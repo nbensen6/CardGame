@@ -1,15 +1,18 @@
-## Playable combat view — presentation + pointer input only (CLAUDE.md §8:
-## /views render state; they don't own it). All rules live in /core (Combat).
+## Combat view — a pure CLIENT of the authoritative host (CLAUDE.md §2, §8).
+## It renders snapshot Dictionaries and sends intents through GameClient; it
+## holds NO game rules and never touches /core types. The same view will render
+## whether the host is in-process (now) or across a network (build step 3).
 ##
 ## Mobile-ready constraints honored (CLAUDE.md §5):
-##  - Single-pointer only: every action is a click/tap on a Button. No hover,
-##    right-click, or keyboard is REQUIRED.
-##  - No hover-only info: each card shows its cost + rules text on its face;
-##    the boss intent is always visible on screen.
+##  - Single-pointer only: every action is a click/tap on a Button.
+##  - No hover-only info: each card shows cost + rules text on its face; the
+##    boss intent is always visible.
 ##  - Anchor-based, scalable UI: containers only, no hard-coded pixel positions.
 extends Control
 
-var _combat: Combat
+var _transport: LocalTransport
+var _host: GameHost
+var _client: GameClient
 
 @onready var _boss_name: Label = %BossName
 @onready var _boss_hp: Label = %BossHP
@@ -25,80 +28,76 @@ var _combat: Combat
 
 
 func _ready() -> void:
-	_end_turn_btn.pressed.connect(_on_end_turn)
-	_restart_btn.pressed.connect(func() -> void: get_tree().reload_current_scene())
-	_start_new_combat()
+	_end_turn_btn.pressed.connect(func() -> void: _client.end_turn())
+	_restart_btn.pressed.connect(func() -> void: _client.restart())
+
+	# --- Bootstrap the client/server split over an in-process transport. ---
+	# Build step 3 swaps LocalTransport for a networked transport with NO changes
+	# to GameHost, GameClient, /core, or this view. (This local wiring is the
+	# only bit that moves out then: the host runs on one machine, clients dial in.)
+	_transport = LocalTransport.new()
+	_host = GameHost.new(_transport)          # authoritative state lives here
+	_client = GameClient.new(_transport, 1)   # this window is player/peer 1
+	_client.state_updated.connect(_on_state)
+	_client.join()
 
 
-func _start_new_combat() -> void:
-	var deck := Content.build_starter_deck()
-	var player := Combatant.new("You", 42)
-	var boss := Content.build_boss("gatekeeper")
-	_combat = Combat.new(deck, player, boss, 0)  # seed 0 = randomized real play
-	_combat.start()
-	_refresh()
-
-
-func _on_end_turn() -> void:
-	if _combat.is_over():
-		return
-	_combat.end_turn()
+func _on_state(_shared: Dictionary, _private: Dictionary) -> void:
 	_refresh()
 
 
 func _on_card_pressed(index: int) -> void:
-	if _combat.play_card(index):
-		_refresh()
+	_client.play_card(index)
 
 
 func _refresh() -> void:
-	var boss := _combat.boss
-	_boss_name.text = boss.name
-	_boss_hp.text = "HP %d / %d%s" % [boss.hp, boss.max_hp, _block_suffix(boss.block)]
-	_boss_hp_bar.max_value = boss.max_hp
-	_boss_hp_bar.value = boss.hp
-	_intent.text = "Intent:  %s" % _intent_text(boss.current_move())
+	var s := _client.shared
+	if s.is_empty():
+		return
+	var boss: Dictionary = s["boss"]
+	_boss_name.text = String(boss["name"])
+	_boss_hp.text = "HP %d / %d%s" % [boss["hp"], boss["max_hp"], _block_suffix(boss["block"])]
+	_boss_hp_bar.max_value = boss["max_hp"]
+	_boss_hp_bar.value = boss["hp"]
+	_intent.text = "Intent:  %s" % _intent_text(boss["intent"])
 
-	var p := _combat.player
+	var p: Dictionary = s["player"]
 	_player_stats.text = "You:  HP %d / %d%s      Energy %d / %d      Turn %d" % [
-		p.hp, p.max_hp, _block_suffix(p.block),
-		_combat.energy, Combat.BASE_ENERGY, _combat.turn,
+		p["hp"], p["max_hp"], _block_suffix(p["block"]),
+		s["energy"], s["base_energy"], s["turn"],
 	]
 
-	# Last few log lines (kept short so it reads at a glance).
-	var lines: Array = _combat.log.slice(maxi(_combat.log.size() - 6, 0))
-	_log_label.text = "\n".join(lines)
+	_log_label.text = "\n".join(s["log"])
 
-	_rebuild_hand()
-	_end_turn_btn.disabled = _combat.is_over()
-	_update_overlay()
+	_rebuild_hand(_client.private.get("hand", []))
+	_end_turn_btn.disabled = bool(s["over"])
+	_update_overlay(s)
 
 
-func _rebuild_hand() -> void:
+func _rebuild_hand(cards: Array) -> void:
 	for child in _hand_row.get_children():
 		child.queue_free()
 
-	for i in range(_combat.hand.size()):
-		var card: Card = _combat.hand[i]
+	for card in cards:
 		var btn := Button.new()
 		btn.custom_minimum_size = Vector2(150, 190)  # thumb-friendly target (§5)
 		btn.clip_text = true
 		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		btn.text = "%s\n(%d energy)\n\n%s" % [card.name, card.cost, card.text]
-		btn.disabled = not _combat.can_play(i)
-		btn.pressed.connect(_on_card_pressed.bind(i))
+		btn.text = "%s\n(%d energy)\n\n%s" % [card["name"], card["cost"], card["text"]]
+		btn.disabled = not bool(card["playable"])
+		btn.pressed.connect(_on_card_pressed.bind(int(card["index"])))
 		_hand_row.add_child(btn)
 
 
-func _update_overlay() -> void:
-	if not _combat.is_over():
+func _update_overlay(s: Dictionary) -> void:
+	if not bool(s.get("over", false)):
 		_overlay.visible = false
 		return
 	_overlay.visible = true
-	match _combat.result():
-		Combat.Result.WIN:
+	match String(s.get("result", "")):
+		"win":
 			_result_label.text = "Victory!\nThe Gatekeeper falls."
-		Combat.Result.LOSE:
+		"lose":
 			_result_label.text = "Defeat.\nYou have fallen."
 		_:
 			_result_label.text = "Combat over."

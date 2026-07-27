@@ -20,7 +20,8 @@ Local editor path (this machine):
 /                 CLAUDE.md, README, .gitignore
 /game             Godot project (project.godot lives here)
   /core           game rules & state — NO rendering, input, or net deps
-  /net            transport-agnostic networking (interfaces + impl)
+  /net            transport-agnostic messaging (Transport interface + LocalTransport)
+  /session        authoritative host + client proxy — binds /core to /net
   /views          private (hand) view + shared (board) view — presentation only
   /input          pointer-first input abstraction
   /data           cards / bosses / relics as data files, not hard-coded
@@ -28,6 +29,11 @@ Local editor path (this machine):
   /tools          headless test runner, build/content scripts
 /design           design docs, card lists, balance sheets
 ```
+
+`/session` is an engine-fit addition to the brief's structure (CLAUDE.md §8
+says "adjust to engine"): `GameHost` owns the only real state and depends on
+both `/core` and `/net`; `GameClient` is what a view talks to. `/core` still
+depends on nothing.
 
 **Key rule:** `/core` must not depend on `/views`, `/input`, or `/net`
 (CLAUDE.md §8). Game rules take inputs and produce state; views render state;
@@ -53,16 +59,24 @@ Exit code 0 = all passed.
 
 ## Current status
 
-**Build step 1 done** — a playable single-player combat loop:
+**Build steps 1 & 2 done.**
 
-- Deterministic, unit-tested `/core` combat engine (`Combat`, `Combatant`,
-  `Boss`, `Card`) with no rendering/input/net deps. 10 tests, all passing.
-- Data-driven cards + boss (`data/cards.json`, `data/bosses.json`).
-- Tap-friendly `views/combat_view.tscn`: play cards, End Turn, boss acts on a
-  telegraphed intent, win/lose overlay with Play Again. Single-pointer, no
-  hover-only info, anchor-based UI (CLAUDE.md §5).
+Step 1 — playable single-player combat loop: deterministic, unit-tested `/core`
+engine (`Combat`, `Combatant`, `Boss`, `Card`); data-driven cards + boss;
+tap-friendly `combat_view` with telegraphed boss intent and win/lose overlay.
+
+Step 2 — the client/server split (CLAUDE.md §2, §7): game state is authoritative
+in `GameHost`; the view is a pure `GameClient` that sends intents and renders
+snapshots split into **shared** (the board everyone sees) and **private** (only
+that player's hand). All messaging goes through the `Transport` interface —
+today an in-process `LocalTransport`, swappable for real networking in step 3
+with no changes to `/core`, the host, the client, or the view.
+
+**16 headless tests pass** (`tools/run_tests.gd`), covering combat rules and the
+session layer (command flow, snapshot shape, per-peer private isolation).
 
 Play it: open the project and press Play, or run the CLI command above.
 
-Next: **build step 2** — the client/server split (authoritative host, private
-hand / shared board views), still testable on one machine.
+Next: **build step 3** — two-player online co-op. Swap `LocalTransport` for a
+networked transport, map two peers to two hands, and add co-op *combo*
+mechanics (the `assist` card is already seeded in `data/cards.json`).

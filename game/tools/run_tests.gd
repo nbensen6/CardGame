@@ -7,6 +7,10 @@
 extends SceneTree
 
 var _failures := 0
+# Hosts must be retained: a signal connection does NOT keep a RefCounted target
+# alive, so without a strong ref the host is freed and later commands hit nothing.
+# (The real app keeps its host as a view member — this only bites the harness.)
+var _kept: Array = []
 
 
 func _init() -> void:
@@ -19,6 +23,13 @@ func _init() -> void:
 	_test_deterministic_shuffle_same_seed()
 	_test_full_fight_reaches_terminal_state()
 	_test_content_loads_from_data()
+
+	# --- session / client-server split (build step 2) ---
+	_test_session_join_delivers_snapshot()
+	_test_session_snapshot_shape()
+	_test_session_play_card_updates_client()
+	_test_session_end_turn_advances()
+	_test_session_private_view_is_isolated()
 
 	print("")
 	if _failures == 0:
@@ -142,6 +153,77 @@ func _test_content_loads_from_data() -> void:
 	var boss := Content.build_boss("gatekeeper")
 	_expect(deck.size() == 10 and boss.name == "The Gatekeeper" and boss.max_hp == 55
 		and boss.moves.size() == 4, "content loads deck + boss from /data")
+
+
+# --- session / client-server split ---------------------------------------
+
+# Loopback is synchronous: after each client call, the client's snapshot is
+# already up to date (command -> host -> broadcast -> client, all in one frame).
+func _make_session(seed_value: int = 42) -> GameClient:
+	var transport := LocalTransport.new()
+	var host := GameHost.new(transport, seed_value)
+	var client := GameClient.new(transport, 1)
+	_kept.append(host)  # retain host past this function (see _kept note above)
+	client.join()
+	return client
+
+
+func _test_session_join_delivers_snapshot() -> void:
+	var client := _make_session()
+	var shared := client.shared
+	_expect(not shared.is_empty()
+		and shared["boss"]["hp"] == 55
+		and client.private["hand"].size() == Combat.HAND_SIZE,
+		"join delivers shared board + private hand")
+
+
+func _test_session_snapshot_shape() -> void:
+	var client := _make_session()
+	var s := client.shared
+	var has_shared := s.has("boss") and s.has("player") and s.has("energy") \
+		and s.has("turn") and s.has("log") and s.has("over") and s.has("result")
+	var has_private := client.private.has("hand")
+	_expect(has_shared and has_private, "snapshot has the expected shared/private shape")
+
+
+func _test_session_play_card_updates_client() -> void:
+	var client := _make_session()
+	var energy_before: int = client.shared["energy"]
+	var idx := _first_playable(client)
+	_expect(idx >= 0, "there is a playable card at start")
+	client.play_card(idx)
+	# Every starter card costs >= 1, so energy must drop after a valid play.
+	_expect(client.shared["energy"] < energy_before,
+		"play_card command flows host->client and spends energy")
+
+
+func _test_session_end_turn_advances() -> void:
+	var client := _make_session()
+	var turn_before: int = client.shared["turn"]
+	client.end_turn()
+	# After the boss acts, either the fight ended or the turn advanced by one.
+	_expect(bool(client.shared["over"]) or client.shared["turn"] == turn_before + 1,
+		"end_turn advances the turn via the host")
+
+
+func _test_session_private_view_is_isolated() -> void:
+	# A peer that never joined must receive nothing — proves per-peer routing so
+	# a player's private hand is never leaked to others.
+	var transport := LocalTransport.new()
+	var host := GameHost.new(transport, 42)
+	var joined := GameClient.new(transport, 1)
+	var eavesdropper := GameClient.new(transport, 2)  # never calls join()
+	joined.join()
+	joined.play_card(_first_playable(joined))
+	_expect(eavesdropper.shared.is_empty() and eavesdropper.private.is_empty(),
+		"a non-joined peer receives no private state")
+
+
+func _first_playable(client: GameClient) -> int:
+	for c in client.private.get("hand", []):
+		if bool(c["playable"]):
+			return int(c["index"])
+	return -1
 
 
 # --- helpers --------------------------------------------------------------
