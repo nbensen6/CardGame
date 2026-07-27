@@ -1,0 +1,21 @@
+# Godot 4+ engine cache / imported assets
+.godot/
+game/.godot/
+
+# Godot exports & build output
+export_presets.cfg
+/build/
+*.import
+
+# Mono/.NET crash dumps (harmless if unused)
+.mono/
+data_*/
+mono_crash.*.json
+
+# Editor / OS junk
+*.tmp
+*~
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store

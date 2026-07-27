@@ -1,0 +1,8 @@
+{
+  "_comment": "Cards/bosses/relics are DATA, not hard-coded logic (CLAUDE.md §11). Placeholder starter cards for the Phase-1 single-player loop; expand during the content pass (build step 4).",
+  "cards": [
+    { "id": "strike", "name": "Strike", "type": "attack", "energy": 1, "damage": 6, "text": "Deal 6 damage to the boss." },
+    { "id": "guard", "name": "Guard", "type": "skill", "energy": 1, "block": 5, "text": "Gain 5 block." },
+    { "id": "assist", "name": "Assist", "type": "skill", "energy": 1, "ally_block": 4, "text": "Give an ally 4 block. (Co-op combo seed — CLAUDE.md §6.)" }
+  ]
+}
