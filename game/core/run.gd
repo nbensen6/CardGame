@@ -12,7 +12,7 @@ enum Phase { COMBAT, REWARD, WON, LOST }
 
 const ENCOUNTERS := ["stone_warden", "gale_serpent"]
 const REWARD_CHOICES := 3
-const HEAL_BETWEEN := 10  # hunters recover a little after each Titan falls
+const HEAL_BETWEEN := 6  # hunters recover a little after each Titan falls
 const PLAYER_HP := 42
 
 var phase: int = Phase.COMBAT

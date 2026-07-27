@@ -3,22 +3,22 @@
   "bosses": {
     "stone_warden": {
       "name": "The Stone Warden",
-      "max_hp": 90,
+      "max_hp": 108,
       "moves": [
-        { "type": "attack", "value": 8 },
-        { "type": "attack", "value": 10 },
-        { "type": "block", "value": 8 },
-        { "type": "attack", "value": 16 }
+        { "type": "attack", "value": 11 },
+        { "type": "attack", "value": 14 },
+        { "type": "block", "value": 10 },
+        { "type": "attack", "value": 22 }
       ]
     },
     "gale_serpent": {
       "name": "The Gale Serpent",
-      "max_hp": 120,
+      "max_hp": 140,
       "moves": [
-        { "type": "attack_all", "value": 5 },
+        { "type": "attack_all", "value": 8 },
         { "type": "enrage", "value": 2 },
-        { "type": "attack", "value": 9 },
-        { "type": "attack_all", "value": 8 }
+        { "type": "attack", "value": 14 },
+        { "type": "attack_all", "value": 11 }
       ]
     }
   }
