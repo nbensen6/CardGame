@@ -6,10 +6,12 @@
 ##
 ## One bus, two directions:
 ##   client -> server:  send_command(peer_id, command)  =>  command_received
-##   server -> clients:  broadcast(message)             =>  message_received
+##   server -> ONE client:  send_to(peer_id, message)   =>  message_received
 ##
-## Messages are JSON-friendly Dictionaries so any real transport can serialize
-## them unchanged.
+## The host sends each player their own snapshot with send_to, so a private hand
+## is delivered ONLY to its owner (over a real transport, an actual per-peer
+## packet — not broadcast-and-filter). Messages are JSON-friendly Dictionaries
+## so any real transport can serialize them unchanged.
 class_name Transport
 extends RefCounted
 
@@ -22,6 +24,6 @@ signal message_received(message: Dictionary)
 func send_command(_peer_id: int, _command: Dictionary) -> void:
 	push_error("Transport.send_command not implemented")
 
-## Server -> all clients. Override in a real transport to broadcast.
-func broadcast(_message: Dictionary) -> void:
-	push_error("Transport.broadcast not implemented")
+## Server -> one specific client. Override in a real transport.
+func send_to(_peer_id: int, _message: Dictionary) -> void:
+	push_error("Transport.send_to not implemented")

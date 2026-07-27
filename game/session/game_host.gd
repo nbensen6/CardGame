@@ -75,7 +75,7 @@ func _broadcast_state() -> void:
 	if _combat == null:
 		# Lobby: still waiting for players to join.
 		for pid in _peers:
-			_transport.broadcast({
+			_transport.send_to(pid, {
 				"type": "snapshot", "for_peer": pid, "you": _slot(pid),
 				"shared": {"waiting": true, "joined": _peers.size(), "required": _required},
 				"private": {},
@@ -84,7 +84,7 @@ func _broadcast_state() -> void:
 	var shared := _build_shared()
 	for pid in _peers:
 		var pi := _slot(pid)
-		_transport.broadcast({
+		_transport.send_to(pid, {
 			"type": "snapshot", "for_peer": pid, "you": pi,
 			"shared": shared, "private": _build_private(pi),
 		})

@@ -1,0 +1,82 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://views/menu.gd" id="1_menu"]
+
+[node name="Menu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="BG" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.101961, 0.109804, 0.152941, 1)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Box" type="VBoxContainer" parent="Center"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="Center/Box"]
+layout_mode = 2
+text = "Co-Op Deckbuilder"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="Center/Box"]
+layout_mode = 2
+text = "Two heroes vs one boss"
+horizontal_alignment = 1
+
+[node name="Gap" type="Control" parent="Center/Box"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+
+[node name="HostBtn" type="Button" parent="Center/Box"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(320, 52)
+layout_mode = 2
+text = "Host Game"
+
+[node name="JoinRow" type="HBoxContainer" parent="Center/Box"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="IpEdit" type="LineEdit" parent="Center/Box/JoinRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 52)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "127.0.0.1"
+placeholder_text = "Host IP"
+
+[node name="JoinBtn" type="Button" parent="Center/Box/JoinRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(112, 52)
+layout_mode = 2
+text = "Join"
+
+[node name="Status" type="Label" parent="Center/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Host a game, or join one by IP."
+horizontal_alignment = 1
+
+[node name="Hint" type="Label" parent="Center/Box"]
+layout_mode = 2
+text = "Same machine? Open the game twice: one Hosts, the other Joins 127.0.0.1"
+horizontal_alignment = 1

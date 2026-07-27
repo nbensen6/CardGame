@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Co-Op Deckbuilder (prototype)"
 config/description="Cooperative roguelike deckbuilder — two players vs a boss."
-run/main_scene="res://views/combat_view.tscn"
+run/main_scene="res://views/menu.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 

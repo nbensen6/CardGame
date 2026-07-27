@@ -20,13 +20,14 @@ Local editor path (this machine):
 /                 CLAUDE.md, README, .gitignore
 /game             Godot project (project.godot lives here)
   /core           game rules & state — NO rendering, input, or net deps
-  /net            transport-agnostic messaging (Transport interface + LocalTransport)
-  /session        authoritative host + client proxy — binds /core to /net
-  /views          private (hand) view + shared (board) view — presentation only
+  /net            Transport interface + LocalTransport (in-process) + EnetTransport
+                  (online, via NetLink RPC)
+  /session        authoritative host + client proxy + Session handoff
+  /views          menu (lobby) + combat view — presentation only
   /input          pointer-first input abstraction
   /data           cards / bosses / relics as data files, not hard-coded
   /ui             anchor-based, scalable UI components
-  /tools          headless test runner, build/content scripts
+  /tools          headless test runner, networked smoke test
 /design           design docs, card lists, balance sheets
 ```
 
@@ -39,44 +40,57 @@ depends on nothing.
 (CLAUDE.md §8). Game rules take inputs and produce state; views render state;
 the network moves state.
 
-## Run the game (editor)
+## Play online co-op (two players)
 
-Open `game/project.godot` in the Godot editor and press Play, or from a shell:
+Each player runs the game; one hosts, the other joins by IP. **On one machine,
+open the game twice** — one window clicks **Host Game**, the other keeps
+`127.0.0.1` and clicks **Join**. Authoritative-host (listen-server) model: the
+host also plays.
+
+Launch the game:
 
 ```bash
 "$LOCALAPPDATA/Programs/Godot/Godot_v4.7.1-stable_win64.exe" --path "game"
 ```
 
-The boot scene runs a `/core` self-check and confirms the toolchain is wired up.
+## Run the tests (headless)
 
-## Run the core tests (headless)
+Unit tests (`/core` + `/session`, 23 tests):
 
 ```bash
-"$LOCALAPPDATA/Programs/Godot/Godot_v4.7.1-stable_win64.exe" --headless --path "game" --script res://tools/run_tests.gd
+"$LOCALAPPDATA/Programs/Godot/Godot_v4.7.1-stable_win64_console.exe" --headless --path "game" --script res://tools/run_tests.gd
 ```
 
-Exit code 0 = all passed.
+Networked smoke test (real ENet on 127.0.0.1) — run each line in its own shell:
+
+```bash
+"$LOCALAPPDATA/Programs/Godot/Godot_v4.7.1-stable_win64_console.exe" --headless --path "game" res://tools/net_smoke.tscn -- host
+"$LOCALAPPDATA/Programs/Godot/Godot_v4.7.1-stable_win64_console.exe" --headless --path "game" res://tools/net_smoke.tscn -- client
+```
+
+Exit code 0 = passed. (Use the `_console.exe` on Windows so stdout is captured.)
 
 ## Current status
 
-**Build steps 1 & 2 done.**
+**Build steps 1–3 done.**
 
-Step 1 — playable single-player combat loop: deterministic, unit-tested `/core`
-engine (`Combat`, `Combatant`, `Boss`, `Card`); data-driven cards + boss;
-tap-friendly `combat_view` with telegraphed boss intent and win/lose overlay.
+- **Step 1** — single-player combat loop: deterministic, unit-tested `/core`
+  engine; data-driven cards + boss; tap-friendly view.
+- **Step 2** — client/server split (CLAUDE.md §2): authoritative `GameHost`,
+  pure `GameClient` views, snapshots split into **shared** board vs **private**
+  hand, all behind the `Transport` interface.
+- **Step 3** — two-player online co-op (CLAUDE.md §6):
+  - `/core` supports N players — own hands/energy, ally-targeting cards
+    (**Assist** shields your ally), a boss that telegraphs *which* player it will
+    hit, and shared-fate loss (any death = defeat).
+  - **Real networking**: `EnetTransport` (ENet + RPC) is a drop-in for
+    `LocalTransport` — `/core`, host, client, and views are unchanged. A Host/Join
+    lobby wires it up (listen-server / authoritative host).
 
-Step 2 — the client/server split (CLAUDE.md §2, §7): game state is authoritative
-in `GameHost`; the view is a pure `GameClient` that sends intents and renders
-snapshots split into **shared** (the board everyone sees) and **private** (only
-that player's hand). All messaging goes through the `Transport` interface —
-today an in-process `LocalTransport`, swappable for real networking in step 3
-with no changes to `/core`, the host, the client, or the view.
+**23 unit tests pass** (`tools/run_tests.gd`) + a **two-process ENet smoke test**
+(`tools/net_smoke.tscn`) confirms real cross-process connectivity on localhost.
 
-**16 headless tests pass** (`tools/run_tests.gd`), covering combat rules and the
-session layer (command flow, snapshot shape, per-peer private isolation).
-
-Play it: open the project and press Play, or run the CLI command above.
-
-Next: **build step 3** — two-player online co-op. Swap `LocalTransport` for a
-networked transport, map two peers to two hands, and add co-op *combo*
-mechanics (the `assist` card is already seeded in `data/cards.json`).
+Next: **build step 4** — content & balance. More cards, bosses, relics, and
+meta-progression; the deeper co-op combos live here (this is where the game is
+won or lost, per CLAUDE.md §7). Also worth a pass: disconnect/reconnect handling
+and the remaining §4 decisions (theme/art, monetization).
