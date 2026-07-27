@@ -141,16 +141,35 @@ func _build_private(pi: int) -> Dictionary:
 			var c: Card = ps.hand[i]
 			cards.append({
 				"index": i, "name": c.name, "cost": c.cost, "target": c.target,
-				"text": c.text, "playable": _run.combat.can_play(pi, i),
+				"text": c.text, "icon": _card_icon(c), "playable": _run.combat.can_play(pi, i),
 			})
 		return {"hand": cards, "energy": ps.energy, "ended": ps.ended_turn}
 	if _run.phase == Run.Phase.REWARD:
 		var choices: Array = []
 		for i in range(_run.reward_choices[pi].size()):
 			var rc: Card = _run.reward_choices[pi][i]
-			choices.append({"index": i, "name": rc.name, "cost": rc.cost, "text": rc.text})
+			choices.append({
+				"index": i, "name": rc.name, "cost": rc.cost, "text": rc.text,
+				"target": rc.target, "icon": _card_icon(rc),
+			})
 		return {"reward": {"choices": choices, "picked": bool(_run.reward_picked[pi])}}
 	return {}
+
+## A silhouette-icon key for a card, chosen by its dominant effect (view art).
+func _card_icon(c: Card) -> String:
+	if c.taunt:
+		return "taunt"
+	if c.vulnerable > 0 and c.damage == 0:
+		return "expose"
+	if c.damage > 0:
+		return "sword"
+	if c.ally_block > 0 or c.ally_energy > 0:
+		return "support"
+	if c.block > 0:
+		return "shield"
+	if c.draw > 0:
+		return "aim"
+	return ""
 
 func _slot(peer_id: int) -> int:
 	return int(_slot_of.get(peer_id, -1))

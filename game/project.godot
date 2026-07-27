@@ -24,6 +24,10 @@ window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation="sensor"
 
+[gui]
+
+theme/custom="res://ui/theme.tres"
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"

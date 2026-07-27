@@ -84,11 +84,10 @@ func _render_hand() -> void:
 	var ended := bool(_client.private.get("ended", false))
 	_hand_label.text = "Your hand" + ("   (turn ended — waiting for ally)" if ended else "")
 	for card in _client.private.get("hand", []):
-		var btn := _card_button("%s%s\n(%d energy)\n\n%s" % [
-			card["name"], _target_tag(String(card.get("target", "self"))), card["cost"], card["text"]])
-		btn.disabled = not bool(card["playable"])
-		btn.pressed.connect(_on_card_pressed.bind(int(card["index"])))
-		_hand_row.add_child(btn)
+		var cv := CardView.new()
+		_hand_row.add_child(cv)
+		cv.setup(card, bool(card["playable"]))
+		cv.pressed.connect(_on_card_pressed.bind(int(card["index"])))
 	_end_turn_btn.disabled = ended
 	_end_turn_btn.text = "Waiting for ally…" if ended else "End Turn"
 
@@ -117,10 +116,10 @@ func _render_reward(s: Dictionary) -> void:
 	_hand_label.text = "Pick a reward card" + ("   (chosen — waiting for ally)" if picked else "")
 	_clear(_hand_row)
 	for choice in reward.get("choices", []):
-		var btn := _card_button("%s\n(%d energy)\n\n%s" % [choice["name"], choice["cost"], choice["text"]])
-		btn.disabled = picked
-		btn.pressed.connect(_on_reward_pressed.bind(int(choice["index"])))
-		_hand_row.add_child(btn)
+		var cv := CardView.new()
+		_hand_row.add_child(cv)
+		cv.setup(choice, not picked)
+		cv.pressed.connect(_on_reward_pressed.bind(int(choice["index"])))
 
 
 func _on_reward_pressed(choice: int) -> void:
@@ -225,27 +224,8 @@ func _intent_text(move: Dictionary, strength: int) -> String:
 			return "Unknown"
 
 
-func _target_tag(target: String) -> String:
-	match target:
-		"ally":
-			return "   ↪ ally"
-		"enemy":
-			return "   ↪ Titan"
-		_:
-			return ""
-
-
 func _block_suffix(block: int) -> String:
 	return "   [%d block]" % block if block > 0 else ""
-
-
-func _card_button(text: String) -> Button:
-	var btn := Button.new()
-	btn.custom_minimum_size = Vector2(150, 190)  # thumb-friendly target (§5)
-	btn.clip_text = true
-	btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	btn.text = text
-	return btn
 
 
 func _mklabel(text: String) -> Label:
