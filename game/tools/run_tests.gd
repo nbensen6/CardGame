@@ -37,6 +37,13 @@ func _init() -> void:
 	_test_taunt_redirects_the_boss()
 	_test_attack_all_hits_both()
 	_test_enrage_raises_attack()
+	# phase 2: climb / weak-point loop
+	_test_grip_builds_foothold()
+	_test_sigil_bonus_requires_climb()
+	_test_height0_titan_no_sigil_bonus()
+	_test_attack_all_shakes_foothold()
+	_test_sunlight_blade_scales_with_exposed()
+	_test_bowshot_deals_and_exposes()
 	# step 4: run / meta-progression
 	_test_run_starts_in_combat()
 	_test_run_win_flows_through_reward_to_next_encounter()
@@ -240,6 +247,67 @@ func _test_enrage_raises_attack() -> void:
 	_expect(combat.players[1].combatant.hp == 34, "an enraged attack hits harder")
 
 
+# --- Phase 2: climb / weak-point loop -------------------------------------
+
+func _test_grip_builds_foothold() -> void:
+	var combat := _new_combat([_deck_of(_grip, 10), _deck_of(_slash, 10)], 42, _dummy_boss(200))
+	combat.play_card(0, _first_playable(combat, 0))  # Grip +2
+	var after_one := combat.foothold
+	combat.foothold = 5
+	combat.play_card(0, _first_playable(combat, 0))  # +2 -> capped
+	_expect(after_one == 2 and combat.foothold == Combat.FOOTHOLD_MAX,
+		"grip builds Foothold, capped at max")
+
+
+func _test_sigil_bonus_requires_climb() -> void:
+	var boss := _dummy_boss(300)
+	boss.weak_point_height = 3
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var before := combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))  # not climbed: 6 only
+	_expect(combat.boss.hp == before - 6, "no sigil bonus before the team climbs")
+	combat.foothold = 3  # reached the sigil
+	var before2 := combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))  # 6 + SIGIL_BONUS
+	_expect(combat.boss.hp == before2 - (6 + Combat.SIGIL_BONUS),
+		"striking a reached sigil deals bonus damage")
+
+
+func _test_height0_titan_no_sigil_bonus() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(200))
+	combat.foothold = Combat.FOOTHOLD_MAX  # height 0 -> no high sigil to reach
+	var before := combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))
+	_expect(combat.boss.hp == before - 6, "a low-sigil Titan gives no climb bonus")
+
+
+func _test_attack_all_shakes_foothold() -> void:
+	var boss := Boss.new("Shaker", 500)
+	boss.moves = [{"type": "attack_all", "value": 5}]
+	var combat := _new_combat([_deck_of(_grip, 10), _deck_of(_grip, 10)], 42, boss)
+	combat.foothold = 5
+	combat.end_turn(0)
+	combat.end_turn(1)  # attack_all -> shake
+	_expect(combat.foothold == 5 - Combat.SHAKE_LOSS, "attack_all shakes the team loose")
+
+
+func _test_sunlight_blade_scales_with_exposed() -> void:
+	var combat := _new_combat([_deck_of(_sunblade, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	combat.boss.vulnerable = 2
+	var before := combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))  # 5 + 3*2 = 11, +4 exposed = 15
+	_expect(combat.boss.hp == before - 15 and combat.boss.vulnerable == 1,
+		"Sunlight Blade scales with Exposed and consumes a stack")
+
+
+func _test_bowshot_deals_and_exposes() -> void:
+	var combat := _new_combat([_deck_of(_bowshot, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var before := combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))  # 3 damage, then +1 Exposed
+	_expect(combat.boss.hp == before - 3 and combat.boss.vulnerable == 1,
+		"Bowshot deals damage and Exposes the Titan")
+
+
 # --- Step 4: run / meta-progression ---------------------------------------
 
 func _test_run_starts_in_combat() -> void:
@@ -439,6 +507,12 @@ func _expose() -> Card:
 	return Card.from_dict({"id": "expose", "name": "Expose", "type": "skill", "cost": 1, "vulnerable": 2, "target": "enemy"})
 func _taunt() -> Card:
 	return Card.from_dict({"id": "draw_aggro", "name": "Draw Aggro", "type": "skill", "cost": 1, "taunt": true, "block": 6})
+func _grip() -> Card:
+	return Card.from_dict({"id": "grip", "name": "Grip", "type": "skill", "cost": 1, "grip": 2, "target": "enemy"})
+func _sunblade() -> Card:
+	return Card.from_dict({"id": "sunlight_blade", "name": "Sunlight Blade", "type": "attack", "cost": 1, "damage": 5, "damage_per_vulnerable": 3})
+func _bowshot() -> Card:
+	return Card.from_dict({"id": "bowshot", "name": "Bowshot", "type": "attack", "cost": 0, "damage": 3, "vulnerable": 1})
 
 
 func _expect(cond: bool, name: String) -> void:

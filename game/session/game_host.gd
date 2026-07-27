@@ -109,6 +109,8 @@ func _build_shared() -> Dictionary:
 			"name": b.name, "hp": b.hp, "max_hp": b.max_hp, "block": b.block,
 			"intent": b.current_move(), "target": c.boss_target_index(),
 			"vulnerable": b.vulnerable, "strength": b.strength,
+			"weak_point_height": b.weak_point_height, "foothold": c.foothold,
+			"foothold_max": Combat.FOOTHOLD_MAX, "sigil_reached": c.sigil_reached(),
 		}
 		s["round"] = c.round_num
 		s["base_energy"] = Combat.BASE_ENERGY
@@ -159,6 +161,8 @@ func _build_private(pi: int) -> Dictionary:
 func _card_icon(c: Card) -> String:
 	if c.taunt:
 		return "taunt"
+	if c.grip > 0:
+		return "grip"
 	if c.vulnerable > 0 and c.damage == 0:
 		return "expose"
 	if c.damage > 0:

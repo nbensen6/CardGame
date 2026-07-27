@@ -21,12 +21,16 @@ enum Phase { PLAYERS, ENEMY, OVER }
 
 const HAND_SIZE := 5
 const BASE_ENERGY := 3
-const VULN_BONUS := 4  # extra damage each "exposed" (vulnerable) stack adds to a hit
+const VULN_BONUS := 4    # extra damage each "exposed" (vulnerable) stack adds to a hit
+const SIGIL_BONUS := 5   # extra damage on a hit once the team has climbed to a high sigil
+const FOOTHOLD_MAX := 6  # cap on the shared climb resource
+const SHAKE_LOSS := 2    # Foothold lost when the Titan sweeps (attack_all) — it bucks you off
 
 var players: Array = []  # Array[PlayerState], index = player slot
 var boss: Boss
 var round_num: int = 1
 var phase: int = Phase.PLAYERS
+var foothold: int = 0    # shared "climb" toward a high weak point (SotC) — persists in a fight
 var log: Array = []
 
 var _rng := RandomNumberGenerator.new()
@@ -57,6 +61,10 @@ func player_count() -> int:
 ## The ally a player's ally-targeting cards help. 2-player: the other player.
 func ally_index(pi: int) -> int:
 	return (pi + 1) % players.size()
+
+## True when the team has climbed high enough to strike the Titan's sigil.
+func sigil_reached() -> bool:
+	return boss.weak_point_height > 0 and foothold >= boss.weak_point_height
 
 ## The player the boss's next single-target attack will hit (telegraphed).
 ## A "taunt" this round overrides it; otherwise it rotates by round.
@@ -102,10 +110,15 @@ func play_card(pi: int, ci: int) -> bool:
 	var who: String = ps.combatant.name
 
 	# Damage first, so a card that also Exposes (e.g. Harpoon) doesn't consume
-	# its own new vulnerable stacks.
-	if card.damage > 0:
-		var dealt := _damage_boss(card.damage)
-		_log("%s plays %s — %d damage%s." % [who, card.name, dealt, " (exposed!)" if dealt > card.damage else ""])
+	# its own new vulnerable stacks. Base damage can scale with current Exposed
+	# stacks (Sunlight Blade); _damage_boss then adds the exposed + sigil bonuses.
+	var base_damage := card.damage + card.damage_per_vulnerable * boss.vulnerable
+	if base_damage > 0:
+		var dealt := _damage_boss(base_damage)
+		_log("%s plays %s — %d damage%s." % [who, card.name, dealt, " (weak point!)" if dealt > base_damage else ""])
+	if card.grip > 0:
+		foothold = mini(foothold + card.grip, FOOTHOLD_MAX)
+		_log("%s plays %s — climbs (+%d Foothold, now %d)." % [who, card.name, card.grip, foothold])
 	if card.block > 0:
 		ps.combatant.gain_block(card.block)
 		_log("%s plays %s — +%d block." % [who, card.name, card.block])
@@ -138,6 +151,8 @@ func _damage_boss(amount: int) -> int:
 	if boss.vulnerable > 0:
 		total += VULN_BONUS
 		boss.vulnerable -= 1
+	if sigil_reached():
+		total += SIGIL_BONUS  # struck the high weak point (climbed + reachable)
 	boss.take_damage(total)
 	return total
 
@@ -192,7 +207,12 @@ func _enemy_turn() -> void:
 			var dmg_all := value + boss.strength
 			for ps in players:
 				ps.combatant.take_damage(dmg_all)
-			_log("%s sweeps both hunters for %d." % [boss.name, dmg_all])
+			var shaken := mini(foothold, SHAKE_LOSS)
+			foothold -= shaken
+			if shaken > 0:
+				_log("%s sweeps both hunters for %d and shakes you loose (-%d Foothold)." % [boss.name, dmg_all, shaken])
+			else:
+				_log("%s sweeps both hunters for %d." % [boss.name, dmg_all])
 		"enrage":
 			boss.strength += value
 			_log("%s enrages (+%d strength, now +%d)." % [boss.name, value, boss.strength])

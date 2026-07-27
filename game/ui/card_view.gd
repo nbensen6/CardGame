@@ -13,6 +13,7 @@ const ICONS := {
 	"aim": preload("res://ui/icons/aim.svg"),
 	"expose": preload("res://ui/icons/sun.svg"),
 	"taunt": preload("res://ui/icons/banner.svg"),
+	"grip": preload("res://ui/icons/grip.svg"),
 }
 const ENERGY_ICON := preload("res://ui/icons/energy.svg")
 
@@ -23,6 +24,7 @@ const TINT := {
 	"aim": Color(0.85, 0.78, 0.55),     # gold
 	"expose": Color(0.90, 0.78, 0.42),  # sunlight
 	"taunt": Color(0.82, 0.56, 0.40),   # ember
+	"grip": Color(0.70, 0.62, 0.46),    # stone/earth
 }
 
 ## Build the card from a snapshot dict. `playable` greys it out when false.

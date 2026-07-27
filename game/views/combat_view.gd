@@ -188,6 +188,13 @@ func _titan_tags(boss: Dictionary) -> String:
 	var strength := int(boss.get("strength", 0))
 	if strength > 0:
 		out += "   · enraged +%d" % strength
+	var height := int(boss.get("weak_point_height", 0))
+	if height > 0:
+		var foothold := int(boss.get("foothold", 0))
+		if bool(boss.get("sigil_reached", false)):
+			out += "   · sigil exposed ✓ (Foothold %d)" % foothold
+		else:
+			out += "   · Foothold %d / %d  (climb to %d)" % [foothold, int(boss.get("foothold_max", 6)), height]
 	return out
 
 

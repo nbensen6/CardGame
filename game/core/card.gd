@@ -15,6 +15,8 @@ var ally_block: int    # gained by the ALLY — a co-op combo effect (CLAUDE.md 
 var ally_energy: int   # energy given to the ALLY (combo enabler)
 var vulnerable: int    # "exposed" stacks added to the Titan (next hits deal bonus)
 var taunt: bool        # you become the Titan's target this round (tank for your ally)
+var grip: int          # Foothold gained — climb toward a high weak point (SotC)
+var damage_per_vulnerable: int  # bonus damage per Exposed stack on the Titan
 var draw: int          # extra cards drawn
 var target: String     # "self" | "ally" | "enemy" — who the card acts on (UI clarity)
 var text: String       # rules text, shown on the card face (no hover needed — §5)
@@ -31,6 +33,8 @@ static func from_dict(d: Dictionary) -> Card:
 	c.ally_energy = int(d.get("ally_energy", 0))
 	c.vulnerable = int(d.get("vulnerable", 0))
 	c.taunt = bool(d.get("taunt", false))
+	c.grip = int(d.get("grip", 0))
+	c.damage_per_vulnerable = int(d.get("damage_per_vulnerable", 0))
 	c.draw = int(d.get("draw", 0))
 	c.target = String(d.get("target", "self"))
 	c.text = String(d.get("text", ""))

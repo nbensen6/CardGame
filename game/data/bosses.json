@@ -14,6 +14,7 @@
     "gale_serpent": {
       "name": "The Gale Serpent",
       "max_hp": 140,
+      "weak_point_height": 3,
       "moves": [
         { "type": "attack_all", "value": 8 },
         { "type": "enrage", "value": 2 },
