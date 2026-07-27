@@ -76,7 +76,7 @@ func _play_run(seed_value: int, policy: String) -> Dictionary:
 		elif run.phase == Run.Phase.REWARD:
 			for slot in range(run.player_count()):
 				if not run.reward_picked[slot]:
-					run.pick_reward(slot, _pick_reward(run.reward_choices[slot], policy))
+					run.pick_reward(slot, _pick_reward(run, run.reward_choices[slot], policy))
 	stats["won"] = run.phase == Run.Phase.WON
 	if not stats["won"]:
 		stats["lost_at"] = run.encounter_index + 1
@@ -143,7 +143,18 @@ func _choose(c: Combat, pi: int, policy: String) -> int:
 	return -1
 
 
-func _pick_reward(choices: Array, policy: String) -> int:
+func _pick_reward(run: Run, choices: Array, policy: String) -> int:
+	if choices.is_empty():
+		return 0
+	if run.reward_kind == "relic":
+		if policy == "naive":
+			return 0
+		# Prefer offensive/utility relics; else first.
+		for i in range(choices.size()):
+			if String(choices[i].get("effect", "")) in ["attack_bonus", "max_energy"]:
+				return i
+		return 0
+	# card reward
 	if policy == "naive":
 		return 0
 	# Prefer cards that deepen coordination; else the biggest attack.
@@ -207,10 +218,9 @@ func _tally_combo(card: Card, stats: Dictionary) -> void:
 func _report(title: String, agg: Dictionary) -> void:
 	print("── %s ──" % title)
 	print("  win rate:        %.0f%%  (%d / %d)" % [agg["wins"] * 100.0 / RUNS, agg["wins"], RUNS])
-	var l1: int = int(agg["lost_at"].get(1, 0))
-	var l2: int = int(agg["lost_at"].get(2, 0))
-	print("  losses:          Titan 1: %d   Titan 2: %d" % [l1, l2])
-	for enc in [0, 1]:
+	print("  losses:          Titan 1: %d   Titan 2: %d   Titan 3: %d" % [
+		int(agg["lost_at"].get(1, 0)), int(agg["lost_at"].get(2, 0)), int(agg["lost_at"].get(3, 0))])
+	for enc in [0, 1, 2]:
 		if agg["rounds_n"].has(enc):
 			var avg: float = agg["rounds"][enc] / float(agg["rounds_n"][enc])
 			print("  avg rounds — Titan %d: %.1f  (over %d clears)" % [enc + 1, avg, agg["rounds_n"][enc]])

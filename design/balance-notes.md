@@ -8,21 +8,26 @@ Two AI policies: **naive** (dumps hand, no defense/combos) and **coordinated**
 Coordination should *decide* outcomes (CLAUDE.md §6). Target: naive ≈ 40–55%,
 coordinated ≈ 85–100%, with a wide gap.
 
-## Phase 1 result (2-Titan run)
-| Policy | Win rate | Avg lowest HP |
-|--------|---------:|--------------:|
-| Naive | **43%** | 7 / 42 |
-| Coordinated | **100%** | 21 / 42 |
+## Phase 3 result (3-Titan run, with relics)
+| Policy | Win rate | Lost at T1/T2/T3 | Avg lowest HP |
+|--------|---------:|:----------------:|--------------:|
+| Naive | **8%** | 0 / 171 / 105 | 6 / 42 |
+| Coordinated | **96%** | 0 / 0 / 13 | 16 / 42 |
 
-Gap **+57 points**. Before tuning both policies won 100% (coordination was
-decorative). Now sloppy play dies at Titan 2 more than half the time; coordinated
-play reliably survives.
+Gap **+88 points**. A full three-Titan run is a real gauntlet: sloppy play almost
+never finishes; coordinated play (using combos + relics) clears ~96%. Clean ramp
+— Titan 1 teaches, Titan 2 is the mid-wall, Titan 3 is the final test.
 
-## Final numbers (all in `data/bosses.json`, `core/run.gd`)
-- Players: 42 HP, 3 energy/round. `HEAL_BETWEEN` = 6.
-- **Stone Warden** (Titan 1, the opener): 108 HP; attacks 11 / 14 / block 10 / 22.
-- **Gale Serpent** (Titan 2, the wall): 140 HP; attack_all 8 / enrage 2 /
+(Phase 1, the earlier 2-Titan tuning, landed naive 43% / coord 100%, gap +57.)
+
+## Final numbers (all in `data/bosses.json`, `data/relics.json`, `core/run.gd`)
+- Players: 42 HP, 3 energy/round. `HEAL_BETWEEN` = 6. Run = 3 Titans.
+- **Stone Warden** (T1, opener): 108 HP; attacks 11 / 14 / block 10 / 22.
+- **Gale Serpent** (T2, mid-wall): 140 HP, weak point 3; attack_all 8 / enrage 2 /
   attack 14 / attack_all 11.
+- **Drowned Colossus** (T3, final): 170 HP, weak point 4; attack 13 / attack_all 9 /
+  regen 12 / attack 22.
+- Rewards: card after T1, relic after T2. ~6 relics in `data/relics.json`.
 
 ## Observations / follow-ups
 - **All losses are at Titan 2.** Titan 1 is a pushover (a fine "learn the ropes"

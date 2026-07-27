@@ -50,6 +50,13 @@ func _init() -> void:
 	_test_run_hp_carries_between_encounters()
 	_test_run_defeat_when_a_hunter_falls()
 	_test_content_make_card_and_reward_pool()
+	# phase 3: 3rd titan, relics, longer runs
+	_test_regen_heals_titan()
+	_test_relic_energy_bonus()
+	_test_relic_attack_bonus()
+	_test_relic_round_block()
+	_test_run_is_three_titans()
+	_test_run_relic_reward_and_full_clear()
 	# session / client-server split
 	_test_session_both_players_join()
 	_test_session_lobby_waits_for_second_player()
@@ -332,8 +339,6 @@ func _test_run_win_flows_through_reward_to_next_encounter() -> void:
 	_expect(run.phase == Run.Phase.COMBAT and run.encounter_index == 1
 		and run.decks[0].size() == deck0_before + 1,
 		"after all pick, the next encounter starts with the chosen card added")
-	_force_win(run)
-	_expect(run.phase == Run.Phase.WON, "felling the final Titan wins the run")
 
 
 func _test_run_hp_carries_between_encounters() -> void:
@@ -361,6 +366,61 @@ func _test_content_make_card_and_reward_pool() -> void:
 	var pool := Content.reward_pool()
 	_expect(card.name == "Rally" and card.ally_energy == 1 and pool.size() >= 3,
 		"content builds a card by id and exposes the reward pool")
+
+
+# --- Phase 3: 3rd titan, relics, longer runs ------------------------------
+
+func _test_regen_heals_titan() -> void:
+	var boss := Boss.new("Healer", 100)
+	boss.hp = 90
+	boss.moves = [{"type": "regen", "value": 30}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.end_turn(0)
+	combat.end_turn(1)  # regen 30 -> capped at max 100
+	_expect(combat.boss.hp == 100, "regen heals the Titan, capped at max HP")
+
+
+func _test_relic_energy_bonus() -> void:
+	var combat := _relic_combat(1, 0, 0)
+	_expect(combat.players[0].energy == Combat.BASE_ENERGY + 1,
+		"max_energy relic grants extra energy each round")
+
+
+func _test_relic_attack_bonus() -> void:
+	var combat := _relic_combat(0, 3, 0)
+	var before := combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))  # Slash 6 + 3
+	_expect(combat.boss.hp == before - 9, "attack_bonus relic adds damage to attacks")
+
+
+func _test_relic_round_block() -> void:
+	var combat := _relic_combat(0, 0, 3)
+	_expect(combat.players[0].combatant.block == 3, "round_block relic grants block each round")
+
+
+func _test_run_is_three_titans() -> void:
+	var run := Run.new([_mixed_deck(), _mixed_deck()], ["A", "B"], 5)
+	_expect(run.total_encounters() == 3, "a run is three Titans")
+
+
+func _test_run_relic_reward_and_full_clear() -> void:
+	var run := Run.new([_mixed_deck(), _mixed_deck()], ["A", "B"], 5)
+	run.start()
+	_force_win(run)  # Titan 1 -> card reward
+	_expect(run.reward_kind == "card", "first reward is a card")
+	run.pick_reward(0, 0)
+	run.pick_reward(1, 0)  # -> Titan 2
+	_force_win(run)  # Titan 2 -> relic reward
+	_expect(run.reward_kind == "relic" and not run.reward_choices[0].is_empty(),
+		"second reward is a relic")
+	run.pick_reward(0, 0)
+	run.pick_reward(1, 0)  # 2 team relics -> Titan 3
+	var totals := run.relic_totals()
+	_expect(run.team_relics.size() == 2 and run.encounter_index == 2
+		and totals["energy"] + totals["attack"] + totals["block"] + totals["heal"] > 0,
+		"relics are added team-wide and produce modifiers; final Titan starts")
+	_force_win(run)  # Titan 3 -> run won
+	_expect(run.phase == Run.Phase.WON, "felling all three Titans wins the run")
 
 
 # --- Session / client-server split ----------------------------------------
@@ -448,6 +508,15 @@ func _dummy_boss(hp: int, value: int = 8) -> Boss:
 	var b := Boss.new("Dummy", hp)
 	b.moves = [{"type": "attack", "value": value}]
 	return b
+
+
+## A started 2-player Combat with the given relic modifiers applied.
+func _relic_combat(energy_bonus: int, attack_bonus: int, round_block: int) -> Combat:
+	var players := [Combatant.new("A", 42), Combatant.new("B", 42)]
+	var combat := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)], players,
+		_dummy_boss(300), 42, energy_bonus, attack_bonus, round_block)
+	combat.start()
+	return combat
 
 
 ## Force the current encounter to a WIN and advance run state.

@@ -101,6 +101,7 @@ func _build_shared() -> Dictionary:
 		"over": _run.is_over(),
 		"result": _result_string(),
 		"players": _players_public(),
+		"relics": _relic_names(),
 	}
 	if _run.phase == Run.Phase.COMBAT:
 		var c: Combat = _run.combat
@@ -147,15 +148,25 @@ func _build_private(pi: int) -> Dictionary:
 			})
 		return {"hand": cards, "energy": ps.energy, "ended": ps.ended_turn}
 	if _run.phase == Run.Phase.REWARD:
+		var kind := _run.reward_kind
 		var choices: Array = []
 		for i in range(_run.reward_choices[pi].size()):
-			var rc: Card = _run.reward_choices[pi][i]
-			choices.append({
-				"index": i, "name": rc.name, "cost": rc.cost, "text": rc.text,
-				"target": rc.target, "icon": _card_icon(rc),
-			})
-		return {"reward": {"choices": choices, "picked": bool(_run.reward_picked[pi])}}
+			var rc: Variant = _run.reward_choices[pi][i]
+			if kind == "relic":
+				choices.append({"index": i, "name": rc["name"], "text": rc["text"],
+					"icon": "relic", "no_cost": true})
+			else:
+				choices.append({"index": i, "name": rc.name, "cost": rc.cost, "text": rc.text,
+					"target": rc.target, "icon": _card_icon(rc)})
+		return {"reward": {"kind": kind, "choices": choices, "picked": bool(_run.reward_picked[pi])}}
 	return {}
+
+
+func _relic_names() -> Array:
+	var out: Array = []
+	for r in _run.team_relics:
+		out.append(String(r.get("name", "")))
+	return out
 
 ## A silhouette-icon key for a card, chosen by its dominant effect (view art).
 func _card_icon(c: Card) -> String:

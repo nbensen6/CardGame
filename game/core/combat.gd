@@ -36,9 +36,19 @@ var log: Array = []
 var _rng := RandomNumberGenerator.new()
 var _forced_target: int = -1  # a "taunt" this round overrides the boss's target
 
-## decks[i] and combatants[i] belong to player i.
-func _init(decks: Array, combatants: Array, p_boss: Boss, seed_value: int = 0) -> void:
+# Team relic modifiers (from Run) — flat bonuses applied each fight.
+var _energy_bonus: int = 0
+var _attack_bonus: int = 0
+var _round_block: int = 0
+
+## decks[i] and combatants[i] belong to player i. The trailing bonuses come from
+## the team's relics (see Run) — 0 in a plain fight.
+func _init(decks: Array, combatants: Array, p_boss: Boss, seed_value: int = 0,
+		energy_bonus: int = 0, attack_bonus: int = 0, round_block: int = 0) -> void:
 	boss = p_boss
+	_energy_bonus = energy_bonus
+	_attack_bonus = attack_bonus
+	_round_block = round_block
 	if seed_value == 0:
 		_rng.randomize()
 	else:
@@ -113,6 +123,8 @@ func play_card(pi: int, ci: int) -> bool:
 	# its own new vulnerable stacks. Base damage can scale with current Exposed
 	# stacks (Sunlight Blade); _damage_boss then adds the exposed + sigil bonuses.
 	var base_damage := card.damage + card.damage_per_vulnerable * boss.vulnerable
+	if card.damage > 0:
+		base_damage += _attack_bonus  # relic: attacks hit harder
 	if base_damage > 0:
 		var dealt := _damage_boss(base_damage)
 		_log("%s plays %s — %d damage%s." % [who, card.name, dealt, " (weak point!)" if dealt > base_damage else ""])
@@ -178,8 +190,8 @@ func _begin_round() -> void:
 	phase = Phase.PLAYERS
 	_forced_target = -1  # taunts last only their own round
 	for ps in players:
-		ps.combatant.block = 0
-		ps.energy = BASE_ENERGY
+		ps.combatant.block = _round_block  # relic: start each round with block
+		ps.energy = BASE_ENERGY + _energy_bonus  # relic: extra energy
 		ps.ended_turn = false
 		_draw(ps, HAND_SIZE)
 	_log("— Round %d —" % round_num)
@@ -216,6 +228,9 @@ func _enemy_turn() -> void:
 		"enrage":
 			boss.strength += value
 			_log("%s enrages (+%d strength, now +%d)." % [boss.name, value, boss.strength])
+		"regen":
+			boss.hp = mini(boss.hp + value, boss.max_hp)
+			_log("%s recovers %d HP." % [boss.name, value])
 		"block":
 			boss.gain_block(value)
 			_log("%s defends (+%d block)." % [boss.name, value])

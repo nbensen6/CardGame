@@ -21,6 +21,17 @@
         { "type": "attack", "value": 14 },
         { "type": "attack_all", "value": 11 }
       ]
+    },
+    "drowned_colossus": {
+      "name": "The Drowned Colossus",
+      "max_hp": 170,
+      "weak_point_height": 4,
+      "moves": [
+        { "type": "attack", "value": 13 },
+        { "type": "attack_all", "value": 9 },
+        { "type": "regen", "value": 12 },
+        { "type": "attack", "value": 22 }
+      ]
     }
   }
 }

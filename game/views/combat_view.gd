@@ -75,7 +75,7 @@ func _render_combat(s: Dictionary) -> void:
 	_intent.text = "Intent:  %s%s" % [_intent_text(move, int(boss.get("strength", 0))), _target_suffix(mtype, targeted)]
 
 	_render_players(s, targeted)
-	_log_label.text = "\n".join(s["log"])
+	_log_label.text = _log_with_relics(s)
 	_render_hand()
 
 
@@ -105,15 +105,18 @@ func _render_reward(s: Dictionary) -> void:
 	_intent.visible = false
 	_end_turn_btn.get_parent().visible = false
 
+	var reward: Dictionary = _client.private.get("reward", {})
+	var is_relic := String(reward.get("kind", "card")) == "relic"
 	_boss_name.text = "Titan felled!  (%d / %d)" % [s["encounter"], s["total_encounters"]]
-	_boss_hp.text = "Choose a card to strengthen your deck for the next Titan."
+	_boss_hp.text = ("Choose a RELIC — a lasting boon for the team." if is_relic
+		else "Choose a card to strengthen your deck for the next Titan.")
 
 	_render_players(s, [])
-	_log_label.text = ""
+	_log_label.text = _log_with_relics(s)
 
-	var reward: Dictionary = _client.private.get("reward", {})
 	var picked := bool(reward.get("picked", false))
-	_hand_label.text = "Pick a reward card" + ("   (chosen — waiting for ally)" if picked else "")
+	var label := "Pick a relic" if is_relic else "Pick a reward card"
+	_hand_label.text = label + ("   (chosen — waiting for ally)" if picked else "")
 	_clear(_hand_row)
 	for choice in reward.get("choices", []):
 		var cv := CardView.new()
@@ -229,6 +232,15 @@ func _intent_text(move: Dictionary, strength: int) -> String:
 			return "Defend (+%d block)" % value
 		_:
 			return "Unknown"
+
+
+func _log_with_relics(s: Dictionary) -> String:
+	var body := "\n".join(s.get("log", []))
+	var relics: Array = s.get("relics", [])
+	if relics.is_empty():
+		return body
+	var header := "Relics:  " + ",  ".join(relics)
+	return header + ("\n\n" + body if not body.is_empty() else "")
 
 
 func _block_suffix(block: int) -> String:

@@ -10,7 +10,7 @@ extends RefCounted
 
 enum Phase { COMBAT, REWARD, WON, LOST }
 
-const ENCOUNTERS := ["stone_warden", "gale_serpent"]
+const ENCOUNTERS := ["stone_warden", "gale_serpent", "drowned_colossus"]
 const REWARD_CHOICES := 3
 const HEAL_BETWEEN := 6  # hunters recover a little after each Titan falls
 const PLAYER_HP := 42
@@ -22,7 +22,9 @@ var names: Array = []
 var decks: Array = []            # Array[Array[Card]] per hunter — persists across encounters
 var hp: Array = []               # carried current hp per hunter
 var max_hp: Array = []
-var reward_choices: Array = []   # Array[Array[Card]] per hunter (only during REWARD)
+var team_relics: Array = []      # Array[Dictionary] — persistent team passives
+var reward_kind: String = "card" # "card" | "relic" — what this REWARD offers
+var reward_choices: Array = []   # per hunter: Array of card OR relic choices (by reward_kind)
 var reward_picked: Array = []    # Array[bool]
 
 var _seed: int
@@ -75,7 +77,10 @@ func pick_reward(slot: int, choice: int) -> void:
 	var choices: Array = reward_choices[slot]
 	if choice < 0 or choice >= choices.size():
 		return
-	decks[slot].append(choices[choice])
+	if reward_kind == "relic":
+		team_relics.append(choices[choice])  # relics are team-wide
+	else:
+		decks[slot].append(choices[choice])  # cards go to that hunter's deck
 	reward_picked[slot] = true
 	if _all_picked():
 		encounter_index += 1
@@ -90,10 +95,23 @@ func _start_encounter() -> void:
 		c.hp = hp[i]  # carry damage between encounters
 		combatants.append(c)
 	var boss := Content.build_boss(ENCOUNTERS[encounter_index])
+	var mods := relic_totals()
 	# Distinct per-encounter seed so each fight shuffles differently but reproducibly.
-	combat = Combat.new(decks, combatants, boss, _encounter_seed())
+	combat = Combat.new(decks, combatants, boss, _encounter_seed(),
+		mods["energy"], mods["attack"], mods["block"])
 	combat.start()
 	phase = Phase.COMBAT
+
+## Sum the team's relic effects into flat modifiers.
+func relic_totals() -> Dictionary:
+	var t := {"energy": 0, "attack": 0, "block": 0, "heal": 0}
+	for r in team_relics:
+		match String(r.get("effect", "")):
+			"max_energy": t["energy"] += int(r.get("value", 0))
+			"attack_bonus": t["attack"] += int(r.get("value", 0))
+			"round_block": t["block"] += int(r.get("value", 0))
+			"heal_on_clear": t["heal"] += int(r.get("value", 0))
+	return t
 
 func _encounter_seed() -> int:
 	if _seed == 0:
@@ -101,14 +119,17 @@ func _encounter_seed() -> int:
 	return _seed + (encounter_index + 1) * 101
 
 func _bank_hp() -> void:
+	var heal: int = HEAL_BETWEEN + int(relic_totals()["heal"])
 	for i in range(names.size()):
-		hp[i] = mini(combat.players[i].combatant.hp + HEAL_BETWEEN, max_hp[i])
+		hp[i] = mini(combat.players[i].combatant.hp + heal, max_hp[i])
 
 func _begin_reward() -> void:
 	phase = Phase.REWARD
+	# Alternate: a card reward after odd Titans, a relic after even ones.
+	reward_kind = "relic" if encounter_index % 2 == 1 else "card"
 	reward_choices = []
 	reward_picked = []
-	var pool: Array = Content.reward_pool()
+	var pool: Array = Content.relic_pool() if reward_kind == "relic" else Content.reward_pool()
 	for _i in range(names.size()):
 		reward_choices.append(_roll_choices(pool))
 		reward_picked.append(false)
@@ -119,7 +140,8 @@ func _roll_choices(pool: Array) -> Array:
 	var n: int = mini(REWARD_CHOICES, ids.size())
 	for _k in range(n):
 		var idx := _rng.randi_range(0, ids.size() - 1)
-		out.append(Content.make_card(String(ids[idx])))
+		var id := String(ids[idx])
+		out.append(Content.make_relic(id) if reward_kind == "relic" else Content.make_card(id))
 		ids.remove_at(idx)
 	return out
 

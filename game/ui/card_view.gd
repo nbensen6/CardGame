@@ -14,6 +14,7 @@ const ICONS := {
 	"expose": preload("res://ui/icons/sun.svg"),
 	"taunt": preload("res://ui/icons/banner.svg"),
 	"grip": preload("res://ui/icons/grip.svg"),
+	"relic": preload("res://ui/icons/relic.svg"),
 }
 const ENERGY_ICON := preload("res://ui/icons/energy.svg")
 
@@ -25,6 +26,7 @@ const TINT := {
 	"expose": Color(0.90, 0.78, 0.42),  # sunlight
 	"taunt": Color(0.82, 0.56, 0.40),   # ember
 	"grip": Color(0.70, 0.62, 0.46),    # stone/earth
+	"relic": Color(0.78, 0.66, 0.86),   # arcane violet
 }
 
 ## Build the card from a snapshot dict. `playable` greys it out when false.
@@ -48,7 +50,7 @@ func setup(data: Dictionary, playable: bool = true) -> void:
 	box.add_theme_constant_override("separation", 6)
 	pad.add_child(box)
 
-	box.add_child(_header(String(data.get("name", "")), int(data.get("cost", 0))))
+	box.add_child(_header(String(data.get("name", "")), int(data.get("cost", 0)), bool(data.get("no_cost", false))))
 	box.add_child(_art(String(data.get("icon", ""))))
 	box.add_child(_body(String(data.get("text", ""))))
 	var tgt := String(data.get("target", "self"))
@@ -56,7 +58,13 @@ func setup(data: Dictionary, playable: bool = true) -> void:
 		box.add_child(_tag("→ ally" if tgt == "ally" else "→ Titan"))
 
 
-func _header(card_name: String, cost: int) -> Control:
+func _header(card_name: String, cost: int, no_cost: bool = false) -> Control:
+	if no_cost:  # relics have no energy cost — just a centered name
+		var name_only := _label(card_name, 15)
+		name_only.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		name_only.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		return name_only
+
 	var row := HBoxContainer.new()
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_theme_constant_override("separation", 4)

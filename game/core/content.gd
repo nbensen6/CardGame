@@ -8,6 +8,7 @@ extends RefCounted
 
 const CARDS_PATH := "res://data/cards.json"
 const BOSSES_PATH := "res://data/bosses.json"
+const RELICS_PATH := "res://data/relics.json"
 
 static var _cache: Dictionary = {}
 
@@ -45,6 +46,21 @@ static func build_starter_deck() -> Array:
 ## Card ids offered as between-encounter rewards (build step 4).
 static func reward_pool() -> Array:
 	return _read_json(CARDS_PATH).get("reward_pool", [])
+
+## Relic ids that can be offered as rewards.
+static func relic_pool() -> Array:
+	return _read_json(RELICS_PATH).get("pool", [])
+
+## A relic as a plain dict {id, name, effect, value, text} (relics are passive
+## data, not behaviour — Run/Combat read the effect+value).
+static func make_relic(id: String) -> Dictionary:
+	var relics: Dictionary = _read_json(RELICS_PATH).get("relics", {})
+	if not relics.has(id):
+		push_warning("Content: unknown relic '%s'" % id)
+		return {}
+	var rd: Dictionary = (relics[id] as Dictionary).duplicate()
+	rd["id"] = id
+	return rd
 
 ## Build a Titan by id from data.
 static func build_boss(id: String) -> Boss:

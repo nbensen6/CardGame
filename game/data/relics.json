@@ -1,0 +1,12 @@
+{
+  "_comment": "Relics are DATA (CLAUDE.md §11) — persistent team passives picked between Titans (build step 4 meta-progression). effect types: max_energy (+N energy/round), attack_bonus (+N per attack), round_block (start each round with N block), heal_on_clear (+N HP recovered after each Titan). 'pool' lists which relics can be offered.",
+  "relics": {
+    "iron_thews":    { "name": "Iron Thews", "effect": "max_energy", "value": 1, "text": "+1 Energy each round." },
+    "honed_blades":  { "name": "Honed Blades", "effect": "attack_bonus", "value": 2, "text": "Your attacks deal +2 damage." },
+    "stone_skin":    { "name": "Stone Skin", "effect": "round_block", "value": 3, "text": "Start each round with 3 Block." },
+    "old_remedy":    { "name": "Old Remedy", "effect": "heal_on_clear", "value": 8, "text": "Recover +8 more HP after each Titan falls." },
+    "sunforged_edge":{ "name": "Sunforged Edge", "effect": "attack_bonus", "value": 3, "text": "Your attacks deal +3 damage." },
+    "warding_totem": { "name": "Warding Totem", "effect": "round_block", "value": 4, "text": "Start each round with 4 Block." }
+  },
+  "pool": ["iron_thews", "honed_blades", "stone_skin", "old_remedy", "sunforged_edge", "warding_totem"]
+}
