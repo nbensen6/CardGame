@@ -1,0 +1,15 @@
+{
+  "_comment": "Bosses are DATA (CLAUDE.md §11). 'moves' is a repeating, telegraphed pattern; each move is {type: attack|block, value}. Neutral placeholder theme until §4.3 art/theme is decided.",
+  "bosses": {
+    "gatekeeper": {
+      "name": "The Gatekeeper",
+      "max_hp": 55,
+      "moves": [
+        { "type": "attack", "value": 7 },
+        { "type": "attack", "value": 9 },
+        { "type": "block", "value": 8 },
+        { "type": "attack", "value": 14 }
+      ]
+    }
+  }
+}

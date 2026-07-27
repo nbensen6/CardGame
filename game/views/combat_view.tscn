@@ -1,0 +1,140 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://views/combat_view.gd" id="1_view"]
+
+[node name="CombatView" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_view")
+
+[node name="BG" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.101961, 0.109804, 0.152941, 1)
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="Root" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="BossPanel" type="PanelContainer" parent="Margin/Root"]
+layout_mode = 2
+
+[node name="BossBox" type="VBoxContainer" parent="Margin/Root/BossPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="BossName" type="Label" parent="Margin/Root/BossPanel/BossBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Boss"
+horizontal_alignment = 1
+
+[node name="BossHP" type="Label" parent="Margin/Root/BossPanel/BossBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "HP"
+horizontal_alignment = 1
+
+[node name="BossHPBar" type="ProgressBar" parent="Margin/Root/BossPanel/BossBox"]
+unique_name_in_owner = true
+layout_mode = 2
+show_percentage = false
+
+[node name="Intent" type="Label" parent="Margin/Root/BossPanel/BossBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Intent:"
+horizontal_alignment = 1
+
+[node name="Log" type="Label" parent="Margin/Root"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+text = ""
+vertical_alignment = 0
+autowrap_mode = 3
+
+[node name="PlayerStats" type="Label" parent="Margin/Root"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "You:"
+horizontal_alignment = 1
+
+[node name="Hand" type="HBoxContainer" parent="Margin/Root"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Controls" type="HBoxContainer" parent="Margin/Root"]
+layout_mode = 2
+alignment = 1
+
+[node name="EndTurn" type="Button" parent="Margin/Root/Controls"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+text = "End Turn"
+
+[node name="Overlay" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="Overlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.65)
+
+[node name="Center" type="CenterContainer" parent="Overlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Box" type="VBoxContainer" parent="Overlay/Center"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="ResultLabel" type="Label" parent="Overlay/Center/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Result"
+horizontal_alignment = 1
+
+[node name="RestartButton" type="Button" parent="Overlay/Center/Box"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 52)
+layout_mode = 2
+text = "Play Again"

@@ -53,7 +53,16 @@ Exit code 0 = all passed.
 
 ## Current status
 
-Scaffold complete: runnable window + isolated, tested `/core`.
-Next: **build step 1** — the single-player core loop (one character, starter
-deck, one boss, turn-based combat, win/lose). Prove it's fun solo before
-networking (CLAUDE.md §7).
+**Build step 1 done** — a playable single-player combat loop:
+
+- Deterministic, unit-tested `/core` combat engine (`Combat`, `Combatant`,
+  `Boss`, `Card`) with no rendering/input/net deps. 10 tests, all passing.
+- Data-driven cards + boss (`data/cards.json`, `data/bosses.json`).
+- Tap-friendly `views/combat_view.tscn`: play cards, End Turn, boss acts on a
+  telegraphed intent, win/lose overlay with Play Again. Single-pointer, no
+  hover-only info, anchor-based UI (CLAUDE.md §5).
+
+Play it: open the project and press Play, or run the CLI command above.
+
+Next: **build step 2** — the client/server split (authoritative host, private
+hand / shared board views), still testable on one machine.
