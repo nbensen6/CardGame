@@ -1,14 +1,24 @@
 {
-  "_comment": "Bosses are DATA (CLAUDE.md §11). 'moves' is a repeating, telegraphed pattern; each move is {type: attack|block, value}. Attacks hit the boss's telegraphed target (Combat rotates it between players each round). max_hp tuned for two players; retune during the balance pass (build step 4). Neutral placeholder theme until §4.3.",
+  "_comment": "Titans are DATA (CLAUDE.md §11). A run fights them in order (see Run.ENCOUNTERS). Move types: attack (hits the telegraphed hunter), attack_all (sweeps BOTH — rewards both blocking/Cover), block (guards), enrage (permanently +value to its attacks this fight — a soft timer that rewards focus-fire). Tuned for two players; retune freely during balance.",
   "bosses": {
-    "gatekeeper": {
-      "name": "The Gatekeeper",
+    "stone_warden": {
+      "name": "The Stone Warden",
       "max_hp": 90,
       "moves": [
         { "type": "attack", "value": 8 },
         { "type": "attack", "value": 10 },
         { "type": "block", "value": 8 },
         { "type": "attack", "value": 16 }
+      ]
+    },
+    "gale_serpent": {
+      "name": "The Gale Serpent",
+      "max_hp": 120,
+      "moves": [
+        { "type": "attack_all", "value": 5 },
+        { "type": "enrage", "value": 2 },
+        { "type": "attack", "value": 9 },
+        { "type": "attack_all", "value": 8 }
       ]
     }
   }

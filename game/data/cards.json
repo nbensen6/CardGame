@@ -1,17 +1,22 @@
 {
-  "_comment": "Cards are DATA, not hard-coded logic (CLAUDE.md §11). 'starter_deck' lists card ids (repeats allowed); each player gets their own copy. 'assist' is the co-op combo card — it shields your ALLY (CLAUDE.md §6), so you can soak a hit the boss telegraphs at them.",
+  "_comment": "Titan-slayer theme (CLAUDE.md §4.3 decision, 2026-07-27). Cards are DATA (§11). 'starter_deck' = each hunter's opening deck; 'reward_pool' = cards offered between encounters (build step 4 meta-progression). Combo cards target an ally or the Titan to reward coordination (§6): cover/rally help your ally, expose/harpoon set up focus-fire, draw_aggro tanks a telegraphed hit for your ally.",
   "cards": {
-    "strike": { "name": "Strike", "type": "attack", "cost": 1, "damage": 6, "text": "Deal 6 damage." },
-    "defend": { "name": "Defend", "type": "skill", "cost": 1, "block": 5, "text": "Gain 5 Block." },
-    "bash":   { "name": "Bash", "type": "attack", "cost": 2, "damage": 10, "text": "Deal 10 damage." },
-    "focus":  { "name": "Focus", "type": "skill", "cost": 1, "draw": 2, "text": "Draw 2 cards." },
-    "assist": { "name": "Assist", "type": "skill", "cost": 1, "ally_block": 6, "target": "ally", "text": "Give your ally 6 Block." }
+    "slash":      { "name": "Slash", "type": "attack", "cost": 1, "damage": 6, "text": "Deal 6 damage." },
+    "brace":      { "name": "Brace", "type": "skill", "cost": 1, "block": 5, "text": "Gain 5 Block." },
+    "cleave":     { "name": "Cleave", "type": "attack", "cost": 2, "damage": 10, "text": "Deal 10 damage." },
+    "take_aim":   { "name": "Take Aim", "type": "skill", "cost": 1, "draw": 2, "text": "Draw 2 cards." },
+    "cover":      { "name": "Cover", "type": "skill", "cost": 1, "ally_block": 6, "target": "ally", "text": "Give your ally 6 Block." },
+    "rally":      { "name": "Rally", "type": "skill", "cost": 1, "ally_energy": 1, "target": "ally", "text": "Give your ally 1 Energy." },
+    "expose":     { "name": "Expose", "type": "skill", "cost": 1, "vulnerable": 2, "target": "enemy", "text": "Expose the Titan: its next 2 hits taken deal +4." },
+    "draw_aggro": { "name": "Draw Aggro", "type": "skill", "cost": 1, "taunt": true, "block": 6, "target": "self", "text": "You become the Titan's target this round. Gain 6 Block." },
+    "harpoon":    { "name": "Harpoon", "type": "attack", "cost": 2, "damage": 8, "vulnerable": 1, "text": "Deal 8 damage, then Expose the Titan (1)." }
   },
   "starter_deck": [
-    "strike", "strike", "strike", "strike",
-    "defend", "defend", "defend",
-    "focus",
-    "bash",
-    "assist"
-  ]
+    "slash", "slash", "slash", "slash",
+    "brace", "brace", "brace",
+    "take_aim",
+    "cleave",
+    "cover"
+  ],
+  "reward_pool": ["rally", "expose", "draw_aggro", "harpoon", "cleave", "cover", "brace", "slash", "take_aim"]
 }

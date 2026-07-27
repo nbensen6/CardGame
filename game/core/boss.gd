@@ -8,6 +8,8 @@ class_name Boss
 extends Combatant
 
 var moves: Array = []
+var vulnerable: int = 0  # "exposed" stacks — each consumed hit deals bonus damage
+var strength: int = 0    # added to every attack (grows via "enrage" moves)
 var _move_index: int = 0
 
 ## The move the boss will perform on its next enemy turn (telegraphed now).

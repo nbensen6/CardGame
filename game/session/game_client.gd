@@ -32,6 +32,10 @@ func play_card(index: int) -> void:
 func end_turn() -> void:
 	_send({"type": "end_turn"})
 
+## Pick reward card option `choice` (during the between-encounter REWARD phase).
+func pick_card(choice: int) -> void:
+	_send({"type": "pick_card", "choice": choice})
+
 func restart() -> void:
 	_send({"type": "restart"})
 

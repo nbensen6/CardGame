@@ -21,6 +21,7 @@ enum Phase { PLAYERS, ENEMY, OVER }
 
 const HAND_SIZE := 5
 const BASE_ENERGY := 3
+const VULN_BONUS := 4  # extra damage each "exposed" (vulnerable) stack adds to a hit
 
 var players: Array = []  # Array[PlayerState], index = player slot
 var boss: Boss
@@ -29,6 +30,7 @@ var phase: int = Phase.PLAYERS
 var log: Array = []
 
 var _rng := RandomNumberGenerator.new()
+var _forced_target: int = -1  # a "taunt" this round overrides the boss's target
 
 ## decks[i] and combatants[i] belong to player i.
 func _init(decks: Array, combatants: Array, p_boss: Boss, seed_value: int = 0) -> void:
@@ -56,8 +58,11 @@ func player_count() -> int:
 func ally_index(pi: int) -> int:
 	return (pi + 1) % players.size()
 
-## The player the boss's next attack will hit (telegraphed). Rotates by round.
+## The player the boss's next single-target attack will hit (telegraphed).
+## A "taunt" this round overrides it; otherwise it rotates by round.
 func boss_target_index() -> int:
+	if _forced_target >= 0:
+		return _forced_target
 	return (round_num - 1) % players.size()
 
 func can_play(pi: int, ci: int) -> bool:
@@ -96,9 +101,11 @@ func play_card(pi: int, ci: int) -> bool:
 	ps.discard_pile.append(card)
 	var who: String = ps.combatant.name
 
+	# Damage first, so a card that also Exposes (e.g. Harpoon) doesn't consume
+	# its own new vulnerable stacks.
 	if card.damage > 0:
-		boss.take_damage(card.damage)
-		_log("%s plays %s — %d damage." % [who, card.name, card.damage])
+		var dealt := _damage_boss(card.damage)
+		_log("%s plays %s — %d damage%s." % [who, card.name, dealt, " (exposed!)" if dealt > card.damage else ""])
 	if card.block > 0:
 		ps.combatant.gain_block(card.block)
 		_log("%s plays %s — +%d block." % [who, card.name, card.block])
@@ -106,12 +113,33 @@ func play_card(pi: int, ci: int) -> bool:
 		var ally: PlayerState = players[ally_index(pi)]
 		ally.combatant.gain_block(card.ally_block)
 		_log("%s plays %s — +%d block to %s." % [who, card.name, card.ally_block, ally.combatant.name])
+	if card.ally_energy > 0:
+		var ally_e: PlayerState = players[ally_index(pi)]
+		ally_e.energy += card.ally_energy
+		_log("%s plays %s — +%d energy to %s." % [who, card.name, card.ally_energy, ally_e.combatant.name])
+	if card.vulnerable > 0:
+		boss.vulnerable += card.vulnerable
+		_log("%s plays %s — %s exposed (%d)." % [who, card.name, boss.name, boss.vulnerable])
+	if card.taunt:
+		_forced_target = pi
+		_log("%s plays %s — draws %s's aggro." % [who, card.name, boss.name])
 	if card.draw > 0:
 		_draw(ps, card.draw)
 		_log("%s plays %s — draw %d." % [who, card.name, card.draw])
 
 	_check_end()
 	return true
+
+
+## Deal card damage to the Titan, consuming one "exposed" stack for bonus.
+## Returns the actual damage dealt (so the log can flag the bonus).
+func _damage_boss(amount: int) -> int:
+	var total := amount
+	if boss.vulnerable > 0:
+		total += VULN_BONUS
+		boss.vulnerable -= 1
+	boss.take_damage(total)
+	return total
 
 ## Player pi ends their turn. When every player has ended, the boss acts.
 func end_turn(pi: int) -> void:
@@ -133,6 +161,7 @@ func end_turn(pi: int) -> void:
 
 func _begin_round() -> void:
 	phase = Phase.PLAYERS
+	_forced_target = -1  # taunts last only their own round
 	for ps in players:
 		ps.combatant.block = 0
 		ps.energy = BASE_ENERGY
@@ -152,14 +181,24 @@ func _enemy_turn() -> void:
 		return
 	boss.block = 0
 	var move := boss.current_move()
+	var value := int(move.get("value", 0))
 	match String(move.get("type", "")):
 		"attack":
+			var dmg := value + boss.strength
 			var target: PlayerState = players[boss_target_index()]
-			target.combatant.take_damage(int(move.get("value", 0)))
-			_log("%s attacks %s for %d." % [boss.name, target.combatant.name, int(move.get("value", 0))])
+			target.combatant.take_damage(dmg)
+			_log("%s attacks %s for %d." % [boss.name, target.combatant.name, dmg])
+		"attack_all":
+			var dmg_all := value + boss.strength
+			for ps in players:
+				ps.combatant.take_damage(dmg_all)
+			_log("%s sweeps both hunters for %d." % [boss.name, dmg_all])
+		"enrage":
+			boss.strength += value
+			_log("%s enrages (+%d strength, now +%d)." % [boss.name, value, boss.strength])
 		"block":
-			boss.gain_block(int(move.get("value", 0)))
-			_log("%s defends (+%d block)." % [boss.name, int(move.get("value", 0))])
+			boss.gain_block(value)
+			_log("%s defends (+%d block)." % [boss.name, value])
 		_:
 			_log("%s hesitates." % boss.name)
 	boss.advance_move()

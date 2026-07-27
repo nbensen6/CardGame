@@ -1,25 +1,21 @@
-## Authoritative co-op host (CLAUDE.md §2, §6, §7 build step 3). Owns the ONLY
-## real game state (a /core Combat), maps each connected peer to a player slot,
-## validates every command against the rules, and broadcasts per-player snapshots.
-## Clients never mutate state — they ask; the host decides.
+## Authoritative co-op host (CLAUDE.md §2, §6, §7). Owns the ONLY real game state
+## (a /core Run of Titan encounters), maps each peer to a hunter slot, validates
+## every command against the rules, and sends per-hunter snapshots. Clients never
+## mutate state — they ask; the host decides.
 ##
 ## Snapshot split (THE core idea, §2):
-##   shared  — the board everyone sees: boss (+ who it targets), BOTH players'
-##             public status, round, log.
-##   private — only the recipient's own hand (never sent to anyone else).
-## Each snapshot also carries `you` = the recipient's player slot, so a client
-## knows which player on the shared board is itself (and who the ally is).
+##   shared  — what everyone sees: run phase/encounter, the Titan (+ who it
+##             targets), both hunters' public status, round, log.
+##   private — only the recipient's own hand (or, in REWARD, their card choices).
+## Each snapshot carries `you` = the recipient's hunter slot.
 class_name GameHost
 extends RefCounted
 
-const PLAYER_HP := 42
-const BOSS_ID := "gatekeeper"
-
 var _transport: Transport
-var _combat: Combat
+var _run: Run
 var _seed: int
 var _required: int
-var _slot_of: Dictionary = {}  # peer_id -> player slot
+var _slot_of: Dictionary = {}  # peer_id -> hunter slot
 var _peers: Array = []         # peer_ids in join order (slot = position)
 
 func _init(transport: Transport, seed_value: int = 0, required_players: int = 2) -> void:
@@ -28,14 +24,14 @@ func _init(transport: Transport, seed_value: int = 0, required_players: int = 2)
 	_required = required_players
 	_transport.command_received.connect(_on_command)
 
-func start_new_combat() -> void:
+func start_new_run() -> void:
 	var decks: Array = []
-	var combatants: Array = []
+	var names: Array = []
 	for i in range(_peers.size()):
-		decks.append(Content.build_starter_deck())           # each player, own deck
-		combatants.append(Combatant.new(_player_name(i), PLAYER_HP))
-	_combat = Combat.new(decks, combatants, Content.build_boss(BOSS_ID), _seed)
-	_combat.start()
+		decks.append(Content.build_starter_deck())
+		names.append(_player_name(i))
+	_run = Run.new(decks, names, _seed)
+	_run.start()
 	_broadcast_state()
 
 # --- Command handling (client -> host) ------------------------------------
@@ -45,35 +41,42 @@ func _on_command(peer_id: int, command: Dictionary) -> void:
 		"join":
 			_handle_join(peer_id)
 		"play_card":
-			var pi := _slot(peer_id)
-			if _combat != null and pi >= 0:
-				_combat.play_card(pi, int(command.get("index", -1)))
-			_broadcast_state()
+			_in_combat_action(peer_id, func(pi: int) -> void:
+				_run.combat.play_card(pi, int(command.get("index", -1))))
 		"end_turn":
-			var pi2 := _slot(peer_id)
-			if _combat != null and pi2 >= 0:
-				_combat.end_turn(pi2)
+			_in_combat_action(peer_id, func(pi: int) -> void:
+				_run.combat.end_turn(pi))
+		"pick_card":
+			var pslot := _slot(peer_id)
+			if _run != null and pslot >= 0:
+				_run.pick_reward(pslot, int(command.get("choice", -1)))
 			_broadcast_state()
 		"restart":
-			if _combat != null:
-				start_new_combat()
+			if _run != null:
+				start_new_run()
 		_:
 			push_warning("GameHost: unknown command '%s'" % command.get("type", ""))
+
+func _in_combat_action(peer_id: int, action: Callable) -> void:
+	var pi := _slot(peer_id)
+	if _run != null and _run.phase == Run.Phase.COMBAT and pi >= 0:
+		action.call(pi)
+		_run.sync()
+	_broadcast_state()
 
 func _handle_join(peer_id: int) -> void:
 	if not _slot_of.has(peer_id) and _peers.size() < _required:
 		_slot_of[peer_id] = _peers.size()
 		_peers.append(peer_id)
-	if _combat == null and _peers.size() >= _required:
-		start_new_combat()
+	if _run == null and _peers.size() >= _required:
+		start_new_run()
 	else:
 		_broadcast_state()
 
 # --- Snapshots (host -> clients) ------------------------------------------
 
 func _broadcast_state() -> void:
-	if _combat == null:
-		# Lobby: still waiting for players to join.
+	if _run == null:
 		for pid in _peers:
 			_transport.send_to(pid, {
 				"type": "snapshot", "for_peer": pid, "you": _slot(pid),
@@ -90,49 +93,81 @@ func _broadcast_state() -> void:
 		})
 
 func _build_shared() -> Dictionary:
-	var players_pub: Array = []
-	for ps in _combat.players:
-		players_pub.append({
-			"name": ps.combatant.name, "hp": ps.combatant.hp, "max_hp": ps.combatant.max_hp,
-			"block": ps.combatant.block, "energy": ps.energy, "ended": ps.ended_turn,
-		})
-	var b := _combat.boss
-	return {
+	var s := {
 		"waiting": false,
-		"boss": {
-			"name": b.name, "hp": b.hp, "max_hp": b.max_hp, "block": b.block,
-			"intent": b.current_move(), "target": _combat.boss_target_index(),
-		},
-		"players": players_pub,
-		"round": _combat.round_num,
-		"base_energy": Combat.BASE_ENERGY,
-		"log": _combat.log.slice(maxi(_combat.log.size() - 7, 0)),
-		"over": _combat.is_over(),
+		"phase": _phase_string(),
+		"encounter": _run.encounter_index + 1,
+		"total_encounters": _run.total_encounters(),
+		"over": _run.is_over(),
 		"result": _result_string(),
+		"players": _players_public(),
 	}
+	if _run.phase == Run.Phase.COMBAT:
+		var c: Combat = _run.combat
+		var b: Boss = c.boss
+		s["boss"] = {
+			"name": b.name, "hp": b.hp, "max_hp": b.max_hp, "block": b.block,
+			"intent": b.current_move(), "target": c.boss_target_index(),
+			"vulnerable": b.vulnerable, "strength": b.strength,
+		}
+		s["round"] = c.round_num
+		s["base_energy"] = Combat.BASE_ENERGY
+		s["log"] = c.log.slice(maxi(c.log.size() - 7, 0))
+	return s
+
+func _players_public() -> Array:
+	var out: Array = []
+	if _run.phase == Run.Phase.COMBAT:
+		for ps in _run.combat.players:
+			out.append({
+				"name": ps.combatant.name, "hp": ps.combatant.hp, "max_hp": ps.combatant.max_hp,
+				"block": ps.combatant.block, "energy": ps.energy, "ended": ps.ended_turn,
+			})
+	else:
+		for i in range(_run.player_count()):
+			out.append({
+				"name": _run.names[i], "hp": _run.hp[i], "max_hp": _run.max_hp[i],
+				"picked": _run.phase == Run.Phase.REWARD and bool(_run.reward_picked[i]),
+			})
+	return out
 
 func _build_private(pi: int) -> Dictionary:
-	var ps: PlayerState = _combat.players[pi]
-	var cards: Array = []
-	for i in range(ps.hand.size()):
-		var c: Card = ps.hand[i]
-		cards.append({
-			"index": i, "name": c.name, "cost": c.cost, "target": c.target,
-			"text": c.text, "playable": _combat.can_play(pi, i),
-		})
-	return {"hand": cards, "energy": ps.energy, "ended": ps.ended_turn}
+	if pi < 0 or _run == null:
+		return {}
+	if _run.phase == Run.Phase.COMBAT:
+		var ps: PlayerState = _run.combat.players[pi]
+		var cards: Array = []
+		for i in range(ps.hand.size()):
+			var c: Card = ps.hand[i]
+			cards.append({
+				"index": i, "name": c.name, "cost": c.cost, "target": c.target,
+				"text": c.text, "playable": _run.combat.can_play(pi, i),
+			})
+		return {"hand": cards, "energy": ps.energy, "ended": ps.ended_turn}
+	if _run.phase == Run.Phase.REWARD:
+		var choices: Array = []
+		for i in range(_run.reward_choices[pi].size()):
+			var rc: Card = _run.reward_choices[pi][i]
+			choices.append({"index": i, "name": rc.name, "cost": rc.cost, "text": rc.text})
+		return {"reward": {"choices": choices, "picked": bool(_run.reward_picked[pi])}}
+	return {}
 
 func _slot(peer_id: int) -> int:
 	return int(_slot_of.get(peer_id, -1))
 
 func _player_name(slot: int) -> String:
-	return "Player %d" % (slot + 1)
+	return "Hunter %d" % (slot + 1)
+
+func _phase_string() -> String:
+	match _run.phase:
+		Run.Phase.COMBAT: return "combat"
+		Run.Phase.REWARD: return "reward"
+		Run.Phase.WON: return "won"
+		Run.Phase.LOST: return "lost"
+		_: return "combat"
 
 func _result_string() -> String:
-	match _combat.result():
-		Combat.Result.WIN:
-			return "win"
-		Combat.Result.LOSE:
-			return "lose"
-		_:
-			return "ongoing"
+	match _run.phase:
+		Run.Phase.WON: return "win"
+		Run.Phase.LOST: return "lose"
+		_: return "ongoing"

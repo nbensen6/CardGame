@@ -20,6 +20,7 @@ Local editor path (this machine):
 /                 CLAUDE.md, README, .gitignore
 /game             Godot project (project.godot lives here)
   /core           game rules & state — NO rendering, input, or net deps
+                  (Combat, Combatant, Boss, Card, PlayerState, Run, Content)
   /net            Transport interface + LocalTransport (in-process) + EnetTransport
                   (online, via NetLink RPC)
   /session        authoritative host + client proxy + Session handoff
@@ -87,10 +88,20 @@ Exit code 0 = passed. (Use the `_console.exe` on Windows so stdout is captured.)
     `LocalTransport` — `/core`, host, client, and views are unchanged. A Host/Join
     lobby wires it up (listen-server / authoritative host).
 
-**23 unit tests pass** (`tools/run_tests.gd`) + a **two-process ENet smoke test**
+- **Step 4** — content, deeper combos & meta-progression (theme: **Titan-slayers**,
+  two hunters vs colossal bosses — chosen from market research, CLAUDE.md §4.3):
+  - New co-op combos: **Rally** (give ally energy), **Expose** (Titan takes bonus
+    damage — set up focus-fire), **Draw Aggro** (taunt a telegraphed hit off your
+    ally), plus **Cover** (shield ally).
+  - New Titan moves: **attack_all** (sweeps both) and **enrage** (escalates) — a
+    second Titan, The Gale Serpent, uses them.
+  - **Runs** (`Run`): fight Titans in sequence; after each win every hunter picks
+    a reward card (persistent deck), HP carries over. Win = all Titans felled;
+    any hunter's death = the run is lost.
+
+**40 unit tests pass** (`tools/run_tests.gd`) + a **two-process ENet smoke test**
 (`tools/net_smoke.tscn`) confirms real cross-process connectivity on localhost.
 
-Next: **build step 4** — content & balance. More cards, bosses, relics, and
-meta-progression; the deeper co-op combos live here (this is where the game is
-won or lost, per CLAUDE.md §7). Also worth a pass: disconnect/reconnect handling
-and the remaining §4 decisions (theme/art, monetization).
+Next: more content depth (relics, more Titans/cards, longer runs), balance
+tuning, disconnect/reconnect handling, and the remaining §4 decisions
+(monetization; art production now that the theme is set).

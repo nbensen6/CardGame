@@ -1,16 +1,16 @@
-## Co-op combat view — a pure CLIENT of the authoritative host (CLAUDE.md §2, §8).
+## Co-op run view — a pure CLIENT of the authoritative host (CLAUDE.md §2, §8).
 ## Renders snapshot Dictionaries and sends intents through GameClient; holds NO
-## game rules and never touches /core types. The SAME view renders whether the
-## host is in-process or across a network — the transport is chosen elsewhere
-## (menu for online play), then handed to this view via the Session autoload.
+## game rules and never touches /core types. Handles the run's phases:
+##   waiting -> combat (fight a Titan) -> reward (pick a card) -> ... -> won/lost.
 ##
 ## Mobile-ready (CLAUDE.md §5): single-pointer taps only; each card shows cost +
-## text on its face; the boss intent (and WHO it targets) is always visible;
+## text on its face; the Titan's intent (and WHO it targets) is always visible;
 ## anchor-based, scalable layout.
 extends Control
 
 var _client: GameClient
 
+@onready var _boss_panel: PanelContainer = %BossPanel
 @onready var _boss_name: Label = %BossName
 @onready var _boss_hp: Label = %BossHP
 @onready var _boss_hp_bar: ProgressBar = %BossHPBar
@@ -28,54 +28,132 @@ var _client: GameClient
 func _ready() -> void:
 	_end_turn_btn.pressed.connect(func() -> void: _client.end_turn())
 	_restart_btn.pressed.connect(func() -> void: _client.restart())
-
-	# The Session autoload holds the transport/client the menu (or a test harness)
-	# set up. This view is transport-agnostic: local or networked, same code.
 	_client = Session.client
 	_client.state_updated.connect(_on_state)
 	if not _client.shared.is_empty():
-		_refresh()  # a snapshot may already have arrived before we connected
+		_refresh()
 
 
 func _on_state(_shared: Dictionary, _private: Dictionary) -> void:
 	_refresh()
 
 
-func _on_card_pressed(index: int) -> void:
-	_client.play_card(index)
-
-
 func _refresh() -> void:
 	var s := _client.shared
 	if s.is_empty():
 		return
-
 	if bool(s.get("waiting", false)):
 		_show_waiting(s)
 		return
-	_overlay.visible = _is_over(s)
+	match String(s.get("phase", "combat")):
+		"combat":
+			_render_combat(s)
+		"reward":
+			_render_reward(s)
+		_:  # "won" / "lost"
+			_render_over(s)
+
+
+# --- Combat phase ---------------------------------------------------------
+
+func _render_combat(s: Dictionary) -> void:
+	_overlay.visible = false
+	_boss_panel.visible = true
+	_boss_hp_bar.visible = true
+	_intent.visible = true
+	_end_turn_btn.get_parent().visible = true
 
 	var boss: Dictionary = s["boss"]
-	_boss_name.text = String(boss["name"])
-	_boss_hp.text = "HP %d / %d%s" % [boss["hp"], boss["max_hp"], _block_suffix(boss["block"])]
+	_boss_name.text = "%s        Titan %d / %d" % [boss["name"], s["encounter"], s["total_encounters"]]
+	_boss_hp.text = "HP %d / %d%s" % [boss["hp"], boss["max_hp"], _titan_tags(boss)]
 	_boss_hp_bar.max_value = boss["max_hp"]
 	_boss_hp_bar.value = boss["hp"]
-	var target_name := _target_name(s)
-	_intent.text = "Intent:  %s  →  %s" % [_intent_text(boss["intent"]), target_name]
 
-	_rebuild_players(s)
+	var move: Dictionary = boss["intent"]
+	var mtype := String(move.get("type", ""))
+	var targeted := _targeted_indices(mtype, int(boss.get("target", -1)), s["players"].size())
+	_intent.text = "Intent:  %s%s" % [_intent_text(move, int(boss.get("strength", 0))), _target_suffix(mtype, targeted)]
+
+	_render_players(s, targeted)
 	_log_label.text = "\n".join(s["log"])
-	_rebuild_hand()
-	_update_controls(s)
-	_update_overlay(s)
+	_render_hand()
 
 
-func _rebuild_players(s: Dictionary) -> void:
-	for child in _players_row.get_children():
-		child.queue_free()
+func _render_hand() -> void:
+	_clear(_hand_row)
+	var ended := bool(_client.private.get("ended", false))
+	_hand_label.text = "Your hand" + ("   (turn ended — waiting for ally)" if ended else "")
+	for card in _client.private.get("hand", []):
+		var btn := _card_button("%s%s\n(%d energy)\n\n%s" % [
+			card["name"], _target_tag(String(card.get("target", "self"))), card["cost"], card["text"]])
+		btn.disabled = not bool(card["playable"])
+		btn.pressed.connect(_on_card_pressed.bind(int(card["index"])))
+		_hand_row.add_child(btn)
+	_end_turn_btn.disabled = ended
+	_end_turn_btn.text = "Waiting for ally…" if ended else "End Turn"
 
+
+func _on_card_pressed(index: int) -> void:
+	_client.play_card(index)
+
+
+# --- Reward phase ---------------------------------------------------------
+
+func _render_reward(s: Dictionary) -> void:
+	_overlay.visible = false
+	_boss_panel.visible = true
+	_boss_hp_bar.visible = false
+	_intent.visible = false
+	_end_turn_btn.get_parent().visible = false
+
+	_boss_name.text = "Titan felled!  (%d / %d)" % [s["encounter"], s["total_encounters"]]
+	_boss_hp.text = "Choose a card to strengthen your deck for the next Titan."
+
+	_render_players(s, [])
+	_log_label.text = ""
+
+	var reward: Dictionary = _client.private.get("reward", {})
+	var picked := bool(reward.get("picked", false))
+	_hand_label.text = "Pick a reward card" + ("   (chosen — waiting for ally)" if picked else "")
+	_clear(_hand_row)
+	for choice in reward.get("choices", []):
+		var btn := _card_button("%s\n(%d energy)\n\n%s" % [choice["name"], choice["cost"], choice["text"]])
+		btn.disabled = picked
+		btn.pressed.connect(_on_reward_pressed.bind(int(choice["index"])))
+		_hand_row.add_child(btn)
+
+
+func _on_reward_pressed(choice: int) -> void:
+	_client.pick_card(choice)
+
+
+# --- Run over -------------------------------------------------------------
+
+func _render_over(s: Dictionary) -> void:
+	_overlay.visible = true
+	_restart_btn.visible = true
+	match String(s.get("result", "")):
+		"win":
+			_result_label.text = "Run complete!\nAll Titans have fallen."
+		"lose":
+			_result_label.text = "Defeat.\nA hunter has fallen."
+		_:
+			_result_label.text = "Run over."
+
+
+func _show_waiting(s: Dictionary) -> void:
+	_overlay.visible = true
+	_restart_btn.visible = false
+	_result_label.text = "Waiting for hunters…\n%d / %d joined" % [
+		int(s.get("joined", 1)), int(s.get("required", 2))]
+
+
+# --- Shared: players row --------------------------------------------------
+
+func _render_players(s: Dictionary, targeted: Array) -> void:
+	_clear(_players_row)
 	var me: int = _client.you
-	var target: int = int(s["boss"].get("target", -1))
+	var phase := String(s.get("phase", "combat"))
 	var players: Array = s["players"]
 	for i in range(players.size()):
 		var p: Dictionary = players[i]
@@ -85,93 +163,89 @@ func _rebuild_players(s: Dictionary) -> void:
 		box.add_theme_constant_override("separation", 2)
 		panel.add_child(box)
 
-		var who := "%s%s" % [String(p["name"]), "  (you)" if i == me else ""]
-		if i == target:
+		var who := String(p["name"]) + ("   (you)" if i == me else "")
+		if i in targeted:
 			who += "   ⚔ targeted"
 		box.add_child(_mklabel(who))
-		box.add_child(_mklabel("HP %d / %d%s" % [p["hp"], p["max_hp"], _block_suffix(p["block"])]))
-		var status := "Energy %d / %d" % [p["energy"], s["base_energy"]]
-		if bool(p["ended"]):
-			status += "   • ended"
-		box.add_child(_mklabel(status))
+		box.add_child(_mklabel("HP %d / %d%s" % [p["hp"], p["max_hp"], _block_suffix(int(p.get("block", 0)))]))
+
+		if phase == "combat":
+			var status := "Energy %d / %d" % [p["energy"], s["base_energy"]]
+			if bool(p.get("ended", false)):
+				status += "   • ended"
+			box.add_child(_mklabel(status))
+		elif phase == "reward":
+			box.add_child(_mklabel("✓ card chosen" if bool(p.get("picked", false)) else "choosing…"))
 		_players_row.add_child(panel)
-
-
-func _rebuild_hand() -> void:
-	for child in _hand_row.get_children():
-		child.queue_free()
-
-	var ended := bool(_client.private.get("ended", false))
-	_hand_label.text = "Your hand" + ("   (turn ended — waiting for ally)" if ended else "")
-
-	for card in _client.private.get("hand", []):
-		var btn := Button.new()
-		btn.custom_minimum_size = Vector2(150, 190)  # thumb-friendly target (§5)
-		btn.clip_text = true
-		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		var tag := "  ↪ ally" if String(card.get("target", "self")) == "ally" else ""
-		btn.text = "%s%s\n(%d energy)\n\n%s" % [card["name"], tag, card["cost"], card["text"]]
-		btn.disabled = not bool(card["playable"])
-		btn.pressed.connect(_on_card_pressed.bind(int(card["index"])))
-		_hand_row.add_child(btn)
-
-
-func _update_controls(s: Dictionary) -> void:
-	var ended := bool(_client.private.get("ended", false))
-	_end_turn_btn.disabled = ended or _is_over(s)
-	_end_turn_btn.text = "Waiting for ally…" if ended and not _is_over(s) else "End Turn"
-
-
-func _update_overlay(s: Dictionary) -> void:
-	if not _is_over(s):
-		_overlay.visible = false
-		return
-	_overlay.visible = true
-	_restart_btn.visible = true
-	match String(s.get("result", "")):
-		"win":
-			_result_label.text = "Victory!\nThe Gatekeeper falls."
-		"lose":
-			_result_label.text = "Defeat.\nA hero has fallen."
-		_:
-			_result_label.text = "Combat over."
-
-
-func _show_waiting(s: Dictionary) -> void:
-	_overlay.visible = true
-	_result_label.text = "Waiting for players…\n%d / %d joined" % [
-		int(s.get("joined", 1)), int(s.get("required", 2)),
-	]
-	_restart_btn.visible = false
 
 
 # --- helpers --------------------------------------------------------------
 
-func _is_over(s: Dictionary) -> bool:
-	return bool(s.get("over", false))
+func _titan_tags(boss: Dictionary) -> String:
+	var out := _block_suffix(int(boss.get("block", 0)))
+	var vuln := int(boss.get("vulnerable", 0))
+	if vuln > 0:
+		out += "   · exposed %d" % vuln
+	var strength := int(boss.get("strength", 0))
+	if strength > 0:
+		out += "   · enraged +%d" % strength
+	return out
 
 
-func _target_name(s: Dictionary) -> String:
-	var t: int = int(s["boss"].get("target", -1))
-	var players: Array = s["players"]
-	if t < 0 or t >= players.size():
-		return "?"
-	var name := String(players[t]["name"])
-	return name + (" (you)" if t == _client.you else "")
+func _targeted_indices(mtype: String, target: int, count: int) -> Array:
+	if mtype == "attack" and target >= 0:
+		return [target]
+	if mtype == "attack_all":
+		return range(count)
+	return []
 
 
-func _intent_text(move: Dictionary) -> String:
+func _target_suffix(mtype: String, targeted: Array) -> String:
+	if mtype == "attack_all":
+		return "  →  both hunters"
+	if targeted.size() == 1:
+		var players: Array = _client.shared["players"]
+		var t: int = targeted[0]
+		return "  →  %s%s" % [players[t]["name"], " (you)" if t == _client.you else ""]
+	return ""
+
+
+func _intent_text(move: Dictionary, strength: int) -> String:
+	var value := int(move.get("value", 0))
 	match String(move.get("type", "")):
 		"attack":
-			return "Attack for %d" % int(move.get("value", 0))
+			return "Attack for %d" % (value + strength)
+		"attack_all":
+			return "Sweep for %d" % (value + strength)
+		"enrage":
+			return "Enrage (+%d strength)" % value
 		"block":
-			return "Defend (+%d block)" % int(move.get("value", 0))
+			return "Defend (+%d block)" % value
 		_:
 			return "Unknown"
 
 
+func _target_tag(target: String) -> String:
+	match target:
+		"ally":
+			return "   ↪ ally"
+		"enemy":
+			return "   ↪ Titan"
+		_:
+			return ""
+
+
 func _block_suffix(block: int) -> String:
 	return "   [%d block]" % block if block > 0 else ""
+
+
+func _card_button(text: String) -> Button:
+	var btn := Button.new()
+	btn.custom_minimum_size = Vector2(150, 190)  # thumb-friendly target (§5)
+	btn.clip_text = true
+	btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	btn.text = text
+	return btn
 
 
 func _mklabel(text: String) -> Label:
@@ -179,3 +253,8 @@ func _mklabel(text: String) -> Label:
 	l.text = text
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return l
+
+
+func _clear(node: Node) -> void:
+	for child in node.get_children():
+		child.queue_free()
