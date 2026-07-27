@@ -7,12 +7,14 @@ extends RefCounted
 
 var id: String
 var name: String
-var type: String  # "attack" | "skill"
-var cost: int     # energy to play
-var damage: int   # dealt to the boss
-var block: int    # gained by the player
-var draw: int     # extra cards drawn
-var text: String  # rules text, shown on the card face (no hover needed — §5)
+var type: String       # "attack" | "skill"
+var cost: int          # energy to play
+var damage: int        # dealt to the boss
+var block: int         # gained by the player who plays it
+var ally_block: int    # gained by the ALLY — a co-op combo effect (CLAUDE.md §6)
+var draw: int          # extra cards drawn
+var target: String     # "self" | "ally" — who the effect helps (for UI clarity)
+var text: String       # rules text, shown on the card face (no hover needed — §5)
 
 static func from_dict(d: Dictionary) -> Card:
 	var c := Card.new()
@@ -22,6 +24,8 @@ static func from_dict(d: Dictionary) -> Card:
 	c.cost = int(d.get("cost", 0))
 	c.damage = int(d.get("damage", 0))
 	c.block = int(d.get("block", 0))
+	c.ally_block = int(d.get("ally_block", 0))
 	c.draw = int(d.get("draw", 0))
+	c.target = String(d.get("target", "self"))
 	c.text = String(d.get("text", ""))
 	return c

@@ -1,14 +1,14 @@
 {
-  "_comment": "Bosses are DATA (CLAUDE.md §11). 'moves' is a repeating, telegraphed pattern; each move is {type: attack|block, value}. Neutral placeholder theme until §4.3 art/theme is decided.",
+  "_comment": "Bosses are DATA (CLAUDE.md §11). 'moves' is a repeating, telegraphed pattern; each move is {type: attack|block, value}. Attacks hit the boss's telegraphed target (Combat rotates it between players each round). max_hp tuned for two players; retune during the balance pass (build step 4). Neutral placeholder theme until §4.3.",
   "bosses": {
     "gatekeeper": {
       "name": "The Gatekeeper",
-      "max_hp": 55,
+      "max_hp": 90,
       "moves": [
-        { "type": "attack", "value": 7 },
-        { "type": "attack", "value": 9 },
+        { "type": "attack", "value": 8 },
+        { "type": "attack", "value": 10 },
         { "type": "block", "value": 8 },
-        { "type": "attack", "value": 14 }
+        { "type": "attack", "value": 16 }
       ]
     }
   }

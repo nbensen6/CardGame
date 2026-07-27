@@ -11,6 +11,7 @@ signal state_updated(shared: Dictionary, private: Dictionary)
 
 var shared: Dictionary = {}
 var private: Dictionary = {}
+var you: int = -1  # this client's player slot, as assigned by the host
 
 var _transport: Transport
 var _peer_id: int
@@ -44,6 +45,7 @@ func _on_message(message: Dictionary) -> void:
 		return
 	if int(message.get("for_peer", -1)) != _peer_id:
 		return  # addressed to another player — not our private view
+	you = int(message.get("you", -1))
 	shared = message.get("shared", {})
 	private = message.get("private", {})
 	state_updated.emit(shared, private)
