@@ -59,6 +59,7 @@ func _init() -> void:
 	_test_burn_coal_exhaust_and_cheapen()
 	_test_catapult_sacrifices_to_launch_ally()
 	_test_meld_fuses_two_cards()
+	_test_meld_carries_special_effects()
 	_test_satchel_charge_detonates()
 	_test_rhythm_builds_and_scales()
 	_test_vine_weaver_poison_and_wound()
@@ -532,6 +533,26 @@ func _test_rhythm_builds_and_scales() -> void:
 	combat.play_card(0, 0, true)  # Tongue Snap: 2 + 3*Rhythm(1) + 3 timed = 8
 	_expect(r0 == 0 and r1 == 1 and before - combat.boss.hp == 8,
 		"a timed card builds Rhythm; a Rhythm card scales with it (2 +3/Rhythm +3 nailed)")
+
+
+func _test_meld_carries_special_effects() -> void:
+	# Nick's bug: goblin cards live on special fields and fusion dropped them.
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	# Jetpack (prepare) + Build Mech (block_per_play)
+	ps.hand = [_meld_card(), Content.make_card("goblin_jetpack"), Content.make_card("build_mech")]
+	ps.energy = 9
+	combat.play_card(0, 0, true, 1, 2)
+	var f1: Card = ps.hand[0]
+	var jet_mech: bool = f1.prepare == "jetpack" and f1.block_per_play == 2 and f1.block == 2
+	# Grappling Arm (pull_ally) + Satchel (timed_hits 3, timed_damage 20)
+	ps.hand = [_meld_card(), Content.make_card("grappling_arm"), Content.make_card("satchel_charge")]
+	ps.energy = 9
+	combat.play_card(0, 0, true, 1, 2)
+	var f2: Card = ps.hand[0]
+	var arm_satchel: bool = f2.pull_ally == 3 and f2.timed and f2.timed_hits == 3 and f2.timed_damage == 20
+	_expect(jet_mech and arm_satchel,
+		"a meld keeps BOTH cards' special effects (prepare/block_per_play/pull_ally/timed chain)")
 
 
 func _test_satchel_charge_detonates() -> void:

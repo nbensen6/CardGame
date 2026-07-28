@@ -164,11 +164,13 @@ func can_play(pi: int, ci: int) -> bool:
 		return false
 	return effective_cost(pi, ps.hand[ci]) <= ps.energy
 
-## Fuse two cards into one: effects add up, cost is their sum minus 1, and if
-## either was timed the result is one timed card carrying BOTH timed bonuses (so
-## "two timed effects" collapse into a single timing bar). Selection-type fields
-## (create/prepare/exhaust picks) are intentionally dropped — melds combine plain
-## effects, not other gadgets.
+## Fuse two cards into one: EVERY effect carries over (Nick's bug: goblin cards
+## live on special fields — prepare/pull_ally/block_per_play/create/timed_hits —
+## and the old fusion dropped them, so melds "didn't do both effects"). Numeric
+## effects add; flags OR; one-of-a-kind effects (prepare/create) take whichever
+## card has one. If either was timed the result is one timed card carrying both
+## timed bonuses and the LONGER chain. Only `meld` itself doesn't carry (no
+## recursive fuse-cards).
 func _meld_cards(a: Card, b: Card) -> Card:
 	return Card.from_dict({
 		"id": "meld_%s_%s" % [a.id, b.id],
@@ -177,21 +179,35 @@ func _meld_cards(a: Card, b: Card) -> Card:
 		"cost": maxi(0, a.cost + b.cost - 1),
 		"damage": a.damage + b.damage,
 		"block": a.block + b.block,
+		"block_per_play": a.block_per_play + b.block_per_play,
 		"ally_block": a.ally_block + b.ally_block,
 		"ally_energy": a.ally_energy + b.ally_energy,
 		"vulnerable": a.vulnerable + b.vulnerable,
 		"taunt": a.taunt or b.taunt,
 		"grip": a.grip + b.grip,
 		"ally_grip": a.ally_grip + b.ally_grip,
+		"pull_ally": maxi(a.pull_ally, b.pull_ally),
+		"sac_ally_grip": a.sac_ally_grip + b.sac_ally_grip,
+		"exhaust_pick": a.exhaust_pick or b.exhaust_pick,
+		"cheapen_pick": a.cheapen_pick or b.cheapen_pick,
+		"cheapen_amount": maxi(a.cheapen_amount, b.cheapen_amount),
+		"prepare": a.prepare if a.prepare != "" else b.prepare,
+		"create": a.create if a.create != "" else b.create,
 		"timed": a.timed or b.timed,
+		"timed_hits": maxi(a.timed_hits, b.timed_hits),
 		"timed_grip": a.timed_grip + b.timed_grip,
 		"timed_damage": a.timed_damage + b.timed_damage,
 		"damage_per_vulnerable": a.damage_per_vulnerable + b.damage_per_vulnerable,
 		"damage_per_foothold": a.damage_per_foothold + b.damage_per_foothold,
+		"damage_per_ally_foothold": a.damage_per_ally_foothold + b.damage_per_ally_foothold,
+		"damage_per_rhythm": a.damage_per_rhythm + b.damage_per_rhythm,
+		"grip_per_rhythm": a.grip_per_rhythm + b.grip_per_rhythm,
+		"damage_per_wound": a.damage_per_wound + b.damage_per_wound,
 		"strength": a.strength + b.strength,
 		"wound": a.wound + b.wound,
 		"hits": maxi(a.hits, b.hits),
 		"draw": a.draw + b.draw,
+		"icon": a.icon if a.icon != "" else b.icon,
 		"target": "enemy",
 		"text": "%s  +  %s" % [a.text, b.text],
 	})

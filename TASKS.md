@@ -12,6 +12,7 @@ Nick's continuous task list for Claude. **How it works:**
 ## Inbox
 - [ ] *(standing)* continually look through assets to use — finds so far: menu reskin `c4140ba`, strike/shake juice `5d9d09f` (burst flash + dust + arena judder); ambient music `e5fb47e` (menu=Flowing Rocks, combat=Retro Mystic — swap assets/music/*.ogg to change); queued: Emote Pack (reactions), UI Pack (grip/timing bars)
 - [] check the meld card by the engineer. i have been fusing cards and it's not doing both of the cards effects.
+- [] need to be able to 
 ## Questions from Claude
 (none)
 
