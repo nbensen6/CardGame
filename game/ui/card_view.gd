@@ -91,8 +91,6 @@ func setup(data: Dictionary, playable: bool = true) -> void:
 	box.add_child(_header(String(data.get("name", "")), int(data.get("cost", 0)), bool(data.get("no_cost", false))))
 	box.add_child(_art(String(data.get("icon", "")), String(data.get("portrait", ""))))
 	box.add_child(_body(String(data.get("text", ""))))
-	if String(data.get("target", "self")) == "ally":
-		box.add_child(_tag("→ helps your ally"))  # enemy-targeting is the default; only flag ally cards
 
 	_strip = _build_timing_strip()  # hidden until start_timing()
 	box.add_child(_strip)
@@ -134,8 +132,10 @@ func _header(card_name: String, cost: int, no_cost: bool = false) -> Control:
 func _art(icon: String, portrait: String = "") -> Control:
 	var tex := TextureRect.new()
 	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	tex.custom_minimum_size = Vector2(0, 56)
-	tex.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# Fixed, modest art size — the icon is an accent, not the card's focus (Nick).
+	# Portraits (character select) keep a larger pane.
+	tex.custom_minimum_size = Vector2(0, 76 if portrait != "" else 42)
+	tex.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE  # a big PNG must not force the card taller
 	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	if portrait != "" and ResourceLoader.exists(portrait):
@@ -150,7 +150,8 @@ func _body(text_str: String) -> Control:
 	var l := _label(text_str, 12)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.size_flags_vertical = Control.SIZE_SHRINK_END  # sit low; never push past the frame
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	l.size_flags_vertical = Control.SIZE_EXPAND_FILL  # balance the space below the art
 	return l
 
 
