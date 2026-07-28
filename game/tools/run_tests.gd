@@ -60,6 +60,7 @@ func _init() -> void:
 	_test_catapult_sacrifices_to_launch_ally()
 	_test_meld_fuses_two_cards()
 	_test_satchel_charge_detonates()
+	_test_rhythm_builds_and_scales()
 	# step 4: run / meta-progression
 	_test_run_starts_in_combat()
 	_test_run_win_flows_through_reward_to_next_encounter()
@@ -485,6 +486,20 @@ func _test_catapult_sacrifices_to_launch_ally() -> void:
 	_expect(ok and ps.exhaust_pile.size() == 1 and ps.hand.size() == 0
 		and combat.players[1].foothold == ally_before + 2,
 		"Catapult sacrifices a card to launch the ally up +2 Height")
+
+
+func _test_rhythm_builds_and_scales() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_flick(), _tongue_snap()]
+	ps.energy = 3
+	var r0: int = ps.rhythm
+	combat.play_card(0, 0, true)  # flick lands (timed) -> Rhythm +1
+	var r1: int = ps.rhythm
+	var before: int = combat.boss.hp
+	combat.play_card(0, 0, true)  # Tongue Snap: 2 + 3*Rhythm(1) + 3 timed = 8
+	_expect(r0 == 0 and r1 == 1 and before - combat.boss.hp == 8,
+		"a timed card builds Rhythm; a Rhythm card scales with it (2 +3/Rhythm +3 nailed)")
 
 
 func _test_satchel_charge_detonates() -> void:
@@ -1011,6 +1026,10 @@ func _meld_card() -> Card:
 	return Card.from_dict({"id": "meld", "name": "Meld", "type": "skill", "cost": 1, "meld": true})
 func _satchel() -> Card:
 	return Card.from_dict({"id": "satchel_charge", "name": "Satchel Charge", "type": "attack", "cost": 2, "damage": 6, "timed": true, "timed_hits": 3, "timed_damage": 20, "target": "enemy"})
+func _flick() -> Card:
+	return Card.from_dict({"id": "flick", "name": "Tongue Flick", "type": "attack", "cost": 0, "damage": 2, "timed": true, "timed_damage": 3, "target": "enemy"})
+func _tongue_snap() -> Card:
+	return Card.from_dict({"id": "tongue_snap", "name": "Tongue Snap", "type": "attack", "cost": 1, "damage": 2, "damage_per_rhythm": 3, "grip": 1, "timed": true, "timed_damage": 3, "target": "enemy"})
 func _sunblade() -> Card:
 	return Card.from_dict({"id": "sunlight_blade", "name": "Sunlight Blade", "type": "attack", "cost": 1, "damage": 5, "damage_per_vulnerable": 3})
 func _bowshot() -> Card:

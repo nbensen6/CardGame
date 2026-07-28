@@ -20,6 +20,8 @@ var timed: bool        # playing it triggers a timing bar; nailing it grants the
 var timed_grip: int    # bonus Height on a well-timed throw (Goblin Engineer's grapple)
 var timed_damage: int  # bonus damage on a well-timed strike (interactive attacks)
 var timed_hits: int    # how many timing windows in a row you must nail (default 1; Satchel = 3)
+var damage_per_rhythm: int  # bonus damage per Rhythm (Frog combo) you've built this turn
+var grip_per_rhythm: int    # bonus Height per Rhythm you've built this turn
 var ally_grip: int     # Foothold given to the ALLY (vines/ropes — shared climbing)
 var create: String     # card id this card builds and adds to your hand (Goblin Mech)
 var pull_ally: int     # grapple the ally UP to your Height, if the gap is within this
@@ -57,6 +59,8 @@ static func from_dict(d: Dictionary) -> Card:
 	c.timed_grip = int(d.get("timed_grip", 0))
 	c.timed_damage = int(d.get("timed_damage", 0))
 	c.timed_hits = int(d.get("timed_hits", 1))
+	c.damage_per_rhythm = int(d.get("damage_per_rhythm", 0))
+	c.grip_per_rhythm = int(d.get("grip_per_rhythm", 0))
 	c.ally_grip = int(d.get("ally_grip", 0))
 	c.create = String(d.get("create", ""))
 	c.pull_ally = int(d.get("pull_ally", 0))

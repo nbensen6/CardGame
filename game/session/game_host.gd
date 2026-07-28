@@ -207,7 +207,7 @@ func _players_public() -> Array:
 			out.append({
 				"name": Content.character_name(ps.character), "hp": ps.combatant.hp,
 				"max_hp": ps.combatant.max_hp, "block": ps.combatant.block, "energy": ps.energy,
-				"ended": ps.ended_turn, "strength": ps.strength,
+				"ended": ps.ended_turn, "strength": ps.strength, "rhythm": ps.rhythm,
 				"foothold": ps.foothold, "reached": c.sigil_reached(i),
 				"secure": c.is_secure(i), "next_safe": c.next_safe_height(i),
 				"wp_damage": ps.weak_point_damage,

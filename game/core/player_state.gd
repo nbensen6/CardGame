@@ -16,6 +16,7 @@ var foothold: int = 0          # how high THIS hunter has climbed (per-player â€
 var weak_point_damage: int = 0 # sigil damage dealt this visit; at the threshold the beast bucks you off
 var ended_turn: bool = false   # this player has passed; others may still act this round
 var prepared: String = ""      # a delayed effect armed this fight (e.g. "jetpack"), fires next turn
+var rhythm: int = 0            # combo counter â€” +1 per timed card you LAND this turn (Frog); resets each turn
 var play_counts: Dictionary = {}  # card id -> times played this fight (for scaling cards like Build Mech)
 # Character signature passives (set from the chosen character; constant for the run)
 var character: String = ""     # character id, for display

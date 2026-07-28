@@ -249,7 +249,7 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	# Base scales with Exposed stacks (Sunlight Blade) and this hunter's own Height
 	# (Belay Strike). _damage_boss gates on whether THIS hunter reached the sigil.
 	var base_damage := card.damage + card.damage_per_vulnerable * boss.vulnerable \
-		+ card.damage_per_foothold * ps.foothold
+		+ card.damage_per_foothold * ps.foothold + card.damage_per_rhythm * ps.rhythm
 	if card.timed:  # only well-timed hits reach here — a clean strike bites deeper
 		base_damage += card.timed_damage
 	if card.damage > 0:
@@ -274,7 +274,7 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	if card.timed:  # only hits reach here (fumbles slipped away above)
 		grip_amount += card.timed_grip
 	if grip_amount > 0:
-		var climbed := grip_amount + ps.climb_bonus
+		var climbed := grip_amount + ps.climb_bonus + card.grip_per_rhythm * ps.rhythm
 		ps.foothold = mini(ps.foothold + climbed, FOOTHOLD_MAX)
 		var flair := "  (nailed it!)" if card.timed else ""
 		_log("%s plays %s — climbs (+%d Height, now %d)%s." % [who, card.name, climbed, ps.foothold, flair])
@@ -348,6 +348,8 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		_draw(ps, card.draw)
 		_log("%s plays %s — draw %d." % [who, card.name, card.draw])
 
+	if card.timed:  # landing a timed card builds Rhythm this turn (Frog combo payoff)
+		ps.rhythm += 1
 	_check_weakpoint_buck(pi)
 	_check_end()
 	return true
@@ -412,6 +414,7 @@ func _begin_round() -> void:
 		ps.combatant.block = _round_block  # relic: start each round with block
 		ps.energy = BASE_ENERGY + _energy_bonus  # relic: extra energy
 		ps.ended_turn = false
+		ps.rhythm = 0  # combo resets each turn
 		_resolve_prepared(ps)
 		_draw(ps, HAND_SIZE)
 	_log("— Round %d —" % round_num)

@@ -645,6 +645,8 @@ func _render_players(s: Dictionary, targeted: Array) -> void:
 			var status := "Energy %d / %d" % [p["energy"], s["base_energy"]]
 			if int(p.get("strength", 0)) > 0:
 				status += "   Str +%d" % int(p["strength"])
+				if int(p.get("rhythm", 0)) > 0:
+					status += "   ♪ Rhythm %d" % int(p["rhythm"])
 			if bool(p.get("ended", false)):
 				status += "   • ended"
 			box.add_child(_mklabel(status))

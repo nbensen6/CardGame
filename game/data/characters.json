@@ -1,30 +1,91 @@
 {
-  "_comment": "Characters are DATA (CLAUDE.md §11). Each has a starter_deck (card ids) and a signature passive. Designed on the 'climbs well <-> hits hard' dependency axis so pairs combo (design/climbing-and-characters.md). Decks now lean into TIMED cards (the double-timing feel the user likes) for interactive climbs/strikes, each with reliable non-timed support cards. Passive types: climb_bonus (+N Height per climb card you play), attack_bonus (+N to your attacks), ally_climb (when YOU climb, your ally also gains N Height), none.",
-  "order": ["frog", "vine_weaver", "mountain_climbers", "goblin_mech"],
+  "_comment": "Characters are DATA (CLAUDE.md \u00a711). Each has a starter_deck (card ids) and a signature passive. Designed on the 'climbs well <-> hits hard' dependency axis so pairs combo (design/climbing-and-characters.md). Decks now lean into TIMED cards (the double-timing feel the user likes) for interactive climbs/strikes, each with reliable non-timed support cards. Passive types: climb_bonus (+N Height per climb card you play), attack_bonus (+N to your attacks), ally_climb (when YOU climb, your ally also gains N Height), none.",
+  "order": [
+    "frog",
+    "vine_weaver",
+    "mountain_climbers",
+    "goblin_mech"
+  ],
   "characters": {
     "frog": {
       "name": "The Frog",
-      "desc": "Nimble — climbs fast and tags the weak point, but hits soft.",
-      "passive": { "type": "climb_bonus", "value": 1 },
-      "starter_deck": ["leap", "scramble", "scramble", "pounce", "pounce", "flick", "tongue_lash", "brace", "cover", "take_aim"]
+      "desc": "Nimble \u2014 climbs fast and tags the weak point, but hits soft.",
+      "passive": {
+        "type": "climb_bonus",
+        "value": 1
+      },
+      "starter_deck": [
+        "leap",
+        "scramble",
+        "tongue_snap",
+        "tongue_snap",
+        "flick",
+        "pounce",
+        "hop",
+        "leapfrog",
+        "brace",
+        "take_aim"
+      ]
     },
     "vine_weaver": {
       "name": "The Vine-Weaver",
       "desc": "Grows vines that lift the ally, and poisons the beast so it bleeds.",
-      "passive": { "type": "none", "value": 0 },
-      "starter_deck": ["vine", "vine", "spore", "creeper", "creeper", "lash_out", "lash_out", "cover", "brace", "take_aim"]
+      "passive": {
+        "type": "none",
+        "value": 0
+      },
+      "starter_deck": [
+        "vine",
+        "vine",
+        "spore",
+        "creeper",
+        "creeper",
+        "lash_out",
+        "lash_out",
+        "cover",
+        "brace",
+        "take_aim"
+      ]
     },
     "mountain_climbers": {
       "name": "The Mountain Climbers",
-      "desc": "Roped — the ally climbs when they do, and they hit harder the higher they are.",
-      "passive": { "type": "ally_climb", "value": 1 },
-      "starter_deck": ["rope_up", "rope_up", "haul", "belay_strike", "piton_drive", "piton_drive", "scramble", "brace", "cover", "take_aim"]
+      "desc": "Roped \u2014 the ally climbs when they do, and they hit harder the higher they are.",
+      "passive": {
+        "type": "ally_climb",
+        "value": 1
+      },
+      "starter_deck": [
+        "rope_up",
+        "rope_up",
+        "haul",
+        "belay_strike",
+        "piton_drive",
+        "piton_drive",
+        "scramble",
+        "brace",
+        "cover",
+        "take_aim"
+      ]
     },
     "goblin_mech": {
       "name": "The Goblin Engineer",
-      "desc": "Heavy hitter — wrecks the weak point, but climbs terribly. Builds timed grapples to haul up.",
-      "passive": { "type": "attack_bonus", "value": 2 },
-      "starter_deck": ["goblin_jetpack", "satchel_charge", "satchel_charge", "grappling_arm", "meld", "burn_coal", "build_grapple", "build_grapple", "build_mech", "catapult"]
+      "desc": "Heavy hitter \u2014 wrecks the weak point, but climbs terribly. Builds timed grapples to haul up.",
+      "passive": {
+        "type": "attack_bonus",
+        "value": 2
+      },
+      "starter_deck": [
+        "goblin_jetpack",
+        "satchel_charge",
+        "satchel_charge",
+        "grappling_arm",
+        "meld",
+        "burn_coal",
+        "build_grapple",
+        "build_grapple",
+        "build_mech",
+        "catapult"
+      ]
     }
   }
 }
