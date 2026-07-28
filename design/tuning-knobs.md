@@ -14,20 +14,25 @@ Current (measured, 3-Titan run via `tools/balance_sim.gd`):
 Per Titan: `max_hp`, `weak_point_height` (0 = no climb; >0 needs Foothold),
 and a `moves` pattern that loops. Move types:
 - `attack` (hits the telegraphed hunter), `attack_all` (sweeps both + shakes
-  Foothold), `block` (guards), `enrage` (permanent +strength), `regen` (heals).
-- Order in the run + which Titans: `Run.ENCOUNTERS` in `game/core/run.gd`.
-- Today: Stone Warden (108) → Gale Serpent (140, wp 3) → Drowned Colossus (170, wp 4).
+  Foothold), `block` (guards), `enrage` (permanent +strength), `regen` (heals),
+  `leech` (attacks a hunter and heals the Titan for the same).
+- Order in the run + which Titans: `Run.ENCOUNTERS` in `game/core/run.gd`
+  (currently **4 Titans** per run).
+- Today: Stone Warden (108) → Gale Serpent (140, wp 3) → Drowned Colossus
+  (170, wp 4) → Sunken Warden (180, wp 4, the final wall).
 
 ## Cards — `game/data/cards.json`
 Per card: `cost`, and any of `damage`, `block`, `ally_block`, `ally_energy`,
-`vulnerable`, `taunt`, `grip`, `damage_per_vulnerable`, `draw`, `target`, `text`.
+`vulnerable`, `taunt`, `grip`, `damage_per_vulnerable`, `strength` (self buff),
+`wound` (Titan bleed), `hits` (multi-strike), `draw`, `target`, `text`.
 - `starter_deck` — each hunter's opening 10 cards.
 - `reward_pool` — cards offered between Titans.
 - Add a new card: add an entry, then list its id in `reward_pool` (and/or starter).
 
 ## Relics — `game/data/relics.json`
 Per relic: `effect` (`max_energy` | `attack_bonus` | `round_block` |
-`heal_on_clear`) + `value` + `text`. `pool` lists which can be offered.
+`heal_on_clear` | `start_strength`) + `value` + `text`. `pool` lists which can be
+offered.
 - New effect types need a case in `Combat` (`_init` bonuses) or `Run.relic_totals`.
 
 ## Core constants
