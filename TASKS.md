@@ -10,7 +10,7 @@ Nick's continuous task list for Claude. **How it works:**
   in **Questions** below if truly stuck rather than stalling.
 
 ## Inbox
-- [ ] *(standing)* continually look through assets to use — finds so far: menu reskin `c4140ba`; queued: Emote Pack (reactions), Explosion/Smoke (strike & fall juice), UI Pack (grip/timing bars), Music Loops (ambient)
+- [ ] *(standing)* continually look through assets to use — finds so far: menu reskin `c4140ba`, strike/shake juice `5d9d09f` (burst flash + dust + arena judder); queued: Emote Pack (reactions), UI Pack (grip/timing bars), Music Loops (ambient)
 
 ## Questions from Claude
 (none)
