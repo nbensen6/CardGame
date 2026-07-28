@@ -1,6 +1,6 @@
 # Task Queue
 
-The user's continuous task list for Claude. **How it works:**
+Nick's continuous task list for Claude. **How it works:**
 - Add tasks under **Inbox** — one `- [ ]` line each, any order, any device
   (easiest from your phone: GitHub app / github.com → edit this file → commit).
 - Tell Claude "work the task list" (or run `/loop 10m work the next task in TASKS.md`
