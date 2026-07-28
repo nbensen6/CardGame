@@ -16,6 +16,8 @@ var ally_energy: int   # energy given to the ALLY (combo enabler)
 var vulnerable: int    # "exposed" stacks added to the Titan (next hits deal bonus)
 var taunt: bool        # you become the Titan's target this round (tank for your ally)
 var grip: int          # Foothold gained — climb toward a high weak point (SotC)
+var timed: bool        # playing it triggers a timing bar; nailing it grants timed_grip
+var timed_grip: int    # bonus Height on a well-timed throw (Goblin Engineer's grapple)
 var ally_grip: int     # Foothold given to the ALLY (vines/ropes — shared climbing)
 var create: String     # card id this card builds and adds to your hand (Goblin Mech)
 var damage_per_vulnerable: int  # bonus damage per Exposed stack on the Titan
@@ -40,6 +42,8 @@ static func from_dict(d: Dictionary) -> Card:
 	c.vulnerable = int(d.get("vulnerable", 0))
 	c.taunt = bool(d.get("taunt", false))
 	c.grip = int(d.get("grip", 0))
+	c.timed = bool(d.get("timed", false))
+	c.timed_grip = int(d.get("timed_grip", 0))
 	c.ally_grip = int(d.get("ally_grip", 0))
 	c.create = String(d.get("create", ""))
 	c.damage_per_vulnerable = int(d.get("damage_per_vulnerable", 0))

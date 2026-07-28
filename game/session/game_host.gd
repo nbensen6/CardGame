@@ -53,7 +53,7 @@ func _on_command(peer_id: int, command: Dictionary) -> void:
 			_try_start_or_broadcast()
 		"play_card":
 			_in_combat_action(peer_id, func(pi: int) -> void:
-				_run.combat.play_card(pi, int(command.get("index", -1))))
+				_run.combat.play_card(pi, int(command.get("index", -1)), bool(command.get("timing", true))))
 		"end_turn":
 			_in_combat_action(peer_id, func(pi: int) -> void:
 				_run.combat.end_turn(pi))
@@ -193,7 +193,8 @@ func _build_private(pi: int) -> Dictionary:
 			var c: Card = ps.hand[i]
 			cards.append({
 				"index": i, "name": c.name, "cost": c.cost, "target": c.target,
-				"text": c.text, "icon": _card_icon(c), "playable": _run.combat.can_play(pi, i),
+				"text": c.text, "icon": _card_icon(c), "timed": c.timed,
+				"playable": _run.combat.can_play(pi, i),
 			})
 		return {"hand": cards, "energy": ps.energy, "ended": ps.ended_turn}
 	if _run.phase == Run.Phase.REWARD:

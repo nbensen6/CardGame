@@ -71,6 +71,7 @@ func _init() -> void:
 	_test_character_attack_bonus()
 	_test_build_creates_grapple()
 	_test_belay_scales_with_height()
+	_test_timed_grapple()
 	_test_content_builds_character()
 	# session / client-server split
 	_test_session_both_players_join()
@@ -569,6 +570,15 @@ func _test_belay_scales_with_height() -> void:
 	_expect(combat.boss.hp == before - 9, "Belay Strike scales with the hunter's Height")
 
 
+func _test_timed_grapple() -> void:
+	var hit := _new_combat([_deck_of(_grapple, 10), _deck_of(_slash, 10)], 42, _dummy_boss(200))
+	hit.play_card(0, _first_playable(hit, 0), true)  # nailed the timing
+	_expect(hit.players[0].foothold == 3, "a well-timed grapple climbs +3")
+	var miss := _new_combat([_deck_of(_grapple, 10), _deck_of(_slash, 10)], 42, _dummy_boss(200))
+	miss.play_card(0, _first_playable(miss, 0), false)  # slipped
+	_expect(miss.players[0].foothold == 1, "a mistimed grapple only climbs +1")
+
+
 func _test_content_builds_character() -> void:
 	var deck := Content.character_deck("frog")
 	var passive := Content.character_passive("frog")
@@ -757,6 +767,8 @@ func _build() -> Card:
 	return Card.from_dict({"id": "build_grapple", "name": "Build Grapple", "type": "skill", "cost": 0, "create": "grapple"})
 func _belay() -> Card:
 	return Card.from_dict({"id": "belay_strike", "name": "Belay Strike", "type": "attack", "cost": 1, "damage": 3, "damage_per_foothold": 2})
+func _grapple() -> Card:
+	return Card.from_dict({"id": "grapple", "name": "Grappling Hook", "type": "skill", "cost": 0, "grip": 1, "timed": true, "timed_grip": 2, "target": "enemy"})
 func _sunblade() -> Card:
 	return Card.from_dict({"id": "sunlight_blade", "name": "Sunlight Blade", "type": "attack", "cost": 1, "damage": 5, "damage_per_vulnerable": 3})
 func _bowshot() -> Card:

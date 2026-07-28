@@ -30,8 +30,8 @@ func join() -> void:
 func select_character(character_id: String) -> void:
 	_send({"type": "select_character", "character": character_id})
 
-func play_card(index: int) -> void:
-	_send({"type": "play_card", "index": index})
+func play_card(index: int, timing_hit: bool = true) -> void:
+	_send({"type": "play_card", "index": index, "timing": timing_hit})
 
 func end_turn() -> void:
 	_send({"type": "end_turn"})

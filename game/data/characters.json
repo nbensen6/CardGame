@@ -21,8 +21,8 @@
       "starter_deck": ["rope_up", "rope_up", "belay_strike", "belay_strike", "scramble", "scramble", "brace", "cover", "slash", "take_aim"]
     },
     "goblin_mech": {
-      "name": "The Goblin Mech",
-      "desc": "Heavy hitter — wrecks the weak point, but climbs terribly. Needs a carry.",
+      "name": "The Goblin Engineer",
+      "desc": "Heavy hitter — wrecks the weak point, but climbs terribly. Builds timed grapples to haul up.",
       "passive": { "type": "attack_bonus", "value": 2 },
       "starter_deck": ["cleave", "cleave", "flurry", "sharpen", "rend", "build_grapple", "build_grapple", "slash", "slash", "brace"]
     }

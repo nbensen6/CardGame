@@ -137,14 +137,25 @@ func _render_hand() -> void:
 		var cv := CardView.new()
 		_hand_row.add_child(cv)
 		cv.setup(card, bool(card["playable"]))
-		cv.pressed.connect(_on_card_pressed.bind(int(card["index"])))
+		cv.pressed.connect(_on_card_pressed.bind(int(card["index"]), bool(card.get("timed", false))))
 	_end_turn_btn.disabled = ended
 	_end_turn_btn.text = "Waiting for ally…" if ended else "End Turn"
 
 
-func _on_card_pressed(index: int) -> void:
+func _on_card_pressed(index: int, timed: bool = false) -> void:
+	if timed:
+		_start_timing(index)
+		return
 	Sfx.play("card")
 	_client.play_card(index)
+
+
+func _start_timing(index: int) -> void:
+	var bar := TimingBar.new()
+	add_child(bar)
+	bar.resolved.connect(func(hit: bool) -> void:
+		Sfx.play("card")
+		_client.play_card(index, hit))
 
 
 # --- Reward phase ---------------------------------------------------------

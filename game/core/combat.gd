@@ -123,8 +123,9 @@ func is_over() -> bool:
 
 # --- Player actions -------------------------------------------------------
 
-## Player pi plays the card at hand index ci. Returns false if it can't.
-func play_card(pi: int, ci: int) -> bool:
+## Player pi plays the card at hand index ci. `timing_hit` is the result of a
+## timed card's throw (client skill) — true grants the card's timed bonus.
+func play_card(pi: int, ci: int, timing_hit: bool = true) -> bool:
 	if not can_play(pi, ci):
 		return false
 	var ps: PlayerState = players[pi]
@@ -155,10 +156,14 @@ func play_card(pi: int, ci: int) -> bool:
 	if card.wound > 0:
 		boss.wound += card.wound
 		_log("%s plays %s — Poison %d on %s." % [who, card.name, boss.wound, boss.name])
-	if card.grip > 0:
-		var climbed := card.grip + ps.climb_bonus
+	var grip_amount := card.grip
+	if card.timed and timing_hit:
+		grip_amount += card.timed_grip  # a well-timed throw catches — climb higher
+	if grip_amount > 0:
+		var climbed := grip_amount + ps.climb_bonus
 		ps.foothold = mini(ps.foothold + climbed, FOOTHOLD_MAX)
-		_log("%s plays %s — climbs (+%d Height, now %d)." % [who, card.name, climbed, ps.foothold])
+		var flair := "  (nailed it!)" if (card.timed and timing_hit) else ("  (slipped)" if card.timed else "")
+		_log("%s plays %s — climbs (+%d Height, now %d)%s." % [who, card.name, climbed, ps.foothold, flair])
 		if ps.ally_climb > 0:  # roped together — the ally climbs with you
 			var roped: PlayerState = players[ally_index(pi)]
 			roped.foothold = mini(roped.foothold + ps.ally_climb, FOOTHOLD_MAX)
