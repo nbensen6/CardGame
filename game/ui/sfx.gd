@@ -24,6 +24,7 @@ const DEFS := {
 	"lose": {"f": 120.0, "d": 0.45, "w": "sine"},
 	# Climb loop — richer .wav versions live in res://audio/ (tools/gen_sfx.gd);
 	# these are the code fallbacks if the files are ever missing.
+	"lock": {"f": 440.0, "d": 0.09, "w": "square"},
 	"climb": {"f": 300.0, "d": 0.08, "w": "square"},
 	"reach_sigil": {"f": 780.0, "d": 0.18, "w": "sine"},
 	"shake": {"f": 90.0, "d": 0.30, "w": "square"},

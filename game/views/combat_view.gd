@@ -481,7 +481,7 @@ func _on_lock() -> void:
 	var s := _client.shared
 	if bool(s.get("waiting", false)) and String(s.get("phase", "")) == "select":
 		if _selected_char != "":
-			Sfx.play("reward")
+			Sfx.play("lock")  # a latch clunking shut — locking your climber in
 			var slot := int(s.get("current_slot", -1)) if _is_solo() else -1
 			_client.select_character(_selected_char, slot)
 			_selected_char = ""
