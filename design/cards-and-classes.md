@@ -68,19 +68,28 @@ terribly** — he **builds gadgets** (grapples, and whatever we invent) to haul
 himself up, and leans on a partner to carry him. Rewards big timed swings.
 **Passive:** `attack_bonus` +2 (every attack he plays hits for +2).
 
-**Current deck** (`characters.json` → `goblin_mech.starter_deck`, 10 cards):
+**Current deck** (`characters.json` → `goblin_mech.starter_deck`, 10 cards) — mid-redesign:
 
 | Card | Cost | What it does |
 |---|---|---|
-| Cleave | 2 | Deal 10 |
-| Piston Punch ×2 | 2 | **Timed.** 8 (+8 nailed) — his signature big swing |
-| Flurry | 2 | 4 damage ×2 (each hit can hit an Exposed weak point) |
-| Sharpen | 1 | +2 Strength (rest of fight) |
-| Rend | 1 | 4 damage + Wound 2 |
+| **Goblin Jetpack** | 2 | Prime it; next turn rockets you to the weak point |
+| Piston Punch ×2 | 2 | **Timed.** 8 (+8 nailed) — signature big swing *(→ Satchel, pending)* |
+| **Grappling Arm** | 1 | Pull an ally up to your Height (if within 3) |
+| Sharpen | 1 | +2 Strength *(→ Meld, pending)* |
+| Rend | 1 | 4 damage + Wound 2 *(→ Burn Coal, pending)* |
 | Build Grapple ×2 | 0 | Builds a **Grappling Hook** into your hand |
-| Brace | 1 | 5 Block |
-| Slash | 1 | Deal 6 |
-| *(built)* Grappling Hook | 0 | **Timed.** Climb +1 (+2 nailed). His only climb. |
+| **Build Mech** | 1 | 2 Block, +2 more per prior Build Mech this fight |
+| Slash | 1 | Deal 6 *(→ Catapult, pending)* |
+| *(built)* Grappling Hook | 0 | **Timed.** Climb +1 (+2 nailed) |
+
+**Nathan's redesign — status**
+- ✅ **Goblin Jetpack** (was Cleave) — prepare→next-turn auto-climb to the sigil.
+- ✅ **Grappling Arm** (was Flurry) — pull ally up to you if within 3 Height.
+- ✅ **Build Mech** (was Brace) — Block scales each play.
+- ⏳ **Satchel Charge** (Piston Punch) — needs a *chained timing* model (3 timed hits → boom). Design Q: 3 sequential bars on one card, or a planted bomb primed over several turns?
+- ⏳ **Burn Coal** (Rend) — Exhaust one card + permanently −1 cost to another. Needs a "pick a card to sacrifice" selection UI (shared with Catapult).
+- ⏳ **Catapult** (Slash) — ally sacrifices a card to climb. Needs the sacrifice UI + a cross-player prompt.
+- 🅿️ **Meld** (Sharpen) — fuse two cards into one at −1 cost. Big feature (runtime card composition + combined timed effects). Parked until the others land.
 
 **His design space (levers that fit the fantasy):**
 - **More `create` gadgets** — the engineer's identity. A card that *builds* a
