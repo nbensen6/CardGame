@@ -11,6 +11,7 @@ Nick's continuous task list for Claude. **How it works:**
 
 ## Inbox
 - [ ] *(standing)* continually look through assets to use — finds so far: menu reskin `c4140ba`, strike/shake juice `5d9d09f` (burst flash + dust + arena judder); ambient music `e5fb47e` (menu=Flowing Rocks, combat=Retro Mystic — swap assets/music/*.ogg to change); emotes `e4285f7`; HUD fantasy-frame skin `da743f8`. Queue empty — next finds will be my own proposals (noted here before building)
+- [] grapple hook should not be able to be played unless you can pull that player up.
 ## Questions from Claude
 (none)
 

@@ -162,7 +162,12 @@ func can_play(pi: int, ci: int) -> bool:
 		return false
 	if ci < 0 or ci >= ps.hand.size():
 		return false
-	return effective_cost(pi, ps.hand[ci]) <= ps.energy
+	var card: Card = ps.hand[ci]
+	if card.pull_ally > 0:  # a grapple must have someone to pull (Nick): ally below, within reach
+		var gap: int = ps.foothold - int(players[ally_index(pi)].foothold)
+		if gap <= 0 or gap > card.pull_ally:
+			return false
+	return effective_cost(pi, card) <= ps.energy
 
 ## Fuse two cards into one: EVERY effect carries over (Nick's bug: goblin cards
 ## live on special fields — prepare/pull_ally/block_per_play/create/timed_hits —

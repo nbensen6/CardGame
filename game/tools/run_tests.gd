@@ -448,13 +448,17 @@ func _test_grappling_arm_pulls_ally() -> void:
 	var combat := _new_combat([_deck_of(_grapple_arm, 10), _deck_of(_slash, 10)], 42, _climb_boss(8))
 	combat.players[0].foothold = 4
 	combat.players[1].foothold = 2  # gap 2, within reach 3
-	combat.play_card(0, _first_playable(combat, 0))
+	var in_range: bool = combat.can_play(0, 0)
+	combat.play_card(0, 0)
 	var pulled: bool = combat.players[1].foothold == 4
+	# out of reach (gap 5) and no gap (level): the card is simply UNPLAYABLE (Nick)
 	combat.players[0].foothold = 6
-	combat.players[1].foothold = 1  # gap 5, out of reach
-	combat.play_card(0, _first_playable(combat, 0))
-	_expect(pulled and combat.players[1].foothold == 1,
-		"Grappling Arm pulls an ally within reach up to you, not one too far below")
+	combat.players[1].foothold = 1
+	var out_of_range: bool = combat.can_play(0, 0)
+	combat.players[1].foothold = 6
+	var level: bool = combat.can_play(0, 0)
+	_expect(in_range and pulled and not out_of_range and not level,
+		"Grappling Arm pulls an ally in reach, and is unplayable when it can't pull")
 
 
 func _test_build_mech_scales() -> void:
