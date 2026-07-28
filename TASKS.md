@@ -10,15 +10,16 @@ Nick's continuous task list for Claude. **How it works:**
   in **Questions** below if truly stuck rather than stalling.
 
 ## Inbox
-- [ the lock in character sounds don't sound right. look for different sounds to use] continually look through assets to use *(standing task — finds so far: menu reskin `c4140ba` (bg + hero lineup + looming rhino); candidates queued: Emote Pack for hunter reactions, Explosion/Smoke packs for strike & fall juice, UI Pack for grip/timing bars, Music Loops for ambient)*
- - [maybe get rid of the 'help your ally' on cards as it messes up the text. also lower the size of the icon on cards. it takes up too much space.]
- - [look for new assets to use on the cards. most of the current assets are blurry]
- - [all the ]
+- [ ] get rid of the "helps your ally" tag on cards (messes up text) + shrink the card icon size
+- [ ] find sharper assets for cards — current ones look blurry
+- [ ] all the height boxes (ladder rungs) should be the same size
+- [ ] *(standing)* continually look through assets to use — finds so far: menu reskin `c4140ba`; queued: Emote Pack (reactions), Explosion/Smoke (strike & fall juice), UI Pack (grip/timing bars), Music Loops (ambient)
 
 ## Questions from Claude
 (none)
 
 ## Done
-- [x] run another game and test the cards for sizing; make the cards look better — `c453b75` (ornate Kenney fantasy-border card frames w/ hover/selected states; sizing screenshot-verified on the wordiest deck)
+- [x] lock-in character sound — `ce8f3b4` (new "lock" event: Kenney metalLatch, a latch clunking shut; reward lock keeps the power-up)
+- [x] run another game and test the cards for sizing; make the cards look better — `c453b75` (ornate Kenney fantasy-border card frames w/ hover/selected states; sizing screenshot-verified)
 - [x] make log collapsible — `c453b75` (Log ▸/▾ toggle: 4-line ticker ↔ 16-line history)
-- [x] character icon disappeared at the weak point — `c453b75` (bug: Height can overshoot the sigil, marker had no rung; now clamps to the top rung)
+- [x] character icon disappeared at the weak point — `c453b75` (Height can overshoot the sigil; markers now clamp to the top rung)
