@@ -34,6 +34,13 @@ var _selected_char := ""     # character highlighted in the lobby but NOT yet lo
 var _prev_phase := ""
 var _active_slot := 0        # solo: which hunter the player is currently controlling
 var _over_sound := false     # win/lose sting plays once
+# Climb-loop audio: fired from snapshot-to-snapshot deltas (the view is a pure
+# client, so it infers "climbed / reached / bucked off / struck the sigil" by
+# comparing successive states rather than being told).
+var _prev_encounter := -1
+var _prev_boss_hp := -1
+var _prev_footholds: Array = []
+var _prev_reached: Array = []
 
 
 # --- Solo helpers (one player controls both hunters) ----------------------
@@ -162,10 +169,60 @@ func _render_combat(s: Dictionary) -> void:
 	_intent.text = "Intent:  %s%s" % [_intent_text(move, int(boss.get("strength", 0))), _target_suffix(mtype, targeted)]
 	_intent.add_theme_color_override("font_color", _intent_color(mtype))
 
+	_combat_audio(s)
 	_show_boss_art(String(boss.get("art", "")), int(boss.get("strength", 0)) > 0)
 	_render_players(s, targeted)
 	_log_label.text = _log_with_relics(s)
 	_render_hand()
+
+
+## Emit climb-loop sounds by diffing this combat snapshot against the last one.
+## A fresh fight (new Titan, or the very first snapshot) syncs silently so we
+## never mistake an encounter reset for a climb or a buck-off.
+func _combat_audio(s: Dictionary) -> void:
+	var boss: Dictionary = s["boss"]
+	var players: Array = s["players"]
+	var enc := int(s.get("encounter", 0))
+	var hp := int(boss.get("hp", 0))
+	var foots: Array = []
+	var reached: Array = []
+	for p in players:
+		foots.append(int(p.get("foothold", 0)))
+		reached.append(bool(p.get("reached", false)))
+
+	if enc != _prev_encounter or _prev_footholds.size() != foots.size():
+		_sync_combat_audio(enc, hp, foots, reached)
+		return
+
+	# A real hit on the sigil: the beast lost health while a hunter was up there.
+	if hp < _prev_boss_hp and (reached.has(true) or _prev_reached.has(true)):
+		Sfx.play("strike_weakpoint")
+
+	var arrived := false
+	var climbed := false
+	var shook := false
+	for i in range(foots.size()):
+		if not _prev_reached[i] and reached[i]:
+			arrived = true
+		elif foots[i] > _prev_footholds[i]:
+			climbed = true
+		elif foots[i] < _prev_footholds[i]:
+			shook = true
+	if arrived:
+		Sfx.play("reach_sigil")
+	elif climbed:
+		Sfx.play("climb")
+	if shook:
+		Sfx.play("shake")
+
+	_sync_combat_audio(enc, hp, foots, reached)
+
+
+func _sync_combat_audio(enc: int, hp: int, foots: Array, reached: Array) -> void:
+	_prev_encounter = enc
+	_prev_boss_hp = hp
+	_prev_footholds = foots
+	_prev_reached = reached
 
 
 func _render_hand() -> void:

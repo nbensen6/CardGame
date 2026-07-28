@@ -22,6 +22,12 @@ const DEFS := {
 	"slip": {"f": 190.0, "d": 0.14, "w": "square"},
 	"win": {"f": 860.0, "d": 0.35, "w": "sine"},
 	"lose": {"f": 120.0, "d": 0.45, "w": "sine"},
+	# Climb loop — richer .wav versions live in res://audio/ (tools/gen_sfx.gd);
+	# these are the code fallbacks if the files are ever missing.
+	"climb": {"f": 300.0, "d": 0.08, "w": "square"},
+	"reach_sigil": {"f": 780.0, "d": 0.18, "w": "sine"},
+	"shake": {"f": 90.0, "d": 0.30, "w": "square"},
+	"strike_weakpoint": {"f": 160.0, "d": 0.22, "w": "square"},
 }
 
 static var _players: Array = []
