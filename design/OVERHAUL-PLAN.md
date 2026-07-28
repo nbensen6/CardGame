@@ -28,6 +28,16 @@ look. Therefore:
 - **Audio** — Kenney SFX packs (still extracting at time of writing). For the
   **sound overhaul** (drop-in `game/audio/<event>.wav`).
 
+## Progress (2026-07-28 autonomous run)
+- ✅ **P1** icons + repo guard (whitelist .gitignore) — commit 38394e8
+- ✅ **P2a** Frog + Rhythm combo — 6bc813e
+- ✅ **P2b/c** Vine-Weaver (poison_lift, damage_per_wound) + Mountain Climbers
+  (damage_per_ally_foothold) — 1e362ac
+- ✅ **P5** audio: 13 Kenney SFX wired — 218a06c
+- ⏳ **P4** UI reskin (font + Kenney panels/borders) — fonts copied+imported;
+  font wiring DEFERRED (readability/taste — needs Nathan's eye or a preview).
+- ⏳ **P6** boss/creature art — needs curation from the 2D packs (taste-risk).
+
 ## Phases (each self-verifies + commits independently)
 
 ### P1 — Visual foundation: fonts + card icons  ⬅ starting here

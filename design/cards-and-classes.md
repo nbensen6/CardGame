@@ -53,6 +53,13 @@ mix them freely. Unset fields default to 0/false.
 - **Multi-hit + Expose:** each of a `hits` card's strikes can consume an Expose
   stack — multi-hit + Expose is a combo.
 
+### Signature scaling fields (added in the overhaul)
+- `damage_per_rhythm` / `grip_per_rhythm` — scale with **Rhythm** (Frog: +1 per
+  timed card landed this turn, resets each turn).
+- `damage_per_wound` — scale with the Titan's **Poison** stacks (Vine-Weaver).
+- `damage_per_ally_foothold` — scale with your **ally's Height** (Mountain Climbers).
+- passive `poison_lift` — applying Wound climbs your ally (Vine-Weaver).
+
 ### Not yet available (ask Claude to add the field if you want it)
 Cost-scaling, exhaust/one-shot cards, card-draw-on-hit, energy refund, self-damage,
 conditional effects ("if at the weak point…"), block-scaling damage, AoE across
