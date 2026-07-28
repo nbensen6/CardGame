@@ -63,7 +63,8 @@ func _on_command(peer_id: int, command: Dictionary) -> void:
 		"play_card":
 			var ps0 := _acting_slot(peer_id, command)
 			_in_combat_action(ps0, func() -> void:
-				_run.combat.play_card(ps0, int(command.get("index", -1)), bool(command.get("timing", true))))
+				_run.combat.play_card(ps0, int(command.get("index", -1)), bool(command.get("timing", true)),
+					int(command.get("sac", -1)), int(command.get("target", -1))))
 		"end_turn":
 			var ps1 := _acting_slot(peer_id, command)
 			_in_combat_action(ps1, func() -> void:
@@ -235,8 +236,9 @@ func _slot_private(pi: int) -> Dictionary:
 		for i in range(ps.hand.size()):
 			var c: Card = ps.hand[i]
 			cards.append({
-				"index": i, "name": c.name, "cost": c.cost, "target": c.target,
+				"index": i, "name": c.name, "cost": _run.combat.effective_cost(pi, c), "target": c.target,
 				"text": c.text, "icon": _card_icon(c), "timed": c.timed,
+				"exhaust_pick": c.exhaust_pick, "cheapen_pick": c.cheapen_pick,
 				"playable": _run.combat.can_play(pi, i),
 			})
 		return {"hand": cards, "energy": ps.energy, "ended": ps.ended_turn}
@@ -288,8 +290,10 @@ func _card_icon(c: Card) -> String:
 		return "taunt"
 	if c.prepare != "" or c.grip > 0:
 		return "grip"
-	if c.pull_ally > 0:
+	if c.pull_ally > 0 or c.sac_ally_grip > 0:
 		return "support"
+	if c.exhaust_pick:
+		return "expose"
 	if c.vulnerable > 0 and c.damage == 0:
 		return "expose"
 	if c.damage > 0:

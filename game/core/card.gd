@@ -24,6 +24,10 @@ var create: String     # card id this card builds and adds to your hand (Goblin 
 var pull_ally: int     # grapple the ally UP to your Height, if the gap is within this
 var block_per_play: int # extra Block for each earlier time you've played this card this fight
 var prepare: String    # arms a delayed effect that resolves at the start of your next turn
+var exhaust_pick: bool # requires picking a card from your hand to EXHAUST (gone for the fight)
+var cheapen_pick: bool # requires picking a card from your hand to permanently cut its cost
+var cheapen_amount: int # how much cheapen_pick reduces the chosen card's cost (default 1)
+var sac_ally_grip: int # Height your ally climbs, IF you sacrificed a card (Catapult)
 var damage_per_vulnerable: int  # bonus damage per Exposed stack on the Titan
 var damage_per_foothold: int    # bonus damage per Height climbed (Mountain Climbers)
 var strength: int      # Strength gained by the player (attacks deal +Strength this fight)
@@ -54,6 +58,10 @@ static func from_dict(d: Dictionary) -> Card:
 	c.pull_ally = int(d.get("pull_ally", 0))
 	c.block_per_play = int(d.get("block_per_play", 0))
 	c.prepare = String(d.get("prepare", ""))
+	c.exhaust_pick = bool(d.get("exhaust_pick", false))
+	c.cheapen_pick = bool(d.get("cheapen_pick", false))
+	c.cheapen_amount = int(d.get("cheapen_amount", 1))
+	c.sac_ally_grip = int(d.get("sac_ally_grip", 0))
 	c.damage_per_vulnerable = int(d.get("damage_per_vulnerable", 0))
 	c.damage_per_foothold = int(d.get("damage_per_foothold", 0))
 	c.strength = int(d.get("strength", 0))

@@ -53,6 +53,9 @@ var _climbing := false        # the active hunter is between holds, timer runnin
 var _grip := 1.0              # remaining grip, 1..0
 var _climb_target := 0        # the Height (ledge/sigil) we're racing to reach
 var _me_secure := true        # active hunter is resting on a safe hold
+# Card selection (Burn Coal / Catapult): tapping a selection card starts a local
+# pick flow; the chosen hand indices are bundled into one play_card. Empty = idle.
+var _selecting: Dictionary = {}
 
 
 # --- Solo helpers (one player controls both hunters) ----------------------
@@ -160,6 +163,7 @@ func _update_climb_state(s: Dictionary) -> void:
 
 func _stop_climb() -> void:
 	_climbing = false
+	_selecting = {}  # any in-progress card pick is abandoned when we leave combat
 	if _grip_bar != null:
 		_grip_bar.visible = false
 
@@ -298,14 +302,20 @@ func _render_hand() -> void:
 	var solo := _is_solo()
 	var priv := _my_private()
 	var ended := bool(priv.get("ended", false))
+	var selecting := not _selecting.is_empty()
 	var tag := ("   —   %s" % _hunter_name(_active_slot)) if solo else ""
-	_hand_label.text = "Your hand%s%s" % [tag, "   (turn ended)" if ended else ""]
+	if selecting:
+		_hand_label.text = _selection_prompt()
+	else:
+		_hand_label.text = "Your hand%s%s" % [tag, "   (turn ended)" if ended else ""]
 	for card in priv.get("hand", []):
+		var idx := int(card["index"])
 		var cv := CardView.new()
 		_hand_row.add_child(cv)
-		cv.setup(card, bool(card["playable"]))
-		var idx := int(card["index"])
-		cv.tapped.connect(_on_card_tapped.bind(idx, bool(card.get("timed", false)), cv))
+		cv.setup(card, true if selecting else bool(card["playable"]))  # any card is pickable
+		if selecting and (idx == int(_selecting.get("play_index", -1)) or idx == int(_selecting.get("sac", -1))):
+			cv.set_selected(true)
+		cv.tapped.connect(_on_card_tapped.bind(card, cv))
 		cv.timing_resolved.connect(_on_timing_resolved.bind(idx))
 	_switch_btn.visible = solo
 	if solo:
@@ -315,18 +325,77 @@ func _render_hand() -> void:
 		_end_turn_btn.text = "Waiting for ally…" if ended else "End Turn"
 	_end_turn_btn.disabled = ended
 	_switch_btn.disabled = false
-	if _climbing:  # committed to a hop — you can't rest here; reach a hold or fall
+	if selecting:  # mid-pick — lock the turn controls until it resolves or cancels
+		_end_turn_btn.disabled = true
+		_end_turn_btn.text = "Choosing a card…"
+		_switch_btn.disabled = true
+	elif _climbing:  # committed to a hop — you can't rest here; reach a hold or fall
 		_end_turn_btn.disabled = true
 		_end_turn_btn.text = "⚠ Climbing — reach a hold!"
 		_switch_btn.disabled = true
 
 
-func _on_card_tapped(index: int, timed: bool, cv: CardView) -> void:
-	if timed:
+func _on_card_tapped(card: Dictionary, cv: CardView) -> void:
+	var index := int(card["index"])
+	if not _selecting.is_empty():  # a pick for the active selection card
+		_pick_for_selection(index)
+		return
+	if bool(card.get("timed", false)):
 		cv.start_timing()  # the card runs its own timing sweep; the next tap fires it
+		return
+	if bool(card.get("exhaust_pick", false)) or bool(card.get("cheapen_pick", false)):
+		_start_selection(card)  # Burn Coal / Catapult — pick target cards, then it fires
 		return
 	Sfx.play("card")
 	_client.play_card(index, true, _cmd_slot())
+
+
+# --- Card selection flow (Burn Coal / Catapult) ---------------------------
+
+func _selection_prompt() -> String:
+	var steps: Array = _selecting.get("steps", [])
+	var step := String(steps[int(_selecting.get("step", 0))])
+	var nm := String(_selecting.get("name", "card"))
+	if step == "exhaust":
+		return "%s — tap a card to SACRIFICE   (tap %s again to cancel)" % [nm, nm]
+	return "%s — tap a card to make CHEAPER" % nm
+
+
+func _start_selection(card: Dictionary) -> void:
+	var steps: Array = []
+	if bool(card.get("exhaust_pick", false)):
+		steps.append("exhaust")
+	if bool(card.get("cheapen_pick", false)):
+		steps.append("cheapen")
+	_selecting = {"play_index": int(card["index"]), "name": String(card.get("name", "card")),
+		"steps": steps, "step": 0, "sac": -1, "target": -1}
+	Sfx.play("card")
+	_render_hand()
+
+
+func _pick_for_selection(idx: int) -> void:
+	if idx == int(_selecting.get("play_index", -1)):
+		_selecting = {}  # tapped the selection card again — cancel
+		_render_hand()
+		return
+	var steps: Array = _selecting.get("steps", [])
+	var step := String(steps[int(_selecting.get("step", 0))])
+	if step == "exhaust":
+		_selecting["sac"] = idx
+	else:
+		if idx == int(_selecting.get("sac", -1)):
+			return  # can't cheapen the card you just sacrificed
+		_selecting["target"] = idx
+	_selecting["step"] = int(_selecting.get("step", 0)) + 1
+	if int(_selecting["step"]) >= steps.size():  # all picks made — fire it
+		var play_index := int(_selecting.get("play_index", -1))
+		var sac := int(_selecting.get("sac", -1))
+		var target := int(_selecting.get("target", -1))
+		_selecting = {}
+		Sfx.play("card")
+		_client.play_card(play_index, true, _cmd_slot(), sac, target)
+	else:
+		_render_hand()
 
 
 func _on_timing_resolved(hit: bool, index: int) -> void:

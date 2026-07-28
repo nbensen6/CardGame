@@ -161,7 +161,13 @@ func can_play(pi: int, ci: int) -> bool:
 		return false
 	if ci < 0 or ci >= ps.hand.size():
 		return false
-	return ps.hand[ci].cost <= ps.energy
+	return effective_cost(pi, ps.hand[ci]) <= ps.energy
+
+## A card's cost for a hunter, after any permanent Burn Coal reductions.
+func effective_cost(pi: int, card: Card) -> int:
+	if pi < 0 or pi >= players.size():
+		return card.cost
+	return maxi(0, card.cost - int(players[pi].cost_reductions.get(card.id, 0)))
 
 func result() -> int:
 	if boss.is_dead():
@@ -178,12 +184,24 @@ func is_over() -> bool:
 
 ## Player pi plays the card at hand index ci. `timing_hit` is the result of a
 ## timed card's throw (client skill) — true grants the card's timed bonus.
-func play_card(pi: int, ci: int, timing_hit: bool = true) -> bool:
+## `sac_index` / `target_index` name cards in the caster's hand for selection cards
+## (Burn Coal: burn one, cheapen another; Catapult: burn one). They're chosen on the
+## client and validated here. -1 = none.
+func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, target_index: int = -1) -> bool:
 	if not can_play(pi, ci):
 		return false
 	var ps: PlayerState = players[pi]
 	var card: Card = ps.hand[ci]
-	ps.energy -= card.cost
+	# Capture selection targets by reference BEFORE any removal (indices are into the
+	# current hand, and must not point at the card being played).
+	var sac_card: Card = null
+	if card.exhaust_pick and sac_index >= 0 and sac_index < ps.hand.size() and sac_index != ci:
+		sac_card = ps.hand[sac_index]
+	var cheapen_card: Card = null
+	if card.cheapen_pick and target_index >= 0 and target_index < ps.hand.size() \
+			and target_index != ci and target_index != sac_index:
+		cheapen_card = ps.hand[target_index]
+	ps.energy -= effective_cost(pi, card)
 	ps.hand.remove_at(ci)
 	# A fumbled timed card slips away — removed with no effect (not even discarded).
 	if card.timed and not timing_hit:
@@ -238,6 +256,21 @@ func play_card(pi: int, ci: int, timing_hit: bool = true) -> bool:
 		var built := Content.make_card(card.create)
 		ps.hand.append(built)
 		_log("%s plays %s — builds %s." % [who, card.name, built.name])
+	if card.exhaust_pick:  # Burn Coal / Catapult — sacrifice a chosen card
+		if sac_card != null:
+			ps.hand.erase(sac_card)
+			ps.exhaust_pile.append(sac_card)
+			_log("%s sacrifices %s." % [who, sac_card.name])
+			if cheapen_card != null:  # Burn Coal: permanently cheapen another card
+				var cid := cheapen_card.id
+				ps.cost_reductions[cid] = int(ps.cost_reductions.get(cid, 0)) + card.cheapen_amount
+				_log("%s makes %s cost %d less this fight." % [who, cheapen_card.name, card.cheapen_amount])
+			if card.sac_ally_grip > 0:  # Catapult: launch the ally up
+				var launched: PlayerState = players[ally_index(pi)]
+				launched.foothold = mini(launched.foothold + card.sac_ally_grip, FOOTHOLD_MAX)
+				_log("%s catapults %s up (+%d Height, now %d)." % [who, launched.combatant.name, card.sac_ally_grip, launched.foothold])
+		else:
+			_log("%s plays %s — but sacrifices nothing." % [who, card.name])
 	if card.pull_ally > 0:  # grapple the ally UP to your Height, if they're within reach
 		var yanked: PlayerState = players[ally_index(pi)]
 		var gap := ps.foothold - yanked.foothold

@@ -56,6 +56,8 @@ func _init() -> void:
 	_test_jetpack_prepares_climb()
 	_test_grappling_arm_pulls_ally()
 	_test_build_mech_scales()
+	_test_burn_coal_exhaust_and_cheapen()
+	_test_catapult_sacrifices_to_launch_ally()
 	# step 4: run / meta-progression
 	_test_run_starts_in_combat()
 	_test_run_win_flows_through_reward_to_next_encounter()
@@ -456,6 +458,31 @@ func _test_build_mech_scales() -> void:
 	combat.play_card(0, _first_playable(combat, 0))  # +4 (grows) -> 6 total
 	_expect(b1 == 2 and combat.players[0].combatant.block == 6,
 		"Build Mech's Block grows each time it's played this fight")
+
+
+func _test_burn_coal_exhaust_and_cheapen() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_burn_coal(), _cleave(), _slash()]  # play 0, sacrifice 2, cheapen 1
+	ps.energy = 3
+	var cleave_before: int = combat.effective_cost(0, ps.hand[1])
+	var ok: bool = combat.play_card(0, 0, true, 2, 1)
+	_expect(ok and ps.exhaust_pile.size() == 1 and String(ps.exhaust_pile[0].id) == "slash"
+		and ps.hand.size() == 1 and String(ps.hand[0].id) == "cleave"
+		and combat.effective_cost(0, ps.hand[0]) == cleave_before - 1,
+		"Burn Coal exhausts the sacrificed card and permanently cheapens the chosen one")
+
+
+func _test_catapult_sacrifices_to_launch_ally() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _climb_boss(8))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_catapult(), _slash()]  # play 0, sacrifice 1
+	ps.energy = 3
+	var ally_before: int = combat.players[1].foothold
+	var ok: bool = combat.play_card(0, 0, true, 1, -1)
+	_expect(ok and ps.exhaust_pile.size() == 1 and ps.hand.size() == 0
+		and combat.players[1].foothold == ally_before + 2,
+		"Catapult sacrifices a card to launch the ally up +2 Height")
 
 
 func _test_timed_damage_bonus() -> void:
@@ -947,6 +974,12 @@ func _grapple_arm() -> Card:
 	return Card.from_dict({"id": "grappling_arm", "name": "Grappling Arm", "type": "skill", "cost": 1, "pull_ally": 3, "target": "ally"})
 func _build_mech() -> Card:
 	return Card.from_dict({"id": "build_mech", "name": "Build Mech", "type": "skill", "cost": 1, "block": 2, "block_per_play": 2})
+func _cleave() -> Card:
+	return Card.from_dict({"id": "cleave", "name": "Cleave", "type": "attack", "cost": 2, "damage": 10})
+func _burn_coal() -> Card:
+	return Card.from_dict({"id": "burn_coal", "name": "Burn Coal", "type": "skill", "cost": 1, "exhaust_pick": true, "cheapen_pick": true, "cheapen_amount": 1})
+func _catapult() -> Card:
+	return Card.from_dict({"id": "catapult", "name": "Catapult", "type": "skill", "cost": 1, "exhaust_pick": true, "sac_ally_grip": 2, "target": "ally"})
 func _sunblade() -> Card:
 	return Card.from_dict({"id": "sunlight_blade", "name": "Sunlight Blade", "type": "attack", "cost": 1, "damage": 5, "damage_per_vulnerable": 3})
 func _bowshot() -> Card:

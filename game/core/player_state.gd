@@ -8,6 +8,8 @@ var combatant: Combatant       # hp / block / name — the public bit shown on t
 var draw_pile: Array = []      # face-down; drawn from the back
 var hand: Array = []           # PRIVATE — only this player (and the host) sees the cards
 var discard_pile: Array = []
+var exhaust_pile: Array = []   # cards burned/sacrificed this fight — never reshuffled back
+var cost_reductions: Dictionary = {}  # card id -> permanent cost cut this fight (Burn Coal)
 var energy: int = 0
 var strength: int = 0          # added to this hunter's attack damage (buffs last the fight)
 var foothold: int = 0          # how high THIS hunter has climbed (per-player — SotC)
