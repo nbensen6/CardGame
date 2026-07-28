@@ -3,6 +3,7 @@
   "bosses": {
     "stone_warden": {
       "name": "The Stone Warden",
+      "art": "res://ui/bosses/stone_warden.svg",
       "max_hp": 46,
       "weak_point_height": 1,
       "moves": [
@@ -14,6 +15,7 @@
     },
     "gale_serpent": {
       "name": "The Gale Serpent",
+      "art": "res://ui/bosses/gale_serpent.svg",
       "max_hp": 72,
       "weak_point_height": 2,
       "moves": [
@@ -25,6 +27,7 @@
     },
     "drowned_colossus": {
       "name": "The Drowned Colossus",
+      "art": "res://ui/bosses/drowned_colossus.svg",
       "max_hp": 98,
       "weak_point_height": 3,
       "moves": [
@@ -36,6 +39,7 @@
     },
     "sunken_warden": {
       "name": "The Sunken Warden",
+      "art": "res://ui/bosses/sunken_warden.svg",
       "max_hp": 130,
       "weak_point_height": 3,
       "moves": [

@@ -185,6 +185,7 @@ func _build_shared() -> Dictionary:
 			"intent": b.current_move(), "target": c.boss_target_index(),
 			"vulnerable": b.vulnerable, "strength": b.strength, "wound": b.wound,
 			"weak_point_height": b.weak_point_height, "foothold_max": Combat.FOOTHOLD_MAX,
+			"art": b.art,
 		}
 		s["round"] = c.round_num
 		s["base_energy"] = Combat.BASE_ENERGY

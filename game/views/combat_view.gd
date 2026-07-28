@@ -16,6 +16,7 @@ var _client: GameClient
 @onready var _boss_hp_bar: ProgressBar = %BossHPBar
 @onready var _intent: Label = %Intent
 @onready var _players_row: HBoxContainer = %Players
+@onready var _boss_art: TextureRect = %BossArt
 @onready var _log_label: Label = %Log
 @onready var _hand_label: Label = %HandLabel
 @onready var _hand_row: HBoxContainer = %Hand
@@ -32,6 +33,7 @@ var _selected_choice := -1   # reward highlighted but NOT yet locked
 var _selected_char := ""     # character highlighted in the lobby but NOT yet locked
 var _prev_phase := ""
 var _active_slot := 0        # solo: which hunter the player is currently controlling
+var _over_sound := false     # win/lose sting plays once
 
 
 # --- Solo helpers (one player controls both hunters) ----------------------
@@ -131,6 +133,7 @@ func _refresh() -> void:
 # --- Combat phase ---------------------------------------------------------
 
 func _render_combat(s: Dictionary) -> void:
+	_over_sound = false  # reset so the next win/lose plays its sting
 	_overlay.visible = false
 	_boss_panel.visible = true
 	_boss_hp_bar.visible = true
@@ -159,6 +162,7 @@ func _render_combat(s: Dictionary) -> void:
 	_intent.text = "Intent:  %s%s" % [_intent_text(move, int(boss.get("strength", 0))), _target_suffix(mtype, targeted)]
 	_intent.add_theme_color_override("font_color", _intent_color(mtype))
 
+	_show_boss_art(String(boss.get("art", "")), int(boss.get("strength", 0)) > 0)
 	_render_players(s, targeted)
 	_log_label.text = _log_with_relics(s)
 	_render_hand()
@@ -196,7 +200,7 @@ func _on_card_tapped(index: int, timed: bool, cv: CardView) -> void:
 
 
 func _on_timing_resolved(hit: bool, index: int) -> void:
-	Sfx.play("card")
+	Sfx.play("nail" if hit else "slip")
 	_client.play_card(index, hit, _cmd_slot())
 
 
@@ -210,6 +214,7 @@ func _render_reward(s: Dictionary) -> void:
 	_intent.visible = false
 	_end_turn_btn.get_parent().visible = true
 	_end_turn_btn.visible = false
+	_boss_art.visible = false
 	var solo := _is_solo()
 	_switch_btn.visible = solo
 	if solo:
@@ -294,6 +299,7 @@ func _render_character_select(s: Dictionary) -> void:
 	_end_turn_btn.get_parent().visible = true
 	_end_turn_btn.visible = false
 	_switch_btn.visible = false
+	_boss_art.visible = false
 
 	var solo := bool(s.get("solo", false))
 	var current := int(s.get("current_slot", 0)) if solo else _client.you
@@ -345,6 +351,9 @@ func _render_over(s: Dictionary) -> void:
 	_menu_btn.visible = true
 	_result_label.add_theme_font_size_override("font_size", 30)
 	var win := String(s.get("result", "")) == "win"
+	if not _over_sound:
+		Sfx.play("win" if win else "lose")
+		_over_sound = true
 	_result_label.add_theme_color_override("font_color",
 		Color(0.62, 0.80, 0.52) if win else Color(0.86, 0.46, 0.42))
 	match String(s.get("result", "")):
@@ -468,6 +477,16 @@ func _intent_text(move: Dictionary, strength: int) -> String:
 			return "Defend (+%d block)" % value
 		_:
 			return "Unknown"
+
+
+func _show_boss_art(path: String, enraged: bool) -> void:
+	if path == "" or not ResourceLoader.exists(path):
+		_boss_art.visible = false
+		return
+	_boss_art.texture = load(path)
+	# Warm stone tone; a shade redder when the beast is enraged.
+	_boss_art.modulate = Color(0.72, 0.42, 0.34) if enraged else Color(0.56, 0.49, 0.39)
+	_boss_art.visible = true
 
 
 func _log_with_relics(s: Dictionary) -> String:

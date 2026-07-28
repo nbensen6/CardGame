@@ -8,6 +8,7 @@ class_name Boss
 extends Combatant
 
 var moves: Array = []
+var art: String = ""           # path to the beast's silhouette (shown in the combat view)
 var vulnerable: int = 0        # "exposed" stacks — each consumed hit deals bonus damage
 var strength: int = 0          # added to every attack (grows via "enrage" moves)
 var wound: int = 0             # bleed — the Titan takes this much at the start of each of its turns
