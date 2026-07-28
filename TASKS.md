@@ -11,7 +11,8 @@ Nick's continuous task list for Claude. **How it works:**
 
 ## Inbox
 - [ ] *(standing)* continually look through assets to use — finds so far: menu reskin `c4140ba`, strike/shake juice `5d9d09f` (burst flash + dust + arena judder); queued: Emote Pack (reactions), UI Pack (grip/timing bars), Music Loops (ambient)
-
+- [] there should be a maximum amount of time you have to succeed on a timed card. also they should be faster
+- [] the attack for x by the boss should just be a display of the boss then a sword then the icon for the player it's attack
 ## Questions from Claude
 (none)
 

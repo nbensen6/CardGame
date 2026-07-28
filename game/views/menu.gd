@@ -19,6 +19,7 @@ const PORT := 9999
 
 func _ready() -> void:
 	Session.reset()
+	Music.play("menu")
 	_solo_btn.pressed.connect(_on_solo)
 	_host_btn.pressed.connect(_on_host)
 	_join_btn.pressed.connect(_on_join)

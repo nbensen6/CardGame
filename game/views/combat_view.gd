@@ -105,6 +105,7 @@ func _ready() -> void:
 		_refresh())
 	_restart_btn.pressed.connect(func() -> void: _client.restart())
 	_menu_btn.pressed.connect(_return_to_menu)
+	Music.play("combat")
 	_client = Session.client
 	_client.state_updated.connect(_on_state)
 	# Disconnect handling: the host going away (client side) drops us to the menu.
