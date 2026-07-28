@@ -51,10 +51,11 @@ var _prev_reached: Array = []
 # or the client reports a fall. Purely client-side skill — the host is told the
 # outcome (a play_card that reaches safety, or a `fall`), never the ticking timer.
 const GRIP_SECONDS := 5.0     # how long you can cling between holds (tune by feel)
-var _climbing := false        # the active hunter is between holds, timer running
-var _grip := 1.0              # remaining grip, 1..0
-var _climb_target := 0        # the Height (ledge/sigil) we're racing to reach
-var _me_secure := true        # active hunter is resting on a safe hold
+# Per-hunter grip timers: slot -> {g: remaining 0..1, target: Height to reach}.
+# In solo BOTH hunters can be mid-climb at once (Nick: switch while the timer
+# runs — hunter A keeps draining while you act with hunter B). In co-op each
+# client only ever tracks its own hunter.
+var _climb: Dictionary = {}
 # Card selection (Burn Coal / Catapult): tapping a selection card starts a local
 # pick flow; the chosen hand indices are bundled into one play_card. Empty = idle.
 var _selecting: Dictionary = {}
@@ -131,60 +132,65 @@ func _on_state(_shared: Dictionary, _private: Dictionary) -> void:
 	_refresh()
 
 
-## Real-time grip drain. Runs every frame; only does anything mid-climb. When the
-## timer empties, tell the host our hunter fell — the snapshot that follows drops
-## us to the base and ends the burst.
+## Real-time grip drain — every climbing hunter's timer ticks, whoever is active.
+## When a timer empties, tell the host that hunter fell.
 func _process(delta: float) -> void:
-	if not _climbing:
+	if _climb.is_empty():
 		return
-	_grip -= delta / GRIP_SECONDS
-	if _grip <= 0.0:
-		_grip = 0.0
-		_climbing = false
-		_update_grip_bar()
-		Sfx.play("shake")
-		_client.fall(_cmd_slot())
-		return
+	for slot in _climb.keys().duplicate():
+		var st: Dictionary = _climb[slot]
+		st["g"] = float(st["g"]) - delta / GRIP_SECONDS
+		if float(st["g"]) <= 0.0:
+			_climb.erase(slot)
+			Sfx.play("shake")
+			_client.fall(int(slot) if _is_solo() else -1)
 	_update_grip_bar()
 
 
-## Derive the burst from the active hunter's "secure" flag: leaving a hold starts
-## the timer full; reaching one (or falling) ends it. Grip only resets to full on
-## a genuine hold->climbing transition, so it drains continuously across the whole
-## hop even as we play several climb cards.
+## Derive climb bursts from the "secure" flags: leaving a hold starts that
+## hunter's timer full; reaching one (or falling) ends it. Grip only resets on a
+## genuine hold->climbing transition, so it drains continuously across a hop.
+## Solo tracks BOTH hunters; co-op only your own.
 func _update_climb_state(s: Dictionary) -> void:
 	var players: Array = s.get("players", [])
-	var meidx := _me()
-	if meidx < 0 or meidx >= players.size():
-		_stop_climb()
-		return
-	var p: Dictionary = players[meidx]
-	_me_secure = bool(p.get("secure", true))
-	_climb_target = int(p.get("next_safe", int(p.get("foothold", 0))))
-	if _me_secure:
-		_climbing = false
-	elif not _climbing:
-		_climbing = true
-		_grip = 1.0
+	var slots: Array = [0, 1] if _is_solo() else [_client.you]
+	for slot in slots:
+		if slot < 0 or slot >= players.size():
+			continue
+		var p: Dictionary = players[slot]
+		if bool(p.get("secure", true)):
+			_climb.erase(slot)
+		else:
+			if not _climb.has(slot):
+				_climb[slot] = {"g": 1.0}
+			_climb[slot]["target"] = int(p.get("next_safe", int(p.get("foothold", 0))))
 	_update_grip_bar()
 
 
 func _stop_climb() -> void:
-	_climbing = false
+	_climb.clear()
 	_selecting = {}  # any in-progress card pick is abandoned when we leave combat
 	if _grip_bar != null:
 		_grip_bar.visible = false
 
 
+## Show the ACTIVE hunter's grip if they're climbing; else any other climbing
+## hunter's (named), so a ticking ally timer is never invisible after a switch.
 func _update_grip_bar() -> void:
 	if _grip_bar == null:
 		return
-	_grip_bar.visible = _climbing
-	if not _climbing:
+	_grip_bar.visible = not _climb.is_empty()
+	if _climb.is_empty():
 		return
-	_grip_meter.value = _grip
-	_grip_meter.modulate = Color(0.9, 0.33, 0.28).lerp(Color(0.55, 0.85, 0.5), _grip)
-	_grip_label.text = "⚠ HOLD ON — reach Height %d before your grip gives out!" % _climb_target
+	var slot: int = _me() if _climb.has(_me()) else int(_climb.keys()[0])
+	var st: Dictionary = _climb[slot]
+	var g := clampf(float(st["g"]), 0.0, 1.0)
+	_grip_meter.value = g
+	_grip_meter.modulate = Color(0.9, 0.33, 0.28).lerp(Color(0.55, 0.85, 0.5), g)
+	var who := "" if slot == _me() else "%s — " % _hunter_name(slot)
+	var extra := "   (both hunters climbing!)" if _climb.size() > 1 else ""
+	_grip_label.text = "⚠ %sHOLD ON — reach Height %d before your grip gives out!%s" % [
+		who, int(st.get("target", 0)), extra]
 
 
 func _refresh() -> void:
@@ -335,10 +341,11 @@ func _render_hand() -> void:
 		_end_turn_btn.disabled = true
 		_end_turn_btn.text = "Choosing a card…"
 		_switch_btn.disabled = true
-	elif _climbing:  # committed to a hop — you can't rest here; reach a hold or fall
+	elif _climb.has(_me()):  # committed to a hop — reach a hold or fall...
 		_end_turn_btn.disabled = true
 		_end_turn_btn.text = "⚠ Climbing — reach a hold!"
-		_switch_btn.disabled = true
+		# ...but you MAY switch and act with the other hunter while the timer runs
+		# (their climb keeps draining — solo multitasking, per Nick).
 
 
 func _on_card_tapped(card: Dictionary, cv: CardView) -> void:

@@ -11,12 +11,13 @@ Nick's continuous task list for Claude. **How it works:**
 
 ## Inbox
 - [ ] *(standing)* continually look through assets to use — finds so far: menu reskin `c4140ba`, strike/shake juice `5d9d09f` (burst flash + dust + arena judder); ambient music `e5fb47e` (menu=Flowing Rocks, combat=Retro Mystic — swap assets/music/*.ogg to change); queued: Emote Pack (reactions), UI Pack (grip/timing bars)
-- [] need to be able to switch characters 
+- [] check the meld card by the engineer. i have been fusing cards and it's not doing both of the cards effects.
+- [] need to be able to switch characters while the timer is going for climbing before you fall 
+- [] remove the text saying 'your hand -- x character' and just make it a symbol of your character
 ## Questions from Claude
 (none)
 
 ## Done
-- [x] meld not doing both cards' effects — `c0d6f93` (fusion dropped the special fields the goblin's kit runs on — prepare/pull_ally/block_per_play/create/timed chain/sacrifice; all carried now, regression-tested)
 - [x] boss attack intent as icons — `984cd87` ([beast] [sword] [value] → [target portrait]; sweeps show both hunters)
 - [x] max time on timed cards + faster sweeps — `373b544` (2.5s window, expire = fizzle; sweep 1.25→1.9; strip reddens as time runs out)
 - [x] find sharper assets for cards — `06500f5` (icons swapped to crisp 128px PNGs; portraits baked at 3x so everything downscales)
