@@ -132,7 +132,7 @@ func _build_shared() -> Dictionary:
 		s["boss"] = {
 			"name": b.name, "hp": b.hp, "max_hp": b.max_hp, "block": b.block,
 			"intent": b.current_move(), "target": c.boss_target_index(),
-			"vulnerable": b.vulnerable, "strength": b.strength,
+			"vulnerable": b.vulnerable, "strength": b.strength, "wound": b.wound,
 			"weak_point_height": b.weak_point_height, "foothold": c.foothold,
 			"foothold_max": Combat.FOOTHOLD_MAX, "sigil_reached": c.sigil_reached(),
 		}
@@ -148,6 +148,7 @@ func _players_public() -> Array:
 			out.append({
 				"name": ps.combatant.name, "hp": ps.combatant.hp, "max_hp": ps.combatant.max_hp,
 				"block": ps.combatant.block, "energy": ps.energy, "ended": ps.ended_turn,
+				"strength": ps.strength,
 			})
 	else:
 		for i in range(_run.player_count()):
@@ -201,7 +202,7 @@ func _card_icon(c: Card) -> String:
 		return "expose"
 	if c.damage > 0:
 		return "sword"
-	if c.ally_block > 0 or c.ally_energy > 0:
+	if c.ally_block > 0 or c.ally_energy > 0 or c.strength > 0:
 		return "support"
 	if c.block > 0:
 		return "shield"

@@ -44,7 +44,8 @@ var _round_block: int = 0
 ## decks[i] and combatants[i] belong to player i. The trailing bonuses come from
 ## the team's relics (see Run) — 0 in a plain fight.
 func _init(decks: Array, combatants: Array, p_boss: Boss, seed_value: int = 0,
-		energy_bonus: int = 0, attack_bonus: int = 0, round_block: int = 0) -> void:
+		energy_bonus: int = 0, attack_bonus: int = 0, round_block: int = 0,
+		start_strength: int = 0) -> void:
 	boss = p_boss
 	_energy_bonus = energy_bonus
 	_attack_bonus = attack_bonus
@@ -56,6 +57,7 @@ func _init(decks: Array, combatants: Array, p_boss: Boss, seed_value: int = 0,
 	for i in range(combatants.size()):
 		var ps := PlayerState.new()
 		ps.combatant = combatants[i]
+		ps.strength = start_strength  # relic: begin the fight with Strength
 		ps.draw_pile = (decks[i] as Array).duplicate()
 		_shuffle(ps.draw_pile)
 		players.append(ps)
@@ -124,10 +126,21 @@ func play_card(pi: int, ci: int) -> bool:
 	# stacks (Sunlight Blade); _damage_boss then adds the exposed + sigil bonuses.
 	var base_damage := card.damage + card.damage_per_vulnerable * boss.vulnerable
 	if card.damage > 0:
-		base_damage += _attack_bonus  # relic: attacks hit harder
+		base_damage += _attack_bonus + ps.strength  # relic + hunter Strength
 	if base_damage > 0:
-		var dealt := _damage_boss(base_damage)
-		_log("%s plays %s — %d damage%s." % [who, card.name, dealt, " (weak point!)" if dealt > base_damage else ""])
+		var hit_count := maxi(card.hits, 1)
+		var dealt := 0
+		for _h in hit_count:
+			dealt += _damage_boss(base_damage)
+		var flavour := "" if dealt <= base_damage * hit_count else " (weak point!)"
+		var times := "" if hit_count == 1 else " x%d" % hit_count
+		_log("%s plays %s — %d damage%s%s." % [who, card.name, dealt, times, flavour])
+	if card.strength > 0:
+		ps.strength += card.strength
+		_log("%s plays %s — +%d Strength." % [who, card.name, card.strength])
+	if card.wound > 0:
+		boss.wound += card.wound
+		_log("%s plays %s — Wound %d on %s." % [who, card.name, boss.wound, boss.name])
 	if card.grip > 0:
 		foothold = mini(foothold + card.grip, FOOTHOLD_MAX)
 		_log("%s plays %s — climbs (+%d Foothold, now %d)." % [who, card.name, card.grip, foothold])
@@ -206,6 +219,11 @@ func _enemy_turn() -> void:
 	phase = Phase.ENEMY
 	if _check_end():
 		return
+	if boss.wound > 0:  # bleed ignores the Titan's block
+		boss.hp = maxi(boss.hp - boss.wound, 0)
+		_log("%s bleeds for %d." % [boss.name, boss.wound])
+		if _check_end():
+			return
 	boss.block = 0
 	var move := boss.current_move()
 	var value := int(move.get("value", 0))
@@ -215,6 +233,13 @@ func _enemy_turn() -> void:
 			var target: PlayerState = players[boss_target_index()]
 			target.combatant.take_damage(dmg)
 			_log("%s attacks %s for %d." % [boss.name, target.combatant.name, dmg])
+		"leech":
+			var ldmg := value + boss.strength
+			var lt: PlayerState = players[boss_target_index()]
+			lt.combatant.take_damage(ldmg)
+			var healed := mini(ldmg, boss.max_hp - boss.hp)
+			boss.hp += healed
+			_log("%s drains %s for %d and recovers %d." % [boss.name, lt.combatant.name, ldmg, healed])
 		"attack_all":
 			var dmg_all := value + boss.strength
 			for ps in players:

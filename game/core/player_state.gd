@@ -9,4 +9,5 @@ var draw_pile: Array = []      # face-down; drawn from the back
 var hand: Array = []           # PRIVATE — only this player (and the host) sees the cards
 var discard_pile: Array = []
 var energy: int = 0
+var strength: int = 0          # added to this hunter's attack damage (buffs last the fight)
 var ended_turn: bool = false   # this player has passed; others may still act this round

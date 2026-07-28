@@ -12,7 +12,11 @@
     "harpoon":    { "name": "Harpoon", "type": "attack", "cost": 2, "damage": 8, "vulnerable": 1, "text": "Deal 8 damage, then Expose the Titan (1)." },
     "grip":       { "name": "Grip", "type": "skill", "cost": 1, "grip": 2, "target": "enemy", "text": "Climb the Titan (+2 Foothold). Reach a high weak point." },
     "sunlight_blade": { "name": "Sunlight Blade", "type": "attack", "cost": 1, "damage": 5, "damage_per_vulnerable": 3, "text": "Deal 5 damage, +3 for each Exposed stack on the Titan." },
-    "bowshot":    { "name": "Bowshot", "type": "attack", "cost": 0, "damage": 3, "vulnerable": 1, "text": "Deal 3 damage and Expose the Titan (1)." }
+    "bowshot":    { "name": "Bowshot", "type": "attack", "cost": 0, "damage": 3, "vulnerable": 1, "text": "Deal 3 damage and Expose the Titan (1)." },
+    "sharpen":    { "name": "Sharpen", "type": "skill", "cost": 1, "strength": 2, "text": "Gain 2 Strength — your attacks deal +2 for the rest of this fight." },
+    "rend":       { "name": "Rend", "type": "attack", "cost": 1, "damage": 4, "wound": 2, "text": "Deal 4 damage and apply Wound 2 (the Titan bleeds each turn)." },
+    "dagger":     { "name": "Dagger", "type": "attack", "cost": 0, "damage": 3, "text": "Deal 3 damage." },
+    "flurry":     { "name": "Flurry", "type": "attack", "cost": 2, "damage": 4, "hits": 2, "text": "Deal 4 damage twice (each hit can strike an Exposed weak point)." }
   },
   "starter_deck": [
     "slash", "slash", "slash", "slash",
@@ -21,5 +25,5 @@
     "cleave",
     "cover"
   ],
-  "reward_pool": ["rally", "expose", "draw_aggro", "harpoon", "grip", "sunlight_blade", "bowshot", "cleave", "cover", "brace", "slash", "take_aim"]
+  "reward_pool": ["rally", "expose", "draw_aggro", "harpoon", "grip", "sunlight_blade", "bowshot", "sharpen", "rend", "dagger", "flurry", "cleave", "cover", "brace", "slash", "take_aim"]
 }

@@ -6,7 +6,9 @@
     "stone_skin":    { "name": "Stone Skin", "effect": "round_block", "value": 3, "text": "Start each round with 3 Block." },
     "old_remedy":    { "name": "Old Remedy", "effect": "heal_on_clear", "value": 8, "text": "Recover +8 more HP after each Titan falls." },
     "sunforged_edge":{ "name": "Sunforged Edge", "effect": "attack_bonus", "value": 3, "text": "Your attacks deal +3 damage." },
-    "warding_totem": { "name": "Warding Totem", "effect": "round_block", "value": 4, "text": "Start each round with 4 Block." }
+    "warding_totem": { "name": "Warding Totem", "effect": "round_block", "value": 4, "text": "Start each round with 4 Block." },
+    "whetstone":     { "name": "Whetstone", "effect": "start_strength", "value": 2, "text": "Begin each Titan with +2 Strength." },
+    "field_kit":     { "name": "Field Kit", "effect": "heal_on_clear", "value": 10, "text": "Recover +10 more HP after each Titan falls." }
   },
-  "pool": ["iron_thews", "honed_blades", "stone_skin", "old_remedy", "sunforged_edge", "warding_totem"]
+  "pool": ["iron_thews", "honed_blades", "stone_skin", "old_remedy", "sunforged_edge", "warding_totem", "whetstone", "field_kit"]
 }

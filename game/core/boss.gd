@@ -10,6 +10,7 @@ extends Combatant
 var moves: Array = []
 var vulnerable: int = 0        # "exposed" stacks — each consumed hit deals bonus damage
 var strength: int = 0          # added to every attack (grows via "enrage" moves)
+var wound: int = 0             # bleed — the Titan takes this much at the start of each of its turns
 var weak_point_height: int = 0 # 0 = low sigil (always reachable); >0 needs Foothold to strike (SotC climb)
 var _move_index: int = 0
 

@@ -55,8 +55,14 @@ func _init() -> void:
 	_test_relic_energy_bonus()
 	_test_relic_attack_bonus()
 	_test_relic_round_block()
-	_test_run_is_three_titans()
+	_test_run_is_four_titans()
 	_test_run_relic_reward_and_full_clear()
+	# content batch: strength, wound, multi-hit, leech
+	_test_strength_mechanic()
+	_test_wound_bleeds_the_titan()
+	_test_flurry_multi_hit()
+	_test_leech_drains_and_heals()
+	_test_relic_start_strength()
 	# session / client-server split
 	_test_session_both_players_join()
 	_test_session_lobby_waits_for_second_player()
@@ -399,9 +405,9 @@ func _test_relic_round_block() -> void:
 	_expect(combat.players[0].combatant.block == 3, "round_block relic grants block each round")
 
 
-func _test_run_is_three_titans() -> void:
+func _test_run_is_four_titans() -> void:
 	var run := Run.new([_mixed_deck(), _mixed_deck()], ["A", "B"], 5)
-	_expect(run.total_encounters() == 3, "a run is three Titans")
+	_expect(run.total_encounters() == 4, "a run is four Titans")
 
 
 func _test_run_relic_reward_and_full_clear() -> void:
@@ -409,19 +415,77 @@ func _test_run_relic_reward_and_full_clear() -> void:
 	run.start()
 	_force_win(run)  # Titan 1 -> card reward
 	_expect(run.reward_kind == "card", "first reward is a card")
-	run.pick_reward(0, 0)
-	run.pick_reward(1, 0)  # -> Titan 2
+	_pick_both(run)  # -> Titan 2
 	_force_win(run)  # Titan 2 -> relic reward
 	_expect(run.reward_kind == "relic" and not run.reward_choices[0].is_empty(),
 		"second reward is a relic")
+	_pick_both(run)  # 2 team relics -> Titan 3
+	_expect(run.team_relics.size() == 2 and run.encounter_index == 2,
+		"relics added team-wide; run advances to Titan 3")
+	_force_win(run)  # Titan 3 -> card reward
+	_pick_both(run)  # -> Titan 4
+	_force_win(run)  # Titan 4 -> run won
+	_expect(run.phase == Run.Phase.WON, "felling all four Titans wins the run")
+
+
+func _pick_both(run: Run) -> void:
 	run.pick_reward(0, 0)
-	run.pick_reward(1, 0)  # 2 team relics -> Titan 3
-	var totals := run.relic_totals()
-	_expect(run.team_relics.size() == 2 and run.encounter_index == 2
-		and totals["energy"] + totals["attack"] + totals["block"] + totals["heal"] > 0,
-		"relics are added team-wide and produce modifiers; final Titan starts")
-	_force_win(run)  # Titan 3 -> run won
-	_expect(run.phase == Run.Phase.WON, "felling all three Titans wins the run")
+	run.pick_reward(1, 0)
+
+
+# --- content batch: strength, wound, multi-hit, leech ---------------------
+
+func _test_strength_mechanic() -> void:
+	var combat := _new_combat([_deck_of(_sharpen, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	combat.play_card(0, _first_playable(combat, 0))  # Sharpen +2 Strength
+	_expect(combat.players[0].strength == 2, "Sharpen grants Strength")
+	combat.players[1].strength = 3
+	var before := combat.boss.hp
+	combat.play_card(1, _first_playable(combat, 1))  # Slash 6 + 3 Strength
+	_expect(combat.boss.hp == before - 9, "Strength adds to attack damage")
+
+
+func _test_wound_bleeds_the_titan() -> void:
+	var boss := Boss.new("Bleeder", 100)
+	boss.moves = [{"type": "block", "value": 0}]  # harmless move
+	var combat := _new_combat([_deck_of(_rend, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.play_card(0, _first_playable(combat, 0))  # Rend: 4 damage + Wound 2
+	_expect(combat.boss.wound == 2 and combat.boss.hp == 96, "Rend deals damage and applies Wound")
+	combat.end_turn(0)
+	combat.end_turn(1)  # enemy turn: bleed 2
+	_expect(combat.boss.hp == 94, "Wound bleeds at the start of the Titan's turn")
+
+
+func _test_flurry_multi_hit() -> void:
+	var combat := _new_combat([_deck_of(_flurry, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var before := combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))  # 4 x2 = 8
+	_expect(combat.boss.hp == before - 8, "Flurry deals its damage twice")
+	var c2 := _new_combat([_deck_of(_flurry, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	c2.boss.vulnerable = 2
+	var b2 := c2.boss.hp
+	c2.play_card(0, _first_playable(c2, 0))  # (4+4)+(4+4) = 16, vulnerable 2->0
+	_expect(c2.boss.hp == b2 - 16 and c2.boss.vulnerable == 0,
+		"each Flurry hit can strike an Exposed weak point")
+
+
+func _test_leech_drains_and_heals() -> void:
+	var boss := Boss.new("Leech", 100)
+	boss.hp = 50
+	boss.moves = [{"type": "leech", "value": 12}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.end_turn(0)
+	combat.end_turn(1)  # leech hits hunter 1 for 12, Titan heals 12
+	_expect(combat.players[0].combatant.hp == 30 and combat.boss.hp == 62,
+		"leech drains a hunter and heals the Titan")
+
+
+func _test_relic_start_strength() -> void:
+	var players := [Combatant.new("A", 42), Combatant.new("B", 42)]
+	var combat := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)], players,
+		_dummy_boss(300), 42, 0, 0, 0, 2)  # start_strength = 2
+	combat.start()
+	_expect(combat.players[0].strength == 2, "start_strength relic begins the fight with Strength")
 
 
 # --- Session / client-server split ----------------------------------------
@@ -598,6 +662,12 @@ func _sunblade() -> Card:
 	return Card.from_dict({"id": "sunlight_blade", "name": "Sunlight Blade", "type": "attack", "cost": 1, "damage": 5, "damage_per_vulnerable": 3})
 func _bowshot() -> Card:
 	return Card.from_dict({"id": "bowshot", "name": "Bowshot", "type": "attack", "cost": 0, "damage": 3, "vulnerable": 1})
+func _sharpen() -> Card:
+	return Card.from_dict({"id": "sharpen", "name": "Sharpen", "type": "skill", "cost": 1, "strength": 2})
+func _rend() -> Card:
+	return Card.from_dict({"id": "rend", "name": "Rend", "type": "attack", "cost": 1, "damage": 4, "wound": 2})
+func _flurry() -> Card:
+	return Card.from_dict({"id": "flurry", "name": "Flurry", "type": "attack", "cost": 2, "damage": 4, "hits": 2})
 
 
 func _expect(cond: bool, name: String) -> void:

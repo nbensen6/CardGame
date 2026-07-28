@@ -218,9 +218,11 @@ func _tally_combo(card: Card, stats: Dictionary) -> void:
 func _report(title: String, agg: Dictionary) -> void:
 	print("── %s ──" % title)
 	print("  win rate:        %.0f%%  (%d / %d)" % [agg["wins"] * 100.0 / RUNS, agg["wins"], RUNS])
-	print("  losses:          Titan 1: %d   Titan 2: %d   Titan 3: %d" % [
-		int(agg["lost_at"].get(1, 0)), int(agg["lost_at"].get(2, 0)), int(agg["lost_at"].get(3, 0))])
-	for enc in [0, 1, 2]:
+	var loss_parts: Array = []
+	for e in range(Run.ENCOUNTERS.size()):
+		loss_parts.append("T%d: %d" % [e + 1, int(agg["lost_at"].get(e + 1, 0))])
+	print("  losses:          " + "   ".join(loss_parts))
+	for enc in range(Run.ENCOUNTERS.size()):
 		if agg["rounds_n"].has(enc):
 			var avg: float = agg["rounds"][enc] / float(agg["rounds_n"][enc])
 			print("  avg rounds — Titan %d: %.1f  (over %d clears)" % [enc + 1, avg, agg["rounds_n"][enc]])

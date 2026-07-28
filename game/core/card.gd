@@ -17,6 +17,9 @@ var vulnerable: int    # "exposed" stacks added to the Titan (next hits deal bon
 var taunt: bool        # you become the Titan's target this round (tank for your ally)
 var grip: int          # Foothold gained — climb toward a high weak point (SotC)
 var damage_per_vulnerable: int  # bonus damage per Exposed stack on the Titan
+var strength: int      # Strength gained by the player (attacks deal +Strength this fight)
+var wound: int         # Wound applied to the Titan (it bleeds each of its turns)
+var hits: int          # how many times the damage lands (default 1) — multi-strike
 var draw: int          # extra cards drawn
 var target: String     # "self" | "ally" | "enemy" — who the card acts on (UI clarity)
 var text: String       # rules text, shown on the card face (no hover needed — §5)
@@ -35,6 +38,9 @@ static func from_dict(d: Dictionary) -> Card:
 	c.taunt = bool(d.get("taunt", false))
 	c.grip = int(d.get("grip", 0))
 	c.damage_per_vulnerable = int(d.get("damage_per_vulnerable", 0))
+	c.strength = int(d.get("strength", 0))
+	c.wound = int(d.get("wound", 0))
+	c.hits = int(d.get("hits", 1))
 	c.draw = int(d.get("draw", 0))
 	c.target = String(d.get("target", "self"))
 	c.text = String(d.get("text", ""))

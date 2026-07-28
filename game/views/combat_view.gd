@@ -262,6 +262,8 @@ func _render_players(s: Dictionary, targeted: Array) -> void:
 
 		if phase == "combat":
 			var status := "Energy %d / %d" % [p["energy"], s["base_energy"]]
+			if int(p.get("strength", 0)) > 0:
+				status += "   Str +%d" % int(p["strength"])
 			if bool(p.get("ended", false)):
 				status += "   • ended"
 			box.add_child(_mklabel(status))
@@ -280,6 +282,9 @@ func _titan_tags(boss: Dictionary) -> String:
 	var strength := int(boss.get("strength", 0))
 	if strength > 0:
 		out += "   · enraged +%d" % strength
+	var wound := int(boss.get("wound", 0))
+	if wound > 0:
+		out += "   · bleeding %d" % wound
 	var height := int(boss.get("weak_point_height", 0))
 	if height > 0:
 		var foothold := int(boss.get("foothold", 0))

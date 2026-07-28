@@ -10,7 +10,7 @@ extends RefCounted
 
 enum Phase { COMBAT, REWARD, WON, LOST }
 
-const ENCOUNTERS := ["stone_warden", "gale_serpent", "drowned_colossus"]
+const ENCOUNTERS := ["stone_warden", "gale_serpent", "drowned_colossus", "sunken_warden"]
 const REWARD_CHOICES := 3
 const HEAL_BETWEEN := 6  # hunters recover a little after each Titan falls
 const PLAYER_HP := 42
@@ -98,19 +98,20 @@ func _start_encounter() -> void:
 	var mods := relic_totals()
 	# Distinct per-encounter seed so each fight shuffles differently but reproducibly.
 	combat = Combat.new(decks, combatants, boss, _encounter_seed(),
-		mods["energy"], mods["attack"], mods["block"])
+		mods["energy"], mods["attack"], mods["block"], mods["strength"])
 	combat.start()
 	phase = Phase.COMBAT
 
 ## Sum the team's relic effects into flat modifiers.
 func relic_totals() -> Dictionary:
-	var t := {"energy": 0, "attack": 0, "block": 0, "heal": 0}
+	var t := {"energy": 0, "attack": 0, "block": 0, "heal": 0, "strength": 0}
 	for r in team_relics:
 		match String(r.get("effect", "")):
 			"max_energy": t["energy"] += int(r.get("value", 0))
 			"attack_bonus": t["attack"] += int(r.get("value", 0))
 			"round_block": t["block"] += int(r.get("value", 0))
 			"heal_on_clear": t["heal"] += int(r.get("value", 0))
+			"start_strength": t["strength"] += int(r.get("value", 0))
 	return t
 
 func _encounter_seed() -> int:
