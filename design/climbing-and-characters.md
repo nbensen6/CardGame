@@ -103,6 +103,30 @@ tweaks.
 - The climb rework (A2) touches `Combat` (Height gating, fall/grip) + `Boss`
   (zones/sigil position) + `data/bosses.json` + the view (a climb/height indicator).
 
+## Part C — merged roster v2 (human's creatures)
+
+**Tone pivot (human's call, endorsed):** swap the somber SotC archetypes for
+**charming creatures climbing giant beasts.** Keeps the climb mechanic; changes the
+skin. Rationale: better differentiation (the co-op niche is all serious fantasy),
+cheaper/easier art (§9), charm sells in this genre — and the ascend-to-the-weak-point
+loop is untouched. The colossi become **giant climbable beasts** (a turtle-mountain,
+a great bird, a tusked behemoth); reskin/rename the current Titans as creatures.
+
+**Key principle:** spread the roster along a **"climbs well ↔ hits hard"** axis so
+characters DEPEND on each other. If everyone self-climbs, there is no synergy; the
+magic is a fast climber hauling a heavy hitter up to the sigil.
+
+| Character | Role | Signature | On the axis |
+|---|---|---|---|
+| **Goblin Mech** | builder / heavy | *Salvage/Build* temporary Gadget cards (grappling hook = Height, piton = anti-shake); can hand gadgets to the ally | climbs poorly · **hits hard** |
+| **Vine-Weaver (Plant)** | setup + DOT | *Vines* give shared Height to BOTH players; *Poison* (= our Wound) ticks the beast; roots resist shakes | climbs well (for team) · hits slow |
+| **Frog** | mobility / scout | *Leap* — big self-Height, reaches + Exposes the sigil fast, weak strikes; can drag an ally up a zone | **climbs great** · hits weak |
+| **Mountain Climbers** | coordination | *paired cards* — climb moves are incomplete alone; must combine with the ally's card the same round (belay ↔ ascend). Forces true §6 co-op | climbs only **together** |
+
+**Gaps to fill:** the set is climb-heavy — light on a pure PAYOFF striker and a
+PROTECTOR. Options: make the Goblin Mech the heavy payoff, and/or add one more
+creature (a Beetle/Ram/Yeti-style defender-bruiser).
+
 ## Open questions for the human
 - **How far on the climb feel?** A2 (recommended) is a real rework + re-tune;
   A1 is cheap but shallow. Your call on ambition.
