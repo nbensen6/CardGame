@@ -39,7 +39,8 @@
     "grappling_arm": { "name": "Grappling Arm", "type": "skill", "cost": 1, "pull_ally": 3, "target": "ally", "text": "Grapple your ally up to your Height (only if they're within 3 below you)." },
     "build_mech":    { "name": "Build Mech", "type": "skill", "cost": 1, "block": 2, "block_per_play": 2, "text": "Bolt on more plating: 2 Block, +2 for each time you've played Build Mech this fight." },
     "burn_coal":     { "name": "Burn Coal", "type": "skill", "cost": 1, "exhaust_pick": true, "cheapen_pick": true, "cheapen_amount": 1, "text": "Sacrifice a card (exhausted for the fight) to permanently cut another card's cost by 1." },
-    "catapult":      { "name": "Catapult", "type": "skill", "cost": 1, "exhaust_pick": true, "sac_ally_grip": 2, "target": "ally", "text": "Sacrifice a card to catapult your ally up +2 Height." }
+    "catapult":      { "name": "Catapult", "type": "skill", "cost": 1, "exhaust_pick": true, "sac_ally_grip": 2, "target": "ally", "text": "Sacrifice a card to catapult your ally up +2 Height." },
+    "meld":          { "name": "Meld", "type": "skill", "cost": 1, "meld": true, "text": "Fuse two cards in your hand into one that does both, at 1 less than their combined cost." }
   },
   "starter_deck": [
     "slash", "slash", "slash",

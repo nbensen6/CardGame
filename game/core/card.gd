@@ -28,6 +28,7 @@ var exhaust_pick: bool # requires picking a card from your hand to EXHAUST (gone
 var cheapen_pick: bool # requires picking a card from your hand to permanently cut its cost
 var cheapen_amount: int # how much cheapen_pick reduces the chosen card's cost (default 1)
 var sac_ally_grip: int # Height your ally climbs, IF you sacrificed a card (Catapult)
+var meld: bool         # fuse two chosen hand cards into one (their effects combined, cost sum -1)
 var damage_per_vulnerable: int  # bonus damage per Exposed stack on the Titan
 var damage_per_foothold: int    # bonus damage per Height climbed (Mountain Climbers)
 var strength: int      # Strength gained by the player (attacks deal +Strength this fight)
@@ -62,6 +63,7 @@ static func from_dict(d: Dictionary) -> Card:
 	c.cheapen_pick = bool(d.get("cheapen_pick", false))
 	c.cheapen_amount = int(d.get("cheapen_amount", 1))
 	c.sac_ally_grip = int(d.get("sac_ally_grip", 0))
+	c.meld = bool(d.get("meld", false))
 	c.damage_per_vulnerable = int(d.get("damage_per_vulnerable", 0))
 	c.damage_per_foothold = int(d.get("damage_per_foothold", 0))
 	c.strength = int(d.get("strength", 0))

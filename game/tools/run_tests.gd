@@ -58,6 +58,7 @@ func _init() -> void:
 	_test_build_mech_scales()
 	_test_burn_coal_exhaust_and_cheapen()
 	_test_catapult_sacrifices_to_launch_ally()
+	_test_meld_fuses_two_cards()
 	# step 4: run / meta-progression
 	_test_run_starts_in_combat()
 	_test_run_win_flows_through_reward_to_next_encounter()
@@ -483,6 +484,19 @@ func _test_catapult_sacrifices_to_launch_ally() -> void:
 	_expect(ok and ps.exhaust_pile.size() == 1 and ps.hand.size() == 0
 		and combat.players[1].foothold == ally_before + 2,
 		"Catapult sacrifices a card to launch the ally up +2 Height")
+
+
+func _test_meld_fuses_two_cards() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_meld_card(), _cleave(), _grapple()]  # meld Cleave (1) + Grapple (2)
+	ps.energy = 3
+	var ok: bool = combat.play_card(0, 0, true, 1, 2)
+	var one_card: bool = ps.hand.size() == 1
+	var fused: Card = ps.hand[0]
+	_expect(ok and one_card and fused.damage == 10 and fused.grip == 1
+		and fused.timed and fused.timed_grip == 2 and fused.cost == 1,
+		"Meld fuses two cards into one that does both, at cost sum -1")
 
 
 func _test_timed_damage_bonus() -> void:
@@ -980,6 +994,8 @@ func _burn_coal() -> Card:
 	return Card.from_dict({"id": "burn_coal", "name": "Burn Coal", "type": "skill", "cost": 1, "exhaust_pick": true, "cheapen_pick": true, "cheapen_amount": 1})
 func _catapult() -> Card:
 	return Card.from_dict({"id": "catapult", "name": "Catapult", "type": "skill", "cost": 1, "exhaust_pick": true, "sac_ally_grip": 2, "target": "ally"})
+func _meld_card() -> Card:
+	return Card.from_dict({"id": "meld", "name": "Meld", "type": "skill", "cost": 1, "meld": true})
 func _sunblade() -> Card:
 	return Card.from_dict({"id": "sunlight_blade", "name": "Sunlight Blade", "type": "attack", "cost": 1, "damage": 5, "damage_per_vulnerable": 3})
 func _bowshot() -> Card:

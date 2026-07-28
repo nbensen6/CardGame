@@ -163,6 +163,38 @@ func can_play(pi: int, ci: int) -> bool:
 		return false
 	return effective_cost(pi, ps.hand[ci]) <= ps.energy
 
+## Fuse two cards into one: effects add up, cost is their sum minus 1, and if
+## either was timed the result is one timed card carrying BOTH timed bonuses (so
+## "two timed effects" collapse into a single timing bar). Selection-type fields
+## (create/prepare/exhaust picks) are intentionally dropped — melds combine plain
+## effects, not other gadgets.
+func _meld_cards(a: Card, b: Card) -> Card:
+	return Card.from_dict({
+		"id": "meld_%s_%s" % [a.id, b.id],
+		"name": "%s + %s" % [a.name, b.name],
+		"type": "attack" if (a.type == "attack" or b.type == "attack") else "skill",
+		"cost": maxi(0, a.cost + b.cost - 1),
+		"damage": a.damage + b.damage,
+		"block": a.block + b.block,
+		"ally_block": a.ally_block + b.ally_block,
+		"ally_energy": a.ally_energy + b.ally_energy,
+		"vulnerable": a.vulnerable + b.vulnerable,
+		"taunt": a.taunt or b.taunt,
+		"grip": a.grip + b.grip,
+		"ally_grip": a.ally_grip + b.ally_grip,
+		"timed": a.timed or b.timed,
+		"timed_grip": a.timed_grip + b.timed_grip,
+		"timed_damage": a.timed_damage + b.timed_damage,
+		"damage_per_vulnerable": a.damage_per_vulnerable + b.damage_per_vulnerable,
+		"damage_per_foothold": a.damage_per_foothold + b.damage_per_foothold,
+		"strength": a.strength + b.strength,
+		"wound": a.wound + b.wound,
+		"hits": maxi(a.hits, b.hits),
+		"draw": a.draw + b.draw,
+		"target": "enemy",
+		"text": "%s  +  %s" % [a.text, b.text],
+	})
+
 ## A card's cost for a hunter, after any permanent Burn Coal reductions.
 func effective_cost(pi: int, card: Card) -> int:
 	if pi < 0 or pi >= players.size():
@@ -195,10 +227,10 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	# Capture selection targets by reference BEFORE any removal (indices are into the
 	# current hand, and must not point at the card being played).
 	var sac_card: Card = null
-	if card.exhaust_pick and sac_index >= 0 and sac_index < ps.hand.size() and sac_index != ci:
+	if (card.exhaust_pick or card.meld) and sac_index >= 0 and sac_index < ps.hand.size() and sac_index != ci:
 		sac_card = ps.hand[sac_index]
 	var cheapen_card: Card = null
-	if card.cheapen_pick and target_index >= 0 and target_index < ps.hand.size() \
+	if (card.cheapen_pick or card.meld) and target_index >= 0 and target_index < ps.hand.size() \
 			and target_index != ci and target_index != sac_index:
 		cheapen_card = ps.hand[target_index]
 	ps.energy -= effective_cost(pi, card)
@@ -271,6 +303,15 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 				_log("%s catapults %s up (+%d Height, now %d)." % [who, launched.combatant.name, card.sac_ally_grip, launched.foothold])
 		else:
 			_log("%s plays %s — but sacrifices nothing." % [who, card.name])
+	if card.meld:  # fuse two chosen cards into one combined card
+		if sac_card != null and cheapen_card != null:
+			ps.hand.erase(sac_card)
+			ps.hand.erase(cheapen_card)
+			var fused := _meld_cards(sac_card, cheapen_card)
+			ps.hand.append(fused)
+			_log("%s melds %s + %s into %s (cost %d)." % [who, sac_card.name, cheapen_card.name, fused.name, fused.cost])
+		else:
+			_log("%s plays %s — needs two cards to meld." % [who, card.name])
 	if card.pull_ally > 0:  # grapple the ally UP to your Height, if they're within reach
 		var yanked: PlayerState = players[ally_index(pi)]
 		var gap := ps.foothold - yanked.foothold

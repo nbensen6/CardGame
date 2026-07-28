@@ -86,10 +86,12 @@ himself up, and leans on a partner to carry him. Rewards big timed swings.
 - ✅ **Goblin Jetpack** (was Cleave) — prepare→next-turn auto-climb to the sigil.
 - ✅ **Grappling Arm** (was Flurry) — pull ally up to you if within 3 Height.
 - ✅ **Build Mech** (was Brace) — Block scales each play.
-- ⏳ **Satchel Charge** (Piston Punch) — needs a *chained timing* model (3 timed hits → boom). Design Q: 3 sequential bars on one card, or a planted bomb primed over several turns?
-- ⏳ **Burn Coal** (Rend) — Exhaust one card + permanently −1 cost to another. Needs a "pick a card to sacrifice" selection UI (shared with Catapult).
-- ⏳ **Catapult** (Slash) — ally sacrifices a card to climb. Needs the sacrifice UI + a cross-player prompt.
-- 🅿️ **Meld** (Sharpen) — fuse two cards into one at −1 cost. Big feature (runtime card composition + combined timed effects). Parked until the others land.
+- ✅ **Burn Coal** (was Rend) — sacrifice a card (exhaust) to permanently −1 another card's cost. Uses the new pick-a-card flow.
+- ✅ **Catapult** (was Slash) — sacrifice a card to launch your ally +2 Height. *Note: the CASTER sacrifices (not the ally) — flag if you want the true ally-chooses version.*
+- ✅ **Meld** (was Sharpen) — fuse two chosen cards into one: effects add up, cost = sum −1, and if either is timed the result is ONE timed card with both bonuses combined (one timing bar). Selection fields (create/prepare/exhaust) are dropped when melded.
+- ⏳ **Satchel Charge** (Piston Punch) — the last one. Needs a *chained timing* model. **Design Q for Nathan:** (a) one card, 3 timing bars back-to-back → boom; or (b) a planted bomb primed with a timed action over several turns?
+
+The Engineer is fully redesigned except Satchel (waiting on the timing-model choice).
 
 **His design space (levers that fit the fantasy):**
 - **More `create` gadgets** — the engineer's identity. A card that *builds* a

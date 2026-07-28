@@ -343,8 +343,8 @@ func _on_card_tapped(card: Dictionary, cv: CardView) -> void:
 	if bool(card.get("timed", false)):
 		cv.start_timing()  # the card runs its own timing sweep; the next tap fires it
 		return
-	if bool(card.get("exhaust_pick", false)) or bool(card.get("cheapen_pick", false)):
-		_start_selection(card)  # Burn Coal / Catapult — pick target cards, then it fires
+	if bool(card.get("exhaust_pick", false)) or bool(card.get("cheapen_pick", false)) or bool(card.get("meld", false)):
+		_start_selection(card)  # Burn Coal / Catapult / Meld — pick target cards, then it fires
 		return
 	Sfx.play("card")
 	_client.play_card(index, true, _cmd_slot())
@@ -353,22 +353,32 @@ func _on_card_tapped(card: Dictionary, cv: CardView) -> void:
 # --- Card selection flow (Burn Coal / Catapult) ---------------------------
 
 func _selection_prompt() -> String:
-	var steps: Array = _selecting.get("steps", [])
-	var step := String(steps[int(_selecting.get("step", 0))])
+	var mode := String(_selecting.get("mode", "exhaust"))
+	var step := int(_selecting.get("step", 0))
 	var nm := String(_selecting.get("name", "card"))
-	if step == "exhaust":
-		return "%s — tap a card to SACRIFICE   (tap %s again to cancel)" % [nm, nm]
-	return "%s — tap a card to make CHEAPER" % nm
+	var cancel := "   (tap %s again to cancel)" % nm
+	match mode:
+		"meld":
+			return "%s — tap the %s card to meld%s" % [nm, "FIRST" if step == 0 else "SECOND", cancel]
+		"exhaust_cheapen":
+			if step == 0:
+				return "%s — tap a card to SACRIFICE%s" % [nm, cancel]
+			return "%s — tap a card to make CHEAPER" % nm
+		_:
+			return "%s — tap a card to SACRIFICE%s" % [nm, cancel]
 
 
 func _start_selection(card: Dictionary) -> void:
-	var steps: Array = []
-	if bool(card.get("exhaust_pick", false)):
-		steps.append("exhaust")
-	if bool(card.get("cheapen_pick", false)):
-		steps.append("cheapen")
+	var mode := "exhaust"
+	var picks := 1
+	if bool(card.get("meld", false)):
+		mode = "meld"
+		picks = 2
+	elif bool(card.get("cheapen_pick", false)):
+		mode = "exhaust_cheapen"
+		picks = 2
 	_selecting = {"play_index": int(card["index"]), "name": String(card.get("name", "card")),
-		"steps": steps, "step": 0, "sac": -1, "target": -1}
+		"mode": mode, "picks": picks, "step": 0, "sac": -1, "target": -1}
 	Sfx.play("card")
 	_render_hand()
 
@@ -378,16 +388,14 @@ func _pick_for_selection(idx: int) -> void:
 		_selecting = {}  # tapped the selection card again — cancel
 		_render_hand()
 		return
-	var steps: Array = _selecting.get("steps", [])
-	var step := String(steps[int(_selecting.get("step", 0))])
-	if step == "exhaust":
+	if int(_selecting.get("step", 0)) == 0:
 		_selecting["sac"] = idx
 	else:
 		if idx == int(_selecting.get("sac", -1)):
-			return  # can't cheapen the card you just sacrificed
+			return  # the two picks must be different cards
 		_selecting["target"] = idx
 	_selecting["step"] = int(_selecting.get("step", 0)) + 1
-	if int(_selecting["step"]) >= steps.size():  # all picks made — fire it
+	if int(_selecting["step"]) >= int(_selecting.get("picks", 1)):  # all picks made — fire it
 		var play_index := int(_selecting.get("play_index", -1))
 		var sac := int(_selecting.get("sac", -1))
 		var target := int(_selecting.get("target", -1))
