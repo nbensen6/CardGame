@@ -29,6 +29,15 @@ Per card: `cost`, and any of `damage`, `block`, `ally_block`, `ally_energy`,
 - `reward_pool` — cards offered between Titans.
 - Add a new card: add an entry, then list its id in `reward_pool` (and/or starter).
 
+## Characters — `game/data/characters.json`
+Per character: `name`, `desc`, `starter_deck` (card ids), and a signature
+`passive` ({type, value}). Passive types: `climb_bonus` (+Height per climb),
+`attack_bonus` (+attack), `ally_climb` (ally climbs when you do), `none`. `order`
+sets the lobby list. Height is PER-HUNTER — cards can lift the ally (`ally_grip`),
+build cards (`create`), or scale damage with your Height (`damage_per_foothold`).
+Four creatures span a "climbs well ↔ hits hard" dependency axis (Frog/Vine-Weaver
+climb & carry; Goblin Mech hits hard but can't climb — needs a lift).
+
 ## Relics — `game/data/relics.json`
 Per relic: `effect` (`max_energy` | `attack_bonus` | `round_block` |
 `heal_on_clear` | `start_strength`) + `value` + `text`. `pool` lists which can be
