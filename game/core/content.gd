@@ -9,6 +9,7 @@ extends RefCounted
 const CARDS_PATH := "res://data/cards.json"
 const BOSSES_PATH := "res://data/bosses.json"
 const RELICS_PATH := "res://data/relics.json"
+const CHARACTERS_PATH := "res://data/characters.json"
 
 static var _cache: Dictionary = {}
 
@@ -61,6 +62,38 @@ static func make_relic(id: String) -> Dictionary:
 	var rd: Dictionary = (relics[id] as Dictionary).duplicate()
 	rd["id"] = id
 	return rd
+
+## Characters, in menu order: [{id, name, desc}, ...].
+static func list_characters() -> Array:
+	var db := _read_json(CHARACTERS_PATH)
+	var chars: Dictionary = db.get("characters", {})
+	var out: Array = []
+	for id in db.get("order", chars.keys()):
+		if chars.has(id):
+			var c: Dictionary = chars[id]
+			out.append({"id": id, "name": String(c.get("name", id)), "desc": String(c.get("desc", ""))})
+	return out
+
+## Build a character's starter deck.
+static func character_deck(id: String) -> Array:
+	var chars: Dictionary = _read_json(CHARACTERS_PATH).get("characters", {})
+	var deck: Array = []
+	if chars.has(id):
+		for cid in (chars[id] as Dictionary).get("starter_deck", []):
+			deck.append(make_card(String(cid)))
+	return deck
+
+## A character's signature passive as {type, value, character:id}.
+static func character_passive(id: String) -> Dictionary:
+	var chars: Dictionary = _read_json(CHARACTERS_PATH).get("characters", {})
+	var p: Dictionary = (chars.get(id, {}) as Dictionary).get("passive", {"type": "none", "value": 0})
+	var out: Dictionary = p.duplicate()
+	out["character"] = id
+	return out
+
+static func character_name(id: String) -> String:
+	var chars: Dictionary = _read_json(CHARACTERS_PATH).get("characters", {})
+	return String((chars.get(id, {}) as Dictionary).get("name", id))
 
 ## Build a Titan by id from data.
 static func build_boss(id: String) -> Boss:

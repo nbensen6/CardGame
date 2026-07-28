@@ -19,6 +19,7 @@ var _slot_of: Dictionary = {}  # peer_id -> hunter slot
 var _peers: Array = []         # peer_ids in join order (slot = position)
 var paused: bool = false       # a hunter dropped mid-run; play is halted
 var _disconnected_slot: int = -1
+var _character_of: Dictionary = {}  # peer_id -> chosen character id (lobby select)
 
 func _init(transport: Transport, seed_value: int = 0, required_players: int = 2) -> void:
 	_transport = transport
@@ -30,10 +31,13 @@ func _init(transport: Transport, seed_value: int = 0, required_players: int = 2)
 func start_new_run() -> void:
 	var decks: Array = []
 	var names: Array = []
-	for i in range(_peers.size()):
-		decks.append(Content.build_starter_deck())
-		names.append(_player_name(i))
-	_run = Run.new(decks, names, _seed)
+	var passives: Array = []
+	for pid in _peers:
+		var cid := String(_character_of.get(pid, "frog"))
+		decks.append(Content.character_deck(cid))
+		names.append(Content.character_name(cid))
+		passives.append(Content.character_passive(cid))
+	_run = Run.new(decks, names, _seed, passives)
 	_run.start()
 	_broadcast_state()
 
@@ -43,6 +47,10 @@ func _on_command(peer_id: int, command: Dictionary) -> void:
 	match String(command.get("type", "")):
 		"join":
 			_handle_join(peer_id)
+		"select_character":
+			if _run == null:
+				_character_of[peer_id] = String(command.get("character", ""))
+			_try_start_or_broadcast()
 		"play_card":
 			_in_combat_action(peer_id, func(pi: int) -> void:
 				_run.combat.play_card(pi, int(command.get("index", -1))))
@@ -89,20 +97,34 @@ func _handle_join(peer_id: int) -> void:
 	if not _slot_of.has(peer_id) and _peers.size() < _required:
 		_slot_of[peer_id] = _peers.size()
 		_peers.append(peer_id)
-	if _run == null and _peers.size() >= _required:
+	_try_start_or_broadcast()
+
+## Start the run once everyone has joined AND chosen a character; else broadcast.
+func _try_start_or_broadcast() -> void:
+	if _run == null and _peers.size() >= _required and _all_selected():
 		start_new_run()
 	else:
 		_broadcast_state()
+
+func _all_selected() -> bool:
+	for pid in _peers:
+		if not _character_of.has(pid):
+			return false
+	return true
 
 # --- Snapshots (host -> clients) ------------------------------------------
 
 func _broadcast_state() -> void:
 	if _run == null:
+		# Lobby: character select. Everyone sees who has picked; each gets the roster.
+		var selections := _selections()
 		for pid in _peers:
 			_transport.send_to(pid, {
 				"type": "snapshot", "for_peer": pid, "you": _slot(pid),
-				"shared": {"waiting": true, "joined": _peers.size(), "required": _required},
-				"private": {},
+				"shared": {"waiting": true, "phase": "select",
+					"joined": _peers.size(), "required": _required, "selections": selections},
+				"private": {"characters": Content.list_characters(),
+					"selected": String(_character_of.get(pid, ""))},
 			})
 		return
 	var shared := _build_shared()
@@ -133,8 +155,7 @@ func _build_shared() -> Dictionary:
 			"name": b.name, "hp": b.hp, "max_hp": b.max_hp, "block": b.block,
 			"intent": b.current_move(), "target": c.boss_target_index(),
 			"vulnerable": b.vulnerable, "strength": b.strength, "wound": b.wound,
-			"weak_point_height": b.weak_point_height, "foothold": c.foothold,
-			"foothold_max": Combat.FOOTHOLD_MAX, "sigil_reached": c.sigil_reached(),
+			"weak_point_height": b.weak_point_height, "foothold_max": Combat.FOOTHOLD_MAX,
 		}
 		s["round"] = c.round_num
 		s["base_energy"] = Combat.BASE_ENERGY
@@ -144,11 +165,15 @@ func _build_shared() -> Dictionary:
 func _players_public() -> Array:
 	var out: Array = []
 	if _run.phase == Run.Phase.COMBAT:
-		for ps in _run.combat.players:
+		var c: Combat = _run.combat
+		for i in range(c.players.size()):
+			var ps: PlayerState = c.players[i]
 			out.append({
-				"name": ps.combatant.name, "hp": ps.combatant.hp, "max_hp": ps.combatant.max_hp,
-				"block": ps.combatant.block, "energy": ps.energy, "ended": ps.ended_turn,
-				"strength": ps.strength,
+				"name": Content.character_name(ps.character), "hp": ps.combatant.hp,
+				"max_hp": ps.combatant.max_hp, "block": ps.combatant.block, "energy": ps.energy,
+				"ended": ps.ended_turn, "strength": ps.strength,
+				"foothold": ps.foothold, "reached": c.sigil_reached(i),
+				"weak_point_height": c.boss.weak_point_height,
 			})
 	else:
 		for i in range(_run.player_count()):
@@ -190,6 +215,14 @@ func _relic_names() -> Array:
 	var out: Array = []
 	for r in _run.team_relics:
 		out.append(String(r.get("name", "")))
+	return out
+
+## Lobby: each hunter's chosen character (name + whether picked), in slot order.
+func _selections() -> Array:
+	var out: Array = []
+	for pid in _peers:
+		var cid := String(_character_of.get(pid, ""))
+		out.append({"name": Content.character_name(cid) if cid != "" else "", "picked": cid != ""})
 	return out
 
 ## A silhouette-icon key for a card, chosen by its dominant effect (view art).

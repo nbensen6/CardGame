@@ -22,16 +22,15 @@ enum Phase { PLAYERS, ENEMY, OVER }
 const HAND_SIZE := 5
 const BASE_ENERGY := 3
 const VULN_BONUS := 4    # extra damage each "exposed" (vulnerable) stack adds to a hit
-const SIGIL_BONUS := 5   # extra damage on a hit once the team has climbed to the sigil
-const FOOTHOLD_MAX := 6  # cap on the shared climb resource
-const SHAKE_LOSS := 3    # Foothold lost when the Titan sweeps (attack_all) — it bucks you off
+const SIGIL_BONUS := 5   # extra damage on a hit once a hunter has climbed to the sigil
+const FOOTHOLD_MAX := 6  # cap on each hunter's climb (Height)
+const SHAKE_LOSS := 3    # Height each hunter loses when the beast sweeps (attack_all) — bucked off
 const ARMORED_DIVISOR := 4  # below the weak point the hide is armored: attacks chip 1/ARMORED_DIVISOR
 
 var players: Array = []  # Array[PlayerState], index = player slot
 var boss: Boss
 var round_num: int = 1
 var phase: int = Phase.PLAYERS
-var foothold: int = 0    # shared "climb" toward a high weak point (SotC) — persists in a fight
 var log: Array = []
 
 var _rng := RandomNumberGenerator.new()
@@ -46,7 +45,7 @@ var _round_block: int = 0
 ## the team's relics (see Run) — 0 in a plain fight.
 func _init(decks: Array, combatants: Array, p_boss: Boss, seed_value: int = 0,
 		energy_bonus: int = 0, attack_bonus: int = 0, round_block: int = 0,
-		start_strength: int = 0) -> void:
+		start_strength: int = 0, player_passives: Array = []) -> void:
 	boss = p_boss
 	_energy_bonus = energy_bonus
 	_attack_bonus = attack_bonus
@@ -59,9 +58,20 @@ func _init(decks: Array, combatants: Array, p_boss: Boss, seed_value: int = 0,
 		var ps := PlayerState.new()
 		ps.combatant = combatants[i]
 		ps.strength = start_strength  # relic: begin the fight with Strength
+		if i < player_passives.size():
+			_apply_passive(ps, player_passives[i])
 		ps.draw_pile = (decks[i] as Array).duplicate()
 		_shuffle(ps.draw_pile)
 		players.append(ps)
+
+## Set a hunter's character signature passive (constant for the run).
+func _apply_passive(ps: PlayerState, passive: Dictionary) -> void:
+	ps.character = String(passive.get("character", ""))
+	var value := int(passive.get("value", 0))
+	match String(passive.get("type", "")):
+		"climb_bonus": ps.climb_bonus = value
+		"attack_bonus": ps.char_attack_bonus = value
+		"ally_climb": ps.ally_climb = value
 
 func start() -> void:
 	_begin_round()
@@ -75,9 +85,11 @@ func player_count() -> int:
 func ally_index(pi: int) -> int:
 	return (pi + 1) % players.size()
 
-## True when the team has climbed high enough to strike the Titan's sigil.
-func sigil_reached() -> bool:
-	return boss.weak_point_height > 0 and foothold >= boss.weak_point_height
+## True when hunter `pi` has climbed high enough to strike the beast's sigil.
+func sigil_reached(pi: int) -> bool:
+	if pi < 0 or pi >= players.size():
+		return false
+	return boss.weak_point_height > 0 and players[pi].foothold >= boss.weak_point_height
 
 ## The player the boss's next single-target attack will hit (telegraphed).
 ## A "taunt" this round overrides it; otherwise it rotates by round.
@@ -122,17 +134,18 @@ func play_card(pi: int, ci: int) -> bool:
 	ps.discard_pile.append(card)
 	var who: String = ps.combatant.name
 
-	# Damage first, so a card that also Exposes (e.g. Harpoon) doesn't consume
-	# its own new vulnerable stacks. Base damage can scale with current Exposed
-	# stacks (Sunlight Blade); _damage_boss then adds the exposed + sigil bonuses.
-	var base_damage := card.damage + card.damage_per_vulnerable * boss.vulnerable
+	# Damage first (so a card that also Exposes doesn't consume its own stacks).
+	# Base scales with Exposed stacks (Sunlight Blade) and this hunter's own Height
+	# (Belay Strike). _damage_boss gates on whether THIS hunter reached the sigil.
+	var base_damage := card.damage + card.damage_per_vulnerable * boss.vulnerable \
+		+ card.damage_per_foothold * ps.foothold
 	if card.damage > 0:
-		base_damage += _attack_bonus + ps.strength  # relic + hunter Strength
+		base_damage += _attack_bonus + ps.strength + ps.char_attack_bonus
 	if base_damage > 0:
 		var hit_count := maxi(card.hits, 1)
 		var dealt := 0
 		for _h in hit_count:
-			dealt += _damage_boss(base_damage)
+			dealt += _damage_boss(base_damage, pi)
 		var flavour := "" if dealt <= base_damage * hit_count else " (weak point!)"
 		var times := "" if hit_count == 1 else " x%d" % hit_count
 		_log("%s plays %s — %d damage%s%s." % [who, card.name, dealt, times, flavour])
@@ -141,10 +154,23 @@ func play_card(pi: int, ci: int) -> bool:
 		_log("%s plays %s — +%d Strength." % [who, card.name, card.strength])
 	if card.wound > 0:
 		boss.wound += card.wound
-		_log("%s plays %s — Wound %d on %s." % [who, card.name, boss.wound, boss.name])
+		_log("%s plays %s — Poison %d on %s." % [who, card.name, boss.wound, boss.name])
 	if card.grip > 0:
-		foothold = mini(foothold + card.grip, FOOTHOLD_MAX)
-		_log("%s plays %s — climbs (+%d Foothold, now %d)." % [who, card.name, card.grip, foothold])
+		var climbed := card.grip + ps.climb_bonus
+		ps.foothold = mini(ps.foothold + climbed, FOOTHOLD_MAX)
+		_log("%s plays %s — climbs (+%d Height, now %d)." % [who, card.name, climbed, ps.foothold])
+		if ps.ally_climb > 0:  # roped together — the ally climbs with you
+			var roped: PlayerState = players[ally_index(pi)]
+			roped.foothold = mini(roped.foothold + ps.ally_climb, FOOTHOLD_MAX)
+			_log("%s is roped — %s climbs +%d." % [who, roped.combatant.name, ps.ally_climb])
+	if card.ally_grip > 0:  # vines/ropes that lift the ally up the beast
+		var lifted: PlayerState = players[ally_index(pi)]
+		lifted.foothold = mini(lifted.foothold + card.ally_grip, FOOTHOLD_MAX)
+		_log("%s plays %s — lifts %s (+%d Height, now %d)." % [who, card.name, lifted.combatant.name, card.ally_grip, lifted.foothold])
+	if card.create != "":
+		var built := Content.make_card(card.create)
+		ps.hand.append(built)
+		_log("%s plays %s — builds %s." % [who, card.name, built.name])
 	if card.block > 0:
 		ps.combatant.gain_block(card.block)
 		_log("%s plays %s — +%d block." % [who, card.name, card.block])
@@ -172,11 +198,11 @@ func play_card(pi: int, ci: int) -> bool:
 
 ## Deal card damage to the Titan, consuming one "exposed" stack for bonus.
 ## Returns the actual damage dealt (so the log can flag the bonus).
-func _damage_boss(amount: int) -> int:
+func _damage_boss(amount: int, pi: int) -> int:
 	# Below the weak point, the beast's hide is armored — attacks barely chip it,
-	# and Exposed stacks are NOT spent (they bank until you reach the sigil). You
-	# have to CLIMB to deal real damage. This is what makes it a climb, not a fight.
-	if boss.weak_point_height > 0 and not sigil_reached():
+	# and Exposed stacks are NOT spent (they bank until a hunter reaches the sigil).
+	# You have to CLIMB to deal real damage. This is what makes it a climb, not a fight.
+	if boss.weak_point_height > 0 and not sigil_reached(pi):
 		var chip := maxi(1, amount / ARMORED_DIVISOR)
 		boss.take_damage(chip)
 		return chip
@@ -253,12 +279,8 @@ func _enemy_turn() -> void:
 			var dmg_all := value + boss.strength
 			for ps in players:
 				ps.combatant.take_damage(dmg_all)
-			var shaken := mini(foothold, SHAKE_LOSS)
-			foothold -= shaken
-			if shaken > 0:
-				_log("%s sweeps both hunters for %d and shakes you loose (-%d Foothold)." % [boss.name, dmg_all, shaken])
-			else:
-				_log("%s sweeps both hunters for %d." % [boss.name, dmg_all])
+				ps.foothold = maxi(0, ps.foothold - SHAKE_LOSS)  # bucks each hunter off
+			_log("%s sweeps both hunters for %d and shakes them loose (-%d Height)." % [boss.name, dmg_all, SHAKE_LOSS])
 		"enrage":
 			boss.strength += value
 			_log("%s enrages (+%d strength, now +%d)." % [boss.name, value, boss.strength])

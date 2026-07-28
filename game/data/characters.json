@@ -1,0 +1,30 @@
+{
+  "_comment": "Characters are DATA (CLAUDE.md §11). Each has a starter_deck (card ids) and a signature passive. Designed on the 'climbs well <-> hits hard' dependency axis so pairs combo (design/climbing-and-characters.md). Passive types: climb_bonus (+N Height per climb card you play), attack_bonus (+N to your attacks), ally_climb (when YOU climb, your ally also gains N Height), none.",
+  "order": ["frog", "vine_weaver", "mountain_climbers", "goblin_mech"],
+  "characters": {
+    "frog": {
+      "name": "The Frog",
+      "desc": "Nimble — climbs fast and tags the weak point, but hits soft.",
+      "passive": { "type": "climb_bonus", "value": 1 },
+      "starter_deck": ["leap", "leap", "scramble", "scramble", "tongue_lash", "tongue_lash", "bowshot", "brace", "cover", "take_aim"]
+    },
+    "vine_weaver": {
+      "name": "The Vine-Weaver",
+      "desc": "Grows vines that lift the ally, and poisons the beast so it bleeds.",
+      "passive": { "type": "none", "value": 0 },
+      "starter_deck": ["vine", "vine", "spore", "spore", "scramble", "cover", "cover", "brace", "take_aim", "slash"]
+    },
+    "mountain_climbers": {
+      "name": "The Mountain Climbers",
+      "desc": "Roped — the ally climbs when they do, and they hit harder the higher they are.",
+      "passive": { "type": "ally_climb", "value": 1 },
+      "starter_deck": ["rope_up", "rope_up", "belay_strike", "belay_strike", "scramble", "scramble", "brace", "cover", "slash", "take_aim"]
+    },
+    "goblin_mech": {
+      "name": "The Goblin Mech",
+      "desc": "Heavy hitter — wrecks the weak point, but climbs terribly. Needs a carry.",
+      "passive": { "type": "attack_bonus", "value": 2 },
+      "starter_deck": ["cleave", "cleave", "flurry", "sharpen", "rend", "build_grapple", "build_grapple", "slash", "slash", "brace"]
+    }
+  }
+}

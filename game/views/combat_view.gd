@@ -28,6 +28,7 @@ var _client: GameClient
 
 var _server_lost := false
 var _selected_choice := -1   # reward highlighted but NOT yet locked
+var _selected_char := ""     # character highlighted in the lobby but NOT yet locked
 var _prev_phase := ""
 
 
@@ -78,7 +79,10 @@ func _refresh() -> void:
 		_show_paused(s)
 		return
 	if bool(s.get("waiting", false)):
-		_show_waiting(s)
+		if String(s.get("phase", "")) == "select":
+			_render_character_select(s)
+		else:
+			_show_waiting(s)
 		return
 	match String(s.get("phase", "combat")):
 		"combat":
@@ -102,22 +106,17 @@ func _render_combat(s: Dictionary) -> void:
 
 	var boss: Dictionary = s["boss"]
 	var height := int(boss.get("weak_point_height", 0))
-	var reached := bool(boss.get("sigil_reached", false))
 	_boss_name.text = "%s        Titan %d / %d" % [boss["name"], s["encounter"], s["total_encounters"]]
-	if height > 0 and not reached:
-		_boss_hp.text = "Armored hide — CLIMB to the weak point:  Height %d / %d%s" % [
-			int(boss.get("foothold", 0)), height, _titan_tags(boss)]
-	elif height > 0:
-		_boss_hp.text = "✦ WEAK POINT EXPOSED — strike!    sigil %d / %d%s" % [
-			boss["hp"], boss["max_hp"], _titan_tags(boss)]
+	if height > 0:
+		_boss_hp.text = "Weak point at Height %d — a hunter must climb to it to strike.   sigil %d / %d%s" % [
+			height, boss["hp"], boss["max_hp"], _titan_tags(boss)]
 	else:
 		_boss_hp.text = "HP %d / %d%s" % [boss["hp"], boss["max_hp"], _titan_tags(boss)]
 	_boss_hp_bar.max_value = boss["max_hp"]
 	_boss_hp_bar.value = boss["hp"]
 	_boss_hp_bar.add_theme_stylebox_override("fill",
 		_bar_fill(float(boss["hp"]) / maxf(1.0, float(boss["max_hp"]))))
-	# Dim the sigil bar while the hide is armored — it only gives way once climbed.
-	_boss_hp_bar.modulate = Color(1, 1, 1, 1) if (reached or height == 0) else Color(1, 1, 1, 0.4)
+	_boss_hp_bar.modulate = Color(1, 1, 1, 1)
 
 	var move: Dictionary = boss["intent"]
 	var mtype := String(move.get("type", ""))
@@ -151,6 +150,7 @@ func _on_card_pressed(index: int) -> void:
 # --- Reward phase ---------------------------------------------------------
 
 func _render_reward(s: Dictionary) -> void:
+	_lock_btn.text = "Lock In Reward"
 	_overlay.visible = false
 	_boss_panel.visible = true
 	_boss_hp_bar.visible = false
@@ -201,10 +201,70 @@ func _on_reward_selected(choice: int) -> void:
 
 
 func _on_lock() -> void:
+	var s := _client.shared
+	if bool(s.get("waiting", false)) and String(s.get("phase", "")) == "select":
+		if _selected_char != "":
+			Sfx.play("reward")
+			_client.select_character(_selected_char)
+		return
 	if _selected_choice < 0:
 		return
 	Sfx.play("reward")
 	_client.pick_card(_selected_choice)
+
+
+func _on_character_selected(character_id: String) -> void:
+	if String(_client.private.get("selected", "")) != "":
+		return  # already locked
+	Sfx.play("card")
+	_selected_char = character_id
+	_refresh()
+
+
+# --- Character select (lobby) ---------------------------------------------
+
+func _render_character_select(s: Dictionary) -> void:
+	_overlay.visible = false
+	_boss_panel.visible = true
+	_boss_hp_bar.visible = false
+	_intent.visible = false
+	_end_turn_btn.get_parent().visible = true
+	_end_turn_btn.visible = false
+
+	_boss_name.text = "Choose your climber"
+	_boss_hp.text = "Pick a character, then Lock In. The run begins when both hunters are ready."
+
+	# players row -> who has locked in
+	_clear(_players_row)
+	var me: int = _client.you
+	var sels: Array = s.get("selections", [])
+	for i in range(sels.size()):
+		var sel: Dictionary = sels[i]
+		var panel := PanelContainer.new()
+		panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var box := VBoxContainer.new()
+		box.add_theme_constant_override("separation", 2)
+		panel.add_child(box)
+		box.add_child(_mklabel("Hunter %d%s" % [i + 1, "   (you)" if i == me else ""]))
+		box.add_child(_mklabel("✓ " + String(sel["name"]) if bool(sel.get("picked", false)) else "choosing…"))
+		_players_row.add_child(panel)
+	_log_label.text = ""
+
+	var selected := String(_client.private.get("selected", ""))
+	var locked := selected != ""
+	_hand_label.text = "Characters" + ("   (locked — waiting for ally)" if locked else "")
+	_clear(_hand_row)
+	for ch in _client.private.get("characters", []):
+		var cid := String(ch["id"])
+		var cv := CardView.new()
+		_hand_row.add_child(cv)
+		cv.setup({"name": ch["name"], "text": ch["desc"], "icon": "grip", "no_cost": true}, not locked)
+		if not locked and cid == _selected_char:
+			cv.set_selected(true)
+		cv.pressed.connect(_on_character_selected.bind(cid))
+	_lock_btn.text = "Lock In Character"
+	_lock_btn.visible = not locked
+	_lock_btn.disabled = locked or _selected_char == ""
 
 
 # --- Run over -------------------------------------------------------------
@@ -272,6 +332,14 @@ func _render_players(s: Dictionary, targeted: Array) -> void:
 		box.add_child(_mklabel("HP %d / %d%s" % [p["hp"], p["max_hp"], _block_suffix(int(p.get("block", 0)))]))
 
 		if phase == "combat":
+			var h := int(p.get("weak_point_height", 0))
+			if h > 0:
+				if bool(p.get("reached", false)):
+					var atwp := _mklabel("✦ at the weak point — strike!")
+					atwp.add_theme_color_override("font_color", Color(0.62, 0.82, 0.5))
+					box.add_child(atwp)
+				else:
+					box.add_child(_mklabel("⛰ climbing — Height %d / %d" % [int(p.get("foothold", 0)), h]))
 			var status := "Energy %d / %d" % [p["energy"], s["base_energy"]]
 			if int(p.get("strength", 0)) > 0:
 				status += "   Str +%d" % int(p["strength"])

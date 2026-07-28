@@ -17,7 +17,15 @@
     "sharpen":    { "name": "Sharpen", "type": "skill", "cost": 1, "strength": 2, "text": "Gain 2 Strength — your attacks deal +2 for the rest of this fight." },
     "rend":       { "name": "Rend", "type": "attack", "cost": 1, "damage": 4, "wound": 2, "text": "Deal 4 damage and apply Wound 2 (the Titan bleeds each turn)." },
     "dagger":     { "name": "Dagger", "type": "attack", "cost": 0, "damage": 3, "text": "Deal 3 damage." },
-    "flurry":     { "name": "Flurry", "type": "attack", "cost": 2, "damage": 4, "hits": 2, "text": "Deal 4 damage twice (each hit can strike an Exposed weak point)." }
+    "flurry":     { "name": "Flurry", "type": "attack", "cost": 2, "damage": 4, "hits": 2, "text": "Deal 4 damage twice (each hit can strike an Exposed weak point)." },
+    "leap":         { "name": "Leap", "type": "skill", "cost": 1, "grip": 3, "target": "enemy", "text": "Leap up the beast (+3 Height)." },
+    "tongue_lash":  { "name": "Tongue Lash", "type": "attack", "cost": 1, "damage": 3, "grip": 1, "text": "Deal 3 damage and pull yourself up (+1 Height)." },
+    "build_grapple":{ "name": "Build Grapple", "type": "skill", "cost": 0, "create": "grapple", "text": "Build a Grappling Hook and add it to your hand." },
+    "grapple":      { "name": "Grappling Hook", "type": "skill", "cost": 0, "grip": 2, "target": "enemy", "text": "Fire the hook — climb (+2 Height)." },
+    "vine":         { "name": "Vine", "type": "skill", "cost": 1, "grip": 1, "ally_grip": 2, "target": "ally", "text": "Climb (+1); grow a vine that lifts your ally (+2 Height)." },
+    "spore":        { "name": "Spore Burst", "type": "attack", "cost": 1, "damage": 2, "wound": 2, "text": "Deal 2 damage and Poison 2 (the beast bleeds each turn)." },
+    "rope_up":      { "name": "Rope Up", "type": "skill", "cost": 1, "grip": 1, "ally_grip": 1, "target": "ally", "text": "You and your ally both climb (+1 Height)." },
+    "belay_strike": { "name": "Belay Strike", "type": "attack", "cost": 1, "damage": 3, "damage_per_foothold": 2, "text": "Deal 3 damage, +2 for each Height you've climbed." }
   },
   "starter_deck": [
     "slash", "slash", "slash",

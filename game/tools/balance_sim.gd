@@ -49,8 +49,12 @@ func _run_many(policy: String) -> Dictionary:
 
 
 func _play_run(seed_value: int, policy: String) -> Dictionary:
-	var decks := [Content.build_starter_deck(), Content.build_starter_deck()]
-	var run := Run.new(decks, ["H1", "H2"], seed_value)
+	# A representative pairing: a fast climber + a height-scaling striker.
+	var chars := ["frog", "mountain_climbers"]
+	var decks := [Content.character_deck(chars[0]), Content.character_deck(chars[1])]
+	var names := [Content.character_name(chars[0]), Content.character_name(chars[1])]
+	var passives := [Content.character_passive(chars[0]), Content.character_passive(chars[1])]
+	var run := Run.new(decks, names, seed_value, passives)
 	run.start()
 	var stats := {
 		"won": false, "lost_at": -1, "min_hp": float(Run.PLAYER_HP), "enc_rounds": {},
@@ -122,7 +126,7 @@ func _choose(c: Combat, pi: int, policy: String) -> int:
 		if brc >= 0:
 			return brc
 	# 3. climb toward the weak point if we haven't reached it (armored below it)
-	if c.boss.weak_point_height > 0 and not c.sigil_reached():
+	if c.boss.weak_point_height > 0 and not c.sigil_reached(pi):
 		var climb := _find(c, pi, func(card: Card) -> bool: return card.grip > 0)
 		if climb >= 0:
 			return climb

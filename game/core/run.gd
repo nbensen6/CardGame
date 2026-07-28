@@ -23,6 +23,7 @@ var decks: Array = []            # Array[Array[Card]] per hunter — persists ac
 var hp: Array = []               # carried current hp per hunter
 var max_hp: Array = []
 var team_relics: Array = []      # Array[Dictionary] — persistent team passives
+var player_passives: Array = []  # per-hunter character signature passives
 var reward_kind: String = "card" # "card" | "relic" — what this REWARD offers
 var reward_choices: Array = []   # per hunter: Array of card OR relic choices (by reward_kind)
 var reward_picked: Array = []    # Array[bool]
@@ -30,8 +31,9 @@ var reward_picked: Array = []    # Array[bool]
 var _seed: int
 var _rng := RandomNumberGenerator.new()
 
-func _init(p_decks: Array, p_names: Array, seed_value: int = 0) -> void:
+func _init(p_decks: Array, p_names: Array, seed_value: int = 0, p_passives: Array = []) -> void:
 	_seed = seed_value
+	player_passives = p_passives
 	if seed_value == 0:
 		_rng.randomize()
 	else:
@@ -98,7 +100,7 @@ func _start_encounter() -> void:
 	var mods := relic_totals()
 	# Distinct per-encounter seed so each fight shuffles differently but reproducibly.
 	combat = Combat.new(decks, combatants, boss, _encounter_seed(),
-		mods["energy"], mods["attack"], mods["block"], mods["strength"])
+		mods["energy"], mods["attack"], mods["block"], mods["strength"], player_passives)
 	combat.start()
 	phase = Phase.COMBAT
 

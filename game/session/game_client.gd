@@ -26,6 +26,10 @@ func _init(transport: Transport, peer_id: int) -> void:
 func join() -> void:
 	_send({"type": "join"})
 
+## Choose a character in the lobby (before the run starts).
+func select_character(character_id: String) -> void:
+	_send({"type": "select_character", "character": character_id})
+
 func play_card(index: int) -> void:
 	_send({"type": "play_card", "index": index})
 

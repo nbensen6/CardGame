@@ -64,6 +64,14 @@ func _init() -> void:
 	_test_flurry_multi_hit()
 	_test_leech_drains_and_heals()
 	_test_relic_start_strength()
+	# characters (per-player climb + signature passives)
+	_test_frog_climb_bonus()
+	_test_vine_lifts_ally()
+	_test_roped_ally_climbs()
+	_test_character_attack_bonus()
+	_test_build_creates_grapple()
+	_test_belay_scales_with_height()
+	_test_content_builds_character()
 	# session / client-server split
 	_test_session_both_players_join()
 	_test_session_lobby_waits_for_second_player()
@@ -267,10 +275,10 @@ func _test_enrage_raises_attack() -> void:
 func _test_grip_builds_foothold() -> void:
 	var combat := _new_combat([_deck_of(_grip, 10), _deck_of(_slash, 10)], 42, _dummy_boss(200))
 	combat.play_card(0, _first_playable(combat, 0))  # Grip +2
-	var after_one := combat.foothold
-	combat.foothold = 5
+	var after_one: int = combat.players[0].foothold
+	combat.players[0].foothold = 5
 	combat.play_card(0, _first_playable(combat, 0))  # +2 -> capped
-	_expect(after_one == 2 and combat.foothold == Combat.FOOTHOLD_MAX,
+	_expect(after_one == 2 and combat.players[0].foothold == Combat.FOOTHOLD_MAX,
 		"grip builds Foothold, capped at max")
 
 
@@ -281,7 +289,7 @@ func _test_sigil_bonus_requires_climb() -> void:
 	var before := combat.boss.hp
 	combat.play_card(0, _first_playable(combat, 0))  # armored: slash 6 -> chip 1
 	_expect(combat.boss.hp == before - 1, "armored hide below the weak point: attacks barely chip")
-	combat.foothold = 3  # reached the sigil
+	combat.players[0].foothold = 3  # reached the sigil
 	var before2 := combat.boss.hp
 	combat.play_card(0, _first_playable(combat, 0))  # reached: 6 + SIGIL_BONUS
 	_expect(combat.boss.hp == before2 - (6 + Combat.SIGIL_BONUS),
@@ -295,7 +303,7 @@ func _test_exposed_banks_until_climbed() -> void:
 	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
 	combat.play_card(0, _first_playable(combat, 0))  # armored: chips, Exposed NOT spent
 	_expect(combat.boss.vulnerable == 2, "Exposed stacks bank while the hide is armored")
-	combat.foothold = 2
+	combat.players[0].foothold = 2
 	var before := combat.boss.hp
 	combat.play_card(0, _first_playable(combat, 0))  # reached: 6 + VULN_BONUS + SIGIL_BONUS
 	_expect(combat.boss.hp == before - (6 + Combat.VULN_BONUS + Combat.SIGIL_BONUS)
@@ -305,7 +313,7 @@ func _test_exposed_banks_until_climbed() -> void:
 
 func _test_height0_titan_no_sigil_bonus() -> void:
 	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(200))
-	combat.foothold = Combat.FOOTHOLD_MAX  # height 0 -> no high sigil to reach
+	combat.players[0].foothold = Combat.FOOTHOLD_MAX  # height 0 -> no high sigil to reach
 	var before := combat.boss.hp
 	combat.play_card(0, _first_playable(combat, 0))
 	_expect(combat.boss.hp == before - 6, "a low-sigil Titan gives no climb bonus")
@@ -315,10 +323,10 @@ func _test_attack_all_shakes_foothold() -> void:
 	var boss := Boss.new("Shaker", 500)
 	boss.moves = [{"type": "attack_all", "value": 5}]
 	var combat := _new_combat([_deck_of(_grip, 10), _deck_of(_grip, 10)], 42, boss)
-	combat.foothold = 5
+	combat.players[0].foothold = 5
 	combat.end_turn(0)
 	combat.end_turn(1)  # attack_all -> shake
-	_expect(combat.foothold == 5 - Combat.SHAKE_LOSS, "attack_all shakes the team loose")
+	_expect(combat.players[0].foothold == 5 - Combat.SHAKE_LOSS, "attack_all shakes the team loose")
 
 
 func _test_sunlight_blade_scales_with_exposed() -> void:
@@ -504,6 +512,71 @@ func _test_relic_start_strength() -> void:
 	_expect(combat.players[0].strength == 2, "start_strength relic begins the fight with Strength")
 
 
+# --- Characters (per-player climb + signature passives) -------------------
+
+func _new_combat_p(decks: Array, seed_value: int, boss: Boss, passives: Array) -> Combat:
+	var players := [Combatant.new("P1", 42), Combatant.new("P2", 42)]
+	var c := Combat.new(decks, players, boss, seed_value, 0, 0, 0, 0, passives)
+	c.start()
+	return c
+
+
+func _test_frog_climb_bonus() -> void:
+	var combat := _new_combat_p([_deck_of(_scramble, 10), _deck_of(_slash, 10)], 42,
+		_dummy_boss(200), [{"type": "climb_bonus", "value": 1}, {}])
+	combat.play_card(0, _first_playable(combat, 0))  # Scramble grip 1 + climb_bonus 1
+	_expect(combat.players[0].foothold == 2, "Frog's climb_bonus adds Height to each climb")
+
+
+func _test_vine_lifts_ally() -> void:
+	var combat := _new_combat_p([_deck_of(_vine, 10), _deck_of(_slash, 10)], 42, _dummy_boss(200), [{}, {}])
+	combat.play_card(0, _first_playable(combat, 0))  # Vine: self +1, ally +2
+	_expect(combat.players[0].foothold == 1 and combat.players[1].foothold == 2,
+		"Vine climbs the caster and lifts the ally")
+
+
+func _test_roped_ally_climbs() -> void:
+	var combat := _new_combat_p([_deck_of(_scramble, 10), _deck_of(_slash, 10)], 42,
+		_dummy_boss(200), [{"type": "ally_climb", "value": 1}, {}])
+	combat.play_card(0, _first_playable(combat, 0))  # Scramble +1; roped -> ally +1
+	_expect(combat.players[0].foothold == 1 and combat.players[1].foothold == 1,
+		"roped: when a Mountain Climber climbs, the ally climbs too")
+
+
+func _test_character_attack_bonus() -> void:
+	var combat := _new_combat_p([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42,
+		_dummy_boss(200), [{"type": "attack_bonus", "value": 2}, {}])
+	var before := combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))  # Slash 6 + 2
+	_expect(combat.boss.hp == before - 8, "Goblin Mech's attack_bonus adds to attacks")
+
+
+func _test_build_creates_grapple() -> void:
+	var combat := _new_combat_p([_deck_of(_build, 10), _deck_of(_slash, 10)], 42, _dummy_boss(200), [{}, {}])
+	combat.play_card(0, _first_playable(combat, 0))  # Build Grapple -> adds a Grappling Hook
+	var has_grapple := false
+	for c in combat.players[0].hand:
+		if c.id == "grapple":
+			has_grapple = true
+	_expect(has_grapple, "Build creates a Grappling Hook in hand")
+
+
+func _test_belay_scales_with_height() -> void:
+	var combat := _new_combat_p([_deck_of(_belay, 10), _deck_of(_slash, 10)], 42, _dummy_boss(200), [{}, {}])
+	combat.players[0].foothold = 3
+	var before := combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))  # Belay 3 + 2*3 = 9 (height-0 boss, full)
+	_expect(combat.boss.hp == before - 9, "Belay Strike scales with the hunter's Height")
+
+
+func _test_content_builds_character() -> void:
+	var deck := Content.character_deck("frog")
+	var passive := Content.character_passive("frog")
+	_expect(deck.size() == 10 and String(passive["type"]) == "climb_bonus"
+		and int(passive["value"]) == 1 and String(passive["character"]) == "frog",
+		"content builds a character's deck + signature passive")
+
+
 # --- Session / client-server split ----------------------------------------
 
 # Loopback is synchronous: after each client call the client snapshots are
@@ -514,8 +587,10 @@ func _make_session(seed_value: int = 42) -> Dictionary:
 	var c0 := GameClient.new(transport, 10)
 	var c1 := GameClient.new(transport, 20)
 	_kept.append(host)
-	c0.join()  # slot 0 — combat not yet started (needs 2)
-	c1.join()  # slot 1 — host starts combat and broadcasts
+	c0.join()  # slot 0
+	c1.join()  # slot 1 — both joined, now in character select
+	c0.select_character("frog")
+	c1.select_character("mountain_climbers")  # both chosen -> host starts the run
 	return {"transport": transport, "host": host, "c0": c0, "c1": c1}
 
 
@@ -674,6 +749,14 @@ func _taunt() -> Card:
 	return Card.from_dict({"id": "draw_aggro", "name": "Draw Aggro", "type": "skill", "cost": 1, "taunt": true, "block": 6})
 func _grip() -> Card:
 	return Card.from_dict({"id": "grip", "name": "Grip", "type": "skill", "cost": 1, "grip": 2, "target": "enemy"})
+func _scramble() -> Card:
+	return Card.from_dict({"id": "scramble", "name": "Scramble", "type": "skill", "cost": 0, "grip": 1, "target": "enemy"})
+func _vine() -> Card:
+	return Card.from_dict({"id": "vine", "name": "Vine", "type": "skill", "cost": 1, "grip": 1, "ally_grip": 2, "target": "ally"})
+func _build() -> Card:
+	return Card.from_dict({"id": "build_grapple", "name": "Build Grapple", "type": "skill", "cost": 0, "create": "grapple"})
+func _belay() -> Card:
+	return Card.from_dict({"id": "belay_strike", "name": "Belay Strike", "type": "attack", "cost": 1, "damage": 3, "damage_per_foothold": 2})
 func _sunblade() -> Card:
 	return Card.from_dict({"id": "sunlight_blade", "name": "Sunlight Blade", "type": "attack", "cost": 1, "damage": 5, "damage_per_vulnerable": 3})
 func _bowshot() -> Card:
