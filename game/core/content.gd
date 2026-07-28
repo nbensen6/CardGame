@@ -71,7 +71,8 @@ static func list_characters() -> Array:
 	for id in db.get("order", chars.keys()):
 		if chars.has(id):
 			var c: Dictionary = chars[id]
-			out.append({"id": id, "name": String(c.get("name", id)), "desc": String(c.get("desc", ""))})
+			out.append({"id": id, "name": String(c.get("name", id)), "desc": String(c.get("desc", "")),
+				"portrait": String(c.get("portrait", ""))})
 	return out
 
 ## Build a character's starter deck.
@@ -94,6 +95,10 @@ static func character_passive(id: String) -> Dictionary:
 static func character_name(id: String) -> String:
 	var chars: Dictionary = _read_json(CHARACTERS_PATH).get("characters", {})
 	return String((chars.get(id, {}) as Dictionary).get("name", id))
+
+static func character_portrait(id: String) -> String:
+	var chars: Dictionary = _read_json(CHARACTERS_PATH).get("characters", {})
+	return String((chars.get(id, {}) as Dictionary).get("portrait", ""))
 
 ## Build a Titan by id from data.
 static func build_boss(id: String) -> Boss:

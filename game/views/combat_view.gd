@@ -10,12 +10,13 @@ extends Control
 
 var _client: GameClient
 
-@onready var _boss_panel: PanelContainer = %BossPanel
+@onready var _top_bar: PanelContainer = %TopBar
 @onready var _boss_name: Label = %BossName
 @onready var _boss_hp: Label = %BossHP
 @onready var _boss_hp_bar: ProgressBar = %BossHPBar
 @onready var _intent: Label = %Intent
-@onready var _players_row: HBoxContainer = %Players
+@onready var _players_row: VBoxContainer = %Players
+@onready var _ladder: VBoxContainer = %Ladder
 @onready var _boss_art: TextureRect = %BossArt
 @onready var _log_label: Label = %Log
 @onready var _hand_label: Label = %HandLabel
@@ -213,7 +214,7 @@ func _refresh() -> void:
 func _render_combat(s: Dictionary) -> void:
 	_over_sound = false  # reset so the next win/lose plays its sting
 	_overlay.visible = false
-	_boss_panel.visible = true
+	_top_bar.visible = true
 	_boss_hp_bar.visible = true
 	_intent.visible = true
 	_end_turn_btn.get_parent().visible = true
@@ -221,13 +222,8 @@ func _render_combat(s: Dictionary) -> void:
 	_lock_btn.visible = false
 
 	var boss: Dictionary = s["boss"]
-	var height := int(boss.get("weak_point_height", 0))
-	_boss_name.text = "%s        Titan %d / %d" % [boss["name"], s["encounter"], s["total_encounters"]]
-	if height > 0:
-		_boss_hp.text = "Weak point at Height %d — a hunter must climb to it to strike.   sigil %d / %d%s" % [
-			height, boss["hp"], boss["max_hp"], _titan_tags(boss)]
-	else:
-		_boss_hp.text = "HP %d / %d%s" % [boss["hp"], boss["max_hp"], _titan_tags(boss)]
+	_boss_name.text = "%s   ·   Titan %d / %d" % [boss["name"], s["encounter"], s["total_encounters"]]
+	_boss_hp.text = "%d / %d%s" % [boss["hp"], boss["max_hp"], _titan_tags(boss)]
 	_boss_hp_bar.max_value = boss["max_hp"]
 	_boss_hp_bar.value = boss["hp"]
 	_boss_hp_bar.add_theme_stylebox_override("fill",
@@ -237,14 +233,15 @@ func _render_combat(s: Dictionary) -> void:
 	var move: Dictionary = boss["intent"]
 	var mtype := String(move.get("type", ""))
 	var targeted := _targeted_indices(mtype, int(boss.get("target", -1)), s["players"].size())
-	_intent.text = "Intent:  %s%s" % [_intent_text(move, int(boss.get("strength", 0))), _target_suffix(mtype, targeted)]
+	_intent.text = "%s%s" % [_intent_text(move, int(boss.get("strength", 0))), _target_suffix(mtype, targeted)]
 	_intent.add_theme_color_override("font_color", _intent_color(mtype))
 
 	_combat_audio(s)
 	_update_climb_state(s)
 	_show_boss_art(String(boss.get("art", "")), int(boss.get("strength", 0)) > 0)
+	_build_ladder(s)
 	_render_players(s, targeted)
-	_log_label.text = _log_with_relics(s)
+	_log_label.text = _log_tail(s)
 	_render_hand()
 
 
@@ -417,12 +414,13 @@ func _render_reward(s: Dictionary) -> void:
 	_stop_climb()
 	_lock_btn.text = "Lock In Reward"
 	_overlay.visible = false
-	_boss_panel.visible = true
+	_top_bar.visible = true
 	_boss_hp_bar.visible = false
 	_intent.visible = false
 	_end_turn_btn.get_parent().visible = true
 	_end_turn_btn.visible = false
 	_boss_art.visible = false
+	_ladder.visible = false
 	var solo := _is_solo()
 	_switch_btn.visible = solo
 	_switch_btn.disabled = false  # never inherit combat's mid-climb lock into reward
@@ -503,13 +501,14 @@ func _on_character_selected(character_id: String) -> void:
 func _render_character_select(s: Dictionary) -> void:
 	_stop_climb()
 	_overlay.visible = false
-	_boss_panel.visible = true
+	_top_bar.visible = true
 	_boss_hp_bar.visible = false
 	_intent.visible = false
 	_end_turn_btn.get_parent().visible = true
 	_end_turn_btn.visible = false
 	_switch_btn.visible = false
 	_boss_art.visible = false
+	_ladder.visible = false
 
 	var solo := bool(s.get("solo", false))
 	var current := int(s.get("current_slot", 0)) if solo else _client.you
@@ -544,7 +543,8 @@ func _render_character_select(s: Dictionary) -> void:
 		var cid := String(ch["id"])
 		var cv := CardView.new()
 		_hand_row.add_child(cv)
-		cv.setup({"name": ch["name"], "text": ch["desc"], "icon": "climb", "no_cost": true}, not locked)
+		cv.setup({"name": ch["name"], "text": ch["desc"], "icon": "climb",
+			"portrait": String(ch.get("portrait", "")), "no_cost": true}, not locked)
 		if not locked and cid == _selected_char:
 			cv.set_selected(true)
 		cv.tapped.connect(_on_character_selected.bind(cid))
@@ -600,6 +600,7 @@ func _show_waiting(s: Dictionary) -> void:
 
 # --- Shared: players row --------------------------------------------------
 
+## Compact hunter panel: [portrait] [name / HP bar / one status line].
 func _render_players(s: Dictionary, targeted: Array) -> void:
 	_clear(_players_row)
 	var me: int = _me()
@@ -609,50 +610,89 @@ func _render_players(s: Dictionary, targeted: Array) -> void:
 		var p: Dictionary = players[i]
 		var panel := PanelContainer.new()
 		panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var box := VBoxContainer.new()
-		box.add_theme_constant_override("separation", 2)
-		panel.add_child(box)
-
-		var who := String(p["name"]) + ("   (you)" if i == me else "")
 		if i in targeted:
-			who += "   ⚔ targeted"
 			panel.add_theme_stylebox_override("panel", _danger_panel())
-		var who_lbl := _mklabel(who)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+		panel.add_child(row)
+
+		var port := TextureRect.new()
+		port.custom_minimum_size = Vector2(46, 46)
+		port.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		port.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		var ppath := String(p.get("portrait", ""))
+		if ppath != "" and ResourceLoader.exists(ppath):
+			port.texture = load(ppath)
+		row.add_child(port)
+
+		var box := VBoxContainer.new()
+		box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		box.add_theme_constant_override("separation", 2)
+		row.add_child(box)
+
+		var who := String(p["name"]) + ("  (you)" if i == me else "")
+		if i in targeted:
+			who += "  ⚔"
+		var who_lbl := Label.new()
+		who_lbl.text = who
+		who_lbl.add_theme_font_size_override("font_size", 15)
 		if i in targeted:
 			who_lbl.add_theme_color_override("font_color", Color(0.9, 0.52, 0.45))
 		box.add_child(who_lbl)
-		box.add_child(_mklabel("HP %d / %d%s" % [p["hp"], p["max_hp"], _block_suffix(int(p.get("block", 0)))]))
 
+		var hp_row := HBoxContainer.new()
+		hp_row.add_theme_constant_override("separation", 6)
+		var hp_bar := ProgressBar.new()
+		hp_bar.custom_minimum_size = Vector2(120, 14)
+		hp_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		hp_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		hp_bar.show_percentage = false
+		hp_bar.max_value = int(p["max_hp"])
+		hp_bar.value = int(p["hp"])
+		hp_bar.add_theme_stylebox_override("fill",
+			_bar_fill(float(p["hp"]) / maxf(1.0, float(p["max_hp"]))))
+		hp_row.add_child(hp_bar)
+		var hp_lbl := Label.new()
+		hp_lbl.text = "%d%s" % [int(p["hp"]), _block_suffix(int(p.get("block", 0)))]
+		hp_lbl.add_theme_font_size_override("font_size", 13)
+		hp_row.add_child(hp_lbl)
+		box.add_child(hp_row)
+
+		var status_lbl := Label.new()
+		status_lbl.add_theme_font_size_override("font_size", 13)
+		status_lbl.add_theme_color_override("font_color", Color(0.8, 0.76, 0.66))
 		if phase == "combat":
-			var h := int(p.get("weak_point_height", 0))
-			if h > 0:
-				var fh := int(p.get("foothold", 0))
-				box.add_child(_climb_track(fh, h, s.get("boss", {}).get("ledges", [])))
-				if bool(p.get("reached", false)):
-					var thr := int(s.get("boss", {}).get("weak_point_threshold", 0))
-					var txt := "✦ at the weak point — strike!"
-					if thr > 0:
-						txt += "   (%d / %d before it bucks you)" % [int(p.get("wp_damage", 0)), thr]
-					var atwp := _mklabel(txt)
-					atwp.add_theme_color_override("font_color", Color(0.62, 0.82, 0.5))
-					box.add_child(atwp)
-				elif bool(p.get("secure", true)):  # resting on a hold
-					box.add_child(_mklabel("⛰ on a ledge" if fh > 0 else "⛰ at the base"))
-				else:  # clinging between holds — grip timer ticking
-					var climbing := _mklabel("⚠ climbing…")
-					climbing.add_theme_color_override("font_color", Color(0.92, 0.6, 0.42))
-					box.add_child(climbing)
-			var status := "Energy %d / %d" % [p["energy"], s["base_energy"]]
-			if int(p.get("strength", 0)) > 0:
-				status += "   Str +%d" % int(p["strength"])
-				if int(p.get("rhythm", 0)) > 0:
-					status += "   ♪ Rhythm %d" % int(p["rhythm"])
-			if bool(p.get("ended", false)):
-				status += "   • ended"
-			box.add_child(_mklabel(status))
+			status_lbl.text = _player_status_line(s, p)
+			if not bool(p.get("secure", true)):
+				status_lbl.add_theme_color_override("font_color", Color(0.92, 0.6, 0.42))
+			elif bool(p.get("reached", false)):
+				status_lbl.add_theme_color_override("font_color", Color(0.62, 0.82, 0.5))
 		elif phase == "reward":
-			box.add_child(_mklabel("✓ card chosen" if bool(p.get("picked", false)) else "choosing…"))
+			status_lbl.text = "✓ chosen" if bool(p.get("picked", false)) else "choosing…"
+		box.add_child(status_lbl)
 		_players_row.add_child(panel)
+
+
+## One compact line: energy + climb situation + buffs.
+func _player_status_line(s: Dictionary, p: Dictionary) -> String:
+	var bits: Array[String] = []
+	bits.append("✦%d" % int(p.get("energy", 0)))
+	var h := int(p.get("weak_point_height", 0))
+	if h > 0:
+		if bool(p.get("reached", false)):
+			var thr := int(s.get("boss", {}).get("weak_point_threshold", 0))
+			bits.append("at weak point!" if thr <= 0 else "weak point %d/%d" % [int(p.get("wp_damage", 0)), thr])
+		elif not bool(p.get("secure", true)):
+			bits.append("climbing…")
+		elif int(p.get("foothold", 0)) > 0:
+			bits.append("on ledge")
+	if int(p.get("strength", 0)) > 0:
+		bits.append("Str+%d" % int(p["strength"]))
+	if int(p.get("rhythm", 0)) > 0:
+		bits.append("♪%d" % int(p["rhythm"]))
+	if bool(p.get("ended", false)):
+		bits.append("ended")
+	return "   ".join(bits)
 
 
 # --- helpers --------------------------------------------------------------
@@ -709,8 +749,12 @@ func _show_boss_art(path: String, enraged: bool) -> void:
 		_boss_art.visible = false
 		return
 	_boss_art.texture = load(path)
-	# Warm stone tone; a shade redder when the beast is enraged.
-	_boss_art.modulate = Color(0.72, 0.42, 0.34) if enraged else Color(0.56, 0.49, 0.39)
+	if path.ends_with(".svg"):
+		# Silhouettes get the warm stone tone; a shade redder when enraged.
+		_boss_art.modulate = Color(0.72, 0.42, 0.34) if enraged else Color(0.56, 0.49, 0.39)
+	else:
+		# Full-colour art stays true; flush red when the beast is enraged.
+		_boss_art.modulate = Color(1.0, 0.62, 0.55) if enraged else Color(1, 1, 1)
 	_boss_art.visible = true
 
 
@@ -723,22 +767,57 @@ func _log_with_relics(s: Dictionary) -> String:
 	return header + ("\n\n" + body if not body.is_empty() else "")
 
 
-## A visual climb track: one block per Height rung to the sigil. Solid = climbed,
-## outlined = still to go; the top block is the weak point (gold), ledges are
-## marked (blue). Replaces the raw "Height 3 / 6" number.
-func _climb_track(fh: int, height: int, ledges: Array) -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 3)
-	for i in range(1, height + 1):
+## Combat ticker: just the last few log lines, dim, in the scene's left column.
+func _log_tail(s: Dictionary) -> String:
+	var log: Array = s.get("log", [])
+	return "\n".join(log.slice(maxi(log.size() - 4, 0)))
+
+
+## The shared climb ladder, drawn IN the scene beside the beast: one rung per
+## Height (top = the gold weak point, blue = rest ledges), with each hunter's
+## portrait marker sitting at their current Height. This is the climb made
+## visible — solid blocks below you, outlined blocks still to go.
+func _build_ladder(s: Dictionary) -> void:
+	_clear(_ladder)
+	_ladder.visible = true
+	var boss: Dictionary = s.get("boss", {})
+	var height := int(boss.get("weak_point_height", 0))
+	if height <= 0:
+		_ladder.visible = false
+		return
+	var ledges: Array = boss.get("ledges", [])
+	var players: Array = s.get("players", [])
+	var max_fh := 0
+	for p in players:
+		max_fh = maxi(max_fh, int(p.get("foothold", 0)))
+	for lvl in range(height, -1, -1):  # top (sigil) down to the base (0)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		row.alignment = BoxContainer.ALIGNMENT_END
+		# hunters standing at this Height
+		for p in players:
+			if int(p.get("foothold", 0)) == lvl:
+				var m := TextureRect.new()
+				m.custom_minimum_size = Vector2(30, 30)
+				m.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				m.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+				var pp := String(p.get("portrait", ""))
+				if pp != "" and ResourceLoader.exists(pp):
+					m.texture = load(pp)
+				if not bool(p.get("secure", true)):
+					m.modulate = Color(1.0, 0.75, 0.6)  # clinging — tinted warm
+				row.add_child(m)
 		var is_ledge := false
 		for l in ledges:
-			if int(l) == i:
+			if int(l) == lvl:
 				is_ledge = true
 		var b := Panel.new()
-		b.custom_minimum_size = Vector2(15, 15)
-		b.add_theme_stylebox_override("panel", _block_style(i <= fh, i == height, is_ledge))
+		var size := 26 if lvl == height else 22
+		b.custom_minimum_size = Vector2(size, size)
+		b.add_theme_stylebox_override("panel",
+			_block_style(lvl <= max_fh and lvl > 0, lvl == height, is_ledge or lvl == 0))
 		row.add_child(b)
-	return row
+		_ladder.add_child(row)
 
 
 func _block_style(climbed: bool, is_sigil: bool, is_ledge: bool) -> StyleBoxFlat:

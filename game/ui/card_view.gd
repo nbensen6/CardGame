@@ -65,7 +65,8 @@ const TINT := {
 
 ## Build the card from a snapshot dict. `playable` greys it out when false.
 func setup(data: Dictionary, playable: bool = true) -> void:
-	custom_minimum_size = Vector2(156, 210)  # thumb-friendly (§5)
+	# Character/relic cards (no cost pip) carry portraits + longer text — taller frame.
+	custom_minimum_size = Vector2(176, 264) if bool(data.get("no_cost", false)) else Vector2(164, 224)
 	disabled = not playable
 	text = ""
 	if not mouse_entered.is_connected(_on_hover):
@@ -88,11 +89,10 @@ func setup(data: Dictionary, playable: bool = true) -> void:
 	pad.add_child(box)
 
 	box.add_child(_header(String(data.get("name", "")), int(data.get("cost", 0)), bool(data.get("no_cost", false))))
-	box.add_child(_art(String(data.get("icon", ""))))
+	box.add_child(_art(String(data.get("icon", "")), String(data.get("portrait", ""))))
 	box.add_child(_body(String(data.get("text", ""))))
-	var tgt := String(data.get("target", "self"))
-	if tgt == "ally" or tgt == "enemy":
-		box.add_child(_tag("→ ally" if tgt == "ally" else "→ Titan"))
+	if String(data.get("target", "self")) == "ally":
+		box.add_child(_tag("→ helps your ally"))  # enemy-targeting is the default; only flag ally cards
 
 	_strip = _build_timing_strip()  # hidden until start_timing()
 	box.add_child(_strip)
@@ -102,9 +102,10 @@ func setup(data: Dictionary, playable: bool = true) -> void:
 
 func _header(card_name: String, cost: int, no_cost: bool = false) -> Control:
 	if no_cost:  # relics have no energy cost — just a centered name
-		var name_only := _label(card_name, 15)
+		var name_only := _label(card_name, 14)
 		name_only.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		name_only.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		name_only.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		return name_only
 
 	var row := HBoxContainer.new()
@@ -122,29 +123,34 @@ func _header(card_name: String, cost: int, no_cost: bool = false) -> Control:
 	var cost_lbl := _label(str(cost), 16)
 	row.add_child(cost_lbl)
 
-	var name_lbl := _label(card_name, 15)
+	var name_lbl := _label(card_name, 14)
 	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS  # long names never overflow
 	row.add_child(name_lbl)
 	return row
 
 
-func _art(icon: String) -> Control:
+func _art(icon: String, portrait: String = "") -> Control:
 	var tex := TextureRect.new()
 	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tex.custom_minimum_size = Vector2(0, 56)
 	tex.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE  # a big PNG must not force the card taller
 	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	if ICONS.has(icon):
+	if portrait != "" and ResourceLoader.exists(portrait):
+		tex.texture = load(portrait)  # character portrait, full colour
+	elif ICONS.has(icon):
 		tex.texture = ICONS[icon]
 		tex.modulate = TINT.get(icon, Color(0.85, 0.8, 0.7))
 	return tex
 
 
 func _body(text_str: String) -> Control:
-	var l := _label(text_str, 13)
+	var l := _label(text_str, 12)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.size_flags_vertical = Control.SIZE_SHRINK_END  # sit low; never push past the frame
 	return l
 
 

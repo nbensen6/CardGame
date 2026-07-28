@@ -25,7 +25,8 @@
         "leapfrog",
         "brace",
         "take_aim"
-      ]
+      ],
+      "portrait": "res://assets/portraits/frog.png"
     },
     "vine_weaver": {
       "name": "The Vine-Weaver",
@@ -45,11 +46,12 @@
         "blightbloom",
         "brace",
         "cover"
-      ]
+      ],
+      "portrait": "res://assets/portraits/sloth.png"
     },
     "mountain_climbers": {
       "name": "The Mountain Climbers",
-      "desc": "Roped coordination — the ally climbs with them, and strikes scale with BOTH hunters' Height.",
+      "desc": "Roped — the ally climbs with you; strikes scale with both Heights.",
       "passive": {
         "type": "ally_climb",
         "value": 1
@@ -65,11 +67,12 @@
         "pitons_in",
         "brace",
         "take_aim"
-      ]
+      ],
+      "portrait": "res://assets/portraits/goat.png"
     },
     "goblin_mech": {
       "name": "The Goblin Engineer",
-      "desc": "Heavy hitter — wrecks the weak point, but climbs terribly. Builds timed grapples to haul up.",
+      "desc": "Heavy hitter — builds gadgets to climb; wrecks the weak point.",
       "passive": {
         "type": "attack_bonus",
         "value": 2
@@ -85,7 +88,8 @@
         "build_grapple",
         "build_mech",
         "catapult"
-      ]
+      ],
+      "portrait": "res://assets/portraits/monkey.png"
     }
   }
 }

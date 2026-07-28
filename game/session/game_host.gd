@@ -206,6 +206,7 @@ func _players_public() -> Array:
 			var ps: PlayerState = c.players[i]
 			out.append({
 				"name": Content.character_name(ps.character), "hp": ps.combatant.hp,
+				"portrait": Content.character_portrait(ps.character),
 				"max_hp": ps.combatant.max_hp, "block": ps.combatant.block, "energy": ps.energy,
 				"ended": ps.ended_turn, "strength": ps.strength, "rhythm": ps.rhythm,
 				"foothold": ps.foothold, "reached": c.sigil_reached(i),
@@ -217,6 +218,7 @@ func _players_public() -> Array:
 		for i in range(_run.player_count()):
 			out.append({
 				"name": _run.names[i], "hp": _run.hp[i], "max_hp": _run.max_hp[i],
+				"portrait": Content.character_portrait(_slot_char(i)),
 				"picked": _run.phase == Run.Phase.REWARD and bool(_run.reward_picked[i]),
 			})
 	return out
@@ -312,6 +314,14 @@ func _card_icon(c: Card) -> String:
 		return "sword"
 	if c.block > 0 or c.block_per_play > 0:
 		return "shield"
+	return ""
+
+## The character id chosen for a hunter slot (works in solo and co-op).
+func _slot_char(slot: int) -> String:
+	if _solo:
+		return String(_solo_chars[slot]) if slot < _solo_chars.size() else ""
+	if slot < _peers.size():
+		return String(_character_of.get(_peers[slot], ""))
 	return ""
 
 func _slot(peer_id: int) -> int:
