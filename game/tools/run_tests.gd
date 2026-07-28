@@ -45,6 +45,12 @@ func _init() -> void:
 	_test_attack_all_shakes_foothold()
 	_test_sunlight_blade_scales_with_exposed()
 	_test_bowshot_deals_and_exposes()
+	# grip / stamina (SotC climb tension)
+	_test_climb_drains_grip()
+	_test_grip_holds_at_sigil()
+	_test_grip_runs_out_and_falls()
+	_test_timed_climb_refunds_grip()
+	_test_shake_tears_grip()
 	# step 4: run / meta-progression
 	_test_run_starts_in_combat()
 	_test_run_win_flows_through_reward_to_next_encounter()
@@ -329,6 +335,72 @@ func _test_attack_all_shakes_foothold() -> void:
 	combat.end_turn(0)
 	combat.end_turn(1)  # attack_all -> shake
 	_expect(combat.players[0].foothold == 5 - Combat.SHAKE_LOSS, "attack_all shakes the team loose")
+
+
+func _climb_boss(height: int) -> Boss:
+	# A benign titan (its move does nothing to the hunters) with a high weak point,
+	# so grip-upkeep can be tested without the boss's attack skewing HP/foothold.
+	var b := Boss.new("Climber", 500)
+	b.moves = [{"type": "block", "value": 0}]
+	b.weak_point_height = height
+	return b
+
+
+func _test_climb_drains_grip() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _climb_boss(3))
+	combat.players[0].foothold = 1  # mid-climb, clinging
+	var before: int = combat.players[0].stamina
+	combat.end_turn(0)
+	combat.end_turn(1)  # round turns over -> grip upkeep
+	_expect(combat.players[0].stamina == before - Combat.STAMINA_DRAIN,
+		"a hunter clinging mid-climb loses grip each round")
+
+
+func _test_grip_holds_at_sigil() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _climb_boss(3))
+	combat.players[0].foothold = 3  # reached the sigil — secure
+	var before: int = combat.players[0].stamina
+	combat.end_turn(0)
+	combat.end_turn(1)
+	_expect(combat.players[0].stamina == before,
+		"a hunter secure at the weak point holds grip steady")
+
+
+func _test_grip_runs_out_and_falls() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _climb_boss(3))
+	combat.players[0].foothold = 2  # mid-climb
+	combat.players[0].stamina = Combat.STAMINA_DRAIN  # exactly enough to hit empty
+	var hp0: int = combat.players[0].combatant.hp
+	combat.end_turn(0)
+	combat.end_turn(1)  # grip gives out -> fall
+	var ps: PlayerState = combat.players[0]
+	_expect(ps.foothold == 0 and ps.combatant.hp == hp0 - Combat.FALL_DAMAGE
+		and ps.stamina == ps.stamina_max,
+		"grip runs out -> the hunter falls, takes a knock, Height reset")
+
+
+func _test_timed_climb_refunds_grip() -> void:
+	var combat := _new_combat([_deck_of(_grapple, 10), _deck_of(_slash, 10)], 42, _climb_boss(3))
+	var ps: PlayerState = combat.players[0]
+	ps.stamina = 1
+	combat.play_card(0, _first_playable(combat, 0), true)  # timed HIT climbs and refunds grip
+	_expect(ps.stamina == mini(1 + Combat.STAMINA_HIT_REFUND, ps.stamina_max),
+		"a well-timed climb claws back grip")
+
+
+func _test_shake_tears_grip() -> void:
+	var boss := Boss.new("Shaker", 500)
+	boss.moves = [{"type": "attack_all", "value": 0}]
+	boss.weak_point_height = 3
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 5
+	ps.stamina = ps.stamina_max
+	combat.end_turn(0)
+	combat.end_turn(1)  # sweep tears grip + Height, then holding on drains more
+	_expect(ps.foothold == 5 - Combat.SHAKE_LOSS
+		and ps.stamina == ps.stamina_max - Combat.SHAKE_STAMINA_LOSS - Combat.STAMINA_DRAIN,
+		"a sweep tears at grip as well as Height")
 
 
 func _test_sunlight_blade_scales_with_exposed() -> void:

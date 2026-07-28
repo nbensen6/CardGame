@@ -203,6 +203,7 @@ func _players_public() -> Array:
 				"max_hp": ps.combatant.max_hp, "block": ps.combatant.block, "energy": ps.energy,
 				"ended": ps.ended_turn, "strength": ps.strength,
 				"foothold": ps.foothold, "reached": c.sigil_reached(i),
+					"stamina": ps.stamina, "stamina_max": ps.stamina_max,
 				"weak_point_height": c.boss.weak_point_height,
 			})
 	else:

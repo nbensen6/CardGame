@@ -127,6 +127,21 @@ magic is a fast climber hauling a heavy hitter up to the sigil.
 PROTECTOR. Options: make the Goblin Mech the heavy payoff, and/or add one more
 creature (a Beetle/Ram/Yeti-style defender-bruiser).
 
+## Grip / stamina — SHIPPED (v1)
+The climb is now a **race against your grip**, à la Shadow of the Colossus. Each
+hunter has a Grip meter (`STAMINA_MAX` 6). While clinging *mid-climb* it drains
+each round (`STAMINA_DRAIN`); at the base it refills; at the sigil it holds steady
+so you can strike safely. If grip runs out mid-climb you **fall** — all Height
+gone plus a `FALL_DAMAGE` knock. The beast's sweep tears at grip
+(`SHAKE_STAMINA_LOSS`) on top of the Height knock-off, so a sweep can shake you
+loose *and* make you fall. A **well-timed climb** (a timed card that lands) claws
+grip back (`STAMINA_HIT_REFUND`) — fusing the timing minigame with the grip
+economy. This makes "get from A to B before your grip gives out" the core tension,
+and sharpens the carry dependency (a stranded striker on low grip needs a lift
+*now*). All knobs in `design/tuning-knobs.md`. Next: teach it in onboarding
+(Epic A), then consider per-character grip (a Frog clings longer; a Goblin barely
+holds on).
+
 ## Open questions for the human
 - **How far on the climb feel?** A2 (recommended) is a real rework + re-tune;
   A1 is cheap but shallow. Your call on ambition.

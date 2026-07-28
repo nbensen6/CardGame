@@ -470,12 +470,20 @@ func _render_players(s: Dictionary, targeted: Array) -> void:
 		if phase == "combat":
 			var h := int(p.get("weak_point_height", 0))
 			if h > 0:
+				var fh := int(p.get("foothold", 0))
 				if bool(p.get("reached", false)):
 					var atwp := _mklabel("✦ at the weak point — strike!")
 					atwp.add_theme_color_override("font_color", Color(0.62, 0.82, 0.5))
 					box.add_child(atwp)
 				else:
-					box.add_child(_mklabel("⛰ climbing — Height %d / %d" % [int(p.get("foothold", 0)), h]))
+					box.add_child(_mklabel("⛰ climbing — Height %d / %d" % [fh, h]))
+				if fh > 0:  # on the beast — grip matters (SotC stamina)
+					var stam := int(p.get("stamina", 0))
+					var stam_max := int(p.get("stamina_max", 0))
+					var grip_lbl := _mklabel(_grip_text(stam, stam_max))
+					if stam <= 2:  # about to lose your hold
+						grip_lbl.add_theme_color_override("font_color", Color(0.92, 0.5, 0.42))
+					box.add_child(grip_lbl)
 			var status := "Energy %d / %d" % [p["energy"], s["base_energy"]]
 			if int(p.get("strength", 0)) > 0:
 				status += "   Str +%d" % int(p["strength"])
@@ -553,6 +561,12 @@ func _log_with_relics(s: Dictionary) -> String:
 		return body
 	var header := "Relics:  " + ",  ".join(relics)
 	return header + ("\n\n" + body if not body.is_empty() else "")
+
+
+## A grip meter as filled/empty pips — the SotC hold-on stamina while climbing.
+func _grip_text(stamina: int, stamina_max: int) -> String:
+	var filled := clampi(stamina, 0, stamina_max)
+	return "Grip " + "▰".repeat(filled) + "▱".repeat(stamina_max - filled) + "  %d/%d" % [stamina, stamina_max]
 
 
 func _block_suffix(block: int) -> String:

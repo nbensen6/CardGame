@@ -26,6 +26,15 @@ const SIGIL_BONUS := 5   # extra damage on a hit once a hunter has climbed to th
 const FOOTHOLD_MAX := 6  # cap on each hunter's climb (Height)
 const SHAKE_LOSS := 3    # Height each hunter loses when the beast sweeps (attack_all) — bucked off
 const ARMORED_DIVISOR := 4  # below the weak point the hide is armored: attacks chip 1/ARMORED_DIVISOR
+# Grip / stamina (Shadow-of-the-Colossus climb tension): getting from the base to
+# the weak point is a race against your grip. You cling while climbing and it
+# drains each round; you recover at the base and hold steady at the sigil; if it
+# gives out mid-climb you fall. Well-timed climbs claw some back. All tunable.
+const STAMINA_MAX := 6        # how long a hunter can cling before needing a rest/ledge
+const STAMINA_DRAIN := 2      # grip lost each round spent mid-climb (not base, not sigil)
+const SHAKE_STAMINA_LOSS := 2 # extra grip torn away when the beast sweeps (attack_all)
+const STAMINA_HIT_REFUND := 2 # grip clawed back by a well-timed climb ("nailed it")
+const FALL_DAMAGE := 3        # damage taken when grip runs out and a hunter falls
 
 var players: Array = []  # Array[PlayerState], index = player slot
 var boss: Boss
@@ -58,6 +67,8 @@ func _init(decks: Array, combatants: Array, p_boss: Boss, seed_value: int = 0,
 		var ps := PlayerState.new()
 		ps.combatant = combatants[i]
 		ps.strength = start_strength  # relic: begin the fight with Strength
+		ps.stamina = STAMINA_MAX
+		ps.stamina_max = STAMINA_MAX
 		if i < player_passives.size():
 			_apply_passive(ps, player_passives[i])
 		ps.draw_pile = (decks[i] as Array).duplicate()
@@ -169,6 +180,8 @@ func play_card(pi: int, ci: int, timing_hit: bool = true) -> bool:
 		ps.foothold = mini(ps.foothold + climbed, FOOTHOLD_MAX)
 		var flair := "  (nailed it!)" if card.timed else ""
 		_log("%s plays %s — climbs (+%d Height, now %d)%s." % [who, card.name, climbed, ps.foothold, flair])
+		if card.timed and STAMINA_HIT_REFUND > 0:  # a clean grab conserves grip
+			ps.stamina = mini(ps.stamina + STAMINA_HIT_REFUND, ps.stamina_max)
 		if ps.ally_climb > 0:  # roped together — the ally climbs with you
 			var roped: PlayerState = players[ally_index(pi)]
 			roped.foothold = mini(roped.foothold + ps.ally_climb, FOOTHOLD_MAX)
@@ -290,6 +303,7 @@ func _enemy_turn() -> void:
 			for ps in players:
 				ps.combatant.take_damage(dmg_all)
 				ps.foothold = maxi(0, ps.foothold - SHAKE_LOSS)  # bucks each hunter off
+				ps.stamina = maxi(0, ps.stamina - SHAKE_STAMINA_LOSS)  # and tears at their grip
 			_log("%s sweeps both hunters for %d and shakes them loose (-%d Height)." % [boss.name, dmg_all, SHAKE_LOSS])
 		"enrage":
 			boss.strength += value
@@ -305,8 +319,33 @@ func _enemy_turn() -> void:
 	boss.advance_move()
 	if _check_end():
 		return
+	_climb_upkeep()
+	if _check_end():  # a fall can be lethal
+		return
 	round_num += 1
 	_begin_round()
+
+## Between rounds, resolve grip (SotC stamina). A hunter at the base recovers; one
+## secure at the sigil holds steady; one still clinging mid-climb loses grip, and
+## if it gives out entirely they lose their hold and fall — all Height gone plus a
+## knock. This is what turns the climb into a race from the base to the weak point.
+func _climb_upkeep() -> void:
+	if boss.weak_point_height <= 0:
+		return  # a low-sigil Titan isn't climbed — no grip pressure
+	for pi in range(players.size()):
+		var ps: PlayerState = players[pi]
+		if ps.foothold <= 0:
+			ps.stamina = ps.stamina_max  # resting at the base
+		elif sigil_reached(pi):
+			pass  # secure at the sigil — you can strike without losing grip
+		else:
+			ps.stamina -= STAMINA_DRAIN  # clinging to the hide
+			if ps.stamina <= 0:
+				ps.stamina = ps.stamina_max
+				ps.foothold = 0
+				ps.combatant.take_damage(FALL_DAMAGE)
+				_log("%s loses their grip and falls! (-%d, back to the base)" % [ps.combatant.name, FALL_DAMAGE])
+
 
 func _draw(ps: PlayerState, n: int) -> void:
 	for _i in n:
