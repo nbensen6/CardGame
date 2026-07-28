@@ -23,15 +23,34 @@ var _client: GameClient
 @onready var _overlay: Control = %Overlay
 @onready var _result_label: Label = %ResultLabel
 @onready var _restart_btn: Button = %RestartButton
+@onready var _menu_btn: Button = %MenuButton
+
+var _server_lost := false
 
 
 func _ready() -> void:
 	_end_turn_btn.pressed.connect(func() -> void: _client.end_turn())
 	_restart_btn.pressed.connect(func() -> void: _client.restart())
+	_menu_btn.pressed.connect(_return_to_menu)
 	_client = Session.client
 	_client.state_updated.connect(_on_state)
+	# Disconnect handling: the host going away (client side) drops us to the menu.
+	if Session.transport != null:
+		Session.transport.server_lost.connect(_on_server_lost)
 	if not _client.shared.is_empty():
 		_refresh()
+
+
+func _on_server_lost() -> void:
+	_server_lost = true
+	_overlay.visible = true
+	_restart_btn.visible = false
+	_menu_btn.visible = true
+	_result_label.text = "Disconnected from host.\nThe run has ended."
+
+
+func _return_to_menu() -> void:
+	get_tree().change_scene_to_file("res://views/menu.tscn")
 
 
 func _on_state(_shared: Dictionary, _private: Dictionary) -> void:
@@ -39,8 +58,13 @@ func _on_state(_shared: Dictionary, _private: Dictionary) -> void:
 
 
 func _refresh() -> void:
+	if _server_lost:
+		return  # keep the disconnect overlay
 	var s := _client.shared
 	if s.is_empty():
+		return
+	if bool(s.get("paused", false)):
+		_show_paused(s)
 		return
 	if bool(s.get("waiting", false)):
 		_show_waiting(s)
@@ -134,6 +158,7 @@ func _on_reward_pressed(choice: int) -> void:
 func _render_over(s: Dictionary) -> void:
 	_overlay.visible = true
 	_restart_btn.visible = true
+	_menu_btn.visible = true
 	match String(s.get("result", "")):
 		"win":
 			_result_label.text = "Run complete!\nAll Titans have fallen."
@@ -143,9 +168,22 @@ func _render_over(s: Dictionary) -> void:
 			_result_label.text = "Run over."
 
 
+func _show_paused(s: Dictionary) -> void:
+	_overlay.visible = true
+	_restart_btn.visible = false
+	_menu_btn.visible = true
+	var slot := int(s.get("disconnected_slot", -1))
+	var who := "A hunter"
+	var players: Array = s.get("players", [])
+	if slot >= 0 and slot < players.size():
+		who = String(players[slot]["name"])
+	_result_label.text = "%s disconnected.\nThe run is paused." % who
+
+
 func _show_waiting(s: Dictionary) -> void:
 	_overlay.visible = true
 	_restart_btn.visible = false
+	_menu_btn.visible = true
 	_result_label.text = "Waiting for hunters…\n%d / %d joined" % [
 		int(s.get("joined", 1)), int(s.get("required", 2))]
 

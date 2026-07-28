@@ -19,6 +19,8 @@ func _init(link: NetLink, is_server: bool) -> void:
 	_is_server = is_server
 	_link.command_arrived.connect(_on_link_command)
 	_link.message_arrived.connect(_on_link_message)
+	_link.peer_dropped.connect(func(id: int) -> void: peer_left.emit(id))
+	_link.host_dropped.connect(func() -> void: server_lost.emit())
 
 ## Client -> server. On the host, the local client's command skips the wire.
 func send_command(peer_id: int, command: Dictionary) -> void:

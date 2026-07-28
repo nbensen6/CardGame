@@ -19,6 +19,10 @@ extends RefCounted
 signal command_received(peer_id: int, command: Dictionary)
 ## Client side: a server message arrived.
 signal message_received(message: Dictionary)
+## Server side: a client dropped. (Never fires for the in-process LocalTransport.)
+signal peer_left(peer_id: int)
+## Client side: the host went away.
+signal server_lost()
 
 ## Client -> server. Override in a real transport to send over the wire.
 func send_command(_peer_id: int, _command: Dictionary) -> void:

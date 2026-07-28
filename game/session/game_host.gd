@@ -17,12 +17,15 @@ var _seed: int
 var _required: int
 var _slot_of: Dictionary = {}  # peer_id -> hunter slot
 var _peers: Array = []         # peer_ids in join order (slot = position)
+var paused: bool = false       # a hunter dropped mid-run; play is halted
+var _disconnected_slot: int = -1
 
 func _init(transport: Transport, seed_value: int = 0, required_players: int = 2) -> void:
 	_transport = transport
 	_seed = seed_value
 	_required = required_players
 	_transport.command_received.connect(_on_command)
+	_transport.peer_left.connect(_on_peer_left)
 
 func start_new_run() -> void:
 	var decks: Array = []
@@ -48,7 +51,7 @@ func _on_command(peer_id: int, command: Dictionary) -> void:
 				_run.combat.end_turn(pi))
 		"pick_card":
 			var pslot := _slot(peer_id)
-			if _run != null and pslot >= 0:
+			if not paused and _run != null and pslot >= 0:
 				_run.pick_reward(pslot, int(command.get("choice", -1)))
 			_broadcast_state()
 		"restart":
@@ -59,10 +62,28 @@ func _on_command(peer_id: int, command: Dictionary) -> void:
 
 func _in_combat_action(peer_id: int, action: Callable) -> void:
 	var pi := _slot(peer_id)
-	if _run != null and _run.phase == Run.Phase.COMBAT and pi >= 0:
+	if not paused and _run != null and _run.phase == Run.Phase.COMBAT and pi >= 0:
 		action.call(pi)
 		_run.sync()
 	_broadcast_state()
+
+## A hunter dropped. In the lobby we free their slot; mid-run we pause.
+func _on_peer_left(peer_id: int) -> void:
+	if not _slot_of.has(peer_id):
+		return
+	if _run == null:
+		_peers.erase(peer_id)
+		_slot_of.erase(peer_id)
+		_reindex_slots()
+	else:
+		paused = true
+		_disconnected_slot = _slot(peer_id)
+	_broadcast_state()
+
+func _reindex_slots() -> void:
+	_slot_of.clear()
+	for i in range(_peers.size()):
+		_slot_of[_peers[i]] = i
 
 func _handle_join(peer_id: int) -> void:
 	if not _slot_of.has(peer_id) and _peers.size() < _required:
@@ -102,6 +123,8 @@ func _build_shared() -> Dictionary:
 		"result": _result_string(),
 		"players": _players_public(),
 		"relics": _relic_names(),
+		"paused": paused,
+		"disconnected_slot": _disconnected_slot,
 	}
 	if _run.phase == Run.Phase.COMBAT:
 		var c: Combat = _run.combat

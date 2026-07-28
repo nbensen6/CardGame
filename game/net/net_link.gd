@@ -12,6 +12,15 @@ extends Node
 signal command_arrived(peer_id: int, command: Dictionary)
 ## The server's message reached this client.
 signal message_arrived(message: Dictionary)
+## A remote peer dropped (server side).
+signal peer_dropped(peer_id: int)
+## The host went away (client side).
+signal host_dropped()
+
+func _ready() -> void:
+	# multiplayer_peer is set before this node is added, so these are safe here.
+	multiplayer.peer_disconnected.connect(func(id: int) -> void: peer_dropped.emit(id))
+	multiplayer.server_disconnected.connect(func() -> void: host_dropped.emit())
 
 ## Client -> server.
 func to_server(command: Dictionary) -> void:

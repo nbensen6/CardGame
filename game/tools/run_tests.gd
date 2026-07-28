@@ -63,6 +63,7 @@ func _init() -> void:
 	_test_session_shared_board_syncs_across_players()
 	_test_session_end_turn_needs_all_players()
 	_test_session_private_view_is_isolated()
+	_test_host_pauses_on_disconnect()
 
 	print("")
 	if _failures == 0:
@@ -493,6 +494,21 @@ func _test_session_private_view_is_isolated() -> void:
 	(s["c0"] as GameClient).play_card(_first_playable_client(s["c0"]))
 	_expect(eavesdropper.shared.is_empty() and eavesdropper.private.is_empty(),
 		"a non-joined peer receives no shared or private state")
+
+
+func _test_host_pauses_on_disconnect() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var transport: LocalTransport = s["transport"]
+	_expect(not host.paused, "run is not paused initially")
+	transport.emit_signal("peer_left", 20)  # hunter 2 (peer 20) drops
+	_expect(host.paused and bool(c0.shared.get("paused", false)),
+		"host pauses and broadcasts when a hunter drops")
+	var energy_before: int = c0.shared["players"][0]["energy"]
+	c0.play_card(_first_playable_client(c0))
+	_expect(int(c0.shared["players"][0]["energy"]) == energy_before,
+		"commands are ignored while paused")
 
 
 # --- helpers --------------------------------------------------------------
