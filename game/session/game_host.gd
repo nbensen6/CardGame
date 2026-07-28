@@ -20,20 +20,26 @@ var _peers: Array = []         # peer_ids in join order (slot = position)
 var paused: bool = false       # a hunter dropped mid-run; play is halted
 var _disconnected_slot: int = -1
 var _character_of: Dictionary = {}  # peer_id -> chosen character id (lobby select)
+# Solo: one player controls BOTH hunters. required=1; both characters picked by
+# the one peer; commands carry an explicit "slot".
+var _solo: bool = false
+var _solo_chars: Array = ["", ""]
 
-func _init(transport: Transport, seed_value: int = 0, required_players: int = 2) -> void:
+func _init(transport: Transport, seed_value: int = 0, required_players: int = 2, solo: bool = false) -> void:
 	_transport = transport
 	_seed = seed_value
-	_required = required_players
+	_solo = solo
+	_required = 1 if solo else required_players
 	_transport.command_received.connect(_on_command)
 	_transport.peer_left.connect(_on_peer_left)
 
 func start_new_run() -> void:
+	var char_ids := _solo_chars if _solo else _co_op_char_ids()
 	var decks: Array = []
 	var names: Array = []
 	var passives: Array = []
-	for pid in _peers:
-		var cid := String(_character_of.get(pid, "frog"))
+	for cid_v in char_ids:
+		var cid := String(cid_v)
 		decks.append(Content.character_deck(cid))
 		names.append(Content.character_name(cid))
 		passives.append(Content.character_passive(cid))
@@ -49,16 +55,21 @@ func _on_command(peer_id: int, command: Dictionary) -> void:
 			_handle_join(peer_id)
 		"select_character":
 			if _run == null:
-				_character_of[peer_id] = String(command.get("character", ""))
+				if _solo:
+					_solo_chars[clampi(int(command.get("slot", 0)), 0, 1)] = String(command.get("character", ""))
+				else:
+					_character_of[peer_id] = String(command.get("character", ""))
 			_try_start_or_broadcast()
 		"play_card":
-			_in_combat_action(peer_id, func(pi: int) -> void:
-				_run.combat.play_card(pi, int(command.get("index", -1)), bool(command.get("timing", true))))
+			var ps0 := _acting_slot(peer_id, command)
+			_in_combat_action(ps0, func() -> void:
+				_run.combat.play_card(ps0, int(command.get("index", -1)), bool(command.get("timing", true))))
 		"end_turn":
-			_in_combat_action(peer_id, func(pi: int) -> void:
-				_run.combat.end_turn(pi))
+			var ps1 := _acting_slot(peer_id, command)
+			_in_combat_action(ps1, func() -> void:
+				_run.combat.end_turn(ps1))
 		"pick_card":
-			var pslot := _slot(peer_id)
+			var pslot := _acting_slot(peer_id, command)
 			if not paused and _run != null and pslot >= 0:
 				_run.pick_reward(pslot, int(command.get("choice", -1)))
 			_broadcast_state()
@@ -68,12 +79,24 @@ func _on_command(peer_id: int, command: Dictionary) -> void:
 		_:
 			push_warning("GameHost: unknown command '%s'" % command.get("type", ""))
 
-func _in_combat_action(peer_id: int, action: Callable) -> void:
-	var pi := _slot(peer_id)
-	if not paused and _run != null and _run.phase == Run.Phase.COMBAT and pi >= 0:
-		action.call(pi)
+func _in_combat_action(pi: int, action: Callable) -> void:
+	if not paused and _run != null and _run.phase == Run.Phase.COMBAT and pi >= 0 and pi < _run.player_count():
+		action.call()
 		_run.sync()
 	_broadcast_state()
+
+## Which hunter slot a command acts on: in solo the peer names it; in co-op it's
+## the peer's own slot.
+func _acting_slot(peer_id: int, command: Dictionary) -> int:
+	if _solo:
+		return int(command.get("slot", -1))
+	return _slot(peer_id)
+
+func _co_op_char_ids() -> Array:
+	var ids: Array = []
+	for pid in _peers:
+		ids.append(String(_character_of.get(pid, "frog")))
+	return ids
 
 ## A hunter dropped. In the lobby we free their slot; mid-run we pause.
 func _on_peer_left(peer_id: int) -> void:
@@ -107,6 +130,8 @@ func _try_start_or_broadcast() -> void:
 		_broadcast_state()
 
 func _all_selected() -> bool:
+	if _solo:
+		return _solo_chars[0] != "" and _solo_chars[1] != ""
 	for pid in _peers:
 		if not _character_of.has(pid):
 			return false
@@ -116,16 +141,19 @@ func _all_selected() -> bool:
 
 func _broadcast_state() -> void:
 	if _run == null:
-		# Lobby: character select. Everyone sees who has picked; each gets the roster.
-		var selections := _selections()
+		# Lobby: character select. Solo picks both hunters; co-op one each.
 		for pid in _peers:
-			_transport.send_to(pid, {
-				"type": "snapshot", "for_peer": pid, "you": _slot(pid),
-				"shared": {"waiting": true, "phase": "select",
-					"joined": _peers.size(), "required": _required, "selections": selections},
-				"private": {"characters": Content.list_characters(),
-					"selected": String(_character_of.get(pid, ""))},
-			})
+			var sh := {"waiting": true, "phase": "select", "solo": _solo,
+				"joined": _peers.size(), "required": _required}
+			var pv := {"characters": Content.list_characters()}
+			if _solo:
+				sh["selections"] = _solo_selections()
+				sh["current_slot"] = _first_unpicked_solo()
+			else:
+				sh["selections"] = _selections()
+				pv["selected"] = String(_character_of.get(pid, ""))
+			_transport.send_to(pid, {"type": "snapshot", "for_peer": pid, "you": _slot(pid),
+				"shared": sh, "private": pv})
 		return
 	var shared := _build_shared()
 	for pid in _peers:
@@ -147,6 +175,7 @@ func _build_shared() -> Dictionary:
 		"relics": _relic_names(),
 		"paused": paused,
 		"disconnected_slot": _disconnected_slot,
+		"solo": _solo,
 	}
 	if _run.phase == Run.Phase.COMBAT:
 		var c: Combat = _run.combat
@@ -186,6 +215,12 @@ func _players_public() -> Array:
 func _build_private(pi: int) -> Dictionary:
 	if pi < 0 or _run == null:
 		return {}
+	# Solo controls both hunters, so send both slots' private data.
+	if _solo:
+		return {"solo": true, "slots": [_slot_private(0), _slot_private(1)]}
+	return _slot_private(pi)
+
+func _slot_private(pi: int) -> Dictionary:
 	if _run.phase == Run.Phase.COMBAT:
 		var ps: PlayerState = _run.combat.players[pi]
 		var cards: Array = []
@@ -225,6 +260,19 @@ func _selections() -> Array:
 		var cid := String(_character_of.get(pid, ""))
 		out.append({"name": Content.character_name(cid) if cid != "" else "", "picked": cid != ""})
 	return out
+
+func _solo_selections() -> Array:
+	var out: Array = []
+	for cid_v in _solo_chars:
+		var cid := String(cid_v)
+		out.append({"name": Content.character_name(cid) if cid != "" else "", "picked": cid != ""})
+	return out
+
+func _first_unpicked_solo() -> int:
+	for i in range(_solo_chars.size()):
+		if String(_solo_chars[i]) == "":
+			return i
+	return -1
 
 ## A silhouette-icon key for a card, chosen by its dominant effect (view art).
 func _card_icon(c: Card) -> String:

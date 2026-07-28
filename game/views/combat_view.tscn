@@ -110,6 +110,13 @@ layout_mode = 2
 disabled = true
 text = "Lock In Reward"
 
+[node name="SwitchButton" type="Button" parent="Margin/Root/Controls"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(200, 44)
+layout_mode = 2
+text = "Switch Hunter"
+
 [node name="Overlay" type="Control" parent="."]
 unique_name_in_owner = true
 visible = false

@@ -14,10 +14,24 @@ const PORT := 9999
 @onready var _join_btn: Button = %JoinBtn
 
 
+@onready var _solo_btn: Button = %SoloBtn
+
+
 func _ready() -> void:
 	Session.reset()
+	_solo_btn.pressed.connect(_on_solo)
 	_host_btn.pressed.connect(_on_host)
 	_join_btn.pressed.connect(_on_join)
+
+
+## Single-player: one player controls both hunters, all in-process (no networking).
+func _on_solo() -> void:
+	var transport := LocalTransport.new()
+	Session.transport = transport
+	Session.host = GameHost.new(transport, 0, 2, true)  # solo = true
+	Session.client = GameClient.new(transport, 1)
+	Session.client.join()  # enters the (solo) character-select lobby
+	_goto_combat()
 
 
 func _on_host() -> void:

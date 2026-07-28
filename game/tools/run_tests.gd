@@ -80,6 +80,7 @@ func _init() -> void:
 	_test_session_end_turn_needs_all_players()
 	_test_session_private_view_is_isolated()
 	_test_host_pauses_on_disconnect()
+	_test_solo_controls_both_hunters()
 
 	print("")
 	if _failures == 0:
@@ -664,6 +665,33 @@ func _test_session_private_view_is_isolated() -> void:
 	(s["c0"] as GameClient).play_card(_first_playable_client(s["c0"]))
 	_expect(eavesdropper.shared.is_empty() and eavesdropper.private.is_empty(),
 		"a non-joined peer receives no shared or private state")
+
+
+func _test_solo_controls_both_hunters() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, true)  # solo
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()  # enters the solo character-select lobby
+	_expect(bool(c.shared.get("solo", false)) and int(c.shared.get("current_slot", -1)) == 0,
+		"solo lobby asks for hunter 1 first")
+	c.select_character("frog", 0)
+	_expect(int(c.shared.get("current_slot", -1)) == 1, "after hunter 1, solo asks for hunter 2")
+	c.select_character("goblin_mech", 1)  # both chosen -> run starts
+	var slots: Array = c.private.get("slots", [])
+	_expect(bool(c.private.get("solo", false)) and slots.size() == 2
+		and slots[0]["hand"].size() == Combat.HAND_SIZE
+		and slots[1]["hand"].size() == Combat.HAND_SIZE,
+		"solo: the one client receives BOTH hunters' hands")
+	var energy_before: int = c.shared["players"][1]["energy"]
+	var idx := -1
+	for card in slots[1]["hand"]:
+		if bool(card["playable"]):
+			idx = int(card["index"])
+			break
+	c.play_card(idx, true, 1)  # act as hunter 2
+	_expect(int(c.shared["players"][1]["energy"]) < energy_before,
+		"solo: a command with slot=1 acts on hunter 2")
 
 
 func _test_host_pauses_on_disconnect() -> void:

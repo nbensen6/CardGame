@@ -21,6 +21,7 @@ var _client: GameClient
 @onready var _hand_row: HBoxContainer = %Hand
 @onready var _end_turn_btn: Button = %EndTurn
 @onready var _lock_btn: Button = %LockButton
+@onready var _switch_btn: Button = %SwitchButton
 @onready var _overlay: Control = %Overlay
 @onready var _result_label: Label = %ResultLabel
 @onready var _restart_btn: Button = %RestartButton
@@ -30,12 +31,46 @@ var _server_lost := false
 var _selected_choice := -1   # reward highlighted but NOT yet locked
 var _selected_char := ""     # character highlighted in the lobby but NOT yet locked
 var _prev_phase := ""
+var _active_slot := 0        # solo: which hunter the player is currently controlling
+
+
+# --- Solo helpers (one player controls both hunters) ----------------------
+
+func _is_solo() -> bool:
+	return bool(_client.shared.get("solo", false))
+
+## The hunter this view currently represents (solo: the active one; co-op: you).
+func _me() -> int:
+	return _active_slot if _is_solo() else _client.you
+
+## The slot a command targets: solo names it, co-op lets the host use the peer's.
+func _cmd_slot() -> int:
+	return _active_slot if _is_solo() else -1
+
+## The private data for the hunter being controlled.
+func _my_private() -> Dictionary:
+	if _is_solo():
+		var slots: Array = _client.private.get("slots", [])
+		return slots[_active_slot] if _active_slot < slots.size() else {}
+	return _client.private
+
+func _hunter_name(slot: int) -> String:
+	var players: Array = _client.shared.get("players", [])
+	return String(players[slot]["name"]) if slot < players.size() else "Hunter %d" % (slot + 1)
 
 
 func _ready() -> void:
 	_end_turn_btn.pressed.connect(func() -> void:
 		Sfx.play("end_turn")
-		_client.end_turn())
+		_client.end_turn(_cmd_slot())
+		if _is_solo():  # hand control to the other hunter
+			_active_slot = 1 - _active_slot
+			_refresh())
+	_switch_btn.pressed.connect(func() -> void:
+		_active_slot = 1 - _active_slot
+		_selected_choice = -1
+		_selected_char = ""
+		_refresh())
 	_lock_btn.pressed.connect(_on_lock)
 	_restart_btn.pressed.connect(func() -> void: _client.restart())
 	_menu_btn.pressed.connect(_return_to_menu)
@@ -131,17 +166,25 @@ func _render_combat(s: Dictionary) -> void:
 
 func _render_hand() -> void:
 	_clear(_hand_row)
-	var ended := bool(_client.private.get("ended", false))
-	_hand_label.text = "Your hand" + ("   (turn ended — waiting for ally)" if ended else "")
-	for card in _client.private.get("hand", []):
+	var solo := _is_solo()
+	var priv := _my_private()
+	var ended := bool(priv.get("ended", false))
+	var tag := ("   —   %s" % _hunter_name(_active_slot)) if solo else ""
+	_hand_label.text = "Your hand%s%s" % [tag, "   (turn ended)" if ended else ""]
+	for card in priv.get("hand", []):
 		var cv := CardView.new()
 		_hand_row.add_child(cv)
 		cv.setup(card, bool(card["playable"]))
 		var idx := int(card["index"])
 		cv.tapped.connect(_on_card_tapped.bind(idx, bool(card.get("timed", false)), cv))
 		cv.timing_resolved.connect(_on_timing_resolved.bind(idx))
+	_switch_btn.visible = solo
+	if solo:
+		_switch_btn.text = "▶ Switch to %s" % _hunter_name(1 - _active_slot)
+		_end_turn_btn.text = "End %s's Turn" % _hunter_name(_active_slot)
+	else:
+		_end_turn_btn.text = "Waiting for ally…" if ended else "End Turn"
 	_end_turn_btn.disabled = ended
-	_end_turn_btn.text = "Waiting for ally…" if ended else "End Turn"
 
 
 func _on_card_tapped(index: int, timed: bool, cv: CardView) -> void:
@@ -149,12 +192,12 @@ func _on_card_tapped(index: int, timed: bool, cv: CardView) -> void:
 		cv.start_timing()  # the card runs its own timing sweep; the next tap fires it
 		return
 	Sfx.play("card")
-	_client.play_card(index)
+	_client.play_card(index, true, _cmd_slot())
 
 
 func _on_timing_resolved(hit: bool, index: int) -> void:
 	Sfx.play("card")
-	_client.play_card(index, hit)
+	_client.play_card(index, hit, _cmd_slot())
 
 
 # --- Reward phase ---------------------------------------------------------
@@ -167,11 +210,16 @@ func _render_reward(s: Dictionary) -> void:
 	_intent.visible = false
 	_end_turn_btn.get_parent().visible = true
 	_end_turn_btn.visible = false
+	var solo := _is_solo()
+	_switch_btn.visible = solo
+	if solo:
+		_switch_btn.text = "▶ Switch to %s" % _hunter_name(1 - _active_slot)
 
-	var reward: Dictionary = _client.private.get("reward", {})
+	var reward: Dictionary = _my_private().get("reward", {})
 	var is_relic := String(reward.get("kind", "card")) == "relic"
 	var picked := bool(reward.get("picked", false))
-	_boss_name.text = "Titan felled!  (%d / %d)" % [s["encounter"], s["total_encounters"]]
+	_boss_name.text = "Titan felled!  (%d / %d)%s" % [s["encounter"], s["total_encounters"],
+		("   —   %s picks" % _hunter_name(_active_slot)) if solo else ""]
 	_boss_hp.text = ("Choose a RELIC — a lasting boon for the team." if is_relic
 		else "Choose a card to strengthen your deck for the next Titan.")
 
@@ -203,7 +251,7 @@ func _render_reward(s: Dictionary) -> void:
 
 func _on_reward_selected(choice: int) -> void:
 	# Select (highlight) only — nothing is committed until Lock In.
-	if bool(_client.private.get("reward", {}).get("picked", false)):
+	if bool(_my_private().get("reward", {}).get("picked", false)):
 		return
 	Sfx.play("card")
 	_selected_choice = choice
@@ -215,17 +263,22 @@ func _on_lock() -> void:
 	if bool(s.get("waiting", false)) and String(s.get("phase", "")) == "select":
 		if _selected_char != "":
 			Sfx.play("reward")
-			_client.select_character(_selected_char)
+			var slot := int(s.get("current_slot", -1)) if _is_solo() else -1
+			_client.select_character(_selected_char, slot)
+			_selected_char = ""
 		return
 	if _selected_choice < 0:
 		return
 	Sfx.play("reward")
-	_client.pick_card(_selected_choice)
+	_client.pick_card(_selected_choice, _cmd_slot())
+	_selected_choice = -1
+	if _is_solo():  # go pick the other hunter's reward
+		_active_slot = 1 - _active_slot
 
 
 func _on_character_selected(character_id: String) -> void:
-	if String(_client.private.get("selected", "")) != "":
-		return  # already locked
+	if not _is_solo() and String(_client.private.get("selected", "")) != "":
+		return  # already locked (co-op)
 	Sfx.play("card")
 	_selected_char = character_id
 	_refresh()
@@ -240,13 +293,19 @@ func _render_character_select(s: Dictionary) -> void:
 	_intent.visible = false
 	_end_turn_btn.get_parent().visible = true
 	_end_turn_btn.visible = false
+	_switch_btn.visible = false
 
-	_boss_name.text = "Choose your climber"
-	_boss_hp.text = "Pick a character, then Lock In. The run begins when both hunters are ready."
+	var solo := bool(s.get("solo", false))
+	var current := int(s.get("current_slot", 0)) if solo else _client.you
+	if solo:
+		_boss_name.text = "Choose Hunter %d's climber" % (current + 1)
+		_boss_hp.text = "Pick a character for each hunter, then Lock In. You'll play both."
+	else:
+		_boss_name.text = "Choose your climber"
+		_boss_hp.text = "Pick a character, then Lock In. The run begins when both hunters are ready."
 
 	# players row -> who has locked in
 	_clear(_players_row)
-	var me: int = _client.you
 	var sels: Array = s.get("selections", [])
 	for i in range(sels.size()):
 		var sel: Dictionary = sels[i]
@@ -255,13 +314,14 @@ func _render_character_select(s: Dictionary) -> void:
 		var box := VBoxContainer.new()
 		box.add_theme_constant_override("separation", 2)
 		panel.add_child(box)
-		box.add_child(_mklabel("Hunter %d%s" % [i + 1, "   (you)" if i == me else ""]))
-		box.add_child(_mklabel("✓ " + String(sel["name"]) if bool(sel.get("picked", false)) else "choosing…"))
+		var marker := "   ◀ choosing" if (solo and i == current) else ("   (you)" if (not solo and i == current) else "")
+		box.add_child(_mklabel("Hunter %d%s" % [i + 1, marker]))
+		box.add_child(_mklabel("✓ " + String(sel["name"]) if bool(sel.get("picked", false)) else "…"))
 		_players_row.add_child(panel)
 	_log_label.text = ""
 
-	var selected := String(_client.private.get("selected", ""))
-	var locked := selected != ""
+	# In solo you always control the pick; in co-op you lock once.
+	var locked := (not solo) and String(_client.private.get("selected", "")) != ""
 	_hand_label.text = "Characters" + ("   (locked — waiting for ally)" if locked else "")
 	_clear(_hand_row)
 	for ch in _client.private.get("characters", []):
@@ -320,7 +380,7 @@ func _show_waiting(s: Dictionary) -> void:
 
 func _render_players(s: Dictionary, targeted: Array) -> void:
 	_clear(_players_row)
-	var me: int = _client.you
+	var me: int = _me()
 	var phase := String(s.get("phase", "combat"))
 	var players: Array = s["players"]
 	for i in range(players.size()):
@@ -391,7 +451,7 @@ func _target_suffix(mtype: String, targeted: Array) -> String:
 	if targeted.size() == 1:
 		var players: Array = _client.shared["players"]
 		var t: int = targeted[0]
-		return "  →  %s%s" % [players[t]["name"], " (you)" if t == _client.you else ""]
+		return "  →  %s%s" % [players[t]["name"], " (you)" if t == _me() else ""]
 	return ""
 
 

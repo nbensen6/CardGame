@@ -26,19 +26,20 @@ func _init(transport: Transport, peer_id: int) -> void:
 func join() -> void:
 	_send({"type": "join"})
 
-## Choose a character in the lobby (before the run starts).
-func select_character(character_id: String) -> void:
-	_send({"type": "select_character", "character": character_id})
+## Choose a character in the lobby. `slot` is used in solo (this player picks both
+## hunters); co-op ignores it.
+func select_character(character_id: String, slot: int = -1) -> void:
+	_send({"type": "select_character", "character": character_id, "slot": slot})
 
-func play_card(index: int, timing_hit: bool = true) -> void:
-	_send({"type": "play_card", "index": index, "timing": timing_hit})
+func play_card(index: int, timing_hit: bool = true, slot: int = -1) -> void:
+	_send({"type": "play_card", "index": index, "timing": timing_hit, "slot": slot})
 
-func end_turn() -> void:
-	_send({"type": "end_turn"})
+func end_turn(slot: int = -1) -> void:
+	_send({"type": "end_turn", "slot": slot})
 
 ## Pick reward card option `choice` (during the between-encounter REWARD phase).
-func pick_card(choice: int) -> void:
-	_send({"type": "pick_card", "choice": choice})
+func pick_card(choice: int, slot: int = -1) -> void:
+	_send({"type": "pick_card", "choice": choice, "slot": slot})
 
 func restart() -> void:
 	_send({"type": "restart"})
