@@ -627,6 +627,7 @@ func _render_players(s: Dictionary, targeted: Array) -> void:
 			var h := int(p.get("weak_point_height", 0))
 			if h > 0:
 				var fh := int(p.get("foothold", 0))
+				box.add_child(_climb_track(fh, h, s.get("boss", {}).get("ledges", [])))
 				if bool(p.get("reached", false)):
 					var thr := int(s.get("boss", {}).get("weak_point_threshold", 0))
 					var txt := "✦ at the weak point — strike!"
@@ -636,10 +637,9 @@ func _render_players(s: Dictionary, targeted: Array) -> void:
 					atwp.add_theme_color_override("font_color", Color(0.62, 0.82, 0.5))
 					box.add_child(atwp)
 				elif bool(p.get("secure", true)):  # resting on a hold
-					var where := "on a ledge" if fh > 0 else "at the base"
-					box.add_child(_mklabel("⛰ Height %d / %d  (%s)" % [fh, h, where]))
+					box.add_child(_mklabel("⛰ on a ledge" if fh > 0 else "⛰ at the base"))
 				else:  # clinging between holds — grip timer ticking
-					var climbing := _mklabel("⚠ climbing… Height %d → %d" % [fh, int(p.get("next_safe", fh))])
+					var climbing := _mklabel("⚠ climbing…")
 					climbing.add_theme_color_override("font_color", Color(0.92, 0.6, 0.42))
 					box.add_child(climbing)
 			var status := "Energy %d / %d" % [p["energy"], s["base_energy"]]
@@ -719,6 +719,42 @@ func _log_with_relics(s: Dictionary) -> String:
 		return body
 	var header := "Relics:  " + ",  ".join(relics)
 	return header + ("\n\n" + body if not body.is_empty() else "")
+
+
+## A visual climb track: one block per Height rung to the sigil. Solid = climbed,
+## outlined = still to go; the top block is the weak point (gold), ledges are
+## marked (blue). Replaces the raw "Height 3 / 6" number.
+func _climb_track(fh: int, height: int, ledges: Array) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 3)
+	for i in range(1, height + 1):
+		var is_ledge := false
+		for l in ledges:
+			if int(l) == i:
+				is_ledge = true
+		var b := Panel.new()
+		b.custom_minimum_size = Vector2(15, 15)
+		b.add_theme_stylebox_override("panel", _block_style(i <= fh, i == height, is_ledge))
+		row.add_child(b)
+	return row
+
+
+func _block_style(climbed: bool, is_sigil: bool, is_ledge: bool) -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.set_corner_radius_all(2)
+	sb.set_border_width_all(1)
+	if climbed:  # solid — you're past this rung
+		sb.bg_color = Color(0.55, 0.80, 0.48) if is_sigil else Color(0.68, 0.50, 0.30)
+		sb.border_color = sb.bg_color.lightened(0.25)
+	else:  # outlined — still to climb
+		sb.bg_color = Color(0.12, 0.11, 0.09)
+		if is_sigil:
+			sb.border_color = Color(0.90, 0.74, 0.38)  # gold — the weak point up top
+		elif is_ledge:
+			sb.border_color = Color(0.46, 0.62, 0.78)  # blue — a rest ledge
+		else:
+			sb.border_color = Color(0.36, 0.32, 0.26)
+	return sb
 
 
 func _block_suffix(block: int) -> String:

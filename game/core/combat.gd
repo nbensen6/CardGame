@@ -259,8 +259,10 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		var dealt := 0
 		for _h in hit_count:
 			dealt += _damage_boss(base_damage, pi)
-		var flavour := "" if dealt <= base_damage * hit_count else " (weak point!)"
 		var times := "" if hit_count == 1 else " x%d" % hit_count
+		var flavour := ""
+		if boss.weak_point_height > 0:
+			flavour = "  (weak point!)" if sigil_reached(pi) else "  (ARMORED — climb to the weak point!)"
 		_log("%s plays %s — %d damage%s%s." % [who, card.name, dealt, times, flavour])
 	if card.strength > 0:
 		ps.strength += card.strength
