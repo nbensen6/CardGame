@@ -10,16 +10,17 @@ Nick's continuous task list for Claude. **How it works:**
   in **Questions** below if truly stuck rather than stalling.
 
 ## Inbox
-- [ ] get rid of the "helps your ally" tag on cards (messes up text) + shrink the card icon size
 - [ ] find sharper assets for cards — current ones look blurry
-- [ ] all the height boxes (ladder rungs) should be the same size
 - [ ] *(standing)* continually look through assets to use — finds so far: menu reskin `c4140ba`; queued: Emote Pack (reactions), Explosion/Smoke (strike & fall juice), UI Pack (grip/timing bars), Music Loops (ambient)
 
 ## Questions from Claude
 (none)
 
 ## Done
-- [x] lock-in character sound — `ce8f3b4` (new "lock" event: Kenney metalLatch, a latch clunking shut; reward lock keeps the power-up)
-- [x] run another game and test the cards for sizing; make the cards look better — `c453b75` (ornate Kenney fantasy-border card frames w/ hover/selected states; sizing screenshot-verified)
+- [x] get rid of the "helps your ally" tag + shrink the card icon — `8db43fe` (tag removed; art is a fixed 42px accent, text centered in the freed space)
+- [x] all the height boxes (ladder rungs) same size — `41aed4b` (uniform 22px; the sigil is marked by gold, not size)
+- [x] add more climb per boss — `5cca9b8` (weak points 3/5/7/8, were 2/4/6/6; final titan uses the full ladder; ledges retuned so ascents take more grip-timer hops)
+- [x] lock-in character sound — `ce8f3b4` (new "lock" event: Kenney metalLatch; reward lock keeps the power-up)
+- [x] run another game and test the cards for sizing; make the cards look better — `c453b75` (ornate fantasy-border card frames; screenshot-verified)
 - [x] make log collapsible — `c453b75` (Log ▸/▾ toggle: 4-line ticker ↔ 16-line history)
 - [x] character icon disappeared at the weak point — `c453b75` (Height can overshoot the sigil; markers now clamp to the top rung)
