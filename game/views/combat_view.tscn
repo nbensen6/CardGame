@@ -36,53 +36,62 @@ theme_override_constants/margin_bottom = 20
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="BossPanel" type="PanelContainer" parent="Margin/Root"]
+[node name="Board" type="ScrollContainer" parent="Margin/Root"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="BoardBox" type="VBoxContainer" parent="Margin/Root/Board"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="BossPanel" type="PanelContainer" parent="Margin/Root/Board/BoardBox"]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="BossBox" type="VBoxContainer" parent="Margin/Root/BossPanel"]
+[node name="BossBox" type="VBoxContainer" parent="Margin/Root/Board/BoardBox/BossPanel"]
 layout_mode = 2
 theme_override_constants/separation = 3
 
-[node name="BossName" type="Label" parent="Margin/Root/BossPanel/BossBox"]
+[node name="BossName" type="Label" parent="Margin/Root/Board/BoardBox/BossPanel/BossBox"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Boss"
 horizontal_alignment = 1
 
-[node name="BossHP" type="Label" parent="Margin/Root/BossPanel/BossBox"]
+[node name="BossHP" type="Label" parent="Margin/Root/Board/BoardBox/BossPanel/BossBox"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "HP"
 horizontal_alignment = 1
 
-[node name="BossHPBar" type="ProgressBar" parent="Margin/Root/BossPanel/BossBox"]
+[node name="BossHPBar" type="ProgressBar" parent="Margin/Root/Board/BoardBox/BossPanel/BossBox"]
 unique_name_in_owner = true
 layout_mode = 2
 show_percentage = false
 
-[node name="Intent" type="Label" parent="Margin/Root/BossPanel/BossBox"]
+[node name="Intent" type="Label" parent="Margin/Root/Board/BoardBox/BossPanel/BossBox"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Intent:"
 horizontal_alignment = 1
 
-[node name="Players" type="HBoxContainer" parent="Margin/Root"]
+[node name="Players" type="HBoxContainer" parent="Margin/Root/Board/BoardBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="BossArt" type="TextureRect" parent="Margin/Root"]
+[node name="BossArt" type="TextureRect" parent="Margin/Root/Board/BoardBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 150)
+custom_minimum_size = Vector2(0, 130)
 layout_mode = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Log" type="Label" parent="Margin/Root"]
+[node name="Log" type="Label" parent="Margin/Root/Board/BoardBox"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_vertical = 3
 text = ""
 vertical_alignment = 0
 autowrap_mode = 3
