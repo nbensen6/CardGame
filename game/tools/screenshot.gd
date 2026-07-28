@@ -19,6 +19,10 @@ func _initialize() -> void:
 		elif a.begins_with("state="):
 			_state = a.substr(6)
 	_failsafe()  # never hang the machine
+	if _state == "menu":  # just the main menu, no session
+		change_scene_to_file("res://views/menu.tscn")
+		_capture()
+		return
 	var transport := LocalTransport.new()
 	Session.transport = transport
 	Session.host = GameHost.new(transport, 42, 2, true)  # deterministic solo game
