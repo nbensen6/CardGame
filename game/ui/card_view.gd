@@ -169,18 +169,34 @@ func _label(text_str: String, size: int) -> Label:
 	return l
 
 
+const FRAME_NORMAL := preload("res://assets/ui/card_normal.png")
+const FRAME_HOVER := preload("res://assets/ui/card_hover.png")
+const FRAME_PRESSED := preload("res://assets/ui/card_pressed.png")
+const FRAME_DISABLED := preload("res://assets/ui/card_disabled.png")
+const FRAME_GOLD := preload("res://assets/ui/card_gold.png")
+
+
 func _apply_frame() -> void:
-	add_theme_stylebox_override("normal", _frame(Color(0.152, 0.132, 0.104), Color(0.42, 0.36, 0.25)))
-	add_theme_stylebox_override("hover", _frame(Color(0.2, 0.17, 0.13), Color(0.66, 0.54, 0.34)))
-	add_theme_stylebox_override("pressed", _frame(Color(0.13, 0.112, 0.088), Color(0.5, 0.42, 0.28)))
-	add_theme_stylebox_override("disabled", _frame(Color(0.115, 0.105, 0.092), Color(0.26, 0.23, 0.18)))
+	add_theme_stylebox_override("normal", _tex_frame(FRAME_NORMAL))
+	add_theme_stylebox_override("hover", _tex_frame(FRAME_HOVER))
+	add_theme_stylebox_override("pressed", _tex_frame(FRAME_PRESSED))
+	add_theme_stylebox_override("disabled", _tex_frame(FRAME_DISABLED))
+
+
+## Ornate 9-slice card frame (baked from Kenney Fantasy UI Borders).
+func _tex_frame(tex: Texture2D) -> StyleBoxTexture:
+	var sb := StyleBoxTexture.new()
+	sb.texture = tex
+	sb.set_texture_margin_all(14)  # keep the corner ornaments un-stretched
+	sb.set_content_margin_all(8)
+	return sb
 
 
 ## Mark this card as the current (not yet locked) reward selection.
 func set_selected(on: bool) -> void:
 	if not on:
 		return
-	var gold := _frame(Color(0.24, 0.20, 0.13), Color(0.90, 0.74, 0.42))
+	var gold := _tex_frame(FRAME_GOLD)
 	add_theme_stylebox_override("normal", gold)
 	add_theme_stylebox_override("hover", gold)
 	add_theme_stylebox_override("pressed", gold)

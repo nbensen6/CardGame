@@ -19,6 +19,7 @@ var _client: GameClient
 @onready var _ladder: VBoxContainer = %Ladder
 @onready var _boss_art: TextureRect = %BossArt
 @onready var _log_label: Label = %Log
+@onready var _log_toggle: Button = %LogToggle
 @onready var _hand_label: Label = %HandLabel
 @onready var _hand_row: HBoxContainer = %Hand
 @onready var _grip_bar: PanelContainer = %GripBar
@@ -57,6 +58,7 @@ var _me_secure := true        # active hunter is resting on a safe hold
 # Card selection (Burn Coal / Catapult): tapping a selection card starts a local
 # pick flow; the chosen hand indices are bundled into one play_card. Empty = idle.
 var _selecting: Dictionary = {}
+var _log_expanded := false   # log ticker: collapsed = last 4 lines, expanded = last 16
 
 
 # --- Solo helpers (one player controls both hunters) ----------------------
@@ -97,6 +99,10 @@ func _ready() -> void:
 		_selected_char = ""
 		_refresh())
 	_lock_btn.pressed.connect(_on_lock)
+	_log_toggle.pressed.connect(func() -> void:
+		_log_expanded = not _log_expanded
+		_log_toggle.text = "Log ▾" if _log_expanded else "Log ▸"
+		_refresh())
 	_restart_btn.pressed.connect(func() -> void: _client.restart())
 	_menu_btn.pressed.connect(_return_to_menu)
 	_client = Session.client
@@ -238,6 +244,7 @@ func _render_combat(s: Dictionary) -> void:
 
 	_combat_audio(s)
 	_update_climb_state(s)
+	_log_toggle.visible = true
 	_show_boss_art(String(boss.get("art", "")), int(boss.get("strength", 0)) > 0)
 	_build_ladder(s)
 	_render_players(s, targeted)
@@ -500,6 +507,7 @@ func _on_character_selected(character_id: String) -> void:
 
 func _render_character_select(s: Dictionary) -> void:
 	_stop_climb()
+	_log_toggle.visible = false
 	_overlay.visible = false
 	_top_bar.visible = true
 	_boss_hp_bar.visible = false
@@ -767,10 +775,12 @@ func _log_with_relics(s: Dictionary) -> String:
 	return header + ("\n\n" + body if not body.is_empty() else "")
 
 
-## Combat ticker: just the last few log lines, dim, in the scene's left column.
+## Combat ticker: the last few log lines, dim, in the scene's left column.
+## The Log ▸/▾ button toggles between a 4-line ticker and a 16-line history.
 func _log_tail(s: Dictionary) -> String:
 	var log: Array = s.get("log", [])
-	return "\n".join(log.slice(maxi(log.size() - 4, 0)))
+	var n := 16 if _log_expanded else 4
+	return "\n".join(log.slice(maxi(log.size() - n, 0)))
 
 
 ## The shared climb ladder, drawn IN the scene beside the beast: one rung per
@@ -794,9 +804,10 @@ func _build_ladder(s: Dictionary) -> void:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 6)
 		row.alignment = BoxContainer.ALIGNMENT_END
-		# hunters standing at this Height
+		# hunters standing at this Height (clamped: overshooting the sigil still
+		# shows you AT the sigil — markers must never vanish off the top)
 		for p in players:
-			if int(p.get("foothold", 0)) == lvl:
+			if clampi(int(p.get("foothold", 0)), 0, height) == lvl:
 				var m := TextureRect.new()
 				m.custom_minimum_size = Vector2(30, 30)
 				m.expand_mode = TextureRect.EXPAND_IGNORE_SIZE

@@ -195,7 +195,7 @@ func _build_shared() -> Dictionary:
 		}
 		s["round"] = c.round_num
 		s["base_energy"] = Combat.BASE_ENERGY
-		s["log"] = c.log.slice(maxi(c.log.size() - 7, 0))
+		s["log"] = c.log.slice(maxi(c.log.size() - 18, 0))  # enough for the expanded log view
 	return s
 
 func _players_public() -> Array:

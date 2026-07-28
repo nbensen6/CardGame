@@ -10,8 +10,11 @@ Nick's continuous task list for Claude. **How it works:**
   in **Questions** below if truly stuck rather than stalling.
 
 ## Inbox
-- [ ] (add tasks here)
-
+- [run another game and test the cards for sizing. try to make the cards have a better look to them. ] (add tasks here)
+ - [make log collapseable]
+ - [make sure the display of each character and a height stays. the character icon dissapeared for me when i reached a weak point]
+ - [continually look through assetts to use]
+ 
 ## Questions from Claude
 (none)
 
