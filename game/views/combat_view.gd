@@ -273,6 +273,7 @@ func _combat_audio(s: Dictionary) -> void:
 	# A real hit on the sigil: the beast lost health while a hunter was up there.
 	if hp < _prev_boss_hp and (reached.has(true) or _prev_reached.has(true)):
 		Sfx.play("strike_weakpoint")
+		_juice_strike()
 
 	var arrived := false
 	var climbed := false
@@ -290,6 +291,7 @@ func _combat_audio(s: Dictionary) -> void:
 		Sfx.play("climb")
 	if shook:
 		Sfx.play("shake")
+		_juice_shake()
 
 	_sync_combat_audio(enc, hp, foots, reached)
 
@@ -750,6 +752,51 @@ func _intent_text(move: Dictionary, strength: int) -> String:
 			return "Defend (+%d block)" % value
 		_:
 			return "Unknown"
+
+
+# --- Juice (visual feedback on big combat beats) --------------------------
+
+const FX_BURST := preload("res://assets/fx/burst.png")
+const FX_DUST := preload("res://assets/fx/dust.png")
+
+## A weak-point strike: burst flash over the beast + a white flinch.
+func _juice_strike() -> void:
+	_spawn_fx(FX_BURST, Color(1.0, 0.85, 0.4), 1.6)
+	if _boss_art.visible:
+		var tw := create_tween()
+		_boss_art.modulate = Color(1.6, 1.6, 1.5)  # over-bright flash
+		tw.tween_property(_boss_art, "modulate", Color(1, 1, 1), 0.25)
+
+## The beast bucks: dust + the whole arena judders.
+func _juice_shake() -> void:
+	_spawn_fx(FX_DUST, Color(0.9, 0.82, 0.7, 0.9), 2.2)
+	var arena := _boss_art.get_parent() as Control
+	if arena == null:
+		return
+	var tw := create_tween()
+	for off in [Vector2(10, -6), Vector2(-9, 5), Vector2(6, -3), Vector2.ZERO]:
+		tw.tween_property(arena, "position", arena.position + off, 0.05)
+
+## Spawn a one-shot particle sprite over the beast, tweened out then freed.
+func _spawn_fx(tex: Texture2D, tint: Color, grow: float) -> void:
+	if not _boss_art.visible:
+		return
+	var fx := TextureRect.new()
+	fx.texture = tex
+	fx.modulate = tint
+	fx.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fx.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	fx.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	var size := Vector2(150, 150)
+	fx.size = size
+	fx.pivot_offset = size / 2.0
+	add_child(fx)
+	fx.global_position = _boss_art.global_position + _boss_art.size / 2.0 - size / 2.0
+	fx.scale = Vector2(0.5, 0.5)
+	var tw := create_tween().set_parallel(true)
+	tw.tween_property(fx, "scale", Vector2(grow, grow), 0.3).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw.tween_property(fx, "modulate:a", 0.0, 0.35)
+	tw.chain().tween_callback(fx.queue_free)
 
 
 func _show_boss_art(path: String, enraged: bool) -> void:

@@ -41,6 +41,13 @@ func _initialize() -> void:
 func _capture() -> void:
 	for _i in 15:  # let the scene lay out and draw
 		await process_frame
+	if _state == "juice":  # fire the strike effect and catch it mid-tween
+		var view := current_scene
+		if view != null and view.has_method("_juice_strike"):
+			view.call("_juice_strike")
+			view.call("_juice_shake")
+		for _i in 6:
+			await process_frame
 	await RenderingServer.frame_post_draw
 	var img := root.get_viewport().get_texture().get_image()
 	img.save_png(_out)
