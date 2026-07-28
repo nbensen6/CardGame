@@ -10,7 +10,7 @@ Nick's continuous task list for Claude. **How it works:**
   in **Questions** below if truly stuck rather than stalling.
 
 ## Inbox
-- [ ] *(standing)* continually look through assets to use — finds so far: menu reskin `c4140ba`, strike/shake juice `5d9d09f` (burst flash + dust + arena judder); ambient music `e5fb47e` (menu=Flowing Rocks, combat=Retro Mystic — swap assets/music/*.ogg to change); queued: Emote Pack (reactions), UI Pack (grip/timing bars)
+- [ ] *(standing)* continually look through assets to use — finds so far: menu reskin `c4140ba`, strike/shake juice `5d9d09f` (burst flash + dust + arena judder); ambient music `e5fb47e` (menu=Flowing Rocks, combat=Retro Mystic — swap assets/music/*.ogg to change); emotes `e4285f7` (star at sigil, dizzy on knockdown); queued: UI Pack (grip/timing bars)
 ## Questions from Claude
 (none)
 
