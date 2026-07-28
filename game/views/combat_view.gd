@@ -288,10 +288,12 @@ func _combat_audio(s: Dictionary) -> void:
 	for i in range(foots.size()):
 		if not _prev_reached[i] and reached[i]:
 			arrived = true
+			_spawn_emote(i, EMOTE_STAR)  # made it to the weak point!
 		elif foots[i] > _prev_footholds[i]:
 			climbed = true
 		elif foots[i] < _prev_footholds[i]:
 			shook = true
+			_spawn_emote(i, EMOTE_SWIRL)  # knocked down — dizzy
 	if arrived:
 		Sfx.play("reach_sigil")
 	elif climbed:
@@ -826,6 +828,29 @@ func _intent_text(move: Dictionary, strength: int) -> String:
 
 const FX_BURST := preload("res://assets/fx/burst.png")
 const FX_DUST := preload("res://assets/fx/dust.png")
+const EMOTE_STAR := preload("res://assets/fx/emote_star.png")
+const EMOTE_SWIRL := preload("res://assets/fx/emote_swirl.png")
+
+
+## A little reaction bubble over a hunter's panel — floats up and fades.
+func _spawn_emote(slot: int, tex: Texture2D) -> void:
+	if slot < 0 or slot >= _players_row.get_child_count():
+		return
+	var panel := _players_row.get_child(slot) as Control
+	if panel == null:
+		return
+	var fx := TextureRect.new()
+	fx.texture = tex
+	fx.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fx.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	fx.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	fx.size = Vector2(40, 40)
+	add_child(fx)
+	fx.global_position = panel.global_position + Vector2(panel.size.x - 48, -8)
+	var tw := create_tween().set_parallel(true)
+	tw.tween_property(fx, "position:y", fx.position.y - 26, 0.7).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw.tween_property(fx, "modulate:a", 0.0, 0.8)
+	tw.chain().tween_callback(fx.queue_free)
 
 ## A weak-point strike: burst flash over the beast + a white flinch.
 func _juice_strike() -> void:

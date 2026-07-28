@@ -46,6 +46,8 @@ func _capture() -> void:
 		if view != null and view.has_method("_juice_strike"):
 			view.call("_juice_strike")
 			view.call("_juice_shake")
+			view.call("_spawn_emote", 0, load("res://assets/fx/emote_star.png"))
+			view.call("_spawn_emote", 1, load("res://assets/fx/emote_swirl.png"))
 		for _i in 6:
 			await process_frame
 	await RenderingServer.frame_post_draw
