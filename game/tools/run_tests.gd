@@ -575,8 +575,13 @@ func _test_timed_grapple() -> void:
 	hit.play_card(0, _first_playable(hit, 0), true)  # nailed the timing
 	_expect(hit.players[0].foothold == 3, "a well-timed grapple climbs +3")
 	var miss := _new_combat([_deck_of(_grapple, 10), _deck_of(_slash, 10)], 42, _dummy_boss(200))
-	miss.play_card(0, _first_playable(miss, 0), false)  # slipped
-	_expect(miss.players[0].foothold == 1, "a mistimed grapple only climbs +1")
+	var hand_before: int = miss.players[0].hand.size()
+	var discard_before: int = miss.players[0].discard_pile.size()
+	miss.play_card(0, _first_playable(miss, 0), false)  # fumbled -> slips away
+	_expect(miss.players[0].foothold == 0
+		and miss.players[0].hand.size() == hand_before - 1
+		and miss.players[0].discard_pile.size() == discard_before,
+		"a fumbled grapple gives nothing and vanishes (not even discarded)")
 
 
 func _test_content_builds_character() -> void:

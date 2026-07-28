@@ -132,6 +132,11 @@ func play_card(pi: int, ci: int, timing_hit: bool = true) -> bool:
 	var card: Card = ps.hand[ci]
 	ps.energy -= card.cost
 	ps.hand.remove_at(ci)
+	# A fumbled timed card slips away — removed with no effect (not even discarded).
+	if card.timed and not timing_hit:
+		_log("%s fumbles %s — it slips away." % [ps.combatant.name, card.name])
+		_check_end()
+		return true
 	ps.discard_pile.append(card)
 	var who: String = ps.combatant.name
 
@@ -157,12 +162,12 @@ func play_card(pi: int, ci: int, timing_hit: bool = true) -> bool:
 		boss.wound += card.wound
 		_log("%s plays %s — Poison %d on %s." % [who, card.name, boss.wound, boss.name])
 	var grip_amount := card.grip
-	if card.timed and timing_hit:
-		grip_amount += card.timed_grip  # a well-timed throw catches — climb higher
+	if card.timed:  # only hits reach here (fumbles slipped away above)
+		grip_amount += card.timed_grip
 	if grip_amount > 0:
 		var climbed := grip_amount + ps.climb_bonus
 		ps.foothold = mini(ps.foothold + climbed, FOOTHOLD_MAX)
-		var flair := "  (nailed it!)" if (card.timed and timing_hit) else ("  (slipped)" if card.timed else "")
+		var flair := "  (nailed it!)" if card.timed else ""
 		_log("%s plays %s — climbs (+%d Height, now %d)%s." % [who, card.name, climbed, ps.foothold, flair])
 		if ps.ally_climb > 0:  # roped together — the ally climbs with you
 			var roped: PlayerState = players[ally_index(pi)]

@@ -21,7 +21,7 @@
     "leap":         { "name": "Leap", "type": "skill", "cost": 1, "grip": 3, "target": "enemy", "text": "Leap up the beast (+3 Height)." },
     "tongue_lash":  { "name": "Tongue Lash", "type": "attack", "cost": 1, "damage": 3, "grip": 1, "text": "Deal 3 damage and pull yourself up (+1 Height)." },
     "build_grapple":{ "name": "Build Grapple", "type": "skill", "cost": 0, "create": "grapple", "text": "Build a Grappling Hook and add it to your hand." },
-    "grapple":      { "name": "Grappling Hook", "type": "skill", "cost": 0, "grip": 1, "timed": true, "timed_grip": 2, "target": "enemy", "text": "Fire the hook — time your throw! Climb +1, or +3 if you nail the timing." },
+    "grapple":      { "name": "Grappling Hook", "type": "skill", "cost": 0, "grip": 1, "timed": true, "timed_grip": 2, "target": "enemy", "text": "Fire the hook — time it! Climb +3 on a good throw. Miss and it slips away." },
     "vine":         { "name": "Vine", "type": "skill", "cost": 1, "grip": 1, "ally_grip": 2, "target": "ally", "text": "Climb (+1); grow a vine that lifts your ally (+2 Height)." },
     "spore":        { "name": "Spore Burst", "type": "attack", "cost": 1, "damage": 2, "wound": 2, "text": "Deal 2 damage and Poison 2 (the beast bleeds each turn)." },
     "rope_up":      { "name": "Rope Up", "type": "skill", "cost": 1, "grip": 1, "ally_grip": 1, "target": "ally", "text": "You and your ally both climb (+1 Height)." },

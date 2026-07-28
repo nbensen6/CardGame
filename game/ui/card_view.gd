@@ -6,6 +6,21 @@
 class_name CardView
 extends Button
 
+## A normal tap (not during timing).
+signal tapped
+## A timed card's throw resolved: hit = landed in the green zone.
+signal timing_resolved(hit: bool)
+
+const ZONE_MIN := 0.40
+const ZONE_MAX := 0.60
+const SWEEP_SPEED := 1.25  # sweeps per second
+
+var _timing := false
+var _t := 0.0
+var _dir := 1.0
+var _strip: Control
+var _marker: ColorRect
+
 const ICONS := {
 	"sword": preload("res://ui/icons/sword.svg"),
 	"shield": preload("res://ui/icons/shield.svg"),
@@ -59,6 +74,11 @@ func setup(data: Dictionary, playable: bool = true) -> void:
 	var tgt := String(data.get("target", "self"))
 	if tgt == "ally" or tgt == "enemy":
 		box.add_child(_tag("→ ally" if tgt == "ally" else "→ Titan"))
+
+	_strip = _build_timing_strip()  # hidden until start_timing()
+	box.add_child(_strip)
+	if not pressed.is_connected(_on_self_pressed):
+		pressed.connect(_on_self_pressed)
 
 
 func _header(card_name: String, cost: int, no_cost: bool = false) -> Control:
@@ -139,6 +159,74 @@ func set_selected(on: bool) -> void:
 	add_theme_stylebox_override("normal", gold)
 	add_theme_stylebox_override("hover", gold)
 	add_theme_stylebox_override("pressed", gold)
+
+
+# --- Timing minigame (on the card) ----------------------------------------
+
+## Begin the timing sweep. The next tap on this card fires it.
+func start_timing() -> void:
+	if _timing:
+		return
+	_timing = true
+	_t = 0.0
+	_dir = 1.0
+	var w := _strip.size.x
+	var zone: ColorRect = _strip.get_node("Zone")
+	zone.position = Vector2(w * ZONE_MIN, 0)
+	zone.size = Vector2(w * (ZONE_MAX - ZONE_MIN), _strip.size.y)
+	_strip.visible = true
+	set_process(true)
+
+
+func _on_self_pressed() -> void:
+	if _timing:
+		_fire()
+	else:
+		tapped.emit()
+
+
+func _fire() -> void:
+	_timing = false
+	set_process(false)
+	_strip.visible = false
+	timing_resolved.emit(_t >= ZONE_MIN and _t <= ZONE_MAX)
+
+
+func _process(delta: float) -> void:
+	if not _timing:
+		return
+	_t += _dir * SWEEP_SPEED * delta
+	if _t >= 1.0:
+		_t = 1.0
+		_dir = -1.0
+	elif _t <= 0.0:
+		_t = 0.0
+		_dir = 1.0
+	_marker.position.x = _t * (_strip.size.x - _marker.size.x)
+
+
+func _build_timing_strip() -> Control:
+	var strip := Control.new()
+	strip.custom_minimum_size = Vector2(0, 14)
+	strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	strip.visible = false
+	var bg := ColorRect.new()
+	bg.color = Color(0.08, 0.07, 0.06)
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	strip.add_child(bg)
+	var zone := ColorRect.new()
+	zone.name = "Zone"
+	zone.color = Color(0.35, 0.62, 0.32)
+	zone.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	strip.add_child(zone)
+	_marker = ColorRect.new()
+	_marker.color = Color(0.96, 0.9, 0.75)
+	_marker.size = Vector2(4, 14)
+	_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	strip.add_child(_marker)
+	return strip
 
 
 func _on_hover() -> void:

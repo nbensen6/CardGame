@@ -137,25 +137,24 @@ func _render_hand() -> void:
 		var cv := CardView.new()
 		_hand_row.add_child(cv)
 		cv.setup(card, bool(card["playable"]))
-		cv.pressed.connect(_on_card_pressed.bind(int(card["index"]), bool(card.get("timed", false))))
+		var idx := int(card["index"])
+		cv.tapped.connect(_on_card_tapped.bind(idx, bool(card.get("timed", false)), cv))
+		cv.timing_resolved.connect(_on_timing_resolved.bind(idx))
 	_end_turn_btn.disabled = ended
 	_end_turn_btn.text = "Waiting for ally…" if ended else "End Turn"
 
 
-func _on_card_pressed(index: int, timed: bool = false) -> void:
+func _on_card_tapped(index: int, timed: bool, cv: CardView) -> void:
 	if timed:
-		_start_timing(index)
+		cv.start_timing()  # the card runs its own timing sweep; the next tap fires it
 		return
 	Sfx.play("card")
 	_client.play_card(index)
 
 
-func _start_timing(index: int) -> void:
-	var bar := TimingBar.new()
-	add_child(bar)
-	bar.resolved.connect(func(hit: bool) -> void:
-		Sfx.play("card")
-		_client.play_card(index, hit))
+func _on_timing_resolved(hit: bool, index: int) -> void:
+	Sfx.play("card")
+	_client.play_card(index, hit)
 
 
 # --- Reward phase ---------------------------------------------------------
@@ -195,7 +194,7 @@ func _render_reward(s: Dictionary) -> void:
 		cv.setup(choice, not picked)
 		if not picked and idx == _selected_choice:
 			cv.set_selected(true)
-		cv.pressed.connect(_on_reward_selected.bind(idx))
+		cv.tapped.connect(_on_reward_selected.bind(idx))
 
 	# The Lock In button confirms the highlighted choice (fixes accidental picks).
 	_lock_btn.visible = not picked
@@ -272,7 +271,7 @@ func _render_character_select(s: Dictionary) -> void:
 		cv.setup({"name": ch["name"], "text": ch["desc"], "icon": "grip", "no_cost": true}, not locked)
 		if not locked and cid == _selected_char:
 			cv.set_selected(true)
-		cv.pressed.connect(_on_character_selected.bind(cid))
+		cv.tapped.connect(_on_character_selected.bind(cid))
 	_lock_btn.text = "Lock In Character"
 	_lock_btn.visible = not locked
 	_lock_btn.disabled = locked or _selected_char == ""
