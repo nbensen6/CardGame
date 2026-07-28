@@ -14,6 +14,7 @@ var strength: int = 0          # added to every attack (grows via "enrage" moves
 var wound: int = 0             # bleed — the Titan takes this much at the start of each of its turns
 var weak_point_height: int = 0 # 0 = low sigil (always reachable); >0 needs Foothold to strike (SotC climb)
 var ledges: Array = []         # safe rest Heights between the base and the sigil (SotC holds)
+var weak_point_threshold: int = 0  # sigil damage a hunter can deal per visit before it bucks them off (0 = no limit)
 var _move_index: int = 0
 
 ## The move the boss will perform on its next enemy turn (telegraphed now).

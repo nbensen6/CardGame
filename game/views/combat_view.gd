@@ -551,7 +551,11 @@ func _render_players(s: Dictionary, targeted: Array) -> void:
 			if h > 0:
 				var fh := int(p.get("foothold", 0))
 				if bool(p.get("reached", false)):
-					var atwp := _mklabel("✦ at the weak point — strike!")
+					var thr := int(s.get("boss", {}).get("weak_point_threshold", 0))
+					var txt := "✦ at the weak point — strike!"
+					if thr > 0:
+						txt += "   (%d / %d before it bucks you)" % [int(p.get("wp_damage", 0)), thr]
+					var atwp := _mklabel(txt)
 					atwp.add_theme_color_override("font_color", Color(0.62, 0.82, 0.5))
 					box.add_child(atwp)
 				elif bool(p.get("secure", true)):  # resting on a hold

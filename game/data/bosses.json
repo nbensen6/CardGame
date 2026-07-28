@@ -7,6 +7,7 @@
       "max_hp": 46,
       "weak_point_height": 2,
       "ledges": [],
+      "weak_point_threshold": 12,
       "moves": [
         { "type": "attack", "value": 10 },
         { "type": "attack", "value": 13 },
@@ -20,6 +21,7 @@
       "max_hp": 72,
       "weak_point_height": 4,
       "ledges": [2],
+      "weak_point_threshold": 16,
       "moves": [
         { "type": "attack_all", "value": 8 },
         { "type": "enrage", "value": 2 },
@@ -33,6 +35,7 @@
       "max_hp": 98,
       "weak_point_height": 6,
       "ledges": [2, 4],
+      "weak_point_threshold": 22,
       "moves": [
         { "type": "attack", "value": 13 },
         { "type": "attack_all", "value": 9 },
@@ -46,6 +49,7 @@
       "max_hp": 130,
       "weak_point_height": 6,
       "ledges": [3],
+      "weak_point_threshold": 28,
       "moves": [
         { "type": "leech", "value": 10 },
         { "type": "attack_all", "value": 9 },

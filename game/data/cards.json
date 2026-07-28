@@ -25,7 +25,15 @@
     "vine":         { "name": "Vine", "type": "skill", "cost": 1, "grip": 1, "ally_grip": 2, "target": "ally", "text": "Climb (+1); grow a vine that lifts your ally (+2 Height)." },
     "spore":        { "name": "Spore Burst", "type": "attack", "cost": 1, "damage": 2, "wound": 2, "text": "Deal 2 damage and Poison 2 (the beast bleeds each turn)." },
     "rope_up":      { "name": "Rope Up", "type": "skill", "cost": 1, "grip": 1, "ally_grip": 1, "target": "ally", "text": "You and your ally both climb (+1 Height)." },
-    "belay_strike": { "name": "Belay Strike", "type": "attack", "cost": 1, "damage": 3, "damage_per_foothold": 2, "text": "Deal 3 damage, +2 for each Height you've climbed." }
+    "belay_strike": { "name": "Belay Strike", "type": "attack", "cost": 1, "damage": 3, "damage_per_foothold": 2, "text": "Deal 3 damage, +2 for each Height you've climbed." },
+
+    "pounce":       { "name": "Pounce", "type": "attack", "cost": 1, "damage": 4, "grip": 1, "timed": true, "timed_damage": 5, "target": "enemy", "text": "Time it! Pounce for 4 (+5 nailed) and pull up +1 Height. Miss and it slips away." },
+    "flick":        { "name": "Tongue Flick", "type": "attack", "cost": 0, "damage": 2, "timed": true, "timed_damage": 3, "target": "enemy", "text": "Time it! Flick the sigil for 2 (+3 nailed). Miss and it slips away." },
+    "lash_out":     { "name": "Lash Out", "type": "attack", "cost": 1, "damage": 3, "wound": 2, "ally_grip": 1, "timed": true, "timed_damage": 4, "target": "enemy", "text": "Time it! Whip for 3 (+4 nailed), Poison 2, and a vine lifts your ally +1." },
+    "creeper":      { "name": "Creeper Vine", "type": "skill", "cost": 0, "grip": 1, "ally_grip": 1, "timed": true, "timed_grip": 2, "target": "ally", "text": "Time it! Vine up +1 (+2 nailed); your ally climbs +1. Miss and it slips away." },
+    "piton_drive":  { "name": "Piton Drive", "type": "attack", "cost": 1, "damage": 2, "damage_per_foothold": 2, "timed": true, "timed_damage": 4, "target": "enemy", "text": "Time it! Drive a piton: 2, +2 per Height climbed (+4 nailed)." },
+    "haul":         { "name": "Haul Up", "type": "skill", "cost": 1, "grip": 1, "ally_grip": 1, "timed": true, "timed_grip": 2, "target": "ally", "text": "Time it! Both climb +1 (you +2 more nailed). Miss and it slips away." },
+    "piston_punch": { "name": "Piston Punch", "type": "attack", "cost": 2, "damage": 8, "timed": true, "timed_damage": 8, "target": "enemy", "text": "Time it! A massive timed blow: 8 (+8 nailed). Miss and it slips away." }
   },
   "starter_deck": [
     "slash", "slash", "slash",
@@ -35,5 +43,5 @@
     "cleave",
     "cover"
   ],
-  "reward_pool": ["rally", "expose", "draw_aggro", "harpoon", "grip", "sunlight_blade", "bowshot", "sharpen", "rend", "dagger", "flurry", "cleave", "cover", "brace", "slash", "take_aim"]
+  "reward_pool": ["rally", "expose", "draw_aggro", "harpoon", "grip", "sunlight_blade", "bowshot", "sharpen", "rend", "dagger", "flurry", "cleave", "cover", "brace", "slash", "take_aim", "pounce", "flick", "lash_out", "piton_drive", "piston_punch", "haul"]
 }

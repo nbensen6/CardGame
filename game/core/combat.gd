@@ -139,6 +139,7 @@ func fall(pi: int) -> void:
 		return
 	var ps: PlayerState = players[pi]
 	ps.foothold = 0
+	ps.weak_point_damage = 0
 	ps.combatant.take_damage(FALL_DAMAGE)
 	_log("%s loses their grip and falls! (-%d, back to the base)" % [ps.combatant.name, FALL_DAMAGE])
 	_check_end()
@@ -197,6 +198,8 @@ func play_card(pi: int, ci: int, timing_hit: bool = true) -> bool:
 	# (Belay Strike). _damage_boss gates on whether THIS hunter reached the sigil.
 	var base_damage := card.damage + card.damage_per_vulnerable * boss.vulnerable \
 		+ card.damage_per_foothold * ps.foothold
+	if card.timed:  # only well-timed hits reach here — a clean strike bites deeper
+		base_damage += card.timed_damage
 	if card.damage > 0:
 		base_damage += _attack_bonus + ps.strength + ps.char_attack_bonus
 	if base_damage > 0:
@@ -254,8 +257,22 @@ func play_card(pi: int, ci: int, timing_hit: bool = true) -> bool:
 		_draw(ps, card.draw)
 		_log("%s plays %s — draw %d." % [who, card.name, card.draw])
 
+	_check_weakpoint_buck(pi)
 	_check_end()
 	return true
+
+
+## Once a hunter has dealt the sigil's damage threshold this visit, the beast
+## bucks them down a hold — you can't camp the weak point. This is what makes the
+## loop climb -> strike for a chunk -> get thrown -> climb again -> strike.
+func _check_weakpoint_buck(pi: int) -> void:
+	if boss.weak_point_threshold <= 0 or not sigil_reached(pi):
+		return
+	var ps: PlayerState = players[pi]
+	if ps.weak_point_damage >= boss.weak_point_threshold:
+		ps.foothold = _hold_below(ps.foothold)
+		ps.weak_point_damage = 0
+		_log("The Titan bucks %s off the weak point — climb back up!" % ps.combatant.name)
 
 
 ## Deal card damage to the Titan, consuming one "exposed" stack for bonus.
@@ -275,6 +292,7 @@ func _damage_boss(amount: int, pi: int) -> int:
 		boss.vulnerable -= 1
 	if boss.weak_point_height > 0:
 		total += SIGIL_BONUS
+		players[pi].weak_point_damage += total  # counts toward the buck-off threshold
 	boss.take_damage(total)
 	return total
 
@@ -342,6 +360,7 @@ func _enemy_turn() -> void:
 			for ps in players:
 				ps.combatant.take_damage(dmg_all)
 				ps.foothold = _hold_below(ps.foothold)  # bucked down to the ledge below
+				ps.weak_point_damage = 0
 			_log("%s sweeps both hunters for %d and shakes them down a hold." % [boss.name, dmg_all])
 		"enrage":
 			boss.strength += value

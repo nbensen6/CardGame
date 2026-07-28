@@ -73,6 +73,23 @@ drop a hunter.
   never falls. The sim measures the underlying card balance (which the taller
   sigils changed a lot); grip stakes are tuned by playtest.
 
+## Weak-point threshold — the climb→strike→climb loop
+`data/bosses.json` `weak_point_threshold` per titan (12/16/22/28): sigil damage a
+hunter can deal per visit before the beast **bucks them down a hold** (`_check_weakpoint_buck`
+in `core/combat.gd`). Lower = shorter strikes, more re-climbs (a tighter loop);
+higher = camp longer. `PlayerState.weak_point_damage` accumulates while reached
+and resets on any drop (fall/sweep/buck). Note: the sim assumes perfect timing +
+never falls, so its coord win-rate over-states real play — treat it as the card
+ceiling, not the human number.
+
+## Timed cards (the double-timing feel) — `data/cards.json`
+`timed: true` makes a card run its on-card timing sweep; a HIT grants `timed_grip`
+(bonus Height) and/or `timed_damage` (bonus damage), a MISS makes the card slip
+away with no effect. Class decks lean on these (pounce/flick/lash_out/creeper/
+piton_drive/haul/piston_punch). More timed *climb* cards = more double-timing
+(card sweep + live grip bar). Tune the base-vs-bonus split so a miss stings but a
+whiff-heavy player isn't hopeless; keep ~4-6 reliable non-timed cards per deck.
+
 ## Reward pacing
 `Run._begin_reward` decides card vs relic (currently: card after Titan 1, relic
 after Titan 2). Change the rule there for different pacing.

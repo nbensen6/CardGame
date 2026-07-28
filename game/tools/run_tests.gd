@@ -50,6 +50,8 @@ func _init() -> void:
 	_test_next_safe_height()
 	_test_fall_drops_to_base()
 	_test_fall_noop_when_secure()
+	_test_weakpoint_threshold_bucks()
+	_test_timed_damage_bonus()
 	# step 4: run / meta-progression
 	_test_run_starts_in_combat()
 	_test_run_win_flows_through_reward_to_next_encounter()
@@ -403,6 +405,28 @@ func _test_fall_noop_when_secure() -> void:
 	combat.fall(0)
 	_expect(ps.foothold == 4 and ps.combatant.hp == hp0,
 		"a fall report is ignored when the hunter is on a safe hold")
+
+
+func _test_weakpoint_threshold_bucks() -> void:
+	var boss := _climb_boss(6)
+	boss.ledges = [2, 4]
+	boss.weak_point_threshold = 10
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 6  # at the sigil; slash lands 6 + SIGIL_BONUS = 11 >= threshold 10
+	combat.play_card(0, _first_playable(combat, 0))
+	_expect(ps.foothold == 4 and ps.weak_point_damage == 0,
+		"dealing the sigil threshold bucks the hunter down a hold")
+
+
+func _test_timed_damage_bonus() -> void:
+	var combat := _new_combat([_deck_of(_pounce, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var before: int = combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0), true)  # timed HIT: 4 + 5 timed_damage
+	var hit_hp: int = combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0), false)  # fumble: slips away, no damage
+	_expect(before - hit_hp == 9 and combat.boss.hp == hit_hp,
+		"a well-timed strike adds timed_damage; a fumble deals nothing")
 
 
 func _test_sunlight_blade_scales_with_exposed() -> void:
@@ -760,7 +784,7 @@ func _test_solo_controls_both_hunters() -> void:
 	var energy_before: int = c.shared["players"][1]["energy"]
 	var idx := -1
 	for card in slots[1]["hand"]:
-		if bool(card["playable"]):
+		if bool(card["playable"]) and int(card.get("cost", 0)) > 0:  # one that spends energy
 			idx = int(card["index"])
 			break
 	c.play_card(idx, true, 1)  # act as hunter 2
@@ -876,6 +900,8 @@ func _belay() -> Card:
 	return Card.from_dict({"id": "belay_strike", "name": "Belay Strike", "type": "attack", "cost": 1, "damage": 3, "damage_per_foothold": 2})
 func _grapple() -> Card:
 	return Card.from_dict({"id": "grapple", "name": "Grappling Hook", "type": "skill", "cost": 0, "grip": 1, "timed": true, "timed_grip": 2, "target": "enemy"})
+func _pounce() -> Card:
+	return Card.from_dict({"id": "pounce", "name": "Pounce", "type": "attack", "cost": 1, "damage": 4, "grip": 1, "timed": true, "timed_damage": 5, "target": "enemy"})
 func _sunblade() -> Card:
 	return Card.from_dict({"id": "sunlight_blade", "name": "Sunlight Blade", "type": "attack", "cost": 1, "damage": 5, "damage_per_vulnerable": 3})
 func _bowshot() -> Card:

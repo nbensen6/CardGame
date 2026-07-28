@@ -103,5 +103,6 @@ static func build_boss(id: String) -> Boss:
 	b.moves = bd.get("moves", [])
 	b.weak_point_height = int(bd.get("weak_point_height", 0))
 	b.ledges = bd.get("ledges", [])
+	b.weak_point_threshold = int(bd.get("weak_point_threshold", 0))
 	b.art = String(bd.get("art", ""))
 	return b

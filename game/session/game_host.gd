@@ -189,7 +189,7 @@ func _build_shared() -> Dictionary:
 			"intent": b.current_move(), "target": c.boss_target_index(),
 			"vulnerable": b.vulnerable, "strength": b.strength, "wound": b.wound,
 			"weak_point_height": b.weak_point_height, "foothold_max": Combat.FOOTHOLD_MAX,
-			"ledges": b.ledges,
+			"ledges": b.ledges, "weak_point_threshold": b.weak_point_threshold,
 			"art": b.art,
 		}
 		s["round"] = c.round_num
@@ -209,6 +209,7 @@ func _players_public() -> Array:
 				"ended": ps.ended_turn, "strength": ps.strength,
 				"foothold": ps.foothold, "reached": c.sigil_reached(i),
 				"secure": c.is_secure(i), "next_safe": c.next_safe_height(i),
+				"wp_damage": ps.weak_point_damage,
 				"weak_point_height": c.boss.weak_point_height,
 			})
 	else:
