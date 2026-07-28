@@ -54,22 +54,24 @@ offered.
 - `PLAYER_HP` 42, `HEAL_BETWEEN` 6, `REWARD_CHOICES` 3
 - `ENCOUNTERS` (Titan list/order), reward card-vs-relic alternation in `_begin_reward`
 
-## Grip / stamina (SotC climb tension) — `game/core/combat.gd`
-The race from the base to the weak point is gated by grip. All constants live at
-the top of `combat.gd`:
-- `STAMINA_MAX` 6 — how long a hunter can cling before they must reach the sigil
-  or fall (with `STAMINA_DRAIN` 2, that's ~3 rounds of climbing).
-- `STAMINA_DRAIN` 2 — grip lost each round spent *mid-climb* (not at the base,
-  where it refills, nor at the sigil, where it holds steady). See `_climb_upkeep`.
-- `SHAKE_STAMINA_LOSS` 2 — extra grip torn away by a sweep (`attack_all`), on top
-  of the `SHAKE_LOSS` Height knock-off.
-- `STAMINA_HIT_REFUND` 2 — grip clawed back by a well-timed climb (a timed card
-  that lands its throw). Ties the timing skill to the grip economy.
-- `FALL_DAMAGE` 3 — the knock a hunter takes when grip runs out and they fall
-  (Height resets to 0). A fall *can* be lethal, so it's checked for a loss.
-Note: grip only applies to Titans with `weak_point_height > 0`. The balance sim's
-AI climbs efficiently and rarely falls, so grip mostly changes *human* feel, not
-the sim win-rate — tune it by playtest.
+## Grip — real-time SotC climb (ledges + live timer)
+Climbing between safe holds is a **real-time race**. The timer lives on the CLIENT
+(`views/combat_view.gd`); the deterministic core only knows what's safe and how to
+drop a hunter.
+- **`GRIP_SECONDS`** (`views/combat_view.gd`, default `5.0`) — how long you can
+  cling between holds before the timer empties. THE main feel knob; tune first.
+- **`Combat.FALL_DAMAGE`** (`core/combat.gd`, `3`) — the knock on a fall. A fall
+  resets Height to 0 and *can* be lethal (checked for a loss).
+- **Ledges & weak points** (`data/bosses.json`, per titan) — `weak_point_height`
+  is the sigil; `ledges` are the safe rest Heights between the base and it. Fewer
+  ledges / a higher sigil = a longer, riskier climb. Current: warden 2 / serpent
+  4 (ledge 2) / drowned 6 (2,4) / sunken 6 (3). `FOOTHOLD_MAX` 8.
+- A hunter is **secure** on the base (0), any ledge, or the sigil (`is_secure`);
+  between holds the client timer runs. A sweep (`attack_all`) shakes each hunter
+  **down one hold** (`_hold_below`), not off entirely.
+- Grip only bites in *human* play — the headless sim has no real-time timer, so it
+  never falls. The sim measures the underlying card balance (which the taller
+  sigils changed a lot); grip stakes are tuned by playtest.
 
 ## Reward pacing
 `Run._begin_reward` decides card vs relic (currently: card after Titan 1, relic

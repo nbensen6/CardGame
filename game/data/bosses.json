@@ -1,11 +1,12 @@
 {
-  "_comment": "Titans are DATA (CLAUDE.md §11). A run fights them in order (see Run.ENCOUNTERS). Move types: attack (hits the telegraphed hunter), attack_all (sweeps BOTH — rewards both blocking/Cover), block (guards), enrage (permanently +value to its attacks this fight — a soft timer that rewards focus-fire). Tuned for two players; retune freely during balance.",
+  "_comment": "Titans are DATA (CLAUDE.md §11). A run fights them in order (see Run.ENCOUNTERS). Move types: attack (hits the telegraphed hunter), attack_all (sweeps BOTH — shakes each hunter DOWN to the ledge below, and rewards blocking/Cover), block (guards), enrage (permanently +value to its attacks this fight — a soft timer that rewards focus-fire). weak_point_height = the sigil Height; ledges = safe rest Heights on the way up (climb between them before your grip timer runs out, SotC-style). Tuned for two players; retune freely during balance.",
   "bosses": {
     "stone_warden": {
       "name": "The Stone Warden",
       "art": "res://ui/bosses/stone_warden.svg",
       "max_hp": 46,
-      "weak_point_height": 1,
+      "weak_point_height": 2,
+      "ledges": [],
       "moves": [
         { "type": "attack", "value": 10 },
         { "type": "attack", "value": 13 },
@@ -17,7 +18,8 @@
       "name": "The Gale Serpent",
       "art": "res://ui/bosses/gale_serpent.svg",
       "max_hp": 72,
-      "weak_point_height": 2,
+      "weak_point_height": 4,
+      "ledges": [2],
       "moves": [
         { "type": "attack_all", "value": 8 },
         { "type": "enrage", "value": 2 },
@@ -29,7 +31,8 @@
       "name": "The Drowned Colossus",
       "art": "res://ui/bosses/drowned_colossus.svg",
       "max_hp": 98,
-      "weak_point_height": 3,
+      "weak_point_height": 6,
+      "ledges": [2, 4],
       "moves": [
         { "type": "attack", "value": 13 },
         { "type": "attack_all", "value": 9 },
@@ -41,7 +44,8 @@
       "name": "The Sunken Warden",
       "art": "res://ui/bosses/sunken_warden.svg",
       "max_hp": 130,
-      "weak_point_height": 3,
+      "weak_point_height": 6,
+      "ledges": [3],
       "moves": [
         { "type": "leech", "value": 10 },
         { "type": "attack_all", "value": 9 },

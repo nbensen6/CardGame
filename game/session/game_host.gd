@@ -68,6 +68,10 @@ func _on_command(peer_id: int, command: Dictionary) -> void:
 			var ps1 := _acting_slot(peer_id, command)
 			_in_combat_action(ps1, func() -> void:
 				_run.combat.end_turn(ps1))
+		"fall":  # the client's real-time grip timer ran out while climbing
+			var psf := _acting_slot(peer_id, command)
+			_in_combat_action(psf, func() -> void:
+				_run.combat.fall(psf))
 		"pick_card":
 			var pslot := _acting_slot(peer_id, command)
 			if not paused and _run != null and pslot >= 0:
@@ -185,6 +189,7 @@ func _build_shared() -> Dictionary:
 			"intent": b.current_move(), "target": c.boss_target_index(),
 			"vulnerable": b.vulnerable, "strength": b.strength, "wound": b.wound,
 			"weak_point_height": b.weak_point_height, "foothold_max": Combat.FOOTHOLD_MAX,
+			"ledges": b.ledges,
 			"art": b.art,
 		}
 		s["round"] = c.round_num
@@ -203,7 +208,7 @@ func _players_public() -> Array:
 				"max_hp": ps.combatant.max_hp, "block": ps.combatant.block, "energy": ps.energy,
 				"ended": ps.ended_turn, "strength": ps.strength,
 				"foothold": ps.foothold, "reached": c.sigil_reached(i),
-					"stamina": ps.stamina, "stamina_max": ps.stamina_max,
+				"secure": c.is_secure(i), "next_safe": c.next_safe_height(i),
 				"weak_point_height": c.boss.weak_point_height,
 			})
 	else:

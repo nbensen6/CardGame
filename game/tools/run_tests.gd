@@ -42,15 +42,14 @@ func _init() -> void:
 	_test_sigil_bonus_requires_climb()
 	_test_exposed_banks_until_climbed()
 	_test_height0_titan_no_sigil_bonus()
-	_test_attack_all_shakes_foothold()
+	_test_attack_all_shakes_down_a_hold()
 	_test_sunlight_blade_scales_with_exposed()
 	_test_bowshot_deals_and_exposes()
-	# grip / stamina (SotC climb tension)
-	_test_climb_drains_grip()
-	_test_grip_holds_at_sigil()
-	_test_grip_runs_out_and_falls()
-	_test_timed_climb_refunds_grip()
-	_test_shake_tears_grip()
+	# grip / ledges (SotC real-time climb)
+	_test_secure_on_holds()
+	_test_next_safe_height()
+	_test_fall_drops_to_base()
+	_test_fall_noop_when_secure()
 	# step 4: run / meta-progression
 	_test_run_starts_in_combat()
 	_test_run_win_flows_through_reward_to_next_encounter()
@@ -284,7 +283,7 @@ func _test_grip_builds_foothold() -> void:
 	var combat := _new_combat([_deck_of(_grip, 10), _deck_of(_slash, 10)], 42, _dummy_boss(200))
 	combat.play_card(0, _first_playable(combat, 0))  # Grip +2
 	var after_one: int = combat.players[0].foothold
-	combat.players[0].foothold = 5
+	combat.players[0].foothold = Combat.FOOTHOLD_MAX - 1
 	combat.play_card(0, _first_playable(combat, 0))  # +2 -> capped
 	_expect(after_one == 2 and combat.players[0].foothold == Combat.FOOTHOLD_MAX,
 		"grip builds Foothold, capped at max")
@@ -327,14 +326,18 @@ func _test_height0_titan_no_sigil_bonus() -> void:
 	_expect(combat.boss.hp == before - 6, "a low-sigil Titan gives no climb bonus")
 
 
-func _test_attack_all_shakes_foothold() -> void:
+func _test_attack_all_shakes_down_a_hold() -> void:
 	var boss := Boss.new("Shaker", 500)
 	boss.moves = [{"type": "attack_all", "value": 5}]
+	boss.weak_point_height = 6
+	boss.ledges = [2, 4]
 	var combat := _new_combat([_deck_of(_grip, 10), _deck_of(_grip, 10)], 42, boss)
-	combat.players[0].foothold = 5
+	combat.players[0].foothold = 4  # upper ledge
+	combat.players[1].foothold = 2  # lower ledge
 	combat.end_turn(0)
-	combat.end_turn(1)  # attack_all -> shake
-	_expect(combat.players[0].foothold == 5 - Combat.SHAKE_LOSS, "attack_all shakes the team loose")
+	combat.end_turn(1)  # attack_all -> shake each down a hold
+	_expect(combat.players[0].foothold == 2 and combat.players[1].foothold == 0,
+		"a sweep shakes each hunter down to the ledge below")
 
 
 func _climb_boss(height: int) -> Boss:
@@ -346,61 +349,60 @@ func _climb_boss(height: int) -> Boss:
 	return b
 
 
-func _test_climb_drains_grip() -> void:
-	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _climb_boss(3))
-	combat.players[0].foothold = 1  # mid-climb, clinging
-	var before: int = combat.players[0].stamina
-	combat.end_turn(0)
-	combat.end_turn(1)  # round turns over -> grip upkeep
-	_expect(combat.players[0].stamina == before - Combat.STAMINA_DRAIN,
-		"a hunter clinging mid-climb loses grip each round")
-
-
-func _test_grip_holds_at_sigil() -> void:
-	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _climb_boss(3))
-	combat.players[0].foothold = 3  # reached the sigil — secure
-	var before: int = combat.players[0].stamina
-	combat.end_turn(0)
-	combat.end_turn(1)
-	_expect(combat.players[0].stamina == before,
-		"a hunter secure at the weak point holds grip steady")
-
-
-func _test_grip_runs_out_and_falls() -> void:
-	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _climb_boss(3))
-	combat.players[0].foothold = 2  # mid-climb
-	combat.players[0].stamina = Combat.STAMINA_DRAIN  # exactly enough to hit empty
-	var hp0: int = combat.players[0].combatant.hp
-	combat.end_turn(0)
-	combat.end_turn(1)  # grip gives out -> fall
-	var ps: PlayerState = combat.players[0]
-	_expect(ps.foothold == 0 and ps.combatant.hp == hp0 - Combat.FALL_DAMAGE
-		and ps.stamina == ps.stamina_max,
-		"grip runs out -> the hunter falls, takes a knock, Height reset")
-
-
-func _test_timed_climb_refunds_grip() -> void:
-	var combat := _new_combat([_deck_of(_grapple, 10), _deck_of(_slash, 10)], 42, _climb_boss(3))
-	var ps: PlayerState = combat.players[0]
-	ps.stamina = 1
-	combat.play_card(0, _first_playable(combat, 0), true)  # timed HIT climbs and refunds grip
-	_expect(ps.stamina == mini(1 + Combat.STAMINA_HIT_REFUND, ps.stamina_max),
-		"a well-timed climb claws back grip")
-
-
-func _test_shake_tears_grip() -> void:
-	var boss := Boss.new("Shaker", 500)
-	boss.moves = [{"type": "attack_all", "value": 0}]
-	boss.weak_point_height = 3
+func _test_secure_on_holds() -> void:
+	var boss := _climb_boss(6)
+	boss.ledges = [2, 4]
 	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
 	var ps: PlayerState = combat.players[0]
+	ps.foothold = 0
+	var at_base := combat.is_secure(0)
+	ps.foothold = 2
+	var at_ledge := combat.is_secure(0)
+	ps.foothold = 3
+	var between := combat.is_secure(0)
+	ps.foothold = 6
+	var at_sigil := combat.is_secure(0)
+	_expect(at_base and at_ledge and not between and at_sigil,
+		"secure at base/ledge/sigil, exposed between holds")
+
+
+func _test_next_safe_height() -> void:
+	var boss := _climb_boss(6)
+	boss.ledges = [2, 4]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 0
+	var from_base := combat.next_safe_height(0)  # -> first ledge, 2
+	ps.foothold = 3
+	var from_mid := combat.next_safe_height(0)   # -> next ledge, 4
 	ps.foothold = 5
-	ps.stamina = ps.stamina_max
-	combat.end_turn(0)
-	combat.end_turn(1)  # sweep tears grip + Height, then holding on drains more
-	_expect(ps.foothold == 5 - Combat.SHAKE_LOSS
-		and ps.stamina == ps.stamina_max - Combat.SHAKE_STAMINA_LOSS - Combat.STAMINA_DRAIN,
-		"a sweep tears at grip as well as Height")
+	var near_top := combat.next_safe_height(0)   # -> the sigil, 6
+	_expect(from_base == 2 and from_mid == 4 and near_top == 6,
+		"the next safe hold is the ledge (or sigil) above you")
+
+
+func _test_fall_drops_to_base() -> void:
+	var boss := _climb_boss(6)
+	boss.ledges = [2, 4]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 3  # between holds
+	var hp0: int = ps.combatant.hp
+	combat.fall(0)
+	_expect(ps.foothold == 0 and ps.combatant.hp == hp0 - Combat.FALL_DAMAGE,
+		"losing grip drops the hunter to the base with a knock")
+
+
+func _test_fall_noop_when_secure() -> void:
+	var boss := _climb_boss(6)
+	boss.ledges = [2, 4]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 4  # on a ledge — safe
+	var hp0: int = ps.combatant.hp
+	combat.fall(0)
+	_expect(ps.foothold == 4 and ps.combatant.hp == hp0,
+		"a fall report is ignored when the hunter is on a safe hold")
 
 
 func _test_sunlight_blade_scales_with_exposed() -> void:

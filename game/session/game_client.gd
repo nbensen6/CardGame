@@ -37,6 +37,11 @@ func play_card(index: int, timing_hit: bool = true, slot: int = -1) -> void:
 func end_turn(slot: int = -1) -> void:
 	_send({"type": "end_turn", "slot": slot})
 
+## Report that a hunter lost their grip mid-climb (the client's real-time grip
+## timer emptied before they reached a safe hold). The host drops them to the base.
+func fall(slot: int = -1) -> void:
+	_send({"type": "fall", "slot": slot})
+
 ## Pick reward card option `choice` (during the between-encounter REWARD phase).
 func pick_card(choice: int, slot: int = -1) -> void:
 	_send({"type": "pick_card", "choice": choice, "slot": slot})

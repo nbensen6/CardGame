@@ -96,6 +96,30 @@ text = ""
 vertical_alignment = 0
 autowrap_mode = 3
 
+[node name="GripBar" type="PanelContainer" parent="Margin/Root"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="GripBox" type="VBoxContainer" parent="Margin/Root/GripBar"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="GripLabel" type="Label" parent="Margin/Root/GripBar/GripBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "GRIP"
+horizontal_alignment = 1
+
+[node name="GripMeter" type="ProgressBar" parent="Margin/Root/GripBar/GripBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+max_value = 1.0
+step = 0.001
+value = 1.0
+show_percentage = false
+
 [node name="HandLabel" type="Label" parent="Margin/Root"]
 unique_name_in_owner = true
 layout_mode = 2

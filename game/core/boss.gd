@@ -13,6 +13,7 @@ var vulnerable: int = 0        # "exposed" stacks — each consumed hit deals bo
 var strength: int = 0          # added to every attack (grows via "enrage" moves)
 var wound: int = 0             # bleed — the Titan takes this much at the start of each of its turns
 var weak_point_height: int = 0 # 0 = low sigil (always reachable); >0 needs Foothold to strike (SotC climb)
+var ledges: Array = []         # safe rest Heights between the base and the sigil (SotC holds)
 var _move_index: int = 0
 
 ## The move the boss will perform on its next enemy turn (telegraphed now).

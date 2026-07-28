@@ -102,5 +102,6 @@ static func build_boss(id: String) -> Boss:
 	var b := Boss.new(String(bd.get("name", "Titan")), int(bd.get("max_hp", 1)))
 	b.moves = bd.get("moves", [])
 	b.weak_point_height = int(bd.get("weak_point_height", 0))
+	b.ledges = bd.get("ledges", [])
 	b.art = String(bd.get("art", ""))
 	return b

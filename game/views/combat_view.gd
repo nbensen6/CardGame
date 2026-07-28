@@ -20,6 +20,9 @@ var _client: GameClient
 @onready var _log_label: Label = %Log
 @onready var _hand_label: Label = %HandLabel
 @onready var _hand_row: HBoxContainer = %Hand
+@onready var _grip_bar: PanelContainer = %GripBar
+@onready var _grip_label: Label = %GripLabel
+@onready var _grip_meter: ProgressBar = %GripMeter
 @onready var _end_turn_btn: Button = %EndTurn
 @onready var _lock_btn: Button = %LockButton
 @onready var _switch_btn: Button = %SwitchButton
@@ -41,6 +44,15 @@ var _prev_encounter := -1
 var _prev_boss_hp := -1
 var _prev_footholds: Array = []
 var _prev_reached: Array = []
+# Real-time grip (SotC): the instant the active hunter leaves a safe hold, a grip
+# timer starts full and drains live; reach the next ledge/sigil before it empties
+# or the client reports a fall. Purely client-side skill — the host is told the
+# outcome (a play_card that reaches safety, or a `fall`), never the ticking timer.
+const GRIP_SECONDS := 5.0     # how long you can cling between holds (tune by feel)
+var _climbing := false        # the active hunter is between holds, timer running
+var _grip := 1.0              # remaining grip, 1..0
+var _climb_target := 0        # the Height (ledge/sigil) we're racing to reach
+var _me_secure := true        # active hunter is resting on a safe hold
 
 
 # --- Solo helpers (one player controls both hunters) ----------------------
@@ -108,6 +120,61 @@ func _on_state(_shared: Dictionary, _private: Dictionary) -> void:
 	_refresh()
 
 
+## Real-time grip drain. Runs every frame; only does anything mid-climb. When the
+## timer empties, tell the host our hunter fell — the snapshot that follows drops
+## us to the base and ends the burst.
+func _process(delta: float) -> void:
+	if not _climbing:
+		return
+	_grip -= delta / GRIP_SECONDS
+	if _grip <= 0.0:
+		_grip = 0.0
+		_climbing = false
+		_update_grip_bar()
+		Sfx.play("shake")
+		_client.fall(_cmd_slot())
+		return
+	_update_grip_bar()
+
+
+## Derive the burst from the active hunter's "secure" flag: leaving a hold starts
+## the timer full; reaching one (or falling) ends it. Grip only resets to full on
+## a genuine hold->climbing transition, so it drains continuously across the whole
+## hop even as we play several climb cards.
+func _update_climb_state(s: Dictionary) -> void:
+	var players: Array = s.get("players", [])
+	var meidx := _me()
+	if meidx < 0 or meidx >= players.size():
+		_stop_climb()
+		return
+	var p: Dictionary = players[meidx]
+	_me_secure = bool(p.get("secure", true))
+	_climb_target = int(p.get("next_safe", int(p.get("foothold", 0))))
+	if _me_secure:
+		_climbing = false
+	elif not _climbing:
+		_climbing = true
+		_grip = 1.0
+	_update_grip_bar()
+
+
+func _stop_climb() -> void:
+	_climbing = false
+	if _grip_bar != null:
+		_grip_bar.visible = false
+
+
+func _update_grip_bar() -> void:
+	if _grip_bar == null:
+		return
+	_grip_bar.visible = _climbing
+	if not _climbing:
+		return
+	_grip_meter.value = _grip
+	_grip_meter.modulate = Color(0.9, 0.33, 0.28).lerp(Color(0.55, 0.85, 0.5), _grip)
+	_grip_label.text = "⚠ HOLD ON — reach Height %d before your grip gives out!" % _climb_target
+
+
 func _refresh() -> void:
 	if _server_lost:
 		return  # keep the disconnect overlay
@@ -170,6 +237,7 @@ func _render_combat(s: Dictionary) -> void:
 	_intent.add_theme_color_override("font_color", _intent_color(mtype))
 
 	_combat_audio(s)
+	_update_climb_state(s)
 	_show_boss_art(String(boss.get("art", "")), int(boss.get("strength", 0)) > 0)
 	_render_players(s, targeted)
 	_log_label.text = _log_with_relics(s)
@@ -246,6 +314,11 @@ func _render_hand() -> void:
 	else:
 		_end_turn_btn.text = "Waiting for ally…" if ended else "End Turn"
 	_end_turn_btn.disabled = ended
+	_switch_btn.disabled = false
+	if _climbing:  # committed to a hop — you can't rest here; reach a hold or fall
+		_end_turn_btn.disabled = true
+		_end_turn_btn.text = "⚠ Climbing — reach a hold!"
+		_switch_btn.disabled = true
 
 
 func _on_card_tapped(index: int, timed: bool, cv: CardView) -> void:
@@ -264,6 +337,7 @@ func _on_timing_resolved(hit: bool, index: int) -> void:
 # --- Reward phase ---------------------------------------------------------
 
 func _render_reward(s: Dictionary) -> void:
+	_stop_climb()
 	_lock_btn.text = "Lock In Reward"
 	_overlay.visible = false
 	_boss_panel.visible = true
@@ -349,6 +423,7 @@ func _on_character_selected(character_id: String) -> void:
 # --- Character select (lobby) ---------------------------------------------
 
 func _render_character_select(s: Dictionary) -> void:
+	_stop_climb()
 	_overlay.visible = false
 	_boss_panel.visible = true
 	_boss_hp_bar.visible = false
@@ -403,6 +478,7 @@ func _render_character_select(s: Dictionary) -> void:
 # --- Run over -------------------------------------------------------------
 
 func _render_over(s: Dictionary) -> void:
+	_stop_climb()
 	_overlay.visible = true
 	_restart_btn.visible = true
 	_menu_btn.visible = true
@@ -423,6 +499,7 @@ func _render_over(s: Dictionary) -> void:
 
 
 func _show_paused(s: Dictionary) -> void:
+	_stop_climb()
 	_overlay.visible = true
 	_restart_btn.visible = false
 	_menu_btn.visible = true
@@ -435,6 +512,7 @@ func _show_paused(s: Dictionary) -> void:
 
 
 func _show_waiting(s: Dictionary) -> void:
+	_stop_climb()
 	_overlay.visible = true
 	_restart_btn.visible = false
 	_menu_btn.visible = true
@@ -475,15 +553,13 @@ func _render_players(s: Dictionary, targeted: Array) -> void:
 					var atwp := _mklabel("✦ at the weak point — strike!")
 					atwp.add_theme_color_override("font_color", Color(0.62, 0.82, 0.5))
 					box.add_child(atwp)
-				else:
-					box.add_child(_mklabel("⛰ climbing — Height %d / %d" % [fh, h]))
-				if fh > 0:  # on the beast — grip matters (SotC stamina)
-					var stam := int(p.get("stamina", 0))
-					var stam_max := int(p.get("stamina_max", 0))
-					var grip_lbl := _mklabel(_grip_text(stam, stam_max))
-					if stam <= 2:  # about to lose your hold
-						grip_lbl.add_theme_color_override("font_color", Color(0.92, 0.5, 0.42))
-					box.add_child(grip_lbl)
+				elif bool(p.get("secure", true)):  # resting on a hold
+					var where := "on a ledge" if fh > 0 else "at the base"
+					box.add_child(_mklabel("⛰ Height %d / %d  (%s)" % [fh, h, where]))
+				else:  # clinging between holds — grip timer ticking
+					var climbing := _mklabel("⚠ climbing… Height %d → %d" % [fh, int(p.get("next_safe", fh))])
+					climbing.add_theme_color_override("font_color", Color(0.92, 0.6, 0.42))
+					box.add_child(climbing)
 			var status := "Energy %d / %d" % [p["energy"], s["base_energy"]]
 			if int(p.get("strength", 0)) > 0:
 				status += "   Str +%d" % int(p["strength"])
@@ -561,12 +637,6 @@ func _log_with_relics(s: Dictionary) -> String:
 		return body
 	var header := "Relics:  " + ",  ".join(relics)
 	return header + ("\n\n" + body if not body.is_empty() else "")
-
-
-## A grip meter as filled/empty pips — the SotC hold-on stamina while climbing.
-func _grip_text(stamina: int, stamina_max: int) -> String:
-	var filled := clampi(stamina, 0, stamina_max)
-	return "Grip " + "▰".repeat(filled) + "▱".repeat(stamina_max - filled) + "  %d/%d" % [stamina, stamina_max]
 
 
 func _block_suffix(block: int) -> String:
