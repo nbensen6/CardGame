@@ -1,6 +1,6 @@
 # The Big Overhaul — plan
 
-Triggered 2026-07-28: Nathan bought the **Kenney All-in-1 bundle** (extracted into
+Triggered 2026-07-28: the designer bought the **Kenney All-in-1 bundle** (extracted into
 the project root as an asset SOURCE — gitignored; we copy what we use into
 `game/assets/**`). Mandate: overhaul visuals with the assets, redesign every
 character's cards, and add new mechanics — a long autonomous run. Tone stays
@@ -12,7 +12,7 @@ Godot `--headless` **cannot render** — so I can't screenshot to check how visu
 look. Therefore:
 - **Content & mechanics** (card effects, new systems) → fully verified by unit tests.
 - **Visuals** (icons, fonts, UI, art) → I wire them so they provably *load* (headless
-  load-check), but **Nathan judges the actual look on his next run** and I adjust.
+  load-check), but **the designer judges the actual look on his next run** and I adjust.
 - I front-load the aesthetic forks I can't preview as questions.
 
 ## Asset inventory (what we have to work with)
@@ -35,7 +35,7 @@ look. Therefore:
   (damage_per_ally_foothold) — 1e362ac
 - ✅ **P5** audio: 13 Kenney SFX wired — 218a06c
 - ⏳ **P4** UI reskin (font + Kenney panels/borders) — fonts copied+imported;
-  font wiring DEFERRED (readability/taste — needs Nathan's eye or a preview).
+  font wiring DEFERRED (readability/taste — needs the designer's eye or a preview).
 - ⏳ **P6** boss/creature art — needs curation from the 2D packs (taste-risk).
 
 ## Phases (each self-verifies + commits independently)
@@ -67,9 +67,9 @@ per-card/per-titan), copy into `game/audio/`, replacing the synth.
 
 ### P6 — Boss / creature visuals
 Find or assemble whimsical beast art from the 2D packs (or keep silhouettes if
-nothing fits) — the highest-taste-risk phase, likely needs Nathan's eye.
+nothing fits) — the highest-taste-risk phase, likely needs the designer's eye.
 
-## What needs Nathan (answer from phone; I proceed on defaults meanwhile)
+## What needs the designer (answer from phone; I proceed on defaults meanwhile)
 1. **How far to commit to the Kenney look** — full reskin as the game's style, or
    UI+icons only with art direction kept open for later commission?
 2. **Card icon feel** — the clean Board-Game-Icon style is my default; OK, or want

@@ -89,7 +89,7 @@ himself up, and leans on a partner to carry him. Rewards big timed swings.
 | Slash | 1 | Deal 6 *(→ Catapult, pending)* |
 | *(built)* Grappling Hook | 0 | **Timed.** Climb +1 (+2 nailed) |
 
-**Nathan's redesign — status**
+**the designer's redesign — status**
 - ✅ **Goblin Jetpack** (was Cleave) — prepare→next-turn auto-climb to the sigil.
 - ✅ **Grappling Arm** (was Flurry) — pull ally up to you if within 3 Height.
 - ✅ **Build Mech** (was Brace) — Block scales each play.

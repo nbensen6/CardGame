@@ -143,7 +143,7 @@ never falls (grip is a human-skill layer). Titan `weak_point_height`s were raise
 (2/4/6/6 with ledges) to make the climb a real journey — this alone jumped the
 stakes hugely (sim: naive 16% / coord 73%, gap +57).
 
-Design choices (from Nathan): live real-time bar · ledges between holds · fall to
+Design choices (from the designer): live real-time bar · ledges between holds · fall to
 the ground. Tuning is by playtest — `GRIP_SECONDS`, ledge placement, sigil heights
 in `data/bosses.json`. Next: teach it in onboarding (Epic A); later, per-character
 grip (a Frog clings longer; a Goblin barely holds on) and per-titan grip times.

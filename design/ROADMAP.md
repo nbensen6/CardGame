@@ -6,7 +6,7 @@
 >
 > This is a living document. It decides *what the game is* so that "production"
 > can happen on rails. When something here is a proposal, it says **(proposed —
-> confirm/adjust)**. Nathan owns the creative/business calls; Claude builds on
+> confirm/adjust)**. The designer owns the creative/business calls; Claude builds on
 > rails, keeps the test suite + balance sim green, and maintains this doc.
 
 ---
@@ -170,7 +170,7 @@ call (taste/budget); I can prep specs, placeholders, and integration.
 **Claude drives:** systems & content code, the balance sim + tooling, UX/onboarding
 implementation, refactors, keeping tests/sim green, and maintaining this doc.
 
-**Nathan owns (I can't):** *is it fun*, art direction & budget, real-human
+**The designer owns (I can't):** *is it fun*, art direction & budget, real-human
 playtesting, all business/marketing calls (Steam page, pricing, trailer, Next Fest
 timing), and — most important — **keeping the EA box closed.**
 
