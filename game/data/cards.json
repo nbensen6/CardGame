@@ -6,14 +6,14 @@
     "cleave":     { "name": "Cleave", "type": "attack", "cost": 2, "damage": 10, "text": "Deal 10 damage." },
     "take_aim":   { "name": "Take Aim", "type": "skill", "cost": 1, "draw": 2, "text": "Draw 2 cards." },
     "cover":      { "name": "Cover", "type": "skill", "cost": 1, "ally_block": 6, "target": "ally", "text": "Give your ally 6 Block." },
-    "rally":      { "name": "Rally", "type": "skill", "cost": 1, "ally_energy": 1, "target": "ally", "text": "Give your ally 1 Energy." },
+    "rally":      { "name": "Rally", "type": "skill", "icon": "rally", "cost": 1, "ally_energy": 1, "target": "ally", "text": "Give your ally 1 Energy." },
     "expose":     { "name": "Expose", "type": "skill", "cost": 1, "vulnerable": 2, "target": "enemy", "text": "Expose the Titan: its next 2 hits taken deal +4." },
     "draw_aggro": { "name": "Draw Aggro", "type": "skill", "cost": 1, "taunt": true, "block": 6, "target": "self", "text": "You become the Titan's target this round. Gain 6 Block." },
-    "harpoon":    { "name": "Harpoon", "type": "attack", "cost": 2, "damage": 8, "vulnerable": 1, "text": "Deal 8 damage, then Expose the Titan (1)." },
+    "harpoon":    { "name": "Harpoon", "type": "attack", "icon": "bow", "cost": 2, "damage": 8, "vulnerable": 1, "text": "Deal 8 damage, then Expose the Titan (1)." },
     "scramble":   { "name": "Scramble", "type": "skill", "cost": 0, "grip": 1, "target": "enemy", "text": "Climb (+1 Height) toward the weak point." },
     "grip":       { "name": "Grip", "type": "skill", "cost": 1, "grip": 2, "target": "enemy", "text": "Climb the Titan (+2 Height). Reach a high weak point." },
-    "sunlight_blade": { "name": "Sunlight Blade", "type": "attack", "cost": 1, "damage": 5, "damage_per_vulnerable": 3, "text": "Deal 5 damage, +3 for each Exposed stack on the Titan." },
-    "bowshot":    { "name": "Bowshot", "type": "attack", "cost": 0, "damage": 3, "vulnerable": 1, "text": "Deal 3 damage and Expose the Titan (1)." },
+    "sunlight_blade": { "name": "Sunlight Blade", "type": "attack", "icon": "expose", "cost": 1, "damage": 5, "damage_per_vulnerable": 3, "text": "Deal 5 damage, +3 for each Exposed stack on the Titan." },
+    "bowshot":    { "name": "Bowshot", "type": "attack", "icon": "bow", "cost": 0, "damage": 3, "vulnerable": 1, "text": "Deal 3 damage and Expose the Titan (1)." },
     "sharpen":    { "name": "Sharpen", "type": "skill", "cost": 1, "strength": 2, "text": "Gain 2 Strength — your attacks deal +2 for the rest of this fight." },
     "rend":       { "name": "Rend", "type": "attack", "cost": 1, "damage": 4, "wound": 2, "text": "Deal 4 damage and apply Wound 2 (the Titan bleeds each turn)." },
     "dagger":     { "name": "Dagger", "type": "attack", "cost": 0, "damage": 3, "text": "Deal 3 damage." },
@@ -23,7 +23,7 @@
     "build_grapple":{ "name": "Build Grapple", "type": "skill", "cost": 0, "create": "grapple", "text": "Build a Grappling Hook and add it to your hand." },
     "grapple":      { "name": "Grappling Hook", "type": "skill", "cost": 0, "grip": 1, "timed": true, "timed_grip": 2, "target": "enemy", "text": "Fire the hook — time it! Climb +3 on a good throw. Miss and it slips away." },
     "vine":         { "name": "Vine", "type": "skill", "cost": 1, "grip": 1, "ally_grip": 2, "target": "ally", "text": "Climb (+1); grow a vine that lifts your ally (+2 Height)." },
-    "spore":        { "name": "Spore Burst", "type": "attack", "cost": 1, "damage": 2, "wound": 2, "text": "Deal 2 damage and Poison 2 (the beast bleeds each turn)." },
+    "spore":        { "name": "Spore Burst", "type": "attack", "icon": "fire", "cost": 1, "damage": 2, "wound": 2, "text": "Deal 2 damage and Poison 2 (the beast bleeds each turn)." },
     "rope_up":      { "name": "Rope Up", "type": "skill", "cost": 1, "grip": 1, "ally_grip": 1, "target": "ally", "text": "You and your ally both climb (+1 Height)." },
     "belay_strike": { "name": "Belay Strike", "type": "attack", "cost": 1, "damage": 3, "damage_per_foothold": 2, "text": "Deal 3 damage, +2 for each Height you've climbed." },
 
@@ -41,7 +41,7 @@
     "burn_coal":     { "name": "Burn Coal", "type": "skill", "cost": 1, "exhaust_pick": true, "cheapen_pick": true, "cheapen_amount": 1, "text": "Sacrifice a card (exhausted for the fight) to permanently cut another card's cost by 1." },
     "catapult":      { "name": "Catapult", "type": "skill", "cost": 1, "exhaust_pick": true, "sac_ally_grip": 2, "target": "ally", "text": "Sacrifice a card to catapult your ally up +2 Height." },
     "meld":          { "name": "Meld", "type": "skill", "cost": 1, "meld": true, "text": "Fuse two cards in your hand into one that does both, at 1 less than their combined cost." },
-    "satchel_charge": { "name": "Satchel Charge", "type": "attack", "cost": 2, "damage": 6, "timed": true, "timed_hits": 3, "timed_damage": 20, "target": "enemy", "text": "Plant a satchel — nail 3 timing windows in a row to detonate for 26. Miss any and it fizzles." }
+    "satchel_charge": { "name": "Satchel Charge", "type": "attack", "icon": "bomb", "cost": 2, "damage": 6, "timed": true, "timed_hits": 3, "timed_damage": 20, "target": "enemy", "text": "Plant a satchel — nail 3 timing windows in a row to detonate for 26. Miss any and it fizzles." }
   },
   "starter_deck": [
     "slash", "slash", "slash",

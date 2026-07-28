@@ -37,6 +37,7 @@ var wound: int         # Wound applied to the Titan (it bleeds each of its turns
 var hits: int          # how many times the damage lands (default 1) — multi-strike
 var draw: int          # extra cards drawn
 var target: String     # "self" | "ally" | "enemy" — who the card acts on (UI clarity)
+var icon: String       # optional icon-key override (else the view infers one from effects)
 var text: String       # rules text, shown on the card face (no hover needed — §5)
 
 static func from_dict(d: Dictionary) -> Card:
@@ -73,5 +74,6 @@ static func from_dict(d: Dictionary) -> Card:
 	c.hits = int(d.get("hits", 1))
 	c.draw = int(d.get("draw", 0))
 	c.target = String(d.get("target", "self"))
+	c.icon = String(d.get("icon", ""))
 	c.text = String(d.get("text", ""))
 	return c

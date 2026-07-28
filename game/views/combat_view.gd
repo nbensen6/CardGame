@@ -544,7 +544,7 @@ func _render_character_select(s: Dictionary) -> void:
 		var cid := String(ch["id"])
 		var cv := CardView.new()
 		_hand_row.add_child(cv)
-		cv.setup({"name": ch["name"], "text": ch["desc"], "icon": "grip", "no_cost": true}, not locked)
+		cv.setup({"name": ch["name"], "text": ch["desc"], "icon": "climb", "no_cost": true}, not locked)
 		if not locked and cid == _selected_char:
 			cv.set_selected(true)
 		cv.tapped.connect(_on_character_selected.bind(cid))

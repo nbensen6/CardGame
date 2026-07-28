@@ -286,24 +286,32 @@ func _first_unpicked_solo() -> int:
 
 ## A silhouette-icon key for a card, chosen by its dominant effect (view art).
 func _card_icon(c: Card) -> String:
+	if c.icon != "":
+		return c.icon  # explicit override from cards.json
 	if c.taunt:
 		return "taunt"
-	if c.prepare != "" or c.grip > 0:
-		return "grip"
-	if c.pull_ally > 0 or c.sac_ally_grip > 0:
-		return "support"
+	if c.meld or c.create != "":
+		return "gadget"
 	if c.exhaust_pick:
-		return "expose"
+		return "bomb"  # sacrifice/burn a card
+	if c.prepare != "":
+		return "climb"  # jetpack — get up the beast
+	if c.pull_ally > 0 or c.sac_ally_grip > 0 or c.ally_block > 0 or c.ally_energy > 0:
+		return "support"
+	if c.grip > 0 or c.ally_grip > 0:
+		return "climb"
+	if c.wound > 0:
+		return "skull"
 	if c.vulnerable > 0 and c.damage == 0:
 		return "expose"
+	if c.strength > 0:
+		return "flask"
+	if c.draw > 0:
+		return "draw"
 	if c.damage > 0:
 		return "sword"
-	if c.ally_block > 0 or c.ally_energy > 0 or c.strength > 0:
-		return "support"
-	if c.block > 0:
+	if c.block > 0 or c.block_per_play > 0:
 		return "shield"
-	if c.draw > 0:
-		return "aim"
 	return ""
 
 func _slot(peer_id: int) -> int:

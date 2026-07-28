@@ -24,27 +24,43 @@ var _count_lbl: Label
 var _hits_needed := 1  # sequential timing windows to nail (Satchel Charge = 3)
 var _hits_done := 0
 
+# Kenney "Board Game Icons" (white-fill SVGs → tint via modulate). Keys are the
+# effect roles the host maps cards to (see game_host._card_icon).
 const ICONS := {
-	"sword": preload("res://ui/icons/sword.svg"),
-	"shield": preload("res://ui/icons/shield.svg"),
-	"support": preload("res://ui/icons/arrow.svg"),
-	"aim": preload("res://ui/icons/aim.svg"),
-	"expose": preload("res://ui/icons/sun.svg"),
-	"taunt": preload("res://ui/icons/banner.svg"),
-	"grip": preload("res://ui/icons/grip.svg"),
-	"relic": preload("res://ui/icons/relic.svg"),
+	"sword": preload("res://assets/icons/sword.svg"),
+	"shield": preload("res://assets/icons/shield.svg"),
+	"bow": preload("res://assets/icons/bow.svg"),
+	"fire": preload("res://assets/icons/fire.svg"),
+	"skull": preload("res://assets/icons/skull.svg"),
+	"flask": preload("res://assets/icons/flask_full.svg"),
+	"climb": preload("res://assets/icons/pawn_up.svg"),
+	"bomb": preload("res://assets/icons/exploding.svg"),
+	"gadget": preload("res://assets/icons/structure_tower.svg"),
+	"draw": preload("res://assets/icons/hand_card.svg"),
+	"expose": preload("res://assets/icons/flag_square.svg"),
+	"taunt": preload("res://assets/icons/flag_triangle.svg"),
+	"support": preload("res://assets/icons/hand.svg"),
+	"relic": preload("res://assets/icons/award.svg"),
+	"rally": preload("res://assets/icons/campfire.svg"),
 }
 const ENERGY_ICON := preload("res://ui/icons/energy.svg")
 
 const TINT := {
 	"sword": Color(0.82, 0.44, 0.34),   # rust
 	"shield": Color(0.56, 0.66, 0.75),  # steel
-	"support": Color(0.62, 0.73, 0.51), # moss
-	"aim": Color(0.85, 0.78, 0.55),     # gold
+	"bow": Color(0.85, 0.78, 0.55),     # gold
+	"fire": Color(0.90, 0.55, 0.35),    # ember
+	"skull": Color(0.62, 0.80, 0.52),   # sickly green (poison/wound)
+	"flask": Color(0.80, 0.68, 0.88),   # potion violet
+	"climb": Color(0.72, 0.63, 0.46),   # stone/earth
+	"bomb": Color(0.90, 0.50, 0.40),    # blast red
+	"gadget": Color(0.74, 0.62, 0.44),  # bronze/build
+	"draw": Color(0.85, 0.78, 0.55),    # gold
 	"expose": Color(0.90, 0.78, 0.42),  # sunlight
 	"taunt": Color(0.82, 0.56, 0.40),   # ember
-	"grip": Color(0.70, 0.62, 0.46),    # stone/earth
+	"support": Color(0.62, 0.73, 0.51), # moss
 	"relic": Color(0.78, 0.66, 0.86),   # arcane violet
+	"rally": Color(0.90, 0.62, 0.35),   # firelight
 }
 
 ## Build the card from a snapshot dict. `playable` greys it out when false.

@@ -1,18 +1,28 @@
-# Godot 4+ engine cache / imported assets
+# ============================================================
+# WHITELIST gitignore.
+# The Kenney "All-in-1" bundle was extracted into the repo ROOT, dumping many
+# large folders (2D assets, 3D assets, Archive, Audio, Icons, UI assets, Goodies,
+# Early access, Other, Overview.html, ...). Rather than chase each one, we ignore
+# EVERYTHING at the root and re-include ONLY the actual project below.
+# Assets we actually use are copied into game/assets/** (tracked, since game/ is
+# re-included). The raw bundle is the source library and is never committed.
+# ============================================================
+/*
+!/.gitignore
+!/.claude/
+!/CLAUDE.md
+!/README.md
+!/design/
+!/game/
+
+# --- Inside the project: Godot cache, imported assets, editor/OS junk ---
 .godot/
-game/.godot/
-
-# Godot exports & build output
-export_presets.cfg
-/build/
 *.import
-
-# Mono/.NET crash dumps (harmless if unused)
+export_presets.cfg
+build/
 .mono/
 data_*/
 mono_crash.*.json
-
-# Editor / OS junk
 *.tmp
 *~
 Thumbs.db
