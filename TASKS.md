@@ -11,11 +11,11 @@ Nick's continuous task list for Claude. **How it works:**
 
 ## Inbox
 - [ ] *(standing)* continually look through assets to use — finds so far: menu reskin `c4140ba`, strike/shake juice `5d9d09f` (burst flash + dust + arena judder); ambient music `e5fb47e` (menu=Flowing Rocks, combat=Retro Mystic — swap assets/music/*.ogg to change); queued: Emote Pack (reactions), UI Pack (grip/timing bars)
-- [] remove the text saying 'your hand -- x character' and just make it a symbol of your character
 ## Questions from Claude
 (none)
 
 ## Done
+- [x] hand header as character symbol — `8b2703b` (portrait above the hand; text only for turn-ended/selection states)
 - [x] switch characters while the climb timer runs — `9181605` (per-hunter grip timers; Switch enabled mid-climb, both timers drain at once, grip bar names whichever hunter it shows)
 - [x] boss attack intent as icons — `984cd87` ([beast] [sword] [value] → [target portrait]; sweeps show both hunters)
 - [x] max time on timed cards + faster sweeps — `373b544` (2.5s window, expire = fizzle; sweep 1.25→1.9; strip reddens as time runs out)
