@@ -14,7 +14,7 @@ var _client: GameClient
 @onready var _boss_name: Label = %BossName
 @onready var _boss_hp: Label = %BossHP
 @onready var _boss_hp_bar: ProgressBar = %BossHPBar
-@onready var _intent: Label = %Intent
+@onready var _intent: HBoxContainer = %Intent
 @onready var _players_row: VBoxContainer = %Players
 @onready var _ladder: VBoxContainer = %Ladder
 @onready var _boss_art: TextureRect = %BossArt
@@ -240,8 +240,7 @@ func _render_combat(s: Dictionary) -> void:
 	var move: Dictionary = boss["intent"]
 	var mtype := String(move.get("type", ""))
 	var targeted := _targeted_indices(mtype, int(boss.get("target", -1)), s["players"].size())
-	_intent.text = "%s%s" % [_intent_text(move, int(boss.get("strength", 0))), _target_suffix(mtype, targeted)]
-	_intent.add_theme_color_override("font_color", _intent_color(mtype))
+	_render_intent(s, boss, move, mtype, targeted)
 
 	_combat_audio(s)
 	_update_climb_state(s)
@@ -738,6 +737,57 @@ func _target_suffix(mtype: String, targeted: Array) -> String:
 		var t: int = targeted[0]
 		return "  →  %s%s" % [players[t]["name"], " (you)" if t == _me() else ""]
 	return ""
+
+
+# Intent as iconography (Nick): [beast] [move icon] [value] → [target portrait(s)].
+const INTENT_ICONS := {
+	"attack": preload("res://assets/icons/sword.png"),
+	"attack_all": preload("res://assets/icons/sword.png"),
+	"leech": preload("res://assets/icons/skull.png"),
+	"enrage": preload("res://assets/icons/fire.png"),
+	"block": preload("res://assets/icons/shield.png"),
+	"regen": preload("res://assets/icons/flask_full.png"),
+}
+
+func _render_intent(s: Dictionary, boss: Dictionary, move: Dictionary, mtype: String, targeted: Array) -> void:
+	_clear(_intent)
+	var art := String(boss.get("art", ""))
+	if art != "" and ResourceLoader.exists(art):
+		_intent.add_child(_mini_icon(load(art)))
+	if INTENT_ICONS.has(mtype):
+		var icon := _mini_icon(INTENT_ICONS[mtype])
+		icon.modulate = _intent_color(mtype)
+		_intent.add_child(icon)
+	var value := int(move.get("value", 0))
+	if mtype in ["attack", "attack_all", "leech"]:
+		value += int(boss.get("strength", 0))
+	if value > 0:
+		var v := Label.new()
+		v.text = str(value)
+		v.add_theme_font_size_override("font_size", 17)
+		v.add_theme_color_override("font_color", _intent_color(mtype))
+		_intent.add_child(v)
+	# who it's aimed at — the targeted hunters' portraits
+	if not targeted.is_empty():
+		var arrow := Label.new()
+		arrow.text = "→"
+		arrow.add_theme_color_override("font_color", Color(0.8, 0.74, 0.62))
+		_intent.add_child(arrow)
+		var players: Array = s.get("players", [])
+		for t in targeted:
+			var pp := String(players[t].get("portrait", "")) if t < players.size() else ""
+			if pp != "" and ResourceLoader.exists(pp):
+				_intent.add_child(_mini_icon(load(pp)))
+
+
+func _mini_icon(tex: Texture2D) -> TextureRect:
+	var m := TextureRect.new()
+	m.texture = tex
+	m.custom_minimum_size = Vector2(26, 26)
+	m.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	m.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	m.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	return m
 
 
 func _intent_text(move: Dictionary, strength: int) -> String:

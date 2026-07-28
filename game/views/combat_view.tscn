@@ -78,10 +78,10 @@ text = "HP"
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Intent" type="Label" parent="Margin/Root/TopBar/TopBox"]
+[node name="Intent" type="HBoxContainer" parent="Margin/Root/TopBar/TopBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Intent:"
+theme_override_constants/separation = 8
 
 [node name="Scene" type="HBoxContainer" parent="Margin/Root"]
 layout_mode = 2
