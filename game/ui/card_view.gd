@@ -170,10 +170,9 @@ func start_timing() -> void:
 	_timing = true
 	_t = 0.0
 	_dir = 1.0
-	var w := _strip.size.x
-	var zone: ColorRect = _strip.get_node("Zone")
-	zone.position = Vector2(w * ZONE_MIN, 0)
-	zone.size = Vector2(w * (ZONE_MAX - ZONE_MIN), _strip.size.y)
+	# The green zone is anchored (see _build_timing_strip), so it sizes itself once
+	# the strip is laid out — no need to compute a width here (which was 0 while the
+	# strip was still hidden, making the target invisible).
 	_strip.visible = true
 	set_process(true)
 
@@ -207,23 +206,40 @@ func _process(delta: float) -> void:
 
 func _build_timing_strip() -> Control:
 	var strip := Control.new()
-	strip.custom_minimum_size = Vector2(0, 14)
+	strip.custom_minimum_size = Vector2(0, 20)
 	strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	strip.visible = false
 	var bg := ColorRect.new()
-	bg.color = Color(0.08, 0.07, 0.06)
+	bg.color = Color(0.06, 0.05, 0.045)
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	strip.add_child(bg)
+	# Success zone: anchored to ZONE_MIN..ZONE_MAX of the strip so it always spans
+	# the target band, whatever the strip's laid-out width is. A brighter "perfect"
+	# core in the centre makes the aim point obvious.
 	var zone := ColorRect.new()
 	zone.name = "Zone"
-	zone.color = Color(0.35, 0.62, 0.32)
+	zone.color = Color(0.33, 0.72, 0.36)
+	zone.anchor_left = ZONE_MIN
+	zone.anchor_right = ZONE_MAX
+	zone.anchor_top = 0.0
+	zone.anchor_bottom = 1.0
+	zone.offset_left = 0.0
+	zone.offset_right = 0.0
 	zone.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	strip.add_child(zone)
+	var core := ColorRect.new()  # the bullseye — centre of the green band
+	core.color = Color(0.55, 0.95, 0.55)
+	core.anchor_left = 0.47
+	core.anchor_right = 0.53
+	core.anchor_top = 0.0
+	core.anchor_bottom = 1.0
+	core.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	strip.add_child(core)
 	_marker = ColorRect.new()
-	_marker.color = Color(0.96, 0.9, 0.75)
-	_marker.size = Vector2(4, 14)
+	_marker.color = Color(1.0, 0.96, 0.82)
+	_marker.size = Vector2(5, 20)
 	_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	strip.add_child(_marker)
 	return strip
