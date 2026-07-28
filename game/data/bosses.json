@@ -5,7 +5,7 @@
       "name": "The Stone Warden",
       "art": "res://assets/portraits/rhino.png",
       "max_hp": 46,
-      "weak_point_height": 2,
+      "weak_point_height": 3,
       "ledges": [],
       "weak_point_threshold": 12,
       "moves": [
@@ -31,7 +31,7 @@
       "name": "The Gale Serpent",
       "art": "res://assets/portraits/snake.png",
       "max_hp": 72,
-      "weak_point_height": 4,
+      "weak_point_height": 5,
       "ledges": [
         2
       ],
@@ -59,10 +59,10 @@
       "name": "The Drowned Colossus",
       "art": "res://assets/portraits/whale.png",
       "max_hp": 98,
-      "weak_point_height": 6,
+      "weak_point_height": 7,
       "ledges": [
         2,
-        4
+        5
       ],
       "weak_point_threshold": 22,
       "moves": [
@@ -88,9 +88,10 @@
       "name": "The Sunken Warden",
       "art": "res://assets/portraits/walrus.png",
       "max_hp": 130,
-      "weak_point_height": 6,
+      "weak_point_height": 8,
       "ledges": [
-        3
+        3,
+        6
       ],
       "weak_point_threshold": 28,
       "moves": [
