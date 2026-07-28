@@ -102,6 +102,14 @@ custom_minimum_size = Vector2(180, 44)
 layout_mode = 2
 text = "End Turn"
 
+[node name="LockButton" type="Button" parent="Margin/Root/Controls"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(220, 44)
+layout_mode = 2
+disabled = true
+text = "Lock In Reward"
+
 [node name="Overlay" type="Control" parent="."]
 unique_name_in_owner = true
 visible = false

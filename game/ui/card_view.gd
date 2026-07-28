@@ -131,6 +131,16 @@ func _apply_frame() -> void:
 	add_theme_stylebox_override("disabled", _frame(Color(0.115, 0.105, 0.092), Color(0.26, 0.23, 0.18)))
 
 
+## Mark this card as the current (not yet locked) reward selection.
+func set_selected(on: bool) -> void:
+	if not on:
+		return
+	var gold := _frame(Color(0.24, 0.20, 0.13), Color(0.90, 0.74, 0.42))
+	add_theme_stylebox_override("normal", gold)
+	add_theme_stylebox_override("hover", gold)
+	add_theme_stylebox_override("pressed", gold)
+
+
 func _on_hover() -> void:
 	# Optional accelerator only — cards remain fully usable by tap (§5).
 	pivot_offset = size / 2.0

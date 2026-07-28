@@ -20,18 +20,22 @@ var _client: GameClient
 @onready var _hand_label: Label = %HandLabel
 @onready var _hand_row: HBoxContainer = %Hand
 @onready var _end_turn_btn: Button = %EndTurn
+@onready var _lock_btn: Button = %LockButton
 @onready var _overlay: Control = %Overlay
 @onready var _result_label: Label = %ResultLabel
 @onready var _restart_btn: Button = %RestartButton
 @onready var _menu_btn: Button = %MenuButton
 
 var _server_lost := false
+var _selected_choice := -1   # reward highlighted but NOT yet locked
+var _prev_phase := ""
 
 
 func _ready() -> void:
 	_end_turn_btn.pressed.connect(func() -> void:
 		Sfx.play("end_turn")
 		_client.end_turn())
+	_lock_btn.pressed.connect(_on_lock)
 	_restart_btn.pressed.connect(func() -> void: _client.restart())
 	_menu_btn.pressed.connect(_return_to_menu)
 	_client = Session.client
@@ -65,6 +69,11 @@ func _refresh() -> void:
 	var s := _client.shared
 	if s.is_empty():
 		return
+	# Reset the (unlocked) reward selection when a fresh reward phase begins.
+	var cur_phase := String(s.get("phase", "combat"))
+	if cur_phase == "reward" and _prev_phase != "reward":
+		_selected_choice = -1
+	_prev_phase = cur_phase
 	if bool(s.get("paused", false)):
 		_show_paused(s)
 		return
@@ -88,6 +97,8 @@ func _render_combat(s: Dictionary) -> void:
 	_boss_hp_bar.visible = true
 	_intent.visible = true
 	_end_turn_btn.get_parent().visible = true
+	_end_turn_btn.visible = true
+	_lock_btn.visible = false
 
 	var boss: Dictionary = s["boss"]
 	_boss_name.text = "%s        Titan %d / %d" % [boss["name"], s["encounter"], s["total_encounters"]]
@@ -133,10 +144,12 @@ func _render_reward(s: Dictionary) -> void:
 	_boss_panel.visible = true
 	_boss_hp_bar.visible = false
 	_intent.visible = false
-	_end_turn_btn.get_parent().visible = false
+	_end_turn_btn.get_parent().visible = true
+	_end_turn_btn.visible = false
 
 	var reward: Dictionary = _client.private.get("reward", {})
 	var is_relic := String(reward.get("kind", "card")) == "relic"
+	var picked := bool(reward.get("picked", false))
 	_boss_name.text = "Titan felled!  (%d / %d)" % [s["encounter"], s["total_encounters"]]
 	_boss_hp.text = ("Choose a RELIC — a lasting boon for the team." if is_relic
 		else "Choose a card to strengthen your deck for the next Titan.")
@@ -144,20 +157,43 @@ func _render_reward(s: Dictionary) -> void:
 	_render_players(s, [])
 	_log_label.text = _log_with_relics(s)
 
-	var picked := bool(reward.get("picked", false))
-	var label := "Pick a relic" if is_relic else "Pick a reward card"
-	_hand_label.text = label + ("   (chosen — waiting for ally)" if picked else "")
+	var noun := "relic" if is_relic else "card"
+	if picked:
+		_hand_label.text = "Locked in — waiting for ally"
+	elif _selected_choice >= 0:
+		_hand_label.text = "Tap another to change, or Lock In your %s" % noun
+	else:
+		_hand_label.text = "Tap a %s to select" % noun
+
 	_clear(_hand_row)
 	for choice in reward.get("choices", []):
+		var idx := int(choice["index"])
 		var cv := CardView.new()
 		_hand_row.add_child(cv)
 		cv.setup(choice, not picked)
-		cv.pressed.connect(_on_reward_pressed.bind(int(choice["index"])))
+		if not picked and idx == _selected_choice:
+			cv.set_selected(true)
+		cv.pressed.connect(_on_reward_selected.bind(idx))
+
+	# The Lock In button confirms the highlighted choice (fixes accidental picks).
+	_lock_btn.visible = not picked
+	_lock_btn.disabled = picked or _selected_choice < 0
 
 
-func _on_reward_pressed(choice: int) -> void:
+func _on_reward_selected(choice: int) -> void:
+	# Select (highlight) only — nothing is committed until Lock In.
+	if bool(_client.private.get("reward", {}).get("picked", false)):
+		return
+	Sfx.play("card")
+	_selected_choice = choice
+	_refresh()
+
+
+func _on_lock() -> void:
+	if _selected_choice < 0:
+		return
 	Sfx.play("reward")
-	_client.pick_card(choice)
+	_client.pick_card(_selected_choice)
 
 
 # --- Run over -------------------------------------------------------------
