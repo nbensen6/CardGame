@@ -29,7 +29,9 @@ var _server_lost := false
 
 
 func _ready() -> void:
-	_end_turn_btn.pressed.connect(func() -> void: _client.end_turn())
+	_end_turn_btn.pressed.connect(func() -> void:
+		Sfx.play("end_turn")
+		_client.end_turn())
 	_restart_btn.pressed.connect(func() -> void: _client.restart())
 	_menu_btn.pressed.connect(_return_to_menu)
 	_client = Session.client
@@ -92,11 +94,14 @@ func _render_combat(s: Dictionary) -> void:
 	_boss_hp.text = "HP %d / %d%s" % [boss["hp"], boss["max_hp"], _titan_tags(boss)]
 	_boss_hp_bar.max_value = boss["max_hp"]
 	_boss_hp_bar.value = boss["hp"]
+	_boss_hp_bar.add_theme_stylebox_override("fill",
+		_bar_fill(float(boss["hp"]) / maxf(1.0, float(boss["max_hp"]))))
 
 	var move: Dictionary = boss["intent"]
 	var mtype := String(move.get("type", ""))
 	var targeted := _targeted_indices(mtype, int(boss.get("target", -1)), s["players"].size())
 	_intent.text = "Intent:  %s%s" % [_intent_text(move, int(boss.get("strength", 0))), _target_suffix(mtype, targeted)]
+	_intent.add_theme_color_override("font_color", _intent_color(mtype))
 
 	_render_players(s, targeted)
 	_log_label.text = _log_with_relics(s)
@@ -117,6 +122,7 @@ func _render_hand() -> void:
 
 
 func _on_card_pressed(index: int) -> void:
+	Sfx.play("card")
 	_client.play_card(index)
 
 
@@ -150,6 +156,7 @@ func _render_reward(s: Dictionary) -> void:
 
 
 func _on_reward_pressed(choice: int) -> void:
+	Sfx.play("reward")
 	_client.pick_card(choice)
 
 
@@ -159,6 +166,10 @@ func _render_over(s: Dictionary) -> void:
 	_overlay.visible = true
 	_restart_btn.visible = true
 	_menu_btn.visible = true
+	_result_label.add_theme_font_size_override("font_size", 30)
+	var win := String(s.get("result", "")) == "win"
+	_result_label.add_theme_color_override("font_color",
+		Color(0.62, 0.80, 0.52) if win else Color(0.86, 0.46, 0.42))
 	match String(s.get("result", "")):
 		"win":
 			_result_label.text = "Run complete!\nAll Titans have fallen."
@@ -206,7 +217,11 @@ func _render_players(s: Dictionary, targeted: Array) -> void:
 		var who := String(p["name"]) + ("   (you)" if i == me else "")
 		if i in targeted:
 			who += "   ⚔ targeted"
-		box.add_child(_mklabel(who))
+			panel.add_theme_stylebox_override("panel", _danger_panel())
+		var who_lbl := _mklabel(who)
+		if i in targeted:
+			who_lbl.add_theme_color_override("font_color", Color(0.9, 0.52, 0.45))
+		box.add_child(who_lbl)
 		box.add_child(_mklabel("HP %d / %d%s" % [p["hp"], p["max_hp"], _block_suffix(int(p.get("block", 0)))]))
 
 		if phase == "combat":
@@ -283,6 +298,42 @@ func _log_with_relics(s: Dictionary) -> String:
 
 func _block_suffix(block: int) -> String:
 	return "   [%d block]" % block if block > 0 else ""
+
+
+func _bar_fill(frac: float) -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	if frac > 0.5:
+		sb.bg_color = Color(0.66, 0.44, 0.28)  # bronze
+	elif frac > 0.25:
+		sb.bg_color = Color(0.80, 0.45, 0.22)  # orange
+	else:
+		sb.bg_color = Color(0.80, 0.28, 0.22)  # blood red
+	sb.set_corner_radius_all(3)
+	return sb
+
+
+func _intent_color(mtype: String) -> Color:
+	match mtype:
+		"attack", "attack_all":
+			return Color(0.88, 0.5, 0.44)  # threat red
+		"enrage":
+			return Color(0.9, 0.62, 0.35)  # ember
+		"block":
+			return Color(0.6, 0.72, 0.82)  # steel
+		"regen":
+			return Color(0.62, 0.8, 0.55)  # sickly green
+		_:
+			return Color(0.9, 0.86, 0.78)
+
+
+func _danger_panel() -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.20, 0.12, 0.11)
+	sb.set_border_width_all(1)
+	sb.border_color = Color(0.68, 0.34, 0.30)
+	sb.set_corner_radius_all(4)
+	sb.set_content_margin_all(8)
+	return sb
 
 
 func _mklabel(text: String) -> Label:

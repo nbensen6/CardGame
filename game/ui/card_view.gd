@@ -34,6 +34,9 @@ func setup(data: Dictionary, playable: bool = true) -> void:
 	custom_minimum_size = Vector2(156, 210)  # thumb-friendly (§5)
 	disabled = not playable
 	text = ""
+	if not mouse_entered.is_connected(_on_hover):
+		mouse_entered.connect(_on_hover)
+		mouse_exited.connect(_on_unhover)
 	_apply_frame()
 	for child in get_children():
 		child.queue_free()
@@ -126,6 +129,16 @@ func _apply_frame() -> void:
 	add_theme_stylebox_override("hover", _frame(Color(0.2, 0.17, 0.13), Color(0.66, 0.54, 0.34)))
 	add_theme_stylebox_override("pressed", _frame(Color(0.13, 0.112, 0.088), Color(0.5, 0.42, 0.28)))
 	add_theme_stylebox_override("disabled", _frame(Color(0.115, 0.105, 0.092), Color(0.26, 0.23, 0.18)))
+
+
+func _on_hover() -> void:
+	# Optional accelerator only — cards remain fully usable by tap (§5).
+	pivot_offset = size / 2.0
+	scale = Vector2(1.06, 1.06)
+
+
+func _on_unhover() -> void:
+	scale = Vector2.ONE
 
 
 func _frame(bg: Color, border: Color) -> StyleBoxFlat:
