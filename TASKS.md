@@ -11,12 +11,12 @@ Nick's continuous task list for Claude. **How it works:**
 
 ## Inbox
 - [ ] *(standing)* continually look through assets to use — finds so far: menu reskin `c4140ba`, strike/shake juice `5d9d09f` (burst flash + dust + arena judder); ambient music `e5fb47e` (menu=Flowing Rocks, combat=Retro Mystic — swap assets/music/*.ogg to change); queued: Emote Pack (reactions), UI Pack (grip/timing bars)
-- [] the attack for x by the boss should just be a icon the boss then a sword then the icon for the player it's attack
 - [] check the meld card by the engineer. i have been fusing cards and it's not doing both of the cards effects.
 ## Questions from Claude
 (none)
 
 ## Done
+- [x] boss attack intent as icons — `984cd87` ([beast] [sword] [value] → [target portrait]; sweeps show both hunters)
 - [x] max time on timed cards + faster sweeps — `373b544` (2.5s window, expire = fizzle; sweep 1.25→1.9; strip reddens as time runs out)
 - [x] find sharper assets for cards — `06500f5` (icons swapped to crisp 128px PNGs; portraits baked at 3x so everything downscales)
 - [x] get rid of the "helps your ally" tag + shrink the card icon — `8db43fe` (tag removed; art is a fixed 42px accent, text centered in the freed space)
