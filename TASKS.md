@@ -11,11 +11,11 @@ Nick's continuous task list for Claude. **How it works:**
 
 ## Inbox
 - [ ] *(standing)* continually look through assets to use — finds so far: menu reskin `c4140ba`, strike/shake juice `5d9d09f` (burst flash + dust + arena judder); ambient music `e5fb47e` (menu=Flowing Rocks, combat=Retro Mystic — swap assets/music/*.ogg to change); emotes `e4285f7`; HUD fantasy-frame skin `da743f8`. Queue empty — next finds will be my own proposals (noted here before building)
-- [] grapple hook should not be able to be played unless you can pull that player up.
 ## Questions from Claude
 (none)
 
 ## Done
+- [x] Grappling Arm only playable when it can pull — `caf4be9` (requires an ally below you within reach; greys out otherwise)
 - [x] hand header as character symbol — `8b2703b` (portrait above the hand; text only for turn-ended/selection states)
 - [x] switch characters while the climb timer runs — `9181605` (per-hunter grip timers; Switch enabled mid-climb, both timers drain at once, grip bar names whichever hunter it shows)
 - [x] boss attack intent as icons — `984cd87` ([beast] [sword] [value] → [target portrait]; sweeps show both hunters)
