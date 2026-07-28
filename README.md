@@ -27,9 +27,9 @@ Local editor path (this machine):
   /views          menu (lobby) + combat view — presentation only
   /input          pointer-first input abstraction
   /data           cards / bosses / relics as data files, not hard-coded
-  /ui             anchor-based, scalable UI components
-  /tools          headless test runner, networked smoke test
-/design           design docs, card lists, balance sheets
+  /ui             theme, CardView, silhouette icons, SFX hook stub
+  /tools          run_tests, net_smoke (ENet), balance_sim (autoplay)
+/design           direction, balance notes, tuning knobs
 ```
 
 `/session` is an engine-fit addition to the brief's structure (CLAUDE.md §8
@@ -73,7 +73,8 @@ Exit code 0 = passed. (Use the `_console.exe` on Windows so stdout is captured.)
 
 ## Current status
 
-**Build steps 1–3 done.**
+**Build steps 1–4 done, plus an autonomous deepening pass (balance, climb loop,
+3-Titan runs + relics, disconnect handling, polish).**
 
 - **Step 1** — single-player combat loop: deterministic, unit-tested `/core`
   engine; data-driven cards + boss; tap-friendly view.
@@ -99,9 +100,26 @@ Exit code 0 = passed. (Use the `_console.exe` on Windows so stdout is captured.)
     a reward card (persistent deck), HP carries over. Win = all Titans felled;
     any hunter's death = the run is lost.
 
-**40 unit tests pass** (`tools/run_tests.gd`) + a **two-process ENet smoke test**
-(`tools/net_smoke.tscn`) confirms real cross-process connectivity on localhost.
+- **Autonomous deepening pass** (theme: **Titan-slayers**, Shadow-of-the-Colossus
+  inspired — see [`design/titan-design.md`](design/titan-design.md)):
+  - **Balance** (sim-driven): tuned so coordination decides — naive AI 8% / a
+    coordinated AI 96% over a full run ([`design/balance-notes.md`](design/balance-notes.md)).
+  - **Climb loop**: shared **Foothold** + high weak points → *climb → reveal →
+    strike* (Grip, Sunlight Blade, Bowshot).
+  - **3-Titan runs + relics**: a 3rd Titan (Drowned Colossus, new `regen` move) and
+    persistent team **relics** (energy/attack/block/heal) picked between fights.
+  - **Robustness**: a dropped hunter pauses the run cleanly (Return to Menu);
+    seamless reconnect still TODO.
+  - **Look & feel**: SotC theme + reusable `CardView`; danger colours (HP bar,
+    targeted hunter, intent); silent SFX hooks wired.
 
-Next: more content depth (relics, more Titans/cards, longer runs), balance
-tuning, disconnect/reconnect handling, and the remaining §4 decisions
-(monetization; art production now that the theme is set).
+**61 unit tests pass** (`tools/run_tests.gd`) + a **two-process ENet smoke test**
+(`tools/net_smoke.tscn`). A **balance simulator** (`tools/balance_sim.gd`) plays
+hundreds of full runs to measure difficulty.
+
+**To fine-tune** (difficulty, cards, Titans, relics): see
+[`design/tuning-knobs.md`](design/tuning-knobs.md).
+
+Open / needs you: whether the difficulty & combos *feel* right (playtest),
+real cross-machine network test, seamless reconnect, real art, and the §4
+monetization decision.
