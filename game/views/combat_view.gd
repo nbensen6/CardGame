@@ -823,8 +823,7 @@ func _build_ladder(s: Dictionary) -> void:
 			if int(l) == lvl:
 				is_ledge = true
 		var b := Panel.new()
-		var size := 26 if lvl == height else 22
-		b.custom_minimum_size = Vector2(size, size)
+		b.custom_minimum_size = Vector2(22, 22)  # uniform rungs (Nick)
 		b.add_theme_stylebox_override("panel",
 			_block_style(lvl <= max_fh and lvl > 0, lvl == height, is_ledge or lvl == 0))
 		row.add_child(b)
