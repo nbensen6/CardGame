@@ -59,6 +59,7 @@ func _init() -> void:
 	_test_burn_coal_exhaust_and_cheapen()
 	_test_catapult_sacrifices_to_launch_ally()
 	_test_meld_fuses_two_cards()
+	_test_satchel_charge_detonates()
 	# step 4: run / meta-progression
 	_test_run_starts_in_combat()
 	_test_run_win_flows_through_reward_to_next_encounter()
@@ -484,6 +485,18 @@ func _test_catapult_sacrifices_to_launch_ally() -> void:
 	_expect(ok and ps.exhaust_pile.size() == 1 and ps.hand.size() == 0
 		and combat.players[1].foothold == ally_before + 2,
 		"Catapult sacrifices a card to launch the ally up +2 Height")
+
+
+func _test_satchel_charge_detonates() -> void:
+	# The 3-window chain is client-side; core sees one hit/miss. A clean chain (hit)
+	# detonates for base + timed_damage; a fizzle (miss) slips away for nothing.
+	var combat := _new_combat([_deck_of(_satchel, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var before: int = combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0), true)   # chain landed
+	var after_hit: int = combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0), false)  # fizzled
+	_expect(before - after_hit == 26 and combat.boss.hp == after_hit,
+		"Satchel Charge detonates for 26 on a clean chain; a fizzle does nothing")
 
 
 func _test_meld_fuses_two_cards() -> void:
@@ -996,6 +1009,8 @@ func _catapult() -> Card:
 	return Card.from_dict({"id": "catapult", "name": "Catapult", "type": "skill", "cost": 1, "exhaust_pick": true, "sac_ally_grip": 2, "target": "ally"})
 func _meld_card() -> Card:
 	return Card.from_dict({"id": "meld", "name": "Meld", "type": "skill", "cost": 1, "meld": true})
+func _satchel() -> Card:
+	return Card.from_dict({"id": "satchel_charge", "name": "Satchel Charge", "type": "attack", "cost": 2, "damage": 6, "timed": true, "timed_hits": 3, "timed_damage": 20, "target": "enemy"})
 func _sunblade() -> Card:
 	return Card.from_dict({"id": "sunlight_blade", "name": "Sunlight Blade", "type": "attack", "cost": 1, "damage": 5, "damage_per_vulnerable": 3})
 func _bowshot() -> Card:

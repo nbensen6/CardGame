@@ -20,6 +20,9 @@ var _t := 0.0
 var _dir := 1.0
 var _strip: Control
 var _marker: ColorRect
+var _count_lbl: Label
+var _hits_needed := 1  # sequential timing windows to nail (Satchel Charge = 3)
+var _hits_done := 0
 
 const ICONS := {
 	"sword": preload("res://ui/icons/sword.svg"),
@@ -163,16 +166,18 @@ func set_selected(on: bool) -> void:
 
 # --- Timing minigame (on the card) ----------------------------------------
 
-## Begin the timing sweep. The next tap on this card fires it.
-func start_timing() -> void:
+## Begin the timing sweep. `hits` sequential windows must all land (Satchel = 3);
+## the next tap fires each one. The green zone is anchored (see _build_timing_strip)
+## so it sizes itself once the strip is laid out.
+func start_timing(hits: int = 1) -> void:
 	if _timing:
 		return
 	_timing = true
+	_hits_needed = maxi(1, hits)
+	_hits_done = 0
 	_t = 0.0
 	_dir = 1.0
-	# The green zone is anchored (see _build_timing_strip), so it sizes itself once
-	# the strip is laid out — no need to compute a width here (which was 0 while the
-	# strip was still hidden, making the target invisible).
+	_update_count()
 	_strip.visible = true
 	set_process(true)
 
@@ -184,11 +189,36 @@ func _on_self_pressed() -> void:
 		tapped.emit()
 
 
+## One tap during timing. A miss ends the whole chain (fizzle); a hit either
+## advances to the next window or, on the last one, resolves as a success.
 func _fire() -> void:
+	if _t < ZONE_MIN or _t > ZONE_MAX:
+		_end_timing(false)
+		return
+	_hits_done += 1
+	if _hits_done >= _hits_needed:
+		_end_timing(true)
+		return
+	_t = 0.0  # reset the sweep for the next window
+	_dir = 1.0
+	_update_count()
+
+
+func _end_timing(success: bool) -> void:
 	_timing = false
 	set_process(false)
 	_strip.visible = false
-	timing_resolved.emit(_t >= ZONE_MIN and _t <= ZONE_MAX)
+	timing_resolved.emit(success)
+
+
+func _update_count() -> void:
+	if _count_lbl == null:
+		return
+	if _hits_needed > 1:
+		_count_lbl.visible = true
+		_count_lbl.text = "%d/%d" % [_hits_done, _hits_needed]
+	else:
+		_count_lbl.visible = false
 
 
 func _process(delta: float) -> void:
@@ -242,6 +272,17 @@ func _build_timing_strip() -> Control:
 	_marker.size = Vector2(5, 20)
 	_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	strip.add_child(_marker)
+	# Chain counter (only shown for multi-window cards like Satchel), pinned left.
+	_count_lbl = Label.new()
+	_count_lbl.add_theme_font_size_override("font_size", 12)
+	_count_lbl.add_theme_color_override("font_color", Color(1.0, 0.95, 0.7))
+	_count_lbl.anchor_top = 0.0
+	_count_lbl.anchor_bottom = 1.0
+	_count_lbl.offset_left = 4.0
+	_count_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_count_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_count_lbl.visible = false
+	strip.add_child(_count_lbl)
 	return strip
 
 

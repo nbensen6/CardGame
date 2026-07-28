@@ -237,7 +237,7 @@ func _slot_private(pi: int) -> Dictionary:
 			var c: Card = ps.hand[i]
 			cards.append({
 				"index": i, "name": c.name, "cost": _run.combat.effective_cost(pi, c), "target": c.target,
-				"text": c.text, "icon": _card_icon(c), "timed": c.timed,
+				"text": c.text, "icon": _card_icon(c), "timed": c.timed, "timed_hits": c.timed_hits,
 				"exhaust_pick": c.exhaust_pick, "cheapen_pick": c.cheapen_pick, "meld": c.meld,
 				"playable": _run.combat.can_play(pi, i),
 			})

@@ -40,7 +40,8 @@
     "build_mech":    { "name": "Build Mech", "type": "skill", "cost": 1, "block": 2, "block_per_play": 2, "text": "Bolt on more plating: 2 Block, +2 for each time you've played Build Mech this fight." },
     "burn_coal":     { "name": "Burn Coal", "type": "skill", "cost": 1, "exhaust_pick": true, "cheapen_pick": true, "cheapen_amount": 1, "text": "Sacrifice a card (exhausted for the fight) to permanently cut another card's cost by 1." },
     "catapult":      { "name": "Catapult", "type": "skill", "cost": 1, "exhaust_pick": true, "sac_ally_grip": 2, "target": "ally", "text": "Sacrifice a card to catapult your ally up +2 Height." },
-    "meld":          { "name": "Meld", "type": "skill", "cost": 1, "meld": true, "text": "Fuse two cards in your hand into one that does both, at 1 less than their combined cost." }
+    "meld":          { "name": "Meld", "type": "skill", "cost": 1, "meld": true, "text": "Fuse two cards in your hand into one that does both, at 1 less than their combined cost." },
+    "satchel_charge": { "name": "Satchel Charge", "type": "attack", "cost": 2, "damage": 6, "timed": true, "timed_hits": 3, "timed_damage": 20, "target": "enemy", "text": "Plant a satchel — nail 3 timing windows in a row to detonate for 26. Miss any and it fizzles." }
   },
   "starter_deck": [
     "slash", "slash", "slash",

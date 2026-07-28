@@ -89,9 +89,9 @@ himself up, and leans on a partner to carry him. Rewards big timed swings.
 - ✅ **Burn Coal** (was Rend) — sacrifice a card (exhaust) to permanently −1 another card's cost. Uses the new pick-a-card flow.
 - ✅ **Catapult** (was Slash) — sacrifice a card to launch your ally +2 Height. *Note: the CASTER sacrifices (not the ally) — flag if you want the true ally-chooses version.*
 - ✅ **Meld** (was Sharpen) — fuse two chosen cards into one: effects add up, cost = sum −1, and if either is timed the result is ONE timed card with both bonuses combined (one timing bar). Selection fields (create/prepare/exhaust) are dropped when melded.
-- ⏳ **Satchel Charge** (Piston Punch) — the last one. Needs a *chained timing* model. **Design Q for Nathan:** (a) one card, 3 timing bars back-to-back → boom; or (b) a planted bomb primed with a timed action over several turns?
+- ✅ **Satchel Charge** (was Piston Punch) — a **chained-timing** card: nail 3 timing windows in a row to detonate for 26; miss any and it fizzles. The 3 windows are client-side (CardView `timed_hits`); core sees one hit/miss. A counter (1/3, 2/3) shows progress on the card.
 
-The Engineer is fully redesigned except Satchel (waiting on the timing-model choice).
+**The Goblin Engineer is fully redesigned.** New deck: Goblin Jetpack · Satchel Charge ×2 · Grappling Arm · Meld · Burn Coal · Build Grapple ×2 · Build Mech · Catapult.
 
 **His design space (levers that fit the fantasy):**
 - **More `create` gadgets** — the engineer's identity. A card that *builds* a

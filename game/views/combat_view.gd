@@ -341,7 +341,7 @@ func _on_card_tapped(card: Dictionary, cv: CardView) -> void:
 		_pick_for_selection(index)
 		return
 	if bool(card.get("timed", false)):
-		cv.start_timing()  # the card runs its own timing sweep; the next tap fires it
+		cv.start_timing(int(card.get("timed_hits", 1)))  # runs its own sweep(s); next tap fires each
 		return
 	if bool(card.get("exhaust_pick", false)) or bool(card.get("cheapen_pick", false)) or bool(card.get("meld", false)):
 		_start_selection(card)  # Burn Coal / Catapult / Meld — pick target cards, then it fires
