@@ -348,6 +348,7 @@ func _render_reward(s: Dictionary) -> void:
 	_boss_art.visible = false
 	var solo := _is_solo()
 	_switch_btn.visible = solo
+	_switch_btn.disabled = false  # never inherit combat's mid-climb lock into reward
 	if solo:
 		_switch_btn.text = "▶ Switch to %s" % _hunter_name(1 - _active_slot)
 
