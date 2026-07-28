@@ -3,18 +3,19 @@
   "bosses": {
     "stone_warden": {
       "name": "The Stone Warden",
-      "max_hp": 108,
+      "max_hp": 46,
+      "weak_point_height": 1,
       "moves": [
-        { "type": "attack", "value": 11 },
-        { "type": "attack", "value": 14 },
-        { "type": "block", "value": 10 },
-        { "type": "attack", "value": 22 }
+        { "type": "attack", "value": 10 },
+        { "type": "attack", "value": 13 },
+        { "type": "attack_all", "value": 8 },
+        { "type": "attack", "value": 18 }
       ]
     },
     "gale_serpent": {
       "name": "The Gale Serpent",
-      "max_hp": 140,
-      "weak_point_height": 3,
+      "max_hp": 72,
+      "weak_point_height": 2,
       "moves": [
         { "type": "attack_all", "value": 8 },
         { "type": "enrage", "value": 2 },
@@ -24,19 +25,19 @@
     },
     "drowned_colossus": {
       "name": "The Drowned Colossus",
-      "max_hp": 170,
-      "weak_point_height": 4,
+      "max_hp": 98,
+      "weak_point_height": 3,
       "moves": [
         { "type": "attack", "value": 13 },
         { "type": "attack_all", "value": 9 },
-        { "type": "regen", "value": 12 },
+        { "type": "regen", "value": 10 },
         { "type": "attack", "value": 22 }
       ]
     },
     "sunken_warden": {
       "name": "The Sunken Warden",
-      "max_hp": 180,
-      "weak_point_height": 4,
+      "max_hp": 130,
+      "weak_point_height": 3,
       "moves": [
         { "type": "leech", "value": 10 },
         { "type": "attack_all", "value": 9 },

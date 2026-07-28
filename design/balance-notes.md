@@ -8,17 +8,23 @@ Two AI policies: **naive** (dumps hand, no defense/combos) and **coordinated**
 Coordination should *decide* outcomes (CLAUDE.md §6). Target: naive ≈ 40–55%,
 coordinated ≈ 85–100%, with a wide gap.
 
-## Phase 3 result (3-Titan run, with relics)
-| Policy | Win rate | Lost at T1/T2/T3 | Avg lowest HP |
-|--------|---------:|:----------------:|--------------:|
-| Naive | **8%** | 0 / 171 / 105 | 6 / 42 |
-| Coordinated | **96%** | 0 / 0 / 13 | 16 / 42 |
+## Climb-foundation result (4-Titan run, height-gated)
+The big change: **below the weak point the hide is armored** (attacks chip
+1/`ARMORED_DIVISOR`); you must build **Height** to reach the sigil, where strikes
+land full + bonuses. The shake (attack_all) knocks off `SHAKE_LOSS` Height, so the
+loop is climb → strike → get bucked off → re-climb.
 
-Gap **+88 points**. A full three-Titan run is a real gauntlet: sloppy play almost
-never finishes; coordinated play (using combos + relics) clears ~96%. Clean ramp
-— Titan 1 teaches, Titan 2 is the mid-wall, Titan 3 is the final test.
+| Policy | Win rate | Lost at T1/T2/T3/T4 | Avg lowest HP |
+|--------|---------:|:-------------------:|--------------:|
+| Naive | **68%** | 0 / 0 / 9 / 86 | 11 / 42 |
+| Coordinated | **98%** | 0 / 0 / 0 / 6 | 22 / 42 |
 
-(Phase 1, the earlier 2-Titan tuning, landed naive 43% / coord 100%, gap +57.)
+Gap **+30**. Reasonable, tunable state — the feel (climbing) was the goal here;
+difficulty is yours to dial. NOTE: the sim's AIs were taught to climb (play grip
+cards when below the sigil), else they never deal real damage.
+
+(Earlier tunings for reference: 3-Titan pre-climb landed naive 8% / coord 96%;
+2-Titan naive 43% / coord 100%.)
 
 ## Final numbers (all in `data/bosses.json`, `data/relics.json`, `core/run.gd`)
 - Players: 42 HP, 3 energy/round. `HEAL_BETWEEN` = 6. Run = 3 Titans.

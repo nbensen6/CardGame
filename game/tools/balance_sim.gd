@@ -121,7 +121,12 @@ func _choose(c: Combat, pi: int, policy: String) -> int:
 		var brc := _find(c, pi, func(card: Card) -> bool: return card.block > 0 and not card.taunt)
 		if brc >= 0:
 			return brc
-	# 3. expose to set up focus-fire
+	# 3. climb toward the weak point if we haven't reached it (armored below it)
+	if c.boss.weak_point_height > 0 and not c.sigil_reached():
+		var climb := _find(c, pi, func(card: Card) -> bool: return card.grip > 0)
+		if climb >= 0:
+			return climb
+	# 4. expose to set up focus-fire
 	if c.boss.vulnerable < 2:
 		var exp := _find(c, pi, func(card: Card) -> bool: return card.vulnerable > 0 and card.damage == 0)
 		if exp >= 0:
@@ -177,7 +182,7 @@ func _threatened(c: Combat, pidx: int) -> int:
 	var m := c.boss.current_move()
 	var v := int(m.get("value", 0)) + c.boss.strength
 	match String(m.get("type", "")):
-		"attack":
+		"attack", "leech":
 			return v if c.boss_target_index() == pidx else 0
 		"attack_all":
 			return v

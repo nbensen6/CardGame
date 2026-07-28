@@ -22,9 +22,10 @@ enum Phase { PLAYERS, ENEMY, OVER }
 const HAND_SIZE := 5
 const BASE_ENERGY := 3
 const VULN_BONUS := 4    # extra damage each "exposed" (vulnerable) stack adds to a hit
-const SIGIL_BONUS := 5   # extra damage on a hit once the team has climbed to a high sigil
+const SIGIL_BONUS := 5   # extra damage on a hit once the team has climbed to the sigil
 const FOOTHOLD_MAX := 6  # cap on the shared climb resource
-const SHAKE_LOSS := 2    # Foothold lost when the Titan sweeps (attack_all) — it bucks you off
+const SHAKE_LOSS := 3    # Foothold lost when the Titan sweeps (attack_all) — it bucks you off
+const ARMORED_DIVISOR := 4  # below the weak point the hide is armored: attacks chip 1/ARMORED_DIVISOR
 
 var players: Array = []  # Array[PlayerState], index = player slot
 var boss: Boss
@@ -172,12 +173,20 @@ func play_card(pi: int, ci: int) -> bool:
 ## Deal card damage to the Titan, consuming one "exposed" stack for bonus.
 ## Returns the actual damage dealt (so the log can flag the bonus).
 func _damage_boss(amount: int) -> int:
+	# Below the weak point, the beast's hide is armored — attacks barely chip it,
+	# and Exposed stacks are NOT spent (they bank until you reach the sigil). You
+	# have to CLIMB to deal real damage. This is what makes it a climb, not a fight.
+	if boss.weak_point_height > 0 and not sigil_reached():
+		var chip := maxi(1, amount / ARMORED_DIVISOR)
+		boss.take_damage(chip)
+		return chip
+	# At the weak point (or a beast with no high sigil): full strike + bonuses.
 	var total := amount
 	if boss.vulnerable > 0:
 		total += VULN_BONUS
 		boss.vulnerable -= 1
-	if sigil_reached():
-		total += SIGIL_BONUS  # struck the high weak point (climbed + reachable)
+	if boss.weak_point_height > 0:
+		total += SIGIL_BONUS
 	boss.take_damage(total)
 	return total
 

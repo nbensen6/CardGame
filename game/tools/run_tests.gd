@@ -40,6 +40,7 @@ func _init() -> void:
 	# phase 2: climb / weak-point loop
 	_test_grip_builds_foothold()
 	_test_sigil_bonus_requires_climb()
+	_test_exposed_banks_until_climbed()
 	_test_height0_titan_no_sigil_bonus()
 	_test_attack_all_shakes_foothold()
 	_test_sunlight_blade_scales_with_exposed()
@@ -278,13 +279,28 @@ func _test_sigil_bonus_requires_climb() -> void:
 	boss.weak_point_height = 3
 	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
 	var before := combat.boss.hp
-	combat.play_card(0, _first_playable(combat, 0))  # not climbed: 6 only
-	_expect(combat.boss.hp == before - 6, "no sigil bonus before the team climbs")
+	combat.play_card(0, _first_playable(combat, 0))  # armored: slash 6 -> chip 1
+	_expect(combat.boss.hp == before - 1, "armored hide below the weak point: attacks barely chip")
 	combat.foothold = 3  # reached the sigil
 	var before2 := combat.boss.hp
-	combat.play_card(0, _first_playable(combat, 0))  # 6 + SIGIL_BONUS
+	combat.play_card(0, _first_playable(combat, 0))  # reached: 6 + SIGIL_BONUS
 	_expect(combat.boss.hp == before2 - (6 + Combat.SIGIL_BONUS),
-		"striking a reached sigil deals bonus damage")
+		"striking the reached sigil deals full damage + bonus")
+
+
+func _test_exposed_banks_until_climbed() -> void:
+	var boss := _dummy_boss(300)
+	boss.weak_point_height = 2
+	boss.vulnerable = 2
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.play_card(0, _first_playable(combat, 0))  # armored: chips, Exposed NOT spent
+	_expect(combat.boss.vulnerable == 2, "Exposed stacks bank while the hide is armored")
+	combat.foothold = 2
+	var before := combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))  # reached: 6 + VULN_BONUS + SIGIL_BONUS
+	_expect(combat.boss.hp == before - (6 + Combat.VULN_BONUS + Combat.SIGIL_BONUS)
+		and combat.boss.vulnerable == 1,
+		"the banked Exposed pays off once you reach the weak point")
 
 
 func _test_height0_titan_no_sigil_bonus() -> void:

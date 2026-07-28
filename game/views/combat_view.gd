@@ -101,12 +101,23 @@ func _render_combat(s: Dictionary) -> void:
 	_lock_btn.visible = false
 
 	var boss: Dictionary = s["boss"]
+	var height := int(boss.get("weak_point_height", 0))
+	var reached := bool(boss.get("sigil_reached", false))
 	_boss_name.text = "%s        Titan %d / %d" % [boss["name"], s["encounter"], s["total_encounters"]]
-	_boss_hp.text = "HP %d / %d%s" % [boss["hp"], boss["max_hp"], _titan_tags(boss)]
+	if height > 0 and not reached:
+		_boss_hp.text = "Armored hide — CLIMB to the weak point:  Height %d / %d%s" % [
+			int(boss.get("foothold", 0)), height, _titan_tags(boss)]
+	elif height > 0:
+		_boss_hp.text = "✦ WEAK POINT EXPOSED — strike!    sigil %d / %d%s" % [
+			boss["hp"], boss["max_hp"], _titan_tags(boss)]
+	else:
+		_boss_hp.text = "HP %d / %d%s" % [boss["hp"], boss["max_hp"], _titan_tags(boss)]
 	_boss_hp_bar.max_value = boss["max_hp"]
 	_boss_hp_bar.value = boss["hp"]
 	_boss_hp_bar.add_theme_stylebox_override("fill",
 		_bar_fill(float(boss["hp"]) / maxf(1.0, float(boss["max_hp"]))))
+	# Dim the sigil bar while the hide is armored — it only gives way once climbed.
+	_boss_hp_bar.modulate = Color(1, 1, 1, 1) if (reached or height == 0) else Color(1, 1, 1, 0.4)
 
 	var move: Dictionary = boss["intent"]
 	var mtype := String(move.get("type", ""))
@@ -285,13 +296,6 @@ func _titan_tags(boss: Dictionary) -> String:
 	var wound := int(boss.get("wound", 0))
 	if wound > 0:
 		out += "   · bleeding %d" % wound
-	var height := int(boss.get("weak_point_height", 0))
-	if height > 0:
-		var foothold := int(boss.get("foothold", 0))
-		if bool(boss.get("sigil_reached", false)):
-			out += "   · sigil exposed ✓ (Foothold %d)" % foothold
-		else:
-			out += "   · Foothold %d / %d  (climb to %d)" % [foothold, int(boss.get("foothold_max", 6)), height]
 	return out
 
 
