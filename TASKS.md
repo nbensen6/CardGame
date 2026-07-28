@@ -10,7 +10,7 @@ Nick's continuous task list for Claude. **How it works:**
   in **Questions** below if truly stuck rather than stalling.
 
 ## Inbox
-- [ ] continually look through assets to use *(standing task — I'll fold asset upgrades into every visual pass and note finds here)*
+- [ ] continually look through assets to use *(standing task — finds so far: menu reskin `c4140ba` (bg + hero lineup + looming rhino); candidates queued: Emote Pack for hunter reactions, Explosion/Smoke packs for strike & fall juice, UI Pack for grip/timing bars, Music Loops for ambient)*
 
 ## Questions from Claude
 (none)
