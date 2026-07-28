@@ -24,7 +24,7 @@
       "name": "The Goblin Engineer",
       "desc": "Heavy hitter — wrecks the weak point, but climbs terribly. Builds timed grapples to haul up.",
       "passive": { "type": "attack_bonus", "value": 2 },
-      "starter_deck": ["cleave", "piston_punch", "piston_punch", "flurry", "sharpen", "rend", "build_grapple", "build_grapple", "brace", "slash"]
+      "starter_deck": ["goblin_jetpack", "piston_punch", "piston_punch", "grappling_arm", "sharpen", "rend", "build_grapple", "build_grapple", "build_mech", "slash"]
     }
   }
 }

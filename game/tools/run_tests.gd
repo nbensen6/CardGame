@@ -52,6 +52,10 @@ func _init() -> void:
 	_test_fall_noop_when_secure()
 	_test_weakpoint_threshold_bucks()
 	_test_timed_damage_bonus()
+	# Goblin Engineer cards
+	_test_jetpack_prepares_climb()
+	_test_grappling_arm_pulls_ally()
+	_test_build_mech_scales()
 	# step 4: run / meta-progression
 	_test_run_starts_in_combat()
 	_test_run_win_flows_through_reward_to_next_encounter()
@@ -417,6 +421,41 @@ func _test_weakpoint_threshold_bucks() -> void:
 	combat.play_card(0, _first_playable(combat, 0))
 	_expect(ps.foothold == 4 and ps.weak_point_damage == 0,
 		"dealing the sigil threshold bucks the hunter down a hold")
+
+
+func _test_jetpack_prepares_climb() -> void:
+	var boss := Boss.new("Jet", 500)
+	boss.moves = [{"type": "block", "value": 0}]  # benign enemy turn
+	boss.weak_point_height = 4
+	var combat := _new_combat([_deck_of(_jetpack, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.play_card(0, _first_playable(combat, 0))  # prime the jetpack (not immediate)
+	var armed: bool = combat.players[0].prepared == "jetpack" and combat.players[0].foothold == 0
+	combat.end_turn(0)
+	combat.end_turn(1)  # round turns over -> jetpack fires at next turn's start
+	_expect(armed and combat.players[0].foothold == 4 and combat.players[0].prepared == "",
+		"Goblin Jetpack arms now and rockets to the weak point next turn")
+
+
+func _test_grappling_arm_pulls_ally() -> void:
+	var combat := _new_combat([_deck_of(_grapple_arm, 10), _deck_of(_slash, 10)], 42, _climb_boss(8))
+	combat.players[0].foothold = 4
+	combat.players[1].foothold = 2  # gap 2, within reach 3
+	combat.play_card(0, _first_playable(combat, 0))
+	var pulled: bool = combat.players[1].foothold == 4
+	combat.players[0].foothold = 6
+	combat.players[1].foothold = 1  # gap 5, out of reach
+	combat.play_card(0, _first_playable(combat, 0))
+	_expect(pulled and combat.players[1].foothold == 1,
+		"Grappling Arm pulls an ally within reach up to you, not one too far below")
+
+
+func _test_build_mech_scales() -> void:
+	var combat := _new_combat([_deck_of(_build_mech, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	combat.play_card(0, _first_playable(combat, 0))  # +2 (base)
+	var b1: int = combat.players[0].combatant.block
+	combat.play_card(0, _first_playable(combat, 0))  # +4 (grows) -> 6 total
+	_expect(b1 == 2 and combat.players[0].combatant.block == 6,
+		"Build Mech's Block grows each time it's played this fight")
 
 
 func _test_timed_damage_bonus() -> void:
@@ -902,6 +941,12 @@ func _grapple() -> Card:
 	return Card.from_dict({"id": "grapple", "name": "Grappling Hook", "type": "skill", "cost": 0, "grip": 1, "timed": true, "timed_grip": 2, "target": "enemy"})
 func _pounce() -> Card:
 	return Card.from_dict({"id": "pounce", "name": "Pounce", "type": "attack", "cost": 1, "damage": 4, "grip": 1, "timed": true, "timed_damage": 5, "target": "enemy"})
+func _jetpack() -> Card:
+	return Card.from_dict({"id": "goblin_jetpack", "name": "Goblin Jetpack", "type": "skill", "cost": 2, "prepare": "jetpack", "target": "enemy"})
+func _grapple_arm() -> Card:
+	return Card.from_dict({"id": "grappling_arm", "name": "Grappling Arm", "type": "skill", "cost": 1, "pull_ally": 3, "target": "ally"})
+func _build_mech() -> Card:
+	return Card.from_dict({"id": "build_mech", "name": "Build Mech", "type": "skill", "cost": 1, "block": 2, "block_per_play": 2})
 func _sunblade() -> Card:
 	return Card.from_dict({"id": "sunlight_blade", "name": "Sunlight Blade", "type": "attack", "cost": 1, "damage": 5, "damage_per_vulnerable": 3})
 func _bowshot() -> Card:

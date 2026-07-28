@@ -192,6 +192,8 @@ func play_card(pi: int, ci: int, timing_hit: bool = true) -> bool:
 		return true
 	ps.discard_pile.append(card)
 	var who: String = ps.combatant.name
+	var prior_plays := int(ps.play_counts.get(card.id, 0))  # how many times BEFORE this play
+	ps.play_counts[card.id] = prior_plays + 1
 
 	# Damage first (so a card that also Exposes doesn't consume its own stacks).
 	# Base scales with Exposed stacks (Sunlight Blade) and this hunter's own Height
@@ -236,9 +238,22 @@ func play_card(pi: int, ci: int, timing_hit: bool = true) -> bool:
 		var built := Content.make_card(card.create)
 		ps.hand.append(built)
 		_log("%s plays %s — builds %s." % [who, card.name, built.name])
-	if card.block > 0:
-		ps.combatant.gain_block(card.block)
-		_log("%s plays %s — +%d block." % [who, card.name, card.block])
+	if card.pull_ally > 0:  # grapple the ally UP to your Height, if they're within reach
+		var yanked: PlayerState = players[ally_index(pi)]
+		var gap := ps.foothold - yanked.foothold
+		if gap > 0 and gap <= card.pull_ally:
+			yanked.foothold = ps.foothold
+			_log("%s grapples %s up to Height %d." % [who, yanked.combatant.name, ps.foothold])
+		else:
+			_log("%s plays %s — no ally in grapple range." % [who, card.name])
+	if card.prepare != "":  # arm a delayed effect (resolves at the start of your next turn)
+		ps.prepared = card.prepare
+		_log("%s plays %s — armed for next turn." % [who, card.name])
+	if card.block > 0 or card.block_per_play > 0:
+		var blk := card.block + card.block_per_play * prior_plays  # Build Mech grows each play
+		if blk > 0:
+			ps.combatant.gain_block(blk)
+			_log("%s plays %s — +%d block." % [who, card.name, blk])
 	if card.ally_block > 0:
 		var ally: PlayerState = players[ally_index(pi)]
 		ally.combatant.gain_block(card.ally_block)
@@ -321,8 +336,19 @@ func _begin_round() -> void:
 		ps.combatant.block = _round_block  # relic: start each round with block
 		ps.energy = BASE_ENERGY + _energy_bonus  # relic: extra energy
 		ps.ended_turn = false
+		_resolve_prepared(ps)
 		_draw(ps, HAND_SIZE)
 	_log("— Round %d —" % round_num)
+
+
+## Fire any delayed effect a hunter armed last turn (Goblin Jetpack, etc.).
+func _resolve_prepared(ps: PlayerState) -> void:
+	match ps.prepared:
+		"jetpack":  # rockets you straight to the weak point — the Engineer's climb answer
+			ps.prepared = ""
+			if boss.weak_point_height > 0:
+				ps.foothold = boss.weak_point_height
+				_log("%s's jetpack fires — rocketed to the weak point!" % ps.combatant.name)
 
 func _all_ended() -> bool:
 	for ps in players:

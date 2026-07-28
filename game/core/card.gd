@@ -21,6 +21,9 @@ var timed_grip: int    # bonus Height on a well-timed throw (Goblin Engineer's g
 var timed_damage: int  # bonus damage on a well-timed strike (interactive attacks)
 var ally_grip: int     # Foothold given to the ALLY (vines/ropes — shared climbing)
 var create: String     # card id this card builds and adds to your hand (Goblin Mech)
+var pull_ally: int     # grapple the ally UP to your Height, if the gap is within this
+var block_per_play: int # extra Block for each earlier time you've played this card this fight
+var prepare: String    # arms a delayed effect that resolves at the start of your next turn
 var damage_per_vulnerable: int  # bonus damage per Exposed stack on the Titan
 var damage_per_foothold: int    # bonus damage per Height climbed (Mountain Climbers)
 var strength: int      # Strength gained by the player (attacks deal +Strength this fight)
@@ -48,6 +51,9 @@ static func from_dict(d: Dictionary) -> Card:
 	c.timed_damage = int(d.get("timed_damage", 0))
 	c.ally_grip = int(d.get("ally_grip", 0))
 	c.create = String(d.get("create", ""))
+	c.pull_ally = int(d.get("pull_ally", 0))
+	c.block_per_play = int(d.get("block_per_play", 0))
+	c.prepare = String(d.get("prepare", ""))
 	c.damage_per_vulnerable = int(d.get("damage_per_vulnerable", 0))
 	c.damage_per_foothold = int(d.get("damage_per_foothold", 0))
 	c.strength = int(d.get("strength", 0))

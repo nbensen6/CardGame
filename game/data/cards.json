@@ -33,7 +33,11 @@
     "creeper":      { "name": "Creeper Vine", "type": "skill", "cost": 0, "grip": 1, "ally_grip": 1, "timed": true, "timed_grip": 2, "target": "ally", "text": "Time it! Vine up +1 (+2 nailed); your ally climbs +1. Miss and it slips away." },
     "piton_drive":  { "name": "Piton Drive", "type": "attack", "cost": 1, "damage": 2, "damage_per_foothold": 2, "timed": true, "timed_damage": 4, "target": "enemy", "text": "Time it! Drive a piton: 2, +2 per Height climbed (+4 nailed)." },
     "haul":         { "name": "Haul Up", "type": "skill", "cost": 1, "grip": 1, "ally_grip": 1, "timed": true, "timed_grip": 2, "target": "ally", "text": "Time it! Both climb +1 (you +2 more nailed). Miss and it slips away." },
-    "piston_punch": { "name": "Piston Punch", "type": "attack", "cost": 2, "damage": 8, "timed": true, "timed_damage": 8, "target": "enemy", "text": "Time it! A massive timed blow: 8 (+8 nailed). Miss and it slips away." }
+    "piston_punch": { "name": "Piston Punch", "type": "attack", "cost": 2, "damage": 8, "timed": true, "timed_damage": 8, "target": "enemy", "text": "Time it! A massive timed blow: 8 (+8 nailed). Miss and it slips away." },
+
+    "goblin_jetpack": { "name": "Goblin Jetpack", "type": "skill", "cost": 2, "prepare": "jetpack", "target": "enemy", "text": "Prime a jetpack. At the start of your NEXT turn it rockets you straight to the weak point." },
+    "grappling_arm": { "name": "Grappling Arm", "type": "skill", "cost": 1, "pull_ally": 3, "target": "ally", "text": "Grapple your ally up to your Height (only if they're within 3 below you)." },
+    "build_mech":    { "name": "Build Mech", "type": "skill", "cost": 1, "block": 2, "block_per_play": 2, "text": "Bolt on more plating: 2 Block, +2 for each time you've played Build Mech this fight." }
   },
   "starter_deck": [
     "slash", "slash", "slash",

@@ -286,8 +286,10 @@ func _first_unpicked_solo() -> int:
 func _card_icon(c: Card) -> String:
 	if c.taunt:
 		return "taunt"
-	if c.grip > 0:
+	if c.prepare != "" or c.grip > 0:
 		return "grip"
+	if c.pull_ally > 0:
+		return "support"
 	if c.vulnerable > 0 and c.damage == 0:
 		return "expose"
 	if c.damage > 0:
