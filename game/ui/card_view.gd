@@ -13,11 +13,13 @@ signal timing_resolved(hit: bool)
 
 const ZONE_MIN := 0.40
 const ZONE_MAX := 0.60
-const SWEEP_SPEED := 1.25  # sweeps per second
+const SWEEP_SPEED := 1.9    # sweeps per second — quick; timing should demand focus (Nick)
+const WINDOW_SECONDS := 2.5 # max time per timing window; expire = the card fizzles (Nick)
 
 var _timing := false
 var _t := 0.0
 var _dir := 1.0
+var _elapsed := 0.0  # time spent in the current window
 var _strip: Control
 var _marker: ColorRect
 var _count_lbl: Label
@@ -216,7 +218,9 @@ func start_timing(hits: int = 1) -> void:
 	_hits_done = 0
 	_t = 0.0
 	_dir = 1.0
+	_elapsed = 0.0
 	_update_count()
+	_strip.modulate = Color(1, 1, 1)
 	_strip.visible = true
 	set_process(true)
 
@@ -240,6 +244,7 @@ func _fire() -> void:
 		return
 	_t = 0.0  # reset the sweep for the next window
 	_dir = 1.0
+	_elapsed = 0.0  # a fresh clock per window
 	_update_count()
 
 
@@ -263,6 +268,10 @@ func _update_count() -> void:
 func _process(delta: float) -> void:
 	if not _timing:
 		return
+	_elapsed += delta
+	if _elapsed >= WINDOW_SECONDS:  # hesitated too long — the moment is gone
+		_end_timing(false)
+		return
 	_t += _dir * SWEEP_SPEED * delta
 	if _t >= 1.0:
 		_t = 1.0
@@ -271,6 +280,9 @@ func _process(delta: float) -> void:
 		_t = 0.0
 		_dir = 1.0
 	_marker.position.x = _t * (_strip.size.x - _marker.size.x)
+	# The strip reddens as the window runs out — see the timeout coming.
+	var urgency := _elapsed / WINDOW_SECONDS
+	_strip.modulate = Color(1.0, 1.0 - 0.45 * urgency, 1.0 - 0.45 * urgency)
 
 
 func _build_timing_strip() -> Control:
