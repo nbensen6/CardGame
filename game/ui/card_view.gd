@@ -27,21 +27,21 @@ var _hits_done := 0
 # Kenney "Board Game Icons" (white-fill SVGs → tint via modulate). Keys are the
 # effect roles the host maps cards to (see game_host._card_icon).
 const ICONS := {
-	"sword": preload("res://assets/icons/sword.svg"),
-	"shield": preload("res://assets/icons/shield.svg"),
-	"bow": preload("res://assets/icons/bow.svg"),
-	"fire": preload("res://assets/icons/fire.svg"),
-	"skull": preload("res://assets/icons/skull.svg"),
-	"flask": preload("res://assets/icons/flask_full.svg"),
-	"climb": preload("res://assets/icons/pawn_up.svg"),
-	"bomb": preload("res://assets/icons/exploding.svg"),
-	"gadget": preload("res://assets/icons/structure_tower.svg"),
-	"draw": preload("res://assets/icons/hand_card.svg"),
-	"expose": preload("res://assets/icons/flag_square.svg"),
-	"taunt": preload("res://assets/icons/flag_triangle.svg"),
-	"support": preload("res://assets/icons/hand.svg"),
-	"relic": preload("res://assets/icons/award.svg"),
-	"rally": preload("res://assets/icons/campfire.svg"),
+	"sword": preload("res://assets/icons/sword.png"),
+	"shield": preload("res://assets/icons/shield.png"),
+	"bow": preload("res://assets/icons/bow.png"),
+	"fire": preload("res://assets/icons/fire.png"),
+	"skull": preload("res://assets/icons/skull.png"),
+	"flask": preload("res://assets/icons/flask_full.png"),
+	"climb": preload("res://assets/icons/pawn_up.png"),
+	"bomb": preload("res://assets/icons/exploding.png"),
+	"gadget": preload("res://assets/icons/structure_tower.png"),
+	"draw": preload("res://assets/icons/hand_card.png"),
+	"expose": preload("res://assets/icons/flag_square.png"),
+	"taunt": preload("res://assets/icons/flag_triangle.png"),
+	"support": preload("res://assets/icons/hand.png"),
+	"relic": preload("res://assets/icons/award.png"),
+	"rally": preload("res://assets/icons/campfire.png"),
 }
 const ENERGY_ICON := preload("res://ui/icons/energy.svg")
 
