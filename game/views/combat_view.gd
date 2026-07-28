@@ -21,6 +21,7 @@ var _client: GameClient
 @onready var _log_label: Label = %Log
 @onready var _log_toggle: Button = %LogToggle
 @onready var _hand_label: Label = %HandLabel
+@onready var _hand_icon: TextureRect = %HandIcon
 @onready var _hand_row: HBoxContainer = %Hand
 @onready var _grip_bar: PanelContainer = %GripBar
 @onready var _grip_label: Label = %GripLabel
@@ -315,11 +316,18 @@ func _render_hand() -> void:
 	var priv := _my_private()
 	var ended := bool(priv.get("ended", false))
 	var selecting := not _selecting.is_empty()
-	var tag := ("   —   %s" % _hunter_name(_active_slot)) if solo else ""
+	# Your identity is a SYMBOL, not a sentence (Nick): the active hunter's
+	# portrait sits above the hand; text only appears for real states.
+	var players: Array = _client.shared.get("players", [])
+	var meidx := _me()
+	var pp := String(players[meidx].get("portrait", "")) if meidx < players.size() else ""
+	_hand_icon.visible = pp != "" and ResourceLoader.exists(pp)
+	if _hand_icon.visible:
+		_hand_icon.texture = load(pp)
 	if selecting:
 		_hand_label.text = _selection_prompt()
 	else:
-		_hand_label.text = "Your hand%s%s" % [tag, "   (turn ended)" if ended else ""]
+		_hand_label.text = "(turn ended)" if ended else ""
 	for card in priv.get("hand", []):
 		var idx := int(card["index"])
 		var cv := CardView.new()
@@ -428,6 +436,7 @@ func _on_timing_resolved(hit: bool, index: int) -> void:
 
 func _render_reward(s: Dictionary) -> void:
 	_stop_climb()
+	_hand_icon.visible = false  # instruction text leads here, not identity
 	_lock_btn.text = "Lock In Reward"
 	_overlay.visible = false
 	_top_bar.visible = true
@@ -516,6 +525,7 @@ func _on_character_selected(character_id: String) -> void:
 
 func _render_character_select(s: Dictionary) -> void:
 	_stop_climb()
+	_hand_icon.visible = false
 	_log_toggle.visible = false
 	_overlay.visible = false
 	_top_bar.visible = true

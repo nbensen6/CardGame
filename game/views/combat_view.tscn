@@ -161,10 +161,23 @@ step = 0.001
 value = 1.0
 show_percentage = false
 
-[node name="HandLabel" type="Label" parent="Margin/Root"]
+[node name="HandBar" type="HBoxContainer" parent="Margin/Root"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 8
+
+[node name="HandIcon" type="TextureRect" parent="Margin/Root/HandBar"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(34, 34)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HandLabel" type="Label" parent="Margin/Root/HandBar"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Your hand"
+size_flags_vertical = 4
+text = ""
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 14
 
