@@ -23,3 +23,4 @@ var character: String = ""     # character id, for display
 var climb_bonus: int = 0       # extra Height per climb card (Frog)
 var char_attack_bonus: int = 0 # extra attack damage (Goblin Mech)
 var ally_climb: int = 0        # when this hunter climbs, the ally also gains this Height (Mountain Climbers)
+var poison_lift: int = 0       # when this hunter applies Wound, the ally climbs this much (Vine-Weaver)

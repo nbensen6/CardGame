@@ -77,6 +77,7 @@ func _apply_passive(ps: PlayerState, passive: Dictionary) -> void:
 		"climb_bonus": ps.climb_bonus = value
 		"attack_bonus": ps.char_attack_bonus = value
 		"ally_climb": ps.ally_climb = value
+		"poison_lift": ps.poison_lift = value
 
 func start() -> void:
 	_begin_round()
@@ -249,7 +250,9 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	# Base scales with Exposed stacks (Sunlight Blade) and this hunter's own Height
 	# (Belay Strike). _damage_boss gates on whether THIS hunter reached the sigil.
 	var base_damage := card.damage + card.damage_per_vulnerable * boss.vulnerable \
-		+ card.damage_per_foothold * ps.foothold + card.damage_per_rhythm * ps.rhythm
+		+ card.damage_per_foothold * ps.foothold + card.damage_per_rhythm * ps.rhythm \
+		+ card.damage_per_wound * boss.wound \
+		+ card.damage_per_ally_foothold * int(players[ally_index(pi)].foothold)
 	if card.timed:  # only well-timed hits reach here — a clean strike bites deeper
 		base_damage += card.timed_damage
 	if card.damage > 0:
@@ -270,6 +273,10 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	if card.wound > 0:
 		boss.wound += card.wound
 		_log("%s plays %s — Poison %d on %s." % [who, card.name, boss.wound, boss.name])
+		if ps.poison_lift > 0:  # Vine-Weaver: the vines feed on the poison and lift the ally
+			var fed_ally: PlayerState = players[ally_index(pi)]
+			fed_ally.foothold = mini(fed_ally.foothold + ps.poison_lift, FOOTHOLD_MAX)
+			_log("%s's vines surge — %s climbs +%d." % [who, fed_ally.combatant.name, ps.poison_lift])
 	var grip_amount := card.grip
 	if card.timed:  # only hits reach here (fumbles slipped away above)
 		grip_amount += card.timed_grip

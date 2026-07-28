@@ -34,6 +34,8 @@ var sac_ally_grip: int # Height your ally climbs, IF you sacrificed a card (Cata
 var meld: bool         # fuse two chosen hand cards into one (their effects combined, cost sum -1)
 var damage_per_vulnerable: int  # bonus damage per Exposed stack on the Titan
 var damage_per_foothold: int    # bonus damage per Height climbed (Mountain Climbers)
+var damage_per_wound: int       # bonus damage per Wound stack on the Titan (Vine-Weaver)
+var damage_per_ally_foothold: int  # bonus damage per your ALLY's Height (Mountain Climbers coordination)
 var strength: int      # Strength gained by the player (attacks deal +Strength this fight)
 var wound: int         # Wound applied to the Titan (it bleeds each of its turns)
 var hits: int          # how many times the damage lands (default 1) — multi-strike
@@ -73,6 +75,8 @@ static func from_dict(d: Dictionary) -> Card:
 	c.meld = bool(d.get("meld", false))
 	c.damage_per_vulnerable = int(d.get("damage_per_vulnerable", 0))
 	c.damage_per_foothold = int(d.get("damage_per_foothold", 0))
+	c.damage_per_wound = int(d.get("damage_per_wound", 0))
+	c.damage_per_ally_foothold = int(d.get("damage_per_ally_foothold", 0))
 	c.strength = int(d.get("strength", 0))
 	c.wound = int(d.get("wound", 0))
 	c.hits = int(d.get("hits", 1))

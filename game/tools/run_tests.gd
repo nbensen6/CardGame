@@ -61,6 +61,8 @@ func _init() -> void:
 	_test_meld_fuses_two_cards()
 	_test_satchel_charge_detonates()
 	_test_rhythm_builds_and_scales()
+	_test_vine_weaver_poison_and_wound()
+	_test_summit_strike_scales_with_both()
 	# step 4: run / meta-progression
 	_test_run_starts_in_combat()
 	_test_run_win_flows_through_reward_to_next_encounter()
@@ -486,6 +488,36 @@ func _test_catapult_sacrifices_to_launch_ally() -> void:
 	_expect(ok and ps.exhaust_pile.size() == 1 and ps.hand.size() == 0
 		and combat.players[1].foothold == ally_before + 2,
 		"Catapult sacrifices a card to launch the ally up +2 Height")
+
+
+func _test_vine_weaver_poison_and_wound() -> void:
+	var combat := _new_combat_p([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42,
+		_dummy_boss(300), [{"type": "poison_lift", "value": 1}, {}])
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_toxic_lash(), _toxic_lash()]
+	ps.energy = 3
+	var ally_before: int = combat.players[1].foothold
+	var before: int = combat.boss.hp
+	combat.play_card(0, 0, true)  # Wound 0 -> 2 +0 +3 timed = 5; then Poison 1; ally lifts +1
+	var d1: int = before - combat.boss.hp
+	var lifted: bool = combat.players[1].foothold == ally_before + 1
+	var before2: int = combat.boss.hp
+	combat.play_card(0, 0, true)  # Wound 1 -> 2 + 2*1 + 3 = 7
+	_expect(d1 == 5 and lifted and before2 - combat.boss.hp == 7,
+		"Vine-Weaver: poison lifts the ally, and strikes scale with Wound stacks")
+
+
+func _test_summit_strike_scales_with_both() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 2
+	combat.players[1].foothold = 3
+	ps.hand = [_summit_strike()]
+	ps.energy = 3
+	var before: int = combat.boss.hp
+	combat.play_card(0, 0, true)  # 2 + 2*2(own) + 2*3(ally) + 3 timed = 15
+	_expect(before - combat.boss.hp == 15,
+		"Summit Strike scales with BOTH hunters' Height (+ally coordination)")
 
 
 func _test_rhythm_builds_and_scales() -> void:
@@ -1030,6 +1062,10 @@ func _flick() -> Card:
 	return Card.from_dict({"id": "flick", "name": "Tongue Flick", "type": "attack", "cost": 0, "damage": 2, "timed": true, "timed_damage": 3, "target": "enemy"})
 func _tongue_snap() -> Card:
 	return Card.from_dict({"id": "tongue_snap", "name": "Tongue Snap", "type": "attack", "cost": 1, "damage": 2, "damage_per_rhythm": 3, "grip": 1, "timed": true, "timed_damage": 3, "target": "enemy"})
+func _toxic_lash() -> Card:
+	return Card.from_dict({"id": "toxic_lash", "name": "Toxic Lash", "type": "attack", "cost": 1, "damage": 2, "damage_per_wound": 2, "wound": 1, "timed": true, "timed_damage": 3, "target": "enemy"})
+func _summit_strike() -> Card:
+	return Card.from_dict({"id": "summit_strike", "name": "Summit Strike", "type": "attack", "cost": 1, "damage": 2, "damage_per_foothold": 2, "damage_per_ally_foothold": 2, "timed": true, "timed_damage": 3, "target": "enemy"})
 func _sunblade() -> Card:
 	return Card.from_dict({"id": "sunlight_blade", "name": "Sunlight Blade", "type": "attack", "cost": 1, "damage": 5, "damage_per_vulnerable": 3})
 func _bowshot() -> Card:

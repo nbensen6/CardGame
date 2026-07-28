@@ -1,5 +1,5 @@
 {
-  "_comment": "Characters are DATA (CLAUDE.md \u00a711). Each has a starter_deck (card ids) and a signature passive. Designed on the 'climbs well <-> hits hard' dependency axis so pairs combo (design/climbing-and-characters.md). Decks now lean into TIMED cards (the double-timing feel the user likes) for interactive climbs/strikes, each with reliable non-timed support cards. Passive types: climb_bonus (+N Height per climb card you play), attack_bonus (+N to your attacks), ally_climb (when YOU climb, your ally also gains N Height), none.",
+  "_comment": "Characters are DATA (CLAUDE.md §11). Each has a starter_deck (card ids) and a signature passive. Designed on the 'climbs well <-> hits hard' dependency axis so pairs combo (design/climbing-and-characters.md). Decks now lean into TIMED cards (the double-timing feel the user likes) for interactive climbs/strikes, each with reliable non-timed support cards. Passive types: climb_bonus (+N Height per climb card you play), attack_bonus (+N to your attacks), ally_climb (when YOU climb, your ally also gains N Height), none.",
   "order": [
     "frog",
     "vine_weaver",
@@ -9,7 +9,7 @@
   "characters": {
     "frog": {
       "name": "The Frog",
-      "desc": "Nimble \u2014 climbs fast and tags the weak point, but hits soft.",
+      "desc": "Nimble — climbs fast and tags the weak point, but hits soft.",
       "passive": {
         "type": "climb_bonus",
         "value": 1
@@ -29,47 +29,47 @@
     },
     "vine_weaver": {
       "name": "The Vine-Weaver",
-      "desc": "Grows vines that lift the ally, and poisons the beast so it bleeds.",
+      "desc": "Poison feeds the vines — every Wound lifts the ally; strikes scale with poison.",
       "passive": {
-        "type": "none",
-        "value": 0
+        "type": "poison_lift",
+        "value": 1
       },
       "starter_deck": [
         "vine",
-        "vine",
         "spore",
-        "creeper",
+        "toxic_lash",
+        "toxic_lash",
         "creeper",
         "lash_out",
-        "lash_out",
-        "cover",
+        "overgrowth",
+        "blightbloom",
         "brace",
-        "take_aim"
+        "cover"
       ]
     },
     "mountain_climbers": {
       "name": "The Mountain Climbers",
-      "desc": "Roped \u2014 the ally climbs when they do, and they hit harder the higher they are.",
+      "desc": "Roped coordination — the ally climbs with them, and strikes scale with BOTH hunters' Height.",
       "passive": {
         "type": "ally_climb",
         "value": 1
       },
       "starter_deck": [
         "rope_up",
-        "rope_up",
         "haul",
         "belay_strike",
         "piton_drive",
-        "piton_drive",
-        "scramble",
+        "summit_strike",
+        "summit_strike",
+        "belay",
+        "pitons_in",
         "brace",
-        "cover",
         "take_aim"
       ]
     },
     "goblin_mech": {
       "name": "The Goblin Engineer",
-      "desc": "Heavy hitter \u2014 wrecks the weak point, but climbs terribly. Builds timed grapples to haul up.",
+      "desc": "Heavy hitter — wrecks the weak point, but climbs terribly. Builds timed grapples to haul up.",
       "passive": {
         "type": "attack_bonus",
         "value": 2

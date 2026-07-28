@@ -42,8 +42,14 @@
     "satchel_charge": {"name": "Satchel Charge", "type": "attack", "icon": "bomb", "cost": 2, "damage": 6, "timed": true, "timed_hits": 3, "timed_damage": 20, "target": "enemy", "text": "Plant a satchel — nail 3 timing windows in a row to detonate for 26. Miss any and it fizzles."},
     "tongue_snap": {"name": "Tongue Snap", "type": "attack", "icon": "sword", "cost": 1, "damage": 2, "damage_per_rhythm": 3, "grip": 1, "timed": true, "timed_damage": 3, "target": "enemy", "text": "Time it! Snap for 2 (+3 nailed), +3 per Rhythm, and hop up +1."},
     "hop": {"name": "Hop", "type": "skill", "icon": "climb", "cost": 0, "grip": 1, "grip_per_rhythm": 1, "timed": true, "timed_grip": 1, "target": "enemy", "text": "Time it! Hop +1 (+1 nailed), +1 Height per Rhythm."},
-    "leapfrog": {"name": "Leapfrog", "type": "skill", "icon": "support", "cost": 1, "grip": 2, "ally_grip": 2, "target": "ally", "text": "Spring off the beast: you climb +2 and vault your ally +2."}
+    "leapfrog": {"name": "Leapfrog", "type": "skill", "icon": "support", "cost": 1, "grip": 2, "ally_grip": 2, "target": "ally", "text": "Spring off the beast: you climb +2 and vault your ally +2."},
+    "toxic_lash": {"name": "Toxic Lash", "type": "attack", "icon": "skull", "cost": 1, "damage": 2, "damage_per_wound": 2, "wound": 1, "timed": true, "timed_damage": 3, "target": "enemy", "text": "Time it! Lash for 2 (+3 nailed), +2 per Poison stack, and Poison 1."},
+    "overgrowth": {"name": "Overgrowth", "type": "skill", "icon": "support", "cost": 1, "grip": 1, "ally_grip": 3, "target": "ally", "text": "A surge of vines: you climb +1 and haul your ally +3 Height."},
+    "blightbloom": {"name": "Blightbloom", "type": "attack", "icon": "fire", "cost": 1, "damage": 1, "wound": 3, "target": "enemy", "text": "Burst a spore cloud: 1 damage and Poison 3."},
+    "summit_strike": {"name": "Summit Strike", "type": "attack", "icon": "sword", "cost": 1, "damage": 2, "damage_per_foothold": 2, "damage_per_ally_foothold": 2, "timed": true, "timed_damage": 3, "target": "enemy", "text": "Time it! 2 (+3 nailed), +2 per YOUR Height and +2 per your ALLY's Height."},
+    "belay": {"name": "Belay", "type": "skill", "icon": "shield", "cost": 1, "ally_block": 6, "ally_grip": 1, "target": "ally", "text": "Anchor your ally: give them 6 Block and climb them +1 Height."},
+    "pitons_in": {"name": "Pitons In", "type": "skill", "icon": "climb", "cost": 1, "grip": 2, "ally_grip": 2, "target": "ally", "text": "Hammer pitons: you and your ally both climb +2 Height."}
   },
   "starter_deck": ["slash", "slash", "slash", "brace", "brace", "scramble", "scramble", "take_aim", "cleave", "cover"],
-  "reward_pool": ["rally", "expose", "draw_aggro", "harpoon", "grip", "sunlight_blade", "bowshot", "sharpen", "rend", "dagger", "flurry", "cleave", "cover", "brace", "slash", "take_aim", "pounce", "flick", "lash_out", "piton_drive", "piston_punch", "haul", "tongue_snap", "hop", "leapfrog"]
+  "reward_pool": ["rally", "expose", "draw_aggro", "harpoon", "grip", "sunlight_blade", "bowshot", "sharpen", "rend", "dagger", "flurry", "cleave", "cover", "brace", "slash", "take_aim", "pounce", "flick", "lash_out", "piton_drive", "piston_punch", "haul", "tongue_snap", "hop", "leapfrog", "toxic_lash", "overgrowth", "blightbloom", "summit_strike", "belay", "pitons_in"]
 }
