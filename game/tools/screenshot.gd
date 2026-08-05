@@ -11,6 +11,7 @@ extends SceneTree
 var _out := "shot.png"
 var _state := "combat"
 var _hold := ""   # 3dloop: stop the lap at this phase instead of finishing it
+var _beast := ""  # force a specific beast, to check a model that RNG rarely picks
 
 
 func _initialize() -> void:
@@ -21,6 +22,8 @@ func _initialize() -> void:
 			_state = a.substr(6)
 		elif a.begins_with("hold="):
 			_hold = a.substr(5)
+		elif a.begins_with("beast="):
+			_beast = a.substr(6)
 	_failsafe()  # never hang the machine
 	Progress.reset_hints()  # shots should show onboarding as a new player sees it
 	if _state == "menu":  # just the main menu, no session
@@ -89,6 +92,9 @@ func _initialize() -> void:
 		var cs: Combat = Session.host._run.combat
 		cs.players[0].foothold = cs.boss.weak_point_height
 		cs.players[1].foothold = maxi(cs.boss.weak_point_height - 1, 1)
+		Session.host._broadcast_state()
+	if _beast != "" and Session.host._run.combat != null:
+		Session.host._run.combat.boss = Content.build_boss(_beast)
 		Session.host._broadcast_state()
 	if _state == "3dsel":  # a Meld in hand, so the pick flow can be exercised
 		var cm: Combat = Session.host._run.combat

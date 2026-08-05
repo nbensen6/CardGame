@@ -7,6 +7,8 @@
 class_name Boss
 extends Combatant
 
+var id: String = ""            # the data key — the view needs a STABLE identity,
+                               # since art paths are shared between beasts
 var moves: Array = []
 var art: String = ""           # path to the beast's silhouette (shown in the combat view)
 var vulnerable: int = 0        # "exposed" stacks — each consumed hit deals bonus damage

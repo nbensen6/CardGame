@@ -17,10 +17,20 @@ const CAST := "res://assets/3d/cast/"
 const MODELS := {
 	"frog": "bunny", "vine_weaver": "koala", "mountain_climbers": "deer",
 	"goblin_mech": "monkey",
-	"stone_warden": "elephant", "gale_serpent": "tiger",
+	# every beast gets its OWN body — the map's variety is pointless if ten of
+	# the fourteen fights look like the same elephant. Chosen to echo the 2D
+	# portrait where a Cube Pet exists, and to never reuse a hunter's model.
+	"stone_warden": "elephant", "gale_serpent": "caterpillar",
 	"drowned_colossus": "polar", "sunken_warden": "lion",
+	"crag_pup": "dog", "bramble_hog": "pig", "bounder": "fox",
+	"root_lurker": "beaver", "sky_snapper": "parrot", "riftling": "cat",
+	"mire_snapper": "crab", "frost_sentinel": "penguin",
+	"grove_bear": "panda", "shifting_idol": "tiger",
 }
-const BEAST_SCALE := 2.6
+## Beasts are sized by how far you have to climb them, so a Titan with its sigil
+## at Height 8 physically towers over a Crag Pup you can hit from the ground.
+const BEAST_MIN_SCALE := 1.5
+const BEAST_SCALE_PER_HEIGHT := 0.16
 ## Real-time grip (SotC), the same client-side skill layer the 2D view runs: the
 ## instant a hunter leaves a safe hold a timer starts full and drains live; reach
 ## the next ledge before it empties or this client reports a fall. The host is
@@ -32,6 +42,7 @@ var _client: GameClient
 var _beast: Node3D
 var _beast_id := ""
 var _beast_box := AABB(Vector3(-1, 0, -1), Vector3(2, 2, 2))
+var _beast_scale := BEAST_MIN_SCALE
 var _hunters: Array = []          # slot -> {node, home}
 var _active_slot := 0
 
@@ -129,7 +140,7 @@ func _process(delta: float) -> void:
 	if _beast != null:
 		var breathe := 1.0 + sin(_time * 1.6) * 0.02
 		var recoil := 1.0 - _beast_punch * 0.10
-		_beast.scale = Vector3.ONE * BEAST_SCALE * breathe * recoil
+		_beast.scale = Vector3.ONE * _beast_scale * breathe * recoil
 		_beast.position.z = -_beast_punch * 0.35
 	_beast_punch = maxf(0.0, _beast_punch - delta * 3.5)
 	for i in range(_hunters.size()):
@@ -242,7 +253,8 @@ func _refresh() -> void:
 	_hp_bar.max_value = int(boss["max_hp"])
 	_hp_bar.value = int(boss["hp"])
 	_intent.text = _intent_text(boss)
-	_show_beast(String(boss.get("art", "")), String(boss["name"]))
+	_show_beast(String(boss.get("id", "")), String(boss["name"]),
+		int(boss.get("weak_point_height", 0)))
 	_place_sigil(s)
 	_place_hunters(s)
 	_update_climb_state(s)
@@ -271,32 +283,46 @@ func _intent_text(boss: Dictionary) -> String:
 
 # --- the beast ------------------------------------------------------------
 
-func _show_beast(art: String, beast_name: String) -> void:
-	var key := _model_key(art, beast_name)
-	if key == _beast_id:
+func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
+	var key := _model_key(beast_id, beast_name)
+	var scale := BEAST_MIN_SCALE + BEAST_SCALE_PER_HEIGHT * float(weak_point)
+	if key == _beast_id and is_instance_valid(_beast) and is_equal_approx(scale, _beast_scale):
 		return
 	_beast_id = key
+	_beast_scale = scale
 	if _beast != null:
 		_beast.queue_free()
 	var path := CAST + key + ".glb"
 	if not ResourceLoader.exists(path):
 		return
 	_beast = (load(path) as PackedScene).instantiate()
-	_beast.scale = Vector3.ONE * BEAST_SCALE
+	_beast.scale = Vector3.ONE * _beast_scale
 	_rig.add_child(_beast)
 	_beast_box = _merged_aabb(_beast)
+	_frame_beast()
 
 
-## The 2D build identified beasts by portrait path; reuse that to pick a model.
-func _model_key(art: String, beast_name: String) -> String:
-	var stem := art.get_file().get_basename()
-	for id in MODELS:
-		if stem == String(MODELS[id]) or stem == id:
-			return String(MODELS[id])
+## Pull the camera back to fit whatever we're fighting. Beasts now range from a
+## Crag Pup to a Titan nearly twice its height, so a fixed camera either crops
+## the big ones or strands the small ones in empty sky.
+func _frame_beast() -> void:
+	var tall := maxf(_beast_box.size.y, 1.0)
+	_cam_home = Vector3(0.0, tall * 0.62 + 1.1, clampf(tall * 2.15 + 3.2, 9.5, 22.0))
+	_cam.position = _cam_home
+
+
+## The beast's data id picks its model. The old guess read the portrait PATH,
+## which cannot work — several beasts share one portrait (two use crocodile.png),
+## so half the roster resolved to the wrong body or fell back to the elephant.
+## The name is kept only as a fallback for a beast added without a mapping.
+func _model_key(beast_id: String, beast_name: String) -> String:
+	if MODELS.has(beast_id):
+		return String(MODELS[beast_id])
 	var lower := beast_name.to_lower()
-	for id2 in MODELS:
-		if lower.contains(String(id2).replace("_", " ")):
-			return String(MODELS[id2])
+	for id in MODELS:
+		if lower.contains(String(id).replace("_", " ")):
+			return String(MODELS[id])
+	push_warning("combat_3d: no model for beast '%s' — falling back" % beast_id)
 	return "elephant"
 
 

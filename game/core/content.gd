@@ -154,6 +154,7 @@ static func build_boss(id: String) -> Boss:
 	var bosses: Dictionary = _read_json(BOSSES_PATH).get("bosses", {})
 	var bd: Dictionary = bosses.get(id, {})
 	var b := Boss.new(String(bd.get("name", "Titan")), int(bd.get("max_hp", 1)))
+	b.id = id
 	b.moves = bd.get("moves", [])
 	b.weak_point_height = int(bd.get("weak_point_height", 0))
 	b.ledges = bd.get("ledges", [])

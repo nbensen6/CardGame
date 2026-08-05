@@ -234,7 +234,7 @@ func _build_shared() -> Dictionary:
 		var c: Combat = _run.combat
 		var b: Boss = c.boss
 		s["boss"] = {
-			"name": b.name, "hp": b.hp, "max_hp": b.max_hp, "block": b.block,
+			"id": b.id, "name": b.name, "hp": b.hp, "max_hp": b.max_hp, "block": b.block,
 			"intent": b.current_move(), "target": c.boss_target_index(),
 			"vulnerable": b.vulnerable, "strength": b.strength, "wound": b.wound,
 			"weak_point_height": b.weak_point_height, "foothold_max": Combat.FOOTHOLD_MAX,
