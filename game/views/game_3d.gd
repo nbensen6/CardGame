@@ -5,8 +5,10 @@
 ##
 ##   map    -> views/overworld_3d.tscn   (walk the region to choose your route)
 ##   combat -> views/combat_3d.tscn      (climb the beast, play cards)
+##   reward -> views/location_3d.tscn    (standing over what you just felled)
+##   won/lost -> the same scene
 ##   else   -> views/combat_view.tscn    (the 2D client still owns event,
-##                                        campfire, shop, reward, won, lost)
+##                                        campfire and shop)
 ##
 ## The fallback is deliberate and temporary: those phases have no 3D staging yet,
 ## and a 2D screen for them is far better than blocking the loop on art that
@@ -19,6 +21,9 @@ extends Node
 const SCENES := {
 	"map": "res://views/overworld_3d.tscn",
 	"combat": "res://views/combat_3d.tscn",
+	"reward": "res://views/location_3d.tscn",
+	"won": "res://views/location_3d.tscn",
+	"lost": "res://views/location_3d.tscn",
 }
 const FALLBACK_2D := "res://views/combat_view.tscn"
 

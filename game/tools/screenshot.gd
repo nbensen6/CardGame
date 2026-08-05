@@ -48,7 +48,7 @@ func _initialize() -> void:
 		Session.client.select_character("frog", 0)
 		Session.client.select_character("goblin_mech", 1)
 	if _state in ["combat", "goblin", "juice", "climbing", "3d", "3dclimb",
-			"3dstrike", "3dgame", "3dgrip", "3dsel"]:  # 3dloop deliberately starts ON the map  # step off the map into a fight
+			"3dstrike", "3dgame", "3dgrip", "3dsel", "3dreward", "3dwon"]:  # 3dloop deliberately starts ON the map  # step off the map into a fight
 		var r: Run = Session.host._run
 		var g := 0
 		while r.phase == Run.Phase.MAP and g < 30:
@@ -122,6 +122,33 @@ func _initialize() -> void:
 	if _beast != "" and Session.host._run.combat != null:
 		Session.host._run.combat.boss = Content.build_boss(_beast)
 		Session.host._broadcast_state()
+	if _state in ["3dreward", "3dwon"]:  # fell the beast so the phase after opens
+		var rr2: Run = Session.host._run
+		rr2.combat.boss.hp = 0
+		rr2.combat.phase = Combat.Phase.OVER
+		rr2.sync()
+		if _state == "3dwon":  # drive it all the way to the end of the run
+			var spin2 := 0
+			while rr2.phase not in [Run.Phase.WON, Run.Phase.LOST] and spin2 < 400:
+				spin2 += 1
+				match rr2.phase:
+					Run.Phase.REWARD:
+						for sl in range(rr2.player_count()):
+							rr2.pick_reward(sl, 0)
+					Run.Phase.MAP:
+						rr2.pick_node(int(rr2.available_nodes()[0]))
+						if rr2.phase == Run.Phase.COMBAT:
+							rr2.combat.boss.hp = 0
+							rr2.combat.phase = Combat.Phase.OVER
+							rr2.sync()
+					Run.Phase.EVENT: rr2.pick_event(0)
+					Run.Phase.CAMPFIRE:
+						for sl2 in range(rr2.player_count()):
+							rr2.campfire_action(sl2, "rest")
+					Run.Phase.SHOP: rr2.leave_shop()
+					_: break
+			print("RUN ended in phase %s" % rr2.phase)
+		Session.host._broadcast_state()
 	if _state == "3dsel":  # a Meld in hand, so the pick flow can be exercised
 		var cm: Combat = Session.host._run.combat
 		cm.players[0].hand[0] = Content.make_card("meld")
@@ -150,7 +177,7 @@ func _initialize() -> void:
 		Session.host._broadcast_state()
 	# 3D clients: the overworld for 3dmap, the combat scene for the rest
 	var scene := "res://views/combat_view.tscn"
-	if _state in ["3dgame", "3dloop"]:
+	if _state in ["3dgame", "3dloop", "3dreward", "3dwon"]:
 		scene = "res://views/game_3d.tscn"
 	elif _state == "3dmap":
 		scene = "res://views/overworld_3d.tscn"
@@ -194,7 +221,7 @@ func _capture() -> void:
 		run.sync()
 		Session.host._broadcast_state()
 		await process_frame
-		_router_is(router, "reward", "CombatView")
+		_router_is(router, "reward", "Location3D")
 		if _hold != "reward":  # otherwise stop here so the handover can be seen
 			while run.phase == Run.Phase.REWARD:
 				for slot in range(run.player_count()):

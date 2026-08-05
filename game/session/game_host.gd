@@ -223,6 +223,10 @@ func _build_shared() -> Dictionary:
 			"available": _run.available_nodes(),
 			"boss_art": _boss_art_per_act(),
 		}
+	# the reward screen is staged over the beast you just felled, so the view
+	# needs to know which one it was — combat is gone by every other measure
+	if _run.phase == Run.Phase.REWARD and _run.combat != null and _run.combat.boss != null:
+		s["felled"] = _run.combat.boss.id
 	if _run.phase == Run.Phase.EVENT:
 		s["event"] = _run.event
 	if _run.phase == Run.Phase.SHOP:

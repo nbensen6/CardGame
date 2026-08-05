@@ -104,7 +104,17 @@ better starting point than the 2D situation ever was.
    the next ledge" still appears on the grip bar, which is when it matters.
 
    **Parity reached.** Retiring `combat_view.gd` is now only blocked by the
-   phases it still owns (event / campfire / shop / reward / won / lost).
+   phases it still owns.
+
+7. **The places between fights** — `views/location_3d.gd`, one scene for the
+   non-combat phases, because they are all the same shape: your hunters standing
+   somewhere, being offered a choice. Only the place and the HUD change, which is
+   what keeps each additional phase cheap.
+
+   Done: **reward** (staged over the beast you just felled, on its back on a hex
+   plot — the host now sends `felled` so the view knows which one it was) and
+   **won / lost**. Still on the 2D client: **event, campfire, shop** — the three
+   with substantial UI of their own.
 
 7. **Retire or keep the 2D client?** Keeping both costs double maintenance on every
    view change. Recommendation: keep `combat_view.gd` until the 3D one has feature
