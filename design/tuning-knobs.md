@@ -5,9 +5,9 @@ Almost all of it is data (JSON) or a handful of constants — no deep code neede
 After any change, re-measure with the balance simulator (bottom of this doc).
 
 ## Difficulty at a glance
-Current (measured, 3-Titan run via `tools/balance_sim.gd`):
-**naive AI 8% win · coordinated AI 96% · gap +88.**
-- Too hard? Lower Titan HP/damage, or raise `PLAYER_HP` / `HEAL_BETWEEN` / energy.
+Current (measured — see `design/balance-notes.md`):
+**naive 7% · coordinated 78% · gap +70 · Ascension 8 at 20%.**
+- Too hard? Lower beast HP/damage, or raise `PLAYER_HP` / `HEAL_BETWEEN` / energy.
 - Too easy? The reverse. Watch the *gap* — a big gap means coordination matters.
 
 ## Titans — `game/data/bosses.json`
@@ -16,10 +16,13 @@ and a `moves` pattern that loops. Move types:
 - `attack` (hits the telegraphed hunter), `attack_all` (sweeps both + shakes
   Foothold), `block` (guards), `enrage` (permanent +strength), `regen` (heals),
   `leech` (attacks a hunter and heals the Titan for the same).
-- Order in the run + which Titans: `Run.ENCOUNTERS` in `game/core/run.gd`
-  (currently **4 Titans** per run).
-- Today: Stone Warden (108) → Gale Serpent (140, wp 3) → Drowned Colossus
-  (170, wp 4) → Sunken Warden (180, wp 4, the final wall).
+- Also `swipe_high` / `swipe_low` (hit only hunters off / on the ground),
+  `rift` (damage scales with the Height gap between hunters), `shift_sigil`
+  (moves the weak point mid-fight).
+- Act Titans: `Run.ENCOUNTERS` in `game/core/run.gd` (4 acts). Everything else is
+  drawn from `pools` (fight / elite / boss) by the map's node type.
+- Today: Stone Warden (68, wp 2) → Gale Serpent (148, wp 4) → Drowned Colossus
+  (220, wp 6) → Sunken Warden (300, wp 6). 6 fight beasts + 4 elites besides.
 
 ## Cards — `game/data/cards.json`
 Per card: `cost`, and any of `damage`, `block`, `ally_block`, `ally_energy`,
@@ -39,20 +42,28 @@ Four creatures span a "climbs well ↔ hits hard" dependency axis (Frog/Vine-Wea
 climb & carry; Goblin Mech hits hard but can't climb — needs a lift).
 
 ## Relics — `game/data/relics.json`
-Per relic: `effect` (`max_energy` | `attack_bonus` | `round_block` |
-`heal_on_clear` | `start_strength`) + `value` + `text`. `pool` lists which can be
-offered.
-- New effect types need a case in `Combat` (`_init` bonuses) or `Run.relic_totals`.
+Per relic: `effect` + `value` + `text`; `pool` lists what can be offered. 26 today.
+- Flat: `max_energy`, `attack_bonus`, `round_block`, `heal_on_clear`, `start_strength`.
+- Rule-changing: `start_foothold`, `fall_safe`, `shake_resist`, `rhythm_keeps`,
+  `threshold`, `chip`, `sigil_bonus`, `vuln_bonus`, `draw`.
+- Client-side (the systems live in the view): `grip_seconds`, `timing_zone`.
+- A new effect needs summing in `Run.relic_totals()` and reading via `Combat._mod()`
+  (or in the view, from the snapshot's `mods`).
 
 ## Core constants
 `game/core/combat.gd`:
 - `HAND_SIZE` 5, `BASE_ENERGY` 3
 - `VULN_BONUS` 4 (Exposed bonus per stack), `SIGIL_BONUS` 5 (climb payoff)
-- `FOOTHOLD_MAX` 6, `SHAKE_LOSS` 2
+- `FOOTHOLD_MAX` 8, `FALL_DAMAGE` 3, `RIFT_PER_GAP` 2, `ARMORED_DIVISOR` 4
 
 `game/core/run.gd`:
-- `PLAYER_HP` 42, `HEAL_BETWEEN` 6, `REWARD_CHOICES` 3
-- `ENCOUNTERS` (Titan list/order), reward card-vs-relic alternation in `_begin_reward`
+- `PLAYER_HP` 42, `HEAL_BETWEEN` 4, `REST_HEAL` 9 (campfire), `MIN_DECK` 5
+- `REWARD_CHOICES` 3, `ENCOUNTERS` (the act Titans)
+
+`game/core/run_map.gd`: `ROWS_PER_ACT` 3, row width 2–3, node-type weights in
+`_roll_type` (how often you meet a fight / elite / rest / treasure / event).
+
+`game/data/ascension.json`: the 8 difficulty tiers and what each one does.
 
 ## Grip — real-time SotC climb (ledges + live timer)
 Climbing between safe holds is a **real-time race**. The timer lives on the CLIENT
@@ -69,18 +80,17 @@ drop a hunter.
 - A hunter is **secure** on the base (0), any ledge, or the sigil (`is_secure`);
   between holds the client timer runs. A sweep (`attack_all`) shakes each hunter
   **down one hold** (`_hold_below`), not off entirely.
-- Grip only bites in *human* play — the headless sim has no real-time timer, so it
-  never falls. The sim measures the underlying card balance (which the taller
-  sigils changed a lot); grip stakes are tuned by playtest.
+- The sim now MODELS falling (`FALL_CHANCE` in `tools/balance_sim.gd`) rather than
+  ignoring it, so grip pressure shows up in the win rates. How the seconds *feel*
+  is still a playtest question.
 
 ## Weak-point threshold — the climb→strike→climb loop
-`data/bosses.json` `weak_point_threshold` per titan (12/16/22/28): sigil damage a
+`data/bosses.json` `weak_point_threshold` per beast (Titans 18/24/33/42): sigil damage a
 hunter can deal per visit before the beast **bucks them down a hold** (`_check_weakpoint_buck`
 in `core/combat.gd`). Lower = shorter strikes, more re-climbs (a tighter loop);
 higher = camp longer. `PlayerState.weak_point_damage` accumulates while reached
-and resets on any drop (fall/sweep/buck). Note: the sim assumes perfect timing +
-never falls, so its coord win-rate over-states real play — treat it as the card
-ceiling, not the human number.
+and resets on any drop (fall/sweep/buck). Raise these alongside beast HP — if HP
+grows and the threshold doesn't, you just get twice as many re-climbs.
 
 ## Timed cards (the double-timing feel) — `data/cards.json`
 `timed: true` makes a card run its on-card timing sweep; a HIT grants `timed_grip`
@@ -91,8 +101,10 @@ piton_drive/haul/piston_punch). More timed *climb* cards = more double-timing
 whiff-heavy player isn't hopeless; keep ~4-6 reliable non-timed cards per deck.
 
 ## Reward pacing
-`Run._begin_reward` decides card vs relic (currently: card after Titan 1, relic
-after Titan 2). Change the rule there for different pacing.
+Set by map node type in `Run.pick_node`/`sync`: fights pay a **card**, elites and
+Titans pay a **relic**, treasure nodes pay a relic outright. Cards come from the
+acting hunter's own pool (`characters.json` → `reward_pool`) so each class drafts
+its own archetypes. Rewards can be **skipped** (`Run.skip_reward`).
 
 ## Colours / theme — `game/ui/theme.tres`
 Palette, panel/button styles, progress-bar colour. HP-bar danger thresholds and
