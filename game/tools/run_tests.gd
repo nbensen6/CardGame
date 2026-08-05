@@ -59,6 +59,8 @@ func _init() -> void:
 	_test_rule_changing_relics()
 	_test_relics_all_load()
 	_test_climb_twisting_moves()
+	_test_per_class_reward_pools()
+	_test_rhythm_card_grants_combo()
 	# grip / ledges (SotC real-time climb)
 	_test_secure_on_holds()
 	_test_next_safe_height()
@@ -663,6 +665,46 @@ func _test_climb_twisting_moves() -> void:
 
 	_expect(low_ok and high_ok and rift_ok and shifted,
 		"beasts twist the climb: stamp the ground, lash the flank, punish separation, move the sigil")
+
+
+func _test_per_class_reward_pools() -> void:
+	var frog: Array = Content.reward_pool("frog")
+	var gob: Array = Content.reward_pool("goblin_mech")
+	var shared: Array = Content.reward_pool()
+	# each class can draft toward its own archetype, and can't draft the other's
+	var frog_own: bool = frog.has("cadence") and frog.has("flurry_hop") and not frog.has("satchel_charge")
+	var gob_own: bool = gob.has("build_bomb") and gob.has("satchel_charge") and not gob.has("cadence")
+	var neutrals: bool = frog.has("brace") and gob.has("brace")
+	# and a run actually rolls from the acting hunter's pool
+	var decks := [Content.character_deck("frog"), Content.character_deck("goblin_mech")]
+	var run := Run.new(decks, ["F", "G"], 99,
+		[Content.character_passive("frog"), Content.character_passive("goblin_mech")])
+	run.start()
+	_step_into_combat(run)
+	_force_win(run)
+	var from_own_pools := true
+	if run.reward_kind == "card":
+		for c in run.reward_choices[0]:
+			if not frog.has((c as Card).id):
+				from_own_pools = false
+		for c2 in run.reward_choices[1]:
+			if not gob.has((c2 as Card).id):
+				from_own_pools = false
+	_expect(frog_own and gob_own and neutrals and not shared.is_empty() and from_own_pools,
+		"each hunter drafts from their own archetype pool, plus neutrals")
+
+
+func _test_rhythm_card_grants_combo() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [Content.make_card("cadence"), Content.make_card("flurry_hop")]
+	ps.energy = 3
+	combat.play_card(0, 0)                      # +2 Rhythm outright
+	var built: bool = ps.rhythm == 2
+	var before: int = combat.boss.hp
+	combat.play_card(0, 0)                      # 2 + 2*2 Rhythm = 6 damage, climbs 1 + 2
+	_expect(built and before - combat.boss.hp == 6 and ps.foothold == 3,
+		"Cadence grants Rhythm outright, and Rhythm cards scale off it")
 
 
 ## Walk the route until a combat node is reached (skipping rest/treasure).

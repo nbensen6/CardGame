@@ -1,5 +1,5 @@
 {
-  "_comment": "Characters are DATA (CLAUDE.md §11). Each has a starter_deck (card ids) and a signature passive. Designed on the 'climbs well <-> hits hard' dependency axis so pairs combo (design/climbing-and-characters.md). Decks now lean into TIMED cards (the double-timing feel the user likes) for interactive climbs/strikes, each with reliable non-timed support cards. Passive types: climb_bonus (+N Height per climb card you play), attack_bonus (+N to your attacks), ally_climb (when YOU climb, your ally also gains N Height), none.",
+  "_comment": "Characters are DATA (CLAUDE.md §11). Each has a starter_deck (card ids) and a signature passive. Designed on the 'climbs well <-> hits hard' dependency axis so pairs combo (design/climbing-and-characters.md). Decks now lean into TIMED cards (the double-timing feel the user likes) for interactive climbs/strikes, each with reliable non-timed support cards. Passive types: climb_bonus (+N Height per climb card you play), attack_bonus (+N to your attacks), ally_climb (when YOU climb, your ally also gains N Height), none. Each character also has a 'reward_pool' — their own draftable cards plus neutrals — so you can build TOWARD an archetype instead of drawing from one shared bag.",
   "order": [
     "frog",
     "vine_weaver",
@@ -26,7 +26,28 @@
         "brace",
         "take_aim"
       ],
-      "portrait": "res://assets/portraits/frog.png"
+      "portrait": "res://assets/portraits/frog.png",
+      "reward_pool": [
+        "cadence",
+        "flurry_hop",
+        "pounce",
+        "flick",
+        "hop",
+        "tongue_snap",
+        "leapfrog",
+        "leap",
+        "tongue_lash",
+        "bowshot",
+        "brace",
+        "cover",
+        "take_aim",
+        "rally",
+        "expose",
+        "draw_aggro",
+        "dagger",
+        "slash",
+        "scramble"
+      ]
     },
     "vine_weaver": {
       "name": "The Vine-Weaver",
@@ -47,7 +68,28 @@
         "brace",
         "cover"
       ],
-      "portrait": "res://assets/portraits/sloth.png"
+      "portrait": "res://assets/portraits/sloth.png",
+      "reward_pool": [
+        "rot_bloom",
+        "tangle",
+        "toxic_lash",
+        "spore",
+        "blightbloom",
+        "creeper",
+        "overgrowth",
+        "vine",
+        "rend",
+        "sunlight_blade",
+        "brace",
+        "cover",
+        "take_aim",
+        "rally",
+        "expose",
+        "draw_aggro",
+        "dagger",
+        "slash",
+        "scramble"
+      ]
     },
     "mountain_climbers": {
       "name": "The Mountain Climbers",
@@ -68,7 +110,28 @@
         "brace",
         "take_aim"
       ],
-      "portrait": "res://assets/portraits/goat.png"
+      "portrait": "res://assets/portraits/goat.png",
+      "reward_pool": [
+        "anchor_line",
+        "crest_strike",
+        "summit_strike",
+        "piton_drive",
+        "belay",
+        "belay_strike",
+        "pitons_in",
+        "rope_up",
+        "haul",
+        "grip",
+        "brace",
+        "cover",
+        "take_aim",
+        "rally",
+        "expose",
+        "draw_aggro",
+        "dagger",
+        "slash",
+        "scramble"
+      ]
     },
     "goblin_mech": {
       "name": "The Goblin Engineer",
@@ -89,7 +152,30 @@
         "build_mech",
         "catapult"
       ],
-      "portrait": "res://assets/portraits/monkey.png"
+      "portrait": "res://assets/portraits/monkey.png",
+      "reward_pool": [
+        "build_bomb",
+        "build_grapple",
+        "build_mech",
+        "piston_punch",
+        "satchel_charge",
+        "meld",
+        "burn_coal",
+        "catapult",
+        "grappling_arm",
+        "cleave",
+        "sharpen",
+        "flurry",
+        "brace",
+        "cover",
+        "take_aim",
+        "rally",
+        "expose",
+        "draw_aggro",
+        "dagger",
+        "slash",
+        "scramble"
+      ]
     }
   }
 }

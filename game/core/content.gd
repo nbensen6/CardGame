@@ -45,9 +45,16 @@ static func build_starter_deck() -> Array:
 		deck.append(make_card(String(id)))
 	return deck
 
-## Card ids offered as between-encounter rewards (build step 4).
-static func reward_pool() -> Array:
-	return _read_json(CARDS_PATH).get("reward_pool", [])
+## Card ids offered as rewards. A character draws from THEIR pool (their
+## archetype cards plus neutrals) so a run can be drafted toward a build; the
+## shared pool is the fallback.
+static func reward_pool(character_id: String = "") -> Array:
+	if character_id != "":
+		var chars: Dictionary = _read_json(CHARACTERS_PATH).get("characters", {})
+		var own: Array = (chars.get(character_id, {}) as Dictionary).get("reward_pool", [])
+		if not own.is_empty():
+			return own.duplicate()
+	return (_read_json(CARDS_PATH).get("reward_pool", []) as Array).duplicate()
 
 ## Relic ids that can be offered as rewards.
 static func relic_pool() -> Array:

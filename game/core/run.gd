@@ -303,10 +303,17 @@ func _begin_reward(kind: String) -> void:
 	reward_kind = kind
 	reward_choices = []
 	reward_picked = []
-	var pool: Array = Content.relic_pool() if reward_kind == "relic" else Content.reward_pool()
-	for _i in range(names.size()):
+	for i in range(names.size()):
+		# Cards come from that hunter's own pool, so each can draft their archetype.
+		var pool: Array = Content.relic_pool() if reward_kind == "relic" else Content.reward_pool(_character_of(i))
 		reward_choices.append(_roll_choices(pool))
 		reward_picked.append(false)
+
+## The character id a hunter is playing (from their signature passive).
+func _character_of(slot: int) -> String:
+	if slot < 0 or slot >= player_passives.size():
+		return ""
+	return String((player_passives[slot] as Dictionary).get("character", ""))
 
 func _roll_choices(pool: Array) -> Array:
 	var ids: Array = pool.duplicate()

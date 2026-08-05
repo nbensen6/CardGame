@@ -22,6 +22,7 @@ var timed_damage: int  # bonus damage on a well-timed strike (interactive attack
 var timed_hits: int    # how many timing windows in a row you must nail (default 1; Satchel = 3)
 var damage_per_rhythm: int  # bonus damage per Rhythm (Frog combo) you've built this turn
 var grip_per_rhythm: int    # bonus Height per Rhythm you've built this turn
+var rhythm: int             # Rhythm granted outright (the Frog's combo starter)
 var ally_grip: int     # Foothold given to the ALLY (vines/ropes — shared climbing)
 var create: String     # card id this card builds and adds to your hand (Goblin Mech)
 var pull_ally: int     # grapple the ally UP to your Height, if the gap is within this
@@ -64,6 +65,7 @@ static func from_dict(d: Dictionary) -> Card:
 	c.timed_hits = int(d.get("timed_hits", 1))
 	c.damage_per_rhythm = int(d.get("damage_per_rhythm", 0))
 	c.grip_per_rhythm = int(d.get("grip_per_rhythm", 0))
+	c.rhythm = int(d.get("rhythm", 0))
 	c.ally_grip = int(d.get("ally_grip", 0))
 	c.create = String(d.get("create", ""))
 	c.pull_ally = int(d.get("pull_ally", 0))
@@ -105,6 +107,7 @@ func to_dict() -> Dictionary:
 		"damage_per_foothold": damage_per_foothold,
 		"damage_per_ally_foothold": damage_per_ally_foothold,
 		"damage_per_rhythm": damage_per_rhythm, "grip_per_rhythm": grip_per_rhythm,
+		"rhythm": rhythm,
 		"damage_per_wound": damage_per_wound,
 		"strength": strength, "wound": wound, "hits": hits, "draw": draw,
 		"target": target, "icon": icon, "text": text, "upgraded": upgraded,
@@ -124,7 +127,7 @@ func upgraded_copy() -> Card:
 			d[key] = int(d[key]) + 3
 			bumped = true
 	for key in ["grip", "ally_grip", "timed_grip", "vulnerable", "wound",
-			"strength", "draw", "block_per_play", "ally_energy",
+			"strength", "draw", "block_per_play", "ally_energy", "rhythm",
 			"damage_per_vulnerable", "damage_per_foothold",
 			"damage_per_ally_foothold", "damage_per_rhythm", "damage_per_wound"]:
 		if int(d[key]) > 0:

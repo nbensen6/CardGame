@@ -48,7 +48,15 @@
     "blightbloom": {"name": "Blightbloom", "type": "attack", "icon": "fire", "cost": 1, "damage": 1, "wound": 3, "target": "enemy", "text": "1 damage and Poison 3 (it bleeds each turn)."},
     "summit_strike": {"name": "Summit Strike", "type": "attack", "icon": "sword", "cost": 1, "damage": 2, "damage_per_foothold": 2, "damage_per_ally_foothold": 2, "timed": true, "timed_damage": 3, "target": "enemy", "text": "Time it! 2 (+3 nailed), +2 per Height of EACH hunter."},
     "belay": {"name": "Belay", "type": "skill", "icon": "shield", "cost": 1, "ally_block": 6, "ally_grip": 1, "target": "ally", "text": "Anchor your ally: give them 6 Block and climb them +1 Height."},
-    "pitons_in": {"name": "Pitons In", "type": "skill", "icon": "climb", "cost": 1, "grip": 2, "ally_grip": 2, "target": "ally", "text": "Hammer pitons: you and your ally both climb +2 Height."}
+    "pitons_in": {"name": "Pitons In", "type": "skill", "icon": "climb", "cost": 1, "grip": 2, "ally_grip": 2, "target": "ally", "text": "Hammer pitons: you and your ally both climb +2 Height."},
+    "cadence": {"name": "Cadence", "type": "skill", "icon": "rally", "cost": 0, "rhythm": 2, "text": "Find the beat: +2 Rhythm."},
+    "flurry_hop": {"name": "Flurry Hop", "type": "attack", "icon": "climb", "cost": 1, "damage": 2, "damage_per_rhythm": 2, "grip": 1, "grip_per_rhythm": 1, "target": "enemy", "text": "2 dmg +2/Rhythm; climb +1, +1 more per Rhythm."},
+    "rot_bloom": {"name": "Rot Bloom", "type": "attack", "icon": "skull", "cost": 2, "damage": 3, "damage_per_wound": 3, "target": "enemy", "text": "3 damage, +3 per Poison stack."},
+    "tangle": {"name": "Tangle", "type": "skill", "icon": "support", "cost": 1, "ally_block": 5, "wound": 2, "target": "ally", "text": "Ally gains 5 Block; Poison 2."},
+    "anchor_line": {"name": "Anchor Line", "type": "skill", "icon": "shield", "cost": 1, "block": 4, "ally_block": 4, "ally_grip": 1, "target": "ally", "text": "Both gain 4 Block; your ally climbs +1."},
+    "crest_strike": {"name": "Crest Strike", "type": "attack", "icon": "sword", "cost": 2, "damage": 4, "damage_per_foothold": 3, "timed": true, "timed_damage": 4, "target": "enemy", "text": "Time it! 4 (+4 nailed), +3 per Height climbed."},
+    "build_bomb": {"name": "Build Bomb", "type": "skill", "icon": "gadget", "cost": 0, "create": "bomb", "text": "Build a Bomb into your hand."},
+    "bomb": {"name": "Bomb", "type": "attack", "icon": "bomb", "cost": 0, "damage": 4, "timed": true, "timed_hits": 2, "timed_damage": 12, "target": "enemy", "text": "Time it twice! 4 (+12 nailed). Miss and it fizzles."}
   },
   "starter_deck": ["slash", "slash", "slash", "brace", "brace", "scramble", "scramble", "take_aim", "cleave", "cover"],
   "reward_pool": ["rally", "expose", "draw_aggro", "harpoon", "grip", "sunlight_blade", "bowshot", "sharpen", "rend", "dagger", "flurry", "cleave", "cover", "brace", "slash", "take_aim", "pounce", "flick", "lash_out", "piton_drive", "piston_punch", "haul", "tongue_snap", "hop", "leapfrog", "toxic_lash", "overgrowth", "blightbloom", "summit_strike", "belay", "pitons_in"]

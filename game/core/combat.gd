@@ -213,6 +213,7 @@ func _meld_cards(a: Card, b: Card) -> Card:
 		"damage_per_foothold": a.damage_per_foothold + b.damage_per_foothold,
 		"damage_per_ally_foothold": a.damage_per_ally_foothold + b.damage_per_ally_foothold,
 		"damage_per_rhythm": a.damage_per_rhythm + b.damage_per_rhythm,
+		"rhythm": a.rhythm + b.rhythm,
 		"grip_per_rhythm": a.grip_per_rhythm + b.grip_per_rhythm,
 		"damage_per_wound": a.damage_per_wound + b.damage_per_wound,
 		"strength": a.strength + b.strength,
@@ -383,6 +384,9 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		_draw(ps, card.draw)
 		_log("%s plays %s — draw %d." % [who, card.name, card.draw])
 
+	if card.rhythm > 0:
+		ps.rhythm += card.rhythm
+		_log("%s plays %s — +%d Rhythm." % [who, card.name, card.rhythm])
 	if card.timed:  # landing a timed card builds Rhythm this turn (Frog combo payoff)
 		ps.rhythm += 1
 	_check_weakpoint_buck(pi)
