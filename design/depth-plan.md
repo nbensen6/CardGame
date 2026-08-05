@@ -59,12 +59,18 @@ Thin (remove a card, floors at 5), or Sharpen (upgrade). `Card.upgraded_copy()`
 is one generic rule (bump the numbers a card uses; if it has none, cost -1) so
 new cards get upgrades free. Rewards are **skippable**.
 
-### 3. Fight variety — not every fight is a titan
+### 3. Fight variety — not every fight is a titan ✅ SHIPPED `d31c629`
 Specific to our mechanic: the climb is slow and ceremonial, so it should feel
 like an act boss. All four fights are currently the same shape, so the ritual
 never varies. Add quick regular fights that *twist* the climb — a low-slung beast
 with a ground-level weak point, a swarm that punishes being separated, an enemy
 that rewards staying at the base.
+
+**Shipped:** four move types that bend position — `swipe_low` (only hunters on
+the ground), `swipe_high` (only hunters off it), `rift` (damage scales with the
+Height GAP between hunters), `shift_sigil` (the weak point moves mid-fight) — and
+four beasts built around them. The intent row computes conditional targeting, so
+the twist telegraphs itself.
 
 ### 4. Relics that change rules, not numbers ✅ SHIPPED `c10a366`
 8 relics today, mostly flat bonuses. They should hook our unique systems:
@@ -75,17 +81,29 @@ reset between turns," "falling costs no HP."* ~30 of those and runs feel authore
 grip timer, timing windows, Rhythm and the weak-point threshold. Two are
 client-side (grip seconds, timing width) and travel in the snapshot.
 
-### 5. Archetype-aware reward pools
+### 5. Archetype-aware reward pools ✅ SHIPPED `358bf5d`
 The 31-card pool is shared across all four characters, so you can't draft
 *toward* anything. Each class needs its own pool containing 2–3 discoverable
 archetypes (Frog: rhythm-chaining vs. hit-and-run; Goblin: gadget-spam vs.
 one-huge-swing). "I'm building the poison deck this run" is the missing feeling.
 
-### 6. Ascension ladder + unlocks
+**Shipped:** every character has its own `reward_pool` (archetype cards +
+neutrals); each hunter drafts from theirs, so two players build different decks
+off the same fight. Eight new cards seed the archetypes, plus a `rhythm` card
+field so the Frog's combo has a starter.
+
+### 6. Ascension ladder + unlocks ✅ SHIPPED
 The long tail — last. Reason to play run #20.
 
-Once 1–3 exist, generating the content mountain (75+ cards, 30 relics, 15 events)
-is cheap.
+**Shipped:** 8 cumulative tiers (`data/ascension.json`), unlocked by clearing the
+one below and persisted in `user://progress.cfg`; chosen at the menu.
+
+**All six items are now shipped.** Remaining known gaps: shop nodes (needs a gold
+economy), and a real balance pass — the run is deliberately untuned while the
+structure was moving (see the memory note on not balancing yet).
+
+Content as of this pass: 56 cards · 26 relics · 14 beasts (6 fight / 4 elite /
+4 Titan) · 10 events · 8 ascension tiers · 4 characters with their own pools.
 
 ---
 
