@@ -43,6 +43,7 @@ var draw: int          # extra cards drawn
 var target: String     # "self" | "ally" | "enemy" — who the card acts on (UI clarity)
 var icon: String       # optional icon-key override (else the view infers one from effects)
 var text: String       # rules text, shown on the card face (no hover needed — §5)
+var upgraded: bool     # a campfire-sharpened card (name gets a +)
 
 static func from_dict(d: Dictionary) -> Card:
 	var c := Card.new()
@@ -84,4 +85,53 @@ static func from_dict(d: Dictionary) -> Card:
 	c.target = String(d.get("target", "self"))
 	c.icon = String(d.get("icon", ""))
 	c.text = String(d.get("text", ""))
+	c.upgraded = bool(d.get("upgraded", false))
 	return c
+
+
+## Every field, so a card can be copied or upgraded without losing anything.
+func to_dict() -> Dictionary:
+	return {
+		"id": id, "name": name, "type": type, "cost": cost, "damage": damage,
+		"block": block, "block_per_play": block_per_play, "ally_block": ally_block,
+		"ally_energy": ally_energy, "vulnerable": vulnerable, "taunt": taunt,
+		"grip": grip, "ally_grip": ally_grip, "pull_ally": pull_ally,
+		"sac_ally_grip": sac_ally_grip, "exhaust_pick": exhaust_pick,
+		"cheapen_pick": cheapen_pick, "cheapen_amount": cheapen_amount, "meld": meld,
+		"prepare": prepare, "create": create,
+		"timed": timed, "timed_hits": timed_hits, "timed_grip": timed_grip,
+		"timed_damage": timed_damage,
+		"damage_per_vulnerable": damage_per_vulnerable,
+		"damage_per_foothold": damage_per_foothold,
+		"damage_per_ally_foothold": damage_per_ally_foothold,
+		"damage_per_rhythm": damage_per_rhythm, "grip_per_rhythm": grip_per_rhythm,
+		"damage_per_wound": damage_per_wound,
+		"strength": strength, "wound": wound, "hits": hits, "draw": draw,
+		"target": target, "icon": icon, "text": text, "upgraded": upgraded,
+	}
+
+
+## A sharpened copy (campfire). One generic rule so every card — including ones
+## we invent later — can be upgraded without hand-authoring a second version:
+## bump whatever numbers the card actually uses; if it has none, make it cheaper.
+func upgraded_copy() -> Card:
+	var d := to_dict()
+	if upgraded:
+		return Card.from_dict(d)  # already sharpened — no double-dipping
+	var bumped := false
+	for key in ["damage", "block", "ally_block", "timed_damage"]:
+		if int(d[key]) > 0:
+			d[key] = int(d[key]) + 3
+			bumped = true
+	for key in ["grip", "ally_grip", "timed_grip", "vulnerable", "wound",
+			"strength", "draw", "block_per_play", "ally_energy",
+			"damage_per_vulnerable", "damage_per_foothold",
+			"damage_per_ally_foothold", "damage_per_rhythm", "damage_per_wound"]:
+		if int(d[key]) > 0:
+			d[key] = int(d[key]) + 1
+			bumped = true
+	if not bumped and int(d["cost"]) > 0:
+		d["cost"] = int(d["cost"]) - 1  # nothing to scale — make it cheaper instead
+	d["name"] = String(d["name"]) + "+"
+	d["upgraded"] = true
+	return Card.from_dict(d)

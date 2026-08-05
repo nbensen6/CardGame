@@ -60,6 +60,17 @@ func pick_event(choice: int) -> void:
 	_send({"type": "pick_event", "choice": choice})
 
 
+## Campfire: "rest" | "remove" | "upgrade" (the latter two name a card in your
+## own deck). Each hunter takes their own action.
+func campfire(action: String, index: int = -1, slot: int = -1) -> void:
+	_send({"type": "campfire", "action": action, "index": index, "slot": slot})
+
+
+## Decline a reward — keeping the deck lean is a real strategy.
+func skip_reward(slot: int = -1) -> void:
+	_send({"type": "skip_reward", "slot": slot})
+
+
 func restart() -> void:
 	_send({"type": "restart"})
 

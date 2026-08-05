@@ -81,6 +81,16 @@ func _on_command(peer_id: int, command: Dictionary) -> void:
 			if not paused and _run != null:
 				_run.pick_event(int(command.get("choice", -1)))
 			_broadcast_state()
+		"campfire":
+			var cs := _acting_slot(peer_id, command)
+			if not paused and _run != null and cs >= 0:
+				_run.campfire_action(cs, String(command.get("action", "")), int(command.get("index", -1)))
+			_broadcast_state()
+		"skip_reward":
+			var sk := _acting_slot(peer_id, command)
+			if not paused and _run != null and sk >= 0:
+				_run.skip_reward(sk)
+			_broadcast_state()
 		"pick_card":
 			var pslot := _acting_slot(peer_id, command)
 			if not paused and _run != null and pslot >= 0:
@@ -198,6 +208,9 @@ func _build_shared() -> Dictionary:
 		}
 	if _run.phase == Run.Phase.EVENT:
 		s["event"] = _run.event
+	if _run.phase == Run.Phase.CAMPFIRE:
+		s["campfire"] = {"done": _run.campfire_done, "min_deck": Run.MIN_DECK,
+			"heal": Run.REST_HEAL}
 	if _run.phase == Run.Phase.COMBAT:
 		var c: Combat = _run.combat
 		var b: Boss = c.boss
@@ -267,6 +280,8 @@ func _slot_private(pi: int) -> Dictionary:
 				"playable": _run.combat.can_play(pi, i),
 			})
 		return {"hand": cards, "energy": ps.energy, "ended": ps.ended_turn}
+	if _run.phase == Run.Phase.CAMPFIRE:
+		return {"deck": _deck_cards(pi), "done": bool(_run.campfire_done[pi])}
 	if _run.phase == Run.Phase.REWARD:
 		var kind := _run.reward_kind
 		var choices: Array = []
@@ -281,6 +296,18 @@ func _slot_private(pi: int) -> Dictionary:
 		return {"reward": {"kind": kind, "choices": choices, "picked": bool(_run.reward_picked[pi])}}
 	return {}
 
+
+## The hunter's persistent deck, as card dicts the view can render.
+func _deck_cards(pi: int) -> Array:
+	var out: Array = []
+	var deck: Array = _run.decks[pi]
+	for i in range(deck.size()):
+		var c: Card = deck[i]
+		out.append({
+			"index": i, "name": c.name, "cost": c.cost, "target": c.target,
+			"text": c.text, "icon": _card_icon(c), "upgraded": c.upgraded,
+		})
+	return out
 
 func _relic_names() -> Array:
 	var out: Array = []
@@ -357,6 +384,7 @@ func _phase_string() -> String:
 	match _run.phase:
 		Run.Phase.MAP: return "map"
 		Run.Phase.EVENT: return "event"
+		Run.Phase.CAMPFIRE: return "campfire"
 		Run.Phase.COMBAT: return "combat"
 		Run.Phase.REWARD: return "reward"
 		Run.Phase.WON: return "won"

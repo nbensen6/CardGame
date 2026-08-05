@@ -85,7 +85,11 @@ func _play_run(seed_value: int, policy: String) -> Dictionary:
 				break
 			run.pick_node(int(open_cols[0]))
 		elif run.phase == Run.Phase.EVENT:
-			run.pick_event(0)  # no event strategy yet — take the first offer
+			run.pick_event(0)
+		elif run.phase == Run.Phase.CAMPFIRE:
+			# no campfire strategy yet — everyone rests
+			for slot in range(run.player_count()):
+				run.campfire_action(slot, "rest")  # no event strategy yet — take the first offer
 		elif run.phase == Run.Phase.REWARD:
 			for slot in range(run.player_count()):
 				if not run.reward_picked[slot]:

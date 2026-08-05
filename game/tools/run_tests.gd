@@ -53,6 +53,9 @@ func _init() -> void:
 	_test_event_choice_applies_effects()
 	_test_event_reward_choice_routes_to_reward()
 	_test_events_load_and_are_well_formed()
+	_test_card_upgrade_bumps_numbers()
+	_test_campfire_rest_remove_upgrade()
+	_test_skip_reward_keeps_the_deck_lean()
 	# grip / ledges (SotC real-time climb)
 	_test_secure_on_holds()
 	_test_next_safe_height()
@@ -501,6 +504,52 @@ func _test_event_reward_choice_routes_to_reward() -> void:
 		"an event that offers loot opens the reward screen; events never kill")
 
 
+func _test_card_upgrade_bumps_numbers() -> void:
+	var slash := Content.make_card("slash")          # 6 damage, cost 1
+	var up := slash.upgraded_copy()
+	var brace := Content.make_card("brace")          # 5 block
+	var up_brace := brace.upgraded_copy()
+	var take_aim := Content.make_card("take_aim")    # draw 2 -> draw 3
+	var up_aim := take_aim.upgraded_copy()
+	var twice := up.upgraded_copy()                  # already sharpened
+	_expect(up.damage == slash.damage + 3 and up.name.ends_with("+") and up.upgraded
+		and up_brace.block == brace.block + 3
+		and up_aim.draw == take_aim.draw + 1
+		and twice.damage == up.damage,
+		"upgrading bumps whatever numbers a card uses, once")
+
+
+func _test_campfire_rest_remove_upgrade() -> void:
+	var run := _map_run()
+	run.hp[0] = 10
+	run.hp[1] = 10
+	run._begin_campfire()
+	var deck_before: int = run.decks[0].size()
+	_expect(run.phase == Run.Phase.CAMPFIRE, "a rest node opens the campfire")
+	run.campfire_action(0, "remove", 0)
+	var thinned: bool = run.decks[0].size() == deck_before - 1
+	# still waiting on hunter 2
+	var waiting: bool = run.phase == Run.Phase.CAMPFIRE
+	var name_before: String = (run.decks[1][0] as Card).name
+	run.campfire_action(1, "upgrade", 0)
+	var sharpened: bool = (run.decks[1][0] as Card).name == name_before + "+"
+	_expect(thinned and waiting and sharpened and run.phase == Run.Phase.MAP,
+		"a campfire thins one deck, sharpens the other, then hands back to the map")
+
+
+func _test_skip_reward_keeps_the_deck_lean() -> void:
+	var run := _map_run()
+	_step_into_combat(run)
+	_force_win(run)
+	var deck_before: int = run.decks[0].size()
+	run.skip_reward(0)
+	var still_waiting: bool = run.phase == Run.Phase.REWARD
+	run.skip_reward(1)
+	_expect(run.decks[0].size() == deck_before and still_waiting
+		and run.phase != Run.Phase.REWARD,
+		"a reward can be declined, leaving the deck untouched")
+
+
 ## Walk the route until a combat node is reached (skipping rest/treasure).
 func _step_into_combat(run: Run) -> void:
 	var guard := 0
@@ -517,6 +566,9 @@ func _step_into_combat(run: Run) -> void:
 			run.pick_node(choice)
 		elif run.phase == Run.Phase.EVENT:
 			run.pick_event(0)
+		elif run.phase == Run.Phase.CAMPFIRE:
+			for slot in range(run.player_count()):
+				run.campfire_action(slot, "rest")
 		elif run.phase == Run.Phase.REWARD:
 			_pick_both(run)
 
@@ -879,6 +931,9 @@ func _test_run_relic_reward_and_full_clear() -> void:
 				_force_win(run)
 			Run.Phase.EVENT:
 				run.pick_event(0)
+			Run.Phase.CAMPFIRE:
+				for slot in range(run.player_count()):
+					run.campfire_action(slot, "rest")
 			Run.Phase.REWARD:
 				if run.reward_kind == "card":
 					saw_card = true

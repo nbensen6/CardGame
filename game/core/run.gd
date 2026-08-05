@@ -11,10 +11,11 @@
 class_name Run
 extends RefCounted
 
-enum Phase { MAP, COMBAT, EVENT, REWARD, WON, LOST }
+enum Phase { MAP, COMBAT, EVENT, CAMPFIRE, REWARD, WON, LOST }
 
 const ENCOUNTERS := ["stone_warden", "gale_serpent", "drowned_colossus", "sunken_warden"]
-const REST_HEAL := 12  # a breather node patches you up
+const REST_HEAL := 12  # a campfire "rest" patches you up
+const MIN_DECK := 5    # you may thin a deck, but not into nothing
 const REWARD_CHOICES := 3
 const HEAL_BETWEEN := 6  # hunters recover a little after each Titan falls
 const PLAYER_HP := 42
@@ -29,6 +30,7 @@ var beast_id: String = ""        # the beast this combat is against
 var event: Dictionary = {}       # the event being resolved (EVENT phase)
 var event_result: String = ""    # flavour text for the choice just taken
 var _seen_events: Array = []     # don't repeat an event while fresh ones remain
+var campfire_done: Array = []    # per hunter: have they taken their campfire action?
 var combat: Combat
 var names: Array = []
 var decks: Array = []            # Array[Array[Card]] per hunter — persists across encounters
@@ -87,9 +89,7 @@ func pick_node(col: int) -> bool:
 	encounter_index = int(node.get("act", 0))
 	match node_type:
 		"rest":
-			for i in range(names.size()):
-				hp[i] = mini(hp[i] + REST_HEAL, max_hp[i])
-			_after_node()
+			_begin_campfire()
 		"treasure":
 			_begin_reward("relic")
 		"event":
@@ -97,6 +97,48 @@ func pick_node(col: int) -> bool:
 		_:  # fight / elite / boss
 			_start_encounter()
 	return true
+
+## A campfire: each hunter chooses to patch up, thin their deck, or sharpen a
+## card. Deck *transformation* is what makes a deckbuilder sharpen instead of
+## just bloat, and the campfire is its natural home.
+func _begin_campfire() -> void:
+	phase = Phase.CAMPFIRE
+	campfire_done = []
+	for _i in range(names.size()):
+		campfire_done.append(false)
+
+
+## `action` is "rest" | "remove" | "upgrade". Removing or sharpening needs
+## `card_index` into that hunter's own deck. Each hunter acts once.
+func campfire_action(slot: int, action: String, card_index: int = -1) -> bool:
+	if phase != Phase.CAMPFIRE:
+		return false
+	if slot < 0 or slot >= names.size() or bool(campfire_done[slot]):
+		return false
+	var deck: Array = decks[slot]
+	match action:
+		"rest":
+			hp[slot] = mini(hp[slot] + REST_HEAL, max_hp[slot])
+		"remove":
+			if card_index < 0 or card_index >= deck.size() or deck.size() <= MIN_DECK:
+				return false
+			deck.remove_at(card_index)
+		"upgrade":
+			if card_index < 0 or card_index >= deck.size():
+				return false
+			var c: Card = deck[card_index]
+			if c.upgraded:
+				return false
+			deck[card_index] = c.upgraded_copy()
+		_:
+			return false
+	campfire_done[slot] = true
+	for done in campfire_done:
+		if not done:
+			return true
+	_after_node()
+	return true
+
 
 ## Roll an unseen event where possible, so a run doesn't repeat itself early.
 func _begin_event() -> void:
@@ -166,6 +208,18 @@ func _after_node() -> void:
 		phase = Phase.WON
 	else:
 		phase = Phase.MAP
+
+## Decline the reward. Keeping a deck lean is a real strategy, so skipping has
+## to be a first-class option rather than a forced pick.
+func skip_reward(slot: int) -> bool:
+	if phase != Phase.REWARD:
+		return false
+	if slot < 0 or slot >= names.size() or bool(reward_picked[slot]):
+		return false
+	reward_picked[slot] = true
+	if _all_picked():
+		_after_node()
+	return true
 
 ## Hunter `slot` picks reward option `choice`. When all have picked, the next
 ## encounter begins.

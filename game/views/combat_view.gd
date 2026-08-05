@@ -38,6 +38,7 @@ var _client: GameClient
 @onready var _grip_meter: ProgressBar = %GripMeter
 @onready var _end_turn_btn: Button = %EndTurn
 @onready var _lock_btn: Button = %LockButton
+@onready var _skip_btn: Button = %SkipButton
 @onready var _switch_btn: Button = %SwitchButton
 @onready var _overlay: Control = %Overlay
 @onready var _result_label: Label = %ResultLabel
@@ -70,6 +71,7 @@ var _climb: Dictionary = {}
 # Card selection (Burn Coal / Catapult): tapping a selection card starts a local
 # pick flow; the chosen hand indices are bundled into one play_card. Empty = idle.
 var _selecting: Dictionary = {}
+var _campfire_pick := ""    # campfire: "remove"/"upgrade" while choosing a card
 var _log_expanded := false   # log ticker: collapsed = last 4 lines, expanded = last 16
 
 
@@ -111,6 +113,12 @@ func _ready() -> void:
 		_selected_char = ""
 		_refresh())
 	_lock_btn.pressed.connect(_on_lock)
+	_skip_btn.pressed.connect(func() -> void:
+		Sfx.play("end_turn")
+		_client.skip_reward(_cmd_slot())
+		_selected_choice = -1
+		if _is_solo():
+			_active_slot = 1 - _active_slot)
 	_log_toggle.pressed.connect(func() -> void:
 		_log_expanded = not _log_expanded
 		_log_toggle.text = "Log ▾" if _log_expanded else "Log ▸"
@@ -214,6 +222,8 @@ func _refresh() -> void:
 	var cur_phase := String(s.get("phase", "combat"))
 	if cur_phase == "reward" and _prev_phase != "reward":
 		_selected_choice = -1
+	if cur_phase != "campfire":
+		_campfire_pick = ""  # sub-state only lives inside the campfire screen
 	_prev_phase = cur_phase
 	if bool(s.get("paused", false)):
 		_show_paused(s)
@@ -229,6 +239,8 @@ func _refresh() -> void:
 			_render_map(s)
 		"event":
 			_render_event(s)
+		"campfire":
+			_render_campfire(s)
 		"combat":
 			_render_combat(s)
 		"reward":
@@ -240,6 +252,7 @@ func _refresh() -> void:
 # --- Combat phase ---------------------------------------------------------
 
 func _render_combat(s: Dictionary) -> void:
+	_skip_btn.visible = false
 	_show_screen(false)
 	_over_sound = false  # reset so the next win/lose plays its sting
 	_overlay.visible = false
@@ -473,6 +486,7 @@ const NODE_LABEL := {
 ## step to are lit and tappable; where you stand is ringed; what's behind you is
 ## dimmed. Either hunter may choose — the route is a shared decision.
 func _render_map(s: Dictionary) -> void:
+	_skip_btn.visible = false
 	_show_screen(true)
 	_overlay.visible = false
 	_top_bar.visible = true
@@ -614,6 +628,7 @@ func _show_screen(map_on: bool, event_on: bool = false) -> void:
 ## A wayside event: a bit of prose and a couple of choices with real stakes.
 ## Shared decision — either hunter may answer.
 func _render_event(s: Dictionary) -> void:
+	_skip_btn.visible = false
 	_show_screen(false, true)
 	_overlay.visible = false
 	_top_bar.visible = true
@@ -656,6 +671,96 @@ func _effect_blurb(eff: Dictionary) -> String:
 	if rw != "":
 		bits.append("choose a " + rw)
 	return "(%s)" % "  ·  ".join(bits) if not bits.is_empty() else ""
+
+
+# --- Campfire (deck transformation) ---------------------------------------
+
+## A campfire: patch up, thin the deck, or sharpen a card. Deck transformation
+## is what lets a deck get *better* instead of merely bigger, so it gets a real
+## decision rather than an automatic heal.
+func _render_campfire(s: Dictionary) -> void:
+	_skip_btn.visible = false
+	_show_screen(false, true)
+	_overlay.visible = false
+	_top_bar.visible = true
+	_boss_hp_bar.visible = false
+	_intent.visible = false
+	var cf: Dictionary = s.get("campfire", {})
+	var priv := _my_private()
+	var done := bool(priv.get("done", false))
+	var deck: Array = priv.get("deck", [])
+	var solo := _is_solo()
+	_boss_name.text = "Campfire"
+	_boss_hp.text = "Act %d of %d" % [int(s.get("encounter", 1)), int(s.get("total_encounters", 4))]
+	_switch_btn.visible = solo
+	_switch_btn.disabled = false
+	if solo:
+		_switch_btn.text = "▶ Switch to %s" % _hunter_name(1 - _active_slot)
+	_event_title.text = "%s rests" % _hunter_name(_me())
+	_clear(_event_choices)
+	if done:
+		_event_text.text = "Done — waiting for your ally."
+		return
+	if _campfire_pick != "":
+		_render_campfire_deck(deck, cf)
+		return
+	_event_text.text = "A quiet hour before the climb. Spend it how you like."
+	_add_campfire_button("Rest — recover %d HP" % int(cf.get("heal", 12)),
+		func() -> void:
+			Sfx.play("reward")
+			_client.campfire("rest", -1, _cmd_slot()))
+	var can_thin: bool = deck.size() > int(cf.get("min_deck", 5))
+	_add_campfire_button("Thin the deck — remove a card" if can_thin else "Thin the deck — deck too small",
+		func() -> void:
+			_campfire_pick = "remove"
+			_refresh(), can_thin)
+	_add_campfire_button("Sharpen — upgrade a card",
+		func() -> void:
+			_campfire_pick = "upgrade"
+			_refresh())
+
+
+func _add_campfire_button(label: String, action: Callable, enabled: bool = true) -> void:
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(460, 46)
+	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	b.text = label
+	b.disabled = not enabled
+	if enabled:
+		b.pressed.connect(action)
+	_event_choices.add_child(b)
+
+
+## Pick which card to remove or sharpen, from your own persistent deck.
+func _render_campfire_deck(deck: Array, _cf: Dictionary) -> void:
+	_event_text.text = ("Choose a card to remove — it leaves your deck for good."
+		if _campfire_pick == "remove" else "Choose a card to sharpen.")
+	var grid := GridContainer.new()
+	grid.columns = 6
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
+	for card in deck:
+		var cv := CardView.new()
+		var upgraded := bool(card.get("upgraded", false))
+		# sharpening an already-sharpened card does nothing, so grey those out
+		var pickable: bool = not (_campfire_pick == "upgrade" and upgraded)
+		grid.add_child(cv)
+		cv.setup(card, pickable)
+		if pickable:
+			var idx := int(card["index"])
+			cv.tapped.connect(func() -> void:
+				Sfx.play("card")
+				_client.campfire(_campfire_pick, idx, _cmd_slot())
+				_campfire_pick = "")
+	_event_choices.add_child(grid)
+	var back := Button.new()
+	back.custom_minimum_size = Vector2(200, 40)
+	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	back.text = "← Back"
+	back.pressed.connect(func() -> void:
+		_campfire_pick = ""
+		_refresh())
+	_event_choices.add_child(back)
 
 
 # --- Reward phase ---------------------------------------------------------
@@ -711,6 +816,9 @@ func _render_reward(s: Dictionary) -> void:
 	# The Lock In button confirms the highlighted choice (fixes accidental picks).
 	_lock_btn.visible = not picked
 	_lock_btn.disabled = picked or _selected_choice < 0
+	# Declining is a real strategy — a lean deck draws its good cards more often.
+	_skip_btn.visible = not picked
+	_skip_btn.text = "Skip — keep the deck lean" if not is_relic else "Skip"
 
 
 func _on_reward_selected(choice: int) -> void:
@@ -751,6 +859,7 @@ func _on_character_selected(character_id: String) -> void:
 # --- Character select (lobby) ---------------------------------------------
 
 func _render_character_select(s: Dictionary) -> void:
+	_skip_btn.visible = false
 	_show_screen(false)
 	_stop_climb()
 	_hand_icon.visible = false
@@ -811,6 +920,7 @@ func _render_character_select(s: Dictionary) -> void:
 # --- Run over -------------------------------------------------------------
 
 func _render_over(s: Dictionary) -> void:
+	_skip_btn.visible = false
 	_show_screen(false)
 	_stop_climb()
 	_overlay.visible = true

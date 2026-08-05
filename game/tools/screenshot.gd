@@ -41,6 +41,12 @@ func _initialize() -> void:
 			g += 1
 			r.pick_node(int(r.available_nodes()[0]))
 		Session.host._broadcast_state()
+	if _state == "campfire":  # open a campfire so deck transformation is checkable
+		var rc: Run = Session.host._run
+		rc.map_row = 0
+		rc.node_type = "rest"
+		rc._begin_campfire()
+		Session.host._broadcast_state()
 	if _state == "event":  # force an event node so the screen can be checked
 		var re: Run = Session.host._run
 		re.map_row = 0
