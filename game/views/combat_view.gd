@@ -16,6 +16,9 @@ var _client: GameClient
 @onready var _boss_hp_bar: ProgressBar = %BossHPBar
 @onready var _intent: HBoxContainer = %Intent
 @onready var _players_row: VBoxContainer = %Players
+@onready var _coach: PanelContainer = %Coach
+@onready var _coach_text: Label = %CoachText
+@onready var _coach_ok: Button = %CoachOk
 @onready var _scene_row: HBoxContainer = %Scene
 @onready var _map_panel: PanelContainer = %MapPanel
 @onready var _map_rows: VBoxContainer = %MapRows
@@ -76,6 +79,7 @@ var _climb: Dictionary = {}
 # pick flow; the chosen hand indices are bundled into one play_card. Empty = idle.
 var _selecting: Dictionary = {}
 var _campfire_pick := ""    # campfire: "remove"/"upgrade" while choosing a card
+var _coach_id := ""         # the onboarding hint currently on screen
 var _log_expanded := false   # log ticker: collapsed = last 4 lines, expanded = last 16
 
 
@@ -115,6 +119,12 @@ func _ready() -> void:
 		_active_slot = 1 - _active_slot
 		_selected_choice = -1
 		_selected_char = ""
+		_refresh())
+	_coach_ok.pressed.connect(func() -> void:
+		if _coach_id != "":
+			Progress.mark_hint_seen(_coach_id)   # taught once, never again
+			_coach_id = ""
+		_coach.visible = false
 		_refresh())
 	_lock_btn.pressed.connect(_on_lock)
 	_skip_btn.pressed.connect(func() -> void:
@@ -238,6 +248,7 @@ func _refresh() -> void:
 		else:
 			_show_waiting(s)
 		return
+	_update_coach(s)
 	match String(s.get("phase", "combat")):
 		"map":
 			_render_map(s)
@@ -466,6 +477,20 @@ func _pick_for_selection(idx: int) -> void:
 func _on_timing_resolved(hit: bool, index: int) -> void:
 	Sfx.play("nail" if hit else "slip")
 	_client.play_card(index, hit, _cmd_slot())
+
+
+## Show the next thing this player hasn't been taught, for the situation they're
+## actually in. Each hint sticks until dismissed, so it can't be missed, but it
+## vanishes on its own if the moment passes.
+func _update_coach(s: Dictionary) -> void:
+	var hint := Coach.hint_for(s, _my_private(), _me())
+	if hint.is_empty():
+		_coach_id = ""
+		_coach.visible = false
+		return
+	_coach_id = String(hint["id"])
+	_coach_text.text = String(hint["text"])
+	_coach.visible = true
 
 
 # --- Map phase (the route) ------------------------------------------------

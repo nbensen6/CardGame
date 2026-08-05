@@ -84,6 +84,38 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 8
 
+[node name="Coach" type="PanelContainer" parent="Margin/Root"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="CoachBox" type="HBoxContainer" parent="Margin/Root/Coach"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="CoachIcon" type="Label" parent="Margin/Root/Coach/CoachBox"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "✦"
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.92, 0.78, 0.42, 1)
+
+[node name="CoachText" type="Label" parent="Margin/Root/Coach/CoachBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+text = ""
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 14
+
+[node name="CoachOk" type="Button" parent="Margin/Root/Coach/CoachBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 34)
+layout_mode = 2
+size_flags_vertical = 4
+text = "Got it"
+
 [node name="Scene" type="HBoxContainer" parent="Margin/Root"]
 unique_name_in_owner = true
 layout_mode = 2

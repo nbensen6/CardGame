@@ -62,6 +62,7 @@ func _init() -> void:
 	_test_per_class_reward_pools()
 	_test_rhythm_card_grants_combo()
 	_test_ascension_makes_the_run_harder()
+	_test_coach_teaches_the_right_thing_first()
 	# grip / ledges (SotC real-time climb)
 	_test_secure_on_holds()
 	_test_next_safe_height()
@@ -724,6 +725,31 @@ func _test_ascension_makes_the_run_harder() -> void:
 	var frailer: bool = hard.max_hp[0] < base.max_hp[0]
 	_expect(tiers.size() >= 8 and cumulative and tougher and frailer,
 		"ascension tiers stack: thicker hides, meaner beasts, and a frailer party")
+
+
+func _test_coach_teaches_the_right_thing_first() -> void:
+	Progress.reset_hints()
+	# standing on the ground under a high weak point: the armoured rule matters most
+	var on_ground := {"phase": "combat", "boss": {"weak_point_height": 3},
+		"players": [{"foothold": 0, "secure": true, "reached": false},
+			{"foothold": 0, "secure": true, "reached": false}]}
+	var first: Dictionary = Coach.hint_for(on_ground, {"hand": []}, 0)
+	# mid-climb with the grip draining outranks everything
+	var climbing := {"phase": "combat", "boss": {"weak_point_height": 3},
+		"players": [{"foothold": 1, "secure": false, "reached": false},
+			{"foothold": 0, "secure": true, "reached": false}]}
+	var urgent: Dictionary = Coach.hint_for(climbing, {"hand": []}, 0)
+	# each hint fires once, ever
+	Progress.mark_hint_seen("armored")
+	var after: Dictionary = Coach.hint_for(on_ground, {"hand": []}, 0)
+	var not_repeated: bool = String(after.get("id", "")) != "armored"
+	# and phases teach their own lesson
+	var on_map: Dictionary = Coach.hint_for({"phase": "map"}, {}, 0)
+	Progress.reset_hints()
+	_expect(String(first.get("id", "")) == "armored"
+		and String(urgent.get("id", "")) == "climbing"
+		and not_repeated and String(on_map.get("id", "")) == "map",
+		"the coach teaches the most urgent unseen rule, once each")
 
 
 ## Walk the route until a combat node is reached (skipping rest/treasure).

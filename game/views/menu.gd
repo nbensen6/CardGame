@@ -19,6 +19,7 @@ const PORT := 9999
 @onready var _asc_text: Label = %AscText
 @onready var _asc_down: Button = %AscDown
 @onready var _asc_up: Button = %AscUp
+@onready var _reset_hints: Button = %ResetHints
 
 ## Chosen difficulty tier. You may pick anything up to what you've unlocked;
 ## clearing a tier unlocks the next (see core/progress.gd).
@@ -32,6 +33,10 @@ func _ready() -> void:
 	_asc_down.pressed.connect(func() -> void: _set_ascension(_ascension - 1))
 	_asc_up.pressed.connect(func() -> void: _set_ascension(_ascension + 1))
 	_refresh_ascension()
+	_reset_hints.pressed.connect(func() -> void:
+		Progress.reset_hints()
+		_reset_hints.text = "Tips will show again"
+		_reset_hints.disabled = true)
 	_solo_btn.pressed.connect(_on_solo)
 	_host_btn.pressed.connect(_on_host)
 	_join_btn.pressed.connect(_on_join)

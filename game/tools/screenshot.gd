@@ -19,6 +19,7 @@ func _initialize() -> void:
 		elif a.begins_with("state="):
 			_state = a.substr(6)
 	_failsafe()  # never hang the machine
+	Progress.reset_hints()  # shots should show onboarding as a new player sees it
 	if _state == "menu":  # just the main menu, no session
 		change_scene_to_file("res://views/menu.tscn")
 		_capture()
