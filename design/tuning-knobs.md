@@ -6,7 +6,7 @@ After any change, re-measure with the balance simulator (bottom of this doc).
 
 ## Difficulty at a glance
 Current (measured — see `design/balance-notes.md`):
-**naive 7% · coordinated 78% · gap +70 · Ascension 8 at 20%.**
+**naive 7% · coordinated 74% · gap +67 · Ascension 8 at 12%.**
 - Too hard? Lower beast HP/damage, or raise `PLAYER_HP` / `HEAL_BETWEEN` / energy.
 - Too easy? The reverse. Watch the *gap* — a big gap means coordination matters.
 
@@ -99,6 +99,13 @@ away with no effect. Class decks lean on these (pounce/flick/lash_out/creeper/
 piton_drive/haul/piston_punch). More timed *climb* cards = more double-timing
 (card sweep + live grip bar). Tune the base-vs-bonus split so a miss stings but a
 whiff-heavy player isn't hopeless; keep ~4-6 reliable non-timed cards per deck.
+
+## Gold & shops — `core/run.gd`
+`GOLD_FIGHT` 25 / `GOLD_ELITE` 55 / `GOLD_BOSS` 80 into a **shared purse**; some
+events pay gold too. Shop prices: `PRICE_CARD` 55, `PRICE_RELIC` 135,
+`PRICE_REMOVE` 70 rising 25 per removal bought in the run. Shop stock is 2 cards
+per hunter (own pool) + 2 team relics + a removal per hunter. Shop frequency is
+the `shop` weight in `RunMap._roll_type`.
 
 ## Reward pacing
 Set by map node type in `Run.pick_node`/`sync`: fights pay a **card**, elites and

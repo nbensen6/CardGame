@@ -40,11 +40,11 @@ plays the hand in order with no plan — an honest floor.
 *(Re-measured after shop nodes landed — shops displaced some treasure and rest
 nodes, which cost the coordinated team a few points.)*
 
-**Coordination is worth +70 points.** That's the design pillar holding: two
+**Coordination is worth +67 points.** That's the design pillar holding: two
 hunters playing as a team win most runs; two playing solo-style lose almost all.
 
 Shape checks that matter as much as the headline:
-- **A good team's losses skew late** (1 / 19 / 13 / 12) — runs are decided deep,
+- **A good team's losses skew late** (0 / 22 / 22 / 8) — runs are decided deep,
   not at the door. Act 1 teaches; act 2 onward tests.
 - **Fights last 2–5 rounds**, up from 2–3. Beasts now get turns, so their
   telegraphs and the climb actually matter.
@@ -98,7 +98,7 @@ copies, with a regression test.
 ## Caveats worth remembering
 
 - The coordinated AI is **near-optimal at card sequencing** while only being human
-  at timing. Real players sequence worse, so treat 78% as a ceiling — a good human
+  at timing. Real players sequence worse, so treat 74% as a ceiling — a good human
   is probably 60–70%.
 - The sim measures **balance, not fun**. It cannot tell you whether the climb
   feels good, only whether the numbers are survivable.
