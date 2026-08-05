@@ -42,6 +42,13 @@ func _initialize() -> void:
 			g += 1
 			r.pick_node(int(r.available_nodes()[0]))
 		Session.host._broadcast_state()
+	if _state == "shop":  # stock a trader so the screen can be checked
+		var rs: Run = Session.host._run
+		rs.gold = 260
+		rs.map_row = 0
+		rs.node_type = "shop"
+		rs._begin_shop()
+		Session.host._broadcast_state()
 	if _state == "campfire":  # open a campfire so deck transformation is checkable
 		var rc: Run = Session.host._run
 		rc.map_row = 0

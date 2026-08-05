@@ -112,6 +112,8 @@ func _play_run(seed_value: int, policy: String, ascension: int = 0) -> Dictionar
 		elif run.phase == Run.Phase.CAMPFIRE:
 			for slot in range(run.player_count()):
 				_campfire(run, slot, policy)
+		elif run.phase == Run.Phase.SHOP:
+			_shop(run, policy)
 		elif run.phase == Run.Phase.REWARD:
 			for slot in range(run.player_count()):
 				if not run.reward_picked[slot]:
@@ -238,6 +240,34 @@ func _pick_node(run: Run, open_cols: Array, policy: String) -> int:
 			if String(run.map.node_at(run.map_row + 1, int(col)).get("type", "")) == String(kind):
 				return int(col)
 	return int(open_cols[0])
+
+
+## Shop: a coordinated team buys removals first (the best gold sink in a
+## deckbuilder), then relics, then cards. Naive buys the first thing it can.
+func _shop(run: Run, policy: String) -> void:
+	var guard := 0
+	while guard < 12:
+		guard += 1
+		var want: Array = ["remove", "relic", "card"] if policy == "coordinated" else ["card", "relic", "remove"]
+		var bought := false
+		for kind in want:
+			for i in range(run.shop_stock.size()):
+				var item: Dictionary = run.shop_stock[i]
+				if bool(item["sold"]) or String(item["kind"]) != String(kind):
+					continue
+				if run.gold < int(item["price"]):
+					continue
+				if String(kind) == "remove":
+					bought = run.buy(i, 0)
+				else:
+					bought = run.buy(i)
+				if bought:
+					break
+			if bought:
+				break
+		if not bought:
+			break
+	run.leave_shop()
 
 
 ## Campfire: patch up when hurt, otherwise sharpen the deck.

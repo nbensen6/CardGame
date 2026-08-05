@@ -63,6 +63,7 @@ func _init() -> void:
 	_test_rhythm_card_grants_combo()
 	_test_ascension_makes_the_run_harder()
 	_test_coach_teaches_the_right_thing_first()
+	_test_gold_and_shop()
 	# grip / ledges (SotC real-time climb)
 	_test_secure_on_holds()
 	_test_next_safe_height()
@@ -752,6 +753,56 @@ func _test_coach_teaches_the_right_thing_first() -> void:
 		"the coach teaches the most urgent unseen rule, once each")
 
 
+func _test_gold_and_shop() -> void:
+	var run := _map_run()
+	var start_gold: int = run.gold
+	_step_into_combat(run)
+	_force_win(run)
+	var earned: bool = run.gold > start_gold   # beasts pay
+	_pick_both(run)
+	# stock a shop by hand and trade against it
+	run.gold = 500
+	run.map_row = 0
+	run.node_type = "shop"
+	run._begin_shop()
+	var stocked: bool = run.phase == Run.Phase.SHOP and run.shop_stock.size() >= 4
+	# buy the first card on offer
+	var card_i := -1
+	for i in range(run.shop_stock.size()):
+		if String(run.shop_stock[i]["kind"]) == "card":
+			card_i = i
+			break
+	var slot := int(run.shop_stock[card_i]["slot"])
+	var deck_before: int = run.decks[slot].size()
+	var purse_before: int = run.gold
+	var bought: bool = run.buy(card_i)
+	var got_card: bool = run.decks[slot].size() == deck_before + 1 and run.gold < purse_before
+	var twice: bool = run.buy(card_i)   # already sold
+	# removal is priced up each time it's used
+	var rem_i := -1
+	for i in range(run.shop_stock.size()):
+		if String(run.shop_stock[i]["kind"]) == "remove":
+			rem_i = i
+			break
+	var rslot := int(run.shop_stock[rem_i]["slot"])
+	var rdeck_before: int = run.decks[rslot].size()
+	var first_price: int = run.remove_price()
+	run.buy(rem_i, 0)
+	var thinned: bool = run.decks[rslot].size() == rdeck_before - 1
+	var pricier: bool = run.remove_price() > first_price
+	# can't buy what you can't afford
+	run.gold = 0
+	var broke := false
+	for i in range(run.shop_stock.size()):
+		if not bool(run.shop_stock[i]["sold"]):
+			broke = not run.buy(i)
+			break
+	run.leave_shop()
+	_expect(earned and stocked and bought and got_card and not twice
+		and thinned and pricier and broke and run.phase == Run.Phase.MAP,
+		"gold is earned, the shop trades, removal gets pricier, and you can't overspend")
+
+
 ## Walk the route until a combat node is reached (skipping rest/treasure).
 func _step_into_combat(run: Run) -> void:
 	var guard := 0
@@ -771,6 +822,8 @@ func _step_into_combat(run: Run) -> void:
 		elif run.phase == Run.Phase.CAMPFIRE:
 			for slot in range(run.player_count()):
 				run.campfire_action(slot, "rest")
+		elif run.phase == Run.Phase.SHOP:
+			run.leave_shop()
 		elif run.phase == Run.Phase.REWARD:
 			_pick_both(run)
 
@@ -1136,6 +1189,8 @@ func _test_run_relic_reward_and_full_clear() -> void:
 			Run.Phase.CAMPFIRE:
 				for slot in range(run.player_count()):
 					run.campfire_action(slot, "rest")
+			Run.Phase.SHOP:
+				run.leave_shop()
 			Run.Phase.REWARD:
 				if run.reward_kind == "card":
 					saw_card = true

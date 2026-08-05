@@ -94,6 +94,14 @@ func _on_command(peer_id: int, command: Dictionary) -> void:
 			if not paused and _run != null and sk >= 0:
 				_run.skip_reward(sk)
 			_broadcast_state()
+		"buy":
+			if not paused and _run != null:
+				_run.buy(int(command.get("index", -1)), int(command.get("card_index", -1)))
+			_broadcast_state()
+		"leave_shop":
+			if not paused and _run != null:
+				_run.leave_shop()
+			_broadcast_state()
 		"pick_card":
 			var pslot := _acting_slot(peer_id, command)
 			if not paused and _run != null and pslot >= 0:
@@ -204,6 +212,7 @@ func _build_shared() -> Dictionary:
 		"disconnected_slot": _disconnected_slot,
 		"solo": _solo,
 		"ascension": _ascension,
+		"gold": _run.gold,
 		# Relic effects the CLIENT owns (the grip timer and timing windows are
 		# client-side skill, so their relics have to travel in the snapshot).
 		"mods": _run.relic_totals(),
@@ -216,6 +225,8 @@ func _build_shared() -> Dictionary:
 		}
 	if _run.phase == Run.Phase.EVENT:
 		s["event"] = _run.event
+	if _run.phase == Run.Phase.SHOP:
+		s["shop"] = {"stock": _run.shop_stock, "min_deck": Run.MIN_DECK}
 	if _run.phase == Run.Phase.CAMPFIRE:
 		s["campfire"] = {"done": _run.campfire_done, "min_deck": Run.MIN_DECK,
 			"heal": Run.REST_HEAL}
@@ -290,6 +301,8 @@ func _slot_private(pi: int) -> Dictionary:
 		return {"hand": cards, "energy": ps.energy, "ended": ps.ended_turn}
 	if _run.phase == Run.Phase.CAMPFIRE:
 		return {"deck": _deck_cards(pi), "done": bool(_run.campfire_done[pi])}
+	if _run.phase == Run.Phase.SHOP:
+		return {"deck": _deck_cards(pi)}
 	if _run.phase == Run.Phase.REWARD:
 		var kind := _run.reward_kind
 		var choices: Array = []
@@ -393,6 +406,7 @@ func _phase_string() -> String:
 		Run.Phase.MAP: return "map"
 		Run.Phase.EVENT: return "event"
 		Run.Phase.CAMPFIRE: return "campfire"
+		Run.Phase.SHOP: return "shop"
 		Run.Phase.COMBAT: return "combat"
 		Run.Phase.REWARD: return "reward"
 		Run.Phase.WON: return "won"

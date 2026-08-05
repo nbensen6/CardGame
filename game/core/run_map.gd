@@ -79,13 +79,15 @@ func _roll_type(row_in_act: int, rng: RandomNumberGenerator) -> String:
 		if roll < 82:
 			return "event"
 		return "elite"
-	if roll < 36:
+	if roll < 34:
 		return "fight"
-	if roll < 58:
+	if roll < 54:
 		return "event"
-	if roll < 76:
+	if roll < 70:
 		return "elite"
-	if roll < 90:
+	if roll < 82:
+		return "shop"
+	if roll < 92:
 		return "treasure"
 	return "rest"
 

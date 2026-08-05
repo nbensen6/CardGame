@@ -11,11 +11,18 @@
 class_name Run
 extends RefCounted
 
-enum Phase { MAP, COMBAT, EVENT, CAMPFIRE, REWARD, WON, LOST }
+enum Phase { MAP, COMBAT, EVENT, CAMPFIRE, SHOP, REWARD, WON, LOST }
 
 const ENCOUNTERS := ["stone_warden", "gale_serpent", "drowned_colossus", "sunken_warden"]
 const REST_HEAL := 9   # a campfire "rest" patches you up
 const MIN_DECK := 5    # you may thin a deck, but not into nothing
+# Gold is a SHARED purse — "do we buy your card or my relic?" is a co-op decision.
+const GOLD_FIGHT := 25
+const GOLD_ELITE := 55
+const GOLD_BOSS := 80
+const PRICE_CARD := 55
+const PRICE_RELIC := 135
+const PRICE_REMOVE := 70   # rises each time it's used in a run
 const REWARD_CHOICES := 3
 const HEAL_BETWEEN := 4  # hunters recover a little after each beast falls
 const PLAYER_HP := 42
@@ -31,6 +38,9 @@ var event: Dictionary = {}       # the event being resolved (EVENT phase)
 var event_result: String = ""    # flavour text for the choice just taken
 var _seen_events: Array = []     # don't repeat an event while fresh ones remain
 var campfire_done: Array = []    # per hunter: have they taken their campfire action?
+var gold: int = 0                # the team's shared purse
+var shop_stock: Array = []       # SHOP phase: [{kind, slot, id, name, text, price, sold}]
+var removes_bought: int = 0      # each removal costs more than the last
 var ascension: int = 0           # difficulty tier (0 = base); see data/ascension.json
 var _asc: Dictionary = {}        # cumulative ascension modifiers
 var combat: Combat
@@ -100,9 +110,92 @@ func pick_node(col: int) -> bool:
 			_begin_reward("relic")
 		"event":
 			_begin_event()
+		"shop":
+			_begin_shop()
 		_:  # fight / elite / boss
 			_start_encounter()
 	return true
+
+func _gold_for(kind: String) -> int:
+	match kind:
+		"elite": return GOLD_ELITE
+		"boss": return GOLD_BOSS
+		_: return GOLD_FIGHT
+
+
+## Stock a shop: a couple of cards from each hunter's own pool, team relics, and
+## the single most valuable service in a deckbuilder — removing a card.
+func _begin_shop() -> void:
+	phase = Phase.SHOP
+	shop_stock = []
+	for slot in range(names.size()):
+		var pool: Array = Content.reward_pool(_character_of(slot))
+		for _n in range(2):
+			if pool.is_empty():
+				break
+			var cid := String(pool[_rng.randi_range(0, pool.size() - 1)])
+			pool.erase(cid)
+			var card := Content.make_card(cid)
+			shop_stock.append({"kind": "card", "slot": slot, "id": cid, "name": card.name,
+				"text": card.text, "price": PRICE_CARD, "sold": false})
+	var relics: Array = Content.relic_pool()
+	for _r in range(2):
+		if relics.is_empty():
+			break
+		var rid := String(relics[_rng.randi_range(0, relics.size() - 1)])
+		relics.erase(rid)
+		var relic := Content.make_relic(rid)
+		shop_stock.append({"kind": "relic", "slot": -1, "id": rid,
+			"name": String(relic.get("name", rid)), "text": String(relic.get("text", "")),
+			"price": PRICE_RELIC, "sold": false})
+	for slot2 in range(names.size()):
+		shop_stock.append({"kind": "remove", "slot": slot2, "id": "", "name": "Thin the deck",
+			"text": "Remove a card from %s's deck for good." % names[slot2],
+			"price": remove_price(), "sold": false})
+
+
+## Removal gets pricier each time — you can't just delete your whole deck.
+func remove_price() -> int:
+	return PRICE_REMOVE + removes_bought * 25
+
+
+## Buy stock item `index`. A removal also names a card in that hunter's deck.
+func buy(index: int, card_index: int = -1) -> bool:
+	if phase != Phase.SHOP or index < 0 or index >= shop_stock.size():
+		return false
+	var item: Dictionary = shop_stock[index]
+	if bool(item["sold"]) or gold < int(item["price"]):
+		return false
+	var slot := int(item["slot"])
+	match String(item["kind"]):
+		"card":
+			decks[slot].append(Content.make_card(String(item["id"])))
+		"relic":
+			team_relics.append(Content.make_relic(String(item["id"])))
+		"remove":
+			var deck: Array = decks[slot]
+			if card_index < 0 or card_index >= deck.size() or deck.size() <= MIN_DECK:
+				return false
+			deck.remove_at(card_index)
+			removes_bought += 1
+			# the next removal in this shop reprices immediately
+			for other in shop_stock:
+				if String(other["kind"]) == "remove" and not bool(other["sold"]):
+					other["price"] = remove_price()
+		_:
+			return false
+	gold -= int(item["price"])
+	item["sold"] = true
+	return true
+
+
+## Walk away from the shop and carry on up the route.
+func leave_shop() -> bool:
+	if phase != Phase.SHOP:
+		return false
+	_after_node()
+	return true
+
 
 ## A campfire: each hunter chooses to patch up, thin their deck, or sharpen a
 ## card. Deck *transformation* is what makes a deckbuilder sharpen instead of
@@ -185,6 +278,7 @@ func pick_event(choice: int) -> bool:
 			# Events bruise but never end a run — no death without a fight.
 			hp[i] = clampi(hp[i] + h, 1, max_hp[i])
 		hp[i] = mini(hp[i], max_hp[i])
+	gold += int(eff.get("gold", 0))
 	if bool(eff.get("relic", false)):
 		var pool: Array = Content.relic_pool()
 		if not pool.is_empty():
@@ -203,6 +297,7 @@ func sync() -> void:
 		return
 	if combat.result() == Combat.Result.WIN:
 		_bank_hp()
+		gold += _gold_for(node_type)
 		# elites and Titans pay a relic; ordinary beasts pay a card
 		_begin_reward("relic" if node_type in ["elite", "boss"] else "card")
 	else:

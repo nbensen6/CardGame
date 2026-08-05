@@ -71,6 +71,16 @@ func skip_reward(slot: int = -1) -> void:
 	_send({"type": "skip_reward", "slot": slot})
 
 
+## Buy shop stock item `index`. A removal also names a card in that deck.
+## The purse is shared, so either hunter may spend it.
+func buy(index: int, card_index: int = -1) -> void:
+	_send({"type": "buy", "index": index, "card_index": card_index})
+
+
+func leave_shop() -> void:
+	_send({"type": "leave_shop"})
+
+
 func restart() -> void:
 	_send({"type": "restart"})
 

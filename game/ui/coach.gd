@@ -24,6 +24,9 @@ static func hint_for(shared: Dictionary, private: Dictionary, me: int) -> Dictio
 		"event":
 			candidates.append({"id": "event",
 				"text": "Wayside choices have real stakes, and each button says exactly what it costs or gives."})
+		"shop":
+			candidates.append({"id": "shop",
+				"text": "One purse between you — gold is shared. Removing a card is often worth more than buying one."})
 		"campfire":
 			candidates.append({"id": "campfire",
 				"text": "Rest to heal — or spend the hour on your deck. Removing a weak card makes you draw your best ones more often."})

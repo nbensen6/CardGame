@@ -80,6 +80,7 @@ var _climb: Dictionary = {}
 var _selecting: Dictionary = {}
 var _campfire_pick := ""    # campfire: "remove"/"upgrade" while choosing a card
 var _coach_id := ""         # the onboarding hint currently on screen
+var _shop_pick := -1        # shop: which removal slot is choosing a card
 var _log_expanded := false   # log ticker: collapsed = last 4 lines, expanded = last 16
 
 
@@ -238,6 +239,8 @@ func _refresh() -> void:
 		_selected_choice = -1
 	if cur_phase != "campfire":
 		_campfire_pick = ""  # sub-state only lives inside the campfire screen
+	if cur_phase != "shop":
+		_shop_pick = -1
 	_prev_phase = cur_phase
 	if bool(s.get("paused", false)):
 		_show_paused(s)
@@ -256,6 +259,8 @@ func _refresh() -> void:
 			_render_event(s)
 		"campfire":
 			_render_campfire(s)
+		"shop":
+			_render_shop(s)
 		"combat":
 			_render_combat(s)
 		"reward":
@@ -500,6 +505,7 @@ const NODE_ICONS := {
 	"elite": preload("res://assets/icons/skull.png"),
 	"rest": preload("res://assets/icons/campfire.png"),
 	"treasure": preload("res://assets/icons/award.png"),
+	"shop": preload("res://assets/icons/pouch.png"),
 }
 const NODE_TINT := {
 	"fight": Color(0.82, 0.44, 0.34),
@@ -507,10 +513,11 @@ const NODE_TINT := {
 	"rest": Color(0.62, 0.80, 0.52),
 	"treasure": Color(0.90, 0.78, 0.42),
 	"boss": Color(0.95, 0.55, 0.42),
+	"shop": Color(0.65, 0.82, 0.72),
 }
 const NODE_LABEL := {
 	"fight": "Beast", "elite": "Elite", "rest": "Rest",
-	"treasure": "Relic", "boss": "TITAN",
+	"treasure": "Relic", "shop": "Trader", "boss": "TITAN",
 }
 
 ## The route: rows of nodes drawn bottom-up (you climb the page). Nodes you can
@@ -702,6 +709,107 @@ func _effect_blurb(eff: Dictionary) -> String:
 	if rw != "":
 		bits.append("choose a " + rw)
 	return "(%s)" % "  ·  ".join(bits) if not bits.is_empty() else ""
+
+
+# --- Shop -----------------------------------------------------------------
+
+## The purse is shared, so buying is a conversation: your card or my relic?
+## Removal is here as well as at campfires — it's the most valuable thing gold
+## can buy in a deckbuilder, and it gets pricier each time.
+func _render_shop(s: Dictionary) -> void:
+	_show_screen(false, true)
+	_overlay.visible = false
+	_top_bar.visible = true
+	_boss_hp_bar.visible = false
+	_intent.visible = false
+	var shop: Dictionary = s.get("shop", {})
+	var stock: Array = shop.get("stock", [])
+	var gold := int(s.get("gold", 0))
+	var solo := _is_solo()
+	_switch_btn.visible = solo
+	_switch_btn.disabled = false
+	if solo:
+		_switch_btn.text = "▶ Switch to %s" % _hunter_name(1 - _active_slot)
+	_boss_name.text = "A trader on the road"
+	_boss_hp.text = "Purse: %d gold" % gold
+	_event_title.text = "Wares"
+	_clear(_event_choices)
+	if _shop_pick >= 0:
+		_render_shop_removal(shop)
+		return
+	_event_text.text = "One purse between you. Spend it well."
+	var grid := GridContainer.new()
+	grid.columns = 4
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 10)
+	for i in range(stock.size()):
+		var item: Dictionary = stock[i]
+		grid.add_child(_shop_item_button(item, i, gold))
+	_event_choices.add_child(grid)
+	var leave := Button.new()
+	leave.custom_minimum_size = Vector2(220, 44)
+	leave.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	leave.text = "Move on →"
+	leave.pressed.connect(func() -> void:
+		Sfx.play("end_turn")
+		_client.leave_shop())
+	_event_choices.add_child(leave)
+
+
+func _shop_item_button(item: Dictionary, index: int, gold: int) -> Control:
+	var price := int(item["price"])
+	var sold := bool(item["sold"])
+	var kind := String(item["kind"])
+	var owner_slot := int(item.get("slot", -1))
+	var afford: bool = gold >= price and not sold
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(228, 92)
+	b.disabled = not afford
+	var who := "" if owner_slot < 0 else "  (%s)" % _hunter_name(owner_slot)
+	var head := "SOLD" if sold else "%d gold" % price
+	b.text = "%s%s
+%s
+%s" % [String(item["name"]), who, head, String(item.get("text", ""))]
+	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	if afford:
+		b.pressed.connect(func() -> void:
+			if kind == "remove":
+				_shop_pick = index   # pick which card to burn first
+				_refresh()
+			else:
+				Sfx.play("reward")
+				_client.buy(index))
+	return b
+
+
+## Choosing which card the trader takes off your hands.
+func _render_shop_removal(shop: Dictionary) -> void:
+	var deck: Array = _my_private().get("deck", [])
+	_event_text.text = "Choose a card to remove — it leaves the deck for good."
+	var grid := GridContainer.new()
+	grid.columns = 6
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
+	var can_thin: bool = deck.size() > int(shop.get("min_deck", 5))
+	for card in deck:
+		var cv := CardView.new()
+		grid.add_child(cv)
+		cv.setup(card, can_thin)
+		if can_thin:
+			var idx := int(card["index"])
+			cv.tapped.connect(func() -> void:
+				Sfx.play("reward")
+				_client.buy(_shop_pick, idx)
+				_shop_pick = -1)
+	_event_choices.add_child(grid)
+	var back := Button.new()
+	back.custom_minimum_size = Vector2(200, 40)
+	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	back.text = "← Back"
+	back.pressed.connect(func() -> void:
+		_shop_pick = -1
+		_refresh())
+	_event_choices.add_child(back)
 
 
 # --- Campfire (deck transformation) ---------------------------------------
