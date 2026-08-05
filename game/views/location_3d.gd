@@ -44,6 +44,8 @@ var _client: GameClient
 var _built := ""        # the phase the scene was staged for
 var _active_slot := 0
 var _selected := -1     # reward choice tapped but not yet locked in
+var _deck_pick := ""    # campfire: "remove" | "upgrade" while choosing a card
+var _shop_pick := -1    # shop: the removal being resolved, -1 when idle
 var _time := 0.0
 var _hunters: Array = []
 
@@ -101,9 +103,15 @@ func _refresh() -> void:
 	if phase != _built:
 		_built = phase
 		_selected = -1
+		_deck_pick = ""
+		_shop_pick = -1
 		_stage(s, phase)
 	match phase:
+		"select": _render_select(s)
 		"reward": _render_reward(s)
+		"event": _render_event(s)
+		"campfire": _render_campfire(s)
+		"shop": _render_shop(s)
 		"won", "lost": _render_over(s, phase)
 
 
@@ -124,9 +132,18 @@ func _stage(s: Dictionary, phase: String) -> void:
 		if i >= 6:
 			tile = ["grass", "grass", "grass-forest", "grass-hill"][rng.randi() % 4]
 		_tile(tile, at.x, at.y, rng)
-	if phase == "reward":
+	if phase == "select":
+		pass  # the roster itself is the staging — see _show_roster
+	elif phase == "reward":
 		_lay_out_the_felled(String(s.get("felled", "")))
-	_place_hunters(s)
+	elif phase == "event":
+		_landmark("building-wizard-tower", Vector3(-1.0, 0.0, -1.55))
+	elif phase == "campfire":
+		_landmark("building-cabin", Vector3(-1.0, 0.0, -1.55))
+	elif phase == "shop":
+		_landmark("building-market", Vector3(-1.0, 0.0, -1.55))
+	if phase != "select":
+		_place_hunters(s)
 	# the card row owns the bottom of the screen here too, so the scene is
 	# aimed and offset to sit clear of it — same trick as the combat view
 	_cam.position = Vector3(0.0, 3.5, 6.0)
@@ -165,6 +182,17 @@ func _lay_out_the_felled(beast_id: String) -> void:
 	body.position.y = TILE_TOP - _bounds(body).position.y
 
 
+## A hex landmark stood up as scenery — the same tile the overworld uses for
+## that node type, so arriving somewhere looks like the place you walked to.
+func _landmark(name: String, at: Vector3) -> void:
+	var path := HEX + name + ".glb"
+	if not ResourceLoader.exists(path):
+		return
+	var inst: Node3D = (load(path) as PackedScene).instantiate()
+	inst.position = at
+	_plot.add_child(inst)
+
+
 func _place_hunters(s: Dictionary) -> void:
 	var players: Array = s.get("players", [])
 	for i in range(players.size()):
@@ -180,7 +208,9 @@ func _place_hunters(s: Dictionary) -> void:
 		_plot.add_child(n)
 		_fit_height(n, HUNTER_HEIGHT)
 		n.position = Vector3(-0.78 + 1.56 * float(i), TILE_TOP, -0.15)
-		n.rotation.y = PI + (0.35 if i == 0 else -0.35)  # turned a little inward
+		# facing the camera, angled toward each other — models face +Z, so PI
+		# here would show you nothing but their backs
+		n.rotation.y = 0.4 if i == 0 else -0.4
 		_hunters.append(n)
 
 
@@ -268,6 +298,57 @@ func _render_reward(s: Dictionary) -> void:
 				_render_reward(_client.shared)))
 
 
+# --- wayside events --------------------------------------------------------
+
+func _render_event(s: Dictionary) -> void:
+	var ev: Dictionary = s.get("event", {})
+	_title.text = String(ev.get("title", "On the way"))
+	_subtitle.text = String(ev.get("text", ""))
+	_prompt.text = ""
+	for c in _row.get_children():
+		c.queue_free()
+	for c in _controls.get_children():
+		c.queue_free()
+	# an event can offer more than two choices, so they stack in the card row
+	# rather than crowding the single control strip
+	var stack := VBoxContainer.new()
+	stack.alignment = BoxContainer.ALIGNMENT_END
+	stack.add_theme_constant_override("separation", 8)
+	_row.add_child(stack)
+	for i in range(ev.get("choices", []).size()):
+		var ch: Dictionary = (ev["choices"] as Array)[i]
+		var idx := i
+		var b := _button("%s     %s" % [String(ch.get("label", "…")),
+			_stakes(ch.get("effects", {}))], func() -> void:
+				Sfx.play("card")
+				_client.pick_event(idx))
+		b.custom_minimum_size = Vector2(560, 44)
+		stack.add_child(b)
+
+
+## Spell the stakes out on the button — an event should never be a blind pick.
+## Same rule the 2D screen follows, and the same wording.
+func _stakes(eff: Dictionary) -> String:
+	var bits: Array[String] = []
+	var h := int(eff.get("heal", 0))
+	if h > 0:
+		bits.append("+%d HP" % h)
+	elif h < 0:
+		bits.append("%d HP" % h)
+	var mh := int(eff.get("max_hp", 0))
+	if mh != 0:
+		bits.append("%+d max HP" % mh)
+	var g := int(eff.get("gold", 0))
+	if g != 0:
+		bits.append("%+d gold" % g)
+	if bool(eff.get("relic", false)):
+		bits.append("relic")
+	var rw := String(eff.get("reward", ""))
+	if rw != "":
+		bits.append("choose a " + rw)
+	return "(%s)" % "  ·  ".join(bits) if not bits.is_empty() else ""
+
+
 # --- the run ending --------------------------------------------------------
 
 func _render_over(s: Dictionary, phase: String) -> void:
@@ -299,3 +380,205 @@ func _hunter_name(slot: int) -> String:
 	if slot < 0 or slot >= players.size():
 		return "Hunter %d" % (slot + 1)
 	return String((players[slot] as Dictionary).get("name", "Hunter %d" % (slot + 1)))
+
+
+# --- choosing your hunter --------------------------------------------------
+
+## The lobby, staged like everywhere else. Picking a hunter in 3D means you see
+## the body you'll be climbing with, at the size it'll actually be — which a row
+## of portrait cards never told you.
+func _render_select(s: Dictionary) -> void:
+	var roster: Array = _client.private.get("characters", [])
+	var solo := bool(s.get("solo", false))
+	var slot := int(s.get("current_slot", 0)) if solo else _client.you
+	_title.text = "Choose your hunter" if not solo \
+		else "Choose Hunter %d's climber" % (slot + 1)
+	var joined := int(s.get("joined", 1))
+	var required := int(s.get("required", 1))
+	_subtitle.text = "Waiting for hunters — %d of %d here." % [joined, required] \
+		if joined < required else "Nobody climbs this alone. Pick who you'll be."
+	_clear_ui()
+	_show_roster(roster)
+	for i in range(roster.size()):
+		var c: Dictionary = roster[i]
+		var id := String(c.get("id", ""))
+		var b := _button("%s\n%s" % [String(c.get("name", id)), String(c.get("desc", ""))],
+			func() -> void:
+				Sfx.play("lock")
+				_client.select_character(id, slot if solo else -1))
+		b.custom_minimum_size = Vector2(268, 96)
+		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_controls.add_child(b)
+
+
+## Line the whole roster up on the plot, so the buttons below name bodies you
+## can see rather than words on their own.
+func _show_roster(roster: Array) -> void:
+	for n in _hunters:
+		if is_instance_valid(n):
+			(n as Node3D).queue_free()
+	_hunters.clear()
+	var span := 1.05
+	var left := -span * (float(roster.size()) - 1.0) * 0.5
+	for i in range(roster.size()):
+		var key: String = String(HUNTER_MODEL.get(String((roster[i] as Dictionary).get("id", "")),
+			"bunny"))
+		var path := CAST + key + ".glb"
+		if not ResourceLoader.exists(path):
+			continue
+		var n: Node3D = (load(path) as PackedScene).instantiate()
+		_plot.add_child(n)
+		_fit_height(n, HUNTER_HEIGHT)
+		n.position = Vector3(left + span * float(i), TILE_TOP, -0.4)
+		_hunters.append(n)
+
+
+# --- the campfire ----------------------------------------------------------
+
+func _render_campfire(s: Dictionary) -> void:
+	var cf: Dictionary = s.get("campfire", {})
+	var priv := _my_private()
+	var deck: Array = priv.get("deck", [])
+	var done := bool(priv.get("done", false))
+	_title.text = "Campfire"
+	_clear_ui()
+	if done:
+		_subtitle.text = "%s is done — waiting for your ally." % _hunter_name(_me())
+		_add_switch()
+		return
+	if _deck_pick != "":
+		_subtitle.text = ("Choose a card to remove — it leaves the deck for good."
+			if _deck_pick == "remove" else "Choose a card to sharpen.")
+		var action := _deck_pick
+		_deck_picker(deck, func(i: int) -> void:
+			Sfx.play("reward")
+			_client.campfire(action, i, _cmd_slot())
+			_deck_pick = "")
+		_controls.add_child(_button("Back", func() -> void:
+			_deck_pick = ""
+			_refresh()))
+		return
+	_subtitle.text = "%s rests. A quiet hour before the climb — spend it how you like." \
+		% _hunter_name(_me())
+	var stack := _stack()
+	stack.add_child(_button("Rest — recover %d HP" % int(cf.get("heal", 12)),
+		func() -> void:
+			Sfx.play("reward")
+			_client.campfire("rest", -1, _cmd_slot())))
+	# thinning past the floor would let a deck shrink away to nothing
+	var can_thin: bool = deck.size() > int(cf.get("min_deck", 5))
+	var thin := _button("Thin the deck — remove a card" if can_thin
+		else "Thin the deck — deck too small", func() -> void:
+			_deck_pick = "remove"
+			_refresh())
+	thin.disabled = not can_thin
+	stack.add_child(thin)
+	stack.add_child(_button("Sharpen — upgrade a card", func() -> void:
+		_deck_pick = "upgrade"
+		_refresh()))
+	_add_switch()
+
+
+# --- the trader ------------------------------------------------------------
+
+func _render_shop(s: Dictionary) -> void:
+	var shop: Dictionary = s.get("shop", {})
+	var stock: Array = shop.get("stock", [])
+	var gold := int(s.get("gold", 0))
+	_title.text = "A trader on the road"
+	_clear_ui()
+	if _shop_pick >= 0:
+		_subtitle.text = "Choose a card to remove — it leaves the deck for good."
+		var idx := _shop_pick
+		_deck_picker(_my_private().get("deck", []), func(i: int) -> void:
+			Sfx.play("reward")
+			_client.buy(idx, i)
+			_shop_pick = -1)
+		_controls.add_child(_button("Back", func() -> void:
+			_shop_pick = -1
+			_refresh()))
+		return
+	_subtitle.text = "Purse: %d gold. One purse between you — spend it well." % gold
+	var grid := GridContainer.new()
+	grid.columns = 4
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 6)
+	# hug the bottom, so eight stock items don't bury the place you walked to
+	grid.size_flags_vertical = Control.SIZE_SHRINK_END
+	_row.add_child(grid)
+	for i in range(stock.size()):
+		grid.add_child(_stock_button(stock[i], i, gold))
+	_controls.add_child(_button("Move on →", func() -> void:
+		Sfx.play("end_turn")
+		_client.leave_shop()))
+	_add_switch()
+
+
+func _stock_button(item: Dictionary, index: int, gold: int) -> Button:
+	var price := int(item["price"])
+	var sold := bool(item["sold"])
+	var owner := int(item.get("slot", -1))
+	var who := "" if owner < 0 else "  (%s)" % _hunter_name(owner)
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(258, 74)
+	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	b.text = "%s\n%s%s\n%s" % ["SOLD" if sold else "%d gold" % price,
+		String(item.get("name", "?")), who, String(item.get("text", ""))]
+	b.disabled = sold or gold < price
+	if not b.disabled:
+		var idx := index
+		b.pressed.connect(func() -> void:
+			# a removal has to name a card too, so it opens the deck picker
+			if String(item.get("kind", "")) == "remove":
+				_shop_pick = idx
+				_refresh()
+			else:
+				Sfx.play("reward")
+				_client.buy(idx))
+	return b
+
+
+# --- shared UI helpers -----------------------------------------------------
+
+func _clear_ui() -> void:
+	_prompt.text = ""
+	for c in _row.get_children():
+		c.queue_free()
+	for c in _controls.get_children():
+		c.queue_free()
+
+
+func _stack() -> VBoxContainer:
+	var v := VBoxContainer.new()
+	v.alignment = BoxContainer.ALIGNMENT_END
+	v.add_theme_constant_override("separation", 8)
+	_row.add_child(v)
+	return v
+
+
+## Your persistent deck, as a grid you pick one card from. Compact buttons rather
+## than CardViews: a deck runs well past a dozen cards and full card faces don't
+## fit the strip — the name and cost are what you're choosing on anyway.
+func _deck_picker(deck: Array, on_pick: Callable) -> void:
+	var grid := GridContainer.new()
+	grid.columns = 6
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 6)
+	_row.add_child(grid)
+	for i in range(deck.size()):
+		var card: Dictionary = deck[i]
+		var idx := i
+		var b := _button("%s   ✦%d" % [String(card.get("name", "?")),
+			int(card.get("cost", 0))], func() -> void: on_pick.call(idx))
+		b.custom_minimum_size = Vector2(196, 36)
+		grid.add_child(b)
+
+
+func _add_switch() -> void:
+	if _is_solo():
+		_controls.add_child(_button("▶ Switch to %s" % _hunter_name(1 - _active_slot),
+			func() -> void:
+				_active_slot = 1 - _active_slot
+				_deck_pick = ""
+				_shop_pick = -1
+				_refresh()))

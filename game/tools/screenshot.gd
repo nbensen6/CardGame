@@ -44,7 +44,7 @@ func _initialize() -> void:
 	if _state == "goblin":  # goblin as the ACTIVE hunter (slot 0) — wordiest cards
 		Session.client.select_character("goblin_mech", 0)
 		Session.client.select_character("frog", 1)
-	elif _state != "select":
+	elif _state not in ["select", "3dselect"]:
 		Session.client.select_character("frog", 0)
 		Session.client.select_character("goblin_mech", 1)
 	if _state in ["combat", "goblin", "juice", "climbing", "3d", "3dclimb",
@@ -54,6 +54,19 @@ func _initialize() -> void:
 		while r.phase == Run.Phase.MAP and g < 30:
 			g += 1
 			r.pick_node(int(r.available_nodes()[0]))
+		Session.host._broadcast_state()
+	if _state == "3dshop":  # the same stocked trader, shown by the 3D client
+		var s3: Run = Session.host._run
+		s3.gold = 260
+		s3.map_row = 0
+		s3.node_type = "shop"
+		s3._begin_shop()
+		Session.host._broadcast_state()
+	if _state == "3dcampfire":  # a campfire, shown by the 3D client
+		var c4: Run = Session.host._run
+		c4.map_row = 0
+		c4.node_type = "rest"
+		c4._begin_campfire()
 		Session.host._broadcast_state()
 	if _state == "shop":  # stock a trader so the screen can be checked
 		var rs: Run = Session.host._run
@@ -67,6 +80,12 @@ func _initialize() -> void:
 		rc.map_row = 0
 		rc.node_type = "rest"
 		rc._begin_campfire()
+		Session.host._broadcast_state()
+	if _state == "3devent":  # the same forced event, shown by the 3D client
+		var r3: Run = Session.host._run
+		r3.map_row = 0
+		r3.node_type = "event"
+		r3._begin_event()
 		Session.host._broadcast_state()
 	if _state == "event":  # force an event node so the screen can be checked
 		var re: Run = Session.host._run
@@ -177,7 +196,8 @@ func _initialize() -> void:
 		Session.host._broadcast_state()
 	# 3D clients: the overworld for 3dmap, the combat scene for the rest
 	var scene := "res://views/combat_view.tscn"
-	if _state in ["3dgame", "3dloop", "3dreward", "3dwon"]:
+	if _state in ["3dgame", "3dloop", "3dreward", "3dwon", "3devent",
+			"3dcampfire", "3dshop", "3dselect"]:
 		scene = "res://views/game_3d.tscn"
 	elif _state == "3dmap":
 		scene = "res://views/overworld_3d.tscn"

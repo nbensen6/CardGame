@@ -89,7 +89,7 @@ better starting point than the 2D situation ever was.
    mounted at each phase, not just that it didn't crash.
 
 5. **Traversal co-op** — how two players move together.
-6. **2D-client parity** — what the 3D fight still owes the 2D one. Making the
+6b. **2D-client parity** — what the 3D fight still owes the 2D one. Making the
    router the default turned every gap into a live regression, so these were
    closed straight away: the real-time **grip timer** (3D had timed cards but no
    climb clock, so leaving a hold cost nothing), the **multi-pick cards** (Burn
@@ -111,12 +111,19 @@ better starting point than the 2D situation ever was.
    somewhere, being offered a choice. Only the place and the HUD change, which is
    what keeps each additional phase cheap.
 
-   Done: **reward** (staged over the beast you just felled, on its back on a hex
-   plot — the host now sends `felled` so the view knows which one it was) and
-   **won / lost**. Still on the 2D client: **event, campfire, shop** — the three
-   with substantial UI of their own.
+   All of them are done: **character select** (the whole roster stood on the plot,
+   so you pick a body at the size it'll be rather than a portrait), **event** (the
+   wizard tower, stakes spelled out on every button), **campfire** (the cabin;
+   rest / thin / sharpen, with a compact deck picker), **shop** (the market stall
+   and its stock), **reward** (staged over the beast you just felled, on its back
+   — the host sends `felled` so the view knows which one it was), and **won /
+   lost**.
 
-7. **Retire or keep the 2D client?** Keeping both costs double maintenance on every
+   **The 2D client is now unreachable in normal play.** `game_3d.gd` routes every
+   phase the game reports; `FALLBACK_2D` remains only as a safety net for a phase
+   name the table doesn't know.
+
+8. **Retire or keep the 2D client?** Keeping both costs double maintenance on every
    view change. Recommendation: keep `combat_view.gd` until the 3D one has feature
    parity, then delete it — the tests don't depend on it.
 
