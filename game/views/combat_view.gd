@@ -19,6 +19,7 @@ var _client: GameClient
 @onready var _scene_row: HBoxContainer = %Scene
 @onready var _map_panel: PanelContainer = %MapPanel
 @onready var _map_rows: VBoxContainer = %MapRows
+@onready var _map_edges: MapEdges = %MapEdges
 @onready var _hand_bar: HBoxContainer = %HandBar
 @onready var _arena: Control = %Arena
 @onready var _climb_layer: Control = %Climb
@@ -487,6 +488,7 @@ func _render_map(s: Dictionary) -> void:
 	_boss_name.text = "Choose your route"
 	_boss_hp.text = "Act %d of %d" % [act + 1, int(s.get("total_encounters", 4))]
 	_clear(_map_rows)
+	var buttons := {}  # "row,col" -> the button, so edges can be wired after
 	for r in range(rows.size() - 1, -1, -1):  # the Titan on top — you climb the page
 		var row: Array = rows[r]
 		if int((row[0] as Dictionary).get("act", 0)) != act:
@@ -498,8 +500,33 @@ func _render_map(s: Dictionary) -> void:
 			var node: Dictionary = row[c]
 			var is_here: bool = (r == cur_row and c == cur_col)
 			var is_open: bool = (r == cur_row + 1 and avail.has(c))
-			line.add_child(_map_node_button(node, r < cur_row, is_here, is_open, c, boss_art))
+			var btn := _map_node_button(node, r < cur_row, is_here, is_open, c, boss_art)
+			buttons["%d,%d" % [r, c]] = btn
+			line.add_child(btn)
 		_map_rows.add_child(line)
+	_wire_map_edges(rows, buttons, cur_row, cur_col)
+
+
+## Connect each node to the nodes it leads to, so the route can be read ahead.
+## Steps available right now are drawn bright; the rest are faint guides.
+func _wire_map_edges(rows: Array, buttons: Dictionary, cur_row: int, cur_col: int) -> void:
+	var list: Array = []
+	for key in buttons:
+		var parts := String(key).split(",")
+		var r := int(parts[0])
+		var c := int(parts[1])
+		if r + 1 >= rows.size():
+			continue
+		for n in (rows[r] as Array)[c].get("next", []):
+			var up := "%d,%d" % [r + 1, int(n)]
+			if not buttons.has(up):
+				continue  # the next row belongs to the following act
+			list.append({
+				"from": buttons[key], "to": buttons[up],
+				"open": r == cur_row and c == cur_col,
+			})
+	_map_edges.edges = list
+	_map_edges.queue_redraw()
 
 
 func _map_node_button(node: Dictionary, passed: bool, here: bool, open: bool,
@@ -551,8 +578,9 @@ func _node_style(here: bool, open: bool, passed: bool, hover: bool = false) -> S
 	sb.set_border_width_all(2)
 	sb.set_content_margin_all(6)
 	if here:
-		sb.bg_color = Color(0.26, 0.21, 0.13)
-		sb.border_color = Color(0.92, 0.78, 0.42)   # you are here
+		sb.bg_color = Color(0.34, 0.26, 0.14)
+		sb.border_color = Color(1.0, 0.88, 0.55)    # you are here — brightest, thickest
+		sb.set_border_width_all(4)
 	elif open:
 		sb.bg_color = Color(0.20, 0.18, 0.14) if not hover else Color(0.27, 0.24, 0.18)
 		sb.border_color = Color(0.72, 0.62, 0.40)   # reachable

@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://views/combat_view.gd" id="1_view"]
 [ext_resource type="Texture2D" path="res://assets/bg/arena.png" id="2_bg"]
+[ext_resource type="Script" path="res://ui/map_edges.gd" id="3_edges"]
 
 [node name="CombatView" type="Control"]
 layout_mode = 3
@@ -151,6 +152,12 @@ visible = false
 layout_mode = 2
 size_flags_vertical = 3
 
+[node name="MapEdges" type="Control" parent="Margin/Root/MapPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("3_edges")
+
 [node name="MapScroll" type="ScrollContainer" parent="Margin/Root/MapPanel"]
 layout_mode = 2
 horizontal_scroll_mode = 0
@@ -159,7 +166,9 @@ horizontal_scroll_mode = 0
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 6
+size_flags_vertical = 3
+alignment = 1
+theme_override_constants/separation = 34
 
 [node name="GripBar" type="PanelContainer" parent="Margin/Root"]
 unique_name_in_owner = true

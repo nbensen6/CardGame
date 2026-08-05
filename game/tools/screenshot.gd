@@ -41,6 +41,16 @@ func _initialize() -> void:
 			g += 1
 			r.pick_node(int(r.available_nodes()[0]))
 		Session.host._broadcast_state()
+	if _state == "route":  # one node in, so the map shows where we stand
+		var rr: Run = Session.host._run
+		rr.pick_node(int(rr.available_nodes()[0]))
+		rr.combat.boss.hp = 0
+		rr.combat.phase = Combat.Phase.OVER
+		rr.sync()
+		while rr.phase == Run.Phase.REWARD:
+			for slot in range(rr.player_count()):
+				rr.pick_reward(slot, 0)
+		Session.host._broadcast_state()
 	if _state == "climbing":  # mid-ascent, so marker placement can be checked
 		var c: Combat = Session.host._run.combat
 		c.players[0].foothold = c.boss.weak_point_height      # at the sigil
