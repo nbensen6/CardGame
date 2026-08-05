@@ -16,7 +16,8 @@ var _client: GameClient
 @onready var _boss_hp_bar: ProgressBar = %BossHPBar
 @onready var _intent: HBoxContainer = %Intent
 @onready var _players_row: VBoxContainer = %Players
-@onready var _ladder: VBoxContainer = %Ladder
+@onready var _arena: Control = %Arena
+@onready var _climb_layer: Control = %Climb
 @onready var _boss_art: TextureRect = %BossArt
 @onready var _log_label: Label = %Log
 @onready var _log_toggle: Button = %LogToggle
@@ -253,7 +254,7 @@ func _render_combat(s: Dictionary) -> void:
 	_update_climb_state(s)
 	_log_toggle.visible = true
 	_show_boss_art(String(boss.get("art", "")), int(boss.get("strength", 0)) > 0)
-	_build_ladder(s)
+	_build_climb_arena(s)
 	_render_players(s, targeted)
 	_log_label.text = _log_tail(s)
 	_render_hand()
@@ -447,7 +448,7 @@ func _render_reward(s: Dictionary) -> void:
 	_end_turn_btn.get_parent().visible = true
 	_end_turn_btn.visible = false
 	_boss_art.visible = false
-	_ladder.visible = false
+	_arena.visible = false
 	var solo := _is_solo()
 	_switch_btn.visible = solo
 	_switch_btn.disabled = false  # never inherit combat's mid-climb lock into reward
@@ -537,7 +538,7 @@ func _render_character_select(s: Dictionary) -> void:
 	_end_turn_btn.visible = false
 	_switch_btn.visible = false
 	_boss_art.visible = false
-	_ladder.visible = false
+	_arena.visible = false
 
 	var solo := bool(s.get("solo", false))
 	var current := int(s.get("current_slot", 0)) if solo else _client.you
@@ -923,71 +924,121 @@ func _log_tail(s: Dictionary) -> String:
 	return "\n".join(log.slice(maxi(log.size() - n, 0)))
 
 
-## The shared climb ladder, drawn IN the scene beside the beast: one rung per
-## Height (top = the gold weak point, blue = rest ledges), with each hunter's
-## portrait marker sitting at their current Height. This is the climb made
-## visible — solid blocks below you, outlined blocks still to go.
-func _build_ladder(s: Dictionary) -> void:
-	_clear(_ladder)
-	_ladder.visible = true
+## The beast IS the play space: hunters are markers placed ON its body, the weak
+## point glows at a real spot on it, and ledges are ticks along the route. Height
+## maps to a normalized y between the base (bottom) and the sigil (upper body), so
+## it stays correct at any window size and works with whatever art we swap in.
+const CLIMB_X := 0.5      # the route runs up the centre of the beast
+const BASE_Y := 0.92      # ground level
+const SIGIL_Y := 0.22     # where the weak point sits on the body
+
+func _build_climb_arena(s: Dictionary) -> void:
+	for c in _climb_layer.get_children():
+		c.queue_free()
+	_arena.visible = true
 	var boss: Dictionary = s.get("boss", {})
 	var height := int(boss.get("weak_point_height", 0))
 	if height <= 0:
-		_ladder.visible = false
 		return
-	var ledges: Array = boss.get("ledges", [])
+	# the route itself — a faint line up the body from base to sigil
+	var route := Panel.new()
+	route.add_theme_stylebox_override("panel", _route_style())
+	_place(route, CLIMB_X, (BASE_Y + SIGIL_Y) / 2.0, Vector2(6, 0))
+	route.anchor_top = SIGIL_Y
+	route.anchor_bottom = BASE_Y
+	route.offset_top = 0.0
+	route.offset_bottom = 0.0
+	# ledge ticks along the route
+	for l in boss.get("ledges", []):
+		var tick := Panel.new()
+		tick.add_theme_stylebox_override("panel", _ledge_style())
+		_place(tick, CLIMB_X, _climb_y(int(l), height), Vector2(54, 5))
+	# the weak point — a pulsing gold burst on the beast's body
+	var wp := TextureRect.new()
+	wp.texture = FX_BURST
+	wp.modulate = Color(1.0, 0.82, 0.35, 0.95)
+	wp.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	wp.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_place(wp, CLIMB_X, SIGIL_Y, Vector2(64, 64))
+	wp.pivot_offset = Vector2(32, 32)
+	var pulse := wp.create_tween().set_loops()
+	pulse.tween_property(wp, "scale", Vector2(1.15, 1.15), 0.7).set_trans(Tween.TRANS_SINE)
+	pulse.tween_property(wp, "scale", Vector2(0.9, 0.9), 0.7).set_trans(Tween.TRANS_SINE)
+	# the hunters, on the beast at their Heights
 	var players: Array = s.get("players", [])
-	var max_fh := 0
-	for p in players:
-		max_fh = maxi(max_fh, int(p.get("foothold", 0)))
-	for lvl in range(height, -1, -1):  # top (sigil) down to the base (0)
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 6)
-		row.alignment = BoxContainer.ALIGNMENT_END
-		# hunters standing at this Height (clamped: overshooting the sigil still
-		# shows you AT the sigil — markers must never vanish off the top)
-		for p in players:
-			if clampi(int(p.get("foothold", 0)), 0, height) == lvl:
-				var m := TextureRect.new()
-				m.custom_minimum_size = Vector2(30, 30)
-				m.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-				m.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-				var pp := String(p.get("portrait", ""))
-				if pp != "" and ResourceLoader.exists(pp):
-					m.texture = load(pp)
-				if not bool(p.get("secure", true)):
-					m.modulate = Color(1.0, 0.75, 0.6)  # clinging — tinted warm
-				row.add_child(m)
-		var is_ledge := false
-		for l in ledges:
-			if int(l) == lvl:
-				is_ledge = true
-		var b := Panel.new()
-		b.custom_minimum_size = Vector2(22, 22)  # uniform rungs (Nick)
-		b.add_theme_stylebox_override("panel",
-			_block_style(lvl <= max_fh and lvl > 0, lvl == height, is_ledge or lvl == 0))
-		row.add_child(b)
-		_ladder.add_child(row)
+	for i in range(players.size()):
+		var p: Dictionary = players[i]
+		var fh := clampi(int(p.get("foothold", 0)), 0, height)
+		var nx: float = CLIMB_X + (-0.07 if i == 0 else 0.07)
+		_climb_layer.add_child(_hunter_marker(p, i == _me()))
+		_place(_climb_layer.get_child(-1), nx, _climb_y(fh, height), Vector2(50, 50))
 
 
-func _block_style(climbed: bool, is_sigil: bool, is_ledge: bool) -> StyleBoxFlat:
+## Normalized y for a Height: 0 sits at the base, `height` at the sigil.
+func _climb_y(lvl: int, height: int) -> float:
+	var t := float(lvl) / float(maxi(height, 1))
+	return lerpf(BASE_Y, SIGIL_Y, clampf(t, 0.0, 1.0))
+
+
+## Anchor a node at a normalized point in the climb layer, so it scales with the
+## arena instead of depending on pixel sizes we don't know until layout runs.
+func _place(node: Control, nx: float, ny: float, size: Vector2) -> void:
+	if node.get_parent() == null:
+		_climb_layer.add_child(node)
+	node.anchor_left = nx
+	node.anchor_right = nx
+	node.anchor_top = ny
+	node.anchor_bottom = ny
+	node.offset_left = -size.x / 2.0
+	node.offset_right = size.x / 2.0
+	node.offset_top = -size.y / 2.0
+	node.offset_bottom = size.y / 2.0
+	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+## A hunter clinging to the beast: portrait on a dark disc, ringed gold when it's
+## the hunter you're currently controlling, tinted warm while mid-climb.
+func _hunter_marker(p: Dictionary, is_me: bool) -> Control:
+	var holder := PanelContainer.new()
+	holder.add_theme_stylebox_override("panel", _marker_style(is_me, not bool(p.get("secure", true))))
+	var port := TextureRect.new()
+	port.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	port.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	port.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var pp := String(p.get("portrait", ""))
+	if pp != "" and ResourceLoader.exists(pp):
+		port.texture = load(pp)
+	holder.add_child(port)
+	return holder
+
+
+func _marker_style(is_me: bool, climbing: bool) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
-	sb.set_corner_radius_all(2)
-	sb.set_border_width_all(1)
-	if climbed:  # solid — you're past this rung
-		sb.bg_color = Color(0.55, 0.80, 0.48) if is_sigil else Color(0.68, 0.50, 0.30)
-		sb.border_color = sb.bg_color.lightened(0.25)
-	else:  # outlined — still to climb
-		sb.bg_color = Color(0.12, 0.11, 0.09)
-		if is_sigil:
-			sb.border_color = Color(0.90, 0.74, 0.38)  # gold — the weak point up top
-		elif is_ledge:
-			sb.border_color = Color(0.46, 0.62, 0.78)  # blue — a rest ledge
-		else:
-			sb.border_color = Color(0.36, 0.32, 0.26)
+	sb.bg_color = Color(0.10, 0.09, 0.07, 0.85)
+	sb.set_corner_radius_all(25)
+	sb.set_border_width_all(3 if is_me else 2)
+	if climbing:
+		sb.border_color = Color(0.95, 0.62, 0.35)   # clinging — warm warning
+	elif is_me:
+		sb.border_color = Color(0.92, 0.78, 0.42)   # you
+	else:
+		sb.border_color = Color(0.55, 0.50, 0.42)   # ally
+	sb.set_content_margin_all(4)
 	return sb
 
 
+func _route_style() -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.15, 0.11, 0.07, 0.45)  # a scuffed line up the hide
+	sb.set_corner_radius_all(2)
+	return sb
+
+
+func _ledge_style() -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.46, 0.62, 0.78, 0.55)
+	sb.set_corner_radius_all(2)
+	return sb
 func _block_suffix(block: int) -> String:
 	return "   [%d block]" % block if block > 0 else ""
 

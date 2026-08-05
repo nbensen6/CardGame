@@ -34,6 +34,11 @@ func _initialize() -> void:
 	elif _state != "select":
 		Session.client.select_character("frog", 0)
 		Session.client.select_character("goblin_mech", 1)
+	if _state == "climbing":  # mid-ascent, so marker placement can be checked
+		var c: Combat = Session.host._run.combat
+		c.players[0].foothold = c.boss.weak_point_height      # at the sigil
+		c.players[1].foothold = maxi(c.boss.weak_point_height - 1, 1)  # clinging below
+		Session.host._broadcast_state()
 	change_scene_to_file("res://views/combat_view.tscn")
 	_capture()
 

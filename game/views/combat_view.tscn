@@ -90,7 +90,7 @@ theme_override_constants/separation = 14
 
 [node name="LeftCol" type="VBoxContainer" parent="Margin/Root/Scene"]
 layout_mode = 2
-custom_minimum_size = Vector2(330, 0)
+custom_minimum_size = Vector2(270, 0)
 theme_override_constants/separation = 8
 
 [node name="Players" type="VBoxContainer" parent="Margin/Root/Scene/LeftCol"]
@@ -116,26 +116,33 @@ clip_text = true
 theme_override_font_sizes/font_size = 13
 theme_override_colors/font_color = Color(0.78, 0.73, 0.63, 1)
 
-[node name="Arena" type="HBoxContainer" parent="Margin/Root/Scene"]
-layout_mode = 2
-size_flags_horizontal = 3
-alignment = 1
-theme_override_constants/separation = 18
-
-[node name="Ladder" type="VBoxContainer" parent="Margin/Root/Scene/Arena"]
+[node name="Arena" type="Control" parent="Margin/Root/Scene"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_vertical = 4
-alignment = 1
-theme_override_constants/separation = 4
+size_flags_horizontal = 3
+size_flags_vertical = 3
 
 [node name="BossArt" type="TextureRect" parent="Margin/Root/Scene/Arena"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(300, 300)
-layout_mode = 2
-size_flags_vertical = 4
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
+
+[node name="Climb" type="Control" parent="Margin/Root/Scene/Arena"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [node name="GripBar" type="PanelContainer" parent="Margin/Root"]
 unique_name_in_owner = true
