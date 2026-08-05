@@ -52,6 +52,7 @@ var _climb: Dictionary = {}
 # local pick flow, and the chosen hand indices are bundled into ONE play_card.
 # Empty = idle. Without this, those cards simply can't be played.
 var _selecting: Dictionary = {}
+var _coach_id := ""   # the onboarding hint currently on screen
 
 @onready var _rig: Node3D = %BeastRig
 @onready var _cam: Camera3D = %Camera
@@ -72,6 +73,9 @@ var _selecting: Dictionary = {}
 @onready var _grip_meter: ProgressBar = %GripMeter
 @onready var _party: VBoxContainer = %Party
 @onready var _run_label: Label = %RunLabel
+@onready var _coach: PanelContainer = %Coach
+@onready var _coach_text: Label = %CoachText
+@onready var _coach_ok: Button = %CoachOk
 
 
 func _ready() -> void:
@@ -89,6 +93,11 @@ func _ready() -> void:
 	_switch_btn.pressed.connect(func() -> void:
 		_active_slot = 1 - _active_slot
 		_refresh())
+	_coach_ok.pressed.connect(func() -> void:
+		if _coach_id != "":
+			Progress.mark_hint_seen(_coach_id)   # taught once, never again
+			_coach_id = ""
+		_coach.visible = false)
 	if not _client.shared.is_empty():
 		_refresh()
 
@@ -224,6 +233,7 @@ func _refresh() -> void:
 		_hud.visible = false
 		_climb.clear()
 		_selecting = {}
+		_coach.visible = false
 		return
 	_hud.visible = true
 	var boss: Dictionary = s["boss"]
@@ -237,6 +247,7 @@ func _refresh() -> void:
 	_place_hunters(s)
 	_update_climb_state(s)
 	_render_party(s, int(boss.get("target", -1)), String(boss.get("intent", {}).get("type", "")))
+	_update_coach(s)
 	_react(s)
 	_render_hand()
 
@@ -621,3 +632,18 @@ func _party_card(p: Dictionary, slot: int, aimed: bool) -> Control:
 	stats.add_theme_color_override("font_color", Color(0.86, 0.82, 0.72))
 	box.add_child(stats)
 	return panel
+
+
+## Contextual onboarding, shared with the 2D client: the rule that matters right
+## now announces itself once, then never again. The armoured-hide gate is the
+## one that most needs saying — without it, hitting a beast from the ground
+## reads as the cards being broken rather than as the climb being the point.
+func _update_coach(s: Dictionary) -> void:
+	var hint := Coach.hint_for(s, _my_private(), _me())
+	if hint.is_empty():
+		_coach_id = ""
+		_coach.visible = false
+		return
+	_coach_id = String(hint["id"])
+	_coach_text.text = String(hint["text"])
+	_coach.visible = true

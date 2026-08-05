@@ -89,7 +89,20 @@ better starting point than the 2D situation ever was.
    mounted at each phase, not just that it didn't crash.
 
 5. **Traversal co-op** — how two players move together.
-6. **Retire or keep the 2D client?** Keeping both costs double maintenance on every
+6. **2D-client parity** — what the 3D fight still owes the 2D one. Making the
+   router the default turned every gap into a live regression, so these were
+   closed straight away: the real-time **grip timer** (3D had timed cards but no
+   climb clock, so leaving a hold cost nothing), the **multi-pick cards** (Burn
+   Coal / Catapult / Meld were literally unplayable — the hand only ever sent
+   `play_card(index, hit, slot)`), the **party panel** (a co-op game showing
+   nothing about your ally), and the **coach**.
+
+   Still owed: the **combat log** (3D has no history of what happened), and the
+   climb's per-hunter ladder readout — Height is now the hunter's position on the
+   beast, which is better, but "how far to the next ledge" is only visible while
+   the grip bar is up.
+
+7. **Retire or keep the 2D client?** Keeping both costs double maintenance on every
    view change. Recommendation: keep `combat_view.gd` until the 3D one has feature
    parity, then delete it — the tests don't depend on it.
 

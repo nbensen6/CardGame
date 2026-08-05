@@ -215,6 +215,40 @@ autowrap_mode = 3
 theme_override_font_sizes/font_size = 13
 theme_override_colors/font_color = Color(0.92, 0.86, 0.72, 1)
 
+[node name="Coach" type="PanelContainer" parent="Hud/Root"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 290.0
+offset_top = 70.0
+offset_right = -16.0
+offset_bottom = 128.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("card_panel")
+
+[node name="Box" type="HBoxContainer" parent="Hud/Root/Coach"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="CoachText" type="Label" parent="Hud/Root/Coach/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+text = ""
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.96, 0.9, 0.76, 1)
+
+[node name="CoachOk" type="Button" parent="Hud/Root/Coach/Box"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 32)
+layout_mode = 2
+size_flags_vertical = 4
+text = "Got it"
+
 [node name="GripBar" type="PanelContainer" parent="Hud/Root"]
 unique_name_in_owner = true
 visible = false
