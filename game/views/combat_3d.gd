@@ -21,6 +21,11 @@ const MODELS := {
 	"drowned_colossus": "polar", "sunken_warden": "lion",
 }
 const BEAST_SCALE := 2.6
+## Real-time grip (SotC), the same client-side skill layer the 2D view runs: the
+## instant a hunter leaves a safe hold a timer starts full and drains live; reach
+## the next ledge before it empties or this client reports a fall. The host is
+## told the OUTCOME, never the ticking timer.
+const GRIP_SECONDS := 5.0
 const HUNTER_SCALE := 0.42
 
 var _client: GameClient
@@ -40,6 +45,9 @@ var _prev_hp := -1
 var _prev_foot: Array = []
 var _prev_reached: Array = []
 var _prev_encounter := -1
+# slot -> {g: remaining 0..1, target: the Height that ends the climb}. Solo
+# tracks BOTH hunters, since you can switch while a timer runs.
+var _climb: Dictionary = {}
 
 @onready var _rig: Node3D = %BeastRig
 @onready var _cam: Camera3D = %Camera
@@ -55,6 +63,9 @@ var _prev_encounter := -1
 @onready var _status: Label = %StatusLabel
 @onready var _end_btn: Button = %EndTurn
 @onready var _switch_btn: Button = %SwitchBtn
+@onready var _grip_bar: PanelContainer = %GripBar
+@onready var _grip_label: Label = %GripLabel
+@onready var _grip_meter: ProgressBar = %GripMeter
 
 
 func _ready() -> void:
@@ -123,12 +134,89 @@ func _process(delta: float) -> void:
 		_cam.position = _cam_home
 	if _flash != null:
 		_flash.light_energy = maxf(0.0, _flash.light_energy - delta * 9.0)
+	_tick_grip(delta)
+
+
+## How long the party can cling, including any grip relics.
+func _grip_seconds() -> float:
+	return GRIP_SECONDS + float(int(_client.shared.get("mods", {}).get("grip_seconds", 0)))
+
+
+## Every climbing hunter's timer ticks, whoever is active. An empty timer is a
+## fall — and in 3D that is worth SEEING, so a slipping hunter shakes harder the
+## closer they are to letting go.
+func _tick_grip(delta: float) -> void:
+	if _climb.is_empty():
+		return
+	for slot in _climb.keys().duplicate():
+		var st: Dictionary = _climb[slot]
+		st["g"] = float(st["g"]) - delta / _grip_seconds()
+		if float(st["g"]) <= 0.0:
+			_climb.erase(slot)
+			Sfx.play("shake")
+			_client.fall(int(slot) if _is_solo() else -1)
+			continue
+		var i := int(slot)
+		if i < _hunters.size():
+			var node: Node3D = (_hunters[i] as Dictionary)["node"]
+			if is_instance_valid(node):
+				# steady at full grip, scrabbling as it runs out
+				var slip: float = 1.0 - clampf(float(st["g"]), 0.0, 1.0)
+				var amp: float = slip * slip * 0.075
+				node.position.x = float(((_hunters[i] as Dictionary)["home"] as Vector3).x) 					+ sin(_time * 34.0 + i) * amp
+	_update_grip_bar()
+
+
+## Derive climb bursts from the "secure" flags: leaving a hold starts that
+## hunter's timer full, reaching one (or falling) ends it. Grip only resets on a
+## genuine hold -> climbing transition, so it drains continuously across a hop.
+func _update_climb_state(s: Dictionary) -> void:
+	var players: Array = s.get("players", [])
+	var slots: Array = [0, 1] if _is_solo() else [_client.you]
+	for slot in slots:
+		if slot < 0 or slot >= players.size():
+			continue
+		var p: Dictionary = players[slot]
+		if bool(p.get("secure", true)):
+			_climb.erase(slot)
+		else:
+			if not _climb.has(slot):
+				_climb[slot] = {"g": 1.0}
+			_climb[slot]["target"] = int(p.get("next_safe", int(p.get("foothold", 0))))
+	_update_grip_bar()
+
+
+## Show the ACTIVE hunter's grip if they're climbing, else any other climbing
+## hunter's (named), so a ticking ally timer is never invisible after a switch.
+func _update_grip_bar() -> void:
+	if _grip_bar == null:
+		return
+	_grip_bar.visible = not _climb.is_empty()
+	if _climb.is_empty():
+		return
+	var slot: int = _me() if _climb.has(_me()) else int(_climb.keys()[0])
+	var st: Dictionary = _climb[slot]
+	var g := clampf(float(st["g"]), 0.0, 1.0)
+	_grip_meter.value = g
+	_grip_meter.modulate = Color(0.9, 0.33, 0.28).lerp(Color(0.55, 0.85, 0.5), g)
+	var who := "" if slot == _me() else "%s — " % _hunter_name(slot)
+	var extra := "   (both hunters climbing!)" if _climb.size() > 1 else ""
+	_grip_label.text = "⚠ %sHOLD ON — reach Height %d before your grip gives out!%s" % [
+		who, int(st.get("target", 0)), extra]
+
+
+func _hunter_name(slot: int) -> String:
+	var players: Array = _client.shared.get("players", [])
+	if slot < 0 or slot >= players.size():
+		return "Hunter %d" % (slot + 1)
+	return String((players[slot] as Dictionary).get("name", "Hunter %d" % (slot + 1)))
 
 
 func _refresh() -> void:
 	var s := _client.shared
 	if s.is_empty() or String(s.get("phase", "")) != "combat":
 		_hud.visible = false
+		_climb.clear()
 		return
 	_hud.visible = true
 	var boss: Dictionary = s["boss"]
@@ -140,6 +228,7 @@ func _refresh() -> void:
 	_show_beast(String(boss.get("art", "")), String(boss["name"]))
 	_place_sigil(s)
 	_place_hunters(s)
+	_update_climb_state(s)
 	_react(s)
 	_render_hand()
 

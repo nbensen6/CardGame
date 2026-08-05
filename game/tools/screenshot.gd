@@ -39,7 +39,7 @@ func _initialize() -> void:
 		Session.client.select_character("frog", 0)
 		Session.client.select_character("goblin_mech", 1)
 	if _state in ["combat", "goblin", "juice", "climbing", "3d", "3dclimb",
-			"3dstrike", "3dgame"]:  # 3dloop deliberately starts ON the map  # step off the map into a fight
+			"3dstrike", "3dgame", "3dgrip"]:  # 3dloop deliberately starts ON the map  # step off the map into a fight
 		var r: Run = Session.host._run
 		var g := 0
 		while r.phase == Run.Phase.MAP and g < 30:
@@ -89,6 +89,17 @@ func _initialize() -> void:
 		var cs: Combat = Session.host._run.combat
 		cs.players[0].foothold = cs.boss.weak_point_height
 		cs.players[1].foothold = maxi(cs.boss.weak_point_height - 1, 1)
+		Session.host._broadcast_state()
+	if _state == "3dgrip":  # BETWEEN holds: the grip timer should be live
+		var cg: Combat = Session.host._run.combat
+		# find a height that is neither the ground, a ledge, nor the sigil
+		var unsafe := 1
+		for h in range(1, cg.boss.weak_point_height):
+			if not (h in cg.boss.ledges):
+				unsafe = h
+				break
+		cg.players[0].foothold = unsafe
+		cg.players[1].foothold = maxi(cg.boss.weak_point_height - 1, 1)
 		Session.host._broadcast_state()
 	if _state == "3dclimb":  # mid-ascent in 3D — hunters should be up ON the beast
 		var c3: Combat = Session.host._run.combat
@@ -186,6 +197,17 @@ func _capture() -> void:
 					Session.host._run.phase])
 			else:
 				print("WALK FAIL: raycast missed the landmark")
+	if _state == "3dgrip":  # let the grip run out and prove the fall lands
+		var vg := current_scene
+		var cg: Combat = Session.host._run.combat
+		var before := int(cg.players[0].foothold)
+		var guard := 0
+		while not (vg.get("_climb") as Dictionary).is_empty() and guard < 40000:
+			guard += 1
+			await process_frame
+		var after := int(Session.host._run.combat.players[0].foothold)
+		print("GRIP %s: foothold %d -> %d after the timer emptied" % [
+			"OK" if after < before else "FAIL", before, after])
 	if _state == "juice":  # fire the strike effect and catch it mid-tween
 		var view := current_scene
 		if view != null and view.has_method("_juice_strike"):
