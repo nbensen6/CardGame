@@ -199,6 +199,9 @@ func _build_shared() -> Dictionary:
 		"paused": paused,
 		"disconnected_slot": _disconnected_slot,
 		"solo": _solo,
+		# Relic effects the CLIENT owns (the grip timer and timing windows are
+		# client-side skill, so their relics have to travel in the snapshot).
+		"mods": _run.relic_totals(),
 	}
 	if _run.phase == Run.Phase.MAP and _run.map != null:
 		s["map"] = {

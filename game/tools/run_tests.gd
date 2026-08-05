@@ -56,6 +56,8 @@ func _init() -> void:
 	_test_card_upgrade_bumps_numbers()
 	_test_campfire_rest_remove_upgrade()
 	_test_skip_reward_keeps_the_deck_lean()
+	_test_rule_changing_relics()
+	_test_relics_all_load()
 	# grip / ledges (SotC real-time climb)
 	_test_secure_on_holds()
 	_test_next_safe_height()
@@ -548,6 +550,65 @@ func _test_skip_reward_keeps_the_deck_lean() -> void:
 	_expect(run.decks[0].size() == deck_before and still_waiting
 		and run.phase != Run.Phase.REWARD,
 		"a reward can be declined, leaving the deck untouched")
+
+
+func _test_relics_all_load() -> void:
+	var pool: Array = Content.relic_pool()
+	var ok := pool.size() >= 20
+	var rule_changers := 0
+	var flat := ["max_energy", "attack_bonus", "round_block", "heal_on_clear", "start_strength"]
+	for id in pool:
+		var r: Dictionary = Content.make_relic(String(id))
+		if String(r.get("name", "")) == "" or String(r.get("text", "")) == "" or String(r.get("effect", "")) == "":
+			ok = false
+		if not flat.has(String(r.get("effect", ""))):
+			rule_changers += 1
+	_expect(ok and rule_changers >= 12,
+		"the relic pool is deep and mostly rule-changing, not flat numbers")
+
+
+func _test_rule_changing_relics() -> void:
+	# start_foothold: begin the fight already up the beast
+	var boss := _climb_boss(6)
+	var players := [Combatant.new("A", 42), Combatant.new("B", 42)]
+	var c := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)], players, boss, 42,
+		0, 0, 0, 0, [], {"start_foothold": 2})
+	c.start()
+	var started_up: bool = c.players[0].foothold == 2
+
+	# fall_safe: losing your grip costs Height but no HP
+	var boss2 := _climb_boss(6)
+	boss2.ledges = [2, 4]
+	var c2 := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)],
+		[Combatant.new("A", 42), Combatant.new("B", 42)], boss2, 42, 0, 0, 0, 0, [], {"fall_safe": 1})
+	c2.start()
+	c2.players[0].foothold = 3
+	var hp0: int = c2.players[0].combatant.hp
+	c2.fall(0)
+	var painless: bool = c2.players[0].foothold == 0 and c2.players[0].combatant.hp == hp0
+
+	# threshold: strike longer before the beast bucks you off
+	var boss3 := _climb_boss(6)
+	boss3.weak_point_threshold = 10
+	var c3 := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)],
+		[Combatant.new("A", 42), Combatant.new("B", 42)], boss3, 42, 0, 0, 0, 0, [], {"threshold": 20})
+	c3.start()
+	c3.players[0].foothold = 6
+	c3.play_card(0, _first_playable(c3, 0))  # would have bucked at 10 without the relic
+	var still_up: bool = c3.players[0].foothold == 6
+
+	# rhythm_keeps: the combo survives the turn rollover
+	var c4 := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)],
+		[Combatant.new("A", 42), Combatant.new("B", 42)], _dummy_boss(300), 42,
+		0, 0, 0, 0, [], {"rhythm_keeps": 1})
+	c4.start()
+	c4.players[0].rhythm = 3
+	c4.end_turn(0)
+	c4.end_turn(1)
+	var kept: bool = c4.players[0].rhythm == 3
+
+	_expect(started_up and painless and still_up and kept,
+		"rule-changing relics rewrite the climb, the fall, the threshold and Rhythm")
 
 
 ## Walk the route until a combat node is reached (skipping rest/treasure).

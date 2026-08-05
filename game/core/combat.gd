@@ -45,12 +45,15 @@ var _forced_target: int = -1  # a "taunt" this round overrides the boss's target
 var _energy_bonus: int = 0
 var _attack_bonus: int = 0
 var _round_block: int = 0
+var _mods: Dictionary = {}  # rule-changing relic totals (see Run.relic_totals)
 
 ## decks[i] and combatants[i] belong to player i. The trailing bonuses come from
 ## the team's relics (see Run) — 0 in a plain fight.
 func _init(decks: Array, combatants: Array, p_boss: Boss, seed_value: int = 0,
 		energy_bonus: int = 0, attack_bonus: int = 0, round_block: int = 0,
-		start_strength: int = 0, player_passives: Array = []) -> void:
+		start_strength: int = 0, player_passives: Array = [],
+		run_mods: Dictionary = {}) -> void:
+	_mods = run_mods
 	boss = p_boss
 	_energy_bonus = energy_bonus
 	_attack_bonus = attack_bonus
@@ -63,6 +66,7 @@ func _init(decks: Array, combatants: Array, p_boss: Boss, seed_value: int = 0,
 		var ps := PlayerState.new()
 		ps.combatant = combatants[i]
 		ps.strength = start_strength  # relic: begin the fight with Strength
+		ps.foothold = mini(_mod("start_foothold"), FOOTHOLD_MAX)  # relic: start partway up
 		if i < player_passives.size():
 			_apply_passive(ps, player_passives[i])
 		ps.draw_pile = (decks[i] as Array).duplicate()
@@ -141,8 +145,10 @@ func fall(pi: int) -> void:
 	var ps: PlayerState = players[pi]
 	ps.foothold = 0
 	ps.weak_point_damage = 0
-	ps.combatant.take_damage(FALL_DAMAGE)
-	_log("%s loses their grip and falls! (-%d, back to the base)" % [ps.combatant.name, FALL_DAMAGE])
+	var fall_dmg: int = 0 if _mod("fall_safe") > 0 else FALL_DAMAGE
+	if fall_dmg > 0:
+		ps.combatant.take_damage(fall_dmg)
+	_log("%s loses their grip and falls! (-%d, back to the base)" % [ps.combatant.name, fall_dmg])
 	_check_end()
 
 ## The player the boss's next single-target attack will hit (telegraphed).
@@ -390,7 +396,7 @@ func _check_weakpoint_buck(pi: int) -> void:
 	if boss.weak_point_threshold <= 0 or not sigil_reached(pi):
 		return
 	var ps: PlayerState = players[pi]
-	if ps.weak_point_damage >= boss.weak_point_threshold:
+	if ps.weak_point_damage >= boss.weak_point_threshold + _mod("threshold"):
 		ps.foothold = _hold_below(ps.foothold)
 		ps.weak_point_damage = 0
 		_log("The Titan bucks %s off the weak point — climb back up!" % ps.combatant.name)
@@ -403,16 +409,17 @@ func _damage_boss(amount: int, pi: int) -> int:
 	# and Exposed stacks are NOT spent (they bank until a hunter reaches the sigil).
 	# You have to CLIMB to deal real damage. This is what makes it a climb, not a fight.
 	if boss.weak_point_height > 0 and not sigil_reached(pi):
-		var chip := maxi(1, amount / ARMORED_DIVISOR)
+		var divisor: int = maxi(2, ARMORED_DIVISOR - _mod("chip"))
+		var chip := maxi(1, amount / divisor)
 		boss.take_damage(chip)
 		return chip
 	# At the weak point (or a beast with no high sigil): full strike + bonuses.
 	var total := amount
 	if boss.vulnerable > 0:
-		total += VULN_BONUS
+		total += VULN_BONUS + _mod("vuln_bonus")
 		boss.vulnerable -= 1
 	if boss.weak_point_height > 0:
-		total += SIGIL_BONUS
+		total += SIGIL_BONUS + _mod("sigil_bonus")
 		players[pi].weak_point_damage += total  # counts toward the buck-off threshold
 	boss.take_damage(total)
 	return total
@@ -442,9 +449,10 @@ func _begin_round() -> void:
 		ps.combatant.block = _round_block  # relic: start each round with block
 		ps.energy = BASE_ENERGY + _energy_bonus  # relic: extra energy
 		ps.ended_turn = false
-		ps.rhythm = 0  # combo resets each turn
+		if _mod("rhythm_keeps") <= 0:
+			ps.rhythm = 0  # combo resets each turn (a relic can keep it)
 		_resolve_prepared(ps)
-		_draw(ps, HAND_SIZE)
+		_draw(ps, HAND_SIZE + _mod("draw"))
 	_log("— Round %d —" % round_num)
 
 
@@ -492,8 +500,9 @@ func _enemy_turn() -> void:
 			var dmg_all := value + boss.strength
 			for ps in players:
 				ps.combatant.take_damage(dmg_all)
-				ps.foothold = _hold_below(ps.foothold)  # bucked down to the ledge below
-				ps.weak_point_damage = 0
+				if _mod("shake_resist") <= 0:  # a relic can anchor you against sweeps
+						ps.foothold = _hold_below(ps.foothold)
+						ps.weak_point_damage = 0
 			_log("%s sweeps both hunters for %d and shakes them down a hold." % [boss.name, dmg_all])
 		"enrage":
 			boss.strength += value
@@ -540,6 +549,10 @@ func _check_end() -> bool:
 			_log("%s has fallen. Defeat." % ps.combatant.name)
 			return true
 	return false
+
+## A rule-changing relic total (0 when the team has none of that relic).
+func _mod(key: String) -> int:
+	return int(_mods.get(key, 0))
 
 func _log(msg: String) -> void:
 	log.append(msg)

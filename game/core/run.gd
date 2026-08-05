@@ -252,20 +252,30 @@ func _start_encounter() -> void:
 	var mods := relic_totals()
 	# Distinct per-encounter seed so each fight shuffles differently but reproducibly.
 	combat = Combat.new(decks, combatants, boss, _encounter_seed(),
-		mods["energy"], mods["attack"], mods["block"], mods["strength"], player_passives)
+		mods["energy"], mods["attack"], mods["block"], mods["strength"], player_passives, mods)
 	combat.start()
 	phase = Phase.COMBAT
 
-## Sum the team's relic effects into flat modifiers.
+## Sum the team's relic effects. The flat five feed Combat's old parameters; the
+## rest are rule changes Combat and the client read from `mods`.
 func relic_totals() -> Dictionary:
 	var t := {"energy": 0, "attack": 0, "block": 0, "heal": 0, "strength": 0}
+	for key in ["start_foothold", "fall_safe", "rhythm_keeps", "threshold", "chip",
+			"sigil_bonus", "vuln_bonus", "draw", "shake_resist",
+			"grip_seconds", "timing_zone"]:
+		t[key] = 0
 	for r in team_relics:
-		match String(r.get("effect", "")):
-			"max_energy": t["energy"] += int(r.get("value", 0))
-			"attack_bonus": t["attack"] += int(r.get("value", 0))
-			"round_block": t["block"] += int(r.get("value", 0))
-			"heal_on_clear": t["heal"] += int(r.get("value", 0))
-			"start_strength": t["strength"] += int(r.get("value", 0))
+		var e := String(r.get("effect", ""))
+		var v := int(r.get("value", 0))
+		match e:
+			"max_energy": t["energy"] += v
+			"attack_bonus": t["attack"] += v
+			"round_block": t["block"] += v
+			"heal_on_clear": t["heal"] += v
+			"start_strength": t["strength"] += v
+			_:
+				if t.has(e):
+					t[e] += v
 	return t
 
 func _encounter_seed() -> int:

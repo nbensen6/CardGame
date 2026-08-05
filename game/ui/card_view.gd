@@ -20,6 +20,8 @@ var _timing := false
 var _t := 0.0
 var _dir := 1.0
 var _elapsed := 0.0  # time spent in the current window
+## Relic bonus widening the success zone on each side (0.06 = +6% each way).
+var zone_bonus := 0.0
 var _strip: Control
 var _marker: ColorRect
 var _count_lbl: Label
@@ -220,6 +222,10 @@ func start_timing(hits: int = 1) -> void:
 	_dir = 1.0
 	_elapsed = 0.0
 	_update_count()
+	var zone := _strip.get_node_or_null("Zone")
+	if zone != null:  # relics may have widened the window since setup()
+		(zone as Control).anchor_left = maxf(0.0, ZONE_MIN - zone_bonus)
+		(zone as Control).anchor_right = minf(1.0, ZONE_MAX + zone_bonus)
 	_strip.modulate = Color(1, 1, 1)
 	_strip.visible = true
 	set_process(true)
@@ -235,7 +241,7 @@ func _on_self_pressed() -> void:
 ## One tap during timing. A miss ends the whole chain (fizzle); a hit either
 ## advances to the next window or, on the last one, resolves as a success.
 func _fire() -> void:
-	if _t < ZONE_MIN or _t > ZONE_MAX:
+	if _t < ZONE_MIN - zone_bonus or _t > ZONE_MAX + zone_bonus:
 		_end_timing(false)
 		return
 	_hits_done += 1
@@ -302,8 +308,8 @@ func _build_timing_strip() -> Control:
 	var zone := ColorRect.new()
 	zone.name = "Zone"
 	zone.color = Color(0.33, 0.72, 0.36)
-	zone.anchor_left = ZONE_MIN
-	zone.anchor_right = ZONE_MAX
+	zone.anchor_left = maxf(0.0, ZONE_MIN - zone_bonus)
+	zone.anchor_right = minf(1.0, ZONE_MAX + zone_bonus)
 	zone.anchor_top = 0.0
 	zone.anchor_bottom = 1.0
 	zone.offset_left = 0.0

@@ -62,7 +62,11 @@ var _prev_reached: Array = []
 # timer starts full and drains live; reach the next ledge/sigil before it empties
 # or the client reports a fall. Purely client-side skill — the host is told the
 # outcome (a play_card that reaches safety, or a `fall`), never the ticking timer.
-const GRIP_SECONDS := 5.0     # how long you can cling between holds (tune by feel)
+const GRIP_SECONDS := 5.0     # base cling time between holds (relics extend it)
+
+## How long the party can cling, including any grip relics.
+func _grip_seconds() -> float:
+	return GRIP_SECONDS + float(int(_client.shared.get("mods", {}).get("grip_seconds", 0)))
 # Per-hunter grip timers: slot -> {g: remaining 0..1, target: Height to reach}.
 # In solo BOTH hunters can be mid-climb at once (Nick: switch while the timer
 # runs — hunter A keeps draining while you act with hunter B). In co-op each
@@ -158,7 +162,7 @@ func _process(delta: float) -> void:
 		return
 	for slot in _climb.keys().duplicate():
 		var st: Dictionary = _climb[slot]
-		st["g"] = float(st["g"]) - delta / GRIP_SECONDS
+		st["g"] = float(st["g"]) - delta / _grip_seconds()
 		if float(st["g"]) <= 0.0:
 			_climb.erase(slot)
 			Sfx.play("shake")
@@ -392,6 +396,8 @@ func _on_card_tapped(card: Dictionary, cv: CardView) -> void:
 		_pick_for_selection(index)
 		return
 	if bool(card.get("timed", false)):
+		# a relic can widen the window, so pass the team's bonus through
+		cv.zone_bonus = float(int(_client.shared.get("mods", {}).get("timing_zone", 0))) / 100.0
 		cv.start_timing(int(card.get("timed_hits", 1)))  # runs its own sweep(s); next tap fires each
 		return
 	if bool(card.get("exhaust_pick", false)) or bool(card.get("cheapen_pick", false)) or bool(card.get("meld", false)):
