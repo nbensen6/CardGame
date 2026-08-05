@@ -10,7 +10,7 @@ Nick's continuous task list for Claude. **How it works:**
   in **Questions** below if truly stuck rather than stalling.
 
 ## Inbox
-- [ ] **depth plan** (see `design/depth-plan.md`) — ~~(1) the MAP~~ ✅ `f301e06` (branching routes, fight/elite/rest/treasure/boss nodes, 6 lesser beasts). Map follow-ups: ~~edges~~ ✅ (plannable routes); still open: event nodes, shop nodes (needs gold). Next: (2) deck transformation: card removal + upgrades + skip-reward; (3) fight variety: quick non-titan fights that twist the climb; (4) rule-changing relics (~30); (5) per-class archetype reward pools; (6) ascension ladder
+- [ ] **depth plan** (see `design/depth-plan.md`) — ~~(1) the MAP~~ ✅ `f301e06` (branching routes, fight/elite/rest/treasure/boss nodes, 6 lesser beasts). ~~(2) deck transformation~~ ✅ `18656c7` (campfires: rest/thin/sharpen; upgrades; skippable rewards). ~~(4) rule-changing relics~~ ✅ `c10a366` (26). Map follow-ups: ~~edges~~ ✅, ~~events~~ ✅ `a7ae962`; still open: shop nodes (needs gold). Remaining: (3) more fight variety, (5) per-class archetype reward pools, (6) ascension ladder. Next: (2) deck transformation: card removal + upgrades + skip-reward; (3) fight variety: quick non-titan fights that twist the climb; (4) rule-changing relics (~30); (5) per-class archetype reward pools; (6) ascension ladder
 - [ ] *(standing)* continually look through assets to use — finds so far: menu reskin `c4140ba`, strike/shake juice `5d9d09f` (burst flash + dust + arena judder); ambient music `e5fb47e` (menu=Flowing Rocks, combat=Retro Mystic — swap assets/music/*.ogg to change); emotes `e4285f7`; HUD fantasy-frame skin `da743f8`. Queue empty — next finds will be my own proposals (noted here before building)
 ## Questions from Claude
 (none)

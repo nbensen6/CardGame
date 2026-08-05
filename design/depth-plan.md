@@ -41,9 +41,11 @@ treasure / boss, with six lesser beasts backing the fight and elite nodes. The
 route is a shared choice (either hunter may step).
 **Edges drawn** (`ui/map_edges.gd`) — open steps bright, the rest faint, so a
 route can be planned several rows ahead.
-**Still to do here:** **event** nodes; **shop** nodes (needs a gold economy).
+**Events shipped** (`a7ae962`) — 10 hand-written wayside choices; they bruise but
+never kill, and their stakes are printed on the button.
+**Still to do here:** **shop** nodes (needs a gold economy).
 
-### 2. Deck *transformation*, not just addition
+### 2. Deck *transformation*, not just addition ✅ SHIPPED `18656c7`
 Cards currently only get added, so every deck converges on "my 10 starters plus
 whatever showed up." The three missing pressures:
 - **Card removal** (the most valuable purchase in StS)
@@ -52,6 +54,11 @@ whatever showed up." The three missing pressures:
 
 Without these a deckbuilder can't *sharpen* — it only bloats.
 
+**Shipped:** rest nodes became **campfires** — each hunter chooses Rest (heal),
+Thin (remove a card, floors at 5), or Sharpen (upgrade). `Card.upgraded_copy()`
+is one generic rule (bump the numbers a card uses; if it has none, cost -1) so
+new cards get upgrades free. Rewards are **skippable**.
+
 ### 3. Fight variety — not every fight is a titan
 Specific to our mechanic: the climb is slow and ceremonial, so it should feel
 like an act boss. All four fights are currently the same shape, so the ritual
@@ -59,10 +66,14 @@ never varies. Add quick regular fights that *twist* the climb — a low-slung be
 with a ground-level weak point, a swarm that punishes being separated, an enemy
 that rewards staying at the base.
 
-### 4. Relics that change rules, not numbers
+### 4. Relics that change rules, not numbers ✅ SHIPPED `c10a366`
 8 relics today, mostly flat bonuses. They should hook our unique systems:
 *"timed windows are 1s longer," "start each fight at Height 2," "Rhythm doesn't
 reset between turns," "falling costs no HP."* ~30 of those and runs feel authored.
+
+**Shipped: 26 relics**, most of them rule-changers hooked into the climb, the
+grip timer, timing windows, Rhythm and the weak-point threshold. Two are
+client-side (grip seconds, timing width) and travel in the snapshot.
 
 ### 5. Archetype-aware reward pools
 The 31-card pool is shared across all four characters, so you can't draft
