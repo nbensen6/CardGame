@@ -29,11 +29,19 @@ compounds. That's the whole difference.
 
 ## The ordered plan
 
-### 1. The map — the single biggest lever
+### 1. The map — the single biggest lever ✅ SHIPPED `f301e06`
 Branching paths between fights with node types: **fight / elite / rest / event /
 shop / treasure**. Mostly run-structure + UI work, very little new combat code.
 The moment it exists, every run has a different shape and the player is choosing
 constantly instead of riding a fixed rail of four titans.
+
+**Shipped:** `core/run_map.gd` generates 4 acts × 3 branching rows + a Titan row,
+seeded and connectivity-guaranteed. Node types live: fight / elite / rest /
+treasure / boss, with six lesser beasts backing the fight and elite nodes. The
+route is a shared choice (either hunter may step).
+**Still to do here:** draw the edges between rows (right now you see the act's
+shape but not which node your choice leads to — that's what makes planning ahead
+possible); **event** nodes; **shop** nodes (needs a gold economy).
 
 ### 2. Deck *transformation*, not just addition
 Cards currently only get added, so every deck converges on "my 10 starters plus
