@@ -37,6 +37,22 @@ shading_mode = 0
 albedo_color = Color(0.46, 0.42, 0.34, 1)
 roughness = 0.95
 
+[sub_resource type="StyleBoxFlat" id="card_panel"]
+content_margin_left = 10.0
+content_margin_top = 7.0
+content_margin_right = 10.0
+content_margin_bottom = 7.0
+bg_color = Color(0.13, 0.1, 0.08, 0.8)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.33, 0.23, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
 [sub_resource type="StyleBoxFlat" id="grip_panel"]
 content_margin_left = 14.0
 content_margin_top = 8.0
@@ -167,6 +183,37 @@ unique_name_in_owner = true
 layout_mode = 2
 text = ""
 theme_override_colors/font_color = Color(0.9, 0.55, 0.45, 1)
+
+[node name="Party" type="VBoxContainer" parent="Hud/Root"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 112.0
+offset_right = 268.0
+offset_bottom = -410.0
+grow_vertical = 2
+theme_override_constants/separation = 6
+
+[node name="RunBar" type="PanelContainer" parent="Hud/Root"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 0.0
+offset_left = 16.0
+offset_top = 70.0
+offset_right = 268.0
+offset_bottom = 70.0
+theme_override_styles/panel = SubResource("card_panel")
+
+[node name="RunLabel" type="Label" parent="Hud/Root/RunBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.92, 0.86, 0.72, 1)
 
 [node name="GripBar" type="PanelContainer" parent="Hud/Root"]
 unique_name_in_owner = true

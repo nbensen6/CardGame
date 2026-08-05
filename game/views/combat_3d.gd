@@ -70,6 +70,8 @@ var _selecting: Dictionary = {}
 @onready var _grip_bar: PanelContainer = %GripBar
 @onready var _grip_label: Label = %GripLabel
 @onready var _grip_meter: ProgressBar = %GripMeter
+@onready var _party: VBoxContainer = %Party
+@onready var _run_label: Label = %RunLabel
 
 
 func _ready() -> void:
@@ -234,6 +236,7 @@ func _refresh() -> void:
 	_place_sigil(s)
 	_place_hunters(s)
 	_update_climb_state(s)
+	_render_party(s, int(boss.get("target", -1)), String(boss.get("intent", {}).get("type", "")))
 	_react(s)
 	_render_hand()
 
@@ -549,3 +552,72 @@ func _pick_for_selection(idx: int) -> void:
 		_client.play_card(play_index, true, _cmd_slot(), sac, target)
 	else:
 		_render_hand()
+
+
+# --- the party and the run's standing ------------------------------------
+
+## Co-op means your ally's state is not optional information: HP, block,
+## Energy, how high they've climbed, whether they're hanging, and whether the
+## beast is about to hit them. The 3D scene shows WHERE they are; this says how
+## they're doing.
+func _render_party(s: Dictionary, boss_target: int, move_type: String) -> void:
+	for c in _party.get_children():
+		c.queue_free()
+	var players: Array = s.get("players", [])
+	var sweeps: bool = move_type in ["attack_all", "swipe_high", "swipe_low"]
+	for i in range(players.size()):
+		var p: Dictionary = players[i]
+		var aimed: bool = sweeps or i == boss_target
+		_party.add_child(_party_card(p, i, aimed))
+	var bits: Array = ["Gold %d" % int(s.get("gold", 0))]
+	var relics: Array = s.get("relics", [])
+	if not relics.is_empty():
+		bits.append(", ".join(relics))
+	_run_label.text = "  •  ".join(bits)
+
+
+func _party_card(p: Dictionary, slot: int, aimed: bool) -> Control:
+	var panel := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.13, 0.1, 0.08, 0.8)
+	style.set_border_width_all(2 if slot == _me() else 1)
+	# the hunter in the beast's sights is outlined in red — the single most
+	# time-critical fact on the screen
+	style.border_color = Color(0.85, 0.32, 0.26) if aimed 		else (Color(0.85, 0.68, 0.4) if slot == _me() else Color(0.45, 0.33, 0.23))
+	style.set_corner_radius_all(5)
+	style.content_margin_left = 10.0
+	style.content_margin_right = 10.0
+	style.content_margin_top = 6.0
+	style.content_margin_bottom = 6.0
+	panel.add_theme_stylebox_override("panel", style)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 2)
+	panel.add_child(box)
+	var who := Label.new()
+	who.text = "%s%s" % [String(p.get("name", "")), "  (you)" if slot == _me() else ""]
+	who.add_theme_font_size_override("font_size", 13)
+	who.add_theme_color_override("font_color", Color(1, 0.93, 0.78))
+	box.add_child(who)
+	var bar := ProgressBar.new()
+	bar.max_value = maxi(int(p.get("max_hp", 1)), 1)
+	bar.value = int(p.get("hp", 0))
+	bar.show_percentage = false
+	bar.custom_minimum_size = Vector2(0, 12)
+	box.add_child(bar)
+	var stats := Label.new()
+	var parts: Array = ["HP %d/%d" % [int(p.get("hp", 0)), int(p.get("max_hp", 0))]]
+	if int(p.get("block", 0)) > 0:
+		parts.append("◈%d" % int(p.get("block", 0)))
+	parts.append("✦%d" % int(p.get("energy", 0)))
+	parts.append("↑%d" % int(p.get("foothold", 0)))
+	if bool(p.get("reached", false)):
+		parts.append("at the sigil")
+	elif not bool(p.get("secure", true)):
+		parts.append("hanging!")
+	if bool(p.get("ended", false)):
+		parts.append("done")
+	stats.text = "   ".join(parts)
+	stats.add_theme_font_size_override("font_size", 12)
+	stats.add_theme_color_override("font_color", Color(0.86, 0.82, 0.72))
+	box.add_child(stats)
+	return panel
