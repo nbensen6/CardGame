@@ -60,10 +60,14 @@ titans, timing minigame, procedural SFX, placeholder art.
 *One* complete run at near-shipping quality — the thing a stranger can play
 start→finish with **zero explanation**. This build *is* your future demo.
 Gaps to close (see §4 for the ordered plan):
-- **Onboarding / tutorial** ⬅ *next focus* — teach climb→reveal→strike with no words.
-- **Run structure** — a map with path choices + events (the roguelike replay engine).
-- **One difficulty setting that feels fair**, validated by a real human, not just the sim.
-- **First real art pass** on the core (one biome, the 4 creatures, the slice's titans).
+- ✅ **Onboarding** `f30052c` — a contextual coach teaches each rule the moment it
+  first matters, once each, persisted between runs.
+- ✅ **Run structure** `f301e06` — branching map, node types, events, campfires.
+- ✅ **A difficulty that holds up** `692a453` — measured against a sim that models
+  human timing and falls: naive 7% / coordinated 78%, ladder to 20% at A8.
+  *Still needs a real human to confirm it FEELS fair.*
+- ⬜ **First real art pass** — the one remaining gap, and Nick's call (see
+  `design/depth-plan.md` for why the placeholders fight the fantasy).
 **Exit:** a stranger plays a full run unaided and asks to play again.
 
 ### M2 — Steam page live *(marketing track begins — do this AT M1)*
@@ -132,7 +136,7 @@ finishable, sellable, and it proves the game before we build the rest.
 
 Ordered by your pick (onboarding first), then the rest of the vertical slice.
 
-### Epic A — Onboarding / tutorial *(next up)*
+### Epic A — Onboarding ✅ SHIPPED `f30052c`
 Make a first-time player understand **climb → reveal → strike** and **co-op
 dependency** without reading anything. *(proposed approach)*
 1. **Scripted first encounter** — a gentle "training titan" (low HP, telegraphed,
