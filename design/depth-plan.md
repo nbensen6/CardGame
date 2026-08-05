@@ -39,9 +39,9 @@ constantly instead of riding a fixed rail of four titans.
 seeded and connectivity-guaranteed. Node types live: fight / elite / rest /
 treasure / boss, with six lesser beasts backing the fight and elite nodes. The
 route is a shared choice (either hunter may step).
-**Still to do here:** draw the edges between rows (right now you see the act's
-shape but not which node your choice leads to — that's what makes planning ahead
-possible); **event** nodes; **shop** nodes (needs a gold economy).
+**Edges drawn** (`ui/map_edges.gd`) — open steps bright, the rest faint, so a
+route can be planned several rows ahead.
+**Still to do here:** **event** nodes; **shop** nodes (needs a gold economy).
 
 ### 2. Deck *transformation*, not just addition
 Cards currently only get added, so every deck converges on "my 10 starters plus
