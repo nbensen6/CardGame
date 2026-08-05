@@ -35,7 +35,7 @@ func _initialize() -> void:
 	elif _state != "select":
 		Session.client.select_character("frog", 0)
 		Session.client.select_character("goblin_mech", 1)
-	if _state in ["combat", "goblin", "juice", "climbing"]:  # step off the map into a fight
+	if _state in ["combat", "goblin", "juice", "climbing", "3d", "3dclimb"]:  # step off the map into a fight
 		var r: Run = Session.host._run
 		var g := 0
 		while r.phase == Run.Phase.MAP and g < 30:
@@ -71,12 +71,19 @@ func _initialize() -> void:
 			for slot in range(rr.player_count()):
 				rr.pick_reward(slot, 0)
 		Session.host._broadcast_state()
+	if _state == "3dclimb":  # mid-ascent in 3D — hunters should be up ON the beast
+		var c3: Combat = Session.host._run.combat
+		c3.players[0].foothold = c3.boss.weak_point_height
+		c3.players[1].foothold = maxi(c3.boss.weak_point_height - 1, 1)
+		Session.host._broadcast_state()
 	if _state == "climbing":  # mid-ascent, so marker placement can be checked
 		var c: Combat = Session.host._run.combat
 		c.players[0].foothold = c.boss.weak_point_height      # at the sigil
 		c.players[1].foothold = maxi(c.boss.weak_point_height - 1, 1)  # clinging below
 		Session.host._broadcast_state()
-	change_scene_to_file("res://views/combat_view.tscn")
+	# state=3d renders the prototype 3D client instead of the 2D one
+	change_scene_to_file("res://views/combat_3d.tscn" if _state.begins_with("3d")
+		else "res://views/combat_view.tscn")
 	_capture()
 
 

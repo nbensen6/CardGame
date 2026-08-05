@@ -16,6 +16,8 @@
 !/design/
 !/game/
 
+# NOTE: game/assets/3d/** IS tracked (copied from the bundle, like icons/audio).
+
 # --- Inside the project: Godot cache, imported assets, editor/OS junk ---
 .godot/
 *.import
