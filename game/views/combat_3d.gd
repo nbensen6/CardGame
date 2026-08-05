@@ -37,6 +37,14 @@ const BEAST_SCALE_PER_HEIGHT := 0.16
 ## told the OUTCOME, never the ticking timer.
 const GRIP_SECONDS := 5.0
 const HUNTER_SCALE := 0.42
+## Orbit camera (Nick's call, 2026-08-05). The beast is a PLACE, so you can walk
+## the camera around it. Auto-framing still sets the opening shot off the model's
+## own size; dragging only takes over from there, and never below the ground or
+## over the top.
+const ORBIT_PITCH_MIN := -0.12   # radians below level — never under the floor
+const ORBIT_PITCH_MAX := 1.05    # nearly overhead, but never gimbal-locked
+const ORBIT_SENSITIVITY := 0.006
+const ZOOM_STEP := 0.12
 
 var _client: GameClient
 var _beast: Node3D
@@ -49,6 +57,12 @@ var _active_slot := 0
 # --- feel state ---
 var _shake := 0.0                 # camera shake energy, decays each frame
 var _cam_home := Vector3.ZERO
+# --- orbit state ---
+var _yaw := 0.0
+var _pitch := 0.26
+var _dist := 12.0
+var _pivot := Vector3(0, 2.0, 0)
+var _dragging := false
 var _beast_punch := 0.0           # recoil when the beast is struck
 var _time := 0.0
 # snapshot deltas drive the juice, exactly like the 2D view
@@ -165,6 +179,7 @@ func _process(delta: float) -> void:
 			randf_range(-amp, amp), randf_range(-amp, amp), randf_range(-amp, amp) * 0.4)
 	elif _cam.position != _cam_home:
 		_cam.position = _cam_home
+		_cam.look_at(_pivot, Vector3.UP)
 	if _flash != null:
 		_flash.light_energy = maxf(0.0, _flash.light_energy - delta * 9.0)
 	_tick_grip(delta)
@@ -315,8 +330,46 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 ## the big ones or strands the small ones in empty sky.
 func _frame_beast() -> void:
 	var tall := maxf(_beast_box.size.y, 1.0)
-	_cam_home = Vector3(0.0, tall * 0.62 + 1.1, clampf(tall * 2.15 + 3.2, 9.5, 22.0))
+	_dist = clampf(tall * 2.15 + 3.2, 9.5, 22.0)
+	# aim at the body's middle: high enough that the beast clears the top HUD,
+	# low enough that hunters standing on the GROUND stay above the card hand
+	_pivot = Vector3(0.0, tall * 0.46, 0.0)
+	_yaw = 0.0          # a new beast is always introduced from the front
+	_pitch = 0.26
+	_apply_orbit()
+
+
+## Spherical position around the beast. Everything else (shake, the strike flash)
+## composes on top of _cam_home, so the orbit is the only thing that decides
+## where the camera fundamentally is.
+func _apply_orbit() -> void:
+	_pitch = clampf(_pitch, ORBIT_PITCH_MIN, ORBIT_PITCH_MAX)
+	var flat := cos(_pitch) * _dist
+	_cam_home = _pivot + Vector3(sin(_yaw) * flat, sin(_pitch) * _dist, cos(_yaw) * flat)
 	_cam.position = _cam_home
+	_cam.look_at(_pivot, Vector3.UP)
+
+
+## Drag anywhere the HUD didn't already claim. Cards and buttons are Controls, so
+## they consume their own clicks before this ever runs — the hand and the camera
+## never fight over the same drag.
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mb: InputEventMouseButton = event
+		match mb.button_index:
+			MOUSE_BUTTON_LEFT:
+				_dragging = mb.pressed
+			MOUSE_BUTTON_WHEEL_UP:
+				_dist = maxf(_dist * (1.0 - ZOOM_STEP), 4.0)
+				_apply_orbit()
+			MOUSE_BUTTON_WHEEL_DOWN:
+				_dist = minf(_dist * (1.0 + ZOOM_STEP), 34.0)
+				_apply_orbit()
+	elif event is InputEventMouseMotion and _dragging:
+		var mm: InputEventMouseMotion = event
+		_yaw -= mm.relative.x * ORBIT_SENSITIVITY
+		_pitch += mm.relative.y * ORBIT_SENSITIVITY
+		_apply_orbit()
 
 
 ## The beast's data id picks its model. The old guess read the portrait PATH,
@@ -414,7 +467,31 @@ func _spawn_hunter(slot: int, players: Array) -> Dictionary:
 		var m := (load(path) as PackedScene).instantiate()
 		m.scale = Vector3.ONE * HUNTER_SCALE
 		holder.add_child(m)
+	holder.add_child(_hunter_pip(slot))
 	return {"node": holder, "home": Vector3.ZERO}
+
+
+## Orbiting means a hunter can end up behind the beast's body. A pip that draws
+## THROUGH the beast keeps both of them findable from any angle — otherwise the
+## camera freedom costs you the one thing you always need to know.
+func _hunter_pip(slot: int) -> Node3D:
+	var pip := MeshInstance3D.new()
+	var cone := CylinderMesh.new()
+	cone.top_radius = 0.0
+	cone.bottom_radius = 0.12
+	cone.height = 0.22
+	cone.radial_segments = 8
+	pip.mesh = cone
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.45, 0.95, 0.5) if slot == 0 else Color(0.55, 0.82, 1.0)
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.no_depth_test = true
+	mat.render_priority = 2
+	pip.material_override = mat
+	pip.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	pip.rotation.z = PI  # point down at the hunter it marks
+	pip.position = Vector3(0, 0.72, 0)
+	return pip
 
 
 ## The weak point sits atop the beast and pulses, so the target of the whole

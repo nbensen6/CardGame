@@ -129,7 +129,7 @@ color = Color(0.85, 0.78, 0.62, 1)
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 0.982, 0.191, 0, -0.191, 0.982, 0, 3.9, 12.4)
 fov = 48.0
-v_offset = -1.15
+v_offset = -0.8
 
 [node name="Hud" type="CanvasLayer" parent="."]
 

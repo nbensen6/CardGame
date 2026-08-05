@@ -13,6 +13,7 @@ var _state := "combat"
 var _hold := ""   # 3dloop: stop the lap at this phase instead of finishing it
 var _beast := ""  # force a specific beast, to check a model that RNG rarely picks
 var _act := 0     # 3dmap: fast-forward to this act, so later regions get looked at
+var _orbit := 999.0  # 3D combat: drive the orbit camera to this yaw, in degrees
 
 
 func _initialize() -> void:
@@ -27,6 +28,8 @@ func _initialize() -> void:
 			_beast = a.substr(6)
 		elif a.begins_with("act="):
 			_act = int(a.substr(4))
+		elif a.begins_with("orbit="):
+			_orbit = float(a.substr(6))
 	_failsafe()  # never hang the machine
 	Progress.reset_hints()  # shots should show onboarding as a new player sees it
 	if _state == "menu":  # just the main menu, no session
@@ -231,6 +234,12 @@ func _capture() -> void:
 					Session.host._run.phase])
 			else:
 				print("WALK FAIL: raycast missed the landmark")
+	if _orbit < 900.0:  # swing the camera round, to check the view from any side
+		var vo := current_scene
+		vo.set("_yaw", deg_to_rad(_orbit))
+		vo.call("_apply_orbit")
+		for _j in 3:
+			await process_frame
 	if _state == "3dsel":  # tap Meld, then pick two cards, and check it fired
 		var vs := current_scene
 		var cs2: Combat = Session.host._run.combat
