@@ -110,10 +110,24 @@ better starting point than the 2D situation ever was.
    view change. Recommendation: keep `combat_view.gd` until the 3D one has feature
    parity, then delete it — the tests don't depend on it.
 
-## Open questions for Nick
+## Decisions (Nick, 2026-08-05)
 
-- **Camera in combat:** fixed cinematic angle (FF-style), or free orbit?
+- **Camera in combat: free orbit.** Shipped — drag to swing, wheel to zoom, with
+  the opening shot of each fight still auto-framed from the front off the model's
+  own size. I'd argued for a fixed camera on legibility grounds; the two holes I
+  named are closed rather than hand-waved (the hand can't fight the drag because
+  cards consume their own clicks, and each hunter carries a pip that draws through
+  the beast so orbiting can't hide them).
+- **The grip timer stays real-time.** No change needed — it was already ported.
+  Worth re-checking by feel in co-op specifically, where two live clocks while
+  your partner thinks is the case most likely to grate. Real-time solo /
+  turn-based in co-op remains available if it does.
+- **Art: Nick is learning Blender.** See `design/blender-pipeline.md` for the
+  model contract. The relevant engineering follow-up is done: models are now sized
+  to a measured target world height rather than a fixed multiplier, so a mesh
+  built at any scale drops in, and swapping a beast is a one-line change.
+
+## Still open
+
 - **Traversal scale:** small diorama-ish areas per node, or one continuous walkable
   region per act?
-- **Does the grip timer stay real-time** in 3D, or become a turn-based resource
-  now that the fight is more deliberate?

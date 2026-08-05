@@ -27,16 +27,22 @@ const MODELS := {
 	"mire_snapper": "crab", "frost_sentinel": "penguin",
 	"grove_bear": "panda", "shifting_idol": "tiger",
 }
-## Beasts are sized by how far you have to climb them, so a Titan with its sigil
-## at Height 8 physically towers over a Crag Pup you can hit from the ground.
-const BEAST_MIN_SCALE := 1.5
-const BEAST_SCALE_PER_HEIGHT := 0.16
+## Models are sized to a TARGET WORLD HEIGHT, measured off each mesh, never by a
+## fixed multiplier. Two reasons. The Cube Pets already vary 1.55-2.13 units
+## tall, so one multiplier made the two hunters differ by ~24% for no reason.
+## And it means a model built in Blender at any scale drops straight in — the
+## art pipeline shouldn't require matching someone else's units.
+##
+## A beast's height comes from how far you climb it, so a Titan with its sigil at
+## Height 8 physically towers over a Crag Pup you can hit from the ground.
+const BEAST_BASE_HEIGHT := 2.6
+const BEAST_HEIGHT_PER_CLIMB := 0.28
 ## Real-time grip (SotC), the same client-side skill layer the 2D view runs: the
 ## instant a hunter leaves a safe hold a timer starts full and drains live; reach
 ## the next ledge before it empties or this client reports a fall. The host is
 ## told the OUTCOME, never the ticking timer.
 const GRIP_SECONDS := 5.0
-const HUNTER_SCALE := 0.42
+const HUNTER_HEIGHT := 0.8
 ## Orbit camera (Nick's call, 2026-08-05). The beast is a PLACE, so you can walk
 ## the camera around it. Auto-framing still sets the opening shot off the model's
 ## own size; dragging only takes over from there, and never below the ground or
@@ -50,7 +56,8 @@ var _client: GameClient
 var _beast: Node3D
 var _beast_id := ""
 var _beast_box := AABB(Vector3(-1, 0, -1), Vector3(2, 2, 2))
-var _beast_scale := BEAST_MIN_SCALE
+var _beast_scale := 1.0
+var _beast_height := 0.0
 var _hunters: Array = []          # slot -> {node, home}
 var _active_slot := 0
 
@@ -308,21 +315,30 @@ func _intent_text(boss: Dictionary) -> String:
 
 func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	var key := _model_key(beast_id, beast_name)
-	var scale := BEAST_MIN_SCALE + BEAST_SCALE_PER_HEIGHT * float(weak_point)
-	if key == _beast_id and is_instance_valid(_beast) and is_equal_approx(scale, _beast_scale):
+	var want := BEAST_BASE_HEIGHT + BEAST_HEIGHT_PER_CLIMB * float(weak_point)
+	if key == _beast_id and is_instance_valid(_beast) 			and is_equal_approx(want, _beast_height):
 		return
 	_beast_id = key
-	_beast_scale = scale
+	_beast_height = want
 	if _beast != null:
 		_beast.queue_free()
 	var path := CAST + key + ".glb"
 	if not ResourceLoader.exists(path):
 		return
 	_beast = (load(path) as PackedScene).instantiate()
-	_beast.scale = Vector3.ONE * _beast_scale
 	_rig.add_child(_beast)
+	_beast_scale = _fit_height(_beast, want)
 	_beast_box = _merged_aabb(_beast)
 	_frame_beast()
+
+
+## Scale a freshly added model so it stands `want` units tall, and report the
+## factor used. Measured, so it holds for any mesh from any source.
+func _fit_height(node: Node3D, want: float) -> float:
+	var raw := _merged_aabb(node).size.y
+	var factor: float = want / maxf(raw, 0.001)
+	node.scale = Vector3.ONE * factor
+	return factor
 
 
 ## Pull the camera back to fit whatever we're fighting. Beasts now range from a
@@ -465,8 +481,8 @@ func _spawn_hunter(slot: int, players: Array) -> Dictionary:
 	var path := CAST + key + ".glb"
 	if ResourceLoader.exists(path):
 		var m := (load(path) as PackedScene).instantiate()
-		m.scale = Vector3.ONE * HUNTER_SCALE
 		holder.add_child(m)
+		_fit_height(m, HUNTER_HEIGHT)
 	holder.add_child(_hunter_pip(slot))
 	return {"node": holder, "home": Vector3.ZERO}
 
