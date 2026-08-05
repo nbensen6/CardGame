@@ -64,6 +64,7 @@ func _init() -> void:
 	_test_ascension_makes_the_run_harder()
 	_test_coach_teaches_the_right_thing_first()
 	_test_gold_and_shop()
+	_test_content_pools_are_copies()
 	# grip / ledges (SotC real-time climb)
 	_test_secure_on_holds()
 	_test_next_safe_height()
@@ -801,6 +802,24 @@ func _test_gold_and_shop() -> void:
 	_expect(earned and stocked and bought and got_card and not twice
 		and thinned and pricier and broke and run.phase == Run.Phase.MAP,
 		"gold is earned, the shop trades, removal gets pricier, and you can't overspend")
+
+
+func _test_content_pools_are_copies() -> void:
+	# Regression: the shop filters these lists with erase(). Handing out the
+	# CACHED array drained the relic pool for the whole session, which then hung
+	# the reward phase on an empty choice list.
+	var a: Array = Content.relic_pool()
+	var before: int = a.size()
+	a.clear()
+	var b: Array = Content.relic_pool()
+	var beasts: Array = Content.beast_pool("fight")
+	beasts.clear()
+	var rewards: Array = Content.reward_pool("frog")
+	rewards.clear()
+	_expect(before > 0 and b.size() == before
+		and Content.beast_pool("fight").size() > 0
+		and Content.reward_pool("frog").size() > 0,
+		"content pools hand out copies — callers can filter without draining the game")
 
 
 ## Walk the route until a combat node is reached (skipping rest/treasure).

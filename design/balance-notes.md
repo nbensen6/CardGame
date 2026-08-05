@@ -32,10 +32,13 @@ plays the hand in order with no plan — an honest floor.
 
 | | naive | coordinated |
 |---|---|---|
-| win rate | **7%** | **78%** |
-| losses by act | 67 / 101 / 12 / 6 | 1 / 19 / 13 / 12 |
+| win rate | **7%** | **74%** |
+| losses by act | 64 / 111 / 10 / 2 | 0 / 22 / 22 / 8 |
 | avg rounds per Titan | 3.9 → 7.2 | 2.3 → 5.3 |
 | avg lowest HP | 6 / 42 | 14 / 42 |
+
+*(Re-measured after shop nodes landed — shops displaced some treasure and rest
+nodes, which cost the coordinated team a few points.)*
 
 **Coordination is worth +70 points.** That's the design pillar holding: two
 hunters playing as a team win most runs; two playing solo-style lose almost all.
@@ -51,13 +54,15 @@ Shape checks that matter as much as the headline:
 
 | tier | coordinated win | avg lowest HP |
 |---|---|---|
-| 0 | 78% | 14 |
-| 2 | 51% | 11 |
-| 4 | 43% | 9 |
-| 6 | 35% | 8 |
-| 8 | **20%** | 7 |
+| 0 | 74% | 14 |
+| 2 | 51% | 10 |
+| 4 | 37% | 8 |
+| 6 | 28% | 7 |
+| 8 | **12%** | 7 |
 
-A smooth slide with a real wall at the top that is still clearly beatable.
+A smooth slide. A8 sits a little below the ~20% target — steep, but the top tier
+of a ladder should be; soften a tier in `data/ascension.json` if it reads as
+hopeless in play.
 
 ## What was changed to get here
 
@@ -75,6 +80,20 @@ before they could threaten.
   are still learning. (Naive's wall moved from act 1 to act 2, which is right.)
 - **Ascension tiers softened** — `boss_hp_pct` 15 → 10, `boss_strength` 2 → 1 per
   tier. The stacked version reached 2% at A8, which is not a ladder.
+
+## The sim earns its keep: a real bug it caught
+
+Adding shops sent every coordinated run to 0%. Three suspects turned out to be
+wrong (shop policy, greedy elite-hunting, route choice) before the real one:
+
+`Content.relic_pool()` returned the **cached** array, and the shop filtered it
+with `erase()`. So visiting shops permanently drained relics from the entire
+session; once empty, relic rewards offered nothing, `pick_reward` rejected the
+empty choice, and the run **hung in REWARD forever**.
+
+That is a player-facing bug — relics quietly disappearing from a session — and
+nothing but a full-run simulation would have surfaced it. Pools now hand out
+copies, with a regression test.
 
 ## Caveats worth remembering
 

@@ -226,15 +226,21 @@ func _pick_reward(run: Run, choices: Array, policy: String) -> int:
 	return best
 
 
-## Route choice: a coordinated team heals when hurt and takes risks when healthy;
-## a naive one just walks forward.
+## Route choice. A good player takes elites for the relic — but only once the
+## deck can handle one. Greedily hunting them in act 1 with a starting deck is
+## how you die, so the policy earns its way up to them.
 func _pick_node(run: Run, open_cols: Array, policy: String) -> int:
 	if policy == "naive":
 		return int(open_cols[0])
-	var hurt: bool = float(run.hp[0]) / float(run.max_hp[0]) < 0.55 \
-		or float(run.hp[1]) / float(run.max_hp[1]) < 0.55
-	var want: Array = ["rest", "treasure", "fight", "event", "elite"] if hurt \
-		else ["elite", "treasure", "event", "fight", "rest"]
+	var frac: float = minf(float(run.hp[0]) / float(run.max_hp[0]),
+		float(run.hp[1]) / float(run.max_hp[1]))
+	var want: Array
+	if frac < 0.55:
+		want = ["rest", "treasure", "shop", "event", "fight", "elite"]
+	elif frac > 0.8 and run.encounter_index >= 1:
+		want = ["elite", "treasure", "shop", "fight", "event", "rest"]
+	else:
+		want = ["treasure", "shop", "fight", "event", "rest", "elite"]
 	for kind in want:
 		for col in open_cols:
 			if String(run.map.node_at(run.map_row + 1, int(col)).get("type", "")) == String(kind):
@@ -242,13 +248,15 @@ func _pick_node(run: Run, open_cols: Array, policy: String) -> int:
 	return int(open_cols[0])
 
 
-## Shop: a coordinated team buys removals first (the best gold sink in a
-## deckbuilder), then relics, then cards. Naive buys the first thing it can.
+## Shop: thin ONE weak card (removal is strong, but stripping a deck to the floor
+## is self-sabotage), then buy relics, then cards, while the purse lasts.
 func _shop(run: Run, policy: String) -> void:
+	if policy == "coordinated":
+		_buy_one_removal(run)
+	var want: Array = ["relic", "card"] if policy == "coordinated" else ["card", "relic"]
 	var guard := 0
-	while guard < 12:
+	while guard < 10:
 		guard += 1
-		var want: Array = ["remove", "relic", "card"] if policy == "coordinated" else ["card", "relic", "remove"]
 		var bought := false
 		for kind in want:
 			for i in range(run.shop_stock.size()):
@@ -257,10 +265,7 @@ func _shop(run: Run, policy: String) -> void:
 					continue
 				if run.gold < int(item["price"]):
 					continue
-				if String(kind) == "remove":
-					bought = run.buy(i, 0)
-				else:
-					bought = run.buy(i)
+				bought = run.buy(i)
 				if bought:
 					break
 			if bought:
@@ -268,6 +273,32 @@ func _shop(run: Run, policy: String) -> void:
 		if not bought:
 			break
 	run.leave_shop()
+
+
+## Cut the least useful card in the deck — the cheap filler, not whatever is at
+## index 0.
+func _buy_one_removal(run: Run) -> void:
+	for i in range(run.shop_stock.size()):
+		var item: Dictionary = run.shop_stock[i]
+		if bool(item["sold"]) or String(item["kind"]) != "remove":
+			continue
+		if run.gold < int(item["price"]):
+			return
+		var slot := int(item["slot"])
+		var deck: Array = run.decks[slot]
+		var worst := -1
+		var worst_score := 999
+		for j in range(deck.size()):
+			var card: Card = deck[j]
+			if card.upgraded:
+				continue
+			var score: int = card.damage + card.block + card.grip * 3 + card.ally_grip * 3
+			if score < worst_score:
+				worst_score = score
+				worst = j
+		if worst >= 0:
+			run.buy(i, worst)
+		return
 
 
 ## Campfire: patch up when hurt, otherwise sharpen the deck.

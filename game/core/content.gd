@@ -57,9 +57,10 @@ static func reward_pool(character_id: String = "") -> Array:
 			return own.duplicate()
 	return (_read_json(CARDS_PATH).get("reward_pool", []) as Array).duplicate()
 
-## Relic ids that can be offered as rewards.
+## Relic ids that can be offered as rewards. Returns a COPY — callers filter and
+## erase from these lists, and mutating the cache would drain the pool globally.
 static func relic_pool() -> Array:
-	return _read_json(RELICS_PATH).get("pool", [])
+	return (_read_json(RELICS_PATH).get("pool", []) as Array).duplicate()
 
 ## A relic as a plain dict {id, name, effect, value, text} (relics are passive
 ## data, not behaviour — Run/Combat read the effect+value).
