@@ -10,11 +10,13 @@ Nick's continuous task list for Claude. **How it works:**
   in **Questions** below if truly stuck rather than stalling.
 
 ## Inbox
+- [ ] **depth plan** (see `design/depth-plan.md`) — in order: (1) the MAP: branching paths w/ fight/elite/rest/event/shop nodes; (2) deck transformation: card removal + upgrades + skip-reward; (3) fight variety: quick non-titan fights that twist the climb; (4) rule-changing relics (~30); (5) per-class archetype reward pools; (6) ascension ladder
 - [ ] *(standing)* continually look through assets to use — finds so far: menu reskin `c4140ba`, strike/shake juice `5d9d09f` (burst flash + dust + arena judder); ambient music `e5fb47e` (menu=Flowing Rocks, combat=Retro Mystic — swap assets/music/*.ogg to change); emotes `e4285f7`; HUD fantasy-frame skin `da743f8`. Queue empty — next finds will be my own proposals (noted here before building)
 ## Questions from Claude
 (none)
 
 ## Done
+- [x] composition overhaul — beast is the play space — `8e519df` (hunters climb ON the beast, glowing weak point, route line; abstract ladder removed)
 - [x] Grappling Arm only playable when it can pull — `caf4be9` (requires an ally below you within reach; greys out otherwise)
 - [x] hand header as character symbol — `8b2703b` (portrait above the hand; text only for turn-ended/selection states)
 - [x] switch characters while the climb timer runs — `9181605` (per-hunter grip timers; Switch enabled mid-climb, both timers drain at once, grip bar names whichever hunter it shows)
