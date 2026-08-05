@@ -100,6 +100,11 @@ static func character_portrait(id: String) -> String:
 	var chars: Dictionary = _read_json(CHARACTERS_PATH).get("characters", {})
 	return String((chars.get(id, {}) as Dictionary).get("portrait", ""))
 
+## Beast ids for a map node type ("fight" | "elite" | "boss").
+static func beast_pool(kind: String) -> Array:
+	var pools: Dictionary = _read_json(BOSSES_PATH).get("pools", {})
+	return (pools.get(kind, []) as Array).duplicate()
+
 ## Build a Titan by id from data.
 static func build_boss(id: String) -> Boss:
 	var bosses: Dictionary = _read_json(BOSSES_PATH).get("bosses", {})

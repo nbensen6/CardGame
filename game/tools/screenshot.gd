@@ -34,6 +34,13 @@ func _initialize() -> void:
 	elif _state != "select":
 		Session.client.select_character("frog", 0)
 		Session.client.select_character("goblin_mech", 1)
+	if _state in ["combat", "goblin", "juice", "climbing"]:  # step off the map into a fight
+		var r: Run = Session.host._run
+		var g := 0
+		while r.phase == Run.Phase.MAP and g < 30:
+			g += 1
+			r.pick_node(int(r.available_nodes()[0]))
+		Session.host._broadcast_state()
 	if _state == "climbing":  # mid-ascent, so marker placement can be checked
 		var c: Combat = Session.host._run.combat
 		c.players[0].foothold = c.boss.weak_point_height      # at the sigil

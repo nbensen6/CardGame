@@ -49,6 +49,12 @@ func fall(slot: int = -1) -> void:
 func pick_card(choice: int, slot: int = -1) -> void:
 	_send({"type": "pick_card", "choice": choice, "slot": slot})
 
+## Step onto a map node (column in the next row). The route is a shared
+## decision, so either hunter may send this.
+func pick_node(col: int) -> void:
+	_send({"type": "pick_node", "col": col})
+
+
 func restart() -> void:
 	_send({"type": "restart"})
 

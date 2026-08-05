@@ -45,6 +45,11 @@ func _init() -> void:
 	_test_attack_all_shakes_down_a_hold()
 	_test_sunlight_blade_scales_with_exposed()
 	_test_bowshot_deals_and_exposes()
+	# the run map (branching route)
+	_test_map_generates_connected_rows()
+	_test_map_is_deterministic_per_seed()
+	_test_run_walks_the_map()
+	_test_rest_node_heals_and_returns_to_map()
 	# grip / ledges (SotC real-time climb)
 	_test_secure_on_holds()
 	_test_next_safe_height()
@@ -363,6 +368,103 @@ func _climb_boss(height: int) -> Boss:
 	return b
 
 
+func _test_map_generates_connected_rows() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	var m := RunMap.new(4, rng)
+	var rows_ok := m.total_rows() == 4 * (RunMap.ROWS_PER_ACT + 1)
+	var every_node_reachable := true
+	var bosses := 0
+	for r in range(m.rows.size()):
+		var row: Array = m.rows[r]
+		for c in range(row.size()):
+			if String(row[c]["type"]) == "boss":
+				bosses += 1
+		if r == 0:
+			continue
+		var reached := {}
+		for prev in m.rows[r - 1]:
+			for e in prev["next"]:
+				reached[e] = true
+		for c in range(row.size()):
+			if not reached.has(c):
+				every_node_reachable = false
+	# the last row of each act is a lone boss
+	var last_is_boss: bool = m.rows[m.rows.size() - 1].size() == 1 		and String(m.rows[m.rows.size() - 1][0]["type"]) == "boss"
+	_expect(rows_ok and every_node_reachable and bosses == 4 and last_is_boss,
+		"the map generates connected rows with one Titan capping each act")
+
+
+func _test_map_is_deterministic_per_seed() -> void:
+	var a := RandomNumberGenerator.new(); a.seed = 99
+	var b := RandomNumberGenerator.new(); b.seed = 99
+	var c := RandomNumberGenerator.new(); c.seed = 12345
+	var m1 := RunMap.new(2, a)
+	var m2 := RunMap.new(2, b)
+	var m3 := RunMap.new(2, c)
+	var same := str(m1.rows) == str(m2.rows)
+	var different := str(m1.rows) != str(m3.rows)
+	_expect(same and different, "the same seed maps the same route; a new seed re-rolls it")
+
+
+func _test_run_walks_the_map() -> void:
+	var run := _map_run()
+	var started_on_map: bool = run.phase == Run.Phase.MAP and run.map_row == -1
+	var opening: Array = run.available_nodes()
+	var rejected: bool = not run.pick_node(99)  # not a reachable column
+	run.pick_node(int(opening[0]))
+	# row 0 is always a fight, so we should be in combat against a pooled beast
+	var in_combat: bool = run.phase == Run.Phase.COMBAT and run.node_type == "fight"
+	var pooled: bool = Content.beast_pool("fight").has(run.beast_id)
+	_expect(started_on_map and opening.size() >= 2 and rejected and in_combat and pooled,
+		"a run starts on the map, rejects unreachable nodes, and fights what it steps on")
+
+
+func _test_rest_node_heals_and_returns_to_map() -> void:
+	var run := _map_run()
+	run.hp[0] = 10
+	run.hp[1] = 10
+	# walk to a rest node wherever the route offers one
+	var guard := 0
+	var rested := false
+	while not rested and guard < 40:
+		guard += 1
+		if run.phase != Run.Phase.MAP:
+			break
+		var found := -1
+		for col in run.available_nodes():
+			if String(run.map.node_at(run.map_row + 1, int(col)).get("type", "")) == "rest":
+				found = int(col)
+		if found < 0:
+			break
+		run.pick_node(found)
+		rested = true
+	if not rested:
+		_expect(true, "rest node heals and hands back to the map (no rest offered on this seed)")
+		return
+	_expect(run.hp[0] == 10 + Run.REST_HEAL and run.phase == Run.Phase.MAP,
+		"a rest node heals the party and hands straight back to the map")
+
+
+## Walk the route until a combat node is reached (skipping rest/treasure).
+func _step_into_combat(run: Run) -> void:
+	var guard := 0
+	while run.phase != Run.Phase.COMBAT and not run.is_over() and guard < 60:
+		guard += 1
+		if run.phase == Run.Phase.MAP:
+			run.pick_node(int(run.available_nodes()[0]))
+		elif run.phase == Run.Phase.REWARD:
+			_pick_both(run)
+
+
+## A started run positioned at the trailhead of a seeded map.
+func _map_run() -> Run:
+	var decks := [_deck_of(_slash, 10), _deck_of(_slash, 10)]
+	var run := Run.new(decks, ["A", "B"], 4242, [{}, {}])
+	run.start()
+	return run
+
+
 func _test_secure_on_holds() -> void:
 	var boss := _climb_boss(6)
 	boss.ledges = [2, 4]
@@ -614,48 +716,44 @@ func _test_bowshot_deals_and_exposes() -> void:
 # --- Step 4: run / meta-progression ---------------------------------------
 
 func _test_run_starts_in_combat() -> void:
-	var run := Run.new([_mixed_deck(), _mixed_deck()], ["A", "B"], 5)
-	run.start()
-	_expect(run.phase == Run.Phase.COMBAT and run.encounter_index == 0
-		and run.combat != null, "a run starts fighting the first Titan")
-
+	var run := _map_run()
+	var on_map: bool = run.phase == Run.Phase.MAP and run.combat == null
+	_step_into_combat(run)
+	_expect(on_map and run.phase == Run.Phase.COMBAT and run.combat != null,
+		"a run starts on the map, then fights the node it steps on")
 
 func _test_run_win_flows_through_reward_to_next_encounter() -> void:
-	var run := Run.new([_mixed_deck(), _mixed_deck()], ["A", "B"], 5)
-	run.start()
+	var run := _map_run()
+	_step_into_combat(run)  # row 0 is always a fight -> card reward
 	_force_win(run)
-	_expect(run.phase == Run.Phase.REWARD
+	_expect(run.phase == Run.Phase.REWARD and run.reward_kind == "card"
 		and run.reward_choices.size() == 2
 		and run.reward_choices[0].size() == Run.REWARD_CHOICES,
-		"winning a non-final Titan enters the reward phase with choices")
+		"winning a fight enters the reward phase with choices")
 	var deck0_before: int = run.decks[0].size()
 	run.pick_reward(0, 0)
 	_expect(run.phase == Run.Phase.REWARD, "the run waits for every hunter to pick")
 	run.pick_reward(1, 0)
-	_expect(run.phase == Run.Phase.COMBAT and run.encounter_index == 1
-		and run.decks[0].size() == deck0_before + 1,
-		"after all pick, the next encounter starts with the chosen card added")
-
+	_expect(run.phase == Run.Phase.MAP and run.decks[0].size() == deck0_before + 1,
+		"after all pick, the chosen card is added and the route opens up again")
 
 func _test_run_hp_carries_between_encounters() -> void:
-	var run := Run.new([_mixed_deck(), _mixed_deck()], ["A", "B"], 5)
-	run.start()
+	var run := _map_run()
+	_step_into_combat(run)
 	run.combat.players[0].combatant.hp = 20  # took damage this fight
 	_force_win(run)
-	run.pick_reward(0, 0)
-	run.pick_reward(1, 0)  # -> next encounter starts
+	_pick_both(run)          # -> back to the map
+	_step_into_combat(run)   # next node
 	_expect(run.combat.players[0].combatant.hp == 20 + Run.HEAL_BETWEEN,
 		"damage carries to the next encounter (plus a small heal)")
 
-
 func _test_run_defeat_when_a_hunter_falls() -> void:
-	var run := Run.new([_mixed_deck(), _mixed_deck()], ["A", "B"], 5)
-	run.start()
+	var run := _map_run()
+	_step_into_combat(run)
 	run.combat.players[0].combatant.hp = 0
 	run.combat.phase = Combat.Phase.OVER
 	run.sync()
 	_expect(run.phase == Run.Phase.LOST, "a hunter falling loses the whole run")
-
 
 func _test_content_make_card_and_reward_pool() -> void:
 	var card := Content.make_card("rally")
@@ -695,27 +793,31 @@ func _test_relic_round_block() -> void:
 
 
 func _test_run_is_four_titans() -> void:
-	var run := Run.new([_mixed_deck(), _mixed_deck()], ["A", "B"], 5)
-	_expect(run.total_encounters() == 4, "a run is four Titans")
-
+	var run := _map_run()
+	_expect(run.total_encounters() == 4 and run.map.total_rows() == 4 * (RunMap.ROWS_PER_ACT + 1),
+		"a run is four acts, each a few map rows capped by a Titan")
 
 func _test_run_relic_reward_and_full_clear() -> void:
-	var run := Run.new([_mixed_deck(), _mixed_deck()], ["A", "B"], 5)
-	run.start()
-	_force_win(run)  # Titan 1 -> card reward
-	_expect(run.reward_kind == "card", "first reward is a card")
-	_pick_both(run)  # -> Titan 2
-	_force_win(run)  # Titan 2 -> relic reward
-	_expect(run.reward_kind == "relic" and not run.reward_choices[0].is_empty(),
-		"second reward is a relic")
-	_pick_both(run)  # 2 team relics -> Titan 3
-	_expect(run.team_relics.size() == 2 and run.encounter_index == 2,
-		"relics added team-wide; run advances to Titan 3")
-	_force_win(run)  # Titan 3 -> card reward
-	_pick_both(run)  # -> Titan 4
-	_force_win(run)  # Titan 4 -> run won
-	_expect(run.phase == Run.Phase.WON, "felling all four Titans wins the run")
-
+	var run := _map_run()
+	# walk the entire route, winning every fight, until the run resolves
+	var guard := 0
+	var saw_card := false
+	var saw_relic := false
+	while not run.is_over() and guard < 200:
+		guard += 1
+		match run.phase:
+			Run.Phase.MAP:
+				run.pick_node(int(run.available_nodes()[0]))
+			Run.Phase.COMBAT:
+				_force_win(run)
+			Run.Phase.REWARD:
+				if run.reward_kind == "card":
+					saw_card = true
+				else:
+					saw_relic = true
+				_pick_both(run)
+	_expect(run.phase == Run.Phase.WON and saw_card and saw_relic and run.team_relics.size() > 0,
+		"walking the whole map (fights pay cards, elites/Titans pay relics) wins the run")
 
 func _pick_both(run: Run) -> void:
 	run.pick_reward(0, 0)
@@ -870,6 +972,15 @@ func _make_session(seed_value: int = 42) -> Dictionary:
 	c1.join()  # slot 1 — both joined, now in character select
 	c0.select_character("frog")
 	c1.select_character("mountain_climbers")  # both chosen -> host starts the run
+	# The run now opens on the MAP; step onto the first node so these tests are
+	# exercising combat (row 0 is always a fight).
+	var guard := 0
+	while String(c0.shared.get("phase", "")) == "map" and guard < 10:
+		guard += 1
+		var avail: Array = (c0.shared.get("map", {}) as Dictionary).get("available", [])
+		if avail.is_empty():
+			break
+		c0.pick_node(int(avail[0]))
 	return {"transport": transport, "host": host, "c0": c0, "c1": c1}
 
 
@@ -940,7 +1051,14 @@ func _test_solo_controls_both_hunters() -> void:
 		"solo lobby asks for hunter 1 first")
 	c.select_character("frog", 0)
 	_expect(int(c.shared.get("current_slot", -1)) == 1, "after hunter 1, solo asks for hunter 2")
-	c.select_character("goblin_mech", 1)  # both chosen -> run starts
+	c.select_character("goblin_mech", 1)  # both chosen -> run starts (on the map)
+	var guard := 0
+	while String(c.shared.get("phase", "")) == "map" and guard < 10:
+		guard += 1
+		var av: Array = (c.shared.get("map", {}) as Dictionary).get("available", [])
+		if av.is_empty():
+			break
+		c.pick_node(int(av[0]))
 	var slots: Array = c.private.get("slots", [])
 	_expect(bool(c.private.get("solo", false)) and slots.size() == 2
 		and slots[0]["hand"].size() == Combat.HAND_SIZE

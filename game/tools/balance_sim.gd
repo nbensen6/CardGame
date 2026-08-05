@@ -77,6 +77,13 @@ func _play_run(seed_value: int, policy: String) -> Dictionary:
 					stats["min_hp"] = minf(stats["min_hp"], ps.combatant.hp)
 			else:
 				stats["enc_rounds"][enc] = c.round_num
+		elif run.phase == Run.Phase.MAP:
+			# Walk the route. The AI has no route strategy yet — it takes the first
+			# open node, which is enough to keep the sim measuring card balance.
+			var open_cols: Array = run.available_nodes()
+			if open_cols.is_empty():
+				break
+			run.pick_node(int(open_cols[0]))
 		elif run.phase == Run.Phase.REWARD:
 			for slot in range(run.player_count()):
 				if not run.reward_picked[slot]:

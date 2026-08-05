@@ -3,20 +3,29 @@
 ## picks a card to add to their persistent deck. Pure /core: no rendering, input,
 ## or net — the host drives it and turns it into snapshots.
 ##
-## Phases: COMBAT (fighting a Titan) -> REWARD (each hunter picks a card) ->
-##         next COMBAT -> ... -> WON (all Titans felled) or LOST (a hunter fell).
+## Phases: MAP (choose where to go) -> COMBAT / rest / treasure -> REWARD ->
+##         back to MAP -> ... -> WON (all Titans felled) or LOST (a hunter fell).
+##
+## The route is a RunMap: rows of branching nodes, a Titan capping each act. The
+## run walks it one row at a time; the node you step on decides what happens.
 class_name Run
 extends RefCounted
 
-enum Phase { COMBAT, REWARD, WON, LOST }
+enum Phase { MAP, COMBAT, REWARD, WON, LOST }
 
 const ENCOUNTERS := ["stone_warden", "gale_serpent", "drowned_colossus", "sunken_warden"]
+const REST_HEAL := 12  # a breather node patches you up
 const REWARD_CHOICES := 3
 const HEAL_BETWEEN := 6  # hunters recover a little after each Titan falls
 const PLAYER_HP := 42
 
-var phase: int = Phase.COMBAT
-var encounter_index: int = 0
+var phase: int = Phase.MAP
+var encounter_index: int = 0     # which act/Titan we're on (display + seeding)
+var map: RunMap
+var map_row: int = -1            # -1 = at the trailhead, nothing stepped on yet
+var map_col: int = 0
+var node_type: String = ""       # the node we're currently resolving
+var beast_id: String = ""        # the beast this combat is against
 var combat: Combat
 var names: Array = []
 var decks: Array = []            # Array[Array[Card]] per hunter — persists across encounters
@@ -43,9 +52,10 @@ func _init(p_decks: Array, p_names: Array, seed_value: int = 0, p_passives: Arra
 		names.append(String(p_names[i]))
 		max_hp.append(PLAYER_HP)
 		hp.append(PLAYER_HP)
+	map = RunMap.new(ENCOUNTERS.size(), _rng)
 
 func start() -> void:
-	_start_encounter()
+	phase = Phase.MAP
 
 func player_count() -> int:
 	return names.size()
@@ -56,18 +66,50 @@ func total_encounters() -> int:
 func is_over() -> bool:
 	return phase == Phase.WON or phase == Phase.LOST
 
+## Columns the party may step to from where they stand.
+func available_nodes() -> Array:
+	return map.available(map_row, map_col) if map != null else []
+
+## Step onto a node in the next row and resolve it. Any hunter may choose — the
+## route is a shared decision.
+func pick_node(col: int) -> bool:
+	if phase != Phase.MAP or map == null:
+		return false
+	if not available_nodes().has(col):
+		return false
+	map_row += 1
+	map_col = col
+	var node: Dictionary = map.node_at(map_row, map_col)
+	node_type = String(node.get("type", "fight"))
+	encounter_index = int(node.get("act", 0))
+	match node_type:
+		"rest":
+			for i in range(names.size()):
+				hp[i] = mini(hp[i] + REST_HEAL, max_hp[i])
+			_after_node()
+		"treasure":
+			_begin_reward("relic")
+		_:  # fight / elite / boss
+			_start_encounter()
+	return true
+
 ## The host calls this after every combat command to advance run state.
 func sync() -> void:
 	if phase != Phase.COMBAT or combat == null or not combat.is_over():
 		return
 	if combat.result() == Combat.Result.WIN:
 		_bank_hp()
-		if encounter_index + 1 >= ENCOUNTERS.size():
-			phase = Phase.WON
-		else:
-			_begin_reward()
+		# elites and Titans pay a relic; ordinary beasts pay a card
+		_begin_reward("relic" if node_type in ["elite", "boss"] else "card")
 	else:
 		phase = Phase.LOST
+
+## Where the run goes once a node is fully resolved: on to the map, or done.
+func _after_node() -> void:
+	if map != null and map.is_last_row(map_row):
+		phase = Phase.WON
+	else:
+		phase = Phase.MAP
 
 ## Hunter `slot` picks reward option `choice`. When all have picked, the next
 ## encounter begins.
@@ -85,18 +127,18 @@ func pick_reward(slot: int, choice: int) -> void:
 		decks[slot].append(choices[choice])  # cards go to that hunter's deck
 	reward_picked[slot] = true
 	if _all_picked():
-		encounter_index += 1
-		_start_encounter()
+		_after_node()
 
 # --- internals ------------------------------------------------------------
 
 func _start_encounter() -> void:
+	beast_id = _roll_beast()
 	var combatants: Array = []
 	for i in range(names.size()):
 		var c := Combatant.new(names[i], max_hp[i])
 		c.hp = hp[i]  # carry damage between encounters
 		combatants.append(c)
-	var boss := Content.build_boss(ENCOUNTERS[encounter_index])
+	var boss := Content.build_boss(beast_id if beast_id != "" else ENCOUNTERS[encounter_index])
 	var mods := relic_totals()
 	# Distinct per-encounter seed so each fight shuffles differently but reproducibly.
 	combat = Combat.new(decks, combatants, boss, _encounter_seed(),
@@ -119,17 +161,26 @@ func relic_totals() -> Dictionary:
 func _encounter_seed() -> int:
 	if _seed == 0:
 		return 0  # keep it random
-	return _seed + (encounter_index + 1) * 101
+	return _seed + (map_row + 1) * 101 + map_col
 
 func _bank_hp() -> void:
 	var heal: int = HEAL_BETWEEN + int(relic_totals()["heal"])
 	for i in range(names.size()):
 		hp[i] = mini(combat.players[i].combatant.hp + heal, max_hp[i])
 
-func _begin_reward() -> void:
+## Pick the beast for this node: Titans follow the act order so the run still
+## climaxes on a known ladder; fights and elites roll from their pool.
+func _roll_beast() -> String:
+	if node_type == "boss":
+		return String(ENCOUNTERS[clampi(encounter_index, 0, ENCOUNTERS.size() - 1)])
+	var pool := Content.beast_pool(node_type)
+	if pool.is_empty():
+		return String(ENCOUNTERS[0])
+	return String(pool[_rng.randi_range(0, pool.size() - 1)])
+
+func _begin_reward(kind: String) -> void:
 	phase = Phase.REWARD
-	# Alternate: a card reward after odd Titans, a relic after even ones.
-	reward_kind = "relic" if encounter_index % 2 == 1 else "card"
+	reward_kind = kind
 	reward_choices = []
 	reward_picked = []
 	var pool: Array = Content.relic_pool() if reward_kind == "relic" else Content.reward_pool()

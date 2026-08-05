@@ -1,5 +1,5 @@
 {
-  "_comment": "Titans are DATA (CLAUDE.md §11). A run fights them in order (see Run.ENCOUNTERS). Move types: attack (hits the telegraphed hunter), attack_all (sweeps BOTH — shakes each hunter DOWN to the ledge below, and rewards blocking/Cover), block (guards), enrage (permanently +value to its attacks this fight — a soft timer that rewards focus-fire). weak_point_height = the sigil Height; ledges = safe rest Heights on the way up (climb between them before your grip timer runs out, SotC-style). Tuned for two players; retune freely during balance.",
+  "_comment": "Titans are DATA (CLAUDE.md §11). A run fights them in order (see Run.ENCOUNTERS). Move types: attack (hits the telegraphed hunter), attack_all (sweeps BOTH — shakes each hunter DOWN to the ledge below, and rewards blocking/Cover), block (guards), enrage (permanently +value to its attacks this fight — a soft timer that rewards focus-fire). weak_point_height = the sigil Height; ledges = safe rest Heights on the way up (climb between them before your grip timer runs out, SotC-style). Tuned for two players; retune freely during balance. 'pools' groups beasts by map node type: quick fights, elites, and the act-ending Titans.",
   "bosses": {
     "stone_warden": {
       "name": "The Stone Warden",
@@ -116,6 +116,160 @@
           "value": 22
         }
       ]
+    },
+    "crag_pup": {
+      "name": "The Crag Pup",
+      "art": "res://assets/portraits/dog.png",
+      "max_hp": 24,
+      "weak_point_height": 1,
+      "ledges": [],
+      "weak_point_threshold": 10,
+      "moves": [
+        {
+          "type": "attack",
+          "value": 6
+        },
+        {
+          "type": "attack",
+          "value": 8
+        }
+      ]
+    },
+    "bramble_hog": {
+      "name": "The Bramble Hog",
+      "art": "res://assets/portraits/pig.png",
+      "max_hp": 30,
+      "weak_point_height": 2,
+      "ledges": [],
+      "weak_point_threshold": 12,
+      "moves": [
+        {
+          "type": "attack",
+          "value": 7
+        },
+        {
+          "type": "attack_all",
+          "value": 5
+        },
+        {
+          "type": "attack",
+          "value": 9
+        }
+      ]
+    },
+    "bounder": {
+      "name": "The Bounder",
+      "art": "res://assets/portraits/rabbit.png",
+      "max_hp": 22,
+      "weak_point_height": 1,
+      "ledges": [],
+      "weak_point_threshold": 10,
+      "moves": [
+        {
+          "type": "attack_all",
+          "value": 5
+        },
+        {
+          "type": "attack",
+          "value": 7
+        }
+      ]
+    },
+    "mire_snapper": {
+      "name": "The Mire Snapper",
+      "art": "res://assets/portraits/crocodile.png",
+      "max_hp": 46,
+      "weak_point_height": 2,
+      "ledges": [],
+      "weak_point_threshold": 16,
+      "moves": [
+        {
+          "type": "leech",
+          "value": 8
+        },
+        {
+          "type": "attack",
+          "value": 11
+        },
+        {
+          "type": "attack_all",
+          "value": 7
+        }
+      ]
+    },
+    "frost_sentinel": {
+      "name": "The Frost Sentinel",
+      "art": "res://assets/portraits/penguin.png",
+      "max_hp": 50,
+      "weak_point_height": 3,
+      "ledges": [
+        2
+      ],
+      "weak_point_threshold": 18,
+      "moves": [
+        {
+          "type": "block",
+          "value": 8
+        },
+        {
+          "type": "attack",
+          "value": 12
+        },
+        {
+          "type": "enrage",
+          "value": 2
+        },
+        {
+          "type": "attack",
+          "value": 14
+        }
+      ]
+    },
+    "grove_bear": {
+      "name": "The Grove Bear",
+      "art": "res://assets/portraits/bear.png",
+      "max_hp": 54,
+      "weak_point_height": 3,
+      "ledges": [
+        2
+      ],
+      "weak_point_threshold": 18,
+      "moves": [
+        {
+          "type": "attack",
+          "value": 10
+        },
+        {
+          "type": "attack_all",
+          "value": 8
+        },
+        {
+          "type": "enrage",
+          "value": 3
+        },
+        {
+          "type": "attack",
+          "value": 15
+        }
+      ]
     }
+  },
+  "pools": {
+    "fight": [
+      "crag_pup",
+      "bramble_hog",
+      "bounder"
+    ],
+    "elite": [
+      "mire_snapper",
+      "frost_sentinel",
+      "grove_bear"
+    ],
+    "boss": [
+      "stone_warden",
+      "gale_serpent",
+      "drowned_colossus",
+      "sunken_warden"
+    ]
   }
 }

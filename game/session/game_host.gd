@@ -73,6 +73,10 @@ func _on_command(peer_id: int, command: Dictionary) -> void:
 			var psf := _acting_slot(peer_id, command)
 			_in_combat_action(psf, func() -> void:
 				_run.combat.fall(psf))
+		"pick_node":  # the route is a shared choice — any hunter may step
+			if not paused and _run != null:
+				_run.pick_node(int(command.get("col", -1)))
+			_broadcast_state()
 		"pick_card":
 			var pslot := _acting_slot(peer_id, command)
 			if not paused and _run != null and pslot >= 0:
@@ -182,6 +186,12 @@ func _build_shared() -> Dictionary:
 		"disconnected_slot": _disconnected_slot,
 		"solo": _solo,
 	}
+	if _run.phase == Run.Phase.MAP and _run.map != null:
+		s["map"] = {
+			"rows": _run.map.rows, "row": _run.map_row, "col": _run.map_col,
+			"available": _run.available_nodes(),
+			"boss_art": _boss_art_per_act(),
+		}
 	if _run.phase == Run.Phase.COMBAT:
 		var c: Combat = _run.combat
 		var b: Boss = c.boss
@@ -197,6 +207,13 @@ func _build_shared() -> Dictionary:
 		s["base_energy"] = Combat.BASE_ENERGY
 		s["log"] = c.log.slice(maxi(c.log.size() - 18, 0))  # enough for the expanded log view
 	return s
+
+## Each act's Titan portrait, so the route can show what it's building toward.
+func _boss_art_per_act() -> Array:
+	var out: Array = []
+	for id in Run.ENCOUNTERS:
+		out.append(Content.build_boss(String(id)).art)
+	return out
 
 func _players_public() -> Array:
 	var out: Array = []
@@ -332,6 +349,7 @@ func _player_name(slot: int) -> String:
 
 func _phase_string() -> String:
 	match _run.phase:
+		Run.Phase.MAP: return "map"
 		Run.Phase.COMBAT: return "combat"
 		Run.Phase.REWARD: return "reward"
 		Run.Phase.WON: return "won"

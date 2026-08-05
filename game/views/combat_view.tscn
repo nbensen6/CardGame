@@ -84,6 +84,7 @@ layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="Scene" type="HBoxContainer" parent="Margin/Root"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 14
@@ -144,6 +145,22 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
+[node name="MapPanel" type="PanelContainer" parent="Margin/Root"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MapScroll" type="ScrollContainer" parent="Margin/Root/MapPanel"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="MapRows" type="VBoxContainer" parent="Margin/Root/MapPanel/MapScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
 [node name="GripBar" type="PanelContainer" parent="Margin/Root"]
 unique_name_in_owner = true
 visible = false
@@ -169,6 +186,7 @@ value = 1.0
 show_percentage = false
 
 [node name="HandBar" type="HBoxContainer" parent="Margin/Root"]
+unique_name_in_owner = true
 layout_mode = 2
 alignment = 1
 theme_override_constants/separation = 8

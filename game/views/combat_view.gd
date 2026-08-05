@@ -16,6 +16,10 @@ var _client: GameClient
 @onready var _boss_hp_bar: ProgressBar = %BossHPBar
 @onready var _intent: HBoxContainer = %Intent
 @onready var _players_row: VBoxContainer = %Players
+@onready var _scene_row: HBoxContainer = %Scene
+@onready var _map_panel: PanelContainer = %MapPanel
+@onready var _map_rows: VBoxContainer = %MapRows
+@onready var _hand_bar: HBoxContainer = %HandBar
 @onready var _arena: Control = %Arena
 @onready var _climb_layer: Control = %Climb
 @onready var _boss_art: TextureRect = %BossArt
@@ -216,6 +220,8 @@ func _refresh() -> void:
 			_show_waiting(s)
 		return
 	match String(s.get("phase", "combat")):
+		"map":
+			_render_map(s)
 		"combat":
 			_render_combat(s)
 		"reward":
@@ -227,6 +233,7 @@ func _refresh() -> void:
 # --- Combat phase ---------------------------------------------------------
 
 func _render_combat(s: Dictionary) -> void:
+	_show_map(false)
 	_over_sound = false  # reset so the next win/lose plays its sting
 	_overlay.visible = false
 	_top_bar.visible = true
@@ -435,9 +442,141 @@ func _on_timing_resolved(hit: bool, index: int) -> void:
 	_client.play_card(index, hit, _cmd_slot())
 
 
+# --- Map phase (the route) ------------------------------------------------
+
+const NODE_ICONS := {
+	"fight": preload("res://assets/icons/sword.png"),
+	"elite": preload("res://assets/icons/skull.png"),
+	"rest": preload("res://assets/icons/campfire.png"),
+	"treasure": preload("res://assets/icons/award.png"),
+}
+const NODE_TINT := {
+	"fight": Color(0.82, 0.44, 0.34),
+	"elite": Color(0.72, 0.42, 0.72),
+	"rest": Color(0.62, 0.80, 0.52),
+	"treasure": Color(0.90, 0.78, 0.42),
+	"boss": Color(0.95, 0.55, 0.42),
+}
+const NODE_LABEL := {
+	"fight": "Beast", "elite": "Elite", "rest": "Rest",
+	"treasure": "Relic", "boss": "TITAN",
+}
+
+## The route: rows of nodes drawn bottom-up (you climb the page). Nodes you can
+## step to are lit and tappable; where you stand is ringed; what's behind you is
+## dimmed. Either hunter may choose — the route is a shared decision.
+func _render_map(s: Dictionary) -> void:
+	_show_map(true)
+	_overlay.visible = false
+	_top_bar.visible = true
+	_boss_hp_bar.visible = false
+	_intent.visible = false
+	var m: Dictionary = s.get("map", {})
+	var rows: Array = m.get("rows", [])
+	var cur_row := int(m.get("row", -1))
+	var cur_col := int(m.get("col", 0))
+	var avail: Array = m.get("available", [])
+	var boss_art: Array = m.get("boss_art", [])
+	# Only the act you're in — each act is a short route capped by its Titan, so
+	# the whole choice fits on screen without scrolling.
+	var act := 0
+	if cur_row >= 0 and cur_row < rows.size():
+		act = int((rows[cur_row] as Array)[cur_col].get("act", 0))
+	elif not rows.is_empty():
+		act = int((rows[0] as Array)[0].get("act", 0))
+	_boss_name.text = "Choose your route"
+	_boss_hp.text = "Act %d of %d" % [act + 1, int(s.get("total_encounters", 4))]
+	_clear(_map_rows)
+	for r in range(rows.size() - 1, -1, -1):  # the Titan on top — you climb the page
+		var row: Array = rows[r]
+		if int((row[0] as Dictionary).get("act", 0)) != act:
+			continue
+		var line := HBoxContainer.new()
+		line.alignment = BoxContainer.ALIGNMENT_CENTER
+		line.add_theme_constant_override("separation", 12)
+		for c in range(row.size()):
+			var node: Dictionary = row[c]
+			var is_here: bool = (r == cur_row and c == cur_col)
+			var is_open: bool = (r == cur_row + 1 and avail.has(c))
+			line.add_child(_map_node_button(node, r < cur_row, is_here, is_open, c, boss_art))
+		_map_rows.add_child(line)
+
+
+func _map_node_button(node: Dictionary, passed: bool, here: bool, open: bool,
+		col: int, boss_art: Array) -> Control:
+	var type := String(node.get("type", "fight"))
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(122, 60)
+	b.disabled = not open
+	b.add_theme_stylebox_override("normal", _node_style(here, open, passed))
+	b.add_theme_stylebox_override("hover", _node_style(here, open, passed, true))
+	b.add_theme_stylebox_override("disabled", _node_style(here, open, passed))
+	var box := HBoxContainer.new()
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 6)
+	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	b.add_child(box)
+	var icon := TextureRect.new()
+	icon.custom_minimum_size = Vector2(28, 28)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if type == "boss":
+		var act := int(node.get("act", 0))
+		var art := String(boss_art[act]) if act < boss_art.size() else ""
+		if art != "" and ResourceLoader.exists(art):
+			icon.texture = load(art)
+	elif NODE_ICONS.has(type):
+		icon.texture = NODE_ICONS[type]
+		icon.modulate = NODE_TINT.get(type, Color(1, 1, 1))
+	box.add_child(icon)
+	var l := Label.new()
+	l.text = String(NODE_LABEL.get(type, type))
+	l.add_theme_font_size_override("font_size", 13)
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if not open and not here:
+		l.add_theme_color_override("font_color", Color(0.55, 0.51, 0.45))
+	box.add_child(l)
+	if open:
+		b.pressed.connect(func() -> void:
+			Sfx.play("card")
+			_client.pick_node(col))
+	return b
+
+
+func _node_style(here: bool, open: bool, passed: bool, hover: bool = false) -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.set_corner_radius_all(6)
+	sb.set_border_width_all(2)
+	sb.set_content_margin_all(6)
+	if here:
+		sb.bg_color = Color(0.26, 0.21, 0.13)
+		sb.border_color = Color(0.92, 0.78, 0.42)   # you are here
+	elif open:
+		sb.bg_color = Color(0.20, 0.18, 0.14) if not hover else Color(0.27, 0.24, 0.18)
+		sb.border_color = Color(0.72, 0.62, 0.40)   # reachable
+	else:
+		sb.bg_color = Color(0.11, 0.10, 0.09, 0.75 if passed else 0.5)
+		sb.border_color = Color(0.30, 0.27, 0.22)   # behind you / off-route
+	return sb
+
+
+## Swap between the route screen and the combat scene.
+func _show_map(on: bool) -> void:
+	_map_panel.visible = on
+	_scene_row.visible = not on
+	_hand_bar.visible = not on
+	_hand_row.visible = not on
+	_end_turn_btn.get_parent().visible = not on
+	if on:
+		_stop_climb()
+
+
 # --- Reward phase ---------------------------------------------------------
 
 func _render_reward(s: Dictionary) -> void:
+	_show_map(false)
 	_stop_climb()
 	_hand_icon.visible = false  # instruction text leads here, not identity
 	_lock_btn.text = "Lock In Reward"
@@ -527,6 +666,7 @@ func _on_character_selected(character_id: String) -> void:
 # --- Character select (lobby) ---------------------------------------------
 
 func _render_character_select(s: Dictionary) -> void:
+	_show_map(false)
 	_stop_climb()
 	_hand_icon.visible = false
 	_log_toggle.visible = false
@@ -586,6 +726,7 @@ func _render_character_select(s: Dictionary) -> void:
 # --- Run over -------------------------------------------------------------
 
 func _render_over(s: Dictionary) -> void:
+	_show_map(false)
 	_stop_climb()
 	_overlay.visible = true
 	_restart_btn.visible = true
@@ -607,6 +748,7 @@ func _render_over(s: Dictionary) -> void:
 
 
 func _show_paused(s: Dictionary) -> void:
+	_show_map(false)
 	_stop_climb()
 	_overlay.visible = true
 	_restart_btn.visible = false
@@ -620,6 +762,7 @@ func _show_paused(s: Dictionary) -> void:
 
 
 func _show_waiting(s: Dictionary) -> void:
+	_show_map(false)
 	_stop_climb()
 	_overlay.visible = true
 	_restart_btn.visible = false
