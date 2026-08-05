@@ -12,6 +12,7 @@ var _out := "shot.png"
 var _state := "combat"
 var _hold := ""   # 3dloop: stop the lap at this phase instead of finishing it
 var _beast := ""  # force a specific beast, to check a model that RNG rarely picks
+var _act := 0     # 3dmap: fast-forward to this act, so later regions get looked at
 
 
 func _initialize() -> void:
@@ -24,6 +25,8 @@ func _initialize() -> void:
 			_hold = a.substr(5)
 		elif a.begins_with("beast="):
 			_beast = a.substr(6)
+		elif a.begins_with("act="):
+			_act = int(a.substr(4))
 	_failsafe()  # never hang the machine
 	Progress.reset_hints()  # shots should show onboarding as a new player sees it
 	if _state == "menu":  # just the main menu, no session
@@ -70,13 +73,33 @@ func _initialize() -> void:
 		Session.host._broadcast_state()
 	if _state == "3dmap":  # a couple of rows in, so the walked route is visible
 		var rm: Run = Session.host._run
-		rm.pick_node(int(rm.available_nodes()[0]))
-		rm.combat.boss.hp = 0
-		rm.combat.phase = Combat.Phase.OVER
-		rm.sync()
-		while rm.phase == Run.Phase.REWARD:
-			for slot in range(rm.player_count()):
-				rm.pick_reward(slot, 0)
+		# one step for act 1; for later acts, walk the whole way there
+		var steps: int = 1 if _act <= 0 else (_act * (RunMap.ROWS_PER_ACT + 1) + 1)
+		for _s in range(steps):
+			if rm.phase != Run.Phase.MAP or rm.available_nodes().is_empty():
+				break
+			rm.pick_node(int(rm.available_nodes()[0]))
+			if rm.phase == Run.Phase.COMBAT:
+				rm.combat.boss.hp = 0
+				rm.combat.phase = Combat.Phase.OVER
+				rm.sync()
+			var spin := 0
+			while rm.phase not in [Run.Phase.MAP, Run.Phase.WON, Run.Phase.LOST] and spin < 40:
+				spin += 1
+				match rm.phase:
+					Run.Phase.REWARD:
+						for slot in range(rm.player_count()):
+							rm.pick_reward(slot, 0)
+					Run.Phase.EVENT:
+						rm.pick_event(0)
+					Run.Phase.CAMPFIRE:
+						for slot in range(rm.player_count()):
+							rm.campfire_action(slot, "rest")
+					Run.Phase.SHOP:
+						rm.leave_shop()
+					_:
+						break
+		print("MAP at row %d, phase %s" % [rm.map_row, rm.phase])
 		Session.host._broadcast_state()
 	if _state == "route":  # one node in, so the map shows where we stand
 		var rr: Run = Session.host._run

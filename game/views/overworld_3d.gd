@@ -174,7 +174,8 @@ func _lay_field(rows: Array, act: int, cur_row: int, cur_col: int, avail: Array)
 			if open:
 				_nodes[c] = {"node": node, "pos": pos, "type": type, "open": true}
 				_add_marker(pos)
-			_add_label(pos, String(NODE_LABEL.get(type, "?")), type == "boss")
+			_add_label(pos, String(NODE_LABEL.get(type, "?")), type == "boss",
+				at.y, _height_of(node) if node != null else 1.0)
 	_draw_roads(rows, act_rows, spot, cur_row, cur_col)
 	_frame_camera(act_rows.size())
 
@@ -270,7 +271,13 @@ func _add_marker(pos: Vector3) -> void:
 	_markers.add_child(mesh)
 
 
-func _add_label(pos: Vector3, text: String, big: bool) -> void:
+## Two things decide where a label sits. It must clear its OWN landmark, which
+## is measured — a Titan's mountain is far taller than a watchtower, so a fixed
+## height either buries the short ones or throws the tall ones off the top of the
+## screen. And perspective compresses the far rows toward each other, so each row
+## gets a little extra lift to pull them apart again.
+func _add_label(pos: Vector3, text: String, big: bool, hex_row: int,
+		landmark_height: float) -> void:
 	var l := Label3D.new()
 	l.text = text
 	l.font_size = 110 if big else 84
@@ -280,7 +287,8 @@ func _add_label(pos: Vector3, text: String, big: bool) -> void:
 	l.outline_size = 26
 	l.modulate = Color(1, 0.9, 0.72) if big else Color(0.98, 0.96, 0.92)
 	l.outline_modulate = Color(0.08, 0.06, 0.05)
-	l.position = pos + Vector3(0, 1.85 if big else 1.5, 0)
+	l.position = pos + Vector3(0, landmark_height + (0.55 if big else 0.42)
+		+ hex_row * 0.1, 0)
 	_field.add_child(l)
 
 
