@@ -61,6 +61,7 @@ func _init() -> void:
 	_test_climb_twisting_moves()
 	_test_per_class_reward_pools()
 	_test_rhythm_card_grants_combo()
+	_test_ascension_makes_the_run_harder()
 	# grip / ledges (SotC real-time climb)
 	_test_secure_on_holds()
 	_test_next_safe_height()
@@ -705,6 +706,24 @@ func _test_rhythm_card_grants_combo() -> void:
 	combat.play_card(0, 0)                      # 2 + 2*2 Rhythm = 6 damage, climbs 1 + 2
 	_expect(built and before - combat.boss.hp == 6 and ps.foothold == 3,
 		"Cadence grants Rhythm outright, and Rhythm cards scale off it")
+
+
+func _test_ascension_makes_the_run_harder() -> void:
+	var tiers: Array = Content.ascension_tiers()
+	var mods0: Dictionary = Content.ascension_mods(0)
+	var mods4: Dictionary = Content.ascension_mods(4)
+	var cumulative: bool = int(mods4["boss_hp_pct"]) > 0 and int(mods4["boss_strength"]) > 0 		and int(mods4["reward_choices"]) > 0 and int(mods0["boss_hp_pct"]) == 0
+	var decks := [_deck_of(_slash, 10), _deck_of(_slash, 10)]
+	var base := Run.new(decks, ["A", "B"], 7, [{}, {}], 0)
+	var hard := Run.new(decks, ["A", "B"], 7, [{}, {}], 7)
+	base.start()
+	hard.start()
+	_step_into_combat(base)
+	_step_into_combat(hard)
+	var tougher: bool = hard.combat.boss.max_hp > base.combat.boss.max_hp 		and hard.combat.boss.strength > base.combat.boss.strength
+	var frailer: bool = hard.max_hp[0] < base.max_hp[0]
+	_expect(tiers.size() >= 8 and cumulative and tougher and frailer,
+		"ascension tiers stack: thicker hides, meaner beasts, and a frailer party")
 
 
 ## Walk the route until a combat node is reached (skipping rest/treasure).

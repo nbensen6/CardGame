@@ -31,6 +31,8 @@ var event: Dictionary = {}       # the event being resolved (EVENT phase)
 var event_result: String = ""    # flavour text for the choice just taken
 var _seen_events: Array = []     # don't repeat an event while fresh ones remain
 var campfire_done: Array = []    # per hunter: have they taken their campfire action?
+var ascension: int = 0           # difficulty tier (0 = base); see data/ascension.json
+var _asc: Dictionary = {}        # cumulative ascension modifiers
 var combat: Combat
 var names: Array = []
 var decks: Array = []            # Array[Array[Card]] per hunter — persists across encounters
@@ -45,9 +47,12 @@ var reward_picked: Array = []    # Array[bool]
 var _seed: int
 var _rng := RandomNumberGenerator.new()
 
-func _init(p_decks: Array, p_names: Array, seed_value: int = 0, p_passives: Array = []) -> void:
+func _init(p_decks: Array, p_names: Array, seed_value: int = 0, p_passives: Array = [],
+		p_ascension: int = 0) -> void:
 	_seed = seed_value
 	player_passives = p_passives
+	ascension = p_ascension
+	_asc = Content.ascension_mods(ascension)
 	if seed_value == 0:
 		_rng.randomize()
 	else:
@@ -55,8 +60,9 @@ func _init(p_decks: Array, p_names: Array, seed_value: int = 0, p_passives: Arra
 	for i in range(p_names.size()):
 		decks.append((p_decks[i] as Array).duplicate())
 		names.append(String(p_names[i]))
-		max_hp.append(PLAYER_HP)
-		hp.append(PLAYER_HP)
+		var start_hp: int = maxi(10, PLAYER_HP - int(_asc.get("player_hp", 0)))
+		max_hp.append(start_hp)
+		hp.append(start_hp)
 	map = RunMap.new(ENCOUNTERS.size(), _rng)
 
 func start() -> void:
@@ -118,7 +124,7 @@ func campfire_action(slot: int, action: String, card_index: int = -1) -> bool:
 	var deck: Array = decks[slot]
 	match action:
 		"rest":
-			hp[slot] = mini(hp[slot] + REST_HEAL, max_hp[slot])
+			hp[slot] = mini(hp[slot] + maxi(1, REST_HEAL - int(_asc.get("rest_heal", 0))), max_hp[slot])
 		"remove":
 			if card_index < 0 or card_index >= deck.size() or deck.size() <= MIN_DECK:
 				return false
@@ -249,6 +255,11 @@ func _start_encounter() -> void:
 		c.hp = hp[i]  # carry damage between encounters
 		combatants.append(c)
 	var boss := Content.build_boss(beast_id if beast_id != "" else ENCOUNTERS[encounter_index])
+	var hp_pct := int(_asc.get("boss_hp_pct", 0))
+	if hp_pct > 0:  # ascension: thicker hides
+		boss.max_hp = int(boss.max_hp * (100 + hp_pct) / 100.0)
+		boss.hp = boss.max_hp
+	boss.strength += int(_asc.get("boss_strength", 0))  # ascension: meaner beasts
 	var mods := relic_totals()
 	# Distinct per-encounter seed so each fight shuffles differently but reproducibly.
 	combat = Combat.new(decks, combatants, boss, _encounter_seed(),
@@ -284,7 +295,7 @@ func _encounter_seed() -> int:
 	return _seed + (map_row + 1) * 101 + map_col
 
 func _bank_hp() -> void:
-	var heal: int = HEAL_BETWEEN + int(relic_totals()["heal"])
+	var heal: int = maxi(0, HEAL_BETWEEN - int(_asc.get("heal_between", 0))) + int(relic_totals()["heal"])
 	for i in range(names.size()):
 		hp[i] = mini(combat.players[i].combatant.hp + heal, max_hp[i])
 
@@ -318,7 +329,7 @@ func _character_of(slot: int) -> String:
 func _roll_choices(pool: Array) -> Array:
 	var ids: Array = pool.duplicate()
 	var out: Array = []
-	var n: int = mini(REWARD_CHOICES, ids.size())
+	var n: int = mini(maxi(1, REWARD_CHOICES - int(_asc.get("reward_choices", 0))), ids.size())
 	for _k in range(n):
 		var idx := _rng.randi_range(0, ids.size() - 1)
 		var id := String(ids[idx])

@@ -1,0 +1,13 @@
+{
+  "_comment": "The difficulty ladder (design/depth-plan.md item 6). Tiers are CUMULATIVE — Ascension 4 applies tiers 1-4. Effects: boss_hp_pct (+% to every beast's HP), boss_strength (beasts begin with +N Strength), heal_between (less HP recovered after a fight), rest_heal (weaker campfire Rest), reward_choices (fewer cards offered), player_hp (start the run with less max HP). Clearing a tier unlocks the next.",
+  "tiers": [
+    { "level": 1, "name": "Thicker Hides",   "effect": "boss_hp_pct",    "value": 15, "text": "Every beast has 15% more HP." },
+    { "level": 2, "name": "Long Roads",      "effect": "heal_between",   "value": 3,  "text": "Recover 3 less HP after each beast falls." },
+    { "level": 3, "name": "Meaner Beasts",   "effect": "boss_strength",  "value": 2,  "text": "Beasts begin every fight with +2 Strength." },
+    { "level": 4, "name": "Thin Pickings",   "effect": "reward_choices", "value": 1,  "text": "Rewards offer one fewer card." },
+    { "level": 5, "name": "Cold Camps",      "effect": "rest_heal",      "value": 4,  "text": "Resting at a campfire heals 4 less." },
+    { "level": 6, "name": "Harder Still",    "effect": "boss_hp_pct",    "value": 15, "text": "Every beast has a further 15% more HP." },
+    { "level": 7, "name": "Worn Down",       "effect": "player_hp",      "value": 5,  "text": "Begin each run with 5 less max HP." },
+    { "level": 8, "name": "The Long Climb",  "effect": "boss_strength",  "value": 2,  "text": "Beasts begin every fight with a further +2 Strength." }
+  ]
+}

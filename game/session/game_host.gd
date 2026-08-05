@@ -24,8 +24,11 @@ var _character_of: Dictionary = {}  # peer_id -> chosen character id (lobby sele
 # the one peer; commands carry an explicit "slot".
 var _solo: bool = false
 var _solo_chars: Array = ["", ""]
+var _ascension: int = 0  # difficulty tier chosen at the menu
 
-func _init(transport: Transport, seed_value: int = 0, required_players: int = 2, solo: bool = false) -> void:
+func _init(transport: Transport, seed_value: int = 0, required_players: int = 2, solo: bool = false,
+		ascension: int = 0) -> void:
+	_ascension = ascension
 	_transport = transport
 	_seed = seed_value
 	_solo = solo
@@ -43,7 +46,7 @@ func start_new_run() -> void:
 		decks.append(Content.character_deck(cid))
 		names.append(Content.character_name(cid))
 		passives.append(Content.character_passive(cid))
-	_run = Run.new(decks, names, _seed, passives)
+	_run = Run.new(decks, names, _seed, passives, _ascension)
 	_run.start()
 	_broadcast_state()
 
@@ -178,6 +181,7 @@ func _broadcast_state() -> void:
 			_transport.send_to(pid, {"type": "snapshot", "for_peer": pid, "you": _slot(pid),
 				"shared": sh, "private": pv})
 		return
+	_note_progress()
 	var shared := _build_shared()
 	for pid in _peers:
 		var pi := _slot(pid)
@@ -199,6 +203,7 @@ func _build_shared() -> Dictionary:
 		"paused": paused,
 		"disconnected_slot": _disconnected_slot,
 		"solo": _solo,
+		"ascension": _ascension,
 		# Relic effects the CLIENT owns (the grip timer and timing windows are
 		# client-side skill, so their relics have to travel in the snapshot).
 		"mods": _run.relic_totals(),
@@ -393,6 +398,10 @@ func _phase_string() -> String:
 		Run.Phase.WON: return "won"
 		Run.Phase.LOST: return "lost"
 		_: return "combat"
+
+func _note_progress() -> void:
+	if _run != null and _run.phase == Run.Phase.WON:
+		Progress.record_win(_ascension)
 
 func _result_string() -> String:
 	match _run.phase:

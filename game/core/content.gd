@@ -11,6 +11,7 @@ const BOSSES_PATH := "res://data/bosses.json"
 const EVENTS_PATH := "res://data/events.json"
 const RELICS_PATH := "res://data/relics.json"
 const CHARACTERS_PATH := "res://data/characters.json"
+const ASCENSION_PATH := "res://data/ascension.json"
 
 static var _cache: Dictionary = {}
 
@@ -107,6 +108,26 @@ static func character_name(id: String) -> String:
 static func character_portrait(id: String) -> String:
 	var chars: Dictionary = _read_json(CHARACTERS_PATH).get("characters", {})
 	return String((chars.get(id, {}) as Dictionary).get("portrait", ""))
+
+## Every ascension tier, in order.
+static func ascension_tiers() -> Array:
+	return (_read_json(ASCENSION_PATH).get("tiers", []) as Array).duplicate()
+
+static func max_ascension() -> int:
+	return ascension_tiers().size()
+
+## Cumulative difficulty modifiers for a level (tiers 1..level all apply).
+static func ascension_mods(level: int) -> Dictionary:
+	var m := {"boss_hp_pct": 0, "boss_strength": 0, "heal_between": 0,
+		"rest_heal": 0, "reward_choices": 0, "player_hp": 0}
+	for t in ascension_tiers():
+		var tier: Dictionary = t
+		if int(tier.get("level", 99)) > level:
+			continue
+		var e := String(tier.get("effect", ""))
+		if m.has(e):
+			m[e] += int(tier.get("value", 0))
+	return m
 
 ## Every event id (map EVENT nodes).
 static func list_events() -> Array:

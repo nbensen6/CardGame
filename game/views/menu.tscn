@@ -114,6 +114,40 @@ texture = ExtResource("6_monkey")
 expand_mode = 1
 stretch_mode = 5
 
+[node name="AscRow" type="HBoxContainer" parent="Center/Box"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="AscDown" type="Button" parent="Center/Box/AscRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(48, 40)
+layout_mode = 2
+text = "◀"
+
+[node name="AscLabel" type="Label" parent="Center/Box/AscRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+size_flags_vertical = 4
+text = "Ascension 0"
+horizontal_alignment = 1
+
+[node name="AscUp" type="Button" parent="Center/Box/AscRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(48, 40)
+layout_mode = 2
+text = "▶"
+
+[node name="AscText" type="Label" parent="Center/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.8, 0.74, 0.6, 1)
+
 [node name="Gap" type="Control" parent="Center/Box"]
 custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
