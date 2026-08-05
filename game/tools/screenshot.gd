@@ -10,6 +10,7 @@ extends SceneTree
 
 var _out := "shot.png"
 var _state := "combat"
+var _hold := ""   # 3dloop: stop the lap at this phase instead of finishing it
 
 
 func _initialize() -> void:
@@ -18,6 +19,8 @@ func _initialize() -> void:
 			_out = a.substr(4)
 		elif a.begins_with("state="):
 			_state = a.substr(6)
+		elif a.begins_with("hold="):
+			_hold = a.substr(5)
 	_failsafe()  # never hang the machine
 	Progress.reset_hints()  # shots should show onboarding as a new player sees it
 	if _state == "menu":  # just the main menu, no session
@@ -35,7 +38,8 @@ func _initialize() -> void:
 	elif _state != "select":
 		Session.client.select_character("frog", 0)
 		Session.client.select_character("goblin_mech", 1)
-	if _state in ["combat", "goblin", "juice", "climbing", "3d", "3dclimb", "3dstrike"]:  # step off the map into a fight
+	if _state in ["combat", "goblin", "juice", "climbing", "3d", "3dclimb",
+			"3dstrike", "3dgame"]:  # 3dloop deliberately starts ON the map  # step off the map into a fight
 		var r: Run = Session.host._run
 		var g := 0
 		while r.phase == Run.Phase.MAP and g < 30:
@@ -98,12 +102,26 @@ func _initialize() -> void:
 		Session.host._broadcast_state()
 	# 3D clients: the overworld for 3dmap, the combat scene for the rest
 	var scene := "res://views/combat_view.tscn"
-	if _state == "3dmap":
+	if _state in ["3dgame", "3dloop"]:
+		scene = "res://views/game_3d.tscn"
+	elif _state == "3dmap":
 		scene = "res://views/overworld_3d.tscn"
 	elif _state.begins_with("3d"):
 		scene = "res://views/combat_3d.tscn"
 	change_scene_to_file(scene)
 	_capture()
+
+
+## The router's whole job is showing the right client for the phase, so check
+## exactly that: what phase does the host report, and what is actually mounted.
+func _router_is(router: Node, phase: String, want_scene: String) -> void:
+	var actual := String(Session.client.shared.get("phase", "?"))
+	var mounted := "(nothing)"
+	if router.get_child_count() > 0:
+		mounted = router.get_child(router.get_child_count() - 1).name
+	var ok: bool = actual == phase and mounted == want_scene
+	print("ROUTER %s: phase=%s (wanted %s) showing=%s (wanted %s)" % [
+		"OK" if ok else "FAIL", actual, phase, mounted, want_scene])
 
 
 func _capture() -> void:
@@ -114,6 +132,29 @@ func _capture() -> void:
 		if v3 != null and v3.has_method("_strike"):
 			v3.call("_strike", true)
 		for _i in 3:
+			await process_frame
+	if _state == "3dloop":  # walk the router through a whole lap of the run
+		var router := current_scene
+		var run: Run = Session.host._run
+		_router_is(router, "map", "Overworld3D")
+		run.pick_node(int(run.available_nodes()[0]))
+		Session.host._broadcast_state()
+		await process_frame
+		_router_is(router, "combat", "Combat3D")
+		run.combat.boss.hp = 0
+		run.combat.phase = Combat.Phase.OVER
+		run.sync()
+		Session.host._broadcast_state()
+		await process_frame
+		_router_is(router, "reward", "CombatView")
+		if _hold != "reward":  # otherwise stop here so the handover can be seen
+			while run.phase == Run.Phase.REWARD:
+				for slot in range(run.player_count()):
+					run.pick_reward(slot, 0)
+			Session.host._broadcast_state()
+			await process_frame
+			_router_is(router, "map", "Overworld3D")
+		for _k in 8:
 			await process_frame
 	if _state == "3dmap":  # prove the click -> walk -> pick_node round trip
 		var w := current_scene

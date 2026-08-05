@@ -127,7 +127,7 @@ func _make_link() -> NetLink:
 
 
 func _goto_combat() -> void:
-	get_tree().change_scene_to_file("res://views/combat_view.tscn")
+	get_tree().change_scene_to_file("res://views/game_3d.tscn")
 
 
 func _set_busy(msg: String, busy: bool = true) -> void:

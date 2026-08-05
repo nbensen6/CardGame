@@ -79,8 +79,17 @@ better starting point than the 2D situation ever was.
    Node rows sit on even hex rows so the odd rows between stay clear; roads are
    drawn ribbons rather than laid tiles, because a hex is far too coarse to say
    *which* edges exist (the first attempt paved nearly every row).
-4. **Traversal co-op** — how two players move together.
-5. **Retire or keep the 2D client?** Keeping both costs double maintenance on every
+4. ✅ **One 3D loop** — *Done.* `views/game_3d.gd` routes on the authoritative
+   `phase`: map -> the overworld, combat -> the 3D fight, everything else -> the
+   2D client, which still owns event / campfire / shop / reward / won / lost.
+   The menu now boots this instead of the 2D view, so the 3D path is the game.
+   The fallback is deliberate: those phases have no 3D staging yet, and a 2D
+   screen beats blocking the loop on art that doesn't exist. Verified by driving
+   a whole lap — map -> combat -> reward -> map — and asserting which client is
+   mounted at each phase, not just that it didn't crash.
+
+5. **Traversal co-op** — how two players move together.
+6. **Retire or keep the 2D client?** Keeping both costs double maintenance on every
    view change. Recommendation: keep `combat_view.gd` until the 3D one has feature
    parity, then delete it — the tests don't depend on it.
 
