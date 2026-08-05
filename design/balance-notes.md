@@ -1,48 +1,93 @@
 # Balance notes
 
-Measured with `tools/balance_sim.gd` (300 runs/policy through the real /core).
-Two AI policies: **naive** (dumps hand, no defense/combos) and **coordinated**
-(covers the targeted ally, braces, Expose→focus-fire).
+Measured with `tools/balance_sim.gd` (200 full runs per policy, through the real
+`/core`). Rerun any time:
 
-## Goal
-Coordination should *decide* outcomes (CLAUDE.md §6). Target: naive ≈ 40–55%,
-coordinated ≈ 85–100%, with a wide gap.
+```bash
+Godot_v4.7.1-stable_win64_console.exe --headless --path game --script res://tools/balance_sim.gd
+```
 
-## Climb-foundation result (4-Titan run, height-gated)
-The big change: **below the weak point the hide is armored** (attacks chip
-1/`ARMORED_DIVISOR`); you must build **Height** to reach the sigil, where strikes
-land full + bonuses. The shake (attack_all) knocks off `SHAKE_LOSS` Height, so the
-loop is climb → strike → get bucked off → re-climb.
+## The thing that made the numbers honest
 
-| Policy | Win rate | Lost at T1/T2/T3/T4 | Avg lowest HP |
-|--------|---------:|:-------------------:|--------------:|
-| Naive | **68%** | 0 / 0 / 9 / 86 | 11 / 42 |
-| Coordinated | **98%** | 0 / 0 / 0 / 6 | 22 / 42 |
+The sim used to report ~100% for everyone, and it was **lying** — it played a
+perfect solver. The grip timer and card timing live on the *client*, so a
+headless run nailed every timed card and never once fell off a beast.
 
-Gap **+30**. Reasonable, tunable state — the feel (climbing) was the goal here;
-difficulty is yours to dial. NOTE: the sim's AIs were taught to climb (play grip
-cards when below the sigil), else they never deal real damage.
+The sim now models a human:
 
-(Earlier tunings for reference: 3-Titan pre-climb landed naive 8% / coord 96%;
-2-Titan naive 43% / coord 100%.)
+| | naive | coordinated |
+|---|---|---|
+| chance a timed card lands (per window) | 55% | 78% |
+| chance a climb ends in a fall | 30% | 16% |
 
-## Final numbers (all in `data/bosses.json`, `data/relics.json`, `core/run.gd`)
-- Players: 42 HP, 3 energy/round. `HEAL_BETWEEN` = 6. Run = 3 Titans.
-- **Stone Warden** (T1, opener): 108 HP; attacks 11 / 14 / block 10 / 22.
-- **Gale Serpent** (T2, mid-wall): 140 HP, weak point 3; attack_all 8 / enrage 2 /
-  attack 14 / attack_all 11.
-- **Drowned Colossus** (T3, final): 170 HP, weak point 4; attack 13 / attack_all 9 /
-  regen 12 / attack 22.
-- Rewards: card after T1, relic after T2. ~6 relics in `data/relics.json`.
+A chained card like Satchel Charge needs all three windows, so its real success
+rate is `rate³` — about 47% even for a good player. That single change is what
+turned "everything wins" into numbers worth tuning against.
 
-## Observations / follow-ups
-- **All losses are at Titan 2.** Titan 1 is a pushover (a fine "learn the ropes"
-  fight). When Titan 3 lands (Phase 3), build a real ramp: easy → medium → hard.
-- **Cover carries** the coordinated game (~6 plays/run) — the ally-shield is
-  central and very on-theme (protect your partner from the colossus).
-- **Rally and Taunt are barely used** by the AI (~0.1 and ~0.0/run) — a signal
-  they're underpowered or too situational. Revisit their numbers/design when
-  adding mechanics (Taunt should matter vs single big hits; Rally with pricier
-  cards).
-- Sim "coordinated" AI is near-optimal defense, so real human co-op will sit
-  *below* 100% — the 43% naive floor and the big gap are the meaningful signals.
+`naive` also stopped preferring damage cards. Preferring damage was *worse* than
+naive: it systematically refused to climb, which no real player does. It now
+plays the hand in order with no plan — an honest floor.
+
+## Where it landed (Ascension 0)
+
+| | naive | coordinated |
+|---|---|---|
+| win rate | **7%** | **78%** |
+| losses by act | 67 / 101 / 12 / 6 | 1 / 19 / 13 / 12 |
+| avg rounds per Titan | 3.9 → 7.2 | 2.3 → 5.3 |
+| avg lowest HP | 6 / 42 | 14 / 42 |
+
+**Coordination is worth +70 points.** That's the design pillar holding: two
+hunters playing as a team win most runs; two playing solo-style lose almost all.
+
+Shape checks that matter as much as the headline:
+- **A good team's losses skew late** (1 / 19 / 13 / 12) — runs are decided deep,
+  not at the door. Act 1 teaches; act 2 onward tests.
+- **Fights last 2–5 rounds**, up from 2–3. Beasts now get turns, so their
+  telegraphs and the climb actually matter.
+- **You finish bloodied** (14/42), not comfortable.
+
+## The ascension ladder
+
+| tier | coordinated win | avg lowest HP |
+|---|---|---|
+| 0 | 78% | 14 |
+| 2 | 51% | 11 |
+| 4 | 43% | 9 |
+| 6 | 35% | 8 |
+| 8 | **20%** | 7 |
+
+A smooth slide with a real wall at the top that is still clearly beatable.
+
+## What was changed to get here
+
+Starting point: coordinated **100%**, fights over in 2–3 rounds, beasts dying
+before they could threaten.
+
+- **Beast HP up** — Titans ×~2 (68 / 148 / 220 / 300), elites ×1.8, fodder ×1.65.
+  This was the big one: it buys the beast enough turns to be dangerous.
+- **Beast damage up ~20–25%** on everything that hurts (block/regen/enrage kept).
+- **Weak-point thresholds ×1.4–1.5**, so the buck-off cadence survived the HP rise
+  instead of doubling the number of re-climbs.
+- **Healing trimmed** — `HEAL_BETWEEN` 6 → 4, `REST_HEAL` 12 → 9.
+- **Act 1 softened deliberately** — The Stone Warden went back to weak point 2 and
+  68 HP. It is the game teaching you to climb; it should be survivable while you
+  are still learning. (Naive's wall moved from act 1 to act 2, which is right.)
+- **Ascension tiers softened** — `boss_hp_pct` 15 → 10, `boss_strength` 2 → 1 per
+  tier. The stacked version reached 2% at A8, which is not a ladder.
+
+## Caveats worth remembering
+
+- The coordinated AI is **near-optimal at card sequencing** while only being human
+  at timing. Real players sequence worse, so treat 78% as a ceiling — a good human
+  is probably 60–70%.
+- The sim measures **balance, not fun**. It cannot tell you whether the climb
+  feels good, only whether the numbers are survivable.
+- Route and campfire policy are modelled simply (heal when hurt, otherwise take
+  risks / sharpen). A player drafting a real archetype should beat these numbers.
+- Every knob lives in data — see `design/tuning-knobs.md`.
+
+## Older results, for reference
+Pre-climb 3-Titan runs landed naive 8% / coord 96%; the first height-gated
+4-Titan pass landed naive 68% / coord 98% (gap +30) before the map, campfires,
+relics and ascension existed.

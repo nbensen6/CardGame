@@ -14,10 +14,10 @@ extends RefCounted
 enum Phase { MAP, COMBAT, EVENT, CAMPFIRE, REWARD, WON, LOST }
 
 const ENCOUNTERS := ["stone_warden", "gale_serpent", "drowned_colossus", "sunken_warden"]
-const REST_HEAL := 12  # a campfire "rest" patches you up
+const REST_HEAL := 9   # a campfire "rest" patches you up
 const MIN_DECK := 5    # you may thin a deck, but not into nothing
 const REWARD_CHOICES := 3
-const HEAL_BETWEEN := 6  # hunters recover a little after each Titan falls
+const HEAL_BETWEEN := 4  # hunters recover a little after each beast falls
 const PLAYER_HP := 42
 
 var phase: int = Phase.MAP

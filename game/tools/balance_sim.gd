@@ -4,36 +4,60 @@
 ## does NOT judge "fun" (that needs a human).
 ##
 ## Two policies are compared so we can see whether coordination actually matters:
-##   naive       — dump the hand, no defense or combos
+##   naive       — play the hand in order, no plan (the honest floor)
 ##   coordinated — cover the targeted ally, brace, Expose -> focus-fire, Rally
 ##
+## IMPORTANT: the sim models a HUMAN, not a perfect solver. The grip timer and
+## card timing live on the client, so a headless run would otherwise nail every
+## throw and never fall — which overstates player power enormously. Both are
+## modelled below (TIMING_HIT / FALL_CHANCE).
+##
 ##   godot --headless --path game --script res://tools/balance_sim.gd
+##   ... -- ascension=4      (measure a single tier)
 extends SceneTree
 
-const RUNS := 300
+const RUNS := 200
+# How often a player lands a timed card, and how often a climb between holds
+# ends in a fall. Rough but honest stand-ins for human skill.
+const TIMING_HIT := {"naive": 0.55, "coordinated": 0.78}
+const FALL_CHANCE := {"naive": 0.30, "coordinated": 0.16}
+const ASCENSION_SWEEP := [0, 2, 4, 6, 8]
+
+var _rng := RandomNumberGenerator.new()
 
 func _init() -> void:
-	print("Simulating %d runs per policy…\n" % RUNS)
-	var naive := _run_many("naive")
-	var coop := _run_many("coordinated")
+	var only := -1
+	for a in OS.get_cmdline_user_args():
+		if String(a).begins_with("ascension="):
+			only = int(String(a).substr(10))
+	var tier: int = maxi(only, 0)
+	print("Simulating %d runs per policy (human timing modelled)…\n" % RUNS)
 
-	_report("NAIVE (no coordination)", naive)
-	_report("COORDINATED (combos + defense)", coop)
-
+	var naive := _run_many("naive", tier)
+	var coop := _run_many("coordinated", tier)
+	_report("NAIVE (no coordination)  A%d" % tier, naive)
+	_report("COORDINATED (combos + defense)  A%d" % tier, coop)
 	var lift: float = coop["wins"] * 100.0 / RUNS - naive["wins"] * 100.0 / RUNS
-	print("\n=> Coordination changes win rate by %+.1f points (%.0f%% -> %.0f%%)." % [
+	print("=> Coordination is worth %+.1f points (%.0f%% -> %.0f%%)." % [
 		lift, naive.wins * 100.0 / RUNS, coop.wins * 100.0 / RUNS])
+
+	if only < 0:  # the ladder should bite: a good team should fade as tiers stack
+		print("\n── ASCENSION LADDER (coordinated) ──")
+		for lvl in ASCENSION_SWEEP:
+			var a2 := _run_many("coordinated", lvl)
+			print("  Ascension %d:  %3.0f%% win   (avg lowest HP %.0f)" % [
+				lvl, a2["wins"] * 100.0 / RUNS, a2["min_hp_sum"] / RUNS])
 	quit(0)
 
 
-func _run_many(policy: String) -> Dictionary:
+func _run_many(policy: String, ascension: int = 0) -> Dictionary:
 	var agg := {
 		"wins": 0, "lost_at": {}, "min_hp_sum": 0.0,
 		"rounds": {}, "rounds_n": {},
 		"combos": {"expose": 0.0, "cover": 0.0, "rally": 0.0, "taunt": 0.0},
 	}
 	for i in range(RUNS):
-		var s := _play_run(i + 1, policy)
+		var s := _play_run(i + 1, policy, ascension)
 		if s["won"]:
 			agg["wins"] += 1
 		else:
@@ -48,16 +72,17 @@ func _run_many(policy: String) -> Dictionary:
 	return agg
 
 
-func _play_run(seed_value: int, policy: String) -> Dictionary:
+func _play_run(seed_value: int, policy: String, ascension: int = 0) -> Dictionary:
 	# A representative pairing: a fast climber + a height-scaling striker.
 	var chars := ["frog", "mountain_climbers"]
 	var decks := [Content.character_deck(chars[0]), Content.character_deck(chars[1])]
 	var names := [Content.character_name(chars[0]), Content.character_name(chars[1])]
 	var passives := [Content.character_passive(chars[0]), Content.character_passive(chars[1])]
-	var run := Run.new(decks, names, seed_value, passives)
+	var run := Run.new(decks, names, seed_value, passives, ascension)
 	run.start()
+	_rng.seed = seed_value * 7919 + ascension
 	var stats := {
-		"won": false, "lost_at": -1, "min_hp": float(Run.PLAYER_HP), "enc_rounds": {},
+		"won": false, "lost_at": -1, "min_hp": float(run.max_hp[0]), "enc_rounds": {},
 		"combos": {"expose": 0, "cover": 0, "rally": 0, "taunt": 0},
 	}
 	var guard := 0
@@ -78,18 +103,15 @@ func _play_run(seed_value: int, policy: String) -> Dictionary:
 			else:
 				stats["enc_rounds"][enc] = c.round_num
 		elif run.phase == Run.Phase.MAP:
-			# Walk the route. The AI has no route strategy yet — it takes the first
-			# open node, which is enough to keep the sim measuring card balance.
 			var open_cols: Array = run.available_nodes()
 			if open_cols.is_empty():
 				break
-			run.pick_node(int(open_cols[0]))
+			run.pick_node(_pick_node(run, open_cols, policy))
 		elif run.phase == Run.Phase.EVENT:
 			run.pick_event(0)
 		elif run.phase == Run.Phase.CAMPFIRE:
-			# no campfire strategy yet — everyone rests
 			for slot in range(run.player_count()):
-				run.campfire_action(slot, "rest")  # no event strategy yet — take the first offer
+				_campfire(run, slot, policy)
 		elif run.phase == Run.Phase.REWARD:
 			for slot in range(run.player_count()):
 				if not run.reward_picked[slot]:
@@ -109,18 +131,27 @@ func _take_turn(c: Combat, pi: int, policy: String, stats: Dictionary) -> void:
 			break
 		var card: Card = c.players[pi].hand[idx]
 		_tally_combo(card, stats)
-		if not c.play_card(pi, idx):
+		# A timed card is a skill check — a human misses some, and a miss spends
+		# the card for nothing.
+		var landed := true
+		if card.timed:
+			var per_window: float = float(TIMING_HIT[policy])
+			landed = _rng.randf() < pow(per_window, maxf(1.0, float(card.timed_hits)))
+		if not c.play_card(pi, idx, landed):
 			break
 		if c.is_over():
 			return
+	# Caught between holds when the turn ends? The grip timer may run out.
+	if not c.is_secure(pi) and _rng.randf() < float(FALL_CHANCE[policy]):
+		c.fall(pi)
 	c.end_turn(pi)
 
 
 func _choose(c: Combat, pi: int, policy: String) -> int:
 	if policy == "naive":
-		var atk := _find(c, pi, func(card: Card) -> bool: return card.damage > 0)
-		if atk >= 0:
-			return atk
+		# A floor, not a fool: plays whatever is playable in hand order with no
+		# plan. (Preferring damage first was worse than naive — it systematically
+		# refused to climb, which no real player does.)
 		return _find(c, pi, func(_card: Card) -> bool: return true)
 
 	# coordinated
@@ -191,6 +222,44 @@ func _pick_reward(run: Run, choices: Array, policy: String) -> int:
 			best_d = choices[i].damage
 			best = i
 	return best
+
+
+## Route choice: a coordinated team heals when hurt and takes risks when healthy;
+## a naive one just walks forward.
+func _pick_node(run: Run, open_cols: Array, policy: String) -> int:
+	if policy == "naive":
+		return int(open_cols[0])
+	var hurt: bool = float(run.hp[0]) / float(run.max_hp[0]) < 0.55 \
+		or float(run.hp[1]) / float(run.max_hp[1]) < 0.55
+	var want: Array = ["rest", "treasure", "fight", "event", "elite"] if hurt \
+		else ["elite", "treasure", "event", "fight", "rest"]
+	for kind in want:
+		for col in open_cols:
+			if String(run.map.node_at(run.map_row + 1, int(col)).get("type", "")) == String(kind):
+				return int(col)
+	return int(open_cols[0])
+
+
+## Campfire: patch up when hurt, otherwise sharpen the deck.
+func _campfire(run: Run, slot: int, policy: String) -> void:
+	if policy == "naive":
+		run.campfire_action(slot, "rest")
+		return
+	if float(run.hp[slot]) / float(run.max_hp[slot]) < 0.6:
+		run.campfire_action(slot, "rest")
+		return
+	var deck: Array = run.decks[slot]
+	var best := -1
+	var best_cost := -1
+	for i in range(deck.size()):
+		var card: Card = deck[i]
+		if not card.upgraded and card.cost > best_cost:
+			best_cost = card.cost
+			best = i
+	if best >= 0 and run.campfire_action(slot, "upgrade", best):
+		return
+	if not run.campfire_action(slot, "remove", 0):
+		run.campfire_action(slot, "rest")
 
 
 # --- helpers --------------------------------------------------------------

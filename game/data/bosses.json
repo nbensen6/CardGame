@@ -4,10 +4,10 @@
     "stone_warden": {
       "name": "The Stone Warden",
       "art": "res://assets/portraits/rhino.png",
-      "max_hp": 46,
-      "weak_point_height": 3,
+      "max_hp": 68,
+      "weak_point_height": 2,
       "ledges": [],
-      "weak_point_threshold": 12,
+      "weak_point_threshold": 16,
       "moves": [
         {
           "type": "attack",
@@ -30,16 +30,16 @@
     "gale_serpent": {
       "name": "The Gale Serpent",
       "art": "res://assets/portraits/snake.png",
-      "max_hp": 72,
+      "max_hp": 148,
       "weak_point_height": 5,
       "ledges": [
         2
       ],
-      "weak_point_threshold": 16,
+      "weak_point_threshold": 24,
       "moves": [
         {
           "type": "attack_all",
-          "value": 8
+          "value": 10
         },
         {
           "type": "enrage",
@@ -47,32 +47,32 @@
         },
         {
           "type": "attack",
-          "value": 14
+          "value": 18
         },
         {
           "type": "attack_all",
-          "value": 11
+          "value": 14
         }
       ]
     },
     "drowned_colossus": {
       "name": "The Drowned Colossus",
       "art": "res://assets/portraits/whale.png",
-      "max_hp": 98,
+      "max_hp": 220,
       "weak_point_height": 7,
       "ledges": [
         2,
         5
       ],
-      "weak_point_threshold": 22,
+      "weak_point_threshold": 33,
       "moves": [
         {
           "type": "attack",
-          "value": 13
+          "value": 16
         },
         {
           "type": "attack_all",
-          "value": 9
+          "value": 11
         },
         {
           "type": "regen",
@@ -80,28 +80,28 @@
         },
         {
           "type": "attack",
-          "value": 22
+          "value": 28
         }
       ]
     },
     "sunken_warden": {
       "name": "The Sunken Warden",
       "art": "res://assets/portraits/walrus.png",
-      "max_hp": 130,
+      "max_hp": 300,
       "weak_point_height": 8,
       "ledges": [
         3,
         6
       ],
-      "weak_point_threshold": 28,
+      "weak_point_threshold": 42,
       "moves": [
         {
           "type": "leech",
-          "value": 10
+          "value": 12
         },
         {
           "type": "attack_all",
-          "value": 9
+          "value": 11
         },
         {
           "type": "enrage",
@@ -109,24 +109,64 @@
         },
         {
           "type": "leech",
-          "value": 13
+          "value": 16
         },
         {
           "type": "attack",
-          "value": 22
+          "value": 28
         }
       ]
     },
     "crag_pup": {
       "name": "The Crag Pup",
       "art": "res://assets/portraits/dog.png",
-      "max_hp": 24,
+      "max_hp": 34,
       "weak_point_height": 1,
       "ledges": [],
-      "weak_point_threshold": 10,
+      "weak_point_threshold": 14,
       "moves": [
         {
           "type": "attack",
+          "value": 7
+        },
+        {
+          "type": "attack",
+          "value": 10
+        }
+      ]
+    },
+    "bramble_hog": {
+      "name": "The Bramble Hog",
+      "art": "res://assets/portraits/pig.png",
+      "max_hp": 50,
+      "weak_point_height": 2,
+      "ledges": [],
+      "weak_point_threshold": 17,
+      "moves": [
+        {
+          "type": "attack",
+          "value": 8
+        },
+        {
+          "type": "attack_all",
+          "value": 6
+        },
+        {
+          "type": "attack",
+          "value": 11
+        }
+      ]
+    },
+    "bounder": {
+      "name": "The Bounder",
+      "art": "res://assets/portraits/rabbit.png",
+      "max_hp": 32,
+      "weak_point_height": 1,
+      "ledges": [],
+      "weak_point_threshold": 14,
+      "moves": [
+        {
+          "type": "attack_all",
           "value": 6
         },
         {
@@ -135,77 +175,37 @@
         }
       ]
     },
-    "bramble_hog": {
-      "name": "The Bramble Hog",
-      "art": "res://assets/portraits/pig.png",
-      "max_hp": 30,
-      "weak_point_height": 2,
-      "ledges": [],
-      "weak_point_threshold": 12,
-      "moves": [
-        {
-          "type": "attack",
-          "value": 7
-        },
-        {
-          "type": "attack_all",
-          "value": 5
-        },
-        {
-          "type": "attack",
-          "value": 9
-        }
-      ]
-    },
-    "bounder": {
-      "name": "The Bounder",
-      "art": "res://assets/portraits/rabbit.png",
-      "max_hp": 22,
-      "weak_point_height": 1,
-      "ledges": [],
-      "weak_point_threshold": 10,
-      "moves": [
-        {
-          "type": "attack_all",
-          "value": 5
-        },
-        {
-          "type": "attack",
-          "value": 7
-        }
-      ]
-    },
     "mire_snapper": {
       "name": "The Mire Snapper",
       "art": "res://assets/portraits/crocodile.png",
-      "max_hp": 46,
+      "max_hp": 83,
       "weak_point_height": 2,
       "ledges": [],
-      "weak_point_threshold": 16,
+      "weak_point_threshold": 24,
       "moves": [
         {
           "type": "leech",
-          "value": 8
+          "value": 10
         },
         {
           "type": "attack",
-          "value": 11
+          "value": 13
         },
         {
           "type": "attack_all",
-          "value": 7
+          "value": 8
         }
       ]
     },
     "frost_sentinel": {
       "name": "The Frost Sentinel",
       "art": "res://assets/portraits/penguin.png",
-      "max_hp": 50,
+      "max_hp": 90,
       "weak_point_height": 3,
       "ledges": [
         2
       ],
-      "weak_point_threshold": 18,
+      "weak_point_threshold": 27,
       "moves": [
         {
           "type": "block",
@@ -213,7 +213,7 @@
         },
         {
           "type": "attack",
-          "value": 12
+          "value": 14
         },
         {
           "type": "enrage",
@@ -221,27 +221,27 @@
         },
         {
           "type": "attack",
-          "value": 14
+          "value": 17
         }
       ]
     },
     "grove_bear": {
       "name": "The Grove Bear",
       "art": "res://assets/portraits/bear.png",
-      "max_hp": 54,
+      "max_hp": 97,
       "weak_point_height": 3,
       "ledges": [
         2
       ],
-      "weak_point_threshold": 18,
+      "weak_point_threshold": 27,
       "moves": [
         {
           "type": "attack",
-          "value": 10
+          "value": 12
         },
         {
           "type": "attack_all",
-          "value": 8
+          "value": 10
         },
         {
           "type": "enrage",
@@ -249,89 +249,89 @@
         },
         {
           "type": "attack",
-          "value": 15
+          "value": 18
         }
       ]
     },
     "root_lurker": {
       "name": "The Root Lurker",
       "art": "res://assets/portraits/crocodile.png",
-      "max_hp": 30,
+      "max_hp": 50,
       "weak_point_height": 2,
       "ledges": [],
-      "weak_point_threshold": 12,
+      "weak_point_threshold": 17,
       "moves": [
         {
           "type": "swipe_low",
-          "value": 9
-        },
-        {
-          "type": "attack",
-          "value": 6
-        },
-        {
-          "type": "swipe_low",
-          "value": 12
-        }
-      ]
-    },
-    "sky_snapper": {
-      "name": "The Sky Snapper",
-      "art": "res://assets/portraits/owl.png",
-      "max_hp": 32,
-      "weak_point_height": 2,
-      "ledges": [],
-      "weak_point_threshold": 12,
-      "moves": [
-        {
-          "type": "attack",
-          "value": 6
-        },
-        {
-          "type": "swipe_high",
-          "value": 10
-        },
-        {
-          "type": "attack_all",
-          "value": 5
-        }
-      ]
-    },
-    "riftling": {
-      "name": "The Riftling",
-      "art": "res://assets/portraits/snake.png",
-      "max_hp": 34,
-      "weak_point_height": 3,
-      "ledges": [
-        2
-      ],
-      "weak_point_threshold": 14,
-      "moves": [
-        {
-          "type": "rift",
-          "value": 4
+          "value": 11
         },
         {
           "type": "attack",
           "value": 7
         },
         {
-          "type": "rift",
+          "type": "swipe_low",
+          "value": 14
+        }
+      ]
+    },
+    "sky_snapper": {
+      "name": "The Sky Snapper",
+      "art": "res://assets/portraits/owl.png",
+      "max_hp": 53,
+      "weak_point_height": 2,
+      "ledges": [],
+      "weak_point_threshold": 17,
+      "moves": [
+        {
+          "type": "attack",
+          "value": 7
+        },
+        {
+          "type": "swipe_high",
+          "value": 12
+        },
+        {
+          "type": "attack_all",
           "value": 6
+        }
+      ]
+    },
+    "riftling": {
+      "name": "The Riftling",
+      "art": "res://assets/portraits/snake.png",
+      "max_hp": 56,
+      "weak_point_height": 3,
+      "ledges": [
+        2
+      ],
+      "weak_point_threshold": 20,
+      "moves": [
+        {
+          "type": "rift",
+          "value": 5
+        },
+        {
+          "type": "attack",
+          "value": 8
+        },
+        {
+          "type": "rift",
+          "value": 7
         }
       ]
     },
     "shifting_idol": {
       "name": "The Shifting Idol",
       "art": "res://assets/portraits/penguin.png",
-      "max_hp": 56,
+      "max_hp": 101,
       "weak_point_height": 2,
       "ledges": [],
-      "weak_point_threshold": 16,
+      "weak_point_threshold": 24,
       "moves": [
         {
           "type": "attack",
-          "value": 9
+          "value": 11
         },
         {
           "type": "shift_sigil",
@@ -339,7 +339,7 @@
         },
         {
           "type": "attack_all",
-          "value": 7
+          "value": 8
         },
         {
           "type": "shift_sigil",
@@ -347,7 +347,7 @@
         },
         {
           "type": "attack",
-          "value": 13
+          "value": 16
         }
       ]
     }

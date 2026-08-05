@@ -98,10 +98,25 @@ after Titan 2). Change the rule there for different pacing.
 Palette, panel/button styles, progress-bar colour. HP-bar danger thresholds and
 intent colours are in `game/views/combat_view.gd` (`_bar_fill`, `_intent_color`).
 
+## Difficulty targets (what "balanced" means here)
+Hit these and the design pillar is holding — see `design/balance-notes.md`:
+- **Coordinated ~75–80%** at Ascension 0 (a good team usually wins, not always)
+- **Naive under ~15%** (solo-style play loses)
+- **A gap of +60 or more** — coordination must DECIDE the run
+- **Losses skew late** (act 3–4, not act 1) — a run should be decided deep
+- **Fights last 4–6 rounds** — short fights mean the beast never threatens
+- **Ascension 8 around 20%** — a real wall, still beatable
+
+The sim models human timing (`TIMING_HIT`) and falls (`FALL_CHANCE`) at the top
+of `tools/balance_sim.gd`. Those two constants matter more than any beast stat:
+with perfect timing every policy wins, which is what made the old numbers useless.
+
 ## Re-measuring after a change
 ```bash
-# balance (win rates, where runs die)
+# balance (win rates by policy + the full ascension ladder)
 Godot_v4.7.1-stable_win64_console.exe --headless --path game --script res://tools/balance_sim.gd
+# one tier only
+Godot_v4.7.1-stable_win64_console.exe --headless --path game --script res://tools/balance_sim.gd -- ascension=4
 # correctness (must stay green)
 Godot_v4.7.1-stable_win64_console.exe --headless --path game --script res://tools/run_tests.gd
 ```
