@@ -59,8 +59,13 @@ better starting point than the 2D situation ever was.
 ## Proposed build order
 
 1. ✅ **Prove the architecture** — 3D combat client on live snapshots. *Done.*
-2. **3D combat feel** — camera framing, hunters positioned on the beast, idle/attack
-   animations, the strike/shake juice moved into 3D.
+2. ✅ **3D combat feel** — *Done.* Cinematic low camera with a negative `v_offset`
+   so the 3D frame clears the card hand; hunters placed off the beast's real AABB
+   (flanking on the ground, clinging to the flank mid-climb, standing on the sigil
+   at the top) with tweened hops between holds; fully **procedural** animation
+   since the Cube Pets models are static props — breathing, out-of-phase idle sway,
+   recoil on hit; and the strike juice rebuilt in 3D as a burst OmniLight + dust
+   particles at the sigil + camera shake. Intent shown in the top bar.
 3. **The overworld** — render `RunMap` as physical locations with walkable paths;
    moving your character onto a node is how you choose the route. Node types keep
    their meaning (fight / elite / rest / event / shop / treasure / Titan).

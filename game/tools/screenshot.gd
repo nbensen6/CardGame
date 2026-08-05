@@ -35,7 +35,7 @@ func _initialize() -> void:
 	elif _state != "select":
 		Session.client.select_character("frog", 0)
 		Session.client.select_character("goblin_mech", 1)
-	if _state in ["combat", "goblin", "juice", "climbing", "3d", "3dclimb"]:  # step off the map into a fight
+	if _state in ["combat", "goblin", "juice", "climbing", "3d", "3dclimb", "3dstrike"]:  # step off the map into a fight
 		var r: Run = Session.host._run
 		var g := 0
 		while r.phase == Run.Phase.MAP and g < 30:
@@ -71,6 +71,11 @@ func _initialize() -> void:
 			for slot in range(rr.player_count()):
 				rr.pick_reward(slot, 0)
 		Session.host._broadcast_state()
+	if _state == "3dstrike":  # mid-ascent AND mid-hit, to check the 3D juice
+		var cs: Combat = Session.host._run.combat
+		cs.players[0].foothold = cs.boss.weak_point_height
+		cs.players[1].foothold = maxi(cs.boss.weak_point_height - 1, 1)
+		Session.host._broadcast_state()
 	if _state == "3dclimb":  # mid-ascent in 3D — hunters should be up ON the beast
 		var c3: Combat = Session.host._run.combat
 		c3.players[0].foothold = c3.boss.weak_point_height
@@ -90,6 +95,12 @@ func _initialize() -> void:
 func _capture() -> void:
 	for _i in 15:  # let the scene lay out and draw
 		await process_frame
+	if _state == "3dstrike":  # fire the 3D strike and catch the flash + dust
+		var v3 := current_scene
+		if v3 != null and v3.has_method("_strike"):
+			v3.call("_strike", true)
+		for _i in 3:
+			await process_frame
 	if _state == "juice":  # fire the strike effect and catch it mid-tween
 		var view := current_scene
 		if view != null and view.has_method("_juice_strike"):

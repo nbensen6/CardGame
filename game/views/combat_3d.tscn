@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://views/combat_3d.gd" id="1_view"]
 
@@ -20,6 +20,23 @@ ambient_light_sky_contribution = 0.35
 tonemap_mode = 2
 ssao_enabled = true
 
+[sub_resource type="SphereMesh" id="sigil_mesh"]
+radius = 0.22
+height = 0.44
+radial_segments = 12
+rings = 6
+
+[sub_resource type="StandardMaterial3D" id="sigil_mat"]
+albedo_color = Color(1, 0.85, 0.35, 1)
+emission_enabled = true
+emission = Color(1, 0.78, 0.3, 1)
+emission_energy_multiplier = 3.0
+shading_mode = 0
+
+[sub_resource type="StandardMaterial3D" id="ground_mat"]
+albedo_color = Color(0.46, 0.42, 0.34, 1)
+roughness = 0.95
+
 [node name="Combat3D" type="Node3D"]
 script = ExtResource("1_view")
 
@@ -36,14 +53,51 @@ unique_name_in_owner = true
 
 [node name="Ground" type="CSGCylinder3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+material = SubResource("ground_mat")
 radius = 9.0
 height = 0.1
 sides = 32
 
+[node name="Sigil" type="Node3D" parent="."]
+unique_name_in_owner = true
+
+[node name="Glow" type="MeshInstance3D" parent="Sigil"]
+mesh = SubResource("sigil_mesh")
+surface_material_override/0 = SubResource("sigil_mat")
+
+[node name="SigilLight" type="OmniLight3D" parent="Sigil"]
+light_color = Color(1, 0.82, 0.4, 1)
+light_energy = 1.6
+omni_range = 3.5
+
+[node name="Flash" type="OmniLight3D" parent="."]
+unique_name_in_owner = true
+light_color = Color(1, 0.88, 0.6, 1)
+light_energy = 0.0
+omni_range = 7.0
+
+[node name="Dust" type="CPUParticles3D" parent="."]
+unique_name_in_owner = true
+emitting = false
+amount = 26
+lifetime = 0.9
+one_shot = true
+explosiveness = 0.9
+mesh = SubResource("sigil_mesh")
+direction = Vector3(0, 1, 0)
+spread = 60.0
+gravity = Vector3(0, -3, 0)
+initial_velocity_min = 2.0
+initial_velocity_max = 4.5
+scale_amount_min = 0.25
+scale_amount_max = 0.5
+color = Color(0.85, 0.78, 0.62, 1)
+
 [node name="Camera" type="Camera3D" parent="."]
 unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 0.965, 0.262, 0, -0.262, 0.965, 0, 4.4, 15.5)
-fov = 46.0
+transform = Transform3D(1, 0, 0, 0, 0.982, 0.191, 0, -0.191, 0.982, 0, 3.9, 12.4)
+fov = 48.0
+v_offset = -1.15
 
 [node name="Hud" type="CanvasLayer" parent="."]
 
@@ -88,6 +142,16 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "HP"
 
+[node name="Spacer" type="Control" parent="Hud/Root/TopBar/Box"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Intent" type="Label" parent="Hud/Root/TopBar/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+theme_override_colors/font_color = Color(0.9, 0.55, 0.45, 1)
+
 [node name="StatusLabel" type="Label" parent="Hud/Root"]
 unique_name_in_owner = true
 layout_mode = 1
@@ -96,13 +160,17 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 16.0
-offset_top = -300.0
+offset_top = -322.0
 offset_right = -16.0
-offset_bottom = -272.0
+offset_bottom = -294.0
 grow_horizontal = 2
 grow_vertical = 0
 text = ""
 horizontal_alignment = 1
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(1, 0.95, 0.82, 1)
+theme_override_colors/font_outline_color = Color(0.08, 0.06, 0.05, 1)
+theme_override_constants/outline_size = 6
 
 [node name="Hand" type="HBoxContainer" parent="Hud/Root"]
 unique_name_in_owner = true
