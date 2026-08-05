@@ -48,6 +48,10 @@ var _prev_encounter := -1
 # slot -> {g: remaining 0..1, target: the Height that ends the climb}. Solo
 # tracks BOTH hunters, since you can switch while a timer runs.
 var _climb: Dictionary = {}
+# Card selection (Burn Coal / Catapult / Meld): tapping a selection card starts a
+# local pick flow, and the chosen hand indices are bundled into ONE play_card.
+# Empty = idle. Without this, those cards simply can't be played.
+var _selecting: Dictionary = {}
 
 @onready var _rig: Node3D = %BeastRig
 @onready var _cam: Camera3D = %Camera
@@ -217,6 +221,7 @@ func _refresh() -> void:
 	if s.is_empty() or String(s.get("phase", "")) != "combat":
 		_hud.visible = false
 		_climb.clear()
+		_selecting = {}
 		return
 	_hud.visible = true
 	var boss: Dictionary = s["boss"]
@@ -439,24 +444,29 @@ func _render_hand() -> void:
 	for c in _hand_row.get_children():
 		c.queue_free()
 	var priv := _my_private()
+	var selecting := not _selecting.is_empty()
 	for card in priv.get("hand", []):
 		var cv := CardView.new()
 		_hand_row.add_child(cv)
-		cv.setup(card, bool(card["playable"]))
 		var idx := int(card["index"])
-		var timed := bool(card.get("timed", false))
-		var hits := int(card.get("timed_hits", 1))
-		cv.tapped.connect(func() -> void:
-			if timed:
-				cv.start_timing(hits)
-			else:
-				Sfx.play("card")
-				_client.play_card(idx, true, _cmd_slot()))
+		# while picking, EVERY card is tappable — the pick is the point — except
+		# the ones already spoken for
+		var playable: bool = bool(card["playable"])
+		if selecting:
+			playable = idx != int(_selecting.get("sac", -1))
+		cv.setup(card, playable)
+		var c_card: Dictionary = card
+		cv.tapped.connect(func() -> void: _on_card_tapped(c_card, cv))
 		cv.timing_resolved.connect(func(hit: bool) -> void:
 			Sfx.play("nail" if hit else "slip")
 			_client.play_card(idx, hit, _cmd_slot()))
 	var players: Array = _client.shared.get("players", [])
 	var me: Dictionary = players[_me()] if _me() < players.size() else {}
+	if selecting:
+		_status.text = _selection_prompt()
+		_switch_btn.visible = _is_solo()
+		_end_btn.disabled = bool(priv.get("ended", false))
+		return
 	var climb := ""
 	if bool(me.get("reached", false)):
 		climb = "   ✦ at the weak point"
@@ -466,3 +476,76 @@ func _render_hand() -> void:
 		int(me.get("energy", 0)), int(me.get("hp", 0)), climb]
 	_switch_btn.visible = _is_solo()
 	_end_btn.disabled = bool(priv.get("ended", false))
+
+
+# --- playing a card, including the multi-pick cards -----------------------
+
+func _on_card_tapped(card: Dictionary, cv: CardView) -> void:
+	var index := int(card["index"])
+	if not _selecting.is_empty():  # this tap is a pick for the active card
+		_pick_for_selection(index)
+		return
+	if bool(card.get("timed", false)):
+		# a relic can widen the window, so pass the team's bonus through
+		cv.zone_bonus = float(int(_client.shared.get("mods", {}).get("timing_zone", 0))) / 100.0
+		cv.start_timing(int(card.get("timed_hits", 1)))
+		return
+	if bool(card.get("exhaust_pick", false)) or bool(card.get("cheapen_pick", false)) 			or bool(card.get("meld", false)):
+		_start_selection(card)
+		return
+	Sfx.play("card")
+	_client.play_card(index, true, _cmd_slot())
+
+
+func _selection_prompt() -> String:
+	var mode := String(_selecting.get("mode", "exhaust"))
+	var step := int(_selecting.get("step", 0))
+	var nm := String(_selecting.get("name", "card"))
+	var cancel := "   (tap %s again to cancel)" % nm
+	match mode:
+		"meld":
+			return "%s — tap the %s card to meld%s" % [nm, "FIRST" if step == 0 else "SECOND", cancel]
+		"exhaust_cheapen":
+			if step == 0:
+				return "%s — tap a card to SACRIFICE%s" % [nm, cancel]
+			return "%s — tap a card to make CHEAPER" % nm
+		_:
+			return "%s — tap a card to SACRIFICE%s" % [nm, cancel]
+
+
+func _start_selection(card: Dictionary) -> void:
+	var mode := "exhaust"
+	var picks := 1
+	if bool(card.get("meld", false)):
+		mode = "meld"
+		picks = 2
+	elif bool(card.get("cheapen_pick", false)):
+		mode = "exhaust_cheapen"
+		picks = 2
+	_selecting = {"play_index": int(card["index"]), "name": String(card.get("name", "card")),
+		"mode": mode, "picks": picks, "step": 0, "sac": -1, "target": -1}
+	Sfx.play("card")
+	_render_hand()
+
+
+func _pick_for_selection(idx: int) -> void:
+	if idx == int(_selecting.get("play_index", -1)):
+		_selecting = {}  # tapped the selection card again — cancel
+		_render_hand()
+		return
+	if int(_selecting.get("step", 0)) == 0:
+		_selecting["sac"] = idx
+	elif idx == int(_selecting.get("sac", -1)):
+		return  # the two picks must be different cards
+	else:
+		_selecting["target"] = idx
+	_selecting["step"] = int(_selecting.get("step", 0)) + 1
+	if int(_selecting["step"]) >= int(_selecting.get("picks", 1)):  # all picks in — fire
+		var play_index := int(_selecting.get("play_index", -1))
+		var sac := int(_selecting.get("sac", -1))
+		var target := int(_selecting.get("target", -1))
+		_selecting = {}
+		Sfx.play("card")
+		_client.play_card(play_index, true, _cmd_slot(), sac, target)
+	else:
+		_render_hand()

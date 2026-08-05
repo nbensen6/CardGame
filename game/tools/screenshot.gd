@@ -39,7 +39,7 @@ func _initialize() -> void:
 		Session.client.select_character("frog", 0)
 		Session.client.select_character("goblin_mech", 1)
 	if _state in ["combat", "goblin", "juice", "climbing", "3d", "3dclimb",
-			"3dstrike", "3dgame", "3dgrip"]:  # 3dloop deliberately starts ON the map  # step off the map into a fight
+			"3dstrike", "3dgame", "3dgrip", "3dsel"]:  # 3dloop deliberately starts ON the map  # step off the map into a fight
 		var r: Run = Session.host._run
 		var g := 0
 		while r.phase == Run.Phase.MAP and g < 30:
@@ -89,6 +89,11 @@ func _initialize() -> void:
 		var cs: Combat = Session.host._run.combat
 		cs.players[0].foothold = cs.boss.weak_point_height
 		cs.players[1].foothold = maxi(cs.boss.weak_point_height - 1, 1)
+		Session.host._broadcast_state()
+	if _state == "3dsel":  # a Meld in hand, so the pick flow can be exercised
+		var cm: Combat = Session.host._run.combat
+		cm.players[0].hand[0] = Content.make_card("meld")
+		cm.players[0].energy = 5
 		Session.host._broadcast_state()
 	if _state == "3dgrip":  # BETWEEN holds: the grip timer should be live
 		var cg: Combat = Session.host._run.combat
@@ -197,6 +202,28 @@ func _capture() -> void:
 					Session.host._run.phase])
 			else:
 				print("WALK FAIL: raycast missed the landmark")
+	if _state == "3dsel":  # tap Meld, then pick two cards, and check it fired
+		var vs := current_scene
+		var cs2: Combat = Session.host._run.combat
+		var hand_before := int(cs2.players[0].hand.size())
+		var meld: Dictionary = (Session.client.private.get("slots", [])[0] as Dictionary)["hand"][0]
+		vs.call("_on_card_tapped", meld, CardView.new())
+		await process_frame
+		var armed: bool = not (vs.get("_selecting") as Dictionary).is_empty()
+		print("SELECT armed=%s prompt=%s" % [armed, vs.get("_status").text])
+		if _hold == "armed":  # stop here so the pick prompt can be seen
+			for _k in 4:
+				await process_frame
+		else:
+			vs.call("_pick_for_selection", 1)
+			vs.call("_pick_for_selection", 2)
+			for _j in 6:
+				await process_frame
+			var hand_after := int(Session.host._run.combat.players[0].hand.size())
+			# Meld eats itself and both picks, leaving one fused card: 3 out, 1 in
+			print("SELECT %s: hand %d -> %d, still selecting=%s" % [
+				"OK" if hand_after == hand_before - 2 else "FAIL", hand_before, hand_after,
+				not (vs.get("_selecting") as Dictionary).is_empty()])
 	if _state == "3dgrip":  # let the grip run out and prove the fall lands
 		var vg := current_scene
 		var cg: Combat = Session.host._run.combat
