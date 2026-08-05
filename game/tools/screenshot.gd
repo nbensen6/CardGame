@@ -61,6 +61,16 @@ func _initialize() -> void:
 		re.node_type = "event"
 		re._begin_event()
 		Session.host._broadcast_state()
+	if _state == "3dmap":  # a couple of rows in, so the walked route is visible
+		var rm: Run = Session.host._run
+		rm.pick_node(int(rm.available_nodes()[0]))
+		rm.combat.boss.hp = 0
+		rm.combat.phase = Combat.Phase.OVER
+		rm.sync()
+		while rm.phase == Run.Phase.REWARD:
+			for slot in range(rm.player_count()):
+				rm.pick_reward(slot, 0)
+		Session.host._broadcast_state()
 	if _state == "route":  # one node in, so the map shows where we stand
 		var rr: Run = Session.host._run
 		rr.pick_node(int(rr.available_nodes()[0]))
@@ -86,9 +96,13 @@ func _initialize() -> void:
 		c.players[0].foothold = c.boss.weak_point_height      # at the sigil
 		c.players[1].foothold = maxi(c.boss.weak_point_height - 1, 1)  # clinging below
 		Session.host._broadcast_state()
-	# state=3d renders the prototype 3D client instead of the 2D one
-	change_scene_to_file("res://views/combat_3d.tscn" if _state.begins_with("3d")
-		else "res://views/combat_view.tscn")
+	# 3D clients: the overworld for 3dmap, the combat scene for the rest
+	var scene := "res://views/combat_view.tscn"
+	if _state == "3dmap":
+		scene = "res://views/overworld_3d.tscn"
+	elif _state.begins_with("3d"):
+		scene = "res://views/combat_3d.tscn"
+	change_scene_to_file(scene)
 	_capture()
 
 
@@ -101,6 +115,36 @@ func _capture() -> void:
 			v3.call("_strike", true)
 		for _i in 3:
 			await process_frame
+	if _state == "3dmap":  # prove the click -> walk -> pick_node round trip
+		var w := current_scene
+		var before := int(Session.host._run.map_row)
+		var cols: Array = w.get("_nodes").keys()
+		if cols.is_empty():
+			print("WALK FAIL: no reachable node was built")
+		else:
+			# project a reachable landmark BACK to a screen point and click it,
+			# so the raycast itself is under test, not just the travel tween
+			var cam: Camera3D = w.get("_cam")
+			var target: Vector3 = w.get("_nodes")[cols[0]]["pos"]
+			var screen: Vector2 = cam.unproject_position(target)
+			var hit := int(w.call("_node_under_mouse", screen))
+			print("WALK raycast: clicked %s -> node %d (wanted %d)" % [screen, hit, int(cols[0])])
+			if hit == int(cols[0]):
+				w.call("_travel_to", hit)
+				# this harness runs frames far faster than real time, so wait on
+				# the walk itself rather than a frame count
+				var guard := 0
+				while bool(w.get("_walking")) and guard < 3000:
+					guard += 1
+					await process_frame
+				for _j in 4:
+					await process_frame
+				var after := int(Session.host._run.map_row)
+				print("WALK %s: row %d -> %d, phase=%s" % [
+					"OK" if after == before + 1 else "FAIL", before, after,
+					Session.host._run.phase])
+			else:
+				print("WALK FAIL: raycast missed the landmark")
 	if _state == "juice":  # fire the strike effect and catch it mid-tween
 		var view := current_scene
 		if view != null and view.has_method("_juice_strike"):

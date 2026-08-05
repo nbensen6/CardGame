@@ -66,9 +66,19 @@ better starting point than the 2D situation ever was.
    since the Cube Pets models are static props — breathing, out-of-phase idle sway,
    recoil on hit; and the strike juice rebuilt in 3D as a burst OmniLight + dust
    particles at the sigil + camera shake. Intent shown in the top bar.
-3. **The overworld** — render `RunMap` as physical locations with walkable paths;
-   moving your character onto a node is how you choose the route. Node types keep
-   their meaning (fight / elite / rest / event / shop / treasure / Titan).
+3. ✅ **The overworld** — *Done.* `views/overworld_3d.gd` renders the act you're
+   in as a hex island (Kenney Hexagon Kit). Each node is one landmark tile that
+   says what it is — watchtower = fight, castle = elite, cabin = rest, market =
+   shop, wizard tower = event, mine = treasure, mountain = Titan — with the DAG's
+   edges drawn as roads between them (bright = walkable now, faint = read ahead).
+   Clicking a reachable landmark walks your hunter there, and **arriving** is what
+   calls `pick_node()`. Verified end to end by the harness: a landmark is projected
+   back to a screen point, that point is fed through the same raycast a click uses,
+   the walk runs, and the run advances a row into combat.
+
+   Node rows sit on even hex rows so the odd rows between stay clear; roads are
+   drawn ribbons rather than laid tiles, because a hex is far too coarse to say
+   *which* edges exist (the first attempt paved nearly every row).
 4. **Traversal co-op** — how two players move together.
 5. **Retire or keep the 2D client?** Keeping both costs double maintenance on every
    view change. Recommendation: keep `combat_view.gd` until the 3D one has feature
