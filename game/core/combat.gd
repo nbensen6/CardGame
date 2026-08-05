@@ -31,6 +31,7 @@ const ARMORED_DIVISOR := 4  # below the weak point the hide is armored: attacks 
 # just needs to know what's SAFE (the base, a ledge, or the sigil) and how to drop
 # a hunter. See is_secure(), next_safe_height(), fall(), and the sweep handling.
 const FALL_DAMAGE := 3   # damage taken when grip runs out and a hunter falls to the base
+const RIFT_PER_GAP := 2  # extra 'rift' damage per Height between the hunters — climb together
 
 var players: Array = []  # Array[PlayerState], index = player slot
 var boss: Boss
@@ -504,6 +505,45 @@ func _enemy_turn() -> void:
 						ps.foothold = _hold_below(ps.foothold)
 						ps.weak_point_damage = 0
 			_log("%s sweeps both hunters for %d and shakes them down a hold." % [boss.name, dmg_all])
+		"swipe_high":  # a lash along the flank — only hunters off the ground are hit
+			var dh := value + boss.strength
+			var caught_high: Array = []
+			for i in range(players.size()):
+				if players[i].foothold > 0:
+					players[i].combatant.take_damage(dh)
+					caught_high.append(players[i].combatant.name)
+			if caught_high.is_empty():
+				_log("%s lashes along its flank — nobody is clinging to it." % boss.name)
+			else:
+				_log("%s lashes its flank for %d — %s caught on it." % [boss.name, dh, ", ".join(caught_high)])
+		"swipe_low":  # it stamps the ground — safe only if you're ON the beast
+			var dl := value + boss.strength
+			var caught_low: Array = []
+			for i in range(players.size()):
+				if players[i].foothold <= 0:
+					players[i].combatant.take_damage(dl)
+					caught_low.append(players[i].combatant.name)
+			if caught_low.is_empty():
+				_log("%s stamps the ground — both hunters are above it." % boss.name)
+			else:
+				_log("%s stamps for %d — %s still on the ground." % [boss.name, dl, ", ".join(caught_low)])
+		"rift":  # the further apart the hunters are, the worse it hurts — climb together
+			var lo := 99
+			var hi := 0
+			for ps2 in players:
+				lo = mini(lo, ps2.foothold)
+				hi = maxi(hi, ps2.foothold)
+			var gap: int = maxi(0, hi - lo)
+			var dr: int = value + boss.strength + gap * RIFT_PER_GAP
+			for ps3 in players:
+				ps3.combatant.take_damage(dr)
+			_log("%s wrenches the hunters apart for %d (gap of %d)." % [boss.name, dr, gap])
+		"shift_sigil":  # the weak point moves — whatever you climbed is now wrong
+			var moved: int = clampi(value, 1, FOOTHOLD_MAX)
+			boss.weak_point_height = moved
+			for ps4 in players:
+				ps4.weak_point_damage = 0
+			_log("%s's sigil shifts to Height %d." % [boss.name, moved])
 		"enrage":
 			boss.strength += value
 			_log("%s enrages (+%d strength, now +%d)." % [boss.name, value, boss.strength])

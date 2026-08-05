@@ -58,6 +58,7 @@ func _init() -> void:
 	_test_skip_reward_keeps_the_deck_lean()
 	_test_rule_changing_relics()
 	_test_relics_all_load()
+	_test_climb_twisting_moves()
 	# grip / ledges (SotC real-time climb)
 	_test_secure_on_holds()
 	_test_next_safe_height()
@@ -609,6 +610,59 @@ func _test_rule_changing_relics() -> void:
 
 	_expect(started_up and painless and still_up and kept,
 		"rule-changing relics rewrite the climb, the fall, the threshold and Rhythm")
+
+
+func _test_climb_twisting_moves() -> void:
+	# swipe_low punishes anyone still on the ground; swipe_high the opposite
+	var low := Boss.new("Lurker", 300)
+	low.moves = [{"type": "swipe_low", "value": 8}]
+	low.weak_point_height = 3
+	var c := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, low)
+	c.players[0].foothold = 2   # up the beast — safe
+	c.players[1].foothold = 0   # on the ground — caught
+	var hp_up: int = c.players[0].combatant.hp
+	var hp_down: int = c.players[1].combatant.hp
+	c.end_turn(0)
+	c.end_turn(1)
+	var low_ok: bool = c.players[0].combatant.hp == hp_up and c.players[1].combatant.hp == hp_down - 8
+
+	var high := Boss.new("Snapper", 300)
+	high.moves = [{"type": "swipe_high", "value": 7}]
+	high.weak_point_height = 3
+	var c2 := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, high)
+	c2.players[0].foothold = 2
+	c2.players[1].foothold = 0
+	var h0: int = c2.players[0].combatant.hp
+	var h1: int = c2.players[1].combatant.hp
+	c2.end_turn(0)
+	c2.end_turn(1)
+	var high_ok: bool = c2.players[0].combatant.hp == h0 - 7 and c2.players[1].combatant.hp == h1
+
+	# rift scales with how far apart they are — climbing together is the answer
+	var rift := Boss.new("Riftling", 300)
+	rift.moves = [{"type": "rift", "value": 4}]
+	rift.weak_point_height = 4
+	var c3 := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, rift)
+	c3.players[0].foothold = 4
+	c3.players[1].foothold = 0   # gap of 4
+	var r0: int = c3.players[0].combatant.hp
+	c3.end_turn(0)
+	c3.end_turn(1)
+	var rift_ok: bool = c3.players[0].combatant.hp == r0 - (4 + 4 * Combat.RIFT_PER_GAP)
+
+	# shift_sigil moves the weak point, so a climb can be invalidated
+	var idol := Boss.new("Idol", 300)
+	idol.moves = [{"type": "shift_sigil", "value": 5}]
+	idol.weak_point_height = 2
+	var c4 := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, idol)
+	c4.players[0].foothold = 2
+	var was_there: bool = c4.sigil_reached(0)
+	c4.end_turn(0)
+	c4.end_turn(1)
+	var shifted: bool = c4.boss.weak_point_height == 5 and was_there and not c4.sigil_reached(0)
+
+	_expect(low_ok and high_ok and rift_ok and shifted,
+		"beasts twist the climb: stamp the ground, lash the flank, punish separation, move the sigil")
 
 
 ## Walk the route until a combat node is reached (skipping rest/treasure).

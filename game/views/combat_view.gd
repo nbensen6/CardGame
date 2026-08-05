@@ -278,7 +278,7 @@ func _render_combat(s: Dictionary) -> void:
 
 	var move: Dictionary = boss["intent"]
 	var mtype := String(move.get("type", ""))
-	var targeted := _targeted_indices(mtype, int(boss.get("target", -1)), s["players"].size())
+	var targeted := _targeted_indices(mtype, int(boss.get("target", -1)), s["players"])
 	_render_intent(s, boss, move, mtype, targeted)
 
 	_combat_audio(s)
@@ -1085,11 +1085,28 @@ func _titan_tags(boss: Dictionary) -> String:
 	return out
 
 
-func _targeted_indices(mtype: String, target: int, count: int) -> Array:
-	if mtype == "attack" and target >= 0:
-		return [target]
-	if mtype == "attack_all":
-		return range(count)
+## Who the telegraphed move will actually catch. The conditional sweeps depend on
+## where each hunter is standing, which the client already knows — so the intent
+## row can show exactly who's in danger right now.
+func _targeted_indices(mtype: String, target: int, players: Array) -> Array:
+	var count := players.size()
+	match mtype:
+		"attack", "leech":
+			return [target] if target >= 0 else []
+		"attack_all", "rift":
+			return range(count)
+		"swipe_high":  # only hunters off the ground
+			var high: Array = []
+			for i in range(count):
+				if int(players[i].get("foothold", 0)) > 0:
+					high.append(i)
+			return high
+		"swipe_low":   # only hunters still at the base
+			var low: Array = []
+			for i in range(count):
+				if int(players[i].get("foothold", 0)) <= 0:
+					low.append(i)
+			return low
 	return []
 
 
@@ -1111,6 +1128,10 @@ const INTENT_ICONS := {
 	"enrage": preload("res://assets/icons/fire.png"),
 	"block": preload("res://assets/icons/shield.png"),
 	"regen": preload("res://assets/icons/flask_full.png"),
+	"swipe_high": preload("res://assets/icons/pawn_up.png"),
+	"swipe_low": preload("res://assets/icons/exploding.png"),
+	"rift": preload("res://assets/icons/skull.png"),
+	"shift_sigil": preload("res://assets/icons/flag_square.png"),
 }
 
 func _render_intent(s: Dictionary, boss: Dictionary, move: Dictionary, mtype: String, targeted: Array) -> void:
@@ -1123,7 +1144,7 @@ func _render_intent(s: Dictionary, boss: Dictionary, move: Dictionary, mtype: St
 		icon.modulate = _intent_color(mtype)
 		_intent.add_child(icon)
 	var value := int(move.get("value", 0))
-	if mtype in ["attack", "attack_all", "leech"]:
+	if mtype in ["attack", "attack_all", "leech", "swipe_high", "swipe_low", "rift"]:
 		value += int(boss.get("strength", 0))
 	if value > 0:
 		var v := Label.new()
@@ -1161,6 +1182,14 @@ func _intent_text(move: Dictionary, strength: int) -> String:
 			return "Attack for %d" % (value + strength)
 		"attack_all":
 			return "Sweep for %d" % (value + strength)
+		"swipe_high":
+			return "Lash the flank for %d (hunters off the ground)" % (value + strength)
+		"swipe_low":
+			return "Stamp for %d (hunters on the ground)" % (value + strength)
+		"rift":
+			return "Wrench apart for %d + gap" % (value + strength)
+		"shift_sigil":
+			return "Shift its sigil to Height %d" % value
 		"enrage":
 			return "Enrage (+%d strength)" % value
 		"block":
@@ -1401,8 +1430,10 @@ func _bar_fill(frac: float) -> StyleBoxFlat:
 
 func _intent_color(mtype: String) -> Color:
 	match mtype:
-		"attack", "attack_all":
+		"attack", "attack_all", "swipe_high", "swipe_low", "rift":
 			return Color(0.88, 0.5, 0.44)  # threat red
+		"shift_sigil":
+			return Color(0.90, 0.78, 0.42)  # the sigil moves — gold, not a hit
 		"enrage":
 			return Color(0.9, 0.62, 0.35)  # ember
 		"block":

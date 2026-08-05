@@ -252,18 +252,120 @@
           "value": 15
         }
       ]
+    },
+    "root_lurker": {
+      "name": "The Root Lurker",
+      "art": "res://assets/portraits/crocodile.png",
+      "max_hp": 30,
+      "weak_point_height": 2,
+      "ledges": [],
+      "weak_point_threshold": 12,
+      "moves": [
+        {
+          "type": "swipe_low",
+          "value": 9
+        },
+        {
+          "type": "attack",
+          "value": 6
+        },
+        {
+          "type": "swipe_low",
+          "value": 12
+        }
+      ]
+    },
+    "sky_snapper": {
+      "name": "The Sky Snapper",
+      "art": "res://assets/portraits/owl.png",
+      "max_hp": 32,
+      "weak_point_height": 2,
+      "ledges": [],
+      "weak_point_threshold": 12,
+      "moves": [
+        {
+          "type": "attack",
+          "value": 6
+        },
+        {
+          "type": "swipe_high",
+          "value": 10
+        },
+        {
+          "type": "attack_all",
+          "value": 5
+        }
+      ]
+    },
+    "riftling": {
+      "name": "The Riftling",
+      "art": "res://assets/portraits/snake.png",
+      "max_hp": 34,
+      "weak_point_height": 3,
+      "ledges": [
+        2
+      ],
+      "weak_point_threshold": 14,
+      "moves": [
+        {
+          "type": "rift",
+          "value": 4
+        },
+        {
+          "type": "attack",
+          "value": 7
+        },
+        {
+          "type": "rift",
+          "value": 6
+        }
+      ]
+    },
+    "shifting_idol": {
+      "name": "The Shifting Idol",
+      "art": "res://assets/portraits/penguin.png",
+      "max_hp": 56,
+      "weak_point_height": 2,
+      "ledges": [],
+      "weak_point_threshold": 16,
+      "moves": [
+        {
+          "type": "attack",
+          "value": 9
+        },
+        {
+          "type": "shift_sigil",
+          "value": 4
+        },
+        {
+          "type": "attack_all",
+          "value": 7
+        },
+        {
+          "type": "shift_sigil",
+          "value": 2
+        },
+        {
+          "type": "attack",
+          "value": 13
+        }
+      ]
     }
   },
   "pools": {
     "fight": [
       "crag_pup",
       "bramble_hog",
-      "bounder"
+      "bounder",
+      "root_lurker",
+      "sky_snapper",
+      "riftling"
     ],
     "elite": [
       "mire_snapper",
       "frost_sentinel",
-      "grove_bear"
+      "grove_bear",
+      "shifting_idol"
     ],
     "boss": [
       "stone_warden",
