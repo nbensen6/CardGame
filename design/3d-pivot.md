@@ -97,10 +97,14 @@ better starting point than the 2D situation ever was.
    `play_card(index, hit, slot)`), the **party panel** (a co-op game showing
    nothing about your ally), and the **coach**.
 
-   Still owed: the **combat log** (3D has no history of what happened), and the
-   climb's per-hunter ladder readout — Height is now the hunter's position on the
-   beast, which is better, but "how far to the next ledge" is only visible while
-   the grip bar is up.
+   The **combat log** is now ported too, so the 3D fight owes nothing it can't
+   argue for: the only 2D feature not carried across is the climb's ladder
+   readout, and that's deliberate — Height IS the hunter's position on the beast
+   now, so a row of rungs would restate what the scene already shows. "How far to
+   the next ledge" still appears on the grip bar, which is when it matters.
+
+   **Parity reached.** Retiring `combat_view.gd` is now only blocked by the
+   phases it still owns (event / campfire / shop / reward / won / lost).
 
 7. **Retire or keep the 2D client?** Keeping both costs double maintenance on every
    view change. Recommendation: keep `combat_view.gd` until the 3D one has feature

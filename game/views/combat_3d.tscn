@@ -249,6 +249,41 @@ layout_mode = 2
 size_flags_vertical = 4
 text = "Got it"
 
+[node name="LogBox" type="VBoxContainer" parent="Hud/Root"]
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -300.0
+offset_top = 112.0
+offset_right = -16.0
+offset_bottom = -410.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_constants/separation = 4
+
+[node name="LogToggle" type="Button" parent="Hud/Root/LogBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 26)
+layout_mode = 2
+size_flags_horizontal = 8
+text = "Log ▸"
+flat = true
+
+[node name="LogPanel" type="PanelContainer" parent="Hud/Root/LogBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_styles/panel = SubResource("card_panel")
+
+[node name="LogLabel" type="Label" parent="Hud/Root/LogBox/LogPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.82, 0.78, 0.68, 1)
+
 [node name="GripBar" type="PanelContainer" parent="Hud/Root"]
 unique_name_in_owner = true
 visible = false

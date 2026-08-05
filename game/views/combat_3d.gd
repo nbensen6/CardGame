@@ -64,6 +64,7 @@ var _climb: Dictionary = {}
 # Empty = idle. Without this, those cards simply can't be played.
 var _selecting: Dictionary = {}
 var _coach_id := ""   # the onboarding hint currently on screen
+var _log_expanded := false
 
 @onready var _rig: Node3D = %BeastRig
 @onready var _cam: Camera3D = %Camera
@@ -87,6 +88,9 @@ var _coach_id := ""   # the onboarding hint currently on screen
 @onready var _coach: PanelContainer = %Coach
 @onready var _coach_text: Label = %CoachText
 @onready var _coach_ok: Button = %CoachOk
+@onready var _log_label: Label = %LogLabel
+@onready var _log_toggle: Button = %LogToggle
+@onready var _log_panel: PanelContainer = %LogPanel
 
 
 func _ready() -> void:
@@ -103,6 +107,9 @@ func _ready() -> void:
 		_refresh())
 	_switch_btn.pressed.connect(func() -> void:
 		_active_slot = 1 - _active_slot
+		_refresh())
+	_log_toggle.pressed.connect(func() -> void:
+		_log_expanded = not _log_expanded
 		_refresh())
 	_coach_ok.pressed.connect(func() -> void:
 		if _coach_id != "":
@@ -260,6 +267,7 @@ func _refresh() -> void:
 	_update_climb_state(s)
 	_render_party(s, int(boss.get("target", -1)), String(boss.get("intent", {}).get("type", "")))
 	_update_coach(s)
+	_render_log(s)
 	_react(s)
 	_render_hand()
 
@@ -673,3 +681,15 @@ func _update_coach(s: Dictionary) -> void:
 	_coach_id = String(hint["id"])
 	_coach_text.text = String(hint["text"])
 	_coach.visible = true
+
+
+## What just happened, in words. The 3D scene shows the blow landing but not
+## WHY it was small — the armoured-hide flag that explains a chipped hit only
+## exists here, which is exactly the confusion the log was added to fix.
+func _render_log(s: Dictionary) -> void:
+	var entries: Array = s.get("log", [])
+	var n := 16 if _log_expanded else 4
+	_log_label.text = "
+".join(entries.slice(maxi(entries.size() - n, 0)))
+	_log_panel.visible = not entries.is_empty()  # no empty box before round 1
+	_log_toggle.text = "Log ▾" if _log_expanded else "Log ▸"
