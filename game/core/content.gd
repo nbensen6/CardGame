@@ -8,6 +8,7 @@ extends RefCounted
 
 const CARDS_PATH := "res://data/cards.json"
 const BOSSES_PATH := "res://data/bosses.json"
+const EVENTS_PATH := "res://data/events.json"
 const RELICS_PATH := "res://data/relics.json"
 const CHARACTERS_PATH := "res://data/characters.json"
 
@@ -99,6 +100,20 @@ static func character_name(id: String) -> String:
 static func character_portrait(id: String) -> String:
 	var chars: Dictionary = _read_json(CHARACTERS_PATH).get("characters", {})
 	return String((chars.get(id, {}) as Dictionary).get("portrait", ""))
+
+## Every event id (map EVENT nodes).
+static func list_events() -> Array:
+	return (_read_json(EVENTS_PATH).get("events", {}) as Dictionary).keys()
+
+## One event as a display-ready Dictionary: {id, title, text, choices:[{label,result,effects}]}.
+static func make_event(id: String) -> Dictionary:
+	var events: Dictionary = _read_json(EVENTS_PATH).get("events", {})
+	if not events.has(id):
+		push_warning("Content: unknown event '%s'" % id)
+		return {}
+	var e: Dictionary = (events[id] as Dictionary).duplicate(true)
+	e["id"] = id
+	return e
 
 ## Beast ids for a map node type ("fight" | "elite" | "boss").
 static func beast_pool(kind: String) -> Array:

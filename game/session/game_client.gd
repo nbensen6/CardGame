@@ -55,6 +55,11 @@ func pick_node(col: int) -> void:
 	_send({"type": "pick_node", "col": col})
 
 
+## Answer a map event. Shared decision — either hunter may choose.
+func pick_event(choice: int) -> void:
+	_send({"type": "pick_event", "choice": choice})
+
+
 func restart() -> void:
 	_send({"type": "restart"})
 

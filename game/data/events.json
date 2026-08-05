@@ -1,0 +1,85 @@
+{
+  "_comment": "Map EVENT nodes are DATA (CLAUDE.md §11). Each event offers choices with immediate effects. Effect keys: heal (int, negative = a bruise — events never kill, HP floors at 1), max_hp (int, permanent), relic (bool, a random team relic), reward ('card'|'relic' — routes into the normal pick-1-of-3 screen). An empty effects block is a clean walk-away. Tone: small climbers in a big wild world.",
+  "events": {
+    "napping_beast": {
+      "title": "A Napping Beast",
+      "text": "Something enormous is asleep across the trail. Its breathing moves the grass like weather. Tufts of shed fur — strong as rope — are caught on the rocks around it.",
+      "choices": [
+        { "label": "Tiptoe past", "result": "You go the long way round. Nothing gained, nothing lost.", "effects": {} },
+        { "label": "Harvest the fur", "result": "You gather an armful of rope-fur. It stirs; a swatting paw catches you both.", "effects": { "heal": -5, "relic": true } }
+      ]
+    },
+    "hollow_log": {
+      "title": "The Hollow Log",
+      "text": "A fallen trunk lies across a gully, big enough to walk inside. It is dry, quiet, and smells faintly of somebody else's supplies.",
+      "choices": [
+        { "label": "Sleep a while", "result": "You wake warm and unbothered.", "effects": { "heal": 12 } },
+        { "label": "Rummage deeper", "result": "Somebody cached their kit here and never came back for it.", "effects": { "reward": "card" } }
+      ]
+    },
+    "fallen_climber": {
+      "title": "A Fallen Climber's Pack",
+      "text": "A pack sits neatly against a stone, straps fastened, as if its owner meant to come back. There are no tracks leading away.",
+      "choices": [
+        { "label": "Take the gear", "result": "Good rope, good hooks. You try not to think about it.", "effects": { "relic": true } },
+        { "label": "Build them a cairn", "result": "You stack stones until it looks like something. You feel steadier for it.", "effects": { "max_hp": 6 } }
+      ]
+    },
+    "windy_ledge": {
+      "title": "The Windy Ledge",
+      "text": "A shelf of rock cuts straight across the cliff — hours saved. The wind comes off it in slabs, and the drop below has no bottom you can see.",
+      "choices": [
+        { "label": "Take the shortcut", "result": "You cross on your bellies. The wind takes skin and temper both — but the way ahead is clear.", "effects": { "heal": -7, "reward": "relic" } },
+        { "label": "Go the safe way", "result": "Longer, duller, whole.", "effects": { "heal": 4 } }
+      ]
+    },
+    "berry_thicket": {
+      "title": "The Bright Thicket",
+      "text": "Berries, fat and improbably purple. One of you is certain they are food. One of you is certain they are a warning.",
+      "choices": [
+        { "label": "Eat your fill", "result": "Delicious. No consequences whatsoever, probably.", "effects": { "heal": 14 } },
+        { "label": "Pocket them for later", "result": "You ration them out over the next few days and feel the better for it.", "effects": { "max_hp": 5, "heal": 3 } }
+      ]
+    },
+    "friendly_beetle": {
+      "title": "A Very Large Beetle",
+      "text": "It is the size of a cart, iridescent, and appears delighted to see you. It lowers its head hopefully.",
+      "choices": [
+        { "label": "Accept the ride", "result": "It carries you up three switchbacks and sets you down gently, thrumming.", "effects": { "heal": 9 } },
+        { "label": "Study its shell", "result": "The plating is jointed in a way you had not considered. You sketch it.", "effects": { "reward": "card" } }
+      ]
+    },
+    "old_grapple_line": {
+      "title": "An Old Line",
+      "text": "A grapple line hangs down the rock face, weathered pale. Somebody rigged this a long time ago, and rigged it well.",
+      "choices": [
+        { "label": "Climb it", "result": "It holds. Of course it holds. You still feel the rope creak the whole way.", "effects": { "heal": -3, "reward": "card" } },
+        { "label": "Salvage the hardware", "result": "The line is done for, but the ironwork is beautiful.", "effects": { "relic": true } }
+      ]
+    },
+    "hot_spring": {
+      "title": "A Steaming Pool",
+      "text": "Water the temperature of a good bath, tucked between two boulders, going quietly about its business.",
+      "choices": [
+        { "label": "Soak", "result": "Every ache you had been ignoring makes itself known, then leaves.", "effects": { "heal": 16 } },
+        { "label": "Fill the flasks", "result": "It stays warm for days. You will be glad of it later.", "effects": { "max_hp": 4, "heal": 6 } }
+      ]
+    },
+    "watchers_cairn": {
+      "title": "The Watcher's Cairn",
+      "text": "A stack of flat stones, taller than either of you, worn smooth by hands. Small offerings are tucked into its gaps — hooks, teeth, a child's carving of something enormous.",
+      "choices": [
+        { "label": "Leave an offering", "result": "You add one of your own hooks. The wind drops for a moment.", "effects": { "heal": -2, "reward": "relic" } },
+        { "label": "Take one", "result": "You pocket a tooth the length of your forearm. It seems like a fair trade to you.", "effects": { "relic": true, "heal": -4 } }
+      ]
+    },
+    "lost_cub": {
+      "title": "Something Small and Lost",
+      "text": "It is unmistakably a baby version of something you will eventually have to fight. Right now it is stuck under a rock and crying about it.",
+      "choices": [
+        { "label": "Free it", "result": "It headbutts your shins in thanks and bounds off. You feel obscurely better about everything.", "effects": { "max_hp": 7 } },
+        { "label": "Leave well alone", "result": "You walk on. Its mother passes you an hour later, and does not look at you twice.", "effects": { "heal": 8 } }
+      ]
+    }
+  }
+}

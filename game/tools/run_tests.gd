@@ -50,6 +50,9 @@ func _init() -> void:
 	_test_map_is_deterministic_per_seed()
 	_test_run_walks_the_map()
 	_test_rest_node_heals_and_returns_to_map()
+	_test_event_choice_applies_effects()
+	_test_event_reward_choice_routes_to_reward()
+	_test_events_load_and_are_well_formed()
 	# grip / ledges (SotC real-time climb)
 	_test_secure_on_holds()
 	_test_next_safe_height()
@@ -446,13 +449,74 @@ func _test_rest_node_heals_and_returns_to_map() -> void:
 		"a rest node heals the party and hands straight back to the map")
 
 
+func _test_events_load_and_are_well_formed() -> void:
+	var ids: Array = Content.list_events()
+	var ok := ids.size() >= 8
+	for id in ids:
+		var e: Dictionary = Content.make_event(String(id))
+		var choices: Array = e.get("choices", [])
+		if String(e.get("title", "")) == "" or String(e.get("text", "")) == "" or choices.size() < 2:
+			ok = false
+		for ch in choices:
+			if String((ch as Dictionary).get("label", "")) == "":
+				ok = false
+	_expect(ok, "every event has a title, prose, and at least two labelled choices")
+
+
+func _test_event_choice_applies_effects() -> void:
+	var run := _map_run()
+	run.event = {"title": "T", "text": "x", "choices": [
+		{"label": "hurt", "result": "ouch", "effects": {"heal": -5, "max_hp": 4, "relic": true}},
+	]}
+	run.phase = Run.Phase.EVENT
+	run.map_row = 0  # standing on a node, so resolving hands back to the map
+	var hp_before: int = run.hp[0]
+	var max_before: int = run.max_hp[0]
+	var relics_before: int = run.team_relics.size()
+	run.pick_event(0)
+	_expect(run.hp[0] == hp_before - 5 and run.max_hp[0] == max_before + 4
+		and run.team_relics.size() == relics_before + 1
+		and run.phase == Run.Phase.MAP and run.event_result == "ouch",
+		"an event choice applies its effects and hands back to the map")
+
+
+func _test_event_reward_choice_routes_to_reward() -> void:
+	var run := _map_run()
+	run.event = {"title": "T", "text": "x", "choices": [
+		{"label": "loot", "result": "!", "effects": {"reward": "card"}},
+	]}
+	run.phase = Run.Phase.EVENT
+	run.map_row = 0
+	run.pick_event(0)
+	var lethal := true
+	# also prove events can never kill: a huge bruise floors at 1 HP
+	var run2 := _map_run()
+	run2.event = {"title": "T", "text": "x", "choices": [
+		{"label": "ow", "result": "!", "effects": {"heal": -999}}]}
+	run2.phase = Run.Phase.EVENT
+	run2.map_row = 0
+	run2.pick_event(0)
+	lethal = run2.hp[0] <= 0
+	_expect(run.phase == Run.Phase.REWARD and run.reward_kind == "card" and not lethal,
+		"an event that offers loot opens the reward screen; events never kill")
+
+
 ## Walk the route until a combat node is reached (skipping rest/treasure).
 func _step_into_combat(run: Run) -> void:
 	var guard := 0
 	while run.phase != Run.Phase.COMBAT and not run.is_over() and guard < 60:
 		guard += 1
 		if run.phase == Run.Phase.MAP:
-			run.pick_node(int(run.available_nodes()[0]))
+			# Prefer a fight so rest/event side effects don't muddy what's asserted.
+			var choice := int(run.available_nodes()[0])
+			for col in run.available_nodes():
+				var t := String(run.map.node_at(run.map_row + 1, int(col)).get("type", ""))
+				if t in ["fight", "elite", "boss"]:
+					choice = int(col)
+					break
+			run.pick_node(choice)
+		elif run.phase == Run.Phase.EVENT:
+			run.pick_event(0)
 		elif run.phase == Run.Phase.REWARD:
 			_pick_both(run)
 
@@ -742,10 +806,13 @@ func _test_run_hp_carries_between_encounters() -> void:
 	_step_into_combat(run)
 	run.combat.players[0].combatant.hp = 20  # took damage this fight
 	_force_win(run)
-	_pick_both(run)          # -> back to the map
-	_step_into_combat(run)   # next node
-	_expect(run.combat.players[0].combatant.hp == 20 + Run.HEAL_BETWEEN,
-		"damage carries to the next encounter (plus a small heal)")
+	var banked: int = run.hp[0]              # carried + the between-fight heal
+	_pick_both(run)                          # -> back to the map
+	_step_into_combat(run)                   # walk on to the next fight
+	# the next fight starts from the run's carried HP, whatever the route did on the way
+	_expect(banked == 20 + Run.HEAL_BETWEEN
+		and run.combat.players[0].combatant.hp == run.hp[0],
+		"damage carries between encounters (plus a small heal), through whatever the route offers")
 
 func _test_run_defeat_when_a_hunter_falls() -> void:
 	var run := _map_run()
@@ -810,6 +877,8 @@ func _test_run_relic_reward_and_full_clear() -> void:
 				run.pick_node(int(run.available_nodes()[0]))
 			Run.Phase.COMBAT:
 				_force_win(run)
+			Run.Phase.EVENT:
+				run.pick_event(0)
 			Run.Phase.REWARD:
 				if run.reward_kind == "card":
 					saw_card = true

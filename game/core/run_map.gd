@@ -72,16 +72,20 @@ func _roll_type(row_in_act: int, rng: RandomNumberGenerator) -> String:
 		return "fight"
 	var roll := rng.randi_range(0, 99)
 	if row_in_act >= ROWS_PER_ACT - 1:  # the run-up to the Titan
-		if roll < 40:
+		if roll < 36:
 			return "rest"
-		if roll < 70:
+		if roll < 62:
 			return "treasure"
+		if roll < 82:
+			return "event"
 		return "elite"
-	if roll < 42:
+	if roll < 36:
 		return "fight"
-	if roll < 64:
+	if roll < 58:
+		return "event"
+	if roll < 76:
 		return "elite"
-	if roll < 84:
+	if roll < 90:
 		return "treasure"
 	return "rest"
 

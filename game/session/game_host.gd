@@ -77,6 +77,10 @@ func _on_command(peer_id: int, command: Dictionary) -> void:
 			if not paused and _run != null:
 				_run.pick_node(int(command.get("col", -1)))
 			_broadcast_state()
+		"pick_event":  # events are a shared choice, like the route
+			if not paused and _run != null:
+				_run.pick_event(int(command.get("choice", -1)))
+			_broadcast_state()
 		"pick_card":
 			var pslot := _acting_slot(peer_id, command)
 			if not paused and _run != null and pslot >= 0:
@@ -192,6 +196,8 @@ func _build_shared() -> Dictionary:
 			"available": _run.available_nodes(),
 			"boss_art": _boss_art_per_act(),
 		}
+	if _run.phase == Run.Phase.EVENT:
+		s["event"] = _run.event
 	if _run.phase == Run.Phase.COMBAT:
 		var c: Combat = _run.combat
 		var b: Boss = c.boss
@@ -350,6 +356,7 @@ func _player_name(slot: int) -> String:
 func _phase_string() -> String:
 	match _run.phase:
 		Run.Phase.MAP: return "map"
+		Run.Phase.EVENT: return "event"
 		Run.Phase.COMBAT: return "combat"
 		Run.Phase.REWARD: return "reward"
 		Run.Phase.WON: return "won"

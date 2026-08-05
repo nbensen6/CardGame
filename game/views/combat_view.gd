@@ -20,6 +20,10 @@ var _client: GameClient
 @onready var _map_panel: PanelContainer = %MapPanel
 @onready var _map_rows: VBoxContainer = %MapRows
 @onready var _map_edges: MapEdges = %MapEdges
+@onready var _event_panel: PanelContainer = %EventPanel
+@onready var _event_title: Label = %EventTitle
+@onready var _event_text: Label = %EventText
+@onready var _event_choices: VBoxContainer = %EventChoices
 @onready var _hand_bar: HBoxContainer = %HandBar
 @onready var _arena: Control = %Arena
 @onready var _climb_layer: Control = %Climb
@@ -223,6 +227,8 @@ func _refresh() -> void:
 	match String(s.get("phase", "combat")):
 		"map":
 			_render_map(s)
+		"event":
+			_render_event(s)
 		"combat":
 			_render_combat(s)
 		"reward":
@@ -234,7 +240,7 @@ func _refresh() -> void:
 # --- Combat phase ---------------------------------------------------------
 
 func _render_combat(s: Dictionary) -> void:
-	_show_map(false)
+	_show_screen(false)
 	_over_sound = false  # reset so the next win/lose plays its sting
 	_overlay.visible = false
 	_top_bar.visible = true
@@ -467,7 +473,7 @@ const NODE_LABEL := {
 ## step to are lit and tappable; where you stand is ringed; what's behind you is
 ## dimmed. Either hunter may choose — the route is a shared decision.
 func _render_map(s: Dictionary) -> void:
-	_show_map(true)
+	_show_screen(true)
 	_overlay.visible = false
 	_top_bar.visible = true
 	_boss_hp_bar.visible = false
@@ -590,21 +596,72 @@ func _node_style(here: bool, open: bool, passed: bool, hover: bool = false) -> S
 	return sb
 
 
-## Swap between the route screen and the combat scene.
-func _show_map(on: bool) -> void:
-	_map_panel.visible = on
-	_scene_row.visible = not on
-	_hand_bar.visible = not on
-	_hand_row.visible = not on
-	_end_turn_btn.get_parent().visible = not on
-	if on:
+## Which full-screen surface is up: the combat scene, the route, or an event.
+func _show_screen(map_on: bool, event_on: bool = false) -> void:
+	_map_panel.visible = map_on
+	_event_panel.visible = event_on
+	var combat_on := not (map_on or event_on)
+	_scene_row.visible = combat_on
+	_hand_bar.visible = combat_on
+	_hand_row.visible = combat_on
+	_end_turn_btn.get_parent().visible = combat_on
+	if not combat_on:
 		_stop_climb()
+
+
+# --- Event phase ----------------------------------------------------------
+
+## A wayside event: a bit of prose and a couple of choices with real stakes.
+## Shared decision — either hunter may answer.
+func _render_event(s: Dictionary) -> void:
+	_show_screen(false, true)
+	_overlay.visible = false
+	_top_bar.visible = true
+	_boss_hp_bar.visible = false
+	_intent.visible = false
+	var ev: Dictionary = s.get("event", {})
+	_boss_name.text = "On the way"
+	_boss_hp.text = "Act %d of %d" % [int(s.get("encounter", 1)), int(s.get("total_encounters", 4))]
+	_event_title.text = String(ev.get("title", ""))
+	_event_text.text = String(ev.get("text", ""))
+	_clear(_event_choices)
+	var choices: Array = ev.get("choices", [])
+	for i in range(choices.size()):
+		var ch: Dictionary = choices[i]
+		var b := Button.new()
+		b.custom_minimum_size = Vector2(560, 46)
+		b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		b.text = "%s     %s" % [String(ch.get("label", "…")), _effect_blurb(ch.get("effects", {}))]
+		var idx := i
+		b.pressed.connect(func() -> void:
+			Sfx.play("card")
+			_client.pick_event(idx))
+		_event_choices.add_child(b)
+
+
+## Spell the stakes out on the button — an event should never be a blind pick.
+func _effect_blurb(eff: Dictionary) -> String:
+	var bits: Array[String] = []
+	var h := int(eff.get("heal", 0))
+	if h > 0:
+		bits.append("+%d HP" % h)
+	elif h < 0:
+		bits.append("%d HP" % h)
+	var mh := int(eff.get("max_hp", 0))
+	if mh != 0:
+		bits.append("%+d max HP" % mh)
+	if bool(eff.get("relic", false)):
+		bits.append("relic")
+	var rw := String(eff.get("reward", ""))
+	if rw != "":
+		bits.append("choose a " + rw)
+	return "(%s)" % "  ·  ".join(bits) if not bits.is_empty() else ""
 
 
 # --- Reward phase ---------------------------------------------------------
 
 func _render_reward(s: Dictionary) -> void:
-	_show_map(false)
+	_show_screen(false)
 	_stop_climb()
 	_hand_icon.visible = false  # instruction text leads here, not identity
 	_lock_btn.text = "Lock In Reward"
@@ -694,7 +751,7 @@ func _on_character_selected(character_id: String) -> void:
 # --- Character select (lobby) ---------------------------------------------
 
 func _render_character_select(s: Dictionary) -> void:
-	_show_map(false)
+	_show_screen(false)
 	_stop_climb()
 	_hand_icon.visible = false
 	_log_toggle.visible = false
@@ -754,7 +811,7 @@ func _render_character_select(s: Dictionary) -> void:
 # --- Run over -------------------------------------------------------------
 
 func _render_over(s: Dictionary) -> void:
-	_show_map(false)
+	_show_screen(false)
 	_stop_climb()
 	_overlay.visible = true
 	_restart_btn.visible = true
@@ -776,7 +833,7 @@ func _render_over(s: Dictionary) -> void:
 
 
 func _show_paused(s: Dictionary) -> void:
-	_show_map(false)
+	_show_screen(false)
 	_stop_climb()
 	_overlay.visible = true
 	_restart_btn.visible = false
@@ -790,7 +847,7 @@ func _show_paused(s: Dictionary) -> void:
 
 
 func _show_waiting(s: Dictionary) -> void:
-	_show_map(false)
+	_show_screen(false)
 	_stop_climb()
 	_overlay.visible = true
 	_restart_btn.visible = false

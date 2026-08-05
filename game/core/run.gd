@@ -11,7 +11,7 @@
 class_name Run
 extends RefCounted
 
-enum Phase { MAP, COMBAT, REWARD, WON, LOST }
+enum Phase { MAP, COMBAT, EVENT, REWARD, WON, LOST }
 
 const ENCOUNTERS := ["stone_warden", "gale_serpent", "drowned_colossus", "sunken_warden"]
 const REST_HEAL := 12  # a breather node patches you up
@@ -26,6 +26,9 @@ var map_row: int = -1            # -1 = at the trailhead, nothing stepped on yet
 var map_col: int = 0
 var node_type: String = ""       # the node we're currently resolving
 var beast_id: String = ""        # the beast this combat is against
+var event: Dictionary = {}       # the event being resolved (EVENT phase)
+var event_result: String = ""    # flavour text for the choice just taken
+var _seen_events: Array = []     # don't repeat an event while fresh ones remain
 var combat: Combat
 var names: Array = []
 var decks: Array = []            # Array[Array[Card]] per hunter — persists across encounters
@@ -89,9 +92,62 @@ func pick_node(col: int) -> bool:
 			_after_node()
 		"treasure":
 			_begin_reward("relic")
+		"event":
+			_begin_event()
 		_:  # fight / elite / boss
 			_start_encounter()
 	return true
+
+## Roll an unseen event where possible, so a run doesn't repeat itself early.
+func _begin_event() -> void:
+	var ids: Array = Content.list_events()
+	if ids.is_empty():
+		_after_node()
+		return
+	var fresh: Array = []
+	for id in ids:
+		if not _seen_events.has(id):
+			fresh.append(id)
+	var pick_from: Array = fresh if not fresh.is_empty() else ids
+	var id := String(pick_from[_rng.randi_range(0, pick_from.size() - 1)])
+	_seen_events.append(id)
+	event = Content.make_event(id)
+	event_result = ""
+	phase = Phase.EVENT
+
+
+## Resolve an event choice. Like the route, it's a shared decision — either
+## hunter may answer. Effects land immediately; a choice that offers a card or
+## relic routes into the normal pick-1-of-3 screen.
+func pick_event(choice: int) -> bool:
+	if phase != Phase.EVENT:
+		return false
+	var choices: Array = event.get("choices", [])
+	if choice < 0 or choice >= choices.size():
+		return false
+	var picked: Dictionary = choices[choice]
+	var eff: Dictionary = picked.get("effects", {})
+	event_result = String(picked.get("result", ""))
+	var mh := int(eff.get("max_hp", 0))
+	var h := int(eff.get("heal", 0))
+	for i in range(names.size()):
+		if mh != 0:
+			max_hp[i] = maxi(1, max_hp[i] + mh)
+		if h != 0:
+			# Events bruise but never end a run — no death without a fight.
+			hp[i] = clampi(hp[i] + h, 1, max_hp[i])
+		hp[i] = mini(hp[i], max_hp[i])
+	if bool(eff.get("relic", false)):
+		var pool: Array = Content.relic_pool()
+		if not pool.is_empty():
+			team_relics.append(Content.make_relic(String(pool[_rng.randi_range(0, pool.size() - 1)])))
+	var rw := String(eff.get("reward", ""))
+	if rw != "":
+		_begin_reward(rw)
+	else:
+		_after_node()
+	return true
+
 
 ## The host calls this after every combat command to advance run state.
 func sync() -> void:

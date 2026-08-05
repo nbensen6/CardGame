@@ -41,6 +41,12 @@ func _initialize() -> void:
 			g += 1
 			r.pick_node(int(r.available_nodes()[0]))
 		Session.host._broadcast_state()
+	if _state == "event":  # force an event node so the screen can be checked
+		var re: Run = Session.host._run
+		re.map_row = 0
+		re.node_type = "event"
+		re._begin_event()
+		Session.host._broadcast_state()
 	if _state == "route":  # one node in, so the map shows where we stand
 		var rr: Run = Session.host._run
 		rr.pick_node(int(rr.available_nodes()[0]))
