@@ -5,7 +5,12 @@ Each player has a private hand; the boss and battlefield are shared. PC-first (S
 architected so a mobile / "phones-as-hands, TV-as-boss" casting mode is a later
 rendering target, not a rewrite.
 
-See [`CLAUDE.md`](./CLAUDE.md) for the full brief, architecture rules, and build order.
+**Start here: [`design/GDD.md`](design/GDD.md)** — the game design document. What the
+game is, every system, current content counts, and a map of every other design doc
+(including which ones are now history).
+
+See [`CLAUDE.md`](./CLAUDE.md) for the architecture rules and build conventions,
+and [`design/ROADMAP.md`](design/ROADMAP.md) for milestones and Early Access scope.
 
 ## Engine
 
