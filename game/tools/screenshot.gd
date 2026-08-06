@@ -186,9 +186,76 @@ func _router_is(router: Node, phase: String, want_scene: String) -> void:
 		"OK" if ok else "FAIL", actual, phase, mounted, want_scene])
 
 
+## Wait for the combat camera to stop moving.
+##
+## It eases toward its target over real seconds (the opening pull-in, and the ride
+## up the beast as you climb), and this harness runs frames far faster than real
+## time — so a fixed frame count catches it mid-glide and every shot lies about
+## where the camera settles. Wait on the state, not on a count.
+func _await_camera(view: Node) -> void:
+	if view == null or not view.has_method("snap_camera"):
+		return
+	view.call("snap_camera")
+	for _i in 3:  # a few settled frames before the shot
+		await process_frame
+
+
+## Where the things the player MUST see actually landed, in pixels.
+##
+## Eyeballing a 1280x720 render can't settle whether a hunter is on screen or two
+## pixels behind the coach panel — and "can I see my climbers and the sigil" is
+## the whole readability question the big-beast framing risks. So project them and
+## check against the region the HUD does not own.
+##
+## Safe region excludes the left rail, the top bar/grip/coach strip, and the
+## bottom-right party + buttons block.
+func _report_visibility(view: Node) -> void:
+	if view == null or not view.has_method("_climb_frame"):
+		return
+	var cam: Camera3D = view.get("_cam")
+	if cam == null:
+		return
+	var vp := Vector2(1280, 720)
+	var box: AABB = view.get("_beast_box")
+	print("CAM pos=%v pivot=%v dist=%.2f pitch=%.3f h=%.2f v=%.2f | box pos=%v size=%v" % [
+		cam.position, view.get("_pivot"), view.get("_dist"), view.get("_pitch"),
+		cam.h_offset, cam.v_offset, box.position, box.size])
+	var marks: Array = []
+	var hunters: Array = view.get("_hunters")
+	for i in range(hunters.size()):
+		marks.append(["hunter%d" % i, (hunters[i] as Dictionary)["home"]])
+	# The sigil is only expected on screen once the hunter you're PLAYING is close
+	# enough for the camera's look-ahead to reach it. Below that, a Titan's weak
+	# point being over the horizon of the frame is the scale doing its job, not a
+	# framing bug — so don't assert it and don't cry wolf about it.
+	var sigil: Node3D = view.get("_sigil")
+	if sigil != null and sigil.visible:
+		var me := int(view.call("_me"))
+		var mine: float = float((hunters[me] as Dictionary)["home"].y) if me < hunters.size() else 0.0
+		if mine > 0.5 and sigil.position.y - mine <= 3.5:
+			marks.append(["sigil", sigil.position])
+		else:
+			print("VIS n/a sigil: hunter is %.1f below it — out of frame by design" % (
+				sigil.position.y - mine))
+	for m in marks:
+		var world: Vector3 = m[1]
+		if cam.is_position_behind(world):
+			print("VIS FAIL %s: behind the camera" % m[0])
+			continue
+		var p: Vector2 = cam.unproject_position(world)
+		var on: bool = p.x > 312 and p.x < vp.x - 8 and p.y > 200 and p.y < vp.y - 8
+		# the bottom-right block is party + turn buttons
+		if p.x > vp.x - 320 and p.y > vp.y - 220:
+			on = false
+		print("VIS %s %s: (%d, %d)" % ["OK" if on else "FAIL", m[0], int(p.x), int(p.y)])
+
+
 func _capture() -> void:
 	for _i in 15:  # let the scene lay out and draw
 		await process_frame
+	await _await_camera(current_scene)
+	if _state.begins_with("3d") and _state not in ["3dmap", "3dloop"]:
+		_report_visibility(current_scene)
 	if _state == "3dstrike":  # fire the 3D strike and catch the flash + dust
 		var v3 := current_scene
 		if v3 != null and v3.has_method("_strike"):

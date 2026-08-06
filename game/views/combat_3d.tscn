@@ -211,6 +211,16 @@ offset_bottom = -12.0
 grow_vertical = 2
 theme_override_constants/separation = 6
 
+[node name="StatusLabel" type="Label" parent="Hud/Root/LeftRail"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(1, 0.95, 0.82, 1)
+theme_override_colors/font_outline_color = Color(0.08, 0.06, 0.05, 1)
+theme_override_constants/outline_size = 4
+
 [node name="HandScroll" type="ScrollContainer" parent="Hud/Root/LeftRail"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -336,26 +346,6 @@ layout_mode = 2
 max_value = 1.0
 step = 0.001
 show_percentage = false
-
-[node name="StatusLabel" type="Label" parent="Hud/Root"]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 312.0
-offset_top = -68.0
-offset_right = -348.0
-offset_bottom = -40.0
-grow_horizontal = 2
-grow_vertical = 0
-text = ""
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(1, 0.95, 0.82, 1)
-theme_override_colors/font_outline_color = Color(0.08, 0.06, 0.05, 1)
-theme_override_constants/outline_size = 6
 
 [node name="Controls" type="HBoxContainer" parent="Hud/Root"]
 layout_mode = 1

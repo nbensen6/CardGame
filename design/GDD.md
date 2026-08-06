@@ -281,6 +281,14 @@ overworld, and every between-fights screen. There is no 2D client any more.
   zoom, with markers so you never lose a hunter behind a leg. The weak point
   glows. Everything that moves is procedural — breathing, idle sway, climb hops,
   recoil, flash, dust, camera shake — so it reads as alive at no animation cost.
+- **The beasts are colossal, and the camera refuses to contain them** (Nick,
+  2026-08-06). A Titan stands ~17 hunters tall. Crucially the camera frames a
+  fixed *window* of world rather than fitting the body, so how much of a beast
+  overflows the screen IS how big it is — fitting the whole creature in frame is
+  what made them read as pets, and no amount of scaling fixes that on its own.
+  From the ground you look up at a wall of animal whose weak point is over the
+  horizon of the frame; as you climb, the camera rides up the body with you, so
+  the ascent is something you watch rather than a number changing.
 - **The fight's screen is the scene** (Nick, 2026-08-06), framed like a Pokémon
   battle. The hand is a **rail down the left edge** — short wide cards instead of
   a row of portraits — because a portrait row ate the bottom third of the screen,

@@ -36,8 +36,24 @@ const MODELS := {
 ##
 ## A beast's height comes from how far you climb it, so a Titan with its sigil at
 ## Height 8 physically towers over a Crag Pup you can hit from the ground.
-const BEAST_BASE_HEIGHT := 2.6
-const BEAST_HEIGHT_PER_CLIMB := 0.28
+##
+## Far bigger than they were (Nick, 2026-08-06: "much bigger, to feel like you are
+## climbing something massive"). A Titan is ~17 hunters tall now instead of ~6 —
+## the difference between a large animal and a colossus.
+##
+## Scale ALONE would have changed nothing, which is the part worth remembering:
+## the camera used to fit the whole body in frame, so doubling a beast's size just
+## pushed the camera twice as far back and looked identical. A shot that always
+## contains the whole creature is a shot that says "toy on a table". See
+## VIEW_WINDOW_* — the camera now shows a fixed slice of world, and a big beast
+## simply overflows it.
+const BEAST_BASE_HEIGHT := 4.0
+const BEAST_HEIGHT_PER_CLIMB := 1.2
+## How much vertical world the camera frames, in units — the constant that makes
+## size legible. A beast shorter than this fits with air around it; a Titan runs
+## off the top of the screen and you only ever see the stretch you're climbing.
+const VIEW_WINDOW_MIN := 5.5
+const VIEW_WINDOW_MAX := 11.0
 ## Real-time grip (SotC), the same client-side skill layer the 2D view runs: the
 ## instant a hunter leaves a safe hold a timer starts full and drains live; reach
 ## the next ledge before it empties or this client reports a fall. The host is
@@ -63,6 +79,13 @@ const ZOOM_STEP := 0.12
 ## ground live down there. Shifting the full amount centres the beast beautifully
 ## and posts a hunter behind the party panel, so this splits the difference.
 const SCENE_SHIFT := 0.09
+## Downward lens shift per unit of distance while a hunter is on the ground, which
+## lifts the whole shot so tiny hunters at a Titan's feet aren't pressed into the
+## bottom edge. See _apply_orbit for why this can't be done by moving the pivot.
+const GROUND_LIFT := 0.07
+## Lowest the camera may sit, in world units. Below this it is under the ground
+## plane and the shot looks up through the floor.
+const CAMERA_FLOOR := 0.8
 
 var _client: GameClient
 var _beast: Node3D
@@ -82,6 +105,10 @@ var _pitch := 0.26
 var _dist := 12.0
 var _pivot := Vector3(0, 2.0, 0)
 var _dragging := false
+var _pivot_target := Vector3(0, 2.0, 0)  # where the camera is drifting its aim to
+var _user_framed := false   # the player has dragged/zoomed — stop auto-pitching
+var _establishing := false  # easing from the opening wide shot into the working one
+var _working_dist := 12.0   # the shot the establishing pull-in settles at
 var _beast_punch := 0.0           # recoil when the beast is struck
 var _time := 0.0
 # snapshot deltas drive the juice, exactly like the 2D view
@@ -191,6 +218,7 @@ func _process(delta: float) -> void:
 			node.position.y = float((h["home"] as Vector3).y) + sin(_time * 2.3 + i * 1.7) * 0.045
 	if _sigil != null and _sigil.visible:
 		_sigil.scale = Vector3.ONE * (1.0 + sin(_time * 3.0) * 0.14)
+	_track_climb(delta)
 	if _shake > 0.001:
 		_shake = maxf(0.0, _shake - delta * 2.6)
 		var amp := _shake * 0.42
@@ -341,6 +369,12 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	_rig.add_child(_beast)
 	_beast_scale = _fit_height(_beast, want)
 	_beast_box = _merged_aabb(_beast)
+	# Grow the arena with its occupant. A 9-unit disc was generous under a bear and
+	# is a dinner plate under a Titan — it ran out mid-frame and left the bottom of
+	# the shot as void, which reads as a hole rather than as ground.
+	var ground := get_node_or_null("Ground") as CSGCylinder3D
+	if ground != null:
+		ground.radius = maxf(9.0, maxf(_beast_box.size.x, _beast_box.size.z) * 1.5)
 	_frame_beast()
 
 
@@ -353,21 +387,153 @@ func _fit_height(node: Node3D, want: float) -> float:
 	return factor
 
 
-## Pull the camera back to fit whatever we're fighting. Beasts now range from a
-## Crag Pup to a Titan nearly twice its height, so a fixed camera either crops
-## the big ones or strands the small ones in empty sky.
+## Frame a SLICE of the world, not the whole animal.
+##
+## The old version fitted the entire body, which is why the beasts never felt big:
+## fitting is normalising, and a normalised colossus is a bear. Now the camera
+## shows a roughly constant window of world, so how much of a beast is visible IS
+## how big it is. A Crag Pup fits inside the window; the Sunken Warden runs off
+## the top of the screen and you meet it a stretch at a time.
 func _frame_beast() -> void:
 	var tall := maxf(_beast_box.size.y, 1.0)
-	# Closer than it used to be: the hand moved to the left rail, which handed the
-	# whole bottom of the screen back to the scene. The old numbers were framing
-	# around a card row that no longer exists.
-	_dist = clampf(tall * 1.8 + 2.8, 8.0, 19.0)
-	# aim at the body's middle — nothing crowds the bottom any more, so this is
-	# the beast's actual centre rather than a dodge around the HUD
-	_pivot = Vector3(0.0, tall * 0.5, 0.0)
+	_working_dist = _dist_for_window(clampf(tall * 1.15, VIEW_WINDOW_MIN, VIEW_WINDOW_MAX))
 	_yaw = 0.0          # a new beast is always introduced from the front
-	_pitch = 0.26
+	_user_framed = false
+	# Open on the whole creature, however far back that has to be, then fall in to
+	# the working shot. You get to see what you've picked a fight with once —
+	# after that, the climb is the subject and the rest of it is off-screen.
+	_dist = _dist_for_window(tall * 1.35)
+	_establishing = _dist > _working_dist + 0.1
+	_pivot = Vector3(0.0, tall * 0.5, 0.0)
+	_pivot_target = _pivot
+	_pitch = 0.24
 	_apply_orbit()
+
+
+## Ride the camera up the beast as the hunter climbs. Smoothed rather than
+## snapped, because the drift IS the feedback — a cut would just teleport you and
+## you'd learn nothing about how far up you are.
+##
+## Only the AIM is automatic. Distance and angle stay the player's once they've
+## touched them, so following the action can never wrestle the orbit away.
+func _track_climb(delta: float) -> void:
+	_aim_camera(delta, false)
+
+
+## Settle the camera instantly, wherever it was easing to.
+##
+## For the screenshot harness: it drives frames far faster than real time, so a
+## time-based ease can never finish there and every shot would show a camera
+## caught mid-glide. Called twice because the ground framing reads the current
+## distance, so one pass leaves it one step behind.
+func snap_camera() -> void:
+	_aim_camera(0.0, true)
+	_aim_camera(0.0, true)
+
+
+func _aim_camera(delta: float, snap: bool) -> void:
+	if _client == null or _beast == null:
+		return
+	var want := _climb_frame()
+	_pivot_target.y = want.x
+	if not _user_framed:
+		_working_dist = _dist_for_window(want.y)
+	if snap:
+		_pivot = _pivot_target
+		if not _user_framed:
+			_dist = _working_dist
+		_establishing = false
+	else:
+		if _establishing or (not _user_framed and absf(_dist - _working_dist) > 0.02):
+			_dist = lerpf(_dist, _working_dist, 1.0 - exp(-delta * 1.6))
+			if _establishing and absf(_dist - _working_dist) < 0.05:
+				_establishing = false
+		if _pivot.distance_to(_pivot_target) > 0.005 or _establishing:
+			# frame-rate independent ease: the same feel at 30fps and 144
+			_pivot = _pivot.lerp(_pivot_target, 1.0 - exp(-delta * 3.2))
+	if not _user_framed:
+		# Tilted up at the base, flattening out as you gain height — and only ever
+		# flattening. A camera that tips DOWN at the top looks at a Titan's scalp,
+		# which reads as a floor; near-level keeps the silhouette against the sky,
+		# and a silhouette is what makes something look big.
+		var t := clampf(_pivot.y / maxf(_beast_box.size.y * 0.55, 1.0), 0.0, 1.0)
+		_pitch = lerpf(ORBIT_PITCH_MIN, 0.10, t)
+	_apply_orbit()
+
+
+## Camera distance that makes `window` world-units of height fill the frame.
+## Derived from the lens rather than hand-tuned, so changing fov can't silently
+## break the framing.
+## Camera distance that makes `window` world-units of height fill the frame.
+##
+## Measured from the beast's FRONT, not its centre. The orbit is anchored at the
+## body's axis, but the hunters cling to its near face — on a Titan that's 5 units
+## nearer the camera, so standing off by the window alone put the lens practically
+## against them and threw both hunters off opposite edges of the screen.
+func _dist_for_window(window: float) -> float:
+	var lens := maxf(window, 1.0) / (2.0 * tan(deg_to_rad(_cam.fov) * 0.5))
+	return lens + maxf(_beast_box.end.z * 0.85, 0.0)
+
+
+## What the camera should be looking at, and how much world to fit around it:
+## returns (focus height, window height).
+##
+## Two different shots, because the fight has two different subjects.
+##
+## On the ground the subject is the BEAST: aim low, near your hunters' own eye
+## level, and let the body rear up out of the top of the frame. (Aiming at its
+## middle instead is what made it look like a pet.)
+##
+## Once anyone is climbing, the subject is the HUNTERS: frame the pair, biased
+## toward the one you're playing but never dropping the other. Aiming at the
+## active hunter alone put a Titan's blank scalp on screen and lost the ally off
+## the edge — and "where is my partner" is the question this game is about.
+func _climb_frame() -> Vector2:
+	var tall := maxf(_beast_box.size.y, 1.0)
+	var eye := HUNTER_HEIGHT * 0.6
+	var ys: Array[float] = []
+	for h in _hunters:
+		ys.append(float((h["home"] as Vector3).y) + eye)
+	if ys.is_empty():
+		return Vector2(tall * 0.5, clampf(tall * 1.15, VIEW_WINDOW_MIN, VIEW_WINDOW_MAX))
+	var lo: float = ys.min()
+	var hi: float = ys.max()
+	if hi < eye + 0.05:  # nobody has left the ground — the looming shot
+		var window := clampf(tall * 1.15, VIEW_WINDOW_MIN, VIEW_WINDOW_MAX)
+		return Vector2(minf(tall * 0.5, eye + _dist * 0.03), window)
+	var active: float = ys[_me()] if _me() < ys.size() else hi
+	# Look a little way up the road — from where YOU are, not from wherever the
+	# party's highest climber got to. Framing purely on hunters put the sigil just
+	# off the top of the screen for the whole ascent, so you climb toward a target
+	# you can't see. Headroom is capped, so from partway up a Titan the weak point
+	# is still over the horizon of the frame (honest, and part of why it feels
+	# tall), but it slides into view as you close on it.
+	#
+	# Strictly after the ground test: applied before it, a hunter standing at the
+	# feet already "sees" 3 units of headroom, the ground branch never fires, and
+	# the looming shot this whole change exists for is silently lost.
+	if _sigil != null and _sigil.visible:
+		hi = maxf(hi, minf(_sigil.position.y, active + 3.0))
+	# Enough air around the pair to read the body they're clinging to, then aim so
+	# the HIGHER hunter lands around 42% down the frame rather than centred. The
+	# top ~200px belong to the grip bar and the coach, and the higher hunter is
+	# usually the one at the sigil — centre the pair and the payoff of the whole
+	# climb sits behind a HUD panel. Framing off the top hunter also means the
+	# lower one is always below them, so both stay on screen by construction.
+	# The offset is bigger than "half the frame" arithmetic suggests, and measured
+	# rather than derived: hunters cling to the FRONT of the body, much nearer the
+	# camera than the pivot plane, so parallax throws them further from centre than
+	# their world height alone predicts. tools/screenshot.gd prints where they
+	# actually land — tune this against that, not against algebra.
+	var window := clampf((hi - lo) * 1.5 + 4.0, VIEW_WINDOW_MIN, VIEW_WINDOW_MAX)
+	# When a carry is going well the pair can be most of a Titan apart — further
+	# than any window that still feels big. Something has to fall off the edge, and
+	# it is never the hunter whose cards you are holding. This clamp pins the
+	# active hunter inside the middle 60% of frame; the ally can drift off, which
+	# is itself the read that they are a very long way below you. The party panel
+	# still has their HP and Height.
+	return Vector2(clampf(hi - window * 0.19,
+		active - window * 0.30, active + window * 0.30), window)
 
 
 ## Spherical position around the beast. Everything else (shake, the strike flash)
@@ -377,6 +543,14 @@ func _apply_orbit() -> void:
 	_pitch = clampf(_pitch, ORBIT_PITCH_MIN, ORBIT_PITCH_MAX)
 	var flat := cos(_pitch) * _dist
 	_cam_home = _pivot + Vector3(sin(_yaw) * flat, sin(_pitch) * _dist, cos(_yaw) * flat)
+	# how far up the body the shot has ridden — both lens shifts key off it
+	var climbed := clampf(_pivot.y / maxf(_beast_box.size.y * 0.5, 1.0), 0.0, 1.0)
+	var lift := _dist * lerpf(GROUND_LIFT, 0.0, climbed)
+	# Never dip under the floor. Aiming low at the foot of something 13 units tall
+	# drives the camera below y=0, and then you're looking up THROUGH the ground.
+	# The lens shift is added in because Godot applies it after this, moving the
+	# camera down by exactly that much.
+	_cam_home.y = maxf(_cam_home.y, CAMERA_FLOOR + lift)
 	_cam.position = _cam_home
 	_cam.look_at(_pivot, Vector3.UP)
 	# The hand rail owns the left edge, so the screen's centre is not the SCENE's
@@ -384,7 +558,16 @@ func _apply_orbit() -> void:
 	# the beast sits in the middle of the space it actually has. It scales with
 	# distance because that's what a fixed fraction of the frame costs in world
 	# units — zoom in and the shift shrinks with it.
-	_cam.h_offset = -SCENE_SHIFT * _dist
+	# It earns its keep in the wide ground shot, where the beast is broad and the
+	# rail would crowd it. Up on the body it mostly pushes the right-hand climber
+	# toward the party panel, so it eases off as you climb.
+	_cam.h_offset = -lerpf(SCENE_SHIFT, SCENE_SHIFT * 0.3, climbed) * _dist
+	# Lens shift DOWN while you're at the beast's feet, which lifts everything in
+	# frame — the hunters stop hugging the bottom edge without the camera having to
+	# tilt down and lose the looming angle. Moving the pivot can't do this: it
+	# carries the camera with it, so the ground stays exactly where it was. Fades
+	# out as you climb, where the hunter should simply be centred.
+	_cam.v_offset = -lift
 
 
 ## Drag anywhere the HUD didn't already claim. Cards and buttons are Controls, so
@@ -397,16 +580,27 @@ func _unhandled_input(event: InputEvent) -> void:
 			MOUSE_BUTTON_LEFT:
 				_dragging = mb.pressed
 			MOUSE_BUTTON_WHEEL_UP:
+				_take_manual_control()
 				_dist = maxf(_dist * (1.0 - ZOOM_STEP), 4.0)
 				_apply_orbit()
 			MOUSE_BUTTON_WHEEL_DOWN:
-				_dist = minf(_dist * (1.0 + ZOOM_STEP), 34.0)
+				_take_manual_control()
+				_dist = minf(_dist * (1.0 + ZOOM_STEP), 60.0)
 				_apply_orbit()
 	elif event is InputEventMouseMotion and _dragging:
 		var mm: InputEventMouseMotion = event
+		_take_manual_control()
 		_yaw -= mm.relative.x * ORBIT_SENSITIVITY
 		_pitch += mm.relative.y * ORBIT_SENSITIVITY
 		_apply_orbit()
+
+
+## The moment the player touches the camera it stops second-guessing them: no more
+## auto-pitch, and the opening pull-in gives up rather than dragging them back.
+## Following the climb keeps working — that's help, not interference.
+func _take_manual_control() -> void:
+	_user_framed = true
+	_establishing = false
 
 
 ## The beast's data id picks its model. The old guess read the portrait PATH,
@@ -467,18 +661,28 @@ func _place_hunters(s: Dictionary) -> void:
 		var side: float = -1.0 if i == 0 else 1.0
 		var pos: Vector3
 		if t <= 0.01:
-			# flanking it on the ground, tucked closer to the body than they used
-			# to be: the party panel and turn buttons now own the bottom-right
-			# corner, and a hunter parked wide on that side vanishes behind them
-			pos = Vector3(side * (_beast_box.size.x * 0.5 + 0.9), 0.0,
-				_beast_box.end.z * 0.55)
+			# At the feet, close in. Flanking scales with the body, and the bodies
+			# are colossal now — a hunter parked half a Titan's width out lands
+			# under the hand rail on one side or the party panel on the other.
+			# Standing right at the foot also reads better: you're about to climb
+			# this thing, not square up to it.
+			pos = Vector3(side * (_beast_box.size.x * 0.22 + 0.6), 0.0,
+				_beast_box.end.z * 0.9)
 		elif t >= 0.92:
-			# at the weak point — stand ON the sigil, the thing the climb was for
-			pos = _sigil.position + Vector3(side * 0.42, -0.12, 0.15)
+			# at the weak point — stand ON the sigil, the thing the climb was for.
+			# Scaled off the body: a fixed nudge that cleared a 2-unit-deep bear
+			# leaves a hunter buried inside a 12-unit-deep Titan.
+			pos = _sigil.position + Vector3(side * (_beast_box.size.x * 0.10 + 0.3),
+				-0.12, _beast_box.size.z * 0.06)
 		else:
 			var y := _beast_box.position.y + _beast_box.size.y * lerpf(0.18, 0.80, t)
-			var x := side * (_beast_box.size.x * 0.30)
-			pos = Vector3(x, y, _beast_box.get_center().z + _beast_box.size.z * 0.38)
+			# closer to the spine than they used to be — a third of a Titan's width
+			# out puts the right-hand climber behind the party panel, and hugging
+			# the body reads more like climbing than like hanging off the edges
+			var x := side * (_beast_box.size.x * 0.20)
+			# out on the FRONT of the body, not a quarter of the way into it —
+			# otherwise the hunter is behind the mesh and simply isn't there
+			pos = Vector3(x, y, _beast_box.end.z * 0.82)
 		var h: Dictionary = _hunters[i]
 		var node: Node3D = h["node"]
 		var moved: bool = (h["home"] as Vector3).distance_to(pos) > 0.05
@@ -540,9 +744,11 @@ func _place_sigil(s: Dictionary) -> void:
 	_sigil.visible = on
 	if not on:
 		return
+	# On the FRONT of the body. A quarter-depth offset put it inside the mesh —
+	# survivable when a beast was 2 units deep, invisible now one is 12.
 	_sigil.position = Vector3(_beast_box.get_center().x,
 		_beast_box.position.y + _beast_box.size.y * 0.88,
-		_beast_box.get_center().z + _beast_box.size.z * 0.25)
+		_beast_box.end.z * 0.86)
 
 
 # --- reactions (the same snapshot deltas the 2D view uses) ----------------

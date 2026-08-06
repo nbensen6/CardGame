@@ -113,16 +113,40 @@ Titans pay a **relic**, treasure nodes pay a relic outright. Cards come from the
 acting hunter's own pool (`characters.json` → `reward_pool`) so each class drafts
 its own archetypes. Rewards can be **skipped** (`Run.skip_reward`).
 
-## Combat framing & layout — `game/views/combat_3d.gd` + `.tscn`
-The fight is framed like a Pokémon battle: the scene owns the middle, the HUD
-holds the edges. Knobs, in the order you'd reach for them:
-- **`_frame_beast()`** — `_dist = tall * 1.8 + 2.8` (clamped 8–19) is how close
-  the camera sits; `_pivot = tall * 0.5` is what it aims at. Both scale off the
-  beast's MEASURED height, so a Crag Pup and a Titan frame themselves.
-- **`SCENE_SHIFT`** (`0.09`) — sideways truck per unit of camera distance, pushing
-  the beast right so it centres in the space left of the hand rail. Raise it and
-  the beast centres more perfectly but a ground hunter slides behind the party
-  panel; that trade is the whole reason it isn't higher.
+## Beast scale & camera — `game/views/combat_3d.gd`
+**The single most important thing here: scale and framing are ONE knob, not two.**
+Making a beast bigger while the camera fits the whole body in frame changes
+nothing at all — the camera just backs off and the picture is identical. Fitting
+is normalising. If a beast doesn't feel big, look at the framing first.
+- **`BEAST_BASE_HEIGHT`** (`4.0`) + **`BEAST_HEIGHT_PER_CLIMB`** (`1.2`) — world
+  height = base + per-climb × weak-point Height. A Titan is ~13.6 units against a
+  0.8-unit hunter (~17×). Raise per-climb to widen the gap between a quick fight
+  and an act boss.
+- **`VIEW_WINDOW_MIN/MAX`** (`5.5` / `11.0`) — how much vertical world the camera
+  frames. **This is what makes size legible.** A beast shorter than the window
+  fits with air; a taller one overflows and you only ever see the stretch you're
+  climbing. Lower MAX = everything feels bigger and you see less of it.
+- **`_climb_frame()`** — returns (what to look at, how much to fit). Two shots:
+  the *looming* one when both hunters are down (aim near their eye level, body
+  rears out of frame) and the *pair* one once anyone climbs (frame both, biased to
+  the hunter you control, with capped look-ahead toward the sigil).
+- **`GROUND_LIFT`** (`0.07`) — downward lens shift at the feet so tiny hunters
+  aren't pressed into the bottom edge. Note moving the pivot CANNOT do this: it
+  carries the camera with it and the ground stays put.
+- **`CAMERA_FLOOR`** (`0.8`) — aiming low at something 13 units tall drives the
+  camera underground; this stops it looking up through the floor.
+- **`SCENE_SHIFT`** (`0.09`) — sideways truck per unit of distance, pushing the
+  beast right so it centres in the space left of the hand rail. Eases off as you
+  climb, where it would otherwise shove the right-hand climber behind the party
+  panel.
+
+**Verify framing with numbers, not eyes.** `tools/screenshot.gd` prints `CAM …`
+and `VIS OK/FAIL` lines giving the pixel position of every hunter and the sigil,
+and whether it clears the HUD. Squinting at a 1280x720 render will tell you a
+hunter is fine when it is 40px behind the coach panel. Tune against the print.
+
+## Combat layout — `game/views/combat_3d.tscn`
+Framed like a Pokémon battle: the scene owns the middle, the HUD holds the edges.
 - **`CardView.RAIL_HEIGHT`** (`76`) — height of a card in the left rail. The rail
   itself is 288px wide, set in `combat_3d.tscn` (`LeftRail`).
 - Layout offsets live in `combat_3d.tscn`. The design resolution is 1280x720 with
