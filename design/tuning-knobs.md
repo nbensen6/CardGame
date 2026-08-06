@@ -67,9 +67,9 @@ Per relic: `effect` + `value` + `text`; `pool` lists what can be offered. 26 tod
 
 ## Grip — real-time SotC climb (ledges + live timer)
 Climbing between safe holds is a **real-time race**. The timer lives on the CLIENT
-(`views/combat_view.gd`); the deterministic core only knows what's safe and how to
+(`views/combat_3d.gd`); the deterministic core only knows what's safe and how to
 drop a hunter.
-- **`GRIP_SECONDS`** (`views/combat_view.gd`, default `5.0`) — how long you can
+- **`GRIP_SECONDS`** (`views/combat_3d.gd`, default `5.0`) — how long you can
   cling between holds before the timer empties. THE main feel knob; tune first.
 - **`Combat.FALL_DAMAGE`** (`core/combat.gd`, `3`) — the knock on a fall. A fall
   resets Height to 0 and *can* be lethal (checked for a loss).
@@ -115,7 +115,9 @@ its own archetypes. Rewards can be **skipped** (`Run.skip_reward`).
 
 ## Colours / theme — `game/ui/theme.tres`
 Palette, panel/button styles, progress-bar colour. HP-bar danger thresholds and
-intent colours are in `game/views/combat_view.gd` (`_bar_fill`, `_intent_color`).
+The fight's own colours (grip-bar drain, the red border on the targeted hunter,
+hunter marker tints) are inline `Color(...)` literals in `game/views/combat_3d.gd`
+— `_update_grip_bar`, `_party_card`, `_hunter_pip`.
 
 ## Difficulty targets (what "balanced" means here)
 Hit these and the design pillar is holding — see `design/balance-notes.md`:

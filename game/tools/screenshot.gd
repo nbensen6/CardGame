@@ -5,7 +5,10 @@
 ##
 ##   Godot_v4.7.1-stable_win64_console.exe --path game --script res://tools/screenshot.gd -- out=C:/path/shot.png state=combat
 ##
-## states: select (character pick) | combat (solo fight, frog+goblin)
+## states: menu | goblin (fight with the wordiest deck as the active hunter) |
+##   3dselect 3dmap 3d 3dclimb 3dstrike 3dgrip 3dsel 3dreward 3devent 3dcampfire
+##   3dshop 3dwon | 3dgame 3dloop (the router itself, walking a whole lap)
+## modifiers: hold= (stop a driven sequence at a phase) beast= act= orbit=
 extends SceneTree
 
 var _out := "shot.png"
@@ -44,10 +47,10 @@ func _initialize() -> void:
 	if _state == "goblin":  # goblin as the ACTIVE hunter (slot 0) — wordiest cards
 		Session.client.select_character("goblin_mech", 0)
 		Session.client.select_character("frog", 1)
-	elif _state not in ["select", "3dselect"]:
+	elif _state != "3dselect":
 		Session.client.select_character("frog", 0)
 		Session.client.select_character("goblin_mech", 1)
-	if _state in ["combat", "goblin", "juice", "climbing", "3d", "3dclimb",
+	if _state in ["goblin", "3d", "3dclimb",
 			"3dstrike", "3dgame", "3dgrip", "3dsel", "3dreward", "3dwon"]:  # 3dloop deliberately starts ON the map  # step off the map into a fight
 		var r: Run = Session.host._run
 		var g := 0
@@ -68,30 +71,11 @@ func _initialize() -> void:
 		c4.node_type = "rest"
 		c4._begin_campfire()
 		Session.host._broadcast_state()
-	if _state == "shop":  # stock a trader so the screen can be checked
-		var rs: Run = Session.host._run
-		rs.gold = 260
-		rs.map_row = 0
-		rs.node_type = "shop"
-		rs._begin_shop()
-		Session.host._broadcast_state()
-	if _state == "campfire":  # open a campfire so deck transformation is checkable
-		var rc: Run = Session.host._run
-		rc.map_row = 0
-		rc.node_type = "rest"
-		rc._begin_campfire()
-		Session.host._broadcast_state()
 	if _state == "3devent":  # the same forced event, shown by the 3D client
 		var r3: Run = Session.host._run
 		r3.map_row = 0
 		r3.node_type = "event"
 		r3._begin_event()
-		Session.host._broadcast_state()
-	if _state == "event":  # force an event node so the screen can be checked
-		var re: Run = Session.host._run
-		re.map_row = 0
-		re.node_type = "event"
-		re._begin_event()
 		Session.host._broadcast_state()
 	if _state == "3dmap":  # a couple of rows in, so the walked route is visible
 		var rm: Run = Session.host._run
@@ -122,16 +106,6 @@ func _initialize() -> void:
 					_:
 						break
 		print("MAP at row %d, phase %s" % [rm.map_row, rm.phase])
-		Session.host._broadcast_state()
-	if _state == "route":  # one node in, so the map shows where we stand
-		var rr: Run = Session.host._run
-		rr.pick_node(int(rr.available_nodes()[0]))
-		rr.combat.boss.hp = 0
-		rr.combat.phase = Combat.Phase.OVER
-		rr.sync()
-		while rr.phase == Run.Phase.REWARD:
-			for slot in range(rr.player_count()):
-				rr.pick_reward(slot, 0)
 		Session.host._broadcast_state()
 	if _state == "3dstrike":  # mid-ascent AND mid-hit, to check the 3D juice
 		var cs: Combat = Session.host._run.combat
@@ -189,20 +163,13 @@ func _initialize() -> void:
 		c3.players[0].foothold = c3.boss.weak_point_height
 		c3.players[1].foothold = maxi(c3.boss.weak_point_height - 1, 1)
 		Session.host._broadcast_state()
-	if _state == "climbing":  # mid-ascent, so marker placement can be checked
-		var c: Combat = Session.host._run.combat
-		c.players[0].foothold = c.boss.weak_point_height      # at the sigil
-		c.players[1].foothold = maxi(c.boss.weak_point_height - 1, 1)  # clinging below
-		Session.host._broadcast_state()
-	# 3D clients: the overworld for 3dmap, the combat scene for the rest
-	var scene := "res://views/combat_view.tscn"
+	# the router for anything it stages, the overworld for 3dmap, else the fight
+	var scene := "res://views/combat_3d.tscn"
 	if _state in ["3dgame", "3dloop", "3dreward", "3dwon", "3devent",
 			"3dcampfire", "3dshop", "3dselect"]:
 		scene = "res://views/game_3d.tscn"
 	elif _state == "3dmap":
 		scene = "res://views/overworld_3d.tscn"
-	elif _state.begins_with("3d"):
-		scene = "res://views/combat_3d.tscn"
 	change_scene_to_file(scene)
 	_capture()
 
@@ -320,15 +287,6 @@ func _capture() -> void:
 		var after := int(Session.host._run.combat.players[0].foothold)
 		print("GRIP %s: foothold %d -> %d after the timer emptied" % [
 			"OK" if after < before else "FAIL", before, after])
-	if _state == "juice":  # fire the strike effect and catch it mid-tween
-		var view := current_scene
-		if view != null and view.has_method("_juice_strike"):
-			view.call("_juice_strike")
-			view.call("_juice_shake")
-			view.call("_spawn_emote", 0, load("res://assets/fx/emote_star.png"))
-			view.call("_spawn_emote", 1, load("res://assets/fx/emote_swirl.png"))
-		for _i in 6:
-			await process_frame
 	await RenderingServer.frame_post_draw
 	var img := root.get_viewport().get_texture().get_image()
 	img.save_png(_out)

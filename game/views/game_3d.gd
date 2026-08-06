@@ -8,12 +8,10 @@
 ##   reward -> views/location_3d.tscn    (standing over what you just felled)
 ##   select, event, campfire, shop, won, lost -> the same scene
 ##
-## Nothing falls through to the 2D client any more. FALLBACK_2D stays only as a
-## safety net for a phase name this table doesn't know about.
-##
-## The fallback is deliberate and temporary: those phases have no 3D staging yet,
-## and a 2D screen for them is far better than blocking the loop on art that
-## doesn't exist. `design/3d-pivot.md` retires the 2D client only at parity.
+## The table is the whole contract: every phase /core can report has a 3D screen,
+## so there is no 2D fallback any more. A phase this table doesn't know is a bug
+## in one of the two, not a case to paper over — it holds the current screen and
+## shouts, rather than swapping to something arbitrary mid-run.
 ##
 ## Every child scene already builds itself from the snapshot on `_ready`, so a
 ## swap needs no handover — the router owns nothing but which scene is current.
@@ -30,7 +28,6 @@ const SCENES := {
 	"won": "res://views/location_3d.tscn",
 	"lost": "res://views/location_3d.tscn",
 }
-const FALLBACK_2D := "res://views/combat_view.tscn"
 
 var _client: GameClient
 var _current := ""   # the scene path on screen, so identical phases don't churn
@@ -49,7 +46,10 @@ func _sync() -> void:
 	var phase := String(_client.shared.get("phase", ""))
 	if phase.is_empty():
 		return
-	var want: String = String(SCENES.get(phase, FALLBACK_2D))
+	if not SCENES.has(phase):
+		push_error("game_3d: no 3D client for phase '%s' — staying on %s" % [phase, _current])
+		return
+	var want: String = String(SCENES[phase])
 	if want == _current:
 		return
 	_current = want

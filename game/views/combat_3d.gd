@@ -1,8 +1,9 @@
 ## 3D combat view — the SAME authoritative snapshots, rendered in a 3D scene.
 ##
 ## This is CLAUDE.md §2's layering rule paying off: /core and /session don't know
-## or care that the game became 3D. This is a second client alongside
-## views/combat_view.gd, reading identical `shared`/`private` dicts.
+## or care that the game became 3D. It began as a second client beside the 2D
+## `combat_view.gd`, reading identical `shared`/`private` dicts; that one has
+## since been retired, and this is the only fight screen.
 ##
 ## The climb stops being an abstraction here — Height IS vertical position on the
 ## beast's body, so a hunter at the weak point is literally up at the weak point.

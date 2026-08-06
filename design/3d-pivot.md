@@ -120,12 +120,22 @@ better starting point than the 2D situation ever was.
    lost**.
 
    **The 2D client is now unreachable in normal play.** `game_3d.gd` routes every
-   phase the game reports; `FALLBACK_2D` remains only as a safety net for a phase
-   name the table doesn't know.
+   phase the game reports.
 
-8. **Retire or keep the 2D client?** Keeping both costs double maintenance on every
-   view change. Recommendation: keep `combat_view.gd` until the 3D one has feature
-   parity, then delete it — the tests don't depend on it.
+8. **The 2D client is retired.** Nick's call, once parity was reached and the
+   backup was confirmed on GitHub: `views/combat_view.gd` (~1500 lines), its
+   `.tscn` and its `.uid` are **deleted**. Recover any of it from history — the
+   last commit that has the file is `e9464e1`:
+
+       git show e9464e1:game/views/combat_view.gd
+
+   What went with it: the router's `FALLBACK_2D` (an unknown phase now holds the
+   current screen and calls `push_error`, instead of quietly swapping to a client
+   that can't stage it), and the screenshot harness's 2D-only states — `select`
+   `combat` `juice` `climbing` `route` `event` `campfire` `shop`, each of which
+   already had a `3d…` twin. `menu` and `goblin` survive (`goblin` now boots the
+   3D fight with the wordiest deck in hand, which is what it was ever for).
+   `ui/card_view.gd` stays — the 3D scenes build their hands out of it.
 
 ## Decisions (Nick, 2026-08-05)
 
