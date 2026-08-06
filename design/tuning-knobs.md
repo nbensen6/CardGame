@@ -113,6 +113,23 @@ Titans pay a **relic**, treasure nodes pay a relic outright. Cards come from the
 acting hunter's own pool (`characters.json` → `reward_pool`) so each class drafts
 its own archetypes. Rewards can be **skipped** (`Run.skip_reward`).
 
+## Combat framing & layout — `game/views/combat_3d.gd` + `.tscn`
+The fight is framed like a Pokémon battle: the scene owns the middle, the HUD
+holds the edges. Knobs, in the order you'd reach for them:
+- **`_frame_beast()`** — `_dist = tall * 1.8 + 2.8` (clamped 8–19) is how close
+  the camera sits; `_pivot = tall * 0.5` is what it aims at. Both scale off the
+  beast's MEASURED height, so a Crag Pup and a Titan frame themselves.
+- **`SCENE_SHIFT`** (`0.09`) — sideways truck per unit of camera distance, pushing
+  the beast right so it centres in the space left of the hand rail. Raise it and
+  the beast centres more perfectly but a ground hunter slides behind the party
+  panel; that trade is the whole reason it isn't higher.
+- **`CardView.RAIL_HEIGHT`** (`76`) — height of a card in the left rail. The rail
+  itself is 288px wide, set in `combat_3d.tscn` (`LeftRail`).
+- Layout offsets live in `combat_3d.tscn`. The design resolution is 1280x720 with
+  `stretch/mode=canvas_items`, so those pixel offsets hold their proportions at
+  any window size. **Rule: the middle stays empty** — new HUD goes in a corner, or
+  it covers the thing the player is climbing.
+
 ## Colours / theme — `game/ui/theme.tres`
 Palette, panel/button styles, progress-bar colour. HP-bar danger thresholds and
 The fight's own colours (grip-bar drain, the red border on the targeted hunter,

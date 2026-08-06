@@ -129,7 +129,7 @@ color = Color(0.85, 0.78, 0.62, 1)
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 0.982, 0.191, 0, -0.191, 0.982, 0, 3.9, 12.4)
 fov = 48.0
-v_offset = -0.8
+v_offset = -0.25
 
 [node name="Hud" type="CanvasLayer" parent="."]
 
@@ -147,7 +147,7 @@ mouse_filter = 1
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 16.0
+offset_left = 312.0
 offset_top = 12.0
 offset_right = -16.0
 offset_bottom = 58.0
@@ -187,27 +187,47 @@ theme_override_colors/font_color = Color(0.9, 0.55, 0.45, 1)
 [node name="Party" type="VBoxContainer" parent="Hud/Root"]
 unique_name_in_owner = true
 layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -316.0
+offset_top = -212.0
+offset_right = -16.0
+offset_bottom = -66.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_constants/separation = 6
+
+[node name="LeftRail" type="VBoxContainer" parent="Hud/Root"]
+layout_mode = 1
 anchors_preset = 9
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = 112.0
-offset_right = 268.0
-offset_bottom = -410.0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 300.0
+offset_bottom = -12.0
 grow_vertical = 2
 theme_override_constants/separation = 6
 
-[node name="RunBar" type="PanelContainer" parent="Hud/Root"]
+[node name="HandScroll" type="ScrollContainer" parent="Hud/Root/LeftRail"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Hand" type="VBoxContainer" parent="Hud/Root/LeftRail/HandScroll"]
 unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 9
-anchor_bottom = 0.0
-offset_left = 16.0
-offset_top = 70.0
-offset_right = 268.0
-offset_bottom = 70.0
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="RunBar" type="PanelContainer" parent="Hud/Root/LeftRail"]
+unique_name_in_owner = true
+layout_mode = 2
 theme_override_styles/panel = SubResource("card_panel")
 
-[node name="RunLabel" type="Label" parent="Hud/Root/RunBar"]
+[node name="RunLabel" type="Label" parent="Hud/Root/LeftRail/RunBar"]
 unique_name_in_owner = true
 layout_mode = 2
 text = ""
@@ -221,10 +241,10 @@ visible = false
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 290.0
-offset_top = 70.0
-offset_right = -16.0
-offset_bottom = 128.0
+offset_left = 312.0
+offset_top = 140.0
+offset_right = -348.0
+offset_bottom = 198.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("card_panel")
 
@@ -255,10 +275,10 @@ anchors_preset = 11
 anchor_left = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -300.0
-offset_top = 112.0
+offset_left = -316.0
+offset_top = 68.0
 offset_right = -16.0
-offset_bottom = -410.0
+offset_bottom = -228.0
 grow_horizontal = 0
 grow_vertical = 2
 theme_override_constants/separation = 4
@@ -288,16 +308,13 @@ theme_override_colors/font_color = Color(0.82, 0.78, 0.68, 1)
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
+anchors_preset = 10
 anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 290.0
-offset_top = -396.0
-offset_right = -290.0
-offset_bottom = -330.0
+offset_left = 312.0
+offset_top = 66.0
+offset_right = -348.0
+offset_bottom = 132.0
 grow_horizontal = 2
-grow_vertical = 0
 theme_override_styles/panel = SubResource("grip_panel")
 
 [node name="Box" type="VBoxContainer" parent="Hud/Root/GripBar"]
@@ -327,10 +344,10 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = -322.0
-offset_right = -16.0
-offset_bottom = -294.0
+offset_left = 312.0
+offset_top = -68.0
+offset_right = -348.0
+offset_bottom = -40.0
 grow_horizontal = 2
 grow_vertical = 0
 text = ""
@@ -340,46 +357,31 @@ theme_override_colors/font_color = Color(1, 0.95, 0.82, 1)
 theme_override_colors/font_outline_color = Color(0.08, 0.06, 0.05, 1)
 theme_override_constants/outline_size = 6
 
-[node name="Hand" type="HBoxContainer" parent="Hud/Root"]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = -266.0
-offset_right = -16.0
-offset_bottom = -62.0
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_constants/separation = 10
-alignment = 1
-
 [node name="Controls" type="HBoxContainer" parent="Hud/Root"]
 layout_mode = 1
-anchors_preset = 12
+anchors_preset = 3
+anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = -54.0
+offset_left = -316.0
+offset_top = -56.0
 offset_right = -16.0
-offset_bottom = -12.0
-grow_horizontal = 2
+offset_bottom = -14.0
+grow_horizontal = 0
 grow_vertical = 0
-alignment = 1
-theme_override_constants/separation = 10
+alignment = 2
+theme_override_constants/separation = 8
 
 [node name="EndTurn" type="Button" parent="Hud/Root/Controls"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(180, 40)
+custom_minimum_size = Vector2(140, 40)
 layout_mode = 2
 text = "End Turn"
 
 [node name="SwitchBtn" type="Button" parent="Hud/Root/Controls"]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(200, 40)
+custom_minimum_size = Vector2(150, 40)
 layout_mode = 2
-text = "Switch Hunter"
+text = "Switch"

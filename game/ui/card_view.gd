@@ -11,6 +11,10 @@ signal tapped
 ## A timed card's throw resolved: hit = landed in the green zone.
 signal timing_resolved(hit: bool)
 
+## Rail cards size themselves to the column's width; only the height is fixed, and
+## it's set by the two lines of text plus the timing strip.
+const RAIL_HEIGHT := 76
+
 const ZONE_MIN := 0.40
 const ZONE_MAX := 0.60
 const SWEEP_SPEED := 1.9    # sweeps per second — quick; timing should demand focus (Nick)
@@ -27,6 +31,7 @@ var _marker: ColorRect
 var _count_lbl: Label
 var _hits_needed := 1  # sequential timing windows to nail (Satchel Charge = 3)
 var _hits_done := 0
+var _compact := false  # built in the rail form (see setup)
 
 # Kenney "Board Game Icons" (white-fill SVGs → tint via modulate). Keys are the
 # effect roles the host maps cards to (see game_host._card_icon).
@@ -68,9 +73,19 @@ const TINT := {
 }
 
 ## Build the card from a snapshot dict. `playable` greys it out when false.
-func setup(data: Dictionary, playable: bool = true) -> void:
+##
+## `compact` builds the RAIL form: a short, wide row instead of a portrait card.
+## The fight stacks these down the left edge so the 3D scene keeps the screen
+## (Nick, 2026-08-06) — a row of portrait cards ate the bottom third, which is
+## exactly where the beast you're climbing stands. Everywhere the cards ARE the
+## screen (rewards, shop, campfire, character select) keeps the portrait form.
+func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> void:
 	# Character/relic cards (no cost pip) carry portraits + longer text — taller frame.
-	custom_minimum_size = Vector2(176, 264) if bool(data.get("no_cost", false)) else Vector2(164, 224)
+	_compact = compact
+	if compact:
+		custom_minimum_size = Vector2(0, RAIL_HEIGHT)
+	else:
+		custom_minimum_size = Vector2(176, 264) if bool(data.get("no_cost", false)) else Vector2(164, 224)
 	disabled = not playable
 	text = ""
 	if not mouse_entered.is_connected(_on_hover):
@@ -83,23 +98,75 @@ func setup(data: Dictionary, playable: bool = true) -> void:
 	var pad := MarginContainer.new()
 	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	pad.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var margin := 6 if compact else 10
 	for side in ["left", "top", "right", "bottom"]:
-		pad.add_theme_constant_override("margin_" + side, 10)
+		pad.add_theme_constant_override("margin_" + side, margin)
 	add_child(pad)
 
 	var box := VBoxContainer.new()
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_theme_constant_override("separation", 6)
+	box.add_theme_constant_override("separation", 6 if not compact else 3)
 	pad.add_child(box)
 
-	box.add_child(_header(String(data.get("name", "")), int(data.get("cost", 0)), bool(data.get("no_cost", false))))
-	box.add_child(_art(String(data.get("icon", "")), String(data.get("portrait", ""))))
-	box.add_child(_body(String(data.get("text", ""))))
+	if compact:
+		box.add_child(_rail_row(data))
+	else:
+		box.add_child(_header(String(data.get("name", "")), int(data.get("cost", 0)), bool(data.get("no_cost", false))))
+		box.add_child(_art(String(data.get("icon", "")), String(data.get("portrait", ""))))
+		box.add_child(_body(String(data.get("text", ""))))
 
 	_strip = _build_timing_strip()  # hidden until start_timing()
 	box.add_child(_strip)
 	if not pressed.is_connected(_on_self_pressed):
 		pressed.connect(_on_self_pressed)
+
+
+## The rail form: [cost] [icon] [name / rules text], one row. Everything a
+## portrait card says, laid out sideways — nothing is dropped, because a card you
+## can't read is a card you won't play.
+func _rail_row(data: Dictionary) -> Control:
+	var row := HBoxContainer.new()
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override("separation", 8)
+	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+	# Cost reads as a pip, not a word — it's the number you scan first.
+	var cost := _label(str(int(data.get("cost", 0))), 20)
+	cost.custom_minimum_size = Vector2(22, 0)
+	cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cost.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	cost.add_theme_color_override("font_color", Color(0.95, 0.82, 0.5))
+	row.add_child(cost)
+
+	var icon := String(data.get("icon", ""))
+	if ICONS.has(icon):
+		var tex := TextureRect.new()
+		tex.texture = ICONS[icon]
+		tex.modulate = TINT.get(icon, Color(0.85, 0.8, 0.7))
+		tex.custom_minimum_size = Vector2(30, 30)
+		tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tex.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(tex)
+
+	var col := VBoxContainer.new()
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	col.add_theme_constant_override("separation", 1)
+
+	var name_lbl := _label(String(data.get("name", "")), 14)
+	name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	col.add_child(name_lbl)
+
+	var body := _label(String(data.get("text", "")), 11)
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.add_theme_color_override("font_color", Color(0.84, 0.79, 0.68))
+	col.add_child(body)
+
+	row.add_child(col)
+	return row
 
 
 func _header(card_name: String, cost: int, no_cost: bool = false) -> Control:
@@ -345,11 +412,19 @@ func _build_timing_strip() -> Control:
 
 func _on_hover() -> void:
 	# Optional accelerator only — cards remain fully usable by tap (§5).
+	# A rail card slides out of the column instead of scaling: it's already as
+	# wide as the rail, so growing it would just clip on the screen edge.
+	if _compact:
+		position.x = 8.0
+		return
 	pivot_offset = size / 2.0
 	scale = Vector2(1.06, 1.06)
 
 
 func _on_unhover() -> void:
+	if _compact:
+		position.x = 0.0
+		return
 	scale = Vector2.ONE
 
 

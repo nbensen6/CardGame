@@ -281,6 +281,14 @@ overworld, and every between-fights screen. There is no 2D client any more.
   zoom, with markers so you never lose a hunter behind a leg. The weak point
   glows. Everything that moves is procedural — breathing, idle sway, climb hops,
   recoil, flash, dust, camera shake — so it reads as alive at no animation cost.
+- **The fight's screen is the scene** (Nick, 2026-08-06), framed like a Pokémon
+  battle. The hand is a **rail down the left edge** — short wide cards instead of
+  a row of portraits — because a portrait row ate the bottom third of the screen,
+  which is exactly where the beast you're climbing stands. Everything else holds a
+  corner: the beast's health across the top, your party and the turn buttons
+  bottom-right, the log top-right, the grip bar across the top when it matters.
+  The camera trucks sideways (`SCENE_SHIFT`) so the beast centres in the space it
+  actually has rather than on the screen. Nothing overlaps the middle.
 - **Between fights** — one scene (`location_3d`) stages every non-combat phase,
   because they are all the same shape: your hunters standing somewhere, being
   offered a choice. Character select puts the whole roster on the plot at the size

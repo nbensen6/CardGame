@@ -52,6 +52,17 @@ const ORBIT_PITCH_MIN := -0.12   # radians below level — never under the floor
 const ORBIT_PITCH_MAX := 1.05    # nearly overhead, but never gimbal-locked
 const ORBIT_SENSITIVITY := 0.006
 const ZOOM_STEP := 0.12
+## Sideways truck, in world units per unit of camera distance, that pushes the
+## beast right so it centres in the space left of the HUD rather than on the
+## screen. The rail claims ~300 of 1280px, so the free middle is ~11% right of
+## centre; at fov 48 on 16:9 a frame width is ~1.58 * distance, so 0.11 of a frame
+## costs ~0.17 per unit of distance.
+##
+## Held well under that in practice: the rail only claims the LEFT edge, while the
+## party and turn buttons claim the bottom RIGHT, and hunters standing on the
+## ground live down there. Shifting the full amount centres the beast beautifully
+## and posts a hunter behind the party panel, so this splits the difference.
+const SCENE_SHIFT := 0.09
 
 var _client: GameClient
 var _beast: Node3D
@@ -98,7 +109,7 @@ var _log_expanded := false
 @onready var _hp: Label = %HpLabel
 @onready var _hp_bar: ProgressBar = %HpBar
 @onready var _intent: Label = %Intent
-@onready var _hand_row: HBoxContainer = %Hand
+@onready var _hand_row: VBoxContainer = %Hand
 @onready var _status: Label = %StatusLabel
 @onready var _end_btn: Button = %EndTurn
 @onready var _switch_btn: Button = %SwitchBtn
@@ -347,10 +358,13 @@ func _fit_height(node: Node3D, want: float) -> float:
 ## the big ones or strands the small ones in empty sky.
 func _frame_beast() -> void:
 	var tall := maxf(_beast_box.size.y, 1.0)
-	_dist = clampf(tall * 2.15 + 3.2, 9.5, 22.0)
-	# aim at the body's middle: high enough that the beast clears the top HUD,
-	# low enough that hunters standing on the GROUND stay above the card hand
-	_pivot = Vector3(0.0, tall * 0.46, 0.0)
+	# Closer than it used to be: the hand moved to the left rail, which handed the
+	# whole bottom of the screen back to the scene. The old numbers were framing
+	# around a card row that no longer exists.
+	_dist = clampf(tall * 1.8 + 2.8, 8.0, 19.0)
+	# aim at the body's middle — nothing crowds the bottom any more, so this is
+	# the beast's actual centre rather than a dodge around the HUD
+	_pivot = Vector3(0.0, tall * 0.5, 0.0)
 	_yaw = 0.0          # a new beast is always introduced from the front
 	_pitch = 0.26
 	_apply_orbit()
@@ -365,6 +379,12 @@ func _apply_orbit() -> void:
 	_cam_home = _pivot + Vector3(sin(_yaw) * flat, sin(_pitch) * _dist, cos(_yaw) * flat)
 	_cam.position = _cam_home
 	_cam.look_at(_pivot, Vector3.UP)
+	# The hand rail owns the left edge, so the screen's centre is not the SCENE's
+	# centre any more. h_offset trucks the camera sideways without re-aiming it, so
+	# the beast sits in the middle of the space it actually has. It scales with
+	# distance because that's what a fixed fraction of the frame costs in world
+	# units — zoom in and the shift shrinks with it.
+	_cam.h_offset = -SCENE_SHIFT * _dist
 
 
 ## Drag anywhere the HUD didn't already claim. Cards and buttons are Controls, so
@@ -447,10 +467,11 @@ func _place_hunters(s: Dictionary) -> void:
 		var side: float = -1.0 if i == 0 else 1.0
 		var pos: Vector3
 		if t <= 0.01:
-			# flanking it on the ground — out to the sides, not in front, so the
-			# card hand can't swallow them at the bottom of the frame
-			pos = Vector3(side * (_beast_box.size.x * 0.5 + 1.4), 0.0,
-				_beast_box.end.z * 0.4)
+			# flanking it on the ground, tucked closer to the body than they used
+			# to be: the party panel and turn buttons now own the bottom-right
+			# corner, and a hunter parked wide on that side vanishes behind them
+			pos = Vector3(side * (_beast_box.size.x * 0.5 + 0.9), 0.0,
+				_beast_box.end.z * 0.55)
 		elif t >= 0.92:
 			# at the weak point — stand ON the sigil, the thing the climb was for
 			pos = _sigil.position + Vector3(side * 0.42, -0.12, 0.15)
@@ -596,7 +617,7 @@ func _render_hand() -> void:
 		var playable: bool = bool(card["playable"])
 		if selecting:
 			playable = idx != int(_selecting.get("sac", -1))
-		cv.setup(card, playable)
+		cv.setup(card, playable, true)  # rail form — the scene keeps the screen
 		var c_card: Dictionary = card
 		cv.tapped.connect(func() -> void: _on_card_tapped(c_card, cv))
 		cv.timing_resolved.connect(func(hit: bool) -> void:
