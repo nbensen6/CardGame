@@ -211,8 +211,13 @@ offset_bottom = -12.0
 grow_vertical = 2
 theme_override_constants/separation = 6
 
+[node name="HunterHeader" type="PanelContainer" parent="Hud/Root/LeftRail"]
+unique_name_in_owner = true
+layout_mode = 2
+
 [node name="StatusLabel" type="Label" parent="Hud/Root/LeftRail"]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 text = ""
 autowrap_mode = 3
@@ -249,13 +254,16 @@ theme_override_colors/font_color = Color(0.92, 0.86, 0.72, 1)
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = 12
 anchor_right = 1.0
-offset_left = 312.0
-offset_top = 140.0
-offset_right = -348.0
-offset_bottom = 198.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 330.0
+offset_top = -108.0
+offset_right = -366.0
+offset_bottom = -62.0
 grow_horizontal = 2
+grow_vertical = 0
 theme_override_styles/panel = SubResource("card_panel")
 
 [node name="Box" type="HBoxContainer" parent="Hud/Root/Coach"]

@@ -126,10 +126,16 @@ is normalising. If a beast doesn't feel big, look at the framing first.
   frames. **This is what makes size legible.** A beast shorter than the window
   fits with air; a taller one overflows and you only ever see the stretch you're
   climbing. Lower MAX = everything feels bigger and you see less of it.
-- **`_climb_frame()`** — returns (what to look at, how much to fit). Two shots:
-  the *looming* one when both hunters are down (aim near their eye level, body
-  rears out of frame) and the *pair* one once anyone climbs (frame both, biased to
-  the hunter you control, with capped look-ahead toward the sigil).
+- **`_climb_frame()`** — returns (what to look at, how much to fit). Three shots:
+  *face to face* for a beast that fits the window (met whole — cropping a Crag Pup
+  isn't imposing, it just looks broken), *looming* for one too big to hold, and
+  *pair* once anyone climbs (frame both, biased to the hunter you control, with
+  capped look-ahead toward the sigil). The face-to-face/looming threshold is
+  `VIEW_WINDOW_MAX * 0.82`, so towering is something the act Titans do rather than
+  something every fight does.
+- **`_climb_t`** — 0 on the ground, →1 as the active hunter ascends. Drives pitch
+  and both lens shifts. Read off the HUNTERS, never the camera's height: those
+  come apart whenever the shot aims high at a small beast.
 - **`GROUND_LIFT`** (`0.07`) — downward lens shift at the feet so tiny hunters
   aren't pressed into the bottom edge. Note moving the pivot CANNOT do this: it
   carries the camera with it and the ground stays put.

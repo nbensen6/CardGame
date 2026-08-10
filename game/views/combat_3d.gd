@@ -86,6 +86,16 @@ const GROUND_LIFT := 0.07
 ## Lowest the camera may sit, in world units. Below this it is under the ground
 ## plane and the shot looks up through the floor.
 const CAMERA_FLOOR := 0.8
+## How long a coach hint stays up before dismissing itself. Long enough to read
+## twice, short enough that it never becomes a thing you have to click away
+## (Nick, 2026-08-06: the tips are annoying). Acting also dismisses it — if you
+## already know what to do, the lesson has served its purpose.
+const COACH_SECONDS := 7.0
+## The two hunters are told apart by COLOUR, everywhere it matters: the pip
+## floating over their model in the scene, the frame around the portrait in the
+## rail, their party card. One source so those can never drift apart — the whole
+## point is that the green frame and the green pip are obviously the same hunter.
+const SLOT_TINT := [Color(0.45, 0.95, 0.5), Color(0.55, 0.82, 1.0)]
 
 var _client: GameClient
 var _beast: Node3D
@@ -109,6 +119,11 @@ var _pivot_target := Vector3(0, 2.0, 0)  # where the camera is drifting its aim 
 var _user_framed := false   # the player has dragged/zoomed — stop auto-pitching
 var _establishing := false  # easing from the opening wide shot into the working one
 var _working_dist := 12.0   # the shot the establishing pull-in settles at
+## 0 while everyone is on the ground, ->1 as the hunter you're playing ascends.
+## Derived from the HUNTERS, never from the camera's own height: the two come
+## apart whenever the shot aims high at a small beast, and reading it off the
+## pivot silently switched the ground lens shift off in exactly that case.
+var _climb_t := 0.0
 var _beast_punch := 0.0           # recoil when the beast is struck
 var _time := 0.0
 # snapshot deltas drive the juice, exactly like the 2D view
@@ -124,6 +139,7 @@ var _climb: Dictionary = {}
 # Empty = idle. Without this, those cards simply can't be played.
 var _selecting: Dictionary = {}
 var _coach_id := ""   # the onboarding hint currently on screen
+var _coach_left := 0.0  # seconds before it dismisses itself
 var _log_expanded := false
 
 @onready var _rig: Node3D = %BeastRig
@@ -138,6 +154,7 @@ var _log_expanded := false
 @onready var _intent: Label = %Intent
 @onready var _hand_row: VBoxContainer = %Hand
 @onready var _status: Label = %StatusLabel
+@onready var _hunter_header: PanelContainer = %HunterHeader
 @onready var _end_btn: Button = %EndTurn
 @onready var _switch_btn: Button = %SwitchBtn
 @onready var _grip_bar: PanelContainer = %GripBar
@@ -161,6 +178,7 @@ func _ready() -> void:
 	_client.state_updated.connect(func(_s: Dictionary, _p: Dictionary) -> void: _refresh())
 	_end_btn.pressed.connect(func() -> void:
 		Sfx.play("end_turn")
+		_dismiss_coach()
 		_client.end_turn(_cmd_slot())
 		if _is_solo():
 			_active_slot = 1 - _active_slot
@@ -171,11 +189,7 @@ func _ready() -> void:
 	_log_toggle.pressed.connect(func() -> void:
 		_log_expanded = not _log_expanded
 		_refresh())
-	_coach_ok.pressed.connect(func() -> void:
-		if _coach_id != "":
-			Progress.mark_hint_seen(_coach_id)   # taught once, never again
-			_coach_id = ""
-		_coach.visible = false)
+	_coach_ok.pressed.connect(_dismiss_coach)
 	if not _client.shared.is_empty():
 		_refresh()
 
@@ -219,6 +233,13 @@ func _process(delta: float) -> void:
 	if _sigil != null and _sigil.visible:
 		_sigil.scale = Vector3.ONE * (1.0 + sin(_time * 3.0) * 0.14)
 	_track_climb(delta)
+	if _coach_left > 0.0:
+		_coach_left -= delta
+		# fade the last second, so it leaves rather than blinking out
+		_coach.modulate.a = clampf(_coach_left, 0.0, 1.0)
+		if _coach_left <= 0.0:
+			_dismiss_coach()
+			_coach.modulate.a = 1.0
 	if _shake > 0.001:
 		_shake = maxf(0.0, _shake - delta * 2.6)
 		var amp := _shake * 0.42
@@ -456,8 +477,7 @@ func _aim_camera(delta: float, snap: bool) -> void:
 		# flattening. A camera that tips DOWN at the top looks at a Titan's scalp,
 		# which reads as a floor; near-level keeps the silhouette against the sky,
 		# and a silhouette is what makes something look big.
-		var t := clampf(_pivot.y / maxf(_beast_box.size.y * 0.55, 1.0), 0.0, 1.0)
-		_pitch = lerpf(ORBIT_PITCH_MIN, 0.10, t)
+		_pitch = lerpf(ORBIT_PITCH_MIN, 0.10, _climb_t)
 	_apply_orbit()
 
 
@@ -498,10 +518,18 @@ func _climb_frame() -> Vector2:
 		return Vector2(tall * 0.5, clampf(tall * 1.15, VIEW_WINDOW_MIN, VIEW_WINDOW_MAX))
 	var lo: float = ys.min()
 	var hi: float = ys.max()
-	if hi < eye + 0.05:  # nobody has left the ground — the looming shot
+	if hi < eye + 0.05:  # nobody has left the ground
+		_climb_t = 0.0
 		var window := clampf(tall * 1.15, VIEW_WINDOW_MIN, VIEW_WINDOW_MAX)
+		# A beast small enough to fit the window is met face to face — cropping a
+		# Crag Pup's head isn't imposing, it just looks like a mistake. Only the
+		# ones too big to hold get the looming shot, which makes towering a thing
+		# the act Titans do rather than something every fight does.
+		if tall <= VIEW_WINDOW_MAX * 0.82:
+			return Vector2(tall * 0.52, window)
 		return Vector2(minf(tall * 0.5, eye + _dist * 0.03), window)
 	var active: float = ys[_me()] if _me() < ys.size() else hi
+	_climb_t = clampf(active / maxf(tall * 0.55, 1.0), 0.0, 1.0)
 	# Look a little way up the road — from where YOU are, not from wherever the
 	# party's highest climber got to. Framing purely on hunters put the sigil just
 	# off the top of the screen for the whole ascent, so you climb toward a target
@@ -543,9 +571,7 @@ func _apply_orbit() -> void:
 	_pitch = clampf(_pitch, ORBIT_PITCH_MIN, ORBIT_PITCH_MAX)
 	var flat := cos(_pitch) * _dist
 	_cam_home = _pivot + Vector3(sin(_yaw) * flat, sin(_pitch) * _dist, cos(_yaw) * flat)
-	# how far up the body the shot has ridden — both lens shifts key off it
-	var climbed := clampf(_pivot.y / maxf(_beast_box.size.y * 0.5, 1.0), 0.0, 1.0)
-	var lift := _dist * lerpf(GROUND_LIFT, 0.0, climbed)
+	var lift := _dist * lerpf(GROUND_LIFT, 0.0, _climb_t)
 	# Never dip under the floor. Aiming low at the foot of something 13 units tall
 	# drives the camera below y=0, and then you're looking up THROUGH the ground.
 	# The lens shift is added in because Godot applies it after this, moving the
@@ -561,7 +587,7 @@ func _apply_orbit() -> void:
 	# It earns its keep in the wide ground shot, where the beast is broad and the
 	# rail would crowd it. Up on the body it mostly pushes the right-hand climber
 	# toward the party panel, so it eases off as you climb.
-	_cam.h_offset = -lerpf(SCENE_SHIFT, SCENE_SHIFT * 0.3, climbed) * _dist
+	_cam.h_offset = -lerpf(SCENE_SHIFT, SCENE_SHIFT * 0.3, _climb_t) * _dist
 	# Lens shift DOWN while you're at the beast's feet, which lifts everything in
 	# frame — the hunters stop hugging the bottom edge without the camera having to
 	# tilt down and lose the looming angle. Moving the pivot can't do this: it
@@ -725,7 +751,7 @@ func _hunter_pip(slot: int) -> Node3D:
 	cone.radial_segments = 8
 	pip.mesh = cone
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.45, 0.95, 0.5) if slot == 0 else Color(0.55, 0.82, 1.0)
+	mat.albedo_color = _slot_color(slot)
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.no_depth_test = true
 	mat.render_priority = 2
@@ -833,23 +859,21 @@ func _render_hand() -> void:
 	var me: Dictionary = players[_me()] if _me() < players.size() else {}
 	if selecting:
 		_status.text = _selection_prompt()
-		_switch_btn.visible = _is_solo()
+		_status.visible = true   # a transient instruction, not an identity
+		_render_hunter_header(me)
+		_show_switch_target(players)
 		_end_btn.disabled = bool(priv.get("ended", false))
 		return
-	var climb := ""
-	if bool(me.get("reached", false)):
-		climb = "   ✦ at the weak point"
-	elif not bool(me.get("secure", true)):
-		climb = "   ⚠ climbing"
-	_status.text = "%s   ✦%d   HP %d%s" % [String(me.get("name", "")),
-		int(me.get("energy", 0)), int(me.get("hp", 0)), climb]
-	_switch_btn.visible = _is_solo()
+	_status.visible = false
+	_render_hunter_header(me)
+	_show_switch_target(players)
 	_end_btn.disabled = bool(priv.get("ended", false))
 
 
 # --- playing a card, including the multi-pick cards -----------------------
 
 func _on_card_tapped(card: Dictionary, cv: CardView) -> void:
+	_dismiss_coach()   # you're playing; you don't need to be told to play
 	var index := int(card["index"])
 	if not _selecting.is_empty():  # this tap is a pick for the active card
 		_pick_for_selection(index)
@@ -942,6 +966,103 @@ func _render_party(s: Dictionary, boss_target: int, move_type: String) -> void:
 	_run_label.text = "  •  ".join(bits)
 
 
+## Solo only: the Switch button wears the face of the hunter you'd switch TO, so
+## the swap is a picture rather than a word. Knowing who you're holding and who
+## you'd get should both be glanceable.
+func _show_switch_target(players: Array) -> void:
+	_switch_btn.visible = _is_solo()
+	if not _is_solo():
+		return
+	var other := 1 - _me()
+	if other >= players.size():
+		return
+	var path := String((players[other] as Dictionary).get("portrait", ""))
+	if path != "" and ResourceLoader.exists(path):
+		_switch_btn.icon = load(path)
+		_switch_btn.expand_icon = true
+	_switch_btn.text = "Switch"
+	_switch_btn.add_theme_color_override("font_color", _slot_color(other))
+
+
+func _slot_color(slot: int) -> Color:
+	return SLOT_TINT[slot % SLOT_TINT.size()]
+
+
+## Who am I playing right now? A PORTRAIT, not a sentence (Nick, 2026-08-06).
+##
+## In solo you drive both hunters and switch between them mid-turn, so this has
+## to be answerable without reading — the face, framed in the same colour as the
+## pip floating over that hunter's model out in the scene. The name was spelled
+## out in text before and it simply didn't register while you were busy.
+##
+## Numbers stay as symbols: ✦ energy, ♥ health, ↑ Height.
+func _render_hunter_header(p: Dictionary) -> void:
+	for c in _hunter_header.get_children():
+		c.queue_free()
+	if p.is_empty():
+		return
+	var slot := _me()
+	var tint := _slot_color(slot)
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.13, 0.1, 0.08, 0.85)
+	style.set_border_width_all(2)
+	style.border_color = tint
+	style.set_corner_radius_all(5)
+	style.content_margin_left = 8.0
+	style.content_margin_right = 8.0
+	style.content_margin_top = 5.0
+	style.content_margin_bottom = 5.0
+	_hunter_header.add_theme_stylebox_override("panel", style)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 9)
+	_hunter_header.add_child(row)
+	row.add_child(_portrait_of(p, 46, tint))
+
+	var col := VBoxContainer.new()
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	col.add_theme_constant_override("separation", 1)
+	var pips := Label.new()
+	pips.text = "✦%d    ♥%d    ↑%d" % [int(p.get("energy", 0)), int(p.get("hp", 0)),
+		int(p.get("foothold", 0))]
+	pips.add_theme_font_size_override("font_size", 16)
+	pips.add_theme_color_override("font_color", Color(1, 0.95, 0.82))
+	col.add_child(pips)
+	# the one bit of state urgent enough to spell out
+	var state := ""
+	if bool(p.get("reached", false)):
+		state = "✦ at the sigil"
+	elif not bool(p.get("secure", true)):
+		state = "⚠ hanging"
+	if state != "":
+		var st := Label.new()
+		st.text = state
+		st.add_theme_font_size_override("font_size", 12)
+		st.add_theme_color_override("font_color",
+			Color(0.95, 0.72, 0.4) if state.begins_with("⚠") else Color(0.72, 0.9, 0.6))
+		col.add_child(st)
+	row.add_child(col)
+
+
+## A character's face at a fixed size, tinted frame optional. Portraits are baked
+## large, so the texture is always told to ignore its own size.
+func _portrait_of(p: Dictionary, px: int, ring: Color = Color(0, 0, 0, 0)) -> Control:
+	var path := String(p.get("portrait", ""))
+	if path == "" or not ResourceLoader.exists(path):
+		var dot := ColorRect.new()   # never leave the slot unidentified
+		dot.color = ring if ring.a > 0.0 else Color(0.5, 0.45, 0.4)
+		dot.custom_minimum_size = Vector2(px, px)
+		return dot
+	var tex := TextureRect.new()
+	tex.texture = load(path)
+	tex.custom_minimum_size = Vector2(px, px)
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tex.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	return tex
+
+
 func _party_card(p: Dictionary, slot: int, aimed: bool) -> Control:
 	var panel := PanelContainer.new()
 	var style := StyleBoxFlat.new()
@@ -949,16 +1070,23 @@ func _party_card(p: Dictionary, slot: int, aimed: bool) -> Control:
 	style.set_border_width_all(2 if slot == _me() else 1)
 	# the hunter in the beast's sights is outlined in red — the single most
 	# time-critical fact on the screen
-	style.border_color = Color(0.85, 0.32, 0.26) if aimed 		else (Color(0.85, 0.68, 0.4) if slot == _me() else Color(0.45, 0.33, 0.23))
+	# red when the beast is aiming at them, else their own identity colour so the
+	# card, the portrait in the rail and the pip in the scene all agree
+	style.border_color = Color(0.85, 0.32, 0.26) if aimed else _slot_color(slot)
 	style.set_corner_radius_all(5)
-	style.content_margin_left = 10.0
+	style.content_margin_left = 8.0
 	style.content_margin_right = 10.0
 	style.content_margin_top = 6.0
 	style.content_margin_bottom = 6.0
 	panel.add_theme_stylebox_override("panel", style)
+	var outer := HBoxContainer.new()
+	outer.add_theme_constant_override("separation", 8)
+	panel.add_child(outer)
+	outer.add_child(_portrait_of(p, 34))
 	var box := VBoxContainer.new()
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.add_theme_constant_override("separation", 2)
-	panel.add_child(box)
+	outer.add_child(box)
 	var who := Label.new()
 	who.text = "%s%s" % [String(p.get("name", "")), "  (you)" if slot == _me() else ""]
 	who.add_theme_font_size_override("font_size", 13)
@@ -999,9 +1127,24 @@ func _update_coach(s: Dictionary) -> void:
 		_coach_id = ""
 		_coach.visible = false
 		return
+	if String(hint["id"]) == _coach_id:
+		return           # already up — don't restart its clock on every snapshot
 	_coach_id = String(hint["id"])
 	_coach_text.text = String(hint["text"])
 	_coach.visible = true
+	_coach_left = COACH_SECONDS
+
+
+## Hints teach once and then get out of the way — they should never be a chore.
+## Anything that dismisses one also marks it seen, exactly as the button does:
+## running out the clock and pressing "Got it" mean the same thing.
+func _dismiss_coach() -> void:
+	if _coach_id == "":
+		return
+	Progress.mark_hint_seen(_coach_id)
+	_coach_id = ""
+	_coach_left = 0.0
+	_coach.visible = false
 
 
 ## What just happened, in words. The 3D scene shows the blow landing but not

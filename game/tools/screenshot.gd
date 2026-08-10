@@ -207,8 +207,9 @@ func _await_camera(view: Node) -> void:
 ## the whole readability question the big-beast framing risks. So project them and
 ## check against the region the HUD does not own.
 ##
-## Safe region excludes the left rail, the top bar/grip/coach strip, and the
-## bottom-right party + buttons block.
+## Safe region excludes the left rail (x<312), the top bar + grip strip (y<140,
+## which is where the grip bar ends), and the bottom-right party + buttons block.
+## The coach now lives along the bottom centre, inside the party block's row.
 func _report_visibility(view: Node) -> void:
 	if view == null or not view.has_method("_climb_frame"):
 		return
@@ -243,7 +244,7 @@ func _report_visibility(view: Node) -> void:
 			print("VIS FAIL %s: behind the camera" % m[0])
 			continue
 		var p: Vector2 = cam.unproject_position(world)
-		var on: bool = p.x > 312 and p.x < vp.x - 8 and p.y > 200 and p.y < vp.y - 8
+		var on: bool = p.x > 312 and p.x < vp.x - 8 and p.y > 140 and p.y < vp.y - 8
 		# the bottom-right block is party + turn buttons
 		if p.x > vp.x - 320 and p.y > vp.y - 220:
 			on = false

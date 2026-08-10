@@ -269,6 +269,21 @@ A contextual **coach**: each rule is taught the first moment it actually matters
 once, and then never again (persisted between runs via `core/progress.gd`).
 No wall of text, no separate tutorial mode to maintain.
 
+Hints are **one line, and they dismiss themselves** (`COACH_SECONDS`, 7s) — acting
+also dismisses them, because a player who is already playing doesn't need to be
+told to play. They sit along the bottom, never over the beast. A tip you have to
+click away is a chore, and a tutorial that nags is worse than none.
+
+### 8.6 Knowing who you are
+
+Solo drives both hunters and lets you switch mid-turn, so **which hunter am I** has
+to be answerable without reading. Each slot owns a colour, used in exactly three
+places that must always agree: the pip floating over that hunter's model in the
+scene, the frame around the **portrait** at the top of the card rail, and their
+party card. The Switch button wears the face of the hunter you'd swap to. Stats
+are symbols — ✦ energy, ♥ health, ↑ Height. The name used to be spelled out in
+text at the top and simply didn't register mid-fight.
+
 ---
 
 ## 9. Presentation

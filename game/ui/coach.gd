@@ -20,41 +20,41 @@ static func hint_for(shared: Dictionary, private: Dictionary, me: int) -> Dictio
 	match phase:
 		"map":
 			candidates.append({"id": "map",
-				"text": "Choose your route. Elites and Titans pay relics; campfires heal you or sharpen your deck. Look ahead — the lines show where each path leads."})
+				"text": "Pick your route. Elites pay relics; campfires heal or sharpen your deck."})
 		"event":
 			candidates.append({"id": "event",
-				"text": "Wayside choices have real stakes, and each button says exactly what it costs or gives."})
+				"text": "Every choice says what it costs before you take it."})
 		"shop":
 			candidates.append({"id": "shop",
-				"text": "One purse between you — gold is shared. Removing a card is often worth more than buying one."})
+				"text": "One shared purse. Removing a card often beats buying one."})
 		"campfire":
 			candidates.append({"id": "campfire",
-				"text": "Rest to heal — or spend the hour on your deck. Removing a weak card makes you draw your best ones more often."})
+				"text": "Heal, or spend the hour on your deck — cutting a weak card sharpens every draw."})
 		"reward":
 			candidates.append({"id": "reward",
-				"text": "You can Skip a reward. A lean deck is often stronger than a big one."})
+				"text": "You can Skip. A lean deck draws its best cards more often."})
 		"combat":
 			var height := int(boss.get("weak_point_height", 0))
 			var fh := int(mine.get("foothold", 0))
 			# most urgent first — a ticking grip timer beats every other lesson
 			if not bool(mine.get("secure", true)):
 				candidates.append({"id": "climbing",
-					"text": "You're between holds and your grip is draining. Play another climb card to reach the next ledge — or you'll fall."})
+					"text": "Your grip is draining. Reach the next ledge before it empties."})
 			if bool(mine.get("reached", false)):
 				candidates.append({"id": "at_sigil",
-					"text": "You're at the weak point. Strikes land in full here — but deal too much and the beast will buck you off."})
+					"text": "Full damage here — but deal too much and it bucks you off."})
 			if height > 0 and fh <= 0:
 				candidates.append({"id": "armored",
-					"text": "Below the weak point its hide is armoured — your hits barely chip it. Climb to the glowing sigil to do real damage."})
+					"text": "Armoured below the sigil. Climb to the glow to really hurt it."})
 			if _hand_has(hand, "timed"):
 				candidates.append({"id": "timed",
-					"text": "Timed card: tap once to start the swing, then tap again inside the green band. Miss and the card is wasted."})
+					"text": "Timed card: tap to swing, then tap again inside the green band."})
 			var ally: Dictionary = players[1 - me] if players.size() == 2 and me in [0, 1] else {}
 			if height > 0 and fh > 0 and int(ally.get("foothold", 0)) <= 0:
 				candidates.append({"id": "ally_stuck",
-					"text": "Your ally is still on the ground. Some cards lift them — nobody climbs this alone."})
+					"text": "Your ally is stuck on the ground. Some cards lift them."})
 			candidates.append({"id": "play_card",
-				"text": "Tap a card to play it. Your energy is the ✦ number; End Turn when you're done."})
+				"text": "Tap a card to play it. ✦ is energy. End Turn when you're done."})
 
 	for c in candidates:
 		if not Progress.hint_seen(String(c["id"])):
