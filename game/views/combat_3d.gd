@@ -165,6 +165,7 @@ var _log_expanded := false
 @onready var _coach: PanelContainer = %Coach
 @onready var _coach_text: Label = %CoachText
 @onready var _coach_ok: Button = %CoachOk
+@onready var _coach_off: Button = %CoachOff
 @onready var _log_label: Label = %LogLabel
 @onready var _log_toggle: Button = %LogToggle
 @onready var _log_panel: PanelContainer = %LogPanel
@@ -190,6 +191,14 @@ func _ready() -> void:
 		_log_expanded = not _log_expanded
 		_refresh())
 	_coach_ok.pressed.connect(_dismiss_coach)
+	# The off switch lives ON the tip, because that is the exact moment you want
+	# it. Burying it in a menu means being annoyed now and fixing it later, which
+	# in practice means never.
+	_coach_off.pressed.connect(func() -> void:
+		Progress.set_hints_enabled(false)
+		_coach_id = ""
+		_coach_left = 0.0
+		_coach.visible = false)
 	if not _client.shared.is_empty():
 		_refresh()
 
@@ -1122,6 +1131,12 @@ func _party_card(p: Dictionary, slot: int, aimed: bool) -> Control:
 ## one that most needs saying — without it, hitting a beast from the ground
 ## reads as the cards being broken rather than as the climb being the point.
 func _update_coach(s: Dictionary) -> void:
+	# Gated here rather than inside Coach so Coach stays a pure function of the
+	# snapshot — its tests must not depend on whatever this machine's config says.
+	if not Progress.hints_enabled():
+		_coach_id = ""
+		_coach.visible = false
+		return
 	var hint := Coach.hint_for(s, _my_private(), _me())
 	if hint.is_empty():
 		_coach_id = ""

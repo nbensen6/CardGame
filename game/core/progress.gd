@@ -30,6 +30,25 @@ static func mark_hint_seen(id: String) -> void:
 	cfg.set_value(SECTION, "seen_hints", seen)
 	cfg.save(PATH)
 
+## Tips off entirely (Nick, 2026-08-06). Deliberately separate from seen_hints:
+## OFF silences everything including hints you've never been shown, while
+## reset_hints only makes already-taught ones eligible again. Turning tips back on
+## therefore returns you to exactly where you were, rather than re-teaching you
+## the whole game.
+static func hints_enabled() -> bool:
+	var cfg := ConfigFile.new()
+	if cfg.load(PATH) != OK:
+		return true      # a brand-new player gets taught
+	return bool(cfg.get_value(SECTION, "hints_enabled", true))
+
+
+static func set_hints_enabled(on: bool) -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(PATH)
+	cfg.set_value(SECTION, "hints_enabled", on)
+	cfg.save(PATH)
+
+
 ## Forget every hint — useful for testing, and offered on the menu.
 static func reset_hints() -> void:
 	var cfg := ConfigFile.new()

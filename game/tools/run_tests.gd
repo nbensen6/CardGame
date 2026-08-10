@@ -63,6 +63,7 @@ func _init() -> void:
 	_test_rhythm_card_grants_combo()
 	_test_ascension_makes_the_run_harder()
 	_test_coach_teaches_the_right_thing_first()
+	_test_tips_can_be_switched_off_without_losing_your_place()
 	_test_gold_and_shop()
 	_test_content_pools_are_copies()
 	# grip / ledges (SotC real-time climb)
@@ -727,6 +728,24 @@ func _test_ascension_makes_the_run_harder() -> void:
 	var frailer: bool = hard.max_hp[0] < base.max_hp[0]
 	_expect(tiers.size() >= 8 and cumulative and tougher and frailer,
 		"ascension tiers stack: thicker hides, meaner beasts, and a frailer party")
+
+
+## Turning tips off must not amount to "mark everything seen" — switch them back
+## on and you should be exactly where you left off, not skipped past the lessons
+## you never got. Saves and restores the real setting; a test has no business
+## changing what the player chose.
+func _test_tips_can_be_switched_off_without_losing_your_place() -> void:
+	var was := Progress.hints_enabled()
+	Progress.reset_hints()
+	Progress.set_hints_enabled(false)
+	var off := Progress.hints_enabled()
+	Progress.set_hints_enabled(true)
+	# the hint is still unseen, so it is still owed to the player
+	var still_owed: Dictionary = Coach.hint_for({"phase": "map"}, {}, 0)
+	Progress.set_hints_enabled(was)
+	_expect(not off and Progress.hints_enabled() == was
+		and String(still_owed.get("id", "")) == "map",
+		"tips toggle off and back on without consuming unseen hints")
 
 
 func _test_coach_teaches_the_right_thing_first() -> void:

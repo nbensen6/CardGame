@@ -34,7 +34,11 @@ func _initialize() -> void:
 		elif a.begins_with("orbit="):
 			_orbit = float(a.substr(6))
 	_failsafe()  # never hang the machine
-	Progress.reset_hints()  # shots should show onboarding as a new player sees it
+	# Shots should show onboarding as a NEW player sees it, whatever this machine's
+	# config happens to say — otherwise turning tips off while playing silently
+	# changes what every screenshot verifies.
+	Progress.reset_hints()
+	Progress.set_hints_enabled(true)
 	if _state == "menu":  # just the main menu, no session
 		change_scene_to_file("res://views/menu.tscn")
 		_capture()

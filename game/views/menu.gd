@@ -20,6 +20,7 @@ const PORT := 9999
 @onready var _asc_down: Button = %AscDown
 @onready var _asc_up: Button = %AscUp
 @onready var _reset_hints: Button = %ResetHints
+@onready var _tips_toggle: Button = %TipsToggle
 
 ## Chosen difficulty tier. You may pick anything up to what you've unlocked;
 ## clearing a tier unlocks the next (see core/progress.gd).
@@ -33,13 +34,29 @@ func _ready() -> void:
 	_asc_down.pressed.connect(func() -> void: _set_ascension(_ascension - 1))
 	_asc_up.pressed.connect(func() -> void: _set_ascension(_ascension + 1))
 	_refresh_ascension()
+	_tips_toggle.pressed.connect(func() -> void:
+		Progress.set_hints_enabled(not Progress.hints_enabled())
+		_refresh_tips())
 	_reset_hints.pressed.connect(func() -> void:
 		Progress.reset_hints()
+		Progress.set_hints_enabled(true)   # asking to replay them implies wanting them
+		_refresh_tips()
 		_reset_hints.text = "Tips will show again"
 		_reset_hints.disabled = true)
+	_refresh_tips()
 	_solo_btn.pressed.connect(_on_solo)
 	_host_btn.pressed.connect(_on_host)
 	_join_btn.pressed.connect(_on_join)
+
+
+## Two separate controls, because they answer different questions. The toggle is
+## "do I want to be taught at all"; Replay is "teach me the ones I've already
+## dismissed". Replaying with tips switched off would do nothing visible, so it
+## switches them back on.
+func _refresh_tips() -> void:
+	var on := Progress.hints_enabled()
+	_tips_toggle.text = "Tips: On" if on else "Tips: Off"
+	_reset_hints.visible = on
 
 
 ## Single-player: one player controls both hunters, all in-process (no networking).
