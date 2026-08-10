@@ -290,6 +290,18 @@ func _capture() -> void:
 			_router_is(router, "map", "Overworld3D")
 		for _k in 8:
 			await process_frame
+	# Swing the camera BEFORE the walk test, not after. Now that the player can
+	# look around the region, "can you still click a landmark from over here" is
+	# the actual risk — and applying the orbit afterwards tested the pick from the
+	# default angle every time while appearing to sweep.
+	if _orbit < 900.0:
+		var vo0 := current_scene
+		if vo0 != null and vo0.has_method("_apply_orbit"):
+			vo0.set("_yaw", deg_to_rad(_orbit))
+			vo0.set("_user_framed", true)   # don't let a refresh undo it
+			vo0.call("_apply_orbit")
+			for _j in 3:
+				await process_frame
 	if _state == "3dmap":  # prove the click -> walk -> pick_node round trip
 		var w := current_scene
 		var before := int(Session.host._run.map_row)
@@ -320,12 +332,6 @@ func _capture() -> void:
 					Session.host._run.phase])
 			else:
 				print("WALK FAIL: raycast missed the landmark")
-	if _orbit < 900.0:  # swing the camera round, to check the view from any side
-		var vo := current_scene
-		vo.set("_yaw", deg_to_rad(_orbit))
-		vo.call("_apply_orbit")
-		for _j in 3:
-			await process_frame
 	if _state == "3dsel":  # tap Meld, then pick two cards, and check it fired
 		var vs := current_scene
 		var cs2: Combat = Session.host._run.combat

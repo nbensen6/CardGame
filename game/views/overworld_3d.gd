@@ -49,6 +49,16 @@ const HUNTER_MODEL := {
 const HUNTER_HEIGHT := 0.5  # world units — measured, not guessed, so any
                             # cast model reads at the same size beside a tile
 const WALK_SPEED := 2.6  # hexes per second along the road
+## Looking around. Pitch never drops to the horizon (you'd see the underside of a
+## floating island) and never goes fully overhead (the labels would fall flat).
+const PITCH_MIN := 0.22
+const PITCH_MAX := 1.30
+const LOOK_SENSITIVITY := 0.006
+const ZOOM_STEP := 0.12
+## How far the pointer may travel and still count as a tap on a landmark. Below
+## this a click picks; above it, it was a look. One pointer has to do both, and
+## the game is single-pointer by design (CLAUDE.md §5).
+const DRAG_SLOP := 7.0
 
 var _client: GameClient
 var _nodes := {}       # col -> {node: Node3D, pos: Vector3, type: String, open: bool}
@@ -57,6 +67,18 @@ var _laid_row := -99   # the map row the field was last built for
 var _avatar: Node3D
 var _walking := false
 var _time := 0.0
+# --- looking around (Nick, 2026-08-06: you should be able to study a region
+# before committing to a route) ---
+var _pivot := Vector3.ZERO
+var _yaw := 0.0
+var _pitch := 0.6
+var _dist := 12.0
+var _home_dist := 12.0     # the opening framing; zoom is bounded relative to it
+var _user_framed := false  # they've moved the camera — stop re-framing under them
+var _framed_act := -99     # a NEW region does get a fresh establishing shot
+var _drag_from := Vector2.ZERO
+var _dragging := false
+var _dragged := false      # passed the slop threshold, so this is a look, not a pick
 
 @onready var _field: Node3D = %Field
 @onready var _markers: Node3D = %Markers
@@ -83,15 +105,46 @@ func _process(delta: float) -> void:
 		m.rotation.y += delta * 1.4
 
 
+## One pointer, two jobs: drag to look around the region, tap to set off for a
+## landmark. They're told apart by distance travelled, not by which button — the
+## pick fires on RELEASE, and only if the pointer barely moved. Dragging over a
+## landmark and letting go therefore studies the map instead of committing you to
+## a fight you didn't choose.
 func _unhandled_input(event: InputEvent) -> void:
-	if _walking or not (event is InputEventMouseButton):
-		return
-	var mb: InputEventMouseButton = event
-	if not mb.pressed or mb.button_index != MOUSE_BUTTON_LEFT:
-		return
-	var col := _node_under_mouse(mb.position)
-	if col >= 0 and bool(_nodes[col]["open"]):
-		_travel_to(col)
+	if event is InputEventMouseButton:
+		var mb: InputEventMouseButton = event
+		match mb.button_index:
+			MOUSE_BUTTON_WHEEL_UP:
+				_user_framed = true
+				_dist *= 1.0 - ZOOM_STEP
+				_apply_orbit()
+			MOUSE_BUTTON_WHEEL_DOWN:
+				_user_framed = true
+				_dist *= 1.0 + ZOOM_STEP
+				_apply_orbit()
+			MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT:
+				if mb.pressed:
+					_dragging = true
+					_dragged = false
+					_drag_from = mb.position
+					return
+				var was_look := _dragged or mb.button_index == MOUSE_BUTTON_RIGHT
+				_dragging = false
+				_dragged = false
+				if was_look or _walking:
+					return
+				var col := _node_under_mouse(mb.position)
+				if col >= 0 and bool(_nodes[col]["open"]):
+					_travel_to(col)
+	elif event is InputEventMouseMotion and _dragging:
+		var mm: InputEventMouseMotion = event
+		if not _dragged and mm.position.distance_to(_drag_from) < DRAG_SLOP:
+			return          # still inside the slop — might yet be a tap
+		_dragged = true
+		_user_framed = true
+		_yaw -= mm.relative.x * LOOK_SENSITIVITY
+		_pitch += mm.relative.y * LOOK_SENSITIVITY
+		_apply_orbit()
 
 
 # --- building the field ---------------------------------------------------
@@ -113,7 +166,8 @@ func _refresh() -> void:
 	else:
 		act = int((rows[0] as Array)[0].get("act", 0))
 	_title.text = "Act %d of %d" % [act + 1, int(s.get("total_encounters", 4))]
-	_subtitle.text = "Walk to where you'll go next"
+	# says the pick AND the look, because a control nobody finds isn't a feature
+	_subtitle.text = "Walk to where you'll go next   ·   drag to look around, wheel to zoom"
 	if act != _act or cur_row != _laid_row:
 		_act = act
 		_laid_row = cur_row
@@ -292,10 +346,37 @@ func _add_label(pos: Vector3, text: String, big: bool, hex_row: int,
 	_field.add_child(l)
 
 
+## The opening shot over the region, re-expressed as an orbit so the player can
+## take it over. The numbers are the framing this always had — derived into
+## yaw/pitch/distance rather than replaced, so the default view is unchanged and
+## only the ability to move it is new.
+##
+## Skipped once the player has looked around, unless the region itself changed:
+## re-laying the field on every snapshot must not yank the camera back to centre
+## while someone is studying the route ahead.
 func _frame_camera(row_count: int) -> void:
+	if _user_framed and _framed_act == _act:
+		return
+	_framed_act = _act
+	_user_framed = false
 	var depth := (row_count - 1) * 2.0 * ROW_STEP
-	_cam.position = Vector3(0.0, depth * 0.70 + 2.4, depth * 0.50 + 1.9)
-	_cam.look_at(Vector3(0.0, 0.0, -depth * 0.55), Vector3.UP)
+	_pivot = Vector3(0.0, 0.0, -depth * 0.55)
+	var off := Vector3(0.0, depth * 0.70 + 2.4, depth * 0.50 + 1.9) - _pivot
+	_dist = off.length()
+	_home_dist = _dist
+	_pitch = asin(clampf(off.y / maxf(_dist, 0.001), -1.0, 1.0))
+	_yaw = atan2(off.x, off.z)
+	_apply_orbit()
+
+
+## Spherical orbit around the middle of the region — the same model the fight
+## uses, so looking around means the same thing in both places.
+func _apply_orbit() -> void:
+	_pitch = clampf(_pitch, PITCH_MIN, PITCH_MAX)
+	_dist = clampf(_dist, _home_dist * 0.45, _home_dist * 1.9)
+	var flat := cos(_pitch) * _dist
+	_cam.position = _pivot + Vector3(sin(_yaw) * flat, sin(_pitch) * _dist, cos(_yaw) * flat)
+	_cam.look_at(_pivot, Vector3.UP)
 
 
 # --- the hunter you move --------------------------------------------------

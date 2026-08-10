@@ -229,7 +229,11 @@ Node types: **fight** (a lesser beast, pays a card) · **elite** (pays a relic) 
 **boss** (the act Titan, pays a relic).
 
 In 3D the map *is* a hex island you walk across: you click a landmark, your hunter
-physically walks there, and arriving is what commits the choice.
+physically walks there, and arriving is what commits the choice. You can **look
+around the region before committing** — drag to orbit, wheel to zoom — because
+routing is the run's biggest decision and you should be able to study it. One
+pointer does both jobs: a tap picks, a drag looks, told apart by how far the
+pointer moved rather than by which button.
 
 ### 8.2 Beasts
 
