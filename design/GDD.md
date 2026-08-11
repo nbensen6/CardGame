@@ -427,6 +427,7 @@ ideas go on the post-launch list.
 | `climbing-and-characters.md` | the pre-3D climb/character pivot | **historical** — outcome is in §5–6 above |
 | `OVERHAUL-PLAN.md` | the Kenney asset overhaul phases | **complete** |
 | `audio-guide.md` | how to override a sound | current, narrow |
+| `claude-project.md` | setting up the claude.ai Project for design/marketing chat | current |
 
 ---
 
