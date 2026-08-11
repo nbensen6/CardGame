@@ -20,9 +20,23 @@ const HEX_D := 1.154701
 const ROW_STEP := HEX_D * 0.75
 const TILE_TOP := 0.2
 const HUNTER_HEIGHT := 0.62
-## The felled beast is laid out behind the hunters — big enough to read as what
-## you just brought down, not so big it competes with the cards.
-const FELLED_HEIGHT := 1.7
+## The felled beast is laid out behind the hunters, sized from the SAME input the
+## fight used — how far you had to climb it — so the thing lying here is
+## recognisably the thing you just beat.
+##
+## Not at combat's literal ratio. There a Titan stands ~17 hunters tall; 17x here
+## would bury the reward cards this scene exists to frame, and you'd be reading
+## three cards against a wall of flank. So it's compressed into a range the plot
+## can hold, while a Titan still sprawls about three times a Crag Pup. Before
+## this, EVERY beast lay at 1.7 — you felled a colossus and got a knee-high
+## trophy, which quietly undercut the fight you'd just won.
+const FELLED_MIN := 1.8
+const FELLED_MAX := 5.0
+## Weak-point Heights run 1..8 across the roster; that span maps onto the range.
+const FELLED_MAX_WP := 8.0
+## Where the body's centre lands — behind the hunters (who stand at z -0.15),
+## still on the tiles.
+const FELLED_Z := -1.25
 ## Hex neighbours around the centre tile — pointy-top, so odd rows step half a
 ## tile sideways. Same grid the overworld uses.
 const _PLOT := [
@@ -48,6 +62,7 @@ var _deck_pick := ""    # campfire: "remove" | "upgrade" while choosing a card
 var _shop_pick := -1    # shop: the removal being resolved, -1 when idle
 var _time := 0.0
 var _hunters: Array = []
+var _felled_span := 0.0   # size of the body on the plot; the shot backs off for it
 
 @onready var _plot: Node3D = %Plot
 @onready var _cam: Camera3D = %Camera
@@ -96,6 +111,12 @@ func _my_private() -> Dictionary:
 # --- staging --------------------------------------------------------------
 
 func _refresh() -> void:
+	# A snapshot can land while the router is swapping this view out — the signal
+	# is still connected for that window. Staging a detached scene aims a camera
+	# that isn't in the tree and measures props that aren't either; nothing good
+	# comes of it, and the frame it would build is about to be thrown away.
+	if not is_inside_tree():
+		return
 	var s := _client.shared
 	var phase := String(s.get("phase", ""))
 	if phase == "":
@@ -121,6 +142,7 @@ func _stage(s: Dictionary, phase: String) -> void:
 	for c in _plot.get_children():
 		c.queue_free()
 	_hunters.clear()
+	_felled_span = 0.0   # only a reward has a body to make room for
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(phase + String(s.get("felled", "")))
 	# The inner ring stays PLAIN grass: forest tiles carry trees, and trees where
@@ -135,7 +157,12 @@ func _stage(s: Dictionary, phase: String) -> void:
 	if phase == "select":
 		pass  # the roster itself is the staging — see _show_roster
 	elif phase == "reward":
-		_lay_out_the_felled(String(s.get("felled", "")))
+		var felled_id := String(s.get("felled", ""))
+		# Ground first, and enough of it: a felled Titan sprawls wider than this
+		# little plot, and a carcass overhanging open water is the same "floating"
+		# read this whole fix exists to kill. Sized off the body that's coming.
+		_widen_plot(rng, _felled_height(felled_id) * 0.78)
+		_lay_out_the_felled(felled_id)
 	elif phase == "event":
 		_landmark("building-wizard-tower", Vector3(-1.0, 0.0, -1.55))
 	elif phase == "campfire":
@@ -145,9 +172,16 @@ func _stage(s: Dictionary, phase: String) -> void:
 	if phase != "select":
 		_place_hunters(s)
 	# the card row owns the bottom of the screen here too, so the scene is
-	# aimed and offset to sit clear of it — same trick as the combat view
-	_cam.position = Vector3(0.0, 3.5, 6.0)
-	_cam.look_at(Vector3(0.0, 0.5, -1.4), Vector3.UP)
+	# aimed and offset to sit clear of it — same trick as the combat view.
+	# A felled Titan sprawls several times a Crag Pup, so the shot backs off to
+	# hold it rather than cropping the body the reward is FOR.
+	# Derived from the body's measured sprawl and the lens, not hand-tuned offsets:
+	# a felled Crag Pup and a felled Titan differ by three times, and coefficients
+	# that framed one cropped the other.
+	var need := maxf(4.5, _felled_span * 1.9)
+	var back := need / (2.0 * tan(deg_to_rad(_cam.fov) * 0.5))
+	_cam.position = Vector3(0.0, back * 0.55, back * 1.05)
+	_cam.look_at(Vector3(0.0, 0.4 + _felled_span * 0.22, -1.1), Vector3.UP)
 
 
 func _hex_x(hex_col: int, hex_row: int) -> float:
@@ -173,13 +207,58 @@ func _lay_out_the_felled(beast_id: String) -> void:
 		return
 	var body: Node3D = (load(path) as PackedScene).instantiate()
 	_plot.add_child(body)
-	_fit_height(body, FELLED_HEIGHT)
-	# onto its BACK, not its flank — a cube pet tipped sideways still reads as
-	# sitting, but feet-up is unmistakable
+	var tall := _felled_height(beast_id)
+	_fit_height(body, tall)
+	_felled_span = tall
+	# Onto its BACK, feet toward the camera — a cube pet tipped onto its flank
+	# still reads as sitting, but belly-up is unmistakable.
 	body.rotation = Vector3(-PI * 0.5, 0.35, 0.0)
-	body.position = Vector3(0.45, 0.0, -1.55)
-	# it was scaled upright, so only AFTER toppling do we know how tall it lies
-	body.position.y = TILE_TOP - _bounds(body).position.y
+	body.position = Vector3.ZERO
+	# Measure, then correct. A toppled body sprawls by its full standing height,
+	# and where a model's origin sits inside that sprawl differs per beast — the
+	# old fixed offset sent it off the BACK of the island to hang over the sea,
+	# which is why the trophy looked like it was floating. Place it, look at where
+	# it actually landed, and shift by the difference.
+	var b := _bounds_in_parent(body)
+	body.position += Vector3(-b.get_center().x,
+		TILE_TOP - b.position.y,
+		FELLED_Z - b.get_center().z)
+	# What the shot has to hold: the body's real sprawl, not the height we asked
+	# for. These models are near-cubic, so a beast scaled to 2.3 tall still lies
+	# 2.8 across — frame off the target and the trophy gets its head cropped.
+	_felled_span = maxf(b.size.x, maxf(b.size.y, b.size.z))
+
+
+## Extra ground out to `radius`, filling in whatever _PLOT doesn't already cover.
+## Circular rather than following _PLOT's hand-placed shape, so it stays right at
+## any size — and the other phases, which need no extra room, never call it and
+## keep the plot exactly as it was.
+func _widen_plot(rng: RandomNumberGenerator, radius: float) -> void:
+	if radius <= 2.2:   # _PLOT already reaches about this far
+		return
+	var have := {Vector2i(0, 0): true}
+	for at in _PLOT:
+		have[at] = true
+	for row in range(-6, 7):
+		for col in range(-6, 7):
+			var key := Vector2i(col, row)
+			if have.has(key):
+				continue
+			if Vector2(_hex_x(col, row), -row * ROW_STEP).length() > radius:
+				continue
+			_tile(["grass", "grass", "grass", "grass-forest"][rng.randi() % 4],
+				col, row, rng)
+
+
+## How big the body lying here should be, from the climb the beast demanded.
+## Reads the beast's own data rather than anything the snapshot happens to carry,
+## so it stays right if the reward payload ever changes shape.
+func _felled_height(beast_id: String) -> float:
+	var boss: Boss = Content.build_boss(beast_id)
+	if boss == null:
+		return FELLED_MIN
+	var t := clampf((float(boss.weak_point_height) - 1.0) / (FELLED_MAX_WP - 1.0), 0.0, 1.0)
+	return lerpf(FELLED_MIN, FELLED_MAX, t)
 
 
 ## A hex landmark stood up as scenery — the same tile the overworld uses for
@@ -219,16 +298,45 @@ func _fit_height(node: Node3D, want: float) -> void:
 	node.scale = Vector3.ONE * (want / maxf(_bounds(node).size.y, 0.001))
 
 
-## World-space bounds of everything under a node.
+## Bounds of everything under `node`, in NODE'S OWN space.
+##
+## Deliberately not `global_transform`. That needs the node to be inside the
+## scene tree, and staging measures a model the instant it is built — including
+## on snapshots that land while this view is being swapped out, which threw about
+## a dozen errors per staging and left the first drawn frame mis-framed. Walking
+## the local chain needs no tree at all.
+##
+## Measuring in the node's own space is also the honest answer: a model's size
+## should not change because something above it happens to be scaled.
 func _bounds(node: Node3D) -> AABB:
 	var box := AABB()
 	var first := true
 	for m in _meshes(node):
 		var mi: MeshInstance3D = m
-		var b: AABB = mi.global_transform * mi.get_aabb()
+		var b: AABB = _relative_xform(mi, node) * mi.get_aabb()
 		box = b if first else box.merge(b)
 		first = false
 	return box
+
+
+## The same bounds seen by the node's PARENT — so it includes the node's own
+## rotation and scale. What you want after toppling something on its back: only
+## then is its upright height lying sideways.
+func _bounds_in_parent(node: Node3D) -> AABB:
+	return node.transform * _bounds(node)
+
+
+## Transform of `from` expressed in `to`'s space, by walking the parent chain.
+## Pure arithmetic on local transforms — works on a node that was built a moment
+## ago and has never been in the tree.
+func _relative_xform(from: Node3D, to: Node3D) -> Transform3D:
+	var t := Transform3D.IDENTITY
+	var n: Node = from
+	while n != null and n != to:
+		if n is Node3D:
+			t = (n as Node3D).transform * t
+		n = n.get_parent()
+	return t
 
 
 func _meshes(node: Node) -> Array:
