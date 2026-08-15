@@ -10,10 +10,17 @@ extends Button
 signal tapped
 ## A timed card's throw resolved: hit = landed in the green zone.
 signal timing_resolved(hit: bool)
+## The player asked what this card actually does. A dedicated button rather than a
+## hover or a long-press: CLAUDE.md §5 forbids hover-only information (no hover on
+## touch), and a hold would fight the timing tap.
+signal inspect_requested(data: Dictionary)
 
 ## Rail cards size themselves to the column's width; only the height is fixed, and
-## it's set by the two lines of text plus the timing strip.
-const RAIL_HEIGHT := 76
+## it's set by the live-effect line plus two clipped lines of prose and the timing
+## strip. The prose is deliberately allowed to run out of room — the numbers are on
+## the effect line and the full rules are one tap away in the inspector.
+const RAIL_HEIGHT := 88
+const RAIL_TEXT_LINES := 2
 
 const ZONE_MIN := 0.40
 const ZONE_MAX := 0.60
@@ -113,6 +120,10 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 	else:
 		box.add_child(_header(String(data.get("name", "")), int(data.get("cost", 0)), bool(data.get("no_cost", false))))
 		box.add_child(_art(String(data.get("icon", "")), String(data.get("portrait", ""))))
+		var eff := _effect_line(data)
+		if eff != null:
+			eff.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			box.add_child(eff)
 		box.add_child(_body(String(data.get("text", ""))))
 
 	_strip = _build_timing_strip()  # hidden until start_timing()
@@ -160,13 +171,93 @@ func _rail_row(data: Dictionary) -> Control:
 	name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	col.add_child(name_lbl)
 
+	var effect := _effect_line(data)  # the live numbers, above the prose
+	if effect != null:
+		col.add_child(effect)
+
 	var body := _label(String(data.get("text", "")), 11)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	# Clip rather than overflow: the effect line above already carries every number,
+	# and tapping the card shows the full text. A half-drawn third line reads as a bug.
+	body.max_lines_visible = RAIL_TEXT_LINES
+	body.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	body.add_theme_color_override("font_color", Color(0.84, 0.79, 0.68))
 	col.add_child(body)
 
 	row.add_child(col)
+	row.add_child(_inspect_button(data))
 	return row
+
+
+## A thumb-sized "?" that opens the full rules. The card face carries the numbers;
+## this carries the explanation, so neither has to be crammed onto the other.
+func _inspect_button(data: Dictionary) -> Control:
+	var b := Button.new()
+	b.text = "?"
+	b.flat = true
+	b.focus_mode = Control.FOCUS_NONE
+	b.custom_minimum_size = Vector2(26, 26)
+	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	b.tooltip_text = "What does this do?"
+	b.add_theme_font_size_override("font_size", 15)
+	b.add_theme_color_override("font_color", Color(0.72, 0.66, 0.56))
+	b.add_theme_color_override("font_hover_color", Color(1, 0.88, 0.55))
+	b.pressed.connect(func() -> void: inspect_requested.emit(data))
+	return b
+
+
+## What this card will ACTUALLY do, right now, in this board state — straight from
+## Combat.preview via the snapshot.
+##
+## The printed text explains a card's SHAPE ("+3 per EACH hunter's Height"); this is
+## the arithmetic the player would otherwise be doing in their head, every turn, for
+## every card in hand, while a real-time grip bar drains. See
+## design/feel-and-readability.md.
+func _effect_line(data: Dictionary) -> Control:
+	var bits := _effect_bits(data)
+	if bits == "":
+		return null
+	var lbl := _label(bits, 13)
+	lbl.add_theme_color_override("font_color", Color(0.98, 0.84, 0.45))
+	return lbl
+
+
+## Static so the card inspector can format the same line without building a card —
+## one formatter, so the face and the detail panel can never disagree.
+static func _effect_bits(data: Dictionary) -> String:
+	var pv: Dictionary = data.get("preview", {})
+	if pv.is_empty():
+		return ""
+	var miss: Dictionary = data.get("preview_miss", pv)
+	var timed := bool(data.get("timed", false))
+	var bits: PackedStringArray = []
+
+	var dmg := int(pv.get("damage", 0))
+	if dmg > 0:
+		var hits := int(pv.get("hits", 1))
+		var d := _pair(int(miss.get("damage", 0)), dmg, timed)
+		bits.append(d + " dmg" if hits <= 1 else "%s dmg x%d" % [d, hits])
+	var blk := int(pv.get("block", 0))
+	if blk > 0:
+		bits.append(_pair(int(miss.get("block", 0)), blk, timed) + " blk")
+	var climb := int(pv.get("grip", 0))
+	if climb > 0:
+		bits.append("+" + _pair(int(miss.get("grip", 0)), climb, timed) + " climb")
+	var ally_blk := int(pv.get("ally_block", 0))
+	if ally_blk > 0:
+		bits.append(_pair(int(miss.get("ally_block", 0)), ally_blk, timed) + " blk ally")
+	var ally_climb := int(pv.get("ally_grip", 0))
+	if ally_climb > 0:
+		bits.append("+%d climb ally" % ally_climb)
+	return "   ".join(bits)
+
+
+## "15" when nailing it changes nothing, "8→15" when it does — so a timed card shows
+## what it's worth AND what it's worth if you land it, without a parenthesis.
+static func _pair(low: int, high: int, timed: bool) -> String:
+	if timed and high != low:
+		return "%d→%d" % [low, high]
+	return str(high)
 
 
 func _header(card_name: String, cost: int, no_cost: bool = false) -> Control:

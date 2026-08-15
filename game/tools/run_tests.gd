@@ -104,6 +104,9 @@ func _init() -> void:
 	_test_run_is_four_titans()
 	_test_run_relic_reward_and_full_clear()
 	_test_elite_pays_a_card_then_a_relic()
+	_test_preview_matches_what_the_card_actually_does()
+	_test_incoming_reckons_damage_after_block()
+	_test_every_derived_keyword_resolves()
 	_test_every_card_declares_a_rarity()
 	_test_rarity_weighting_favours_commons()
 	# content batch: strength, wound, multi-hit, leech
@@ -1336,6 +1339,76 @@ func _test_elite_pays_a_card_then_a_relic() -> void:
 		and run.team_relics.size() == relics_before + run.player_count()
 		and run.phase == Run.Phase.MAP,
 		"an elite pays a card and THEN a relic before the route reopens")
+
+
+## GameHost._keywords_of derives keyword ids in CODE; keywords.json defines them.
+## A typo in either silently drops a tooltip and the card goes back to being
+## unexplained, which is the exact problem the keyword layer exists to fix.
+func _test_every_derived_keyword_resolves() -> void:
+	var derived := ["timed", "poison", "expose", "rhythm", "strength", "block",
+		"height", "armoured", "taunt", "burn"]
+	var defined := Content.keyword_ids()
+	var missing: Array = []
+	for id in derived:
+		if not defined.has(id):
+			missing.append(id)
+		elif String(Content.keyword(String(id)).get("text", "")).is_empty():
+			missing.append("%s (no text)" % id)
+	_expect(missing.is_empty(),
+		"every keyword the host derives is defined in keywords.json [%s]" % ", ".join(missing))
+
+
+## The intent icon says WHAT is coming; incoming_for says whether you survive it.
+## The swipes are the ones players get wrong — being ON the beast saves you from a
+## stamp and dooms you to a flank lash.
+func _test_incoming_reckons_damage_after_block() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(200, 10))
+	var aimed := combat.boss_target_index()
+	var spared := combat.ally_index(aimed)
+	combat.players[aimed].combatant.block = 4
+	var hit := combat.incoming_for(aimed)
+	var safe := combat.incoming_for(spared)
+
+	var stomp := _dummy_boss(200, 8)
+	stomp.moves = [{"type": "swipe_low", "value": 8}]  # only catches the grounded
+	var c2 := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, stomp)
+	c2.players[0].foothold = 3   # climbing — a stamp can't reach
+	c2.players[1].foothold = 0   # on the ground — it can
+	var airborne := c2.incoming_for(0)
+	var grounded := c2.incoming_for(1)
+
+	_expect(int(hit["raw"]) == 10 and int(hit["through"]) == 6 and int(safe["raw"]) == 0
+		and int(airborne["raw"]) == 0 and int(grounded["raw"]) == 8,
+		"incoming shows what lands after Block, for the hunter the move can actually reach")
+
+
+## The card FACE shows preview(); play_card resolves through the same call. The
+## moment those diverge the card starts lying about its own effect, which is worse
+## than showing no number at all — so pin them together on a card that scales off
+## several things at once.
+func _test_preview_matches_what_the_card_actually_does() -> void:
+	var combat := _new_combat([_deck_of(_summit_strike, 10), _deck_of(_defend, 10)], 42, _dummy_boss(400))
+	combat.players[0].foothold = 3   # summit_strike scales off BOTH hunters' Height
+	combat.players[1].foothold = 2
+	var ci := _first_playable(combat, 0)
+	var pv := combat.preview(0, combat.players[0].hand[ci], true)
+	var before: int = combat.boss.hp
+	combat.play_card(0, ci, true)
+	var dealt := before - combat.boss.hp
+
+	# and a block card, since block scales off plays and the exhaust pile
+	var c2 := _new_combat([_deck_of(_build_mech, 10), _deck_of(_slash, 10)], 42, _dummy_boss(400))
+	var i2 := _first_playable(c2, 0)
+	c2.play_card(0, i2, true)                       # first play: 2 block
+	var i3 := _first_playable(c2, 0)
+	var pv2 := c2.preview(0, c2.players[0].hand[i3], true)  # second: 2 + 2 = 4
+	var blocked_before: int = c2.players[0].combatant.block
+	c2.play_card(0, i3, true)
+	var gained: int = c2.players[0].combatant.block - blocked_before
+
+	_expect(dealt == int(pv["damage"]) and dealt > 0
+		and gained == int(pv2["block"]) and gained == 4,
+		"preview() is exactly what the card deals and blocks (%d dmg, %d block)" % [dealt, gained])
 
 
 ## An unset rarity silently defaults to "common", which would quietly make a new

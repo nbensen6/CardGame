@@ -275,6 +275,7 @@ func _players_public() -> Array:
 				"secure": c.is_secure(i), "next_safe": c.next_safe_height(i),
 				"wp_damage": ps.weak_point_damage,
 				"weak_point_height": c.boss.weak_point_height,
+					"incoming": c.incoming_for(i),  # {raw, through} — survivability at a glance
 			})
 	else:
 		for i in range(_run.player_count()):
@@ -299,13 +300,27 @@ func _slot_private(pi: int) -> Dictionary:
 		var cards: Array = []
 		for i in range(ps.hand.size()):
 			var c: Card = ps.hand[i]
+			# LIVE numbers, not the printed ones. The player should never have to
+			# compute "3 dmg, +3 per EACH hunter's Height" under a draining grip bar.
+			# `miss` is the same card without its timed bonus, so the face can show
+			# both outcomes of a timed play.
+			var hit: Dictionary = _run.combat.preview(pi, c, true)
+			var miss: Dictionary = _run.combat.preview(pi, c, false)
 			cards.append({
 				"index": i, "name": c.name, "cost": _run.combat.effective_cost(pi, c), "target": c.target,
 				"text": c.text, "icon": _card_icon(c), "timed": c.timed, "timed_hits": c.timed_hits,
 				"exhaust_pick": c.exhaust_pick, "cheapen_pick": c.cheapen_pick, "meld": c.meld,
 				"playable": _run.combat.can_play(pi, i),
+				"rarity": c.rarity, "keywords": _keywords_of(c),
+				"preview": hit, "preview_miss": miss,
 			})
-		return {"hand": cards, "energy": ps.energy, "ended": ps.ended_turn}
+		return {
+			"hand": cards, "energy": ps.energy, "ended": ps.ended_turn,
+			# Pile sizes. The Goblin's kit scales off the exhaust pile, which was
+			# invisible to the player until now.
+			"draw": ps.draw_pile.size(), "discard": ps.discard_pile.size(),
+			"exhaust": ps.exhaust_pile.size(),
+		}
 	if _run.phase == Run.Phase.CAMPFIRE:
 		return {"deck": _deck_cards(pi), "done": bool(_run.campfire_done[pi])}
 	if _run.phase == Run.Phase.SHOP:
@@ -323,6 +338,40 @@ func _slot_private(pi: int) -> Dictionary:
 					"target": rc.target, "icon": _card_icon(rc)})
 		return {"reward": {"kind": kind, "choices": choices, "picked": bool(_run.reward_picked[pi])}}
 	return {}
+
+
+## Which keywords a card touches, derived from its FIELDS rather than declared per
+## card — so a new card gets the right tooltips for free and nobody has to remember
+## to tag it. Returns [{id, name, text}] for the inspector to render.
+func _keywords_of(c: Card) -> Array:
+	var ids: Array = []
+	if c.timed:
+		ids.append("timed")
+	if c.wound > 0 or c.damage_per_wound > 0:
+		ids.append("poison")
+	if c.vulnerable > 0 or c.damage_per_vulnerable > 0:
+		ids.append("expose")
+	if c.rhythm > 0 or c.damage_per_rhythm > 0 or c.grip_per_rhythm > 0:
+		ids.append("rhythm")
+	if c.strength > 0:
+		ids.append("strength")
+	if c.block > 0 or c.ally_block > 0 or c.block_per_play > 0 \
+			or c.block_per_exhausted > 0 or c.timed_block > 0 or c.timed_ally_block > 0:
+		ids.append("block")
+	if c.grip > 0 or c.ally_grip > 0 or c.timed_grip > 0 or c.pull_ally > 0 \
+			or c.sac_ally_grip > 0 or c.damage_per_foothold > 0 or c.damage_per_ally_foothold > 0:
+		ids.append("height")
+		ids.append("armoured")
+	if c.taunt:
+		ids.append("taunt")
+	if c.exhaust_pick or c.damage_per_exhausted > 0 or c.block_per_exhausted > 0:
+		ids.append("burn")
+	var out: Array = []
+	for id in ids:
+		var k := Content.keyword(String(id))
+		if not k.is_empty():
+			out.append(k)
+	return out
 
 
 ## The hunter's persistent deck, as card dicts the view can render.

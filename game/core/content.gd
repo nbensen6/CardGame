@@ -12,6 +12,7 @@ const EVENTS_PATH := "res://data/events.json"
 const RELICS_PATH := "res://data/relics.json"
 const CHARACTERS_PATH := "res://data/characters.json"
 const ASCENSION_PATH := "res://data/ascension.json"
+const KEYWORDS_PATH := "res://data/keywords.json"
 
 static var _cache: Dictionary = {}
 
@@ -38,6 +39,21 @@ static func make_card(id: String) -> Card:
 	var cd: Dictionary = (cards[id] as Dictionary).duplicate()
 	cd["id"] = id
 	return Card.from_dict(cd)
+
+## One keyword as {id, name, text}, for the card inspector. Empty if unknown.
+static func keyword(id: String) -> Dictionary:
+	var all: Dictionary = _read_json(KEYWORDS_PATH).get("keywords", {})
+	if not all.has(id):
+		return {}
+	var k: Dictionary = (all[id] as Dictionary).duplicate()
+	k["id"] = id
+	return k
+
+
+## Every keyword id — used by tests to prove nothing references a missing one.
+static func keyword_ids() -> Array:
+	return (_read_json(KEYWORDS_PATH).get("keywords", {}) as Dictionary).keys()
+
 
 ## A card's rarity without building the whole Card — reward rolls ask for this
 ## once per candidate, so it stays a plain dictionary lookup.

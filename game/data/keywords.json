@@ -1,0 +1,49 @@
+{
+  "_comment": "The game's vocabulary. A card names a mechanic; this explains it ONCE, in the card inspector. Before this file every card re-taught its own rules on the face, which is why card text kept growing (design/feel-and-readability.md). Keywords are DERIVED from a card's fields by GameHost._keywords_of — no card has to declare them, so a new card gets the right tooltips for free.",
+  "keywords": {
+    "timed": {
+      "name": "Timed",
+      "text": "Play it on the sweeping bar. Land in the bright zone for the bonus — miss and the card slips away with no effect at all."
+    },
+    "poison": {
+      "name": "Poison",
+      "text": "The beast bleeds this much at the start of each of its turns. It does not wear off."
+    },
+    "expose": {
+      "name": "Expose",
+      "text": "Each stack makes one incoming hit deal +4. Stacks are spent as they are used — and they bank while you are below the weak point."
+    },
+    "rhythm": {
+      "name": "Rhythm",
+      "text": "+1 every time you land a timed card this turn. Resets at the end of your turn, so Rhythm cards want to be chained in one go."
+    },
+    "strength": {
+      "name": "Strength",
+      "text": "Adds to every attack you play for the rest of the fight."
+    },
+    "block": {
+      "name": "Block",
+      "text": "Absorbs damage before your health. It clears at the start of your next turn, so it is worth spending, not saving."
+    },
+    "height": {
+      "name": "Height",
+      "text": "How far up the beast you have climbed. The weak point sits at the top — see Armoured."
+    },
+    "armoured": {
+      "name": "Armoured",
+      "text": "Below the weak point the hide takes only a quarter of your damage, and Expose stacks bank instead of being spent. Climb to the sigil before you commit a big hit."
+    },
+    "grip": {
+      "name": "Grip",
+      "text": "A live timer that drains whenever you are between holds. Reach a ledge or the sigil before it empties or you fall to the base."
+    },
+    "taunt": {
+      "name": "Taunt",
+      "text": "The beast targets you this round instead of your ally."
+    },
+    "burn": {
+      "name": "Burn",
+      "text": "The card is removed for the rest of this fight. Some Goblin cards get stronger for every card burned."
+    }
+  }
+}

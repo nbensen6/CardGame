@@ -54,7 +54,7 @@ func _initialize() -> void:
 	elif _state != "3dselect":
 		Session.client.select_character("frog", 0)
 		Session.client.select_character("goblin_mech", 1)
-	if _state in ["goblin", "3d", "3dclimb",
+	if _state in ["goblin", "3d", "3dclimb", "3dinspect",
 			"3dstrike", "3dgame", "3dgrip", "3dsel", "3dreward", "3dwon"]:  # 3dloop deliberately starts ON the map  # step off the map into a fight
 		var r: Run = Session.host._run
 		var g := 0
@@ -261,11 +261,33 @@ func _capture() -> void:
 	await _await_camera(current_scene)
 	if _state.begins_with("3d") and _state not in ["3dmap", "3dloop"]:
 		_report_visibility(current_scene)
+	if _state == "3dinspect":  # open the card inspector on the first card in hand
+		var vi := current_scene
+		# Solo (which this harness always runs) nests each hunter's hand under
+		# slots[]; co-op sends a flat "hand". Handle both.
+		var priv: Dictionary = Session.client.private
+		var hand: Array = priv.get("hand", [])
+		if hand.is_empty() and priv.has("slots"):
+			var slots: Array = priv["slots"]
+			if not slots.is_empty():
+				hand = (slots[0] as Dictionary).get("hand", [])
+		if vi != null and vi.has_method("_show_card_detail") and not hand.is_empty():
+			vi.call("_show_card_detail", hand[0])
+		for _i in 4:
+			await process_frame
 	if _state == "3dstrike":  # fire the 3D strike and catch the flash + dust
 		var v3 := current_scene
 		if v3 != null and v3.has_method("_strike"):
 			v3.call("_strike", true)
-		for _i in 3:
+		# The damage number rides the snapshot diff (hp dropped), which this state
+		# fakes rather than actually dealing — so fire the popup directly too, or
+		# the one state whose whole job is checking the juice would miss it.
+		if v3 != null and v3.has_method("_damage_popup"):
+			var sig: Node3D = v3.get("_sigil")
+			var where: Vector3 = sig.position if sig != null else Vector3.ZERO
+			v3.call("_damage_popup", 34, where, true, false)
+			v3.call("_damage_popup", 11, where + Vector3(-1.6, -1.2, 0.0), false, true)
+		for _i in 8:  # let the popup rise a little before the shutter
 			await process_frame
 	if _state == "3dloop":  # walk the router through a whole lap of the run
 		var router := current_scene

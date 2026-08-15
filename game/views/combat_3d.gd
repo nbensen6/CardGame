@@ -130,6 +130,8 @@ var _time := 0.0
 var _prev_hp := -1
 var _prev_foot: Array = []
 var _prev_reached: Array = []
+var _prev_php: Array = []   # per-hunter hp last frame, so a hit on YOU pops a number too
+var _detail: ColorRect = null   # the card inspector overlay, when one is open
 var _prev_encounter := -1
 # slot -> {g: remaining 0..1, target: the Height that ends the climb}. Solo
 # tracks BOTH hunters, since you can switch while a timer runs.
@@ -809,23 +811,180 @@ func _react(s: Dictionary) -> void:
 	if enc != _prev_encounter or _prev_foot.size() != foots.size():
 		_sync(enc, hp, foots, reached)
 		return
+	var php: Array = []
+	for p in players:
+		php.append(int(p.get("hp", 0)))
+	if _prev_php.size() != php.size():
+		_sync(enc, hp, foots, reached, php)
+		return
 	if hp < _prev_hp:
-		_strike(reached.has(true) or _prev_reached.has(true))
+		var weak := reached.has(true) or _prev_reached.has(true)
+		_strike(weak)
+		_damage_popup(_prev_hp - hp, _sigil.position if weak else _beast_box.get_center(), weak)
 	for i in range(foots.size()):
+		if php[i] < _prev_php[i] and i < _hunters.size() \
+				and is_instance_valid((_hunters[i] as Dictionary)["node"]):
+			# Hunters bleed too, and how hard you were hit is the thing you most
+			# need to know before deciding next turn.
+			var hnode: Node3D = (_hunters[i] as Dictionary)["node"]
+			_damage_popup(_prev_php[i] - php[i],
+				hnode.position + Vector3(0.0, HUNTER_HEIGHT * 1.4, 0.0), false, true)
 		if not _prev_reached[i] and reached[i]:
 			Sfx.play("reach_sigil")
 		elif foots[i] > _prev_foot[i]:
 			Sfx.play("climb")
 		elif foots[i] < _prev_foot[i]:
 			_beast_shake()
-	_sync(enc, hp, foots, reached)
+	_sync(enc, hp, foots, reached, php)
 
 
-func _sync(enc: int, hp: int, foots: Array, reached: Array) -> void:
+func _sync(enc: int, hp: int, foots: Array, reached: Array, php: Array = []) -> void:
 	_prev_encounter = enc
 	_prev_hp = hp
 	_prev_foot = foots
 	_prev_reached = reached
+	_prev_php = php
+
+
+## The full rules for one card, on demand — the home that lets the card FACE stop
+## being a rulebook.
+##
+## Shows what it does right now (live, from Combat.preview), the authored text, and
+## every keyword it touches with the mechanic explained. Before this, each card
+## re-taught its own mechanics on the face forever, which is why card text kept
+## growing. See design/feel-and-readability.md.
+func _show_card_detail(data: Dictionary) -> void:
+	if _detail != null and is_instance_valid(_detail):
+		_detail.queue_free()
+
+	_detail = ColorRect.new()
+	_detail.color = Color(0.04, 0.03, 0.02, 0.72)
+	_detail.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_detail.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(_detail)
+	# Tap anywhere to dismiss — one gesture, no close button to aim at on a phone.
+	_detail.gui_input.connect(func(e: InputEvent) -> void:
+		if e is InputEventMouseButton and (e as InputEventMouseButton).pressed:
+			if _detail != null and is_instance_valid(_detail):
+				_detail.queue_free()
+				_detail = null)
+
+	# A CenterContainer, not a CENTER anchor preset: the panel's height depends on how
+	# many keywords the card touches, and an anchored panel grows off the bottom of
+	# the screen instead of staying centred.
+	var centre := CenterContainer.new()
+	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_detail.add_child(centre)
+
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(430, 0)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.13, 0.105, 0.08, 0.99)
+	st.set_border_width_all(2)
+	st.border_color = Color(0.62, 0.5, 0.3)
+	st.set_corner_radius_all(6)
+	for side in ["left", "right", "top", "bottom"]:
+		st.set("content_margin_" + side, 18.0)
+	panel.add_theme_stylebox_override("panel", st)
+	centre.add_child(panel)
+
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 8)
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(col)
+
+	col.add_child(_detail_label("%s   ✦%d" % [String(data.get("name", "")),
+		int(data.get("cost", 0))], 21, Color(1, 0.94, 0.8)))
+
+	var rarity := String(data.get("rarity", ""))
+	if rarity != "":
+		var rc := Color(0.72, 0.68, 0.6)
+		if rarity == "uncommon":
+			rc = Color(0.55, 0.78, 0.92)
+		elif rarity == "rare":
+			rc = Color(1, 0.84, 0.42)
+		col.add_child(_detail_label(rarity.to_upper(), 11, rc))
+
+	col.add_child(_detail_rule())
+	col.add_child(_detail_label(String(data.get("text", "")), 14, Color(0.88, 0.84, 0.75), true))
+
+	var bits := CardView._effect_bits(data)  # the one formatter — never a second copy
+	if bits != "":
+		col.add_child(_detail_label("Right now:  " + bits, 15, Color(0.98, 0.84, 0.45)))
+
+	var kws: Array = data.get("keywords", [])
+	if not kws.is_empty():
+		col.add_child(_detail_rule())
+		for k in kws:
+			var kd: Dictionary = k
+			col.add_child(_detail_label(String(kd.get("name", "")), 14, Color(1, 0.86, 0.5)))
+			col.add_child(_detail_label(String(kd.get("text", "")), 12,
+				Color(0.8, 0.76, 0.68), true))
+
+	col.add_child(_detail_rule())
+	col.add_child(_detail_label("tap anywhere to close", 11, Color(0.6, 0.56, 0.5)))
+
+
+func _detail_label(txt: String, size: int, tint: Color, wrap: bool = false) -> Label:
+	var l := Label.new()
+	l.text = txt
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_color_override("font_color", tint)
+	if wrap:
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		l.custom_minimum_size = Vector2(394, 0)
+	return l
+
+
+func _detail_rule() -> Control:
+	var r := ColorRect.new()
+	r.color = Color(0.4, 0.33, 0.22, 0.7)
+	r.custom_minimum_size = Vector2(0, 1)
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return r
+
+
+## A damage number at the point of impact.
+##
+## Until now the only place a hit's SIZE appeared was a line of text in the log,
+## four lines down in the corner — so the loop was: play a card, see a flash, then
+## READ to find out what happened. See design/feel-and-readability.md.
+##
+## Sized against the beast's own height so it stays legible whether you're fighting
+## a pup or a Titan (the camera pulls back with the beast, so a fixed size shrinks).
+func _damage_popup(amount: int, at: Vector3, weak_point: bool, on_hunter: bool = false) -> void:
+	if amount <= 0:
+		return
+	var lbl := Label3D.new()
+	lbl.text = str(amount)
+	lbl.font_size = 128
+	lbl.outline_size = 30
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.no_depth_test = true          # never lost inside the beast's mesh
+	lbl.fixed_size = false
+	var reach: float = maxf(_beast_box.size.y, 2.0)
+	lbl.pixel_size = (0.0010 if not weak_point else 0.0014) * reach
+	if on_hunter:
+		lbl.pixel_size = 0.0009 * reach
+		lbl.modulate = Color(1.0, 0.45, 0.38)      # your blood, not the beast's
+	elif weak_point:
+		lbl.modulate = Color(1.0, 0.86, 0.36)      # the sigil hit — the big one
+	else:
+		lbl.modulate = Color(0.95, 0.93, 0.88)
+	lbl.outline_modulate = Color(0.08, 0.05, 0.04, 0.95)
+	lbl.position = at
+	_rig.add_child(lbl)
+
+	var rise := reach * 0.22
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(lbl, "position", at + Vector3(0.0, rise, 0.0), 0.85) \
+		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	tw.tween_property(lbl, "modulate:a", 0.0, 0.45).set_delay(0.4)
+	tw.chain().tween_callback(lbl.queue_free)
 
 
 ## A hit on the beast: recoil, a flash of light, a kick of camera shake — much
@@ -869,6 +1028,7 @@ func _render_hand() -> void:
 		cv.setup(card, playable, true)  # rail form — the scene keeps the screen
 		var c_card: Dictionary = card
 		cv.tapped.connect(func() -> void: _on_card_tapped(c_card, cv))
+		cv.inspect_requested.connect(_show_card_detail)
 		cv.timing_resolved.connect(func(hit: bool) -> void:
 			Sfx.play("nail" if hit else "slip")
 			_client.play_card(idx, hit, _cmd_slot()))
@@ -1059,6 +1219,35 @@ func _render_hunter_header(p: Dictionary) -> void:
 		st.add_theme_color_override("font_color",
 			Color(0.95, 0.72, 0.4) if state.begins_with("⚠") else Color(0.72, 0.9, 0.6))
 		col.add_child(st)
+
+	# What the beast's telegraphed move will cost YOU, after Block. The intent icon
+	# up top says what's coming; this says whether you survive it, so the player
+	# stops doing the subtraction in their head every turn.
+	var inc: Dictionary = p.get("incoming", {})
+	var raw := int(inc.get("raw", 0))
+	if raw > 0:
+		var through := int(inc.get("through", 0))
+		var warn := Label.new()
+		warn.add_theme_font_size_override("font_size", 13)
+		if through <= 0:
+			warn.text = "⛨ %d incoming — blocked" % raw
+			warn.add_theme_color_override("font_color", Color(0.6, 0.86, 0.62))
+		else:
+			var soaked := raw - through
+			warn.text = ("⚔ %d incoming" % through) if soaked <= 0 \
+				else "⚔ %d incoming  (%d blocked)" % [through, soaked]
+			warn.add_theme_color_override("font_color", Color(0.98, 0.52, 0.42))
+		col.add_child(warn)
+
+	# Pile counts. The Goblin's kit scales off the burn pile and it was invisible.
+	var piles := _my_private()
+	if piles.has("draw"):
+		var pl := Label.new()
+		pl.text = "draw %d · disc %d · burn %d" % [int(piles.get("draw", 0)),
+			int(piles.get("discard", 0)), int(piles.get("exhaust", 0))]
+		pl.add_theme_font_size_override("font_size", 11)
+		pl.add_theme_color_override("font_color", Color(0.66, 0.61, 0.53))
+		col.add_child(pl)
 	row.add_child(col)
 
 

@@ -249,6 +249,74 @@ func is_over() -> bool:
 # --- Player actions -------------------------------------------------------
 
 ## Player pi plays the card at hand index ci. `timing_hit` is the result of a
+## What a card will actually DO right now, for this hunter, in this board state.
+##
+## ONE formula with two callers: `play_card` resolves with it, and the host puts the
+## same numbers on the card face so the player never does the arithmetic. That single
+## source is the whole point — a second copy would drift the moment a scaling field is
+## added, and the card would start lying about its own effect.
+##
+## `nailed` picks the timed branch: a timed card's bonus applies only on a hit, so the
+## view can show both outcomes ("3 → 7"). Untimed cards ignore it.
+func preview(pi: int, card: Card, nailed: bool = true) -> Dictionary:
+	var ps: PlayerState = players[pi]
+	var mate: PlayerState = players[ally_index(pi)]
+	var hit := card.timed and nailed
+	var exhausted := ps.exhaust_pile.size()
+	var prior := int(ps.play_counts.get(card.id, 0))
+
+	var dmg := card.damage + card.damage_per_vulnerable * boss.vulnerable \
+		+ card.damage_per_foothold * ps.foothold + card.damage_per_rhythm * ps.rhythm \
+		+ card.damage_per_wound * boss.wound \
+		+ card.damage_per_ally_foothold * int(mate.foothold) \
+		+ card.damage_per_exhausted * exhausted
+	if hit:
+		dmg += card.timed_damage
+	if card.damage > 0:  # buffs lift real attacks, not incidental scaling
+		dmg += _attack_bonus + ps.strength + ps.char_attack_bonus
+
+	var blk := card.block + card.block_per_play * prior + card.block_per_exhausted * exhausted
+	if hit:
+		blk += card.timed_block
+	var ally_blk := card.ally_block + (card.timed_ally_block if hit else 0)
+
+	var climb := card.grip + (card.timed_grip if hit else 0)
+	if climb > 0:  # the climb bonus rides an actual climb, not a zero
+		climb += ps.climb_bonus + card.grip_per_rhythm * ps.rhythm
+
+	return {
+		"damage": maxi(dmg, 0), "hits": maxi(card.hits, 1),
+		"block": maxi(blk, 0), "ally_block": maxi(ally_blk, 0),
+		"grip": maxi(climb, 0), "ally_grip": card.ally_grip,
+	}
+
+
+## What the beast's telegraphed move will actually cost this hunter, after Block.
+##
+## The intent icon already says WHAT is coming; this says whether you survive it.
+## Without it every turn ends with the player doing the same subtraction in their
+## head — and for the two swipes, working out whether being ON the beast saves them
+## or dooms them.
+##
+## Returns {raw, through}: damage aimed at this hunter, and what lands past Block.
+func incoming_for(pi: int) -> Dictionary:
+	var ps: PlayerState = players[pi]
+	var move := boss.current_move()
+	var value := int(move.get("value", 0)) + boss.strength
+	var raw := 0
+	match String(move.get("type", "")):
+		"attack", "leech":
+			if boss_target_index() == pi:
+				raw = value
+		"attack_all":
+			raw = value
+		"swipe_high":  # only catches hunters off the ground
+			raw = value if ps.foothold > 0 else 0
+		"swipe_low":   # only catches hunters still on the ground
+			raw = value if ps.foothold <= 0 else 0
+	return {"raw": raw, "through": maxi(raw - ps.combatant.block, 0)}
+
+
 ## timed card's throw (client skill) — true grants the card's timed bonus.
 ## `sac_index` / `target_index` name cards in the caster's hand for selection cards
 ## (Burn Coal: burn one, cheapen another; Catapult: burn one). They're chosen on the
@@ -276,24 +344,19 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		return true
 	ps.discard_pile.append(card)
 	var who: String = ps.combatant.name
-	var prior_plays := int(ps.play_counts.get(card.id, 0))  # how many times BEFORE this play
-	ps.play_counts[card.id] = prior_plays + 1
-	# Counted BEFORE this card's own exhaust_pick fires, so a card that burns AND
-	# scales (Detonator) doesn't secretly count its own sacrifice.
-	var exhausted_before := ps.exhaust_pile.size()
 
-	# Damage first (so a card that also Exposes doesn't consume its own stacks).
-	# Base scales with Exposed stacks (Sunlight Blade) and this hunter's own Height
-	# (Belay Strike). _damage_boss gates on whether THIS hunter reached the sigil.
-	var base_damage := card.damage + card.damage_per_vulnerable * boss.vulnerable \
-		+ card.damage_per_foothold * ps.foothold + card.damage_per_rhythm * ps.rhythm \
-		+ card.damage_per_wound * boss.wound \
-		+ card.damage_per_ally_foothold * int(players[ally_index(pi)].foothold) \
-		+ card.damage_per_exhausted * exhausted_before
-	if card.timed:  # only well-timed hits reach here — a clean strike bites deeper
-		base_damage += card.timed_damage
-	if card.damage > 0:
-		base_damage += _attack_bonus + ps.strength + ps.char_attack_bonus
+	# Everything numeric this card does, from the one formula the card face also
+	# shows. Only well-timed plays reach here (fumbles slipped away above), so the
+	# preview is taken as nailed. Damage resolves first, so a card that also Exposes
+	# doesn't consume its own stacks. _damage_boss gates on whether THIS hunter
+	# reached the sigil.
+	#
+	# Taken BEFORE play_counts is bumped and before this card's own exhaust_pick
+	# fires, so Build Mech counts only EARLIER plays and Detonator doesn't secretly
+	# count its own sacrifice.
+	var pv := preview(pi, card, true)
+	ps.play_counts[card.id] = int(ps.play_counts.get(card.id, 0)) + 1
+	var base_damage: int = int(pv["damage"])
 	if base_damage > 0:
 		var hit_count := maxi(card.hits, 1)
 		var dealt := 0
@@ -314,11 +377,8 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 			var fed_ally: PlayerState = players[ally_index(pi)]
 			fed_ally.foothold = mini(fed_ally.foothold + ps.poison_lift, FOOTHOLD_MAX)
 			_log("%s's vines surge — %s climbs +%d." % [who, fed_ally.combatant.name, ps.poison_lift])
-	var grip_amount := card.grip
-	if card.timed:  # only hits reach here (fumbles slipped away above)
-		grip_amount += card.timed_grip
-	if grip_amount > 0:
-		var climbed := grip_amount + ps.climb_bonus + card.grip_per_rhythm * ps.rhythm
+	var climbed: int = int(pv["grip"])
+	if climbed > 0:
 		ps.foothold = mini(ps.foothold + climbed, FOOTHOLD_MAX)
 		var flair := "  (nailed it!)" if card.timed else ""
 		_log("%s plays %s — climbs (+%d Height, now %d)%s." % [who, card.name, climbed, ps.foothold, flair])
@@ -372,20 +432,16 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	# A braced guard can be timed too: nail the window as the beast swings and the
 	# guard holds. Only hits reach here — a fumbled brace slipped away above, so
 	# mistiming a defensive card means eating the blow bare.
-	var timed_blk := card.timed_block if card.timed else 0
-	var timed_ally_blk := card.timed_ally_block if card.timed else 0
-	if card.block > 0 or card.block_per_play > 0 or timed_blk > 0 or card.block_per_exhausted > 0:
-		var blk := card.block + card.block_per_play * prior_plays + timed_blk \
-			+ card.block_per_exhausted * exhausted_before  # Build Mech grows each play
-		if blk > 0:
-			ps.combatant.gain_block(blk)
-			var guard := "  (nailed it!)" if timed_blk > 0 else ""
-			_log("%s plays %s — +%d block%s." % [who, card.name, blk, guard])
-	if card.ally_block > 0 or timed_ally_blk > 0:
+	var blk: int = int(pv["block"])
+	if blk > 0:
+		ps.combatant.gain_block(blk)
+		var guard := "  (nailed it!)" if card.timed and card.timed_block > 0 else ""
+		_log("%s plays %s — +%d block%s." % [who, card.name, blk, guard])
+	var ally_blk: int = int(pv["ally_block"])
+	if ally_blk > 0:
 		var ally: PlayerState = players[ally_index(pi)]
-		var ally_blk := card.ally_block + timed_ally_blk
 		ally.combatant.gain_block(ally_blk)
-		var anchored := "  (nailed it!)" if timed_ally_blk > 0 else ""
+		var anchored := "  (nailed it!)" if card.timed and card.timed_ally_block > 0 else ""
 		_log("%s plays %s — +%d block to %s%s." % [who, card.name, ally_blk, ally.combatant.name, anchored])
 	if card.ally_energy > 0:
 		var ally_e: PlayerState = players[ally_index(pi)]
