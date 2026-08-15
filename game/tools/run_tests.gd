@@ -76,6 +76,8 @@ func _init() -> void:
 	_test_timed_block_guards_on_a_hit()
 	_test_timed_ally_block_anchors_the_ally()
 	_test_every_referenced_card_id_resolves()
+	_test_exhaust_scaling_grows_with_the_burn_pile()
+	_test_detonator_does_not_count_its_own_sacrifice()
 	# Goblin Engineer cards
 	_test_jetpack_prepares_climb()
 	_test_grappling_arm_pulls_ally()
@@ -1126,6 +1128,35 @@ func _test_timed_ally_block_anchors_the_ally() -> void:
 		"Anchor Brace shields the ally on a nailed timing, and the caster a little")
 
 
+## The Goblin's sacrifices should compound: every card he burns makes Scrap Drive
+## and Pressure Valve stronger for the rest of the fight.
+func _test_exhaust_scaling_grows_with_the_burn_pile() -> void:
+	var combat := _new_combat([_deck_of(_scrap_drive, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var before: int = combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))          # nothing burned yet: 3 damage
+	var cold: int = before - combat.boss.hp
+	ps.exhaust_pile.append(_slash())                          # two cards burned
+	ps.exhaust_pile.append(_slash())
+	var mid: int = combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))          # 3 + 3*2 = 9
+	_expect(cold == 3 and mid - combat.boss.hp == 9,
+		"damage_per_exhausted scales with cards burned this fight")
+
+
+## Detonator both burns a card AND scales off the burn pile. It must count the
+## pile as it was BEFORE its own sacrifice, or it silently pays itself.
+func _test_detonator_does_not_count_its_own_sacrifice() -> void:
+	var combat := _new_combat([_deck_of(_detonator, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var ci := _first_playable(combat, 0)
+	var sac := 1 if ci != 1 else 2
+	var before: int = combat.boss.hp
+	combat.play_card(0, ci, true, sac)   # pile empty before the play: 4 damage, not 10
+	_expect(before - combat.boss.hp == 4 and ps.exhaust_pile.size() == 1,
+		"Detonator scales off the pile before its own sacrifice, and still burns one")
+
+
 ## Content.make_card returns an EMPTY card for an unknown id rather than failing,
 ## so a typo in a deck or pool is silently a blank card in someone's hand. Catch it.
 func _test_every_referenced_card_id_resolves() -> void:
@@ -1683,6 +1714,10 @@ func _flurry() -> Card:
 	return Card.from_dict({"id": "flurry", "name": "Flurry", "type": "attack", "cost": 2, "damage": 4, "hits": 2})
 func _dig_in() -> Card:
 	return Card.from_dict({"id": "dig_in", "name": "Dig In", "type": "skill", "cost": 1, "block": 4, "timed": true, "timed_block": 6})
+func _scrap_drive() -> Card:
+	return Card.from_dict({"id": "scrap_drive", "name": "Scrap Drive", "type": "attack", "cost": 1, "damage": 3, "damage_per_exhausted": 3})
+func _detonator() -> Card:
+	return Card.from_dict({"id": "detonator", "name": "Detonator", "type": "attack", "cost": 3, "damage": 4, "damage_per_exhausted": 6, "exhaust_pick": true})
 func _anchor_brace() -> Card:
 	return Card.from_dict({"id": "anchor_brace", "name": "Anchor Brace", "type": "skill", "cost": 1, "block": 2, "ally_block": 4, "timed": true, "timed_ally_block": 6, "target": "ally"})
 

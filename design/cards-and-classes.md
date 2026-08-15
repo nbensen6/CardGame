@@ -217,6 +217,36 @@ slips away with no effect, so mistiming a brace means taking the hit bare.
 | deploy_bulwark | Goblin Engineer | 1 | Builds **Bulwark** into your hand |
 | bulwark | *(built)* | 0 | **Timed.** 3 Block (+8 nailed) |
 
+### Content batch — 40 signature cards (2026-08-15)
+
+Ten per class. **The live catalog is now the Card Lab** (`node tools/cardlab/build.js`)
+rather than a hand-maintained table — it reads the JSON directly, so it can't drift.
+
+Where the batch landed, and why the target is what it is:
+
+| | Before | After | Target |
+|---|---|---|---|
+| Cards in game | 65 | **105** | — |
+| Draftable pool per class | 21–24 | **31–32** | ~40 |
+| Signature cards per class | 5–10 | **15–18** | 25+ |
+| Cost-1 share | 54% | **50%** | <50% |
+
+**Where the ~40 target comes from.** A run visits 16 nodes (4 acts x 3 rows + a Titan
+row). Row 0 of each act is always a fight and the run-up row never is, so only about
+**5–6 nodes per run pay a card reward**, each offering `REWARD_CHOICES = 3`. That's
+~16 cards seen per run. Against the old 21-card pool you saw ~78% of your class every
+single run, which is why drafting converged. At 31 you now see ~52%; at 40 you'd see
+~40%, which is where two runs of the same class start to diverge.
+
+**The cheaper lever, not yet pulled:** card rewards are rare *because elites and Titans
+pay relics instead of cards*. Slay the Spire pays a card after essentially every combat.
+Making elites pay a card **and** a relic would roughly double draft decisions per run
+without authoring a single new card — likely worth more than the next 40 cards.
+
+New fields this batch: `damage_per_exhausted` / `block_per_exhausted` — the Goblin's
+sacrifices now compound instead of being a one-off cost. Both count the pile as it stood
+**before** the played card's own sacrifice, so Detonator can't pay itself.
+
 ## 4. How to add a card (template)
 
 1. Add an entry to `game/data/cards.json` under `"cards"`:

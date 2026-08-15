@@ -29,6 +29,8 @@ var ally_grip: int     # Foothold given to the ALLY (vines/ropes — shared clim
 var create: String     # card id this card builds and adds to your hand (Goblin Mech)
 var pull_ally: int     # grapple the ally UP to your Height, if the gap is within this
 var block_per_play: int # extra Block for each earlier time you've played this card this fight
+var damage_per_exhausted: int # bonus damage per card burned to the exhaust pile this fight (Goblin)
+var block_per_exhausted: int  # bonus Block per card burned to the exhaust pile this fight (Goblin)
 var prepare: String    # arms a delayed effect that resolves at the start of your next turn
 var exhaust_pick: bool # requires picking a card from your hand to EXHAUST (gone for the fight)
 var cheapen_pick: bool # requires picking a card from your hand to permanently cut its cost
@@ -74,6 +76,8 @@ static func from_dict(d: Dictionary) -> Card:
 	c.create = String(d.get("create", ""))
 	c.pull_ally = int(d.get("pull_ally", 0))
 	c.block_per_play = int(d.get("block_per_play", 0))
+	c.damage_per_exhausted = int(d.get("damage_per_exhausted", 0))
+	c.block_per_exhausted = int(d.get("block_per_exhausted", 0))
 	c.prepare = String(d.get("prepare", ""))
 	c.exhaust_pick = bool(d.get("exhaust_pick", false))
 	c.cheapen_pick = bool(d.get("cheapen_pick", false))
@@ -100,6 +104,8 @@ func to_dict() -> Dictionary:
 	return {
 		"id": id, "name": name, "type": type, "cost": cost, "damage": damage,
 		"block": block, "block_per_play": block_per_play, "ally_block": ally_block,
+		"damage_per_exhausted": damage_per_exhausted,
+		"block_per_exhausted": block_per_exhausted,
 		"ally_energy": ally_energy, "vulnerable": vulnerable, "taunt": taunt,
 		"grip": grip, "ally_grip": ally_grip, "pull_ally": pull_ally,
 		"sac_ally_grip": sac_ally_grip, "exhaust_pick": exhaust_pick,
@@ -135,7 +141,8 @@ func upgraded_copy() -> Card:
 	for key in ["grip", "ally_grip", "timed_grip", "vulnerable", "wound",
 			"strength", "draw", "block_per_play", "ally_energy", "rhythm",
 			"damage_per_vulnerable", "damage_per_foothold",
-			"damage_per_ally_foothold", "damage_per_rhythm", "damage_per_wound"]:
+			"damage_per_ally_foothold", "damage_per_rhythm", "damage_per_wound",
+			"damage_per_exhausted", "block_per_exhausted"]:
 		if int(d[key]) > 0:
 			d[key] = int(d[key]) + 1
 			bumped = true

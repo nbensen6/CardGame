@@ -192,6 +192,8 @@ func _meld_cards(a: Card, b: Card) -> Card:
 		"damage": a.damage + b.damage,
 		"block": a.block + b.block,
 		"block_per_play": a.block_per_play + b.block_per_play,
+		"damage_per_exhausted": a.damage_per_exhausted + b.damage_per_exhausted,
+		"block_per_exhausted": a.block_per_exhausted + b.block_per_exhausted,
 		"ally_block": a.ally_block + b.ally_block,
 		"ally_energy": a.ally_energy + b.ally_energy,
 		"vulnerable": a.vulnerable + b.vulnerable,
@@ -276,6 +278,9 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	var who: String = ps.combatant.name
 	var prior_plays := int(ps.play_counts.get(card.id, 0))  # how many times BEFORE this play
 	ps.play_counts[card.id] = prior_plays + 1
+	# Counted BEFORE this card's own exhaust_pick fires, so a card that burns AND
+	# scales (Detonator) doesn't secretly count its own sacrifice.
+	var exhausted_before := ps.exhaust_pile.size()
 
 	# Damage first (so a card that also Exposes doesn't consume its own stacks).
 	# Base scales with Exposed stacks (Sunlight Blade) and this hunter's own Height
@@ -283,7 +288,8 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	var base_damage := card.damage + card.damage_per_vulnerable * boss.vulnerable \
 		+ card.damage_per_foothold * ps.foothold + card.damage_per_rhythm * ps.rhythm \
 		+ card.damage_per_wound * boss.wound \
-		+ card.damage_per_ally_foothold * int(players[ally_index(pi)].foothold)
+		+ card.damage_per_ally_foothold * int(players[ally_index(pi)].foothold) \
+		+ card.damage_per_exhausted * exhausted_before
 	if card.timed:  # only well-timed hits reach here — a clean strike bites deeper
 		base_damage += card.timed_damage
 	if card.damage > 0:
@@ -368,8 +374,9 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	# mistiming a defensive card means eating the blow bare.
 	var timed_blk := card.timed_block if card.timed else 0
 	var timed_ally_blk := card.timed_ally_block if card.timed else 0
-	if card.block > 0 or card.block_per_play > 0 or timed_blk > 0:
-		var blk := card.block + card.block_per_play * prior_plays + timed_blk  # Build Mech grows each play
+	if card.block > 0 or card.block_per_play > 0 or timed_blk > 0 or card.block_per_exhausted > 0:
+		var blk := card.block + card.block_per_play * prior_plays + timed_blk \
+			+ card.block_per_exhausted * exhausted_before  # Build Mech grows each play
 		if blk > 0:
 			ps.combatant.gain_block(blk)
 			var guard := "  (nailed it!)" if timed_blk > 0 else ""
