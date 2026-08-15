@@ -33,3 +33,6 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 .DS_Store
+
+# Card Lab output — regenerate with tools/cardlab/build.js
+tools/cardlab/cardlab.html
