@@ -24,6 +24,9 @@ const PRICE_CARD := 55
 const PRICE_RELIC := 135
 const PRICE_REMOVE := 70   # rises each time it's used in a run
 const REWARD_CHOICES := 3
+## How often each rarity is offered, relative to the others. Tune these before
+## adding more cards — they move perceived variety far more than raw pool size.
+const RARITY_WEIGHT := {"common": 55, "uncommon": 35, "rare": 10}
 const HEAL_BETWEEN := 4  # hunters recover a little after each beast falls
 const PLAYER_HP := 42
 
@@ -443,11 +446,38 @@ func _roll_choices(pool: Array) -> Array:
 	var out: Array = []
 	var n: int = mini(maxi(1, REWARD_CHOICES - int(_asc.get("reward_choices", 0))), ids.size())
 	for _k in range(n):
-		var idx := _rng.randi_range(0, ids.size() - 1)
+		var idx := _weighted_index(ids)
 		var id := String(ids[idx])
 		out.append(Content.make_relic(id) if reward_kind == "relic" else Content.make_card(id))
 		ids.remove_at(idx)
 	return out
+
+
+## Pick an index from `ids`, weighted by rarity, so commons carry the drafting and
+## a rare feels like a find rather than another option. Without this, a 40-card
+## pool offers its best payoff as often as its filler.
+##
+## With the current catalog (61 common / 61 uncommon / 20 rare) these weights land
+## at roughly 59% / 37% / 4% of cards actually offered.
+func _weighted_index(ids: Array) -> int:
+	if ids.size() <= 1:
+		return 0
+	if reward_kind == "relic":
+		return _rng.randi_range(0, ids.size() - 1)  # relics have no rarity — stay uniform
+	var weights: Array = []
+	var total := 0
+	for id in ids:
+		var w: int = int(RARITY_WEIGHT.get(Content.card_rarity(String(id)), RARITY_WEIGHT["common"]))
+		weights.append(w)
+		total += w
+	if total <= 0:
+		return _rng.randi_range(0, ids.size() - 1)
+	var roll := _rng.randi_range(0, total - 1)
+	for i in range(weights.size()):
+		roll -= int(weights[i])
+		if roll < 0:
+			return i
+	return weights.size() - 1
 
 func _all_picked() -> bool:
 	for picked in reward_picked:

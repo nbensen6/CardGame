@@ -104,6 +104,8 @@ func _init() -> void:
 	_test_run_is_four_titans()
 	_test_run_relic_reward_and_full_clear()
 	_test_elite_pays_a_card_then_a_relic()
+	_test_every_card_declares_a_rarity()
+	_test_rarity_weighting_favours_commons()
 	# content batch: strength, wound, multi-hit, leech
 	_test_strength_mechanic()
 	_test_wound_bleeds_the_titan()
@@ -1334,6 +1336,39 @@ func _test_elite_pays_a_card_then_a_relic() -> void:
 		and run.team_relics.size() == relics_before + run.player_count()
 		and run.phase == Run.Phase.MAP,
 		"an elite pays a card and THEN a relic before the route reopens")
+
+
+## An unset rarity silently defaults to "common", which would quietly make a new
+## rare card as frequent as filler. Every drafted card must declare one.
+func _test_every_card_declares_a_rarity() -> void:
+	var valid := ["common", "uncommon", "rare"]
+	var bad: Array = []
+	for c in Content.list_characters():
+		for rid in Content.reward_pool(String(c["id"])):
+			var r := Content.card_rarity(String(rid))
+			if not valid.has(r):
+				bad.append("%s: '%s'" % [rid, r])
+	_expect(bad.is_empty(), "every draftable card declares a valid rarity [%s]" % ", ".join(bad))
+
+
+## Over many rolls, commons should dominate the offers and rares should be scarce.
+## Statistical, so the bounds are deliberately loose — this catches "weighting is
+## wired up backwards or not at all", not small tuning drift.
+func _test_rarity_weighting_favours_commons() -> void:
+	var run := _map_run()
+	var pool: Array = Content.reward_pool("frog")
+	var seen := {"common": 0, "uncommon": 0, "rare": 0}
+	run.reward_kind = "card"
+	for _i in range(400):
+		for card in run._roll_choices(pool):
+			var r := String((card as Card).rarity)
+			seen[r] = int(seen.get(r, 0)) + 1
+	var total: int = int(seen["common"]) + int(seen["uncommon"]) + int(seen["rare"])
+	var common_pct := float(seen["common"]) / float(total)
+	var rare_pct := float(seen["rare"]) / float(total)
+	_expect(total > 0 and common_pct > 0.45 and rare_pct < 0.15,
+		"rarity weighting favours commons (%d%% common, %d%% rare over %d offers)"
+			% [int(common_pct * 100.0), int(rare_pct * 100.0), total])
 
 
 func _pick_both(run: Run) -> void:

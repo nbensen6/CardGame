@@ -57,7 +57,8 @@ const GROUPS = [
   ["Timing",   ["timed", "timed_hits", "timed_damage", "timed_grip",
                 "timed_block", "timed_ally_block"]],
 ];
-const META_FIELDS = new Set(["name", "type", "text", "icon", "target", "cost"]);
+const META_FIELDS = new Set(["name", "type", "text", "icon", "target", "cost", "rarity"]);
+const RARITY_WEIGHT = { common: 55, uncommon: 35, rare: 10 }; // mirrors Run.RARITY_WEIGHT
 
 /* ---------- build the card model ----------------------------------------- */
 const allFields = new Set();
@@ -102,6 +103,7 @@ const model = Object.entries(CARDS).map(([id, c]) => {
   return {
     id,
     name: c.name || id,
+    rarity: c.rarity || "common",
     type: c.type || "—",
     cost: c.cost ?? 0,
     text: c.text || "",
@@ -163,6 +165,23 @@ const classStats = CHAR_ORDER.map((cid) => {
 
   const totalEnergy = starterCards.reduce((s, c) => s + c.cost, 0);
 
+  // How the pool is split by rarity, and — more useful — how often each rarity
+  // is actually OFFERED once the reward weights are applied. A pool that is 15%
+  // rare still only shows a rare in a few percent of slots.
+  const rarityMix = { common: 0, uncommon: 0, rare: 0 };
+  for (const id of pool) {
+    const c = byId[id];
+    if (c) rarityMix[c.rarity] = (rarityMix[c.rarity] || 0) + 1;
+  }
+  let weighted = 0;
+  for (const r of Object.keys(rarityMix)) weighted += rarityMix[r] * (RARITY_WEIGHT[r] ?? 55);
+  const offerRate = {};
+  for (const r of Object.keys(rarityMix)) {
+    offerRate[r] = weighted
+      ? Math.round(((rarityMix[r] * (RARITY_WEIGHT[r] ?? 55)) / weighted) * 100)
+      : 0;
+  }
+
   return {
     id: cid,
     name: ch.name,
@@ -180,6 +199,8 @@ const classStats = CHAR_ORDER.map((cid) => {
     sharedInPool,
     identityPct: pool.length ? Math.round((sigInPool / pool.length) * 100) : 0,
     avgCost: starter.length ? (totalEnergy / starter.length).toFixed(2) : "0",
+    rarityMix,
+    offerRate,
     curve: costCurve(starter),
   };
 });
@@ -336,7 +357,7 @@ for (let i = 0; i < GROUPS.length; i++) {
 const payload = {
   generated: new Date().toISOString(),
   cards: model.map((c) => ({
-    id: c.id, name: c.name, type: c.type, cost: c.cost, text: c.text,
+    id: c.id, name: c.name, type: c.type, rarity: c.rarity, cost: c.cost, text: c.text,
     target: c.target, timed: c.timed, used: c.used, classes: c.classes,
     signature: c.signature, shared: c.shared, reachable: c.reachable,
     builtBy: c.builtBy, inGlobalPool: c.inGlobalPool,
@@ -417,6 +438,9 @@ td.num,th.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-ali
 .tag.t{background:#2e2412;color:var(--gold);border-color:#4a3a1c}
 .tag.sig{background:#1d2a18;color:var(--moss);border-color:#2f4426}
 .tag.sh{background:#1a2530;color:var(--sky);border-color:#27384a}
+.tag.r-c{background:#20201d;color:var(--dim);border-color:#33322c}
+.tag.r-u{background:#16242c;color:var(--sky);border-color:#223945}
+.tag.r-r{background:#2e2412;color:var(--gold);border-color:#4a3a1c}
 .bar{display:flex;align-items:center;gap:8px}
 .bar i{display:block;height:9px;background:var(--gold);border-radius:1px;min-width:2px}
 .bar.m i{background:var(--moss)} .bar.s i{background:var(--sky)}
@@ -505,6 +529,8 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
       <td class="num">\${k.avgCost}</td>
       <td><div class="bar"><i style="width:\${k.timedPct*1.2}px"></i><span class="sub">\${k.timedPct}%\${k.builtTimed?" ("+k.directTimed+"+"+k.builtTimed+" built)":""}</span></div></td>
       <td><div class="bar m"><i style="width:\${k.identityPct*1.2}px"></i><span class="sub">\${k.identityPct}%</span></div></td>
+      <td class="cardtext"><span class="tag r-c">\${k.rarityMix.common} C</span><span class="tag r-u">\${k.rarityMix.uncommon} U</span><span class="tag r-r">\${k.rarityMix.rare} R</span>
+        <div class="sub">offered \${k.offerRate.common}/\${k.offerRate.uncommon}/\${k.offerRate.rare}%</div></td>
       <td class="cardtext">\${cv}</td></tr>\`;
   }).join("");
 
@@ -522,7 +548,7 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
      Identity % is how much of the class's reward pool is unique to it rather than shared filler.</p>
    <div class="scroll"><table><thead><tr>
      <th>Class</th><th>Passive</th><th class="num">Deck</th><th class="num">Avg cost</th>
-     <th>Timed</th><th>Identity</th><th>Cost spread</th></tr></thead><tbody>\${cls}</tbody></table></div>
+     <th>Timed</th><th>Identity</th><th>Rarity mix</th><th>Cost spread</th></tr></thead><tbody>\${cls}</tbody></table></div>
    <h2>Cost curve — whole catalog</h2>
    <p class="note">You have 3 energy a turn. If one cost dominates, every turn plays the same
      number of cards and deckbuilding loses its central tension.</p>
@@ -540,6 +566,8 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
       <select id="fc"><option value="">All classes</option>\${classOpts}<option value="__none">Unowned</option></select>
       <select id="fk"><option value="">All kinds</option><option value="timed">Timed only</option>
         <option value="sig">Signature only</option><option value="shared">Shared only</option></select>
+      <select id="fr"><option value="">All rarities</option><option value="common">Common</option>
+        <option value="uncommon">Uncommon</option><option value="rare">Rare</option></select>
       <span class="sub" id="count"></span>
     </div>
     <div class="scroll"><table id="tbl"><thead><tr>
@@ -557,6 +585,7 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
       if(fk==="timed" && !c.timed) return false;
       if(fk==="sig" && !c.signature) return false;
       if(fk==="shared" && !c.shared) return false;
+      if($("#fr").value && c.rarity!==$("#fr").value) return false;
       return true;
     });
     list.sort((a,b)=>{
@@ -565,7 +594,7 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
     });
     $("#count").textContent = list.length + " of " + D.cards.length;
     $("#tbl tbody").innerHTML = list.map(c=>\`<tr>
-      <td><b>\${esc(c.name)}</b>\${c.timed?' <span class="tag t">timed</span>':""}
+      <td><b>\${esc(c.name)}</b> <span class="tag r-\${c.rarity[0]}">\${esc(c.rarity)}</span>\${c.timed?' <span class="tag t">timed</span>':""}
         \${!c.reachable?' <span class="tag" style="color:var(--rust)">unreachable</span>':""}
         <div class="sub">\${esc(c.id)}</div></td>
       <td class="num">\${c.cost}</td>
@@ -578,7 +607,7 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
   s.querySelectorAll("thead th[data-k]").forEach(th=>th.onclick=()=>{
     const k=th.dataset.k; sortDir = (k===sortK) ? -sortDir : 1; sortK=k; rows();
   });
-  ["q","fc","fk"].forEach(id=>$("#"+id).oninput=rows);
+  ["q","fc","fk","fr"].forEach(id=>$("#"+id).oninput=rows);
   rows();
 })();
 

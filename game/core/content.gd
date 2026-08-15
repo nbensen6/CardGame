@@ -39,6 +39,13 @@ static func make_card(id: String) -> Card:
 	cd["id"] = id
 	return Card.from_dict(cd)
 
+## A card's rarity without building the whole Card — reward rolls ask for this
+## once per candidate, so it stays a plain dictionary lookup.
+static func card_rarity(id: String) -> String:
+	var cards: Dictionary = _read_json(CARDS_PATH).get("cards", {})
+	return String((cards.get(id, {}) as Dictionary).get("rarity", "common"))
+
+
 ## Build a hunter's starting deck from data.
 static func build_starter_deck() -> Array:
 	var deck: Array = []
