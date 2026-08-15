@@ -908,11 +908,16 @@ func _show_card_detail(data: Dictionary) -> void:
 		col.add_child(_detail_label(rarity.to_upper(), 11, rc))
 
 	col.add_child(_detail_rule())
-	col.add_child(_detail_label(String(data.get("text", "")), 14, Color(0.88, 0.84, 0.75), true))
+	# What it does right now — the same one sentence the card face shows, from the
+	# same formatter, so the two can never disagree.
+	col.add_child(_detail_label(CardView.face_text(data), 15, Color(0.98, 0.88, 0.6), true))
 
-	var bits := CardView._effect_bits(data)  # the one formatter — never a second copy
-	if bits != "":
-		col.add_child(_detail_label("Right now:  " + bits, 15, Color(0.98, 0.84, 0.45)))
+	# The authored line explains the card's SHAPE ("+3 per Rhythm") — the part a
+	# single live number can't convey. It belongs here, where there is room, not
+	# crammed onto the face beside the numbers it produces.
+	var authored := String(data.get("text", ""))
+	if authored != "":
+		col.add_child(_detail_label(authored, 12, Color(0.76, 0.72, 0.64), true))
 
 	var kws: Array = data.get("keywords", [])
 	if not kws.is_empty():

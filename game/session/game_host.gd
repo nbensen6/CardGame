@@ -313,6 +313,16 @@ func _slot_private(pi: int) -> Dictionary:
 				"playable": _run.combat.can_play(pi, i),
 				"rarity": c.rarity, "keywords": _keywords_of(c),
 				"preview": hit, "preview_miss": miss,
+				# The non-numeric effects, so the face can write ONE sentence
+				# instead of printing a formula beside a live readout.
+				"fx": {
+					"wound": c.wound, "vulnerable": c.vulnerable, "strength": c.strength,
+					"draw": c.draw, "taunt": c.taunt, "rhythm": c.rhythm,
+					"create": c.create, "prepare": c.prepare, "meld": c.meld,
+					"exhaust_pick": c.exhaust_pick, "cheapen_pick": c.cheapen_pick,
+					"pull_ally": c.pull_ally, "sac_ally_grip": c.sac_ally_grip,
+					"hits": c.hits,
+				},
 			})
 		return {
 			"hand": cards, "energy": ps.energy, "ended": ps.ended_turn,

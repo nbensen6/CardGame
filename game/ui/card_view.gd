@@ -120,11 +120,7 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 	else:
 		box.add_child(_header(String(data.get("name", "")), int(data.get("cost", 0)), bool(data.get("no_cost", false))))
 		box.add_child(_art(String(data.get("icon", "")), String(data.get("portrait", ""))))
-		var eff := _effect_line(data)
-		if eff != null:
-			eff.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			box.add_child(eff)
-		box.add_child(_body(String(data.get("text", ""))))
+		box.add_child(_body(face_text(data)))
 
 	_strip = _build_timing_strip()  # hidden until start_timing()
 	box.add_child(_strip)
@@ -171,17 +167,12 @@ func _rail_row(data: Dictionary) -> Control:
 	name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	col.add_child(name_lbl)
 
-	var effect := _effect_line(data)  # the live numbers, above the prose
-	if effect != null:
-		col.add_child(effect)
-
-	var body := _label(String(data.get("text", "")), 11)
+	# ONE description, with live numbers in it. Not a readout plus a formula.
+	var body := _label(face_text(data), 12)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	# Clip rather than overflow: the effect line above already carries every number,
-	# and tapping the card shows the full text. A half-drawn third line reads as a bug.
 	body.max_lines_visible = RAIL_TEXT_LINES
 	body.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	body.add_theme_color_override("font_color", Color(0.84, 0.79, 0.68))
+	body.add_theme_color_override("font_color", Color(0.9, 0.86, 0.76))
 	col.add_child(body)
 
 	row.add_child(col)
@@ -206,54 +197,77 @@ func _inspect_button(data: Dictionary) -> Control:
 	return b
 
 
-## What this card will ACTUALLY do, right now, in this board state — straight from
-## Combat.preview via the snapshot.
+## The card's ONE description line, written from what it will actually do.
 ##
-## The printed text explains a card's SHAPE ("+3 per EACH hunter's Height"); this is
-## the arithmetic the player would otherwise be doing in their head, every turn, for
-## every card in hand, while a real-time grip bar drains. See
-## design/feel-and-readability.md.
-func _effect_line(data: Dictionary) -> Control:
-	var bits := _effect_bits(data)
-	if bits == "":
-		return null
-	var lbl := _label(bits, 13)
-	lbl.add_theme_color_override("font_color", Color(0.98, 0.84, 0.45))
-	return lbl
-
-
-## Static so the card inspector can format the same line without building a card —
-## one formatter, so the face and the detail panel can never disagree.
-static func _effect_bits(data: Dictionary) -> String:
+## Slay the Spire never prints a formula and a result side by side: a card says
+## "Deal 6 damage", and when Strength makes that 9 the NUMBER changes, in place.
+## The first pass at this added a live readout ABOVE the authored text, so Brace
+## read "5 blk" and then "Gain 5 Block." — the same fact twice, once abbreviated.
+## This replaces both: full words, live numbers, one sentence.
+##
+## The authored `text` still exists and still explains the card's SHAPE ("+3 per
+## Rhythm") — it lives in the inspector, where there is room for it.
+static func face_text(data: Dictionary) -> String:
 	var pv: Dictionary = data.get("preview", {})
 	if pv.is_empty():
-		return ""
+		return String(data.get("text", ""))
 	var miss: Dictionary = data.get("preview_miss", pv)
+	var fx: Dictionary = data.get("fx", {})
 	var timed := bool(data.get("timed", false))
-	var bits: PackedStringArray = []
+	var out: PackedStringArray = []
 
 	var dmg := int(pv.get("damage", 0))
 	if dmg > 0:
-		var hits := int(pv.get("hits", 1))
-		var d := _pair(int(miss.get("damage", 0)), dmg, timed)
-		bits.append(d + " dmg" if hits <= 1 else "%s dmg x%d" % [d, hits])
+		var n := int(fx.get("hits", 1))
+		var times := "" if n <= 1 else (" twice" if n == 2 else " %d times" % n)
+		out.append("Deal %s damage%s." % [_pair(int(miss.get("damage", 0)), dmg, timed), times])
 	var blk := int(pv.get("block", 0))
 	if blk > 0:
-		bits.append(_pair(int(miss.get("block", 0)), blk, timed) + " blk")
+		out.append("Gain %s Block." % _pair(int(miss.get("block", 0)), blk, timed))
 	var climb := int(pv.get("grip", 0))
 	if climb > 0:
-		bits.append("+" + _pair(int(miss.get("grip", 0)), climb, timed) + " climb")
+		out.append("Climb +%s." % _pair(int(miss.get("grip", 0)), climb, timed))
 	var ally_blk := int(pv.get("ally_block", 0))
 	if ally_blk > 0:
-		bits.append(_pair(int(miss.get("ally_block", 0)), ally_blk, timed) + " blk ally")
+		out.append("Ally gains %s Block." % _pair(int(miss.get("ally_block", 0)), ally_blk, timed))
 	var ally_climb := int(pv.get("ally_grip", 0))
 	if ally_climb > 0:
-		bits.append("+%d climb ally" % ally_climb)
-	return "   ".join(bits)
+		out.append("Ally climbs +%d." % ally_climb)
+
+	if int(fx.get("wound", 0)) > 0:
+		out.append("Poison %d." % int(fx["wound"]))
+	if int(fx.get("vulnerable", 0)) > 0:
+		out.append("Expose %d." % int(fx["vulnerable"]))
+	if int(fx.get("strength", 0)) > 0:
+		out.append("+%d Strength." % int(fx["strength"]))
+	if int(fx.get("rhythm", 0)) > 0:
+		out.append("+%d Rhythm." % int(fx["rhythm"]))
+	if int(fx.get("draw", 0)) > 0:
+		out.append("Draw %d." % int(fx["draw"]))
+	if bool(fx.get("taunt", false)):
+		out.append("Taunt.")
+	if int(fx.get("pull_ally", 0)) > 0:
+		out.append("Pull your ally up to you.")
+	if int(fx.get("sac_ally_grip", 0)) > 0:
+		out.append("Burn a card: ally climbs +%d." % int(fx["sac_ally_grip"]))
+	elif bool(fx.get("exhaust_pick", false)):
+		out.append("Burn a card." if not bool(fx.get("cheapen_pick", false))
+			else "Burn a card to cheapen another.")
+	if String(fx.get("create", "")) != "":
+		out.append("Build a tool into your hand.")
+	if String(fx.get("prepare", "")) != "":
+		out.append("Primed for next turn.")
+	if bool(fx.get("meld", false)):
+		out.append("Fuse two cards into one.")
+
+	if out.is_empty():
+		return String(data.get("text", ""))
+	var body := " ".join(out)
+	return ("Time it! " + body) if timed else body
 
 
-## "15" when nailing it changes nothing, "8→15" when it does — so a timed card shows
-## what it's worth AND what it's worth if you land it, without a parenthesis.
+## "15" when nailing it changes nothing, "2→5" when it does — so a timed card shows
+## what it's worth AND what landing it is worth, without a parenthesis.
 static func _pair(low: int, high: int, timed: bool) -> String:
 	if timed and high != low:
 		return "%d→%d" % [low, high]
