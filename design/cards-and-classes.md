@@ -29,11 +29,13 @@ mix them freely. Unset fields default to 0/false.
 | `timed` | Runs the on-card timing bar. **Hit** → grants the timed bonuses; **miss** → the card *slips away with no effect* |
 | `timed_grip` | Bonus Height on a well-timed climb |
 | `timed_damage` | Bonus damage on a well-timed strike |
+| `timed_block` | Bonus Block on a well-timed **brace**. Miss and the card slips away as usual — so a mistimed guard means eating the blow bare |
+| `timed_ally_block` | Bonus Block for your **ally** on a well-timed anchor (roped defence) |
 | `create` | A card id this card **builds** and adds to your hand (Engineer gadgets) |
 | `damage_per_vulnerable` | +damage per Expose stack on the Titan |
 | `damage_per_foothold` | +damage per Height **you've** climbed |
 | `strength` | **Strength** for you — adds to all your attacks for the rest of the fight |
-| `wound` | **Wound** on the Titan — it bleeds this much at the start of each of its turns |
+| `wound` | **Displayed to players as "Poison".** The Titan bleeds this much at the start of each of its turns. The field name is historical — every card face and combat log says Poison, so write new card text that way |
 | `hits` | How many times the damage lands (multi-strike; default 1) |
 | `draw` | Extra cards drawn |
 | `target` | `"self"`/`"ally"`/`"enemy"` — **UI label only**, tells the player who it acts on |
@@ -160,7 +162,7 @@ just fit the theme.)*
 | flick | Tongue Flick | 0 | **Timed.** 2 (+3) |
 | tongue_lash | Tongue Lash | 1 | 3 damage + climb +1 |
 
-**Vine-Weaver** — vines lift the ally, poison the beast *(passive: none)*
+**Vine-Weaver** — vines lift the ally, poison the beast *(passive: `poison_lift` 1 — applying Poison climbs your ally)*
 | id | name | cost | effect |
 |---|---|---|---|
 | vine | Vine | 1 | Climb +1, ally +2 |
@@ -183,6 +185,37 @@ just fit the theme.)*
 | grapple | Grappling Hook | 0 | **Timed.** Climb +1 (+2 nailed) — built, not drawn |
 
 ---
+
+### The 3-cost payoff tier (added 2026-08-15)
+
+The catalog had **no cards at cost 3** and 66% of everything at cost 1, so with 3
+energy a turn every turn played the same three cards and "what do I cut?" was never
+a real question. Each class now has one expensive payoff worth building toward, plus
+a neutral one. Cost-1 share is now 54%.
+
+| id | class | cost | effect |
+|---|---|---|---|
+| grand_leap | Frog | 3 | **Timed.** 4 dmg (+4), climb +3 (+3), +2 Height per Rhythm |
+| bloomburst | Vine-Weaver | 3 | 5 damage, +4 per Poison stack. Poison 2 |
+| summit_push | Mountain Climbers | 3 | Both climb +2; 5 damage, +3 per ally's Height |
+| overload_engine | Goblin Engineer | 3 | **Timed ×2.** 10 damage (+16 nailed) |
+| last_stand | neutral | 3 | Both hunters +10 Block; Taunt |
+
+Repriced 1 → 2 at the same time (they were buying too much Height for one energy):
+`leap`, `overgrowth`, `leapfrog`, `pitons_in`, `anchor_line`.
+
+### Timed defence (added 2026-08-15)
+
+Nothing in the game made you *time a defensive play* — every timed card was an attack
+or a climb. These close that gap, and they carry real stakes: a fumbled timed card
+slips away with no effect, so mistiming a brace means taking the hit bare.
+
+| id | class | cost | effect |
+|---|---|---|---|
+| dig_in | neutral | 1 | **Timed.** 4 Block (+6 nailed) |
+| anchor_brace | Mountain Climbers | 1 | **Timed.** You +2 Block; ally +4 (+6 nailed) |
+| deploy_bulwark | Goblin Engineer | 1 | Builds **Bulwark** into your hand |
+| bulwark | *(built)* | 0 | **Timed.** 3 Block (+8 nailed) |
 
 ## 4. How to add a card (template)
 

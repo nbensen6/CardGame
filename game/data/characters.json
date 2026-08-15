@@ -28,6 +28,8 @@
       ],
       "portrait": "res://assets/portraits/frog.png",
       "reward_pool": [
+        "grand_leap",
+        "dig_in",
         "cadence",
         "flurry_hop",
         "pounce",
@@ -70,6 +72,8 @@
       ],
       "portrait": "res://assets/portraits/sloth.png",
       "reward_pool": [
+        "bloomburst",
+        "dig_in",
         "rot_bloom",
         "tangle",
         "toxic_lash",
@@ -112,6 +116,9 @@
       ],
       "portrait": "res://assets/portraits/goat.png",
       "reward_pool": [
+        "summit_push",
+        "anchor_brace",
+        "dig_in",
         "anchor_line",
         "crest_strike",
         "summit_strike",
@@ -154,6 +161,9 @@
       ],
       "portrait": "res://assets/portraits/monkey.png",
       "reward_pool": [
+        "overload_engine",
+        "deploy_bulwark",
+        "last_stand",
         "build_bomb",
         "build_grapple",
         "build_mech",

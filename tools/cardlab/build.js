@@ -42,10 +42,11 @@ const GLOBAL_STARTER = cardsFile.starter_deck || [];
    field just because this list is stale. */
 const GROUPS = [
   ["Damage",   ["damage", "hits", "strength", "timed_damage"]],
-  ["Defense",  ["block", "block_per_play", "taunt", "ally_block"]],
+  ["Defense",  ["block", "block_per_play", "taunt", "ally_block",
+                "timed_block", "timed_ally_block"]],
   ["Climb",    ["grip", "timed_grip", "ally_grip", "pull_ally", "sac_ally_grip"]],
   ["Ally",     ["ally_block", "ally_energy", "ally_grip", "pull_ally",
-                "sac_ally_grip", "damage_per_ally_foothold"]],
+                "sac_ally_grip", "damage_per_ally_foothold", "timed_ally_block"]],
   ["Status",   ["vulnerable", "wound", "rhythm"]],
   ["Scaling",  ["damage_per_vulnerable", "damage_per_foothold", "damage_per_wound",
                 "damage_per_rhythm", "damage_per_ally_foothold", "grip_per_rhythm",
@@ -53,7 +54,8 @@ const GROUPS = [
   ["Tempo",    ["draw", "cost"]],
   ["Gadget",   ["create", "prepare", "meld", "exhaust_pick", "cheapen_pick",
                 "cheapen_amount"]],
-  ["Timing",   ["timed", "timed_hits", "timed_damage", "timed_grip"]],
+  ["Timing",   ["timed", "timed_hits", "timed_damage", "timed_grip",
+                "timed_block", "timed_ally_block"]],
 ];
 const META_FIELDS = new Set(["name", "type", "text", "icon", "target", "cost"]);
 
@@ -135,6 +137,18 @@ function costCurve(ids) {
   return out;
 }
 
+// A card that BUILDS a timed card (Build Grapple → Grappling Hook) puts a timing
+// bar in your hand just as surely as a timed card does. Counting only `timed`
+// undercounts the Goblin, whose identity is building his tools before using them.
+function reachesTiming(card, seen) {
+  seen ??= new Set();
+  if (!card || seen.has(card.id)) return false;
+  if (card.timed) return true;
+  seen.add(card.id);
+  const made = card.fields.create || card.fields.prepare;
+  return made ? reachesTiming(byId[made], seen) : false;
+}
+
 const classStats = CHAR_ORDER.map((cid) => {
   const ch = CHARS[cid];
   const starter = ch.starter_deck || [];
@@ -142,7 +156,8 @@ const classStats = CHAR_ORDER.map((cid) => {
   const starterCards = starter.map((i) => byId[i]).filter(Boolean);
   const poolCards = pool.map((i) => byId[i]).filter(Boolean);
 
-  const timedInStarter = starterCards.filter((c) => c.timed).length;
+  const timedInStarter = starterCards.filter((c) => reachesTiming(c)).length;
+  const directTimed = starterCards.filter((c) => c.timed).length;
   const sigInPool = poolCards.filter((c) => c.signature).length;
   const sharedInPool = poolCards.filter((c) => c.shared).length;
 
@@ -158,6 +173,8 @@ const classStats = CHAR_ORDER.map((cid) => {
     starterSize: starter.length,
     poolSize: pool.length,
     timedInStarter,
+    directTimed,
+    builtTimed: timedInStarter - directTimed,
     timedPct: starter.length ? Math.round((timedInStarter / starter.length) * 100) : 0,
     sigInPool,
     sharedInPool,
@@ -486,7 +503,7 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
       <td><span class="tag">\${esc(k.passive.type)} \${k.passive.value||""}</span></td>
       <td class="num">\${k.starterSize}</td>
       <td class="num">\${k.avgCost}</td>
-      <td><div class="bar"><i style="width:\${k.timedPct*1.2}px"></i><span class="sub">\${k.timedPct}%</span></div></td>
+      <td><div class="bar"><i style="width:\${k.timedPct*1.2}px"></i><span class="sub">\${k.timedPct}%\${k.builtTimed?" ("+k.directTimed+"+"+k.builtTimed+" built)":""}</span></div></td>
       <td><div class="bar m"><i style="width:\${k.identityPct*1.2}px"></i><span class="sub">\${k.identityPct}%</span></div></td>
       <td class="cardtext">\${cv}</td></tr>\`;
   }).join("");

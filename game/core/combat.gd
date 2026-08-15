@@ -209,6 +209,8 @@ func _meld_cards(a: Card, b: Card) -> Card:
 		"timed_hits": maxi(a.timed_hits, b.timed_hits),
 		"timed_grip": a.timed_grip + b.timed_grip,
 		"timed_damage": a.timed_damage + b.timed_damage,
+		"timed_block": a.timed_block + b.timed_block,
+		"timed_ally_block": a.timed_ally_block + b.timed_ally_block,
 		"damage_per_vulnerable": a.damage_per_vulnerable + b.damage_per_vulnerable,
 		"damage_per_foothold": a.damage_per_foothold + b.damage_per_foothold,
 		"damage_per_ally_foothold": a.damage_per_ally_foothold + b.damage_per_ally_foothold,
@@ -361,15 +363,23 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	if card.prepare != "":  # arm a delayed effect (resolves at the start of your next turn)
 		ps.prepared = card.prepare
 		_log("%s plays %s — armed for next turn." % [who, card.name])
-	if card.block > 0 or card.block_per_play > 0:
-		var blk := card.block + card.block_per_play * prior_plays  # Build Mech grows each play
+	# A braced guard can be timed too: nail the window as the beast swings and the
+	# guard holds. Only hits reach here — a fumbled brace slipped away above, so
+	# mistiming a defensive card means eating the blow bare.
+	var timed_blk := card.timed_block if card.timed else 0
+	var timed_ally_blk := card.timed_ally_block if card.timed else 0
+	if card.block > 0 or card.block_per_play > 0 or timed_blk > 0:
+		var blk := card.block + card.block_per_play * prior_plays + timed_blk  # Build Mech grows each play
 		if blk > 0:
 			ps.combatant.gain_block(blk)
-			_log("%s plays %s — +%d block." % [who, card.name, blk])
-	if card.ally_block > 0:
+			var guard := "  (nailed it!)" if timed_blk > 0 else ""
+			_log("%s plays %s — +%d block%s." % [who, card.name, blk, guard])
+	if card.ally_block > 0 or timed_ally_blk > 0:
 		var ally: PlayerState = players[ally_index(pi)]
-		ally.combatant.gain_block(card.ally_block)
-		_log("%s plays %s — +%d block to %s." % [who, card.name, card.ally_block, ally.combatant.name])
+		var ally_blk := card.ally_block + timed_ally_blk
+		ally.combatant.gain_block(ally_blk)
+		var anchored := "  (nailed it!)" if timed_ally_blk > 0 else ""
+		_log("%s plays %s — +%d block to %s%s." % [who, card.name, ally_blk, ally.combatant.name, anchored])
 	if card.ally_energy > 0:
 		var ally_e: PlayerState = players[ally_index(pi)]
 		ally_e.energy += card.ally_energy

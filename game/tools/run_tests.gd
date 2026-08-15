@@ -73,6 +73,9 @@ func _init() -> void:
 	_test_fall_noop_when_secure()
 	_test_weakpoint_threshold_bucks()
 	_test_timed_damage_bonus()
+	_test_timed_block_guards_on_a_hit()
+	_test_timed_ally_block_anchors_the_ally()
+	_test_every_referenced_card_id_resolves()
 	# Goblin Engineer cards
 	_test_jetpack_prepares_climb()
 	_test_grappling_arm_pulls_ally()
@@ -1105,6 +1108,46 @@ func _test_timed_damage_bonus() -> void:
 		"a well-timed strike adds timed_damage; a fumble deals nothing")
 
 
+## A timed defensive card: nail the window and the guard holds; mistime it and the
+## card slips away like any other timed card — so you eat the blow bare.
+func _test_timed_block_guards_on_a_hit() -> void:
+	var combat := _new_combat([_deck_of(_dig_in, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	combat.play_card(0, _first_playable(combat, 0), true)   # 4 base + 6 timed
+	var nailed: int = combat.players[0].combatant.block
+	combat.play_card(0, _first_playable(combat, 0), false)  # fumble — no guard at all
+	_expect(nailed == 10 and combat.players[0].combatant.block == 10,
+		"a well-timed brace adds timed_block; a mistimed one grants nothing")
+
+
+func _test_timed_ally_block_anchors_the_ally() -> void:
+	var combat := _new_combat([_deck_of(_anchor_brace, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	combat.play_card(0, _first_playable(combat, 0), true)   # ally 4 + 6 timed; caster 2
+	_expect(combat.players[1].combatant.block == 10 and combat.players[0].combatant.block == 2,
+		"Anchor Brace shields the ally on a nailed timing, and the caster a little")
+
+
+## Content.make_card returns an EMPTY card for an unknown id rather than failing,
+## so a typo in a deck or pool is silently a blank card in someone's hand. Catch it.
+func _test_every_referenced_card_id_resolves() -> void:
+	var bad: Array = []
+	for c in Content.list_characters():
+		var cid := String(c["id"])
+		for card in Content.character_deck(cid):
+			if String(card.name).is_empty():
+				bad.append("%s starter_deck" % cid)
+		for rid in Content.reward_pool(cid):
+			if String(Content.make_card(String(rid)).name).is_empty():
+				bad.append("%s reward_pool: %s" % [cid, rid])
+	for rid in Content.reward_pool():
+		if String(Content.make_card(String(rid)).name).is_empty():
+			bad.append("global reward_pool: %s" % rid)
+	for card in Content.build_starter_deck():
+		if String(card.name).is_empty():
+			bad.append("global starter_deck")
+	_expect(bad.is_empty(),
+		"every card id in every deck and reward pool resolves [%s]" % ", ".join(bad))
+
+
 func _test_sunlight_blade_scales_with_exposed() -> void:
 	var combat := _new_combat([_deck_of(_sunblade, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
 	combat.boss.vulnerable = 2
@@ -1638,6 +1681,10 @@ func _rend() -> Card:
 	return Card.from_dict({"id": "rend", "name": "Rend", "type": "attack", "cost": 1, "damage": 4, "wound": 2})
 func _flurry() -> Card:
 	return Card.from_dict({"id": "flurry", "name": "Flurry", "type": "attack", "cost": 2, "damage": 4, "hits": 2})
+func _dig_in() -> Card:
+	return Card.from_dict({"id": "dig_in", "name": "Dig In", "type": "skill", "cost": 1, "block": 4, "timed": true, "timed_block": 6})
+func _anchor_brace() -> Card:
+	return Card.from_dict({"id": "anchor_brace", "name": "Anchor Brace", "type": "skill", "cost": 1, "block": 2, "ally_block": 4, "timed": true, "timed_ally_block": 6, "target": "ally"})
 
 
 func _expect(cond: bool, name: String) -> void:

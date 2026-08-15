@@ -20,6 +20,8 @@ var timed: bool        # playing it triggers a timing bar; nailing it grants the
 var timed_grip: int    # bonus Height on a well-timed throw (Goblin Engineer's grapple)
 var timed_damage: int  # bonus damage on a well-timed strike (interactive attacks)
 var timed_hits: int    # how many timing windows in a row you must nail (default 1; Satchel = 3)
+var timed_block: int   # bonus Block on a well-timed brace — mistime it and the guard slips away
+var timed_ally_block: int  # bonus Block for the ALLY on a well-timed anchor (roped defence)
 var damage_per_rhythm: int  # bonus damage per Rhythm (Frog combo) you've built this turn
 var grip_per_rhythm: int    # bonus Height per Rhythm you've built this turn
 var rhythm: int             # Rhythm granted outright (the Frog's combo starter)
@@ -63,6 +65,8 @@ static func from_dict(d: Dictionary) -> Card:
 	c.timed_grip = int(d.get("timed_grip", 0))
 	c.timed_damage = int(d.get("timed_damage", 0))
 	c.timed_hits = int(d.get("timed_hits", 1))
+	c.timed_block = int(d.get("timed_block", 0))
+	c.timed_ally_block = int(d.get("timed_ally_block", 0))
 	c.damage_per_rhythm = int(d.get("damage_per_rhythm", 0))
 	c.grip_per_rhythm = int(d.get("grip_per_rhythm", 0))
 	c.rhythm = int(d.get("rhythm", 0))
@@ -102,7 +106,8 @@ func to_dict() -> Dictionary:
 		"cheapen_pick": cheapen_pick, "cheapen_amount": cheapen_amount, "meld": meld,
 		"prepare": prepare, "create": create,
 		"timed": timed, "timed_hits": timed_hits, "timed_grip": timed_grip,
-		"timed_damage": timed_damage,
+		"timed_damage": timed_damage, "timed_block": timed_block,
+		"timed_ally_block": timed_ally_block,
 		"damage_per_vulnerable": damage_per_vulnerable,
 		"damage_per_foothold": damage_per_foothold,
 		"damage_per_ally_foothold": damage_per_ally_foothold,
@@ -122,7 +127,8 @@ func upgraded_copy() -> Card:
 	if upgraded:
 		return Card.from_dict(d)  # already sharpened — no double-dipping
 	var bumped := false
-	for key in ["damage", "block", "ally_block", "timed_damage"]:
+	for key in ["damage", "block", "ally_block", "timed_damage",
+			"timed_block", "timed_ally_block"]:
 		if int(d[key]) > 0:
 			d[key] = int(d[key]) + 3
 			bumped = true
