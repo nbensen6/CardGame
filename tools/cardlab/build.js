@@ -173,6 +173,14 @@ const classStats = CHAR_ORDER.map((cid) => {
     const c = byId[id];
     if (c) rarityMix[c.rarity] = (rarityMix[c.rarity] || 0) + 1;
   }
+  // Distinct icons this class's pool shows. Identity should read from the MIX.
+  const icons = {};
+  for (const id of new Set([...starter, ...pool])) {
+    const c = byId[id];
+    if (c && c.icon) icons[c.icon] = (icons[c.icon] || 0) + 1;
+  }
+  const iconTop = Object.entries(icons).sort((a, b) => b[1] - a[1]);
+
   let weighted = 0;
   for (const r of Object.keys(rarityMix)) weighted += rarityMix[r] * (RARITY_WEIGHT[r] ?? 55);
   const offerRate = {};
@@ -201,6 +209,8 @@ const classStats = CHAR_ORDER.map((cid) => {
     avgCost: starter.length ? (totalEnergy / starter.length).toFixed(2) : "0",
     rarityMix,
     offerRate,
+    iconCount: iconTop.length,
+    iconTop: iconTop.slice(0, 4),
     curve: costCurve(starter),
   };
 });
@@ -335,16 +345,32 @@ if (longText.length) {
   });
 }
 
-// An icon-less card falls back to a heuristic guess from its effects.
+// Icon collisions. A hand is scanned, not read — if a third of it wears the same
+// face, the icons are decoration rather than information. Watch the per-class
+// numbers more than the catalog ones: identity should come from a class's icon MIX,
+// not from every card of that class carrying one badge.
 const noIcon = model.filter((c) => !c.icon && c.reachable);
-if (noIcon.length) {
+const iconSpread = {};
+for (const c of model) if (c.icon && c.reachable) iconSpread[c.icon] = (iconSpread[c.icon] || 0) + 1;
+const iconRows = Object.entries(iconSpread).sort((a, b) => b[1] - a[1]);
+const draftable = model.filter((c) => c.reachable).length;
+if (iconRows.length) {
+  const worst = iconRows[0];
+  const share = Math.round((worst[1] / draftable) * 100);
   checks.push({
-    level: "info",
-    title: `${noIcon.length} draftable cards don't specify an icon`,
+    level: noIcon.length || share > 20 ? "warn" : "info",
+    title: `${iconRows.length} icons across ${draftable} draftable cards ` +
+      `(most common: ${worst[0]}, ${share}%)`,
     detail:
-      "Without an `icon` the view infers one from the card's effects. That's a reasonable " +
-      "fallback, but it means two very different cards can wear the same face.",
-    items: noIcon.slice(0, 24).map((c) => c.name),
+      "Before the 2026-08-15 audit this was 14 icons, with 27 cards sharing one face. " +
+      (noIcon.length
+        ? `${noIcon.length} cards still declare no icon and fall back to a guess. `
+        : "Every draftable card declares an icon. ") +
+      "Per-class spread is on the Overview; a class wants a distinctive mix, not one badge.",
+    items: [
+      iconRows.map(([k, v]) => `${k} ${v}`).join("  ·  "),
+      ...(noIcon.length ? ["no icon: " + noIcon.map((c) => c.name).join(", ")] : []),
+    ],
   });
 }
 
@@ -566,6 +592,8 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
       <td><div class="bar m"><i style="width:\${k.identityPct*1.2}px"></i><span class="sub">\${k.identityPct}%</span></div></td>
       <td class="cardtext"><span class="tag r-c">\${k.rarityMix.common} C</span><span class="tag r-u">\${k.rarityMix.uncommon} U</span><span class="tag r-r">\${k.rarityMix.rare} R</span>
         <div class="sub">offered \${k.offerRate.common}/\${k.offerRate.uncommon}/\${k.offerRate.rare}%</div></td>
+      <td class="cardtext"><b>\${k.iconCount}</b> icons
+        <div class="sub">\${k.iconTop.map(t=>esc(t[0])+" "+t[1]).join(" · ")}</div></td>
       <td class="cardtext">\${cv}</td></tr>\`;
   }).join("");
 
@@ -583,7 +611,7 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
      Identity % is how much of the class's reward pool is unique to it rather than shared filler.</p>
    <div class="scroll"><table><thead><tr>
      <th>Class</th><th>Passive</th><th class="num">Deck</th><th class="num">Avg cost</th>
-     <th>Timed</th><th>Identity</th><th>Rarity mix</th><th>Cost spread</th></tr></thead><tbody>\${cls}</tbody></table></div>
+     <th>Timed</th><th>Identity</th><th>Rarity mix</th><th>Icons</th><th>Cost spread</th></tr></thead><tbody>\${cls}</tbody></table></div>
    <h2>Cost curve — whole catalog</h2>
    <p class="note">You have 3 energy a turn. If one cost dominates, every turn plays the same
      number of cards and deckbuilding loses its central tension.</p>

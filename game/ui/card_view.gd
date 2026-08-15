@@ -66,6 +66,23 @@ const ICONS := {
 	"support": preload("res://assets/icons/hand.png"),
 	"relic": preload("res://assets/icons/award.png"),
 	"rally": preload("res://assets/icons/campfire.png"),
+	# Added 2026-08-15 by the icon audit. 136 draftable cards were sharing 14
+	# icons — 27 of them wore the same "climb" face — so a hand read as a wall of
+	# identical tiles. These split the crowded families by what a card actually
+	# does. See design/icon-audit.md.
+	"volley": preload("res://assets/icons/dice_sword.png"),      # multi-hit attack
+	"guard": preload("res://assets/icons/dice_shield.png"),      # timed block
+	"wall": preload("res://assets/icons/structure_wall.png"),    # block that scales
+	"ascend": preload("res://assets/icons/character_lift.png"),  # a big climb
+	"rope": preload("res://assets/icons/pawns.png"),             # both hunters climb
+	"lift": preload("res://assets/icons/hand_token_open.png"),   # haul the ally to you
+	"target": preload("res://assets/icons/card_target.png"),     # scales off Exposed
+	"rhythm": preload("res://assets/icons/spinner.png"),         # Frog's combo counter
+	"timer": preload("res://assets/icons/hourglass.png"),        # timed, nothing else
+	"cog": preload("res://assets/icons/puzzle.png"),             # meld / fuse
+	"burn": preload("res://assets/icons/card_remove.png"),       # exhaust a card
+	"stack": preload("res://assets/icons/cards_stack.png"),      # draw / hand size
+	"peak": preload("res://assets/icons/structure_watchtower.png"),  # strike that scales with Height
 }
 const ENERGY_ICON := preload("res://ui/icons/energy.svg")
 
@@ -85,6 +102,19 @@ const TINT := {
 	"support": Color(0.62, 0.73, 0.51), # moss
 	"relic": Color(0.78, 0.66, 0.86),   # arcane violet
 	"rally": Color(0.90, 0.62, 0.35),   # firelight
+	"volley": Color(0.86, 0.52, 0.40),  # rust, a shade off sword
+	"guard": Color(0.62, 0.74, 0.82),   # steel, brighter than shield
+	"wall": Color(0.60, 0.60, 0.62),    # stone
+	"ascend": Color(0.80, 0.72, 0.52),  # sunlit rock
+	"rope": Color(0.72, 0.66, 0.50),    # hemp
+	"lift": Color(0.66, 0.78, 0.56),    # moss, kin to support
+	"target": Color(0.92, 0.80, 0.44),  # sunlight, kin to expose
+	"rhythm": Color(0.70, 0.80, 0.90),  # cool pulse — the Frog's beat
+	"timer": Color(0.88, 0.78, 0.48),   # brass
+	"cog": Color(0.76, 0.64, 0.46),     # bronze, kin to gadget
+	"burn": Color(0.84, 0.48, 0.38),    # ash-red
+	"stack": Color(0.82, 0.76, 0.58),   # parchment
+	"peak": Color(0.86, 0.70, 0.46)     # summit light
 }
 
 ## Build the card from a snapshot dict. `playable` greys it out when false.
