@@ -53,6 +53,9 @@ var player_passives: Array = []  # per-hunter character signature passives
 var reward_kind: String = "card" # "card" | "relic" — what this REWARD offers
 var reward_choices: Array = []   # per hunter: Array of card OR relic choices (by reward_kind)
 var reward_picked: Array = []    # Array[bool]
+# A node can owe TWO rewards (elites and Titans pay a card and then a relic).
+# The second is held here and opened once everyone has taken the first.
+var _queued_reward: String = ""
 
 var _seed: int
 var _rng := RandomNumberGenerator.new()
@@ -298,10 +301,24 @@ func sync() -> void:
 	if combat.result() == Combat.Result.WIN:
 		_bank_hp()
 		gold += _gold_for(node_type)
-		# elites and Titans pay a relic; ordinary beasts pay a card
-		_begin_reward("relic" if node_type in ["elite", "boss"] else "card")
+		# EVERY beast pays a card — a hard fight that pays nothing you wanted reads
+		# as unfair, and card rewards are the run's main deckbuilding decision.
+		# Elites and Titans pay a relic on top, taken after the card.
+		_queued_reward = "relic" if node_type in ["elite", "boss"] else ""
+		_begin_reward("card")
 	else:
 		phase = Phase.LOST
+
+## One reward is settled. If this node still owes another (an elite's or Titan's
+## relic, after its card), open that instead of releasing the run to the map.
+func _finish_reward() -> void:
+	if _queued_reward != "":
+		var next_kind := _queued_reward
+		_queued_reward = ""
+		_begin_reward(next_kind)
+	else:
+		_after_node()
+
 
 ## Where the run goes once a node is fully resolved: on to the map, or done.
 func _after_node() -> void:
@@ -319,7 +336,7 @@ func skip_reward(slot: int) -> bool:
 		return false
 	reward_picked[slot] = true
 	if _all_picked():
-		_after_node()
+		_finish_reward()
 	return true
 
 ## Hunter `slot` picks reward option `choice`. When all have picked, the next
@@ -338,7 +355,7 @@ func pick_reward(slot: int, choice: int) -> void:
 		decks[slot].append(choices[choice])  # cards go to that hunter's deck
 	reward_picked[slot] = true
 	if _all_picked():
-		_after_node()
+		_finish_reward()
 
 # --- internals ------------------------------------------------------------
 

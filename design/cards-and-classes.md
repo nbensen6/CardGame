@@ -224,12 +224,15 @@ rather than a hand-maintained table — it reads the JSON directly, so it can't 
 
 Where the batch landed, and why the target is what it is:
 
-| | Before | After | Target |
+Two batches of 40 and 36 landed the target:
+
+| | Session start | **Now** | Target |
 |---|---|---|---|
-| Cards in game | 65 | **105** | — |
-| Draftable pool per class | 21–24 | **31–32** | ~40 |
-| Signature cards per class | 5–10 | **15–18** | 25+ |
-| Cost-1 share | 54% | **50%** | <50% |
+| Cards in game | 56 | **142** | — |
+| Draftable pool per class | 21–24 | **40–41** | ~40 ✅ |
+| Signature cards per class | 5–10 | **25–26** | 25+ ✅ |
+| Identity share | 21–42% | **61–65%** | >50% ✅ |
+| Cost-1 share | 66% | **51%** | <50% |
 
 **Where the ~40 target comes from.** A run visits 16 nodes (4 acts x 3 rows + a Titan
 row). Row 0 of each act is always a fight and the run-up row never is, so only about
@@ -238,10 +241,31 @@ row). Row 0 of each act is always a fight and the run-up row never is, so only a
 single run, which is why drafting converged. At 31 you now see ~52%; at 40 you'd see
 ~40%, which is where two runs of the same class start to diverge.
 
-**The cheaper lever, not yet pulled:** card rewards are rare *because elites and Titans
-pay relics instead of cards*. Slay the Spire pays a card after essentially every combat.
-Making elites pay a card **and** a relic would roughly double draft decisions per run
-without authoring a single new card — likely worth more than the next 40 cards.
+**That lever has now been pulled.** Elites and Titans previously paid a relic *instead of*
+a card. Every beast now pays a card, and elites/Titans pay a relic on top (the card first,
+the relic second — `Run._queued_reward`). Card rewards per run went from ~5.4 to **~10.7**,
+which doubles the deckbuilding decisions in a run without authoring anything.
+
+**And here is the honest consequence, which is worth understanding before writing 40 more
+cards.** Doubling the rewards also doubles how much of your pool you see:
+
+| | Session start | Now |
+|---|---|---|
+| Card rewards per run | ~5.4 | **~10.7** |
+| Cards seen per run | ~16 | **~32** |
+| Pool per class | 21 | **40** |
+| **Share of pool seen** | ~76% | **~80%** |
+
+Both numbers doubled, so **the ratio barely moved.** More cards and more rewards are each
+good on their own — decision density is up, and class identity went from 21–42% to 61–65% —
+but repetition-per-run is roughly where it started.
+
+To actually move that ratio by content alone you'd need **65–80 cards per class**, which is
+Slay the Spire territory (~75–100) and a very long grind. **The cheaper answer is card
+rarity.** StS doesn't avoid repetition by making you never see a card twice; it weights
+commons to appear often and rares to feel like treats. A `rarity` field on cards plus
+weighted `_roll_choices()` would deliver more perceived variety than the next 40 cards,
+and it is perhaps an hour of work. **Do that before writing more content.**
 
 New fields this batch: `damage_per_exhausted` / `block_per_exhausted` — the Goblin's
 sacrifices now compound instead of being a one-off cost. Both count the pile as it stood

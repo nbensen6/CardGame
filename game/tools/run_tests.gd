@@ -103,6 +103,7 @@ func _init() -> void:
 	_test_relic_round_block()
 	_test_run_is_four_titans()
 	_test_run_relic_reward_and_full_clear()
+	_test_elite_pays_a_card_then_a_relic()
 	# content batch: strength, wound, multi-hit, leech
 	_test_strength_mechanic()
 	_test_wound_bleeds_the_titan()
@@ -1311,6 +1312,29 @@ func _test_run_relic_reward_and_full_clear() -> void:
 				_pick_both(run)
 	_expect(run.phase == Run.Phase.WON and saw_card and saw_relic and run.team_relics.size() > 0,
 		"walking the whole map (fights pay cards, elites/Titans pay relics) wins the run")
+
+## Elites and Titans owe TWO rewards — the card first, the relic after. The run
+## must not release to the map until both have been taken.
+func _test_elite_pays_a_card_then_a_relic() -> void:
+	var run := _map_run()
+	_step_into_combat(run)
+	run.node_type = "elite"  # treat the node we stepped onto as an elite
+	var deck_before: int = run.decks[0].size()
+	var relics_before: int = run.team_relics.size()
+	_force_win(run)
+	var first_kind: String = run.reward_kind
+	_pick_both(run)                                   # take the card
+	var still_rewarding: bool = run.phase == Run.Phase.REWARD
+	var second_kind: String = run.reward_kind
+	_pick_both(run)                                   # take the relic
+	# Each hunter picks their OWN relic and both join the team pool, so a relic
+	# reward grows team_relics by the party size, not by one.
+	_expect(first_kind == "card" and still_rewarding and second_kind == "relic"
+		and run.decks[0].size() == deck_before + 1
+		and run.team_relics.size() == relics_before + run.player_count()
+		and run.phase == Run.Phase.MAP,
+		"an elite pays a card and THEN a relic before the route reopens")
+
 
 func _pick_both(run: Run) -> void:
 	run.pick_reward(0, 0)
