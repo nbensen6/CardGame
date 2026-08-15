@@ -22,6 +22,14 @@ signal inspect_requested(data: Dictionary)
 const RAIL_HEIGHT := 88
 const RAIL_TEXT_LINES := 2
 
+## A value a buff or scaling changed from what the card prints — Slay the Spire
+## greens these, and it's the only way a player sees a passive is doing something.
+const LIVE_COLOR := "7fd45c"
+## The half of a timed card you only get by landing it.
+const NAILED_COLOR := "ffd35c"
+## A rules term with a tooltip behind it. Never used decoratively.
+const KEYWORD_COLOR := "f0b45a"
+
 const ZONE_MIN := 0.40
 const ZONE_MAX := 0.60
 const SWEEP_SPEED := 1.9    # sweeps per second — quick; timing should demand focus (Nick)
@@ -120,7 +128,7 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 	else:
 		box.add_child(_header(String(data.get("name", "")), int(data.get("cost", 0)), bool(data.get("no_cost", false))))
 		box.add_child(_art(String(data.get("icon", "")), String(data.get("portrait", ""))))
-		box.add_child(_body(face_text(data)))
+		box.add_child(_rich_body(data, 12, 96))
 
 	_strip = _build_timing_strip()  # hidden until start_timing()
 	box.add_child(_strip)
@@ -167,13 +175,7 @@ func _rail_row(data: Dictionary) -> Control:
 	name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	col.add_child(name_lbl)
 
-	# ONE description, with live numbers in it. Not a readout plus a formula.
-	var body := _label(face_text(data), 12)
-	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	body.max_lines_visible = RAIL_TEXT_LINES
-	body.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	body.add_theme_color_override("font_color", Color(0.9, 0.86, 0.76))
-	col.add_child(body)
+	col.add_child(_rich_body(data, 12, RAIL_HEIGHT - 34))
 
 	row.add_child(col)
 	row.add_child(_inspect_button(data))
@@ -207,12 +209,17 @@ func _inspect_button(data: Dictionary) -> Control:
 ##
 ## The authored `text` still exists and still explains the card's SHAPE ("+3 per
 ## Rhythm") — it lives in the inspector, where there is room for it.
-static func face_text(data: Dictionary) -> String:
+## `rich` emits BBCode for a RichTextLabel: numbers a buff or scaling CHANGED from
+## the card's printed value turn green (StS's cue that your Strength is working),
+## and every keyword turns gold so the player can see a rules term exists at all.
+static func face_text(data: Dictionary, rich: bool = false) -> String:
 	var pv: Dictionary = data.get("preview", {})
 	if pv.is_empty():
 		return String(data.get("text", ""))
 	var miss: Dictionary = data.get("preview_miss", pv)
 	var fx: Dictionary = data.get("fx", {})
+	var base: Dictionary = data.get("base", {})
+	var kw: Array = data.get("keywords", [])
 	var timed := bool(data.get("timed", false))
 	var out: PackedStringArray = []
 
@@ -220,39 +227,44 @@ static func face_text(data: Dictionary) -> String:
 	if dmg > 0:
 		var n := int(fx.get("hits", 1))
 		var times := "" if n <= 1 else (" twice" if n == 2 else " %d times" % n)
-		out.append("Deal %s damage%s." % [_pair(int(miss.get("damage", 0)), dmg, timed), times])
+		out.append("Deal %s damage%s." % [_num(int(miss.get("damage", 0)), dmg,
+			timed, int(base.get("damage", dmg)), rich), times])
 	var blk := int(pv.get("block", 0))
 	if blk > 0:
-		out.append("Gain %s Block." % _pair(int(miss.get("block", 0)), blk, timed))
+		out.append("Gain %s %s." % [_num(int(miss.get("block", 0)), blk, timed,
+			int(base.get("block", blk)), rich), _kw("Block", "block", kw, rich)])
 	var climb := int(pv.get("grip", 0))
 	if climb > 0:
-		out.append("Climb +%s." % _pair(int(miss.get("grip", 0)), climb, timed))
+		out.append("%s +%s." % [_kw("Climb", "height", kw, rich),
+			_num(int(miss.get("grip", 0)), climb, timed, int(base.get("grip", climb)), rich)])
 	var ally_blk := int(pv.get("ally_block", 0))
 	if ally_blk > 0:
-		out.append("Ally gains %s Block." % _pair(int(miss.get("ally_block", 0)), ally_blk, timed))
+		out.append("Ally gains %s %s." % [_num(int(miss.get("ally_block", 0)), ally_blk,
+			timed, int(base.get("ally_block", ally_blk)), rich), _kw("Block", "block", kw, rich)])
 	var ally_climb := int(pv.get("ally_grip", 0))
 	if ally_climb > 0:
-		out.append("Ally climbs +%d." % ally_climb)
+		out.append("Ally %ss +%d." % [_kw("climb", "height", kw, rich), ally_climb])
 
 	if int(fx.get("wound", 0)) > 0:
-		out.append("Poison %d." % int(fx["wound"]))
+		out.append("%s %d." % [_kw("Poison", "poison", kw, rich), int(fx["wound"])])
 	if int(fx.get("vulnerable", 0)) > 0:
-		out.append("Expose %d." % int(fx["vulnerable"]))
+		out.append("%s %d." % [_kw("Expose", "expose", kw, rich), int(fx["vulnerable"])])
 	if int(fx.get("strength", 0)) > 0:
-		out.append("+%d Strength." % int(fx["strength"]))
+		out.append("+%d %s." % [int(fx["strength"]), _kw("Strength", "strength", kw, rich)])
 	if int(fx.get("rhythm", 0)) > 0:
-		out.append("+%d Rhythm." % int(fx["rhythm"]))
+		out.append("+%d %s." % [int(fx["rhythm"]), _kw("Rhythm", "rhythm", kw, rich)])
 	if int(fx.get("draw", 0)) > 0:
 		out.append("Draw %d." % int(fx["draw"]))
 	if bool(fx.get("taunt", false)):
-		out.append("Taunt.")
+		out.append("%s." % _kw("Taunt", "taunt", kw, rich))
 	if int(fx.get("pull_ally", 0)) > 0:
 		out.append("Pull your ally up to you.")
 	if int(fx.get("sac_ally_grip", 0)) > 0:
-		out.append("Burn a card: ally climbs +%d." % int(fx["sac_ally_grip"]))
+		out.append("%s a card: ally climbs +%d." % [_kw("Burn", "burn", kw, rich),
+			int(fx["sac_ally_grip"])])
 	elif bool(fx.get("exhaust_pick", false)):
-		out.append("Burn a card." if not bool(fx.get("cheapen_pick", false))
-			else "Burn a card to cheapen another.")
+		out.append("%s a card%s." % [_kw("Burn", "burn", kw, rich),
+			"" if not bool(fx.get("cheapen_pick", false)) else " to cheapen another"])
 	if String(fx.get("create", "")) != "":
 		out.append("Build a tool into your hand.")
 	if String(fx.get("prepare", "")) != "":
@@ -263,7 +275,49 @@ static func face_text(data: Dictionary) -> String:
 	if out.is_empty():
 		return String(data.get("text", ""))
 	var body := " ".join(out)
-	return ("Time it! " + body) if timed else body
+	return (_kw("Time it!", "timed", kw, rich) + " " + body) if timed else body
+
+
+## The card's one description, as rich text so a single number or keyword can be
+## coloured. A plain Label can only tint the whole line, which is why modified values
+## and keyword terms were invisible before.
+func _rich_body(data: Dictionary, size: int, height: int) -> RichTextLabel:
+	var r := RichTextLabel.new()
+	r.bbcode_enabled = true
+	r.text = face_text(data, true)
+	r.fit_content = false
+	r.scroll_active = false      # clip a long line rather than grow the card
+	r.clip_contents = true
+	r.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	r.custom_minimum_size = Vector2(0, height)
+	r.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	r.add_theme_font_size_override("normal_font_size", size)
+	r.add_theme_color_override("default_color", Color(0.9, 0.86, 0.76))
+	return r
+
+
+## A number, coloured only when it isn't what the card printed.
+## Timed cards show both outcomes as "2→5"; the nailed half wears the timing colour.
+static func _num(low: int, high: int, timed: bool, base: int, rich: bool) -> String:
+	if timed and high != low:
+		if rich:
+			return "%d[color=#%s]→%d[/color]" % [low, NAILED_COLOR, high]
+		return "%d→%d" % [low, high]
+	if rich and low != base:  # a buff or a scaling field moved it
+		return "[color=#%s]%d[/color]" % [LIVE_COLOR, high]
+	return str(high)
+
+
+## Gold a word only when it really is a keyword this card touches — so the colour
+## always means "there is a tooltip behind this", never decoration.
+static func _kw(word: String, id: String, kws: Array, rich: bool) -> String:
+	if not rich:
+		return word
+	for k in kws:
+		if String((k as Dictionary).get("id", "")) == id:
+			return "[color=#%s]%s[/color]" % [KEYWORD_COLOR, word]
+	return word
 
 
 ## "15" when nailing it changes nothing, "2→5" when it does — so a timed card shows

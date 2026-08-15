@@ -323,6 +323,13 @@ func _slot_private(pi: int) -> Dictionary:
 					"pull_ally": c.pull_ally, "sac_ally_grip": c.sac_ally_grip,
 					"hits": c.hits,
 				},
+				# The card's PRINTED values. The face compares live against these to
+				# know which numbers a buff or scaling changed, and highlights only
+				# those — that's how a player learns their Strength is doing something.
+				"base": {
+					"damage": c.damage, "block": c.block, "grip": c.grip,
+					"ally_block": c.ally_block, "ally_grip": c.ally_grip,
+				},
 			})
 		return {
 			"hand": cards, "energy": ps.energy, "ended": ps.ended_turn,

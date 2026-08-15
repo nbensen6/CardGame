@@ -49,8 +49,8 @@ After:   Time it! Deal 2→5 damage. Climb +2.
 | **Type** | Frame *shape* — attacks pentagonal, skills rectangular, powers circular | `type` is data-only; nothing on screen | ❌ **invisible** |
 | **Rarity** | Banner colour | Only in the inspector | ❌ **invisible on the face** |
 | **Description** | ONE line, dynamic numbers inline | ONE generated sentence, live numbers | ✅ **fixed today** |
-| **Modified numbers** | Highlighted green when a buff changed them | Plain text | ⚠️ **partial** |
-| **Keywords** | Gold inline in the description + tooltip | Listed only in the inspector | ⚠️ **partial** |
+| **Modified numbers** | Highlighted green when a buff changed them | Green when live ≠ printed | ✅ **fixed** |
+| **Keywords** | Gold inline in the description + tooltip | Gold inline + inspector tooltip | ✅ **fixed** |
 | **Inspect** | Right-click / hold | `?` button per card | ✅ equivalent, and touch-safe |
 | **Unplayable** | Dimmed and greyed hard | `playable` flag exists, styling is soft | ⚠️ weak |
 
@@ -58,23 +58,23 @@ After:   Time it! Deal 2→5 damage. Climb +2.
 
 ## 2. What's still missing, in the order I'd fix it
 
-### 2.1 Modified numbers aren't marked ⚠️
+### ~~2.1 Modified numbers~~ ✅ done
 
-Leap prints "Climb +4" for the Frog because the class passive adds 1 — but nothing
-tells the player that 4 isn't the card's base value. StS turns such a number green,
-which is how you learn your buffs are working.
+The face body is a `RichTextLabel` now, so single tokens can be coloured:
 
-Timed cards already show it as **`2→5`**, which is good. Buff-modified values need the
-same treatment. Needs a **RichTextLabel** on the face so a single token can be
-coloured — currently the body is a plain `Label` and can only tint the whole line.
+- **Green** when the live value differs from what the card printed. Leap reads
+  "Climb **+4**" with the 4 green for the Frog, because the class passive adds 1 —
+  which is how a player discovers a passive is doing anything at all.
+- **Amber** for the half of a timed card you only get by landing it: "Deal 2**→5**".
 
-### 2.2 Keywords aren't marked in the description ⚠️
+Colours are `CardView.LIVE_COLOR` / `NAILED_COLOR` / `KEYWORD_COLOR`.
 
-The face says "Poison 2." with no signal that **Poison** is a defined term with a
-tooltip. StS golds every keyword inline, which is what teaches players that a rules
-layer exists at all. Same fix as 2.1 — RichTextLabel and a token pass.
+### ~~2.2 Keywords inline~~ ✅ done
 
-**2.1 and 2.2 are one job.** Doing them together is the next real card-design task.
+Every keyword in the generated sentence is **gold**, and only when the card genuinely
+touches it — so the colour always means "there is a tooltip behind this word", never
+decoration. The inspector's headline renders the identical BBCode, so the face and the
+detail panel cannot drift.
 
 ### 2.3 Type is invisible ❌
 

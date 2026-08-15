@@ -910,7 +910,17 @@ func _show_card_detail(data: Dictionary) -> void:
 	col.add_child(_detail_rule())
 	# What it does right now — the same one sentence the card face shows, from the
 	# same formatter, so the two can never disagree.
-	col.add_child(_detail_label(CardView.face_text(data), 15, Color(0.98, 0.88, 0.6), true))
+	var live := RichTextLabel.new()
+	live.bbcode_enabled = true
+	live.text = CardView.face_text(data, true)  # same colouring as the card face
+	live.fit_content = true
+	live.scroll_active = false
+	live.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	live.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	live.custom_minimum_size = Vector2(394, 0)
+	live.add_theme_font_size_override("normal_font_size", 15)
+	live.add_theme_color_override("default_color", Color(0.94, 0.9, 0.82))
+	col.add_child(live)
 
 	# The authored line explains the card's SHAPE ("+3 per Rhythm") — the part a
 	# single live number can't convey. It belongs here, where there is room, not
