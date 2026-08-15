@@ -313,6 +313,41 @@ if (leaked.length) {
   });
 }
 
+// Card text has to fit a 164x224 card at ~40 characters a line. Existing cards
+// that read well sit around 30-50; past ~55 the body crowds the art and past ~65
+// it risks clipping. This is the check that stops mechanics work from quietly
+// producing cards nobody can read.
+const TEXT_COMFORTABLE = 55;
+const TEXT_MAX = 65;
+const longText = model
+  .filter((c) => c.text.length > TEXT_COMFORTABLE)
+  .sort((a, b) => b.text.length - a.text.length);
+if (longText.length) {
+  const over = longText.filter((c) => c.text.length > TEXT_MAX);
+  checks.push({
+    level: over.length ? "warn" : "info",
+    title: `${longText.length} cards have text longer than ${TEXT_COMFORTABLE} characters`,
+    detail:
+      `The card face is 164x224 with roughly 40 characters a line. "Time it! Flick for 2 ` +
+      `(+3 nailed) or it slips away." is 50 and already wraps to three lines. ` +
+      `${over.length} of these exceed ${TEXT_MAX} and should be rewritten shorter.`,
+    items: longText.slice(0, 20).map((c) => `${c.text.length}  ${c.name} — "${c.text}"`),
+  });
+}
+
+// An icon-less card falls back to a heuristic guess from its effects.
+const noIcon = model.filter((c) => !c.icon && c.reachable);
+if (noIcon.length) {
+  checks.push({
+    level: "info",
+    title: `${noIcon.length} draftable cards don't specify an icon`,
+    detail:
+      "Without an `icon` the view infers one from the card's effects. That's a reasonable " +
+      "fallback, but it means two very different cards can wear the same face.",
+    items: noIcon.slice(0, 24).map((c) => c.name),
+  });
+}
+
 // Design-doc drift.
 const docDrift = [];
 for (const cs of classStats) {

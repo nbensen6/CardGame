@@ -271,6 +271,43 @@ New fields this batch: `damage_per_exhausted` / `block_per_exhausted` — the Go
 sacrifices now compound instead of being a one-off cost. Both count the pile as it stood
 **before** the played card's own sacrifice, so Detonator can't pay itself.
 
+### Card text — the house style (2026-08-15)
+
+The card face is **164×224 px**, about **40 characters a line**. That is the scarcest
+space in the game and it is easy to forget while designing mechanics: a batch of 40
+cards produced 29 that were too long to read comfortably, several over 70 characters.
+The Card Lab now flags anything over 55 so it can't happen quietly again.
+
+**Current catalog: average 40 characters, longest 55.**
+
+Rules, in order of how much space they save:
+
+1. **Never restate a universal rule.** Every timed card fizzles on a miss. "Miss and
+   it slips away", "or it buckles", "or the cable slips", "or the fuel dumps" — that's
+   ~20 characters spent on something the player learns once, on 39 different cards.
+   Teach it in onboarding; keep it off the card.
+2. **Lead with `Time it!`** on timed cards. The timing cue is the most important thing
+   on the face, and it's the established convention.
+3. **`(+N nailed)`** is the house notation for a timed bonus. Don't invent another.
+4. **Numbers, not prose.** "4 dmg" over "deal four damage". `dmg` is fine when tight.
+5. **Semicolons over sentences.** "Both climb +2; you +2 more nailed."
+6. **Cut flavour before you cut rules.** Flavour belongs in the name.
+
+Before: *"Time it! Vault the beast: +3 Height (+3 nailed), +2 per Rhythm. 4 damage (+4)."* (78)
+After: *"Time it! Climb +3 (+3), +2 per Rhythm. 4 dmg (+4)."* (50)
+
+### Icons
+
+`icon` is optional — without one the view infers a face from the card's effects. That
+fallback is reasonable but it means two very different cards can wear the same art.
+**32 of 136 draftable cards have no icon.** Icons in use today:
+
+`shield` 19 · `climb` 16 · `support` 14 · `sword` 12 · `skull` 9 · `gadget` 9 ·
+`rally` 7 · `expose` 5 · `fire` 5 · `bow` 4 · `bomb` 4
+
+Worth a pass: the set is small enough that a Frog card and a Goblin card can look
+identical at a glance, which hurts the fast reading a hand needs.
+
 ## 4. How to add a card (template)
 
 1. Add an entry to `game/data/cards.json` under `"cards"`:
