@@ -50,7 +50,9 @@ game/assets/3d/hex/<name>.glb     overworld tiles and landmarks
 ```
 
 Then one line in `views/combat_3d.gd`'s `MODELS` table maps a character or beast
-id to a file stem:
+id to a file stem. (Hunters honour this table as of 2026-08-15 — before that
+`_spawn_hunter` parsed the portrait filename instead and ignored `MODELS`, so
+editing it did nothing for a hunter.)
 
 ```gdscript
 "stone_warden": "elephant",   ->   "stone_warden": "warden",
@@ -119,6 +121,10 @@ Order I'd suggest building things: **one hunter** (small, you'll iterate most),
 then **one lesser beast**, then a **Titan**. Do not start with the Titan — it's
 the most visible model and you'll want your third attempt at a beast, not your
 first.
+
+**→ `design/first-asset-frog.md` picks that first hunter and walks it end to end:
+what to build, the two evenings it takes, the exact drop-in path, and the command
+to look at it.**
 
 ## What this doesn't cover — and the one thing not to defer
 

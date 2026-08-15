@@ -731,12 +731,20 @@ func _place_hunters(s: Dictionary) -> void:
 		node.rotation.y = (PI + 0.7 * side) if t <= 0.01 else (PI * 0.5 * -side)
 
 
+## Hunters read the same MODELS table the beasts do, keyed by character id, so
+## swapping in your own art is one line there and nothing else. The portrait-stem
+## map is only a fallback for a snapshot old enough to lack the character id.
 func _spawn_hunter(slot: int, players: Array) -> Dictionary:
+	var p: Dictionary = players[slot]
 	var key := "bunny"
-	var stem := String((players[slot] as Dictionary).get("portrait", "")).get_file().get_basename()
-	var by_portrait := {"frog": "bunny", "sloth": "koala", "goat": "deer", "monkey": "monkey"}
-	if by_portrait.has(stem):
-		key = String(by_portrait[stem])
+	var cid := String(p.get("character", ""))
+	if cid != "" and MODELS.has(cid):
+		key = String(MODELS[cid])
+	else:
+		var stem := String(p.get("portrait", "")).get_file().get_basename()
+		var by_portrait := {"frog": "bunny", "sloth": "koala", "goat": "deer", "monkey": "monkey"}
+		if by_portrait.has(stem):
+			key = String(by_portrait[stem])
 	var holder := Node3D.new()
 	_rig.add_child(holder)
 	var path := CAST + key + ".glb"

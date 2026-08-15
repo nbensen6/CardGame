@@ -266,6 +266,9 @@ func _players_public() -> Array:
 			out.append({
 				"name": Content.character_name(ps.character), "hp": ps.combatant.hp,
 				"portrait": Content.character_portrait(ps.character),
+				# The id, so the view picks a model by CHARACTER rather than by
+				# parsing a portrait filename (that guess already misfired for beasts).
+				"character": ps.character,
 				"max_hp": ps.combatant.max_hp, "block": ps.combatant.block, "energy": ps.energy,
 				"ended": ps.ended_turn, "strength": ps.strength, "rhythm": ps.rhythm,
 				"foothold": ps.foothold, "reached": c.sigil_reached(i),
