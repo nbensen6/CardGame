@@ -44,6 +44,49 @@
     "burn": {
       "name": "Burn",
       "text": "The card is removed for the rest of this fight. Some Goblin cards get stronger for every card burned."
+    },
+
+    "_comment_moves": "Below: the beast's telegraphed moves. Same vocabulary rules as the cards — the intent tag NAMES the move and prints its number, and the explanation lives here, one right-click away. Ids match the move `type` in bosses.json. Added 2026-08-16: the tag had started explaining itself inline ('Sweep 8 — hits you both'), which is the card-text problem all over again.",
+
+    "attack": {
+      "name": "Attack",
+      "text": "A single hunter, the one the beast is turned toward. Your Block comes off it first."
+    },
+    "attack_all": {
+      "name": "Sweep",
+      "text": "Hits BOTH hunters for the full amount, and shakes each of you down to the hold below. Block on one of you does nothing for the other."
+    },
+    "swipe_high": {
+      "name": "Lash the flank",
+      "text": "Only catches hunters off the ground. Standing at the base is the safe place to be this round."
+    },
+    "swipe_low": {
+      "name": "Stamp",
+      "text": "Only catches hunters still on the ground. Anyone already climbing is above it."
+    },
+    "leech": {
+      "name": "Drain",
+      "text": "Hits the hunter it is turned toward, and the beast heals for what it takes."
+    },
+    "rift": {
+      "name": "Wrench apart",
+      "text": "Hits both hunters, and gets worse the further apart you are — 2 more damage for every Height between you. Climb together and it is just the base number."
+    },
+    "block": {
+      "name": "Defend",
+      "text": "The beast guards. Damage comes off its Block before its health, and the Block is gone by its next turn."
+    },
+    "enrage": {
+      "name": "Enrage",
+      "text": "Permanently raises every attack it makes for the rest of the fight. A soft timer: the longer the fight runs, the harder it hits."
+    },
+    "regen": {
+      "name": "Recover",
+      "text": "The beast heals. Damage you have already dealt is not lost, but the clock just moved against you."
+    },
+    "shift_sigil": {
+      "name": "Shift its sigil",
+      "text": "The weak point moves to a new Height, and any damage banked into the old one is lost. Whatever you climbed may now be the wrong place."
     }
   }
 }

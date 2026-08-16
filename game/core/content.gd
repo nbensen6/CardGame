@@ -51,8 +51,13 @@ static func keyword(id: String) -> Dictionary:
 
 
 ## Every keyword id — used by tests to prove nothing references a missing one.
+## Underscore keys are editorial notes in the data file, not vocabulary.
 static func keyword_ids() -> Array:
-	return (_read_json(KEYWORDS_PATH).get("keywords", {}) as Dictionary).keys()
+	var out: Array = []
+	for id in (_read_json(KEYWORDS_PATH).get("keywords", {}) as Dictionary).keys():
+		if not String(id).begins_with("_"):
+			out.append(id)
+	return out
 
 
 ## A card's rarity without building the whole Card — reward rolls ask for this

@@ -158,6 +158,8 @@ var _detail: ColorRect = null   # the card inspector overlay, when one is open
 ## The climb gauge on the right edge, and the snapshot it draws from.
 var _gauge: Control = null
 var _gauge_data := {}
+## The move type currently telegraphed, so right-clicking the tag can explain it.
+var _intent_kind := ""
 ## The keybind action waiting for a key press, or "" when nothing is rebinding.
 var _rebinding := ""
 var _rebind_btns := {}          # action id → the button showing its key
@@ -182,7 +184,9 @@ var _log_expanded := false
 @onready var _title: Label = %Title
 @onready var _hp: Label = %HpLabel
 @onready var _hp_bar: ProgressBar = %HpBar
-@onready var _intent: Label = %Intent
+## RichTextLabel, not Label: the move's NAME is a keyword, and a keyword has to
+## be able to wear an underline and carry the id a right-click looks up.
+@onready var _intent: RichTextLabel = %Intent
 @onready var _intent_tag: PanelContainer = %IntentTag
 @onready var _hand_row: HBoxContainer = %Hand
 @onready var _status: Label = %StatusLabel
@@ -228,6 +232,16 @@ func _ready() -> void:
 		_coach_left = 0.0
 		_coach.visible = false)
 	_build_gauge()
+	# Right-click the telegraph to ask what the move does — the tag itself names
+	# it and prints the number, and nothing more.
+	_intent_tag.mouse_filter = Control.MOUSE_FILTER_STOP
+	_intent_tag.gui_input.connect(func(e: InputEvent) -> void:
+		if not (e is InputEventMouseButton):
+			return
+		var mb := e as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed and _intent_kind != "":
+			_intent_tag.accept_event()
+			_show_keyword(Content.keyword(_intent_kind)))
 	if not _client.shared.is_empty():
 		_refresh()
 
@@ -603,13 +617,14 @@ func _refresh() -> void:
 ## turn where the beast isn't swinging reads as safe at a glance.
 func _set_intent(boss: Dictionary, s: Dictionary) -> void:
 	var txt := _intent_text(boss, s)
-	_intent.text = txt
+	_intent.text = "[center]%s[/center]" % txt
 	_intent_tag.visible = txt != ""
 	if txt == "":
 		return
 	var kind := String(boss.get("intent", {}).get("type", ""))
+	_intent_kind = kind
 	var hostile: bool = kind in ["attack", "attack_all", "swipe_high", "swipe_low", "leech", "rift"]
-	_intent.add_theme_color_override("font_color",
+	_intent.add_theme_color_override("default_color",
 		Color(0.98, 0.55, 0.44) if hostile else Color(0.72, 0.84, 0.62))
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.18, 0.07, 0.06, 0.88) if hostile else Color(0.09, 0.14, 0.09, 0.85)
@@ -658,21 +673,28 @@ func _position_intent_tag() -> void:
 func _intent_text(boss: Dictionary, s: Dictionary) -> String:
 	var move: Dictionary = boss.get("intent", {})
 	var v := int(move.get("value", 0)) + int(boss.get("strength", 0))
-	match String(move.get("type", "")):
-		"attack": return "⚔ Attack %d" % v
-		"attack_all": return "⚔ Sweep %d — hits you both" % v
-		"swipe_high": return "⚔ Lash the flank %d — only climbers" % v
-		"swipe_low": return "⚔ Stamp %d — only the ground" % v
-		"leech": return "⚔ Drain %d — it heals what it takes" % v
+	var kind := String(move.get("type", ""))
+	var kw: Dictionary = Content.keyword(kind)
+	if kw.is_empty():
+		return ""
+	var name := String(kw.get("name", kind))
+	# The number, and nothing else. The move's NAME is the keyword; what it means
+	# is a right-click away, the same deal the cards make (Nick, 2026-08-16: "it's
+	# still giving a description for what the boss is gonna do").
+	# Underlined, like every other keyword in the game, so it reads as something
+	# you can ask about rather than as a label.
+	var term := "[u]%s[/u]" % name
+	match kind:
+		"attack", "attack_all", "swipe_high", "swipe_low", "leech":
+			return "⚔ %s %d" % [term, v]
 		"rift":
 			# The real total, gap included, the same way a card face shows what it
 			# will actually do rather than the formula behind it.
-			var gap := _height_gap(s)
-			return "⚔ Wrench apart %d — climb together" % (v + gap * Combat.RIFT_PER_GAP)
-		"block": return "◆ Defend %d" % int(move.get("value", 0))
-		"enrage": return "▲ Enrage — every later hit gains %d" % int(move.get("value", 0))
-		"regen": return "✚ Recover %d HP" % int(move.get("value", 0))
-		"shift_sigil": return "✦ Sigil moves to Height %d" % int(move.get("value", 0))
+			return "⚔ %s %d" % [term, v + _height_gap(s) * Combat.RIFT_PER_GAP]
+		"block": return "◆ %s %d" % [term, int(move.get("value", 0))]
+		"enrage": return "▲ %s %d" % [term, int(move.get("value", 0))]
+		"regen": return "✚ %s %d" % [term, int(move.get("value", 0))]
+		"shift_sigil": return "✦ %s — Height %d" % [term, int(move.get("value", 0))]
 	return ""
 
 
@@ -1230,6 +1252,51 @@ static func _key_name(code: int) -> String:
 	return OS.get_keycode_string(code)
 
 
+## One keyword, on its own. Right-clicking the word "Poison" should answer
+## "what does Poison do" and nothing else — the full card inspector is the answer
+## to a different question, and burying one term in it makes you hunt.
+func _show_keyword(kw: Dictionary) -> void:
+	if kw.is_empty():
+		return
+	_close_overlay()
+	_detail = ColorRect.new()
+	_detail.color = Color(0.04, 0.03, 0.02, 0.55)
+	_detail.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_detail.mouse_filter = Control.MOUSE_FILTER_STOP
+	_overlay_root().add_child(_detail)
+	_detail.gui_input.connect(func(e: InputEvent) -> void:
+		if e is InputEventMouseButton and (e as InputEventMouseButton).pressed:
+			_close_overlay())
+
+	var centre := CenterContainer.new()
+	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_detail.add_child(centre)
+
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(360, 0)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.13, 0.105, 0.08, 0.99)
+	st.set_border_width_all(2)
+	st.border_color = Color(0.62, 0.5, 0.3)
+	st.set_corner_radius_all(6)
+	for side in ["left", "right", "top", "bottom"]:
+		st.set("content_margin_" + side, 16.0)
+	panel.add_theme_stylebox_override("panel", st)
+	centre.add_child(panel)
+
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 6)
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(col)
+	col.add_child(_underlined(String(kw.get("name", "")), 18, Color(1, 0.86, 0.5)))
+	var body := _detail_label(String(kw.get("text", "")), 13, Color(0.86, 0.82, 0.74), true)
+	body.custom_minimum_size = Vector2(328, 0)
+	col.add_child(body)
+	col.add_child(_detail_label("tap anywhere to close", 11, Color(0.6, 0.56, 0.5)))
+
+
 func _open_settings() -> void:
 	_close_overlay()
 	_detail = ColorRect.new()
@@ -1454,12 +1521,29 @@ func _show_card_detail(data: Dictionary) -> void:
 		col.add_child(_detail_rule())
 		for k in kws:
 			var kd: Dictionary = k
-			col.add_child(_detail_label(String(kd.get("name", "")), 14, Color(1, 0.86, 0.5)))
+			# Underlined here too. A keyword wears the same face wherever it
+			# appears, or the underline stops meaning "this is a keyword".
+			col.add_child(_underlined(String(kd.get("name", "")), 14, Color(1, 0.86, 0.5)))
 			col.add_child(_detail_label(String(kd.get("text", "")), 12,
 				Color(0.8, 0.76, 0.68), true))
 
 	col.add_child(_detail_rule())
 	col.add_child(_detail_label("tap anywhere to close", 11, Color(0.6, 0.56, 0.5)))
+
+
+## A keyword heading. A plain Label cannot underline, so the one place in the UI
+## that needs the mark takes a RichTextLabel to get it.
+func _underlined(txt: String, size: int, tint: Color) -> Control:
+	var r := RichTextLabel.new()
+	r.bbcode_enabled = true
+	r.text = "[u]%s[/u]" % txt
+	r.fit_content = true
+	r.scroll_active = false
+	r.autowrap_mode = TextServer.AUTOWRAP_OFF
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	r.add_theme_font_size_override("normal_font_size", size)
+	r.add_theme_color_override("default_color", tint)
+	return r
 
 
 func _detail_label(txt: String, size: int, tint: Color, wrap: bool = false) -> Label:
@@ -1568,6 +1652,7 @@ func _render_hand() -> void:
 		var c_card: Dictionary = card
 		cv.tapped.connect(func() -> void: _on_card_tapped(c_card, cv))
 		cv.inspect_requested.connect(_show_card_detail)
+		cv.keyword_requested.connect(_show_keyword)
 		cv.timing_resolved.connect(func(hit: bool) -> void:
 			Sfx.play("nail" if hit else "slip")
 			_client.play_card(idx, hit, _cmd_slot()))

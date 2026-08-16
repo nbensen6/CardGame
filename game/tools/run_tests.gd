@@ -107,6 +107,7 @@ func _init() -> void:
 	_test_preview_matches_what_the_card_actually_does()
 	_test_incoming_reckons_damage_after_block()
 	_test_every_derived_keyword_resolves()
+	_test_every_boss_move_type_resolves()
 	_test_every_card_declares_a_rarity()
 	_test_rarity_weighting_favours_commons()
 	# content batch: strength, wound, multi-hit, leech
@@ -1356,6 +1357,21 @@ func _test_every_derived_keyword_resolves() -> void:
 			missing.append("%s (no text)" % id)
 	_expect(missing.is_empty(),
 		"every keyword the host derives is defined in keywords.json [%s]" % ", ".join(missing))
+
+
+## The intent tag NAMES a move and lets you right-click it for the rest, so an
+## undefined move type is a telegraph with no explanation behind it.
+func _test_every_boss_move_type_resolves() -> void:
+	var missing: Array = []
+	for kind in ["fight", "elite", "boss"]:
+		for id in Content.beast_pool(kind):
+			var b: Boss = Content.build_boss(String(id))
+			for m in b.moves:
+				var t := String((m as Dictionary).get("type", ""))
+				if String(Content.keyword(t).get("text", "")).is_empty():
+					missing.append("%s: %s" % [id, t])
+	_expect(missing.is_empty(),
+		"every boss move type has a keyword entry [%s]" % ", ".join(missing))
 
 
 ## The intent icon says WHAT is coming; incoming_for says whether you survive it.

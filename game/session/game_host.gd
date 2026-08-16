@@ -367,7 +367,10 @@ func _slot_private(pi: int) -> Dictionary:
 				# needs a timing window is half of whether you want it.
 				choices.append({"index": i, "name": rc.name, "cost": rc.cost, "text": rc.text,
 					"target": rc.target, "icon": _card_icon(rc), "timed": rc.timed,
-					"timed_hits": rc.timed_hits, "rarity": rc.rarity})
+					"timed_hits": rc.timed_hits, "rarity": rc.rarity,
+					# So a card you are DECIDING on can be asked about, which is
+					# when "what does Poison do" matters most.
+					"keywords": _keywords_of(rc)})
 		return {"reward": {"kind": kind, "choices": choices, "picked": bool(_run.reward_picked[pi])}}
 	return {}
 
@@ -416,6 +419,7 @@ func _deck_cards(pi: int) -> Array:
 			"index": i, "name": c.name, "cost": c.cost, "target": c.target,
 			"text": c.text, "icon": _card_icon(c), "upgraded": c.upgraded,
 			"timed": c.timed, "timed_hits": c.timed_hits, "rarity": c.rarity,
+			"keywords": _keywords_of(c),
 		})
 	return out
 

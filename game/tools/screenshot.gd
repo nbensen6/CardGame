@@ -274,6 +274,31 @@ func _press(code: Key) -> void:
 	Input.parse_input_event(ev)
 
 
+## The first RichTextLabel under a node — a card's rules body.
+func _find_rich(node: Node) -> RichTextLabel:
+	if node is RichTextLabel:
+		return node as RichTextLabel
+	for c in node.get_children():
+		var hit := _find_rich(c)
+		if hit != null:
+			return hit
+	return null
+
+
+## Every Label / RichTextLabel string under a node, in tree order.
+func _all_text(node: Node) -> Array:
+	var out: Array = []
+	if node == null:
+		return out
+	if node is Label:
+		out.append((node as Label).text)
+	elif node is RichTextLabel:
+		out.append((node as RichTextLabel).get_parsed_text())
+	for c in node.get_children():
+		out += _all_text(c)
+	return out
+
+
 ## The first CardView in the hand rail, or null if the hand hasn't been built.
 func _first_card(view: Node) -> Control:
 	if view == null:
@@ -389,6 +414,59 @@ func _capture() -> void:
 				await process_frame
 			var opened: bool = vi.get("_detail") != null and is_instance_valid(vi.get("_detail"))
 			print("RIGHTCLICK opened_inspector=%s  %s" % [opened, "OK" if opened else "FAIL"])
+			# And a right-click ON A KEYWORD should answer that keyword alone.
+			# Faked at the hover level because driving the pointer onto the exact
+			# glyph is brittle; everything downstream of the hover is the real path.
+			# The inspector opened above covers the screen, so close it first or
+			# the next click lands on the overlay instead of on the card.
+			vi.call("_close_overlay")
+			for _i in 2:
+				await process_frame
+			card.set("_hover_meta", "kw:timed")
+			Input.parse_input_event(ev)
+			for _i in 4:
+				await process_frame
+			var panel: Node = vi.get("_detail")
+			var words: Array = []
+			for n in _all_text(panel):
+				words.append(n)
+			var only_timed: bool = words.size() >= 2 and String(words[0]).contains("Timed") 					and not "".join(words).contains("Rhythm")
+			print("KEYWORD panel=%s  %s" % [str(words).substr(0, 90),
+				"OK" if only_timed else "FAIL"])
+
+			# The card body now ACCEPTS the mouse so it can tell which keyword is
+			# under it. That is exactly how you break playing cards, so prove both
+			# left-click paths still reach the card: bare text, and the keyword
+			# itself (which the RichTextLabel consumes and forwards by hand).
+			vi.call("_close_overlay")
+			for _i in 2:
+				await process_frame
+			var lmb := InputEventMouseButton.new()
+			lmb.button_index = MOUSE_BUTTON_LEFT
+			lmb.pressed = true
+			lmb.position = c
+			lmb.global_position = c
+			Input.parse_input_event(lmb)
+			await process_frame
+			var lup := InputEventMouseButton.new()
+			lup.button_index = MOUSE_BUTTON_LEFT
+			lup.pressed = false
+			lup.position = c
+			lup.global_position = c
+			Input.parse_input_event(lup)
+			for _i in 3:
+				await process_frame
+			var body_click: bool = bool(card.get("_timing"))
+			card.set("_timing", false)
+
+			var rtl: RichTextLabel = _find_rich(card)
+			var meta_click := false
+			if rtl != null:
+				rtl.meta_clicked.emit("kw:timed")
+				await process_frame
+				meta_click = bool(card.get("_timing"))
+			print("LEFTCLICK body=%s on_keyword=%s  %s" % [body_click, meta_click,
+				"OK" if (body_click and meta_click) else "FAIL"])
 		elif vi != null and vi.has_method("_show_card_detail") and not hand.is_empty():
 			vi.call("_show_card_detail", hand[0])
 		for _i in 4:

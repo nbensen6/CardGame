@@ -58,6 +58,7 @@ var _client: GameClient
 var _built := ""        # the phase the scene was staged for
 var _active_slot := 0
 var _selected := -1     # reward choice tapped but not yet locked in
+var _kw_popup: CanvasLayer = null  # the keyword explainer, when one is open
 var _deck_pick := ""    # campfire: "remove" | "upgrade" while choosing a card
 var _shop_pick := -1    # shop: the removal being resolved, -1 when idle
 var _time := 0.0
@@ -348,6 +349,72 @@ func _meshes(node: Node) -> Array:
 	return out
 
 
+## Right-clicking a keyword on a card you are being offered explains it, the same
+## as it does in a fight. Its own small overlay: this scene has no card inspector,
+## and the question ("what is Poison") does not need one.
+func _show_keyword(kw: Dictionary) -> void:
+	if kw.is_empty() or _kw_popup != null and is_instance_valid(_kw_popup):
+		if _kw_popup != null and is_instance_valid(_kw_popup):
+			_kw_popup.queue_free()
+			_kw_popup = null
+		if kw.is_empty():
+			return
+	var shade := ColorRect.new()
+	shade.color = Color(0.04, 0.03, 0.02, 0.55)
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	shade.gui_input.connect(func(e: InputEvent) -> void:
+		if e is InputEventMouseButton and (e as InputEventMouseButton).pressed:
+			shade.queue_free()
+			_kw_popup = null)
+	var layer := CanvasLayer.new()
+	layer.layer = 20
+	add_child(layer)
+	layer.add_child(shade)
+	_kw_popup = layer
+
+	var centre := CenterContainer.new()
+	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shade.add_child(centre)
+
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(360, 0)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.13, 0.105, 0.08, 0.99)
+	st.set_border_width_all(2)
+	st.border_color = Color(0.62, 0.5, 0.3)
+	st.set_corner_radius_all(6)
+	for side in ["left", "right", "top", "bottom"]:
+		st.set("content_margin_" + side, 16.0)
+	panel.add_theme_stylebox_override("panel", st)
+	centre.add_child(panel)
+
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 6)
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(col)
+	var title := RichTextLabel.new()
+	title.bbcode_enabled = true
+	title.text = "[u]%s[/u]" % String(kw.get("name", ""))
+	title.fit_content = true
+	title.scroll_active = false
+	title.autowrap_mode = TextServer.AUTOWRAP_OFF
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	title.add_theme_font_size_override("normal_font_size", 18)
+	title.add_theme_color_override("default_color", Color(1, 0.86, 0.5))
+	col.add_child(title)
+	var body := Label.new()
+	body.text = String(kw.get("text", ""))
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.custom_minimum_size = Vector2(328, 0)
+	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	body.add_theme_font_size_override("font_size", 13)
+	body.add_theme_color_override("font_color", Color(0.86, 0.82, 0.74))
+	col.add_child(body)
+
+
 # --- the reward ------------------------------------------------------------
 
 func _render_reward(s: Dictionary) -> void:
@@ -388,6 +455,7 @@ func _render_reward(s: Dictionary) -> void:
 		cv.setup(choice, not picked)
 		cv.modulate = Color(1, 1, 1) if (_selected == idx or _selected < 0) \
 			else Color(0.62, 0.6, 0.56)
+		cv.keyword_requested.connect(_show_keyword)
 		cv.tapped.connect(func() -> void:
 			if picked:
 				return

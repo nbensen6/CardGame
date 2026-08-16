@@ -14,6 +14,8 @@ signal timing_resolved(hit: bool)
 ## hover or a long-press: CLAUDE.md §5 forbids hover-only information (no hover on
 ## touch), and a hold would fight the timing tap.
 signal inspect_requested(data: Dictionary)
+## The player right-clicked one KEYWORD and wants just that term explained.
+signal keyword_requested(keyword: Dictionary)
 
 ## Rail cards size themselves to the column's width; only the height is fixed, and
 ## it's set by the live-effect line plus two clipped lines of prose and the timing
@@ -43,6 +45,7 @@ var _elapsed := 0.0  # time spent in the current window
 var zone_bonus := 0.0
 var _strip: Control
 var _data := {}      # the snapshot this card was built from, for right-click inspect
+var _hover_meta := ""  # "kw:<id>" while the pointer is over a keyword
 var _clock: Control  # the timed badge, if this card has one
 var _marker: ColorRect
 var _count_lbl: Label
@@ -304,10 +307,25 @@ func _inspect_button(data: Dictionary) -> Control:
 ## `rich` emits BBCode for a RichTextLabel: numbers a buff or scaling CHANGED from
 ## the card's printed value turn green (StS's cue that your Strength is working),
 ## and every keyword turns gold so the player can see a rules term exists at all.
+## The word a keyword actually WEARS in prose. Mostly the keyword's own name, but
+## Height is written "climb" everywhere a card talks about it, so searching for
+## "Height" would find nothing. Timed has no word at all any more — the clock
+## badge says it — so it is deliberately absent.
+const KEYWORD_WORDS := {
+	"height": ["Climb", "climb", "climbs", "Height"],
+	"block": ["Block"], "poison": ["Poison"], "expose": ["Expose"],
+	"rhythm": ["Rhythm"], "strength": ["Strength"], "burn": ["Burn"],
+	"taunt": ["Taunt"],
+}
+
+
 static func face_text(data: Dictionary, rich: bool = false) -> String:
 	var pv: Dictionary = data.get("preview", {})
 	if pv.is_empty():
-		return String(data.get("text", ""))
+		# No live preview — a card you are being OFFERED rather than holding. Its
+		# authored text still names keywords, so mark them up here or the same
+		# term would be underlined in your hand and plain on the reward screen.
+		return _markup(String(data.get("text", "")), data.get("keywords", []), rich)
 	var miss: Dictionary = data.get("preview_miss", pv)
 	var fx: Dictionary = data.get("fx", {})
 	var base: Dictionary = data.get("base", {})
@@ -392,7 +410,17 @@ func _rich_body(data: Dictionary, size: int, height: int) -> RichTextLabel:
 	r.scroll_active = false      # clip a long line rather than grow the card
 	r.clip_contents = true
 	r.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# PASS, not IGNORE: the label has to SEE the pointer to know which keyword is
+	# under it. Anything it doesn't accept still reaches the card Button beneath.
+	r.mouse_filter = Control.MOUSE_FILTER_PASS
+	r.meta_underlined = false           # the [u] in _kw does it, on the word only
+	r.meta_hover_started.connect(func(meta: Variant) -> void: _hover_meta = String(meta))
+	r.meta_hover_ended.connect(func(_meta: Variant) -> void: _hover_meta = "")
+	# A left click on a keyword is consumed by the RichTextLabel before the Button
+	# ever sees it, so forward it by hand — clicking the word "Poison" on a card
+	# must still play that card.
+	r.meta_clicked.connect(func(_meta: Variant) -> void: _on_self_pressed())
+	r.gui_input.connect(_on_card_input)  # right-click over a keyword asks about it
 	r.custom_minimum_size = Vector2(0, height)
 	r.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	r.add_theme_font_size_override("normal_font_size", size)
@@ -460,14 +488,61 @@ static func _num(low: int, high: int, base: int, rich: bool) -> String:
 	return str(shown)
 
 
-## Gold a word only when it really is a keyword this card touches — so the colour
-## always means "there is a tooltip behind this", never decoration.
+## Wrap every keyword term in a block of prose, once each.
+##
+## Only the FIRST occurrence: marking up every "Block" in a sentence turns the
+## card into a ransom note, and one underline is enough to say the term is
+## explainable. Matches on word boundaries so "Blocking" is never half-wrapped.
+static func _markup(text_str: String, kws: Array, rich: bool) -> String:
+	if not rich or text_str == "" or kws.is_empty():
+		return text_str
+	var out := text_str
+	for k in kws:
+		var id := String((k as Dictionary).get("id", ""))
+		for word in KEYWORD_WORDS.get(id, []):
+			var at := _word_index(out, String(word))
+			if at < 0:
+				continue
+			out = out.substr(0, at) + _kw(String(word), id, kws, true) 				+ out.substr(at + String(word).length())
+			break  # this keyword is marked; move to the next one
+	return out
+
+
+## Index of `word` in `text_str` as a whole word, or -1. Skips anything already
+## inside a BBCode tag, so a second keyword can't be spliced into the first's markup.
+static func _word_index(text_str: String, word: String) -> int:
+	var from := 0
+	while true:
+		var at := text_str.find(word, from)
+		if at < 0:
+			return -1
+		var before := "" if at == 0 else text_str[at - 1]
+		var after_i := at + word.length()
+		var after := "" if after_i >= text_str.length() else text_str[after_i]
+		var boundary := not _is_word_char(before) and not _is_word_char(after)
+		if boundary and text_str.rfind("[", at) <= text_str.rfind("]", at):
+			return at
+		from = at + 1
+	return -1
+
+
+static func _is_word_char(c: String) -> bool:
+	return c != "" and (c.to_lower() != c.to_upper() or c == "_")
+
+
+## Gold AND underlined, only when the word really is a keyword this card touches.
+##
+## The colour alone said "this is special"; the underline says "you can ask about
+## this" — which is the part that has to be visible, now that right-clicking a
+## keyword explains it (Nick, 2026-08-16: "the keyword should be underlined. All
+## keywords should be underlined."). The [url] carries the id so a click knows
+## WHICH keyword it landed on.
 static func _kw(word: String, id: String, kws: Array, rich: bool) -> String:
 	if not rich:
 		return word
 	for k in kws:
 		if String((k as Dictionary).get("id", "")) == id:
-			return "[color=#%s]%s[/color]" % [KEYWORD_COLOR, word]
+			return "[url=kw:%s][u][color=#%s]%s[/color][/u][/url]" % [id, KEYWORD_COLOR, word]
 	return word
 
 
@@ -615,9 +690,18 @@ func _on_card_input(event: InputEvent) -> void:
 	if not (event is InputEventMouseButton):
 		return
 	var mb := event as InputEventMouseButton
-	if mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
-		accept_event()  # never let a right-click fall through and play the card
-		inspect_requested.emit(_data)
+	if mb.button_index != MOUSE_BUTTON_RIGHT or not mb.pressed:
+		return
+	accept_event()  # never let a right-click fall through and play the card
+	# On a keyword, answer that keyword. Anywhere else on the card, open the
+	# inspector — which answers all of them, plus the card itself.
+	if _hover_meta.begins_with("kw:"):
+		var want := _hover_meta.substr(3)
+		for k in _data.get("keywords", []):
+			if String((k as Dictionary).get("id", "")) == want:
+				keyword_requested.emit(k)
+				return
+	inspect_requested.emit(_data)
 
 
 func _on_self_pressed() -> void:
