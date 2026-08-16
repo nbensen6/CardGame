@@ -178,11 +178,22 @@ text = "HP"
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Intent" type="Label" parent="Hud/Root/TopBar/Box"]
+[node name="IntentTag" type="PanelContainer" parent="Hud/Root"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_right = 160.0
+offset_bottom = 34.0
+
+[node name="Intent" type="Label" parent="Hud/Root/IntentTag"]
 unique_name_in_owner = true
 layout_mode = 2
 text = ""
-theme_override_colors/font_color = Color(0.9, 0.55, 0.45, 1)
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 17
+theme_override_colors/font_color = Color(0.98, 0.62, 0.5, 1)
+theme_override_colors/font_outline_color = Color(0.08, 0.05, 0.04, 1)
+theme_override_constants/outline_size = 5
 
 [node name="Party" type="VBoxContainer" parent="Hud/Root"]
 unique_name_in_owner = true

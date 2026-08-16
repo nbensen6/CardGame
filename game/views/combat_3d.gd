@@ -171,6 +171,7 @@ var _log_expanded := false
 @onready var _hp: Label = %HpLabel
 @onready var _hp_bar: ProgressBar = %HpBar
 @onready var _intent: Label = %Intent
+@onready var _intent_tag: PanelContainer = %IntentTag
 @onready var _hand_row: HBoxContainer = %Hand
 @onready var _status: Label = %StatusLabel
 @onready var _energy_orb: PanelContainer = %EnergyOrb
@@ -265,6 +266,9 @@ func _process(delta: float) -> void:
 	if _sigil != null and _sigil.visible:
 		_sigil.scale = Vector3.ONE * (1.0 + sin(_time * 3.0) * 0.14)
 	_track_climb(delta)
+	# After the camera work above: the tag is pinned to a world point, so it has to
+	# be reprojected once the shake, recoil and orbit for this frame have settled.
+	_position_intent_tag()
 	if _coach_left > 0.0:
 		_coach_left -= delta
 		# fade the last second, so it leaves rather than blinking out
@@ -374,7 +378,7 @@ func _refresh() -> void:
 	_hp.text = "%d / %d" % [int(boss["hp"]), int(boss["max_hp"])]
 	_hp_bar.max_value = int(boss["max_hp"])
 	_hp_bar.value = int(boss["hp"])
-	_intent.text = _intent_text(boss)
+	_set_intent(boss)
 	_show_beast(String(boss.get("id", "")), String(boss["name"]),
 		int(boss.get("weak_point_height", 0)))
 	_place_sigil(s)
@@ -385,6 +389,61 @@ func _refresh() -> void:
 	_render_log(s)
 	_react(s)
 	_render_hand()
+
+
+## The telegraph belongs ABOVE THE BEAST, not in a bar at the top of the screen
+## (Nick, 2026-08-15). Slay the Spire puts intent on the enemy for a reason: it is
+## the one thing you must read before choosing a card, and you are already looking
+## at the thing that's about to hit you. In the top bar it sat beside the HP
+## readout, competing with the name, the numbers and the Menu button.
+##
+## Aggressive moves wear the alarm colour; defensive and utility ones don't, so a
+## turn where the beast isn't swinging reads as safe at a glance.
+func _set_intent(boss: Dictionary) -> void:
+	var txt := _intent_text(boss)
+	_intent.text = txt
+	_intent_tag.visible = txt != ""
+	if txt == "":
+		return
+	var kind := String(boss.get("intent", {}).get("type", ""))
+	var hostile: bool = kind in ["attack", "attack_all", "swipe_high", "swipe_low", "leech", "rift"]
+	_intent.add_theme_color_override("font_color",
+		Color(0.98, 0.55, 0.44) if hostile else Color(0.72, 0.84, 0.62))
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.18, 0.07, 0.06, 0.88) if hostile else Color(0.09, 0.14, 0.09, 0.85)
+	style.set_border_width_all(2)
+	style.border_color = Color(0.86, 0.36, 0.28) if hostile else Color(0.46, 0.62, 0.42)
+	style.set_corner_radius_all(5)
+	style.content_margin_left = 12.0
+	style.content_margin_right = 12.0
+	style.content_margin_top = 4.0
+	style.content_margin_bottom = 4.0
+	_intent_tag.add_theme_stylebox_override("panel", style)
+
+
+## Follow the beast's crown in screen space, clamped so it is always readable.
+##
+## The clamp matters more than the tracking: a Titan's head is off the top of the
+## frame by design, so an untethered tag would sit off-screen for exactly the
+## fights where knowing what's coming matters most.
+func _position_intent_tag() -> void:
+	if _intent_tag == null or not _intent_tag.visible or _cam == null:
+		return
+	if _beast_box.size.y <= 0.0:
+		return
+	var c := _beast_box.get_center()
+	var crown := Vector3(c.x, _beast_box.end.y + _beast_box.size.y * 0.05, c.z)
+	if _cam.is_position_behind(crown):
+		return
+	var p := _cam.unproject_position(crown)
+	var sz := _intent_tag.size
+	# Node3D has no get_viewport_rect(); that lives on Control.
+	var vp: Vector2 = get_viewport().get_visible_rect().size
+	var lo_y := 70.0                                   # clear of the boss HP bar
+	var hi_y: float = maxf(lo_y, vp.y - sz.y - 250.0)  # clear of the hand
+	_intent_tag.position = Vector2(
+		clampf(p.x - sz.x * 0.5, 12.0, maxf(12.0, vp.x - sz.x - 12.0)),
+		clampf(p.y - sz.y - 10.0, lo_y, hi_y))
 
 
 func _intent_text(boss: Dictionary) -> String:
