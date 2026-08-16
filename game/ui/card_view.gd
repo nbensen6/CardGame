@@ -158,7 +158,7 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 	else:
 		box.add_child(_header(String(data.get("name", "")), int(data.get("cost", 0)), bool(data.get("no_cost", false))))
 		box.add_child(_art(String(data.get("icon", "")), String(data.get("portrait", ""))))
-		box.add_child(_rich_body(data, 12, 96))
+		box.add_child(_rich_body(data, 12, 74))
 
 	_strip = _build_timing_strip()  # hidden until start_timing()
 	box.add_child(_strip)

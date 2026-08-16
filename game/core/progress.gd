@@ -37,9 +37,11 @@ static func mark_hint_seen(id: String) -> void:
 ## the whole game.
 static func hints_enabled() -> bool:
 	var cfg := ConfigFile.new()
+	# OFF by default (Nick, 2026-08-15) — the tips get in the way while the game is
+	# still being built. Flip this back when onboarding is the thing being worked on.
 	if cfg.load(PATH) != OK:
-		return true      # a brand-new player gets taught
-	return bool(cfg.get_value(SECTION, "hints_enabled", true))
+		return false
+	return bool(cfg.get_value(SECTION, "hints_enabled", false))
 
 
 static func set_hints_enabled(on: bool) -> void:

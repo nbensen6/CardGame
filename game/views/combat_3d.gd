@@ -47,13 +47,25 @@ const MODELS := {
 ## contains the whole creature is a shot that says "toy on a table". See
 ## VIEW_WINDOW_* — the camera now shows a fixed slice of world, and a big beast
 ## simply overflows it.
-const BEAST_BASE_HEIGHT := 4.0
-const BEAST_HEIGHT_PER_CLIMB := 1.2
+## Beasts should read as COLOSSAL, not merely big (Nick, 2026-08-15). Raised from
+## 4.0 / 1.2 — a final Titan now stands ~16 units rather than ~11, and the camera
+## framing below follows the beast's measured height so it pulls back to suit.
+const BEAST_BASE_HEIGHT := 7.0
+const BEAST_HEIGHT_PER_CLIMB := 2.0
 ## How much vertical world the camera frames, in units — the constant that makes
 ## size legible. A beast shorter than this fits with air around it; a Titan runs
 ## off the top of the screen and you only ever see the stretch you're climbing.
-const VIEW_WINDOW_MIN := 5.5
-const VIEW_WINDOW_MAX := 11.0
+## The vertical slice of world the camera tries to hold. Widened (Nick,
+## 2026-08-15: "camera should start zoomed out more") — and it has to grow anyway
+## now the beasts are half again as tall.
+const VIEW_WINDOW_MIN := 8.0
+const VIEW_WINDOW_MAX := 20.0
+
+## The bottom strip the hand now occupies. The camera frames into what is LEFT of
+## the screen and lifts its aim to match, so the beast stands in clear air instead
+## of behind the cards. Without this, moving the hand to the bottom simply hid the
+## lower third of every beast.
+const HUD_BOTTOM_FRACTION := 0.34
 ## Real-time grip (SotC), the same client-side skill layer the 2D view runs: the
 ## instant a hunter leaves a safe hold a timer starts full and drains live; reach
 ## the next ledge before it empties or this client reports a fall. The host is
@@ -154,7 +166,7 @@ var _log_expanded := false
 @onready var _hp: Label = %HpLabel
 @onready var _hp_bar: ProgressBar = %HpBar
 @onready var _intent: Label = %Intent
-@onready var _hand_row: VBoxContainer = %Hand
+@onready var _hand_row: HBoxContainer = %Hand
 @onready var _status: Label = %StatusLabel
 @onready var _hunter_header: PanelContainer = %HunterHeader
 @onready var _end_btn: Button = %EndTurn
@@ -168,6 +180,7 @@ var _log_expanded := false
 @onready var _coach_text: Label = %CoachText
 @onready var _coach_ok: Button = %CoachOk
 @onready var _coach_off: Button = %CoachOff
+@onready var _menu_btn: Button = %MenuBtn
 @onready var _log_label: Label = %LogLabel
 @onready var _log_toggle: Button = %LogToggle
 @onready var _log_panel: PanelContainer = %LogPanel
@@ -192,6 +205,7 @@ func _ready() -> void:
 	_log_toggle.pressed.connect(func() -> void:
 		_log_expanded = not _log_expanded
 		_refresh())
+	_menu_btn.pressed.connect(_confirm_quit)
 	_coach_ok.pressed.connect(_dismiss_coach)
 	# The off switch lives ON the tip, because that is the exact moment you want
 	# it. Burying it in a menu means being annoyed now and fixing it later, which
@@ -428,15 +442,16 @@ func _fit_height(node: Node3D, want: float) -> float:
 ## the top of the screen and you meet it a stretch at a time.
 func _frame_beast() -> void:
 	var tall := maxf(_beast_box.size.y, 1.0)
-	_working_dist = _dist_for_window(clampf(tall * 1.15, VIEW_WINDOW_MIN, VIEW_WINDOW_MAX))
+	var window := _window_for(tall * 1.04)
+	_working_dist = _dist_for_window(window)
 	_yaw = 0.0          # a new beast is always introduced from the front
 	_user_framed = false
 	# Open on the whole creature, however far back that has to be, then fall in to
 	# the working shot. You get to see what you've picked a fight with once —
 	# after that, the climb is the subject and the rest of it is off-screen.
-	_dist = _dist_for_window(tall * 1.35)
+	_dist = _dist_for_window(_window_for(tall * 1.35))
 	_establishing = _dist > _working_dist + 0.1
-	_pivot = Vector3(0.0, tall * 0.5, 0.0)
+	_pivot = Vector3(0.0, _ground_pivot(window), 0.0)
 	_pivot_target = _pivot
 	_pitch = 0.24
 	_apply_orbit()
@@ -501,6 +516,29 @@ func _aim_camera(delta: float, snap: bool) -> void:
 ## body's axis, but the hunters cling to its near face — on a Titan that's 5 units
 ## nearer the camera, so standing off by the window alone put the lens practically
 ## against them and threw both hunters off opposite edges of the screen.
+## The window the camera must hold for `want` world-units to stay visible ABOVE the
+## card strip, clamped to the framing range.
+func _window_for(want: float) -> float:
+	return clampf(want / (1.0 - HUD_BOTTOM_FRACTION), VIEW_WINDOW_MIN, VIEW_WINDOW_MAX)
+
+
+## How far to lift the aim so the subject sits in the clear band rather than centred
+## on a screen whose bottom third is cards.
+## Aim so the GROUND lands on the top edge of the card strip.
+##
+## Both ground shots want this and neither used to have it. Aiming lower left a
+## Titan's feet floating a third of the way up the screen with a dead lane of desert
+## under them; aiming higher pushed a lesser beast's whole body behind the hand. One
+## rule fixes both: the beast stands ON the cards, so every pixel of clear screen is
+## beast, and anything too tall to fit runs off the top — which is the whole point.
+##
+## Derivation: for world y=0 to sit at screen fraction (1 - HUD_BOTTOM_FRACTION),
+## the pivot must be (0.5 - HUD_BOTTOM_FRACTION) * window. The small margin keeps
+## the feet just clear of the card edge rather than tangent to it.
+func _ground_pivot(window: float) -> float:
+	return window * (0.5 - HUD_BOTTOM_FRACTION + 0.04)
+
+
 func _dist_for_window(window: float) -> float:
 	var lens := maxf(window, 1.0) / (2.0 * tan(deg_to_rad(_cam.fov) * 0.5))
 	return lens + maxf(_beast_box.end.z * 0.85, 0.0)
@@ -526,19 +564,18 @@ func _climb_frame() -> Vector2:
 	for h in _hunters:
 		ys.append(float((h["home"] as Vector3).y) + eye)
 	if ys.is_empty():
-		return Vector2(tall * 0.5, clampf(tall * 1.15, VIEW_WINDOW_MIN, VIEW_WINDOW_MAX))
+		var w0 := _window_for(tall * 1.04)
+		return Vector2(_ground_pivot(w0), w0)
 	var lo: float = ys.min()
 	var hi: float = ys.max()
 	if hi < eye + 0.05:  # nobody has left the ground
 		_climb_t = 0.0
-		var window := clampf(tall * 1.15, VIEW_WINDOW_MIN, VIEW_WINDOW_MAX)
+		var window := _window_for(tall * 1.04)
 		# A beast small enough to fit the window is met face to face — cropping a
 		# Crag Pup's head isn't imposing, it just looks like a mistake. Only the
 		# ones too big to hold get the looming shot, which makes towering a thing
 		# the act Titans do rather than something every fight does.
-		if tall <= VIEW_WINDOW_MAX * 0.82:
-			return Vector2(tall * 0.52, window)
-		return Vector2(minf(tall * 0.5, eye + _dist * 0.03), window)
+		return Vector2(_ground_pivot(window), window)
 	var active: float = ys[_me()] if _me() < ys.size() else hi
 	_climb_t = clampf(active / maxf(tall * 0.55, 1.0), 0.0, 1.0)
 	# Look a little way up the road — from where YOU are, not from wherever the
@@ -564,14 +601,16 @@ func _climb_frame() -> Vector2:
 	# camera than the pivot plane, so parallax throws them further from centre than
 	# their world height alone predicts. tools/screenshot.gd prints where they
 	# actually land — tune this against that, not against algebra.
-	var window := clampf((hi - lo) * 1.5 + 4.0, VIEW_WINDOW_MIN, VIEW_WINDOW_MAX)
+	var window := _window_for((hi - lo) * 1.5 + 4.0)
 	# When a carry is going well the pair can be most of a Titan apart — further
 	# than any window that still feels big. Something has to fall off the edge, and
 	# it is never the hunter whose cards you are holding. This clamp pins the
 	# active hunter inside the middle 60% of frame; the ally can drift off, which
 	# is itself the read that they are a very long way below you. The party panel
 	# still has their HP and Height.
-	return Vector2(clampf(hi - window * 0.19,
+	# Climbing: the subject is the hunters, so bias the pair into the clear band
+	# above the hand rather than the middle of the whole screen.
+	return Vector2(clampf(hi - window * (0.19 + HUD_BOTTOM_FRACTION * 0.5),
 		active - window * 0.30, active + window * 0.30), window)
 
 
@@ -846,6 +885,22 @@ func _sync(enc: int, hp: int, foots: Array, reached: Array, php: Array = []) -> 
 	_prev_php = php
 
 
+## There was no way out of a fight except finishing it (Nick, 2026-08-15). Asks
+## first: a run is long, and a mis-tapped Menu button that binned it silently would
+## be worse than having no button at all.
+func _confirm_quit() -> void:
+	var d := ConfirmationDialog.new()
+	d.title = "Leave the hunt?"
+	d.dialog_text = "This run ends here. Progress in it is lost."
+	d.ok_button_text = "Leave"
+	d.cancel_button_text = "Keep hunting"
+	add_child(d)
+	d.confirmed.connect(func() -> void:
+		get_tree().change_scene_to_file("res://views/menu.tscn"))
+	d.canceled.connect(d.queue_free)
+	d.popup_centered()
+
+
 ## The full rules for one card, on demand — the home that lets the card FACE stop
 ## being a rulebook.
 ##
@@ -1040,7 +1095,11 @@ func _render_hand() -> void:
 		var playable: bool = bool(card["playable"])
 		if selecting:
 			playable = idx != int(_selecting.get("sac", -1))
-		cv.setup(card, playable, true)  # rail form — the scene keeps the screen
+		# Portrait form along the bottom (Nick, 2026-08-15). The left rail was
+		# chosen in Aug to keep the 3D scene clear; with the camera pulled back and
+		# the beasts scaled up, the bottom strip is affordable again and the cards
+		# read far better at portrait size.
+		cv.setup(card, playable, false)
 		var c_card: Dictionary = card
 		cv.tapped.connect(func() -> void: _on_card_tapped(c_card, cv))
 		cv.inspect_requested.connect(_show_card_detail)

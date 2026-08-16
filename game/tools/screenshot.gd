@@ -38,7 +38,10 @@ func _initialize() -> void:
 	# config happens to say — otherwise turning tips off while playing silently
 	# changes what every screenshot verifies.
 	Progress.reset_hints()
-	Progress.set_hints_enabled(true)
+	# Match the shipping default (off, 2026-08-15) so shots show the real UI. This
+	# writes to user://progress.cfg, so forcing tips ON here silently turned them
+	# back on in the designer's own game every time a screenshot was taken.
+	Progress.set_hints_enabled(false)
 	if _state == "menu":  # just the main menu, no session
 		change_scene_to_file("res://views/menu.tscn")
 		_capture()
