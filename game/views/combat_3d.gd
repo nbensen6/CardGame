@@ -50,16 +50,16 @@ const MODELS := {
 ## Beasts should read as COLOSSAL, not merely big (Nick, 2026-08-15). Raised from
 ## 4.0 / 1.2 — a final Titan now stands ~16 units rather than ~11, and the camera
 ## framing below follows the beast's measured height so it pulls back to suit.
-const BEAST_BASE_HEIGHT := 7.0
-const BEAST_HEIGHT_PER_CLIMB := 2.0
+const BEAST_BASE_HEIGHT := 10.0
+const BEAST_HEIGHT_PER_CLIMB := 2.8
 ## How much vertical world the camera frames, in units — the constant that makes
 ## size legible. A beast shorter than this fits with air around it; a Titan runs
 ## off the top of the screen and you only ever see the stretch you're climbing.
 ## The vertical slice of world the camera tries to hold. Widened (Nick,
 ## 2026-08-15: "camera should start zoomed out more") — and it has to grow anyway
 ## now the beasts are half again as tall.
-const VIEW_WINDOW_MIN := 8.0
-const VIEW_WINDOW_MAX := 20.0
+const VIEW_WINDOW_MIN := 9.0
+const VIEW_WINDOW_MAX := 28.0
 
 ## The bottom strip the hand now occupies. The camera frames into what is LEFT of
 ## the screen and lifts its aim to match, so the beast stands in clear air instead
@@ -71,7 +71,12 @@ const HUD_BOTTOM_FRACTION := 0.34
 ## the next ledge before it empties or this client reports a fall. The host is
 ## told the OUTCOME, never the ticking timer.
 const GRIP_SECONDS := 5.0
-const HUNTER_HEIGHT := 0.8
+## Hunters are the scale reference — a beast only looks colossal NEXT TO something.
+## Dropped from 0.8 (Nick, 2026-08-15: "beasts much bigger than the hunters"), which
+## widens the ratio from both ends at once: a lesser beast is now ~22x a hunter and a
+## Titan ~38x, where before it was 14x and 24x. Lowering this is cheaper than raising
+## the beasts alone, because it costs no extra camera pull-back.
+const HUNTER_HEIGHT := 0.7
 ## Orbit camera (Nick's call, 2026-08-05). The beast is a PLACE, so you can walk
 ## the camera around it. Auto-framing still sets the opening shot off the model's
 ## own size; dragging only takes over from there, and never below the ground or
@@ -442,7 +447,7 @@ func _fit_height(node: Node3D, want: float) -> float:
 ## the top of the screen and you meet it a stretch at a time.
 func _frame_beast() -> void:
 	var tall := maxf(_beast_box.size.y, 1.0)
-	var window := _window_for(tall * 1.04)
+	var window := _window_for(tall * 1.18)
 	_working_dist = _dist_for_window(window)
 	_yaw = 0.0          # a new beast is always introduced from the front
 	_user_framed = false
@@ -564,13 +569,13 @@ func _climb_frame() -> Vector2:
 	for h in _hunters:
 		ys.append(float((h["home"] as Vector3).y) + eye)
 	if ys.is_empty():
-		var w0 := _window_for(tall * 1.04)
+		var w0 := _window_for(tall * 1.18)
 		return Vector2(_ground_pivot(w0), w0)
 	var lo: float = ys.min()
 	var hi: float = ys.max()
 	if hi < eye + 0.05:  # nobody has left the ground
 		_climb_t = 0.0
-		var window := _window_for(tall * 1.04)
+		var window := _window_for(tall * 1.18)
 		# A beast small enough to fit the window is met face to face — cropping a
 		# Crag Pup's head isn't imposing, it just looks like a mistake. Only the
 		# ones too big to hold get the looming shot, which makes towering a thing
