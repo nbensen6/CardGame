@@ -524,6 +524,39 @@ input:focus-visible,select:focus-visible{outline:2px solid var(--sky);outline-of
 .gap b{display:block;font-size:.95rem;margin-bottom:3px}
 .gap span{font-family:var(--mono);font-size:10.5px;color:var(--faint)}
 .cardtext{color:var(--dim);font-size:12.5px;max-width:38ch}
+/* Anything that navigates says so before you click it. */
+.go{cursor:pointer}
+tr.go:hover{background:var(--panel2)}
+tr.go:hover .arrow{opacity:1}
+.arrow{font-family:var(--mono);font-size:11px;color:var(--gold);opacity:0;transition:opacity .12s}
+.stat.go:hover{border-color:var(--gold)}
+.stat.go:hover span{color:var(--gold)}
+.go:focus-visible{outline:2px solid var(--sky);outline-offset:-2px}
+/* Hunters tab — decks read as decks, not as table rows. */
+.hpick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+.hpick button{background:var(--panel);border:1px solid var(--line);color:var(--dim);border-radius:3px;
+  padding:9px 15px;cursor:pointer;font-family:var(--sans);font-size:14px}
+.hpick button:hover{color:var(--ink)}
+.hpick button.on{border-color:var(--gold);color:var(--gold);background:var(--panel2)}
+.hpick button:focus-visible{outline:2px solid var(--sky);outline-offset:1px}
+.ident{background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:14px 16px;margin-bottom:18px}
+.ident h2{margin:0 0 4px}
+.ident p{margin:0 0 10px;color:var(--dim);max-width:74ch}
+.deck{display:grid;gap:9px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.dcard{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--faint);
+  border-radius:0 3px 3px 0;padding:9px 11px}
+.dcard.r-uncommon{border-left-color:var(--sky)}
+.dcard.r-rare{border-left-color:var(--gold)}
+.dcard .cost{float:right;font-family:var(--mono);font-size:12px;color:var(--gold);
+  border:1px solid var(--line);background:var(--panel2);border-radius:50%;
+  width:23px;height:23px;line-height:21px;text-align:center;margin-left:8px}
+.dcard b{font-size:.93rem}
+.dcard .mult{font-family:var(--mono);font-size:12px;color:var(--gold);margin-left:5px}
+.dcard .body{color:var(--dim);font-size:12.5px;margin:5px 0 6px}
+.dcard .foot{line-height:1.9}
+.dcard.dim{opacity:.28}
+h3.grp{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--dim);margin:20px 0 9px;font-weight:400}
 details summary{cursor:pointer;font-family:var(--mono);font-size:11px;color:var(--dim);
   letter-spacing:.08em;text-transform:uppercase;padding:6px 0}
 details summary:hover{color:var(--ink)}
@@ -558,6 +591,7 @@ footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);
 
 <nav>
   <button class="on" data-t="overview">Overview</button>
+  <button data-t="hunters">Hunters</button>
   <button data-t="cards">Cards</button>
   <button data-t="coverage">Coverage</button>
   <button data-t="gaps">Gaps</button>
@@ -566,6 +600,7 @@ footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);
 </nav>
 
 <section class="on" id="overview"></section>
+<section id="hunters"></section>
 <section id="cards"></section>
 <section id="coverage"></section>
 <section id="gaps"></section>
@@ -582,11 +617,15 @@ const $ = (s,r=document)=>r.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 document.getElementById("stamp").textContent = "generated " + new Date(D.generated).toLocaleString();
 
-/* nav */
-document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
-  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));
-  document.querySelectorAll("section").forEach(s=>s.classList.toggle("on",s.id===b.dataset.t));
-});
+/* nav. goTab is the one way tabs change, so anything anywhere on the page can
+   send you somewhere else — a class row jumps to that hunter, a stat tile jumps
+   to the list it counts. */
+function goTab(id){
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x.dataset.t===id));
+  document.querySelectorAll("section").forEach(s=>s.classList.toggle("on",s.id===id));
+  window.scrollTo({top:0});
+}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>goTab(b.dataset.t));
 
 /* ---- overview ---- */
 (function(){
@@ -599,8 +638,8 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
   const cls = D.classes.map(k=>{
     const cv = Object.entries(k.curve).sort((a,b)=>a[0]-b[0])
       .map(([cost,n])=>\`\${cost}:\${n}\`).join(" · ");
-    return \`<tr>
-      <td><b>\${esc(k.name)}</b><div class="cardtext">\${esc(k.desc)}</div></td>
+    return \`<tr class="go" data-hunter="\${k.id}" tabindex="0" role="button">
+      <td><b>\${esc(k.name)}</b> <span class="arrow">-&gt;</span><div class="cardtext">\${esc(k.desc)}</div></td>
       <td><span class="tag">\${esc(k.passive.type)} \${k.passive.value||""}</span></td>
       <td class="num">\${k.starterSize}</td>
       <td class="num">\${k.avgCost}</td>
@@ -615,16 +654,17 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
 
   $("#overview").innerHTML = \`
    <div class="grid stats">
-     <div class="stat"><b>\${c.cards}</b><span>cards</span></div>
-     <div class="stat"><b>\${c.timed}</b><span>timed</span></div>
-     <div class="stat"><b>\${c.classes}</b><span>classes</span></div>
+     <div class="stat go" data-cards="{}"><b>\${c.cards}</b><span>cards</span></div>
+     <div class="stat go" data-cards='{"kind":"timed"}'><b>\${c.timed}</b><span>timed</span></div>
+     <div class="stat go" data-tab="hunters"><b>\${c.classes}</b><span>classes</span></div>
      <div class="stat"><b>\${c.relics}</b><span>relics</span></div>
-     <div class="stat"><b>\${D.gaps.length}</b><span>empty cells</span></div>
-     <div class="stat"><b>\${D.checks.length}</b><span>findings</span></div>
+     <div class="stat go" data-tab="gaps"><b>\${D.gaps.length}</b><span>empty cells</span></div>
+     <div class="stat go" data-tab="health"><b>\${D.checks.length}</b><span>findings</span></div>
    </div>
    <h2>Classes</h2>
-   <p class="note">Timed % is how much of the starter deck runs a timing bar — your "double timing" density.
-     Identity % is how much of the class's reward pool is unique to it rather than shared filler.</p>
+   <p class="note">Click a class to open its full deck. Timed % is how much of the starter deck runs a
+     timing bar — your "double timing" density. Identity % is how much of the class's reward pool is
+     unique to it rather than shared filler.</p>
    <div class="scroll"><table><thead><tr>
      <th>Class</th><th>Passive</th><th class="num">Deck</th><th class="num">Avg cost</th>
      <th>Timed</th><th>Identity</th><th>Rarity mix</th><th>Icons</th><th>Cost spread</th></tr></thead><tbody>\${cls}</tbody></table></div>
@@ -633,6 +673,107 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
      number of cards and deckbuilding loses its central tension.</p>
    <div class="scroll"><table><thead><tr><th class="num">Cost</th><th class="num">Cards</th><th></th></tr></thead>
      <tbody>\${curve}</tbody></table></div>\`;
+
+  // Wired after innerHTML, not as inline onclick, so the markup above stays
+  // readable and every jump goes through goTab.
+  $("#overview").querySelectorAll("[data-hunter]").forEach(tr=>{
+    const go = () => showHunter(tr.dataset.hunter);
+    tr.onclick = go;
+    tr.onkeydown = e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(); } };
+  });
+  $("#overview").querySelectorAll(".stat.go").forEach(el=>{
+    el.tabIndex = 0; el.setAttribute("role","button");
+    const go = () => el.dataset.tab ? goTab(el.dataset.tab) : showCards(JSON.parse(el.dataset.cards));
+    el.onclick = go;
+    el.onkeydown = e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(); } };
+  });
+})();
+
+/* ---- hunters ----
+   One hunter at a time: who they are, the deck they actually start every run
+   with (duplicates shown as x2, because two copies of Tongue Snap is a real
+   fact about the opening hand), and the pool they draft from. */
+(function(){
+  const s = $("#hunters");
+  const byId = Object.fromEntries(D.cards.map(c=>[c.id,c]));
+  const RANK = {common:0, uncommon:1, rare:2};
+
+  s.innerHTML = \`
+    <div class="hpick">\${D.classes.map((c,i)=>
+      \`<button data-c="\${c.id}"\${i?"":' class="on"'}>\${esc(c.name)}</button>\`).join("")}</div>
+    <div id="hbody"></div>\`;
+
+  function tile(card, mult){
+    if(!card) return "";
+    const kw = [];
+    if(card.timed) kw.push('<span class="tag t">timed</span>');
+    if(card.signature) kw.push('<span class="tag sig">signature</span>');
+    if(card.shared) kw.push('<span class="tag sh">shared</span>');
+    if(card.icon) kw.push(\`<span class="tag">\${esc(card.icon)}</span>\`);
+    return \`<div class="dcard r-\${card.rarity}" data-hay="\${esc((card.name+" "+card.text+" "+card.id+" "+card.used.join(" ")).toLowerCase())}">
+      <span class="cost">\${card.cost}</span>
+      <b>\${esc(card.name)}</b>\${mult>1?\`<span class="mult">x\${mult}</span>\`:""}
+      <div class="body">\${esc(card.text)}</div>
+      <div class="foot"><span class="tag r-\${card.rarity[0]}">\${esc(card.rarity)}</span>\${kw.join("")}</div>
+    </div>\`;
+  }
+
+  function render(cid){
+    const k = D.classes.find(c=>c.id===cid);
+
+    // Starter deck: collapse duplicates but keep run order stable.
+    const seen = new Map();
+    for(const id of k.starter) seen.set(id, (seen.get(id)||0)+1);
+    const starter = [...seen].map(([id,n])=>tile(byId[id], n)).join("");
+
+    // Pool grouped by rarity — that is the order you meet them in, weighted.
+    const groups = ["common","uncommon","rare"].map(r=>{
+      const list = k.pool.map(id=>byId[id]).filter(c=>c&&c.rarity===r)
+        .sort((a,b)=>a.cost-b.cost || a.name.localeCompare(b.name));
+      if(!list.length) return "";
+      return \`<h3 class="grp">\${r} - \${list.length} cards, \${k.offerRate[r]}% of reward slots</h3>
+        <div class="deck">\${list.map(c=>tile(c,1)).join("")}</div>\`;
+    }).join("");
+
+    $("#hbody").innerHTML = \`
+      <div class="ident">
+        <h2>\${esc(k.name)}</h2>
+        <p>\${esc(k.desc)}</p>
+        <span class="tag">passive: \${esc(k.passive.type)} \${k.passive.value||""}</span>
+        \${k.iconTop.map(t=>\`<span class="tag">\${esc(t[0])} x\${t[1]}</span>\`).join("")}
+      </div>
+      <div class="grid stats">
+        <div class="stat"><b>\${k.starterSize}</b><span>starter deck</span></div>
+        <div class="stat"><b>\${k.poolSize}</b><span>draftable</span></div>
+        <div class="stat"><b>\${k.avgCost}</b><span>avg cost</span></div>
+        <div class="stat"><b>\${k.timedPct}%</b><span>starter timed</span></div>
+        <div class="stat"><b>\${k.identityPct}%</b><span>pool is signature</span></div>
+        <div class="stat"><b>\${k.iconCount}</b><span>icons</span></div>
+      </div>
+      <div class="controls" style="margin-top:18px">
+        <input type="search" id="hq" placeholder="Filter this hunter's cards...">
+        <span class="sub">\${k.directTimed} timed in hand\${k.builtTimed?" + "+k.builtTimed+" built":""}</span>
+      </div>
+      <h3 class="grp">Starter deck - every run opens with these</h3>
+      <div class="deck">\${starter}</div>
+      \${groups}\`;
+
+    // Dim rather than remove, so a filter never changes the shape of the deck.
+    $("#hq").oninput = e => {
+      const q = e.target.value.toLowerCase().trim();
+      $("#hbody").querySelectorAll(".dcard").forEach(d=>
+        d.classList.toggle("dim", !!q && !d.dataset.hay.includes(q)));
+    };
+  }
+
+  function pick(cid){
+    s.querySelectorAll(".hpick button").forEach(x=>x.classList.toggle("on",x.dataset.c===cid));
+    render(cid);
+  }
+  s.querySelectorAll(".hpick button").forEach(b=>b.onclick=()=>pick(b.dataset.c));
+  pick(D.classes[0].id);
+
+  window.showHunter = cid => { pick(cid); goTab("hunters"); };
 })();
 
 /* ---- cards ---- */
@@ -688,6 +829,14 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
   });
   ["q","fc","fk","fr"].forEach(id=>$("#"+id).oninput=rows);
   rows();
+
+  // Arriving from a stat tile should land on the filtered list, not on the
+  // whole catalog with the filter left for you to set.
+  window.showCards = (f={}) => {
+    $("#q").value = f.q || ""; $("#fc").value = f.cls || "";
+    $("#fk").value = f.kind || ""; $("#fr").value = f.rarity || "";
+    rows(); goTab("cards");
+  };
 })();
 
 /* ---- coverage ---- */
