@@ -204,6 +204,11 @@ func _build_shared() -> Dictionary:
 		"phase": _phase_string(),
 		"encounter": _run.encounter_index + 1,
 		"total_encounters": _run.total_encounters(),
+		# Which kind of node is being resolved. The reward screen needs it: a
+		# treasure cache opens the same REWARD phase a felled Titan does, and
+		# announcing "Titan felled!" over a chest is a lie about what just
+		# happened (Nick, 2026-08-16).
+		"node_type": _run.node_type,
 		"over": _run.is_over(),
 		"result": _result_string(),
 		"players": _players_public(),
@@ -282,6 +287,12 @@ func _players_public() -> Array:
 			out.append({
 				"name": _run.names[i], "hp": _run.hp[i], "max_hp": _run.max_hp[i],
 				"portrait": Content.character_portrait(_slot_char(i)),
+				# Same reason combat sends it: the view picks a model by CHARACTER.
+				# Without this the campfire and the shop fell back to guessing from
+				# the portrait filename, and "sloth"/"goat"/"monkey" are not model
+				# keys — so every hunter but the Frog rendered as the Frog's bunny,
+				# and you met yourself twice at every campfire (Nick, 2026-08-16).
+				"character": _slot_char(i),
 				"picked": _run.phase == Run.Phase.REWARD and bool(_run.reward_picked[i]),
 			})
 	return out

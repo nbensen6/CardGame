@@ -11,7 +11,11 @@
 class_name RunMap
 extends RefCounted
 
-const ROWS_PER_ACT := 3  # non-boss rows before each Titan
+## Non-boss rows before each Titan. Was 3, which made an act four nodes long:
+## you reached a trader holding one fight's worth of gold and could not afford
+## anything in it, and an act was over before its route had a shape you could
+## plan (Nick, 2026-08-16). Five rows puts a run at 24 nodes.
+const ROWS_PER_ACT := 5
 const MIN_WIDTH := 2
 const MAX_WIDTH := 3
 
@@ -20,8 +24,12 @@ var rows: Array = []  # Array[Array[Dictionary]]
 
 func _init(acts: int, rng: RandomNumberGenerator) -> void:
 	for a in range(acts):
+		var act_rows: Array = []
 		for r in range(ROWS_PER_ACT):
-			rows.append(_make_row(a, r, rng))
+			act_rows.append(_make_row(a, r, rng))
+		_ensure_shop(act_rows, rng)
+		for row in act_rows:
+			rows.append(row)
 		rows.append([{"type": "boss", "act": a, "next": []}])
 	_link(rng)
 
@@ -56,6 +64,34 @@ func total_rows() -> int:
 
 
 # --- generation -----------------------------------------------------------
+
+## Every act offers a trader, in its back half.
+##
+## Left to the dice a shop turned up in about a third of acts, and when it did it
+## could land on row 1 — before you had earned anything, which is the same as no
+## shop at all. The back half guarantees a full act's fights are behind you, so
+## the purse is worth spending when you get there.
+func _ensure_shop(act_rows: Array, rng: RandomNumberGenerator) -> void:
+	for row in act_rows:
+		for n in row:
+			if String((n as Dictionary)["type"]) == "shop":
+				return
+	var first: int = int(ceil(float(ROWS_PER_ACT) / 2.0))
+	if first >= act_rows.size():
+		return
+	var r: int = rng.randi_range(first, act_rows.size() - 1)
+	var row: Array = act_rows[r]
+	# Convert a fight or an event rather than the rest that may be the only heal
+	# before the Titan, falling back to any node if the row is all rests.
+	var candidates: Array = []
+	for i in range(row.size()):
+		if String((row[i] as Dictionary)["type"]) in ["fight", "event", "treasure"]:
+			candidates.append(i)
+	if candidates.is_empty():
+		for i in range(row.size()):
+			candidates.append(i)
+	(row[candidates[rng.randi_range(0, candidates.size() - 1)]] as Dictionary)["type"] = "shop"
+
 
 func _make_row(act: int, row_in_act: int, rng: RandomNumberGenerator) -> Array:
 	var width := rng.randi_range(MIN_WIDTH, MAX_WIDTH)

@@ -160,19 +160,39 @@ func _refresh() -> void:
 	var avail: Array = m.get("available", [])
 	if rows.is_empty():
 		return
-	var act := 0
-	if cur_row >= 0 and cur_row < rows.size():
-		act = int((rows[cur_row] as Array)[cur_col].get("act", 0))
-	else:
-		act = int((rows[0] as Array)[0].get("act", 0))
+	# The region to draw is the one you are about to walk INTO, not the one you
+	# are standing in. Those are the same thing everywhere except on a Titan's
+	# node, which is the last row of its act — and there they differed, so the
+	# field was laid for the act you had just finished, the next act's row was
+	# never placed, and act one ended with nowhere to go (Nick, 2026-08-16).
+	var act := _act_ahead(rows, cur_row, cur_col)
 	_title.text = "Act %d of %d" % [act + 1, int(s.get("total_encounters", 4))]
-	# says the pick AND the look, because a control nobody finds isn't a feature
-	_subtitle.text = "Walk to where you'll go next   ·   drag to look around, wheel to zoom"
+	_subtitle.text = ""
 	if act != _act or cur_row != _laid_row:
 		_act = act
 		_laid_row = cur_row
 		_lay_field(rows, act, cur_row, cur_col, avail)
 	_place_avatar(s, cur_row, cur_col)
+
+
+## The act whose region should be on screen: the one containing the row you may
+## step to next. On the final Titan there is no next row, so it stays where it is.
+func _act_ahead(rows: Array, cur_row: int, cur_col: int) -> int:
+	if rows.is_empty():
+		return 0
+	if cur_row < 0:
+		return int((rows[0] as Array)[0].get("act", 0))
+	if cur_row + 1 < rows.size():
+		return int((rows[cur_row + 1] as Array)[0].get("act", 0))
+	return int((rows[cur_row] as Array)[cur_col].get("act", 0))
+
+
+## Is the row the party stands on part of the region currently drawn? False on
+## the step across an act boundary, where they stand on the previous act's Titan.
+func _row_in_act(rows: Array, row: int) -> bool:
+	if row < 0 or row >= rows.size():
+		return false
+	return int((rows[row] as Array)[0].get("act", 0)) == _act
 
 
 ## Rebuild the region for the act you're in. Node rows land on EVEN hex rows so
@@ -259,7 +279,14 @@ func _draw_roads(rows: Array, act_rows: Array, spot: Dictionary,
 				var walkable: bool = (r == cur_row and c == cur_col)
 				any_bright = any_bright or walkable
 				_ribbon(bright if walkable else faint, a, b)
-	bright.surface_end()
+	# Ending a surface that got no vertices is an engine error, and at a trailhead
+	# — the run's first step, and now every act boundary — there are no bright
+	# roads to draw, because the party is standing beside the region rather than
+	# on one of its nodes.
+	if any_bright:
+		bright.surface_end()
+	else:
+		bright.clear_surfaces()
 	faint.surface_end()
 	_add_ribbon_mesh(faint, Color(0.55, 0.44, 0.3, 0.85))
 	if any_bright:
@@ -399,12 +426,16 @@ func _place_avatar(s: Dictionary, cur_row: int, cur_col: int) -> void:
 	_avatar.position = _stand_at(cur_row, cur_col) + Vector3(0, 0, 0.3)
 
 
-## Where the party stands: on the current node, or at the trailhead before the
-## run has started (row -1 means nothing has been stepped on yet).
+## Where the party stands: on the current node, or at the trailhead.
+##
+## The trailhead covers both edges of a region — before the run has started
+## (row -1, nothing stepped on yet) and just after a Titan, where the node you
+## are standing on belongs to the act BEHIND you. Both read the same way: you are
+## at the mouth of this region with its first row ahead of you.
 func _stand_at(cur_row: int, cur_col: int) -> Vector3:
-	if cur_row < 0:
-		return Vector3(0.0, TILE_TOP, ROW_STEP * 1.6)
 	var rows: Array = _client.shared.get("map", {}).get("rows", [])
+	if cur_row < 0 or not _row_in_act(rows, cur_row):
+		return Vector3(0.0, TILE_TOP, ROW_STEP * 1.6)
 	var act_index := 0
 	for r in range(rows.size()):
 		if int((rows[r] as Array)[0].get("act", 0)) == _act:

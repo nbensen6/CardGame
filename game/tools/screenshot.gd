@@ -86,10 +86,14 @@ func _initialize() -> void:
 		r3.node_type = "event"
 		r3._begin_event()
 		Session.host._broadcast_state()
-	if _state == "3dmap":  # a couple of rows in, so the walked route is visible
+	if _state in ["3dmap", "3dcross"]:  # a couple of rows in, so the walked route is visible
 		var rm: Run = Session.host._run
-		# one step for act 1; for later acts, walk the whole way there
+		# one step for act 1; for later acts, walk the whole way there.
+		# 3dcross stops ON the act's Titan — the act boundary, where the party
+		# stands in one region with the next one ahead of them.
 		var steps: int = 1 if _act <= 0 else (_act * (RunMap.ROWS_PER_ACT + 1) + 1)
+		if _state == "3dcross":
+			steps = (_act + 1) * (RunMap.ROWS_PER_ACT + 1)
 		for _s in range(steps):
 			if rm.phase != Run.Phase.MAP or rm.available_nodes().is_empty():
 				break
@@ -177,7 +181,7 @@ func _initialize() -> void:
 	if _state in ["3dgame", "3dloop", "3dreward", "3dwon", "3devent",
 			"3dcampfire", "3dshop", "3dselect"]:
 		scene = "res://views/game_3d.tscn"
-	elif _state == "3dmap":
+	elif _state in ["3dmap", "3dcross"]:
 		scene = "res://views/overworld_3d.tscn"
 	change_scene_to_file(scene)
 	_capture()
@@ -302,6 +306,17 @@ func _capture() -> void:
 		print("SPACE slot=%d ended %s -> %s  %s" % [slot, ended_before,
 			combat.players[slot].ended_turn,
 			"OK" if (not ended_before and combat.players[slot].ended_turn) else "FAIL"])
+		for _i in 3:
+			await process_frame
+	if _state == "3dcross":  # prove an act boundary leaves somewhere to walk to
+		var vc := current_scene
+		var rc: Run = Session.host._run
+		var open: int = (vc.get("_nodes") as Dictionary).size()
+		print("CROSS row=%d type=%s avail=%s drawn_act=%d open_nodes=%d title=%s  %s" % [
+			rc.map_row, rc.map.node_at(rc.map_row, rc.map_col).get("type", "?"),
+			str(rc.available_nodes()), int(vc.get("_act")), open,
+			vc.get("_title").text,
+			"OK" if (open > 0 and open == rc.available_nodes().size()) else "FAIL"])
 		for _i in 3:
 			await process_frame
 	if _state == "3drebind":  # prove the settings menu can actually rebind a key

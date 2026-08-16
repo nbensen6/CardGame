@@ -356,8 +356,19 @@ func _render_reward(s: Dictionary) -> void:
 	var picked := bool(reward.get("picked", false))
 	var noun := "relic" if is_relic else "card"
 	var solo := _is_solo()
-	_title.text = "Titan felled!   (%d / %d)" % [
-		int(s.get("encounter", 1)), int(s.get("total_encounters", 1))]
+	# The REWARD phase is reached three ways — a felled beast, a felled Titan, or a
+	# treasure cache you simply walked up to — and only one of them involves
+	# felling a Titan.
+	match String(s.get("node_type", "boss")):
+		"boss":
+			_title.text = "Titan felled!   (%d / %d)" % [
+				int(s.get("encounter", 1)), int(s.get("total_encounters", 1))]
+		"elite":
+			_title.text = "The elite falls."
+		"treasure":
+			_title.text = "A cache in the rocks"
+		_:
+			_title.text = "The beast falls."
 	_subtitle.text = ("Choose a RELIC — a lasting boon for the team."
 		if is_relic else "Choose a card to strengthen your deck for the next Titan.")
 	if picked:
