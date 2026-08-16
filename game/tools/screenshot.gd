@@ -57,7 +57,7 @@ func _initialize() -> void:
 	elif _state != "3dselect":
 		Session.client.select_character("frog", 0)
 		Session.client.select_character("goblin_mech", 1)
-	if _state in ["goblin", "3d", "3dclimb", "3dinspect",
+	if _state in ["goblin", "3d", "3dclimb", "3dinspect", "3dsettings",
 			"3dstrike", "3dgame", "3dgrip", "3dsel", "3dreward", "3dwon"]:  # 3dloop deliberately starts ON the map  # step off the map into a fight
 		var r: Run = Session.host._run
 		var g := 0
@@ -264,6 +264,12 @@ func _capture() -> void:
 	await _await_camera(current_scene)
 	if _state.begins_with("3d") and _state not in ["3dmap", "3dloop"]:
 		_report_visibility(current_scene)
+	if _state == "3dsettings":  # the settings overlay behind the Menu button
+		var vs := current_scene
+		if vs != null and vs.has_method("_open_settings"):
+			vs.call("_open_settings")
+		for _i in 4:
+			await process_frame
 	if _state == "3dinspect":  # open the card inspector on the first card in hand
 		var vi := current_scene
 		# Solo (which this harness always runs) nests each hunter's hand under

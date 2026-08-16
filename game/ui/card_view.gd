@@ -130,7 +130,10 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 	if compact:
 		custom_minimum_size = Vector2(0, RAIL_HEIGHT)
 	else:
-		custom_minimum_size = Vector2(176, 264) if bool(data.get("no_cost", false)) else Vector2(164, 224)
+		# 148 wide, not 164: with the energy orb beside the hand, five cards at the
+		# old width overflowed and put a scrollbar under the most-used control on
+		# the screen.
+		custom_minimum_size = Vector2(176, 264) if bool(data.get("no_cost", false)) else Vector2(148, 224)
 	disabled = not playable
 	text = ""
 	if not mouse_entered.is_connected(_on_hover):
@@ -381,7 +384,7 @@ func _header(card_name: String, cost: int, no_cost: bool = false) -> Control:
 	var cost_lbl := _label(str(cost), 16)
 	row.add_child(cost_lbl)
 
-	var name_lbl := _label(card_name, 14)
+	var name_lbl := _label(card_name, 12)
 	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS  # long names never overflow

@@ -173,7 +173,9 @@ var _log_expanded := false
 @onready var _intent: Label = %Intent
 @onready var _hand_row: HBoxContainer = %Hand
 @onready var _status: Label = %StatusLabel
-@onready var _hunter_header: PanelContainer = %HunterHeader
+@onready var _energy_orb: PanelContainer = %EnergyOrb
+@onready var _energy_label: Label = %EnergyLabel
+@onready var _piles: Label = %Piles
 @onready var _end_btn: Button = %EndTurn
 @onready var _switch_btn: Button = %SwitchBtn
 @onready var _grip_bar: PanelContainer = %GripBar
@@ -210,7 +212,7 @@ func _ready() -> void:
 	_log_toggle.pressed.connect(func() -> void:
 		_log_expanded = not _log_expanded
 		_refresh())
-	_menu_btn.pressed.connect(_confirm_quit)
+	_menu_btn.pressed.connect(_open_settings)
 	_coach_ok.pressed.connect(_dismiss_coach)
 	# The off switch lives ON the tip, because that is the exact moment you want
 	# it. Burying it in a menu means being annoyed now and fixing it later, which
@@ -890,9 +892,103 @@ func _sync(enc: int, hp: int, foots: Array, reached: Array, php: Array = []) -> 
 	_prev_php = php
 
 
-## There was no way out of a fight except finishing it (Nick, 2026-08-15). Asks
-## first: a run is long, and a mis-tapped Menu button that binned it silently would
-## be worse than having no button at all.
+## Everything that isn't playing a card, behind one button. Settings live here
+## rather than as their own HUD controls precisely because the screen was already
+## too busy — the cure for clutter is not more buttons.
+func _open_settings() -> void:
+	_close_overlay()
+	_detail = ColorRect.new()
+	_detail.color = Color(0.04, 0.03, 0.02, 0.72)
+	_detail.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_detail.mouse_filter = Control.MOUSE_FILTER_STOP
+	_overlay_root().add_child(_detail)
+	_detail.gui_input.connect(func(e: InputEvent) -> void:
+		if e is InputEventMouseButton and (e as InputEventMouseButton).pressed:
+			_close_overlay())
+
+	var centre := CenterContainer.new()
+	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_detail.add_child(centre)
+
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(320, 0)
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.13, 0.105, 0.08, 0.99)
+	st.set_border_width_all(2)
+	st.border_color = Color(0.62, 0.5, 0.3)
+	st.set_corner_radius_all(6)
+	for side in ["left", "right", "top", "bottom"]:
+		st.set("content_margin_" + side, 18.0)
+	panel.add_theme_stylebox_override("panel", st)
+	centre.add_child(panel)
+
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 10)
+	panel.add_child(col)
+	col.add_child(_detail_label("Settings", 20, Color(1, 0.94, 0.8)))
+	col.add_child(_detail_rule())
+
+	var music := Button.new()
+	music.custom_minimum_size = Vector2(0, 42)
+	music.text = "Music:  %s" % ("On" if Progress.music_enabled() else "Off")
+	music.pressed.connect(func() -> void:
+		Progress.set_music_enabled(not Progress.music_enabled())
+		Music.refresh()   # audible on the tap, not at the next scene change
+		music.text = "Music:  %s" % ("On" if Progress.music_enabled() else "Off"))
+	col.add_child(music)
+
+	var tips := Button.new()
+	tips.custom_minimum_size = Vector2(0, 42)
+	tips.text = "Tips:  %s" % ("On" if Progress.hints_enabled() else "Off")
+	tips.pressed.connect(func() -> void:
+		Progress.set_hints_enabled(not Progress.hints_enabled())
+		tips.text = "Tips:  %s" % ("On" if Progress.hints_enabled() else "Off")
+		if not Progress.hints_enabled():
+			_coach_id = ""
+			_coach.visible = false)
+	col.add_child(tips)
+
+	col.add_child(_detail_rule())
+	var quit := Button.new()
+	quit.custom_minimum_size = Vector2(0, 42)
+	quit.text = "Abandon the hunt"
+	quit.add_theme_color_override("font_color", Color(0.95, 0.55, 0.45))
+	quit.pressed.connect(_confirm_quit)
+	col.add_child(quit)
+
+	var back := Button.new()
+	back.custom_minimum_size = Vector2(0, 38)
+	back.text = "Back"
+	back.flat = true
+	back.pressed.connect(_close_overlay)
+	col.add_child(back)
+
+
+func _close_overlay() -> void:
+	if _detail != null and is_instance_valid(_detail):
+		_detail.queue_free()
+	_detail = null
+
+
+## Overlays must live in their OWN CanvasLayer, above the HUD's.
+##
+## Parenting them to this Node3D put them on the root canvas (layer 0) while the
+## Hud CanvasLayer sits above it — so the settings panel rendered behind the hand
+## and its Back button was unclickable under a card.
+func _overlay_root() -> CanvasLayer:
+	var found := get_node_or_null("OverlayLayer")
+	if found is CanvasLayer:
+		return found
+	var layer := CanvasLayer.new()
+	layer.name = "OverlayLayer"
+	layer.layer = 20
+	add_child(layer)
+	return layer
+
+
+## Asks first: a run is long, and a mis-tap that binned it silently would be worse
+## than having no way out at all.
 func _confirm_quit() -> void:
 	var d := ConfirmationDialog.new()
 	d.title = "Leave the hunt?"
@@ -921,7 +1017,7 @@ func _show_card_detail(data: Dictionary) -> void:
 	_detail.color = Color(0.04, 0.03, 0.02, 0.72)
 	_detail.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_detail.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(_detail)
+	_overlay_root().add_child(_detail)
 	# Tap anywhere to dismiss — one gesture, no close button to aim at on a phone.
 	_detail.gui_input.connect(func(e: InputEvent) -> void:
 		if e is InputEventMouseButton and (e as InputEventMouseButton).pressed:
@@ -1116,12 +1212,12 @@ func _render_hand() -> void:
 	if selecting:
 		_status.text = _selection_prompt()
 		_status.visible = true   # a transient instruction, not an identity
-		_render_hunter_header(me)
+		_render_energy(me)
 		_show_switch_target(players)
 		_end_btn.disabled = bool(priv.get("ended", false))
 		return
 	_status.visible = false
-	_render_hunter_header(me)
+	_render_energy(me)
 	_show_switch_target(players)
 	_end_btn.disabled = bool(priv.get("ended", false))
 
@@ -1244,90 +1340,34 @@ func _slot_color(slot: int) -> Color:
 	return SLOT_TINT[slot % SLOT_TINT.size()]
 
 
-## Who am I playing right now? A PORTRAIT, not a sentence (Nick, 2026-08-06).
+## Energy, big, beside the hand — Slay the Spire's one un-shrunken HUD number.
 ##
-## In solo you drive both hunters and switch between them mid-turn, so this has
-## to be answerable without reading — the face, framed in the same colour as the
-## pip floating over that hunter's model out in the scene. The name was spelled
-## out in text before and it simply didn't register while you were busy.
-##
-## Numbers stay as symbols: ✦ energy, ♥ health, ↑ Height.
-func _render_hunter_header(p: Dictionary) -> void:
-	for c in _hunter_header.get_children():
-		c.queue_free()
-	if p.is_empty():
-		return
-	var slot := _me()
-	var tint := _slot_color(slot)
+## This replaced a panel in the top-left that restated the active hunter's entire
+## row: portrait, HP, energy, Height, incoming, piles. All of it was already in the
+## party panel, so the screen said everything twice (Nick, 2026-08-15: "still have
+## some clutter"). The party panel now owns hunter state, and the only thing lifted
+## out is the number you consult before every single card.
+func _render_energy(p: Dictionary) -> void:
+	var out := int(p.get("energy", 0))
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.13, 0.1, 0.08, 0.85)
-	style.set_border_width_all(2)
-	style.border_color = tint
-	style.set_corner_radius_all(5)
-	style.content_margin_left = 8.0
-	style.content_margin_right = 8.0
-	style.content_margin_top = 5.0
-	style.content_margin_bottom = 5.0
-	_hunter_header.add_theme_stylebox_override("panel", style)
+	style.bg_color = Color(0.16, 0.12, 0.07, 0.92) if out > 0 else Color(0.11, 0.1, 0.1, 0.85)
+	style.set_border_width_all(3)
+	style.border_color = Color(0.82, 0.66, 0.34) if out > 0 else Color(0.34, 0.32, 0.30)
+	style.set_corner_radius_all(48)   # a disc, not a card — it should read as an orb
+	_energy_orb.add_theme_stylebox_override("panel", style)
+	_energy_label.text = str(out)
+	_energy_label.add_theme_color_override("font_color",
+		Color(1, 0.87, 0.5) if out > 0 else Color(0.55, 0.52, 0.5))
 
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 9)
-	_hunter_header.add_child(row)
-	row.add_child(_portrait_of(p, 46, tint))
+	# Pile counts tucked under the orb. Small on purpose: they matter to the Goblin,
+	# whose kit scales off the burn pile, and to nobody else most turns.
+	var priv := _my_private()
+	_piles.visible = priv.has("draw")
+	if priv.has("draw"):
+		_piles.text = "draw %d\ndisc %d · burn %d" % [int(priv.get("draw", 0)),
+			int(priv.get("discard", 0)), int(priv.get("exhaust", 0))]
 
-	var col := VBoxContainer.new()
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	col.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	col.add_theme_constant_override("separation", 1)
-	var pips := Label.new()
-	pips.text = "✦%d    ♥%d    ↑%d" % [int(p.get("energy", 0)), int(p.get("hp", 0)),
-		int(p.get("foothold", 0))]
-	pips.add_theme_font_size_override("font_size", 16)
-	pips.add_theme_color_override("font_color", Color(1, 0.95, 0.82))
-	col.add_child(pips)
-	# the one bit of state urgent enough to spell out
-	var state := ""
-	if bool(p.get("reached", false)):
-		state = "✦ at the sigil"
-	elif not bool(p.get("secure", true)):
-		state = "⚠ hanging"
-	if state != "":
-		var st := Label.new()
-		st.text = state
-		st.add_theme_font_size_override("font_size", 12)
-		st.add_theme_color_override("font_color",
-			Color(0.95, 0.72, 0.4) if state.begins_with("⚠") else Color(0.72, 0.9, 0.6))
-		col.add_child(st)
 
-	# What the beast's telegraphed move will cost YOU, after Block. The intent icon
-	# up top says what's coming; this says whether you survive it, so the player
-	# stops doing the subtraction in their head every turn.
-	var inc: Dictionary = p.get("incoming", {})
-	var raw := int(inc.get("raw", 0))
-	if raw > 0:
-		var through := int(inc.get("through", 0))
-		var warn := Label.new()
-		warn.add_theme_font_size_override("font_size", 13)
-		if through <= 0:
-			warn.text = "⛨ %d incoming — blocked" % raw
-			warn.add_theme_color_override("font_color", Color(0.6, 0.86, 0.62))
-		else:
-			var soaked := raw - through
-			warn.text = ("⚔ %d incoming" % through) if soaked <= 0 \
-				else "⚔ %d incoming  (%d blocked)" % [through, soaked]
-			warn.add_theme_color_override("font_color", Color(0.98, 0.52, 0.42))
-		col.add_child(warn)
-
-	# Pile counts. The Goblin's kit scales off the burn pile and it was invisible.
-	var piles := _my_private()
-	if piles.has("draw"):
-		var pl := Label.new()
-		pl.text = "draw %d · disc %d · burn %d" % [int(piles.get("draw", 0)),
-			int(piles.get("discard", 0)), int(piles.get("exhaust", 0))]
-		pl.add_theme_font_size_override("font_size", 11)
-		pl.add_theme_color_override("font_color", Color(0.66, 0.61, 0.53))
-		col.add_child(pl)
-	row.add_child(col)
 
 
 ## A character's face at a fixed size, tinted frame optional. Portraits are baked
@@ -1387,8 +1427,17 @@ func _party_card(p: Dictionary, slot: int, aimed: bool) -> Control:
 	var parts: Array = ["HP %d/%d" % [int(p.get("hp", 0)), int(p.get("max_hp", 0))]]
 	if int(p.get("block", 0)) > 0:
 		parts.append("◈%d" % int(p.get("block", 0)))
-	parts.append("✦%d" % int(p.get("energy", 0)))
+	# Energy only for the ALLY — yours is the orb beside your hand, and printing it
+	# in both places is exactly the doubling this pass exists to remove.
+	if slot != _me():
+		parts.append("✦%d" % int(p.get("energy", 0)))
 	parts.append("↑%d" % int(p.get("foothold", 0)))
+	# What the telegraphed move costs THIS hunter, after their Block. The red border
+	# already says "aimed at"; this says whether they survive it.
+	var inc: Dictionary = p.get("incoming", {})
+	var through := int(inc.get("through", 0))
+	if int(inc.get("raw", 0)) > 0:
+		parts.append("⚔%d" % through if through > 0 else "⛨ blocked")
 	if bool(p.get("reached", false)):
 		parts.append("at the sigil")
 	elif not bool(p.get("secure", true)):
@@ -1446,5 +1495,8 @@ func _render_log(s: Dictionary) -> void:
 	var n := 16 if _log_expanded else 4
 	_log_label.text = "
 ".join(entries.slice(maxi(entries.size() - n, 0)))
-	_log_panel.visible = not entries.is_empty()  # no empty box before round 1
+	# Collapsed by default: Slay the Spire shows no combat log at all, and a panel
+	# reading "— Round 1 —" beside the beast is pure noise. The toggle stays, so the
+	# history is one tap away when something surprising happens.
+	_log_panel.visible = _log_expanded and not entries.is_empty()
 	_log_toggle.text = "Log ▾" if _log_expanded else "Log ▸"

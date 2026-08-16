@@ -51,6 +51,21 @@ static func set_hints_enabled(on: bool) -> void:
 	cfg.save(PATH)
 
 
+## Music on/off. Stored beside the tips flag so both survive a run and a restart.
+static func music_enabled() -> bool:
+	var cfg := ConfigFile.new()
+	if cfg.load(PATH) != OK:
+		return true
+	return bool(cfg.get_value(SECTION, "music_enabled", true))
+
+
+static func set_music_enabled(on: bool) -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(PATH)
+	cfg.set_value(SECTION, "music_enabled", on)
+	cfg.save(PATH)
+
+
 ## Forget every hint — useful for testing, and offered on the menu.
 static func reset_hints() -> void:
 	var cfg := ConfigFile.new()

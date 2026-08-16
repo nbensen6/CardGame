@@ -12,7 +12,12 @@ static var _current := ""
 
 
 static func play(track: String) -> void:
-	if track == _current:
+	if not Progress.music_enabled():
+		_current = track   # remember the intent so unmuting can resume it
+		if _player != null:
+			_player.stop()
+		return
+	if track == _current and _player != null and _player.playing:
 		return
 	_ensure()
 	if _player == null:
@@ -35,6 +40,19 @@ static func stop() -> void:
 	_current = ""
 	if _player != null:
 		_player.stop()
+
+
+## Apply the current setting right now — the toggle has to be audible on the tap,
+## not on the next scene change.
+static func refresh() -> void:
+	if not Progress.music_enabled():
+		if _player != null:
+			_player.stop()
+		return
+	var want := _current
+	_current = ""      # force play() past its "already playing this" guard
+	if want != "":
+		play(want)
 
 
 static func _ensure() -> void:
