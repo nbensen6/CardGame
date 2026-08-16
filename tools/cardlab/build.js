@@ -529,7 +529,23 @@ details summary{cursor:pointer;font-family:var(--mono);font-size:11px;color:var(
 details summary:hover{color:var(--ink)}
 footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);
   font-family:var(--mono);font-size:11px;color:var(--faint)}
-@media (max-width:640px){.wrap{padding:18px 14px 60px}.cardtext{max-width:none}}
+/* Phone. The lab is genuinely useful away from the desk — serve.js binds 0.0.0.0
+   so it opens over wifi — so tap targets have to be thumb-sized, not mouse-sized.
+   Tables already scroll inside .scroll, so nothing here fights horizontal overflow. */
+@media (max-width:640px){
+  body{font-size:16px}
+  .wrap{padding:16px 12px 60px}
+  .cardtext{max-width:none}
+  .masthead{padding-top:34px}
+  nav{position:sticky;top:0;z-index:5;background:var(--bg);margin:14px -12px 18px;padding:0 12px}
+  nav button{padding:15px 14px;font-size:12px}      /* ~46px tall: thumb, not cursor */
+  input[type=search],select{padding:12px;font-size:16px}  /* 16px stops iOS zooming on focus */
+  input[type=search]{min-width:0;flex:1 1 100%}
+  .controls{gap:10px}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  th,td{padding:10px 12px}
+  .gapgrid{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>

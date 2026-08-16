@@ -8,11 +8,24 @@
  */
 const http = require("http");
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 const { execFileSync } = require("child_process");
 
 const PORT = 5180;
 const DIR = __dirname;
+
+/** Every LAN address this machine answers on, so a phone on the same wifi can
+ *  reach the lab without any tunnelling or hosting. */
+function lanUrls() {
+  const out = [];
+  for (const list of Object.values(os.networkInterfaces())) {
+    for (const n of list || []) {
+      if (n.family === "IPv4" && !n.internal) out.push(`http://${n.address}:${PORT}`);
+    }
+  }
+  return out;
+}
 
 http
   .createServer((req, res) => {
@@ -31,4 +44,12 @@ http
     res.writeHead(404, { "content-type": "text/plain" });
     res.end("not found");
   })
-  .listen(PORT, () => console.log(`Card Lab on http://localhost:${PORT}`));
+  // 0.0.0.0, not localhost — binding to the loopback only is what stops a phone
+  // on the same wifi from opening this. Nothing here is sensitive: it serves one
+  // generated page from your own card data, read-only.
+  .listen(PORT, "0.0.0.0", () => {
+    console.log(`Card Lab   http://localhost:${PORT}`);
+    for (const u of lanUrls()) console.log(`  on phone  ${u}`);
+    // Plain ASCII: the Windows console mangles non-ASCII punctuation.
+    console.log("\n(Windows may ask to allow Node through the firewall - say yes for Private networks.)");
+  });
