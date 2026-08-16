@@ -274,6 +274,19 @@ func _press(code: Key) -> void:
 	Input.parse_input_event(ev)
 
 
+## The first CardView in the hand rail, or null if the hand hasn't been built.
+func _first_card(view: Node) -> Control:
+	if view == null:
+		return null
+	var hand := view.get_node_or_null("%Hand")
+	if hand == null:
+		return null
+	for c in hand.get_children():
+		if c is CardView:
+			return c as Control
+	return null
+
+
 func _capture() -> void:
 	for _i in 15:  # let the scene lay out and draw
 		await process_frame
@@ -360,7 +373,23 @@ func _capture() -> void:
 			var slots: Array = priv["slots"]
 			if not slots.is_empty():
 				hand = (slots[0] as Dictionary).get("hand", [])
-		if vi != null and vi.has_method("_show_card_detail") and not hand.is_empty():
+		# Driven by a real RIGHT-CLICK on the card, not by calling the handler:
+		# right-click has to open the inspector without also playing the card, and
+		# only a genuine event through the GUI proves both halves.
+		var card: Control = _first_card(vi)
+		if card != null:
+			var c := card.get_global_rect().get_center()
+			var ev := InputEventMouseButton.new()
+			ev.button_index = MOUSE_BUTTON_RIGHT
+			ev.pressed = true
+			ev.position = c
+			ev.global_position = c
+			Input.parse_input_event(ev)
+			for _i in 4:
+				await process_frame
+			var opened: bool = vi.get("_detail") != null and is_instance_valid(vi.get("_detail"))
+			print("RIGHTCLICK opened_inspector=%s  %s" % [opened, "OK" if opened else "FAIL"])
+		elif vi != null and vi.has_method("_show_card_detail") and not hand.is_empty():
 			vi.call("_show_card_detail", hand[0])
 		for _i in 4:
 			await process_frame

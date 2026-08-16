@@ -50,8 +50,14 @@ const MODELS := {
 ## Beasts should read as COLOSSAL, not merely big (Nick, 2026-08-15). Raised from
 ## 4.0 / 1.2 — a final Titan now stands ~16 units rather than ~11, and the camera
 ## framing below follows the beast's measured height so it pulls back to suit.
-const BEAST_BASE_HEIGHT := 10.0
-const BEAST_HEIGHT_PER_CLIMB := 2.8
+## Retuned 2026-08-16 alongside the deeper climbs. Sigils moved from 1-8 to 4-13,
+## and at the old 2.8-per-Height a Titan would have stood 46 units — half again
+## the size Nick signed off on. Raising the base and flattening the slope keeps
+## the biggest beast at the ~33 units that already read as colossal, while every
+## lesser beast grows: the shallowest is now 18 units rather than 13, so nothing
+## in the game reads as small any more.
+const BEAST_BASE_HEIGHT := 12.0
+const BEAST_HEIGHT_PER_CLIMB := 1.6
 ## How much vertical world the camera frames, in units — the constant that makes
 ## size legible. A beast shorter than this fits with air around it; a Titan runs
 ## off the top of the screen and you only ever see the stretch you're climbing.
@@ -149,6 +155,9 @@ var _prev_foot: Array = []
 var _prev_reached: Array = []
 var _prev_php: Array = []   # per-hunter hp last frame, so a hit on YOU pops a number too
 var _detail: ColorRect = null   # the card inspector overlay, when one is open
+## The climb gauge on the right edge, and the snapshot it draws from.
+var _gauge: Control = null
+var _gauge_data := {}
 ## The keybind action waiting for a key press, or "" when nothing is rebinding.
 var _rebinding := ""
 var _rebind_btns := {}          # action id → the button showing its key
@@ -218,8 +227,128 @@ func _ready() -> void:
 		_coach_id = ""
 		_coach_left = 0.0
 		_coach.visible = false)
+	_build_gauge()
 	if not _client.shared.is_empty():
 		_refresh()
+
+
+# --- the climb gauge -------------------------------------------------------
+#
+# "It's not very intuitive on how far you still need to climb" (Nick,
+# 2026-08-16). It never was: the party panel printed a bare Height and nothing
+# said what Height you were aiming AT, so the number had no scale. With sigils
+# now sitting at 4-13 instead of 1-3 that gap stops being cosmetic — a climb is
+# several turns of planning and you have to be able to see where you are in it.
+#
+# A ladder, drawn to scale, on the right edge: the sigil at the top, ledges as
+# rungs, and each hunter as a dot in their own colour. Position, distance and the
+# next safe hold are all one glance, and the shape of the climb is visible before
+# you commit to it.
+
+const GAUGE_W := 62.0
+const GAUGE_H := 330.0
+const GAUGE_MARGIN := 14.0
+const GAUGE_PAD_TOP := 30.0     # room for the sigil mark above the rail
+const GAUGE_PAD_BOTTOM := 34.0  # room for the "N to go" line below it
+
+
+func _build_gauge() -> void:
+	# A panel, not a bare line on the background: at 3 pixels wide against a sky
+	# the first version read as a scratch on the screen rather than as a reading.
+	var panel := PanelContainer.new()
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.set_anchors_preset(Control.PRESET_CENTER_RIGHT)
+	panel.offset_left = -(GAUGE_W + GAUGE_MARGIN)
+	panel.offset_right = -GAUGE_MARGIN
+	panel.offset_top = -GAUGE_H * 0.5
+	panel.offset_bottom = GAUGE_H * 0.5
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.09, 0.075, 0.06, 0.66)
+	st.set_border_width_all(1)
+	st.border_color = Color(0.42, 0.35, 0.26, 0.8)
+	st.set_corner_radius_all(6)
+	panel.add_theme_stylebox_override("panel", st)
+
+	_gauge = Control.new()
+	_gauge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_gauge.draw.connect(_draw_gauge)
+	panel.add_child(_gauge)
+	panel.visible = false
+	_hud.add_child(panel)
+
+
+## Feed the gauge from a snapshot. Hidden entirely for a beast with no weak point
+## to climb to, because an empty ladder is worse than no ladder.
+func _update_gauge(s: Dictionary) -> void:
+	if _gauge == null or not is_instance_valid(_gauge):
+		return
+	var boss: Dictionary = s.get("boss", {})
+	var top := int(boss.get("weak_point_height", 0))
+	var panel: Control = _gauge.get_parent() as Control
+	if top <= 0:
+		panel.visible = false
+		return
+	var heights: Array = []
+	for p in s.get("players", []):
+		heights.append(int((p as Dictionary).get("foothold", 0)))
+	_gauge_data = {"top": top, "ledges": boss.get("ledges", []), "heights": heights}
+	panel.visible = true
+	_gauge.queue_redraw()
+
+
+func _draw_gauge() -> void:
+	if _gauge_data.is_empty():
+		return
+	var top: int = int(_gauge_data["top"])
+	var ledges: Array = _gauge_data["ledges"]
+	var heights: Array = _gauge_data["heights"]
+	var size := _gauge.size
+	var x := size.x * 0.5
+	var y_top := GAUGE_PAD_TOP
+	var y_bot := size.y - GAUGE_PAD_BOTTOM
+	var font := ThemeDB.fallback_font
+	var rail := Color(0.55, 0.47, 0.36, 0.95)
+	var gold := Color(1.0, 0.84, 0.42)
+
+	# `h` in Height units -> a y on the rail. Height 0 is the ground, at the bottom.
+	var y_of := func(h: float) -> float:
+		return y_bot - (y_bot - y_top) * clampf(h / float(top), 0.0, 1.0)
+
+	_gauge.draw_line(Vector2(x, y_top), Vector2(x, y_bot), rail, 3.0)
+
+	# Rungs. Every Height gets a small one so the ladder has a SCALE — without
+	# them a climb of 2 up a sigil of 13 looks the same as one up a sigil of 4.
+	for h in range(1, top):
+		var y: float = y_of.call(float(h))
+		var is_ledge: bool = ledges.has(h)
+		var w: float = 13.0 if is_ledge else 6.0
+		_gauge.draw_line(Vector2(x - w, y), Vector2(x + w, y),
+			Color(0.78, 0.68, 0.5, 0.95) if is_ledge else rail, 3.0 if is_ledge else 1.5)
+
+	# The sigil, its Height, and the ground you fall back to.
+	_gauge.draw_line(Vector2(x - 15, y_top), Vector2(x + 15, y_top), gold, 3.0)
+	_gauge.draw_string(font, Vector2(0, y_top - 10), "✦ %d" % top,
+		HORIZONTAL_ALIGNMENT_CENTER, size.x, 13, gold)
+	_gauge.draw_line(Vector2(x - 11, y_bot), Vector2(x + 11, y_bot), rail, 3.0)
+
+	# Each hunter, and — for the one you are holding — how much climb is left.
+	for i in range(heights.size()):
+		var h: int = heights[i]
+		var y: float = y_of.call(float(h))
+		var tint: Color = _slot_color(i)
+		# Two hunters on the same hold would draw on top of each other.
+		var dx: float = -8.0 if i == 0 else 8.0
+		if heights.size() > 1 and int(heights[0]) != int(heights[1]):
+			dx = 0.0
+		_gauge.draw_circle(Vector2(x + dx, y), 6.0, tint)
+		_gauge.draw_arc(Vector2(x + dx, y), 6.0, 0.0, TAU, 16, Color(0.1, 0.09, 0.07), 2.0)
+
+	var mine: int = int(heights[_me()]) if _me() < heights.size() else 0
+	var left: int = top - mine
+	var label := "at sigil" if left <= 0 else "%d up" % left
+	_gauge.draw_string(font, Vector2(0, y_bot + 22), label,
+		HORIZONTAL_ALIGNMENT_CENTER, size.x, 13,
+		gold if left <= 0 else Color(0.92, 0.88, 0.78))
 
 
 ## The one place a turn ends, so the button and the key can never drift apart.
@@ -450,12 +579,13 @@ func _refresh() -> void:
 	_hp.text = "%d / %d" % [int(boss["hp"]), int(boss["max_hp"])]
 	_hp_bar.max_value = int(boss["max_hp"])
 	_hp_bar.value = int(boss["hp"])
-	_set_intent(boss)
+	_set_intent(boss, s)
 	_show_beast(String(boss.get("id", "")), String(boss["name"]),
 		int(boss.get("weak_point_height", 0)))
 	_place_sigil(s)
 	_place_hunters(s)
 	_update_climb_state(s)
+	_update_gauge(s)
 	_render_party(s, int(boss.get("target", -1)), String(boss.get("intent", {}).get("type", "")))
 	_update_coach(s)
 	_render_log(s)
@@ -471,8 +601,8 @@ func _refresh() -> void:
 ##
 ## Aggressive moves wear the alarm colour; defensive and utility ones don't, so a
 ## turn where the beast isn't swinging reads as safe at a glance.
-func _set_intent(boss: Dictionary) -> void:
-	var txt := _intent_text(boss)
+func _set_intent(boss: Dictionary, s: Dictionary) -> void:
+	var txt := _intent_text(boss, s)
 	_intent.text = txt
 	_intent_tag.visible = txt != ""
 	if txt == "":
@@ -518,21 +648,46 @@ func _position_intent_tag() -> void:
 		clampf(p.y - sz.y - 10.0, lo_y, hi_y))
 
 
-func _intent_text(boss: Dictionary) -> String:
+## What the beast is about to do, in numbers the player does not have to derive.
+##
+## "It currently says wrench apart five. I'm not sure what that means" (Nick,
+## 2026-08-16). It meant 5 plus 2 for every Height between the hunters, and the
+## "+" was the whole explanation. A telegraph that hides its own arithmetic is
+## not a telegraph — so every move now prints the real figure and, where the
+## number depends on where you are standing, says what to do about it.
+func _intent_text(boss: Dictionary, s: Dictionary) -> String:
 	var move: Dictionary = boss.get("intent", {})
 	var v := int(move.get("value", 0)) + int(boss.get("strength", 0))
 	match String(move.get("type", "")):
 		"attack": return "⚔ Attack %d" % v
-		"attack_all": return "⚔ Sweep %d" % v
-		"swipe_high": return "⚔ Lash the flank %d" % v
-		"swipe_low": return "⚔ Stamp %d" % v
-		"rift": return "⚔ Wrench apart %d+" % v
-		"leech": return "⚔ Drain %d" % v
-		"block": return "◆ Defend"
-		"enrage": return "▲ Enrage"
-		"regen": return "✚ Recover"
-		"shift_sigil": return "✦ Shift its sigil"
+		"attack_all": return "⚔ Sweep %d — hits you both" % v
+		"swipe_high": return "⚔ Lash the flank %d — only climbers" % v
+		"swipe_low": return "⚔ Stamp %d — only the ground" % v
+		"leech": return "⚔ Drain %d — it heals what it takes" % v
+		"rift":
+			# The real total, gap included, the same way a card face shows what it
+			# will actually do rather than the formula behind it.
+			var gap := _height_gap(s)
+			return "⚔ Wrench apart %d — climb together" % (v + gap * Combat.RIFT_PER_GAP)
+		"block": return "◆ Defend %d" % int(move.get("value", 0))
+		"enrage": return "▲ Enrage — every later hit gains %d" % int(move.get("value", 0))
+		"regen": return "✚ Recover %d HP" % int(move.get("value", 0))
+		"shift_sigil": return "✦ Sigil moves to Height %d" % int(move.get("value", 0))
 	return ""
+
+
+## Height between the two hunters — what a rift is priced on.
+func _height_gap(s: Dictionary) -> int:
+	var players: Array = s.get("players", [])
+	if players.size() < 2:
+		return 0
+	var lo := 9999
+	var hi := 0
+	for p in players:
+		var f := int((p as Dictionary).get("foothold", 0))
+		lo = mini(lo, f)
+		hi = maxi(hi, f)
+	return maxi(0, hi - lo)
 
 
 # --- the beast ------------------------------------------------------------
@@ -1643,7 +1798,11 @@ func _party_card(p: Dictionary, slot: int, aimed: bool) -> Control:
 	# in both places is exactly the doubling this pass exists to remove.
 	if slot != _me():
 		parts.append("✦%d" % int(p.get("energy", 0)))
-	parts.append("↑%d" % int(p.get("foothold", 0)))
+	# "↑2 / 6", never a bare "↑2" — a Height with nothing to measure it against
+	# tells you where you are and not how far is left (Nick, 2026-08-16).
+	var wp := int(p.get("weak_point_height", 0))
+	parts.append("↑%d / %d" % [int(p.get("foothold", 0)), wp] if wp > 0
+		else "↑%d" % int(p.get("foothold", 0)))
 	# What the telegraphed move costs THIS hunter, after their Block. The red border
 	# already says "aimed at"; this says whether they survive it.
 	var inc: Dictionary = p.get("incoming", {})

@@ -42,6 +42,7 @@ var _elapsed := 0.0  # time spent in the current window
 ## Relic bonus widening the success zone on each side (0.06 = +6% each way).
 var zone_bonus := 0.0
 var _strip: Control
+var _data := {}      # the snapshot this card was built from, for right-click inspect
 var _clock: Control  # the timed badge, if this card has one
 var _marker: ColorRect
 var _count_lbl: Label
@@ -128,6 +129,7 @@ const TINT := {
 func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> void:
 	# Character/relic cards (no cost pip) carry portraits + longer text — taller frame.
 	_compact = compact
+	_data = data
 	if compact:
 		custom_minimum_size = Vector2(0, RAIL_HEIGHT)
 	else:
@@ -172,6 +174,8 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 		add_child(_clock)
 	if not pressed.is_connected(_on_self_pressed):
 		pressed.connect(_on_self_pressed)
+	if not gui_input.is_connected(_on_card_input):
+		gui_input.connect(_on_card_input)
 
 
 ## The rail form: [cost] [icon] [name / rules text], one row. Everything a
@@ -596,6 +600,24 @@ func start_timing(hits: int = 1) -> void:
 	if is_instance_valid(_clock):
 		_clock.visible = false  # the strip is the clock now
 	set_process(true)
+
+
+## Right-click asks what a card's words MEAN, without playing it.
+##
+## Nick, 2026-08-16: "I would like the ability to right click on things like
+## keywords... For example, poison. What does poison do?" The inspector already
+## answers exactly that — every keyword the card touches, with its definition —
+## it was just behind a small "?" that is easy not to notice.
+##
+## The "?" button stays: CLAUDE.md §5 keeps a tap path for everything, because a
+## phone has no right mouse button. This is the accelerator, not the only way in.
+func _on_card_input(event: InputEvent) -> void:
+	if not (event is InputEventMouseButton):
+		return
+	var mb := event as InputEventMouseButton
+	if mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
+		accept_event()  # never let a right-click fall through and play the card
+		inspect_requested.emit(_data)
 
 
 func _on_self_pressed() -> void:

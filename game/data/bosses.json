@@ -5,8 +5,8 @@
       "name": "The Stone Warden",
       "art": "res://assets/portraits/rhino.png",
       "max_hp": 68,
-      "weak_point_height": 2,
-      "ledges": [],
+      "weak_point_height": 6,
+      "ledges": [2,4],
       "weak_point_threshold": 16,
       "moves": [
         {
@@ -31,10 +31,8 @@
       "name": "The Gale Serpent",
       "art": "res://assets/portraits/snake.png",
       "max_hp": 148,
-      "weak_point_height": 5,
-      "ledges": [
-        2
-      ],
+      "weak_point_height": 9,
+      "ledges": [3,6],
       "weak_point_threshold": 24,
       "moves": [
         {
@@ -59,11 +57,8 @@
       "name": "The Drowned Colossus",
       "art": "res://assets/portraits/whale.png",
       "max_hp": 220,
-      "weak_point_height": 7,
-      "ledges": [
-        2,
-        5
-      ],
+      "weak_point_height": 11,
+      "ledges": [3,6,9],
       "weak_point_threshold": 33,
       "moves": [
         {
@@ -88,11 +83,8 @@
       "name": "The Sunken Warden",
       "art": "res://assets/portraits/walrus.png",
       "max_hp": 300,
-      "weak_point_height": 8,
-      "ledges": [
-        3,
-        6
-      ],
+      "weak_point_height": 13,
+      "ledges": [3,6,9,11],
       "weak_point_threshold": 42,
       "moves": [
         {
@@ -121,8 +113,8 @@
       "name": "The Crag Pup",
       "art": "res://assets/portraits/dog.png",
       "max_hp": 34,
-      "weak_point_height": 1,
-      "ledges": [],
+      "weak_point_height": 4,
+      "ledges": [2],
       "weak_point_threshold": 14,
       "moves": [
         {
@@ -139,8 +131,8 @@
       "name": "The Bramble Hog",
       "art": "res://assets/portraits/pig.png",
       "max_hp": 50,
-      "weak_point_height": 2,
-      "ledges": [],
+      "weak_point_height": 5,
+      "ledges": [2],
       "weak_point_threshold": 17,
       "moves": [
         {
@@ -161,8 +153,8 @@
       "name": "The Bounder",
       "art": "res://assets/portraits/rabbit.png",
       "max_hp": 32,
-      "weak_point_height": 1,
-      "ledges": [],
+      "weak_point_height": 4,
+      "ledges": [2],
       "weak_point_threshold": 14,
       "moves": [
         {
@@ -179,8 +171,8 @@
       "name": "The Mire Snapper",
       "art": "res://assets/portraits/crocodile.png",
       "max_hp": 83,
-      "weak_point_height": 2,
-      "ledges": [],
+      "weak_point_height": 6,
+      "ledges": [3],
       "weak_point_threshold": 24,
       "moves": [
         {
@@ -201,10 +193,8 @@
       "name": "The Frost Sentinel",
       "art": "res://assets/portraits/penguin.png",
       "max_hp": 90,
-      "weak_point_height": 3,
-      "ledges": [
-        2
-      ],
+      "weak_point_height": 7,
+      "ledges": [2,5],
       "weak_point_threshold": 27,
       "moves": [
         {
@@ -229,10 +219,8 @@
       "name": "The Grove Bear",
       "art": "res://assets/portraits/bear.png",
       "max_hp": 97,
-      "weak_point_height": 3,
-      "ledges": [
-        2
-      ],
+      "weak_point_height": 7,
+      "ledges": [3,5],
       "weak_point_threshold": 27,
       "moves": [
         {
@@ -257,8 +245,8 @@
       "name": "The Root Lurker",
       "art": "res://assets/portraits/crocodile.png",
       "max_hp": 50,
-      "weak_point_height": 2,
-      "ledges": [],
+      "weak_point_height": 5,
+      "ledges": [2],
       "weak_point_threshold": 17,
       "moves": [
         {
@@ -279,8 +267,8 @@
       "name": "The Sky Snapper",
       "art": "res://assets/portraits/owl.png",
       "max_hp": 53,
-      "weak_point_height": 2,
-      "ledges": [],
+      "weak_point_height": 5,
+      "ledges": [3],
       "weak_point_threshold": 17,
       "moves": [
         {
@@ -301,10 +289,8 @@
       "name": "The Riftling",
       "art": "res://assets/portraits/snake.png",
       "max_hp": 56,
-      "weak_point_height": 3,
-      "ledges": [
-        2
-      ],
+      "weak_point_height": 6,
+      "ledges": [2,4],
       "weak_point_threshold": 20,
       "moves": [
         {
@@ -325,8 +311,8 @@
       "name": "The Shifting Idol",
       "art": "res://assets/portraits/penguin.png",
       "max_hp": 101,
-      "weak_point_height": 2,
-      "ledges": [],
+      "weak_point_height": 6,
+      "ledges": [2,4],
       "weak_point_threshold": 24,
       "moves": [
         {

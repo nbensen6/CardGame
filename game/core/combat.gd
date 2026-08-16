@@ -23,7 +23,9 @@ const HAND_SIZE := 5
 const BASE_ENERGY := 3
 const VULN_BONUS := 4    # extra damage each "exposed" (vulnerable) stack adds to a hit
 const SIGIL_BONUS := 5   # extra damage on a hit once a hunter has climbed to the sigil
-const FOOTHOLD_MAX := 8  # cap on each hunter's climb (Height)
+## Cap on each hunter's climb (Height). Was 8, which the deeper climbs of
+## 2026-08-16 would have clipped — the Sunken Warden's sigil is at 13.
+const FOOTHOLD_MAX := 16
 const ARMORED_DIVISOR := 4  # below the weak point the hide is armored: attacks chip 1/ARMORED_DIVISOR
 # Grip (Shadow-of-the-Colossus climb tension): climbing between safe holds is a
 # race against a real-time grip timer that lives on the CLIENT (like a timed
@@ -314,6 +316,15 @@ func incoming_for(pi: int) -> Dictionary:
 			raw = value if ps.foothold > 0 else 0
 		"swipe_low":   # only catches hunters still on the ground
 			raw = value if ps.foothold <= 0 else 0
+		"rift":        # hits BOTH, and harder the further apart they are
+			# Missing here until 2026-08-16, so the one move whose damage the
+			# player controls was the one move the HUD showed nothing for.
+			var lo := 9999
+			var hi := 0
+			for other in players:
+				lo = mini(lo, other.foothold)
+				hi = maxi(hi, other.foothold)
+			raw = value + maxi(0, hi - lo) * RIFT_PER_GAP
 	return {"raw": raw, "through": maxi(raw - ps.combatant.block, 0)}
 
 
