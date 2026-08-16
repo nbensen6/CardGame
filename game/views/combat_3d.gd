@@ -149,6 +149,9 @@ var _prev_foot: Array = []
 var _prev_reached: Array = []
 var _prev_php: Array = []   # per-hunter hp last frame, so a hit on YOU pops a number too
 var _detail: ColorRect = null   # the card inspector overlay, when one is open
+## The keybind action waiting for a key press, or "" when nothing is rebinding.
+var _rebinding := ""
+var _rebind_btns := {}          # action id → the button showing its key
 var _prev_encounter := -1
 # slot -> {g: remaining 0..1, target: the Height that ends the climb}. Solo
 # tracks BOTH hunters, since you can switch while a timer runs.
@@ -200,13 +203,7 @@ func _ready() -> void:
 	if _client == null:
 		return
 	_client.state_updated.connect(func(_s: Dictionary, _p: Dictionary) -> void: _refresh())
-	_end_btn.pressed.connect(func() -> void:
-		Sfx.play("end_turn")
-		_dismiss_coach()
-		_client.end_turn(_cmd_slot())
-		if _is_solo():
-			_active_slot = 1 - _active_slot
-		_refresh())
+	_end_btn.pressed.connect(_end_turn)
 	_switch_btn.pressed.connect(func() -> void: _switch_to(1 - _active_slot))
 	_log_toggle.pressed.connect(func() -> void:
 		_log_expanded = not _log_expanded
@@ -225,33 +222,64 @@ func _ready() -> void:
 		_refresh()
 
 
-## Keyboard accelerators for swapping hunter.
+## The one place a turn ends, so the button and the key can never drift apart.
+func _end_turn() -> void:
+	if _end_btn.disabled:
+		return                                   # already ended; waiting on your ally
+	Sfx.play("end_turn")
+	_dismiss_coach()
+	_client.end_turn(_cmd_slot())
+	if _is_solo():
+		_active_slot = 1 - _active_slot
+	_refresh()
+
+
+## Keyboard accelerators, all remappable from the settings menu (Progress.KEYBINDS).
 ##
-## Both grip timers drain at once in solo, so a swap is a time-critical action —
-## and reaching for a button in the far corner while a bar empties is the wrong
-## input for it (Nick, 2026-08-15). TAB toggles; 1 and 2 jump straight to a hunter,
-## which beats toggling when you know who you want.
+## Space ends the turn — it is the action you take every single turn, and the
+## button for it sits in the far bottom corner (Nick, 2026-08-16). Swapping is
+## time-critical for the same reason: both grip timers drain at once in solo, so
+## reaching for a corner button while a bar empties is the wrong input for it.
+## TAB toggles; 1 and 2 jump straight to a hunter, which beats toggling when you
+## know who you want.
 ##
 ## An accelerator, never the only path: CLAUDE.md §5 keeps every action reachable
-## by tap, because there is no keyboard on the mobile target. The Switch button
-## stays exactly as it was.
+## by tap, because there is no keyboard on the mobile target. Every button stays
+## exactly as it was.
 ##
-## _input rather than _unhandled_input: TAB is ui_focus_next, and the viewport's
-## GUI layer consumes it before unhandled input ever runs the moment any button has
-## been clicked — which, on a HUD you drive by clicking, is always.
+## _input rather than _unhandled_input: TAB is ui_focus_next and Space activates
+## the focused button, and the viewport's GUI layer consumes both before unhandled
+## input ever runs — which, on a HUD you drive by clicking, is always.
 func _input(event: InputEvent) -> void:
 	if not (event is InputEventKey) or not event.is_pressed() or event.is_echo():
 		return
-	if not _is_solo():
-		return                                   # co-op: you only ever hold one hunter
+	var code: int = (event as InputEventKey).keycode
+
+	# Rebinding runs first and swallows everything: while the settings menu is
+	# waiting for a key, that key must land in the binding rather than firing the
+	# action it is currently bound to.
+	if _rebinding != "":
+		_apply_rebind(code)
+		get_viewport().set_input_as_handled()
+		return
 	if _detail != null and is_instance_valid(_detail):
 		return                                   # an overlay owns the keyboard
-	match (event as InputEventKey).keycode:
-		KEY_TAB:
-			_switch_to(1 - _active_slot)
-		KEY_1, KEY_KP_1:
+
+	# The keypad digits are aliases, not bindings — nobody expects to have to map
+	# both, and nothing else wants them.
+	if code == KEY_KP_1:
+		code = KEY_1
+	elif code == KEY_KP_2:
+		code = KEY_2
+
+	match Progress.action_for_key(code):
+		"end_turn":
+			_end_turn()
+		"swap":
+			_switch_to(1 - _active_slot)         # solo-only, guarded in _switch_to
+		"hunter_1":
 			_switch_to(0)
-		KEY_2, KEY_KP_2:
+		"hunter_2":
 			_switch_to(1)
 		_:
 			return
@@ -998,6 +1026,55 @@ func _sync(enc: int, hp: int, foots: Array, reached: Array, php: Array = []) -> 
 ## Everything that isn't playing a card, behind one button. Settings live here
 ## rather than as their own HUD controls precisely because the screen was already
 ## too busy — the cure for clutter is not more buttons.
+## One row of the keybind list: what it does on the left, the key on the right.
+func _keybind_row(spec: Dictionary) -> Control:
+	var id := String(spec["id"])
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+
+	var name_lbl := _detail_label(String(spec["name"]), 13, Color(0.9, 0.86, 0.78))
+	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(name_lbl)
+
+	var btn := Button.new()
+	btn.custom_minimum_size = Vector2(104, 34)
+	# FOCUS_NONE matters here: a focused Button eats Space and Enter as "press me",
+	# so binding Space would re-open the very button you just clicked.
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.text = _key_name(Progress.keybind(id))
+	btn.pressed.connect(func() -> void:
+		# Cancel any other row already listening, so only one key is ever captured.
+		if _rebinding != "" and _rebind_btns.has(_rebinding):
+			(_rebind_btns[_rebinding] as Button).text = _key_name(Progress.keybind(_rebinding))
+		_rebinding = id
+		btn.text = "press a key")
+	_rebind_btns[id] = btn
+	row.add_child(btn)
+	return row
+
+
+## Finish a rebind with the key the player just pressed. Escape cancels — it is
+## the one key nobody should be able to bind, because it is how you back out.
+func _apply_rebind(code: int) -> void:
+	var id := _rebinding
+	_rebinding = ""
+	if code != KEY_ESCAPE:
+		Progress.set_keybind(id, code)
+	# Every row, not just this one: binding a key steals it from whoever held it.
+	for other: String in _rebind_btns:
+		var b: Button = _rebind_btns[other]
+		if is_instance_valid(b):
+			b.text = _key_name(Progress.keybind(other))
+
+
+static func _key_name(code: int) -> String:
+	if code == KEY_NONE:
+		return "unbound"
+	if code == KEY_SPACE:
+		return "Space"          # OS_get_keycode_string gives "Space" already, but be sure
+	return OS.get_keycode_string(code)
+
+
 func _open_settings() -> void:
 	_close_overlay()
 	_detail = ColorRect.new()
@@ -1053,6 +1130,30 @@ func _open_settings() -> void:
 	col.add_child(tips)
 
 	col.add_child(_detail_rule())
+	col.add_child(_detail_label("Keys", 14, Color(1, 0.86, 0.5)))
+	var hint := _detail_label(
+		"Tap a key, then press the one you want. Escape cancels. Every action still has a button.",
+		11, Color(0.72, 0.68, 0.6), true)
+	hint.custom_minimum_size = Vector2(284, 0)  # this panel is 320 wide, not the inspector's 430
+	col.add_child(hint)
+	_rebind_btns = {}
+	for k in Progress.KEYBINDS:
+		col.add_child(_keybind_row(k as Dictionary))
+
+	var reset := Button.new()
+	reset.custom_minimum_size = Vector2(0, 32)
+	reset.focus_mode = Control.FOCUS_NONE
+	reset.text = "Reset keys"
+	reset.add_theme_font_size_override("font_size", 12)
+	reset.add_theme_color_override("font_color", Color(0.72, 0.68, 0.6))
+	reset.pressed.connect(func() -> void:
+		_rebinding = ""
+		Progress.reset_keybinds()
+		for id: String in _rebind_btns:
+			(_rebind_btns[id] as Button).text = _key_name(Progress.keybind(id)))
+	col.add_child(reset)
+
+	col.add_child(_detail_rule())
 	var quit := Button.new()
 	quit.custom_minimum_size = Vector2(0, 42)
 	quit.text = "Abandon the hunt"
@@ -1072,6 +1173,10 @@ func _close_overlay() -> void:
 	if _detail != null and is_instance_valid(_detail):
 		_detail.queue_free()
 	_detail = null
+	# Closing mid-rebind must not leave the capture armed — it would swallow the
+	# next key press and bind it to whatever row happened to be listening.
+	_rebinding = ""
+	_rebind_btns = {}
 
 
 ## Overlays must live in their OWN CanvasLayer, above the HUD's.

@@ -7,7 +7,9 @@
 ##
 ## states: menu | goblin (fight with the wordiest deck as the active hunter) |
 ##   3dselect 3dmap 3d 3dclimb 3dstrike 3dgrip 3dsel 3dreward 3devent 3dcampfire
-##   3dshop 3dwon | 3dgame 3dloop (the router itself, walking a whole lap)
+##   3dshop 3dwon | 3dswap (drives the keybinds and reports) | 3drebind (drives the
+##   settings menu's key remapping and reports) | 3dgame 3dloop (the router itself,
+##   walking a whole lap)
 ## modifiers: hold= (stop a driven sequence at a phase) beast= act= orbit=
 extends SceneTree
 
@@ -57,7 +59,7 @@ func _initialize() -> void:
 	elif _state != "3dselect":
 		Session.client.select_character("frog", 0)
 		Session.client.select_character("goblin_mech", 1)
-	if _state in ["goblin", "3d", "3dclimb", "3dinspect", "3dsettings", "3dswap",
+	if _state in ["goblin", "3d", "3dclimb", "3dinspect", "3dsettings", "3dswap", "3drebind",
 			"3dstrike", "3dgame", "3dgrip", "3dsel", "3dreward", "3dwon"]:  # 3dloop deliberately starts ON the map  # step off the map into a fight
 		var r: Run = Session.host._run
 		var g := 0
@@ -288,7 +290,44 @@ func _capture() -> void:
 		var after_2: int = int(vw.get("_active_slot"))
 		print("SWAP start=%d tab=%d key1=%d key2=%d  %s" % [before, after_tab, after_1, after_2,
 			"OK" if (after_tab != before and after_1 == 0 and after_2 == 1) else "FAIL"])
+
+		# Space ends the turn. Checked against the HOST's player state rather than
+		# the button, because solo flips to the other hunter straight after and the
+		# button then shows THEIR turn.
+		var slot: int = int(vw.get("_active_slot"))
+		var combat = Session.host._run.combat
+		var ended_before: bool = combat.players[slot].ended_turn
+		_press(KEY_SPACE)
+		await process_frame
+		print("SPACE slot=%d ended %s -> %s  %s" % [slot, ended_before,
+			combat.players[slot].ended_turn,
+			"OK" if (not ended_before and combat.players[slot].ended_turn) else "FAIL"])
 		for _i in 3:
+			await process_frame
+	if _state == "3drebind":  # prove the settings menu can actually rebind a key
+		var vr := current_scene
+		# Nick's own keybinds live in user://progress.cfg. Put back exactly what
+		# was there — a screenshot must never rewrite the player's settings.
+		var saved := {}
+		for k in Progress.KEYBINDS:
+			saved[String((k as Dictionary)["id"])] = Progress.keybind(String((k as Dictionary)["id"]))
+		vr.call("_open_settings")
+		for _i in 4:
+			await process_frame
+		var row: Button = (vr.get("_rebind_btns") as Dictionary)["end_turn"]
+		row.emit_signal("pressed")           # tap the key button
+		await process_frame
+		var listening: String = String(vr.get("_rebinding"))
+		_press(KEY_E)                        # and press the key to bind
+		await process_frame
+		var bound: int = Progress.keybind("end_turn")
+		var label: String = row.text
+		print("REBIND listening=%s bound=%s label=%s  %s" % [listening,
+			OS.get_keycode_string(bound), label,
+			"OK" if (listening == "end_turn" and bound == KEY_E and label == "E") else "FAIL"])
+		for id: String in saved:
+			Progress.set_keybind(id, int(saved[id]))
+		for _i in 4:
 			await process_frame
 	if _state == "3dsettings":  # the settings overlay behind the Menu button
 		var vs := current_scene
