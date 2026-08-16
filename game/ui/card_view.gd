@@ -42,6 +42,7 @@ var _elapsed := 0.0  # time spent in the current window
 ## Relic bonus widening the success zone on each side (0.06 = +6% each way).
 var zone_bonus := 0.0
 var _strip: Control
+var _clock: Control  # the timed badge, if this card has one
 var _marker: ColorRect
 var _count_lbl: Label
 var _hits_needed := 1  # sequential timing windows to nail (Satchel Charge = 3)
@@ -165,6 +166,10 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 
 	_strip = _build_timing_strip()  # hidden until start_timing()
 	box.add_child(_strip)
+	_clock = null
+	if bool(data.get("timed", false)):
+		_clock = _clock_badge(compact, int(data.get("timed_hits", 1)))
+		add_child(_clock)
 	if not pressed.is_connected(_on_self_pressed):
 		pressed.connect(_on_self_pressed)
 
@@ -215,6 +220,56 @@ func _rail_row(data: Dictionary) -> Control:
 	return row
 
 
+## The clock in the bottom-right corner: this card has a timing window, and
+## landing the middle of it pays a bonus.
+##
+## It replaces the "Time it!" that used to open the description. A badge in a
+## fixed corner is learned once and then read at a glance across a whole hand,
+## where a text prefix has to be re-read on every card and costs the room the
+## actual numbers need (Nick, 2026-08-16).
+##
+## Bottom-right, not top-right: the name is right-aligned in the header, and a
+## badge up there cost "Tongue Snap" its last three letters on every timed card.
+## It shares the bottom band with the timing strip, so start_timing() hides it —
+## once the strip is sweeping, the promise has been redeemed and the badge is
+## just clutter over the thing the player is actually watching.
+## `hits` > 1 puts a count beside the clock ("3x"). Descriptions say nothing about
+## timing at all now, so a card that needs THREE windows in a row rather than one
+## — Satchel Charge is the whole point of the mechanic — would otherwise read
+## exactly like a card that needs none. The count is an icon, not prose.
+func _clock_badge(compact: bool, hits: int) -> Control:
+	var size := 14.0 if compact else 18.0
+	var inset := 3.0 if compact else 5.0
+	var gold := Color(1.0, 0.83, 0.36)  # the timing colour, so badge and strip agree
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 1)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE  # never steals the tap that plays the card
+	var width := size
+	if hits > 1:
+		var count := _label("%dx" % hits, 11 if compact else 12)
+		count.add_theme_color_override("font_color", gold)
+		count.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		row.add_child(count)
+		width += 14.0
+
+	var tex := TextureRect.new()
+	tex.texture = ICONS["timer"]
+	tex.modulate = gold
+	tex.custom_minimum_size = Vector2(size, size)
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(tex)
+
+	row.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	row.offset_left = -(width + inset)
+	row.offset_top = -(size + inset)
+	row.offset_right = -inset
+	row.offset_bottom = -inset
+	return row
+
+
 ## A thumb-sized "?" that opens the full rules. The card face carries the numbers;
 ## this carries the explanation, so neither has to be crammed onto the other.
 func _inspect_button(data: Dictionary) -> Control:
@@ -253,7 +308,6 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 	var fx: Dictionary = data.get("fx", {})
 	var base: Dictionary = data.get("base", {})
 	var kw: Array = data.get("keywords", [])
-	var timed := bool(data.get("timed", false))
 	var out: PackedStringArray = []
 
 	var dmg := int(pv.get("damage", 0))
@@ -261,31 +315,41 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 		var n := int(fx.get("hits", 1))
 		var times := "" if n <= 1 else (" twice" if n == 2 else " %d times" % n)
 		out.append("Deal %s damage%s." % [_num(int(miss.get("damage", 0)), dmg,
-			timed, int(base.get("damage", dmg)), rich), times])
+			int(base.get("damage", dmg)), rich), times])
+
+	# Both-hunters effects merge into one line. "Gain 2 Block. Ally gains 2 Block."
+	# is the same fact typed twice; "All players gain 2 Block" is the card.
 	var blk := int(pv.get("block", 0))
-	if blk > 0:
-		out.append("Gain %s %s." % [_num(int(miss.get("block", 0)), blk, timed,
-			int(base.get("block", blk)), rich), _kw("Block", "block", kw, rich)])
-	var climb := int(pv.get("grip", 0))
-	if climb > 0:
-		out.append("%s +%s." % [_kw("Climb", "height", kw, rich),
-			_num(int(miss.get("grip", 0)), climb, timed, int(base.get("grip", climb)), rich)])
 	var ally_blk := int(pv.get("ally_block", 0))
-	if ally_blk > 0:
-		out.append("Ally gains %s %s." % [_num(int(miss.get("ally_block", 0)), ally_blk,
-			timed, int(base.get("ally_block", ally_blk)), rich), _kw("Block", "block", kw, rich)])
+	var blk_n := _num(int(miss.get("block", 0)), blk, int(base.get("block", blk)), rich)
+	if blk > 0 and blk == ally_blk:
+		out.append("All players gain %s %s." % [blk_n, _kw("Block", "block", kw, rich)])
+	else:
+		if blk > 0:
+			out.append("Gain %s %s." % [blk_n, _kw("Block", "block", kw, rich)])
+		if ally_blk > 0:
+			out.append("Ally gains %s %s." % [_num(int(miss.get("ally_block", 0)), ally_blk,
+				int(base.get("ally_block", ally_blk)), rich), _kw("Block", "block", kw, rich)])
+
+	var climb := int(pv.get("grip", 0))
 	var ally_climb := int(pv.get("ally_grip", 0))
-	if ally_climb > 0:
-		out.append("Ally %ss +%d." % [_kw("climb", "height", kw, rich), ally_climb])
+	var climb_n := _num(int(miss.get("grip", 0)), climb, int(base.get("grip", climb)), rich)
+	if climb > 0 and climb == ally_climb:
+		out.append("All players %s %s." % [_kw("climb", "height", kw, rich), climb_n])
+	else:
+		if climb > 0:
+			out.append("%s %s." % [_kw("Climb", "height", kw, rich), climb_n])
+		if ally_climb > 0:
+			out.append("Ally %ss %d." % [_kw("climb", "height", kw, rich), ally_climb])
 
 	if int(fx.get("wound", 0)) > 0:
 		out.append("%s %d." % [_kw("Poison", "poison", kw, rich), int(fx["wound"])])
 	if int(fx.get("vulnerable", 0)) > 0:
 		out.append("%s %d." % [_kw("Expose", "expose", kw, rich), int(fx["vulnerable"])])
 	if int(fx.get("strength", 0)) > 0:
-		out.append("+%d %s." % [int(fx["strength"]), _kw("Strength", "strength", kw, rich)])
+		out.append("%s %d." % [_kw("Strength", "strength", kw, rich), int(fx["strength"])])
 	if int(fx.get("rhythm", 0)) > 0:
-		out.append("+%d %s." % [int(fx["rhythm"]), _kw("Rhythm", "rhythm", kw, rich)])
+		out.append("%s %d." % [_kw("Rhythm", "rhythm", kw, rich), int(fx["rhythm"])])
 	if int(fx.get("draw", 0)) > 0:
 		out.append("Draw %d." % int(fx["draw"]))
 	if bool(fx.get("taunt", false)):
@@ -293,7 +357,7 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 	if int(fx.get("pull_ally", 0)) > 0:
 		out.append("Pull your ally up to you.")
 	if int(fx.get("sac_ally_grip", 0)) > 0:
-		out.append("%s a card: ally climbs +%d." % [_kw("Burn", "burn", kw, rich),
+		out.append("%s a card: ally climbs %d." % [_kw("Burn", "burn", kw, rich),
 			int(fx["sac_ally_grip"])])
 	elif bool(fx.get("exhaust_pick", false)):
 		out.append("%s a card%s." % [_kw("Burn", "burn", kw, rich),
@@ -303,12 +367,14 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 	if String(fx.get("prepare", "")) != "":
 		out.append("Primed for next turn.")
 	if bool(fx.get("meld", false)):
-		out.append("Fuse two cards into one.")
+		out.append("Fuse two cards into one that costs 1 less.")
 
 	if out.is_empty():
 		return String(data.get("text", ""))
-	var body := " ".join(out)
-	return (_kw("Time it!", "timed", kw, rich) + " " + body) if timed else body
+	# No "Time it!" prefix: the clock badge in the corner says the card is timed,
+	# and it says it in the same place on every card instead of eating the first
+	# three words of the description (Nick, 2026-08-16).
+	return " ".join(out)
 
 
 ## The card's one description, as rich text so a single number or keyword can be
@@ -330,16 +396,64 @@ func _rich_body(data: Dictionary, size: int, height: int) -> RichTextLabel:
 	return r
 
 
+## The authored text minus everything the live line already said.
+##
+## Both strings are now written from the same vocabulary, so the inspector showed
+## "Deal 2 damage. Climb 2." and then, one line under it, "Deal 2 damage. Climb 1.
+## 3 more damage per Rhythm..." — the same words twice. Comparing with the digits
+## stripped also catches "Climb 2" against the printed "Climb 1": the same
+## statement at a different value, which is exactly what the live line is for.
+##
+## What survives is the part a live number cannot show — the scaling clauses and
+## the timing bonus. A card with nothing left to add (Leap is just "Climb 3")
+## returns "", and the inspector drops the line entirely.
+static func shape_text(data: Dictionary) -> String:
+	var authored := String(data.get("text", ""))
+	if authored == "" or (data.get("preview", {}) as Dictionary).is_empty():
+		return authored
+	var said := {}
+	for s in _sentences(face_text(data, false)):
+		said[_shape_of(s)] = true
+	var keep: PackedStringArray = []
+	for s in _sentences(authored):
+		if not said.has(_shape_of(s)):
+			keep.append(s)
+	return " ".join(keep)
+
+
+static func _sentences(s: String) -> PackedStringArray:
+	var out: PackedStringArray = []
+	for part in s.split(". ", false):
+		var t := part.strip_edges()
+		if t != "":
+			out.append(t if t.ends_with(".") else t + ".")
+	return out
+
+
+## A sentence with its numbers removed, so two statements that differ only in
+## value compare equal.
+static func _shape_of(s: String) -> String:
+	var out := ""
+	for c in s:
+		if not (c >= "0" and c <= "9"):
+			out += c
+	return out.strip_edges()
+
+
 ## A number, coloured only when it isn't what the card printed.
-## Timed cards show both outcomes as "2→5"; the nailed half wears the timing colour.
-static func _num(low: int, high: int, timed: bool, base: int, rich: bool) -> String:
-	if timed and high != low:
-		if rich:
-			return "%d[color=#%s]→%d[/color]" % [low, NAILED_COLOR, high]
-		return "%d→%d" % [low, high]
-	if rich and low != base:  # a buff or a scaling field moved it
-		return "[color=#%s]%d[/color]" % [LIVE_COLOR, high]
-	return str(high)
+##
+## A timed card prints what it is GUARANTEED to do — `low`, the miss outcome —
+## because the clock badge already promises a bonus for landing the middle, and a
+## bonus reads as "on top of the printed number". The old "2→5" put an arrow and
+## two numbers on every timed card, which is most of the Frog's hand.
+## The exception is a card whose whole effect is conditional (Tempo Trap climbs
+## only on a nail): printing "Climb 0" would describe nothing, so it prints the
+## landed value.
+static func _num(low: int, high: int, base: int, rich: bool) -> String:
+	var shown := low if low > 0 else high
+	if rich and shown != base:  # a buff or a scaling field moved it
+		return "[color=#%s]%d[/color]" % [LIVE_COLOR, shown]
+	return str(shown)
 
 
 ## Gold a word only when it really is a keyword this card touches — so the colour
@@ -351,14 +465,6 @@ static func _kw(word: String, id: String, kws: Array, rich: bool) -> String:
 		if String((k as Dictionary).get("id", "")) == id:
 			return "[color=#%s]%s[/color]" % [KEYWORD_COLOR, word]
 	return word
-
-
-## "15" when nailing it changes nothing, "2→5" when it does — so a timed card shows
-## what it's worth AND what landing it is worth, without a parenthesis.
-static func _pair(low: int, high: int, timed: bool) -> String:
-	if timed and high != low:
-		return "%d→%d" % [low, high]
-	return str(high)
 
 
 func _header(card_name: String, cost: int, no_cost: bool = false) -> Control:
@@ -487,6 +593,8 @@ func start_timing(hits: int = 1) -> void:
 		(zone as Control).anchor_right = minf(1.0, ZONE_MAX + zone_bonus)
 	_strip.modulate = Color(1, 1, 1)
 	_strip.visible = true
+	if is_instance_valid(_clock):
+		_clock.visible = false  # the strip is the clock now
 	set_process(true)
 
 
@@ -517,6 +625,8 @@ func _end_timing(success: bool) -> void:
 	_timing = false
 	set_process(false)
 	_strip.visible = false
+	if is_instance_valid(_clock):
+		_clock.visible = true
 	timing_resolved.emit(success)
 
 

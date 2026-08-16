@@ -323,12 +323,17 @@ if (leaked.length) {
   });
 }
 
-// Card text has to fit a 164x224 card at ~40 characters a line. Existing cards
-// that read well sit around 30-50; past ~55 the body crowds the art and past ~65
-// it risks clipping. This is the check that stops mechanics work from quietly
-// producing cards nobody can read.
+// Since 2026-08-16 the combat card face does NOT print this text — CardView
+// writes its own sentence from the live preview. This text is what you read in
+// the inspector, in the Card Lab, and on a card you are being OFFERED (reward,
+// shop, campfire have no combat state to preview against), and that reward card
+// is the tightest of those: a 148x224 face at ~40 characters a line.
+//
+// Cards that read well sit around 30-50; past ~55 the body crowds the art and
+// past ~70 it risks clipping on the reward screen. This is the check that stops
+// mechanics work from quietly producing cards nobody can read.
 const TEXT_COMFORTABLE = 55;
-const TEXT_MAX = 65;
+const TEXT_MAX = 70;
 const longText = model
   .filter((c) => c.text.length > TEXT_COMFORTABLE)
   .sort((a, b) => b.text.length - a.text.length);
@@ -338,9 +343,12 @@ if (longText.length) {
     level: over.length ? "warn" : "info",
     title: `${longText.length} cards have text longer than ${TEXT_COMFORTABLE} characters`,
     detail:
-      `The card face is 164x224 with roughly 40 characters a line. "Time it! Flick for 2 ` +
-      `(+3 nailed) or it slips away." is 50 and already wraps to three lines. ` +
-      `${over.length} of these exceed ${TEXT_MAX} and should be rewritten shorter.`,
+      `A reward card is 148x224 at roughly 40 characters a line, so ~55 already wraps ` +
+      `to three lines. Length now comes almost entirely from scaling clauses ` +
+      `("and an additional 3 per Rhythm"), so a card over the line is usually one that ` +
+      `scales twice — worth asking whether it needs both. ` +
+      `${over.length} of these exceed ${TEXT_MAX} and should be rewritten shorter. ` +
+      `Regenerate all of them with tools/cardlab/rewrite-text.js.`,
     items: longText.slice(0, 20).map((c) => `${c.text.length}  ${c.name} — "${c.text}"`),
   });
 }

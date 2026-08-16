@@ -11,11 +11,11 @@
     },
     "expose": {
       "name": "Expose",
-      "text": "Each stack makes one incoming hit deal +4. Stacks are spent as they are used — and they bank while you are below the weak point."
+      "text": "Each stack makes one incoming hit deal 4 more. Stacks are spent as they are used — and they bank while you are below the weak point."
     },
     "rhythm": {
       "name": "Rhythm",
-      "text": "+1 every time you land a timed card this turn. Resets at the end of your turn, so Rhythm cards want to be chained in one go."
+      "text": "Goes up by 1 every time you land a timed card this turn. Resets at the end of your turn, so Rhythm cards want to be chained in one go."
     },
     "strength": {
       "name": "Strength",

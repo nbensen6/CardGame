@@ -1181,10 +1181,11 @@ func _show_card_detail(data: Dictionary) -> void:
 	live.add_theme_color_override("default_color", Color(0.94, 0.9, 0.82))
 	col.add_child(live)
 
-	# The authored line explains the card's SHAPE ("+3 per Rhythm") — the part a
-	# single live number can't convey. It belongs here, where there is room, not
-	# crammed onto the face beside the numbers it produces.
-	var authored := String(data.get("text", ""))
+	# The authored line explains the card's SHAPE ("3 more damage per Rhythm") —
+	# the part a single live number can't convey. It belongs here, where there is
+	# room, not crammed onto the face beside the numbers it produces. shape_text
+	# drops the clauses the live line above already stated.
+	var authored := CardView.shape_text(data)
 	if authored != "":
 		col.add_child(_detail_label(authored, 12, Color(0.76, 0.72, 0.64), true))
 
