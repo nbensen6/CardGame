@@ -207,9 +207,7 @@ func _ready() -> void:
 		if _is_solo():
 			_active_slot = 1 - _active_slot
 		_refresh())
-	_switch_btn.pressed.connect(func() -> void:
-		_active_slot = 1 - _active_slot
-		_refresh())
+	_switch_btn.pressed.connect(func() -> void: _switch_to(1 - _active_slot))
 	_log_toggle.pressed.connect(func() -> void:
 		_log_expanded = not _log_expanded
 		_refresh())
@@ -225,6 +223,52 @@ func _ready() -> void:
 		_coach.visible = false)
 	if not _client.shared.is_empty():
 		_refresh()
+
+
+## Keyboard accelerators for swapping hunter.
+##
+## Both grip timers drain at once in solo, so a swap is a time-critical action —
+## and reaching for a button in the far corner while a bar empties is the wrong
+## input for it (Nick, 2026-08-15). TAB toggles; 1 and 2 jump straight to a hunter,
+## which beats toggling when you know who you want.
+##
+## An accelerator, never the only path: CLAUDE.md §5 keeps every action reachable
+## by tap, because there is no keyboard on the mobile target. The Switch button
+## stays exactly as it was.
+##
+## _input rather than _unhandled_input: TAB is ui_focus_next, and the viewport's
+## GUI layer consumes it before unhandled input ever runs the moment any button has
+## been clicked — which, on a HUD you drive by clicking, is always.
+func _input(event: InputEvent) -> void:
+	if not (event is InputEventKey) or not event.is_pressed() or event.is_echo():
+		return
+	if not _is_solo():
+		return                                   # co-op: you only ever hold one hunter
+	if _detail != null and is_instance_valid(_detail):
+		return                                   # an overlay owns the keyboard
+	match (event as InputEventKey).keycode:
+		KEY_TAB:
+			_switch_to(1 - _active_slot)
+		KEY_1, KEY_KP_1:
+			_switch_to(0)
+		KEY_2, KEY_KP_2:
+			_switch_to(1)
+		_:
+			return
+	get_viewport().set_input_as_handled()
+
+
+## The one place the active hunter changes, so the button and the keys can never
+## drift apart. A swap mid-pick would strand the half-finished selection on the
+## other hunter's hand, so it cancels first.
+func _switch_to(slot: int) -> void:
+	if not _is_solo() or slot == _active_slot or slot < 0 or slot > 1:
+		return
+	if not _selecting.is_empty():
+		_selecting = {}
+	_active_slot = slot
+	Sfx.play("card")
+	_refresh()
 
 
 # --- solo helpers ---------------------------------------------------------
@@ -1391,7 +1435,10 @@ func _show_switch_target(players: Array) -> void:
 	if path != "" and ResourceLoader.exists(path):
 		_switch_btn.icon = load(path)
 		_switch_btn.expand_icon = true
-	_switch_btn.text = "Switch"
+	# Name the shortcut on the control it accelerates — a keybind nobody is told
+	# about is a keybind nobody uses.
+	_switch_btn.text = "Switch  ⇥"
+	_switch_btn.tooltip_text = "Swap hunter.  Tab, or 1 / 2 to pick one directly."
 	_switch_btn.add_theme_color_override("font_color", _slot_color(other))
 
 

@@ -57,7 +57,7 @@ func _initialize() -> void:
 	elif _state != "3dselect":
 		Session.client.select_character("frog", 0)
 		Session.client.select_character("goblin_mech", 1)
-	if _state in ["goblin", "3d", "3dclimb", "3dinspect", "3dsettings",
+	if _state in ["goblin", "3d", "3dclimb", "3dinspect", "3dsettings", "3dswap",
 			"3dstrike", "3dgame", "3dgrip", "3dsel", "3dreward", "3dwon"]:  # 3dloop deliberately starts ON the map  # step off the map into a fight
 		var r: Run = Session.host._run
 		var g := 0
@@ -258,12 +258,38 @@ func _report_visibility(view: Node) -> void:
 		print("VIS %s %s: (%d, %d)" % ["OK" if on else "FAIL", m[0], int(p.x), int(p.y)])
 
 
+## Feed a real key press through the input system, so this exercises the same path
+## a player's keyboard does rather than calling the handler directly.
+func _press(code: Key) -> void:
+	var ev := InputEventKey.new()
+	ev.keycode = code
+	ev.physical_keycode = code
+	ev.pressed = true
+	Input.parse_input_event(ev)
+
+
 func _capture() -> void:
 	for _i in 15:  # let the scene lay out and draw
 		await process_frame
 	await _await_camera(current_scene)
 	if _state.begins_with("3d") and _state not in ["3dmap", "3dloop"]:
 		_report_visibility(current_scene)
+	if _state == "3dswap":  # prove the swap keybinds actually reach the view
+		var vw := current_scene
+		var before: int = int(vw.get("_active_slot"))
+		_press(KEY_TAB)
+		await process_frame
+		var after_tab: int = int(vw.get("_active_slot"))
+		_press(KEY_1)
+		await process_frame
+		var after_1: int = int(vw.get("_active_slot"))
+		_press(KEY_2)
+		await process_frame
+		var after_2: int = int(vw.get("_active_slot"))
+		print("SWAP start=%d tab=%d key1=%d key2=%d  %s" % [before, after_tab, after_1, after_2,
+			"OK" if (after_tab != before and after_1 == 0 and after_2 == 1) else "FAIL"])
+		for _i in 3:
+			await process_frame
 	if _state == "3dsettings":  # the settings overlay behind the Menu button
 		var vs := current_scene
 		if vs != null and vs.has_method("_open_settings"):

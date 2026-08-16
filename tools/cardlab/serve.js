@@ -10,10 +10,11 @@ const http = require("http");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
-const { execFileSync } = require("child_process");
+const { execFileSync, exec } = require("child_process");
 
 const PORT = 5180;
 const DIR = __dirname;
+const OPEN = process.argv.includes("--open");
 
 /** Every LAN address this machine answers on, so a phone on the same wifi can
  *  reach the lab without any tunnelling or hosting. */
@@ -52,4 +53,13 @@ http
     for (const u of lanUrls()) console.log(`  on phone  ${u}`);
     // Plain ASCII: the Windows console mangles non-ASCII punctuation.
     console.log("\n(Windows may ask to allow Node through the firewall - say yes for Private networks.)");
+    // --open is for the desktop shortcut: launch the browser only once the
+    // server is actually listening, so the first request can't 404.
+    if (OPEN) {
+      const url = `http://localhost:${PORT}`;
+      const cmd = process.platform === "win32" ? `start "" "${url}"`
+        : process.platform === "darwin" ? `open "${url}"` : `xdg-open "${url}"`;
+      exec(cmd, () => {});
+    }
+    console.log("\nLeave this window open while you use the lab. Ctrl+C to stop.");
   });
