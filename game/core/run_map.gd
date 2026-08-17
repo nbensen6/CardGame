@@ -63,6 +63,22 @@ func total_rows() -> int:
 	return rows.size()
 
 
+# --- saving ---------------------------------------------------------------
+#
+# Rows are already plain Dictionaries of ints and Strings, so the map needs no
+# translation to survive a save — only a way to be rebuilt WITHOUT regenerating,
+# since a fresh generation would hand the player a different mountain.
+
+func to_dict() -> Dictionary:
+	return {"rows": rows.duplicate(true)}
+
+
+static func from_dict(d: Dictionary) -> RunMap:
+	var m := RunMap.new(0, RandomNumberGenerator.new())  # 0 acts: generates nothing
+	m.rows = (d.get("rows", []) as Array).duplicate(true)
+	return m
+
+
 # --- generation -----------------------------------------------------------
 
 ## Every act offers a trader, in its back half.

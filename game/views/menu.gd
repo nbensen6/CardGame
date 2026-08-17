@@ -15,6 +15,7 @@ const PORT := 9999
 
 
 @onready var _solo_btn: Button = %SoloBtn
+@onready var _continue_btn: Button = %ContinueBtn
 @onready var _asc_label: Label = %AscLabel
 @onready var _asc_text: Label = %AscText
 @onready var _asc_down: Button = %AscDown
@@ -44,9 +45,41 @@ func _ready() -> void:
 		_reset_hints.text = "Tips will show again"
 		_reset_hints.disabled = true)
 	_refresh_tips()
+	_refresh_continue()
+	_continue_btn.pressed.connect(_on_continue)
 	_solo_btn.pressed.connect(_on_solo)
 	_host_btn.pressed.connect(_on_host)
 	_join_btn.pressed.connect(_on_join)
+
+
+## Continue only appears when there is something to continue, and it says WHICH
+## run — "Act 2 · The Frog & The Goblin Engineer" — because the one thing you
+## want to know before pressing it is whether it is the run you remember.
+func _refresh_continue() -> void:
+	var summary := RunSave.summary()
+	_continue_btn.visible = summary != ""
+	if summary != "":
+		_continue_btn.text = "Continue  —  %s" % summary
+		# Starting a new run would overwrite the save, so say so rather than
+		# letting someone lose an hour to a misread button.
+		_solo_btn.text = "New run  (overwrites your save)"
+
+
+## Resume the saved run. Solo only, and the character-select lobby is skipped —
+## those hunters were chosen an hour ago.
+func _on_continue() -> void:
+	var saved := RunSave.load_run()
+	if saved == null:
+		_status.text = "That save could not be read. Starting fresh instead."
+		_refresh_continue()
+		return
+	var transport := LocalTransport.new()
+	Session.transport = transport
+	Session.host = GameHost.new(transport, 0, 2, true, saved.ascension)
+	Session.client = GameClient.new(transport, 1)
+	Session.client.join()
+	Session.host.resume_run(saved)
+	_goto_combat()
 
 
 ## Two separate controls, because they answer different questions. The toggle is

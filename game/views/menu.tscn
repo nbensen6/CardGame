@@ -152,6 +152,13 @@ theme_override_colors/font_color = Color(0.8, 0.74, 0.6, 1)
 custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 
+[node name="ContinueBtn" type="Button" parent="Center/Box"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(340, 54)
+layout_mode = 2
+text = "Continue"
+
 [node name="SoloBtn" type="Button" parent="Center/Box"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(340, 54)

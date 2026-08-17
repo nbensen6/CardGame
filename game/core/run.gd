@@ -93,6 +93,91 @@ func total_encounters() -> int:
 func is_over() -> bool:
 	return phase == Phase.WON or phase == Phase.LOST
 
+
+# --- saving ---------------------------------------------------------------
+#
+# A run is 24 nodes and the better part of an hour, so it has to survive putting
+# the game down. Everything below the COMBAT phase is plain data; Combat itself
+# (hands, piles, footholds, a live grip timer) is deliberately NOT saved, so the
+# rule is: a save is only ever taken when no fight is in progress, and resuming
+# puts you back on the map about to pick that node. You lose a fight, never a run.
+#
+# The RNG's state travels too. Without it, quitting and resuming would reroll
+# every future reward — a save/quit button that doubles as a reroll button.
+
+func to_dict() -> Dictionary:
+	var deck_dicts: Array = []
+	for deck in decks:
+		var one: Array = []
+		for c in deck:
+			one.append((c as Card).to_dict())
+		deck_dicts.append(one)
+	# Reward choices are Cards for a card reward and plain relic dicts otherwise.
+	var choices: Array = []
+	for per_player in reward_choices:
+		var one2: Array = []
+		for rc in per_player:
+			one2.append((rc as Card).to_dict() if rc is Card else rc)
+		choices.append(one2)
+	return {
+		"version": 1,
+		"phase": phase, "encounter_index": encounter_index,
+		"map": map.to_dict() if map != null else {},
+		"map_row": map_row, "map_col": map_col,
+		"node_type": node_type, "beast_id": beast_id,
+		"event": event, "event_result": event_result, "seen_events": _seen_events,
+		"campfire_done": campfire_done, "gold": gold,
+		"shop_stock": shop_stock, "removes_bought": removes_bought,
+		"ascension": ascension,
+		"names": names, "decks": deck_dicts,
+		"hp": hp, "max_hp": max_hp,
+		"team_relics": team_relics, "player_passives": player_passives,
+		"reward_kind": reward_kind, "reward_choices": choices,
+		"reward_picked": reward_picked, "queued_reward": _queued_reward,
+		"seed": _seed, "rng_state": str(_rng.state),  # a uint64; JSON floats would round it
+	}
+
+
+static func from_dict(d: Dictionary) -> Run:
+	# _init regenerates a map and burns RNG; both are overwritten straight after.
+	var r := Run.new([], [], int(d.get("seed", 0)),
+		d.get("player_passives", []) as Array, int(d.get("ascension", 0)))
+	r.phase = int(d.get("phase", Phase.MAP))
+	r.encounter_index = int(d.get("encounter_index", 0))
+	r.map = RunMap.from_dict(d.get("map", {}))
+	r.map_row = int(d.get("map_row", -1))
+	r.map_col = int(d.get("map_col", 0))
+	r.node_type = String(d.get("node_type", ""))
+	r.beast_id = String(d.get("beast_id", ""))
+	r.event = d.get("event", {})
+	r.event_result = String(d.get("event_result", ""))
+	r._seen_events = (d.get("seen_events", []) as Array).duplicate()
+	r.campfire_done = (d.get("campfire_done", []) as Array).duplicate()
+	r.gold = int(d.get("gold", 0))
+	r.shop_stock = (d.get("shop_stock", []) as Array).duplicate(true)
+	r.removes_bought = int(d.get("removes_bought", 0))
+	r.names = (d.get("names", []) as Array).duplicate()
+	r.hp = (d.get("hp", []) as Array).duplicate()
+	r.max_hp = (d.get("max_hp", []) as Array).duplicate()
+	r.team_relics = (d.get("team_relics", []) as Array).duplicate(true)
+	r.decks = []
+	for one in d.get("decks", []):
+		var deck: Array = []
+		for cd in one:
+			deck.append(Card.from_dict(cd))
+		r.decks.append(deck)
+	r.reward_kind = String(d.get("reward_kind", "card"))
+	r.reward_choices = []
+	for per_player in d.get("reward_choices", []):
+		var one2: Array = []
+		for rc in per_player:
+			one2.append(Card.from_dict(rc) if r.reward_kind == "card" else rc)
+		r.reward_choices.append(one2)
+	r.reward_picked = (d.get("reward_picked", []) as Array).duplicate()
+	r._queued_reward = String(d.get("queued_reward", ""))
+	r._rng.state = int(String(d.get("rng_state", "0")))
+	return r
+
 ## Columns the party may step to from where they stand.
 func available_nodes() -> Array:
 	return map.available(map_row, map_col) if map != null else []

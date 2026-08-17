@@ -36,6 +36,19 @@ func _init(transport: Transport, seed_value: int = 0, required_players: int = 2,
 	_transport.command_received.connect(_on_command)
 	_transport.peer_left.connect(_on_peer_left)
 
+## Resume a saved run instead of rolling a new one. The lobby's character select
+## is skipped entirely — the hunters were chosen when the run began, and their
+## decks have been played with since.
+func resume_run(saved: Run) -> void:
+	_run = saved
+	_ascension = saved.ascension
+	# A save is only ever written outside combat, so a resumed run always lands on
+	# the map or on a node the player was mid-way through resolving.
+	if _run.phase == Run.Phase.COMBAT:
+		_run.phase = Run.Phase.MAP
+	_broadcast_state()
+
+
 func start_new_run() -> void:
 	var char_ids := _solo_chars if _solo else _co_op_char_ids()
 	var decks: Array = []
@@ -119,6 +132,21 @@ func _in_combat_action(pi: int, action: Callable) -> void:
 		_run.sync()
 	_broadcast_state()
 
+## Persist the run every time the state settles, which is the honest definition
+## of "a safe point": the host has just finished resolving something.
+##
+## RunSave refuses to write mid-fight, so this quietly does nothing during combat
+## and the last save stays the map before it. Finishing the run clears the slot —
+## a dead or won run must not offer to be continued.
+func _autosave() -> void:
+	if _run == null or not _solo:
+		return  # co-op resume needs a rendezvous, not a file (see RunSave)
+	if _run.is_over():
+		RunSave.clear()
+		return
+	RunSave.save(_run)
+
+
 ## Which hunter slot a command acts on: in solo the peer names it; in co-op it's
 ## the peer's own slot.
 func _acting_slot(peer_id: int, command: Dictionary) -> int:
@@ -174,6 +202,7 @@ func _all_selected() -> bool:
 # --- Snapshots (host -> clients) ------------------------------------------
 
 func _broadcast_state() -> void:
+	_autosave()
 	if _run == null:
 		# Lobby: character select. Solo picks both hunters; co-op one each.
 		for pid in _peers:

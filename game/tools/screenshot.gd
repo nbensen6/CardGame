@@ -39,6 +39,11 @@ func _initialize() -> void:
 	# Shots should show onboarding as a NEW player sees it, whatever this machine's
 	# config happens to say — otherwise turning tips off while playing silently
 	# changes what every screenshot verifies.
+	# A GameHost autosaves, and this harness starts real ones. Without this, taking
+	# a screenshot would overwrite the designer's actual saved run — the same way
+	# it used to flip their tips setting.
+	RunSave.use_scratch_slot("run_screenshot")
+	RunSave.clear()
 	Progress.reset_hints()
 	# Match the shipping default (off, 2026-08-15) so shots show the real UI. This
 	# writes to user://progress.cfg, so forcing tips ON here silently turned them

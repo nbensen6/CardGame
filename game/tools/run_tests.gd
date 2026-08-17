@@ -15,6 +15,10 @@ var _kept: Array = []
 
 
 func _init() -> void:
+	# Several tests build real GameHosts, and a GameHost autosaves. Point the slot
+	# at a scratch file first or running the suite eats the designer's own run.
+	RunSave.use_scratch_slot("run_tests")
+	RunSave.clear()
 	# combatant / boss
 	_test_combatant_block_absorbs_before_hp()
 	_test_combatant_hp_never_negative()
@@ -108,6 +112,9 @@ func _init() -> void:
 	_test_incoming_reckons_damage_after_block()
 	_test_every_derived_keyword_resolves()
 	_test_every_boss_move_type_resolves()
+	_test_card_dict_round_trips_every_field()
+	_test_run_survives_a_save_and_load()
+	_test_save_refuses_mid_fight_and_clears_when_over()
 	_test_every_card_declares_a_rarity()
 	_test_rarity_weighting_favours_commons()
 	# content batch: strength, wound, multi-hit, leech
@@ -132,6 +139,7 @@ func _init() -> void:
 	_test_session_end_turn_needs_all_players()
 	_test_session_private_view_is_isolated()
 	_test_host_pauses_on_disconnect()
+	_test_host_autosaves_and_resumes()
 	_test_solo_controls_both_hunters()
 
 	print("")
@@ -1374,6 +1382,97 @@ func _test_every_boss_move_type_resolves() -> void:
 		"every boss move type has a keyword entry [%s]" % ", ".join(missing))
 
 
+## Card.to_dict is hand-written while from_dict is hand-written separately, so a
+## field added to one and forgotten in the other silently drops from every save
+## AND from every melded card. Walk the script's OWN properties rather than a
+## list here, so a new field is covered the moment it is declared.
+func _test_card_dict_round_trips_every_field() -> void:
+	var card := Content.make_card("tongue_snap")
+	var missing: Array = []
+	var dict := card.to_dict()
+	for p in card.get_property_list():
+		var prop: Dictionary = p
+		if int(prop.get("usage", 0)) & PROPERTY_USAGE_SCRIPT_VARIABLE == 0:
+			continue
+		var key := String(prop["name"])
+		if not dict.has(key):
+			missing.append(key)
+	var back := Card.from_dict(dict)
+	var changed: Array = []
+	for p2 in card.get_property_list():
+		var prop2: Dictionary = p2
+		if int(prop2.get("usage", 0)) & PROPERTY_USAGE_SCRIPT_VARIABLE == 0:
+			continue
+		var key2 := String(prop2["name"])
+		if dict.has(key2) and back.get(key2) != card.get(key2):
+			changed.append(key2)
+	_expect(missing.is_empty() and changed.is_empty(),
+		"every Card field survives to_dict/from_dict [missing: %s] [changed: %s]"
+			% [", ".join(missing), ", ".join(changed)])
+
+
+## A run has to come back the way it left. The deck is the part that matters most
+## — it carries sharpened and melded cards that exist nowhere in cards.json, so a
+## deck rebuilt from ids alone would quietly undo a whole run's upgrades.
+func _test_run_survives_a_save_and_load() -> void:
+	var run := Run.new([_deck_of(_slash, 6), _deck_of(_slash, 5)], ["A", "B"], 99,
+		[{"character": "frog"}, {"character": "goblin_mech"}], 2)
+	run.start()
+	run.gold = 175
+	run.hp = [21, 33]
+	run.decks[0][0] = run.decks[0][0].upgraded_copy()   # a campfire sharpening
+	run.team_relics = [{"id": "grip_ring", "name": "Grip Ring"}]
+	run.pick_node(int(run.available_nodes()[0]))
+	run.phase = Run.Phase.MAP  # whatever the node opened, park it at a safe point
+
+	# Through the FILE, not just to_dict/from_dict. JSON has one number type, so a
+	# straight dictionary round trip hides that every int comes back a float.
+	RunSave.clear()
+	RunSave.save(run)
+	var back := RunSave.load_run()
+	var ints_stayed_ints: bool = back.hp == run.hp and back.gold == run.gold
+	_expect(ints_stayed_ints, "ints survive the JSON round trip as ints, not floats")
+	var same: bool = (
+		back.gold == run.gold
+		and back.hp == run.hp
+		and back.ascension == run.ascension
+		and back.map_row == run.map_row and back.map_col == run.map_col
+		and back.encounter_index == run.encounter_index
+		and back.team_relics.size() == run.team_relics.size()
+		and back.map.total_rows() == run.map.total_rows()
+		and back.decks.size() == run.decks.size()
+		and back.decks[0].size() == run.decks[0].size()
+		and String(back.decks[0][0].name) == String(run.decks[0][0].name)
+		and bool(back.decks[0][0].upgraded) == bool(run.decks[0][0].upgraded)
+		and int(back.decks[0][0].damage) == int(run.decks[0][0].damage)
+	)
+	_expect(same, "a saved run reloads with its map, gold, HP, relics and sharpened deck")
+
+	# The RNG travels too, or quitting and resuming would reroll every reward —
+	# a save button that doubles as a reroll button.
+	_expect(back._rng.randi() == run._rng.randi(),
+		"a reloaded run continues the same random sequence")
+
+
+## The two rules that keep the slot honest: never write a fight (Combat isn't
+## serialized), and never leave a finished run offering to be continued.
+func _test_save_refuses_mid_fight_and_clears_when_over() -> void:
+	var run := Run.new([_deck_of(_slash, 6), _deck_of(_slash, 5)], ["A", "B"], 7,
+		[{"character": "frog"}, {"character": "goblin_mech"}], 0)
+	run.start()
+	RunSave.clear()
+	run.phase = Run.Phase.COMBAT
+	var wrote_fight := RunSave.save(run)
+	run.phase = Run.Phase.MAP
+	var wrote_map := RunSave.save(run)
+	var had := RunSave.has_save()
+	run.phase = Run.Phase.WON
+	var wrote_won := RunSave.save(run)
+	RunSave.clear()
+	_expect(not wrote_fight and wrote_map and had and not wrote_won and not RunSave.has_save(),
+		"the save slot refuses combat and finished runs, and clears on demand")
+
+
 ## The intent icon says WHAT is coming; incoming_for says whether you survive it.
 ## The swipes are the ones players get wrong — being ON the beast saves you from a
 ## stamp and dooms you to a flank lash.
@@ -1680,6 +1779,45 @@ func _test_session_private_view_is_isolated() -> void:
 	(s["c0"] as GameClient).play_card(_first_playable_client(s["c0"]))
 	_expect(eavesdropper.shared.is_empty() and eavesdropper.private.is_empty(),
 		"a non-joined peer receives no shared or private state")
+
+
+## The whole loop, through the host that actually does it: play a run, have the
+## autosave fire on its own, then bring it back in a FRESH host the way the menu's
+## Continue button does. Serialising correctly is not the same as resuming.
+func _test_host_autosaves_and_resumes() -> void:
+	RunSave.clear()
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, true)
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	var run: Run = host._run
+	run.gold = 210
+	run.hp = [17, 29]
+	host._broadcast_state()   # the autosave rides on this, unasked
+	_expect(RunSave.has_save(), "the host saves the run without being told to")
+
+	var t2 := LocalTransport.new()
+	var host2 := GameHost.new(t2, 0, 2, true)
+	_kept.append(host2)
+	var c2 := GameClient.new(t2, 1)
+	c2.join()
+	host2.resume_run(RunSave.load_run())
+	var back: Run = host2._run
+	var same: bool = (
+		back.gold == 210
+		and back.hp == run.hp
+		and back.names == run.names
+		and back.map.total_rows() == run.map.total_rows()
+		and back.decks[0].size() == run.decks[0].size()
+	)
+	# And the resumed run reaches the CLIENT — a host that resumed in private
+	# would leave the player staring at a character-select screen.
+	var reached: bool = String(c2.shared.get("phase", "")) != "select" 		and int(c2.shared.get("gold", 0)) == 210
+	_expect(same and reached, "a saved run resumes in a fresh host and reaches the client")
+	RunSave.clear()
 
 
 func _test_solo_controls_both_hunters() -> void:
