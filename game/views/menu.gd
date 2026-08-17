@@ -29,6 +29,8 @@ var _ascension := 0
 
 
 func _ready() -> void:
+	Screen.fit(self)   # a phone gets a physically larger interface
+	_compact_for_handheld()
 	Session.reset()
 	Music.play("menu")
 	_ascension = Progress.unlocked_ascension()  # default to your hardest cleared tier
@@ -50,6 +52,30 @@ func _ready() -> void:
 	_solo_btn.pressed.connect(_on_solo)
 	_host_btn.pressed.connect(_on_host)
 	_join_btn.pressed.connect(_on_join)
+
+
+## This column is taller than a handheld's logical viewport, and a CenterContainer
+## that overflows clips BOTH ends — the title off the top and the buttons off the
+## bottom, with no way to reach either. Rather than let it scroll (a menu you have
+## to scroll to find "play" is a bad menu), it gives up the things a phone doesn't
+## need: the tagline, the local-network hint that assumes two windows on one
+## desktop, and some of the breathing room.
+func _compact_for_handheld() -> void:
+	if not Screen.is_handheld():
+		return
+	var box := get_node_or_null("Center/Box") as VBoxContainer
+	if box == null:
+		return
+	box.add_theme_constant_override("separation", 7)
+	var title := box.get_node_or_null("Title") as Label
+	if title != null:
+		title.add_theme_font_size_override("font_size", 30)
+	for hide_me in ["Subtitle", "Hint"]:
+		var n := box.get_node_or_null(hide_me) as Control
+		if n != null:
+			n.visible = false
+	for b in [_continue_btn, _solo_btn, _host_btn]:
+		b.custom_minimum_size = Vector2(300, 44)
 
 
 ## Continue only appears when there is something to continue, and it says WHICH

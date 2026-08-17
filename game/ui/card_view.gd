@@ -139,7 +139,17 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 		# 148 wide, not 164: with the energy orb beside the hand, five cards at the
 		# old width overflowed and put a scrollbar under the most-used control on
 		# the screen.
-		custom_minimum_size = Vector2(176, 264) if bool(data.get("no_cost", false)) else Vector2(148, 224)
+		#
+		# A handheld runs the interface at fewer logical pixels so everything is
+		# physically bigger (see ui/screen.gd), which means the SAME card is a much
+		# larger share of the screen — at 224 tall the hand ate 40% of a phone and
+		# climbed over the beast. Smaller here keeps the same physical size it has
+		# on a desktop while giving the fight back its room.
+		var big := bool(data.get("no_cost", false))
+		if Screen.is_handheld():
+			custom_minimum_size = Vector2(148, 222) if big else Vector2(124, 186)
+		else:
+			custom_minimum_size = Vector2(176, 264) if big else Vector2(148, 224)
 	disabled = not playable
 	text = ""
 	if not mouse_entered.is_connected(_on_hover):

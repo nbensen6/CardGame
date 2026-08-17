@@ -211,6 +211,13 @@ var _log_expanded := false
 
 
 func _ready() -> void:
+	Screen.fit(self)   # a phone gets a physically larger interface
+	if Screen.is_handheld():
+		# The hand's band is sized for a 224-tall card. Handheld cards are 186, so
+		# hand the difference back to the beast rather than leaving a dead strip.
+		var scroll := _hand_row.get_parent() as Control
+		if scroll != null:
+			scroll.offset_top = -206.0
 	_cam_home = _cam.position
 	_client = Session.client
 	if _client == null:

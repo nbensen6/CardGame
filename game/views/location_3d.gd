@@ -75,6 +75,7 @@ var _felled_span := 0.0   # size of the body on the plot; the shot backs off for
 
 
 func _ready() -> void:
+	Screen.fit(self)   # a phone gets a physically larger interface
 	_client = Session.client
 	if _client == null:
 		return

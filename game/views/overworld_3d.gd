@@ -88,6 +88,7 @@ var _dragged := false      # passed the slop threshold, so this is a look, not a
 
 
 func _ready() -> void:
+	Screen.fit(self)   # a phone gets a physically larger interface
 	_client = Session.client
 	if _client == null:
 		return

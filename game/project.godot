@@ -16,13 +16,17 @@ run/main_scene="res://views/menu.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
+
 [display]
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
-window/handheld/orientation="sensor"
+; Landscape only. The HUD puts the beast above and the hand below with the party
+; and the climb gauge on the flanks; rotated into portrait there is nowhere for
+; any of it to go, so letting the sensor decide just breaks the game sideways.
+window/handheld/orientation="landscape"
 
 [gui]
 

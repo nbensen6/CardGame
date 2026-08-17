@@ -19,6 +19,7 @@ var _hold := ""   # 3dloop: stop the lap at this phase instead of finishing it
 var _beast := ""  # force a specific beast, to check a model that RNG rarely picks
 var _act := 0     # 3dmap: fast-forward to this act, so later regions get looked at
 var _orbit := 999.0  # 3D combat: drive the orbit camera to this yaw, in degrees
+var _size := Vector2i.ZERO  # size=WxH — shoot at a different screen shape
 
 
 func _initialize() -> void:
@@ -35,6 +36,16 @@ func _initialize() -> void:
 			_act = int(a.substr(4))
 		elif a.begins_with("orbit="):
 			_orbit = float(a.substr(6))
+		elif a == "mobile":
+			Screen.force_handheld = true   # shoot the phone layout from a desktop
+		elif a.begins_with("size="):
+			# size=2340x1080 — shoot at a phone's aspect ratio. The HUD is laid out
+			# against 1280x720 (1.78); a modern phone is 2.17, which is a much
+			# SHORTER viewport once the width is matched, and that is where a
+			# desktop HUD falls apart.
+			var wh: PackedStringArray = a.substr(5).split("x")
+			if wh.size() == 2:
+				_size = Vector2i(int(wh[0]), int(wh[1]))
 	_failsafe()  # never hang the machine
 	# Shots should show onboarding as a NEW player sees it, whatever this machine's
 	# config happens to say — otherwise turning tips off while playing silently
@@ -42,6 +53,13 @@ func _initialize() -> void:
 	# A GameHost autosaves, and this harness starts real ones. Without this, taking
 	# a screenshot would overwrite the designer's actual saved run — the same way
 	# it used to flip their tips setting.
+	if _size != Vector2i.ZERO:
+		# Halve anything that would not fit on the desktop it is being shot from;
+		# the ASPECT is what is being tested, not the pixel count.
+		var shot := _size
+		while shot.x > 1900:
+			shot /= 2
+		DisplayServer.window_set_size(shot)
 	RunSave.use_scratch_slot("run_screenshot")
 	RunSave.clear()
 	Progress.reset_hints()

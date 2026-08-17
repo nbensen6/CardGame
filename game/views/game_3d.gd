@@ -35,6 +35,7 @@ var _view: Node
 
 
 func _ready() -> void:
+	Screen.fit(self)   # a phone gets a physically larger interface
 	_client = Session.client
 	if _client == null:
 		return
