@@ -80,6 +80,53 @@ to allow installing from that source.
 
 Either way the first build is slow (Gradle warms up); later ones are quick.
 
+## iPhone
+
+**An iOS build needs a Mac.** Godot's iOS export produces an Xcode project, and
+building and signing it requires Xcode, which is macOS-only. There is no Windows
+path to an iPhone build — not a difficult one, not one at all.
+
+So the options are:
+
+| | Cost | Gets you |
+|---|---|---|
+| **Any Android device** | £0 if you own one | The real thing. Everything above already works. |
+| **Web export → Safari** | £0 | Layout and flow on the actual phone. Not the feel. |
+| **Mac mini** (used ~£300, new ~£600) | one-off | Real iOS builds, free 7-day sideload to your own device |
+| **Cloud Mac** (Scaleway, MacStadium) | ~£0.10–1/hr | Same, rented. Fiddly for iterating. |
+| **App Store / TestFlight** | £99/yr + a Mac | Only relevant if iOS becomes a release target |
+
+Worth being blunt about the priority: **iOS is not a release target.** The roadmap
+ships to Steam. This is a question about where you can conveniently playtest, and
+for that a £0 Android device or the web build both beat spending on a Mac.
+
+### The web route (no Mac, no account, no store)
+
+The game uses no threads of its own and already renders through
+`gl_compatibility` — WebGL2 — so a single-threaded web export works.
+
+1. Same **Manage Export Templates** download as Android; it covers Web too.
+2. **Project → Export… → Web**, and **uncheck Thread Support**.
+   This matters: threads need SharedArrayBuffer, which needs cross-origin
+   isolation, which needs a secure context — https or localhost. A phone opening
+   `http://192.168.x.x` is neither, so a threaded build will not boot over the
+   LAN at all.
+3. Export to `build/web/index.html`.
+4. `node tools/webserve.js`, then open the printed LAN address on the phone —
+   the same shape as the Card Lab, which already reaches your phone this way.
+
+**What the web build is good for:** does the interface fit, is the text readable
+in your hand, are the buttons thumb-sized, does a run flow.
+
+**What it is bad for:** the timing minigame. The grip bar and the timed-card
+windows are latency-sensitive, and browser input lag on a phone will make them
+feel worse than they are. Do not judge the feel of the game from a web build —
+which is unfortunate, because the feel is the thing most worth testing on a
+phone. That is the honest case for borrowing an Android device.
+
+Also expect: audio only starts after your first tap (iOS blocks autoplay), and
+the first load is a large download over wifi (the server gzips it).
+
 ## Known rough edges to expect on the first run
 
 Worth knowing so they don't read as bugs:
