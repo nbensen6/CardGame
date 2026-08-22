@@ -138,6 +138,56 @@ Ordered. Source in brackets.
   idiom, do not reweight. *Done when:* Frog has 5-7 rares, tested the same way.
   [measured 2026-08-22]
 
+- [ ] **24. Named holds on a beast — the climb ENGINE** `cloud-safe` —
+  Nick, 2026-08-22: the climb should have *spots* you choose, not just a number
+  that goes up. Today a climb card adds N Height and that is the whole decision.
+  Generalise `Boss.ledges` (a bare int array) into named holds — height, whether
+  it is safe, and which moves it is exposed to — and let a climb card TARGET a
+  hold rather than blindly add. That makes climbing positional: the high hold is
+  closer to the sigil but in reach of the sweep, the low one is safe but slow.
+  It is also the thing that makes item 25's drag meaningful, so build it first.
+  *Done when:* holds are data, a card can name one, reaching one is tested, and
+  the old "just add Height" path still works for cards that don't target.
+- [ ] **25. Drag a card to the hold you want** `needs a screen` — the UI half of
+  24, and Nick's other ask: pull a card out and drag it where you want to climb.
+  **Design tension to resolve before building:** a timed card today is tap → the
+  bar sweeps → tap to nail it. Adding drag makes that drag → release → bar → tap,
+  which is three gestures for one card. Decide whether the release *starts* the
+  bar, or whether targeted cards are simply never timed, before writing any of it.
+  Still single-pointer, so CLAUDE.md §5 holds and it works on a phone.
+- [ ] **26. Potions** `cloud-safe` (engine only) — the biggest Slay-the-Spire
+  staple we do not have. Three slots, consumable, found from fights and shops;
+  they are what lets a bad hand still be survivable, and their absence is why a
+  bad draw here feels flat rather than tense. Data plus a generic apply, same
+  shape as relics. *Done when:* potions are data, can be held, used and thrown
+  away, persist through save/load, and are tested. The slots UI is a separate
+  needs-a-screen item.
+- [ ] **27. Status and curse cards** `cloud-safe` — cards that clog your deck
+  rather than help it (StS's Burn, Dazed, Wound). We have no way for an event, an
+  elite or a Titan to *punish* you into your own deck, which is a whole pressure
+  the genre uses and we don't. Fits our idiom: a Titan that shakes you could
+  shuffle in "Bruised Grip", a dead card that costs you a draw.
+  *Done when:* they exist as data, can be inflicted, are removable at a campfire
+  or shop, and are tested.
+- [ ] **28. Retain and Innate** `cloud-safe` — two one-word card properties that
+  StS gets enormous play out of. Retain: not discarded at end of turn. Innate:
+  always in the opening hand. Both are a flag plus one line in the draw/discard
+  path, and both create build decisions immediately.
+- [ ] **29. X-cost cards** `cloud-safe` — spend ALL remaining energy, scale with
+  how much. The classic end-of-turn dump, and it interacts well with our energy
+  relics. `cost: -1` as the sentinel, resolved in `effective_cost`/`play_card`.
+- [ ] **30. Relics with a downside** `cloud-safe` — every one of our 26 is pure
+  upside, so taking one is never a decision. StS's boss relics cost you something
+  (less energy, no potions, more damage taken) in exchange for power.
+  *Done when:* at least 4 relics carry a real cost, and picking one is a choice.
+- [ ] **31. A run-start boon** `cloud-safe` — StS opens with Neow: a free
+  meaningful choice before the first fight that sets the run's direction. We drop
+  you straight onto the map. *Done when:* one choice of 3-4 at run start, saved
+  with the run, tested.
+- [ ] **32. Potion slots and status feedback** `needs a screen` — the UI for 26
+  and 27: three slots you can see and tap, and a clear cue when something clogs
+  your deck. Deliberately separate so the engine can land without it.
+
 ## Where the work happens
 
 Two places, and they can do different things.
