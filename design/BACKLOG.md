@@ -63,7 +63,7 @@ Ordered. Source in brackets.
   the reward weights she almost never sees one. Write rares, do not reweight.
   *Done when:* she has 5–7, in her own idiom (poison, ally-lifting, vines).
   [measured 2026-08-16]
-- [ ] **6. The `type` field decides what it is** — every card carries `cloud-safe`
+- [x] **6. The `type` field decides what it is** — every card carries `cloud-safe`
   `"attack"` / `"skill"` and nothing reads it. Either give it a mechanical
   meaning or drop it; a field that lies is worse than no field.
 - [ ] **7. `location_3d.gd` `!is_inside_tree()` guard** — pre-existing, still `cloud-safe`
@@ -185,6 +185,29 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **6. The `type` field decides what it is** — gave it the field a real reader:
+  `Combat.preview()`'s Strength/attack_bonus lift now gates on `card.type ==
+  "attack"` instead of guessing from `card.damage > 0`. Auditing all 146 cards
+  found exactly one place the two disagreed — `pollen_drift` was labelled
+  `"attack"` with 0 base damage (a Poison-only card, like every other 0-damage
+  Wound card in the set, all of which are `"skill"`) — so that was a data typo,
+  not a design choice; fixed to `"skill"`. Because the one mismatch is now
+  corrected, the new gate produces byte-identical combat numbers to the old one
+  for all existing cards — this is a data-consistency and dead-field fix, not a
+  balance change. Added `Content.all_card_ids()` (nothing enumerated the whole
+  card set before) plus two tests: one walks every card asserting type agrees
+  with dealing base damage, one proves Strength no longer lifts a skill-type
+  card mechanically. `run_tests.gd` green (all pass, was already green before);
+  `balance_sim.gd` smoke-tested only, not tuned to (win rates unchanged, as
+  expected from a behavior-preserving fix).
+- **(bookkeeping)** The previous run's three commits (items #1, #4, #5 done,
+  plus the queue-deepening) looked stranded on a detached HEAD after `git
+  checkout -B main origin/main` warned about "leaving 3 commits behind" — but
+  a fetch showed `origin/main` already had them; the warning was just a stale
+  local remote-tracking ref from before this session's first fetch. Fast-
+  forwarded local `main` to match; nothing was actually lost or re-pushed.
+  Noting it here since it cost a few minutes of investigation and the next
+  run doesn't need to repeat it.
 - **4. Per-beast limiters** — added `Boss.limiter` ({type, value}, data-only) and
   one generic `Combat._apply_limiter()` dispatch, mirroring the existing move-type
   match. Three types: `wound_decay` (sheds Wound/turn — punishes stack-and-wait

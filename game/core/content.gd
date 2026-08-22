@@ -60,6 +60,11 @@ static func keyword_ids() -> Array:
 	return out
 
 
+## Every card id in cards.json, reachable or not — content-integrity checks
+## walk the whole set rather than just what a reward pool happens to offer.
+static func all_card_ids() -> Array:
+	return (_read_json(CARDS_PATH).get("cards", {}) as Dictionary).keys()
+
 ## A card's rarity without building the whole Card — reward rolls ask for this
 ## once per candidate, so it stays a plain dictionary lookup.
 static func card_rarity(id: String) -> String:

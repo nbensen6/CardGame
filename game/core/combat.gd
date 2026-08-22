@@ -275,7 +275,7 @@ func preview(pi: int, card: Card, nailed: bool = true) -> Dictionary:
 		+ card.damage_per_exhausted * exhausted
 	if hit:
 		dmg += card.timed_damage
-	if card.damage > 0:  # buffs lift real attacks, not incidental scaling
+	if card.type == "attack":  # buffs lift real attacks, not incidental scaling
 		dmg += _attack_bonus + ps.strength + ps.char_attack_bonus
 
 	var blk := card.block + card.block_per_play * prior + card.block_per_exhausted * exhausted

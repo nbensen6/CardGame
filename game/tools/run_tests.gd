@@ -116,6 +116,8 @@ func _init() -> void:
 	_test_run_survives_a_save_and_load()
 	_test_save_refuses_mid_fight_and_clears_when_over()
 	_test_every_card_declares_a_rarity()
+	_test_card_type_matches_whether_it_deals_damage()
+	_test_strength_only_lifts_attack_type_cards()
 	_test_rarity_weighting_favours_commons()
 	_test_vine_weaver_has_enough_rares()
 	# content batch: strength, wound, multi-hit, leech
@@ -1544,6 +1546,32 @@ func _test_every_card_declares_a_rarity() -> void:
 	_expect(bad.is_empty(), "every draftable card declares a valid rarity [%s]" % ", ".join(bad))
 
 
+## `type` ("attack"/"skill") used to be printed and never read (backlog #6) — a
+## field that lies is worse than no field. Now combat.gd gates the Strength/
+## attack_bonus lift on it, so it had better agree with what the card actually
+## does: a card dealing base damage calls itself an attack, and vice versa.
+func _test_card_type_matches_whether_it_deals_damage() -> void:
+	var bad: Array = []
+	for id in Content.all_card_ids():
+		var c := Content.make_card(String(id))
+		var is_attack: bool = c.type == "attack"
+		var deals_damage: bool = c.damage > 0
+		if is_attack != deals_damage:
+			bad.append("%s: type=%s damage=%d" % [id, c.type, c.damage])
+	_expect(bad.is_empty(), "every card's type agrees with whether it deals base damage [%s]" % ", ".join(bad))
+
+
+## The mechanical half of the same fix: Strength must not sneak onto a card
+## that only inflicts Poison or draws cards just because damage happens to
+## round up somewhere — the gate is the type field now, not a damage>0 guess.
+func _test_strength_only_lifts_attack_type_cards() -> void:
+	var combat := _new_combat([_deck_of(_venom_dart, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	combat.players[0].strength = 5
+	var pv := combat.preview(0, combat.players[0].hand[0], true)
+	_expect(combat.players[0].hand[0].type == "skill" and int(pv["damage"]) == 0,
+		"Strength does not lift a skill-type card even when the caster has it")
+
+
 ## Over many rolls, commons should dominate the offers and rares should be scarce.
 ## Statistical, so the bounds are deliberately loose — this catches "weighting is
 ## wired up backwards or not at all", not small tuning drift.
@@ -2073,6 +2101,8 @@ func _sharpen() -> Card:
 	return Card.from_dict({"id": "sharpen", "name": "Sharpen", "type": "skill", "cost": 1, "strength": 2})
 func _rend() -> Card:
 	return Card.from_dict({"id": "rend", "name": "Rend", "type": "attack", "cost": 1, "damage": 4, "wound": 2})
+func _venom_dart() -> Card:
+	return Card.from_dict({"id": "venom_dart", "name": "Venom Dart", "type": "skill", "cost": 0, "wound": 2})
 func _flurry() -> Card:
 	return Card.from_dict({"id": "flurry", "name": "Flurry", "type": "attack", "cost": 2, "damage": 4, "hits": 2})
 func _dig_in() -> Card:

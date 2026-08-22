@@ -80,7 +80,7 @@
     "snap_volley": {"name": "Snap Volley", "rarity": "uncommon", "type": "attack", "icon": "volley", "cost": 2, "damage": 2, "hits": 3, "damage_per_rhythm": 2, "target": "enemy", "text": "Deal 2 damage 3 times and an additional 2 per Rhythm."},
     "crescendo": {"name": "Crescendo", "rarity": "rare", "type": "attack", "icon": "rhythm", "cost": 2, "damage": 3, "damage_per_rhythm": 5, "grip": 1, "grip_per_rhythm": 1, "target": "enemy", "text": "Deal 3 damage and an additional 5 per Rhythm. Climb 1 and an additional 1 per Rhythm."},
 
-    "pollen_drift": {"name": "Pollen Drift", "rarity": "common", "type": "attack", "icon": "skull", "cost": 0, "wound": 2, "target": "enemy", "text": "Poison 2."},
+    "pollen_drift": {"name": "Pollen Drift", "rarity": "common", "type": "skill", "icon": "skull", "cost": 0, "wound": 2, "target": "enemy", "text": "Poison 2."},
     "seedling": {"name": "Seedling", "rarity": "common", "type": "skill", "icon": "climb", "cost": 0, "wound": 1, "grip": 1, "target": "enemy", "text": "Climb 1. Poison 1."},
     "thornmail": {"name": "Thornmail", "rarity": "common", "type": "skill", "icon": "shield", "cost": 1, "block": 4, "wound": 2, "target": "self", "text": "Gain 4 Block. Poison 2."},
     "root_network": {"name": "Root Network", "rarity": "common", "type": "skill", "icon": "lift", "cost": 1, "ally_grip": 2, "wound": 2, "target": "ally", "text": "Ally climbs 2. Poison 2."},
