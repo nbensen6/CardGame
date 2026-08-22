@@ -17,6 +17,9 @@ var wound: int = 0             # bleed — the Titan takes this much at the star
 var weak_point_height: int = 0 # 0 = low sigil (always reachable); >0 needs Foothold to strike (SotC climb)
 var ledges: Array = []         # safe rest Heights between the base and the sigil (SotC holds)
 var weak_point_threshold: int = 0  # sigil damage a hunter can deal per visit before it bucks them off (0 = no limit)
+var limiter: Dictionary = {}   # {"type": ..., "value": ...} — a rule this Titan bends against a
+                                # specific strategy, applied generically by Combat._apply_limiter()
+                                # (design/sts2-comparison.md §3.4). {} = none.
 var _move_index: int = 0
 
 ## The move the boss will perform on its next enemy turn (telegraphed now).

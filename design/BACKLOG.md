@@ -42,7 +42,7 @@ These exist because nobody is watching. Breaking one is worse than doing nothing
 
 Ordered. Source in brackets.
 
-- [ ] **1. Exhaust scaling for the Goblin** — one field, immediate depth. `cloud-safe`
+- [x] **1. Exhaust scaling for the Goblin** — one field, immediate depth. `cloud-safe`
   *Done when:* the field exists, at least three cards use it, tests cover it.
   [sts2-comparison §5.2]
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
@@ -55,7 +55,7 @@ Ordered. Source in brackets.
   *Done when:* enchants are data, apply generically, are visible on the card
   face, and come from at least one source (campfire).
   [sts2-comparison §3.1 ⭐]
-- [ ] **4. Per-beast limiters** — a rule each Titan bends, so four Titans are `cloud-safe`
+- [x] **4. Per-beast limiters** — a rule each Titan bends, so four Titans are `cloud-safe`
   four puzzles rather than four HP bars.
   *Done when:* at least the four Titans each carry one, expressed as data.
   [sts2-comparison §3.4]
@@ -180,4 +180,20 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- _(nothing yet — the loop appends here)_
+- **4. Per-beast limiters** — added `Boss.limiter` ({type, value}, data-only) and
+  one generic `Combat._apply_limiter()` dispatch, mirroring the existing move-type
+  match. Three types: `wound_decay` (sheds Wound/turn — punishes stack-and-wait
+  Poison), `sigil_fatigue` (chips a hunter camped at the sigil past an allowance),
+  `height_split` (chips a hunter who's climbed far past their ally, unsupported).
+  Assigned across the four Titans (stone_warden: height_split, gale_serpent +
+  sunken_warden: sigil_fatigue at different thresholds, drowned_colossus:
+  wound_decay) so two share a mechanic at different tuning rather than forcing a
+  fourth distinct type for its own sake. 4 new tests plus a content-integrity
+  check that every Titan's limiter type actually resolves. `run_tests.gd` and
+  `balance_sim.gd` (smoke test only, not tuned to) both clean.
+- **1. Exhaust scaling for the Goblin** — turned out already done: `cards.json`
+  has 5 cards using `damage_per_exhausted`/`block_per_exhausted` (well past the
+  "three cards" bar), and `run_tests.gd` already covers it. No code changed —
+  ticking it off so the next iteration doesn't re-derive this. Worth a beat: this
+  queue was written 2026-08-16 without checking the tree first, so an item can go
+  stale between writing and working it.

@@ -34,6 +34,7 @@ const ARMORED_DIVISOR := 4  # below the weak point the hide is armored: attacks 
 # a hunter. See is_secure(), next_safe_height(), fall(), and the sweep handling.
 const FALL_DAMAGE := 3   # damage taken when grip runs out and a hunter falls to the base
 const RIFT_PER_GAP := 2  # extra 'rift' damage per Height between the hunters — climb together
+const SIGIL_FATIGUE_DAMAGE := 4  # a "sigil_fatigue" limiter's chip damage per round camped past its allowance
 
 var players: Array = []  # Array[PlayerState], index = player slot
 var boss: Boss
@@ -491,6 +492,39 @@ func _check_weakpoint_buck(pi: int) -> void:
 		_log("The Titan bucks %s off the weak point — climb back up!" % ps.combatant.name)
 
 
+## Each Titan bends one rule against a specific strategy — a wound-stacker, a
+## sigil-camper, a hunter who hoards all the Height — so four Titans read as four
+## puzzles rather than four HP bars (design/sts2-comparison.md §3.4). One generic
+## dispatch on boss.limiter (data), same pattern as the move-type match in
+## _enemy_turn(). Runs once at the start of the Titan's turn, before its move.
+func _apply_limiter() -> void:
+	if boss.limiter.is_empty():
+		return
+	var value: int = int(boss.limiter.get("value", 0))
+	match String(boss.limiter.get("type", "")):
+		"wound_decay":  # sheds Poison/Wound each turn — a stack-and-wait strategy decays away
+			if boss.wound > 0:
+				boss.wound = maxi(boss.wound - value, 0)
+		"sigil_fatigue":  # can't camp the weak point turn after turn — grip burns out
+			for i in range(players.size()):
+				var ps: PlayerState = players[i]
+				if sigil_reached(i):
+					ps.sigil_rounds += 1
+					if ps.sigil_rounds > value:
+						ps.combatant.take_damage(SIGIL_FATIGUE_DAMAGE)
+						_log("%s's grip burns from clinging too long — takes %d." % [ps.combatant.name, SIGIL_FATIGUE_DAMAGE])
+				else:
+					ps.sigil_rounds = 0
+		"height_split":  # one hunter far above the other strains alone — split the climb
+			for i in range(players.size()):
+				var ps2: PlayerState = players[i]
+				var mate: PlayerState = players[ally_index(i)]
+				var excess: int = ps2.foothold - mate.foothold - value
+				if excess > 0:
+					ps2.combatant.take_damage(excess)
+					_log("%s strains alone at Height %d, unsupported — takes %d." % [ps2.combatant.name, ps2.foothold, excess])
+
+
 ## Deal card damage to the Titan, consuming one "exposed" stack for bonus.
 ## Returns the actual damage dealt (so the log can flag the bonus).
 func _damage_boss(amount: int, pi: int) -> int:
@@ -569,6 +603,9 @@ func _enemy_turn() -> void:
 		_log("%s bleeds for %d." % [boss.name, boss.wound])
 		if _check_end():
 			return
+	_apply_limiter()
+	if _check_end():
+		return
 	boss.block = 0
 	var move := boss.current_move()
 	var value := int(move.get("value", 0))

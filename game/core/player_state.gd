@@ -18,6 +18,7 @@ var ended_turn: bool = false   # this player has passed; others may still act th
 var prepared: String = ""      # a delayed effect armed this fight (e.g. "jetpack"), fires next turn
 var rhythm: int = 0            # combo counter — +1 per timed card you LAND this turn (Frog); resets each turn
 var play_counts: Dictionary = {}  # card id -> times played this fight (for scaling cards like Build Mech)
+var sigil_rounds: int = 0      # consecutive enemy turns spent at/above the sigil (a "sigil_fatigue" limiter)
 # Character signature passives (set from the chosen character; constant for the run)
 var character: String = ""     # character id, for display
 var climb_bonus: int = 0       # extra Height per climb card (Frog)

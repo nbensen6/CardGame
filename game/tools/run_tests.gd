@@ -122,6 +122,10 @@ func _init() -> void:
 	_test_wound_bleeds_the_titan()
 	_test_flurry_multi_hit()
 	_test_leech_drains_and_heals()
+	_test_wound_decay_limiter_sheds_poison()
+	_test_sigil_fatigue_limiter_punishes_camping()
+	_test_height_split_limiter_punishes_hoarding()
+	_test_every_titan_carries_a_known_limiter()
 	_test_relic_start_strength()
 	# characters (per-player climb + signature passives)
 	_test_frog_climb_bonus()
@@ -1609,6 +1613,65 @@ func _test_leech_drains_and_heals() -> void:
 	combat.end_turn(1)  # leech hits hunter 1 for 12, Titan heals 12
 	_expect(combat.players[0].combatant.hp == 30 and combat.boss.hp == 62,
 		"leech drains a hunter and heals the Titan")
+
+
+func _test_wound_decay_limiter_sheds_poison() -> void:
+	var boss := Boss.new("Decayer", 200)
+	boss.moves = [{"type": "block", "value": 0}]  # harmless move — isolate the limiter
+	boss.limiter = {"type": "wound_decay", "value": 3}
+	boss.wound = 5
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var hp0 := combat.boss.hp
+	combat.end_turn(0)
+	combat.end_turn(1)  # bleeds 5 (this turn's old wound), then decays 5 -> 2 for next turn
+	_expect(combat.boss.hp == hp0 - 5 and combat.boss.wound == 2,
+		"wound_decay limiter sheds Wound each turn, after that turn's bleed")
+
+
+func _test_sigil_fatigue_limiter_punishes_camping() -> void:
+	var boss := _climb_boss(6)
+	boss.limiter = {"type": "sigil_fatigue", "value": 1}
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 6  # at the sigil
+	var hp0: int = ps.combatant.hp
+	combat.end_turn(0)
+	combat.end_turn(1)  # round 1 at the sigil — within the allowance
+	var after_round1: int = ps.combatant.hp
+	combat.end_turn(0)
+	combat.end_turn(1)  # round 2 — camped past the allowance, grip burns
+	_expect(after_round1 == hp0 and ps.combatant.hp == hp0 - Combat.SIGIL_FATIGUE_DAMAGE,
+		"sigil_fatigue limiter chips a hunter who camps the weak point too long")
+
+
+func _test_height_split_limiter_punishes_hoarding() -> void:
+	var boss := Boss.new("Splitter", 200)
+	boss.moves = [{"type": "block", "value": 0}]  # harmless move — isolate the limiter
+	boss.limiter = {"type": "height_split", "value": 4}
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 9
+	combat.players[1].foothold = 2  # gap 7, 3 over the allowance of 4
+	var hp0: int = ps.combatant.hp
+	combat.end_turn(0)
+	combat.end_turn(1)
+	_expect(ps.combatant.hp == hp0 - 3 and combat.players[1].combatant.hp == combat.players[1].combatant.max_hp,
+		"height_split limiter chips a hunter who climbs far ahead of their ally")
+
+
+## Backlog #4: per-beast limiters — a rule each Titan bends, so four Titans read
+## as four puzzles rather than four HP bars. Every act-ending Titan must carry
+## one, of a type Combat._apply_limiter() actually knows how to apply (a typo'd
+## type would silently do nothing, same trap as an undefined move type).
+func _test_every_titan_carries_a_known_limiter() -> void:
+	var known := ["wound_decay", "sigil_fatigue", "height_split"]
+	var bad: Array = []
+	for id in Content.beast_pool("boss"):
+		var b: Boss = Content.build_boss(String(id))
+		var t := String(b.limiter.get("type", ""))
+		if t == "" or not known.has(t):
+			bad.append("%s: %s" % [id, t])
+	_expect(bad.is_empty(), "every Titan carries a limiter of a known type [%s]" % ", ".join(bad))
 
 
 func _test_relic_start_strength() -> void:
