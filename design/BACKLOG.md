@@ -76,6 +76,63 @@ Ordered. Source in brackets.
 - [ ] **10. Relics to ~30** — 26 today. Rule-changing, not number-changing `cloud-safe`
   (§3.4 of depth-plan).
 
+- [ ] **11. Beast move patterns** `cloud-safe` — seven beasts run 2–3 moves and
+  the Crag Pup is literally two attacks, so a fight has no shape to read. Ten
+  move types exist; use them. *Done when:* no beast has fewer than 4 moves or
+  only one kind, and a test asserts it.
+  [measured 2026-08-22]
+- [ ] **12. The enchantment ENGINE** `cloud-safe` — the data-and-rules half of
+  item 3, split out because only the card FACE needs a screen.
+  `data/enchants.json` plus one generic apply on `Card`, the same trick
+  `upgraded_copy()` already uses. *Done when:* enchants are data, apply
+  generically to any card, round-trip through save/load, and are covered by
+  tests. Do NOT touch the card face — that half is tagged needs-a-screen.
+- [ ] **13. Relics that change a rule** `cloud-safe` — all 26 relics are the
+  same `{effect, value}` number bump. depth-plan §4 asked for rule-changers and
+  none exist. *Done when:* at least 6 relics alter a RULE (an extra timing
+  window, climbing without losing grip, exhaust returning a card) rather than
+  adding to a number, with tests.
+  [measured 2026-08-22]
+- [ ] **14. Mid-combat saving** `cloud-safe` — promoted from Later. Today the
+  slot is only written between fights, so quitting mid-fight replays it.
+  `Combat` is the one thing `Run.to_dict()` skips. *Done when:* hands, piles,
+  footholds, block and the boss's pattern all survive a round trip, and the
+  "refuses mid-fight" guard is replaced rather than deleted.
+- [ ] **15. Save coverage for the other phases** `cloud-safe` — the save tests
+  only exercise a run parked on the map. Shop stock, campfire progress and an
+  in-flight event are all serialized and none are tested.
+  *Done when:* a run saved in SHOP, CAMPFIRE and EVENT reloads intact.
+- [ ] **16. Every card field a player must understand has a keyword**
+  `cloud-safe` — keywords are derived from fields by `GameHost._keywords_of`;
+  a field added without one silently ships an unexplained card.
+  *Done when:* a test walks every field used by any card and fails on one that
+  needs explaining and has no entry in keywords.json.
+- [ ] **17. Events that touch the DECK** `cloud-safe` — the 10 events trade in
+  HP and gold only. The interesting ones in this genre cost or change CARDS.
+  *Done when:* at least 4 events add, remove, sharpen or burn a card, and the
+  stakes are still printed on the button.
+- [ ] **18. Content integrity test** `cloud-safe` — every card id named by a
+  starter deck, a reward pool, a `create`/`prepare` field or an event resolves
+  to a real card; same for beast ids and relic ids. A typo in data currently
+  fails silently at runtime. *Done when:* one test proves the whole graph.
+- [ ] **19. Shop and campfire test coverage** `cloud-safe` — buying, price
+  rises on repeat removals, and each campfire action are rules nobody tests.
+  *Done when:* covered, including that you cannot buy what you cannot afford
+  and cannot thin a deck below `MIN_DECK`.
+- [ ] **20. `weak_point_threshold` audit** `cloud-safe` — the per-visit sigil
+  damage cap was tuned when sigils sat at Height 1–8. They now sit at 4–13 and
+  nobody re-checked whether the cap still means anything.
+  *Done when:* each beast's cap is justified against its new climb, or the field
+  is removed as dead.
+- [ ] **21. Unreachable content report in the Card Lab** `cloud-safe` —
+  `tools/cardlab/build.js` already computes reachability. Extend it to name
+  every card, relic and event that no pool can offer.
+  *Done when:* the Health tab lists them, and the build prints a count.
+- [ ] **22. Ascension tiers apply what they claim** `cloud-safe` — eight tiers
+  exist in data and the sim walks them, but no test proves a tier's modifier
+  actually reaches combat. *Done when:* each modifier key is asserted at the
+  tier that introduces it.
+
 ## Where the work happens
 
 Two places, and they can do different things.
