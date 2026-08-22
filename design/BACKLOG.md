@@ -188,6 +188,28 @@ Ordered. Source in brackets.
   and 27: three slots you can see and tap, and a clear cue when something clogs
   your deck. Deliberately separate so the engine can land without it.
 
+- [ ] **33. Graded timing accuracy — the rules half** `cloud-safe` —
+  Nick, 2026-08-22: make the timing osu-like. Today it is binary: `nailed` is a
+  bool, so a hit dead-centre pays exactly what a hit scraping the edge does.
+  Widen that to a quality tier (perfect / good / miss) and let the timed bonus
+  scale with it. This is the whole rules half of the idea and needs no display:
+  the seam is already narrow — `timing_resolved(hit)` -> `play_card(timing_hit)`
+  -> `preview(nailed)`, four files.
+  *Done when:* quality is carried end to end, the bonus scales, save/load is
+  unaffected, and the existing 38 timing assertions still hold with "perfect"
+  behaving exactly as today's "nailed" did.
+- [ ] **34. osu-style hit circle at the hold** `needs a screen` — the display
+  half, and the reason it is worth doing: a shrinking approach circle **placed at
+  the hold you are climbing to** answers *where* and *when* in ONE gesture. That
+  dissolves the three-gesture problem item 25 flagged, so 24 + 25 + 34 want
+  building together rather than separately.
+  **Build it behind a setting, keep the sweep bar.** This is the mechanic Nick
+  said was landing ("double timing"), and a feel change of this size is not
+  something tests can grade — it needs both playable side by side so he can pick.
+  **Watch for:** the grip timer is ALREADY a live real-time pressure. An osu
+  circle on top is two clocks at once, which may be thrilling or may be
+  unplayable. That question is the point of the experiment.
+
 ## Where the work happens
 
 Two places, and they can do different things.
