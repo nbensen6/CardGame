@@ -57,6 +57,7 @@ func _init() -> void:
 	_test_event_choice_applies_effects()
 	_test_event_reward_choice_routes_to_reward()
 	_test_events_load_and_are_well_formed()
+	_test_event_gold_cost_never_goes_negative()
 	_test_card_upgrade_bumps_numbers()
 	_test_campfire_rest_remove_upgrade()
 	_test_skip_reward_keeps_the_deck_lean()
@@ -491,7 +492,8 @@ func _test_rest_node_heals_and_returns_to_map() -> void:
 
 func _test_events_load_and_are_well_formed() -> void:
 	var ids: Array = Content.list_events()
-	var ok := ids.size() >= 8
+	# EA target is 12-15 hand-written events (BACKLOG.md item 9).
+	var ok := ids.size() >= 12
 	for id in ids:
 		var e: Dictionary = Content.make_event(String(id))
 		var choices: Array = e.get("choices", [])
@@ -500,7 +502,19 @@ func _test_events_load_and_are_well_formed() -> void:
 		for ch in choices:
 			if String((ch as Dictionary).get("label", "")) == "":
 				ok = false
-	_expect(ok, "every event has a title, prose, and at least two labelled choices")
+	_expect(ok, "every event has a title, prose, and at least two labelled choices, and there are at least 12")
+
+
+func _test_event_gold_cost_never_goes_negative() -> void:
+	var run := _map_run()
+	run.gold = 5
+	run.event = {"title": "T", "text": "x", "choices": [
+		{"label": "pay", "result": "!", "effects": {"gold": -20}},
+	]}
+	run.phase = Run.Phase.EVENT
+	run.map_row = 0
+	run.pick_event(0)
+	_expect(run.gold == 0, "an event's gold cost never puts the shared purse in debt")
 
 
 func _test_event_choice_applies_effects() -> void:

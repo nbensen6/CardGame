@@ -209,6 +209,90 @@
           }
         }
       ]
+    },
+    "rockslide_altar": {
+      "title": "A Rockslide Altar",
+      "text": "The slide unearthed a ring of stones nobody built this high by accident. Something is wedged in the middle, glinting.",
+      "choices": [
+        {
+          "label": "Dig it free",
+          "result": "The stones shift as you pull it loose. Worth it.",
+          "effects": {
+            "heal": -6,
+            "relic": true
+          }
+        },
+        {
+          "label": "Leave it buried",
+          "result": "You give the pile a wide berth and catch your breath instead.",
+          "effects": {
+            "heal": 6
+          }
+        }
+      ]
+    },
+    "stranded_kite": {
+      "title": "A Stranded Storm-Kite",
+      "text": "Someone's kite is wrapped three times around a spire, fabric still taut with old wind. The frame looks salvageable.",
+      "choices": [
+        {
+          "label": "Cut it down",
+          "result": "It comes free all at once and nearly takes you with it. Worth studying, though.",
+          "effects": {
+            "heal": -4,
+            "reward": "card"
+          }
+        },
+        {
+          "label": "Use it as a windbreak",
+          "result": "You shelter behind it for the night. Simple, and it works.",
+          "effects": {
+            "heal": 10
+          }
+        }
+      ]
+    },
+    "the_toll_crow": {
+      "title": "The Toll Crow",
+      "text": "A crow the size of a dog watches you from a ledge, head cocked, one leg extended like it's expecting something.",
+      "choices": [
+        {
+          "label": "Pay the toll",
+          "result": "You leave coin on the ledge. The crow allows you to pass, and drops something in return.",
+          "effects": {
+            "gold": -20,
+            "relic": true
+          }
+        },
+        {
+          "label": "Push past",
+          "result": "It follows you for an hour, shrieking. Exhausting, but free.",
+          "effects": {
+            "heal": -3
+          }
+        }
+      ]
+    },
+    "quiet_overhang": {
+      "title": "A Quiet Overhang",
+      "text": "The rock bows out overhead just enough to keep the weather off. Old scratch marks in the stone count something — days, maybe, or teeth.",
+      "choices": [
+        {
+          "label": "Make camp here",
+          "result": "It is exactly as dry and quiet as it looks.",
+          "effects": {
+            "heal": 11
+          }
+        },
+        {
+          "label": "Count the scratches",
+          "result": "There are more than you're comfortable counting. Tucked into the deepest one, something metal.",
+          "effects": {
+            "heal": -3,
+            "reward": "relic"
+          }
+        }
+      ]
     }
   }
 }

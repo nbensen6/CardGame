@@ -369,7 +369,8 @@ func pick_event(choice: int) -> bool:
 			# Events bruise but never end a run — no death without a fight.
 			hp[i] = clampi(hp[i] + h, 1, max_hp[i])
 		hp[i] = mini(hp[i], max_hp[i])
-	gold += int(eff.get("gold", 0))
+	# Events can ask a price, but never put the purse in debt.
+	gold = maxi(0, gold + int(eff.get("gold", 0)))
 	if bool(eff.get("relic", false)):
 		var pool: Array = Content.relic_pool()
 		if not pool.is_empty():

@@ -71,7 +71,7 @@ Ordered. Source in brackets.
   guard, and either fix the cause or write down why it stays.
 - [ ] **8. Deck view** — you cannot see your own deck mid-run outside a campfire. `needs a screen`
   Every deckbuilder has this and its absence is felt.
-- [ ] **9. More events** — 10 today, the EA target is 12–15. Hand-written, they `cloud-safe`
+- [x] **9. More events** — 10 today, the EA target is 12–15. Hand-written, they `cloud-safe`
   bruise but never kill, stakes printed on the button.
 - [ ] **10. Relics to ~30** — 26 today. Rule-changing, not number-changing `cloud-safe`
   (§3.4 of depth-plan).
@@ -257,6 +257,26 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-22** — #9 More events: added 4 (`rockslide_altar`, `stranded_kite`,
+  `the_toll_crow`, `quiet_overhang`), 10 → 14, inside the 12–15 EA band, all
+  in the "bruise, don't kill" idiom. `the_toll_crow` is the first event to
+  charge gold rather than only pay it out, which surfaced a real bug: nothing
+  floored the shared purse at 0, so an early-run team with less gold than the
+  toll could go negative. Fixed generically in `Run.pick_event`
+  (`gold = maxi(0, gold + ...)`), same spirit as the existing HP floor, and
+  added `_test_event_gold_cost_never_goes_negative`. Also tightened
+  `_test_events_load_and_are_well_formed`'s count check from >=8 to >=12 so a
+  future regression below the EA band fails loudly.
+  **Also:** before starting, found this session's checkout arrived with 7
+  commits (items #4–#7 plus queue growth) sitting on a detached HEAD that had
+  never reached `origin/main` — a real miss this time, not the stale-ref false
+  alarm logged below on 2026-08-22 for a 3-commit case. Confirmed on
+  `origin/main` it was a true fast-forward, and pushed it before touching
+  anything else, so that work stays found instead of getting silently
+  redone or lost to container reclamation. Worth Nick knowing the "stranded
+  commits" failure mode has now happened twice — if it recurs, the push step
+  at the end of an iteration may need a stronger guarantee than "assume the
+  next run's checkout will already have it."
 - **2026-08-22** — #7 `location_3d.gd`'s `!is_inside_tree()` guard: audited, kept,
   and documented in place rather than removed — it is not masking a bug. Traced
   the actual race: `game_3d.gd` (the router) connects its `state_updated`
