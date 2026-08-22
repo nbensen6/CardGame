@@ -59,7 +59,7 @@ Ordered. Source in brackets.
   four puzzles rather than four HP bars.
   *Done when:* at least the four Titans each carry one, expressed as data.
   [sts2-comparison §3.4]
-- [ ] **5. Vine-Weaver's rare shortage** — 2 rares against the Goblin's 7, so at `cloud-safe`
+- [x] **5. Vine-Weaver's rare shortage** — 2 rares against the Goblin's 7, so at `cloud-safe`
   the reward weights she almost never sees one. Write rares, do not reweight.
   *Done when:* she has 5–7, in her own idiom (poison, ally-lifting, vines).
   [measured 2026-08-16]
@@ -132,6 +132,11 @@ Ordered. Source in brackets.
   exist in data and the sim walks them, but no test proves a tier's modifier
   actually reaches combat. *Done when:* each modifier key is asserted at the
   tier that introduces it.
+- [ ] **23. Frog's rare shortage** `cloud-safe` — found while fixing #5: the `cloud-safe`
+  Frog sits at 4 rares (`flurry_hop`, `crescendo`, `finale`, `grand_leap`), one
+  under the 5-7 band #5 set for Vine-Weaver. Write 1-3 more in her rhythm/climb
+  idiom, do not reweight. *Done when:* Frog has 5-7 rares, tested the same way.
+  [measured 2026-08-22]
 
 ## Where the work happens
 
@@ -197,3 +202,13 @@ Newest first. One line per finished item: what, and anything surprising.
   ticking it off so the next iteration doesn't re-derive this. Worth a beat: this
   queue was written 2026-08-16 without checking the tree first, so an item can go
   stale between writing and working it.
+- **5. Vine-Weaver's rare shortage** — wrote 4 new rares in her existing idiom
+  (poison-scaling `venom_cascade`/`withering_grasp`, ally-lifting `root_bond`,
+  vines `verdant_weave`), reusing only existing card fields — no new mechanics,
+  no reweighting. Added to her `reward_pool` in `characters.json`; she now has 6
+  rares (was 2), in the 5-7 band the item asked for. Added
+  `_test_vine_weaver_has_enough_rares`, scoped to her specifically rather than a
+  blanket per-character rule — a generic version of that test also flagged the
+  Frog at 4 rares, which is real but out of this item's scope, so I narrowed the
+  test instead of fixing the Frog too (no new scope). `run_tests.gd` and
+  `balance_sim.gd` (smoke test only, not tuned to) both clean.

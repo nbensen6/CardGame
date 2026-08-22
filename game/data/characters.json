@@ -93,6 +93,10 @@
       "portrait": "res://assets/portraits/sloth.png",
       "reward_pool": [
         "world_tree",
+        "venom_cascade",
+        "withering_grasp",
+        "root_bond",
+        "verdant_weave",
         "toxin_bloom",
         "spore_mother",
         "symbiosis",

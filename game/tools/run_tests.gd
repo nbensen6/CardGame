@@ -117,6 +117,7 @@ func _init() -> void:
 	_test_save_refuses_mid_fight_and_clears_when_over()
 	_test_every_card_declares_a_rarity()
 	_test_rarity_weighting_favours_commons()
+	_test_vine_weaver_has_enough_rares()
 	# content batch: strength, wound, multi-hit, leech
 	_test_strength_mechanic()
 	_test_wound_bleeds_the_titan()
@@ -1561,6 +1562,19 @@ func _test_rarity_weighting_favours_commons() -> void:
 	_expect(total > 0 and common_pct > 0.45 and rare_pct < 0.15,
 		"rarity weighting favours commons (%d%% common, %d%% rare over %d offers)"
 			% [int(common_pct * 100.0), int(rare_pct * 100.0), total])
+
+
+## The Vine-Weaver's reward pool sat at 2 rares against the Goblin's 7, so the
+## draft weights meant she almost never saw one (backlog #5). Pins the fix at
+## her stated target (5-7) rather than a blanket rule across every character —
+## the other three weren't part of that measurement and aren't this item's scope.
+func _test_vine_weaver_has_enough_rares() -> void:
+	var rares: Dictionary = {}
+	for rid in Content.reward_pool("vine_weaver"):
+		if Content.card_rarity(String(rid)) == "rare":
+			rares[String(rid)] = true
+	_expect(rares.size() >= 5 and rares.size() <= 7,
+		"Vine-Weaver has 5-7 rares, in her own idiom (%d: %s)" % [rares.size(), ", ".join(rares.keys())])
 
 
 func _pick_both(run: Run) -> void:
