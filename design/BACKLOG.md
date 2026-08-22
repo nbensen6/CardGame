@@ -66,7 +66,7 @@ Ordered. Source in brackets.
 - [x] **6. The `type` field decides what it is** — every card carries `cloud-safe`
   `"attack"` / `"skill"` and nothing reads it. Either give it a mechanical
   meaning or drop it; a field that lies is worse than no field.
-- [ ] **7. `location_3d.gd` `!is_inside_tree()` guard** — pre-existing, still `cloud-safe`
+- [x] **7. `location_3d.gd` `!is_inside_tree()` guard** — pre-existing, still `cloud-safe`
   there. Confirm whether it is masking a real ordering bug or is a legitimate
   guard, and either fix the cause or write down why it stays.
 - [ ] **8. Deck view** — you cannot see your own deck mid-run outside a campfire. `needs a screen`
@@ -256,6 +256,27 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-22** — #7 `location_3d.gd`'s `!is_inside_tree()` guard: audited, kept,
+  and documented in place rather than removed — it is not masking a bug. Traced
+  the actual race: `game_3d.gd` (the router) connects its `state_updated`
+  listener before any child view exists, so on every emission the router always
+  runs first; when the phase changes it removes+frees the old view *immediately*
+  (deliberate, per its own comment, so two views don't render for a frame), but
+  `queue_free()` doesn't disconnect signals, so the old view's own handler —
+  connected later, so later in call order — still fires this same emission
+  against a node that already left the tree. `combat_3d.gd`/`overworld_3d.gd`
+  share the router but dodge it because their `_refresh` bails the instant
+  `phase` isn't theirs, before touching anything tree-dependent; `location_3d.gd`
+  can't use that trick since one scene covers seven different phases, hence its
+  own guard. It was added in `0934ea9915b2` and took staging errors from 11 per
+  staging to 0 — confirmed real, not speculative. Expanded the code comment with
+  this trace so the next person (or the next unattended pass) doesn't have to
+  re-derive it. No code behavior changed; `run_tests.gd` still green. Did not add
+  a regression test — the existing suite only exercises `/core` and `/session`
+  headless, never instantiates a `/views` scene, and standing up that harness for
+  one guard is bigger than this item; flagging it here rather than doing it
+  quietly.
 
 - **6. The `type` field decides what it is** — gave it the field a real reader:
   `Combat.preview()`'s Strength/attack_bonus lift now gates on `card.type ==

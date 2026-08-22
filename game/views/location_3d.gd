@@ -117,6 +117,24 @@ func _refresh() -> void:
 	# is still connected for that window. Staging a detached scene aims a camera
 	# that isn't in the tree and measures props that aren't either; nothing good
 	# comes of it, and the frame it would build is about to be thrown away.
+	#
+	# Audited 2026-08-22 (backlog #7): legitimate, not masking a bug. `game_3d.gd`
+	# connects its own `state_updated` listener before any child view exists, so on
+	# every emission the router's `_sync()` always runs first; when a phase change
+	# lands it calls `remove_child(_view); _view.queue_free()` on the OLD view
+	# *immediately* (deliberately — see game_3d.gd, so both views don't render for
+	# a frame), then instantiates the new one. `queue_free()` only defers the
+	# node's destruction to end-of-frame — it does not disconnect signals — so the
+	# OLD view's own `state_updated` handler, connected later (in its `_ready`) and
+	# hence later in Godot's per-signal call order, still fires this same emission
+	# against a node that has already left the tree. `combat_3d.gd` and
+	# `overworld_3d.gd` share the same router and the same ordering, but dodge the
+	# race for a different reason: their `_refresh` bails out itself the moment
+	# `phase` no longer names them, before touching anything tree-dependent. This
+	# view can't use that trick — one scene renders SEVERAL phases (select, reward,
+	# event, campfire, shop, won, lost) — so it needs its own guard. Added in
+	# 0934ea9915b2 ("staging stops shouting"), which took staging errors from 11
+	# per staging to 0; removing it reintroduces them.
 	if not is_inside_tree():
 		return
 	var s := _client.shared
