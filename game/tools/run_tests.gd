@@ -114,6 +114,7 @@ func _init() -> void:
 	_test_incoming_reckons_damage_after_block()
 	_test_every_derived_keyword_resolves()
 	_test_every_boss_move_type_resolves()
+	_test_every_beast_has_a_move_pattern()
 	_test_card_dict_round_trips_every_field()
 	_test_run_survives_a_save_and_load()
 	_test_save_refuses_mid_fight_and_clears_when_over()
@@ -1447,6 +1448,23 @@ func _test_every_boss_move_type_resolves() -> void:
 					missing.append("%s: %s" % [id, t])
 	_expect(missing.is_empty(),
 		"every boss move type has a keyword entry [%s]" % ", ".join(missing))
+
+
+## Backlog #11: a beast with fewer than 4 moves, or only one move type, has no
+## pattern to read — Crag Pup was literally two attacks. Every beast needs a
+## real shape: enough moves to cycle through, and more than one kind among them.
+func _test_every_beast_has_a_move_pattern() -> void:
+	var bad: Array = []
+	for kind in ["fight", "elite", "boss"]:
+		for id in Content.beast_pool(kind):
+			var b: Boss = Content.build_boss(String(id))
+			var kinds := {}
+			for m in b.moves:
+				kinds[String((m as Dictionary).get("type", ""))] = true
+			if b.moves.size() < 4 or kinds.size() < 2:
+				bad.append("%s (%d moves, %d kinds)" % [id, b.moves.size(), kinds.size()])
+	_expect(bad.is_empty(),
+		"every beast has at least 4 moves and more than one kind [%s]" % ", ".join(bad))
 
 
 ## Card.to_dict is hand-written while from_dict is hand-written separately, so a

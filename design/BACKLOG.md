@@ -76,7 +76,7 @@ Ordered. Source in brackets.
 - [x] **10. Relics to ~30** — 26 today. Rule-changing, not number-changing `cloud-safe`
   (§3.4 of depth-plan).
 
-- [ ] **11. Beast move patterns** `cloud-safe` — seven beasts run 2–3 moves and
+- [x] **11. Beast move patterns** `cloud-safe` — seven beasts run 2–3 moves and
   the Crag Pup is literally two attacks, so a fight has no shape to read. Ten
   move types exist; use them. *Done when:* no beast has fewer than 4 moves or
   only one kind, and a test asserts it.
@@ -257,6 +257,28 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-23** — #11 Beast move patterns: 7 of 15 beasts had fewer than 4
+  moves or only one move kind (`crag_pup` was literally two `attack`s at 7
+  and 10). Gave each a 4th (or, for `bounder`, a 3rd and 4th) move reusing
+  only the 10 move types the engine already dispatches generically in
+  `Combat._enemy_turn()` — no new code, `bosses.json` only — and picked each
+  addition to fit the beast's existing idiom rather than at random:
+  `crag_pup` gains `block`+`attack_all` (the simplest early fight now has a
+  guard beat and a sweep, not just two hits), `bramble_hog` and `sky_snapper`
+  gain `enrage` (matching the pattern `frost_sentinel`/`grove_bear` already
+  use), `bounder` (a rabbit) gains `swipe_high` + `block`, `mire_snapper` (a
+  croc) gains `swipe_low`, `root_lurker` gains `block`, and `riftling` gains
+  `shift_sigil` (a rift-creature warping the weak point reads as the same
+  idea as its `rift` move, and it's the move `shifting_idol` already uses).
+  The four Titans and `frost_sentinel`/`grove_bear`/`shifting_idol` already
+  satisfied the rule and were left untouched. Added
+  `_test_every_beast_has_a_move_pattern`, walking every beast in all three
+  pools and failing if any has <4 moves or only one move kind — the same
+  shape as the existing `_test_every_boss_move_type_resolves`, registered
+  right after it. `run_tests.gd` all green (58 assertions incl. the new
+  one); `balance_sim.gd` run as a smoke test only, not tuned to — numbers
+  will have moved since weaker beasts now sometimes block or enrage instead
+  of always attacking, which is the point of the item, not a balance pass.
 - **2026-08-23** — #10 Relics to ~30: added 4 new relics (26 → 30), each a genuine
   rule flip rather than a bigger number on an existing axis — `riveted_plates`
   (Block halves instead of resetting to 0 each round), `grapnel_clamp` (a weak
