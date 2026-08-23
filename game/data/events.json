@@ -1,5 +1,5 @@
 {
-  "_comment": "Map EVENT nodes are DATA (CLAUDE.md §11). Each event offers choices with immediate effects. Effect keys: heal (int, negative = a bruise — events never kill, HP floors at 1), max_hp (int, permanent), relic (bool, a random team relic), gold (int, into the shared purse), reward ('card'|'relic' — routes into the normal pick-1-of-3 screen). An empty effects block is a clean walk-away. Tone: small climbers in a big wild world.",
+  "_comment": "Map EVENT nodes are DATA (CLAUDE.md §11). Each event offers choices with immediate effects. Effect keys: heal (int, negative = a bruise — events never kill, HP floors at 1), max_hp (int, permanent), relic (bool, a random team relic), gold (int, into the shared purse), reward ('card'|'relic' — routes into the normal pick-1-of-3 screen), remove_card (bool, each hunter loses one random card from their own deck, never below MIN_DECK), sharpen_card (bool, each hunter upgrades one random un-upgraded card in their own deck, no-op if none). An empty effects block is a clean walk-away. Tone: small climbers in a big wild world.",
   "events": {
     "napping_beast": {
       "title": "A Napping Beast",
@@ -290,6 +290,46 @@
           "effects": {
             "heal": -3,
             "reward": "relic"
+          }
+        }
+      ]
+    },
+    "scavenger_raid": {
+      "title": "A Scavenger's Raid",
+      "text": "Something quick and clever got into your packs while you slept. It hasn't gone far — you can still see it, working something loose from its teeth.",
+      "choices": [
+        {
+          "label": "Chase it down (lose a random card)",
+          "result": "You wrestle back most of what it took. Not all of it.",
+          "effects": {
+            "remove_card": true
+          }
+        },
+        {
+          "label": "Let it have its prize",
+          "result": "It bounds off delighted. Whatever it took, you can live without.",
+          "effects": {
+            "heal": 5
+          }
+        }
+      ]
+    },
+    "quiet_technique": {
+      "title": "A Quiet Afternoon",
+      "text": "Nothing threatens you for once. There's time to actually practice a move instead of just surviving with it.",
+      "choices": [
+        {
+          "label": "Drill the fundamentals (sharpen a random card)",
+          "result": "One move gets sharper, cleaner, more sure.",
+          "effects": {
+            "sharpen_card": true
+          }
+        },
+        {
+          "label": "Rest instead",
+          "result": "Some days the body needs it more than the technique does.",
+          "effects": {
+            "heal": 10
           }
         }
       ]

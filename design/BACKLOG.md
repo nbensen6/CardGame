@@ -107,7 +107,7 @@ Ordered. Source in brackets.
   a field added without one silently ships an unexplained card.
   *Done when:* a test walks every field used by any card and fails on one that
   needs explaining and has no entry in keywords.json.
-- [ ] **17. Events that touch the DECK** `cloud-safe` — the 10 events trade in
+- [x] **17. Events that touch the DECK** `cloud-safe` — the 10 events trade in
   HP and gold only. The interesting ones in this genre cost or change CARDS.
   *Done when:* at least 4 events add, remove, sharpen or burn a card, and the
   stakes are still printed on the button.
@@ -257,6 +257,51 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-23** — #17 Events that touch the DECK: the item's own rationale
+  ("the 10 events trade in HP and gold only") was already stale by the time it
+  was worked — 4 of the current 14 events (`hollow_log`, `friendly_beetle`,
+  `old_grapple_line`, `stranded_kite`) already used `reward: "card"`, which
+  routes into the normal pick-1-of-3 screen and does add a card, meeting the
+  item's literal "at least 4" bar on its own. Didn't just tick it off on that
+  technicality, since "add via the existing reward screen" isn't the new
+  mechanic the item's text is actually asking for (events that COST or CHANGE
+  a card, not just hand one out same as any fight). Built the two genuinely
+  missing verbs instead: `remove_card` and `sharpen_card`, two new boolean
+  effect keys read generically in `Run.pick_event` (same shape `heal`/`max_hp`
+  already use — loop over every hunter, act on each one's own deck), no event
+  needs to know how either works. `remove_card` drops one random card per
+  hunter's deck, floored at `MIN_DECK` exactly like the campfire's own
+  "remove" action; `sharpen_card` upgrades one random un-upgraded card per
+  hunter via the existing `upgraded_copy()` trick, and quietly no-ops on a
+  deck that's already fully sharpened rather than erroring. Both are random,
+  not player-picked, on purpose — a picker would need a screen this routine
+  doesn't have. Added 2 new events using them (`scavenger_raid` /
+  `remove_card`, `quiet_technique` / `sharpen_card`), stakes stated on the
+  button per the item's own rule, not just in the flavor text. That's 14 → 16
+  events, over the "12-15 EA band" item #9 aimed for — flagging it rather than
+  quietly letting it slide, but not walking it back either, since growing the
+  event pool is exactly what this item explicitly asked for, and 16 isn't a
+  quality problem, just a stale target from an earlier item. 5 new tests:
+  the two effects each in isolation, `remove_card` respecting `MIN_DECK`,
+  `sharpen_card`'s no-op case, and a `_test_backlog17_...` walking every event
+  in `Content.list_events()` to pin the "at least 4" count itself against
+  regression (the same shape #10/#13's content-integrity tests use). One
+  GDScript gotcha, same one #10's log already named: `var size_before :=
+  run2.decks[0].size()` doesn't type-infer through an untyped `Array` field —
+  needed `: int` explicit. `run_tests.gd` all green (73 assertions incl. the
+  five new ones); `balance_sim.gd` run as a smoke test only, not tuned to.
+  **Also:** before starting, `git checkout -B main origin/main` used a stale
+  cached `origin/main` ref 16 commits behind the true tip and briefly reset
+  `main` onto it — caught immediately (before any other git operation) by
+  the "leaving N commits behind" warning, safety-branched the detached HEAD
+  before touching anything else, confirmed with `git fetch origin main` that
+  the real GitHub tip already had all 16 commits (a prior session's push had
+  already landed — nothing was actually at risk), and reset cleanly. Same
+  recurring stale-local-ref pattern this file's log has now named seven
+  times; still not fixing the root cause (out of scope here), but seven is a
+  lot — worth Nick deciding whether `git fetch` should just be forced before
+  the very first `origin/main` reference each run, rather than each session
+  re-diagnosing a false alarm by hand.
 - **2026-08-23** — #16 Every card field a player must understand has a
   keyword: 6 fields on `Card` had no tooltip at all — `create` (Build),
   `prepare` (Primed), `cheapen_pick`/`cheapen_amount` (Cheapen), `meld`

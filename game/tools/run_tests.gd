@@ -58,6 +58,10 @@ func _init() -> void:
 	_test_event_reward_choice_routes_to_reward()
 	_test_events_load_and_are_well_formed()
 	_test_event_gold_cost_never_goes_negative()
+	_test_event_remove_card_effect()
+	_test_event_remove_card_respects_min_deck()
+	_test_event_sharpen_card_effect()
+	_test_backlog17_four_events_touch_the_deck()
 	_test_card_upgrade_bumps_numbers()
 	_test_enchanted_copy_attaches_to_any_card()
 	_test_enchants_all_load()
@@ -566,6 +570,74 @@ func _test_event_reward_choice_routes_to_reward() -> void:
 	lethal = run2.hp[0] <= 0
 	_expect(run.phase == Run.Phase.REWARD and run.reward_kind == "card" and not lethal,
 		"an event that offers loot opens the reward screen; events never kill")
+
+
+func _test_event_remove_card_effect() -> void:
+	var run := _map_run()  # each deck starts as 10x Slash
+	run.event = {"title": "T", "text": "x", "choices": [
+		{"label": "chase", "result": "!", "effects": {"remove_card": true}},
+	]}
+	run.phase = Run.Phase.EVENT
+	run.map_row = 0
+	run.pick_event(0)
+	_expect(run.decks[0].size() == 9 and run.decks[1].size() == 9,
+		"an event's remove_card effect takes one random card from each hunter's own deck")
+
+
+func _test_event_remove_card_respects_min_deck() -> void:
+	var run := _map_run()
+	run.decks[0] = _deck_of(_slash, Run.MIN_DECK)  # already at the floor
+	run.event = {"title": "T", "text": "x", "choices": [
+		{"label": "chase", "result": "!", "effects": {"remove_card": true}},
+	]}
+	run.phase = Run.Phase.EVENT
+	run.map_row = 0
+	run.pick_event(0)
+	_expect(run.decks[0].size() == Run.MIN_DECK and run.decks[1].size() == 9,
+		"remove_card never thins a deck below MIN_DECK, even while an unaffected deck still loses a card")
+
+
+func _test_event_sharpen_card_effect() -> void:
+	var run := _map_run()
+	run.event = {"title": "T", "text": "x", "choices": [
+		{"label": "drill", "result": "!", "effects": {"sharpen_card": true}},
+	]}
+	run.phase = Run.Phase.EVENT
+	run.map_row = 0
+	run.pick_event(0)
+	var upgraded0 := 0
+	for c in run.decks[0]:
+		if (c as Card).upgraded:
+			upgraded0 += 1
+	var upgraded1 := 0
+	for c in run.decks[1]:
+		if (c as Card).upgraded:
+			upgraded1 += 1
+	_expect(upgraded0 == 1 and upgraded1 == 1,
+		"an event's sharpen_card effect upgrades exactly one random card in each hunter's own deck")
+	# and it's a genuine no-op once nothing is left to sharpen, not an error
+	var run2 := _map_run()
+	for i in range(run2.decks[0].size()):
+		run2.decks[0][i] = (run2.decks[0][i] as Card).upgraded_copy()
+	run2.event = run.event.duplicate(true)
+	run2.phase = Run.Phase.EVENT
+	run2.map_row = 0
+	var size_before: int = run2.decks[0].size()
+	run2.pick_event(0)
+	_expect(run2.decks[0].size() == size_before, "sharpen_card quietly no-ops on a fully-upgraded deck")
+
+
+func _test_backlog17_four_events_touch_the_deck() -> void:
+	var count := 0
+	for id in Content.list_events():
+		var e: Dictionary = Content.make_event(String(id))
+		for ch in (e.get("choices", []) as Array):
+			var eff: Dictionary = (ch as Dictionary).get("effects", {})
+			if String(eff.get("reward", "")) == "card" or bool(eff.get("remove_card", false)) \
+					or bool(eff.get("sharpen_card", false)):
+				count += 1
+				break
+	_expect(count >= 4, "at least 4 events add, remove or sharpen a card (backlog #17)")
 
 
 func _test_card_upgrade_bumps_numbers() -> void:

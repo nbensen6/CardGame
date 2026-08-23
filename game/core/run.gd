@@ -385,6 +385,25 @@ func pick_event(choice: int) -> bool:
 		var pool: Array = Content.relic_pool()
 		if not pool.is_empty():
 			team_relics.append(Content.make_relic(String(pool[_rng.randi_range(0, pool.size() - 1)])))
+	# Deck-touching events (backlog #17): a random card per hunter, same "whole
+	# team" shape heal/max_hp already use above. Never below MIN_DECK, and
+	# sharpening quietly no-ops for a deck that's already fully upgraded —
+	# neither is a screen, so both stay event-safe.
+	if bool(eff.get("remove_card", false)):
+		for i in range(names.size()):
+			var deck: Array = decks[i]
+			if deck.size() > MIN_DECK:
+				deck.remove_at(_rng.randi_range(0, deck.size() - 1))
+	if bool(eff.get("sharpen_card", false)):
+		for i in range(names.size()):
+			var deck2: Array = decks[i]
+			var candidates: Array = []
+			for j in range(deck2.size()):
+				if not (deck2[j] as Card).upgraded:
+					candidates.append(j)
+			if not candidates.is_empty():
+				var idx := int(candidates[_rng.randi_range(0, candidates.size() - 1)])
+				deck2[idx] = (deck2[idx] as Card).upgraded_copy()
 	var rw := String(eff.get("reward", ""))
 	if rw != "":
 		_begin_reward(rw)
