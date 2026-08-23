@@ -91,6 +91,7 @@ func _init() -> void:
 	_test_timed_block_guards_on_a_hit()
 	_test_timed_ally_block_anchors_the_ally()
 	_test_every_referenced_card_id_resolves()
+	_test_content_integrity_graph()
 	_test_exhaust_scaling_grows_with_the_burn_pile()
 	_test_detonator_does_not_count_its_own_sacrifice()
 	# Goblin Engineer cards
@@ -1420,6 +1421,31 @@ func _test_every_referenced_card_id_resolves() -> void:
 			bad.append("global starter_deck")
 	_expect(bad.is_empty(),
 		"every card id in every deck and reward pool resolves [%s]" % ", ".join(bad))
+
+
+## Backlog #18: the rest of the content graph, which the test above doesn't
+## reach. A `create` field builds another card by id (Goblin gadgets); a
+## `prepare` field arms a delayed effect that combat.gd's _resolve_prepared()
+## must actually handle, not just any string; a beast pool id must resolve to
+## a real Titan/beast, not the empty "Titan, no moves" Boss.build_boss() hands
+## back for an unknown one. Card ids in decks/pools are proven above and relic
+## ids by _test_relics_all_load() — together these prove the whole graph.
+func _test_content_integrity_graph() -> void:
+	var bad: Array = []
+	var known_prepares := ["jetpack"]  # every key Combat._resolve_prepared() handles
+	for id in Content.all_card_ids():
+		var card := Content.make_card(String(id))
+		if card.create != "" and String(Content.make_card(card.create).name).is_empty():
+			bad.append("%s create: %s" % [id, card.create])
+		if card.prepare != "" and not known_prepares.has(card.prepare):
+			bad.append("%s prepare: %s (unhandled by combat.gd)" % [id, card.prepare])
+	for kind in ["fight", "elite", "boss"]:
+		for id in Content.beast_pool(kind):
+			var b := Content.build_boss(String(id))
+			if b.moves.is_empty():
+				bad.append("%s pool: %s (no moves — unknown beast id?)" % [kind, id])
+	_expect(bad.is_empty(),
+		"create/prepare fields and beast pool ids all resolve [%s]" % ", ".join(bad))
 
 
 func _test_sunlight_blade_scales_with_exposed() -> void:

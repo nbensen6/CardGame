@@ -37,6 +37,12 @@ These exist because nobody is watching. Breaking one is worse than doing nothing
 8. **Log honestly.** If an item was harder than expected, half-done, or turned
    out to be a bad idea, the log says so. A log that only contains wins is not
    worth reading.
+9. **Fetch before trusting `origin/main`.** A fresh container's cached
+   `origin/main` ref can be behind the real GitHub tip (seen 2026-08-23: 17
+   commits behind, including a prior session's own finished work on the item
+   this session picked). Run `git fetch origin main` and diff
+   `design/BACKLOG.md` against `origin/main` before starting — not just before
+   pushing — or unsupervised work can silently redo something already done.
 
 ## Queue
 
@@ -111,7 +117,7 @@ Ordered. Source in brackets.
   HP and gold only. The interesting ones in this genre cost or change CARDS.
   *Done when:* at least 4 events add, remove, sharpen or burn a card, and the
   stakes are still printed on the button.
-- [ ] **18. Content integrity test** `cloud-safe` — every card id named by a
+- [x] **18. Content integrity test** `cloud-safe` — every card id named by a
   starter deck, a reward pool, a `create`/`prepare` field or an event resolves
   to a real card; same for beast ids and relic ids. A typo in data currently
   fails silently at runtime. *Done when:* one test proves the whole graph.
@@ -257,6 +263,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-23** — #18 Content integrity test: found the item was mostly
+  already covered — `_test_every_referenced_card_id_resolves` already proves
+  every card id in starter decks/reward pools, and `_test_relics_all_load`
+  already proves the relic pool. Also found events don't reference card ids at
+  all (`remove_card`/`sharpen_card` act on a random card already IN the deck,
+  not by id), so that part of the item's wording didn't apply. What was
+  actually missing: `create` fields (Goblin gadgets building another card by
+  id) and `prepare` fields (Goblin Jetpack's delayed effect) had no check that
+  the id/key they name actually resolves, and the three beast pools
+  (fight/elite/boss) had no check that every id in them builds a real Titan
+  rather than `build_boss()`'s empty "Titan, no moves" fallback for a typo.
+  Added `_test_content_integrity_graph()` to cover exactly that gap; combined
+  with the two pre-existing tests, the whole graph the item asked for is now
+  proven. Data itself had no actual typos today — this only guards against one
+  landing silently in the future. `Content.all_card_ids()` already existed,
+  seemingly added in anticipation of this item but never used for it.
+- **2026-08-23** — attempted backlog #4 (per-beast limiters) blind, without
+  checking whether `origin/main` had moved past the locally cached ref first:
+  this container's initial `git checkout -B main origin/main` pinned to a
+  stale `origin/main` (32dc550) that was 17 commits behind the real tip
+  (f225695) already on GitHub, including a prior session's own #4 (commit
+  `edeb7aa`, 2026-08-22 — `Boss.limiter`, a generic dispatch, one rule per
+  Titan; same shape independently arrived at, different specific rules).
+  Built a full second implementation before `git push` was rejected as
+  non-fast-forward, which is what surfaced the staleness. Reset to the real
+  `origin/main` and discarded the duplicate rather than trying to reconcile
+  two competing limiter systems. No harm done since nothing had reached the
+  remote, but a lesson for next time: fetch and compare against the queue's
+  actual current state before trusting a container's starting checkout.
 - **2026-08-23** — #17 Events that touch the DECK: the item's own rationale
   ("the 10 events trade in HP and gold only") was already stale by the time it
   was worked — 4 of the current 14 events (`hollow_log`, `friendly_beetle`,
