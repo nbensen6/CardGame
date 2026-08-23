@@ -62,6 +62,7 @@ func _init() -> void:
 	_test_campfire_rest_remove_upgrade()
 	_test_skip_reward_keeps_the_deck_lean()
 	_test_rule_changing_relics()
+	_test_backlog10_new_rule_changing_relics()
 	_test_relics_all_load()
 	_test_climb_twisting_moves()
 	_test_per_class_reward_pools()
@@ -658,6 +659,51 @@ func _test_rule_changing_relics() -> void:
 
 	_expect(started_up and painless and still_up and kept,
 		"rule-changing relics rewrite the climb, the fall, the threshold and Rhythm")
+
+
+func _test_backlog10_new_rule_changing_relics() -> void:
+	# block_carries: half of unspent Block survives into the next round
+	var c1 := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)],
+		[Combatant.new("A", 42), Combatant.new("B", 42)], _climb_boss(6), 42,
+		0, 0, 0, 0, [], {"block_carries": 1})
+	c1.start()
+	c1.players[0].combatant.block = 9
+	c1.end_turn(0)
+	c1.end_turn(1)  # benign boss move, then the next round begins automatically
+	var carried_block: bool = c1.players[0].combatant.block == 4  # floor(9 / 2)
+
+	# no_buck: a weak-point strike that would normally buck you off no longer does
+	var boss2 := _climb_boss(6)
+	boss2.weak_point_threshold = 10
+	var c2 := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)],
+		[Combatant.new("A", 42), Combatant.new("B", 42)], boss2, 42, 0, 0, 0, 0, [], {"no_buck": 1})
+	c2.start()
+	c2.players[0].foothold = 6
+	c2.play_card(0, _first_playable(c2, 0))  # 6 damage + sigil bonus clears the threshold of 10
+	var never_bucked: bool = c2.players[0].foothold == 6
+
+	# soft_fall: losing your grip lands on the nearest hold below, not the base
+	var boss3 := _climb_boss(6)
+	boss3.ledges = [2, 4]
+	var c3 := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)],
+		[Combatant.new("A", 42), Combatant.new("B", 42)], boss3, 42, 0, 0, 0, 0, [], {"soft_fall": 1})
+	c3.start()
+	c3.players[0].foothold = 5
+	c3.fall(0)
+	var soft_landing: bool = c3.players[0].foothold == 4
+
+	# energy_handoff: unspent Energy at end of turn passes to the ally instead of vanishing
+	var c4 := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)],
+		[Combatant.new("A", 42), Combatant.new("B", 42)], _dummy_boss(300), 42,
+		0, 0, 0, 0, [], {"energy_handoff": 1})
+	c4.start()
+	var mate_before: int = c4.players[1].energy
+	var self_before: int = c4.players[0].energy
+	c4.end_turn(0)
+	var handed_off: bool = c4.players[0].energy == 0 and c4.players[1].energy == mate_before + self_before
+
+	_expect(carried_block and never_bucked and soft_landing and handed_off,
+		"backlog #10's new relics carry Block, cancel the buck, soften a fall, and hand off Energy")
 
 
 func _test_climb_twisting_moves() -> void:

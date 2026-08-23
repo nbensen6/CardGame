@@ -147,12 +147,14 @@ func fall(pi: int) -> void:
 	if pi < 0 or pi >= players.size() or is_secure(pi):
 		return
 	var ps: PlayerState = players[pi]
-	ps.foothold = 0
+	var soft := _mod("soft_fall") > 0
+	ps.foothold = _hold_below(ps.foothold) if soft else 0  # relic: land on the nearest hold, not the base
 	ps.weak_point_damage = 0
 	var fall_dmg: int = 0 if _mod("fall_safe") > 0 else FALL_DAMAGE
 	if fall_dmg > 0:
 		ps.combatant.take_damage(fall_dmg)
-	_log("%s loses their grip and falls! (-%d, back to the base)" % [ps.combatant.name, fall_dmg])
+	_log("%s loses their grip and falls! (-%d, %s)" % [ps.combatant.name, fall_dmg,
+		"catches a hold" if soft else "back to the base"])
 	_check_end()
 
 ## The player the boss's next single-target attack will hit (telegraphed).
@@ -483,7 +485,7 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 ## bucks them down a hold — you can't camp the weak point. This is what makes the
 ## loop climb -> strike for a chunk -> get thrown -> climb again -> strike.
 func _check_weakpoint_buck(pi: int) -> void:
-	if boss.weak_point_threshold <= 0 or not sigil_reached(pi):
+	if boss.weak_point_threshold <= 0 or not sigil_reached(pi) or _mod("no_buck") > 0:
 		return
 	var ps: PlayerState = players[pi]
 	if ps.weak_point_damage >= boss.weak_point_threshold + _mod("threshold"):
@@ -557,6 +559,12 @@ func end_turn(pi: int) -> void:
 	if ps.ended_turn:
 		return
 	ps.ended_turn = true
+	if _mod("energy_handoff") > 0 and ps.energy > 0:  # relic: unspent Energy passes to the ally
+		var mate: PlayerState = players[ally_index(pi)]
+		if not mate.ended_turn:
+			mate.energy += ps.energy
+			_log("%s hands off %d unspent Energy to %s." % [ps.combatant.name, ps.energy, mate.combatant.name])
+			ps.energy = 0
 	while not ps.hand.is_empty():
 		ps.discard_pile.append(ps.hand.pop_back())
 	_log("%s ends their turn." % ps.combatant.name)
@@ -569,7 +577,8 @@ func _begin_round() -> void:
 	phase = Phase.PLAYERS
 	_forced_target = -1  # taunts last only their own round
 	for ps in players:
-		ps.combatant.block = _round_block  # relic: start each round with block
+		var carried: int = ps.combatant.block / 2 if _mod("block_carries") > 0 else 0
+		ps.combatant.block = _round_block + carried  # relic: start each round with block (+ retained Block)
 		ps.energy = BASE_ENERGY + _energy_bonus  # relic: extra energy
 		ps.ended_turn = false
 		if _mod("rhythm_keeps") <= 0:

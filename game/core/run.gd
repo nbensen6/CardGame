@@ -474,7 +474,8 @@ func relic_totals() -> Dictionary:
 	var t := {"energy": 0, "attack": 0, "block": 0, "heal": 0, "strength": 0}
 	for key in ["start_foothold", "fall_safe", "rhythm_keeps", "threshold", "chip",
 			"sigil_bonus", "vuln_bonus", "draw", "shake_resist",
-			"grip_seconds", "timing_zone"]:
+			"grip_seconds", "timing_zone",
+			"block_carries", "no_buck", "soft_fall", "energy_handoff"]:
 		t[key] = 0
 	for r in team_relics:
 		var e := String(r.get("effect", ""))

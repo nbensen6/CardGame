@@ -73,7 +73,7 @@ Ordered. Source in brackets.
   Every deckbuilder has this and its absence is felt.
 - [x] **9. More events** — 10 today, the EA target is 12–15. Hand-written, they `cloud-safe`
   bruise but never kill, stakes printed on the button.
-- [ ] **10. Relics to ~30** — 26 today. Rule-changing, not number-changing `cloud-safe`
+- [x] **10. Relics to ~30** — 26 today. Rule-changing, not number-changing `cloud-safe`
   (§3.4 of depth-plan).
 
 - [ ] **11. Beast move patterns** `cloud-safe` — seven beasts run 2–3 moves and
@@ -257,6 +257,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-23** — #10 Relics to ~30: added 4 new relics (26 → 30), each a genuine
+  rule flip rather than a bigger number on an existing axis — `riveted_plates`
+  (Block halves instead of resetting to 0 each round), `grapnel_clamp` (a weak
+  point never bucks you off), `safety_line` (losing your grip lands you on the
+  nearest hold below instead of the base), `relay_baton` (unspent Energy at
+  end of turn passes to your ally instead of vanishing — leans into the
+  co-op-combo goal in CLAUDE.md §6). All four are `{effect, value}` entries in
+  `relics.json` read by the same generic `Run.relic_totals()` → `Combat._mod()`
+  path every other relic already uses; only `_begin_round()`, `fall()`,
+  `_check_weakpoint_buck()` and `end_turn()` each needed one new conditional
+  line, no new subsystem. One GDScript gotcha: `var carried := X if cond else
+  0` doesn't type-infer inside a `for` loop with `:=` — Godot's parser rejected
+  it at import time ("Cannot infer the type"); fixed by declaring `: int`
+  explicitly. Added `_test_backlog10_new_rule_changing_relics` covering all
+  four; `run_tests.gd` all green, `balance_sim.gd` smoke-tested only (numbers
+  moved because the new relics enter the reward pool, not because anything was
+  tuned).
+  **Also:** before starting, `git checkout -B main origin/main` warned about
+  leaving 8 commits behind on a detached HEAD (matching this file's own
+  "stranded commits" note from 2026-08-22) — but a fresh `git fetch origin
+  main` showed `origin/main` already had all 8 (the prior run's own log entry
+  confirms it recovered and pushed them). The local ref was just stale from
+  container init; refetching and re-running the checkout fixed it with nothing
+  lost or redone. Also found item #1 had already been ticked off and 6 more
+  items (#4-#7, #9) completed since this file was last read at the top of a
+  stale local clone — re-read the file fresh after fetching before picking
+  the next item, which is what surfaced #10 as the true topmost open
+  `cloud-safe` item instead of #1.
 - **2026-08-22** — #9 More events: added 4 (`rockslide_altar`, `stranded_kite`,
   `the_toll_crow`, `quiet_overhang`), 10 → 14, inside the 12–15 EA band, all
   in the "bruise, don't kill" idiom. `the_toll_crow` is the first event to
