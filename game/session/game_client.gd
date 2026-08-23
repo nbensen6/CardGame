@@ -32,10 +32,14 @@ func select_character(character_id: String, slot: int = -1) -> void:
 	_send({"type": "select_character", "character": character_id, "slot": slot})
 
 ## `sac`/`target` are hand indices for selection cards (Burn Coal / Catapult),
-## chosen on the client; -1 when the card needs no selection.
-func play_card(index: int, timing_hit: bool = true, slot: int = -1, sac: int = -1, target: int = -1) -> void:
+## chosen on the client; -1 when the card needs no selection. `quality` is the
+## graded timing result (Combat.TIMING_MISS/GOOD/PERFECT, backlog #33) —
+## defaults to PERFECT so an untimed play (or any caller that predates
+## grading) needs no change to keep paying a timed bonus in full.
+func play_card(index: int, timing_hit: bool = true, slot: int = -1, sac: int = -1, target: int = -1,
+		quality: int = Combat.TIMING_PERFECT) -> void:
 	_send({"type": "play_card", "index": index, "timing": timing_hit, "slot": slot,
-		"sac": sac, "target": target})
+		"sac": sac, "target": target, "quality": quality})
 
 func end_turn(slot: int = -1) -> void:
 	_send({"type": "end_turn", "slot": slot})

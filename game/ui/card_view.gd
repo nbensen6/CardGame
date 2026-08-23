@@ -8,8 +8,11 @@ extends Button
 
 ## A normal tap (not during timing).
 signal tapped
-## A timed card's throw resolved: hit = landed in the green zone.
-signal timing_resolved(hit: bool)
+## A timed card's throw resolved: Combat.TIMING_MISS/GOOD/PERFECT (backlog #33
+## — outside the green zone is a miss; inside it but off the bullseye core is a
+## "good" landing; inside the core is "perfect". A multi-hit chain reports its
+## WORST window, so a shaky chain can't average up to perfect.
+signal timing_resolved(quality: int)
 ## The player asked what this card actually does. A dedicated button rather than a
 ## hover or a long-press: CLAUDE.md §5 forbids hover-only information (no hover on
 ## touch), and a hold would fight the timing tap.
@@ -34,6 +37,11 @@ const KEYWORD_COLOR := "f0b45a"
 
 const ZONE_MIN := 0.40
 const ZONE_MAX := 0.60
+## The bullseye core within the zone — already drawn brighter in
+## _build_timing_strip() as an aim point; backlog #33 makes it mean something:
+## land inside THIS band (not just the wider zone) for the full timed bonus.
+const CORE_MIN := 0.47
+const CORE_MAX := 0.53
 const SWEEP_SPEED := 1.9    # sweeps per second — quick; timing should demand focus (Nick)
 const WINDOW_SECONDS := 2.5 # max time per timing window; expire = the card fizzles (Nick)
 
@@ -51,6 +59,7 @@ var _marker: ColorRect
 var _count_lbl: Label
 var _hits_needed := 1  # sequential timing windows to nail (Satchel Charge = 3)
 var _hits_done := 0
+var _worst_quality := Combat.TIMING_PERFECT  # the weakest window in a multi-hit chain wins
 var _compact := false  # built in the rail form (see setup)
 
 # Kenney "Board Game Icons" (white-fill SVGs → tint via modulate). Keys are the
@@ -672,6 +681,7 @@ func start_timing(hits: int = 1) -> void:
 	_timing = true
 	_hits_needed = maxi(1, hits)
 	_hits_done = 0
+	_worst_quality = Combat.TIMING_PERFECT
 	_t = 0.0
 	_dir = 1.0
 	_elapsed = 0.0
@@ -722,14 +732,19 @@ func _on_self_pressed() -> void:
 
 
 ## One tap during timing. A miss ends the whole chain (fizzle); a hit either
-## advances to the next window or, on the last one, resolves as a success.
+## advances to the next window or, on the last one, resolves at whatever
+## quality the chain earned — the CORE band (already drawn as the bullseye)
+## is "perfect", the rest of the zone is "good"; a chain's quality is its
+## WORST window, not its last one, so a shaky early hit still costs you.
 func _fire() -> void:
 	if _t < ZONE_MIN - zone_bonus or _t > ZONE_MAX + zone_bonus:
-		_end_timing(false)
+		_end_timing(Combat.TIMING_MISS)
 		return
+	if _t < CORE_MIN or _t > CORE_MAX:
+		_worst_quality = mini(_worst_quality, Combat.TIMING_GOOD)
 	_hits_done += 1
 	if _hits_done >= _hits_needed:
-		_end_timing(true)
+		_end_timing(_worst_quality)
 		return
 	_t = 0.0  # reset the sweep for the next window
 	_dir = 1.0
@@ -737,13 +752,13 @@ func _fire() -> void:
 	_update_count()
 
 
-func _end_timing(success: bool) -> void:
+func _end_timing(quality: int) -> void:
 	_timing = false
 	set_process(false)
 	_strip.visible = false
 	if is_instance_valid(_clock):
 		_clock.visible = true
-	timing_resolved.emit(success)
+	timing_resolved.emit(quality)
 
 
 func _update_count() -> void:
@@ -761,7 +776,7 @@ func _process(delta: float) -> void:
 		return
 	_elapsed += delta
 	if _elapsed >= WINDOW_SECONDS:  # hesitated too long — the moment is gone
-		_end_timing(false)
+		_end_timing(Combat.TIMING_MISS)
 		return
 	_t += _dir * SWEEP_SPEED * delta
 	if _t >= 1.0:
@@ -803,8 +818,8 @@ func _build_timing_strip() -> Control:
 	strip.add_child(zone)
 	var core := ColorRect.new()  # the bullseye — centre of the green band
 	core.color = Color(0.55, 0.95, 0.55)
-	core.anchor_left = 0.47
-	core.anchor_right = 0.53
+	core.anchor_left = CORE_MIN
+	core.anchor_right = CORE_MAX
 	core.anchor_top = 0.0
 	core.anchor_bottom = 1.0
 	core.mouse_filter = Control.MOUSE_FILTER_IGNORE

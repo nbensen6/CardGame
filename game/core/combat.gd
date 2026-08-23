@@ -36,6 +36,19 @@ const FALL_DAMAGE := 3   # damage taken when grip runs out and a hunter falls to
 const RIFT_PER_GAP := 2  # extra 'rift' damage per Height between the hunters — climb together
 const SIGIL_FATIGUE_DAMAGE := 4  # a "sigil_fatigue" limiter's chip damage per round camped past its allowance
 
+# Graded timing (backlog #33): a timed card's throw used to be a bare hit/miss
+# bool. It's now a quality tier so a hit dead-centre pays more than a hit
+# scraping the edge of the same green zone. TIMING_PERFECT reproduces exactly
+# what a plain "hit" always paid (preview()/play_card() both default to it,
+# so every untouched caller — every existing test, and the network command
+# format — keeps behaving byte-identical to before this landed). Only a
+# caller that explicitly threads a lower tier through (CardView's graded
+# zone, see ui/card_view.gd) ever sees the new GOOD scaling.
+const TIMING_MISS := 0
+const TIMING_GOOD := 1
+const TIMING_PERFECT := 2
+const TIMING_GOOD_SCALE := 0.5  # a "good" (not dead-centre) hit pays half the timed bonus
+
 var players: Array = []  # Array[PlayerState], index = player slot
 var boss: Boss
 var round_num: int = 1
@@ -293,10 +306,19 @@ func is_over() -> bool:
 ##
 ## `nailed` picks the timed branch: a timed card's bonus applies only on a hit, so the
 ## view can show both outcomes ("3 → 7"). Untimed cards ignore it.
-func preview(pi: int, card: Card, nailed: bool = true) -> Dictionary:
+##
+## `quality` (backlog #33) grades HOW WELL a hit landed once `nailed` is true —
+## TIMING_PERFECT (the default, so every caller that doesn't pass it explicitly
+## behaves exactly as before this landed) pays the timed bonus in full;
+## TIMING_GOOD pays TIMING_GOOD_SCALE of it. It's meaningless when `nailed` is
+## false — there's no bonus to grade.
+func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PERFECT) -> Dictionary:
 	var ps: PlayerState = players[pi]
 	var mate: PlayerState = players[ally_index(pi)]
 	var hit := card.timed and nailed
+	var scale := 0.0
+	if hit:
+		scale = 1.0 if quality >= TIMING_PERFECT else (TIMING_GOOD_SCALE if quality >= TIMING_GOOD else 0.0)
 	var exhausted := ps.exhaust_pile.size()
 	var prior := int(ps.play_counts.get(card.id, 0))
 
@@ -306,16 +328,16 @@ func preview(pi: int, card: Card, nailed: bool = true) -> Dictionary:
 		+ card.damage_per_ally_foothold * int(mate.foothold) \
 		+ card.damage_per_exhausted * exhausted
 	if hit:
-		dmg += card.timed_damage
+		dmg += int(card.timed_damage * scale)
 	if card.type == "attack":  # buffs lift real attacks, not incidental scaling
 		dmg += _attack_bonus + ps.strength + ps.char_attack_bonus
 
 	var blk := card.block + card.block_per_play * prior + card.block_per_exhausted * exhausted
 	if hit:
-		blk += card.timed_block
-	var ally_blk := card.ally_block + (card.timed_ally_block if hit else 0)
+		blk += int(card.timed_block * scale)
+	var ally_blk := card.ally_block + (int(card.timed_ally_block * scale) if hit else 0)
 
-	var climb := card.grip + (card.timed_grip if hit else 0)
+	var climb := card.grip + (int(card.timed_grip * scale) if hit else 0)
 	if climb > 0:  # the climb bonus rides an actual climb, not a zero
 		climb += ps.climb_bonus + card.grip_per_rhythm * ps.rhythm
 
@@ -365,8 +387,13 @@ func incoming_for(pi: int) -> Dictionary:
 ## `sac_index` / `target_index` name cards in the caster's hand for selection cards
 ## (Burn Coal: burn one, cheapen another; Catapult: burn one). They're chosen on the
 ## client and validated here. -1 = none.
+## `timing_quality` (backlog #33) grades a landed hit — TIMING_PERFECT (the
+## default) pays the timed bonus in full, same as every caller that predates
+## grading; only a caller that threads CardView's graded result through (see
+## ui/card_view.gd) can land at TIMING_GOOD for a scaled-down bonus. It has no
+## effect on the fumble check below — `timing_hit` alone still decides that.
 func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, target_index: int = -1,
-		hold_target: int = -1) -> bool:
+		hold_target: int = -1, timing_quality: int = TIMING_PERFECT) -> bool:
 	if not can_play(pi, ci):
 		return false
 	var ps: PlayerState = players[pi]
@@ -393,14 +420,14 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 
 	# Everything numeric this card does, from the one formula the card face also
 	# shows. Only well-timed plays reach here (fumbles slipped away above), so the
-	# preview is taken as nailed. Damage resolves first, so a card that also Exposes
-	# doesn't consume its own stacks. _damage_boss gates on whether THIS hunter
-	# reached the sigil.
+	# preview is taken as nailed, scaled by how well it landed (backlog #33).
+	# Damage resolves first, so a card that also Exposes doesn't consume its own
+	# stacks. _damage_boss gates on whether THIS hunter reached the sigil.
 	#
 	# Taken BEFORE play_counts is bumped and before this card's own exhaust_pick
 	# fires, so Build Mech counts only EARLIER plays and Detonator doesn't secretly
 	# count its own sacrifice.
-	var pv := preview(pi, card, true)
+	var pv := preview(pi, card, true, timing_quality)
 	ps.play_counts[card.id] = int(ps.play_counts.get(card.id, 0)) + 1
 	var base_damage: int = int(pv["damage"])
 	if base_damage > 0:

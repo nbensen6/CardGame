@@ -82,7 +82,8 @@ func _on_command(peer_id: int, command: Dictionary) -> void:
 			var ps0 := _acting_slot(peer_id, command)
 			_in_combat_action(ps0, func() -> void:
 				_run.combat.play_card(ps0, int(command.get("index", -1)), bool(command.get("timing", true)),
-					int(command.get("sac", -1)), int(command.get("target", -1))))
+					int(command.get("sac", -1)), int(command.get("target", -1)), -1,
+					int(command.get("quality", Combat.TIMING_PERFECT))))
 		"end_turn":
 			var ps1 := _acting_slot(peer_id, command)
 			_in_combat_action(ps1, func() -> void:

@@ -131,7 +131,7 @@ Ordered. Source in brackets.
   It is also the thing that makes item 25's drag meaningful, so build it first.
   *Done when:* holds are data, a card can name one, reaching one is tested, and
   the old "just add Height" path still works for cards that don't target.
-- [ ] **33. Graded timing accuracy — the rules half** `cloud-safe` —
+- [x] **33. Graded timing accuracy — the rules half** `cloud-safe` —
   Nick, 2026-08-22: make the timing osu-like. Today it is binary: `nailed` is a
   bool, so a hit dead-centre pays exactly what a hit scraping the edge does.
   Widen that to a quality tier (perfect / good / miss) and let the timed bonus
@@ -283,6 +283,55 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-23** — #33 Graded timing accuracy, the rules half: widened the
+  bare hit/miss timing bool into a 3-tier quality (`Combat.TIMING_MISS` /
+  `TIMING_GOOD` / `TIMING_PERFECT`) carried through the whole seam the item
+  named: `CardView._fire()` now grades the throw, `GameClient.play_card` /
+  `GameHost`'s `"play_card"` command carry it over the wire as a new
+  `"quality"` key, and `Combat.play_card`/`preview()` scale the timed bonus
+  by it (`TIMING_GOOD` pays `TIMING_GOOD_SCALE` = half; `TIMING_PERFECT` pays
+  it in full). Landed it as a strict ADD rather than a replacement: every
+  changed function signature grows a new trailing parameter defaulting to
+  `TIMING_PERFECT`/omitted-`"quality"`-means-`PERFECT`, so every existing
+  caller — all 40-ish pre-existing timing call sites in `run_tests.gd`, the
+  old `true`/`false` network wire shape, `game_host.gd`'s `bool(...,true)`
+  default — keeps behaving byte-identical with zero edits, which is what
+  "perfect behaving exactly as today's nailed did" actually required. Best
+  find: `card_view.gd`'s `_build_timing_strip()` already drew a brighter
+  "bullseye" core rectangle at 0.47-0.53 of the bar with a comment calling it
+  "the aim point" — purely decorative until now. Reused those exact bounds
+  (`CardView.CORE_MIN`/`CORE_MAX`) as the PERFECT threshold instead of
+  inventing new ones, so the on-screen strip is pixel-identical to before —
+  genuinely needs no display work, not just "doesn't need NEW UI." A
+  multi-hit chain (Satchel Charge) grades on its WORST window, not its last,
+  via `CardView._worst_quality`, so a shaky opening hit still costs the whole
+  throw. Did not touch `hold_target`/#24's targeting param, and did not wire
+  the "wide" enchant or any relic's `timing_zone` mod into the grading (they
+  widen which taps register as a HIT, not how they're graded once landed —
+  orthogonal, no interaction to resolve). 4 new tests: half-bonus GOOD,
+  PERFECT-matches-old-nailed-hit (pinned by comparing both call styles
+  directly, not just asserting a number), `preview()`'s quality scaling in
+  isolation including that a miss ignores quality entirely, and the omitted-
+  argument default. Deliberately did NOT add a test instantiating `CardView`
+  itself (the quality-grading math in `_fire()`) — this suite has never stood
+  up a `/views` scene headless (per #7's log), and this item's own log is not
+  the place to take that on. `run_tests.gd` all green (98 assertions incl.
+  the four new ones); `balance_sim.gd` ran clean as a smoke test only — every
+  policy call site omits `quality`, so grading has zero effect on it, and the
+  win-rate swings visible in this run's output are from other sessions'
+  content growth since the sim was last run, not anything tuned here.
+  **Also:** this session's initial `git checkout -B main origin/main` pinned
+  to a ref later than the container's very first fetch (6d8c01f, through
+  #24) but had ALREADY (before any git command in this session) built and
+  nearly pushed a full duplicate of #4 against a stale 32dc550 ref — caught
+  by the rejected push, not by rule 9's "diff before starting" (which this
+  run only started doing after the rejection). Discarded the duplicate,
+  re-fetched, re-read the queue fresh, and picked #33 as the actual topmost
+  open `cloud-safe` item. Filed here rather than re-logging the by-now
+  ninth occurrence of the stale-ref note in detail — rule 9 already exists
+  because of it and nothing new was learned about the failure mode itself,
+  only that this run still didn't front-load the fetch-and-diff step rule 9
+  asks for.
 - **2026-08-23** — #24 Named holds on a beast, the climb ENGINE: generalised
   `Boss.ledges` so each element can be either a bare number (legacy: an
   unrestricted safe rest Height — kept working unchanged for all 14 existing

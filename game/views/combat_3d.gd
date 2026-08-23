@@ -1693,9 +1693,11 @@ func _render_hand() -> void:
 		cv.tapped.connect(func() -> void: _on_card_tapped(c_card, cv))
 		cv.inspect_requested.connect(_show_card_detail)
 		cv.keyword_requested.connect(_show_keyword)
-		cv.timing_resolved.connect(func(hit: bool) -> void:
-			Sfx.play("nail" if hit else "slip")
-			_client.play_card(idx, hit, _cmd_slot()))
+		cv.timing_resolved.connect(func(quality: int) -> void:
+			# The clip is still binary (nailed it / missed it) — a "good" vs.
+			# "perfect" distinction is the display half (backlog #34), not this one.
+			Sfx.play("nail" if quality > Combat.TIMING_MISS else "slip")
+			_client.play_card(idx, quality > Combat.TIMING_MISS, _cmd_slot(), -1, -1, quality))
 	var players: Array = _client.shared.get("players", [])
 	var me: Dictionary = players[_me()] if _me() < players.size() else {}
 	if selecting:

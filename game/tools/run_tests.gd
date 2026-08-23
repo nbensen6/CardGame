@@ -93,6 +93,11 @@ func _init() -> void:
 	_test_sure_enchant_lands_even_on_a_fumble()
 	_test_timed_block_guards_on_a_hit()
 	_test_timed_ally_block_anchors_the_ally()
+	# graded timing accuracy — the rules half (backlog #33)
+	_test_graded_timing_good_pays_half_the_bonus()
+	_test_graded_timing_perfect_matches_a_plain_nailed_hit()
+	_test_preview_quality_scales_the_timed_bonus()
+	_test_graded_timing_default_quality_is_perfect()
 	_test_every_referenced_card_id_resolves()
 	_test_content_integrity_graph()
 	_test_exhaust_scaling_grows_with_the_burn_pile()
@@ -1447,6 +1452,60 @@ func _test_timed_ally_block_anchors_the_ally() -> void:
 	combat.play_card(0, _first_playable(combat, 0), true)   # ally 4 + 6 timed; caster 2
 	_expect(combat.players[1].combatant.block == 10 and combat.players[0].combatant.block == 2,
 		"Anchor Brace shields the ally on a nailed timing, and the caster a little")
+
+
+# --- Graded timing accuracy — the rules half (backlog #33) -----------------
+# Today's binary nailed/fumbled becomes a quality tier (miss/good/perfect) so
+# a dead-centre hit pays more than one that barely landed in the zone. The
+# seam: CardView grades the throw -> play_card(timing_quality) ->
+# preview(nailed, quality). TIMING_PERFECT must reproduce exactly what a
+# plain nailed hit always paid — these tests pin that alongside the new tier.
+
+func _test_graded_timing_good_pays_half_the_bonus() -> void:
+	var combat := _new_combat([_deck_of(_pounce, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var before: int = combat.boss.hp
+	var idx := _first_playable(combat, 0)
+	combat.play_card(0, idx, true, -1, -1, -1, Combat.TIMING_GOOD)  # 4 base + half of 5 timed_damage
+	_expect(before - combat.boss.hp == 6,
+		"a 'good' (not dead-centre) timed hit pays half the timed bonus, not the full amount")
+
+
+func _test_graded_timing_perfect_matches_a_plain_nailed_hit() -> void:
+	# Backlog #33's own bar: TIMING_PERFECT must behave EXACTLY as the old bare
+	# nailed hit did. Pin that by comparing the two call styles directly
+	# rather than trusting they happen to agree.
+	var a := _new_combat([_deck_of(_pounce, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var before_a: int = a.boss.hp
+	a.play_card(0, _first_playable(a, 0), true)  # old call style: no quality arg at all
+	var dealt_a := before_a - a.boss.hp
+	var b := _new_combat([_deck_of(_pounce, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var before_b: int = b.boss.hp
+	b.play_card(0, _first_playable(b, 0), true, -1, -1, -1, Combat.TIMING_PERFECT)
+	var dealt_b := before_b - b.boss.hp
+	_expect(dealt_a == dealt_b and dealt_a == 9,
+		"TIMING_PERFECT deals exactly what a plain nailed hit always dealt")
+
+
+func _test_preview_quality_scales_the_timed_bonus() -> void:
+	var combat := _new_combat([_deck_of(_pounce, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var card: Card = combat.players[0].hand[_first_playable(combat, 0)]
+	var perfect := combat.preview(0, card, true, Combat.TIMING_PERFECT)
+	var good := combat.preview(0, card, true, Combat.TIMING_GOOD)
+	var miss := combat.preview(0, card, false, Combat.TIMING_GOOD)  # quality is moot without a hit
+	_expect(int(perfect["damage"]) == 9 and int(good["damage"]) == 6 and int(miss["damage"]) == 4,
+		"preview() grades the timed bonus by quality, and ignores quality entirely on a miss")
+
+
+func _test_graded_timing_default_quality_is_perfect() -> void:
+	# play_card's timing_quality defaults to PERFECT so every network command
+	# format from before this landed (no "quality" key at all) still pays the
+	# full timed bonus, same as _test_graded_timing_perfect_matches... but
+	# exercised through the actual default rather than an explicit argument.
+	var combat := _new_combat([_deck_of(_pounce, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var before: int = combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0), true, -1, -1)  # no quality arg supplied
+	_expect(before - combat.boss.hp == 9,
+		"an omitted timing_quality defaults to PERFECT, matching pre-#33 behavior")
 
 
 ## The Goblin's sacrifices should compound: every card he burns makes Scrap Drive
