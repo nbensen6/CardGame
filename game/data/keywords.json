@@ -49,6 +49,30 @@
       "name": "Enchanted",
       "text": "A named effect attached to this one card. What it does is printed on the card itself."
     },
+    "energy": {
+      "name": "Energy",
+      "text": "What you spend to play cards. Both hunters get a fresh 3 each round and unspent Energy does not carry over — a card that hands some to your ally lets them spend it right now, on your turn."
+    },
+    "build": {
+      "name": "Build",
+      "text": "Adds a new card straight into your hand — not your draw or discard pile — so you can play it this turn if you have the energy for it."
+    },
+    "prime": {
+      "name": "Primed",
+      "text": "Arms a delayed effect that fires the instant your next turn begins, before you draw."
+    },
+    "cheapen": {
+      "name": "Cheapen",
+      "text": "Permanently cuts the chosen card's cost for the rest of this fight — it comes back cheaper every time you draw it again."
+    },
+    "meld": {
+      "name": "Meld",
+      "text": "Fuses two cards from your hand into one new card carrying everything both did, for one less energy than their costs added together."
+    },
+    "multistrike": {
+      "name": "Multistrike",
+      "text": "The damage lands more than once, as separate hits — each one can spend an Expose stack or land at a reached weak point on its own."
+    },
 
     "_comment_moves": "Below: the beast's telegraphed moves. Same vocabulary rules as the cards — the intent tag NAMES the move and prints its number, and the explanation lives here, one right-click away. Ids match the move `type` in bosses.json. Added 2026-08-16: the tag had started explaining itself inline ('Sweep 8 — hits you both'), which is the card-text problem all over again.",
 

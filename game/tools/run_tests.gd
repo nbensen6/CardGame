@@ -118,6 +118,7 @@ func _init() -> void:
 	_test_preview_matches_what_the_card_actually_does()
 	_test_incoming_reckons_damage_after_block()
 	_test_every_derived_keyword_resolves()
+	_test_every_field_a_player_must_understand_has_a_keyword()
 	_test_every_boss_move_type_resolves()
 	_test_every_beast_has_a_move_pattern()
 	_test_card_dict_round_trips_every_field()
@@ -1510,7 +1511,8 @@ func _test_elite_pays_a_card_then_a_relic() -> void:
 ## unexplained, which is the exact problem the keyword layer exists to fix.
 func _test_every_derived_keyword_resolves() -> void:
 	var derived := ["timed", "poison", "expose", "rhythm", "strength", "block",
-		"height", "armoured", "taunt", "burn"]
+		"height", "armoured", "taunt", "burn", "enchant", "energy", "build",
+		"prime", "cheapen", "meld", "multistrike"]
 	var defined := Content.keyword_ids()
 	var missing: Array = []
 	for id in derived:
@@ -1520,6 +1522,51 @@ func _test_every_derived_keyword_resolves() -> void:
 			missing.append("%s (no text)" % id)
 	_expect(missing.is_empty(),
 		"every keyword the host derives is defined in keywords.json [%s]" % ", ".join(missing))
+
+
+## Backlog #16: the check above only catches an id that's misspelled in one
+## place and not the other. It says nothing about a NEW field on Card that
+## nobody wired into _keywords_of at all — that ships silently unexplained.
+## So walk Card's actual fields (reflection, same trick
+## _test_card_dict_round_trips_every_field uses) rather than a hand-kept list:
+## a field added tomorrow is covered the moment it's declared. Each field is
+## probed ALONE, isolated from every other field on the card, so it can't
+## hide behind some unrelated field on the same real card supplying the tag.
+func _test_every_field_a_player_must_understand_has_a_keyword() -> void:
+	# Fields whose meaning is plain from their own number/name — a name, rules
+	# text already printed on the card, the cost pip, the damage number, how
+	# many draws — need no separate keyword tooltip. timed_hits is a plain
+	# repeat-count that only means anything once you already understand Timed.
+	var self_evident := ["id", "name", "type", "rarity", "cost", "damage", "draw",
+		"target", "icon", "text", "upgraded", "timed_hits"]
+	# A handful of int fields are meaningless at the generic probe value of 1
+	# because 1 IS their neutral default (a single hit, no repeat) — probe
+	# those with a value that's actually "used" instead.
+	var probe_override := {"hits": 2}
+	var host := GameHost.new(LocalTransport.new(), 1, 2)
+	_kept.append(host)
+	var probe := Card.new()
+	var missing: Array = []
+	for p in probe.get_property_list():
+		var prop: Dictionary = p
+		if int(prop.get("usage", 0)) & PROPERTY_USAGE_SCRIPT_VARIABLE == 0:
+			continue
+		var key := String(prop["name"])
+		if self_evident.has(key):
+			continue
+		var d := {}
+		match typeof(probe.get(key)):
+			TYPE_BOOL:
+				d[key] = true
+			TYPE_STRING:
+				d[key] = "probe"
+			_:
+				d[key] = int(probe_override.get(key, 1))
+		var lone := Card.from_dict(d)
+		if host._keywords_of(lone).is_empty():
+			missing.append(key)
+	_expect(missing.is_empty(),
+		"every card field a player must understand has a keyword [%s]" % ", ".join(missing))
 
 
 ## The intent tag NAMES a move and lets you right-click it for the rest, so an

@@ -410,7 +410,7 @@ func _slot_private(pi: int) -> Dictionary:
 ## to tag it. Returns [{id, name, text}] for the inspector to render.
 func _keywords_of(c: Card) -> Array:
 	var ids: Array = []
-	if c.timed:
+	if c.timed or c.timed_damage > 0:
 		ids.append("timed")
 	if c.wound > 0 or c.damage_per_wound > 0:
 		ids.append("poison")
@@ -433,6 +433,18 @@ func _keywords_of(c: Card) -> Array:
 		ids.append("burn")
 	if c.enchant != "":
 		ids.append("enchant")
+	if c.ally_energy > 0:
+		ids.append("energy")
+	if c.create != "":
+		ids.append("build")
+	if c.prepare != "":
+		ids.append("prime")
+	if c.cheapen_pick or c.cheapen_amount > 0:
+		ids.append("cheapen")
+	if c.meld:
+		ids.append("meld")
+	if c.hits > 1:
+		ids.append("multistrike")
 	var out: Array = []
 	for id in ids:
 		var k := Content.keyword(String(id))

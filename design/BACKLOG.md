@@ -102,7 +102,7 @@ Ordered. Source in brackets.
   only exercise a run parked on the map. Shop stock, campfire progress and an
   in-flight event are all serialized and none are tested.
   *Done when:* a run saved in SHOP, CAMPFIRE and EVENT reloads intact.
-- [ ] **16. Every card field a player must understand has a keyword**
+- [x] **16. Every card field a player must understand has a keyword**
   `cloud-safe` — keywords are derived from fields by `GameHost._keywords_of`;
   a field added without one silently ships an unexplained card.
   *Done when:* a test walks every field used by any card and fails on one that
@@ -257,6 +257,26 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-23** — #16 Every card field a player must understand has a
+  keyword: 6 fields on `Card` had no tooltip at all — `create` (Build),
+  `prepare` (Primed), `cheapen_pick`/`cheapen_amount` (Cheapen), `meld`
+  (Meld), `hits > 1` (Multistrike), and `ally_energy` (Energy — this one
+  also gave the game its first explanation of what Energy even is, not just
+  that giving it away is special). Wired all six into
+  `GameHost._keywords_of` plus entries in `keywords.json`, and gave
+  `timed_damage` a trigger it was missing (it only ever showed up alongside
+  `timed` on real cards, so the gap was invisible until tested in
+  isolation). The existing `_test_every_derived_keyword_resolves` only
+  guards a hand-kept id list — exactly the trap this item warns about, since
+  a new FIELD wired to nothing wouldn't show up in that list either. Added
+  `_test_every_field_a_player_must_understand_has_a_keyword`, which instead
+  walks `Card`'s actual fields by reflection and probes each ALONE (isolated
+  from every other field, so one can't hide behind an unrelated tag on the
+  same real card) — a field declared tomorrow and forgotten is caught the
+  moment it's declared, not the moment someone remembers to update a list.
+  `timed_hits`/`draw`/etc. stay unwired on purpose (plain repeat-counts and
+  numbers, not jargon) via a short self-evident allowlist in the test.
+  `run_tests.gd` all green; `balance_sim.gd` run as a smoke test only.
 - **2026-08-23** — #15 Save coverage for the other phases: `Run.to_dict()`/
   `from_dict()` already carried SHOP/CAMPFIRE/EVENT state generically (only
   `Combat` needed its own dict, per #14 — the rest of `Run` was never
