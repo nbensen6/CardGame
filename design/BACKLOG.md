@@ -121,6 +121,26 @@ Ordered. Source in brackets.
   starter deck, a reward pool, a `create`/`prepare` field or an event resolves
   to a real card; same for beast ids and relic ids. A typo in data currently
   fails silently at runtime. *Done when:* one test proves the whole graph.
+- [ ] **24. Named holds on a beast — the climb ENGINE** `cloud-safe` —
+  Nick, 2026-08-22: the climb should have *spots* you choose, not just a number
+  that goes up. Today a climb card adds N Height and that is the whole decision.
+  Generalise `Boss.ledges` (a bare int array) into named holds — height, whether
+  it is safe, and which moves it is exposed to — and let a climb card TARGET a
+  hold rather than blindly add. That makes climbing positional: the high hold is
+  closer to the sigil but in reach of the sweep, the low one is safe but slow.
+  It is also the thing that makes item 25's drag meaningful, so build it first.
+  *Done when:* holds are data, a card can name one, reaching one is tested, and
+  the old "just add Height" path still works for cards that don't target.
+- [ ] **33. Graded timing accuracy — the rules half** `cloud-safe` —
+  Nick, 2026-08-22: make the timing osu-like. Today it is binary: `nailed` is a
+  bool, so a hit dead-centre pays exactly what a hit scraping the edge does.
+  Widen that to a quality tier (perfect / good / miss) and let the timed bonus
+  scale with it. This is the whole rules half of the idea and needs no display:
+  the seam is already narrow — `timing_resolved(hit)` -> `play_card(timing_hit)`
+  -> `preview(nailed)`, four files.
+  *Done when:* quality is carried end to end, the bonus scales, save/load is
+  unaffected, and the existing 38 timing assertions still hold with "perfect"
+  behaving exactly as today's "nailed" did.
 - [ ] **19. Shop and campfire test coverage** `cloud-safe` — buying, price
   rises on repeat removals, and each campfire action are rules nobody tests.
   *Done when:* covered, including that you cannot buy what you cannot afford
@@ -144,16 +164,6 @@ Ordered. Source in brackets.
   idiom, do not reweight. *Done when:* Frog has 5-7 rares, tested the same way.
   [measured 2026-08-22]
 
-- [ ] **24. Named holds on a beast — the climb ENGINE** `cloud-safe` —
-  Nick, 2026-08-22: the climb should have *spots* you choose, not just a number
-  that goes up. Today a climb card adds N Height and that is the whole decision.
-  Generalise `Boss.ledges` (a bare int array) into named holds — height, whether
-  it is safe, and which moves it is exposed to — and let a climb card TARGET a
-  hold rather than blindly add. That makes climbing positional: the high hold is
-  closer to the sigil but in reach of the sweep, the low one is safe but slow.
-  It is also the thing that makes item 25's drag meaningful, so build it first.
-  *Done when:* holds are data, a card can name one, reaching one is tested, and
-  the old "just add Height" path still works for cards that don't target.
 - [ ] **25. Drag a card to the hold you want** `needs a screen` — the UI half of
   24, and Nick's other ask: pull a card out and drag it where you want to climb.
   **Design tension to resolve before building:** a timed card today is tap → the
@@ -194,16 +204,6 @@ Ordered. Source in brackets.
   and 27: three slots you can see and tap, and a clear cue when something clogs
   your deck. Deliberately separate so the engine can land without it.
 
-- [ ] **33. Graded timing accuracy — the rules half** `cloud-safe` —
-  Nick, 2026-08-22: make the timing osu-like. Today it is binary: `nailed` is a
-  bool, so a hit dead-centre pays exactly what a hit scraping the edge does.
-  Widen that to a quality tier (perfect / good / miss) and let the timed bonus
-  scale with it. This is the whole rules half of the idea and needs no display:
-  the seam is already narrow — `timing_resolved(hit)` -> `play_card(timing_hit)`
-  -> `preview(nailed)`, four files.
-  *Done when:* quality is carried end to end, the bonus scales, save/load is
-  unaffected, and the existing 38 timing assertions still hold with "perfect"
-  behaving exactly as today's "nailed" did.
 - [ ] **34. osu-style hit circle at the hold** `needs a screen` — the display
   half, and the reason it is worth doing: a shrinking approach circle **placed at
   the hold you are climbing to** answers *where* and *when* in ONE gesture. That
@@ -215,6 +215,26 @@ Ordered. Source in brackets.
   **Watch for:** the grip timer is ALREADY a live real-time pressure. An osu
   circle on top is two clocks at once, which may be thrilling or may be
   unplayable. That question is the point of the experiment.
+
+## Working alongside the cloud routine
+
+Two of us push to `main`: the routine every two hours, and Nick-and-Claude in a
+session. That works, but it has an order to it.
+
+**The routine builds engines; the session builds faces.** Almost everything
+tagged `needs a screen` is the visible half of something the routine already
+built invisibly — enchantments have rules but no card face, potions will have
+rules but no slots. So the queue is ordered so the ENGINE lands before the
+session that puts a face on it. Items 24 and 33 were promoted to the front on
+2026-08-23 for exactly this reason: 25, 32 and 34 are their faces, and building a
+face for an engine that does not exist yet is the one way to waste a session.
+
+**Before a session, pull.** The routine always starts from `origin/main`, so it
+picks up session work automatically — but the session does not pick up the
+routine's work unless someone fetches.
+
+**If a push is rejected**, a routine run landed while the session was working.
+Fetch, rebase on top, re-run the tests, push again. Never force.
 
 ## Where the work happens
 
