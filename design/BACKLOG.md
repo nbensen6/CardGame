@@ -98,7 +98,7 @@ Ordered. Source in brackets.
   `Combat` is the one thing `Run.to_dict()` skips. *Done when:* hands, piles,
   footholds, block and the boss's pattern all survive a round trip, and the
   "refuses mid-fight" guard is replaced rather than deleted.
-- [ ] **15. Save coverage for the other phases** `cloud-safe` — the save tests
+- [x] **15. Save coverage for the other phases** `cloud-safe` — the save tests
   only exercise a run parked on the map. Shop stock, campfire progress and an
   in-flight event are all serialized and none are tested.
   *Done when:* a run saved in SHOP, CAMPFIRE and EVENT reloads intact.
@@ -257,6 +257,29 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-23** — #15 Save coverage for the other phases: `Run.to_dict()`/
+  `from_dict()` already carried SHOP/CAMPFIRE/EVENT state generically (only
+  `Combat` needed its own dict, per #14 — the rest of `Run` was never
+  phase-gated), so this was pure test debt, not a missing feature. Added three
+  round trips through the actual save FILE, same shape as the existing
+  map-level and mid-combat tests: shop (stock + gold survive, and the
+  reloaded stock is still purchasable, not a frozen snapshot), campfire
+  (one hunter acts, the other hasn't — `campfire_done` reloads as
+  `[true, false]`, and the reload still resolves the node when the second
+  hunter acts), and event (the picked event and `_seen_events` survive, and
+  `pick_event` still resolves on the reload). All three use the same
+  `run.node_type = "..."; run._begin_x()` direct-setup pattern the existing
+  `_test_gold_and_shop` already used, rather than walking the whole map
+  through a mandatory act-opening fight to reach them incidentally.
+  `run_tests.gd` all green (68 assertions incl. the three new ones);
+  `balance_sim.gd` run as a smoke test only — nothing exploded, not tuned to.
+  **Also:** `git fetch origin main` before the checkout showed `origin/main`
+  had moved from a stale local ref (32dc550) to 3a282bd (14 commits, through
+  #14) — the same recurring stale-checkout pattern logged on 2026-08-22 and
+  three times on 2026-08-23; re-fetching and re-running `checkout -B main
+  origin/main` picked up the real tip with nothing lost. Not fixing the root
+  cause this round (out of this item's scope) but it's now happened five
+  times — worth Nick's attention if it keeps costing investigation time.
 - **2026-08-23** — #14 Mid-combat saving: `Boss`, `PlayerState` and `Combat`
   each got their own `to_dict()`/`from_dict()` (Boss splits static-from-`id`
   vs. dynamic-per-fight state, the same trick `upgraded_copy()`/`Content`

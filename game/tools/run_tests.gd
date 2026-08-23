@@ -123,6 +123,9 @@ func _init() -> void:
 	_test_card_dict_round_trips_every_field()
 	_test_run_survives_a_save_and_load()
 	_test_run_survives_a_save_and_load_mid_combat()
+	_test_run_survives_a_save_and_load_in_shop()
+	_test_run_survives_a_save_and_load_in_campfire()
+	_test_run_survives_a_save_and_load_in_event()
 	_test_save_refuses_only_finished_runs_and_clears_when_over()
 	_test_every_card_declares_a_rarity()
 	_test_card_type_matches_whether_it_deals_damage()
@@ -1698,6 +1701,92 @@ func _test_run_survives_a_save_and_load_mid_combat() -> void:
 	# would have the next time a pile empties.
 	_expect(back_combat._rng.randi() == combat._rng.randi(),
 		"a reloaded fight continues the same random sequence")
+	RunSave.clear()
+
+
+## Backlog #15: to_dict/from_dict already carry every phase's state — Run has no
+## per-phase skip the way Combat did before #14 — but only the MAP phase (above)
+## and mid-combat (above that) were ever proven to round-trip through the FILE.
+## One test per remaining phase, same shape: scramble real state, save, reload,
+## check it's not just equal-looking but still live and playable.
+func _test_run_survives_a_save_and_load_in_shop() -> void:
+	var run := Run.new([_deck_of(_slash, 8), _deck_of(_slash, 8)], ["A", "B"], 31,
+		[{"character": "frog"}, {"character": "goblin_mech"}], 0)
+	run.start()
+	run.gold = 500
+	run.map_row = 0
+	run.node_type = "shop"
+	run._begin_shop()
+	var expect_stock_size: int = run.shop_stock.size()
+	var expect_first_id := String(run.shop_stock[0]["id"])
+	var expect_gold: int = run.gold
+
+	RunSave.clear()
+	RunSave.save(run)
+	var back := RunSave.load_run()
+
+	var stock_ok: bool = back.shop_stock.size() == expect_stock_size \
+		and String(back.shop_stock[0]["id"]) == expect_first_id \
+		and int(back.shop_stock[0]["price"]) == int(run.shop_stock[0]["price"])
+	_expect(back.phase == Run.Phase.SHOP and back.gold == expect_gold and stock_ok,
+		"a run saved mid-shop reloads with its stock and gold intact")
+	# Index 0 is always a "card" entry (_begin_shop stocks cards before relics
+	# and removals), so buying it needs no card_index — this proves the reloaded
+	# stock is live data you can still transact against, not a frozen snapshot.
+	var bought := back.buy(0)
+	_expect(bought, "reloaded shop stock is still purchasable")
+	RunSave.clear()
+
+
+func _test_run_survives_a_save_and_load_in_campfire() -> void:
+	var run := Run.new([_deck_of(_slash, 8), _deck_of(_slash, 8)], ["A", "B"], 32,
+		[{"character": "frog"}, {"character": "goblin_mech"}], 0)
+	run.start()
+	run.map_row = 0
+	run.node_type = "rest"
+	run._begin_campfire()
+	run.campfire_action(0, "rest")   # one hunter acts, the other hasn't yet
+	var expect_hp0: int = run.hp[0]
+
+	RunSave.clear()
+	RunSave.save(run)
+	var back := RunSave.load_run()
+
+	_expect(back.phase == Run.Phase.CAMPFIRE and back.campfire_done == [true, false]
+		and back.hp[0] == expect_hp0,
+		"a run saved mid-campfire reloads with each hunter's own progress intact")
+	# The remaining hunter finishing on the reload should close the node out
+	# exactly as it would have without the save/load in between.
+	var closed := back.campfire_action(1, "rest")
+	_expect(closed and back.phase == Run.Phase.MAP,
+		"the reloaded campfire still resolves when the remaining hunter acts")
+	RunSave.clear()
+
+
+func _test_run_survives_a_save_and_load_in_event() -> void:
+	var run := Run.new([_deck_of(_slash, 8), _deck_of(_slash, 8)], ["A", "B"], 33,
+		[{"character": "frog"}, {"character": "goblin_mech"}], 0)
+	run.start()
+	run.map_row = 0
+	run.node_type = "event"
+	run._begin_event()
+	var expect_id := String(run.event.get("id", ""))
+	var expect_choice_count: int = (run.event.get("choices", []) as Array).size()
+
+	RunSave.clear()
+	RunSave.save(run)
+	var back := RunSave.load_run()
+
+	var event_ok: bool = String(back.event.get("id", "")) == expect_id \
+		and (back.event.get("choices", []) as Array).size() == expect_choice_count \
+		and back._seen_events.has(expect_id)
+	_expect(back.phase == Run.Phase.EVENT and event_ok,
+		"a run saved mid-event reloads with the same event and its seen-events memory")
+	# Resolving it on the reload proves the dict came back playable, not just
+	# equal-looking — an event can route to MAP or REWARD, either is fine here.
+	var resolved := back.pick_event(0)
+	_expect(resolved and back.phase != Run.Phase.EVENT,
+		"the reloaded event still resolves when a choice is picked")
 	RunSave.clear()
 
 
