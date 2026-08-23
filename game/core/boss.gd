@@ -31,3 +31,24 @@ func current_move() -> Dictionary:
 ## Advance the pattern after the boss acts.
 func advance_move() -> void:
 	_move_index += 1
+
+## Only the DYNAMIC per-fight state (what a fight can actually change) — the
+## static data (moves, ledges, limiter, art, max_hp) is rebuilt from `id` via
+## Content.boss_from_dict(), the same split Run/PlayerState use for cards.
+func to_dict() -> Dictionary:
+	return {
+		"id": id, "hp": hp, "block": block, "vulnerable": vulnerable,
+		"strength": strength, "wound": wound,
+		"weak_point_height": weak_point_height,  # shift_sigil can move it mid-fight
+		"move_index": _move_index,
+	}
+
+## Restore the dynamic state saved above onto a freshly rebuilt Boss.
+func apply_dict(d: Dictionary) -> void:
+	hp = int(d.get("hp", hp))
+	block = int(d.get("block", 0))
+	vulnerable = int(d.get("vulnerable", 0))
+	strength = int(d.get("strength", 0))
+	wound = int(d.get("wound", 0))
+	weak_point_height = int(d.get("weak_point_height", weak_point_height))
+	_move_index = int(d.get("move_index", 0))

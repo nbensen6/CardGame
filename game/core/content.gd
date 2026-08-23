@@ -217,3 +217,10 @@ static func build_boss(id: String) -> Boss:
 	b.limiter = bd.get("limiter", {})
 	b.art = String(bd.get("art", ""))
 	return b
+
+## Rebuild a Boss for a resumed fight: static data from `id` (as build_boss),
+## dynamic per-fight state (hp, block, strength...) overlaid from the save.
+static func boss_from_dict(d: Dictionary) -> Boss:
+	var b := build_boss(String(d.get("id", "")))
+	b.apply_dict(d)
+	return b

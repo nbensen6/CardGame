@@ -29,10 +29,11 @@ static func use_scratch_slot(name: String) -> void:
 	path = "user://%s.json" % name
 
 
-## Write the run. Refuses mid-fight: Combat is not serialized, so a save taken
-## during a fight would silently drop the fight's state (see Run.to_dict).
+## Write the run, mid-fight included (backlog #14 — Combat has its own
+## to_dict/from_dict now, see Run.to_dict). Refuses only a finished run: a
+## WON or LOST run has nothing left to resume into.
 static func save(run: Run) -> bool:
-	if run == null or run.is_over() or run.phase == Run.Phase.COMBAT:
+	if run == null or run.is_over():
 		return false
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	if f == null:

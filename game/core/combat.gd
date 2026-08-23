@@ -731,3 +731,46 @@ func _mod(key: String) -> int:
 
 func _log(msg: String) -> void:
 	log.append(msg)
+
+# --- saving -----------------------------------------------------------------
+#
+# Backlog #14: a fight used to be the one thing Run.to_dict() skipped, so
+# quitting mid-combat replayed it from scratch. Everything a save needs to put
+# the fight back exactly where it was: both hunters' full state (PlayerState
+# does its own to_dict/from_dict, piles included), the boss's dynamic state
+# (Boss.to_dict — static data comes back from its id), the round/phase/log,
+# and the combat RNG's own state — without that last one, reloading would
+# reshuffle differently than the fight actually would have, same trap
+# Run.to_dict's own comment already calls out for the run-level RNG.
+
+func to_dict() -> Dictionary:
+	var player_dicts: Array = []
+	for ps in players:
+		player_dicts.append((ps as PlayerState).to_dict())
+	return {
+		"players": player_dicts, "boss": boss.to_dict(),
+		"round_num": round_num, "phase": phase, "log": log,
+		"forced_target": _forced_target,
+		"energy_bonus": _energy_bonus, "attack_bonus": _attack_bonus,
+		"round_block": _round_block, "mods": _mods,
+		"rng_state": str(_rng.state),  # a uint64; JSON floats would round it
+	}
+
+## Rebuild an in-progress Combat. _init is bypassed (empty decks/combatants —
+## real state is overlaid right after) the same way Run.from_dict sidesteps
+## its own _init.
+static func from_dict(d: Dictionary) -> Combat:
+	var c := Combat.new([], [], Content.boss_from_dict(d.get("boss", {})))
+	c.players = []
+	for pd in d.get("players", []):
+		c.players.append(PlayerState.from_dict(pd))
+	c.round_num = int(d.get("round_num", 1))
+	c.phase = int(d.get("phase", Phase.PLAYERS))
+	c.log = (d.get("log", []) as Array).duplicate()
+	c._forced_target = int(d.get("forced_target", -1))
+	c._energy_bonus = int(d.get("energy_bonus", 0))
+	c._attack_bonus = int(d.get("attack_bonus", 0))
+	c._round_block = int(d.get("round_block", 0))
+	c._mods = (d.get("mods", {}) as Dictionary).duplicate()
+	c._rng.state = int(String(d.get("rng_state", "0")))
+	return c

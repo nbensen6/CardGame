@@ -93,7 +93,7 @@ Ordered. Source in brackets.
   window, climbing without losing grip, exhaust returning a card) rather than
   adding to a number, with tests.
   [measured 2026-08-22]
-- [ ] **14. Mid-combat saving** `cloud-safe` — promoted from Later. Today the
+- [x] **14. Mid-combat saving** `cloud-safe` — promoted from Later. Today the
   slot is only written between fights, so quitting mid-fight replays it.
   `Combat` is the one thing `Run.to_dict()` skips. *Done when:* hands, piles,
   footholds, block and the boss's pattern all survive a round trip, and the
@@ -257,6 +257,22 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-23** — #14 Mid-combat saving: `Boss`, `PlayerState` and `Combat`
+  each got their own `to_dict()`/`from_dict()` (Boss splits static-from-`id`
+  vs. dynamic-per-fight state, the same trick `upgraded_copy()`/`Content`
+  already use elsewhere), and `Run.to_dict()`/`from_dict()` now carries an
+  in-progress fight instead of skipping it. Replaced the "refuses mid-fight"
+  guard in `RunSave.save()` with "refuses only a finished run", and fixed
+  `GameHost.resume_run()`, which used to force a COMBAT-phase resume back to
+  the map unconditionally — that line was the OTHER half of the old guard, and
+  leaving it in place would have made the save work but the resume still
+  silently drop the fight. The combat RNG's own state travels too (same
+  reroll-button trap the run-level RNG comment already flags), or a reload
+  would reshuffle a pile differently than the original fight would have.
+  First pass duplicated work another session had already pushed to origin/main
+  (backlog #4, per-beast limiters) — origin had moved 13 commits ahead mid-run
+  from a concurrent session; caught it before pushing by re-fetching, dropped
+  the redundant commit, and re-picked from the (now current) queue.
 - **2026-08-23** — #13 Relics that change a rule: turned out mostly already
   done by #10, which wasn't obvious until counted. `relics.json` already had
   7 relics whose effect changes what happens rather than a number — `fall_safe`

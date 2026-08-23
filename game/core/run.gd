@@ -97,10 +97,12 @@ func is_over() -> bool:
 # --- saving ---------------------------------------------------------------
 #
 # A run is 24 nodes and the better part of an hour, so it has to survive putting
-# the game down. Everything below the COMBAT phase is plain data; Combat itself
-# (hands, piles, footholds, a live grip timer) is deliberately NOT saved, so the
-# rule is: a save is only ever taken when no fight is in progress, and resuming
-# puts you back on the map about to pick that node. You lose a fight, never a run.
+# the game down — mid-fight included (backlog #14): Combat has its own
+# to_dict/from_dict, so an in-progress fight (hands, piles, footholds, block,
+# the boss's move pattern) rides along inside this dict rather than being
+# skipped. The one thing that's genuinely NOT saved is the live real-time grip
+# timer — that's a client-side clock (see Combat's header), so a resumed climb
+# between holds lands you back on the safe hold you started climbing from.
 #
 # The RNG's state travels too. Without it, quitting and resuming would reroll
 # every future reward — a save/quit button that doubles as a reroll button.
@@ -135,6 +137,7 @@ func to_dict() -> Dictionary:
 		"reward_kind": reward_kind, "reward_choices": choices,
 		"reward_picked": reward_picked, "queued_reward": _queued_reward,
 		"seed": _seed, "rng_state": str(_rng.state),  # a uint64; JSON floats would round it
+		"combat": combat.to_dict() if (phase == Phase.COMBAT and combat != null) else {},
 	}
 
 
@@ -176,6 +179,13 @@ static func from_dict(d: Dictionary) -> Run:
 	r.reward_picked = (d.get("reward_picked", []) as Array).duplicate()
 	r._queued_reward = String(d.get("queued_reward", ""))
 	r._rng.state = int(String(d.get("rng_state", "0")))
+	var combat_d: Dictionary = d.get("combat", {})
+	if r.phase == Phase.COMBAT and not combat_d.is_empty():
+		r.combat = Combat.from_dict(combat_d)
+	elif r.phase == Phase.COMBAT:
+		# Should never happen post-#14 (save always includes combat when the
+		# phase is COMBAT) — a defensive fallback for an old or malformed save.
+		r.phase = Phase.MAP
 	return r
 
 ## Columns the party may step to from where they stand.

@@ -42,9 +42,11 @@ func _init(transport: Transport, seed_value: int = 0, required_players: int = 2,
 func resume_run(saved: Run) -> void:
 	_run = saved
 	_ascension = saved.ascension
-	# A save is only ever written outside combat, so a resumed run always lands on
-	# the map or on a node the player was mid-way through resolving.
-	if _run.phase == Run.Phase.COMBAT:
+	# A save now captures an in-progress fight too (backlog #14 — Combat has its
+	# own to_dict/from_dict), so a resumed run can land back inside COMBAT rather
+	# than always bouncing to the map. Defensive fallback for the
+	# should-never-happen case of a COMBAT-phase save with no combat in it.
+	if _run.phase == Run.Phase.COMBAT and _run.combat == null:
 		_run.phase = Run.Phase.MAP
 	_broadcast_state()
 
@@ -133,11 +135,10 @@ func _in_combat_action(pi: int, action: Callable) -> void:
 	_broadcast_state()
 
 ## Persist the run every time the state settles, which is the honest definition
-## of "a safe point": the host has just finished resolving something.
-##
-## RunSave refuses to write mid-fight, so this quietly does nothing during combat
-## and the last save stays the map before it. Finishing the run clears the slot —
-## a dead or won run must not offer to be continued.
+## of "a safe point": the host has just finished resolving something — a card
+## played, a turn ended, mid-fight included since RunSave now covers Combat
+## (backlog #14). Finishing the run clears the slot — a dead or won run must
+## not offer to be continued.
 func _autosave() -> void:
 	if _run == null or not _solo:
 		return  # co-op resume needs a rendezvous, not a file (see RunSave)

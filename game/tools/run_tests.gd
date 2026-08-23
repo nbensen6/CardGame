@@ -122,7 +122,8 @@ func _init() -> void:
 	_test_every_beast_has_a_move_pattern()
 	_test_card_dict_round_trips_every_field()
 	_test_run_survives_a_save_and_load()
-	_test_save_refuses_mid_fight_and_clears_when_over()
+	_test_run_survives_a_save_and_load_mid_combat()
+	_test_save_refuses_only_finished_runs_and_clears_when_over()
 	_test_every_card_declares_a_rarity()
 	_test_card_type_matches_whether_it_deals_damage()
 	_test_strength_only_lifts_attack_type_cards()
@@ -155,6 +156,7 @@ func _init() -> void:
 	_test_session_private_view_is_isolated()
 	_test_host_pauses_on_disconnect()
 	_test_host_autosaves_and_resumes()
+	_test_host_autosaves_and_resumes_mid_combat()
 	_test_solo_controls_both_hunters()
 
 	print("")
@@ -1621,23 +1623,82 @@ func _test_run_survives_a_save_and_load() -> void:
 		"a reloaded run continues the same random sequence")
 
 
-## The two rules that keep the slot honest: never write a fight (Combat isn't
-## serialized), and never leave a finished run offering to be continued.
-func _test_save_refuses_mid_fight_and_clears_when_over() -> void:
+## The one rule that keeps the slot honest post-#14: never leave a finished run
+## offering to be continued. Mid-fight saves now succeed (see the dedicated
+## mid-combat round-trip test below).
+func _test_save_refuses_only_finished_runs_and_clears_when_over() -> void:
 	var run := Run.new([_deck_of(_slash, 6), _deck_of(_slash, 5)], ["A", "B"], 7,
 		[{"character": "frog"}, {"character": "goblin_mech"}], 0)
 	run.start()
 	RunSave.clear()
-	run.phase = Run.Phase.COMBAT
-	var wrote_fight := RunSave.save(run)
 	run.phase = Run.Phase.MAP
 	var wrote_map := RunSave.save(run)
 	var had := RunSave.has_save()
 	run.phase = Run.Phase.WON
 	var wrote_won := RunSave.save(run)
 	RunSave.clear()
-	_expect(not wrote_fight and wrote_map and had and not wrote_won and not RunSave.has_save(),
-		"the save slot refuses combat and finished runs, and clears on demand")
+	_expect(wrote_map and had and not wrote_won and not RunSave.has_save(),
+		"the save slot refuses only finished runs, and clears on demand")
+
+
+## Backlog #14: a fight used to be the one thing a save dropped. Step a real
+## run into a real fight, scramble every corner of Combat state a card or a
+## boss turn can touch, then round-trip through the FILE (not just
+## to_dict/from_dict — JSON's one number type is the thing that actually bites,
+## per the map-level save test above) and check it all comes back.
+func _test_run_survives_a_save_and_load_mid_combat() -> void:
+	var run := Run.new([_deck_of(_slash, 8), _deck_of(_slash, 8)], ["A", "B"], 55,
+		[{"character": "frog"}, {"character": "goblin_mech"}], 0)
+	run.start()
+	_step_into_combat(run)
+	var combat: Combat = run.combat
+	# Scramble hands/piles/foothold/block/energy across both hunters...
+	combat.players[0].foothold = 5
+	combat.players[0].combatant.block = 3
+	combat.players[0].energy = 1
+	combat.players[0].discard_pile.append(combat.players[0].hand.pop_back())
+	combat.players[1].strength = 2
+	combat.players[1].exhaust_pile.append(combat.players[1].hand.pop_back())
+	# ...and a real boss turn, so its move pattern actually advances.
+	combat.end_turn(0)
+	combat.end_turn(1)
+	var expect_hand0: Array = []
+	for c in combat.players[0].hand:
+		expect_hand0.append(String((c as Card).id))
+	var expect_move_type := String(combat.boss.current_move().get("type", ""))
+	var expect_hp: int = combat.boss.hp
+	var expect_round: int = combat.round_num
+
+	RunSave.clear()
+	RunSave.save(run)
+	var back := RunSave.load_run()
+	var back_combat: Combat = back.combat
+
+	var boss_ok: bool = back_combat != null and back_combat.boss.id == combat.boss.id \
+		and back_combat.boss.hp == expect_hp \
+		and String(back_combat.boss.current_move().get("type", "")) == expect_move_type \
+		and back_combat.round_num == expect_round
+	var hand_ok := true
+	if back_combat != null:
+		var back_hand: Array = []
+		for c2 in back_combat.players[0].hand:
+			back_hand.append(String((c2 as Card).id))
+		hand_ok = back_hand == expect_hand0
+	var state_ok: bool = back_combat != null \
+		and back_combat.players[0].foothold == 5 \
+		and back_combat.players[0].combatant.block == combat.players[0].combatant.block \
+		and back_combat.players[0].discard_pile.size() == combat.players[0].discard_pile.size() \
+		and back_combat.players[1].strength == 2 \
+		and back_combat.players[1].exhaust_pile.size() == 1
+	_expect(back.phase == Run.Phase.COMBAT and boss_ok and hand_ok and state_ok,
+		"a run saved mid-fight reloads INTO the fight: hands, piles, foothold, block and the boss's pattern")
+
+	# Same trap the run-level RNG comment calls out: without the combat RNG's
+	# own state, a reload would reshuffle differently than the fight actually
+	# would have the next time a pile empties.
+	_expect(back_combat._rng.randi() == combat._rng.randi(),
+		"a reloaded fight continues the same random sequence")
+	RunSave.clear()
 
 
 ## The intent icon says WHAT is coming; incoming_for says whether you survive it.
@@ -2082,6 +2143,47 @@ func _test_host_autosaves_and_resumes() -> void:
 	# would leave the player staring at a character-select screen.
 	var reached: bool = String(c2.shared.get("phase", "")) != "select" 		and int(c2.shared.get("gold", 0)) == 210
 	_expect(same and reached, "a saved run resumes in a fresh host and reaches the client")
+	RunSave.clear()
+
+
+## Backlog #14, through the host this time: step into a real fight, poke its
+## state, autosave, and check a FRESH host resumes INTO the fight — the client
+## sees "combat", not the map it used to be bounced back to.
+func _test_host_autosaves_and_resumes_mid_combat() -> void:
+	RunSave.clear()
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, true)  # solo
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	var guard := 0
+	while String(c.shared.get("phase", "")) == "map" and guard < 10:
+		guard += 1
+		var avail: Array = (c.shared.get("map", {}) as Dictionary).get("available", [])
+		if avail.is_empty():
+			break
+		c.pick_node(int(avail[0]))  # row 0 is always a fight
+	var run: Run = host._run
+	var combat: Combat = run.combat
+	combat.players[0].foothold = 3
+	var expect_hp: int = combat.boss.hp
+	host._broadcast_state()  # the autosave rides on this, unasked — captures the poke above
+	_expect(RunSave.has_save() and String(c.shared.get("phase", "")) == "combat",
+		"the host autosaves mid-fight too")
+
+	var t2 := LocalTransport.new()
+	var host2 := GameHost.new(t2, 0, 2, true)
+	_kept.append(host2)
+	var c2 := GameClient.new(t2, 1)
+	c2.join()
+	host2.resume_run(RunSave.load_run())
+	var back: Run = host2._run
+	var reached: bool = String(c2.shared.get("phase", "")) == "combat"
+	_expect(back.phase == Run.Phase.COMBAT and back.combat != null
+			and back.combat.players[0].foothold == 3 and back.combat.boss.hp == expect_hp and reached,
+		"a run saved mid-fight resumes INTO the fight, and the client sees combat, not the map")
 	RunSave.clear()
 
 
