@@ -415,7 +415,7 @@ func _place_avatar(s: Dictionary, cur_row: int, cur_col: int) -> void:
 		var id := ""
 		if not players.is_empty():
 			id = String((players[0] as Dictionary).get("character", "frog"))
-		var scene: PackedScene = load(CAST + String(HUNTER_MODEL.get(id, "bunny")) + ".glb")
+		var scene: PackedScene = load(Cast.model_path(id))
 		if scene == null:
 			return
 		_avatar = scene.instantiate()

@@ -1110,7 +1110,9 @@ func _spawn_hunter(slot: int, players: Array) -> Dictionary:
 			key = String(by_portrait[stem])
 	var holder := Node3D.new()
 	_rig.add_child(holder)
-	var path := CAST + key + ".glb"
+	# Your own cast/<character>.glb wins over the Kenney stand-in (see ui/cast.gd),
+	# so exporting a model is the whole job — no code edit to make it show up.
+	var path := Cast.model_path(cid) if Cast.is_yours(cid) else CAST + key + ".glb"
 	if ResourceLoader.exists(path):
 		var m := (load(path) as PackedScene).instantiate()
 		holder.add_child(m)

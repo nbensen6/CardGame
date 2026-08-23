@@ -299,8 +299,8 @@ func _place_hunters(s: Dictionary) -> void:
 		if id == "":
 			id = String((players[i] as Dictionary).get("portrait", "")) \
 				.get_file().get_basename()
-		var key: String = String(HUNTER_MODEL.get(id, "bunny"))
-		var path := CAST + key + ".glb"
+		# Your art first — same rule as the fight (ui/cast.gd).
+		var path := Cast.model_path(id)
 		if not ResourceLoader.exists(path):
 			continue
 		var n: Node3D = (load(path) as PackedScene).instantiate()
