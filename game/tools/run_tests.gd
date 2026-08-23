@@ -83,6 +83,9 @@ func _init() -> void:
 	# grip / ledges (SotC real-time climb)
 	_test_secure_on_holds()
 	_test_next_safe_height()
+	_test_hold_helpers_read_both_shapes()
+	_test_named_holds_dict_shape_and_unsafe_flag()
+	_test_targets_hold_card_climbs_to_a_named_hold()
 	_test_fall_drops_to_base()
 	_test_fall_noop_when_secure()
 	_test_weakpoint_threshold_bucks()
@@ -1138,6 +1141,80 @@ func _test_next_safe_height() -> void:
 	var near_top := combat.next_safe_height(0)   # -> the sigil, 6
 	_expect(from_base == 2 and from_mid == 4 and near_top == 6,
 		"the next safe hold is the ledge (or sigil) above you")
+
+
+# --- Named holds — the climb ENGINE (design/BACKLOG.md #24) ---------------
+
+func _test_hold_helpers_read_both_shapes() -> void:
+	var legacy_ok: bool = Boss.hold_height(4) == 4 and Boss.hold_safe(4) and Boss.hold_exposed_to(4).is_empty()
+	var named := {"height": 7, "safe": false, "exposed_to": ["swipe_low", "swipe_high"]}
+	var named_ok: bool = Boss.hold_height(named) == 7 and not Boss.hold_safe(named) \
+		and Boss.hold_exposed_to(named) == ["swipe_low", "swipe_high"]
+	var boss := Boss.new("Test", 10)
+	boss.ledges = [2, named]
+	var heights_ok: bool = boss.ledge_heights() == [2, 7]
+	_expect(legacy_ok and named_ok and heights_ok,
+		"hold_height/hold_safe/hold_exposed_to/ledge_heights read legacy ints and named-hold dicts alike")
+
+
+func _test_named_holds_dict_shape_and_unsafe_flag() -> void:
+	var boss := _climb_boss(8)
+	boss.ledges = [2, {"height": 5, "safe": false, "exposed_to": ["swipe_low"]}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 5
+	var unsafe_hold_not_secure: bool = not combat.is_secure(0)
+	ps.foothold = 2
+	var legacy_int_still_secure: bool = combat.is_secure(0)
+	ps.foothold = 3
+	var skips_unsafe_hold: bool = combat.next_safe_height(0) == 8  # 5 is unsafe — straight to the sigil
+	_expect(unsafe_hold_not_secure and legacy_int_still_secure and skips_unsafe_hold,
+		"a named hold can be marked unsafe, and legacy bare-int ledges keep working alongside it")
+
+
+func _test_targets_hold_card_climbs_to_a_named_hold() -> void:
+	var boss := _climb_boss(6)
+	boss.ledges = [2, 4]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [Content.make_card("route_finder")]
+	ps.energy = 3
+	combat.play_card(0, 0)  # no explicit hold_target -> nearest safe hold above (2)
+	var untargeted_ok: bool = ps.foothold == 2
+
+	var boss2 := _climb_boss(6)
+	boss2.ledges = [2, 4]
+	var combat2 := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss2)
+	var ps2: PlayerState = combat2.players[0]
+	ps2.foothold = 1
+	ps2.hand = [Content.make_card("route_finder")]
+	ps2.energy = 3
+	combat2.play_card(0, 0, true, -1, -1, 4)  # explicitly name the higher ledge
+	var explicit_ok: bool = ps2.foothold == 4
+
+	var boss3 := _climb_boss(6)
+	boss3.ledges = [2, 4]
+	var combat3 := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss3)
+	var ps3: PlayerState = combat3.players[0]
+	ps3.foothold = 1
+	ps3.hand = [Content.make_card("route_finder")]
+	ps3.energy = 3
+	combat3.play_card(0, 0, true, -1, -1, 3)  # 3 names no real hold -> falls back to nearest (2)
+	var invalid_falls_back_ok: bool = ps3.foothold == 2
+
+	var boss4 := _climb_boss(6)
+	boss4.ledges = [2, 4]
+	var combat4 := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss4)
+	var ps4: PlayerState = combat4.players[0]
+	ps4.foothold = 6  # already at the sigil — nothing left to climb to
+	ps4.hand = [Content.make_card("route_finder")]
+	ps4.energy = 3
+	combat4.play_card(0, 0)
+	var noop_at_top_ok: bool = ps4.foothold == 6
+
+	_expect(untargeted_ok and explicit_ok and invalid_falls_back_ok and noop_at_top_ok,
+		"a targets_hold card climbs straight to a named hold, defaults to the nearest one, " +
+		"ignores a fake target, and no-ops safely with nothing left above")
 
 
 func _test_fall_drops_to_base() -> void:

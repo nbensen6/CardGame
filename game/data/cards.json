@@ -19,6 +19,7 @@
     "dagger": {"name": "Dagger", "icon": "sword", "rarity": "common", "type": "attack", "cost": 0, "damage": 3, "text": "Deal 3 damage."},
     "flurry": {"name": "Flurry", "icon": "volley", "rarity": "uncommon", "type": "attack", "cost": 2, "damage": 4, "hits": 2, "text": "Deal 4 damage twice."},
     "leap": {"name": "Leap", "icon": "ascend", "rarity": "uncommon", "type": "skill", "cost": 2, "grip": 3, "target": "enemy", "text": "Climb 3."},
+    "route_finder": {"name": "Route Finder", "icon": "ascend", "rarity": "uncommon", "type": "skill", "cost": 1, "targets_hold": true, "target": "enemy", "text": "Climb straight to the next hold."},
     "tongue_lash": {"name": "Tongue Lash", "icon": "sword", "rarity": "common", "type": "attack", "cost": 1, "damage": 3, "grip": 1, "text": "Deal 3 damage. Climb 1."},
     "build_grapple": {"name": "Build Grapple", "icon": "gadget", "rarity": "uncommon", "type": "skill", "cost": 0, "create": "grapple", "text": "Build a tool into your hand."},
     "grapple": {"name": "Grappling Hook", "icon": "ascend", "rarity": "common", "type": "skill", "cost": 0, "grip": 1, "timed": true, "timed_grip": 2, "target": "enemy", "text": "Climb 1."},
@@ -159,5 +160,5 @@
     "grand_contraption": {"name": "Grand Contraption", "rarity": "rare", "type": "attack", "icon": "gadget", "cost": 3, "damage": 6, "damage_per_exhausted": 4, "create": "bomb", "target": "enemy", "text": "Deal 6 damage and an additional 4 per card burned. Build a tool into your hand."}
   },
   "starter_deck": ["slash", "slash", "slash", "brace", "brace", "scramble", "scramble", "take_aim", "cleave", "cover"],
-  "reward_pool": ["rally", "expose", "draw_aggro", "harpoon", "grip", "sunlight_blade", "bowshot", "sharpen", "rend", "dagger", "flurry", "cleave", "cover", "brace", "slash", "take_aim", "pounce", "flick", "lash_out", "piton_drive", "piston_punch", "haul", "tongue_snap", "hop", "leapfrog", "toxic_lash", "overgrowth", "blightbloom", "summit_strike", "belay", "pitons_in", "dig_in", "last_stand"]
+  "reward_pool": ["rally", "expose", "draw_aggro", "harpoon", "grip", "sunlight_blade", "bowshot", "sharpen", "rend", "dagger", "flurry", "cleave", "cover", "brace", "slash", "take_aim", "pounce", "flick", "lash_out", "piton_drive", "piston_punch", "haul", "tongue_snap", "hop", "leapfrog", "toxic_lash", "overgrowth", "blightbloom", "summit_strike", "belay", "pitons_in", "dig_in", "last_stand", "route_finder"]
 }

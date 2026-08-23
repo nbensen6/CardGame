@@ -15,7 +15,10 @@ var vulnerable: int = 0        # "exposed" stacks — each consumed hit deals bo
 var strength: int = 0          # added to every attack (grows via "enrage" moves)
 var wound: int = 0             # bleed — the Titan takes this much at the start of each of its turns
 var weak_point_height: int = 0 # 0 = low sigil (always reachable); >0 needs Foothold to strike (SotC climb)
-var ledges: Array = []         # safe rest Heights between the base and the sigil (SotC holds)
+var ledges: Array = []         # safe rest Heights between the base and the sigil (SotC holds) —
+                               # each element is either a bare int (legacy: an unrestricted safe
+                               # hold) or a named-hold Dictionary, see hold_height()/hold_safe()
+                               # below (design/BACKLOG.md #24).
 var weak_point_threshold: int = 0  # sigil damage a hunter can deal per visit before it bucks them off (0 = no limit)
 var limiter: Dictionary = {}   # {"type": ..., "value": ...} — a rule this Titan bends against a
                                 # specific strategy, applied generically by Combat._apply_limiter()
@@ -31,6 +34,28 @@ func current_move() -> Dictionary:
 ## Advance the pattern after the boss acts.
 func advance_move() -> void:
 	_move_index += 1
+
+## A hold in `ledges` is either a bare number (legacy: an unrestricted safe
+## rest Height — JSON-loaded ledges arrive as float, not int, so this checks
+## `is Dictionary` rather than `is int`) or a Dictionary { "height": int,
+## "safe": bool (default true), "exposed_to": Array[String] (default []) }.
+## These three helpers let every reader treat both shapes the same way.
+static func hold_height(h) -> int:
+	return int((h as Dictionary).get("height", 0)) if h is Dictionary else int(h)
+
+static func hold_safe(h) -> bool:
+	return bool((h as Dictionary).get("safe", true)) if h is Dictionary else true
+
+static func hold_exposed_to(h) -> Array:
+	return (h as Dictionary).get("exposed_to", []) if h is Dictionary else []
+
+## Plain heights, for legacy consumers (the climb gauge, screenshot.gd) that
+## only need "which Heights are marked" and don't care about the richer shape.
+func ledge_heights() -> Array:
+	var out: Array = []
+	for l in ledges:
+		out.append(hold_height(l))
+	return out
 
 ## Only the DYNAMIC per-fight state (what a fight can actually change) — the
 ## static data (moves, ledges, limiter, art, max_hp) is rebuilt from `id` via

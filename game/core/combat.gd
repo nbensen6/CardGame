@@ -114,28 +114,58 @@ func is_secure(pi: int) -> bool:
 	if boss.weak_point_height <= 0:
 		return true
 	var fh: int = players[pi].foothold
-	return fh <= 0 or fh >= boss.weak_point_height or fh in boss.ledges
+	if fh <= 0 or fh >= boss.weak_point_height:
+		return true
+	for l in boss.ledges:
+		if Boss.hold_height(l) == fh and Boss.hold_safe(l):
+			return true
+	return false
 
 ## The next safe hold strictly above a hunter — the ledge (or sigil) they're
 ## climbing toward. Returns their current height if there's nothing above (secure
-## at the top). Drives the "reach Height N" prompt in the view.
+## at the top). Drives the "reach Height N" prompt in the view. An unsafe named
+## hold (#24) doesn't count as a valid rest stop, same as a bare gap in the wall.
 func next_safe_height(pi: int) -> int:
 	if pi < 0 or pi >= players.size() or boss.weak_point_height <= 0:
 		return 0
 	var fh: int = players[pi].foothold
 	var best := boss.weak_point_height  # the sigil is the ultimate hold
 	for l in boss.ledges:
-		var lv := int(l)
+		if not Boss.hold_safe(l):
+			continue
+		var lv := Boss.hold_height(l)
 		if lv > fh and lv < best:
 			best = lv
 	return best if best > fh else fh
+
+## True when `height` names an actual hold on this Titan — a ledge (any
+## safety) or the sigil itself — rather than an arbitrary number.
+func _is_named_hold(height: int) -> bool:
+	if height > 0 and height == boss.weak_point_height:
+		return true
+	for l in boss.ledges:
+		if Boss.hold_height(l) == height:
+			return true
+	return false
+
+## Where a targets_hold card actually climbs to: the requested Height if it
+## names a real hold above the hunter's current one, else the nearest safe
+## hold above (the sensible default until item 25's drag UI supplies a
+## deliberate choice — see Card.targets_hold).
+func _resolve_hold_target(pi: int, requested_height: int) -> int:
+	var ps: PlayerState = players[pi]
+	if requested_height > ps.foothold and _is_named_hold(requested_height):
+		return requested_height
+	return next_safe_height(pi)
 
 ## The highest safe hold strictly below a Height (a ledge, or the base). Where a
 ## hunter lands when the beast shakes them down a hold.
 func _hold_below(height: int) -> int:
 	var best := 0
 	for l in boss.ledges:
-		var lv := int(l)
+		if not Boss.hold_safe(l):
+			continue
+		var lv := Boss.hold_height(l)
 		if lv < height and lv > best:
 			best = lv
 	return best
@@ -203,7 +233,7 @@ func _meld_cards(a: Card, b: Card) -> Card:
 		"ally_energy": a.ally_energy + b.ally_energy,
 		"vulnerable": a.vulnerable + b.vulnerable,
 		"taunt": a.taunt or b.taunt,
-		"grip": a.grip + b.grip,
+		"grip": a.grip + b.grip, "targets_hold": a.targets_hold or b.targets_hold,
 		"ally_grip": a.ally_grip + b.ally_grip,
 		"pull_ally": maxi(a.pull_ally, b.pull_ally),
 		"sac_ally_grip": a.sac_ally_grip + b.sac_ally_grip,
@@ -335,7 +365,8 @@ func incoming_for(pi: int) -> Dictionary:
 ## `sac_index` / `target_index` name cards in the caster's hand for selection cards
 ## (Burn Coal: burn one, cheapen another; Catapult: burn one). They're chosen on the
 ## client and validated here. -1 = none.
-func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, target_index: int = -1) -> bool:
+func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, target_index: int = -1,
+		hold_target: int = -1) -> bool:
 	if not can_play(pi, ci):
 		return false
 	var ps: PlayerState = players[pi]
@@ -392,6 +423,17 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 			var fed_ally: PlayerState = players[ally_index(pi)]
 			fed_ally.foothold = mini(fed_ally.foothold + ps.poison_lift, FOOTHOLD_MAX)
 			_log("%s's vines surge — %s climbs +%d." % [who, fed_ally.combatant.name, ps.poison_lift])
+	if card.targets_hold:  # climbs straight TO a named hold instead of adding grip (#24)
+		var dest := _resolve_hold_target(pi, hold_target)
+		if dest > ps.foothold:
+			ps.foothold = mini(dest, FOOTHOLD_MAX)
+			_log("%s plays %s — climbs to the hold at Height %d." % [who, card.name, ps.foothold])
+			if ps.ally_climb > 0:  # roped together — the ally climbs with you
+				var roped_h: PlayerState = players[ally_index(pi)]
+				roped_h.foothold = mini(roped_h.foothold + ps.ally_climb, FOOTHOLD_MAX)
+				_log("%s is roped — %s climbs +%d." % [who, roped_h.combatant.name, ps.ally_climb])
+		else:
+			_log("%s plays %s — no hold left to reach from here." % [who, card.name])
 	var climbed: int = int(pv["grip"])
 	if climbed > 0:
 		ps.foothold = mini(ps.foothold + climbed, FOOTHOLD_MAX)

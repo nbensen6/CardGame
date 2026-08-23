@@ -121,7 +121,7 @@ Ordered. Source in brackets.
   starter deck, a reward pool, a `create`/`prepare` field or an event resolves
   to a real card; same for beast ids and relic ids. A typo in data currently
   fails silently at runtime. *Done when:* one test proves the whole graph.
-- [ ] **24. Named holds on a beast — the climb ENGINE** `cloud-safe` —
+- [x] **24. Named holds on a beast — the climb ENGINE** `cloud-safe` —
   Nick, 2026-08-22: the climb should have *spots* you choose, not just a number
   that goes up. Today a climb card adds N Height and that is the whole decision.
   Generalise `Boss.ledges` (a bare int array) into named holds — height, whether
@@ -283,6 +283,59 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-23** — #24 Named holds on a beast, the climb ENGINE: generalised
+  `Boss.ledges` so each element can be either a bare number (legacy: an
+  unrestricted safe rest Height — kept working unchanged for all 14 existing
+  beasts) or a `{"height", "safe", "exposed_to"}` Dictionary. Three static
+  helpers on `Boss` (`hold_height`/`hold_safe`/`hold_exposed_to`) let
+  `is_secure`/`next_safe_height`/`_hold_below` in `combat.gd` read both shapes
+  the same way; an unsafe named hold correctly does NOT count as a valid rest
+  stop. Gotcha the first pass missed: JSON-loaded ledges arrive as `float`,
+  not `int`, so branching on `h is int` silently mis-detected every real
+  boss's ledges as the Dictionary shape and crashed on cast — caught by
+  running the FULL suite (not just the new tests), fixed by branching on
+  `h is Dictionary` instead (numeric legacy values, int or float, fall
+  through to the `else`). Added one new card field, `Card.targets_hold: bool`
+  (wired through `from_dict`/`to_dict`/`_meld_cards`, the same generic spots
+  every other flag lives), and a `hold_target` parameter on `Combat.play_card`
+  (same shape as the existing `sac_index`/`target_index` per-play choices) —
+  a targeting card climbs straight to a named hold instead of adding `grip`;
+  an unset or invalid target falls back to the nearest safe hold above
+  (`next_safe_height`), and it's a safe no-op with nothing left to reach.
+  Deliberately did NOT make the target an absolute height baked into card
+  data (bosses' ledge heights vary too much across the roster for one number
+  to generalize — a card that only makes sense against specific fights is bad
+  content), and did NOT wire `exposed_to` into any move's damage logic yet —
+  it's present as real data (satisfying "which moves it is exposed to") but
+  UNCONSUMED, same as `wide`/`timing_zone` was left in #12, because rewiring
+  `swipe_high`/`swipe_low`'s existing binary foothold>0 check risked changing
+  behavior on content this item didn't ask to touch. One new card,
+  `route_finder` (uncommon, cost 1, in the shared reward pool), proves the
+  field end-to-end rather than leaving it data with no consumer. Also had to
+  teach `GameHost._keywords_of` about the new field (the existing reflection
+  test — added by #16 — walks every Card field and fails if any produces no
+  tooltip) — reused the existing "height" keyword rather than inventing one.
+  Left `game/views/combat_3d.gd` and `game/tools/screenshot.gd` (both outside
+  `/core`, both read `boss.ledges` as a flat membership list) untouched: no
+  real beast's `ledges` was converted to the Dictionary shape in this pass,
+  so their behavior is unchanged either way — `Boss.ledge_heights()` exists
+  for whichever session eventually needs them to cope with mixed shapes.
+  5 new tests (helper shapes, an unsafe named hold, and the four card-targeting
+  cases: default/explicit/invalid/no-holds-left); `run_tests.gd` all green;
+  `balance_sim.gd` ran clean as a smoke test only, not tuned to.
+  **Also:** this session's initial `git checkout -B main origin/main` pinned
+  to a stale cached ref 23 commits behind the real tip — the same recurring
+  pattern rule 9 above exists to catch. Built a full duplicate implementation
+  of #4 (per-beast limiters, already done by a prior session under a
+  different but equivalent design) before `git push` was rejected as
+  non-fast-forward, which is what surfaced it. Fetched, confirmed items #1
+  and #4 were both already `[x]` on the real `origin/main`, discarded the
+  redundant commit (nothing had reached the remote, so no history was lost),
+  and re-read the queue fresh before picking #24 as the true next item. Rule
+  9 already names this exact failure mode from an earlier occurrence; this is
+  at least the eighth time it's been logged. Not fixing the root cause here
+  either (still out of scope for a single queue item), but flagging again
+  since "worth Nick's attention" keeps being true and nobody's acted on it.
 - **2026-08-23** — #18 Content integrity test: found the item was mostly
   already covered — `_test_every_referenced_card_id_resolves` already proves
   every card id in starter decks/reward pools, and `_test_relics_all_load`

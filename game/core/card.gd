@@ -17,6 +17,9 @@ var ally_energy: int   # energy given to the ALLY (combo enabler)
 var vulnerable: int    # "exposed" stacks added to the Titan (next hits deal bonus)
 var taunt: bool        # you become the Titan's target this round (tank for your ally)
 var grip: int          # Foothold gained — climb toward a high weak point (SotC)
+var targets_hold: bool # climbs straight to a named hold (a ledge or the sigil) instead of
+                        # adding `grip` — see Combat._resolve_hold_target() (#24, the climb
+                        # ENGINE; item 25 is the drag UI that will choose which hold)
 var timed: bool        # playing it triggers a timing bar; nailing it grants the timed bonus
 var timed_grip: int    # bonus Height on a well-timed throw (Goblin Engineer's grapple)
 var timed_damage: int  # bonus damage on a well-timed strike (interactive attacks)
@@ -66,6 +69,7 @@ static func from_dict(d: Dictionary) -> Card:
 	c.vulnerable = int(d.get("vulnerable", 0))
 	c.taunt = bool(d.get("taunt", false))
 	c.grip = int(d.get("grip", 0))
+	c.targets_hold = bool(d.get("targets_hold", false))
 	c.timed = bool(d.get("timed", false))
 	c.timed_grip = int(d.get("timed_grip", 0))
 	c.timed_damage = int(d.get("timed_damage", 0))
@@ -111,7 +115,7 @@ func to_dict() -> Dictionary:
 		"damage_per_exhausted": damage_per_exhausted,
 		"block_per_exhausted": block_per_exhausted,
 		"ally_energy": ally_energy, "vulnerable": vulnerable, "taunt": taunt,
-		"grip": grip, "ally_grip": ally_grip, "pull_ally": pull_ally,
+		"grip": grip, "targets_hold": targets_hold, "ally_grip": ally_grip, "pull_ally": pull_ally,
 		"sac_ally_grip": sac_ally_grip, "exhaust_pick": exhaust_pick,
 		"cheapen_pick": cheapen_pick, "cheapen_amount": cheapen_amount, "meld": meld,
 		"prepare": prepare, "create": create,

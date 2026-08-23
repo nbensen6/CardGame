@@ -424,7 +424,8 @@ func _keywords_of(c: Card) -> Array:
 			or c.block_per_exhausted > 0 or c.timed_block > 0 or c.timed_ally_block > 0:
 		ids.append("block")
 	if c.grip > 0 or c.ally_grip > 0 or c.timed_grip > 0 or c.pull_ally > 0 \
-			or c.sac_ally_grip > 0 or c.damage_per_foothold > 0 or c.damage_per_ally_foothold > 0:
+			or c.sac_ally_grip > 0 or c.damage_per_foothold > 0 or c.damage_per_ally_foothold > 0 \
+			or c.targets_hold:
 		ids.append("height")
 		ids.append("armoured")
 	if c.taunt:
