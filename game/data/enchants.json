@@ -1,0 +1,17 @@
+{
+  "_comment": "Card enchantments (backlog #12, the engine half of #3). A data-driven modifier attached to ONE card via Card.enchanted_copy() -- the same generic-copy trick upgraded_copy() already uses, just carrying a named effect+value instead of bumping numbers. Combat (or later, the view) reads effect+value rather than special-casing an enchant id per card, the same shape relics.json already uses for team-wide mods. Only 'sure' has a /core consumer today (Combat.play_card); 'wide' is valid, tested data waiting on the card-face + timing-window UI work that #3 still owns -- deliberately not wired into the view here (needs a screen).",
+  "enchants": {
+    "sure": {
+      "name": "Sure",
+      "text": "This card's timing always lands, even on a fumble.",
+      "effect": "auto_nail",
+      "value": 1
+    },
+    "wide": {
+      "name": "Wide",
+      "text": "A much wider timing window for this card.",
+      "effect": "timing_zone",
+      "value": 30
+    }
+  }
+}

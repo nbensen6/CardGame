@@ -430,6 +430,8 @@ func _keywords_of(c: Card) -> Array:
 		ids.append("taunt")
 	if c.exhaust_pick or c.damage_per_exhausted > 0 or c.block_per_exhausted > 0:
 		ids.append("burn")
+	if c.enchant != "":
+		ids.append("enchant")
 	var out: Array = []
 	for id in ids:
 		var k := Content.keyword(String(id))

@@ -351,8 +351,9 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		cheapen_card = ps.hand[target_index]
 	ps.energy -= effective_cost(pi, card)
 	ps.hand.remove_at(ci)
-	# A fumbled timed card slips away — removed with no effect (not even discarded).
-	if card.timed and not timing_hit:
+	# A fumbled timed card slips away — removed with no effect (not even discarded)
+	# — unless the "sure" enchant is attached, which always lands (backlog #12).
+	if card.timed and not timing_hit and String(card.enchant_data().get("effect", "")) != "auto_nail":
 		_log("%s fumbles %s — it slips away." % [ps.combatant.name, card.name])
 		_check_end()
 		return true

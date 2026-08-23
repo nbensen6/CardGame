@@ -50,6 +50,7 @@ var target: String     # "self" | "ally" | "enemy" — who the card acts on (UI 
 var icon: String       # optional icon-key override (else the view infers one from effects)
 var text: String       # rules text, shown on the card face (no hover needed — §5)
 var upgraded: bool     # a campfire-sharpened card (name gets a +)
+var enchant: String    # id of an attached enchant (data/enchants.json); "" = none
 
 static func from_dict(d: Dictionary) -> Card:
 	var c := Card.new()
@@ -98,6 +99,7 @@ static func from_dict(d: Dictionary) -> Card:
 	c.icon = String(d.get("icon", ""))
 	c.text = String(d.get("text", ""))
 	c.upgraded = bool(d.get("upgraded", false))
+	c.enchant = String(d.get("enchant", ""))
 	return c
 
 
@@ -124,6 +126,7 @@ func to_dict() -> Dictionary:
 		"damage_per_wound": damage_per_wound,
 		"strength": strength, "wound": wound, "hits": hits, "draw": draw,
 		"target": target, "icon": icon, "text": text, "upgraded": upgraded,
+		"enchant": enchant,
 	}
 
 
@@ -152,4 +155,23 @@ func upgraded_copy() -> Card:
 		d["cost"] = int(d["cost"]) - 1  # nothing to scale — make it cheaper instead
 	d["name"] = String(d["name"]) + "+"
 	d["upgraded"] = true
+	return Card.from_dict(d)
+
+
+## The attached enchant as {id, name, text, effect, value}, or {} if none — one
+## generic lookup so a reader keys off `effect` (e.g. "auto_nail") rather than
+## special-casing enchant ids, the same shape Content.make_relic() already uses.
+func enchant_data() -> Dictionary:
+	if enchant == "":
+		return {}
+	return Content.make_enchant(enchant)
+
+
+## An enchanted copy. The same generic trick upgraded_copy() uses — this works on
+## ANY card without the caller (or the card) knowing what the enchant does — but
+## attaches a named effect+value instead of bumping numbers. One enchant slot:
+## enchanting an already-enchanted card REPLACES the old one rather than stacking.
+func enchanted_copy(enchant_id: String) -> Card:
+	var d := to_dict()
+	d["enchant"] = enchant_id
 	return Card.from_dict(d)

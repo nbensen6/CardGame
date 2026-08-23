@@ -81,7 +81,7 @@ Ordered. Source in brackets.
   move types exist; use them. *Done when:* no beast has fewer than 4 moves or
   only one kind, and a test asserts it.
   [measured 2026-08-22]
-- [ ] **12. The enchantment ENGINE** `cloud-safe` — the data-and-rules half of
+- [x] **12. The enchantment ENGINE** `cloud-safe` — the data-and-rules half of
   item 3, split out because only the card FACE needs a screen.
   `data/enchants.json` plus one generic apply on `Card`, the same trick
   `upgraded_copy()` already uses. *Done when:* enchants are data, apply
@@ -257,6 +257,42 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-23** — #12 The enchantment ENGINE: added `Card.enchant: String`
+  (id of an attached enchant, "" = none) plus `data/enchants.json` with two
+  entries — `sure` (`effect: auto_nail`) and `wide` (`effect: timing_zone`),
+  the two ideas item #3 itself names. One generic apply, the same trick
+  `upgraded_copy()` already uses: `Card.enchanted_copy(id)` works on any card
+  without either the card or the caller knowing what the enchant does, and
+  never mutates the original. `Card.enchant_data()` reads the id back through
+  `Content.make_enchant()` (same `{name, text, effect, value}` shape
+  `relics.json` already uses) so a reader keys off `effect`, not a hardcoded
+  enchant id. `sure` got a real /core consumer: `Combat.play_card`'s existing
+  fumble check (a mistimed `timed` card normally slips away with no effect)
+  now also checks for `effect == "auto_nail"` and lets it land anyway — one
+  added condition, no new branch. `wide` is valid, tested data with NO
+  consumer yet — the timing window itself is rendered client-side
+  (`combat_3d.gd`'s `zone_bonus`, already fed by a relic-side `timing_zone`
+  mod), so actually widening it per-card is the needs-a-screen half item #3
+  still owns; wiring it up without being able to look at it would be
+  guessing, which the hard rules forbid. Did NOT touch the card face (name,
+  icon, text) or any view/UI file — only `core/card.gd`, `core/content.gd`,
+  `core/combat.gd`, `session/game_host.gd` (one line adding an `enchant`
+  keyword id, mirroring how `timed`/`burn` etc. are derived) and
+  `data/keywords.json`/`data/enchants.json`. New field round-trips through
+  save/load for free — `_test_card_dict_round_trips_every_field` walks the
+  Card class generically and already covered it without changes. Three new
+  tests (generic attach-to-any-card, data-integrity over the whole enchant
+  pool, and `sure` actually landing a fumbled timed card); `run_tests.gd` all
+  green (61 assertions incl. the three new ones); `balance_sim.gd` run as a
+  smoke test only — nothing exploded, not tuned to.
+  **Also:** before starting, `git checkout -B main origin/main` warned about
+  leaving 11 commits behind on a detached HEAD — the same stale-local-ref
+  false alarm logged on 2026-08-22 and 2026-08-23, not a real miss this time:
+  a fresh `git fetch origin main` immediately showed `origin/main` already
+  at those 11 commits, so nothing was lost or re-pushed. Noting it again only
+  because it's now the third time — if a fourth cloud run hits this, it's
+  worth actually fixing (e.g. `git fetch` before the very first `git log
+  origin/main` check) rather than re-diagnosing it by hand each time.
 - **2026-08-23** — #11 Beast move patterns: 7 of 15 beasts had fewer than 4
   moves or only one move kind (`crag_pup` was literally two `attack`s at 7
   and 10). Gave each a 4th (or, for `bounder`, a 3rd and 4th) move reusing

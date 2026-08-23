@@ -13,6 +13,7 @@ const RELICS_PATH := "res://data/relics.json"
 const CHARACTERS_PATH := "res://data/characters.json"
 const ASCENSION_PATH := "res://data/ascension.json"
 const KEYWORDS_PATH := "res://data/keywords.json"
+const ENCHANTS_PATH := "res://data/enchants.json"
 
 static var _cache: Dictionary = {}
 
@@ -105,6 +106,22 @@ static func make_relic(id: String) -> Dictionary:
 	var rd: Dictionary = (relics[id] as Dictionary).duplicate()
 	rd["id"] = id
 	return rd
+
+## An enchant as a plain dict {id, name, text, effect, value} (enchants are
+## passive data, not behaviour — Card/Combat read effect+value, same shape
+## make_relic() already uses).
+static func make_enchant(id: String) -> Dictionary:
+	var enchants: Dictionary = _read_json(ENCHANTS_PATH).get("enchants", {})
+	if not enchants.has(id):
+		push_warning("Content: unknown enchant '%s'" % id)
+		return {}
+	var ed: Dictionary = (enchants[id] as Dictionary).duplicate()
+	ed["id"] = id
+	return ed
+
+## Every enchant id in data — content-integrity checks walk the whole set.
+static func all_enchant_ids() -> Array:
+	return (_read_json(ENCHANTS_PATH).get("enchants", {}) as Dictionary).keys()
 
 ## Characters, in menu order: [{id, name, desc}, ...].
 static func list_characters() -> Array:

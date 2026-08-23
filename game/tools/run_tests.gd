@@ -59,6 +59,8 @@ func _init() -> void:
 	_test_events_load_and_are_well_formed()
 	_test_event_gold_cost_never_goes_negative()
 	_test_card_upgrade_bumps_numbers()
+	_test_enchanted_copy_attaches_to_any_card()
+	_test_enchants_all_load()
 	_test_campfire_rest_remove_upgrade()
 	_test_skip_reward_keeps_the_deck_lean()
 	_test_rule_changing_relics()
@@ -79,6 +81,7 @@ func _init() -> void:
 	_test_fall_noop_when_secure()
 	_test_weakpoint_threshold_bucks()
 	_test_timed_damage_bonus()
+	_test_sure_enchant_lands_even_on_a_fumble()
 	_test_timed_block_guards_on_a_hit()
 	_test_timed_ally_block_anchors_the_ally()
 	_test_every_referenced_card_id_resolves()
@@ -570,6 +573,33 @@ func _test_card_upgrade_bumps_numbers() -> void:
 		and up_aim.draw == take_aim.draw + 1
 		and twice.damage == up.damage,
 		"upgrading bumps whatever numbers a card uses, once")
+
+
+## The enchant engine (backlog #12): one generic copy trick, same shape as
+## upgraded_copy(), works on ANY card without either the card or the caller
+## knowing what the enchant does — and never mutates the original (cards are
+## immutable during combat, same rule upgraded_copy() follows).
+func _test_enchanted_copy_attaches_to_any_card() -> void:
+	var slash := _slash()
+	var enchanted_slash := slash.enchanted_copy("wide")
+	var take_aim := Content.make_card("take_aim")
+	var enchanted_aim := take_aim.enchanted_copy("sure")
+	_expect(enchanted_slash.enchant == "wide"
+		and String(enchanted_slash.enchant_data().get("effect", "")) == "timing_zone"
+		and enchanted_aim.enchant == "sure"
+		and String(enchanted_aim.enchant_data().get("effect", "")) == "auto_nail"
+		and slash.enchant == "" and take_aim.enchant == "",
+		"enchanted_copy attaches any enchant to any card generically, without mutating the original")
+
+
+func _test_enchants_all_load() -> void:
+	var ids: Array = Content.all_enchant_ids()
+	var ok := ids.size() >= 2
+	for id in ids:
+		var e: Dictionary = Content.make_enchant(String(id))
+		if String(e.get("name", "")) == "" or String(e.get("text", "")) == "" or String(e.get("effect", "")) == "":
+			ok = false
+	_expect(ok, "every enchant declares a name, text and effect")
 
 
 func _test_campfire_rest_remove_upgrade() -> void:
@@ -1191,6 +1221,21 @@ func _test_timed_damage_bonus() -> void:
 	combat.play_card(0, _first_playable(combat, 0), false)  # fumble: slips away, no damage
 	_expect(before - hit_hp == 9 and combat.boss.hp == hit_hp,
 		"a well-timed strike adds timed_damage; a fumble deals nothing")
+
+
+## The "sure" enchant's one /core behaviour: a card that would normally fumble
+## and slip away with no effect instead lands its full timed bonus, same as a
+## nailed hit. ("wide" — the other half of backlog #3's idea — has no /core
+## consumer yet; the timing window itself is client-rendered, so widening it is
+## the needs-a-screen work #3 still owns.)
+func _test_sure_enchant_lands_even_on_a_fumble() -> void:
+	var combat := _new_combat([_deck_of(_pounce, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var before: int = combat.boss.hp
+	var idx := _first_playable(combat, 0)
+	combat.players[0].hand[idx] = combat.players[0].hand[idx].enchanted_copy("sure")
+	combat.play_card(0, idx, false)  # a fumbled timing hit — Sure carries it anyway
+	_expect(before - combat.boss.hp == 9,  # 4 base + 5 timed_damage, same as a nailed hit
+		"a Sure-enchanted card lands its timed bonus even when the timing is missed")
 
 
 ## A timed defensive card: nail the window and the guard holds; mistime it and the
