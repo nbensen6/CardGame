@@ -65,6 +65,8 @@ func _init() -> void:
 	_test_skip_reward_keeps_the_deck_lean()
 	_test_rule_changing_relics()
 	_test_backlog10_new_rule_changing_relics()
+	_test_shake_resist_relic()
+	_test_backlog13_six_relics_change_a_rule()
 	_test_relics_all_load()
 	_test_climb_twisting_moves()
 	_test_per_class_reward_pools()
@@ -735,6 +737,41 @@ func _test_backlog10_new_rule_changing_relics() -> void:
 
 	_expect(carried_block and never_bucked and soft_landing and handed_off,
 		"backlog #10's new relics carry Block, cancel the buck, soften a fall, and hand off Energy")
+
+
+func _test_shake_resist_relic() -> void:
+	# shake_resist (Anchor Pin): a sweep still hits, but no longer shakes you down a hold
+	var boss := Boss.new("Shaker", 500)
+	boss.moves = [{"type": "attack_all", "value": 5}]
+	boss.weak_point_height = 6
+	boss.ledges = [2, 4]
+	var c := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)],
+		[Combatant.new("A", 42), Combatant.new("B", 42)], boss, 42, 0, 0, 0, 0, [], {"shake_resist": 1})
+	c.start()
+	c.players[0].foothold = 4  # upper ledge
+	c.players[1].foothold = 2  # lower ledge
+	var hp0_before: int = c.players[0].combatant.hp
+	c.end_turn(0)
+	c.end_turn(1)  # attack_all -> would shake without the relic
+	var still_hit: bool = c.players[0].combatant.hp < hp0_before
+	var held_the_hold: bool = c.players[0].foothold == 4 and c.players[1].foothold == 2
+	_expect(still_hit and held_the_hold, "shake_resist takes the sweep's damage but keeps the hold")
+
+
+## Item #13: at least 6 relics change a RULE (what happens) rather than a NUMBER
+## (how much). The flat-count check in _test_relics_all_load() is deliberately
+## loose (anything not a basic stat bump); this one names the actual rule-changing
+## effects — each already proven by a behavior test above — and walks the whole
+## data file so a future edit can't quietly drop below the bar.
+func _test_backlog13_six_relics_change_a_rule() -> void:
+	var rule_changing_effects := ["fall_safe", "shake_resist", "rhythm_keeps",
+		"block_carries", "no_buck", "soft_fall", "energy_handoff"]
+	var found := 0
+	for id in Content.all_relic_ids():
+		var r: Dictionary = Content.make_relic(String(id))
+		if rule_changing_effects.has(String(r.get("effect", ""))):
+			found += 1
+	_expect(found >= 6, "at least 6 relics alter a rule rather than a number (found %d)" % found)
 
 
 func _test_climb_twisting_moves() -> void:

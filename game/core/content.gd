@@ -96,6 +96,11 @@ static func reward_pool(character_id: String = "") -> Array:
 static func relic_pool() -> Array:
 	return (_read_json(RELICS_PATH).get("pool", []) as Array).duplicate()
 
+## Every relic id in relics.json, reachable or not — content-integrity checks
+## walk the whole set rather than just what the reward pool happens to offer.
+static func all_relic_ids() -> Array:
+	return (_read_json(RELICS_PATH).get("relics", {}) as Dictionary).keys()
+
 ## A relic as a plain dict {id, name, effect, value, text} (relics are passive
 ## data, not behaviour — Run/Combat read the effect+value).
 static func make_relic(id: String) -> Dictionary:

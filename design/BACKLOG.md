@@ -87,7 +87,7 @@ Ordered. Source in brackets.
   `upgraded_copy()` already uses. *Done when:* enchants are data, apply
   generically to any card, round-trip through save/load, and are covered by
   tests. Do NOT touch the card face — that half is tagged needs-a-screen.
-- [ ] **13. Relics that change a rule** `cloud-safe` — all 26 relics are the
+- [x] **13. Relics that change a rule** `cloud-safe` — all 26 relics are the
   same `{effect, value}` number bump. depth-plan §4 asked for rule-changers and
   none exist. *Done when:* at least 6 relics alter a RULE (an extra timing
   window, climbing without losing grip, exhaust returning a card) rather than
@@ -257,6 +257,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-23** — #13 Relics that change a rule: turned out mostly already
+  done by #10, which wasn't obvious until counted. `relics.json` already had
+  7 relics whose effect changes what happens rather than a number — `fall_safe`
+  (Feather Harness, pre-existing), `shake_resist` (Anchor Pin, pre-existing),
+  `rhythm_keeps` (Drummer's Hide, pre-existing), plus #10's four
+  (`block_carries`, `no_buck`, `soft_fall`, `energy_handoff`) — already past
+  the "at least 6" bar the item set. What was actually missing: `shake_resist`
+  (Anchor Pin) had no behavior test at all, and nothing pinned the *count* of
+  rule-changing relics against regression — the existing `_test_relics_all_load`
+  counts "not a flat stat bump" (>=12), which is a much looser bar than "changes
+  a rule" and would happily pass even if every true rule-changer were removed,
+  since the item's own definition (an extra timing window, climbing without
+  losing grip, exhaust returning a card) is stricter than that. Added
+  `_test_shake_resist_relic` (a sweep still deals damage but no longer shakes
+  the hunter down a hold) and `_test_backlog13_six_relics_change_a_rule`, which
+  names the actual rule-changing effect set and walks every relic in the data
+  file via a new `Content.all_relic_ids()` (mirrors `all_card_ids()`) so a
+  future edit that dropped below 6 would fail loudly instead of silently.
+  No new relic content — the item's bar was already met by data, so this closes
+  the gap between "the rule exists" and "a test proves it," which is what the
+  item actually asked for. `run_tests.gd` all green (65 assertions incl. the
+  two new ones); `balance_sim.gd` run as a smoke test only — nothing exploded,
+  not tuned to (no relic weights or values changed).
+  **Also:** before starting, `git checkout -B main origin/main` again warned
+  about stranded commits on a detached HEAD; `git fetch origin main` first
+  showed `origin/main` already at the tip (bda5c0b, #12's commit) — the same
+  stale-local-ref pattern logged three times before, not a real miss. Not
+  re-logging the "worth fixing" note again since it's now a known, harmless,
+  recurring artifact of how the container's checkout arrives.
 - **2026-08-23** — #12 The enchantment ENGINE: added `Card.enchant: String`
   (id of an attached enchant, "" = none) plus `data/enchants.json` with two
   entries — `sure` (`effect: auto_nail`) and `wide` (`effect: timing_zone`),
