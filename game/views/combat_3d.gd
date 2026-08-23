@@ -66,6 +66,15 @@ const BEAST_HEIGHT_PER_CLIMB := 1.6
 ## now the beasts are half again as tall.
 const VIEW_WINDOW_MIN := 9.0
 const VIEW_WINDOW_MAX := 28.0
+## How far the camera slides toward the hunter you are HOLDING, as a fraction of
+## their offset from the beast's axis (Nick, 2026-08-23: the shot is too centred,
+## and switching hunter should show you who you now control).
+##
+## Not 1.0. Sitting the pivot fully on a hunter shoves the beast — the thing you
+## are climbing and the thing telegraphing at you — out toward the frame edge.
+## Just over half reads clearly as "the camera favours you" while the body stays
+## the subject. It is also what makes a swap legible: the whole frame slides.
+const CAMERA_LEAN := 0.55
 
 ## The bottom strip the hand now occupies. The camera frames into what is LEFT of
 ## the screen and lifts its aim to match, so the beast stands in clear air instead
@@ -97,11 +106,17 @@ const ZOOM_STEP := 0.12
 ## centre; at fov 48 on 16:9 a frame width is ~1.58 * distance, so 0.11 of a frame
 ## costs ~0.17 per unit of distance.
 ##
-## Held well under that in practice: the rail only claims the LEFT edge, while the
-## party and turn buttons claim the bottom RIGHT, and hunters standing on the
-## ground live down there. Shifting the full amount centres the beast beautifully
-## and posts a hunter behind the party panel, so this splits the difference.
-const SCENE_SHIFT := 0.09
+## Now 0. This compensated for a hand RAIL down the left edge, and the cards moved
+## to the bottom on 2026-08-15 — so for a week the camera has been trucking
+## sideways to dodge a UI element that no longer exists, which is most of why the
+## shot read as subtly off (Nick, 2026-08-23). The left is now the party panel and
+## the right is the climb gauge, which balance each other, so the scene's centre
+## and the screen's centre are the same place again.
+##
+## Kept as a constant rather than deleted: if a future layout claims one edge
+## again, this is the knob, and the derivation above is the reason it is 0.09-ish
+## rather than arbitrary.
+const SCENE_SHIFT := 0.0
 ## Downward lens shift per unit of distance while a hunter is on the ground, which
 ## lifts the whole shot so tiny hunters at a Titan's feet aren't pressed into the
 ## bottom edge. See _apply_orbit for why this can't be done by moving the pivot.
@@ -800,11 +815,27 @@ func snap_camera() -> void:
 	_aim_camera(0.0, true)
 
 
+## Where the camera leans, sideways. Follows the hunter you are holding, so the
+## frame answers "who am I?" without a label — and answers it by MOVING, which is
+## the part a static badge cannot do.
+##
+## Yields to _user_framed: once someone has dragged the camera themselves, it
+## stops sliding out from under them.
+func _lean_x() -> float:
+	if _user_framed or _hunters.is_empty():
+		return 0.0
+	var me := _me()
+	if me < 0 or me >= _hunters.size():
+		return 0.0
+	return float((_hunters[me]["home"] as Vector3).x) * CAMERA_LEAN
+
+
 func _aim_camera(delta: float, snap: bool) -> void:
 	if _client == null or _beast == null:
 		return
 	var want := _climb_frame()
 	_pivot_target.y = want.x
+	_pivot_target.x = _lean_x()
 	if not _user_framed:
 		_working_dist = _dist_for_window(want.y)
 	if snap:

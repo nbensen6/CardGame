@@ -10,7 +10,8 @@
 ##   3dshop 3dwon | 3dswap (drives the keybinds and reports) | 3drebind (drives the
 ##   settings menu's key remapping and reports) | 3dgame 3dloop (the router itself,
 ##   walking a whole lap)
-## modifiers: hold= (stop a driven sequence at a phase) beast= act= orbit=
+## modifiers: hold= (stop a driven sequence at a phase) beast= act= orbit= size=WxH
+##   mobile (force the handheld layout) slot=N (force the active hunter — camera work)
 extends SceneTree
 
 var _out := "shot.png"
@@ -20,6 +21,7 @@ var _beast := ""  # force a specific beast, to check a model that RNG rarely pic
 var _act := 0     # 3dmap: fast-forward to this act, so later regions get looked at
 var _orbit := 999.0  # 3D combat: drive the orbit camera to this yaw, in degrees
 var _size := Vector2i.ZERO  # size=WxH — shoot at a different screen shape
+var _slot := -1  # slot=N — force the active hunter, so camera framing can be compared
 
 
 func _initialize() -> void:
@@ -36,6 +38,8 @@ func _initialize() -> void:
 			_act = int(a.substr(4))
 		elif a.begins_with("orbit="):
 			_orbit = float(a.substr(6))
+		elif a.begins_with("slot="):
+			_slot = int(a.substr(5))   # which hunter is ACTIVE, for camera framing work
 		elif a == "mobile":
 			Screen.force_handheld = true   # shoot the phone layout from a desktop
 		elif a.begins_with("size="):
@@ -339,6 +343,15 @@ func _capture() -> void:
 	for _i in 15:  # let the scene lay out and draw
 		await process_frame
 	await _await_camera(current_scene)
+	if _slot >= 0 and current_scene != null and current_scene.has_method("_switch_to"):
+		current_scene.call("_switch_to", _slot)
+		# snap rather than wait: this harness runs frames as fast as it can, so the
+		# real-time ease barely advances and every measurement would be mid-glide.
+		if current_scene.has_method("snap_camera"):
+			current_scene.call("snap_camera")
+		for _i in 4:
+			await process_frame
+		print("SLOT active=%s pivot=%s lean=%s" % [str(current_scene.get("_active_slot")), str(current_scene.get("_pivot")), str(current_scene.call("_lean_x"))])
 	if _state.begins_with("3d") and _state not in ["3dmap", "3dloop"]:
 		_report_visibility(current_scene)
 	if _state == "3dswap":  # prove the swap keybinds actually reach the view
