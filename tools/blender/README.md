@@ -33,3 +33,30 @@ multiplies by `1.5 / that`, not by 1.5. Apply first and the number means what it
 ## Use Blender 4.1, not 5.2
 
 Both are installed. 4.1 is what these scripts are tested against.
+
+## Driving a live Blender session
+
+`blender-mcp` is installed. The addon opens a socket on `localhost:9876` and
+Claude talks to it, so it can read the scene you have open, run code in it, and
+screenshot your viewport.
+
+Start Blender with the socket already listening — no menu hunting:
+
+    tools\blender\open.cmd
+
+The addon is installed for **both 4.1 and 5.2** and registers cleanly on both,
+so use whichever you already have your preferences in.
+
+`bmcp.py` speaks that socket directly, which matters because MCP tools only load
+when a Claude session *starts*. If the `blender` tools are not available in a
+session, this still works:
+
+    python tools/blender/bmcp.py scene
+    python tools/blender/bmcp.py obj Frog
+    python tools/blender/bmcp.py code "import bpy; print(bpy.data.objects.keys())"
+
+`get_viewport_screenshot` needs an explicit `filepath` param or it answers
+"No filepath provided".
+
+Scripts beat the socket for *building* a model — a script is diffable and
+re-runnable. The socket is for working inside a file you already have open.
