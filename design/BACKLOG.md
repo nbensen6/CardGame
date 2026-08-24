@@ -216,6 +216,54 @@ Ordered. Source in brackets.
   circle on top is two clocks at once, which may be thrilling or may be
   unplayable. That question is the point of the experiment.
 
+- [ ] **35. Migrate saves instead of throwing them away** `cloud-safe` — the
+  save carries `VERSION := 1` and `run_save.gd` **rejects** any file that does
+  not match it. Every field the routine adds is a change to the run's shape, so
+  the day someone bumps that constant every run in progress is silently deleted.
+  Rejection is the right default for a corrupt file and the wrong one for an old
+  one. *Done when:* an older save is upgraded field-by-field to the current
+  shape rather than discarded, a genuinely unreadable file still refuses
+  cleanly, and a test loads a fixture written in the previous shape.
+
+- [ ] **36. Frail, Artifact and Thorns** `cloud-safe` — the debuff axis we do
+  not have. Today a hunter carries Strength, Wound and Vulnerable: everything
+  points at the damage number. Nothing touches BLOCK, nothing RESISTS a debuff,
+  and nothing punishes the act of attacking. Those three are one field each and
+  they change what a turn is worth rather than how big it is. Thorns in
+  particular reads naturally on a Titan — a spined beast that costs you to touch
+  it. *Done when:* each is a field, at least two cards or relics and one beast
+  apply them, and each has a test.
+
+- [ ] **37. Events that know potions exist** `cloud-safe` — 17 events, and not
+  one of them mentions a potion, because all 17 were written before item 26
+  landed. The genre's best events trade in every currency the run has — HP, gold,
+  cards, relics, potions — and ours only trade in four of the five. *Done when:*
+  at least four events grant, take, or gamble a potion, and the content
+  integrity test proves every potion id they name resolves.
+
+- [ ] **38. A seed you can share** `cloud-safe` — runs are seeded, but the seed
+  is an internal number nobody can see or set. Being able to type one in is how
+  a bug report becomes reproducible and how two people race the same run — worth
+  far more to us than to a single-player game, because we are co-op. *Done
+  when:* the seed is readable, a run can be started from a given one, and a test
+  proves two runs from the same seed make identical maps, shops and rewards.
+
+- [ ] **39. A run summary worth showing at the end** `cloud-safe` — nothing is
+  counted over a run: not damage dealt, not the highest climb reached, not cards
+  played, turns taken, or what killed you. So a finished run says nothing about
+  itself, and we have no way to tell a close win from a walkover. This is the
+  DATA half only; the screen that shows it is someone else's item. *Done when:*
+  a stats block accumulates through the run, survives save and load, and is
+  tested.
+
+- [ ] **40. Beast moves that react to where you are** `cloud-safe` — every move
+  fires on a fixed rotation regardless of the board. A Titan cannot notice that
+  you are clinging to its sigil. One optional `when` condition on a move (above
+  or below a height, at the sigil, a hunter undefended) turns the climb into
+  something the beast answers, and it is the cheapest depth available because
+  the moves are already data. *Done when:* the condition is a data field with a
+  fallback move when it fails, at least three beasts use it, and it is tested.
+
 ## Working alongside the cloud routine
 
 Two of us push to `main`: the routine every two hours, and Nick-and-Claude in a
