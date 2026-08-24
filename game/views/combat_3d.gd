@@ -110,6 +110,17 @@ const PAN_SENSITIVITY := 0.0018   # world units per pixel, per unit of distance
 ## by distance because a step that reads as a step next to a Crag Pup is a
 ## twitch next to a Titan, and the camera is 40 units out there.
 const FLY_SPEED := 0.34
+## How far in the camera cuts when you pick a hunter, as a fraction of the shot
+## it settles back to.
+##
+## Sliding the frame across was not enough, and measuring it proved why rather
+## than disproving it: the lock does put the hunter dead centre, but on the
+## ground a hunter is about 4% of the frame's height beside a beast that fills
+## it, so a lateral slide of a sixth of a frame is a change nobody can see
+## (Nick, 2026-08-24: "it still doesnt feel like ... it centers the camera on
+## them"). A cut IN, then a pull back out to the fight, is a camera MOVE — and a
+## move is the one thing the eye cannot miss.
+const FOCUS_PUNCH := 0.52
 const ZOOM_STEP := 0.12
 ## Sideways truck, in world units per unit of camera distance, that pushes the
 ## beast right so it centres in the space left of the HUD rather than on the
@@ -244,8 +255,26 @@ var _log_expanded := false
 @onready var _log_panel: PanelContainer = %LogPanel
 
 
+## Let a camera drag pass through a whole subtree.
+##
+## Setting mouse_filter on a container does nothing for its children, and a
+## child that is a plain Control still defaults to STOP — which is why marking
+## the top bar IGNORE in the scene left it a dead strip anyway. Walking the
+## subtree also means a label added there later cannot quietly reintroduce one.
+static func _let_drags_through(root: Node) -> void:
+	if root == null:
+		return
+	if root is Control:
+		(root as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for child in root.get_children():
+		_let_drags_through(child)
+
+
 func _ready() -> void:
 	Screen.fit(self)   # a phone gets a physically larger interface
+	# The top bar is the beast's name and health: a readout with nothing to
+	# click, so the camera gets every pixel of it.
+	_let_drags_through(get_node_or_null("Hud/Root/TopBar"))
 	if Screen.is_handheld():
 		# The hand's band is sized for a 224-tall card. Handheld cards are 186, so
 		# hand the difference back to the beast rather than leaving a dead strip.
@@ -416,6 +445,7 @@ func _end_turn() -> void:
 	if _is_solo():
 		_active_slot = 1 - _active_slot
 		_lock_slot = _active_slot   # the camera follows the hand you now hold
+		_focus_camera()
 	_refresh()
 
 
@@ -475,15 +505,52 @@ func _input(event: InputEvent) -> void:
 ## drift apart. A swap mid-pick would strand the half-finished selection on the
 ## other hunter's hand, so it cancels first.
 func _switch_to(slot: int) -> void:
-	if not _is_solo() or slot == _active_slot or slot < 0 or slot > 1:
+	if not _is_solo() or slot < 0 or slot > 1:
+		return
+	# Asking for the hunter you are already holding is not a no-op: it means
+	# "show me them", which is the whole point of a lock-on and the natural thing
+	# to do after flying the camera somewhere else.
+	if slot == _active_slot:
+		_focus_camera()
 		return
 	if not _selecting.is_empty():
 		_selecting = {}
 	_active_slot = slot
 	_lock_slot = slot          # selecting a hunter IS aiming the camera at them
-	_pan = Vector3.ZERO        # ...and is how you get back from a pan
+	_focus_camera()
 	Sfx.play("card")
 	_refresh()
+
+
+## Put the camera on the hunter you just picked, hard enough to notice.
+##
+## The pivot CUTS rather than glides — a glide across a frame this size is
+## indistinguishable from the camera drifting — and the distance snaps in close,
+## which _aim_camera then eases back out to the working shot on its own because
+## clearing _user_framed hands framing back to it. The result is a push-in and a
+## pull-out: unmistakably a camera move, and it ends exactly where the fight
+## wants to be framed anyway.
+##
+## Also the one way back from free look, which is why it clears the pan and the
+## manual framing rather than only re-aiming.
+func _focus_camera() -> void:
+	_pan = Vector3.ZERO
+	_user_framed = false
+	_establishing = false
+	if _hunters.is_empty() or _cam == null:
+		return
+	var lock := _lock_point()
+	_pivot.x = lock.x
+	_pivot.z = lock.y
+	# Aim at the HUNTER's own height, not the beast-framing height _climb_frame
+	# hands back. Pushing in while still aimed at the beast's middle just filled
+	# the screen with beast and left the hunter under the cards, which answers the
+	# wrong question — the whole point is showing you WHO you are holding.
+	var slot: int = _lock_slot if _lock_slot >= 0 and _lock_slot < _hunters.size() else _me()
+	if slot >= 0 and slot < _hunters.size():
+		_pivot.y = float((_hunters[slot]["home"] as Vector3).y) + HUNTER_HEIGHT * 1.4
+	_dist = maxf(_working_dist * FOCUS_PUNCH, 4.0)
+	_apply_orbit()
 
 
 # --- solo helpers ---------------------------------------------------------

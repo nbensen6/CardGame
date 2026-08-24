@@ -95,8 +95,12 @@ func _initialize() -> void:
 	elif _state != "3dselect":
 		Session.client.select_character("frog", 0)
 		Session.client.select_character("goblin_mech", 1)
+	# 3dfreecam and 3dfocus MUST be here. Without it they mount combat_3d with no
+	# fight behind it: no beast, so _aim_camera bails, and no HUD, so a drag-
+	# anywhere sweep proves nothing because there is nothing there to block it.
 	if _state in ["goblin", "3d", "3dclimb", "3dinspect", "3dsettings", "3dswap", "3drebind",
-			"3dstrike", "3dgame", "3dgrip", "3dsel", "3dreward", "3dwon"]:  # 3dloop deliberately starts ON the map  # step off the map into a fight
+			"3dstrike", "3dgame", "3dgrip", "3dsel", "3dreward", "3dwon",
+			"3dfreecam", "3dfocus"]:  # 3dloop deliberately starts ON the map  # step off the map into a fight
 		var r: Run = Session.host._run
 		var g := 0
 		while r.phase == Run.Phase.MAP and g < 30:
@@ -363,6 +367,31 @@ func _capture() -> void:
 		print("SLOT active=%s lock=%s pivot=%s at=%s" % [str(current_scene.get("_active_slot")), str(current_scene.get("_lock_slot")), str(current_scene.get("_pivot")), str(current_scene.call("_lock_point"))])
 	if _state.begins_with("3d") and _state not in ["3dmap", "3dloop"]:
 		_report_visibility(current_scene)
+	if _state == "3dfocus":  # picking a hunter must be a camera MOVE, not a nudge
+		var fv := current_scene
+		fv.call("snap_camera")
+		await process_frame
+		var before: float = float(fv.get("_dist"))
+		var px0: float = float((fv.get("_pivot") as Vector3).x)
+		fv.call("_switch_to", 1 - int(fv.get("_active_slot")))
+		await process_frame
+		var punched: float = float(fv.get("_dist"))
+		var px1: float = float((fv.get("_pivot") as Vector3).x)
+		for _i in 90:                       # let the pull-back finish
+			await process_frame
+		var settled: float = float(fv.get("_dist"))
+		print("FOCUS dist %.1f -> %.1f (in %d%%) -> %.1f | pivot x %.2f -> %.2f  %s"
+			% [before, punched, int(round(100.0 * punched / maxf(before, 0.001))), settled,
+			   px0, px1,
+			   "OK" if (punched < before * 0.9 and settled > punched * 1.05
+				   and absf(px1 - px0) > 0.5) else "FAIL"])
+		# Re-picking the hunter you already hold must also move the camera.
+		var again: float = float(fv.get("_dist"))
+		fv.call("_switch_to", int(fv.get("_active_slot")))
+		await process_frame
+		var repick: float = float(fv.get("_dist"))
+		print("FOCUS re-pick same hunter: %.1f -> %.1f  %s"
+			% [again, repick, "moves" if repick < again * 0.9 else "DEAD"])
 	if _state == "3dfreecam":  # WHERE on the screen does a drag reach the camera?
 		var cv := current_scene
 		var vw := float(_size.x) if _size != Vector2i.ZERO else float(get_root().size.x)
@@ -402,7 +431,17 @@ func _capture() -> void:
 			print("FREECAM %-13s %s" % [label, "drags" if moved else "DEAD"])
 			if not moved:
 				stuck.append(label)
-		print("FREECAM dead zones: %s" % ("none" if stuck.is_empty() else ", ".join(stuck)))
+		# The party cards and the hand are meant to eat their own clicks — you
+		# select a hunter and play a card with them. Anywhere ELSE that refuses a
+		# drag is a bug, and the top bar was one.
+		var expected := ["party-panel", "over-cards"]
+		var wrong: Array[String] = []
+		for z in stuck:
+			if not expected.has(z):
+				wrong.append(z)
+		print("FREECAM dead: %s  |  unexpected: %s" % [
+			"none" if stuck.is_empty() else ", ".join(stuck),
+			"none" if wrong.is_empty() else ", ".join(wrong)])
 		var pan0: Vector3 = cv.get("_pan")
 		var mid := Vector2(vw * 0.5, vh * 0.45)
 		var rdn := InputEventMouseButton.new()
