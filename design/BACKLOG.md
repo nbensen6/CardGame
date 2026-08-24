@@ -158,7 +158,7 @@ Ordered. Source in brackets.
   exist in data and the sim walks them, but no test proves a tier's modifier
   actually reaches combat. *Done when:* each modifier key is asserted at the
   tier that introduces it.
-- [ ] **23. Frog's rare shortage** `cloud-safe` — found while fixing #5: the `cloud-safe`
+- [x] **23. Frog's rare shortage** `cloud-safe` — found while fixing #5: the `cloud-safe`
   Frog sits at 4 rares (`flurry_hop`, `crescendo`, `finale`, `grand_leap`), one
   under the 5-7 band #5 set for Vine-Weaver. Write 1-3 more in her rhythm/climb
   idiom, do not reweight. *Done when:* Frog has 5-7 rares, tested the same way.
@@ -283,6 +283,23 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-24** — #23 Frog's rare shortage: hit the exact same stale-`origin/main`
+  failure the two log entries below already name — checked out a cached tip that
+  didn't have items 11-33 on it yet, redid #4 (per-beast limiters) a third time
+  with yet another design (`Boss.limiter` {type, value} dict), tests green, push
+  rejected non-fast-forward. Fetched, diffed, found the real #4 already merged;
+  discarded the unpushed commit with `git reset --hard origin/main` (never
+  reached the remote) and re-read the queue against the real tip. #23 was the
+  true topmost open `cloud-safe` item: Frog sat at 4 rares
+  (`flurry_hop`/`crescendo`/`finale`/`grand_leap`) against the 5-7 band #5 set
+  for the Vine-Weaver. Added two, reusing only existing card fields (no new
+  engine scope): `Ripple Leap` (a climb/ally-support rare — every existing Frog
+  rare was an attack, so this is her first support payoff) and `Encore` (an
+  attack combining `damage_per_rhythm` and `damage_per_vulnerable`, a scaling
+  pair none of her other rares used). Brings her to 6, matching the
+  Vine-Weaver's count. Added `_test_frog_has_enough_rares`, same shape as the
+  Vine-Weaver's existing test. `run_tests.gd` and `balance_sim.gd` (smoke test
+  only) both ran clean.
 - **2026-08-24** — #22 Ascension tiers apply what they claim: same failure mode
   rule 9 warns about bit this session too — checked out a stale cached
   `origin/main`, redid #4 (per-beast limiters) from scratch with a different

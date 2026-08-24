@@ -153,6 +153,7 @@ func _init() -> void:
 	_test_strength_only_lifts_attack_type_cards()
 	_test_rarity_weighting_favours_commons()
 	_test_vine_weaver_has_enough_rares()
+	_test_frog_has_enough_rares()
 	# content batch: strength, wound, multi-hit, leech
 	_test_strength_mechanic()
 	_test_wound_bleeds_the_titan()
@@ -2427,6 +2428,17 @@ func _test_vine_weaver_has_enough_rares() -> void:
 			rares[String(rid)] = true
 	_expect(rares.size() >= 5 and rares.size() <= 7,
 		"Vine-Weaver has 5-7 rares, in her own idiom (%d: %s)" % [rares.size(), ", ".join(rares.keys())])
+
+
+## Found while fixing #5: the Frog sat at 4 rares, one under the same 5-7 band
+## (backlog #23). Same shape of test as the Vine-Weaver's, for the same reason.
+func _test_frog_has_enough_rares() -> void:
+	var rares: Dictionary = {}
+	for rid in Content.reward_pool("frog"):
+		if Content.card_rarity(String(rid)) == "rare":
+			rares[String(rid)] = true
+	_expect(rares.size() >= 5 and rares.size() <= 7,
+		"Frog has 5-7 rares, in her own idiom (%d: %s)" % [rares.size(), ", ".join(rares.keys())])
 
 
 func _pick_both(run: Run) -> void:

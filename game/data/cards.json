@@ -124,6 +124,8 @@
     "drumroll": {"name": "Drumroll", "rarity": "uncommon", "type": "skill", "icon": "rhythm", "cost": 2, "rhythm": 4, "draw": 1, "target": "self", "text": "Rhythm 4. Draw 1."},
     "tempo_trap": {"name": "Tempo Trap", "rarity": "common", "type": "skill", "icon": "climb", "cost": 1, "vulnerable": 2, "rhythm": 1, "timed": true, "timed_grip": 2, "target": "enemy", "text": "Expose 2. Rhythm 1."},
     "finale": {"name": "Finale", "rarity": "rare", "type": "attack", "icon": "volley", "cost": 3, "damage": 6, "damage_per_rhythm": 4, "hits": 2, "target": "enemy", "text": "Deal 6 damage twice and an additional 4 per Rhythm."},
+    "ripple_leap": {"name": "Ripple Leap", "rarity": "rare", "type": "skill", "icon": "lift", "cost": 2, "grip": 1, "grip_per_rhythm": 2, "ally_grip": 3, "timed": true, "timed_ally_block": 8, "target": "ally", "text": "Climb 1 and an additional 2 per Rhythm. Ally climbs 3."},
+    "encore": {"name": "Encore", "rarity": "rare", "type": "attack", "icon": "target", "cost": 2, "damage": 3, "damage_per_rhythm": 2, "damage_per_vulnerable": 3, "target": "enemy", "text": "Deal 3 damage, an additional 2 per Rhythm and 3 per Expose."},
 
     "deep_roots": {"name": "Deep Roots", "rarity": "common", "type": "skill", "icon": "shield", "cost": 0, "block": 2, "wound": 1, "target": "self", "text": "Gain 2 Block. Poison 1."},
     "strangler": {"name": "Strangler", "rarity": "common", "type": "skill", "icon": "skull", "cost": 1, "wound": 2, "vulnerable": 2, "target": "enemy", "text": "Poison 2. Expose 2."},
