@@ -351,7 +351,7 @@ func _capture() -> void:
 			current_scene.call("snap_camera")
 		for _i in 4:
 			await process_frame
-		print("SLOT active=%s pivot=%s lean=%s" % [str(current_scene.get("_active_slot")), str(current_scene.get("_pivot")), str(current_scene.call("_lean_x"))])
+		print("SLOT active=%s lock=%s pivot=%s at=%s" % [str(current_scene.get("_active_slot")), str(current_scene.get("_lock_slot")), str(current_scene.get("_pivot")), str(current_scene.call("_lock_point"))])
 	if _state.begins_with("3d") and _state not in ["3dmap", "3dloop"]:
 		_report_visibility(current_scene)
 	if _state == "3dswap":  # prove the swap keybinds actually reach the view

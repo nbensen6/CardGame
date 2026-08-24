@@ -70,11 +70,16 @@ const VIEW_WINDOW_MAX := 28.0
 ## their offset from the beast's axis (Nick, 2026-08-23: the shot is too centred,
 ## and switching hunter should show you who you now control).
 ##
-## Not 1.0. Sitting the pivot fully on a hunter shoves the beast — the thing you
-## are climbing and the thing telegraphing at you — out toward the frame edge.
-## Just over half reads clearly as "the camera favours you" while the body stays
-## the subject. It is also what makes a swap legible: the whole frame slides.
-const CAMERA_LEAN := 0.55
+## Now 1.0 — a real lock rather than a lean (Nick, 2026-08-24: "make sure the
+## camera locks on to a character when you select it"). The earlier 0.55 hedged
+## against shoving the beast out of frame, but the hunters sit only a fifth of the
+## body's width off its spine, so a full lock slides the shot about 8% of a frame:
+## plainly "this one is mine", nowhere near enough to lose the body.
+##
+## The lock is also what makes free look survivable. The camera orbits AROUND the
+## hunter you hold, so dragging changes your angle ON them instead of wandering
+## off them.
+const CAMERA_LOCK := 1.0
 
 ## The bottom strip the hand now occupies. The camera frames into what is LEFT of
 ## the screen and lifts its aim to match, so the beast stands in clear air instead
@@ -97,7 +102,7 @@ const HUNTER_HEIGHT := 0.7
 ## own size; dragging only takes over from there, and never below the ground or
 ## over the top.
 const ORBIT_PITCH_MIN := -0.12   # radians below level — never under the floor
-const ORBIT_PITCH_MAX := 1.05    # nearly overhead, but never gimbal-locked
+const ORBIT_PITCH_MAX := 1.32    # nearly overhead, but never gimbal-locked
 const ORBIT_SENSITIVITY := 0.006
 const ZOOM_STEP := 0.12
 ## Sideways truck, in world units per unit of camera distance, that pushes the
@@ -155,6 +160,7 @@ var _pivot := Vector3(0, 2.0, 0)
 var _dragging := false
 var _pivot_target := Vector3(0, 2.0, 0)  # where the camera is drifting its aim to
 var _user_framed := false   # the player has dragged/zoomed — stop auto-pitching
+var _lock_slot := 0         # the hunter the camera is locked onto (CAMERA_LOCK)
 var _establishing := false  # easing from the opening wide shot into the working one
 var _working_dist := 12.0   # the shot the establishing pull-in settles at
 ## 0 while everyone is on the ground, ->1 as the hunter you're playing ascends.
@@ -396,6 +402,7 @@ func _end_turn() -> void:
 	_client.end_turn(_cmd_slot())
 	if _is_solo():
 		_active_slot = 1 - _active_slot
+		_lock_slot = _active_slot   # the camera follows the hand you now hold
 	_refresh()
 
 
@@ -460,6 +467,7 @@ func _switch_to(slot: int) -> void:
 	if not _selecting.is_empty():
 		_selecting = {}
 	_active_slot = slot
+	_lock_slot = slot          # selecting a hunter IS aiming the camera at them
 	Sfx.play("card")
 	_refresh()
 
@@ -783,6 +791,7 @@ func _frame_beast() -> void:
 	_working_dist = _dist_for_window(window)
 	_yaw = 0.0          # a new beast is always introduced from the front
 	_user_framed = false
+	_lock_slot = _me()
 	# Open on the whole creature, however far back that has to be, then fall in to
 	# the working shot. You get to see what you've picked a fight with once —
 	# after that, the climb is the subject and the rest of it is off-screen.
@@ -815,27 +824,39 @@ func snap_camera() -> void:
 	_aim_camera(0.0, true)
 
 
-## Where the camera leans, sideways. Follows the hunter you are holding, so the
-## frame answers "who am I?" without a label — and answers it by MOVING, which is
-## the part a static badge cannot do.
+## Where the camera is locked, on the ground plane: (x, z) of the hunter you are
+## holding. The frame answers "who am I?" without a label — and answers it by
+## MOVING, which is the part a static badge cannot do.
 ##
-## Yields to _user_framed: once someone has dragged the camera themselves, it
-## stops sliding out from under them.
-func _lean_x() -> float:
-	if _user_framed or _hunters.is_empty():
-		return 0.0
-	var me := _me()
-	if me < 0 or me >= _hunters.size():
-		return 0.0
-	return float((_hunters[me]["home"] as Vector3).x) * CAMERA_LEAN
+## It does NOT yield to _user_framed any more, and that was the bug. The moment
+## you looked around, selecting a hunter stopped moving the camera at all — so the
+## one gesture that should always answer "who am I?" went dead at exactly the
+## moment the shot was least familiar. Free look owns the ANGLE and the DISTANCE;
+## the lock owns what you are angled at.
+##
+## Both x and z, not just x: under a rotated yaw a hunter's screen position is no
+## longer a function of world x alone, so an x-only lock silently stops centring
+## anyone the moment you orbit.
+func _lock_point() -> Vector2:
+	if _hunters.is_empty():
+		return Vector2.ZERO
+	var slot := _lock_slot
+	if slot < 0 or slot >= _hunters.size():
+		slot = _me()
+	if slot < 0 or slot >= _hunters.size():
+		return Vector2.ZERO
+	var home := _hunters[slot]["home"] as Vector3
+	return Vector2(home.x, home.z) * CAMERA_LOCK
 
 
 func _aim_camera(delta: float, snap: bool) -> void:
 	if _client == null or _beast == null:
 		return
 	var want := _climb_frame()
+	var lock := _lock_point()
 	_pivot_target.y = want.x
-	_pivot_target.x = _lean_x()
+	_pivot_target.x = lock.x
+	_pivot_target.z = lock.y
 	if not _user_framed:
 		_working_dist = _dist_for_window(want.y)
 	if snap:
@@ -894,7 +915,11 @@ func _ground_pivot(window: float) -> float:
 
 func _dist_for_window(window: float) -> float:
 	var lens := maxf(window, 1.0) / (2.0 * tan(deg_to_rad(_cam.fov) * 0.5))
-	return lens + maxf(_beast_box.end.z * 0.85, 0.0)
+	# Stand off from the beast's FRONT rather than its centre — but only by the
+	# part the pivot has not already covered. Locking onto a hunter puts the pivot
+	# out on that front face, and charging the whole standoff on top of it would
+	# back the camera off by the beast's depth twice over.
+	return lens + maxf(_beast_box.end.z * 0.85 - _pivot_target.z, 0.0)
 
 
 ## What the camera should be looking at, and how much world to fit around it:
@@ -1946,6 +1971,20 @@ func _party_card(p: Dictionary, slot: int, aimed: bool) -> Control:
 	stats.add_theme_font_size_override("font_size", 12)
 	stats.add_theme_color_override("font_color", Color(0.86, 0.82, 0.72))
 	box.add_child(stats)
+	# Tapping a hunter's card holds that hunter, and the camera locks onto them.
+	# The card already shows who they are and what is about to hit them, so it is
+	# the thing you are looking at when you decide to swap — asking you to look
+	# away to a separate button was the long way round (Nick: "make things more
+	# clickable"). Solo only: in multiplayer you cannot hold your ally's hand.
+	if _is_solo():
+		panel.mouse_filter = Control.MOUSE_FILTER_STOP
+		panel.tooltip_text = "Hold this hunter — the camera locks on."
+		panel.gui_input.connect(func(e: InputEvent) -> void:
+			if not (e is InputEventMouseButton):
+				return
+			var mb := e as InputEventMouseButton
+			if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
+				_switch_to(slot))
 	return panel
 
 
