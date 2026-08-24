@@ -11,7 +11,7 @@
 class_name Run
 extends RefCounted
 
-enum Phase { MAP, COMBAT, EVENT, CAMPFIRE, SHOP, REWARD, WON, LOST }
+enum Phase { MAP, COMBAT, EVENT, CAMPFIRE, SHOP, REWARD, WON, LOST, BOON }
 
 const ENCOUNTERS := ["stone_warden", "gale_serpent", "drowned_colossus", "sunken_warden"]
 const REST_HEAL := 9   # a campfire "rest" patches you up
@@ -41,6 +41,8 @@ var node_type: String = ""       # the node we're currently resolving
 var beast_id: String = ""        # the beast this combat is against
 var event: Dictionary = {}       # the event being resolved (EVENT phase)
 var event_result: String = ""    # flavour text for the choice just taken
+var boon: Dictionary = {}        # the run-start choice being offered (BOON phase, #31)
+var boon_result: String = ""     # flavour text for the boon just taken
 var _seen_events: Array = []     # don't repeat an event while fresh ones remain
 var campfire_done: Array = []    # per hunter: have they taken their campfire action?
 var gold: int = 0                # the team's shared purse
@@ -132,6 +134,7 @@ func to_dict() -> Dictionary:
 		"map_row": map_row, "map_col": map_col,
 		"node_type": node_type, "beast_id": beast_id,
 		"event": event, "event_result": event_result, "seen_events": _seen_events,
+		"boon": boon, "boon_result": boon_result,
 		"campfire_done": campfire_done, "gold": gold,
 		"shop_stock": shop_stock, "removes_bought": removes_bought,
 		"ascension": ascension,
@@ -159,6 +162,8 @@ static func from_dict(d: Dictionary) -> Run:
 	r.event = d.get("event", {})
 	r.event_result = String(d.get("event_result", ""))
 	r._seen_events = (d.get("seen_events", []) as Array).duplicate()
+	r.boon = d.get("boon", {})
+	r.boon_result = String(d.get("boon_result", ""))
 	r.campfire_done = (d.get("campfire_done", []) as Array).duplicate()
 	r.gold = int(d.get("gold", 0))
 	r.shop_stock = (d.get("shop_stock", []) as Array).duplicate(true)
@@ -392,6 +397,20 @@ func pick_event(choice: int) -> bool:
 	var picked: Dictionary = choices[choice]
 	var eff: Dictionary = picked.get("effects", {})
 	event_result = String(picked.get("result", ""))
+	_apply_effect_block(eff)
+	var rw := String(eff.get("reward", ""))
+	if rw != "":
+		_begin_reward(rw)
+	else:
+		_after_node()
+	return true
+
+
+## The generic effect-application rule shared by an event choice and a run-start
+## boon (#31) — a boon IS an event choice, just offered before the map rather
+## than found on it, so it reads the exact same keys (see events.json's
+## _comment): max_hp, heal, gold, relic, remove_card, sharpen_card, curse_card.
+func _apply_effect_block(eff: Dictionary) -> void:
 	var mh := int(eff.get("max_hp", 0))
 	var h := int(eff.get("heal", 0))
 	for i in range(names.size()):
@@ -407,10 +426,9 @@ func pick_event(choice: int) -> bool:
 		var pool: Array = Content.relic_pool()
 		if not pool.is_empty():
 			team_relics.append(Content.make_relic(String(pool[_rng.randi_range(0, pool.size() - 1)])))
-	# Deck-touching events (backlog #17): a random card per hunter, same "whole
+	# Deck-touching effects (backlog #17): a random card per hunter, same "whole
 	# team" shape heal/max_hp already use above. Never below MIN_DECK, and
-	# sharpening quietly no-ops for a deck that's already fully upgraded —
-	# neither is a screen, so both stay event-safe.
+	# sharpening quietly no-ops for a deck that's already fully upgraded.
 	if bool(eff.get("remove_card", false)):
 		for i in range(names.size()):
 			var deck: Array = decks[i]
@@ -434,11 +452,52 @@ func pick_event(choice: int) -> bool:
 	if cc != "":
 		for i in range(names.size()):
 			decks[i].append(Content.make_card(cc))
-	var rw := String(eff.get("reward", ""))
-	if rw != "":
-		_begin_reward(rw)
-	else:
-		_after_node()
+
+
+## A free choice of 3-4 offered once, before the first map step — same idiom as
+## Neow in Slay the Spire (backlog #31). Returns false (a no-op) if boons.json
+## is empty.
+##
+## Deliberately NOT called from start() yet. game_3d.gd's phase router has no
+## 3D scene for "boon" — its own doc comment calls an unhandled phase "a bug...
+## it holds the current screen and shouts, rather than swapping to something
+## arbitrary mid-run" — and GameHost.start_new_run() calls Run.start() for
+## every real co-op game. Wiring this in before that screen exists would
+## soft-lock every new run at the moment it begins, not just ship an invisible
+## feature. This method is the tested, ready-to-call engine half; hooking it
+## into start() belongs with the screen that can show it (needs a screen).
+func offer_run_start_boon() -> bool:
+	var ids: Array = Content.list_boons()
+	if ids.is_empty():
+		return false
+	var pool: Array = ids.duplicate()
+	var n: int = mini(4, pool.size())
+	var choices: Array = []
+	for _i in range(n):
+		var idx := _rng.randi_range(0, pool.size() - 1)
+		var bid := String(pool[idx])
+		pool.remove_at(idx)
+		choices.append(Content.make_boon(bid))
+	boon = {"choices": choices}
+	boon_result = ""
+	phase = Phase.BOON
+	return true
+
+
+## Resolve the run-start boon. Like an event, it's a shared decision — either
+## hunter may answer — and applies immediately rather than opening a reward
+## screen, so it needs none of pick_event's "reward" routing.
+func pick_boon(choice: int) -> bool:
+	if phase != Phase.BOON:
+		return false
+	var choices: Array = boon.get("choices", [])
+	if choice < 0 or choice >= choices.size():
+		return false
+	var picked: Dictionary = choices[choice]
+	var eff: Dictionary = picked.get("effects", {})
+	boon_result = String(picked.get("result", ""))
+	_apply_effect_block(eff)
+	phase = Phase.MAP
 	return true
 
 

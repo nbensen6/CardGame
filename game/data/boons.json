@@ -1,0 +1,34 @@
+{
+  "_comment": "Run-start boons (backlog #31) — a free choice offered once, before the first map step, same idiom as Neow in Slay the Spire. Same effect keys as events.json (see its _comment): max_hp, heal, gold, relic, remove_card, sharpen_card, curse_card. No reward routing here — a boon resolves immediately, it doesn't open a pick-1-of-3 screen. Reuses Run's existing effect-application rule; adding a boon is a data change, not a code one.",
+  "boons": {
+    "pack_light": {
+      "label": "Pack light and steady",
+      "result": "You start sure-footed, ready for anything.",
+      "effects": {
+        "max_hp": 8
+      }
+    },
+    "borrowed_gear": {
+      "label": "Borrow a stranger's relic",
+      "result": "Someone left their gear behind at the trailhead. It still works.",
+      "effects": {
+        "relic": true
+      }
+    },
+    "a_full_purse": {
+      "label": "Pocket a dropped purse",
+      "result": "Somebody's savings, now yours.",
+      "effects": {
+        "gold": 75
+      }
+    },
+    "a_bold_trade": {
+      "label": "Take the bold trade",
+      "result": "The gear is good — but it costs you something to carry.",
+      "effects": {
+        "sharpen_card": true,
+        "curse_card": "bruised_grip"
+      }
+    }
+  }
+}

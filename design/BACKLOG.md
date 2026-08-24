@@ -206,13 +206,26 @@ Ordered. Source in brackets.
   upside, so taking one is never a decision. StS's boss relics cost you something
   (less energy, no potions, more damage taken) in exchange for power.
   *Done when:* at least 4 relics carry a real cost, and picking one is a choice.
-- [ ] **31. A run-start boon** `cloud-safe` — StS opens with Neow: a free
+- [x] **31. A run-start boon** `cloud-safe` — StS opens with Neow: a free
   meaningful choice before the first fight that sets the run's direction. We drop
   you straight onto the map. *Done when:* one choice of 3-4 at run start, saved
   with the run, tested.
 - [ ] **32. Potion slots and status feedback** `needs a screen` — the UI for 26
   and 27: three slots you can see and tap, and a clear cue when something clogs
   your deck. Deliberately separate so the engine can land without it.
+- [ ] **31b. Wire the run-start boon into a real game** `needs a screen` — #31's
+  engine (`Run.offer_run_start_boon()` / `pick_boon()`) is tested but
+  deliberately NOT called from `Run.start()`: `game_3d.gd`'s phase router has
+  no 3D scene for `"boon"`, and its own doc comment says an unhandled phase
+  "holds the current screen and shouts" rather than swapping — every real
+  co-op run goes through `GameHost.start_new_run() -> Run.start()`, so wiring
+  the trigger in before a screen exists would soft-lock every new run the
+  moment it begins. Needs, together: a 3D scene for the offer (or reuse
+  `location_3d.tscn`'s event rendering, since a boon is shaped like one event
+  choice), `game_3d.gd`'s `SCENES` table gaining `"boon"`, `GameHost` exposing
+  `s["boon"]` and a `"pick_boon"` command (mirrors `"pick_event"` exactly), and
+  `Run.start()` calling `offer_run_start_boon()`. *Done when:* a fresh run
+  shows the offer on screen, picking one is a tap, and it's been looked at.
 
 - [x] **34. osu-style hit circle at the hold** `needs a screen` — the display
   half, and the reason it is worth doing: a shrinking approach circle **placed at
@@ -396,6 +409,50 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-24** — #31 A run-start boon: `data/boons.json` (4 entries — a max
+  HP bump, a free relic, gold, and a bold trade that sharpens a card but
+  curses one) plus `Content.list_boons()`/`make_boon()`, same shape
+  `list_events()`/`make_event()` already have. A boon reuses events'
+  own effect keys (`max_hp`/`heal`/`gold`/`relic`/`remove_card`/
+  `sharpen_card`/`curse_card`) verbatim rather than inventing a second
+  mini-mechanic — pulled `pick_event()`'s effect-application body out into a
+  shared `Run._apply_effect_block()` so `pick_boon()` reads the exact same
+  rule instead of a parallel copy (rule 7, and a real simplification: one
+  fewer place a new effect key would need wiring twice). `Run.Phase.BOON`
+  appended at the END of the enum (value 8) rather than inserted where it
+  reads best, so no existing saved `phase` int changes meaning.
+  **Deliberately NOT wired into `Run.start()`.** Chased the "done when: at
+  run start" requirement into `game_3d.gd` before writing any Run code, since
+  every real co-op game reaches `Run.start()` through
+  `GameHost.start_new_run()`: its phase router (`SCENES` dict) has no 3D
+  scene for `"boon"`, and its own doc comment is explicit that an unrecognised
+  phase "holds the current screen and shouts, rather than swapping to
+  something arbitrary mid-run" — i.e. flipping `start()` over to auto-offer a
+  boon today would soft-lock every new run the instant it began, for every
+  real player, not just ship an invisible feature. That's a materially
+  different risk than #29b's gap (an unreachable sentinel nothing drafted
+  yet) — this one is reachable by construction the moment `start()` calls it.
+  So the engine landed as a standalone, fully-tested pair —
+  `offer_run_start_boon()` (rolls 3-4 of the pool, opens `Phase.BOON`) and
+  `pick_boon()` (applies the effect block, returns to `Phase.MAP`) — callable
+  directly today (exactly how `_begin_shop()`/`_begin_campfire()`/
+  `_begin_event()` are already called directly in tests, bypassing
+  `pick_node()`), with the live trigger + `GameHost` command + a screen left
+  as new item **31b** (`needs a screen`) rather than guessing blind at a
+  scene nobody can render here. 6 new tests: boons.json well-formedness,
+  offer-then-pick applying a synthetic effect block end-to-end, the
+  outside-phase guard, save/load through the actual file (mirroring #15's
+  per-phase shape — offer a boon, save, reload, confirm the offer is still
+  live and pickable, not a frozen snapshot), and — the one that actually
+  matters here — a dedicated regression test,
+  `_test_start_does_not_auto_offer_a_boon`, pinning that `Run.start()` still
+  leaves a fresh run on `Phase.MAP`, so a future edit can't silently flip the
+  soft-lock risk back on without a test noticing. Extended #18's content
+  integrity graph to check a boon's `curse_card` ref the same way it already
+  checks an event's. `run_tests.gd` all green (223 assertions incl. the six
+  new ones); `balance_sim.gd` ran clean as a smoke test only — its policies
+  never call `offer_run_start_boon()` (nothing does yet, by design), so its
+  printed win rates are unchanged, not tuned to.
 - **2026-08-24** — #30 Relics with a downside: a downside is just a SECOND
   `{effect, value}` pair on the same relic — `downside_effect`/`downside_value`,
   optional keys read by `Run.relic_totals()` through the exact same

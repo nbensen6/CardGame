@@ -63,6 +63,11 @@ func _init() -> void:
 	_test_event_sharpen_card_effect()
 	_test_event_curse_card_effect()
 	_test_backlog17_four_events_touch_the_deck()
+	_test_boons_load_and_are_well_formed()
+	_test_boon_offer_and_pick_applies_effects()
+	_test_boon_rejects_outside_its_phase()
+	_test_start_does_not_auto_offer_a_boon()
+	_test_run_survives_a_save_and_load_in_boon()
 	_test_card_upgrade_bumps_numbers()
 	_test_enchanted_copy_attaches_to_any_card()
 	_test_enchants_all_load()
@@ -698,6 +703,84 @@ func _test_backlog17_four_events_touch_the_deck() -> void:
 				count += 1
 				break
 	_expect(count >= 4, "at least 4 events add, remove or sharpen a card (backlog #17)")
+
+
+## Backlog #31: the run-start boon reuses events.json's own well-formedness
+## shape (label, result, effects), just without a title/text pair — a boon is
+## a single offer, not a rolled-and-narrated encounter.
+func _test_boons_load_and_are_well_formed() -> void:
+	var ids: Array = Content.list_boons()
+	var ok := ids.size() >= 3  # "3-4" per the item's own done-when
+	for id in ids:
+		var b: Dictionary = Content.make_boon(String(id))
+		if String(b.get("label", "")) == "" or String(b.get("result", "")) == "" \
+				or not b.has("effects"):
+			ok = false
+	_expect(ok, "every boon has a label, result and effects block, and there are at least 3")
+
+
+## offer_run_start_boon() populates up to 4 choices and opens the BOON phase;
+## pick_boon() applies the chosen effect through the same generic rule an
+## event choice uses, and hands back to the map.
+func _test_boon_offer_and_pick_applies_effects() -> void:
+	var run := Run.new([_deck_of(_slash, 10), _deck_of(_slash, 10)], ["A", "B"], 4242, [{}, {}])
+	var offered := run.offer_run_start_boon()
+	var choice_count: int = (run.boon.get("choices", []) as Array).size()
+	_expect(offered and run.phase == Run.Phase.BOON and choice_count >= 3 and choice_count <= 4,
+		"offer_run_start_boon opens the BOON phase with 3-4 choices")
+	# Override with a synthetic choice, same shape the event tests use, so the
+	# assertion is about the generic effect rule, not which boon.json entry
+	# happened to roll.
+	run.boon = {"choices": [
+		{"label": "test", "result": "you feel ready.", "effects": {"max_hp": 5, "gold": 10, "relic": true}},
+	]}
+	var max_before: int = run.max_hp[0]
+	var gold_before: int = run.gold
+	var relics_before: int = run.team_relics.size()
+	var picked := run.pick_boon(0)
+	_expect(picked and run.max_hp[0] == max_before + 5 and run.gold == gold_before + 10
+		and run.team_relics.size() == relics_before + 1
+		and run.phase == Run.Phase.MAP and run.boon_result == "you feel ready.",
+		"picking a boon applies its effects and hands back to the map")
+
+
+func _test_boon_rejects_outside_its_phase() -> void:
+	var run := Run.new([_deck_of(_slash, 10), _deck_of(_slash, 10)], ["A", "B"], 4242, [{}, {}])
+	run.start()  # start() leaves phase == MAP, not BOON — see offer_run_start_boon()'s own comment
+	_expect(not run.pick_boon(0), "pick_boon refuses to act outside the BOON phase")
+
+
+## The load-bearing safety property this item's own design rests on: a real
+## co-op run (GameHost.start_new_run() -> Run.start()) must NOT enter BOON on
+## its own, because no client screen exists for it yet (see
+## offer_run_start_boon()'s doc comment). If this ever starts failing, a boon
+## screen has to land in the SAME change that flips this default.
+func _test_start_does_not_auto_offer_a_boon() -> void:
+	var run := Run.new([_deck_of(_slash, 10), _deck_of(_slash, 10)], ["A", "B"], 4242, [{}, {}])
+	run.start()
+	_expect(run.phase == Run.Phase.MAP, "Run.start() still leaves a fresh run on the MAP, not BOON")
+
+
+func _test_run_survives_a_save_and_load_in_boon() -> void:
+	var run := Run.new([_deck_of(_slash, 8), _deck_of(_slash, 8)], ["A", "B"], 34,
+		[{"character": "frog"}, {"character": "goblin_mech"}], 0)
+	run.start()
+	run.offer_run_start_boon()
+	var expect_choice_count: int = (run.boon.get("choices", []) as Array).size()
+	var expect_first_label := String((run.boon.get("choices", [])[0] as Dictionary).get("label", ""))
+
+	RunSave.clear()
+	RunSave.save(run)
+	var back := RunSave.load_run()
+
+	var boon_ok: bool = (back.boon.get("choices", []) as Array).size() == expect_choice_count \
+		and String((back.boon.get("choices", [])[0] as Dictionary).get("label", "")) == expect_first_label
+	_expect(back.phase == Run.Phase.BOON and boon_ok,
+		"a run saved mid-boon reloads with its offer intact")
+	# and the reloaded offer is still live, not a frozen snapshot
+	var picked := back.pick_boon(0)
+	_expect(picked and back.phase == Run.Phase.MAP, "the reloaded boon is still pickable")
+	RunSave.clear()
 
 
 func _test_card_upgrade_bumps_numbers() -> void:
@@ -2145,6 +2228,13 @@ func _test_content_integrity_graph() -> void:
 			var cc := String((choice as Dictionary).get("effects", {}).get("curse_card", ""))
 			if cc != "" and String(Content.make_card(cc).name).is_empty():
 				bad.append("%s curse_card: %s" % [eid, cc])
+	# A boon (#31) is shaped like a single event choice, and its curse_card
+	# needs the exact same check the loop above already runs on events.
+	for bid in Content.list_boons():
+		var bn := Content.make_boon(String(bid))
+		var bcc := String(bn.get("effects", {}).get("curse_card", ""))
+		if bcc != "" and String(Content.make_card(bcc).name).is_empty():
+			bad.append("%s curse_card: %s" % [bid, bcc])
 	_expect(bad.is_empty(),
 		"create/prepare fields, beast pool ids and curse_card refs all resolve [%s]" % ", ".join(bad))
 

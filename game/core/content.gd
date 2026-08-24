@@ -15,6 +15,7 @@ const ASCENSION_PATH := "res://data/ascension.json"
 const KEYWORDS_PATH := "res://data/keywords.json"
 const ENCHANTS_PATH := "res://data/enchants.json"
 const POTIONS_PATH := "res://data/potions.json"
+const BOONS_PATH := "res://data/boons.json"
 
 static var _cache: Dictionary = {}
 
@@ -220,6 +221,23 @@ static func make_event(id: String) -> Dictionary:
 	var e: Dictionary = (events[id] as Dictionary).duplicate(true)
 	e["id"] = id
 	return e
+
+## Every boon id (backlog #31 — the free run-start choice, offered before the
+## first map step).
+static func list_boons() -> Array:
+	return (_read_json(BOONS_PATH).get("boons", {}) as Dictionary).keys()
+
+## One boon as a display-ready Dictionary: {id, label, result, effects}. Same
+## effect keys as an event choice (see events.json's _comment) — a boon IS an
+## event choice, just offered before the map rather than found on it.
+static func make_boon(id: String) -> Dictionary:
+	var boons: Dictionary = _read_json(BOONS_PATH).get("boons", {})
+	if not boons.has(id):
+		push_warning("Content: unknown boon '%s'" % id)
+		return {}
+	var b: Dictionary = (boons[id] as Dictionary).duplicate(true)
+	b["id"] = id
+	return b
 
 ## Beast ids for a map node type ("fight" | "elite" | "boss").
 static func beast_pool(kind: String) -> Array:
