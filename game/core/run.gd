@@ -349,7 +349,7 @@ func campfire_action(slot: int, action: String, card_index: int = -1) -> bool:
 			if card_index < 0 or card_index >= deck.size():
 				return false
 			var c: Card = deck[card_index]
-			if c.upgraded:
+			if c.upgraded or c.status:  # a curse has nothing to sharpen — only remove it
 				return false
 			deck[card_index] = c.upgraded_copy()
 		_:
@@ -426,6 +426,14 @@ func pick_event(choice: int) -> bool:
 			if not candidates.is_empty():
 				var idx := int(candidates[_rng.randi_range(0, candidates.size() - 1)])
 				deck2[idx] = (deck2[idx] as Card).upgraded_copy()
+	# curse_card (backlog #27): names a status card id and shuffles one copy into
+	# EACH hunter's own deck, same "whole team" shape remove_card/sharpen_card
+	# above already use. Unlike a reward, this is not a choice — the whole point
+	# of a status card is that you don't get to pick whether you're clogged.
+	var cc := String(eff.get("curse_card", ""))
+	if cc != "":
+		for i in range(names.size()):
+			decks[i].append(Content.make_card(cc))
 	var rw := String(eff.get("reward", ""))
 	if rw != "":
 		_begin_reward(rw)

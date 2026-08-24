@@ -178,7 +178,7 @@ Ordered. Source in brackets.
   shape as relics. *Done when:* potions are data, can be held, used and thrown
   away, persist through save/load, and are tested. The slots UI is a separate
   needs-a-screen item.
-- [ ] **27. Status and curse cards** `cloud-safe` — cards that clog your deck
+- [x] **27. Status and curse cards** `cloud-safe` — cards that clog your deck
   rather than help it (StS's Burn, Dazed, Wound). We have no way for an event, an
   elite or a Titan to *punish* you into your own deck, which is a whole pressure
   the genre uses and we don't. Fits our idiom: a Titan that shakes you could
@@ -283,6 +283,50 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-24** — #27 Status and curse cards: added a `status: bool` field to
+  `Card` (data/rules only — no new mechanic needed, since a card with no
+  effect fields set already resolves to "cost energy, do nothing" for free)
+  and one card, `bruised_grip` (cost 1, status, no fields). Kept it OUT of
+  every starter deck and reward pool — the whole point is you don't draft a
+  curse, something inflicts it on you — and proved that with a dedicated
+  test walking every status card against every pool. The inflicting path
+  reuses #17's exact shape: a new event effect key, `curse_card: "<id>"`,
+  handled in `Run.pick_event()` right next to `remove_card`/`sharpen_card` —
+  each hunter's deck gets one copy, unconditionally (unlike the other two,
+  never a coin flip, since opting out would defeat the point). Wired it to
+  one real event, `the_shaken_pitch` (push on rattled for gold + a curse, or
+  stop and eat a small heal cost) rather than leaving the mechanic
+  reachable-in-theory-only. Removability needed no new code at all — the
+  existing campfire/shop "remove" paths already operate on a deck index
+  without caring what the card is — but added explicit tests proving it
+  anyway rather than assuming. Did add one real guard: campfire "upgrade"
+  now refuses a status card (nothing to sharpen on a card with no numbers),
+  tested. First pass shipped a second card, `winded`, before checking it
+  against anything — `node tools/cardlab/build.js` flagged it unreachable
+  (nothing in `starter_deck`/`reward_pool`/`create`/`prepare` OR the new
+  `curse_card` path pointed at it), so it was dead content by the exact
+  standard #21 exists to catch; deleted it rather than inventing a second
+  use to justify keeping it. That check needed a small extension of its
+  own first — `build.js`'s reachability graph only knew about
+  `create`/`prepare` chains, so `bruised_grip` itself briefly read as
+  unreachable too until a `cursedBy` set (same shape `createdBy`) was added
+  alongside it; `unreachable: 0 cards` after. 4 new test functions: the event effect
+  itself, the campfire sharpen-refusal (and that removal still works there),
+  shop removal, and the never-drafted sweep; extended `_test_content_integrity_graph`
+  (#18) to validate `curse_card` refs the same way it already validates
+  `create`/`prepare`. `run_tests.gd` all green (201 assertions incl. the new
+  ones); `balance_sim.gd` ran clean as a smoke test only (its policies
+  don't touch events, so the numbers are unchanged, not tuned to).
+  **Also:** this session's initial `git checkout -B main origin/main` (before
+  any fetch) again reported the stale-detached-HEAD pattern rule 9 already
+  names — 31 commits this time, past 2026-08-24's own prior record of 30.
+  A fetch confirmed the real GitHub tip already had every one of them
+  (merge-base *was* the old cached tip, a clean fast-forward, nothing to
+  push) — the same false alarm logged five times running now, just still
+  growing. Not re-investigating the root cause again here either, but five
+  in a row on a monotonically growing gap is past "noise" — worth Nick
+  looking at the container-init snapshotting directly rather than this
+  routine keep re-discovering the symptom.
 - **2026-08-24** — #26 Potions: the engine half, same shape as relics
   (`data/potions.json` — `{name, effect, value, text}` — plus one generic
   dispatch), but held PER-HUNTER rather than team-wide, since a potion is a

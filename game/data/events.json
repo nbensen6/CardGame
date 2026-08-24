@@ -1,5 +1,5 @@
 {
-  "_comment": "Map EVENT nodes are DATA (CLAUDE.md §11). Each event offers choices with immediate effects. Effect keys: heal (int, negative = a bruise — events never kill, HP floors at 1), max_hp (int, permanent), relic (bool, a random team relic), gold (int, into the shared purse), reward ('card'|'relic' — routes into the normal pick-1-of-3 screen), remove_card (bool, each hunter loses one random card from their own deck, never below MIN_DECK), sharpen_card (bool, each hunter upgrades one random un-upgraded card in their own deck, no-op if none). An empty effects block is a clean walk-away. Tone: small climbers in a big wild world.",
+  "_comment": "Map EVENT nodes are DATA (CLAUDE.md §11). Each event offers choices with immediate effects. Effect keys: heal (int, negative = a bruise — events never kill, HP floors at 1), max_hp (int, permanent), relic (bool, a random team relic), gold (int, into the shared purse), reward ('card'|'relic' — routes into the normal pick-1-of-3 screen), remove_card (bool, each hunter loses one random card from their own deck, never below MIN_DECK), sharpen_card (bool, each hunter upgrades one random un-upgraded card in their own deck, no-op if none), curse_card (a status-card id from cards.json, e.g. 'bruised_grip' — each hunter's deck gains one copy; unlike remove/sharpen this always fires, never a coin flip, since the whole point of a status card is you don't get to opt out — backlog #27). An empty effects block is a clean walk-away. Tone: small climbers in a big wild world.",
   "events": {
     "napping_beast": {
       "title": "A Napping Beast",
@@ -330,6 +330,27 @@
           "result": "Some days the body needs it more than the technique does.",
           "effects": {
             "heal": 10
+          }
+        }
+      ]
+    },
+    "the_shaken_pitch": {
+      "title": "The Shaken Pitch",
+      "text": "The whole face trembles — nothing falling, just a deep shudder passing through the rock, gone before you can name it. Your hands don't trust it again for a while.",
+      "choices": [
+        {
+          "label": "Push on rattled (gain gold, a Bruised Grip joins each deck)",
+          "result": "You keep climbing. Every hold after this one gets checked twice, whether it needs it or not — that costs you, quietly, from here on.",
+          "effects": {
+            "gold": 30,
+            "curse_card": "bruised_grip"
+          }
+        },
+        {
+          "label": "Stop and let it pass",
+          "result": "You wait it out, hands flat on the rock, until your grip feels like your own again.",
+          "effects": {
+            "heal": -3
           }
         }
       ]

@@ -54,6 +54,8 @@ var icon: String       # optional icon-key override (else the view infers one fr
 var text: String       # rules text, shown on the card face (no hover needed — §5)
 var upgraded: bool     # a campfire-sharpened card (name gets a +)
 var enchant: String    # id of an attached enchant (data/enchants.json); "" = none
+var status: bool       # a status/curse card — clogs your deck, no beneficial effect;
+                        # inflicted (an event's curse_card), not drafted (backlog #27)
 
 static func from_dict(d: Dictionary) -> Card:
 	var c := Card.new()
@@ -104,6 +106,7 @@ static func from_dict(d: Dictionary) -> Card:
 	c.text = String(d.get("text", ""))
 	c.upgraded = bool(d.get("upgraded", false))
 	c.enchant = String(d.get("enchant", ""))
+	c.status = bool(d.get("status", false))
 	return c
 
 
@@ -130,7 +133,7 @@ func to_dict() -> Dictionary:
 		"damage_per_wound": damage_per_wound,
 		"strength": strength, "wound": wound, "hits": hits, "draw": draw,
 		"target": target, "icon": icon, "text": text, "upgraded": upgraded,
-		"enchant": enchant,
+		"enchant": enchant, "status": status,
 	}
 
 

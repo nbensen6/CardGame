@@ -90,12 +90,24 @@ for (const [id, c] of Object.entries(CARDS)) {
   if (made) (createdBy[made] ??= []).push(id);
 }
 
+// Status/curse cards (backlog #27) are never drafted — an event INFLICTS one
+// via curse_card, so that's their reachability path, same shape createdBy
+// gives a `create`/`prepare` target.
+const cursedBy = {};
+for (const [eid, ev] of Object.entries(EVENTS)) {
+  for (const choice of ev.choices || []) {
+    const id = choice.effects && choice.effects.curse_card;
+    if (id) (cursedBy[id] ??= []).push(eid);
+  }
+}
+
 const model = Object.entries(CARDS).map(([id, c]) => {
   const owners = ownersOf[id] || {};
   const classList = Object.keys(owners);
   const inGlobalPool = GLOBAL_POOL.includes(id);
   const inGlobalStarter = GLOBAL_STARTER.includes(id);
   const built = createdBy[id] || [];
+  const cursed = cursedBy[id] || [];
 
   // Signature = lives in exactly one class and isn't handed out neutrally.
   const signature = classList.length === 1 && !inGlobalPool;
@@ -122,10 +134,12 @@ const model = Object.entries(CARDS).map(([id, c]) => {
     inGlobalPool,
     inGlobalStarter,
     builtBy: built,
+    cursedBy: cursed,
     signature,
     shared,
     reachable:
-      classList.length > 0 || inGlobalPool || inGlobalStarter || built.length > 0,
+      classList.length > 0 || inGlobalPool || inGlobalStarter
+      || built.length > 0 || cursed.length > 0,
   };
 });
 

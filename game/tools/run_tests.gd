@@ -61,6 +61,7 @@ func _init() -> void:
 	_test_event_remove_card_effect()
 	_test_event_remove_card_respects_min_deck()
 	_test_event_sharpen_card_effect()
+	_test_event_curse_card_effect()
 	_test_backlog17_four_events_touch_the_deck()
 	_test_card_upgrade_bumps_numbers()
 	_test_enchanted_copy_attaches_to_any_card()
@@ -68,6 +69,7 @@ func _init() -> void:
 	_test_campfire_rest_remove_upgrade()
 	_test_campfire_rest_heals_and_caps_at_max()
 	_test_campfire_guards_against_illegal_actions()
+	_test_status_card_cannot_be_sharpened_but_can_be_removed_at_campfire()
 	_test_skip_reward_keeps_the_deck_lean()
 	_test_rule_changing_relics()
 	_test_backlog10_new_rule_changing_relics()
@@ -84,8 +86,10 @@ func _init() -> void:
 	_test_gold_and_shop()
 	_test_shop_buys_a_relic()
 	_test_shop_cannot_thin_below_min_deck()
+	_test_status_card_removable_at_shop()
 	_test_shop_rejects_actions_outside_its_phase()
 	_test_content_pools_are_copies()
+	_test_status_cards_never_offered_as_a_reward()
 	# potions (backlog #26)
 	_test_potions_all_load()
 	_test_use_potion_applies_each_effect()
@@ -653,6 +657,24 @@ func _test_event_sharpen_card_effect() -> void:
 	_expect(run2.decks[0].size() == size_before, "sharpen_card quietly no-ops on a fully-upgraded deck")
 
 
+## Backlog #27: an event can punish you into your OWN deck with a status card,
+## not just take one away or sharpen one.
+func _test_event_curse_card_effect() -> void:
+	var run := _map_run()  # each deck starts as 10x Slash
+	var size_before: int = run.decks[0].size()
+	run.event = {"title": "T", "text": "x", "choices": [
+		{"label": "push on", "result": "!", "effects": {"curse_card": "bruised_grip"}},
+	]}
+	run.phase = Run.Phase.EVENT
+	run.map_row = 0
+	run.pick_event(0)
+	var last0: Card = run.decks[0][run.decks[0].size() - 1]
+	var last1: Card = run.decks[1][run.decks[1].size() - 1]
+	_expect(run.decks[0].size() == size_before + 1 and run.decks[1].size() == size_before + 1
+			and last0.id == "bruised_grip" and last0.status and last1.id == "bruised_grip",
+		"an event's curse_card effect shuffles one named status card into each hunter's own deck")
+
+
 func _test_backlog17_four_events_touch_the_deck() -> void:
 	var count := 0
 	for id in Content.list_events():
@@ -777,6 +799,29 @@ func _test_campfire_guards_against_illegal_actions() -> void:
 		and blocked_upgrade and name_unchanged and refused_outside,
 		"the campfire refuses a second action, thinning past the floor, " +
 		"a repeat upgrade, and acting outside its own phase")
+
+
+## Backlog #27: a status card has nothing to sharpen — the campfire refuses to
+## upgrade one, but removal (its only real escape) still works normally.
+func _test_status_card_cannot_be_sharpened_but_can_be_removed_at_campfire() -> void:
+	var run := _map_run()
+	run.decks[0].append(Content.make_card("bruised_grip"))
+	var curse_index: int = run.decks[0].size() - 1
+	run._begin_campfire()
+	var blocked := not run.campfire_action(0, "upgrade", curse_index)
+	var still_status: bool = (run.decks[0][curse_index] as Card).status
+	var still_waiting: bool = run.phase == Run.Phase.CAMPFIRE  # refusal doesn't spend the visit
+	_expect(blocked and still_status and still_waiting,
+		"a status card refuses the campfire's sharpen option, without spending the hunter's turn")
+
+	var run2 := _map_run()
+	run2.decks[0].append(Content.make_card("bruised_grip"))
+	var idx2: int = run2.decks[0].size() - 1
+	var before2: int = run2.decks[0].size()
+	run2._begin_campfire()
+	var removed := run2.campfire_action(0, "remove", idx2)
+	_expect(removed and run2.decks[0].size() == before2 - 1,
+		"a status card can be removed like any other card at a campfire")
 
 
 func _test_skip_reward_keeps_the_deck_lean() -> void:
@@ -1261,6 +1306,27 @@ func _test_shop_cannot_thin_below_min_deck() -> void:
 		"the shop refuses to thin a deck past MIN_DECK, and doesn't charge for the refusal")
 
 
+## Backlog #27: the shop's "Thin the deck" removal doesn't care what a card
+## IS — a status card comes out through the same generic path as any other.
+func _test_status_card_removable_at_shop() -> void:
+	var run := _map_run()
+	run.decks[0].append(Content.make_card("bruised_grip"))
+	var curse_index: int = run.decks[0].size() - 1
+	run.gold = 5000
+	run.map_row = 0
+	run.node_type = "shop"
+	run._begin_shop()
+	var rem_i := -1
+	for i in range(run.shop_stock.size()):
+		if String(run.shop_stock[i]["kind"]) == "remove" and int(run.shop_stock[i]["slot"]) == 0:
+			rem_i = i
+			break
+	var before: int = run.decks[0].size()
+	var bought := run.buy(rem_i, curse_index)
+	_expect(bought and run.decks[0].size() == before - 1,
+		"a status card can be bought out of a deck at a shop like any other card")
+
+
 func _test_shop_rejects_actions_outside_its_phase() -> void:
 	var run := _map_run()  # start() leaves the run on the MAP, not in a shop
 	_expect(not run.buy(0) and not run.leave_shop(),
@@ -1283,6 +1349,31 @@ func _test_content_pools_are_copies() -> void:
 		and Content.beast_pool("fight").size() > 0
 		and Content.reward_pool("frog").size() > 0,
 		"content pools hand out copies — callers can filter without draining the game")
+
+
+## Backlog #27: status cards are INFLICTED (an event's curse_card), never
+## drafted — they must not turn up in any starter deck or reward pool, global
+## or per-character, or a fresh run/reward screen could hand one out for free.
+func _test_status_cards_never_offered_as_a_reward() -> void:
+	var bad: Array = []
+	for id in Content.all_card_ids():
+		if not Content.make_card(String(id)).status:
+			continue
+		var in_starter := false
+		for c in Content.build_starter_deck():
+			if String((c as Card).id) == id:
+				in_starter = true
+				break
+		if in_starter:
+			bad.append("%s in global starter_deck" % id)
+		if Content.reward_pool().has(id):
+			bad.append("%s in global reward_pool" % id)
+		for c in Content.list_characters():
+			var cid := String(c["id"])
+			if Content.reward_pool(cid).has(id):
+				bad.append("%s in %s reward_pool" % [id, cid])
+	_expect(bad.is_empty(),
+		"no status card is offered by any starter deck or reward pool [%s]" % ", ".join(bad))
 
 
 # --- potions (backlog #26): held per-hunter, same data shape as relics -----
@@ -1911,7 +2002,8 @@ func _test_every_referenced_card_id_resolves() -> void:
 ## `prepare` field arms a delayed effect that combat.gd's _resolve_prepared()
 ## must actually handle, not just any string; a beast pool id must resolve to
 ## a real Titan/beast, not the empty "Titan, no moves" Boss.build_boss() hands
-## back for an unknown one. Card ids in decks/pools are proven above and relic
+## back for an unknown one; an event's curse_card (backlog #27) must name a
+## real status card. Card ids in decks/pools are proven above and relic
 ## ids by _test_relics_all_load() — together these prove the whole graph.
 func _test_content_integrity_graph() -> void:
 	var bad: Array = []
@@ -1927,8 +2019,14 @@ func _test_content_integrity_graph() -> void:
 			var b := Content.build_boss(String(id))
 			if b.moves.is_empty():
 				bad.append("%s pool: %s (no moves — unknown beast id?)" % [kind, id])
+	for eid in Content.list_events():
+		var ev := Content.make_event(String(eid))
+		for choice in (ev.get("choices", []) as Array):
+			var cc := String((choice as Dictionary).get("effects", {}).get("curse_card", ""))
+			if cc != "" and String(Content.make_card(cc).name).is_empty():
+				bad.append("%s curse_card: %s" % [eid, cc])
 	_expect(bad.is_empty(),
-		"create/prepare fields and beast pool ids all resolve [%s]" % ", ".join(bad))
+		"create/prepare fields, beast pool ids and curse_card refs all resolve [%s]" % ", ".join(bad))
 
 
 func _test_sunlight_blade_scales_with_exposed() -> void:
