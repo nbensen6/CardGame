@@ -66,6 +66,8 @@ func _init() -> void:
 	_test_enchanted_copy_attaches_to_any_card()
 	_test_enchants_all_load()
 	_test_campfire_rest_remove_upgrade()
+	_test_campfire_rest_heals_and_caps_at_max()
+	_test_campfire_guards_against_illegal_actions()
 	_test_skip_reward_keeps_the_deck_lean()
 	_test_rule_changing_relics()
 	_test_backlog10_new_rule_changing_relics()
@@ -79,6 +81,9 @@ func _init() -> void:
 	_test_coach_teaches_the_right_thing_first()
 	_test_tips_can_be_switched_off_without_losing_your_place()
 	_test_gold_and_shop()
+	_test_shop_buys_a_relic()
+	_test_shop_cannot_thin_below_min_deck()
+	_test_shop_rejects_actions_outside_its_phase()
 	_test_content_pools_are_copies()
 	# grip / ledges (SotC real-time climb)
 	_test_secure_on_holds()
@@ -709,6 +714,59 @@ func _test_campfire_rest_remove_upgrade() -> void:
 		"a campfire thins one deck, sharpens the other, then hands back to the map")
 
 
+## Backlog #19: "rest" itself, and the guards that keep a campfire from being
+## abused (acting twice, thinning past the floor, upgrading twice), were never
+## exercised — only remove/upgrade succeeding was.
+func _test_campfire_rest_heals_and_caps_at_max() -> void:
+	var run := _map_run()
+	run.hp[0] = 10
+	run._begin_campfire()
+	var ok := run.campfire_action(0, "rest")
+	_expect(ok and run.hp[0] == 10 + Run.REST_HEAL, "a campfire rest heals by REST_HEAL")
+
+	var run2 := _map_run()
+	run2.hp[0] = run2.max_hp[0] - 2  # almost topped up already
+	run2._begin_campfire()
+	run2.campfire_action(0, "rest")
+	_expect(run2.hp[0] == run2.max_hp[0], "a campfire rest cannot overheal past max HP")
+
+
+func _test_campfire_guards_against_illegal_actions() -> void:
+	# a hunter who has already acted this visit can't act again
+	var run := _map_run()
+	run._begin_campfire()
+	run.campfire_action(0, "rest")
+	run.hp[0] = 1  # so a second heal would show up plainly if it fired
+	var no_double_action: bool = not run.campfire_action(0, "rest") and run.hp[0] == 1
+
+	# can't thin a deck already at the floor
+	var run2 := _map_run()
+	while run2.decks[0].size() > Run.MIN_DECK:
+		run2.decks[0].pop_back()
+	run2._begin_campfire()
+	var size_before: int = run2.decks[0].size()
+	var blocked_remove := not run2.campfire_action(0, "remove", 0)
+	var floor_held: bool = run2.decks[0].size() == size_before
+
+	# can't upgrade the same card a second time, on a later visit
+	var run3 := _map_run()
+	run3._begin_campfire()
+	run3.campfire_action(0, "upgrade", 0)
+	var upgraded_name: String = (run3.decks[0][0] as Card).name
+	run3._begin_campfire()  # a later campfire, same run, same deck
+	var blocked_upgrade := not run3.campfire_action(0, "upgrade", 0)
+	var name_unchanged: bool = (run3.decks[0][0] as Card).name == upgraded_name
+
+	# outside the campfire phase entirely
+	var run4 := _map_run()
+	var refused_outside := not run4.campfire_action(0, "rest")
+
+	_expect(no_double_action and blocked_remove and floor_held
+		and blocked_upgrade and name_unchanged and refused_outside,
+		"the campfire refuses a second action, thinning past the floor, " +
+		"a repeat upgrade, and acting outside its own phase")
+
+
 func _test_skip_reward_keeps_the_deck_lean() -> void:
 	var run := _map_run()
 	_step_into_combat(run)
@@ -1063,6 +1121,58 @@ func _test_gold_and_shop() -> void:
 	_expect(earned and stocked and bought and got_card and not twice
 		and thinned and pricier and broke and run.phase == Run.Phase.MAP,
 		"gold is earned, the shop trades, removal gets pricier, and you can't overspend")
+
+
+## Backlog #19: the card/removal paths above were covered, but a relic
+## purchase and the "can't thin past the floor" guard never were.
+func _test_shop_buys_a_relic() -> void:
+	var run := _map_run()
+	run.gold = 500
+	run.map_row = 0
+	run.node_type = "shop"
+	run._begin_shop()
+	var relic_i := -1
+	for i in range(run.shop_stock.size()):
+		if String(run.shop_stock[i]["kind"]) == "relic":
+			relic_i = i
+			break
+	if relic_i < 0:
+		_expect(true, "shop buys a relic (none stocked this seed)")
+		return
+	var relics_before: int = run.team_relics.size()
+	var purse_before: int = run.gold
+	var bought := run.buy(relic_i)
+	_expect(bought and run.team_relics.size() == relics_before + 1
+		and run.gold == purse_before - Run.PRICE_RELIC and bool(run.shop_stock[relic_i]["sold"]),
+		"buying a relic adds it to the team and spends gold")
+
+
+func _test_shop_cannot_thin_below_min_deck() -> void:
+	var run := _map_run()
+	run.gold = 5000
+	run.map_row = 0
+	run.node_type = "shop"
+	run._begin_shop()
+	var rem_i := -1
+	for i in range(run.shop_stock.size()):
+		if String(run.shop_stock[i]["kind"]) == "remove":
+			rem_i = i
+			break
+	var rslot := int(run.shop_stock[rem_i]["slot"])
+	while run.decks[rslot].size() > Run.MIN_DECK:  # thin it to the floor by hand
+		run.decks[rslot].pop_back()
+	var size_before: int = run.decks[rslot].size()
+	var purse_before: int = run.gold
+	var blocked := not run.buy(rem_i, 0)
+	_expect(blocked and run.decks[rslot].size() == size_before and run.gold == purse_before
+		and not bool(run.shop_stock[rem_i]["sold"]),
+		"the shop refuses to thin a deck past MIN_DECK, and doesn't charge for the refusal")
+
+
+func _test_shop_rejects_actions_outside_its_phase() -> void:
+	var run := _map_run()  # start() leaves the run on the MAP, not in a shop
+	_expect(not run.buy(0) and not run.leave_shop(),
+		"buy() and leave_shop() refuse to act outside the SHOP phase")
 
 
 func _test_content_pools_are_copies() -> void:

@@ -141,7 +141,7 @@ Ordered. Source in brackets.
   *Done when:* quality is carried end to end, the bonus scales, save/load is
   unaffected, and the existing 38 timing assertions still hold with "perfect"
   behaving exactly as today's "nailed" did.
-- [ ] **19. Shop and campfire test coverage** `cloud-safe` — buying, price
+- [x] **19. Shop and campfire test coverage** `cloud-safe` — buying, price
   rises on repeat removals, and each campfire action are rules nobody tests.
   *Done when:* covered, including that you cannot buy what you cannot afford
   and cannot thin a deck below `MIN_DECK`.
@@ -283,6 +283,23 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-24** — #19 Shop and campfire test coverage: this session picked
+  #1 and #4 first, built a full "per-beast limiter" feature for #4, then hit
+  a push conflict and discovered (via rule 9, added exactly for this) both
+  were already done on `origin/main` by a prior run — `git reset --hard
+  origin/main` threw the duplicate work away before anything was pushed, no
+  harm done. Re-picked from the real, current queue and landed #19 instead:
+  a relic purchase, the "can't thin a deck past `MIN_DECK`" guard (shop AND
+  campfire — only the shop's card/removal paths and the campfire's
+  remove/upgrade *succeeding* had tests before), `buy()`/`campfire_action()`
+  refusing to act outside their own phase, a campfire "rest" actually
+  healing by `REST_HEAL` and capping at max HP, a hunter acting twice in one
+  campfire visit, and re-upgrading an already-upgraded card on a later
+  visit. 5 new test functions, all passing; `_test_rest_node_heals_and_returns_to_map`
+  is still a pre-existing weak test (its substantive branch never fires on
+  the fixed seed — "no rest offered on this seed") but fixing that is a
+  different item, left alone. `balance_sim.gd` still runs clean (smoke test
+  only).
 - **2026-08-23** — #33 Graded timing accuracy, the rules half: widened the
   bare hit/miss timing bool into a 3-tier quality (`Combat.TIMING_MISS` /
   `TIMING_GOOD` / `TIMING_PERFECT`) carried through the whole seam the item
