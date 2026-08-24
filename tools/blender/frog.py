@@ -1,167 +1,119 @@
-"""The Frog.
+"""The Frog, built to match the Kenney models it stands next to.
 
-Built from smooth-shaded spheres rather than faceted primitives, because the
-faceting was the first thing that read as "programmer art". Every part is its
-own object with its own material — the Kenney models do the same, and it means
-the eyes, mouth and belly can be different colours without touching UVs.
+Copying that style meant reading it off the bunny rather than guessing:
+
+  * ~575 triangles, and the low-poly look comes from the VERTEX COUNT, not
+    from flat shading — 78% of the bunny's faces are smooth-shaded.
+  * ONE material for the whole Kenney set: a 512x512 palette atlas. Colour
+    comes from UVs pointing at a flat swatch, which is why a bunny and a
+    koala batch together.
+
+So this frog uses their actual colormap.png. Every part is one mesh with one
+material, coloured by aiming its UVs at a swatch, and it stands as tall as the
+bunny so the cast reads at one eye level.
 
     blender.exe --background --python tools/blender/frog.py -- <out.glb>
 """
-import bpy, sys, math, mathutils
+import bpy, sys, os, math, mathutils
 
 out = sys.argv[sys.argv.index("--") + 1]
+HERE = os.path.dirname(os.path.abspath(__file__))
+TARGET_HEIGHT = 1.85          # the Kenney bunny is 1.83 tall
+
 bpy.ops.wm.read_factory_settings(use_empty=True)
 
+img = bpy.data.images.load(os.path.join(HERE, "colormap.png"))
+img.name = "colormap"
+mat = bpy.data.materials.new("colormap")
+mat.use_nodes = True
+bsdf = mat.node_tree.nodes["Principled BSDF"]
+bsdf.inputs["Roughness"].default_value = 1.0
+tex = mat.node_tree.nodes.new("ShaderNodeTexImage")
+tex.image = img
+tex.interpolation = "Closest"          # never blend two swatches together
+mat.node_tree.links.new(bsdf.inputs["Base Color"], tex.outputs["Color"])
 
-def mat(name, rgb, rough=0.6):
-    m = bpy.data.materials.new(name)
-    m.use_nodes = True
-    b = m.node_tree.nodes["Principled BSDF"]
-    b.inputs["Base Color"].default_value = (rgb[0], rgb[1], rgb[2], 1.0)
-    b.inputs["Roughness"].default_value = rough
-    return m
+
+def swatch(px, py):
+    """UV of a palette cell, by its pixel in colormap.png (PNG y runs down)."""
+    return (px / 512.0, 1.0 - py / 512.0)
 
 
-SKIN  = mat("Skin",  (0.055, 0.175, 0.070), 0.55)   # deep forest green
-BELLY = mat("Belly", (0.600, 0.640, 0.390), 0.70)   # pale olive
-SPOT  = mat("Spot",  (0.022, 0.075, 0.035), 0.50)
-MOUTH = mat("Mouth", (0.030, 0.045, 0.035), 0.80)
-EYE   = mat("Eye",   (0.870, 0.690, 0.110), 0.35)   # gold
-PUPIL = mat("Pupil", (0.018, 0.018, 0.024), 0.25)
-GLINT = mat("Glint", (1.000, 1.000, 1.000), 0.10)
+SKIN  = swatch(432, 320)   # 3da679  deep green
+LIGHT = swatch(400, 320)   # 61cb8b  mint
+BELLY = swatch(336, 320)   # fde4c7  cream
+GOLD  = swatch(464, 320)   # ffc044
+DARK  = swatch(336, 448)   # 38383d
 
 parts = []
 
 
-def ball(loc, scale, m, seg=20, ring=10, rot=(0, 0, 0)):
-    """A smooth-shaded ellipsoid. Everything on this frog is one of these."""
-    bpy.ops.mesh.primitive_uv_sphere_add(segments=seg, ring_count=ring, location=loc)
-    o = bpy.context.object
-    o.scale, o.rotation_euler = scale, rot
-    o.data.materials.append(m)
+def paint(o, uv, smooth=True):
+    o.data.materials.append(mat)
+    layer = o.data.uv_layers[0] if o.data.uv_layers else o.data.uv_layers.new(name="UVMap")
+    for loop in layer.data:
+        loop.uv = uv
     for p in o.data.polygons:
-        p.use_smooth = True
+        p.use_smooth = smooth
     parts.append(o)
     return o
 
 
-# Blender -Y is forward; the glTF exporter turns that into the +Z Godot wants.
-BODY_C, BODY_S = (0.0, 0.10, 0.45), (0.40, 0.45, 0.32)
-HEAD_C, HEAD_S = (0.0, -0.35, 0.44), (0.36, 0.30, 0.26)
-
-ball(BODY_C, BODY_S, SKIN, 24, 12)
-ball(HEAD_C, HEAD_S, SKIN, 24, 12)
-ball((0.0, -0.06, 0.27), (0.34, 0.42, 0.19), BELLY, 20, 10)   # underside
-ball((0.0, -0.47, 0.215), (0.245, 0.155, 0.100), BELLY, 16, 8)  # throat, under the jaw
+def ball(loc, scale, uv, seg=10, ring=6, rot=(0, 0, 0)):
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=seg, ring_count=ring, location=loc)
+    o = bpy.context.object
+    o.scale, o.rotation_euler = scale, rot
+    return paint(o, uv)
 
 
-def on_body(x, y):
-    """Height of the body surface above (x, y) — so spots sit ON the back."""
-    dx = x / BODY_S[0]
-    dy = (y - BODY_C[1]) / BODY_S[1]
-    r = max(0.0, 1.0 - dx * dx - dy * dy)
-    return BODY_C[2] + BODY_S[2] * math.sqrt(r)
+def slab(loc, scale, uv, rot=(0, 0, 0)):
+    bpy.ops.mesh.primitive_cube_add(location=loc)
+    o = bpy.context.object
+    o.scale, o.rotation_euler = scale, rot
+    return paint(o, uv, smooth=False)
 
 
-for x, y, s in [(0.17, -0.02, 1.0), (-0.20, 0.06, 0.9), (0.26, 0.26, 0.85),
-                (-0.25, 0.30, 0.8), (0.02, 0.34, 0.75), (-0.06, 0.16, 0.6)]:
-    ball((x, y, on_body(x, y) - 0.025), (0.085 * s, 0.105 * s, 0.045 * s), SPOT, 14, 7)
-
-def on_head(x, y):
-    """Height of the head surface above (x, y) — for nostrils that sit ON it."""
-    dx = x / HEAD_S[0]
-    dy = (y - HEAD_C[1]) / HEAD_S[1]
-    r = max(0.0, 1.0 - dx * dx - dy * dy)
-    return HEAD_C[2] + HEAD_S[2] * math.sqrt(r)
-
-
-for nx in (-0.078, 0.078):
-    ball((nx, -0.585, on_head(nx, -0.585) - 0.012), (0.030, 0.036, 0.020), MOUTH, 12, 6)
-
-# The mouth is a ring, not a line: a frog's jaw wraps most of the way round its
-# head. The back of the ring is buried in the body, so only the grin shows.
+# Blender -Y is forward; the exporter turns that into the +Z Godot wants.
+ball((0.00,  0.00, 0.72), (0.44, 0.40, 0.46), SKIN,  10, 6)   # body
+ball((0.00, -0.05, 1.26), (0.44, 0.42, 0.34), SKIN,  10, 6)   # head
+ball((0.00, -0.24, 0.62), (0.30, 0.24, 0.32), BELLY,  8, 5)   # belly
 bpy.ops.mesh.primitive_torus_add(major_radius=1.0, minor_radius=0.052,
-                                 major_segments=30, minor_segments=8,
-                                 location=(0.0, -0.35, 0.335))
-mouth = bpy.context.object
-mouth.scale = (0.350, 0.293, 0.62)
-mouth.data.materials.append(MOUTH)
-for p in mouth.data.polygons:
-    p.use_smooth = True
-parts.append(mouth)
+                                 major_segments=14, minor_segments=4,
+                                 location=(0.0, -0.05, 1.10))
+_m = bpy.context.object
+_m.scale = (0.400, 0.381, 0.55)
+paint(_m, DARK)                                               # mouth
 
 for sx in (-1, 1):
-    eye = mathutils.Vector((0.205 * sx, -0.415, 0.655))
-    out_dir = mathutils.Vector((0.45 * sx, -0.80, 0.26)).normalized()
-    ball(eye, (0.118, 0.118, 0.118), EYE, 20, 10)
-    p = eye + out_dir * 0.070
-    ball(p, (0.060, 0.060, 0.036), PUPIL, 16, 8)          # horizontal frog slit
-    g = eye + out_dir * 0.098 + mathutils.Vector((-0.030 * sx, 0.0, 0.042))
-    ball(g, (0.021, 0.021, 0.021), GLINT, 10, 6)
-    ball(eye + mathutils.Vector((0, 0.008, 0.040)),
-         (0.129, 0.126, 0.085), SKIN, 20, 10)             # heavy lid
+    eye = mathutils.Vector((0.235 * sx, -0.120, 1.520))
+    look = mathutils.Vector((0.34 * sx, -0.86, 0.38)).normalized()
+    ball(eye, (0.160, 0.160, 0.160), GOLD, 8, 5)
+    ball(eye + look * 0.105, (0.078, 0.078, 0.052), DARK, 6, 4)     # slit pupil
+    ball((0.360 * sx,  0.090, 0.420), (0.180, 0.280, 0.260), SKIN,  7, 4)   # haunch
+    ball((0.310 * sx, -0.045, 0.235), (0.135, 0.150, 0.185), SKIN,  6, 4)   # shin
+    ball((0.265 * sx, -0.210, 0.095), (0.185, 0.300, 0.095), LIGHT, 6, 4)   # foot
+    ball((0.345 * sx, -0.160, 0.760), (0.105, 0.105, 0.235), SKIN,  6, 4)   # arm
 
-    # folded back leg
-    ball((0.335 * sx, 0.295, 0.400), (0.135, 0.225, 0.155), SKIN, 18, 9,
-         (math.radians(24), 0, 0))
-    ball((0.360 * sx, 0.470, 0.215), (0.105, 0.105, 0.190), SKIN, 16, 8)
-    ball((0.345 * sx, 0.190, 0.062), (0.115, 0.230, 0.055), SKIN, 16, 8)
-    for i, fx in enumerate((-0.075, 0.0, 0.075)):
-        ball((0.345 * sx + fx, -0.030 - abs(fx) * 0.5, 0.050),
-             (0.042, 0.115, 0.038), SKIN, 12, 6)
-
-    # front arm
-    ball((0.240 * sx, -0.300, 0.230), (0.080, 0.080, 0.205), SKIN, 16, 8)
-    ball((0.250 * sx, -0.360, 0.052), (0.092, 0.125, 0.048), SKIN, 14, 7)
-    for fx in (-0.058, 0.0, 0.058):
-        ball((0.250 * sx + fx, -0.470 - abs(fx) * 0.4, 0.044),
-             (0.033, 0.085, 0.032), SKIN, 10, 5)
-
-# Apply first, THEN scale, then apply again: join/primitive ops leave an object
-# scale behind, so scaling before the first apply multiplies by the wrong number.
+# One material means the whole frog can be ONE mesh and still be many colours.
 bpy.ops.object.select_all(action="SELECT")
 bpy.context.view_layer.objects.active = parts[0]
 bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-for o in parts:
-    o.scale = (1.5, 1.5, 1.5)
-bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+bpy.ops.object.join()
+frog = bpy.context.object
+frog.name = "Frog"
 
-# 43 separate objects is 43 draw calls per frog, and with four hunters on screen
-# that adds up for no reason. Parts sharing a material are one mesh; nothing about
-# the shape changes.
-groups = {}
-for o in parts:
-    groups.setdefault(o.data.materials[0].name, []).append(o)
-parts = []
-for name, group in groups.items():
-    bpy.ops.object.select_all(action="DESELECT")
-    for o in group:
-        o.select_set(True)
-    bpy.context.view_layer.objects.active = group[0]
-    if len(group) > 1:
-        bpy.ops.object.join()
-    merged = bpy.context.object
-    merged.name = name
-    parts.append(merged)
+co = [v.co for v in frog.data.vertices]
+lo = mathutils.Vector((min(c.x for c in co), min(c.y for c in co), min(c.z for c in co)))
+hi = mathutils.Vector((max(c.x for c in co), max(c.y for c in co), max(c.z for c in co)))
+k = TARGET_HEIGHT / (hi.z - lo.z)
+mid = mathutils.Vector(((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, lo.z))
+for v in frog.data.vertices:
+    v.co = (v.co - mid) * k          # to scale, and standing on the floor
 
-# Drop the whole frog onto the floor, centred left-to-right.
-lo = mathutils.Vector((1e9, 1e9, 1e9))
-hi = mathutils.Vector((-1e9, -1e9, -1e9))
-for o in parts:
-    for v in o.data.vertices:
-        lo = mathutils.Vector((min(lo.x, v.co.x), min(lo.y, v.co.y), min(lo.z, v.co.z)))
-        hi = mathutils.Vector((max(hi.x, v.co.x), max(hi.y, v.co.y), max(hi.z, v.co.z)))
-off = mathutils.Vector(((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, lo.z))
-for o in parts:
-    for v in o.data.vertices:
-        v.co -= off
-
-tris = 0
-for o in parts:
-    o.data.calc_loop_triangles()
-    tris += len(o.data.loop_triangles)
-print("TRIS", tris, "PARTS", len(parts))
-print("SIZE", round(hi.x - lo.x, 3), round(hi.y - lo.y, 3), round(hi.z - lo.z, 3))
+frog.data.calc_loop_triangles()
+print("TRIS", len(frog.data.loop_triangles), "MESHES 1 MATERIALS 1")
+print("SIZE", round((hi.x - lo.x) * k, 3), round((hi.y - lo.y) * k, 3),
+      round((hi.z - lo.z) * k, 3))
 
 bpy.ops.export_scene.gltf(filepath=out, export_format="GLB", use_selection=False)
 print("WROTE", out)

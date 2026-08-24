@@ -1,5 +1,9 @@
 # Models as scripts
 
+`frog.py` builds the Frog that ships. `frog_smooth.py` is the earlier
+higher-poly take, kept because switching styles should be one command rather
+than an archaeology dig — that is the point of models being source.
+
 Every file here builds one model and exports it straight to `game/assets/3d/cast/`.
 No `.blend` file in the middle. That is the whole idea: a model written as code is
 diffable, reviewable, and re-runnable, so "make the eyes bigger" is a one-line
@@ -29,6 +33,26 @@ Godot wants, so build the model facing -Y and the export lands facing the camera
 **Apply transforms before you scale, then apply again.** `join()` leaves the
 result carrying the first part's object scale, so setting `scale = 1.5` on it
 multiplies by `1.5 / that`, not by 1.5. Apply first and the number means what it says.
+
+## Matching the Kenney style
+
+Read off the bunny rather than guessed at:
+
+* **~575 triangles**, and the low-poly look comes from the VERTEX COUNT, not
+  from flat shading — 78% of the bunny's faces are smooth-shaded. Faceting a
+  model is what makes it read as programmer art, not the triangle budget.
+* **One material for the whole set**: a 512x512 palette atlas, `colormap.png`,
+  kept next to these scripts. Colour comes from UVs pointing at a flat swatch,
+  which is why a bunny and a koala batch together.
+
+So one mesh can be many colours. Aim a part's UVs at a swatch and everything
+joins into a single mesh with a single material — the Frog is 876 triangles in
+1 mesh, where the bunny needs 5.
+
+Two traps: the primitives already ship a `UVMap`, so `uv_layers.new()` gives you
+a second layer named `UVMap.001` and the renderer keeps using the original
+unwrap — write into `uv_layers[0]` instead. And set the texture node's
+interpolation to `Closest`, or neighbouring swatches bleed into each other.
 
 ## Use Blender 4.1, not 5.2
 
