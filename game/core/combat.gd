@@ -236,7 +236,12 @@ func _meld_cards(a: Card, b: Card) -> Card:
 		"id": "meld_%s_%s" % [a.id, b.id],
 		"name": "%s + %s" % [a.name, b.name],
 		"type": "attack" if (a.type == "attack" or b.type == "attack") else "skill",
-		"cost": maxi(0, a.cost + b.cost - 1),
+		# An X-cost card (backlog #29, sentinel -1) melded with anything stays
+		# X-cost — summing -1 into an ordinary cost would corrupt the sentinel
+		# into a real (wrong) number instead of "all remaining energy".
+		"cost": -1 if (a.cost == -1 or b.cost == -1) else maxi(0, a.cost + b.cost - 1),
+		"damage_per_x": a.damage_per_x + b.damage_per_x,
+		"block_per_x": a.block_per_x + b.block_per_x,
 		"damage": a.damage + b.damage,
 		"block": a.block + b.block,
 		"block_per_play": a.block_per_play + b.block_per_play,
@@ -278,9 +283,15 @@ func _meld_cards(a: Card, b: Card) -> Card:
 	})
 
 ## A card's cost for a hunter, after any permanent Burn Coal reductions.
+## `cost == -1` is the X-cost sentinel (backlog #29): it always costs exactly
+## whatever energy the hunter currently has, so playing it always drains them
+## to zero — permanent reductions don't apply to a cost that isn't a fixed
+## number to begin with.
 func effective_cost(pi: int, card: Card) -> int:
 	if pi < 0 or pi >= players.size():
 		return card.cost
+	if card.cost == -1:
+		return players[pi].energy
 	return maxi(0, card.cost - int(players[pi].cost_reductions.get(card.id, 0)))
 
 func result() -> int:
@@ -312,7 +323,16 @@ func is_over() -> bool:
 ## behaves exactly as before this landed) pays the timed bonus in full;
 ## TIMING_GOOD pays TIMING_GOOD_SCALE of it. It's meaningless when `nailed` is
 ## false — there's no bonus to grade.
-func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PERFECT) -> Dictionary:
+##
+## `x_spent` (backlog #29) is how much energy an X-cost card drained — it feeds
+## `damage_per_x`/`block_per_x`. Left at -1 (the default), it's read live off
+## `ps.energy`, which is correct for a DISPLAY preview (called before the card
+## is played, energy still full). `play_card` passes the captured amount
+## explicitly instead, since by the time it previews the resolved play it has
+## already spent that energy down to zero. Cards that aren't X-cost never set
+## `damage_per_x`/`block_per_x`, so this is a no-op for them either way.
+func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PERFECT,
+		x_spent: int = -1) -> Dictionary:
 	var ps: PlayerState = players[pi]
 	var mate: PlayerState = players[ally_index(pi)]
 	var hit := card.timed and nailed
@@ -321,18 +341,20 @@ func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PER
 		scale = 1.0 if quality >= TIMING_PERFECT else (TIMING_GOOD_SCALE if quality >= TIMING_GOOD else 0.0)
 	var exhausted := ps.exhaust_pile.size()
 	var prior := int(ps.play_counts.get(card.id, 0))
+	var x := x_spent if x_spent >= 0 else (ps.energy if card.cost == -1 else 0)
 
 	var dmg := card.damage + card.damage_per_vulnerable * boss.vulnerable \
 		+ card.damage_per_foothold * ps.foothold + card.damage_per_rhythm * ps.rhythm \
 		+ card.damage_per_wound * boss.wound \
 		+ card.damage_per_ally_foothold * int(mate.foothold) \
-		+ card.damage_per_exhausted * exhausted
+		+ card.damage_per_exhausted * exhausted + card.damage_per_x * x
 	if hit:
 		dmg += int(card.timed_damage * scale)
 	if card.type == "attack":  # buffs lift real attacks, not incidental scaling
 		dmg += _attack_bonus + ps.strength + ps.char_attack_bonus
 
-	var blk := card.block + card.block_per_play * prior + card.block_per_exhausted * exhausted
+	var blk := card.block + card.block_per_play * prior + card.block_per_exhausted * exhausted \
+		+ card.block_per_x * x
 	if hit:
 		blk += int(card.timed_block * scale)
 	var ally_blk := card.ally_block + (int(card.timed_ally_block * scale) if hit else 0)
@@ -407,7 +429,12 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	if (card.cheapen_pick or card.meld) and target_index >= 0 and target_index < ps.hand.size() \
 			and target_index != ci and target_index != sac_index:
 		cheapen_card = ps.hand[target_index]
-	ps.energy -= effective_cost(pi, card)
+	# Captured BEFORE the subtraction below — an X-cost card (backlog #29)
+	# drains `ps.energy` to zero here, so `preview()` further down can't
+	# read it live the way a display-only preview call does.
+	var pay := effective_cost(pi, card)
+	var x_spent := pay if card.cost == -1 else 0
+	ps.energy -= pay
 	ps.hand.remove_at(ci)
 	# A fumbled timed card slips away — removed with no effect (not even discarded)
 	# — unless the "sure" enchant is attached, which always lands (backlog #12).
@@ -427,7 +454,7 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	# Taken BEFORE play_counts is bumped and before this card's own exhaust_pick
 	# fires, so Build Mech counts only EARLIER plays and Detonator doesn't secretly
 	# count its own sacrifice.
-	var pv := preview(pi, card, true, timing_quality)
+	var pv := preview(pi, card, true, timing_quality, x_spent)
 	ps.play_counts[card.id] = int(ps.play_counts.get(card.id, 0)) + 1
 	var base_damage: int = int(pv["damage"])
 	if base_damage > 0:

@@ -453,6 +453,8 @@ func _keywords_of(c: Card) -> Array:
 		ids.append("retain")
 	if c.innate:
 		ids.append("innate")
+	if c.cost == -1 or c.damage_per_x > 0 or c.block_per_x > 0:
+		ids.append("x_cost")
 	var out: Array = []
 	for id in ids:
 		var k := Content.keyword(String(id))

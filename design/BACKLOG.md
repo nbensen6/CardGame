@@ -189,9 +189,19 @@ Ordered. Source in brackets.
   StS gets enormous play out of. Retain: not discarded at end of turn. Innate:
   always in the opening hand. Both are a flag plus one line in the draw/discard
   path, and both create build decisions immediately.
-- [ ] **29. X-cost cards** `cloud-safe` — spend ALL remaining energy, scale with
+- [x] **29. X-cost cards** `cloud-safe` — spend ALL remaining energy, scale with
   how much. The classic end-of-turn dump, and it interacts well with our energy
   relics. `cost: -1` as the sentinel, resolved in `effective_cost`/`play_card`.
+- [ ] **29b. X-cost card face** `needs a screen` — item 29's engine landed but
+  no real card uses `cost: -1` yet: `game_host.gd`'s reward-choice and
+  deck-view dicts (lines building `"cost": rc.cost` / `"cost": c.cost`, unlike
+  the combat-hand list which already calls `effective_cost`) and the three
+  view casts that print it (`card_view.gd`'s cost label, `combat_3d.gd`,
+  `location_3d.gd`) all do a raw `int(cost)` — an X-cost card there would show
+  a literal "-1". Needs a screen to fix (render "X" instead) and confirm
+  before any real card can safely use the sentinel outside a live hand.
+  *Done when:* those three spots show "X", at least one real card ships with
+  `cost: -1`, and it's been looked at.
 - [ ] **30. Relics with a downside** `cloud-safe` — every one of our 26 is pure
   upside, so taking one is never a decision. StS's boss relics cost you something
   (less energy, no potions, more damage taken) in exchange for power.
@@ -331,6 +341,56 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-24** — #29 X-cost cards: `cost == -1` is the sentinel, resolved in
+  exactly the two places the item named. `Combat.effective_cost()` now returns
+  the hunter's CURRENT energy for an X-cost card instead of `card.cost` minus
+  permanent reductions — Burn Coal-style reductions don't apply to a cost
+  that isn't a fixed number, which a dedicated test pins deliberately rather
+  than leaving implicit. `Combat.play_card()` captures that amount (`x_spent`)
+  BEFORE draining `ps.energy` to zero, then threads it into `preview()` as a
+  new optional param so the same formula used for the live card-face preview
+  (energy still full, reads `ps.energy` directly) also resolves the actual
+  play (energy already spent, needs the captured value instead) — one formula,
+  two callers, same shape the file's own doc comment already insists on for
+  every other scaling field. Two new `Card` fields, `damage_per_x`/
+  `block_per_x`, same shape as the existing `damage_per_exhausted`/
+  `block_per_exhausted` pair. Two smaller correctness fixes the item's own
+  text didn't spell out but the sentinel demands: `_meld_cards()` used to sum
+  `a.cost + b.cost - 1`, which would silently turn `-1` into a real (wrong)
+  number the moment an X-cost card was ever melded with anything — it now
+  keeps the sentinel if either side has it, and sums the two new per_x fields
+  like every other numeric field already does; `upgraded_copy()`'s "nothing to
+  scale, make it cheaper" fallback only fires when `cost > 0`, so it already
+  left `-1` alone without needing a guard, and its bump list now includes the
+  two new per_x fields so sharpening an X-cost card does something. Wired a
+  `x_cost` entry into `keywords.json` and `GameHost._keywords_of` — #16's
+  reflection test forces this for any new field, caught automatically since it
+  probes `damage_per_x`/`block_per_x` in isolation.
+  **Deliberately no real card**: chasing down where a card's cost actually
+  gets displayed found three spots that never learned about the sentinel —
+  `game_host.gd`'s reward-choice and deck-view dicts both send the card's raw
+  `.cost` (unlike the combat-hand list a few lines above them, which already
+  calls `effective_cost()` for exactly this reason), and `card_view.gd` /
+  `combat_3d.gd` / `location_3d.gd` all print it with a bare `int(cost)`. A
+  real X-cost card offered as a reward or sitting in a deck would show a
+  literal "-1" on screen — a real, visible bug I can't fix blind and can't
+  verify without a screen (hard rule 3), so rather than ship it and hope,
+  proved the mechanic entirely against `Combat` with synthetic test cards
+  (`_x_strike`/`_x_brace`, the same shape every other test-only card in this
+  suite already uses) and logged the gap as new queue item **29b** (`needs a
+  screen`) rather than silently leaving the engine unreachable-by-design
+  forever. 5 new tests: live cost reads current energy, damage/block scale
+  with what was actually spent, playable (and inert, not crashing) at zero
+  energy, a permanent reduction is ignored, and the meld interaction. Also
+  covered the upgrade-bump path directly. `run_tests.gd` all green (7 new
+  assertions on top of the existing suite, no regressions); `balance_sim.gd`
+  ran clean as a smoke test only — no policy calls an X-cost card since none
+  exists in `cards.json` yet, so the printed win rates are from other
+  sessions' content growth, not anything touched here.
+  **Also:** confirmed `git fetch origin main` matched the container's
+  initial detached-HEAD checkout exactly (`47464f8`, 42 commits ahead of a
+  stale cached ref this session almost trusted at first) before starting —
+  rule 9 held, no duplicate work this time.
 - **2026-08-24** — #28 Retain and Innate: two `bool` fields on `Card`
   (`retain`, `innate`), each a flag plus one line in the draw/discard path,
   same shape rule 7 asks for. `retain`: `Combat.end_turn()`'s discard loop now

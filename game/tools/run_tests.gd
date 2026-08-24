@@ -117,6 +117,12 @@ func _init() -> void:
 	_test_retain_survives_into_the_next_round()
 	_test_innate_is_guaranteed_in_the_opening_hand()
 	_test_innate_does_not_reappear_every_round()
+	# X-cost cards (backlog #29)
+	_test_x_cost_spends_all_energy_and_scales_with_it()
+	_test_x_cost_playable_at_zero_energy()
+	_test_x_cost_ignores_permanent_cost_reductions()
+	_test_x_cost_meld_keeps_sentinel_and_sums_per_x()
+	_test_x_cost_upgrade_bumps_per_x_scaling()
 	# graded timing accuracy — the rules half (backlog #33)
 	_test_graded_timing_good_pays_half_the_bonus()
 	_test_graded_timing_perfect_matches_a_plain_nailed_hit()
@@ -1948,6 +1954,63 @@ func _test_innate_does_not_reappear_every_round() -> void:
 		"round 2 draws a normal hand size — innate only guarantees round 1")
 
 
+# --- X-cost cards (backlog #29) --------------------------------------------
+# cost == -1 is the sentinel: the card always spends every point of energy the
+# hunter has, and `damage_per_x`/`block_per_x` scale with how much that was.
+# No real card is wired into cards.json yet — the reward-choice and deck-view
+# JSON (game_host.gd) and their card-face views still print a raw `int(cost)`,
+# which would show a literal "-1" for a card nobody has ever seen played. That
+# needs a screen to fix and verify, so this is engine-only, proven directly
+# against Combat instead of through real content (same shape _slash()/_grip()
+# etc. already use for every other synthetic test card in this file).
+
+func _test_x_cost_spends_all_energy_and_scales_with_it() -> void:
+	var combat := _new_combat([_deck_of(_x_strike, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	_expect(ps.energy == Combat.BASE_ENERGY and combat.effective_cost(0, ps.hand[0]) == Combat.BASE_ENERGY,
+		"an X-cost card's effective cost is however much energy the hunter currently has")
+	var before: int = combat.boss.hp
+	var ok: bool = combat.play_card(0, 0)
+	_expect(ok and ps.energy == 0 and before - combat.boss.hp == 1 + 3 * Combat.BASE_ENERGY,
+		"playing an X-cost card drains all energy and its damage scales with how much was spent")
+
+
+func _test_x_cost_playable_at_zero_energy() -> void:
+	var combat := _new_combat([_deck_of(_x_strike, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.energy = 0
+	var before: int = combat.boss.hp
+	_expect(combat.can_play(0, 0), "an X-cost card is still playable at zero energy — spending zero is valid")
+	var ok: bool = combat.play_card(0, 0)
+	_expect(ok and ps.energy == 0 and before - combat.boss.hp == 1,
+		"an X-cost card played for zero energy deals only its flat base — no per_x bonus, no crash")
+
+
+func _test_x_cost_ignores_permanent_cost_reductions() -> void:
+	var combat := _new_combat([_deck_of(_x_strike, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.cost_reductions[ps.hand[0].id] = 2  # a Burn Coal-style permanent reduction
+	_expect(combat.effective_cost(0, ps.hand[0]) == Combat.BASE_ENERGY,
+		"a permanent cost reduction does nothing to a cost that isn't a fixed number to begin with")
+
+
+func _test_x_cost_meld_keeps_sentinel_and_sums_per_x() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_meld_card(), _x_strike(), _x_brace()]
+	ps.energy = 3
+	var ok: bool = combat.play_card(0, 0, true, 1, 2)
+	var fused: Card = ps.hand[0]
+	_expect(ok and fused.cost == -1 and fused.damage_per_x == 3 and fused.block_per_x == 4,
+		"melding an X-cost card into anything keeps the -1 sentinel and sums the per_x scaling")
+
+
+func _test_x_cost_upgrade_bumps_per_x_scaling() -> void:
+	var sharpened := _x_strike().upgraded_copy()
+	_expect(sharpened.cost == -1 and sharpened.damage_per_x == 4 and sharpened.upgraded,
+		"sharpening an X-cost card bumps its per_x scaling like any other scaling field, and leaves the sentinel alone")
+
+
 # --- Graded timing accuracy — the rules half (backlog #33) -----------------
 # Today's binary nailed/fumbled becomes a quality tier (miss/good/perfect) so
 # a dead-centre hit pays more than one that barely landed in the zone. The
@@ -3279,6 +3342,10 @@ func _catapult() -> Card:
 	return Card.from_dict({"id": "catapult", "name": "Catapult", "type": "skill", "cost": 1, "exhaust_pick": true, "sac_ally_grip": 2, "target": "ally"})
 func _meld_card() -> Card:
 	return Card.from_dict({"id": "meld", "name": "Meld", "type": "skill", "cost": 1, "meld": true})
+func _x_strike() -> Card:
+	return Card.from_dict({"id": "x_strike", "name": "X Strike", "type": "attack", "cost": -1, "damage": 1, "damage_per_x": 3, "target": "enemy"})
+func _x_brace() -> Card:
+	return Card.from_dict({"id": "x_brace", "name": "X Brace", "type": "skill", "cost": -1, "block_per_x": 4})
 func _satchel() -> Card:
 	return Card.from_dict({"id": "satchel_charge", "name": "Satchel Charge", "type": "attack", "cost": 2, "damage": 6, "timed": true, "timed_hits": 3, "timed_damage": 20, "target": "enemy"})
 func _flick() -> Card:
