@@ -214,7 +214,7 @@ Ordered. Source in brackets.
   and 27: three slots you can see and tap, and a clear cue when something clogs
   your deck. Deliberately separate so the engine can land without it.
 
-- [ ] **34. osu-style hit circle at the hold** `needs a screen` — the display
+- [x] **34. osu-style hit circle at the hold** `needs a screen` — the display
   half, and the reason it is worth doing: a shrinking approach circle **placed at
   the hold you are climbing to** answers *where* and *when* in ONE gesture. That
   dissolves the three-gesture problem item 25 flagged, so 24 + 25 + 34 want
@@ -395,6 +395,21 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-24** — #34 osu-style hit circle: built as a SECOND FACE over the
+  grading #33 already shipped, not a replacement. `ui/hit_circle.gd` opens an
+  approach ring on the beast at the Height the card would take you to (reusing
+  `_place_hunters`' own Height->world mapping, so it can't drift from the body),
+  and emits the same `resolved(quality)` the card face does — nothing downstream
+  can tell which face the player used. Toggle in Settings; the bar stays, because
+  the bar is the part Nick has already said feels good and swapping it out on a
+  hunch would throw that away. Surprise: `tools/screenshot.gd` writes to
+  `Progress`, so every screenshot ever taken has been editing the designer's real
+  settings — it would have flipped this new one too. `Progress.path` is now
+  redirectable like `RunSave.path` and the harness uses a scratch file. New
+  `3dosu` / `3dbar` states; the grading probes assert perfect/good/miss at three
+  offsets, which caught that a GDScript lambda captures by value and my first
+  probe could never have reported anything.
 
 - **2026-08-24** — #29 X-cost cards: `cost == -1` is the sentinel, resolved in
   exactly the two places the item named. `Combat.effective_cost()` now returns

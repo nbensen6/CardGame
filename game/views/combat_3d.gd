@@ -178,6 +178,8 @@ var _dragging := false
 var _pivot_target := Vector3(0, 2.0, 0)  # where the camera is drifting its aim to
 var _user_framed := false   # the player has dragged/zoomed — stop auto-pitching
 var _lock_slot := 0         # the hunter the camera is locked onto (CAMERA_LOCK)
+var _circle: HitCircle      # the osu-style timing face, when that setting is on
+var _circle_index := -1     # the hand index whose window the circle is holding open
 ## Free offset from whatever the camera is locked to. Orbiting alone can only
 ## ever look AT the subject from a new angle; panning is what lets you go and
 ## look at something else, which is the difference between an orbit and a free
@@ -275,6 +277,14 @@ func _ready() -> void:
 	# The top bar is the beast's name and health: a readout with nothing to
 	# click, so the camera gets every pixel of it.
 	_let_drags_through(get_node_or_null("Hud/Root/TopBar"))
+	_circle = HitCircle.new()
+	_circle.name = "HitCircle"
+	var hud := get_node_or_null("Hud/Root") as Control
+	if hud != null:
+		hud.add_child(_circle)
+		# Connected once, not per card: there is one circle and it is told which
+		# card it is holding a window open for.
+		_circle.resolved.connect(_on_circle_resolved)
 	if Screen.is_handheld():
 		# The hand's band is sized for a 224-tall card. Handheld cards are 186, so
 		# hand the difference back to the beast rather than leaving a dead strip.
@@ -433,6 +443,40 @@ func _draw_gauge() -> void:
 	_gauge.draw_string(font, Vector2(0, y_bot + 22), label,
 		HORIZONTAL_ALIGNMENT_CENTER, size.x, 13,
 		gold if left <= 0 else Color(0.92, 0.88, 0.78))
+
+
+## The circle landed (or ran out). Identical to the card face's path — same
+## grading, same command — which is the point: nothing downstream knows or cares
+## which face the player used.
+func _on_circle_resolved(quality: int) -> void:
+	if _circle_index < 0:
+		return
+	Sfx.play("nail" if quality > Combat.TIMING_MISS else "slip")
+	_client.play_card(_circle_index, quality > Combat.TIMING_MISS, _cmd_slot(), -1, -1, quality)
+	_circle_index = -1
+
+
+## World point for the hold this card is reaching for: the Height you would be
+## at if it lands. Reuses _place_hunters' own Height->world mapping rather than
+## a second copy of it, so the circle can never drift away from the body the
+## hunters are actually climbing.
+func _hold_point(card: Dictionary) -> Vector3:
+	var boss: Dictionary = _client.shared.get("boss", {})
+	var top: int = maxi(int(boss.get("weak_point_height", 1)), 1)
+	var me := _me()
+	var here := 0
+	var players: Array = _client.shared.get("players", [])
+	if me >= 0 and me < players.size():
+		here = int((players[me] as Dictionary).get("foothold", 0))
+	var climb := int(card.get("grip", 0)) + int(card.get("timed_grip", 0))
+	var t := clampf(float(here + climb) / float(top), 0.0, 1.0)
+	var side := -1.0 if me == 0 else 1.0
+	var x := side * (_beast_box.size.x * 0.20)
+	var y := _beast_box.position.y + _beast_box.size.y * lerpf(0.18, 0.80, t)
+	if t <= 0.01:  # still on the ground: open it just above the hunter, not in the dirt
+		y = _beast_box.position.y + HUNTER_HEIGHT * 1.6
+		x = side * (_beast_box.size.x * 0.22 + 0.6)
+	return Vector3(x, y, _beast_box.end.z * 0.86)
 
 
 ## The one place a turn ends, so the button and the key can never drift apart.
@@ -1548,6 +1592,18 @@ func _open_settings() -> void:
 	# The camera has four gestures and, until now, nothing anywhere said so. A
 	# control nobody is told about is a control nobody has, which is indistinguishable
 	# from one that does not work.
+	var timing := Button.new()
+	timing.custom_minimum_size = Vector2(0, 34)
+	timing.focus_mode = Control.FOCUS_NONE
+	timing.text = "Timing:  %s" % ("Hit circle" if Progress.timing_style() == Progress.TIMING_CIRCLE
+		else "Sweep bar")
+	timing.tooltip_text = "Where a timed card asks you to hit: an osu-style circle out on the beast, or the bar under the card."
+	timing.pressed.connect(func() -> void:
+		var next := Progress.TIMING_BAR if Progress.timing_style() == Progress.TIMING_CIRCLE 			else Progress.TIMING_CIRCLE
+		Progress.set_timing_style(next)
+		timing.text = "Timing:  %s" % ("Hit circle" if next == Progress.TIMING_CIRCLE else "Sweep bar"))
+	col.add_child(timing)
+
 	col.add_child(_detail_rule())
 	col.add_child(_detail_label("Camera", 14, Color(1, 0.86, 0.5)))
 	var cam_help := _detail_label(
@@ -1892,8 +1948,17 @@ func _on_card_tapped(card: Dictionary, cv: CardView) -> void:
 		return
 	if bool(card.get("timed", false)):
 		# a relic can widen the window, so pass the team's bonus through
-		cv.zone_bonus = float(int(_client.shared.get("mods", {}).get("timing_zone", 0))) / 100.0
-		cv.start_timing(int(card.get("timed_hits", 1)))
+		var bonus := float(int(_client.shared.get("mods", {}).get("timing_zone", 0))) / 100.0
+		var hits := int(card.get("timed_hits", 1))
+		if Progress.timing_style() == Progress.TIMING_CIRCLE and _circle != null:
+			# Same grading, a different face: the circle opens ON the beast at the
+			# hold this card is reaching for, so the tensest moment of the turn
+			# happens where you are looking instead of in a strip under the cards.
+			_circle_index = index
+			_circle.begin(hits, bonus, _cam, _hold_point(card))
+			return
+		cv.zone_bonus = bonus
+		cv.start_timing(hits)
 		return
 	if bool(card.get("exhaust_pick", false)) or bool(card.get("cheapen_pick", false)) 			or bool(card.get("meld", false)):
 		_start_selection(card)

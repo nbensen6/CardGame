@@ -75,11 +75,15 @@ func _initialize() -> void:
 		DisplayServer.window_set_size(shot)
 	RunSave.use_scratch_slot("run_screenshot")
 	RunSave.clear()
+	# Settings go to a scratch file too. Every Progress write below used to land
+	# in the designer's real user://progress.cfg, so taking a screenshot silently
+	# changed his own game — his tips, and now his timing style. A tool that opens
+	# the game to LOOK at it must not edit it.
+	Progress.use_scratch_slot("progress_screenshot")
 	Progress.reset_hints()
-	# Match the shipping default (off, 2026-08-15) so shots show the real UI. This
-	# writes to user://progress.cfg, so forcing tips ON here silently turned them
-	# back on in the designer's own game every time a screenshot was taken.
-	Progress.set_hints_enabled(false)
+	Progress.set_hints_enabled(false)   # the shipping default (off, 2026-08-15)
+	if _state == "3dbar":               # shoot the sweep bar instead of the circle
+		Progress.set_timing_style(Progress.TIMING_BAR)
 	if _state == "menu":  # just the main menu, no session
 		change_scene_to_file("res://views/menu.tscn")
 		_capture()
@@ -100,7 +104,7 @@ func _initialize() -> void:
 	# anywhere sweep proves nothing because there is nothing there to block it.
 	if _state in ["goblin", "3d", "3dclimb", "3dinspect", "3dsettings", "3dswap", "3drebind",
 			"3dstrike", "3dgame", "3dgrip", "3dsel", "3dreward", "3dwon",
-			"3dfreecam", "3dfocus"]:  # 3dloop deliberately starts ON the map  # step off the map into a fight
+			"3dfreecam", "3dfocus", "3dosu", "3dbar"]:  # 3dloop deliberately starts ON the map  # step off the map into a fight
 		var r: Run = Session.host._run
 		var g := 0
 		while r.phase == Run.Phase.MAP and g < 30:
@@ -367,6 +371,53 @@ func _capture() -> void:
 		print("SLOT active=%s lock=%s pivot=%s at=%s" % [str(current_scene.get("_active_slot")), str(current_scene.get("_lock_slot")), str(current_scene.get("_pivot")), str(current_scene.call("_lock_point"))])
 	if _state.begins_with("3d") and _state not in ["3dmap", "3dloop"]:
 		_report_visibility(current_scene)
+	if _state in ["3dosu", "3dbar"]:  # open a timed card's window and hold it there
+		var tv := current_scene
+		tv.call("snap_camera")
+		await process_frame
+		var hand: Array = Session.client.private.get("slots", [{}])[0].get("hand", [])
+		var timed_at := -1
+		for i in range(hand.size()):
+			if bool((hand[i] as Dictionary).get("timed", false)):
+				timed_at = i
+				break
+		if timed_at < 0:
+			print("TIMING no timed card in hand — nothing to show")
+		else:
+			var row: Node = tv.get("_hand_row")
+			var cv: Node = row.get_child(timed_at)
+			tv.call("_on_card_tapped", hand[timed_at], cv)
+			for _i in 26:                # part-way through the approach
+				await process_frame
+			var circle = tv.get("_circle")
+			print("TIMING style=%s card=%s circle_live=%s"
+				% [Progress.timing_style(), String((hand[timed_at] as Dictionary).get("name", "?")),
+				   str(circle != null and circle.call("is_live"))])
+			if _state == "3dosu" and circle != null:
+				# It must be able to RECEIVE the tap, not just draw.
+				print("TIMING circle takes taps: %s"
+					% str(int(circle.get("mouse_filter")) == Control.MOUSE_FILTER_STOP))
+				# Grade three taps by moving the clock rather than the mouse: the
+				# harness runs frames far faster than real time, so waiting for the
+				# ring to land would never happen.
+				for probe in [["dead centre", HitCircle.APPROACH_SECONDS, Combat.TIMING_PERFECT],
+						["just off", HitCircle.APPROACH_SECONDS
+							+ HitCircle.APPROACH_SECONDS * HitCircle.CORE_BAND * 2.0,
+							Combat.TIMING_GOOD],
+						["way early", HitCircle.APPROACH_SECONDS * 0.2, Combat.TIMING_MISS]]:
+					# An Array, not an int: a GDScript lambda captures by VALUE, so
+					# assigning to a plain local inside it changes nothing out here.
+					var got := [-99]
+					var probe_circle := HitCircle.new()
+					get_root().add_child(probe_circle)
+					probe_circle.resolved.connect(func(q: int) -> void: got[0] = q)
+					probe_circle.begin(1, 0.0, tv.get("_cam"), Vector3.ZERO)
+					probe_circle.set("_t", float(probe[1]))
+					probe_circle.call("_fire")
+					print("TIMING   %-12s -> %s  %s" % [probe[0], _quality_name(int(got[0])),
+						"OK" if int(got[0]) == int(probe[2])
+						else "FAIL want " + _quality_name(int(probe[2]))])
+					probe_circle.queue_free()
 	if _state == "3dfocus":  # picking a hunter must be a camera MOVE, not a nudge
 		var fv := current_scene
 		fv.call("snap_camera")
@@ -778,3 +829,12 @@ func _failsafe() -> void:
 	await create_timer(10.0).timeout
 	print("SHOT TIMEOUT")
 	quit(1)
+
+
+## Readable name for a timing quality tier, for the 3dosu report.
+func _quality_name(q: int) -> String:
+	match q:
+		Combat.TIMING_MISS: return "miss"
+		Combat.TIMING_GOOD: return "good"
+		Combat.TIMING_PERFECT: return "perfect"
+	return "?(%d)" % q
