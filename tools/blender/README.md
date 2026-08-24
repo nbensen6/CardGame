@@ -48,6 +48,25 @@ Godot wants, so build the model facing -Y and the export lands facing the camera
 result carrying the first part's object scale, so setting `scale = 1.5` on it
 multiplies by `1.5 / that`, not by 1.5. Apply first and the number means what it says.
 
+## Editing one by hand
+
+    toolslender\edit.cmd goblin_mech
+
+Opens that model in Blender, framed, in material preview, with the MCP socket
+running so Claude can see the same scene. Export back over the SAME path
+(`game/assets/3d/cast/<name>.glb`, format glB) and the game picks it up next
+run — `ui/cast.gd` goes by filename, so there is nothing to rewire.
+
+**One honest catch.** Re-running the build script overwrites your hand edits,
+because the script does not know about them. So pick per model:
+
+* **Small stuff — proportions, colours, position.** Say what you want changed
+  and it goes in the script. Stays diffable, stays re-runnable, and a later
+  "make the ears bigger" is still a one-line change.
+* **Real modelling — new geometry, sculpting, anything the primitives cannot
+  say.** Edit the `.glb` and the script retires for that model; its header gets
+  a line saying the file is now the source, so nobody rebuilds over your work.
+
 ## Matching the Kenney style
 
 Read off the bunny rather than guessed at:
