@@ -150,7 +150,7 @@ Ordered. Source in brackets.
   nobody re-checked whether the cap still means anything.
   *Done when:* each beast's cap is justified against its new climb, or the field
   is removed as dead.
-- [ ] **21. Unreachable content report in the Card Lab** `cloud-safe` —
+- [x] **21. Unreachable content report in the Card Lab** `cloud-safe` —
   `tools/cardlab/build.js` already computes reachability. Extend it to name
   every card, relic and event that no pool can offer.
   *Done when:* the Health tab lists them, and the build prints a count.
@@ -283,6 +283,33 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-24** — #21 Unreachable content report in the Card Lab: this session
+  also duplicated #4 (per-beast limiters) again before checking `origin/main`
+  first — same failure mode rule 9 already names, and already logged at
+  length below; caught by the rejected push, discarded before it reached the
+  remote, re-fetched, re-read the queue, and picked #21 as the true topmost
+  open item. `build.js` already computed card reachability (`reachable` +
+  the "unreachable card" Health finding); extended the same pattern to
+  relics: a relic in `relics.json`'s `relics` dict missing from its `pool`
+  array is now a Health-tab finding, same shape as the card check. Events
+  turned out not to need the same treatment — `Content.list_events()` draws
+  directly from every key in `events.json`; there is no separate offer-pool
+  an event can fall out of, so "unreachable event" isn't a state that can
+  exist under the current architecture (unlike cards/relics, which both have
+  a real pool an entry can be missing from). Rather than inventing a pool
+  concept for events that nothing asked for (rule 6), added the count for
+  visibility/future-proofing and documented in code why the check is
+  currently always empty. Also added `counts.unreachable` (`{cards, relics,
+  events}`) to the JSON payload and a second summary line so the build
+  actually **prints** the count the item's "done when" asked for, not just
+  the Health tab. Verified the relic check fires by temporarily dropping one
+  entry from `relics.json`'s `pool` (findings 4→5, `unreachable.relics`
+  0→1), confirmed it reverted cleanly (`git checkout --`), then regenerated
+  the real `cardlab.html` clean (0/0/0). No JS test harness exists for this
+  tool (never has — it's `node tools/cardlab/build.js`, run and read), so
+  verification was this manual before/after rather than an automated test;
+  `run_tests.gd` (unaffected by this change, but required before every
+  commit) still all green.
 - **2026-08-24** — #20 `weak_point_threshold` audit: also started this run by
   duplicating #1 and #4 (a full second "per-beast limiter" build, same failure
   mode rule 9 already names) — caught by a rejected push, discarded before

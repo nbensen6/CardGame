@@ -25,6 +25,11 @@ const cardsFile = readJson("cards.json");
 const charsFile = readJson("characters.json");
 const relicsFile = safe(() => readJson("relics.json"), { relics: {} });
 const bossesFile = safe(() => readJson("bosses.json"), {});
+const eventsFile = safe(() => readJson("events.json"), { events: {} });
+
+const RELICS = relicsFile.relics || {};
+const RELIC_POOL = new Set(relicsFile.pool || []);
+const EVENTS = eventsFile.events || {};
 
 function safe(fn, fallback) {
   try { return fn(); } catch { return fallback; }
@@ -261,6 +266,26 @@ if (orphans.length) {
   });
 }
 
+// A relic is only ever offered from `pool` (Content.relic_pool()) — an entry in
+// `relics` missing from `pool` is defined but can never be picked up in a run.
+const relicOrphans = Object.entries(RELICS).filter(([id]) => !RELIC_POOL.has(id));
+if (relicOrphans.length) {
+  checks.push({
+    level: "warn",
+    title: `${relicOrphans.length} unreachable relic${relicOrphans.length > 1 ? "s" : ""}`,
+    detail:
+      "Defined in relics.json but missing from its offer pool. Dead content unless added to `pool`.",
+    items: relicOrphans.map(([id, r]) => `${r.name || id} (${id})`),
+  });
+}
+
+// Events have no separate offer-pool the way cards/relics do — Content.list_events()
+// draws directly from every key in events.json, so no event can be structurally
+// unreachable under the current architecture. Counted below for visibility (and so
+// this stays true rather than assumed if events ever gain a gated pool later), but
+// there is nothing here for a health check to warn about today.
+const eventOrphans = [];
+
 // Cost clumping — the single most useful balance signal at this stage.
 const curveAll = {};
 for (const c of model) curveAll[c.cost] = (curveAll[c.cost] || 0) + 1;
@@ -444,8 +469,10 @@ const payload = {
     cards: model.length,
     timed: model.filter((c) => c.timed).length,
     classes: classStats.length,
-    relics: Object.keys(relicsFile.relics || relicsFile || {}).length,
+    relics: Object.keys(RELICS).length,
+    events: Object.keys(EVENTS).length,
     bosses: Object.keys(bossesFile.bosses || bossesFile || {}).length,
+    unreachable: { cards: orphans.length, relics: relicOrphans.length, events: eventOrphans.length },
   },
 };
 
@@ -454,6 +481,10 @@ console.log(`Card Lab → ${OUT}`);
 console.log(
   `  ${payload.counts.cards} cards · ${payload.counts.timed} timed · ` +
   `${payload.counts.classes} classes · ${checks.length} findings · ${gaps.length} open cells`
+);
+console.log(
+  `  unreachable: ${payload.counts.unreachable.cards} cards · ` +
+  `${payload.counts.unreachable.relics} relics · ${payload.counts.unreachable.events} events`
 );
 
 function renderHtml(data) {
