@@ -78,6 +78,7 @@ func _init() -> void:
 	_test_per_class_reward_pools()
 	_test_rhythm_card_grants_combo()
 	_test_ascension_makes_the_run_harder()
+	_test_ascension_tier_effects_reach_the_run()
 	_test_coach_teaches_the_right_thing_first()
 	_test_tips_can_be_switched_off_without_losing_your_place()
 	_test_gold_and_shop()
@@ -1029,6 +1030,86 @@ func _test_ascension_makes_the_run_harder() -> void:
 	var frailer: bool = hard.max_hp[0] < base.max_hp[0]
 	_expect(tiers.size() >= 8 and cumulative and tougher and frailer,
 		"ascension tiers stack: thicker hides, meaner beasts, and a frailer party")
+
+
+func _asc_run(level: int) -> Run:
+	var decks := [_deck_of(_slash, 10), _deck_of(_slash, 10)]
+	var run := Run.new(decks, ["A", "B"], 7, [{}, {}], level)
+	run.start()
+	return run
+
+
+## Backlog #22: Content.ascension_mods() accumulating the right numbers (proven
+## above) is not the same as those numbers actually reaching the run. This pairs
+## every tier with the one below it (same seed, so the same beast/map either
+## side) and checks the SPECIFIC effect that tier claims to introduce actually
+## changed something a hunter would feel — not just the mods dictionary.
+func _test_ascension_tier_effects_reach_the_run() -> void:
+	# Tier 1 — boss_hp_pct: the very beast this seed fights gets +10% max HP.
+	var base := _asc_run(0)
+	_step_into_combat(base)
+	var base_hp: int = base.combat.boss.max_hp
+	var t1 := _asc_run(1)
+	_step_into_combat(t1)
+	var t1_ok: bool = t1.combat.boss.max_hp == int(base_hp * 110 / 100.0)
+
+	# Tier 2 — heal_between: 3 less HP banked after a win (both start hurt so
+	# the max-HP clamp can't mask the difference).
+	var t1b := _asc_run(1)
+	_step_into_combat(t1b)
+	t1b.combat.players[0].combatant.hp = 5
+	_force_win(t1b)
+	var t2 := _asc_run(2)
+	_step_into_combat(t2)
+	t2.combat.players[0].combatant.hp = 5
+	_force_win(t2)
+	var t2_ok: bool = t1b.hp[0] == 5 + Run.HEAL_BETWEEN and t2.hp[0] == 5 + (Run.HEAL_BETWEEN - 3)
+
+	# Tier 3 — boss_strength: the beast begins the fight already enraged.
+	var t2b := _asc_run(2)
+	_step_into_combat(t2b)
+	var t3 := _asc_run(3)
+	_step_into_combat(t3)
+	var t3_ok: bool = t2b.combat.boss.strength == 0 and t3.combat.boss.strength == 1
+
+	# Tier 4 — reward_choices: one fewer card offered after a win.
+	var t3b := _asc_run(3)
+	_step_into_combat(t3b)
+	_force_win(t3b)
+	var t4 := _asc_run(4)
+	_step_into_combat(t4)
+	_force_win(t4)
+	var t4_ok: bool = t3b.reward_choices[0].size() == Run.REWARD_CHOICES \
+		and t4.reward_choices[0].size() == Run.REWARD_CHOICES - 1
+
+	# Tier 5 — rest_heal: a campfire rest heals 4 less.
+	var t4b := _asc_run(4)
+	t4b.hp[0] = 5
+	t4b._begin_campfire()
+	t4b.campfire_action(0, "rest")
+	var t5 := _asc_run(5)
+	t5.hp[0] = 5
+	t5._begin_campfire()
+	t5.campfire_action(0, "rest")
+	var t5_ok: bool = t4b.hp[0] == 5 + Run.REST_HEAL and t5.hp[0] == 5 + (Run.REST_HEAL - 4)
+
+	# Tier 6 — boss_hp_pct stacks a further 10% (20% total off the base HP).
+	var t6 := _asc_run(6)
+	_step_into_combat(t6)
+	var t6_ok: bool = t6.combat.boss.max_hp == int(base_hp * 120 / 100.0)
+
+	# Tier 7 — player_hp: 5 less starting max HP.
+	var t7 := _asc_run(7)
+	var t7_ok: bool = t7.max_hp[0] == Run.PLAYER_HP - 5
+
+	# Tier 8 — boss_strength stacks a further +1 (+2 total).
+	var t8 := _asc_run(8)
+	_step_into_combat(t8)
+	var t8_ok: bool = t8.combat.boss.strength == 2
+
+	_expect(t1_ok and t2_ok and t3_ok and t4_ok and t5_ok and t6_ok and t7_ok and t8_ok,
+		"every ascension tier's own effect reaches the run, not just Content.ascension_mods() [%s]"
+			% [[t1_ok, t2_ok, t3_ok, t4_ok, t5_ok, t6_ok, t7_ok, t8_ok]])
 
 
 ## Turning tips off must not amount to "mark everything seen" — switch them back

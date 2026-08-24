@@ -154,7 +154,7 @@ Ordered. Source in brackets.
   `tools/cardlab/build.js` already computes reachability. Extend it to name
   every card, relic and event that no pool can offer.
   *Done when:* the Health tab lists them, and the build prints a count.
-- [ ] **22. Ascension tiers apply what they claim** `cloud-safe` — eight tiers
+- [x] **22. Ascension tiers apply what they claim** `cloud-safe` — eight tiers
   exist in data and the sim walks them, but no test proves a tier's modifier
   actually reaches combat. *Done when:* each modifier key is asserted at the
   tier that introduces it.
@@ -283,6 +283,27 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-24** — #22 Ascension tiers apply what they claim: same failure mode
+  rule 9 warns about bit this session too — checked out a stale cached
+  `origin/main`, redid #4 (per-beast limiters) from scratch with a different
+  approach (extra moves instead of a `limiter` field) than the version another
+  session had already landed, tests green, push rejected as non-fast-forward.
+  Fetched, diffed, found the real #4 already merged and incompatible with
+  mine; discarded the unpushed commit with `git reset --hard origin/main`
+  (never reached the remote, so nothing lost) instead of trying to reconcile
+  two different designs for the same item. Re-read the queue against the real
+  tip and picked #22, the true topmost open `cloud-safe` item: all six
+  ascension effect keys (`boss_hp_pct`, `heal_between`, `boss_strength`,
+  `reward_choices`, `rest_heal`, `player_hp`) were already wired into
+  `run.gd`, just never proven end-to-end — the existing test only checked
+  `Content.ascension_mods()`'s dictionary and one jump to Ascension 7. Added
+  `_test_ascension_tier_effects_reach_the_run()`: one before/after pair per
+  tier (same seed either side, so the same map/beast), asserting the SPECIFIC
+  effect that tier claims to add actually changes run behavior — boss max HP,
+  boss strength, HP banked after a win, reward count, campfire rest amount,
+  and starting max HP. All eight passed on the first try; no code changes
+  needed, only the missing test. `balance_sim.gd` ran clean as a smoke test —
+  not tuned against.
 - **2026-08-24** — #21 Unreachable content report in the Card Lab: this session
   also duplicated #4 (per-beast limiters) again before checking `origin/main`
   first — same failure mode rule 9 already names, and already logged at
