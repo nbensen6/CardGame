@@ -12,14 +12,6 @@ const PORT := 9999
 ## She is the first thing in this game that is OURS rather than a Kenney
 ## placeholder, so she should be the first thing you see, and she should move —
 ## a still image of a model says nothing a painting could not.
-## Sized to the screen rather than fixed. "Skip her on a handheld" was too blunt
-## a rule: the game is landscape-locked, so a phone is a WIDE short window with
-## plenty of clear space to the right of the menu column — it is vertical room it
-## is short of, and that is a reason to shrink her, not to drop her.
-const HERO_HEIGHT := 400.0       # logical px, on a desktop
-const HERO_ASPECT := 0.75        # width / height
-const HERO_ROOM := 500.0         # logical px of viewport width before she fits at all
-const HERO_SPIN := 0.42          # radians/sec — a slow turntable, not a spinner
 
 @onready var _ip: LineEdit = %IpEdit
 @onready var _status: Label = %Status
@@ -39,7 +31,6 @@ const HERO_SPIN := 0.42          # radians/sec — a slow turntable, not a spinn
 ## Chosen difficulty tier. You may pick anything up to what you've unlocked;
 ## clearing a tier unlocks the next (see core/progress.gd).
 var _ascension := 0
-var _hero: Node3D = null   # the Frog turning on the menu, if there is room for her
 
 
 func _ready() -> void:
@@ -66,7 +57,6 @@ func _ready() -> void:
 	_solo_btn.pressed.connect(_on_solo)
 	_host_btn.pressed.connect(_on_host)
 	_join_btn.pressed.connect(_on_join)
-	_add_hero()
 
 
 ## This column is taller than a handheld's logical viewport, and a CenterContainer
@@ -226,78 +216,3 @@ func _set_busy(msg: String, busy: bool = true) -> void:
 	_host_btn.disabled = busy
 	_join_btn.disabled = busy
 
-
-## Put the Frog on the menu, lit and turning.
-##
-## Built in code rather than in menu.tscn because it is entirely conditional: it
-## needs a model that may not exist yet (every other hunter is still a
-## placeholder, and Cast.is_yours is how we tell), and it needs a screen wide
-## enough to hold her beside the menu. A scene file cannot express "only if".
-func _add_hero() -> void:
-	if not Cast.is_yours("frog"):
-		return                     # a placeholder bunny is not a mascot
-	var scene := load(Cast.model_path("frog")) as PackedScene
-	if scene == null:
-		return
-	var view := get_viewport_rect().size
-	if view.x < HERO_ROOM:
-		return                     # she would stand on top of the buttons
-	# Short windows shrink her instead of losing her.
-	var hero := Vector2(0.0, minf(HERO_HEIGHT, view.y * 0.80))
-	hero.x = hero.y * HERO_ASPECT
-	var margin := Vector2(-52.0, -6.0) if not Screen.is_handheld() else Vector2(-26.0, -4.0)
-
-	var vp := SubViewport.new()
-	vp.size = Vector2i(hero)
-	vp.transparent_bg = true
-	vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	vp.msaa_3d = Viewport.MSAA_4X
-
-	# Its own lighting: a SubViewport is a separate world, so it inherits nothing
-	# from the menu and would otherwise render pitch black.
-	var env := WorldEnvironment.new()
-	var e := Environment.new()
-	e.background_mode = Environment.BG_CLEAR_COLOR
-	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	e.ambient_light_color = Color(0.62, 0.66, 0.78)
-	e.ambient_light_energy = 1.15
-	env.environment = e
-	vp.add_child(env)
-
-	var key := DirectionalLight3D.new()
-	key.rotation_degrees = Vector3(-36.0, 152.0, 0.0)
-	key.light_energy = 1.7
-	vp.add_child(key)
-
-	_hero = scene.instantiate() as Node3D
-	_hero.rotation.y = 0.35        # three-quarter on, so she reads as a shape
-	vp.add_child(_hero)
-
-	var cam := Camera3D.new()
-	cam.fov = 33.0
-	# look_at needs a node already in the tree; this one is not yet.
-	cam.look_at_from_position(Vector3(0.0, 1.06, 5.1), Vector3(0.0, 0.93, 0.0), Vector3.UP)
-	vp.add_child(cam)
-
-	var holder := SubViewportContainer.new()
-	holder.stretch = true
-	holder.custom_minimum_size = hero
-	holder.size = hero
-	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE   # never eat a menu click
-	holder.add_child(vp)
-	add_child(holder)
-	# Index 3: after BG, BGTint and the painted Beast, before the menu column. At
-	# index 2 the Beast drew on top of her and swallowed her head.
-	move_child(holder, 3)
-	# Bottom RIGHT, standing in front of the beast on the backdrop. She was on the
-	# left first and fought the menu column for the same 170px; here she is clear
-	# of every button and the composition states the pitch — little climber,
-	# colossal beast — instead of the tagline having to.
-	holder.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT,
-		Control.PRESET_MODE_KEEP_SIZE)
-	holder.position += margin
-
-
-func _process(delta: float) -> void:
-	if _hero != null:
-		_hero.rotation.y += delta * HERO_SPIN

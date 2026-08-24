@@ -47,10 +47,6 @@ const _PLOT := [
 	Vector2i(0, 2), Vector2i(-1, 2), Vector2i(0, -2), Vector2i(-1, -2),
 	Vector2i(1, 2), Vector2i(-2, 2), Vector2i(1, -2), Vector2i(-2, -2),
 ]
-const HUNTER_MODEL := {
-	"frog": "bunny", "vine_weaver": "koala", "mountain_climbers": "deer",
-	"goblin_mech": "monkey",
-}
 ## Reuses the combat view's table, so a beast swapped there is swapped here too.
 const BEAST_MODEL := preload("res://views/combat_3d.gd")
 
@@ -627,9 +623,11 @@ func _show_roster(roster: Array) -> void:
 	var span := 1.05
 	var left := -span * (float(roster.size()) - 1.0) * 0.5
 	for i in range(roster.size()):
-		var key: String = String(HUNTER_MODEL.get(String((roster[i] as Dictionary).get("id", "")),
-			"bunny"))
-		var path := CAST + key + ".glb"
+		# Ask Cast, which prefers your own art over the Kenney stand-in. This line
+		# used to carry its own copy of the placeholder table and so kept showing a
+		# bunny for the Frog long after frog.glb existed — the character select is
+		# the ONE screen whose whole job is showing you who you are picking.
+		var path := Cast.model_path(String((roster[i] as Dictionary).get("id", "")))
 		if not ResourceLoader.exists(path):
 			continue
 		var n: Node3D = (load(path) as PackedScene).instantiate()

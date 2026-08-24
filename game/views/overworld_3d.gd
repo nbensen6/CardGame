@@ -41,11 +41,6 @@ const FILLER := ["grass", "grass", "grass", "grass", "grass-forest",
 	"grass-hill", "grass-hill", "stone", "stone-hill"]
 const ROAD_W := 0.13  # roads are drawn between node centres, not laid as tiles —
                       # a tile is far too coarse to say WHICH edges exist
-## Which model plays each hunter — same table the combat view uses.
-const HUNTER_MODEL := {
-	"frog": "bunny", "vine_weaver": "koala", "mountain_climbers": "deer",
-	"goblin_mech": "monkey",
-}
 const HUNTER_HEIGHT := 0.5  # world units — measured, not guessed, so any
                             # cast model reads at the same size beside a tile
 const WALK_SPEED := 2.6  # hexes per second along the road

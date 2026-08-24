@@ -14,10 +14,11 @@
 extends Node3D
 
 const CAST := "res://assets/3d/cast/"
-## Which model plays each character / beast, until real art exists.
+## Which model plays each BEAST, until real art exists. Hunters are not in here:
+## they come from ui/cast.gd, which prefers your own art, and keeping a second
+## copy of that mapping is what kept the Frog looking like a bunny on the
+## character select long after frog.glb existed.
 const MODELS := {
-	"frog": "bunny", "vine_weaver": "koala", "mountain_climbers": "deer",
-	"goblin_mech": "monkey",
 	# every beast gets its OWN body — the map's variety is pointless if ten of
 	# the fourteen fights look like the same elephant. Chosen to echo the 2D
 	# portrait where a Cube Pet exists, and to never reuse a hunter's model.
@@ -1150,25 +1151,17 @@ func _place_hunters(s: Dictionary) -> void:
 		node.rotation.y = (PI + 0.7 * side) if t <= 0.01 else (PI * 0.5 * -side)
 
 
-## Hunters read the same MODELS table the beasts do, keyed by character id, so
-## swapping in your own art is one line there and nothing else. The portrait-stem
-## map is only a fallback for a snapshot old enough to lack the character id.
+## Hunters come from ui/cast.gd, the one place that knows which body plays which
+## character — and that prefers cast/<id>.glb, your own art, over the stand-in.
+## Exporting a model is the whole job; no code edit makes it show up.
 func _spawn_hunter(slot: int, players: Array) -> Dictionary:
 	var p: Dictionary = players[slot]
-	var key := "bunny"
 	var cid := String(p.get("character", ""))
-	if cid != "" and MODELS.has(cid):
-		key = String(MODELS[cid])
-	else:
-		var stem := String(p.get("portrait", "")).get_file().get_basename()
-		var by_portrait := {"frog": "bunny", "sloth": "koala", "goat": "deer", "monkey": "monkey"}
-		if by_portrait.has(stem):
-			key = String(by_portrait[stem])
 	var holder := Node3D.new()
 	_rig.add_child(holder)
 	# Your own cast/<character>.glb wins over the Kenney stand-in (see ui/cast.gd),
 	# so exporting a model is the whole job — no code edit to make it show up.
-	var path := Cast.model_path(cid) if Cast.is_yours(cid) else CAST + key + ".glb"
+	var path := Cast.model_path(cid)
 	if ResourceLoader.exists(path):
 		var m := (load(path) as PackedScene).instantiate()
 		holder.add_child(m)

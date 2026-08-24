@@ -363,6 +363,48 @@ func _capture() -> void:
 		print("SLOT active=%s lock=%s pivot=%s at=%s" % [str(current_scene.get("_active_slot")), str(current_scene.get("_lock_slot")), str(current_scene.get("_pivot")), str(current_scene.call("_lock_point"))])
 	if _state.begins_with("3d") and _state not in ["3dmap", "3dloop"]:
 		_report_visibility(current_scene)
+	if _state == "3dfreecam":  # prove a drag actually reaches the orbit camera
+		var cv := current_scene
+		var yaw0: float = float(cv.get("_yaw"))
+		var pitch0: float = float(cv.get("_pitch"))
+		var dist0: float = float(cv.get("_dist"))
+		var centre := Vector2(_size.x, _size.y) * 0.5 if _size != Vector2i.ZERO 			else get_root().size as Vector2 * 0.5
+		var down := InputEventMouseButton.new()
+		down.button_index = MOUSE_BUTTON_LEFT
+		down.pressed = true
+		down.position = centre
+		Input.parse_input_event(down)
+		await process_frame
+		var held: bool = bool(cv.get("_dragging"))
+		for _i in 6:                       # a drag is many small motions, not one jump
+			var mm := InputEventMouseMotion.new()
+			mm.position = centre
+			mm.relative = Vector2(24.0, 6.0)
+			Input.parse_input_event(mm)
+			await process_frame
+		var up := InputEventMouseButton.new()
+		up.button_index = MOUSE_BUTTON_LEFT
+		up.pressed = false
+		up.position = centre
+		Input.parse_input_event(up)
+		await process_frame
+		var wheel := InputEventMouseButton.new()
+		wheel.button_index = MOUSE_BUTTON_WHEEL_UP
+		wheel.pressed = true
+		wheel.position = centre
+		Input.parse_input_event(wheel)
+		await process_frame
+		var yaw1: float = float(cv.get("_yaw"))
+		var pitch1: float = float(cv.get("_pitch"))
+		var dist1: float = float(cv.get("_dist"))
+		var turned := absf(yaw1 - yaw0) > 0.001
+		var tilted := absf(pitch1 - pitch0) > 0.001
+		var zoomed := absf(dist1 - dist0) > 0.001
+		print("FREECAM press=%s yaw %.3f->%.3f %s | pitch %.3f->%.3f %s | zoom %.2f->%.2f %s  %s"
+			% [str(held), yaw0, yaw1, "turned" if turned else "STUCK",
+			   pitch0, pitch1, "tilted" if tilted else "STUCK",
+			   dist0, dist1, "zoomed" if zoomed else "STUCK",
+			   "OK" if (turned and tilted and zoomed) else "FAIL"])
 	if _state == "3dswap":  # prove the swap keybinds actually reach the view
 		var vw := current_scene
 		var before: int = int(vw.get("_active_slot"))
