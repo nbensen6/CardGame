@@ -574,18 +574,23 @@ func relic_totals() -> Dictionary:
 			"block_carries", "no_buck", "soft_fall", "energy_handoff"]:
 		t[key] = 0
 	for r in team_relics:
-		var e := String(r.get("effect", ""))
-		var v := int(r.get("value", 0))
-		match e:
-			"max_energy": t["energy"] += v
-			"attack_bonus": t["attack"] += v
-			"round_block": t["block"] += v
-			"heal_on_clear": t["heal"] += v
-			"start_strength": t["strength"] += v
-			_:
-				if t.has(e):
-					t[e] += v
+		_apply_relic_effect(t, String(r.get("effect", "")), int(r.get("value", 0)))
+		# A downside (#30) is just a second {effect, value} pair on the same
+		# relic, folded in by the identical generic rule — no special case.
+		if r.has("downside_effect"):
+			_apply_relic_effect(t, String(r.get("downside_effect", "")), int(r.get("downside_value", 0)))
 	return t
+
+func _apply_relic_effect(t: Dictionary, e: String, v: int) -> void:
+	match e:
+		"max_energy": t["energy"] += v
+		"attack_bonus": t["attack"] += v
+		"round_block": t["block"] += v
+		"heal_on_clear": t["heal"] += v
+		"start_strength": t["strength"] += v
+		_:
+			if t.has(e):
+				t[e] += v
 
 func _encounter_seed() -> int:
 	if _seed == 0:

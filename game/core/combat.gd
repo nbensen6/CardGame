@@ -710,8 +710,11 @@ func _begin_round() -> void:
 	_forced_target = -1  # taunts last only their own round
 	for ps in players:
 		var carried: int = ps.combatant.block / 2 if _mod("block_carries") > 0 else 0
-		ps.combatant.block = _round_block + carried  # relic: start each round with block (+ retained Block)
-		ps.energy = BASE_ENERGY + _energy_bonus  # relic: extra energy
+		# maxi(0, ...): a downside relic (#30) can push either bonus negative;
+		# neither block nor energy is meaningful below zero (see combatant.gd's
+		# take_damage, which assumes block never goes negative).
+		ps.combatant.block = maxi(0, _round_block + carried)  # relic: start each round with block (+ retained Block)
+		ps.energy = maxi(0, BASE_ENERGY + _energy_bonus)  # relic: extra energy
 		ps.ended_turn = false
 		if _mod("rhythm_keeps") <= 0:
 			ps.rhythm = 0  # combo resets each turn (a relic can keep it)

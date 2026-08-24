@@ -155,6 +155,7 @@ func _init() -> void:
 	_test_relic_energy_bonus()
 	_test_relic_attack_bonus()
 	_test_relic_round_block()
+	_test_relic_downside()
 	_test_run_is_four_titans()
 	_test_run_relic_reward_and_full_clear()
 	_test_elite_pays_a_card_then_a_relic()
@@ -2921,6 +2922,32 @@ func _test_every_titan_carries_a_known_limiter() -> void:
 		if t == "" or not known.has(t):
 			bad.append("%s: %s" % [id, t])
 	_expect(bad.is_empty(), "every Titan carries a limiter of a known type [%s]" % ", ".join(bad))
+
+
+## Item #30: a relic's downside_effect/downside_value is just a second
+## {effect, value} pair, folded in by the same generic rule as the primary
+## effect — proven both at the Run.relic_totals() level (the pair sums
+## correctly) and at Combat (a heavily negative bonus can't drive block or
+## energy below zero, per combat.gd's new maxi(0, ...) floor).
+func _test_relic_downside() -> void:
+	var run := _map_run()
+	run.team_relics = [Content.make_relic("warlords_girdle")]
+	var totals := run.relic_totals()
+	var girdle_ok: bool = int(totals["attack"]) == 6 and int(totals["energy"]) == -1
+
+	run.team_relics = [Content.make_relic("fortress_ward"), Content.make_relic("adrenal_surge")]
+	var totals2 := run.relic_totals()
+	# round_block: fortress_ward +10, adrenal_surge -4 -> +6; draw: -1; energy: +2
+	var stacked_ok: bool = int(totals2["block"]) == 6 and int(totals2["draw"]) == -1 and int(totals2["energy"]) == 2
+
+	# a big enough downside is floored at zero, not left negative (combat.gd)
+	var starved := _relic_combat(-5, 0, 0)
+	var no_negative_energy: bool = starved.players[0].energy == 0
+	var battered := _relic_combat(0, 0, -20)
+	var no_negative_block: bool = battered.players[0].combatant.block == 0
+
+	_expect(girdle_ok and stacked_ok and no_negative_energy and no_negative_block,
+		"a relic's downside is a second {effect, value} pair, summed by the same rule, floored at zero")
 
 
 func _test_relic_start_strength() -> void:

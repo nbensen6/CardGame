@@ -202,7 +202,7 @@ Ordered. Source in brackets.
   before any real card can safely use the sentinel outside a live hand.
   *Done when:* those three spots show "X", at least one real card ships with
   `cost: -1`, and it's been looked at.
-- [ ] **30. Relics with a downside** `cloud-safe` — every one of our 26 is pure
+- [x] **30. Relics with a downside** `cloud-safe` — every one of our 26 is pure
   upside, so taking one is never a decision. StS's boss relics cost you something
   (less energy, no potions, more damage taken) in exchange for power.
   *Done when:* at least 4 relics carry a real cost, and picking one is a choice.
@@ -396,6 +396,40 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-24** — #30 Relics with a downside: a downside is just a SECOND
+  `{effect, value}` pair on the same relic — `downside_effect`/`downside_value`,
+  optional keys read by `Run.relic_totals()` through the exact same
+  `_apply_relic_effect()` match statement the primary effect already used
+  (pulled out into its own function so both calls share it, rather than
+  duplicating the match arm), so a downside needed zero new mechanic, only a
+  second pass through an existing generic rule — matches rule 7. Four new
+  relics, each a real StS-boss-relic-style trade rather than a token cost:
+  `Warlord's Girdle` (+6 attack / -1 Energy each round), `Bottomless Quiver`
+  (+3 draw / -3 attack), `Fortress Ward` (+10 round Block / -1 draw), and
+  `Adrenal Surge` (+2 Energy / -4 round Block). Found a real bug chasing this:
+  `Combat._begin_round()` set `ps.combatant.block = _round_block + carried`
+  and `ps.energy = BASE_ENERGY + _energy_bonus` with no floor — harmless while
+  every relic was additive, but a downside relic pushing either negative
+  would have handed `Combatant.take_damage()` a negative starting `block`,
+  and its `absorbed := mini(block, remaining)` line assumes block is never
+  negative: a negative block makes `absorbed` negative too, which then
+  *adds* to `remaining` (damage taken) instead of reducing it, compounding
+  worse each hit taken that round. Added `maxi(0, ...)` at both assignments
+  before shipping anything that could trigger it — a genuine correctness fix
+  the item's own "done when" didn't name, but the sentinel demanded once a
+  relic could actually drive either stat negative. `draw`'s downside needed
+  no equivalent fix — `_begin_round()`'s own draw call already reads
+  `maxi(0, HAND_SIZE + _mod("draw") - innate_drawn)` — and `attack_bonus`'s
+  needed none either, since `resolve_preview()` already floors the final
+  damage number at 0 regardless of how negative the bonus gets. New test
+  proves both the additive stacking (two relics' round_block downside/upside
+  net out correctly through `relic_totals()`) and the floor itself (a
+  synthetic -5/-20 bonus through `_relic_combat()` lands at exactly 0, not
+  negative). `run_tests.gd` all green (213 assertions incl. the new one);
+  `node tools/cardlab/build.js` confirms all four new relics reachable
+  (34 relics, `unreachable: 0`); `balance_sim.gd` ran clean as a smoke test
+  only — its policies pick relics by existing logic unrelated to this item,
+  so nothing here was tuned to its win-rate output.
 - **2026-08-24** — #34 osu-style hit circle: built as a SECOND FACE over the
   grading #33 already shipped, not a replacement. `ui/hit_circle.gd` opens an
   approach ring on the beast at the Height the card would take you to (reusing
