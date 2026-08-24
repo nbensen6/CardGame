@@ -110,8 +110,13 @@ const PAN_SENSITIVITY := 0.0018   # world units per pixel, per unit of distance
 ## by distance because a step that reads as a step next to a Crag Pup is a
 ## twitch next to a Titan, and the camera is 40 units out there.
 const FLY_SPEED := 0.34
-## How far in the camera cuts when you pick a hunter, as a fraction of the shot
-## it settles back to.
+## World-units of height the camera holds around a hunter you have picked.
+##
+## An ABSOLUTE window, not a fraction of the working shot, and this is the whole
+## fix: a fraction of a Titan's framing is still a Titan's distance away, so on a
+## big beast "52% closer" left the hunter a speck (Nick, 2026-08-24: "still
+## doesnt centar closely"). Four units is about six hunter-heights, so a hunter
+## reads at roughly a fifth of the frame whatever they are standing on.
 ##
 ## Sliding the frame across was not enough, and measuring it proved why rather
 ## than disproving it: the lock does put the hunter dead centre, but on the
@@ -120,7 +125,7 @@ const FLY_SPEED := 0.34
 ## (Nick, 2026-08-24: "it still doesnt feel like ... it centers the camera on
 ## them"). A cut IN, then a pull back out to the fight, is a camera MOVE — and a
 ## move is the one thing the eye cannot miss.
-const FOCUS_PUNCH := 0.52
+const FOCUS_WINDOW := 4.0
 const ZOOM_STEP := 0.12
 ## Sideways truck, in world units per unit of camera distance, that pushes the
 ## beast right so it centres in the space left of the HUD rather than on the
@@ -180,6 +185,7 @@ var _user_framed := false   # the player has dragged/zoomed — stop auto-pitchi
 var _lock_slot := 0         # the hunter the camera is locked onto (CAMERA_LOCK)
 var _circle: HitCircle      # the osu-style timing face, when that setting is on
 var _circle_index := -1     # the hand index whose window the circle is holding open
+var _focused := false       # the camera is held close on the hunter you picked
 ## Free offset from whatever the camera is locked to. Orbiting alone can only
 ## ever look AT the subject from a new angle; panning is what lets you go and
 ## look at something else, which is the difference between an orbit and a free
@@ -568,21 +574,26 @@ func _switch_to(slot: int) -> void:
 
 ## Put the camera on the hunter you just picked, hard enough to notice.
 ##
-## The pivot CUTS rather than glides — a glide across a frame this size is
-## indistinguishable from the camera drifting — and the distance snaps in close,
-## which _aim_camera then eases back out to the working shot on its own because
-## clearing _user_framed hands framing back to it. The result is a push-in and a
-## pull-out: unmistakably a camera move, and it ends exactly where the fight
-## wants to be framed anyway.
+## The pivot CUTS rather than glides, and the shot STAYS close. It used to push
+## in and ease back out to the beast framing, which Nick reported as the camera
+## "moving away after selecting" — and he is right that it is wrong: a lock-on
+## you have to keep re-triggering is not a lock-on. Now the close shot holds, and
+## follows the hunter up the beast as they climb.
+##
+## Zoom or drag whenever you want the fight back; picking a hunter is how you
+## return, and a new beast opens wide again.
 ##
 ## Also the one way back from free look, which is why it clears the pan and the
 ## manual framing rather than only re-aiming.
 func _focus_camera() -> void:
 	_pan = Vector3.ZERO
-	_user_framed = false
 	_establishing = false
 	if _hunters.is_empty() or _cam == null:
 		return
+	_focused = true
+	# Hold the shot: _aim_camera only eases distance back to the beast framing
+	# while it still owns framing, so taking it away is what stops the drift.
+	_user_framed = true
 	var lock := _lock_point()
 	_pivot.x = lock.x
 	_pivot.z = lock.y
@@ -593,7 +604,7 @@ func _focus_camera() -> void:
 	var slot: int = _lock_slot if _lock_slot >= 0 and _lock_slot < _hunters.size() else _me()
 	if slot >= 0 and slot < _hunters.size():
 		_pivot.y = float((_hunters[slot]["home"] as Vector3).y) + HUNTER_HEIGHT * 1.4
-	_dist = maxf(_working_dist * FOCUS_PUNCH, 4.0)
+	_dist = maxf(_dist_for_window(FOCUS_WINDOW), 2.6)
 	_apply_orbit()
 
 
@@ -919,6 +930,7 @@ func _frame_beast() -> void:
 	_user_framed = false
 	_lock_slot = _me()
 	_pan = Vector3.ZERO
+	_focused = false          # a new beast is met wide, then you pick someone
 	# Open on the whole creature, however far back that has to be, then fall in to
 	# the working shot. You get to see what you've picked a fight with once —
 	# after that, the climb is the subject and the rest of it is off-screen.
@@ -1022,6 +1034,12 @@ func _aim_camera(delta: float, snap: bool) -> void:
 	var want := _climb_frame()
 	var lock := _lock_point()
 	_pivot_target.y = want.x + _pan.y
+	if _focused:
+		# Aim at the hunter and keep aiming at them, so the close shot rides up
+		# the body as they climb instead of sliding back to the beast's framing.
+		var fs: int = _lock_slot if _lock_slot >= 0 and _lock_slot < _hunters.size() else _me()
+		if fs >= 0 and fs < _hunters.size():
+			_pivot_target.y = float((_hunters[fs]["home"] as Vector3).y) 				+ HUNTER_HEIGHT * 1.2 + _pan.y
 	_pivot_target.x = lock.x + _pan.x
 	_pivot_target.z = lock.y + _pan.z
 	if not _user_framed:

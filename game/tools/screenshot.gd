@@ -82,8 +82,10 @@ func _initialize() -> void:
 	Progress.use_scratch_slot("progress_screenshot")
 	Progress.reset_hints()
 	Progress.set_hints_enabled(false)   # the shipping default (off, 2026-08-15)
-	if _state == "3dbar":               # shoot the sweep bar instead of the circle
-		Progress.set_timing_style(Progress.TIMING_BAR)
+	# The scratch config persists between runs, so a previous 3dbar would leave
+	# "bar" set and the next 3dosu would silently shoot the wrong face. State it.
+	Progress.set_timing_style(Progress.TIMING_BAR if _state == "3dbar"
+		else Progress.TIMING_CIRCLE)
 	if _state == "menu":  # just the main menu, no session
 		change_scene_to_file("res://views/menu.tscn")
 		_capture()
@@ -428,21 +430,26 @@ func _capture() -> void:
 		await process_frame
 		var punched: float = float(fv.get("_dist"))
 		var px1: float = float((fv.get("_pivot") as Vector3).x)
-		for _i in 90:                       # let the pull-back finish
+		for _i in 90:                       # it must NOT drift back out
 			await process_frame
 		var settled: float = float(fv.get("_dist"))
-		print("FOCUS dist %.1f -> %.1f (in %d%%) -> %.1f | pivot x %.2f -> %.2f  %s"
+		print("FOCUS dist %.1f -> %.1f (in %d%%) -> %.1f after 90 frames | pivot x %.2f -> %.2f  %s"
 			% [before, punched, int(round(100.0 * punched / maxf(before, 0.001))), settled,
 			   px0, px1,
-			   "OK" if (punched < before * 0.9 and settled > punched * 1.05
+			   "OK" if (punched < before * 0.5 and absf(settled - punched) < 0.5
 				   and absf(px1 - px0) > 0.5) else "FAIL"])
-		# Re-picking the hunter you already hold must also move the camera.
-		var again: float = float(fv.get("_dist"))
+		# Fly the camera away, then re-pick the hunter you already hold: that is
+		# the one gesture that has to bring you back.
+		fv.set("_pan", Vector3(9.0, 4.0, 6.0))
+		fv.set("_dist", 40.0)
+		await process_frame
 		fv.call("_switch_to", int(fv.get("_active_slot")))
 		await process_frame
-		var repick: float = float(fv.get("_dist"))
-		print("FOCUS re-pick same hunter: %.1f -> %.1f  %s"
-			% [again, repick, "moves" if repick < again * 0.9 else "DEAD"])
+		var back: float = float(fv.get("_dist"))
+		var pan_now: Vector3 = fv.get("_pan")
+		print("FOCUS re-pick after flying off: dist %.1f, pan %s  %s"
+			% [back, str(pan_now),
+			   "OK" if (absf(back - settled) < 0.5 and pan_now == Vector3.ZERO) else "FAIL"])
 	if _state == "3dfreecam":  # WHERE on the screen does a drag reach the camera?
 		var cv := current_scene
 		var vw := float(_size.x) if _size != Vector2i.ZERO else float(get_root().size.x)
