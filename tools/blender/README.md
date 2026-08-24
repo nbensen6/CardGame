@@ -1,8 +1,22 @@
 # Models as scripts
 
-`frog.py` builds the Frog that ships. `frog_smooth.py` is the earlier
-higher-poly take, kept because switching styles should be one command rather
-than an archaeology dig — that is the point of models being source.
+`kenney.py` holds the machinery: the palette, the primitives, and the join /
+scale / export at the end. Each hunter script is then just a list of ellipsoids
+with a colour name against each — which is the whole point, because "make the
+ears rounder" should be a one-line diff you can read.
+
+    frog.py               vine_weaver.py
+    mountain_climbers.py  goblin_mech.py
+
+`frog_smooth.py` is an earlier higher-poly take on the Frog, kept because
+switching styles should be one command rather than an archaeology dig.
+
+Build one:
+
+    "C:/Program Files/Blender Foundation/Blender 4.1/blender.exe" --background       --python tools/blender/goblin_mech.py --       "G:/Co Op Game/game/assets/3d/cast/goblin_mech.glb"
+
+The filename IS the wiring: `ui/cast.gd` prefers `cast/<character_id>.glb` over
+the Kenney stand-in, so exporting to the right name is the entire job.
 
 Every file here builds one model and exports it straight to `game/assets/3d/cast/`.
 No `.blend` file in the middle. That is the whole idea: a model written as code is
