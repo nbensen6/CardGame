@@ -14,6 +14,7 @@ const CHARACTERS_PATH := "res://data/characters.json"
 const ASCENSION_PATH := "res://data/ascension.json"
 const KEYWORDS_PATH := "res://data/keywords.json"
 const ENCHANTS_PATH := "res://data/enchants.json"
+const POTIONS_PATH := "res://data/potions.json"
 
 static var _cache: Dictionary = {}
 
@@ -127,6 +128,27 @@ static func make_enchant(id: String) -> Dictionary:
 ## Every enchant id in data — content-integrity checks walk the whole set.
 static func all_enchant_ids() -> Array:
 	return (_read_json(ENCHANTS_PATH).get("enchants", {}) as Dictionary).keys()
+
+## A potion as a plain dict {id, name, effect, value, text} — held per-hunter,
+## same shape make_relic()/make_enchant() already use (backlog #26).
+static func make_potion(id: String) -> Dictionary:
+	var potions: Dictionary = _read_json(POTIONS_PATH).get("potions", {})
+	if not potions.has(id):
+		push_warning("Content: unknown potion '%s'" % id)
+		return {}
+	var pd: Dictionary = (potions[id] as Dictionary).duplicate()
+	pd["id"] = id
+	return pd
+
+## Potion ids that can be found from fights or bought in a shop. Returns a COPY
+## (see relic_pool()'s comment — callers erase from these while rolling).
+static func potion_pool() -> Array:
+	return (_read_json(POTIONS_PATH).get("pool", []) as Array).duplicate()
+
+## Every potion id in potions.json, reachable or not — content-integrity checks
+## walk the whole set rather than just what the pool happens to offer.
+static func all_potion_ids() -> Array:
+	return (_read_json(POTIONS_PATH).get("potions", {}) as Dictionary).keys()
 
 ## Characters, in menu order: [{id, name, desc}, ...].
 static func list_characters() -> Array:

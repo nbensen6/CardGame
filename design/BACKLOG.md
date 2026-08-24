@@ -171,7 +171,7 @@ Ordered. Source in brackets.
   which is three gestures for one card. Decide whether the release *starts* the
   bar, or whether targeted cards are simply never timed, before writing any of it.
   Still single-pointer, so CLAUDE.md §5 holds and it works on a phone.
-- [ ] **26. Potions** `cloud-safe` (engine only) — the biggest Slay-the-Spire
+- [x] **26. Potions** `cloud-safe` (engine only) — the biggest Slay-the-Spire
   staple we do not have. Three slots, consumable, found from fights and shops;
   they are what lets a bad hand still be survivable, and their absence is why a
   bad draw here feels flat rather than tense. Data plus a generic apply, same
@@ -283,6 +283,55 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-24** — #26 Potions: the engine half, same shape as relics
+  (`data/potions.json` — `{name, effect, value, text}` — plus one generic
+  dispatch), but held PER-HUNTER rather than team-wide, since a potion is a
+  private resource like a hand or a deck. Added `Run.potions` (`Array[Array]`,
+  `POTION_SLOTS = 3` per hunter), `Combat.use_potion(pi, effect, value)`
+  (heal/block/strength/energy/draw, reusing the exact methods a relic or card
+  already calls — `Combatant.gain_block`, `PlayerState.strength/energy`,
+  `Combat._draw`), and on `Run`: `use_potion` (mid-fight only — forwards to
+  Combat, empties the slot on success), `discard_potion` (any time, no
+  effect), and `_grant_potions` (every beast felled pays each hunter with a
+  free slot one potion, same unconditional shape gold already uses — a coin
+  flip would've been harder to test for no real benefit). Shops also stock one
+  potion per hunter (`PRICE_POTION = 45`) through the same `buy()` dispatch
+  cards/relics/removals already use. A full 3-slot inventory refuses both a
+  win's drop and a shop purchase rather than silently discarding — "can be
+  held" implied a real cap, not an infinite bag. 10 potions across the 5
+  effect types (2 per type, a cheap/strong pair) — deliberately not gated
+  behind rarity or a character's pool the way cards are, since nothing in the
+  item asked for that and every hunter can use any of them. Left the potion
+  SLOTS UI (seeing/tapping them) untouched — that's item #32, already split
+  out as `needs a screen`, and this item's own "done when" only asked for
+  held/used/thrown-away/persisted/tested, all of which are true with zero
+  view code. 13 new tests: data integrity, each effect in isolation plus an
+  unknown-effect refusal, three gating cases (bad player index, already-ended
+  turn, wrong phase — set `combat.phase` directly rather than fighting the
+  real turn loop, since `_enemy_turn()` always lands back on `PLAYERS` before
+  `end_turn()` even returns), Run-level use+discard, a shop purchase, the
+  full-inventory cap against both acquisition paths, the win-grants-a-potion
+  path, and a save/load round trip through the actual file (JSON's
+  one-number-type gotcha, same reason the existing save tests go through
+  `RunSave` rather than a bare `to_dict()`/`from_dict()` pair). `run_tests.gd`
+  all green (196 assertions incl. the 13 new ones); no old
+  save predates this field, but `Run.from_dict` backfills empty potion arrays
+  for hunter counts anyway, matching the defensive pattern `combat`'s own
+  from_dict fallback already uses. `balance_sim.gd` ran clean as a smoke test
+  only — the sim's policies don't call `use_potion` at all yet (they're a
+  separate concern, not this item's scope), so the numbers it printed are
+  unchanged from before this landed, not tuned to.
+  **Also:** this session's initial `git checkout -B main origin/main` (before
+  any fetch) warned about leaving 30 commits behind on a detached HEAD — by
+  far the largest gap logged yet for this pattern, and worth Nick's attention
+  even though rule 9 already exists for it: a `git fetch origin main` showed
+  the real GitHub tip was `56809ae` (#23, the log entry directly below),
+  already containing all 30 — nothing was actually lost, just a badly stale
+  container-init snapshot. This is the same false alarm named seven times
+  before (2026-08-22 through 2026-08-24), just at a new size record; not
+  re-investigating the root cause again here, but the growing gap size is a
+  signal the container's initial checkout is drifting further behind between
+  routine firings than it used to.
 - **2026-08-24** — #23 Frog's rare shortage: hit the exact same stale-`origin/main`
   failure the two log entries below already name — checked out a cached tip that
   didn't have items 11-33 on it yet, redid #4 (per-beast limiters) a third time

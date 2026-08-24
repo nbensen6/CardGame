@@ -641,6 +641,35 @@ func end_turn(pi: int) -> void:
 	if _all_ended():
 		_enemy_turn()
 
+
+## Use a held potion (backlog #26): a free action outside the card economy —
+## no cost, no card play — so a bad hand still has an out. Reads the same
+## effect vocabulary a relic already uses (heal/block/strength/energy/draw);
+## Run owns the inventory and removes the potion from its slot on success.
+func use_potion(pi: int, effect: String, value: int) -> bool:
+	if phase != Phase.PLAYERS:
+		return false
+	if pi < 0 or pi >= players.size():
+		return false
+	var ps: PlayerState = players[pi]
+	if ps.ended_turn:
+		return false
+	match effect:
+		"heal":
+			ps.combatant.hp = mini(ps.combatant.hp + maxi(value, 0), ps.combatant.max_hp)
+		"block":
+			ps.combatant.gain_block(value)
+		"strength":
+			ps.strength += value
+		"energy":
+			ps.energy += value
+		"draw":
+			_draw(ps, value)
+		_:
+			return false
+	_log("%s drinks a potion." % ps.combatant.name)
+	return true
+
 # --- Internals ------------------------------------------------------------
 
 func _begin_round() -> void:

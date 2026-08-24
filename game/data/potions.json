@@ -1,0 +1,77 @@
+{
+  "_comment": "Potions are DATA (CLAUDE.md §11) — held per-hunter, not team-wide like relics (backlog #26). Same {name, effect, value, text} shape as relics.json/enchants.json. Effect types, read generically by Combat.use_potion: heal (restore HP, capped at max), block (Combatant.gain_block), strength (PlayerState.strength, lasts the fight), energy (PlayerState.energy, this turn), draw (draw N cards now). 'pool' lists what fights and shops can offer.",
+  "potions": {
+    "quick_tonic": {
+      "name": "Quick Tonic",
+      "effect": "energy",
+      "value": 1,
+      "text": "Gain 1 Energy immediately."
+    },
+    "surging_tonic": {
+      "name": "Surging Tonic",
+      "effect": "energy",
+      "value": 2,
+      "text": "Gain 2 Energy immediately."
+    },
+    "field_dressing": {
+      "name": "Field Dressing",
+      "effect": "heal",
+      "value": 12,
+      "text": "Restore 12 HP."
+    },
+    "hearty_draught": {
+      "name": "Hearty Draught",
+      "effect": "heal",
+      "value": 20,
+      "text": "Restore 20 HP."
+    },
+    "guard_oil": {
+      "name": "Guard Oil",
+      "effect": "block",
+      "value": 10,
+      "text": "Gain 10 Block."
+    },
+    "bulwark_oil": {
+      "name": "Bulwark Oil",
+      "effect": "block",
+      "value": 18,
+      "text": "Gain 18 Block."
+    },
+    "iron_draught": {
+      "name": "Iron Draught",
+      "effect": "strength",
+      "value": 3,
+      "text": "Gain 3 Strength this fight."
+    },
+    "giant_draught": {
+      "name": "Giant's Draught",
+      "effect": "strength",
+      "value": 6,
+      "text": "Gain 6 Strength this fight."
+    },
+    "clarity_brew": {
+      "name": "Clarity Brew",
+      "effect": "draw",
+      "value": 2,
+      "text": "Draw 2 cards."
+    },
+    "focus_brew": {
+      "name": "Focus Brew",
+      "effect": "draw",
+      "value": 3,
+      "text": "Draw 3 cards."
+    }
+  },
+  "pool": [
+    "quick_tonic",
+    "surging_tonic",
+    "field_dressing",
+    "hearty_draught",
+    "guard_oil",
+    "bulwark_oil",
+    "iron_draught",
+    "giant_draught",
+    "clarity_brew",
+    "focus_brew"
+  ]
+}

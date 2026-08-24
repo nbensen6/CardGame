@@ -22,7 +22,9 @@ const GOLD_ELITE := 55
 const GOLD_BOSS := 80
 const PRICE_CARD := 55
 const PRICE_RELIC := 135
+const PRICE_POTION := 45
 const PRICE_REMOVE := 70   # rises each time it's used in a run
+const POTION_SLOTS := 3    # per hunter, same shape StS's 2-3 slots (backlog #26)
 const REWARD_CHOICES := 3
 ## How often each rarity is offered, relative to the others. Tune these before
 ## adding more cards — they move perceived variety far more than raw pool size.
@@ -52,6 +54,7 @@ var decks: Array = []            # Array[Array[Card]] per hunter — persists ac
 var hp: Array = []               # carried current hp per hunter
 var max_hp: Array = []
 var team_relics: Array = []      # Array[Dictionary] — persistent team passives
+var potions: Array = []          # Array[Array[Dictionary]] per hunter — held consumables (backlog #26)
 var player_passives: Array = []  # per-hunter character signature passives
 var reward_kind: String = "card" # "card" | "relic" — what this REWARD offers
 var reward_choices: Array = []   # per hunter: Array of card OR relic choices (by reward_kind)
@@ -79,6 +82,7 @@ func _init(p_decks: Array, p_names: Array, seed_value: int = 0, p_passives: Arra
 		var start_hp: int = maxi(10, PLAYER_HP - int(_asc.get("player_hp", 0)))
 		max_hp.append(start_hp)
 		hp.append(start_hp)
+		potions.append([])
 	map = RunMap.new(ENCOUNTERS.size(), _rng)
 
 func start() -> void:
@@ -133,7 +137,7 @@ func to_dict() -> Dictionary:
 		"ascension": ascension,
 		"names": names, "decks": deck_dicts,
 		"hp": hp, "max_hp": max_hp,
-		"team_relics": team_relics, "player_passives": player_passives,
+		"team_relics": team_relics, "potions": potions, "player_passives": player_passives,
 		"reward_kind": reward_kind, "reward_choices": choices,
 		"reward_picked": reward_picked, "queued_reward": _queued_reward,
 		"seed": _seed, "rng_state": str(_rng.state),  # a uint64; JSON floats would round it
@@ -163,6 +167,10 @@ static func from_dict(d: Dictionary) -> Run:
 	r.hp = (d.get("hp", []) as Array).duplicate()
 	r.max_hp = (d.get("max_hp", []) as Array).duplicate()
 	r.team_relics = (d.get("team_relics", []) as Array).duplicate(true)
+	r.potions = (d.get("potions", []) as Array).duplicate(true)
+	if r.potions.size() < r.names.size():  # old saves predate potions — backfill empty slots
+		for _i in range(r.names.size() - r.potions.size()):
+			r.potions.append([])
 	r.decks = []
 	for one in d.get("decks", []):
 		var deck: Array = []
@@ -249,6 +257,16 @@ func _begin_shop() -> void:
 		shop_stock.append({"kind": "relic", "slot": -1, "id": rid,
 			"name": String(relic.get("name", rid)), "text": String(relic.get("text", "")),
 			"price": PRICE_RELIC, "sold": false})
+	var pots: Array = Content.potion_pool()
+	for slot3 in range(names.size()):
+		if pots.is_empty():
+			break
+		var pid := String(pots[_rng.randi_range(0, pots.size() - 1)])
+		pots.erase(pid)
+		var potion := Content.make_potion(pid)
+		shop_stock.append({"kind": "potion", "slot": slot3, "id": pid,
+			"name": String(potion.get("name", pid)), "text": String(potion.get("text", "")),
+			"price": PRICE_POTION, "sold": false})
 	for slot2 in range(names.size()):
 		shop_stock.append({"kind": "remove", "slot": slot2, "id": "", "name": "Thin the deck",
 			"text": "Remove a card from %s's deck for good." % names[slot2],
@@ -273,6 +291,10 @@ func buy(index: int, card_index: int = -1) -> bool:
 			decks[slot].append(Content.make_card(String(item["id"])))
 		"relic":
 			team_relics.append(Content.make_relic(String(item["id"])))
+		"potion":
+			if potions[slot].size() >= POTION_SLOTS:
+				return false
+			potions[slot].append(Content.make_potion(String(item["id"])))
 		"remove":
 			var deck: Array = decks[slot]
 			if card_index < 0 or card_index >= deck.size() or deck.size() <= MIN_DECK:
@@ -419,6 +441,7 @@ func sync() -> void:
 	if combat.result() == Combat.Result.WIN:
 		_bank_hp()
 		gold += _gold_for(node_type)
+		_grant_potions()
 		# EVERY beast pays a card — a hard fight that pays nothing you wanted reads
 		# as unfair, and card rewards are the run's main deckbuilding decision.
 		# Elites and Titans pay a relic on top, taken after the card.
@@ -444,6 +467,42 @@ func _after_node() -> void:
 		phase = Phase.WON
 	else:
 		phase = Phase.MAP
+
+## Use a held potion mid-fight — applies its effect via Combat and empties the
+## slot. Potion effects (heal/block/strength/energy/draw) only mean something
+## while a fight is live, so this is COMBAT-only, unlike discard_potion below.
+func use_potion(slot: int, index: int) -> bool:
+	if phase != Phase.COMBAT or combat == null:
+		return false
+	if slot < 0 or slot >= potions.size() or index < 0 or index >= potions[slot].size():
+		return false
+	var p: Dictionary = potions[slot][index]
+	if not combat.use_potion(slot, String(p.get("effect", "")), int(p.get("value", 0))):
+		return false
+	potions[slot].remove_at(index)
+	return true
+
+## Throw a potion away unused, freeing the slot — legal any time you're
+## carrying one, not just mid-fight, since a bad potion clogging your one open
+## slot before a fight shouldn't have to wait for one.
+func discard_potion(slot: int, index: int) -> bool:
+	if slot < 0 or slot >= potions.size() or index < 0 or index >= potions[slot].size():
+		return false
+	potions[slot].remove_at(index)
+	return true
+
+## Every beast a hunter fells pays a potion too, if their slots aren't full —
+## same "found from fights" the item asked for, guaranteed rather than a coin
+## flip so it stays simple to test and to reason about.
+func _grant_potions() -> void:
+	var pool: Array = Content.potion_pool()
+	if pool.is_empty():
+		return
+	for i in range(names.size()):
+		if potions[i].size() >= POTION_SLOTS:
+			continue
+		var pid := String(pool[_rng.randi_range(0, pool.size() - 1)])
+		potions[i].append(Content.make_potion(pid))
 
 ## Decline the reward. Keeping a deck lean is a real strategy, so skipping has
 ## to be a first-class option rather than a forced pick.

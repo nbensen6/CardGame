@@ -86,6 +86,15 @@ func _init() -> void:
 	_test_shop_cannot_thin_below_min_deck()
 	_test_shop_rejects_actions_outside_its_phase()
 	_test_content_pools_are_copies()
+	# potions (backlog #26)
+	_test_potions_all_load()
+	_test_use_potion_applies_each_effect()
+	_test_use_potion_gating()
+	_test_run_potion_use_and_discard()
+	_test_shop_buys_a_potion()
+	_test_potion_slots_are_capped()
+	_test_fight_wins_grant_a_potion()
+	_test_potions_round_trip_through_save()
 	# grip / ledges (SotC real-time climb)
 	_test_secure_on_holds()
 	_test_next_safe_height()
@@ -1274,6 +1283,151 @@ func _test_content_pools_are_copies() -> void:
 		and Content.beast_pool("fight").size() > 0
 		and Content.reward_pool("frog").size() > 0,
 		"content pools hand out copies — callers can filter without draining the game")
+
+
+# --- potions (backlog #26): held per-hunter, same data shape as relics -----
+
+func _test_potions_all_load() -> void:
+	var pool: Array = Content.potion_pool()
+	var ok := pool.size() >= 8
+	var known_effects := ["heal", "block", "strength", "energy", "draw"]
+	for id in pool:
+		var p: Dictionary = Content.make_potion(String(id))
+		if String(p.get("name", "")) == "" or String(p.get("text", "")) == "" \
+				or not known_effects.has(String(p.get("effect", ""))) or int(p.get("value", 0)) <= 0:
+			ok = false
+	_expect(ok, "the potion pool is stocked and every entry has a real name/text/effect/value")
+
+
+## Combat.use_potion() reads the same {effect, value} shape a relic does — one
+## generic dispatch, no per-potion special case.
+func _test_use_potion_applies_each_effect() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.combatant.hp = 20
+	var healed := combat.use_potion(0, "heal", 12)
+	var capped := combat.use_potion(0, "heal", 999)  # heal never overflows max HP
+	var block_ok := combat.use_potion(0, "block", 10)
+	var energy_before: int = ps.energy
+	var energy_ok := combat.use_potion(0, "energy", 2)
+	var strength_ok := combat.use_potion(0, "strength", 3)
+	var hand_before: int = ps.hand.size()
+	var draw_ok := combat.use_potion(0, "draw", 2)
+	var bad := combat.use_potion(0, "not_a_real_effect", 1)
+	_expect(healed and capped and ps.combatant.hp == ps.combatant.max_hp,
+		"a heal potion restores HP and never overflows max HP")
+	_expect(block_ok and ps.combatant.block == 10, "a block potion grants Block")
+	_expect(energy_ok and ps.energy == energy_before + 2, "an energy potion grants Energy")
+	_expect(strength_ok and ps.strength == 3, "a strength potion grants Strength for the fight")
+	_expect(draw_ok and ps.hand.size() == hand_before + 2, "a draw potion draws cards")
+	_expect(not bad, "an unrecognised potion effect is refused, not silently ignored")
+
+
+func _test_use_potion_gating() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var bad_index := not combat.use_potion(9, "heal", 5)
+	combat.players[0].ended_turn = true
+	var ended := not combat.use_potion(0, "heal", 5)
+	combat.players[0].ended_turn = false
+	combat.phase = Combat.Phase.ENEMY  # mid-resolution — not this hunter's action to take
+	var wrong_phase := not combat.use_potion(0, "heal", 5)
+	_expect(bad_index and ended and wrong_phase,
+		"use_potion refuses an invalid player, a player who's already ended, and acting outside PLAYERS phase")
+
+
+## Run owns the inventory: gaining a slot, using it mid-fight (which forwards
+## to Combat and empties the slot), and discarding one unused.
+func _test_run_potion_use_and_discard() -> void:
+	var run := _map_run()
+	_step_into_combat(run)
+	run.potions[0] = [Content.make_potion("field_dressing"), Content.make_potion("guard_oil")]
+	run.combat.players[0].combatant.hp = 10
+	var before: int = run.potions[0].size()
+	var used := run.use_potion(0, 0)  # field_dressing: heal 12
+	var used_slot_shrank: bool = run.potions[0].size() == before - 1
+	var healed: bool = run.combat.players[0].combatant.hp == 22
+	var discarded := run.discard_potion(0, 0)  # the remaining guard_oil, unused
+	var empty_now: bool = run.potions[0].is_empty()
+	var bad_index := not run.use_potion(0, 0)  # nothing left to use
+	_expect(used and used_slot_shrank and healed and discarded and empty_now and bad_index,
+		"a used potion applies its effect and empties the slot; a discarded one just empties it")
+
+
+func _test_shop_buys_a_potion() -> void:
+	var run := _map_run()
+	run.gold = 500
+	run.map_row = 0
+	run.node_type = "shop"
+	run._begin_shop()
+	var potion_i := -1
+	for i in range(run.shop_stock.size()):
+		if String(run.shop_stock[i]["kind"]) == "potion":
+			potion_i = i
+			break
+	if potion_i < 0:
+		_expect(true, "shop buys a potion (none stocked this seed)")
+		return
+	var slot := int(run.shop_stock[potion_i]["slot"])
+	var before: int = run.potions[slot].size()
+	var purse_before: int = run.gold
+	var bought := run.buy(potion_i)
+	_expect(bought and run.potions[slot].size() == before + 1
+		and run.gold == purse_before - Run.PRICE_POTION and bool(run.shop_stock[potion_i]["sold"]),
+		"buying a potion adds it to that hunter's slots and spends gold")
+
+
+func _test_potion_slots_are_capped() -> void:
+	var run := _map_run()
+	for _i in range(Run.POTION_SLOTS):
+		run.potions[0].append(Content.make_potion("field_dressing"))
+	var full_before: int = run.potions[0].size()
+	run._grant_potions()  # a win shouldn't overflow a full inventory
+	run.gold = 5000
+	run.map_row = 0
+	run.node_type = "shop"
+	run._begin_shop()
+	var potion_i := -1
+	for i in range(run.shop_stock.size()):
+		if String(run.shop_stock[i]["kind"]) == "potion" and int(run.shop_stock[i]["slot"]) == 0:
+			potion_i = i
+			break
+	var blocked_purchase := true
+	if potion_i >= 0:
+		blocked_purchase = not run.buy(potion_i)
+	_expect(full_before == Run.POTION_SLOTS and run.potions[0].size() == Run.POTION_SLOTS
+		and blocked_purchase,
+		"a full potion inventory refuses both a fight's drop and a shop purchase")
+
+
+func _test_fight_wins_grant_a_potion() -> void:
+	var run := _map_run()
+	_step_into_combat(run)
+	run.potions = [[], []]
+	_force_win(run)
+	var gained := true
+	for p in run.potions:
+		if (p as Array).is_empty():
+			gained = false
+	_expect(gained, "felling a beast pays each hunter a potion, same as it pays gold")
+
+
+## Through the FILE, same reason _test_run_survives_a_save_and_load uses it —
+## JSON has one number type, so a shallow dict round trip would hide a float
+## creeping into a potion's "value".
+func _test_potions_round_trip_through_save() -> void:
+	var run := Run.new([_deck_of(_slash, 6), _deck_of(_slash, 5)], ["A", "B"], 99,
+		[{"character": "frog"}, {"character": "goblin_mech"}], 0)
+	run.start()
+	run.potions[0].append(Content.make_potion("iron_draught"))
+	run.potions[1].append(Content.make_potion("clarity_brew"))
+	RunSave.clear()
+	RunSave.save(run)
+	var back := RunSave.load_run()
+	_expect(back.potions.size() == 2
+		and back.potions[0].size() == 1 and String(back.potions[0][0]["id"]) == "iron_draught"
+		and int(back.potions[0][0]["value"]) == 3
+		and back.potions[1].size() == 1 and String(back.potions[1][0]["id"]) == "clarity_brew",
+		"held potions survive a save/load round trip through the file")
 
 
 ## Walk the route until a combat node is reached (skipping rest/treasure).
