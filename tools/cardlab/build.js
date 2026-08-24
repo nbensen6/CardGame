@@ -26,10 +26,15 @@ const charsFile = readJson("characters.json");
 const relicsFile = safe(() => readJson("relics.json"), { relics: {} });
 const bossesFile = safe(() => readJson("bosses.json"), {});
 const eventsFile = safe(() => readJson("events.json"), { events: {} });
+const potionsFile = safe(() => readJson("potions.json"), { potions: {}, pool: [] });
+const enchantsFile = safe(() => readJson("enchants.json"), { enchants: {} });
 
 const RELICS = relicsFile.relics || {};
 const RELIC_POOL = new Set(relicsFile.pool || []);
 const EVENTS = eventsFile.events || {};
+const POTIONS = potionsFile.potions || {};
+const ENCHANTS = enchantsFile.enchants || {};
+const POTION_POOL = new Set(potionsFile.pool || []);
 
 function safe(fn, fallback) {
   try { return fn(); } catch { return fallback; }
@@ -293,6 +298,56 @@ if (relicOrphans.length) {
   });
 }
 
+// Relics, potions and enchantments are all {name, effect, value, text}: a named
+// effect the engine reads generically rather than a special case per id. Being
+// the same shape is exactly why they belong on one screen — it makes "which
+// effects does the engine actually understand" answerable at a glance.
+const ITEMS = [
+  ...Object.entries(RELICS).map(([id, r]) => ({
+    kind: "relic", id, name: r.name || id, effect: r.effect || "",
+    value: r.value, text: r.text || "", offered: RELIC_POOL.has(id),
+  })),
+  ...Object.entries(POTIONS).map(([id, r]) => ({
+    kind: "potion", id, name: r.name || id, effect: r.effect || "",
+    value: r.value, text: r.text || "", offered: POTION_POOL.has(id),
+  })),
+  ...Object.entries(ENCHANTS).map(([id, r]) => ({
+    // Enchantments have no offer pool: they are attached to a card by whatever
+    // grants them, so "offered" is not a question you can ask of the data.
+    kind: "enchant", id, name: r.name || id, effect: r.effect || "",
+    value: r.value, text: r.text || "", offered: null,
+  })),
+];
+
+// Same rule as relics: Content offers potions from `pool`, so a potion missing
+// from it is defined and unreachable.
+const potionOrphans = Object.entries(POTIONS).filter(([id]) => !POTION_POOL.has(id));
+if (potionOrphans.length) {
+  checks.push({
+    level: "warn",
+    title: `${potionOrphans.length} unreachable potion${potionOrphans.length > 1 ? "s" : ""}`,
+    detail:
+      "Defined in potions.json but missing from its `pool`. Dead content unless added.",
+    items: potionOrphans.map(([id, r]) => `${r.name || id} (${id})`),
+  });
+}
+
+// An effect nothing reads is dead weight, and the two files disagree about how
+// many readers they have: potions are all consumed by Combat.use_potion, while
+// enchants.json says only `sure` has a /core consumer today and `wide` is
+// waiting on the card-face work item 3 still owns. Surface that rather than let
+// it sit in a comment nobody opens.
+const enchantEffects = Object.values(ENCHANTS).map((e) => e.effect);
+if (enchantEffects.length) {
+  checks.push({
+    level: "info",
+    title: `${enchantEffects.length} enchantment effect${enchantEffects.length > 1 ? "s" : ""}, ${Object.keys(ENCHANTS).length} enchantment${Object.keys(ENCHANTS).length > 1 ? "s" : ""}`,
+    detail:
+      "Enchantments are attached to a single card, so they have no offer pool and cannot be structurally unreachable. Check each effect has a consumer in /core before counting it as shipped.",
+    items: Object.entries(ENCHANTS).map(([id, e]) => `${e.name || id} — ${e.effect} ${e.value}`),
+  });
+}
+
 // Events have no separate offer-pool the way cards/relics do — Content.list_events()
 // draws directly from every key in events.json, so no event can be structurally
 // unreachable under the current architecture. Counted below for visibility (and so
@@ -479,14 +534,20 @@ const payload = {
   gaps,
   comboGaps,
   curveAll,
+  items: ITEMS,
   counts: {
     cards: model.length,
     timed: model.filter((c) => c.timed).length,
     classes: classStats.length,
     relics: Object.keys(RELICS).length,
+    potions: Object.keys(POTIONS).length,
+    enchants: Object.keys(ENCHANTS).length,
     events: Object.keys(EVENTS).length,
     bosses: Object.keys(bossesFile.bosses || bossesFile || {}).length,
-    unreachable: { cards: orphans.length, relics: relicOrphans.length, events: eventOrphans.length },
+    unreachable: {
+      cards: orphans.length, relics: relicOrphans.length,
+      events: eventOrphans.length, potions: potionOrphans.length,
+    },
   },
 };
 
@@ -494,6 +555,8 @@ fs.writeFileSync(OUT, renderHtml(payload), "utf8");
 console.log(`Card Lab → ${OUT}`);
 console.log(
   `  ${payload.counts.cards} cards · ${payload.counts.timed} timed · ` +
+  `${payload.counts.relics} relics · ${payload.counts.potions} potions · ` +
+  `${payload.counts.enchants} enchants · ` +
   `${payload.counts.classes} classes · ${checks.length} findings · ${gaps.length} open cells`
 );
 console.log(
@@ -646,6 +709,7 @@ footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);
   <button class="on" data-t="overview">Overview</button>
   <button data-t="hunters">Hunters</button>
   <button data-t="cards">Cards</button>
+  <button data-t="items">Items</button>
   <button data-t="coverage">Coverage</button>
   <button data-t="gaps">Gaps</button>
   <button data-t="levers">Levers</button>
@@ -655,6 +719,7 @@ footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);
 <section class="on" id="overview"></section>
 <section id="hunters"></section>
 <section id="cards"></section>
+<section id="items"></section>
 <section id="coverage"></section>
 <section id="gaps"></section>
 <section id="levers"></section>
@@ -710,7 +775,9 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>goTab(b.dataset
      <div class="stat go" data-cards="{}"><b>\${c.cards}</b><span>cards</span></div>
      <div class="stat go" data-cards='{"kind":"timed"}'><b>\${c.timed}</b><span>timed</span></div>
      <div class="stat go" data-tab="hunters"><b>\${c.classes}</b><span>classes</span></div>
-     <div class="stat"><b>\${c.relics}</b><span>relics</span></div>
+     <div class="stat go" data-items="relic"><b>\${c.relics}</b><span>relics</span></div>
+     <div class="stat go" data-items="potion"><b>\${c.potions}</b><span>potions</span></div>
+     <div class="stat go" data-items="enchant"><b>\${c.enchants}</b><span>enchants</span></div>
      <div class="stat go" data-tab="gaps"><b>\${D.gaps.length}</b><span>empty cells</span></div>
      <div class="stat go" data-tab="health"><b>\${D.checks.length}</b><span>findings</span></div>
    </div>
@@ -736,7 +803,9 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>goTab(b.dataset
   });
   $("#overview").querySelectorAll(".stat.go").forEach(el=>{
     el.tabIndex = 0; el.setAttribute("role","button");
-    const go = () => el.dataset.tab ? goTab(el.dataset.tab) : showCards(JSON.parse(el.dataset.cards));
+    const go = () => el.dataset.tab ? goTab(el.dataset.tab)
+      : el.dataset.items ? showItems(el.dataset.items)
+      : showCards(JSON.parse(el.dataset.cards));
     el.onclick = go;
     el.onkeydown = e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(); } };
   });
@@ -890,6 +959,56 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>goTab(b.dataset
     $("#fk").value = f.kind || ""; $("#fr").value = f.rarity || "";
     rows(); goTab("cards");
   };
+})();
+
+/* ---- items: relics, potions, enchantments ---- */
+(function(){
+  const s = $("#items");
+  s.innerHTML = \`
+    <p class="note">Relics, potions and enchantments are the same shape — a named
+      <b>effect</b> the engine reads generically, plus a value — which is exactly why they
+      belong on one screen. This is every non-card effect in the game, in one list.</p>
+    <div class="controls">
+      <input type="search" id="iq" placeholder="Search name, text, or effect…">
+      <select id="ik"><option value="">All kinds</option><option value="relic">Relics</option>
+        <option value="potion">Potions</option><option value="enchant">Enchantments</option></select>
+      <span class="sub" id="icount"></span>
+    </div>
+    <div class="scroll"><table id="itbl"><thead><tr>
+      <th data-k="name">Item</th><th data-k="kind">Kind</th><th data-k="effect">Effect</th>
+      <th class="num">Value</th><th>Text</th><th>Offered</th></tr></thead><tbody></tbody></table></div>\`;
+
+  let sk="kind", sd=1;
+  function irows(){
+    const q = $("#iq").value.toLowerCase().trim(), k = $("#ik").value;
+    const list = D.items.filter(i=>{
+      if(k && i.kind!==k) return false;
+      if(q && !((i.name+" "+i.text+" "+i.effect+" "+i.id).toLowerCase().includes(q))) return false;
+      return true;
+    });
+    list.sort((a,b)=>{
+      const x=a[sk], y=b[sk];
+      return (typeof x==="number" ? x-y : String(x).localeCompare(String(y)))*sd;
+    });
+    $("#icount").textContent = list.length + " of " + D.items.length;
+    $("#itbl tbody").innerHTML = list.map(i=>\`<tr>
+      <td><b>\${esc(i.name)}</b><div class="sub">\${esc(i.id)}</div></td>
+      <td><span class="tag">\${esc(i.kind)}</span></td>
+      <td>\${i.effect ? \`<span class="tag">\${esc(i.effect)}</span>\` : '<span class="sub">—</span>'}</td>
+      <td class="num">\${i.value===undefined||i.value===null ? "" : i.value}</td>
+      <td class="cardtext">\${esc(i.text)}</td>
+      <td>\${i.offered===null ? '<span class="sub">n/a</span>'
+            : (i.offered ? '<span class="tag">in pool</span>'
+                         : '<span class="tag" style="color:var(--rust)">unreachable</span>')}</td></tr>\`).join("");
+  }
+  s.querySelectorAll("thead th[data-k]").forEach(th=>th.onclick=()=>{
+    const k=th.dataset.k; sd=(k===sk)?-sd:1; sk=k; irows();
+  });
+  ["iq","ik"].forEach(id=>$("#"+id).oninput=irows);
+  irows();
+
+  // Same contract as showCards: a stat tile lands you on the filtered list.
+  window.showItems = kind => { $("#ik").value = kind || ""; irows(); goTab("items"); };
 })();
 
 /* ---- coverage ---- */
