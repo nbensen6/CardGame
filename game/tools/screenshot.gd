@@ -424,6 +424,39 @@ func _capture() -> void:
 		Input.parse_input_event(rup)
 		await process_frame
 		var pan1: Vector3 = cv.get("_pan")
+		# WASD: hold each key across a few frames and watch the offset move.
+		var flew := {}
+		for key in [KEY_W, KEY_S, KEY_A, KEY_D, KEY_E, KEY_Q]:
+			var was: Vector3 = cv.get("_pan")
+			Input.action_press("ui_accept")   # keep the tree awake
+			Input.action_release("ui_accept")
+			var kd := InputEventKey.new()
+			kd.keycode = key
+			kd.pressed = true
+			Input.parse_input_event(kd)
+			for _i in 5:
+				await process_frame
+			var ku := InputEventKey.new()
+			ku.keycode = key
+			ku.pressed = false
+			Input.parse_input_event(ku)
+			await process_frame
+			flew[OS.get_keycode_string(key)] = (cv.get("_pan") as Vector3).distance_to(was) > 0.001
+		var dead: Array[String] = []
+		for k in flew:
+			if not bool(flew[k]):
+				dead.append(str(k))
+		print("FREECAM wasd: %s" % ("all six move the camera" if dead.is_empty()
+			else "DEAD: " + ", ".join(dead)))
+		# The sweep deliberately drags, pans and flies the camera into the desert,
+		# and clicks land on cards along the way. Put it back so the PNG this state
+		# saves is a picture of the fight rather than of the stress test.
+		cv.set("_pan", Vector3.ZERO)
+		cv.set("_yaw", 0.0)
+		cv.set("_user_framed", false)
+		if cv.has_method("snap_camera"):
+			cv.call("snap_camera")
+		await process_frame
 		cv.call("_switch_to", 1 - int(cv.get("_active_slot")))
 		await process_frame
 		var pan2: Vector3 = cv.get("_pan")

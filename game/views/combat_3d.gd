@@ -106,6 +106,10 @@ const ORBIT_PITCH_MIN := -0.12   # radians below level — never under the floor
 const ORBIT_PITCH_MAX := 1.32    # nearly overhead, but never gimbal-locked
 const ORBIT_SENSITIVITY := 0.006
 const PAN_SENSITIVITY := 0.0018   # world units per pixel, per unit of distance
+## WASD fly speed, in world units per second per unit of camera distance. Scaled
+## by distance because a step that reads as a step next to a Crag Pup is a
+## twitch next to a Titan, and the camera is 40 units out there.
+const FLY_SPEED := 0.34
 const ZOOM_STEP := 0.12
 ## Sideways truck, in world units per unit of camera distance, that pushes the
 ## beast right so it centres in the space left of the HUD rather than on the
@@ -520,6 +524,7 @@ func _process(delta: float) -> void:
 			node.position.y = float((h["home"] as Vector3).y) + sin(_time * 2.3 + i * 1.7) * 0.045
 	if _sigil != null and _sigil.visible:
 		_sigil.scale = Vector3.ONE * (1.0 + sin(_time * 3.0) * 0.14)
+	_fly(delta)
 	_track_climb(delta)
 	# After the camera work above: the tag is pinned to a world point, so it has to
 	# be reprojected once the shake, recoil and orbit for this frame have settled.
@@ -812,6 +817,46 @@ func _frame_beast() -> void:
 	_pivot_target = _pivot
 	_pitch = 0.24
 	_apply_orbit()
+
+
+## Walk the camera, on the keys, wherever you want it.
+##
+## The orbit could always TURN, and right-drag could slide it, but it stayed tied
+## to a point — you could look at the fight from any angle and never go anywhere
+## (Nick, 2026-08-24: "currently its locked to a fix point"). WASD moves it, E/Q
+## lift and drop it.
+##
+## Movement is on the ground plane rather than along the lens, so holding W walks
+## toward what you are facing instead of burrowing into the floor when you happen
+## to be looking down. Picking a hunter puts it back.
+func _fly(delta: float) -> void:
+	if _rebinding != "" or (_detail != null and is_instance_valid(_detail)):
+		return                       # a menu owns the keyboard
+	if _cam == null:
+		return
+	var step := Vector3.ZERO
+	if Input.is_key_pressed(KEY_W):
+		step.z += 1.0
+	if Input.is_key_pressed(KEY_S):
+		step.z -= 1.0
+	if Input.is_key_pressed(KEY_D):
+		step.x += 1.0
+	if Input.is_key_pressed(KEY_A):
+		step.x -= 1.0
+	if Input.is_key_pressed(KEY_E):
+		step.y += 1.0
+	if Input.is_key_pressed(KEY_Q):
+		step.y -= 1.0
+	if step == Vector3.ZERO:
+		return
+	_take_manual_control()
+	var b := _cam.global_transform.basis
+	var fwd := Vector3(-b.z.x, 0.0, -b.z.z)
+	fwd = fwd.normalized() if fwd.length() > 0.001 else Vector3.FORWARD
+	var right := Vector3(b.x.x, 0.0, b.x.z)
+	right = right.normalized() if right.length() > 0.001 else Vector3.RIGHT
+	var speed := FLY_SPEED * maxf(_dist, 4.0) * delta
+	_pan += (fwd * step.z + right * step.x + Vector3.UP * step.y) * speed
 
 
 ## Ride the camera up the beast as the hunter climbs. Smoothed rather than
@@ -1439,9 +1484,11 @@ func _open_settings() -> void:
 	col.add_child(_detail_rule())
 	col.add_child(_detail_label("Camera", 14, Color(1, 0.86, 0.5)))
 	var cam_help := _detail_label(
-		"Drag to look around.  Right-drag to move the camera.  Wheel to zoom.
+		"W A S D  move the camera.  E / Q raise and lower it.
 "
-		+ "Picking a hunter re-centres on them.",
+		+ "Drag to look around.  Right-drag to slide.  Wheel to zoom.
+"
+		+ "Picking a hunter puts the camera back on them.",
 		11, Color(0.72, 0.68, 0.6), true)
 	cam_help.custom_minimum_size = Vector2(284, 0)
 	col.add_child(cam_help)
