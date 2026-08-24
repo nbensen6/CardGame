@@ -50,6 +50,15 @@ func _initialize() -> void:
 			var wh: PackedStringArray = a.substr(5).split("x")
 			if wh.size() == 2:
 				_size = Vector2i(int(wh[0]), int(wh[1]))
+	# The game is landscape-locked (project.godot handheld/orientation), so a
+	# portrait size shoots an orientation that can never happen on a device. It
+	# letterboxes a 16:9 canvas into a tall window, which looks exactly like a
+	# broken layout and is not one — that false alarm cost a round trip on
+	# 2026-08-24. Rotate it and say so, rather than quietly rendering a lie.
+	if _size.y > _size.x:
+		print("NOTE size=%dx%d is portrait; the game is landscape-locked. Shooting %dx%d."
+			% [_size.x, _size.y, _size.y, _size.x])
+		_size = Vector2i(_size.y, _size.x)
 	_failsafe()  # never hang the machine
 	# Shots should show onboarding as a NEW player sees it, whatever this machine's
 	# config happens to say — otherwise turning tips off while playing silently

@@ -27,6 +27,16 @@ Godot_v4.7.1-stable_win64_console.exe --path game --script res://tools/screensho
 
 `mobile` forces the handheld layout; `size=` sets the aspect ratio to shoot at.
 
+**Give it a LANDSCAPE size.** The game is landscape-locked, so a phone is a wide,
+short window — `844x390`, not `390x844`. Shooting a portrait size letterboxes the
+16:9 canvas into a tall window: the interface renders small and stranded in the
+middle of a mostly empty screen, which looks exactly like a broken layout and is
+not one. That cost a round trip on 2026-08-24. The harness now rotates a portrait
+`size=` and prints a NOTE rather than rendering the lie.
+
+Sizes worth checking, smallest first: `667x375` (iPhone SE), `844x390`
+(iPhone 14), `932x430` (15 Pro Max).
+
 ## What you need to install (about 20 minutes, mostly downloading)
 
 You already have **Java 17**, which is the part people usually get stuck on.
