@@ -185,7 +185,7 @@ Ordered. Source in brackets.
   shuffle in "Bruised Grip", a dead card that costs you a draw.
   *Done when:* they exist as data, can be inflicted, are removable at a campfire
   or shop, and are tested.
-- [ ] **28. Retain and Innate** `cloud-safe` — two one-word card properties that
+- [x] **28. Retain and Innate** `cloud-safe` — two one-word card properties that
   StS gets enormous play out of. Retain: not discarded at end of turn. Innate:
   always in the opening hand. Both are a flag plus one line in the draw/discard
   path, and both create build decisions immediately.
@@ -331,6 +331,55 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-24** — #28 Retain and Innate: two `bool` fields on `Card`
+  (`retain`, `innate`), each a flag plus one line in the draw/discard path,
+  same shape rule 7 asks for. `retain`: `Combat.end_turn()`'s discard loop now
+  splits kept cards from discarded ones (`if c.retain: kept.append(c) else:
+  discard_pile.append(c)`) instead of unconditionally emptying the hand — a
+  retained card doesn't reduce next round's draw, so it sits ON TOP of a full
+  fresh hand, same as StS. `innate`: a new `_draw_innate()` pulls every innate
+  card straight out of the (already-shuffled) draw pile into the opening hand,
+  gated to `round_num == 1` only, and the normal `_draw()` call right after it
+  is shortened by however many it pulled — so an innate card fills a slot in
+  the guaranteed hand rather than adding a 6th card, which is what "guaranteed
+  in the opening hand" actually means (confirmed against StS's own Innate,
+  not invented). Two new global cards prove both end-to-end rather than
+  leaving the fields unconsumed: `Bunker Down` (retain, common, in the
+  existing "Brace" defensive slot but weaker block for the flexibility) and
+  `First Strike` (innate, uncommon, a slightly-worse Slash traded for
+  guaranteed turn-1 access) — both added to `data/cards.json`'s global
+  `reward_pool`, confirmed reachable with `node tools/cardlab/build.js`
+  (`unreachable: 0 cards`). Wired `retain`/`innate` into
+  `GameHost._keywords_of` and `keywords.json` (#16's reflection test forces
+  this for any new bool field — caught it immediately when the two fields
+  were declared with no keyword branch yet). 4 new tests: retain keeps a card
+  in hand at end of turn while an ordinary one still discards, a retained
+  card survives into next round on top of the fresh draw (hand size
+  `HAND_SIZE + 1`, proving it isn't a one-shot skip), innate is present in
+  the opening hand at the normal hand size (NOT `HAND_SIZE + 1` — my first
+  draft of that assertion was wrong and the run caught it as a real FAIL,
+  not a rubber-stamp), and innate does not reappear every round once played
+  and gone. `run_tests.gd` all green (205 assertions incl. the four new
+  ones); `balance_sim.gd` ran clean as a smoke test only — neither new card
+  is drafted by the sim's own logic paths differently from any other common/
+  uncommon, so the printed win rates are unaffected, not tuned to.
+  **Also:** this session's `git checkout -B main origin/main` (before any
+  fetch, per the task's own step 0) again pinned to a stale cached ref —
+  landed on 32dc550, 36 commits behind the real tip (e6f952f). Built and
+  committed a full duplicate of #1 (exhaust scaling for the Goblin, already
+  `[x]` upstream — just missing test coverage for `block_per_exhausted`,
+  which this session's version happened to add too) before `git push` was
+  rejected as non-fast-forward. Per rule 9: fetched, branched off the
+  unpushed commit as `stale-work-f00ac60` rather than deleting it outright
+  (in case the block_per_exhausted test coverage gap it fixed is worth
+  someone cherry-picking later — it isn't merged into `main` and isn't
+  pushed), reset `main` cleanly to the real `origin/main`, and re-read the
+  queue fresh before picking #28. Same recurring pattern the log has now
+  named at least ten times; not re-investigating the container-init root
+  cause here either, but it is still happening on the newest, largest gap
+  yet and step 0 of this routine's own instructions still does the naive
+  checkout before any fetch — that step, not just rule 9's advice, may be
+  worth revising.
 - **2026-08-24** — #27 Status and curse cards: added a `status: bool` field to
   `Card` (data/rules only — no new mechanic needed, since a card with no
   effect fields set already resolves to "cost energy, do nothing" for free)

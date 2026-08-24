@@ -56,6 +56,8 @@ var upgraded: bool     # a campfire-sharpened card (name gets a +)
 var enchant: String    # id of an attached enchant (data/enchants.json); "" = none
 var status: bool       # a status/curse card — clogs your deck, no beneficial effect;
                         # inflicted (an event's curse_card), not drafted (backlog #27)
+var retain: bool        # stays in hand at end of turn instead of being discarded (backlog #28)
+var innate: bool        # guaranteed in the opening hand of every fight (backlog #28)
 
 static func from_dict(d: Dictionary) -> Card:
 	var c := Card.new()
@@ -107,6 +109,8 @@ static func from_dict(d: Dictionary) -> Card:
 	c.upgraded = bool(d.get("upgraded", false))
 	c.enchant = String(d.get("enchant", ""))
 	c.status = bool(d.get("status", false))
+	c.retain = bool(d.get("retain", false))
+	c.innate = bool(d.get("innate", false))
 	return c
 
 
@@ -134,6 +138,7 @@ func to_dict() -> Dictionary:
 		"strength": strength, "wound": wound, "hits": hits, "draw": draw,
 		"target": target, "icon": icon, "text": text, "upgraded": upgraded,
 		"enchant": enchant, "status": status,
+		"retain": retain, "innate": innate,
 	}
 
 

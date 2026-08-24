@@ -112,6 +112,11 @@ func _init() -> void:
 	_test_sure_enchant_lands_even_on_a_fumble()
 	_test_timed_block_guards_on_a_hit()
 	_test_timed_ally_block_anchors_the_ally()
+	# Retain and Innate (backlog #28)
+	_test_retain_keeps_a_card_in_hand_at_end_of_turn()
+	_test_retain_survives_into_the_next_round()
+	_test_innate_is_guaranteed_in_the_opening_hand()
+	_test_innate_does_not_reappear_every_round()
 	# graded timing accuracy — the rules half (backlog #33)
 	_test_graded_timing_good_pays_half_the_bonus()
 	_test_graded_timing_perfect_matches_a_plain_nailed_hit()
@@ -1892,6 +1897,57 @@ func _test_timed_ally_block_anchors_the_ally() -> void:
 		"Anchor Brace shields the ally on a nailed timing, and the caster a little")
 
 
+## Retain (backlog #28): a retained card survives end_turn in hand; an
+## ordinary card in the same hand still goes to the discard pile as normal.
+func _test_retain_keeps_a_card_in_hand_at_end_of_turn() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_bunker_down(), _slash()]
+	combat.end_turn(0)
+	_expect(ps.hand.size() == 1 and ps.hand[0].id == "bunker_down"
+			and _has_id(ps.discard_pile, "slash"),
+		"a retained card stays in hand at end of turn; a normal one is discarded")
+
+
+## A retained card kept across a turn boundary is still there to be played the
+## following round, on top of the normal fresh draw — it isn't a one-shot skip.
+func _test_retain_survives_into_the_next_round() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_bunker_down()]
+	combat.end_turn(0)
+	combat.end_turn(1)  # both end -> boss acts -> round 2 begins, hand redrawn
+	_expect(_has_id(ps.hand, "bunker_down") and ps.hand.size() == Combat.HAND_SIZE + 1,
+		"a retained card is still in hand next round, on top of the fresh draw")
+
+
+## Innate (backlog #28): guaranteed in the OPENING hand — start() already ran
+## _begin_round() for round 1 by the time _new_combat() returns. It fills one
+## of the normal draw's slots rather than adding to the hand size (an innate
+## card is guaranteed to be THERE, not a bonus card on top).
+func _test_innate_is_guaranteed_in_the_opening_hand() -> void:
+	var deck: Array = [_first_strike()] + _deck_of(_slash, 9)
+	var combat := _new_combat([deck, _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	_expect(_has_id(ps.hand, "first_strike") and ps.hand.size() == Combat.HAND_SIZE,
+		"an innate card is guaranteed in the opening hand, at the normal hand size")
+
+
+## Innate only guarantees the OPENING hand — once played and gone, later rounds
+## draw normally and can go a while without seeing it again (it's shuffled back
+## into the deck like any other card once discarded/drawn again).
+func _test_innate_does_not_reappear_every_round() -> void:
+	var deck: Array = [_first_strike()] + _deck_of(_slash, 4)  # tiny deck: 5 cards
+	var combat := _new_combat([deck, _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var i := _index_of_id(ps.hand, "first_strike")
+	combat.play_card(0, i)  # First Strike leaves the hand into the discard pile
+	combat.end_turn(0)
+	combat.end_turn(1)  # round 2: a normal draw, not another guaranteed copy
+	_expect(ps.hand.size() == Combat.HAND_SIZE,
+		"round 2 draws a normal hand size — innate only guarantees round 1")
+
+
 # --- Graded timing accuracy — the rules half (backlog #33) -----------------
 # Today's binary nailed/fumbled becomes a quality tier (miss/good/perfect) so
 # a dead-centre hit pays more than one that barely landed in the zone. The
@@ -3156,6 +3212,17 @@ func _hand_names(combat: Combat, pi: int) -> Array:
 	return names
 
 
+func _has_id(cards: Array, id: String) -> bool:
+	return _index_of_id(cards, id) >= 0
+
+
+func _index_of_id(cards: Array, id: String) -> int:
+	for i in range(cards.size()):
+		if (cards[i] as Card).id == id:
+			return i
+	return -1
+
+
 func _deck_of(maker: Callable, n: int) -> Array:
 	var d: Array = []
 	for _i in n:
@@ -3242,6 +3309,10 @@ func _detonator() -> Card:
 	return Card.from_dict({"id": "detonator", "name": "Detonator", "type": "attack", "cost": 3, "damage": 4, "damage_per_exhausted": 6, "exhaust_pick": true})
 func _anchor_brace() -> Card:
 	return Card.from_dict({"id": "anchor_brace", "name": "Anchor Brace", "type": "skill", "cost": 1, "block": 2, "ally_block": 4, "timed": true, "timed_ally_block": 6, "target": "ally"})
+func _bunker_down() -> Card:
+	return Card.from_dict({"id": "bunker_down", "name": "Bunker Down", "type": "skill", "cost": 1, "block": 4, "retain": true})
+func _first_strike() -> Card:
+	return Card.from_dict({"id": "first_strike", "name": "First Strike", "type": "attack", "cost": 1, "damage": 5, "innate": true})
 
 
 func _expect(cond: bool, name: String) -> void:

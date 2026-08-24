@@ -635,8 +635,14 @@ func end_turn(pi: int) -> void:
 			mate.energy += ps.energy
 			_log("%s hands off %d unspent Energy to %s." % [ps.combatant.name, ps.energy, mate.combatant.name])
 			ps.energy = 0
+	var kept: Array = []  # Retain (backlog #28): stays in hand instead of the discard pile
 	while not ps.hand.is_empty():
-		ps.discard_pile.append(ps.hand.pop_back())
+		var c: Card = ps.hand.pop_back()
+		if c.retain:
+			kept.append(c)
+		else:
+			ps.discard_pile.append(c)
+	ps.hand = kept
 	_log("%s ends their turn." % ps.combatant.name)
 	if _all_ended():
 		_enemy_turn()
@@ -683,7 +689,13 @@ func _begin_round() -> void:
 		if _mod("rhythm_keeps") <= 0:
 			ps.rhythm = 0  # combo resets each turn (a relic can keep it)
 		_resolve_prepared(ps)
-		_draw(ps, HAND_SIZE + _mod("draw"))
+		# Innate (backlog #28): guaranteed in the opening hand of the fight —
+		# only round 1, before the normal draw, so it never displaces a card
+		# that would otherwise have been drawn this round.
+		var innate_drawn := 0
+		if round_num == 1:
+			innate_drawn = _draw_innate(ps)
+		_draw(ps, maxi(0, HAND_SIZE + _mod("draw") - innate_drawn))
 	_log("— Round %d —" % round_num)
 
 
@@ -803,6 +815,22 @@ func _draw(ps: PlayerState, n: int) -> void:
 			ps.discard_pile.clear()
 			_shuffle(ps.draw_pile)
 		ps.hand.append(ps.draw_pile.pop_back())
+
+## Innate (backlog #28): pull every innate card straight out of the (already
+## shuffled) draw pile into the opening hand, in whatever order they fell —
+## no need to reshuffle what's left, since removing entries doesn't bias it.
+## Returns how many were pulled, so the normal draw can make room for them.
+func _draw_innate(ps: PlayerState) -> int:
+	var kept: Array = []
+	var pulled := 0
+	for c in ps.draw_pile:
+		if c.innate:
+			ps.hand.append(c)
+			pulled += 1
+		else:
+			kept.append(c)
+	ps.draw_pile = kept
+	return pulled
 
 func _shuffle(arr: Array) -> void:
 	for i in range(arr.size() - 1, 0, -1):

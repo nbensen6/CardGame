@@ -449,6 +449,10 @@ func _keywords_of(c: Card) -> Array:
 		ids.append("multistrike")
 	if c.status:
 		ids.append("status")
+	if c.retain:
+		ids.append("retain")
+	if c.innate:
+		ids.append("innate")
 	var out: Array = []
 	for id in ids:
 		var k := Content.keyword(String(id))
