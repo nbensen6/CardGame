@@ -274,6 +274,61 @@ Ordered. Source in brackets.
   the moves are already data. *Done when:* the condition is a data field with a
   fallback move when it fails, at least three beasts use it, and it is tested.
 
+- [ ] **41. Shops and campfires should trade in potions** `cloud-safe` — item 26
+  built potions and nothing sells them. `Run.shop_stock` offers cards and a
+  removal; the campfire offers rest and the other options. So the only way to
+  hold a potion is whatever grants one in a fight, which makes three slots of
+  inventory mostly decorative. *Done when:* the shop stocks potions at a price,
+  a full inventory is handled rather than silently dropping the purchase, and
+  both are tested.
+
+- [ ] **42. Something to unlock between runs** `cloud-safe` — `Progress` remembers
+  your ascension, your hints, your keybinds and your wins, and nothing else. A
+  loss therefore leaves you with exactly what you started with, which is the one
+  thing the genre never does: StS drips new cards and relics into the pool for
+  dozens of hours. We have 152 cards and 30 relics all available from run one.
+  *Done when:* a gated subset unlocks on defined events, the pool respects it,
+  it persists, and it is tested. Keep the gate small — this is a hook to hang
+  progression on, not a rebalance of what is offered.
+
+- [ ] **43. One trigger point instead of scattered special cases** `cloud-safe` —
+  there is no generic "when X happens, run Y". Every timed effect, relic and
+  passive is wired at its own call site, so each new one costs another branch in
+  `combat.gd` and the file grows a special case per idea. A small set of named
+  moments (turn start, turn end, card played, damage taken, hunter climbs) that
+  relics, potions and cards all subscribe to would make the next twenty pieces
+  of content data rather than code. *Done when:* the moments exist, at least
+  three existing effects are moved onto them with no behaviour change, and the
+  suite proves the behaviour did not change.
+
+- [ ] **44. Titans that change their pattern when hurt** `cloud-safe` — every
+  beast runs one fixed rotation from full health to zero, so the back half of a
+  fight is the front half with smaller numbers. A second move list that takes
+  over below a health threshold is the genre's standard answer and ours is
+  cheap, because moves are already data. It also suits the fiction: a beast that
+  has been climbed for five rounds should start behaving like it. *Done when:*
+  the threshold and the second list are data fields, at least three beasts use
+  them, the switch is visible in the telegraph, and it is tested.
+
+- [ ] **45. Prove the new mechanics cross the client/server boundary**
+  `cloud-safe` — potions, curses, Retain, Innate, named holds and graded timing
+  all landed as `/core` rules with `/core` tests. This is a CO-OP game: the
+  thing that actually breaks is the snapshot boundary, where a field exists on
+  the host and never reaches the peer, or reaches only the peer who owns it.
+  `game_host.gd` decides what each peer sees, and none of these were added with
+  a two-peer test. *Done when:* each of those six is exercised through a real
+  host/client pair, including what the ALLY should and should not see.
+
+- [ ] **46. A robustness sweep that is not balance tuning** `cloud-safe` — we
+  have `balance_sim.gd`, which the standing rule says not to tune to, and that
+  rule has left the whole simulation unused. But there is a question it can
+  answer that has nothing to do with win rates: does a run ever get STUCK. No
+  playable card and no energy, a climb that cannot progress, a shop that offers
+  nothing affordable with no exit, an event with no valid choice. *Done when:*
+  a sweep of many seeded runs asserts every state has at least one legal action
+  and every run terminates, and it fails loudly on a soft-lock. Report crashes
+  and dead ends only — never win rates.
+
 ## Working alongside the cloud routine
 
 Two of us push to `main`: the routine every two hours, and Nick-and-Claude in a
