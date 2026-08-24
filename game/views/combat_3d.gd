@@ -105,6 +105,7 @@ const HUNTER_HEIGHT := 0.7
 const ORBIT_PITCH_MIN := -0.12   # radians below level — never under the floor
 const ORBIT_PITCH_MAX := 1.32    # nearly overhead, but never gimbal-locked
 const ORBIT_SENSITIVITY := 0.006
+const PAN_SENSITIVITY := 0.0018   # world units per pixel, per unit of distance
 const ZOOM_STEP := 0.12
 ## Sideways truck, in world units per unit of camera distance, that pushes the
 ## beast right so it centres in the space left of the HUD rather than on the
@@ -162,6 +163,13 @@ var _dragging := false
 var _pivot_target := Vector3(0, 2.0, 0)  # where the camera is drifting its aim to
 var _user_framed := false   # the player has dragged/zoomed — stop auto-pitching
 var _lock_slot := 0         # the hunter the camera is locked onto (CAMERA_LOCK)
+## Free offset from whatever the camera is locked to. Orbiting alone can only
+## ever look AT the subject from a new angle; panning is what lets you go and
+## look at something else, which is the difference between an orbit and a free
+## camera. Cleared whenever you select a hunter, so picking one is also how you
+## get back — no "reset camera" button to find.
+var _pan := Vector3.ZERO
+var _panning := false
 var _establishing := false  # easing from the opening wide shot into the working one
 var _working_dist := 12.0   # the shot the establishing pull-in settles at
 ## 0 while everyone is on the ground, ->1 as the hunter you're playing ascends.
@@ -469,6 +477,7 @@ func _switch_to(slot: int) -> void:
 		_selecting = {}
 	_active_slot = slot
 	_lock_slot = slot          # selecting a hunter IS aiming the camera at them
+	_pan = Vector3.ZERO        # ...and is how you get back from a pan
 	Sfx.play("card")
 	_refresh()
 
@@ -793,6 +802,7 @@ func _frame_beast() -> void:
 	_yaw = 0.0          # a new beast is always introduced from the front
 	_user_framed = false
 	_lock_slot = _me()
+	_pan = Vector3.ZERO
 	# Open on the whole creature, however far back that has to be, then fall in to
 	# the working shot. You get to see what you've picked a fight with once —
 	# after that, the climb is the subject and the rest of it is off-screen.
@@ -855,9 +865,9 @@ func _aim_camera(delta: float, snap: bool) -> void:
 		return
 	var want := _climb_frame()
 	var lock := _lock_point()
-	_pivot_target.y = want.x
-	_pivot_target.x = lock.x
-	_pivot_target.z = lock.y
+	_pivot_target.y = want.x + _pan.y
+	_pivot_target.x = lock.x + _pan.x
+	_pivot_target.z = lock.y + _pan.z
 	if not _user_framed:
 		_working_dist = _dist_for_window(want.y)
 	if snap:
@@ -1034,6 +1044,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		match mb.button_index:
 			MOUSE_BUTTON_LEFT:
 				_dragging = mb.pressed
+			MOUSE_BUTTON_MIDDLE, MOUSE_BUTTON_RIGHT:
+				# Right-drag pans. Right-CLICK on a card opens its keyword, but a
+				# card is a Control and eats its own clicks before this runs, so
+				# the two never meet.
+				_panning = mb.pressed
 			MOUSE_BUTTON_WHEEL_UP:
 				_take_manual_control()
 				_dist = maxf(_dist * (1.0 - ZOOM_STEP), 4.0)
@@ -1042,11 +1057,20 @@ func _unhandled_input(event: InputEvent) -> void:
 				_take_manual_control()
 				_dist = minf(_dist * (1.0 + ZOOM_STEP), 60.0)
 				_apply_orbit()
-	elif event is InputEventMouseMotion and _dragging:
+	elif event is InputEventMouseMotion and (_dragging or _panning):
 		var mm: InputEventMouseMotion = event
 		_take_manual_control()
-		_yaw -= mm.relative.x * ORBIT_SENSITIVITY
-		_pitch += mm.relative.y * ORBIT_SENSITIVITY
+		if _panning:
+			# In the camera's own axes, so a drag moves the world the way the
+			# hand moves, whatever angle you are viewing from. Scaled by distance
+			# so panning feels the same close in and far out.
+			var basis := _cam.global_transform.basis
+			var k := _dist * PAN_SENSITIVITY
+			_pan -= basis.x * mm.relative.x * k
+			_pan += basis.y * mm.relative.y * k
+		else:
+			_yaw -= mm.relative.x * ORBIT_SENSITIVITY
+			_pitch += mm.relative.y * ORBIT_SENSITIVITY
 		_apply_orbit()
 
 
@@ -1408,6 +1432,19 @@ func _open_settings() -> void:
 			_coach_id = ""
 			_coach.visible = false)
 	col.add_child(tips)
+
+	# The camera has four gestures and, until now, nothing anywhere said so. A
+	# control nobody is told about is a control nobody has, which is indistinguishable
+	# from one that does not work.
+	col.add_child(_detail_rule())
+	col.add_child(_detail_label("Camera", 14, Color(1, 0.86, 0.5)))
+	var cam_help := _detail_label(
+		"Drag to look around.  Right-drag to move the camera.  Wheel to zoom.
+"
+		+ "Picking a hunter re-centres on them.",
+		11, Color(0.72, 0.68, 0.6), true)
+	cam_help.custom_minimum_size = Vector2(284, 0)
+	col.add_child(cam_help)
 
 	col.add_child(_detail_rule())
 	col.add_child(_detail_label("Keys", 14, Color(1, 0.86, 0.5)))

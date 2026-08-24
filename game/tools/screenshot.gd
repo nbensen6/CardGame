@@ -363,48 +363,73 @@ func _capture() -> void:
 		print("SLOT active=%s lock=%s pivot=%s at=%s" % [str(current_scene.get("_active_slot")), str(current_scene.get("_lock_slot")), str(current_scene.get("_pivot")), str(current_scene.call("_lock_point"))])
 	if _state.begins_with("3d") and _state not in ["3dmap", "3dloop"]:
 		_report_visibility(current_scene)
-	if _state == "3dfreecam":  # prove a drag actually reaches the orbit camera
+	if _state == "3dfreecam":  # WHERE on the screen does a drag reach the camera?
 		var cv := current_scene
-		var yaw0: float = float(cv.get("_yaw"))
-		var pitch0: float = float(cv.get("_pitch"))
-		var dist0: float = float(cv.get("_dist"))
-		var centre := Vector2(_size.x, _size.y) * 0.5 if _size != Vector2i.ZERO 			else get_root().size as Vector2 * 0.5
-		var down := InputEventMouseButton.new()
-		down.button_index = MOUSE_BUTTON_LEFT
-		down.pressed = true
-		down.position = centre
-		Input.parse_input_event(down)
-		await process_frame
-		var held: bool = bool(cv.get("_dragging"))
-		for _i in 6:                       # a drag is many small motions, not one jump
-			var mm := InputEventMouseMotion.new()
-			mm.position = centre
-			mm.relative = Vector2(24.0, 6.0)
-			Input.parse_input_event(mm)
+		var vw := float(_size.x) if _size != Vector2i.ZERO else float(get_root().size.x)
+		var vh := float(_size.y) if _size != Vector2i.ZERO else float(get_root().size.y)
+		var spots := {
+			"centre": Vector2(vw * 0.5, vh * 0.45),
+			"sky-left": Vector2(vw * 0.30, vh * 0.18),
+			"party-panel": Vector2(vw * 0.13, vh * 0.10),
+			"over-cards": Vector2(vw * 0.50, vh * 0.82),
+			"ground-gap": Vector2(vw * 0.50, vh * 0.63),
+			"gauge": Vector2(vw * 0.96, vh * 0.45),
+			"top-bar": Vector2(vw * 0.55, vh * 0.05),
+		}
+		var stuck: Array[String] = []
+		for label in spots:
+			var at: Vector2 = spots[label]
+			var y0: float = float(cv.get("_yaw"))
+			var down := InputEventMouseButton.new()
+			down.button_index = MOUSE_BUTTON_LEFT
+			down.pressed = true
+			down.position = at
+			Input.parse_input_event(down)
 			await process_frame
-		var up := InputEventMouseButton.new()
-		up.button_index = MOUSE_BUTTON_LEFT
-		up.pressed = false
-		up.position = centre
-		Input.parse_input_event(up)
+			for _i in 4:
+				var mm := InputEventMouseMotion.new()
+				mm.position = at
+				mm.relative = Vector2(20.0, 0.0)
+				Input.parse_input_event(mm)
+				await process_frame
+			var up := InputEventMouseButton.new()
+			up.button_index = MOUSE_BUTTON_LEFT
+			up.pressed = false
+			up.position = at
+			Input.parse_input_event(up)
+			await process_frame
+			var moved := absf(float(cv.get("_yaw")) - y0) > 0.001
+			print("FREECAM %-13s %s" % [label, "drags" if moved else "DEAD"])
+			if not moved:
+				stuck.append(label)
+		print("FREECAM dead zones: %s" % ("none" if stuck.is_empty() else ", ".join(stuck)))
+		var pan0: Vector3 = cv.get("_pan")
+		var mid := Vector2(vw * 0.5, vh * 0.45)
+		var rdn := InputEventMouseButton.new()
+		rdn.button_index = MOUSE_BUTTON_RIGHT
+		rdn.pressed = true
+		rdn.position = mid
+		Input.parse_input_event(rdn)
 		await process_frame
-		var wheel := InputEventMouseButton.new()
-		wheel.button_index = MOUSE_BUTTON_WHEEL_UP
-		wheel.pressed = true
-		wheel.position = centre
-		Input.parse_input_event(wheel)
+		for _i in 4:
+			var pm := InputEventMouseMotion.new()
+			pm.position = mid
+			pm.relative = Vector2(18.0, 10.0)
+			Input.parse_input_event(pm)
+			await process_frame
+		var rup := InputEventMouseButton.new()
+		rup.button_index = MOUSE_BUTTON_RIGHT
+		rup.pressed = false
+		rup.position = mid
+		Input.parse_input_event(rup)
 		await process_frame
-		var yaw1: float = float(cv.get("_yaw"))
-		var pitch1: float = float(cv.get("_pitch"))
-		var dist1: float = float(cv.get("_dist"))
-		var turned := absf(yaw1 - yaw0) > 0.001
-		var tilted := absf(pitch1 - pitch0) > 0.001
-		var zoomed := absf(dist1 - dist0) > 0.001
-		print("FREECAM press=%s yaw %.3f->%.3f %s | pitch %.3f->%.3f %s | zoom %.2f->%.2f %s  %s"
-			% [str(held), yaw0, yaw1, "turned" if turned else "STUCK",
-			   pitch0, pitch1, "tilted" if tilted else "STUCK",
-			   dist0, dist1, "zoomed" if zoomed else "STUCK",
-			   "OK" if (turned and tilted and zoomed) else "FAIL"])
+		var pan1: Vector3 = cv.get("_pan")
+		cv.call("_switch_to", 1 - int(cv.get("_active_slot")))
+		await process_frame
+		var pan2: Vector3 = cv.get("_pan")
+		print("FREECAM pan %s -> %s %s | select clears it: %s" % [str(pan0), str(pan1),
+			"panned" if pan0.distance_to(pan1) > 0.001 else "STUCK",
+			"yes" if pan2 == Vector3.ZERO else "NO"])
 	if _state == "3dswap":  # prove the swap keybinds actually reach the view
 		var vw := current_scene
 		var before: int = int(vw.get("_active_slot"))
