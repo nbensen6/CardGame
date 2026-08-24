@@ -139,6 +139,7 @@ func _init() -> void:
 	_test_every_field_a_player_must_understand_has_a_keyword()
 	_test_every_boss_move_type_resolves()
 	_test_every_beast_has_a_move_pattern()
+	_test_weak_point_threshold_still_means_something()
 	_test_card_dict_round_trips_every_field()
 	_test_run_survives_a_save_and_load()
 	_test_run_survives_a_save_and_load_mid_combat()
@@ -1943,6 +1944,47 @@ func _test_every_beast_has_a_move_pattern() -> void:
 				bad.append("%s (%d moves, %d kinds)" % [id, b.moves.size(), kinds.size()])
 	_expect(bad.is_empty(),
 		"every beast has at least 4 moves and more than one kind [%s]" % ", ".join(bad))
+
+
+## Backlog #20: weak_point_threshold audit. It caps how much sigil damage a
+## hunter can bank per visit before the Titan bucks them off — "climb, strike
+## for a CHUNK, get thrown" (GDD). The worry was that it was tuned back when
+## sigils sat at Height 1-8 and never rechecked once climbs deepened to 4-13.
+## It turns out the threshold was never really a function of sigil HEIGHT —
+## it's a function of typical hit damage at the sigil, and that hasn't moved.
+## So the actual audit is: does the cap still take MORE THAN ONE hit (a "tap"
+## isn't a "chunk") but still bucks you off WITHIN A SINGLE TURN'S worth of
+## hits (otherwise it can't be felt at all)? Compute "hits to buck" from the
+## real card pool's average cheap attack (cost<=1, so it can't be dodged by
+## only ever playing big cards) plus SIGIL_BONUS, the same total _damage_boss
+## adds at the sigil, and require every weak-point beast to land in [1.5, 6].
+## Measured 2026-08-24: every beast lands between 1.78 (Crag Pup/Bounder) and
+## 5.34 hits (Sunken Warden) — a beast-by-beast rise that already tracks HP,
+## independent of sigil height. Nothing to retune; this only pins the finding
+## against regression (a future beast added outside the band would fail here
+## instead of silently shipping a dead or trivial cap).
+func _test_weak_point_threshold_still_means_something() -> void:
+	var cheap_attack_dmgs: Array = []
+	for id in Content.all_card_ids():
+		var c: Card = Content.make_card(String(id))
+		if c.type == "attack" and c.cost <= 1 and c.damage > 0:
+			cheap_attack_dmgs.append(c.damage)
+	var avg_dmg := 0.0
+	for v in cheap_attack_dmgs:
+		avg_dmg += v
+	avg_dmg /= cheap_attack_dmgs.size()
+	var avg_sigil_hit: float = avg_dmg + Combat.SIGIL_BONUS
+	var out_of_band: Array = []
+	for kind in ["fight", "elite", "boss"]:
+		for id in Content.beast_pool(kind):
+			var b: Boss = Content.build_boss(String(id))
+			if b.weak_point_height <= 0 or b.weak_point_threshold <= 0:
+				continue
+			var hits_to_buck: float = float(b.weak_point_threshold) / avg_sigil_hit
+			if hits_to_buck < 1.5 or hits_to_buck > 6.0:
+				out_of_band.append("%s (%.2f hits)" % [id, hits_to_buck])
+	_expect(out_of_band.is_empty(),
+		"weak_point_threshold takes more than one hit but bucks within a turn's reach, for every beast [%s]" % ", ".join(out_of_band))
 
 
 ## Card.to_dict is hand-written while from_dict is hand-written separately, so a

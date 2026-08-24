@@ -145,7 +145,7 @@ Ordered. Source in brackets.
   rises on repeat removals, and each campfire action are rules nobody tests.
   *Done when:* covered, including that you cannot buy what you cannot afford
   and cannot thin a deck below `MIN_DECK`.
-- [ ] **20. `weak_point_threshold` audit** `cloud-safe` — the per-visit sigil
+- [x] **20. `weak_point_threshold` audit** `cloud-safe` — the per-visit sigil
   damage cap was tuned when sigils sat at Height 1–8. They now sit at 4–13 and
   nobody re-checked whether the cap still means anything.
   *Done when:* each beast's cap is justified against its new climb, or the field
@@ -283,6 +283,30 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-24** — #20 `weak_point_threshold` audit: also started this run by
+  duplicating #1 and #4 (a full second "per-beast limiter" build, same failure
+  mode rule 9 already names) — caught by a rejected push, discarded before
+  anything reached the remote, re-fetched and re-read the queue fresh, and
+  picked #20 as the actual next open item. The audit's own worry — that the
+  per-visit cap was tuned when sigils sat at Height 1-8 and never rechecked
+  now that they sit at 4-13 — turned out to rest on a wrong assumption: the
+  cap was never really a function of sigil HEIGHT, it's a function of typical
+  hit damage at the sigil (`card.damage + SIGIL_BONUS`), and that hasn't
+  moved even as climbs got deeper. Computed "hits to buck" per beast from the
+  real card pool's average cheap (cost<=1) attack card (2.86 avg damage) +
+  `SIGIL_BONUS` (5) = 7.86/hit: every weak-point beast lands between 1.78
+  (Crag Pup/Bounder) and 5.34 (Sunken Warden) hits, rising with beast tier —
+  more than a single tap, bucked off within a normal turn's reach, exactly
+  what "climb, strike for a CHUNK, get thrown" (GDD) describes. Nothing was
+  numerically wrong, so no values changed and the field is not dead — this
+  closes the gap between "the cap happens to still make sense" and "a test
+  proves it," the same shape as #13/#18's audits. Added
+  `_test_weak_point_threshold_still_means_something`, which computes the
+  average live (not a hardcoded number) so it stays honest if the card pool's
+  damage curve shifts later, and asserts every beast lands in [1.5, 6] hits —
+  a band a genuinely dead (huge) or trivial (sub-1) cap would fail.
+  `run_tests.gd` all green (181 assertions incl. the new one); `balance_sim.gd`
+  ran clean as a smoke test only, not tuned to.
 - **2026-08-24** — #19 Shop and campfire test coverage: this session picked
   #1 and #4 first, built a full "per-beast limiter" feature for #4, then hit
   a push conflict and discovered (via rule 9, added exactly for this) both
