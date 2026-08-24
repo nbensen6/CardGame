@@ -1261,6 +1261,11 @@ func _take_manual_control() -> void:
 ## so half the roster resolved to the wrong body or fell back to the elephant.
 ## The name is kept only as a fallback for a beast added without a mapping.
 func _model_key(beast_id: String, beast_name: String) -> String:
+	# Your own art wins, exactly as it does for hunters (ui/cast.gd): a file named
+	# cast/<beast_id>.glb replaces the Kenney stand-in with no code change, so
+	# making a beast is exporting a file and nothing else.
+	if beast_id != "" and ResourceLoader.exists(CAST + beast_id + ".glb"):
+		return beast_id
 	if MODELS.has(beast_id):
 		return String(MODELS[beast_id])
 	var lower := beast_name.to_lower()

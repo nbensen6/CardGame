@@ -217,10 +217,15 @@ func _tile(name: String, hex_col: int, hex_row: int, rng: RandomNumberGenerator)
 ## The beast you just brought down, on its side. It is the only reason the
 ## reward exists, and a flat panel never said so.
 func _lay_out_the_felled(beast_id: String) -> void:
-	var key: String = String((BEAST_MODEL.MODELS as Dictionary).get(beast_id, ""))
-	var path := CAST + key + ".glb"
-	if key == "" or not ResourceLoader.exists(path):
-		return
+	# Same rule as the fight: your own cast/<beast_id>.glb beats the stand-in, so
+	# the beast you felled is the beast lying here rather than the elephant it
+	# used to be standing in for.
+	var path := CAST + beast_id + ".glb"
+	if beast_id == "" or not ResourceLoader.exists(path):
+		var key: String = String((BEAST_MODEL.MODELS as Dictionary).get(beast_id, ""))
+		path = CAST + key + ".glb"
+		if key == "" or not ResourceLoader.exists(path):
+			return
 	var body: Node3D = (load(path) as PackedScene).instantiate()
 	_plot.add_child(body)
 	var tall := _felled_height(beast_id)
