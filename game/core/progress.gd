@@ -182,12 +182,25 @@ static func _seen_hints() -> Array:
 	return (cfg.get_value(SECTION, "seen_hints", []) as Array).duplicate()
 
 
-## Call on a win. Clearing tier N unlocks N+1 (capped at the last tier).
+## Career total of runs won — the gate backlog #42 hangs a small content
+## unlock on (see Content.relic_pool()/reward_pool()'s `wins` param). Separate
+## from unlocked_ascension: that one only advances on a NEW hardest tier
+## cleared, so a player replaying an already-cleared tier would never
+## accumulate anything to gate content on.
+static func total_wins() -> int:
+	var cfg := ConfigFile.new()
+	if cfg.load(path) != OK:
+		return 0
+	return int(cfg.get_value(SECTION, "total_wins", 0))
+
+
+## Call on a win. Always banks toward the total-wins gate; separately, clearing
+## tier N unlocks N+1 (capped at the last tier) if this win reached a new one.
 static func record_win(ascension: int) -> void:
-	var top: int = mini(ascension + 1, Content.max_ascension())
-	if top <= unlocked_ascension():
-		return
 	var cfg := ConfigFile.new()
 	cfg.load(path)  # keep anything else already stored
-	cfg.set_value(SECTION, "unlocked_ascension", top)
+	cfg.set_value(SECTION, "total_wins", total_wins() + 1)
+	var top: int = mini(ascension + 1, Content.max_ascension())
+	if top > unlocked_ascension():
+		cfg.set_value(SECTION, "unlocked_ascension", top)
 	cfg.save(path)

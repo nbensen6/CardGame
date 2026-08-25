@@ -287,7 +287,7 @@ Ordered. Source in brackets.
   the moves are already data. *Done when:* the condition is a data field with a
   fallback move when it fails, at least three beasts use it, and it is tested.
 
-- [ ] **41. Shops and campfires should trade in potions** `cloud-safe` — item 26
+- [x] **41. Shops and campfires should trade in potions** `cloud-safe` — item 26
   built potions and nothing sells them. `Run.shop_stock` offers cards and a
   removal; the campfire offers rest and the other options. So the only way to
   hold a potion is whatever grants one in a fight, which makes three slots of
@@ -295,7 +295,7 @@ Ordered. Source in brackets.
   a full inventory is handled rather than silently dropping the purchase, and
   both are tested.
 
-- [ ] **42. Something to unlock between runs** `cloud-safe` — `Progress` remembers
+- [x] **42. Something to unlock between runs** `cloud-safe` — `Progress` remembers
   your ascension, your hints, your keybinds and your wins, and nothing else. A
   loss therefore leaves you with exactly what you started with, which is the one
   thing the genre never does: StS drips new cards and relics into the pool for
@@ -409,6 +409,88 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-25** — #42 Something to unlock between runs: the gate is a single
+  career counter, `Progress.total_wins()` — separate from `unlocked_ascension()`,
+  which only advances on a NEW hardest tier cleared and so would never
+  accumulate anything to gate content on if a player replays an already-won
+  tier; `record_win()` now always banks a win toward it, restructured so the
+  ascension-ladder check no longer early-returns before that happens. A card or
+  relic may carry an optional `unlock_wins` (int) in its data; `Content.
+  relic_pool(wins)`/`reward_pool(character_id, wins)` filter it out below that
+  bar, both defaulting to a new `Content.UNLOCKED_ALL` sentinel so every one of
+  the ~15 existing call sites that doesn't pass `wins` keeps seeing the whole
+  pool unchanged — the gate is opt-in per call site, not a global cut. `Run`
+  carries the value it was built with (`_unlocked_wins`, threaded through all
+  four of its own `relic_pool()`/`reward_pool()` call sites — the shop, an
+  event's free-relic grant, and both reward-screen branches) and exposes it
+  via `unlocked_wins()`, the same read-only-getter shape `seed_value()` (#38)
+  already established; round-trips through `to_dict()`/`from_dict()` the same
+  additive-backfill way #35 requires — an older save missing the key backfills
+  to `UNLOCKED_ALL` (everything open), never to 0, since a save from before
+  this item existed must not retroactively lock content nobody meant to gate.
+  Wired all the way live, not left as a dead hook: `GameHost` gained the same
+  parameter (mirroring how `ascension` already flows from the menu), threading
+  it into `Run.new()` on a new run and restoring it from the save on
+  `resume_run()` rather than trusting the fresh constructor default. `menu.gd`'s
+  two new-run call sites (`_on_solo`, `_on_host`) now pass `Progress.
+  total_wins()` in exactly the slot `_ascension` already occupies — a one-line
+  numeric substitution into an existing constructor call, no new UI, so unlike
+  #31/#31b's boon (a new phase needing a scene to not soft-lock every run) or
+  #29/#29b's X-cost card (a raw `int(cost)` display bug only a screen could
+  catch), there's no reason this half needs one: nothing renders differently,
+  only which ids a pool can draw from. `_on_continue` (resuming a save) was
+  deliberately left passing no gate at its own construction — `resume_run()`
+  overwrites it from the save's own value immediately after, so threading it
+  there too would've been dead code. Kept the gate genuinely small per the
+  item's own instruction: exactly one new relic (`summit_cairn`, start_foothold
+  3, unlock_wins 1 — a first-win reward) and one new rare card
+  (`trailmasters_cut`, unlock_wins 3), both ADDED to the pool rather than an
+  existing relic/card retroactively locked, so no run's available content gets
+  worse — only bigger, once earned. `node tools/cardlab/build.js` confirms both
+  reachable (`unreachable: 0`); its "offered" flag doesn't distinguish
+  gated-but-real from always-available, which is correct for that tool's own
+  job (reachability, not runtime gating) and out of this item's scope. 6 new
+  tests: `total_wins()` climbs on a replayed already-cleared tier as well as a
+  new one (proving it's tracked independently of the ascension ladder, not
+  derived from it); `relic_pool()`/`reward_pool()` gate correctly at, below,
+  and above the threshold, with the no-arg default unaffected; a real `Run`
+  built with 0 unlocked wins never offers the locked relic in a real
+  `_begin_shop()` call (deterministic — an excluded id literally isn't in the
+  candidate array, not a probabilistic sampling check); a save/load round trip
+  proving both the value and the missing-key backfill; and a full `GameHost`
+  resume (mirroring `_test_host_autosaves_and_resumes`'s own shape) proving the
+  gate survives that trip via the save, not the second host's own constructor
+  default. Also redirected `Progress.use_scratch_slot("run_tests")` at the top
+  of `run_tests.gd`'s `_init()`, alongside the existing `RunSave` one — a
+  pre-existing gap (several older hint/tips tests read/write the DEFAULT
+  `user://progress.cfg` with no redirect) that this item's own new tests would
+  otherwise have hit too; fixing it at the top level is the same class of bug
+  `tools/screenshot.gd` was already flagged for (#34's log) and now nothing in
+  the suite can silently corrupt a real designer's progress file just by
+  running headless tests on his machine. `run_tests.gd` all green (270
+  assertions incl. the six new ones); `balance_sim.gd` ran clean as a smoke
+  test only (36% coordinated at A0 this run vs. 40-42% in prior sessions — the
+  sim's own policies pass no `unlocked_wins` argument, so `Content.UNLOCKED_ALL`
+  applies and both new items are simply in its pool same as any other; this is
+  ordinary run-to-run sim variance, not something tuned to or caused by this
+  item).
+- **2026-08-25** — #41 Shops and campfires should trade in potions: turned out
+  already done, as part of item #26's original commit (`2cceb23`) rather than
+  its own — that commit's own message says so explicitly ("found from shops:
+  one stocked per hunter alongside the existing card/relic/removal offers,
+  same buy() path"), which this item's own text didn't anticipate when it went
+  on the queue. Confirmed rather than assumed: `Run._begin_shop()` already
+  rolls one potion per hunter into `shop_stock` at `PRICE_POTION`, and
+  `Run.buy()`'s `"potion"` branch already returns `false` *before* touching
+  gold or marking the stock item sold when that hunter's `POTION_SLOTS` is
+  full — so a full inventory cleanly refuses the purchase rather than
+  silently eating the gold. Both halves were already tested too
+  (`_test_shop_buys_a_potion`, `_test_potion_slots_are_capped`, the latter
+  explicitly covering "a full potion inventory refuses both a fight's drop
+  and a shop purchase"). No code changed for this item; ticking it off so a
+  future pass doesn't re-derive or re-build this. The campfire half the
+  item's prose mentions was never actually required by its own "*Done when*"
+  (which only names the shop) — left alone, not a partial completion.
 - **2026-08-25** — #40 Beast moves that react to where you are: one optional
   `when` field on a boss move — `{"type": "min_height"|"max_height"|"at_sigil"
   |"undefended", "value": int}` — checked against every hunter's foothold/Block

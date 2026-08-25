@@ -19,6 +19,7 @@ func _init() -> void:
 	# at a scratch file first or running the suite eats the designer's own run.
 	RunSave.use_scratch_slot("run_tests")
 	RunSave.clear()
+	Progress.use_scratch_slot("run_tests")  # a headless test run must never touch the designer's real progress.cfg
 	# combatant / boss
 	_test_combatant_block_absorbs_before_hp()
 	_test_combatant_hp_never_negative()
@@ -31,6 +32,13 @@ func _init() -> void:
 	_test_backlog40_conditional_move_resolves_through_a_real_enemy_turn()
 	_test_backlog40_conditional_move_falls_back_off_the_sigil()
 	_test_backlog40_at_least_three_beasts_react_to_position()
+	# backlog #42: something to unlock between runs
+	_test_backlog42_progress_total_wins_climbs_on_every_win()
+	_test_backlog42_relic_pool_respects_unlock_wins()
+	_test_backlog42_reward_pool_respects_unlock_wins()
+	_test_backlog42_run_threads_unlocked_wins_into_the_shop()
+	_test_backlog42_unlocked_wins_round_trips_and_backfills()
+	_test_backlog42_gamehost_carries_unlocked_wins_through_resume()
 	# co-op combat rules
 	_test_play_card_spends_energy_and_damages_boss()
 	_test_cannot_overspend_energy()
@@ -2553,6 +2561,106 @@ func _test_content_make_card_and_reward_pool() -> void:
 	var pool := Content.reward_pool()
 	_expect(card.name == "Rally" and card.ally_energy == 1 and pool.size() >= 3,
 		"content builds a card by id and exposes the reward pool")
+
+
+# --- Something to unlock between runs (backlog #42) -----------------------
+
+## Progress.total_wins() is the gate: it must climb on every win, independent
+## of whether that win also advanced the ascension ladder (a replayed, already-
+## cleared tier still counts toward it).
+func _test_backlog42_progress_total_wins_climbs_on_every_win() -> void:
+	Progress.use_scratch_slot("run_tests_backlog42")
+	var cfg := ConfigFile.new()
+	cfg.set_value(Progress.SECTION, "total_wins", 0)
+	cfg.save(Progress.path)
+	var before := Progress.total_wins()
+	Progress.record_win(0)  # first clear of tier 0 -> also advances unlocked_ascension to 1
+	Progress.record_win(0)  # replaying tier 0 again -> ladder doesn't move, but this still counts
+	_expect(Progress.total_wins() == before + 2,
+		"total_wins climbs on every win, even a replay that doesn't advance the ascension ladder")
+
+
+## relic_pool()'s `wins` gate: a relic tagged unlock_wins only appears once the
+## career total reaches it; everything else, and the default (no arg), is
+## unaffected.
+func _test_backlog42_relic_pool_respects_unlock_wins() -> void:
+	var locked_out := Content.relic_pool(0)
+	var unlocked := Content.relic_pool(1)
+	var everything := Content.relic_pool()
+	_expect(not locked_out.has("summit_cairn") and locked_out.has("iron_thews")
+		and unlocked.has("summit_cairn") and everything.has("summit_cairn"),
+		"relic_pool() withholds a gated relic below its unlock_wins and offers it at/above, "
+		+ "leaving ungated relics and the no-arg default untouched")
+
+
+## Same gate, the card side (reward_pool()).
+func _test_backlog42_reward_pool_respects_unlock_wins() -> void:
+	var locked_out := Content.reward_pool("", 0)
+	var unlocked := Content.reward_pool("", 3)
+	var everything := Content.reward_pool()
+	_expect(not locked_out.has("trailmasters_cut") and locked_out.has("slash")
+		and unlocked.has("trailmasters_cut") and everything.has("trailmasters_cut"),
+		"reward_pool() withholds a gated card below its unlock_wins and offers it at/above, "
+		+ "leaving ungated cards and the no-arg default untouched")
+
+
+## The plumbing, not just the filter: a Run built with a career gate carries it
+## (readable via unlocked_wins()), and the shop it deals actually respects it —
+## deterministic, since an excluded id literally isn't in the candidate pool a
+## shop draws from, whatever the RNG does.
+func _test_backlog42_run_threads_unlocked_wins_into_the_shop() -> void:
+	var decks := [_deck_of(_slash, 10), _deck_of(_slash, 10)]
+	var gated := Run.new(decks, ["A", "B"], 4242, [{}, {}], 0, 0)
+	gated.map_row = 0
+	gated.node_type = "shop"
+	gated._begin_shop()
+	var saw_locked_relic := false
+	for item in gated.shop_stock:
+		if String((item as Dictionary).get("id", "")) == "summit_cairn":
+			saw_locked_relic = true
+	_expect(gated.unlocked_wins() == 0 and not saw_locked_relic,
+		"a Run built with 0 unlocked wins carries that gate and its shop never offers a locked relic")
+
+
+## Old saves predate this field entirely (backlog #35's additive-backfill
+## shape) — from_dict() must treat "missing" as "not gated" (Content.UNLOCKED_ALL),
+## not as 0, or every save written before this item shipped would suddenly
+## lose access to content nobody meant to lock retroactively.
+func _test_backlog42_unlocked_wins_round_trips_and_backfills() -> void:
+	var decks := [_deck_of(_slash, 10), _deck_of(_slash, 10)]
+	var run := Run.new(decks, ["A", "B"], 4242, [{}, {}], 0, 7)
+	run.start()
+	var d := run.to_dict()
+	var back := Run.from_dict(d)
+	d.erase("unlocked_wins")
+	var old_save := Run.from_dict(d)
+	_expect(back.unlocked_wins() == 7 and old_save.unlocked_wins() == Content.UNLOCKED_ALL,
+		"unlocked_wins round-trips through a real save, and an older save missing the key backfills to unlocked")
+
+
+## Through a real GameHost, resumed the way the menu's Continue button does
+## (mirrors _test_host_autosaves_and_resumes) — the gate must survive that trip
+## too, not just Run's own to_dict/from_dict.
+func _test_backlog42_gamehost_carries_unlocked_wins_through_resume() -> void:
+	RunSave.clear()
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, true, 0, 2)  # solo, ascension 0, 2 career wins
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	host._broadcast_state()  # autosave
+
+	var t2 := LocalTransport.new()
+	var host2 := GameHost.new(t2, 0, 2, true)  # no gate passed at construction...
+	_kept.append(host2)
+	var c2 := GameClient.new(t2, 1)
+	c2.join()
+	host2.resume_run(RunSave.load_run())  # ...so this proves it came from the SAVE, not the constructor
+	var resumed: Run = host2._run
+	_expect(resumed.unlocked_wins() == 2, "resuming a saved run restores its unlock gate, not the fresh default")
+	RunSave.clear()
 
 
 # --- Phase 3: 3rd titan, relics, longer runs ------------------------------

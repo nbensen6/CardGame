@@ -56,6 +56,7 @@ var shop_stock: Array = []       # SHOP phase: [{kind, slot, id, name, text, pri
 var removes_bought: int = 0      # each removal costs more than the last
 var ascension: int = 0           # difficulty tier (0 = base); see data/ascension.json
 var _asc: Dictionary = {}        # cumulative ascension modifiers
+var _unlocked_wins: int = Content.UNLOCKED_ALL  # career gate on locked content (backlog #42)
 var combat: Combat
 var names: Array = []
 var decks: Array = []            # Array[Array[Card]] per hunter — persists across encounters
@@ -83,11 +84,12 @@ var _seed: int
 var _rng := RandomNumberGenerator.new()
 
 func _init(p_decks: Array, p_names: Array, seed_value: int = 0, p_passives: Array = [],
-		p_ascension: int = 0) -> void:
+		p_ascension: int = 0, p_unlocked_wins: int = Content.UNLOCKED_ALL) -> void:
 	_seed = seed_value
 	player_passives = p_passives
 	ascension = p_ascension
 	_asc = Content.ascension_mods(ascension)
+	_unlocked_wins = p_unlocked_wins
 	if seed_value == 0:
 		_rng.randomize()
 	else:
@@ -117,6 +119,11 @@ func is_over() -> bool:
 ## means "rolled randomly at start" (see _init) rather than a real seed.
 func seed_value() -> int:
 	return _seed
+
+## The career-wins gate this run was built with (backlog #42) — readable so a
+## resumed run's host can carry it forward instead of losing it on reload.
+func unlocked_wins() -> int:
+	return _unlocked_wins
 
 
 # --- saving ---------------------------------------------------------------
@@ -156,7 +163,7 @@ func to_dict() -> Dictionary:
 		"boon": boon, "boon_result": boon_result,
 		"campfire_done": campfire_done, "gold": gold,
 		"shop_stock": shop_stock, "removes_bought": removes_bought,
-		"ascension": ascension,
+		"ascension": ascension, "unlocked_wins": _unlocked_wins,
 		"names": names, "decks": deck_dicts,
 		"hp": hp, "max_hp": max_hp,
 		"team_relics": team_relics, "potions": potions, "player_passives": player_passives,
@@ -171,7 +178,8 @@ func to_dict() -> Dictionary:
 static func from_dict(d: Dictionary) -> Run:
 	# _init regenerates a map and burns RNG; both are overwritten straight after.
 	var r := Run.new([], [], int(d.get("seed", 0)),
-		d.get("player_passives", []) as Array, int(d.get("ascension", 0)))
+		d.get("player_passives", []) as Array, int(d.get("ascension", 0)),
+		int(d.get("unlocked_wins", Content.UNLOCKED_ALL)))
 	r.phase = int(d.get("phase", Phase.MAP))
 	r.encounter_index = int(d.get("encounter_index", 0))
 	r.map = RunMap.from_dict(d.get("map", {}))
@@ -271,7 +279,7 @@ func _begin_shop() -> void:
 	phase = Phase.SHOP
 	shop_stock = []
 	for slot in range(names.size()):
-		var pool: Array = Content.reward_pool(_character_of(slot))
+		var pool: Array = Content.reward_pool(_character_of(slot), _unlocked_wins)
 		for _n in range(2):
 			if pool.is_empty():
 				break
@@ -280,7 +288,7 @@ func _begin_shop() -> void:
 			var card := Content.make_card(cid)
 			shop_stock.append({"kind": "card", "slot": slot, "id": cid, "name": card.name,
 				"text": card.text, "price": PRICE_CARD, "sold": false})
-	var relics: Array = Content.relic_pool()
+	var relics: Array = Content.relic_pool(_unlocked_wins)
 	for _r in range(2):
 		if relics.is_empty():
 			break
@@ -451,7 +459,7 @@ func _apply_effect_block(eff: Dictionary) -> void:
 	# Events can ask a price, but never put the purse in debt.
 	gold = maxi(0, gold + int(eff.get("gold", 0)))
 	if bool(eff.get("relic", false)):
-		var pool: Array = Content.relic_pool()
+		var pool: Array = Content.relic_pool(_unlocked_wins)
 		if not pool.is_empty():
 			team_relics.append(Content.make_relic(String(pool[_rng.randi_range(0, pool.size() - 1)])))
 	# Deck-touching effects (backlog #17): a random card per hunter, same "whole
@@ -737,7 +745,7 @@ func _begin_reward(kind: String) -> void:
 	reward_picked = []
 	for i in range(names.size()):
 		# Cards come from that hunter's own pool, so each can draft their archetype.
-		var pool: Array = Content.relic_pool() if reward_kind == "relic" else Content.reward_pool(_character_of(i))
+		var pool: Array = Content.relic_pool(_unlocked_wins) if reward_kind == "relic" else Content.reward_pool(_character_of(i), _unlocked_wins)
 		reward_choices.append(_roll_choices(pool))
 		reward_picked.append(false)
 

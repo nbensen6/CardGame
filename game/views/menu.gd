@@ -127,7 +127,7 @@ func _refresh_tips() -> void:
 func _on_solo() -> void:
 	var transport := LocalTransport.new()
 	Session.transport = transport
-	Session.host = GameHost.new(transport, 0, 2, true, _ascension)  # solo = true
+	Session.host = GameHost.new(transport, 0, 2, true, _ascension, Progress.total_wins())  # solo = true
 	Session.client = GameClient.new(transport, 1)
 	Session.client.join()  # enters the (solo) character-select lobby
 	_goto_combat()
@@ -165,7 +165,7 @@ func _on_host() -> void:
 	var link := _make_link()
 	var transport := EnetTransport.new(link, true)
 	Session.transport = transport
-	Session.host = GameHost.new(transport, 0, 2, false, _ascension)
+	Session.host = GameHost.new(transport, 0, 2, false, _ascension, Progress.total_wins())
 	Session.client = GameClient.new(transport, multiplayer.get_unique_id())  # = 1
 	Session.client.join()  # host joins as Player 1; combat starts when Player 2 arrives
 	_goto_combat()

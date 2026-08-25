@@ -1,5 +1,5 @@
 {
-  "_comment": "Relics are DATA (CLAUDE.md §11) — persistent team passives. The good ones CHANGE A RULE rather than nudging a number, and hook this game's own systems (the climb, the grip timer, timed cards, Rhythm, the weak-point threshold). Effect types: max_energy, attack_bonus, round_block, heal_on_clear, start_strength, start_foothold, fall_safe, rhythm_keeps, threshold, chip, sigil_bonus, vuln_bonus, draw, shake_resist, grip_seconds (client), timing_zone (client), block_carries, no_buck, soft_fall, energy_handoff. A relic may also carry 'downside_effect'/'downside_value' — a SECOND {effect, value} pair from the same vocabulary, summed in on top of the first by the identical generic rule (backlog #30) — for a relic that costs something real in exchange for its power. 'pool' lists what can be offered.",
+  "_comment": "Relics are DATA (CLAUDE.md §11) — persistent team passives. The good ones CHANGE A RULE rather than nudging a number, and hook this game's own systems (the climb, the grip timer, timed cards, Rhythm, the weak-point threshold). Effect types: max_energy, attack_bonus, round_block, heal_on_clear, start_strength, start_foothold, fall_safe, rhythm_keeps, threshold, chip, sigil_bonus, vuln_bonus, draw, shake_resist, grip_seconds (client), timing_zone (client), block_carries, no_buck, soft_fall, energy_handoff. A relic may also carry 'downside_effect'/'downside_value' — a SECOND {effect, value} pair from the same vocabulary, summed in on top of the first by the identical generic rule (backlog #30) — for a relic that costs something real in exchange for its power. A relic may also carry 'unlock_wins' (int) — it only appears in relic_pool() once the player's career total_wins (Progress.total_wins()) reaches that number; omitted means always available (backlog #42). 'pool' lists what can be offered.",
   "relics": {
     "iron_thews": {
       "name": "Iron Thews",
@@ -212,6 +212,13 @@
       "downside_effect": "round_block",
       "downside_value": -4,
       "text": "+2 Energy each round. Start each round with 4 less Block."
+    },
+    "summit_cairn": {
+      "name": "Summit Cairn",
+      "effect": "start_foothold",
+      "value": 3,
+      "unlock_wins": 1,
+      "text": "Begin every fight already 3 Height up. Left behind by a team that has already stood on a summit."
     }
   },
   "pool": [
@@ -248,6 +255,7 @@
     "warlords_girdle",
     "bottomless_quiver",
     "fortress_ward",
-    "adrenal_surge"
+    "adrenal_surge",
+    "summit_cairn"
   ]
 }

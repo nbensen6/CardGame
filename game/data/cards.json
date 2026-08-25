@@ -1,5 +1,5 @@
 {
-  "_comment": "Titan-slayer theme (CLAUDE.md §4.3 decision, 2026-07-27). Cards are DATA (§11). 'starter_deck' = each hunter's opening deck; 'reward_pool' = cards offered between encounters (build step 4 meta-progression). Combo cards target an ally or the Titan to reward coordination (§6): cover/rally help your ally, expose/harpoon set up focus-fire, draw_aggro tanks a telegraphed hit for your ally.",
+  "_comment": "Titan-slayer theme (CLAUDE.md §4.3 decision, 2026-07-27). Cards are DATA (§11). 'starter_deck' = each hunter's opening deck; 'reward_pool' = cards offered between encounters (build step 4 meta-progression). Combo cards target an ally or the Titan to reward coordination (§6): cover/rally help your ally, expose/harpoon set up focus-fire, draw_aggro tanks a telegraphed hit for your ally. A card may also carry 'unlock_wins' (int) — it only appears in reward_pool() once the player's career total_wins (Progress.total_wins()) reaches that number; omitted means always available (backlog #42).",
   "cards": {
     "slash": {"name": "Slash", "icon": "sword", "rarity": "common", "type": "attack", "cost": 1, "damage": 6, "text": "Deal 6 damage."},
     "brace": {"name": "Brace", "icon": "shield", "rarity": "common", "type": "skill", "cost": 1, "block": 5, "text": "Gain 5 Block."},
@@ -166,8 +166,9 @@
     "bruised_grip": {"name": "Bruised Grip", "rarity": "common", "type": "skill", "icon": "skull", "cost": 1, "status": true, "text": "Does nothing. A dead card in your hand."},
 
     "crippling_blow": {"name": "Crippling Blow", "rarity": "uncommon", "type": "attack", "icon": "sword", "cost": 1, "damage": 5, "frail": 2, "target": "enemy", "text": "Deal 5 damage. Frail 2."},
-    "spinebrace": {"name": "Spinebrace", "rarity": "uncommon", "type": "skill", "icon": "shield", "cost": 1, "block": 5, "thorns": 2, "text": "Gain 5 Block. Thorns 2."}
+    "spinebrace": {"name": "Spinebrace", "rarity": "uncommon", "type": "skill", "icon": "shield", "cost": 1, "block": 5, "thorns": 2, "text": "Gain 5 Block. Thorns 2."},
+    "trailmasters_cut": {"name": "Trailmaster's Cut", "rarity": "rare", "type": "attack", "icon": "sword", "cost": 2, "damage": 5, "hits": 2, "grip": 1, "unlock_wins": 3, "target": "enemy", "text": "Deal 5 damage twice. Climb 1."}
   },
   "starter_deck": ["slash", "slash", "slash", "brace", "brace", "scramble", "scramble", "take_aim", "cleave", "cover"],
-  "reward_pool": ["rally", "expose", "draw_aggro", "harpoon", "grip", "sunlight_blade", "bowshot", "sharpen", "rend", "dagger", "flurry", "cleave", "cover", "brace", "slash", "take_aim", "pounce", "flick", "lash_out", "piton_drive", "piston_punch", "haul", "tongue_snap", "hop", "leapfrog", "toxic_lash", "overgrowth", "blightbloom", "summit_strike", "belay", "pitons_in", "dig_in", "last_stand", "route_finder", "bunker_down", "first_strike", "crippling_blow", "spinebrace"]
+  "reward_pool": ["rally", "expose", "draw_aggro", "harpoon", "grip", "sunlight_blade", "bowshot", "sharpen", "rend", "dagger", "flurry", "cleave", "cover", "brace", "slash", "take_aim", "pounce", "flick", "lash_out", "piton_drive", "piston_punch", "haul", "tongue_snap", "hop", "leapfrog", "toxic_lash", "overgrowth", "blightbloom", "summit_strike", "belay", "pitons_in", "dig_in", "last_stand", "route_finder", "bunker_down", "first_strike", "crippling_blow", "spinebrace", "trailmasters_cut"]
 }

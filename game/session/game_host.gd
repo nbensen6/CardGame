@@ -25,10 +25,12 @@ var _character_of: Dictionary = {}  # peer_id -> chosen character id (lobby sele
 var _solo: bool = false
 var _solo_chars: Array = ["", ""]
 var _ascension: int = 0  # difficulty tier chosen at the menu
+var _unlocked_wins: int = Content.UNLOCKED_ALL  # career-total gate on locked content (backlog #42)
 
 func _init(transport: Transport, seed_value: int = 0, required_players: int = 2, solo: bool = false,
-		ascension: int = 0) -> void:
+		ascension: int = 0, unlocked_wins: int = Content.UNLOCKED_ALL) -> void:
 	_ascension = ascension
+	_unlocked_wins = unlocked_wins
 	_transport = transport
 	_seed = seed_value
 	_solo = solo
@@ -42,6 +44,7 @@ func _init(transport: Transport, seed_value: int = 0, required_players: int = 2,
 func resume_run(saved: Run) -> void:
 	_run = saved
 	_ascension = saved.ascension
+	_unlocked_wins = saved.unlocked_wins()
 	# A save now captures an in-progress fight too (backlog #14 — Combat has its
 	# own to_dict/from_dict), so a resumed run can land back inside COMBAT rather
 	# than always bouncing to the map. Defensive fallback for the
@@ -61,7 +64,7 @@ func start_new_run() -> void:
 		decks.append(Content.character_deck(cid))
 		names.append(Content.character_name(cid))
 		passives.append(Content.character_passive(cid))
-	_run = Run.new(decks, names, _seed, passives, _ascension)
+	_run = Run.new(decks, names, _seed, passives, _ascension, _unlocked_wins)
 	_run.start()
 	_broadcast_state()
 

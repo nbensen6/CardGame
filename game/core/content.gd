@@ -19,6 +19,11 @@ const BOONS_PATH := "res://data/boons.json"
 
 static var _cache: Dictionary = {}
 
+## Sentinel `wins` value for relic_pool()/reward_pool(): every existing caller
+## (menus, tests, the ~150 other content calls that predate backlog #42) omits
+## `wins` and gets the whole pool, same as before this gate existed.
+const UNLOCKED_ALL := 999999
+
 static func _read_json(path: String) -> Dictionary:
 	if _cache.has(path):
 		return _cache[path]
@@ -84,19 +89,37 @@ static func build_starter_deck() -> Array:
 
 ## Card ids offered as rewards. A character draws from THEIR pool (their
 ## archetype cards plus neutrals) so a run can be drafted toward a build; the
-## shared pool is the fallback.
-static func reward_pool(character_id: String = "") -> Array:
+## shared pool is the fallback. `wins` gates a card carrying an `unlock_wins`
+## field (backlog #42) — a career total below that bar is filtered out. Always
+## a fresh Array (safe for callers to filter/erase from without touching the cache).
+static func reward_pool(character_id: String = "", wins: int = UNLOCKED_ALL) -> Array:
+	var raw: Array
 	if character_id != "":
 		var chars: Dictionary = _read_json(CHARACTERS_PATH).get("characters", {})
 		var own: Array = (chars.get(character_id, {}) as Dictionary).get("reward_pool", [])
-		if not own.is_empty():
-			return own.duplicate()
-	return (_read_json(CARDS_PATH).get("reward_pool", []) as Array).duplicate()
+		raw = own if not own.is_empty() else (_read_json(CARDS_PATH).get("reward_pool", []) as Array)
+	else:
+		raw = _read_json(CARDS_PATH).get("reward_pool", []) as Array
+	var cards: Dictionary = _read_json(CARDS_PATH).get("cards", {})
+	var out: Array = []
+	for id_v in raw:
+		var id := String(id_v)
+		if int((cards.get(id, {}) as Dictionary).get("unlock_wins", 0)) <= wins:
+			out.append(id)
+	return out
 
-## Relic ids that can be offered as rewards. Returns a COPY — callers filter and
-## erase from these lists, and mutating the cache would drain the pool globally.
-static func relic_pool() -> Array:
-	return (_read_json(RELICS_PATH).get("pool", []) as Array).duplicate()
+## Relic ids that can be offered as rewards, gated by `wins` the same way
+## reward_pool() gates cards (backlog #42). Returns a fresh Array — callers
+## filter and erase from these lists, and mutating the cache would drain the
+## pool globally.
+static func relic_pool(wins: int = UNLOCKED_ALL) -> Array:
+	var relics: Dictionary = _read_json(RELICS_PATH).get("relics", {})
+	var out: Array = []
+	for id_v in (_read_json(RELICS_PATH).get("pool", []) as Array):
+		var id := String(id_v)
+		if int((relics.get(id, {}) as Dictionary).get("unlock_wins", 0)) <= wins:
+			out.append(id)
+	return out
 
 ## Every relic id in relics.json, reachable or not — content-integrity checks
 ## walk the whole set rather than just what the reward pool happens to offer.
