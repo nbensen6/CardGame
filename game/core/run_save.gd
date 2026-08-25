@@ -14,7 +14,6 @@ class_name RunSave
 extends RefCounted
 
 const DEFAULT_PATH := "user://run.json"
-const VERSION := 1
 
 ## Where the slot lives. A var, not a const, because the test suite and the
 ## screenshot harness both spin up real GameHosts — and a GameHost autosaves.
@@ -47,9 +46,13 @@ static func has_save() -> bool:
 	return FileAccess.file_exists(path)
 
 
-## The saved run, or null if there is none, it is unreadable, or it was written
-## by a version of the game that laid its data out differently. A corrupt save
-## reads as "no save" rather than crashing someone's only run into a stack trace.
+## The saved run, or null if there is none, it is genuinely unreadable, or it
+## was written by a build NEWER than this one (a version we don't know how to
+## read forward from). An OLDER save is upgraded field-by-field through
+## `_migrate` rather than discarded — see backlog #35: every field a routine
+## adds is a change to the save's shape, and rejecting on a version mismatch
+## used to mean the day someone bumped `Run.SAVE_VERSION`, every run already
+## in progress would vanish with no warning.
 static func load_run() -> Run:
 	if not has_save():
 		return null
@@ -62,11 +65,44 @@ static func load_run() -> Run:
 	if not (parsed is Dictionary):
 		return null
 	var d: Dictionary = parsed
-	if int(d.get("version", 0)) != VERSION:
+	var from_version := int(d.get("version", 0))
+	# 0: no version at all, e.g. non-JSON-object garbage under a real key — not
+	# a save this or any past build could have written. Above SAVE_VERSION: a
+	# later build wrote a shape this code has never seen; reading it forward
+	# would mean guessing, which is exactly the "corrupt" case rejection is for.
+	if from_version <= 0 or from_version > Run.SAVE_VERSION:
 		return null
 	if not d.has("decks") or not d.has("map"):
 		return null
+	d = _migrate(d, from_version)
 	return Run.from_dict(_whole_numbers(d) as Dictionary)
+
+
+## Walk a save forward one version at a time to the shape `Run.from_dict`
+## expects today. Most fields need no entry here at all — they're additive,
+## and `from_dict`'s own `.get(key, default)` calls already treat "missing"
+## as "didn't exist yet" for free. A step only needs to exist where an old
+## save's ABSENCE of a field means something more specific than a bare
+## default would assume.
+static func _migrate(d: Dictionary, from_version: int) -> Dictionary:
+	var v := from_version
+	while v < Run.SAVE_VERSION:
+		match v:
+			1:
+				# v1 predates potions (backlog #26) entirely. There, "no
+				# potions key" means "this hunter has never held one", i.e. an
+				# empty slot array per hunter — not whatever a bare .get()
+				# default would leave it as.
+				if not d.has("potions"):
+					var backfilled: Array = []
+					for _i in range((d.get("names", []) as Array).size()):
+						backfilled.append([])
+					d["potions"] = backfilled
+			_:
+				pass
+		v += 1
+	d["version"] = Run.SAVE_VERSION
+	return d
 
 
 ## JSON has one number type, so every int in the file comes back as a float:

@@ -26,6 +26,12 @@ const PRICE_POTION := 45
 const PRICE_REMOVE := 70   # rises each time it's used in a run
 const POTION_SLOTS := 3    # per hunter, same shape StS's 2-3 slots (backlog #26)
 const REWARD_CHOICES := 3
+## The save-file shape this build writes and fully understands. RunSave reads
+## this rather than keeping its own copy — a save's "version" key and the
+## constant that gates loading it used to live in two different files, which
+## meant bumping one without the other would silently break every save
+## (backlog #35).
+const SAVE_VERSION := 2
 ## How often each rarity is offered, relative to the others. Tune these before
 ## adding more cards — they move perceived variety far more than raw pool size.
 const RARITY_WEIGHT := {"common": 55, "uncommon": 35, "rare": 10}
@@ -128,7 +134,7 @@ func to_dict() -> Dictionary:
 			one2.append((rc as Card).to_dict() if rc is Card else rc)
 		choices.append(one2)
 	return {
-		"version": 1,
+		"version": SAVE_VERSION,
 		"phase": phase, "encounter_index": encounter_index,
 		"map": map.to_dict() if map != null else {},
 		"map_row": map_row, "map_col": map_col,

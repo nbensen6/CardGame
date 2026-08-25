@@ -239,7 +239,7 @@ Ordered. Source in brackets.
   circle on top is two clocks at once, which may be thrilling or may be
   unplayable. That question is the point of the experiment.
 
-- [ ] **35. Migrate saves instead of throwing them away** `cloud-safe` — the
+- [x] **35. Migrate saves instead of throwing them away** `cloud-safe` — the
   save carries `VERSION := 1` and `run_save.gd` **rejects** any file that does
   not match it. Every field the routine adds is a change to the run's shape, so
   the day someone bumps that constant every run in progress is silently deleted.
@@ -409,6 +409,38 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-25** — #35 Migrate saves instead of throwing them away: the
+  version gate in `run_save.gd` used to reject on `!= VERSION`, which meant a
+  save from an older build would silently vanish the day `VERSION` ever got
+  bumped — it never had, because nobody wanted to be the run that ate every
+  in-progress save doing it. Fixed that by making the version check
+  directional: `load_run()` now accepts anything `<= Run.SAVE_VERSION` (the
+  save constant moved onto `Run` itself, since `to_dict()`'s literal
+  `"version": 1` and `run_save.gd`'s own `VERSION := 1` were two copies of
+  the same number in two files — a real latent bug, since bumping one
+  without the other would have broken every save silently) and only refuses
+  a version ABOVE what this build understands (a save from a later build) or
+  a version of exactly 0/missing (no version key at all — not a shape any
+  build could have written). A new `_migrate()` walks an old save forward
+  one version at a time; today's only real step is v1->v2 (v1 predates
+  potions entirely, so a save missing the `potions` key gets an empty slot
+  array backfilled per hunter, matching what "never held one" already means
+  everywhere else) — most fields need no entry at all, since `from_dict`'s
+  own `.get(key, default)` calls already treat "missing" as "didn't exist
+  yet" for free, which is the reason this item was cheap rather than a
+  rewrite. Bumped `Run.SAVE_VERSION` from 1 to 2 to actually exercise the
+  path end-to-end rather than leaving the mechanism theoretical. 3 new
+  tests: a real save written straight to the file with `version` rolled back
+  to 1 and `potions` stripped out loads and backfills correctly (not just
+  `to_dict`/`from_dict` — through `RunSave.path` the same way the existing
+  save tests insist on, since that's where the JSON-number and version
+  gating actually live); a save claiming a version above `SAVE_VERSION`
+  refuses; and a plain corrupt (non-JSON) file refuses cleanly rather than
+  throwing — the corrupt-file case wasn't covered by any existing test
+  despite the module's own doc comment always claiming it. `run_tests.gd`
+  all green (233 assertions incl. the three new ones); `balance_sim.gd` ran
+  clean as a smoke test only (a save-format change has nothing to do with
+  its win-rate output, and nothing here touches it).
 - **2026-08-24** — #31 A run-start boon: `data/boons.json` (4 entries — a max
   HP bump, a free relic, gold, and a bold trade that sharpens a card but
   curses one) plus `Content.list_boons()`/`make_boon()`, same shape

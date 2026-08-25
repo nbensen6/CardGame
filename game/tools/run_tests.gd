@@ -178,6 +178,9 @@ func _init() -> void:
 	_test_run_survives_a_save_and_load_in_campfire()
 	_test_run_survives_a_save_and_load_in_event()
 	_test_save_refuses_only_finished_runs_and_clears_when_over()
+	_test_load_run_migrates_an_older_save()
+	_test_load_run_rejects_a_save_from_a_newer_build()
+	_test_load_run_rejects_a_corrupt_file()
 	_test_every_card_declares_a_rarity()
 	_test_card_type_matches_whether_it_deals_damage()
 	_test_strength_only_lifts_attack_type_cards()
@@ -2764,6 +2767,65 @@ func _test_run_survives_a_save_and_load_in_event() -> void:
 	var resolved := back.pick_event(0)
 	_expect(resolved and back.phase != Run.Phase.EVENT,
 		"the reloaded event still resolves when a choice is picked")
+	RunSave.clear()
+
+
+## Backlog #35: rejecting on a version mismatch used to mean the day someone
+## bumped `Run.SAVE_VERSION`, every save from an older build would silently
+## vanish rather than load. This writes a fixture in the PREVIOUS shape (a
+## real save with "version" rolled back to 1 and "potions" stripped out,
+## since v1 predates potions entirely) straight to the file `RunSave` reads,
+## and checks it comes back playable with sensible defaults, not discarded.
+func _test_load_run_migrates_an_older_save() -> void:
+	var run := Run.new([_deck_of(_slash, 6), _deck_of(_slash, 5)], ["A", "B"], 41,
+		[{"character": "frog"}, {"character": "goblin_mech"}], 0)
+	run.start()
+	run.gold = 60
+	var d := run.to_dict()
+	d.erase("potions")
+	d["version"] = 1
+
+	RunSave.clear()
+	var f := FileAccess.open(RunSave.path, FileAccess.WRITE)
+	f.store_string(JSON.stringify(d))
+	f.close()
+
+	var back := RunSave.load_run()
+	var migrated_ok: bool = back != null and back.gold == 60 \
+		and back.potions.size() == back.names.size() \
+		and back.potions[0].is_empty() and back.potions[1].is_empty()
+	_expect(migrated_ok, "an older save (missing potions entirely) migrates to the current shape instead of being discarded")
+	RunSave.clear()
+
+
+## The other half of #35: rejection is still correct for a save this build
+## genuinely cannot read forward — one written by a LATER build than this one,
+## claiming a version this code has never seen.
+func _test_load_run_rejects_a_save_from_a_newer_build() -> void:
+	var run := Run.new([_deck_of(_slash, 6), _deck_of(_slash, 5)], ["A", "B"], 42,
+		[{"character": "frog"}, {"character": "goblin_mech"}], 0)
+	run.start()
+	var d := run.to_dict()
+	d["version"] = Run.SAVE_VERSION + 1
+
+	RunSave.clear()
+	var f := FileAccess.open(RunSave.path, FileAccess.WRITE)
+	f.store_string(JSON.stringify(d))
+	f.close()
+
+	_expect(RunSave.load_run() == null, "a save from a newer build than this one refuses to load rather than guessing")
+	RunSave.clear()
+
+
+## And a genuinely corrupt file — not a version this code doesn't know, just
+## not readable data at all — still refuses cleanly rather than crashing.
+func _test_load_run_rejects_a_corrupt_file() -> void:
+	RunSave.clear()
+	var f := FileAccess.open(RunSave.path, FileAccess.WRITE)
+	f.store_string("{ not valid json at all")
+	f.close()
+
+	_expect(RunSave.load_run() == null, "an unreadable file loads as \"no save\" rather than crashing")
 	RunSave.clear()
 
 
