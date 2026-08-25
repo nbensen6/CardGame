@@ -417,6 +417,125 @@ Ordered. Source in brackets.
   exists. *Done when:* the ladder extends with tiers that change rules rather
   than only numbers, and each new one is tested the way #22 tests the first eight.
 
+### The Slay-the-Spire gap
+
+Checked against the code on 2026-08-25, not listed from memory. Each of these is
+something Slay the Spire leans on hard and we do not have at all.
+
+- [ ] **57. Powers — cards that stay played** `cloud-safe` — the single biggest
+  card category we lack. A Power leaves your hand for good and keeps paying for
+  the rest of the fight, which is what makes a deck feel like it *becomes*
+  something mid-combat instead of just cycling. We have no concept of a card
+  that persists: everything resolves and goes to a pile. *Done when:* a `power`
+  card type exists, played powers persist and stack for the fight, they reach
+  the snapshot so a face can show them later, and they are tested.
+
+- [ ] **58. Ethereal** `cloud-safe` — a card that exhausts if it is still in your
+  hand at end of turn. One flag, and it is the counterweight that lets a card be
+  pushed well above its cost: powerful, but only if you can use it NOW. The
+  exact opposite of Retain (#28), which we already have. *Done when:* the flag
+  exists, end of turn honours it, at least three cards use it, and it is tested.
+
+- [ ] **59. Scry** `cloud-safe` — look at the top few of your draw pile and bin
+  what you do not want. It is how a deck steers itself without drawing, and
+  nothing we have touches the draw pile's ORDER at all. It suits co-op too:
+  scrying tells your ally what is coming. *Done when:* the effect exists, the
+  choice is a command the host validates, and it is tested.
+
+- [ ] **60. Dexterity** `cloud-safe` — Strength's counterpart, and we have only
+  Strength. Every buff we own points at the damage number, so a defensive build
+  has no scaling to find. One field on `Combatant`, applied wherever Block is
+  gained. *Done when:* the field exists, cards and relics grant it, Frail (#36)
+  interacts correctly, and it is tested.
+
+- [ ] **61. Intangible, Buffer and Plated Armour** `cloud-safe` — the tier above
+  Block. Block is all-or-nothing and resets every round; these change the SHAPE
+  of taking a hit — reduce any hit to 1, cancel the next attack outright, keep
+  armour that does not decay. On a beast that sweeps both hunters, "survive this
+  one turn" is a real decision we cannot currently express. *Done when:* all
+  three exist, interact correctly with Block and Thorns, and are tested.
+
+- [ ] **62. Cards that reward discarding** `cloud-safe` — the discard archetype
+  turns a cost into a resource. We have a discard pile that nothing reads.
+  *Done when:* discarding is something a card can do on purpose, at least four
+  cards pay off for it, and it is tested.
+
+- [ ] **63. More than one thing to fight at once** `cloud-safe` — every Spire
+  fight is two to four enemies and every one of ours is a single beast, which is
+  why targeting is never a decision. Our idiom makes this better than a straight
+  copy: things ON the beast — parasites, guardians clinging to a hold — that you
+  fight while climbing past them. Expect several runs; this touches targeting
+  everywhere. *Done when:* a fight can hold more than one combatant, cards target
+  among them, sweeps hit correctly, and the per-peer snapshot carries all of them.
+
+- [ ] **64. Keys, and a Titan you can only reach with them** `cloud-safe` — the
+  Spire gates its true final fight behind three keys taken from optional, costly
+  choices earlier in the run, which is the best structural idea in that game: it
+  makes Act 1 decisions matter in Act 4. Ours ends on a fourth Titan everyone
+  reaches anyway. *Done when:* keys are run state, three are earnable from
+  distinct node types at a real cost, the final encounter checks them, and it is
+  tested.
+
+- [ ] **65. Run history** `cloud-safe` — #39 counts a run while it happens and
+  then throws the numbers away. Every finished run should be recorded:
+  character, seed, ascension, how far, what killed you, the deck you ended with.
+  It is what makes a loss feel like data instead of like nothing, and it is the
+  only way we will ever see a pattern across runs. *Done when:* finished runs
+  persist, the file survives a version bump the way #35 taught, and it is tested.
+
+- [ ] **66. Upgrades that change a rule, not a number** `cloud-safe` — our
+  upgrade path bumps values. The upgrades worth remembering change what a card
+  DOES: cost to zero, gain Retain, hit everything, stop exhausting. A +2 is not
+  a decision; a rule change is. *Done when:* an upgrade can carry an effect
+  change rather than only a value, at least six cards use one, and each is tested.
+
+- [ ] **67. Cards that ask a question about the board** `cloud-safe` — "if you
+  are above the sigil", "if your ally is hanging", "if this is the third card
+  this turn". Every card we own does the same thing every time it is played, so
+  a hand never has a right ORDER to play it in. This is the cheapest depth left:
+  one optional condition, evaluated at play time. *Done when:* the condition is
+  a data field with a fallback, at least six cards use it, and both branches of
+  each are tested.
+
+- [ ] **68. Reaching into the draw pile** `cloud-safe` — put a card on top,
+  shuffle one in, pull a specific card out. Nothing we have touches the draw
+  pile except drawing from it, so deck order is pure luck every single time.
+  *Done when:* the operations exist as effects, stay deterministic under a seed,
+  and are tested.
+
+- [ ] **69. Beasts that debuff YOU** `cloud-safe` — #36 gave us Frail, Artifact
+  and Thorns, #27 gave us curses, and not one beast inflicts any of them. A
+  Titan that only ever deals damage is a damage number with a picture on it.
+  *Done when:* at least five beasts apply a status or a curse through the
+  existing generic move path, the telegraph names it, and it is tested.
+
+- [ ] **70. Things that fire when the fight STARTS** `cloud-safe` — Innate (#28)
+  is the only opening-hand effect we have. The Spire opens fights with relics and
+  powers already resolving, which is what makes a build feel assembled before
+  turn one rather than after turn three. *Done when:* a fight-start moment exists
+  that relics, boons and powers can subscribe to, at least four things use it,
+  and it is tested. Do #43 first if it is still open — this is one of its moments.
+
+- [ ] **71. A shop worth revisiting** `cloud-safe` — fixed stock and one removal.
+  Spire shops rotate, hold a guaranteed rare slot, and sell removal at a rising
+  price you have to judge against the cards in front of you. Ours already rises
+  (`removes_bought`); the rest is missing. *Done when:* stock is generated per
+  visit with a rare slot, prices vary, and it is tested.
+
+- [ ] **72. Rewards that know what you are building** `cloud-safe` — card rewards
+  roll flat from a pool, so a deck never compounds into anything. Tag cards by
+  archetype and let the roll lean, gently, toward tags you already hold. This is
+  not balance tuning: the tags and the lean are structure, and it is done when it
+  WORKS, not when a win rate moves. *Done when:* tags exist on cards, the reward
+  roll uses them, and a test proves a tagged deck sees more of its own tag.
+
+- [ ] **73. osu sliders: notes you hold, not just tap** `needs a screen` — the
+  chain of tapped notes landed on 2026-08-25 with #34. The other half of osu's
+  vocabulary is the slider: a note you press and HOLD along a path. Our climb
+  cards want exactly that — a long haul up the beast should feel sustained, not
+  like three separate taps. Build it on the same `resolved(quality)` contract so
+  nothing downstream has to learn a new shape.
+
 ## Working alongside the cloud routine
 
 Two of us push to `main`: the routine every two hours, and Nick-and-Claude in a
