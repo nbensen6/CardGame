@@ -48,6 +48,64 @@ The failures that have happened, all of which passed every check:
 
 ---
 
+### the eleven beasts that had no body — ALL NEED A PASS
+
+Built 2026-08-25 by hand, from `tools/blender/<id>.py`, on the new `beast.py`
+helper. Every beast in the game now has its own body: fourteen of fourteen, none
+of them a Kenney farm animal.
+
+All eleven pass the hold contract **in Godot**, not just in Blender:
+`assetcheck.gd -- file=... beast=<id>` reports "every hold and the sigil have a
+shelf at their Height" for all fourteen beasts including the three older ones.
+
+| beast | holds / sigil | tris | the one-line idea |
+|---|---|---|---|
+| bounder | 2 / 4 | 1580 | almost all legs; a boulder slung between them |
+| bramble_hog | 2 / 5 | 1796 | no creature under the brambles — the brambles are it |
+| root_lurker | 2 / 5 | 2046 | a cage of roots you can see daylight through |
+| mire_snapper | 3 / 6 | 2080 | the only horizontal beast; you stand IN its mouth |
+| sky_snapper | 3 / 5 | 1580 | top-heavy: a hooked beak and folded plates on thin legs |
+| frost_sentinel | 2,5 / 7 | 1112 | the only angular one; a lit core in an open gap |
+| shifting_idol | 2,4 / 6 | 1280 | stacked blocks that never line up — the overhang IS the ledge |
+| grove_bear | 3,5 / 7 | 2212 | weight; a hill that stood up, no head, a hollow instead |
+| gale_serpent | 3,6 / 9 | 1922 | a spiral — the only shape that says climb AROUND me |
+| drowned_colossus | 3,6,9 / 11 | 2506 | three terraces, kelp hanging off each so holds read from below |
+| sunken_warden | 3,6,9,11 / 13 | 3054 | four tiers tightening toward the crown; one arm already broken off |
+
+**What a reviewer should look at first**, because these are the calls I made that
+could reasonably go the other way:
+
+- **The Mire Snapper's hold is inside its mouth.** That is either the best or the
+  worst idea in the roster and I cannot tell which without playing it.
+- **The Sunken Warden is 1.2x the beast budget** (3054 of 2600), down from 4302.
+  Four tiers of coral is what costs it. Same call as the Ent: accept, or say what
+  goes.
+- **The ledges are visibly ledges** — grey slabs stepping out of the body. Honest
+  about where you stand, but on the Warden and the Colossus they read a little
+  like scaffolding. Worth deciding whether that is a feature.
+- **Silhouette spread.** The set was designed so no two share an outline: legs,
+  bramble, cage, horizontal, top-heavy, angular, stacked, mass, spiral, terraced,
+  tower. Judge that as a GROUP rather than one at a time — it is the only thing
+  here that cannot be checked one model at a time.
+
+**Not judged at all**: colour at fight distance, whether the amber eyes read as
+eyes or as hot spots, and whether any of the eleven is simply boring.
+
+### What building eleven at once taught
+
+- **A sigil that passes every check can still hang in mid air.** Four of the
+  first five had the mark floating off the body, because `mark()` placed it at
+  80% of the height whether or not there was body there. It now checks for
+  geometry near the anchor and says so, and the disc faces OUT rather than lying
+  flat — every sigil in the game before today was a gold pancake balanced on the
+  beast, inherited from the Stone Warden.
+- **Ask the geometry where it is.** The Gale Serpent's ledges were placed by hand
+  at the height the data wanted and came out hanging beside the coil, because a
+  helix has moved on by the time it reaches that height. Computing the position
+  from the coil itself fixed it and cannot drift again.
+- **A bevel on a 12-sided drum triples its cost and changes nothing.** Most of
+  the Sunken Warden's 4302 triangles were bevels and coral nobody would count.
+
 ### vine_weaver — NEEDS A PASS (redesigned as an ENT)
 
 Not a rebuild, a **redesign**, at Nick's call on 2026-08-25: the Vine-Weaver is
