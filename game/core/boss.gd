@@ -64,6 +64,12 @@ func to_dict() -> Dictionary:
 	return {
 		"id": id, "hp": hp, "block": block, "vulnerable": vulnerable,
 		"strength": strength, "wound": wound,
+		# frail/artifact (backlog #36) are dynamic too — frail only ever
+		# starts at 0 and grows from a card, same as vulnerable/wound; artifact
+		# starts from beast data (build_boss) but is SPENT during the fight,
+		# same shape weak_point_height already uses for a data-seeded value
+		# that a fight can then change.
+		"frail": frail, "artifact": artifact,
 		"weak_point_height": weak_point_height,  # shift_sigil can move it mid-fight
 		"move_index": _move_index,
 	}
@@ -75,5 +81,7 @@ func apply_dict(d: Dictionary) -> void:
 	vulnerable = int(d.get("vulnerable", 0))
 	strength = int(d.get("strength", 0))
 	wound = int(d.get("wound", 0))
+	frail = int(d.get("frail", 0))
+	artifact = int(d.get("artifact", artifact))  # fall back to build_boss's data-seeded value
 	weak_point_height = int(d.get("weak_point_height", weak_point_height))
 	_move_index = int(d.get("move_index", 0))

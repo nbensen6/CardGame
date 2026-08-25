@@ -1,5 +1,5 @@
 {
-  "_comment": "Titans are DATA (CLAUDE.md §11). A run fights them in order (see Run.ENCOUNTERS). Move types: attack (hits the telegraphed hunter), attack_all (sweeps BOTH — shakes each hunter DOWN to the ledge below, and rewards blocking/Cover), block (guards), enrage (permanently +value to its attacks this fight — a soft timer that rewards focus-fire). weak_point_height = the sigil Height; ledges = safe rest Heights on the way up (climb between them before your grip timer runs out, SotC-style). limiter = {type, value}: one generic rule this Titan bends against a specific strategy, applied by Combat._apply_limiter() at the start of its turn (design/sts2-comparison.md §3.4) — 'wound_decay' sheds `value` Wound/turn (punishes stack-and-wait Poison), 'sigil_fatigue' chips a hunter camped at the sigil more than `value` rounds running, 'height_split' chips a hunter more than `value` Height above their ally (punishes one hunter hoarding the climb). Tuned for two players; retune freely during balance. 'pools' groups beasts by map node type: quick fights, elites, and the act-ending Titans.",
+  "_comment": "Titans are DATA (CLAUDE.md §11). A run fights them in order (see Run.ENCOUNTERS). Move types: attack (hits the telegraphed hunter), attack_all (sweeps BOTH — shakes each hunter DOWN to the ledge below, and rewards blocking/Cover), block (guards), enrage (permanently +value to its attacks this fight — a soft timer that rewards focus-fire). weak_point_height = the sigil Height; ledges = safe rest Heights on the way up (climb between them before your grip timer runs out, SotC-style). limiter = {type, value}: one generic rule this Titan bends against a specific strategy, applied by Combat._apply_limiter() at the start of its turn (design/sts2-comparison.md §3.4) — 'wound_decay' sheds `value` Wound/turn (punishes stack-and-wait Poison), 'sigil_fatigue' chips a hunter camped at the sigil more than `value` rounds running, 'height_split' chips a hunter more than `value` Height above their ally (punishes one hunter hoarding the climb). Tuned for two players; retune freely during balance. 'thorns' (backlog #36, static): a hunter who deals card damage to this Titan takes this much back (Combat._damage_boss). 'artifact' (backlog #36, static seed, spent as the fight goes — see Boss.apply_dict): wards this many of the hunters' Expose/Poison/Frail applications before they land (Combatant.try_block_debuff). 'pools' groups beasts by map node type: quick fights, elites, and the act-ending Titans.",
   "bosses": {
     "stone_warden": {
       "name": "The Stone Warden",
@@ -146,6 +146,7 @@
       "weak_point_height": 5,
       "ledges": [2],
       "weak_point_threshold": 17,
+      "thorns": 3,
       "moves": [
         {
           "type": "attack",
@@ -224,6 +225,7 @@
       "weak_point_height": 7,
       "ledges": [2,5],
       "weak_point_threshold": 27,
+      "artifact": 2,
       "moves": [
         {
           "type": "block",

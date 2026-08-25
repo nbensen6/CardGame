@@ -197,6 +197,14 @@ func _init() -> void:
 	_test_height_split_limiter_punishes_hoarding()
 	_test_every_titan_carries_a_known_limiter()
 	_test_relic_start_strength()
+	# the debuff axis (backlog #36): Frail, Artifact, Thorns
+	_test_frail_reduces_block_gained()
+	_test_frail_card_cuts_the_boss_own_block_move()
+	_test_artifact_wards_off_a_debuff_then_is_spent()
+	_test_thorns_reflects_a_landed_boss_attack()
+	_test_beast_thorns_reflects_card_damage_dealt_to_it()
+	_test_frail_artifact_thorns_persist_through_save()
+	_test_beast_thorns_and_artifact_are_wired()
 	# characters (per-player climb + signature passives)
 	_test_frog_climb_bonus()
 	_test_vine_lifts_ally()
@@ -3110,6 +3118,90 @@ func _test_relic_start_strength() -> void:
 	_expect(combat.players[0].strength == 2, "start_strength relic begins the fight with Strength")
 
 
+# --- The debuff axis (backlog #36): Frail, Artifact, Thorns ---------------
+
+func _test_frail_reduces_block_gained() -> void:
+	var c := Combatant.new("Test", 30)
+	c.gain_block(8)
+	_expect(c.block == 8, "Block is gained in full without Frail")
+	c.block = 0
+	c.frail = 1
+	c.gain_block(8)
+	_expect(c.block == 6, "Frail cuts Block gained by a quarter, floored")
+
+
+## Crippling Blow applies Frail to the Titan; the Titan's own "block" move
+## then gains less than it says, the same generic Combatant.gain_block cut
+## every other source of Block would feel.
+func _test_frail_card_cuts_the_boss_own_block_move() -> void:
+	var combat := _new_combat([_deck_of(_crippling_blow, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	combat.play_card(0, _first_playable(combat, 0))  # Crippling Blow: 5 damage + Frail 2
+	_expect(combat.boss.frail == 2, "Crippling Blow applies Frail to the Titan")
+	combat.boss.moves = [{"type": "block", "value": 8}]
+	combat.end_turn(0)
+	combat.end_turn(1)  # boss defends for a stated 8 — Frail cuts what it actually gains
+	_expect(combat.boss.block == 6, "Frail cuts the Titan's own Block move")
+
+
+func _test_artifact_wards_off_a_debuff_then_is_spent() -> void:
+	var combat := _new_combat([_deck_of(_expose, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	combat.boss.artifact = 1
+	combat.play_card(0, _first_playable(combat, 0))  # Expose 2 — warded off
+	_expect(combat.boss.vulnerable == 0 and combat.boss.artifact == 0,
+		"Artifact wards off Expose and spends a stack doing it")
+	combat.play_card(0, _first_playable(combat, 0))  # Expose again — no ward left
+	_expect(combat.boss.vulnerable == 2, "once Artifact is spent, the next debuff lands normally")
+
+
+func _test_thorns_reflects_a_landed_boss_attack() -> void:
+	var boss := _dummy_boss(300, 8)  # a plain "attack" move for 8
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.players[0].combatant.thorns = 3
+	var hp0: int = combat.players[0].combatant.hp
+	var boss_hp := combat.boss.hp
+	combat.end_turn(0)
+	combat.end_turn(1)  # round 1: boss_target_index() is player 0
+	_expect(combat.players[0].combatant.hp == hp0 - 8, "the boss's attack still lands in full")
+	_expect(combat.boss.hp == boss_hp - 3, "Thorns on the hunter reflects the boss's own attack back at it")
+
+
+func _test_beast_thorns_reflects_card_damage_dealt_to_it() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	combat.boss.thorns = 2
+	var hp0: int = combat.players[0].combatant.hp
+	combat.play_card(0, _first_playable(combat, 0))  # Slash deals card damage to the boss
+	_expect(combat.players[0].combatant.hp == hp0 - 2, "a Thorned beast bites back when a hunter's card lands on it")
+
+
+## Mirrors #14/#15's own insistence on going through the real file (RunSave),
+## not a bare to_dict()/from_dict() pair, since that's where JSON's one-number
+## -type gotcha and the version gate actually live.
+func _test_frail_artifact_thorns_persist_through_save() -> void:
+	var run := Run.new([_deck_of(_slash, 8), _deck_of(_slash, 8)], ["A", "B"], 77, [{}, {}], 0)
+	run.start()
+	_step_into_combat(run)
+	var combat: Combat = run.combat
+	combat.boss.frail = 2
+	combat.boss.artifact = 1
+	combat.players[0].combatant.thorns = 2
+	combat.players[0].combatant.artifact = 1
+
+	RunSave.clear()
+	RunSave.save(run)
+	var back := RunSave.load_run()
+	var bc: Combat = back.combat if back != null else null
+	_expect(bc != null and bc.boss.frail == 2 and bc.boss.artifact == 1
+			and bc.players[0].combatant.thorns == 2 and bc.players[0].combatant.artifact == 1,
+		"Frail/Artifact/Thorns survive a mid-fight save and load")
+
+
+func _test_beast_thorns_and_artifact_are_wired() -> void:
+	var hog := Content.build_boss("bramble_hog")
+	var sentinel := Content.build_boss("frost_sentinel")
+	_expect(hog.thorns == 3, "the Bramble Hog carries innate Thorns")
+	_expect(sentinel.artifact == 2, "the Frost Sentinel carries innate Artifact")
+
+
 # --- Characters (per-player climb + signature passives) -------------------
 
 func _new_combat_p(decks: Array, seed_value: int, boss: Boss, passives: Array) -> Combat:
@@ -3559,6 +3651,8 @@ func _bunker_down() -> Card:
 	return Card.from_dict({"id": "bunker_down", "name": "Bunker Down", "type": "skill", "cost": 1, "block": 4, "retain": true})
 func _first_strike() -> Card:
 	return Card.from_dict({"id": "first_strike", "name": "First Strike", "type": "attack", "cost": 1, "damage": 5, "innate": true})
+func _crippling_blow() -> Card:
+	return Card.from_dict({"id": "crippling_blow", "name": "Crippling Blow", "type": "attack", "cost": 1, "damage": 5, "frail": 2, "target": "enemy"})
 
 
 func _expect(cond: bool, name: String) -> void:

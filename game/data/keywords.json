@@ -89,6 +89,18 @@
       "name": "X",
       "text": "Spends ALL your remaining energy when played. Its damage or Block scales with how much you spent."
     },
+    "frail": {
+      "name": "Frail",
+      "text": "Block gained while this is stacked is reduced by a quarter. Artifact can ward it off before it lands."
+    },
+    "thorns": {
+      "name": "Thorns",
+      "text": "A direct attack landed on the carrier reflects this much damage back at whoever threw it."
+    },
+    "artifact": {
+      "name": "Artifact",
+      "text": "One stack blocks one debuff — Expose, Poison, or Frail — before it lands, then is spent."
+    },
 
     "_comment_moves": "Below: the beast's telegraphed moves. Same vocabulary rules as the cards — the intent tag NAMES the move and prints its number, and the explanation lives here, one right-click away. Ids match the move `type` in bosses.json. Added 2026-08-16: the tag had started explaining itself inline ('Sweep 8 — hits you both'), which is the card-text problem all over again.",
 

@@ -248,7 +248,7 @@ Ordered. Source in brackets.
   shape rather than discarded, a genuinely unreadable file still refuses
   cleanly, and a test loads a fixture written in the previous shape.
 
-- [ ] **36. Frail, Artifact and Thorns** `cloud-safe` — the debuff axis we do
+- [x] **36. Frail, Artifact and Thorns** `cloud-safe` — the debuff axis we do
   not have. Today a hunter carries Strength, Wound and Vulnerable: everything
   points at the damage number. Nothing touches BLOCK, nothing RESISTS a debuff,
   and nothing punishes the act of attacking. Those three are one field each and
@@ -409,6 +409,51 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-25** — #36 Frail, Artifact and Thorns: three fields on `Combatant`
+  (the base class both `PlayerState.combatant` and `Boss` share, so one
+  implementation covers either side for free). **Frail** cuts Block GAINED,
+  not a separate stat to remember to check — `Combatant.gain_block()` itself
+  does the cut (1/4, floored), so every existing source of Block (cards,
+  relics, potions) feels it automatically with zero call-site changes.
+  **Artifact** is a ward: `try_block_debuff()` spends one stack to shrug off
+  the next debuff, gated in front of the THREE debuff-application points that
+  now exist — Expose, Poison, and the new Frail — so a warded beast resists
+  all three the same way, not just the one this item added. **Thorns**
+  reflects a landed direct attack back at whoever threw it, both directions:
+  `_damage_boss()` reflects a Thorned beast's bite back at the hunter who hit
+  it, and a new `_boss_hits()` helper (replacing six raw `take_damage` calls
+  across attack/leech/attack_all/swipe_high/swipe_low/rift) reflects a
+  Thorned hunter's spikes back at the beast — deliberately NOT wrapping
+  `fall()`'s knock or the sigil-fatigue/height-split limiter chip, since
+  those are the hunter hurting themselves, not the beast attacking, and
+  Thorns has nothing to answer there. Two new cards (`Crippling Blow`:
+  damage + Frail on the Titan; `Spinebrace`: Block + Thorns on the caster) in
+  the global reward pool, and two existing beasts got a new static trait each
+  — the Bramble Hog innate Thorns (a spined hog that bites back fits
+  literally), the Frost Sentinel innate Artifact (a warded guardian that
+  shrugs off your first Expose/Poison/Frail) — content, not balance: neither
+  beast's HP or move numbers changed. Deliberately did NOT add a card or
+  relic granting a PLAYER Artifact: nothing in the game debuffs a hunter
+  today (Frail only ever targets the Titan, Vulnerable/Wound always have),
+  so a player-side Artifact stack would be guaranteed-inert rather than
+  situational — the same "reachable but dead" trap #27's `winded` card fell
+  into, just a mechanical dead end instead of a content one. Skipped a new
+  boss move type for the same reason it would have solved that trap: doable
+  without touching a view file, but the payoff (making a beast a source of
+  player-facing debuffs) is a real design decision, not a one-field
+  mechanical follow-on — left for whoever picks that up on purpose. 9 new
+  tests: Frail's Block cut in isolation, Frail applied by a card then
+  actually cutting the Titan's own `block` move, Artifact warding one debuff
+  off and then lapsing, Thorns reflecting a landed boss attack (both that
+  the attack still connects AND that the reflection lands), a Thorned beast
+  biting back on card damage, a mid-fight save/load round trip through the
+  real file (`RunSave`, not a bare `to_dict`/`from_dict` pair — #14/#15's own
+  insistence), and the two beasts' new static data. `run_tests.gd` all green
+  (235 assertions incl. the nine new ones); `node tools/cardlab/build.js`
+  confirms both new cards reachable (154 cards, `unreachable: 0`);
+  `balance_sim.gd` ran clean as a smoke test only — neither new card nor
+  either beast's new trait is drafted/played differently by the sim's fixed
+  policies, so the printed win rates are unchanged, not tuned to.
 - **2026-08-25** — #35 Migrate saves instead of throwing them away: the
   version gate in `run_save.gd` used to reject on `!= VERSION`, which meant a
   save from an older build would silently vanish the day `VERSION` ever got

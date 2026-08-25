@@ -163,8 +163,11 @@
     "wrecking_ball": {"name": "Wrecking Ball", "rarity": "rare", "type": "attack", "icon": "bomb", "cost": 2, "damage": 8, "timed": true, "timed_damage": 10, "target": "enemy", "text": "Deal 8 damage."},
     "grand_contraption": {"name": "Grand Contraption", "rarity": "rare", "type": "attack", "icon": "gadget", "cost": 3, "damage": 6, "damage_per_exhausted": 4, "create": "bomb", "target": "enemy", "text": "Deal 6 damage and an additional 4 per card burned. Build a tool into your hand."},
 
-    "bruised_grip": {"name": "Bruised Grip", "rarity": "common", "type": "skill", "icon": "skull", "cost": 1, "status": true, "text": "Does nothing. A dead card in your hand."}
+    "bruised_grip": {"name": "Bruised Grip", "rarity": "common", "type": "skill", "icon": "skull", "cost": 1, "status": true, "text": "Does nothing. A dead card in your hand."},
+
+    "crippling_blow": {"name": "Crippling Blow", "rarity": "uncommon", "type": "attack", "icon": "sword", "cost": 1, "damage": 5, "frail": 2, "target": "enemy", "text": "Deal 5 damage. Frail 2."},
+    "spinebrace": {"name": "Spinebrace", "rarity": "uncommon", "type": "skill", "icon": "shield", "cost": 1, "block": 5, "thorns": 2, "text": "Gain 5 Block. Thorns 2."}
   },
   "starter_deck": ["slash", "slash", "slash", "brace", "brace", "scramble", "scramble", "take_aim", "cleave", "cover"],
-  "reward_pool": ["rally", "expose", "draw_aggro", "harpoon", "grip", "sunlight_blade", "bowshot", "sharpen", "rend", "dagger", "flurry", "cleave", "cover", "brace", "slash", "take_aim", "pounce", "flick", "lash_out", "piton_drive", "piston_punch", "haul", "tongue_snap", "hop", "leapfrog", "toxic_lash", "overgrowth", "blightbloom", "summit_strike", "belay", "pitons_in", "dig_in", "last_stand", "route_finder", "bunker_down", "first_strike"]
+  "reward_pool": ["rally", "expose", "draw_aggro", "harpoon", "grip", "sunlight_blade", "bowshot", "sharpen", "rend", "dagger", "flurry", "cleave", "cover", "brace", "slash", "take_aim", "pounce", "flick", "lash_out", "piton_drive", "piston_punch", "haul", "tongue_snap", "hop", "leapfrog", "toxic_lash", "overgrowth", "blightbloom", "summit_strike", "belay", "pitons_in", "dig_in", "last_stand", "route_finder", "bunker_down", "first_strike", "crippling_blow", "spinebrace"]
 }

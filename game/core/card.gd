@@ -60,6 +60,8 @@ var retain: bool        # stays in hand at end of turn instead of being discarde
 var innate: bool        # guaranteed in the opening hand of every fight (backlog #28)
 var damage_per_x: int  # bonus damage per point of energy spent (backlog #29 — X-cost cards only)
 var block_per_x: int   # bonus Block per point of energy spent (backlog #29 — X-cost cards only)
+var frail: int          # Frail applied to the Titan: while it lasts, Block IT gains is cut (backlog #36)
+var thorns: int         # Thorns gained by the player: an attack landed on them reflects this much at the Titan (backlog #36)
 
 static func from_dict(d: Dictionary) -> Card:
 	var c := Card.new()
@@ -115,6 +117,8 @@ static func from_dict(d: Dictionary) -> Card:
 	c.innate = bool(d.get("innate", false))
 	c.damage_per_x = int(d.get("damage_per_x", 0))
 	c.block_per_x = int(d.get("block_per_x", 0))
+	c.frail = int(d.get("frail", 0))
+	c.thorns = int(d.get("thorns", 0))
 	return c
 
 
@@ -144,6 +148,7 @@ func to_dict() -> Dictionary:
 		"enchant": enchant, "status": status,
 		"retain": retain, "innate": innate,
 		"damage_per_x": damage_per_x, "block_per_x": block_per_x,
+		"frail": frail, "thorns": thorns,
 	}
 
 
@@ -165,7 +170,7 @@ func upgraded_copy() -> Card:
 			"damage_per_vulnerable", "damage_per_foothold",
 			"damage_per_ally_foothold", "damage_per_rhythm", "damage_per_wound",
 			"damage_per_exhausted", "block_per_exhausted",
-			"damage_per_x", "block_per_x"]:
+			"damage_per_x", "block_per_x", "frail", "thorns"]:
 		if int(d[key]) > 0:
 			d[key] = int(d[key]) + 1
 			bumped = true

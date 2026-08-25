@@ -275,6 +275,8 @@ func _meld_cards(a: Card, b: Card) -> Card:
 		"damage_per_wound": a.damage_per_wound + b.damage_per_wound,
 		"strength": a.strength + b.strength,
 		"wound": a.wound + b.wound,
+			"frail": a.frail + b.frail,
+			"thorns": a.thorns + b.thorns,
 		"hits": maxi(a.hits, b.hits),
 		"draw": a.draw + b.draw,
 		"icon": a.icon if a.icon != "" else b.icon,
@@ -471,12 +473,22 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		ps.strength += card.strength
 		_log("%s plays %s — +%d Strength." % [who, card.name, card.strength])
 	if card.wound > 0:
-		boss.wound += card.wound
-		_log("%s plays %s — Poison %d on %s." % [who, card.name, boss.wound, boss.name])
-		if ps.poison_lift > 0:  # Vine-Weaver: the vines feed on the poison and lift the ally
-			var fed_ally: PlayerState = players[ally_index(pi)]
-			fed_ally.foothold = mini(fed_ally.foothold + ps.poison_lift, FOOTHOLD_MAX)
-			_log("%s's vines surge — %s climbs +%d." % [who, fed_ally.combatant.name, ps.poison_lift])
+		# Artifact (backlog #36) wards the boss against a debuff before it lands —
+		# same gate Expose gets below, so a warded Titan shrugs off Poison too.
+		if boss.try_block_debuff():
+			_log("%s plays %s — %s's Artifact wards off the Poison." % [who, card.name, boss.name])
+		else:
+			boss.wound += card.wound
+			_log("%s plays %s — Poison %d on %s." % [who, card.name, boss.wound, boss.name])
+			if ps.poison_lift > 0:  # Vine-Weaver: the vines feed on the poison and lift the ally
+				var fed_ally: PlayerState = players[ally_index(pi)]
+				fed_ally.foothold = mini(fed_ally.foothold + ps.poison_lift, FOOTHOLD_MAX)
+				_log("%s's vines surge — %s climbs +%d." % [who, fed_ally.combatant.name, ps.poison_lift])
+	if card.frail > 0:  # Frail on the Titan — reduces the Block it gains (backlog #36)
+		_apply_frail(boss, card.frail)
+	if card.thorns > 0:  # Thorns on the player — reflects a landed boss attack (backlog #36)
+		ps.combatant.thorns += card.thorns
+		_log("%s plays %s — +%d Thorns." % [who, card.name, card.thorns])
 	if card.targets_hold:  # climbs straight TO a named hold instead of adding grip (#24)
 		var dest := _resolve_hold_target(pi, hold_target)
 		if dest > ps.foothold:
@@ -559,8 +571,11 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		ally_e.energy += card.ally_energy
 		_log("%s plays %s — +%d energy to %s." % [who, card.name, card.ally_energy, ally_e.combatant.name])
 	if card.vulnerable > 0:
-		boss.vulnerable += card.vulnerable
-		_log("%s plays %s — %s exposed (%d)." % [who, card.name, boss.name, boss.vulnerable])
+		if boss.try_block_debuff():  # Artifact (backlog #36) shrugs off the Expose
+			_log("%s plays %s — %s's Artifact wards off the Expose." % [who, card.name, boss.name])
+		else:
+			boss.vulnerable += card.vulnerable
+			_log("%s plays %s — %s exposed (%d)." % [who, card.name, boss.name, boss.vulnerable])
 	if card.taunt:
 		_forced_target = pi
 		_log("%s plays %s — draws %s's aggro." % [who, card.name, boss.name])
@@ -624,27 +639,48 @@ func _apply_limiter() -> void:
 					_log("%s strains alone at Height %d, unsupported — takes %d." % [ps2.combatant.name, ps2.foothold, excess])
 
 
+## Frail (backlog #36) — the debuff that touches BLOCK: while it's stacked, the
+## carrier's Block GAINED is cut (Combatant.gain_block does the actual cut, so
+## every source of Block — cards, relics, potions — feels it for free without
+## each of them knowing Frail exists). Routed through here so Artifact
+## (Combatant.try_block_debuff(), a ward that spends a stack to shrug off the
+## next debuff) gets first say, the same gate the vulnerable/wound applications
+## in play_card() already use.
+func _apply_frail(target: Combatant, amount: int) -> void:
+	if amount <= 0:
+		return
+	if target.try_block_debuff():
+		_log("%s's Artifact wards off a debuff." % target.name)
+		return
+	target.frail += amount
+	_log("%s is Frail (%d) — Block gained is reduced." % [target.name, target.frail])
+
 ## Deal card damage to the Titan, consuming one "exposed" stack for bonus.
 ## Returns the actual damage dealt (so the log can flag the bonus).
 func _damage_boss(amount: int, pi: int) -> int:
+	var dealt := 0
 	# Below the weak point, the beast's hide is armored — attacks barely chip it,
 	# and Exposed stacks are NOT spent (they bank until a hunter reaches the sigil).
 	# You have to CLIMB to deal real damage. This is what makes it a climb, not a fight.
 	if boss.weak_point_height > 0 and not sigil_reached(pi):
 		var divisor: int = maxi(2, ARMORED_DIVISOR - _mod("chip"))
-		var chip := maxi(1, amount / divisor)
-		boss.take_damage(chip)
-		return chip
-	# At the weak point (or a beast with no high sigil): full strike + bonuses.
-	var total := amount
-	if boss.vulnerable > 0:
-		total += VULN_BONUS + _mod("vuln_bonus")
-		boss.vulnerable -= 1
-	if boss.weak_point_height > 0:
-		total += SIGIL_BONUS + _mod("sigil_bonus")
-		players[pi].weak_point_damage += total  # counts toward the buck-off threshold
-	boss.take_damage(total)
-	return total
+		dealt = maxi(1, amount / divisor)
+		boss.take_damage(dealt)
+	else:
+		# At the weak point (or a beast with no high sigil): full strike + bonuses.
+		var total := amount
+		if boss.vulnerable > 0:
+			total += VULN_BONUS + _mod("vuln_bonus")
+			boss.vulnerable -= 1
+		if boss.weak_point_height > 0:
+			total += SIGIL_BONUS + _mod("sigil_bonus")
+			players[pi].weak_point_damage += total  # counts toward the buck-off threshold
+		boss.take_damage(total)
+		dealt = total
+	if boss.thorns > 0:  # Thorns (backlog #36): touching a spined beast costs you
+		players[pi].combatant.take_damage(boss.thorns)
+		_log("%s's thorns bite back — %s takes %d." % [boss.name, players[pi].combatant.name, boss.thorns])
+	return dealt
 
 ## Player pi ends their turn. When every player has ended, the boss acts.
 func end_turn(pi: int) -> void:
@@ -744,6 +780,19 @@ func _all_ended() -> bool:
 			return false
 	return true
 
+## The boss's own telegraphed attack lands on a hunter, then Thorns
+## (backlog #36) on that hunter reflects back — the debuff axis that punishes
+## the act of ATTACKING, not just being hit. Deliberately only wraps the
+## boss's real attack moves in _enemy_turn() below — not fall()'s knockdown,
+## not the sigil-fatigue/height-split limiter chip — since those are the hunter
+## hurting themselves, not the beast striking them, and Thorns has nothing to
+## answer there.
+func _boss_hits(ps: PlayerState, dmg: int) -> void:
+	ps.combatant.take_damage(dmg)
+	if ps.combatant.thorns > 0:
+		boss.take_damage(ps.combatant.thorns)
+		_log("%s's thorns bite back — %s takes %d." % [ps.combatant.name, boss.name, ps.combatant.thorns])
+
 func _enemy_turn() -> void:
 	phase = Phase.ENEMY
 	if _check_end():
@@ -763,19 +812,19 @@ func _enemy_turn() -> void:
 		"attack":
 			var dmg := value + boss.strength
 			var target: PlayerState = players[boss_target_index()]
-			target.combatant.take_damage(dmg)
+			_boss_hits(target, dmg)
 			_log("%s attacks %s for %d." % [boss.name, target.combatant.name, dmg])
 		"leech":
 			var ldmg := value + boss.strength
 			var lt: PlayerState = players[boss_target_index()]
-			lt.combatant.take_damage(ldmg)
+			_boss_hits(lt, ldmg)
 			var healed := mini(ldmg, boss.max_hp - boss.hp)
 			boss.hp += healed
 			_log("%s drains %s for %d and recovers %d." % [boss.name, lt.combatant.name, ldmg, healed])
 		"attack_all":
 			var dmg_all := value + boss.strength
 			for ps in players:
-				ps.combatant.take_damage(dmg_all)
+				_boss_hits(ps, dmg_all)
 				if _mod("shake_resist") <= 0:  # a relic can anchor you against sweeps
 						ps.foothold = _hold_below(ps.foothold)
 						ps.weak_point_damage = 0
@@ -785,7 +834,7 @@ func _enemy_turn() -> void:
 			var caught_high: Array = []
 			for i in range(players.size()):
 				if players[i].foothold > 0:
-					players[i].combatant.take_damage(dh)
+					_boss_hits(players[i], dh)
 					caught_high.append(players[i].combatant.name)
 			if caught_high.is_empty():
 				_log("%s lashes along its flank — nobody is clinging to it." % boss.name)
@@ -796,7 +845,7 @@ func _enemy_turn() -> void:
 			var caught_low: Array = []
 			for i in range(players.size()):
 				if players[i].foothold <= 0:
-					players[i].combatant.take_damage(dl)
+					_boss_hits(players[i], dl)
 					caught_low.append(players[i].combatant.name)
 			if caught_low.is_empty():
 				_log("%s stamps the ground — both hunters are above it." % boss.name)
@@ -811,7 +860,7 @@ func _enemy_turn() -> void:
 			var gap: int = maxi(0, hi - lo)
 			var dr: int = value + boss.strength + gap * RIFT_PER_GAP
 			for ps3 in players:
-				ps3.combatant.take_damage(dr)
+				_boss_hits(ps3, dr)
 			_log("%s wrenches the hunters apart for %d (gap of %d)." % [boss.name, dr, gap])
 		"shift_sigil":  # the weak point moves — whatever you climbed is now wrong
 			var moved: int = clampi(value, 1, FOOTHOLD_MAX)

@@ -255,6 +255,8 @@ static func build_boss(id: String) -> Boss:
 	b.ledges = bd.get("ledges", [])
 	b.weak_point_threshold = int(bd.get("weak_point_threshold", 0))
 	b.limiter = bd.get("limiter", {})
+	b.thorns = int(bd.get("thorns", 0))      # backlog #36: a spined beast that bites back
+	b.artifact = int(bd.get("artifact", 0))  # backlog #36: a warded beast that resists Expose/Poison/Frail
 	b.art = String(bd.get("art", ""))
 	return b
 
