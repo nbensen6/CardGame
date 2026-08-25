@@ -36,6 +36,18 @@ const FALL_DAMAGE := 3   # damage taken when grip runs out and a hunter falls to
 const RIFT_PER_GAP := 2  # extra 'rift' damage per Height between the hunters — climb together
 const SIGIL_FATIGUE_DAMAGE := 4  # a "sigil_fatigue" limiter's chip damage per round camped past its allowance
 
+# Named trigger moments (backlog #43): before this, a relic/passive that cared
+# "when does this fire" was wired into its own call site — energy_handoff read
+# straight out of end_turn(), block_carries out of _begin_round(), and every
+# new one like them cost combat.gd another special-cased branch. These five
+# names are the whole set of moments anything in a fight can care about; see
+# _on()/_fire() below for how something subscribes to one.
+const MOMENT_TURN_START := "turn_start"
+const MOMENT_TURN_END := "turn_end"
+const MOMENT_CARD_PLAYED := "card_played"
+const MOMENT_DAMAGE_TAKEN := "damage_taken"
+const MOMENT_HUNTER_CLIMBS := "hunter_climbs"
+
 # Graded timing (backlog #33): a timed card's throw used to be a bare hit/miss
 # bool. It's now a quality tier so a hit dead-centre pays more than a hit
 # scraping the edge of the same green zone. TIMING_PERFECT reproduces exactly
@@ -71,6 +83,7 @@ var _energy_bonus: int = 0
 var _attack_bonus: int = 0
 var _round_block: int = 0
 var _mods: Dictionary = {}  # rule-changing relic totals (see Run.relic_totals)
+var _hooks: Dictionary = {}  # moment name -> Array[Callable] (backlog #43)
 
 ## decks[i] and combatants[i] belong to player i. The trailing bonuses come from
 ## the team's relics (see Run) — 0 in a plain fight.
@@ -79,6 +92,15 @@ func _init(decks: Array, combatants: Array, p_boss: Boss, seed_value: int = 0,
 		start_strength: int = 0, player_passives: Array = [],
 		run_mods: Dictionary = {}) -> void:
 	_mods = run_mods
+	# Registered unconditionally, not gated on _mod() here: from_dict() below
+	# constructs with the default empty _mods and only overwrites it AFTER
+	# _init returns, so a handler that checked _mod() at registration time
+	# would silently stay unwired on a fight reloaded from a save. Each
+	# handler reads _mod() live, at fire time, instead — same as every other
+	# _mod() call in this file already does.
+	_on(MOMENT_TURN_START, Callable(self, "_handle_block_carries"))
+	_on(MOMENT_TURN_END, Callable(self, "_handle_energy_handoff"))
+	_on(MOMENT_CARD_PLAYED, Callable(self, "_handle_timed_rhythm"))
 	boss = p_boss
 	_energy_bonus = energy_bonus
 	_attack_bonus = attack_bonus
@@ -595,8 +617,7 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	if card.rhythm > 0:
 		ps.rhythm += card.rhythm
 		_log("%s plays %s — +%d Rhythm." % [who, card.name, card.rhythm])
-	if card.timed:  # landing a timed card builds Rhythm this turn (Frog combo payoff)
-		ps.rhythm += 1
+	_fire(MOMENT_CARD_PLAYED, {"player": ps, "card": card})  # e.g. a timed hit builds Rhythm (Frog combo payoff)
 	_check_weakpoint_buck(pi)
 	_track_climb()
 	_check_end()
@@ -691,6 +712,7 @@ func _damage_boss(amount: int, pi: int) -> int:
 		players[pi].combatant.take_damage(boss.thorns)
 		_log("%s's thorns bite back — %s takes %d." % [boss.name, players[pi].combatant.name, boss.thorns])
 	damage_dealt_total += dealt
+	_fire(MOMENT_DAMAGE_TAKEN, {"target": boss, "amount": dealt, "player_index": pi})
 	return dealt
 
 ## Player pi ends their turn. When every player has ended, the boss acts.
@@ -703,12 +725,7 @@ func end_turn(pi: int) -> void:
 	if ps.ended_turn:
 		return
 	ps.ended_turn = true
-	if _mod("energy_handoff") > 0 and ps.energy > 0:  # relic: unspent Energy passes to the ally
-		var mate: PlayerState = players[ally_index(pi)]
-		if not mate.ended_turn:
-			mate.energy += ps.energy
-			_log("%s hands off %d unspent Energy to %s." % [ps.combatant.name, ps.energy, mate.combatant.name])
-			ps.energy = 0
+	_fire(MOMENT_TURN_END, {"player": ps, "index": pi})  # relic: unspent Energy can pass to the ally
 	var kept: Array = []  # Retain (backlog #28): stays in hand instead of the discard pile
 	while not ps.hand.is_empty():
 		var c: Card = ps.hand.pop_back()
@@ -756,11 +773,12 @@ func _begin_round() -> void:
 	phase = Phase.PLAYERS
 	_forced_target = -1  # taunts last only their own round
 	for ps in players:
-		var carried: int = ps.combatant.block / 2 if _mod("block_carries") > 0 else 0
+		var start_ctx := {"player": ps, "carried_block": 0}
+		_fire(MOMENT_TURN_START, start_ctx)
 		# maxi(0, ...): a downside relic (#30) can push either bonus negative;
 		# neither block nor energy is meaningful below zero (see combatant.gd's
 		# take_damage, which assumes block never goes negative).
-		ps.combatant.block = maxi(0, _round_block + carried)  # relic: start each round with block (+ retained Block)
+		ps.combatant.block = maxi(0, _round_block + int(start_ctx["carried_block"]))  # relic: start each round with block (+ retained Block)
 		ps.energy = maxi(0, BASE_ENERGY + _energy_bonus)  # relic: extra energy
 		ps.ended_turn = false
 		if _mod("rhythm_keeps") <= 0:
@@ -797,6 +815,8 @@ func _all_ended() -> bool:
 ## _resolve_prepared above — rather than duplicated at each call site.
 func _track_climb() -> void:
 	for ps in players:
+		if ps.foothold > highest_climb:
+			_fire(MOMENT_HUNTER_CLIMBS, {"player": ps, "foothold": ps.foothold})
 		highest_climb = maxi(highest_climb, ps.foothold)
 
 ## The board state a boss move's "when" condition (backlog #40) reads — one
@@ -821,6 +841,7 @@ func boss_context() -> Dictionary:
 ## answer there.
 func _boss_hits(ps: PlayerState, dmg: int) -> void:
 	ps.combatant.take_damage(dmg)
+	_fire(MOMENT_DAMAGE_TAKEN, {"target": ps, "amount": dmg, "from_boss": true})
 	if ps.combatant.thorns > 0:
 		boss.take_damage(ps.combatant.thorns)
 		_log("%s's thorns bite back — %s takes %d." % [ps.combatant.name, boss.name, ps.combatant.thorns])
@@ -965,6 +986,62 @@ func _check_end() -> bool:
 ## A rule-changing relic total (0 when the team has none of that relic).
 func _mod(key: String) -> int:
 	return int(_mods.get(key, 0))
+
+# --- Trigger moments (backlog #43) -----------------------------------------
+#
+# A small, named set of points in a round anything can subscribe to instead
+# of being wired into its own call site. `ctx` is a plain Dictionary the
+# subscriber can both read AND write — GDScript passes Dictionaries by
+# reference, so a handler that wants to change what the caller does next
+# (block_carries deciding how much Block survives the reset, below) mutates
+# a key on it rather than needing its own return-value protocol.
+
+## Subscribe `handler` to run every time `moment` fires, in registration order.
+func _on(moment: String, handler: Callable) -> void:
+	if not _hooks.has(moment):
+		_hooks[moment] = []
+	_hooks[moment].append(handler)
+
+## Fire every handler subscribed to `moment`.
+func _fire(moment: String, ctx: Dictionary = {}) -> void:
+	for h in _hooks.get(moment, []):
+		(h as Callable).call(ctx)
+
+## block_carries relic (turn_start): half of last round's unspent Block
+## survives the reset instead of draining to zero. Reads `ps.combatant.block`
+## BEFORE _begin_round() overwrites it — the caller fires this while the old
+## value still stands, then applies whatever `carried_block` ends up holding.
+func _handle_block_carries(ctx: Dictionary) -> void:
+	if _mod("block_carries") <= 0:
+		return
+	var ps: PlayerState = ctx["player"]
+	ctx["carried_block"] = ps.combatant.block / 2
+
+## energy_handoff relic (turn_end): a hunter's unspent Energy passes to their
+## ally instead of vanishing, if the ally hasn't ended their turn yet.
+func _handle_energy_handoff(ctx: Dictionary) -> void:
+	if _mod("energy_handoff") <= 0:
+		return
+	var ps: PlayerState = ctx["player"]
+	var pi: int = ctx["index"]
+	if ps.energy <= 0:
+		return
+	var mate: PlayerState = players[ally_index(pi)]
+	if mate.ended_turn:
+		return
+	mate.energy += ps.energy
+	_log("%s hands off %d unspent Energy to %s." % [ps.combatant.name, ps.energy, mate.combatant.name])
+	ps.energy = 0
+
+## Not a relic — a fixed core rule (landing a timed card builds Rhythm) moved
+## onto the same moment as the third proof effect, since it fires from
+## exactly the same place a relic-driven card_played handler would.
+func _handle_timed_rhythm(ctx: Dictionary) -> void:
+	var card: Card = ctx["card"]
+	if not card.timed:
+		return
+	var ps: PlayerState = ctx["player"]
+	ps.rhythm += 1
 
 func _log(msg: String) -> void:
 	log.append(msg)

@@ -304,7 +304,7 @@ Ordered. Source in brackets.
   it persists, and it is tested. Keep the gate small — this is a hook to hang
   progression on, not a rebalance of what is offered.
 
-- [ ] **43. One trigger point instead of scattered special cases** `cloud-safe` —
+- [x] **43. One trigger point instead of scattered special cases** `cloud-safe` —
   there is no generic "when X happens, run Y". Every timed effect, relic and
   passive is wired at its own call site, so each new one costs another branch in
   `combat.gd` and the file grows a special case per idea. A small set of named
@@ -603,6 +603,58 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-25** — #43 One trigger point instead of scattered special cases:
+  a small, named set of moments (`Combat.MOMENT_TURN_START`/`_TURN_END`/
+  `_CARD_PLAYED`/`_DAMAGE_TAKEN`/`_HUNTER_CLIMBS`) plus a generic `_on(moment,
+  handler)` / `_fire(moment, ctx)` pair — a `Dictionary` of moment name ->
+  `Array[Callable]`, `ctx` a plain `Dictionary` handlers can both read and
+  write (GDScript passes it by reference, so a handler that needs to change
+  what the caller does next — see block_carries below — mutates a key on it
+  instead of needing its own return-value protocol). Three existing
+  special-cased branches moved onto it as the proof, all three already
+  covered by pre-existing behavior tests so the suite itself is the "no
+  behaviour change" proof rather than anything new: **block_carries**
+  (turn_start) used to compute `carried` inline in `_begin_round()` before
+  overwriting Block — now `_begin_round()` fires `turn_start` with a
+  `carried_block` key defaulting to 0, and `_handle_block_carries()` sets it
+  only if the relic total is present, read BEFORE the caller applies it, so
+  the actual arithmetic is unchanged. **energy_handoff** (turn_end) used to
+  be a straight `if _mod(...) > 0` block inside `end_turn()` — now `end_turn()`
+  just fires `turn_end` and `_handle_energy_handoff()` carries the same
+  gate, same log line, same early-outs (`ps.energy <= 0`, ally already
+  ended). **Timed-card Rhythm** (a fixed core rule, not a relic — included as
+  the third proof since it's wired at exactly the same call site a
+  relic-driven `card_played` handler would use) moved from
+  `if card.timed: ps.rhythm += 1` inline in `play_card()` to
+  `_handle_timed_rhythm()`. One real trap caught before it shipped: all
+  three handlers had to be registered **unconditionally** in `_init()` and
+  read `_mod()` live at FIRE time rather than being registered only when the
+  relic total is present at construction — `Combat.from_dict()` builds a
+  fresh `Combat` with the default empty `_mods` and only overwrites `_mods`
+  *after* `_init()` already returned (mirrors how every other `_mod()` call
+  in this file already has to work), so a handler gated at registration time
+  would have silently stayed unwired on any fight reloaded from a save,
+  which is exactly the kind of bug this item was supposed to make less
+  likely to happen again, not introduce one on its own first outing. The two
+  moments nothing subscribes to yet (`damage_taken`, `hunter_climbs`) still
+  fire with real context at every real damage instance (`_boss_hits()` and
+  `_damage_boss()`) and every new climb peak (`_track_climb()`, now gated on
+  `foothold > highest_climb` so it fires on an actual new high rather than
+  every card play) — they exist and work, just have no consumer content yet;
+  future relics/potions/cards are the reason this item was worth doing, not
+  something it had to deliver itself. One new test
+  (`_test_backlog43_trigger_moments_exist_and_fire`) proves those two
+  specifically: a Slash against an armored Titan fires `damage_taken` with a
+  positive amount and the correct target, a Grip climb from Height 0 fires
+  `hunter_climbs` exactly once with the new foothold, and calling the
+  tracker again with nothing moved does NOT re-fire — proving the "new peak"
+  gate actually gates rather than firing on every touch. `run_tests.gd` all
+  green (276 assertions incl. the one new one, the pre-existing #10/#33
+  tests the migration leaned on for regression proof unchanged);
+  `balance_sim.gd` ran clean as a smoke test only (36% coordinated at A0
+  this run — ordinary run-to-run variance against the 36-42% range seen in
+  prior sessions, nothing here touches drafting or spending policy so this
+  is not something tuned to).
 - **2026-08-25** — #42 Something to unlock between runs: the gate is a single
   career counter, `Progress.total_wins()` — separate from `unlocked_ascension()`,
   which only advances on a NEW hardest tier cleared and so would never

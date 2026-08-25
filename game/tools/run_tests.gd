@@ -39,6 +39,8 @@ func _init() -> void:
 	_test_backlog42_run_threads_unlocked_wins_into_the_shop()
 	_test_backlog42_unlocked_wins_round_trips_and_backfills()
 	_test_backlog42_gamehost_carries_unlocked_wins_through_resume()
+	# backlog #43: one trigger point instead of scattered special cases
+	_test_backlog43_trigger_moments_exist_and_fire()
 	# co-op combat rules
 	_test_play_card_spends_energy_and_damages_boss()
 	_test_cannot_overspend_energy()
@@ -2661,6 +2663,41 @@ func _test_backlog42_gamehost_carries_unlocked_wins_through_resume() -> void:
 	var resumed: Run = host2._run
 	_expect(resumed.unlocked_wins() == 2, "resuming a saved run restores its unlock gate, not the fresh default")
 	RunSave.clear()
+
+
+## Item #43: a small set of named moments (turn_start, turn_end, card_played,
+## damage_taken, hunter_climbs) that anything can subscribe to, instead of
+## being wired into its own call site. block_carries, energy_handoff and
+## timed-card Rhythm were MOVED onto turn_start/turn_end/card_played — proven
+## unchanged by _test_backlog10_new_rule_changing_relics (block_carries,
+## energy_handoff) and the existing Rhythm test above (card_played) still
+## passing untouched. This test covers what those don't: that damage_taken
+## and hunter_climbs — the two moments nothing subscribes to yet — actually
+## exist and fire with real data during ordinary play, proven by registering
+## a probe with the same _on()/_fire() plumbing a future relic would use.
+func _test_backlog43_trigger_moments_exist_and_fire() -> void:
+	var boss := _climb_boss(6)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_grip, 10)], 42, boss)
+	var damage_events: Array = []
+	var climb_events: Array = []
+	combat._on(Combat.MOMENT_DAMAGE_TAKEN, func(ctx): damage_events.append(ctx))
+	combat._on(Combat.MOMENT_HUNTER_CLIMBS, func(ctx): climb_events.append(ctx))
+
+	combat.play_card(0, _first_playable(combat, 0))  # a Slash hits the (armored) Titan
+	var damage_fired: bool = damage_events.size() == 1 \
+		and damage_events[0]["target"] == boss and int(damage_events[0]["amount"]) > 0
+
+	combat.play_card(1, _first_playable(combat, 1))  # Grip climbs hunter 1 from Height 0 — a fresh peak
+	var climb_fired: bool = climb_events.size() == 1 \
+		and climb_events[0]["player"] == combat.players[1] and int(climb_events[0]["foothold"]) > 0
+
+	# Re-running the tracker with no foothold above the recorded peak must not
+	# re-fire — hunter_climbs means "reached a NEW high", not "foothold touched".
+	combat._track_climb()
+	var no_refire_without_a_new_peak: bool = climb_events.size() == 1
+
+	_expect(damage_fired and climb_fired and no_refire_without_a_new_peak,
+		"backlog #43's damage_taken and hunter_climbs moments exist and fire with real data")
 
 
 # --- Phase 3: 3rd titan, relics, longer runs ------------------------------
