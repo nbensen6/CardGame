@@ -11,7 +11,24 @@ ears rounder" should be a one-line diff you can read.
 `frog_smooth.py` is an earlier higher-poly take on the Frog, kept because
 switching styles should be one command rather than an archaeology dig.
 
-Build one:
+## Building anything
+
+One command, and it reimports so the game actually sees the result:
+
+    toolslenderuild.cmd frog goblin_mech    one or more hunters/beasts
+    toolslenderuild.cmd cast                every hunter and beast
+    toolslenderuild.cmd env crag_pup        one fight's ground
+    toolslenderuild.cmd env                 every fight's ground
+    toolslenderuild.cmd map                 the overworld tiles
+    toolslenderuild.cmd all                 the lot
+
+The reimport is the point. Godot caches every imported `.glb` as a `.scn` and
+only notices a changed source when the EDITOR opens the project, so running the
+game from the command line never reimports: a rebuilt model exports fine, passes
+every check, and the game keeps drawing the old one. That looks exactly like the
+build silently failing, and it cost an afternoon before this script existed.
+
+Under it, one model at a time is still just Blender:
 
     "C:/Program Files/Blender Foundation/Blender 4.1/blender.exe" --background       --python tools/blender/goblin_mech.py --       "G:/Co Op Game/game/assets/3d/cast/goblin_mech.glb"
 

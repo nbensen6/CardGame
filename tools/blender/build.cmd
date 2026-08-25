@@ -1,39 +1,94 @@
 @echo off
-REM Build one or more cast models AND make the game actually see them.
+REM Build models AND make the game actually see them.
 REM
-REM     tools\blender\build.cmd frog goblin_mech
-REM     tools\blender\build.cmd all
+REM     tools\blender\build.cmd frog goblin_mech      one or more cast models
+REM     tools\blender\build.cmd cast                  every hunter and beast
+REM     tools\blender\build.cmd env crag_pup          one fight's ground
+REM     tools\blender\build.cmd env                   every fight's ground
+REM     tools\blender\build.cmd map                   the overworld tiles
+REM     tools\blender\build.cmd all                   the lot
 REM
-REM The second half is the point. Godot caches every imported .glb as a .scn
-REM under .godot/imported/, and it only notices a changed source file when the
-REM EDITOR opens the project. Running the game straight from the command line
-REM never reimports, so a rebuilt model exports fine, passes every check, and
-REM the game keeps drawing the old one - which looks exactly like the build
-REM silently failing. `--import` is the fix and it belongs here, not in a note
-REM somebody has to remember.
+REM The reimport at the end is the point. Godot caches every imported .glb as a
+REM .scn and only notices a changed source when the EDITOR opens the project.
+REM Running the game straight from the command line never reimports, so a
+REM rebuilt model exports fine, passes every check, and the game keeps drawing
+REM the old one — which looks exactly like the build silently failing.
 
-setlocal
+setlocal enabledelayedexpansion
 set BLENDER=C:\Program Files\Blender Foundation\Blender 4.1\blender.exe
 set GODOT=C:\Users\nbens\AppData\Local\Programs\Godot\Godot_v4.7.1-stable_win64_console.exe
+set HERE=%~dp0
 set ROOT=%~dp0..\..
-set NAMES=%*
-if "%NAMES%"=="" (
-  echo usage: build.cmd ^<name^> [name ...]   ^|   build.cmd all
+set CASTOUT=%ROOT%\game\assets\3d\cast
+set ENVOUT=%ROOT%\game\assets\3d\env
+set HEXOUT=%ROOT%\game\assets\3d\hexown
+
+set CAST=frog vine_weaver mountain_climbers goblin_mech lightbearer stone_warden gale_serpent drowned_colossus sunken_warden crag_pup bramble_hog bounder mire_snapper frost_sentinel grove_bear root_lurker sky_snapper riftling shifting_idol
+set GROUNDS=crag_pup bounder bramble_hog root_lurker mire_snapper sky_snapper frost_sentinel shifting_idol grove_bear gale_serpent drowned_colossus sunken_warden riftling stone_warden
+
+if "%~1"=="" (
+  echo usage: build.cmd ^<name...^> ^| cast ^| env [name...] ^| map ^| all
   exit /b 1
 )
-if /i "%NAMES%"=="all" set NAMES=frog vine_weaver mountain_climbers goblin_mech crag_pup riftling stone_warden
 
+set MODE=%~1
+if /i "%MODE%"=="env" goto :envmode
+if /i "%MODE%"=="map" goto :mapmode
+if /i "%MODE%"=="all" goto :allmode
+if /i "%MODE%"=="cast" (set NAMES=%CAST%) else (set NAMES=%*)
+goto :castmode
+
+:allmode
+set NAMES=%CAST%
+call :buildcast
+call :buildenv %GROUNDS%
+call :buildmap
+goto :reimport
+
+:castmode
+call :buildcast
+goto :reimport
+
+:envmode
+shift
+set ENVNAMES=
+:envargs
+if not "%~1"=="" (set ENVNAMES=!ENVNAMES! %~1& shift& goto :envargs)
+if "!ENVNAMES!"=="" set ENVNAMES=%GROUNDS%
+call :buildenv !ENVNAMES!
+goto :reimport
+
+:mapmode
+call :buildmap
+goto :reimport
+
+:buildcast
 for %%N in (%NAMES%) do (
-  if not exist "%~dp0%%N.py" (
-    echo   SKIP %%N - no tools\blender\%%N.py
-  ) else (
-    echo.
-    echo === %%N ===
-    "%BLENDER%" --background --python "%~dp0%%N.py" -- "%ROOT%\game\assets\3d\cast\%%N.glb" ^
-      | findstr /R "TRIS PARTS SIZE WARNING WROTE"
-  )
+  if exist "%HERE%%%N.py" (
+    echo === cast %%N
+    "%BLENDER%" --background --python "%HERE%%%N.py" -- "%CASTOUT%\%%N.glb" ^
+      | findstr /R "TRIS PARTS CLIMB HOLD ROOM SPAN GREW WARNING FAIL"
+  ) else ( echo   SKIP %%N - no tools\blender\%%N.py )
 )
+exit /b 0
 
+:buildenv
+for %%N in (%*) do (
+  if exist "%HERE%env\%%N.py" (
+    echo === ground %%N
+    "%BLENDER%" --background --python "%HERE%env\%%N.py" -- "%ENVOUT%\%%N.glb" ^
+      | findstr /R "TRIS GROUND WARNING"
+  ) else ( echo   SKIP %%N - no tools\blender\env\%%N.py )
+)
+exit /b 0
+
+:buildmap
+echo === overworld tiles
+"%BLENDER%" --background --python "%HERE%hexes.py" -- "%HEXOUT%" ^
+  | findstr /R "TRIS WARNING"
+exit /b 0
+
+:reimport
 echo.
 echo === reimporting so the game sees them ===
 "%GODOT%" --headless --path "%ROOT%\game" --import >nul 2>&1
