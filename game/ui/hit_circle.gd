@@ -59,6 +59,14 @@ const START_SCALE := 2.9      # ring radius at the start, in target radii
 ## Seconds of fade-in as the note appears. osu never pops a circle in at full
 ## opacity; the fade is what tells you a new one has started.
 const FADE_IN := 0.11
+## Dimmest a note is drawn while it is still too early to hit.
+##
+## It used to be drawn SOLID from 110ms and stay solid for the rest of its life,
+## while only 39% of that life could actually be struck — so it looked clickable
+## for half a second before it was, and clicking it then was a miss you had every
+## reason to think was a hit (Nick, 2026-08-25: "im clicking directly on the
+## circles and it says miss"). Now solid means hittable.
+const EARLY_ALPHA := 0.34
 ## How much of the NEXT note is already on screen while you are hitting this one.
 ## osu never shows you one circle at a time — the pattern is legible several
 ## notes ahead, and reading ahead is most of the skill. Without this a chain is
@@ -345,7 +353,7 @@ func _path_point(path: PackedVector2Array, t: float) -> Vector2:
 ## Drawn as a road rather than as separate targets, because that is what it asks
 ## of you — one sustained motion, not several decisions.
 func _draw_slider(path: PackedVector2Array) -> void:
-	var fade := clampf(_t / FADE_IN, 0.0, 1.0)
+	var fade := _ready_alpha()
 	draw_polyline(path, Color(0.10, 0.09, 0.13, 0.40 * fade), TARGET_RADIUS * 1.05, true)
 	draw_polyline(path, Color(GOLD.r, GOLD.g, GOLD.b, 0.72 * fade), 2.5, true)
 	var tail := path[path.size() - 1]
@@ -400,7 +408,9 @@ func _draw_slider(path: PackedVector2Array) -> void:
 ## because the words are what the rest of the game already calls them.
 func _burst(at: Vector2, grade: int, t: float) -> void:
 	var tint := MISS
-	var label := "MISS"
+	# Which side of the beat you were on. "MISS" teaches nothing; "TOO EARLY"
+	# teaches the whole thing in one word.
+	var label := "TOO EARLY" if _offset() < 0.0 else "TOO LATE"
 	if grade >= Combat.TIMING_PERFECT:
 		tint = CORE
 		label = "PERFECT"
@@ -422,6 +432,22 @@ func _burst(at: Vector2, grade: int, t: float) -> void:
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color(GOLD.r, GOLD.g, GOLD.b, t * 0.9))
 
 
+## How solid the live note should look: dim while it is too early to strike,
+## full the moment it enters the window. The eye reads brightness far faster
+## than it reads the radius of a ring, so THIS is the cue, and the ring is the
+## detail you refine against once you know the beat.
+func _ready_alpha() -> float:
+	var appear := clampf(_t / FADE_IN, 0.0, 1.0)
+	var live := absf(_offset()) <= GOOD_WINDOW + zone_bonus * 0.35
+	if live:
+		return appear
+	# Ramp up over the last stretch before the window rather than snapping on, so
+	# there is a visible "here it comes".
+	var lead := maxf(_approach - GOOD_WINDOW, 0.001)
+	var toward := clampf(_t / lead, 0.0, 1.0)
+	return appear * lerpf(EARLY_ALPHA, 0.92, toward * toward)
+
+
 func _draw() -> void:
 	if _cam == null or not is_instance_valid(_cam) or _notes.is_empty():
 		return
@@ -439,7 +465,7 @@ func _draw() -> void:
 			_draw_slider(path)
 		return
 
-	var fade := clampf(_t / FADE_IN, 0.0, 1.0)
+	var fade := _ready_alpha()
 
 	# The notes you have not hit yet, furthest first so the current one draws on
 	# top. Each is dimmer than the last: the pattern is legible ahead of time,
@@ -457,6 +483,11 @@ func _draw() -> void:
 		return
 	_at = _screen(_hits_done)
 	_note(_at, _hits_done + 1, fade)
+	# Inside the window: a halo. "The circle is glowing" is a rule you learn in
+	# one note, where "the ring has reached the rim" takes a dozen.
+	if absf(_offset()) <= GOOD_WINDOW + zone_bonus * 0.35:
+		draw_arc(_at, TARGET_RADIUS + 7.0, 0.0, TAU, 56,
+			Color(CORE.r, CORE.g, CORE.b, 0.55), 6.0, true)
 
 	# The perfect band, drawn where the approach ring will be when a tap scores
 	# perfect. Aim for the moment it crosses this, not for the rim.

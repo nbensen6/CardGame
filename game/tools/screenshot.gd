@@ -423,6 +423,19 @@ func _capture() -> void:
 			for _i in 26:                # part-way through the approach
 				await process_frame
 			var circle = tv.get("_circle")
+			# Park the note at a chosen point in its life so a shot can show the
+			# early state and the hittable state side by side. Without this every
+			# screenshot catches it a few frames in, which is exactly the state
+			# that used to LOOK hittable and was not.
+			if circle != null and _hold != "":
+				var park := HitCircle.APPROACH_SECONDS
+				if _hold == "early":
+					park = HitCircle.APPROACH_SECONDS * 0.25
+				elif _hold == "late":
+					park = HitCircle.APPROACH_SECONDS + HitCircle.GOOD_WINDOW * 0.8
+				circle.set("_t", park)
+				circle.queue_redraw()
+				await process_frame
 			print("TIMING style=%s card=%s windows=%d circle_live=%s"
 				% [Progress.timing_style(), String((hand[timed_at] as Dictionary).get("name", "?")),
 				   int((hand[timed_at] as Dictionary).get("timed_hits", 1)),
