@@ -589,34 +589,24 @@ the model against the contract, renders three angles, and appends a block to
 `design/ART-REVIEW.md` saying what it was trying to make and what it could not
 check. It never judges its own work. See item 74 for why.
 
-- [ ] **75. The other eleven beasts** `cloud-art` — three of fourteen have their
-  own bodies (Crag Pup, Riftling, Stone Warden); the rest are still Kenney
-  animals. Each is one script in `tools/blender/`, built on `kenney.py`, and the
-  hold contract is per-beast so `assetcheck.gd -- file=... beast=<id>` proves the
-  body actually fits the fight it is used in. **One beast per run.** Read the
-  three that exist first: shape carries the class, holds are the brief, and the
-  sigil is the same gold mark everywhere. *Done when:* a beast has a body, passes
-  the contract, has previews committed, and has a review block.
+- [x] **75. The other eleven beasts** `cloud-art` — **done 2026-08-25, by hand,
+  not by a run.** All fourteen beasts have their own body and all fourteen pass
+  the hold contract in Godot. `tools/blender/beast.py` is what made eleven
+  tractable: it reads `bosses.json`, gives you `shelf()` which lands a ledge
+  exactly where the contract wants one, and runs Godot's own area test in Blender
+  before the file is written. Ticked because the models exist and are proven —
+  but every one is **unreviewed**, and the eleven review blocks in
+  `design/ART-REVIEW.md` say what to look at first.
 
-- [ ] **78. The other two hunters, onto the new vocabulary** `cloud-art` — the
-  Frog and the Goblin Engineer were rebuilt on 2026-08-25; the Vine-Weaver and
-  the Mountain Climbers are still made entirely of ellipsoids, and both have a
-  part that the vocabulary now says properly. The Vine-Weaver's vines are rows
-  of spheres and want `limb()` — that is what it was written for. The Climbers'
-  arms, legs and coiled rope are the same. Read `tools/blender/frog.py` for how
-  a rebuild goes, and `design/ART-REVIEW.md` for the two traps that cost passes
-  (box half-extents, bevels changing the silhouette width). **One hunter per
-  run.** *Done when:* the hunter is rebuilt, inside budget, all parts touching,
-  previews committed and a review block written.
-
-- [ ] **79. The Stone Warden, the Crag Pup and the Riftling, re-cut** `cloud-art`
-  — the three beasts that already have bodies were built before the vocabulary
-  existed. The Stone Warden is the extreme case: **3744 triangles**, six times
-  Kenney's entire budget for the bunny, and every single part of it an ellipsoid.
-  It is the clearest proof in the repo that detail is not a triangle problem. Cut
-  it to the 2600 beast budget by replacing spheres with boxes and tapers, not by
-  removing parts. **One beast per run**, and the hold contract still has to pass:
-  `assetcheck.gd -- file=... beast=<id>`.
+- [ ] **80. The Lightbearer's art, and the rule that a new hunter needs some**
+  `cloud-art` — the cloud added a fifth hunter in #47 with no model, so it stood
+  on screen as a bunny, and `Cast.PLACEHOLDER` had no entry for it either. The
+  model exists now (`tools/blender/lightbearer.py`). What does not exist is the
+  habit: **a run that adds a character or a beast must either build its body or
+  queue it here and add a deliberate PLACEHOLDER entry.** Falling through to the
+  default bunny is how a fifth hunter shipped invisible. *Done when:* that rule
+  is written into the routine's brief and the portrait for the Lightbearer is
+  ours rather than Kenney's owl.
 
 - [ ] **76. Card icons, rendered rather than borrowed** `cloud-art` — every card
   face wears one of 25 Kenney icons, so cards share pictures and the Card Lab

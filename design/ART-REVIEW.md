@@ -48,6 +48,25 @@ The failures that have happened, all of which passed every check:
 
 ---
 
+### lightbearer — NEEDS A PASS
+
+The cloud added a fifth hunter (#47) with no model, so it was on screen as a
+bunny. `Cast.PLACEHOLDER` did not even have an entry for it, which is why the
+fallback was the default rather than something chosen.
+
+- built: 2026-08-25 by hand, from tools/blender/lightbearer.py
+- checks: 1312 tris (inside the 1400 hunter budget), 1 mesh, 1 material, all
+  parts touching, assetcheck 4/4
+- previews: design/art-previews/lightbearer_0.png (three-quarter), _1, _2
+- intent: the class banks a resource and spends it in one go, so the read is a
+  VESSEL — a lantern held high on a staff and a second light already caught in
+  the chest. Two lights, one stored and one carried. Silhouette-wise it is the
+  shape the cast did not have: a tall narrow triangle, and the only hunter whose
+  highest point is not part of its body.
+- unsure about: whether the hood reads as a hood or as a party hat (the dark
+  face under it is doing all the work), and whether a robe with no legs reads as
+  deliberate or as unfinished at fight distance.
+
 ### the eleven beasts that had no body — ALL NEED A PASS
 
 Built 2026-08-25 by hand, from `tools/blender/<id>.py`, on the new `beast.py`

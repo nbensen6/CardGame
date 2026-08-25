@@ -15,7 +15,7 @@ const DIR := "res://assets/3d/cast/"
 ## The Kenney model standing in for each hunter until you replace it.
 const PLACEHOLDER := {
 	"frog": "bunny", "vine_weaver": "koala", "mountain_climbers": "deer",
-	"goblin_mech": "monkey",
+	"goblin_mech": "monkey", "lightbearer": "cat",
 }
 
 
