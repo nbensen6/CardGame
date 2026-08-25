@@ -17,9 +17,12 @@ const CAST := "res://assets/3d/cast/"
 
 func _initialize() -> void:
 	var path := ""
+	var beast := ""
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("file="):
 			path = a.substr(5)
+		elif a.begins_with("beast="):
+			beast = a.substr(6)
 	if path == "":
 		print("usage: --script res://tools/assetcheck.gd -- file=res://assets/3d/cast/yours.glb")
 		print("\nA reference model to compare against:")
@@ -30,13 +33,13 @@ func _initialize() -> void:
 		path = CAST + path            # bare filenames mean the cast folder
 	if not path.ends_with(".glb"):
 		path += ".glb"
-	_report(path, "YOUR MODEL")
+	_report(path, "YOUR MODEL", beast)
 	print("\n--- compared against a Kenney model that already works ---")
 	_report(CAST + "bunny.glb", "REFERENCE (bunny)")
 	quit()
 
 
-func _report(path: String, label: String) -> void:
+func _report(path: String, label: String, beast_id: String = "") -> void:
 	print("\n=== %s: %s ===" % [label, path])
 	if not ResourceLoader.exists(path):
 		print("  MISSING. Export from Blender to that path, then run this again.")
@@ -92,6 +95,9 @@ func _report(path: String, label: String) -> void:
 	else:
 		print("  WARN  centre is %.3f off in X — it will stand beside its spot, not on it" % cx)
 
+	if beast_id != "":
+		_check_holds(root, box, beast_id)
+
 	# Rule 3 — applied transforms. An unapplied scale makes the measured bounds
 	# lie, and every size in the game is derived from those bounds.
 	var s := root.scale
@@ -136,4 +142,82 @@ func _merged_aabb(root: Node3D) -> AABB:
 			first = false
 		else:
 			out = out.merge(box)
+	return out
+
+
+## The hold contract: a beast whose body has no shelf where its data says there
+## is one is a beast you climb by floating.
+##
+## The view places hunters at lerp(0.18, 0.80) of the model's bounding box, so a
+## beast with ledges [3, 6, 9] and a sigil at 11 needs somewhere to STAND at 35%,
+## 52% and 69% of its height.
+##
+## It measures UPWARD-FACING surface, not "is there body here". The first version
+## asked whether the model was wide at that height, and a bunny passed as the
+## Sunken Warden — of course it did, a solid blob has body everywhere. A hold is
+## a shelf: faces whose normals point at the sky. That distinction is the entire
+## value of this check, because it is the one thing a run with no eyes cannot
+## get right by accident.
+func _check_holds(root: Node3D, box: AABB, beast_id: String) -> void:
+	var b: Boss = Content.build_boss(beast_id)
+	if b == null or b.weak_point_height <= 0:
+		print("  WARN  no beast data for '%s' — cannot check holds" % beast_id)
+		return
+	var tris := _tris(root)
+	if tris.is_empty():
+		return
+	var heights: Array = b.ledge_heights()
+	heights.append(b.weak_point_height)
+	# A hold worth standing on, as a fraction of the model's footprint. Measured
+	# against the three beasts built by hand and against models that should fail.
+	var want := box.size.x * box.size.z * 0.020
+	var bad := 0
+	for h in heights:
+		var t := clampf(float(h) / float(b.weak_point_height), 0.0, 1.0)
+		var y := box.position.y + box.size.y * lerpf(0.18, 0.80, t)
+		var band := box.size.y * 0.055
+		var flat := 0.0
+		for tri in tris:
+			var a: Vector3 = tri[0]
+			var c: Vector3 = tri[1]
+			var d: Vector3 = tri[2]
+			var mid := (a + c + d) / 3.0
+			if absf(mid.y - y) > band:
+				continue
+			var cross := (c - a).cross(d - a)
+			var area := cross.length() * 0.5
+			if area <= 0.0:
+				continue
+			if absf(cross.normalized().y) > 0.55:   # points at the sky (or the floor under a lip)
+				flat += area
+		var what := "sigil" if h == b.weak_point_height else "hold"
+		if flat < want:
+			print("  FAIL  %s at Height %d (%.0f%% up): %.3f of shelf to stand on, wants %.3f"
+				% [what, h, t * 100.0, flat, want])
+			bad += 1
+	if bad == 0:
+		print("  PASS  every hold and the sigil have a shelf at their Height")
+
+
+## Every triangle in world space, for the hold check.
+func _tris(root: Node3D) -> Array:
+	var out: Array = []
+	for m in _meshes(root):
+		var mi := m as MeshInstance3D
+		if mi.mesh == null:
+			continue
+		for s in range(mi.mesh.get_surface_count()):
+			var arr: Array = mi.mesh.surface_get_arrays(s)
+			if arr.size() <= Mesh.ARRAY_INDEX or arr[Mesh.ARRAY_VERTEX] == null:
+				continue
+			var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+			var idx = arr[Mesh.ARRAY_INDEX]
+			var xf := mi.global_transform
+			if idx == null:
+				for i in range(0, verts.size() - 2, 3):
+					out.append([xf * verts[i], xf * verts[i + 1], xf * verts[i + 2]])
+			else:
+				var ii: PackedInt32Array = idx
+				for i in range(0, ii.size() - 2, 3):
+					out.append([xf * verts[ii[i]], xf * verts[ii[i + 1]], xf * verts[ii[i + 2]]])
 	return out

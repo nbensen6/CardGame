@@ -576,6 +576,39 @@ something Slay the Spire leans on hard and we do not have at all.
   `assetcheck` is a model nobody has looked at, and we have shipped that mistake
   before.
 
+### Art the cloud can build
+
+Tagged `cloud-art`: the routine downloads Blender, writes a build script, proves
+the model against the contract, renders three angles, and appends a block to
+`design/ART-REVIEW.md` saying what it was trying to make and what it could not
+check. It never judges its own work. See item 74 for why.
+
+- [ ] **75. The other eleven beasts** `cloud-art` — three of fourteen have their
+  own bodies (Crag Pup, Riftling, Stone Warden); the rest are still Kenney
+  animals. Each is one script in `tools/blender/`, built on `kenney.py`, and the
+  hold contract is per-beast so `assetcheck.gd -- file=... beast=<id>` proves the
+  body actually fits the fight it is used in. **One beast per run.** Read the
+  three that exist first: shape carries the class, holds are the brief, and the
+  sigil is the same gold mark everywhere. *Done when:* a beast has a body, passes
+  the contract, has previews committed, and has a review block.
+
+- [ ] **76. Card icons, rendered rather than borrowed** `cloud-art` — every card
+  face wears one of 25 Kenney icons, so cards share pictures and the Card Lab
+  already flags how few there are for 155 cards. Build small 3D icons in the same
+  palette and render them square and flat to `assets/icons/`. They cost nothing
+  at runtime — they are PNGs like the current ones — and they are ours. *Done
+  when:* at least eight new icons exist, cards reference them, and the Lab's icon
+  finding improves. **One batch per run**, and say in the review block which
+  cards you pointed at them.
+
+- [ ] **77. Props for the places you walk** `cloud-art` — the overworld is Kenney
+  hex tiles with Kenney trees, and the campfire, shop and reward plots are nearly
+  bare. Rocks, dead trees, banners, a shop awning, a campfire that reads as a
+  campfire from above. Small, cheap, in the palette. These are the lowest-risk
+  art the routine can make: nothing depends on their shape, so a weak one costs a
+  review rather than a broken fight. *Done when:* at least four props exist with
+  previews and review blocks, and the scene that wants them uses them.
+
 ## Working alongside the cloud routine
 
 Two of us push to `main`: the routine every two hours, and Nick-and-Claude in a
@@ -613,6 +646,11 @@ run: the harness needs a real rendered frame and says so in its own header.
 That is why every queue item is tagged:
 
 - `cloud-safe` — data and logic, provable by the test suite alone.
+- `cloud-art` — the routine CAN build it in Blender (headless, no display
+  needed) but cannot judge it. It must prove the model against the contract,
+  render previews, and write a block in `design/ART-REVIEW.md` saying what it
+  was going for and what it could not check. Never tick a `cloud-art` item off
+  as finished: a human has to look first.
 - `needs a screen` — the cloud routine must **skip it and move down the list**,
   not attempt it blind. Shipping a UI change nobody looked at has been wrong
   before, and doing it unattended is worse.
