@@ -14,6 +14,9 @@
 extends Node3D
 
 const CAST := "res://assets/3d/cast/"
+const ENV := "res://assets/3d/env/"
+## Every environment is built to this floor radius — see tools/blender/env.py.
+const ENV_RADIUS := 6.0
 ## Which model plays each BEAST, until real art exists. Hunters are not in here:
 ## they come from ui/cast.gd, which prefers your own art, and keeping a second
 ## copy of that mapping is what kept the Frog looking like a bunny on the
@@ -169,6 +172,7 @@ const SLOT_TINT := [Color(0.45, 0.95, 0.5), Color(0.55, 0.82, 1.0)]
 
 var _client: GameClient
 var _beast: Node3D
+var _env: Node3D
 var _beast_id := ""
 var _beast_box := AABB(Vector3(-1, 0, -1), Vector3(2, 2, 2))
 ## Height -> where a hunter at that Height actually stands, in rig space.
@@ -994,10 +998,44 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	# Grow the arena with its occupant. A 9-unit disc was generous under a bear and
 	# is a dinner plate under a Titan — it ran out mid-frame and left the bottom of
 	# the shot as void, which reads as a hole rather than as ground.
+	var want_r := maxf(9.0, maxf(_beast_box.size.x, _beast_box.size.z) * 1.5)
 	var ground := get_node_or_null("Ground") as CSGCylinder3D
 	if ground != null:
-		ground.radius = maxf(9.0, maxf(_beast_box.size.x, _beast_box.size.z) * 1.5)
+		ground.radius = want_r
+	_show_env(beast_id, want_r, ground)
 	_frame_beast()
+
+
+## The ground this particular beast is fought on.
+##
+## Every Titan used to stand on the same blank grey disc, which is why the
+## fights all looked like the same fight in a different costume — a beast reads
+## as colossal only next to something, and "something" was one hunter and a
+## circle.
+##
+## Same rule as the cast: `env/<beast_id>.glb` if you made one, nothing if you
+## have not, and the plain disc stays underneath either way so a beast with no
+## ground yet still has a floor. Making one is exporting a file.
+func _show_env(beast_id: String, want_r: float, ground: CSGCylinder3D) -> void:
+	if _env != null:
+		_env.queue_free()
+		_env = null
+	var path := ENV + beast_id + ".glb"
+	if beast_id == "" or not ResourceLoader.exists(path):
+		if ground != null:
+			ground.visible = true
+		return
+	_env = (load(path) as PackedScene).instantiate()
+	_rig.add_child(_env)
+	# tools/blender/env.py builds every floor to ENV_RADIUS. Scaling by a
+	# CONSTANT rather than by measured bounds is deliberate: an environment's
+	# apron and props deliberately overhang its floor, so its bounds say nothing
+	# useful about how big the floor is.
+	_env.scale = Vector3.ONE * (want_r / ENV_RADIUS)
+	_rig.move_child(_env, 0)
+	if ground != null:
+		# The disc would z-fight with the floor sitting on top of it.
+		ground.visible = false
 
 
 ## Scale a freshly added model so it stands `want` units tall, and report the

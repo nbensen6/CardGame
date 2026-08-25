@@ -408,8 +408,16 @@ class Build:
         co = [v.co for v in who.data.vertices]
         lo = mathutils.Vector((min(c.x for c in co), min(c.y for c in co), min(c.z for c in co)))
         hi = mathutils.Vector((max(c.x for c in co), max(c.y for c in co), max(c.z for c in co)))
-        k = height / (hi.z - lo.z)
-        mid = mathutils.Vector(((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, lo.z))
+        # height=None means "leave it where it was authored". A character is fitted
+        # to a common eye level so the cast reads as one set; a piece of GROUND is
+        # not a character — its size is the whole point of it, and normalising it
+        # would throw away the one measurement the game needs.
+        if height is None:
+            k = 1.0
+            mid = mathutils.Vector((0.0, 0.0, 0.0))
+        else:
+            k = height / (hi.z - lo.z)
+            mid = mathutils.Vector(((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, lo.z))
         for v in who.data.vertices:
             v.co = (v.co - mid) * k     # to scale, and standing on the floor
 
