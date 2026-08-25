@@ -23,6 +23,14 @@ func _init() -> void:
 	_test_combatant_block_absorbs_before_hp()
 	_test_combatant_hp_never_negative()
 	_test_boss_pattern_loops()
+	# backlog #40: beast moves that react to where you are
+	_test_backlog40_min_height_condition_picks_fallback_when_unmet()
+	_test_backlog40_at_sigil_condition_needs_a_hunter_on_it()
+	_test_backlog40_undefended_condition_reads_block()
+	_test_backlog40_missing_fallback_defaults_safely()
+	_test_backlog40_conditional_move_resolves_through_a_real_enemy_turn()
+	_test_backlog40_conditional_move_falls_back_off_the_sigil()
+	_test_backlog40_at_least_three_beasts_react_to_position()
 	# co-op combat rules
 	_test_play_card_spends_energy_and_damages_boss()
 	_test_cannot_overspend_energy()
@@ -268,6 +276,105 @@ func _test_boss_pattern_loops() -> void:
 	var third: Dictionary = b.current_move()  # wraps to first
 	_expect(first["value"] == 1 and second["value"] == 2 and third["value"] == 1,
 		"boss pattern loops")
+
+
+# --- Beast moves that react to where you are (backlog #40) ----------------
+
+func _test_backlog40_min_height_condition_picks_fallback_when_unmet() -> void:
+	var b := Boss.new("B", 30)
+	b.moves = [{"type": "attack_all", "value": 10,
+		"when": {"type": "min_height", "value": 5},
+		"fallback": {"type": "attack", "value": 14}}]
+	var low := b.current_move({"footholds": [2, 3], "blocks": [0, 0]})
+	var high := b.current_move({"footholds": [2, 6], "blocks": [0, 0]})
+	_expect(low["type"] == "attack" and int(low["value"]) == 14,
+		"min_height unmet falls back to the plain move")
+	_expect(high["type"] == "attack_all" and int(high["value"]) == 10,
+		"min_height met (one hunter at/above 5) fires the reactive move")
+
+
+func _test_backlog40_at_sigil_condition_needs_a_hunter_on_it() -> void:
+	var b := Boss.new("B", 30)
+	b.weak_point_height = 4
+	b.moves = [{"type": "attack", "value": 14,
+		"when": {"type": "at_sigil"},
+		"fallback": {"type": "attack", "value": 10}}]
+	var off_sigil := b.current_move({"footholds": [1, 3], "blocks": [0, 0]})
+	var on_sigil := b.current_move({"footholds": [1, 4], "blocks": [0, 0]})
+	_expect(int(off_sigil["value"]) == 10, "no hunter on the sigil -> fallback")
+	_expect(int(on_sigil["value"]) == 14, "a hunter camped on the sigil -> reactive bite")
+
+
+func _test_backlog40_undefended_condition_reads_block() -> void:
+	var b := Boss.new("B", 30)
+	b.moves = [{"type": "attack", "value": 17,
+		"when": {"type": "undefended", "value": 0},
+		"fallback": {"type": "attack", "value": 13}}]
+	var guarded := b.current_move({"footholds": [0, 0], "blocks": [5, 8]})
+	var exposed := b.current_move({"footholds": [0, 0], "blocks": [5, 0]})
+	_expect(int(guarded["value"]) == 13, "both hunters blocked -> fallback")
+	_expect(int(exposed["value"]) == 17, "a hunter with no block -> reactive move")
+
+
+## A move with "when" but no "fallback" is a data mistake (rule 7's own field
+## needs the sibling to mean anything) — must not crash, and defaults safe.
+func _test_backlog40_missing_fallback_defaults_safely() -> void:
+	var b := Boss.new("B", 30)
+	b.moves = [{"type": "attack", "value": 99, "when": {"type": "min_height", "value": 5}}]
+	var m := b.current_move({"footholds": [0, 0], "blocks": [0, 0]})
+	_expect(m["type"] == "attack" and int(m["value"]) == 0,
+		"a when with no fallback defaults to a harmless move, not a crash")
+
+
+## End to end through a real fight: the boss's actual enemy-turn resolution
+## (not just current_move()'s prediction) applies the reactive move once a
+## hunter is on the sigil, and the plain one otherwise — proving the wiring
+## through Combat.boss_context(), not just Boss in isolation.
+func _test_backlog40_conditional_move_resolves_through_a_real_enemy_turn() -> void:
+	var boss := Boss.new("Reactive", 500)
+	boss.weak_point_height = 4
+	boss.moves = [{"type": "attack", "value": 14,
+		"when": {"type": "at_sigil"},
+		"fallback": {"type": "attack", "value": 10}}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.players[0].foothold = boss.weak_point_height  # camped on the weak point
+	combat.end_turn(0)
+	combat.end_turn(1)  # boss acts against its telegraphed target (player 0)
+	_expect(combat.players[0].combatant.hp == 42 - 14,
+		"a hunter on the sigil provokes the reactive, harder move")
+
+
+func _test_backlog40_conditional_move_falls_back_off_the_sigil() -> void:
+	var boss := Boss.new("Reactive", 500)
+	boss.weak_point_height = 4
+	boss.moves = [{"type": "attack", "value": 14,
+		"when": {"type": "at_sigil"},
+		"fallback": {"type": "attack", "value": 10}}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	# player 0 (the telegraphed target) never leaves the ground -> condition unmet
+	combat.end_turn(0)
+	combat.end_turn(1)
+	_expect(combat.players[0].combatant.hp == 42 - 10,
+		"nobody on the sigil -> the plain fallback move fires")
+
+
+## Content-level sentinel (mirrors #17/#37's "at least N" checks): at least
+## three real beasts actually ship a "when" so this can't silently regress
+## back to zero, and every "when" it finds has the required "fallback".
+func _test_backlog40_at_least_three_beasts_react_to_position() -> void:
+	var reactive := 0
+	for kind in ["fight", "elite", "boss"]:
+		for id in Content.beast_pool(kind):
+			var b := Content.build_boss(String(id))
+			var has_when := false
+			for m in b.moves:
+				if (m as Dictionary).has("when"):
+					_expect((m as Dictionary).has("fallback"),
+						"beast '%s' pairs every 'when' with a 'fallback'" % id)
+					has_when = true
+			if has_when:
+				reactive += 1
+	_expect(reactive >= 3, "at least three beasts react to hunter position (found %d)" % reactive)
 
 
 # --- Co-op combat rules ---------------------------------------------------

@@ -279,7 +279,7 @@ Ordered. Source in brackets.
   a stats block accumulates through the run, survives save and load, and is
   tested.
 
-- [ ] **40. Beast moves that react to where you are** `cloud-safe` — every move
+- [x] **40. Beast moves that react to where you are** `cloud-safe` — every move
   fires on a fixed rotation regardless of the board. A Titan cannot notice that
   you are clinging to its sigil. One optional `when` condition on a move (above
   or below a height, at the sigil, a hunter undefended) turns the climb into
@@ -409,6 +409,47 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-25** — #40 Beast moves that react to where you are: one optional
+  `when` field on a boss move — `{"type": "min_height"|"max_height"|"at_sigil"
+  |"undefended", "value": int}` — checked against every hunter's foothold/Block
+  at the moment the move comes up in the pattern; a move with `when` also
+  carries a sibling `fallback` move (same `{type, value}` shape) used when the
+  condition doesn't hold, and a move with no `when` fires exactly as before.
+  All in `Boss.current_move(context)`, one generic evaluator (`_condition_met`)
+  reused by all four condition types — no per-beast code, matches rule 7.
+  `context` (`{footholds: [...], blocks: [...]}`, one entry per hunter) is
+  built by a new public `Combat.boss_context()`, used at every real call site:
+  `incoming_for()`'s prediction, `_enemy_turn()`'s actual resolution, AND
+  `game_host.gd`'s telegraphed `"intent"` sent to clients — the last one
+  mattered as much as the other two, since a client showing the fallback's
+  icon while the boss was about to fire the reactive move would be a lying
+  telegraph, the exact thing CLAUDE.md §5's "no hidden information" spirit
+  argues against. Also threaded into `balance_sim.gd`'s `_threatened()` helper
+  for the same reason (consistency, not required by the item). Three beasts,
+  one per pool so the mechanic isn't confined to a single difficulty band: the
+  Crag Pup (`fight`) bites harder (14 vs 10) if a hunter is camped on its
+  sigil; the Frost Sentinel (`elite`) answers a hunter at/above its second
+  ledge (Height 5) with a sweeping `attack_all` (10 to both) instead of its
+  usual single `attack` (14); the Stone Warden (`boss`) punishes an undefended
+  hunter with a heavier hit (17 vs 13). Each reactive value is a genuine swing
+  in both directions from the move it replaced (not just the fallback
+  restating the old number), and every fallback matches what that move used
+  to do unconditionally — so a fight where the condition never triggers plays
+  exactly as it did before this item, and `balance_sim.gd`'s printed win rate
+  (40% coordinated at A0 this run, 42% last session — ordinary run-to-run
+  sim variance, not this item) is a smoke-test confirmation, not something
+  tuned to. 7 new tests: each condition type in isolation (met and unmet) via
+  `Boss.current_move()` directly, a move with `when` but no `fallback`
+  defaulting safely instead of crashing, a full `Combat.end_turn()` round trip
+  proving the REAL enemy-turn resolution (not just the prediction) picks the
+  reactive move with a hunter on the sigil and the fallback without one, and a
+  content sentinel (mirrors #17/#37's "at least N" pattern) walking every real
+  beast's data confirming at least three react and that every `when` it finds
+  is paired with a `fallback`. `run_tests.gd` all green (267 assertions incl.
+  the seven new ones); `node tools/cardlab/build.js` unaffected (bosses.json
+  isn't part of the card/relic/event reachability graph it checks) — ran
+  clean regardless (154 cards, `unreachable: 0`); `balance_sim.gd` ran clean
+  as a smoke test only.
 - **2026-08-25** — #39 A run summary worth showing at the end: the data half
   only, as scoped — no view code touched. Three counters on `Combat`
   (`damage_dealt_total`, `cards_played_total`, `highest_climb`), each fed by

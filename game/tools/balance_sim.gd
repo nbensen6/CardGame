@@ -326,7 +326,7 @@ func _campfire(run: Run, slot: int, policy: String) -> void:
 # --- helpers --------------------------------------------------------------
 
 func _threatened(c: Combat, pidx: int) -> int:
-	var m := c.boss.current_move()
+	var m := c.boss.current_move(c.boss_context())
 	var v := int(m.get("value", 0)) + c.boss.strength
 	match String(m.get("type", "")):
 		"attack", "leech":

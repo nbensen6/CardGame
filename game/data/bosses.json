@@ -1,5 +1,5 @@
 {
-  "_comment": "Titans are DATA (CLAUDE.md §11). A run fights them in order (see Run.ENCOUNTERS). Move types: attack (hits the telegraphed hunter), attack_all (sweeps BOTH — shakes each hunter DOWN to the ledge below, and rewards blocking/Cover), block (guards), enrage (permanently +value to its attacks this fight — a soft timer that rewards focus-fire). weak_point_height = the sigil Height; ledges = safe rest Heights on the way up (climb between them before your grip timer runs out, SotC-style). limiter = {type, value}: one generic rule this Titan bends against a specific strategy, applied by Combat._apply_limiter() at the start of its turn (design/sts2-comparison.md §3.4) — 'wound_decay' sheds `value` Wound/turn (punishes stack-and-wait Poison), 'sigil_fatigue' chips a hunter camped at the sigil more than `value` rounds running, 'height_split' chips a hunter more than `value` Height above their ally (punishes one hunter hoarding the climb). Tuned for two players; retune freely during balance. 'thorns' (backlog #36, static): a hunter who deals card damage to this Titan takes this much back (Combat._damage_boss). 'artifact' (backlog #36, static seed, spent as the fight goes — see Boss.apply_dict): wards this many of the hunters' Expose/Poison/Frail applications before they land (Combatant.try_block_debuff). 'pools' groups beasts by map node type: quick fights, elites, and the act-ending Titans.",
+  "_comment": "Titans are DATA (CLAUDE.md §11). A run fights them in order (see Run.ENCOUNTERS). Move types: attack (hits the telegraphed hunter), attack_all (sweeps BOTH — shakes each hunter DOWN to the ledge below, and rewards blocking/Cover), block (guards), enrage (permanently +value to its attacks this fight — a soft timer that rewards focus-fire). weak_point_height = the sigil Height; ledges = safe rest Heights on the way up (climb between them before your grip timer runs out, SotC-style). limiter = {type, value}: one generic rule this Titan bends against a specific strategy, applied by Combat._apply_limiter() at the start of its turn (design/sts2-comparison.md §3.4) — 'wound_decay' sheds `value` Wound/turn (punishes stack-and-wait Poison), 'sigil_fatigue' chips a hunter camped at the sigil more than `value` rounds running, 'height_split' chips a hunter more than `value` Height above their ally (punishes one hunter hoarding the climb). Tuned for two players; retune freely during balance. 'thorns' (backlog #36, static): a hunter who deals card damage to this Titan takes this much back (Combat._damage_boss). 'artifact' (backlog #36, static seed, spent as the fight goes — see Boss.apply_dict): wards this many of the hunters' Expose/Poison/Frail applications before they land (Combatant.try_block_debuff). 'pools' groups beasts by map node type: quick fights, elites, and the act-ending Titans. A move can also carry 'when' (backlog #40): {type: 'min_height'|'max_height'|'at_sigil'|'undefended', value: int}, checked against every hunter's foothold/Block at the moment the move comes up in the pattern (Boss.current_move(context), context built by Combat.boss_context()) — true if ANY hunter meets it. When 'when' is present the move also needs a sibling 'fallback' move (same {type, value} shape) used instead when the condition fails; a move with no 'when' always fires, unconditionally, exactly as before this field existed.",
   "bosses": {
     "stone_warden": {
       "name": "The Stone Warden",
@@ -16,7 +16,9 @@
         },
         {
           "type": "attack",
-          "value": 13
+          "value": 17,
+          "when": {"type": "undefended", "value": 0},
+          "fallback": {"type": "attack", "value": 13}
         },
         {
           "type": "attack_all",
@@ -131,7 +133,9 @@
         },
         {
           "type": "attack",
-          "value": 10
+          "value": 14,
+          "when": {"type": "at_sigil"},
+          "fallback": {"type": "attack", "value": 10}
         },
         {
           "type": "attack_all",
@@ -232,8 +236,10 @@
           "value": 8
         },
         {
-          "type": "attack",
-          "value": 14
+          "type": "attack_all",
+          "value": 10,
+          "when": {"type": "min_height", "value": 5},
+          "fallback": {"type": "attack", "value": 14}
         },
         {
           "type": "enrage",

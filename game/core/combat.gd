@@ -390,7 +390,7 @@ func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PER
 ## Returns {raw, through}: damage aimed at this hunter, and what lands past Block.
 func incoming_for(pi: int) -> Dictionary:
 	var ps: PlayerState = players[pi]
-	var move := boss.current_move()
+	var move := boss.current_move(boss_context())
 	var value := int(move.get("value", 0)) + boss.strength
 	var raw := 0
 	match String(move.get("type", "")):
@@ -799,6 +799,19 @@ func _track_climb() -> void:
 	for ps in players:
 		highest_climb = maxi(highest_climb, ps.foothold)
 
+## The board state a boss move's "when" condition (backlog #40) reads — one
+## foothold and one Block entry per hunter, in `players` order. Public: the
+## telegraphed intent shown to a client (game_host.gd) must resolve a
+## conditional move the same way _enemy_turn() will actually resolve it, or
+## the intent icon would lie about what's coming.
+func boss_context() -> Dictionary:
+	var footholds: Array = []
+	var blocks: Array = []
+	for ps in players:
+		footholds.append(ps.foothold)
+		blocks.append(ps.combatant.block)
+	return {"footholds": footholds, "blocks": blocks}
+
 ## The boss's own telegraphed attack lands on a hunter, then Thorns
 ## (backlog #36) on that hunter reflects back — the debuff axis that punishes
 ## the act of ATTACKING, not just being hit. Deliberately only wraps the
@@ -825,7 +838,7 @@ func _enemy_turn() -> void:
 	if _check_end():
 		return
 	boss.block = 0
-	var move := boss.current_move()
+	var move := boss.current_move(boss_context())
 	var value := int(move.get("value", 0))
 	match String(move.get("type", "")):
 		"attack":

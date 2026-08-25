@@ -25,11 +25,61 @@ var limiter: Dictionary = {}   # {"type": ..., "value": ...} — a rule this Tit
                                 # (design/sts2-comparison.md §3.4). {} = none.
 var _move_index: int = 0
 
+## A move in `moves` can carry an optional "when" condition (backlog #40):
+## {"type": "min_height"|"max_height"|"at_sigil"|"undefended", "value": int}.
+## When present, the move only fires if the condition holds against the
+## board `context` passed to current_move() — {"footholds": [...], "blocks":
+## [...]}, one entry per hunter, built by Combat.boss_context(). If it does
+## not hold, the move's own "fallback" Dictionary is used instead (or a bare
+## attack for 0 if a move sets "when" without a "fallback"). A move with no
+## "when" always fires, exactly as before this existed.
+const COND_MIN_HEIGHT := "min_height"
+const COND_MAX_HEIGHT := "max_height"
+const COND_AT_SIGIL := "at_sigil"
+const COND_UNDEFENDED := "undefended"
+
 ## The move the boss will perform on its next enemy turn (telegraphed now).
-func current_move() -> Dictionary:
+## `context` is only consulted for moves that set "when" — omit it (or pass
+## {}) to read the pattern's plain, unconditional shape.
+func current_move(context: Dictionary = {}) -> Dictionary:
 	if moves.is_empty():
 		return {"type": "attack", "value": 0}
-	return moves[_move_index % moves.size()]
+	var move: Dictionary = moves[_move_index % moves.size()]
+	if move.has("when") and not _condition_met(move["when"], context):
+		return move.get("fallback", {"type": "attack", "value": 0})
+	return move
+
+## Evaluate one "when" condition against the board context. Any hunter
+## meeting it is enough — these are reactions to the CLIMB, not to a specific
+## hunter, so either one clinging to the sigil (say) is enough to provoke it.
+func _condition_met(cond: Dictionary, context: Dictionary) -> bool:
+	var footholds: Array = context.get("footholds", [])
+	var blocks: Array = context.get("blocks", [])
+	match String(cond.get("type", "")):
+		COND_MIN_HEIGHT:
+			for h in footholds:
+				if int(h) >= int(cond.get("value", 0)):
+					return true
+			return false
+		COND_MAX_HEIGHT:
+			for h in footholds:
+				if int(h) <= int(cond.get("value", 0)):
+					return true
+			return false
+		COND_AT_SIGIL:
+			if weak_point_height <= 0:
+				return false
+			for h in footholds:
+				if int(h) == weak_point_height:
+					return true
+			return false
+		COND_UNDEFENDED:
+			for b in blocks:
+				if int(b) <= int(cond.get("value", 0)):
+					return true
+			return false
+		_:
+			return false
 
 ## Advance the pattern after the boss acts.
 func advance_move() -> void:
