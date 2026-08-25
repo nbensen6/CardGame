@@ -2172,7 +2172,14 @@ func _render_energy(p: Dictionary) -> void:
 	style.bg_color = Color(0.16, 0.12, 0.07, 0.92) if out > 0 else Color(0.11, 0.1, 0.1, 0.85)
 	style.set_border_width_all(3)
 	style.border_color = Color(0.82, 0.66, 0.34) if out > 0 else Color(0.34, 0.32, 0.30)
-	style.set_corner_radius_all(48)   # a disc, not a card — it should read as an orb
+	# A rounded SQUARE, not a disc. It was a disc — "it should read as an orb" —
+	# right up until the osu face started drawing dark circles with a gold rim and
+	# a big number in them, at which point the most permanent thing on the HUD and
+	# the most urgent thing on the screen were speaking the same language (Nick,
+	# 2026-08-25: "the number in the corner is confusing a bit. its the same
+	# design as the osu numbers"). Two things cannot share one shape, and the one
+	# you have to react to in half a second wins it.
+	style.set_corner_radius_all(14)
 	_energy_orb.add_theme_stylebox_override("panel", style)
 	_energy_label.text = str(out)
 	_energy_label.add_theme_color_override("font_color",

@@ -375,6 +375,22 @@ func _capture() -> void:
 		_report_visibility(current_scene)
 	if _state in ["3dosu", "3dbar", "3dslide"]:  # open a timed card's window and hold it there
 		var tv := current_scene
+		if _state == "3dosu":
+			# Partway up, which is where the path gets long: from a card at the
+			# bottom of the screen to a hold near a Titan's sigil is most of a
+			# frame, and that is the case where a note used to fall off the top.
+			var cu: Combat = Session.host._run.combat
+			cu.players[0].foothold = maxi(int(cu.boss.weak_point_height * 0.55), 1)
+			cu.players[1].foothold = maxi(int(cu.boss.weak_point_height * 0.35), 1)
+			Session.host._broadcast_state()
+			await process_frame
+			await process_frame
+			# And with the camera CUT IN on the hunter, which is where this really
+			# bites: picking someone pulls the shot to ~7 units, and from there the
+			# hold a card reaches for is a long way outside the frame.
+			tv.call("_focus_camera")
+			tv.call("snap_camera")
+			await process_frame
 		if _state == "3dslide":
 			# Every timed card that climbs enough to BE a slider lives in the
 			# reward pool, so an opening hand never holds one. Deal one.
@@ -417,6 +433,22 @@ func _capture() -> void:
 				var one: PackedVector3Array = tv.call("_hold_points", hand[timed_at], 1, Vector2(640, 600))
 				print("TIMING notes: live=%d  a one-window card would get %d"
 					% [(circle.get("_notes") as PackedVector3Array).size(), one.size()])
+				# Every note must be ON the screen. One you cannot see is not a
+				# timing test, it is a guaranteed miss.
+				var frame := Rect2(Vector2.ZERO, (circle as Control).size)
+				var off: Array[String] = []
+				var raw_off: Array[String] = []
+				var cam3: Camera3D = tv.get("_cam")
+				var live_notes: PackedVector3Array = circle.get("_notes")
+				for i in range(live_notes.size()):
+					var drawn: Vector2 = circle.call("_screen", i)
+					if not frame.has_point(drawn):
+						off.append(str(i + 1))
+					if not frame.has_point(cam3.unproject_position(live_notes[i])):
+						raw_off.append(str(i + 1))
+				print("TIMING on screen: %s  (unclamped would lose: %s)" % [
+					"all" if off.is_empty() else "MISSING " + ", ".join(off),
+					"none" if raw_off.is_empty() else ", ".join(raw_off)])
 			if _state == "3dslide" and circle != null:
 				# Press on the beat, then walk the follower down the path and let
 				# go at three places: held to the end, let go just past the rescue

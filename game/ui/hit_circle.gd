@@ -230,9 +230,19 @@ func _finish(quality: int) -> void:
 	resolved.emit(quality)
 
 
-## Screen position of note `i`, or null-ish if it is behind the camera.
+## Screen position of note `i`, kept ON the screen.
+##
+## The path runs from the card up to the hold, and on a tall beast the far end
+## of it can be above the top of the frame — so you would tap 1 and 2 and never
+## find 3 (Nick, 2026-08-25). A note you cannot see is not a timing test, it is
+## a guaranteed miss. Clamping here rather than where the path is built means it
+## stays true while the camera moves under it, and every reader — notes, follow
+## points, slider body, judgement bursts — gets the corrected position for free.
 func _screen(i: int) -> Vector2:
-	return _cam.unproject_position(_notes[i])
+	var at := _cam.unproject_position(_notes[i])
+	var pad := TARGET_RADIUS * START_SCALE * 0.5 + 8.0   # room for the approach ring
+	return Vector2(clampf(at.x, pad, maxf(size.x - pad, pad)),
+		clampf(at.y, pad, maxf(size.y - pad, pad)))
 
 
 func _visible_note(i: int) -> bool:
@@ -272,7 +282,7 @@ func _screen_path() -> PackedVector2Array:
 	for i in range(_notes.size()):
 		if _cam.is_position_behind(_notes[i]):
 			return PackedVector2Array()   # any point behind us and the path is a lie
-		out.append(_cam.unproject_position(_notes[i]))
+		out.append(_screen(i))
 	return out
 
 
