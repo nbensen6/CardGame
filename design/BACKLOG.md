@@ -332,7 +332,7 @@ Ordered. Source in brackets.
   a two-peer test. *Done when:* each of those six is exercised through a real
   host/client pair, including what the ALLY should and should not see.
 
-- [ ] **46. A robustness sweep that is not balance tuning** `cloud-safe` — we
+- [x] **46. A robustness sweep that is not balance tuning** `cloud-safe` — we
   have `balance_sim.gd`, which the standing rule says not to tune to, and that
   rule has left the whole simulation unused. But there is a question it can
   answer that has nothing to do with win rates: does a run ever get STUCK. No
@@ -680,6 +680,31 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-25** — #46 A robustness sweep that is not balance tuning:
+  `tools/robustness_sweep.gd`, a sibling to `balance_sim.gd` that measures
+  nothing about skill — it plays 216 complete seeded runs (all 6 character
+  pairs x ascension 0/4/8 x 6 seeds x a "naive" and a "random" legal-action
+  policy) and asserts, at every MAP/EVENT/CAMPFIRE/SHOP/REWARD/BOON/COMBAT
+  decision point, that a legal action exists and the run reaches WON/LOST
+  within a 4000-step guard. It found zero real dead ends, but it did catch
+  one false one worth writing down: the sweep's own end-of-turn check first
+  read `ended_turn` immediately after calling `Combat.end_turn(pi)` and
+  flagged every game where the SECOND hunter to act ended their turn, because
+  for the last player `end_turn()` runs the enemy turn synchronously and, if
+  the fight continues, `_begin_round()` resets `ended_turn` back to false for
+  the new round right there — so the flag being false a moment later is the
+  round working correctly, not a stuck hunter. Fixed by also treating a
+  round-number change or the fight ending as proof the turn resolved. Also
+  added five fast, deterministic regression tests to `run_tests.gd` pinning
+  the specific escape hatches the sweep depends on (campfire rest at
+  MIN_DECK, leaving an empty shop, every event having a choice, skipping an
+  empty reward, ending a turn with an empty hand and no energy) so a
+  regression here fails the always-on suite immediately rather than waiting
+  for someone to run the sweep by hand. `run_tests.gd`: all green, 297
+  assertions (292 prior + 5 new). `balance_sim.gd` run as a smoke test only,
+  unchanged from prior sessions (36% coordinated at A0) — nothing here
+  touches drafting or spending.
 
 - **2026-08-25** — #45 Prove the new mechanics cross the client/server
   boundary: checked all six named in the item against `game_host.gd`/

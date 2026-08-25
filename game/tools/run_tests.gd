@@ -263,6 +263,12 @@ func _init() -> void:
 	_test_backlog45_retain_and_innate_keywords_reach_the_owners_hand()
 	_test_backlog45_named_holds_cross_to_both_peers_identically()
 	_test_backlog45_graded_timing_quality_reaches_the_host_and_the_preview()
+	# backlog #46: a robustness sweep that is not balance tuning
+	_test_backlog46_campfire_rest_always_legal_even_at_min_deck()
+	_test_backlog46_shop_leave_always_legal_with_nothing_affordable()
+	_test_backlog46_every_event_has_at_least_one_choice()
+	_test_backlog46_empty_reward_choices_can_still_be_skipped()
+	_test_backlog46_end_turn_always_works_with_empty_hand()
 
 	print("")
 	if _failures == 0:
@@ -4337,6 +4343,67 @@ func _first_strike() -> Card:
 	return Card.from_dict({"id": "first_strike", "name": "First Strike", "type": "attack", "cost": 1, "damage": 5, "innate": true})
 func _crippling_blow() -> Card:
 	return Card.from_dict({"id": "crippling_blow", "name": "Crippling Blow", "type": "attack", "cost": 1, "damage": 5, "frail": 2, "target": "enemy"})
+
+
+# --- backlog #46: a robustness sweep that is not balance tuning -----------
+# Fast, deterministic locks on the specific dead-end shapes the sweep tool
+# (tools/robustness_sweep.gd) exists to catch across many random seeds. These
+# don't replace the sweep — they pin the exact escape hatches it depends on,
+# so a regression here fails run_tests.gd immediately instead of waiting for
+# someone to run the (expensive, non-CI) sweep by hand.
+
+func _test_backlog46_campfire_rest_always_legal_even_at_min_deck() -> void:
+	var run := Run.new([_deck_of(_slash, Run.MIN_DECK), _deck_of(_slash, Run.MIN_DECK)],
+		["A", "B"], 4242, [{}, {}])
+	run.start()
+	run._begin_campfire()
+	var remove_refused: bool = not run.campfire_action(0, "remove", 0)  # already at MIN_DECK
+	var rest_ok: bool = run.campfire_action(0, "rest")
+	_expect(remove_refused and rest_ok,
+		"a campfire at MIN_DECK refuses to remove further but rest always stays legal")
+
+
+func _test_backlog46_shop_leave_always_legal_with_nothing_affordable() -> void:
+	var run := _map_run()
+	run.gold = 0
+	run._begin_shop()
+	var nothing_affordable := true
+	for item in run.shop_stock:
+		if run.gold >= int(item["price"]):
+			nothing_affordable = false
+	var left := run.leave_shop()
+	_expect(nothing_affordable and left,
+		"a shop with zero gold and nothing affordable can still be left")
+
+
+func _test_backlog46_every_event_has_at_least_one_choice() -> void:
+	var ok := true
+	var bad := ""
+	for id in Content.list_events():
+		var e := Content.make_event(String(id))
+		if (e.get("choices", []) as Array).is_empty():
+			ok = false
+			bad = String(id)
+			break
+	_expect(ok, "every event has at least one choice (found empty: '%s')" % bad)
+
+
+func _test_backlog46_empty_reward_choices_can_still_be_skipped() -> void:
+	var run := _map_run()
+	run._begin_reward("card")
+	run.reward_choices[0] = []  # the shape a fully-drained/gated pool would produce
+	var skipped := run.skip_reward(0)
+	_expect(skipped and bool(run.reward_picked[0]),
+		"a hunter offered zero reward choices can still skip the reward")
+
+
+func _test_backlog46_end_turn_always_works_with_empty_hand() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(200))
+	combat.players[0].hand.clear()
+	combat.players[0].energy = 0
+	combat.end_turn(0)
+	_expect(combat.players[0].ended_turn,
+		"a hunter with no cards and no energy can still end their turn")
 
 
 func _expect(cond: bool, name: String) -> void:
