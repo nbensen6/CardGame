@@ -264,7 +264,7 @@ Ordered. Source in brackets.
   at least four events grant, take, or gamble a potion, and the content
   integrity test proves every potion id they name resolves.
 
-- [ ] **38. A seed you can share** `cloud-safe` — runs are seeded, but the seed
+- [x] **38. A seed you can share** `cloud-safe` — runs are seeded, but the seed
   is an internal number nobody can see or set. Being able to type one in is how
   a bug report becomes reproducible and how two people race the same run — worth
   far more to us than to a single-player game, because we are co-op. *Done
@@ -409,6 +409,40 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-25** — #38 A seed you can share: the engine already accepted a
+  seed at construction (`Run.new`/`GameHost.new` both take `seed_value`) and
+  already drew every map/shop/reward roll from one seeded `RandomNumberGenerator`
+  (confirmed by grepping `run.gd` for every `randi`/`rng` call — all of them go
+  through `_rng`, none bypass it), so "started from a given one" was already
+  true; what was actually missing was "readable" and a test proving the
+  determinism end-to-end rather than assuming it. Added `Run.seed_value()`
+  (a public getter over the previously-private `_seed`, same trick as every
+  other read-only accessor already on the class) and threaded it into
+  `GameHost._build_shared()`'s base dict as `"seed"` — the ONE snapshot key
+  every phase already carries unconditionally, so it reaches a peer whether
+  they're on the map, mid-fight, or in a shop, not just at the phases that
+  happened to need it before. Left `menu.gd`'s three `GameHost.new(transport,
+  0, ...)` call sites alone (they hard-code seed 0 = "roll randomly") — a
+  text field to type a seed into before starting a run is the visible half of
+  this and needs a screen to place and verify; the "done when" only asked for
+  readable + startable-from + a determinism proof, all three of which are now
+  true with zero view code. Two new tests:
+  `_test_backlog38_same_seed_reproduces_map_shop_and_rewards` builds two Runs
+  from the same seed and confirms identical `map.rows`, then (reaching into
+  `_begin_shop`/`_begin_reward` directly the same way `_test_gold_and_shop`
+  and friends already do, rather than fighting through a real fight to get
+  past row 0 of the map) identical `shop_stock` and `reward_choices`, plus a
+  third Run from a different seed diverging on the map — extending the
+  existing map-only determinism test (`_test_map_is_deterministic_per_seed`)
+  rather than replacing it, since that one still isolates `RunMap` alone;
+  `_test_session_shared_state_exposes_the_seed` proves the seed actually
+  rides the host->client snapshot boundary (two `_make_session()` calls at
+  seeds 42 and 99, asserting each client's `shared["seed"]` matches what the
+  session was built with) rather than just existing as an unused getter.
+  `run_tests.gd` all green (243 assertions incl. the two new ones);
+  `balance_sim.gd` ran clean as a smoke test only — nothing here touches how
+  the sim's policies draft or spend, so the printed win rates (42% coordinated
+  at A0, same shape as prior sessions' runs) are unchanged, not tuned to.
 - **2026-08-25** — #37 Events that know potions exist: three new effect keys in
   `Run._apply_effect_block()`, each reusing an existing shape rather than
   inventing a mechanic — `potion` (a named id) mirrors `curse_card` naming a

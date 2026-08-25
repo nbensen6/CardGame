@@ -52,6 +52,7 @@ func _init() -> void:
 	# the run map (branching route)
 	_test_map_generates_connected_rows()
 	_test_map_is_deterministic_per_seed()
+	_test_backlog38_same_seed_reproduces_map_shop_and_rewards()
 	_test_run_walks_the_map()
 	_test_rest_node_heals_and_returns_to_map()
 	_test_event_choice_applies_effects()
@@ -228,6 +229,7 @@ func _init() -> void:
 	_test_host_autosaves_and_resumes()
 	_test_host_autosaves_and_resumes_mid_combat()
 	_test_solo_controls_both_hunters()
+	_test_session_shared_state_exposes_the_seed()
 
 	print("")
 	if _failures == 0:
@@ -528,6 +530,32 @@ func _test_map_is_deterministic_per_seed() -> void:
 	var same := str(m1.rows) == str(m2.rows)
 	var different := str(m1.rows) != str(m3.rows)
 	_expect(same and different, "the same seed maps the same route; a new seed re-rolls it")
+
+
+## Backlog #38: a shareable seed is only worth sharing if replaying it actually
+## reproduces the run — not just the map (already proven above) but the shop
+## and reward rolls too, since those are the other two places `_rng` is drawn
+## from during a run. Reaches into `_begin_shop`/`_begin_reward` directly
+## (the same pattern `_test_gold_and_shop` etc. already use) rather than
+## walking the whole map through combat, since row 0 of every act is always a
+## fight and resolving one isn't what this test is about.
+func _test_backlog38_same_seed_reproduces_map_shop_and_rewards() -> void:
+	var run_a := Run.new([_deck_of(_slash, 10), _deck_of(_slash, 10)], ["A", "B"], 2026, [{}, {}])
+	var run_b := Run.new([_deck_of(_slash, 10), _deck_of(_slash, 10)], ["A", "B"], 2026, [{}, {}])
+	var same_map: bool = str(run_a.map.rows) == str(run_b.map.rows)
+	var same_seed_readback: bool = run_a.seed_value() == 2026 and run_b.seed_value() == 2026
+	run_a.map_row = 0
+	run_a._begin_shop()
+	run_b.map_row = 0
+	run_b._begin_shop()
+	var same_shop: bool = str(run_a.shop_stock) == str(run_b.shop_stock)
+	run_a._begin_reward("relic")
+	run_b._begin_reward("relic")
+	var same_reward: bool = str(run_a.reward_choices) == str(run_b.reward_choices)
+	var run_c := Run.new([_deck_of(_slash, 10), _deck_of(_slash, 10)], ["A", "B"], 777, [{}, {}])
+	var different_map: bool = str(run_a.map.rows) != str(run_c.map.rows)
+	_expect(same_map and same_seed_readback and same_shop and same_reward and different_map,
+		"two runs from the same seed roll identical maps, shops and rewards; a new seed re-rolls all three")
 
 
 func _test_run_walks_the_map() -> void:
@@ -3377,6 +3405,18 @@ func _make_session(seed_value: int = 42) -> Dictionary:
 			break
 		c0.pick_node(int(avail[0]))
 	return {"transport": transport, "host": host, "c0": c0, "c1": c1}
+
+
+## Backlog #38: the seed has to actually reach a peer's snapshot to be
+## "readable" for real — a getter nobody's view ever calls doesn't help
+## someone trying to read it off screen and share it.
+func _test_session_shared_state_exposes_the_seed() -> void:
+	var s42 := _make_session(42)
+	var s99 := _make_session(99)
+	var c0_42: GameClient = s42["c0"]
+	var c0_99: GameClient = s99["c0"]
+	_expect(int(c0_42.shared["seed"]) == 42 and int(c0_99.shared["seed"]) == 99,
+		"the run's seed rides along in the shared snapshot, matching what it was started with")
 
 
 func _test_session_both_players_join() -> void:

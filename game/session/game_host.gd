@@ -252,6 +252,9 @@ func _build_shared() -> Dictionary:
 		# Relic effects the CLIENT owns (the grip timer and timing windows are
 		# client-side skill, so their relics have to travel in the snapshot).
 		"mods": _run.relic_totals(),
+		# Readable so it can be shown and shared (backlog #38) — a bug report or
+		# a race between two co-op groups needs a number a player can type back in.
+		"seed": _run.seed_value(),
 	}
 	if _run.phase == Run.Phase.MAP and _run.map != null:
 		s["map"] = {

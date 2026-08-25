@@ -105,6 +105,11 @@ func total_encounters() -> int:
 func is_over() -> bool:
 	return phase == Phase.WON or phase == Phase.LOST
 
+## The run's seed, readable so it can be shown and shared (backlog #38). 0
+## means "rolled randomly at start" (see _init) rather than a real seed.
+func seed_value() -> int:
+	return _seed
+
 
 # --- saving ---------------------------------------------------------------
 #
