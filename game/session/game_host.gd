@@ -26,15 +26,17 @@ var _solo: bool = false
 var _solo_chars: Array = ["", ""]
 var _ascension: int = 0  # difficulty tier chosen at the menu
 var _unlocked_wins: int = Content.UNLOCKED_ALL  # career-total gate on locked content (backlog #42)
+var _daily_date: String = ""  # set => start_new_run() rolls a shared daily (backlog #49)
 
 func _init(transport: Transport, seed_value: int = 0, required_players: int = 2, solo: bool = false,
-		ascension: int = 0, unlocked_wins: int = Content.UNLOCKED_ALL) -> void:
+		ascension: int = 0, unlocked_wins: int = Content.UNLOCKED_ALL, daily_date: String = "") -> void:
 	_ascension = ascension
 	_unlocked_wins = unlocked_wins
 	_transport = transport
 	_seed = seed_value
 	_solo = solo
 	_required = 1 if solo else required_players
+	_daily_date = daily_date
 	_transport.command_received.connect(_on_command)
 	_transport.peer_left.connect(_on_peer_left)
 
@@ -64,7 +66,10 @@ func start_new_run() -> void:
 		decks.append(Content.character_deck(cid))
 		names.append(Content.character_name(cid))
 		passives.append(Content.character_passive(cid))
-	_run = Run.new(decks, names, _seed, passives, _ascension, _unlocked_wins)
+	if _daily_date != "":
+		_run = Run.new_daily(decks, names, _daily_date, passives, _unlocked_wins)
+	else:
+		_run = Run.new(decks, names, _seed, passives, _ascension, _unlocked_wins)
 	_run.start()
 	_broadcast_state()
 
@@ -267,6 +272,7 @@ func _build_shared() -> Dictionary:
 		# Readable so it can be shown and shared (backlog #38) — a bug report or
 		# a race between two co-op groups needs a number a player can type back in.
 		"seed": _run.seed_value(),
+		"is_daily": _run.is_daily,
 	}
 	if _run.phase == Run.Phase.MAP and _run.map != null:
 		s["map"] = {

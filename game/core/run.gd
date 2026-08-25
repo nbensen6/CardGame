@@ -37,6 +37,10 @@ const SAVE_VERSION := 2
 const RARITY_WEIGHT := {"common": 55, "uncommon": 35, "rare": 10}
 const HEAL_BETWEEN := 4  # hunters recover a little after each beast falls
 const PLAYER_HP := 42
+## Ascension every daily run is pinned to (backlog #49) — a shared seed only
+## races fair if everyone plays the same difficulty, and 0 is the one tier
+## every player has unlocked regardless of career wins (#42).
+const DAILY_ASCENSION := 0
 
 var phase: int = Phase.MAP
 var encounter_index: int = 0     # which act/Titan we're on (display + seeding)
@@ -73,6 +77,8 @@ var stats: Dictionary = {
 	"damage_dealt": 0, "highest_climb": 0, "cards_played": 0,
 	"turns_taken": 0, "beasts_felled": 0, "died_to": "",
 }
+var is_daily: bool = false      # true when the seed below came from a shared date (backlog #49)
+var daily_date: String = ""     # the date string it was derived from, e.g. "2026-08-25"
 var reward_kind: String = "card" # "card" | "relic" — what this REWARD offers
 var reward_choices: Array = []   # per hunter: Array of card OR relic choices (by reward_kind)
 var reward_picked: Array = []    # Array[bool]
@@ -84,12 +90,15 @@ var _seed: int
 var _rng := RandomNumberGenerator.new()
 
 func _init(p_decks: Array, p_names: Array, seed_value: int = 0, p_passives: Array = [],
-		p_ascension: int = 0, p_unlocked_wins: int = Content.UNLOCKED_ALL) -> void:
+		p_ascension: int = 0, p_unlocked_wins: int = Content.UNLOCKED_ALL,
+		p_is_daily: bool = false, p_daily_date: String = "") -> void:
 	_seed = seed_value
 	player_passives = p_passives
 	ascension = p_ascension
 	_asc = Content.ascension_mods(ascension)
 	_unlocked_wins = p_unlocked_wins
+	is_daily = p_is_daily
+	daily_date = p_daily_date
 	if seed_value == 0:
 		_rng.randomize()
 	else:
@@ -119,6 +128,25 @@ func is_over() -> bool:
 ## means "rolled randomly at start" (see _init) rather than a real seed.
 func seed_value() -> int:
 	return _seed
+
+## Derives a stable, shareable seed from a date string (backlog #49), building
+## on #38's shareable seed so a daily needs no new machinery of its own —
+## everyone who calls this with the same date gets the same map, shop and
+## reward rolls. String.hash() is a deterministic (non-random) hash in Godot,
+## the same guarantee a plain typed-in seed already relies on. 0 is reserved
+## by _init to mean "roll randomly", so a hash landing on it is nudged to 1
+## rather than silently becoming a random run.
+static func daily_seed(date_string: String) -> int:
+	var h := date_string.hash()
+	return h if h != 0 else 1
+
+## Builds today's (or any given date's) shared run: the derived seed above,
+## pinned to DAILY_ASCENSION so the race is fair regardless of career
+## progress, flagged and dated so a save and a snapshot can both say so.
+static func new_daily(p_decks: Array, p_names: Array, date_string: String,
+		p_passives: Array = [], p_unlocked_wins: int = Content.UNLOCKED_ALL) -> Run:
+	return Run.new(p_decks, p_names, daily_seed(date_string), p_passives,
+		DAILY_ASCENSION, p_unlocked_wins, true, date_string)
 
 ## The career-wins gate this run was built with (backlog #42) — readable so a
 ## resumed run's host can carry it forward instead of losing it on reload.
@@ -171,6 +199,7 @@ func to_dict() -> Dictionary:
 		"reward_kind": reward_kind, "reward_choices": choices,
 		"reward_picked": reward_picked, "queued_reward": _queued_reward,
 		"seed": _seed, "rng_state": str(_rng.state),  # a uint64; JSON floats would round it
+		"is_daily": is_daily, "daily_date": daily_date,
 		"combat": combat.to_dict() if (phase == Phase.COMBAT and combat != null) else {},
 	}
 
@@ -179,7 +208,8 @@ static func from_dict(d: Dictionary) -> Run:
 	# _init regenerates a map and burns RNG; both are overwritten straight after.
 	var r := Run.new([], [], int(d.get("seed", 0)),
 		d.get("player_passives", []) as Array, int(d.get("ascension", 0)),
-		int(d.get("unlocked_wins", Content.UNLOCKED_ALL)))
+		int(d.get("unlocked_wins", Content.UNLOCKED_ALL)),
+		bool(d.get("is_daily", false)), String(d.get("daily_date", "")))
 	r.phase = int(d.get("phase", Phase.MAP))
 	r.encounter_index = int(d.get("encounter_index", 0))
 	r.map = RunMap.from_dict(d.get("map", {}))

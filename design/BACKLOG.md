@@ -360,7 +360,7 @@ Ordered. Source in brackets.
   carry a tier, the offer respects it, Titans draw from a pool of their own, and
   it is tested.
 
-- [ ] **49. A daily run everyone shares** `cloud-safe` — #38 made seeds
+- [x] **49. A daily run everyone shares** `cloud-safe` — #38 made seeds
   reproducible and shareable, which is most of the work; a daily is that seed
   derived from the date plus a fixed ascension, so two people can race the same
   map. Cheap now, and the first thing in this game with a reason to come back
@@ -690,6 +690,36 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-25** — #49 A daily run everyone shares: built directly on #38's
+  shareable seed rather than adding new machinery. `Run.daily_seed(date_string)`
+  is a pure `String.hash()` of the date (deterministic in Godot, same guarantee
+  the plain typed-in seed already relied on; a hash landing on 0 — which `_init`
+  reserves to mean "roll randomly" — is nudged to 1). `Run.new_daily(decks,
+  names, date_string, ...)` wraps that seed together with a new
+  `DAILY_ASCENSION := 0` constant, pinned rather than left at the caller's own
+  ascension, so a race is fair regardless of career-unlock progress (#42) —
+  ascension 4+ content would exclude players who haven't earned it, which
+  defeats "everyone shares." Two new `Run` fields, `is_daily`/`daily_date`,
+  round-trip through `to_dict`/`from_dict` the same additive way `stats` (#39)
+  and `potions` (#26) already do — no `SAVE_VERSION` bump, since a missing key
+  just defaults to `false`/`""` on an old save. Wired one layer up too:
+  `GameHost` takes an optional `daily_date` and, when set, calls
+  `Run.new_daily()` instead of `Run.new()` inside `start_new_run()`, and the
+  shared snapshot now carries `"is_daily"` next to the `"seed"` key #38 added —
+  the same "a getter nobody's snapshot exposes doesn't help" lesson #38's own
+  log entry drew. Did NOT touch `menu.gd` or add a way to actually pick "play
+  today's daily" on screen — that's a `needs a screen` follow-up (mirrors how
+  #38 landed the seed without a "type a seed in" box); what's here is the
+  engine a future menu button calls into. 3 new tests: `daily_seed` is stable
+  for the same date and differs across two dates, `Run.new_daily()` with a
+  shared date produces an identical map/shop/reward roll the same way #38's
+  test proves for a typed seed (and a different date re-rolls all three), the
+  flag+date+pinned-ascension survive a save/load round trip, and a `GameHost`
+  given a `daily_date` actually starts a daily and exposes it in the shared
+  snapshot. `run_tests.gd`: all green, 310 assertions (307 prior + 3 new).
+  `node tools/cardlab/build.js`: unchanged (164 cards, 35 relics, 0
+  unreachable, same 6 pre-existing findings) — this item touched no data files.
 
 - **2026-08-25** — #47 A fifth hunter, driven by a resource: The Lightbearer
   (`design/climbing-and-characters.md`'s stretch-5th concept, an owl portrait

@@ -77,6 +77,9 @@ func _init() -> void:
 	_test_map_generates_connected_rows()
 	_test_map_is_deterministic_per_seed()
 	_test_backlog38_same_seed_reproduces_map_shop_and_rewards()
+	_test_backlog49_daily_seed_is_stable_and_shared()
+	_test_backlog49_daily_run_saves_and_loads_the_flag()
+	_test_backlog49_host_can_start_a_shared_daily()
 	_test_run_walks_the_map()
 	_test_rest_node_heals_and_returns_to_map()
 	_test_event_choice_applies_effects()
@@ -774,6 +777,62 @@ func _test_backlog38_same_seed_reproduces_map_shop_and_rewards() -> void:
 	var different_map: bool = str(run_a.map.rows) != str(run_c.map.rows)
 	_expect(same_map and same_seed_readback and same_shop and same_reward and different_map,
 		"two runs from the same seed roll identical maps, shops and rewards; a new seed re-rolls all three")
+
+
+## Backlog #49: the daily's whole promise is "same date -> same run", built on
+## #38's shareable seed rather than new machinery — Run.new_daily() just picks
+## the seed for you from a date string and pins the ascension. Mirrors the
+## #38 test above but through that entry point.
+func _test_backlog49_daily_seed_is_stable_and_shared() -> void:
+	var same_day: bool = Run.daily_seed("2026-08-25") == Run.daily_seed("2026-08-25")
+	var different_day: bool = Run.daily_seed("2026-08-25") != Run.daily_seed("2026-08-26")
+	var run_a := Run.new_daily([_deck_of(_slash, 10), _deck_of(_slash, 10)], ["A", "B"], "2026-08-25", [{}, {}])
+	var run_b := Run.new_daily([_deck_of(_slash, 10), _deck_of(_slash, 10)], ["A", "B"], "2026-08-25", [{}, {}])
+	var run_c := Run.new_daily([_deck_of(_slash, 10), _deck_of(_slash, 10)], ["A", "B"], "2026-08-26", [{}, {}])
+	var flagged: bool = (run_a.is_daily and run_a.daily_date == "2026-08-25"
+		and run_a.ascension == Run.DAILY_ASCENSION)
+	var same_map: bool = str(run_a.map.rows) == str(run_b.map.rows)
+	run_a.map_row = 0
+	run_a._begin_shop()
+	run_b.map_row = 0
+	run_b._begin_shop()
+	var same_shop: bool = str(run_a.shop_stock) == str(run_b.shop_stock)
+	run_a._begin_reward("relic")
+	run_b._begin_reward("relic")
+	var same_reward: bool = str(run_a.reward_choices) == str(run_b.reward_choices)
+	var different_map: bool = str(run_a.map.rows) != str(run_c.map.rows)
+	_expect(same_day and different_day and flagged and same_map and same_shop and same_reward and different_map,
+		"two players who start a daily on the same date get an identical map, shop and reward roll; a new date re-rolls all three")
+
+
+## Backlog #49 x #35: a daily is a run like any other and has to survive the
+## same save/load round trip, or "the daily you resume" silently stops being
+## the daily you started.
+func _test_backlog49_daily_run_saves_and_loads_the_flag() -> void:
+	var run := Run.new_daily([_deck_of(_slash, 10), _deck_of(_slash, 10)], ["A", "B"], "2026-08-25", [{}, {}])
+	var loaded := Run.from_dict(run.to_dict())
+	_expect(loaded.is_daily and loaded.daily_date == "2026-08-25" and loaded.seed_value() == run.seed_value()
+		and loaded.ascension == Run.DAILY_ASCENSION,
+		"a daily run's flag, date and pinned ascension survive a save/load round trip")
+
+
+## Backlog #49: the flag has to actually reach a peer, the same lesson #38
+## already taught for the seed — a getter nobody's snapshot exposes doesn't
+## help a future screen that wants to show a "DAILY" badge.
+func _test_backlog49_host_can_start_a_shared_daily() -> void:
+	var transport := LocalTransport.new()
+	var host := GameHost.new(transport, 0, 2, false, 0, Content.UNLOCKED_ALL, "2026-08-25")
+	_kept.append(host)
+	var c0 := GameClient.new(transport, 10)
+	var c1 := GameClient.new(transport, 20)
+	c0.join()
+	c1.join()
+	c0.select_character("frog")
+	c1.select_character("mountain_climbers")
+	var expected_seed := Run.daily_seed("2026-08-25")
+	_expect(bool(c0.shared.get("is_daily", false)) and int(c0.shared.get("seed", -1)) == expected_seed
+		and int(c0.shared.get("ascension", -1)) == Run.DAILY_ASCENSION,
+		"a host given a daily_date starts a run flagged as daily, pinned to DAILY_ASCENSION, seeded from the date")
 
 
 func _test_run_walks_the_map() -> void:
