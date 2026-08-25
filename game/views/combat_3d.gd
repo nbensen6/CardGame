@@ -467,18 +467,40 @@ func _on_circle_resolved(quality: int) -> void:
 	_circle_index = -1
 
 
-## The path this card asks you to tap: one world point per timing window,
-## climbing as the card climbs.
+## How much Climb makes a card a HOLD rather than a tap. A long haul up the body
+## should feel sustained; a short hop should not.
+## Climb 2 and up. At 3 only two cards in the whole game would ever have been a
+## slider, so the feature would have shipped effectively dead; at 2 it is five,
+## and the rule still reads honestly — a real haul is a hold, a hop is a tap.
+const SLIDER_CLIMB := 2
+
+
+## How far this card climbs, as PRINTED on it.
 ##
-## A three-window card used to open three prompts in the same spot, which is the
-## same reaction test three times. Spread up the body they become a route — you
-## are tapping your way UP the beast, which is the thing the card is doing
-## anyway (Nick, 2026-08-25: "mimicing how osu has multiple clicks").
+## Under `base`, not at the top level: the snapshot puts a card's printed values
+## in their own dict so the face can compare live numbers against them. Reading
+## `card.grip` returns 0 for every card in the game, silently, which is exactly
+## how the slider path came out flat until the harness could not find a climb
+## card either.
+func _card_climb(card: Dictionary) -> int:
+	return int((card.get("base", {}) as Dictionary).get("grip", 0))
+
+
+## The path this card asks you to play: one world point per timing window,
+## starting AT THE CARD and climbing to the hold it takes you to.
 ##
-## Reuses _place_hunters' own Height->world mapping rather than a second copy of
-## it, so a note can never drift off the body the hunters are climbing.
-func _hold_points(card: Dictionary, hits: int) -> PackedVector3Array:
+## It used to open out on the beast, which made your eye jump from the hand you
+## were reading to somewhere else entirely at the exact moment the turn got tense
+## (Nick, 2026-08-25: "make sure the circle is near the card when you select
+## it"). Beginning at the card and travelling up the body draws the card's action
+## instead: from your hand, onto the beast, to where you end up.
+##
+## Reuses _place_hunters' Height->world mapping for the far end rather than a
+## second copy, so the last note lands on the body the hunters actually climb.
+func _hold_points(card: Dictionary, hits: int, from_screen: Vector2) -> PackedVector3Array:
 	var out := PackedVector3Array()
+	if _cam == null:
+		return out
 	var boss: Dictionary = _client.shared.get("boss", {})
 	var top: int = maxi(int(boss.get("weak_point_height", 1)), 1)
 	var me := _me()
@@ -486,28 +508,34 @@ func _hold_points(card: Dictionary, hits: int) -> PackedVector3Array:
 	var players: Array = _client.shared.get("players", [])
 	if me >= 0 and me < players.size():
 		here = int((players[me] as Dictionary).get("foothold", 0))
-	var climb := int(card.get("grip", 0)) + int(card.get("timed_grip", 0))
+	var climb := _card_climb(card)
 	var side := -1.0 if me == 0 else 1.0
-	for i in range(maxi(hits, 1)):
-		var step := float(i + 1) / float(maxi(hits, 1))
-		var t := clampf((float(here) + float(climb) * step) / float(top), 0.0, 1.0)
-		var y := _beast_box.position.y + _beast_box.size.y * lerpf(0.18, 0.80, t)
-		var x := side * (_beast_box.size.x * 0.20)
-		if t <= 0.01:   # still on the ground: above the hunter, not in the dirt
-			y = _beast_box.position.y + HUNTER_HEIGHT * 1.5
-			x = side * (_beast_box.size.x * 0.22 + 0.6)
-		# A card that does not climb still gets a route rather than a stack —
-		# three taps in one place is not a pattern, it is a repeat.
-		if climb <= 0:
-			y += HUNTER_HEIGHT * 8.0 * (step - 0.5)
-		# Alternate the sway so the chain zigzags, the way an osu pattern does.
-		#
-		# These spreads are large because they are WORLD units seen from the
-		# fight camera, ~30 units out: a note is 40px of screen, so two of them
-		# need several world units between their centres or they overlap into one
-		# blob. Measured against tools/screenshot.gd, not guessed.
-		out.append(Vector3(x + (1.0 if i % 2 == 0 else -1.0) * _beast_box.size.x * 0.22,
-			y, _beast_box.end.z * 0.86))
+
+	# The far end: the hold this card reaches.
+	var t := clampf(float(here + climb) / float(top), 0.0, 1.0)
+	var target := Vector3(side * (_beast_box.size.x * 0.20),
+		_beast_box.position.y + _beast_box.size.y * lerpf(0.18, 0.80, t),
+		_beast_box.end.z * 0.86)
+	if t <= 0.01:
+		target = Vector3(side * (_beast_box.size.x * 0.22 + 0.6),
+			_beast_box.position.y + HUNTER_HEIGHT * 2.6, _beast_box.end.z * 0.86)
+
+	# The near end: a world point that lands just above the card you tapped.
+	# project_position is the inverse of the unproject the circle draws with, so
+	# the note appears exactly where the card is however the camera is sitting.
+	var depth := maxf(_cam.global_position.distance_to(target), 2.0)
+	var start := _cam.project_position(from_screen, depth)
+
+	var slider := climb >= SLIDER_CLIMB
+	var count := maxi(hits, 2) if slider else maxi(hits, 1)
+	for i in range(count):
+		var k := 0.0 if count == 1 else float(i) / float(count - 1)
+		var p := start.lerp(target, k)
+		# Zigzag a tapped chain so it reads as a pattern; a slider gets a gentle
+		# bow instead, because a held path should be one motion, not a scribble.
+		var sway := _beast_box.size.x * (0.05 if slider else 0.16)
+		var bend := sin(k * PI) if slider else (1.0 if i % 2 == 0 else -1.0)
+		out.append(p + Vector3(bend * sway, 0.0, 0.0))
 	return out
 
 
@@ -2004,7 +2032,10 @@ func _on_card_tapped(card: Dictionary, cv: CardView) -> void:
 			# hold this card is reaching for, so the tensest moment of the turn
 			# happens where you are looking instead of in a strip under the cards.
 			_circle_index = index
-			_circle.begin(bonus, _cam, _hold_points(card, hits))
+			var anchor := cv.get_global_rect().get_center() - Vector2(0.0, cv.size.y * 0.62)
+			var climb := _card_climb(card)
+			_circle.begin(bonus, _cam, _hold_points(card, hits, anchor),
+				climb >= SLIDER_CLIMB)
 			return
 		cv.zone_bonus = bonus
 		cv.start_timing(hits)

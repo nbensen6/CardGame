@@ -106,7 +106,7 @@ func _initialize() -> void:
 	# anywhere sweep proves nothing because there is nothing there to block it.
 	if _state in ["goblin", "3d", "3dclimb", "3dinspect", "3dsettings", "3dswap", "3drebind",
 			"3dstrike", "3dgame", "3dgrip", "3dsel", "3dreward", "3dwon",
-			"3dfreecam", "3dfocus", "3dosu", "3dbar"]:  # 3dloop deliberately starts ON the map  # step off the map into a fight
+			"3dfreecam", "3dfocus", "3dosu", "3dbar", "3dslide"]:  # 3dloop deliberately starts ON the map  # step off the map into a fight
 		var r: Run = Session.host._run
 		var g := 0
 		while r.phase == Run.Phase.MAP and g < 30:
@@ -373,20 +373,28 @@ func _capture() -> void:
 		print("SLOT active=%s lock=%s pivot=%s at=%s" % [str(current_scene.get("_active_slot")), str(current_scene.get("_lock_slot")), str(current_scene.get("_pivot")), str(current_scene.call("_lock_point"))])
 	if _state.begins_with("3d") and _state not in ["3dmap", "3dloop"]:
 		_report_visibility(current_scene)
-	if _state in ["3dosu", "3dbar"]:  # open a timed card's window and hold it there
+	if _state in ["3dosu", "3dbar", "3dslide"]:  # open a timed card's window and hold it there
 		var tv := current_scene
+		if _state == "3dslide":
+			# Every timed card that climbs enough to BE a slider lives in the
+			# reward pool, so an opening hand never holds one. Deal one.
+			var c3: Combat = Session.host._run.combat
+			c3.players[0].hand.push_front(Content.make_card("grand_leap"))
+			Session.host._broadcast_state()
+			await process_frame
+			await process_frame
 		tv.call("snap_camera")
 		await process_frame
 		var hand: Array = Session.client.private.get("slots", [{}])[0].get("hand", [])
-		# Prefer the card with the MOST windows: a one-window card cannot show a
-		# chain, and the chain is the whole point of the osu face.
+		# 3dosu wants the most WINDOWS (a one-window card cannot show a chain);
+		# 3dslide wants the most CLIMB, since a long haul is what becomes a hold.
 		var timed_at := -1
 		var best := 0
 		for i in range(hand.size()):
 			var c: Dictionary = hand[i]
 			if not bool(c.get("timed", false)):
 				continue
-			var n := int(c.get("timed_hits", 1))
+			var n := int((c.get("base", {}) as Dictionary).get("grip", 0)) if _state == "3dslide" else int(c.get("timed_hits", 1))
 			if n > best:
 				best = n
 				timed_at = i
@@ -403,6 +411,34 @@ func _capture() -> void:
 				% [Progress.timing_style(), String((hand[timed_at] as Dictionary).get("name", "?")),
 				   int((hand[timed_at] as Dictionary).get("timed_hits", 1)),
 				   str(circle != null and circle.call("is_live"))])
+			if _state == "3dslide" and circle != null:
+				# Press on the beat, then walk the follower down the path and let
+				# go at three places: held to the end, let go just past the rescue
+				# mark, and let go at the start.
+				print("TIMING slider=%s" % str(circle.get("_slider")))
+				for probe in [["held to the end", 1.0, Combat.TIMING_PERFECT],
+						["let go late", 0.80, Combat.TIMING_GOOD],
+						["let go early", 0.20, Combat.TIMING_MISS]]:
+					var got := [-99]
+					var pc := HitCircle.new()
+					get_root().add_child(pc)
+					pc.resolved.connect(func(q: int) -> void: got[0] = q)
+					pc.begin(0.0, tv.get("_cam"),
+						PackedVector3Array([Vector3.ZERO, Vector3(0, 2, 0)]), true)
+					pc.set("_t", HitCircle.APPROACH_SECONDS)
+					pc.call("_fire")                     # the press
+					pc.set("_slide", float(probe[1]))
+					if float(probe[1]) >= 1.0:
+						pc.call("_finish", pc.get("_press_quality"))
+					else:
+						var up := InputEventMouseButton.new()
+						up.button_index = MOUSE_BUTTON_LEFT
+						up.pressed = false
+						pc.call("_gui_input", up)
+					print("TIMING   %-16s -> %s  %s" % [probe[0], _quality_name(int(got[0])),
+						"OK" if int(got[0]) == int(probe[2])
+						else "FAIL want " + _quality_name(int(probe[2]))])
+					pc.queue_free()
 			if _state == "3dosu" and circle != null:
 				# It must be able to RECEIVE the tap, not just draw.
 				print("TIMING circle takes taps: %s"

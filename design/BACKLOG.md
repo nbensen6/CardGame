@@ -529,7 +529,7 @@ something Slay the Spire leans on hard and we do not have at all.
   WORKS, not when a win rate moves. *Done when:* tags exist on cards, the reward
   roll uses them, and a test proves a tagged deck sees more of its own tag.
 
-- [ ] **73. osu sliders: notes you hold, not just tap** `needs a screen` — the
+- [x] **73. osu sliders: notes you hold, not just tap** `needs a screen` — the
   chain of tapped notes landed on 2026-08-25 with #34. The other half of osu's
   vocabulary is the slider: a note you press and HOLD along a path. Our climb
   cards want exactly that — a long haul up the beast should feel sustained, not
@@ -602,6 +602,17 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-25** — #73 osu sliders: a timed card that climbs 2 or more is now a
+  HOLD, not a tap — press on the beat, keep hold while the follower runs the
+  path, let go past the rescue mark and it still pays at Good. Two things
+  surprised me. The threshold started at Climb 3, where exactly TWO cards in the
+  whole game qualified, so the feature would have shipped effectively dead; at 2
+  it is five. And the whole path came out flat because `card.grip` is not a
+  top-level snapshot key — printed values live under `base`, so every card read
+  as Climb 0, silently. The harness could not find a slider card either, which
+  is the only reason it surfaced. Chains and sliders both now start AT THE CARD
+  and travel to the hold, and the approach is 0.80s (was 0.58).
 
 - **2026-08-25** — #43 One trigger point instead of scattered special cases:
   a small, named set of moments (`Combat.MOMENT_TURN_START`/`_TURN_END`/
