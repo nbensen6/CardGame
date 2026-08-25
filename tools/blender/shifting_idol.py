@@ -38,8 +38,10 @@ for (z0, s0, _, _), (z1, s1, _, _) in zip(BLOCKS, BLOCKS[1:]):
 
 # The holds: the overhang where a block juts past the one below it. The shelf
 # goes ON the block's own top, at the turn it is already sitting at.
-b.shelf(2, (0.0, -0.30), (0.98, 0.62), GRAPHITE, thickness=0.10, rot=(0, 0, -0.34))
-b.shelf(4, (0.0, -0.26), (0.86, 0.56), GRAPHITE, thickness=0.10, rot=(0, 0, -0.20))
+b.shelf(2, (0.0, -0.44), (0.76, 0.44), GRAPHITE, thickness=0.075, bevel=0.04,
+        rot=(0, 0, -0.34))
+b.shelf(4, (0.0, -0.40), (0.66, 0.40), GRAPHITE, thickness=0.070, bevel=0.04,
+        rot=(0, 0, -0.20))
 
 # ------------------------------------------------------------------- the mask
 b.wedge((0.0, -0.84, 2.60), (0.60, 0.30, 0.44), SILVER,

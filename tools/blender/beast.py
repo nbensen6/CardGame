@@ -30,7 +30,7 @@ import bpy, bmesh, json, math, os, sys, mathutils
 from mathutils import Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from kenney import Build, GOLD, AMBER
+from kenney import Build, GOLD, AMBER, SLATE
 
 ## Where a hunter stands, as a fraction of the model's height, for a hold at the
 ## bottom and at the sigil. Straight out of combat_3d.gd via assetcheck.gd; if
@@ -83,6 +83,8 @@ class Beast(Build):
         self.span = (0.0, self.H) if span is None else (float(span[0]), float(span[1]))
         self._promised = []
         self._anchors = {}
+        self._final = {}
+        self._ledge_uv = {}
         self._fit_k, self._fit_mid = 1.0, Vector((0, 0, 0))
 
     # ------------------------------------------------------------- the climb
@@ -108,7 +110,7 @@ class Beast(Build):
         print("CLIMB %s: %s" % (self.id, "; ".join(parts)))
 
     def shelf(self, game_height, at, size, uv, thickness=0.09, bevel=0.03,
-              rot=(0, 0, 0), drop=0.0):
+              rot=(0, 0, 0), drop=0.0, lip=0.72):
         """A ledge whose TOP surface lands where a hunter's feet go.
 
         `at` is (x, y) and `size` is (half-width, half-depth). `drop` nudges the
@@ -118,11 +120,13 @@ class Beast(Build):
         """
         top = self.z_for(game_height) - drop
         self._promised.append(game_height)
-        # Where a hunter actually STANDS. The game used to derive this from the
-        # bounding box, which put climbers in front of the beast rather than on
-        # it; now the model says, and the ledge and the standing place are the
-        # same fact by construction.
-        self.anchor(game_height, (at[0], at[1], top))
+        # Where a hunter actually STANDS: out at the ledge's front LIP, not in
+        # the middle of it. The middle of a ledge is inside the creature — a
+        # shelf is a step OUT of a body, so its centre is level with the chest
+        # it grew from and a hunter placed there is inside the chest. Standing
+        # at the lip is also what a person climbing would actually do.
+        self.anchor(game_height, (at[0], at[1] - size[1] * lip, top))
+        self._ledge_uv[int(game_height)] = uv
         return self.box((at[0], at[1], top - thickness),
                         (size[0], size[1], thickness), uv, rot=rot, bevel=bevel)
 
@@ -198,20 +202,114 @@ class Beast(Build):
         Node3D, so the route travels WITH the art: rebuild a beast with its
         shoulder 20cm higher and the hunter who stands there moves too, with no
         code change and nothing to keep in sync.
+
+        This is also where a climb point is pushed OUT to the body's surface. A
+        shelf is a step out of a torso that keeps bulging past it, so the middle
+        of a ledge is level with the chest it grew from — and a hunter placed
+        there is inside the chest. Measuring the reach needs the whole body, and
+        the whole body only exists here, once everything is joined.
         """
         if not self._anchors:
             return
-        self._fit_k, self._fit_mid = k, mid
+        me = bpy.context.object.data
+        me.calc_loop_triangles()
+        tris = [tuple(me.vertices[i].co.copy() for i in t.vertices)
+                for t in me.loop_triangles]
+        co = [v.co for v in me.vertices]
+        axis = Vector(((min(c.x for c in co) + max(c.x for c in co)) * 0.5,
+                       (min(c.y for c in co) + max(c.y for c in co)) * 0.5, 0.0))
+        hs = self.hunter_size()
+
+        self._final = {}
+        moved = []
+        steps = []
         for h in sorted(self._anchors):
             p = (self._anchors[h] - mid) * k
+            out = Vector((p.x - axis.x, p.y - axis.y, 0.0))
+            if out.length < 1e-4:
+                out = Vector((0.0, -1.0, 0.0))            # beasts face -Y
+            out.normalize()
+            reach = self._reach(tris, axis, p, out, hs)
+            if reach is not None:
+                here = (p - axis).x * out.x + (p - axis).y * out.y
+                push = (reach + hs * 0.45) - here
+                if push > 0.0:
+                    p = p + out * push
+                    moved.append((h, push))
+                    if push > hs * 0.8:
+                        # The ledge stopped short of the body, so the hunter
+                        # would now stand correctly and on nothing. Grow a step
+                        # from the body out to where they stand. Cheaper and
+                        # more reliable than hand-tuning forty shelf depths, and
+                        # it cannot drift when a body is reshaped.
+                        steps.append((h, p.copy(), out.copy(), push))
+            self._final[h] = p
+
             e = bpy.data.objects.new(CLIMB_PREFIX + str(h), None)
             e.empty_display_type = "PLAIN_AXES"
             e.empty_display_size = 0.25
             e.location = p
             bpy.context.collection.objects.link(e)
+
+        if steps:
+            self._grow_steps(steps, hs)
+
         print("CLIMB POINTS %s" % ", ".join(
-            "%d@z%.2f" % (h, ((self._anchors[h] - mid) * k).z)
-            for h in sorted(self._anchors)))
+            "%d@z%.2f" % (h, self._final[h].z) for h in sorted(self._final)))
+        if moved:
+            # Worth reading rather than ignoring: a big push means the LEDGE does
+            # not reach the front of the beast, so the hunter now stands correctly
+            # but on nothing visible. Extend that shelf forward in the script.
+            print("PUSHED OUT %s  (a hunter is %.2f wide here; a push much bigger "
+                  "than that means the ledge stops short of the body and wants "
+                  "extending forward)"
+                  % (", ".join("H%d by %.2f" % (h, d) for h, d in moved), hs))
+
+    def _grow_steps(self, steps, hs):
+        """A ledge under every climb point that ended up off the body.
+
+        Small, and in the colour the script gave that ledge, so it reads as the
+        same step rather than as a grey plank appearing from nowhere.
+        """
+        body = bpy.context.object
+        made = []
+        for h, p, out, push in steps:
+            depth = push * 0.5 + hs * 0.55
+            bpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))
+            o = bpy.context.object
+            o.scale = (hs * 1.15, depth, hs * 0.16)
+            o.rotation_euler = (0.0, 0.0, math.atan2(-out.x, out.y))
+            bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+            o.location = p - out * (depth - hs * 0.5) - Vector((0, 0, hs * 0.16))
+            self._paint(o, self._ledge_uv.get(h, SLATE))
+            made.append(o)
+
+        bpy.ops.object.select_all(action="DESELECT")
+        for o in made:
+            o.select_set(True)
+        body.select_set(True)
+        bpy.context.view_layer.objects.active = body
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+        bpy.ops.object.join()
+        print("GREW %d step(s) out to climb points the ledges did not reach: %s"
+              % (len(made), ", ".join("H%d" % h for h, _, _, _ in steps)))
+
+    @staticmethod
+    def _reach(tris, axis, p, out, hs):
+        """How far the body reaches outward in the column around this point."""
+        side = Vector((-out.y, out.x, 0.0))
+        best = None
+        for t in tris:
+            m = (t[0] + t[1] + t[2]) / 3.0
+            if abs(m.z - p.z) > hs * 1.6:
+                continue
+            rel = m - axis
+            if abs(rel.x * side.x + rel.y * side.y) > hs * 2.0:
+                continue
+            d = rel.x * out.x + rel.y * out.y
+            if best is None or d > best:
+                best = d
+        return best
 
     def _measure_span(self, name):
         """What z range the body ACTUALLY occupies, against what span assumed.
@@ -260,6 +358,70 @@ class Beast(Build):
         self.finish(out, height=self.H, name=name, budget=budget)
         self._prove(name)
 
+    def hunter_size(self):
+        """How big a hunter is, in this model's units.
+
+        combat_3d scales every beast to BEAST_BASE_HEIGHT + PER_CLIMB * sigil and
+        every hunter to a flat HUNTER_HEIGHT, so the ratio is knowable here — and
+        it has to be, because "is there room to stand" is a question about the
+        hunter's size, not the beast's.
+        """
+        want = 12.0 + 1.6 * float(self.sigil_height)     # combat_3d.gd
+        return 0.7 * self.H / want                        # HUNTER_HEIGHT
+
+    def _clearance(self, tris, lo, hi, name):
+        """Is each climb point out where the body ends, or behind it?
+
+        Nick, 2026-08-25: "the models of the climbers are meshing inside the
+        bosses as they climb." A climb point can be exactly on its contract
+        height, on a real shelf, and still be buried — because a shelf is a step
+        OUT of a torso that keeps bulging past it, and the middle of that shelf
+        is level with the chest it grew from.
+
+        Counting geometry near the hunter does not catch it: a hunter is about a
+        thirtieth of a beast, so the sphere it occupies is smaller than one of
+        the beast's triangles. What does catch it is asking how far out the body
+        reaches at that height, and comparing.
+        """
+        axis = Vector(((lo.x + hi.x) * 0.5, (lo.y + hi.y) * 0.5, 0.0))
+        hs = self.hunter_size()
+        bad = []
+        for h in sorted(getattr(self, "_final", self._anchors)):
+            a = self._final[h]
+            out = Vector((a.x - axis.x, a.y - axis.y, 0.0))
+            if out.length < 1e-4:
+                out = Vector((0.0, -1.0, 0.0))            # beasts face -Y
+            out.normalize()
+            side = Vector((-out.y, out.x, 0.0))
+
+            reach = None
+            for t in tris:
+                m = (t[0] + t[1] + t[2]) / 3.0
+                if abs(m.z - a.z) > hs * 1.6:
+                    continue
+                rel = m - axis
+                if abs(rel.x * side.x + rel.y * side.y) > hs * 2.0:
+                    continue                              # not in this column
+                d = rel.x * out.x + rel.y * out.y
+                if reach is None or d > reach:
+                    reach = d
+            if reach is None:
+                continue
+            here = (a - axis).x * out.x + (a - axis).y * out.y
+            deep = reach - here
+            ok = deep <= hs * 0.55
+            print("  ROOM  %-10s %s"
+                  % ("ground" if h == 0 else "Height %d" % h,
+                     "clear" if ok else
+                     "BURIED %.2f behind the body (a hunter is %.2f wide)"
+                     % (deep, hs)))
+            if not ok:
+                bad.append(h)
+        if bad:
+            print("FAIL %s: climb point(s) %s sit inside the silhouette. Move "
+                  "them out along the front — a hunter standing there is inside "
+                  "the beast." % (name, bad))
+
     def _prove(self, name):
         """Godot's hold test, run here, on the finished mesh.
 
@@ -280,6 +442,8 @@ class Beast(Build):
         for t in me.loop_triangles:
             a, b_, c = (me.vertices[i].co for i in t.vertices)
             tris.append((a, b_, c))
+
+        self._clearance(tris, lo, hi, name)
 
         bad = []
         for h in self.ledges + [self.sigil_height]:
@@ -310,8 +474,8 @@ class Beast(Build):
         # before this helper existed all did exactly that, and their shelves
         # were at the wrong fraction of the body for months without anything
         # noticing - the hold check passed on the body's own curvature instead.
-        for h in sorted(self._anchors):
-            p = (self._anchors[h] - self._fit_mid) * self._fit_k
+        for h in sorted(getattr(self, "_final", self._anchors)):
+            p = self._final[h]
             got = (p.z - lo.z) / max(1e-6, size.z)
             if h == 0:
                 print("  CLIMB ground        at %.0f%% of the body" % (got * 100))

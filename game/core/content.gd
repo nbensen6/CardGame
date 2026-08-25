@@ -287,6 +287,16 @@ static func beast_pool(kind: String) -> Array:
 	return (pools.get(kind, []) as Array).duplicate()
 
 ## Build a Titan by id from data.
+## Every beast id there is. Used by the art-coverage test, which is the only
+## thing that notices a beast added to the data with no body built for it.
+static func boss_ids() -> Array:
+	var out: Array = []
+	for id in _read_json(BOSSES_PATH).get("bosses", {}).keys():
+		out.append(String(id))
+	out.sort()
+	return out
+
+
 static func build_boss(id: String) -> Boss:
 	var bosses: Dictionary = _read_json(BOSSES_PATH).get("bosses", {})
 	var bd: Dictionary = bosses.get(id, {})

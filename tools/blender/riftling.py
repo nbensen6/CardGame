@@ -15,7 +15,7 @@ from beast import Beast
 from kenney import (out_path, STONE, PEWTER, GRAPHITE, MIDNIGHT, NAVY,
                     VIOLET, LILAC, IRIS, GOLD, ICE)
 
-b = Beast("riftling", height=3.4, span=(-0.05, 3.07))
+b = Beast("riftling", height=3.4, span=(-0.04, 2.76))
 H = b.H
 LOW = b.z_for(2)      # hold at Height 2, from the data
 HIGH = b.z_for(4)     # hold at Height 4

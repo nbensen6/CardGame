@@ -208,6 +208,7 @@ func _init() -> void:
 	_test_backlog47_light_survives_playerstate_dict_round_trip()
 	_test_backlog47_light_survives_mid_combat_save_and_load()
 	_test_backlog47_lightbearer_plays_a_full_run()
+	_test_everyone_wears_their_own_art()
 	_test_preview_matches_what_the_card_actually_does()
 	_test_incoming_reckons_damage_after_block()
 	_test_every_derived_keyword_resolves()
@@ -4641,6 +4642,34 @@ func _test_backlog47_lightbearer_plays_a_full_run() -> void:
 				from_own_pool = false
 	_expect(run.phase == Run.Phase.REWARD and not pool.is_empty() and from_own_pool,
 		"the Lightbearer's starter deck plays a real run to a win and drafts from its own pool")
+
+
+## Every playable character, and every beast, wears its OWN art.
+##
+## Backlog #80: the cloud added a fifth hunter with no model, Cast.PLACEHOLDER
+## had no entry for it either, so it fell through to the DEFAULT stand-in and
+## the Lightbearer walked around as a bunny — on the character select, in the
+## fight, and on the screen where the beast falls. Nothing failed; it just
+## quietly looked wrong everywhere at once.
+##
+## A run that adds a character or a beast now trips this instead.
+func _test_everyone_wears_their_own_art() -> void:
+	var strays: Array = []
+	for c in Content.list_characters():
+		var id := String((c as Dictionary).get("id", ""))
+		if not Cast.is_yours(id):
+			strays.append(id)
+	_expect(strays.is_empty(),
+		"every playable character has its own model, not a Kenney stand-in"
+			+ ("" if strays.is_empty() else " (wearing one: %s)" % ", ".join(strays)))
+
+	var beasts: Array = []
+	for id in Content.boss_ids():
+		if not ResourceLoader.exists("res://assets/3d/cast/%s.glb" % String(id)):
+			beasts.append(String(id))
+	_expect(beasts.is_empty(),
+		"every beast has its own model"
+			+ ("" if beasts.is_empty() else " (missing: %s)" % ", ".join(beasts)))
 
 
 func _expect(cond: bool, name: String) -> void:

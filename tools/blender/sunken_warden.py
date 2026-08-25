@@ -46,10 +46,10 @@ for z, rx, ry, h, col in TIERS:
            10, 4, thickness=0.20)
 
 # ------------------------------------------------------------------ the ledges
-b.shelf(3, (0.0, -0.30), (1.34, 0.92), SLATE, thickness=0.16)
-b.shelf(6, (0.0, -0.26), (1.16, 0.82), SLATE, thickness=0.15)
-b.shelf(9, (0.0, -0.22), (0.98, 0.70), SLATE, thickness=0.14)
-b.shelf(11, (0.0, -0.20), (0.84, 0.60), SLATE, thickness=0.13)
+b.shelf(3, (0.0, -0.42), (0.98, 0.62), STEEL, thickness=0.095, bevel=0.05)
+b.shelf(6, (0.0, -0.36), (0.86, 0.56), STEEL, thickness=0.090, bevel=0.05)
+b.shelf(9, (0.0, -0.30), (0.74, 0.48), STEEL, thickness=0.085, bevel=0.05)
+b.shelf(11, (0.0, -0.28), (0.64, 0.42), STEEL, thickness=0.080, bevel=0.05)
 
 # Coral crusting the ledges, so a hold is visible from below.
 for z, r, n, col in ((1.94, 1.24, 6, CORAL), (2.80, 1.08, 5, ROSE),
