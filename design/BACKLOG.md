@@ -367,7 +367,7 @@ Ordered. Source in brackets.
   tomorrow. *Done when:* the day's seed is derived and stable, a daily run is
   flagged as one, and a test proves two runs on the same date match.
 
-- [ ] **50. Enchantments beyond the two proving ones** `cloud-safe` — #12 built
+- [x] **50. Enchantments beyond the two proving ones** `cloud-safe` — #12 built
   the engine and `enchants.json` has exactly two entries, one of which has no
   consumer yet. An engine with two pieces of data is a demo. Write enough that
   enchanting is a decision: cost, draw, target, exhaust, timing. *Done when:*
@@ -715,6 +715,35 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-25** — #50 Enchantments beyond the two proving ones: `enchants.json`
+  went from 2 entries (only one with a consumer) to 8, covering every category
+  the item named — cost (`cheap`: `cost_cut`, read in `effective_cost`), draw
+  (`keen`: `bonus_draw`, drawn alongside the card's own `draw` field in
+  `play_card`), exhaust (`spent`: `self_exhaust`, routes the played card to
+  `exhaust_pile` instead of `discard_pile`), target/co-op (`bonded`:
+  `echo_block` mirrors any Block the card grants onto the ally; `generous`:
+  `ally_energy_gift` hands the ally a flat amount of energy regardless of the
+  card's own `ally_energy` field) and a second timing effect (`true_eye`:
+  `quality_up`, upgrades a landed TIMING_GOOD hit to TIMING_PERFECT before
+  `preview()` grades it — `wide`/`timing_zone` stays the one entry with no
+  `/core` consumer, since widening a timing window is inherently client-side
+  and still needs a screen, same as #12's log already said). All six read
+  `card.enchant_data().get("effect", ...)` generically off `Card.enchant`, the
+  same dispatch `auto_nail` already used — none of them special-case an
+  enchant id anywhere. `play_card` now reads `enchant_data()` once into a
+  local instead of the three separate calls the old fumble-check line made,
+  since six consumers off the same dict made that worth doing. 6 new tests,
+  one per new effect, in the same shape `_test_sure_enchant_lands_even_on_a_fumble`
+  already used (build a combat, enchant a hand card, play it, assert the one
+  behaviour). Two of them (`Card`-typed locals assigned from `enchanted_copy()`
+  on an `Array`-typed hand) hit a GDScript static-inference error on `:=` that
+  the existing `sure` test's plain-assignment style never tripped — fixed by
+  giving those two locals an explicit `: Card` type instead of inferring it.
+  `run_tests.gd`: all green, 316 assertions (310 prior + 6 new).
+  `node tools/cardlab/build.js`: 164 cards, 35 relics, **8 enchants** (was 2),
+  0 unreachable, same 6 pre-existing findings — this item touched no cards,
+  relics or events, only `enchants.json` and the two files that read it.
 
 - **2026-08-25** — #49 A daily run everyone shares: built directly on #38's
   shareable seed rather than adding new machinery. `Run.daily_seed(date_string)`

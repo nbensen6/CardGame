@@ -1,5 +1,5 @@
 {
-  "_comment": "Card enchantments (backlog #12, the engine half of #3). A data-driven modifier attached to ONE card via Card.enchanted_copy() -- the same generic-copy trick upgraded_copy() already uses, just carrying a named effect+value instead of bumping numbers. Combat (or later, the view) reads effect+value rather than special-casing an enchant id per card, the same shape relics.json already uses for team-wide mods. Only 'sure' has a /core consumer today (Combat.play_card); 'wide' is valid, tested data waiting on the card-face + timing-window UI work that #3 still owns -- deliberately not wired into the view here (needs a screen).",
+  "_comment": "Card enchantments (backlog #12, the engine half of #3; widened by #50). A data-driven modifier attached to ONE card via Card.enchanted_copy() -- the same generic-copy trick upgraded_copy() already uses, just carrying a named effect+value instead of bumping numbers. Combat (or later, the view) reads effect+value rather than special-casing an enchant id per card, the same shape relics.json already uses for team-wide mods. 'wide' is valid, tested data waiting on the card-face + timing-window UI work that #3 still owns -- deliberately not wired into the view here (needs a screen). Every other enchant below has a /core consumer in Combat, covering cost (cheap), draw (keen), exhaust (spent), target/co-op (bonded, generous) and timing (sure, true_eye) -- the spread #50 asked for.",
   "enchants": {
     "sure": {
       "name": "Sure",
@@ -12,6 +12,42 @@
       "text": "A much wider timing window for this card.",
       "effect": "timing_zone",
       "value": 30
+    },
+    "true_eye": {
+      "name": "True Eye",
+      "text": "A good hit on this card lands as a perfect one.",
+      "effect": "quality_up",
+      "value": 1
+    },
+    "cheap": {
+      "name": "Cheap",
+      "text": "Costs 1 less energy to play (minimum 0).",
+      "effect": "cost_cut",
+      "value": 1
+    },
+    "keen": {
+      "name": "Keen",
+      "text": "Draw an extra card when you play this.",
+      "effect": "bonus_draw",
+      "value": 1
+    },
+    "spent": {
+      "name": "Spent",
+      "text": "Exhausts (leaves the fight) instead of going to your discard pile.",
+      "effect": "self_exhaust",
+      "value": 1
+    },
+    "bonded": {
+      "name": "Bonded",
+      "text": "Any Block this grants you, your ally gains too.",
+      "effect": "echo_block",
+      "value": 1
+    },
+    "generous": {
+      "name": "Generous",
+      "text": "Also gives your ally 1 energy.",
+      "effect": "ally_energy_gift",
+      "value": 1
     }
   }
 }
