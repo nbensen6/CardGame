@@ -632,13 +632,12 @@ check. It never judges its own work. See item 74 for why.
   item originally meant, so it is reopened as #82 rather than pretending the map
   got done too.
 
-- [ ] **82. The overworld map, in our own art** `cloud-art` — the map between
-  fights is still Kenney hex tiles with Kenney trees on them, and now that every
-  fight has its own ground it is the most obviously borrowed screen left. The
-  campfire, shop and reward plots are nearly bare. `tools/blender/env.py` has the
-  vocabulary already (`tree`, `stump`, `rock`, `slabs`, `pillar`), so this is
-  mostly placement. *Done when:* the hex tiles and their landmarks are ours,
-  previews are committed and a review block is written.
+- [x] **82. The overworld map, in our own art** — **done 2026-08-25.** All
+  seventeen models built by `tools/blender/hexes.py` in one Blender run; nine
+  tiles, seven landmarks and the loose tree. `ui/tiles.gd` prefers ours and falls
+  back to Kenney's, same rule as `ui/cast.gd`, so the map can be changed one tile
+  at a time. Unreviewed — see the block in `design/ART-REVIEW.md`, particularly
+  the note about the green.
 
 - [ ] **78. A Light meter for the Lightbearer** `needs a screen` — #47's engine
   landed: `PlayerState.light`, `light_gain`/`light_cost`/`damage_per_light`/

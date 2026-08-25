@@ -318,7 +318,7 @@ func _hex_x(hex_col: int, hex_row: int) -> float:
 
 
 func _place_tile(name: String, hex_col: int, hex_row: int, spin: float) -> Node3D:
-	var scene: PackedScene = load(HEX + name + ".glb")
+	var scene: PackedScene = load(Tiles.path(name))
 	if scene == null:
 		return null
 	var inst: Node3D = scene.instantiate()

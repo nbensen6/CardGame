@@ -205,7 +205,7 @@ func _hex_x(hex_col: int, hex_row: int) -> float:
 
 
 func _tile(name: String, hex_col: int, hex_row: int, rng: RandomNumberGenerator) -> void:
-	var path := HEX + name + ".glb"
+	var path := Tiles.path(name)
 	if not ResourceLoader.exists(path):
 		return
 	var inst: Node3D = (load(path) as PackedScene).instantiate()
@@ -285,7 +285,7 @@ func _felled_height(beast_id: String) -> float:
 ## A hex landmark stood up as scenery — the same tile the overworld uses for
 ## that node type, so arriving somewhere looks like the place you walked to.
 func _landmark(name: String, at: Vector3) -> void:
-	var path := HEX + name + ".glb"
+	var path := Tiles.path(name)
 	if not ResourceLoader.exists(path):
 		return
 	var inst: Node3D = (load(path) as PackedScene).instantiate()

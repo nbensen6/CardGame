@@ -48,6 +48,33 @@ The failures that have happened, all of which passed every check:
 
 ---
 
+### the overworld map — NEEDS A PASS
+
+Built 2026-08-25, all seventeen models from `tools/blender/hexes.py` in one
+Blender run. Nine tiles (grass, forest, hill, stone, stone-hill, mountain, sand,
+dirt, water), seven landmarks (cabin, market, tower, castle, wizard tower, mine,
+village) and the loose tree.
+
+`ui/tiles.gd` prefers `hexown/<name>.glb` over the Kenney tile of the same name,
+the same rule and for the same reason as `ui/cast.gd`: it lets the map be
+replaced one tile at a time instead of in one commit that either works or leaves
+the map full of holes, and it keeps the Kenney set as a reference rather than
+deleting it.
+
+- previews: shoot them with `screenshot.gd -- state=3dmap` and `state=3dcampfire`
+- intent: each node type readable at map size from its silhouette and one
+  colour — the camp by its fire, the shop by its striped awning, the event by
+  the only violet on the map and the only building that leans, the elite by
+  being the only thing with a banner, treasure by a cut into a hillside.
+- unsure about: **the green.** The palette's GREEN is strong, and a whole map of
+  it next to orange tile sides is loud. It matches the Kenney tiles it replaced
+  almost exactly, so it may just be the look this game already had — but it is
+  the first thing to change if the map feels garish.
+  Also unjudged: whether the tile-top scatter (tufts and pebbles) reads as
+  texture or as litter when forty tiles are on screen at once.
+- known: the campfire plot's cabin sits at the edge of frame and may be cropped.
+  That framing predates these models; the landmark itself is fine on the map.
+
 ### the fourteen fight grounds — ALL NEED A PASS
 
 Built 2026-08-25, from `tools/blender/env/<beast_id>.py` on the `env.py` helper.
