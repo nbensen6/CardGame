@@ -493,6 +493,10 @@ func _keywords_of(c: Card) -> Array:
 		ids.append("frail")
 	if c.thorns > 0:
 		ids.append("thorns")
+	if c.light_gain > 0 or c.light_cost > 0 or c.damage_per_light > 0:
+		ids.append("light")
+	if c.ally_heal > 0:
+		ids.append("mend")
 	var out: Array = []
 	for id in ids:
 		var k := Content.keyword(String(id))
@@ -558,6 +562,10 @@ func _card_icon(c: Card) -> String:
 		return "support"
 	if c.grip > 0 or c.ally_grip > 0:
 		return "climb"
+	if c.ally_heal > 0:
+		return "support"
+	if c.light_gain > 0 or c.damage_per_light > 0:
+		return "flask"
 	if c.wound > 0:
 		return "skull"
 	if c.vulnerable > 0 and c.damage == 0:

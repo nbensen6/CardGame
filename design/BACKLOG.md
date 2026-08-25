@@ -342,7 +342,7 @@ Ordered. Source in brackets.
   and every run terminates, and it fails loudly on a soft-lock. Report crashes
   and dead ends only — never win rates.
 
-- [ ] **47. A fifth hunter, driven by a resource** `cloud-safe` — promoted from
+- [x] **47. A fifth hunter, driven by a resource** `cloud-safe` — promoted from
   Later. Four classes all spend the same 3 energy; a class with its OWN currency
   (charge, heat, breath — something it banks and spends) is how the genre keeps
   its fifth character from being a re-skin. Expect this to take several runs:
@@ -609,6 +609,16 @@ check. It never judges its own work. See item 74 for why.
   review rather than a broken fight. *Done when:* at least four props exist with
   previews and review blocks, and the scene that wants them uses them.
 
+- [ ] **78. A Light meter for the Lightbearer** `needs a screen` — #47's engine
+  landed: `PlayerState.light`, `light_gain`/`light_cost`/`damage_per_light`/
+  `ally_heal` on `Card`, and 9 cards that use them. Nothing shows a player their
+  banked Light — Energy gets pips in the HUD, Light gets nothing, so a
+  `light_cost` card just looks unplayable with no explanation. The card face's
+  `text` already says the number ("Spend 3 Light..."), and the keyword tooltip
+  explains the mechanic, but there is no running counter the way Energy has one.
+  *Done when:* the HUD shows current Light for a Lightbearer hunter, and it's
+  been looked at.
+
 ## Working alongside the cloud routine
 
 Two of us push to `main`: the routine every two hours, and Nick-and-Claude in a
@@ -680,6 +690,60 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-25** — #47 A fifth hunter, driven by a resource: The Lightbearer
+  (`design/climbing-and-characters.md`'s stretch-5th concept, an owl portrait
+  since no new art was in scope), built on Light — a resource that BANKS
+  across turns instead of resetting like energy or Rhythm does, since nothing
+  in `_begin_round()` touches it (deliberate — that's the whole point of the
+  design ask, "a currency it banks and spends"). Four new `Card` fields
+  (`light_gain`, `light_cost`, `damage_per_light`, `ally_heal`) follow the
+  exact shape `damage_per_rhythm`/`grip_per_rhythm`/`rhythm` already
+  established: `light_cost` is a second cost checked in `can_play` alongside
+  energy and spent in `play_card` even on a fumble (same treatment as energy);
+  `light_gain` and `ally_heal` (clamped to the ally's max_hp, mirroring the
+  existing potion "heal" effect) apply in the main effect body so a fumbled
+  timed card doesn't trigger them; `damage_per_light` folds into `preview()`
+  the same way every other scaling field does, so it reads Light WITHOUT
+  spending it — the deliberate build tension between Flare (spend 5, deal 14
+  now) and Sunburst (spend nothing, scale with however much is banked). New
+  `light`/`mend` keywords added to `keywords.json` and wired into
+  `GameHost._keywords_of` — the reflection-based test added by #16
+  (`_test_every_field_a_player_must_understand_has_a_keyword`) would have
+  failed loudly on the new fields otherwise, and did until that was in place.
+  9 new cards (`spark`, `radiant_bolt`, `warm_glow`, `kindled_strike`,
+  `beacon`, `guiding_light`, `steady_flame`, `flare`, `sunburst`) — enough
+  for a full 10-card starter deck plus a modest reward pool of its own
+  archetype cards + the same shared neutrals every other class drafts from.
+  Worth being honest about: this reward pool is ~18 cards against the other
+  four classes' ~40-44 — #47 explicitly warned this would take "several
+  runs," and this one covered the engine, the starter deck, and a first pass
+  of cards, not the deep pool the other four have accumulated over multiple
+  sessions. A future session writing more Light cards is exactly that kind of
+  follow-up, the same way #50 is still open for enchants. The passive slot
+  is `"none"` (already a legal no-op value) — deliberately did NOT hang the
+  resource off a character passive the way climb_bonus/poison_lift/etc. do,
+  since the design ask was "build it on a resource, not a keyword" (the
+  resource itself, not one more passive scalar). 7 new tests: Light banking
+  across the round reset (proving it does NOT reset like Rhythm), the
+  light_cost gate-and-spend round trip, damage_per_light scaling without
+  spending, ally_heal clamping at max_hp, `PlayerState.light` surviving both
+  a bare dict round trip and a REAL mid-combat save/load (the #14 seam), and
+  a full `Run` played with the Lightbearer's own starter deck through to a
+  win, drafting only from its own pool (same proof `_test_per_class_reward_pools`
+  uses for the other four). `characters.json`'s `order` array is the only
+  place a new character needs registering — `Content.list_characters()` is
+  what the content-integrity tests, the robustness sweep, and the host's
+  character list all already iterate, so adding one entry there is what pulled
+  the new character and its 9 cards into every existing coverage test for
+  free, exactly as designed. `run_tests.gd`: all green, 307 assertions (300
+  prior + 7 new). `node tools/cardlab/build.js`: 164 cards (155+9), 5 classes,
+  0 unreachable — same 6 pre-existing findings as the baseline (checked by
+  diffing against a stash of this commit's parent), so nothing new is broken.
+  Left the Light meter itself for a `needs a screen` follow-up (#78, new) —
+  the card text and keyword tooltip explain the number, but there's no
+  running HUD counter the way Energy has pips, and that's a visual claim this
+  session can't verify.
 
 - **2026-08-25** — #48 Relic tiers, and a pool only Titans pay from: every
   relic in `relics.json` now carries `"tier"` — `"common"` (31) or `"boss"`

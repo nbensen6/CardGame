@@ -252,6 +252,8 @@ func can_play(pi: int, ci: int) -> bool:
 		var gap: int = ps.foothold - int(players[ally_index(pi)].foothold)
 		if gap <= 0 or gap > card.pull_ally:
 			return false
+	if card.light_cost > ps.light:  # the Lightbearer's own currency — a second cost on top of energy (backlog #47)
+		return false
 	return effective_cost(pi, card) <= ps.energy
 
 ## Fuse two cards into one: EVERY effect carries over (Nick's bug: goblin cards
@@ -379,7 +381,8 @@ func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PER
 		+ card.damage_per_foothold * ps.foothold + card.damage_per_rhythm * ps.rhythm \
 		+ card.damage_per_wound * boss.wound \
 		+ card.damage_per_ally_foothold * int(mate.foothold) \
-		+ card.damage_per_exhausted * exhausted + card.damage_per_x * x
+		+ card.damage_per_exhausted * exhausted + card.damage_per_x * x \
+		+ card.damage_per_light * ps.light
 	if hit:
 		dmg += int(card.timed_damage * scale)
 	if card.type == "attack":  # buffs lift real attacks, not incidental scaling
@@ -467,6 +470,7 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	var pay := effective_cost(pi, card)
 	var x_spent := pay if card.cost == -1 else 0
 	ps.energy -= pay
+	ps.light -= card.light_cost  # the Lightbearer's own currency — spent alongside energy, win or fumble (backlog #47)
 	ps.hand.remove_at(ci)
 	# A fumbled timed card slips away — removed with no effect (not even discarded)
 	# — unless the "sure" enchant is attached, which always lands (backlog #12).
@@ -601,6 +605,14 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		var ally_e: PlayerState = players[ally_index(pi)]
 		ally_e.energy += card.ally_energy
 		_log("%s plays %s — +%d energy to %s." % [who, card.name, card.ally_energy, ally_e.combatant.name])
+	if card.light_gain > 0:  # the Lightbearer's own currency — banks across turns (backlog #47)
+		ps.light += card.light_gain
+		_log("%s plays %s — +%d Light (now %d)." % [who, card.name, card.light_gain, ps.light])
+	if card.ally_heal > 0:  # the Lightbearer's mend — direct HP to the ally, up to their max
+		var mended: PlayerState = players[ally_index(pi)]
+		var mended_amount := mini(card.ally_heal, mended.combatant.max_hp - mended.combatant.hp)
+		mended.combatant.hp += maxi(mended_amount, 0)
+		_log("%s plays %s — mends %s for %d." % [who, card.name, mended.combatant.name, maxi(mended_amount, 0)])
 	if card.vulnerable > 0:
 		if boss.try_block_debuff():  # Artifact (backlog #36) shrugs off the Expose
 			_log("%s plays %s — %s's Artifact wards off the Expose." % [who, card.name, boss.name])

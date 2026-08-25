@@ -4,7 +4,8 @@
     "frog",
     "vine_weaver",
     "mountain_climbers",
-    "goblin_mech"
+    "goblin_mech",
+    "lightbearer"
   ],
   "characters": {
     "frog": {
@@ -256,6 +257,47 @@
         "cleave",
         "sharpen",
         "flurry",
+        "brace",
+        "cover",
+        "take_aim",
+        "rally",
+        "expose",
+        "draw_aggro",
+        "dagger",
+        "slash",
+        "scramble"
+      ]
+    },
+    "lightbearer": {
+      "name": "The Lightbearer",
+      "desc": "Banks Light instead of spending straight from energy — mends an ally, then cashes it in for a burst.",
+      "passive": {
+        "type": "none",
+        "value": 0
+      },
+      "starter_deck": [
+        "radiant_bolt",
+        "radiant_bolt",
+        "spark",
+        "spark",
+        "guiding_light",
+        "warm_glow",
+        "beacon",
+        "steady_flame",
+        "brace",
+        "take_aim"
+      ],
+      "portrait": "res://assets/portraits/owl.png",
+      "reward_pool": [
+        "spark",
+        "radiant_bolt",
+        "warm_glow",
+        "kindled_strike",
+        "beacon",
+        "guiding_light",
+        "steady_flame",
+        "flare",
+        "sunburst",
         "brace",
         "cover",
         "take_aim",

@@ -19,6 +19,7 @@ var prepared: String = ""      # a delayed effect armed this fight (e.g. "jetpac
 var rhythm: int = 0            # combo counter — +1 per timed card you LAND this turn (Frog); resets each turn
 var play_counts: Dictionary = {}  # card id -> times played this fight (for scaling cards like Build Mech)
 var sigil_rounds: int = 0      # consecutive enemy turns spent at/above the sigil (a "sigil_fatigue" limiter)
+var light: int = 0             # the Lightbearer's own resource (backlog #47) — banks across turns, unlike energy
 # Character signature passives (set from the chosen character; constant for the run)
 var character: String = ""     # character id, for display
 var climb_bonus: int = 0       # extra Height per climb card (Frog)
@@ -40,7 +41,7 @@ func to_dict() -> Dictionary:
 		"cost_reductions": cost_reductions, "energy": energy, "strength": strength,
 		"foothold": foothold, "weak_point_damage": weak_point_damage,
 		"ended_turn": ended_turn, "prepared": prepared, "rhythm": rhythm,
-		"play_counts": play_counts, "sigil_rounds": sigil_rounds,
+		"play_counts": play_counts, "sigil_rounds": sigil_rounds, "light": light,
 		"character": character, "climb_bonus": climb_bonus,
 		"char_attack_bonus": char_attack_bonus, "ally_climb": ally_climb,
 		"poison_lift": poison_lift,
@@ -66,6 +67,7 @@ static func from_dict(d: Dictionary) -> PlayerState:
 	ps.rhythm = int(d.get("rhythm", 0))
 	ps.play_counts = (d.get("play_counts", {}) as Dictionary).duplicate()
 	ps.sigil_rounds = int(d.get("sigil_rounds", 0))
+	ps.light = int(d.get("light", 0))
 	ps.character = String(d.get("character", ""))
 	ps.climb_bonus = int(d.get("climb_bonus", 0))
 	ps.char_attack_bonus = int(d.get("char_attack_bonus", 0))

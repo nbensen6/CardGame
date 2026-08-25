@@ -197,6 +197,14 @@ func _init() -> void:
 	_test_backlog48_relic_pool_and_boss_relic_pool_partition_by_tier()
 	_test_backlog48_titan_relic_reward_draws_only_from_the_boss_pool()
 	_test_backlog48_elite_relic_reward_never_offers_a_boss_relic()
+	# backlog #47: a fifth hunter, driven by a resource (Light)
+	_test_backlog47_light_gain_banks_across_the_round_reset()
+	_test_backlog47_light_cost_gates_and_spends()
+	_test_backlog47_damage_per_light_scales_without_spending()
+	_test_backlog47_ally_heal_caps_at_max_hp()
+	_test_backlog47_light_survives_playerstate_dict_round_trip()
+	_test_backlog47_light_survives_mid_combat_save_and_load()
+	_test_backlog47_lightbearer_plays_a_full_run()
 	_test_preview_matches_what_the_card_actually_does()
 	_test_incoming_reckons_damage_after_block()
 	_test_every_derived_keyword_resolves()
@@ -4463,6 +4471,117 @@ func _test_backlog46_end_turn_always_works_with_empty_hand() -> void:
 	combat.end_turn(0)
 	_expect(combat.players[0].ended_turn,
 		"a hunter with no cards and no energy can still end their turn")
+
+
+## Backlog #47 — the Lightbearer: a fifth hunter whose OWN currency (Light)
+## banks across turns instead of resetting like energy does (contrast Rhythm,
+## which _begin_round() explicitly zeroes each turn).
+func _test_backlog47_light_gain_banks_across_the_round_reset() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [Content.make_card("spark")]
+	ps.energy = 3
+	combat.play_card(0, 0)
+	var gained := ps.light == 2
+	combat.end_turn(0)
+	combat.end_turn(1)  # both ended -> the boss acts and a new round begins
+	_expect(gained and ps.light == 2,
+		"Light gained by a card banks and survives the round reset (unlike Rhythm)")
+
+
+## A Light-cost card is a second cost on top of energy: unplayable below it,
+## and spending drains Light the same way playing any card drains energy.
+func _test_backlog47_light_cost_gates_and_spends() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [Content.make_card("guiding_light")]  # cost 1 energy, light_cost 3
+	ps.energy = 3
+	ps.light = 2
+	var blocked := not combat.can_play(0, 0)
+	ps.light = 3
+	var allowed := combat.can_play(0, 0)
+	combat.play_card(0, 0)
+	_expect(blocked and allowed and ps.light == 0,
+		"a Light-cost card is unplayable below its cost, and playing it spends the Light")
+
+
+## Sunburst reads banked Light for bonus damage but never spends it — the
+## build tension the design docs asked for (spend for a burst vs. hoard to
+## scale), same shape damage_per_rhythm/damage_per_foothold already prove.
+func _test_backlog47_damage_per_light_scales_without_spending() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [Content.make_card("sunburst")]  # damage 2, damage_per_light 2
+	ps.energy = 3
+	ps.light = 4
+	var before: int = combat.boss.hp
+	combat.play_card(0, 0)
+	var dealt := before - combat.boss.hp
+	_expect(dealt == 10 and ps.light == 4,
+		"Sunburst's damage scales with banked Light (2 + 2*4 = 10) without spending any of it")
+
+
+## The Lightbearer's mend targets the ally directly, clamped the same way
+## Combat.use_potion()'s "heal" effect and the campfire rest already clamp —
+## never past their own max_hp.
+func _test_backlog47_ally_heal_caps_at_max_hp() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var mate: PlayerState = combat.players[1]
+	ps.hand = [Content.make_card("warm_glow")]  # ally_heal 4, light_gain 1
+	ps.energy = 3
+	mate.combatant.hp = mate.combatant.max_hp - 1  # only 1 point of room
+	combat.play_card(0, 0)
+	_expect(mate.combatant.hp == mate.combatant.max_hp and ps.light == 1,
+		"mending an ally near full HP caps at max_hp rather than overhealing")
+
+
+## Leaf serializer for the whole save chain (Run -> Combat -> PlayerState) is
+## PlayerState.to_dict()/from_dict() — same seam #35 and #14 taught.
+func _test_backlog47_light_survives_playerstate_dict_round_trip() -> void:
+	var ps := PlayerState.new()
+	ps.combatant = Combatant.new("X", 30)
+	ps.light = 7
+	var back := PlayerState.from_dict(ps.to_dict())
+	_expect(back.light == 7, "PlayerState.light round-trips through to_dict/from_dict")
+
+
+## The real chain, not just the leaf: a mid-fight save (#14) must carry Light
+## the same way it already carries foothold/strength/exhaust_pile.
+func _test_backlog47_light_survives_mid_combat_save_and_load() -> void:
+	var run := Run.new([_deck_of(_slash, 8), _deck_of(_slash, 8)], ["A", "B"], 55,
+		[{"character": "frog"}, {"character": "lightbearer"}], 0)
+	run.start()
+	_step_into_combat(run)
+	var combat: Combat = run.combat
+	combat.players[1].light = 6
+	RunSave.clear()
+	RunSave.save(run)
+	var back := RunSave.load_run()
+	var back_combat: Combat = back.combat
+	_expect(back_combat != null and back_combat.players[1].light == 6,
+		"Light survives a mid-combat save and load")
+
+
+## Done-when (#47): "it plays a full run" — a real Run built from the
+## character's own starter_deck and passive, forced to a win, and the reward
+## it's offered comes from ITS OWN archetype pool (same proof
+## _test_per_class_reward_pools uses for the other four).
+func _test_backlog47_lightbearer_plays_a_full_run() -> void:
+	var decks := [Content.character_deck("lightbearer"), Content.character_deck("frog")]
+	var run := Run.new(decks, ["L", "F"], 123,
+		[Content.character_passive("lightbearer"), Content.character_passive("frog")])
+	run.start()
+	_step_into_combat(run)
+	_force_win(run)
+	var pool := Content.reward_pool("lightbearer")
+	var from_own_pool := true
+	if run.reward_kind == "card":
+		for c in run.reward_choices[0]:
+			if not pool.has((c as Card).id):
+				from_own_pool = false
+	_expect(run.phase == Run.Phase.REWARD and not pool.is_empty() and from_own_pool,
+		"the Lightbearer's starter deck plays a real run to a win and drafts from its own pool")
 
 
 func _expect(cond: bool, name: String) -> void:
