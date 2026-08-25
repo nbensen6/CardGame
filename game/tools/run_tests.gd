@@ -274,6 +274,7 @@ func _init() -> void:
 	_test_session_end_turn_needs_all_players()
 	_test_session_private_view_is_isolated()
 	_test_host_pauses_on_disconnect()
+	_test_dropped_hunter_can_rejoin_mid_fight()
 	_test_host_autosaves_and_resumes()
 	_test_host_autosaves_and_resumes_mid_combat()
 	_test_solo_controls_both_hunters()
@@ -4377,6 +4378,41 @@ func _test_host_pauses_on_disconnect() -> void:
 	c0.play_card(_first_playable_client(c0))
 	_expect(int(c0.shared["players"][0]["energy"]) == energy_before,
 		"commands are ignored while paused")
+
+
+## Backlog #51: a dropped hunter's SEAT survives them, so a fresh connection
+## that sends "join" while the host is paused reclaims it rather than being
+## turned away for the party already being full (or, worse, bumping the
+## still-connected hunter). This is the actual reconnect path a real client
+## takes -- menu.gd's "Join" button already ends in Session.client.join()
+## (see _on_join()), so nothing on the view side has to change for this to work.
+func _test_dropped_hunter_can_rejoin_mid_fight() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var transport: LocalTransport = s["transport"]
+	transport.emit_signal("peer_left", 20)  # hunter 2 (peer 20) drops
+	_expect(host.paused, "host pauses when hunter 2 drops")
+
+	# The reconnect: a NEW peer id, exactly what a fresh ENet connection gets.
+	var c_new := GameClient.new(transport, 99)
+	c_new.join()
+	_expect(not host.paused, "rejoining clears the pause")
+	_expect(c_new.you == 1, "the rejoining peer is handed the SEAT hunter 2 dropped, not a new one")
+	_expect(not bool(c0.shared.get("paused", false)),
+		"the still-connected hunter's own snapshot reflects the resume too")
+
+	# Play resumes for BOTH hunters, including the one who just rejoined.
+	var idx := _first_playable_client(c_new)
+	_expect(idx >= 0, "the rejoined client received hunter 2's actual hand, not an empty one")
+	var energy_before: int = c_new.shared["players"][1]["energy"]
+	c_new.play_card(idx)
+	_expect(int(c_new.shared["players"][1]["energy"]) < energy_before,
+		"a command from the rejoined connection acts on hunter 2 again")
+
+	# The dead connection's old peer id is forgotten, not left as a live seat.
+	transport.emit_signal("peer_left", 99)
+	_expect(host.paused, "the SAME slot dropping again re-pauses, proving 99 (not 20) now owns it")
 
 
 # --- helpers --------------------------------------------------------------

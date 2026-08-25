@@ -373,7 +373,7 @@ Ordered. Source in brackets.
   enchanting is a decision: cost, draw, target, exhaust, timing. *Done when:*
   at least eight exist, each has a consumer in /core, and each is tested.
 
-- [ ] **51. A dropped hunter can come back** `cloud-safe` — `net_link.gd` emits
+- [x] **51. A dropped hunter can come back** `cloud-safe` — `net_link.gd` emits
   `peer_dropped` and nothing rejoins. In a two-player game one dropped phone
   ends the run for BOTH people, which is the worst failure this design has: the
   whole pitch is that you are climbing together. The host is already
@@ -721,6 +721,38 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-25** — #51 A dropped hunter can come back: `GameHost._on_peer_left`
+  already paused the run and remembered `_disconnected_slot`, but it never
+  cleared the peer's spot in `_slot_of`/`_peers`, so a reconnecting peer (a new
+  ENet connection, and therefore a brand-new `peer_id`) had nowhere to land —
+  `_handle_join` would see the party already at `_required` and turn it away
+  forever. Fixed in `_handle_join`: an unrecognised "join" that arrives while
+  `paused` and a slot is on record as dropped now reclaims THAT slot
+  (`_reclaim_slot` — erases the dead peer id's mapping, points the slot at the
+  new one, clears `paused`/`_disconnected_slot`, rebroadcasts) instead of being
+  rejected. Also handled the odd case of a peer landing back on its OLD id
+  (the local-loopback transport tests use can do this even though real ENet
+  won't): the already-known branch now checks whether that peer owns the
+  disconnected slot and unpauses too, rather than sitting recognised-but-frozen.
+  Nothing on the view side needed to change — `menu.gd`'s existing "Join" flow
+  already ends every connection in `Session.client.join()` (`_on_join()`), so
+  the same button that starts a session is the one that resumes one; this was
+  a `/net` + `/session` gap, not a missing screen. One known limitation, left
+  alone as out of scope for a two-required-player co-op game: `_disconnected_slot`
+  only remembers the LAST drop, so two simultaneous drops would lose track of
+  the first — not attempted here since `paused` already blocks all play the
+  moment either hunter is gone, and reconnecting the second unpauses the game
+  with the first still absent. New test
+  `_test_dropped_hunter_can_rejoin_mid_fight`: drops hunter 2 mid-combat,
+  connects a fresh `GameClient` on a new peer id, joins, and asserts the pause
+  clears, the new connection is handed slot 1 (not a rejected join or a new
+  slot), it receives hunter 2's actual hand rather than an empty one, a played
+  card acts on hunter 2 again, and dropping that same new id re-pauses the
+  run — proving the old id was actually forgotten rather than left as a second
+  live seat. `run_tests.gd`: all green, 326 assertions (319 prior + 7 new).
+  `node tools/cardlab/build.js`: unchanged (164 cards, 35 relics, 0
+  unreachable) — this item touched no data files, only `/net`-adjacent code.
 
 - **2026-08-25** — #50 Enchantments beyond the two proving ones: `enchants.json`
   went from 2 entries (only one with a consumer) to 8, covering every category

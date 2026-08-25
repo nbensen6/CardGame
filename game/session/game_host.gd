@@ -198,10 +198,39 @@ func _reindex_slots() -> void:
 		_slot_of[_peers[i]] = i
 
 func _handle_join(peer_id: int) -> void:
-	if not _slot_of.has(peer_id) and _peers.size() < _required:
+	if _slot_of.has(peer_id):
+		# A rejoin that happens to land on its OLD peer id (unusual for ENet,
+		# which hands out a fresh one, but the local loopback transport used in
+		# tests can) still needs to clear the pause -- otherwise it sits
+		# "known" but frozen forever.
+		if paused and _slot(peer_id) == _disconnected_slot:
+			paused = false
+			_disconnected_slot = -1
+		_try_start_or_broadcast()
+		return
+	# backlog #51: a hunter dropped mid-run leaves their slot held (_on_peer_left
+	# does not erase it) so the NEXT unrecognised "join" -- a fresh ENet
+	# connection, since a rejoin always gets a new peer id -- reclaims that
+	# slot instead of being turned away for the party already being full.
+	if paused and _disconnected_slot >= 0:
+		_reclaim_slot(peer_id, _disconnected_slot)
+		return
+	if _peers.size() < _required:
 		_slot_of[peer_id] = _peers.size()
 		_peers.append(peer_id)
 	_try_start_or_broadcast()
+
+## Hand a rejoining peer the slot its predecessor held and resume play. The
+## dropped connection's own id is forgotten -- it can never come back to life,
+## and holding onto it would just be a stale key nothing looks up again.
+func _reclaim_slot(peer_id: int, slot: int) -> void:
+	var old_peer_id: int = _peers[slot]
+	_slot_of.erase(old_peer_id)
+	_peers[slot] = peer_id
+	_slot_of[peer_id] = slot
+	paused = false
+	_disconnected_slot = -1
+	_broadcast_state()
 
 ## Start the run once everyone has joined AND chosen a character; else broadcast.
 func _try_start_or_broadcast() -> void:
