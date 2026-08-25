@@ -159,6 +159,7 @@ func _init() -> void:
 	_test_run_win_flows_through_reward_to_next_encounter()
 	_test_run_hp_carries_between_encounters()
 	_test_run_defeat_when_a_hunter_falls()
+	_test_backlog39_stats_accumulate_across_fights()
 	_test_content_make_card_and_reward_pool()
 	# phase 3: 3rd titan, relics, longer runs
 	_test_regen_heals_titan()
@@ -182,8 +183,10 @@ func _init() -> void:
 	_test_run_survives_a_save_and_load_in_shop()
 	_test_run_survives_a_save_and_load_in_campfire()
 	_test_run_survives_a_save_and_load_in_event()
+	_test_backlog39_stats_round_trip_through_save()
 	_test_save_refuses_only_finished_runs_and_clears_when_over()
 	_test_load_run_migrates_an_older_save()
+	_test_backlog39_older_save_backfills_missing_stats()
 	_test_load_run_rejects_a_save_from_a_newer_build()
 	_test_load_run_rejects_a_corrupt_file()
 	_test_every_card_declares_a_rarity()
@@ -2412,6 +2415,32 @@ func _test_run_defeat_when_a_hunter_falls() -> void:
 	run.sync()
 	_expect(run.phase == Run.Phase.LOST, "a hunter falling loses the whole run")
 
+## Backlog #39: a finished run should say something about itself. Walk a real
+## Run through a won fight (playing a real card, so damage/cards actually
+## happen) and then a lost one, and confirm the totals accumulate across BOTH
+## fights rather than only reflecting the last one.
+func _test_backlog39_stats_accumulate_across_fights() -> void:
+	var run := _map_run()
+	_step_into_combat(run)
+	var ci := _first_playable(run.combat, 0)
+	run.combat.play_card(0, ci)  # a real Slash — proves damage_dealt/cards_played aren't just wired, they fire
+	_force_win(run)
+	var after_first: Dictionary = run.stats.duplicate()
+	_expect(int(after_first["beasts_felled"]) == 1 and int(after_first["cards_played"]) >= 1
+		and int(after_first["damage_dealt"]) > 0 and int(after_first["turns_taken"]) >= 1
+		and String(after_first["died_to"]) == "",
+		"winning a fight banks a felled beast, cards played, damage dealt and turns taken")
+	_step_into_combat(run)  # clears the reward, walks back to the map, into the next fight
+	run.combat.players[0].combatant.hp = 0
+	run.combat.phase = Combat.Phase.OVER
+	run.sync()
+	_expect(run.phase == Run.Phase.LOST and String(run.stats["died_to"]) != ""
+		and int(run.stats["beasts_felled"]) == 1  # the loss doesn't fell anything
+		and int(run.stats["turns_taken"]) > int(after_first["turns_taken"])
+		and int(run.stats["damage_dealt"]) >= int(after_first["damage_dealt"]),
+		"a second, losing fight records what killed the run and keeps accumulating rather than resetting")
+
+
 func _test_content_make_card_and_reward_pool() -> void:
 	var card := Content.make_card("rally")
 	var pool := Content.reward_pool()
@@ -2714,6 +2743,37 @@ func _test_run_survives_a_save_and_load() -> void:
 		"a reloaded run continues the same random sequence")
 
 
+## Backlog #39: the run summary is only worth building if it actually survives
+## putting the game down. Through the real file, same reason #35's tests insist
+## on it — JSON has one number type, so a bare to_dict/from_dict pair wouldn't
+## catch an int quietly coming back a float.
+func _test_backlog39_stats_round_trip_through_save() -> void:
+	var run := Run.new([_deck_of(_slash, 6), _deck_of(_slash, 5)], ["A", "B"], 55, [{}, {}])
+	run.start()
+	run.stats["damage_dealt"] = 40
+	run.stats["highest_climb"] = 7
+	run.stats["cards_played"] = 12
+	run.stats["turns_taken"] = 5
+	run.stats["beasts_felled"] = 2
+	run.stats["died_to"] = "Stone Warden"
+	run.pick_node(int(run.available_nodes()[0]))
+	run.phase = Run.Phase.MAP
+
+	RunSave.clear()
+	RunSave.save(run)
+	var back := RunSave.load_run()
+	# Key by key, not str(dict) == str(dict) — JSON parsing doesn't promise to
+	# preserve insertion order, so two equal dicts can print in a different
+	# order and a str() comparison would fail on a correct round trip.
+	var stats_match: bool = back != null
+	if stats_match:
+		for key in run.stats:
+			if back.stats.get(key) != run.stats[key]:
+				stats_match = false
+	_expect(stats_match, "a run's stats survive a save/load round trip through the real file")
+	RunSave.clear()
+
+
 ## The one rule that keeps the slot honest post-#14: never leave a finished run
 ## offering to be continued. Mid-fight saves now succeed (see the dedicated
 ## mid-combat round-trip test below).
@@ -2903,6 +2963,29 @@ func _test_load_run_migrates_an_older_save() -> void:
 		and back.potions.size() == back.names.size() \
 		and back.potions[0].is_empty() and back.potions[1].is_empty()
 	_expect(migrated_ok, "an older save (missing potions entirely) migrates to the current shape instead of being discarded")
+	RunSave.clear()
+
+
+## A save from before #39 (or before any single stat this dict grows to next)
+## has no "stats" key at all — from_dict backfills the defaults the same
+## additive way it already does for potions above, no version bump needed.
+func _test_backlog39_older_save_backfills_missing_stats() -> void:
+	var run := Run.new([_deck_of(_slash, 6), _deck_of(_slash, 5)], ["A", "B"], 56, [{}, {}])
+	run.start()
+	var d := run.to_dict()
+	d.erase("stats")
+
+	RunSave.clear()
+	var f := FileAccess.open(RunSave.path, FileAccess.WRITE)
+	f.store_string(JSON.stringify(d))
+	f.close()
+
+	var back := RunSave.load_run()
+	var backfilled_ok: bool = back != null \
+		and int(back.stats.get("damage_dealt", -1)) == 0 \
+		and int(back.stats.get("beasts_felled", -1)) == 0 \
+		and String(back.stats.get("died_to", "x")) == ""
+	_expect(backfilled_ok, "a save missing stats entirely backfills the defaults instead of crashing")
 	RunSave.clear()
 
 

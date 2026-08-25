@@ -64,6 +64,14 @@ var max_hp: Array = []
 var team_relics: Array = []      # Array[Dictionary] — persistent team passives
 var potions: Array = []          # Array[Array[Dictionary]] per hunter — held consumables (backlog #26)
 var player_passives: Array = []  # per-hunter character signature passives
+## A run summary the end screen can show (backlog #39) — accumulation only, no
+## view code. sync() folds a fight's Combat totals in here exactly once, right
+## when that fight ends (guarded the same way the WIN/LOSE branch below already
+## is), so a save mid-fight can't double-count a partial fight's numbers.
+var stats: Dictionary = {
+	"damage_dealt": 0, "highest_climb": 0, "cards_played": 0,
+	"turns_taken": 0, "beasts_felled": 0, "died_to": "",
+}
 var reward_kind: String = "card" # "card" | "relic" — what this REWARD offers
 var reward_choices: Array = []   # per hunter: Array of card OR relic choices (by reward_kind)
 var reward_picked: Array = []    # Array[bool]
@@ -152,6 +160,7 @@ func to_dict() -> Dictionary:
 		"names": names, "decks": deck_dicts,
 		"hp": hp, "max_hp": max_hp,
 		"team_relics": team_relics, "potions": potions, "player_passives": player_passives,
+		"stats": stats,
 		"reward_kind": reward_kind, "reward_choices": choices,
 		"reward_picked": reward_picked, "queued_reward": _queued_reward,
 		"seed": _seed, "rng_state": str(_rng.state),  # a uint64; JSON floats would round it
@@ -187,6 +196,14 @@ static func from_dict(d: Dictionary) -> Run:
 	if r.potions.size() < r.names.size():  # old saves predate potions — backfill empty slots
 		for _i in range(r.names.size() - r.potions.size()):
 			r.potions.append([])
+	# A save from before #39 (or one missing an individual stat added later)
+	# just starts that stat at the default r._init() already gave it — same
+	# additive-backfill shape the potions block above uses, no version bump needed.
+	var loaded_stats: Dictionary = (d.get("stats", {}) as Dictionary).duplicate()
+	for key in r.stats:
+		if not loaded_stats.has(key):
+			loaded_stats[key] = r.stats[key]
+	r.stats = loaded_stats
 	r.decks = []
 	for one in d.get("decks", []):
 		var deck: Array = []
@@ -539,7 +556,14 @@ func pick_boon(choice: int) -> bool:
 func sync() -> void:
 	if phase != Phase.COMBAT or combat == null or not combat.is_over():
 		return
+	# Backlog #39: fold this fight's totals in exactly once — the guard above
+	# already stops sync() from re-entering once phase has moved off COMBAT.
+	stats["damage_dealt"] = int(stats["damage_dealt"]) + combat.damage_dealt_total
+	stats["cards_played"] = int(stats["cards_played"]) + combat.cards_played_total
+	stats["highest_climb"] = maxi(int(stats["highest_climb"]), combat.highest_climb)
+	stats["turns_taken"] = int(stats["turns_taken"]) + combat.round_num
 	if combat.result() == Combat.Result.WIN:
+		stats["beasts_felled"] = int(stats["beasts_felled"]) + 1
 		_bank_hp()
 		gold += _gold_for(node_type)
 		_grant_potions()
@@ -549,6 +573,7 @@ func sync() -> void:
 		_queued_reward = "relic" if node_type in ["elite", "boss"] else ""
 		_begin_reward("card")
 	else:
+		stats["died_to"] = combat.boss.name
 		phase = Phase.LOST
 
 ## One reward is settled. If this node still owes another (an elite's or Titan's

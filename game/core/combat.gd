@@ -55,6 +55,14 @@ var round_num: int = 1
 var phase: int = Phase.PLAYERS
 var log: Array = []
 
+# Run-summary stats (backlog #39) — accumulated for THIS fight only; Run.sync()
+# folds them into the run-wide totals once the fight ends, so a fight left
+# mid-flight by a save isn't double-counted (see Combat's own to_dict below,
+# which carries these so a reloaded fight keeps counting from the right spot).
+var damage_dealt_total: int = 0
+var cards_played_total: int = 0
+var highest_climb: int = 0
+
 var _rng := RandomNumberGenerator.new()
 var _forced_target: int = -1  # a "taunt" this round overrides the boss's target
 
@@ -445,6 +453,7 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		_check_end()
 		return true
 	ps.discard_pile.append(card)
+	cards_played_total += 1
 	var who: String = ps.combatant.name
 
 	# Everything numeric this card does, from the one formula the card face also
@@ -589,6 +598,7 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	if card.timed:  # landing a timed card builds Rhythm this turn (Frog combo payoff)
 		ps.rhythm += 1
 	_check_weakpoint_buck(pi)
+	_track_climb()
 	_check_end()
 	return true
 
@@ -680,6 +690,7 @@ func _damage_boss(amount: int, pi: int) -> int:
 	if boss.thorns > 0:  # Thorns (backlog #36): touching a spined beast costs you
 		players[pi].combatant.take_damage(boss.thorns)
 		_log("%s's thorns bite back — %s takes %d." % [boss.name, players[pi].combatant.name, boss.thorns])
+	damage_dealt_total += dealt
 	return dealt
 
 ## Player pi ends their turn. When every player has ended, the boss acts.
@@ -762,6 +773,7 @@ func _begin_round() -> void:
 		if round_num == 1:
 			innate_drawn = _draw_innate(ps)
 		_draw(ps, maxi(0, HAND_SIZE + _mod("draw") - innate_drawn))
+	_track_climb()  # a jetpack (_resolve_prepared) can raise a foothold before any card is played this round
 	_log("— Round %d —" % round_num)
 
 
@@ -779,6 +791,13 @@ func _all_ended() -> bool:
 		if not ps.ended_turn:
 			return false
 	return true
+
+## The peak Height either hunter has reached this fight (backlog #39). Called
+## after anything that can raise a foothold — play_card and the jetpack's
+## _resolve_prepared above — rather than duplicated at each call site.
+func _track_climb() -> void:
+	for ps in players:
+		highest_climb = maxi(highest_climb, ps.foothold)
 
 ## The boss's own telegraphed attack lands on a hunter, then Thorns
 ## (backlog #36) on that hunter reflects back — the debuff axis that punishes
@@ -959,6 +978,8 @@ func to_dict() -> Dictionary:
 		"energy_bonus": _energy_bonus, "attack_bonus": _attack_bonus,
 		"round_block": _round_block, "mods": _mods,
 		"rng_state": str(_rng.state),  # a uint64; JSON floats would round it
+		"damage_dealt_total": damage_dealt_total, "cards_played_total": cards_played_total,
+		"highest_climb": highest_climb,
 	}
 
 ## Rebuild an in-progress Combat. _init is bypassed (empty decks/combatants —
@@ -978,4 +999,7 @@ static func from_dict(d: Dictionary) -> Combat:
 	c._round_block = int(d.get("round_block", 0))
 	c._mods = (d.get("mods", {}) as Dictionary).duplicate()
 	c._rng.state = int(String(d.get("rng_state", "0")))
+	c.damage_dealt_total = int(d.get("damage_dealt_total", 0))
+	c.cards_played_total = int(d.get("cards_played_total", 0))
+	c.highest_climb = int(d.get("highest_climb", 0))
 	return c

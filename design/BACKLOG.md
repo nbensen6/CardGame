@@ -271,7 +271,7 @@ Ordered. Source in brackets.
   when:* the seed is readable, a run can be started from a given one, and a test
   proves two runs from the same seed make identical maps, shops and rewards.
 
-- [ ] **39. A run summary worth showing at the end** `cloud-safe` — nothing is
+- [x] **39. A run summary worth showing at the end** `cloud-safe` — nothing is
   counted over a run: not damage dealt, not the highest climb reached, not cards
   played, turns taken, or what killed you. So a finished run says nothing about
   itself, and we have no way to tell a close win from a walkover. This is the
@@ -409,6 +409,50 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-25** — #39 A run summary worth showing at the end: the data half
+  only, as scoped — no view code touched. Three counters on `Combat`
+  (`damage_dealt_total`, `cards_played_total`, `highest_climb`), each fed by
+  a single existing choke point rather than a new call site per card:
+  `_damage_boss()` already returns the dealt amount to its one caller, so it
+  now also adds that amount to the running total; `play_card()` already has
+  one place a card is confirmed to have resolved (`ps.discard_pile.append(card)`,
+  reached only AFTER the fumble-slips-away early return, so a fumbled timed
+  card correctly doesn't count as "played"); a new `_track_climb()` helper
+  (`highest_climb = maxi(highest_climb, ps.foothold)` for both hunters) is
+  called once at the end of `play_card()` and once at the end of
+  `_begin_round()` — the second call is the one easy to miss, since a Goblin
+  Jetpack's `prepare` effect raises a foothold from `_resolve_prepared()`
+  during round-start, outside `play_card()` entirely, so climb-tracking only
+  at the end of `play_card()` would silently undercount a jetpack rocket to
+  the sigil. `Run.stats` is a plain Dictionary (`damage_dealt`,
+  `highest_climb`, `cards_played`, `turns_taken`, `beasts_felled`,
+  `died_to`), folded in from `Combat`'s three counters plus `combat.round_num`
+  inside `Run.sync()` — the one place a fight's end is already detected, and
+  already guarded (by `phase != Phase.COMBAT`) against re-entering once the
+  phase has moved on, so the fold-in provably happens exactly once per
+  fight. `died_to` is set to `combat.boss.name` on the LOSE branch;
+  `beasts_felled` increments only on WIN. Persisted the same additive way
+  #35 and #26 already establish — `to_dict` adds one `"stats"` key,
+  `from_dict` backfills any missing individual stat (or the whole key, for a
+  save from before this item existed) from the defaults `_init` already set,
+  no `SAVE_VERSION` bump needed since nothing here changes the MEANING of an
+  existing field. `Combat.to_dict`/`from_dict` also carry the three counters,
+  so a save mid-fight resumes counting from the right spot instead of
+  losing partial credit for the fight in progress. 3 new tests: a real run
+  played through one won fight (a real card played, not just a forced win,
+  so damage/cards actually fire) then one lost fight, proving the totals
+  ADD rather than reset between fights and that a loss records what killed
+  it; a save/load round trip through the real file (caught a real test bug
+  while writing it — comparing the two stats dicts with `str(a) == str(b)`
+  failed on a correct round trip because Godot's JSON parser doesn't
+  preserve key insertion order, so the fix compares key-by-key instead, the
+  same trap a naive dict-equality check would hit anywhere in this codebase);
+  and an older save missing the `"stats"` key entirely still loads with
+  every default in place. `run_tests.gd` all green (250 assertions incl. the
+  three new ones); `node tools/cardlab/build.js` untouched by this item, not
+  re-run; `balance_sim.gd` ran clean as a smoke test only — its policies
+  never read `Run.stats`, so the printed win rates (42% coordinated at A0,
+  same shape as prior sessions) are unchanged, not tuned to.
 - **2026-08-25** — #38 A seed you can share: the engine already accepted a
   seed at construction (`Run.new`/`GameHost.new` both take `seed_value`) and
   already drew every map/shop/reward roll from one seeded `RandomNumberGenerator`
