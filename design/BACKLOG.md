@@ -626,13 +626,19 @@ check. It never judges its own work. See item 74 for why.
   finding improves. **One batch per run**, and say in the review block which
   cards you pointed at them.
 
-- [ ] **77. Props for the places you walk** `cloud-art` — the overworld is Kenney
-  hex tiles with Kenney trees, and the campfire, shop and reward plots are nearly
-  bare. Rocks, dead trees, banners, a shop awning, a campfire that reads as a
-  campfire from above. Small, cheap, in the palette. These are the lowest-risk
-  art the routine can make: nothing depends on their shape, so a weak one costs a
-  review rather than a broken fight. *Done when:* at least four props exist with
-  previews and review blocks, and the scene that wants them uses them.
+- [x] **77. Props for the places you walk** `cloud-art` — **the FIGHT grounds are
+  done (2026-08-25): all fourteen, one per beast, in `tools/blender/env/`.** The
+  overworld map is still Kenney hex tiles and Kenney trees, which is what this
+  item originally meant, so it is reopened as #82 rather than pretending the map
+  got done too.
+
+- [ ] **82. The overworld map, in our own art** `cloud-art` — the map between
+  fights is still Kenney hex tiles with Kenney trees on them, and now that every
+  fight has its own ground it is the most obviously borrowed screen left. The
+  campfire, shop and reward plots are nearly bare. `tools/blender/env.py` has the
+  vocabulary already (`tree`, `stump`, `rock`, `slabs`, `pillar`), so this is
+  mostly placement. *Done when:* the hex tiles and their landmarks are ours,
+  previews are committed and a review block is written.
 
 - [ ] **78. A Light meter for the Lightbearer** `needs a screen` — #47's engine
   landed: `PlayerState.light`, `light_gain`/`light_cost`/`damage_per_light`/

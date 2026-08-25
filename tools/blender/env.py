@@ -26,8 +26,8 @@ Two things worth knowing before adding one:
     keeps out of it for you.
   * **Cheap.** The camera shows a slice of world, so most of an environment is
     off-screen most of the time. The budget is 2200 triangles for the whole
-    ground — about one beast — and detail is better spent on the ring the
-    camera actually frames than on the far edge.
+    ground, and detail is better spent on the ring the camera actually frames
+    than on the far edge.
 """
 import bpy, math, os, random, sys
 from mathutils import Vector
@@ -52,7 +52,12 @@ BACK = (0.30, math.pi - 0.30)
 SIDES = (-0.55, 0.55)
 ANY = (0.0, math.tau)
 
-BUDGET["ground"] = 2200
+## Higher than a beast's, on purpose. An environment is one static mesh in one
+## draw call that never moves and never animates, and Nick asked for detail — a
+## place should have more going on than the creature standing in it, because it
+## is what tells you WHERE you are. The number is here to stop waste, not to
+## keep grounds sparse.
+BUDGET["ground"] = 3600
 
 
 class Env(Build):
@@ -82,7 +87,7 @@ class Env(Build):
             self.taper((0.0, 0.0, -dish * 0.5), self.R * 0.66, self.R * 0.20,
                        dish, uv, seg=seg)
 
-    def apron(self, uv, out=1.7, drop=0.55, seg=24):
+    def apron(self, uv, out=1.35, drop=0.55, seg=24):
         """Ground beyond the disc, lower and darker, so the world does not end
         at a clean circle. The camera catches this at the edges of a wide shot
         and it is the difference between a stage and a place."""
@@ -107,8 +112,10 @@ class Env(Build):
             a = arc[0] + (arc[1] - arc[0]) * ((i + self.rng.random() * 0.8)
                                               / max(1.0, float(count)))
             r = near + (far - near) * math.sqrt(self.rng.random())
+            # A shade below the floor. A prop resting exactly ON it leaves a
+            # hairline of daylight under one edge as soon as the ground dishes.
             p = Vector((math.cos(a) * r, math.sin(a) * r,
-                        self.rng.uniform(-jitter, jitter)))
+                        -0.035 + self.rng.uniform(-jitter, jitter)))
             make(p, size * (0.7 + self.rng.random() * 0.6), self.rng)
 
     # ---------------------------------------------------------------- parts
@@ -165,7 +172,12 @@ class Env(Build):
                        rot=point((math.cos(b) * lean, math.sin(b) * lean, 1.0)))
 
     def pool(self, at, size, uv=ICE, rim=None):
-        """Standing water, sunk into the floor."""
+        """Standing water, sunk into the floor.
+
+        Takes a plain (x, y, z) as happily as a scattered point, because a pool
+        is usually placed by hand — you know where the low ground is.
+        """
+        at = Vector(at) if not hasattr(at, "x") else at
         if rim is not None:
             self.taper((at.x, at.y, at.z - 0.04), size * 1.16, size * 1.10,
                        0.16, rim, seg=10)
@@ -192,6 +204,20 @@ class Env(Build):
                      (size * 0.34, size * 0.34, size * 0.07), cap, bevel=0.03)
 
     # ----------------------------------------------------------------- done
+
+    def _islands(self):
+        """Suppressed, on purpose.
+
+        Build's island check exists to catch a limb placed in mid-air on a
+        CHARACTER, where every part is meant to be one body. A ground is the
+        opposite: it is a floor with a scatter of separate things standing on
+        it, and half of them are meant to be separate — the Riftling's shards
+        hang in the air because that is what the Riftling does to ground.
+
+        Reporting "35 pieces do not touch" for a field of rocks is noise, and
+        noise is how a real warning gets missed.
+        """
+        return [list(range(len(self.parts)))]
 
     def done(self, out, name="Ground"):
         """Export, and check the one number the game depends on.

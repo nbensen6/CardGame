@@ -998,10 +998,17 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	# Grow the arena with its occupant. A 9-unit disc was generous under a bear and
 	# is a dinner plate under a Titan — it ran out mid-frame and left the bottom of
 	# the shot as void, which reads as a hole rather than as ground.
-	var want_r := maxf(9.0, maxf(_beast_box.size.x, _beast_box.size.z) * 1.5)
+	# How big the world is, from how TALL the beast is — not from how far it
+	# sprawls. A Mire Snapper is mostly jaw and tail, so sizing the ground off its
+	# footprint gave it a floor sixty units across and an apron the camera stood
+	# inside; you could not see the beast for its own scenery. Height is the
+	# measure that means something, with a floor under it so a long beast still
+	# has ground beneath every part of itself.
+	var want_r := maxf(_beast_height * 0.85,
+		maxf(_beast_box.size.x, _beast_box.size.z) * 0.62)
 	var ground := get_node_or_null("Ground") as CSGCylinder3D
 	if ground != null:
-		ground.radius = want_r
+		ground.radius = maxf(9.0, want_r)
 	_show_env(beast_id, want_r, ground)
 	_frame_beast()
 

@@ -48,6 +48,63 @@ The failures that have happened, all of which passed every check:
 
 ---
 
+### the fourteen fight grounds — ALL NEED A PASS
+
+Built 2026-08-25, from `tools/blender/env/<beast_id>.py` on the `env.py` helper.
+Every beast now fights somewhere rather than on the same blank disc.
+
+| beast | where it fights |
+|---|---|
+| stone_warden | a quarry somebody stopped working — everything has a straight edge |
+| crag_pup | a scree hollow ringed with standing stones, the rock it is made of |
+| bounder | a dry riverbed of rounded cobbles, flat so you can watch it land |
+| bramble_hog | a thicket floor trodden into a hollow; the brambles at rest |
+| root_lurker | forest floor growing the same roots it is hiding among |
+| mire_snapper | shallow water over silt, with logs it is pretending to be |
+| sky_snapper | bare cliff-top rock, wind-scoured, with its nest and bones |
+| frost_sentinel | a frozen lake, cracks running out from where it stands |
+| shifting_idol | a plaza somebody built and left; the only made ground |
+| grove_bear | a clearing in old woodland it half disappears into |
+| gale_serpent | a ridge whose rock winds in the same spiral the beast does |
+| drowned_colossus | a tidal flat at low water, pools and kelp and ribs |
+| sunken_warden | a drowned temple, the only fight with walls |
+| riftling | ground come apart into drifting plates, lit from below |
+
+**What to judge, in this order:**
+
+- **Do they read as fourteen PLACES or as fourteen palettes?** The intent was
+  that each beast fights somewhere that explains it — the Pup on its own
+  hillside, the Snapper among logs it could be mistaken for. Judge that as a set;
+  it is the thing that cannot be seen one at a time.
+- **The Mire Snapper's water.** STEEL on CLAY silt is the weakest colour call in
+  the batch and may not read as water at all from the fight camera.
+- **The Grove Bear may work too well.** It was deliberately made to half
+  disappear against its treeline, and there is a real chance that crosses from
+  atmospheric into hard-to-read.
+- **The Riftling's floating shards.** The only environment with things in mid
+  air on purpose. If they read as a bug rather than as the beast's effect on the
+  world, they should go.
+
+**Unjudged:** whether the aprons are too visible at the edges of a wide shot,
+and whether any ground is busy enough to fight the creature standing on it.
+
+### What building the grounds taught
+
+- **Anything tall belongs BEHIND the beast** (`env.BACK`). The camera sits about
+  as far from a beast as its ground is wide, so a standing stone on the front rim
+  is not scenery, it is a wall. The first build without that rule filled the
+  screen with the inside of a boulder.
+- **Size the world off the beast's HEIGHT, not its footprint.** The Mire Snapper
+  is mostly jaw and tail; sizing its ground off how far it sprawls gave it a floor
+  sixty units across and an apron the camera stood inside.
+- **Scale by a constant, not by measured bounds.** An environment's props and
+  apron overhang its floor on purpose, so its bounds say nothing about how big
+  the floor is.
+- **The island check is the wrong tool for a ground.** It exists to catch a limb
+  in mid-air on a character; on a field of scattered rocks it reports "35 pieces
+  do not touch" and that is how a real warning gets missed. `Env` turns it off
+  and says why.
+
 ### lightbearer — NEEDS A PASS
 
 The cloud added a fifth hunter (#47) with no model, so it was on screen as a

@@ -18,7 +18,7 @@ e = Env(seed=11)
 
 # The floor, dished so the fight happens in a hollow rather than on a plate.
 e.ground(CLAY, rim=UMBER, dish=0.22)
-e.apron(UMBER, out=1.8, drop=0.62)
+e.apron(UMBER, out=1.35, drop=0.62)
 
 # Gravel: flat chips lying in drifts, densest where the ground dips.
 e.scatter(26, lambda p, r, rng: e.box((p.x, p.y, 0.03),
