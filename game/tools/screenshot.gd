@@ -95,7 +95,7 @@ func _initialize() -> void:
 	Session.host = GameHost.new(transport, 42, 2, true)  # deterministic solo game
 	Session.client = GameClient.new(transport, 1)
 	Session.client.join()
-	if _state == "goblin":  # goblin as the ACTIVE hunter (slot 0) — wordiest cards
+	if _state in ["goblin", "3dosu"]:  # goblin active: he owns the 3-window Satchel Charge
 		Session.client.select_character("goblin_mech", 0)
 		Session.client.select_character("frog", 1)
 	elif _state != "3dselect":
@@ -378,11 +378,18 @@ func _capture() -> void:
 		tv.call("snap_camera")
 		await process_frame
 		var hand: Array = Session.client.private.get("slots", [{}])[0].get("hand", [])
+		# Prefer the card with the MOST windows: a one-window card cannot show a
+		# chain, and the chain is the whole point of the osu face.
 		var timed_at := -1
+		var best := 0
 		for i in range(hand.size()):
-			if bool((hand[i] as Dictionary).get("timed", false)):
+			var c: Dictionary = hand[i]
+			if not bool(c.get("timed", false)):
+				continue
+			var n := int(c.get("timed_hits", 1))
+			if n > best:
+				best = n
 				timed_at = i
-				break
 		if timed_at < 0:
 			print("TIMING no timed card in hand — nothing to show")
 		else:
@@ -392,8 +399,9 @@ func _capture() -> void:
 			for _i in 26:                # part-way through the approach
 				await process_frame
 			var circle = tv.get("_circle")
-			print("TIMING style=%s card=%s circle_live=%s"
+			print("TIMING style=%s card=%s windows=%d circle_live=%s"
 				% [Progress.timing_style(), String((hand[timed_at] as Dictionary).get("name", "?")),
+				   int((hand[timed_at] as Dictionary).get("timed_hits", 1)),
 				   str(circle != null and circle.call("is_live"))])
 			if _state == "3dosu" and circle != null:
 				# It must be able to RECEIVE the tap, not just draw.
@@ -413,7 +421,7 @@ func _capture() -> void:
 					var probe_circle := HitCircle.new()
 					get_root().add_child(probe_circle)
 					probe_circle.resolved.connect(func(q: int) -> void: got[0] = q)
-					probe_circle.begin(1, 0.0, tv.get("_cam"), Vector3.ZERO)
+					probe_circle.begin(0.0, tv.get("_cam"), PackedVector3Array([Vector3.ZERO]))
 					probe_circle.set("_t", float(probe[1]))
 					probe_circle.call("_fire")
 					print("TIMING   %-12s -> %s  %s" % [probe[0], _quality_name(int(got[0])),
