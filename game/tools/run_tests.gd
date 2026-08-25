@@ -194,6 +194,9 @@ func _init() -> void:
 	_test_run_is_four_titans()
 	_test_run_relic_reward_and_full_clear()
 	_test_elite_pays_a_card_then_a_relic()
+	_test_backlog48_relic_pool_and_boss_relic_pool_partition_by_tier()
+	_test_backlog48_titan_relic_reward_draws_only_from_the_boss_pool()
+	_test_backlog48_elite_relic_reward_never_offers_a_boss_relic()
 	_test_preview_matches_what_the_card_actually_does()
 	_test_incoming_reckons_damage_after_block()
 	_test_every_derived_keyword_resolves()
@@ -2872,6 +2875,62 @@ func _test_elite_pays_a_card_then_a_relic() -> void:
 		and run.team_relics.size() == relics_before + run.player_count()
 		and run.phase == Run.Phase.MAP,
 		"an elite pays a card and THEN a relic before the route reopens")
+
+
+## Backlog #48: relics carry a tier, and relic_pool()/boss_relic_pool() are a
+## strict partition of the same 35 — nothing in one is in the other, and
+## nothing outside "common"/"boss" exists to fall through the cracks.
+func _test_backlog48_relic_pool_and_boss_relic_pool_partition_by_tier() -> void:
+	var common: Array = Content.relic_pool()
+	var boss: Array = Content.boss_relic_pool()
+	var overlap := false
+	for id in common:
+		if boss.has(id):
+			overlap = true
+	var all_ids: Array = Content.all_relic_ids()
+	var covers_everything := common.size() + boss.size() == all_ids.size()
+	_expect(not overlap and covers_everything and boss.has("warlords_girdle")
+		and not common.has("warlords_girdle"),
+		"relic_pool() and boss_relic_pool() partition every relic by tier with no overlap")
+
+
+## The reward a Titan itself pays must come from ITS OWN pool — never a relic
+## a shop or an elite could also offer. Reaches into _begin_reward via
+## node_type = "boss" the same way _test_elite_pays_a_card_then_a_relic does.
+func _test_backlog48_titan_relic_reward_draws_only_from_the_boss_pool() -> void:
+	var run := _map_run()
+	_step_into_combat(run)
+	run.node_type = "boss"
+	_force_win(run)
+	_pick_both(run)  # take the card, opening the relic reward
+	var boss_ids: Array = Content.boss_relic_pool()
+	var all_boss_tier := true
+	var offered_any := false
+	for choices in run.reward_choices:
+		for r in (choices as Array):
+			offered_any = true
+			if not boss_ids.has(String((r as Dictionary).get("id", ""))):
+				all_boss_tier = false
+	_expect(run.reward_kind == "relic" and offered_any and all_boss_tier,
+		"a Titan's relic reward offers only tier: boss relics")
+
+
+## The mirror check: an elite's relic reward must NEVER surface a boss-tier
+## relic — those are held back for a Titan kill specifically.
+func _test_backlog48_elite_relic_reward_never_offers_a_boss_relic() -> void:
+	var run := _map_run()
+	_step_into_combat(run)
+	run.node_type = "elite"
+	_force_win(run)
+	_pick_both(run)  # take the card, opening the relic reward
+	var boss_ids: Array = Content.boss_relic_pool()
+	var saw_boss_tier := false
+	for choices in run.reward_choices:
+		for r in (choices as Array):
+			if boss_ids.has(String((r as Dictionary).get("id", ""))):
+				saw_boss_tier = true
+	_expect(run.reward_kind == "relic" and not saw_boss_tier,
+		"an elite's relic reward never offers a boss-tier relic")
 
 
 ## GameHost._keywords_of derives keyword ids in CODE; keywords.json defines them.

@@ -743,9 +743,13 @@ func _begin_reward(kind: String) -> void:
 	reward_kind = kind
 	reward_choices = []
 	reward_picked = []
+	# A Titan itself (node_type "boss") pays from its own relic pool — the
+	# tier-gated relics no shop, treasure or elite ever offers (backlog #48).
+	var relic_pool: Array = Content.boss_relic_pool(_unlocked_wins) if node_type == "boss" \
+		else Content.relic_pool(_unlocked_wins)
 	for i in range(names.size()):
 		# Cards come from that hunter's own pool, so each can draft their archetype.
-		var pool: Array = Content.relic_pool(_unlocked_wins) if reward_kind == "relic" else Content.reward_pool(_character_of(i), _unlocked_wins)
+		var pool: Array = relic_pool if reward_kind == "relic" else Content.reward_pool(_character_of(i), _unlocked_wins)
 		reward_choices.append(_roll_choices(pool))
 		reward_picked.append(false)
 

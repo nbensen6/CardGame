@@ -351,7 +351,7 @@ Ordered. Source in brackets.
   the resource survives save/load, and its cards are tested.
   [sts2-comparison §3.5]
 
-- [ ] **48. Relic tiers, and a pool only Titans pay from** `cloud-safe` — all 35
+- [x] **48. Relic tiers, and a pool only Titans pay from** `cloud-safe` — all 35
   relics carry `{name, effect, value, text}` and NO rarity, so every one is
   equally likely and felling a Titan feels the same as opening a chest. StS's
   boss relics are the memorable ones precisely because they are gated behind the
@@ -680,6 +680,39 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-25** — #48 Relic tiers, and a pool only Titans pay from: every
+  relic in `relics.json` now carries `"tier"` — `"common"` (31) or `"boss"`
+  (4). The boss tier didn't need new content: the four downside relics #30
+  already wrote (Warlord's Girdle, Bottomless Quiver, Fortress Ward, Adrenal
+  Surge) already read as the StS boss-relic idiom — real power, real cost —
+  they just weren't gated, exactly as the item said. `Content.relic_pool()`
+  now excludes `tier: "boss"` (so shop, treasure and an elite's payout never
+  offer one) and a new `Content.boss_relic_pool()` returns only those four;
+  `Run._begin_reward()` picks between them by checking `node_type == "boss"`,
+  which is already how the code tells a Titan kill apart from an elite's. 3
+  new tests: `relic_pool()`/`boss_relic_pool()` partition all 35 with no
+  overlap, a Titan's actual reward (driven through `_force_win`/`_pick_both`
+  the same way `_test_elite_pays_a_card_then_a_relic` already does) offers
+  only boss-tier ids, and an elite's never does. `run_tests.gd` all green,
+  300 assertions (297 prior + 3 new). `node tools/cardlab/build.js` clean (35
+  relics, 0 unreachable — the flat `pool` list is untouched, only which
+  function reads which slice of it changed). Ran `balance_sim.gd` as the
+  standing smoke test and it's worth writing down plainly rather than
+  quietly noticing: COORDINATED win rate at A0 dropped from the ~36% prior
+  sessions logged to 22%, reproduced by diffing against a stash of this same
+  commit's parent (36% before, 22% after, same seeds both times — not
+  variance). Root cause isn't a bug in the feature; it's `balance_sim.gd`'s
+  own `_pick_reward()` heuristic, which grabs any relic whose `effect` is
+  `attack_bonus` or `max_energy` and has never read `downside_effect` — two
+  of the four boss relics match that filter, and now that they're the ONLY
+  thing on offer after a Titan (not mixed in among 31 safe ones) the
+  "coordinated" policy grabs them and eats their downside blind, every
+  Titan, every run. `balance_sim.gd` is explicitly not to be tuned against
+  (standing rule #5), and this isn't a soft-lock either — #46's sweep policies
+  don't special-case relic effect names, so they're unaffected. Left the sim
+  and the relics alone; flagging the heuristic gap here in case a future
+  session wants a smarter (downside-aware) `_pick_reward` for its own sake.
 
 - **2026-08-25** — #46 A robustness sweep that is not balance tuning:
   `tools/robustness_sweep.gd`, a sibling to `balance_sim.gd` that measures

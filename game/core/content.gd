@@ -109,15 +109,34 @@ static func reward_pool(character_id: String = "", wins: int = UNLOCKED_ALL) -> 
 	return out
 
 ## Relic ids that can be offered as rewards, gated by `wins` the same way
-## reward_pool() gates cards (backlog #42). Returns a fresh Array — callers
-## filter and erase from these lists, and mutating the cache would drain the
-## pool globally.
+## reward_pool() gates cards (backlog #42). Excludes `tier: "boss"` relics —
+## those are withheld from every normal offer (shop, treasure, elite reward,
+## event grant) and only reachable through boss_relic_pool() below (backlog
+## #48). Returns a fresh Array — callers filter and erase from these lists,
+## and mutating the cache would drain the pool globally.
 static func relic_pool(wins: int = UNLOCKED_ALL) -> Array:
 	var relics: Dictionary = _read_json(RELICS_PATH).get("relics", {})
 	var out: Array = []
 	for id_v in (_read_json(RELICS_PATH).get("pool", []) as Array):
 		var id := String(id_v)
-		if int((relics.get(id, {}) as Dictionary).get("unlock_wins", 0)) <= wins:
+		var rd: Dictionary = relics.get(id, {})
+		if String(rd.get("tier", "common")) == "boss":
+			continue
+		if int(rd.get("unlock_wins", 0)) <= wins:
+			out.append(id)
+	return out
+
+## The relic pool a Titan itself pays out — `tier: "boss"` only. Same
+## unlock_wins gate as relic_pool(); a fresh Array for the same reason.
+static func boss_relic_pool(wins: int = UNLOCKED_ALL) -> Array:
+	var relics: Dictionary = _read_json(RELICS_PATH).get("relics", {})
+	var out: Array = []
+	for id_v in (_read_json(RELICS_PATH).get("pool", []) as Array):
+		var id := String(id_v)
+		var rd: Dictionary = relics.get(id, {})
+		if String(rd.get("tier", "common")) != "boss":
+			continue
+		if int(rd.get("unlock_wins", 0)) <= wins:
 			out.append(id)
 	return out
 

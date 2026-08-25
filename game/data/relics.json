@@ -1,188 +1,219 @@
 {
-  "_comment": "Relics are DATA (CLAUDE.md §11) — persistent team passives. The good ones CHANGE A RULE rather than nudging a number, and hook this game's own systems (the climb, the grip timer, timed cards, Rhythm, the weak-point threshold). Effect types: max_energy, attack_bonus, round_block, heal_on_clear, start_strength, start_foothold, fall_safe, rhythm_keeps, threshold, chip, sigil_bonus, vuln_bonus, draw, shake_resist, grip_seconds (client), timing_zone (client), block_carries, no_buck, soft_fall, energy_handoff. A relic may also carry 'downside_effect'/'downside_value' — a SECOND {effect, value} pair from the same vocabulary, summed in on top of the first by the identical generic rule (backlog #30) — for a relic that costs something real in exchange for its power. A relic may also carry 'unlock_wins' (int) — it only appears in relic_pool() once the player's career total_wins (Progress.total_wins()) reaches that number; omitted means always available (backlog #42). 'pool' lists what can be offered.",
+  "_comment": "Relics are DATA (CLAUDE.md §11) — persistent team passives. The good ones CHANGE A RULE rather than nudging a number, and hook this game's own systems (the climb, the grip timer, timed cards, Rhythm, the weak-point threshold). Effect types: max_energy, attack_bonus, round_block, heal_on_clear, start_strength, start_foothold, fall_safe, rhythm_keeps, threshold, chip, sigil_bonus, vuln_bonus, draw, shake_resist, grip_seconds (client), timing_zone (client), block_carries, no_buck, soft_fall, energy_handoff. A relic may also carry 'downside_effect'/'downside_value' — a SECOND {effect, value} pair from the same vocabulary, summed in on top of the first by the identical generic rule (backlog #30) — for a relic that costs something real in exchange for its power. A relic may also carry 'unlock_wins' (int) — it only appears in relic_pool() once the player's career total_wins (Progress.total_wins()) reaches that number; omitted means always available (backlog #42). 'tier' is 'common' or 'boss' — 'boss' relics are withheld from every normal offer (shop, treasure, elite reward, event grant) and only appear in the reward a Titan itself pays (backlog #48); today that's exactly the four downside relics, since a real cost in exchange for real power is the boss-relic idiom already. 'pool' lists what can be offered.",
   "relics": {
     "iron_thews": {
       "name": "Iron Thews",
+      "tier": "common",
       "effect": "max_energy",
       "value": 1,
       "text": "+1 Energy each round."
     },
     "honed_blades": {
       "name": "Honed Blades",
+      "tier": "common",
       "effect": "attack_bonus",
       "value": 2,
       "text": "Your attacks deal +2 damage."
     },
     "stone_skin": {
       "name": "Stone Skin",
+      "tier": "common",
       "effect": "round_block",
       "value": 3,
       "text": "Start each round with 3 Block."
     },
     "old_remedy": {
       "name": "Old Remedy",
+      "tier": "common",
       "effect": "heal_on_clear",
       "value": 8,
       "text": "Recover +8 more HP after each beast falls."
     },
     "sunforged_edge": {
       "name": "Sunforged Edge",
+      "tier": "common",
       "effect": "attack_bonus",
       "value": 3,
       "text": "Your attacks deal +3 damage."
     },
     "warding_totem": {
       "name": "Warding Totem",
+      "tier": "common",
       "effect": "round_block",
       "value": 4,
       "text": "Start each round with 4 Block."
     },
     "whetstone": {
       "name": "Whetstone",
+      "tier": "common",
       "effect": "start_strength",
       "value": 2,
       "text": "Begin each fight with +2 Strength."
     },
     "field_kit": {
       "name": "Field Kit",
+      "tier": "common",
       "effect": "heal_on_clear",
       "value": 10,
       "text": "Recover +10 more HP after each beast falls."
     },
     "climbers_boots": {
       "name": "Climber's Boots",
+      "tier": "common",
       "effect": "start_foothold",
       "value": 1,
       "text": "Begin every fight already 1 Height up."
     },
     "grapple_spurs": {
       "name": "Grapple Spurs",
+      "tier": "common",
       "effect": "start_foothold",
       "value": 2,
       "text": "Begin every fight already 2 Height up."
     },
     "feather_harness": {
       "name": "Feather Harness",
+      "tier": "common",
       "effect": "fall_safe",
       "value": 1,
       "text": "Losing your grip costs no HP — you only lose the Height."
     },
     "anchor_pin": {
       "name": "Anchor Pin",
+      "tier": "common",
       "effect": "shake_resist",
       "value": 1,
       "text": "A sweep no longer shakes you down a hold."
     },
     "chalk_pouch": {
       "name": "Chalk Pouch",
+      "tier": "common",
       "effect": "grip_seconds",
       "value": 2,
       "text": "Your grip holds 2 seconds longer between holds."
     },
     "tar_gloves": {
       "name": "Tar Gloves",
+      "tier": "common",
       "effect": "grip_seconds",
       "value": 4,
       "text": "Your grip holds 4 seconds longer between holds."
     },
     "steady_hands": {
       "name": "Steady Hands",
+      "tier": "common",
       "effect": "timing_zone",
       "value": 6,
       "text": "Timing windows are noticeably wider."
     },
     "metronome_shell": {
       "name": "Metronome Shell",
+      "tier": "common",
       "effect": "timing_zone",
       "value": 12,
       "text": "Timing windows are much wider."
     },
     "drummers_hide": {
       "name": "Drummer's Hide",
+      "tier": "common",
       "effect": "rhythm_keeps",
       "value": 1,
       "text": "Rhythm no longer resets between turns."
     },
     "deep_hooks": {
       "name": "Deep Hooks",
+      "tier": "common",
       "effect": "threshold",
       "value": 8,
       "text": "You may deal 8 more damage at a weak point before it bucks you."
     },
     "barbed_pitons": {
       "name": "Barbed Pitons",
+      "tier": "common",
       "effect": "threshold",
       "value": 14,
       "text": "You may deal 14 more damage at a weak point before it bucks you."
     },
     "sigil_lens": {
       "name": "Sigil Lens",
+      "tier": "common",
       "effect": "sigil_bonus",
       "value": 3,
       "text": "Weak-point strikes deal +3."
     },
     "hunters_mark": {
       "name": "Hunter's Mark",
+      "tier": "common",
       "effect": "vuln_bonus",
       "value": 3,
       "text": "Each Exposed stack is worth +3 more damage."
     },
     "prying_bar": {
       "name": "Prying Bar",
+      "tier": "common",
       "effect": "chip",
       "value": 2,
       "text": "Armoured hide chips far better — your ground attacks bite."
     },
     "scouts_satchel": {
       "name": "Scout's Satchel",
+      "tier": "common",
       "effect": "draw",
       "value": 1,
       "text": "Draw 1 more card each turn."
     },
     "long_lungs": {
       "name": "Long Lungs",
+      "tier": "common",
       "effect": "draw",
       "value": 2,
       "text": "Draw 2 more cards each turn."
     },
     "second_wind": {
       "name": "Second Wind",
+      "tier": "common",
       "effect": "max_energy",
       "value": 2,
       "text": "+2 Energy each round."
     },
     "travellers_stew": {
       "name": "Traveller's Stew",
+      "tier": "common",
       "effect": "heal_on_clear",
       "value": 14,
       "text": "Recover +14 more HP after each beast falls."
     },
     "riveted_plates": {
       "name": "Riveted Plates",
+      "tier": "common",
       "effect": "block_carries",
       "value": 1,
       "text": "Half your unspent Block carries into the next round instead of resetting."
     },
     "grapnel_clamp": {
       "name": "Grapnel Clamp",
+      "tier": "common",
       "effect": "no_buck",
       "value": 1,
       "text": "Reaching a weak point, you are never bucked off it."
     },
     "safety_line": {
       "name": "Safety Line",
+      "tier": "common",
       "effect": "soft_fall",
       "value": 1,
       "text": "Losing your grip drops you to the nearest hold below instead of all the way to the base."
     },
     "relay_baton": {
       "name": "Relay Baton",
+      "tier": "common",
       "effect": "energy_handoff",
       "value": 1,
       "text": "Unspent Energy when you end your turn passes to your ally instead of being lost."
     },
     "warlords_girdle": {
       "name": "Warlord's Girdle",
+      "tier": "boss",
       "effect": "attack_bonus",
       "value": 6,
       "downside_effect": "max_energy",
@@ -191,6 +222,7 @@
     },
     "bottomless_quiver": {
       "name": "Bottomless Quiver",
+      "tier": "boss",
       "effect": "draw",
       "value": 3,
       "downside_effect": "attack_bonus",
@@ -199,6 +231,7 @@
     },
     "fortress_ward": {
       "name": "Fortress Ward",
+      "tier": "boss",
       "effect": "round_block",
       "value": 10,
       "downside_effect": "draw",
@@ -207,6 +240,7 @@
     },
     "adrenal_surge": {
       "name": "Adrenal Surge",
+      "tier": "boss",
       "effect": "max_energy",
       "value": 2,
       "downside_effect": "round_block",
@@ -215,6 +249,7 @@
     },
     "summit_cairn": {
       "name": "Summit Cairn",
+      "tier": "common",
       "effect": "start_foothold",
       "value": 3,
       "unlock_wins": 1,
