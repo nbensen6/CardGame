@@ -147,6 +147,12 @@ func _init() -> void:
 	_test_weakpoint_threshold_bucks()
 	_test_timed_damage_bonus()
 	_test_sure_enchant_lands_even_on_a_fumble()
+	_test_cheap_enchant_cuts_cost()
+	_test_keen_enchant_draws_an_extra_card()
+	_test_spent_enchant_exhausts_instead_of_discarding()
+	_test_bonded_enchant_echoes_block_to_the_ally()
+	_test_generous_enchant_gives_the_ally_energy()
+	_test_true_eye_enchant_upgrades_good_to_perfect()
 	_test_timed_block_guards_on_a_hit()
 	_test_timed_ally_block_anchors_the_ally()
 	# Retain and Innate (backlog #28)
@@ -2347,6 +2353,76 @@ func _test_sure_enchant_lands_even_on_a_fumble() -> void:
 	combat.play_card(0, idx, false)  # a fumbled timing hit — Sure carries it anyway
 	_expect(before - combat.boss.hp == 9,  # 4 base + 5 timed_damage, same as a nailed hit
 		"a Sure-enchanted card lands its timed bonus even when the timing is missed")
+
+
+## Six more enchants (backlog #50): #12 built the engine with two proving
+## entries ("sure", tested above, and "wide", which stays needs-a-screen since
+## the timing window is client-rendered). These give the enchant SLOT a real
+## decision across the categories #50 named — cost, draw, exhaust, target
+## (co-op) and a second timing effect — each with its own /core consumer.
+
+func _test_cheap_enchant_cuts_cost() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var idx := _first_playable(combat, 0)
+	var enchanted: Card = combat.players[0].hand[idx].enchanted_copy("cheap")
+	combat.players[0].hand[idx] = enchanted
+	var before_energy: int = combat.players[0].energy
+	_expect(combat.effective_cost(0, enchanted) == 0,
+		"a Cheap-enchanted 1-cost card effectively costs 0")
+	combat.play_card(0, idx, true)
+	_expect(combat.players[0].energy == before_energy,
+		"playing a Cheap-enchanted card spends no energy once its cut cost reaches 0")
+
+
+func _test_keen_enchant_draws_an_extra_card() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var idx := _first_playable(combat, 0)
+	var before: int = combat.players[0].hand.size()
+	combat.players[0].hand[idx] = combat.players[0].hand[idx].enchanted_copy("keen")
+	combat.play_card(0, idx, true)
+	_expect(combat.players[0].hand.size() == before,
+		"a Keen-enchanted card's extra draw replaces the card it just spent")
+
+
+func _test_spent_enchant_exhausts_instead_of_discarding() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var idx := _first_playable(combat, 0)
+	var card: Card = combat.players[0].hand[idx].enchanted_copy("spent")
+	combat.players[0].hand[idx] = card
+	combat.play_card(0, idx, true)
+	_expect(combat.players[0].discard_pile.is_empty()
+		and combat.players[0].exhaust_pile.size() == 1
+		and combat.players[0].exhaust_pile[0].id == card.id,
+		"a Spent-enchanted card exhausts instead of returning to the discard pile")
+
+
+func _test_bonded_enchant_echoes_block_to_the_ally() -> void:
+	var combat := _new_combat([_deck_of(_defend, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var idx := _first_playable(combat, 0)
+	combat.players[0].hand[idx] = combat.players[0].hand[idx].enchanted_copy("bonded")
+	combat.play_card(0, idx, true)
+	_expect(combat.players[0].combatant.block == 5 and combat.players[1].combatant.block == 5,
+		"a Bonded card's Block is echoed to the ally, not just the caster")
+
+
+func _test_generous_enchant_gives_the_ally_energy() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var idx := _first_playable(combat, 0)
+	combat.players[0].hand[idx] = combat.players[0].hand[idx].enchanted_copy("generous")
+	var ally_before: int = combat.players[1].energy
+	combat.play_card(0, idx, true)
+	_expect(combat.players[1].energy == ally_before + 1,
+		"a Generous-enchanted card hands the ally 1 energy")
+
+
+func _test_true_eye_enchant_upgrades_good_to_perfect() -> void:
+	var combat := _new_combat([_deck_of(_pounce, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var before: int = combat.boss.hp
+	var idx := _first_playable(combat, 0)
+	combat.players[0].hand[idx] = combat.players[0].hand[idx].enchanted_copy("true_eye")
+	combat.play_card(0, idx, true, -1, -1, -1, Combat.TIMING_GOOD)
+	_expect(before - combat.boss.hp == 9,  # 4 base + the FULL 5 timed_damage, not half
+		"a True Eye-enchanted card turns a good hit into a perfect one")
 
 
 ## A timed defensive card: nail the window and the guard holds; mistime it and the

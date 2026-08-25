@@ -326,7 +326,10 @@ func effective_cost(pi: int, card: Card) -> int:
 		return card.cost
 	if card.cost == -1:
 		return players[pi].energy
-	return maxi(0, card.cost - int(players[pi].cost_reductions.get(card.id, 0)))
+	var cost := maxi(0, card.cost - int(players[pi].cost_reductions.get(card.id, 0)))
+	if String(card.enchant_data().get("effect", "")) == "cost_cut":  # "Cheap" (backlog #50)
+		cost = maxi(0, cost - int(card.enchant_data().get("value", 0)))
+	return cost
 
 func result() -> int:
 	if boss.is_dead():
@@ -455,6 +458,7 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		return false
 	var ps: PlayerState = players[pi]
 	var card: Card = ps.hand[ci]
+	var enchant_effect := String(card.enchant_data().get("effect", ""))  # read once (backlog #50)
 	# Capture selection targets by reference BEFORE any removal (indices are into the
 	# current hand, and must not point at the card being played).
 	var sac_card: Card = null
@@ -474,13 +478,21 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	ps.hand.remove_at(ci)
 	# A fumbled timed card slips away — removed with no effect (not even discarded)
 	# — unless the "sure" enchant is attached, which always lands (backlog #12).
-	if card.timed and not timing_hit and String(card.enchant_data().get("effect", "")) != "auto_nail":
+	if card.timed and not timing_hit and enchant_effect != "auto_nail":
 		_log("%s fumbles %s — it slips away." % [ps.combatant.name, card.name])
 		_check_end()
 		return true
-	ps.discard_pile.append(card)
+	if enchant_effect == "self_exhaust":  # "Spent" (backlog #50) — leaves the fight instead
+		ps.exhaust_pile.append(card)
+	else:
+		ps.discard_pile.append(card)
 	cards_played_total += 1
 	var who: String = ps.combatant.name
+
+	# "True Eye" (backlog #50): a good hit reads as a perfect one for this card,
+	# ahead of the preview so the bonus it scales actually pays out perfect.
+	if card.timed and timing_hit and timing_quality == TIMING_GOOD and enchant_effect == "quality_up":
+		timing_quality = TIMING_PERFECT
 
 	# Everything numeric this card does, from the one formula the card face also
 	# shows. Only well-timed plays reach here (fumbles slipped away above), so the
@@ -595,6 +607,10 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		ps.combatant.gain_block(blk)
 		var guard := "  (nailed it!)" if card.timed and card.timed_block > 0 else ""
 		_log("%s plays %s — +%d block%s." % [who, card.name, blk, guard])
+		if enchant_effect == "echo_block":  # "Bonded" (backlog #50) — the ally feels it too
+			var bonded: PlayerState = players[ally_index(pi)]
+			bonded.combatant.gain_block(blk)
+			_log("%s's Bonded card echoes +%d block to %s." % [who, blk, bonded.combatant.name])
 	var ally_blk: int = int(pv["ally_block"])
 	if ally_blk > 0:
 		var ally: PlayerState = players[ally_index(pi)]
@@ -605,6 +621,11 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		var ally_e: PlayerState = players[ally_index(pi)]
 		ally_e.energy += card.ally_energy
 		_log("%s plays %s — +%d energy to %s." % [who, card.name, card.ally_energy, ally_e.combatant.name])
+	if enchant_effect == "ally_energy_gift":  # "Generous" (backlog #50)
+		var gifted: PlayerState = players[ally_index(pi)]
+		var gift: int = int(card.enchant_data().get("value", 0))
+		gifted.energy += gift
+		_log("%s's Generous card gives %s +%d energy." % [who, gifted.combatant.name, gift])
 	if card.light_gain > 0:  # the Lightbearer's own currency — banks across turns (backlog #47)
 		ps.light += card.light_gain
 		_log("%s plays %s — +%d Light (now %d)." % [who, card.name, card.light_gain, ps.light])
@@ -625,6 +646,10 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	if card.draw > 0:
 		_draw(ps, card.draw)
 		_log("%s plays %s — draw %d." % [who, card.name, card.draw])
+	if enchant_effect == "bonus_draw":  # "Keen" (backlog #50)
+		var keen_draw: int = int(card.enchant_data().get("value", 0))
+		_draw(ps, keen_draw)
+		_log("%s's Keen card draws %d more." % [who, keen_draw])
 
 	if card.rhythm > 0:
 		ps.rhythm += card.rhythm
