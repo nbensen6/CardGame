@@ -69,23 +69,86 @@ because the script does not know about them. So pick per model:
 
 ## Matching the Kenney style
 
-Read off the bunny rather than guessed at:
+Measured, not guessed. `dissect.py` takes a `.glb` apart and reports how it is
+built — how many pieces, what shape each piece is, how hard its edges are:
+
+    blender.exe --background --python tools/blender/dissect.py --       game/assets/3d/cast/bunny.glb game/assets/3d/cast/fox.glb
+
+Run against Kenney's bunny and fox, three things come back:
 
 * **~575 triangles**, and the low-poly look comes from the VERTEX COUNT, not
-  from flat shading — 78% of the bunny's faces are smooth-shaded. Faceting a
+  from flat shading — 80% of the bunny's faces are smooth-shaded. Faceting a
   model is what makes it read as programmer art, not the triangle budget.
-* **One material for the whole set**: a 512x512 palette atlas, `colormap.png`,
-  kept next to these scripts. Colour comes from UVs pointing at a flat swatch,
-  which is why a bunny and a koala batch together.
+* **He bevels everything.** 246 of the bunny's 833 edges sit in the 25-50 degree
+  band, which is the signature of a bevelled hard edge. This is why his boxes
+  read as moulded plastic and ours read as debug volumes.
+* **His parts are TUBES, BOXES and TAPERS.** The fox's ears narrow 0.23 -> 0.10
+  along their length. He also reuses: the fox and the bunny share the same four
+  legs and the same body sphere, vertex for vertex.
 
-So one mesh can be many colours. Aim a part's UVs at a swatch and everything
-joins into a single mesh with a single material — the Frog is 876 triangles in
-1 mesh, where the bunny needs 5.
+Against that, the models here as they stood in August 2026 were **every part an
+ellipsoid** — the Frog classified as sixteen squashed spheres, and the Stone
+Warden spent 3744 triangles, six times Kenney's entire budget, making spheres
+rounder rather than making shapes. Detail was never a triangle problem. It was a
+vocabulary problem.
+
+## The vocabulary
+
+    ball    an ellipsoid                     bodies, heads, joints
+    box     a BEVELLED cube                  plates, slabs, blocks, machinery
+    taper   a cone or frustum                snouts, horns, claws, ears, spikes
+    wedge   a box with one end shrunk        beaks, jaws, fins, blades, boots
+    limb    a tapered tube along a path      tails, vines, arms, legs, necks
+    ring    a torus                          mouths, collars, bands
+
+    mirror(fn)   build once, get both sides
+
+`limb` is the one worth reading the source of. It threads a tube through a list
+of points and carries the frame forward from one to the next, so the tube does
+not spin around its own axis where the path turns. Built the naive way a tail
+comes out looking like a drill bit.
+
+**A box half-extent is not a sphere radius.** Swapping the numbers straight
+across inflates every part by its corners — the Goblin's rig came out as a stack
+of grey fridges he was hiding behind. Multiply the old radii by about 0.72.
+
+Shading is decided by **angle**, not per part: every face is smooth, and an edge
+sharper than `CREASE` (50 degrees, which is where Kenney's own edges split)
+stops sharing a normal. So a sphere comes out soft and a box comes out crisp
+from the same rule, and there is no `smooth=` to remember.
+
+Colour still comes from **one material for the whole set**: a 512x512 palette
+atlas, `colormap.png`, kept next to these scripts, with UVs pointing at a flat
+swatch. Which is why a bunny and a koala batch together.
 
 Two traps: the primitives already ship a `UVMap`, so `uv_layers.new()` gives you
 a second layer named `UVMap.001` and the renderer keeps using the original
 unwrap — write into `uv_layers[0]` instead. And set the texture node's
 interpolation to `Closest`, or neighbouring swatches bleed into each other.
+
+## What finish() shouts about
+
+Two failures kept shipping because nothing was watching for them, so now
+`finish()` prints and names both:
+
+* **Parts that do not touch.** The Vine-Weaver stood on a spike with hoops
+  orbiting it; the Goblin's fist hung 3cm clear of his forearm. `finish()` groups
+  the parts by whether their bounds overlap and names any group that floats free.
+  It is a loose test — two spheres can share a box corner without touching — but
+  it catches the case that actually happens, which is a limb placed in mid-air.
+* **The budget.** `BUDGET` in `kenney.py`: 1400 for a hunter, 2600 for a beast,
+  500 for a prop. Over it, `finish()` says by how much. The Stone Warden shipped
+  at 3744 and nobody noticed, because nothing was counting.
+
+Neither is fatal. Both are meant to be read.
+
+## References
+
+`design/art-references/` — drop pictures in, say which model. Its README is an
+honest account of which kinds of reference change the result and which do not.
+The short version: a model file beats three views, three views beat a
+screenshot, and a screenshot beats a concept painting, because the ranking is by
+how much can be MEASURED rather than by how good it looks.
 
 ## Use Blender 4.1, not 5.2
 

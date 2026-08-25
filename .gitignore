@@ -36,3 +36,5 @@ Desktop.ini
 
 # Card Lab output — regenerate with tools/cardlab/build.js
 tools/cardlab/cardlab.html
+
+tools/blender/__pycache__/

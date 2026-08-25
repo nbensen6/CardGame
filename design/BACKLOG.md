@@ -578,6 +578,12 @@ something Slay the Spire leans on hard and we do not have at all.
 
 ### Art the cloud can build
 
+**Read `tools/blender/README.md` first.** It carries the vocabulary — `taper`,
+`box`, `wedge`, `limb`, `mirror` — measured off Kenney's own models rather than
+guessed at, and the two things `finish()` now shouts about (parts that do not
+touch, and the triangle budget). A build script that reaches only for `ball()`
+is the mistake this whole section exists to stop repeating.
+
 Tagged `cloud-art`: the routine downloads Blender, writes a build script, proves
 the model against the contract, renders three angles, and appends a block to
 `design/ART-REVIEW.md` saying what it was trying to make and what it could not
@@ -591,6 +597,26 @@ check. It never judges its own work. See item 74 for why.
   three that exist first: shape carries the class, holds are the brief, and the
   sigil is the same gold mark everywhere. *Done when:* a beast has a body, passes
   the contract, has previews committed, and has a review block.
+
+- [ ] **78. The other two hunters, onto the new vocabulary** `cloud-art` — the
+  Frog and the Goblin Engineer were rebuilt on 2026-08-25; the Vine-Weaver and
+  the Mountain Climbers are still made entirely of ellipsoids, and both have a
+  part that the vocabulary now says properly. The Vine-Weaver's vines are rows
+  of spheres and want `limb()` — that is what it was written for. The Climbers'
+  arms, legs and coiled rope are the same. Read `tools/blender/frog.py` for how
+  a rebuild goes, and `design/ART-REVIEW.md` for the two traps that cost passes
+  (box half-extents, bevels changing the silhouette width). **One hunter per
+  run.** *Done when:* the hunter is rebuilt, inside budget, all parts touching,
+  previews committed and a review block written.
+
+- [ ] **79. The Stone Warden, the Crag Pup and the Riftling, re-cut** `cloud-art`
+  — the three beasts that already have bodies were built before the vocabulary
+  existed. The Stone Warden is the extreme case: **3744 triangles**, six times
+  Kenney's entire budget for the bunny, and every single part of it an ellipsoid.
+  It is the clearest proof in the repo that detail is not a triangle problem. Cut
+  it to the 2600 beast budget by replacing spheres with boxes and tapers, not by
+  removing parts. **One beast per run**, and the hold contract still has to pass:
+  `assetcheck.gd -- file=... beast=<id>`.
 
 - [ ] **76. Card icons, rendered rather than borrowed** `cloud-art` — every card
   face wears one of 25 Kenney icons, so cards share pictures and the Card Lab
