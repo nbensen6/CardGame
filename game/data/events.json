@@ -1,5 +1,5 @@
 {
-  "_comment": "Map EVENT nodes are DATA (CLAUDE.md §11). Each event offers choices with immediate effects. Effect keys: heal (int, negative = a bruise — events never kill, HP floors at 1), max_hp (int, permanent), relic (bool, a random team relic), gold (int, into the shared purse), reward ('card'|'relic' — routes into the normal pick-1-of-3 screen), remove_card (bool, each hunter loses one random card from their own deck, never below MIN_DECK), sharpen_card (bool, each hunter upgrades one random un-upgraded card in their own deck, no-op if none), curse_card (a status-card id from cards.json, e.g. 'bruised_grip' — each hunter's deck gains one copy; unlike remove/sharpen this always fires, never a coin flip, since the whole point of a status card is you don't get to opt out — backlog #27). An empty effects block is a clean walk-away. Tone: small climbers in a big wild world.",
+  "_comment": "Map EVENT nodes are DATA (CLAUDE.md §11). Each event offers choices with immediate effects. Effect keys: heal (int, negative = a bruise — events never kill, HP floors at 1), max_hp (int, permanent), relic (bool, a random team relic), gold (int, into the shared purse), reward ('card'|'relic' — routes into the normal pick-1-of-3 screen), remove_card (bool, each hunter loses one random card from their own deck, never below MIN_DECK), sharpen_card (bool, each hunter upgrades one random un-upgraded card in their own deck, no-op if none), curse_card (a status-card id from cards.json, e.g. 'bruised_grip' — each hunter's deck gains one copy; unlike remove/sharpen this always fires, never a coin flip, since the whole point of a status card is you don't get to opt out — backlog #27), potion (a potion id from potions.json — each hunter with an open slot gets a copy, quietly capped like a fight's own drop), random_potion (bool, same as potion but rolled from the pool, same shape 'relic' rolls one), take_potion (bool, the gamble — each hunter loses one random HELD potion, a no-op if they're carrying none — backlog #37). An empty effects block is a clean walk-away. Tone: small climbers in a big wild world.",
   "events": {
     "napping_beast": {
       "title": "A Napping Beast",
@@ -351,6 +351,89 @@
           "result": "You wait it out, hands flat on the rock, until your grip feels like your own again.",
           "effects": {
             "heal": -3
+          }
+        }
+      ]
+    },
+    "abandoned_apothecary": {
+      "title": "The Abandoned Apothecary",
+      "text": "A satchel of corked vials, wedged into a crack, labelled in handwriting neither of you recognises. Most of it is still good.",
+      "choices": [
+        {
+          "label": "Take the marked vial",
+          "result": "One is labelled plainly enough to trust. You pocket it.",
+          "effects": {
+            "potion": "field_dressing"
+          }
+        },
+        {
+          "label": "Take the whole satchel",
+          "result": "You grab everything, unlabelled and all, and sort it out later. Something in there stings on the way past.",
+          "effects": {
+            "random_potion": true,
+            "heal": -3
+          }
+        }
+      ]
+    },
+    "the_gambling_crow": {
+      "title": "The Gambling Crow",
+      "text": "A second crow, bolder than the first, hops along the ledge with its head cocked at your belt. It clearly wants to trade — it just isn't clear for what.",
+      "choices": [
+        {
+          "label": "Wager a potion",
+          "result": "It snatches whatever you're carrying and drops something heavier in your palm.",
+          "effects": {
+            "take_potion": true,
+            "gold": 40
+          }
+        },
+        {
+          "label": "Keep your vials",
+          "result": "It sulks off, unimpressed. You keep climbing, a little rattled by how close it got.",
+          "effects": {
+            "heal": -2
+          }
+        }
+      ]
+    },
+    "field_medics_kit": {
+      "title": "A Field Medic's Kit",
+      "text": "A canvas roll, lashed shut, still smelling faintly of antiseptic. Whoever carried it this far up knew what they were doing.",
+      "choices": [
+        {
+          "label": "Take the dressing",
+          "result": "Clean bandages, sealed and dry. You'll want these later.",
+          "effects": {
+            "potion": "field_dressing"
+          }
+        },
+        {
+          "label": "Sell it at the next camp instead",
+          "result": "Someone down the trail will pay well for gear this good.",
+          "effects": {
+            "gold": 20
+          }
+        }
+      ]
+    },
+    "the_wandering_brewer": {
+      "title": "The Wandering Brewer",
+      "text": "An old climber with a rack of bottles on their back offers you a taste, unasked. \"Good for the nerves,\" they say, \"or the opposite, depending.\"",
+      "choices": [
+        {
+          "label": "Take the steady one",
+          "result": "They hand over something labelled plainly and walk on without another word.",
+          "effects": {
+            "potion": "iron_draught"
+          }
+        },
+        {
+          "label": "Ask for the strong stuff",
+          "result": "They grin and pour something unlabelled. It hits harder than you expected.",
+          "effects": {
+            "random_potion": true,
+            "heal": -5
           }
         }
       ]

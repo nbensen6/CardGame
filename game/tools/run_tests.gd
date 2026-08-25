@@ -63,6 +63,10 @@ func _init() -> void:
 	_test_event_sharpen_card_effect()
 	_test_event_curse_card_effect()
 	_test_backlog17_four_events_touch_the_deck()
+	_test_event_potion_effect()
+	_test_event_random_potion_respects_slot_cap()
+	_test_event_take_potion_effect()
+	_test_backlog37_four_events_touch_potions()
 	_test_boons_load_and_are_well_formed()
 	_test_boon_offer_and_pick_applies_effects()
 	_test_boon_rejects_outside_its_phase()
@@ -701,6 +705,66 @@ func _test_event_curse_card_effect() -> void:
 	_expect(run.decks[0].size() == size_before + 1 and run.decks[1].size() == size_before + 1
 			and last0.id == "bruised_grip" and last0.status and last1.id == "bruised_grip",
 		"an event's curse_card effect shuffles one named status card into each hunter's own deck")
+
+
+## Backlog #37: an event can grant a NAMED potion, same shape curse_card names
+## a specific card. Each hunter with an open slot gets a copy.
+func _test_event_potion_effect() -> void:
+	var run := _map_run()
+	run.event = {"title": "T", "text": "x", "choices": [
+		{"label": "take it", "result": "!", "effects": {"potion": "field_dressing"}},
+	]}
+	run.phase = Run.Phase.EVENT
+	run.map_row = 0
+	run.pick_event(0)
+	_expect(run.potions[0].size() == 1 and String(run.potions[0][0].get("id", "")) == "field_dressing"
+			and run.potions[1].size() == 1 and String(run.potions[1][0].get("id", "")) == "field_dressing",
+		"an event's potion effect grants a named potion to every hunter with room")
+
+
+## random_potion rolls from the pool instead of naming one, same shape "relic"
+## already does for relics — and both respect the POTION_SLOTS cap.
+func _test_event_random_potion_respects_slot_cap() -> void:
+	var run := _map_run()
+	run.potions[0] = [Content.make_potion("field_dressing"), Content.make_potion("guard_oil"),
+		Content.make_potion("iron_draught")]  # hunter 0 already full
+	run.event = {"title": "T", "text": "x", "choices": [
+		{"label": "grab one", "result": "!", "effects": {"random_potion": true}},
+	]}
+	run.phase = Run.Phase.EVENT
+	run.map_row = 0
+	run.pick_event(0)
+	_expect(run.potions[0].size() == 3 and run.potions[1].size() == 1,
+		"random_potion fills an open slot but a full inventory quietly doesn't grow")
+
+
+## take_potion is the gamble: it removes one HELD potion per hunter, and
+## quietly no-ops for a hunter carrying none rather than failing.
+func _test_event_take_potion_effect() -> void:
+	var run := _map_run()
+	run.potions[0] = [Content.make_potion("field_dressing")]
+	# run.potions[1] stays empty on purpose.
+	run.event = {"title": "T", "text": "x", "choices": [
+		{"label": "wager", "result": "!", "effects": {"take_potion": true, "gold": 40}},
+	]}
+	run.phase = Run.Phase.EVENT
+	run.map_row = 0
+	run.pick_event(0)
+	_expect(run.potions[0].is_empty() and run.potions[1].is_empty() and run.gold == 40,
+		"take_potion removes a held potion and no-ops for a hunter carrying none")
+
+
+func _test_backlog37_four_events_touch_potions() -> void:
+	var count := 0
+	for id in Content.list_events():
+		var e: Dictionary = Content.make_event(String(id))
+		for ch in (e.get("choices", []) as Array):
+			var eff: Dictionary = (ch as Dictionary).get("effects", {})
+			if String(eff.get("potion", "")) != "" or bool(eff.get("random_potion", false)) \
+					or bool(eff.get("take_potion", false)):
+				count += 1
+				break
+	_expect(count >= 4, "at least 4 events grant, take, or gamble a potion (backlog #37)")
 
 
 func _test_backlog17_four_events_touch_the_deck() -> void:
@@ -2236,18 +2300,26 @@ func _test_content_integrity_graph() -> void:
 	for eid in Content.list_events():
 		var ev := Content.make_event(String(eid))
 		for choice in (ev.get("choices", []) as Array):
-			var cc := String((choice as Dictionary).get("effects", {}).get("curse_card", ""))
+			var eff: Dictionary = (choice as Dictionary).get("effects", {})
+			var cc := String(eff.get("curse_card", ""))
 			if cc != "" and String(Content.make_card(cc).name).is_empty():
 				bad.append("%s curse_card: %s" % [eid, cc])
-	# A boon (#31) is shaped like a single event choice, and its curse_card
-	# needs the exact same check the loop above already runs on events.
+			var pid := String(eff.get("potion", ""))
+			if pid != "" and String(Content.make_potion(pid).get("name", "")).is_empty():
+				bad.append("%s potion: %s" % [eid, pid])
+	# A boon (#31) is shaped like a single event choice, and its curse_card /
+	# potion refs need the exact same check the loop above already runs on events.
 	for bid in Content.list_boons():
 		var bn := Content.make_boon(String(bid))
-		var bcc := String(bn.get("effects", {}).get("curse_card", ""))
+		var beff: Dictionary = bn.get("effects", {})
+		var bcc := String(beff.get("curse_card", ""))
 		if bcc != "" and String(Content.make_card(bcc).name).is_empty():
 			bad.append("%s curse_card: %s" % [bid, bcc])
+		var bpid := String(beff.get("potion", ""))
+		if bpid != "" and String(Content.make_potion(bpid).get("name", "")).is_empty():
+			bad.append("%s potion: %s" % [bid, bpid])
 	_expect(bad.is_empty(),
-		"create/prepare fields, beast pool ids and curse_card refs all resolve [%s]" % ", ".join(bad))
+		"create/prepare fields, beast pool ids, curse_card and potion refs all resolve [%s]" % ", ".join(bad))
 
 
 func _test_sunlight_blade_scales_with_exposed() -> void:

@@ -257,7 +257,7 @@ Ordered. Source in brackets.
   it. *Done when:* each is a field, at least two cards or relics and one beast
   apply them, and each has a test.
 
-- [ ] **37. Events that know potions exist** `cloud-safe` — 17 events, and not
+- [x] **37. Events that know potions exist** `cloud-safe` — 17 events, and not
   one of them mentions a potion, because all 17 were written before item 26
   landed. The genre's best events trade in every currency the run has — HP, gold,
   cards, relics, potions — and ours only trade in four of the five. *Done when:*
@@ -408,6 +408,34 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-25** — #37 Events that know potions exist: three new effect keys in
+  `Run._apply_effect_block()`, each reusing an existing shape rather than
+  inventing a mechanic — `potion` (a named id) mirrors `curse_card` naming a
+  specific card, `random_potion` (bool) mirrors `relic` rolling from a pool,
+  and `take_potion` (bool, the "gamble") removes one random HELD potion per
+  hunter and quietly no-ops for a hunter carrying none, the same shape
+  `remove_card`'s own MIN_DECK floor already treats "nothing to take" as a
+  clean no-op rather than a failure. All three respect `POTION_SLOTS` the way
+  `_grant_potions()` already does — a full inventory just doesn't grow, so a
+  potion-heavy event can't silently overflow the cap `_test_use_potion`'s own
+  sibling tests already enforce elsewhere. Four new events (`abandoned_apothecary`,
+  `the_gambling_crow`, `field_medics_kit`, `the_wandering_brewer`), in the
+  existing wilderness-climber tone, between them touching all three keys (two
+  `potion`, two `random_potion`, one `take_potion` paired with a gold gain —
+  the actual "wager" framing item 37 asked for). Extended #18's content
+  integrity graph to validate an event or boon's `potion` ref the same way it
+  already validates `curse_card`, and extended the events.json header comment
+  with the three new keys so the file stays self-documenting. 4 new tests:
+  the named-potion grant, the slot-cap respected when a hunter is already
+  full, the gamble removing a held potion while no-oping for an empty-handed
+  ally, and a sentinel (mirroring #17's `_test_backlog17_four_events_touch_the_deck`)
+  proving at least 4 events touch a potion so this can't silently regress.
+  `run_tests.gd` all green (239 assertions incl. the four new ones);
+  `node tools/cardlab/build.js` confirms all four new events reachable
+  (`unreachable: 0`); `balance_sim.gd` ran clean as a smoke test only — its
+  policies don't call any of the three new keys (events aren't part of its
+  simulated loop at all), so the printed win rates are unchanged, not tuned to.
 
 - **2026-08-25** — #36 Frail, Artifact and Thorns: three fields on `Combatant`
   (the base class both `PlayerState.combatant` and `Boss` share, so one

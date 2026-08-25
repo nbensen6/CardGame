@@ -458,6 +458,29 @@ func _apply_effect_block(eff: Dictionary) -> void:
 	if cc != "":
 		for i in range(names.size()):
 			decks[i].append(Content.make_card(cc))
+	# Potions (backlog #37): an event can trade in whatever's in your pack too,
+	# same "whole team" shape as the effects above. "potion" names a specific id
+	# (a guaranteed find, same shape curse_card names a specific card); "random_potion"
+	# pulls one from the pool at random (same shape "relic" already does for
+	# relics); "take_potion" is the gamble — one random HELD potion per hunter is
+	# lost, a clean no-op for a hunter carrying none. All three respect the
+	# POTION_SLOTS cap the way _grant_potions() does: a full inventory just
+	# doesn't grow.
+	var pid := String(eff.get("potion", ""))
+	if pid != "":
+		for i in range(names.size()):
+			if potions[i].size() < POTION_SLOTS:
+				potions[i].append(Content.make_potion(pid))
+	if bool(eff.get("random_potion", false)):
+		var ppool: Array = Content.potion_pool()
+		if not ppool.is_empty():
+			for i in range(names.size()):
+				if potions[i].size() < POTION_SLOTS:
+					potions[i].append(Content.make_potion(String(ppool[_rng.randi_range(0, ppool.size() - 1)])))
+	if bool(eff.get("take_potion", false)):
+		for i in range(names.size()):
+			if not potions[i].is_empty():
+				potions[i].remove_at(_rng.randi_range(0, potions[i].size() - 1))
 
 
 ## A free choice of 3-4 offered once, before the first map step — same idiom as
