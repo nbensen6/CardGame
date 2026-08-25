@@ -27,6 +27,8 @@ So this module now speaks:
     ring    a torus                          mouths, collars, bands
 
     mirror  build once, get both sides
+    aim     point a box or wedge along a direction
+    point   point a cone along a direction
 
 Colour still comes from UVs pointing at a flat swatch of one shared 512x512
 atlas, so a whole character is one mesh with one material and as many colours as
@@ -92,6 +94,40 @@ def mirror(fn):
     """
     fn(-1)
     fn(1)
+
+
+def aim(d, up=(0, 0, 1)):
+    """Euler that swings a part's FORWARD (-Y) onto direction `d`.
+
+    For box() and wedge(), whose narrow end points -Y. `up` decides the roll:
+    which way the part's flat side faces. Petals in a ring want up=(0, -1, 0),
+    so their broad face turns toward the camera instead of their edge.
+    """
+    d = Vector(d).normalized()
+    y = -d                                       # local +Y is the far end
+    u = Vector(up)
+    if abs(y.normalized().dot(u.normalized())) > 0.999:
+        u = Vector((0, 1, 0)) if abs(y.z) > 0.9 else Vector((0, 0, 1))
+    z = (u - y * y.dot(u)).normalized()
+    x = y.cross(z)
+    m = mathutils.Matrix.Identity(3)
+    for i, v in enumerate((x, y, z)):
+        m[0][i], m[1][i], m[2][i] = v.x, v.y, v.z
+    return m.to_euler("XYZ")
+
+
+def point(d, up=(0, 0, 1)):
+    """Euler that swings a cone's axis (+Z) onto direction `d`. For taper()."""
+    z = Vector(d).normalized()
+    u = Vector(up)
+    if abs(z.dot(u.normalized())) > 0.999:
+        u = Vector((0, 1, 0)) if abs(z.z) > 0.9 else Vector((0, 0, 1))
+    x = u.cross(z).normalized()
+    y = z.cross(x)
+    m = mathutils.Matrix.Identity(3)
+    for i, v in enumerate((x, y, z)):
+        m[0][i], m[1][i], m[2][i] = v.x, v.y, v.z
+    return m.to_euler("XYZ")
 
 
 def _frames(points):

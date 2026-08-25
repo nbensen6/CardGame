@@ -41,8 +41,50 @@ The failures that have happened, all of which passed every check:
   behind its own head, invisible from the angle you fight it.
 - **Slabs that overhang the silhouette**, reading as handles bolted on rather
   than as ledges cut from the body.
+- **A silhouette that cannot be fixed by fixing the model.** The Vine-Weaver was
+  rebuilt once, well, and still read as a lamp — because a stalk with a bloom on
+  it is a line with a dot on it. When three passes all land somewhere weak, ask
+  whether the design is wrong before tuning it a fourth time.
 
 ---
+
+### vine_weaver — NEEDS A PASS (redesigned as an ENT)
+
+Not a rebuild, a **redesign**, at Nick's call on 2026-08-25: the Vine-Weaver is
+now a walking tree rather than a flower on a stalk. The old silhouette was a
+vertical line with a dot on top — the same outline as a lamp — and no amount of
+rebuilding was going to fix that, because the shape itself was the problem.
+
+- built: 2026-08-25 by hand, from tools/blender/vine_weaver.py
+- checks: 1704 tris (**304 over the 1400 hunter budget — see below**), 1 mesh,
+  1 material, all parts touching, assetcheck 4/4
+- previews: design/art-previews/vine_weaver_0.png (three-quarter), _1, _2
+- intent: the Ent read is carried by four things — a face cut INTO the wood with
+  a jutting brow so the eyes sit in their own shadow, root feet with three toes
+  each reaching the ground at different lengths, arms that FORK rather than
+  bend, and a canopy wider than the trunk so the top of the silhouette is a mass
+  and not a point. The vines stay, wound up the trunk with leaves on them, so
+  the class name still means something.
+- **the budget overage is a decision, not an oversight.** An Ent has a canopy,
+  two forked arms, six root toes and two vines. Getting it under 1400 means
+  losing one of those. Accept it, or say which one goes.
+- unsure about: the vines took three passes and are still the weakest part —
+  thin they read as moss, thick they read as green shelves, and this is the
+  compromise. Also unjudged: whether the canopy is too big for the trunk, and
+  whether the amber eyes read as eyes or as knots at fight distance.
+
+### mountain_climbers — NEEDS A PASS
+- built: 2026-08-25 by hand, from tools/blender/mountain_climbers.py
+- checks: 1436 tris (36 over), 1 mesh, 1 material, all parts touching,
+  assetcheck 4/4
+- previews: design/art-previews/mountain_climbers_0.png (three-quarter), _1, _2
+- intent: the rope is the class, so it is an actual rope — one limb wound twice
+  round the chest on a helix whose radius follows the torso's own curve, so it
+  lies ON him. Two horizontal tori read as a barrel. The pack is a bevelled box
+  because a pack is a box, the beard is a taper, the boots are wedges, and the
+  carabiner is a torus you can see through.
+- unsure about: whether the beard now reads as a beard or as a bib, and whether
+  the rope is legible against the blue at fight distance or just texture.
 
 ### goblin_mech — NEEDS A PASS
 - built: 2026-08-25 by hand, from tools/blender/goblin_mech.py
