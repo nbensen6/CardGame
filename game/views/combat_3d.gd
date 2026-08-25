@@ -123,9 +123,14 @@ const FLY_SPEED := 0.34
 ## ground a hunter is about 4% of the frame's height beside a beast that fills
 ## it, so a lateral slide of a sixth of a frame is a change nobody can see
 ## (Nick, 2026-08-24: "it still doesnt feel like ... it centers the camera on
-## them"). A cut IN, then a pull back out to the fight, is a camera MOVE — and a
-## move is the one thing the eye cannot miss.
-const FOCUS_WINDOW := 4.0
+## them"). So the camera CUTS to an absolute window around the hunter and holds
+## there — a cut is the one move the eye cannot miss, and holding is what makes
+## it a lock rather than a flourish.
+##
+## 6.5 units, about nine hunter-heights. A first pass at 4 was close enough to
+## lose the fight around them (Nick: "zoom the camera out a bit"); at 6.5 the
+## hunter still plainly owns the frame and you can see what they are standing on.
+const FOCUS_WINDOW := 6.5
 const ZOOM_STEP := 0.12
 ## Sideways truck, in world units per unit of camera distance, that pushes the
 ## beast right so it centres in the space left of the HUD rather than on the
