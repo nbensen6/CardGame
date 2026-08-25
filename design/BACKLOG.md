@@ -598,6 +598,15 @@ check. It never judges its own work. See item 74 for why.
   but every one is **unreviewed**, and the eleven review blocks in
   `design/ART-REVIEW.md` say what to look at first.
 
+- [ ] **81. The ledges read as scaffolding** `needs a screen` — every beast now
+  has real standable ledges and hunters stand on them (2026-08-25). On the
+  terraced ones — the Drowned Colossus and the Sunken Warden especially — the
+  slabs are pale grey and step out of the body far enough to read as planks
+  bolted on rather than as the creature's own shape. Honest about where you
+  stand, which is why they are like that; whether that honesty is worth the look
+  is Nick's call. *Done when:* the ledges read as part of the body from fight
+  distance, without the climb points moving.
+
 - [ ] **80. The Lightbearer's art, and the rule that a new hunter needs some**
   `cloud-art` — the cloud added a fifth hunter in #47 with no model, so it stood
   on screen as a bunny, and `Cast.PLACEHOLDER` had no entry for it either. The

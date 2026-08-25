@@ -427,5 +427,17 @@ class Build:
                   % (name, tris / float(cap), budget))
         print("SIZE", round((hi.x - lo.x) * k, 3), round((hi.y - lo.y) * k, 3),
               round((hi.z - lo.z) * k, 3))
+        # Anything that is not mesh - climb anchors, say - goes in here, in the
+        # same space the vertices just landed in. Default does nothing.
+        self._decorate(k, mid)
         bpy.ops.export_scene.gltf(filepath=out, export_format="GLB", use_selection=False)
         print("WROTE", out)
+
+    def _decorate(self, k, mid):
+        """Hook for non-mesh nodes, after the mesh is scaled and stood up.
+
+        `k` and `mid` are the transform finish() just applied, so a subclass can
+        place a marker at a point it recorded in BUILD space and have it land
+        where that point actually ended up.
+        """
+        return

@@ -11,14 +11,15 @@ read.
 """
 import sys, os, math
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from kenney import (Build, out_path, STONE, PEWTER, GRAPHITE, MIDNIGHT, NAVY,
+from beast import Beast
+from kenney import (out_path, STONE, PEWTER, GRAPHITE, MIDNIGHT, NAVY,
                     VIOLET, LILAC, IRIS, GOLD, ICE)
 
-b = Build()
-H = 3.4
-LOW = 0.387 * H       # hold at Height 2
-HIGH = 0.593 * H      # hold at Height 4
-CORE = 0.80 * H       # the sigil
+b = Beast("riftling", height=3.4, span=(-0.05, 3.07))
+H = b.H
+LOW = b.z_for(2)      # hold at Height 2, from the data
+HIGH = b.z_for(4)     # hold at Height 4
+CORE = b.z_for(6)     # the sigil
 
 # Base: a shattered plinth, half sunk, nothing that could be a foot.
 b.ball((0.0, 0.0, 0.16), (1.02, 0.94, 0.20), MIDNIGHT, 12, 7)
@@ -58,4 +59,12 @@ b.ring((0.0, 0.0, CORE), (0.62, 0.62, 0.12), GOLD, 18, 5, thickness=0.08)
 b.ring((0.0, 0.0, CORE + 0.02), (0.50, 0.50, 0.10), GOLD, 18, 5,
        thickness=0.07, rot=(math.radians(64), 0.0, 0.0))
 
-b.finish(out_path(), height=H, name="Riftling")
+# The climb, exported with the model: ground, every ledge, then the sigil.
+# Before this the view placed hunters off the bounding box, so they hovered
+# in FRONT of the beast instead of standing on the shelves it already had.
+b.foot((0.0, -0.78, 0.64))                  # onto the broken plinth
+b.anchor(2, (0.10, -0.20, LOW + 0.10))      # the lower slab
+b.anchor(4, (-0.14, 0.02, HIGH + 0.02))     # the upper slab
+b.anchor(6, (0.0, -0.52, CORE))             # the core itself
+
+b.done(out_path(), name="Riftling")

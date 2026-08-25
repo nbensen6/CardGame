@@ -16,7 +16,7 @@ from beast import Beast
 from kenney import (out_path, mirror, point, aim, INDIGO, BLUE, NAVY, SKY, ICE,
                     SILVER, STEEL, SLATE, CHARCOAL, AMBER, GOLD, GRAPHITE)
 
-b = Beast("sky_snapper", height=3.4)
+b = Beast("sky_snapper", height=3.4, span=(0.12, 2.96))
 
 # ------------------------------------------------------------------- the legs
 def leg(s):
@@ -75,6 +75,8 @@ mirror(wing)
 # The shoulder spar, flattened where the two wings meet the back.
 b.shelf(3, (0.0, 0.38), (0.62, 0.44), STEEL, thickness=0.10)
 b.ball((0.0, 0.42, 1.78), (0.60, 0.46, 0.16), STEEL, 9, 5)
+
+b.foot((0.54, -0.26, 0.34))          # onto a talon
 
 b.mark(at=(0.0, -0.46, 2.38), size=0.28, facing=(0.0, -0.80, 0.60))
 mirror(lambda s: b.taper((0.30 * s, 0.30, 2.76), 0.10, 0.018, 0.46, ICE, seg=5,

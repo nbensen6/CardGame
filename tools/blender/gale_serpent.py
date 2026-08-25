@@ -18,7 +18,7 @@ from beast import Beast
 from kenney import (out_path, mirror, point, aim, SKY, ICE, WHITE, SILVER,
                     STEEL, INDIGO, BLUE, PERIWINKLE, CHARCOAL, AMBER, SLATE)
 
-b = Beast("gale_serpent", height=5.0)
+b = Beast("gale_serpent", height=5.0, span=(-0.10, 5.15))
 
 # ------------------------------------------------------------------ the coil
 # 2.7 turns from the floor to the throat, the radius closing as it climbs, so
@@ -83,6 +83,8 @@ mirror(lambda s: b.ball((0.22 * s, -1.12, 4.72), (0.115, 0.095, 0.100),
                         CHARCOAL, 8, 5))
 mirror(lambda s: b.ball((0.23 * s, -1.20, 4.72), (0.066, 0.048, 0.058), AMBER, 7, 4))
 b.box((0.0, -1.36, 4.40), (0.16, 0.10, 0.030), CHARCOAL, bevel=0.008)
+
+b.foot(on_coil(0.75) + (0.80,))      # onto the bottom of the coil
 
 b.mark(at=(0.0, -0.72, 4.02), size=0.34, facing=(0.0, -1.0, 0.0))
 

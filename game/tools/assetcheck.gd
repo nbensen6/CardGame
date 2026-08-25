@@ -97,6 +97,7 @@ func _report(path: String, label: String, beast_id: String = "") -> void:
 
 	if beast_id != "":
 		_check_holds(root, box, beast_id)
+	_check_climb(root, box, beast_id)
 
 	# Rule 3 — applied transforms. An unapplied scale makes the measured bounds
 	# lie, and every size in the game is derived from those bounds.
@@ -197,6 +198,59 @@ func _check_holds(root: Node3D, box: AABB, beast_id: String) -> void:
 			bad += 1
 	if bad == 0:
 		print("  PASS  every hold and the sigil have a shelf at their Height")
+
+
+## The climb points a model carries with it.
+##
+## tools/blender/beast.py drops an empty called `climb_<Height>` at every place a
+## hunter actually stands, and glTF carries empties through as plain nodes. That
+## is the whole mechanism: the route travels WITH the art, so moving a shoulder
+## in Blender moves the hunter who stands on it, with nothing to keep in sync.
+##
+## Without them the view falls back to the bounding box, which is how hunters
+## ended up hovering in FRONT of a beast instead of on its ledges.
+func _check_climb(root: Node3D, box: AABB, beast_id: String) -> void:
+	var found := {}
+	_collect_climb(root, root.transform, found)
+	if found.is_empty():
+		if beast_id != "":
+			print("  WARN  no climb points. The view will place hunters off the")
+			print("        bounding box, which puts them in front of the body.")
+			print("        Add shelf()/anchor()/foot() calls in the build script.")
+		return
+	var keys: Array = found.keys()
+	keys.sort()
+	var bits: Array = []
+	for h in keys:
+		var p: Vector3 = found[h]
+		var up: float = (p.y - box.position.y) / maxf(box.size.y, 0.001)
+		bits.append("%s@%.0f%%" % ["ground" if int(h) == 0 else "H%d" % int(h), up * 100.0])
+	print("  PASS  %d climb points: %s" % [keys.size(), ", ".join(bits)])
+	if beast_id == "":
+		return
+	var b: Boss = Content.build_boss(beast_id)
+	if b == null:
+		return
+	var want: Array = b.ledge_heights()
+	want.append(b.weak_point_height)
+	for h in want:
+		if not found.has(int(h)):
+			print("  WARN  Height %d has a hold but no climb point — a hunter" % int(h))
+			print("        standing there falls back to the bounding box.")
+
+
+## Walks the accumulated transform down rather than asking for global_position,
+## which needs the node to be inside the tree and reports (0,0,0) when it isn't.
+func _collect_climb(n: Node, xf: Transform3D, out: Dictionary) -> void:
+	if n is Node3D and String(n.name).begins_with("climb_"):
+		var tail := String(n.name).substr(6)
+		if tail.is_valid_int():
+			out[tail.to_int()] = xf.origin
+	for c in n.get_children():
+		var next := xf
+		if c is Node3D:
+			next = xf * (c as Node3D).transform
+		_collect_climb(c, next, out)
 
 
 ## Every triangle in world space, for the hold check.

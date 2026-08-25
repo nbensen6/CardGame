@@ -14,7 +14,7 @@ from beast import Beast
 from kenney import (out_path, mirror, point, GREEN, MINT, UMBER, BROWN,
                     CHARCOAL, AMBER, GRAPHITE, SLATE)
 
-b = Beast("bramble_hog", height=3.2)
+b = Beast("bramble_hog", height=3.2, span=(0.07, 2.86))
 
 # ------------------------------------------------------------------- the legs
 for sx in (-1, 1):
@@ -57,7 +57,10 @@ mirror(lambda s: b.ball((0.31 * s, -1.14, 1.62), (0.066, 0.048, 0.055), AMBER, 7
 b.ball((0.0, 0.05, 2.28), (0.66, 0.72, 0.42), GREEN, 10, 6)           # leaf mat
 b.ball((0.0, 0.42, 2.52), (0.44, 0.46, 0.34), MINT, 9, 5)
 
-b.mark(at=(0.0, -0.46, 2.40), size=0.32,
-       facing=(0.0, -0.86, 0.50))
+b.foot((0.88, -0.74, 0.30))          # onto a root leg
+
+# z from the data, not from a number that looked about right - the sigil is
+# what the whole climb is FOR, so it has to be at the Height the climb ends at.
+b.mark(at=(0.0, -0.50, b.z_for(5)), size=0.32, facing=(0.0, -0.86, 0.50))
 
 b.done(out_path(), name="BrambleHog")

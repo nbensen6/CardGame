@@ -21,7 +21,7 @@ from kenney import (out_path, mirror, point, aim, MIDNIGHT, NAVY, INDIGO,
                     PERIWINKLE, IRIS, VIOLET, ICE, SILVER, STEEL, SLATE,
                     CORAL, ROSE, MINT, CHARCOAL, AMBER, GOLD, GRAPHITE)
 
-b = Beast("sunken_warden", height=6.0)
+b = Beast("sunken_warden", height=6.0, span=(-0.04, 5.76))
 
 # ------------------------------------------------------------------- the base
 b.ball((0.0, 0.0, 0.42), (1.72, 1.58, 0.46), MIDNIGHT, 10, 6)
@@ -105,6 +105,8 @@ for i in range(6):
             0.86 if i % 2 else 0.62, PERIWINKLE, seg=5,
             rot=point((math.cos(a) * lean, math.sin(a) * lean, 1.0)))
 b.ball((0.0, 0.0, 5.40), (0.46, 0.44, 0.26), VIOLET, 9, 5)
+
+b.foot((0.0, -1.45, 0.58))           # onto the anchor roots
 
 b.mark(at=(0.0, -0.80, 4.42), size=0.36, facing=(0.0, -1.0, 0.10))
 

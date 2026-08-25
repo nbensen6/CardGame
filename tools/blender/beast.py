@@ -37,6 +37,10 @@ from kenney import Build, GOLD, AMBER
 ## that view ever changes these, this file has to follow.
 FOOT_LOW, FOOT_HIGH = 0.18, 0.80
 
+## Every climb point is exported as an empty with this prefix, so the game can
+## find them by name without a manifest that can drift out of date.
+CLIMB_PREFIX = "climb_"
+
 ## The band a hold is measured in, and how much upward-facing surface it wants,
 ## as a fraction of the model's footprint. Both mirror assetcheck.gd exactly.
 BAND = 0.055
@@ -63,21 +67,31 @@ def _height_of(hold):
 class Beast(Build):
     """One Titan. Same vocabulary as Build, plus the climb."""
 
-    def __init__(self, beast_id, height):
+    def __init__(self, beast_id, height, span=None):
         super().__init__()
         self.id = beast_id
         self.data = boss_data(beast_id)
         self.sigil_height = int(self.data["weak_point_height"])
         self.ledges = [_height_of(h) for h in self.data.get("ledges", [])]
         self.H = float(height)
+        # The build-space z range the body ACTUALLY occupies. finish() rescales
+        # whatever it finds to `height`, so a script whose geometry stops short
+        # of H has every contract height it computed slide upward with the
+        # rescale — which is how the Crag Pup's shoulder shelf sat at 61% of its
+        # body while its data said 49%, for months, with nothing complaining.
+        # Author across the full 0..H and this can stay None.
+        self.span = (0.0, self.H) if span is None else (float(span[0]), float(span[1]))
         self._promised = []
+        self._anchors = {}
+        self._fit_k, self._fit_mid = 1.0, Vector((0, 0, 0))
 
     # ------------------------------------------------------------- the climb
 
     def z_for(self, game_height):
         """Model z where a hunter at that game Height puts their feet."""
         t = min(1.0, max(0.0, float(game_height) / float(self.sigil_height)))
-        return self.H * (FOOT_LOW + (FOOT_HIGH - FOOT_LOW) * t)
+        lo, hi = self.span
+        return lo + (hi - lo) * (FOOT_LOW + (FOOT_HIGH - FOOT_LOW) * t)
 
     @property
     def sigil_z(self):
@@ -85,8 +99,9 @@ class Beast(Build):
 
     def brief(self):
         """One line naming what this body has to provide, for the build log."""
+        lo, hi = self.span
         parts = ["hold %d at %.0f%% (z %.2f)"
-                 % (h, 100.0 * self.z_for(h) / self.H, self.z_for(h))
+                 % (h, 100.0 * (self.z_for(h) - lo) / (hi - lo), self.z_for(h))
                  for h in self.ledges]
         parts.append("sigil %d at %.0f%% (z %.2f)"
                      % (self.sigil_height, 100.0 * FOOT_HIGH, self.sigil_z))
@@ -103,8 +118,27 @@ class Beast(Build):
         """
         top = self.z_for(game_height) - drop
         self._promised.append(game_height)
+        # Where a hunter actually STANDS. The game used to derive this from the
+        # bounding box, which put climbers in front of the beast rather than on
+        # it; now the model says, and the ledge and the standing place are the
+        # same fact by construction.
+        self.anchor(game_height, (at[0], at[1], top))
         return self.box((at[0], at[1], top - thickness),
                         (size[0], size[1], thickness), uv, rot=rot, bevel=bevel)
+
+    def anchor(self, game_height, at):
+        """Name a climb point by hand, for a hold the body provides itself.
+
+        Exported into the .glb as an empty called `climb_<height>`, so the model
+        carries its own route and nothing in the game has to guess.
+        """
+        self._anchors[int(game_height)] = Vector((at[0], at[1], at[2]))
+
+    def foot(self, at):
+        """Where the climb STARTS - the ankle, the root, the lowest thing worth
+        grabbing. Height 0. Without it a hunter leaving the ground cuts a
+        straight line to the first ledge, through the body."""
+        self._anchors[0] = Vector((at[0], at[1], at[2]))
 
     def mark(self, at, size=None, facing=(0, -1, 0)):
         """The sigil: the same gold mark every beast wears, at its Height.
@@ -126,6 +160,9 @@ class Beast(Build):
         here = Vector((x, y, z))
 
         self._sigil_lands(here, w)
+        # Standing ON the sigil is the end of the climb, so the anchor sits just
+        # off its face rather than inside it.
+        self._anchors[self.sigil_height] = here + d * (w * 0.55)
 
         from kenney import point
         self.taper((here - d * w * 0.10)[:], w, w * 0.94, w * 0.30, GOLD,
@@ -154,9 +191,56 @@ class Beast(Build):
 
     # ------------------------------------------------------------ the check
 
+    def _decorate(self, k, mid):
+        """Drop an empty at every climb point, in the finished model's space.
+
+        glTF carries empties through as plain nodes and Godot imports them as
+        Node3D, so the route travels WITH the art: rebuild a beast with its
+        shoulder 20cm higher and the hunter who stands there moves too, with no
+        code change and nothing to keep in sync.
+        """
+        if not self._anchors:
+            return
+        self._fit_k, self._fit_mid = k, mid
+        for h in sorted(self._anchors):
+            p = (self._anchors[h] - mid) * k
+            e = bpy.data.objects.new(CLIMB_PREFIX + str(h), None)
+            e.empty_display_type = "PLAIN_AXES"
+            e.empty_display_size = 0.25
+            e.location = p
+            bpy.context.collection.objects.link(e)
+        print("CLIMB POINTS %s" % ", ".join(
+            "%d@z%.2f" % (h, ((self._anchors[h] - mid) * k).z)
+            for h in sorted(self._anchors)))
+
+    def _measure_span(self, name):
+        """What z range the body ACTUALLY occupies, against what span assumed.
+
+        z_for() has to answer "what height is Height 3" while the script is still
+        being written, so it works from a span it is told. Told wrong, every
+        ledge and the sigil slide by the same fraction and the beast still passes
+        every check — which is exactly what the Crag Pup did for months.
+
+        So measure it at the end and print the line to paste back. One rebuild
+        and the script is honest.
+        """
+        zs = [(o.matrix_world @ v.co).z for o in self.parts for v in o.data.vertices]
+        if not zs:
+            return
+        lo, hi = min(zs), max(zs)
+        want_lo, want_hi = self.span
+        drift = max(abs(lo - want_lo), abs(hi - want_hi)) / max(1e-6, hi - lo)
+        if drift <= 0.02:
+            return
+        print("SPAN %s: body is z %.2f..%.2f but span says %.2f..%.2f. Every hold "
+              "is off by up to %.0f%% of the body. Paste this into the Beast(): "
+              "span=(%.2f, %.2f)"
+              % (name, lo, hi, want_lo, want_hi, drift * 100, lo, hi))
+
     def done(self, out, name="Beast", budget="beast"):
         """finish(), then prove the climb before anyone has to look at it."""
         self.brief()
+        self._measure_span(name)
         missing = [h for h in self.ledges + [self.sigil_height]
                    if h not in self._promised]
         if missing:
@@ -164,6 +248,15 @@ class Beast(Build):
             # measurement below is the real judge. But it is worth saying.
             print("NOTE %s: no shelf() call for Height(s) %s - relying on the "
                   "body to provide them." % (name, missing))
+        want = set(self.ledges + [self.sigil_height])
+        blank = sorted(want - set(self._anchors))
+        if blank:
+            print("NOTE %s: no climb point for Height(s) %s - the game will fall "
+                  "back to the bounding box there, which puts a hunter in front "
+                  "of the beast rather than on it." % (name, blank))
+        if 0 not in self._anchors:
+            print("NOTE %s: no foot() - the climb off the ground will cut a "
+                  "straight line to the first ledge." % name)
         self.finish(out, height=self.H, name=name, budget=budget)
         self._prove(name)
 
@@ -210,6 +303,28 @@ class Beast(Build):
                   % (what, h, z, flat, want, "ok" if ok else "TOO SMALL"))
             if not ok:
                 bad.append(h)
+        # And where the climb points ACTUALLY ended up. z_for() assumes the
+        # script authors the body across the full 0..H it asked for; a script
+        # whose geometry stops short gets rescaled by finish() and every
+        # contract height it computed slides with it. The three beasts written
+        # before this helper existed all did exactly that, and their shelves
+        # were at the wrong fraction of the body for months without anything
+        # noticing - the hold check passed on the body's own curvature instead.
+        for h in sorted(self._anchors):
+            p = (self._anchors[h] - self._fit_mid) * self._fit_k
+            got = (p.z - lo.z) / max(1e-6, size.z)
+            if h == 0:
+                print("  CLIMB ground        at %.0f%% of the body" % (got * 100))
+                continue
+            t = min(1.0, max(0.0, float(h) / float(self.sigil_height)))
+            wants = FOOT_LOW + (FOOT_HIGH - FOOT_LOW) * t
+            off = abs(got - wants)
+            print("  CLIMB Height %-3d    at %.0f%%, contract says %.0f%%  %s"
+                  % (h, got * 100, wants * 100,
+                     "ok" if off <= BAND else "OFF by %.0f%%" % (off * 100)))
+            if off > BAND:
+                bad.append(h)
+
         if bad:
             print("FAIL %s: nowhere to stand at Height(s) %s. Widen the shelf or "
                   "move it - the band is +/-%.0f%% of the body's height, so it "

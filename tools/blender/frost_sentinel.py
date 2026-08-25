@@ -57,6 +57,8 @@ for i, (a, lean, tall) in enumerate([(0.4, 0.30, 1.30), (2.0, 0.22, 0.96),
             ICE, seg=5, rot=point((math.cos(a) * lean, math.sin(a) * lean, 1.0)))
 b.box((0.0, -0.02, 3.34), (0.50, 0.48, 0.26), WHITE, bevel=0.05, rot=(0, 0, -0.20))
 
+b.foot((0.0, -0.92, 0.62))           # onto the plinth
+
 b.mark(at=(0.0, -0.48, 3.24), size=0.34, facing=(0.0, -1.0, 0.10))
 
 b.done(out_path(), name="FrostSentinel")

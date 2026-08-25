@@ -58,6 +58,10 @@ mirror(lambda s: b.taper((0.62 * s, 0.10, 2.72), 0.16, 0.03, 0.52, SLATE, seg=6,
                          rot=point((0.34 * s, 0.30, 1.0))))             # crown spurs
 b.ball((0.0, 0.06, 2.72), (0.44, 0.40, 0.26), MINT, 9, 5)               # moss cap
 
+# Where the climb starts: the top of a foot, which is the only thing on this
+# beast low enough to step onto.
+b.foot((0.86, -0.58, 0.32))
+
 b.mark(at=(0.0, -0.66, 2.36), size=0.32)
 
 b.done(out_path(), name="Bounder")

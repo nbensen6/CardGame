@@ -142,6 +142,49 @@ Two failures kept shipping because nothing was watching for them, so now
 
 Neither is fatal. Both are meant to be read.
 
+## Beasts carry their own climb
+
+`beast.py` builds a Titan. A beast is not just a shape, it is a shape you CLIMB:
+`bosses.json` says where the holds are, and a beast with no shelf where its data
+claims one is a beast you climb by floating.
+
+    from beast import Beast
+    b = Beast("frost_sentinel", height=4.0)
+    b.shelf(2, (0, -0.5), (0.75, 0.55), STEEL)   # a ledge at Height 2
+    b.foot((0.0, -0.9, 0.6))                     # where the climb starts
+    b.mark(at=(0.0, -0.5, b.z_for(7)), size=0.34)
+    b.done(out_path(), name="FrostSentinel")
+
+`shelf()` lands a ledge exactly where the contract wants one AND records where a
+hunter stands on it. `done()` then runs Godot's own area test in Blender, so a
+bad hold is a line in the build log rather than a hunter standing on air.
+
+Every standing place is exported as an **empty named `climb_<Height>`**. glTF
+carries empties through as plain nodes and Godot imports them as Node3D, so
+`combat_3d.gd` reads the route out of the model: the art IS the climb data.
+Move a shoulder in Blender and the hunter who stands on it moves too, with
+nothing to keep in sync. Without them the view falls back to the bounding box,
+which is how hunters used to hover in FRONT of a beast rather than on the
+shelves it already had.
+
+### span, and the bug it exists to stop
+
+`z_for()` has to answer "how high is Height 3" while the script is still being
+written, so it works from the range it is told the body occupies — `span`,
+defaulting to the full `0..height`. Told wrong, every ledge and the sigil slide
+by the same fraction and the beast still passes every other check.
+
+The Crag Pup did exactly that for months: its shoulder shelf sat at 61% of its
+body while its data said 49%, because the script asked for a 3.0-tall model and
+only built 2.4 of it, and `finish()` scaled the difference back in. The hold
+check passed anyway, on the body's own curvature.
+
+So `done()` measures the real range and prints the line to paste back:
+
+    SPAN MireSnapper: body is z 0.00..2.76 but span says 0.00..3.40. Every hold
+    is off by up to 23% of the body. Paste this into the Beast():
+    span=(0.00, 2.76)
+
 ## References
 
 `design/art-references/` — drop pictures in, say which model. Its README is an

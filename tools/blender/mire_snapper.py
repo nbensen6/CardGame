@@ -17,7 +17,7 @@ from beast import Beast
 from kenney import (out_path, mirror, point, aim, CLAY, UMBER, BROWN, MINT,
                     GREEN, TAN, CREAM, CHARCOAL, AMBER, GRAPHITE, SLATE)
 
-b = Beast("mire_snapper", height=3.4)
+b = Beast("mire_snapper", height=3.4, span=(0.00, 2.76))
 
 # ------------------------------------------------------------------- the body
 b.ball((0.0, 1.05, 1.55), (1.02, 1.15, 0.92), CLAY, 12, 7)             # hump
@@ -68,6 +68,10 @@ for i in range(5):
     b.taper((math.cos(a) * 0.60, 1.10 + math.sin(a) * 0.55, 2.55), 0.10, 0.02,
             0.44, SLATE, seg=5, rot=point((math.cos(a) * 0.4, math.sin(a) * 0.4, 1.0)))
 
-b.mark(at=(0.0, 0.86, 2.52), size=0.32, facing=(0.0, -0.55, 0.84))
+# In through the jaw. On this one the way up IS the mouth, so the climb starts
+# on the lower jaw and the first ledge is the tongue ridge behind the teeth.
+b.foot((0.0, -1.85, 0.92))
+
+b.mark(at=(0.0, 0.86, b.z_for(6)), size=0.32, facing=(0.0, -0.55, 0.84))
 
 b.done(out_path(), name="MireSnapper")

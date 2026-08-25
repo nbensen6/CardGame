@@ -91,6 +91,8 @@ for z, r, n in ((2.32 - 0.10, 1.05, 7), (3.10 - 0.10, 0.98, 6), (3.86 - 0.08, 0.
                 (x * 1.02, y * 1.02, z - drop)],
                [0.075, 0.055, 0.030], GREEN if i % 2 else MINT, seg=4, cap=False)
 
+b.foot((0.90, -0.50, 0.42))          # onto the top of a foot
+
 # A collar between the shoulders, so the sigil has a surface to sit on. Placed
 # at the sigil Height first and shaped around it, not the other way round.
 b.wedge((0.0, -0.50, 4.26), (0.62, 0.42, 0.30), INDIGO,

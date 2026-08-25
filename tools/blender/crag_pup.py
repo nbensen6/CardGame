@@ -10,13 +10,14 @@ plainly stand on and a lit crack across the crown to strike.
 """
 import sys, os, math
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from kenney import (Build, out_path, STONE, PEWTER, GRAPHITE, CHARCOAL,
+from beast import Beast
+from kenney import (out_path, STONE, PEWTER, GRAPHITE, CHARCOAL,
                     MINT, GREEN, GOLD, AMBER)
 
-b = Build()
-H = 3.0
-SHELF = 0.49 * H      # the hold at Height 2
-SIGIL = 0.80 * H      # the weak point at Height 4
+b = Beast("crag_pup", height=3.0, span=(-0.04, 2.25))
+H = b.H
+SHELF = b.z_for(2)    # the hold at Height 2, from the data
+SIGIL = b.z_for(4)    # the weak point at Height 4
 
 for sx in (-1, 1):
     for sy, ly in ((-1, -0.62), (1, 0.62)):          # four stubby legs
@@ -44,7 +45,20 @@ for sx, sy, r in ((-0.36, 0.62, 0.26), (0.40, 0.20, 0.30), (-0.10, -0.10, 0.22))
 b.ball((0.30, 0.86, 1.86), (0.20, 0.24, 0.16), GREEN, 8, 5)
 
 # The sigil: one gold mark, the same language on every beast, at its Height.
-b.ball((0.0, 0.10, SIGIL), (0.40, 0.44, 0.14), GOLD, 12, 7)
-b.ball((0.0, 0.10, SIGIL + 0.06), (0.22, 0.24, 0.10), AMBER, 10, 6)
+#
+# On the FRONT of the hump, not on top of it. It used to sit at 80% of the
+# height this script asked for rather than 80% of the height it actually built,
+# which put it a fifth of a body too high — right on the crown, where it read as
+# a gold plate balanced on the moss. Corrected downward it landed INSIDE the
+# hump instead, so it moves forward as well: b.mark() faces it out at the
+# climber and refuses quietly to sit in mid air.
 
-b.finish(out_path(), height=H, name="CragPup")
+# The climb, exported with the model: ground, every ledge, then the sigil.
+# Before this the view placed hunters off the bounding box, so they hovered
+# in FRONT of the beast instead of standing on the shelves it already had.
+b.mark(at=(0.0, -0.50, SIGIL), size=0.14, facing=(0.0, -0.94, 0.34))
+
+b.foot((0.66, -0.66, 0.58))                 # onto a foreleg
+b.anchor(2, (0.0, -0.30, SHELF + 0.09))     # the shoulder shelf
+
+b.done(out_path(), name="CragPup")

@@ -171,6 +171,22 @@ var _client: GameClient
 var _beast: Node3D
 var _beast_id := ""
 var _beast_box := AABB(Vector3(-1, 0, -1), Vector3(2, 2, 2))
+## Height -> where a hunter at that Height actually stands, in rig space.
+##
+## Read out of the model. tools/blender/beast.py drops an empty called
+## `climb_<Height>` on every ledge and on the sigil, glTF carries empties
+## through as plain nodes, so the route ships WITH the art: move a shoulder in
+## Blender and the hunter standing on it moves too.
+##
+## Empty means an older model with no anchors, and the bounding-box fallback
+## below takes over — which is what every beast used to do, and why hunters
+## hovered in FRONT of a body instead of standing on the shelves it already had.
+var _climb_points: Dictionary = {}
+## How big the pulsing marker is. It used to be a fixed 1.0, which was tuned
+## when it hung above the body at 88% of the bounding box and was mostly seen
+## edge-on. Now it sits ON the mark the model wears, at eye level, where a fixed
+## size swallowed a small beast's whole head — so it scales with the body.
+var _sigil_scale := 1.0
 var _beast_scale := 1.0
 var _beast_height := 0.0
 var _hunters: Array = []          # slot -> {node, home}
@@ -722,7 +738,7 @@ func _process(delta: float) -> void:
 			# a gentle out-of-phase idle so the two hunters don't look cloned
 			node.position.y = float((h["home"] as Vector3).y) + sin(_time * 2.3 + i * 1.7) * 0.045
 	if _sigil != null and _sigil.visible:
-		_sigil.scale = Vector3.ONE * (1.0 + sin(_time * 3.0) * 0.14)
+		_sigil.scale = Vector3.ONE * _sigil_scale * (1.0 + sin(_time * 3.0) * 0.14)
 	_fly(delta)
 	_track_climb(delta)
 	# After the camera work above: the tag is pinned to a world point, so it has to
@@ -974,6 +990,7 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	_rig.add_child(_beast)
 	_beast_scale = _fit_height(_beast, want)
 	_beast_box = _merged_aabb(_beast)
+	_read_climb_points()
 	# Grow the arena with its occupant. A 9-unit disc was generous under a bear and
 	# is a dinner plate under a Titan — it ran out mid-frame and left the bottom of
 	# the shot as void, which reads as a hole rather than as ground.
@@ -1382,6 +1399,79 @@ func _all_meshes(node: Node) -> Array:
 
 # --- hunters --------------------------------------------------------------
 
+## Pull the climb route out of the model that just spawned.
+func _read_climb_points() -> void:
+	_climb_points.clear()
+	if _beast == null:
+		return
+	_gather_climb(_beast, Transform3D.IDENTITY)
+
+
+## Walks the transform down rather than reading global_position, which is only
+## meaningful once the node is in the tree and settled.
+func _gather_climb(n: Node, xf: Transform3D) -> void:
+	for c in n.get_children():
+		var next := xf
+		if c is Node3D:
+			next = xf * (c as Node3D).transform
+			var nm := String(c.name)
+			if nm.begins_with("climb_"):
+				var tail := nm.substr(6)
+				if tail.is_valid_int():
+					_climb_points[tail.to_int()] = next.origin * _beast_scale
+		_gather_climb(c, next)
+
+
+## The Heights this beast has anchors for, in order.
+func _climb_rungs() -> Array:
+	var keys: Array = _climb_points.keys()
+	keys.sort()
+	return keys
+
+
+## Where a hunter at `foot` stands, from the model's own anchors.
+##
+## Exactly on a rung when the Height matches one, and between the two that
+## bracket it otherwise — so a hunter part-way up a long haul is on the line
+## between the ledge below and the ledge above rather than on a number.
+func _stand_on_model(foot: int, side: float) -> Vector3:
+	var rungs := _climb_rungs()
+	var lo: int = int(rungs[0])
+	var hi: int = int(rungs[rungs.size() - 1])
+	for k in rungs:
+		if int(k) <= foot:
+			lo = int(k)
+		if int(k) >= foot:
+			hi = int(k)
+			break
+	var a: Vector3 = _climb_points[lo]
+	var b: Vector3 = _climb_points[hi]
+	var p: Vector3 = a
+	if hi != lo:
+		p = a.lerp(b, clampf(float(foot - lo) / float(hi - lo), 0.0, 1.0))
+	# Two hunters on one ledge stand apart rather than inside each other, and a
+	# little forward of the anchor so neither is buried in the body.
+	return p + Vector3(side * (_beast_box.size.x * 0.055 + 0.30), 0.0,
+		_beast_box.size.z * 0.025)
+
+
+## Every anchor strictly between two footholds, so a hunter climbing from the
+## ankle to the shoulder goes VIA the platform instead of through the chest.
+func _route_between(from_foot: int, to_foot: int) -> Array:
+	var out: Array = []
+	var rungs := _climb_rungs()
+	if to_foot > from_foot:
+		for k in rungs:
+			if int(k) > from_foot and int(k) < to_foot:
+				out.append(int(k))
+	else:
+		for i in range(rungs.size() - 1, -1, -1):
+			var k := int(rungs[i])
+			if k < from_foot and k > to_foot:
+				out.append(k)
+	return out
+
+
 ## Height becomes literal: on the ground they stand in front of the beast; as
 ## they climb they move UP its flank, hugging the model's actual bounds.
 func _place_hunters(s: Dictionary) -> void:
@@ -1392,7 +1482,8 @@ func _place_hunters(s: Dictionary) -> void:
 		_hunters.append(_spawn_hunter(_hunters.size(), players))
 	for i in range(players.size()):
 		var p: Dictionary = players[i]
-		var t: float = clampf(float(int(p.get("foothold", 0))) / float(height), 0.0, 1.0)
+		var foot: int = int(p.get("foothold", 0))
+		var t: float = clampf(float(foot) / float(height), 0.0, 1.0)
 		var side: float = -1.0 if i == 0 else 1.0
 		var pos: Vector3
 		if t <= 0.01:
@@ -1403,6 +1494,9 @@ func _place_hunters(s: Dictionary) -> void:
 			# this thing, not square up to it.
 			pos = Vector3(side * (_beast_box.size.x * 0.22 + 0.6), 0.0,
 				_beast_box.end.z * 0.9)
+		elif not _climb_points.is_empty():
+			# The model says where its ledges are, so stand on one.
+			pos = _stand_on_model(foot, side)
 		elif t >= 0.92:
 			# at the weak point — stand ON the sigil, the thing the climb was for.
 			# Scaled off the body: a fixed nudge that cleared a 2-unit-deep bear
@@ -1421,10 +1515,24 @@ func _place_hunters(s: Dictionary) -> void:
 		var h: Dictionary = _hunters[i]
 		var node: Node3D = h["node"]
 		var moved: bool = (h["home"] as Vector3).distance_to(pos) > 0.05
+		var was: int = int(h.get("foot", foot))
 		h["home"] = pos
+		h["foot"] = foot
 		if moved:
-			create_tween().tween_property(node, "position", pos, 0.28) \
-				.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+			# Climb VIA the ledges in between, not through the body. Going from
+			# the ankle to the shoulder means stopping on the platform on the way,
+			# which is the whole reason the anchors exist — a straight tween
+			# between two heights walks a hunter through the beast's chest.
+			var way: Array = []
+			if not _climb_points.is_empty() and was != foot:
+				way = _route_between(was, foot)
+			var tw := create_tween()
+			tw.set_trans(Tween.TRANS_QUAD)
+			var step: float = maxf(0.16, 0.30 / float(way.size() + 1))
+			for wp in way:
+				tw.tween_property(node, "position", _stand_on_model(int(wp), side),
+					step).set_ease(Tween.EASE_IN_OUT)
+			tw.tween_property(node, "position", pos, step).set_ease(Tween.EASE_OUT)
 		else:
 			node.position = pos
 		# ground hunters stand three-quarter on, turned in toward the beast
@@ -1480,6 +1588,18 @@ func _place_sigil(s: Dictionary) -> void:
 	var on: bool = int(boss.get("weak_point_height", 0)) > 0
 	_sigil.visible = on
 	if not on:
+		return
+	# The model carries its own gold mark now, at the Height its data says. Put
+	# the marker THERE rather than at 88% of the bounding box, or the beast wears
+	# two sigils in different places and the floating one wins the eye.
+	var wp := int(boss.get("weak_point_height", 0))
+	_sigil_scale = clampf(_beast_box.size.y * 0.016, 0.28, 0.85)
+	if _climb_points.has(wp):
+		# Just in FRONT of the mark the model already wears, so the pulsing glow
+		# reads as a highlight ON the weak point rather than as a second sigil
+		# floating near it.
+		_sigil.position = (_climb_points[wp] as Vector3) + Vector3(0.0, 0.0,
+			_beast_box.size.z * 0.05)
 		return
 	# On the FRONT of the body. A quarter-depth offset put it inside the mesh —
 	# survivable when a beast was 2 units deep, invisible now one is 12.

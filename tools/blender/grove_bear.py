@@ -76,6 +76,8 @@ for i, (x, y, z, r) in enumerate([(-0.55, 0.60, 3.20, 0.42), (0.50, 1.05, 3.30, 
     b.ball((x * 1.08, y * 1.04, 3.52 + r * 0.30), (r, r * 0.92, r * 0.62),
            MINT if i % 2 else GREEN, 7, 4)
 
+b.foot((1.30, -0.92, 0.40))          # onto a knuckle
+
 # A crest between the shoulders to carry the sigil - the hollow is below it and
 # the moss bed behind, and without this the mark hung in the gap between them.
 b.wedge((0.0, -0.50, 3.02), (0.74, 0.40, 0.42), PEWTER,

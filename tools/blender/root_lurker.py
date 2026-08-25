@@ -16,7 +16,7 @@ from beast import Beast
 from kenney import (out_path, mirror, point, BROWN, UMBER, CLAY, TAN, GREEN,
                     MINT, CHARCOAL, AMBER, GRAPHITE)
 
-b = Beast("root_lurker", height=3.2)
+b = Beast("root_lurker", height=3.2, span=(-0.14, 2.97))
 
 # ------------------------------------------------------------------- the mound
 b.ball((0.0, 0.0, 0.30), (1.28, 1.18, 0.44), UMBER, 12, 7)
@@ -61,6 +61,8 @@ b.shelf(2, (0.0, -0.72), (0.66, 0.40), CLAY, thickness=0.11)
 b.ball((0.0, -0.78, 1.22), (0.58, 0.30, 0.17), MINT, 9, 5)          # moss on it
 mirror(lambda s: b.ball((0.72 * s, 0.42, 1.44), (0.30, 0.32, 0.20), GREEN, 8, 5))
 b.ball((0.0, 0.68, 2.30), (0.42, 0.34, 0.30), GREEN, 8, 5)          # leaf clump
+
+b.foot((0.0, -1.10, 0.46))           # onto the mound, between the roots
 
 # On the front pair of cage roots, where they lean in over the mouth.
 b.wedge((0.0, -0.62, 2.46), (0.42, 0.26, 0.30), UMBER,

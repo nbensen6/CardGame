@@ -16,7 +16,7 @@ from beast import Beast
 from kenney import (out_path, mirror, point, STONE, SLATE, PEWTER, GRAPHITE,
                     CHARCOAL, VIOLET, ORCHID, GOLD, AMBER, SILVER)
 
-b = Beast("shifting_idol", height=3.8)
+b = Beast("shifting_idol", height=3.8, span=(0.00, 3.93))
 
 # The stack: (z, half-size, turn, colour). Each block turned off the last.
 BLOCKS = [(0.36, (1.10, 1.02, 0.36),  0.00, PEWTER),
@@ -56,6 +56,8 @@ for i in range(4):
     a = i * math.tau / 4.0 + 0.5
     b.taper((math.cos(a) * 0.34, math.sin(a) * 0.34, 3.72), 0.13, 0.02, 0.42,
             AMBER, seg=5, rot=point((math.cos(a) * 0.28, math.sin(a) * 0.28, 1.0)))
+
+b.foot((0.0, -0.96, 0.70))           # onto the bottom block
 
 b.mark(at=(0.0, -0.72, 3.10), size=0.30, facing=(0.0, -0.96, 0.28))
 

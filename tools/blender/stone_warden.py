@@ -13,14 +13,15 @@ sigil 6, holds at 2 and 4 -> shelves at 39% and 59% of the body, sigil at 80%.
 """
 import sys, os, math
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from kenney import (Build, out_path, STONE, PEWTER, GRAPHITE, CHARCOAL,
+from beast import Beast
+from kenney import (out_path, STONE, PEWTER, GRAPHITE, CHARCOAL,
                     MIDNIGHT, GREEN, MINT, GOLD, AMBER, SLATE, SILVER)
 
-b = Build()
-H = 4.2
-HIP = 0.387 * H       # hold at Height 2
-SHOULDER = 0.593 * H  # hold at Height 4
-SIGIL = 0.80 * H
+b = Beast("stone_warden", height=4.2, span=(-0.03, 3.56))
+H = b.H
+HIP = b.z_for(2)      # hold at Height 2, from the data
+SHOULDER = b.z_for(4) # hold at Height 4
+SIGIL = b.z_for(6)    # the sigil
 
 # --- lower zone: dark, rough, heavy -----------------------------------------
 for sx in (-1, 1):
@@ -73,4 +74,12 @@ b.ball((0.0, -1.18, SIGIL), (0.48, 0.44, 0.20), GOLD, 12, 7)
 b.ball((0.0, -1.42, SIGIL - 0.04), (0.30, 0.26, 0.14), AMBER, 10, 6)
 b.ring((0.0, -1.10, SIGIL - 0.02), (0.60, 0.52, 0.10), AMBER, 18, 5, thickness=0.09)
 
-b.finish(out_path(), height=H, name="StoneWarden")
+# The climb, exported with the model: ground, every ledge, then the sigil.
+# Before this the view placed hunters off the bounding box, so they hovered
+# in FRONT of the beast instead of standing on the shelves it already had.
+b.foot((1.16, -0.90, 0.72))                 # onto a knuckle
+b.anchor(2, (0.0, -0.62, HIP + 0.10))       # the hip shelf
+b.anchor(4, (0.0, -0.54, SHOULDER + 0.10))  # the shoulder shelf
+b.anchor(6, (0.0, -1.42, SIGIL + 0.10))     # standing on the mark
+
+b.done(out_path(), name="StoneWarden")
