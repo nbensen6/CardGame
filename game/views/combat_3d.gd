@@ -497,56 +497,45 @@ func _card_climb(card: Dictionary) -> int:
 	return int((card.get("base", {}) as Dictionary).get("grip", 0))
 
 
-## The path this card asks you to play: one world point per timing window,
-## starting AT THE CARD and climbing to the hold it takes you to.
+## Screen-space spacing between consecutive notes, in pixels.
 ##
-## It used to open out on the beast, which made your eye jump from the hand you
-## were reading to somewhere else entirely at the exact moment the turn got tense
-## (Nick, 2026-08-25: "make sure the circle is near the card when you select
-## it"). Beginning at the card and travelling up the body draws the card's action
-## instead: from your hand, onto the beast, to where you end up.
+## About a circle and a half apart — an osu stream, where the next note is close
+## enough that you flick to it rather than travel to it. The first version ran
+## the chain from the card all the way up to the hold, which was a journey across
+## the frame and put notes off the edge of it (Nick, 2026-08-25: "dont make them
+## acros the screen. they should be in quick succesion").
+const NOTE_STEP := 92.0
+## How far the zigzag swings either side of the line.
+const NOTE_SWAY := 42.0
+
+
+## The pattern this card asks you to tap: a short stream rising from the card you
+## tapped, in screen space so the spacing is the same whatever the camera is
+## doing and whatever you are fighting.
 ##
-## Reuses _place_hunters' Height->world mapping for the far end rather than a
-## second copy, so the last note lands on the body the hunters actually climb.
+## Built as screen offsets and projected into the world, because HitCircle draws
+## from world points — project_position is the exact inverse of the unproject it
+## uses, so a note lands where the arithmetic says it will.
 func _hold_points(card: Dictionary, hits: int, from_screen: Vector2) -> PackedVector3Array:
 	var out := PackedVector3Array()
 	if _cam == null:
 		return out
-	var boss: Dictionary = _client.shared.get("boss", {})
-	var top: int = maxi(int(boss.get("weak_point_height", 1)), 1)
-	var me := _me()
-	var here := 0
-	var players: Array = _client.shared.get("players", [])
-	if me >= 0 and me < players.size():
-		here = int((players[me] as Dictionary).get("foothold", 0))
-	var climb := _card_climb(card)
-	var side := -1.0 if me == 0 else 1.0
-
-	# The far end: the hold this card reaches.
-	var t := clampf(float(here + climb) / float(top), 0.0, 1.0)
-	var target := Vector3(side * (_beast_box.size.x * 0.20),
-		_beast_box.position.y + _beast_box.size.y * lerpf(0.18, 0.80, t),
-		_beast_box.end.z * 0.86)
-	if t <= 0.01:
-		target = Vector3(side * (_beast_box.size.x * 0.22 + 0.6),
-			_beast_box.position.y + HUNTER_HEIGHT * 2.6, _beast_box.end.z * 0.86)
-
-	# The near end: a world point that lands just above the card you tapped.
-	# project_position is the inverse of the unproject the circle draws with, so
-	# the note appears exactly where the card is however the camera is sitting.
-	var depth := maxf(_cam.global_position.distance_to(target), 2.0)
-	var start := _cam.project_position(from_screen, depth)
-
-	var slider := climb >= SLIDER_CLIMB
 	var count := maxi(hits, NOTE_MIN)
+	if _card_climb(card) >= SLIDER_CLIMB:
+		count = maxi(count, 3)      # a slider needs a path to travel along
+	# One depth for the whole pattern, so the spacing stays in pixels rather than
+	# stretching with perspective.
+	var depth := maxf(_dist * 0.55, 3.0)
+	# Keep the stream inside the frame even when the card that started it sits in
+	# a corner: shove the whole pattern, rather than bending it out of shape.
+	var rise := NOTE_STEP * float(count - 1)
+	var top := from_screen.y - rise
+	var lift := maxf(0.0, 96.0 - top)
 	for i in range(count):
-		var k := 0.0 if count == 1 else float(i) / float(count - 1)
-		var p := start.lerp(target, k)
-		# Zigzag a tapped chain so it reads as a pattern; a slider gets a gentle
-		# bow instead, because a held path should be one motion, not a scribble.
-		var sway := _beast_box.size.x * (0.05 if slider else 0.16)
-		var bend := sin(k * PI) if slider else (1.0 if i % 2 == 0 else -1.0)
-		out.append(p + Vector3(bend * sway, 0.0, 0.0))
+		var at := from_screen + Vector2(
+			(1.0 if i % 2 == 0 else -1.0) * NOTE_SWAY,
+			lift - NOTE_STEP * float(i))
+		out.append(_cam.project_position(at, depth))
 	return out
 
 

@@ -51,9 +51,10 @@ const FADE_IN := 0.11
 ## function mimicing how osu has multiple clicks for timing not just one").
 const LOOKAHEAD_ALPHA := 0.34
 ## Seconds of head start the next note's approach ring gets, so it is already
-## closing when the current one resolves. This is what makes a chain feel like
-## one continuous motion instead of three separate reaction tests.
-const CHAIN_OVERLAP := 0.22
+## closing when the current one resolves. Over half the approach, so the first
+## note gives you time to read the pattern and the rest come in quick succession
+## — a stream, not three separate reaction tests (Nick, 2026-08-25).
+const CHAIN_OVERLAP := 0.44
 ## A slider: press on the beat, then HOLD while the follower runs the path.
 ## Seconds for it to travel the whole chain.
 const SLIDE_SECONDS := 0.85
@@ -273,7 +274,10 @@ func _follow(a: Vector2, bb: Vector2, alpha: float) -> void:
 	var dots := int(run / 22.0)
 	for i in range(maxi(dots, 0)):
 		var p := start + dir * (22.0 * (i + 0.5))
-		draw_circle(p, 2.6, Color(RING.r, RING.g, RING.b, 0.45 * alpha))
+		# Not scaled all the way down with the note it leads to: the dots are the
+		# thing that says these are ONE pattern, so they stay readable even where
+		# the note ahead is barely there.
+		draw_circle(p, 2.8, Color(RING.r, RING.g, RING.b, 0.5 * maxf(alpha, 0.55)))
 
 
 ## Every note as a screen point, in order.
