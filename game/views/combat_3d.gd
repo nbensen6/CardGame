@@ -624,6 +624,22 @@ func _input(event: InputEvent) -> void:
 		_apply_rebind(code)
 		get_viewport().set_input_as_handled()
 		return
+
+	# Beast check: [ and ] swap the Titan you are standing in front of, without
+	# leaving the fight or playing a run to reach it.
+	#
+	# Nick asked for a way to "go directly to each boss to check on this" — there
+	# are fourteen beasts and fourteen grounds now, and the only way to see the
+	# fourth Titan's was to win three fights first. This swaps the boss the same
+	# way tools/screenshot.gd does, so it exercises the real model, the real
+	# ground and the real climb points rather than a preview of them.
+	#
+	# Host-only, because only the host owns the run — on a joined client the keys
+	# do nothing rather than desyncing the two of you.
+	if code == KEY_BRACKETLEFT or code == KEY_BRACKETRIGHT:
+		_cycle_beast(1 if code == KEY_BRACKETRIGHT else -1)
+		get_viewport().set_input_as_handled()
+		return
 	if _detail != null and is_instance_valid(_detail):
 		return                                   # an overlay owns the keyboard
 
@@ -1351,6 +1367,46 @@ func _apply_orbit() -> void:
 ## Drag anywhere the HUD didn't already claim. Cards and buttons are Controls, so
 ## they consume their own clicks before this ever runs — the hand and the camera
 ## never fight over the same drag.
+## Swap to the next (or previous) beast in bosses.json, in place.
+func _cycle_beast(step: int) -> void:
+	if Session.host == null or Session.host._run == null 			or Session.host._run.combat == null:
+		_dev_note("[ ] only work while the HOST is in a fight")
+		return
+	var ids: Array = Content.boss_ids()
+	if ids.is_empty():
+		return
+	var here: int = ids.find(String(Session.host._run.combat.boss.id))
+	var next: int = posmod(here + step, ids.size())
+	var id := String(ids[next])
+	Session.host._run.combat.boss = Content.build_boss(id)
+	Session.host._broadcast_state()
+	_dev_note("%d/%d  %s   —  [ and ] to change" % [next + 1, ids.size(),
+		Content.build_boss(id).name])
+
+
+## A line of text at the top of the screen that goes away on its own. Deliberately
+## built here rather than added to the scene: it is a tool, and a tool that only
+## exists when you press its key cannot be left switched on by accident.
+func _dev_note(text: String) -> void:
+	var old := get_node_or_null("DevNote")
+	if old != null:
+		old.queue_free()
+	var l := Label.new()
+	l.name = "DevNote"
+	l.text = text
+	l.add_theme_color_override("font_color", Color(1.0, 0.86, 0.45))
+	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	l.add_theme_constant_override("outline_size", 6)
+	l.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	l.position.y = 96.0
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(l)
+	var tw := create_tween()
+	tw.tween_interval(2.6)
+	tw.tween_property(l, "modulate:a", 0.0, 0.8)
+	tw.tween_callback(l.queue_free)
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb: InputEventMouseButton = event

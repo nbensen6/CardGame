@@ -223,8 +223,8 @@ class Beast(Build):
         self._final = {}
         moved = []
         steps = []
-        for h in sorted(self._anchors):
-            p = (self._anchors[h] - mid) * k
+        for h in sorted(self._rungs()):
+            p = (self._rung(h) - mid) * k
             out = Vector((p.x - axis.x, p.y - axis.y, 0.0))
             if out.length < 1e-4:
                 out = Vector((0.0, -1.0, 0.0))            # beasts face -Y
@@ -232,7 +232,7 @@ class Beast(Build):
             reach = self._reach(tris, axis, p, out, hs)
             if reach is not None:
                 here = (p - axis).x * out.x + (p - axis).y * out.y
-                push = (reach + hs * 0.45) - here
+                push = (reach + hs * 0.80) - here
                 if push > 0.0:
                     p = p + out * push
                     moved.append((h, push))
@@ -254,8 +254,10 @@ class Beast(Build):
         if steps:
             self._grow_steps(steps, hs)
 
-        print("CLIMB POINTS %s" % ", ".join(
-            "%d@z%.2f" % (h, self._final[h].z) for h in sorted(self._final)))
+        print("CLIMB POINTS %d (every Height 0-%d): %s"
+              % (len(self._final), self.sigil_height,
+                 ", ".join("%d@z%.2f" % (h, self._final[h].z)
+                           for h in sorted(self._final))))
         if moved:
             # Worth reading rather than ignoring: a big push means the LEDGE does
             # not reach the front of the beast, so the hunter now stands correctly
@@ -291,8 +293,55 @@ class Beast(Build):
         bpy.context.view_layer.objects.active = body
         bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
         bpy.ops.object.join()
-        print("GREW %d step(s) out to climb points the ledges did not reach: %s"
-              % (len(made), ", ".join("H%d" % h for h, _, _, _ in steps)))
+        # finish() counted and printed TRIS before this ran, so say what the
+        # steps added rather than leaving a number in the log that is quietly
+        # short of what actually shipped.
+        me = bpy.context.object.data
+        me.calc_loop_triangles()
+        print("GREW %d step(s) out to climb points the ledges did not reach: %s "
+              "— TRIS is now %d"
+              % (len(made), ", ".join("H%d" % h for h, _, _, _ in steps),
+                 len(me.loop_triangles)))
+
+    def _rungs(self):
+        """Every Height a hunter can be at, not just the ones with ledges.
+
+        Nick, 2026-08-25: "often time while I'm playing I will get stuck inside
+        the boss when I get knocked down half way." That is this. A hunter shaken
+        off a ledge lands on some Height BETWEEN two of them, and with only the
+        ledges anchored the view had to interpolate — along the straight line
+        between two points on a body that bulges outward in between. The line
+        goes through the chest.
+
+        So anchor all of them. A Height with no ledge still gets a place to
+        stand, pushed out to the surface like every other, and the view never has
+        to guess.
+        """
+        return list(range(0, self.sigil_height + 1))
+
+    def _rung(self, h):
+        """Where Height `h` sits in BUILD space, authored or worked out.
+
+        The height comes from the contract; the way round the body comes from
+        the two authored points either side, so a climb that spirals keeps
+        spiralling between its ledges instead of cutting the corner.
+        """
+        if h in self._anchors:
+            return self._anchors[h]
+        known = sorted(self._anchors)
+        below = [k for k in known if k < h]
+        above = [k for k in known if k > h]
+        z = self.z_for(h)
+        if not below:
+            a = self._anchors[above[0]]
+            return Vector((a.x, a.y, z))
+        if not above:
+            a = self._anchors[below[-1]]
+            return Vector((a.x, a.y, z))
+        lo, hi = below[-1], above[0]
+        t = float(h - lo) / float(hi - lo)
+        a, b = self._anchors[lo], self._anchors[hi]
+        return Vector((a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, z))
 
     @staticmethod
     def _reach(tris, axis, p, out, hs):
@@ -409,7 +458,12 @@ class Beast(Build):
                 continue
             here = (a - axis).x * out.x + (a - axis).y * out.y
             deep = reach - here
-            ok = deep <= hs * 0.55
+            # A full hunter-width of slack, because by the time this runs the
+            # model has GROWN a step at the climb point, and that step is body
+            # too — so a point can read as marginally behind its own ledge. The
+            # failure worth catching is a point deep inside a torso, not one a
+            # few centimetres back from the lip it is standing on.
+            ok = deep <= hs * 1.05
             print("  ROOM  %-10s %s"
                   % ("ground" if h == 0 else "Height %d" % h,
                      "clear" if ok else
