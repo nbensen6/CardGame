@@ -536,6 +536,46 @@ something Slay the Spire leans on hard and we do not have at all.
   like three separate taps. Build it on the same `resolved(quality)` contract so
   nothing downstream has to learn a new shape.
 
+- [ ] **74. Let the cloud build models — behind a shape contract it can check**
+  `cloud-safe` — mechanically this already works: Blender runs `--background`
+  with no display, which is how every model in `tools/blender/` was built, and
+  it renders preview PNGs headless too (workbench, no GPU). The routine already
+  downloads Godot each run, so downloading the Linux Blender tarball is the same
+  move.
+
+  What it cannot do is LOOK at the result, and that is the whole job. The Stone
+  Warden needed a second pass because it was a murky near-black blob; the
+  Vine-Weaver's base was three hoops floating over empty air. Both passed every
+  automated check we had. A run that cannot see would have committed them.
+
+  So the useful version is not "generate beasts", it is **give the machine
+  enough of a contract that it can fail loudly**:
+
+  * **Holds exist where the data says.** This is the strong one and it is
+    genuinely checkable. Hunters stand at `lerp(0.18, 0.80)` of a beast's
+    bounding box, so a beast with `ledges: [3, 6, 9]` and `weak_point_height: 11`
+    needs standable geometry at 35%, 52% and 69% of its height. Sample the mesh
+    at those bands: enough near-horizontal surface, wide enough, or fail.
+  * **Sigil present at its Height**, in the shared gold, and visible from the
+    front rather than buried behind the body.
+  * **Silhouette distinctness.** Render the silhouette and compare against every
+    model already in `cast/`. A new beast that matches an existing one above a
+    threshold is a re-skin and should fail.
+  * **Budget and structure** — the four `assetcheck.gd` rules, triangle count,
+    one mesh, one material, palette swatches only.
+
+  With that, a run can build to a spec, prove it met the spec, render previews
+  from three angles, and commit both. Nick and Claude judge a batch later on a
+  screen — which is far cheaper than building each one by hand, and honest about
+  where the taste has to come from.
+
+  *Done when:* Blender installs in the sandbox, the shape contract exists as a
+  tool that fails loudly, previews are committed beside each model, and one
+  beast is built end to end by a run without a human in the loop.
+  **Do not skip the contract and just generate.** A model that passes nothing but
+  `assetcheck` is a model nobody has looked at, and we have shipped that mistake
+  before.
+
 ## Working alongside the cloud routine
 
 Two of us push to `main`: the routine every two hours, and Nick-and-Claude in a
