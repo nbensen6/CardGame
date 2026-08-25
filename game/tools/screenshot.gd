@@ -411,6 +411,12 @@ func _capture() -> void:
 				% [Progress.timing_style(), String((hand[timed_at] as Dictionary).get("name", "?")),
 				   int((hand[timed_at] as Dictionary).get("timed_hits", 1)),
 				   str(circle != null and circle.call("is_live"))])
+			if _state == "3dosu" and circle != null:
+				# The complaint was that most cards showed ONE circle. Prove the
+				# floor by asking for a one-window card's path directly.
+				var one: PackedVector3Array = tv.call("_hold_points", hand[timed_at], 1, Vector2(640, 600))
+				print("TIMING notes: live=%d  a one-window card would get %d"
+					% [(circle.get("_notes") as PackedVector3Array).size(), one.size()])
 			if _state == "3dslide" and circle != null:
 				# Press on the beat, then walk the follower down the path and let
 				# go at three places: held to the end, let go just past the rescue

@@ -469,6 +469,17 @@ func _on_circle_resolved(quality: int) -> void:
 
 ## How much Climb makes a card a HOLD rather than a tap. A long haul up the body
 ## should feel sustained; a short hop should not.
+## Fewest notes a timed card ever asks for.
+##
+## This is the whole reason the osu face did not feel like osu: `timed_hits` is 1
+## for 28 of the 41 timed cards, so almost every card showed ONE circle and one
+## circle is not a rhythm (Nick, 2026-08-25: "the osu circles still only have 1
+## circle"). In osu you are always hitting a sequence — the pattern IS the
+## instrument. A card that wants more windows still gets them; this is a floor,
+## not an override, so Satchel Charge keeps its three.
+const NOTE_MIN := 3
+
+
 ## Climb 2 and up. At 3 only two cards in the whole game would ever have been a
 ## slider, so the feature would have shipped effectively dead; at 2 it is five,
 ## and the rule still reads honestly — a real haul is a hold, a hop is a tap.
@@ -527,7 +538,7 @@ func _hold_points(card: Dictionary, hits: int, from_screen: Vector2) -> PackedVe
 	var start := _cam.project_position(from_screen, depth)
 
 	var slider := climb >= SLIDER_CLIMB
-	var count := maxi(hits, 2) if slider else maxi(hits, 1)
+	var count := maxi(hits, NOTE_MIN)
 	for i in range(count):
 		var k := 0.0 if count == 1 else float(i) / float(count - 1)
 		var p := start.lerp(target, k)

@@ -61,6 +61,15 @@ const SLIDE_SECONDS := 0.85
 ## a hair early is a slip; releasing at the start is not doing it at all.
 const SLIDE_RESCUE := 0.72
 
+## Slider ticks, as a fraction of the path. osu dots the body at regular
+## intervals; passing one is a beat you can hear yourself keeping, and it turns a
+## hold from "wait" into "travel".
+const TICK_STEP := 0.2
+## The follow circle: osu draws a ring around the ball WHILE you hold it, and
+## drops it the instant you let go. It is the clearest "you still have this"
+## signal in the game.
+const FOLLOW_SCALE := 1.55
+
 const GOLD := Color(1.0, 0.83, 0.36)
 const RING := Color(0.98, 0.93, 0.72)
 const CORE := Color(0.55, 0.95, 0.60)
@@ -74,7 +83,9 @@ var _hits_needed := 1
 var _hits_done := 0
 var _worst := Combat.TIMING_PERFECT
 var _flash := 0.0
-var _flash_good := false
+var _burst_grade := -1        # judgement being popped, osu's 300 / 100 / X
+var _burst_note := 0          # which note it belongs to, so it follows the camera
+var _combo := 0               # notes landed in a row, reset by a miss
 var _slider := false          # this window is held, not tapped
 var _holding := false         # the press has landed and the follower is running
 var _slide := 0.0             # 0..1 along the path
@@ -185,11 +196,17 @@ func _fire() -> void:
 		_press_quality = _worst
 		_holding = true
 		_slide = 0.0
+		_combo += 1
+		_burst_note = 0
+		_burst_grade = _worst
+		_flash = 1.0
 		note_hit.emit(0, _worst)
 		return
 	_hits_done += 1
+	_combo += 1
+	_burst_note = _hits_done - 1
+	_burst_grade = Combat.TIMING_PERFECT if off <= CORE_BAND else Combat.TIMING_GOOD
 	_flash = 1.0
-	_flash_good = true
 	note_hit.emit(_hits_done - 1, Combat.TIMING_PERFECT if off <= CORE_BAND else Combat.TIMING_GOOD)
 	if _hits_done >= _hits_needed:
 		_finish(_worst)
@@ -204,10 +221,12 @@ func _finish(quality: int) -> void:
 	_holding = false
 	if _live and quality == Combat.TIMING_MISS:
 		note_hit.emit(_hits_done, Combat.TIMING_MISS)
+		_combo = 0
+		_burst_note = mini(_hits_done, maxi(_notes.size() - 1, 0))
+		_burst_grade = Combat.TIMING_MISS
+		_flash = 1.0
 	_live = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_flash = 1.0
-	_flash_good = quality > Combat.TIMING_MISS
 	resolved.emit(quality)
 
 
@@ -289,6 +308,17 @@ func _draw_slider(path: PackedVector2Array) -> void:
 	draw_arc(tail, TARGET_RADIUS * 0.6, 0.0, TAU, 32,
 		Color(CORE.r, CORE.g, CORE.b, 0.7 * fade), 3.0, true)
 
+	# Slider ticks: osu dots the body at regular intervals, and passing one is a
+	# beat you keep. They light as the ball goes over them, so the track fills in
+	# behind you and the hold has a rhythm instead of being a wait.
+	var tick := TICK_STEP
+	while tick < 0.999:
+		var lit: bool = _holding and _slide >= tick
+		var tc := CORE if lit else RING
+		draw_circle(_path_point(path, tick), 5.0 if lit else 3.8,
+			Color(tc.r, tc.g, tc.b, (0.95 if lit else 0.6) * fade))
+		tick += TICK_STEP
+
 	if _holding:
 		# The road behind you lights up, so "how much is left" is the thing you
 		# are reading rather than a number.
@@ -301,6 +331,11 @@ func _draw_slider(path: PackedVector2Array) -> void:
 		var ball := _path_point(path, _slide)
 		draw_circle(ball, TARGET_RADIUS * 0.52, Color(0.10, 0.09, 0.13, 0.9))
 		draw_arc(ball, TARGET_RADIUS * 0.52, 0.0, TAU, 40, CORE, 4.0, true)
+		# The follow circle. osu draws it around the ball only while you are
+		# holding and drops it the instant you let go, which makes it the
+		# clearest "you still have this" signal on the screen.
+		draw_arc(ball, TARGET_RADIUS * 0.52 * FOLLOW_SCALE, 0.0, TAU, 44,
+			Color(GOLD.r, GOLD.g, GOLD.b, 0.75), 3.0, true)
 		# The rescue mark: let go past this and it still pays, downgraded.
 		var rescue := _path_point(path, SLIDE_RESCUE)
 		draw_arc(rescue, 7.0, 0.0, TAU, 20, Color(GOLD.r, GOLD.g, GOLD.b, 0.6), 2.0, true)
@@ -317,17 +352,41 @@ func _draw_slider(path: PackedVector2Array) -> void:
 	draw_arc(path[0], TARGET_RADIUS * lerpf(START_SCALE, 0.30, k), 0.0, TAU, 64, ring, 3.5, true)
 
 
+## osu pops a judgement at the circle the moment you hit it — 300, 100, 50 or a
+## miss — and the number IS the feedback. Ours are named rather than numbered
+## because the words are what the rest of the game already calls them.
+func _burst(at: Vector2, grade: int, t: float) -> void:
+	var tint := MISS
+	var label := "MISS"
+	if grade >= Combat.TIMING_PERFECT:
+		tint = CORE
+		label = "PERFECT"
+	elif grade >= Combat.TIMING_GOOD:
+		tint = GOLD
+		label = "GOOD"
+	var ring := tint
+	ring.a = t * 0.7
+	draw_arc(at, TARGET_RADIUS * (1.0 + (1.0 - t) * 1.6), 0.0, TAU, 48, ring, 4.0, true)
+	var font := ThemeDB.fallback_font
+	var size := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 17)
+	var lift := (1.0 - t) * 22.0
+	draw_string(font, at + Vector2(-size.x * 0.5, -TARGET_RADIUS - 12.0 - lift), label,
+		HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color(tint.r, tint.g, tint.b, t))
+	if _combo > 1 and grade > Combat.TIMING_MISS:
+		var combo := "%dx" % _combo
+		var cs := font.get_string_size(combo, HORIZONTAL_ALIGNMENT_LEFT, -1, 15)
+		draw_string(font, at + Vector2(-cs.x * 0.5, TARGET_RADIUS + 24.0 + lift * 0.5), combo,
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color(GOLD.r, GOLD.g, GOLD.b, t * 0.9))
+
+
 func _draw() -> void:
 	if _cam == null or not is_instance_valid(_cam) or _notes.is_empty():
 		return
 
-	if _flash > 0.0:
-		var fi := clampi(_hits_done - 1 if _flash_good else _hits_done, 0, _notes.size() - 1)
+	if _flash > 0.0 and _burst_grade >= 0:
+		var fi := clampi(_burst_note, 0, _notes.size() - 1)
 		if _visible_note(fi):
-			var burst := TARGET_RADIUS * (1.0 + (1.0 - _flash) * 1.6)
-			var tint := (CORE if _flash_good else MISS)
-			tint.a = _flash * 0.7
-			draw_arc(_screen(fi), burst, 0.0, TAU, 48, tint, 4.0, true)
+			_burst(_screen(fi), _burst_grade, _flash)
 	if not _live:
 		return
 
