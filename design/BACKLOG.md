@@ -342,6 +342,81 @@ Ordered. Source in brackets.
   and every run terminates, and it fails loudly on a soft-lock. Report crashes
   and dead ends only — never win rates.
 
+- [ ] **47. A fifth hunter, driven by a resource** `cloud-safe` — promoted from
+  Later. Four classes all spend the same 3 energy; a class with its OWN currency
+  (charge, heat, breath — something it banks and spends) is how the genre keeps
+  its fifth character from being a re-skin. Expect this to take several runs:
+  character entry, starter deck, reward pool, the resource on `PlayerState`, and
+  the cards that pay into and out of it. *Done when:* it plays a full run,
+  the resource survives save/load, and its cards are tested.
+  [sts2-comparison §3.5]
+
+- [ ] **48. Relic tiers, and a pool only Titans pay from** `cloud-safe` — all 35
+  relics carry `{name, effect, value, text}` and NO rarity, so every one is
+  equally likely and felling a Titan feels the same as opening a chest. StS's
+  boss relics are the memorable ones precisely because they are gated behind the
+  hardest thing you did. #30 already gave some of ours a real downside, which is
+  the boss-relic idiom exactly — they just are not gated. *Done when:* relics
+  carry a tier, the offer respects it, Titans draw from a pool of their own, and
+  it is tested.
+
+- [ ] **49. A daily run everyone shares** `cloud-safe` — #38 made seeds
+  reproducible and shareable, which is most of the work; a daily is that seed
+  derived from the date plus a fixed ascension, so two people can race the same
+  map. Cheap now, and the first thing in this game with a reason to come back
+  tomorrow. *Done when:* the day's seed is derived and stable, a daily run is
+  flagged as one, and a test proves two runs on the same date match.
+
+- [ ] **50. Enchantments beyond the two proving ones** `cloud-safe` — #12 built
+  the engine and `enchants.json` has exactly two entries, one of which has no
+  consumer yet. An engine with two pieces of data is a demo. Write enough that
+  enchanting is a decision: cost, draw, target, exhaust, timing. *Done when:*
+  at least eight exist, each has a consumer in /core, and each is tested.
+
+- [ ] **51. A dropped hunter can come back** `cloud-safe` — `net_link.gd` emits
+  `peer_dropped` and nothing rejoins. In a two-player game one dropped phone
+  ends the run for BOTH people, which is the worst failure this design has: the
+  whole pitch is that you are climbing together. The host is already
+  authoritative and already sends per-peer snapshots, so the state to resume
+  from exists. *Done when:* a peer that drops can rejoin the same run and
+  receive a correct snapshot, and a test drops and restores one mid-fight.
+
+- [ ] **52. Potions across the whole effect range** `cloud-safe` — ten potions
+  covering five effects, two of each, which is a ladder rather than a choice:
+  the big one is always better than the small one. Potions should do things
+  cards cannot — remove a debuff, refill grip, move you up the beast, hit every
+  hunter at once. *Done when:* at least sixteen exist, no effect has only a
+  large-and-small pair, and the new effects are tested.
+
+- [ ] **53. Events that branch more than once** `cloud-safe` — all 20 events are
+  one screen and one choice. The ones people remember in this genre have a
+  second beat: you take the deal, and THEN it asks something. One optional
+  `then` on an outcome buys that for the whole file. *Done when:* the field
+  exists, at least four events use it, and a test walks a two-step event.
+
+- [ ] **54. Keyword coverage for everything added since #16** `cloud-safe` —
+  `_keywords_of` derives tooltips from a card's fields, and a great deal has
+  landed since: potions, curses, Retain, Innate, X-cost, Frail, Artifact,
+  Thorns, boons, named holds, graded timing. A mechanic with no keyword entry is
+  a mechanic the player has to guess. *Done when:* every field a player must
+  understand resolves to a keyword, and the existing coverage test is extended
+  to prove it stays true.
+
+- [ ] **55. More beasts — data first, art follows** `cloud-safe` — fourteen
+  beasts across four acts, so a run reuses the same bodies and the map stops
+  surprising you by Act 2. Beast DATA (moves, holds, sigil height, limiter) is
+  cloud-safe; the model is not, and a new beast without one falls back to a
+  stand-in rather than breaking. Write them in the existing idiom — each should
+  bend one rule, the way the current fourteen do. *Done when:* at least six new
+  beasts exist with holds and limiters, they are in the right pools, and content
+  integrity still passes.
+
+- [ ] **56. Ascension 9 and up** `cloud-safe` — eight tiers, and #22 proved they
+  do what they claim. StS runs to twenty because the ladder IS the long game for
+  the people who finish it. The tiers are data and the harness for them already
+  exists. *Done when:* the ladder extends with tiers that change rules rather
+  than only numbers, and each new one is tested the way #22 tests the first eight.
+
 ## Working alongside the cloud routine
 
 Two of us push to `main`: the routine every two hours, and Nick-and-Claude in a
