@@ -274,6 +274,8 @@ static func build_boss(id: String) -> Boss:
 	var b := Boss.new(String(bd.get("name", "Titan")), int(bd.get("max_hp", 1)))
 	b.id = id
 	b.moves = bd.get("moves", [])
+	b.hurt_pct = float(bd.get("hurt_pct", 0.0))     # backlog #44: second pattern below this HP fraction
+	b.hurt_moves = bd.get("hurt_moves", [])
 	b.weak_point_height = int(bd.get("weak_point_height", 0))
 	b.ledges = bd.get("ledges", [])
 	b.weak_point_threshold = int(bd.get("weak_point_threshold", 0))

@@ -23,6 +23,10 @@ var weak_point_threshold: int = 0  # sigil damage a hunter can deal per visit be
 var limiter: Dictionary = {}   # {"type": ..., "value": ...} — a rule this Titan bends against a
                                 # specific strategy, applied generically by Combat._apply_limiter()
                                 # (design/sts2-comparison.md §3.4). {} = none.
+var hurt_pct: float = 0.0      # backlog #44: below this fraction of max_hp, `hurt_moves` replaces
+                                # `moves` entirely. 0 (default) = no second pattern, unchanged beast.
+var hurt_moves: Array = []     # the second pattern; same shape as `moves` ("when"/"fallback" both
+                                # still work inside it). Ignored unless hurt_pct > 0.
 var _move_index: int = 0
 
 ## A move in `moves` can carry an optional "when" condition (backlog #40):
@@ -42,12 +46,23 @@ const COND_UNDEFENDED := "undefended"
 ## `context` is only consulted for moves that set "when" — omit it (or pass
 ## {}) to read the pattern's plain, unconditional shape.
 func current_move(context: Dictionary = {}) -> Dictionary:
-	if moves.is_empty():
+	var active := _active_moves()
+	if active.is_empty():
 		return {"type": "attack", "value": 0}
-	var move: Dictionary = moves[_move_index % moves.size()]
+	var move: Dictionary = active[_move_index % active.size()]
 	if move.has("when") and not _condition_met(move["when"], context):
 		return move.get("fallback", {"type": "attack", "value": 0})
 	return move
+
+## backlog #44: below `hurt_pct` of max HP, the Titan switches its whole
+## pattern rather than its whole fight looking the same at 5 HP as at full.
+## Same `_move_index` drives both lists (no separate counter, no reset on
+## crossing the line) so the switch lands wherever the pattern already was —
+## a beast hurt mid-pattern doesn't restart its rotation, it just changes it.
+func _active_moves() -> Array:
+	if hurt_pct > 0.0 and not hurt_moves.is_empty() and hp <= max_hp * hurt_pct:
+		return hurt_moves
+	return moves
 
 ## Evaluate one "when" condition against the board context. Any hunter
 ## meeting it is enough — these are reactions to the CLIMB, not to a specific

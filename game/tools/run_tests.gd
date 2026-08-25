@@ -32,6 +32,12 @@ func _init() -> void:
 	_test_backlog40_conditional_move_resolves_through_a_real_enemy_turn()
 	_test_backlog40_conditional_move_falls_back_off_the_sigil()
 	_test_backlog40_at_least_three_beasts_react_to_position()
+	# backlog #44: titans that change their pattern when hurt
+	_test_backlog44_hurt_pct_switches_the_whole_pattern()
+	_test_backlog44_same_move_index_drives_both_lists()
+	_test_backlog44_disabled_by_default()
+	_test_backlog44_hurt_moves_resolve_through_a_real_enemy_turn()
+	_test_backlog44_at_least_three_beasts_have_a_second_pattern()
 	# backlog #42: something to unlock between runs
 	_test_backlog42_progress_total_wins_climbs_on_every_win()
 	_test_backlog42_relic_pool_respects_unlock_wins()
@@ -385,6 +391,75 @@ func _test_backlog40_at_least_three_beasts_react_to_position() -> void:
 			if has_when:
 				reactive += 1
 	_expect(reactive >= 3, "at least three beasts react to hunter position (found %d)" % reactive)
+
+
+# --- Titans that change their pattern when hurt (backlog #44) -------------
+
+func _test_backlog44_hurt_pct_switches_the_whole_pattern() -> void:
+	var b := Boss.new("B", 100)
+	b.moves = [{"type": "attack", "value": 1}, {"type": "block", "value": 2}]
+	b.hurt_pct = 0.5
+	b.hurt_moves = [{"type": "attack", "value": 9}]
+	b.hp = 51
+	_expect(int(b.current_move()["value"]) == 1, "above the threshold still reads the first pattern")
+	b.hp = 50
+	_expect(int(b.current_move()["value"]) == 9, "at the threshold the second pattern takes over")
+	b.hp = 1
+	_expect(int(b.current_move()["value"]) == 9, "stays on the second pattern the rest of the fight")
+
+
+func _test_backlog44_same_move_index_drives_both_lists() -> void:
+	var b := Boss.new("B", 100)
+	b.moves = [{"type": "attack", "value": 1}, {"type": "attack", "value": 2}, {"type": "attack", "value": 3}]
+	b.hurt_pct = 0.5
+	b.hurt_moves = [{"type": "attack", "value": 90}, {"type": "attack", "value": 91}]
+	b.advance_move()  # _move_index == 1 -> moves[1] (value 2) while healthy
+	_expect(int(b.current_move()["value"]) == 2, "index 1 into the healthy list is its second move")
+	b.hp = 40  # cross the threshold without touching _move_index at all
+	_expect(int(b.current_move()["value"]) == 91,
+		"the same index (1) into hurt_moves is ITS second move -> the pattern doesn't reset to move 1")
+
+
+func _test_backlog44_disabled_by_default() -> void:
+	var b := Boss.new("B", 20)
+	b.moves = [{"type": "attack", "value": 5}]
+	b.hp = 1  # would be well under any reasonable threshold
+	_expect(int(b.current_move()["value"]) == 5,
+		"a beast with hurt_pct 0 (the default) never switches, unchanged from before this item")
+
+
+func _test_backlog44_hurt_moves_resolve_through_a_real_enemy_turn() -> void:
+	var boss := Boss.new("Reactive", 500)
+	boss.moves = [{"type": "attack", "value": 10}]
+	boss.hurt_pct = 0.5
+	boss.hurt_moves = [{"type": "attack", "value": 25}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.end_turn(0)
+	combat.end_turn(1)  # round 1, full HP -> the plain move, targets player 0
+	_expect(combat.players[0].combatant.hp == 42 - 10, "at full HP the enemy turn uses the plain move")
+	boss.hp = 200  # below the 250 (50%) threshold
+	combat.end_turn(0)
+	combat.end_turn(1)  # round 2 -> target rotates to player 1
+	_expect(combat.players[1].combatant.hp == 42 - 25,
+		"once hurt, the real enemy turn resolves the second pattern, not just current_move()'s preview")
+
+
+## Content-level sentinel (mirrors #40's own "at least N" check): at least
+## three real beasts actually ship a second pattern, and it's telegraphed
+## through the same current_move() the view and the host both already read.
+func _test_backlog44_at_least_three_beasts_have_a_second_pattern() -> void:
+	var count := 0
+	for kind in ["fight", "elite", "boss"]:
+		for id in Content.beast_pool(kind):
+			var b := Content.build_boss(String(id))
+			if b.hurt_pct > 0.0:
+				_expect(not b.hurt_moves.is_empty(),
+					"beast '%s' pairs hurt_pct with a real hurt_moves list" % id)
+				b.hp = int(b.max_hp * b.hurt_pct)  # at the threshold
+				_expect(b.current_move() in b.hurt_moves,
+					"beast '%s' actually switches pattern once hurt" % id)
+				count += 1
+	_expect(count >= 3, "at least three beasts change their pattern when hurt (found %d)" % count)
 
 
 # --- Co-op combat rules ---------------------------------------------------

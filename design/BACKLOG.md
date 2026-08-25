@@ -314,7 +314,7 @@ Ordered. Source in brackets.
   three existing effects are moved onto them with no behaviour change, and the
   suite proves the behaviour did not change.
 
-- [ ] **44. Titans that change their pattern when hurt** `cloud-safe` — every
+- [x] **44. Titans that change their pattern when hurt** `cloud-safe` — every
   beast runs one fixed rotation from full health to zero, so the back half of a
   fight is the front half with smaller numbers. A second move list that takes
   over below a health threshold is the genre's standard answer and ours is
@@ -602,6 +602,47 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-25** — #44 Titans that change their pattern when hurt: two new
+  `Boss` fields, `hurt_pct` (fraction of max_hp) and `hurt_moves` (a second
+  move list, same shape as `moves` — "when"/"fallback" both still work
+  inside it). `current_move()` now reads through a new `_active_moves()`
+  that returns `hurt_moves` once `hp <= max_hp * hurt_pct`, `moves`
+  otherwise; `hurt_pct` defaults to 0.0, which short-circuits the check, so
+  every beast without the new fields (all of them, until this commit) is
+  byte-for-byte unchanged. Deliberately did NOT give the switch its own
+  index or reset `_move_index` on crossing the threshold: both lists are
+  read through the same `_move_index % list.size()`, so a beast that gets
+  hurt mid-pattern continues wherever it already was rather than restarting
+  its rotation at move 1 — a test (`_test_backlog44_same_move_index_drives_
+  both_lists`) proves this by advancing the index once, checking it lands on
+  each list's own SECOND move, not first. `Content.build_boss()` loads both
+  fields from data the same way `moves`/`ledges` already do, so a resumed
+  save recomputes the active list live from hp rather than needing anything
+  new persisted — `to_dict()`/`apply_dict()` untouched. No view code needed
+  touching either: `current_move()` was already the one place the telegraph
+  (`game_host.gd`'s `"intent"`) and the balance sim both read the pattern
+  from, so the switch is visible wherever the plain pattern already was,
+  automatically. Three beasts, one per pool, matching #40's spread: the Crag
+  Pup (`fight`, hurt_pct 0.35) drops its block move and leans harder on its
+  sigil bite; the Mire Snapper (`elite`, hurt_pct 0.35) goes leech-heavy,
+  trying to heal back what it's lost; the Gale Serpent (`boss`, hurt_pct
+  0.35) drops its `enrage` buildup for repeated `attack_all` sweeps — a
+  shape change in each case (which moves exist, not just their numbers),
+  not a tune. 5 new tests: the switch itself (above/at/below the threshold),
+  the same-index proof above, a beast with `hurt_pct` left at its 0.0
+  default never switching (the "unchanged for everyone else" guarantee),
+  a real `Combat.end_turn()` round trip proving the actual enemy-turn
+  resolution picks the hurt pattern once hp crosses the line (not just
+  `current_move()`'s prediction), and a content sentinel walking every real
+  beast confirming at least three carry a paired `hurt_pct`/`hurt_moves`
+  and genuinely switch at the threshold (found 3). `run_tests.gd` all green
+  (280 assertions incl. the five new ones); `node tools/cardlab/build.js`
+  clean (155 cards, `unreachable: 0` — bosses.json isn't part of its
+  reachability graph, ran anyway since the file changed); `balance_sim.gd`
+  ran clean as a smoke test only (36% coordinated at A0 this run, within the
+  36-42% range seen across prior sessions — nothing here touches drafting
+  or spending policy, so this is ordinary run-to-run variance, not tuned to).
 
 - **2026-08-25** — #73 osu sliders: a timed card that climbs 2 or more is now a
   HOLD, not a tap — press on the beat, keep hold while the follower runs the
