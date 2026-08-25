@@ -528,14 +528,37 @@ func _hold_points(card: Dictionary, hits: int, from_screen: Vector2) -> PackedVe
 	var depth := maxf(_dist * 0.55, 3.0)
 	# Keep the stream inside the frame even when the card that started it sits in
 	# a corner: shove the whole pattern, rather than bending it out of shape.
-	var rise := NOTE_STEP * float(count - 1)
-	var top := from_screen.y - rise
-	var lift := maxf(0.0, 96.0 - top)
+	# A different shape every time. The same three positions on every card turned
+	# a rhythm test into muscle memory you only had to learn once (Nick,
+	# 2026-08-25: "the circles are in the same position everytime"). The stream
+	# still rises — you are climbing — but it leans, curves and steps differently
+	# on each play.
+	var rng := RandomNumberGenerator.new()
+	var lean := rng.randf_range(-0.55, 0.55)          # radians off vertical
+	var curve := rng.randf_range(-0.9, 0.9)           # how much the line bends
+	var flip := 1.0 if rng.randf() < 0.5 else -1.0    # which side the zigzag starts
+	var pattern := PackedVector2Array()
+	var lo := Vector2(1e9, 1e9)
+	var hi := Vector2(-1e9, -1e9)
 	for i in range(count):
-		var at := from_screen + Vector2(
-			(1.0 if i % 2 == 0 else -1.0) * NOTE_SWAY,
-			lift - NOTE_STEP * float(i))
-		out.append(_cam.project_position(at, depth))
+		var step := float(i)
+		var along := Vector2(sin(lean), -cos(lean)) * (NOTE_STEP * step)
+		var side := Vector2(cos(lean), sin(lean))
+		var wobble := flip * (1.0 if i % 2 == 0 else -1.0) * NOTE_SWAY
+		var bend := curve * NOTE_SWAY * sin(step / maxf(float(count - 1), 1.0) * PI)
+		var at := from_screen + along + side * (wobble + bend)
+		pattern.append(at)
+		lo = Vector2(minf(lo.x, at.x), minf(lo.y, at.y))
+		hi = Vector2(maxf(hi.x, at.x), maxf(hi.y, at.y))
+
+	# Shove the whole pattern back on screen rather than bending it out of shape.
+	var pad := 96.0
+	var view := get_viewport().get_visible_rect().size
+	var shove := Vector2(
+		maxf(0.0, pad - lo.x) - maxf(0.0, hi.x - (view.x - pad)),
+		maxf(0.0, pad - lo.y) - maxf(0.0, hi.y - (view.y - pad)))
+	for at in pattern:
+		out.append(_cam.project_position(at + shove, depth))
 	return out
 
 

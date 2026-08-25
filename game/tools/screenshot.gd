@@ -481,14 +481,34 @@ func _capture() -> void:
 				# It must be able to RECEIVE the tap, not just draw.
 				print("TIMING circle takes taps: %s"
 					% str(int(circle.get("mouse_filter")) == Control.MOUSE_FILTER_STOP))
+				# The window a STREAM note gets, in milliseconds, against the wait
+				# it used to impose. This is the number the bug was hiding in.
+				print("TIMING windows: perfect +/-%dms, good +/-%dms; a note after a hit is hittable from %dms"
+					% [int(HitCircle.PERFECT_WINDOW * 1000), int(HitCircle.GOOD_WINDOW * 1000),
+					   int(maxf(HitCircle.STREAM_BEAT - HitCircle.GOOD_WINDOW, 0.0) * 1000)])
+				# A click nowhere near the live note must be IGNORED, not judged.
+				var stray := [-99]
+				var sc := HitCircle.new()
+				get_root().add_child(sc)
+				sc.resolved.connect(func(q: int) -> void: stray[0] = q)
+				sc.begin(0.0, tv.get("_cam"), PackedVector3Array([Vector3.ZERO, Vector3(0, 2, 0)]))
+				sc.set("_t", HitCircle.APPROACH_SECONDS)
+				var far := InputEventMouseButton.new()
+				far.button_index = MOUSE_BUTTON_LEFT
+				far.pressed = true
+				far.position = sc.call("_screen", 0) + Vector2(HitCircle.HIT_RADIUS * 3.0, 0.0)
+				sc.call("_gui_input", far)
+				print("TIMING stray click far from the note: %s"
+					% ("ignored" if int(stray[0]) == -99 else "JUDGED as " + _quality_name(int(stray[0]))))
+				sc.queue_free()
 				# Grade three taps by moving the clock rather than the mouse: the
 				# harness runs frames far faster than real time, so waiting for the
 				# ring to land would never happen.
 				for probe in [["dead centre", HitCircle.APPROACH_SECONDS, Combat.TIMING_PERFECT],
-						["just off", HitCircle.APPROACH_SECONDS
-							+ HitCircle.APPROACH_SECONDS * HitCircle.CORE_BAND * 2.0,
+						["just off", HitCircle.APPROACH_SECONDS + HitCircle.PERFECT_WINDOW * 1.6,
 							Combat.TIMING_GOOD],
-						["way early", HitCircle.APPROACH_SECONDS * 0.2, Combat.TIMING_MISS]]:
+						["way early", HitCircle.APPROACH_SECONDS - HitCircle.GOOD_WINDOW * 2.0,
+							Combat.TIMING_MISS]]:
 					# An Array, not an int: a GDScript lambda captures by VALUE, so
 					# assigning to a plain local inside it changes nothing out here.
 					var got := [-99]

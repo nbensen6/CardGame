@@ -32,12 +32,27 @@ const APPROACH_SECONDS := 0.80
 ## fraction of the approach. A late tap has to be possible or the whole thing is
 ## a coin flip on latency.
 const OVERRUN := 0.30
-## Bands, on the 0..1 approach scale: |offset| inside CORE is perfect, inside
-## ZONE is good, outside is a miss. Wider fractions of a much shorter approach,
-## which still tightens both in real time — perfect went 69ms -> 44ms and the
-## whole window 184ms -> 116ms.
-const CORE_BAND := 0.075
-const ZONE_BAND := 0.200
+## Hit windows, in SECONDS, and deliberately not a fraction of the approach.
+##
+## osu keeps these separate for a reason: approach rate says how long you SEE a
+## note, overall difficulty says how close to the beat you must be. Ours were a
+## fraction of the approach, so shortening the approach for a stream silently
+## shrank the window too — and after a hit the next note could not be struck at
+## all for 200ms, however dead-centre the cursor was (Nick, 2026-08-25:
+## "sometimes im clicking in the circle but it says miss"). Absolute windows mean
+## a quick note and a slow one are equally fair to hit.
+const PERFECT_WINDOW := 0.070
+const GOOD_WINDOW := 0.185
+## How long a note in a stream is visible for, after the first one. The first
+## gets the full approach so you can read the pattern; the rest come at tempo.
+## 0.34 with a 185ms window means the next note is hittable 155ms after the last
+## one landed — fast enough to tap through, slow enough to be a beat.
+const STREAM_BEAT := 0.34
+## A click must land within this of the live note to count. Farther away it is
+## ignored ENTIRELY rather than judged — clicking the circle you are looking at
+## while an earlier one is still live used to grade that earlier one, early, and
+## report a miss you did not make.
+const HIT_RADIUS := 74.0
 
 const TARGET_RADIUS := 40.0
 const START_SCALE := 2.9      # ring radius at the start, in target radii
@@ -87,6 +102,7 @@ var _flash := 0.0
 var _burst_grade := -1        # judgement being popped, osu's 300 / 100 / X
 var _burst_note := 0          # which note it belongs to, so it follows the camera
 var _combo := 0               # notes landed in a row, reset by a miss
+var _approach := APPROACH_SECONDS   # this note's own approach length
 var _slider := false          # this window is held, not tapped
 var _holding := false         # the press has landed and the follower is running
 var _slide := 0.0             # 0..1 along the path
@@ -124,7 +140,8 @@ func begin(bonus: float, cam: Camera3D, points: PackedVector3Array,
 	_hits_needed = 1 if _slider else points.size()
 	_hits_done = 0
 	_worst = Combat.TIMING_PERFECT
-	_t = CHAIN_OVERLAP    # the first note starts part-closed too, so nothing stalls
+	_approach = APPROACH_SECONDS
+	_t = 0.0
 	_flash = 0.0
 	zone_bonus = bonus
 	_cam = cam
@@ -148,7 +165,7 @@ func _process(delta: float) -> void:
 		return
 	if _live:
 		_t += delta
-		if _t > APPROACH_SECONDS * (1.0 + OVERRUN):
+		if _t > _approach + GOOD_WINDOW + 0.08:
 			_finish(Combat.TIMING_MISS)   # the window closed with no tap
 			return
 	elif _flash <= 0.0:
@@ -163,21 +180,33 @@ func _gui_input(event: InputEvent) -> void:
 	var mb := event as InputEventMouseButton
 	if mb.button_index != MOUSE_BUTTON_LEFT:
 		return
-	accept_event()
 	if mb.pressed:
+		# Position first. A click that is not on the live note is not a mistake,
+		# it is aimed at something else — ignore it rather than judging the note
+		# you were not clicking.
+		if _hits_done < _notes.size() and _visible_note(_hits_done) 				and mb.position.distance_to(_screen(_hits_done)) > HIT_RADIUS:
+			return
+		accept_event()
 		_fire()
-	elif _holding:
+		return
+	accept_event()
+	if _holding:
 		# Let go. Near the end is a slip and still pays something; letting go at
 		# the start means you did not hold it at all.
 		_finish(Combat.TIMING_MISS if _slide < SLIDE_RESCUE
 			else mini(_press_quality, Combat.TIMING_GOOD))
 
 
-## Signed distance from the target, on the 0..1 approach scale. Negative before
-## the ring lands, positive after — the sign is only for drawing; grading uses
-## the magnitude, so early and late are punished identically.
+## Seconds from the beat. Negative before the ring lands, positive after; the
+## sign is only for drawing, since early and late are punished identically.
 func _offset() -> float:
-	return (_t - APPROACH_SECONDS) / APPROACH_SECONDS
+	return _t - _approach
+
+
+## How far the approach ring has closed, 0..1. Separate from _offset now that
+## the window no longer scales with the approach.
+func _closed() -> float:
+	return clampf(_t / maxf(_approach * (1.0 + OVERRUN), 0.001), 0.0, 1.0)
 
 
 ## One tap. Mirrors CardView._fire exactly, including that a chain's quality is
@@ -186,10 +215,10 @@ func _fire() -> void:
 	if _holding:
 		return                       # already running the path
 	var off := absf(_offset())
-	if off > ZONE_BAND + zone_bonus:
+	if off > GOOD_WINDOW + zone_bonus * 0.35:
 		_finish(Combat.TIMING_MISS)
 		return
-	if off > CORE_BAND:
+	if off > PERFECT_WINDOW:
 		_worst = mini(_worst, Combat.TIMING_GOOD)
 	if _slider:
 		# The press was on time. Now keep hold of it: the note is not done until
@@ -203,19 +232,20 @@ func _fire() -> void:
 		_flash = 1.0
 		note_hit.emit(0, _worst)
 		return
+
 	_hits_done += 1
 	_combo += 1
 	_burst_note = _hits_done - 1
-	_burst_grade = Combat.TIMING_PERFECT if off <= CORE_BAND else Combat.TIMING_GOOD
+	_burst_grade = Combat.TIMING_PERFECT if off <= PERFECT_WINDOW else Combat.TIMING_GOOD
 	_flash = 1.0
-	note_hit.emit(_hits_done - 1, Combat.TIMING_PERFECT if off <= CORE_BAND else Combat.TIMING_GOOD)
+	note_hit.emit(_hits_done - 1, Combat.TIMING_PERFECT if off <= PERFECT_WINDOW else Combat.TIMING_GOOD)
 	if _hits_done >= _hits_needed:
 		_finish(_worst)
 		return
-	# The next note's ring is already partly closed, because it has been on
-	# screen behind this one. Rewinding to zero is what made the old chain feel
-	# like three separate prompts.
-	_t = CHAIN_OVERLAP
+	# The rest of the stream comes at tempo: a shorter approach, but the SAME hit
+	# window, so tapping in time is exactly as forgiving as the first note was.
+	_approach = STREAM_BEAT
+	_t = 0.0
 
 
 func _finish(quality: int) -> void:
@@ -356,14 +386,13 @@ func _draw_slider(path: PackedVector2Array) -> void:
 		return
 
 	_note(path[0], 1, fade)
-	var core_r := TARGET_RADIUS * (1.0 + CORE_BAND * START_SCALE)
+	var core_r := TARGET_RADIUS * (1.0 + (PERFECT_WINDOW / maxf(_approach, 0.001)) * START_SCALE)
 	draw_arc(path[0], core_r, 0.0, TAU, 48, Color(CORE.r, CORE.g, CORE.b, 0.5 * fade), 2.0, true)
-	var span := 1.0 + OVERRUN
-	var k := clampf(_t / (APPROACH_SECONDS * span), 0.0, 1.0)
-	var near := 1.0 - clampf(absf(_offset()) / (ZONE_BAND + zone_bonus), 0.0, 1.0)
+	var near := 1.0 - clampf(absf(_offset()) / GOOD_WINDOW, 0.0, 1.0)
 	var ring := RING.lerp(CORE, near)
 	ring.a = (0.5 + 0.5 * near) * fade
-	draw_arc(path[0], TARGET_RADIUS * lerpf(START_SCALE, 0.30, k), 0.0, TAU, 64, ring, 3.5, true)
+	draw_arc(path[0], TARGET_RADIUS * lerpf(START_SCALE, 0.30, _closed()), 0.0, TAU, 64,
+		ring, 3.5, true)
 
 
 ## osu pops a judgement at the circle the moment you hit it — 300, 100, 50 or a
@@ -431,15 +460,14 @@ func _draw() -> void:
 
 	# The perfect band, drawn where the approach ring will be when a tap scores
 	# perfect. Aim for the moment it crosses this, not for the rim.
-	var core_r := TARGET_RADIUS * (1.0 + CORE_BAND * START_SCALE)
+	var core_r := TARGET_RADIUS * (1.0 + (PERFECT_WINDOW / maxf(_approach, 0.001)) * START_SCALE)
 	draw_arc(_at, core_r, 0.0, TAU, 48, Color(CORE.r, CORE.g, CORE.b, 0.5 * fade), 2.0, true)
 
 	# The approach ring, shrinking onto the rim, carrying on past it through the
 	# overrun so a late tap reads as late rather than as the window having gone.
-	var span := 1.0 + OVERRUN
-	var k := clampf(_t / (APPROACH_SECONDS * span), 0.0, 1.0)
+	var k := _closed()
 	var radius := TARGET_RADIUS * lerpf(START_SCALE, 0.30, k)
-	var near := 1.0 - clampf(absf(_offset()) / (ZONE_BAND + zone_bonus), 0.0, 1.0)
+	var near := 1.0 - clampf(absf(_offset()) / GOOD_WINDOW, 0.0, 1.0)
 	var ring := RING.lerp(CORE, near)
 	ring.a = (0.5 + 0.5 * near) * fade
-	draw_arc(_at, radius, 0.0, TAU, 64, ring, 3.5, true)
+	draw_arc(_at, radius, 0.0, TAU, 64, ring, 5.0, true)
