@@ -332,7 +332,7 @@ Ordered. Source in brackets.
   a two-peer test. *Done when:* each of those six is exercised through a real
   host/client pair, including what the ALLY should and should not see.
 
-- [ ] **46. A robustness sweep that is not balance tuning** `cloud-safe` — we
+- [x] **46. A robustness sweep that is not balance tuning** `cloud-safe` — we
   have `balance_sim.gd`, which the standing rule says not to tune to, and that
   rule has left the whole simulation unused. But there is a question it can
   answer that has nothing to do with win rates: does a run ever get STUCK. No
@@ -342,7 +342,7 @@ Ordered. Source in brackets.
   and every run terminates, and it fails loudly on a soft-lock. Report crashes
   and dead ends only — never win rates.
 
-- [ ] **47. A fifth hunter, driven by a resource** `cloud-safe` — promoted from
+- [x] **47. A fifth hunter, driven by a resource** `cloud-safe` — promoted from
   Later. Four classes all spend the same 3 energy; a class with its OWN currency
   (charge, heat, breath — something it banks and spends) is how the genre keeps
   its fifth character from being a re-skin. Expect this to take several runs:
@@ -351,7 +351,7 @@ Ordered. Source in brackets.
   the resource survives save/load, and its cards are tested.
   [sts2-comparison §3.5]
 
-- [ ] **48. Relic tiers, and a pool only Titans pay from** `cloud-safe` — all 35
+- [x] **48. Relic tiers, and a pool only Titans pay from** `cloud-safe` — all 35
   relics carry `{name, effect, value, text}` and NO rarity, so every one is
   equally likely and felling a Titan feels the same as opening a chest. StS's
   boss relics are the memorable ones precisely because they are gated behind the
@@ -360,7 +360,7 @@ Ordered. Source in brackets.
   carry a tier, the offer respects it, Titans draw from a pool of their own, and
   it is tested.
 
-- [ ] **49. A daily run everyone shares** `cloud-safe` — #38 made seeds
+- [x] **49. A daily run everyone shares** `cloud-safe` — #38 made seeds
   reproducible and shareable, which is most of the work; a daily is that seed
   derived from the date plus a fixed ascension, so two people can race the same
   map. Cheap now, and the first thing in this game with a reason to come back
@@ -635,6 +635,16 @@ check. It never judges its own work. See item 74 for why.
   review rather than a broken fight. *Done when:* at least four props exist with
   previews and review blocks, and the scene that wants them uses them.
 
+- [ ] **78. A Light meter for the Lightbearer** `needs a screen` — #47's engine
+  landed: `PlayerState.light`, `light_gain`/`light_cost`/`damage_per_light`/
+  `ally_heal` on `Card`, and 9 cards that use them. Nothing shows a player their
+  banked Light — Energy gets pips in the HUD, Light gets nothing, so a
+  `light_cost` card just looks unplayable with no explanation. The card face's
+  `text` already says the number ("Spend 3 Light..."), and the keyword tooltip
+  explains the mechanic, but there is no running counter the way Energy has one.
+  *Done when:* the HUD shows current Light for a Lightbearer hunter, and it's
+  been looked at.
+
 ## Working alongside the cloud routine
 
 Two of us push to `main`: the routine every two hours, and Nick-and-Claude in a
@@ -706,6 +716,148 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-25** — #49 A daily run everyone shares: built directly on #38's
+  shareable seed rather than adding new machinery. `Run.daily_seed(date_string)`
+  is a pure `String.hash()` of the date (deterministic in Godot, same guarantee
+  the plain typed-in seed already relied on; a hash landing on 0 — which `_init`
+  reserves to mean "roll randomly" — is nudged to 1). `Run.new_daily(decks,
+  names, date_string, ...)` wraps that seed together with a new
+  `DAILY_ASCENSION := 0` constant, pinned rather than left at the caller's own
+  ascension, so a race is fair regardless of career-unlock progress (#42) —
+  ascension 4+ content would exclude players who haven't earned it, which
+  defeats "everyone shares." Two new `Run` fields, `is_daily`/`daily_date`,
+  round-trip through `to_dict`/`from_dict` the same additive way `stats` (#39)
+  and `potions` (#26) already do — no `SAVE_VERSION` bump, since a missing key
+  just defaults to `false`/`""` on an old save. Wired one layer up too:
+  `GameHost` takes an optional `daily_date` and, when set, calls
+  `Run.new_daily()` instead of `Run.new()` inside `start_new_run()`, and the
+  shared snapshot now carries `"is_daily"` next to the `"seed"` key #38 added —
+  the same "a getter nobody's snapshot exposes doesn't help" lesson #38's own
+  log entry drew. Did NOT touch `menu.gd` or add a way to actually pick "play
+  today's daily" on screen — that's a `needs a screen` follow-up (mirrors how
+  #38 landed the seed without a "type a seed in" box); what's here is the
+  engine a future menu button calls into. 3 new tests: `daily_seed` is stable
+  for the same date and differs across two dates, `Run.new_daily()` with a
+  shared date produces an identical map/shop/reward roll the same way #38's
+  test proves for a typed seed (and a different date re-rolls all three), the
+  flag+date+pinned-ascension survive a save/load round trip, and a `GameHost`
+  given a `daily_date` actually starts a daily and exposes it in the shared
+  snapshot. `run_tests.gd`: all green, 310 assertions (307 prior + 3 new).
+  `node tools/cardlab/build.js`: unchanged (164 cards, 35 relics, 0
+  unreachable, same 6 pre-existing findings) — this item touched no data files.
+
+- **2026-08-25** — #47 A fifth hunter, driven by a resource: The Lightbearer
+  (`design/climbing-and-characters.md`'s stretch-5th concept, an owl portrait
+  since no new art was in scope), built on Light — a resource that BANKS
+  across turns instead of resetting like energy or Rhythm does, since nothing
+  in `_begin_round()` touches it (deliberate — that's the whole point of the
+  design ask, "a currency it banks and spends"). Four new `Card` fields
+  (`light_gain`, `light_cost`, `damage_per_light`, `ally_heal`) follow the
+  exact shape `damage_per_rhythm`/`grip_per_rhythm`/`rhythm` already
+  established: `light_cost` is a second cost checked in `can_play` alongside
+  energy and spent in `play_card` even on a fumble (same treatment as energy);
+  `light_gain` and `ally_heal` (clamped to the ally's max_hp, mirroring the
+  existing potion "heal" effect) apply in the main effect body so a fumbled
+  timed card doesn't trigger them; `damage_per_light` folds into `preview()`
+  the same way every other scaling field does, so it reads Light WITHOUT
+  spending it — the deliberate build tension between Flare (spend 5, deal 14
+  now) and Sunburst (spend nothing, scale with however much is banked). New
+  `light`/`mend` keywords added to `keywords.json` and wired into
+  `GameHost._keywords_of` — the reflection-based test added by #16
+  (`_test_every_field_a_player_must_understand_has_a_keyword`) would have
+  failed loudly on the new fields otherwise, and did until that was in place.
+  9 new cards (`spark`, `radiant_bolt`, `warm_glow`, `kindled_strike`,
+  `beacon`, `guiding_light`, `steady_flame`, `flare`, `sunburst`) — enough
+  for a full 10-card starter deck plus a modest reward pool of its own
+  archetype cards + the same shared neutrals every other class drafts from.
+  Worth being honest about: this reward pool is ~18 cards against the other
+  four classes' ~40-44 — #47 explicitly warned this would take "several
+  runs," and this one covered the engine, the starter deck, and a first pass
+  of cards, not the deep pool the other four have accumulated over multiple
+  sessions. A future session writing more Light cards is exactly that kind of
+  follow-up, the same way #50 is still open for enchants. The passive slot
+  is `"none"` (already a legal no-op value) — deliberately did NOT hang the
+  resource off a character passive the way climb_bonus/poison_lift/etc. do,
+  since the design ask was "build it on a resource, not a keyword" (the
+  resource itself, not one more passive scalar). 7 new tests: Light banking
+  across the round reset (proving it does NOT reset like Rhythm), the
+  light_cost gate-and-spend round trip, damage_per_light scaling without
+  spending, ally_heal clamping at max_hp, `PlayerState.light` surviving both
+  a bare dict round trip and a REAL mid-combat save/load (the #14 seam), and
+  a full `Run` played with the Lightbearer's own starter deck through to a
+  win, drafting only from its own pool (same proof `_test_per_class_reward_pools`
+  uses for the other four). `characters.json`'s `order` array is the only
+  place a new character needs registering — `Content.list_characters()` is
+  what the content-integrity tests, the robustness sweep, and the host's
+  character list all already iterate, so adding one entry there is what pulled
+  the new character and its 9 cards into every existing coverage test for
+  free, exactly as designed. `run_tests.gd`: all green, 307 assertions (300
+  prior + 7 new). `node tools/cardlab/build.js`: 164 cards (155+9), 5 classes,
+  0 unreachable — same 6 pre-existing findings as the baseline (checked by
+  diffing against a stash of this commit's parent), so nothing new is broken.
+  Left the Light meter itself for a `needs a screen` follow-up (#78, new) —
+  the card text and keyword tooltip explain the number, but there's no
+  running HUD counter the way Energy has pips, and that's a visual claim this
+  session can't verify.
+
+- **2026-08-25** — #48 Relic tiers, and a pool only Titans pay from: every
+  relic in `relics.json` now carries `"tier"` — `"common"` (31) or `"boss"`
+  (4). The boss tier didn't need new content: the four downside relics #30
+  already wrote (Warlord's Girdle, Bottomless Quiver, Fortress Ward, Adrenal
+  Surge) already read as the StS boss-relic idiom — real power, real cost —
+  they just weren't gated, exactly as the item said. `Content.relic_pool()`
+  now excludes `tier: "boss"` (so shop, treasure and an elite's payout never
+  offer one) and a new `Content.boss_relic_pool()` returns only those four;
+  `Run._begin_reward()` picks between them by checking `node_type == "boss"`,
+  which is already how the code tells a Titan kill apart from an elite's. 3
+  new tests: `relic_pool()`/`boss_relic_pool()` partition all 35 with no
+  overlap, a Titan's actual reward (driven through `_force_win`/`_pick_both`
+  the same way `_test_elite_pays_a_card_then_a_relic` already does) offers
+  only boss-tier ids, and an elite's never does. `run_tests.gd` all green,
+  300 assertions (297 prior + 3 new). `node tools/cardlab/build.js` clean (35
+  relics, 0 unreachable — the flat `pool` list is untouched, only which
+  function reads which slice of it changed). Ran `balance_sim.gd` as the
+  standing smoke test and it's worth writing down plainly rather than
+  quietly noticing: COORDINATED win rate at A0 dropped from the ~36% prior
+  sessions logged to 22%, reproduced by diffing against a stash of this same
+  commit's parent (36% before, 22% after, same seeds both times — not
+  variance). Root cause isn't a bug in the feature; it's `balance_sim.gd`'s
+  own `_pick_reward()` heuristic, which grabs any relic whose `effect` is
+  `attack_bonus` or `max_energy` and has never read `downside_effect` — two
+  of the four boss relics match that filter, and now that they're the ONLY
+  thing on offer after a Titan (not mixed in among 31 safe ones) the
+  "coordinated" policy grabs them and eats their downside blind, every
+  Titan, every run. `balance_sim.gd` is explicitly not to be tuned against
+  (standing rule #5), and this isn't a soft-lock either — #46's sweep policies
+  don't special-case relic effect names, so they're unaffected. Left the sim
+  and the relics alone; flagging the heuristic gap here in case a future
+  session wants a smarter (downside-aware) `_pick_reward` for its own sake.
+
+- **2026-08-25** — #46 A robustness sweep that is not balance tuning:
+  `tools/robustness_sweep.gd`, a sibling to `balance_sim.gd` that measures
+  nothing about skill — it plays 216 complete seeded runs (all 6 character
+  pairs x ascension 0/4/8 x 6 seeds x a "naive" and a "random" legal-action
+  policy) and asserts, at every MAP/EVENT/CAMPFIRE/SHOP/REWARD/BOON/COMBAT
+  decision point, that a legal action exists and the run reaches WON/LOST
+  within a 4000-step guard. It found zero real dead ends, but it did catch
+  one false one worth writing down: the sweep's own end-of-turn check first
+  read `ended_turn` immediately after calling `Combat.end_turn(pi)` and
+  flagged every game where the SECOND hunter to act ended their turn, because
+  for the last player `end_turn()` runs the enemy turn synchronously and, if
+  the fight continues, `_begin_round()` resets `ended_turn` back to false for
+  the new round right there — so the flag being false a moment later is the
+  round working correctly, not a stuck hunter. Fixed by also treating a
+  round-number change or the fight ending as proof the turn resolved. Also
+  added five fast, deterministic regression tests to `run_tests.gd` pinning
+  the specific escape hatches the sweep depends on (campfire rest at
+  MIN_DECK, leaving an empty shop, every event having a choice, skipping an
+  empty reward, ending a turn with an empty hand and no energy) so a
+  regression here fails the always-on suite immediately rather than waiting
+  for someone to run the sweep by hand. `run_tests.gd`: all green, 297
+  assertions (292 prior + 5 new). `balance_sim.gd` run as a smoke test only,
+  unchanged from prior sessions (36% coordinated at A0) — nothing here
+  touches drafting or spending.
 
 - **2026-08-25** — #45 Prove the new mechanics cross the client/server
   boundary: checked all six named in the item against `game_host.gd`/

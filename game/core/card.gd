@@ -62,6 +62,10 @@ var damage_per_x: int  # bonus damage per point of energy spent (backlog #29 —
 var block_per_x: int   # bonus Block per point of energy spent (backlog #29 — X-cost cards only)
 var frail: int          # Frail applied to the Titan: while it lasts, Block IT gains is cut (backlog #36)
 var thorns: int         # Thorns gained by the player: an attack landed on them reflects this much at the Titan (backlog #36)
+var light_gain: int     # Light banked outright — the Lightbearer's own resource (backlog #47)
+var light_cost: int     # Light required AND SPENT to play this card (bank-and-spend, on top of energy)
+var damage_per_light: int  # bonus damage per Light currently banked (scales without spending it)
+var ally_heal: int      # HP healed on the ALLY, up to their max — the Lightbearer's mend
 
 static func from_dict(d: Dictionary) -> Card:
 	var c := Card.new()
@@ -119,6 +123,10 @@ static func from_dict(d: Dictionary) -> Card:
 	c.block_per_x = int(d.get("block_per_x", 0))
 	c.frail = int(d.get("frail", 0))
 	c.thorns = int(d.get("thorns", 0))
+	c.light_gain = int(d.get("light_gain", 0))
+	c.light_cost = int(d.get("light_cost", 0))
+	c.damage_per_light = int(d.get("damage_per_light", 0))
+	c.ally_heal = int(d.get("ally_heal", 0))
 	return c
 
 
@@ -149,6 +157,8 @@ func to_dict() -> Dictionary:
 		"retain": retain, "innate": innate,
 		"damage_per_x": damage_per_x, "block_per_x": block_per_x,
 		"frail": frail, "thorns": thorns,
+		"light_gain": light_gain, "light_cost": light_cost,
+		"damage_per_light": damage_per_light, "ally_heal": ally_heal,
 	}
 
 
@@ -170,7 +180,8 @@ func upgraded_copy() -> Card:
 			"damage_per_vulnerable", "damage_per_foothold",
 			"damage_per_ally_foothold", "damage_per_rhythm", "damage_per_wound",
 			"damage_per_exhausted", "block_per_exhausted",
-			"damage_per_x", "block_per_x", "frail", "thorns"]:
+			"damage_per_x", "block_per_x", "frail", "thorns",
+			"light_gain", "damage_per_light", "ally_heal"]:
 		if int(d[key]) > 0:
 			d[key] = int(d[key]) + 1
 			bumped = true

@@ -167,7 +167,17 @@
 
     "crippling_blow": {"name": "Crippling Blow", "rarity": "uncommon", "type": "attack", "icon": "sword", "cost": 1, "damage": 5, "frail": 2, "target": "enemy", "text": "Deal 5 damage. Frail 2."},
     "spinebrace": {"name": "Spinebrace", "rarity": "uncommon", "type": "skill", "icon": "shield", "cost": 1, "block": 5, "thorns": 2, "text": "Gain 5 Block. Thorns 2."},
-    "trailmasters_cut": {"name": "Trailmaster's Cut", "rarity": "rare", "type": "attack", "icon": "sword", "cost": 2, "damage": 5, "hits": 2, "grip": 1, "unlock_wins": 3, "target": "enemy", "text": "Deal 5 damage twice. Climb 1."}
+    "trailmasters_cut": {"name": "Trailmaster's Cut", "rarity": "rare", "type": "attack", "icon": "sword", "cost": 2, "damage": 5, "hits": 2, "grip": 1, "unlock_wins": 3, "target": "enemy", "text": "Deal 5 damage twice. Climb 1."},
+
+    "spark": {"name": "Spark", "rarity": "common", "type": "skill", "icon": "flask", "cost": 0, "light_gain": 2, "target": "self", "text": "Gain 2 Light."},
+    "radiant_bolt": {"name": "Radiant Bolt", "rarity": "common", "type": "attack", "icon": "sword", "cost": 1, "damage": 5, "target": "enemy", "text": "Deal 5 damage."},
+    "warm_glow": {"name": "Warm Glow", "rarity": "common", "type": "skill", "icon": "support", "cost": 1, "ally_heal": 4, "light_gain": 1, "target": "ally", "text": "Heal an ally 4. Gain 1 Light."},
+    "kindled_strike": {"name": "Kindled Strike", "rarity": "uncommon", "type": "attack", "icon": "sword", "cost": 1, "damage": 3, "light_gain": 2, "timed": true, "timed_damage": 3, "target": "enemy", "text": "Deal 3 damage. Gain 2 Light."},
+    "beacon": {"name": "Beacon", "rarity": "uncommon", "type": "skill", "icon": "shield", "cost": 1, "block": 4, "light_gain": 3, "target": "self", "text": "Gain 4 Block. Gain 3 Light."},
+    "guiding_light": {"name": "Guiding Light", "rarity": "uncommon", "type": "skill", "icon": "support", "cost": 1, "light_cost": 3, "ally_heal": 8, "target": "ally", "text": "Spend 3 Light. Heal an ally 8."},
+    "steady_flame": {"name": "Steady Flame", "rarity": "uncommon", "type": "skill", "icon": "shield", "cost": 1, "retain": true, "block": 5, "light_gain": 2, "target": "self", "text": "Gain 5 Block. Gain 2 Light. Retain."},
+    "flare": {"name": "Flare", "rarity": "rare", "type": "attack", "icon": "sword", "cost": 2, "light_cost": 5, "damage": 14, "target": "enemy", "text": "Spend 5 Light. Deal 14 damage."},
+    "sunburst": {"name": "Sunburst", "rarity": "rare", "type": "attack", "icon": "sword", "cost": 2, "damage": 2, "damage_per_light": 2, "target": "enemy", "text": "Deal 2 damage, plus 2 per Light banked."}
   },
   "starter_deck": ["slash", "slash", "slash", "brace", "brace", "scramble", "scramble", "take_aim", "cleave", "cover"],
   "reward_pool": ["rally", "expose", "draw_aggro", "harpoon", "grip", "sunlight_blade", "bowshot", "sharpen", "rend", "dagger", "flurry", "cleave", "cover", "brace", "slash", "take_aim", "pounce", "flick", "lash_out", "piton_drive", "piston_punch", "haul", "tongue_snap", "hop", "leapfrog", "toxic_lash", "overgrowth", "blightbloom", "summit_strike", "belay", "pitons_in", "dig_in", "last_stand", "route_finder", "bunker_down", "first_strike", "crippling_blow", "spinebrace", "trailmasters_cut"]

@@ -77,6 +77,9 @@ func _init() -> void:
 	_test_map_generates_connected_rows()
 	_test_map_is_deterministic_per_seed()
 	_test_backlog38_same_seed_reproduces_map_shop_and_rewards()
+	_test_backlog49_daily_seed_is_stable_and_shared()
+	_test_backlog49_daily_run_saves_and_loads_the_flag()
+	_test_backlog49_host_can_start_a_shared_daily()
 	_test_run_walks_the_map()
 	_test_rest_node_heals_and_returns_to_map()
 	_test_event_choice_applies_effects()
@@ -194,6 +197,17 @@ func _init() -> void:
 	_test_run_is_four_titans()
 	_test_run_relic_reward_and_full_clear()
 	_test_elite_pays_a_card_then_a_relic()
+	_test_backlog48_relic_pool_and_boss_relic_pool_partition_by_tier()
+	_test_backlog48_titan_relic_reward_draws_only_from_the_boss_pool()
+	_test_backlog48_elite_relic_reward_never_offers_a_boss_relic()
+	# backlog #47: a fifth hunter, driven by a resource (Light)
+	_test_backlog47_light_gain_banks_across_the_round_reset()
+	_test_backlog47_light_cost_gates_and_spends()
+	_test_backlog47_damage_per_light_scales_without_spending()
+	_test_backlog47_ally_heal_caps_at_max_hp()
+	_test_backlog47_light_survives_playerstate_dict_round_trip()
+	_test_backlog47_light_survives_mid_combat_save_and_load()
+	_test_backlog47_lightbearer_plays_a_full_run()
 	_test_preview_matches_what_the_card_actually_does()
 	_test_incoming_reckons_damage_after_block()
 	_test_every_derived_keyword_resolves()
@@ -263,6 +277,12 @@ func _init() -> void:
 	_test_backlog45_retain_and_innate_keywords_reach_the_owners_hand()
 	_test_backlog45_named_holds_cross_to_both_peers_identically()
 	_test_backlog45_graded_timing_quality_reaches_the_host_and_the_preview()
+	# backlog #46: a robustness sweep that is not balance tuning
+	_test_backlog46_campfire_rest_always_legal_even_at_min_deck()
+	_test_backlog46_shop_leave_always_legal_with_nothing_affordable()
+	_test_backlog46_every_event_has_at_least_one_choice()
+	_test_backlog46_empty_reward_choices_can_still_be_skipped()
+	_test_backlog46_end_turn_always_works_with_empty_hand()
 
 	print("")
 	if _failures == 0:
@@ -757,6 +777,62 @@ func _test_backlog38_same_seed_reproduces_map_shop_and_rewards() -> void:
 	var different_map: bool = str(run_a.map.rows) != str(run_c.map.rows)
 	_expect(same_map and same_seed_readback and same_shop and same_reward and different_map,
 		"two runs from the same seed roll identical maps, shops and rewards; a new seed re-rolls all three")
+
+
+## Backlog #49: the daily's whole promise is "same date -> same run", built on
+## #38's shareable seed rather than new machinery — Run.new_daily() just picks
+## the seed for you from a date string and pins the ascension. Mirrors the
+## #38 test above but through that entry point.
+func _test_backlog49_daily_seed_is_stable_and_shared() -> void:
+	var same_day: bool = Run.daily_seed("2026-08-25") == Run.daily_seed("2026-08-25")
+	var different_day: bool = Run.daily_seed("2026-08-25") != Run.daily_seed("2026-08-26")
+	var run_a := Run.new_daily([_deck_of(_slash, 10), _deck_of(_slash, 10)], ["A", "B"], "2026-08-25", [{}, {}])
+	var run_b := Run.new_daily([_deck_of(_slash, 10), _deck_of(_slash, 10)], ["A", "B"], "2026-08-25", [{}, {}])
+	var run_c := Run.new_daily([_deck_of(_slash, 10), _deck_of(_slash, 10)], ["A", "B"], "2026-08-26", [{}, {}])
+	var flagged: bool = (run_a.is_daily and run_a.daily_date == "2026-08-25"
+		and run_a.ascension == Run.DAILY_ASCENSION)
+	var same_map: bool = str(run_a.map.rows) == str(run_b.map.rows)
+	run_a.map_row = 0
+	run_a._begin_shop()
+	run_b.map_row = 0
+	run_b._begin_shop()
+	var same_shop: bool = str(run_a.shop_stock) == str(run_b.shop_stock)
+	run_a._begin_reward("relic")
+	run_b._begin_reward("relic")
+	var same_reward: bool = str(run_a.reward_choices) == str(run_b.reward_choices)
+	var different_map: bool = str(run_a.map.rows) != str(run_c.map.rows)
+	_expect(same_day and different_day and flagged and same_map and same_shop and same_reward and different_map,
+		"two players who start a daily on the same date get an identical map, shop and reward roll; a new date re-rolls all three")
+
+
+## Backlog #49 x #35: a daily is a run like any other and has to survive the
+## same save/load round trip, or "the daily you resume" silently stops being
+## the daily you started.
+func _test_backlog49_daily_run_saves_and_loads_the_flag() -> void:
+	var run := Run.new_daily([_deck_of(_slash, 10), _deck_of(_slash, 10)], ["A", "B"], "2026-08-25", [{}, {}])
+	var loaded := Run.from_dict(run.to_dict())
+	_expect(loaded.is_daily and loaded.daily_date == "2026-08-25" and loaded.seed_value() == run.seed_value()
+		and loaded.ascension == Run.DAILY_ASCENSION,
+		"a daily run's flag, date and pinned ascension survive a save/load round trip")
+
+
+## Backlog #49: the flag has to actually reach a peer, the same lesson #38
+## already taught for the seed — a getter nobody's snapshot exposes doesn't
+## help a future screen that wants to show a "DAILY" badge.
+func _test_backlog49_host_can_start_a_shared_daily() -> void:
+	var transport := LocalTransport.new()
+	var host := GameHost.new(transport, 0, 2, false, 0, Content.UNLOCKED_ALL, "2026-08-25")
+	_kept.append(host)
+	var c0 := GameClient.new(transport, 10)
+	var c1 := GameClient.new(transport, 20)
+	c0.join()
+	c1.join()
+	c0.select_character("frog")
+	c1.select_character("mountain_climbers")
+	var expected_seed := Run.daily_seed("2026-08-25")
+	_expect(bool(c0.shared.get("is_daily", false)) and int(c0.shared.get("seed", -1)) == expected_seed
+		and int(c0.shared.get("ascension", -1)) == Run.DAILY_ASCENSION,
+		"a host given a daily_date starts a run flagged as daily, pinned to DAILY_ASCENSION, seeded from the date")
 
 
 func _test_run_walks_the_map() -> void:
@@ -2868,6 +2944,62 @@ func _test_elite_pays_a_card_then_a_relic() -> void:
 		"an elite pays a card and THEN a relic before the route reopens")
 
 
+## Backlog #48: relics carry a tier, and relic_pool()/boss_relic_pool() are a
+## strict partition of the same 35 — nothing in one is in the other, and
+## nothing outside "common"/"boss" exists to fall through the cracks.
+func _test_backlog48_relic_pool_and_boss_relic_pool_partition_by_tier() -> void:
+	var common: Array = Content.relic_pool()
+	var boss: Array = Content.boss_relic_pool()
+	var overlap := false
+	for id in common:
+		if boss.has(id):
+			overlap = true
+	var all_ids: Array = Content.all_relic_ids()
+	var covers_everything := common.size() + boss.size() == all_ids.size()
+	_expect(not overlap and covers_everything and boss.has("warlords_girdle")
+		and not common.has("warlords_girdle"),
+		"relic_pool() and boss_relic_pool() partition every relic by tier with no overlap")
+
+
+## The reward a Titan itself pays must come from ITS OWN pool — never a relic
+## a shop or an elite could also offer. Reaches into _begin_reward via
+## node_type = "boss" the same way _test_elite_pays_a_card_then_a_relic does.
+func _test_backlog48_titan_relic_reward_draws_only_from_the_boss_pool() -> void:
+	var run := _map_run()
+	_step_into_combat(run)
+	run.node_type = "boss"
+	_force_win(run)
+	_pick_both(run)  # take the card, opening the relic reward
+	var boss_ids: Array = Content.boss_relic_pool()
+	var all_boss_tier := true
+	var offered_any := false
+	for choices in run.reward_choices:
+		for r in (choices as Array):
+			offered_any = true
+			if not boss_ids.has(String((r as Dictionary).get("id", ""))):
+				all_boss_tier = false
+	_expect(run.reward_kind == "relic" and offered_any and all_boss_tier,
+		"a Titan's relic reward offers only tier: boss relics")
+
+
+## The mirror check: an elite's relic reward must NEVER surface a boss-tier
+## relic — those are held back for a Titan kill specifically.
+func _test_backlog48_elite_relic_reward_never_offers_a_boss_relic() -> void:
+	var run := _map_run()
+	_step_into_combat(run)
+	run.node_type = "elite"
+	_force_win(run)
+	_pick_both(run)  # take the card, opening the relic reward
+	var boss_ids: Array = Content.boss_relic_pool()
+	var saw_boss_tier := false
+	for choices in run.reward_choices:
+		for r in (choices as Array):
+			if boss_ids.has(String((r as Dictionary).get("id", ""))):
+				saw_boss_tier = true
+	_expect(run.reward_kind == "relic" and not saw_boss_tier,
+		"an elite's relic reward never offers a boss-tier relic")
+
+
 ## GameHost._keywords_of derives keyword ids in CODE; keywords.json defines them.
 ## A typo in either silently drops a tooltip and the card goes back to being
 ## unexplained, which is the exact problem the keyword layer exists to fix.
@@ -4337,6 +4469,178 @@ func _first_strike() -> Card:
 	return Card.from_dict({"id": "first_strike", "name": "First Strike", "type": "attack", "cost": 1, "damage": 5, "innate": true})
 func _crippling_blow() -> Card:
 	return Card.from_dict({"id": "crippling_blow", "name": "Crippling Blow", "type": "attack", "cost": 1, "damage": 5, "frail": 2, "target": "enemy"})
+
+
+# --- backlog #46: a robustness sweep that is not balance tuning -----------
+# Fast, deterministic locks on the specific dead-end shapes the sweep tool
+# (tools/robustness_sweep.gd) exists to catch across many random seeds. These
+# don't replace the sweep — they pin the exact escape hatches it depends on,
+# so a regression here fails run_tests.gd immediately instead of waiting for
+# someone to run the (expensive, non-CI) sweep by hand.
+
+func _test_backlog46_campfire_rest_always_legal_even_at_min_deck() -> void:
+	var run := Run.new([_deck_of(_slash, Run.MIN_DECK), _deck_of(_slash, Run.MIN_DECK)],
+		["A", "B"], 4242, [{}, {}])
+	run.start()
+	run._begin_campfire()
+	var remove_refused: bool = not run.campfire_action(0, "remove", 0)  # already at MIN_DECK
+	var rest_ok: bool = run.campfire_action(0, "rest")
+	_expect(remove_refused and rest_ok,
+		"a campfire at MIN_DECK refuses to remove further but rest always stays legal")
+
+
+func _test_backlog46_shop_leave_always_legal_with_nothing_affordable() -> void:
+	var run := _map_run()
+	run.gold = 0
+	run._begin_shop()
+	var nothing_affordable := true
+	for item in run.shop_stock:
+		if run.gold >= int(item["price"]):
+			nothing_affordable = false
+	var left := run.leave_shop()
+	_expect(nothing_affordable and left,
+		"a shop with zero gold and nothing affordable can still be left")
+
+
+func _test_backlog46_every_event_has_at_least_one_choice() -> void:
+	var ok := true
+	var bad := ""
+	for id in Content.list_events():
+		var e := Content.make_event(String(id))
+		if (e.get("choices", []) as Array).is_empty():
+			ok = false
+			bad = String(id)
+			break
+	_expect(ok, "every event has at least one choice (found empty: '%s')" % bad)
+
+
+func _test_backlog46_empty_reward_choices_can_still_be_skipped() -> void:
+	var run := _map_run()
+	run._begin_reward("card")
+	run.reward_choices[0] = []  # the shape a fully-drained/gated pool would produce
+	var skipped := run.skip_reward(0)
+	_expect(skipped and bool(run.reward_picked[0]),
+		"a hunter offered zero reward choices can still skip the reward")
+
+
+func _test_backlog46_end_turn_always_works_with_empty_hand() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(200))
+	combat.players[0].hand.clear()
+	combat.players[0].energy = 0
+	combat.end_turn(0)
+	_expect(combat.players[0].ended_turn,
+		"a hunter with no cards and no energy can still end their turn")
+
+
+## Backlog #47 — the Lightbearer: a fifth hunter whose OWN currency (Light)
+## banks across turns instead of resetting like energy does (contrast Rhythm,
+## which _begin_round() explicitly zeroes each turn).
+func _test_backlog47_light_gain_banks_across_the_round_reset() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [Content.make_card("spark")]
+	ps.energy = 3
+	combat.play_card(0, 0)
+	var gained := ps.light == 2
+	combat.end_turn(0)
+	combat.end_turn(1)  # both ended -> the boss acts and a new round begins
+	_expect(gained and ps.light == 2,
+		"Light gained by a card banks and survives the round reset (unlike Rhythm)")
+
+
+## A Light-cost card is a second cost on top of energy: unplayable below it,
+## and spending drains Light the same way playing any card drains energy.
+func _test_backlog47_light_cost_gates_and_spends() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [Content.make_card("guiding_light")]  # cost 1 energy, light_cost 3
+	ps.energy = 3
+	ps.light = 2
+	var blocked := not combat.can_play(0, 0)
+	ps.light = 3
+	var allowed := combat.can_play(0, 0)
+	combat.play_card(0, 0)
+	_expect(blocked and allowed and ps.light == 0,
+		"a Light-cost card is unplayable below its cost, and playing it spends the Light")
+
+
+## Sunburst reads banked Light for bonus damage but never spends it — the
+## build tension the design docs asked for (spend for a burst vs. hoard to
+## scale), same shape damage_per_rhythm/damage_per_foothold already prove.
+func _test_backlog47_damage_per_light_scales_without_spending() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [Content.make_card("sunburst")]  # damage 2, damage_per_light 2
+	ps.energy = 3
+	ps.light = 4
+	var before: int = combat.boss.hp
+	combat.play_card(0, 0)
+	var dealt := before - combat.boss.hp
+	_expect(dealt == 10 and ps.light == 4,
+		"Sunburst's damage scales with banked Light (2 + 2*4 = 10) without spending any of it")
+
+
+## The Lightbearer's mend targets the ally directly, clamped the same way
+## Combat.use_potion()'s "heal" effect and the campfire rest already clamp —
+## never past their own max_hp.
+func _test_backlog47_ally_heal_caps_at_max_hp() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var mate: PlayerState = combat.players[1]
+	ps.hand = [Content.make_card("warm_glow")]  # ally_heal 4, light_gain 1
+	ps.energy = 3
+	mate.combatant.hp = mate.combatant.max_hp - 1  # only 1 point of room
+	combat.play_card(0, 0)
+	_expect(mate.combatant.hp == mate.combatant.max_hp and ps.light == 1,
+		"mending an ally near full HP caps at max_hp rather than overhealing")
+
+
+## Leaf serializer for the whole save chain (Run -> Combat -> PlayerState) is
+## PlayerState.to_dict()/from_dict() — same seam #35 and #14 taught.
+func _test_backlog47_light_survives_playerstate_dict_round_trip() -> void:
+	var ps := PlayerState.new()
+	ps.combatant = Combatant.new("X", 30)
+	ps.light = 7
+	var back := PlayerState.from_dict(ps.to_dict())
+	_expect(back.light == 7, "PlayerState.light round-trips through to_dict/from_dict")
+
+
+## The real chain, not just the leaf: a mid-fight save (#14) must carry Light
+## the same way it already carries foothold/strength/exhaust_pile.
+func _test_backlog47_light_survives_mid_combat_save_and_load() -> void:
+	var run := Run.new([_deck_of(_slash, 8), _deck_of(_slash, 8)], ["A", "B"], 55,
+		[{"character": "frog"}, {"character": "lightbearer"}], 0)
+	run.start()
+	_step_into_combat(run)
+	var combat: Combat = run.combat
+	combat.players[1].light = 6
+	RunSave.clear()
+	RunSave.save(run)
+	var back := RunSave.load_run()
+	var back_combat: Combat = back.combat
+	_expect(back_combat != null and back_combat.players[1].light == 6,
+		"Light survives a mid-combat save and load")
+
+
+## Done-when (#47): "it plays a full run" — a real Run built from the
+## character's own starter_deck and passive, forced to a win, and the reward
+## it's offered comes from ITS OWN archetype pool (same proof
+## _test_per_class_reward_pools uses for the other four).
+func _test_backlog47_lightbearer_plays_a_full_run() -> void:
+	var decks := [Content.character_deck("lightbearer"), Content.character_deck("frog")]
+	var run := Run.new(decks, ["L", "F"], 123,
+		[Content.character_passive("lightbearer"), Content.character_passive("frog")])
+	run.start()
+	_step_into_combat(run)
+	_force_win(run)
+	var pool := Content.reward_pool("lightbearer")
+	var from_own_pool := true
+	if run.reward_kind == "card":
+		for c in run.reward_choices[0]:
+			if not pool.has((c as Card).id):
+				from_own_pool = false
+	_expect(run.phase == Run.Phase.REWARD and not pool.is_empty() and from_own_pool,
+		"the Lightbearer's starter deck plays a real run to a win and drafts from its own pool")
 
 
 func _expect(cond: bool, name: String) -> void:
