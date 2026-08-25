@@ -49,6 +49,15 @@ func end_turn(slot: int = -1) -> void:
 func fall(slot: int = -1) -> void:
 	_send({"type": "fall", "slot": slot})
 
+## Drink a held potion (index into this hunter's own inventory) — combat only,
+## same gate Run.use_potion() enforces host-side.
+func use_potion(index: int, slot: int = -1) -> void:
+	_send({"type": "use_potion", "index": index, "slot": slot})
+
+## Throw a held potion away unused — legal any phase you're carrying one.
+func discard_potion(index: int, slot: int = -1) -> void:
+	_send({"type": "discard_potion", "index": index, "slot": slot})
+
 ## Pick reward card option `choice` (during the between-encounter REWARD phase).
 func pick_card(choice: int, slot: int = -1) -> void:
 	_send({"type": "pick_card", "choice": choice, "slot": slot})

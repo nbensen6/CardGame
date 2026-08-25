@@ -323,7 +323,7 @@ Ordered. Source in brackets.
   the threshold and the second list are data fields, at least three beasts use
   them, the switch is visible in the telegraph, and it is tested.
 
-- [ ] **45. Prove the new mechanics cross the client/server boundary**
+- [x] **45. Prove the new mechanics cross the client/server boundary**
   `cloud-safe` — potions, curses, Retain, Innate, named holds and graded timing
   all landed as `/core` rules with `/core` tests. This is a CO-OP game: the
   thing that actually breaks is the snapshot boundary, where a field exists on
@@ -602,6 +602,40 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-25** — #45 Prove the new mechanics cross the client/server
+  boundary: checked all six named in the item against `game_host.gd`/
+  `game_client.gd` rather than assuming they were fine because they had
+  `/core` tests. Two were real gaps, not just untested ones. Potions
+  (#26) had NO command at all — `Run.use_potion()`/`discard_potion()` sat
+  in `/core` completely unreachable over the network, and no snapshot ever
+  mentioned a potion, so three slots of inventory were invisible and unusable
+  from any client. Added `"use_potion"`/`"discard_potion"` to `GameHost`'s
+  command match (routed through the existing `_acting_slot`/`_in_combat_action`
+  guards, same as every other per-hunter command — a co-op peer can never
+  address another hunter's slot no matter what they send, proved by a spoof
+  attempt in the new test), matching `GameClient` methods, and a `potions`
+  field in `_players_public()` — shared, not private, since a held potion
+  isn't secret information the way a hand is. Graded timing (#33) had a
+  narrower gap: the private hand snapshot only ever sent `preview` (PERFECT)
+  and `preview_miss` (fumble); a client could never learn what a `TIMING_GOOD`
+  hit was worth, so an osu-style approach circle would have nothing honest to
+  show for landing off-centre. Added `preview_good` alongside them, same
+  formula, third quality tier. The other four (curses, Retain/Innate, named
+  holds) turned out to already cross correctly — cards travel whole through
+  the existing per-hunter hand snapshot and `ledges` was already sent raw —
+  so those became regression tests rather than fixes. 8 new tests, all
+  through a real two-peer `GameHost`/`GameClient` pair via `_make_session()`,
+  checking both directions: what the ALLY sees (potions, shared) and what
+  they don't (the other hunter's exact hand). One test needed a rewrite
+  after the fact: the first graded-timing assertion compared a played card's
+  raw `preview.damage` against the boss's actual hp drop and failed, because
+  `Combat._damage_boss()` runs every hit through the climb's own armor
+  divisor when the hunter hasn't reached the sigil — nothing to do with
+  timing, so the fix zeroes `weak_point_height` for that one test rather
+  than chasing the armor math. `run_tests.gd` all green, 292 assertions
+  (280 prior + 12 new); did not run `balance_sim.gd` since nothing here
+  touches drafting, spending, or numbers.
 
 - **2026-08-25** — #44 Titans that change their pattern when hurt: two new
   `Boss` fields, `hurt_pct` (fraction of max_hp) and `hurt_moves` (a second

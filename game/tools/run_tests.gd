@@ -257,6 +257,12 @@ func _init() -> void:
 	_test_host_autosaves_and_resumes_mid_combat()
 	_test_solo_controls_both_hunters()
 	_test_session_shared_state_exposes_the_seed()
+	# backlog #45: prove the new mechanics cross the client/server boundary
+	_test_backlog45_potions_are_shared_but_only_the_owner_can_drink_them()
+	_test_backlog45_status_curse_card_stays_private_to_its_owner()
+	_test_backlog45_retain_and_innate_keywords_reach_the_owners_hand()
+	_test_backlog45_named_holds_cross_to_both_peers_identically()
+	_test_backlog45_graded_timing_quality_reaches_the_host_and_the_preview()
 
 	print("")
 	if _failures == 0:
@@ -3829,6 +3835,155 @@ func _test_session_shared_state_exposes_the_seed() -> void:
 		"the run's seed rides along in the shared snapshot, matching what it was started with")
 
 
+# --- Backlog #45: six /core mechanics, proven across a real host/client pair -
+
+## Potions (backlog #26) never reached a snapshot at all, and GameHost had no
+## "use_potion"/"discard_potion" command -- Run.use_potion()/discard_potion()
+## sat in /core completely unreachable from the network layer. Wired both
+## sides; this proves a potion is SHARED (an ally can see what you're
+## holding, same as your HP) but only ever USABLE by its owner, because
+## _acting_slot resolves every co-op command to the sending peer's own slot
+## no matter what slot/index the command claims.
+func _test_backlog45_potions_are_shared_but_only_the_owner_can_drink_them() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var c1: GameClient = s["c1"]
+	var run: Run = host._run
+	run.potions[0].append(Content.make_potion("quick_tonic"))  # +1 energy
+	run.potions[1].append(Content.make_potion("guard_oil"))    # +10 block
+	host._broadcast_state()
+	_expect(c0.shared["players"][0]["potions"].size() == 1
+		and String(c0.shared["players"][0]["potions"][0]["name"]) == "Quick Tonic"
+		and String(c1.shared["players"][0]["potions"][0]["name"]) == "Quick Tonic",
+		"a hunter's potions are visible to their ally too, not just to the holder")
+	var slot1_block_before := int(c0.shared["players"][1]["block"])
+	# c1 impersonates slot 0 (index 0, slot 0) -- in co-op _acting_slot ignores
+	# the claimed slot entirely and resolves to the SENDING peer's own slot.
+	c1.use_potion(0, 0)
+	_expect(c0.shared["players"][0]["potions"].size() == 1,
+		"a spoofed slot can't touch a teammate's potion -- the command still resolves to the sender's own slot")
+	_expect(int(c0.shared["players"][1]["block"]) == slot1_block_before + 10
+		and c0.shared["players"][1]["potions"].is_empty(),
+		"the caller's OWN potion (guard_oil, +10 block) applied to their own slot instead")
+	var slot0_energy_before := int(c0.private["energy"])
+	c0.use_potion(0)  # slot 0 drinks their own quick_tonic
+	_expect(int(c0.private["energy"]) == slot0_energy_before + 1
+		and c0.shared["players"][0]["potions"].is_empty(),
+		"the owner drinking their own potion applies its effect and empties the slot")
+
+
+## Status/curse cards (backlog #27) are ordinary Cards, so they ride the same
+## private-hand snapshot every card does -- prove a curse specifically
+## reaches its owner (tagged with the status keyword) and never leaks into
+## the ally's own hand, the field-privacy _test_session_private_view_is_isolated
+## already proves for a normal hand.
+func _test_backlog45_status_curse_card_stays_private_to_its_owner() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var c1: GameClient = s["c1"]
+	var curse: Card = Content.make_card("bruised_grip")
+	host._run.combat.players[0].hand.append(curse)
+	host._broadcast_state()
+	var mine: Array = c0.private["hand"]
+	var mine_curse: Dictionary = mine[mine.size() - 1]
+	_expect(String(mine_curse["name"]) == curse.name and _has_keyword(mine_curse["keywords"], "status"),
+		"the curse reaches its owner's private hand, tagged with the status keyword")
+	var leaked := false
+	for c in c1.private["hand"]:
+		if String(c["name"]) == curse.name:
+			leaked = true
+	_expect(not leaked, "the curse never appears in the ally's own private hand")
+
+
+## Retain and Innate (backlog #28) are card FLAGS, surfaced to a player only
+## as a derived keyword (GameHost._keywords_of). Prove that derived tag
+## actually rides the wire to its owner's hand.
+func _test_backlog45_retain_and_innate_keywords_reach_the_owners_hand() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var retain_card: Card = Content.make_card("bunker_down")
+	var innate_card: Card = Content.make_card("first_strike")
+	host._run.combat.players[0].hand.append(retain_card)
+	host._run.combat.players[0].hand.append(innate_card)
+	host._broadcast_state()
+	var hand: Array = c0.private["hand"]
+	var retain_kw: Array = hand[hand.size() - 2]["keywords"]
+	var innate_kw: Array = hand[hand.size() - 1]["keywords"]
+	_expect(_has_keyword(retain_kw, "retain") and not _has_keyword(retain_kw, "innate"),
+		"a Retain card reaches its owner's hand tagged Retain, and only Retain")
+	_expect(_has_keyword(innate_kw, "innate") and not _has_keyword(innate_kw, "retain"),
+		"an Innate card reaches its owner's hand tagged Innate, and only Innate")
+
+
+## Named holds (backlog #24) widened Boss.ledges from a bare int array to an
+## optional Dictionary shape {height, safe, exposed_to}. Prove the richer
+## shape crosses the snapshot boundary intact and IDENTICALLY to both peers
+## -- it's shared board state, not per-hunter.
+func _test_backlog45_named_holds_cross_to_both_peers_identically() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var c1: GameClient = s["c1"]
+	var named_ledges := [
+		{"height": 3, "safe": false, "exposed_to": ["slam"]},
+		{"height": 6, "safe": true, "exposed_to": []},
+	]
+	host._run.combat.boss.ledges = named_ledges
+	host._broadcast_state()
+	_expect(c0.shared["boss"]["ledges"] == named_ledges and c1.shared["boss"]["ledges"] == named_ledges,
+		"a named-hold ledges array crosses the boundary intact and identically to both peers")
+	var crossed: Variant = c1.shared["boss"]["ledges"][0]
+	_expect(Boss.hold_height(crossed) == 3 and Boss.hold_safe(crossed) == false
+		and Boss.hold_exposed_to(crossed) == ["slam"],
+		"the peer can read height/safe/exposed_to off the crossed data the same way the host does")
+
+
+## Graded timing (backlog #33) added a `quality` argument that travels
+## client -> host on play_card, and a middle "good" preview tier a client
+## needs to show a hit that isn't dead-centre. Prove both: the preview a
+## peer receives actually grades miss/good/perfect as three distinct
+## numbers, and a real play_card sent with TIMING_GOOD lands exactly the
+## graded (half) bonus over the wire -- not the full one and not zero.
+func _test_backlog45_graded_timing_quality_reaches_the_host_and_the_preview() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var c1: GameClient = s["c1"]
+	# Neutralise the climb's own armor rule (Combat._damage_boss halves/floors
+	# damage below the sigil) so what lands on the boss is exactly the graded
+	# formula preview() already predicts — this test is about the timing
+	# boundary, not the climb.
+	host._run.combat.boss.weak_point_height = 0
+	host._run.combat.boss.vulnerable = 0
+	var actor: GameClient = null
+	var idx := -1
+	for cli in [c0, c1]:
+		for c in cli.private["hand"]:
+			if bool(c["timed"]) and String(c["target"]) == "enemy" and bool(c["playable"]) \
+					and int((c["fx"] as Dictionary).get("hits", 1)) <= 1 \
+					and not _has_keyword(c["keywords"], "x_cost") \
+					and int(c["preview"]["damage"]) > int(c["preview_good"]["damage"]) \
+					and int(c["preview_good"]["damage"]) > int(c["preview_miss"]["damage"]):
+				actor = cli
+				idx = int(c["index"])
+				break
+		if idx >= 0:
+			break
+	_expect(idx >= 0, "a timed attack in the opening hands previews three distinct tiers: miss < good < perfect")
+	if idx < 0:
+		return
+	var card: Dictionary = actor.private["hand"][idx]
+	var good_damage := int(card["preview_good"]["damage"])
+	var boss_hp_before := int(actor.shared["boss"]["hp"])
+	actor.play_card(idx, true, -1, -1, -1, Combat.TIMING_GOOD)
+	var boss_hp_after := int(actor.shared["boss"]["hp"])
+	_expect(boss_hp_before - boss_hp_after == good_damage,
+		"a play_card sent with TIMING_GOOD crosses the boundary and lands the graded (half) bonus, not the full one")
+
+
 func _test_session_both_players_join() -> void:
 	var s := _make_session()
 	var c0: GameClient = s["c0"]
@@ -4066,6 +4221,13 @@ func _hand_names(combat: Combat, pi: int) -> Array:
 	for c in combat.players[pi].hand:
 		names.append(c.name)
 	return names
+
+
+func _has_keyword(keywords: Array, id: String) -> bool:
+	for k in keywords:
+		if String((k as Dictionary).get("id", "")) == id:
+			return true
+	return false
 
 
 func _has_id(cards: Array, id: String) -> bool:

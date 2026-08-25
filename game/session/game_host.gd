@@ -95,6 +95,15 @@ func _on_command(peer_id: int, command: Dictionary) -> void:
 			var psf := _acting_slot(peer_id, command)
 			_in_combat_action(psf, func() -> void:
 				_run.combat.fall(psf))
+		"use_potion":  # backlog #26/#45 -- mid-fight only, same reason Run.use_potion() gates it
+			var up := _acting_slot(peer_id, command)
+			_in_combat_action(up, func() -> void:
+				_run.use_potion(up, int(command.get("index", -1))))
+		"discard_potion":  # legal any phase you're carrying one -- not gated on combat
+			var dp := _acting_slot(peer_id, command)
+			if not paused and _run != null and dp >= 0:
+				_run.discard_potion(dp, int(command.get("index", -1)))
+			_broadcast_state()
 		"pick_node":  # the route is a shared choice — any hunter may step
 			if not paused and _run != null:
 				_run.pick_node(int(command.get("col", -1)))
@@ -299,6 +308,16 @@ func _boss_art_per_act() -> Array:
 		out.append(Content.build_boss(String(id)).art)
 	return out
 
+## A hunter's held potions, public (backlog #45 -- see _players_public()).
+func _potion_view(pi: int) -> Array:
+	var out: Array = []
+	if pi < 0 or pi >= _run.potions.size():
+		return out
+	for i in range(_run.potions[pi].size()):
+		var p: Dictionary = _run.potions[pi][i]
+		out.append({"index": i, "name": String(p.get("name", "")), "text": String(p.get("text", ""))})
+	return out
+
 func _players_public() -> Array:
 	var out: Array = []
 	if _run.phase == Run.Phase.COMBAT:
@@ -318,6 +337,10 @@ func _players_public() -> Array:
 				"wp_damage": ps.weak_point_damage,
 				"weak_point_height": c.boss.weak_point_height,
 					"incoming": c.incoming_for(i),  # {raw, through} — survivability at a glance
+				# Potions aren't secret (backlog #45): a teammate can see what you're
+				# holding, same as they see your HP -- only USING one is yours alone,
+				# enforced by _acting_slot ignoring a co-op peer's claimed slot.
+				"potions": _potion_view(i),
 			})
 	else:
 		for i in range(_run.player_count()):
@@ -331,6 +354,7 @@ func _players_public() -> Array:
 				# and you met yourself twice at every campfire (Nick, 2026-08-16).
 				"character": _slot_char(i),
 				"picked": _run.phase == Run.Phase.REWARD and bool(_run.reward_picked[i]),
+				"potions": _potion_view(i),
 			})
 	return out
 
@@ -351,16 +375,20 @@ func _slot_private(pi: int) -> Dictionary:
 			# LIVE numbers, not the printed ones. The player should never have to
 			# compute "3 dmg, +3 per EACH hunter's Height" under a draining grip bar.
 			# `miss` is the same card without its timed bonus, so the face can show
-			# both outcomes of a timed play.
+			# both outcomes of a timed play. `good` is the THIRD tier graded timing
+			# (backlog #33/#45) added — without it a client can only ever preview
+			# the PERFECT payout, so a shrinking hit circle has no honest number to
+			# show for landing just outside dead-centre.
 			var hit: Dictionary = _run.combat.preview(pi, c, true)
 			var miss: Dictionary = _run.combat.preview(pi, c, false)
+			var good: Dictionary = _run.combat.preview(pi, c, true, Combat.TIMING_GOOD)
 			cards.append({
 				"index": i, "name": c.name, "cost": _run.combat.effective_cost(pi, c), "target": c.target,
 				"text": c.text, "icon": _card_icon(c), "timed": c.timed, "timed_hits": c.timed_hits,
 				"exhaust_pick": c.exhaust_pick, "cheapen_pick": c.cheapen_pick, "meld": c.meld,
 				"playable": _run.combat.can_play(pi, i),
 				"rarity": c.rarity, "keywords": _keywords_of(c),
-				"preview": hit, "preview_miss": miss,
+				"preview": hit, "preview_miss": miss, "preview_good": good,
 				# The non-numeric effects, so the face can write ONE sentence
 				# instead of printing a formula beside a live readout.
 				"fx": {
