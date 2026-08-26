@@ -27,6 +27,7 @@ var _solo_chars: Array = ["", ""]
 var _ascension: int = 0  # difficulty tier chosen at the menu
 var _unlocked_wins: int = Content.UNLOCKED_ALL  # career-total gate on locked content (backlog #42)
 var _daily_date: String = ""  # set => start_new_run() rolls a shared daily (backlog #49)
+var _history_recorded: bool = false  # this run's ending has been logged (backlog #65)
 
 func _init(transport: Transport, seed_value: int = 0, required_players: int = 2, solo: bool = false,
 		ascension: int = 0, unlocked_wins: int = Content.UNLOCKED_ALL, daily_date: String = "") -> void:
@@ -45,6 +46,7 @@ func _init(transport: Transport, seed_value: int = 0, required_players: int = 2,
 ## decks have been played with since.
 func resume_run(saved: Run) -> void:
 	_run = saved
+	_history_recorded = false
 	_ascension = saved.ascension
 	_unlocked_wins = saved.unlocked_wins()
 	# A save now captures an in-progress fight too (backlog #14 — Combat has its
@@ -70,6 +72,7 @@ func start_new_run() -> void:
 		_run = Run.new_daily(decks, names, _daily_date, passives, _unlocked_wins)
 	else:
 		_run = Run.new(decks, names, _seed, passives, _ascension, _unlocked_wins)
+	_history_recorded = false
 	_run.start()
 	_broadcast_state()
 
@@ -598,6 +601,8 @@ func _keywords_of(c: Card) -> Array:
 		ids.append("discard")
 	if c.hits_all_enemies:
 		ids.append("cleave")
+	if c.topdeck != "" or c.shuffle_in != "" or c.tutor != "":
+		ids.append("reach")
 	var out: Array = []
 	for id in ids:
 		var k := Content.keyword(String(id))
@@ -719,8 +724,12 @@ func _phase_string() -> String:
 		_: return "combat"
 
 func _note_progress() -> void:
-	if _run != null and _run.phase == Run.Phase.WON:
+	if _run == null or not _run.is_over() or _history_recorded:
+		return
+	_history_recorded = true  # broadcasts repeat on a finished run; the log must not
+	if _run.phase == Run.Phase.WON:
 		Progress.record_win(_ascension)
+	Progress.record_run(_run.history_entry())
 
 func _result_string() -> String:
 	match _run.phase:

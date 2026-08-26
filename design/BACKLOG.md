@@ -479,7 +479,7 @@ something Slay the Spire leans on hard and we do not have at all.
   everywhere. *Done when:* a fight can hold more than one combatant, cards target
   among them, sweeps hit correctly, and the per-peer snapshot carries all of them.
 
-- [ ] **64. Keys, and a Titan you can only reach with them** `cloud-safe` — the
+- [x] **64. Keys, and a Titan you can only reach with them** `cloud-safe` — the
   Spire gates its true final fight behind three keys taken from optional, costly
   choices earlier in the run, which is the best structural idea in that game: it
   makes Act 1 decisions matter in Act 4. Ours ends on a fourth Titan everyone
@@ -487,20 +487,20 @@ something Slay the Spire leans on hard and we do not have at all.
   distinct node types at a real cost, the final encounter checks them, and it is
   tested.
 
-- [ ] **65. Run history** `cloud-safe` — #39 counts a run while it happens and
+- [x] **65. Run history** `cloud-safe` — #39 counts a run while it happens and
   then throws the numbers away. Every finished run should be recorded:
   character, seed, ascension, how far, what killed you, the deck you ended with.
   It is what makes a loss feel like data instead of like nothing, and it is the
   only way we will ever see a pattern across runs. *Done when:* finished runs
   persist, the file survives a version bump the way #35 taught, and it is tested.
 
-- [ ] **66. Upgrades that change a rule, not a number** `cloud-safe` — our
+- [x] **66. Upgrades that change a rule, not a number** `cloud-safe` — our
   upgrade path bumps values. The upgrades worth remembering change what a card
   DOES: cost to zero, gain Retain, hit everything, stop exhausting. A +2 is not
   a decision; a rule change is. *Done when:* an upgrade can carry an effect
   change rather than only a value, at least six cards use one, and each is tested.
 
-- [ ] **67. Cards that ask a question about the board** `cloud-safe` — "if you
+- [x] **67. Cards that ask a question about the board** `cloud-safe` — "if you
   are above the sigil", "if your ally is hanging", "if this is the third card
   this turn". Every card we own does the same thing every time it is played, so
   a hand never has a right ORDER to play it in. This is the cheapest depth left:
@@ -508,32 +508,32 @@ something Slay the Spire leans on hard and we do not have at all.
   a data field with a fallback, at least six cards use it, and both branches of
   each are tested.
 
-- [ ] **68. Reaching into the draw pile** `cloud-safe` — put a card on top,
+- [x] **68. Reaching into the draw pile** `cloud-safe` — put a card on top,
   shuffle one in, pull a specific card out. Nothing we have touches the draw
   pile except drawing from it, so deck order is pure luck every single time.
   *Done when:* the operations exist as effects, stay deterministic under a seed,
   and are tested.
 
-- [ ] **69. Beasts that debuff YOU** `cloud-safe` — #36 gave us Frail, Artifact
+- [x] **69. Beasts that debuff YOU** `cloud-safe` — #36 gave us Frail, Artifact
   and Thorns, #27 gave us curses, and not one beast inflicts any of them. A
   Titan that only ever deals damage is a damage number with a picture on it.
   *Done when:* at least five beasts apply a status or a curse through the
   existing generic move path, the telegraph names it, and it is tested.
 
-- [ ] **70. Things that fire when the fight STARTS** `cloud-safe` — Innate (#28)
+- [x] **70. Things that fire when the fight STARTS** `cloud-safe` — Innate (#28)
   is the only opening-hand effect we have. The Spire opens fights with relics and
   powers already resolving, which is what makes a build feel assembled before
   turn one rather than after turn three. *Done when:* a fight-start moment exists
   that relics, boons and powers can subscribe to, at least four things use it,
   and it is tested. Do #43 first if it is still open — this is one of its moments.
 
-- [ ] **71. A shop worth revisiting** `cloud-safe` — fixed stock and one removal.
+- [x] **71. A shop worth revisiting** `cloud-safe` — fixed stock and one removal.
   Spire shops rotate, hold a guaranteed rare slot, and sell removal at a rising
   price you have to judge against the cards in front of you. Ours already rises
   (`removes_bought`); the rest is missing. *Done when:* stock is generated per
   visit with a rare slot, prices vary, and it is tested.
 
-- [ ] **72. Rewards that know what you are building** `cloud-safe` — card rewards
+- [x] **72. Rewards that know what you are building** `cloud-safe` — card rewards
   roll flat from a pool, so a deck never compounds into anything. Tag cards by
   archetype and let the roll lean, gently, toward tags you already hold. This is
   not balance tuning: the tags and the lean are structure, and it is done when it
@@ -586,6 +586,30 @@ something Slay the Spire leans on hard and we do not have at all.
   **Do not skip the contract and just generate.** A model that passes nothing but
   `assetcheck` is a model nobody has looked at, and we have shipped that mistake
   before.
+  **Checked 2026-08-26: three of the four contract rules landed** (see the Log
+  entry below) — sigil colour, silhouette distinctness, and mesh/material/budget
+  structure, all as pure `AssetContract` functions with real `run_tests.gd`
+  coverage. Left unchecked because the "Done when" bar is higher than the
+  contract alone: nobody has downloaded Blender in the sandbox or built a beast
+  end to end through it yet. That is real remaining scope, not paperwork — pick
+  it up as its own iteration rather than assuming the contract's existence means
+  this item is close to done.
+  **Checked 2026-08-26 (later the same day): the fourth rule landed too** —
+  sigil visibility, the one bullet the note above deliberately left unbuilt
+  ("visible from the front rather than buried behind the body"). See the Log
+  entry below for what it is and, importantly, **what it found**: run against
+  all 14 already-shipped beasts, 10 of them read the mark as more than half
+  occluded by the beast's own body from the fight camera's angle, including
+  `stone_warden` at 100% — which independently rediscovers the exact,
+  already-documented "Warden's sigil sat on the crown behind its own head"
+  bug this file's own §"What a reviewer is actually looking for" names, and
+  is the reason to trust the other 9 rather than assume the check is wrong.
+  Still left unchecked: the "Done when" bar is still Blender + an end-to-end
+  beast, not the contract, and fixing 10 beasts' mark placement is per-beast
+  `cloud-art` rework (needs Blender, still blocked — see the Log's
+  network-policy note), not a data change. Whoever next gets Blender working
+  should treat those 10 as a punch list before spending a build on a 15th
+  beast.
 
 ### Art the cloud can build
 
@@ -744,10 +768,481 @@ rather than inventing work.
   Found auditing #54; not itself a keyword-text problem so it wasn't fixed
   there — it's snapshot plumbing (`_players_public()`/the boss dict in
   `game_host.gd`) plus a boundary test, cloud-safe, cheap, but a distinct item.
+- `game/data/keywords.json` has a pre-existing duplicate `"block"` key — one
+  entry explains the player's Block, a second (for the boss's `block` move)
+  reuses the same id lower in the file. JSON keeps only the last one, so
+  `Content.keyword("block")` currently returns the boss-move text, not the
+  player one. Found while wiring #69's move keywords; not this item's bug,
+  cloud-safe, one-line fix (rename one of the two ids and its one call site).
 
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-26** — #74 Let the cloud build models — behind a shape contract it
+  can check: the fourth and last contract rule, sigil visibility ("visible
+  from the front rather than buried behind the body," the one bullet the
+  earlier pass on this same item today left deliberately unbuilt — "occlusion
+  testing needs either a real raycast against the mesh or a rendered view, and
+  I'd rather leave it unbuilt than ship a check I can't first verify"). Still
+  left `74` UNCHECKED — same reason as before, the Blender-and-end-to-end-beast
+  bar is unmet — but this closes the contract's own remaining gap. Re-confirmed
+  `download.blender.org` is still a 403 through the egress proxy before
+  starting (so no beast build was attempted), which meant Godot alone —
+  already downloadable — was enough for this piece, since occlusion is pure
+  triangle geometry, no Blender required.
+  The raycast: `AssetContract.z_at_xy`/`nearest_front_z_at_xy`/
+  `is_occluded_from_front`, solving a triangle's plane for Z at a fixed (X, Y)
+  rather than a full ray-triangle intersection, since the "camera" only ever
+  looks straight along Z — the same simplification `_point_in_tri_xy` already
+  makes. Wired into `assetcheck.gd`'s new `_check_sigil_visible`, which reuses
+  `_check_sigil_color`'s own band+gold-UV filter for "what counts as the mark"
+  and flags a FAIL when over half the mark's area (by area, not triangle
+  count) is occluded.
+  Two real bugs caught before trusting it — same discipline the sigil-colour
+  check's own log entry used, and for the same reason: a first version FAILED
+  literally every one of the 14 already-shipped beasts at 100% buried, which
+  was this bug, not fourteen bad marks. (1) Backwards camera axis: assumed
+  the viewer stood on the -Z side because "faces +Z" sounds like "the front
+  points away from the camera," but `views/combat_3d.tscn`'s actual Camera
+  node sits at Z ~= +12.4 looking back toward -Z — so LARGER Z is closer to
+  the viewer, the opposite of the first version's assumption. Checked the
+  real scene file rather than re-guessing from the README's wording a second
+  time. (2) Self-occlusion: a sigil mark (`taper()`, a solid 3D bump) has its
+  own back half naturally hidden behind its own front half, which isn't
+  "buried behind the BODY" at all — a debug run against `frost_sentinel`
+  showed 30 of 68 gold triangles in its self-occluded-only category. Fixed by
+  checking each mark triangle's occlusion only against NON-gold triangles.
+  After both fixes, `crag_pup` and `riftling` PASS outright (44% and 22%
+  occluded) and the remaining 10 still FAIL, `stone_warden` at exactly 100% —
+  which matches this file's own already-documented, human-found bug ("the
+  Warden's sigil sat on the crown behind its own head," in the "what a
+  reviewer is actually looking for" section above) almost exactly, which is
+  the closest thing to independent proof this check measures the right thing
+  rather than being a third version of the same mistake. Did NOT rebuild any
+  of the 10 failing beasts — that's per-beast `cloud-art` work needing
+  Blender, out of scope for a `cloud-safe` iteration and explicitly the next
+  item's own "still blocked" state. Three new pure-geometry tests against
+  hand-built triangles (matching the existing `_rect_tris` helper's style),
+  all green. `run_tests.gd`: ALL TESTS PASSED throughout — this touched no
+  game data and nothing `assetcheck.gd`-shaped runs inside the actual suite,
+  so the 10 real-beast FAILs are new information for a human, not a broken
+  build.
+- **2026-08-26** — No work done this run. Every remaining unchecked item is
+  either `needs a screen` (2, 3, 8, 25, 29b, 32, 31b, 81, 78, 79) or requires
+  Blender (55, 74's remaining art half, 76, 80) — and `download.blender.org`
+  is still a policy 403 through the egress proxy, same block an earlier run
+  today already found and logged just below. Re-confirmed rather than assumed
+  stale, then stopped rather than inventing scope, per rule 6. Nothing to
+  revert — no files were touched before this was confirmed. If this keeps
+  recurring across runs, the fix is a network-policy change on the
+  environment (allow `download.blender.org`), which is Nick's call, not
+  something to route around.
+- **2026-08-26** — #74 Let the cloud build models — behind a shape contract it
+  can check: partial, left UNCHECKED on purpose (see the item's own note).
+  #55 stays correctly skipped and #74 was next in queue order. Scoped down
+  from the full item to just the contract half, and even that took longer
+  than planned because two of the three new checks were wrong on the first
+  pass — writing that down since both are exactly the kind of mistake this
+  item exists to catch, and both were only caught because I ran the new
+  checks against real committed beasts before trusting them, not because I
+  reasoned my way to the right answer up front.
+  Landed `game/tools/asset_contract.gd` (`class_name AssetContract`) holding
+  the pure, file-IO-free half of three contract rules — silhouette grids +
+  Jaccard similarity, UV-in-swatch-cell, and the triangle budget table — so
+  `run_tests.gd` can exercise them against hand-built triangles in
+  milliseconds instead of only through a real `.glb` and a display-free
+  Godot process. `assetcheck.gd` wires them to real loaded models and gained
+  three new checks: mesh-count/material-count now FAIL instead of just being
+  reported (kenney.py's own `finish()` always joins to 1/1, so this is a real
+  invariant); per-type triangle budget (1400/2600/500, kenney.py's own table)
+  replaced a flat 6000 WARN; sigil colour and silhouette distinctness are new.
+  First bug: sigil colour started as "what fraction of the sigil's STANDABLE
+  shelf is gold", reusing `_check_holds`' upward-facing-normal filter — and
+  FAILED all 14 already-shipped beasts at 0% gold. The mark and the shelf are
+  different parts of the body (`beast.py`'s `mark()` takes a per-beast
+  `facing` that is often NOT flat-up), so a shelf-shaped filter excludes the
+  mark's own triangles entirely. Rewrote it to ask a simpler, correct
+  question — is there a real chunk of gold-UV area near the sigil's Height,
+  any orientation — which is what the item actually asked for ("in the shared
+  gold"), not "is the standing surface itself gold." Second bug, same
+  symptom: even after that fix, gold area measured exactly zero on every
+  beast. Wrote a throwaway UV-dump script (not committed) and found the real
+  cluster sitting at UV (0.910, 0.630) against an expected (0.906, 0.375) —
+  right on X, off by a full flip on Y. `kenney.py`'s `swatch()` returns a
+  Blender-space V (bottom-up), and Blender's glTF exporter flips V again on
+  export to match glTF's top-down convention, so the two flips cancel and the
+  V that actually lands in the imported mesh is the UN-flipped
+  `py / 512`, not `1 - py / 512`. Documented the derivation in
+  `AssetContract.GOLD_UV`'s own comment so it isn't rediscovered the hard way
+  again. Third bug, caught by inspection rather than a false FAIL: silhouette
+  distinctness first rasterised the TOP-DOWN (XZ) footprint, which flagged
+  the Gale Serpent against the Riftling at 91% (over the 90% re-skin
+  threshold) — two beasts that share a similar footprint from above but look
+  nothing alike from the front, which is the view a player actually judges a
+  re-skin by. Switched the projection to XY (front-on, matching
+  `tools/blender/README.md`'s "-Y is forward" / models face +Z), which
+  dropped every real pair's worst match to 84% or under with no threshold
+  tuning needed. Along the way, sanity-running the fixed checks against a
+  real beast surfaced an unrelated pre-existing bug in `_tris()`: it read
+  `mi.global_transform`, which needs `is_inside_tree()` and was silently
+  returning identity (an error to stderr, not a thrown failure) for a
+  freshly-instantiated model — accidentally harmless today only because every
+  exported model is one MeshInstance3D directly under the scene root, so
+  local and global transform coincide. Fixed to use `mi.transform`, matching
+  the pattern `_merged_aabb()` already used successfully in the same file.
+  Ran the full contract against all 14 already-built, already-reviewed
+  beasts (`stone_warden` through `shifting_idol`) after each fix: every one
+  now passes every check with real headroom (gold area 0.24–2.0x its
+  threshold; worst silhouette match 84%, threshold 90%), which is the closest
+  thing to proof I have that these checks fail on the right things and not
+  on real work. `run_tests.gd`: all green (479 passes, up from 470), 4 new
+  test functions (9 assertions) exercising `AssetContract` directly.
+  `node tools/cardlab/build.js`:
+  unaffected (this touched no game data). Did NOT touch Blender, previews, or
+  ART-REVIEW.md, and did NOT build a beast end to end — that's the item's
+  actual "Done when" bar and it's still open; see the item's own note for
+  what's left. Also did not attempt the "visible from the front, not buried
+  behind the body" half of the sigil bullet — occlusion-testing needs either
+  a real raycast against the mesh or a rendered view, and I'd rather leave it
+  unbuilt than ship a check I can't first verify the same way I verified the
+  other three.
+
+- **2026-08-26** — #72 Rewards that know what you are building: #55 stays
+  correctly skipped (its own note explains why — needs per-beast `cloud-art`
+  work, not a plain data change), so this was the next `cloud-safe` item in
+  order. Chose DERIVED tags over an authored field: `Card.archetype_tags()`
+  reads fields the card already has (wound→poison, rhythm/damage_per_rhythm/
+  grip_per_rhythm→rhythm, grip/targets_hold/ally_grip/damage_per_foothold→
+  climb, etc. — 11 tags total) rather than hand-tagging 187 cards, which
+  can't drift out of sync with what a card does and adds zero new save data.
+  Confirmed this sidesteps the #16/#54 keyword-coverage reflection test
+  entirely: that test walks `Card`'s `var` properties via
+  `get_property_list()`, and a method isn't one — no `keywords.json` entry
+  needed, no `self_evident` list edit needed. `Content.card_tags(id)` mirrors
+  `card_rarity(id)`'s shape for the reward roll to call cheaply. The lean
+  itself is `Run.TAG_LEAN_BONUS` (20 — deliberately equal to the smallest
+  rarity-tier gap, common-uncommon, never the larger common-rare one) added
+  to `_weighted_index()`'s existing rarity weight per matching tag; threaded
+  through via a new `_tag_counts(deck)` helper called once per hunter in
+  `_begin_reward()` (empty for relic rewards, which have no tags and stay
+  uniform — a rarity-only default parameter keeps every other `_roll_choices`
+  caller unaffected). Three new tests: one pins the tag derivation against
+  four real cards, one is the statistical proof the item asked for — a
+  10-card Poison deck against a neutral baseline, 1500 rolls each, over a
+  same-rarity 6-card pool so only the tag lean (not `RARITY_WEIGHT`) could
+  move the number — landed at 56% vs a 48% baseline, and one confirms a
+  relic roll handed a non-empty tag count still returns relics untouched.
+  `run_tests.gd`: all green (470 passes, up from 467). `node
+  tools/cardlab/build.js`: 187 cards, 0 unreachable. `balance_sim.gd` run as
+  the standing smoke test only (not tuned to): both policies and the full
+  ascension ladder completed cleanly, no crash.
+
+- **2026-08-26** — #71 A shop worth revisiting: the two missing pieces named
+  in the item, since "fresh stock per visit" and rising removal price already
+  existed. Added `_card_price()` (common/uncommon/rare, `PRICE_CARD` /
+  `PRICE_CARD_UNCOMMON` / `PRICE_CARD_RARE`) so a card's shop price now
+  follows the same rarity axis a reward roll already weighs by
+  (`RARITY_WEIGHT`), instead of every card costing a flat 55 regardless of
+  what it is. Relic and potion prices stay flat on purpose — checked
+  `relics.json` first and every non-boss relic (the only tier a shop ever
+  offers, boss-tier is withheld by `relic_pool()`) carries `tier: "common"`,
+  and potions carry no tier/rarity field at all, so there is no existing axis
+  to price against without inventing one, which would be new scope. For the
+  guaranteed rare slot, `_begin_shop()` now pulls one card from a hunter's
+  RARE subset first (if their pool has one) before falling back to the
+  original uniform pull for the second slot — same total of 2 cards per
+  hunter as before, just no longer purely lucky whether one is worth looking
+  at. Two new tests: one pins `_card_price()` against three real ids of known
+  rarity (`slash`/`cleave`/`meld`) plus the price ladder itself, the other
+  runs an actual `_begin_shop()` and checks a rare showed up in hunter 0's
+  card slots — the seed `_map_run()` already uses lands on the global reward
+  pool (empty `character_id`), which carries 3 rare ids out of 62, so the
+  guarantee is exercised for real rather than by category alone. `run_tests.gd`
+  and `balance_sim.gd` (smoke only, not tuned to) both stayed green throughout.
+
+- **2026-08-26** — #70 Things that fire when the fight STARTS: #55 stayed
+  skipped for its own stated reason, so this was the next attemptable
+  `cloud-safe` item, ahead of 71/72/74 in queue order (73/76/78-81 are
+  `needs a screen`/`cloud-art`). Added the sixth named moment, backlog #43
+  asked for by name: `Combat.MOMENT_FIGHT_START`, fired once per hunter from
+  `start()` — deliberately BEFORE `_begin_round()`'s first call, so anything
+  hooked to it is in place before round 1's hand is even drawn. Confirmed the
+  "never on a mid-fight save reload" requirement holds structurally rather
+  than by a guard flag: `Combat.from_dict()` (the mid-fight resume path) calls
+  `Combat.new([], [], boss)` with EMPTY decks/combatants, so `start()` is
+  simply never called on that path — an opener physically cannot re-fire on
+  load, and a test proves it by round-tripping a started fight through
+  `to_dict()`/`from_dict()` and checking the applied Artifact stayed at 1, not
+  2. One handler, `_handle_opening_relics`, reads four new relic mod keys
+  (`open_power`, `open_artifact`, `open_thorns`, `open_intangible`) the same
+  `_mod()`-per-line shape `_handle_block_carries`/`_handle_energy_handoff`
+  already use for their own single mod each. `open_power` is the one that
+  earns the item's own framing ("relics and powers already resolving before
+  turn one"): it seeds `ps.powers["iron_husk"]` directly — the SAME dict
+  `_handle_power_effects` (turn_end, #57) already pays out every round — so a
+  relic carrying it makes Iron Husk's own +3 Block fire at round 1's turn_end
+  even though nobody ever played the card; proved directly, not inferred, by
+  a test that ends player 0's turn alone (checking block right there, before
+  the round rolls over and resets it — my first draft of that test checked
+  AFTER both hunters ended, which rolls the round and wipes Block same as any
+  other round transition, and failed for exactly that reason before the fix).
+  The other three are stat fields that combatant.gd's own comments already
+  establish persist past a round reset (Artifact/Thorns/Intangible are spent
+  per-USE, not decayed by round, unlike Block) — confirmed by a test that
+  applies all four and reads them straight off the fields. A fourth test
+  proves a negative mod (a downside relic pushing one of these below zero,
+  #30's shape) is a no-op rather than an inverted debuff, since "-1 Artifact"
+  has no sensible meaning the way "-1 Energy" does. Four new common relics
+  give the moment actual content instead of dead plumbing — Smoldering Husk
+  (open_power), Warded Hide (open_artifact), Briar Wrap (open_thorns), Veiled
+  Step (open_intangible) — added to both `relics.json`'s `relics` dict and its
+  `pool` array (the Card Lab's reachability sweep would have caught a miss on
+  the second one, since it's what "unreachable: 0 relics" actually checks
+  against). Deliberately did NOT touch the pre-existing `start_strength`/
+  `start_dexterity`/`start_foothold` relic mods that already run through
+  `_init()`'s constructor params rather than this new moment — they already
+  work, moving them would be a refactor this item didn't ask for and risks
+  behaviour nobody asked to change. Also deliberately did NOT wire a boon
+  directly to a fight-start effect: boons (#31) are a one-time, run-START
+  choice, not a per-fight one, and the existing `"relic": true` boon effect
+  already grants a random relic from the pool — including, now, one of these
+  four — which is how a boon reaches this moment without a second, redundant
+  effect vocabulary. Four new tests, all green — `run_tests.gd`: 461 passes,
+  0 failures (up from 457). `node tools/cardlab/build.js`: 40 relics (up from
+  36), 0 unreachable. `balance_sim.gd` run as the standing smoke test only
+  (no tuning against its numbers, per rule 5): completed cleanly across both
+  policies and the ascension ladder, no crash, no soft-lock.
+
+- **2026-08-26** — #69 Beasts that debuff YOU: #55 still correctly skipped
+  (needs Nick or per-beast `cloud-art` work), so this was next in order and
+  cloud-safe outright. Two new boss move `type`s in the SAME generic match
+  statement `Combat._enemy_turn()` already resolves every other move through
+  — no new special-cased code path, just two more arms. `frail` Frails the
+  currently-targeted hunter by routing through `Combat._apply_frail()`, the
+  exact function a card already uses to Frail the Titan, so it's warded by
+  that hunter's own Artifact stack for free. `curse` shoves `value` (default
+  1) copies of a status card (default `bruised_grip`, or whatever id the
+  optional `card` key names) straight into the targeted hunter's discard
+  pile — deliberately NOT warded by Artifact, matching the precedent an
+  event's own `curse_card` (#27) already set: a curse is a card you're
+  handed, not a debuff stat. Five beasts carry one now, spread across all
+  three pools rather than piled on one tier: `bounder` and `riftling`
+  (fight), `frost_sentinel` and `mire_snapper` (elite), `sunken_warden`
+  (boss) — 3 `frail`, 2 `curse`. Reused the existing `frail` keyword
+  (already generic enough to cover a move, not just a card field — same id,
+  no duplicate) and added one new `curse` entry; while doing that I noticed
+  keywords.json already has an unrelated PRE-EXISTING duplicate `"block"`
+  key (a player-Block entry and a boss-move-Block entry both named
+  `block` — JSON keeps only the last, so `Content.keyword("block")`
+  currently returns the boss one). Not this item's bug and out of scope to
+  fix here, so left alone; noted under Later rather than silently walked
+  past. Deliberately did NOT touch `combat_3d.gd`'s `_intent_text` — it has
+  no test coverage at all (confirmed: nothing in run_tests.gd references
+  `combat_3d`) and is exactly the kind of "needs a screen" face the
+  routine/session split (bottom of this file) says stays with a session
+  that has a display; today these two moves still log correctly
+  (`Combat._log`) and resolve correctly, but the on-screen intent tag will
+  print nothing for them until someone adds two match arms there and looks
+  at it. Also extended `_test_content_integrity_graph` to check a `curse`
+  move's `card` id resolves (same shape as `curse_card`/`potion` already
+  get), and added a new standing test,
+  `_test_every_beast_move_type_has_a_keyword`, that walks every beast's
+  real `moves`/`hurt_moves` and fails if any move `type` has no
+  keywords.json entry — the move equivalent of #16/#54's card-field
+  coverage test, guarding the exact "telegraph prints nothing" failure mode
+  above from happening silently to a FUTURE move type. Nine new tests, all
+  green — `run_tests.gd`: 457 passes, 0 failures (up from 450).
+  `node tools/cardlab/build.js`: 187 cards, 0 unreachable (unchanged — no
+  new cards were added, only two beast-side move types).
+
+- **2026-08-26** — #68 Reaching into the draw pile: #55 remains correctly
+  skipped (needs Nick or per-beast `cloud-art` work bigger than one iteration),
+  so this was next in queue order and cloud-safe outright. Three new String
+  fields on Card — `topdeck`, `shuffle_in`, `tutor` — each naming a card id,
+  the same "empty string means none" idiom `create`/`prepare` already use, so
+  none of them needed a new sentinel or a picker UI. `topdeck` appends the
+  built card to the END of `draw_pile` (the same end `_draw()`/`_peek_top()`
+  already pop from — Godot's Array has no dedicated "push to top" op, so
+  matching that existing convention was the whole trick). `shuffle_in` inserts
+  at `_rng.randi_range(0, draw_pile.size())` — through Combat's own seeded
+  RNG, not GDScript's global one, which is what keeps it reproducible; a test
+  runs the same seed and the same play twice and asserts the card lands at the
+  identical index both times. `tutor` linear-scans the pile for a matching id
+  and moves it straight to hand if found; if not, it's a logged no-op rather
+  than a crash or a silent substitute, the same fallback shape `pull_ally`
+  already uses for "no valid target." None of the three touch `_meld_cards` —
+  that function already doesn't carry several later fields (scry, the light
+  fields, condition/condition_bonus), so extending it is pre-existing debt
+  this item didn't create and wasn't asked to fix. Wired into
+  `GameHost._keywords_of` as one shared "reach" keyword (all three read the
+  same to a player: something reached into the draw pile) so backlog #54's
+  generic field-coverage test — which probes every Card field alone and fails
+  on one with no keyword — passes without a special case. Three real cards in
+  the shared pool exercise all three ops in the same idiom as Peer Ahead/Read
+  The Climb: Waymark (0-cost, topdecks a Scramble), Depot (gains Block, then
+  shuffles a Grip in), and Recon (searches for a Cleave and pulls it to hand).
+  Extended `_test_content_integrity_graph` to check `topdeck`/`shuffle_in`/
+  `tutor` resolve the same way it already checks `create`/`prepare`, so a typo
+  in any of the three fails loudly instead of silently handing someone a blank
+  card. Five new tests, all green — `run_tests.gd`: 450 passes, 0 failures.
+  `node tools/cardlab/build.js`: 184 -> 187 cards, 0 unreachable.
+
+- **2026-08-26** — #67 Cards that ask a question about the board: 55 stayed
+  skipped for its own stated reason (needs Nick or per-beast `cloud-art`
+  work), so this was the next attemptable `cloud-safe` item, ahead of
+  68-72/74 in queue order. Two new Card fields, `condition` (`{type, value}`)
+  and `condition_bonus` (a field:value dict), evaluated once inside
+  `Combat.preview()` — the single formula both the real play and the card
+  face's numbers already came from (per its own header comment), so a
+  condition can never make the printed preview lie about what playing the
+  card will do. `condition_bonus` is ADDITIVE, not a replacement like #66's
+  `rule_upgrade` — deliberately, since the item's own "fallback" is just "no
+  bonus": a card with an unmet condition still does exactly its printed
+  numbers, never less. Three condition types, matching the item's own three
+  examples literally: `above_sigil` (this hunter's foothold >= the Titan's
+  `weak_point_height`), `ally_hanging` (the ally's foothold > 0 — off the
+  ground), and `nth_card` (this play is at least the Nth card this hunter has
+  played this round). `nth_card` needed one new piece of state,
+  `PlayerState.cards_played_this_turn` — nothing before this counted cards
+  played per round, only per fight (`play_counts`) — reset in `_begin_round`
+  the same place `rhythm` already resets, and bumped in `play_card` at the
+  exact same line `play_counts` is, so it inherits that line's existing
+  "counts only EARLIER plays" guarantee for free: the card asking "is this my
+  3rd card" is itself allowed to be the 3rd, not made to wait for a 4th.
+  Six real cards, two per condition type, chosen from the shared/neutral pool
+  rather than one class's own idiom (unlike #5/#23's rares) since a
+  board-state question reads as generic depth, not character flavour: Harpoon
+  and Sunlight Blade gain bonus damage `above_sigil`, Safety Line and Draw
+  Aggro gain bonus block `ally_hanging`, Dagger and Brace gain a bonus
+  `nth_card`(3). Each card's own `text` spells the condition out in prose
+  ("Above the sigil, deal 4 more"), so — same call #66 made for
+  `rule_upgrade` — `condition`/`condition_bonus` went into backlog #54's
+  field-coverage test's `self_evident` list rather than getting an invented
+  keyword tooltip nobody would ever see a reason to open, since a Dictionary
+  field can't be faked by that test's generic bool/string/int probe anyway.
+  One real bug caught before commit, not after: my first version of the
+  end-to-end play_card test expected Harpoon's 8 base + 4 condition bonus to
+  land as exactly 12 boss damage, and it failed — `_damage_boss` adds its own
+  `SIGIL_BONUS` (5) on top of any hit that lands with `sigil_reached(pi)`
+  true, which `above_sigil` cards always will since they only pay their bonus
+  in that same state. Not a bug in the new code, just a wrong hand-computed
+  expectation in the test — fixed the assertion to `8 + 4 + 5`, not the
+  production code, and left a comment explaining why so the next person
+  reading that assertion doesn't make the same arithmetic mistake. Six new
+  tests: both branches (met/unmet) for `above_sigil` and `ally_hanging` via
+  direct `preview()` calls, `nth_card`'s "counts earlier plays only" boundary,
+  its per-round reset, one full `play_card()` resolution proving the bonus
+  reaches the boss as real damage (not just the preview number), and an
+  explicit "unmet condition never costs the printed numbers" check. All
+  green — `run_tests.gd` passes with no other test touched or broken.
+  `node tools/cardlab/build.js`: 184 cards (unchanged — six existing cards
+  edited, none added), 0 unreachable.
+
+- **2026-08-26** — #66 Upgrades that change a rule, not a number: #55 stayed
+  skipped for its own stated reason (needs Nick or a per-beast cloud-art
+  build, not one iteration), so this was the next attemptable `cloud-safe`
+  item, ahead of 67-72/74 in queue order. One new field, `Card.rule_upgrade`
+  — a `field: value` override dict, populated from a card's own data and
+  spent (cleared) the moment `upgraded_copy()` applies it — that REPLACES the
+  existing generic number-bump for a card that carries one, rather than
+  stacking with it, matching the item's own framing that a rule change and a
+  bigger number are different things, not two effects on the same card. Six
+  cards, one per idiom the item named: Dig In upgrades to 0 cost, Cover
+  upgrades to gain Retain, Belay Strike upgrades to gain Innate, Piston Punch
+  upgrades to hit every add and the Titan at once (hits_all_enemies), Salvage
+  upgrades to drop its burn-a-card cost, and Reckless Swing upgrades OUT of
+  Ethereal — "stop exhausting" read most naturally as removing the
+  punishment on a card that already had it, rather than adding a new
+  self-exhaust rule to one that didn't. Each upgrade also hand-rewrites the
+  card's `text` so an offered (out-of-combat) upgraded card doesn't show
+  stale prose — checked first that cost is never restated in body text (it
+  has its own pip) so Dig In needed no text change at all. The one thing that
+  would have silently broken: backlog #54's field-coverage test
+  (`_test_every_field_a_player_must_understand_has_a_keyword`) walks every
+  `Card` script property by reflection and fakes a probe value per type
+  (bool/string/else-int) to prove `_keywords_of` explains it — it has no
+  Dictionary case, and `rule_upgrade` is the first Dictionary-typed field
+  Card has ever carried, so the probe would have coerced `int(1)` into a
+  Dictionary slot and thrown rather than failed cleanly. Added it to that
+  test's own `self_evident` list instead: a player never sees "rule_upgrade"
+  itself, only whatever it overrides once applied (Retain, Innate, a 0
+  cost...), and every one of those already resolves to its own keyword
+  through the normal path — proven directly in the new test, which checks
+  the sharpened copy's actual fields (not the recipe) end to end. One new
+  test, covering all six cards plus re-upgrading a no-op the same way the
+  existing number-bump test does, all green.
+
+- **2026-08-26** — #65 Run history: the next `cloud-safe` item after #64 in
+  queue order (55 stayed skipped for its own stated reason; 66-72 and 74 are
+  all further down and this was the topmost genuinely attemptable one).
+  `Run.history_entry()` builds the record from fields the run already carries
+  — `_character_of()` per hunter, `seed_value()`, `ascension`, `phase` for
+  win/lose, `stats` (#39's accumulator, unmodified) and each hunter's deck ids
+  — and `Progress.record_run()`/`run_history()` persist it the same way
+  `seen_hints` already lives in the ConfigFile, so it's additive by
+  construction rather than needing its own version counter like RunSave's:
+  an entry a later build adds a field to still loads an older entry missing
+  it, tested directly by writing a bare `{characters, seed, ascension,
+  result}` entry and confirming `run_history()` returns it with `final_deck`
+  defaulting to `[]` rather than crashing. The one real bug this surfaced:
+  `GameHost._note_progress()` already called `Progress.record_win()` on
+  *every* broadcast once a run reached WON, with no guard — harmless today
+  only because total_wins has no test that broadcasts twice after a win, but
+  wiring `record_run()` onto that same unguarded call would have logged one
+  duplicate entry per post-game broadcast (a client polling the win/lose
+  screen, for instance). Fixed both at once with a `_history_recorded` flag
+  reset on `start_new_run()`/`resume_run()`, proven with a GameHost test that
+  broadcasts three times after WON and checks the history grew by exactly
+  one. Did not touch `stats`' shape or add a timestamp — the item's own
+  "done when" names character/seed/ascension/how-far/cause-of-death/deck and
+  nothing about wall-clock time, and this codebase has no prior use of
+  Godot's `Time`/`OS` clock calls, so adding one order-of-operations concern
+  the tests would then have to work around felt like scope the item didn't
+  ask for. Six new tests, all green: entry shape on a loss and on a win
+  (built directly on a run already in that phase, deliberately not re-proving
+  the WIN-routes-through-REWARD or a real Combat death — #39/#64 already
+  cover that machinery), Progress round-tripping two entries in order, the
+  GameHost exactly-once guard, and the missing-field tolerance test above.
+
+- **2026-08-26** — #64 Keys, and a Titan you can only reach with them: #55
+  stayed skipped for the reason its own note gives, so this was the next
+  attemptable `cloud-safe` item after #63. `Run.keys` (Array[String]) is the
+  new run state, backfilling to empty on an older save the same additive way
+  #39's stats do. Three DISTINCT node types earn one each, matching the
+  item's own wording literally: `Run.take_key(source)` lets a "treasure" or
+  "elite" node trade its relic reward for a key instead, at a real cost
+  (`KEY_COST_GOLD` gold, and only before anyone's picked — a key replaces the
+  WHOLE node's reward rather than half-resolving it), and a new event, "The
+  Sealed Hollow" (`data/events.json`), grants the third via a new `"key"`
+  effect on `_apply_effect_block` at an HP cost — gated to `phase ==
+  Phase.EVENT` specifically so the run-start boon, which shares that same
+  effect-application code, can never hand one out for free (tested directly:
+  boon effects with `key: true` grant nothing). The interesting decision was
+  what happens WITHOUT all three: the item's own text ("everyone reaches
+  anyway") points at gating raw map access, but #46 built a robustness sweep
+  specifically to catch a route with no legal next step, and hard-gating
+  `pick_node` onto the fourth Titan's row — the only node in it — is exactly
+  that shape if a run never finds (or never takes) all three keys. Resolved
+  it the way Slay the Spire actually works, not the naive reading: short of
+  the keys, reaching that row ends the run as a sealed door (`phase = WON`,
+  no fight, `stats.true_ending` stays false) rather than becoming a wall with
+  no move past it — WON is already a terminal state every other exit path
+  produces, so this adds no new one. Ran `robustness_sweep.gd` by hand after
+  (360 runs, 0 dead ends) specifically because this item touched map
+  generation and the MAP-phase gate the sweep exists to police — it isn't
+  part of `run_tests.gd` and nothing in these instructions required running
+  it, but skipping it felt like grading my own gating logic's safety without
+  checking. Also added `RunMap._ensure_key_sources()`, the same shape as the
+  existing `_ensure_shop` guarantee, so a key's SOURCE (not the choice to pay
+  for it) is never left to the dice across an entire map — a run always has a
+  real shot at the true ending, it just has to spend for it. 13 new tests:
+  round-trip/backfill, both `take_key` node types, wrong-node and
+  no-pick-yet-required refusals, once-per-run-per-type, the event effect's
+  idempotency, the boon exclusion, the real "Sealed Hollow" content end to
+  end, the map guarantee across 24 seeds, and both final-Titan branches (0
+  keys -> sealed WON, 3 keys -> a real COMBAT that sets `true_ending` on the
+  win).
 
 - **2026-08-26** — #63 More than one thing to fight at once: the next
   `cloud-safe` item after #62 in queue order — #55 (More beasts) stayed

@@ -47,6 +47,12 @@ const MOMENT_TURN_END := "turn_end"
 const MOMENT_CARD_PLAYED := "card_played"
 const MOMENT_DAMAGE_TAKEN := "damage_taken"
 const MOMENT_HUNTER_CLIMBS := "hunter_climbs"
+# backlog #70: fires once per hunter, before round 1's hand is drawn — the
+# moment a relic (or a boon that granted one) or a power gets to already be
+# "on" when the fight begins, instead of only Innate (#28) having an opening
+# effect. Named separately from turn_start because it must fire exactly ONCE
+# per fresh fight, never on a mid-fight save reload — see start() below.
+const MOMENT_FIGHT_START := "fight_start"
 
 # Graded timing (backlog #33): a timed card's throw used to be a bare hit/miss
 # bool. It's now a quality tier so a hit dead-centre pays more than a hit
@@ -60,6 +66,15 @@ const TIMING_MISS := 0
 const TIMING_GOOD := 1
 const TIMING_PERFECT := 2
 const TIMING_GOOD_SCALE := 0.5  # a "good" (not dead-centre) hit pays half the timed bonus
+
+# A card's optional `condition` (backlog #67) — a question about the board,
+# asked in preview() so the printed card and the real play never disagree.
+const COND_ABOVE_SIGIL := "above_sigil"    # this hunter's foothold >= the Titan's sigil height
+const COND_ALLY_HANGING := "ally_hanging"  # the ally has climbed off the ground (foothold > 0)
+const COND_NTH_CARD := "nth_card"          # this play is at least the Nth card this hunter has
+                                            # played this round (value = N; counts EARLIER plays
+                                            # only, same idiom play_counts already uses, so the
+                                            # Nth card itself is the one that first meets it)
 
 var players: Array = []  # Array[PlayerState], index = player slot
 var boss: Boss
@@ -111,6 +126,7 @@ func _init(decks: Array, combatants: Array, p_boss: Boss, seed_value: int = 0,
 	_on(MOMENT_TURN_END, Callable(self, "_handle_energy_handoff"))
 	_on(MOMENT_TURN_END, Callable(self, "_handle_power_effects"))
 	_on(MOMENT_CARD_PLAYED, Callable(self, "_handle_timed_rhythm"))
+	_on(MOMENT_FIGHT_START, Callable(self, "_handle_opening_relics"))
 	boss = p_boss
 	adds = Content.build_boss_adds(boss.id)  # backlog #63 — [] unless the beast's own data defines any
 	_energy_bonus = energy_bonus
@@ -143,6 +159,11 @@ func _apply_passive(ps: PlayerState, passive: Dictionary) -> void:
 		"poison_lift": ps.poison_lift = value
 
 func start() -> void:
+	# Fires exactly once per fresh fight (from_dict, the mid-fight-save reload
+	# path, bypasses start() entirely — see its own comment) so an opener never
+	# re-applies itself every time a save is loaded.
+	for ps in players:
+		_fire(MOMENT_FIGHT_START, {"player": ps})
 	_begin_round()
 
 # --- Queries --------------------------------------------------------------
@@ -431,11 +452,37 @@ func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PER
 	if climb > 0:  # the climb bonus rides an actual climb, not a zero
 		climb += ps.climb_bonus + card.grip_per_rhythm * ps.rhythm
 
+	# backlog #67: a card's optional `condition` gates `condition_bonus` — added
+	# on top of everything above, never taken away, so the printed numbers stay
+	# the floor and the condition is pure upside when it holds.
+	if _condition_met(card.condition, ps, mate):
+		dmg += int(card.condition_bonus.get("damage", 0))
+		blk += int(card.condition_bonus.get("block", 0))
+		ally_blk += int(card.condition_bonus.get("ally_block", 0))
+		climb += int(card.condition_bonus.get("grip", 0))
+
 	return {
 		"damage": maxi(dmg, 0), "hits": maxi(card.hits, 1),
 		"block": maxi(blk, 0), "ally_block": maxi(ally_blk, 0),
 		"grip": maxi(climb, 0), "ally_grip": card.ally_grip,
 	}
+
+
+## Evaluate one card's `condition` (backlog #67) against the current board.
+## {} (no condition) is never "met" — a card with no condition carries no
+## bonus to gate, same as `card.condition_bonus.get(...)` defaulting to 0.
+func _condition_met(cond: Dictionary, ps: PlayerState, mate: PlayerState) -> bool:
+	if cond.is_empty():
+		return false
+	match String(cond.get("type", "")):
+		COND_ABOVE_SIGIL:
+			return boss.weak_point_height > 0 and ps.foothold >= boss.weak_point_height
+		COND_ALLY_HANGING:
+			return mate.foothold > 0
+		COND_NTH_CARD:
+			return ps.cards_played_this_turn + 1 >= int(cond.get("value", 1))
+		_:
+			return false
 
 
 ## What the beast's telegraphed move will actually cost this hunter, after Block.
@@ -553,6 +600,8 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	# count its own sacrifice.
 	var pv := preview(pi, card, true, timing_quality, x_spent)
 	ps.play_counts[card.id] = int(ps.play_counts.get(card.id, 0)) + 1
+	ps.cards_played_this_turn += 1  # backlog #67 — bumped AFTER the preview this
+	# card itself resolved with, same "counts only earlier plays" idiom as play_counts above
 	var base_damage: int = int(pv["damage"])
 	if base_damage > 0:
 		var hit_count := maxi(card.hits, 1)
@@ -744,6 +793,29 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		ps.scry_pending = _peek_top(ps, card.scry)
 		if not ps.scry_pending.is_empty():
 			_log("%s plays %s — scries the top %d." % [who, card.name, ps.scry_pending.size()])
+	if card.topdeck != "":  # backlog #68 — put a card on TOP of the draw pile: the end of
+		# the array, the same end _draw()/_peek_top() pop from.
+		var topped := Content.make_card(card.topdeck)
+		ps.draw_pile.append(topped)
+		_log("%s plays %s — puts %s on top of the draw pile." % [who, card.name, topped.name])
+	if card.shuffle_in != "":  # backlog #68 — through _rng so it stays deterministic under a seed
+		var shuffled := Content.make_card(card.shuffle_in)
+		ps.draw_pile.insert(_rng.randi_range(0, ps.draw_pile.size()), shuffled)
+		_log("%s plays %s — shuffles %s into the draw pile." % [who, card.name, shuffled.name])
+	if card.tutor != "":  # backlog #68 — pull a specific card straight out of the draw pile
+		# into hand; a harmless no-op if it isn't there, same fallback idiom pull_ally uses
+		var found := -1
+		for i in range(ps.draw_pile.size()):
+			if (ps.draw_pile[i] as Card).id == card.tutor:
+				found = i
+				break
+		if found >= 0:
+			var pulled: Card = ps.draw_pile[found]
+			ps.draw_pile.remove_at(found)
+			ps.hand.append(pulled)
+			_log("%s plays %s — pulls %s from the draw pile." % [who, card.name, pulled.name])
+		else:
+			_log("%s plays %s — but no %s is in the draw pile." % [who, card.name, card.tutor])
 	if card.rhythm > 0:
 		ps.rhythm += card.rhythm
 		_log("%s plays %s — +%d Rhythm." % [who, card.name, card.rhythm])
@@ -963,6 +1035,7 @@ func _begin_round() -> void:
 		ps.ended_turn = false
 		if _mod("rhythm_keeps") <= 0:
 			ps.rhythm = 0  # combo resets each turn (a relic can keep it)
+		ps.cards_played_this_turn = 0  # backlog #67 — a card's "nth_card" question is per-round
 		_resolve_prepared(ps)
 		# Innate (backlog #28): guaranteed in the opening hand of the fight —
 		# only round 1, before the normal draw, so it never displaces a card
@@ -1106,6 +1179,18 @@ func _enemy_turn() -> void:
 			for ps4 in players:
 				ps4.weak_point_damage = 0
 			_log("%s's sigil shifts to Height %d." % [boss.name, moved])
+		"frail":  # backlog #69 — a debuff move: chips Block gained rather than HP
+			var ft: PlayerState = players[boss_target_index()]
+			_log("%s claws at %s, sapping their guard." % [boss.name, ft.combatant.name])
+			_apply_frail(ft.combatant, value)  # same generic path a card uses on the Titan — Artifact wards it
+		"curse":  # backlog #69 — hands the targeted hunter a status card, same idiom as an event's curse_card
+			var ct: PlayerState = players[boss_target_index()]
+			var curse_id := String(move.get("card", "bruised_grip"))
+			var cname := String(Content.make_card(curse_id).name)
+			var n := maxi(value, 1)
+			for i in range(n):
+				ct.discard_pile.append(Content.make_card(curse_id))
+			_log("%s curses %s — %d %s%s land in their discard pile." % [boss.name, ct.combatant.name, n, cname, "s" if n > 1 else ""])
 		"enrage":
 			boss.strength += value
 			_log("%s enrages (+%d strength, now +%d)." % [boss.name, value, boss.strength])
@@ -1311,6 +1396,35 @@ func _handle_energy_handoff(ctx: Dictionary) -> void:
 	mate.energy += ps.energy
 	_log("%s hands off %d unspent Energy to %s." % [ps.combatant.name, ps.energy, mate.combatant.name])
 	ps.energy = 0
+
+## fight_start relics (backlog #70): each reads its own _mod() key so a fresh
+## opener is just one more line here, the same shape block_carries/
+## energy_handoff already use for their own single _mod(). All four land
+## effects that PERSIST past round 1's reset (Artifact/Thorns/Intangible are
+## spent-on-use, not decayed by round — see combatant.gd — and a seeded power
+## just joins the same ps.powers dict _handle_power_effects already pays out
+## every turn_end), so firing this once before the first round is enough.
+func _handle_opening_relics(ctx: Dictionary) -> void:
+	var ps: PlayerState = ctx["player"]
+	var power_stacks := _mod("open_power")
+	if power_stacks > 0:
+		var entry: Dictionary = ps.powers.get("iron_husk", {"stacks": 0, "value": 0})
+		entry["stacks"] = int(entry.get("stacks", 0)) + power_stacks
+		entry["value"] = int(entry.get("value", 0)) + power_stacks * Content.make_card("iron_husk").power_value
+		ps.powers["iron_husk"] = entry
+		_log("%s's relic ignites Iron Husk before the fight begins." % ps.combatant.name)
+	var artifact_amt := _mod("open_artifact")
+	if artifact_amt > 0:
+		ps.combatant.artifact += artifact_amt
+		_log("%s starts the fight warded (Artifact %d)." % [ps.combatant.name, ps.combatant.artifact])
+	var thorns_amt := _mod("open_thorns")
+	if thorns_amt > 0:
+		ps.combatant.thorns += thorns_amt
+		_log("%s starts the fight bristling (Thorns %d)." % [ps.combatant.name, ps.combatant.thorns])
+	var intangible_amt := _mod("open_intangible")
+	if intangible_amt > 0:
+		ps.combatant.intangible += intangible_amt
+		_log("%s starts the fight barely-there (Intangible %d)." % [ps.combatant.name, ps.combatant.intangible])
 
 ## Not a relic — a fixed core rule (backlog #57, Powers): a `type: "power"`
 ## card never returns to your hand once played (see the "power" branch in

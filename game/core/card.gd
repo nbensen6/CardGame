@@ -97,6 +97,33 @@ var hits_all_enemies: bool     # deals its damage to the Titan AND every one of 
                                 # "adds" at once instead of a single target (backlog #63,
                                 # Cleave) — a fight with more than one thing in it needs a
                                 # way to hit all of them without spending a card per target
+var rule_upgrade: Dictionary   # field:value overrides applied by upgraded_copy() INSTEAD of
+                                # the generic number bump (backlog #66) — how a card's
+                                # campfire sharpening can change what it DOES (cost to zero,
+                                # gain Retain, hit everything) rather than only its numbers.
+                                # Spent the moment it is applied: the sharpened copy carries
+                                # the new rule, not the recipe that produced it.
+var condition: Dictionary      # {type, value} — a question about the board, asked when the
+                                # card is played or previewed (backlog #67): "above_sigil" (this
+                                # hunter is at or above the Titan's weak_point_height),
+                                # "ally_hanging" (the ally has climbed off the ground),
+                                # "nth_card" (this is at least the Nth card played this turn,
+                                # value = N). {} = none — the FALLBACK the item asked for is
+                                # simply "no bonus", not a second card. Evaluated in
+                                # Combat.preview() so the face and the real play never disagree.
+var condition_bonus: Dictionary # field:value ADDED to Combat.preview()'s result — damage,
+                                 # block, ally_block, grip only — when `condition` holds. Same
+                                 # dictionary-override idiom rule_upgrade (#66) and enchants use,
+                                 # but additive rather than replacing: the card's printed numbers
+                                 # are always the floor, never something the condition takes away.
+var topdeck: String    # card id built and put on TOP of your OWN draw pile — the very next
+                        # card you draw (backlog #68). "" = none.
+var shuffle_in: String  # card id built and shuffled into your OWN draw pile at a random
+                        # position, through Combat._rng so it stays deterministic under a seed
+                        # (backlog #68). "" = none.
+var tutor: String       # card id searched for in your OWN draw pile and pulled straight into
+                        # your hand if it's there — a harmless no-op if it isn't (backlog #68).
+                        # "" = none.
 
 static func from_dict(d: Dictionary) -> Card:
 	var c := Card.new()
@@ -170,6 +197,12 @@ static func from_dict(d: Dictionary) -> Card:
 	c.damage_per_discarded = int(d.get("damage_per_discarded", 0))
 	c.block_per_discarded = int(d.get("block_per_discarded", 0))
 	c.hits_all_enemies = bool(d.get("hits_all_enemies", false))
+	c.rule_upgrade = (d.get("rule_upgrade", {}) as Dictionary).duplicate(true)
+	c.condition = (d.get("condition", {}) as Dictionary).duplicate(true)
+	c.condition_bonus = (d.get("condition_bonus", {}) as Dictionary).duplicate(true)
+	c.topdeck = String(d.get("topdeck", ""))
+	c.shuffle_in = String(d.get("shuffle_in", ""))
+	c.tutor = String(d.get("tutor", ""))
 	return c
 
 
@@ -208,6 +241,9 @@ func to_dict() -> Dictionary:
 		"discard": discard, "damage_per_discarded": damage_per_discarded,
 		"block_per_discarded": block_per_discarded,
 		"hits_all_enemies": hits_all_enemies,
+		"rule_upgrade": rule_upgrade,
+		"condition": condition, "condition_bonus": condition_bonus,
+		"topdeck": topdeck, "shuffle_in": shuffle_in, "tutor": tutor,
 	}
 
 
@@ -218,6 +254,16 @@ func upgraded_copy() -> Card:
 	var d := to_dict()
 	if upgraded:
 		return Card.from_dict(d)  # already sharpened — no double-dipping
+	if not rule_upgrade.is_empty():
+		# A rule change (backlog #66) — REPLACES the generic number bump rather
+		# than stacking with it, the same way an authored card is either "bigger
+		# numbers" or "does something new", never both.
+		for key in rule_upgrade.keys():
+			d[key] = rule_upgrade[key]
+		d["rule_upgrade"] = {}
+		d["name"] = String(d["name"]) + "+"
+		d["upgraded"] = true
+		return Card.from_dict(d)
 	var bumped := false
 	for key in ["damage", "block", "ally_block", "timed_damage",
 			"timed_block", "timed_ally_block"]:
@@ -260,3 +306,40 @@ func enchanted_copy(enchant_id: String) -> Card:
 	var d := to_dict()
 	d["enchant"] = enchant_id
 	return Card.from_dict(d)
+
+
+## Archetype tags, DERIVED from the fields this card already has rather than a
+## new field to author (CLAUDE.md §11 — one generic rule beats hand-tagging 155
+## cards, and it can never drift out of sync with what a card actually does).
+## Used by Run's reward roll to lean a card draft toward the archetype a hunter
+## is already building (backlog #72). Not stored, not part of to_dict()/
+## from_dict() — nothing here is a new piece of data, so it needs no keywords.json
+## entry and no save-format change.
+func archetype_tags() -> Array:
+	var tags: Array = []
+	if grip > 0 or targets_hold or ally_grip > 0 or damage_per_foothold > 0 \
+			or damage_per_ally_foothold > 0 or pull_ally > 0 or sac_ally_grip > 0:
+		tags.append("climb")
+	if rhythm > 0 or damage_per_rhythm > 0 or grip_per_rhythm > 0:
+		tags.append("rhythm")
+	if wound > 0 or damage_per_wound > 0:
+		tags.append("poison")
+	if block > 0 or ally_block > 0 or timed_block > 0 or timed_ally_block > 0 \
+			or plated_armour > 0 or buffer > 0 or intangible > 0:
+		tags.append("block")
+	if strength > 0:
+		tags.append("strength")
+	if dexterity > 0:
+		tags.append("dexterity")
+	if ally_block > 0 or ally_energy > 0 or ally_grip > 0 or pull_ally > 0 \
+			or sac_ally_grip > 0 or ally_heal > 0:
+		tags.append("ally")
+	if exhaust_pick or damage_per_exhausted > 0 or block_per_exhausted > 0:
+		tags.append("burn")
+	if light_gain > 0 or light_cost > 0 or damage_per_light > 0:
+		tags.append("light")
+	if discard > 0 or damage_per_discarded > 0 or block_per_discarded > 0:
+		tags.append("discard")
+	if vulnerable > 0 or damage_per_vulnerable > 0:
+		tags.append("vulnerable")
+	return tags

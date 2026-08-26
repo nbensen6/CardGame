@@ -33,13 +33,13 @@ func _initialize() -> void:
 		path = CAST + path            # bare filenames mean the cast folder
 	if not path.ends_with(".glb"):
 		path += ".glb"
-	_report(path, "YOUR MODEL", beast)
+	_report(path, "YOUR MODEL", beast, true)
 	print("\n--- compared against a Kenney model that already works ---")
 	_report(CAST + "bunny.glb", "REFERENCE (bunny)")
 	quit()
 
 
-func _report(path: String, label: String, beast_id: String = "") -> void:
+func _report(path: String, label: String, beast_id: String = "", check_silhouette: bool = false) -> void:
 	print("\n=== %s: %s ===" % [label, path])
 	if not ResourceLoader.exists(path):
 		print("  MISSING. Export from Blender to that path, then run this again.")
@@ -79,6 +79,21 @@ func _report(path: String, label: String, beast_id: String = "") -> void:
 	print("  bottom  y %.3f   (origin sits %s the mesh)" % [box.position.y,
 		"AT" if absf(box.position.y) < 0.02 else "OFF"])
 
+	# Structure — kenney.py's finish() always joins to exactly one mesh with one
+	# material (its own log prints "MESHES 1 MATERIALS 1" every time), so a file
+	# that isn't 1/1 didn't come out of the pipeline cleanly: a stray unjoined
+	# part, a second material slot, or an export that grabbed more than the
+	# selection.
+	if meshes.size() == 1:
+		print("  PASS  one mesh")
+	else:
+		print("  FAIL  %d meshes, not 1. A part didn't get joined before export." % meshes.size())
+	if mats.size() == 1:
+		print("  PASS  one material")
+	else:
+		print("  FAIL  %d materials, not 1. Every part should paint from the same" % mats.size())
+		print("        shared atlas (kenney.py's colormap.png), not its own slot.")
+
 	# Rule 2 — origin at the feet. The game positions models by their base, so a
 	# centred origin buries half the model in the ground.
 	if absf(box.position.y) < 0.02:
@@ -97,7 +112,11 @@ func _report(path: String, label: String, beast_id: String = "") -> void:
 
 	if beast_id != "":
 		_check_holds(root, box, beast_id)
+		_check_sigil_color(root, box, beast_id)
+		_check_sigil_visible(root, box, beast_id)
 	_check_climb(root, box, beast_id)
+	if check_silhouette:
+		_check_silhouette(root, path)
 
 	# Rule 3 — applied transforms. An unapplied scale makes the measured bounds
 	# lie, and every size in the game is derived from those bounds.
@@ -116,9 +135,18 @@ func _report(path: String, label: String, beast_id: String = "") -> void:
 		print("  WARN  %.1fx wider than deep — often means it faces X, not +Z." % (box.size.x / maxf(box.size.z, 0.001)))
 		print("        Check it looks along +Z. This is the one that's annoying to fix later.")
 
-	if tris > 6000:
-		print("  WARN  %d triangles. The style here is low-poly (the bunny is a few" % tris)
-		print("        hundred); this will still work but won't match.")
+	# Budget — kenney.py's own table (BUDGET in tools/blender/kenney.py), so this
+	# says the same thing the build already warned about at export time, just
+	# from the file itself rather than a scrollback nobody kept. Matches
+	# kenney.py's own choice to warn rather than fail: a model over budget still
+	# WORKS, it just costs more than the style calls for.
+	var kind := "beast" if beast_id != "" else "hunter"
+	var cap := AssetContract.budget_for(kind)
+	if tris <= cap:
+		print("  PASS  %d triangles, within the %s budget of %d" % [tris, kind, cap])
+	else:
+		print("  WARN  %d triangles, %.1fx the %s budget of %d. Kenney's whole bunny" % [tris, tris / float(cap), kind, cap])
+		print("        is 575 — spend triangles on shapes, not on smoother balls.")
 
 	root.queue_free()
 
@@ -253,6 +281,170 @@ func _collect_climb(n: Node, xf: Transform3D, out: Dictionary) -> void:
 		_collect_climb(c, next, out)
 
 
+## The sigil colour contract: every beast's mark is `taper(..., GOLD, ...)` in
+## tools/blender/beast.py's `mark()`, and kenney.py stamps a part's UV to the
+## exact same atlas point on every loop of it, so a correctly-painted sigil
+## carries a real chunk of GOLD-UV surface near its Height.
+##
+## Deliberately NOT restricted to upward-facing geometry the way `_check_holds`'
+## shelf area is: `mark()` takes a per-beast `facing` (crag_pup's tilts the mark
+## toward the camera, normal.y around 0.34, well under the 0.55 a shelf needs),
+## because the mark is a landmark to look at, not a place to stand — those are
+## two different parts of the body and conflating them is exactly the false
+## FAIL a first version of this check produced against crag_pup, an
+## already-shipped, already-reviewed beast. Standability at this Height is
+## `_check_holds`' job; this only asks "is there a real gold mark here."
+func _check_sigil_color(root: Node3D, box: AABB, beast_id: String) -> void:
+	var b: Boss = Content.build_boss(beast_id)
+	if b == null or b.weak_point_height <= 0:
+		return
+	var tris := _tris_with_uv(root)
+	if tris.is_empty():
+		return
+	var y := box.position.y + box.size.y * lerpf(0.18, 0.80, 1.0)
+	var band := box.size.y * 0.055
+	var gold_area := 0.0
+	for tri in tris:
+		var pts: Array = tri["p"]
+		var a: Vector3 = pts[0]
+		var c: Vector3 = pts[1]
+		var d: Vector3 = pts[2]
+		var mid := (a + c + d) / 3.0
+		if absf(mid.y - y) > band:
+			continue
+		if not AssetContract.uv_in_cell([tri["uv"]], AssetContract.GOLD_UV):
+			continue
+		gold_area += (c - a).cross(d - a).length() * 0.5
+	# A real mark, not a stray gold triangle elsewhere on the body that happens
+	# to drift into this Height's band. Much smaller than a hold's "stand here"
+	# threshold on purpose — a landmark can be smaller than a shelf.
+	var want := box.size.x * box.size.z * 0.004
+	if gold_area >= want:
+		print("  PASS  a gold mark sits at the sigil's Height (%.4f of footprint)" % gold_area)
+	else:
+		print("  FAIL  no real gold mark at Height %d (found %.4f, wants >= %.4f)." % [b.weak_point_height, gold_area, want])
+		print("        Every sigil shares one colour (kenney.py's GOLD) so it reads")
+		print("        as the same landmark on every beast — add b.mark() there.")
+
+
+## Sigil visibility — the fourth contract bullet backlog #74 named ("visible
+## from the front... rather than buried behind the body") and the one an
+## earlier pass at this file left deliberately unbuilt: occlusion testing
+## needs either a real raycast against the mesh or a rendered view, and
+## shipping a check nobody could first verify felt worse than leaving it open.
+##
+## AssetContract.is_occluded_from_front is that raycast without a renderer:
+## every model faces +Z and the real combat camera
+## (`views/combat_3d.tscn`) sits at Z ~= +12.4 looking back toward -Z, so
+## LARGER Z is closer to the viewer (see AssetContract.z_at_xy's own note —
+## an earlier version of that function had this backwards and flagged every
+## already-shipped beast's mark as 100% buried, caught only by running it
+## against real models before trusting it). Solving each triangle's plane for
+## Z at a fixed (X, Y) answers the same question a ray-triangle intersection
+## would, using triangle data this file already loads. Reuses
+## `_check_sigil_color`'s own band + gold-UV filter so the two checks agree on
+## what "the sigil" even is.
+func _check_sigil_visible(root: Node3D, box: AABB, beast_id: String) -> void:
+	var b: Boss = Content.build_boss(beast_id)
+	if b == null or b.weak_point_height <= 0:
+		return
+	var tris_uv := _tris_with_uv(root)
+	if tris_uv.is_empty():
+		return
+	var y := box.position.y + box.size.y * lerpf(0.18, 0.80, 1.0)
+	var band := box.size.y * 0.055
+	# Split into the mark itself and everything else — occlusion only counts
+	# against the REST of the body. Checked first against a real mark
+	# (frost_sentinel): a taper() mark is a solid 3D bump, so its own back half
+	# is naturally behind its own front half, same as any solid shape. That is
+	# not "buried behind the body," it is normal geometry, and counting it
+	# nearly doubled the occluded fraction on every beast until this split.
+	var gold: Array = []
+	var other: Array = []
+	for tri in tris_uv:
+		var pts: Array = tri["p"]
+		var a: Vector3 = pts[0]
+		var c: Vector3 = pts[1]
+		var d: Vector3 = pts[2]
+		if AssetContract.uv_in_cell([tri["uv"]], AssetContract.GOLD_UV):
+			gold.append([a, c, d])
+		else:
+			other.append([a, c, d])
+	var total_area := 0.0
+	var hidden_area := 0.0
+	for tri in gold:
+		var a: Vector3 = tri[0]
+		var c: Vector3 = tri[1]
+		var d: Vector3 = tri[2]
+		var mid := (a + c + d) / 3.0
+		if absf(mid.y - y) > band:
+			continue
+		var area := (c - a).cross(d - a).length() * 0.5
+		total_area += area
+		if AssetContract.is_occluded_from_front(mid.x, mid.y, mid.z, other):
+			hidden_area += area
+	if total_area <= 0.0:
+		# _check_sigil_color already reports a missing mark; nothing to add here.
+		return
+	var frac := hidden_area / total_area
+	if frac > 0.5:
+		print("  FAIL  sigil at Height %d is buried: %.0f%% of its surface (by area)" % [b.weak_point_height, frac * 100.0])
+		print("        sits behind other geometry seen from the front. Move the mark")
+		print("        forward (+Z) or thin whatever's blocking it.")
+	else:
+		print("  PASS  sigil is visible from the front (%.0f%% of its surface occluded)" % (frac * 100.0))
+
+
+## Silhouette distinctness: two beasts that read as the same shape from outline
+## alone are one beast wearing two palettes, not two beasts. Rasterises the
+## FRONT-ON outline — what a player actually looks at — into a small occupancy
+## grid (AssetContract.silhouette_grid, scale- and position-normalised so size
+## differences don't matter) and compares against every OTHER model already
+## sitting in cast/ — hunters included, since a beast that silhouettes like a
+## hunter is just as much a re-skin as one that silhouettes like another beast.
+func _check_silhouette(root: Node3D, path: String) -> void:
+	var mine := _tris(root)
+	if mine.is_empty():
+		return
+	var mine_grid := AssetContract.silhouette_grid(mine)
+	var dir := DirAccess.open(CAST)
+	if dir == null:
+		print("  WARN  couldn't open %s to compare silhouettes" % CAST)
+		return
+	dir.list_dir_begin()
+	var worst := 0.0
+	var worst_name := ""
+	var checked := 0
+	var fname := dir.get_next()
+	while fname != "":
+		if fname.ends_with(".glb") and CAST + fname != path:
+			var other := load(CAST + fname) as PackedScene
+			if other != null:
+				var oroot := other.instantiate() as Node3D
+				if oroot != null:
+					get_root().add_child(oroot)
+					var otris := _tris(oroot)
+					if not otris.is_empty():
+						var sim := AssetContract.silhouette_similarity(mine_grid, AssetContract.silhouette_grid(otris))
+						checked += 1
+						if sim > worst:
+							worst = sim
+							worst_name = fname
+					oroot.queue_free()
+		fname = dir.get_next()
+	dir.list_dir_end()
+	if checked == 0:
+		return
+	# Above this and two silhouettes overlap almost everywhere either occupies —
+	# a re-skin does that; two differently-proportioned creatures don't.
+	var threshold := 0.90
+	if worst >= threshold:
+		print("  FAIL  silhouette is %.0f%% the same as %s — reads as the same shape" % [worst * 100.0, worst_name])
+		print("        from outline alone. Change the proportions, not just the palette.")
+	else:
+		print("  PASS  silhouette is distinct (closest match %s at %.0f%%, checked %d models)" % [worst_name, worst * 100.0, checked])
+
+
 ## Every triangle in world space, for the hold check.
 func _tris(root: Node3D) -> Array:
 	var out: Array = []
@@ -266,7 +458,14 @@ func _tris(root: Node3D) -> Array:
 				continue
 			var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
 			var idx = arr[Mesh.ARRAY_INDEX]
-			var xf := mi.global_transform
+			# `mi.transform`, not `mi.global_transform` — same reason `_merged_aabb`
+			# above already uses `vi.transform`: global_transform needs the node
+			# `is_inside_tree()`, which a freshly-instantiated-and-added scene isn't
+			# guaranteed to report true for yet, and it fails SILENT-ish (an error to
+			# stderr, Transform3D() back) rather than loud. Every exported model here
+			# is one MeshInstance3D directly under the scene root, so its local
+			# transform already IS its world transform.
+			var xf := mi.transform
 			if idx == null:
 				for i in range(0, verts.size() - 2, 3):
 					out.append([xf * verts[i], xf * verts[i + 1], xf * verts[i + 2]])
@@ -274,4 +473,40 @@ func _tris(root: Node3D) -> Array:
 				var ii: PackedInt32Array = idx
 				for i in range(0, ii.size() - 2, 3):
 					out.append([xf * verts[ii[i]], xf * verts[ii[i + 1]], xf * verts[ii[i + 2]]])
+	return out
+
+
+## Same as `_tris()`, but keeps each triangle's averaged UV alongside its world
+## positions, for the sigil-colour check. Kept separate rather than folded into
+## `_tris()` so every other caller keeps the plain triangle-array shape.
+func _tris_with_uv(root: Node3D) -> Array:
+	var out: Array = []
+	for m in _meshes(root):
+		var mi := m as MeshInstance3D
+		if mi.mesh == null:
+			continue
+		for s in range(mi.mesh.get_surface_count()):
+			var arr: Array = mi.mesh.surface_get_arrays(s)
+			if arr.size() <= Mesh.ARRAY_INDEX or arr[Mesh.ARRAY_VERTEX] == null:
+				continue
+			var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+			var uvs: PackedVector2Array = arr[Mesh.ARRAY_TEX_UV] if arr.size() > Mesh.ARRAY_TEX_UV and arr[Mesh.ARRAY_TEX_UV] != null else PackedVector2Array()
+			var idx = arr[Mesh.ARRAY_INDEX]
+			var xf := mi.transform    # see the note in _tris() above
+			var tri_idx: Array = []
+			if idx == null:
+				for i in range(0, verts.size() - 2, 3):
+					tri_idx.append([i, i + 1, i + 2])
+			else:
+				var ii: PackedInt32Array = idx
+				for i in range(0, ii.size() - 2, 3):
+					tri_idx.append([ii[i], ii[i + 1], ii[i + 2]])
+			for tri in tri_idx:
+				var i0: int = tri[0]
+				var i1: int = tri[1]
+				var i2: int = tri[2]
+				var uv := Vector2.ZERO
+				if uvs.size() > i2:
+					uv = (uvs[i0] + uvs[i1] + uvs[i2]) / 3.0
+				out.append({"p": [xf * verts[i0], xf * verts[i1], xf * verts[i2]], "uv": uv})
 	return out

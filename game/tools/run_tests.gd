@@ -104,6 +104,13 @@ func _init() -> void:
 	_test_start_does_not_auto_offer_a_boon()
 	_test_run_survives_a_save_and_load_in_boon()
 	_test_card_upgrade_bumps_numbers()
+	_test_card_rule_upgrade_changes_what_it_does_not_just_a_number()
+	_test_backlog67_above_sigil_condition_gates_preview_bonus()
+	_test_backlog67_ally_hanging_condition_gates_preview_bonus()
+	_test_backlog67_nth_card_condition_counts_earlier_plays_only()
+	_test_backlog67_nth_card_counter_resets_each_round()
+	_test_backlog67_condition_bonus_resolves_through_a_real_play()
+	_test_backlog67_unmet_condition_never_costs_the_printed_numbers()
 	_test_enchanted_copy_attaches_to_any_card()
 	_test_enchants_all_load()
 	_test_campfire_rest_remove_upgrade()
@@ -129,8 +136,14 @@ func _init() -> void:
 	_test_shop_cannot_thin_below_min_deck()
 	_test_status_card_removable_at_shop()
 	_test_shop_rejects_actions_outside_its_phase()
+	_test_shop_prices_scale_with_card_rarity()
+	_test_shop_guarantees_a_rare_card_slot()
 	_test_content_pools_are_copies()
 	_test_status_cards_never_offered_as_a_reward()
+	# backlog #72: rewards that know what you are building
+	_test_backlog72_archetype_tags_are_derived_from_fields()
+	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
+	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	# potions (backlog #26)
 	_test_potions_all_load()
 	_test_use_potion_applies_each_effect()
@@ -224,6 +237,14 @@ func _init() -> void:
 	_test_backlog47_light_survives_mid_combat_save_and_load()
 	_test_backlog47_lightbearer_plays_a_full_run()
 	_test_everyone_wears_their_own_art()
+	# backlog #74: the shape contract's data-only half (AssetContract)
+	_test_backlog74_uv_in_cell_matches_gold_exactly_and_rejects_the_next_swatch()
+	_test_backlog74_silhouette_grid_is_invariant_to_scale_and_position()
+	_test_backlog74_silhouette_similarity_flags_a_near_duplicate_and_passes_a_distinct_shape()
+	_test_backlog74_budget_table_matches_kenney_py()
+	_test_backlog74_z_at_xy_reads_the_triangle_plane_and_rejects_outside_points()
+	_test_backlog74_occlusion_flags_a_surface_hidden_behind_a_closer_one()
+	_test_backlog74_occlusion_ignores_geometry_that_does_not_cover_the_same_point()
 	_test_preview_matches_what_the_card_actually_does()
 	_test_incoming_reckons_damage_after_block()
 	_test_every_derived_keyword_resolves()
@@ -275,6 +296,19 @@ func _init() -> void:
 	_test_beast_thorns_reflects_card_damage_dealt_to_it()
 	_test_frail_artifact_thorns_persist_through_save()
 	_test_beast_thorns_and_artifact_are_wired()
+	# Beasts that debuff YOU (backlog #69) — Frail and curses through a boss move
+	_test_frail_move_debuffs_the_targeted_hunter()
+	_test_frail_move_is_warded_by_the_hunters_own_artifact()
+	_test_curse_move_shoves_a_status_card_into_discard()
+	_test_curse_move_respects_card_and_value_fields()
+	_test_curse_move_ignores_artifact_matching_curse_card_precedent()
+	_test_backlog69_at_least_five_beasts_debuff_hunters()
+	_test_every_beast_move_type_has_a_keyword()
+	# Fight-start relics — the fifth moment (backlog #43/#70)
+	_test_backlog70_fight_start_relics_apply_before_round_one()
+	_test_backlog70_seeded_power_pays_out_at_round_one_turn_end()
+	_test_backlog70_negative_openers_are_ignored_not_applied()
+	_test_backlog70_fight_start_does_not_reapply_on_save_reload()
 	# Dexterity, Strength's counterpart (backlog #60)
 	_test_dexterity_adds_to_block_gained()
 	_test_dexterity_card_lifts_a_later_different_cards_block()
@@ -345,12 +379,37 @@ func _init() -> void:
 	_test_backlog46_every_event_has_at_least_one_choice()
 	_test_backlog46_empty_reward_choices_can_still_be_skipped()
 	_test_backlog46_end_turn_always_works_with_empty_hand()
+	# backlog #64: keys, and a Titan you can only reach with them
+	_test_backlog64_keys_are_run_state_and_round_trip()
+	_test_backlog64_take_key_trades_the_relic_reward_on_treasure()
+	_test_backlog64_take_key_trades_the_relic_reward_on_elite()
+	_test_backlog64_take_key_refuses_the_wrong_node_type()
+	_test_backlog64_take_key_refuses_without_gold_or_after_a_pick()
+	_test_backlog64_take_key_is_once_per_node_type_per_run()
+	_test_backlog64_event_key_effect_grants_the_event_key_once()
+	_test_backlog64_boon_effects_never_grant_a_key()
+	_test_backlog64_sealed_hollow_event_grants_a_key_at_a_real_cost()
+	_test_backlog64_map_guarantees_all_three_key_source_types_exist()
+	_test_backlog64_final_titan_is_a_sealed_door_without_all_three_keys()
+	_test_backlog64_final_titan_is_a_real_fight_with_all_three_keys()
+	# backlog #65: run history — a finished run persists rather than vanishing
+	_test_backlog65_history_entry_shape_on_a_loss()
+	_test_backlog65_history_entry_shape_on_a_win()
+	_test_backlog65_progress_record_run_appends_and_round_trips()
+	_test_backlog65_gamehost_records_history_exactly_once()
+	_test_backlog65_run_history_tolerates_an_entry_missing_a_newer_field()
 	# Scry (backlog #59): look at the top of the draw pile and bin what you don't want
 	_test_backlog59_scry_reveals_and_resolve_scry_bins_and_keeps_order()
 	_test_backlog59_resolve_scry_validates_bad_input()
 	_test_backlog59_scry_survives_playerstate_dict_round_trip()
 	_test_backlog59_scry_survives_mid_combat_save_and_load()
 	_test_backlog59_ally_sees_the_scry_reveal()
+	# Reaching into the draw pile (backlog #68): put a card on top, shuffle one
+	# in, pull a named one out — the draw pile's order stops being pure luck.
+	_test_backlog68_topdeck_puts_a_card_on_top_of_the_draw_pile()
+	_test_backlog68_shuffle_in_is_deterministic_under_a_seed()
+	_test_backlog68_tutor_pulls_a_named_card_from_the_draw_pile_into_hand()
+	_test_backlog68_tutor_is_a_harmless_no_op_when_the_card_isnt_there()
 
 	print("")
 	if _failures == 0:
@@ -1304,6 +1363,133 @@ func _test_card_upgrade_bumps_numbers() -> void:
 		"upgrading bumps whatever numbers a card uses, once")
 
 
+## Backlog #66: an upgrade can change what a card DOES instead of only its
+## numbers. `rule_upgrade` on the base card (data/cards.json) REPLACES the
+## generic number bump above rather than stacking with it — six real cards,
+## one for each idiom the item names: cost to zero, gain Retain, gain
+## Innate, hit everything, stop exhausting (an Ethereal card upgraded out of
+## it), and drop a burn-a-card cost.
+func _test_card_rule_upgrade_changes_what_it_does_not_just_a_number() -> void:
+	var reckless := Content.make_card("reckless_swing")  # Ethereal attack
+	var up_reckless := reckless.upgraded_copy()
+	var cover := Content.make_card("cover")              # no Retain yet
+	var up_cover := cover.upgraded_copy()
+	var belay := Content.make_card("belay_strike")       # no Innate yet
+	var up_belay := belay.upgraded_copy()
+	var piston := Content.make_card("piston_punch")      # single target
+	var up_piston := piston.upgraded_copy()
+	var dig := Content.make_card("dig_in")               # costs 1
+	var up_dig := dig.upgraded_copy()
+	var salvage := Content.make_card("salvage")          # must burn a card
+	var up_salvage := salvage.upgraded_copy()
+	var twice := up_reckless.upgraded_copy()             # already sharpened — no double-dip
+	_expect(
+		reckless.ethereal and not up_reckless.ethereal
+			and up_reckless.damage == reckless.damage      # the rule changed, not the number
+			and up_reckless.text == "Deal 10 damage."
+		and not cover.retain and up_cover.retain
+			and up_cover.ally_block == cover.ally_block
+		and not belay.innate and up_belay.innate
+			and up_belay.damage == belay.damage
+		and not piston.hits_all_enemies and up_piston.hits_all_enemies
+			and up_piston.damage == piston.damage
+		and dig.cost == 1 and up_dig.cost == 0
+			and up_dig.block == dig.block
+		and salvage.exhaust_pick and not up_salvage.exhaust_pick
+			and up_salvage.draw == salvage.draw
+		and up_reckless.upgraded and up_reckless.name.ends_with("+")
+			and up_reckless.rule_upgrade.is_empty()  # spent, not carried on the sharpened copy
+		and twice.ethereal == up_reckless.ethereal,      # re-upgrading is a no-op, same as numbers
+		"a rule_upgrade changes what a card DOES instead of bumping its numbers")
+
+
+## Backlog #67: a card can ask a question about the board — "above the sigil",
+## "your ally is hanging", "your 3rd card this turn" — and gets its own bonus
+## ONLY when the answer is yes. The fallback the item asked for is simply "no
+## bonus": every one of the six real cards below still does exactly its
+## printed numbers when the condition doesn't hold, tested explicitly below.
+func _test_backlog67_above_sigil_condition_gates_preview_bonus() -> void:
+	var boss := _dummy_boss(300)
+	boss.weak_point_height = 4
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 7, boss)
+	var harpoon := Content.make_card("harpoon")  # base 8, +4 above the sigil
+	combat.players[0].foothold = 3
+	var below := combat.preview(0, harpoon)
+	combat.players[0].foothold = 4
+	var at_sigil := combat.preview(0, harpoon)
+	_expect(int(below["damage"]) == 8 and int(at_sigil["damage"]) == 12,
+		"above_sigil condition adds its bonus only once this hunter reaches the sigil")
+
+
+func _test_backlog67_ally_hanging_condition_gates_preview_bonus() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 7, boss)
+	var safety := Content.make_card("safety_line")  # base 8 ally block, +4 if the ally is hanging
+	combat.players[1].foothold = 0
+	var grounded := combat.preview(0, safety)
+	combat.players[1].foothold = 3
+	var hanging := combat.preview(0, safety)
+	_expect(int(grounded["ally_block"]) == 8 and int(hanging["ally_block"]) == 12,
+		"ally_hanging condition adds its bonus only once the ally has climbed off the ground")
+
+
+## nth_card counts EARLIER plays only, same idiom block_per_play/play_counts
+## already use — the card being previewed is what WOULD make it the Nth, not
+## something that has to have already happened before it can see itself.
+func _test_backlog67_nth_card_condition_counts_earlier_plays_only() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 7, boss)
+	var dagger := Content.make_card("dagger")  # base 3, +3 on the 3rd card this turn or later
+	var ps: PlayerState = combat.players[0]
+	ps.cards_played_this_turn = 1  # this play would be the 2nd card this turn
+	var second := combat.preview(0, dagger)
+	ps.cards_played_this_turn = 2  # this play would be the 3rd card this turn
+	var third := combat.preview(0, dagger)
+	_expect(int(second["damage"]) == 3 and int(third["damage"]) == 6,
+		"nth_card condition fires from the Nth card played this turn onward, not one card later")
+
+
+func _test_backlog67_nth_card_counter_resets_each_round() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 7, boss)
+	combat.players[0].cards_played_this_turn = 2
+	combat.end_turn(0)
+	combat.end_turn(1)  # both passed — the boss acts and a new round begins
+	_expect(combat.players[0].cards_played_this_turn == 0,
+		"cards_played_this_turn resets at the start of each round, same as rhythm (#67 vs #40's rhythm reset)")
+
+
+## End to end through real play_card resolution, not just preview()'s
+## prediction — proves the bonus lands as actual damage on the boss, and that
+## cards_played_this_turn (bumped inside play_card, same spot play_counts is)
+## is wired all the way through.
+func _test_backlog67_condition_bonus_resolves_through_a_real_play() -> void:
+	var boss := _dummy_boss(300)
+	boss.weak_point_height = 4
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 7, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [Content.make_card("harpoon")]
+	ps.foothold = 4  # camped at the sigil
+	ps.energy = 5
+	combat.play_card(0, 0)
+	# 8 base + 4 condition bonus + Combat.SIGIL_BONUS (5) for landing the hit AT the sigil —
+	# the SIGIL_BONUS is _damage_boss's own reward for reaching weak_point_height, layered on
+	# top of the card's own condition bonus rather than replacing it.
+	_expect(boss.hp == 300 - (8 + 4 + 5),
+		"an above_sigil card's condition bonus resolves as real damage through play_card")
+
+
+func _test_backlog67_unmet_condition_never_costs_the_printed_numbers() -> void:
+	var boss := _dummy_boss(300)
+	boss.weak_point_height = 4
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 7, boss)
+	var harpoon := Content.make_card("harpoon")
+	combat.players[0].foothold = 0  # nowhere near the sigil
+	var pv := combat.preview(0, harpoon)
+	_expect(int(pv["damage"]) == 8,
+		"an unmet condition leaves the card doing exactly its printed numbers, never less")
+
+
 ## The enchant engine (backlog #12): one generic copy trick, same shape as
 ## upgraded_copy(), works on ANY card without either the card or the caller
 ## knowing what the enchant does — and never mutates the original (cards are
@@ -1977,6 +2163,38 @@ func _test_shop_rejects_actions_outside_its_phase() -> void:
 		"buy() and leave_shop() refuse to act outside the SHOP phase")
 
 
+## Backlog #71: a shop worth revisiting — cards cost more the rarer they are,
+## instead of every card carrying the same flat price regardless of what it is.
+func _test_shop_prices_scale_with_card_rarity() -> void:
+	var run := _map_run()
+	var common_ok := run._card_price("slash") == Run.PRICE_CARD
+	var uncommon_ok := run._card_price("cleave") == Run.PRICE_CARD_UNCOMMON
+	var rare_ok := run._card_price("meld") == Run.PRICE_CARD_RARE
+	var ladder := Run.PRICE_CARD < Run.PRICE_CARD_UNCOMMON and Run.PRICE_CARD_UNCOMMON < Run.PRICE_CARD_RARE
+	_expect(common_ok and uncommon_ok and rare_ok and ladder,
+		"a card's shop price follows its rarity: common cheapest, rare priciest")
+
+
+## Backlog #71: a guaranteed rare slot, the same idea a reward roll already
+## leans toward with RARITY_WEIGHT, but as a certainty rather than a chance —
+## the seed used by _map_run() draws from a pool with rares in it (checked
+## against cards.json's global reward_pool, which is what an empty character
+## id falls back to), so this should hold every time rather than by luck.
+func _test_shop_guarantees_a_rare_card_slot() -> void:
+	var run := _map_run()
+	run.map_row = 0
+	run.node_type = "shop"
+	run._begin_shop()
+	var slot0_has_rare := false
+	for item in run.shop_stock:
+		if String(item["kind"]) == "card" and int(item["slot"]) == 0 \
+				and Content.card_rarity(String(item["id"])) == "rare":
+			slot0_has_rare = true
+			break
+	_expect(slot0_has_rare,
+		"a shop with rares in its pool always offers at least one to buy, not just by chance")
+
+
 func _test_content_pools_are_copies() -> void:
 	# Regression: the shop filters these lists with erase(). Handing out the
 	# CACHED array drained the relic pool for the whole session, which then hung
@@ -2018,6 +2236,74 @@ func _test_status_cards_never_offered_as_a_reward() -> void:
 				bad.append("%s in %s reward_pool" % [id, cid])
 	_expect(bad.is_empty(),
 		"no status card is offered by any starter deck or reward pool [%s]" % ", ".join(bad))
+
+
+## Backlog #72: tags are DERIVED from a card's existing fields (Card.archetype_tags()),
+## not a new authored field — pins a few real cards against the rule so the
+## derivation itself is proven, separately from the reward-roll lean it feeds.
+func _test_backlog72_archetype_tags_are_derived_from_fields() -> void:
+	var rend_tags: Array = Content.card_tags("rend")            # wound 2
+	var sharpen_tags: Array = Content.card_tags("sharpen")       # strength 2
+	var cadence_tags: Array = Content.card_tags("cadence")       # rhythm 2
+	var slash_tags: Array = Content.card_tags("slash")           # damage only — no archetype field
+	_expect(rend_tags.has("poison") and sharpen_tags.has("strength") and cadence_tags.has("rhythm")
+			and slash_tags.is_empty(),
+		"archetype tags follow from a card's own fields [rend=%s sharpen=%s cadence=%s slash=%s]"
+			% [rend_tags, sharpen_tags, cadence_tags, slash_tags])
+
+
+## Backlog #72: a card reward roll should lean toward the archetype a hunter is
+## already building, not roll flat from the pool regardless of the deck. Same
+## statistical shape as _test_rarity_weighting_favours_commons — loose bounds,
+## proving the lean is wired up rather than chasing an exact number. The pool is
+## six COMMONS split evenly Poison/non-Poison so every candidate carries the
+## SAME rarity weight — only the tag lean can move the result.
+func _test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck() -> void:
+	var run := _map_run()
+	var pool: Array = ["rend", "spore", "blightbloom", "slash", "bowshot", "sharpen"]
+	run.reward_kind = "card"
+
+	var baseline_seen := 0
+	var baseline_total := 0
+	for _i in range(1500):
+		for card in run._roll_choices(pool, {}):
+			if (card as Card).archetype_tags().has("poison"):
+				baseline_seen += 1
+			baseline_total += 1
+	var baseline_pct := float(baseline_seen) / float(baseline_total)
+
+	var deck_tag_counts: Dictionary = run._tag_counts(_deck_of(_venom_dart, 10))
+	var poison_seen := 0
+	var poison_total := 0
+	for _i in range(1500):
+		for card in run._roll_choices(pool, deck_tag_counts):
+			if (card as Card).archetype_tags().has("poison"):
+				poison_seen += 1
+			poison_total += 1
+	var poison_pct := float(poison_seen) / float(poison_total)
+
+	_expect(baseline_total > 0 and poison_total > 0 and poison_pct > baseline_pct + 0.03,
+		"a deck heavy in Poison cards sees Poison-tagged rewards more often than a neutral deck does (%d%% vs a %d%% baseline, over %d offers each)"
+			% [int(poison_pct * 100.0), int(baseline_pct * 100.0), poison_total])
+
+
+## Backlog #72: relics carry no archetype tags and the relic roll is uniform
+## regardless — _begin_reward() must not hand a relic roll a deck's tag counts
+## and have it silently do something. Calls _roll_choices() the same way
+## _begin_reward() would for a relic reward: deck_tag_counts stays {} because
+## reward_kind == "relic" short-circuits it there.
+func _test_backlog72_relic_rolls_are_unaffected_by_deck_tags() -> void:
+	var run := _map_run()
+	run.reward_kind = "relic"
+	var pool: Array = Content.relic_pool()
+	var deck_tag_counts: Dictionary = run._tag_counts(_deck_of(_venom_dart, 10))
+	var choices := run._roll_choices(pool, deck_tag_counts)
+	var all_relics := true
+	for c in choices:
+		if not (c is Dictionary):
+			all_relics = false
+	_expect(not choices.is_empty() and all_relics,
+		"a relic roll still returns relics (plain dicts) even when handed non-empty deck tag counts")
 
 
 # --- potions (backlog #26): held per-hunter, same data shape as relics -----
@@ -2916,11 +3202,26 @@ func _test_content_integrity_graph() -> void:
 			bad.append("%s create: %s" % [id, card.create])
 		if card.prepare != "" and not known_prepares.has(card.prepare):
 			bad.append("%s prepare: %s (unhandled by combat.gd)" % [id, card.prepare])
+		if card.topdeck != "" and String(Content.make_card(card.topdeck).name).is_empty():
+			bad.append("%s topdeck: %s" % [id, card.topdeck])
+		if card.shuffle_in != "" and String(Content.make_card(card.shuffle_in).name).is_empty():
+			bad.append("%s shuffle_in: %s" % [id, card.shuffle_in])
+		if card.tutor != "" and String(Content.make_card(card.tutor).name).is_empty():
+			bad.append("%s tutor: %s" % [id, card.tutor])
 	for kind in ["fight", "elite", "boss"]:
 		for id in Content.beast_pool(kind):
 			var b := Content.build_boss(String(id))
 			if b.moves.is_empty():
 				bad.append("%s pool: %s (no moves — unknown beast id?)" % [kind, id])
+	# backlog #69: a 'curse' move's optional 'card' key names a real card the
+	# same way an event's curse_card does — check it the same way.
+	for id2 in Content.boss_ids():
+		var b2 := Content.build_boss(String(id2))
+		for m in (b2.moves + b2.hurt_moves):
+			if String((m as Dictionary).get("type", "")) == "curse":
+				var mc := String((m as Dictionary).get("card", "bruised_grip"))
+				if String(Content.make_card(mc).name).is_empty():
+					bad.append("%s curse move card: %s" % [id2, mc])
 	for eid in Content.list_events():
 		var ev := Content.make_event(String(eid))
 		for choice in (ev.get("choices", []) as Array):
@@ -2943,7 +3244,7 @@ func _test_content_integrity_graph() -> void:
 		if bpid != "" and String(Content.make_potion(bpid).get("name", "")).is_empty():
 			bad.append("%s potion: %s" % [bid, bpid])
 	_expect(bad.is_empty(),
-		"create/prepare fields, beast pool ids, curse_card and potion refs all resolve [%s]" % ", ".join(bad))
+		"create/prepare/topdeck/shuffle_in/tutor fields, beast pool ids, curse_card and potion refs all resolve [%s]" % ", ".join(bad))
 
 
 func _test_sunlight_blade_scales_with_exposed() -> void:
@@ -3350,8 +3651,18 @@ func _test_every_field_a_player_must_understand_has_a_keyword() -> void:
 	# text already printed on the card, the cost pip, the damage number, how
 	# many draws — need no separate keyword tooltip. timed_hits is a plain
 	# repeat-count that only means anything once you already understand Timed.
+	# rule_upgrade (backlog #66) is the odd one out: a Dictionary, not a bool/
+	# string/int the probe below knows how to fake a value for, and it is
+	# never itself player-facing — a player never sees "rule_upgrade", they
+	# see whatever it OVERRIDES once applied (Retain, Innate, a 0 cost...),
+	# and every one of those already has its own keyword via the normal path.
+	# condition/condition_bonus (backlog #67) are the same shape: Dictionaries
+	# the probe can't fake, and never shown to the player as fields — a card
+	# that carries one spells the question out in its own printed `text`
+	# ("Above the sigil: 4 more damage."), same as rule_upgrade's cards do.
 	var self_evident := ["id", "name", "type", "rarity", "cost", "damage", "draw",
-		"target", "icon", "text", "upgraded", "timed_hits"]
+		"target", "icon", "text", "upgraded", "timed_hits", "rule_upgrade",
+		"condition", "condition_bonus"]
 	# A handful of int fields are meaningless at the generic probe value of 1
 	# because 1 IS their neutral default (a single hit, no repeat) — probe
 	# those with a value that's actually "used" instead.
@@ -4298,6 +4609,167 @@ func _test_beast_thorns_and_artifact_are_wired() -> void:
 	var sentinel := Content.build_boss("frost_sentinel")
 	_expect(hog.thorns == 3, "the Bramble Hog carries innate Thorns")
 	_expect(sentinel.artifact == 2, "the Frost Sentinel carries innate Artifact")
+
+
+# --- Beasts that debuff YOU (backlog #69) ----------------------------------
+# Every prior move type only ever dealt HP damage; 'frail' and 'curse' are
+# the first two that hit the hunter's DECK/BLOCK instead, through the exact
+# same generic move-resolution path in Combat._enemy_turn() every other move
+# already uses — no new special case, just two more entries in the match.
+
+func _test_frail_move_debuffs_the_targeted_hunter() -> void:
+	var boss := Boss.new("Chiller", 100)
+	boss.moves = [{"type": "frail", "value": 2}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.end_turn(0)
+	combat.end_turn(1)  # round 1 — boss_target_index() is player 0
+	_expect(combat.players[0].combatant.frail == 2 and combat.players[1].combatant.frail == 0,
+		"a 'frail' move Frails only the hunter the boss is turned toward")
+
+
+func _test_frail_move_is_warded_by_the_hunters_own_artifact() -> void:
+	var boss := Boss.new("Chiller", 100)
+	boss.moves = [{"type": "frail", "value": 2}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.players[0].combatant.artifact = 1
+	combat.end_turn(0)
+	combat.end_turn(1)
+	_expect(combat.players[0].combatant.frail == 0 and combat.players[0].combatant.artifact == 0,
+		"the targeted hunter's own Artifact wards off a 'frail' move and is spent doing it")
+
+
+func _test_curse_move_shoves_a_status_card_into_discard() -> void:
+	var boss := Boss.new("Cursed Bog", 100)
+	boss.moves = [{"type": "curse", "value": 1}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.end_turn(0)  # discards player 0's own hand FIRST — captured before, so it isn't mistaken for the curse
+	var before: int = combat.players[0].discard_pile.size()
+	combat.end_turn(1)  # both ended -> boss acts, targeting player 0
+	var pile: Array = combat.players[0].discard_pile
+	_expect(pile.size() == before + 1 and String((pile[pile.size() - 1] as Card).id) == "bruised_grip",
+		"a 'curse' move with no 'card' field lands the default status card in the discard pile")
+
+
+func _test_curse_move_respects_card_and_value_fields() -> void:
+	var boss := Boss.new("Cursed Bog", 100)
+	boss.moves = [{"type": "curse", "value": 2, "card": "bruised_grip"}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.end_turn(0)
+	var before: int = combat.players[0].discard_pile.size()
+	combat.end_turn(1)
+	_expect(combat.players[0].discard_pile.size() == before + 2,
+		"a 'curse' move's 'value' names how many copies land")
+
+
+func _test_curse_move_ignores_artifact_matching_curse_card_precedent() -> void:
+	var boss := Boss.new("Cursed Bog", 100)
+	boss.moves = [{"type": "curse", "value": 1}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.players[0].combatant.artifact = 1
+	combat.end_turn(0)
+	var before: int = combat.players[0].discard_pile.size()
+	combat.end_turn(1)
+	_expect(combat.players[0].discard_pile.size() == before + 1 and combat.players[0].combatant.artifact == 1,
+		"a 'curse' move is not warded by Artifact — a card lands on you, not a debuff stat, same as an event's own curse_card")
+
+
+## Guards the actual point of the item: at least five beasts in the real
+## content — not a synthetic Boss built for the tests above — carry a
+## 'frail' or 'curse' move somewhere in their pattern (main or hurt_moves).
+## A beast that only ever deals damage is a damage number with a picture on
+## it, and that's the thing #69 exists to fix.
+func _test_backlog69_at_least_five_beasts_debuff_hunters() -> void:
+	var debuffers: Array = []
+	for id in Content.boss_ids():
+		var b := Content.build_boss(String(id))
+		var carries := false
+		for m in (b.moves + b.hurt_moves):
+			if String((m as Dictionary).get("type", "")) in ["frail", "curse"]:
+				carries = true
+		if carries:
+			debuffers.append(id)
+	_expect(debuffers.size() >= 5,
+		"at least 5 beasts inflict Frail or a curse [%d: %s]" % [debuffers.size(), ", ".join(debuffers)])
+
+
+## Backlog #16/#54's own rule, extended to moves: a move `type` that shows up
+## in bosses.json but has no keywords.json entry is a move a player can never
+## ask about — Content.keyword() returns {} for it (see keywords.json's own
+## "_comment_moves": "Ids match the move `type` in bosses.json").
+func _test_every_beast_move_type_has_a_keyword() -> void:
+	var missing: Array = []
+	for id in Content.boss_ids():
+		var b := Content.build_boss(String(id))
+		for m in (b.moves + b.hurt_moves):
+			var kind := String((m as Dictionary).get("type", ""))
+			if kind != "" and String(Content.keyword(kind).get("text", "")).is_empty() and not missing.has(kind):
+				missing.append(kind)
+	_expect(missing.is_empty(), "every beast move type resolves to a keyword [%s]" % ", ".join(missing))
+
+
+# --- Fight-start relics — the fifth moment (backlog #43/#70) ---------------
+
+## The four openers all land before round 1's hand is drawn, and all four
+## PERSIST past _begin_round()'s reset (unlike Block) — proven directly on
+## the fields, not inferred from a card play.
+func _test_backlog70_fight_start_relics_apply_before_round_one() -> void:
+	var players := [Combatant.new("A", 42), Combatant.new("B", 42)]
+	var c := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)], players, _dummy_boss(300), 42,
+		0, 0, 0, 0, [], {"open_power": 2, "open_artifact": 1, "open_thorns": 3, "open_intangible": 1})
+	c.start()
+	var ps: PlayerState = c.players[0]
+	var power_entry: Dictionary = ps.powers.get("iron_husk", {})
+	_expect(int(power_entry.get("stacks", 0)) == 2 and int(power_entry.get("value", 0)) == 6,
+		"open_power seeds Iron Husk (power_value 3) at 2 stacks worth 6 before round 1")
+	_expect(ps.combatant.artifact == 1, "open_artifact wards the hunter before round 1")
+	_expect(ps.combatant.thorns == 3, "open_thorns bristles the hunter before round 1")
+	_expect(ps.combatant.intangible == 1, "open_intangible protects the hunter before round 1")
+
+
+## "Already resolving" (the item's own framing): a seeded power pays out at
+## round 1's OWN turn_end, the same moment _handle_power_effects already uses
+## for a power played mid-fight — no real power card was ever played here.
+func _test_backlog70_seeded_power_pays_out_at_round_one_turn_end() -> void:
+	var c := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)],
+		[Combatant.new("A", 42), Combatant.new("B", 42)], _dummy_boss(300), 42,
+		0, 0, 0, 0, [], {"open_power": 1})
+	c.start()
+	var ps: PlayerState = c.players[0]
+	var before: int = ps.combatant.block
+	c.end_turn(0)  # fires MOMENT_TURN_END for player 0 alone -- ally hasn't ended,
+	# so the round hasn't rolled over (and reset Block) yet; check right here.
+	_expect(ps.combatant.block == before + 3,
+		"Iron Husk's own +3 Block fires at turn_end even though nobody played it")
+
+
+## A downside relic (#30) can push these negative the same generic way every
+## other relic mod already can (see relic_totals' maxi(0, ...) callers) — this
+## just proves _mod() itself never applies a NEGATIVE opener (there's nothing
+## sensible for -1 Artifact/Thorns/Intangible to mean), same guard the block/
+## energy bonuses use at their own call sites.
+func _test_backlog70_negative_openers_are_ignored_not_applied() -> void:
+	var c := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)],
+		[Combatant.new("A", 42), Combatant.new("B", 42)], _dummy_boss(300), 42,
+		0, 0, 0, 0, [], {"open_artifact": -2, "open_thorns": -2, "open_intangible": -2, "open_power": -2})
+	c.start()
+	var ps: PlayerState = c.players[0]
+	_expect(ps.combatant.artifact == 0 and ps.combatant.thorns == 0 and ps.combatant.intangible == 0
+		and ps.powers.is_empty(), "a negative opener mod is a no-op, not a debuff")
+
+
+## The moment fires exactly once per fresh fight (backlog #70's own "never on
+## a mid-fight save reload" guarantee) — from_dict() rebuilds a Combat WITHOUT
+## calling start(), so an opener already applied and then saved mid-fight must
+## not double up on load.
+func _test_backlog70_fight_start_does_not_reapply_on_save_reload() -> void:
+	var c := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)],
+		[Combatant.new("A", 42), Combatant.new("B", 42)], _dummy_boss(300), 42,
+		0, 0, 0, 0, [], {"open_artifact": 1})
+	c.start()
+	_expect(c.players[0].combatant.artifact == 1, "opener applied once on a fresh fight")
+	var reloaded := Combat.from_dict(c.to_dict())
+	_expect(reloaded.players[0].combatant.artifact == 1,
+		"reloading a saved fight does not re-fire the fight-start opener")
 
 
 # --- Dexterity, Strength's counterpart (backlog #60) ----------------------
@@ -5496,6 +5968,264 @@ func _test_backlog46_end_turn_always_works_with_empty_hand() -> void:
 		"a hunter with no cards and no energy can still end their turn")
 
 
+# --- backlog #64: keys, and a Titan you can only reach with them -----------
+
+func _test_backlog64_keys_are_run_state_and_round_trip() -> void:
+	var run := _map_run()
+	run.keys = ["elite", "treasure"]
+	var d := run.to_dict()
+	var loaded := Run.from_dict(d)
+	var old_shape: Dictionary = d.duplicate(true)
+	old_shape.erase("keys")  # a save written before #64 has no such key at all
+	var backfilled := Run.from_dict(old_shape)
+	_expect(loaded.keys == ["elite", "treasure"] and backfilled.keys.is_empty(),
+		"keys round-trip through save/load and an older save backfills to none")
+
+
+func _test_backlog64_take_key_trades_the_relic_reward_on_treasure() -> void:
+	var run := _map_run()
+	run.gold = 500
+	run.node_type = "treasure"
+	run._begin_reward("relic")
+	var gold_before: int = run.gold
+	var ok := run.take_key("treasure")
+	_expect(ok and run.keys.has("treasure") and run.gold == gold_before - Run.KEY_COST_GOLD
+		and run.phase != Run.Phase.REWARD,
+		"taking a key on a treasure node spends gold, grants the key, and closes the node")
+
+
+func _test_backlog64_take_key_trades_the_relic_reward_on_elite() -> void:
+	var run := _map_run()
+	run.gold = 500
+	run.node_type = "elite"
+	run._begin_reward("relic")
+	var gold_before: int = run.gold
+	var ok := run.take_key("elite")
+	_expect(ok and run.keys.has("elite") and run.gold == gold_before - Run.KEY_COST_GOLD,
+		"taking a key on an elite's relic reward grants the key and spends gold")
+
+
+func _test_backlog64_take_key_refuses_the_wrong_node_type() -> void:
+	var run := _map_run()
+	run.gold = 500
+	run.node_type = "treasure"
+	run._begin_reward("relic")
+	var wrong_source := run.take_key("elite")       # doesn't match this node
+	var not_a_source := run.take_key("event")        # events grant keys their own way, not this one
+	_expect(not wrong_source and not not_a_source,
+		"take_key only fires for the node type actually being resolved")
+
+
+func _test_backlog64_take_key_refuses_without_gold_or_after_a_pick() -> void:
+	var run := _map_run()
+	run.node_type = "treasure"
+	run._begin_reward("relic")
+	run.gold = 0
+	var broke := run.take_key("treasure")
+	run.gold = 500
+	run.reward_picked[0] = true  # someone already took the relic instead
+	var too_late := run.take_key("treasure")
+	_expect(not broke and not too_late,
+		"take_key needs the real cost paid, and closes once anyone's already picked")
+
+
+func _test_backlog64_take_key_is_once_per_node_type_per_run() -> void:
+	var run := _map_run()
+	run.gold = 5000
+	run.node_type = "treasure"
+	run._begin_reward("relic")
+	run.take_key("treasure")
+	run.node_type = "treasure"          # a second treasure node, later in the same run
+	run._begin_reward("relic")
+	var second := run.take_key("treasure")
+	_expect(not second and run.keys == ["treasure"],
+		"a node type only ever pays out its key once, however many times it's visited")
+
+
+func _test_backlog64_event_key_effect_grants_the_event_key_once() -> void:
+	var run := _map_run()
+	run.phase = Run.Phase.EVENT
+	run._apply_effect_block({"key": true})
+	var after_first: Array = run.keys.duplicate()
+	run._apply_effect_block({"key": true})
+	_expect(after_first == ["event"] and run.keys == ["event"],
+		"an event's key effect grants the event key once and stays idempotent")
+
+
+func _test_backlog64_boon_effects_never_grant_a_key() -> void:
+	var run := _map_run()
+	run.boon = {"choices": [{"result": "", "effects": {"key": true}}]}
+	run.phase = Run.Phase.BOON
+	run.pick_boon(0)
+	_expect(run.keys.is_empty(),
+		"the run-start boon shares _apply_effect_block but never grants a key — no node type earned it")
+
+
+func _test_backlog64_sealed_hollow_event_grants_a_key_at_a_real_cost() -> void:
+	var run := _map_run()
+	run.event = Content.make_event("the_sealed_hollow")
+	run.phase = Run.Phase.EVENT
+	var hp_before: int = run.hp[0]
+	var ok := run.pick_event(0)  # "Force the seal"
+	_expect(ok and run.keys.has("event") and run.hp[0] < hp_before,
+		"the sealed hollow event grants the event key and bruises the team for it")
+
+
+func _test_backlog64_map_guarantees_all_three_key_source_types_exist() -> void:
+	var ok := true
+	var bad_seed := -1
+	for s in range(1, 25):
+		var rng := RandomNumberGenerator.new()
+		rng.seed = s
+		var m := RunMap.new(Run.ENCOUNTERS.size(), rng)
+		var found := {"elite": false, "treasure": false, "event": false}
+		for row in m.rows:
+			for n in row:
+				var t := String((n as Dictionary)["type"])
+				if found.has(t):
+					found[t] = true
+		for k in found:
+			if not bool(found[k]):
+				ok = false
+				bad_seed = s
+		if not ok:
+			break
+	_expect(ok, "every generated map guarantees an elite, a treasure, and an event node exist (failed seed %d)" % bad_seed)
+
+
+func _test_backlog64_final_titan_is_a_sealed_door_without_all_three_keys() -> void:
+	var run := _map_run()
+	run.map_row = run.map.total_rows() - 2
+	run.map_col = 0
+	var open: Array = run.available_nodes()
+	var stepped := run.pick_node(int(open[0]))
+	_expect(stepped and run.phase == Run.Phase.WON and run.combat == null
+		and not bool(run.stats["true_ending"]),
+		"short of all three keys, reaching the fourth Titan ends the run instead of fighting it")
+
+
+func _test_backlog64_final_titan_is_a_real_fight_with_all_three_keys() -> void:
+	var run := _map_run()
+	run.keys = Run.KEY_TYPES.duplicate()
+	run.map_row = run.map.total_rows() - 2
+	run.map_col = 0
+	var open: Array = run.available_nodes()
+	var stepped := run.pick_node(int(open[0]))
+	var fighting := stepped and run.phase == Run.Phase.COMBAT and run.combat != null
+	if fighting:
+		_force_win(run)
+	_expect(fighting and bool(run.stats["true_ending"]),
+		"with all three keys the fourth Titan is a real fight, and winning it earns the true ending")
+
+
+# --- Run history (backlog #65) ---------------------------------------------
+# #39 already accumulates `stats` while a run plays; this is what keeps that
+# once the run itself is thrown away — Run.history_entry() is the shape,
+# Progress.record_run()/run_history() is where it lives, and GameHost is the
+# one call site that must fire it exactly once.
+
+## Sets phase directly rather than driving a real fight to LOST through
+## Combat/sync() — that flow (WIN routes through REWARD, not straight to WON;
+## a real loss needs a dead Combatant) is already proven by #39's and #64's own
+## tests. This test is only about what history_entry() computes FROM a
+## finished run's fields, so it starts from one already in that state.
+func _test_backlog65_history_entry_shape_on_a_loss() -> void:
+	var decks := [_deck_of(_slash, 6), _deck_of(_slash, 5)]
+	var run := Run.new(decks, ["A", "B"], 123, [{"character": "frog"}, {"character": "goblin_mech"}], 2)
+	run.start()
+	run.stats["died_to"] = "Stone Warden"
+	run.phase = Run.Phase.LOST
+
+	var entry := run.history_entry()
+	var final_deck: Array = entry["final_deck"]
+	var deck_ids_match: bool = final_deck.size() == 2 \
+		and (final_deck[0] as Array).size() == run.decks[0].size() \
+		and String((final_deck[0] as Array)[0]) == String((run.decks[0][0] as Card).id)
+	_expect(entry["characters"] == ["frog", "goblin_mech"] and entry["seed"] == 123
+		and entry["ascension"] == 2 and entry["result"] == "lose"
+		and String(entry["stats"]["died_to"]) == "Stone Warden" and deck_ids_match,
+		"a lost run's history entry names who played, the seed, ascension, cause of death and final deck")
+
+
+func _test_backlog65_history_entry_shape_on_a_win() -> void:
+	var decks := [_deck_of(_slash, 6), _deck_of(_slash, 5)]
+	var run := Run.new(decks, ["A", "B"], 55, [{"character": "frog"}, {"character": "goblin_mech"}], 0)
+	run.start()
+	run.stats["beasts_felled"] = 4
+	run.stats["true_ending"] = true
+	run.phase = Run.Phase.WON
+
+	var entry := run.history_entry()
+	_expect(entry["result"] == "win" and entry["characters"] == ["frog", "goblin_mech"]
+		and bool(entry["stats"]["true_ending"]) and int(entry["stats"]["beasts_felled"]) == 4,
+		"a won run's history entry says win and carries this run's own stats through untouched")
+
+
+func _test_backlog65_progress_record_run_appends_and_round_trips() -> void:
+	Progress.use_scratch_slot("run_tests_backlog65_progress")
+	var cfg := ConfigFile.new()
+	cfg.set_value(Progress.SECTION, "run_history", [])
+	cfg.save(Progress.path)
+	var entry_a := {"characters": ["frog", "goblin_mech"], "seed": 1, "ascension": 0,
+		"result": "win", "is_daily": false, "daily_date": "",
+		"stats": {"beasts_felled": 1}, "final_deck": [["slash"], ["slash"]]}
+	var entry_b := {"characters": ["vine_weaver", "frog"], "seed": 2, "ascension": 1,
+		"result": "lose", "is_daily": false, "daily_date": "",
+		"stats": {"died_to": "Gale Serpent"}, "final_deck": [["slash"], ["slash"]]}
+	Progress.record_run(entry_a)
+	Progress.record_run(entry_b)
+
+	var history := Progress.run_history()
+	_expect(history.size() == 2
+		and String(history[0]["result"]) == "win" and String(history[1]["result"]) == "lose"
+		and String((history[1]["characters"] as Array)[0]) == "vine_weaver",
+		"Progress.record_run appends without disturbing earlier entries, and run_history reads them back in order")
+
+
+## GameHost broadcasts on every settled action, including ones after a run has
+## already ended (nothing stops a client polling a WON/LOST screen from
+## triggering more of them) — without a guard the log would grow one entry per
+## broadcast instead of one per run.
+func _test_backlog65_gamehost_records_history_exactly_once() -> void:
+	Progress.use_scratch_slot("run_tests_backlog65_host")
+	var cfg := ConfigFile.new()
+	cfg.set_value(Progress.SECTION, "run_history", [])
+	cfg.save(Progress.path)
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, true)  # solo
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	_expect(host._run != null, "setup sanity: the solo run started once both hunters were picked")
+
+	host._run.phase = Run.Phase.WON
+	host._broadcast_state()
+	host._broadcast_state()
+	host._broadcast_state()
+	_expect(Progress.run_history().size() == 1,
+		"a finished run is logged exactly once even though broadcasts keep firing after it ends")
+
+
+## Backlog #35's lesson applied here rather than to a versioned save: an entry
+## written before some later build added a field must not make the whole file
+## unreadable, and a reader that asks for that field with a default must not
+## crash on its absence.
+func _test_backlog65_run_history_tolerates_an_entry_missing_a_newer_field() -> void:
+	Progress.use_scratch_slot("run_tests_backlog65_old_shape")
+	var cfg := ConfigFile.new()
+	cfg.set_value(Progress.SECTION, "run_history", [
+		{"characters": ["frog", "goblin_mech"], "seed": 9, "ascension": 0, "result": "win"},
+	])
+	cfg.save(Progress.path)
+
+	var history := Progress.run_history()
+	_expect(history.size() == 1 and String(history[0]["result"]) == "win"
+		and (history[0] as Dictionary).get("final_deck", []) == [],
+		"an entry missing a field a later build added still loads, and reading that field defaults rather than crashing")
+
+
 ## Backlog #59 — Scry: playing a scry card reveals the top N cards of the draw
 ## pile (index 0 is the next one that would be drawn) WITHOUT drawing them, and
 ## leaves them in PlayerState.scry_pending until resolve_scry() decides what
@@ -5614,6 +6344,78 @@ func _test_backlog59_ally_sees_the_scry_reveal() -> void:
 	c0.resolve_scry([0])
 	_expect(c0.shared["players"][0]["scry_pending"].is_empty(),
 		"the owner resolving their own scry clears the pending reveal")
+
+
+## Backlog #68 — Reaching into the draw pile: three operations besides drawing
+## from it. `topdeck` puts a built card on TOP — the end of the array, the
+## same end _draw() pops from.
+func _test_backlog68_topdeck_puts_a_card_on_top_of_the_draw_pile() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.draw_pile = [_slash(), _slash()]
+	ps.hand = [Card.from_dict({"id": "waymark", "name": "Waymark", "type": "skill",
+		"cost": 0, "topdeck": "scramble"})]
+	ps.energy = 3
+	combat.play_card(0, 0)
+	_expect(ps.draw_pile.size() == 3
+		and (ps.draw_pile[ps.draw_pile.size() - 1] as Card).id == "scramble",
+		"topdeck appends the named card — the next one _draw() will pop")
+
+
+## `shuffle_in` lands the built card at a position chosen through Combat._rng,
+## not GDScript's global RNG — so replaying the same seed and the same play
+## must land it in the exact same spot, never a different one run to run.
+func _test_backlog68_shuffle_in_is_deterministic_under_a_seed() -> void:
+	var combat1 := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 7, _dummy_boss(300))
+	var ps1: PlayerState = combat1.players[0]
+	ps1.draw_pile = [_slash(), _slash(), _slash()]
+	ps1.hand = [Card.from_dict({"id": "depot", "name": "Depot", "type": "skill",
+		"cost": 1, "shuffle_in": "grip"})]
+	ps1.energy = 3
+	combat1.play_card(0, 0)
+	var pos1 := _index_of_id(ps1.draw_pile, "grip")
+
+	var combat2 := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 7, _dummy_boss(300))
+	var ps2: PlayerState = combat2.players[0]
+	ps2.draw_pile = [_slash(), _slash(), _slash()]
+	ps2.hand = [Card.from_dict({"id": "depot", "name": "Depot", "type": "skill",
+		"cost": 1, "shuffle_in": "grip"})]
+	ps2.energy = 3
+	combat2.play_card(0, 0)
+	var pos2 := _index_of_id(ps2.draw_pile, "grip")
+
+	_expect(ps1.draw_pile.size() == 4 and pos1 >= 0 and pos1 == pos2,
+		"the same seed and the same play shuffle the card into the same position both times")
+
+
+## `tutor` reaches past whatever sits on top and pulls a NAMED card straight
+## into hand, wherever it happens to be in the pile.
+func _test_backlog68_tutor_pulls_a_named_card_from_the_draw_pile_into_hand() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.draw_pile = [_slash(), _bash(), _slash()]  # _bash() == "cleave", buried in the middle
+	ps.hand = [Card.from_dict({"id": "recon", "name": "Recon", "type": "skill",
+		"cost": 1, "tutor": "cleave"})]
+	ps.energy = 3
+	combat.play_card(0, 0)
+	_expect(ps.draw_pile.size() == 2 and not _has_id(ps.draw_pile, "cleave"),
+		"tutor removes the named card from wherever it sat in the draw pile")
+	_expect(_has_id(ps.hand, "cleave"),
+		"tutor delivers the named card straight into hand")
+
+
+## A card the tutor names but the pile doesn't hold is a harmless no-op, not a
+## crash and not a silent draw of something else.
+func _test_backlog68_tutor_is_a_harmless_no_op_when_the_card_isnt_there() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.draw_pile = [_slash(), _slash()]
+	ps.hand = [Card.from_dict({"id": "recon", "name": "Recon", "type": "skill",
+		"cost": 1, "tutor": "cleave"})]
+	ps.energy = 3
+	combat.play_card(0, 0)
+	_expect(ps.draw_pile.size() == 2, "no Cleave to find — the draw pile is untouched")
+	_expect(ps.hand.is_empty(), "no Cleave to find — nothing extra lands in hand")
 
 
 ## Backlog #47 — the Lightbearer: a fifth hunter whose OWN currency (Light)
@@ -5784,6 +6586,117 @@ func _face(id: String, path: String, shared: Dictionary, faceless: Array) -> voi
 	if not shared.has(path):
 		shared[path] = []
 	(shared[path] as Array).append(id)
+
+
+## backlog #74: AssetContract carries the reusable half of the model shape
+## contract (design/BACKLOG.md — "give the machine enough of a contract that
+## it can fail loudly"). assetcheck.gd wires it to real loaded .glb files,
+## which needs actual model files and a scene tree; these exercise the exact
+## same functions against a handful of hand-built triangles so the contract
+## has real regression coverage, not just "looked fine when run by hand."
+## X/Y, not X/Z: AssetContract.silhouette_grid rasterises the FRONT-ON (XY)
+## silhouette, matching what a player actually sees a beast by, so these
+## rectangles vary in X and Y (Z fixed) to exercise that plane.
+func _rect_tris(x0: float, x1: float, y0: float, y1: float, z: float = 0.0) -> Array:
+	return [
+		[Vector3(x0, y0, z), Vector3(x1, y0, z), Vector3(x1, y1, z)],
+		[Vector3(x0, y0, z), Vector3(x1, y1, z), Vector3(x0, y1, z)],
+	]
+
+
+func _test_backlog74_uv_in_cell_matches_gold_exactly_and_rejects_the_next_swatch() -> void:
+	_expect(AssetContract.uv_in_cell([AssetContract.GOLD_UV], AssetContract.GOLD_UV),
+		"a sigil painted exactly GOLD reads as gold")
+	# AMBER sits one 32px column over in kenney.py's atlas (swatch(496, 320) vs
+	# GOLD's swatch(464, 320)) — the real mistake this check exists to catch:
+	# a part painted the neighbouring swatch by accident.
+	var amber_uv := AssetContract.GOLD_UV + Vector2(32.0 / 512.0, 0.0)
+	_expect(not AssetContract.uv_in_cell([amber_uv], AssetContract.GOLD_UV),
+		"a sigil painted the next swatch over does not read as gold")
+
+
+func _test_backlog74_silhouette_grid_is_invariant_to_scale_and_position() -> void:
+	# An L: a tall rect and a wide rect sharing a corner, missing one quadrant of
+	# their combined bounding box — a shape with a real notch in it, not a solid
+	# block, so a scaled/moved copy actually exercises the normalisation.
+	var l_shape := _rect_tris(0, 1, 0, 2) + _rect_tris(0, 2, 0, 1)
+	var l_scaled_and_moved: Array = []
+	var k := 3.5
+	var t := Vector3(40.0, -17.0, 0.0)
+	for tri in l_shape:
+		var moved: Array = []
+		for v in tri:
+			moved.append(Vector3(v.x * k, v.y * k, v.z) + t)
+		l_scaled_and_moved.append(moved)
+
+	var a := AssetContract.silhouette_grid(l_shape, 20)
+	var b := AssetContract.silhouette_grid(l_scaled_and_moved, 20)
+	var sim := AssetContract.silhouette_similarity(a, b)
+	_expect(sim >= 0.99, "the same shape at a different scale and position reads as ~identical (got %.3f)" % sim)
+
+
+func _test_backlog74_silhouette_similarity_flags_a_near_duplicate_and_passes_a_distinct_shape() -> void:
+	var l_shape := _rect_tris(0, 1, 0, 2) + _rect_tris(0, 2, 0, 1)
+	var l_grid := AssetContract.silhouette_grid(l_shape, 20)
+
+	var l_copy := _rect_tris(0, 1, 0, 2) + _rect_tris(0, 2, 0, 1)
+	var dup_sim := AssetContract.silhouette_similarity(l_grid, AssetContract.silhouette_grid(l_copy, 20))
+	_expect(dup_sim >= 0.90, "a re-export of the same shape fails the re-skin threshold (got %.3f)" % dup_sim)
+
+	# A plain square: same bounding box family, but no notch — L is 3 of the 4
+	# quadrants a square would fill, so it lands well under the threshold.
+	var square := _rect_tris(0, 1, 0, 1)
+	var distinct_sim := AssetContract.silhouette_similarity(l_grid, AssetContract.silhouette_grid(square, 20))
+	_expect(distinct_sim < 0.90, "a genuinely different footprint stays under the re-skin threshold (got %.3f)" % distinct_sim)
+
+
+func _test_backlog74_budget_table_matches_kenney_py() -> void:
+	_expect(AssetContract.budget_for("hunter") == 1400, "hunter budget matches kenney.py's BUDGET table")
+	_expect(AssetContract.budget_for("beast") == 2600, "beast budget matches kenney.py's BUDGET table")
+	_expect(AssetContract.budget_for("prop") == 500, "prop budget matches kenney.py's BUDGET table")
+	_expect(AssetContract.budget_for("nonsense") == AssetContract.budget_for("hunter"),
+		"an unknown kind falls back to the hunter budget rather than failing")
+
+
+## backlog #74's fourth contract bullet — "visible from the front, not buried
+## behind the body" — was left unbuilt on 2026-08-26 specifically because
+## occlusion needs a raycast this suite couldn't first verify. AssetContract.
+## z_at_xy/is_occluded_from_front are that raycast, done as a plane-Z solve at
+## a fixed (X, Y) rather than a full ray-triangle intersection, since the
+## "camera" here is always looking straight down +Z. These prove the geometry
+## against hand-built triangles before assetcheck.gd trusts it against a real
+## beast.
+func _test_backlog74_z_at_xy_reads_the_triangle_plane_and_rejects_outside_points() -> void:
+	var tri: Array = _rect_tris(0, 2, 0, 2, -3.0)[0]
+	var inside = AssetContract.z_at_xy(1.0, 1.0, tri[0], tri[1], tri[2])
+	_expect(inside != null and absf(inside - (-3.0)) < 0.001,
+		"a point inside the triangle's XY footprint reads its plane's Z")
+	var outside = AssetContract.z_at_xy(5.0, 5.0, tri[0], tri[1], tri[2])
+	_expect(outside == null, "a point outside the triangle's XY footprint reads no Z at all")
+
+
+func _test_backlog74_occlusion_flags_a_surface_hidden_behind_a_closer_one() -> void:
+	# LARGER Z is CLOSER to a viewer standing in front of the model — the real
+	# combat camera (views/combat_3d.tscn) sits at Z ~= +12.4 looking back
+	# toward -Z, not the other way around (AssetContract.z_at_xy's own note
+	# explains the bug an earlier version of this had). The front rect sits at
+	# Z = 1, a same-footprint back rect at Z = -1, so the back one is hidden
+	# from the front exactly the way a buried sigil would be.
+	var front: Array = _rect_tris(0, 2, 0, 2, 1.0)
+	var back: Array = _rect_tris(0, 2, 0, 2, -1.0)
+	var all_tris: Array = front + back
+	_expect(AssetContract.is_occluded_from_front(1.0, 1.0, -1.0, all_tris),
+		"a surface with closer geometry in front of it (larger Z) reads as occluded")
+	_expect(not AssetContract.is_occluded_from_front(1.0, 1.0, 1.0, all_tris),
+		"the frontmost surface itself is never occluded by what's behind it")
+
+
+func _test_backlog74_occlusion_ignores_geometry_that_does_not_cover_the_same_point() -> void:
+	var mine: Array = _rect_tris(0, 1, 0, 1, 0.0)
+	var elsewhere: Array = _rect_tris(10, 11, 10, 11, -5.0)
+	var all_tris: Array = mine + elsewhere
+	_expect(not AssetContract.is_occluded_from_front(0.5, 0.5, 0.0, all_tris),
+		"closer geometry that doesn't cover the same (x, y) doesn't occlude")
 
 
 func _expect(cond: bool, name: String) -> void:

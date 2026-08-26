@@ -204,3 +204,30 @@ static func record_win(ascension: int) -> void:
 	if top > unlocked_ascension():
 		cfg.set_value(SECTION, "unlocked_ascension", top)
 	cfg.save(path)
+
+
+## Every finished run (backlog #65) — win or loss, `Run.history_entry()`'s
+## shape verbatim. A loss currently leaves nothing behind but the memory of it;
+## this is what lets one be looked back on as data. Stored as a plain array of
+## dictionaries the same way `seen_hints` already is, which is what makes it
+## additive rather than versioned: an entry an older build wrote simply lacks
+## whatever field a later one adds, and a reader that asks for a field with
+## `.get()` and a default (as `run_history()` callers should) never sees that
+## as a reason to reject the whole file the way an unreadable RunSave would
+## (backlog #35's rejection is for a save that can't be understood forward —
+## a history entry with a hole in it is still worth keeping).
+static func record_run(entry: Dictionary) -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(path)
+	var history: Array = run_history()
+	history.append(entry)
+	cfg.set_value(SECTION, "run_history", history)
+	cfg.save(path)
+
+
+## Every recorded run, oldest first. [] if none yet or the file can't be read.
+static func run_history() -> Array:
+	var cfg := ConfigFile.new()
+	if cfg.load(path) != OK:
+		return []
+	return (cfg.get_value(SECTION, "run_history", []) as Array).duplicate()

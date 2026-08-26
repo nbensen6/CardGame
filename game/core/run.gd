@@ -20,12 +20,22 @@ const MIN_DECK := 5    # you may thin a deck, but not into nothing
 const GOLD_FIGHT := 25
 const GOLD_ELITE := 55
 const GOLD_BOSS := 80
-const PRICE_CARD := 55
+const PRICE_CARD := 55          # common-rarity card; see _card_price() for uncommon/rare
+const PRICE_CARD_UNCOMMON := 80
+const PRICE_CARD_RARE := 120
 const PRICE_RELIC := 135
 const PRICE_POTION := 45
 const PRICE_REMOVE := 70   # rises each time it's used in a run
 const POTION_SLOTS := 3    # per hunter, same shape StS's 2-3 slots (backlog #26)
 const REWARD_CHOICES := 3
+## Backlog #64: the fourth Titan is only a real fight with a key from each of
+## these three DISTINCT node types. "elite" and "treasure" trade their relic
+## reward for a key (take_key below); "event" comes from an event choice naming
+## a "key" effect (_apply_effect_block). Declining every offer never strands a
+## run: see pick_node's boss branch for the sealed-door alternative.
+const KEY_TYPES := ["elite", "treasure", "event"]
+const KEY_TAKE_TYPES := ["elite", "treasure"]  # the two take_key() handles; "event" has its own path
+const KEY_COST_GOLD := 60
 ## The save-file shape this build writes and fully understands. RunSave reads
 ## this rather than keeping its own copy — a save's "version" key and the
 ## constant that gates loading it used to live in two different files, which
@@ -35,6 +45,13 @@ const SAVE_VERSION := 2
 ## How often each rarity is offered, relative to the others. Tune these before
 ## adding more cards — they move perceived variety far more than raw pool size.
 const RARITY_WEIGHT := {"common": 55, "uncommon": 35, "rare": 10}
+## Flat bonus added to a card's roll weight per archetype tag (Card.archetype_tags())
+## it shares with the hunter's current deck — a GENTLE lean toward what they're
+## already building (backlog #72), layered on TOP of RARITY_WEIGHT above rather
+## than replacing it: one tag match is worth exactly one step of rarity (the
+## common-uncommon gap), never the larger common-rare gap, so it nudges which
+## card of a given rarity shows up more than it decides whether a rare does.
+const TAG_LEAN_BONUS := 20
 const HEAL_BETWEEN := 4  # hunters recover a little after each beast falls
 const PLAYER_HP := 42
 ## Ascension every daily run is pinned to (backlog #49) — a shared seed only
@@ -67,6 +84,7 @@ var decks: Array = []            # Array[Array[Card]] per hunter — persists ac
 var hp: Array = []               # carried current hp per hunter
 var max_hp: Array = []
 var team_relics: Array = []      # Array[Dictionary] — persistent team passives
+var keys: Array = []             # Array[String] — which of KEY_TYPES the team holds (backlog #64)
 var potions: Array = []          # Array[Array[Dictionary]] per hunter — held consumables (backlog #26)
 var player_passives: Array = []  # per-hunter character signature passives
 ## A run summary the end screen can show (backlog #39) — accumulation only, no
@@ -76,6 +94,7 @@ var player_passives: Array = []  # per-hunter character signature passives
 var stats: Dictionary = {
 	"damage_dealt": 0, "highest_climb": 0, "cards_played": 0,
 	"turns_taken": 0, "beasts_felled": 0, "died_to": "",
+	"true_ending": false,  # the fourth Titan was actually fought and felled (backlog #64)
 }
 var is_daily: bool = false      # true when the seed below came from a shared date (backlog #49)
 var daily_date: String = ""     # the date string it was derived from, e.g. "2026-08-25"
@@ -132,6 +151,33 @@ func is_over() -> bool:
 ## means "rolled randomly at start" (see _init) rather than a real seed.
 func seed_value() -> int:
 	return _seed
+
+## A compact record of how this run ended (backlog #65), for Progress.record_run
+## to keep once the run itself is thrown away. #39 already accumulates `stats`
+## through the run; this just adds the identity of the run (who played it, what
+## seed, what difficulty) and the deck it ended with, so a finished run leaves
+## more behind than the win/loss counter. Only meaningful once is_over() —
+## the host calls this exactly once per run, right when it ends.
+func history_entry() -> Dictionary:
+	var characters: Array = []
+	for i in range(names.size()):
+		characters.append(_character_of(i))
+	var final_deck: Array = []
+	for deck in decks:
+		var ids: Array = []
+		for c in (deck as Array):
+			ids.append((c as Card).id)
+		final_deck.append(ids)
+	var result := ""
+	if phase == Phase.WON:
+		result = "win"
+	elif phase == Phase.LOST:
+		result = "lose"
+	return {
+		"characters": characters, "seed": _seed, "ascension": ascension,
+		"result": result, "is_daily": is_daily, "daily_date": daily_date,
+		"stats": stats.duplicate(), "final_deck": final_deck,
+	}
 
 ## Derives a stable, shareable seed from a date string (backlog #49), building
 ## on #38's shareable seed so a daily needs no new machinery of its own —
@@ -198,7 +244,7 @@ func to_dict() -> Dictionary:
 		"ascension": ascension, "unlocked_wins": _unlocked_wins,
 		"names": names, "decks": deck_dicts,
 		"hp": hp, "max_hp": max_hp,
-		"team_relics": team_relics, "potions": potions, "player_passives": player_passives,
+		"team_relics": team_relics, "keys": keys, "potions": potions, "player_passives": player_passives,
 		"stats": stats,
 		"reward_kind": reward_kind, "reward_choices": choices,
 		"reward_picked": reward_picked, "queued_reward": _queued_reward,
@@ -234,6 +280,7 @@ static func from_dict(d: Dictionary) -> Run:
 	r.hp = (d.get("hp", []) as Array).duplicate()
 	r.max_hp = (d.get("max_hp", []) as Array).duplicate()
 	r.team_relics = (d.get("team_relics", []) as Array).duplicate(true)
+	r.keys = (d.get("keys", []) as Array).duplicate()  # older saves predate #64 — empty is the correct backfill
 	r.potions = (d.get("potions", []) as Array).duplicate(true)
 	if r.potions.size() < r.names.size():  # old saves predate potions — backfill empty slots
 		for _i in range(r.names.size() - r.potions.size()):
@@ -287,6 +334,14 @@ func pick_node(col: int) -> bool:
 	var node: Dictionary = map.node_at(map_row, map_col)
 	node_type = String(node.get("type", "fight"))
 	encounter_index = int(node.get("act", 0))
+	# Backlog #64: the fourth Titan is gated behind three keys. Short of them
+	# this ISN'T a dead end (available_nodes() would return nothing further and
+	# strand the run, exactly what #46's robustness sweep forbids) — the route
+	# simply ends here, a sealed door instead of an unbeatable fight.
+	if node_type == "boss" and encounter_index == ENCOUNTERS.size() - 1 \
+			and keys.size() < KEY_TYPES.size():
+		phase = Phase.WON
+		return true
 	match node_type:
 		"rest":
 			_begin_campfire()
@@ -307,21 +362,45 @@ func _gold_for(kind: String) -> int:
 		_: return GOLD_FIGHT
 
 
+## A card's shop price by rarity — rare finds cost more than filler, the same
+## way a reward roll (RARITY_WEIGHT) already treats them as worth more (#71).
+func _card_price(id: String) -> int:
+	match Content.card_rarity(id):
+		"rare": return PRICE_CARD_RARE
+		"uncommon": return PRICE_CARD_UNCOMMON
+		_: return PRICE_CARD
+
+func _stock_card(slot: int, cid: String) -> void:
+	var card := Content.make_card(cid)
+	shop_stock.append({"kind": "card", "slot": slot, "id": cid, "name": card.name,
+		"text": card.text, "price": _card_price(cid), "sold": false})
+
 ## Stock a shop: a couple of cards from each hunter's own pool, team relics, and
-## the single most valuable service in a deckbuilder — removing a card.
+## the single most valuable service in a deckbuilder — removing a card. A fresh
+## roll every visit, same as StS's rotating stock — each node is its own call.
 func _begin_shop() -> void:
 	phase = Phase.SHOP
 	shop_stock = []
 	for slot in range(names.size()):
 		var pool: Array = Content.reward_pool(_character_of(slot), _unlocked_wins)
-		for _n in range(2):
+		# a guaranteed rare slot: pull one rare first (if the pool has one) so a
+		# hunter isn't left to luck out of ever seeing their own best cards (#71).
+		var rares: Array = []
+		for id in pool:
+			if Content.card_rarity(String(id)) == "rare":
+				rares.append(id)
+		var picks := 2
+		if not rares.is_empty():
+			var rid := String(rares[_rng.randi_range(0, rares.size() - 1)])
+			pool.erase(rid)
+			_stock_card(slot, rid)
+			picks -= 1
+		for _n in range(picks):
 			if pool.is_empty():
 				break
 			var cid := String(pool[_rng.randi_range(0, pool.size() - 1)])
 			pool.erase(cid)
-			var card := Content.make_card(cid)
-			shop_stock.append({"kind": "card", "slot": slot, "id": cid, "name": card.name,
-				"text": card.text, "price": PRICE_CARD, "sold": false})
+			_stock_card(slot, cid)
 	var relics: Array = Content.relic_pool(_unlocked_wins)
 	for _r in range(2):
 		if relics.is_empty():
@@ -562,6 +641,13 @@ func _apply_effect_block(eff: Dictionary) -> void:
 		for i in range(names.size()):
 			if not potions[i].is_empty():
 				potions[i].remove_at(_rng.randi_range(0, potions[i].size() - 1))
+	# Backlog #64: an event is the third of the fourth Titan's three key sources
+	# — "elite" and "treasure" trade their relic instead (take_key), an event
+	# just names its own price on the choice, same as every other effect here.
+	# Gated to EVENT: this block is shared with pick_boon, and a boon is offered
+	# before the map even starts, before any of the three node types exist yet.
+	if bool(eff.get("key", false)) and phase == Phase.EVENT and not keys.has("event"):
+		keys.append("event")
 
 
 ## A free choice of 3-4 offered once, before the first map step — same idiom as
@@ -623,6 +709,8 @@ func sync() -> void:
 	stats["turns_taken"] = int(stats["turns_taken"]) + combat.round_num
 	if combat.result() == Combat.Result.WIN:
 		stats["beasts_felled"] = int(stats["beasts_felled"]) + 1
+		if node_type == "boss" and encounter_index == ENCOUNTERS.size() - 1:
+			stats["true_ending"] = true  # backlog #64: the fourth Titan was a real fight, not skipped
 		_bank_hp()
 		gold += _gold_for(node_type)
 		_grant_potions()
@@ -719,6 +807,28 @@ func pick_reward(slot: int, choice: int) -> void:
 	if _all_picked():
 		_finish_reward()
 
+## Trade this node's relic reward for a key instead (backlog #64) — the "real
+## cost" the item asked for. Only legal before anyone's taken the relic: a key
+## replaces the WHOLE node's reward rather than half-resolving it (one hunter
+## keeping the relic while the other takes the key would leave the team
+## holding neither cleanly). One key per node type, ever, per run.
+func take_key(source: String) -> bool:
+	if phase != Phase.REWARD or reward_kind != "relic":
+		return false
+	if not KEY_TAKE_TYPES.has(source) or node_type != source:
+		return false
+	if keys.has(source) or gold < KEY_COST_GOLD:
+		return false
+	for picked in reward_picked:
+		if picked:
+			return false
+	gold -= KEY_COST_GOLD
+	keys.append(source)
+	for i in range(reward_picked.size()):
+		reward_picked[i] = true
+	_finish_reward()
+	return true
+
 # --- internals ------------------------------------------------------------
 
 func _start_encounter() -> void:
@@ -748,7 +858,8 @@ func relic_totals() -> Dictionary:
 	for key in ["start_foothold", "start_dexterity", "fall_safe", "rhythm_keeps", "threshold", "chip",
 			"sigil_bonus", "vuln_bonus", "draw", "shake_resist",
 			"grip_seconds", "timing_zone",
-			"block_carries", "no_buck", "soft_fall", "energy_handoff"]:
+			"block_carries", "no_buck", "soft_fall", "energy_handoff",
+			"open_power", "open_artifact", "open_thorns", "open_intangible"]:
 		t[key] = 0
 	for r in team_relics:
 		_apply_relic_effect(t, String(r.get("effect", "")), int(r.get("value", 0)))
@@ -801,7 +912,10 @@ func _begin_reward(kind: String) -> void:
 	for i in range(names.size()):
 		# Cards come from that hunter's own pool, so each can draft their archetype.
 		var pool: Array = relic_pool if reward_kind == "relic" else Content.reward_pool(_character_of(i), _unlocked_wins)
-		reward_choices.append(_roll_choices(pool))
+		# Lean the roll toward tags already in THIS hunter's deck (backlog #72) —
+		# relics carry no tags, so the count stays empty and does nothing there.
+		var deck_tag_counts: Dictionary = _tag_counts(decks[i]) if reward_kind != "relic" and i < decks.size() else {}
+		reward_choices.append(_roll_choices(pool, deck_tag_counts))
 		reward_picked.append(false)
 
 ## The character id a hunter is playing (from their signature passive).
@@ -810,12 +924,22 @@ func _character_of(slot: int) -> String:
 		return ""
 	return String((player_passives[slot] as Dictionary).get("character", ""))
 
-func _roll_choices(pool: Array) -> Array:
+## How many cards in `deck` carry each archetype tag (Card.archetype_tags()) —
+## feeds _weighted_index()'s lean toward what a hunter is already building
+## (backlog #72).
+func _tag_counts(deck: Array) -> Dictionary:
+	var counts: Dictionary = {}
+	for c in deck:
+		for t in (c as Card).archetype_tags():
+			counts[t] = int(counts.get(t, 0)) + 1
+	return counts
+
+func _roll_choices(pool: Array, deck_tag_counts: Dictionary = {}) -> Array:
 	var ids: Array = pool.duplicate()
 	var out: Array = []
 	var n: int = mini(maxi(1, REWARD_CHOICES - int(_asc.get("reward_choices", 0))), ids.size())
 	for _k in range(n):
-		var idx := _weighted_index(ids)
+		var idx := _weighted_index(ids, deck_tag_counts)
 		var id := String(ids[idx])
 		out.append(Content.make_relic(id) if reward_kind == "relic" else Content.make_card(id))
 		ids.remove_at(idx)
@@ -828,7 +952,12 @@ func _roll_choices(pool: Array) -> Array:
 ##
 ## With the current catalog (61 common / 61 uncommon / 20 rare) these weights land
 ## at roughly 59% / 37% / 4% of cards actually offered.
-func _weighted_index(ids: Array) -> int:
+##
+## `deck_tag_counts` (backlog #72) adds TAG_LEAN_BONUS per archetype tag a
+## candidate shares with a non-empty count — a card whose tag isn't in the deck
+## at all, or an empty dict (relics; no deck in scope), leaves the rarity-only
+## weight untouched.
+func _weighted_index(ids: Array, deck_tag_counts: Dictionary = {}) -> int:
 	if ids.size() <= 1:
 		return 0
 	if reward_kind == "relic":
@@ -837,6 +966,10 @@ func _weighted_index(ids: Array) -> int:
 	var total := 0
 	for id in ids:
 		var w: int = int(RARITY_WEIGHT.get(Content.card_rarity(String(id)), RARITY_WEIGHT["common"]))
+		if not deck_tag_counts.is_empty():
+			for t in Content.card_tags(String(id)):
+				if int(deck_tag_counts.get(t, 0)) > 0:
+					w += TAG_LEAN_BONUS
 		weights.append(w)
 		total += w
 	if total <= 0:
