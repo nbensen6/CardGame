@@ -103,6 +103,19 @@ var rule_upgrade: Dictionary   # field:value overrides applied by upgraded_copy(
                                 # gain Retain, hit everything) rather than only its numbers.
                                 # Spent the moment it is applied: the sharpened copy carries
                                 # the new rule, not the recipe that produced it.
+var condition: Dictionary      # {type, value} — a question about the board, asked when the
+                                # card is played or previewed (backlog #67): "above_sigil" (this
+                                # hunter is at or above the Titan's weak_point_height),
+                                # "ally_hanging" (the ally has climbed off the ground),
+                                # "nth_card" (this is at least the Nth card played this turn,
+                                # value = N). {} = none — the FALLBACK the item asked for is
+                                # simply "no bonus", not a second card. Evaluated in
+                                # Combat.preview() so the face and the real play never disagree.
+var condition_bonus: Dictionary # field:value ADDED to Combat.preview()'s result — damage,
+                                 # block, ally_block, grip only — when `condition` holds. Same
+                                 # dictionary-override idiom rule_upgrade (#66) and enchants use,
+                                 # but additive rather than replacing: the card's printed numbers
+                                 # are always the floor, never something the condition takes away.
 
 static func from_dict(d: Dictionary) -> Card:
 	var c := Card.new()
@@ -177,6 +190,8 @@ static func from_dict(d: Dictionary) -> Card:
 	c.block_per_discarded = int(d.get("block_per_discarded", 0))
 	c.hits_all_enemies = bool(d.get("hits_all_enemies", false))
 	c.rule_upgrade = (d.get("rule_upgrade", {}) as Dictionary).duplicate(true)
+	c.condition = (d.get("condition", {}) as Dictionary).duplicate(true)
+	c.condition_bonus = (d.get("condition_bonus", {}) as Dictionary).duplicate(true)
 	return c
 
 
@@ -216,6 +231,7 @@ func to_dict() -> Dictionary:
 		"block_per_discarded": block_per_discarded,
 		"hits_all_enemies": hits_all_enemies,
 		"rule_upgrade": rule_upgrade,
+		"condition": condition, "condition_bonus": condition_bonus,
 	}
 
 

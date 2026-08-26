@@ -105,6 +105,12 @@ func _init() -> void:
 	_test_run_survives_a_save_and_load_in_boon()
 	_test_card_upgrade_bumps_numbers()
 	_test_card_rule_upgrade_changes_what_it_does_not_just_a_number()
+	_test_backlog67_above_sigil_condition_gates_preview_bonus()
+	_test_backlog67_ally_hanging_condition_gates_preview_bonus()
+	_test_backlog67_nth_card_condition_counts_earlier_plays_only()
+	_test_backlog67_nth_card_counter_resets_each_round()
+	_test_backlog67_condition_bonus_resolves_through_a_real_play()
+	_test_backlog67_unmet_condition_never_costs_the_printed_numbers()
 	_test_enchanted_copy_attaches_to_any_card()
 	_test_enchants_all_load()
 	_test_campfire_rest_remove_upgrade()
@@ -1362,6 +1368,93 @@ func _test_card_rule_upgrade_changes_what_it_does_not_just_a_number() -> void:
 			and up_reckless.rule_upgrade.is_empty()  # spent, not carried on the sharpened copy
 		and twice.ethereal == up_reckless.ethereal,      # re-upgrading is a no-op, same as numbers
 		"a rule_upgrade changes what a card DOES instead of bumping its numbers")
+
+
+## Backlog #67: a card can ask a question about the board — "above the sigil",
+## "your ally is hanging", "your 3rd card this turn" — and gets its own bonus
+## ONLY when the answer is yes. The fallback the item asked for is simply "no
+## bonus": every one of the six real cards below still does exactly its
+## printed numbers when the condition doesn't hold, tested explicitly below.
+func _test_backlog67_above_sigil_condition_gates_preview_bonus() -> void:
+	var boss := _dummy_boss(300)
+	boss.weak_point_height = 4
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 7, boss)
+	var harpoon := Content.make_card("harpoon")  # base 8, +4 above the sigil
+	combat.players[0].foothold = 3
+	var below := combat.preview(0, harpoon)
+	combat.players[0].foothold = 4
+	var at_sigil := combat.preview(0, harpoon)
+	_expect(int(below["damage"]) == 8 and int(at_sigil["damage"]) == 12,
+		"above_sigil condition adds its bonus only once this hunter reaches the sigil")
+
+
+func _test_backlog67_ally_hanging_condition_gates_preview_bonus() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 7, boss)
+	var safety := Content.make_card("safety_line")  # base 8 ally block, +4 if the ally is hanging
+	combat.players[1].foothold = 0
+	var grounded := combat.preview(0, safety)
+	combat.players[1].foothold = 3
+	var hanging := combat.preview(0, safety)
+	_expect(int(grounded["ally_block"]) == 8 and int(hanging["ally_block"]) == 12,
+		"ally_hanging condition adds its bonus only once the ally has climbed off the ground")
+
+
+## nth_card counts EARLIER plays only, same idiom block_per_play/play_counts
+## already use — the card being previewed is what WOULD make it the Nth, not
+## something that has to have already happened before it can see itself.
+func _test_backlog67_nth_card_condition_counts_earlier_plays_only() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 7, boss)
+	var dagger := Content.make_card("dagger")  # base 3, +3 on the 3rd card this turn or later
+	var ps: PlayerState = combat.players[0]
+	ps.cards_played_this_turn = 1  # this play would be the 2nd card this turn
+	var second := combat.preview(0, dagger)
+	ps.cards_played_this_turn = 2  # this play would be the 3rd card this turn
+	var third := combat.preview(0, dagger)
+	_expect(int(second["damage"]) == 3 and int(third["damage"]) == 6,
+		"nth_card condition fires from the Nth card played this turn onward, not one card later")
+
+
+func _test_backlog67_nth_card_counter_resets_each_round() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 7, boss)
+	combat.players[0].cards_played_this_turn = 2
+	combat.end_turn(0)
+	combat.end_turn(1)  # both passed — the boss acts and a new round begins
+	_expect(combat.players[0].cards_played_this_turn == 0,
+		"cards_played_this_turn resets at the start of each round, same as rhythm (#67 vs #40's rhythm reset)")
+
+
+## End to end through real play_card resolution, not just preview()'s
+## prediction — proves the bonus lands as actual damage on the boss, and that
+## cards_played_this_turn (bumped inside play_card, same spot play_counts is)
+## is wired all the way through.
+func _test_backlog67_condition_bonus_resolves_through_a_real_play() -> void:
+	var boss := _dummy_boss(300)
+	boss.weak_point_height = 4
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 7, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [Content.make_card("harpoon")]
+	ps.foothold = 4  # camped at the sigil
+	ps.energy = 5
+	combat.play_card(0, 0)
+	# 8 base + 4 condition bonus + Combat.SIGIL_BONUS (5) for landing the hit AT the sigil —
+	# the SIGIL_BONUS is _damage_boss's own reward for reaching weak_point_height, layered on
+	# top of the card's own condition bonus rather than replacing it.
+	_expect(boss.hp == 300 - (8 + 4 + 5),
+		"an above_sigil card's condition bonus resolves as real damage through play_card")
+
+
+func _test_backlog67_unmet_condition_never_costs_the_printed_numbers() -> void:
+	var boss := _dummy_boss(300)
+	boss.weak_point_height = 4
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 7, boss)
+	var harpoon := Content.make_card("harpoon")
+	combat.players[0].foothold = 0  # nowhere near the sigil
+	var pv := combat.preview(0, harpoon)
+	_expect(int(pv["damage"]) == 8,
+		"an unmet condition leaves the card doing exactly its printed numbers, never less")
 
 
 ## The enchant engine (backlog #12): one generic copy trick, same shape as
@@ -3415,8 +3508,13 @@ func _test_every_field_a_player_must_understand_has_a_keyword() -> void:
 	# never itself player-facing — a player never sees "rule_upgrade", they
 	# see whatever it OVERRIDES once applied (Retain, Innate, a 0 cost...),
 	# and every one of those already has its own keyword via the normal path.
+	# condition/condition_bonus (backlog #67) are the same shape: Dictionaries
+	# the probe can't fake, and never shown to the player as fields — a card
+	# that carries one spells the question out in its own printed `text`
+	# ("Above the sigil: 4 more damage."), same as rule_upgrade's cards do.
 	var self_evident := ["id", "name", "type", "rarity", "cost", "damage", "draw",
-		"target", "icon", "text", "upgraded", "timed_hits", "rule_upgrade"]
+		"target", "icon", "text", "upgraded", "timed_hits", "rule_upgrade",
+		"condition", "condition_bonus"]
 	# A handful of int fields are meaningless at the generic probe value of 1
 	# because 1 IS their neutral default (a single hit, no repeat) — probe
 	# those with a value that's actually "used" instead.

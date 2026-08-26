@@ -500,7 +500,7 @@ something Slay the Spire leans on hard and we do not have at all.
   a decision; a rule change is. *Done when:* an upgrade can carry an effect
   change rather than only a value, at least six cards use one, and each is tested.
 
-- [ ] **67. Cards that ask a question about the board** `cloud-safe` — "if you
+- [x] **67. Cards that ask a question about the board** `cloud-safe` — "if you
   are above the sigil", "if your ally is hanging", "if this is the third card
   this turn". Every card we own does the same thing every time it is played, so
   a hand never has a right ORDER to play it in. This is the cheapest depth left:
@@ -748,6 +748,57 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-26** — #67 Cards that ask a question about the board: 55 stayed
+  skipped for its own stated reason (needs Nick or per-beast `cloud-art`
+  work), so this was the next attemptable `cloud-safe` item, ahead of
+  68-72/74 in queue order. Two new Card fields, `condition` (`{type, value}`)
+  and `condition_bonus` (a field:value dict), evaluated once inside
+  `Combat.preview()` — the single formula both the real play and the card
+  face's numbers already came from (per its own header comment), so a
+  condition can never make the printed preview lie about what playing the
+  card will do. `condition_bonus` is ADDITIVE, not a replacement like #66's
+  `rule_upgrade` — deliberately, since the item's own "fallback" is just "no
+  bonus": a card with an unmet condition still does exactly its printed
+  numbers, never less. Three condition types, matching the item's own three
+  examples literally: `above_sigil` (this hunter's foothold >= the Titan's
+  `weak_point_height`), `ally_hanging` (the ally's foothold > 0 — off the
+  ground), and `nth_card` (this play is at least the Nth card this hunter has
+  played this round). `nth_card` needed one new piece of state,
+  `PlayerState.cards_played_this_turn` — nothing before this counted cards
+  played per round, only per fight (`play_counts`) — reset in `_begin_round`
+  the same place `rhythm` already resets, and bumped in `play_card` at the
+  exact same line `play_counts` is, so it inherits that line's existing
+  "counts only EARLIER plays" guarantee for free: the card asking "is this my
+  3rd card" is itself allowed to be the 3rd, not made to wait for a 4th.
+  Six real cards, two per condition type, chosen from the shared/neutral pool
+  rather than one class's own idiom (unlike #5/#23's rares) since a
+  board-state question reads as generic depth, not character flavour: Harpoon
+  and Sunlight Blade gain bonus damage `above_sigil`, Safety Line and Draw
+  Aggro gain bonus block `ally_hanging`, Dagger and Brace gain a bonus
+  `nth_card`(3). Each card's own `text` spells the condition out in prose
+  ("Above the sigil, deal 4 more"), so — same call #66 made for
+  `rule_upgrade` — `condition`/`condition_bonus` went into backlog #54's
+  field-coverage test's `self_evident` list rather than getting an invented
+  keyword tooltip nobody would ever see a reason to open, since a Dictionary
+  field can't be faked by that test's generic bool/string/int probe anyway.
+  One real bug caught before commit, not after: my first version of the
+  end-to-end play_card test expected Harpoon's 8 base + 4 condition bonus to
+  land as exactly 12 boss damage, and it failed — `_damage_boss` adds its own
+  `SIGIL_BONUS` (5) on top of any hit that lands with `sigil_reached(pi)`
+  true, which `above_sigil` cards always will since they only pay their bonus
+  in that same state. Not a bug in the new code, just a wrong hand-computed
+  expectation in the test — fixed the assertion to `8 + 4 + 5`, not the
+  production code, and left a comment explaining why so the next person
+  reading that assertion doesn't make the same arithmetic mistake. Six new
+  tests: both branches (met/unmet) for `above_sigil` and `ally_hanging` via
+  direct `preview()` calls, `nth_card`'s "counts earlier plays only" boundary,
+  its per-round reset, one full `play_card()` resolution proving the bonus
+  reaches the boss as real damage (not just the preview number), and an
+  explicit "unmet condition never costs the printed numbers" check. All
+  green — `run_tests.gd` passes with no other test touched or broken.
+  `node tools/cardlab/build.js`: 184 cards (unchanged — six existing cards
+  edited, none added), 0 unreachable.
 
 - **2026-08-26** — #66 Upgrades that change a rule, not a number: #55 stayed
   skipped for its own stated reason (needs Nick or a per-beast cloud-art

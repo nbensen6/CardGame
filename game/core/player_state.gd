@@ -23,6 +23,9 @@ var scry_pending: Array = []   # cards revealed off the top of draw_pile, awaiti
                                 # (backlog #59); index 0 is the next card that would be drawn
 var sigil_rounds: int = 0      # consecutive enemy turns spent at/above the sigil (a "sigil_fatigue" limiter)
 var light: int = 0             # the Lightbearer's own resource (backlog #47) — banks across turns, unlike energy
+var cards_played_this_turn: int = 0  # resets each round (backlog #67 — a card's "nth_card"
+                                # condition reads this); counts only cards that actually resolved,
+                                # same "earlier plays only" idiom play_counts already uses
 # Character signature passives (set from the chosen character; constant for the run)
 var character: String = ""     # character id, for display
 var climb_bonus: int = 0       # extra Height per climb card (Frog)
@@ -45,6 +48,7 @@ func to_dict() -> Dictionary:
 		"foothold": foothold, "weak_point_damage": weak_point_damage,
 		"ended_turn": ended_turn, "prepared": prepared, "rhythm": rhythm,
 		"play_counts": play_counts, "sigil_rounds": sigil_rounds, "light": light,
+		"cards_played_this_turn": cards_played_this_turn,
 		"powers": powers, "scry_pending": _cards_to_dicts(scry_pending),
 		"character": character, "climb_bonus": climb_bonus,
 		"char_attack_bonus": char_attack_bonus, "ally_climb": ally_climb,
@@ -72,6 +76,7 @@ static func from_dict(d: Dictionary) -> PlayerState:
 	ps.rhythm = int(d.get("rhythm", 0))
 	ps.play_counts = (d.get("play_counts", {}) as Dictionary).duplicate()
 	ps.sigil_rounds = int(d.get("sigil_rounds", 0))
+	ps.cards_played_this_turn = int(d.get("cards_played_this_turn", 0))
 	ps.light = int(d.get("light", 0))
 	ps.powers = (d.get("powers", {}) as Dictionary).duplicate(true)  # deep — values are {stacks, value} dicts
 	ps.scry_pending = _cards_from_dicts(d.get("scry_pending", []))

@@ -61,6 +61,15 @@ const TIMING_GOOD := 1
 const TIMING_PERFECT := 2
 const TIMING_GOOD_SCALE := 0.5  # a "good" (not dead-centre) hit pays half the timed bonus
 
+# A card's optional `condition` (backlog #67) — a question about the board,
+# asked in preview() so the printed card and the real play never disagree.
+const COND_ABOVE_SIGIL := "above_sigil"    # this hunter's foothold >= the Titan's sigil height
+const COND_ALLY_HANGING := "ally_hanging"  # the ally has climbed off the ground (foothold > 0)
+const COND_NTH_CARD := "nth_card"          # this play is at least the Nth card this hunter has
+                                            # played this round (value = N; counts EARLIER plays
+                                            # only, same idiom play_counts already uses, so the
+                                            # Nth card itself is the one that first meets it)
+
 var players: Array = []  # Array[PlayerState], index = player slot
 var boss: Boss
 # backlog #63: secondary enemies alongside the boss — "adds" clinging to the
@@ -431,11 +440,37 @@ func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PER
 	if climb > 0:  # the climb bonus rides an actual climb, not a zero
 		climb += ps.climb_bonus + card.grip_per_rhythm * ps.rhythm
 
+	# backlog #67: a card's optional `condition` gates `condition_bonus` — added
+	# on top of everything above, never taken away, so the printed numbers stay
+	# the floor and the condition is pure upside when it holds.
+	if _condition_met(card.condition, ps, mate):
+		dmg += int(card.condition_bonus.get("damage", 0))
+		blk += int(card.condition_bonus.get("block", 0))
+		ally_blk += int(card.condition_bonus.get("ally_block", 0))
+		climb += int(card.condition_bonus.get("grip", 0))
+
 	return {
 		"damage": maxi(dmg, 0), "hits": maxi(card.hits, 1),
 		"block": maxi(blk, 0), "ally_block": maxi(ally_blk, 0),
 		"grip": maxi(climb, 0), "ally_grip": card.ally_grip,
 	}
+
+
+## Evaluate one card's `condition` (backlog #67) against the current board.
+## {} (no condition) is never "met" — a card with no condition carries no
+## bonus to gate, same as `card.condition_bonus.get(...)` defaulting to 0.
+func _condition_met(cond: Dictionary, ps: PlayerState, mate: PlayerState) -> bool:
+	if cond.is_empty():
+		return false
+	match String(cond.get("type", "")):
+		COND_ABOVE_SIGIL:
+			return boss.weak_point_height > 0 and ps.foothold >= boss.weak_point_height
+		COND_ALLY_HANGING:
+			return mate.foothold > 0
+		COND_NTH_CARD:
+			return ps.cards_played_this_turn + 1 >= int(cond.get("value", 1))
+		_:
+			return false
 
 
 ## What the beast's telegraphed move will actually cost this hunter, after Block.
@@ -553,6 +588,8 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	# count its own sacrifice.
 	var pv := preview(pi, card, true, timing_quality, x_spent)
 	ps.play_counts[card.id] = int(ps.play_counts.get(card.id, 0)) + 1
+	ps.cards_played_this_turn += 1  # backlog #67 — bumped AFTER the preview this
+	# card itself resolved with, same "counts only earlier plays" idiom as play_counts above
 	var base_damage: int = int(pv["damage"])
 	if base_damage > 0:
 		var hit_count := maxi(card.hits, 1)
@@ -963,6 +1000,7 @@ func _begin_round() -> void:
 		ps.ended_turn = false
 		if _mod("rhythm_keeps") <= 0:
 			ps.rhythm = 0  # combo resets each turn (a relic can keep it)
+		ps.cards_played_this_turn = 0  # backlog #67 — a card's "nth_card" question is per-round
 		_resolve_prepared(ps)
 		# Innate (backlog #28): guaranteed in the opening hand of the fight —
 		# only round 1, before the normal draw, so it never displaces a card
