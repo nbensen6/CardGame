@@ -381,7 +381,7 @@ Ordered. Source in brackets.
   from exists. *Done when:* a peer that drops can rejoin the same run and
   receive a correct snapshot, and a test drops and restores one mid-fight.
 
-- [ ] **52. Potions across the whole effect range** `cloud-safe` — ten potions
+- [x] **52. Potions across the whole effect range** `cloud-safe` — ten potions
   covering five effects, two of each, which is a ladder rather than a choice:
   the big one is always better than the small one. Potions should do things
   cards cannot — remove a debuff, refill grip, move you up the beast, hit every
@@ -720,6 +720,39 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-26** — #52 Potions across the whole effect range: the ten
+  existing potions were exactly five effects times a small/large pair
+  (`heal`/`block`/`strength`/`energy`/`draw`), which the item itself named as
+  "a ladder rather than a choice." Rather than just tacking more size tiers
+  onto the same five, gave each of them a THIRD option that's a co-op choice
+  instead of a bigger number: `heal_ally`/`block_ally`/`energy_ally`/
+  `strength_ally`/`draw_ally`, the same `ally_index()` hand-off `ally_block`/
+  `ally_energy`/`ally_heal` cards already use — so every one of the five old
+  effects now has a real decision (help yourself or your ally) rather than
+  "which number is bigger," and none of them is a bare pair anymore. Then
+  added two effects no card can reach at all: `climb` (Foothold gained
+  directly, no card slot, no energy, no timing — Grapple Tonic) and
+  `strip_ward` (spends the TITAN's own Artifact stacks directly — Corrosive
+  Oil — rather than needing a debuff card that Artifact would just shrug off
+  one of; justified against `frost_sentinel`'s seeded `artifact: 2`). All
+  seven new effects route through `Combat.use_potion`'s existing generic
+  `{effect, value}` match — no per-potion special case, same shape the five
+  original effects already used. 17 potions total now (was 10), 7 effect
+  families (was 5). Did NOT touch the five existing potions' own values —
+  changing those would be re-numbering an already-tuned economy, which reads
+  as the balance-tuning the standing rule forbids; the new third option is
+  content, not a retune. `_test_potions_all_load`'s `known_effects` allowlist
+  was hardcoded to the original five and would have silently failed every new
+  potion as "unknown effect" — extended it rather than leaving it stale, since
+  that's exactly the kind of drifted test #16/#54 exist to catch. One new
+  test, `_test_use_potion_ally_and_beast_effects`, covers all seven: each
+  `_ally` effect lands on the ALLY and not the drinker, `climb` moves Height
+  with no card/energy and is still capped at `FOOTHOLD_MAX`, and `strip_ward`
+  spends Artifact down to (and never below) zero. `run_tests.gd`: all green.
+  `tools/cardlab/build.js` doesn't exist in this checkout (Node module not
+  found) so it wasn't run as a smoke check this round — not one of the three
+  required test commands, so not a blocker.
 
 - **2026-08-25** — #51 A dropped hunter can come back: `GameHost._on_peer_left`
   already paused the run and remembered `_disconnected_slot`, but it never
