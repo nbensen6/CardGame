@@ -574,6 +574,20 @@ func _render_over(s: Dictionary, phase: String) -> void:
 		get_tree().change_scene_to_file("res://views/menu.tscn")))
 
 
+## How wide one hunter card can be, given how many there are and how much room.
+##
+## Clamped BELOW as well as above: past a point a narrower card just wraps its
+## description into a column of single words, which is worse than swiping.
+func _roster_card_width(count: int) -> float:
+	# This view is a Node3D, so there is no get_viewport_rect() on self — the
+	# viewport's visible rect is already in the same scaled space Controls
+	# lay out in, which is what the cards are measured against.
+	var wide: float = get_viewport().get_visible_rect().size.x
+	var room: float = wide - 40.0 - 10.0 * float(maxi(count - 1, 0))
+	var floor_w := 168.0 if Screen.is_handheld() else 190.0
+	return clampf(room / float(maxi(count, 1)), floor_w, 268.0)
+
+
 func _button(text: String, on_press: Callable) -> Button:
 	var b := Button.new()
 	b.text = text
@@ -606,6 +620,23 @@ func _render_select(s: Dictionary) -> void:
 		if joined < required else "Nobody climbs this alone. Pick who you'll be."
 	_clear_ui()
 	_show_roster(roster)
+	# The roster SCROLLS sideways rather than trusting it to fit.
+	#
+	# It used to be a plain row of 268px buttons. Four of those already
+	# overflowed a 1280 desktop; when the cloud added a fifth hunter nothing
+	# complained, and on a phone — where the interface runs at about 519 logical
+	# pixels wide — two of the five were sliced off at the edges and could be
+	# neither read nor reliably tapped. A row that MUST fit is a row that breaks
+	# the next time someone adds a character.
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.custom_minimum_size = Vector2(0, 104)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	scroll.add_child(row)
+	_controls.add_child(scroll)
 	for i in range(roster.size()):
 		var c: Dictionary = roster[i]
 		var id := String(c.get("id", ""))
@@ -613,9 +644,13 @@ func _render_select(s: Dictionary) -> void:
 			func() -> void:
 				Sfx.play("lock")
 				_client.select_character(id, slot if solo else -1))
-		b.custom_minimum_size = Vector2(268, 96)
+		# Fit the row to the space there IS, down to a floor where the text stops
+		# being readable — below that it scrolls instead of shrinking further. So a
+		# desktop shows all five and a phone shows three and a bit, and neither has
+		# to know how many hunters exist.
+		b.custom_minimum_size = Vector2(_roster_card_width(roster.size()), 96)
 		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		_controls.add_child(b)
+		row.add_child(b)
 
 
 ## Line the whole roster up on the plot, so the buttons below name bodies you
