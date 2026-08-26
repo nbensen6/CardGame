@@ -84,6 +84,15 @@ var buffer: int         # Buffer gained by the player: a hit that gets past Bloc
 var plated_armour: int  # Plated Armour gained by the player: persistent Block that survives the
                          # round reset instead of being wiped, decaying only when a hit still gets
                          # HP through despite it (backlog #61)
+var discard: int        # discards this many random cards from your OWN hand as this card
+                         # resolves — the discard pile stops being fed only by end-of-turn
+                         # cleanup and becomes something a card can spend on purpose (backlog #62)
+var damage_per_discarded: int  # bonus damage per card currently in your discard pile this
+                                # fight — reads the pile size the way damage_per_exhausted
+                                # reads the exhaust pile, so a filler/discard card feeds it for
+                                # free without either field knowing about the other (backlog #62)
+var block_per_discarded: int   # bonus Block per card currently in your discard pile this fight
+                                # (backlog #62)
 
 static func from_dict(d: Dictionary) -> Card:
 	var c := Card.new()
@@ -153,6 +162,9 @@ static func from_dict(d: Dictionary) -> Card:
 	c.intangible = int(d.get("intangible", 0))
 	c.buffer = int(d.get("buffer", 0))
 	c.plated_armour = int(d.get("plated_armour", 0))
+	c.discard = int(d.get("discard", 0))
+	c.damage_per_discarded = int(d.get("damage_per_discarded", 0))
+	c.block_per_discarded = int(d.get("block_per_discarded", 0))
 	return c
 
 
@@ -188,6 +200,8 @@ func to_dict() -> Dictionary:
 		"power_effect": power_effect, "power_value": power_value,
 		"scry": scry,
 		"intangible": intangible, "buffer": buffer, "plated_armour": plated_armour,
+		"discard": discard, "damage_per_discarded": damage_per_discarded,
+		"block_per_discarded": block_per_discarded,
 	}
 
 
@@ -211,7 +225,8 @@ func upgraded_copy() -> Card:
 			"damage_per_exhausted", "block_per_exhausted",
 			"damage_per_x", "block_per_x", "frail", "thorns",
 			"light_gain", "damage_per_light", "ally_heal", "power_value", "scry",
-			"intangible", "buffer", "plated_armour"]:
+			"intangible", "buffer", "plated_armour",
+			"damage_per_discarded", "block_per_discarded"]:
 		if int(d[key]) > 0:
 			d[key] = int(d[key]) + 1
 			bumped = true

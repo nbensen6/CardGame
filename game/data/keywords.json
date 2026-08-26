@@ -137,6 +137,10 @@
       "name": "Scry",
       "text": "Look at the top cards of your draw pile and bin any of them — your ally sees the reveal too. Whatever you keep stays on top, in the same order."
     },
+    "discard": {
+      "name": "Discard",
+      "text": "Sends cards straight to your discard pile without playing them. Some cards get stronger for every card sitting in your discard pile — including the ones your hand loses at the end of every turn, not just ones you discarded on purpose."
+    },
 
     "_comment_moves": "Below: the beast's telegraphed moves. Same vocabulary rules as the cards — the intent tag NAMES the move and prints its number, and the explanation lives here, one right-click away. Ids match the move `type` in bosses.json. Added 2026-08-16: the tag had started explaining itself inline ('Sweep 8 — hits you both'), which is the card-text problem all over again.",
 

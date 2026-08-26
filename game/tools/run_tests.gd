@@ -292,6 +292,13 @@ func _init() -> void:
 	_test_plated_armour_persists_the_round_reset()
 	_test_plated_armour_decays_only_when_a_hit_gets_hp_through()
 	_test_intangible_buffer_plated_armour_persist_through_save()
+	# Cards that reward discarding (backlog #62)
+	_test_discard_field_sends_cards_to_the_discard_pile()
+	_test_discard_stops_early_when_hand_is_short()
+	_test_damage_per_discarded_scales_with_pile_size()
+	_test_block_per_discarded_scales_with_pile_size()
+	_test_cull_the_deck_does_not_count_its_own_forced_discard()
+	_test_discard_and_scaling_cards_survive_mid_combat_save_and_load()
 	# characters (per-player climb + signature passives)
 	_test_frog_climb_bonus()
 	_test_vine_lifts_ally()
@@ -4479,6 +4486,115 @@ func _test_intangible_buffer_plated_armour_persist_through_save() -> void:
 	_expect(bc != null and bc.players[0].combatant.intangible == 2
 			and bc.players[0].combatant.buffer == 1 and bc.players[0].combatant.plated_armour == 3,
 		"Intangible/Buffer/Plated Armour survive a mid-fight save and load")
+
+
+# --- Cards that reward discarding (backlog #62) ----------------------------
+
+func _quick_purge() -> Card:
+	return Card.from_dict({"id": "quick_purge", "name": "Quick Purge", "type": "skill", "cost": 0, "discard": 2, "draw": 1, "target": "self"})
+func _trash_strike() -> Card:
+	return Card.from_dict({"id": "trash_strike", "name": "Trash Strike", "type": "attack", "cost": 1, "damage": 2, "damage_per_discarded": 1, "target": "enemy"})
+func _refuse_wall() -> Card:
+	return Card.from_dict({"id": "refuse_wall", "name": "Refuse Wall", "type": "skill", "cost": 1, "block": 2, "block_per_discarded": 1, "target": "self"})
+func _cull_the_deck() -> Card:
+	return Card.from_dict({"id": "cull_the_deck", "name": "Cull the Deck", "type": "attack", "cost": 1, "discard": 1, "damage": 3, "damage_per_discarded": 1, "target": "enemy"})
+func _landfill() -> Card:
+	return Card.from_dict({"id": "landfill", "name": "Landfill", "type": "skill", "cost": 2, "discard": 1, "block": 3, "block_per_discarded": 2, "target": "self"})
+
+
+## Quick Purge discards 2 random cards from what's left of the hand (the card
+## being played is already removed before this fires) and draws 1. Proves
+## `discard` is an action a card can trigger on purpose, not just a side
+## effect of ending a turn.
+func _test_discard_field_sends_cards_to_the_discard_pile() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_quick_purge(), _slash(), _slash(), _slash()]
+	var discard_before := ps.discard_pile.size()
+	combat.play_card(0, 0)
+	# Quick Purge itself (an ordinary skill card) lands in the discard pile
+	# too, so the pile grows by 3: itself plus the 2 it forces out.
+	_expect(ps.discard_pile.size() == discard_before + 3,
+		"Quick Purge itself plus 2 forced discards land in the discard pile")
+	_expect(ps.hand.size() == 2,
+		"3 cards remained after Quick Purge was played, minus 2 discarded, plus 1 drawn")
+
+
+## A forced discard must never crash or over-discard when the hand runs out
+## first — it stops at whatever is actually there instead of failing the play.
+func _test_discard_stops_early_when_hand_is_short() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_quick_purge()]  # nothing left in hand once Quick Purge itself is removed to be played
+	var discard_before := ps.discard_pile.size()
+	combat.play_card(0, 0)
+	_expect(ps.discard_pile.size() == discard_before + 1,
+		"with nothing left in hand, only the played card itself reaches the discard pile")
+	_expect(ps.hand.size() == 1,
+		"the draw still refills the hand even though the discard had nothing left to take")
+
+
+## The payoff half: damage_per_discarded reads the discard pile's CURRENT
+## size, which by now includes the card being played itself — an ordinary
+## card is routed into the discard pile before preview() runs (unlike
+## exhaust_pick, whose sacrifice resolves later in play_card).
+func _test_damage_per_discarded_scales_with_pile_size() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.discard_pile = [_slash(), _slash()]  # 2 already sitting in the pile
+	ps.hand = [_trash_strike()]
+	var boss_hp := combat.boss.hp
+	combat.play_card(0, 0)
+	_expect(boss_hp - combat.boss.hp == 5,
+		"Trash Strike counts the pile including itself once played: 2 base + 1*3 = 5")
+
+
+func _test_block_per_discarded_scales_with_pile_size() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.discard_pile = [_slash()]  # 1 already sitting in the pile
+	ps.hand = [_refuse_wall()]
+	combat.play_card(0, 0)
+	_expect(ps.combatant.block == 4,
+		"Refuse Wall counts the pile including itself once played: 2 base + 1*2 = 4")
+
+
+## Cull the Deck both scales off the discard pile AND forces one more card out
+## of hand via its own `discard` field. The forced discard resolves LATER in
+## play_card (after preview() already read the pile), so it must not also pay
+## into this same play's own bonus — the same "counts only earlier plays"
+## ordering damage_per_exhausted's Detonator test guards against.
+func _test_cull_the_deck_does_not_count_its_own_forced_discard() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_cull_the_deck(), _slash()]
+	var before: int = combat.boss.hp
+	combat.play_card(0, 0)
+	_expect(before - combat.boss.hp == 4,
+		"Cull the Deck's own bonus counts itself in the pile (3 base + 1*1) but not the card its own discard forces out")
+	_expect(ps.discard_pile.size() == 2,
+		"both Cull the Deck and the card it forced out end up in the discard pile")
+
+
+func _test_discard_and_scaling_cards_survive_mid_combat_save_and_load() -> void:
+	var run := Run.new([_deck_of(_slash, 8), _deck_of(_slash, 8)], ["A", "B"], 77, [{}, {}], 0)
+	run.start()
+	_step_into_combat(run)
+	var combat: Combat = run.combat
+	combat.players[0].hand = [_trash_strike(), _cull_the_deck()]
+	combat.players[0].discard_pile = [_slash(), _landfill()]
+
+	RunSave.clear()
+	RunSave.save(run)
+	var back := RunSave.load_run()
+	var bc: Combat = back.combat if back != null else null
+	var restored_hand: Array = bc.players[0].hand if bc != null else []
+	var restored_discard: Array = bc.players[0].discard_pile if bc != null else []
+	_expect(bc != null and restored_hand.size() == 2 and restored_discard.size() == 2,
+		"hand and discard pile sizes survive a mid-fight save and load")
+	_expect(bc != null and (restored_hand[0] as Card).damage_per_discarded == 1
+			and (restored_discard[1] as Card).block_per_discarded == 2,
+		"the discard/damage_per_discarded/block_per_discarded fields survive the round trip")
 
 
 # --- Characters (per-player climb + signature passives) -------------------

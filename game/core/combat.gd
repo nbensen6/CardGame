@@ -315,6 +315,9 @@ func _meld_cards(a: Card, b: Card) -> Card:
 			"intangible": a.intangible + b.intangible,
 			"buffer": a.buffer + b.buffer,
 			"plated_armour": a.plated_armour + b.plated_armour,
+			"discard": a.discard + b.discard,
+			"damage_per_discarded": a.damage_per_discarded + b.damage_per_discarded,
+			"block_per_discarded": a.block_per_discarded + b.block_per_discarded,
 		"hits": maxi(a.hits, b.hits),
 		"draw": a.draw + b.draw,
 		"icon": a.icon if a.icon != "" else b.icon,
@@ -383,6 +386,9 @@ func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PER
 	if hit:
 		scale = 1.0 if quality >= TIMING_PERFECT else (TIMING_GOOD_SCALE if quality >= TIMING_GOOD else 0.0)
 	var exhausted := ps.exhaust_pile.size()
+	var discarded := ps.discard_pile.size()  # backlog #62 — read BEFORE this play's own
+	# effects (including its own `discard`, resolved later in play_card) touch the pile,
+	# same "counts only earlier plays" idiom damage_per_exhausted already uses.
 	var prior := int(ps.play_counts.get(card.id, 0))
 	var x := x_spent if x_spent >= 0 else (ps.energy if card.cost == -1 else 0)
 
@@ -391,14 +397,14 @@ func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PER
 		+ card.damage_per_wound * boss.wound \
 		+ card.damage_per_ally_foothold * int(mate.foothold) \
 		+ card.damage_per_exhausted * exhausted + card.damage_per_x * x \
-		+ card.damage_per_light * ps.light
+		+ card.damage_per_light * ps.light + card.damage_per_discarded * discarded
 	if hit:
 		dmg += int(card.timed_damage * scale)
 	if card.type == "attack":  # buffs lift real attacks, not incidental scaling
 		dmg += _attack_bonus + ps.strength + ps.char_attack_bonus
 
 	var blk := card.block + card.block_per_play * prior + card.block_per_exhausted * exhausted \
-		+ card.block_per_x * x
+		+ card.block_per_x * x + card.block_per_discarded * discarded
 	if hit:
 		blk += int(card.timed_block * scale)
 	var ally_blk := card.ally_block + (int(card.timed_ally_block * scale) if hit else 0)
@@ -678,6 +684,14 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	if card.taunt:
 		_forced_target = pi
 		_log("%s plays %s — draws %s's aggro." % [who, card.name, boss.name])
+	if card.discard > 0:  # backlog #62 — random (no picker: this is engine-only, cloud-safe
+		# work with no screen to build a hand-picker on; a targeted version is a needs-a-screen
+		# follow-up the same way exhaust_pick's face waited on one). Resolved BEFORE `draw`
+		# below so a card that both discards and draws (Quick Purge) doesn't risk tossing the
+		# very card it just drew — discard from what you're already holding, then refill.
+		var tossed := _discard_random(ps, card.discard)
+		if tossed > 0:
+			_log("%s plays %s — discards %d card(s)." % [who, card.name, tossed])
 	if card.draw > 0:
 		_draw(ps, card.draw)
 		_log("%s plays %s — draw %d." % [who, card.name, card.draw])
@@ -689,7 +703,6 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		ps.scry_pending = _peek_top(ps, card.scry)
 		if not ps.scry_pending.is_empty():
 			_log("%s plays %s — scries the top %d." % [who, card.name, ps.scry_pending.size()])
-
 	if card.rhythm > 0:
 		ps.rhythm += card.rhythm
 		_log("%s plays %s — +%d Rhythm." % [who, card.name, card.rhythm])
@@ -1054,6 +1067,22 @@ func _draw(ps: PlayerState, n: int) -> void:
 			ps.discard_pile.clear()
 			_shuffle(ps.draw_pile)
 		ps.hand.append(ps.draw_pile.pop_back())
+
+## Backlog #62 (discard as a cost): throw `n` random cards from hand into the
+## discard pile — through `_rng` so it stays deterministic under a seed the
+## same as `_shuffle`, since a card-picker UI is a needs-a-screen follow-up
+## this engine-only pass can't build. Stops early if the hand runs out rather
+## than failing the whole play. Returns how many actually went, for the log.
+func _discard_random(ps: PlayerState, n: int) -> int:
+	var tossed := 0
+	for _i in n:
+		if ps.hand.is_empty():
+			break
+		var idx := _rng.randi_range(0, ps.hand.size() - 1)
+		ps.discard_pile.append(ps.hand[idx])
+		ps.hand.remove_at(idx)
+		tossed += 1
+	return tossed
 
 ## Backlog #59 (Scry): lift up to `n` cards off the TOP of the draw pile (same
 ## end the deck draws from, reshuffling the discard pile in exactly like _draw

@@ -586,6 +586,8 @@ func _keywords_of(c: Card) -> Array:
 		ids.append("power")
 	if c.scry > 0:
 		ids.append("scry")
+	if c.discard > 0 or c.damage_per_discarded > 0 or c.block_per_discarded > 0:
+		ids.append("discard")
 	var out: Array = []
 	for id in ids:
 		var k := Content.keyword(String(id))
@@ -672,11 +674,11 @@ func _card_icon(c: Card) -> String:
 		return "shield"
 	if c.intangible > 0 or c.buffer > 0 or c.plated_armour > 0:
 		return "shield"
-	if c.draw > 0 or c.scry > 0:
+	if c.draw > 0 or c.scry > 0 or c.discard > 0:
 		return "draw"
-	if c.damage > 0:
+	if c.damage > 0 or c.damage_per_discarded > 0:
 		return "sword"
-	if c.block > 0 or c.block_per_play > 0:
+	if c.block > 0 or c.block_per_play > 0 or c.block_per_discarded > 0:
 		return "shield"
 	return ""
 

@@ -466,7 +466,7 @@ something Slay the Spire leans on hard and we do not have at all.
   one turn" is a real decision we cannot currently express. *Done when:* all
   three exist, interact correctly with Block and Thorns, and are tested.
 
-- [ ] **62. Cards that reward discarding** `cloud-safe` — the discard archetype
+- [x] **62. Cards that reward discarding** `cloud-safe` — the discard archetype
   turns a cost into a resource. We have a discard pile that nothing reads.
   *Done when:* discarding is something a card can do on purpose, at least four
   cards pay off for it, and it is tested.
@@ -738,6 +738,52 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-26** — #62 Cards that reward discarding: next `cloud-safe` item in
+  queue order after #61 (the `needs a screen` items still ahead of it in the
+  file — 2, 3, 8, 25, 29b, 32, 31b — stay skipped for the same reason prior
+  sessions gave, and #55 stays untouched, still blocked on Blender per its own
+  note). Two `Card` fields do the whole thing: `discard` (the ACTION — throws
+  N random cards from hand into the discard pile as the card resolves) and
+  `damage_per_discarded`/`block_per_discarded` (the PAYOFF — scale off
+  `ps.discard_pile.size()`, read the same place/way `damage_per_exhausted`
+  already reads the exhaust pile). No hand-picker for `discard`: choosing
+  which card to toss needs a UI the cloud routine can't build blind, so it's
+  random, through `_rng` for determinism, same as `_shuffle`; a targeted
+  version is a `needs a screen` follow-up if Nick wants one, same shape as
+  `exhaust_pick`'s own history. One thing this surfaced that wasn't obvious
+  going in: an ordinary (non-power, non-self-exhaust) card is routed into its
+  owner's discard pile BEFORE `preview()` reads the pile's size — unlike
+  `exhaust_pick`, whose sacrifice resolves LATER in `play_card`. So every
+  `damage_per_discarded`/`block_per_discarded` card counts *itself* in its own
+  bonus the instant it's played (it's already sitting in the pile by the time
+  the number is computed) — confirmed as the actual, intended-reading
+  behaviour by a test, not patched around. What still had to be ordered by
+  hand was `discard` vs. `draw` on the same card: my first pass put the
+  forced discard AFTER the draw, which let Quick Purge (discard 2, draw 1)
+  immediately discard the card it had just drawn — a test caught it
+  (`_test_discard_stops_early_when_hand_is_short` failed with the wrong
+  numbers), and moving `discard` to fire before `draw` fixed it, matching the
+  order printed on the card's own text. Five new cards, all in the global
+  `reward_pool` AND all five characters' own `reward_pool` arrays (the trap
+  every recent log flags): Quick Purge (pure filter — discard 2, draw 1),
+  Trash Strike and Refuse Wall (pure payoff — damage/block scaled by the
+  pile), Cull the Deck and Landfill (both — discard 1 AND scale off the
+  pile). `discard`/`damage_per_discarded`/`block_per_discarded` also went into
+  `upgraded_copy()` (only the two payoff fields bump on sharpen — `discard`
+  itself is a cost, not a number worth making worse), `_meld_cards()`, and a
+  new "discard" keyword in `keywords.json` (`_keywords_of`/`_card_icon` in
+  `game_host.gd` pick it up automatically-checked by the existing reflection
+  test rather than a hand-kept list, so nothing there had to be found by
+  hand). 6 new tests: the action sending cards to the pile, stopping early
+  when the hand runs dry, both payoff fields scaling off pile size, an
+  explicit "doesn't double-count its own forced discard" ordering test
+  (mirrors Detonator's own #57 test for `damage_per_exhausted`), and a
+  mid-fight save/load round trip proving all three new fields survive — no
+  new save-format plumbing needed since `Card.to_dict/from_dict` already
+  carries every field generically and `PlayerState`'s hand/discard_pile were
+  already serialized before this landed. All green (404 total, 0 failing),
+  existing suite untouched.
 
 - **2026-08-26** — #61 Intangible, Buffer and Plated Armour: next `cloud-safe`
   item after #60 in queue order (skipped the `needs a screen` items ahead of

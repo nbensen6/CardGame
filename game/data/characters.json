@@ -85,7 +85,12 @@
         "steady_grip",
         "ghost_step",
         "overhang",
-        "hardshell"
+        "hardshell",
+        "quick_purge",
+        "trash_strike",
+        "refuse_wall",
+        "cull_the_deck",
+        "landfill"
       ]
     },
     "vine_weaver": {
@@ -166,7 +171,12 @@
         "steady_grip",
         "ghost_step",
         "overhang",
-        "hardshell"
+        "hardshell",
+        "quick_purge",
+        "trash_strike",
+        "refuse_wall",
+        "cull_the_deck",
+        "landfill"
       ]
     },
     "mountain_climbers": {
@@ -244,7 +254,12 @@
         "steady_grip",
         "ghost_step",
         "overhang",
-        "hardshell"
+        "hardshell",
+        "quick_purge",
+        "trash_strike",
+        "refuse_wall",
+        "cull_the_deck",
+        "landfill"
       ]
     },
     "goblin_mech": {
@@ -321,7 +336,12 @@
         "steady_grip",
         "ghost_step",
         "overhang",
-        "hardshell"
+        "hardshell",
+        "quick_purge",
+        "trash_strike",
+        "refuse_wall",
+        "cull_the_deck",
+        "landfill"
       ]
     },
     "lightbearer": {
@@ -376,7 +396,12 @@
         "steady_grip",
         "ghost_step",
         "overhang",
-        "hardshell"
+        "hardshell",
+        "quick_purge",
+        "trash_strike",
+        "refuse_wall",
+        "cull_the_deck",
+        "landfill"
       ]
     }
   }
