@@ -358,7 +358,12 @@ func _add_label(pos: Vector3, text: String, big: bool, hex_row: int,
 	var l := Label3D.new()
 	l.text = text
 	l.font_size = 110 if big else 84
-	l.pixel_size = 0.0036
+	# Bigger on a handheld. These are Label3Ds, so they shrink with distance like
+	# everything else in the scene — on a phone the far rows came out about eight
+	# pixels tall and the node names sat on top of each other. A phone is a
+	# five-inch screen, not a small 16:9 one, so the labels have to grow even
+	# though the layout has not changed.
+	l.pixel_size = 0.0047 if Screen.is_handheld() else 0.0036
 	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	l.no_depth_test = true
 	l.outline_size = 26

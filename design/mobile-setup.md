@@ -37,6 +37,46 @@ not one. That cost a round trip on 2026-08-24. The harness now rotates a portrai
 Sizes worth checking, smallest first: `667x375` (iPhone SE), `844x390`
 (iPhone 14), `932x430` (15 Pro Max).
 
+## What the phone layout actually looks like (measured 2026-08-26)
+
+Every screen shot at **667x375 (iPhone SE)** with `mobile`, which is the worst
+case that matters. Two things were broken and are fixed; the rest is listed here
+rather than guessed at.
+
+### Fixed
+
+- **The hunter roster overflowed the screen.** Five buttons at a hard-coded 268px
+  is 1340 logical pixels in an interface that runs about 519 wide on a handheld —
+  two of the five hunters were sliced off at the edges and could be neither read
+  nor tapped. Cards are now sized to the room there is, with a readable floor and
+  a scroll below it. Nothing complained when the fifth hunter was added, because
+  a row that overflows still renders; it renders off the side.
+- **Map labels were about eight pixels tall.** They are Label3Ds and shrink with
+  distance, so a phone got node names that could not be read. Bigger on handheld.
+
+### Still open, in the order I would do them
+
+1. **Map nodes are hard to TAP.** The labels are readable now but the tiles
+   themselves are small, and tapping picks by raycast against the tile. A finger
+   is about 9mm; several nodes are under that. The fix is a design call, because
+   the two options differ: grow the tap target (a bigger invisible collider per
+   node, which keeps the whole act on screen), or zoom in and let the player pan
+   (which needs PAN — dragging currently orbits, so a zoomed-in map cannot be
+   moved around). **This one needs Nick.**
+2. **Card names truncate in the fight hand.** "Tongue S..." — the hand fits five
+   cards across a phone, so each is narrow. Either shorten names, shrink the name
+   font a step on handheld, or let the name wrap to two lines.
+3. **The fight wastes the top third.** The camera frames a fixed slice of world
+   height, so a wide-short viewport gets a lot of empty sky above the beast.
+   Worth pulling the framing down on handheld.
+4. **Nothing has been tried with a real finger.** All of the above is measured
+   off screenshots. Touch works (single-pointer since the start, CLAUDE.md §5),
+   but "works" and "feels right" are different claims and only a phone settles
+   the second.
+
+Screens checked and found FINE at SE size: the shop, the campfire, the reward,
+and the fight HUD apart from the card names.
+
 ## What you need to install (about 20 minutes, mostly downloading)
 
 You already have **Java 17**, which is the part people usually get stuck on.
