@@ -91,7 +91,7 @@ func _on_command(peer_id: int, command: Dictionary) -> void:
 			_in_combat_action(ps0, func() -> void:
 				_run.combat.play_card(ps0, int(command.get("index", -1)), bool(command.get("timing", true)),
 					int(command.get("sac", -1)), int(command.get("target", -1)), -1,
-					int(command.get("quality", Combat.TIMING_PERFECT))))
+					int(command.get("quality", Combat.TIMING_PERFECT)), int(command.get("enemy", -1))))
 		"end_turn":
 			var ps1 := _acting_slot(peer_id, command)
 			_in_combat_action(ps1, func() -> void:
@@ -327,13 +327,21 @@ func _build_shared() -> Dictionary:
 	if _run.phase == Run.Phase.COMBAT:
 		var c: Combat = _run.combat
 		var b: Boss = c.boss
+		# backlog #63: secondary "adds" alongside the boss, if this beast has
+		# any — public the same way the rest of the boss dict already is
+		# (there's nothing PRIVATE about an enemy combatant).
+		var add_views: Array = []
+		for add_v in c.adds:
+			var av: Boss = add_v
+			add_views.append({"id": av.id, "name": av.name, "hp": av.hp,
+				"max_hp": av.max_hp, "block": av.block, "art": av.art})
 		s["boss"] = {
 			"id": b.id, "name": b.name, "hp": b.hp, "max_hp": b.max_hp, "block": b.block,
 			"intent": b.current_move(c.boss_context()), "target": c.boss_target_index(),
 			"vulnerable": b.vulnerable, "strength": b.strength, "wound": b.wound,
 			"weak_point_height": b.weak_point_height, "foothold_max": Combat.FOOTHOLD_MAX,
 			"ledges": b.ledges, "weak_point_threshold": b.weak_point_threshold,
-			"art": b.art,
+			"art": b.art, "adds": add_views,
 		}
 		s["round"] = c.round_num
 		s["base_energy"] = Combat.BASE_ENERGY
@@ -588,6 +596,8 @@ func _keywords_of(c: Card) -> Array:
 		ids.append("scry")
 	if c.discard > 0 or c.damage_per_discarded > 0 or c.block_per_discarded > 0:
 		ids.append("discard")
+	if c.hits_all_enemies:
+		ids.append("cleave")
 	var out: Array = []
 	for id in ids:
 		var k := Content.keyword(String(id))

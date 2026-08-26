@@ -63,6 +63,15 @@ const TIMING_GOOD_SCALE := 0.5  # a "good" (not dead-centre) hit pays half the t
 
 var players: Array = []  # Array[PlayerState], index = player slot
 var boss: Boss
+# backlog #63: secondary enemies alongside the boss — "adds" clinging to the
+# beast (a parasite, a guardian on a hold). Real Boss instances (Boss extends
+# Combatant, so take_damage/gain_block/thorns all work for free) built from
+# the boss's own "adds" data (Content.build_boss_adds) — deliberately NOT
+# separate bosses.json top-level entries, so they carry no art-coverage
+# requirement (Content.boss_ids() only walks top-level keys) and no beast
+# pool/move-pattern requirement either. Empty for every beast that doesn't
+# define any, so every existing single-boss fight is unaffected.
+var adds: Array = []  # Array[Boss]
 var round_num: int = 1
 var phase: int = Phase.PLAYERS
 var log: Array = []
@@ -103,6 +112,7 @@ func _init(decks: Array, combatants: Array, p_boss: Boss, seed_value: int = 0,
 	_on(MOMENT_TURN_END, Callable(self, "_handle_power_effects"))
 	_on(MOMENT_CARD_PLAYED, Callable(self, "_handle_timed_rhythm"))
 	boss = p_boss
+	adds = Content.build_boss_adds(boss.id)  # backlog #63 — [] unless the beast's own data defines any
 	_energy_bonus = energy_bonus
 	_attack_bonus = attack_bonus
 	_round_block = round_block
@@ -320,6 +330,7 @@ func _meld_cards(a: Card, b: Card) -> Card:
 			"block_per_discarded": a.block_per_discarded + b.block_per_discarded,
 		"hits": maxi(a.hits, b.hits),
 		"draw": a.draw + b.draw,
+		"hits_all_enemies": a.hits_all_enemies or b.hits_all_enemies,
 		"icon": a.icon if a.icon != "" else b.icon,
 		"target": "enemy",
 		"text": "%s  +  %s" % [a.text, b.text],
@@ -377,6 +388,13 @@ func is_over() -> bool:
 ## explicitly instead, since by the time it previews the resolved play it has
 ## already spent that energy down to zero. Cards that aren't X-cost never set
 ## `damage_per_x`/`block_per_x`, so this is a no-op for them either way.
+##
+## The damage NUMBER never depends on which enemy it will land on (backlog
+## #63 — same as Slay-the-Spire: a card doesn't do less to an add than to the
+## boss). `damage_per_vulnerable`/`damage_per_wound` read the main boss's
+## stacks regardless of target; adds don't carry their own in this pass. Who
+## it actually lands on is decided at play time (see `enemy_index` on
+## play_card()), not here.
 func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PERFECT,
 		x_spent: int = -1) -> Dictionary:
 	var ps: PlayerState = players[pi]
@@ -464,8 +482,14 @@ func incoming_for(pi: int) -> Dictionary:
 ## grading; only a caller that threads CardView's graded result through (see
 ## ui/card_view.gd) can land at TIMING_GOOD for a scaled-down bonus. It has no
 ## effect on the fumble check below — `timing_hit` alone still decides that.
+## `enemy_index` (backlog #63) picks a target among `adds` for the card's
+## damage instead of the boss — -1 (every existing caller) keeps hitting the
+## boss exactly as before this param existed. Ignored by a card whose
+## `hits_all_enemies` is set, which always hits the boss AND every living add.
+## This is engine-only: no card face lets a player choose one yet (the picker
+## is a needs-a-screen follow-up, same split item #25 drew for hold-targeting).
 func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, target_index: int = -1,
-		hold_target: int = -1, timing_quality: int = TIMING_PERFECT) -> bool:
+		hold_target: int = -1, timing_quality: int = TIMING_PERFECT, enemy_index: int = -1) -> bool:
 	if not can_play(pi, ci):
 		return false
 	var ps: PlayerState = players[pi]
@@ -533,11 +557,28 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	if base_damage > 0:
 		var hit_count := maxi(card.hits, 1)
 		var dealt := 0
+		# backlog #63: hits_all_enemies (Cleave) always hits the boss AND every
+		# living add, ignoring enemy_index entirely — it's not a choice. A plain
+		# enemy_index in range redirects the hit to that add instead of the
+		# boss; out of range (including the default -1) hits the boss, exactly
+		# as every card behaved before adds existed.
+		var valid_add := enemy_index >= 0 and enemy_index < adds.size() \
+			and not (adds[enemy_index] as Boss).is_dead()
 		for _h in hit_count:
-			dealt += _damage_boss(base_damage, pi)
+			if card.hits_all_enemies:
+				dealt += _damage_boss(base_damage, pi)
+				for ai in range(adds.size()):
+					dealt += _damage_add(ai, base_damage, pi)
+			elif valid_add:
+				dealt += _damage_add(enemy_index, base_damage, pi)
+			else:
+				dealt += _damage_boss(base_damage, pi)
 		var times := "" if hit_count == 1 else " x%d" % hit_count
+		# The weak-point flavour only ever describes the BOSS's own sigil — a
+		# hit that (also) lands on an add would otherwise print a misleading
+		# "armored" line about a target the add doesn't have.
 		var flavour := ""
-		if boss.weak_point_height > 0:
+		if boss.weak_point_height > 0 and not valid_add:
 			flavour = "  (weak point!)" if sigil_reached(pi) else "  (ARMORED — climb to the weak point!)"
 		_log("%s plays %s — %d damage%s%s." % [who, card.name, dealt, times, flavour])
 	if card.strength > 0:
@@ -804,6 +845,25 @@ func _damage_boss(amount: int, pi: int) -> int:
 	_fire(MOMENT_DAMAGE_TAKEN, {"target": boss, "amount": dealt, "player_index": pi})
 	return dealt
 
+## Deal card damage to one of the boss's adds (backlog #63). Deliberately
+## flat — no weak point, no armored-hide chip, no Vulnerable bonus: adds are
+## small secondary threats, not a second climb, so they don't carry the
+## boss's own sigil mechanics. Returns the actual damage dealt (0 if the
+## index is out of range or the add is already down, so a caller doesn't
+## have to check first).
+func _damage_add(idx: int, amount: int, pi: int) -> int:
+	if idx < 0 or idx >= adds.size():
+		return 0
+	var add: Boss = adds[idx]
+	if add.is_dead():
+		return 0
+	add.take_damage(amount)
+	damage_dealt_total += amount
+	_fire(MOMENT_DAMAGE_TAKEN, {"target": add, "amount": amount, "player_index": pi})
+	if add.is_dead():
+		_log("%s falls." % add.name)
+	return amount
+
 ## Player pi ends their turn. When every player has ended, the boss acts.
 func end_turn(pi: int) -> void:
 	if phase != Phase.PLAYERS:
@@ -959,12 +1019,17 @@ func boss_context() -> Dictionary:
 ## not the sigil-fatigue/height-split limiter chip — since those are the hunter
 ## hurting themselves, not the beast striking them, and Thorns has nothing to
 ## answer there.
-func _boss_hits(ps: PlayerState, dmg: int) -> void:
+## `attacker` (backlog #63) is who Thorns bites back at — null (every existing
+## caller) means the boss itself, exactly as before this param existed; an add's
+## own attack (see _adds_turn()) passes itself so Thorns reflects onto the add
+## that actually landed the hit, not the main boss standing next to it.
+func _boss_hits(ps: PlayerState, dmg: int, attacker: Combatant = null) -> void:
+	var atk: Combatant = attacker if attacker != null else boss
 	ps.combatant.take_damage(dmg)
 	_fire(MOMENT_DAMAGE_TAKEN, {"target": ps, "amount": dmg, "from_boss": true})
 	if ps.combatant.thorns > 0:
-		boss.take_damage(ps.combatant.thorns)
-		_log("%s's thorns bite back — %s takes %d." % [ps.combatant.name, boss.name, ps.combatant.thorns])
+		atk.take_damage(ps.combatant.thorns)
+		_log("%s's thorns bite back — %s takes %d." % [ps.combatant.name, atk.name, ps.combatant.thorns])
 
 func _enemy_turn() -> void:
 	phase = Phase.ENEMY
@@ -1052,11 +1117,37 @@ func _enemy_turn() -> void:
 			_log("%s defends (+%d block)." % [boss.name, value])
 		_:
 			_log("%s hesitates." % boss.name)
+	_adds_turn()
 	boss.advance_move()
 	if _check_end():
 		return
 	round_num += 1
 	_begin_round()
+
+## backlog #63: each living add acts after the boss, on its own move pattern
+## (a real Boss, so current_move()/advance_move() already work). Deliberately
+## thin — only "attack" (at the same hunter the boss is currently targeting)
+## and "block" are handled; an add is a small secondary threat, not a second
+## full beast with the whole move vocabulary.
+func _adds_turn() -> void:
+	for add_v in adds:
+		var add: Boss = add_v
+		if add.is_dead():
+			continue
+		add.block = add.plated_armour  # reseeded each round, same as the boss's own reset above
+		var move := add.current_move()
+		var value := int(move.get("value", 0))
+		match String(move.get("type", "")):
+			"attack":
+				var target: PlayerState = players[boss_target_index()]
+				_boss_hits(target, value, add)
+				_log("%s attacks %s for %d." % [add.name, target.combatant.name, value])
+			"block":
+				add.gain_block(value)
+				_log("%s defends (+%d block)." % [add.name, value])
+			_:
+				pass
+		add.advance_move()
 
 func _draw(ps: PlayerState, n: int) -> void:
 	for _i in n:
@@ -1304,8 +1395,11 @@ func to_dict() -> Dictionary:
 	var player_dicts: Array = []
 	for ps in players:
 		player_dicts.append((ps as PlayerState).to_dict())
+	var add_dicts: Array = []
+	for a in adds:
+		add_dicts.append((a as Boss).to_dict())
 	return {
-		"players": player_dicts, "boss": boss.to_dict(),
+		"players": player_dicts, "boss": boss.to_dict(), "adds": add_dicts,
 		"round_num": round_num, "phase": phase, "log": log,
 		"forced_target": _forced_target,
 		"energy_bonus": _energy_bonus, "attack_bonus": _attack_bonus,
@@ -1320,6 +1414,12 @@ func to_dict() -> Dictionary:
 ## its own _init.
 static func from_dict(d: Dictionary) -> Combat:
 	var c := Combat.new([], [], Content.boss_from_dict(d.get("boss", {})))
+	# c.adds was already rebuilt fresh (full HP) inside _init above, from the
+	# same immutable data the boss's own id points at — overlay only the
+	# DYNAMIC per-fight state saved below, same split Boss.apply_dict() uses.
+	var add_dicts: Array = d.get("adds", [])
+	for i in range(mini(c.adds.size(), add_dicts.size())):
+		(c.adds[i] as Boss).apply_dict(add_dicts[i])
 	c.players = []
 	for pd in d.get("players", []):
 		c.players.append(PlayerState.from_dict(pd))

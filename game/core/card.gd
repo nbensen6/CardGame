@@ -93,6 +93,10 @@ var damage_per_discarded: int  # bonus damage per card currently in your discard
                                 # free without either field knowing about the other (backlog #62)
 var block_per_discarded: int   # bonus Block per card currently in your discard pile this fight
                                 # (backlog #62)
+var hits_all_enemies: bool     # deals its damage to the Titan AND every one of its living
+                                # "adds" at once instead of a single target (backlog #63,
+                                # Cleave) — a fight with more than one thing in it needs a
+                                # way to hit all of them without spending a card per target
 
 static func from_dict(d: Dictionary) -> Card:
 	var c := Card.new()
@@ -165,6 +169,7 @@ static func from_dict(d: Dictionary) -> Card:
 	c.discard = int(d.get("discard", 0))
 	c.damage_per_discarded = int(d.get("damage_per_discarded", 0))
 	c.block_per_discarded = int(d.get("block_per_discarded", 0))
+	c.hits_all_enemies = bool(d.get("hits_all_enemies", false))
 	return c
 
 
@@ -202,6 +207,7 @@ func to_dict() -> Dictionary:
 		"intangible": intangible, "buffer": buffer, "plated_armour": plated_armour,
 		"discard": discard, "damage_per_discarded": damage_per_discarded,
 		"block_per_discarded": block_per_discarded,
+		"hits_all_enemies": hits_all_enemies,
 	}
 
 

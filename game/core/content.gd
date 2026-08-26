@@ -321,3 +321,22 @@ static func boss_from_dict(d: Dictionary) -> Boss:
 	var b := build_boss(String(d.get("id", "")))
 	b.apply_dict(d)
 	return b
+
+## backlog #63: the boss's own secondary combatants ("adds" — a parasite, a
+## guardian clinging to a hold), if its data defines any. Deliberately NOT
+## looked up via a top-level bosses.json id: each add is inline data nested
+## under its parent, so it carries no art-coverage requirement (boss_ids()
+## only walks top-level keys) and no beast-pool/move-pattern requirement
+## either — a small, thin secondary threat, not a second full Titan.
+static func build_boss_adds(id: String) -> Array:
+	var bosses: Dictionary = _read_json(BOSSES_PATH).get("bosses", {})
+	var bd: Dictionary = bosses.get(id, {})
+	var out: Array = []
+	for raw in bd.get("adds", []):
+		var ad: Dictionary = raw
+		var a := Boss.new(String(ad.get("name", "Add")), int(ad.get("max_hp", 1)))
+		a.id = String(ad.get("id", ""))
+		a.moves = ad.get("moves", [])
+		a.art = String(ad.get("art", ""))
+		out.append(a)
+	return out

@@ -299,6 +299,19 @@ func _init() -> void:
 	_test_block_per_discarded_scales_with_pile_size()
 	_test_cull_the_deck_does_not_count_its_own_forced_discard()
 	_test_discard_and_scaling_cards_survive_mid_combat_save_and_load()
+	# More than one thing to fight at once (backlog #63)
+	_test_boss_data_can_carry_adds()
+	_test_a_beast_with_no_adds_data_has_none()
+	_test_enemy_index_targets_an_add_not_the_boss()
+	_test_enemy_index_out_of_range_falls_back_to_the_boss()
+	_test_hits_all_enemies_hits_boss_and_every_living_add()
+	_test_hits_all_enemies_skips_a_dead_add()
+	_test_killing_an_add_does_not_end_the_fight()
+	_test_add_acts_on_its_own_turn()
+	_test_add_block_reseeds_each_round_like_the_bosss_own()
+	_test_add_thorns_bites_the_attacking_add_not_the_boss()
+	_test_adds_round_trip_through_save_and_load()
+	_test_adds_reach_the_shared_snapshot()
 	# characters (per-player climb + signature passives)
 	_test_frog_climb_bonus()
 	_test_vine_lifts_ally()
@@ -4595,6 +4608,173 @@ func _test_discard_and_scaling_cards_survive_mid_combat_save_and_load() -> void:
 	_expect(bc != null and (restored_hand[0] as Card).damage_per_discarded == 1
 			and (restored_discard[1] as Card).block_per_discarded == 2,
 		"the discard/damage_per_discarded/block_per_discarded fields survive the round trip")
+
+
+# --- More than one thing to fight at once (backlog #63) --------------------
+
+func _sweeping_strike() -> Card:
+	return Card.from_dict({"id": "sweeping_strike", "name": "Sweeping Strike", "type": "attack",
+		"cost": 2, "damage": 8, "hits_all_enemies": true, "target": "enemy"})
+
+
+## The boss's own "adds" data (a beast that carries some) builds real Boss
+## instances automatically when a Combat starts against it. Proven against
+## real content (the Root Lurker, bosses.json), not a synthetic fixture, so a
+## typo in that data would actually be caught here.
+func _test_boss_data_can_carry_adds() -> void:
+	var adds := Content.build_boss_adds("root_lurker")
+	_expect(adds.size() == 1 and (adds[0] as Boss).name == "Root Tendril"
+			and (adds[0] as Boss).hp == 14,
+		"the Root Lurker's data-defined add is built with its own name and HP")
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, Content.build_boss("root_lurker"))
+	_expect(combat.adds.size() == 1,
+		"starting a Combat against a beast with 'adds' data pulls them in automatically")
+
+
+func _test_a_beast_with_no_adds_data_has_none() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, Content.build_boss("stone_warden"))
+	_expect(combat.adds.is_empty(),
+		"a beast with no 'adds' entry starts a fight with none -- every existing beast is unaffected")
+
+
+## enemy_index is engine-only (no card face lets a player choose one yet) but
+## has to actually route damage correctly for the day one does.
+func _test_enemy_index_targets_an_add_not_the_boss() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Grub", 10)
+	combat.adds.append(add)
+	combat.players[0].hand = [_slash()]
+	combat.play_card(0, 0, true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
+	_expect(add.hp == 4 and boss.hp == 300,
+		"an attack played with enemy_index 0 lands on the add, leaving the boss untouched")
+
+
+func _test_enemy_index_out_of_range_falls_back_to_the_boss() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.players[0].hand = [_slash()]
+	combat.play_card(0, 0, true, -1, -1, -1, Combat.TIMING_PERFECT, 5)  # no such add
+	_expect(boss.hp == 294,
+		"every existing card call -- no adds present, or an out-of-range index -- still hits the boss exactly as before this field existed")
+
+
+func _test_hits_all_enemies_hits_boss_and_every_living_add() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add1 := Boss.new("Grub A", 20)
+	var add2 := Boss.new("Grub B", 20)
+	combat.adds.append(add1)
+	combat.adds.append(add2)
+	combat.players[0].hand = [_sweeping_strike()]
+	combat.play_card(0, 0)
+	_expect(boss.hp == 292 and add1.hp == 12 and add2.hp == 12,
+		"a hits_all_enemies card damages the boss and every living add for the same amount")
+
+
+func _test_hits_all_enemies_skips_a_dead_add() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var dead_add := Boss.new("Grub", 5)
+	dead_add.hp = 0
+	var living_add := Boss.new("Grub 2", 20)
+	combat.adds.append(dead_add)
+	combat.adds.append(living_add)
+	combat.players[0].hand = [_sweeping_strike()]
+	combat.play_card(0, 0)
+	_expect(living_add.hp == 12 and dead_add.hp == 0,
+		"a hits_all_enemies card never revives a dead add or logs damage for one")
+
+
+func _test_killing_an_add_does_not_end_the_fight() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Grub", 6)
+	combat.adds.append(add)
+	combat.players[0].hand = [_slash()]
+	combat.play_card(0, 0, true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
+	_expect(add.is_dead() and combat.result() == Combat.Result.ONGOING,
+		"an add dying doesn't end the fight -- only the boss's own death does")
+
+
+## A living add acts on its own move pattern after the boss, using the same
+## Boss.current_move()/advance_move() machinery -- a real (if thin) second
+## thing to fight, not just an extra HP bar to poke at.
+func _test_add_acts_on_its_own_turn() -> void:
+	var boss := _dummy_boss(300, 0)  # 0-damage boss isolates the add's own hit
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Grub", 30)
+	add.moves = [{"type": "attack", "value": 5}]
+	combat.adds.append(add)
+	var hp_before: int = combat.players[0].combatant.hp
+	combat.end_turn(0)
+	combat.end_turn(1)
+	_expect(combat.players[0].combatant.hp == hp_before - 5,
+		"a living add attacks on the beast's own turn, using its own move pattern")
+
+
+func _test_add_block_reseeds_each_round_like_the_bosss_own() -> void:
+	var boss := _dummy_boss(300, 0)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Grub", 30)
+	add.moves = [{"type": "block", "value": 6}]
+	combat.adds.append(add)
+	combat.end_turn(0)
+	combat.end_turn(1)
+	_expect(add.block == 6, "an add's own 'block' move grants it Block the same way the boss's does")
+	combat.end_turn(0)
+	combat.end_turn(1)
+	_expect(add.block == 6,
+		"the add's Block is reseeded (not stacked) each round -- the same reset the boss's own Block gets")
+
+
+func _test_add_thorns_bites_the_attacking_add_not_the_boss() -> void:
+	var boss := _dummy_boss(300, 0)
+	# A bare "attack" move (even for 0) still calls _boss_hits() and would
+	# reflect this same Thorns onto the MAIN boss too, muddying the isolation
+	# this test wants -- give it a "block" move instead so only the add's own
+	# attack (via _adds_turn()) ever calls _boss_hits() this round.
+	boss.moves = [{"type": "block", "value": 0}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Grub", 30)
+	add.moves = [{"type": "attack", "value": 5}]
+	combat.adds.append(add)
+	combat.players[0].combatant.thorns = 3
+	combat.end_turn(0)
+	combat.end_turn(1)
+	_expect(add.hp == 27 and boss.hp == 300,
+		"Thorns on the hunter an add hit reflects onto the ADD that hit them, not the main boss standing next to it")
+
+
+func _test_adds_round_trip_through_save_and_load() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, Content.build_boss("root_lurker"))
+	_expect(combat.adds.size() == 1, "sanity: the Root Lurker starts with its one add")
+	var add: Boss = combat.adds[0]
+	add.hp -= 5
+	add.block = 2
+	var d := combat.to_dict()
+	var restored := Combat.from_dict(d)
+	_expect(restored.adds.size() == 1 and (restored.adds[0] as Boss).hp == add.hp
+			and (restored.adds[0] as Boss).block == 2,
+		"an add's dynamic state (HP, Block) survives a save/load round trip")
+
+
+## Backlog #45's own concern applied to this item: a field that exists on the
+## host and never reaches a peer is exactly the kind of bug this whole item
+## could introduce without a boundary test.
+func _test_adds_reach_the_shared_snapshot() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var add := Boss.new("Grub", 15)
+	add.id = "grub"
+	add.hp = 9
+	host._run.combat.adds.append(add)
+	host._broadcast_state()
+	var adds_view: Array = c0.shared["boss"]["adds"]
+	_expect(adds_view.size() == 1 and String(adds_view[0]["name"]) == "Grub"
+			and int(adds_view[0]["hp"]) == 9 and int(adds_view[0]["max_hp"]) == 15,
+		"an add's identity and current HP reach the shared snapshot")
 
 
 # --- Characters (per-player climb + signature passives) -------------------
