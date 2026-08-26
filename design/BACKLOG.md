@@ -763,6 +763,16 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-26** — No work done this run. Every remaining unchecked item is
+  either `needs a screen` (2, 3, 8, 25, 29b, 32, 31b, 81, 78, 79) or requires
+  Blender (55, 74's remaining art half, 76, 80) — and `download.blender.org`
+  is still a policy 403 through the egress proxy, same block an earlier run
+  today already found and logged just below. Re-confirmed rather than assumed
+  stale, then stopped rather than inventing scope, per rule 6. Nothing to
+  revert — no files were touched before this was confirmed. If this keeps
+  recurring across runs, the fix is a network-policy change on the
+  environment (allow `download.blender.org`), which is Nick's call, not
+  something to route around.
 - **2026-08-26** — #74 Let the cloud build models — behind a shape contract it
   can check: partial, left UNCHECKED on purpose (see the item's own note).
   #55 stays correctly skipped and #74 was next in queue order. Scoped down
