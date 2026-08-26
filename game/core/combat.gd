@@ -778,8 +778,16 @@ func end_turn(pi: int) -> void:
 
 ## Use a held potion (backlog #26): a free action outside the card economy —
 ## no cost, no card play — so a bad hand still has an out. Reads the same
-## effect vocabulary a relic already uses (heal/block/strength/energy/draw);
-## Run owns the inventory and removes the potion from its slot on success.
+## effect vocabulary a relic already uses (heal/block/strength/energy/draw)
+## plus the co-op and beast-facing effects backlog #52 added: an `_ally`
+## variant of each of those five (the same ally_index() hand-off ally_block/
+## ally_energy/ally_heal cards already use, so a potion can back the ally's
+## turn instead of your own — a real choice against the plain self version,
+## not just a bigger number), `climb` (Height with no card and no energy —
+## the thing a potion can do that a card economy cannot) and `strip_ward`
+## (spends the TITAN's own Artifact directly, no debuff card required — see
+## the Frost Sentinel's seeded artifact:2 in bosses.json). Run owns the
+## inventory and removes the potion from its slot on success.
 func use_potion(pi: int, effect: String, value: int) -> bool:
 	if phase != Phase.PLAYERS:
 		return false
@@ -799,6 +807,25 @@ func use_potion(pi: int, effect: String, value: int) -> bool:
 			ps.energy += value
 		"draw":
 			_draw(ps, value)
+		"heal_ally":
+			var ally_h: PlayerState = players[ally_index(pi)]
+			var healed := mini(maxi(value, 0), ally_h.combatant.max_hp - ally_h.combatant.hp)
+			ally_h.combatant.hp += maxi(healed, 0)
+		"block_ally":
+			var ally_b: PlayerState = players[ally_index(pi)]
+			ally_b.combatant.gain_block(value)
+		"energy_ally":
+			var ally_e: PlayerState = players[ally_index(pi)]
+			ally_e.energy += value
+		"strength_ally":
+			var ally_s: PlayerState = players[ally_index(pi)]
+			ally_s.strength += value
+		"draw_ally":
+			_draw(players[ally_index(pi)], value)
+		"climb":
+			ps.foothold = mini(ps.foothold + value, FOOTHOLD_MAX)
+		"strip_ward":
+			boss.artifact = maxi(boss.artifact - value, 0)
 		_:
 			return false
 	_log("%s drinks a potion." % ps.combatant.name)

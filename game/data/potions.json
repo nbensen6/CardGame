@@ -1,5 +1,5 @@
 {
-  "_comment": "Potions are DATA (CLAUDE.md §11) — held per-hunter, not team-wide like relics (backlog #26). Same {name, effect, value, text} shape as relics.json/enchants.json. Effect types, read generically by Combat.use_potion: heal (restore HP, capped at max), block (Combatant.gain_block), strength (PlayerState.strength, lasts the fight), energy (PlayerState.energy, this turn), draw (draw N cards now). 'pool' lists what fights and shops can offer.",
+  "_comment": "Potions are DATA (CLAUDE.md §11) — held per-hunter, not team-wide like relics (backlog #26). Same {name, effect, value, text} shape as relics.json/enchants.json. Effect types, read generically by Combat.use_potion: heal (restore HP, capped at max), block (Combatant.gain_block), strength (PlayerState.strength, lasts the fight), energy (PlayerState.energy, this turn), draw (draw N cards now). Backlog #52 added a matching _ally variant of each of those five (heal_ally/block_ally/energy_ally/strength_ally/draw_ally — same ally_index() hand-off ally_block/ally_energy/ally_heal cards already use, a real CHOICE against the self version rather than a bigger number, so no effect here is only a large-and-small pair) plus two effects a card cannot reach at all: climb (Foothold with no card, no energy, no timing) and strip_ward (spends the TITAN's own Artifact directly — see frost_sentinel's seeded artifact:2 in bosses.json). 'pool' lists what fights and shops can offer.",
   "potions": {
     "quick_tonic": {
       "name": "Quick Tonic",
@@ -60,6 +60,48 @@
       "effect": "draw",
       "value": 3,
       "text": "Draw 3 cards."
+    },
+    "mender_flask": {
+      "name": "Mender's Flask",
+      "effect": "heal_ally",
+      "value": 15,
+      "text": "Restore 15 HP to your ally."
+    },
+    "shield_toss": {
+      "name": "Shield Toss",
+      "effect": "block_ally",
+      "value": 12,
+      "text": "Give your ally 12 Block."
+    },
+    "shared_spark": {
+      "name": "Shared Spark",
+      "effect": "energy_ally",
+      "value": 2,
+      "text": "Give your ally 2 Energy immediately."
+    },
+    "warband_draught": {
+      "name": "Warband Draught",
+      "effect": "strength_ally",
+      "value": 3,
+      "text": "Give your ally 3 Strength this fight."
+    },
+    "shared_focus": {
+      "name": "Shared Focus",
+      "effect": "draw_ally",
+      "value": 2,
+      "text": "Your ally draws 2 cards."
+    },
+    "grapple_tonic": {
+      "name": "Grapple Tonic",
+      "effect": "climb",
+      "value": 3,
+      "text": "Climb 3 Height immediately."
+    },
+    "corrosive_oil": {
+      "name": "Corrosive Oil",
+      "effect": "strip_ward",
+      "value": 2,
+      "text": "Strip 2 Artifact from the Titan."
     }
   },
   "pool": [
@@ -72,6 +114,13 @@
     "iron_draught",
     "giant_draught",
     "clarity_brew",
-    "focus_brew"
+    "focus_brew",
+    "mender_flask",
+    "shield_toss",
+    "shared_spark",
+    "warband_draught",
+    "shared_focus",
+    "grapple_tonic",
+    "corrosive_oil"
   ]
 }

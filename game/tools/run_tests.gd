@@ -130,6 +130,7 @@ func _init() -> void:
 	# potions (backlog #26)
 	_test_potions_all_load()
 	_test_use_potion_applies_each_effect()
+	_test_use_potion_ally_and_beast_effects()
 	_test_use_potion_gating()
 	_test_run_potion_use_and_discard()
 	_test_shop_buys_a_potion()
@@ -1864,7 +1865,9 @@ func _test_status_cards_never_offered_as_a_reward() -> void:
 func _test_potions_all_load() -> void:
 	var pool: Array = Content.potion_pool()
 	var ok := pool.size() >= 8
-	var known_effects := ["heal", "block", "strength", "energy", "draw"]
+	var known_effects := ["heal", "block", "strength", "energy", "draw",
+		"heal_ally", "block_ally", "energy_ally", "strength_ally", "draw_ally",
+		"climb", "strip_ward"]
 	for id in pool:
 		var p: Dictionary = Content.make_potion(String(id))
 		if String(p.get("name", "")) == "" or String(p.get("text", "")) == "" \
@@ -1895,6 +1898,48 @@ func _test_use_potion_applies_each_effect() -> void:
 	_expect(strength_ok and ps.strength == 3, "a strength potion grants Strength for the fight")
 	_expect(draw_ok and ps.hand.size() == hand_before + 2, "a draw potion draws cards")
 	_expect(not bad, "an unrecognised potion effect is refused, not silently ignored")
+
+
+## Backlog #52: an _ally variant of each of the five base effects, plus two
+## effects a card cannot reach — climb with no energy/card, and stripping the
+## TITAN's own Artifact directly. Same generic {effect, value} dispatch.
+func _test_use_potion_ally_and_beast_effects() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var mover: PlayerState = combat.players[0]
+	var ally: PlayerState = combat.players[1]
+	ally.combatant.hp = 20
+	var healed_ally := combat.use_potion(0, "heal_ally", 15)
+	var blocked_ally := combat.use_potion(0, "block_ally", 12)
+	var ally_energy_before: int = ally.energy
+	var energised_ally := combat.use_potion(0, "energy_ally", 2)
+	var strengthened_ally := combat.use_potion(0, "strength_ally", 3)
+	var ally_hand_before: int = ally.hand.size()
+	var drew_ally := combat.use_potion(0, "draw_ally", 2)
+	_expect(healed_ally and blocked_ally and energised_ally and strengthened_ally and drew_ally,
+		"every _ally potion effect is accepted")
+	_expect(ally.combatant.hp == 35, "heal_ally restores the ALLY's HP, not the drinker's")
+	_expect(ally.combatant.block == 12, "block_ally grants Block to the ally")
+	_expect(ally.energy == ally_energy_before + 2, "energy_ally grants energy to the ally")
+	_expect(ally.strength == 3, "strength_ally grants Strength to the ally")
+	_expect(ally.hand.size() == ally_hand_before + 2, "draw_ally draws cards for the ally")
+	_expect(mover.combatant.hp != 35 and mover.strength == 0,
+		"an _ally potion changes only the ally, not the hunter who drank it")
+
+	var start_foothold: int = mover.foothold
+	var climbed := combat.use_potion(0, "climb", 3)
+	_expect(climbed and mover.foothold == start_foothold + 3,
+		"a climb potion gains Height directly, with no card and no energy spent")
+	var climbed_over_cap := combat.use_potion(0, "climb", 99)
+	_expect(climbed_over_cap and mover.foothold == Combat.FOOTHOLD_MAX,
+		"a climb potion is still capped at FOOTHOLD_MAX")
+
+	combat.boss.artifact = 3
+	var warded := combat.use_potion(0, "strip_ward", 2)
+	_expect(warded and combat.boss.artifact == 1,
+		"strip_ward spends the Titan's own Artifact directly, without a debuff card")
+	var stripped_to_floor := combat.use_potion(0, "strip_ward", 5)
+	_expect(stripped_to_floor and combat.boss.artifact == 0,
+		"strip_ward never takes the Titan's Artifact below zero")
 
 
 func _test_use_potion_gating() -> void:
