@@ -66,6 +66,9 @@ var light_gain: int     # Light banked outright — the Lightbearer's own resour
 var light_cost: int     # Light required AND SPENT to play this card (bank-and-spend, on top of energy)
 var damage_per_light: int  # bonus damage per Light currently banked (scales without spending it)
 var ally_heal: int      # HP healed on the ALLY, up to their max — the Lightbearer's mend
+var power_effect: String  # a `type: "power"` card's recurring payoff (backlog #57) — e.g. "block",
+                           # "strength"; resolved by Combat._handle_power_effects at each turn end
+var power_value: int      # how much power_effect grants per stack, per turn end
 
 static func from_dict(d: Dictionary) -> Card:
 	var c := Card.new()
@@ -127,6 +130,8 @@ static func from_dict(d: Dictionary) -> Card:
 	c.light_cost = int(d.get("light_cost", 0))
 	c.damage_per_light = int(d.get("damage_per_light", 0))
 	c.ally_heal = int(d.get("ally_heal", 0))
+	c.power_effect = String(d.get("power_effect", ""))
+	c.power_value = int(d.get("power_value", 0))
 	return c
 
 
@@ -159,6 +164,7 @@ func to_dict() -> Dictionary:
 		"frail": frail, "thorns": thorns,
 		"light_gain": light_gain, "light_cost": light_cost,
 		"damage_per_light": damage_per_light, "ally_heal": ally_heal,
+		"power_effect": power_effect, "power_value": power_value,
 	}
 
 
@@ -181,7 +187,7 @@ func upgraded_copy() -> Card:
 			"damage_per_ally_foothold", "damage_per_rhythm", "damage_per_wound",
 			"damage_per_exhausted", "block_per_exhausted",
 			"damage_per_x", "block_per_x", "frail", "thorns",
-			"light_gain", "damage_per_light", "ally_heal"]:
+			"light_gain", "damage_per_light", "ally_heal", "power_value"]:
 		if int(d[key]) > 0:
 			d[key] = int(d[key]) + 1
 			bumped = true

@@ -433,7 +433,7 @@ Ordered. Source in brackets.
 Checked against the code on 2026-08-25, not listed from memory. Each of these is
 something Slay the Spire leans on hard and we do not have at all.
 
-- [ ] **57. Powers — cards that stay played** `cloud-safe` — the single biggest
+- [x] **57. Powers — cards that stay played** `cloud-safe` — the single biggest
   card category we lack. A Power leaves your hand for good and keeps paying for
   the rest of the fight, which is what makes a deck feel like it *becomes*
   something mid-combat instead of just cycling. We have no concept of a card
@@ -738,6 +738,38 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-26** — #57 Powers, cards that stay played: added `type: "power"`
+  plus `power_effect`/`power_value` fields on Card. Playing a power routes it
+  into a new `PlayerState.powers` dict (id -> `{stacks, value}`) instead of
+  the discard pile — `_handle_power_effects`, hooked onto #43's `turn_end`
+  moment, re-fires it for every remaining turn of the fight, stacking cleanly
+  when the same power is played twice. The vocabulary (block/strength/wound/
+  vulnerable/frail/thorns/heal) deliberately mirrors `use_potion()`'s effect
+  match so a future power needs no new code, just a data entry. Caught one
+  real bug before it shipped: the first draft had the recurring payout
+  re-derive its value from `Content.make_card(id)` each turn, which is fine
+  for the effect KIND (upgraded_copy() never changes that) but would have
+  silently thrown away a campfire-upgraded copy's bumped number, since the
+  upgrade shares the base card's id — fixed by storing the SUM of what every
+  played copy actually carried, and added a test that plays an upgraded
+  power and checks the boosted amount, not the base one, actually pays out.
+  Wrote 4 cards (Iron Husk, Old Grudge, Seeping Venom, Barbed Hide — block,
+  strength, poison, thorns) into the global pool AND every character's own
+  reward_pool (reward_pool() only ever draws from a character's own list
+  when one exists, and all five already have one, so the global list alone
+  would have made them undraftable in a real run — worth remembering for the
+  next content item, since it's an easy silent-unreachable trap). Also gave
+  `_keywords_of`/`_card_icon` a generic power_effect-based fallback and a
+  `powers` array in `_players_public()` (visible to the ally, same as
+  potions — a played power is board state, not a secret). 12 new tests, all
+  green, including a full host/client snapshot-boundary check. Not done:
+  `_meld_cards` doesn't know about power_effect/power_value, so melding a
+  power card together with another would silently drop it back to a normal
+  attack/skill card — a pre-existing gap in how meld handles ANY type-
+  specific field, not new to this item, and no current power card carries
+  `meld: true` so it's unreachable today; flagging rather than fixing since
+  it's not this item's scope.
 
 - **2026-08-26** — #56 Ascension 9 and up: added two tiers that change a RULE
   rather than a number, same idiom as #13's rule-changing relics — "Cursed

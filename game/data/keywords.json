@@ -109,6 +109,10 @@
       "name": "Mend",
       "text": "Heals your ally directly, up to their max health."
     },
+    "power": {
+      "name": "Power",
+      "text": "Never discarded once played — it stays in play for the rest of the fight, and its effect fires again at the end of every one of your turns, including this one. Playing a second copy stacks it."
+    },
 
     "_comment_moves": "Below: the beast's telegraphed moves. Same vocabulary rules as the cards — the intent tag NAMES the move and prints its number, and the explanation lives here, one right-click away. Ids match the move `type` in bosses.json. Added 2026-08-16: the tag had started explaining itself inline ('Sweep 8 — hits you both'), which is the card-text problem all over again.",
 

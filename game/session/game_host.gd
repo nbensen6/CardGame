@@ -353,6 +353,25 @@ func _potion_view(pi: int) -> Array:
 		out.append({"index": i, "name": String(p.get("name", "")), "text": String(p.get("text", ""))})
 	return out
 
+## A hunter's active powers, public (backlog #57 — same reasoning as potions in
+## _potion_view: a played power is a standing board fact, not a secret hand
+## card, so the ally should see it too). Looks the id up fresh each time
+## (Content.make_card is cached) rather than storing name/text on PlayerState,
+## the same "one generic rule" trick _handle_power_effects uses to apply it.
+func _powers_view(pi: int) -> Array:
+	var out: Array = []
+	if _run.phase != Run.Phase.COMBAT or pi < 0 or pi >= _run.combat.players.size():
+		return out
+	var ps: PlayerState = _run.combat.players[pi]
+	for id in ps.powers.keys():
+		var entry: Dictionary = ps.powers[id]
+		var stacks: int = int(entry.get("stacks", 0))
+		if stacks <= 0:
+			continue
+		var pc := Content.make_card(String(id))
+		out.append({"id": String(id), "name": pc.name, "text": pc.text, "stacks": stacks})
+	return out
+
 func _players_public() -> Array:
 	var out: Array = []
 	if _run.phase == Run.Phase.COMBAT:
@@ -376,6 +395,7 @@ func _players_public() -> Array:
 				# holding, same as they see your HP -- only USING one is yours alone,
 				# enforced by _acting_slot ignoring a co-op peer's claimed slot.
 				"potions": _potion_view(i),
+				"powers": _powers_view(i),
 			})
 	else:
 		for i in range(_run.player_count()):
@@ -433,6 +453,7 @@ func _slot_private(pi: int) -> Dictionary:
 					"exhaust_pick": c.exhaust_pick, "cheapen_pick": c.cheapen_pick,
 					"pull_ally": c.pull_ally, "sac_ally_grip": c.sac_ally_grip,
 					"hits": c.hits,
+					"power_effect": c.power_effect, "power_value": c.power_value,
 				},
 				# The card's PRINTED values. The face compares live against these to
 				# know which numbers a buff or scaling changed, and highlights only
@@ -532,6 +553,8 @@ func _keywords_of(c: Card) -> Array:
 		ids.append("light")
 	if c.ally_heal > 0:
 		ids.append("mend")
+	if c.type == "power" or c.power_effect != "" or c.power_value != 0:
+		ids.append("power")
 	var out: Array = []
 	for id in ids:
 		var k := Content.keyword(String(id))
@@ -585,6 +608,13 @@ func _first_unpicked_solo() -> int:
 func _card_icon(c: Card) -> String:
 	if c.icon != "":
 		return c.icon  # explicit override from cards.json
+	if c.power_effect != "":  # backlog #57 — infer from the recurring payoff, not a one-off field
+		match c.power_effect:
+			"block": return "shield"
+			"strength", "heal": return "flask"
+			"wound": return "skull"
+			"vulnerable", "frail": return "expose"
+			"thorns": return "shield"
 	if c.taunt:
 		return "taunt"
 	if c.meld or c.create != "":

@@ -100,6 +100,7 @@ func _init(decks: Array, combatants: Array, p_boss: Boss, seed_value: int = 0,
 	# _mod() call in this file already does.
 	_on(MOMENT_TURN_START, Callable(self, "_handle_block_carries"))
 	_on(MOMENT_TURN_END, Callable(self, "_handle_energy_handoff"))
+	_on(MOMENT_TURN_END, Callable(self, "_handle_power_effects"))
 	_on(MOMENT_CARD_PLAYED, Callable(self, "_handle_timed_rhythm"))
 	boss = p_boss
 	_energy_bonus = energy_bonus
@@ -484,6 +485,18 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		return true
 	if enchant_effect == "self_exhaust":  # "Spent" (backlog #50) — leaves the fight instead
 		ps.exhaust_pile.append(card)
+	elif card.type == "power":  # backlog #57 — never discarded; stays in play, stacking
+		# {stacks, value}: `value` sums the PLAYED card's own power_value rather
+		# than re-deriving it later from Content.make_card(id) — a campfire
+		# upgrade only lifts the copy actually played (upgraded_copy() bumps
+		# power_value but keeps the same id), so if a base and an upgraded copy
+		# both land here, each contributes what it actually carries instead of
+		# the ongoing payout silently forgetting the upgrade.
+		var entry: Dictionary = ps.powers.get(card.id, {"stacks": 0, "value": 0})
+		entry["stacks"] = int(entry.get("stacks", 0)) + 1
+		entry["value"] = int(entry.get("value", 0)) + card.power_value
+		ps.powers[card.id] = entry
+		_log("%s plays %s — it stays in play." % [ps.combatant.name, card.name])
 	else:
 		ps.discard_pile.append(card)
 	cards_played_total += 1
@@ -1096,6 +1109,61 @@ func _handle_energy_handoff(ctx: Dictionary) -> void:
 	mate.energy += ps.energy
 	_log("%s hands off %d unspent Energy to %s." % [ps.combatant.name, ps.energy, mate.combatant.name])
 	ps.energy = 0
+
+## Not a relic — a fixed core rule (backlog #57, Powers): a `type: "power"`
+## card never returns to your hand once played (see the "power" branch in
+## play_card's discard routing above), so its payoff has to fire on its own
+## from somewhere. turn_end is the moment, same as StS's Metallicize: a power
+## played THIS turn already pays out at the end of THIS turn, and every turn
+## after, for as long as the fight lasts. `entry.value` is the SUM of what
+## every played copy actually carried (see play_card's power branch) so a
+## campfire-upgraded copy keeps its bumped number instead of the payout
+## re-deriving a flat per-stack amount off the unupgraded data-file card.
+## Only the effect KIND (never touched by upgraded_copy()) and the name/text
+## for the log line come from Content.make_card(id) — that part is safe to
+## look up fresh, the same "look it up rather than cache it" trick
+## block_carries/energy_handoff don't need because they aren't per-card.
+## Vocabulary matches use_potion()'s self-only effects (heal/block/strength/
+## vulnerable/wound/frail/thorns) so a future power can pick from the same
+## list without new code, the same "one generic rule" idiom relics/potions
+## already use for their own {effect, value} pair.
+func _handle_power_effects(ctx: Dictionary) -> void:
+	var ps: PlayerState = ctx["player"]
+	for id in ps.powers.keys():
+		var entry: Dictionary = ps.powers[id]
+		var amount: int = int(entry.get("value", 0))
+		if amount == 0:
+			continue
+		var pc := Content.make_card(String(id))
+		if pc.power_effect == "":
+			continue
+		match pc.power_effect:
+			"block":
+				ps.combatant.gain_block(amount)
+				_log("%s's %s triggers — +%d Block." % [ps.combatant.name, pc.name, amount])
+			"strength":
+				ps.strength += amount
+				_log("%s's %s triggers — +%d Strength." % [ps.combatant.name, pc.name, amount])
+			"thorns":
+				ps.combatant.thorns += amount
+				_log("%s's %s triggers — +%d Thorns." % [ps.combatant.name, pc.name, amount])
+			"heal":
+				ps.combatant.hp = mini(ps.combatant.hp + amount, ps.combatant.max_hp)
+				_log("%s's %s triggers — heals %d." % [ps.combatant.name, pc.name, amount])
+			"wound":
+				if boss.try_block_debuff():
+					_log("%s's Artifact wards off %s's Poison." % [boss.name, ps.combatant.name])
+				else:
+					boss.wound += amount
+					_log("%s's %s triggers — Poison %d on %s." % [ps.combatant.name, pc.name, boss.wound, boss.name])
+			"vulnerable":
+				if boss.try_block_debuff():
+					_log("%s's Artifact wards off %s's Expose." % [boss.name, ps.combatant.name])
+				else:
+					boss.vulnerable += amount
+					_log("%s's %s triggers — %s exposed (%d)." % [ps.combatant.name, pc.name, boss.name, boss.vulnerable])
+			"frail":
+				_apply_frail(boss, amount)
 
 ## Not a relic — a fixed core rule (landing a timed card builds Rhythm) moved
 ## onto the same moment as the third proof effect, since it fires from

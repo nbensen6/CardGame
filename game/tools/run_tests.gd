@@ -256,6 +256,13 @@ func _init() -> void:
 	_test_height_split_limiter_punishes_hoarding()
 	_test_every_titan_carries_a_known_limiter()
 	_test_relic_start_strength()
+	# Powers: cards that stay played (backlog #57)
+	_test_power_cards_stay_in_play_and_stack()
+	_test_power_effects_fire_every_turn_end_and_persist()
+	_test_power_stacks_multiply_and_different_powers_coexist()
+	_test_power_upgrade_value_is_not_lost_by_the_recurring_payout()
+	_test_powers_survive_save_and_load()
+	_test_powers_reach_the_snapshot_and_are_visible_to_the_ally()
 	# the debuff axis (backlog #36): Frail, Artifact, Thorns
 	_test_frail_reduces_block_gained()
 	_test_frail_card_cuts_the_boss_own_block_move()
@@ -4007,6 +4014,123 @@ func _test_relic_start_strength() -> void:
 		_dummy_boss(300), 42, 0, 0, 0, 2)  # start_strength = 2
 	combat.start()
 	_expect(combat.players[0].strength == 2, "start_strength relic begins the fight with Strength")
+
+
+# --- Powers: cards that stay played (backlog #57) --------------------------
+
+func _power_block() -> Card:
+	return Card.from_dict({"id": "iron_husk", "name": "Iron Husk", "type": "power", "cost": 1,
+		"power_effect": "block", "power_value": 3})
+
+func _power_strength() -> Card:
+	return Card.from_dict({"id": "old_grudge", "name": "Old Grudge", "type": "power", "cost": 1,
+		"power_effect": "strength", "power_value": 1})
+
+
+## Playing a power never lands it in the discard pile — it stays out of both
+## piles for the rest of the fight, and a second copy STACKS (one entry, a
+## rising count) rather than sitting beside the first as a second card would.
+func _test_power_cards_stay_in_play_and_stack() -> void:
+	var combat := _new_combat([_deck_of(_power_block, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var hand_before := ps.hand.size()
+	combat.play_card(0, 0)
+	_expect(int(ps.powers.get("iron_husk", {}).get("stacks", 0)) == 1,
+		"playing a power card records one stack under its id")
+	_expect(ps.hand.size() == hand_before - 1 and ps.discard_pile.is_empty(),
+		"a played power leaves the hand but never reaches the discard pile")
+	combat.play_card(0, _first_playable(combat, 0))
+	_expect(int(ps.powers.get("iron_husk", {}).get("stacks", 0)) == 2,
+		"a second copy of the same power stacks onto the one entry instead of sitting beside it")
+
+
+## The whole point of a power: its payoff fires again at the end of EVERY
+## turn for the rest of the fight, not just once when played, and scales with
+## how many stacks are in play. Uses turn_end (backlog #43's moment), so a
+## power played this turn already pays out this turn — proven across two
+## separate rounds so "persists" means more than "happened once".
+func _test_power_effects_fire_every_turn_end_and_persist() -> void:
+	var combat := _new_combat([_deck_of(_power_block, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	combat.play_card(0, 0)  # Iron Husk: +3 Block at the end of each of your turns
+	var block_before_end := ps.combatant.block
+	combat.end_turn(0)
+	_expect(ps.combatant.block == block_before_end + 3,
+		"the power pays out at the end of the SAME turn it was played")
+	combat.end_turn(1)  # boss acts, round 2 begins — block resets to 0 at round start
+	_expect(ps.combatant.block == 0, "a fresh round still resets Block the normal way")
+	combat.end_turn(0)  # no card played this round — the power still fires on its own
+	_expect(ps.combatant.block == 3,
+		"the power keeps paying out on later turns with no card played that turn")
+
+
+## Stacks actually MULTIPLY the payout rather than just being counted, and a
+## second, DIFFERENT power id applies its own effect independently — a block
+## power and a strength power both active must not clobber one another.
+func _test_power_stacks_multiply_and_different_powers_coexist() -> void:
+	var combat := _new_combat([_deck_of(_power_strength, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	combat.play_card(0, 0)
+	combat.play_card(0, _first_playable(combat, 0))  # a second Old Grudge — 2 stacks
+	ps.hand.append(_power_block())  # a DIFFERENT power, appended directly (test-only shortcut)
+	combat.play_card(0, ps.hand.size() - 1)
+	var strength_before := ps.strength
+	var block_before := ps.combatant.block
+	combat.end_turn(0)
+	_expect(ps.strength == strength_before + 2,
+		"two stacks of a +1 Strength power grant +2, not +1")
+	_expect(ps.combatant.block == block_before + 3,
+		"a different power (Block) fires for its own +3 without the Strength power stealing its entry")
+
+
+## A campfire-sharpened power (upgraded_copy() bumps power_value but keeps
+## the same id) must keep paying its BOOSTED number. The recurring payout
+## looks the id up fresh for its name/text/effect KIND (Content.make_card),
+## but the VALUE has to come from what was actually played, or an upgrade
+## would silently vanish the moment the card left the hand.
+func _test_power_upgrade_value_is_not_lost_by_the_recurring_payout() -> void:
+	var combat := _new_combat([_deck_of(_power_block, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var upgraded: Card = ps.hand[0].upgraded_copy()  # power_value 3 -> 4
+	ps.hand[0] = upgraded
+	combat.play_card(0, 0)
+	_expect(int(ps.powers["iron_husk"]["value"]) == 4,
+		"the upgraded copy's bumped power_value is what gets stored, not the base 3")
+	combat.end_turn(0)
+	_expect(ps.combatant.block == 4,
+		"the recurring payout pays the upgraded amount, not the data file's unupgraded default")
+
+
+## Powers are per-fight state on PlayerState, so a mid-fight save (backlog
+## #14) has to carry them the same way it carries the hand and the piles.
+func _test_powers_survive_save_and_load() -> void:
+	var combat := _new_combat([_deck_of(_power_block, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	combat.play_card(0, 0)
+	combat.play_card(0, _first_playable(combat, 0))
+	var restored := Combat.from_dict(combat.to_dict())
+	var entry: Dictionary = restored.players[0].powers.get("iron_husk", {})
+	_expect(int(entry.get("stacks", 0)) == 2 and int(entry.get("value", 0)) == 6,
+		"a power's stacks and accumulated value survive a Combat to_dict/from_dict round trip")
+
+
+## Backlog #45's rule for the six mechanics before this one applies here too:
+## an active power is board state visible to the ally, same as a potion,
+## not a secret. Prove it reaches BOTH peers through GameHost's public
+## players snapshot, with its name and current stack count.
+func _test_powers_reach_the_snapshot_and_are_visible_to_the_ally() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var c1: GameClient = s["c1"]
+	var ps: PlayerState = host._run.combat.players[0]
+	ps.powers["iron_husk"] = {"stacks": 2, "value": 6}
+	host._broadcast_state()
+	var mine: Array = c0.shared["players"][0]["powers"]
+	var theirs: Array = c1.shared["players"][0]["powers"]
+	_expect(mine.size() == 1 and String(mine[0]["name"]) == "Iron Husk" and int(mine[0]["stacks"]) == 2,
+		"an active power reaches its owner's public snapshot with its name and stack count")
+	_expect(theirs.size() == 1 and String(theirs[0]["name"]) == "Iron Husk" and int(theirs[0]["stacks"]) == 2,
+		"the ally sees a teammate's active power too — it's board state, not a secret")
 
 
 # --- The debuff axis (backlog #36): Frail, Artifact, Thorns ---------------

@@ -71,7 +71,11 @@
         "draw_aggro",
         "dagger",
         "slash",
-        "scramble"
+        "scramble",
+        "iron_husk",
+        "old_grudge",
+        "seeping_venom",
+        "barbed_hide"
       ]
     },
     "vine_weaver": {
@@ -138,7 +142,11 @@
         "draw_aggro",
         "dagger",
         "slash",
-        "scramble"
+        "scramble",
+        "iron_husk",
+        "old_grudge",
+        "seeping_venom",
+        "barbed_hide"
       ]
     },
     "mountain_climbers": {
@@ -202,7 +210,11 @@
         "draw_aggro",
         "dagger",
         "slash",
-        "scramble"
+        "scramble",
+        "iron_husk",
+        "old_grudge",
+        "seeping_venom",
+        "barbed_hide"
       ]
     },
     "goblin_mech": {
@@ -265,7 +277,11 @@
         "draw_aggro",
         "dagger",
         "slash",
-        "scramble"
+        "scramble",
+        "iron_husk",
+        "old_grudge",
+        "seeping_venom",
+        "barbed_hide"
       ]
     },
     "lightbearer": {
@@ -306,7 +322,11 @@
         "draw_aggro",
         "dagger",
         "slash",
-        "scramble"
+        "scramble",
+        "iron_husk",
+        "old_grudge",
+        "seeping_venom",
+        "barbed_hide"
       ]
     }
   }
