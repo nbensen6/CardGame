@@ -394,7 +394,7 @@ Ordered. Source in brackets.
   `then` on an outcome buys that for the whole file. *Done when:* the field
   exists, at least four events use it, and a test walks a two-step event.
 
-- [ ] **54. Keyword coverage for everything added since #16** `cloud-safe` —
+- [x] **54. Keyword coverage for everything added since #16** `cloud-safe` —
   `_keywords_of` derives tooltips from a card's fields, and a great deal has
   landed since: potions, curses, Retain, Innate, X-cost, Frail, Artifact,
   Thorns, boons, named holds, graded timing. A mechanic with no keyword entry is
@@ -716,10 +716,41 @@ rather than inventing work.
 - Steam integration (lobbies, invites, achievements)
 - Pinch-to-zoom on the overworld for touch
 - Mid-combat saving (today the slot is written only between fights)
+- The boss's own Frail/Artifact/Thorns (and a player's own Thorns/Artifact)
+  are real Combatant fields, computed correctly, and never leave the host:
+  `GameHost`'s boss dict only forwards `vulnerable`/`strength`/`wound`, so a
+  Titan you've Frailed or a hunter carrying Thorns shows nothing to look at.
+  Found auditing #54; not itself a keyword-text problem so it wasn't fixed
+  there — it's snapshot plumbing (`_players_public()`/the boss dict in
+  `game_host.gd`) plus a boundary test, cloud-safe, cheap, but a distinct item.
 
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-26** — #54 Keyword coverage for everything added since #16: the
+  field->keyword MAPPING it asked for was already done —
+  `_test_every_field_a_player_must_understand_has_a_keyword` (landed
+  2026-08-24) walks every `Card` field by reflection and probes each alone,
+  so a new field is covered the moment it's declared with no list to keep in
+  sync; ran it fresh against HEAD and it, and every other keyword test,
+  passed with an empty `missing` list. Rather than tick it off having found
+  nothing, checked the other half #54 actually named — "graded timing" — and
+  found the "timed" keyword's TEXT had gone stale instead: it was written
+  when a hit was binary (nailed or missed) and still reads that way after
+  backlog #33 graded it into TIMING_PERFECT (full bonus) and TIMING_GOOD
+  (half, `Combat.TIMING_GOOD_SCALE`), so a player reading the tooltip would
+  never learn that catching the edge of the bright zone still pays out —
+  exactly the "mechanic the player has to guess" #54 is about, just in prose
+  rather than a missing field. Reworded it to name both tiers, and added
+  `_test_timed_keyword_explains_graded_quality` (asserts the text mentions
+  "half") so this specific kind of drift — a keyword whose MEANING moved out
+  from under its own tooltip — fails loudly next time rather than silently.
+  Also found, while reading the boss/player snapshot code to check nothing
+  else had drifted, that Frail/Artifact/Thorns never reach `GameHost`'s boss
+  dict at all (only vulnerable/strength/wound do) — a real gap, but plumbing
+  rather than a keyword problem, so it went to Later rather than into this
+  item. `run_tests.gd`: all green, including the new test.
 
 - **2026-08-26** — #53 Events that branch more than once: added an optional
   `then` key to an event choice — `{text, choices}` shaped exactly like the

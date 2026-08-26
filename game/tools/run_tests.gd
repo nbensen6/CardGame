@@ -223,6 +223,7 @@ func _init() -> void:
 	_test_incoming_reckons_damage_after_block()
 	_test_every_derived_keyword_resolves()
 	_test_every_field_a_player_must_understand_has_a_keyword()
+	_test_timed_keyword_explains_graded_quality()
 	_test_every_boss_move_type_resolves()
 	_test_every_beast_has_a_move_pattern()
 	_test_weak_point_threshold_still_means_something()
@@ -3245,6 +3246,20 @@ func _test_every_field_a_player_must_understand_has_a_keyword() -> void:
 			missing.append(key)
 	_expect(missing.is_empty(),
 		"every card field a player must understand has a keyword [%s]" % ", ".join(missing))
+
+
+## Backlog #54: the field->keyword MAPPING above catches a field nobody wired
+## up, but says nothing about a keyword whose TEXT went stale after the
+## mechanic it describes changed shape. "timed" was written when a hit was
+## binary (nailed or missed); backlog #33 graded it into TIMING_PERFECT (full
+## bonus) and TIMING_GOOD (half, per Combat.TIMING_GOOD_SCALE) without anyone
+## touching the tooltip, so a player reading it would never learn a scraped
+## edge still pays out. Check the text actually names the scaled tier, not
+## just that it exists.
+func _test_timed_keyword_explains_graded_quality() -> void:
+	var text := String(Content.keyword("timed").get("text", "")).to_lower()
+	_expect(text.find("half") != -1,
+		"the timed keyword explains that a non-centred hit still pays a scaled (half) bonus")
 
 
 ## The intent tag NAMES a move and lets you right-click it for the rest, so an
