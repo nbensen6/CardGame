@@ -82,7 +82,10 @@
         "peer_ahead",
         "read_the_climb",
         "sure_footing",
-        "steady_grip"
+        "steady_grip",
+        "ghost_step",
+        "overhang",
+        "hardshell"
       ]
     },
     "vine_weaver": {
@@ -160,7 +163,10 @@
         "peer_ahead",
         "read_the_climb",
         "sure_footing",
-        "steady_grip"
+        "steady_grip",
+        "ghost_step",
+        "overhang",
+        "hardshell"
       ]
     },
     "mountain_climbers": {
@@ -235,7 +241,10 @@
         "peer_ahead",
         "read_the_climb",
         "sure_footing",
-        "steady_grip"
+        "steady_grip",
+        "ghost_step",
+        "overhang",
+        "hardshell"
       ]
     },
     "goblin_mech": {
@@ -309,7 +318,10 @@
         "peer_ahead",
         "read_the_climb",
         "sure_footing",
-        "steady_grip"
+        "steady_grip",
+        "ghost_step",
+        "overhang",
+        "hardshell"
       ]
     },
     "lightbearer": {
@@ -361,7 +373,10 @@
         "peer_ahead",
         "read_the_climb",
         "sure_footing",
-        "steady_grip"
+        "steady_grip",
+        "ghost_step",
+        "overhang",
+        "hardshell"
       ]
     }
   }

@@ -30,6 +30,22 @@ var thorns: int = 0    # a direct attack landed on this combatant reflects this 
 # than losing it outright.
 var dexterity: int = 0
 
+# The tier above Block (backlog #61): Block is all-or-nothing and resets every
+# round, these three change the SHAPE of taking a hit instead. Both are spent
+# a stack per HIT rather than decaying by turn count, the same idiom Artifact
+# already uses (try_block_debuff()) — simpler than tracking a duration, and it
+# composes cleanly with everything above: both only ever look at what's left
+# AFTER Block has already done its job, so a well-blocked hit never burns one.
+var intangible: int = 0  # a hit that gets past Block is capped at 1 damage; spends one stack
+var buffer: int = 0      # a hit that gets past Block is cancelled outright; spends one stack
+# Persistent Block (backlog #61): unlike ordinary Block, does NOT reset with
+# the round — Combat re-seeds `block` with this at every round/turn reset
+# (`_begin_round`, `_enemy_turn`) instead of zeroing it — but it decays by 1
+# whenever a hit still gets HP through despite it, so it isn't free armour
+# forever. See take_damage() below for the decay and Combat.play_card() for
+# how a card both banks it here AND calls gain_block() for the immediate hit.
+var plated_armour: int = 0
+
 const FRAIL_BLOCK_DIVISOR := 4  # Frail cuts Block gained by 1/4 (StS's classic 25%), floored
 
 func _init(p_name: String = "", p_max_hp: int = 1) -> void:
@@ -38,11 +54,28 @@ func _init(p_name: String = "", p_max_hp: int = 1) -> void:
 	hp = max_hp
 
 ## Damage hits block first, then HP. HP never goes below 0.
+##
+## Buffer and Intangible (backlog #61) only ever look at what's left AFTER
+## Block — a hit Block fully absorbs never touches either, so blocking well
+## is still strictly better than banking a stack. When both are stacked,
+## Buffer's full cancel goes first (it's the stronger effect and would waste
+## an Intangible stack capping a hit that's about to be zeroed anyway);
+## Intangible only spends a stack when it's the one actually doing something.
+## Plated Armour decays last, and only when real HP damage still lands —
+## a hit Buffer or Intangible fully neutralised costs it nothing.
 func take_damage(amount: int) -> void:
 	var remaining := maxi(amount, 0)
 	var absorbed := mini(block, remaining)
 	block -= absorbed
 	remaining -= absorbed
+	if remaining > 0 and buffer > 0:
+		buffer -= 1
+		remaining = 0
+	elif remaining > 0 and intangible > 0:
+		intangible -= 1
+		remaining = mini(remaining, 1)
+	if remaining > 0 and plated_armour > 0:
+		plated_armour -= 1
 	hp = maxi(hp - remaining, 0)
 
 ## Frail (backlog #36) cuts what actually lands here — a source that grants

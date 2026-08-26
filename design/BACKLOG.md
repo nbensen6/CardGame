@@ -459,7 +459,7 @@ something Slay the Spire leans on hard and we do not have at all.
   gained. *Done when:* the field exists, cards and relics grant it, Frail (#36)
   interacts correctly, and it is tested.
 
-- [ ] **61. Intangible, Buffer and Plated Armour** `cloud-safe` — the tier above
+- [x] **61. Intangible, Buffer and Plated Armour** `cloud-safe` — the tier above
   Block. Block is all-or-nothing and resets every round; these change the SHAPE
   of taking a hit — reduce any hit to 1, cancel the next attack outright, keep
   armour that does not decay. On a beast that sweeps both hunters, "survive this
@@ -738,6 +738,50 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-26** — #61 Intangible, Buffer and Plated Armour: next `cloud-safe`
+  item after #60 in queue order (skipped the `needs a screen` items ahead of
+  it same as #60 did, and left #55 alone for the same Blender-dependency
+  reason its own note gives). All three landed on `Combatant` next to Frail/
+  Dexterity, and deliberately as "spend a stack per HIT" rather than "lasts N
+  turns" — the codebase already has that idiom (Artifact's `try_block_debuff`)
+  and it needed no new duration-tracking machinery, whereas a turn-counter
+  would have needed decrementing at both `_begin_round` (players) and
+  `_enemy_turn` (boss) and getting the "granted mid-round, does it survive
+  to next round" question right. `Combatant.take_damage()` is the single
+  choke point ALL damage already flows through (boss attacks, Thorns both
+  directions, sigil fatigue, height-split) so wiring the interaction there
+  once covers every source for free, same as Frail's cut on `gain_block()`
+  does. Order inside `take_damage`: Block absorbs first (unchanged), then
+  Buffer's full cancel (the stronger effect) is tried before Intangible's
+  cap-at-1, so having both doesn't waste an Intangible stack on a hit Buffer
+  was about to void anyway; Plated Armour's decay is checked last and only
+  fires when real HP damage still gets through. Plated Armour itself is
+  persistent Block: granted via both `plated_armour += ` (the bank) AND
+  `gain_block()` (so it protects the round it's cast in, same as any Block,
+  subject to that play's own Dexterity/Frail) — then `_begin_round` /
+  `_enemy_turn`'s block-reset re-seeds `block` from the bank instead of
+  zeroing it, and only `take_damage`'s own decay ever reduces the bank.
+  Wired to three new self-target skill cards, one per field (Ghost Step:
+  Intangible 2; Overhang: Buffer 1; Hardshell: Plated Armour 3), added to the
+  global reward_pool AND all five characters' own reward_pool arrays — the
+  trap every one of the last several logs has flagged, so I grepped for it
+  before running tests this time instead of after. Also into `upgraded_copy`'s
+  scaling list, `_meld_cards`, `PlayerState` save round-trip, and
+  `GameHost._keywords_of`/`_card_icon` fallbacks (the auto-reflective field
+  coverage test would have caught a miss on any of these anyway). Did NOT
+  touch `Boss.to_dict`/`apply_dict` or the public snapshot (`_players_public`)
+  for any of the three — no boss move grants them, and Dexterity/Frail/Thorns
+  already don't reach the public snapshot either (that gap is its own parked
+  Later item, not new scope to fix here). 12 new tests: the cap-at-1 and
+  full-cancel mechanics alone, proof Block absorbing fully spends neither
+  stack, proof Buffer is tried before Intangible when both are stacked, proof
+  Thorns still retaliates off a landed attack even when Buffer voided the
+  damage entirely, the two card-wiring cases, Plated Armour surviving a round
+  reset a normal Block would have wiped, Plated Armour's decay firing only
+  when HP damage actually gets through (not on a 0-damage hit), and a mid-
+  fight save/load round trip. All green (394 total, 0 failing), existing
+  suite untouched.
 
 - **2026-08-26** — #60 Dexterity: skipped the `needs a screen` items ahead of
   it (2, 3, 8, 25, 29b, 32, 31b) and left #55 (more beasts) unchecked exactly

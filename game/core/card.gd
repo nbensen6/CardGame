@@ -77,6 +77,13 @@ var power_value: int      # how much power_effect grants per stack, per turn end
 var scry: int              # look at this many cards off the TOP of your draw pile and bin any of
                             # them (backlog #59) — the choice is a command (Combat.resolve_scry),
                             # not resolved here; kept cards return to the top in the same order
+var intangible: int    # Intangible gained by the player: a hit that gets past Block is capped at
+                        # 1 damage; spends one stack per hit rather than decaying by turn (backlog #61)
+var buffer: int         # Buffer gained by the player: a hit that gets past Block is cancelled
+                         # outright; spends one stack per hit, same idiom as Intangible (backlog #61)
+var plated_armour: int  # Plated Armour gained by the player: persistent Block that survives the
+                         # round reset instead of being wiped, decaying only when a hit still gets
+                         # HP through despite it (backlog #61)
 
 static func from_dict(d: Dictionary) -> Card:
 	var c := Card.new()
@@ -143,6 +150,9 @@ static func from_dict(d: Dictionary) -> Card:
 	c.power_effect = String(d.get("power_effect", ""))
 	c.power_value = int(d.get("power_value", 0))
 	c.scry = int(d.get("scry", 0))
+	c.intangible = int(d.get("intangible", 0))
+	c.buffer = int(d.get("buffer", 0))
+	c.plated_armour = int(d.get("plated_armour", 0))
 	return c
 
 
@@ -177,6 +187,7 @@ func to_dict() -> Dictionary:
 		"damage_per_light": damage_per_light, "ally_heal": ally_heal,
 		"power_effect": power_effect, "power_value": power_value,
 		"scry": scry,
+		"intangible": intangible, "buffer": buffer, "plated_armour": plated_armour,
 	}
 
 
@@ -199,7 +210,8 @@ func upgraded_copy() -> Card:
 			"damage_per_ally_foothold", "damage_per_rhythm", "damage_per_wound",
 			"damage_per_exhausted", "block_per_exhausted",
 			"damage_per_x", "block_per_x", "frail", "thorns",
-			"light_gain", "damage_per_light", "ally_heal", "power_value", "scry"]:
+			"light_gain", "damage_per_light", "ally_heal", "power_value", "scry",
+			"intangible", "buffer", "plated_armour"]:
 		if int(d[key]) > 0:
 			d[key] = int(d[key]) + 1
 			bumped = true

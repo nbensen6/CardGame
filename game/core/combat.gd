@@ -312,6 +312,9 @@ func _meld_cards(a: Card, b: Card) -> Card:
 		"wound": a.wound + b.wound,
 			"frail": a.frail + b.frail,
 			"thorns": a.thorns + b.thorns,
+			"intangible": a.intangible + b.intangible,
+			"buffer": a.buffer + b.buffer,
+			"plated_armour": a.plated_armour + b.plated_armour,
 		"hits": maxi(a.hits, b.hits),
 		"draw": a.draw + b.draw,
 		"icon": a.icon if a.icon != "" else b.icon,
@@ -551,6 +554,18 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	if card.thorns > 0:  # Thorns on the player — reflects a landed boss attack (backlog #36)
 		ps.combatant.thorns += card.thorns
 		_log("%s plays %s — +%d Thorns." % [who, card.name, card.thorns])
+	if card.intangible > 0:  # backlog #61 — spends a stack per hit rather than decaying by turn
+		ps.combatant.intangible += card.intangible
+		_log("%s plays %s — +%d Intangible." % [who, card.name, card.intangible])
+	if card.buffer > 0:  # backlog #61 — cancels the next hit(s) past Block outright
+		ps.combatant.buffer += card.buffer
+		_log("%s plays %s — +%d Buffer." % [who, card.name, card.buffer])
+	if card.plated_armour > 0:  # backlog #61 — banked here for the round reset AND gained as
+		# ordinary Block right now via gain_block() (so it's subject to this play's own
+		# Dexterity/Frail like any other Block gain), same split #60's Dexterity uses.
+		ps.combatant.plated_armour += card.plated_armour
+		ps.combatant.gain_block(card.plated_armour)
+		_log("%s plays %s — +%d Plated Armour." % [who, card.name, card.plated_armour])
 	if card.targets_hold:  # climbs straight TO a named hold instead of adding grip (#24)
 		var dest := _resolve_hold_target(pi, hold_target)
 		if dest > ps.foothold:
@@ -868,7 +883,9 @@ func _begin_round() -> void:
 		# maxi(0, ...): a downside relic (#30) can push either bonus negative;
 		# neither block nor energy is meaningful below zero (see combatant.gd's
 		# take_damage, which assumes block never goes negative).
-		ps.combatant.block = maxi(0, _round_block + int(start_ctx["carried_block"]))  # relic: start each round with block (+ retained Block)
+		# + plated_armour (backlog #61): re-seeded every round instead of being
+		# wiped like ordinary Block — it only decays from take_damage's own cut.
+		ps.combatant.block = maxi(0, _round_block + int(start_ctx["carried_block"])) + ps.combatant.plated_armour  # relic: start each round with block (+ retained Block)
 		ps.energy = maxi(0, BASE_ENERGY + _energy_bonus)  # relic: extra energy
 		ps.ended_turn = false
 		if _mod("rhythm_keeps") <= 0:
@@ -948,7 +965,7 @@ func _enemy_turn() -> void:
 	_apply_limiter()
 	if _check_end():
 		return
-	boss.block = 0
+	boss.block = boss.plated_armour  # backlog #61 — re-seeded rather than wiped, same as the players' reset
 	var move := boss.current_move(boss_context())
 	var value := int(move.get("value", 0))
 	match String(move.get("type", "")):

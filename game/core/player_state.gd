@@ -50,6 +50,7 @@ func to_dict() -> Dictionary:
 		"char_attack_bonus": char_attack_bonus, "ally_climb": ally_climb,
 		"poison_lift": poison_lift,
 		"frail": combatant.frail, "artifact": combatant.artifact, "thorns": combatant.thorns, "dexterity": combatant.dexterity,
+		"intangible": combatant.intangible, "buffer": combatant.buffer, "plated_armour": combatant.plated_armour,
 	}
 
 static func from_dict(d: Dictionary) -> PlayerState:
@@ -83,6 +84,9 @@ static func from_dict(d: Dictionary) -> PlayerState:
 	ps.combatant.artifact = int(d.get("artifact", 0))
 	ps.combatant.thorns = int(d.get("thorns", 0))
 	ps.combatant.dexterity = int(d.get("dexterity", 0))
+	ps.combatant.intangible = int(d.get("intangible", 0))
+	ps.combatant.buffer = int(d.get("buffer", 0))
+	ps.combatant.plated_armour = int(d.get("plated_armour", 0))
 	return ps
 
 static func _cards_to_dicts(pile: Array) -> Array:

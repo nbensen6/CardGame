@@ -572,6 +572,12 @@ func _keywords_of(c: Card) -> Array:
 		ids.append("frail")
 	if c.thorns > 0:
 		ids.append("thorns")
+	if c.intangible > 0:
+		ids.append("intangible")
+	if c.buffer > 0:
+		ids.append("buffer")
+	if c.plated_armour > 0:
+		ids.append("plated_armour")
 	if c.light_gain > 0 or c.light_cost > 0 or c.damage_per_light > 0:
 		ids.append("light")
 	if c.ally_heal > 0:
@@ -663,6 +669,8 @@ func _card_icon(c: Card) -> String:
 	if c.strength > 0:
 		return "flask"
 	if c.dexterity > 0:
+		return "shield"
+	if c.intangible > 0 or c.buffer > 0 or c.plated_armour > 0:
 		return "shield"
 	if c.draw > 0 or c.scry > 0:
 		return "draw"

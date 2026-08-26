@@ -109,6 +109,18 @@
       "name": "Artifact",
       "text": "One stack blocks one debuff — Expose, Poison, or Frail — before it lands, then is spent."
     },
+    "intangible": {
+      "name": "Intangible",
+      "text": "Any hit that gets past your Block is capped at 1 damage, then one stack is spent. Block still works exactly as normal — this only limits what gets through."
+    },
+    "buffer": {
+      "name": "Buffer",
+      "text": "The next hit that gets past your Block is cancelled outright, then one stack is spent. Stronger than Intangible, so it's used up first if you have both."
+    },
+    "plated_armour": {
+      "name": "Plated Armour",
+      "text": "Block that survives the round instead of resetting to 0 — it only decays by 1 when a hit still gets HP through despite it."
+    },
     "light": {
       "name": "Light",
       "text": "The Lightbearer's own resource. It banks across turns instead of resetting — some cards fill it, others spend it for a bigger effect."

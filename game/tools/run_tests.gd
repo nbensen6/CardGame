@@ -281,6 +281,17 @@ func _init() -> void:
 	_test_dexterity_and_frail_interact_correctly()
 	_test_dexterity_card_lifts_later_block_not_its_own()
 	_test_relic_start_dexterity()
+	# Intangible, Buffer and Plated Armour, the tier above Block (backlog #61)
+	_test_intangible_caps_a_hit_that_gets_past_block()
+	_test_intangible_is_not_spent_when_block_fully_absorbs_the_hit()
+	_test_buffer_cancels_a_hit_that_gets_past_block()
+	_test_buffer_is_spent_before_intangible()
+	_test_buffer_and_thorns_still_retaliate_when_a_hit_is_voided()
+	_test_intangible_card_grants_the_stat()
+	_test_buffer_card_grants_the_stat()
+	_test_plated_armour_persists_the_round_reset()
+	_test_plated_armour_decays_only_when_a_hit_gets_hp_through()
+	_test_intangible_buffer_plated_armour_persist_through_save()
 	# characters (per-player climb + signature passives)
 	_test_frog_climb_bonus()
 	_test_vine_lifts_ally()
@@ -4335,6 +4346,139 @@ func _test_relic_start_dexterity() -> void:
 		_dummy_boss(300), 42, 0, 0, 0, 0, [], {"start_dexterity": 3})
 	combat.start()
 	_expect(combat.players[0].combatant.dexterity == 3, "start_dexterity relic begins the fight with Dexterity")
+
+
+# --- Intangible, Buffer and Plated Armour, the tier above Block (backlog #61) --
+
+func _ghost_step() -> Card:
+	return Card.from_dict({"id": "ghost_step", "name": "Ghost Step", "type": "skill", "cost": 1, "intangible": 2, "target": "self"})
+func _overhang() -> Card:
+	return Card.from_dict({"id": "overhang", "name": "Overhang", "type": "skill", "cost": 1, "buffer": 1, "target": "self"})
+func _hardshell() -> Card:
+	return Card.from_dict({"id": "hardshell", "name": "Hardshell", "type": "skill", "cost": 2, "plated_armour": 3, "target": "self"})
+
+
+func _test_intangible_caps_a_hit_that_gets_past_block() -> void:
+	var c := Combatant.new("Test", 30)
+	c.intangible = 1
+	c.take_damage(10)
+	_expect(c.hp == 29 and c.intangible == 0,
+		"Intangible caps a hit that gets past Block at 1 damage and spends a stack doing it")
+
+
+## Block is checked FIRST — a hit it fully absorbs never reaches Intangible at
+## all, so a well-blocked turn doesn't burn a stack for nothing.
+func _test_intangible_is_not_spent_when_block_fully_absorbs_the_hit() -> void:
+	var c := Combatant.new("Test", 30)
+	c.block = 10
+	c.intangible = 1
+	c.take_damage(6)
+	_expect(c.hp == 30 and c.block == 4 and c.intangible == 1,
+		"a hit Block fully absorbs never touches Intangible")
+
+
+func _test_buffer_cancels_a_hit_that_gets_past_block() -> void:
+	var c := Combatant.new("Test", 30)
+	c.buffer = 1
+	c.take_damage(10)
+	_expect(c.hp == 30 and c.buffer == 0,
+		"Buffer cancels a hit that gets past Block outright and spends a stack doing it")
+
+
+## Buffer is the stronger effect (full cancel vs. a cap at 1), so when both
+## are stacked it goes first — otherwise Intangible would burn a stack
+## capping a hit that was about to be voided anyway.
+func _test_buffer_is_spent_before_intangible() -> void:
+	var c := Combatant.new("Test", 30)
+	c.buffer = 1
+	c.intangible = 1
+	c.take_damage(10)
+	_expect(c.hp == 30 and c.buffer == 0 and c.intangible == 1,
+		"Buffer's full cancel is used first, so the same hit doesn't also spend an Intangible stack")
+
+
+## Thorns (backlog #36) fires off the attack LANDING, not off HP actually
+## being lost — that was already true for Block; this proves it's still true
+## once Buffer can void the hit completely, satisfying #61's "interacts
+## correctly with... Thorns" done-when.
+func _test_buffer_and_thorns_still_retaliate_when_a_hit_is_voided() -> void:
+	var boss := _dummy_boss(300, 8)  # a plain "attack" move for 8
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.combatant.buffer = 1
+	ps.combatant.thorns = 3
+	var hp0: int = ps.combatant.hp
+	var boss_hp := combat.boss.hp
+	combat.end_turn(0)
+	combat.end_turn(1)  # round 1: boss_target_index() is player 0
+	_expect(ps.combatant.hp == hp0, "Buffer cancels the boss's attack outright — no HP lost")
+	_expect(ps.combatant.buffer == 0, "the cancel spends the Buffer stack")
+	_expect(combat.boss.hp == boss_hp - 3, "Thorns still reflects the landed attack even though Buffer voided it")
+
+
+func _test_intangible_card_grants_the_stat() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_ghost_step()]
+	combat.play_card(0, 0)
+	_expect(ps.combatant.intangible == 2, "Ghost Step grants Intangible 2")
+
+
+func _test_buffer_card_grants_the_stat() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_overhang()]
+	combat.play_card(0, 0)
+	_expect(ps.combatant.buffer == 1, "Overhang grants Buffer 1")
+
+
+## Unlike ordinary Block, Plated Armour survives the round reset instead of
+## being wiped to 0 — Combat re-seeds `block` with it every round
+## (_begin_round/_enemy_turn) rather than zeroing it.
+func _test_plated_armour_persists_the_round_reset() -> void:
+	var boss := _dummy_boss(300, 0)  # a plain attack for 0 — proves persistence, not decay
+	var combat := _new_combat([_deck_of(_hardshell, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	combat.play_card(0, 0)  # Hardshell: Plated Armour 3
+	_expect(ps.combatant.block == 3 and ps.combatant.plated_armour == 3,
+		"Plated Armour grants ordinary Block immediately, same as any Block gain")
+	combat.end_turn(0)
+	combat.end_turn(1)  # round 2 begins; the boss's 0-damage attack doesn't touch it
+	_expect(ps.combatant.block == 3,
+		"Plated Armour re-seeds Block at the round reset instead of it resetting to 0")
+	_expect(ps.combatant.plated_armour == 3, "an attack that deals 0 doesn't decay Plated Armour")
+
+
+## The other half: it isn't free forever. It decays by 1 only once real HP
+## damage still gets through despite it.
+func _test_plated_armour_decays_only_when_a_hit_gets_hp_through() -> void:
+	var boss := _dummy_boss(300, 5)  # attack for 5 — more than the 3 Block Plated Armour grants
+	var combat := _new_combat([_deck_of(_hardshell, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	combat.play_card(0, 0)  # Hardshell: Plated Armour 3
+	var hp0: int = ps.combatant.hp
+	combat.end_turn(0)
+	combat.end_turn(1)  # round 1: boss_target_index() is player 0; 3 Block absorbs, 2 gets through
+	_expect(ps.combatant.hp == hp0 - 2, "Block still absorbs what it can before Plated Armour's decay check")
+	_expect(ps.combatant.plated_armour == 2, "Plated Armour decays by 1 once real HP damage gets through")
+
+
+func _test_intangible_buffer_plated_armour_persist_through_save() -> void:
+	var run := Run.new([_deck_of(_slash, 8), _deck_of(_slash, 8)], ["A", "B"], 77, [{}, {}], 0)
+	run.start()
+	_step_into_combat(run)
+	var combat: Combat = run.combat
+	combat.players[0].combatant.intangible = 2
+	combat.players[0].combatant.buffer = 1
+	combat.players[0].combatant.plated_armour = 3
+
+	RunSave.clear()
+	RunSave.save(run)
+	var back := RunSave.load_run()
+	var bc: Combat = back.combat if back != null else null
+	_expect(bc != null and bc.players[0].combatant.intangible == 2
+			and bc.players[0].combatant.buffer == 1 and bc.players[0].combatant.plated_armour == 3,
+		"Intangible/Buffer/Plated Armour survive a mid-fight save and load")
 
 
 # --- Characters (per-player climb + signature passives) -------------------
