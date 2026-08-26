@@ -95,6 +95,9 @@ func _init() -> void:
 	_test_event_random_potion_respects_slot_cap()
 	_test_event_take_potion_effect()
 	_test_backlog37_four_events_touch_potions()
+	_test_backlog53_event_then_beat_replaces_choices_and_stays_in_event_phase()
+	_test_backlog53_then_beat_effects_land_and_reward_routes_from_final_beat()
+	_test_backlog53_four_events_use_then()
 	_test_boons_load_and_are_well_formed()
 	_test_boon_offer_and_pick_applies_effects()
 	_test_boon_rejects_outside_its_phase()
@@ -1079,6 +1082,64 @@ func _test_backlog37_four_events_touch_potions() -> void:
 				count += 1
 				break
 	_expect(count >= 4, "at least 4 events grant, take, or gamble a potion (backlog #37)")
+
+
+## Backlog #53: a choice's "then" replaces the event in place — the run stays
+## in the EVENT phase and a second pick_event answers the follow-up, rather
+## than the first choice resolving the node.
+func _test_backlog53_event_then_beat_replaces_choices_and_stays_in_event_phase() -> void:
+	var run := _map_run()
+	run.event = {"title": "T", "text": "first beat", "choices": [
+		{"label": "provoke it", "result": "it stirs", "effects": {"heal": -1}, "then": {
+			"text": "second beat",
+			"choices": [
+				{"label": "freeze", "result": "it settles", "effects": {}},
+				{"label": "bolt", "result": "you scatter", "effects": {"heal": -2}},
+			],
+		}},
+	]}
+	run.phase = Run.Phase.EVENT
+	run.map_row = 0
+	var hp_before: int = run.hp[0]
+	run.pick_event(0)
+	_expect(run.phase == Run.Phase.EVENT and run.hp[0] == hp_before - 1
+		and String(run.event.get("text", "")) == "second beat"
+		and (run.event.get("choices", []) as Array).size() == 2,
+		"a choice's first beat applies its own effects, then swaps the event for its 'then' and stays in EVENT")
+
+
+## The final beat's own effects and reward routing only happen once there is
+## no further "then" to walk into — proves a two-step event ends the node
+## exactly like a one-step one, and that both beats' effects landed.
+func _test_backlog53_then_beat_effects_land_and_reward_routes_from_final_beat() -> void:
+	var run := _map_run()
+	run.event = {"title": "T", "text": "first beat", "choices": [
+		{"label": "provoke it", "result": "it stirs", "effects": {"heal": -1}, "then": {
+			"text": "second beat",
+			"choices": [
+				{"label": "take the loot", "result": "!", "effects": {"reward": "card", "gold": 10}},
+			],
+		}},
+	]}
+	run.phase = Run.Phase.EVENT
+	run.map_row = 0
+	var hp_before: int = run.hp[0]
+	run.pick_event(0)  # first beat: -1 hp, hands to the follow-up
+	run.pick_event(0)  # second beat: +10 gold, routes to the reward screen
+	_expect(run.hp[0] == hp_before - 1 and run.gold == 10 and run.phase == Run.Phase.REWARD
+		and run.reward_kind == "card",
+		"both beats of a two-step event apply their own effects, and reward routing waits for the final beat")
+
+
+func _test_backlog53_four_events_use_then() -> void:
+	var count := 0
+	for id in Content.list_events():
+		var e: Dictionary = Content.make_event(String(id))
+		for ch in (e.get("choices", []) as Array):
+			if not ((ch as Dictionary).get("then", {}) as Dictionary).is_empty():
+				count += 1
+				break
+	_expect(count >= 4, "at least 4 events have a choice with a second 'then' beat (backlog #53)")
 
 
 func _test_backlog17_four_events_touch_the_deck() -> void:

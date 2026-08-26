@@ -1,5 +1,5 @@
 {
-  "_comment": "Map EVENT nodes are DATA (CLAUDE.md §11). Each event offers choices with immediate effects. Effect keys: heal (int, negative = a bruise — events never kill, HP floors at 1), max_hp (int, permanent), relic (bool, a random team relic), gold (int, into the shared purse), reward ('card'|'relic' — routes into the normal pick-1-of-3 screen), remove_card (bool, each hunter loses one random card from their own deck, never below MIN_DECK), sharpen_card (bool, each hunter upgrades one random un-upgraded card in their own deck, no-op if none), curse_card (a status-card id from cards.json, e.g. 'bruised_grip' — each hunter's deck gains one copy; unlike remove/sharpen this always fires, never a coin flip, since the whole point of a status card is you don't get to opt out — backlog #27), potion (a potion id from potions.json — each hunter with an open slot gets a copy, quietly capped like a fight's own drop), random_potion (bool, same as potion but rolled from the pool, same shape 'relic' rolls one), take_potion (bool, the gamble — each hunter loses one random HELD potion, a no-op if they're carrying none — backlog #37). An empty effects block is a clean walk-away. Tone: small climbers in a big wild world.",
+  "_comment": "Map EVENT nodes are DATA (CLAUDE.md §11). Each event offers choices with immediate effects. Effect keys: heal (int, negative = a bruise — events never kill, HP floors at 1), max_hp (int, permanent), relic (bool, a random team relic), gold (int, into the shared purse), reward ('card'|'relic' — routes into the normal pick-1-of-3 screen), remove_card (bool, each hunter loses one random card from their own deck, never below MIN_DECK), sharpen_card (bool, each hunter upgrades one random un-upgraded card in their own deck, no-op if none), curse_card (a status-card id from cards.json, e.g. 'bruised_grip' — each hunter's deck gains one copy; unlike remove/sharpen this always fires, never a coin flip, since the whole point of a status card is you don't get to opt out — backlog #27), potion (a potion id from potions.json — each hunter with an open slot gets a copy, quietly capped like a fight's own drop), random_potion (bool, same as potion but rolled from the pool, same shape 'relic' rolls one), take_potion (bool, the gamble — each hunter loses one random HELD potion, a no-op if they're carrying none — backlog #37). An empty effects block is a clean walk-away. A choice may also carry a 'then' key (backlog #53): {text, choices} for a second beat that replaces the event in place instead of resolving it — the first beat's effects still land, then the SAME pick_event call is made again to answer the follow-up, so a reward belongs on the final beat, not an intermediate one. Tone: small climbers in a big wild world.",
   "events": {
     "napping_beast": {
       "title": "A Napping Beast",
@@ -14,10 +14,27 @@
         },
         {
           "label": "Harvest the fur",
-          "result": "You gather an armful of rope-fur. It stirs; a swatting paw catches you both.",
-          "effects": {
-            "heal": -5,
-            "relic": true
+          "result": "You gather an armful of rope-fur. It stirs — one eye cracks open, and it hasn't decided anything yet.",
+          "effects": {},
+          "then": {
+            "text": "The beast is watching you now, still half-asleep, its breath gone shallow and careful.",
+            "choices": [
+              {
+                "label": "Freeze and wait it out",
+                "result": "It grumbles, unimpressed, and sinks back into sleep. You keep every scrap of fur.",
+                "effects": {
+                  "relic": true
+                }
+              },
+              {
+                "label": "Bolt with what you have",
+                "result": "You scatter before it fully wakes. A swatting paw catches you both on the way out.",
+                "effects": {
+                  "heal": -5,
+                  "relic": true
+                }
+              }
+            ]
           }
         }
       ]
@@ -216,10 +233,28 @@
       "choices": [
         {
           "label": "Dig it free",
-          "result": "The stones shift as you pull it loose. Worth it.",
+          "result": "The stones shift as you pull it loose. Whatever it is, it's warm in your hand — warmer than a relic should be.",
           "effects": {
-            "heal": -6,
-            "relic": true
+            "heal": -6
+          },
+          "then": {
+            "text": "It's still warm, almost breathing, and neither of you has let go of it yet.",
+            "choices": [
+              {
+                "label": "Keep it",
+                "result": "The unease fades by nightfall. Worth it, in the end.",
+                "effects": {
+                  "relic": true
+                }
+              },
+              {
+                "label": "Cast it back into the stones",
+                "result": "You feel foolish the moment it leaves your hand — and a little relieved.",
+                "effects": {
+                  "heal": 4
+                }
+              }
+            ]
           }
         },
         {
@@ -266,9 +301,24 @@
         },
         {
           "label": "Push past",
-          "result": "It follows you for an hour, shrieking. Exhausting, but free.",
-          "effects": {
-            "heal": -3
+          "result": "It launches after you, still shrieking, keeping easy pace with your climb.",
+          "effects": {},
+          "then": {
+            "text": "It's still airborne over your shoulder, matching every switchback, clearly not done with you.",
+            "choices": [
+              {
+                "label": "Toss it a scrap of food",
+                "result": "It snatches the offering out of the air and peels off, satisfied at last.",
+                "effects": {}
+              },
+              {
+                "label": "Keep walking and ignore it",
+                "result": "It finally tires of you and drops off — but not before drawing blood on the way.",
+                "effects": {
+                  "heal": -3
+                }
+              }
+            ]
           }
         }
       ]
@@ -382,10 +432,28 @@
       "choices": [
         {
           "label": "Wager a potion",
-          "result": "It snatches whatever you're carrying and drops something heavier in your palm.",
+          "result": "It snatches whatever you're carrying and drops something heavier in your palm — then cocks its head again.",
           "effects": {
             "take_potion": true,
             "gold": 40
+          },
+          "then": {
+            "text": "It hasn't flown off. It's still looking at your belt, head cocked, clearly willing to go again.",
+            "choices": [
+              {
+                "label": "Let it try again",
+                "result": "It comes away with a second prize and drops twice the coin for its trouble.",
+                "effects": {
+                  "take_potion": true,
+                  "gold": 40
+                }
+              },
+              {
+                "label": "Call it even",
+                "result": "You pull your hand back before it can take anything more.",
+                "effects": {}
+              }
+            ]
           }
         },
         {

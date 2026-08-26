@@ -388,7 +388,7 @@ Ordered. Source in brackets.
   hunter at once. *Done when:* at least sixteen exist, no effect has only a
   large-and-small pair, and the new effects are tested.
 
-- [ ] **53. Events that branch more than once** `cloud-safe` — all 20 events are
+- [x] **53. Events that branch more than once** `cloud-safe` — all 20 events are
   one screen and one choice. The ones people remember in this genre have a
   second beat: you take the deal, and THEN it asks something. One optional
   `then` on an outcome buys that for the whole file. *Done when:* the field
@@ -720,6 +720,42 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-26** — #53 Events that branch more than once: added an optional
+  `then` key to an event choice — `{text, choices}` shaped exactly like the
+  event itself. `Run.pick_event` applies the picked choice's own effects as
+  before, and if it carries a `then`, swaps `event` for the follow-up in
+  place (same title, new text/choices) and stays in `Phase.EVENT` instead of
+  resolving the node — a second `pick_event` call answers the follow-up
+  exactly like a fresh event, and would recurse again if that choice also had
+  a `then` (none currently do; one level is all four new ones use, but
+  nothing stops a longer chain). Reward routing only checks the picked
+  choice's own `effects.reward` when there's no `then` to walk into, so a
+  branching choice's reward belongs on the FINAL beat — documented in both
+  `events.json`'s `_comment` and the function's doc comment, since getting
+  that backwards would silently skip the reward screen. Gave four existing
+  choices a second beat rather than writing new events, since the item asked
+  for the mechanic to exist, not for more content: `napping_beast`'s "Harvest
+  the fur" (the beast's eye cracks open — freeze and keep everything, or bolt
+  and take the same heal/relic the choice already had), `the_toll_crow`'s
+  "Push past" (the crow keeps following — feed it and walk free, or ignore it
+  and take the same bruise as before), `the_gambling_crow`'s "Wager a potion"
+  (it's still watching your belt — go again for double, or call it even),
+  and `rockslide_altar`'s "Dig it free" (the relic feels wrong in your hand —
+  keep it, or cast it back for a small heal instead). In every case the
+  original choice's own effects were split across the two beats rather than
+  bolted on top, so the two-step version isn't strictly more generous than
+  the one-step version it replaced — it's the same stakes with a second
+  decision in the middle, which is what the item actually asked for. Three
+  new tests: one proves a `then` beat replaces `event` in place and the phase
+  stays EVENT after the first `pick_event`, one proves both beats' effects
+  land and reward-routing waits for the final beat (two `pick_event` calls,
+  checked HP, gold, phase and `reward_kind` together), and one walks
+  `Content.list_events()` asserting at least 4 events carry a `then` (found
+  exactly the 4 written here). `run_tests.gd`: all green, no existing test
+  touched. `node tools/cardlab/build.js`: 164 cards, 35 relics, 17 potions,
+  0 unreachable — unchanged, since this item touched no card/relic/potion
+  data, only event choices.
 
 - **2026-08-26** — #52 Potions across the whole effect range: the ten
   existing potions were exactly five effects times a small/large pair

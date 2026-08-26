@@ -454,6 +454,15 @@ func _begin_event() -> void:
 ## Resolve an event choice. Like the route, it's a shared decision — either
 ## hunter may answer. Effects land immediately; a choice that offers a card or
 ## relic routes into the normal pick-1-of-3 screen.
+##
+## A choice may carry an optional "then" (backlog #53): a second {text,
+## choices} beat that replaces the current event in place rather than
+## resolving the node. The phase stays EVENT and `event` is swapped for the
+## follow-up, so a second call to pick_event answers the follow-up exactly
+## like a fresh event — recursively, if a "then" choice itself has a "then".
+## A choice with a "then" should put any "reward" on the FINAL beat's effects,
+## not an intermediate one: reward-routing is only checked once there is no
+## further "then" to walk into.
 func pick_event(choice: int) -> bool:
 	if phase != Phase.EVENT:
 		return false
@@ -464,6 +473,13 @@ func pick_event(choice: int) -> bool:
 	var eff: Dictionary = picked.get("effects", {})
 	event_result = String(picked.get("result", ""))
 	_apply_effect_block(eff)
+	var then: Dictionary = picked.get("then", {})
+	if not then.is_empty():
+		var next_event: Dictionary = event.duplicate(true)
+		next_event["text"] = String(then.get("text", ""))
+		next_event["choices"] = then.get("choices", [])
+		event = next_event
+		return true
 	var rw := String(eff.get("reward", ""))
 	if rw != "":
 		_begin_reward(rw)
