@@ -471,7 +471,7 @@ something Slay the Spire leans on hard and we do not have at all.
   *Done when:* discarding is something a card can do on purpose, at least four
   cards pay off for it, and it is tested.
 
-- [ ] **63. More than one thing to fight at once** `cloud-safe` — every Spire
+- [x] **63. More than one thing to fight at once** `cloud-safe` — every Spire
   fight is two to four enemies and every one of ours is a single beast, which is
   why targeting is never a decision. Our idiom makes this better than a straight
   copy: things ON the beast — parasites, guardians clinging to a hold — that you
@@ -660,6 +660,16 @@ check. It never judges its own work. See item 74 for why.
   *Done when:* the HUD shows current Light for a Lightbearer hunter, and it's
   been looked at.
 
+- [ ] **79. A card face for choosing which enemy to hit** `needs a screen` —
+  #63's engine landed: `Combat.play_card()` takes an `enemy_index` and routes
+  damage to a boss's `adds` instead of the boss itself, and it crosses the
+  network command (`"enemy"` in the play_card payload) and the shared snapshot
+  (`boss.adds`) end to end. Nothing lets a PLAYER choose one — there's no card
+  face or tap target for an add the way there is for a hold (#24 vs #25's
+  same split). Only one beast (the Root Lurker) has an add to aim at yet.
+  *Done when:* a fight with an add lets a player tap it as a target, and it's
+  been looked at.
+
 ## Working alongside the cloud routine
 
 Two of us push to `main`: the routine every two hours, and Nick-and-Claude in a
@@ -738,6 +748,68 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-26** — #63 More than one thing to fight at once: the next
+  `cloud-safe` item after #62 in queue order — #55 (More beasts) stayed
+  skipped for the reason its own 2026-08-26 note gives (needs full `cloud-art`
+  work per beast, not one iteration), so this was the next genuinely
+  attemptable item. Landed as one real, tested, deliberately thin vertical
+  slice rather than the "several runs" of depth the item's own text expected,
+  the same call #47 (fifth hunter) made — worth being honest about the shape
+  of what's here rather than pretending it's the whole thing. A boss's own
+  data can now name `adds`: small secondary Boss instances (Boss already
+  extends Combatant, so take_damage/gain_block/thorns all worked for free)
+  built by the new `Content.build_boss_adds()`, deliberately NOT separate
+  bosses.json top-level entries — nested under their parent so they carry no
+  art-coverage requirement (`Content.boss_ids()` only walks top-level keys)
+  and no beast-pool/move-pattern requirement either, which is what kept this
+  `cloud-safe` instead of quietly becoming `cloud-art` work like #55 warns
+  about. `Combat.play_card()` gained an `enemy_index` param (-1 default keeps
+  every one of the ~155 existing cards hitting the boss exactly as before)
+  and `Card.hits_all_enemies` (Cleave-style: hits the boss AND every living
+  add, ignoring `enemy_index`) — one new card, Sweeping Strike, added to the
+  global pool and all five characters' own pools (the trap every recent log
+  flags). Adds act on their own turn (`Combat._adds_turn()`, called from
+  `_enemy_turn()` right after the boss's own move) using the SAME
+  `Boss.current_move()`/`advance_move()` machinery the boss already has —
+  deliberately thin, only "attack" and "block" move types are honoured, not
+  the boss's full vocabulary, since an add is meant to be a small secondary
+  threat, not a second full Titan. One real bug this caught before it shipped:
+  `_boss_hits()` hardcoded reflecting a hunter's Thorns onto `boss` — an add's
+  own attack would have reflected Thorns onto the wrong combatant, so it
+  gained an optional `attacker` param (null = boss, every existing caller
+  unaffected) that the add's own attack now passes as itself. The win
+  condition is untouched on purpose: only `boss.is_dead()` ends the fight, so
+  adds are extra things to fight, not extra things you must kill — simpler,
+  and avoids re-opening `_check_end()`. `Content.build_boss_adds(root_lurker)`
+  seeds one add (a Root Tendril, 14 HP, attack/block) as the one real piece of
+  content proving the data path end to end; every other beast is unaffected
+  (`combat.adds` empty exactly as before this landed). Both `Combat.to_dict/
+  from_dict` and the `game_host.gd` snapshot (`boss.adds`, plus a new `"enemy"`
+  key on the `play_card` network command) carry adds through save/load and the
+  host/client boundary — #45's own lesson applied to this item before it could
+  repeat the mistake. 15 new tests: the data-driven Root Lurker add builds
+  correctly, an unrelated beast still has none, `enemy_index` redirects damage
+  to an add (and falls back to the boss out of range), `hits_all_enemies` hits
+  everything alive and skips a dead add, killing an add doesn't end the fight,
+  an add acts and re-seeds its own Block on its own turn, Thorns reflects onto
+  the attacking ADD not the boss, a mid-fight save/load round-trips an add's HP
+  and Block, and a real `GameHost`/`GameClient` pair proves an add reaches the
+  shared snapshot. One test bug caught and fixed before commit, not by luck: a
+  Thorns isolation test used the existing `_dummy_boss(hp, 0)` helper (a 0
+  VALUE "attack" move) expecting it to be a no-op, but `_boss_hits()` reflects
+  Thorns on ANY call regardless of the damage amount — a pre-existing quirk,
+  not something this item introduced — so the dummy boss's own 0-damage
+  "attack" was ALSO reflecting Thorns onto itself and corrupting the test's
+  isolation; fixed by giving that boss a "block" move instead, not by touching
+  the (unrelated, pre-existing) production behavior. Left deliberately
+  unbuilt, spun off as #79 (`needs a screen`): no card face lets a PLAYER
+  choose an enemy yet, the same split #24 (engine) vs #25 (drag-to-target UI)
+  already drew — and only one beast has an add to aim at. `run_tests.gd`: all
+  green, 419 assertions (404 prior + 15 new). `node tools/cardlab/build.js`:
+  184 cards (183+1), 0 unreachable, 7 findings (up from 6, but every one is an
+  informational stat — icon/cost/text-length distributions — that shifts by 1
+  with any new card; nothing newly orphaned).
 
 - **2026-08-26** — #62 Cards that reward discarding: next `cloud-safe` item in
   queue order after #61 (the `needs a screen` items still ahead of it in the
