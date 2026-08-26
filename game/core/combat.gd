@@ -114,6 +114,7 @@ func _init(decks: Array, combatants: Array, p_boss: Boss, seed_value: int = 0,
 		var ps := PlayerState.new()
 		ps.combatant = combatants[i]
 		ps.strength = start_strength  # relic: begin the fight with Strength
+		ps.combatant.dexterity = _mod("start_dexterity")  # relic: begin the fight with Dexterity (#60)
 		ps.foothold = mini(_mod("start_foothold"), FOOTHOLD_MAX)  # relic: start partway up
 		if i < player_passives.size():
 			_apply_passive(ps, player_passives[i])
@@ -307,6 +308,7 @@ func _meld_cards(a: Card, b: Card) -> Card:
 		"grip_per_rhythm": a.grip_per_rhythm + b.grip_per_rhythm,
 		"damage_per_wound": a.damage_per_wound + b.damage_per_wound,
 		"strength": a.strength + b.strength,
+		"dexterity": a.dexterity + b.dexterity,
 		"wound": a.wound + b.wound,
 			"frail": a.frail + b.frail,
 			"thorns": a.thorns + b.thorns,
@@ -630,6 +632,11 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		ally.combatant.gain_block(ally_blk)
 		var anchored := "  (nailed it!)" if card.timed and card.timed_ally_block > 0 else ""
 		_log("%s plays %s — +%d block to %s%s." % [who, card.name, ally_blk, ally.combatant.name, anchored])
+	if card.dexterity > 0:  # backlog #60 — lifts Block gained for the REST of the
+		# fight, same as Strength lifts damage; applied after this card's own Block
+		# above so a card carrying both fields doesn't inflate its own printed number.
+		ps.combatant.dexterity += card.dexterity
+		_log("%s plays %s — +%d Dexterity." % [who, card.name, card.dexterity])
 	if card.ally_energy > 0:
 		var ally_e: PlayerState = players[ally_index(pi)]
 		ally_e.energy += card.ally_energy

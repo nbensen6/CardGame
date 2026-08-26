@@ -453,7 +453,7 @@ something Slay the Spire leans on hard and we do not have at all.
   scrying tells your ally what is coming. *Done when:* the effect exists, the
   choice is a command the host validates, and it is tested.
 
-- [ ] **60. Dexterity** `cloud-safe` — Strength's counterpart, and we have only
+- [x] **60. Dexterity** `cloud-safe` — Strength's counterpart, and we have only
   Strength. Every buff we own points at the damage number, so a defensive build
   has no scaling to find. One field on `Combatant`, applied wherever Block is
   gained. *Done when:* the field exists, cards and relics grant it, Frail (#36)
@@ -738,6 +738,35 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-26** — #60 Dexterity: skipped the `needs a screen` items ahead of
+  it (2, 3, 8, 25, 29b, 32, 31b) and left #55 (more beasts) unchecked exactly
+  as its own note asks — it needs Blender per-beast, not a data-only pass — so
+  this was the topmost item actually buildable cloud-side. Added `dexterity: int`
+  to `Combatant` (not PlayerState/Boss, where Strength lives) exactly as the
+  item specifies, since it has to apply wherever ANY combatant gains Block —
+  self, ally, or (Boss extends Combatant) the Titan's own "block" move — with
+  no extra wiring at those call sites. `gain_block()` now adds `dexterity` to
+  the raw amount BEFORE Frail's cut, so a Frailed defender keeps a diminished
+  benefit rather than losing a banked Dexterity bonus outright — that ordering
+  is the "Frail interacts correctly" half of the done-when. Wired three
+  sources: a card field (`Card.dexterity`, applied in `play_card` AFTER this
+  card's own Block resolves, mirroring how Strength doesn't retroactively lift
+  its own card's damage — otherwise a card with both `block` and `dexterity`
+  would inflate its own printed number), a relic (`nimble_wraps`, +2 start,
+  via the existing generic `_mods`/`_mod("start_...")` plumbing `start_foothold`
+  already uses, so no new Combat constructor parameter was needed), and two
+  cards (`sure_footing`, dexterity-only; `steady_grip`, block+dexterity) added
+  to the global pool AND all five characters' own `reward_pool` arrays — the
+  same trap #57/#58/#59 already flagged, and the one I keep having to
+  remember. Added the `dexterity` keyword and a `_keywords_of`/`_card_icon`
+  fallback so the existing coverage tests still pass, and one line to
+  `_meld_cards`' field list (it already carries `strength`/`frail`/`thorns`,
+  so leaving `dexterity` out would've reopened the exact gap #58's log flagged
+  for `ethereal`). 7 new tests: the base mechanic, the same interaction
+  proven on a real second card (not just the same card twice), the Frail
+  interaction, the same-card-doesn't-inflate-itself ordering proven two ways,
+  and the relic. All green, existing suite untouched.
 
 - **2026-08-26** — #59 Scry: picked up #55 (more beasts) first since it was
   higher in the queue, but Blender turned out to be unreachable this run —

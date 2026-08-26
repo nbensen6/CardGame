@@ -275,6 +275,12 @@ func _init() -> void:
 	_test_beast_thorns_reflects_card_damage_dealt_to_it()
 	_test_frail_artifact_thorns_persist_through_save()
 	_test_beast_thorns_and_artifact_are_wired()
+	# Dexterity, Strength's counterpart (backlog #60)
+	_test_dexterity_adds_to_block_gained()
+	_test_dexterity_card_lifts_a_later_different_cards_block()
+	_test_dexterity_and_frail_interact_correctly()
+	_test_dexterity_card_lifts_later_block_not_its_own()
+	_test_relic_start_dexterity()
 	# characters (per-player climb + signature passives)
 	_test_frog_climb_bonus()
 	_test_vine_lifts_ally()
@@ -4261,6 +4267,74 @@ func _test_beast_thorns_and_artifact_are_wired() -> void:
 	var sentinel := Content.build_boss("frost_sentinel")
 	_expect(hog.thorns == 3, "the Bramble Hog carries innate Thorns")
 	_expect(sentinel.artifact == 2, "the Frost Sentinel carries innate Artifact")
+
+
+# --- Dexterity, Strength's counterpart (backlog #60) ----------------------
+
+func _brace_up() -> Card:
+	return Card.from_dict({"id": "brace_up", "name": "Brace Up", "type": "skill", "cost": 1, "dexterity": 2, "target": "self"})
+func _steady_wrap() -> Card:
+	return Card.from_dict({"id": "steady_wrap", "name": "Steady Wrap", "type": "skill", "cost": 1, "block": 4, "dexterity": 1, "target": "self"})
+
+
+func _test_dexterity_adds_to_block_gained() -> void:
+	var c := Combatant.new("Test", 30)
+	c.dexterity = 3
+	c.gain_block(5)
+	_expect(c.block == 8, "Dexterity adds flat Block to every source of Block gained")
+
+
+## The mechanism the backlog item actually asks for: a card that only grants
+## Dexterity (no Block of its own — Brace Up), followed by an UNRELATED card
+## that grants Block (Brace), proves Dexterity lifts Block from any source,
+## not just a card built to combo with itself.
+func _test_dexterity_card_lifts_a_later_different_cards_block() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_brace_up(), _defend()]
+	combat.play_card(0, 0)  # Brace Up: Dexterity 2, no Block of its own
+	_expect(ps.combatant.block == 0 and ps.combatant.dexterity == 2,
+		"Brace Up grants Dexterity and no Block")
+	combat.play_card(0, 0)  # Brace: 5 Block, lifted by the Dexterity just banked
+	_expect(ps.combatant.block == 7, "Dexterity lifts Block from a later, unrelated card")
+
+
+## Dexterity's bonus is folded into the raw amount BEFORE Frail's cut, the
+## same "one generic rule" gain_block() already applies to every other source
+## of Block (see _test_frail_reduces_block_gained) — so a Frailed defender
+## still keeps some benefit from a banked Dexterity bonus rather than losing
+## it outright.
+func _test_dexterity_and_frail_interact_correctly() -> void:
+	var c := Combatant.new("Test", 30)
+	c.dexterity = 4
+	c.frail = 1
+	c.gain_block(8)
+	_expect(c.block == 9, "Dexterity's bonus is added before Frail's cut, not exempt from it")
+
+
+## Mirrors how Strength lifts damage on every attack AFTER the one that grants
+## it, not the granting card itself (see play_card's ordering): a card
+## carrying both `block` and `dexterity` must not inflate its own printed
+## Block, but the Dexterity it banks has to lift every Block gain after it —
+## including the SAME card played a second time.
+func _test_dexterity_card_lifts_later_block_not_its_own() -> void:
+	var combat := _new_combat([_deck_of(_steady_wrap, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	combat.play_card(0, 0)  # Steady Wrap: 4 Block + Dexterity 1, Dexterity starts at 0
+	_expect(ps.combatant.block == 4,
+		"a card's own Dexterity does not inflate the Block it grants on the same play")
+	_expect(ps.combatant.dexterity == 1, "the Dexterity is still banked for every future Block gain")
+	combat.play_card(0, _first_playable(combat, 0))  # a second Steady Wrap: Dexterity is live now
+	_expect(ps.combatant.block == 4 + (4 + 1),
+		"the banked Dexterity from the first play lifts the second card's own Block")
+
+
+func _test_relic_start_dexterity() -> void:
+	var players := [Combatant.new("A", 42), Combatant.new("B", 42)]
+	var combat := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)], players,
+		_dummy_boss(300), 42, 0, 0, 0, 0, [], {"start_dexterity": 3})
+	combat.start()
+	_expect(combat.players[0].combatant.dexterity == 3, "start_dexterity relic begins the fight with Dexterity")
 
 
 # --- Characters (per-player climb + signature passives) -------------------

@@ -22,6 +22,7 @@
     "sunlight_blade": {"name": "Sunlight Blade", "rarity": "uncommon", "type": "attack", "icon": "target", "cost": 1, "damage": 5, "damage_per_vulnerable": 3, "text": "Deal 5 damage and an additional 3 per Expose."},
     "bowshot": {"name": "Bowshot", "rarity": "common", "type": "attack", "icon": "bow", "cost": 0, "damage": 3, "vulnerable": 1, "text": "Deal 3 damage. Expose 1."},
     "sharpen": {"name": "Sharpen", "icon": "flask", "rarity": "common", "type": "skill", "cost": 1, "strength": 2, "text": "Strength 2."},
+    "sure_footing": {"name": "Sure Footing", "icon": "shield", "rarity": "common", "type": "skill", "cost": 1, "dexterity": 2, "target": "self", "text": "Dexterity 2."},
     "rend": {"name": "Rend", "icon": "fire", "rarity": "common", "type": "attack", "cost": 1, "damage": 4, "wound": 2, "text": "Deal 4 damage. Poison 2."},
     "dagger": {"name": "Dagger", "icon": "sword", "rarity": "common", "type": "attack", "cost": 0, "damage": 3, "text": "Deal 3 damage."},
     "flurry": {"name": "Flurry", "icon": "volley", "rarity": "uncommon", "type": "attack", "cost": 2, "damage": 4, "hits": 2, "text": "Deal 4 damage twice."},
@@ -149,6 +150,7 @@
     "verdant_weave": {"name": "Verdant Weave", "rarity": "rare", "type": "skill", "icon": "rope", "cost": 3, "grip": 2, "ally_grip": 4, "wound": 2, "draw": 1, "target": "ally", "text": "Climb 2. Ally climbs 4. Poison 2. Draw 1."},
 
     "chalk_up": {"name": "Chalk Up", "rarity": "common", "type": "skill", "icon": "shield", "cost": 0, "strength": 1, "block": 2, "target": "self", "text": "Gain 2 Block. Strength 1."},
+    "steady_grip": {"name": "Steady Grip", "rarity": "common", "type": "skill", "icon": "shield", "cost": 1, "block": 4, "dexterity": 1, "target": "self", "text": "Gain 4 Block. Dexterity 1."},
     "foothold_check": {"name": "Foothold Check", "rarity": "common", "type": "skill", "icon": "rope", "cost": 0, "grip": 1, "ally_grip": 1, "draw": 1, "target": "ally", "text": "All players climb 1. Draw 1."},
     "rappel": {"name": "Rappel", "rarity": "uncommon", "type": "attack", "icon": "peak", "cost": 1, "damage": 3, "damage_per_foothold": 2, "timed": true, "timed_damage": 3, "target": "enemy", "text": "Deal 3 damage and an additional 2 per Height."},
     "guide_rope": {"name": "Guide Rope", "rarity": "common", "type": "skill", "icon": "lift", "cost": 1, "pull_ally": 4, "ally_block": 4, "target": "ally", "text": "Ally gains 4 Block. Pull your ally up to you."},
@@ -189,5 +191,5 @@
     "barbed_hide": {"name": "Barbed Hide", "icon": "shield", "rarity": "common", "type": "power", "cost": 1, "power_effect": "thorns", "power_value": 2, "text": "Power. Gain 2 Thorns at the end of each of your turns."}
   },
   "starter_deck": ["slash", "slash", "slash", "brace", "brace", "scramble", "scramble", "take_aim", "cleave", "cover"],
-  "reward_pool": ["rally", "expose", "draw_aggro", "harpoon", "grip", "sunlight_blade", "bowshot", "sharpen", "rend", "dagger", "flurry", "cleave", "cover", "brace", "slash", "take_aim", "pounce", "flick", "lash_out", "piton_drive", "piston_punch", "haul", "tongue_snap", "hop", "leapfrog", "toxic_lash", "overgrowth", "blightbloom", "summit_strike", "belay", "pitons_in", "dig_in", "last_stand", "route_finder", "bunker_down", "first_strike", "crippling_blow", "spinebrace", "trailmasters_cut", "iron_husk", "old_grudge", "seeping_venom", "barbed_hide", "reckless_swing", "guarded_instant", "fading_insight", "peer_ahead", "read_the_climb"]
+  "reward_pool": ["rally", "expose", "draw_aggro", "harpoon", "grip", "sunlight_blade", "bowshot", "sharpen", "rend", "dagger", "flurry", "cleave", "cover", "brace", "slash", "take_aim", "pounce", "flick", "lash_out", "piton_drive", "piston_punch", "haul", "tongue_snap", "hop", "leapfrog", "toxic_lash", "overgrowth", "blightbloom", "summit_strike", "belay", "pitons_in", "dig_in", "last_stand", "route_finder", "bunker_down", "first_strike", "crippling_blow", "spinebrace", "trailmasters_cut", "iron_husk", "old_grudge", "seeping_venom", "barbed_hide", "reckless_swing", "guarded_instant", "fading_insight", "peer_ahead", "read_the_climb", "sure_footing", "steady_grip"]
 }

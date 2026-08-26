@@ -530,6 +530,8 @@ func _keywords_of(c: Card) -> Array:
 		ids.append("rhythm")
 	if c.strength > 0:
 		ids.append("strength")
+	if c.dexterity > 0:
+		ids.append("dexterity")
 	if c.block > 0 or c.ally_block > 0 or c.block_per_play > 0 \
 			or c.block_per_exhausted > 0 or c.timed_block > 0 or c.timed_ally_block > 0:
 		ids.append("block")
@@ -660,6 +662,8 @@ func _card_icon(c: Card) -> String:
 		return "expose"
 	if c.strength > 0:
 		return "flask"
+	if c.dexterity > 0:
+		return "shield"
 	if c.draw > 0 or c.scry > 0:
 		return "draw"
 	if c.damage > 0:

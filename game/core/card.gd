@@ -46,6 +46,8 @@ var damage_per_foothold: int    # bonus damage per Height climbed (Mountain Clim
 var damage_per_wound: int       # bonus damage per Wound stack on the Titan (Vine-Weaver)
 var damage_per_ally_foothold: int  # bonus damage per your ALLY's Height (Mountain Climbers coordination)
 var strength: int      # Strength gained by the player (attacks deal +Strength this fight)
+var dexterity: int     # Dexterity gained by the player (Block they gain is +Dexterity for the
+                        # rest of the fight — Strength's defensive counterpart, backlog #60)
 var wound: int         # Wound applied to the Titan (it bleeds each of its turns)
 var hits: int          # how many times the damage lands (default 1) — multi-strike
 var draw: int          # extra cards drawn
@@ -117,6 +119,7 @@ static func from_dict(d: Dictionary) -> Card:
 	c.damage_per_wound = int(d.get("damage_per_wound", 0))
 	c.damage_per_ally_foothold = int(d.get("damage_per_ally_foothold", 0))
 	c.strength = int(d.get("strength", 0))
+	c.dexterity = int(d.get("dexterity", 0))
 	c.wound = int(d.get("wound", 0))
 	c.hits = int(d.get("hits", 1))
 	c.draw = int(d.get("draw", 0))
@@ -164,7 +167,7 @@ func to_dict() -> Dictionary:
 		"damage_per_rhythm": damage_per_rhythm, "grip_per_rhythm": grip_per_rhythm,
 		"rhythm": rhythm,
 		"damage_per_wound": damage_per_wound,
-		"strength": strength, "wound": wound, "hits": hits, "draw": draw,
+		"strength": strength, "dexterity": dexterity, "wound": wound, "hits": hits, "draw": draw,
 		"target": target, "icon": icon, "text": text, "upgraded": upgraded,
 		"enchant": enchant, "status": status,
 		"retain": retain, "innate": innate, "ethereal": ethereal,
@@ -191,7 +194,7 @@ func upgraded_copy() -> Card:
 			d[key] = int(d[key]) + 3
 			bumped = true
 	for key in ["grip", "ally_grip", "timed_grip", "vulnerable", "wound",
-			"strength", "draw", "block_per_play", "ally_energy", "rhythm",
+			"strength", "dexterity", "draw", "block_per_play", "ally_energy", "rhythm",
 			"damage_per_vulnerable", "damage_per_foothold",
 			"damage_per_ally_foothold", "damage_per_rhythm", "damage_per_wound",
 			"damage_per_exhausted", "block_per_exhausted",
