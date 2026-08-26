@@ -22,6 +22,7 @@ set ROOT=%~dp0..\..
 set CASTOUT=%ROOT%\game\assets\3d\cast
 set ENVOUT=%ROOT%\game\assets\3d\env
 set HEXOUT=%ROOT%\game\assets\3d\hexown
+set PORTOUT=%ROOT%\game\assets\portraits
 
 set CAST=frog vine_weaver mountain_climbers goblin_mech lightbearer stone_warden gale_serpent drowned_colossus sunken_warden crag_pup bramble_hog bounder mire_snapper frost_sentinel grove_bear root_lurker sky_snapper riftling shifting_idol
 set GROUNDS=crag_pup bounder bramble_hog root_lurker mire_snapper sky_snapper frost_sentinel shifting_idol grove_bear gale_serpent drowned_colossus sunken_warden riftling stone_warden
@@ -34,6 +35,7 @@ if "%~1"=="" (
 set MODE=%~1
 if /i "%MODE%"=="env" goto :envmode
 if /i "%MODE%"=="map" goto :mapmode
+if /i "%MODE%"=="portraits" goto :portmode
 if /i "%MODE%"=="all" goto :allmode
 if /i "%MODE%"=="cast" (set NAMES=%CAST%) else (set NAMES=%*)
 goto :castmode
@@ -43,6 +45,7 @@ set NAMES=%CAST%
 call :buildcast
 call :buildenv %GROUNDS%
 call :buildmap
+call :buildportraits
 goto :reimport
 
 :castmode
@@ -60,6 +63,10 @@ goto :reimport
 
 :mapmode
 call :buildmap
+goto :reimport
+
+:portmode
+call :buildportraits
 goto :reimport
 
 :buildcast
@@ -86,6 +93,12 @@ exit /b 0
 echo === overworld tiles
 "%BLENDER%" --background --python "%HERE%hexes.py" -- "%HEXOUT%" ^
   | findstr /R "TRIS WARNING"
+exit /b 0
+
+:buildportraits
+echo === portraits
+"%BLENDER%" --background --python "%HERE%portraits.py" -- "%PORTOUT%" ^
+  | findstr /R "PORTRAIT NO"
 exit /b 0
 
 :reimport

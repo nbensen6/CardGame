@@ -93,7 +93,7 @@
         "brace",
         "cover"
       ],
-      "portrait": "res://assets/portraits/sloth.png",
+      "portrait": "res://assets/portraits/vine_weaver.png",
       "reward_pool": [
         "world_tree",
         "venom_cascade",
@@ -160,7 +160,7 @@
         "brace",
         "take_aim"
       ],
-      "portrait": "res://assets/portraits/goat.png",
+      "portrait": "res://assets/portraits/mountain_climbers.png",
       "reward_pool": [
         "the_two_of_us",
         "crux_move",
@@ -224,7 +224,7 @@
         "build_mech",
         "catapult"
       ],
-      "portrait": "res://assets/portraits/monkey.png",
+      "portrait": "res://assets/portraits/goblin_mech.png",
       "reward_pool": [
         "grand_contraption",
         "wrecking_ball",
@@ -287,7 +287,7 @@
         "brace",
         "take_aim"
       ],
-      "portrait": "res://assets/portraits/owl.png",
+      "portrait": "res://assets/portraits/lightbearer.png",
       "reward_pool": [
         "spark",
         "radiant_bolt",

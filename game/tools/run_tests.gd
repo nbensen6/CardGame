@@ -4783,6 +4783,37 @@ func _test_everyone_wears_their_own_art() -> void:
 		"every beast has its own model"
 			+ ("" if beasts.is_empty() else " (missing: %s)" % ", ".join(beasts)))
 
+	# And its own FACE. There were fifteen Kenney animal portraits for nineteen
+	# characters, so the Mire Snapper and the Root Lurker were the same crocodile
+	# and two beasts shared a penguin — which nothing anywhere objected to,
+	# because a portrait that loads is a portrait that works.
+	var shared := {}
+	var faceless: Array = []
+	for c in Content.list_characters():
+		var cid := String((c as Dictionary).get("id", ""))
+		_face(cid, String((c as Dictionary).get("portrait", "")), shared, faceless)
+	for id in Content.boss_ids():
+		var b: Boss = Content.build_boss(String(id))
+		if b != null:
+			_face(String(id), b.art, shared, faceless)
+	var doubled: Array = []
+	for k in shared:
+		if (shared[k] as Array).size() > 1:
+			doubled.append("%s <- %s" % [k, ", ".join(shared[k])])
+	_expect(faceless.is_empty() and doubled.is_empty(),
+		"every character and beast has a portrait of ITSELF, shared with nobody"
+			+ ("" if faceless.is_empty() else " (missing: %s)" % ", ".join(faceless))
+			+ ("" if doubled.is_empty() else " (shared: %s)" % "; ".join(doubled)))
+
+
+func _face(id: String, path: String, shared: Dictionary, faceless: Array) -> void:
+	if path == "" or not ResourceLoader.exists(path):
+		faceless.append(id)
+		return
+	if not shared.has(path):
+		shared[path] = []
+	(shared[path] as Array).append(id)
+
 
 func _expect(cond: bool, name: String) -> void:
 	if cond:

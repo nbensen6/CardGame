@@ -48,6 +48,32 @@ The failures that have happened, all of which passed every check:
 
 ---
 
+### the nineteen portraits — NEEDS A PASS
+
+Rendered 2026-08-25 from the models themselves by `tools/blender/portraits.py`.
+Five hunters and fourteen beasts, one each, replacing fifteen Kenney animal
+photos that had to cover nineteen characters — so the Mire Snapper and the Root
+Lurker were the same crocodile, and two beasts shared a penguin.
+
+Rendered orthographic, three-quarter from the front and a little above (the
+angle the fight camera uses), on transparency, at 512px. Because they come from
+the models they stay right: change a beast and its portrait changes with it,
+which a painted one never would.
+
+- **What to judge:** they are shown at **34 pixels** in the party panel and about
+  76 on a card. Look at them there, not at the source files. The question is
+  only ever "can I tell which one this is at a glance" — a portrait that is
+  beautiful at 512 and a smudge at 34 has failed.
+- `FOCUS` in the script is the one hand-tuned thing: where on each body to point
+  and how much to fit. "The face" is not a fraction of the bounding box on a
+  creature that is mostly jaw or mostly tail, so a few say where to look. If one
+  is framed wrong, that is a two-number change.
+- **unsure about:** the darker beasts. Exposure is lifted for the small size,
+  but the Stone Warden, the Bounder and the Shifting Idol are grey creatures on
+  a grey render and may still read as one shape at panel size. Also whether the
+  gold sigil ring dominating several beast portraits is a feature (they all wear
+  the same mark) or a sameness.
+
 ### the overworld map — NEEDS A PASS
 
 Built 2026-08-25, all seventeen models from `tools/blender/hexes.py` in one

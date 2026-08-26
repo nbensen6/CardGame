@@ -3,7 +3,7 @@
   "bosses": {
     "stone_warden": {
       "name": "The Stone Warden",
-      "art": "res://assets/portraits/rhino.png",
+      "art": "res://assets/portraits/stone_warden.png",
       "max_hp": 68,
       "weak_point_height": 6,
       "ledges": [2,4],
@@ -32,7 +32,7 @@
     },
     "gale_serpent": {
       "name": "The Gale Serpent",
-      "art": "res://assets/portraits/snake.png",
+      "art": "res://assets/portraits/gale_serpent.png",
       "max_hp": 148,
       "weak_point_height": 9,
       "ledges": [3,6],
@@ -74,7 +74,7 @@
     },
     "drowned_colossus": {
       "name": "The Drowned Colossus",
-      "art": "res://assets/portraits/whale.png",
+      "art": "res://assets/portraits/drowned_colossus.png",
       "max_hp": 220,
       "weak_point_height": 11,
       "ledges": [3,6,9],
@@ -101,7 +101,7 @@
     },
     "sunken_warden": {
       "name": "The Sunken Warden",
-      "art": "res://assets/portraits/walrus.png",
+      "art": "res://assets/portraits/sunken_warden.png",
       "max_hp": 300,
       "weak_point_height": 13,
       "ledges": [3,6,9,11],
@@ -132,7 +132,7 @@
     },
     "crag_pup": {
       "name": "The Crag Pup",
-      "art": "res://assets/portraits/dog.png",
+      "art": "res://assets/portraits/crag_pup.png",
       "max_hp": 34,
       "weak_point_height": 4,
       "ledges": [2],
@@ -177,7 +177,7 @@
     },
     "bramble_hog": {
       "name": "The Bramble Hog",
-      "art": "res://assets/portraits/pig.png",
+      "art": "res://assets/portraits/bramble_hog.png",
       "max_hp": 50,
       "weak_point_height": 5,
       "ledges": [2],
@@ -204,7 +204,7 @@
     },
     "bounder": {
       "name": "The Bounder",
-      "art": "res://assets/portraits/rabbit.png",
+      "art": "res://assets/portraits/bounder.png",
       "max_hp": 32,
       "weak_point_height": 4,
       "ledges": [2],
@@ -230,7 +230,7 @@
     },
     "mire_snapper": {
       "name": "The Mire Snapper",
-      "art": "res://assets/portraits/crocodile.png",
+      "art": "res://assets/portraits/mire_snapper.png",
       "max_hp": 83,
       "weak_point_height": 6,
       "ledges": [3],
@@ -275,7 +275,7 @@
     },
     "frost_sentinel": {
       "name": "The Frost Sentinel",
-      "art": "res://assets/portraits/penguin.png",
+      "art": "res://assets/portraits/frost_sentinel.png",
       "max_hp": 90,
       "weak_point_height": 7,
       "ledges": [2,5],
@@ -304,7 +304,7 @@
     },
     "grove_bear": {
       "name": "The Grove Bear",
-      "art": "res://assets/portraits/bear.png",
+      "art": "res://assets/portraits/grove_bear.png",
       "max_hp": 97,
       "weak_point_height": 7,
       "ledges": [3,5],
@@ -330,7 +330,7 @@
     },
     "root_lurker": {
       "name": "The Root Lurker",
-      "art": "res://assets/portraits/crocodile.png",
+      "art": "res://assets/portraits/root_lurker.png",
       "max_hp": 50,
       "weak_point_height": 5,
       "ledges": [2],
@@ -356,7 +356,7 @@
     },
     "sky_snapper": {
       "name": "The Sky Snapper",
-      "art": "res://assets/portraits/owl.png",
+      "art": "res://assets/portraits/sky_snapper.png",
       "max_hp": 53,
       "weak_point_height": 5,
       "ledges": [3],
@@ -382,7 +382,7 @@
     },
     "riftling": {
       "name": "The Riftling",
-      "art": "res://assets/portraits/snake.png",
+      "art": "res://assets/portraits/riftling.png",
       "max_hp": 56,
       "weak_point_height": 6,
       "ledges": [2,4],
@@ -408,7 +408,7 @@
     },
     "shifting_idol": {
       "name": "The Shifting Idol",
-      "art": "res://assets/portraits/penguin.png",
+      "art": "res://assets/portraits/shifting_idol.png",
       "max_hp": 101,
       "weak_point_height": 6,
       "ledges": [2,4],
