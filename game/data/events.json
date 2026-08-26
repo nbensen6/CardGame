@@ -1,5 +1,5 @@
 {
-  "_comment": "Map EVENT nodes are DATA (CLAUDE.md §11). Each event offers choices with immediate effects. Effect keys: heal (int, negative = a bruise — events never kill, HP floors at 1), max_hp (int, permanent), relic (bool, a random team relic), gold (int, into the shared purse), reward ('card'|'relic' — routes into the normal pick-1-of-3 screen), remove_card (bool, each hunter loses one random card from their own deck, never below MIN_DECK), sharpen_card (bool, each hunter upgrades one random un-upgraded card in their own deck, no-op if none), curse_card (a status-card id from cards.json, e.g. 'bruised_grip' — each hunter's deck gains one copy; unlike remove/sharpen this always fires, never a coin flip, since the whole point of a status card is you don't get to opt out — backlog #27), potion (a potion id from potions.json — each hunter with an open slot gets a copy, quietly capped like a fight's own drop), random_potion (bool, same as potion but rolled from the pool, same shape 'relic' rolls one), take_potion (bool, the gamble — each hunter loses one random HELD potion, a no-op if they're carrying none — backlog #37). An empty effects block is a clean walk-away. A choice may also carry a 'then' key (backlog #53): {text, choices} for a second beat that replaces the event in place instead of resolving it — the first beat's effects still land, then the SAME pick_event call is made again to answer the follow-up, so a reward belongs on the final beat, not an intermediate one. Tone: small climbers in a big wild world.",
+  "_comment": "Map EVENT nodes are DATA (CLAUDE.md §11). Each event offers choices with immediate effects. Effect keys: heal (int, negative = a bruise — events never kill, HP floors at 1), max_hp (int, permanent), relic (bool, a random team relic), gold (int, into the shared purse), reward ('card'|'relic' — routes into the normal pick-1-of-3 screen), remove_card (bool, each hunter loses one random card from their own deck, never below MIN_DECK), sharpen_card (bool, each hunter upgrades one random un-upgraded card in their own deck, no-op if none), curse_card (a status-card id from cards.json, e.g. 'bruised_grip' — each hunter's deck gains one copy; unlike remove/sharpen this always fires, never a coin flip, since the whole point of a status card is you don't get to opt out — backlog #27), potion (a potion id from potions.json — each hunter with an open slot gets a copy, quietly capped like a fight's own drop), random_potion (bool, same as potion but rolled from the pool, same shape 'relic' rolls one), take_potion (bool, the gamble — each hunter loses one random HELD potion, a no-op if they're carrying none — backlog #37), key (bool, grants the team's 'event' key toward the fourth Titan — backlog #64; a no-op if already held). An empty effects block is a clean walk-away. A choice may also carry a 'then' key (backlog #53): {text, choices} for a second beat that replaces the event in place instead of resolving it — the first beat's effects still land, then the SAME pick_event call is made again to answer the follow-up, so a reward belongs on the final beat, not an intermediate one. Tone: small climbers in a big wild world.",
   "events": {
     "napping_beast": {
       "title": "A Napping Beast",
@@ -503,6 +503,25 @@
             "random_potion": true,
             "heal": -5
           }
+        }
+      ]
+    },
+    "the_sealed_hollow": {
+      "title": "The Sealed Hollow",
+      "text": "A door-shaped slab, too regular to be natural, set into the rock and etched with a mark like a Titan's sigil. It won't budge for pushing.",
+      "choices": [
+        {
+          "label": "Force the seal",
+          "result": "It gives all at once, dropping you both to a knee — but the key beneath is real, cold, and unmistakably meant for something.",
+          "effects": {
+            "heal": -6,
+            "key": true
+          }
+        },
+        {
+          "label": "Leave it sealed",
+          "result": "Whatever it's for, it isn't worth the shoulder you'd throw at it. You climb on.",
+          "effects": {}
         }
       ]
     }

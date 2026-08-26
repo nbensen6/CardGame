@@ -31,6 +31,7 @@ func _init(acts: int, rng: RandomNumberGenerator) -> void:
 		for row in act_rows:
 			rows.append(row)
 		rows.append([{"type": "boss", "act": a, "next": []}])
+	_ensure_key_sources(rng)
 	_link(rng)
 
 
@@ -107,6 +108,36 @@ func _ensure_shop(act_rows: Array, rng: RandomNumberGenerator) -> void:
 		for i in range(row.size()):
 			candidates.append(i)
 	(row[candidates[rng.randi_range(0, candidates.size() - 1)]] as Dictionary)["type"] = "shop"
+
+
+## Backlog #64: the final Titan is only a real fight once the party holds a key
+## from each of "elite", "treasure" and "event" — three DISTINCT node types, each
+## a costly optional trade (Run.take_key / an event's "key" effect), not a fixed
+## reward. Left purely to the dice, a short act could roll zero of one type and
+## quietly close off the true ending for the whole run. So guarantee each type
+## exists at least once across the whole map (not per-act — any act's node can
+## supply any key), the same way _ensure_shop guarantees a trader. Converts a
+## plain "fight" node, since row 0 of every act is always one and the boss/shop
+## rows must stay untouched.
+func _ensure_key_sources(rng: RandomNumberGenerator) -> void:
+	for kind in ["elite", "treasure", "event"]:
+		var already := false
+		for row in rows:
+			for n in row:
+				if String((n as Dictionary)["type"]) == kind:
+					already = true
+					break
+			if already:
+				break
+		if already:
+			continue
+		var candidates: Array = []
+		for row2 in rows:
+			for n2 in row2:
+				if String((n2 as Dictionary)["type"]) == "fight":
+					candidates.append(n2)
+		if not candidates.is_empty():
+			(candidates[rng.randi_range(0, candidates.size() - 1)] as Dictionary)["type"] = kind
 
 
 func _make_row(act: int, row_in_act: int, rng: RandomNumberGenerator) -> Array:

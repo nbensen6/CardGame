@@ -479,7 +479,7 @@ something Slay the Spire leans on hard and we do not have at all.
   everywhere. *Done when:* a fight can hold more than one combatant, cards target
   among them, sweeps hit correctly, and the per-peer snapshot carries all of them.
 
-- [ ] **64. Keys, and a Titan you can only reach with them** `cloud-safe` — the
+- [x] **64. Keys, and a Titan you can only reach with them** `cloud-safe` — the
   Spire gates its true final fight behind three keys taken from optional, costly
   choices earlier in the run, which is the best structural idea in that game: it
   makes Act 1 decisions matter in Act 4. Ours ends on a fourth Titan everyone
@@ -748,6 +748,45 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-26** — #64 Keys, and a Titan you can only reach with them: #55
+  stayed skipped for the reason its own note gives, so this was the next
+  attemptable `cloud-safe` item after #63. `Run.keys` (Array[String]) is the
+  new run state, backfilling to empty on an older save the same additive way
+  #39's stats do. Three DISTINCT node types earn one each, matching the
+  item's own wording literally: `Run.take_key(source)` lets a "treasure" or
+  "elite" node trade its relic reward for a key instead, at a real cost
+  (`KEY_COST_GOLD` gold, and only before anyone's picked — a key replaces the
+  WHOLE node's reward rather than half-resolving it), and a new event, "The
+  Sealed Hollow" (`data/events.json`), grants the third via a new `"key"`
+  effect on `_apply_effect_block` at an HP cost — gated to `phase ==
+  Phase.EVENT` specifically so the run-start boon, which shares that same
+  effect-application code, can never hand one out for free (tested directly:
+  boon effects with `key: true` grant nothing). The interesting decision was
+  what happens WITHOUT all three: the item's own text ("everyone reaches
+  anyway") points at gating raw map access, but #46 built a robustness sweep
+  specifically to catch a route with no legal next step, and hard-gating
+  `pick_node` onto the fourth Titan's row — the only node in it — is exactly
+  that shape if a run never finds (or never takes) all three keys. Resolved
+  it the way Slay the Spire actually works, not the naive reading: short of
+  the keys, reaching that row ends the run as a sealed door (`phase = WON`,
+  no fight, `stats.true_ending` stays false) rather than becoming a wall with
+  no move past it — WON is already a terminal state every other exit path
+  produces, so this adds no new one. Ran `robustness_sweep.gd` by hand after
+  (360 runs, 0 dead ends) specifically because this item touched map
+  generation and the MAP-phase gate the sweep exists to police — it isn't
+  part of `run_tests.gd` and nothing in these instructions required running
+  it, but skipping it felt like grading my own gating logic's safety without
+  checking. Also added `RunMap._ensure_key_sources()`, the same shape as the
+  existing `_ensure_shop` guarantee, so a key's SOURCE (not the choice to pay
+  for it) is never left to the dice across an entire map — a run always has a
+  real shot at the true ending, it just has to spend for it. 13 new tests:
+  round-trip/backfill, both `take_key` node types, wrong-node and
+  no-pick-yet-required refusals, once-per-run-per-type, the event effect's
+  idempotency, the boon exclusion, the real "Sealed Hollow" content end to
+  end, the map guarantee across 24 seeds, and both final-Titan branches (0
+  keys -> sealed WON, 3 keys -> a real COMBAT that sets `true_ending` on the
+  win).
 
 - **2026-08-26** — #63 More than one thing to fight at once: the next
   `cloud-safe` item after #62 in queue order — #55 (More beasts) stayed

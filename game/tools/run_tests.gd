@@ -345,6 +345,19 @@ func _init() -> void:
 	_test_backlog46_every_event_has_at_least_one_choice()
 	_test_backlog46_empty_reward_choices_can_still_be_skipped()
 	_test_backlog46_end_turn_always_works_with_empty_hand()
+	# backlog #64: keys, and a Titan you can only reach with them
+	_test_backlog64_keys_are_run_state_and_round_trip()
+	_test_backlog64_take_key_trades_the_relic_reward_on_treasure()
+	_test_backlog64_take_key_trades_the_relic_reward_on_elite()
+	_test_backlog64_take_key_refuses_the_wrong_node_type()
+	_test_backlog64_take_key_refuses_without_gold_or_after_a_pick()
+	_test_backlog64_take_key_is_once_per_node_type_per_run()
+	_test_backlog64_event_key_effect_grants_the_event_key_once()
+	_test_backlog64_boon_effects_never_grant_a_key()
+	_test_backlog64_sealed_hollow_event_grants_a_key_at_a_real_cost()
+	_test_backlog64_map_guarantees_all_three_key_source_types_exist()
+	_test_backlog64_final_titan_is_a_sealed_door_without_all_three_keys()
+	_test_backlog64_final_titan_is_a_real_fight_with_all_three_keys()
 	# Scry (backlog #59): look at the top of the draw pile and bin what you don't want
 	_test_backlog59_scry_reveals_and_resolve_scry_bins_and_keeps_order()
 	_test_backlog59_resolve_scry_validates_bad_input()
@@ -5494,6 +5507,156 @@ func _test_backlog46_end_turn_always_works_with_empty_hand() -> void:
 	combat.end_turn(0)
 	_expect(combat.players[0].ended_turn,
 		"a hunter with no cards and no energy can still end their turn")
+
+
+# --- backlog #64: keys, and a Titan you can only reach with them -----------
+
+func _test_backlog64_keys_are_run_state_and_round_trip() -> void:
+	var run := _map_run()
+	run.keys = ["elite", "treasure"]
+	var d := run.to_dict()
+	var loaded := Run.from_dict(d)
+	var old_shape: Dictionary = d.duplicate(true)
+	old_shape.erase("keys")  # a save written before #64 has no such key at all
+	var backfilled := Run.from_dict(old_shape)
+	_expect(loaded.keys == ["elite", "treasure"] and backfilled.keys.is_empty(),
+		"keys round-trip through save/load and an older save backfills to none")
+
+
+func _test_backlog64_take_key_trades_the_relic_reward_on_treasure() -> void:
+	var run := _map_run()
+	run.gold = 500
+	run.node_type = "treasure"
+	run._begin_reward("relic")
+	var gold_before: int = run.gold
+	var ok := run.take_key("treasure")
+	_expect(ok and run.keys.has("treasure") and run.gold == gold_before - Run.KEY_COST_GOLD
+		and run.phase != Run.Phase.REWARD,
+		"taking a key on a treasure node spends gold, grants the key, and closes the node")
+
+
+func _test_backlog64_take_key_trades_the_relic_reward_on_elite() -> void:
+	var run := _map_run()
+	run.gold = 500
+	run.node_type = "elite"
+	run._begin_reward("relic")
+	var gold_before: int = run.gold
+	var ok := run.take_key("elite")
+	_expect(ok and run.keys.has("elite") and run.gold == gold_before - Run.KEY_COST_GOLD,
+		"taking a key on an elite's relic reward grants the key and spends gold")
+
+
+func _test_backlog64_take_key_refuses_the_wrong_node_type() -> void:
+	var run := _map_run()
+	run.gold = 500
+	run.node_type = "treasure"
+	run._begin_reward("relic")
+	var wrong_source := run.take_key("elite")       # doesn't match this node
+	var not_a_source := run.take_key("event")        # events grant keys their own way, not this one
+	_expect(not wrong_source and not not_a_source,
+		"take_key only fires for the node type actually being resolved")
+
+
+func _test_backlog64_take_key_refuses_without_gold_or_after_a_pick() -> void:
+	var run := _map_run()
+	run.node_type = "treasure"
+	run._begin_reward("relic")
+	run.gold = 0
+	var broke := run.take_key("treasure")
+	run.gold = 500
+	run.reward_picked[0] = true  # someone already took the relic instead
+	var too_late := run.take_key("treasure")
+	_expect(not broke and not too_late,
+		"take_key needs the real cost paid, and closes once anyone's already picked")
+
+
+func _test_backlog64_take_key_is_once_per_node_type_per_run() -> void:
+	var run := _map_run()
+	run.gold = 5000
+	run.node_type = "treasure"
+	run._begin_reward("relic")
+	run.take_key("treasure")
+	run.node_type = "treasure"          # a second treasure node, later in the same run
+	run._begin_reward("relic")
+	var second := run.take_key("treasure")
+	_expect(not second and run.keys == ["treasure"],
+		"a node type only ever pays out its key once, however many times it's visited")
+
+
+func _test_backlog64_event_key_effect_grants_the_event_key_once() -> void:
+	var run := _map_run()
+	run.phase = Run.Phase.EVENT
+	run._apply_effect_block({"key": true})
+	var after_first: Array = run.keys.duplicate()
+	run._apply_effect_block({"key": true})
+	_expect(after_first == ["event"] and run.keys == ["event"],
+		"an event's key effect grants the event key once and stays idempotent")
+
+
+func _test_backlog64_boon_effects_never_grant_a_key() -> void:
+	var run := _map_run()
+	run.boon = {"choices": [{"result": "", "effects": {"key": true}}]}
+	run.phase = Run.Phase.BOON
+	run.pick_boon(0)
+	_expect(run.keys.is_empty(),
+		"the run-start boon shares _apply_effect_block but never grants a key — no node type earned it")
+
+
+func _test_backlog64_sealed_hollow_event_grants_a_key_at_a_real_cost() -> void:
+	var run := _map_run()
+	run.event = Content.make_event("the_sealed_hollow")
+	run.phase = Run.Phase.EVENT
+	var hp_before: int = run.hp[0]
+	var ok := run.pick_event(0)  # "Force the seal"
+	_expect(ok and run.keys.has("event") and run.hp[0] < hp_before,
+		"the sealed hollow event grants the event key and bruises the team for it")
+
+
+func _test_backlog64_map_guarantees_all_three_key_source_types_exist() -> void:
+	var ok := true
+	var bad_seed := -1
+	for s in range(1, 25):
+		var rng := RandomNumberGenerator.new()
+		rng.seed = s
+		var m := RunMap.new(Run.ENCOUNTERS.size(), rng)
+		var found := {"elite": false, "treasure": false, "event": false}
+		for row in m.rows:
+			for n in row:
+				var t := String((n as Dictionary)["type"])
+				if found.has(t):
+					found[t] = true
+		for k in found:
+			if not bool(found[k]):
+				ok = false
+				bad_seed = s
+		if not ok:
+			break
+	_expect(ok, "every generated map guarantees an elite, a treasure, and an event node exist (failed seed %d)" % bad_seed)
+
+
+func _test_backlog64_final_titan_is_a_sealed_door_without_all_three_keys() -> void:
+	var run := _map_run()
+	run.map_row = run.map.total_rows() - 2
+	run.map_col = 0
+	var open: Array = run.available_nodes()
+	var stepped := run.pick_node(int(open[0]))
+	_expect(stepped and run.phase == Run.Phase.WON and run.combat == null
+		and not bool(run.stats["true_ending"]),
+		"short of all three keys, reaching the fourth Titan ends the run instead of fighting it")
+
+
+func _test_backlog64_final_titan_is_a_real_fight_with_all_three_keys() -> void:
+	var run := _map_run()
+	run.keys = Run.KEY_TYPES.duplicate()
+	run.map_row = run.map.total_rows() - 2
+	run.map_col = 0
+	var open: Array = run.available_nodes()
+	var stepped := run.pick_node(int(open[0]))
+	var fighting := stepped and run.phase == Run.Phase.COMBAT and run.combat != null
+	if fighting:
+		_force_win(run)
+	_expect(fighting and bool(run.stats["true_ending"]),
+		"with all three keys the fourth Titan is a real fight, and winning it earns the true ending")
 
 
 ## Backlog #59 — Scry: playing a scry card reveals the top N cards of the draw
