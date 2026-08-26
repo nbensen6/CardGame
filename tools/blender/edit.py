@@ -36,6 +36,27 @@ FOLDERS = {
     "map": os.path.join(ROOT, "game", "assets", "3d", "hexown"),
 }
 
+BLENDS_README = """Double-click any .blend in this folder to open it in Blender.
+
+  cast-*.blend   hunters and beasts     (also the Kenney stand-ins, for reference)
+  env-*.blend    the ground of one fight
+  map-*.blend    one overworld hex tile or landmark
+
+If double-clicking does nothing, right-click > Open with > Blender.
+Use Blender 4.1 - these were saved by it.
+
+Once it opens: press Z and pick "Material Preview" to see the palette colours,
+and press Home to frame everything.
+
+THESE ARE A SCRATCH COPY. The real source of every model is the Python script in
+the folder above - tools/blender/frog.py, tools/blender/env/crag_pup.py, and so
+on. Rebuilding a model replaces its .glb in the game and does NOT touch these, so
+nothing you do in here can break the game. Nothing you do in here reaches the
+game either, unless you export back over the .glb it came from.
+
+Regenerate this whole folder any time:   tools\blender\edit.cmd blends
+"""
+
 args = sys.argv[sys.argv.index("--") + 1:]
 kind = "cast"
 if args and args[0] in FOLDERS:
@@ -62,6 +83,12 @@ def write_blends():
             bpy.ops.wm.save_as_mainfile(filepath=dest)
             made += 1
             print("BLEND", dest)
+    # The note goes IN the folder, because that is where someone stands when
+    # they are about to edit the wrong file. The folder is gitignored, so it has
+    # to be written here rather than committed, or it disappears the first time
+    # anyone regenerates.
+    with open(os.path.join(out, "README.txt"), "w", encoding="utf-8") as f:
+        f.write(BLENDS_README)
     print("WROTE %d .blend files to %s" % (made, out))
     print("These are a scratch copy to look at. The scripts are still the "
           "source: rebuilding replaces the .glb and leaves these alone.")
