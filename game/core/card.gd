@@ -306,3 +306,40 @@ func enchanted_copy(enchant_id: String) -> Card:
 	var d := to_dict()
 	d["enchant"] = enchant_id
 	return Card.from_dict(d)
+
+
+## Archetype tags, DERIVED from the fields this card already has rather than a
+## new field to author (CLAUDE.md §11 — one generic rule beats hand-tagging 155
+## cards, and it can never drift out of sync with what a card actually does).
+## Used by Run's reward roll to lean a card draft toward the archetype a hunter
+## is already building (backlog #72). Not stored, not part of to_dict()/
+## from_dict() — nothing here is a new piece of data, so it needs no keywords.json
+## entry and no save-format change.
+func archetype_tags() -> Array:
+	var tags: Array = []
+	if grip > 0 or targets_hold or ally_grip > 0 or damage_per_foothold > 0 \
+			or damage_per_ally_foothold > 0 or pull_ally > 0 or sac_ally_grip > 0:
+		tags.append("climb")
+	if rhythm > 0 or damage_per_rhythm > 0 or grip_per_rhythm > 0:
+		tags.append("rhythm")
+	if wound > 0 or damage_per_wound > 0:
+		tags.append("poison")
+	if block > 0 or ally_block > 0 or timed_block > 0 or timed_ally_block > 0 \
+			or plated_armour > 0 or buffer > 0 or intangible > 0:
+		tags.append("block")
+	if strength > 0:
+		tags.append("strength")
+	if dexterity > 0:
+		tags.append("dexterity")
+	if ally_block > 0 or ally_energy > 0 or ally_grip > 0 or pull_ally > 0 \
+			or sac_ally_grip > 0 or ally_heal > 0:
+		tags.append("ally")
+	if exhaust_pick or damage_per_exhausted > 0 or block_per_exhausted > 0:
+		tags.append("burn")
+	if light_gain > 0 or light_cost > 0 or damage_per_light > 0:
+		tags.append("light")
+	if discard > 0 or damage_per_discarded > 0 or block_per_discarded > 0:
+		tags.append("discard")
+	if vulnerable > 0 or damage_per_vulnerable > 0:
+		tags.append("vulnerable")
+	return tags

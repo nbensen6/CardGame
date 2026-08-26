@@ -533,7 +533,7 @@ something Slay the Spire leans on hard and we do not have at all.
   (`removes_bought`); the rest is missing. *Done when:* stock is generated per
   visit with a rare slot, prices vary, and it is tested.
 
-- [ ] **72. Rewards that know what you are building** `cloud-safe` — card rewards
+- [x] **72. Rewards that know what you are building** `cloud-safe` — card rewards
   roll flat from a pool, so a deck never compounds into anything. Tag cards by
   archetype and let the roll lean, gently, toward tags you already hold. This is
   not balance tuning: the tags and the lean are structure, and it is done when it
@@ -754,6 +754,36 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-26** — #72 Rewards that know what you are building: #55 stays
+  correctly skipped (its own note explains why — needs per-beast `cloud-art`
+  work, not a plain data change), so this was the next `cloud-safe` item in
+  order. Chose DERIVED tags over an authored field: `Card.archetype_tags()`
+  reads fields the card already has (wound→poison, rhythm/damage_per_rhythm/
+  grip_per_rhythm→rhythm, grip/targets_hold/ally_grip/damage_per_foothold→
+  climb, etc. — 11 tags total) rather than hand-tagging 187 cards, which
+  can't drift out of sync with what a card does and adds zero new save data.
+  Confirmed this sidesteps the #16/#54 keyword-coverage reflection test
+  entirely: that test walks `Card`'s `var` properties via
+  `get_property_list()`, and a method isn't one — no `keywords.json` entry
+  needed, no `self_evident` list edit needed. `Content.card_tags(id)` mirrors
+  `card_rarity(id)`'s shape for the reward roll to call cheaply. The lean
+  itself is `Run.TAG_LEAN_BONUS` (20 — deliberately equal to the smallest
+  rarity-tier gap, common-uncommon, never the larger common-rare one) added
+  to `_weighted_index()`'s existing rarity weight per matching tag; threaded
+  through via a new `_tag_counts(deck)` helper called once per hunter in
+  `_begin_reward()` (empty for relic rewards, which have no tags and stay
+  uniform — a rarity-only default parameter keeps every other `_roll_choices`
+  caller unaffected). Three new tests: one pins the tag derivation against
+  four real cards, one is the statistical proof the item asked for — a
+  10-card Poison deck against a neutral baseline, 1500 rolls each, over a
+  same-rarity 6-card pool so only the tag lean (not `RARITY_WEIGHT`) could
+  move the number — landed at 56% vs a 48% baseline, and one confirms a
+  relic roll handed a non-empty tag count still returns relics untouched.
+  `run_tests.gd`: all green (470 passes, up from 467). `node
+  tools/cardlab/build.js`: 187 cards, 0 unreachable. `balance_sim.gd` run as
+  the standing smoke test only (not tuned to): both policies and the full
+  ascension ladder completed cleanly, no crash.
 
 - **2026-08-26** — #71 A shop worth revisiting: the two missing pieces named
   in the item, since "fresh stock per visit" and rising removal price already

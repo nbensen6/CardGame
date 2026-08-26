@@ -140,6 +140,10 @@ func _init() -> void:
 	_test_shop_guarantees_a_rare_card_slot()
 	_test_content_pools_are_copies()
 	_test_status_cards_never_offered_as_a_reward()
+	# backlog #72: rewards that know what you are building
+	_test_backlog72_archetype_tags_are_derived_from_fields()
+	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
+	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	# potions (backlog #26)
 	_test_potions_all_load()
 	_test_use_potion_applies_each_effect()
@@ -2224,6 +2228,74 @@ func _test_status_cards_never_offered_as_a_reward() -> void:
 				bad.append("%s in %s reward_pool" % [id, cid])
 	_expect(bad.is_empty(),
 		"no status card is offered by any starter deck or reward pool [%s]" % ", ".join(bad))
+
+
+## Backlog #72: tags are DERIVED from a card's existing fields (Card.archetype_tags()),
+## not a new authored field — pins a few real cards against the rule so the
+## derivation itself is proven, separately from the reward-roll lean it feeds.
+func _test_backlog72_archetype_tags_are_derived_from_fields() -> void:
+	var rend_tags: Array = Content.card_tags("rend")            # wound 2
+	var sharpen_tags: Array = Content.card_tags("sharpen")       # strength 2
+	var cadence_tags: Array = Content.card_tags("cadence")       # rhythm 2
+	var slash_tags: Array = Content.card_tags("slash")           # damage only — no archetype field
+	_expect(rend_tags.has("poison") and sharpen_tags.has("strength") and cadence_tags.has("rhythm")
+			and slash_tags.is_empty(),
+		"archetype tags follow from a card's own fields [rend=%s sharpen=%s cadence=%s slash=%s]"
+			% [rend_tags, sharpen_tags, cadence_tags, slash_tags])
+
+
+## Backlog #72: a card reward roll should lean toward the archetype a hunter is
+## already building, not roll flat from the pool regardless of the deck. Same
+## statistical shape as _test_rarity_weighting_favours_commons — loose bounds,
+## proving the lean is wired up rather than chasing an exact number. The pool is
+## six COMMONS split evenly Poison/non-Poison so every candidate carries the
+## SAME rarity weight — only the tag lean can move the result.
+func _test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck() -> void:
+	var run := _map_run()
+	var pool: Array = ["rend", "spore", "blightbloom", "slash", "bowshot", "sharpen"]
+	run.reward_kind = "card"
+
+	var baseline_seen := 0
+	var baseline_total := 0
+	for _i in range(1500):
+		for card in run._roll_choices(pool, {}):
+			if (card as Card).archetype_tags().has("poison"):
+				baseline_seen += 1
+			baseline_total += 1
+	var baseline_pct := float(baseline_seen) / float(baseline_total)
+
+	var deck_tag_counts: Dictionary = run._tag_counts(_deck_of(_venom_dart, 10))
+	var poison_seen := 0
+	var poison_total := 0
+	for _i in range(1500):
+		for card in run._roll_choices(pool, deck_tag_counts):
+			if (card as Card).archetype_tags().has("poison"):
+				poison_seen += 1
+			poison_total += 1
+	var poison_pct := float(poison_seen) / float(poison_total)
+
+	_expect(baseline_total > 0 and poison_total > 0 and poison_pct > baseline_pct + 0.03,
+		"a deck heavy in Poison cards sees Poison-tagged rewards more often than a neutral deck does (%d%% vs a %d%% baseline, over %d offers each)"
+			% [int(poison_pct * 100.0), int(baseline_pct * 100.0), poison_total])
+
+
+## Backlog #72: relics carry no archetype tags and the relic roll is uniform
+## regardless — _begin_reward() must not hand a relic roll a deck's tag counts
+## and have it silently do something. Calls _roll_choices() the same way
+## _begin_reward() would for a relic reward: deck_tag_counts stays {} because
+## reward_kind == "relic" short-circuits it there.
+func _test_backlog72_relic_rolls_are_unaffected_by_deck_tags() -> void:
+	var run := _map_run()
+	run.reward_kind = "relic"
+	var pool: Array = Content.relic_pool()
+	var deck_tag_counts: Dictionary = run._tag_counts(_deck_of(_venom_dart, 10))
+	var choices := run._roll_choices(pool, deck_tag_counts)
+	var all_relics := true
+	for c in choices:
+		if not (c is Dictionary):
+			all_relics = false
+	_expect(not choices.is_empty() and all_relics,
+		"a relic roll still returns relics (plain dicts) even when handed non-empty deck tag counts")
 
 
 # --- potions (backlog #26): held per-hunter, same data shape as relics -----

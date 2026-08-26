@@ -45,6 +45,13 @@ const SAVE_VERSION := 2
 ## How often each rarity is offered, relative to the others. Tune these before
 ## adding more cards — they move perceived variety far more than raw pool size.
 const RARITY_WEIGHT := {"common": 55, "uncommon": 35, "rare": 10}
+## Flat bonus added to a card's roll weight per archetype tag (Card.archetype_tags())
+## it shares with the hunter's current deck — a GENTLE lean toward what they're
+## already building (backlog #72), layered on TOP of RARITY_WEIGHT above rather
+## than replacing it: one tag match is worth exactly one step of rarity (the
+## common-uncommon gap), never the larger common-rare gap, so it nudges which
+## card of a given rarity shows up more than it decides whether a rare does.
+const TAG_LEAN_BONUS := 20
 const HEAL_BETWEEN := 4  # hunters recover a little after each beast falls
 const PLAYER_HP := 42
 ## Ascension every daily run is pinned to (backlog #49) — a shared seed only
@@ -905,7 +912,10 @@ func _begin_reward(kind: String) -> void:
 	for i in range(names.size()):
 		# Cards come from that hunter's own pool, so each can draft their archetype.
 		var pool: Array = relic_pool if reward_kind == "relic" else Content.reward_pool(_character_of(i), _unlocked_wins)
-		reward_choices.append(_roll_choices(pool))
+		# Lean the roll toward tags already in THIS hunter's deck (backlog #72) —
+		# relics carry no tags, so the count stays empty and does nothing there.
+		var deck_tag_counts: Dictionary = _tag_counts(decks[i]) if reward_kind != "relic" and i < decks.size() else {}
+		reward_choices.append(_roll_choices(pool, deck_tag_counts))
 		reward_picked.append(false)
 
 ## The character id a hunter is playing (from their signature passive).
@@ -914,12 +924,22 @@ func _character_of(slot: int) -> String:
 		return ""
 	return String((player_passives[slot] as Dictionary).get("character", ""))
 
-func _roll_choices(pool: Array) -> Array:
+## How many cards in `deck` carry each archetype tag (Card.archetype_tags()) —
+## feeds _weighted_index()'s lean toward what a hunter is already building
+## (backlog #72).
+func _tag_counts(deck: Array) -> Dictionary:
+	var counts: Dictionary = {}
+	for c in deck:
+		for t in (c as Card).archetype_tags():
+			counts[t] = int(counts.get(t, 0)) + 1
+	return counts
+
+func _roll_choices(pool: Array, deck_tag_counts: Dictionary = {}) -> Array:
 	var ids: Array = pool.duplicate()
 	var out: Array = []
 	var n: int = mini(maxi(1, REWARD_CHOICES - int(_asc.get("reward_choices", 0))), ids.size())
 	for _k in range(n):
-		var idx := _weighted_index(ids)
+		var idx := _weighted_index(ids, deck_tag_counts)
 		var id := String(ids[idx])
 		out.append(Content.make_relic(id) if reward_kind == "relic" else Content.make_card(id))
 		ids.remove_at(idx)
@@ -932,7 +952,12 @@ func _roll_choices(pool: Array) -> Array:
 ##
 ## With the current catalog (61 common / 61 uncommon / 20 rare) these weights land
 ## at roughly 59% / 37% / 4% of cards actually offered.
-func _weighted_index(ids: Array) -> int:
+##
+## `deck_tag_counts` (backlog #72) adds TAG_LEAN_BONUS per archetype tag a
+## candidate shares with a non-empty count — a card whose tag isn't in the deck
+## at all, or an empty dict (relics; no deck in scope), leaves the rarity-only
+## weight untouched.
+func _weighted_index(ids: Array, deck_tag_counts: Dictionary = {}) -> int:
 	if ids.size() <= 1:
 		return 0
 	if reward_kind == "relic":
@@ -941,6 +966,10 @@ func _weighted_index(ids: Array) -> int:
 	var total := 0
 	for id in ids:
 		var w: int = int(RARITY_WEIGHT.get(Content.card_rarity(String(id)), RARITY_WEIGHT["common"]))
+		if not deck_tag_counts.is_empty():
+			for t in Content.card_tags(String(id)):
+				if int(deck_tag_counts.get(t, 0)) > 0:
+					w += TAG_LEAN_BONUS
 		weights.append(w)
 		total += w
 	if total <= 0:

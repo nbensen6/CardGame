@@ -79,6 +79,12 @@ static func card_rarity(id: String) -> String:
 	var cards: Dictionary = _read_json(CARDS_PATH).get("cards", {})
 	return String((cards.get(id, {}) as Dictionary).get("rarity", "common"))
 
+## A card's DERIVED archetype tags (Card.archetype_tags(), backlog #72) by id,
+## for a reward roll weighing many candidates without building a full Card for
+## each one — same shape and reason as card_rarity() above.
+static func card_tags(id: String) -> Array:
+	return make_card(id).archetype_tags()
+
 
 ## Build a hunter's starting deck from data.
 static func build_starter_deck() -> Array:
