@@ -242,6 +242,9 @@ func _init() -> void:
 	_test_backlog74_silhouette_grid_is_invariant_to_scale_and_position()
 	_test_backlog74_silhouette_similarity_flags_a_near_duplicate_and_passes_a_distinct_shape()
 	_test_backlog74_budget_table_matches_kenney_py()
+	_test_backlog74_z_at_xy_reads_the_triangle_plane_and_rejects_outside_points()
+	_test_backlog74_occlusion_flags_a_surface_hidden_behind_a_closer_one()
+	_test_backlog74_occlusion_ignores_geometry_that_does_not_cover_the_same_point()
 	_test_preview_matches_what_the_card_actually_does()
 	_test_incoming_reckons_damage_after_block()
 	_test_every_derived_keyword_resolves()
@@ -6653,6 +6656,47 @@ func _test_backlog74_budget_table_matches_kenney_py() -> void:
 	_expect(AssetContract.budget_for("prop") == 500, "prop budget matches kenney.py's BUDGET table")
 	_expect(AssetContract.budget_for("nonsense") == AssetContract.budget_for("hunter"),
 		"an unknown kind falls back to the hunter budget rather than failing")
+
+
+## backlog #74's fourth contract bullet — "visible from the front, not buried
+## behind the body" — was left unbuilt on 2026-08-26 specifically because
+## occlusion needs a raycast this suite couldn't first verify. AssetContract.
+## z_at_xy/is_occluded_from_front are that raycast, done as a plane-Z solve at
+## a fixed (X, Y) rather than a full ray-triangle intersection, since the
+## "camera" here is always looking straight down +Z. These prove the geometry
+## against hand-built triangles before assetcheck.gd trusts it against a real
+## beast.
+func _test_backlog74_z_at_xy_reads_the_triangle_plane_and_rejects_outside_points() -> void:
+	var tri: Array = _rect_tris(0, 2, 0, 2, -3.0)[0]
+	var inside = AssetContract.z_at_xy(1.0, 1.0, tri[0], tri[1], tri[2])
+	_expect(inside != null and absf(inside - (-3.0)) < 0.001,
+		"a point inside the triangle's XY footprint reads its plane's Z")
+	var outside = AssetContract.z_at_xy(5.0, 5.0, tri[0], tri[1], tri[2])
+	_expect(outside == null, "a point outside the triangle's XY footprint reads no Z at all")
+
+
+func _test_backlog74_occlusion_flags_a_surface_hidden_behind_a_closer_one() -> void:
+	# LARGER Z is CLOSER to a viewer standing in front of the model — the real
+	# combat camera (views/combat_3d.tscn) sits at Z ~= +12.4 looking back
+	# toward -Z, not the other way around (AssetContract.z_at_xy's own note
+	# explains the bug an earlier version of this had). The front rect sits at
+	# Z = 1, a same-footprint back rect at Z = -1, so the back one is hidden
+	# from the front exactly the way a buried sigil would be.
+	var front: Array = _rect_tris(0, 2, 0, 2, 1.0)
+	var back: Array = _rect_tris(0, 2, 0, 2, -1.0)
+	var all_tris: Array = front + back
+	_expect(AssetContract.is_occluded_from_front(1.0, 1.0, -1.0, all_tris),
+		"a surface with closer geometry in front of it (larger Z) reads as occluded")
+	_expect(not AssetContract.is_occluded_from_front(1.0, 1.0, 1.0, all_tris),
+		"the frontmost surface itself is never occluded by what's behind it")
+
+
+func _test_backlog74_occlusion_ignores_geometry_that_does_not_cover_the_same_point() -> void:
+	var mine: Array = _rect_tris(0, 1, 0, 1, 0.0)
+	var elsewhere: Array = _rect_tris(10, 11, 10, 11, -5.0)
+	var all_tris: Array = mine + elsewhere
+	_expect(not AssetContract.is_occluded_from_front(0.5, 0.5, 0.0, all_tris),
+		"closer geometry that doesn't cover the same (x, y) doesn't occlude")
 
 
 func _expect(cond: bool, name: String) -> void:

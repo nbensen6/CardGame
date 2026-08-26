@@ -594,6 +594,22 @@ something Slay the Spire leans on hard and we do not have at all.
   end to end through it yet. That is real remaining scope, not paperwork — pick
   it up as its own iteration rather than assuming the contract's existence means
   this item is close to done.
+  **Checked 2026-08-26 (later the same day): the fourth rule landed too** —
+  sigil visibility, the one bullet the note above deliberately left unbuilt
+  ("visible from the front rather than buried behind the body"). See the Log
+  entry below for what it is and, importantly, **what it found**: run against
+  all 14 already-shipped beasts, 10 of them read the mark as more than half
+  occluded by the beast's own body from the fight camera's angle, including
+  `stone_warden` at 100% — which independently rediscovers the exact,
+  already-documented "Warden's sigil sat on the crown behind its own head"
+  bug this file's own §"What a reviewer is actually looking for" names, and
+  is the reason to trust the other 9 rather than assume the check is wrong.
+  Still left unchecked: the "Done when" bar is still Blender + an end-to-end
+  beast, not the contract, and fixing 10 beasts' mark placement is per-beast
+  `cloud-art` rework (needs Blender, still blocked — see the Log's
+  network-policy note), not a data change. Whoever next gets Blender working
+  should treat those 10 as a punch list before spending a build on a 15th
+  beast.
 
 ### Art the cloud can build
 
@@ -763,6 +779,55 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-26** — #74 Let the cloud build models — behind a shape contract it
+  can check: the fourth and last contract rule, sigil visibility ("visible
+  from the front rather than buried behind the body," the one bullet the
+  earlier pass on this same item today left deliberately unbuilt — "occlusion
+  testing needs either a real raycast against the mesh or a rendered view, and
+  I'd rather leave it unbuilt than ship a check I can't first verify"). Still
+  left `74` UNCHECKED — same reason as before, the Blender-and-end-to-end-beast
+  bar is unmet — but this closes the contract's own remaining gap. Re-confirmed
+  `download.blender.org` is still a 403 through the egress proxy before
+  starting (so no beast build was attempted), which meant Godot alone —
+  already downloadable — was enough for this piece, since occlusion is pure
+  triangle geometry, no Blender required.
+  The raycast: `AssetContract.z_at_xy`/`nearest_front_z_at_xy`/
+  `is_occluded_from_front`, solving a triangle's plane for Z at a fixed (X, Y)
+  rather than a full ray-triangle intersection, since the "camera" only ever
+  looks straight along Z — the same simplification `_point_in_tri_xy` already
+  makes. Wired into `assetcheck.gd`'s new `_check_sigil_visible`, which reuses
+  `_check_sigil_color`'s own band+gold-UV filter for "what counts as the mark"
+  and flags a FAIL when over half the mark's area (by area, not triangle
+  count) is occluded.
+  Two real bugs caught before trusting it — same discipline the sigil-colour
+  check's own log entry used, and for the same reason: a first version FAILED
+  literally every one of the 14 already-shipped beasts at 100% buried, which
+  was this bug, not fourteen bad marks. (1) Backwards camera axis: assumed
+  the viewer stood on the -Z side because "faces +Z" sounds like "the front
+  points away from the camera," but `views/combat_3d.tscn`'s actual Camera
+  node sits at Z ~= +12.4 looking back toward -Z — so LARGER Z is closer to
+  the viewer, the opposite of the first version's assumption. Checked the
+  real scene file rather than re-guessing from the README's wording a second
+  time. (2) Self-occlusion: a sigil mark (`taper()`, a solid 3D bump) has its
+  own back half naturally hidden behind its own front half, which isn't
+  "buried behind the BODY" at all — a debug run against `frost_sentinel`
+  showed 30 of 68 gold triangles in its self-occluded-only category. Fixed by
+  checking each mark triangle's occlusion only against NON-gold triangles.
+  After both fixes, `crag_pup` and `riftling` PASS outright (44% and 22%
+  occluded) and the remaining 10 still FAIL, `stone_warden` at exactly 100% —
+  which matches this file's own already-documented, human-found bug ("the
+  Warden's sigil sat on the crown behind its own head," in the "what a
+  reviewer is actually looking for" section above) almost exactly, which is
+  the closest thing to independent proof this check measures the right thing
+  rather than being a third version of the same mistake. Did NOT rebuild any
+  of the 10 failing beasts — that's per-beast `cloud-art` work needing
+  Blender, out of scope for a `cloud-safe` iteration and explicitly the next
+  item's own "still blocked" state. Three new pure-geometry tests against
+  hand-built triangles (matching the existing `_rect_tris` helper's style),
+  all green. `run_tests.gd`: ALL TESTS PASSED throughout — this touched no
+  game data and nothing `assetcheck.gd`-shaped runs inside the actual suite,
+  so the 10 real-beast FAILs are new information for a human, not a broken
+  build.
 - **2026-08-26** — No work done this run. Every remaining unchecked item is
   either `needs a screen` (2, 3, 8, 25, 29b, 32, 31b, 81, 78, 79) or requires
   Blender (55, 74's remaining art half, 76, 80) — and `download.blender.org`

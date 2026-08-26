@@ -115,6 +115,63 @@ static func silhouette_similarity(a: PackedByteArray, b: PackedByteArray) -> flo
 	return float(inter) / float(uni)
 
 
+## The Z (depth) of the surface a triangle presents at world (px, py), or
+## `null` if the point falls outside the triangle's own XY footprint.
+##
+## Every model is built facing +Z and "the export lands facing the camera"
+## (tools/blender/README.md), and the actual combat camera
+## (`views/combat_3d.tscn`'s Camera node) sits at Z ~= +12.4 looking back
+## toward -Z — so LARGER Z is CLOSER to the viewer, not smaller. (An earlier
+## version of this function got that backwards, read "facing +Z" as "the
+## viewer is on the -Z side," and flagged real, already-shipped, gold marks as
+## 100% buried on all 14 beasts — caught by running it against those beasts
+## before trusting it, the same way the sigil-colour and silhouette checks
+## were caught, not by reasoning about the axis correctly up front.) This is
+## the geometry primitive occlusion testing needs: given a triangle nearly
+## perpendicular to the view axis, solve its plane equation for Z at a fixed
+## (X, Y) rather than doing a full ray-triangle intersection, since the "ray"
+## here is always axis-aligned along Z — the same simplification
+## `_point_in_tri_xy` already makes by working purely in the XY plane first.
+static func z_at_xy(px: float, py: float, a: Vector3, b: Vector3, c: Vector3) -> Variant:
+	if not _point_in_tri_xy(px, py, a, b, c):
+		return null
+	var n := (b - a).cross(c - a)
+	if absf(n.z) < 0.0001:
+		# Edge-on to the view axis — no well-defined single Z, and it contributes
+		# no visible surface area from the front either way, so skip rather than
+		# divide by ~zero.
+		return null
+	return a.z - (n.x * (px - a.x) + n.y * (py - a.y)) / n.z
+
+
+## The Z of the surface nearest a viewer in front of the model (LARGEST Z —
+## see `z_at_xy`'s note on which direction the camera actually sits) among ALL
+## triangles that cover world (px, py) — the "what does the front view
+## actually show here" query occlusion testing is built on. `null` if no
+## triangle covers that point at all.
+static func nearest_front_z_at_xy(px: float, py: float, tris: Array) -> Variant:
+	var best = null
+	for tri in tris:
+		var z = z_at_xy(px, py, tri[0], tri[1], tri[2])
+		if z == null:
+			continue
+		if best == null or z > best:
+			best = z
+	return best
+
+
+## Whether a point at (px, py, pz) — a spot on some triangle whose visibility
+## is in question — is hidden behind other geometry: something else in `tris`
+## presents a surface closer to the viewer (LARGER Z) at that same (px, py).
+## `margin` tolerates the point's own triangle re-matching itself at
+## floating-point-adjacent Z, not a real occluder.
+static func is_occluded_from_front(px: float, py: float, pz: float, tris: Array, margin: float = 0.01) -> bool:
+	var nearest = nearest_front_z_at_xy(px, py, tris)
+	if nearest == null:
+		return false
+	return nearest > pz + margin
+
+
 static func _point_in_any_tri_xy(px: float, py: float, tris: Array) -> bool:
 	for tri in tris:
 		if _point_in_tri_xy(px, py, tri[0], tri[1], tri[2]):

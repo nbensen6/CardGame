@@ -113,6 +113,7 @@ func _report(path: String, label: String, beast_id: String = "", check_silhouett
 	if beast_id != "":
 		_check_holds(root, box, beast_id)
 		_check_sigil_color(root, box, beast_id)
+		_check_sigil_visible(root, box, beast_id)
 	_check_climb(root, box, beast_id)
 	if check_silhouette:
 		_check_silhouette(root, path)
@@ -324,6 +325,74 @@ func _check_sigil_color(root: Node3D, box: AABB, beast_id: String) -> void:
 		print("  FAIL  no real gold mark at Height %d (found %.4f, wants >= %.4f)." % [b.weak_point_height, gold_area, want])
 		print("        Every sigil shares one colour (kenney.py's GOLD) so it reads")
 		print("        as the same landmark on every beast — add b.mark() there.")
+
+
+## Sigil visibility — the fourth contract bullet backlog #74 named ("visible
+## from the front... rather than buried behind the body") and the one an
+## earlier pass at this file left deliberately unbuilt: occlusion testing
+## needs either a real raycast against the mesh or a rendered view, and
+## shipping a check nobody could first verify felt worse than leaving it open.
+##
+## AssetContract.is_occluded_from_front is that raycast without a renderer:
+## every model faces +Z and the real combat camera
+## (`views/combat_3d.tscn`) sits at Z ~= +12.4 looking back toward -Z, so
+## LARGER Z is closer to the viewer (see AssetContract.z_at_xy's own note —
+## an earlier version of that function had this backwards and flagged every
+## already-shipped beast's mark as 100% buried, caught only by running it
+## against real models before trusting it). Solving each triangle's plane for
+## Z at a fixed (X, Y) answers the same question a ray-triangle intersection
+## would, using triangle data this file already loads. Reuses
+## `_check_sigil_color`'s own band + gold-UV filter so the two checks agree on
+## what "the sigil" even is.
+func _check_sigil_visible(root: Node3D, box: AABB, beast_id: String) -> void:
+	var b: Boss = Content.build_boss(beast_id)
+	if b == null or b.weak_point_height <= 0:
+		return
+	var tris_uv := _tris_with_uv(root)
+	if tris_uv.is_empty():
+		return
+	var y := box.position.y + box.size.y * lerpf(0.18, 0.80, 1.0)
+	var band := box.size.y * 0.055
+	# Split into the mark itself and everything else — occlusion only counts
+	# against the REST of the body. Checked first against a real mark
+	# (frost_sentinel): a taper() mark is a solid 3D bump, so its own back half
+	# is naturally behind its own front half, same as any solid shape. That is
+	# not "buried behind the body," it is normal geometry, and counting it
+	# nearly doubled the occluded fraction on every beast until this split.
+	var gold: Array = []
+	var other: Array = []
+	for tri in tris_uv:
+		var pts: Array = tri["p"]
+		var a: Vector3 = pts[0]
+		var c: Vector3 = pts[1]
+		var d: Vector3 = pts[2]
+		if AssetContract.uv_in_cell([tri["uv"]], AssetContract.GOLD_UV):
+			gold.append([a, c, d])
+		else:
+			other.append([a, c, d])
+	var total_area := 0.0
+	var hidden_area := 0.0
+	for tri in gold:
+		var a: Vector3 = tri[0]
+		var c: Vector3 = tri[1]
+		var d: Vector3 = tri[2]
+		var mid := (a + c + d) / 3.0
+		if absf(mid.y - y) > band:
+			continue
+		var area := (c - a).cross(d - a).length() * 0.5
+		total_area += area
+		if AssetContract.is_occluded_from_front(mid.x, mid.y, mid.z, other):
+			hidden_area += area
+	if total_area <= 0.0:
+		# _check_sigil_color already reports a missing mark; nothing to add here.
+		return
+	var frac := hidden_area / total_area
+	if frac > 0.5:
+		print("  FAIL  sigil at Height %d is buried: %.0f%% of its surface (by area)" % [b.weak_point_height, frac * 100.0])
+		print("        sits behind other geometry seen from the front. Move the mark")
+		print("        forward (+Z) or thin whatever's blocking it.")
+	else:
+		print("  PASS  sigil is visible from the front (%.0f%% of its surface occluded)" % (frac * 100.0))
 
 
 ## Silhouette distinctness: two beasts that read as the same shape from outline
