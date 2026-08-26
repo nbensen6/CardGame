@@ -237,6 +237,11 @@ func _init() -> void:
 	_test_backlog47_light_survives_mid_combat_save_and_load()
 	_test_backlog47_lightbearer_plays_a_full_run()
 	_test_everyone_wears_their_own_art()
+	# backlog #74: the shape contract's data-only half (AssetContract)
+	_test_backlog74_uv_in_cell_matches_gold_exactly_and_rejects_the_next_swatch()
+	_test_backlog74_silhouette_grid_is_invariant_to_scale_and_position()
+	_test_backlog74_silhouette_similarity_flags_a_near_duplicate_and_passes_a_distinct_shape()
+	_test_backlog74_budget_table_matches_kenney_py()
 	_test_preview_matches_what_the_card_actually_does()
 	_test_incoming_reckons_damage_after_block()
 	_test_every_derived_keyword_resolves()
@@ -6578,6 +6583,76 @@ func _face(id: String, path: String, shared: Dictionary, faceless: Array) -> voi
 	if not shared.has(path):
 		shared[path] = []
 	(shared[path] as Array).append(id)
+
+
+## backlog #74: AssetContract carries the reusable half of the model shape
+## contract (design/BACKLOG.md — "give the machine enough of a contract that
+## it can fail loudly"). assetcheck.gd wires it to real loaded .glb files,
+## which needs actual model files and a scene tree; these exercise the exact
+## same functions against a handful of hand-built triangles so the contract
+## has real regression coverage, not just "looked fine when run by hand."
+## X/Y, not X/Z: AssetContract.silhouette_grid rasterises the FRONT-ON (XY)
+## silhouette, matching what a player actually sees a beast by, so these
+## rectangles vary in X and Y (Z fixed) to exercise that plane.
+func _rect_tris(x0: float, x1: float, y0: float, y1: float, z: float = 0.0) -> Array:
+	return [
+		[Vector3(x0, y0, z), Vector3(x1, y0, z), Vector3(x1, y1, z)],
+		[Vector3(x0, y0, z), Vector3(x1, y1, z), Vector3(x0, y1, z)],
+	]
+
+
+func _test_backlog74_uv_in_cell_matches_gold_exactly_and_rejects_the_next_swatch() -> void:
+	_expect(AssetContract.uv_in_cell([AssetContract.GOLD_UV], AssetContract.GOLD_UV),
+		"a sigil painted exactly GOLD reads as gold")
+	# AMBER sits one 32px column over in kenney.py's atlas (swatch(496, 320) vs
+	# GOLD's swatch(464, 320)) — the real mistake this check exists to catch:
+	# a part painted the neighbouring swatch by accident.
+	var amber_uv := AssetContract.GOLD_UV + Vector2(32.0 / 512.0, 0.0)
+	_expect(not AssetContract.uv_in_cell([amber_uv], AssetContract.GOLD_UV),
+		"a sigil painted the next swatch over does not read as gold")
+
+
+func _test_backlog74_silhouette_grid_is_invariant_to_scale_and_position() -> void:
+	# An L: a tall rect and a wide rect sharing a corner, missing one quadrant of
+	# their combined bounding box — a shape with a real notch in it, not a solid
+	# block, so a scaled/moved copy actually exercises the normalisation.
+	var l_shape := _rect_tris(0, 1, 0, 2) + _rect_tris(0, 2, 0, 1)
+	var l_scaled_and_moved: Array = []
+	var k := 3.5
+	var t := Vector3(40.0, -17.0, 0.0)
+	for tri in l_shape:
+		var moved: Array = []
+		for v in tri:
+			moved.append(Vector3(v.x * k, v.y * k, v.z) + t)
+		l_scaled_and_moved.append(moved)
+
+	var a := AssetContract.silhouette_grid(l_shape, 20)
+	var b := AssetContract.silhouette_grid(l_scaled_and_moved, 20)
+	var sim := AssetContract.silhouette_similarity(a, b)
+	_expect(sim >= 0.99, "the same shape at a different scale and position reads as ~identical (got %.3f)" % sim)
+
+
+func _test_backlog74_silhouette_similarity_flags_a_near_duplicate_and_passes_a_distinct_shape() -> void:
+	var l_shape := _rect_tris(0, 1, 0, 2) + _rect_tris(0, 2, 0, 1)
+	var l_grid := AssetContract.silhouette_grid(l_shape, 20)
+
+	var l_copy := _rect_tris(0, 1, 0, 2) + _rect_tris(0, 2, 0, 1)
+	var dup_sim := AssetContract.silhouette_similarity(l_grid, AssetContract.silhouette_grid(l_copy, 20))
+	_expect(dup_sim >= 0.90, "a re-export of the same shape fails the re-skin threshold (got %.3f)" % dup_sim)
+
+	# A plain square: same bounding box family, but no notch — L is 3 of the 4
+	# quadrants a square would fill, so it lands well under the threshold.
+	var square := _rect_tris(0, 1, 0, 1)
+	var distinct_sim := AssetContract.silhouette_similarity(l_grid, AssetContract.silhouette_grid(square, 20))
+	_expect(distinct_sim < 0.90, "a genuinely different footprint stays under the re-skin threshold (got %.3f)" % distinct_sim)
+
+
+func _test_backlog74_budget_table_matches_kenney_py() -> void:
+	_expect(AssetContract.budget_for("hunter") == 1400, "hunter budget matches kenney.py's BUDGET table")
+	_expect(AssetContract.budget_for("beast") == 2600, "beast budget matches kenney.py's BUDGET table")
+	_expect(AssetContract.budget_for("prop") == 500, "prop budget matches kenney.py's BUDGET table")
+	_expect(AssetContract.budget_for("nonsense") == AssetContract.budget_for("hunter"),
+		"an unknown kind falls back to the hunter budget rather than failing")
 
 
 func _expect(cond: bool, name: String) -> void:

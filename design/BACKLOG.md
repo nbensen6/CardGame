@@ -586,6 +586,14 @@ something Slay the Spire leans on hard and we do not have at all.
   **Do not skip the contract and just generate.** A model that passes nothing but
   `assetcheck` is a model nobody has looked at, and we have shipped that mistake
   before.
+  **Checked 2026-08-26: three of the four contract rules landed** (see the Log
+  entry below) — sigil colour, silhouette distinctness, and mesh/material/budget
+  structure, all as pure `AssetContract` functions with real `run_tests.gd`
+  coverage. Left unchecked because the "Done when" bar is higher than the
+  contract alone: nobody has downloaded Blender in the sandbox or built a beast
+  end to end through it yet. That is real remaining scope, not paperwork — pick
+  it up as its own iteration rather than assuming the contract's existence means
+  this item is close to done.
 
 ### Art the cloud can build
 
@@ -754,6 +762,76 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-26** — #74 Let the cloud build models — behind a shape contract it
+  can check: partial, left UNCHECKED on purpose (see the item's own note).
+  #55 stays correctly skipped and #74 was next in queue order. Scoped down
+  from the full item to just the contract half, and even that took longer
+  than planned because two of the three new checks were wrong on the first
+  pass — writing that down since both are exactly the kind of mistake this
+  item exists to catch, and both were only caught because I ran the new
+  checks against real committed beasts before trusting them, not because I
+  reasoned my way to the right answer up front.
+  Landed `game/tools/asset_contract.gd` (`class_name AssetContract`) holding
+  the pure, file-IO-free half of three contract rules — silhouette grids +
+  Jaccard similarity, UV-in-swatch-cell, and the triangle budget table — so
+  `run_tests.gd` can exercise them against hand-built triangles in
+  milliseconds instead of only through a real `.glb` and a display-free
+  Godot process. `assetcheck.gd` wires them to real loaded models and gained
+  three new checks: mesh-count/material-count now FAIL instead of just being
+  reported (kenney.py's own `finish()` always joins to 1/1, so this is a real
+  invariant); per-type triangle budget (1400/2600/500, kenney.py's own table)
+  replaced a flat 6000 WARN; sigil colour and silhouette distinctness are new.
+  First bug: sigil colour started as "what fraction of the sigil's STANDABLE
+  shelf is gold", reusing `_check_holds`' upward-facing-normal filter — and
+  FAILED all 14 already-shipped beasts at 0% gold. The mark and the shelf are
+  different parts of the body (`beast.py`'s `mark()` takes a per-beast
+  `facing` that is often NOT flat-up), so a shelf-shaped filter excludes the
+  mark's own triangles entirely. Rewrote it to ask a simpler, correct
+  question — is there a real chunk of gold-UV area near the sigil's Height,
+  any orientation — which is what the item actually asked for ("in the shared
+  gold"), not "is the standing surface itself gold." Second bug, same
+  symptom: even after that fix, gold area measured exactly zero on every
+  beast. Wrote a throwaway UV-dump script (not committed) and found the real
+  cluster sitting at UV (0.910, 0.630) against an expected (0.906, 0.375) —
+  right on X, off by a full flip on Y. `kenney.py`'s `swatch()` returns a
+  Blender-space V (bottom-up), and Blender's glTF exporter flips V again on
+  export to match glTF's top-down convention, so the two flips cancel and the
+  V that actually lands in the imported mesh is the UN-flipped
+  `py / 512`, not `1 - py / 512`. Documented the derivation in
+  `AssetContract.GOLD_UV`'s own comment so it isn't rediscovered the hard way
+  again. Third bug, caught by inspection rather than a false FAIL: silhouette
+  distinctness first rasterised the TOP-DOWN (XZ) footprint, which flagged
+  the Gale Serpent against the Riftling at 91% (over the 90% re-skin
+  threshold) — two beasts that share a similar footprint from above but look
+  nothing alike from the front, which is the view a player actually judges a
+  re-skin by. Switched the projection to XY (front-on, matching
+  `tools/blender/README.md`'s "-Y is forward" / models face +Z), which
+  dropped every real pair's worst match to 84% or under with no threshold
+  tuning needed. Along the way, sanity-running the fixed checks against a
+  real beast surfaced an unrelated pre-existing bug in `_tris()`: it read
+  `mi.global_transform`, which needs `is_inside_tree()` and was silently
+  returning identity (an error to stderr, not a thrown failure) for a
+  freshly-instantiated model — accidentally harmless today only because every
+  exported model is one MeshInstance3D directly under the scene root, so
+  local and global transform coincide. Fixed to use `mi.transform`, matching
+  the pattern `_merged_aabb()` already used successfully in the same file.
+  Ran the full contract against all 14 already-built, already-reviewed
+  beasts (`stone_warden` through `shifting_idol`) after each fix: every one
+  now passes every check with real headroom (gold area 0.24–2.0x its
+  threshold; worst silhouette match 84%, threshold 90%), which is the closest
+  thing to proof I have that these checks fail on the right things and not
+  on real work. `run_tests.gd`: all green (479 passes, up from 470), 4 new
+  test functions (9 assertions) exercising `AssetContract` directly.
+  `node tools/cardlab/build.js`:
+  unaffected (this touched no game data). Did NOT touch Blender, previews, or
+  ART-REVIEW.md, and did NOT build a beast end to end — that's the item's
+  actual "Done when" bar and it's still open; see the item's own note for
+  what's left. Also did not attempt the "visible from the front, not buried
+  behind the body" half of the sigil bullet — occlusion-testing needs either
+  a real raycast against the mesh or a rendered view, and I'd rather leave it
+  unbuilt than ship a check I can't first verify the same way I verified the
+  other three.
 
 - **2026-08-26** — #72 Rewards that know what you are building: #55 stays
   correctly skipped (its own note explains why — needs per-beast `cloud-art`
