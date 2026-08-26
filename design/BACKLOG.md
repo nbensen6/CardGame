@@ -447,7 +447,7 @@ something Slay the Spire leans on hard and we do not have at all.
   exact opposite of Retain (#28), which we already have. *Done when:* the flag
   exists, end of turn honours it, at least three cards use it, and it is tested.
 
-- [ ] **59. Scry** `cloud-safe` — look at the top few of your draw pile and bin
+- [x] **59. Scry** `cloud-safe` — look at the top few of your draw pile and bin
   what you do not want. It is how a deck steers itself without drawing, and
   nothing we have touches the draw pile's ORDER at all. It suits co-op too:
   scrying tells your ally what is coming. *Done when:* the effect exists, the
@@ -738,6 +738,43 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-26** — #59 Scry: picked up #55 (more beasts) first since it was
+  higher in the queue, but Blender turned out to be unreachable this run —
+  the egress proxy answered every CONNECT to `download.blender.org` with a
+  policy 403 (`/root/.ccr/README.md`: "do not retry or route around it —
+  report the blocked host"), so the cloud-art half of that item is genuinely
+  blocked here, not stale-checkout or a transient failure. Reverted the
+  bosses.json/tools script work for it cleanly (nothing landed, nothing to
+  undo later) and moved to #59 instead, which needs no art. Added `scry: int`
+  on Card (look at the top N cards of the draw pile without drawing them);
+  `PlayerState.scry_pending` holds the reveal until a NEW command,
+  `Combat.resolve_scry(pi, bin_indices)`, decides what to do with each —
+  binned cards go to the discard pile, kept ones return to the top of the
+  draw pile in the same order they were revealed (index 0 stays the next
+  card drawn). Wired a `resolve_scry` command through `game_host.gd` the same
+  way `use_potion` is (`_acting_slot` gives it the same anti-spoof property:
+  a co-op peer claiming another slot still only resolves their own). Backlog
+  text says "scrying tells your ally what is coming," so unlike a private
+  hand card the reveal rides the PUBLIC per-player snapshot
+  (`_players_public()`'s new `scry_pending`), the same reasoning #45 already
+  gave potions and #57 gave powers — proved with a two-peer session test, not
+  just a single-player one. Two cards shipped (Peer Ahead, common, scry 2;
+  Read The Climb, uncommon, scry 4), added to the global reward_pool AND all
+  five characters' own reward_pool arrays (the same trap #57's and #58's logs
+  both flagged: `Content.reward_pool()` only falls back to the global list
+  when a character has none of their own, and all five already do). Added
+  the `scry` keyword and a `_keywords_of`/`_card_icon` fallback so the
+  existing coverage tests still pass without hand-listing it anywhere else.
+  9 new tests: reveal order, resolve_scry binning + keep-order, two bad-input
+  cases (out-of-range player, out-of-range bin indices, nothing pending),
+  a PlayerState dict round-trip, a real mid-combat save/load, and the
+  two-peer visibility + anti-spoof test. First run of the new tests caught a
+  real bug in the tests themselves, not the engine: I'd forgotten the played
+  scry card ALSO lands in its own discard pile (same as any other skill
+  card), so my "binned card is alone in the discard pile" assertions were
+  off by one — fixed the assertions, not the engine, once I re-read
+  `play_card`'s existing `ps.discard_pile.append(card)` line. All green.
 
 - **2026-08-26** — #58 Ethereal: added an `ethereal: bool` field on Card,
   Retain's exact opposite. `Combat.end_turn` now checks it before Retain

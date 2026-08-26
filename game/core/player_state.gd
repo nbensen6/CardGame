@@ -19,6 +19,8 @@ var prepared: String = ""      # a delayed effect armed this fight (e.g. "jetpac
 var rhythm: int = 0            # combo counter — +1 per timed card you LAND this turn (Frog); resets each turn
 var play_counts: Dictionary = {}  # card id -> times played this fight (for scaling cards like Build Mech)
 var powers: Dictionary = {}    # power card id -> stacks played this fight (backlog #57 — cards that stay played)
+var scry_pending: Array = []   # cards revealed off the top of draw_pile, awaiting Combat.resolve_scry
+                                # (backlog #59); index 0 is the next card that would be drawn
 var sigil_rounds: int = 0      # consecutive enemy turns spent at/above the sigil (a "sigil_fatigue" limiter)
 var light: int = 0             # the Lightbearer's own resource (backlog #47) — banks across turns, unlike energy
 # Character signature passives (set from the chosen character; constant for the run)
@@ -43,7 +45,7 @@ func to_dict() -> Dictionary:
 		"foothold": foothold, "weak_point_damage": weak_point_damage,
 		"ended_turn": ended_turn, "prepared": prepared, "rhythm": rhythm,
 		"play_counts": play_counts, "sigil_rounds": sigil_rounds, "light": light,
-		"powers": powers,
+		"powers": powers, "scry_pending": _cards_to_dicts(scry_pending),
 		"character": character, "climb_bonus": climb_bonus,
 		"char_attack_bonus": char_attack_bonus, "ally_climb": ally_climb,
 		"poison_lift": poison_lift,
@@ -71,6 +73,7 @@ static func from_dict(d: Dictionary) -> PlayerState:
 	ps.sigil_rounds = int(d.get("sigil_rounds", 0))
 	ps.light = int(d.get("light", 0))
 	ps.powers = (d.get("powers", {}) as Dictionary).duplicate(true)  # deep — values are {stacks, value} dicts
+	ps.scry_pending = _cards_from_dicts(d.get("scry_pending", []))
 	ps.character = String(d.get("character", ""))
 	ps.climb_bonus = int(d.get("climb_bonus", 0))
 	ps.char_attack_bonus = int(d.get("char_attack_bonus", 0))

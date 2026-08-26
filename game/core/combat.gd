@@ -663,6 +663,10 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		var keen_draw: int = int(card.enchant_data().get("value", 0))
 		_draw(ps, keen_draw)
 		_log("%s's Keen card draws %d more." % [who, keen_draw])
+	if card.scry > 0:  # backlog #59 — reveal, then resolve_scry() decides what stays
+		ps.scry_pending = _peek_top(ps, card.scry)
+		if not ps.scry_pending.is_empty():
+			_log("%s plays %s — scries the top %d." % [who, card.name, ps.scry_pending.size()])
 
 	if card.rhythm > 0:
 		ps.rhythm += card.rhythm
@@ -1026,6 +1030,58 @@ func _draw(ps: PlayerState, n: int) -> void:
 			ps.discard_pile.clear()
 			_shuffle(ps.draw_pile)
 		ps.hand.append(ps.draw_pile.pop_back())
+
+## Backlog #59 (Scry): lift up to `n` cards off the TOP of the draw pile (same
+## end the deck draws from, reshuffling the discard pile in exactly like _draw
+## does if it runs out) WITHOUT drawing them — the caller holds them until
+## resolve_scry() puts each one back or bins it. Index 0 is the next card that
+## would be drawn, same order _draw() would have taken them in.
+func _peek_top(ps: PlayerState, n: int) -> Array:
+	var out: Array = []
+	for _i in n:
+		if ps.draw_pile.is_empty():
+			if ps.discard_pile.is_empty():
+				break
+			ps.draw_pile = ps.discard_pile.duplicate()
+			ps.discard_pile.clear()
+			_shuffle(ps.draw_pile)
+		out.append(ps.draw_pile.pop_back())
+	return out
+
+## Backlog #59: the player's decision after a Scry reveal — bin any of the
+## revealed cards (indices into scry_pending) to the discard pile; everything
+## else returns to the TOP of the draw pile in the same order it was revealed,
+## so a card a player chooses to keep is still the next one they'd draw.
+## The command the host validates: an out-of-range index is just ignored
+## rather than failing the whole call, and calling this with nothing pending
+## is a harmless no-op that reports false.
+func resolve_scry(pi: int, bin_indices: Array) -> bool:
+	if pi < 0 or pi >= players.size():
+		return false
+	var ps: PlayerState = players[pi]
+	if ps.scry_pending.is_empty():
+		return false
+	var binned := {}
+	for idx_v in bin_indices:
+		var idx := int(idx_v)
+		if idx >= 0 and idx < ps.scry_pending.size():
+			binned[idx] = true
+	var kept: Array = []
+	var bin_count := 0
+	for i in range(ps.scry_pending.size()):
+		var c: Card = ps.scry_pending[i]
+		if binned.has(i):
+			ps.discard_pile.append(c)
+			bin_count += 1
+		else:
+			kept.append(c)
+	# kept[0] must be the next card popped, so push the pile in reverse: the
+	# LAST append is the one pop_back() sees first.
+	for i in range(kept.size() - 1, -1, -1):
+		ps.draw_pile.append(kept[i])
+	ps.scry_pending = []
+	_log("%s bins %d card(s) from the scry." % [ps.combatant.name, bin_count])
+	return true
 
 ## Innate (backlog #28): pull every innate card straight out of the (already
 ## shuffled) draw pile into the opening hand, in whatever order they fell —

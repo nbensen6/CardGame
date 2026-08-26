@@ -72,6 +72,9 @@ var ally_heal: int      # HP healed on the ALLY, up to their max — the Lightbe
 var power_effect: String  # a `type: "power"` card's recurring payoff (backlog #57) — e.g. "block",
                            # "strength"; resolved by Combat._handle_power_effects at each turn end
 var power_value: int      # how much power_effect grants per stack, per turn end
+var scry: int              # look at this many cards off the TOP of your draw pile and bin any of
+                            # them (backlog #59) — the choice is a command (Combat.resolve_scry),
+                            # not resolved here; kept cards return to the top in the same order
 
 static func from_dict(d: Dictionary) -> Card:
 	var c := Card.new()
@@ -136,6 +139,7 @@ static func from_dict(d: Dictionary) -> Card:
 	c.ally_heal = int(d.get("ally_heal", 0))
 	c.power_effect = String(d.get("power_effect", ""))
 	c.power_value = int(d.get("power_value", 0))
+	c.scry = int(d.get("scry", 0))
 	return c
 
 
@@ -169,6 +173,7 @@ func to_dict() -> Dictionary:
 		"light_gain": light_gain, "light_cost": light_cost,
 		"damage_per_light": damage_per_light, "ally_heal": ally_heal,
 		"power_effect": power_effect, "power_value": power_value,
+		"scry": scry,
 	}
 
 
@@ -191,7 +196,7 @@ func upgraded_copy() -> Card:
 			"damage_per_ally_foothold", "damage_per_rhythm", "damage_per_wound",
 			"damage_per_exhausted", "block_per_exhausted",
 			"damage_per_x", "block_per_x", "frail", "thorns",
-			"light_gain", "damage_per_light", "ally_heal", "power_value"]:
+			"light_gain", "damage_per_light", "ally_heal", "power_value", "scry"]:
 		if int(d[key]) > 0:
 			d[key] = int(d[key]) + 1
 			bumped = true

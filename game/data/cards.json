@@ -10,6 +10,8 @@
     "guarded_instant": {"name": "Guarded Instant", "icon": "shield", "rarity": "uncommon", "type": "skill", "cost": 1, "block": 10, "ethereal": true, "text": "Gain 10 Block. Ethereal."},
     "fading_insight": {"name": "Fading Insight", "icon": "stack", "rarity": "uncommon", "type": "skill", "cost": 0, "draw": 2, "ethereal": true, "text": "Draw 2. Ethereal."},
     "take_aim": {"name": "Take Aim", "icon": "stack", "rarity": "common", "type": "skill", "cost": 1, "draw": 2, "text": "Draw 2."},
+    "peer_ahead": {"name": "Peer Ahead", "icon": "stack", "rarity": "common", "type": "skill", "cost": 1, "scry": 2, "text": "Look at the top 2 cards of your draw pile. Bin any of them."},
+    "read_the_climb": {"name": "Read The Climb", "icon": "stack", "rarity": "uncommon", "type": "skill", "cost": 1, "scry": 4, "text": "Look at the top 4 cards of your draw pile. Bin any of them."},
     "cover": {"name": "Cover", "icon": "support", "rarity": "uncommon", "type": "skill", "cost": 1, "ally_block": 6, "target": "ally", "text": "Ally gains 6 Block."},
     "rally": {"name": "Rally", "rarity": "common", "type": "skill", "icon": "rally", "cost": 1, "ally_energy": 1, "target": "ally", "text": "Ally gains 1 Energy."},
     "expose": {"name": "Expose", "icon": "expose", "rarity": "common", "type": "skill", "cost": 1, "vulnerable": 2, "target": "enemy", "text": "Expose 2."},
@@ -187,5 +189,5 @@
     "barbed_hide": {"name": "Barbed Hide", "icon": "shield", "rarity": "common", "type": "power", "cost": 1, "power_effect": "thorns", "power_value": 2, "text": "Power. Gain 2 Thorns at the end of each of your turns."}
   },
   "starter_deck": ["slash", "slash", "slash", "brace", "brace", "scramble", "scramble", "take_aim", "cleave", "cover"],
-  "reward_pool": ["rally", "expose", "draw_aggro", "harpoon", "grip", "sunlight_blade", "bowshot", "sharpen", "rend", "dagger", "flurry", "cleave", "cover", "brace", "slash", "take_aim", "pounce", "flick", "lash_out", "piton_drive", "piston_punch", "haul", "tongue_snap", "hop", "leapfrog", "toxic_lash", "overgrowth", "blightbloom", "summit_strike", "belay", "pitons_in", "dig_in", "last_stand", "route_finder", "bunker_down", "first_strike", "crippling_blow", "spinebrace", "trailmasters_cut", "iron_husk", "old_grudge", "seeping_venom", "barbed_hide", "reckless_swing", "guarded_instant", "fading_insight"]
+  "reward_pool": ["rally", "expose", "draw_aggro", "harpoon", "grip", "sunlight_blade", "bowshot", "sharpen", "rend", "dagger", "flurry", "cleave", "cover", "brace", "slash", "take_aim", "pounce", "flick", "lash_out", "piton_drive", "piston_punch", "haul", "tongue_snap", "hop", "leapfrog", "toxic_lash", "overgrowth", "blightbloom", "summit_strike", "belay", "pitons_in", "dig_in", "last_stand", "route_finder", "bunker_down", "first_strike", "crippling_blow", "spinebrace", "trailmasters_cut", "iron_husk", "old_grudge", "seeping_venom", "barbed_hide", "reckless_swing", "guarded_instant", "fading_insight", "peer_ahead", "read_the_climb"]
 }

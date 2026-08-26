@@ -58,6 +58,12 @@ func use_potion(index: int, slot: int = -1) -> void:
 func discard_potion(index: int, slot: int = -1) -> void:
 	_send({"type": "discard_potion", "index": index, "slot": slot})
 
+## Answer a Scry reveal (backlog #59): `bin` names which revealed cards
+## (indices into scry_pending) go to the discard pile. Everything else
+## returns to the top of the draw pile in the same order it was revealed.
+func resolve_scry(bin: Array, slot: int = -1) -> void:
+	_send({"type": "resolve_scry", "bin": bin, "slot": slot})
+
 ## Pick reward card option `choice` (during the between-encounter REWARD phase).
 func pick_card(choice: int, slot: int = -1) -> void:
 	_send({"type": "pick_card", "choice": choice, "slot": slot})

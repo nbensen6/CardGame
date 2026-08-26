@@ -308,6 +308,12 @@ func _init() -> void:
 	_test_backlog46_every_event_has_at_least_one_choice()
 	_test_backlog46_empty_reward_choices_can_still_be_skipped()
 	_test_backlog46_end_turn_always_works_with_empty_hand()
+	# Scry (backlog #59): look at the top of the draw pile and bin what you don't want
+	_test_backlog59_scry_reveals_and_resolve_scry_bins_and_keeps_order()
+	_test_backlog59_resolve_scry_validates_bad_input()
+	_test_backlog59_scry_survives_playerstate_dict_round_trip()
+	_test_backlog59_scry_survives_mid_combat_save_and_load()
+	_test_backlog59_ally_sees_the_scry_reveal()
 
 	print("")
 	if _failures == 0:
@@ -4974,6 +4980,126 @@ func _test_backlog46_end_turn_always_works_with_empty_hand() -> void:
 	combat.end_turn(0)
 	_expect(combat.players[0].ended_turn,
 		"a hunter with no cards and no energy can still end their turn")
+
+
+## Backlog #59 — Scry: playing a scry card reveals the top N cards of the draw
+## pile (index 0 is the next one that would be drawn) WITHOUT drawing them, and
+## leaves them in PlayerState.scry_pending until resolve_scry() decides what
+## happens to each.
+func _test_backlog59_scry_reveals_and_resolve_scry_bins_and_keeps_order() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var a := Card.from_dict({"id": "a", "name": "A", "type": "skill", "cost": 0})
+	var b := Card.from_dict({"id": "b", "name": "B", "type": "skill", "cost": 0})
+	var c := Card.from_dict({"id": "c", "name": "C", "type": "skill", "cost": 0})
+	var d := Card.from_dict({"id": "d", "name": "D", "type": "skill", "cost": 0})
+	var e := Card.from_dict({"id": "e", "name": "E", "type": "skill", "cost": 0})
+	ps.draw_pile = [a, b, c, d, e]   # e is the "top" — pop_back() draws it first
+	ps.hand = [Card.from_dict({"id": "read_the_climb", "name": "Read The Climb", "type": "skill",
+		"cost": 1, "scry": 3})]
+	ps.energy = 3
+	combat.play_card(0, 0)
+	_expect(ps.scry_pending.size() == 3
+		and (ps.scry_pending[0] as Card).id == "e"
+		and (ps.scry_pending[1] as Card).id == "d"
+		and (ps.scry_pending[2] as Card).id == "c",
+		"Scry reveals the top N cards, in draw order, without drawing them")
+
+	var ok := combat.resolve_scry(0, [1])   # bin "d"
+	_expect(ok and ps.scry_pending.is_empty(),
+		"resolve_scry clears the pending reveal and reports success")
+	# discard_pile already holds the played "read_the_climb" card itself — the
+	# binned card lands beside it.
+	_expect(ps.discard_pile.size() == 2 and (ps.discard_pile[1] as Card).id == "d",
+		"the binned card lands in the discard pile")
+	_expect(ps.draw_pile.size() == 4
+		and (ps.draw_pile[3] as Card).id == "e" and (ps.draw_pile[2] as Card).id == "c"
+		and (ps.draw_pile[1] as Card).id == "b" and (ps.draw_pile[0] as Card).id == "a",
+		"kept cards return to the top of the draw pile in the same order they were revealed")
+
+
+func _test_backlog59_resolve_scry_validates_bad_input() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	_expect(not combat.resolve_scry(-1, []) and not combat.resolve_scry(99, []),
+		"resolve_scry rejects an out-of-range player index")
+	_expect(not combat.resolve_scry(0, []),
+		"resolve_scry is a no-op when nothing is pending")
+
+	var ps: PlayerState = combat.players[0]
+	var a := Card.from_dict({"id": "a", "name": "A", "type": "skill", "cost": 0})
+	var b := Card.from_dict({"id": "b", "name": "B", "type": "skill", "cost": 0})
+	ps.draw_pile = [a, b]
+	ps.hand = [Card.from_dict({"id": "peer_ahead", "name": "Peer Ahead", "type": "skill",
+		"cost": 1, "scry": 2})]
+	ps.energy = 3
+	combat.play_card(0, 0)   # scries both remaining cards: b, then a
+	var ok := combat.resolve_scry(0, [-1, 99])   # nonsense indices — ignored, not fatal
+	# discard_pile already holds the played "peer_ahead" card itself; nothing
+	# else should have joined it, since neither bin index was valid.
+	_expect(ok and ps.discard_pile.size() == 1 and ps.draw_pile.size() == 2,
+		"an out-of-range bin index is ignored rather than failing the whole call")
+
+
+func _test_backlog59_scry_survives_playerstate_dict_round_trip() -> void:
+	var ps := PlayerState.new()
+	ps.combatant = Combatant.new("X", 30)
+	ps.scry_pending = [Content.make_card("slash"), Content.make_card("brace")]
+	var back := PlayerState.from_dict(ps.to_dict())
+	_expect(back.scry_pending.size() == 2
+		and (back.scry_pending[0] as Card).id == "slash"
+		and (back.scry_pending[1] as Card).id == "brace",
+		"PlayerState.scry_pending round-trips through to_dict/from_dict")
+
+
+## The real chain, not just the leaf — same reasoning #47's Light tests give:
+## a mid-fight save (#14) must carry a pending Scry the same way it already
+## carries the hand and the piles.
+func _test_backlog59_scry_survives_mid_combat_save_and_load() -> void:
+	var run := Run.new([_deck_of(_slash, 8), _deck_of(_slash, 8)], ["A", "B"], 55,
+		[{"character": "frog"}, {"character": "lightbearer"}], 0)
+	run.start()
+	_step_into_combat(run)
+	var combat: Combat = run.combat
+	combat.players[1].scry_pending = [Content.make_card("slash")]
+	RunSave.clear()
+	RunSave.save(run)
+	var back := RunSave.load_run()
+	var back_combat: Combat = back.combat
+	_expect(back_combat != null and back_combat.players[1].scry_pending.size() == 1
+		and (back_combat.players[1].scry_pending[0] as Card).id == "slash",
+		"a pending Scry survives a mid-combat save and load")
+
+
+## Backlog #45's own reasoning, extended to #59: "scrying tells your ally what
+## is coming" is the co-op point of the mechanic, so the reveal rides the
+## public per-player snapshot (like potions/powers) rather than the private
+## hand — and only the OWNER's resolve_scry can act on it, same spoof-proofing
+## _acting_slot already gives potions.
+func _test_backlog59_ally_sees_the_scry_reveal() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var c1: GameClient = s["c1"]
+	var combat: Combat = host._run.combat
+	var ps0: PlayerState = combat.players[0]
+	ps0.draw_pile = [Content.make_card("brace"), Content.make_card("slash")]
+	ps0.hand = [Card.from_dict({"id": "peer_ahead", "name": "Peer Ahead", "type": "skill",
+		"cost": 1, "scry": 2})]
+	ps0.energy = 3
+	combat.play_card(0, 0)
+	host._broadcast_state()
+	_expect(c0.shared["players"][0]["scry_pending"].size() == 2
+		and c1.shared["players"][0]["scry_pending"].size() == 2
+		and String(c1.shared["players"][0]["scry_pending"][0]["name"]) == "Slash",
+		"a scry reveal is visible to the ally too, not just the owner")
+	# c1 tries to resolve slot 0's scry — co-op ignores the claimed slot and
+	# resolves against the SENDER's own (slot 1, nothing pending there).
+	c1.resolve_scry([0])
+	_expect(c0.shared["players"][0]["scry_pending"].size() == 2,
+		"a spoofed slot can't resolve a teammate's scry")
+	c0.resolve_scry([0])
+	_expect(c0.shared["players"][0]["scry_pending"].is_empty(),
+		"the owner resolving their own scry clears the pending reveal")
 
 
 ## Backlog #47 — the Lightbearer: a fifth hunter whose OWN currency (Light)

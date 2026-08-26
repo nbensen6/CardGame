@@ -104,6 +104,10 @@ func _on_command(peer_id: int, command: Dictionary) -> void:
 			var up := _acting_slot(peer_id, command)
 			_in_combat_action(up, func() -> void:
 				_run.use_potion(up, int(command.get("index", -1))))
+		"resolve_scry":  # backlog #59 -- which of the revealed top cards to bin
+			var sc := _acting_slot(peer_id, command)
+			_in_combat_action(sc, func() -> void:
+				_run.combat.resolve_scry(sc, command.get("bin", [])))
 		"discard_potion":  # legal any phase you're carrying one -- not gated on combat
 			var dp := _acting_slot(peer_id, command)
 			if not paused and _run != null and dp >= 0:
@@ -372,6 +376,20 @@ func _powers_view(pi: int) -> Array:
 		out.append({"id": String(id), "name": pc.name, "text": pc.text, "stacks": stacks})
 	return out
 
+## The cards a hunter is currently deciding whether to bin, public (backlog
+## #59: "scrying tells your ally what is coming" is the whole co-op reason for
+## the mechanic, so it rides the same public-board reasoning as potions/powers
+## rather than the private hand). Empty outside a pending scry.
+func _scry_view(pi: int) -> Array:
+	var out: Array = []
+	if _run.phase != Run.Phase.COMBAT or pi < 0 or pi >= _run.combat.players.size():
+		return out
+	var ps: PlayerState = _run.combat.players[pi]
+	for i in range(ps.scry_pending.size()):
+		var c: Card = ps.scry_pending[i]
+		out.append({"index": i, "name": c.name, "text": c.text})
+	return out
+
 func _players_public() -> Array:
 	var out: Array = []
 	if _run.phase == Run.Phase.COMBAT:
@@ -396,6 +414,7 @@ func _players_public() -> Array:
 				# enforced by _acting_slot ignoring a co-op peer's claimed slot.
 				"potions": _potion_view(i),
 				"powers": _powers_view(i),
+				"scry_pending": _scry_view(i),
 			})
 	else:
 		for i in range(_run.player_count()):
@@ -557,6 +576,8 @@ func _keywords_of(c: Card) -> Array:
 		ids.append("mend")
 	if c.type == "power" or c.power_effect != "" or c.power_value != 0:
 		ids.append("power")
+	if c.scry > 0:
+		ids.append("scry")
 	var out: Array = []
 	for id in ids:
 		var k := Content.keyword(String(id))
@@ -639,7 +660,7 @@ func _card_icon(c: Card) -> String:
 		return "expose"
 	if c.strength > 0:
 		return "flask"
-	if c.draw > 0:
+	if c.draw > 0 or c.scry > 0:
 		return "draw"
 	if c.damage > 0:
 		return "sword"
