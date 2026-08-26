@@ -38,3 +38,7 @@ Desktop.ini
 tools/cardlab/cardlab.html
 
 tools/blender/__pycache__/
+
+# Scratch copies for looking at models in Blender (toolslenderdit.cmd blends).
+# Regenerable in seconds, binary, and NOT the source — the scripts are.
+tools/blender/blends/
