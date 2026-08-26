@@ -58,6 +58,9 @@ var status: bool       # a status/curse card — clogs your deck, no beneficial 
                         # inflicted (an event's curse_card), not drafted (backlog #27)
 var retain: bool        # stays in hand at end of turn instead of being discarded (backlog #28)
 var innate: bool        # guaranteed in the opening hand of every fight (backlog #28)
+var ethereal: bool      # exhausts (instead of discarding) if still in hand at end of turn —
+                        # Retain's opposite: lets a card be pushed above its cost because it
+                        # punishes holding it (backlog #58)
 var damage_per_x: int  # bonus damage per point of energy spent (backlog #29 — X-cost cards only)
 var block_per_x: int   # bonus Block per point of energy spent (backlog #29 — X-cost cards only)
 var frail: int          # Frail applied to the Titan: while it lasts, Block IT gains is cut (backlog #36)
@@ -122,6 +125,7 @@ static func from_dict(d: Dictionary) -> Card:
 	c.status = bool(d.get("status", false))
 	c.retain = bool(d.get("retain", false))
 	c.innate = bool(d.get("innate", false))
+	c.ethereal = bool(d.get("ethereal", false))
 	c.damage_per_x = int(d.get("damage_per_x", 0))
 	c.block_per_x = int(d.get("block_per_x", 0))
 	c.frail = int(d.get("frail", 0))
@@ -159,7 +163,7 @@ func to_dict() -> Dictionary:
 		"strength": strength, "wound": wound, "hits": hits, "draw": draw,
 		"target": target, "icon": icon, "text": text, "upgraded": upgraded,
 		"enchant": enchant, "status": status,
-		"retain": retain, "innate": innate,
+		"retain": retain, "innate": innate, "ethereal": ethereal,
 		"damage_per_x": damage_per_x, "block_per_x": block_per_x,
 		"frail": frail, "thorns": thorns,
 		"light_gain": light_gain, "light_cost": light_cost,

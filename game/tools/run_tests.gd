@@ -165,6 +165,10 @@ func _init() -> void:
 	_test_retain_survives_into_the_next_round()
 	_test_innate_is_guaranteed_in_the_opening_hand()
 	_test_innate_does_not_reappear_every_round()
+	# Ethereal (backlog #58)
+	_test_ethereal_exhausts_if_still_in_hand_at_end_of_turn()
+	_test_ethereal_played_card_is_not_exhausted()
+	_test_ethereal_overrides_retain_if_both_are_set()
 	# X-cost cards (backlog #29)
 	_test_x_cost_spends_all_energy_and_scales_with_it()
 	_test_x_cost_playable_at_zero_energy()
@@ -2654,6 +2658,42 @@ func _test_innate_does_not_reappear_every_round() -> void:
 		"round 2 draws a normal hand size — innate only guarantees round 1")
 
 
+## Ethereal (backlog #58): Retain's opposite. A card left in hand at end of
+## turn burns away to the exhaust pile instead of the discard pile; an
+## ordinary card in the same hand is discarded as normal.
+func _test_ethereal_exhausts_if_still_in_hand_at_end_of_turn() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_reckless_swing(), _slash()]
+	combat.end_turn(0)
+	_expect(ps.hand.size() == 0 and _has_id(ps.exhaust_pile, "reckless_swing")
+			and _has_id(ps.discard_pile, "slash") and not _has_id(ps.discard_pile, "reckless_swing"),
+		"an ethereal card left in hand exhausts at end of turn; a normal one is discarded")
+
+
+## Playing an ethereal card removes it from the hand like any other card — the
+## exhaust only applies to a copy that is STILL THERE unplayed at end of turn.
+func _test_ethereal_played_card_is_not_exhausted() -> void:
+	var combat := _new_combat([_deck_of(_reckless_swing, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	combat.play_card(0, _first_playable(combat, 0))
+	_expect(_has_id(ps.discard_pile, "reckless_swing") and not _has_id(ps.exhaust_pile, "reckless_swing"),
+		"a played ethereal card discards normally — ethereal only fires on an unplayed copy")
+
+
+## A card can't sensibly linger forever AND burn away — if both flags are set,
+## ethereal wins so the card can never be an unkillable permanent Retain.
+func _test_ethereal_overrides_retain_if_both_are_set() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var both := Card.from_dict({"id": "both", "name": "Both", "type": "skill", "cost": 1,
+		"block": 4, "retain": true, "ethereal": true})
+	ps.hand = [both]
+	combat.end_turn(0)
+	_expect(ps.hand.is_empty() and _has_id(ps.exhaust_pile, "both"),
+		"ethereal takes priority over retain — the card exhausts rather than lingering forever")
+
+
 # --- X-cost cards (backlog #29) --------------------------------------------
 # cost == -1 is the sentinel: the card always spends every point of energy the
 # hunter has, and `damage_per_x`/`block_per_x` scale with how much that was.
@@ -4869,6 +4909,8 @@ func _bunker_down() -> Card:
 	return Card.from_dict({"id": "bunker_down", "name": "Bunker Down", "type": "skill", "cost": 1, "block": 4, "retain": true})
 func _first_strike() -> Card:
 	return Card.from_dict({"id": "first_strike", "name": "First Strike", "type": "attack", "cost": 1, "damage": 5, "innate": true})
+func _reckless_swing() -> Card:
+	return Card.from_dict({"id": "reckless_swing", "name": "Reckless Swing", "type": "attack", "cost": 1, "damage": 10, "ethereal": true})
 func _crippling_blow() -> Card:
 	return Card.from_dict({"id": "crippling_blow", "name": "Crippling Blow", "type": "attack", "cost": 1, "damage": 5, "frail": 2, "target": "enemy"})
 

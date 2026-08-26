@@ -441,7 +441,7 @@ something Slay the Spire leans on hard and we do not have at all.
   card type exists, played powers persist and stack for the fight, they reach
   the snapshot so a face can show them later, and they are tested.
 
-- [ ] **58. Ethereal** `cloud-safe` — a card that exhausts if it is still in your
+- [x] **58. Ethereal** `cloud-safe` — a card that exhausts if it is still in your
   hand at end of turn. One flag, and it is the counterweight that lets a card be
   pushed well above its cost: powerful, but only if you can use it NOW. The
   exact opposite of Retain (#28), which we already have. *Done when:* the flag
@@ -738,6 +738,28 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-26** — #58 Ethereal: added an `ethereal: bool` field on Card,
+  Retain's exact opposite. `Combat.end_turn` now checks it before Retain
+  while sweeping the hand — a card still there at end of turn exhausts
+  instead of discarding — with Retain's own `_test_retain_...` tests as the
+  template for the three new ones, including a "both flags set" case: when a
+  card is somehow both, ethereal wins, so a card can never be an unkillable
+  permanent Retain. Wrote 3 uncommon cards pushed hard above the normal curve
+  for their cost — Reckless Swing (1-cost, 10 damage, vs. Slash's 6),
+  Guarded Instant (1-cost, 10 Block, vs. Brace's 5), Fading Insight (0-cost,
+  draw 2, vs. Take Aim's cost 1 for the same draw) — and remembered #57's own
+  logged trap: added them to the global `cards.json` reward_pool AND all five
+  characters' own `reward_pool` arrays in `characters.json`, since
+  `Content.reward_pool()` only falls back to the global list when a
+  character has none of their own, and all five already do. Also added the
+  `ethereal` keyword (text and the `_keywords_of` mapping) so
+  `_test_every_field_a_player_must_understand_has_a_keyword` still passes.
+  3 new tests, all green, plus the existing suite untouched. Not done: the
+  same `_meld_cards` gap #57 flagged (type-specific fields silently drop on
+  a meld) also applies to `ethereal` — no current card carries both `meld`
+  and `ethereal`, so it's unreachable today, flagging rather than fixing
+  since it's the same pre-existing gap, not new to this item.
 
 - **2026-08-26** — #57 Powers, cards that stay played: added `type: "power"`
   plus `power_effect`/`power_value` fields on Card. Playing a power routes it

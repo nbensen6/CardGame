@@ -75,7 +75,10 @@
         "iron_husk",
         "old_grudge",
         "seeping_venom",
-        "barbed_hide"
+        "barbed_hide",
+        "reckless_swing",
+        "guarded_instant",
+        "fading_insight"
       ]
     },
     "vine_weaver": {
@@ -146,7 +149,10 @@
         "iron_husk",
         "old_grudge",
         "seeping_venom",
-        "barbed_hide"
+        "barbed_hide",
+        "reckless_swing",
+        "guarded_instant",
+        "fading_insight"
       ]
     },
     "mountain_climbers": {
@@ -214,7 +220,10 @@
         "iron_husk",
         "old_grudge",
         "seeping_venom",
-        "barbed_hide"
+        "barbed_hide",
+        "reckless_swing",
+        "guarded_instant",
+        "fading_insight"
       ]
     },
     "goblin_mech": {
@@ -281,7 +290,10 @@
         "iron_husk",
         "old_grudge",
         "seeping_venom",
-        "barbed_hide"
+        "barbed_hide",
+        "reckless_swing",
+        "guarded_instant",
+        "fading_insight"
       ]
     },
     "lightbearer": {
@@ -326,7 +338,10 @@
         "iron_husk",
         "old_grudge",
         "seeping_venom",
-        "barbed_hide"
+        "barbed_hide",
+        "reckless_swing",
+        "guarded_instant",
+        "fading_insight"
       ]
     }
   }

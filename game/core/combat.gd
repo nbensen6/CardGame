@@ -779,7 +779,9 @@ func end_turn(pi: int) -> void:
 	var kept: Array = []  # Retain (backlog #28): stays in hand instead of the discard pile
 	while not ps.hand.is_empty():
 		var c: Card = ps.hand.pop_back()
-		if c.retain:
+		if c.ethereal:  # Retain's opposite (backlog #58) — checked first, so a card
+			ps.exhaust_pile.append(c)  # can never be both and linger in hand forever
+		elif c.retain:
 			kept.append(c)
 		else:
 			ps.discard_pile.append(c)

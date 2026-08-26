@@ -85,6 +85,10 @@
       "name": "Innate",
       "text": "Guaranteed to be in your opening hand at the start of every fight."
     },
+    "ethereal": {
+      "name": "Ethereal",
+      "text": "Burns away — exhausted for the rest of the fight — if it is still in your hand when your turn ends."
+    },
     "x_cost": {
       "name": "X",
       "text": "Spends ALL your remaining energy when played. Its damage or Block scales with how much you spent."
