@@ -143,6 +143,33 @@ func is_over() -> bool:
 func seed_value() -> int:
 	return _seed
 
+## A compact record of how this run ended (backlog #65), for Progress.record_run
+## to keep once the run itself is thrown away. #39 already accumulates `stats`
+## through the run; this just adds the identity of the run (who played it, what
+## seed, what difficulty) and the deck it ended with, so a finished run leaves
+## more behind than the win/loss counter. Only meaningful once is_over() —
+## the host calls this exactly once per run, right when it ends.
+func history_entry() -> Dictionary:
+	var characters: Array = []
+	for i in range(names.size()):
+		characters.append(_character_of(i))
+	var final_deck: Array = []
+	for deck in decks:
+		var ids: Array = []
+		for c in (deck as Array):
+			ids.append((c as Card).id)
+		final_deck.append(ids)
+	var result := ""
+	if phase == Phase.WON:
+		result = "win"
+	elif phase == Phase.LOST:
+		result = "lose"
+	return {
+		"characters": characters, "seed": _seed, "ascension": ascension,
+		"result": result, "is_daily": is_daily, "daily_date": daily_date,
+		"stats": stats.duplicate(), "final_deck": final_deck,
+	}
+
 ## Derives a stable, shareable seed from a date string (backlog #49), building
 ## on #38's shareable seed so a daily needs no new machinery of its own —
 ## everyone who calls this with the same date gets the same map, shop and

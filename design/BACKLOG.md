@@ -487,7 +487,7 @@ something Slay the Spire leans on hard and we do not have at all.
   distinct node types at a real cost, the final encounter checks them, and it is
   tested.
 
-- [ ] **65. Run history** `cloud-safe` — #39 counts a run while it happens and
+- [x] **65. Run history** `cloud-safe` — #39 counts a run while it happens and
   then throws the numbers away. Every finished run should be recorded:
   character, seed, ascension, how far, what killed you, the deck you ended with.
   It is what makes a loss feel like data instead of like nothing, and it is the
@@ -748,6 +748,38 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-26** — #65 Run history: the next `cloud-safe` item after #64 in
+  queue order (55 stayed skipped for its own stated reason; 66-72 and 74 are
+  all further down and this was the topmost genuinely attemptable one).
+  `Run.history_entry()` builds the record from fields the run already carries
+  — `_character_of()` per hunter, `seed_value()`, `ascension`, `phase` for
+  win/lose, `stats` (#39's accumulator, unmodified) and each hunter's deck ids
+  — and `Progress.record_run()`/`run_history()` persist it the same way
+  `seen_hints` already lives in the ConfigFile, so it's additive by
+  construction rather than needing its own version counter like RunSave's:
+  an entry a later build adds a field to still loads an older entry missing
+  it, tested directly by writing a bare `{characters, seed, ascension,
+  result}` entry and confirming `run_history()` returns it with `final_deck`
+  defaulting to `[]` rather than crashing. The one real bug this surfaced:
+  `GameHost._note_progress()` already called `Progress.record_win()` on
+  *every* broadcast once a run reached WON, with no guard — harmless today
+  only because total_wins has no test that broadcasts twice after a win, but
+  wiring `record_run()` onto that same unguarded call would have logged one
+  duplicate entry per post-game broadcast (a client polling the win/lose
+  screen, for instance). Fixed both at once with a `_history_recorded` flag
+  reset on `start_new_run()`/`resume_run()`, proven with a GameHost test that
+  broadcasts three times after WON and checks the history grew by exactly
+  one. Did not touch `stats`' shape or add a timestamp — the item's own
+  "done when" names character/seed/ascension/how-far/cause-of-death/deck and
+  nothing about wall-clock time, and this codebase has no prior use of
+  Godot's `Time`/`OS` clock calls, so adding one order-of-operations concern
+  the tests would then have to work around felt like scope the item didn't
+  ask for. Six new tests, all green: entry shape on a loss and on a win
+  (built directly on a run already in that phase, deliberately not re-proving
+  the WIN-routes-through-REWARD or a real Combat death — #39/#64 already
+  cover that machinery), Progress round-tripping two entries in order, the
+  GameHost exactly-once guard, and the missing-field tolerance test above.
 
 - **2026-08-26** — #64 Keys, and a Titan you can only reach with them: #55
   stayed skipped for the reason its own note gives, so this was the next

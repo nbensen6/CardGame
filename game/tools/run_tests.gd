@@ -358,6 +358,12 @@ func _init() -> void:
 	_test_backlog64_map_guarantees_all_three_key_source_types_exist()
 	_test_backlog64_final_titan_is_a_sealed_door_without_all_three_keys()
 	_test_backlog64_final_titan_is_a_real_fight_with_all_three_keys()
+	# backlog #65: run history — a finished run persists rather than vanishing
+	_test_backlog65_history_entry_shape_on_a_loss()
+	_test_backlog65_history_entry_shape_on_a_win()
+	_test_backlog65_progress_record_run_appends_and_round_trips()
+	_test_backlog65_gamehost_records_history_exactly_once()
+	_test_backlog65_run_history_tolerates_an_entry_missing_a_newer_field()
 	# Scry (backlog #59): look at the top of the draw pile and bin what you don't want
 	_test_backlog59_scry_reveals_and_resolve_scry_bins_and_keeps_order()
 	_test_backlog59_resolve_scry_validates_bad_input()
@@ -5657,6 +5663,114 @@ func _test_backlog64_final_titan_is_a_real_fight_with_all_three_keys() -> void:
 		_force_win(run)
 	_expect(fighting and bool(run.stats["true_ending"]),
 		"with all three keys the fourth Titan is a real fight, and winning it earns the true ending")
+
+
+# --- Run history (backlog #65) ---------------------------------------------
+# #39 already accumulates `stats` while a run plays; this is what keeps that
+# once the run itself is thrown away — Run.history_entry() is the shape,
+# Progress.record_run()/run_history() is where it lives, and GameHost is the
+# one call site that must fire it exactly once.
+
+## Sets phase directly rather than driving a real fight to LOST through
+## Combat/sync() — that flow (WIN routes through REWARD, not straight to WON;
+## a real loss needs a dead Combatant) is already proven by #39's and #64's own
+## tests. This test is only about what history_entry() computes FROM a
+## finished run's fields, so it starts from one already in that state.
+func _test_backlog65_history_entry_shape_on_a_loss() -> void:
+	var decks := [_deck_of(_slash, 6), _deck_of(_slash, 5)]
+	var run := Run.new(decks, ["A", "B"], 123, [{"character": "frog"}, {"character": "goblin_mech"}], 2)
+	run.start()
+	run.stats["died_to"] = "Stone Warden"
+	run.phase = Run.Phase.LOST
+
+	var entry := run.history_entry()
+	var final_deck: Array = entry["final_deck"]
+	var deck_ids_match: bool = final_deck.size() == 2 \
+		and (final_deck[0] as Array).size() == run.decks[0].size() \
+		and String((final_deck[0] as Array)[0]) == String((run.decks[0][0] as Card).id)
+	_expect(entry["characters"] == ["frog", "goblin_mech"] and entry["seed"] == 123
+		and entry["ascension"] == 2 and entry["result"] == "lose"
+		and String(entry["stats"]["died_to"]) == "Stone Warden" and deck_ids_match,
+		"a lost run's history entry names who played, the seed, ascension, cause of death and final deck")
+
+
+func _test_backlog65_history_entry_shape_on_a_win() -> void:
+	var decks := [_deck_of(_slash, 6), _deck_of(_slash, 5)]
+	var run := Run.new(decks, ["A", "B"], 55, [{"character": "frog"}, {"character": "goblin_mech"}], 0)
+	run.start()
+	run.stats["beasts_felled"] = 4
+	run.stats["true_ending"] = true
+	run.phase = Run.Phase.WON
+
+	var entry := run.history_entry()
+	_expect(entry["result"] == "win" and entry["characters"] == ["frog", "goblin_mech"]
+		and bool(entry["stats"]["true_ending"]) and int(entry["stats"]["beasts_felled"]) == 4,
+		"a won run's history entry says win and carries this run's own stats through untouched")
+
+
+func _test_backlog65_progress_record_run_appends_and_round_trips() -> void:
+	Progress.use_scratch_slot("run_tests_backlog65_progress")
+	var cfg := ConfigFile.new()
+	cfg.set_value(Progress.SECTION, "run_history", [])
+	cfg.save(Progress.path)
+	var entry_a := {"characters": ["frog", "goblin_mech"], "seed": 1, "ascension": 0,
+		"result": "win", "is_daily": false, "daily_date": "",
+		"stats": {"beasts_felled": 1}, "final_deck": [["slash"], ["slash"]]}
+	var entry_b := {"characters": ["vine_weaver", "frog"], "seed": 2, "ascension": 1,
+		"result": "lose", "is_daily": false, "daily_date": "",
+		"stats": {"died_to": "Gale Serpent"}, "final_deck": [["slash"], ["slash"]]}
+	Progress.record_run(entry_a)
+	Progress.record_run(entry_b)
+
+	var history := Progress.run_history()
+	_expect(history.size() == 2
+		and String(history[0]["result"]) == "win" and String(history[1]["result"]) == "lose"
+		and String((history[1]["characters"] as Array)[0]) == "vine_weaver",
+		"Progress.record_run appends without disturbing earlier entries, and run_history reads them back in order")
+
+
+## GameHost broadcasts on every settled action, including ones after a run has
+## already ended (nothing stops a client polling a WON/LOST screen from
+## triggering more of them) — without a guard the log would grow one entry per
+## broadcast instead of one per run.
+func _test_backlog65_gamehost_records_history_exactly_once() -> void:
+	Progress.use_scratch_slot("run_tests_backlog65_host")
+	var cfg := ConfigFile.new()
+	cfg.set_value(Progress.SECTION, "run_history", [])
+	cfg.save(Progress.path)
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, true)  # solo
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	_expect(host._run != null, "setup sanity: the solo run started once both hunters were picked")
+
+	host._run.phase = Run.Phase.WON
+	host._broadcast_state()
+	host._broadcast_state()
+	host._broadcast_state()
+	_expect(Progress.run_history().size() == 1,
+		"a finished run is logged exactly once even though broadcasts keep firing after it ends")
+
+
+## Backlog #35's lesson applied here rather than to a versioned save: an entry
+## written before some later build added a field must not make the whole file
+## unreadable, and a reader that asks for that field with a default must not
+## crash on its absence.
+func _test_backlog65_run_history_tolerates_an_entry_missing_a_newer_field() -> void:
+	Progress.use_scratch_slot("run_tests_backlog65_old_shape")
+	var cfg := ConfigFile.new()
+	cfg.set_value(Progress.SECTION, "run_history", [
+		{"characters": ["frog", "goblin_mech"], "seed": 9, "ascension": 0, "result": "win"},
+	])
+	cfg.save(Progress.path)
+
+	var history := Progress.run_history()
+	_expect(history.size() == 1 and String(history[0]["result"]) == "win"
+		and (history[0] as Dictionary).get("final_deck", []) == [],
+		"an entry missing a field a later build added still loads, and reading that field defaults rather than crashing")
 
 
 ## Backlog #59 — Scry: playing a scry card reveals the top N cards of the draw
