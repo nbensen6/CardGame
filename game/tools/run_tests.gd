@@ -136,6 +136,8 @@ func _init() -> void:
 	_test_shop_cannot_thin_below_min_deck()
 	_test_status_card_removable_at_shop()
 	_test_shop_rejects_actions_outside_its_phase()
+	_test_shop_prices_scale_with_card_rarity()
+	_test_shop_guarantees_a_rare_card_slot()
 	_test_content_pools_are_copies()
 	_test_status_cards_never_offered_as_a_reward()
 	# potions (backlog #26)
@@ -2147,6 +2149,38 @@ func _test_shop_rejects_actions_outside_its_phase() -> void:
 	var run := _map_run()  # start() leaves the run on the MAP, not in a shop
 	_expect(not run.buy(0) and not run.leave_shop(),
 		"buy() and leave_shop() refuse to act outside the SHOP phase")
+
+
+## Backlog #71: a shop worth revisiting — cards cost more the rarer they are,
+## instead of every card carrying the same flat price regardless of what it is.
+func _test_shop_prices_scale_with_card_rarity() -> void:
+	var run := _map_run()
+	var common_ok := run._card_price("slash") == Run.PRICE_CARD
+	var uncommon_ok := run._card_price("cleave") == Run.PRICE_CARD_UNCOMMON
+	var rare_ok := run._card_price("meld") == Run.PRICE_CARD_RARE
+	var ladder := Run.PRICE_CARD < Run.PRICE_CARD_UNCOMMON and Run.PRICE_CARD_UNCOMMON < Run.PRICE_CARD_RARE
+	_expect(common_ok and uncommon_ok and rare_ok and ladder,
+		"a card's shop price follows its rarity: common cheapest, rare priciest")
+
+
+## Backlog #71: a guaranteed rare slot, the same idea a reward roll already
+## leans toward with RARITY_WEIGHT, but as a certainty rather than a chance —
+## the seed used by _map_run() draws from a pool with rares in it (checked
+## against cards.json's global reward_pool, which is what an empty character
+## id falls back to), so this should hold every time rather than by luck.
+func _test_shop_guarantees_a_rare_card_slot() -> void:
+	var run := _map_run()
+	run.map_row = 0
+	run.node_type = "shop"
+	run._begin_shop()
+	var slot0_has_rare := false
+	for item in run.shop_stock:
+		if String(item["kind"]) == "card" and int(item["slot"]) == 0 \
+				and Content.card_rarity(String(item["id"])) == "rare":
+			slot0_has_rare = true
+			break
+	_expect(slot0_has_rare,
+		"a shop with rares in its pool always offers at least one to buy, not just by chance")
 
 
 func _test_content_pools_are_copies() -> void:

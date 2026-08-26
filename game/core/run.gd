@@ -20,7 +20,9 @@ const MIN_DECK := 5    # you may thin a deck, but not into nothing
 const GOLD_FIGHT := 25
 const GOLD_ELITE := 55
 const GOLD_BOSS := 80
-const PRICE_CARD := 55
+const PRICE_CARD := 55          # common-rarity card; see _card_price() for uncommon/rare
+const PRICE_CARD_UNCOMMON := 80
+const PRICE_CARD_RARE := 120
 const PRICE_RELIC := 135
 const PRICE_POTION := 45
 const PRICE_REMOVE := 70   # rises each time it's used in a run
@@ -353,21 +355,45 @@ func _gold_for(kind: String) -> int:
 		_: return GOLD_FIGHT
 
 
+## A card's shop price by rarity — rare finds cost more than filler, the same
+## way a reward roll (RARITY_WEIGHT) already treats them as worth more (#71).
+func _card_price(id: String) -> int:
+	match Content.card_rarity(id):
+		"rare": return PRICE_CARD_RARE
+		"uncommon": return PRICE_CARD_UNCOMMON
+		_: return PRICE_CARD
+
+func _stock_card(slot: int, cid: String) -> void:
+	var card := Content.make_card(cid)
+	shop_stock.append({"kind": "card", "slot": slot, "id": cid, "name": card.name,
+		"text": card.text, "price": _card_price(cid), "sold": false})
+
 ## Stock a shop: a couple of cards from each hunter's own pool, team relics, and
-## the single most valuable service in a deckbuilder — removing a card.
+## the single most valuable service in a deckbuilder — removing a card. A fresh
+## roll every visit, same as StS's rotating stock — each node is its own call.
 func _begin_shop() -> void:
 	phase = Phase.SHOP
 	shop_stock = []
 	for slot in range(names.size()):
 		var pool: Array = Content.reward_pool(_character_of(slot), _unlocked_wins)
-		for _n in range(2):
+		# a guaranteed rare slot: pull one rare first (if the pool has one) so a
+		# hunter isn't left to luck out of ever seeing their own best cards (#71).
+		var rares: Array = []
+		for id in pool:
+			if Content.card_rarity(String(id)) == "rare":
+				rares.append(id)
+		var picks := 2
+		if not rares.is_empty():
+			var rid := String(rares[_rng.randi_range(0, rares.size() - 1)])
+			pool.erase(rid)
+			_stock_card(slot, rid)
+			picks -= 1
+		for _n in range(picks):
 			if pool.is_empty():
 				break
 			var cid := String(pool[_rng.randi_range(0, pool.size() - 1)])
 			pool.erase(cid)
-			var card := Content.make_card(cid)
-			shop_stock.append({"kind": "card", "slot": slot, "id": cid, "name": card.name,
-				"text": card.text, "price": PRICE_CARD, "sold": false})
+			_stock_card(slot, cid)
 	var relics: Array = Content.relic_pool(_unlocked_wins)
 	for _r in range(2):
 		if relics.is_empty():

@@ -527,7 +527,7 @@ something Slay the Spire leans on hard and we do not have at all.
   that relics, boons and powers can subscribe to, at least four things use it,
   and it is tested. Do #43 first if it is still open — this is one of its moments.
 
-- [ ] **71. A shop worth revisiting** `cloud-safe` — fixed stock and one removal.
+- [x] **71. A shop worth revisiting** `cloud-safe` — fixed stock and one removal.
   Spire shops rotate, hold a guaranteed rare slot, and sell removal at a rising
   price you have to judge against the cards in front of you. Ours already rises
   (`removes_bought`); the rest is missing. *Done when:* stock is generated per
@@ -754,6 +754,29 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-26** — #71 A shop worth revisiting: the two missing pieces named
+  in the item, since "fresh stock per visit" and rising removal price already
+  existed. Added `_card_price()` (common/uncommon/rare, `PRICE_CARD` /
+  `PRICE_CARD_UNCOMMON` / `PRICE_CARD_RARE`) so a card's shop price now
+  follows the same rarity axis a reward roll already weighs by
+  (`RARITY_WEIGHT`), instead of every card costing a flat 55 regardless of
+  what it is. Relic and potion prices stay flat on purpose — checked
+  `relics.json` first and every non-boss relic (the only tier a shop ever
+  offers, boss-tier is withheld by `relic_pool()`) carries `tier: "common"`,
+  and potions carry no tier/rarity field at all, so there is no existing axis
+  to price against without inventing one, which would be new scope. For the
+  guaranteed rare slot, `_begin_shop()` now pulls one card from a hunter's
+  RARE subset first (if their pool has one) before falling back to the
+  original uniform pull for the second slot — same total of 2 cards per
+  hunter as before, just no longer purely lucky whether one is worth looking
+  at. Two new tests: one pins `_card_price()` against three real ids of known
+  rarity (`slash`/`cleave`/`meld`) plus the price ladder itself, the other
+  runs an actual `_begin_shop()` and checks a rare showed up in hunter 0's
+  card slots — the seed `_map_run()` already uses lands on the global reward
+  pool (empty `character_id`), which carries 3 rare ids out of 62, so the
+  guarantee is exercised for real rather than by category alone. `run_tests.gd`
+  and `balance_sim.gd` (smoke only, not tuned to) both stayed green throughout.
 
 - **2026-08-26** — #70 Things that fire when the fight STARTS: #55 stayed
   skipped for its own stated reason, so this was the next attemptable
