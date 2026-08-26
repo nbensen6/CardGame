@@ -48,6 +48,32 @@ The failures that have happened, all of which passed every check:
 
 ---
 
+### the twenty-eight card icons — NEEDS A PASS
+
+Built 2026-08-26 by `tools/blender/icons.py`. Each is a tiny 3D scene in the
+shared palette, rendered orthographic and HEAD-ON — an icon is read at 42 pixels
+as a silhouette, and a three-quarter view of a small object is a smudge.
+
+They replace 28 Kenney glyphs that were recoloured by a tint table to tell them
+apart. These carry their own colour, so `card_view.TINT` is gone.
+
+- **What to judge:** open a hand and look at the cards, not at the source PNGs.
+  The only question is whether you can tell two cards apart at a glance, because
+  a hand is read by shape, fast.
+- The brief for each is the comment beside it in `card_view.ICONS` — what a card
+  wearing it DOES, not what it is about. An icon showing flavour instead of
+  mechanic is worse than none.
+- **the crowded families are where this will fail if it fails.** Six icons are
+  about going up (`climb`, `ascend`, `peak`, `rope`, `lift`, `rally`) and four
+  are about not dying (`shield`, `guard`, `wall`, `support`). They were drawn to
+  differ in silhouette rather than colour, but that is the pair to check first.
+- unsure about: whether they read a touch pale against the brown card, and
+  whether `guard` (a shield with a clock face) is distinguishable from `shield`
+  at 42px, which is the closest pair in the set.
+- two were redrawn already after looking at them at size: `lift` was a green Z
+  and is now two figures with one hauling the other up; `rally` was a crown and
+  is now a horn.
+
 ### the nineteen portraits — NEEDS A PASS
 
 Rendered 2026-08-25 from the models themselves by `tools/blender/portraits.py`.

@@ -22,6 +22,7 @@ set ROOT=%~dp0..\..
 set CASTOUT=%ROOT%\game\assets\3d\cast
 set ENVOUT=%ROOT%\game\assets\3d\env
 set HEXOUT=%ROOT%\game\assets\3d\hexown
+set ICONOUT=%ROOT%\game\assets\icons
 set PORTOUT=%ROOT%\game\assets\portraits
 
 set CAST=frog vine_weaver mountain_climbers goblin_mech lightbearer stone_warden gale_serpent drowned_colossus sunken_warden crag_pup bramble_hog bounder mire_snapper frost_sentinel grove_bear root_lurker sky_snapper riftling shifting_idol
@@ -36,6 +37,7 @@ set MODE=%~1
 if /i "%MODE%"=="env" goto :envmode
 if /i "%MODE%"=="map" goto :mapmode
 if /i "%MODE%"=="portraits" goto :portmode
+if /i "%MODE%"=="icons" goto :iconmode
 if /i "%MODE%"=="all" goto :allmode
 if /i "%MODE%"=="cast" (set NAMES=%CAST%) else (set NAMES=%*)
 goto :castmode
@@ -46,6 +48,7 @@ call :buildcast
 call :buildenv %GROUNDS%
 call :buildmap
 call :buildportraits
+call :buildicons
 goto :reimport
 
 :castmode
@@ -67,6 +70,10 @@ goto :reimport
 
 :portmode
 call :buildportraits
+goto :reimport
+
+:iconmode
+call :buildicons
 goto :reimport
 
 :buildcast
@@ -99,6 +106,12 @@ exit /b 0
 echo === portraits
 "%BLENDER%" --background --python "%HERE%portraits.py" -- "%PORTOUT%" ^
   | findstr /R "PORTRAIT NO"
+exit /b 0
+
+:buildicons
+echo === card icons
+"%BLENDER%" --background --python "%HERE%icons.py" -- "%ICONOUT%" ^
+  | findstr /R "ICON WARNING"
 exit /b 0
 
 :reimport

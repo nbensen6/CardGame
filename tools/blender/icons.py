@@ -1,0 +1,364 @@
+"""Card icons, built rather than borrowed.
+
+164 cards share 28 icons, and all 28 are Kenney glyphs recoloured by a tint
+table — grey shapes drawn for a board-game asset pack, doing duty as the art on
+every card in the game. They are the last borrowed thing on screen.
+
+    blender --background --python tools/blender/icons.py -- <out_dir>
+
+Each icon is a tiny 3D scene in the shared palette, rendered ORTHOGRAPHIC and
+HEAD-ON. Head-on matters: an icon is read at 42 pixels as a silhouette, and a
+three-quarter view of a small object turns into a smudge. Everything here is
+built flat in X and Z with just enough depth in Y to catch the light.
+
+Because they carry their own colour, `card_view.gd` stops tinting them. The tint
+table existed to tell 28 grey glyphs apart; these are already different.
+
+The brief for each one is the comment beside it in `card_view.ICONS` — what the
+card actually DOES. An icon that shows the flavour instead of the mechanic is
+worse than no icon, because a hand of cards is read by shape, fast.
+"""
+import bpy, math, os, sys
+from mathutils import Vector
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import math
+from kenney import (Build, BUDGET, point, aim, RED, RUST, ORANGE, TANGERINE,
+                    BLUE, INDIGO, ICE, SKY, LILAC, VIOLET, PINK, ORCHID,
+                    STEEL, SLATE, WHITE, SILVER, PEACH, CLAY, BROWN, UMBER,
+                    SAND, TAN, CREAM, WHEAT, MINT, GREEN, GOLD, AMBER,
+                    BLUSH, ROSE, PERIWINKLE, IRIS, LINEN, BISQUE, PUMPKIN,
+                    CARROT, CORAL, BRICK, CHARCOAL, GRAPHITE, PEWTER, STONE,
+                    NAVY, MIDNIGHT)
+
+SIZE = 256
+FRAME = 1.15          # world units across the render
+BUDGET["icon"] = 700
+
+D = 0.10              # how deep an icon is; enough to shade, not enough to read
+
+
+class Icon(Build):
+    """One card icon. Built flat in X/Z, seen head-on."""
+
+    def slabf(self, x, z, w, h, uv, rot=0.0, bevel=0.020, d=D):
+        """A flat plate on the face of the icon. The workhorse."""
+        return self.box((x, 0.0, z), (w, d, h), uv, bevel=bevel,
+                        rot=(0.0, rot, 0.0))
+
+    def spike(self, x, z, r0, r1, length, uv, ang=0.0, seg=6, d=None):
+        """A taper lying in the icon's plane, pointing `ang` from straight up."""
+        return self.taper((x, 0.0, z), r0, r1, length, uv, seg=seg,
+                          rot=point((math.sin(ang), 0.0, math.cos(ang))))
+
+    def ring(self, loc, scale, uv, major=16, minor=5, rot=(0, 0, 0),
+             thickness=0.16, smooth=None):
+        """Face-on by default — a torus in the icon plane, not lying flat."""
+        return Build.ring(self, loc, scale, uv, major, minor,
+                          (math.pi / 2, 0.0, 0.0) if rot == (0, 0, 0) else rot,
+                          thickness, smooth)
+
+    def done(self, out, name):
+        self.finish(out, height=None, name=name, budget="icon")
+
+
+# ----------------------------------------------------------------- the icons
+
+def sword(i):                                   # a plain attack
+    i.slabf(0.0, 0.08, 0.075, 0.40, SILVER)
+    i.spike(0.0, 0.52, 0.075, 0.006, 0.20, SILVER, seg=4)
+    i.slabf(0.0, -0.34, 0.26, 0.045, RUST)      # crossguard
+    i.slabf(0.0, -0.48, 0.045, 0.12, UMBER)     # grip
+    i.ball((0.0, 0.0, -0.62), (0.075, 0.06, 0.075), GOLD, 8, 5)
+
+
+def shield(i):                                  # block
+    i.slabf(0.0, 0.16, 0.34, 0.30, STEEL, bevel=0.05)
+    i.spike(0.0, -0.30, 0.34, 0.02, 0.52, STEEL, ang=math.pi, seg=4)
+    i.slabf(0.0, 0.40, 0.34, 0.055, SILVER)
+    i.slabf(0.0, 0.02, 0.045, 0.34, SILVER)     # the boss and band
+    i.slabf(0.0, 0.02, 0.24, 0.045, SILVER)
+
+
+def bow(i):                                     # a ranged strike
+    for s in (-1, 1):
+        i.limb([(-0.30, 0.0, 0.52 * s), (0.16, 0.0, 0.34 * s),
+                (0.26, 0.0, 0.0)], [0.035, 0.055, 0.06], BROWN, seg=5)
+    i.limb([(-0.28, 0.0, 0.52), (-0.20, 0.0, 0.0), (-0.28, 0.0, -0.52)],
+           [0.016, 0.016, 0.016], CREAM, seg=4, cap=False)
+    i.slabf(0.06, 0.0, 0.34, 0.022, WHEAT)      # the arrow
+    i.spike(0.46, 0.0, 0.075, 0.006, 0.16, SILVER, ang=math.pi / 2, seg=4)
+
+
+def fire(i):                                    # burning damage
+    for x, z, h, w, c in [(-0.22, -0.10, 0.62, 0.16, ORANGE),
+                          (0.22, -0.14, 0.52, 0.14, ORANGE),
+                          (0.0, 0.02, 0.86, 0.22, TANGERINE)]:
+        i.spike(x, z, w, 0.01, h, c, seg=6)
+    i.spike(0.0, -0.16, 0.13, 0.01, 0.44, GOLD, seg=6)
+
+
+def skull(i):                                   # poison, wound, death
+    i.slabf(0.0, 0.10, 0.32, 0.30, MINT, bevel=0.10)
+    i.slabf(0.0, -0.30, 0.20, 0.14, MINT, bevel=0.05)
+    for s in (-1, 1):
+        i.ball((0.15 * s, -0.06, 0.14), (0.10, 0.09, 0.11), CHARCOAL, 7, 4)
+    i.slabf(0.0, -0.14, 0.045, 0.06, CHARCOAL, bevel=0.0)
+    for s in (-1, 0, 1):
+        i.slabf(0.11 * s, -0.36, 0.030, 0.055, CHARCOAL, bevel=0.0)
+
+
+def flask(i):                                   # a potion
+    i.ball((0.0, 0.0, -0.16), (0.34, 0.22, 0.32), LILAC, 10, 6)
+    i.slabf(0.0, 0.30, 0.10, 0.22, LILAC)
+    i.slabf(0.0, 0.52, 0.15, 0.075, UMBER)      # cork
+    i.ball((0.0, -0.10, -0.22), (0.24, 0.14, 0.20), VIOLET, 9, 5)
+    i.ball((0.10, -0.14, 0.02), (0.055, 0.04, 0.055), ORCHID, 6, 4)
+
+
+def climb(i):                                   # gain Height
+    i.slabf(-0.10, -0.44, 0.42, 0.10, STONE)    # two steps
+    i.slabf(0.14, -0.16, 0.30, 0.10, STONE)
+    i.spike(0.0, 0.26, 0.30, 0.02, 0.44, WHEAT, seg=3)   # the arrow up
+    i.slabf(0.0, -0.02, 0.10, 0.26, WHEAT)
+
+
+def bomb(i):                                    # a big one-off blast
+    i.ball((0.0, 0.0, -0.14), (0.36, 0.26, 0.36), GRAPHITE, 10, 6)
+    i.slabf(0.0, 0.26, 0.10, 0.10, CHARCOAL)
+    i.limb([(0.02, 0.0, 0.34), (0.16, 0.0, 0.50), (0.30, 0.0, 0.56)],
+           [0.030, 0.024, 0.018], TAN, seg=4)
+    i.ball((0.34, 0.0, 0.58), (0.10, 0.08, 0.10), ORANGE, 7, 4)
+    i.ball((0.34, -0.04, 0.58), (0.055, 0.05, 0.055), GOLD, 6, 4)
+
+
+def gadget(i):                                  # the Engineer builds something
+    i.slabf(0.0, -0.34, 0.40, 0.14, PEWTER)
+    i.slabf(0.0, -0.02, 0.26, 0.20, STEEL)
+    i.slabf(0.0, 0.30, 0.32, 0.10, PEWTER)
+    for s in (-1, 1):
+        i.spike(0.30 * s, 0.44, 0.055, 0.02, 0.22, CARROT, ang=0.4 * s, seg=4)
+    i.ball((0.0, -0.10, -0.02), (0.09, 0.06, 0.09), CARROT, 7, 4)
+
+
+def draw(i):                                    # draw a card
+    i.slabf(-0.16, -0.10, 0.24, 0.34, WHEAT, rot=0.18)
+    i.slabf(0.06, 0.06, 0.24, 0.34, CREAM, rot=-0.10)
+    i.spike(0.34, 0.30, 0.16, 0.02, 0.26, GOLD, seg=3)
+    i.slabf(0.34, 0.06, 0.055, 0.16, GOLD)
+
+
+def expose(i):                                  # mark a weak point
+    i.ring((0.0, 0.0, 0.0), (0.42, 0.42, 0.42), AMBER, 18, 5, thickness=0.16)
+    i.ring((0.0, 0.0, 0.0), (0.22, 0.22, 0.22), GOLD, 14, 5, thickness=0.24)
+    i.ball((0.0, -0.06, 0.0), (0.09, 0.06, 0.09), BRICK, 7, 4)
+    for s in (-1, 1):
+        i.slabf(0.56 * s, 0.0, 0.09, 0.030, AMBER, bevel=0.0)
+        i.slabf(0.0, 0.56 * s, 0.030, 0.09, AMBER, bevel=0.0)
+
+
+def taunt(i):                                   # pull the beast's attention
+    i.spike(-0.30, -0.10, 0.055, 0.045, 0.90, UMBER, seg=4)   # the pole
+    for k, (w, z, c) in enumerate([(0.44, 0.30, ORANGE), (0.34, 0.06, TANGERINE),
+                                   (0.22, -0.14, ORANGE)]):
+        i.slabf(-0.26 + w * 0.5, z, w * 0.5, 0.085, c)
+    i.ball((-0.30, 0.0, 0.44), (0.075, 0.06, 0.075), GOLD, 7, 4)
+
+
+def support(i):                                 # help the ally
+    i.slabf(0.0, -0.16, 0.30, 0.20, MINT, bevel=0.07)
+    for k, s in enumerate((-1.0, -0.33, 0.33, 1.0)):
+        i.slabf(0.20 * s, 0.16, 0.055, 0.20 - abs(s) * 0.045, MINT)
+    i.spike(-0.34, -0.02, 0.06, 0.05, 0.24, MINT, ang=-0.9, seg=4)
+    i.ball((0.0, -0.10, 0.34), (0.12, 0.08, 0.12), GREEN, 7, 4)
+
+
+def relic(i):                                   # a lasting boon
+    i.spike(0.0, 0.16, 0.30, 0.02, 0.52, VIOLET, seg=6)
+    i.spike(0.0, -0.02, 0.30, 0.02, 0.44, ORCHID, ang=math.pi, seg=6)
+    i.ring((0.0, 0.10, 0.06), (0.34, 0.34, 0.34), GOLD, 16, 5, thickness=0.12)
+    i.ball((0.0, -0.10, 0.06), (0.09, 0.055, 0.09), LILAC, 7, 4)
+
+
+def rally(i):                                   # lift the whole party
+    # A horn, not a crown. The first attempt was three flames over a bar and read
+    # as a crown at 42px, which is a different card entirely. The second put a
+    # backing plate in FRONT of everything: the camera sits at -Y, so a slab
+    # centred on y=0 with any depth is nearer the lens than the icon it was
+    # meant to sit behind.
+    i.limb([(-0.50, 0.0, -0.30), (-0.16, 0.0, -0.36), (0.16, 0.0, -0.16)],
+           [0.070, 0.095, 0.130], AMBER, seg=6)
+    i.taper((0.36, 0.0, 0.06), 0.12, 0.36, 0.36, GOLD, seg=8,
+            rot=point((0.50, 0.0, 0.87)))
+    i.ball((-0.54, 0.0, -0.28), (0.075, 0.06, 0.075), UMBER, 7, 4)
+    # The call coming out of it: arcs, not rings, so nothing has to be hidden.
+    for k, r in enumerate((0.30, 0.46)):
+        pts = [(0.42 + math.cos(a) * r, 0.0, 0.22 + math.sin(a) * r)
+               for a in (-0.75, -0.15, 0.45)]
+        i.limb(pts, [0.038] * 3, TANGERINE if k else ORANGE, seg=4, cap=False)
+
+
+def volley(i):                                  # several hits at once
+    for k, (x, z) in enumerate([(-0.34, 0.22), (0.0, 0.0), (0.34, -0.22)]):
+        i.slabf(x - 0.06, z, 0.22, 0.030, RUST, rot=0.5)
+        i.spike(x + 0.20, z + 0.20, 0.075, 0.006, 0.16, SILVER,
+                ang=math.pi / 4, seg=4)
+
+
+def guard(i):                                   # block, but timed
+    i.slabf(0.0, 0.14, 0.30, 0.26, ICE, bevel=0.05)
+    i.spike(0.0, -0.28, 0.30, 0.02, 0.46, ICE, ang=math.pi, seg=4)
+    i.ring((0.0, -0.05, 0.10), (0.20, 0.20, 0.20), STEEL, 14, 5, thickness=0.18)
+    i.slabf(0.0, 0.16, 0.026, 0.10, STEEL, bevel=0.0)
+    i.slabf(0.07, 0.10, 0.075, 0.026, STEEL, bevel=0.0)
+
+
+def wall(i):                                    # block that scales
+    for row, (z, off) in enumerate([(-0.42, 0.0), (-0.16, 0.16), (0.10, 0.0),
+                                    (0.36, 0.16)]):
+        for k in (-1, 0, 1):
+            i.slabf(k * 0.32 + off, z, 0.145, 0.105,
+                    PEWTER if (row + k) % 2 else STONE)
+
+
+def ascend(i):                                  # a big climb
+    i.spike(0.0, 0.24, 0.44, 0.02, 0.62, WHEAT, seg=3)
+    i.slabf(0.0, -0.20, 0.14, 0.34, WHEAT)
+    for s in (-1, 1):
+        i.spike(0.34 * s, -0.30, 0.075, 0.01, 0.34, GOLD, ang=0.3 * s, seg=4)
+    i.slabf(0.0, -0.56, 0.40, 0.075, TAN)
+
+
+def rope(i):                                    # both hunters climb
+    for k in range(5):
+        z = -0.42 + k * 0.21
+        i.ring((0.0, 0.0, z), (0.34 - abs(k - 2) * 0.03,
+                               0.34 - abs(k - 2) * 0.03, 0.16), TAN, 14, 4,
+               rot=(0.0, 0.0, 0.0), thickness=0.22)
+    i.ring((0.30, 0.0, 0.50), (0.16, 0.16, 0.16), SILVER, 12, 4, thickness=0.30)
+
+
+def lift(i):                                    # haul the ally to you
+    # TWO of you, one hauling the other up. The first attempt was two offset
+    # plates and read as a letter Z. Against its neighbours it has to be clearly
+    # not `support` (one open hand) and not `rope` (a coil).
+    for x, z, c in [(-0.26, -0.34, GREEN), (0.26, 0.24, MINT)]:
+        i.ball((x, 0.0, z + 0.20), (0.14, 0.10, 0.14), c, 8, 5)     # head
+        i.slabf(x, z - 0.06, 0.15, 0.16, c, bevel=0.06)             # body
+    i.limb([(-0.18, 0.0, -0.16), (0.0, 0.0, 0.02), (0.18, 0.0, 0.20)],
+           [0.045, 0.045, 0.045], TAN, seg=5)                       # the grip
+    i.spike(0.0, 0.44, 0.22, 0.02, 0.30, GOLD, seg=3)               # going up
+    i.slabf(0.0, 0.20, 0.075, 0.14, GOLD)
+
+
+def target(i):                                  # scales off Exposed
+    i.ring((0.0, 0.0, 0.0), (0.48, 0.48, 0.48), GOLD, 18, 5, thickness=0.13)
+    i.ring((0.0, 0.0, 0.0), (0.28, 0.28, 0.28), AMBER, 14, 5, thickness=0.20)
+    i.ball((0.0, -0.06, 0.0), (0.10, 0.07, 0.10), BRICK, 7, 4)
+    i.slabf(0.22, 0.22, 0.30, 0.028, SILVER, rot=-0.79)
+    i.spike(0.06, 0.06, 0.075, 0.006, 0.16, BRICK, ang=-2.36, seg=4)
+
+
+def rhythm(i):                                  # the Frog's combo counter
+    pts, rad = [], []
+    for k in range(9):
+        x = -0.52 + k * 0.13
+        pts.append((x, 0.0, math.sin(k * 1.05) * 0.30))
+        rad.append(0.045)
+    i.limb(pts, rad, SKY, seg=5, cap=False)
+    for s in (-1, 1):
+        i.ball((0.52 * s, 0.0, math.sin((8 if s > 0 else 0) * 1.05) * 0.30),
+               (0.09, 0.07, 0.09), ICE, 7, 4)
+    i.slabf(0.0, -0.52, 0.44, 0.045, PERIWINKLE)
+
+
+def timer(i):                                   # timed, nothing else
+    i.slabf(0.0, 0.52, 0.34, 0.060, AMBER)
+    i.slabf(0.0, -0.52, 0.34, 0.060, AMBER)
+    i.spike(0.0, 0.20, 0.28, 0.03, 0.42, GOLD, ang=math.pi, seg=6)
+    i.spike(0.0, -0.20, 0.28, 0.03, 0.42, GOLD, seg=6)
+    i.ball((0.0, -0.04, -0.20), (0.16, 0.10, 0.10), WHEAT, 8, 5)
+
+
+def cog(i):                                     # meld / fuse
+    for cx, cz, r, c in [(-0.16, 0.10, 0.30, CLAY), (0.24, -0.18, 0.22, PEWTER)]:
+        i.ring((cx, 0.0, cz), (r, r, r), c, 14, 5, thickness=0.34)
+        for k in range(6):
+            a = k * math.tau / 6.0
+            i.slabf(cx + math.cos(a) * r * 1.12, cz + math.sin(a) * r * 1.12,
+                    r * 0.20, r * 0.20, c, rot=0.0, bevel=0.012)
+        i.ball((cx, -0.04, cz), (r * 0.28, r * 0.20, r * 0.28), UMBER, 6, 4)
+
+
+def burn(i):                                    # exhaust a card
+    i.slabf(-0.10, -0.06, 0.26, 0.38, LINEN, rot=0.12)
+    i.slabf(-0.10, 0.16, 0.22, 0.10, CHARCOAL, rot=0.12)
+    for x, z, h in [(0.22, 0.10, 0.44), (0.36, -0.06, 0.32), (0.10, 0.26, 0.30)]:
+        i.spike(x, z, 0.10, 0.008, h, BRICK if x > 0.2 else ORANGE, seg=5)
+
+
+def stack(i):                                   # draw / hand size
+    for k, (x, z, rot, c) in enumerate([(-0.26, -0.16, 0.30, WHEAT),
+                                        (0.0, -0.06, 0.0, CREAM),
+                                        (0.26, -0.16, -0.30, WHEAT)]):
+        i.slabf(x, z, 0.20, 0.32, c, rot=rot)
+    i.slabf(0.0, 0.34, 0.30, 0.055, TAN)
+
+
+def peak(i):                                    # a strike that scales with Height
+    i.spike(-0.06, -0.06, 0.52, 0.02, 0.86, SLATE, seg=5)
+    i.spike(0.34, -0.24, 0.30, 0.02, 0.50, PEWTER, seg=5)
+    i.spike(-0.06, 0.30, 0.15, 0.02, 0.22, WHITE, seg=5)
+    i.spike(0.30, 0.02, 0.075, 0.01, 0.12, WHITE, seg=5)
+    i.spike(-0.06, 0.52, 0.020, 0.016, 0.30, UMBER, seg=4)
+    i.slabf(0.10, 0.60, 0.16, 0.075, RED)
+
+
+ICONS = [
+    ("sword", sword), ("shield", shield), ("bow", bow), ("fire", fire),
+    ("skull", skull), ("flask", flask), ("climb", climb), ("bomb", bomb),
+    ("gadget", gadget), ("draw", draw), ("expose", expose), ("taunt", taunt),
+    ("support", support), ("relic", relic), ("rally", rally), ("volley", volley),
+    ("guard", guard), ("wall", wall), ("ascend", ascend), ("rope", rope),
+    ("lift", lift), ("target", target), ("rhythm", rhythm), ("timer", timer),
+    ("cog", cog), ("burn", burn), ("stack", stack), ("peak", peak),
+]
+
+
+def render(out_path):
+    sc = bpy.context.scene
+    sc.render.engine = "BLENDER_WORKBENCH"
+    sc.display.shading.light = "STUDIO"
+    sc.display.shading.color_type = "TEXTURE"
+    sc.display.shading.show_shadows = False
+    sc.display.shading.show_cavity = True
+    sc.render.film_transparent = True
+    sc.view_settings.exposure = 0.85     # read at 42 pixels, not at 256
+    sc.render.resolution_x = sc.render.resolution_y = SIZE
+    sc.render.image_settings.file_format = "PNG"
+    sc.render.image_settings.color_mode = "RGBA"
+
+    # Head-on, from -Y. An icon is a silhouette; a three-quarter view of a small
+    # object is a smudge.
+    bpy.ops.object.camera_add(location=(0.0, -8.0, 0.0))
+    cam = bpy.context.object
+    cam.data.type = "ORTHO"
+    cam.data.ortho_scale = FRAME
+    cam.rotation_euler = Vector((0.0, 1.0, 0.0)).to_track_quat("-Z", "Y").to_euler()
+    sc.camera = cam
+    sc.render.filepath = out_path
+    bpy.ops.render.render(write_still=True)
+
+
+def main():
+    out_dir = sys.argv[sys.argv.index("--") + 1]
+    for name, build in ICONS:
+        icon = Icon()
+        build(icon)
+        icon.done(os.path.join(out_dir, "tmp_" + name + ".glb"), name)
+        render(os.path.join(out_dir, name + ".png"))
+        os.remove(os.path.join(out_dir, "tmp_" + name + ".glb"))
+        print("ICON", name)
+
+
+main()

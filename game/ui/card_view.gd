@@ -64,72 +64,47 @@ var _compact := false  # built in the rail form (see setup)
 
 # Kenney "Board Game Icons" (white-fill SVGs → tint via modulate). Keys are the
 # effect roles the host maps cards to (see game_host._card_icon).
+## Ours, built by tools/blender/icons.py from the same palette as everything
+## else. They were 28 Kenney glyphs recoloured by a tint table until 2026-08-26 —
+## grey shapes drawn for a board-game asset pack, doing duty as the art on all
+## 164 cards. The tint table existed to tell them apart; these carry their own
+## colour, so it is gone.
+##
+## The comment beside each one is the BRIEF: what a card wearing it does. An icon
+## that shows flavour instead of mechanic is worse than none, because a hand is
+## read by shape, fast.
 const ICONS := {
-	"sword": preload("res://assets/icons/sword.png"),
-	"shield": preload("res://assets/icons/shield.png"),
-	"bow": preload("res://assets/icons/bow.png"),
-	"fire": preload("res://assets/icons/fire.png"),
-	"skull": preload("res://assets/icons/skull.png"),
-	"flask": preload("res://assets/icons/flask_full.png"),
-	"climb": preload("res://assets/icons/pawn_up.png"),
-	"bomb": preload("res://assets/icons/exploding.png"),
-	"gadget": preload("res://assets/icons/structure_tower.png"),
-	"draw": preload("res://assets/icons/hand_card.png"),
-	"expose": preload("res://assets/icons/flag_square.png"),
-	"taunt": preload("res://assets/icons/flag_triangle.png"),
-	"support": preload("res://assets/icons/hand.png"),
-	"relic": preload("res://assets/icons/award.png"),
-	"rally": preload("res://assets/icons/campfire.png"),
-	# Added 2026-08-15 by the icon audit. 136 draftable cards were sharing 14
-	# icons — 27 of them wore the same "climb" face — so a hand read as a wall of
-	# identical tiles. These split the crowded families by what a card actually
-	# does. See design/icon-audit.md.
-	"volley": preload("res://assets/icons/dice_sword.png"),      # multi-hit attack
-	"guard": preload("res://assets/icons/dice_shield.png"),      # timed block
-	"wall": preload("res://assets/icons/structure_wall.png"),    # block that scales
-	"ascend": preload("res://assets/icons/character_lift.png"),  # a big climb
-	"rope": preload("res://assets/icons/pawns.png"),             # both hunters climb
-	"lift": preload("res://assets/icons/hand_token_open.png"),   # haul the ally to you
-	"target": preload("res://assets/icons/card_target.png"),     # scales off Exposed
-	"rhythm": preload("res://assets/icons/spinner.png"),         # Frog's combo counter
-	"timer": preload("res://assets/icons/hourglass.png"),        # timed, nothing else
-	"cog": preload("res://assets/icons/puzzle.png"),             # meld / fuse
-	"burn": preload("res://assets/icons/card_remove.png"),       # exhaust a card
-	"stack": preload("res://assets/icons/cards_stack.png"),      # draw / hand size
-	"peak": preload("res://assets/icons/structure_watchtower.png"),  # strike that scales with Height
+	"sword":   preload("res://assets/icons/sword.png"),                        # a plain attack
+	"shield":  preload("res://assets/icons/shield.png"),                      # block
+	"bow":     preload("res://assets/icons/bow.png"),                            # a ranged strike
+	"fire":    preload("res://assets/icons/fire.png"),                          # burning damage
+	"skull":   preload("res://assets/icons/skull.png"),                        # poison, wound, death
+	"flask":   preload("res://assets/icons/flask.png"),                        # a potion
+	"climb":   preload("res://assets/icons/climb.png"),                        # gain Height
+	"bomb":    preload("res://assets/icons/bomb.png"),                          # a big one-off blast
+	"gadget":  preload("res://assets/icons/gadget.png"),                      # the Engineer builds
+	"draw":    preload("res://assets/icons/draw.png"),                          # draw a card
+	"expose":  preload("res://assets/icons/expose.png"),                      # mark a weak point
+	"taunt":   preload("res://assets/icons/taunt.png"),                        # pull its attention
+	"support": preload("res://assets/icons/support.png"),                    # help the ally
+	"relic":   preload("res://assets/icons/relic.png"),                        # a lasting boon
+	"rally":   preload("res://assets/icons/rally.png"),                        # lift the whole party
+	"volley":  preload("res://assets/icons/volley.png"),                      # several hits at once
+	"guard":   preload("res://assets/icons/guard.png"),                        # block, but timed
+	"wall":    preload("res://assets/icons/wall.png"),                          # block that scales
+	"ascend":  preload("res://assets/icons/ascend.png"),                      # a big climb
+	"rope":    preload("res://assets/icons/rope.png"),                          # both hunters climb
+	"lift":    preload("res://assets/icons/lift.png"),                          # haul the ally to you
+	"target":  preload("res://assets/icons/target.png"),                      # scales off Exposed
+	"rhythm":  preload("res://assets/icons/rhythm.png"),                      # the Frog's combo counter
+	"timer":   preload("res://assets/icons/timer.png"),                        # timed, nothing else
+	"cog":     preload("res://assets/icons/cog.png"),                            # meld / fuse
+	"burn":    preload("res://assets/icons/burn.png"),                          # exhaust a card
+	"stack":   preload("res://assets/icons/stack.png"),                        # draw / hand size
+	"peak":    preload("res://assets/icons/peak.png"),                          # a strike that scales with Height
 }
 const ENERGY_ICON := preload("res://ui/icons/energy.svg")
 
-const TINT := {
-	"sword": Color(0.82, 0.44, 0.34),   # rust
-	"shield": Color(0.56, 0.66, 0.75),  # steel
-	"bow": Color(0.85, 0.78, 0.55),     # gold
-	"fire": Color(0.90, 0.55, 0.35),    # ember
-	"skull": Color(0.62, 0.80, 0.52),   # sickly green (poison/wound)
-	"flask": Color(0.80, 0.68, 0.88),   # potion violet
-	"climb": Color(0.72, 0.63, 0.46),   # stone/earth
-	"bomb": Color(0.90, 0.50, 0.40),    # blast red
-	"gadget": Color(0.74, 0.62, 0.44),  # bronze/build
-	"draw": Color(0.85, 0.78, 0.55),    # gold
-	"expose": Color(0.90, 0.78, 0.42),  # sunlight
-	"taunt": Color(0.82, 0.56, 0.40),   # ember
-	"support": Color(0.62, 0.73, 0.51), # moss
-	"relic": Color(0.78, 0.66, 0.86),   # arcane violet
-	"rally": Color(0.90, 0.62, 0.35),   # firelight
-	"volley": Color(0.86, 0.52, 0.40),  # rust, a shade off sword
-	"guard": Color(0.62, 0.74, 0.82),   # steel, brighter than shield
-	"wall": Color(0.60, 0.60, 0.62),    # stone
-	"ascend": Color(0.80, 0.72, 0.52),  # sunlit rock
-	"rope": Color(0.72, 0.66, 0.50),    # hemp
-	"lift": Color(0.66, 0.78, 0.56),    # moss, kin to support
-	"target": Color(0.92, 0.80, 0.44),  # sunlight, kin to expose
-	"rhythm": Color(0.70, 0.80, 0.90),  # cool pulse — the Frog's beat
-	"timer": Color(0.88, 0.78, 0.48),   # brass
-	"cog": Color(0.76, 0.64, 0.46),     # bronze, kin to gadget
-	"burn": Color(0.84, 0.48, 0.38),    # ash-red
-	"stack": Color(0.82, 0.76, 0.58),   # parchment
-	"peak": Color(0.86, 0.70, 0.46)     # summit light
-}
 
 ## Build the card from a snapshot dict. `playable` greys it out when false.
 ##
@@ -221,7 +196,6 @@ func _rail_row(data: Dictionary) -> Control:
 	if ICONS.has(icon):
 		var tex := TextureRect.new()
 		tex.texture = ICONS[icon]
-		tex.modulate = TINT.get(icon, Color(0.85, 0.8, 0.7))
 		tex.custom_minimum_size = Vector2(30, 30)
 		tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -609,7 +583,6 @@ func _art(icon: String, portrait: String = "") -> Control:
 		tex.texture = load(portrait)  # character portrait, full colour
 	elif ICONS.has(icon):
 		tex.texture = ICONS[icon]
-		tex.modulate = TINT.get(icon, Color(0.85, 0.8, 0.7))
 	return tex
 
 
