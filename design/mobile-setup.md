@@ -56,20 +56,35 @@ rather than guessed at.
 
 ### Still open, in the order I would do them
 
-1. **Map nodes are hard to TAP.** The labels are readable now but the tiles
-   themselves are small, and tapping picks by raycast against the tile. A finger
-   is about 9mm; several nodes are under that. The fix is a design call, because
-   the two options differ: grow the tap target (a bigger invisible collider per
-   node, which keeps the whole act on screen), or zoom in and let the player pan
-   (which needs PAN — dragging currently orbits, so a zoomed-in map cannot be
-   moved around). **This one needs Nick.**
+1. ~~**Map nodes are hard to TAP.**~~ **Measured, and it was not true.** The
+   harness can now answer this rather than guess:
+
+   ```
+   screenshot.gd -- state=3dmap taps mobile size=667x375
+   TAPS 2 open nodes: 2 hit dead-on, 2 survive a 26px miss | world target 31px
+   ```
+
+   A node's tap target is **31 logical pixels**, which on a handheld is about
+   6.6mm — already a finger. The tiny tiles in the screenshot are the far ones,
+   which are not open and cannot be tapped anyway; the OPEN nodes are always
+   adjacent to the player, who sits mid-map, so they are never small.
+
+   Disabling the new screen-space reach entirely changes nothing at any act,
+   which is the honest test of whether a fix was needed. It stays in as
+   insurance — if pan and zoom ever arrive, or a region gets deeper, the target
+   stops being 31px — and because it earns its keep another way: a sloppy tap now
+   snaps to a node you can actually walk to rather than to a locked tile a pixel
+   nearer.
+
 2. **Card names truncate in the fight hand.** "Tongue S..." — the hand fits five
    cards across a phone, so each is narrow. Either shorten names, shrink the name
    font a step on handheld, or let the name wrap to two lines.
 3. **The fight wastes the top third.** The camera frames a fixed slice of world
    height, so a wide-short viewport gets a lot of empty sky above the beast.
    Worth pulling the framing down on handheld.
-4. **Nothing has been tried with a real finger.** All of the above is measured
+4. **Nothing has been tried with a real finger.** The tap check above is the
+   only thing here that is a measurement rather than a look at a picture, and
+   even it measures geometry, not feel. All of the above is measured
    off screenshots. Touch works (single-pointer since the start, CLAUDE.md §5),
    but "works" and "feels right" are different claims and only a phone settles
    the second.

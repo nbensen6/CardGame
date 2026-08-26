@@ -22,6 +22,7 @@ var _act := 0     # 3dmap: fast-forward to this act, so later regions get looked
 var _orbit := 999.0  # 3D combat: drive the orbit camera to this yaw, in degrees
 var _size := Vector2i.ZERO  # size=WxH — shoot at a different screen shape
 var _slot := -1  # slot=N — force the active hunter, so camera framing can be compared
+var _taps := false  # taps — report whether the map's nodes can be hit with a thumb
 
 
 func _initialize() -> void:
@@ -38,6 +39,8 @@ func _initialize() -> void:
 			_act = int(a.substr(4))
 		elif a.begins_with("orbit="):
 			_orbit = float(a.substr(6))
+		elif a == "taps":
+			_taps = true
 		elif a.begins_with("slot="):
 			_slot = int(a.substr(5))   # which hunter is ACTIVE, for camera framing work
 		elif a == "mobile":
@@ -233,6 +236,57 @@ func _initialize() -> void:
 	_capture()
 
 
+## Can a thumb hit the map's nodes?
+##
+## A screenshot cannot answer this: a node can be perfectly legible and still be
+## four pixels of tappable target, and the far rows of a region are exactly that.
+## So ask the view the same question the player's finger does — tap at the node,
+## then at a thumb's width off it — and count what resolves.
+##
+## Run it at the size you care about:
+##   screenshot.gd -- state=3dmap taps mobile size=667x375
+func _tap_check(view: Node) -> void:
+	if view == null or not view.has_method("_node_under_mouse"):
+		print("TAPS n/a: %s has no _node_under_mouse" % view)
+		return
+	var nodes: Dictionary = view.get("_nodes")
+	var cam: Camera3D = view.get("_cam")
+	if nodes == null or cam == null:
+		return
+	var slip := 26.0 if Screen.is_handheld() else 14.0   # how far a thumb misses by
+	var open_n := 0
+	var exact := 0
+	var sloppy := 0
+	var missed: Array = []
+	var px: Array = []
+	for col in nodes:
+		if not bool(nodes[col]["open"]):
+			continue
+		open_n += 1
+		var at: Vector3 = nodes[col]["pos"]
+		if cam.is_position_behind(at):
+			continue
+		var mid: Vector2 = cam.unproject_position(at)
+		# How big the WORLD-space target actually is in pixels. This is the number
+		# that decides whether a thumb can hit it, and no screenshot shows it.
+		var edge: Vector2 = cam.unproject_position(at + Vector3(0.62, 0.0, 0.0))
+		px.append("%s:%.0fpx" % [col, mid.distance_to(edge)])
+		if int(view.call("_node_under_mouse", mid)) == int(col):
+			exact += 1
+		var all_off := true
+		for d in [Vector2(slip, 0), Vector2(-slip, 0), Vector2(0, slip), Vector2(0, -slip)]:
+			if int(view.call("_node_under_mouse", mid + d)) == int(col):
+				all_off = false
+		if all_off:
+			missed.append(str(col))
+		else:
+			sloppy += 1
+	print("TAPS %d open nodes: %d hit dead-on, %d survive a %.0fpx miss%s | world target %s"
+		% [open_n, exact, sloppy, slip,
+			"" if missed.is_empty() else " — UNREACHABLE: " + ", ".join(missed),
+			", ".join(px)])
+
+
 ## The router's whole job is showing the right client for the phase, so check
 ## exactly that: what phase does the host report, and what is actually mounted.
 func _router_is(router: Node, phase: String, want_scene: String) -> void:
@@ -362,6 +416,8 @@ func _capture() -> void:
 	for _i in 15:  # let the scene lay out and draw
 		await process_frame
 	await _await_camera(current_scene)
+	if _taps:
+		_tap_check(current_scene)
 	if _slot >= 0 and current_scene != null and current_scene.has_method("_switch_to"):
 		current_scene.call("_switch_to", _slot)
 		# snap rather than wait: this harness runs frames as fast as it can, so the

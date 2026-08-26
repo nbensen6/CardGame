@@ -53,6 +53,12 @@ const ZOOM_STEP := 0.12
 ## How far the pointer may travel and still count as a tap on a landmark. Below
 ## this a click picks; above it, it was a look. One pointer has to do both, and
 ## the game is single-pointer by design (CLAUDE.md §5).
+## How far from a node a tap still counts, in logical pixels. The world-space
+## test above handles a precise click; this is what makes a small far-away tile
+## reachable with a thumb. Roughly 4mm on a desktop pointer and 7mm on a phone,
+## which is a shade under a finger so two adjacent nodes stay separable.
+const TAP_REACH := 18.0
+const TAP_REACH_TOUCH := 34.0
 const DRAG_SLOP := 7.0
 
 var _client: GameClient
@@ -486,6 +492,33 @@ func _node_under_mouse(screen: Vector2) -> int:
 		var d: float = hit.distance_to(_nodes[col]["pos"] as Vector3)
 		if d < best_d:
 			best_d = d
+			best = int(col)
+	if best >= 0:
+		return best
+
+	# Nothing under the finger. Take the nearest node within a finger's reach ON
+	# SCREEN instead.
+	#
+	# The test above is in WORLD units, which is exactly wrong for touch: the far
+	# rows of a region are a few pixels across however generous the world-space
+	# threshold is, and no amount of careful tapping lands on them. A finger is
+	# about 9mm wide and does not get smaller with perspective.
+	#
+	# Deliberately OPEN nodes only. A precise tap still resolves to whatever tile
+	# it actually hit, closed or not, and gets refused upstairs with the usual
+	# feedback; but a forgiving tap should snap to somewhere you can walk, not to
+	# the locked tile that happened to be a pixel nearer.
+	var reach := TAP_REACH_TOUCH if Screen.is_handheld() else TAP_REACH
+	var best_px := reach
+	for col in _nodes:
+		if not bool(_nodes[col]["open"]):
+			continue
+		var at: Vector3 = _nodes[col]["pos"]
+		if _cam.is_position_behind(at):
+			continue
+		var d := screen.distance_to(_cam.unproject_position(at))
+		if d < best_px:
+			best_px = d
 			best = int(col)
 	return best
 
