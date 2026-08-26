@@ -290,6 +290,11 @@ func _init() -> void:
 	_test_curse_move_ignores_artifact_matching_curse_card_precedent()
 	_test_backlog69_at_least_five_beasts_debuff_hunters()
 	_test_every_beast_move_type_has_a_keyword()
+	# Fight-start relics — the fifth moment (backlog #43/#70)
+	_test_backlog70_fight_start_relics_apply_before_round_one()
+	_test_backlog70_seeded_power_pays_out_at_round_one_turn_end()
+	_test_backlog70_negative_openers_are_ignored_not_applied()
+	_test_backlog70_fight_start_does_not_reapply_on_save_reload()
 	# Dexterity, Strength's counterpart (backlog #60)
 	_test_dexterity_adds_to_block_gained()
 	_test_dexterity_card_lifts_a_later_different_cards_block()
@@ -4586,6 +4591,71 @@ func _test_every_beast_move_type_has_a_keyword() -> void:
 			if kind != "" and String(Content.keyword(kind).get("text", "")).is_empty() and not missing.has(kind):
 				missing.append(kind)
 	_expect(missing.is_empty(), "every beast move type resolves to a keyword [%s]" % ", ".join(missing))
+
+
+# --- Fight-start relics — the fifth moment (backlog #43/#70) ---------------
+
+## The four openers all land before round 1's hand is drawn, and all four
+## PERSIST past _begin_round()'s reset (unlike Block) — proven directly on
+## the fields, not inferred from a card play.
+func _test_backlog70_fight_start_relics_apply_before_round_one() -> void:
+	var players := [Combatant.new("A", 42), Combatant.new("B", 42)]
+	var c := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)], players, _dummy_boss(300), 42,
+		0, 0, 0, 0, [], {"open_power": 2, "open_artifact": 1, "open_thorns": 3, "open_intangible": 1})
+	c.start()
+	var ps: PlayerState = c.players[0]
+	var power_entry: Dictionary = ps.powers.get("iron_husk", {})
+	_expect(int(power_entry.get("stacks", 0)) == 2 and int(power_entry.get("value", 0)) == 6,
+		"open_power seeds Iron Husk (power_value 3) at 2 stacks worth 6 before round 1")
+	_expect(ps.combatant.artifact == 1, "open_artifact wards the hunter before round 1")
+	_expect(ps.combatant.thorns == 3, "open_thorns bristles the hunter before round 1")
+	_expect(ps.combatant.intangible == 1, "open_intangible protects the hunter before round 1")
+
+
+## "Already resolving" (the item's own framing): a seeded power pays out at
+## round 1's OWN turn_end, the same moment _handle_power_effects already uses
+## for a power played mid-fight — no real power card was ever played here.
+func _test_backlog70_seeded_power_pays_out_at_round_one_turn_end() -> void:
+	var c := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)],
+		[Combatant.new("A", 42), Combatant.new("B", 42)], _dummy_boss(300), 42,
+		0, 0, 0, 0, [], {"open_power": 1})
+	c.start()
+	var ps: PlayerState = c.players[0]
+	var before: int = ps.combatant.block
+	c.end_turn(0)  # fires MOMENT_TURN_END for player 0 alone -- ally hasn't ended,
+	# so the round hasn't rolled over (and reset Block) yet; check right here.
+	_expect(ps.combatant.block == before + 3,
+		"Iron Husk's own +3 Block fires at turn_end even though nobody played it")
+
+
+## A downside relic (#30) can push these negative the same generic way every
+## other relic mod already can (see relic_totals' maxi(0, ...) callers) — this
+## just proves _mod() itself never applies a NEGATIVE opener (there's nothing
+## sensible for -1 Artifact/Thorns/Intangible to mean), same guard the block/
+## energy bonuses use at their own call sites.
+func _test_backlog70_negative_openers_are_ignored_not_applied() -> void:
+	var c := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)],
+		[Combatant.new("A", 42), Combatant.new("B", 42)], _dummy_boss(300), 42,
+		0, 0, 0, 0, [], {"open_artifact": -2, "open_thorns": -2, "open_intangible": -2, "open_power": -2})
+	c.start()
+	var ps: PlayerState = c.players[0]
+	_expect(ps.combatant.artifact == 0 and ps.combatant.thorns == 0 and ps.combatant.intangible == 0
+		and ps.powers.is_empty(), "a negative opener mod is a no-op, not a debuff")
+
+
+## The moment fires exactly once per fresh fight (backlog #70's own "never on
+## a mid-fight save reload" guarantee) — from_dict() rebuilds a Combat WITHOUT
+## calling start(), so an opener already applied and then saved mid-fight must
+## not double up on load.
+func _test_backlog70_fight_start_does_not_reapply_on_save_reload() -> void:
+	var c := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)],
+		[Combatant.new("A", 42), Combatant.new("B", 42)], _dummy_boss(300), 42,
+		0, 0, 0, 0, [], {"open_artifact": 1})
+	c.start()
+	_expect(c.players[0].combatant.artifact == 1, "opener applied once on a fresh fight")
+	var reloaded := Combat.from_dict(c.to_dict())
+	_expect(reloaded.players[0].combatant.artifact == 1,
+		"reloading a saved fight does not re-fire the fight-start opener")
 
 
 # --- Dexterity, Strength's counterpart (backlog #60) ----------------------

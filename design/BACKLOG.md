@@ -520,7 +520,7 @@ something Slay the Spire leans on hard and we do not have at all.
   *Done when:* at least five beasts apply a status or a curse through the
   existing generic move path, the telegraph names it, and it is tested.
 
-- [ ] **70. Things that fire when the fight STARTS** `cloud-safe` — Innate (#28)
+- [x] **70. Things that fire when the fight STARTS** `cloud-safe` — Innate (#28)
   is the only opening-hand effect we have. The Spire opens fights with relics and
   powers already resolving, which is what makes a build feel assembled before
   turn one rather than after turn three. *Done when:* a fight-start moment exists
@@ -754,6 +754,59 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-26** — #70 Things that fire when the fight STARTS: #55 stayed
+  skipped for its own stated reason, so this was the next attemptable
+  `cloud-safe` item, ahead of 71/72/74 in queue order (73/76/78-81 are
+  `needs a screen`/`cloud-art`). Added the sixth named moment, backlog #43
+  asked for by name: `Combat.MOMENT_FIGHT_START`, fired once per hunter from
+  `start()` — deliberately BEFORE `_begin_round()`'s first call, so anything
+  hooked to it is in place before round 1's hand is even drawn. Confirmed the
+  "never on a mid-fight save reload" requirement holds structurally rather
+  than by a guard flag: `Combat.from_dict()` (the mid-fight resume path) calls
+  `Combat.new([], [], boss)` with EMPTY decks/combatants, so `start()` is
+  simply never called on that path — an opener physically cannot re-fire on
+  load, and a test proves it by round-tripping a started fight through
+  `to_dict()`/`from_dict()` and checking the applied Artifact stayed at 1, not
+  2. One handler, `_handle_opening_relics`, reads four new relic mod keys
+  (`open_power`, `open_artifact`, `open_thorns`, `open_intangible`) the same
+  `_mod()`-per-line shape `_handle_block_carries`/`_handle_energy_handoff`
+  already use for their own single mod each. `open_power` is the one that
+  earns the item's own framing ("relics and powers already resolving before
+  turn one"): it seeds `ps.powers["iron_husk"]` directly — the SAME dict
+  `_handle_power_effects` (turn_end, #57) already pays out every round — so a
+  relic carrying it makes Iron Husk's own +3 Block fire at round 1's turn_end
+  even though nobody ever played the card; proved directly, not inferred, by
+  a test that ends player 0's turn alone (checking block right there, before
+  the round rolls over and resets it — my first draft of that test checked
+  AFTER both hunters ended, which rolls the round and wipes Block same as any
+  other round transition, and failed for exactly that reason before the fix).
+  The other three are stat fields that combatant.gd's own comments already
+  establish persist past a round reset (Artifact/Thorns/Intangible are spent
+  per-USE, not decayed by round, unlike Block) — confirmed by a test that
+  applies all four and reads them straight off the fields. A fourth test
+  proves a negative mod (a downside relic pushing one of these below zero,
+  #30's shape) is a no-op rather than an inverted debuff, since "-1 Artifact"
+  has no sensible meaning the way "-1 Energy" does. Four new common relics
+  give the moment actual content instead of dead plumbing — Smoldering Husk
+  (open_power), Warded Hide (open_artifact), Briar Wrap (open_thorns), Veiled
+  Step (open_intangible) — added to both `relics.json`'s `relics` dict and its
+  `pool` array (the Card Lab's reachability sweep would have caught a miss on
+  the second one, since it's what "unreachable: 0 relics" actually checks
+  against). Deliberately did NOT touch the pre-existing `start_strength`/
+  `start_dexterity`/`start_foothold` relic mods that already run through
+  `_init()`'s constructor params rather than this new moment — they already
+  work, moving them would be a refactor this item didn't ask for and risks
+  behaviour nobody asked to change. Also deliberately did NOT wire a boon
+  directly to a fight-start effect: boons (#31) are a one-time, run-START
+  choice, not a per-fight one, and the existing `"relic": true` boon effect
+  already grants a random relic from the pool — including, now, one of these
+  four — which is how a boon reaches this moment without a second, redundant
+  effect vocabulary. Four new tests, all green — `run_tests.gd`: 461 passes,
+  0 failures (up from 457). `node tools/cardlab/build.js`: 40 relics (up from
+  36), 0 unreachable. `balance_sim.gd` run as the standing smoke test only
+  (no tuning against its numbers, per rule 5): completed cleanly across both
+  policies and the ascension ladder, no crash, no soft-lock.
 
 - **2026-08-26** — #69 Beasts that debuff YOU: #55 still correctly skipped
   (needs Nick or per-beast `cloud-art` work), so this was next in order and

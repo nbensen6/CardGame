@@ -825,7 +825,8 @@ func relic_totals() -> Dictionary:
 	for key in ["start_foothold", "start_dexterity", "fall_safe", "rhythm_keeps", "threshold", "chip",
 			"sigil_bonus", "vuln_bonus", "draw", "shake_resist",
 			"grip_seconds", "timing_zone",
-			"block_carries", "no_buck", "soft_fall", "energy_handoff"]:
+			"block_carries", "no_buck", "soft_fall", "energy_handoff",
+			"open_power", "open_artifact", "open_thorns", "open_intangible"]:
 		t[key] = 0
 	for r in team_relics:
 		_apply_relic_effect(t, String(r.get("effect", "")), int(r.get("value", 0)))

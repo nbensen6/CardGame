@@ -47,6 +47,12 @@ const MOMENT_TURN_END := "turn_end"
 const MOMENT_CARD_PLAYED := "card_played"
 const MOMENT_DAMAGE_TAKEN := "damage_taken"
 const MOMENT_HUNTER_CLIMBS := "hunter_climbs"
+# backlog #70: fires once per hunter, before round 1's hand is drawn — the
+# moment a relic (or a boon that granted one) or a power gets to already be
+# "on" when the fight begins, instead of only Innate (#28) having an opening
+# effect. Named separately from turn_start because it must fire exactly ONCE
+# per fresh fight, never on a mid-fight save reload — see start() below.
+const MOMENT_FIGHT_START := "fight_start"
 
 # Graded timing (backlog #33): a timed card's throw used to be a bare hit/miss
 # bool. It's now a quality tier so a hit dead-centre pays more than a hit
@@ -120,6 +126,7 @@ func _init(decks: Array, combatants: Array, p_boss: Boss, seed_value: int = 0,
 	_on(MOMENT_TURN_END, Callable(self, "_handle_energy_handoff"))
 	_on(MOMENT_TURN_END, Callable(self, "_handle_power_effects"))
 	_on(MOMENT_CARD_PLAYED, Callable(self, "_handle_timed_rhythm"))
+	_on(MOMENT_FIGHT_START, Callable(self, "_handle_opening_relics"))
 	boss = p_boss
 	adds = Content.build_boss_adds(boss.id)  # backlog #63 — [] unless the beast's own data defines any
 	_energy_bonus = energy_bonus
@@ -152,6 +159,11 @@ func _apply_passive(ps: PlayerState, passive: Dictionary) -> void:
 		"poison_lift": ps.poison_lift = value
 
 func start() -> void:
+	# Fires exactly once per fresh fight (from_dict, the mid-fight-save reload
+	# path, bypasses start() entirely — see its own comment) so an opener never
+	# re-applies itself every time a save is loaded.
+	for ps in players:
+		_fire(MOMENT_FIGHT_START, {"player": ps})
 	_begin_round()
 
 # --- Queries --------------------------------------------------------------
@@ -1384,6 +1396,35 @@ func _handle_energy_handoff(ctx: Dictionary) -> void:
 	mate.energy += ps.energy
 	_log("%s hands off %d unspent Energy to %s." % [ps.combatant.name, ps.energy, mate.combatant.name])
 	ps.energy = 0
+
+## fight_start relics (backlog #70): each reads its own _mod() key so a fresh
+## opener is just one more line here, the same shape block_carries/
+## energy_handoff already use for their own single _mod(). All four land
+## effects that PERSIST past round 1's reset (Artifact/Thorns/Intangible are
+## spent-on-use, not decayed by round — see combatant.gd — and a seeded power
+## just joins the same ps.powers dict _handle_power_effects already pays out
+## every turn_end), so firing this once before the first round is enough.
+func _handle_opening_relics(ctx: Dictionary) -> void:
+	var ps: PlayerState = ctx["player"]
+	var power_stacks := _mod("open_power")
+	if power_stacks > 0:
+		var entry: Dictionary = ps.powers.get("iron_husk", {"stacks": 0, "value": 0})
+		entry["stacks"] = int(entry.get("stacks", 0)) + power_stacks
+		entry["value"] = int(entry.get("value", 0)) + power_stacks * Content.make_card("iron_husk").power_value
+		ps.powers["iron_husk"] = entry
+		_log("%s's relic ignites Iron Husk before the fight begins." % ps.combatant.name)
+	var artifact_amt := _mod("open_artifact")
+	if artifact_amt > 0:
+		ps.combatant.artifact += artifact_amt
+		_log("%s starts the fight warded (Artifact %d)." % [ps.combatant.name, ps.combatant.artifact])
+	var thorns_amt := _mod("open_thorns")
+	if thorns_amt > 0:
+		ps.combatant.thorns += thorns_amt
+		_log("%s starts the fight bristling (Thorns %d)." % [ps.combatant.name, ps.combatant.thorns])
+	var intangible_amt := _mod("open_intangible")
+	if intangible_amt > 0:
+		ps.combatant.intangible += intangible_amt
+		_log("%s starts the fight barely-there (Intangible %d)." % [ps.combatant.name, ps.combatant.intangible])
 
 ## Not a relic — a fixed core rule (backlog #57, Powers): a `type: "power"`
 ## card never returns to your hand once played (see the "power" branch in
