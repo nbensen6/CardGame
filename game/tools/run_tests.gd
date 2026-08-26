@@ -121,6 +121,7 @@ func _init() -> void:
 	_test_rhythm_card_grants_combo()
 	_test_ascension_makes_the_run_harder()
 	_test_ascension_tier_effects_reach_the_run()
+	_test_ascension9_and_10_change_a_rule()
 	_test_coach_teaches_the_right_thing_first()
 	_test_tips_can_be_switched_off_without_losing_your_place()
 	_test_gold_and_shop()
@@ -1711,6 +1712,49 @@ func _test_ascension_tier_effects_reach_the_run() -> void:
 	_expect(t1_ok and t2_ok and t3_ok and t4_ok and t5_ok and t6_ok and t7_ok and t8_ok,
 		"every ascension tier's own effect reaches the run, not just Content.ascension_mods() [%s]"
 			% [[t1_ok, t2_ok, t3_ok, t4_ok, t5_ok, t6_ok, t7_ok, t8_ok]])
+
+
+## Backlog #56: the ladder up to tier 8 only ever bumps a number. Tiers 9 and
+## 10 change a RULE instead — a curse already in the deck, a shop that refuses
+## to sell removal at all — so this pairs each with the tier below it exactly
+## like the test above, but checks the shape of a hunter's options changed,
+## not just a stat.
+func _test_ascension9_and_10_change_a_rule() -> void:
+	# Tier 9 — start_curse: every hunter's starting deck already holds one
+	# Bruised Grip, the status card curse_card already uses for events (#27).
+	var t8 := _asc_run(8)
+	var t9 := _asc_run(9)
+	var curses8 := 0
+	for c in t8.decks[0]:
+		if (c as Card).status:
+			curses8 += 1
+	var curses9 := 0
+	for c in t9.decks[0]:
+		if (c as Card).status:
+			curses9 += 1
+	var t9_ok: bool = curses8 == 0 and curses9 == 1 \
+		and t9.decks[0].size() == t8.decks[0].size() + 1
+
+	# Tier 10 — no_shop_removal: the "Thin the deck" offer disappears from
+	# stock entirely, not just gets pricier. Campfire removal is untouched.
+	var t9b := _asc_run(9)
+	t9b._begin_shop()
+	var t10 := _asc_run(10)
+	t10._begin_shop()
+	var has_remove9 := false
+	for item in t9b.shop_stock:
+		if String((item as Dictionary)["kind"]) == "remove":
+			has_remove9 = true
+	var has_remove10 := false
+	for item2 in t10.shop_stock:
+		if String((item2 as Dictionary)["kind"]) == "remove":
+			has_remove10 = true
+	var t10_ok: bool = has_remove9 and not has_remove10 \
+		and t10.shop_stock.size() < t9b.shop_stock.size()
+
+	_expect(t9_ok and t10_ok,
+		"ascension 9 seeds a curse into every deck and ascension 10 seals the shop's removal, not just numbers [%s]"
+			% [[t9_ok, t10_ok]])
 
 
 ## Turning tips off must not amount to "mark everything seen" — switch them back

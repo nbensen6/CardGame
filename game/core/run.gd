@@ -103,8 +103,12 @@ func _init(p_decks: Array, p_names: Array, seed_value: int = 0, p_passives: Arra
 		_rng.randomize()
 	else:
 		_rng.seed = seed_value
+	var start_curse: bool = int(_asc.get("start_curse", 0)) > 0
 	for i in range(p_names.size()):
-		decks.append((p_decks[i] as Array).duplicate())
+		var deck: Array = (p_decks[i] as Array).duplicate()
+		if start_curse:  # ascension #56: a rule change, not a number — a curse in every deck before turn one
+			deck.append(Content.make_card("bruised_grip"))
+		decks.append(deck)
 		names.append(String(p_names[i]))
 		var start_hp: int = maxi(10, PLAYER_HP - int(_asc.get("player_hp", 0)))
 		max_hp.append(start_hp)
@@ -338,10 +342,11 @@ func _begin_shop() -> void:
 		shop_stock.append({"kind": "potion", "slot": slot3, "id": pid,
 			"name": String(potion.get("name", pid)), "text": String(potion.get("text", "")),
 			"price": PRICE_POTION, "sold": false})
-	for slot2 in range(names.size()):
-		shop_stock.append({"kind": "remove", "slot": slot2, "id": "", "name": "Thin the deck",
-			"text": "Remove a card from %s's deck for good." % names[slot2],
-			"price": remove_price(), "sold": false})
+	if int(_asc.get("no_shop_removal", 0)) <= 0:  # ascension #56: a locked market, not a pricier one
+		for slot2 in range(names.size()):
+			shop_stock.append({"kind": "remove", "slot": slot2, "id": "", "name": "Thin the deck",
+				"text": "Remove a card from %s's deck for good." % names[slot2],
+				"price": remove_price(), "sold": false})
 
 
 ## Removal gets pricier each time — you can't just delete your whole deck.

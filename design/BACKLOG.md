@@ -410,8 +410,19 @@ Ordered. Source in brackets.
   bend one rule, the way the current fourteen do. *Done when:* at least six new
   beasts exist with holds and limiters, they are in the right pools, and content
   integrity still passes.
+  **Checked 2026-08-26: the "falls back to a stand-in" claim above is stale.**
+  Backlog #80 added `_test_everyone_wears_their_own_art`
+  (`tools/run_tests.gd`), which fails the whole suite if any id in
+  `Content.boss_ids()` lacks a same-named `assets/3d/cast/<id>.glb` AND its own
+  unshared portrait — there is no beast-side placeholder the way `Cast.PLACEHOLDER`
+  covers hunters. So a new `bosses.json` entry cannot land cloud-safe on data
+  alone under rule 2 (tests must pass, no exceptions) without also being full
+  `cloud-art` work (a Blender build + contract + previews) per beast — six of
+  those is not one iteration. Left unchecked and un-skipped; whoever picks this
+  up next should either build it as `cloud-art` one beast at a time, or get
+  Nick to confirm a real beast-side placeholder is wanted before writing one.
 
-- [ ] **56. Ascension 9 and up** `cloud-safe` — eight tiers, and #22 proved they
+- [x] **56. Ascension 9 and up** `cloud-safe` — eight tiers, and #22 proved they
   do what they claim. StS runs to twenty because the ladder IS the long game for
   the people who finish it. The tiers are data and the harness for them already
   exists. *Done when:* the ladder extends with tiers that change rules rather
@@ -727,6 +738,22 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-26** — #56 Ascension 9 and up: added two tiers that change a RULE
+  rather than a number, same idiom as #13's rule-changing relics — "Cursed
+  Start" (level 9, `start_curse`) shuffles a `bruised_grip` status card into
+  every hunter's deck before the run begins, reusing the exact card #27's
+  event `curse_card` effect already grants; "Sealed Market" (level 10,
+  `no_shop_removal`) drops the "Thin the deck" offer from shop stock entirely
+  rather than pricing it up further, leaving campfire removal untouched. Both
+  wire through the existing generic `_asc.get(key, 0)` pattern with no new
+  branch shape, and are proven the same way #22 proved the first eight —
+  paired same-seed runs one tier apart, checking the actual deck/shop
+  changed, not just `Content.ascension_mods()`. Picked up #55 first ("More
+  beasts") but it turned out to be blocked: #80's art-coverage test now fails
+  the whole suite on any beast id without its own `.glb` and portrait, so
+  cloud-safe data-only beasts aren't buildable under rule 2 any more — left a
+  note on #55 itself rather than silently skipping it, and moved to #56.
 
 - **2026-08-26** — #54 Keyword coverage for everything added since #16: the
   field->keyword MAPPING it asked for was already done —

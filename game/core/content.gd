@@ -240,7 +240,8 @@ static func max_ascension() -> int:
 ## Cumulative difficulty modifiers for a level (tiers 1..level all apply).
 static func ascension_mods(level: int) -> Dictionary:
 	var m := {"boss_hp_pct": 0, "boss_strength": 0, "heal_between": 0,
-		"rest_heal": 0, "reward_choices": 0, "player_hp": 0}
+		"rest_heal": 0, "reward_choices": 0, "player_hp": 0,
+		"start_curse": 0, "no_shop_removal": 0}
 	for t in ascension_tiers():
 		var tier: Dictionary = t
 		if int(tier.get("level", 99)) > level:

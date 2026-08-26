@@ -1,5 +1,5 @@
 {
-  "_comment": "The difficulty ladder (design/depth-plan.md item 6). Tiers are CUMULATIVE — Ascension 4 applies tiers 1-4. Effects: boss_hp_pct (+% to every beast's HP), boss_strength (beasts begin with +N Strength), heal_between (less HP recovered after a fight), rest_heal (weaker campfire Rest), reward_choices (fewer cards offered), player_hp (start the run with less max HP). Clearing a tier unlocks the next.",
+  "_comment": "The difficulty ladder (design/depth-plan.md item 6). Tiers are CUMULATIVE — Ascension 4 applies tiers 1-4. Effects: boss_hp_pct (+% to every beast's HP), boss_strength (beasts begin with +N Strength), heal_between (less HP recovered after a fight), rest_heal (weaker campfire Rest), reward_choices (fewer cards offered), player_hp (start the run with less max HP). Backlog #56 adds two RULE-changing effects rather than more numbers: start_curse (each hunter's deck begins with one 'bruised_grip' status card already in it — any nonzero value means on) and no_shop_removal (the shop stops stocking a 'Thin the deck' offer at all; campfire removal is untouched). Clearing a tier unlocks the next.",
   "tiers": [
     {
       "level": 1,
@@ -56,6 +56,20 @@
       "effect": "boss_strength",
       "value": 1,
       "text": "Beasts begin every fight with a further +1 Strength."
+    },
+    {
+      "level": 9,
+      "name": "Cursed Start",
+      "effect": "start_curse",
+      "value": 1,
+      "text": "Every hunter starts the run with a Bruised Grip already in their deck."
+    },
+    {
+      "level": 10,
+      "name": "Sealed Market",
+      "effect": "no_shop_removal",
+      "value": 1,
+      "text": "Shops no longer offer to thin a deck."
     }
   ]
 }
