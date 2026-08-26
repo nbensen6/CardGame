@@ -191,6 +191,10 @@
     "shift_sigil": {
       "name": "Shift its sigil",
       "text": "The weak point moves to a new Height, and any damage banked into the old one is lost. Whatever you climbed may now be the wrong place."
+    },
+    "curse": {
+      "name": "Curse",
+      "text": "A status card lands in the targeted hunter's discard pile — a dead card that costs them a draw once it comes up."
     }
   }
 }

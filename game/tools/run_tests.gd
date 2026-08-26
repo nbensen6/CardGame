@@ -282,6 +282,14 @@ func _init() -> void:
 	_test_beast_thorns_reflects_card_damage_dealt_to_it()
 	_test_frail_artifact_thorns_persist_through_save()
 	_test_beast_thorns_and_artifact_are_wired()
+	# Beasts that debuff YOU (backlog #69) — Frail and curses through a boss move
+	_test_frail_move_debuffs_the_targeted_hunter()
+	_test_frail_move_is_warded_by_the_hunters_own_artifact()
+	_test_curse_move_shoves_a_status_card_into_discard()
+	_test_curse_move_respects_card_and_value_fields()
+	_test_curse_move_ignores_artifact_matching_curse_card_precedent()
+	_test_backlog69_at_least_five_beasts_debuff_hunters()
+	_test_every_beast_move_type_has_a_keyword()
 	# Dexterity, Strength's counterpart (backlog #60)
 	_test_dexterity_adds_to_block_gained()
 	_test_dexterity_card_lifts_a_later_different_cards_block()
@@ -3086,6 +3094,15 @@ func _test_content_integrity_graph() -> void:
 			var b := Content.build_boss(String(id))
 			if b.moves.is_empty():
 				bad.append("%s pool: %s (no moves — unknown beast id?)" % [kind, id])
+	# backlog #69: a 'curse' move's optional 'card' key names a real card the
+	# same way an event's curse_card does — check it the same way.
+	for id2 in Content.boss_ids():
+		var b2 := Content.build_boss(String(id2))
+		for m in (b2.moves + b2.hurt_moves):
+			if String((m as Dictionary).get("type", "")) == "curse":
+				var mc := String((m as Dictionary).get("card", "bruised_grip"))
+				if String(Content.make_card(mc).name).is_empty():
+					bad.append("%s curse move card: %s" % [id2, mc])
 	for eid in Content.list_events():
 		var ev := Content.make_event(String(eid))
 		for choice in (ev.get("choices", []) as Array):
@@ -4473,6 +4490,102 @@ func _test_beast_thorns_and_artifact_are_wired() -> void:
 	var sentinel := Content.build_boss("frost_sentinel")
 	_expect(hog.thorns == 3, "the Bramble Hog carries innate Thorns")
 	_expect(sentinel.artifact == 2, "the Frost Sentinel carries innate Artifact")
+
+
+# --- Beasts that debuff YOU (backlog #69) ----------------------------------
+# Every prior move type only ever dealt HP damage; 'frail' and 'curse' are
+# the first two that hit the hunter's DECK/BLOCK instead, through the exact
+# same generic move-resolution path in Combat._enemy_turn() every other move
+# already uses — no new special case, just two more entries in the match.
+
+func _test_frail_move_debuffs_the_targeted_hunter() -> void:
+	var boss := Boss.new("Chiller", 100)
+	boss.moves = [{"type": "frail", "value": 2}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.end_turn(0)
+	combat.end_turn(1)  # round 1 — boss_target_index() is player 0
+	_expect(combat.players[0].combatant.frail == 2 and combat.players[1].combatant.frail == 0,
+		"a 'frail' move Frails only the hunter the boss is turned toward")
+
+
+func _test_frail_move_is_warded_by_the_hunters_own_artifact() -> void:
+	var boss := Boss.new("Chiller", 100)
+	boss.moves = [{"type": "frail", "value": 2}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.players[0].combatant.artifact = 1
+	combat.end_turn(0)
+	combat.end_turn(1)
+	_expect(combat.players[0].combatant.frail == 0 and combat.players[0].combatant.artifact == 0,
+		"the targeted hunter's own Artifact wards off a 'frail' move and is spent doing it")
+
+
+func _test_curse_move_shoves_a_status_card_into_discard() -> void:
+	var boss := Boss.new("Cursed Bog", 100)
+	boss.moves = [{"type": "curse", "value": 1}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.end_turn(0)  # discards player 0's own hand FIRST — captured before, so it isn't mistaken for the curse
+	var before: int = combat.players[0].discard_pile.size()
+	combat.end_turn(1)  # both ended -> boss acts, targeting player 0
+	var pile: Array = combat.players[0].discard_pile
+	_expect(pile.size() == before + 1 and String((pile[pile.size() - 1] as Card).id) == "bruised_grip",
+		"a 'curse' move with no 'card' field lands the default status card in the discard pile")
+
+
+func _test_curse_move_respects_card_and_value_fields() -> void:
+	var boss := Boss.new("Cursed Bog", 100)
+	boss.moves = [{"type": "curse", "value": 2, "card": "bruised_grip"}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.end_turn(0)
+	var before: int = combat.players[0].discard_pile.size()
+	combat.end_turn(1)
+	_expect(combat.players[0].discard_pile.size() == before + 2,
+		"a 'curse' move's 'value' names how many copies land")
+
+
+func _test_curse_move_ignores_artifact_matching_curse_card_precedent() -> void:
+	var boss := Boss.new("Cursed Bog", 100)
+	boss.moves = [{"type": "curse", "value": 1}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.players[0].combatant.artifact = 1
+	combat.end_turn(0)
+	var before: int = combat.players[0].discard_pile.size()
+	combat.end_turn(1)
+	_expect(combat.players[0].discard_pile.size() == before + 1 and combat.players[0].combatant.artifact == 1,
+		"a 'curse' move is not warded by Artifact — a card lands on you, not a debuff stat, same as an event's own curse_card")
+
+
+## Guards the actual point of the item: at least five beasts in the real
+## content — not a synthetic Boss built for the tests above — carry a
+## 'frail' or 'curse' move somewhere in their pattern (main or hurt_moves).
+## A beast that only ever deals damage is a damage number with a picture on
+## it, and that's the thing #69 exists to fix.
+func _test_backlog69_at_least_five_beasts_debuff_hunters() -> void:
+	var debuffers: Array = []
+	for id in Content.boss_ids():
+		var b := Content.build_boss(String(id))
+		var carries := false
+		for m in (b.moves + b.hurt_moves):
+			if String((m as Dictionary).get("type", "")) in ["frail", "curse"]:
+				carries = true
+		if carries:
+			debuffers.append(id)
+	_expect(debuffers.size() >= 5,
+		"at least 5 beasts inflict Frail or a curse [%d: %s]" % [debuffers.size(), ", ".join(debuffers)])
+
+
+## Backlog #16/#54's own rule, extended to moves: a move `type` that shows up
+## in bosses.json but has no keywords.json entry is a move a player can never
+## ask about — Content.keyword() returns {} for it (see keywords.json's own
+## "_comment_moves": "Ids match the move `type` in bosses.json").
+func _test_every_beast_move_type_has_a_keyword() -> void:
+	var missing: Array = []
+	for id in Content.boss_ids():
+		var b := Content.build_boss(String(id))
+		for m in (b.moves + b.hurt_moves):
+			var kind := String((m as Dictionary).get("type", ""))
+			if kind != "" and String(Content.keyword(kind).get("text", "")).is_empty() and not missing.has(kind):
+				missing.append(kind)
+	_expect(missing.is_empty(), "every beast move type resolves to a keyword [%s]" % ", ".join(missing))
 
 
 # --- Dexterity, Strength's counterpart (backlog #60) ----------------------

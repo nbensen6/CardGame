@@ -1167,6 +1167,18 @@ func _enemy_turn() -> void:
 			for ps4 in players:
 				ps4.weak_point_damage = 0
 			_log("%s's sigil shifts to Height %d." % [boss.name, moved])
+		"frail":  # backlog #69 — a debuff move: chips Block gained rather than HP
+			var ft: PlayerState = players[boss_target_index()]
+			_log("%s claws at %s, sapping their guard." % [boss.name, ft.combatant.name])
+			_apply_frail(ft.combatant, value)  # same generic path a card uses on the Titan — Artifact wards it
+		"curse":  # backlog #69 — hands the targeted hunter a status card, same idiom as an event's curse_card
+			var ct: PlayerState = players[boss_target_index()]
+			var curse_id := String(move.get("card", "bruised_grip"))
+			var cname := String(Content.make_card(curse_id).name)
+			var n := maxi(value, 1)
+			for i in range(n):
+				ct.discard_pile.append(Content.make_card(curse_id))
+			_log("%s curses %s — %d %s%s land in their discard pile." % [boss.name, ct.combatant.name, n, cname, "s" if n > 1 else ""])
 		"enrage":
 			boss.strength += value
 			_log("%s enrages (+%d strength, now +%d)." % [boss.name, value, boss.strength])

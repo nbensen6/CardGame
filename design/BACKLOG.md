@@ -514,7 +514,7 @@ something Slay the Spire leans on hard and we do not have at all.
   *Done when:* the operations exist as effects, stay deterministic under a seed,
   and are tested.
 
-- [ ] **69. Beasts that debuff YOU** `cloud-safe` — #36 gave us Frail, Artifact
+- [x] **69. Beasts that debuff YOU** `cloud-safe` — #36 gave us Frail, Artifact
   and Thorns, #27 gave us curses, and not one beast inflicts any of them. A
   Titan that only ever deals damage is a damage number with a picture on it.
   *Done when:* at least five beasts apply a status or a curse through the
@@ -744,10 +744,58 @@ rather than inventing work.
   Found auditing #54; not itself a keyword-text problem so it wasn't fixed
   there — it's snapshot plumbing (`_players_public()`/the boss dict in
   `game_host.gd`) plus a boundary test, cloud-safe, cheap, but a distinct item.
+- `game/data/keywords.json` has a pre-existing duplicate `"block"` key — one
+  entry explains the player's Block, a second (for the boss's `block` move)
+  reuses the same id lower in the file. JSON keeps only the last one, so
+  `Content.keyword("block")` currently returns the boss-move text, not the
+  player one. Found while wiring #69's move keywords; not this item's bug,
+  cloud-safe, one-line fix (rename one of the two ids and its one call site).
 
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-26** — #69 Beasts that debuff YOU: #55 still correctly skipped
+  (needs Nick or per-beast `cloud-art` work), so this was next in order and
+  cloud-safe outright. Two new boss move `type`s in the SAME generic match
+  statement `Combat._enemy_turn()` already resolves every other move through
+  — no new special-cased code path, just two more arms. `frail` Frails the
+  currently-targeted hunter by routing through `Combat._apply_frail()`, the
+  exact function a card already uses to Frail the Titan, so it's warded by
+  that hunter's own Artifact stack for free. `curse` shoves `value` (default
+  1) copies of a status card (default `bruised_grip`, or whatever id the
+  optional `card` key names) straight into the targeted hunter's discard
+  pile — deliberately NOT warded by Artifact, matching the precedent an
+  event's own `curse_card` (#27) already set: a curse is a card you're
+  handed, not a debuff stat. Five beasts carry one now, spread across all
+  three pools rather than piled on one tier: `bounder` and `riftling`
+  (fight), `frost_sentinel` and `mire_snapper` (elite), `sunken_warden`
+  (boss) — 3 `frail`, 2 `curse`. Reused the existing `frail` keyword
+  (already generic enough to cover a move, not just a card field — same id,
+  no duplicate) and added one new `curse` entry; while doing that I noticed
+  keywords.json already has an unrelated PRE-EXISTING duplicate `"block"`
+  key (a player-Block entry and a boss-move-Block entry both named
+  `block` — JSON keeps only the last, so `Content.keyword("block")`
+  currently returns the boss one). Not this item's bug and out of scope to
+  fix here, so left alone; noted under Later rather than silently walked
+  past. Deliberately did NOT touch `combat_3d.gd`'s `_intent_text` — it has
+  no test coverage at all (confirmed: nothing in run_tests.gd references
+  `combat_3d`) and is exactly the kind of "needs a screen" face the
+  routine/session split (bottom of this file) says stays with a session
+  that has a display; today these two moves still log correctly
+  (`Combat._log`) and resolve correctly, but the on-screen intent tag will
+  print nothing for them until someone adds two match arms there and looks
+  at it. Also extended `_test_content_integrity_graph` to check a `curse`
+  move's `card` id resolves (same shape as `curse_card`/`potion` already
+  get), and added a new standing test,
+  `_test_every_beast_move_type_has_a_keyword`, that walks every beast's
+  real `moves`/`hurt_moves` and fails if any move `type` has no
+  keywords.json entry — the move equivalent of #16/#54's card-field
+  coverage test, guarding the exact "telegraph prints nothing" failure mode
+  above from happening silently to a FUTURE move type. Nine new tests, all
+  green — `run_tests.gd`: 457 passes, 0 failures (up from 450).
+  `node tools/cardlab/build.js`: 187 cards, 0 unreachable (unchanged — no
+  new cards were added, only two beast-side move types).
 
 - **2026-08-26** — #68 Reaching into the draw pile: #55 remains correctly
   skipped (needs Nick or per-beast `cloud-art` work bigger than one iteration),
