@@ -494,7 +494,7 @@ something Slay the Spire leans on hard and we do not have at all.
   only way we will ever see a pattern across runs. *Done when:* finished runs
   persist, the file survives a version bump the way #35 taught, and it is tested.
 
-- [ ] **66. Upgrades that change a rule, not a number** `cloud-safe` — our
+- [x] **66. Upgrades that change a rule, not a number** `cloud-safe` — our
   upgrade path bumps values. The upgrades worth remembering change what a card
   DOES: cost to zero, gain Retain, hit everything, stop exhausting. A +2 is not
   a decision; a rule change is. *Done when:* an upgrade can carry an effect
@@ -748,6 +748,40 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-26** — #66 Upgrades that change a rule, not a number: #55 stayed
+  skipped for its own stated reason (needs Nick or a per-beast cloud-art
+  build, not one iteration), so this was the next attemptable `cloud-safe`
+  item, ahead of 67-72/74 in queue order. One new field, `Card.rule_upgrade`
+  — a `field: value` override dict, populated from a card's own data and
+  spent (cleared) the moment `upgraded_copy()` applies it — that REPLACES the
+  existing generic number-bump for a card that carries one, rather than
+  stacking with it, matching the item's own framing that a rule change and a
+  bigger number are different things, not two effects on the same card. Six
+  cards, one per idiom the item named: Dig In upgrades to 0 cost, Cover
+  upgrades to gain Retain, Belay Strike upgrades to gain Innate, Piston Punch
+  upgrades to hit every add and the Titan at once (hits_all_enemies), Salvage
+  upgrades to drop its burn-a-card cost, and Reckless Swing upgrades OUT of
+  Ethereal — "stop exhausting" read most naturally as removing the
+  punishment on a card that already had it, rather than adding a new
+  self-exhaust rule to one that didn't. Each upgrade also hand-rewrites the
+  card's `text` so an offered (out-of-combat) upgraded card doesn't show
+  stale prose — checked first that cost is never restated in body text (it
+  has its own pip) so Dig In needed no text change at all. The one thing that
+  would have silently broken: backlog #54's field-coverage test
+  (`_test_every_field_a_player_must_understand_has_a_keyword`) walks every
+  `Card` script property by reflection and fakes a probe value per type
+  (bool/string/else-int) to prove `_keywords_of` explains it — it has no
+  Dictionary case, and `rule_upgrade` is the first Dictionary-typed field
+  Card has ever carried, so the probe would have coerced `int(1)` into a
+  Dictionary slot and thrown rather than failed cleanly. Added it to that
+  test's own `self_evident` list instead: a player never sees "rule_upgrade"
+  itself, only whatever it overrides once applied (Retain, Innate, a 0
+  cost...), and every one of those already resolves to its own keyword
+  through the normal path — proven directly in the new test, which checks
+  the sharpened copy's actual fields (not the recipe) end to end. One new
+  test, covering all six cards plus re-upgrading a no-op the same way the
+  existing number-bump test does, all green.
 
 - **2026-08-26** — #65 Run history: the next `cloud-safe` item after #64 in
   queue order (55 stayed skipped for its own stated reason; 66-72 and 74 are

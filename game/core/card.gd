@@ -97,6 +97,12 @@ var hits_all_enemies: bool     # deals its damage to the Titan AND every one of 
                                 # "adds" at once instead of a single target (backlog #63,
                                 # Cleave) — a fight with more than one thing in it needs a
                                 # way to hit all of them without spending a card per target
+var rule_upgrade: Dictionary   # field:value overrides applied by upgraded_copy() INSTEAD of
+                                # the generic number bump (backlog #66) — how a card's
+                                # campfire sharpening can change what it DOES (cost to zero,
+                                # gain Retain, hit everything) rather than only its numbers.
+                                # Spent the moment it is applied: the sharpened copy carries
+                                # the new rule, not the recipe that produced it.
 
 static func from_dict(d: Dictionary) -> Card:
 	var c := Card.new()
@@ -170,6 +176,7 @@ static func from_dict(d: Dictionary) -> Card:
 	c.damage_per_discarded = int(d.get("damage_per_discarded", 0))
 	c.block_per_discarded = int(d.get("block_per_discarded", 0))
 	c.hits_all_enemies = bool(d.get("hits_all_enemies", false))
+	c.rule_upgrade = (d.get("rule_upgrade", {}) as Dictionary).duplicate(true)
 	return c
 
 
@@ -208,6 +215,7 @@ func to_dict() -> Dictionary:
 		"discard": discard, "damage_per_discarded": damage_per_discarded,
 		"block_per_discarded": block_per_discarded,
 		"hits_all_enemies": hits_all_enemies,
+		"rule_upgrade": rule_upgrade,
 	}
 
 
@@ -218,6 +226,16 @@ func upgraded_copy() -> Card:
 	var d := to_dict()
 	if upgraded:
 		return Card.from_dict(d)  # already sharpened — no double-dipping
+	if not rule_upgrade.is_empty():
+		# A rule change (backlog #66) — REPLACES the generic number bump rather
+		# than stacking with it, the same way an authored card is either "bigger
+		# numbers" or "does something new", never both.
+		for key in rule_upgrade.keys():
+			d[key] = rule_upgrade[key]
+		d["rule_upgrade"] = {}
+		d["name"] = String(d["name"]) + "+"
+		d["upgraded"] = true
+		return Card.from_dict(d)
 	var bumped := false
 	for key in ["damage", "block", "ally_block", "timed_damage",
 			"timed_block", "timed_ally_block"]:

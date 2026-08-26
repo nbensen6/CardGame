@@ -104,6 +104,7 @@ func _init() -> void:
 	_test_start_does_not_auto_offer_a_boon()
 	_test_run_survives_a_save_and_load_in_boon()
 	_test_card_upgrade_bumps_numbers()
+	_test_card_rule_upgrade_changes_what_it_does_not_just_a_number()
 	_test_enchanted_copy_attaches_to_any_card()
 	_test_enchants_all_load()
 	_test_campfire_rest_remove_upgrade()
@@ -1321,6 +1322,46 @@ func _test_card_upgrade_bumps_numbers() -> void:
 		and up_aim.draw == take_aim.draw + 1
 		and twice.damage == up.damage,
 		"upgrading bumps whatever numbers a card uses, once")
+
+
+## Backlog #66: an upgrade can change what a card DOES instead of only its
+## numbers. `rule_upgrade` on the base card (data/cards.json) REPLACES the
+## generic number bump above rather than stacking with it — six real cards,
+## one for each idiom the item names: cost to zero, gain Retain, gain
+## Innate, hit everything, stop exhausting (an Ethereal card upgraded out of
+## it), and drop a burn-a-card cost.
+func _test_card_rule_upgrade_changes_what_it_does_not_just_a_number() -> void:
+	var reckless := Content.make_card("reckless_swing")  # Ethereal attack
+	var up_reckless := reckless.upgraded_copy()
+	var cover := Content.make_card("cover")              # no Retain yet
+	var up_cover := cover.upgraded_copy()
+	var belay := Content.make_card("belay_strike")       # no Innate yet
+	var up_belay := belay.upgraded_copy()
+	var piston := Content.make_card("piston_punch")      # single target
+	var up_piston := piston.upgraded_copy()
+	var dig := Content.make_card("dig_in")               # costs 1
+	var up_dig := dig.upgraded_copy()
+	var salvage := Content.make_card("salvage")          # must burn a card
+	var up_salvage := salvage.upgraded_copy()
+	var twice := up_reckless.upgraded_copy()             # already sharpened — no double-dip
+	_expect(
+		reckless.ethereal and not up_reckless.ethereal
+			and up_reckless.damage == reckless.damage      # the rule changed, not the number
+			and up_reckless.text == "Deal 10 damage."
+		and not cover.retain and up_cover.retain
+			and up_cover.ally_block == cover.ally_block
+		and not belay.innate and up_belay.innate
+			and up_belay.damage == belay.damage
+		and not piston.hits_all_enemies and up_piston.hits_all_enemies
+			and up_piston.damage == piston.damage
+		and dig.cost == 1 and up_dig.cost == 0
+			and up_dig.block == dig.block
+		and salvage.exhaust_pick and not up_salvage.exhaust_pick
+			and up_salvage.draw == salvage.draw
+		and up_reckless.upgraded and up_reckless.name.ends_with("+")
+			and up_reckless.rule_upgrade.is_empty()  # spent, not carried on the sharpened copy
+		and twice.ethereal == up_reckless.ethereal,      # re-upgrading is a no-op, same as numbers
+		"a rule_upgrade changes what a card DOES instead of bumping its numbers")
 
 
 ## The enchant engine (backlog #12): one generic copy trick, same shape as
@@ -3369,8 +3410,13 @@ func _test_every_field_a_player_must_understand_has_a_keyword() -> void:
 	# text already printed on the card, the cost pip, the damage number, how
 	# many draws — need no separate keyword tooltip. timed_hits is a plain
 	# repeat-count that only means anything once you already understand Timed.
+	# rule_upgrade (backlog #66) is the odd one out: a Dictionary, not a bool/
+	# string/int the probe below knows how to fake a value for, and it is
+	# never itself player-facing — a player never sees "rule_upgrade", they
+	# see whatever it OVERRIDES once applied (Retain, Innate, a 0 cost...),
+	# and every one of those already has its own keyword via the normal path.
 	var self_evident := ["id", "name", "type", "rarity", "cost", "damage", "draw",
-		"target", "icon", "text", "upgraded", "timed_hits"]
+		"target", "icon", "text", "upgraded", "timed_hits", "rule_upgrade"]
 	# A handful of int fields are meaningless at the generic probe value of 1
 	# because 1 IS their neutral default (a single hit, no repeat) — probe
 	# those with a value that's actually "used" instead.
