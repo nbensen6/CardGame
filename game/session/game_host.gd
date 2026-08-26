@@ -601,6 +601,8 @@ func _keywords_of(c: Card) -> Array:
 		ids.append("discard")
 	if c.hits_all_enemies:
 		ids.append("cleave")
+	if c.topdeck != "" or c.shuffle_in != "" or c.tutor != "":
+		ids.append("reach")
 	var out: Array = []
 	for id in ids:
 		var k := Content.keyword(String(id))

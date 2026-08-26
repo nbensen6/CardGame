@@ -781,6 +781,29 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		ps.scry_pending = _peek_top(ps, card.scry)
 		if not ps.scry_pending.is_empty():
 			_log("%s plays %s — scries the top %d." % [who, card.name, ps.scry_pending.size()])
+	if card.topdeck != "":  # backlog #68 — put a card on TOP of the draw pile: the end of
+		# the array, the same end _draw()/_peek_top() pop from.
+		var topped := Content.make_card(card.topdeck)
+		ps.draw_pile.append(topped)
+		_log("%s plays %s — puts %s on top of the draw pile." % [who, card.name, topped.name])
+	if card.shuffle_in != "":  # backlog #68 — through _rng so it stays deterministic under a seed
+		var shuffled := Content.make_card(card.shuffle_in)
+		ps.draw_pile.insert(_rng.randi_range(0, ps.draw_pile.size()), shuffled)
+		_log("%s plays %s — shuffles %s into the draw pile." % [who, card.name, shuffled.name])
+	if card.tutor != "":  # backlog #68 — pull a specific card straight out of the draw pile
+		# into hand; a harmless no-op if it isn't there, same fallback idiom pull_ally uses
+		var found := -1
+		for i in range(ps.draw_pile.size()):
+			if (ps.draw_pile[i] as Card).id == card.tutor:
+				found = i
+				break
+		if found >= 0:
+			var pulled: Card = ps.draw_pile[found]
+			ps.draw_pile.remove_at(found)
+			ps.hand.append(pulled)
+			_log("%s plays %s — pulls %s from the draw pile." % [who, card.name, pulled.name])
+		else:
+			_log("%s plays %s — but no %s is in the draw pile." % [who, card.name, card.tutor])
 	if card.rhythm > 0:
 		ps.rhythm += card.rhythm
 		_log("%s plays %s — +%d Rhythm." % [who, card.name, card.rhythm])

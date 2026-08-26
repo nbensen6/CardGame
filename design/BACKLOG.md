@@ -508,7 +508,7 @@ something Slay the Spire leans on hard and we do not have at all.
   a data field with a fallback, at least six cards use it, and both branches of
   each are tested.
 
-- [ ] **68. Reaching into the draw pile** `cloud-safe` — put a card on top,
+- [x] **68. Reaching into the draw pile** `cloud-safe` — put a card on top,
   shuffle one in, pull a specific card out. Nothing we have touches the draw
   pile except drawing from it, so deck order is pure luck every single time.
   *Done when:* the operations exist as effects, stay deterministic under a seed,
@@ -748,6 +748,38 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-26** — #68 Reaching into the draw pile: #55 remains correctly
+  skipped (needs Nick or per-beast `cloud-art` work bigger than one iteration),
+  so this was next in queue order and cloud-safe outright. Three new String
+  fields on Card — `topdeck`, `shuffle_in`, `tutor` — each naming a card id,
+  the same "empty string means none" idiom `create`/`prepare` already use, so
+  none of them needed a new sentinel or a picker UI. `topdeck` appends the
+  built card to the END of `draw_pile` (the same end `_draw()`/`_peek_top()`
+  already pop from — Godot's Array has no dedicated "push to top" op, so
+  matching that existing convention was the whole trick). `shuffle_in` inserts
+  at `_rng.randi_range(0, draw_pile.size())` — through Combat's own seeded
+  RNG, not GDScript's global one, which is what keeps it reproducible; a test
+  runs the same seed and the same play twice and asserts the card lands at the
+  identical index both times. `tutor` linear-scans the pile for a matching id
+  and moves it straight to hand if found; if not, it's a logged no-op rather
+  than a crash or a silent substitute, the same fallback shape `pull_ally`
+  already uses for "no valid target." None of the three touch `_meld_cards` —
+  that function already doesn't carry several later fields (scry, the light
+  fields, condition/condition_bonus), so extending it is pre-existing debt
+  this item didn't create and wasn't asked to fix. Wired into
+  `GameHost._keywords_of` as one shared "reach" keyword (all three read the
+  same to a player: something reached into the draw pile) so backlog #54's
+  generic field-coverage test — which probes every Card field alone and fails
+  on one with no keyword — passes without a special case. Three real cards in
+  the shared pool exercise all three ops in the same idiom as Peer Ahead/Read
+  The Climb: Waymark (0-cost, topdecks a Scramble), Depot (gains Block, then
+  shuffles a Grip in), and Recon (searches for a Cleave and pulls it to hand).
+  Extended `_test_content_integrity_graph` to check `topdeck`/`shuffle_in`/
+  `tutor` resolve the same way it already checks `create`/`prepare`, so a typo
+  in any of the three fails loudly instead of silently handing someone a blank
+  card. Five new tests, all green — `run_tests.gd`: 450 passes, 0 failures.
+  `node tools/cardlab/build.js`: 184 -> 187 cards, 0 unreachable.
 
 - **2026-08-26** — #67 Cards that ask a question about the board: 55 stayed
   skipped for its own stated reason (needs Nick or per-beast `cloud-art`

@@ -377,6 +377,12 @@ func _init() -> void:
 	_test_backlog59_scry_survives_playerstate_dict_round_trip()
 	_test_backlog59_scry_survives_mid_combat_save_and_load()
 	_test_backlog59_ally_sees_the_scry_reveal()
+	# Reaching into the draw pile (backlog #68): put a card on top, shuffle one
+	# in, pull a named one out — the draw pile's order stops being pure luck.
+	_test_backlog68_topdeck_puts_a_card_on_top_of_the_draw_pile()
+	_test_backlog68_shuffle_in_is_deterministic_under_a_seed()
+	_test_backlog68_tutor_pulls_a_named_card_from_the_draw_pile_into_hand()
+	_test_backlog68_tutor_is_a_harmless_no_op_when_the_card_isnt_there()
 
 	print("")
 	if _failures == 0:
@@ -3069,6 +3075,12 @@ func _test_content_integrity_graph() -> void:
 			bad.append("%s create: %s" % [id, card.create])
 		if card.prepare != "" and not known_prepares.has(card.prepare):
 			bad.append("%s prepare: %s (unhandled by combat.gd)" % [id, card.prepare])
+		if card.topdeck != "" and String(Content.make_card(card.topdeck).name).is_empty():
+			bad.append("%s topdeck: %s" % [id, card.topdeck])
+		if card.shuffle_in != "" and String(Content.make_card(card.shuffle_in).name).is_empty():
+			bad.append("%s shuffle_in: %s" % [id, card.shuffle_in])
+		if card.tutor != "" and String(Content.make_card(card.tutor).name).is_empty():
+			bad.append("%s tutor: %s" % [id, card.tutor])
 	for kind in ["fight", "elite", "boss"]:
 		for id in Content.beast_pool(kind):
 			var b := Content.build_boss(String(id))
@@ -3096,7 +3108,7 @@ func _test_content_integrity_graph() -> void:
 		if bpid != "" and String(Content.make_potion(bpid).get("name", "")).is_empty():
 			bad.append("%s potion: %s" % [bid, bpid])
 	_expect(bad.is_empty(),
-		"create/prepare fields, beast pool ids, curse_card and potion refs all resolve [%s]" % ", ".join(bad))
+		"create/prepare/topdeck/shuffle_in/tutor fields, beast pool ids, curse_card and potion refs all resolve [%s]" % ", ".join(bad))
 
 
 func _test_sunlight_blade_scales_with_exposed() -> void:
@@ -6035,6 +6047,78 @@ func _test_backlog59_ally_sees_the_scry_reveal() -> void:
 	c0.resolve_scry([0])
 	_expect(c0.shared["players"][0]["scry_pending"].is_empty(),
 		"the owner resolving their own scry clears the pending reveal")
+
+
+## Backlog #68 — Reaching into the draw pile: three operations besides drawing
+## from it. `topdeck` puts a built card on TOP — the end of the array, the
+## same end _draw() pops from.
+func _test_backlog68_topdeck_puts_a_card_on_top_of_the_draw_pile() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.draw_pile = [_slash(), _slash()]
+	ps.hand = [Card.from_dict({"id": "waymark", "name": "Waymark", "type": "skill",
+		"cost": 0, "topdeck": "scramble"})]
+	ps.energy = 3
+	combat.play_card(0, 0)
+	_expect(ps.draw_pile.size() == 3
+		and (ps.draw_pile[ps.draw_pile.size() - 1] as Card).id == "scramble",
+		"topdeck appends the named card — the next one _draw() will pop")
+
+
+## `shuffle_in` lands the built card at a position chosen through Combat._rng,
+## not GDScript's global RNG — so replaying the same seed and the same play
+## must land it in the exact same spot, never a different one run to run.
+func _test_backlog68_shuffle_in_is_deterministic_under_a_seed() -> void:
+	var combat1 := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 7, _dummy_boss(300))
+	var ps1: PlayerState = combat1.players[0]
+	ps1.draw_pile = [_slash(), _slash(), _slash()]
+	ps1.hand = [Card.from_dict({"id": "depot", "name": "Depot", "type": "skill",
+		"cost": 1, "shuffle_in": "grip"})]
+	ps1.energy = 3
+	combat1.play_card(0, 0)
+	var pos1 := _index_of_id(ps1.draw_pile, "grip")
+
+	var combat2 := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 7, _dummy_boss(300))
+	var ps2: PlayerState = combat2.players[0]
+	ps2.draw_pile = [_slash(), _slash(), _slash()]
+	ps2.hand = [Card.from_dict({"id": "depot", "name": "Depot", "type": "skill",
+		"cost": 1, "shuffle_in": "grip"})]
+	ps2.energy = 3
+	combat2.play_card(0, 0)
+	var pos2 := _index_of_id(ps2.draw_pile, "grip")
+
+	_expect(ps1.draw_pile.size() == 4 and pos1 >= 0 and pos1 == pos2,
+		"the same seed and the same play shuffle the card into the same position both times")
+
+
+## `tutor` reaches past whatever sits on top and pulls a NAMED card straight
+## into hand, wherever it happens to be in the pile.
+func _test_backlog68_tutor_pulls_a_named_card_from_the_draw_pile_into_hand() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.draw_pile = [_slash(), _bash(), _slash()]  # _bash() == "cleave", buried in the middle
+	ps.hand = [Card.from_dict({"id": "recon", "name": "Recon", "type": "skill",
+		"cost": 1, "tutor": "cleave"})]
+	ps.energy = 3
+	combat.play_card(0, 0)
+	_expect(ps.draw_pile.size() == 2 and not _has_id(ps.draw_pile, "cleave"),
+		"tutor removes the named card from wherever it sat in the draw pile")
+	_expect(_has_id(ps.hand, "cleave"),
+		"tutor delivers the named card straight into hand")
+
+
+## A card the tutor names but the pile doesn't hold is a harmless no-op, not a
+## crash and not a silent draw of something else.
+func _test_backlog68_tutor_is_a_harmless_no_op_when_the_card_isnt_there() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.draw_pile = [_slash(), _slash()]
+	ps.hand = [Card.from_dict({"id": "recon", "name": "Recon", "type": "skill",
+		"cost": 1, "tutor": "cleave"})]
+	ps.energy = 3
+	combat.play_card(0, 0)
+	_expect(ps.draw_pile.size() == 2, "no Cleave to find — the draw pile is untouched")
+	_expect(ps.hand.is_empty(), "no Cleave to find — nothing extra lands in hand")
 
 
 ## Backlog #47 — the Lightbearer: a fifth hunter whose OWN currency (Light)

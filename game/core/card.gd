@@ -116,6 +116,14 @@ var condition_bonus: Dictionary # field:value ADDED to Combat.preview()'s result
                                  # dictionary-override idiom rule_upgrade (#66) and enchants use,
                                  # but additive rather than replacing: the card's printed numbers
                                  # are always the floor, never something the condition takes away.
+var topdeck: String    # card id built and put on TOP of your OWN draw pile — the very next
+                        # card you draw (backlog #68). "" = none.
+var shuffle_in: String  # card id built and shuffled into your OWN draw pile at a random
+                        # position, through Combat._rng so it stays deterministic under a seed
+                        # (backlog #68). "" = none.
+var tutor: String       # card id searched for in your OWN draw pile and pulled straight into
+                        # your hand if it's there — a harmless no-op if it isn't (backlog #68).
+                        # "" = none.
 
 static func from_dict(d: Dictionary) -> Card:
 	var c := Card.new()
@@ -192,6 +200,9 @@ static func from_dict(d: Dictionary) -> Card:
 	c.rule_upgrade = (d.get("rule_upgrade", {}) as Dictionary).duplicate(true)
 	c.condition = (d.get("condition", {}) as Dictionary).duplicate(true)
 	c.condition_bonus = (d.get("condition_bonus", {}) as Dictionary).duplicate(true)
+	c.topdeck = String(d.get("topdeck", ""))
+	c.shuffle_in = String(d.get("shuffle_in", ""))
+	c.tutor = String(d.get("tutor", ""))
 	return c
 
 
@@ -232,6 +243,7 @@ func to_dict() -> Dictionary:
 		"hits_all_enemies": hits_all_enemies,
 		"rule_upgrade": rule_upgrade,
 		"condition": condition, "condition_bonus": condition_bonus,
+		"topdeck": topdeck, "shuffle_in": shuffle_in, "tutor": tutor,
 	}
 
 
