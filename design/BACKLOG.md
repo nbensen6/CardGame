@@ -918,6 +918,22 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-27** — Seventh consecutive re-check, same tip (`565f92c`) as the
+  entry directly below. Fetched `origin/main` fresh (rule 9), rebuilt the
+  unchecked list independently with `grep '^- \[ \]'` rather than trusting
+  this file's prose, and re-verified all three `cloud-safe`/`cloud-art`
+  candidates directly against the tree: `game/data/bosses.json` still has 20
+  beasts under `"bosses"` (#55's six all present); `card_view.gd`'s `ICONS`
+  dict still has exactly 28 entries, each `preload()`-ing a real file under
+  `game/assets/icons/` (#76); `lightbearer.glb`, `lightbearer_colormap.png`
+  and the portrait are all still committed under `game/assets/` (#80). Every
+  other unchecked item is `needs a screen` (2, 3, 8, 25, 29b, 32, 31b, 78, 79,
+  81) and out of scope for a headless run. Nothing has changed since the
+  sixth check, so no new push notification — the fifth check's already told
+  Nick the same three finished `cloud-art` items are waiting on his eyes, and
+  repeating an unchanged state would be noise. No code touched; skipped the
+  Godot import/test cycle for the same reason. Stopped per rule 6 rather than
+  inventing scope.
 - **2026-08-27** — Sixth consecutive re-check, same tip (`67f8b06`) as the
   entry directly below. Fetched `origin/main` fresh first (rule 9) and
   rebuilt the unchecked list from scratch with `grep '^- \[ \]'` rather than
