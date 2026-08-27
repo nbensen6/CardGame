@@ -790,6 +790,22 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-27** — No work done this run either (another firing the same
+  day as the entries below). Re-derived the unchecked list from scratch
+  via `grep '^- \[ \]'` rather than trusting the previous entry: still 2,
+  3, 8, 25, 29b, 32, 31b, 78, 79, 81 (`needs a screen`); 55, 74, 76
+  (`cloud-safe`/`cloud-art` but blocked on Blender per their own notes);
+  80 (`cloud-art`, correctly unticked pending Nick's review). Re-checked
+  `download.blender.org` directly: `curl -sI` still returns a 403, and
+  `/__agentproxy/status` still logs it as `connect_rejected` (policy
+  denial), timestamped this run rather than reused from a prior one. This
+  is now six-plus consecutive firings on the identical conclusion. Nothing
+  in the actionable Queue is buildable without either a screen or Blender
+  egress; the diagnosed `keywords.json` duplicate `"block"` id sits in
+  *Later*, not the Queue, so it stays for whoever promotes it deliberately
+  rather than being pulled in on this run's own judgement. Stopped per
+  rule 6 rather than inventing scope. No files touched besides this log
+  line.
 - **2026-08-27** — No work done this run either (yet another firing the
   same day as the two entries below). Re-derived the unchecked list from
   scratch again rather than trusting it: still 2, 3, 8, 25, 29b, 32, 31b,
