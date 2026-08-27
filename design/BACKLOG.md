@@ -43,6 +43,16 @@ These exist because nobody is watching. Breaking one is worse than doing nothing
    this session picked). Run `git fetch origin main` and diff
    `design/BACKLOG.md` against `origin/main` before starting — not just before
    pushing — or unsupervised work can silently redo something already done.
+10. **A new hunter or beast needs a body, or a deliberate stand-in.** Adding
+    character or beast DATA with no model is how the Lightbearer shipped
+    invisible — on screen as a bunny, with no entry in `Cast.PLACEHOLDER` even
+    naming it a placeholder (#80). A run that adds a playable character or
+    beast must, in the same run, either build its body (`cloud-art`) or queue
+    it in this file and add a deliberate placeholder entry (`Cast.PLACEHOLDER`
+    for a hunter; a beast has no such fallback at all — see #55's note on
+    `_test_everyone_wears_their_own_art`, which means a beast with no model
+    fails the suite outright rather than falling through quietly). Never let
+    new content fall through to a default silently.
 
 ## Queue
 
@@ -644,13 +654,14 @@ check. It never judges its own work. See item 74 for why.
 
 - [ ] **80. The Lightbearer's art, and the rule that a new hunter needs some**
   `cloud-art` — the cloud added a fifth hunter in #47 with no model, so it stood
-  on screen as a bunny, and `Cast.PLACEHOLDER` had no entry for it either. The
-  model exists now (`tools/blender/lightbearer.py`). What does not exist is the
-  habit: **a run that adds a character or a beast must either build its body or
-  queue it here and add a deliberate PLACEHOLDER entry.** Falling through to the
-  default bunny is how a fifth hunter shipped invisible. *Done when:* that rule
-  is written into the routine's brief and the portrait for the Lightbearer is
-  ours rather than Kenney's owl.
+  on screen as a bunny, and `Cast.PLACEHOLDER` had no entry for it either. Both
+  halves of *done when* are now met: the model and portrait landed 2026-08-25
+  (`tools/blender/lightbearer.py`; `game/assets/portraits/lightbearer.png` via
+  `portraits.py`), and hard rule #10 above now writes the habit — build a body
+  or queue a deliberate placeholder — into the brief. Left **unchecked**
+  regardless, per this file's own convention: a `cloud-art` item is never
+  ticked by the routine, and `design/ART-REVIEW.md`'s `lightbearer` block still
+  reads NEEDS A PASS — Nick has not looked at the model yet.
 
 - [ ] **76. Card icons, rendered rather than borrowed** `cloud-art` — every card
   face wears one of 25 Kenney icons, so cards share pictures and the Card Lab
@@ -779,6 +790,64 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-27** — No work done this run either (yet another firing the
+  same day as the two entries below). Re-derived the unchecked list from
+  scratch again rather than trusting it: still 2, 3, 8, 25, 29b, 32, 31b,
+  78, 79, 81 (`needs a screen`); 55, 74, 76 (`cloud-safe`/`cloud-art` but
+  blocked on Blender per their own notes); 80 (`cloud-art`, correctly
+  unticked pending Nick's review). Re-checked `download.blender.org`
+  directly rather than assuming: `curl -sI` still gives a CONNECT-tunnel
+  403 and `/__agentproxy/status` still shows it as a policy denial
+  (`connect_rejected`), not a transient relay failure, same as every prior
+  check. This is now five-plus consecutive firings across two days landing
+  on the identical conclusion, which is itself the useful signal: nothing
+  left in the queue is buildable without either a screen or Blender
+  network access, so no amount of re-running will change the outcome.
+  Stopped per rule 6 rather than inventing scope. No files touched besides
+  this log line.
+- **2026-08-27** — No work done this run either (a later firing the same
+  day as the entry below). Re-fetched and re-derived the unchecked list from
+  scratch rather than trusting the previous entry: still 2, 3, 8, 25, 29b, 32,
+  31b, 78, 79, 81 (`needs a screen`), 55/74/76 (blocked on Blender), and 80
+  (`cloud-art`, correctly unticked pending Nick's review). Re-checked
+  `download.blender.org` directly (`curl -sI` gives a CONNECT tunnel 403, and
+  `/__agentproxy/status` shows no relay failure — it's a policy 403, not a
+  transient one) rather than assuming the last run's finding still held.
+  Considered the stray `keywords.json` duplicate `"block"` id noted in
+  *Later* — real, cheap, already diagnosed — but it isn't a queue item and
+  rule 6 says ideas outside the queue don't get pulled into a run on their
+  own judgement, so left it for whoever promotes it deliberately. Nothing
+  else to do; stopped per rule 6 rather than inventing scope. No files
+  touched besides this log line.
+- **2026-08-27** — No work done this run. Every unchecked item is either
+  `needs a screen` (2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81) or needs Blender
+  (55, 74's remaining half, 76), and #80 is `cloud-art` already finished,
+  correctly left unchecked for Nick to review. Re-confirmed
+  `download.blender.org` is still a 403 through the egress proxy
+  (`curl -sI` and `/__agentproxy/status` both agree) before concluding
+  that, not assuming yesterday's several identical findings were still
+  true. Stopped rather than inventing scope, per rule 6. No files touched
+  besides this log line.
+- **2026-08-26** — #80 The Lightbearer's art, and the rule that a new hunter
+  needs some: everything cloud-safe about this item turned out to be a queue
+  bookkeeping bug, not new work. Checked the working tree before touching
+  anything (per rule #55's own "verify it is actually undone" instruction) and
+  found the model, portrait, and an honest NEEDS A PASS block in ART-REVIEW.md
+  had already landed 2026-08-25, by hand, in an interactive session — commits
+  `b4255c7` and `e9167a4` — just never reflected back onto this item's own
+  text. Re-confirmed `download.blender.org` is still a 403 policy denial
+  through the egress proxy (`curl -sI` and the proxy's own
+  `/__agentproxy/status` both agree, same host, same reason as #74's last two
+  entries — not re-attempting or routing around it per the proxy's own
+  instructions), which ruled out every other unchecked `cloud-safe`/`cloud-art`
+  item this run could touch: #55 and #76 both need a new body built in
+  Blender, and #74's own remaining bar is Blender-and-a-beast, not the
+  contract. What was left and genuinely undone was #80's other half — "that
+  rule is written into the routine's brief" — so that's what this run did:
+  added hard rule #10 above (build a body or queue a placeholder for any new
+  character or beast) and updated #80's text to say plainly what's done and
+  what still needs Nick's eyes. Left unchecked on purpose; only the review is
+  outstanding now.
 - **2026-08-26** — #74 Let the cloud build models — behind a shape contract it
   can check: the fourth and last contract rule, sigil visibility ("visible
   from the front rather than buried behind the body," the one bullet the
