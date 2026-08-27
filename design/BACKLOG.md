@@ -918,6 +918,20 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-27** — Sixth consecutive re-check, same tip (`67f8b06`) as the
+  entry directly below. Fetched `origin/main` fresh first (rule 9) and
+  rebuilt the unchecked list from scratch with `grep '^- \[ \]'` rather than
+  trusting the prose here: `2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81` are `needs
+  a screen`; `55, 76, 80` are the only `cloud-safe`/`cloud-art` items, and all
+  three were re-verified directly against files rather than against this
+  log: `game/data/bosses.json` has 20 beasts under `"bosses"`; `card_view.gd`'s
+  `ICONS` dict has exactly 28 entries; `lightbearer.glb` and `lightbearer.png`
+  are both present under `game/assets/`. Nothing changed since the previous
+  entry, so no new push notification this time — the last one already told
+  Nick the same thing (three finished `cloud-art` items waiting on his eyes),
+  and a repeat ping for an unchanged state is noise, not signal. No code
+  touched; skipped the full Godot import/test cycle for the same reason the
+  entry below did. Stopped per rule 6 rather than inventing scope.
 - **2026-08-27** — Fifth consecutive re-check, same tip (`5331b8c`) as the
   entry directly below. Independently re-verified rather than trusting either
   the queue prose or the previous log entry: `game/data/bosses.json` has 20
