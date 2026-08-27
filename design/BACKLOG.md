@@ -918,6 +918,22 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-27** — Fourth consecutive re-check; still no drift, and this one
+  did the independent verification itself rather than trusting the three prior
+  entries below: `origin/main` fetched clean at the real tip, `grep '^- \[ \]'`
+  re-derived the same unchecked list (`2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81`
+  are `needs a screen`; `55, 76, 80` are `cloud-safe`/`cloud-art`), then each of
+  the three was checked against files directly: `game/data/bosses.json` has 20
+  beasts under `"bosses"` including #55's six (`husk_beetle`, `gloom_moth`,
+  `bog_leech`, `thrasher`, `silk_widow`, `boulder_ram`), each with a committed
+  `.glb`; `card_view.gd`'s `ICONS` dict has exactly 28 entries from #76;
+  #80's `lightbearer.glb` and `lightbearer.png` are both committed. Full
+  import + test cycle run anyway: `ALL TESTS PASSED`. Nothing left this
+  routine may build without inventing scope — every remaining item is either
+  `needs a screen` or already-built art waiting on Nick. Flagged to Nick
+  directly this time (three silent identical runs in a row seemed like the
+  wrong call) rather than adding a fifth log entry nobody reads. Stopped per
+  rule 6.
 - **2026-08-27** — Third consecutive re-check; still no drift. `origin/main`
   fetched clean this time (no stale-ref warning), and the unchecked list is
   unchanged: `2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81` are `needs a screen`;
