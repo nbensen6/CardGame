@@ -20,7 +20,7 @@ than the model**. The frog scored 30/50 on the broken view and about 35 on the
 fixed one without a single edit. Re-shoot before believing any of them.
 
 The loop these now go through is `design/asset-loop.md`:
-`toolslender\look.cmd <asset> <pass>`, then open the images and score.
+`tools\blender\look.cmd <asset> <pass>`, then open the images and score.
 
 ## How a run adds to this
 
