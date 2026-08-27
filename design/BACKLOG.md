@@ -790,6 +790,21 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-27** — No work done this run either (yet another firing the
+  same day as the two entries below). Re-derived the unchecked list from
+  scratch again rather than trusting it: still 2, 3, 8, 25, 29b, 32, 31b,
+  78, 79, 81 (`needs a screen`); 55, 74, 76 (`cloud-safe`/`cloud-art` but
+  blocked on Blender per their own notes); 80 (`cloud-art`, correctly
+  unticked pending Nick's review). Re-checked `download.blender.org`
+  directly rather than assuming: `curl -sI` still gives a CONNECT-tunnel
+  403 and `/__agentproxy/status` still shows it as a policy denial
+  (`connect_rejected`), not a transient relay failure, same as every prior
+  check. This is now five-plus consecutive firings across two days landing
+  on the identical conclusion, which is itself the useful signal: nothing
+  left in the queue is buildable without either a screen or Blender
+  network access, so no amount of re-running will change the outcome.
+  Stopped per rule 6 rather than inventing scope. No files touched besides
+  this log line.
 - **2026-08-27** — No work done this run either (a later firing the same
   day as the entry below). Re-fetched and re-derived the unchecked list from
   scratch rather than trusting the previous entry: still 2, 3, 8, 25, 29b, 32,
