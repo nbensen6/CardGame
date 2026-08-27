@@ -918,6 +918,26 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-27** — No work done this run. Re-derived the unchecked list from
+  scratch via `grep '^- \[ \]'` (2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 are
+  `needs a screen`; 55, 76, 80 are `cloud-safe`/`cloud-art`) rather than
+  trusting the queue text or the previous log entry, then checked each of the
+  three non-screen items against the actual repo instead of just their own
+  inline notes: `game/data/bosses.json` lists all six new beasts #55 asked for
+  (`husk_beetle`, `gloom_moth`, `bog_leech`, `thrasher`, `silk_widow`,
+  `boulder_ram`, on top of the original 14), each has a committed `.glb` and
+  an `ART-REVIEW.md` block; #76's 28 rendered icons and its review block are
+  committed (`777524a`); #80's Lightbearer model and portrait are committed.
+  All three items' own "Done when" bars are genuinely met, not just claimed —
+  the queue's own notes on 55 and 76 already said as much, this run just
+  verified it against files rather than prose. None of the three can be
+  ticked by this routine regardless of that: they are `cloud-art` (or, for
+  55, gated on `cloud-art` per-beast work), and a human has to look first.
+  That leaves nothing left in the Queue this run may touch — every other
+  unchecked item is `needs a screen`, and building a seventh beast or a third
+  icon batch past an already-met bar would be inventing scope, not finishing
+  the item. Stopped per rule 6 rather than doing that. No files touched
+  besides this log line.
 - **2026-08-27** — Blender unblocked, and #74 + one beast of #55 landed. Every
   prior "no work" entry below checked `download.blender.org` directly and
   stopped there; this run additionally checked whether Blender was reachable
