@@ -156,3 +156,18 @@ PC first, where the audience is proven).
 - When adding cards/bosses/relics, add them as **data** in `/data`, not hard-coded logic.
 - Keep game rules deterministic and testable; write unit tests for `/core` combat resolution.
 - If a decision from §4 is still open and blocks progress, ask rather than guess.
+
+## 12. 3D assets
+
+Every 3D asset goes through the scored refinement loop in
+**`design/asset-loop.md`** — build, capture, look, score, fix the two worst
+things, repeat, max four passes. Do not generate an asset in one pass and call
+it done.
+
+The step that matters is *look*: render it and open the images. Eleven assets in
+this repo passed every automated check and were still wrong, because a check can
+prove a model meets its contract and cannot tell you it reads as a lamp.
+
+- `tools\blender\look.cmd <asset> <pass>` — capture six views to `design/renders/`
+- `design/progress/<asset>.md` — the score history for one asset
+- `design/ART-REVIEW.md` — assets still waiting on a human eye
