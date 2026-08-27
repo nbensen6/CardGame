@@ -526,6 +526,36 @@
           "value": 1
         }
       ]
+    },
+    "bog_leech": {
+      "name": "The Bog Leech",
+      "art": "res://assets/portraits/bog_leech.png",
+      "max_hp": 90,
+      "weak_point_height": 6,
+      "ledges": [2,4],
+      "weak_point_threshold": 26,
+      "moves": [
+        {
+          "type": "leech",
+          "value": 11
+        },
+        {
+          "type": "enrage",
+          "value": 2
+        },
+        {
+          "type": "attack",
+          "value": 13
+        },
+        {
+          "type": "leech",
+          "value": 9
+        },
+        {
+          "type": "attack_all",
+          "value": 8
+        }
+      ]
     }
   },
   "pools": {
@@ -543,7 +573,8 @@
       "frost_sentinel",
       "grove_bear",
       "shifting_idol",
-      "gloom_moth"
+      "gloom_moth",
+      "bog_leech"
     ],
     "boss": [
       "stone_warden",

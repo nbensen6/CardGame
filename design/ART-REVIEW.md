@@ -48,6 +48,81 @@ The failures that have happened, all of which passed every check:
 
 ---
 
+### bog_leech — NEEDS A PASS
+
+- built: 2026-08-27 by the routine, from `tools/blender/bog_leech.py` — the
+  third beast built end to end this way (backlog #55/#74 — three of the at
+  least six #55 asks for; three still to go). Elite pool, bent rule pairs
+  `leech` with `enrage`: every bite it lands both drains and heals it AND
+  feeds its own strength, so the fight escalates the longer it runs rather
+  than staying flat — none of the other elites make that pairing their whole
+  pattern (Mire Snapper spends leech as one move among five generalist ones;
+  Frost Sentinel wards with Artifact; Grove Bear enrages but never heals off
+  it; Shifting Idol moves the sigil; Gloom Moth clogs the deck instead of the
+  health bar). Husk Beetle (fight pool) also punishes slow play, but
+  passively — it just heals; nothing it does gets stronger by hurting you.
+  Blender install/route reused from husk_beetle/gloom_moth's own notes
+  (`apt-get install blender python3-numpy libegl1 libgl1-mesa-dri
+  libglx-mesa0`), no new setup needed.
+- checks: assetcheck 4/4 PASS on the final build — holds (2 ledges + sigil),
+  sigil colour, sigil visibility (48% occluded, under the 50% bar), silhouette
+  distinct (closest match `shifting_idol.glb` at 79%, checked 39 models). 1868
+  tris / 2600 beast budget, 1 mesh, 1 material. Full `run_tests.gd` green
+  (ALL TESTS PASSED).
+  **Worth reading before the next beast**: this one did NOT pass on the first,
+  second, or several following tries, and the reason is worth knowing before
+  reaching for the same shape again. First, a real bug in this run's own
+  workflow, not the model: Godot only reimports a changed `.glb` when the
+  editor opens (the README already says this) — every rebuild after the
+  first was silently checked against a STALE cached mesh, so five or six
+  fixes in a row reported the exact same "100% buried" verdict no matter what
+  changed, because none of them were actually being tested. Re-running
+  `--headless --path game --import` before every check surfaced the real,
+  moving number. Second, once real feedback was flowing, the actual defect:
+  a sigil mark placed at the CENTRE of its own hosting ball (the same shape
+  `gloom_moth.py`'s forehead crest uses successfully) only clears that ball's
+  own front hemisphere when the ball's centre HEIGHT doesn't coincide with
+  the sigil's own height — this ball's did, by construction, so the ball's
+  widest, most-forward cross-section sat exactly where the mark needed to be,
+  no matter how the ball's size or position was tuned. The fix that actually
+  worked was pulling the mark clearly forward of that surface (not just past
+  the ball's centre) and bridging the resulting gap with a thin separate
+  taper, rather than trying to reshape the ball itself. A second, smaller
+  find along the way: an earlier "vein seam" design used boxes thin in only
+  ONE axis, which read fine in the contract but rendered as a giant flat red
+  wall covering the whole model from the front — caught by looking at the
+  rendered preview, not by any automated check.
+- previews: `design/art-previews/bog_leech_0.png` (three-quarter), `_1.png`
+  (front), `_2.png` (side). Portrait: `game/assets/portraits/bog_leech.png`
+  (rendering portraits.py regenerates all 20 by design; only the new one was
+  copied into the repo, the other 19 left untouched on disk).
+- intent: a squat, swollen leech hunched low over its own puddle — a ringed
+  body with thin blood-red vein-stripes, a wet sucker-mouth ring at the
+  front-bottom with two small dark eye-spots above it, six tiny sucker-pads
+  underneath instead of legs (a leech grips with its body, not limbs), two
+  fed-fat body-segments stepping up its back for the climb, and a small
+  crest — off to one side, on a thin bridging stalk — where the sigil sits.
+- unsure about: the sigil reads clearly from the front (confirmed by looking
+  at the render, not just trusting the 48%-occluded number), but in the side
+  view it sits out on a visible thin stalk that reads more like a stuck-on
+  lollipop or antenna than a mark grown out of the body's own surface — a
+  direct cost of the fix above, and the most honest thing to flag here: the
+  fix that passed the automated check is not obviously the best-looking
+  answer, and a human pass may want to rebuild that crest as a wider, flatter
+  growth rather than a ball-on-a-stick once there's a display to judge it by
+  eye instead of by area percentage. The body reads as round and soft rather
+  than distinctly "leech-shaped" — recognisable as a wet, ringed creature but
+  it leans generic-blob more than the brief wanted; the mouth ring and
+  vein-stripes are doing most of the work of saying "leech" rather than the
+  silhouette itself. The two climb shelves are small, pale grey tabs against
+  a dark body — likely readable up close but worth checking against #81's
+  already-flagged "ledges read as scaffolding" at real fight distance. Legs
+  (sucker-pads) are tiny by design; worth checking they don't vanish against
+  a dark background in the game's actual lighting, the same gap husk_beetle's
+  own review flagged for its antennae.
+
+---
+
 ### gloom_moth — NEEDS A PASS
 
 - built: 2026-08-27 by the routine, from `tools/blender/gloom_moth.py` — the

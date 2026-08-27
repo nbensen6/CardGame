@@ -454,6 +454,27 @@ Ordered. Source in brackets.
   uses) are written up in `design/ART-REVIEW.md`'s `gloom_moth` block — read
   it before the next beast reaches for `shelf()` on a centreline. Left
   unchecked: still NEEDS A PASS, a human has to look.
+  **Checked 2026-08-27 (a third time the same day): three down, three to go.**
+  `bog_leech` landed in the `elite` pool — bent rule pairs `leech` with
+  `enrage` (every bite drains and heals it AND feeds its strength, so the
+  fight gets worse the longer it runs), the first elite whose whole pattern
+  is "the beast escalates" rather than a flat threat. assetcheck 4/4 (sigil
+  48% occluded, under the 50% bar), full suite green. Two things worth
+  reading before the next beast: first, a real process bug, not a modelling
+  one — Godot's headless `--script` run does NOT reimport a changed `.glb`
+  (only opening the editor does, per this file's own README), so five or six
+  rebuilds in a row were checked against a STALE cached mesh and reported the
+  identical "100% buried" verdict no matter what changed; running
+  `--headless --path game --import` before every check is what actually
+  surfaced real feedback. Second, the real defect once feedback worked: a
+  sigil mark placed at the CENTRE of its own hosting ball only clears that
+  ball's front hemisphere when the ball's centre HEIGHT doesn't coincide with
+  the sigil's own height — this one's did, by construction, so no amount of
+  resizing the ball fixed it; pulling the mark clear of the surface and
+  bridging the gap with a thin separate stalk is what worked, and the ART-
+  REVIEW block for it is honest that the stalk itself is a visible cost, not
+  a free fix — a human pass may want to rebuild it once there's a screen to
+  judge it by eye. Left unchecked: still NEEDS A PASS, a human has to look.
 
 - [x] **56. Ascension 9 and up** `cloud-safe` — eight tiers, and #22 proved they
   do what they claim. StS runs to twenty because the ladder IS the long game for
