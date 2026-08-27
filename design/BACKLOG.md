@@ -918,6 +918,24 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-27** — Ninth consecutive re-check, same tip (`6ed5f16`) as the
+  entry directly below. Fetched `origin/main` fresh (rule 9) and checked out
+  `FETCH_HEAD` (real tip, not the stale cached ref rule 9 warns about).
+  Rebuilt the unchecked list independently with `grep '^- \[ \] \*\*\d+'`
+  rather than trusting this file's prose, and re-verified all three
+  `cloud-safe`/`cloud-art` candidates directly against the tree:
+  `game/data/bosses.json` has 20 beasts under `"bosses"` (#55's six still all
+  present); `card_view.gd`'s `ICONS` dict still has exactly 28 entries, each
+  `preload()`-ing a real file under `game/assets/icons/`, and nothing else in
+  `game/ui/` or `game/**/*.tscn` references `assets/icons/` outside that one
+  file (#76); `lightbearer.glb`, `lightbearer_colormap.png` and
+  `lightbearer.png` are all still committed under `game/assets/` (#80). Every
+  other unchecked item is `needs a screen` (2, 3, 8, 25, 29b, 32, 31b, 78, 79,
+  81) and out of scope for a headless run. No drift since the eighth check,
+  so no new push notification — Nick has already been told the same three
+  finished `cloud-art` items are waiting on his eyes, and an unchanged state
+  doesn't need another ping. Skipped the Godot import/test cycle since no
+  code was touched. Stopped per rule 6 rather than inventing scope.
 - **2026-08-27** — Eighth consecutive re-check, same tip (`00d77b5`) as the
   entry directly below. Fetched `origin/main` fresh (rule 9; the cached ref
   was stale by nothing this time — real tip). Independently re-derived the
