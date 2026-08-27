@@ -5238,6 +5238,11 @@ func _test_adds_reach_the_shared_snapshot() -> void:
 	var s := _make_session()
 	var host: GameHost = s["host"]
 	var c0: GameClient = s["c0"]
+	# _make_session() rolls a random fight-pool beast for its node, and some of
+	# them (Root Lurker) carry their own add from bosses.json — clear it first
+	# so this test's assertion doesn't depend on which beast the roll happened
+	# to land on, only on what it appends itself.
+	host._run.combat.adds.clear()
 	var add := Boss.new("Grub", 15)
 	add.id = "grub"
 	add.hp = 9

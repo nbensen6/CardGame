@@ -437,6 +437,36 @@
         }
       ]
     },
+    "husk_beetle": {
+      "name": "The Husk Beetle",
+      "art": "res://assets/portraits/husk_beetle.png",
+      "max_hp": 44,
+      "weak_point_height": 5,
+      "ledges": [2, 3],
+      "weak_point_threshold": 16,
+      "moves": [
+        {
+          "type": "attack",
+          "value": 8
+        },
+        {
+          "type": "attack_all",
+          "value": 6
+        },
+        {
+          "type": "regen",
+          "value": 6
+        },
+        {
+          "type": "block",
+          "value": 5
+        },
+        {
+          "type": "attack",
+          "value": 12
+        }
+      ]
+    },
     "shifting_idol": {
       "name": "The Shifting Idol",
       "art": "res://assets/portraits/shifting_idol.png",
@@ -466,6 +496,160 @@
           "value": 16
         }
       ]
+    },
+    "gloom_moth": {
+      "name": "The Gloom Moth",
+      "art": "res://assets/portraits/gloom_moth.png",
+      "max_hp": 86,
+      "weak_point_height": 5,
+      "ledges": [2,4],
+      "weak_point_threshold": 22,
+      "moves": [
+        {
+          "type": "attack",
+          "value": 9
+        },
+        {
+          "type": "curse",
+          "value": 2
+        },
+        {
+          "type": "frail",
+          "value": 2
+        },
+        {
+          "type": "attack_all",
+          "value": 7
+        },
+        {
+          "type": "curse",
+          "value": 1
+        }
+      ]
+    },
+    "bog_leech": {
+      "name": "The Bog Leech",
+      "art": "res://assets/portraits/bog_leech.png",
+      "max_hp": 90,
+      "weak_point_height": 6,
+      "ledges": [2,4],
+      "weak_point_threshold": 26,
+      "moves": [
+        {
+          "type": "leech",
+          "value": 11
+        },
+        {
+          "type": "enrage",
+          "value": 2
+        },
+        {
+          "type": "attack",
+          "value": 13
+        },
+        {
+          "type": "leech",
+          "value": 9
+        },
+        {
+          "type": "attack_all",
+          "value": 8
+        }
+      ]
+    },
+    "thrasher": {
+      "name": "The Thrasher",
+      "art": "res://assets/portraits/thrasher.png",
+      "max_hp": 48,
+      "weak_point_height": 5,
+      "ledges": [2,4],
+      "weak_point_threshold": 17,
+      "moves": [
+        {
+          "type": "swipe_low",
+          "value": 10
+        },
+        {
+          "type": "swipe_high",
+          "value": 10
+        },
+        {
+          "type": "attack",
+          "value": 8
+        },
+        {
+          "type": "swipe_low",
+          "value": 13
+        },
+        {
+          "type": "swipe_high",
+          "value": 13
+        }
+      ]
+    },
+    "silk_widow": {
+      "name": "The Silk Widow",
+      "art": "res://assets/portraits/silk_widow.png",
+      "max_hp": 94,
+      "weak_point_height": 6,
+      "ledges": [2,4],
+      "weak_point_threshold": 25,
+      "moves": [
+        {
+          "type": "attack",
+          "value": 10
+        },
+        {
+          "type": "frail",
+          "value": 2
+        },
+        {
+          "type": "attack",
+          "value": 18,
+          "when": {"type": "undefended", "value": 0},
+          "fallback": {"type": "attack", "value": 11}
+        },
+        {
+          "type": "attack_all",
+          "value": 7
+        },
+        {
+          "type": "frail",
+          "value": 2
+        }
+      ]
+    },
+    "boulder_ram": {
+      "name": "The Boulder Ram",
+      "art": "res://assets/portraits/boulder_ram.png",
+      "max_hp": 46,
+      "weak_point_height": 5,
+      "ledges": [2,4],
+      "weak_point_threshold": 17,
+      "moves": [
+        {
+          "type": "attack",
+          "value": 8
+        },
+        {
+          "type": "block",
+          "value": 6
+        },
+        {
+          "type": "attack_all",
+          "value": 14,
+          "when": {"type": "max_height", "value": 1},
+          "fallback": {"type": "attack", "value": 9}
+        },
+        {
+          "type": "attack",
+          "value": 11
+        },
+        {
+          "type": "enrage",
+          "value": 2
+        }
+      ]
     }
   },
   "pools": {
@@ -475,13 +659,19 @@
       "bounder",
       "root_lurker",
       "sky_snapper",
-      "riftling"
+      "riftling",
+      "husk_beetle",
+      "thrasher",
+      "boulder_ram"
     ],
     "elite": [
       "mire_snapper",
       "frost_sentinel",
       "grove_bear",
-      "shifting_idol"
+      "shifting_idol",
+      "gloom_moth",
+      "bog_leech",
+      "silk_widow"
     ],
     "boss": [
       "stone_warden",

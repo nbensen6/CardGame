@@ -431,6 +431,120 @@ Ordered. Source in brackets.
   those is not one iteration. Left unchecked and un-skipped; whoever picks this
   up next should either build it as `cloud-art` one beast at a time, or get
   Nick to confirm a real beast-side placeholder is wanted before writing one.
+  **Checked 2026-08-27: one beast down, `cloud-art` end to end, five to go.**
+  Blender now installs in the sandbox (see #74's own note on the `apt-get`
+  route) so this is no longer stuck — `husk_beetle` landed in the `fight`
+  pool with holds, a `regen` limiter-idiom, a full Blender body, and content
+  integrity + the whole suite green. Still unchecked: the "Done when" bar is
+  six, and `design/ART-REVIEW.md`'s `husk_beetle` block is NEEDS A PASS like
+  every `cloud-art` beast before it — a human has to look before this or any
+  single beast counts as done.
+  **Checked 2026-08-27 (later the same day): two down, four to go.**
+  `gloom_moth` landed in the `elite` pool — bent rule `curse` (hands Bruised
+  Grip cards rather than hitting hard, so it's a deck-clog fight rather than
+  a damage race), the first elite-tier idiom none of Mire Snapper/Frost
+  Sentinel/Grove Bear/Shifting Idol use as their centrepiece. assetcheck 4/4,
+  full suite green (484 passed). Worth reading for the NEXT beast, not just
+  this one: the first two builds put its wing-hold shelves on the model's
+  own centreline the way `husk_beetle.py` does, and it rendered as loose
+  slabs bolted onto a ball — an actual instance of this file's own "reads as
+  handles bolted on" failure, caught by looking at the rendered preview
+  rather than trusting the contract alone. Root cause and the fix (a soft
+  ridge mass + off-centre anchors, the same trick `crag_pup.py` already
+  uses) are written up in `design/ART-REVIEW.md`'s `gloom_moth` block — read
+  it before the next beast reaches for `shelf()` on a centreline. Left
+  unchecked: still NEEDS A PASS, a human has to look.
+  **Checked 2026-08-27 (a third time the same day): three down, three to go.**
+  `bog_leech` landed in the `elite` pool — bent rule pairs `leech` with
+  `enrage` (every bite drains and heals it AND feeds its strength, so the
+  fight gets worse the longer it runs), the first elite whose whole pattern
+  is "the beast escalates" rather than a flat threat. assetcheck 4/4 (sigil
+  48% occluded, under the 50% bar), full suite green. Two things worth
+  reading before the next beast: first, a real process bug, not a modelling
+  one — Godot's headless `--script` run does NOT reimport a changed `.glb`
+  (only opening the editor does, per this file's own README), so five or six
+  rebuilds in a row were checked against a STALE cached mesh and reported the
+  identical "100% buried" verdict no matter what changed; running
+  `--headless --path game --import` before every check is what actually
+  surfaced real feedback. Second, the real defect once feedback worked: a
+  sigil mark placed at the CENTRE of its own hosting ball only clears that
+  ball's front hemisphere when the ball's centre HEIGHT doesn't coincide with
+  the sigil's own height — this one's did, by construction, so no amount of
+  resizing the ball fixed it; pulling the mark clear of the surface and
+  bridging the gap with a thin separate stalk is what worked, and the ART-
+  REVIEW block for it is honest that the stalk itself is a visible cost, not
+  a free fix — a human pass may want to rebuild it once there's a screen to
+  judge it by eye. Left unchecked: still NEEDS A PASS, a human has to look.
+  **Checked 2026-08-27 (a fourth time the same day): four down, two to go.**
+  `thrasher` landed in the `fight` pool — bent rule alternates `swipe_low`
+  and `swipe_high` as its whole pattern, so no height is ever safe two turns
+  running (every other fight beast punishes camping ONE side; this punishes
+  camping either). assetcheck 4/4 (sigil 47% occluded), full suite green.
+  One new failure mode worth naming for the next beast, distinct from Bog
+  Leech's: an elongated, roughly symmetric torso (the shape a low four-legged
+  creature invites) makes a climb-point anchor on its own centreline read as
+  "outward along the whole body's length" to beast.py's auto-placement,
+  rather than "outward off the hump it sits on" — a shelf came back pushed
+  out by more than the body's own height before the anchor was moved off the
+  centreline, the same fix (anchor off to one side) Bog Leech's sigil crest
+  used, just applied to a HOLD instead of the mark. Bog Leech's own sigil-
+  burial lesson repeated exactly once more, too: centring the sigil crest
+  ball's own height on the sigil's Height buried it again (69% occluded)
+  regardless of how far sideways it was nudged, until it was pulled forward
+  a full ball-diameter and bridged with a stalk. The ART-REVIEW block says
+  plainly what it could not check: the two shelves read as pale nubs closer
+  to "bolted on" than "grown from the spine" in the rendered previews, and
+  the intended newt reads more like a beetle-rat cross. Left unchecked:
+  still NEEDS A PASS, a human has to look.
+  **Checked 2026-08-27 (a fifth time the same day): five down, one to go.**
+  `silk_widow` landed in the `elite` pool — bent rule pairs `frail` with an
+  `undefended`-gated `attack` (18 damage vs a baseline 10-11, but only if a
+  hunter has zero Block when it fires), so staying defended against
+  something actively eroding your Block is the whole puzzle, a strategy
+  none of the other five elites touch. assetcheck 4/4 (sigil 47% occluded),
+  full suite green. Two things worth reading before the next beast: a
+  two-lobe body (this one's cephalothorax + abdomen) needs its own JOIN
+  piece sized generously, or the whole far lobe comes back as a floating
+  island — a first attempt's waist-pinch ball left a 0.14-unit gap and cost
+  nine parts. And when a sigil comes back buried and moving the mark
+  doesn't move the occlusion number at all, the culprit may be `mark()`'s
+  own AMBER parts (only the GOLD triangles are excluded from
+  self-occlusion) rather than the body — shrinking `size` from 0.19 to 0.16
+  fixed it here with the position unchanged. Full write-up, including three
+  things spotted by looking at the rendered previews that the contract
+  can't check (the sigil-crest bridge reading as a spike, the crest ball
+  reading as loose rather than grown-from, and whether the belly hourglass
+  reads at all), is in `design/ART-REVIEW.md`'s `silk_widow` block. Left
+  unchecked: still NEEDS A PASS, a human has to look.
+  **Checked 2026-08-27 (a sixth time the same day): six down, zero to go —
+  the "Done when" bar is met.** `boulder_ram` landed in the `fight` pool —
+  bent rule spends `boss.gd`'s `max_height` `when` condition (named by
+  backlog #40, unused by any beast until now): a heavy `attack_all` only
+  fires if a hunter is still at Height 1 or below, the first beast that
+  punishes camping the GROUND rather than a height above it. assetcheck
+  4/4 (sigil 46% occluded), full suite green (including content integrity
+  against the new `bosses.json` entry and pool membership). The sigil hit
+  the exact same "moving the mark doesn't move the number" symptom Silk
+  Widow's block named — this run tracked it down for real with a throwaway
+  debug script against `AssetContract`'s own occlusion functions rather
+  than guessing again, and confirmed the culprit is `mark()`'s own AMBER
+  parts self-occluding the GOLD ones it's built alongside, on every beast,
+  not a body-placement bug. The fix (shrink `size`) isn't a fixed constant
+  though — Silk Widow's `0.16` didn't clear this beast's own smaller span,
+  only `0.12` did, so the right number is per-beast, not copy-paste. Also
+  worth naming: a first build passed the contract at 45% occluded with a
+  ball-and-stalk crest, and only LOOKING at the rendered preview (not the
+  contract) caught that it read as a periscope bolted to the shoulder — the
+  exact antenna failure Silk Widow's own block already flagged, on a
+  different beast, passing every check a second time. Rebuilt as a flush
+  shoulder-mounted plate instead. Full write-up, including three things
+  spotted by looking that the contract can't check (a boxy "robot on legs"
+  read, thin ram horns that nearly vanish from the three-quarter angle, and
+  a small remaining nub where the antenna used to be), is in
+  `design/ART-REVIEW.md`'s `boulder_ram` block. Left unchecked, same as
+  every prior entry here: this item's numeric bar is now met but nobody has
+  looked at any of the six yet, and a `cloud-art` item is never ticked by
+  the routine regardless — that judgement is Nick's.
 
 - [x] **56. Ascension 9 and up** `cloud-safe` — eight tiers, and #22 proved they
   do what they claim. StS runs to twenty because the ladder IS the long game for
@@ -557,7 +671,7 @@ something Slay the Spire leans on hard and we do not have at all.
   like three separate taps. Build it on the same `resolved(quality)` contract so
   nothing downstream has to learn a new shape.
 
-- [ ] **74. Let the cloud build models — behind a shape contract it can check**
+- [x] **74. Let the cloud build models — behind a shape contract it can check**
   `cloud-safe` — mechanically this already works: Blender runs `--background`
   with no display, which is how every model in `tools/blender/` was built, and
   it renders preview PNGs headless too (workbench, no GPU). The routine already
@@ -620,6 +734,20 @@ something Slay the Spire leans on hard and we do not have at all.
   network-policy note), not a data change. Whoever next gets Blender working
   should treat those 10 as a punch list before spending a build on a 15th
   beast.
+  **Checked 2026-08-27: all four "Done when" conditions are met, ticked off.**
+  `download.blender.org` is still a policy 403 through the egress proxy — that
+  part never changed — but `apt-get install blender` reaches Ubuntu's own
+  archive instead and installs a working headless 4.0.2 (plus `python3-numpy`
+  for the glTF exporter and `libegl1`/`libgl1-mesa-dri`/`libglx-mesa0` for
+  `preview.py`/`portraits.py`'s offscreen render — none of it needs a display).
+  `husk_beetle` (backlog #55) is the first beast built end to end this way: all
+  four contract rules pass, three previews are committed, and the whole test
+  suite is green. This item is the tooling half only, not a judgement that any
+  beast built with it looks good — see `design/ART-REVIEW.md`'s `husk_beetle`
+  block (NEEDS A PASS) for that, and its own note that a human still has to
+  look. The still-open 10-beast sigil-occlusion punch list from the previous
+  entry is unaffected by this — it's `cloud-art` rework, not tooling, and a
+  separate iteration's job.
 
 ### Art the cloud can build
 
@@ -790,6 +918,117 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-27** — Third consecutive re-check; still no drift. `origin/main`
+  fetched clean this time (no stale-ref warning), and the unchecked list is
+  unchanged: `2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81` are `needs a screen`;
+  `55, 76, 80` are the only `cloud-safe`/`cloud-art` items and all three
+  remain fully built and only waiting on Nick — re-verified `bosses.json`'s
+  six new beasts, `card_view.gd`'s 28-entry `ICONS` dict, and the
+  Lightbearer's committed model/portrait directly, not from queue prose. Ran
+  the full import + test cycle anyway even though no code changed:
+  `ALL TESTS PASSED`. Nothing left this routine may build without inventing
+  scope; stopped per rule 6.
+- **2026-08-27** — Re-checked; no drift since the entry directly below. Fetched
+  origin/main fresh (tip unchanged), re-derived the unchecked list the same
+  way (`grep '^- \[ \]'`), and re-verified the three non-screen items against
+  files rather than trusting either the queue's prose or the previous log
+  entry: `game/data/bosses.json` still lists all 20 beasts including #55's six
+  new ones, each with a committed `.glb` and an `ART-REVIEW.md` block;
+  `card_view.gd`'s `ICONS` dict still has exactly the 28 rendered icons from
+  #76 and every explicit `"icon"` value across `data/*.json` resolves inside
+  it (no gap); #80's `lightbearer.glb`/`lightbearer.png`/review block are all
+  present. Nothing built this run — there is nothing left in the Queue to
+  build. Stopped per rule 6 rather than inventing scope or touching the
+  `Later` section's own two parked `cloud-safe` notes, which are parked, not
+  queued.
+- **2026-08-27** — No work done this run. Re-derived the unchecked list from
+  scratch via `grep '^- \[ \]'` (2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 are
+  `needs a screen`; 55, 76, 80 are `cloud-safe`/`cloud-art`) rather than
+  trusting the queue text or the previous log entry, then checked each of the
+  three non-screen items against the actual repo instead of just their own
+  inline notes: `game/data/bosses.json` lists all six new beasts #55 asked for
+  (`husk_beetle`, `gloom_moth`, `bog_leech`, `thrasher`, `silk_widow`,
+  `boulder_ram`, on top of the original 14), each has a committed `.glb` and
+  an `ART-REVIEW.md` block; #76's 28 rendered icons and its review block are
+  committed (`777524a`); #80's Lightbearer model and portrait are committed.
+  All three items' own "Done when" bars are genuinely met, not just claimed —
+  the queue's own notes on 55 and 76 already said as much, this run just
+  verified it against files rather than prose. None of the three can be
+  ticked by this routine regardless of that: they are `cloud-art` (or, for
+  55, gated on `cloud-art` per-beast work), and a human has to look first.
+  That leaves nothing left in the Queue this run may touch — every other
+  unchecked item is `needs a screen`, and building a seventh beast or a third
+  icon batch past an already-met bar would be inventing scope, not finishing
+  the item. Stopped per rule 6 rather than doing that. No files touched
+  besides this log line.
+- **2026-08-27** — Blender unblocked, and #74 + one beast of #55 landed. Every
+  prior "no work" entry below checked `download.blender.org` directly and
+  stopped there; this run additionally checked whether Blender was reachable
+  by ANY other route before accepting the same conclusion, and `apt-get
+  install blender` reaches Ubuntu's own archive fine — a working headless
+  4.0.2, no display needed. Needed `python3-numpy` too (the glTF exporter
+  throws `ModuleNotFoundError` without it) and `libegl1`/`libgl1-mesa-dri`/
+  `libglx-mesa0` for `preview.py`/`portraits.py`'s offscreen render. Built
+  `husk_beetle`, a `regen`-idiom fight-pool beast, end to end: data in
+  `bosses.json`, a Blender body via `tools/blender/husk_beetle.py`, all four
+  `assetcheck.gd` contract rules passing, three previews rendered and
+  committed, an honest `design/ART-REVIEW.md` block. Surprising: the sigil
+  failed the visibility check at 100% occluded on the first three placements
+  (a beetle's long horizontal body doesn't fit `beast.py`'s "radial out from
+  a central axis" assumption the way a rounder creature like the Crag Pup
+  does) and only cleared 50% after moving the mark and shrinking it twice —
+  worth knowing for the next elongated beast. Also genuinely LOOKED at the
+  renders via the Read tool (it can view a PNG — a real capability, not the
+  same as the game's live camera) rather than only trusting the numeric
+  contract, which is different from how every earlier `cloud-art` entry in
+  this file was written; said so plainly in the review block, including what
+  still reads weak (the shell segments don't look like distinct plates, the
+  antennae cross oddly from one angle). Ticked #74 off (the tooling bar is
+  fully met); left #55 unchecked (one of six) and its own ART-REVIEW block
+  NEEDS A PASS, per the rule that a human looks at `cloud-art` before it
+  counts as done. Also hit and fixed a real regression along the way, not
+  dodged: growing the fight pool from 6 to 7 beasts shifted a seeded test's
+  RNG roll onto a beast that already carries its own add, breaking an
+  unrelated add-snapshot test's assumption — fixed by clearing `adds` before
+  that test appends its own rather than by avoiding the pool-size change.
+- **2026-08-27** — No work done this run either (yet another firing the same
+  day as the entries below, tip now `448eaa3`). Re-derived the unchecked list
+  from scratch via `grep '^- \[ \]'` rather than trusting it: still 2, 3, 8,
+  25, 29b, 32, 31b, 78, 79, 81 (`needs a screen`); 55, 74, 76 (`cloud-safe`/
+  `cloud-art` but blocked on Blender per their own notes); 80 (`cloud-art`,
+  correctly unticked pending Nick's review). Re-checked `download.blender.org`
+  and `/__agentproxy/status` directly rather than assuming: still a policy 403
+  (`connect_rejected`), and re-confirmed no local Blender binary or cached
+  tarball exists anywhere in the sandbox. Nothing in the queue is buildable
+  under this run's constraints. Stopped per rule 6 rather than inventing
+  scope. No files touched besides this log line.
+- **2026-08-27** — No work done this run either (yet another firing the same
+  day as the entries below, tip still `32c0980`). Re-derived the unchecked
+  list from scratch rather than trusting it: still 2, 3, 8, 25, 29b, 32, 31b,
+  78, 79, 81 (`needs a screen`); 55, 74, 76 (`cloud-safe`/`cloud-art` but
+  blocked on Blender per their own notes); 80 (`cloud-art`, correctly
+  unticked pending Nick's review). Re-checked `download.blender.org` and
+  `/__agentproxy/status` directly rather than assuming: still a policy 403
+  (`connect_rejected`), also confirmed no local Blender binary or cached
+  tarball exists anywhere in the sandbox to route around it with. Nothing
+  in the queue is buildable under this run's constraints. Stopped per rule
+  6 rather than inventing scope. No files touched besides this log line.
+- **2026-08-27** — No work done this run either (another firing the same
+  day as the entries below). Re-derived the unchecked list from scratch
+  via `grep '^- \[ \]'` rather than trusting the previous entry: still 2,
+  3, 8, 25, 29b, 32, 31b, 78, 79, 81 (`needs a screen`); 55, 74, 76
+  (`cloud-safe`/`cloud-art` but blocked on Blender per their own notes);
+  80 (`cloud-art`, correctly unticked pending Nick's review). Re-checked
+  `download.blender.org` directly: `curl -sI` still returns a 403, and
+  `/__agentproxy/status` still logs it as `connect_rejected` (policy
+  denial), timestamped this run rather than reused from a prior one. This
+  is now six-plus consecutive firings on the identical conclusion. Nothing
+  in the actionable Queue is buildable without either a screen or Blender
+  egress; the diagnosed `keywords.json` duplicate `"block"` id sits in
+  *Later*, not the Queue, so it stays for whoever promotes it deliberately
+  rather than being pulled in on this run's own judgement. Stopped per
+  rule 6 rather than inventing scope. No files touched besides this log
+  line.
 - **2026-08-27** — No work done this run either (yet another firing the
   same day as the two entries below). Re-derived the unchecked list from
   scratch again rather than trusting it: still 2, 3, 8, 25, 29b, 32, 31b,

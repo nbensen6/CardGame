@@ -61,6 +61,439 @@ The failures that have happened, all of which passed every check:
 
 ---
 
+### boulder_ram — NEEDS A PASS
+
+- built: 2026-08-27 by the routine, from `tools/blender/boulder_ram.py` — the
+  sixth beast built end to end this way (backlog #55/#74: the "at least six
+  new beasts" bar is now met — zero left to go, though all six, this one
+  included, are still unreviewed). Fight pool. Bent rule: the first beast to
+  spend the `max_height` `when` condition (backlog #40 named it in
+  `boss.gd`, nothing had used it before this). A heavy `attack_all` (14) only
+  fires if a hunter is still at Height 1 or below when it comes up in the
+  pattern; otherwise it falls back to a single mild `attack` (9). Crag Pup
+  punishes camping the sigil, Thrasher punishes camping either height by
+  alternating swipes; this is the first beast that punishes camping the
+  GROUND — climb clear before this move comes up, or eat the sweep. Blender
+  install/route reused unchanged from the five beasts before it (`apt-get
+  install blender python3-numpy libegl1 libgl1-mesa-dri libglx-mesa0`).
+- checks: assetcheck 4/4 PASS — holds (2 ledges + sigil), a gold mark at the
+  sigil's Height, sigil visible from the front (46% occluded, under the 50%
+  bar), silhouette distinct (closest match `crag_pup.glb` at 78%, checked 42
+  models). 1180 tris / 2600 beast budget, 1 mesh, 1 material, origin at the
+  feet, no `finish()` "parts that don't touch" warning. Full `run_tests.gd`
+  green (ALL TESTS PASSED, including `_test_everyone_wears_their_own_art`
+  and the content-integrity test that walks `bosses.json`'s new
+  `"boulder_ram"` entry and its `fight`-pool membership).
+  **One real bug worth reading before the next beast, found by a debug pass
+  against `AssetContract` itself rather than guesswork.** The sigil came
+  back 54-55% occluded on the first four attempts, and neither moving the
+  mark further forward along its own facing axis, nor moving its supporting
+  crest/bridge geometry entirely below the sigil's own height band, changed
+  the number by more than a point — the same "moving the mark doesn't move
+  the number" symptom Silk Widow's own block already named. Rather than
+  guess again, this run wrote a throwaway Godot script
+  (`game/tools/_debug_sigil.gd`, deleted before commit — not part of the
+  toolchain) that reused `AssetContract`'s own `z_at_xy`/`is_occluded_from_front`
+  to name, per hidden gold triangle, which OTHER triangle actually blocks
+  it. The answer: `beast.py`'s `mark()` helper's own AMBER parts, sitting a
+  hair closer to the camera than the GOLD parts they frame — confirming
+  Silk Widow's guess, not a new bug, but this time proven rather than
+  inferred. Silk Widow fixed it by dropping `size` from 0.19 to 0.16; that
+  same 0.16 still gave this beast 54-55%, and only dropping further to
+  `size=0.12` got it under the bar (45-46%). Two things to take from that:
+  first, the "safe" mark size the earlier write-up implied (0.16) is not a
+  universal fix, only a size that happened to work for that beast's own
+  `H`/`span` — the self-occlusion scales against the model's fixed-width
+  contract band (`size.y * 0.055`, NOT proportional to the mark's own `w`),
+  so a beast with a smaller overall span needs a smaller mark to clear the
+  same absolute band. Second, and worth checking on EVERY beast rather than
+  assumed fixed: this run also caught a real bolted-on-antenna failure by
+  actually looking at the rendered preview after passing the contract at
+  size=0.16 — the crest+bridge, kept clear of the band to protect the
+  occlusion number, produced a grey ball on a long stick with the mark at
+  its tip, reading exactly as the "periscope" this file already warns
+  about. The contract cannot see that; only the render caught it. It was
+  rebuilt as a small STONE plate recessed flush into the hump's own front
+  face with the mark sitting just proud of it (a mounted shoulder-sigil
+  rather than an antenna), which is what shipped.
+- previews: `design/art-previews/boulder_ram_0.png` (three-quarter), `_1.png`
+  (front), `_2.png` (side). Portrait: `game/assets/portraits/boulder_ram.png`
+  (`portraits.py` regenerates all 22 by design; only the new one was copied
+  into the repo, the other 21 left untouched on disk). `FOCUS["boulder_ram"]
+  = (0.34, 1.35)` in `portraits.py` — needed a wider span than most
+  quadrupeds to fit the raised hump and the lowered head in the same frame.
+- intent: a low, block-shouldered quadruped built for a charge rather than a
+  bite — four thick stubby legs, a wide boxy barrel chest, a raised stony
+  hump over the front shoulders carrying curled ram horns and a lowered
+  head, in boxy stone-plate colours (STONE, CLAY, UMBER, TAN) rather than
+  the smoother organic palette the elite-pool beasts wear, so the
+  silhouette reads "boulder" before it reads "animal" — distinct from
+  Thrasher's low elongated newt and Husk Beetle's domed shell, the other two
+  fight-pool additions.
+- unsure about: looking at the three rendered angles myself (not a claim
+  this is good — that call is Nick's), three things stood out. First, the
+  overall read leans more "boxy robot on legs" than "beast" from the
+  three-quarter and side angles (`_0.png`, `_2.png`) — the barrel-chest box
+  is large and flat-sided relative to the rounded hump and head, and the
+  four black stubby legs read almost mechanical against the warm brown
+  body; whether that's a fair "boulder" reading or needs breaking up with
+  more shape variety is a judgement call this run can't make. Second, the
+  curled ram horns read reasonably clearly from the front (`_1.png`) but
+  nearly disappear from the three-quarter angle (`_0.png`), where only a
+  thin pale sliver near the neck hints at them — they may be too thin, or
+  need a stronger colour break from the body, to read at fight distance
+  from most angles. Third, the shoulder-mounted sigil plate that replaced
+  the antenna reads fine face-on but from the side (`_2.png`) still shows a
+  short grey nub ahead of the gold mark that could pass for a stuck-out
+  eye rather than a mounted plate — smaller than the antenna problem it
+  replaced, but not fully gone, and worth a second look once there's a
+  screen to judge it against the fight camera's actual angle rather than
+  these three fixed previews.
+
+---
+
+### silk_widow — NEEDS A PASS
+
+- built: 2026-08-27 by the routine, from `tools/blender/silk_widow.py` — the
+  fifth beast built end to end this way (backlog #55/#74 — five of the at
+  least six #55 asks for; one still to go). Elite pool. Bent rule: `frail`
+  paired with an `undefended`-gated `attack`. Two Frail applications a cycle
+  chip away at Block gained, and the one move that spikes hard (18 vs a
+  baseline 10-11) only spikes if a hunter has ZERO Block when it comes up.
+  Stone Warden already has one `undefended` move, but it sits alongside a
+  `height_split` limiter that is the actual centrepiece there; this is the
+  first beast where staying defended against something actively eroding your
+  Block IS the whole puzzle. None of the other five elites touch that
+  strategy: Mire Snapper drains, Frost Sentinel wards with Artifact, Grove
+  Bear enrages, Shifting Idol moves the sigil, Gloom Moth clogs the deck.
+  Blender install/route reused from the four beasts before it
+  (`apt-get install blender python3-numpy libegl1 libgl1-mesa-dri
+  libglx-mesa0`), no new setup needed.
+- checks: assetcheck 4/4 PASS — holds (2 ledges + sigil), a gold mark at the
+  sigil's Height, sigil visible from the front (47% occluded, under the 50%
+  bar), silhouette distinct (closest match `penguin.glb` at 64%, checked 41
+  models). 1464 tris / 2600 beast budget, 1 mesh, 1 material. Full
+  `run_tests.gd` green (ALL TESTS PASSED, including
+  `_test_everyone_wears_their_own_art`).
+  **Two real bugs hit building this one, both worth reading before the
+  next beast.** First, a two-lobe body (a spider's cephalothorax and
+  abdomen, built as two separate balls joined at a waist) needs the JOIN
+  itself sized generously — a first attempt's waist-pinch ball left a
+  0.14-unit gap between the two lobes' bounding boxes, and `finish()` came
+  back with the ENTIRE front half (cephalothorax, fangs, eyes, and the two
+  front legs anchored to it — nine parts) as its own floating island,
+  because nothing in that whole cluster touched the abdomen at all. A
+  two-lobe body is not two single-ball beasts glued together; the piece
+  between them has to be sized to actually bridge both AABBs, not just look
+  like it does in the numbers. Second, and the more interesting one: the
+  sigil passed every OTHER check on the first two real builds but came back
+  86% occluded, and moving the mark 0.3 units further forward changed
+  NOTHING (still 51%, to the percentage point) — because the occluder
+  wasn't the body at all, it was `beast.py`'s own `mark()` helper. `mark()`
+  draws three parts (a GOLD taper, an AMBER taper, an AMBER ring), and the
+  visibility check only excludes the GOLD triangles from counting as
+  occluders against themselves — the AMBER ring and second taper count as
+  ordinary body geometry, and with this beast's `facing` value they landed
+  slightly IN FRONT of the gold face they're meant to frame. Bog Leech and
+  Thrasher pass at 47-48% with the exact same `facing=(0, -0.94, 0.30)`,
+  which says this self-occlusion is baked into `mark()` for every beast
+  and normally sits just under the 50% bar — mine tipped over it not from
+  body placement but from `size=0.19` versus their `0.16-0.18`; dropping to
+  `size=0.16` (unchanged position) took it from 51% to 47% with no other
+  change. Worth checking early next time: if the sigil comes back buried
+  and moving the mark doesn't move the number, the culprit may be the mark
+  itself, not the body — try shrinking `size` before adding more forward
+  clearance.
+- previews: `design/art-previews/silk_widow_0.png` (three-quarter), `_1.png`
+  (front), `_2.png` (side). Portrait: `game/assets/portraits/silk_widow.png`
+  (`portraits.py` regenerates all 21 by design; only the new one was copied
+  into the repo, the other 20 left untouched on disk).
+- intent: a low, splayed spider — a small forward cephalothorax with fangs
+  and a huddle of eyes, a big swollen abdomen behind it carrying a red
+  hourglass mark on the underside, six long bent-kneed legs, and the gold
+  sigil on a small off-centre crest atop the abdomen. The bent-kneed leg
+  silhouette (an elevated knee above both the hip and the foot) is meant to
+  read as "spider" against the four straight-legged beasts already in the
+  cast.
+- unsure about: looking at the three rendered angles myself (not a claim
+  this is good — that call is Nick's), three things stood out worth a human
+  checking specifically. First, the side view (`_2.png`) shows the
+  sigil-crest bridge as a long thin rod poking sideways out of the body with
+  the gold mark sitting at its tip — it reads as a spike or an antenna
+  rather than a mark ON the creature, the same "stalk is a visible cost, not
+  a free fix" problem Bog Leech's own block already named, just from a
+  different beast. Second, the small grey crest ball that carries that rod
+  sits above the shoulder in a way that reads as a loose sphere perched on
+  the body rather than grown from it, most visible in the three-quarter and
+  side angles. Third, the red belly hourglass — two mirrored tapers meeting point to
+  point — reads in the previews as a small red wedge rather than a
+  recognisable hourglass; it may need to be bigger or flatter to read as
+  the intended marking rather than as a red smudge, at fight distance.
+
+---
+
+### thrasher — NEEDS A PASS
+
+- built: 2026-08-27 by the routine, from `tools/blender/thrasher.py` — the
+  fourth beast built end to end this way (backlog #55/#74 — four of the at
+  least six #55 asks for; two still to go). Fight pool. Bent rule: pure
+  repositioning pressure. `swipe_low` (hits anyone ON the ground) and
+  `swipe_high` (hits anyone OFF it) alternate as its whole pattern, so no
+  height is ever safe two turns running — Root Lurker punishes staying low,
+  Sky Snapper punishes staying high, and this is the fight-pool beast that
+  punishes staying ANYWHERE. Reading the telegraph and climbing or
+  descending before it lands is the entire fight. Blender install/route
+  reused from husk_beetle/gloom_moth/bog_leech's own notes (`apt-get install
+  blender python3-numpy libegl1 libgl1-mesa-dri libglx-mesa0`), no new setup
+  needed.
+- checks: assetcheck 4/4 PASS — holds (2 ledges + sigil), a gold mark at the
+  sigil's Height, sigil visible from the front (47% occluded, under the 50%
+  bar), silhouette distinct (closest match `bog_leech.glb` at 59%, checked 40
+  models). 1280 tris / 2600 beast budget, 1 mesh, 1 material. Full
+  `run_tests.gd` green (ALL TESTS PASSED, including
+  `_test_everyone_wears_their_own_art`).
+  **Two things worth reading before the next beast.** First, a body built
+  around one long, low, symmetric torso (a legless-underneath, elongated
+  mass, the same instinct a newt or lizard invites) hits a DIFFERENT failure
+  than Bog Leech's — not sigil burial, but a runaway "outward push": a
+  climb-point anchor placed ON the spine's own centreline reads its
+  "outward" direction as running the FULL LENGTH of the torso (beast.py's
+  auto-placement can't tell "outward from a hump" from "outward along a long
+  axis" when the anchor sits exactly on that axis), so a shelf at Height 4
+  first came back pushed out by 1.5 units — more than the whole body's own
+  height — with grown filler steps stretching the model's bounding box from
+  roughly 2.5 units deep to over 4. Anchoring the ridge shelves off to ONE
+  side of the centreline (mirroring Bog Leech's own sigil-crest fix, but for
+  a HOLD rather than the mark) cut that push to a much smaller, still
+  nonzero, ~0.5. Second, this beast's own version of Bog Leech's sigil-crest
+  lesson: placing the crest ball's centre exactly at the sigil's own Height —
+  which reads as the "obviously correct" choice — recreates the exact
+  burial Bog Leech already wrote up (62%, then 69% occluded on two attempts),
+  because a low-poly ball's widest cross-section sits at its own centre
+  regardless of how far sideways the mark is nudged. What actually worked,
+  again, was real forward clearance (the mark sits roughly a ball-diameter
+  in front of the crest's own edge) bridged by a thin stalk, not a
+  hand-measured "just past the surface."
+- previews: `design/art-previews/thrasher_0.png` (three-quarter), `_1.png`
+  (front), `_2.png` (side). Portrait: `game/assets/portraits/thrasher.png`
+  (rendering `portraits.py` regenerates all 21 by design; only the new one
+  was copied into the repo, the other 20 left untouched on disk).
+- intent: a low, crouched newt — four short splayed legs, a long flat body,
+  a bright orange warning-colour throat and belly, and a tail that curls up
+  and back over its own spine as if mid-lash, wearing the fight's own
+  up/down motion as its silhouette. Two ridge-humps step up the spine for
+  the climb, in cool steel/slate against the warm dark hide.
+- unsure about: looking at the rendered previews (this run can read the PNGs
+  it produces, though not the live 3D scene `screenshot.gd` would show), the
+  result reads more like a stag-beetle-crossed-with-rat than the intended
+  newt — the head is closer to a rodent snout than a lizard's, and the long
+  smooth black torso doesn't obviously say "amphibian." The two climb
+  shelves are small pale-grey/steel nubs against a near-black body; from the
+  side angle especially they read closer to this file's own "handles bolted
+  on" failure than to a ridge growing out of the spine, and the automatic
+  filler steps grown to close the gap between each shelf and the body's real
+  surface (a consequence of the off-centre-anchor fix above) add a couple of
+  additional small flat tabs that were not hand-placed and were not checked
+  by eye at fight distance. The sigil's forward stalk is a visible, thin
+  protrusion for the same reason Bog Leech's is — a direct cost of clearing
+  the burial check, not a free result. Whether the near-black base colour
+  reads as intended (rather than too dark, this file's most common recorded
+  failure) and whether the tail's curl is legible against the fight
+  background are both unconfirmed; a human pass with the model in-engine,
+  under the game's actual lighting and at actual fight-camera distance, is
+  needed before any of this counts as good rather than merely contract-legal.
+
+---
+
+### bog_leech — NEEDS A PASS
+
+- built: 2026-08-27 by the routine, from `tools/blender/bog_leech.py` — the
+  third beast built end to end this way (backlog #55/#74 — three of the at
+  least six #55 asks for; three still to go). Elite pool, bent rule pairs
+  `leech` with `enrage`: every bite it lands both drains and heals it AND
+  feeds its own strength, so the fight escalates the longer it runs rather
+  than staying flat — none of the other elites make that pairing their whole
+  pattern (Mire Snapper spends leech as one move among five generalist ones;
+  Frost Sentinel wards with Artifact; Grove Bear enrages but never heals off
+  it; Shifting Idol moves the sigil; Gloom Moth clogs the deck instead of the
+  health bar). Husk Beetle (fight pool) also punishes slow play, but
+  passively — it just heals; nothing it does gets stronger by hurting you.
+  Blender install/route reused from husk_beetle/gloom_moth's own notes
+  (`apt-get install blender python3-numpy libegl1 libgl1-mesa-dri
+  libglx-mesa0`), no new setup needed.
+- checks: assetcheck 4/4 PASS on the final build — holds (2 ledges + sigil),
+  sigil colour, sigil visibility (48% occluded, under the 50% bar), silhouette
+  distinct (closest match `shifting_idol.glb` at 79%, checked 39 models). 1868
+  tris / 2600 beast budget, 1 mesh, 1 material. Full `run_tests.gd` green
+  (ALL TESTS PASSED).
+  **Worth reading before the next beast**: this one did NOT pass on the first,
+  second, or several following tries, and the reason is worth knowing before
+  reaching for the same shape again. First, a real bug in this run's own
+  workflow, not the model: Godot only reimports a changed `.glb` when the
+  editor opens (the README already says this) — every rebuild after the
+  first was silently checked against a STALE cached mesh, so five or six
+  fixes in a row reported the exact same "100% buried" verdict no matter what
+  changed, because none of them were actually being tested. Re-running
+  `--headless --path game --import` before every check surfaced the real,
+  moving number. Second, once real feedback was flowing, the actual defect:
+  a sigil mark placed at the CENTRE of its own hosting ball (the same shape
+  `gloom_moth.py`'s forehead crest uses successfully) only clears that ball's
+  own front hemisphere when the ball's centre HEIGHT doesn't coincide with
+  the sigil's own height — this ball's did, by construction, so the ball's
+  widest, most-forward cross-section sat exactly where the mark needed to be,
+  no matter how the ball's size or position was tuned. The fix that actually
+  worked was pulling the mark clearly forward of that surface (not just past
+  the ball's centre) and bridging the resulting gap with a thin separate
+  taper, rather than trying to reshape the ball itself. A second, smaller
+  find along the way: an earlier "vein seam" design used boxes thin in only
+  ONE axis, which read fine in the contract but rendered as a giant flat red
+  wall covering the whole model from the front — caught by looking at the
+  rendered preview, not by any automated check.
+- previews: `design/art-previews/bog_leech_0.png` (three-quarter), `_1.png`
+  (front), `_2.png` (side). Portrait: `game/assets/portraits/bog_leech.png`
+  (rendering portraits.py regenerates all 20 by design; only the new one was
+  copied into the repo, the other 19 left untouched on disk).
+- intent: a squat, swollen leech hunched low over its own puddle — a ringed
+  body with thin blood-red vein-stripes, a wet sucker-mouth ring at the
+  front-bottom with two small dark eye-spots above it, six tiny sucker-pads
+  underneath instead of legs (a leech grips with its body, not limbs), two
+  fed-fat body-segments stepping up its back for the climb, and a small
+  crest — off to one side, on a thin bridging stalk — where the sigil sits.
+- unsure about: the sigil reads clearly from the front (confirmed by looking
+  at the render, not just trusting the 48%-occluded number), but in the side
+  view it sits out on a visible thin stalk that reads more like a stuck-on
+  lollipop or antenna than a mark grown out of the body's own surface — a
+  direct cost of the fix above, and the most honest thing to flag here: the
+  fix that passed the automated check is not obviously the best-looking
+  answer, and a human pass may want to rebuild that crest as a wider, flatter
+  growth rather than a ball-on-a-stick once there's a display to judge it by
+  eye instead of by area percentage. The body reads as round and soft rather
+  than distinctly "leech-shaped" — recognisable as a wet, ringed creature but
+  it leans generic-blob more than the brief wanted; the mouth ring and
+  vein-stripes are doing most of the work of saying "leech" rather than the
+  silhouette itself. The two climb shelves are small, pale grey tabs against
+  a dark body — likely readable up close but worth checking against #81's
+  already-flagged "ledges read as scaffolding" at real fight distance. Legs
+  (sucker-pads) are tiny by design; worth checking they don't vanish against
+  a dark background in the game's actual lighting, the same gap husk_beetle's
+  own review flagged for its antennae.
+
+---
+
+### gloom_moth — NEEDS A PASS
+
+- built: 2026-08-27 by the routine, from `tools/blender/gloom_moth.py` — the
+  second beast built end to end this way (backlog #55/#74 — two of the at
+  least six #55 asks for; four still to go). Elite pool, bent rule `curse`:
+  rather than hit hard it hands a hunter two Bruised Grips a turn and chips
+  Block with `frail` between doses, so the fight pressures your DECK rather
+  than your HP — none of the other three elites (Mire Snapper, Frost
+  Sentinel, Grove Bear) or Shifting Idol make curse their whole pattern.
+  Blender install and route were already proven by husk_beetle earlier this
+  run (`apt-get install blender python3-numpy libegl1 libgl1-mesa-dri
+  libglx-mesa0`), so this build reused it directly.
+- checks: assetcheck 4/4 PASS — holds (2 ledges + sigil), sigil colour
+  (0.2141 of footprint), sigil visibility (46% occluded, under the 50% bar),
+  silhouette distinct (closest match `shifting_idol.glb` at 72%, checked
+  against all 38 existing models). 1856 tris / 2600 beast budget, 1 mesh,
+  1 material. Full `run_tests.gd` green (484 passed).
+- previews: `design/art-previews/gloom_moth_0.png` (three-quarter), `_1.png`
+  (front), `_2.png` (side). Portrait: `game/assets/portraits/gloom_moth.png`
+  (rendering it regenerated all 19 other portraits too — a Blender-version
+  rendering difference, not a content change — so those were reverted and
+  only the new one is committed).
+- intent: a big fuzzy-thorax moth on six thin insect legs, a soft rounded
+  mass of folded wings draped over its back doubling as the two holds,
+  antennae and a pale dust-marking on its forehead where the sigil sits.
+- what changed mid-build, and why it's worth reading: the first two attempts
+  built the wings as free-standing flat boxes (the same `shelf()` pattern
+  `husk_beetle.py` uses for its shell plates) placed on the model's own
+  centreline. Looking at the rendered previews — actually looking, not just
+  trusting the contract, same as `husk_beetle`'s own note — both attempts
+  read as loose slabs bolted onto a ball, exactly the "reads as handles
+  bolted on" failure this file's own review section names. The root cause,
+  worked out from `beast.py`'s own source rather than guessed at: the
+  auto-push/auto-fill machinery in `_decorate()` pushes an unanchored climb
+  point radially outward from the model's own bounding-box centre, and a
+  centreline anchor (x=0) on a body with a big round head bulging forward of
+  it gets pushed FORWARD toward the head rather than sideways onto the
+  wing — which is what was growing extra stray filler boxes reaching toward
+  the face. Fixed by rebuilding the wings as one big soft ridge-shaped mass
+  (the same "hump, then a small flat step on its front slope" trick
+  `crag_pup.py` already uses successfully) with the two climb anchors placed
+  off-centre, standing on ONE side of the ridge rather than on the seam
+  between two. This is not a guess that it looks better — it visibly does,
+  compared side by side across three rebuilds — but it is still only judged
+  against a static render, not the game's own live camera.
+- unsure about: whether the wing-hump reads as *wings specifically* rather
+  than just a second fuzzy hump — there's no fold-line or wing-tip detail
+  differentiating it from a shoulder or a growth, so a player may not clock
+  "moth" from the silhouette alone without the antennae and portrait doing
+  most of that work. The two flat climb steps are small and close to the
+  ridge's own colour band, which fixed the "bolted-on slab" problem but may
+  have swung the other way — they could be too subtle to read as a place to
+  climb TO at fight distance, the opposite failure from #81's
+  already-flagged "ledges read as scaffolding" on other beasts. The
+  proboscis is a small curled taper tucked under the head; it may read as a
+  stray dark mark rather than a mouthpart at a glance. Legs are
+  deliberately hair-thin per the brief ("moth legs read the thinnest in the
+  cast") — worth checking they don't disappear entirely against a dark
+  background in the actual game lighting, which is brighter than this
+  preview's flat studio light per `husk_beetle`'s own note on that gap.
+
+---
+
+### husk_beetle — NEEDS A PASS
+
+- built: 2026-08-27 by the routine, from `tools/blender/husk_beetle.py` — the
+  first beast built end to end by a cloud run with a genuinely working Blender
+  (backlog #74's last bar): `download.blender.org` is still policy-blocked
+  through the egress proxy, but `apt-get install blender` reaches Ubuntu's own
+  archive and installs 4.0.2 headless with no display — a route no prior run
+  tried. It needed `apt-get install python3-numpy libegl1 libgl1-mesa-dri
+  libglx-mesa0` on top: the glTF exporter dies with `ModuleNotFoundError:
+  numpy` without the first, and `preview.py`/`portraits.py`'s offscreen render
+  needs the second two. Adds a 7th fight-pool beast (backlog #55 — one of the
+  at least six it asks for; five still to go), whose bent rule is `regen`
+  (heals 6 HP a turn unless the fight ends fast) — the one fight-pool idiom
+  none of the other six use yet.
+- checks: assetcheck 4/4 PASS — holds (2 ledges + sigil), sigil colour, sigil
+  visibility (47% occluded, under the 50% bar), silhouette distinct (closest
+  match crag_pup.glb at 72%, checked against all 37 existing models). 1384
+  tris / 2600 beast budget, 1 mesh, 1 material. Full `run_tests.gd` green
+  (484 passed) — including a real regression this addition exposed and fixed,
+  not dodged: growing the fight pool from 6 to 7 entries shifted
+  `_make_session()`'s seeded RNG roll onto the Root Lurker (which already
+  carries its own add) for a test that assumed a bare beast and then appended
+  one of its own, so the size check failed. Fixed in `run_tests.gd` by
+  clearing `combat.adds` before the test appends Grub, so the assertion no
+  longer depends on which beast a seed happens to roll.
+- previews: `design/art-previews/husk_beetle_0.png` (three-quarter), `_1.png`
+  (front), `_2.png` (side).
+- intent: a stout, low ground beetle climbing its own back — four stubby legs,
+  a two-segment shell forming the two ledges, mandibles up front, the sigil on
+  a raised tail-plate just behind the second shelf.
+- unsure about, and this time actually looked rather than only trusting the
+  contract (the Read tool renders a PNG for me; that is real vision on a
+  static image, not the same as the game's own live camera, and worth flagging
+  as a change from how every earlier NEEDS-A-PASS block in this file was
+  written): the two shell segments pass the hold contract — a hunter really
+  can stand there — but do not read as visually distinct plates in the render;
+  the body still looks like one smooth rounded mass with faint ridges rather
+  than a clearly plated beetle. The antennae visually cross over the body from
+  the three-quarter angle (a perspective artefact of two symmetric limbs, not
+  an actual mesh collision — the front and side angles read cleanly) and still
+  look a little odd there. The sigil is sized down to 0.16 world units
+  (against the `mark()` default of `H * 0.115 ≈ 0.35`) specifically to clear
+  the 50%-occluded bar after three larger sizes failed it at 100%, 61%, and
+  54% in turn — at that size it may read as a small badge rather than a
+  landmark at fight distance. On balance it reads more like a rounded
+  pill-bug than an armoured ground beetle; a flatter carapace with a sharper
+  shell-split down the spine is the honest next step if it doesn't hold up
+  next to the other thirteen.
+
+---
+
 ### the twenty-eight card icons — NEEDS A PASS
 
 Built 2026-08-26 by `tools/blender/icons.py`. Each is a tiny 3D scene in the
