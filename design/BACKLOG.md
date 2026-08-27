@@ -791,6 +791,17 @@ rather than inventing work.
 Newest first. One line per finished item: what, and anything surprising.
 
 - **2026-08-27** — No work done this run either (yet another firing the same
+  day as the entries below, tip now `448eaa3`). Re-derived the unchecked list
+  from scratch via `grep '^- \[ \]'` rather than trusting it: still 2, 3, 8,
+  25, 29b, 32, 31b, 78, 79, 81 (`needs a screen`); 55, 74, 76 (`cloud-safe`/
+  `cloud-art` but blocked on Blender per their own notes); 80 (`cloud-art`,
+  correctly unticked pending Nick's review). Re-checked `download.blender.org`
+  and `/__agentproxy/status` directly rather than assuming: still a policy 403
+  (`connect_rejected`), and re-confirmed no local Blender binary or cached
+  tarball exists anywhere in the sandbox. Nothing in the queue is buildable
+  under this run's constraints. Stopped per rule 6 rather than inventing
+  scope. No files touched besides this log line.
+- **2026-08-27** — No work done this run either (yet another firing the same
   day as the entries below, tip still `32c0980`). Re-derived the unchecked
   list from scratch rather than trusting it: still 2, 3, 8, 25, 29b, 32, 31b,
   78, 79, 81 (`needs a screen`); 55, 74, 76 (`cloud-safe`/`cloud-art` but
