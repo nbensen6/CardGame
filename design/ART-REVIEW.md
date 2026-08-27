@@ -9,6 +9,19 @@ behind the head. Every one of those got past every automated check we had.
 
 So: the routine BUILDS and PROVES. We LOOK.
 
+**Update, 2026-08-26.** A session with a display can now do the looking, and the
+first thing it found was that the looking tool was broken. `look.py` rolled its
+cameras 90° on any level shot, so the three-quarter view every judgement was
+read off showed a crouching frog as a hunched quadruped. Fixed; details in
+`design/progress/frog.md`.
+
+Treat every "NEEDS A PASS" note below as **possibly describing the camera rather
+than the model**. The frog scored 30/50 on the broken view and about 35 on the
+fixed one without a single edit. Re-shoot before believing any of them.
+
+The loop these now go through is `design/asset-loop.md`:
+`toolslender\look.cmd <asset> <pass>`, then open the images and score.
+
 ## How a run adds to this
 
 One block per asset, newest at the top, appended by the run that made it:
@@ -319,7 +332,7 @@ rebuilding was going to fix that, because the shape itself was the problem.
   Also unjudged: whether the ears are now too large, and whether the exhaust
   pipe reads as a pipe or as an orange handle.
 
-### frog — NEEDS A PASS
+### frog — DONE (looked at 2026-08-26, 36/50)
 - built: 2026-08-25 by hand, from tools/blender/frog.py
 - checks: 1456 tris (56 over the 1400 hunter budget), 1 mesh, 1 material, all
   parts touching, assetcheck 4/4

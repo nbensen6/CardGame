@@ -12,6 +12,11 @@ What carries a frog is the stuff spheres cannot say:
     line, half-buried, with a lid over them, not beads stuck on the front;
   * **legs that bend**, one limb() each, folded at the knee the way a frog folds;
   * **toes**, splayed. Three per foot is the cheapest read in the whole model.
+
+This model runs about 4% over the hunter budget and that is deliberate. The 56
+triangles were taken back once, off the brow and belly balls, and both went
+faceted enough to show: the brows turned into hard green cubes poking out of the
+eyes at fight distance. A boxy nub on the face costs more than 4% of a budget.
 """
 import sys, os, math, mathutils
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -34,7 +39,13 @@ b.ball((0.00,  0.11, 1.005), (0.365, 0.310, 0.240), GREEN, 8, 5)   # shoulders
 # the rounding.
 b.wedge((0.00, -0.10, 1.305), (0.428, 0.400, 0.175), GREEN,
         narrow=(0.58, 0.63), bevel=0.10, seg=2)
-b.ball((0.00,  0.19, 1.275), (0.375, 0.245, 0.250), GREEN, 8, 5)     # back of skull
+# Back of skull. Was (0, 0.19, 1.275) r(0.375, 0.245, 0.250), which reached
+# back to y 0.435 — over the whole torso — and topped out at 1.525. Between
+# that and the shoulders there was no dip anywhere along the topline, so the
+# 64px silhouette came out as one hump and the frog read as a boar. Smaller
+# and further forward: it now stops at y 0.265 and tops out at 1.460, under
+# the eyes at 1.601, which is the notch.
+b.ball((0.00,  0.10, 1.255), (0.360, 0.165, 0.205), GREEN, 8, 5)
 
 # The lower jaw, a shade lighter, slightly inside the upper so the mouth line
 # sits in shadow rather than on the silhouette.
@@ -55,11 +66,16 @@ def eye(s):
     the gold still faces you. Capping the top instead buried the eye and the
     frog came out squinting.
     """
-    at = mathutils.Vector((0.205 * s, -0.135, 1.455))
+    # Out from 0.205 and up from 1.455. At 0.205 the two domes left 0.084 of
+    # gap between their inner edges — about 2px at 64 — and the brow balls
+    # bridged most of that, so the pair merged into one bump. At 0.250 the
+    # gap is 0.224, and the outer edge is 0.413 against a 0.428 skull, so
+    # the head is no wider than it was.
+    at = mathutils.Vector((0.250 * s, -0.135, 1.485))
     look = mathutils.Vector((0.30 * s, -0.90, 0.31)).normalized()
     b.ball(at, (0.163, 0.163, 0.146), GOLD, 8, 5)
-    b.ball(at + mathutils.Vector((0.014 * s, 0.078, 0.062)),
-           (0.152, 0.136, 0.112), GREEN, 7, 4)                       # brow
+    b.ball(at + mathutils.Vector((0.030 * s, 0.078, 0.062)),
+           (0.140, 0.136, 0.112), GREEN, 7, 4)                       # brow
     b.ball(at + look * 0.112, (0.090, 0.090, 0.038), CHARCOAL, 6, 4,
            rot=(0, 0, 0))                                            # wide pupil
 

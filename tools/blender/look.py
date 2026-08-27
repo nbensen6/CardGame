@@ -42,10 +42,16 @@ SIL_SHOWN = 256    # blown up so a human can see what 64 pixels contains
 
 # Right, in front, a little above. -Y is the direction every model in this
 # project is built to face, so -Y is the front of the camera's arc.
+# The three-quarter is perspective, because that is what the fight camera is.
+# The profile is dead-on and ORTHOGRAPHIC, because the question it answers is
+# "where is the topline" and a perspective camera lifted above the model answers
+# that wrong — it drops the near end and raises the far one, which reads as a
+# rump taller than the head on a model whose eyes are demonstrably the highest
+# point on it.
 ANGLES = {
     "34":   (1.15, -1.30, 0.55),
-    "side": (1.85, 0.10, 0.30),
 }
+PROFILE = (1.0, 0.0, 0.0)
 
 
 def bounds():
@@ -62,10 +68,16 @@ def shoot(mid, reach, d, name, ortho=False, size=SIZE):
     loc = mid + mathutils.Vector(d).normalized() * reach * 2.1
     bpy.ops.object.camera_add(location=loc)
     cam = bpy.context.object
-    # Looking straight down, "up" cannot also be +Z or the track quaternion has
-    # no way to resolve the roll and the plan view comes out arbitrary.
-    up = "Y" if abs(mathutils.Vector(d).normalized().z) > 0.98 else "Z"
-    cam.rotation_euler = (mid - loc).to_track_quat("-Z", up).to_euler()
+    # "-Z", "Y" — and the second argument is the part that is easy to get wrong.
+    # to_track_quat names the camera's LOCAL axis that should point toward world
+    # up, and for a camera that is +Y, because -Z is already spoken for as the
+    # view direction. Passing "Z" asks the solver to point the axis that runs
+    # backwards out of the lens at the sky; with any downward tilt it fudges
+    # something close enough to look right, and on a dead-level camera it cannot,
+    # so it rolls 90 degrees and renders the subject lying on its side. That is
+    # what made the first profile of the frog look like a rump taller than a
+    # head. preview.py and portraits.py both had this right already.
+    cam.rotation_euler = (mid - loc).to_track_quat("-Z", "Y").to_euler()
     if ortho:
         cam.data.type = "ORTHO"
         cam.data.ortho_scale = reach * 1.15
@@ -99,6 +111,7 @@ def main():
 
     for name, d in ANGLES.items():
         shoot(mid, reach, d, name)
+    shoot(mid, reach, PROFILE, "side", ortho=True)
     shoot(mid, reach, (0.0, 0.0, 1.0), "top", ortho=True)
 
     # FORM: the same angle with the palette taken away. This is the one that
