@@ -790,6 +790,15 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-27** — No work done this run. Every unchecked item is either
+  `needs a screen` (2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81) or needs Blender
+  (55, 74's remaining half, 76), and #80 is `cloud-art` already finished,
+  correctly left unchecked for Nick to review. Re-confirmed
+  `download.blender.org` is still a 403 through the egress proxy
+  (`curl -sI` and `/__agentproxy/status` both agree) before concluding
+  that, not assuming yesterday's several identical findings were still
+  true. Stopped rather than inventing scope, per rule 6. No files touched
+  besides this log line.
 - **2026-08-26** — #80 The Lightbearer's art, and the rule that a new hunter
   needs some: everything cloud-safe about this item turned out to be a queue
   bookkeeping bug, not new work. Checked the working tree before touching
