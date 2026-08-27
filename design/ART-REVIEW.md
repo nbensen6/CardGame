@@ -48,6 +48,57 @@ The failures that have happened, all of which passed every check:
 
 ---
 
+### husk_beetle — NEEDS A PASS
+
+- built: 2026-08-27 by the routine, from `tools/blender/husk_beetle.py` — the
+  first beast built end to end by a cloud run with a genuinely working Blender
+  (backlog #74's last bar): `download.blender.org` is still policy-blocked
+  through the egress proxy, but `apt-get install blender` reaches Ubuntu's own
+  archive and installs 4.0.2 headless with no display — a route no prior run
+  tried. It needed `apt-get install python3-numpy libegl1 libgl1-mesa-dri
+  libglx-mesa0` on top: the glTF exporter dies with `ModuleNotFoundError:
+  numpy` without the first, and `preview.py`/`portraits.py`'s offscreen render
+  needs the second two. Adds a 7th fight-pool beast (backlog #55 — one of the
+  at least six it asks for; five still to go), whose bent rule is `regen`
+  (heals 6 HP a turn unless the fight ends fast) — the one fight-pool idiom
+  none of the other six use yet.
+- checks: assetcheck 4/4 PASS — holds (2 ledges + sigil), sigil colour, sigil
+  visibility (47% occluded, under the 50% bar), silhouette distinct (closest
+  match crag_pup.glb at 72%, checked against all 37 existing models). 1384
+  tris / 2600 beast budget, 1 mesh, 1 material. Full `run_tests.gd` green
+  (484 passed) — including a real regression this addition exposed and fixed,
+  not dodged: growing the fight pool from 6 to 7 entries shifted
+  `_make_session()`'s seeded RNG roll onto the Root Lurker (which already
+  carries its own add) for a test that assumed a bare beast and then appended
+  one of its own, so the size check failed. Fixed in `run_tests.gd` by
+  clearing `combat.adds` before the test appends Grub, so the assertion no
+  longer depends on which beast a seed happens to roll.
+- previews: `design/art-previews/husk_beetle_0.png` (three-quarter), `_1.png`
+  (front), `_2.png` (side).
+- intent: a stout, low ground beetle climbing its own back — four stubby legs,
+  a two-segment shell forming the two ledges, mandibles up front, the sigil on
+  a raised tail-plate just behind the second shelf.
+- unsure about, and this time actually looked rather than only trusting the
+  contract (the Read tool renders a PNG for me; that is real vision on a
+  static image, not the same as the game's own live camera, and worth flagging
+  as a change from how every earlier NEEDS-A-PASS block in this file was
+  written): the two shell segments pass the hold contract — a hunter really
+  can stand there — but do not read as visually distinct plates in the render;
+  the body still looks like one smooth rounded mass with faint ridges rather
+  than a clearly plated beetle. The antennae visually cross over the body from
+  the three-quarter angle (a perspective artefact of two symmetric limbs, not
+  an actual mesh collision — the front and side angles read cleanly) and still
+  look a little odd there. The sigil is sized down to 0.16 world units
+  (against the `mark()` default of `H * 0.115 ≈ 0.35`) specifically to clear
+  the 50%-occluded bar after three larger sizes failed it at 100%, 61%, and
+  54% in turn — at that size it may read as a small badge rather than a
+  landmark at fight distance. On balance it reads more like a rounded
+  pill-bug than an armoured ground beetle; a flatter carapace with a sharper
+  shell-split down the spine is the honest next step if it doesn't hold up
+  next to the other thirteen.
+
+---
+
 ### the twenty-eight card icons — NEEDS A PASS
 
 Built 2026-08-26 by `tools/blender/icons.py`. Each is a tiny 3D scene in the

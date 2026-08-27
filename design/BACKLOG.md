@@ -431,6 +431,14 @@ Ordered. Source in brackets.
   those is not one iteration. Left unchecked and un-skipped; whoever picks this
   up next should either build it as `cloud-art` one beast at a time, or get
   Nick to confirm a real beast-side placeholder is wanted before writing one.
+  **Checked 2026-08-27: one beast down, `cloud-art` end to end, five to go.**
+  Blender now installs in the sandbox (see #74's own note on the `apt-get`
+  route) so this is no longer stuck — `husk_beetle` landed in the `fight`
+  pool with holds, a `regen` limiter-idiom, a full Blender body, and content
+  integrity + the whole suite green. Still unchecked: the "Done when" bar is
+  six, and `design/ART-REVIEW.md`'s `husk_beetle` block is NEEDS A PASS like
+  every `cloud-art` beast before it — a human has to look before this or any
+  single beast counts as done.
 
 - [x] **56. Ascension 9 and up** `cloud-safe` — eight tiers, and #22 proved they
   do what they claim. StS runs to twenty because the ladder IS the long game for
@@ -557,7 +565,7 @@ something Slay the Spire leans on hard and we do not have at all.
   like three separate taps. Build it on the same `resolved(quality)` contract so
   nothing downstream has to learn a new shape.
 
-- [ ] **74. Let the cloud build models — behind a shape contract it can check**
+- [x] **74. Let the cloud build models — behind a shape contract it can check**
   `cloud-safe` — mechanically this already works: Blender runs `--background`
   with no display, which is how every model in `tools/blender/` was built, and
   it renders preview PNGs headless too (workbench, no GPU). The routine already
@@ -620,6 +628,20 @@ something Slay the Spire leans on hard and we do not have at all.
   network-policy note), not a data change. Whoever next gets Blender working
   should treat those 10 as a punch list before spending a build on a 15th
   beast.
+  **Checked 2026-08-27: all four "Done when" conditions are met, ticked off.**
+  `download.blender.org` is still a policy 403 through the egress proxy — that
+  part never changed — but `apt-get install blender` reaches Ubuntu's own
+  archive instead and installs a working headless 4.0.2 (plus `python3-numpy`
+  for the glTF exporter and `libegl1`/`libgl1-mesa-dri`/`libglx-mesa0` for
+  `preview.py`/`portraits.py`'s offscreen render — none of it needs a display).
+  `husk_beetle` (backlog #55) is the first beast built end to end this way: all
+  four contract rules pass, three previews are committed, and the whole test
+  suite is green. This item is the tooling half only, not a judgement that any
+  beast built with it looks good — see `design/ART-REVIEW.md`'s `husk_beetle`
+  block (NEEDS A PASS) for that, and its own note that a human still has to
+  look. The still-open 10-beast sigil-occlusion punch list from the previous
+  entry is unaffected by this — it's `cloud-art` rework, not tooling, and a
+  separate iteration's job.
 
 ### Art the cloud can build
 
@@ -790,6 +812,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-27** — Blender unblocked, and #74 + one beast of #55 landed. Every
+  prior "no work" entry below checked `download.blender.org` directly and
+  stopped there; this run additionally checked whether Blender was reachable
+  by ANY other route before accepting the same conclusion, and `apt-get
+  install blender` reaches Ubuntu's own archive fine — a working headless
+  4.0.2, no display needed. Needed `python3-numpy` too (the glTF exporter
+  throws `ModuleNotFoundError` without it) and `libegl1`/`libgl1-mesa-dri`/
+  `libglx-mesa0` for `preview.py`/`portraits.py`'s offscreen render. Built
+  `husk_beetle`, a `regen`-idiom fight-pool beast, end to end: data in
+  `bosses.json`, a Blender body via `tools/blender/husk_beetle.py`, all four
+  `assetcheck.gd` contract rules passing, three previews rendered and
+  committed, an honest `design/ART-REVIEW.md` block. Surprising: the sigil
+  failed the visibility check at 100% occluded on the first three placements
+  (a beetle's long horizontal body doesn't fit `beast.py`'s "radial out from
+  a central axis" assumption the way a rounder creature like the Crag Pup
+  does) and only cleared 50% after moving the mark and shrinking it twice —
+  worth knowing for the next elongated beast. Also genuinely LOOKED at the
+  renders via the Read tool (it can view a PNG — a real capability, not the
+  same as the game's live camera) rather than only trusting the numeric
+  contract, which is different from how every earlier `cloud-art` entry in
+  this file was written; said so plainly in the review block, including what
+  still reads weak (the shell segments don't look like distinct plates, the
+  antennae cross oddly from one angle). Ticked #74 off (the tooling bar is
+  fully met); left #55 unchecked (one of six) and its own ART-REVIEW block
+  NEEDS A PASS, per the rule that a human looks at `cloud-art` before it
+  counts as done. Also hit and fixed a real regression along the way, not
+  dodged: growing the fight pool from 6 to 7 beasts shifted a seeded test's
+  RNG roll onto a beast that already carries its own add, breaking an
+  unrelated add-snapshot test's assumption — fixed by clearing `adds` before
+  that test appends its own rather than by avoiding the pool-size change.
 - **2026-08-27** — No work done this run either (yet another firing the same
   day as the entries below, tip now `448eaa3`). Re-derived the unchecked list
   from scratch via `grep '^- \[ \]'` rather than trusting it: still 2, 3, 8,

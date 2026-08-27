@@ -437,6 +437,36 @@
         }
       ]
     },
+    "husk_beetle": {
+      "name": "The Husk Beetle",
+      "art": "res://assets/portraits/husk_beetle.png",
+      "max_hp": 44,
+      "weak_point_height": 5,
+      "ledges": [2, 3],
+      "weak_point_threshold": 16,
+      "moves": [
+        {
+          "type": "attack",
+          "value": 8
+        },
+        {
+          "type": "attack_all",
+          "value": 6
+        },
+        {
+          "type": "regen",
+          "value": 6
+        },
+        {
+          "type": "block",
+          "value": 5
+        },
+        {
+          "type": "attack",
+          "value": 12
+        }
+      ]
+    },
     "shifting_idol": {
       "name": "The Shifting Idol",
       "art": "res://assets/portraits/shifting_idol.png",
@@ -475,7 +505,8 @@
       "bounder",
       "root_lurker",
       "sky_snapper",
-      "riftling"
+      "riftling",
+      "husk_beetle"
     ],
     "elite": [
       "mire_snapper",
