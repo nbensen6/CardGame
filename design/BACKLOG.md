@@ -496,6 +496,26 @@ Ordered. Source in brackets.
   to "bolted on" than "grown from the spine" in the rendered previews, and
   the intended newt reads more like a beetle-rat cross. Left unchecked:
   still NEEDS A PASS, a human has to look.
+  **Checked 2026-08-27 (a fifth time the same day): five down, one to go.**
+  `silk_widow` landed in the `elite` pool — bent rule pairs `frail` with an
+  `undefended`-gated `attack` (18 damage vs a baseline 10-11, but only if a
+  hunter has zero Block when it fires), so staying defended against
+  something actively eroding your Block is the whole puzzle, a strategy
+  none of the other five elites touch. assetcheck 4/4 (sigil 47% occluded),
+  full suite green. Two things worth reading before the next beast: a
+  two-lobe body (this one's cephalothorax + abdomen) needs its own JOIN
+  piece sized generously, or the whole far lobe comes back as a floating
+  island — a first attempt's waist-pinch ball left a 0.14-unit gap and cost
+  nine parts. And when a sigil comes back buried and moving the mark
+  doesn't move the occlusion number at all, the culprit may be `mark()`'s
+  own AMBER parts (only the GOLD triangles are excluded from
+  self-occlusion) rather than the body — shrinking `size` from 0.19 to 0.16
+  fixed it here with the position unchanged. Full write-up, including three
+  things spotted by looking at the rendered previews that the contract
+  can't check (the sigil-crest bridge reading as a spike, the crest ball
+  reading as loose rather than grown-from, and whether the belly hourglass
+  reads at all), is in `design/ART-REVIEW.md`'s `silk_widow` block. Left
+  unchecked: still NEEDS A PASS, a human has to look.
 
 - [x] **56. Ascension 9 and up** `cloud-safe` — eight tiers, and #22 proved they
   do what they claim. StS runs to twenty because the ladder IS the long game for

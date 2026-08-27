@@ -48,6 +48,86 @@ The failures that have happened, all of which passed every check:
 
 ---
 
+### silk_widow — NEEDS A PASS
+
+- built: 2026-08-27 by the routine, from `tools/blender/silk_widow.py` — the
+  fifth beast built end to end this way (backlog #55/#74 — five of the at
+  least six #55 asks for; one still to go). Elite pool. Bent rule: `frail`
+  paired with an `undefended`-gated `attack`. Two Frail applications a cycle
+  chip away at Block gained, and the one move that spikes hard (18 vs a
+  baseline 10-11) only spikes if a hunter has ZERO Block when it comes up.
+  Stone Warden already has one `undefended` move, but it sits alongside a
+  `height_split` limiter that is the actual centrepiece there; this is the
+  first beast where staying defended against something actively eroding your
+  Block IS the whole puzzle. None of the other five elites touch that
+  strategy: Mire Snapper drains, Frost Sentinel wards with Artifact, Grove
+  Bear enrages, Shifting Idol moves the sigil, Gloom Moth clogs the deck.
+  Blender install/route reused from the four beasts before it
+  (`apt-get install blender python3-numpy libegl1 libgl1-mesa-dri
+  libglx-mesa0`), no new setup needed.
+- checks: assetcheck 4/4 PASS — holds (2 ledges + sigil), a gold mark at the
+  sigil's Height, sigil visible from the front (47% occluded, under the 50%
+  bar), silhouette distinct (closest match `penguin.glb` at 64%, checked 41
+  models). 1464 tris / 2600 beast budget, 1 mesh, 1 material. Full
+  `run_tests.gd` green (ALL TESTS PASSED, including
+  `_test_everyone_wears_their_own_art`).
+  **Two real bugs hit building this one, both worth reading before the
+  next beast.** First, a two-lobe body (a spider's cephalothorax and
+  abdomen, built as two separate balls joined at a waist) needs the JOIN
+  itself sized generously — a first attempt's waist-pinch ball left a
+  0.14-unit gap between the two lobes' bounding boxes, and `finish()` came
+  back with the ENTIRE front half (cephalothorax, fangs, eyes, and the two
+  front legs anchored to it — nine parts) as its own floating island,
+  because nothing in that whole cluster touched the abdomen at all. A
+  two-lobe body is not two single-ball beasts glued together; the piece
+  between them has to be sized to actually bridge both AABBs, not just look
+  like it does in the numbers. Second, and the more interesting one: the
+  sigil passed every OTHER check on the first two real builds but came back
+  86% occluded, and moving the mark 0.3 units further forward changed
+  NOTHING (still 51%, to the percentage point) — because the occluder
+  wasn't the body at all, it was `beast.py`'s own `mark()` helper. `mark()`
+  draws three parts (a GOLD taper, an AMBER taper, an AMBER ring), and the
+  visibility check only excludes the GOLD triangles from counting as
+  occluders against themselves — the AMBER ring and second taper count as
+  ordinary body geometry, and with this beast's `facing` value they landed
+  slightly IN FRONT of the gold face they're meant to frame. Bog Leech and
+  Thrasher pass at 47-48% with the exact same `facing=(0, -0.94, 0.30)`,
+  which says this self-occlusion is baked into `mark()` for every beast
+  and normally sits just under the 50% bar — mine tipped over it not from
+  body placement but from `size=0.19` versus their `0.16-0.18`; dropping to
+  `size=0.16` (unchanged position) took it from 51% to 47% with no other
+  change. Worth checking early next time: if the sigil comes back buried
+  and moving the mark doesn't move the number, the culprit may be the mark
+  itself, not the body — try shrinking `size` before adding more forward
+  clearance.
+- previews: `design/art-previews/silk_widow_0.png` (three-quarter), `_1.png`
+  (front), `_2.png` (side). Portrait: `game/assets/portraits/silk_widow.png`
+  (`portraits.py` regenerates all 21 by design; only the new one was copied
+  into the repo, the other 20 left untouched on disk).
+- intent: a low, splayed spider — a small forward cephalothorax with fangs
+  and a huddle of eyes, a big swollen abdomen behind it carrying a red
+  hourglass mark on the underside, six long bent-kneed legs, and the gold
+  sigil on a small off-centre crest atop the abdomen. The bent-kneed leg
+  silhouette (an elevated knee above both the hip and the foot) is meant to
+  read as "spider" against the four straight-legged beasts already in the
+  cast.
+- unsure about: looking at the three rendered angles myself (not a claim
+  this is good — that call is Nick's), three things stood out worth a human
+  checking specifically. First, the side view (`_2.png`) shows the
+  sigil-crest bridge as a long thin rod poking sideways out of the body with
+  the gold mark sitting at its tip — it reads as a spike or an antenna
+  rather than a mark ON the creature, the same "stalk is a visible cost, not
+  a free fix" problem Bog Leech's own block already named, just from a
+  different beast. Second, the small grey crest ball that carries that rod
+  sits above the shoulder in a way that reads as a loose sphere perched on
+  the body rather than grown from it, most visible in the three-quarter and
+  side angles. Third, the red belly hourglass — two mirrored tapers meeting point to
+  point — reads in the previews as a small red wedge rather than a
+  recognisable hourglass; it may need to be bigger or flatter to read as
+  the intended marking rather than as a red smudge, at fight distance.
+
+---
+
 ### thrasher — NEEDS A PASS
 
 - built: 2026-08-27 by the routine, from `tools/blender/thrasher.py` — the

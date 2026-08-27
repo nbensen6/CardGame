@@ -586,6 +586,38 @@
           "value": 13
         }
       ]
+    },
+    "silk_widow": {
+      "name": "The Silk Widow",
+      "art": "res://assets/portraits/silk_widow.png",
+      "max_hp": 94,
+      "weak_point_height": 6,
+      "ledges": [2,4],
+      "weak_point_threshold": 25,
+      "moves": [
+        {
+          "type": "attack",
+          "value": 10
+        },
+        {
+          "type": "frail",
+          "value": 2
+        },
+        {
+          "type": "attack",
+          "value": 18,
+          "when": {"type": "undefended", "value": 0},
+          "fallback": {"type": "attack", "value": 11}
+        },
+        {
+          "type": "attack_all",
+          "value": 7
+        },
+        {
+          "type": "frail",
+          "value": 2
+        }
+      ]
     }
   },
   "pools": {
@@ -605,7 +637,8 @@
       "grove_bear",
       "shifting_idol",
       "gloom_moth",
-      "bog_leech"
+      "bog_leech",
+      "silk_widow"
     ],
     "boss": [
       "stone_warden",
