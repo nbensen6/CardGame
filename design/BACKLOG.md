@@ -918,6 +918,16 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-27** — Third consecutive re-check; still no drift. `origin/main`
+  fetched clean this time (no stale-ref warning), and the unchecked list is
+  unchanged: `2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81` are `needs a screen`;
+  `55, 76, 80` are the only `cloud-safe`/`cloud-art` items and all three
+  remain fully built and only waiting on Nick — re-verified `bosses.json`'s
+  six new beasts, `card_view.gd`'s 28-entry `ICONS` dict, and the
+  Lightbearer's committed model/portrait directly, not from queue prose. Ran
+  the full import + test cycle anyway even though no code changed:
+  `ALL TESTS PASSED`. Nothing left this routine may build without inventing
+  scope; stopped per rule 6.
 - **2026-08-27** — Re-checked; no drift since the entry directly below. Fetched
   origin/main fresh (tip unchanged), re-derived the unchecked list the same
   way (`grep '^- \[ \]'`), and re-verified the three non-screen items against
