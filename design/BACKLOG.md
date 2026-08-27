@@ -918,6 +918,20 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-27** — Eighth consecutive re-check, same tip (`00d77b5`) as the
+  entry directly below. Fetched `origin/main` fresh (rule 9; the cached ref
+  was stale by nothing this time — real tip). Independently re-derived the
+  unchecked list with `grep '^- \[ \]'` and re-verified the three
+  non-screen candidates against the tree rather than this file's own prose:
+  `game/data/bosses.json` has 20 beasts (14 original + #55's six); the
+  Lightbearer's `.glb`, colormap and portrait are all present under
+  `game/assets/`; #76's icon set is unchanged. Every other unchecked item is
+  `needs a screen` (2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81). No drift since
+  the seventh check, so no new push notification — Nick was already told
+  twice that three finished `cloud-art` items are waiting on his eyes, and
+  an unchanged state doesn't need a third ping. Skipped the Godot
+  import/test cycle since no code was touched. Stopped per rule 6 rather
+  than inventing scope.
 - **2026-08-27** — Seventh consecutive re-check, same tip (`565f92c`) as the
   entry directly below. Fetched `origin/main` fresh (rule 9), rebuilt the
   unchecked list independently with `grep '^- \[ \]'` rather than trusting
