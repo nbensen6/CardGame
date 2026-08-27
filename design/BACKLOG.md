@@ -918,6 +918,19 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-27** — Fifth consecutive re-check, same tip (`5331b8c`) as the
+  entry directly below. Independently re-verified rather than trusting either
+  the queue prose or the previous log entry: `game/data/bosses.json` has 20
+  beasts (all 14 original plus #55's six); `game/ui/card_view.gd`'s `ICONS`
+  dict has exactly 28 entries (#76); `lightbearer.glb`/`lightbearer.png` are
+  both committed (#80). Every other unchecked item is `needs a screen`
+  (2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81). Sent a push notification to Nick
+  this time instead of another log-only entry — a git log line does not reach
+  him while he's away, and this is a real, actionable state (three finished
+  `cloud-art` items sitting idle on his review, and the rest of the queue
+  needs an interactive session to move at all), not a "nothing happened"
+  silence. Did not re-run the full Godot/test cycle since no code changed;
+  stopped per rule 6 rather than inventing scope.
 - **2026-08-27** — Fourth consecutive re-check; still no drift, and this one
   did the independent verification itself rather than trusting the three prior
   entries below: `origin/main` fetched clean at the real tip, `grep '^- \[ \]'`
