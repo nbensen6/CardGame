@@ -48,6 +48,69 @@ The failures that have happened, all of which passed every check:
 
 ---
 
+### gloom_moth — NEEDS A PASS
+
+- built: 2026-08-27 by the routine, from `tools/blender/gloom_moth.py` — the
+  second beast built end to end this way (backlog #55/#74 — two of the at
+  least six #55 asks for; four still to go). Elite pool, bent rule `curse`:
+  rather than hit hard it hands a hunter two Bruised Grips a turn and chips
+  Block with `frail` between doses, so the fight pressures your DECK rather
+  than your HP — none of the other three elites (Mire Snapper, Frost
+  Sentinel, Grove Bear) or Shifting Idol make curse their whole pattern.
+  Blender install and route were already proven by husk_beetle earlier this
+  run (`apt-get install blender python3-numpy libegl1 libgl1-mesa-dri
+  libglx-mesa0`), so this build reused it directly.
+- checks: assetcheck 4/4 PASS — holds (2 ledges + sigil), sigil colour
+  (0.2141 of footprint), sigil visibility (46% occluded, under the 50% bar),
+  silhouette distinct (closest match `shifting_idol.glb` at 72%, checked
+  against all 38 existing models). 1856 tris / 2600 beast budget, 1 mesh,
+  1 material. Full `run_tests.gd` green (484 passed).
+- previews: `design/art-previews/gloom_moth_0.png` (three-quarter), `_1.png`
+  (front), `_2.png` (side). Portrait: `game/assets/portraits/gloom_moth.png`
+  (rendering it regenerated all 19 other portraits too — a Blender-version
+  rendering difference, not a content change — so those were reverted and
+  only the new one is committed).
+- intent: a big fuzzy-thorax moth on six thin insect legs, a soft rounded
+  mass of folded wings draped over its back doubling as the two holds,
+  antennae and a pale dust-marking on its forehead where the sigil sits.
+- what changed mid-build, and why it's worth reading: the first two attempts
+  built the wings as free-standing flat boxes (the same `shelf()` pattern
+  `husk_beetle.py` uses for its shell plates) placed on the model's own
+  centreline. Looking at the rendered previews — actually looking, not just
+  trusting the contract, same as `husk_beetle`'s own note — both attempts
+  read as loose slabs bolted onto a ball, exactly the "reads as handles
+  bolted on" failure this file's own review section names. The root cause,
+  worked out from `beast.py`'s own source rather than guessed at: the
+  auto-push/auto-fill machinery in `_decorate()` pushes an unanchored climb
+  point radially outward from the model's own bounding-box centre, and a
+  centreline anchor (x=0) on a body with a big round head bulging forward of
+  it gets pushed FORWARD toward the head rather than sideways onto the
+  wing — which is what was growing extra stray filler boxes reaching toward
+  the face. Fixed by rebuilding the wings as one big soft ridge-shaped mass
+  (the same "hump, then a small flat step on its front slope" trick
+  `crag_pup.py` already uses successfully) with the two climb anchors placed
+  off-centre, standing on ONE side of the ridge rather than on the seam
+  between two. This is not a guess that it looks better — it visibly does,
+  compared side by side across three rebuilds — but it is still only judged
+  against a static render, not the game's own live camera.
+- unsure about: whether the wing-hump reads as *wings specifically* rather
+  than just a second fuzzy hump — there's no fold-line or wing-tip detail
+  differentiating it from a shoulder or a growth, so a player may not clock
+  "moth" from the silhouette alone without the antennae and portrait doing
+  most of that work. The two flat climb steps are small and close to the
+  ridge's own colour band, which fixed the "bolted-on slab" problem but may
+  have swung the other way — they could be too subtle to read as a place to
+  climb TO at fight distance, the opposite failure from #81's
+  already-flagged "ledges read as scaffolding" on other beasts. The
+  proboscis is a small curled taper tucked under the head; it may read as a
+  stray dark mark rather than a mouthpart at a glance. Legs are
+  deliberately hair-thin per the brief ("moth legs read the thinnest in the
+  cast") — worth checking they don't disappear entirely against a dark
+  background in the actual game lighting, which is brighter than this
+  preview's flat studio light per `husk_beetle`'s own note on that gap.
+
+---
+
 ### husk_beetle — NEEDS A PASS
 
 - built: 2026-08-27 by the routine, from `tools/blender/husk_beetle.py` — the

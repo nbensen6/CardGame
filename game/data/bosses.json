@@ -496,6 +496,36 @@
           "value": 16
         }
       ]
+    },
+    "gloom_moth": {
+      "name": "The Gloom Moth",
+      "art": "res://assets/portraits/gloom_moth.png",
+      "max_hp": 86,
+      "weak_point_height": 5,
+      "ledges": [2,4],
+      "weak_point_threshold": 22,
+      "moves": [
+        {
+          "type": "attack",
+          "value": 9
+        },
+        {
+          "type": "curse",
+          "value": 2
+        },
+        {
+          "type": "frail",
+          "value": 2
+        },
+        {
+          "type": "attack_all",
+          "value": 7
+        },
+        {
+          "type": "curse",
+          "value": 1
+        }
+      ]
     }
   },
   "pools": {
@@ -512,7 +542,8 @@
       "mire_snapper",
       "frost_sentinel",
       "grove_bear",
-      "shifting_idol"
+      "shifting_idol",
+      "gloom_moth"
     ],
     "boss": [
       "stone_warden",

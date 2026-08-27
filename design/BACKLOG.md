@@ -439,6 +439,21 @@ Ordered. Source in brackets.
   six, and `design/ART-REVIEW.md`'s `husk_beetle` block is NEEDS A PASS like
   every `cloud-art` beast before it — a human has to look before this or any
   single beast counts as done.
+  **Checked 2026-08-27 (later the same day): two down, four to go.**
+  `gloom_moth` landed in the `elite` pool — bent rule `curse` (hands Bruised
+  Grip cards rather than hitting hard, so it's a deck-clog fight rather than
+  a damage race), the first elite-tier idiom none of Mire Snapper/Frost
+  Sentinel/Grove Bear/Shifting Idol use as their centrepiece. assetcheck 4/4,
+  full suite green (484 passed). Worth reading for the NEXT beast, not just
+  this one: the first two builds put its wing-hold shelves on the model's
+  own centreline the way `husk_beetle.py` does, and it rendered as loose
+  slabs bolted onto a ball — an actual instance of this file's own "reads as
+  handles bolted on" failure, caught by looking at the rendered preview
+  rather than trusting the contract alone. Root cause and the fix (a soft
+  ridge mass + off-centre anchors, the same trick `crag_pup.py` already
+  uses) are written up in `design/ART-REVIEW.md`'s `gloom_moth` block — read
+  it before the next beast reaches for `shelf()` on a centreline. Left
+  unchecked: still NEEDS A PASS, a human has to look.
 
 - [x] **56. Ascension 9 and up** `cloud-safe` — eight tiers, and #22 proved they
   do what they claim. StS runs to twenty because the ladder IS the long game for
