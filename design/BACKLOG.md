@@ -918,6 +918,19 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-27** — Re-checked; no drift since the entry directly below. Fetched
+  origin/main fresh (tip unchanged), re-derived the unchecked list the same
+  way (`grep '^- \[ \]'`), and re-verified the three non-screen items against
+  files rather than trusting either the queue's prose or the previous log
+  entry: `game/data/bosses.json` still lists all 20 beasts including #55's six
+  new ones, each with a committed `.glb` and an `ART-REVIEW.md` block;
+  `card_view.gd`'s `ICONS` dict still has exactly the 28 rendered icons from
+  #76 and every explicit `"icon"` value across `data/*.json` resolves inside
+  it (no gap); #80's `lightbearer.glb`/`lightbearer.png`/review block are all
+  present. Nothing built this run — there is nothing left in the Queue to
+  build. Stopped per rule 6 rather than inventing scope or touching the
+  `Later` section's own two parked `cloud-safe` notes, which are parked, not
+  queued.
 - **2026-08-27** — No work done this run. Re-derived the unchecked list from
   scratch via `grep '^- \[ \]'` (2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 are
   `needs a screen`; 55, 76, 80 are `cloud-safe`/`cloud-art`) rather than
