@@ -918,6 +918,28 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-27** — Tenth consecutive re-check, same tip (`e08ff28`) as the
+  entry directly below. Fetched `origin/main` fresh (rule 9) and checked out
+  `FETCH_HEAD`; the cached ref was not stale this run. Independently rebuilt
+  the unchecked list with `grep '^- \[ \]'` rather than trusting this file's
+  prose, and re-verified the three `cloud-safe`/`cloud-art` candidates
+  directly against the tree rather than assuming yesterday's numbers still
+  hold: `game/data/bosses.json` has 20 beasts under `"bosses"` (#55's six
+  still all present); `game/ui/card_view.gd`'s `ICONS` dict still preloads
+  real files under `game/assets/icons/` for every icon any card references
+  (#76 — cross-checked cards.json's 26 distinct `icon` values against the
+  files on disk, all present, no gap to fill); `lightbearer.glb`,
+  `lightbearer_colormap.png` and `lightbearer.png` are all still committed
+  under `game/assets/` (#80). Also looked at the two cloud-safe bug reports
+  sitting in the **Later** section (the boss's own Frail/Artifact/Thorns
+  never reaching the snapshot; the duplicate `"block"` key in
+  `keywords.json`) and deliberately left them alone — Later is where ideas
+  get parked until a human promotes them into the Queue (see #47's own
+  "promoted from Later"), and this run's mandate is the Queue, not Later.
+  Every unchecked Queue item is `needs a screen` (2, 3, 8, 25, 29b, 32, 31b,
+  78, 79, 81) and out of scope for a headless run. No drift since the ninth
+  check, so no new push notification. Skipped the Godot import/test cycle
+  since no code was touched. Stopped per rule 6 rather than inventing scope.
 - **2026-08-27** — Ninth consecutive re-check, same tip (`6ed5f16`) as the
   entry directly below. Fetched `origin/main` fresh (rule 9) and checked out
   `FETCH_HEAD` (real tip, not the stale cached ref rule 9 warns about).
