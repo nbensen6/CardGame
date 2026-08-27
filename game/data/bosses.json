@@ -618,6 +618,38 @@
           "value": 2
         }
       ]
+    },
+    "boulder_ram": {
+      "name": "The Boulder Ram",
+      "art": "res://assets/portraits/boulder_ram.png",
+      "max_hp": 46,
+      "weak_point_height": 5,
+      "ledges": [2,4],
+      "weak_point_threshold": 17,
+      "moves": [
+        {
+          "type": "attack",
+          "value": 8
+        },
+        {
+          "type": "block",
+          "value": 6
+        },
+        {
+          "type": "attack_all",
+          "value": 14,
+          "when": {"type": "max_height", "value": 1},
+          "fallback": {"type": "attack", "value": 9}
+        },
+        {
+          "type": "attack",
+          "value": 11
+        },
+        {
+          "type": "enrage",
+          "value": 2
+        }
+      ]
     }
   },
   "pools": {
@@ -629,7 +661,8 @@
       "sky_snapper",
       "riftling",
       "husk_beetle",
-      "thrasher"
+      "thrasher",
+      "boulder_ram"
     ],
     "elite": [
       "mire_snapper",

@@ -48,6 +48,97 @@ The failures that have happened, all of which passed every check:
 
 ---
 
+### boulder_ram — NEEDS A PASS
+
+- built: 2026-08-27 by the routine, from `tools/blender/boulder_ram.py` — the
+  sixth beast built end to end this way (backlog #55/#74: the "at least six
+  new beasts" bar is now met — zero left to go, though all six, this one
+  included, are still unreviewed). Fight pool. Bent rule: the first beast to
+  spend the `max_height` `when` condition (backlog #40 named it in
+  `boss.gd`, nothing had used it before this). A heavy `attack_all` (14) only
+  fires if a hunter is still at Height 1 or below when it comes up in the
+  pattern; otherwise it falls back to a single mild `attack` (9). Crag Pup
+  punishes camping the sigil, Thrasher punishes camping either height by
+  alternating swipes; this is the first beast that punishes camping the
+  GROUND — climb clear before this move comes up, or eat the sweep. Blender
+  install/route reused unchanged from the five beasts before it (`apt-get
+  install blender python3-numpy libegl1 libgl1-mesa-dri libglx-mesa0`).
+- checks: assetcheck 4/4 PASS — holds (2 ledges + sigil), a gold mark at the
+  sigil's Height, sigil visible from the front (46% occluded, under the 50%
+  bar), silhouette distinct (closest match `crag_pup.glb` at 78%, checked 42
+  models). 1180 tris / 2600 beast budget, 1 mesh, 1 material, origin at the
+  feet, no `finish()` "parts that don't touch" warning. Full `run_tests.gd`
+  green (ALL TESTS PASSED, including `_test_everyone_wears_their_own_art`
+  and the content-integrity test that walks `bosses.json`'s new
+  `"boulder_ram"` entry and its `fight`-pool membership).
+  **One real bug worth reading before the next beast, found by a debug pass
+  against `AssetContract` itself rather than guesswork.** The sigil came
+  back 54-55% occluded on the first four attempts, and neither moving the
+  mark further forward along its own facing axis, nor moving its supporting
+  crest/bridge geometry entirely below the sigil's own height band, changed
+  the number by more than a point — the same "moving the mark doesn't move
+  the number" symptom Silk Widow's own block already named. Rather than
+  guess again, this run wrote a throwaway Godot script
+  (`game/tools/_debug_sigil.gd`, deleted before commit — not part of the
+  toolchain) that reused `AssetContract`'s own `z_at_xy`/`is_occluded_from_front`
+  to name, per hidden gold triangle, which OTHER triangle actually blocks
+  it. The answer: `beast.py`'s `mark()` helper's own AMBER parts, sitting a
+  hair closer to the camera than the GOLD parts they frame — confirming
+  Silk Widow's guess, not a new bug, but this time proven rather than
+  inferred. Silk Widow fixed it by dropping `size` from 0.19 to 0.16; that
+  same 0.16 still gave this beast 54-55%, and only dropping further to
+  `size=0.12` got it under the bar (45-46%). Two things to take from that:
+  first, the "safe" mark size the earlier write-up implied (0.16) is not a
+  universal fix, only a size that happened to work for that beast's own
+  `H`/`span` — the self-occlusion scales against the model's fixed-width
+  contract band (`size.y * 0.055`, NOT proportional to the mark's own `w`),
+  so a beast with a smaller overall span needs a smaller mark to clear the
+  same absolute band. Second, and worth checking on EVERY beast rather than
+  assumed fixed: this run also caught a real bolted-on-antenna failure by
+  actually looking at the rendered preview after passing the contract at
+  size=0.16 — the crest+bridge, kept clear of the band to protect the
+  occlusion number, produced a grey ball on a long stick with the mark at
+  its tip, reading exactly as the "periscope" this file already warns
+  about. The contract cannot see that; only the render caught it. It was
+  rebuilt as a small STONE plate recessed flush into the hump's own front
+  face with the mark sitting just proud of it (a mounted shoulder-sigil
+  rather than an antenna), which is what shipped.
+- previews: `design/art-previews/boulder_ram_0.png` (three-quarter), `_1.png`
+  (front), `_2.png` (side). Portrait: `game/assets/portraits/boulder_ram.png`
+  (`portraits.py` regenerates all 22 by design; only the new one was copied
+  into the repo, the other 21 left untouched on disk). `FOCUS["boulder_ram"]
+  = (0.34, 1.35)` in `portraits.py` — needed a wider span than most
+  quadrupeds to fit the raised hump and the lowered head in the same frame.
+- intent: a low, block-shouldered quadruped built for a charge rather than a
+  bite — four thick stubby legs, a wide boxy barrel chest, a raised stony
+  hump over the front shoulders carrying curled ram horns and a lowered
+  head, in boxy stone-plate colours (STONE, CLAY, UMBER, TAN) rather than
+  the smoother organic palette the elite-pool beasts wear, so the
+  silhouette reads "boulder" before it reads "animal" — distinct from
+  Thrasher's low elongated newt and Husk Beetle's domed shell, the other two
+  fight-pool additions.
+- unsure about: looking at the three rendered angles myself (not a claim
+  this is good — that call is Nick's), three things stood out. First, the
+  overall read leans more "boxy robot on legs" than "beast" from the
+  three-quarter and side angles (`_0.png`, `_2.png`) — the barrel-chest box
+  is large and flat-sided relative to the rounded hump and head, and the
+  four black stubby legs read almost mechanical against the warm brown
+  body; whether that's a fair "boulder" reading or needs breaking up with
+  more shape variety is a judgement call this run can't make. Second, the
+  curled ram horns read reasonably clearly from the front (`_1.png`) but
+  nearly disappear from the three-quarter angle (`_0.png`), where only a
+  thin pale sliver near the neck hints at them — they may be too thin, or
+  need a stronger colour break from the body, to read at fight distance
+  from most angles. Third, the shoulder-mounted sigil plate that replaced
+  the antenna reads fine face-on but from the side (`_2.png`) still shows a
+  short grey nub ahead of the gold mark that could pass for a stuck-out
+  eye rather than a mounted plate — smaller than the antenna problem it
+  replaced, but not fully gone, and worth a second look once there's a
+  screen to judge it against the fight camera's actual angle rather than
+  these three fixed previews.
+
+---
+
 ### silk_widow — NEEDS A PASS
 
 - built: 2026-08-27 by the routine, from `tools/blender/silk_widow.py` — the

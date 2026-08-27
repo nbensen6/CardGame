@@ -516,6 +516,35 @@ Ordered. Source in brackets.
   reading as loose rather than grown-from, and whether the belly hourglass
   reads at all), is in `design/ART-REVIEW.md`'s `silk_widow` block. Left
   unchecked: still NEEDS A PASS, a human has to look.
+  **Checked 2026-08-27 (a sixth time the same day): six down, zero to go —
+  the "Done when" bar is met.** `boulder_ram` landed in the `fight` pool —
+  bent rule spends `boss.gd`'s `max_height` `when` condition (named by
+  backlog #40, unused by any beast until now): a heavy `attack_all` only
+  fires if a hunter is still at Height 1 or below, the first beast that
+  punishes camping the GROUND rather than a height above it. assetcheck
+  4/4 (sigil 46% occluded), full suite green (including content integrity
+  against the new `bosses.json` entry and pool membership). The sigil hit
+  the exact same "moving the mark doesn't move the number" symptom Silk
+  Widow's block named — this run tracked it down for real with a throwaway
+  debug script against `AssetContract`'s own occlusion functions rather
+  than guessing again, and confirmed the culprit is `mark()`'s own AMBER
+  parts self-occluding the GOLD ones it's built alongside, on every beast,
+  not a body-placement bug. The fix (shrink `size`) isn't a fixed constant
+  though — Silk Widow's `0.16` didn't clear this beast's own smaller span,
+  only `0.12` did, so the right number is per-beast, not copy-paste. Also
+  worth naming: a first build passed the contract at 45% occluded with a
+  ball-and-stalk crest, and only LOOKING at the rendered preview (not the
+  contract) caught that it read as a periscope bolted to the shoulder — the
+  exact antenna failure Silk Widow's own block already flagged, on a
+  different beast, passing every check a second time. Rebuilt as a flush
+  shoulder-mounted plate instead. Full write-up, including three things
+  spotted by looking that the contract can't check (a boxy "robot on legs"
+  read, thin ram horns that nearly vanish from the three-quarter angle, and
+  a small remaining nub where the antenna used to be), is in
+  `design/ART-REVIEW.md`'s `boulder_ram` block. Left unchecked, same as
+  every prior entry here: this item's numeric bar is now met but nobody has
+  looked at any of the six yet, and a `cloud-art` item is never ticked by
+  the routine regardless — that judgement is Nick's.
 
 - [x] **56. Ascension 9 and up** `cloud-safe` — eight tiers, and #22 proved they
   do what they claim. StS runs to twenty because the ladder IS the long game for
