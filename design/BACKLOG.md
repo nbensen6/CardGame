@@ -918,6 +918,24 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-27** — Eleventh consecutive re-check, same tip (`564c724`) as the
+  entry directly below. Fetched `origin/main` fresh (rule 9) and checked out
+  `FETCH_HEAD`; no stale-ref drift this run either. Rebuilt the unchecked list
+  independently with `grep '^- \[ \]'` rather than trusting this file's prose
+  or the previous log entry, and re-verified all three `cloud-safe`/`cloud-art`
+  candidates directly against the tree: `game/data/bosses.json` still has 20
+  beasts under `"bosses"` (#55's six all present, confirmed via a JSON parse,
+  not a text grep); `game/ui/card_view.gd`'s `ICONS` dict still has exactly 28
+  `preload()` entries, each pointing at a real file under `game/assets/icons/`
+  (52 files on disk total, so no gap for #76 to fill); `game/assets/3d/cast/
+  lightbearer.glb`, its colormap, and `game/assets/portraits/lightbearer.png`
+  are all still committed (#80). Every other unchecked item is `needs a
+  screen` (2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81) and out of scope for a
+  headless run. No drift since the tenth check, so no new push notification —
+  the fifth check already told Nick the same three finished `cloud-art` items
+  are waiting on his eyes, and an unchanged state doesn't need another ping.
+  Skipped the Godot import/test cycle since no code was touched. Stopped per
+  rule 6 rather than inventing scope.
 - **2026-08-27** — Tenth consecutive re-check, same tip (`e08ff28`) as the
   entry directly below. Fetched `origin/main` fresh (rule 9) and checked out
   `FETCH_HEAD`; the cached ref was not stale this run. Independently rebuilt
