@@ -48,6 +48,79 @@ The failures that have happened, all of which passed every check:
 
 ---
 
+### thrasher — NEEDS A PASS
+
+- built: 2026-08-27 by the routine, from `tools/blender/thrasher.py` — the
+  fourth beast built end to end this way (backlog #55/#74 — four of the at
+  least six #55 asks for; two still to go). Fight pool. Bent rule: pure
+  repositioning pressure. `swipe_low` (hits anyone ON the ground) and
+  `swipe_high` (hits anyone OFF it) alternate as its whole pattern, so no
+  height is ever safe two turns running — Root Lurker punishes staying low,
+  Sky Snapper punishes staying high, and this is the fight-pool beast that
+  punishes staying ANYWHERE. Reading the telegraph and climbing or
+  descending before it lands is the entire fight. Blender install/route
+  reused from husk_beetle/gloom_moth/bog_leech's own notes (`apt-get install
+  blender python3-numpy libegl1 libgl1-mesa-dri libglx-mesa0`), no new setup
+  needed.
+- checks: assetcheck 4/4 PASS — holds (2 ledges + sigil), a gold mark at the
+  sigil's Height, sigil visible from the front (47% occluded, under the 50%
+  bar), silhouette distinct (closest match `bog_leech.glb` at 59%, checked 40
+  models). 1280 tris / 2600 beast budget, 1 mesh, 1 material. Full
+  `run_tests.gd` green (ALL TESTS PASSED, including
+  `_test_everyone_wears_their_own_art`).
+  **Two things worth reading before the next beast.** First, a body built
+  around one long, low, symmetric torso (a legless-underneath, elongated
+  mass, the same instinct a newt or lizard invites) hits a DIFFERENT failure
+  than Bog Leech's — not sigil burial, but a runaway "outward push": a
+  climb-point anchor placed ON the spine's own centreline reads its
+  "outward" direction as running the FULL LENGTH of the torso (beast.py's
+  auto-placement can't tell "outward from a hump" from "outward along a long
+  axis" when the anchor sits exactly on that axis), so a shelf at Height 4
+  first came back pushed out by 1.5 units — more than the whole body's own
+  height — with grown filler steps stretching the model's bounding box from
+  roughly 2.5 units deep to over 4. Anchoring the ridge shelves off to ONE
+  side of the centreline (mirroring Bog Leech's own sigil-crest fix, but for
+  a HOLD rather than the mark) cut that push to a much smaller, still
+  nonzero, ~0.5. Second, this beast's own version of Bog Leech's sigil-crest
+  lesson: placing the crest ball's centre exactly at the sigil's own Height —
+  which reads as the "obviously correct" choice — recreates the exact
+  burial Bog Leech already wrote up (62%, then 69% occluded on two attempts),
+  because a low-poly ball's widest cross-section sits at its own centre
+  regardless of how far sideways the mark is nudged. What actually worked,
+  again, was real forward clearance (the mark sits roughly a ball-diameter
+  in front of the crest's own edge) bridged by a thin stalk, not a
+  hand-measured "just past the surface."
+- previews: `design/art-previews/thrasher_0.png` (three-quarter), `_1.png`
+  (front), `_2.png` (side). Portrait: `game/assets/portraits/thrasher.png`
+  (rendering `portraits.py` regenerates all 21 by design; only the new one
+  was copied into the repo, the other 20 left untouched on disk).
+- intent: a low, crouched newt — four short splayed legs, a long flat body,
+  a bright orange warning-colour throat and belly, and a tail that curls up
+  and back over its own spine as if mid-lash, wearing the fight's own
+  up/down motion as its silhouette. Two ridge-humps step up the spine for
+  the climb, in cool steel/slate against the warm dark hide.
+- unsure about: looking at the rendered previews (this run can read the PNGs
+  it produces, though not the live 3D scene `screenshot.gd` would show), the
+  result reads more like a stag-beetle-crossed-with-rat than the intended
+  newt — the head is closer to a rodent snout than a lizard's, and the long
+  smooth black torso doesn't obviously say "amphibian." The two climb
+  shelves are small pale-grey/steel nubs against a near-black body; from the
+  side angle especially they read closer to this file's own "handles bolted
+  on" failure than to a ridge growing out of the spine, and the automatic
+  filler steps grown to close the gap between each shelf and the body's real
+  surface (a consequence of the off-centre-anchor fix above) add a couple of
+  additional small flat tabs that were not hand-placed and were not checked
+  by eye at fight distance. The sigil's forward stalk is a visible, thin
+  protrusion for the same reason Bog Leech's is — a direct cost of clearing
+  the burial check, not a free result. Whether the near-black base colour
+  reads as intended (rather than too dark, this file's most common recorded
+  failure) and whether the tail's curl is legible against the fight
+  background are both unconfirmed; a human pass with the model in-engine,
+  under the game's actual lighting and at actual fight-camera distance, is
+  needed before any of this counts as good rather than merely contract-legal.
+
+---
+
 ### bog_leech — NEEDS A PASS
 
 - built: 2026-08-27 by the routine, from `tools/blender/bog_leech.py` — the

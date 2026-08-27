@@ -475,6 +475,27 @@ Ordered. Source in brackets.
   REVIEW block for it is honest that the stalk itself is a visible cost, not
   a free fix — a human pass may want to rebuild it once there's a screen to
   judge it by eye. Left unchecked: still NEEDS A PASS, a human has to look.
+  **Checked 2026-08-27 (a fourth time the same day): four down, two to go.**
+  `thrasher` landed in the `fight` pool — bent rule alternates `swipe_low`
+  and `swipe_high` as its whole pattern, so no height is ever safe two turns
+  running (every other fight beast punishes camping ONE side; this punishes
+  camping either). assetcheck 4/4 (sigil 47% occluded), full suite green.
+  One new failure mode worth naming for the next beast, distinct from Bog
+  Leech's: an elongated, roughly symmetric torso (the shape a low four-legged
+  creature invites) makes a climb-point anchor on its own centreline read as
+  "outward along the whole body's length" to beast.py's auto-placement,
+  rather than "outward off the hump it sits on" — a shelf came back pushed
+  out by more than the body's own height before the anchor was moved off the
+  centreline, the same fix (anchor off to one side) Bog Leech's sigil crest
+  used, just applied to a HOLD instead of the mark. Bog Leech's own sigil-
+  burial lesson repeated exactly once more, too: centring the sigil crest
+  ball's own height on the sigil's Height buried it again (69% occluded)
+  regardless of how far sideways it was nudged, until it was pulled forward
+  a full ball-diameter and bridged with a stalk. The ART-REVIEW block says
+  plainly what it could not check: the two shelves read as pale nubs closer
+  to "bolted on" than "grown from the spine" in the rendered previews, and
+  the intended newt reads more like a beetle-rat cross. Left unchecked:
+  still NEEDS A PASS, a human has to look.
 
 - [x] **56. Ascension 9 and up** `cloud-safe` — eight tiers, and #22 proved they
   do what they claim. StS runs to twenty because the ladder IS the long game for

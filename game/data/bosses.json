@@ -556,6 +556,36 @@
           "value": 8
         }
       ]
+    },
+    "thrasher": {
+      "name": "The Thrasher",
+      "art": "res://assets/portraits/thrasher.png",
+      "max_hp": 48,
+      "weak_point_height": 5,
+      "ledges": [2,4],
+      "weak_point_threshold": 17,
+      "moves": [
+        {
+          "type": "swipe_low",
+          "value": 10
+        },
+        {
+          "type": "swipe_high",
+          "value": 10
+        },
+        {
+          "type": "attack",
+          "value": 8
+        },
+        {
+          "type": "swipe_low",
+          "value": 13
+        },
+        {
+          "type": "swipe_high",
+          "value": 13
+        }
+      ]
     }
   },
   "pools": {
@@ -566,7 +596,8 @@
       "root_lurker",
       "sky_snapper",
       "riftling",
-      "husk_beetle"
+      "husk_beetle",
+      "thrasher"
     ],
     "elite": [
       "mire_snapper",
