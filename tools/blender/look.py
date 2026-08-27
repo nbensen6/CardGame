@@ -101,6 +101,14 @@ def main():
     sc = bpy.context.scene
     sc.render.engine = "BLENDER_WORKBENCH"
     sc.render.image_settings.file_format = "PNG"
+    # Flat-shaded palette renders are almost all uniform colour, so they crush
+    # to nothing — but only if asked. Blender defaults to 15% compression and an
+    # alpha channel nobody here uses, which is the difference between 240 KB a
+    # frame and about 30. That matters because these get COMMITTED: a cloud run
+    # cannot install Blender, but it can open a PNG, so checked-in renders are
+    # the only way the look-and-score half of the loop reaches one.
+    sc.render.image_settings.color_mode = "RGB"
+    sc.render.image_settings.compression = 100
     sh = sc.display.shading
     sh.light = "STUDIO"
     sh.color_type = "TEXTURE"
