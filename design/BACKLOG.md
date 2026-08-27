@@ -790,6 +790,20 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-27** — No work done this run either (a later firing the same
+  day as the entry below). Re-fetched and re-derived the unchecked list from
+  scratch rather than trusting the previous entry: still 2, 3, 8, 25, 29b, 32,
+  31b, 78, 79, 81 (`needs a screen`), 55/74/76 (blocked on Blender), and 80
+  (`cloud-art`, correctly unticked pending Nick's review). Re-checked
+  `download.blender.org` directly (`curl -sI` gives a CONNECT tunnel 403, and
+  `/__agentproxy/status` shows no relay failure — it's a policy 403, not a
+  transient one) rather than assuming the last run's finding still held.
+  Considered the stray `keywords.json` duplicate `"block"` id noted in
+  *Later* — real, cheap, already diagnosed — but it isn't a queue item and
+  rule 6 says ideas outside the queue don't get pulled into a run on their
+  own judgement, so left it for whoever promotes it deliberately. Nothing
+  else to do; stopped per rule 6 rather than inventing scope. No files
+  touched besides this log line.
 - **2026-08-27** — No work done this run. Every unchecked item is either
   `needs a screen` (2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81) or needs Blender
   (55, 74's remaining half, 76), and #80 is `cloud-art` already finished,
