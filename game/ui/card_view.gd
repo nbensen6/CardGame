@@ -108,6 +108,8 @@ const ICONS := {
 	"thorns":  preload("res://assets/icons/thorns.png"),                      # a landed attack reflects damage back
 	"light":   preload("res://assets/icons/light.png"),                      # generate Light, the Lightbearer's resource
 	"frail":   preload("res://assets/icons/frail.png"),                      # Block gained is reduced while stacked
+	"strength": preload("res://assets/icons/strength.png"),                # gain Strength, adds to every attack
+	"dexterity": preload("res://assets/icons/dexterity.png"),              # gain Dexterity, adds to Block gained
 }
 const ENERGY_ICON := preload("res://ui/icons/energy.svg")
 

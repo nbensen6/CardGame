@@ -567,6 +567,69 @@ mismatch, one line.
 
 ---
 
+### Strength and Dexterity icons (strength, dexterity) — NEEDS A PASS
+
+Built 2026-08-28 by `tools/blender/icons.py`, batch 5 (backlog #76). Not a new
+gap, the one batch 2 explicitly left open: `sharpen`, `oil_can`, `alpine_focus`
+and `old_grudge` grant Strength, and `sure_footing` grants Dexterity — five
+cards, and every one of them wore `flask`, the potion icon, though none
+touches a potion at all. Batch 3's own note ("the card doesn't touch Strength
+or Dexterity or a flask at all") and batch 2's own closing line ("left for a
+future one if it's worth it") both already named this. Built two icons, not
+one folded-together "buff" glyph, because Strength and Dexterity are already
+distinct keywords with their own tooltip text in `keywords.json`, and merging
+them would just trade one wrong answer (a potion) for a vaguer one. After this
+batch nothing wears `flask` — it's not deleted, just currently unused, the
+same as any other Kenney glyph nothing points at — and backlog #76's own
+numeric bar ("at least eight new icons") is met for the first time: intangible,
+buffer, plated_armour, thorns, light, frail, strength, dexterity is eight.
+
+- **What to judge:** whether `strength` and `dexterity` read as two different
+  things from across a hand, not just different from `flask`.
+- `strength`: a dumbbell — two dark ringed weight plates joined by a rust bar
+  with a gold grip wrap. Checked at both the 256px render and a downsampled
+  42px pass; it reads clearly as a dumbbell at both sizes, the cleanest read
+  in this batch.
+- `dexterity`: went through three builds, the first two wrong in ways only the
+  render caught (icons have no assetcheck). First attempt: a column of small
+  flat plates fanned off a central quill — rendered as a fir tree, not a
+  feather, because a flat plate's own silhouette is a diamond and a stack of
+  diamonds reads as branches. Second attempt: two single wide-based tapered
+  blades flaring from the shaft's foot — rendered as a tent, with the barb
+  texture lines floating clear of the shape because they were sized for the
+  first design's footprint, not the second's. Third (shipped): one soft
+  vane built from two overlapping balls (the same two-tone trick `flask`'s
+  own body already uses), a thin quill poking through both ends, and four
+  thin grooves pulled in front of the vane's own front surface (`y=-0.22`,
+  ahead of the lit ball's `y=-0.19` front face — a groove left at `y=0` the
+  way the first two attempts had it sits BEHIND the ball from the camera and
+  is invisible, the same "camera is at -Y, nearer wins" trap `rally`'s own
+  comment already names) so the barb lines actually show up on top instead
+  of being buried inside the mesh.
+- unsure about: `dexterity` reads clearly as an oval vane with diagonal
+  texture and a small stem at both the 256px render and a downsampled 42px
+  pass, but the 42px pass also shows the barb grooves fading to a faint
+  texture and the quill nearly disappearing — so what's confidently verified
+  is "a distinct blue-toned oval, not confusable with `flask` or any other
+  icon," not "unmistakably a feather" the way `strength`'s dumbbell is
+  unmistakably a dumbbell. Whether it reads as *Dexterity* specifically,
+  rather than just "some other stat," next to `strength` in an actual hand
+  is exactly the judgement this file can't make.
+- Rendered with `apt-get install blender` (4.0.2) again, same as batches 3
+  and 4 — `download.blender.org` is still a policy 403 through the egress
+  proxy (backlog #74). This run's apt install also needed `numpy` (missing
+  from the system Python `blender` now links against, not bundling its own
+  the way the tarball build does) and `libegl1`/`libegl-mesa0` (headless
+  rendering failed with `Couldn't open libEGL.so.1` until installed) — worth
+  naming since neither shows up until you actually try to render, not at
+  import. A full re-render of all 36 icons showed pixel differences against
+  every one of the 34 other committed PNGs, the same rendering-version drift
+  batches 3 and 4 already found, not a code change. Only `strength.png` and
+  `dexterity.png` were copied out; the other 34 committed files are
+  untouched.
+
+---
+
 ### one Frail icon (`frail`) — NEEDS A PASS
 
 Built 2026-08-28 by `tools/blender/icons.py`, batch 4 (backlog #76). One card:

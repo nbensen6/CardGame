@@ -427,6 +427,50 @@ def frail(i):                # Block gained is reduced while this is stacked
     i.slabf(0.36, -0.56, 0.10, 0.11, SILVER, rot=0.55, bevel=0.02)
 
 
+# ------------------------------------------------------- backlog #76, batch 5
+#
+# `sharpen`, `oil_can`, `alpine_focus` and `old_grudge` grant Strength, and
+# `sure_footing` grants Dexterity — five cards, and every one of them wore
+# `flask`, the potion icon, though none touches a potion at all. Batch 3's own
+# comment already named this ("the card doesn't touch Strength or Dexterity or
+# a flask at all") as a separate, un-fixed oddity, and `design/ART-REVIEW.md`'s
+# batch 2 block left it explicitly for "a future one if it's worth it." Two
+# icons, not one: Strength and Dexterity are already distinct keywords with
+# their own tooltip text in `keywords.json`, and folding both into one
+# generic "buff" glyph would just trade one wrong answer (potion) for another
+# vague one.
+
+def strength(i):                              # gain Strength (adds to every attack)
+    # A dumbbell — two weight plates joined by a bar. Nothing else in the set
+    # is symmetric plates-on-a-bar, so it can't be mistaken for `sword` (one
+    # blade) or `bomb` (one central ball) even as a silhouette.
+    i.slabf(0.0, 0.0, 0.34, 0.060, RUST, bevel=0.02)            # the bar
+    for s in (-1, 1):
+        i.ring((0.40 * s, 0.0, 0.0), (0.20, 0.20, 0.20), CHARCOAL, 14, 5,
+               thickness=0.34)
+        i.ring((0.40 * s, 0.03, 0.0), (0.11, 0.11, 0.11), GRAPHITE, 12, 4,
+               thickness=0.30)
+    i.slabf(0.0, 0.0, 0.09, 0.16, GOLD, bevel=0.02)             # the grip wrap
+
+
+def dexterity(i):                             # gain Dexterity (adds to Block gained)
+    # A single feather, kept to shapes this file already knows read cleanly.
+    # Two earlier attempts (a column of flat plates, then two wide tapered
+    # blades) both rendered wrong — a fir tree, then a tent with the barbs
+    # floating clear of it — caught only by looking at the render, since
+    # icons have no assetcheck. This one is one soft-edged vane (two
+    # overlapping balls, the way `flask`'s body gets its two-tone shading)
+    # with the quill poking through both ends and it, and a few thin grooves
+    # across it for barb texture, small enough to read as detail rather than
+    # define the outline.
+    i.ball((0.0, 0.0, 0.02), (0.30, 0.16, 0.56), SKY, 12, 8)          # the vane
+    i.ball((-0.08, -0.05, 0.02), (0.20, 0.14, 0.52), ICE, 12, 8)      # its lit half
+    i.spike(0.0, -0.58, 0.020, 0.006, 1.20, TAN, seg=4)                # the quill
+    for k in range(4):                          # barb grooves, pulled in front of
+        z = -0.18 + k * 0.16                    # both balls (y=-0.22) or they'd be
+        i.box((0.0, -0.22, z), (0.15, 0.03, 0.012), WHITE, rot=(0.0, 0.4, 0.0))
+
+
 ICONS = [
     ("sword", sword), ("shield", shield), ("bow", bow), ("fire", fire),
     ("skull", skull), ("flask", flask), ("climb", climb), ("bomb", bomb),
@@ -438,6 +482,7 @@ ICONS = [
     ("intangible", intangible), ("buffer", buffer),
     ("plated_armour", plated_armour), ("thorns", thorns),
     ("light", light), ("frail", frail),
+    ("strength", strength), ("dexterity", dexterity),
 ]
 
 

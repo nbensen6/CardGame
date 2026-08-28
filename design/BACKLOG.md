@@ -868,6 +868,32 @@ check. It never judges its own work. See item 74 for why.
   render is not Nick's judgement on a real card face in a real hand.
   Content integrity and the whole suite green (496 passed). Left unchecked:
   still `cloud-art`, still needs a human look.
+  **Checked 2026-08-28 (a fourth time): batch 5, two icons, closing the gap
+  batch 2 explicitly left open.** `sharpen`, `oil_can`, `alpine_focus`,
+  `old_grudge` (Strength) and `sure_footing` (Dexterity) — five cards — all
+  wore `flask`, the potion icon, though none touches a potion; batch 2's own
+  closing note flagged this and left it for later. Built `strength` (a
+  dumbbell) and `dexterity` (a feather), pointed all five cards at them, so
+  nothing wears `flask` any more. This is the batch that meets the item's own
+  numeric bar for the first time — eight new icons now exist (intangible,
+  buffer, plated_armour, thorns, light, frail, strength, dexterity). Also
+  worth logging for whoever hits this next: the `apt-get install blender`
+  route (still needed — `download.blender.org` is still a 403 through the
+  egress proxy) needed two more system packages this run before it would
+  render at all, `python3.12 -m pip install numpy` and `apt-get install
+  libegl1 libegl-mesa0` — the first Blender run failed on `numpy` missing
+  from headless glTF export, the second on `Couldn't open libEGL.so.1`, and
+  neither error shows up until you actually try to render, not at install or
+  import. `dexterity` cost two failed builds the render caught and the
+  contract couldn't: a column of flat plates read as a fir tree, and the
+  rebuild (two tapered blades) read as a tent with its own barb lines
+  floating clear of the shape — full detail, including exactly how the third
+  build fixed it, is in `design/ART-REVIEW.md`. Content integrity and the
+  whole suite green (496 passed, same count — an icon batch adds no new
+  tests, matching batches 2-4). Left unchecked: still `cloud-art`, still
+  needs a human look, and this one especially — `dexterity`'s feather read
+  is the weakest of anything this item has shipped and says so plainly in
+  the review block.
 
 - [x] **77. Props for the places you walk** `cloud-art` — **the FIGHT grounds are
   done (2026-08-25): all fourteen, one per beast, in `tools/blender/env/`.** The
