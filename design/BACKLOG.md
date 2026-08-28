@@ -926,6 +926,28 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-28** — Eighteenth consecutive re-check, same tip (`a17d66a`) as
+  the entry directly below, fetched fresh (`git fetch --prune origin main`
+  landed exactly there — no staleness this time). Independently re-verified
+  rather than trusting the seventeenth entry's prose: `game/data/bosses.json`
+  parses to 20 `bosses` entries, the same six #55 additions among them
+  (`husk_beetle`, `gloom_moth`, `bog_leech`, `thrasher`, `silk_widow`,
+  `boulder_ram`); `card_view.gd`'s `ICONS` dict still has exactly 32
+  `preload()` entries (#76); re-ran the same script cross-check of every
+  card's `icon` field against its own mechanical fields looking for a
+  #76-style "wears an icon for an effect it doesn't grant" bug — the two
+  `flask` cards outside Strength (`sure_footing`'s pure Dexterity, `spark`'s
+  Light) are the same deliberate "buff in a bottle" convention batch 2 set,
+  not a new mismatch; found none. Full unchecked-queue grep matches the
+  seventeenth entry's list exactly: 2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81
+  (`needs a screen`) plus 55, 76, 80 (`cloud-safe`/`cloud-art`, already
+  built, waiting on Nick's review). **Later** section unchanged: the same
+  five scope calls, no new `cloud-safe` bug to fix. No code or data changed,
+  so the Godot import/test cycle was skipped, same as the fourteenth through
+  seventeenth checks. No push notification — nothing has changed since the
+  seventeenth check already told Nick this. Stopped per rule 6 rather than
+  inventing scope.
+
 - **2026-08-28** — Seventeenth consecutive re-check, same tip (`47625b3`) as
   the entry directly below. Checked both places real work can hide, per the
   sixteenth entry's own reminder: the **Queue**'s checkboxes (`grep '^- \[
