@@ -939,6 +939,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-28** — Thirteenth consecutive re-check, tip now `a1c20f7` (icon
+  batch 2 landed since the twelfth check, via its own inline "Checked" note on
+  #76 rather than a Log entry — confirmed by reading `git show a1c20f7`
+  directly instead of assuming). Fetched `origin/main` fresh (rule 9); no
+  stale-ref drift this run. Rebuilt the unchecked list from scratch with
+  `grep '^- \[ \]'`: 2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 are `needs a
+  screen`; 55, 80, 76 are the only `cloud-safe`/`cloud-art` items. Went a step
+  further than a file count this time and actually audited #76 for a
+  remaining defect rather than assuming batch 2 was the last one needed:
+  wrote a throwaway script (not committed) cross-referencing every card's
+  `icon` against its own mechanical fields, the same shape of check that
+  found the four wrong icons batch 2 fixed. All 30 icon values in use across
+  187 cards match their fields' theme (shield/guard/wall all block-shaped,
+  peak/target/volley all damage-shaped as their comments claim, etc.) — no
+  fifth wrong icon found. Also confirmed `card_view.gd`'s `ICONS` dict now
+  has exactly 32 entries (up from 28) and every one is built by
+  `tools/blender/icons.py`, not a borrowed Kenney file, so #76's own title
+  ("rendered rather than borrowed") is genuinely met, not just its numeric
+  bar. `node tools/cardlab/build.js`'s icon finding is `info`-level now
+  ("every draftable card declares an icon", most-common icon at 10%), not a
+  problem needing another batch. `game/data/bosses.json` still has 20 beasts
+  under `"bosses"` (#55's six all present); `lightbearer.glb` and
+  `lightbearer.png` are still committed (#80). All three remaining
+  `cloud-safe`/`cloud-art` items are genuinely built and waiting on Nick's
+  eyes, not waiting on more work — pushing a third icon batch or a seventh
+  beast now would be manufacturing scope past each item's own "Done when"
+  bar, which rule 6 forbids. No push notification: the fifth check already
+  told Nick these same items are waiting on review, and nothing changed
+  since. Skipped the Godot import/test cycle since no code was touched.
+  Stopped per rule 6 rather than inventing scope.
 - **2026-08-28** — Twelfth consecutive re-check, same tip (`b606a9e`) as the
   entry directly below. Fetched `origin/main` fresh (rule 9) and checked out
   `FETCH_HEAD`; no stale-ref drift this run. Independently re-verified all
