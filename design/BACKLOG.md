@@ -926,6 +926,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-28** — Seventeenth consecutive re-check, same tip (`47625b3`) as
+  the entry directly below. Checked both places real work can hide, per the
+  sixteenth entry's own reminder: the **Queue**'s checkboxes (`grep '^- \[
+  \]'`) and the **Later** section. Queue: still only 2, 3, 8, 25, 29b, 32,
+  31b, 78, 79, 81 (`needs a screen`) plus 55, 76, 80 (`cloud-safe`/`cloud-art`,
+  already built, waiting on Nick's review, not on more work). Later: both
+  `cloud-safe` bugs the sixteenth and this-tip's own entry fixed are gone, and
+  the five items left (resource-driven class, daily/challenge modes, Steam
+  integration, pinch-to-zoom, mid-combat saving) are all scope calls, not
+  cloud-safe fixes. Independently re-verified rather than trusting this
+  file's prose: `game/data/bosses.json` parses to 20 beasts (#55's six still
+  present); `card_view.gd`'s `ICONS` dict still has exactly 32 `preload()`
+  entries (#76); cross-referenced every card's `icon` field against its own
+  mechanical fields (script, not by eye) looking for another #76-style
+  "wears Block's icon but grants no Block" bug the way batch 2 found four —
+  found none: the four keyword icons batch 2 added (`intangible`, `buffer`,
+  `plated_armour`, `thorns`) are each used by exactly one card, the matching
+  one, and every other multi-field card's icon reflects its PRIMARY effect
+  (e.g. `spinebrace` wears `shield` for its 5 Block over its secondary
+  Thorns 2, not a bug). `tools/cardlab/build.js`'s own icon finding reads
+  `info`, not `warn` (30 icons, most-shared `lift` at 10%) — healthy, nothing
+  to fix. `lightbearer.glb`/`.png` still committed (#80); its
+  `design/ART-REVIEW.md` block still reads NEEDS A PASS, same as all sixteen
+  other review blocks — Nick has not looked yet. No code or data changed, so
+  the Godot import/test cycle was skipped, same as the fourteenth/fifteenth
+  checks. No push notification — nothing has changed since the sixteenth
+  check told Nick the same thing about the Queue, and this run's only new
+  information (a clean icon audit) is a non-finding. Stopped per rule 6
+  rather than inventing scope.
+
 - **2026-08-28** — Fixed the other `Later`-section `cloud-safe` bug the
   previous entry (below) left open: the boss's own Frail/Artifact/Thorns,
   and a hunter's own Frail/Artifact/Thorns, are real `Combatant` fields
