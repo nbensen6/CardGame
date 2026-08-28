@@ -939,6 +939,26 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-28** — Fourteenth consecutive re-check, same tip (`332e086`) as the
+  entry directly below — the checkout was on a detached, stale `origin/main`
+  again this run (step 0's known issue), fixed by the fetch-and-rebuild before
+  reading anything else. Independently re-verified all three
+  `cloud-safe`/`cloud-art` candidates against the tree rather than trusting
+  this file's own prose: `game/data/bosses.json` parses to a 20-entry
+  `"bosses"` dict, #55's six (`husk_beetle`, `gloom_moth`, `bog_leech`,
+  `thrasher`, `silk_widow`, `boulder_ram`) all present; `game/ui/card_view.gd`'s
+  `ICONS` dict still has exactly 32 entries (lines 77-108), each a real
+  `preload()` under `game/assets/icons/`, matching #76's own count from batch
+  2; `lightbearer.glb` and `lightbearer.png` are both still committed (#80).
+  Also checked `design/ART-REVIEW.md` directly for any of the nine review
+  blocks flipping from NEEDS A PASS to reviewed — none have; Nick has not
+  looked yet. Rebuilt the unchecked list with `grep '^- \[ \]'`: 2, 3, 8, 25,
+  29b, 32, 31b, 78, 79, 81 are `needs a screen`; 55, 76, 80 are the only
+  `cloud-safe`/`cloud-art` items, all already built and waiting on review, not
+  waiting on more work. No push notification — nothing has changed since the
+  fifth check told Nick the same thing, and a fourteenth identical ping would
+  be noise. Skipped the Godot import/test cycle since no code was touched.
+  Stopped per rule 6 rather than inventing scope.
 - **2026-08-28** — Thirteenth consecutive re-check, tip now `a1c20f7` (icon
   batch 2 landed since the twelfth check, via its own inline "Checked" note on
   #76 rather than a Log entry — confirmed by reading `git show a1c20f7`
