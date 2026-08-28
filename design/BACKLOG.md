@@ -925,6 +925,30 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-28** — Twenty-first consecutive re-check, same tip (`82907ba`) as
+  the entry directly below, fetched fresh (`git fetch --prune origin main`,
+  no staleness this run — the detached-HEAD warning fired as expected and the
+  fetch already covered it, per step 0). Independently re-verified rather
+  than trusting the twentieth entry's numbers: `game/data/bosses.json` still
+  parses to 20 `bosses` entries (#55's six still present); `game/ui/
+  card_view.gd` still has exactly 32 `preload("res://assets/icons/...")`
+  entries (#76); `design/ART-REVIEW.md` still shows every block `NEEDS A
+  PASS` except `frog` (`DONE`) — Nick has not reviewed the rest. Also checked
+  that no commit since `7ac9204` (well before the eighteenth check) has
+  touched `cards.json`, `bosses.json`, `card_view.gd` or `ART-REVIEW.md`, so
+  re-running the icon-mismatch and beast-count scripts the fifteenth through
+  twentieth entries already ran would only reproduce their own results —
+  skipped as redundant rather than re-run for its own sake. `grep '^- \[ \]'`
+  on the Queue reproduces the twentieth entry's list exactly: 2, 3, 8, 25,
+  29b, 32, 31b, 78, 79, 81 (`needs a screen`) plus 55, 76, 80 (`cloud-safe`/
+  `cloud-art`, already built, waiting on Nick's review, not on more work).
+  **Later** section unchanged at four items (resource-driven class, daily/
+  challenge modes, Steam integration, pinch-to-zoom), all scope calls. No
+  code or data changed, so the Godot import/test cycle was skipped, same as
+  the fourteenth through twentieth checks. No push notification — nothing
+  has changed since the twentieth check already told Nick this. Stopped per
+  rule 6 rather than inventing scope.
+
 - **2026-08-28** — Twentieth consecutive re-check, same tip (`26c9b50`) as the
   entry directly below, fetched fresh (`git fetch --prune origin main`, no
   staleness this run). Independently re-verified rather than trusting the
