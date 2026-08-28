@@ -436,6 +436,13 @@ func _players_public() -> Array:
 				# Dexterity or defensive stacks.
 				"dexterity": ps.combatant.dexterity, "intangible": ps.combatant.intangible,
 				"buffer": ps.combatant.buffer, "plated_armour": ps.combatant.plated_armour,
+				# The Lightbearer's own resource (backlog #47) is the same kind of
+				# gap again: PlayerState.light is a real, banked value cards already
+				# read and spend, but nothing ever put it on the wire — not even for
+				# the OWNING player's own client, since it was also absent from
+				# _slot_private()'s combat dict. #78's HUD (needs a screen) has
+				# nothing to read until this lands.
+				"light": ps.light,
 				"foothold": ps.foothold, "reached": c.sigil_reached(i),
 				"secure": c.is_secure(i), "next_safe": c.next_safe_height(i),
 				"wp_damage": ps.weak_point_damage,

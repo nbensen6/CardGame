@@ -925,6 +925,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-28** — Thirtieth check found real work, same class of bug as the
+  sixteenth and twenty-ninth entries but a different field: `PlayerState.light`
+  (backlog #47, the Lightbearer's own resource) was never forwarded to the
+  shared snapshot at all — not even to the OWNING player's own client. Nine
+  cards already read and spend it (`_test_backlog47_*` in `run_tests.gd` were
+  already green, proving the field itself works end to end in `/core`), but
+  `game_host.gd` never copied it anywhere: absent from both `_players_public()`
+  (where Energy/Strength/Rhythm already live) and `_slot_private()`'s combat
+  dict (where Energy/hand/pile sizes live). #78 ("A Light meter for the
+  Lightbearer," `needs a screen`) has been sitting on the Queue with nothing
+  to actually read once a HUD gets built — this closes that gap so #78 is
+  purely a display problem now, not a display-plus-plumbing one. Confirmed
+  the gap was real before touching anything (grepped `game_host.gd` for
+  `light` — only a false-positive hit in an unrelated array; grepped `ui/`
+  and `views/` for the same — nothing reads it today either, so this is data
+  reaching the wire, not a screen changing, same reasoning the two prior
+  entries used). Added `light` to `_players_public()`'s dict (alongside
+  Energy, the resource it's closest to — both are per-hunter numbers the
+  ally should see on the shared board) plus
+  `_test_light_reaches_the_shared_snapshot`, same boundary-test shape as
+  the Frail/Artifact/Thorns and Dexterity/Intangible/Buffer/Plated Armour
+  tests before it — drives a real two-client session through
+  `GameHost._broadcast_state()` and reads both hunters' Light back off the
+  snapshot, including the owning player's own view (the gap this bug had
+  that the two prior ones didn't — a Frailed hunter could still see the
+  hunter's own HP/Block fine, but a Lightbearer had *no* way to see their
+  own banked Light anywhere in the snapshot). `run_tests.gd` all green (497
+  passed, up from 495). `balance_sim.gd` run as a smoke test only — nothing
+  exploded, not tuned to (no numeric field changed, only which existing
+  value reaches the wire).
 - **2026-08-28** — Twenty-ninth check found real work, in the same place the
   sixteenth check found it: `Later`, not the Queue. The sixteenth entry only
   forwarded Frail/Artifact/Thorns to the shared snapshot; #60/#61 added

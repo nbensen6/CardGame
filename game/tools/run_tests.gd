@@ -298,6 +298,7 @@ func _init() -> void:
 	_test_frail_artifact_thorns_persist_through_save()
 	_test_frail_artifact_thorns_reach_the_shared_snapshot()
 	_test_dexterity_intangible_buffer_plated_armour_reach_the_shared_snapshot()
+	_test_light_reaches_the_shared_snapshot()
 	_test_beast_thorns_and_artifact_are_wired()
 	# Beasts that debuff YOU (backlog #69) — Frail and curses through a boss move
 	_test_frail_move_debuffs_the_targeted_hunter()
@@ -4682,6 +4683,19 @@ func _test_dexterity_intangible_buffer_plated_armour_reach_the_shared_snapshot()
 	_expect(int(p0_view["dexterity"]) == 3 and int(p0_view["intangible"]) == 2
 		and int(p0_view["buffer"]) == 1 and int(p0_view["plated_armour"]) == 4,
 		"a hunter's own Dexterity/Intangible/Buffer/Plated Armour reach the shared snapshot too")
+
+
+func _test_light_reaches_the_shared_snapshot() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	host._run.combat.players[0].light = 5
+	host._run.combat.players[1].light = 2
+	host._broadcast_state()
+	var p0_view: Dictionary = c0.shared["players"][0]
+	var p1_view: Dictionary = c0.shared["players"][1]
+	_expect(int(p0_view["light"]) == 5 and int(p1_view["light"]) == 2,
+		"a hunter's banked Light reaches the shared snapshot, including the owning player's own view")
 
 
 func _test_beast_thorns_and_artifact_are_wired() -> void:
