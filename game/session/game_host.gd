@@ -545,7 +545,13 @@ func _keywords_of(c: Card) -> Array:
 		ids.append("dexterity")
 	if c.block > 0 or c.ally_block > 0 or c.block_per_play > 0 \
 			or c.block_per_exhausted > 0 or c.timed_block > 0 or c.timed_ally_block > 0:
-		ids.append("block")
+		# "player_block", not "block" — keywords.json's move-vocabulary section
+		# (see its own "_comment_moves") uses ids that match a boss move `type`
+		# verbatim, and a beast's Defend move is already "block" there. The two
+		# collided under one JSON key until backlog's Later-section note caught
+		# it: JSON keeps only the last of two duplicate keys, so this card-side
+		# lookup was silently resolving to the beast's "the beast guards" text.
+		ids.append("player_block")
 	if c.grip > 0 or c.ally_grip > 0 or c.timed_grip > 0 or c.pull_ally > 0 \
 			or c.sac_ally_grip > 0 or c.damage_per_foothold > 0 or c.damage_per_ally_foothold > 0 \
 			or c.targets_hold:

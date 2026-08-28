@@ -928,17 +928,45 @@ rather than inventing work.
   Found auditing #54; not itself a keyword-text problem so it wasn't fixed
   there — it's snapshot plumbing (`_players_public()`/the boss dict in
   `game_host.gd`) plus a boundary test, cloud-safe, cheap, but a distinct item.
-- `game/data/keywords.json` has a pre-existing duplicate `"block"` key — one
-  entry explains the player's Block, a second (for the boss's `block` move)
-  reuses the same id lower in the file. JSON keeps only the last one, so
-  `Content.keyword("block")` currently returns the boss-move text, not the
-  player one. Found while wiring #69's move keywords; not this item's bug,
-  cloud-safe, one-line fix (rename one of the two ids and its one call site).
 
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-28** — Sixteenth check found real work: the sixteen prior checks
+  all rebuilt the unchecked list with `grep '^- \[ \]'`, which only walks the
+  **Queue** section's checkboxes — it never looks at **Later**, so the two
+  `cloud-safe` bugs parked there (both already described, scoped and flagged
+  cheap by earlier sessions) sat unseen for fifteen re-checks in a row. Fixed
+  the smaller of the two: `game/data/keywords.json` carried two `"block"`
+  keys — the player's own Block explanation, and (further down, under
+  `_comment_moves`'s own documented rule that move-keyword ids match a boss
+  move `type` verbatim) the beast's Defend move. `JSON.parse_string` keeps
+  only the last of two duplicate keys, so `Content.keyword("block")` was
+  silently returning "The beast guards..." for every card that grants Block,
+  never the player's own text. Fixed by renaming the CARD-side id to
+  `player_block` (the move-side id had to stay `"block"` — it's load-bearing
+  for `_test_every_beast_move_type_has_a_keyword`/`_test_every_boss_move_type_
+  resolves`, which key beast moves by their literal `type` string), and
+  updating its four consumers: `GameHost._keywords_of` (the one place the id
+  is derived), `card_view.gd`'s three `_kw("Block", "block", ...)` call sites
+  plus its `KEYWORD_WORDS` lookup table (missed on a first pass — it silently
+  drops the auto-underline of "Block" in a card's authored text for any
+  *offered* card, since it keys off the same id and failing closed rather
+  than loudly), and the `derived` id list in
+  `_test_every_derived_keyword_resolves`. Added
+  `_test_player_block_keyword_is_not_shadowed_by_the_boss_move`, which builds
+  a real Block-granting card through `GameHost._keywords_of` and asserts the
+  resolved keyword is the player's own text, not the beast's — the previous
+  test only checked non-emptiness, which the bug satisfied by accident.
+  `run_tests.gd` all green; `balance_sim.gd` run as a smoke test only (a
+  keyword-text fix touches no numbers, none moved). Removed the now-fixed
+  bullet from **Later** rather than leaving it there stale. The OTHER
+  `Later`-section `cloud-safe` bug (boss Frail/Artifact/Thorns never reaching
+  the snapshot) is still open — bigger scope (snapshot plumbing plus a
+  boundary test), left for a future run rather than stacking two items in one
+  pass. Worth a beat for whoever writes the next "no actionable work" log
+  line: check **Later** too, not just the Queue's checkboxes.
 - **2026-08-28** — Fifteenth consecutive re-check, same tip (`79b2087`) as the
   entry directly below. Fetched `origin/main` fresh (rule 9) and checked out
   `FETCH_HEAD`; no stale-ref drift this run. Independently re-verified all

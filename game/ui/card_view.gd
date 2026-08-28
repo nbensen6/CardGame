@@ -310,7 +310,7 @@ func _inspect_button(data: Dictionary) -> Control:
 ## badge says it — so it is deliberately absent.
 const KEYWORD_WORDS := {
 	"height": ["Climb", "climb", "climbs", "Height"],
-	"block": ["Block"], "poison": ["Poison"], "expose": ["Expose"],
+	"player_block": ["Block"], "poison": ["Poison"], "expose": ["Expose"],
 	"rhythm": ["Rhythm"], "strength": ["Strength"], "burn": ["Burn"],
 	"taunt": ["Taunt"],
 }
@@ -342,13 +342,13 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 	var ally_blk := int(pv.get("ally_block", 0))
 	var blk_n := _num(int(miss.get("block", 0)), blk, int(base.get("block", blk)), rich)
 	if blk > 0 and blk == ally_blk:
-		out.append("All players gain %s %s." % [blk_n, _kw("Block", "block", kw, rich)])
+		out.append("All players gain %s %s." % [blk_n, _kw("Block", "player_block", kw, rich)])
 	else:
 		if blk > 0:
-			out.append("Gain %s %s." % [blk_n, _kw("Block", "block", kw, rich)])
+			out.append("Gain %s %s." % [blk_n, _kw("Block", "player_block", kw, rich)])
 		if ally_blk > 0:
 			out.append("Ally gains %s %s." % [_num(int(miss.get("ally_block", 0)), ally_blk,
-				int(base.get("ally_block", ally_blk)), rich), _kw("Block", "block", kw, rich)])
+				int(base.get("ally_block", ally_blk)), rich), _kw("Block", "player_block", kw, rich)])
 
 	var climb := int(pv.get("grip", 0))
 	var ally_climb := int(pv.get("ally_grip", 0))

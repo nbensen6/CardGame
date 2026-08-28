@@ -25,7 +25,7 @@
       "name": "Dexterity",
       "text": "Adds to every source of Block you gain for the rest of the fight. Reduced by Frail like any other Block."
     },
-    "block": {
+    "player_block": {
       "name": "Block",
       "text": "Absorbs damage before your health. It clears at the start of your next turn, so it is worth spending, not saving."
     },

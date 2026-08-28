@@ -248,6 +248,7 @@ func _init() -> void:
 	_test_preview_matches_what_the_card_actually_does()
 	_test_incoming_reckons_damage_after_block()
 	_test_every_derived_keyword_resolves()
+	_test_player_block_keyword_is_not_shadowed_by_the_boss_move()
 	_test_every_field_a_player_must_understand_has_a_keyword()
 	_test_timed_keyword_explains_graded_quality()
 	_test_every_boss_move_type_resolves()
@@ -3624,7 +3625,7 @@ func _test_backlog48_elite_relic_reward_never_offers_a_boss_relic() -> void:
 ## A typo in either silently drops a tooltip and the card goes back to being
 ## unexplained, which is the exact problem the keyword layer exists to fix.
 func _test_every_derived_keyword_resolves() -> void:
-	var derived := ["timed", "poison", "expose", "rhythm", "strength", "block",
+	var derived := ["timed", "poison", "expose", "rhythm", "strength", "player_block",
 		"height", "armoured", "taunt", "burn", "enchant", "energy", "build",
 		"prime", "cheapen", "meld", "multistrike"]
 	var defined := Content.keyword_ids()
@@ -3636,6 +3637,35 @@ func _test_every_derived_keyword_resolves() -> void:
 			missing.append("%s (no text)" % id)
 	_expect(missing.is_empty(),
 		"every keyword the host derives is defined in keywords.json [%s]" % ", ".join(missing))
+
+
+## keywords.json used to carry TWO "block" keys — a player one under the card
+## vocabulary and a beast-move one ("Defend") under "_comment_moves"'s own
+## documented "ids match the move `type`" rule — and JSON.parse_string keeps
+## only the last of two duplicate keys. So a card that grants Block silently
+## explained itself with "The beast guards..." instead of its own text. Fixed
+## by renaming the card-side id to "player_block"; this proves the two stay
+## distinct and a Block-granting card actually resolves its OWN keyword.
+func _test_player_block_keyword_is_not_shadowed_by_the_boss_move() -> void:
+	var player_kw := Content.keyword("player_block")
+	var boss_kw := Content.keyword("block")
+	_expect(not player_kw.is_empty() and not boss_kw.is_empty(),
+		"both the player's Block keyword and the beast's Defend move keyword exist")
+	_expect(String(player_kw.get("text", "")).find("beast guards") == -1,
+		"the player's Block keyword is not the beast's Defend text")
+	_expect(String(boss_kw.get("text", "")).find("beast guards") != -1,
+		"the beast move keyword 'block' is still Defend, untouched (bosses.json move types match it verbatim)")
+	var host := GameHost.new(LocalTransport.new(), 1, 2)
+	_kept.append(host)
+	var card := Card.from_dict({"block": 3})
+	var kws := host._keywords_of(card)
+	var found := {}
+	for k in kws:
+		found[String((k as Dictionary).get("id", ""))] = k
+	_expect(found.has("player_block") and not found.has("block"),
+		"a Block-granting card's derived keywords use 'player_block', not the shadowed 'block' id")
+	_expect(String((found.get("player_block", {}) as Dictionary).get("text", "")).find("your health") != -1,
+		"the resolved keyword is actually the player's own Block explanation")
 
 
 ## Backlog #16: the check above only catches an id that's misspelled in one
