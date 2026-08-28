@@ -567,6 +567,55 @@ mismatch, one line.
 
 ---
 
+### one Frail icon (`frail`) — NEEDS A PASS
+
+Built 2026-08-28 by `tools/blender/icons.py`, batch 4 (backlog #76). One card:
+`crippling_blow` ("Deal 5 damage. Frail 2.") wore `sword`, which isn't wrong —
+it is a plain attack — but `sword` is also what every OTHER plain hit with no
+second effect wears, so the one card in the game that debuffs a Titan's own
+Block looked identical to a card that does nothing but hit. Same shape of
+finding as batch 2's four (Intangible/Buffer/Plated Armour/Thorns wearing
+`shield` while granting no Block): Frail is that family's fifth member — a
+Block-adjacent status — and was the only one of the five still unmarked.
+
+- **What to judge:** does `frail` read as *broken/weakened* rather than
+  *whole* next to `shield`/`guard`/`wall`/`plated_armour` — all four are a
+  single intact silhouette, so the split was meant to be the signal, not the
+  colour (still STEEL/SILVER, the same family's palette, on purpose — Frail
+  IS about Block).
+- Built as a kite shield broken into two halves along a jagged dark crack,
+  each half nudged apart (rotated and offset outward) so they visibly no
+  longer meet, plus one small chip already broken free and drifting down and
+  clear of the shield below-right.
+- This run could actually open the rendered PNG and look at it directly —
+  the Read tool displays image files inline, which earlier icon batches
+  either didn't try or worked around with pixel-alpha sampling instead. Two
+  iterations: the first pass (flat rounded rectangles, no shield point) read
+  as a stack of cracked bricks rather than a shield at all; giving each half
+  its own tapered point at the bottom, the way `shield()` itself does,
+  fixed that — the second pass reads clearly as two shield-halves with a
+  crack and a falling chip, at both the 256px render and a downsampled
+  42px card-size check against `shield.png` at the same scale for contrast.
+  Flagged as NEEDS A PASS regardless: looking at a render is not the same
+  judgement Nick would apply looking at it live in-game, on an actual card
+  face, next to a real hand — this file's own standing rule (a `cloud-art`
+  item is never ticked by the routine) holds even when the routine can see
+  the image.
+- unsure about: whether "broken shield" reads as *Frail* specifically versus
+  just "something bad happened to my Block" in general, without the keyword
+  tooltip open next to it; whether the crack is thick enough to survive
+  in-game lighting/modulate at actual card size, since the downsample check
+  here used a flat resize, not the game's own rendering path; and whether
+  the floating chip at bottom-right gets cropped or crowded once it sits
+  next to the card's cost pip and text, which this render doesn't show.
+- Same version-drift note as batch 3: rendered with `apt-get install
+  blender` (4.0.2), not `download.blender.org`'s 4.1.1 (still a policy 403
+  through the egress proxy, unchanged from backlog #74). A full re-render of
+  all 34 icons showed pixel differences against every one of the 33 other
+  committed PNGs, confirming that's rendering-version drift and not a code
+  change (`icons.py` was only added to, nothing existing was edited). Only
+  `frail.png` was copied out; the other 33 committed files are untouched.
+
 ### one Light icon (`light`) — NEEDS A PASS
 
 Built 2026-08-28 by `tools/blender/icons.py`, batch 3 (backlog #76). One card,

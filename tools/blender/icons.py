@@ -397,6 +397,36 @@ def light(i):                                   # generate Light (Lightbearer)
         i.spike(math.sin(a) * R, math.cos(a) * R, 0.038, 0.006, 0.34, AMBER, ang=a, seg=4)
 
 
+# ------------------------------------------------------- backlog #76, batch 4
+#
+# `crippling_blow` ("Deal 5 damage. Frail 2.") wore `sword` — not wrong,
+# exactly, since it IS a damage card, but `sword` is also worn by every plain
+# hit with no second effect at all, so the one card that debuffs Block itself
+# looked identical to one that doesn't. The four block-adjacent debuffs
+# (Intangible, Buffer, Plated Armour, Thorns) already got this treatment in
+# batch 2 because they wore `shield` while granting no Block; Frail is the
+# same family — a Block-adjacent status — and the only card that grants it
+# was still unmarked. Kept `sword` alone for every OTHER plain-damage card,
+# same call batch 3 made for the seven Light cards that pair Light with a
+# second effect already visible in their icon.
+
+def frail(i):                # Block gained is reduced while this is stacked
+    # A shield broken in two, not a whole one: `shield`/`guard`/`wall`/
+    # `plated_armour` are all a single intact silhouette, so a split shield
+    # with a jagged crack bridging the gap and a chip already fallen free
+    # reads as "weakened" rather than "protected" even at card size.
+    i.slabf(-0.20, 0.20, 0.24, 0.30, STEEL, bevel=0.045, rot=-0.12)
+    i.spike(-0.20, -0.16, 0.24, 0.02, 0.34, STEEL, ang=math.pi - 0.20, seg=4)
+    i.slabf(-0.20, 0.44, 0.24, 0.05, SILVER, rot=-0.12)
+    i.slabf(0.22, 0.10, 0.24, 0.28, STEEL, bevel=0.045, rot=0.16)
+    i.spike(0.22, -0.28, 0.24, 0.02, 0.32, STEEL, ang=math.pi + 0.22, seg=4)
+    i.slabf(0.22, 0.34, 0.24, 0.05, SILVER, rot=0.16)
+    for x, z, rot in [(0.0, 0.34, 0.30), (0.03, 0.14, -0.35),
+                      (-0.02, -0.06, 0.35), (0.02, -0.26, -0.30)]:
+        i.slabf(x, z, 0.028, 0.16, CHARCOAL, rot=rot, bevel=0.0)
+    i.slabf(0.36, -0.56, 0.10, 0.11, SILVER, rot=0.55, bevel=0.02)
+
+
 ICONS = [
     ("sword", sword), ("shield", shield), ("bow", bow), ("fire", fire),
     ("skull", skull), ("flask", flask), ("climb", climb), ("bomb", bomb),
@@ -407,7 +437,7 @@ ICONS = [
     ("cog", cog), ("burn", burn), ("stack", stack), ("peak", peak),
     ("intangible", intangible), ("buffer", buffer),
     ("plated_armour", plated_armour), ("thorns", thorns),
-    ("light", light),
+    ("light", light), ("frail", frail),
 ]
 
 

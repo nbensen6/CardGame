@@ -175,7 +175,7 @@
 
     "bruised_grip": {"name": "Bruised Grip", "rarity": "common", "type": "skill", "icon": "skull", "cost": 1, "status": true, "text": "Does nothing. A dead card in your hand."},
 
-    "crippling_blow": {"name": "Crippling Blow", "rarity": "uncommon", "type": "attack", "icon": "sword", "cost": 1, "damage": 5, "frail": 2, "target": "enemy", "text": "Deal 5 damage. Frail 2."},
+    "crippling_blow": {"name": "Crippling Blow", "rarity": "uncommon", "type": "attack", "icon": "frail", "cost": 1, "damage": 5, "frail": 2, "target": "enemy", "text": "Deal 5 damage. Frail 2."},
     "spinebrace": {"name": "Spinebrace", "rarity": "uncommon", "type": "skill", "icon": "shield", "cost": 1, "block": 5, "thorns": 2, "text": "Gain 5 Block. Thorns 2."},
     "trailmasters_cut": {"name": "Trailmaster's Cut", "rarity": "rare", "type": "attack", "icon": "sword", "cost": 2, "damage": 5, "hits": 2, "grip": 1, "unlock_wins": 3, "target": "enemy", "text": "Deal 5 damage twice. Climb 1."},
 

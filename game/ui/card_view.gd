@@ -107,6 +107,7 @@ const ICONS := {
 	"plated_armour": preload("res://assets/icons/plated_armour.png"),  # Block that survives the round
 	"thorns":  preload("res://assets/icons/thorns.png"),                      # a landed attack reflects damage back
 	"light":   preload("res://assets/icons/light.png"),                      # generate Light, the Lightbearer's resource
+	"frail":   preload("res://assets/icons/frail.png"),                      # Block gained is reduced while stacked
 }
 const ENERGY_ICON := preload("res://ui/icons/energy.svg")
 

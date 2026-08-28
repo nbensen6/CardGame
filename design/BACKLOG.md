@@ -845,6 +845,29 @@ check. It never judges its own work. See item 74 for why.
   couldn't be verified (42px legibility, whether it's confusable with
   `expose`'s ring-and-ticks design), is in `design/ART-REVIEW.md`. Left
   unchecked: still `cloud-art`, still needs a human look.
+  **Checked 2026-08-28 (a third time): batch 4, one icon, the fifth member of
+  batch 2's own family.** `crippling_blow` ("Deal 5 damage. Frail 2.") wore
+  `sword` — not wrong, since it IS a plain attack, but `sword` is worn by
+  every OTHER plain hit too, so the one card that debuffs a Titan's Block
+  looked identical to a card with no second effect at all. Frail is the same
+  Block-adjacent-status family as batch 2's Intangible/Buffer/Plated
+  Armour/Thorns (all four wore `shield` while granting no Block) and was the
+  only one of the five left unmarked. Built `frail` in `tools/blender/icons.py`
+  as a shield broken into two halves along a jagged crack with a chip falling
+  free, kept in the same STEEL/SILVER palette as `shield`/`guard`/`wall` on
+  purpose (Frail IS about Block; the break is what should read, not the
+  colour), and pointed `crippling_blow` at it. New for this batch: the run
+  could open the rendered PNG directly with the Read tool and actually look
+  at it, rather than working from the contract or pixel-sampling alone the
+  way batches 2 and 3 had to — caught a first draft reading as stacked
+  cracked bricks rather than a shield (no tapered point at the bottom the
+  way `shield()` itself has one), fixed by giving each broken half its own
+  point. Still flagged NEEDS A PASS in `design/ART-REVIEW.md` regardless —
+  this file's own rule that a `cloud-art` item is never ticked by the
+  routine holds even when the routine can see the image; looking at a
+  render is not Nick's judgement on a real card face in a real hand.
+  Content integrity and the whole suite green (496 passed). Left unchecked:
+  still `cloud-art`, still needs a human look.
 
 - [x] **77. Props for the places you walk** `cloud-art` — **the FIGHT grounds are
   done (2026-08-25): all fourteen, one per beast, in `tools/blender/env/`.** The
