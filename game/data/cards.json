@@ -179,7 +179,7 @@
     "spinebrace": {"name": "Spinebrace", "rarity": "uncommon", "type": "skill", "icon": "shield", "cost": 1, "block": 5, "thorns": 2, "text": "Gain 5 Block. Thorns 2."},
     "trailmasters_cut": {"name": "Trailmaster's Cut", "rarity": "rare", "type": "attack", "icon": "sword", "cost": 2, "damage": 5, "hits": 2, "grip": 1, "unlock_wins": 3, "target": "enemy", "text": "Deal 5 damage twice. Climb 1."},
 
-    "spark": {"name": "Spark", "rarity": "common", "type": "skill", "icon": "flask", "cost": 0, "light_gain": 2, "target": "self", "text": "Gain 2 Light."},
+    "spark": {"name": "Spark", "rarity": "common", "type": "skill", "icon": "light", "cost": 0, "light_gain": 2, "target": "self", "text": "Gain 2 Light."},
     "radiant_bolt": {"name": "Radiant Bolt", "rarity": "common", "type": "attack", "icon": "sword", "cost": 1, "damage": 5, "target": "enemy", "text": "Deal 5 damage."},
     "warm_glow": {"name": "Warm Glow", "rarity": "common", "type": "skill", "icon": "support", "cost": 1, "ally_heal": 4, "light_gain": 1, "target": "ally", "text": "Heal an ally 4. Gain 1 Light."},
     "kindled_strike": {"name": "Kindled Strike", "rarity": "uncommon", "type": "attack", "icon": "sword", "cost": 1, "damage": 3, "light_gain": 2, "timed": true, "timed_damage": 3, "target": "enemy", "text": "Deal 3 damage. Gain 2 Light."},

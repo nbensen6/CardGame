@@ -565,6 +565,63 @@ mismatch, one line.
   inconsistency already shipped with `sharpen`/`oil_can`; this batch matched
   it rather than relitigating it.
 
+---
+
+### one Light icon (`light`) — NEEDS A PASS
+
+Built 2026-08-28 by `tools/blender/icons.py`, batch 3 (backlog #76). One card,
+not a new gap but the same "wrong answer" shape as batch 2: `spark` — 0 cost,
+"Gain 2 Light." and nothing else — wore `flask`, the potion icon, because
+`flask` was the closest self-buff glyph on hand when the Lightbearer's cards
+were first stamped. It touches no potion at all. The other seven Light cards
+(`warm_glow`, `kindled_strike`, `beacon`, `guiding_light`, `steady_flame`,
+`flare`, `sunburst`) all pair Light with a second effect — heal, block,
+damage — that's their real read, so their existing `support`/`shield`/`sword`
+icons still tell the truth and were left alone; only the pure-Light card was
+actually lying.
+
+- **What to judge:** does `light` read as its own thing next to `fire`
+  (orange flame tongues, for burning damage), `expose`/`target` (rings), and
+  `bomb` (a round shell) — the icons nearest it in the "burst from a point"
+  family — and does it read as *light* rather than, say, a compass rose or an
+  asterisk.
+- Built as an 8-point starburst: a pale core ball with four long gold rays on
+  the cardinals and four shorter amber rays on the diagonals, all straight
+  tapers rather than `fire`'s curved ones, so the silhouette can't be
+  confused with a flame.
+- Repeats, and this time catches in the same run, the exact trap `thorns`'
+  own comment already named: `taper()`/`spike()` centres a ray's length on
+  its base point, so a ray based AT the ball's own centre only pokes out by
+  half its length, and half of THAT is still buried inside the ball. The
+  first build did exactly this and rendered as a plain cross — the four
+  diagonal rays were short enough to vanish entirely inside the core, and
+  even the four cardinal rays cleared the surface by far less than intended.
+  Confirmed by sampling pixel alpha outward from centre along each ray angle
+  (not by eye — this was caught before ever spending a render on the "does
+  it look right" question), not just by looking at the thumbnail. Fixed by
+  basing every ray out at the ball's own radius (0.15, just inside its 0.16
+  scale) the way `thorns` does, so the near half embeds into the ball and
+  the far half is the part that actually shows.
+- unsure about: whether the long/short ray contrast reads at 42px on a card
+  face, or whether it just looks like eight identical spikes; whether gold
+  rays on amber rays is enough colour separation once card-face lighting is
+  applied, versus needing a starker two-tone split; and whether an 8-point
+  star is confusable with `expose`'s ring-plus-four-ticks design from across
+  a real hand of cards, since both are "radiating from a centre" shapes.
+- Not rebuilt against the rest of the icon set: re-running `icons.py` here
+  used `apt-get install blender` (4.0.2), not the `download.blender.org`
+  4.1.1 build earlier batches used (still a policy 403 through the egress
+  proxy — unchanged from backlog #74's note), and a pixel diff against the
+  32 already-committed PNGs showed real rendering differences, not just file
+  metadata — almost certainly a Blender-version shading difference, not a
+  code change, since `icons.py` itself was only added to, not edited for any
+  existing icon. Only `light.png` was copied out of this run's render; the
+  other 32 committed files are untouched, so this batch cannot have shifted
+  how anything else on a card face looks. Worth a note for whoever next has
+  a real `4.1.1`: a full re-render diverges from what's committed even with
+  no source change, so treat version drift itself as something to watch, not
+  just individual icon content.
+
 ### the nineteen portraits — NEEDS A PASS
 
 Rendered 2026-08-25 from the models themselves by `tools/blender/portraits.py`.

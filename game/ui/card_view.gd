@@ -106,6 +106,7 @@ const ICONS := {
 	"buffer":  preload("res://assets/icons/buffer.png"),                      # the next hit is cancelled outright
 	"plated_armour": preload("res://assets/icons/plated_armour.png"),  # Block that survives the round
 	"thorns":  preload("res://assets/icons/thorns.png"),                      # a landed attack reflects damage back
+	"light":   preload("res://assets/icons/light.png"),                      # generate Light, the Lightbearer's resource
 }
 const ENERGY_ICON := preload("res://ui/icons/energy.svg")
 

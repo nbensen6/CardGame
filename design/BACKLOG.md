@@ -820,6 +820,31 @@ check. It never judges its own work. See item 74 for why.
   integrity and the whole suite green (only touched a card's `icon` field,
   which nothing type-checks against a fixed enum). Left unchecked: still
   `cloud-art`, still needs a human look, same as batch 1.
+  **Checked 2026-08-28 (later the same day): batch 3, one icon, the same
+  wrong-answer shape as batch 2.** `spark` (0-cost, "Gain 2 Light.", nothing
+  else) wore `flask` — the potion icon — though it touches no potion at all;
+  it was the closest self-buff glyph on hand when the Lightbearer's cards
+  were first stamped. The other seven Light cards all pair Light with a
+  second effect (heal/block/damage) that's their real read, so their icons
+  were left alone — only the pure-Light card was lying. Built a new `light`
+  icon (an 8-point starburst, gold cardinal rays + amber diagonal rays around
+  a pale core) in `tools/blender/icons.py` and pointed `spark` at it. First
+  build repeated `thorns`' own already-documented trap exactly: every ray was
+  based at the ball's centre, so `taper()` centring a part's length on its
+  base point buried most of each ray inside the core — this run confirmed it
+  by sampling rendered pixel alpha outward along each ray angle rather than
+  trusting the thumbnail, then fixed it the same way `thorns` did (base each
+  ray out at the ball's own radius). `download.blender.org` is still a policy
+  403 through the egress proxy (unchanged from #74); `apt-get install
+  blender` gave a working 4.0.2 again, but re-rendering the full icon set
+  with it produced real pixel differences against the 32 already-committed
+  PNGs — a Blender-version shading difference, not a code change, since no
+  existing icon's build function was touched. Only `light.png` was copied
+  out of this run; the other 32 committed files are untouched. Content
+  integrity and the whole suite green. Full write-up, including what
+  couldn't be verified (42px legibility, whether it's confusable with
+  `expose`'s ring-and-ticks design), is in `design/ART-REVIEW.md`. Left
+  unchecked: still `cloud-art`, still needs a human look.
 
 - [x] **77. Props for the places you walk** `cloud-art` — **the FIGHT grounds are
   done (2026-08-25): all fourteen, one per beast, in `tools/blender/env/`.** The

@@ -368,6 +368,35 @@ def thorns(i):                                  # a landed attack reflects damag
                (0.05, 0.045, 0.05), BRICK, 6, 4)
 
 
+# ------------------------------------------------------- backlog #76, batch 3
+#
+# `spark` (0-cost, "Gain 2 Light.", nothing else) wore `flask` — the potion
+# icon — because `flask` was the closest "self-buff" glyph on hand when the
+# Lightbearer's cards were first stamped. It is not a potion in any sense; the
+# card doesn't touch Strength or Dexterity or a flask at all. The other seven
+# Light cards (warm_glow, kindled_strike, beacon, guiding_light, steady_flame,
+# flare, sunburst) all pair Light with a second effect — heal, block, damage —
+# that IS their primary read, so `support`/`shield`/`sword` still tell the
+# truth about them and are left alone. Only the pure-Light card was lying.
+
+def light(i):                                   # generate Light (Lightbearer)
+    # A warm radiant burst — straight rays from a bright core — so it can't be
+    # mistaken for `fire`'s curved flame tongues or `expose`'s rings-and-ticks.
+    # taper() centres a spike's length on its base point (the same trap
+    # thorns' own comment names): a ray based AT the ball's centre only pokes
+    # out by half its length, and half of that half is still buried inside
+    # the ball. Basing each ray out at the ball's own radius, the way thorns
+    # does, is what actually clears the surface.
+    R = 0.15
+    i.ball((0.0, 0.0, 0.0), (0.16, 0.13, 0.16), CREAM, 8, 5)
+    for k in range(4):
+        a = k * math.tau / 4.0
+        i.spike(math.sin(a) * R, math.cos(a) * R, 0.05, 0.006, 0.74, GOLD, ang=a, seg=4)
+    for k in range(4):
+        a = k * math.tau / 4.0 + math.tau / 8.0
+        i.spike(math.sin(a) * R, math.cos(a) * R, 0.038, 0.006, 0.34, AMBER, ang=a, seg=4)
+
+
 ICONS = [
     ("sword", sword), ("shield", shield), ("bow", bow), ("fire", fire),
     ("skull", skull), ("flask", flask), ("climb", climb), ("bomb", bomb),
@@ -378,6 +407,7 @@ ICONS = [
     ("cog", cog), ("burn", burn), ("stack", stack), ("peak", peak),
     ("intangible", intangible), ("buffer", buffer),
     ("plated_armour", plated_armour), ("thorns", thorns),
+    ("light", light),
 ]
 
 
