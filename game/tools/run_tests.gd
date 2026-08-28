@@ -296,6 +296,7 @@ func _init() -> void:
 	_test_thorns_reflects_a_landed_boss_attack()
 	_test_beast_thorns_reflects_card_damage_dealt_to_it()
 	_test_frail_artifact_thorns_persist_through_save()
+	_test_frail_artifact_thorns_reach_the_shared_snapshot()
 	_test_beast_thorns_and_artifact_are_wired()
 	# Beasts that debuff YOU (backlog #69) — Frail and curses through a boss move
 	_test_frail_move_debuffs_the_targeted_hunter()
@@ -4632,6 +4633,31 @@ func _test_frail_artifact_thorns_persist_through_save() -> void:
 	_expect(bc != null and bc.boss.frail == 2 and bc.boss.artifact == 1
 			and bc.players[0].combatant.thorns == 2 and bc.players[0].combatant.artifact == 1,
 		"Frail/Artifact/Thorns survive a mid-fight save and load")
+
+
+## Backlog Later (found auditing #54): Frail/Artifact/Thorns were computed
+## correctly on both the boss and a hunter but GameHost's snapshot dicts only
+## ever forwarded vulnerable/strength/wound — a Titan you've Frailed or a
+## hunter carrying Thorns showed nothing to look at. Same shared-snapshot
+## boundary _test_adds_reach_the_shared_snapshot/_test_powers_reach_the_
+## snapshot_and_are_visible_to_the_ally already check for adds and powers.
+func _test_frail_artifact_thorns_reach_the_shared_snapshot() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	host._run.combat.boss.frail = 2
+	host._run.combat.boss.artifact = 1
+	host._run.combat.boss.thorns = 3
+	host._run.combat.players[0].combatant.frail = 1
+	host._run.combat.players[0].combatant.artifact = 2
+	host._run.combat.players[0].combatant.thorns = 4
+	host._broadcast_state()
+	var boss_view: Dictionary = c0.shared["boss"]
+	_expect(int(boss_view["frail"]) == 2 and int(boss_view["artifact"]) == 1 and int(boss_view["thorns"]) == 3,
+		"the boss's Frail/Artifact/Thorns reach the shared snapshot")
+	var p0_view: Dictionary = c0.shared["players"][0]
+	_expect(int(p0_view["frail"]) == 1 and int(p0_view["artifact"]) == 2 and int(p0_view["thorns"]) == 4,
+		"a hunter's own Frail/Artifact/Thorns reach the shared snapshot too")
 
 
 func _test_beast_thorns_and_artifact_are_wired() -> void:

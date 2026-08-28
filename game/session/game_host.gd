@@ -342,6 +342,10 @@ func _build_shared() -> Dictionary:
 			"id": b.id, "name": b.name, "hp": b.hp, "max_hp": b.max_hp, "block": b.block,
 			"intent": b.current_move(c.boss_context()), "target": c.boss_target_index(),
 			"vulnerable": b.vulnerable, "strength": b.strength, "wound": b.wound,
+			# backlog Later (found auditing #54): Frail/Artifact/Thorns are real
+			# Combatant fields the boss computes correctly but never forwarded to
+			# the board — a Titan you've Frailed showed nothing to look at.
+			"frail": b.frail, "artifact": b.artifact, "thorns": b.thorns,
 			"weak_point_height": b.weak_point_height, "foothold_max": Combat.FOOTHOLD_MAX,
 			"ledges": b.ledges, "weak_point_threshold": b.weak_point_threshold,
 			"art": b.art, "adds": add_views,
@@ -415,6 +419,11 @@ func _players_public() -> Array:
 				"character": ps.character,
 				"max_hp": ps.combatant.max_hp, "block": ps.combatant.block, "energy": ps.energy,
 				"ended": ps.ended_turn, "strength": ps.strength, "rhythm": ps.rhythm,
+				# Same gap as the boss dict above, mirrored: a hunter carrying
+				# Thorns, warded by Artifact, or Frailed by a beast's own "frail"
+				# move showed nothing (backlog Later, found auditing #54).
+				"frail": ps.combatant.frail, "artifact": ps.combatant.artifact,
+				"thorns": ps.combatant.thorns,
 				"foothold": ps.foothold, "reached": c.sigil_reached(i),
 				"secure": c.is_secure(i), "next_safe": c.next_safe_height(i),
 				"wp_damage": ps.weak_point_damage,

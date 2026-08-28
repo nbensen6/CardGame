@@ -921,17 +921,37 @@ rather than inventing work.
 - Steam integration (lobbies, invites, achievements)
 - Pinch-to-zoom on the overworld for touch
 - Mid-combat saving (today the slot is written only between fights)
-- The boss's own Frail/Artifact/Thorns (and a player's own Thorns/Artifact)
-  are real Combatant fields, computed correctly, and never leave the host:
-  `GameHost`'s boss dict only forwards `vulnerable`/`strength`/`wound`, so a
-  Titan you've Frailed or a hunter carrying Thorns shows nothing to look at.
-  Found auditing #54; not itself a keyword-text problem so it wasn't fixed
-  there — it's snapshot plumbing (`_players_public()`/the boss dict in
-  `game_host.gd`) plus a boundary test, cloud-safe, cheap, but a distinct item.
 
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-28** — Fixed the other `Later`-section `cloud-safe` bug the
+  previous entry (below) left open: the boss's own Frail/Artifact/Thorns,
+  and a hunter's own Frail/Artifact/Thorns, are real `Combatant` fields
+  computed correctly by `core/combat.gd` but never left `GameHost` — the
+  boss dict only forwarded `vulnerable`/`strength`/`wound`, and the player
+  public dict only forwarded `strength`/`rhythm`, so a Titan you'd Frailed
+  or a hunter carrying Thorns/Artifact showed nothing to look at on the
+  shared snapshot. Confirmed the gap was real before touching anything: a
+  beast's own `"frail"` move (`combat.gd:1185`) already applies Frail to a
+  targeted PLAYER's combatant, not just the boss, so the fix covers both
+  sides symmetrically rather than only the boss half the Later bullet's
+  header sentence named. Added the three fields to both dicts in
+  `session/game_host.gd` (`s["boss"]` and `_players_public()`), plus
+  `_test_frail_artifact_thorns_reach_the_shared_snapshot` in
+  `tools/run_tests.gd`, which drives a real two-client session through
+  `GameHost._broadcast_state()` and reads the fields back off both a
+  boss and a player's snapshot dict — the same boundary-test shape
+  `_test_adds_reach_the_shared_snapshot`/`_test_powers_reach_the_snapshot_
+  and_are_visible_to_the_ally` already use for other snapshot gaps. No UI
+  consumes these fields yet (grepped `ui/`: nothing reads the boss dict's
+  existing `vulnerable`/`strength`/`wound` either, so there is no status
+  badge to add or screenshot to take here — this is data reaching the wire,
+  not a screen changing), which is why this stayed `cloud-safe` rather than
+  `needs a screen`. `run_tests.gd` all green (493 passed); `balance_sim.gd`
+  run as a smoke test only, nothing tuned. Removed the now-fixed bullet from
+  **Later**.
 
 - **2026-08-28** — Sixteenth check found real work: the sixteen prior checks
   all rebuilt the unchecked list with `grep '^- \[ \]'`, which only walks the
