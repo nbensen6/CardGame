@@ -297,6 +297,7 @@ func _init() -> void:
 	_test_beast_thorns_reflects_card_damage_dealt_to_it()
 	_test_frail_artifact_thorns_persist_through_save()
 	_test_frail_artifact_thorns_reach_the_shared_snapshot()
+	_test_dexterity_intangible_buffer_plated_armour_reach_the_shared_snapshot()
 	_test_beast_thorns_and_artifact_are_wired()
 	# Beasts that debuff YOU (backlog #69) — Frail and curses through a boss move
 	_test_frail_move_debuffs_the_targeted_hunter()
@@ -4658,6 +4659,29 @@ func _test_frail_artifact_thorns_reach_the_shared_snapshot() -> void:
 	var p0_view: Dictionary = c0.shared["players"][0]
 	_expect(int(p0_view["frail"]) == 1 and int(p0_view["artifact"]) == 2 and int(p0_view["thorns"]) == 4,
 		"a hunter's own Frail/Artifact/Thorns reach the shared snapshot too")
+
+
+func _test_dexterity_intangible_buffer_plated_armour_reach_the_shared_snapshot() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	host._run.combat.boss.dexterity = 5
+	host._run.combat.boss.intangible = 1
+	host._run.combat.boss.buffer = 1
+	host._run.combat.boss.plated_armour = 2
+	host._run.combat.players[0].combatant.dexterity = 3
+	host._run.combat.players[0].combatant.intangible = 2
+	host._run.combat.players[0].combatant.buffer = 1
+	host._run.combat.players[0].combatant.plated_armour = 4
+	host._broadcast_state()
+	var boss_view: Dictionary = c0.shared["boss"]
+	_expect(int(boss_view["dexterity"]) == 5 and int(boss_view["intangible"]) == 1
+		and int(boss_view["buffer"]) == 1 and int(boss_view["plated_armour"]) == 2,
+		"the boss's Dexterity/Intangible/Buffer/Plated Armour reach the shared snapshot")
+	var p0_view: Dictionary = c0.shared["players"][0]
+	_expect(int(p0_view["dexterity"]) == 3 and int(p0_view["intangible"]) == 2
+		and int(p0_view["buffer"]) == 1 and int(p0_view["plated_armour"]) == 4,
+		"a hunter's own Dexterity/Intangible/Buffer/Plated Armour reach the shared snapshot too")
 
 
 func _test_beast_thorns_and_artifact_are_wired() -> void:

@@ -346,6 +346,12 @@ func _build_shared() -> Dictionary:
 			# Combatant fields the boss computes correctly but never forwarded to
 			# the board — a Titan you've Frailed showed nothing to look at.
 			"frail": b.frail, "artifact": b.artifact, "thorns": b.thorns,
+			# Same gap for Dexterity/Intangible/Buffer/Plated Armour (#60/#61):
+			# nothing grants the boss any of these yet, so this side forwards
+			# zeroes for now, but the hunter side below is live and the two
+			# should stay symmetric.
+			"dexterity": b.dexterity, "intangible": b.intangible,
+			"buffer": b.buffer, "plated_armour": b.plated_armour,
 			"weak_point_height": b.weak_point_height, "foothold_max": Combat.FOOTHOLD_MAX,
 			"ledges": b.ledges, "weak_point_threshold": b.weak_point_threshold,
 			"art": b.art, "adds": add_views,
@@ -424,6 +430,12 @@ func _players_public() -> Array:
 				# move showed nothing (backlog Later, found auditing #54).
 				"frail": ps.combatant.frail, "artifact": ps.combatant.artifact,
 				"thorns": ps.combatant.thorns,
+				# Dexterity/Intangible/Buffer/Plated Armour (#60/#61) are the same
+				# kind of gap: real Combatant fields cards already grant a hunter,
+				# never forwarded, so an ally couldn't see a teammate's own banked
+				# Dexterity or defensive stacks.
+				"dexterity": ps.combatant.dexterity, "intangible": ps.combatant.intangible,
+				"buffer": ps.combatant.buffer, "plated_armour": ps.combatant.plated_armour,
 				"foothold": ps.foothold, "reached": c.sigil_reached(i),
 				"secure": c.is_secure(i), "next_safe": c.next_safe_height(i),
 				"wp_damage": ps.weak_point_damage,

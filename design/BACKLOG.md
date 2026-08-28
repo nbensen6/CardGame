@@ -925,6 +925,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-28** — Twenty-ninth check found real work, in the same place the
+  sixteenth check found it: `Later`, not the Queue. The sixteenth entry only
+  forwarded Frail/Artifact/Thorns to the shared snapshot; #60/#61 added
+  Dexterity, Intangible, Buffer and Plated Armour to `Combatant` afterwards,
+  and those four have the identical gap — real fields `core/combat.gd`
+  already grants a hunter (`_test_dexterity_*` and friends were already
+  green, proving the field itself works), never forwarded past `GameHost`,
+  so an ally can't see a teammate's own banked Dexterity or a defensive
+  stack they're carrying. Confirmed the gap was real before touching
+  anything (grepped `game/session/game_host.gd` for the four field names —
+  absent from both `s["boss"]` and `_players_public()`; grepped `game/ui/`
+  and `game/views/` for the same names — nothing reads them today either, so
+  this is data reaching the wire, not a screen changing, same reasoning the
+  sixteenth entry used to keep its fix `cloud-safe`). Added all four to both
+  dicts in `session/game_host.gd`, symmetrically (boss and hunter side),
+  matching the sixteenth entry's own shape — though unlike Frail/Artifact/
+  Thorns, nothing grants the BOSS any of these four yet (`combat.gd` only
+  ever sets them on `ps.combatant`), so the boss half forwards zeroes for
+  now and is there for parity when a future card or beast move changes that.
+  Added `_test_dexterity_intangible_buffer_plated_armour_reach_the_shared_
+  snapshot` in `tools/run_tests.gd`, same boundary-test shape as
+  `_test_frail_artifact_thorns_reach_the_shared_snapshot` — drives a real
+  two-client session through `GameHost._broadcast_state()` and reads all
+  eight values (four boss, four hunter) back off both a boss and a player's
+  snapshot dict. `run_tests.gd` all green (495 passed, up from 493). Did NOT
+  touch #76's `flask`-for-stat-buff question again — the seventeenth through
+  nineteenth entries already looked at that specific pairing and called it a
+  deliberate convention, not a bug, and nothing about this run's own
+  cross-check of `game_host.gd` changes that. `balance_sim.gd` not run: no
+  numeric field changed, only which existing values reach the wire.
 - **2026-08-28** — Twenty-eighth consecutive re-check, same tip (`c518a5b`)
   as the entry directly below, fetched fresh (`git fetch --prune origin
   main`; the checkout arrived detached against a stale local ref again and
