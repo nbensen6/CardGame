@@ -925,6 +925,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-28** — Twenty-eighth consecutive re-check, same tip (`c518a5b`)
+  as the entry directly below, fetched fresh (`git fetch --prune origin
+  main`; the checkout arrived detached against a stale local ref again and
+  the fetch already fixed it, per step 0). Independently re-verified against
+  the tree rather than trusting the twenty-seventh entry's numbers:
+  `game/data/bosses.json` still parses to 20 `bosses` entries (#55's six
+  still present, confirmed by name — `husk_beetle`, `gloom_moth`,
+  `bog_leech`, `thrasher`, `silk_widow`, `boulder_ram` all have both a
+  `bosses.json` entry and a same-named `.glb`); `game/ui/card_view.gd` still
+  has exactly 32 `preload("res://assets/icons/...")` entries and
+  `game/data/cards.json` still has 187 `"icon"` fields (#76 — also re-ran
+  the icon heuristic in `tools/cardlab/assign-icons.js` against every card
+  by hand and confirmed every diff between the heuristic's guess and the
+  data is a deliberate hand-tuned choice, not a leftover mismatch like
+  batch 2 found; no genuine gap or wrong-icon case left for a batch 3
+  without inventing one); `game/assets/3d/cast/lightbearer.glb` and
+  `game/assets/portraits/lightbearer.png` both still present (#80);
+  `design/ART-REVIEW.md` still has 16 blocks marked `NEEDS A PASS`. `grep
+  '^- \[ \]'` on the Queue reproduces the same list again: 2, 3, 8, 25, 29b,
+  32, 31b, 78, 79, 81 (`needs a screen`, correctly skipped) plus 55, 76, 80
+  (`cloud-safe`/`cloud-art`, already built past their own "Done when" bar,
+  waiting only on Nick's eyes). `Needs Nick` and `Later` sections unchanged
+  too. No code touched, so no Godot import/test cycle to run. No push
+  notification: nothing has changed since the twenty-seventh entry already
+  told Nick the same three items are waiting on review. Stopped per rule 6
+  rather than inventing work.
 - **2026-08-28** — Twenty-seventh consecutive re-check, same tip (`eee960b`)
   as the entry directly below, fetched fresh (`git fetch --prune origin
   main`; the checkout arrived detached against a stale local ref again and
