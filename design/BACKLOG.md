@@ -925,6 +925,26 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-28** — Twenty-second consecutive re-check, same tip (`180c9df`)
+  as the entry directly below, fetched fresh (`git fetch --prune origin
+  main`; the detached-HEAD warning fired as expected and the fetch already
+  covered it, per step 0). Independently re-verified against the tree
+  rather than trusting the twenty-first entry's numbers: `game/data/
+  bosses.json` still parses to 20 `bosses` entries (#55's six still
+  present); `game/ui/card_view.gd` still has exactly 32
+  `preload("res://assets/icons/...")` entries, and `game/data/cards.json`
+  still has 187 `"icon"` fields (#76); `game/assets/3d/cast/lightbearer.glb`
+  and `game/assets/portraits/lightbearer.png` are both still committed
+  (#80); `design/ART-REVIEW.md` still has 21 blocks with 16 still marked
+  `NEEDS A PASS`. Rebuilt the unchecked-item list from scratch
+  (`grep '^- \[ \]'`): 2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 are `needs a
+  screen`, correctly skipped; 55, 76, 80 are the only `cloud-safe`/
+  `cloud-art` items and all three are already built past their own "Done
+  when" bar, waiting only on Nick's eyes — pushing another icon batch or
+  beast now would be manufacturing scope past rule 6. No code touched, so
+  no Godot import/test cycle to run. No push notification: nothing changed
+  since the last one told Nick the same three items are waiting on review.
+  Stopped per rule 6 rather than inventing work.
 - **2026-08-28** — Twenty-first consecutive re-check, same tip (`82907ba`) as
   the entry directly below, fetched fresh (`git fetch --prune origin main`,
   no staleness this run — the detached-HEAD warning fired as expected and the
