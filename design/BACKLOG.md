@@ -939,6 +939,25 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-28** — Fifteenth consecutive re-check, same tip (`79b2087`) as the
+  entry directly below. Fetched `origin/main` fresh (rule 9) and checked out
+  `FETCH_HEAD`; no stale-ref drift this run. Independently re-verified all
+  three `cloud-safe`/`cloud-art` candidates against the tree rather than the
+  prior entry's numbers: `game/data/bosses.json` parses to 20 beasts under
+  `"bosses"` (#55's six all present); `game/ui/card_view.gd`'s `ICONS` dict
+  still has exactly 32 `preload()` entries, unchanged from the fourteenth
+  check (#76); `lightbearer.glb` and `lightbearer.png` are both still
+  committed (#80). Also grepped `design/ART-REVIEW.md` directly for any block
+  header changing from `NEEDS A PASS` — all fifteen review blocks (six
+  beasts, two icon batches, portraits, the overworld map, lightbearer,
+  vine_weaver, mountain_climbers, goblin_mech) are still unreviewed; Nick has
+  not looked yet. Rebuilt the unchecked list with `grep '^- \[ \]'`: 2, 3, 8,
+  25, 29b, 32, 31b, 78, 79, 81 are `needs a screen`; 55, 76, 80 are the only
+  `cloud-safe`/`cloud-art` items, all already built and waiting on review,
+  not waiting on more work. No push notification — nothing has changed since
+  the fifth check told Nick the same thing, and a fifteenth identical ping
+  would be noise. Skipped the Godot import/test cycle since no code was
+  touched. Stopped per rule 6 rather than inventing scope.
 - **2026-08-28** — Fourteenth consecutive re-check, same tip (`332e086`) as the
   entry directly below — the checkout was on a detached, stale `origin/main`
   again this run (step 0's known issue), fixed by the fetch-and-rebuild before
