@@ -925,6 +925,23 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-28** — Twenty-fourth consecutive re-check, same tip (`efc0156`) as
+  the entry directly below, fetched fresh (`git fetch --prune origin main`;
+  the checkout arrived detached against a stale local ref again and the fetch
+  already fixed it, per step 0). Independently re-verified against the tree
+  rather than trusting the twenty-third entry's numbers: `game/data/
+  bosses.json` still parses to 20 `bosses` entries (#55's six still present);
+  `game/ui/card_view.gd` still has exactly 32
+  `preload("res://assets/icons/...")` entries, and `game/data/cards.json`
+  still has 187 `"icon"` fields (#76); `design/ART-REVIEW.md` still has 16
+  blocks marked `NEEDS A PASS`. `grep '^- \[ \]'` on the Queue reproduces the
+  same list again: 2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 (`needs a screen`,
+  correctly skipped) plus 55, 76, 80 (`cloud-safe`/`cloud-art`, already built
+  past their own "Done when" bar, waiting only on Nick's eyes). No code
+  touched, so no Godot import/test cycle to run. No push notification:
+  nothing has changed since the twenty-third entry already told Nick the same
+  three items are waiting on review. Stopped per rule 6 rather than inventing
+  work.
 - **2026-08-28** — Twenty-third consecutive re-check, same tip (`4a8b33c`) as
   the entry directly below, fetched fresh (`git fetch --prune origin main`,
   the detached-HEAD warning fired as expected and the fetch already covered
