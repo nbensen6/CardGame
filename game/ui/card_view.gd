@@ -102,6 +102,10 @@ const ICONS := {
 	"burn":    preload("res://assets/icons/burn.png"),                          # exhaust a card
 	"stack":   preload("res://assets/icons/stack.png"),                        # draw / hand size
 	"peak":    preload("res://assets/icons/peak.png"),                          # a strike that scales with Height
+	"intangible": preload("res://assets/icons/intangible.png"),      # a hit past Block is capped at 1
+	"buffer":  preload("res://assets/icons/buffer.png"),                      # the next hit is cancelled outright
+	"plated_armour": preload("res://assets/icons/plated_armour.png"),  # Block that survives the round
+	"thorns":  preload("res://assets/icons/thorns.png"),                      # a landed attack reflects damage back
 }
 const ENERGY_ICON := preload("res://ui/icons/energy.svg")
 

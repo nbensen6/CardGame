@@ -520,6 +520,51 @@ apart. These carry their own colour, so `card_view.TINT` is gone.
   and is now two figures with one hauling the other up; `rally` was a crown and
   is now a horn.
 
+---
+
+### four defensive-keyword icons (intangible, buffer, plated_armour, thorns) — NEEDS A PASS
+
+Built 2026-08-28 by `tools/blender/icons.py`, batch 2 (backlog #76 — "one batch
+per run"). Not a new gap this time, a wrong answer: `ghost_step`, `overhang`,
+`hardshell` and `barbed_hide` grant Intangible, Buffer, Plated Armour and
+Thorns respectively — none of them Block — and all four were wearing `shield`,
+the Block icon, because `shield` was the closest defensive glyph on hand at
+the time. A player reading a hand by shape would see four Block cards that
+aren't. Also reassigned `sure_footing` (a pure Dexterity card, no Block
+either) from `shield` to `flask`, matching the existing convention `sharpen`/
+`oil_can` already use for a pure Strength card — no new art, just the same
+mismatch, one line.
+
+- **What to judge:** the same question as the first batch — can you tell these
+  four apart from `shield`/`guard`/`wall` at 42px, and does each one look like
+  what its card actually does.
+- `intangible`: three overlapping diamonds on a diagonal, fading light-to-dark
+  toward one corner — an afterimage/phase-out. Untested at 42px whether the
+  palest diamond (near-white on a light card face) disappears rather than
+  reading as "faded."
+- `buffer`: a hex-faceted ring (6-sided, not round, so it can't be mistaken for
+  `guard`'s ring) with a red shard bouncing off the top-right edge — the hit
+  that got cancelled. Unsure whether the shard reads as "deflected" or just as
+  a stray triangle stuck to the hexagon; it's the one part of this batch drawn
+  without a clear precedent to copy.
+- `plated_armour`: three stacked overlapping plates, wide/dark at the bottom
+  to narrow/pale at the top, with three rivet dots. Meant to read as lamellar
+  scale rather than the brick-grid `wall` or the kite-shaped `shield`.
+- `thorns`: a spiked ball with two spikes tipped red. The first build centred
+  every spike ON the ball's own origin, which buried half of each spike inside
+  the mesh and left it reading as a smooth ball with faint bumps — caught by
+  rendering and looking, not by the contract, since icons have no assetcheck.
+  Rebuilt with each spike's base offset out to the ball's own radius instead,
+  so the half that's meant to be visible is the half that actually clears the
+  surface. The fix is in the file now; still unverified how it reads at 42px
+  next to `expose` (also spiky, also red-accented) and `peak` (also has spikes
+  radiating from a point).
+- Not touched this batch, left for a future one if it's worth it:
+  `sure_footing`'s new `flask` assignment repeats the pre-existing oddity that
+  `flask` (a potion) is also the icon for a pure stat-buff card. That
+  inconsistency already shipped with `sharpen`/`oil_can`; this batch matched
+  it rather than relitigating it.
+
 ### the nineteen portraits — NEEDS A PASS
 
 Rendered 2026-08-25 from the models themselves by `tools/blender/portraits.py`.

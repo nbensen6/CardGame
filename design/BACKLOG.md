@@ -799,6 +799,27 @@ check. It never judges its own work. See item 74 for why.
   when:* at least eight new icons exist, cards reference them, and the Lab's icon
   finding improves. **One batch per run**, and say in the review block which
   cards you pointed at them.
+  **Checked 2026-08-28: batch 2, four icons, a wrong-answer fix rather than a
+  gap fill.** Batch 1 (2026-08-26) gave every draftable card SOME icon; this
+  run found four that had one which actively lied. `ghost_step`, `overhang`,
+  `hardshell` and `barbed_hide` grant Intangible, Buffer, Plated Armour and
+  Thorns — none of them Block — and all four wore `shield`, the Block icon.
+  Built `intangible`, `buffer`, `plated_armour` and `thorns` in
+  `tools/blender/icons.py` and pointed those four cards at them; also moved
+  `sure_footing` (pure Dexterity, also no Block) from `shield` to `flask`,
+  matching the existing `sharpen`/`oil_can` convention for a pure Strength
+  card — a one-line data fix, no new art. The first build of `thorns` looked
+  fine in the contract but was actually wrong: every spike was based on the
+  ball's own centre, so half of each was buried inside the mesh and it
+  rendered as a smooth ball with faint bumps — only caught by rendering and
+  looking at the PNG, same lesson the beast batches keep re-learning, just for
+  a 2D icon this time. Fixed by basing each spike out at the ball's own
+  radius instead. Full write-up, including what still could not be verified
+  (mainly: how `intangible`'s palest diamond and `buffer`'s deflected shard
+  read at actual 42px card size) is in `design/ART-REVIEW.md`. Content
+  integrity and the whole suite green (only touched a card's `icon` field,
+  which nothing type-checks against a fixed enum). Left unchecked: still
+  `cloud-art`, still needs a human look, same as batch 1.
 
 - [x] **77. Props for the places you walk** `cloud-art` — **the FIGHT grounds are
   done (2026-08-25): all fourteen, one per beast, in `tools/blender/env/`.** The

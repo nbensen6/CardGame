@@ -314,6 +314,60 @@ def peak(i):                                    # a strike that scales with Heig
     i.slabf(0.10, 0.60, 0.16, 0.075, RED)
 
 
+# ------------------------------------------------------- backlog #76, batch 2
+#
+# Four cards (ghost_step, overhang, hardshell, barbed_hide) grant Intangible,
+# Buffer, Plated Armour and Thorns and were wearing `shield` — the Block icon
+# — despite none of them granting Block. That is not crowding, it is a card
+# telling the player the wrong thing about what it does. Each gets its own
+# icon, built to differ from `shield`/`guard`/`wall` (the actual Block family)
+# in silhouette, not just colour.
+
+def intangible(i):                              # a hit past Block is capped at 1
+    # A fading diagonal trail of the same diamond, three deep — one foot in
+    # this world and one not, rather than a shield that isn't there.
+    i.slabf(0.26, -0.26, 0.15, 0.15, WHITE, rot=0.785, bevel=0.02)
+    i.slabf(0.08, -0.08, 0.17, 0.17, ICE, rot=0.785, bevel=0.025)
+    i.slabf(-0.14, 0.14, 0.19, 0.19, IRIS, rot=0.785, bevel=0.03)
+
+
+def buffer(i):                                  # the next hit is cancelled outright
+    # A hex-faceted energy bubble (low-segment ring, not the round `guard`
+    # ring) with the stopped hit shown bouncing off it rather than landing.
+    i.ring((0.0, 0.0, 0.0), (0.40, 0.40, 0.40), SKY, 6, 4, thickness=0.11)
+    i.ring((0.0, 0.02, 0.0), (0.20, 0.20, 0.20), ICE, 6, 4, thickness=0.07)
+    i.spike(0.32, 0.32, 0.02, 0.10, 0.24, BRICK, ang=2.36, seg=4)
+    i.ball((0.0, -0.02, 0.0), (0.06, 0.05, 0.06), WHITE, 6, 4)
+
+
+def plated_armour(i):                           # Block that survives the round
+    # Three overlapping plates, widest and darkest at the bottom, narrowest
+    # and palest at the top — lamellar scale rather than one kite shield, so
+    # it can't be mistaken for `shield`, `guard` or the brick-grid `wall`.
+    for z, w, c in [(-0.30, 0.44, PEWTER), (-0.02, 0.38, STEEL), (0.26, 0.30, SILVER)]:
+        i.slabf(0.0, z, w * 0.5, 0.15, c, bevel=0.045)
+    for x, z in [(-0.12, -0.30), (0.12, -0.02), (0.0, 0.26)]:
+        i.ball((x, -0.07, z), (0.028, 0.02, 0.028), CHARCOAL, 5, 3)
+
+
+def thorns(i):                                  # a landed attack reflects damage back
+    # A thorn-ball, not a target ring or a blade: a core with spikes fanned
+    # in every direction, two tipped red for the damage that comes back.
+    # spike() centres its length on its base point, so a spike based AT the
+    # core's own centre is half buried and never clears the surface — every
+    # spike here is based out at the core's radius instead, so the visible
+    # half is the half that actually pokes free of the ball.
+    R, L = 0.15, 0.36
+    i.ball((0.0, 0.0, 0.0), (0.20, 0.17, 0.20), GREEN, 8, 5)
+    angs = [k * math.tau / 6.0 + 0.35 for k in range(6)]
+    for a in angs:
+        i.spike(math.sin(a) * R, math.cos(a) * R, 0.09, 0.006, L, UMBER, ang=a, seg=4)
+    tip = R + L * 0.5
+    for a in (angs[0], angs[3]):
+        i.ball((math.sin(a) * tip, -0.02, math.cos(a) * tip),
+               (0.05, 0.045, 0.05), BRICK, 6, 4)
+
+
 ICONS = [
     ("sword", sword), ("shield", shield), ("bow", bow), ("fire", fire),
     ("skull", skull), ("flask", flask), ("climb", climb), ("bomb", bomb),
@@ -322,6 +376,8 @@ ICONS = [
     ("guard", guard), ("wall", wall), ("ascend", ascend), ("rope", rope),
     ("lift", lift), ("target", target), ("rhythm", rhythm), ("timer", timer),
     ("cog", cog), ("burn", burn), ("stack", stack), ("peak", peak),
+    ("intangible", intangible), ("buffer", buffer),
+    ("plated_armour", plated_armour), ("thorns", thorns),
 ]
 
 
