@@ -920,11 +920,35 @@ rather than inventing work.
 - Daily / challenge modes
 - Steam integration (lobbies, invites, achievements)
 - Pinch-to-zoom on the overworld for touch
-- Mid-combat saving (today the slot is written only between fights)
 
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-28** — Twentieth consecutive re-check, same tip (`26c9b50`) as the
+  entry directly below, fetched fresh (`git fetch --prune origin main`, no
+  staleness this run). Independently re-verified rather than trusting the
+  nineteenth entry's numbers: `game/data/bosses.json` parses to 20 `bosses`
+  entries (#55's six still present); `game/ui/card_view.gd` still has exactly
+  32 `preload("res://assets/icons/...")` entries (#76); `design/ART-REVIEW.md`
+  still shows every block as `NEEDS A PASS` except `frog` (already `DONE`) —
+  Nick has not reviewed the rest. `grep '^- \[ \]'` on the Queue reproduces
+  the same list as the nineteenth entry exactly: 2, 3, 8, 25, 29b, 32, 31b,
+  78, 79, 81 (`needs a screen`) plus 55, 76, 80 (`cloud-safe`/`cloud-art`,
+  already built, waiting on review). This run checked one thing the prior
+  eighteen re-checks named as a lesson but didn't re-verify each time — the
+  **Later** section — and found a real, if small, leftover: the bullet
+  "Mid-combat saving (today the slot is written only between fights)" was
+  never removed when #14 promoted it out of Later and shipped it
+  (2026-08-23; `Run.to_dict()`/`from_dict()` has carried an in-progress
+  `Combat` ever since, confirmed by reading `game/core/run.gd` directly
+  rather than trusting the queue's own claim). Removed the stale bullet —
+  a one-line doc fix, not a code change, so `run_tests.gd` was not required
+  by rule 2, but ran it anyway as a sanity check: all green, unaffected.
+  `balance_sim.gd` not run — nothing simulatable changed. No push
+  notification — nothing actionable for Nick to look at changed, only a
+  queue-file inaccuracy corrected. Stopped per rule 6 rather than inventing
+  scope beyond this.
 
 - **2026-08-28** — Nineteenth consecutive re-check, same tip (`d447da8`) as
   the entry directly below, fetched fresh (no staleness this run either).
