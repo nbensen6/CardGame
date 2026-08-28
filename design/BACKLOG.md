@@ -925,6 +925,22 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-28** — Twenty-sixth consecutive re-check, same tip (`079e720`) as
+  the entry directly below, fetched fresh (`git fetch --prune origin main`;
+  no staleness this run, `origin/main` matched the last commit). Independently
+  re-verified against the tree rather than trusting the twenty-fifth entry's
+  numbers: `game/data/bosses.json` still has 20 boss entries; `game/ui/card_view.gd`
+  still has exactly 32 `preload("res://assets/icons/...")` entries and
+  `game/data/cards.json` still has 187 `"icon"` fields (#76); `design/ART-
+  REVIEW.md` still has 16 blocks marked `NEEDS A PASS`. `grep '^- \[ \]'` on
+  the Queue reproduces the same list again: 2, 3, 8, 25, 29b, 32, 31b, 78, 79,
+  81 (`needs a screen`, correctly skipped) plus 55, 76, 80 (`cloud-safe`/
+  `cloud-art`, already built past their own "Done when" bar, waiting only on
+  Nick's eyes). `Needs Nick` and `Later` sections unchanged too. No code
+  touched, so no Godot import/test cycle to run. No push notification:
+  nothing has changed since the twenty-fifth entry already told Nick the same
+  three items are waiting on review. Stopped per rule 6 rather than inventing
+  work.
 - **2026-08-28** — Twenty-fifth consecutive re-check, same tip (`3a5582d`) as
   the entry directly below, fetched fresh (`git fetch --prune origin main`;
   no staleness this run, `origin/main` matched the last commit). Independently
