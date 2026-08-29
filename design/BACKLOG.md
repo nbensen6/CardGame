@@ -915,6 +915,29 @@ check. It never judges its own work. See item 74 for why.
   (496 passed). Left unchecked: still `cloud-art`, still needs a human
   look, and this batch has no image to review since nothing new was
   rendered.
+  **Checked 2026-08-29 (later the same day): batch 7, zero new icons, zero
+  data fixes — the audit is now exhaustive and clean.** Batches 2-6 worked
+  through the climb-family, sword/fire/skull, and one-off families
+  (`sure_footing`, `crippling_blow`, `tempo_trap`) piecemeal, each time
+  auditing whichever slice was on hand. This run went the rest of the way:
+  every remaining family checked card-by-card against its own base text —
+  `shield`/`guard`/`wall` (all 34 grant guaranteed Block, matching the
+  Block-family icons), `gadget` (all 7 "Build a tool into your hand"),
+  `support` (all 6 grant Ally Block/heal), `target`/`taunt`/`bow`/`rally`/
+  `expose`/`cog` (7 single-purpose cards, each icon matches its one
+  guaranteed effect), and `stack`/`draw` (confirmed `stack` = draw/hand-
+  size per `design/icon-audit.md` line 52, so `take_aim` and
+  `fading_insight` wearing `stack` for a plain "Draw 2" is correct by the
+  documented vocabulary, not a leftover miss — `draw` is reserved by hand
+  for `quick_purge`'s discard-then-replace shape, distinct from a flat
+  draw). Combined with batch 6's climb/sword/fire/skull pass, this is now
+  every one of the 187 cards in `cards.json` checked at least once against
+  its own text since batch 2 started. Found nothing left to fix. Content
+  integrity and the whole suite still green (496 passed, unchanged — no
+  file was touched this run). Left unchecked: still `cloud-art`, still
+  needs a human look on the five already-shipped batches; this run shipped
+  no new art or data, only confirmation the earlier batches did not miss
+  anything.
 
 - [x] **77. Props for the places you walk** `cloud-art` — **the FIGHT grounds are
   done (2026-08-25): all fourteen, one per beast, in `tools/blender/env/`.** The
