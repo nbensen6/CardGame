@@ -4276,3 +4276,12 @@ Newest first. One line per finished item: what, and anything surprising.
   Frog at 4 rares, which is real but out of this item's scope, so I narrowed the
   test instead of fixing the Frog too (no new scope). `run_tests.gd` and
   `balance_sim.gd` (smoke test only, not tuned to) both clean.
+- **Eighth re-check confirms no actionable cloud-safe/cloud-art work** — the
+  only three unchecked items carrying either tag are #55 (six beasts, numeric
+  bar already met), #76 (icon audit exhaustive as of batch 7, zero cards
+  changed in `cards.json`/`bosses.json` since), and #80 (Lightbearer model and
+  portrait already built) — all three are build-complete and blocked only on
+  Nick looking at `design/ART-REVIEW.md`, which this routine cannot do for
+  itself. Every other unchecked item is tagged `needs a screen`. No commits
+  touched `game/data/` since batch 7's audit, so there is no new gap to find.
+  No code changed this run.
