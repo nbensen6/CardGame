@@ -1043,6 +1043,21 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-29** — Seventh re-check since item #76's batch 7 closed the icon
+  audit out, same tip (`7c1abd6`, the prior run's own no-op log entry) — no
+  commits landed on `origin/main` between that check and this one.
+  Independently re-verified against the tree rather than trusting the prior
+  entry: `game/data/bosses.json` still 20 bosses; `game/data/cards.json`
+  still 187/187 cards with a non-empty `icon` field (checked programmatically
+  this time, not by grep count); `game/ui/card_view.gd` still 36
+  `preload("res://assets/icons/...")` lines; `design/ART-REVIEW.md` still 20
+  `NEEDS A PASS` blocks; `grep '^- \[ \]'` on the Queue still the same 13
+  items — 2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped);
+  55, 76, 80 `cloud-safe`/`cloud-art`, past their own "Done when" bar,
+  waiting on Nick's art review. No code or data changed, so no test cycle to
+  run. The standing-condition notification already went out (fourth
+  re-check); nothing new surfaced this run, so no second one was sent.
+  Stopped per rule 6 rather than inventing work.
 - **2026-08-29** — Sixth re-check since item #76's batch 7 closed the icon
   audit out, same tip (`53c491d`, the prior run's own no-op log entry) — no
   commits landed on `origin/main` between that check and this one.
