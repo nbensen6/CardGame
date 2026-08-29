@@ -4285,3 +4285,15 @@ Newest first. One line per finished item: what, and anything surprising.
   itself. Every other unchecked item is tagged `needs a screen`. No commits
   touched `game/data/` since batch 7's audit, so there is no new gap to find.
   No code changed this run.
+- **Ninth re-check confirms no actionable cloud-safe/cloud-art work** — fetched
+  `origin/main`, confirmed the tip is still the eighth re-check's own commit
+  (nothing landed in between), and independently re-derived the same
+  conclusion before reading it: the only three unchecked items carrying
+  either tag are #55, #76 and #80, all build-complete and blocked solely on
+  Nick opening `design/ART-REVIEW.md` — six beasts, eight card icons, the
+  Lightbearer model/portrait, nineteen portraits, the overworld map, and all
+  fourteen fight grounds are sitting there as NEEDS A PASS with nothing new
+  since the eighth check. Every other unchecked item is `needs a screen`. No
+  code or data changed this run; flagging via push notification since this is
+  the ninth consecutive idle run and the backlog of unreviewed art is now
+  substantial.
