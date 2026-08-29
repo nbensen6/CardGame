@@ -999,6 +999,21 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-29** — Thirty-second check, same tip (`5dc450c`, the prior run's
+  own no-op log entry). Fetched fresh per step 0 (no stale-ref issue this
+  run). Independently re-verified rather than trusting the prior entry:
+  `game/data/bosses.json` still parses to 20 boss entries; `game/ui/card_view.gd`
+  still has 36 `preload("res://assets/icons/...")` lines; `game/data/cards.json`
+  still has all 187 cards carrying a non-empty `icon` field; `design/ART-
+  REVIEW.md` still has 20 blocks marked `NEEDS A PASS`. `grep '^- \[ \]'` on
+  the Queue reproduces the same list as the prior entry: 2, 3, 8, 25, 29b, 32,
+  31b, 78, 79, 81 (`needs a screen`, correctly skipped) plus 55, 76, 80
+  (`cloud-safe`/`cloud-art`, already built past their own "Done when" bar,
+  waiting only on Nick's eyes). No commits landed on `origin/main` between
+  the prior check and this one, so there is no new ground to re-audit beyond
+  confirming the tree still matches what was already verified. No code or
+  data changed, so no Godot import/test cycle to run. Stopped per rule 6
+  rather than inventing work.
 - **2026-08-29** — Thirty-first check, same tip (`ad97897`, item #76's fifth
   icon batch — Strength/Dexterity icons closing the five-card gap batch 2's
   own note flagged). Fetched fresh per step 0 (no stale-ref issue this run).
