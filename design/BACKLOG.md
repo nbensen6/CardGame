@@ -999,6 +999,38 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-29** — Thirty-first check, same tip (`ad97897`, item #76's fifth
+  icon batch — Strength/Dexterity icons closing the five-card gap batch 2's
+  own note flagged). Fetched fresh per step 0 (no stale-ref issue this run).
+  Independently re-verified against the tree rather than trusting the prior
+  entry's numbers: `game/data/bosses.json` still parses to 20 `bosses`
+  entries (#55's six still present); `game/ui/card_view.gd` now has 36
+  `preload("res://assets/icons/...")` entries (up from 32, matching the four
+  icons batches 3-5 added: `light`, `frail`, `strength`, `dexterity`) and
+  `game/data/cards.json` still has 187/187 cards with an `icon` field, none
+  missing. Went looking for a genuine batch-6 gap rather than assuming none
+  exists: cross-checked every card granting Frail, Dexterity, Intangible,
+  Buffer, Plated Armour, Thorns, Strength or Vulnerable against its icon by
+  hand. Found none lying — the one Frail card (`crippling_blow`) already
+  wears `frail`; the handful that pair Vulnerable with a hit (`harpoon`,
+  `bowshot`, `wither`, `strangler`, `withering_grasp`, `tempo_trap`,
+  `read_the_ridge`, `rivet_gun`) wear icons for their real primary effect,
+  the existing convention batches 2-5 already established; `chalk_up` and
+  `steady_grip` pair Strength/Dexterity with Block and correctly wear
+  `shield` since Block is their primary effect, same reasoning `spinebrace`
+  (Block + Thorns → `shield`) already uses. No card without an icon, no
+  card wearing an icon for an effect it doesn't have. `design/ART-REVIEW.md`
+  still has 20 blocks marked `NEEDS A PASS`. `grep '^- \[ \]'` on the Queue
+  reproduces the same list: 2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 (`needs a
+  screen`, correctly skipped) plus 55, 76, 80 (`cloud-safe`/`cloud-art`,
+  already built past their own "Done when" bar, waiting only on Nick's
+  eyes). `Needs Nick` and `Later` sections unchanged — `Later` no longer
+  carries any parked `cloud-safe` bug (the last two, Frail/Artifact/Thorns
+  and Dexterity/Intangible/Buffer/Plated Armour/Light forwarding, were
+  fixed in the two prior real-work checks). No code or data changed, so no
+  Godot import/test cycle to run, and no new icon batch either — inventing
+  a ninth icon nobody asked for would be new scope, not a gap fill. Stopped
+  per rule 6 rather than inventing work.
 - **2026-08-28** — Thirtieth check found real work, same class of bug as the
   sixteenth and twenty-ninth entries but a different field: `PlayerState.light`
   (backlog #47, the Lightbearer's own resource) was never forwarded to the
