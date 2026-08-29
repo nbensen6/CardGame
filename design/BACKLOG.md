@@ -1043,6 +1043,19 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-29** — Third re-check since item #76's batch 7 closed the icon
+  audit out, same tip (`93fb201`, the prior run's own no-op log entry) — no
+  commits landed on `origin/main` between that check and this one.
+  Independently re-verified again rather than trusting the prior entry:
+  `game/data/cards.json` still 187 cards, `game/data/bosses.json` still 20
+  bosses, `game/ui/card_view.gd` still 36 `preload("res://assets/icons/...")`
+  lines, `design/ART-REVIEW.md` still 20 `NEEDS A PASS` blocks, `origin/main`
+  and local `HEAD` at the same commit. Queue unchanged: 2, 3, 8, 25, 29b, 32,
+  31b, 78, 79, 81 are `needs a screen` (skipped, no display here); 55, 76, 80
+  are `cloud-safe`/`cloud-art` and already past their own "Done when" bar,
+  waiting only on Nick's art review. No code or data changed this run, so no
+  Godot import/test cycle to run. Stopped per rule 6 rather than inventing
+  work.
 - **2026-08-29** — Second re-check since item #76's batch 7 closed the icon
   audit out, same tip (`f82652e`, the prior run's own no-op log entry) — no
   commits landed on `origin/main` between that check and this one.
