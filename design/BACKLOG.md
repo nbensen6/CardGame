@@ -894,6 +894,27 @@ check. It never judges its own work. See item 74 for why.
   needs a human look, and this one especially — `dexterity`'s feather read
   is the weakest of anything this item has shipped and says so plainly in
   the review block.
+  **Checked 2026-08-29: batch 6, zero new icons, one data-only reassignment
+  — the same wrong-answer shape as batch 2, found in a different family.**
+  Audited every climb-family card (`climb`/`ascend`/`rope`/`lift`) against
+  its own base text and found `tempo_trap` ("Expose 2. Rhythm 1.") wearing
+  `climb` despite granting no Climb at all — its only tie to climbing is a
+  `timed_grip: 2` bonus for landing the throw well, and every other timed
+  card in the catalog keys its icon to the GUARANTEED text, not the bonus
+  (`dig_in` wears `guard` for its guaranteed Block despite a `timed_block`
+  bonus; `grapple`/`creeper`/`haul` all wear climb-family icons but also
+  guarantee Climb in their own base text, unlike this one). Tempo Trap's
+  real shape — grant Rhythm plus a rider, no attack or block — matches
+  `cadence`/`croak_chorus`/`pass_the_beat`/`drumroll` exactly, so it now
+  wears `rhythm` instead. Pure data fix, no new art, same category as
+  batch 2's `sure_footing` move. Re-audited `sword`/`fire`/`skull` families
+  too and found nothing else where the base card text contradicts the
+  icon's family — the remaining shared icons (`lift` 18, `rope` 14, `sword`
+  16, `shield` 16 …) all match the documented shape-wins-over-flavor
+  convention on inspection. Content integrity and the whole suite green
+  (496 passed). Left unchecked: still `cloud-art`, still needs a human
+  look, and this batch has no image to review since nothing new was
+  rendered.
 
 - [x] **77. Props for the places you walk** `cloud-art` — **the FIGHT grounds are
   done (2026-08-25): all fourteen, one per beast, in `tools/blender/env/`.** The
