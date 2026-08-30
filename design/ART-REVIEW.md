@@ -61,6 +61,117 @@ The failures that have happened, all of which passed every check:
 
 ---
 
+### riptide_eel — NEEDS A PASS
+
+- built: 2026-08-30 by the routine, from `tools/blender/riptide_eel.py` —
+  backlog #55's numeric "done when" bar (six new beasts) was met on
+  2026-08-27 and twelve had landed by the time this run started, the most
+  recent being Glyph Tortoise. This run kept finding no other actionable
+  `cloud-safe`/`cloud-art` work in `design/BACKLOG.md`, so it built a
+  thirteenth toward the item's own stated goal of fourteen. Elite pool.
+  Bent rule: `sigil_fatigue` (backlog #55's `limiter` field — the same
+  field every true Titan carries, checked generically by
+  `Combat._apply_limiter()`), spent so far only by two of the four true
+  Titans (Gale Serpent, Sunken Warden) and never yet by ANY fight/elite
+  pool beast — every one of the twelve new-content beasts before this one
+  bent its rule through its own MOVES (a gate, a status, an escalation,
+  a hurt-phase swap). This is the first whose whole twist lives in the
+  field every move-based beast left empty: an elite that previews the
+  exact rule language ("camping the sigil burns your grip") a hunter will
+  meet again at a real Titan, value 2 (matching Gale Serpent's own, gentler
+  than Sunken Warden's 1). `max_hp` 88, sigil Height 6, ledges at 2 and 4,
+  threshold 25 — sits inside the established elite band (Bog Leech,
+  Silk Widow, Brine Urchin, Clot Toad, Flicker Stag and Eyrie Hawk all
+  share the same sigil Height and ledge Heights) rather than guessed. Its
+  own moves are left deliberately plain (attack / block / attack_all, no
+  gates, no hurt-phase, no leech) — the same restraint Glyph Tortoise's own
+  write-up named — so the fatigue reads as the one thing this beast does
+  differently. A moray-shaped eel that rears up out of a low crouch into a
+  cobra-like neck and head, echoing Gale Serpent's own "you climb around
+  this, not up it" coil lesson in a simpler rearing-S form rather than a
+  full spiral. Deep-water NAVY/MIDNIGHT/STEEL/SLATE — spent before only by
+  the two aquatic Titans and Riftling/Sky Snapper/Stone Warden, never yet
+  by any new-content beast.
+- checks: assetcheck 4/4 PASS — one mesh, one material, origin at the
+  feet, centred left-right, transforms applied, proportions
+  forward-facing, 1388 tris / 2600 beast budget. Holds PASS (2 ledges +
+  sigil; all seven climb points — ground 4%, H1 28%, H2 39%, H3 49%, H4
+  59%, H5 70%, H6 81% — within the contract's band). Sigil PASS — a real
+  gold mark at the sigil's Height, 43% occluded, comfortably under the
+  contract's 50% line. Silhouette PASS (closest match `lightbearer.glb` at
+  56%, checked 49 models). Full `run_tests.gd` green (ALL TESTS PASSED,
+  including `_test_everyone_wears_their_own_art` against the new
+  `riptide_eel.glb` + its own unshared portrait, and the content-integrity
+  beast-pool walk). `balance_sim.gd` run once as the required smoke test
+  only — no tuning against it. `apt-get install blender` gave a working
+  headless 4.0.2 (`download.blender.org` still a policy 403 through the
+  egress proxy, unchanged from every prior run).
+- **Four real bugs, one caught only by assetcheck and three only by
+  rendering and looking:**
+  1. The sigil crest's first build put the bridging `taper()`'s CENTRE
+     closer to the body than the crest ball's own front edge — bridging
+     BACKWARD instead of forward — so the mark sat behind the crest's own
+     bulk and assetcheck reported it 97% buried outright, not a borderline
+     read. Fixed by reordering so the taper's centre sits PAST the ball's
+     front edge (overlapping it by a small margin so `finish()` doesn't
+     flag a gap) and the mark past the taper's own tip in turn — the same
+     ordering Bog Leech's own working crest already uses. Landed at 43%.
+  2. A decorative dorsal fin membrane (a run of narrow `wedge()` segments
+     along the spine) passed every check on its first build but rendered,
+     in both the `_side` and `_top` views, as a scatter of loose steel
+     chips flagged onto one flank of the neck rather than a membrane — the
+     same "parts read as debris rather than one surface" failure Eyrie
+     Hawk's first folded wing hit for the same reason. Cut rather than
+     shipped wrong: a fin worth having needs one grown surface, not a row
+     of wedges, and that was more than this pass's scope.
+  3. The two dorsal ledge anchors (Height 2 and 4) were first placed
+     INSIDE the main spine tube's own local radius at those Heights (about
+     0.35 and 0.27 body-units) rather than past it, so `beast.py`'s
+     auto-push found the real surface well beyond each anchor and grew a
+     synthetic step at every one of them — visible as thin pale plates
+     along the neck in the `_side` render. Fixed by moving both anchors
+     past the spine's own local radius with margin; the steps still grown
+     at the un-anchored interpolated Heights (H1, H3, H5) are expected per
+     `beast.py`'s own design and were not chased further.
+  4. `portraits.py`'s shared `look()` frames every character by the
+     model's bounding-box X/Y centre plus a Z fraction, which is close
+     enough for every existing character but breaks for a body this long
+     in Y AND reared up in Z: the generic framing centred on the neck and
+     sigil, with the head mostly out of frame — caught only by looking at
+     the render, not by any check. Fixed by adding an optional
+     per-character `FOCUS_XY` override to `portraits.py` (falling back to
+     the old bounding-box behaviour for every other character — verified
+     by re-running the full batch and comparing all 31 other portraits
+     against the ones already committed) rather than hand-patching just
+     this one output file, so a future batch re-run reproduces the same
+     framing instead of silently regenerating a bad one. Also fixed a
+     real latent bug found while doing this: `portraits.py`'s own `main()`
+     was called unconditionally at module scope, unguarded by
+     `if __name__ == "__main__"`, so merely `import`-ing the module — a
+     first attempt at generating just this one portrait — silently
+     re-rendered all thirty-one existing portraits into whatever path had
+     been passed as if it were a directory, which is how one intended
+     output FILE became a directory containing every character's
+     portrait. Guarded now.
+- unsure about: whether the moray-eel read is convincing or just reads as
+  a generic dark serpent — the barbels and parted jaw are the only
+  creature-specific tells and are small against the whole silhouette. The
+  two dorsal ledge humps and their grown steps read, in the `_top` and
+  `_side` renders, as a cluster of pale nubs off one flank rather than a
+  clean stepped ridge — the same "reads as bolted on" risk this file has
+  already flagged on Clot Toad and others, not independently re-verified
+  here, and the largest single visual risk in this build. The sigil, while
+  passing occlusion cleanly at 43%, still sits noticeably forward of the
+  neck's own surface in the `_side` render — a real improvement over the
+  first attempt's 97%-buried version, not confirmed to read as "grown
+  from" the body rather than "mounted on" it. And the portrait's
+  hand-placed framing, while a clear improvement over the generic one,
+  still leaves real empty space at the top-left of frame — the same
+  compromise Flicker Stag's and Eyrie Hawk's own portraits already
+  accepted.
+
+---
+
 ### glyph_tortoise — NEEDS A PASS
 
 - built: 2026-08-30 by the routine, from `tools/blender/glyph_tortoise.py` —

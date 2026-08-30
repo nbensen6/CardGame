@@ -892,6 +892,40 @@
           "value": 6
         }
       ]
+    },
+    "riptide_eel": {
+      "name": "The Riptide Eel",
+      "art": "res://assets/portraits/riptide_eel.png",
+      "max_hp": 88,
+      "weak_point_height": 6,
+      "ledges": [2,4],
+      "weak_point_threshold": 25,
+      "limiter": {
+        "type": "sigil_fatigue",
+        "value": 2
+      },
+      "moves": [
+        {
+          "type": "attack",
+          "value": 11
+        },
+        {
+          "type": "block",
+          "value": 7
+        },
+        {
+          "type": "attack",
+          "value": 14
+        },
+        {
+          "type": "attack_all",
+          "value": 8
+        },
+        {
+          "type": "attack",
+          "value": 12
+        }
+      ]
     }
   },
   "pools": {
@@ -919,7 +953,8 @@
       "brine_urchin",
       "clot_toad",
       "flicker_stag",
-      "eyrie_hawk"
+      "eyrie_hawk",
+      "riptide_eel"
     ],
     "boss": [
       "stone_warden",

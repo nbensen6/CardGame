@@ -44,6 +44,20 @@ FOCUS = {
     "cinder_jackal": (0.45, 1.60), "brine_urchin": (0.62, 1.30),
     "clot_toad": (0.42, 1.15), "flicker_stag": (0.80, 0.62),
     "eyrie_hawk": (0.78, 0.60), "glyph_tortoise": (0.58, 1.00),
+    "riptide_eel": (0.873, 0.62),
+}
+
+## Per-character override of the focus point's X/Y, for a body the bounding-
+## box-centre assumption below gets wrong. Every other character's head sits
+## close enough to its own bounding box's X/Y centre that FOCUS's "at" alone
+## (which only moves the focus up/down in Z) is enough. Riptide Eel breaks
+## that: it is reared up AND long in Y (tail at +1.6, head at -1.7), so the
+## bbox-centre in X/Y lands near the SIGIL on its neck, not the face - a
+## generic render centred there was caught only by looking at it, not by
+## anything that checks the model. Name an explicit focus point here rather
+## than bend the shared formula for one outlier.
+FOCUS_XY = {
+    "riptide_eel": (0.02, -1.35),
 }
 
 ## Three-quarter and a little above: the angle every character in this game was
@@ -52,7 +66,7 @@ EYE = Vector((0.62, -1.0, 0.30))
 SIZE = 512
 
 
-def look(model_path, out_path, at, span):
+def look(model_path, out_path, at, span, xy=None):
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.gltf(filepath=model_path)
 
@@ -61,7 +75,8 @@ def look(model_path, out_path, at, span):
     lo = Vector((min(c.x for c in co), min(c.y for c in co), min(c.z for c in co)))
     hi = Vector((max(c.x for c in co), max(c.y for c in co), max(c.z for c in co)))
     tall = hi.z - lo.z
-    focus = Vector(((lo.x + hi.x) * 0.5, (lo.y + hi.y) * 0.5, lo.z + tall * at))
+    fx, fy = xy if xy is not None else ((lo.x + hi.x) * 0.5, (lo.y + hi.y) * 0.5)
+    focus = Vector((fx, fy, lo.z + tall * at))
 
     sc = bpy.context.scene
     sc.render.engine = "BLENDER_WORKBENCH"
@@ -106,10 +121,12 @@ def main():
         if not os.path.exists(src):
             missing.append(name)
             continue
-        look(src, os.path.join(out_dir, name + ".png"), at, span)
+        look(src, os.path.join(out_dir, name + ".png"), at, span,
+             xy=FOCUS_XY.get(name))
     if missing:
         print("NO MODEL for %s — those keep whatever portrait they had"
               % ", ".join(missing))
 
 
-main()
+if __name__ == "__main__":
+    main()

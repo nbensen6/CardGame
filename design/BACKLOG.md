@@ -754,6 +754,34 @@ Ordered. Source in brackets.
   unchecked, same as every beast before it: a `cloud-art` item is never
   ticked by the routine, and a human still has to look — including at
   the fix above, which this run judged by eye but did not get signed off.
+  **Checked 2026-08-30 (a seventh time the same day): thirteen down, one
+  to go.** `riptide_eel` landed in the `elite` pool, `cloud-art` end to
+  end — the first new-content beast whose bent rule is a `limiter`
+  (backlog #55's own field) rather than a move-list twist: `sigil_fatigue`,
+  spent before only by two of the four true Titans, so it previews for a
+  hunter the exact rule language a real Titan will use later, gentler
+  (value 2) than the harsher of the two. assetcheck 4/4 (sigil 43%
+  occluded), full suite green (including `_test_everyone_wears_their_own_art`
+  against the new model and its own unshared portrait). Full write-up,
+  including four real bugs (a sigil crest bridged backward instead of
+  forward and came back 97% buried before the fix; a decorative dorsal fin
+  that passed every check but rendered as loose debris and was cut rather
+  than shipped wrong; two ledge anchors placed inside the spine's own local
+  radius that grew unwanted synthetic steps; and a real latent bug in
+  `portraits.py` itself — its `main()` ran unconditionally at import time,
+  so a first attempt to render just this one portrait silently re-rendered
+  all thirty-one existing ones into the wrong path, now guarded behind
+  `if __name__ == "__main__"`), is in `design/ART-REVIEW.md`'s
+  `riptide_eel` block. `portraits.py` also gained a `FOCUS_XY` override
+  mechanism this run, needed because this body's shape (reared up AND long)
+  breaks the bounding-box-centre framing every other character relies on —
+  verified to change nothing for the other thirty-one by re-running the
+  full batch and comparing. Left unchecked, same as every beast before it:
+  a `cloud-art` item is never ticked by the routine, and a human still has
+  to look — the ART-REVIEW block is honest that the ledge humps read as a
+  cluster of pale nubs rather than a clean stepped ridge, the single
+  biggest visual risk in this build, not independently re-verified by
+  anything but a static render.
 
 - [x] **56. Ascension 9 and up** `cloud-safe` — eight tiers, and #22 proved they
   do what they claim. StS runs to twenty because the ladder IS the long game for
