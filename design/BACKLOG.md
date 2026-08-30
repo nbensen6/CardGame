@@ -593,6 +593,43 @@ Ordered. Source in brackets.
   amount unverified — a human should look at the grown step platforms
   especially, five of which were pushed out from their authored anchors
   by an unusually wide range (0.27 to 1.23 units) and have not been seen.
+  **Checked 2026-08-30 (a third time the same day): nine down.**
+  `clot_toad` landed in the `elite` pool, `cloud-art` end to end. Bent
+  rule: `hurt_pct`/`hurt_moves` again (spent before only by Crag Pup,
+  Mire Snapper, Gale Serpent, Cinder Jackal) but bent the OPPOSITE way —
+  every one of those four gets more dangerous below the threshold; this
+  one swaps to `regen`+`block` instead, so a slow chip-damage strategy
+  that leaves it hovering just under 40% HP lets it heal back over the
+  line and undo the work. The puzzle is "commit to a real burst once
+  it's low" rather than "survive the enrage," from the same two data
+  fields every prior hurt-beast used the other way. assetcheck 4/4
+  (sigil 47% occluded), full suite green (501 PASS), balance_sim run once
+  as the required smoke test only. `download.blender.org` was a policy
+  403 again (unchanged from #74); `apt-get install blender` still works
+  and gave a working headless 4.0.2.
+  One real, fully-written-up pipeline bug in `design/ART-REVIEW.md`'s
+  `clot_toad` block: placing the tail-ridge mounds' OWN mass via `z_for()`
+  (rather than fixed coordinates, the way every working beast script
+  does it) makes their position depend on `span` while `span` is
+  measured FROM that same position — a feedback loop, not a fixed point,
+  and it never converged across seven rebuilds; the model just kept
+  stretching taller and thinner each pass. Fixed by switching the ridge
+  mounds to fixed, hand-picked z coordinates and reserving `z_for()` for
+  the thin shelf/mark surfaces sitting on top of them, same as every
+  other beast. A second, smaller bug: the flat plate added to give the
+  sigil's hold-check real surface area was placed IN FRONT of (lower-Y
+  than) the mark itself, occluding it at 84% — moving the plate behind
+  the mark and pulling the mark forward dropped that to 47%, under the
+  sigil-occlusion rule's own 50% line for the first time by an actual
+  margin. Left unchecked, same as every beast before it: a `cloud-art`
+  item is never ticked by the routine. The ART-REVIEW block flags real
+  unverified risk here specifically — the hold-placement algorithm still
+  needed all 7 climb points grown into extra step platforms (`PUSHED
+  OUT` 0.3–0.8 body-units, far more than any prior beast), which a human
+  eye may well read as slabs bolted onto a toad rather than a stepped
+  glandular ridge; two enlarge-the-mound attempts to reduce that made the
+  numbers worse, not better, so this run kept the smaller, contract-
+  passing build rather than chase a silhouette it cannot see.
 
 - [x] **56. Ascension 9 and up** `cloud-safe` — eight tiers, and #22 proved they
   do what they claim. StS runs to twenty because the ladder IS the long game for

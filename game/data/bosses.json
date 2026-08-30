@@ -731,6 +731,55 @@
           "value": 2
         }
       ]
+    },
+    "clot_toad": {
+      "name": "The Clot Toad",
+      "art": "res://assets/portraits/clot_toad.png",
+      "max_hp": 86,
+      "weak_point_height": 6,
+      "ledges": [2,4],
+      "weak_point_threshold": 24,
+      "moves": [
+        {
+          "type": "attack",
+          "value": 9
+        },
+        {
+          "type": "block",
+          "value": 7
+        },
+        {
+          "type": "attack",
+          "value": 12
+        },
+        {
+          "type": "attack_all",
+          "value": 8
+        },
+        {
+          "type": "attack",
+          "value": 10
+        }
+      ],
+      "hurt_pct": 0.4,
+      "hurt_moves": [
+        {
+          "type": "regen",
+          "value": 9
+        },
+        {
+          "type": "block",
+          "value": 9
+        },
+        {
+          "type": "regen",
+          "value": 7
+        },
+        {
+          "type": "attack",
+          "value": 5
+        }
+      ]
     }
   },
   "pools": {
@@ -754,7 +803,8 @@
       "gloom_moth",
       "bog_leech",
       "silk_widow",
-      "brine_urchin"
+      "brine_urchin",
+      "clot_toad"
     ],
     "boss": [
       "stone_warden",

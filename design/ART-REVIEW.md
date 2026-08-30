@@ -61,6 +61,86 @@ The failures that have happened, all of which passed every check:
 
 ---
 
+### clot_toad — NEEDS A PASS
+
+- built: 2026-08-30 by the routine, from `tools/blender/clot_toad.py` —
+  backlog #55's numeric "done when" bar (six new beasts) was met on
+  2026-08-27; eight more landed the same week toward the item's own stated
+  goal of fourteen, and this run kept finding no other actionable
+  `cloud-safe`/`cloud-art` work, so it built a ninth the same end-to-end
+  way as the eight before it. Elite pool. Bent rule: `hurt_pct`/`hurt_moves`
+  again (spent before only by Crag Pup, Mire Snapper, Gale Serpent, Cinder
+  Jackal) but bent the OPPOSITE way from all four of those — every one of
+  them gets MORE dangerous below the threshold (bigger hits, `enrage`, a
+  faster pattern). This one swaps to `regen`+`block` almost exclusively
+  below 40% HP, so a slow chip-damage strategy that leaves it hovering just
+  under the line lets it heal back above the threshold and undo the work.
+  The puzzle is "commit to a real burst once it's low, or it stalls the
+  fight indefinitely," the opposite lesson from the same two data fields.
+  `max_hp` 86, sigil Height 6, ledges at 2 and 4, threshold 24 — sized to
+  sit inside the existing elite band (Gloom Moth 86/22, Silk Widow 94/25,
+  Brine Urchin 92/26) rather than guessed.
+- checks: assetcheck 4/4 PASS — one mesh, one material, origin at the feet,
+  centred left-right, transforms applied, proportions forward-facing, 2486
+  tris / 2600 beast budget. Holds PASS (2 ledges + sigil, all seven climb
+  points at ground 14%, H1 28%, H2 39%, H3 49%, H4 58%, H5 70%, H6 81%, all
+  within the contract's band). Sigil PASS — a real gold mark at the sigil's
+  Height, 47% occluded (under the contract's 50% line, the first sigil this
+  run got there with an actual margin rather than landing exactly on it).
+  Silhouette PASS (closest match `mire_snapper.glb` at 65%, checked 45
+  models). Full `run_tests.gd` green (501 PASS, including
+  `_test_everyone_wears_their_own_art` against the new `clot_toad.glb` +
+  its own unshared portrait, and `_test_content_integrity_graph`'s beast-
+  pool walk). `balance_sim.gd` run once as the required smoke test only —
+  no tuning against it, per standing instruction.
+- **One real pipeline bug worth reading before the next beast whose holds
+  sit on raised bumps rather than the main torso.** The first four builds
+  placed the tail-ridge mounds' own MASS at `b.z_for(height)` — the same
+  call every script correctly uses for the thin shelf/mark surface sitting
+  ON a mound — rather than at a fixed, hand-picked coordinate. `z_for()`
+  answers "where is this Height" using `span`, and `span` is itself
+  measured FROM the body's actual geometry after it's built — so a mound
+  whose own position depends on `z_for()` while `span` depends on that same
+  mound's position is a feedback loop, not a fixed point. Five rebuilds
+  pasting back each run's own "paste this span" suggestion never converged;
+  the model just kept stretching taller and thinner every pass (`SIZE`
+  logged 2.35/3.07/2.8 on the first build, 3.18/4.11/2.2 seven rebuilds
+  later, still not settled). Fixed by switching the three ridge mounds to fixed
+  literal z coordinates chosen once by hand — exactly what Crag Pup's and
+  Husk Beetle's own scripts already do for their back-hump geometry — and
+  reserving `z_for()` for what it is actually for: the thin surfaces that
+  sit on top of a mound already built. One more bug once that was fixed:
+  the flat plate added to give the sigil's hold-check real upward-facing
+  area (a bare sphere's tip is a point, not a shelf — the same fix Brine
+  Urchin's own sigil mount used) was centred at a Y position IN FRONT of
+  (closer to the camera than) the mark itself, so the plate was doing the
+  occluding: 84% buried with the plate there, 47% once the plate moved
+  behind the mark and the mark itself pulled forward to clear it.
+- **unsure about — read this before treating the model as done, even by
+  this routine's own low bar:** the hold-placement algorithm needed all
+  SEVEN climb points grown into extra step platforms (`PUSHED OUT` by
+  0.3-0.8 body-units each, against a hunter width of 0.07) — more grown
+  steps, and a wider range, than any prior beast in this file. That many
+  auto-generated slabs is exactly the "handles bolted on" failure this
+  file warns about at the top, and there is a real chance the toad reads
+  as a blob wearing seven grey planks rather than a creature climbing its
+  own stepped ridge. Two attempts to fix this by enlarging the ridge
+  mounds so they would dominate the auto-placement's own reach search made
+  the push numbers WORSE, not better (0.88-0.91 body-units at the worst),
+  so this run reverted to the smaller, still-passing build rather than
+  guess a third time at a shape it cannot render and judge by eye. Also
+  unverified: whether the eyes-on-top-of-the-head silhouette (the one
+  cue meant to read as "toad" rather than "generic quadruped") is visible
+  at fight distance, whether the sandy/wheat/clot-red palette reads as
+  warm and organic or just muddy, and whether the swollen tail gland at
+  the very back is confusable with the ridge steps in front of it from
+  the three-quarter fight-camera angle. A human pass should look at the
+  grown step platforms first — if they read badly, the fix is almost
+  certainly hand-authored replacement geometry at those seven points
+  rather than another parameter nudge.
+
+---
+
 ### brine_urchin — NEEDS A PASS
 
 - built: 2026-08-30 by the routine, from `tools/blender/brine_urchin.py` —
