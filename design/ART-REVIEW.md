@@ -61,6 +61,117 @@ The failures that have happened, all of which passed every check:
 
 ---
 
+### brine_urchin — NEEDS A PASS
+
+- built: 2026-08-30 by the routine, from `tools/blender/brine_urchin.py` —
+  backlog #55's numeric "done when" bar (six new beasts) was met on
+  2026-08-27 and a seventh (`cinder_jackal`) landed the same day the item
+  stayed open; this run kept finding no other actionable
+  `cloud-safe`/`cloud-art` work, so it built an eighth toward the item's own
+  stated goal of fourteen, the same end-to-end way as the seven before it.
+  Elite pool. Bent rule: pairs `at_sigil` with `attack_all` — a combination
+  no beast before this one used. Crag Pup's own `at_sigil` gate only makes
+  a SINGLE-target attack bigger, so camping the sigil only costs the
+  camper. This one sweeps BOTH hunters the moment either one is at Height
+  6, so reaching the true weak point is an alarm the ally eats too — the
+  co-op question becomes "is my ally braced (or already swinging) before I
+  commit to the climb," not "can I solo the sigil safely." Boulder Ram and
+  Frost Sentinel already gate `attack_all` behind a height threshold, but
+  that is a board-position check; this is the first one gated on the
+  weak point itself. `max_hp` 92, sigil Height 6, ledges at 2 and 4,
+  threshold 26 — sized to sit inside the existing elite band (Silk
+  Widow 94/25, Bog Leech 90/26) rather than guessed.
+- checks: assetcheck 4/4 PASS — one mesh, one material, origin at the feet,
+  centred left-right, transforms applied, proportions forward-facing, 1768
+  tris / 2600 beast budget. Holds PASS (2 ledges + sigil, all seven climb
+  points — including the ones with no explicit `shelf()`, which `beast.py`
+  places and proves the same way — within the contract's band). Sigil PASS
+  — a real gold mark at the sigil's Height, exactly 50% occluded (the
+  contract's own bar is `> 50%` fails, so this is the closest a sigil has
+  landed to that line and still a real pass, not a comfortable margin).
+  Silhouette PASS (closest match `elephant.glb` at 73%, checked 44 models).
+  Full `run_tests.gd` green (499 PASS, including
+  `_test_everyone_wears_their_own_art` against the new `brine_urchin.glb` +
+  portrait, `_test_content_integrity_graph`'s beast-pool walk, and the
+  generic when/fallback pairing test naming `brine_urchin` by id).
+  `balance_sim.gd` run once as the required smoke test only — no tuning
+  against it, per standing instruction.
+- **Two real bugs worth reading before the next radial or non-quadruped
+  beast.** First, `taper()` centres the cone ON its `loc`, the way Blender's
+  own primitive does — it is not the base of the shape. Every existing
+  script gets away with this because a horn or ear's `loc` sits close
+  enough to the head that a half-length of slop stays embedded. This
+  beast's ten spines were authored as "base at the body, run outward for
+  `len`," so placing `loc` at the base and computing the tip at
+  `base + d*len` put the true cone from `base - d*len/2` to `base +
+  d*len/2` — the tip balls meant to cap each spine landed a half-length
+  past the real geometry and all nine came back in `finish()`'s "parts
+  that do not touch" warning. Fixed by centring each taper on
+  `base + d*len/2` instead, so its true ends land at `base` (embedded) and
+  `base + d*len` (the tip) — cheap once seen, invisible until `finish()`
+  named it. Second, `span` on a radial body took three rebuilds to
+  converge (2.90 → 2.53 → 2.23 → 2.17) the same way Cinder Jackal's write-
+  up warned: `span` is measured from ALL vertices including ones not yet
+  fixed, so each correction moves the very geometry the next measurement
+  reads. Worth naming as its own thing: the spine tip-ball fix and the
+  span convergence interacted, because the floating tip balls (before the
+  taper fix) were themselves stretching the measured z-range wider than
+  the real body — so the span numbers above were chasing a moving target
+  until BOTH bugs were fixed, not just one.
+- **A third bug, sigil-specific, distinct from every prior beast's sigil
+  fix.** A first build placed the spines at uneven jittered angles (for
+  silhouette variety) and tucked the sigil mount in at a fixed offset
+  (`y=-0.40`); it came back **100% buried** — not partially, totally,
+  because the jittered ring put a spine directly through the sigil's own
+  forward column. Silk Widow's and Boulder Ram's occlusion fixes were both
+  about the MOUNT shape (ball vs. flush plate); this beast's mount was
+  already a flush plate and still failed, because the thing blocking it
+  was a completely separate part (a spine), not the mount's own geometry.
+  Fixed two ways together: the spine ring was changed from jittered angles
+  to an exact 36-degree grid (still varying length/pitch per spine for
+  texture), which guarantees an 18-degree gap centred on the forward
+  direction with no spine crossing it; and the sigil's position was
+  computed FROM the main ball's own ellipsoid equation at the sigil's
+  Height (`sqrt(1-frac²)*radius`) rather than an eyeballed offset, so it
+  sits exactly on the body's real front surface in that gap instead of
+  floating somewhere near it. Landed at exactly 50%, the contract's own
+  boundary — a human should decide whether that is too close to the line
+  once ledges or hold flairs shift a future rebuild of this file.
+- previews: `design/art-previews/brine_urchin_0.png` (three-quarter), _1
+  (front), _2 (side); portrait `game/assets/portraits/brine_urchin.png`.
+  Not opened or judged by this run — no display here, per this file's own
+  standing rule.
+- intent: a radial thing with no front or back, unlike every other beast
+  in the game — a spined ball clamped to a rock by four short tendrils
+  rather than standing on legs, so "climbing" it starts at the rock and
+  works up the spine cluster to a single glowing mark at the crown. The
+  cool marine palette (CORAL/BRICK body, VIOLET/IRIS spine tips, STONE
+  anchor) is meant to read as reef/tidepool and to be distinct from every
+  other elite's palette (Mire Snapper's swamp clay, Frost Sentinel's ice
+  white, Grove Bear's forest green, Shifting Idol's grey stone, Gloom
+  Moth's slate purple, Bog Leech's pond murk, Silk Widow's charcoal web).
+- unsure about: everything a render can prove and a look cannot, which for
+  this beast is more than usual because the shape is a genuine departure
+  from the rest of the cast. Whether ten thin spines actually read as an
+  urchin's silhouette at fight distance or just look like a burr or a sea
+  mine. Whether having no eyes, face, or any front-facing feature at all
+  — deliberate, since the whole point is "no front or back" — reads as
+  "alien and radial" or just "doesn't look alive." Whether the CORAL/BRICK
+  palette reads as coral-reef warm or clashes with the cool marine
+  associations "brine" is meant to suggest. And specifically: `beast.py`
+  grew synthetic step platforms at five of the seven climb points (`GREW 5
+  step(s)` in the build log, pushed out by as little as 0.27 and as much as
+  1.23 units against a hunter width of 0.09) because the ledges/anchors
+  this script placed sit well inside the body's real reach at those
+  columns — a spiky radial body has a much less predictable "how far out
+  does the surface go here" than a quadruped's torso, and those grown
+  platforms have not been looked at. They may read as sensible steps
+  between spines, or as grey slabs poking out of a sea urchin in a way
+  nothing else in the cast does. A human pass should look at all three
+  angles specifically for that before anything else.
+
+---
+
 ### cinder_jackal — NEEDS A PASS
 
 - built: 2026-08-30 by the routine, from `tools/blender/cinder_jackal.py` —

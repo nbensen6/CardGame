@@ -41,7 +41,7 @@ FOCUS = {
     "husk_beetle": (0.42, 1.15), "gloom_moth": (0.55, 1.05),
     "bog_leech": (0.45, 1.35), "thrasher": (0.35, 1.10),
     "silk_widow": (0.45, 0.85), "boulder_ram": (0.34, 1.35),
-    "cinder_jackal": (0.45, 1.60),
+    "cinder_jackal": (0.45, 1.60), "brine_urchin": (0.62, 1.30),
 }
 
 ## Three-quarter and a little above: the angle every character in this game was

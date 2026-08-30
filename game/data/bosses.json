@@ -619,6 +619,38 @@
         }
       ]
     },
+    "brine_urchin": {
+      "name": "The Brine Urchin",
+      "art": "res://assets/portraits/brine_urchin.png",
+      "max_hp": 92,
+      "weak_point_height": 6,
+      "ledges": [2,4],
+      "weak_point_threshold": 26,
+      "moves": [
+        {
+          "type": "attack",
+          "value": 10
+        },
+        {
+          "type": "block",
+          "value": 7
+        },
+        {
+          "type": "attack_all",
+          "value": 15,
+          "when": {"type": "at_sigil"},
+          "fallback": {"type": "attack", "value": 9}
+        },
+        {
+          "type": "attack",
+          "value": 13
+        },
+        {
+          "type": "enrage",
+          "value": 2
+        }
+      ]
+    },
     "boulder_ram": {
       "name": "The Boulder Ram",
       "art": "res://assets/portraits/boulder_ram.png",
@@ -721,7 +753,8 @@
       "shifting_idol",
       "gloom_moth",
       "bog_leech",
-      "silk_widow"
+      "silk_widow",
+      "brine_urchin"
     ],
     "boss": [
       "stone_warden",

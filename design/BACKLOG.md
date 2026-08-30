@@ -568,6 +568,31 @@ Ordered. Source in brackets.
   ticked by the routine, and this one especially needs a look — the sigil
   placement compromise above is exactly the kind of call that is Nick's,
   not the routine's, to make.
+  **Checked 2026-08-30 (later the same day): eight down.** `brine_urchin`
+  landed in the `elite` pool — bent rule pairs `at_sigil` with
+  `attack_all` for the first time (Crag Pup's own `at_sigil` gate only
+  makes a single-target hit bigger; this sweeps BOTH hunters the moment
+  either reaches Height 6, so soloing the sigil now costs your ally too).
+  assetcheck 4/4, sigil exactly 50% occluded (the contract's own line —
+  closest any beast has landed to it and still a real pass), full suite
+  green (499 PASS). Two real bugs, both written up in full in
+  `design/ART-REVIEW.md`'s `brine_urchin` block: `taper()` centres a cone
+  on its `loc`, not its base, which floated nine tip-marker balls a
+  half-length past the real spines until fixed; and this radial body's
+  `span` took three rebuilds to converge, same lesson Cinder Jackal's
+  write-up already named, compounded by the first bug stretching the
+  measured range while it was still wrong. A third bug is sigil-specific
+  and new: a first pass buried the mark 100% because a jittered spine —
+  not the mount itself — crossed its forward column; fixed by gridding
+  the spines at an exact 36-degree spacing so a real gap opens straight
+  ahead, and by computing the sigil's position from the body's own
+  ellipsoid equation instead of an eyeballed offset. Left unchecked, same
+  as every beast before it: a `cloud-art` item is never ticked by the
+  routine, and the ART-REVIEW block says plainly this is the biggest
+  design departure yet (no front/back, no face) with more than the usual
+  amount unverified — a human should look at the grown step platforms
+  especially, five of which were pushed out from their authored anchors
+  by an unusually wide range (0.27 to 1.23 units) and have not been seen.
 
 - [x] **56. Ascension 9 and up** `cloud-safe` — eight tiers, and #22 proved they
   do what they claim. StS runs to twenty because the ladder IS the long game for
