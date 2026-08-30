@@ -650,6 +650,55 @@
           "value": 2
         }
       ]
+    },
+    "cinder_jackal": {
+      "name": "The Cinder Jackal",
+      "art": "res://assets/portraits/cinder_jackal.png",
+      "max_hp": 42,
+      "weak_point_height": 5,
+      "ledges": [2,4],
+      "weak_point_threshold": 16,
+      "moves": [
+        {
+          "type": "attack",
+          "value": 7
+        },
+        {
+          "type": "block",
+          "value": 5
+        },
+        {
+          "type": "attack",
+          "value": 9
+        },
+        {
+          "type": "attack_all",
+          "value": 6
+        },
+        {
+          "type": "attack",
+          "value": 8
+        }
+      ],
+      "hurt_pct": 0.4,
+      "hurt_moves": [
+        {
+          "type": "attack",
+          "value": 12
+        },
+        {
+          "type": "attack_all",
+          "value": 9
+        },
+        {
+          "type": "attack",
+          "value": 14
+        },
+        {
+          "type": "enrage",
+          "value": 2
+        }
+      ]
     }
   },
   "pools": {
@@ -662,7 +711,8 @@
       "riftling",
       "husk_beetle",
       "thrasher",
-      "boulder_ram"
+      "boulder_ram",
+      "cinder_jackal"
     ],
     "elite": [
       "mire_snapper",

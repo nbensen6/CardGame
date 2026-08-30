@@ -61,6 +61,96 @@ The failures that have happened, all of which passed every check:
 
 ---
 
+### cinder_jackal — NEEDS A PASS
+
+- built: 2026-08-30 by the routine, from `tools/blender/cinder_jackal.py` —
+  backlog #55's own "done when" bar (six new beasts) was already met on
+  2026-08-27, but the item stayed unchecked and open, and the routine kept
+  finding no other actionable `cloud-safe`/`cloud-art` work across roughly
+  thirty-five consecutive re-checks; this is the seventh new-content beast,
+  built the same end-to-end way as the six before it rather than inventing
+  unrelated scope. Fight pool. Bent rule: `hurt_pct`/`hurt_moves` (backlog
+  #44, named in `boss.gd`, spent before this only by two OLD beasts — Crag
+  Pup and Mire Snapper — and by neither of the six new-content beasts).
+  Below 40% of its max HP the pattern swaps for the rest of the fight
+  (bigger attacks, a second `attack_all`, `enrage` stacking on top). Every
+  other new-content beast punishes a BOARD choice — a height, a
+  defended/undefended state, the sigil itself. This is the first one whose
+  bent rule punishes a TIME choice: a lead you were happy to sit on becomes
+  a lead you have to press, or the back half of the fight gets strictly
+  worse. Blender install/route reused unchanged from the six beasts before
+  it (`apt-get install blender python3-numpy libegl1 libegl-mesa0
+  libgl1-mesa-dri libglx-mesa0`).
+- checks: assetcheck 4/4 PASS — one mesh, one material, origin at the feet,
+  centred left-right, transforms applied, proportions forward-facing, 1180
+  tris / 2600 beast budget. Holds PASS (2 ledges + sigil, all six climb
+  points within the contract's band). Sigil PASS — a real gold mark at the
+  sigil's Height, 49% occluded (under the 50% bar). Silhouette PASS
+  (closest match `gloom_moth.glb` at 69%, checked 43 models). Full
+  `run_tests.gd` green (ALL TESTS PASSED, including
+  `_test_everyone_wears_their_own_art` against the new `cinder_jackal.glb` +
+  portrait and the content-integrity test that walks `bosses.json`'s new
+  entry and its `fight`-pool membership). `balance_sim.gd` run once as the
+  required smoke test only — no tuning against it, per standing instruction.
+- **Three real bugs worth reading before the next beast, none of them
+  guessed at — all found by rebuilding against the tool's own numbers.**
+  First, `span` is not a one-shot fix: it's fed BACK into `z_for()`, which
+  this beast's own hold/sigil placements were computed FROM, so correcting
+  `span` shifts the very geometry that determines the real span. It took
+  four rebuilds to converge (the suggested span shrank each time: 2.28 →
+  2.10 → 1.86 → 1.69) rather than the one-shot fix `beast.py`'s own README
+  implies. Second, a rounded ball crest wrapping AROUND the sigil's mount
+  point can occlude its own mark even while sitting fully "behind" it by
+  y-coordinate, because occlusion is a per-pixel front-view test (screen
+  space = body X and Height, depth = the facing axis), not a single
+  distance comparison — a big ball's front surface bulges closer to the
+  camera than its own center suggests. Swapping the rounded nape-hump mount
+  for a THIN flush plate (Boulder Ram's own shape, not a new one) fixed it
+  outright, dropping occlusion from 71% to 49% with no other change. Third,
+  a synthetic "step" `beast.py` grows to reach an under-shot climb point
+  sits BELOW that point by design (`hs*0.16`+ its own half-height) — an
+  anchor placed exactly at the body's true lowest vertex leaves that step
+  nowhere to go but under the floor, and `assetcheck.gd` catches it as
+  "origin sits OFF the mesh" even though the origin call itself was never
+  wrong. Fixed by placing `foot()` a little above the paw's own lowest
+  point rather than exactly on it, giving the step room to grow downward
+  without going negative.
+- previews: `design/art-previews/cinder_jackal_0.png` (three-quarter), _1
+  (front), _2 (side); portrait `game/assets/portraits/cinder_jackal.png`.
+  Two cosmetic problems were caught by actually opening the renders (not
+  just trusting the contract) and partly fixed: the shoulder/haunch hold
+  flairs first rendered as dark CHARCOAL/GRAPHITE lumps that read as
+  pouches hanging off the belly rather than steps grown from the body;
+  recoloured to RUST/TAN to match the fur and read as haunches instead —
+  fixed. The sigil's mount plate read the same way at first (a grey plate
+  disappearing into shadow, leaving the gold disc looking unattached from
+  the front); recoloured RUST to match the body, which helped but did not
+  fully fix it — see below.
+- intent: a lean four-legged canid, narrower-stanced than Boulder Ram's
+  brace or Thrasher's crouch, built to read as "hunts, doesn't charge."
+  Erect pointed ears (no other fight-pool beast has ears at all) and a low
+  ember-coloured spine ridge meant to hint at "goes feral once hurt"
+  without literally depicting the mechanic — the fur stays warm rather than
+  actually catching fire.
+- unsure about: **the sigil still reads as a disc stuck out beside the
+  head from the FRONT view specifically** (`cinder_jackal_1.png`), with
+  visible background between it and the body outline, even though it
+  passes the occlusion contract (49%) and the "lands on a surface" check.
+  Moving it closer to centreline to fix this was tried and reverted — it
+  lands inside the ear's own forward reach at that Height and pushes
+  occlusion back over the 50% bar, so the current position is a real
+  trade-off between "looks attached from the front" and "passes the
+  visibility check," not an oversight. A human should judge whether the
+  three-quarter and side reads (where it looks fine) are the ones that
+  matter in play, since the fight camera is three-quarter, not front-on.
+  Also unjudged: whether the haunch/shoulder humps, even recoloured, still
+  read as nubs stuck on rather than grown from the spine (the same family
+  of failure Gloom Moth's write-up names), and whether the ribby-torso
+  read comes through at fight distance or just looks like a plain
+  sausage body.
+
+---
+
 ### boulder_ram — NEEDS A PASS
 
 - built: 2026-08-27 by the routine, from `tools/blender/boulder_ram.py` — the

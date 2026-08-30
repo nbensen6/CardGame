@@ -545,6 +545,29 @@ Ordered. Source in brackets.
   every prior entry here: this item's numeric bar is now met but nobody has
   looked at any of the six yet, and a `cloud-art` item is never ticked by
   the routine regardless — that judgement is Nick's.
+  **Checked 2026-08-30, after roughly thirty-five straight re-checks logged
+  no actionable `cloud-safe`/`cloud-art` work: seven down.** This item's own
+  numeric bar (six) was already met and its checkbox stayed correctly
+  unchecked pending Nick's look, but the item's OWN description still names
+  fourteen beasts across four acts as the real goal, and the map-repetition
+  problem it exists to fix keeps improving with every beast past six. So
+  rather than invent unrelated scope, this run built an honest seventh:
+  `cinder_jackal`, `fight` pool, bent rule `hurt_pct`/`hurt_moves` (backlog
+  #44 — a pattern-swap once badly hurt), the first new-content beast whose
+  twist is a TIME pressure rather than a board one. assetcheck 4/4, sigil
+  49% occluded, full suite green. Full write-up, including three real bugs
+  (a `span` fix that has to be iterated rather than pasted once, a rounded
+  crest occluding its own sigil despite sitting "behind" it by y-coordinate,
+  and a synthetic climb-step sinking the origin below the floor) and two
+  cosmetic problems only caught by opening the renders (dark hold-flair
+  balls reading as belly pouches, fixed by recolouring; the sigil still
+  reading as a disc detached from the head in the FRONT view specifically,
+  not fully fixed — a real trade-off against the occlusion contract, not an
+  oversight), is in `design/ART-REVIEW.md`'s `cinder_jackal` block. Left
+  unchecked, same as every beast before it: a `cloud-art` item is never
+  ticked by the routine, and this one especially needs a look — the sigil
+  placement compromise above is exactly the kind of call that is Nick's,
+  not the routine's, to make.
 
 - [x] **56. Ascension 9 and up** `cloud-safe` — eight tiers, and #22 proved they
   do what they claim. StS runs to twenty because the ladder IS the long game for
@@ -1042,6 +1065,32 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-30** — Built `cinder_jackal`, a seventh new-content beast in the
+  `fight` pool, under item #55 (whose numeric bar of six was already met, but
+  whose own description still names fourteen as the real goal, and whose map-
+  repetition problem keeps improving past six). Bent rule: `hurt_pct`/
+  `hurt_moves` (backlog #44) — the first new-content beast whose twist is a
+  time-pressure ("finish it before 40% or the back half gets worse") rather
+  than a board-position one. `bosses.json` entry + `fight`-pool membership,
+  `tools/blender/cinder_jackal.py` (Blender build script), model + colormap +
+  three preview renders + portrait, `tools/blender/portraits.py` FOCUS entry.
+  assetcheck 4/4 (holds, sigil at 49% occluded, silhouette distinct, budget
+  1180/2600 tris), full `run_tests.gd` green, `balance_sim.gd` run once as
+  the required smoke test only. Three real bugs worth remembering (`span`
+  needs iterating, not a one-shot paste-back; a rounded crest occluded its
+  own sigil despite sitting "behind" it by y-coordinate — fixed by a thin
+  flush plate instead; a synthetic climb-step sank the model's origin below
+  the floor — fixed by giving `foot()` headroom above the true lowest vertex)
+  and two cosmetic ones caught only by opening the renders (dark hold-flair
+  balls read as belly pouches until recoloured; the sigil still reads as a
+  disc detached from the head in the front-on view specifically, a real
+  trade-off against the occlusion contract rather than an oversight) are
+  written up in full in `design/ART-REVIEW.md`'s `cinder_jackal` block and
+  in `design/BACKLOG.md` item #55's own log. Left both the item and the
+  ART-REVIEW block unchecked/NEEDS A PASS — a `cloud-art` item is never
+  ticked by the routine, and the sigil trade-off above is exactly Nick's
+  call to make, not the routine's.
 
 - **2026-08-30** — Thirty-third re-check since item #76's batch 7 closed the
   icon audit out. Fetched `origin/main` fresh (checkout arrived on the real
