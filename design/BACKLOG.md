@@ -630,6 +630,59 @@ Ordered. Source in brackets.
   glandular ridge; two enlarge-the-mound attempts to reduce that made the
   numbers worse, not better, so this run kept the smaller, contract-
   passing build rather than chase a silhouette it cannot see.
+  **Checked 2026-08-30 (a fourth time the same day): ten down.**
+  `flicker_stag` landed in the `elite` pool, `cloud-art` end to end. Bent
+  rule: `hurt_pct`/`hurt_moves` a third way — Crag Pup/Mire Snapper/Gale
+  Serpent/Cinder Jackal all get MORE dangerous below the line and Clot
+  Toad scabs back over it with `regen`, but this one fires `shift_sigil`
+  in its hurt phase instead, so the weak point itself relocates while it
+  keeps attacking: every other hurt-beast changes how dangerous the fight
+  is, this one changes WHERE it is won. assetcheck 4/4 (sigil 49%
+  occluded — right at the contract's 50% line, same territory Brine
+  Urchin's exact 50% already proved is a real pass), full suite green
+  (503 PASS), balance_sim run once as the required smoke test only.
+  `apt-get install blender` gave a working headless 4.0.2 again; this run
+  additionally needed `numpy` installed into Blender's OWN bundled
+  Python (`/usr/bin/python3.12 -m pip install --break-system-packages
+  numpy`) — installing it to the system `python3` (3.11) first did
+  nothing, since Blender 4.0's own interpreter is 3.12 and imports from
+  its own site-packages, not whatever `python3` resolves to.
+  Two real pipeline bugs, both written up in full in
+  `design/ART-REVIEW.md`'s `flicker_stag` block: `taper()`'s `loc` is a
+  cone's own CENTRE, not one end, so branching the antlers by passing a
+  start point straight through as `loc` left both tine pairs floating
+  (caught immediately by `finish()`'s own "in N pieces" warning) — fixed
+  with a small helper that takes two explicit endpoints and places the
+  midpoint itself. And the mirror image of Clot Toad's own named lesson:
+  where Clot Toad's ridge mounds wrongly used `z_for()` for their own
+  mass, this beast's ridge mounds wrongly used a hand-guessed z INSTEAD
+  of `z_for()`, landing more than half a body-unit from where `shelf()`
+  put the actual shelf plate and shipping a shelf floating clear of its
+  mound on the first build. Separately, the sigil failed Godot's own
+  front-occlusion check outright (100%, then 63%) on a centred (x=0)
+  placement even though Blender's own in-Blender proxy check passed both
+  times, because at the sigil's Height that column sits inside the
+  head's own ellipsoid z-span and the head's front bulge occludes
+  anything placed there regardless of how far forward it is nudged —
+  moving the mark off-centre, the same "never on the body's own
+  centreline" fix every recent beast's HOLDS already needed, dropped it
+  straight to 49%; the fix was never "push it further forward." Left
+  unchecked, same as every beast before it: a `cloud-art` item is never
+  ticked by the routine. The ART-REVIEW block flags real unverified risk:
+  all seven climb points still needed a grown step (smaller than Clot
+  Toad's 0.3–0.8 range at 0.15–0.48, but every height rather than some),
+  because this is the first beast built deliberately slender rather than
+  low-and-wide, so there is less real surface anywhere along its legs and
+  neck for a hunter to land on without one; the two ridge shelves were
+  deliberately split across opposite flanks rather than stacking all
+  seven grown steps in one visible row after a first single-flank draft
+  read badly in the rendered preview, but nobody has confirmed the
+  two-shorter-ladders version reads any better from fight distance. The
+  portrait is also a real compromise — the antlers are the tallest, most
+  forward-projecting part of the model, which drags `portraits.py`'s
+  bounding-box-centred framing away from the actual head, and the
+  landed `(0.80, 0.62)` crop leaves real empty space in-frame rather
+  than a clean head-and-shoulders shot.
 
 - [x] **56. Ascension 9 and up** `cloud-safe` — eight tiers, and #22 proved they
   do what they claim. StS runs to twenty because the ladder IS the long game for

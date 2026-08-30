@@ -780,6 +780,55 @@
           "value": 5
         }
       ]
+    },
+    "flicker_stag": {
+      "name": "The Flicker Stag",
+      "art": "res://assets/portraits/flicker_stag.png",
+      "max_hp": 88,
+      "weak_point_height": 6,
+      "ledges": [2,4],
+      "weak_point_threshold": 25,
+      "moves": [
+        {
+          "type": "attack",
+          "value": 11
+        },
+        {
+          "type": "block",
+          "value": 8
+        },
+        {
+          "type": "attack",
+          "value": 13
+        },
+        {
+          "type": "attack_all",
+          "value": 8
+        },
+        {
+          "type": "attack",
+          "value": 12
+        }
+      ],
+      "hurt_pct": 0.4,
+      "hurt_moves": [
+        {
+          "type": "shift_sigil",
+          "value": 2
+        },
+        {
+          "type": "attack",
+          "value": 14
+        },
+        {
+          "type": "shift_sigil",
+          "value": 5
+        },
+        {
+          "type": "attack_all",
+          "value": 9
+        }
+      ]
     }
   },
   "pools": {
@@ -804,7 +853,8 @@
       "bog_leech",
       "silk_widow",
       "brine_urchin",
-      "clot_toad"
+      "clot_toad",
+      "flicker_stag"
     ],
     "boss": [
       "stone_warden",

@@ -61,6 +61,112 @@ The failures that have happened, all of which passed every check:
 
 ---
 
+### flicker_stag — NEEDS A PASS
+
+- built: 2026-08-30 by the routine, from `tools/blender/flicker_stag.py` —
+  backlog #55's numeric "done when" bar (six new beasts) was met on
+  2026-08-27 and nine landed by the time this run started; this run kept
+  finding no other actionable `cloud-safe`/`cloud-art` work in
+  `design/BACKLOG.md`, so it built a tenth toward the item's own stated
+  goal of fourteen. Elite pool. Bent rule: `hurt_pct`/`hurt_moves` again
+  (spent before by Crag Pup, Mire Snapper, Gale Serpent, Cinder Jackal —
+  all four MORE dangerous below the line — and Clot Toad, which scabs
+  back over it with `regen`) but bent a THIRD way: below 40% HP its
+  pattern starts firing `shift_sigil`, so the weak point itself relocates
+  (Height 2, then Height 5) while it keeps attacking. Every other
+  hurt-phase beast changes how dangerous the fight is; this one changes
+  WHERE it is won — the hold you spent three turns reaching stops being
+  the one that matters. `max_hp` 88, sigil Height 6, ledges at 2 and 4,
+  threshold 25 — sits inside the existing elite band (Clot Toad 86/24,
+  Gloom Moth 86/22, Silk Widow 94/25, Brine Urchin 92/26) rather than
+  guessed. Also the first beast built deliberately tall and slender
+  (antlered stag on long legs) rather than low and wide like every
+  quadruped before it in this batch — see the two write-ups below for
+  what that shape cost.
+- checks: assetcheck 4/4 PASS — one mesh, one material, origin at the
+  feet, centred left-right, transforms applied, proportions
+  forward-facing, 2022 tris / 2600 beast budget. Holds PASS (2 ledges +
+  sigil, all seven climb points at ground 3%, H1 28%, H2 39%, H3 49%, H4
+  59%, H5 70%, H6 80%, every one within the contract's band). Sigil PASS
+  — a real gold mark at the sigil's Height, 49% occluded (right at the
+  contract's 50% line, same territory Brine Urchin's exact 50% landed in
+  — a real pass, not a comfortable one). Silhouette PASS (closest match
+  `lightbearer.glb` at 48%, checked 46 models). Full `run_tests.gd` green
+  (503 PASS / ALL TESTS PASSED, including `_test_everyone_wears_their_own_art`
+  against the new `flicker_stag.glb` + its own unshared portrait, and the
+  content-integrity beast-pool walk). `balance_sim.gd` run once as the
+  required smoke test only — no tuning against it, per standing instruction.
+- **Two real pipeline bugs, both worth reading before the next beast that
+  branches geometry (antlers, extra limbs, anything with a fork) or relies
+  on `z_for()` for a decorative mound rather than the shelf/mark surface
+  itself.** First: `taper()`'s `loc` is the CONE'S OWN CENTRE, not one
+  end — the primitive Blender builds is symmetric about it along the
+  rotated axis. The first antler build placed each tine's `loc` AT the
+  point it was meant to start FROM, which only reaches half the intended
+  branch outward and left both tine pairs as floating islands
+  (`finish()`'s own "in N pieces" warning caught it immediately). Fixed
+  with a small helper (`_seg()` in the script) that takes two explicit
+  endpoints and computes the midpoint itself, so a beam or tine actually
+  spans where it looks like it should. Second, a repeat of Clot Toad's own
+  named lesson in a new spot: the two ridge mounds under the Height-2 and
+  Height-4 shelves were first placed at hand-guessed z coordinates instead
+  of `b.z_for(2)`/`b.z_for(4)` — off by more than half a body-unit from
+  where the shelf plates `shelf()` computes actually landed, so the first
+  build shipped a shelf floating clear of its own mound (a second,
+  independent case of the exact failure Clot Toad's write-up already
+  flagged for the opposite mistake — there it was the MOUND using
+  `z_for()` it shouldn't have; here it was the mound NOT using `z_for()`
+  it should have). Fixed by reading the ridge z straight off `b.z_for()`.
+  Separately: the sigil itself failed Godot's own front-occlusion check
+  outright on the first two placements (100%, then 63%, against the
+  contract's 50% line) even though Blender's own in-process proxy check
+  passed both times — because the mark sat at x=0, directly on the head's
+  own centreline, and at Height 6 that column falls inside the head
+  ellipsoid's own z-span, so the head's front bulge sits in front of
+  ANY point placed there no matter how far forward it's nudged. Moving
+  the mark off-centre (to x=0.26, near one antler's own root, the same
+  "never on the centreline" fix every recent beast's SHELVES already
+  needed) dropped it straight to 49% on the next build — the fix was
+  never "push it further forward," the geometry test in
+  `design/BACKLOG.md`'s own beast.py notes about centreline anchors
+  applies to the SIGIL too, not only to holds, and this is the first
+  beast that needed it there.
+- **unsure about — read this before treating the model as done, even by
+  this routine's own low bar:** the hold-placement algorithm still grew
+  all SEVEN climb points into extra step platforms (`PUSHED OUT` 0.15 to
+  0.48 body-units against a 0.12-unit hunter — smaller than Clot Toad's
+  own 0.3-0.8 range but still every single height, not just some of
+  them), because this beast's legs and neck are deliberately slender
+  rather than the low, wide bodies every prior quadruped in this file
+  used, so there is less real surface anywhere for a hunter's stated
+  position to land on without a grown step. Legs and neck were both
+  thickened once already to close the gap and it helped only a little;
+  a bigger fix would mean redesigning the silhouette away from "slender
+  stag," which felt like the wrong trade against the item's own request
+  for variety in the cast. The two ridges were deliberately put on
+  OPPOSITE flanks (Height 2 near the shoulder, Height 4 and 5 near the
+  crown, on the other side) rather than stacking all seven grown steps on
+  one side in a visible row — a first draft with everything on one flank
+  read badly enough in the rendered preview to redo before this write-up,
+  so what shipped is the corrected version, but a human should still
+  check whether two shorter "ladders" reads any better than one long one
+  from fight distance. The portrait is also a real compromise: this
+  beast's antlers are its own tallest, most forward-projecting feature,
+  which drags `portraits.py`'s bounding-box-centred framing away from the
+  actual head — three (`at`, `span`) values were tried before landing on
+  `(0.80, 0.62)`, which shows the head, both antlers and the sigil but
+  with the torso trailing off-frame at bottom-right and real empty space
+  top-right rather than a clean head-and-shoulders crop the way most of
+  the cast's portraits read. And, same as every beast in this file: the
+  autumn rust/umber/bone palette, whether the branching antlers read as
+  antlers rather than as spikes or cracks at fight distance, and whether
+  the animal silhouette (the first non-quadruped-crouching, non-insectoid
+  body in the elite pool) actually reads as "stag" rather than "generic
+  four-legged thing with sticks on its head" are all unverified — nobody
+  has looked at a render of this one yet.
+
+---
+
 ### clot_toad — NEEDS A PASS
 
 - built: 2026-08-30 by the routine, from `tools/blender/clot_toad.py` —
