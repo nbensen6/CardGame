@@ -1043,6 +1043,21 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-30** — Twenty-eighth re-check since item #76's batch 7 closed the
+  icon audit out. Fetched `origin/main` fresh (checkout arrived on the real
+  tip, `e22615f`, no stale-HEAD issue this run). Independently re-verified
+  against the tree, not the log: `bosses.json` still 20 bosses, `cards.json`
+  still 187/187 cards with a non-empty `icon` field; `grep -c 'NEEDS A PASS'
+  design/ART-REVIEW.md` still 20; `grep -c 'preload("res://assets/icons/'
+  game/ui/card_view.gd` still 36; the Queue's `- [ ]` items are the same 13 —
+  2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
+  `cloud-safe`/`cloud-art`, each past its own "Done when" bar and blocked
+  solely on Nick opening `design/ART-REVIEW.md`. Nothing landed since the
+  twenty-seventh check. No code or data changed, so no test cycle to run. Not
+  sending another notification: the standing condition is unchanged from the
+  one already reported, and a repeat ping with nothing new to add is exactly
+  the noise the notification guidance says to withhold.
+
 - **2026-08-30** — Twenty-seventh re-check since item #76's batch 7 closed the
   icon audit out. Fetched `origin/main` fresh (checkout arrived on the real
   tip, `bebbe70`, no stale-HEAD issue this run). Independently re-verified
