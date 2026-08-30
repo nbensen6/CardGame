@@ -61,6 +61,102 @@ The failures that have happened, all of which passed every check:
 
 ---
 
+### yoke_ox — NEEDS A PASS
+
+- built: 2026-08-30 by the routine, from `tools/blender/yoke_ox.py` —
+  backlog #55's numeric "done when" bar (six new beasts) was met on
+  2026-08-27 and thirteen had landed by the time this run started, the
+  most recent being Riptide Eel. This run built the item's own stated
+  goal of fourteen. Fight pool. Bent rule: `height_split` (backlog #55's
+  `limiter` field, checked generically by `Combat._apply_limiter()`),
+  spent before only by Stone Warden (a Titan) and never yet by ANY
+  fight/elite pool beast — a hunter more than 3 Height above their ally
+  takes chip damage each of the Ox's turns, previewing for a hunter the
+  exact rule language a real Titan will use later, gentler (value 3) than
+  Stone Warden's 4. The design carries the mechanic in the body itself: a
+  stout ox with a real wooden yoke slung at the base of its neck — a yoke
+  is built for two to pull together, so a hunter climbing it alone is
+  standing on the half of the beast that was never meant to take weight
+  by itself. `max_hp` 48, sigil Height 5, ledges at 2 and 4, threshold
+  17 — sits inside the established fight-pool band (Husk Beetle, Thrasher,
+  Boulder Ram, Cinder Jackal and Glyph Tortoise all share the same sigil
+  Height and ledge Heights) rather than guessed. Its own moves are left
+  deliberately plain (attack / block / attack_all, no gates, no
+  hurt-phase) — the same restraint Riptide Eel's own write-up named — so
+  the limiter reads as the one thing this beast does differently. Warm
+  hide colours (BROWN, UMBER, TAN) with the yoke itself in a paler wood
+  tone (SAND) so it reads as a carried object rather than another part of
+  the animal.
+- checks: assetcheck 4/4 PASS — one mesh, one material, origin at the
+  feet, centred left-right, transforms applied, proportions
+  forward-facing, 1316 tris / 2600 beast budget. Holds PASS (2 ledges +
+  sigil; all six climb points — ground 1%, H1 30%, H2 42%, H3 54%, H4
+  66%, H5 80% — within the contract's band). Sigil PASS — a real gold
+  mark at the sigil's Height, 46% occluded, under the contract's 50%
+  line (after a fix — see bugs below). Silhouette PASS (closest match
+  `gloom_moth.glb` at 74%, checked 50 models). Full `run_tests.gd` green
+  (ALL TESTS PASSED, including `_test_everyone_wears_their_own_art`
+  against the new `yoke_ox.glb` + its own unshared portrait, and the
+  content-integrity beast-pool walk). `balance_sim.gd` run once as the
+  required smoke test only — no tuning against it. `apt-get install
+  blender` gave a working headless 4.0.2 in this container with no
+  further package installs needed (numpy/libegl already present from
+  earlier work in this same container).
+- **Two real bugs, both caught only by rendering and looking, or by
+  assetcheck's own camera check — neither by the model's own
+  self-check:**
+  1. The first build placed the horns short and low (tip z ~0.90, well
+     under the withers hump's own 1.90 crest) and the yoke beam directly
+     inside the hump's own volume (same y-depth, same z-range). Both
+     passed every geometry check `beast.py` runs (parts touch, budget,
+     holds) but the rendered `_34`, `_side` and `_sil` views all showed a
+     shapeless blob — no horn broke the silhouette and the yoke was fully
+     swallowed into the hump's own outline, the "detail hidden behind
+     other detail" failure this file's own rubric already names on other
+     assets. Fixed by roughly doubling the horns' length and thickness
+     and sweeping their tips up near the hump's own crest height, and by
+     moving the whole yoke beam forward past the hump's own front face
+     (y=-0.85, clear of the hump's y=-0.76 front edge) to the neck/
+     shoulder junction — the position a real yoke actually sits, not
+     draped over the back. Confirmed only by re-rendering: the yoke and
+     horns now read as distinct shapes in the `_top` and `_side` views.
+  2. The sigil's first mount (a plate on the withers hump's own front
+     face, x=0.20, y=-0.28) passed `beast.py`'s own hold-standing check
+     but failed `assetcheck.gd`'s separate front-camera occlusion test
+     outright at 100% buried — the plate sat well INSIDE the hump's own
+     ellipsoid at that x/z rather than on its surface, the same "moving
+     the mark doesn't move the number because the culprit isn't where you
+     think" trap Silk Widow's and Boulder Ram's write-ups already named,
+     here caused by the body rather than by `mark()`'s own parts.
+     Mounting it on the yoke's own front face instead — conveniently
+     right there after bug #1's fix, well forward of the hump entirely —
+     dropped it to 46% occluded, a real pass with margin.
+- unsure about: whether the ox reads as convincing at fight distance —
+  the torso is still a plain bevelled box with a ball hump on top, the
+  same "barrel + hump" shape Boulder Ram's own body uses, and this run
+  did not attempt a rounder or more organic torso. The 64px `_sil`
+  silhouette shows a recognisable stout horned quadruped, but the yoke
+  beam itself is not a clearly separate shape at that size — only a horn
+  tip and a slight ridge along the top break the outline, so the
+  beast's whole named identity (the yoke) may not survive being seen
+  from fight distance the way the render at 512px suggests it does. From
+  the front three-quarter angle (the fight camera's own angle) the yoke
+  and horns visually cross each other in an X shape, which may read as
+  tangled debris rather than as two distinct carried/grown objects — not
+  independently confirmed either way, and exactly the kind of "reads as
+  bolted on" risk this file already flags on other beasts. The legs, at
+  taper radii carried over near-unchanged from Boulder Ram, are thin
+  relative to this beast's wider barrel chest and were not rebalanced to
+  match. And the hold-placement algorithm still grew synthetic steps at
+  every un-anchored climb point (H1, H3) plus a large push (0.58-0.69
+  body-units, several times a hunter's own width) at both authored
+  shelves (H2, H4) — within `beast.py`'s own tolerance and printed as
+  PASS, but a human eye may read the H2/H4 ledges as slabs bolted onto
+  the flank rather than steps grown from it, the same risk Clot Toad's
+  and Riptide Eel's write-ups already flagged on their own beasts.
+
+---
+
 ### riptide_eel — NEEDS A PASS
 
 - built: 2026-08-30 by the routine, from `tools/blender/riptide_eel.py` —

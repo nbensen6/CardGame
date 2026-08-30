@@ -782,6 +782,47 @@ Ordered. Source in brackets.
   cluster of pale nubs rather than a clean stepped ridge, the single
   biggest visual risk in this build, not independently re-verified by
   anything but a static render.
+  **Checked 2026-08-30 (an eighth time the same day): fourteen down, zero
+  to go — the item's own stated goal of fourteen beasts is now met.**
+  `yoke_ox` landed in the `fight` pool, `cloud-art` end to end. Bent rule:
+  `height_split` (backlog #55's own `limiter` field), spent before only by
+  Stone Warden, a Titan, and never yet by any new-content beast — every
+  prior limiter-twist beast (Riptide Eel) used `sigil_fatigue` instead, so
+  this previews a DIFFERENT Titan-only rule at fight tier, gentler (value
+  3) than Stone Warden's 4. The design carries the mechanic in the body:
+  a stout ox with a real wooden yoke slung at its neck, since a yoke is
+  built for two to pull together. assetcheck 4/4 (sigil 46% occluded),
+  full suite green (including `_test_everyone_wears_their_own_art`
+  against the new model and its own unshared portrait), balance_sim run
+  once as the required smoke test only. `apt-get install blender` still
+  worked with no fresh package installs needed in this container. Full
+  write-up, including two real bugs both caught only by rendering and
+  looking or by assetcheck's own camera check (a first pass built the
+  horns too short/low and the yoke bar buried inside the withers hump's
+  own volume, so both vanished from every rendered silhouette despite
+  passing every geometry check; and a first sigil mount sat inside the
+  hump's own ellipsoid rather than on its surface and came back 100%
+  buried, fixed by moving it to the yoke's own front face), is in
+  `design/ART-REVIEW.md`'s `yoke_ox` block. This run also caught and
+  reverted a real close call: `portraits.py`'s batch render regenerates
+  every character's portrait, not just the new one, and in THIS
+  container (apt's Blender 4.0.2, surfaceless EGL software rendering)
+  the other thirty-one came back with real pixel differences from the
+  committed versions (checked directly — up to 66-75/255 per channel
+  against `crag_pup.png`, not just file-size noise), unlike Riptide
+  Eel's own run which verified no change in its own environment. Rather
+  than trust that earlier precedent blind, this run diffed before
+  committing and reverted all thirty-one unchanged files, keeping only
+  `yoke_ox.png` — a different Blender build/renderer is not the same
+  environment, and "verified before" does not mean "verified here."
+  Left unchecked, same as every beast before it: a `cloud-art` item is
+  never ticked by the routine, and a human still has to look — the
+  ART-REVIEW block is honest that the yoke, this beast's whole point,
+  is not clearly a separate shape at 64px silhouette, and that the yoke
+  and horns cross in an X from the fight-camera angle that may read as
+  tangled rather than as two distinct objects. With this beast the
+  item's own description ("fourteen beasts across four acts") is met in
+  full; any further beasts belong to a future backlog item, not this one.
 
 - [x] **56. Ascension 9 and up** `cloud-safe` — eight tiers, and #22 proved they
   do what they claim. StS runs to twenty because the ladder IS the long game for

@@ -926,6 +926,40 @@
           "value": 12
         }
       ]
+    },
+    "yoke_ox": {
+      "name": "The Yoke Ox",
+      "art": "res://assets/portraits/yoke_ox.png",
+      "max_hp": 48,
+      "weak_point_height": 5,
+      "ledges": [2,4],
+      "weak_point_threshold": 17,
+      "limiter": {
+        "type": "height_split",
+        "value": 3
+      },
+      "moves": [
+        {
+          "type": "attack",
+          "value": 8
+        },
+        {
+          "type": "block",
+          "value": 6
+        },
+        {
+          "type": "attack_all",
+          "value": 6
+        },
+        {
+          "type": "attack",
+          "value": 11
+        },
+        {
+          "type": "block",
+          "value": 5
+        }
+      ]
     }
   },
   "pools": {
@@ -940,7 +974,8 @@
       "thrasher",
       "boulder_ram",
       "cinder_jackal",
-      "glyph_tortoise"
+      "glyph_tortoise",
+      "yoke_ox"
     ],
     "elite": [
       "mire_snapper",
