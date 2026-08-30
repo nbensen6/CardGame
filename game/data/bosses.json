@@ -861,6 +861,37 @@
           "value": 9
         }
       ]
+    },
+    "glyph_tortoise": {
+      "name": "The Glyph Tortoise",
+      "art": "res://assets/portraits/glyph_tortoise.png",
+      "max_hp": 50,
+      "weak_point_height": 5,
+      "ledges": [2,4],
+      "weak_point_threshold": 17,
+      "artifact": 1,
+      "moves": [
+        {
+          "type": "attack",
+          "value": 8
+        },
+        {
+          "type": "block",
+          "value": 7
+        },
+        {
+          "type": "attack",
+          "value": 10
+        },
+        {
+          "type": "attack_all",
+          "value": 7
+        },
+        {
+          "type": "block",
+          "value": 6
+        }
+      ]
     }
   },
   "pools": {
@@ -874,7 +905,8 @@
       "husk_beetle",
       "thrasher",
       "boulder_ram",
-      "cinder_jackal"
+      "cinder_jackal",
+      "glyph_tortoise"
     ],
     "elite": [
       "mire_snapper",

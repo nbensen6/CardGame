@@ -720,6 +720,40 @@ Ordered. Source in brackets.
   `design/ART-REVIEW.md`'s `eyrie_hawk` block. Left unchecked, same as
   every beast before it: a `cloud-art` item is never ticked by the
   routine, and a human has to look at all eleven — nobody has yet.
+  **Checked 2026-08-30 (a sixth time the same day): twelve down.**
+  `glyph_tortoise` landed in the `fight` pool, `cloud-art` end to end.
+  Bent rule: `artifact` (backlog #36 — wards off the first N
+  Frail/Poison/Expose applications before they land), spent before only
+  by Frost Sentinel, an ELITE, and never yet by any of the eleven
+  new-content beasts before this one — every one of those bent a rule
+  through its own MOVES; this is the first whose whole twist is what it
+  does to the hunter's own CARDS. `artifact` 1 (half of Frost Sentinel's
+  2, deliberately, so a fight-pool beast introduces the mechanic gently).
+  assetcheck 4/4 (sigil 48% occluded), full suite green (verified via a
+  freshly downloaded Godot 4.7.1 + `--import`, since this run's container
+  had no cache), balance_sim run once as the required smoke test only.
+  `apt-get install blender` needed an `apt-get update` first (the stale
+  index 404'd on several packages); `python3-numpy` and
+  `libegl1`/`libegl-mesa0` installed alongside it, same as recent runs.
+  This run also actually LOOKED at the rendered previews with the Read
+  tool (`tools/blender/look.py`'s six views, plus the three canonical
+  `preview.py` ones committed to `design/art-previews/`) rather than
+  trusting the contract alone, and caught a real defect no check flagged:
+  the first sigil mount passed assetcheck at 43% occluded but was a bare
+  rod pushed so far forward to clear the shell's own bulge (see below)
+  that it read as a gold coin on a flagpole in the render, the same
+  "periscope bolted to the shoulder" failure Boulder Ram's write-up
+  already named on a different beast. Rebuilt with a rounder, shallower
+  shell and a short thick mount instead of a long thin one; full account
+  of both that fix and a second trap it hit on the way (too thick self-
+  occludes, hitting 52-63%) is in `design/ART-REVIEW.md`'s
+  `glyph_tortoise` block. Looking does not make this routine a
+  substitute for Nick's eye though — the block also names a real design
+  problem it found and could not fix: the four carved glyphs meant to
+  make the ward literal are invisible in every rendered angle. Left
+  unchecked, same as every beast before it: a `cloud-art` item is never
+  ticked by the routine, and a human still has to look — including at
+  the fix above, which this run judged by eye but did not get signed off.
 
 - [x] **56. Ascension 9 and up** `cloud-safe` — eight tiers, and #22 proved they
   do what they claim. StS runs to twenty because the ladder IS the long game for

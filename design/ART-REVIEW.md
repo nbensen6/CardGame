@@ -61,6 +61,115 @@ The failures that have happened, all of which passed every check:
 
 ---
 
+### glyph_tortoise — NEEDS A PASS
+
+- built: 2026-08-30 by the routine, from `tools/blender/glyph_tortoise.py` —
+  backlog #55's numeric "done when" bar (six new beasts) was met on
+  2026-08-27 and eleven had landed by the time this run started. This run
+  kept finding no other actionable `cloud-safe`/`cloud-art` work in
+  `design/BACKLOG.md`, so it built a twelfth toward the item's own stated
+  goal of fourteen. Fight pool. Bent rule: `artifact` (backlog #36 — wards
+  off the first N Frail/Poison/Expose applications before they land),
+  spent before only by Frost Sentinel (an ELITE) and never yet by any of
+  the eleven new-content beasts before this one — every one of those
+  reached for a move-list twist (`attack_all`, `curse`, `frail`-as-a-move,
+  `enrage`, `leech`, `regen`, `hurt_pct`/`hurt_moves`, or a `when`-gate).
+  This is the first new-content beast whose whole twist is what it does to
+  the CARDS a hunter plays at it rather than to its own move pattern: a
+  debuff-heavy opening hand spends its first `artifact` applications for
+  nothing, so the puzzle is patience (chip it down first, debuff once the
+  ward is spent) or eating the opening cost and debuffing through it
+  anyway. Its own moves are left deliberately plain (attack / block /
+  attack_all, no gates or phases) so the ward reads as the one thing this
+  beast does differently rather than competing with a second twist.
+  `max_hp` 50, sigil Height 5, ledges at 2 and 4, threshold 17, `artifact`
+  1 — sits inside the existing fight-pool band (Boulder Ram 46/17, Cinder
+  Jackal 42/16, Thrasher 48/17) rather than guessed; the `artifact` value
+  itself is deliberately half of Frost Sentinel's 2, on the idea that a
+  fight-pool beast should introduce a mechanic gently rather than at its
+  elite-tier strength. A low, broad tortoise: four stubby legs, a domed
+  shell doubling as both climb ledges (the same "the ledges ARE the shape"
+  trick Husk Beetle and Boulder Ram already use), a retracted head, and
+  four small carved AMBER glyphs across the shell's crown meant to make
+  the ward literal rather than leave it as a pure number.
+- checks: assetcheck 4/4 PASS — one mesh, one material, origin at the
+  feet, centred left-right, transforms applied, proportions
+  forward-facing, 1476 tris / 2600 beast budget. Holds PASS (2 ledges +
+  sigil, all six climb points at ground 4%, H1 30%, H2 43%, H3 55%, H4
+  66%, H5 80%, every one within the contract's band). Sigil PASS — a real
+  gold mark at the sigil's Height, 48% occluded, just under the
+  contract's 50% line. Silhouette PASS (closest match `mire_snapper.glb`
+  at 76%, checked 48 models). Full `run_tests.gd` green (ALL TESTS
+  PASSED, including `_test_everyone_wears_their_own_art` against the new
+  `glyph_tortoise.glb` + its own unshared portrait, and the
+  content-integrity beast-pool walk). `balance_sim.gd` run once as the
+  required smoke test only — no tuning against it, per standing
+  instruction. `apt-get install blender` gave a working headless 4.0.2
+  (`download.blender.org` a policy 403 through the egress proxy, same as
+  every prior run); `python3-numpy` and `libegl1`/`libegl-mesa0` installed
+  first, same packages recent beasts have needed.
+- **A real design bug this time, caught only by rendering and looking —
+  the contract had nothing that would catch it, and the first build
+  PASSED assetcheck outright.** The first sigil mount was a thin
+  `taper()` rod bridging from the shell out to the mark, sized purely to
+  clear the shell's own front bulge (a domed shell this round turned out
+  to reach forward almost as far as it reaches outward, so a mark merely
+  set on its crown at the sigil's Height sat well behind the shell's own
+  front surface and was buried at 100%, then 54%, no matter how far
+  sideways it was nudged — moving it FORWARD, past the bulge, was what
+  actually worked, the same lesson Flicker Stag's and Eyrie Hawk's own
+  write-ups already named on different beasts). That fix passed assetcheck
+  clean at 43% occluded — but pushed the mark out on a bare rod far enough
+  that the model's own depth (Blender Y / Godot Z) grew from 3.59 to 4.68
+  units against a 2.60-tall, 2.59-wide body, and the rendered `_34` and
+  `_side` views showed exactly what that number implied: a gold coin on a
+  visible thin stick, floating clear of the shell like a flag on a pole,
+  the same "periscope bolted to the shoulder" failure Boulder Ram's own
+  write-up already named on a different beast. No automated check flagged
+  it — budget, holds, silhouette-distance and sigil-occlusion all still
+  read PASS on that build. Fixed in two parts: first, the shell's own Y
+  half-extent was pulled in from 1.05 to 0.85 (rounder, less of a bulge to
+  clear in the first place), and second, the thin rod was rebuilt as a
+  short, thick `taper()` (`r0` 0.10 down from a failed wider attempt at
+  0.15 — thicker than 0.10 put enough of the mount's own STONE-coloured
+  surface directly around the mark to occlude the GOLD triangles from the
+  front, pushing occlusion back up to 52-63% depending on exact
+  proportions, a second real trap this build hit before finding a size
+  that cleared both problems at once) sized to reach almost all the way to
+  the mark rather than leaving a visible gap. Landed at 48% occluded, no
+  floating-parts warning, and the model's own depth back down to 3.48 —
+  re-rendered and the sigil now reads as a small mounted rune stud grown
+  from the shoulder rather than a flagpole, a real improvement over the
+  first build though still not fully "grown from" the shell (see below).
+- **unsure about — read this before treating the model as done, even by
+  this routine's own low bar:** the four carved AMBER glyphs placed
+  across the shell's crown, meant to be the visual tell for the `artifact`
+  ward, do not read AT ALL in the rendered `_34`, `_side` or `_top`
+  views — at `size` 0.06 x 0.06 x 0.015 against a shell with a 0.85-1.05
+  unit half-extent they are apparently too small and too flush with the
+  smoothly-shaded dome to register at any angle this routine rendered,
+  which undercuts the stated design intent ("the ward made literal rather
+  than left as a pure number") outright; a human pass may want to enlarge
+  them, deepen the bevel, or pick a colour with more contrast against
+  SLATE. The sigil mount, even after the fix above, still reads as a
+  distinct stub sticking out from the shell in the `_side` view rather
+  than as a natural growth — better than a bare rod, not confirmed to be
+  good. The two shell-plate ledges (Height 2 and 4) needed grown steps
+  pushed out 0.5-0.7 body-units from their authored anchors (see `PUSHED
+  OUT` in the build log) and show up in the `_34` render as thin pale
+  slivers along the flanks — the same "reads as fins rather than steps"
+  risk this file has flagged on other shelled beasts, not independently
+  re-verified here. And, same as every beast in this file: whether the
+  STONE/SLATE/PEWTER shell palette against the CLAY/BROWN hide actually
+  reads as "cool stone shell, warm hide" rather than as two shades of grey
+  next to two shades of brown, and whether the retracted-head posture
+  reads as a tortoise pulling in rather than as a body with an
+  undersized head, are both genuinely unverified at fight distance and
+  under the game's own lighting — a static Blender render on a flat grey
+  background is not that.
+
+---
+
 ### eyrie_hawk — NEEDS A PASS
 
 - built: 2026-08-30 by the routine, from `tools/blender/eyrie_hawk.py` —
