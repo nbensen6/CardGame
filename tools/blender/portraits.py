@@ -43,6 +43,7 @@ FOCUS = {
     "silk_widow": (0.45, 0.85), "boulder_ram": (0.34, 1.35),
     "cinder_jackal": (0.45, 1.60), "brine_urchin": (0.62, 1.30),
     "clot_toad": (0.42, 1.15), "flicker_stag": (0.80, 0.62),
+    "eyrie_hawk": (0.78, 0.60),
 }
 
 ## Three-quarter and a little above: the angle every character in this game was

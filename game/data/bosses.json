@@ -829,6 +829,38 @@
           "value": 9
         }
       ]
+    },
+    "eyrie_hawk": {
+      "name": "The Eyrie Hawk",
+      "art": "res://assets/portraits/eyrie_hawk.png",
+      "max_hp": 90,
+      "weak_point_height": 6,
+      "ledges": [2,4],
+      "weak_point_threshold": 25,
+      "moves": [
+        {
+          "type": "attack",
+          "value": 12
+        },
+        {
+          "type": "block",
+          "value": 8
+        },
+        {
+          "type": "leech",
+          "value": 13,
+          "when": {"type": "min_height", "value": 5},
+          "fallback": {"type": "attack", "value": 9}
+        },
+        {
+          "type": "attack",
+          "value": 11
+        },
+        {
+          "type": "attack_all",
+          "value": 9
+        }
+      ]
     }
   },
   "pools": {
@@ -854,7 +886,8 @@
       "silk_widow",
       "brine_urchin",
       "clot_toad",
-      "flicker_stag"
+      "flicker_stag",
+      "eyrie_hawk"
     ],
     "boss": [
       "stone_warden",

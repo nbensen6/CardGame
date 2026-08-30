@@ -61,6 +61,106 @@ The failures that have happened, all of which passed every check:
 
 ---
 
+### eyrie_hawk — NEEDS A PASS
+
+- built: 2026-08-30 by the routine, from `tools/blender/eyrie_hawk.py` —
+  backlog #55's numeric "done when" bar (six new beasts) was met on
+  2026-08-27 and ten landed by the time this run started (five in the fight
+  pool, five in elite). This run kept finding no other actionable
+  `cloud-safe`/`cloud-art` work in `design/BACKLOG.md`, so it built an
+  eleventh toward the item's own stated goal of fourteen. Elite pool. Bent
+  rule: `min_height` (backlog #40, spent before only by Frost Sentinel,
+  paired there with `attack_all`) combined with `leech` for the first
+  time — once a hunter reaches Height 5 or above, the beast's attack turns
+  into a drain that heals it back for what it takes, so climbing toward
+  the sigil feeds the thing guarding it. Every other height-punishing
+  beast either sweeps you off (Frost Sentinel) or ignores height
+  entirely; this one turns your own progress into its resource. `max_hp`
+  90, sigil Height 6, ledges at 2 and 4, threshold 25 — sits inside the
+  existing elite band (Clot Toad 86/24, Gloom Moth 86/22, Silk Widow
+  94/25, Brine Urchin 92/26, Flicker Stag 88/25) rather than guessed. Also
+  the first bird in the cast built to read as a grounded, perched raptor
+  rather than a flying "weather system with a beak" (Sky Snapper's own
+  idiom) — steel/graphite/charcoal instead of Sky Snapper's indigo/navy or
+  Flicker Stag's rust/umber, so three tall elites in a row don't share a
+  palette.
+- checks: assetcheck 4/4 PASS — one mesh, one material, origin at the
+  feet, centred left-right, transforms applied, proportions
+  forward-facing, 1588 tris / 2600 beast budget. Holds PASS (2 ledges +
+  sigil, all seven climb points at ground 1%, H1 28%, H2 39%, H3 49%, H4
+  59%, H5 70%, H6 80%, every one within the contract's band). Sigil PASS
+  — a real gold mark at the sigil's Height, 43% occluded, comfortably
+  under the contract's 50% line. Silhouette PASS (closest match
+  `drowned_colossus.glb` at 57%, checked 47 models). Full `run_tests.gd`
+  green (ALL TESTS PASSED, including `_test_everyone_wears_their_own_art`
+  against the new `eyrie_hawk.glb` + its own unshared portrait, and the
+  content-integrity beast-pool walk). `balance_sim.gd` run once as the
+  required smoke test only — no tuning against it, per standing
+  instruction.
+- **One real design bug caught only by rendering and looking — the
+  contract has nothing that would have caught it.** The first build gave
+  the folded wings two wide `wedge()` plates thrown out from the shoulder;
+  every pipeline check passed (holds, sigil, budget, silhouette-distance)
+  and the rendered PNG still showed a single flat black blade jutting out
+  sideways like a shark fin bolted to the back, nothing a person would
+  read as a bird's wing. Rebuilt as a single slender `taper()` pulled in
+  tight against the flank and pointed back along the spine instead of out
+  from the shoulder, with three thin trailing `taper()` primaries at the
+  tip rather than a second wide wedge. Re-rendered and it reads as a
+  folded wing, not a weapon — the fix cost nothing on any check, because
+  no check was measuring "does this read as a wing," only "is it attached
+  and within budget."
+- **A second bug, also only visible by looking: two of the seven climb
+  points' auto-grown steps read as spikes shooting into empty air rather
+  than as ledges.** `beast.py`'s auto-push measures "outward" from the
+  WHOLE body's bounding-box centre, not from the local surface the climb
+  point actually sits near — so Height 1 (interpolated between the foot
+  and the Height-2 shelf, with no body mass directly in that column since
+  the breast and torso balls both sit higher) and Height 3 (interpolated
+  between the two ridge shelves, both of which sit at positive Y) both
+  resolved their "outward" direction as nearly pure forward/backward
+  along the spine rather than sideways off the real nearby surface, and
+  the auto-push then chased empty space for most of a body-unit before
+  finding something to land on — a horizontal spike at the throat for H1,
+  a fan of them near the tail for H3. Named explicit `anchor()` points on
+  the actual thigh and torso-flank surfaces at both Heights (the same fix
+  Flicker Stag's own write-up already used once, for its Height 5) and
+  the pushes dropped from 0.61 and unmeasured-but-visible-in-the-render to
+  0.12 and (for a similarly-placed Height 5) 0.25 body-units respectively.
+  Height 2 and Height 4's own shelf anchors are still pushed 0.46-0.50
+  body-units out, but that push moves the point to the true edge of the
+  ridge ball built specifically to carry that shelf, not into empty space,
+  so it was left alone — worth naming for the next beast that a large
+  PUSHED OUT number is not automatically a bug; whether it is depends on
+  what the push actually reaches.
+- **unsure about — read this before treating the model as done, even by
+  this routine's own low bar:** the three thin trailing-feather tapers at
+  each wing's tip render as a small fan of dark spikes near the hip in the
+  side view, closer to porcupine quills than to feathers — a real risk,
+  not fixed, because the routine cannot judge whether it reads as
+  plumage or as something wrong once it's actually on screen at fight
+  distance. The crest mount carrying the sigil (moved off the head's own
+  centreline, the same fix every recent beast's marks need to avoid being
+  buried by the head's own front bulge) sits connected to the head by a
+  visibly thin neck of geometry rather than growing out of it — the same
+  "bridge reads as a spike" risk Silk Widow's and Boulder Ram's own
+  write-ups already flagged on different beasts, not independently
+  re-verified here. The portrait went through four (`at`, `span`) framing
+  attempts before landing on `(0.78, 0.60)`: tighter crops pushed the head
+  toward a corner of frame because `portraits.py` centres on the whole
+  bounding box, which for this beast is dragged backward and sideways by
+  the wings and legs, not on the head — the landed crop is a legitimate
+  head-and-shoulders shot but, like Flicker Stag's own portrait, leaves
+  real empty space in the top-right rather than a tight crop. And, same as
+  every beast in this file: whether the steel/graphite palette actually
+  reads as a raptor's plumage rather than as unpainted metal, and whether
+  the bent leg posture (meant to read as "perched," unlike Flicker Stag's
+  straight stilts) actually reads as a bird crouched to spring rather than
+  as a broken-looking stance, are both unverified — nobody has looked at a
+  render of this one yet.
+
+---
+
 ### flicker_stag — NEEDS A PASS
 
 - built: 2026-08-30 by the routine, from `tools/blender/flicker_stag.py` —

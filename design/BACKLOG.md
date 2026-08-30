@@ -683,6 +683,43 @@ Ordered. Source in brackets.
   bounding-box-centred framing away from the actual head, and the
   landed `(0.80, 0.62)` crop leaves real empty space in-frame rather
   than a clean head-and-shoulders shot.
+  **Checked 2026-08-30 (a fifth time the same day): eleven down.**
+  `eyrie_hawk` landed in the `elite` pool, `cloud-art` end to end. Bent
+  rule: `min_height` (backlog #40, spent before only by Frost Sentinel,
+  paired there with `attack_all`) combined with `leech` for the first
+  time — a hunter at Height 5 or above gets drained rather than just hit,
+  so the beast heals off the hunter's own climb instead of merely
+  punishing it. assetcheck 4/4 (sigil 43% occluded), full suite green,
+  balance_sim run once as the required smoke test only. `apt-get install
+  blender` gave a working headless 4.0.2 again (`download.blender.org`
+  still a policy 403 through the egress proxy, unchanged from #74);
+  numpy and `libegl1`/`libegl-mesa0` both needed installing first, same
+  packages #76's batch 5 already named.
+  One real design bug this time, caught only by rendering and looking —
+  no automated check flagged it: the first build's folded wings were two
+  wide `wedge()` plates thrown out from the shoulder, and every pipeline
+  check passed while the rendered PNG showed a flat black blade jutting
+  out sideways like a shark fin, nothing a person would call a wing.
+  Rebuilt as a single slender `taper()` pulled tight against the flank
+  and pointed back along the spine, with thin trailing primaries at the
+  tip instead of a second wide wedge — read as a folded wing on
+  re-render. A second, smaller bug: two of the seven climb points
+  (Height 1 and Height 3) auto-grew into spikes shooting into empty air,
+  because `beast.py`'s auto-push measures "outward" from the whole
+  body's bounding-box centre rather than the local surface, and at those
+  two Heights that direction resolved to nearly straight forward/back
+  along the spine instead of sideways. Fixed the same way Flicker Stag's
+  own Height 5 already was — naming an explicit `anchor()` on the real
+  nearby surface — dropping the pushes from a body-unit-plus of empty
+  space to 0.12 and 0.25 body-units. Full write-up, including three
+  things spotted only by looking that no check can catch (the trailing
+  feathers reading as porcupine quills rather than plumage, the
+  sigil-crest bridge reading thin the same way Silk Widow's and Boulder
+  Ram's already did on other beasts, and a portrait that took four
+  framing attempts and still leaves real empty space in frame), is in
+  `design/ART-REVIEW.md`'s `eyrie_hawk` block. Left unchecked, same as
+  every beast before it: a `cloud-art` item is never ticked by the
+  routine, and a human has to look at all eleven — nobody has yet.
 
 - [x] **56. Ascension 9 and up** `cloud-safe` — eight tiers, and #22 proved they
   do what they claim. StS runs to twenty because the ladder IS the long game for
@@ -1180,6 +1217,34 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-08-30** — Built `eyrie_hawk`, an eleventh new-content beast, in the
+  `elite` pool, under item #55 (numeric bar of six long met; built toward the
+  item's own stated goal of fourteen since no other actionable cloud-safe/
+  cloud-art work exists). Bent rule: `min_height` (backlog #40, spent before
+  only by Frost Sentinel) combined with `leech` for the first time — climbing
+  above Height 5 turns the beast's attack into a drain that heals it, so a
+  hunter's own progress feeds the thing they're climbing. `bosses.json` entry
+  + `elite`-pool membership, `tools/blender/eyrie_hawk.py`, model + colormap +
+  three preview renders + portrait, `tools/blender/portraits.py` FOCUS entry.
+  assetcheck 4/4 (sigil 43% occluded, 1588/2600 tris), full `run_tests.gd`
+  green, `balance_sim.gd` run once as the required smoke test only — no
+  tuning. `apt-get install blender` (4.0.2) plus `numpy` and
+  `libegl1`/`libegl-mesa0` for headless rendering, same route #76's batch 5
+  already used; `download.blender.org` still a policy 403 through the egress
+  proxy. One real bug caught only by rendering and looking, not by any
+  check: a first wing build (two wide `wedge()` plates) passed every
+  automated rule and still rendered as a shark fin bolted to the back —
+  rebuilt as a single slim `taper()` hugging the flank and it read as a
+  folded wing. A second: two climb points' auto-grown steps read as spikes
+  into empty air because `beast.py`'s auto-push measures "outward" from the
+  whole body's bounding box rather than the local surface; naming explicit
+  `anchor()` points on the real nearby surface (same fix Flicker Stag's
+  Height 5 already used) fixed both. Full write-up, including what's still
+  unverified (trailing feathers reading as quills, a thin sigil-crest
+  bridge, an imperfect portrait crop), is in `design/ART-REVIEW.md`'s
+  `eyrie_hawk` block. Left unchecked, same as every beast before it: a
+  `cloud-art` item is never ticked by the routine — a human has to look.
 
 - **2026-08-30** — Built `cinder_jackal`, a seventh new-content beast in the
   `fight` pool, under item #55 (whose numeric bar of six was already met, but
