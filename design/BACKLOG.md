@@ -1043,6 +1043,23 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-30** — Twentieth re-check since item #76's batch 7 closed the icon
+  audit out. Fetched `origin/main` fresh (checkout arrived on the real tip,
+  `637f9b7`, no stale-HEAD issue this run) and confirmed the tip matched the
+  nineteenth re-check's own no-op entry — nothing landed in between.
+  Independently re-verified against the tree, not the log: `python3 -c`
+  loading `game/data/bosses.json` and `game/data/cards.json` directly gives 20
+  bosses and 187/187 cards with a non-empty `icon` field (zero missing); `grep
+  -c 'NEEDS A PASS' design/ART-REVIEW.md` still 20; `grep -c
+  'preload("res://assets/icons/' game/ui/card_view.gd` still 36; `grep '^- \[
+  \]' design/BACKLOG.md` on the Queue still the same 13 items — 2, 3, 8, 25,
+  29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
+  `cloud-safe`/`cloud-art`, each already past its own "Done when" bar and
+  blocked solely on Nick opening `design/ART-REVIEW.md`. No code or data
+  changed, so no test cycle to run. A notification for this exact standing
+  condition already went out on an earlier re-check (and the backlog of
+  unreviewed art has not grown since); not repeating it here, per the
+  standing rule that a no-op run is not itself news.
 - **2026-08-29** — Nineteenth re-check since item #76's batch 7 closed the
   icon audit out. Fetched `origin/main` fresh (checkout arrived on the real
   tip, `81ec4e0`, no stale-HEAD issue this run) and confirmed the tip matched
