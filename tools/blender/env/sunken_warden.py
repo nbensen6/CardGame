@@ -21,6 +21,10 @@ e = Env(seed=199)
 e.ground(NAVY, rim=MIDNIGHT, dish=0.16)
 e.apron(MIDNIGHT, out=1.35, drop=0.68)
 
+# The wall. Without one a fight happens on a disc in an open sky and reads
+# as a diorama on a plate: deeper in the same drowned city.
+e.enclose("ruin")
+
 # The temple floor: big square slabs in courses, most still seated, some lifted.
 for ring, (r, n) in enumerate([(2.4, 9), (3.5, 12), (4.6, 14), (5.5, 16)]):
     for i in range(n):

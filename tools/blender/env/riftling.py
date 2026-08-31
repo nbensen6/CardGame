@@ -20,6 +20,10 @@ e = Env(seed=211)
 e.ground(CHARCOAL, rim=MIDNIGHT, dish=0.14)
 e.apron(MIDNIGHT, out=1.35, drop=0.66)
 
+# The wall. Without one a fight happens on a disc in an open sky and reads
+# as a diorama on a plate: rock the rift has not finished taking.
+e.enclose("crag")
+
 # The floor has come apart into plates. Each is a slab turned off true and
 # lifted a little, and the gaps between them are where the light gets out.
 for ring, (r, n) in enumerate([(2.5, 7), (3.6, 9), (4.7, 11), (5.5, 12)]):

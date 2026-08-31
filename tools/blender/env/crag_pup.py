@@ -20,6 +20,10 @@ e = Env(seed=11)
 e.ground(CLAY, rim=UMBER, dish=0.22)
 e.apron(UMBER, out=1.35, drop=0.62)
 
+# The wall. Without one a fight happens on a disc in an open sky and reads
+# as a diorama on a plate: the ridge this hillside broke off.
+e.enclose("crag")
+
 # Gravel: flat chips lying in drifts, densest where the ground dips.
 e.scatter(26, lambda p, r, rng: e.box((p.x, p.y, 0.03),
                                       (r * 0.30, r * 0.24, 0.035),

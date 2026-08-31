@@ -18,6 +18,10 @@ e = Env(seed=149)
 e.ground(GREEN, rim=UMBER, dish=0.24)
 e.apron(CHARCOAL, out=1.35, drop=0.66)
 
+# The wall. Without one a fight happens on a disc in an open sky and reads
+# as a diorama on a plate: a clearing, and the trees own the rest.
+e.enclose("forest")
+
 # Moss over everything, in two greens so the floor is not one flat colour.
 e.scatter(22, lambda p, r, rng: e.ball((p.x, p.y, 0.03),
                                        (r, r * 0.8, r * 0.10),

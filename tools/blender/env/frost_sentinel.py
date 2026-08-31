@@ -18,6 +18,10 @@ e = Env(seed=73)
 e.ground(ICE, rim=STEEL, dish=0.10)
 e.apron(SLATE, out=1.35, drop=0.62)
 
+# The wall. Without one a fight happens on a disc in an open sky and reads
+# as a diorama on a plate: a crevasse with walls of blue ice.
+e.enclose("ice")
+
 # Cracks radiating from the middle, where the weight is. They wander, because a
 # crack that runs straight reads as a drawn line.
 for i in range(11):

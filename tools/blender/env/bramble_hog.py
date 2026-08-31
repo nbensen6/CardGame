@@ -19,6 +19,10 @@ e = Env(seed=23)
 e.ground(UMBER, rim=CHARCOAL, dish=0.30)
 e.apron(CHARCOAL, out=1.35, drop=0.60)
 
+# The wall. Without one a fight happens on a disc in an open sky and reads
+# as a diorama on a plate: thicket closing in on all sides.
+e.enclose("forest")
+
 # Fallen leaves: flat chips in browns and one dying orange in twenty.
 e.scatter(30, lambda p, r, rng: e.box((p.x, p.y, 0.03),
                                       (r * 0.9, r * 0.7, 0.03),

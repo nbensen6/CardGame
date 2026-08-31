@@ -18,6 +18,10 @@ e = Env(seed=167)
 e.ground(SLATE, rim=CHARCOAL, dish=0.18)
 e.apron(CHARCOAL, out=1.35, drop=0.64)
 
+# The wall. Without one a fight happens on a disc in an open sky and reads
+# as a diorama on a plate: a wind-scoured canyon.
+e.enclose("cliff")
+
 # The rock winds. Four spirals out of the middle, the same turn as the beast.
 for k in range(4):
     pts = []

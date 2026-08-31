@@ -19,6 +19,10 @@ e = Env(seed=181)
 e.ground(TAN, rim=UMBER, dish=0.20)
 e.apron(SLATE, out=1.35, drop=0.60)
 
+# The wall. Without one a fight happens on a disc in an open sky and reads
+# as a diorama on a plate: a flooded hall with its roof gone.
+e.enclose("ruin")
+
 # Ripple marks in the sand, in arcs, the way a retreating tide leaves them.
 for k in range(7):
     r = 2.0 + k * 0.55

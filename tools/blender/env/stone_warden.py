@@ -18,6 +18,10 @@ e = Env(seed=229)
 e.ground(SAND, rim=GRAPHITE, dish=0.16)
 e.apron(GRAPHITE, out=1.35, drop=0.68)
 
+# The wall. Without one a fight happens on a disc in an open sky and reads
+# as a diorama on a plate: the quarry that produced it.
+e.enclose("cliff")
+
 # The floor of a quarry: cut in benches, each a step lower than the last, and
 # all of them straight. Nothing natural is this square.
 for i, (y, w, h, col) in enumerate([(-3.9, 5.0, 0.10, PEWTER),

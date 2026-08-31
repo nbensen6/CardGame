@@ -159,6 +159,33 @@ const GROUND_LIFT := 0.07
 ## Lowest the camera may sit, in world units. Below this it is under the ground
 ## plane and the shot looks up through the floor.
 const CAMERA_FLOOR := 0.8
+## The enclosing wall tools/blender/env.py builds, as a multiple of the floor
+## radius. Must match env.ENCLOSE_OUT — the camera clamp below is the only thing
+## keeping the lens inside the wall, and if these two drift the fight goes back
+## to happening on a plate in an open sky.
+const ENV_ENCLOSE_OUT := 2.90
+## How far out the camera may get, as a fraction of the wall's radius.
+##
+## Nick, 2026-08-31: "each environment should feel enclosed and you should not be
+## able to see the overworld as easily ... camera still adjustable, but not
+## entirely free to see past the environment."
+##
+## This is the "not entirely free" half, and it is the half that does the work.
+## Measured first: the camera used to stand 1.5 to 2.4 times further from the
+## beast than the ground was WIDE, so it was outside the arena in every fight at
+## every zoom. No amount of scenery could ever have enclosed it — the walls were
+## all behind the lens. 0.72 keeps it well inside, with enough room that a drag
+## still feels like a drag rather than a rope.
+const CAMERA_REACH := 0.85
+## How far behind the hunters the camera sits when they are on the ground, in
+## hunter-heights. Nick: "move the characters back away from the beast so we can
+## place the camera just behind them" — this is the "just behind" number.
+const OVER_SHOULDER := 4.2
+## How far in FRONT of the beast the hunters stand on the ground, as a fraction
+## of the beast's own depth. They used to stand at 0.9 of its front face, which
+## is close enough to touch it and left nowhere to put a camera except further
+## out than the whole arena.
+const GROUND_STANDOFF := 0.62
 ## How long a coach hint stays up before dismissing itself. Long enough to read
 ## twice, short enough that it never becomes a thing you have to click away
 ## (Nick, 2026-08-06: the tips are annoying). Acting also dismisses it — if you
@@ -220,6 +247,11 @@ var _pan := Vector3.ZERO
 var _panning := false
 var _establishing := false  # easing from the opening wide shot into the working one
 var _working_dist := 12.0   # the shot the establishing pull-in settles at
+## The floor radius of the arena the current beast stands in — the same number
+## _show_env scales the environment by. The camera clamp is measured off this,
+## so it has to be remembered rather than recomputed from the beast box, which
+## is not the same thing for a long low creature.
+var _arena_r := 12.0
 ## 0 while everyone is on the ground, ->1 as the hunter you're playing ascends.
 ## Derived from the HUNTERS, never from the camera's own height: the two come
 ## apart whenever the shot aims high at a small beast, and reading it off the
@@ -1011,6 +1043,7 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	_beast_scale = _fit_height(_beast, want)
 	_beast_box = _merged_aabb(_beast)
 	_read_climb_points()
+	_build_hull()
 	# Grow the arena with its occupant. A 9-unit disc was generous under a bear and
 	# is a dinner plate under a Titan — it ran out mid-frame and left the bottom of
 	# the shot as void, which reads as a hole rather than as ground.
@@ -1022,6 +1055,7 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	# has ground beneath every part of itself.
 	var want_r := maxf(_beast_height * 0.85,
 		maxf(_beast_box.size.x, _beast_box.size.z) * 0.62)
+	_arena_r = want_r
 	var ground := get_node_or_null("Ground") as CSGCylinder3D
 	if ground != null:
 		ground.radius = maxf(9.0, want_r)
@@ -1135,6 +1169,19 @@ func _fly(delta: float) -> void:
 	right = right.normalized() if right.length() > 0.001 else Vector3.RIGHT
 	var speed := FLY_SPEED * maxf(_dist, 4.0) * delta
 	_pan += (fwd * step.z + right * step.x + Vector3.UP * step.y) * speed
+	# Walk the camera anywhere inside the arena, and nowhere outside it. The
+	# orbit clamp alone is not enough: it holds the ORBIT, and flying moves
+	# the point the orbit is around, so W held down would carry the pivot
+	# out through the wall and take the lens with it.
+	var flat := Vector2(_pan.x, _pan.z)
+	var room := maxf(_arena_r * 0.80, 1.0)
+	if flat.length() > room:
+		flat = flat.normalized() * room
+		_pan.x = flat.x
+		_pan.z = flat.y
+	# Not up over the wall's top either, or you look down on the whole arena
+	# and straight out at the sky beyond it.
+	_pan.y = clampf(_pan.y, -_arena_r * 0.2, _arena_r * 0.9)
 
 
 ## Ride the camera up the beast as the hunter climbs. Smoothed rather than
@@ -1198,7 +1245,10 @@ func _aim_camera(delta: float, snap: bool) -> void:
 	_pivot_target.x = lock.x + _pan.x
 	_pivot_target.z = lock.y + _pan.z
 	if not _user_framed:
-		_working_dist = _dist_for_window(want.y)
+		# Never further out than the wall. This is where the enclosure stops
+		# being scenery and starts being a rule: the framing maths would
+		# happily ask for 30 units on a Titan in a 17-unit arena, and did.
+		_working_dist = minf(_dist_for_window(want.y), _cam_reach())
 	if snap:
 		_pivot = _pivot_target
 		if not _user_framed:
@@ -1335,8 +1385,31 @@ func _climb_frame() -> Vector2:
 ## Spherical position around the beast. Everything else (shake, the strike flash)
 ## composes on top of _cam_home, so the orbit is the only thing that decides
 ## where the camera fundamentally is.
+## The furthest the lens may get from the middle of the arena, on the flat.
+##
+## This is what makes the wall mean something. The geometry alone cannot enclose
+## anything — a camera is not stopped by a mesh — so the wall and this number are
+## one feature in two files, and ENV_ENCLOSE_OUT is the seam between them.
+func _cam_reach() -> float:
+	return maxf(_arena_r, 1.0) * ENV_ENCLOSE_OUT * CAMERA_REACH
+
+
+## Pull a camera position back inside the wall, keeping its direction.
+##
+## Clamps the FLAT radius only. Height is left alone: looking down into the
+## arena from up near the wall's top is a shot worth having, and it cannot see
+## out past anything.
+func _inside_wall(p: Vector3) -> Vector3:
+	var flat := Vector2(p.x, p.z)
+	var reach := _cam_reach()
+	if flat.length() > reach:
+		flat = flat.normalized() * reach
+	return Vector3(flat.x, p.y, flat.y)
+
+
 func _apply_orbit() -> void:
 	_pitch = clampf(_pitch, ORBIT_PITCH_MIN, ORBIT_PITCH_MAX)
+	_dist = minf(_dist, _cam_reach())
 	var flat := cos(_pitch) * _dist
 	_cam_home = _pivot + Vector3(sin(_yaw) * flat, sin(_pitch) * _dist, cos(_yaw) * flat)
 	var lift := _dist * lerpf(GROUND_LIFT, 0.0, _climb_t)
@@ -1345,6 +1418,10 @@ func _apply_orbit() -> void:
 	# The lens shift is added in because Godot applies it after this, moving the
 	# camera down by exactly that much.
 	_cam_home.y = maxf(_cam_home.y, CAMERA_FLOOR + lift)
+	# Stay inside the arena wall. Without this the orbit happily walks the
+	# lens out past the scenery and the fight goes back to being a plate in
+	# an open sky, however much wall env.py built.
+	_cam_home = _inside_wall(_cam_home)
 	_cam.position = _cam_home
 	_cam.look_at(_pivot, Vector3.UP)
 	# The hand rail owns the left edge, so the screen's centre is not the SCENE's
@@ -1501,6 +1578,98 @@ func _all_meshes(node: Node) -> Array:
 # --- hunters --------------------------------------------------------------
 
 ## Pull the climb route out of the model that just spawned.
+## How far FORWARD the beast's body reaches, sampled off its actual mesh.
+##
+## Nick, 2026-08-31: "make sure beasts/characters are not colliding with the
+## environment. they are still meshing inside the beast."
+##
+## Every previous attempt at this pushed the hunter out by a fraction of the
+## bounding BOX — 0.055 of its width, 0.025 of its depth — and a box is the one
+## thing a creature is not. On anything with a chest, a jaw or a shell the box
+## front is metres beyond the actual surface at some heights and metres behind it
+## at others, so the same nudge left a hunter hanging in space on the Gale
+## Serpent and buried to the waist in the Grove Bear.
+##
+## So: sample the real surface. One pass over the beast's vertices at spawn
+## builds a coarse heightmap of how far each (x band, y band) of the body reaches
+## toward the camera, and a hunter is placed against THAT. It costs one walk of a
+## 2600-triangle mesh, once per beast.
+const HULL_X := 9      # sideways bands across the body
+const HULL_Y := 20     # bands up it
+
+
+## front reach per (x band, y band), in beast-local units, or an empty array
+## before the first beast has spawned.
+var _hull: PackedFloat32Array = PackedFloat32Array()
+
+
+func _build_hull() -> void:
+	_hull = PackedFloat32Array()
+	if _beast == null:
+		return
+	_hull.resize(HULL_X * HULL_Y)
+	_hull.fill(-1e9)
+	var box := _beast_box
+	if box.size.x <= 0.0001 or box.size.y <= 0.0001:
+		_hull = PackedFloat32Array()
+		return
+	for node in _all_meshes(_beast):
+		var mi := node as MeshInstance3D
+		if mi == null or mi.mesh == null:
+			continue
+		var xf := mi.global_transform
+		for surf in range(mi.mesh.get_surface_count()):
+			var arrays: Array = mi.mesh.surface_get_arrays(surf)
+			if arrays.is_empty():
+				continue
+			var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+			for v in verts:
+				var w: Vector3 = xf * v
+				var ix := int(clampf((w.x - box.position.x) / box.size.x, 0.0, 0.999)
+					* float(HULL_X))
+				var iy := int(clampf((w.y - box.position.y) / box.size.y, 0.0, 0.999)
+					* float(HULL_Y))
+				var at := iy * HULL_X + ix
+				if w.z > _hull[at]:
+					_hull[at] = w.z
+
+
+## The front of the body at (x, y), or the bounding box front where the mesh has
+## nothing in that band — a limb sticking out into empty air must not drag the
+## hunter forward with it, and an empty band means there is no body there at all.
+func _front_of_beast(x: float, y: float) -> float:
+	if _hull.is_empty():
+		return _beast_box.end.z
+	var box := _beast_box
+	var ix := int(clampf((x - box.position.x) / box.size.x, 0.0, 0.999) * float(HULL_X))
+	var iy := int(clampf((y - box.position.y) / box.size.y, 0.0, 0.999) * float(HULL_Y))
+	# The deepest of this band and the eight around it. Sampling the hunter's own
+	# column alone is not enough and the Grove Bear proves why: at the sigil the
+	# chest reaches 8.5 and the hunter stood at 9.5, correctly outside it — and
+	# was still invisible, because the muzzle in the next column along reaches
+	# 11.4 and the hunter was standing behind its face.
+	#
+	# A 3x3 neighbourhood is the local surface rather than one thin slice. Wider
+	# than that and a single outflung limb starts dragging hunters out into open
+	# air on the other side of the body, which is the opposite failure and looks
+	# just as wrong.
+	var best := -1e9
+	for dy: int in [-2, -1, 0, 1, 2]:
+		var j: int = iy + dy
+		if j < 0 or j >= HULL_Y:
+			continue
+		for dx: int in [-1, 0, 1]:
+			var i: int = ix + dx
+			if i < 0 or i >= HULL_X:
+				continue
+			var f: float = _hull[j * HULL_X + i]
+			if f > best:
+				best = f
+	if best < -1e8:
+		return box.position.z    # no body in this column: the back of the box
+	return best
+
+
 func _read_climb_points() -> void:
 	_climb_points.clear()
 	if _beast == null:
@@ -1550,10 +1719,15 @@ func _stand_on_model(foot: int, side: float) -> Vector3:
 	var p: Vector3 = a
 	if hi != lo:
 		p = a.lerp(b, clampf(float(foot - lo) / float(hi - lo), 0.0, 1.0))
-	# Two hunters on one ledge stand apart rather than inside each other, and a
-	# little forward of the anchor so neither is buried in the body.
-	return p + Vector3(side * (_beast_box.size.x * 0.055 + 0.30), 0.0,
-		_beast_box.size.z * 0.025)
+	# Two hunters on one ledge stand apart rather than inside each other.
+	var x: float = p.x + side * (_beast_box.size.x * 0.055 + 0.30)
+	# And OUT to the body's real surface at that spot, not a fraction of the
+	# bounding box. The anchors are authored on the surface in Blender, but a
+	# point ON a surface is still half a hunter inside it, and the old nudge
+	# (0.025 of the box depth) was a box-sized guess about a shape that is not
+	# a box — too small on a deep chest, far too large beside a thin limb.
+	var clear: float = _front_of_beast(x, p.y) + HUNTER_HEIGHT * 0.45
+	return Vector3(x, p.y, maxf(p.z, clear))
 
 
 ## Every anchor strictly between two footholds, so a hunter climbing from the
@@ -1575,6 +1749,43 @@ func _route_between(from_foot: int, to_foot: int) -> Array:
 
 ## Height becomes literal: on the ground they stand in front of the beast; as
 ## they climb they move UP its flank, hugging the model's actual bounds.
+## One leg of a climb, as a JUMP rather than a slide.
+##
+## Nick, 2026-08-31: "add a small animation of a jump as characters are
+## climbing." Hunters travelled between ledges on a straight tween, which reads
+## as a model dragged up a wall on a wire — the one moment this game is about,
+## letting go of one hold and catching the next, had no weight at all.
+##
+## A parabola in two halves: decelerating up to the apex, accelerating down onto
+## the ledge. Two eased segments are indistinguishable from a real arc at this
+## size, and cost nothing — a method-tween sampling a curve every frame would
+## run for every hunter on every client.
+##
+## The squash rides in parallel on the BODY, never the holder, because the pip
+## that marks a hunter through the beast is a child of the holder and has to
+## stay exactly the size it was.
+func _hop(tw: Tween, node: Node3D, body: Node3D, from: Vector3, to: Vector3,
+		step: float) -> void:
+	var hop: float = clampf(from.distance_to(to) * 0.18, HUNTER_HEIGHT * 0.5,
+		HUNTER_HEIGHT * 2.5)
+	# Lean the apex toward the landing, so it reads as a jump ONTO something
+	# rather than a lob. Straight up the middle looks like a fountain.
+	var apex := from.lerp(to, 0.58) + Vector3.UP * hop
+	var rise := step * 0.55
+	var fall: float = maxf(step - rise, 0.05)
+	var live: bool = body != null and is_instance_valid(body)
+	tw.tween_property(node, "position", apex, rise).set_ease(Tween.EASE_OUT)
+	if live:
+		tw.parallel().tween_property(body, "scale", Vector3(0.88, 1.20, 0.88),
+			rise * 0.5).set_ease(Tween.EASE_OUT)
+	tw.tween_property(node, "position", to, fall).set_ease(Tween.EASE_IN)
+	if live:
+		tw.parallel().tween_property(body, "scale", Vector3(1.14, 0.84, 1.14),
+			fall).set_ease(Tween.EASE_IN)
+		# The landing squash is the half people actually read as weight.
+		tw.tween_property(body, "scale", Vector3.ONE, 0.12) 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
 func _place_hunters(s: Dictionary) -> void:
 	var players: Array = s.get("players", [])
 	var boss: Dictionary = s.get("boss", {})
@@ -1593,8 +1804,16 @@ func _place_hunters(s: Dictionary) -> void:
 			# under the hand rail on one side or the party panel on the other.
 			# Standing right at the foot also reads better: you're about to climb
 			# this thing, not square up to it.
+			# Back off the beast, so there is somewhere to put a camera.
+			#
+			# They used to stand at 0.9 of the beast's front face — close enough
+			# to touch it, which left no room behind them and forced the lens
+			# further out than the entire arena to see anything. Standing off by
+			# a fraction of the beast's own DEPTH scales with the creature, and
+			# the clamp keeps them on the floor rather than out in the apron.
+			var back: float = _beast_box.end.z + _beast_box.size.z * GROUND_STANDOFF
 			pos = Vector3(side * (_beast_box.size.x * 0.22 + 0.6), 0.0,
-				_beast_box.end.z * 0.9)
+				minf(back, _arena_r * 0.86))
 		elif not _climb_points.is_empty():
 			# The model says where its ledges are, so stand on one.
 			pos = _stand_on_model(foot, side)
@@ -1602,8 +1821,10 @@ func _place_hunters(s: Dictionary) -> void:
 			# at the weak point — stand ON the sigil, the thing the climb was for.
 			# Scaled off the body: a fixed nudge that cleared a 2-unit-deep bear
 			# leaves a hunter buried inside a 12-unit-deep Titan.
-			pos = _sigil.position + Vector3(side * (_beast_box.size.x * 0.10 + 0.3),
-				-0.12, _beast_box.size.z * 0.06)
+			var sx: float = _sigil.position.x + side * (_beast_box.size.x * 0.10 + 0.3)
+			var sy: float = _sigil.position.y - 0.12
+			pos = Vector3(sx, sy, maxf(_sigil.position.z,
+				_front_of_beast(sx, sy) + HUNTER_HEIGHT * 0.45))
 		else:
 			var y := _beast_box.position.y + _beast_box.size.y * lerpf(0.18, 0.80, t)
 			# closer to the spine than they used to be — a third of a Titan's width
@@ -1612,7 +1833,7 @@ func _place_hunters(s: Dictionary) -> void:
 			var x := side * (_beast_box.size.x * 0.20)
 			# out on the FRONT of the body, not a quarter of the way into it —
 			# otherwise the hunter is behind the mesh and simply isn't there
-			pos = Vector3(x, y, _beast_box.end.z * 0.82)
+			pos = Vector3(x, y, _front_of_beast(x, y) + HUNTER_HEIGHT * 0.45)
 		var h: Dictionary = _hunters[i]
 		var node: Node3D = h["node"]
 		var moved: bool = (h["home"] as Vector3).distance_to(pos) > 0.05
@@ -1629,11 +1850,15 @@ func _place_hunters(s: Dictionary) -> void:
 				way = _route_between(was, foot)
 			var tw := create_tween()
 			tw.set_trans(Tween.TRANS_QUAD)
-			var step: float = maxf(0.16, 0.30 / float(way.size() + 1))
+			# Longer than the old slide: a hop needs air time to read as one.
+			var step: float = maxf(0.22, 0.44 / float(way.size() + 1))
+			var body: Node3D = h.get("body") as Node3D
+			var at: Vector3 = node.position
 			for wp in way:
-				tw.tween_property(node, "position", _stand_on_model(int(wp), side),
-					step).set_ease(Tween.EASE_IN_OUT)
-			tw.tween_property(node, "position", pos, step).set_ease(Tween.EASE_OUT)
+				var mid: Vector3 = _stand_on_model(int(wp), side)
+				_hop(tw, node, body, at, mid, step)
+				at = mid
+			_hop(tw, node, body, at, pos, step)
 		else:
 			node.position = pos
 		# ground hunters stand three-quarter on, turned in toward the beast
@@ -1651,12 +1876,17 @@ func _spawn_hunter(slot: int, players: Array) -> Dictionary:
 	# Your own cast/<character>.glb wins over the Kenney stand-in (see ui/cast.gd),
 	# so exporting a model is the whole job — no code edit to make it show up.
 	var path := Cast.model_path(cid)
+	var body: Node3D = null
 	if ResourceLoader.exists(path):
 		var m := (load(path) as PackedScene).instantiate()
 		holder.add_child(m)
 		_fit_height(m, HUNTER_HEIGHT)
+		body = m
 	holder.add_child(_hunter_pip(slot))
-	return {"node": holder, "home": Vector3.ZERO}
+	# The BODY is kept apart from the holder because the climb hop squashes it,
+	# and the pip is a child of the holder too — squashing that would pump the
+	# one marker that has to stay readable from across the arena.
+	return {"node": holder, "home": Vector3.ZERO, "body": body}
 
 
 ## Orbiting means a hunter can end up behind the beast's body. A pip that draws

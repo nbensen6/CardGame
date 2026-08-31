@@ -20,6 +20,10 @@ e = Env(seed=113)
 e.ground(PEWTER, rim=GRAPHITE, dish=0.14)
 e.apron(GRAPHITE, out=1.35, drop=0.70)
 
+# The wall. Without one a fight happens on a disc in an open sky and reads
+# as a diorama on a plate: a col between two peaks.
+e.enclose("crag")
+
 # Bedding planes: long flat steps in the rock, all running the same way, which
 # is what says "this was laid down" rather than "this was piled up".
 for i in range(6):

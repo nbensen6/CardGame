@@ -18,6 +18,10 @@ e = Env(seed=41)
 e.ground(UMBER, rim=CHARCOAL, dish=0.26)
 e.apron(CHARCOAL, out=1.35, drop=0.66)
 
+# The wall. Without one a fight happens on a disc in an open sky and reads
+# as a diorama on a plate: old wood, too dense to see through.
+e.enclose("forest")
+
 
 def root(p, r, rng):
     """Up out of the mould and back under it. These are the decoys."""

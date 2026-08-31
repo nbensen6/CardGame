@@ -17,6 +17,10 @@ e = Env(seed=57)
 e.ground(CLAY, rim=UMBER, dish=0.34)
 e.apron(UMBER, out=1.8, drop=0.58)
 
+# The wall. Without one a fight happens on a disc in an open sky and reads
+# as a diorama on a plate: reed beds taller than a hunter.
+e.enclose("reed")
+
 # The water: broad flat sheets just above the silt, overlapping so the edges
 # read as a waterline rather than as one clean disc laid on another.
 for i, (x, y, s) in enumerate([(0.0, 0.6, 4.6), (-2.6, -2.2, 2.4),

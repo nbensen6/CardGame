@@ -52,12 +52,47 @@ BACK = (0.30, math.pi - 0.30)
 SIDES = (-0.55, 0.55)
 ANY = (0.0, math.tau)
 
+## The enclosing wall: how far out it stands and how tall it is, both as
+## multiples of the floor radius.
+##
+## Every fight until now happened on a disc floating in an open procedural sky,
+## which is why they read as a diorama on a plate rather than a place. The wall
+## fills the HORIZON BAND — you should still see sky when you tilt up, the way
+## you do at the bottom of a canyon, but never a clean edge where the world runs
+## out.
+##
+## Both numbers are set by the CAMERA, not by eye, and the first pass had them
+## backwards. 1.85 was picked hoping the lens could be pulled inside a tight
+## wall; clamping it there put the camera 17 units from a beast that needs 30 to
+## frame, so the shot ended up inside the Crag Pup with both hunters off the
+## bottom of the screen. The wall has to move out, not the camera in.
+##
+## The pair are solved together against one requirement: a beast needs about 30
+## units of standoff to frame, and the smallest arena is 12.9 across. At
+## ENCLOSE_OUT * CAMERA_REACH = 2.90 * 0.85 the camera may reach 31.8 units,
+## which clears 30 — so the framing is never squeezed, and the lens still stops
+## short of the wall.
+##
+## Height 1.90 was measured, not guessed. At radius 2.90 the far wall stands
+## about 67 units from a camera 30 out and 6 up; a top at 1.90 * 12.9 = 24.5
+## sits 15.4 degrees above that camera's eyeline against a 24-degree half-frame,
+## so it fills roughly two thirds of the upper half of the shot and the side
+## walls fill nearly all of it. A first pass at 1.15 left a broad band of open
+## sky over the top, which is the thing this whole feature exists to remove. combat_3d holds the camera at
+## a fraction of the arena radius (see CAMERA_REACH there), so the wall has to
+## stand outside the furthest the camera can get and still be inside the frame.
+## Measured before it was picked: the camera used to sit 1.5-2.4x further out
+## than the ground was WIDE, which is the real reason no amount of scenery ever
+## enclosed anything — it was all behind the lens.
+ENCLOSE_OUT = 2.90
+ENCLOSE_HIGH = 1.90
+
 ## Higher than a beast's, on purpose. An environment is one static mesh in one
 ## draw call that never moves and never animates, and Nick asked for detail — a
 ## place should have more going on than the creature standing in it, because it
 ## is what tells you WHERE you are. The number is here to stop waste, not to
 ## keep grounds sparse.
-BUDGET["ground"] = 3600
+BUDGET["ground"] = 6400
 
 
 class Env(Build):
@@ -202,6 +237,133 @@ class Env(Build):
         if cap is not None:
             self.box((at.x, at.y, at.z + h + size * 0.06),
                      (size * 0.34, size * 0.34, size * 0.07), cap, bevel=0.03)
+
+    # ------------------------------------------------------------- enclosure
+
+    ## Each style's own palette, so a ground can call enclose("ice") and not
+    ## have to import four more colour names to say something obvious. Passing
+    ## uv/accent explicitly still wins.
+    WALL_PALETTE = {
+        "cliff":  (SLATE, PEWTER),
+        "crag":   (GRAPHITE, SLATE),
+        "forest": (UMBER, GREEN),
+        "ice":    (ICE, WHITE),
+        "ruin":   (PEWTER, STONE),
+        "reed":   (GREEN, MINT),
+    }
+
+    def enclose(self, style="cliff", uv=None, accent=None, n=22, jag=0.34,
+                out=None, high=None, gap=None):
+        """Ring the arena so the world does not simply stop.
+
+        `style` picks what the wall is made of; every style builds the same
+        shape — a broken ring standing outside the floor, tall enough to fill
+        the horizon from any angle the camera is allowed to reach.
+
+        The ring is deliberately UNEVEN. A constant-height wall reads as a
+        cylinder you are standing inside, which is worse than no wall at all;
+        varying each segment and letting a few run tall turns the same triangles
+        into a skyline.
+
+        `gap` is an optional (from, to) arc left low, for a style that wants a
+        way out on one side — a canyon mouth, a treeline break. The camera can
+        still see sky through it, which is the point: one deliberate opening
+        reads as a place, a full seal reads as a box.
+        """
+        out = self.R * (ENCLOSE_OUT if out is None else out)
+        high = self.R * (ENCLOSE_HIGH if high is None else high)
+        pal = self.WALL_PALETTE.get(style, (STONE, None))
+        uv = pal[0] if uv is None else uv
+        accent = pal[1] if accent is None else accent
+        piece = getattr(self, "_wall_" + style, None)
+        if piece is None:
+            raise ValueError("no enclosure style %r — have %s" % (
+                style, ", ".join(sorted(k[6:] for k in dir(self)
+                                        if k.startswith("_wall_")))))
+        for i in range(n):
+            a = math.tau * (i + self.rng.uniform(-0.14, 0.14)) / float(n)
+            if gap is not None and gap[0] <= (a % math.tau) <= gap[1]:
+                continue
+            r = out * self.rng.uniform(0.94, 1.08)
+            # Every third piece runs tall, so the skyline has a rhythm rather
+            # than a uniform noise floor.
+            tall = high * (self.rng.uniform(1.10, 1.32) if i % 3 == 0
+                           else self.rng.uniform(0.80, 1.04))
+            piece(Vector((math.cos(a) * r, math.sin(a) * r, -0.2)), tall, a, jag,
+                  uv, accent)
+
+    ## One segment of wall, per style. Each takes (at, tall, angle, jag, uv,
+    ## accent) and leaves the floor alone — the ring calls these, never the
+    ## other way round.
+
+    def _wall_cliff(self, at, tall, a, jag, uv, accent):
+        """A sheer block, faces squared to the middle. Canyon, quarry, pit."""
+        # Wide enough to overlap. At n=17 on a ring of 1.85R the gap between
+        # centres is about 0.68R, so anything narrower than that leaves daylight
+        # between every pair and the wall becomes a colonnade.
+        w = self.R * self.rng.uniform(0.42, 0.58)
+        self.box((at.x, at.y, at.z + tall * 0.5), (w, w * 0.7, tall * 0.5), uv,
+                 bevel=self.R * 0.02, seg=2,
+                 rot=(0.0, self.rng.uniform(-jag, jag) * 0.25, a + math.pi * 0.5))
+        if accent is not None:
+            self.box((at.x, at.y, at.z + tall * self.rng.uniform(0.75, 0.95)),
+                     (w * 0.8, w * 0.5, tall * 0.10), accent,
+                     bevel=self.R * 0.015,
+                     rot=(0.0, 0.0, a + math.pi * 0.5))
+
+    def _wall_crag(self, at, tall, a, jag, uv, accent):
+        """Broken rock: a squat frustum, wide enough to touch its neighbours.
+
+        This was a cone once, and seventeen cones in a circle read as a ring of
+        traffic bollards. A wall is made of things WIDER than the gap between
+        them, and it stops being a wall the moment the top comes to a point.
+        """
+        w = self.R * self.rng.uniform(0.40, 0.52)
+        self.taper((at.x, at.y, at.z + tall * 0.45), w,
+                   w * self.rng.uniform(0.55, 0.80), tall, uv, seg=6,
+                   rot=point((math.cos(a) * -jag * 0.18,
+                              math.sin(a) * -jag * 0.18, 1.0)))
+        if accent is not None and self.rng.random() < 0.5:
+            self.rock(Vector((at.x * 0.86, at.y * 0.86, at.z)),
+                      self.R * 0.16, accent)
+
+    def _wall_forest(self, at, tall, a, jag, uv, accent):
+        """A treeline. The trunks are the wall; the canopy closes the top."""
+        self.tree(Vector((at.x, at.y, at.z)), tall * 0.62,
+                  trunk=uv, leaf=accent if accent is not None else GREEN,
+                  tiers=3)
+
+    def _wall_ice(self, at, tall, a, jag, uv, accent):
+        self.taper((at.x, at.y, at.z + tall * 0.30), self.R * 0.26,
+                   self.R * 0.02, tall * 1.5, uv, seg=5,
+                   rot=point((math.cos(a) * -jag * 0.35,
+                              math.sin(a) * -jag * 0.35, 1.0)))
+        if accent is not None:
+            self.taper((at.x * 0.9, at.y * 0.9, at.z + tall * 0.18),
+                       self.R * 0.14, self.R * 0.01, tall * 0.8, accent, seg=4,
+                       rot=point((math.cos(a + 1.0) * jag,
+                                  math.sin(a + 1.0) * jag, 1.0)))
+
+    def _wall_ruin(self, at, tall, a, jag, uv, accent):
+        """A wall that was built once and is not finished being knocked down."""
+        h = tall * self.rng.uniform(0.55, 1.0)
+        self.box((at.x, at.y, at.z + h * 0.5),
+                 (self.R * 0.40, self.R * 0.11, h * 0.5), uv,
+                 bevel=self.R * 0.015, seg=2,
+                 rot=(0.0, self.rng.uniform(-0.06, 0.06), a + math.pi * 0.5))
+        if accent is not None and self.rng.random() < 0.6:
+            self.pillar(Vector((at.x * 0.88, at.y * 0.88, at.z)), self.R * 0.20,
+                        accent, broken=True)
+
+    def _wall_reed(self, at, tall, a, jag, uv, accent):
+        """Marsh growth so dense you cannot see through it. Cheap, and the only
+        style that reads as soft."""
+        for k in range(3):
+            o = (k - 1) * self.R * 0.16
+            self.reed(Vector((at.x + math.cos(a + 1.57) * o,
+                              at.y + math.sin(a + 1.57) * o, at.z)),
+                      tall * self.rng.uniform(0.5, 0.8),
+                      uv if accent is None or k != 1 else accent, n=4)
 
     # ----------------------------------------------------------------- done
 
