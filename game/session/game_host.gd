@@ -354,6 +354,11 @@ func _build_shared() -> Dictionary:
 			"buffer": b.buffer, "plated_armour": b.plated_armour,
 			"weak_point_height": b.weak_point_height, "foothold_max": Combat.FOOTHOLD_MAX,
 			"ledges": b.ledges, "weak_point_threshold": b.weak_point_threshold,
+			# The rule this Titan bends (boss.limiter, backlog #55/#40) is real
+			# public data Combat._apply_limiter() reads every Titan turn, but was
+			# never forwarded — a client had no way to know a fight even HAS a
+			# bent rule, let alone which one or its threshold.
+			"limiter": b.limiter,
 			"art": b.art, "adds": add_views,
 		}
 		s["round"] = c.round_num
@@ -443,6 +448,12 @@ func _players_public() -> Array:
 				# _slot_private()'s combat dict. #78's HUD (needs a screen) has
 				# nothing to read until this lands.
 				"light": ps.light,
+				# PlayerState.sigil_rounds (the "sigil_fatigue" limiter's own counter,
+				# backlog #55) is the same kind of gap again: a real, incrementing
+				# value Combat._apply_limiter() already reads to decide when to chip
+				# a camping hunter, never forwarded — an ally had no way to see a
+				# teammate about to take fatigue damage, or know it themselves.
+				"sigil_rounds": ps.sigil_rounds,
 				"foothold": ps.foothold, "reached": c.sigil_reached(i),
 				"secure": c.is_secure(i), "next_safe": c.next_safe_height(i),
 				"wp_damage": ps.weak_point_damage,

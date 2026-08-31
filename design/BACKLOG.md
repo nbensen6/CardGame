@@ -1321,6 +1321,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-31** — Found real cloud-safe work in the same class the
+  sixteenth/twenty-ninth/thirtieth Log entries already found (a real Combatant/
+  PlayerState value cards or a beast's own rule already reads, never forwarded
+  to the shared snapshot). Item #55 has landed six beasts with a `limiter`
+  since those entries: `sigil_fatigue` (gale_serpent, sunken_warden, and
+  riptide_eel — the newest, backlog #55's own content), `height_split`
+  (stone_warden, yoke_ox) and `wound_decay` (drowned_colossus). `wound_decay`
+  and `height_split` both spend fields already on the wire (`boss.wound`,
+  `foothold`), but `sigil_fatigue` spends `PlayerState.sigil_rounds` —
+  `Combat._apply_limiter()` increments it every Titan turn a hunter camps the
+  weak point and chips them once it passes the limiter's own `value` — and
+  neither `sigil_rounds` nor `boss.limiter` itself (the type/value a client
+  would need to know a fight even HAS a bent rule, let alone its threshold)
+  ever reached `game_host.gd`'s snapshot. Confirmed the gap was real before
+  touching anything (grepped `game_host.gd` for both names — absent from
+  `_players_public()` and the boss dict; grepped `game/ui/` and `game/views/`
+  for the same — nothing reads them today either, so this is data reaching the
+  wire, not a screen changing, same reasoning the sixteenth/twenty-ninth/
+  thirtieth entries used). Added `"sigil_rounds"` to `_players_public()` and
+  `"limiter"` to the boss dict in `game/session/game_host.gd`, plus
+  `_test_sigil_rounds_and_boss_limiter_reach_the_shared_snapshot` in
+  `tools/run_tests.gd` — same boundary-test shape as the Frail/Dexterity/Light
+  tests before it, driving a real two-client session through
+  `GameHost._broadcast_state()` and reading both values back off a boss and a
+  player's snapshot, including the owning player's own view. `run_tests.gd`
+  (fresh Godot 4.7.1 + `--import`) all green: ALL TESTS PASSED.
+  `balance_sim.gd` run once as the required smoke test only — nothing
+  exploded, no field tuned (win rates unchanged from prior runs since no
+  numeric value moved, only which existing values reach the wire).
 - **2026-08-30** — Built `eyrie_hawk`, an eleventh new-content beast, in the
   `elite` pool, under item #55 (numeric bar of six long met; built toward the
   item's own stated goal of fourteen since no other actionable cloud-safe/
