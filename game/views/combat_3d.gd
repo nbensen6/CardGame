@@ -261,6 +261,8 @@ var _working_dist := 12.0   # the shot the establishing pull-in settles at
 ## so it has to be remembered rather than recomputed from the beast box, which
 ## is not the same thing for a long low creature.
 var _arena_r := 12.0
+## The biome name the light rig is currently set to, for the dev overlay.
+var _dev_biome := "crag"
 ## 0 while everyone is on the ground, ->1 as the hunter you're playing ascends.
 ## Derived from the HUNTERS, never from the camera's own height: the two come
 ## apart whenever the shot aims high at a small beast, and reading it off the
@@ -1069,6 +1071,7 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	if ground != null:
 		ground.radius = maxf(9.0, want_r)
 	_show_env(beast_id, want_r, ground)
+	_light_for(beast_id)
 	_frame_beast()
 
 
@@ -1082,6 +1085,91 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 ## Same rule as the cast: `env/<beast_id>.glb` if you made one, nothing if you
 ## have not, and the plain disc stays underneath either way so a beast with no
 ## ground yet still has a floor. Making one is exporting a file.
+## Light, per place.
+##
+## Nick, 2026-08-31: "one directional light and flat ambient make a stone golem
+## and an ice wall the same value of pale grey."
+##
+## That was exactly it. Every fight ran the same neutral key over the same
+## neutral ambient, so the palette did all the separating and the palette is
+## deliberately flat — which left the Frost Sentinel's crevasse and the Bramble
+## Hog's clearing the same washed-out value. Colour of LIGHT is the cheapest
+## identity in the game: nothing is rebuilt, nothing is re-exported, and every
+## screenshot changes.
+##
+## Each biome names a key colour and strength, the ambient it sits in, the fog
+## that eats the distance, and the sky behind the wall. Read them as film stock,
+## not as decoration — "cold overcast", "under a canopy", "lit by its own rift".
+const BIOME := {
+	"crag": {
+		"key": Color(1.0, 0.94, 0.84), "energy": 1.20,
+		"fill": Color(0.52, 0.64, 0.86), "ambient": Color(0.26, 0.31, 0.40),
+		"fog": Color(0.38, 0.45, 0.55), "density": 0.007,
+		"top": Color(0.34, 0.44, 0.62), "horizon": Color(0.70, 0.71, 0.68),
+	},
+	"quarry": {
+		"key": Color(1.0, 0.88, 0.68), "energy": 1.30,
+		"fill": Color(0.58, 0.62, 0.80), "ambient": Color(0.34, 0.29, 0.24),
+		"fog": Color(0.52, 0.44, 0.34), "density": 0.008,
+		"top": Color(0.44, 0.50, 0.62), "horizon": Color(0.82, 0.72, 0.55),
+	},
+	"forest": {
+		"key": Color(1.0, 0.96, 0.74), "energy": 1.15,
+		"fill": Color(0.42, 0.62, 0.48), "ambient": Color(0.18, 0.27, 0.20),
+		"fog": Color(0.20, 0.32, 0.24), "density": 0.013,
+		"top": Color(0.26, 0.40, 0.30), "horizon": Color(0.62, 0.70, 0.48),
+	},
+	"marsh": {
+		"key": Color(0.92, 0.94, 0.70), "energy": 1.00,
+		"fill": Color(0.46, 0.60, 0.52), "ambient": Color(0.21, 0.26, 0.21),
+		"fog": Color(0.30, 0.35, 0.26), "density": 0.016,
+		"top": Color(0.40, 0.46, 0.40), "horizon": Color(0.70, 0.70, 0.52),
+	},
+	"ice": {
+		"key": Color(0.94, 0.97, 1.0), "energy": 1.10,
+		"fill": Color(0.55, 0.72, 1.0), "ambient": Color(0.28, 0.37, 0.50),
+		"fog": Color(0.48, 0.60, 0.74), "density": 0.010,
+		"top": Color(0.42, 0.58, 0.78), "horizon": Color(0.86, 0.91, 0.96),
+	},
+	"ruin": {
+		"key": Color(1.0, 0.85, 0.62), "energy": 1.20,
+		"fill": Color(0.48, 0.58, 0.78), "ambient": Color(0.29, 0.27, 0.26),
+		"fog": Color(0.40, 0.36, 0.32), "density": 0.010,
+		"top": Color(0.38, 0.42, 0.52), "horizon": Color(0.78, 0.70, 0.58),
+	},
+	"drowned": {
+		"key": Color(0.66, 0.90, 0.94), "energy": 1.05,
+		"fill": Color(0.30, 0.58, 0.66), "ambient": Color(0.14, 0.27, 0.31),
+		"fog": Color(0.12, 0.30, 0.34), "density": 0.019,
+		"top": Color(0.16, 0.34, 0.42), "horizon": Color(0.40, 0.62, 0.64),
+	},
+	"rift": {
+		"key": Color(0.84, 0.72, 1.0), "energy": 1.05,
+		"fill": Color(0.62, 0.42, 0.86), "ambient": Color(0.23, 0.19, 0.33),
+		"fog": Color(0.24, 0.18, 0.36), "density": 0.014,
+		"top": Color(0.22, 0.18, 0.36), "horizon": Color(0.58, 0.42, 0.68),
+	},
+}
+
+## Which place each beast is fought in. Anything unlisted gets "crag", which is
+## the neutral daylight the game had before — a new beast looks no worse than it
+## used to until someone picks it a home.
+const BEAST_BIOME := {
+	"crag_pup": "crag", "sky_snapper": "crag", "boulder_ram": "crag",
+	"bounder": "quarry", "stone_warden": "quarry", "gale_serpent": "quarry",
+	"cinder_jackal": "quarry", "yoke_ox": "quarry",
+	"bramble_hog": "forest", "root_lurker": "forest", "grove_bear": "forest",
+	"flicker_stag": "forest", "silk_widow": "forest", "eyrie_hawk": "forest",
+	"mire_snapper": "marsh", "bog_leech": "marsh", "clot_toad": "marsh",
+	"riptide_eel": "marsh",
+	"frost_sentinel": "ice",
+	"shifting_idol": "ruin", "glyph_tortoise": "ruin", "husk_beetle": "ruin",
+	"thrasher": "ruin",
+	"drowned_colossus": "drowned", "sunken_warden": "drowned",
+	"brine_urchin": "drowned",
+	"riftling": "rift", "gloom_moth": "rift",
+}
+
 func _show_env(beast_id: String, want_r: float, ground: CSGCylinder3D) -> void:
 	if _env != null:
 		_env.queue_free()
@@ -1106,6 +1194,36 @@ func _show_env(beast_id: String, want_r: float, ground: CSGCylinder3D) -> void:
 
 ## Scale a freshly added model so it stands `want` units tall, and report the
 ## factor used. Measured, so it holds for any mesh from any source.
+## Put the fight in a place, with light.
+func _light_for(beast_id: String) -> void:
+	var name: String = String(BEAST_BIOME.get(beast_id, "crag"))
+	var b: Dictionary = BIOME.get(name, BIOME["crag"])
+	var sun := get_node_or_null("%Sun") as DirectionalLight3D
+	if sun != null:
+		sun.light_color = b["key"]
+		sun.light_energy = float(b["energy"])
+	var fill := get_node_or_null("%Fill") as DirectionalLight3D
+	if fill != null:
+		fill.light_color = b["fill"]
+	var we := get_node_or_null("WorldEnvironment") as WorldEnvironment
+	if we == null or we.environment == null:
+		return
+	var e: Environment = we.environment
+	e.ambient_light_color = b["ambient"]
+	e.fog_light_color = b["fog"]
+	e.fog_density = float(b["density"])
+	# The sky still shows above the wall, and a warm horizon over a blue-lit ice
+	# crevasse is the sort of mismatch that reads as "engine default" even when
+	# everything else is right.
+	var sky: Sky = e.sky
+	if sky != null and sky.sky_material is ProceduralSkyMaterial:
+		var m: ProceduralSkyMaterial = sky.sky_material
+		m.sky_top_color = b["top"]
+		m.sky_horizon_color = b["horizon"]
+		m.ground_horizon_color = b["horizon"]
+	_dev_biome = name
+
+
 func _fit_height(node: Node3D, want: float) -> float:
 	var raw := _merged_aabb(node).size.y
 	var factor: float = want / maxf(raw, 0.001)
