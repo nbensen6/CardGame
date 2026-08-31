@@ -218,6 +218,34 @@ Ordered. Source in brackets.
   clot_toad, silk_widow, thrasher, husk_beetle, gloom_moth, vine_weaver) —
   likely the single highest-leverage fix available if Nick wants one shared
   change rather than fourteen individual ones.
+  **Checked 2026-08-31: batch 5, apt-get blender again (same route as
+  batches 1-4).** Finished the hunters and opened a new asset class, the
+  fight grounds: `mountain_climbers` (34/50 — solid stocky-climber read,
+  docked for a 36-tri budget overage and a pale blue shard at the cheek with
+  no visible grip or clip point, reading as a shape poking out of the jaw
+  rather than a held ice axe), `goblin_mech` (29/50, lowest hunter scored —
+  the "one ordinary arm, one enormous mechanical one" the build script's own
+  docstring calls for doesn't read as one arm; a compressor box sits behind
+  the head on the goblin's own centerline rather than clearly on the rig's
+  side, and thin connecting limb segments make the rig read as scattered
+  grey blocks rather than a single oversized machine). All five hunters now
+  scored (frog, lightbearer, vine_weaver, mountain_climbers, goblin_mech).
+  Also scored the first two of fourteen fight grounds, filed as
+  `<beast>_ground.md` rather than `<beast>.md` since several beasts and
+  their grounds share a name: `stone_warden_ground` (29/50) and
+  `crag_pup_ground` (27/50) — both show the same pattern, where
+  `env.enclose()`'s ring wall fills nearly the whole fight-camera-angle
+  frame and hides most of the floor storytelling (stone_warden's stepped
+  quarry benches and half-worked block; crag_pup's gravel and boulders) that
+  each build script's own docstring names as the point, visible only from
+  directly above. Flagged as unsure whether `look.py`'s camera, calibrated
+  for single creatures, actually matches the real in-game fight camera for
+  an asset this much wider than a beast — a genuinely open question, not a
+  confident defect. Twelve of fourteen grounds, the map, all nineteen
+  portraits and all icon sets remain unscored; portraits and icons are 2D
+  and will need the rubric adapted a second way before they can be scored
+  under this same loop. No model script touched — report only, per this
+  item's own rule. Left unchecked.
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
   relic") on top of the existing Rest / Thin / Sharpen and `Run.relic_totals()`.
   *Done when:* pickable at a campfire, persists, shows in the relic list.
