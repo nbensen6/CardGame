@@ -1322,6 +1322,22 @@ rather than inventing work.
 Newest first. One line per finished item: what, and anything surprising.
 
 - **2026-08-31** — Re-check confirms no actionable cloud-safe/cloud-art work,
+  tree unchanged since the prior check (fetched fresh, tip `75acdab` — that
+  commit IS the prior check's own log entry). Independently re-derived the
+  numbers rather than trusting them secondhand: `bosses.json` still 28
+  bosses, `cards.json` still 187/187 cards with a non-empty `icon` field
+  (checked via the real nested `{bosses:[...]}`/`{cards:{...}}` shape, not a
+  flat list, after a first naive read mis-parsed it), `grep -c
+  'preload("res://assets/icons/' game/ui/card_view.gd` still 36, `grep -c
+  'NEEDS A PASS' design/ART-REVIEW.md` still 28 with zero
+  APPROVED/REJECTED. The Queue's `- [ ]` items are the same 13: 2, 3, 8, 25,
+  29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
+  `cloud-safe`/`cloud-art`, each past its own "Done when" bar and blocked
+  solely on Nick opening `design/ART-REVIEW.md`. No code or data changed
+  this run, so no test cycle to run and nothing to build. Not sending a
+  notification: this exact standing condition has already been reported and
+  nothing has changed since.
+- **2026-08-31** — Re-check confirms no actionable cloud-safe/cloud-art work,
   tree unchanged since the prior check (fetched fresh, tip `20d7e32` — that
   commit IS the prior check's own log entry). Independently walked the same
   three items rather than trusting the prior entry's word: #55's own text now
