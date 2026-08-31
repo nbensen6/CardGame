@@ -171,3 +171,12 @@ prove a model meets its contract and cannot tell you it reads as a lamp.
 - `tools\blender\look.cmd <asset> <pass>` — capture six views to `design/renders/`
 - `design/progress/<asset>.md` — the score history for one asset
 - `design/ART-REVIEW.md` — assets still waiting on a human eye
+- `tools\blender\palette.py` — the shared colour atlas. Derives from
+  `colormap_base.png`, so it is safe to re-run and the numbers in it always mean
+  what they say. **Every model embeds the atlas**, so changing it means
+  `build.cmd all` — cast, grounds, tiles, portraits and icons — or the game keeps
+  drawing the old colours.
+- Light lives in `combat_3d.BIOME`, not in the models. It is the cheapest
+  identity this project can buy: a biome's key colour, ambient, fog and sky cost
+  no rebuild and change every screenshot. Reach for it before reaching for
+  geometry.
