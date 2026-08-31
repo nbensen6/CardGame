@@ -182,6 +182,42 @@ Ordered. Source in brackets.
   named, still open). The non-beast assets (icons, portraits, grounds, map,
   hunters) remain entirely unscored. No model script touched — report
   only, per this item's own rule. Left unchecked.
+  **Checked 2026-08-31: batch 4, apt-get blender again (same route as
+  batches 1-3).** Scored the last two beasts and started the hunters:
+  `husk_beetle` (29/50, lowest beast scored so far — the two-segment shell
+  the build intent describes reads as one smooth mass, and the sigil sits
+  on a bare rod held well clear of the shell, the same "orbiting part"
+  failure named for several other beasts), `gloom_moth` (34/50 — a genuine
+  eyespot marking on the wings is this batch's strongest single element,
+  docked for a wing-hump silhouette with no wing-tip shape and a sigil
+  riding the bare tip of an antenna), `lightbearer` (36/50, first hunter
+  scored under this item — a clean, distinctive tall-narrow silhouette
+  with the staff breaking the top of the outline, docked because the
+  "second light" orb near the hand has no connecting geometry and reads as
+  a stray floating ball), `vine_weaver` (34/50 — strong Ent silhouette and
+  proportion, but 1704/1400 tris (304 over budget, already flagged as a
+  deliberate trade-off in its own build note rather than an oversight) and
+  the sigil gem sits visibly clear of the vine mass, the same orbiting-part
+  pattern). All fourteen beasts now have a scored `design/progress/<name>.md`
+  — the beast list is done. Three of five hunters scored (frog, lightbearer,
+  vine_weaver); mountain_climbers and goblin_mech remain. The non-beast
+  assets (icons, portraits, grounds, map) remain entirely unscored. No
+  model script touched — report only, per this item's own rule. Left
+  unchecked.
+
+  **Ranked weakest ten so far** (of the 16 assets scored across all four
+  batches — lowest first, out of 50): bog_leech 25, clot_toad 28,
+  boulder_ram 29, husk_beetle 29, riptide_eel 30, yoke_ox 31, silk_widow 31,
+  cinder_jackal 32, thrasher 32, eyrie_hawk 33 (tied with flicker_stag and
+  brine_urchin at 33; eyrie_hawk listed as the tenth on no particular
+  tiebreak — treat all three as "also near the bottom"). All ten share or
+  lead toward the same two repeat failures: a body mass that doesn't
+  separate into the segments/parts its own build intent names (bog_leech,
+  boulder_ram, husk_beetle, yoke_ox), and the "orbiting part" sigil/crest
+  problem now seen on at least seven assets across four batches (eyrie_hawk,
+  clot_toad, silk_widow, thrasher, husk_beetle, gloom_moth, vine_weaver) —
+  likely the single highest-leverage fix available if Nick wants one shared
+  change rather than fourteen individual ones.
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
   relic") on top of the existing Rest / Thin / Sharpen and `Run.relic_totals()`.
   *Done when:* pickable at a campfire, persists, shows in the relic list.
