@@ -17,10 +17,19 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
 
+; Nick, 2026-08-31: "while testing the game my pc started to over heat".
+; Nothing in this project capped the framerate, so every screen — including
+; a static menu — rendered as fast as the card could manage. That pins a GPU
+; at 100% and heats the machine for no benefit whatsoever: nobody can see the
+; 900th frame in a second. 60 is the cap; vsync is stated rather than left to
+; the default so a driver override cannot quietly turn it off.
+run/max_fps=60
+
 [display]
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
+window/vsync/vsync_mode=1
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 ; Landscape only. The HUD puts the beast above and the hand below with the party
