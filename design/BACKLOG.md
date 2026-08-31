@@ -1322,6 +1322,31 @@ rather than inventing work.
 Newest first. One line per finished item: what, and anything surprising.
 
 - **2026-08-31** — Re-check confirms no actionable cloud-safe/cloud-art work,
+  tree unchanged since the prior check (fetched fresh, tip `c683b89` — that
+  commit IS the prior check's own log entry, and `git log 04e31f5..HEAD --
+  game/` shows only Log commits in between, no code or data). Independently
+  re-derived the same numbers rather than trusting them secondhand:
+  `bosses.json` 28 bosses, `cards.json` 187/187 cards with a non-empty `icon`
+  field, `design/ART-REVIEW.md` 28 `NEEDS A PASS` blocks and 0
+  APPROVED/REJECTED. Went looking specifically for a fresh angle rather than
+  repeating the prior check verbatim — audited every card wearing the `stack`
+  icon (7 cards: draw, scry, put-on-top, shuffle-in, search-and-pull) against
+  the "shape wins over flavor" convention #76's batch 7 established, since
+  Scry (#59) and draw-pile reach (#68) landed after the original 25-icon
+  vocabulary was written and looked like a plausible miscategorization
+  candidate. It isn't one: `stack` is documented as "affects the draw pile"
+  broadly, not narrowly "hand size," so Scry/search/shuffle correctly share
+  it. Also confirmed no card in `cards.json` has changed since `04e31f5`
+  (`git log --since` on the file is empty), so there is nothing batch 8 of
+  #76 could audit that batches 6-7 didn't already see. Items 55, 76 and 80
+  remain the only `cloud-safe`/`cloud-art` entries in the queue, all past
+  their own "Done when" bars, all blocked solely on Nick opening
+  `design/ART-REVIEW.md`. Every other unchecked item is `needs a screen`. No
+  code or data changed this run, so no test cycle to run. Not sending a
+  notification: this exact standing condition has already been reported and
+  nothing has changed since.
+
+- **2026-08-31** — Re-check confirms no actionable cloud-safe/cloud-art work,
   tree unchanged since the prior check (fetched fresh, tip `75acdab` — that
   commit IS the prior check's own log entry). Independently re-derived the
   numbers rather than trusting them secondhand: `bosses.json` still 28
