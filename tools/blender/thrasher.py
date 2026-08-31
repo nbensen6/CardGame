@@ -82,7 +82,10 @@ b.limb([(0.0, 0.95, 1.10), (0.0, 1.32, 1.68), (0.0, 1.10, 2.14),
 # was real forward clearance - the mark sits a full radius-and-a-half in
 # front of the crest's own edge, not a hand-measured "just clears it" - with
 # a thin stalk bridging the gap so finish() doesn't flag it as floating.
-b.ball((0.34, 0.30, b.z_for(5)), (0.16, 0.09, 0.16), GRAPHITE, 8, 5)
+# The sigil's mount, reaching back to the ridge it grows from. At r_y 0.09
+# it stopped 0.004 short — the whole mount, taper and mark counted as a
+# separate object floating beside the spine.
+b.ball((0.34, 0.34, b.z_for(5)), (0.16, 0.22, 0.16), GRAPHITE, 8, 5)
 b.taper((0.34, -0.02, b.z_for(5) - 0.02), 0.07, 0.02, 0.46, GRAPHITE, seg=6,
         rot=point((0.0, -1.0, 0.0)))
 

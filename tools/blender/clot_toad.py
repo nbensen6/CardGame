@@ -102,7 +102,10 @@ b.foot((0.65, -0.42, 0.24))                                    # onto a foreleg
 # crown gives the hold check real upward-facing area to measure - a bare
 # sphere's tip is a point, not a shelf, the same fix Brine Urchin's own sigil
 # mount used.
-b.ball((0.16, 1.16, 1.08), (0.26, 0.24, 0.20), BRICK, 10, 6)
+# Reaches BACK into the rump. At r_y 0.24 it stopped 0.011 short of the
+# body — invisible, and still three parts the exporter counts as a
+# separate object. A gland grows out of a back; it does not hover.
+b.ball((0.16, 1.13, 1.08), (0.27, 0.31, 0.21), BRICK, 10, 6)
 b.box((0.16, 1.04, b.z_for(6) - 0.02), (0.17, 0.10, 0.05), BRICK, bevel=0.03)
 b.mark(at=(0.16, 0.86, b.z_for(6)), size=0.10, facing=(0.20, -1.0, 0.20))
 # A small scab-crest just behind and above the sigil itself - without SOME
@@ -111,6 +114,7 @@ b.mark(at=(0.16, 0.86, b.z_for(6)), size=0.10, facing=(0.20, -1.0, 0.20))
 # the contract's 80%, since the contract wants headroom above the weak point
 # the same way every other beast's own crown detail (Crag Pup's moss cap,
 # Husk Beetle's tail-plate rise) already provides.
-b.ball((0.14, 1.10, 1.42), (0.13, 0.12, 0.13), WHEAT, 8, 5)
+# Sat 0.010 above the gland it is supposed to be growing out of.
+b.ball((0.14, 1.10, 1.37), (0.14, 0.13, 0.14), WHEAT, 8, 5)
 
 b.done(out_path(), name="ClotToad")

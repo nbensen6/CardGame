@@ -524,15 +524,53 @@ class Build:
             groups.append(sorted(g))
         return groups
 
+    def _part_bounds(self, idx):
+        """World bounds of a group of parts, as (lo, hi)."""
+        co = [self.parts[i].matrix_world @ v.co
+              for i in idx for v in self.parts[i].data.vertices]
+        return ([min(c[k] for c in co) for k in range(3)],
+                [max(c[k] for c in co) for k in range(3)])
+
+    def _nearest_part(self, group, body):
+        """Smallest gap between any part of `group` and any part of `body`.
+
+        PAIRWISE, which is the whole point. Measuring the group's bounding box
+        against the body's overall bounding box reported 0.00 for parts that
+        plainly do not touch — a lump can sit well inside the body's total
+        extent while touching none of it. That is the same mistake the island
+        check exists to catch, made by the thing reporting it.
+        """
+        best, who = 1e9, -1
+        for i in group:
+            a = self._part_bounds([i])
+            for j in body:
+                b = self._part_bounds([j])
+                d = max(0.0,
+                        max(a[0][k] - b[1][k] for k in range(3)),
+                        max(b[0][k] - a[1][k] for k in range(3)))
+                if d < best:
+                    best, who = d, j
+        return best, who
+
     def finish(self, out, height=TARGET_HEIGHT, name="Hunter", budget="hunter"):
         """Join to one mesh, stand it on the floor at `height`, export."""
         groups = self._islands()
         if len(groups) > 1:
             groups.sort(key=len, reverse=True)
-            print("WARNING: %s is in %d pieces that do not touch. Parts %s float "
-                  "free of the body. A model in pieces reads as clutter beside a "
-                  "character, not as part of one."
-                  % (name, len(groups), [g for g in groups[1:]]))
+            # WHERE, not just which index. "Parts [28, 29, 30] float free" tells
+            # you nothing you can act on without counting b.ball() calls down a
+            # hundred-line script; the location and size of the offending lump
+            # names it on sight, and the gap says how far it has to move.
+            for g in groups[1:]:
+                lo, hi = self._part_bounds(g)
+                mid = [(lo[k] + hi[k]) * 0.5 for k in range(3)]
+                gap, near = self._nearest_part(g, groups[0])
+                print("WARNING: %s has %d part(s) floating free at "
+                      "(%.2f, %.2f, %.2f) — parts %s. The nearest body part is "
+                      "%d, %.3f away: close that and they are one body. A model "
+                      "in pieces reads as clutter beside a character, not as "
+                      "part of one."
+                      % (name, len(g), mid[0], mid[1], mid[2], g, near, gap))
 
         bpy.ops.object.select_all(action="SELECT")
         bpy.context.view_layer.objects.active = self.parts[0]
