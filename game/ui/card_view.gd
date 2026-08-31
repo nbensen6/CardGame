@@ -121,6 +121,56 @@ const ENERGY_ICON := preload("res://ui/icons/energy.svg")
 ## (Nick, 2026-08-06) — a row of portrait cards ate the bottom third, which is
 ## exactly where the beast you're climbing stands. Everywhere the cards ARE the
 ## screen (rewards, shop, campfire, character select) keeps the portrait form.
+const FOIL_SHADER := preload("res://ui/foil.gdshader")
+
+var _foil: ColorRect = null
+
+## Force every card foil, for looking at it. Set by tools/screenshot.gd's
+## `foil` flag — a foil is a rare pull by design, so without this there is no
+## reliable way to get one on screen to judge.
+static var force_foil := false
+
+
+## The foil sheen, when this copy pulled one.
+##
+## An overlay rather than a material on the card itself: a CanvasItem's material
+## applies only to its own drawing, so shading the button would leave the name,
+## the cost and the rules text unshaded and the foil would stop at the frame.
+## A rect on top catches the whole face, which is what a real foil does.
+func _build_foil(data: Dictionary) -> void:
+	_foil = ColorRect.new()
+	_foil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_foil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_foil.color = Color(1, 1, 1, 1)
+	var mat := ShaderMaterial.new()
+	mat.shader = FOIL_SHADER
+	# Every foil in a hand shimmers on its own phase. Sharing one makes two
+	# cards move in lockstep, which reads as a filter over the screen rather
+	# than as two separate objects catching the light.
+	mat.set_shader_parameter("seed", float(String(data.get("id", "")).hash() % 997))
+	_foil.material = mat
+	add_child(_foil)
+	set_process(true)
+
+
+## What stands in for turning the card in your hand.
+##
+## The tutorial drives its holographic material off Layer Weight -> Facing, the
+## angle between the surface and the viewer. A 2D card has no such angle, so:
+## the pointer on a desktop, the accelerometer on a phone, and a slow drift
+## under both so a foil sitting untouched still breathes.
+func _foil_tilt(t: float) -> Vector2:
+	var drift := Vector2(sin(t * 0.6), cos(t * 0.43)) * 0.35
+	var accel := Input.get_accelerometer()
+	if accel.length() > 0.1:
+		return drift + Vector2(accel.x, accel.z) * 0.22
+	var here := get_global_rect()
+	if here.size.x <= 0.0:
+		return drift
+	var rel := (get_global_mouse_position() - here.get_center()) / maxf(here.size.y, 1.0)
+	return drift + rel.limit_length(1.5) * 0.5
+
+
 func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> void:
 	# Character/relic cards (no cost pip) carry portraits + longer text — taller frame.
 	_compact = compact
@@ -178,6 +228,9 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 	if bool(data.get("timed", false)):
 		_clock = _clock_badge(compact, int(data.get("timed_hits", 1)))
 		add_child(_clock)
+	_foil = null
+	if bool(data.get("foil", false)) or force_foil:
+		_build_foil(data)
 	if not pressed.is_connected(_on_self_pressed):
 		pressed.connect(_on_self_pressed)
 	if not gui_input.is_connected(_on_card_input):
@@ -799,6 +852,11 @@ func _update_count() -> void:
 
 
 func _process(delta: float) -> void:
+	if _foil != null and is_instance_valid(_foil):
+		var mat := _foil.material as ShaderMaterial
+		if mat != null:
+			mat.set_shader_parameter("tilt",
+				_foil_tilt(float(Time.get_ticks_msec()) * 0.001))
 	if not _timing:
 		return
 	_elapsed += delta

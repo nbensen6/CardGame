@@ -9,6 +9,10 @@ var id: String
 var name: String
 var type: String       # "attack" | "skill"
 var rarity: String     # "common" | "uncommon" | "rare" — weights how often it's offered
+## This particular COPY came out foil. Not a property of the card type — two
+## Strikes in the same deck can differ, which is the whole appeal: it is a
+## pull, not a variant. Purely cosmetic; nothing in combat reads it.
+var foil: bool = false
 var cost: int          # energy to play
 var damage: int        # dealt to the Titan
 var block: int         # gained by the player who plays it
@@ -131,6 +135,7 @@ static func from_dict(d: Dictionary) -> Card:
 	c.name = String(d.get("name", ""))
 	c.type = String(d.get("type", "skill"))
 	c.rarity = String(d.get("rarity", "common"))
+	c.foil = bool(d.get("foil", false))
 	c.cost = int(d.get("cost", 0))
 	c.damage = int(d.get("damage", 0))
 	c.block = int(d.get("block", 0))
@@ -209,7 +214,8 @@ static func from_dict(d: Dictionary) -> Card:
 ## Every field, so a card can be copied or upgraded without losing anything.
 func to_dict() -> Dictionary:
 	return {
-		"id": id, "name": name, "type": type, "rarity": rarity, "cost": cost, "damage": damage,
+		"id": id, "name": name, "type": type, "rarity": rarity, "foil": foil,
+		"cost": cost, "damage": damage,
 		"block": block, "block_per_play": block_per_play, "ally_block": ally_block,
 		"damage_per_exhausted": damage_per_exhausted,
 		"block_per_exhausted": block_per_exhausted,

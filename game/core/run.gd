@@ -106,6 +106,13 @@ var reward_picked: Array = []    # Array[bool]
 var _queued_reward: String = ""
 
 var _seed: int
+## How often a card taken as a reward comes out foil, by rarity.
+##
+## Cosmetic only — nothing in combat reads it — so these are tuned for how
+## often the moment should happen, not for balance. About one card in
+## sixteen at common; a foil rare is a couple of runs apart.
+const FOIL_CHANCE := {"common": 0.06, "uncommon": 0.09, "rare": 0.14}
+
 var _rng := RandomNumberGenerator.new()
 
 func _init(p_decks: Array, p_names: Array, seed_value: int = 0, p_passives: Array = [],
@@ -802,7 +809,15 @@ func pick_reward(slot: int, choice: int) -> void:
 	if reward_kind == "relic":
 		team_relics.append(choices[choice])  # relics are team-wide
 	else:
-		decks[slot].append(choices[choice])  # cards go to that hunter's deck
+		# The pull. Rolled HERE rather than when the choices are offered, so a
+		# foil is something you got rather than something you could see coming
+		# and pick for — the reward stays a decision about the card.
+		#
+		# Rarer cards foil more often, which is the convention every physical
+		# card game uses and the reason a foil rare feels like a real event.
+		var card: Card = choices[choice]
+		card.foil = _rng.randf() < FOIL_CHANCE.get(card.rarity, 0.06)
+		decks[slot].append(card)  # cards go to that hunter's deck
 	reward_picked[slot] = true
 	if _all_picked():
 		_finish_reward()

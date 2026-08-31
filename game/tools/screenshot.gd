@@ -12,6 +12,7 @@
 ##   walking a whole lap)
 ## modifiers: hold= (stop a driven sequence at a phase) beast= act= orbit= size=WxH
 ##   mobile (force the handheld layout) slot=N (force the active hunter — camera work)
+##   foil (force every card foil — a foil is a rare pull, so it needs forcing)
 extends SceneTree
 
 var _out := "shot.png"
@@ -27,6 +28,8 @@ var _taps := false  # taps — report whether the map's nodes can be hit with a 
 
 func _initialize() -> void:
 	for a in OS.get_cmdline_user_args():
+		if a == "foil":
+			CardView.force_foil = true
 		if a.begins_with("out="):
 			_out = a.substr(4)
 		elif a.begins_with("state="):
