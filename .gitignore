@@ -43,3 +43,13 @@ tools/blender/__pycache__/
 # Scratch copies for looking at models in Blender (toolslenderdit.cmd blends).
 # Regenerable in seconds, binary, and NOT the source — the scripts are.
 tools/blender/blends/
+
+# design/asset-loop.md's look.sh writes six views per asset (_sil, _34, _side,
+# _top, _form, _wire); only _sil and _34 get committed as the review preview
+# (backlog #83). The other four are regenerable in seconds from the same .glb
+# and would add ~33MB across the full cast for no reviewing benefit -- keep
+# them out of git so a scoring pass doesn't leave four stray files behind.
+design/renders/*_side.png
+design/renders/*_top.png
+design/renders/*_form.png
+design/renders/*_wire.png
