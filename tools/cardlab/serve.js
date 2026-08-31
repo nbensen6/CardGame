@@ -14,6 +14,7 @@ const { execFileSync, exec } = require("child_process");
 
 const PORT = 5180;
 const DIR = __dirname;
+const ROOT = path.resolve(__dirname, "..", "..");
 const OPEN = process.argv.includes("--open");
 
 /** Every LAN address this machine answers on, so a phone on the same wifi can
@@ -41,6 +42,23 @@ http
       const html = fs.readFileSync(path.join(DIR, "cardlab.html"));
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
       return res.end(html);
+    }
+    // Card art and the shared icons, so the Art tab can actually show them.
+    // Read-only, from two fixed folders, and the filename is stripped to its
+    // basename first — a static server that will happily read ../../.. is how a
+    // dev tool on 0.0.0.0 becomes a way off the machine.
+    const asset = url.match(/^\/(art|icon)\/(.+)$/);
+    if (asset) {
+      const dir = asset[1] === "art"
+        ? path.join(ROOT, "game", "assets", "cardart")
+        : path.join(ROOT, "game", "assets", "icons");
+      const file = path.join(dir, path.basename(decodeURIComponent(asset[2])));
+      if (file.startsWith(dir) && fs.existsSync(file)) {
+        res.writeHead(200, { "content-type": "image/png", "cache-control": "no-cache" });
+        return res.end(fs.readFileSync(file));
+      }
+      res.writeHead(404);
+      return res.end();
     }
     res.writeHead(404, { "content-type": "text/plain" });
     res.end("not found");

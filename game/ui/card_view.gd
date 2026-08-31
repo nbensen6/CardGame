@@ -219,7 +219,8 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 	else:
 		box.add_child(_rarity_pips(data))
 		box.add_child(_header(String(data.get("name", "")), int(data.get("cost", 0)), bool(data.get("no_cost", false))))
-		box.add_child(_art(String(data.get("icon", "")), String(data.get("portrait", ""))))
+		box.add_child(_art(String(data.get("icon", "")),
+			String(data.get("portrait", "")), String(data.get("id", ""))))
 		box.add_child(_rich_body(data, 12, 74))
 
 	_strip = _build_timing_strip()  # hidden until start_timing()
@@ -632,7 +633,29 @@ func _header(card_name: String, cost: int, no_cost: bool = false) -> Control:
 	return row
 
 
-func _art(icon: String, portrait: String = "") -> Control:
+## Where a card's own painted art goes: assets/cardart/<card id>.png.
+##
+## Same idiom as the rest of this project — cast/<id>.glb beats the Kenney
+## stand-in, env/<beast>.glb beats the blank disc. Drop a file in and it wins;
+## no code edit, no manifest, no registration. Delete it and the shared icon
+## comes back.
+##
+## 187 cards currently share 33 icons — eighteen of them wear the same "lift"
+## glyph — so this is the slot that turns a spreadsheet into a card game.
+const CARD_ART := "res://assets/cardart/"
+## What to export from Canva: 1024 x 768 PNG.
+##
+## 4:3 because the art window below is 4:3, so a card fills edge to edge with no
+## letterboxing and nothing has to be cropped by eye. 1024 because the card
+## DETAIL view blows a card up far past its size in hand — 512 is enough for the
+## hand and visibly soft the moment someone inspects it. It is one export either
+## way, so it may as well be the one that survives being looked at closely.
+const CARD_ART_SIZE := Vector2i(1024, 768)
+## The art window's height as a fraction of its width. Matches CARD_ART_SIZE.
+const CARD_ART_ASPECT := 0.75
+
+
+func _art(icon: String, portrait: String = "", card_id: String = "") -> Control:
 	var tex := TextureRect.new()
 	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# Fixed, modest art size — the icon is an accent, not the card's focus (Nick).
@@ -641,7 +664,17 @@ func _art(icon: String, portrait: String = "") -> Control:
 	tex.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE  # a big PNG must not force the card taller
 	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	if portrait != "" and ResourceLoader.exists(portrait):
+	var own := CARD_ART + card_id + ".png"
+	if card_id != "" and ResourceLoader.exists(own):
+		# This card has art of its own. Give it a 4:3 window matching what the
+		# artist exported, so it fills the frame instead of sitting letterboxed
+		# inside the icon's slot. Width comes from the card; height follows.
+		var wide: float = maxf(custom_minimum_size.x, 124.0) - 26.0
+		tex.custom_minimum_size = Vector2(0, wide * CARD_ART_ASPECT)
+		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		tex.clip_contents = true
+		tex.texture = load(own)
+	elif portrait != "" and ResourceLoader.exists(portrait):
 		tex.texture = load(portrait)  # character portrait, full colour
 	elif ICONS.has(icon):
 		tex.texture = ICONS[icon]

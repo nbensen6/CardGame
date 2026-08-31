@@ -152,6 +152,36 @@ const byId = Object.fromEntries(model.map((m) => [m.id, m]));
 
 /* ---------- analyses ------------------------------------------------------ */
 
+// --- ART -------------------------------------------------------------------
+// Which cards have art of their own, and how many share the icon they fall back
+// to. 187 cards currently share 33 icons; eighteen of them wear the same "lift"
+// glyph. Sorting the work by that number is the whole point of the Art tab —
+// painting the card that eighteen others look identical to buys eighteen times
+// what painting a unique one does.
+const ART_DIR = path.join(ROOT, "game", "assets", "cardart");
+const haveArt = new Set(
+  (fs.existsSync(ART_DIR) ? fs.readdirSync(ART_DIR) : [])
+    .filter((f) => f.toLowerCase().endsWith(".png"))
+    .map((f) => f.slice(0, -4))
+);
+const iconUse = {};
+for (const [id, c] of Object.entries(CARDS)) {
+  const k = c.icon || "(none)";
+  iconUse[k] = (iconUse[k] || 0) + 1;
+}
+const artRows = Object.entries(CARDS).map(([id, c]) => ({
+  id,
+  name: c.name || id,
+  type: c.type || "",
+  rarity: c.rarity || "common",
+  icon: c.icon || "",
+  art: haveArt.has(id),
+  shared: iconUse[c.icon || "(none)"] || 1,
+})).sort((a, b) =>
+  (a.art === b.art ? 0 : a.art ? 1 : -1) ||     // undone first
+  b.shared - a.shared ||                         // then the most-shared icon
+  a.name.localeCompare(b.name));
+
 // Cost curve, overall and per class (weighted by copies in the starter deck).
 function costCurve(ids) {
   const out = {};
@@ -519,6 +549,7 @@ for (let i = 0; i < GROUPS.length; i++) {
 /* ---------- emit ---------------------------------------------------------- */
 const payload = {
   generated: new Date().toISOString(),
+  art: artRows,
   cards: model.map((c) => ({
     id: c.id, name: c.name, type: c.type, rarity: c.rarity, cost: c.cost, text: c.text,
     target: c.target, timed: c.timed, used: c.used, classes: c.classes,
@@ -586,6 +617,16 @@ header{display:flex;flex-wrap:wrap;align-items:baseline;gap:14px;border-bottom:2
 h1{font-size:1.5rem;margin:0;letter-spacing:-.02em}
 .sub{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase}
 .stamp{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--faint)}
+.artgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;margin-top:18px}
+figure.art{margin:0;background:var(--panel,#191b20);border:1px solid var(--line);border-radius:6px;
+  overflow:hidden;display:flex;flex-direction:column}
+figure.art img{width:100%;aspect-ratio:4/3;object-fit:contain;background:#0d0e11;display:block;padding:6px}
+figure.art.has img{object-fit:cover;padding:0}
+figure.art.todo{opacity:.72}
+figure.art.has{border-color:var(--gold,#c8a44a)}
+figure.art figcaption{padding:8px 10px;display:flex;flex-direction:column;gap:3px;font-size:12px}
+figure.art code{font-size:10.5px;color:var(--dim);word-break:break-all}
+figure.art .meta{font-size:10.5px;color:var(--dim)}
 nav{display:flex;gap:2px;flex-wrap:wrap;margin:18px 0 22px;border-bottom:1px solid var(--line)}
 nav button{background:none;border:0;border-bottom:2px solid transparent;color:var(--dim);
   font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
@@ -710,6 +751,7 @@ footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);
   <button data-t="hunters">Hunters</button>
   <button data-t="cards">Cards</button>
   <button data-t="items">Items</button>
+  <button data-t="art">Art</button>
   <button data-t="coverage">Coverage</button>
   <button data-t="gaps">Gaps</button>
   <button data-t="levers">Levers</button>
@@ -720,6 +762,7 @@ footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);
 <section id="hunters"></section>
 <section id="cards"></section>
 <section id="items"></section>
+<section id="art"></section>
 <section id="coverage"></section>
 <section id="gaps"></section>
 <section id="levers"></section>
@@ -1070,6 +1113,39 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>goTab(b.dataset
     <p class="note">Listed in design/cards-and-classes.md as "ask Claude to add the field".
       Each one is a new axis of card design, not just a new card.</p>
     <p>\${unused}</p>\`;
+})();
+
+/* ---- art ----
+   The work queue for card art, ordered by what it buys. Cards with no art of
+   their own come first, and within those the ones whose ICON is most shared —
+   painting the card that eighteen others look identical to is worth eighteen
+   times painting a card nobody confuses. */
+(function(){
+  const rows = D.art || [];
+  const done = rows.filter(r=>r.art).length;
+  const pct = rows.length ? Math.round(done / rows.length * 100) : 0;
+  const tile = r => \`
+    <figure class="art \${r.art ? "has" : "todo"}">
+      <img loading="lazy" src="\${r.art ? "/art/" + encodeURIComponent(r.id) + ".png"
+                                       : "/icon/" + encodeURIComponent(r.icon) + ".png"}"
+           alt="\${esc(r.name)}">
+      <figcaption>
+        <b>\${esc(r.name)}</b>
+        <code>cardart/\${esc(r.id)}.png</code>
+        <span class="meta">\${esc(r.rarity)} \${esc(r.type)}\${r.art ? ""
+          : \` · icon <b>\${esc(r.icon)}</b> shared by \${r.shared}\`}</span>
+      </figcaption>
+    </figure>\`;
+  $("#art").innerHTML = \`
+    <h2>Card art</h2>
+    <p class="note"><b>\${done} of \${rows.length}</b> cards have art of their own (\${pct}%).
+      Export <b>1024 x 768 PNG</b>, 4:3 — the card's art window is 4:3, so it fills
+      edge to edge with nothing cropped by eye. Drop the file in
+      <code>game/assets/cardart/</code> named exactly as shown; the game prefers it
+      over the shared icon automatically, and deleting it puts the icon back.</p>
+    <p class="note">Ordered by what the work buys: cards with no art first, and
+      within those the ones whose fallback icon the most other cards share.</p>
+    <div class="artgrid">\${rows.map(tile).join("")}</div>\`;
 })();
 
 /* ---- health ---- */
