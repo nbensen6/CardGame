@@ -60,8 +60,20 @@ CREASE = 50.0
 
 
 def swatch(px, py):
-    """UV of a palette cell, by its pixel in colormap.png (PNG y runs down)."""
-    return (px / 512.0, 1.0 - py / 512.0)
+    """UV of a palette cell, by its pixel in colormap.png (PNG y runs down).
+
+    The +16 on Y is the whole of a bug that was latent for months. `px` names
+    the MIDDLE of a 32px cell (16, 48, 80, ...) but `py` names its TOP EDGE
+    (192, 320, 448), so every UV in this project sampled the first texel row of
+    its cell, sitting flush against whatever is in the row above. Nothing showed
+    while neighbouring colours were close. Darkening the rock family opened a
+    real gap across that boundary and it came back as fine speckle crawling over
+    every large curved surface — the Crag Pup's head, its boulders.
+
+    Sampling the middle of the cell puts 16 pixels between the UV and the
+    nearest edge, which no amount of filtering or mip selection can cross.
+    """
+    return (px / 512.0, 1.0 - (py + 16.0) / 512.0)
 
 
 # The palette, sampled from the atlas and named so a model reads as a

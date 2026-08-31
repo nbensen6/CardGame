@@ -22,8 +22,8 @@ tonemap_mode = 3
 tonemap_exposure = 0.82
 tonemap_white = 6.0
 ssao_enabled = true
-ssao_intensity = 2.6
-ssao_radius = 1.6
+ssao_intensity = 1.4
+ssao_radius = 1.1
 fog_enabled = true
 fog_light_color = Color(0.62, 0.66, 0.73, 1)
 fog_light_energy = 0.45
@@ -97,8 +97,8 @@ light_color = Color(1, 0.93, 0.82, 1)
 light_energy = 1.15
 light_specular = 0.35
 shadow_enabled = true
-shadow_bias = 0.04
-shadow_normal_bias = 1.5
+shadow_bias = 0.10
+shadow_normal_bias = 3.0
 
 [node name="Fill" type="DirectionalLight3D" parent="."]
 unique_name_in_owner = true

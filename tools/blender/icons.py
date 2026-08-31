@@ -58,6 +58,17 @@ class Icon(Build):
                           (math.pi / 2, 0.0, 0.0) if rot == (0, 0, 0) else rot,
                           thickness, smooth)
 
+    def _islands(self):
+        """Suppressed, like env.Env's — and for the same reason.
+
+        The island check exists to catch a limb left in mid-air on a CHARACTER,
+        where every part is meant to be one body. An icon is the opposite: a
+        wall icon IS separate bricks, a gadget icon IS a few loose pieces, and
+        the shape reads because they are apart. Reporting six warnings for one
+        wall is noise, and noise is how a real warning gets missed.
+        """
+        return [list(range(len(self.parts)))]
+
     def done(self, out, name):
         self.finish(out, height=None, name=name, budget="icon")
 

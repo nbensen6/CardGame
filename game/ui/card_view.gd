@@ -167,6 +167,7 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 	if compact:
 		box.add_child(_rail_row(data))
 	else:
+		box.add_child(_rarity_pips(data))
 		box.add_child(_header(String(data.get("name", "")), int(data.get("cost", 0)), bool(data.get("no_cost", false))))
 		box.add_child(_art(String(data.get("icon", "")), String(data.get("portrait", ""))))
 		box.add_child(_rich_body(data, 12, 74))
@@ -625,17 +626,62 @@ const FRAME_DISABLED := preload("res://assets/ui/card_disabled.png")
 const FRAME_GOLD := preload("res://assets/ui/card_gold.png")
 
 
+## Rarity, made visible.
+##
+## The data has carried a rarity per card since the beginning (core/card.gd) and
+## the card face has never once shown it. Marvel Snap and Pokémon TCG Pocket both
+## make rarity a VISUAL fact — borders, effects, a treatment that changes as a
+## card improves — and that is most of where card games earn their reputation for
+## polish. On a phone the card is the object in your hand; it is the surface
+## worth spending on.
+##
+## Deliberately restrained: a tint on the frame and a pip under the cost. Three
+## rarities need to be told apart at a glance on a 124px card, not admired.
+const RARITY := {
+	"common":   {"tint": Color(1.00, 1.00, 1.00), "pip": Color(0.62, 0.66, 0.70), "pips": 1},
+	"uncommon": {"tint": Color(0.86, 0.94, 1.06), "pip": Color(0.55, 0.78, 1.00), "pips": 2},
+	"rare":     {"tint": Color(1.10, 1.00, 0.80), "pip": Color(1.00, 0.82, 0.35), "pips": 3},
+}
+
+
+func _rarity_of(data: Dictionary) -> Dictionary:
+	return RARITY.get(String(data.get("rarity", "common")), RARITY["common"])
+
+
+## Three little gems in the top corner: one common, two uncommon, three rare.
+##
+## Count rather than colour alone, because colour alone fails for the ~8% of
+## players with a red-green deficiency and fails again on a dim phone outdoors.
+func _rarity_pips(data: Dictionary) -> Control:
+	var r := _rarity_of(data)
+	var row := HBoxContainer.new()
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override("separation", 2)
+	row.alignment = BoxContainer.ALIGNMENT_END
+	for i in range(int(r["pips"])):
+		var gem := ColorRect.new()
+		gem.color = r["pip"]
+		gem.custom_minimum_size = Vector2(4, 4)
+		gem.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		gem.pivot_offset = Vector2(2, 2)
+		gem.rotation = PI * 0.25          # a diamond reads as a gem; a square reads as a bug
+		row.add_child(gem)
+	return row
+
+
 func _apply_frame() -> void:
-	add_theme_stylebox_override("normal", _tex_frame(FRAME_NORMAL))
-	add_theme_stylebox_override("hover", _tex_frame(FRAME_HOVER))
-	add_theme_stylebox_override("pressed", _tex_frame(FRAME_PRESSED))
+	var tint: Color = _rarity_of(_data)["tint"]
+	add_theme_stylebox_override("normal", _tex_frame(FRAME_NORMAL, tint))
+	add_theme_stylebox_override("hover", _tex_frame(FRAME_HOVER, tint))
+	add_theme_stylebox_override("pressed", _tex_frame(FRAME_PRESSED, tint))
 	add_theme_stylebox_override("disabled", _tex_frame(FRAME_DISABLED))
 
 
 ## Ornate 9-slice card frame (baked from Kenney Fantasy UI Borders).
-func _tex_frame(tex: Texture2D) -> StyleBoxTexture:
+func _tex_frame(tex: Texture2D, tint: Color = Color.WHITE) -> StyleBoxTexture:
 	var sb := StyleBoxTexture.new()
 	sb.texture = tex
+	sb.modulate_color = tint
 	sb.set_texture_margin_all(14)  # keep the corner ornaments un-stretched
 	sb.set_content_margin_all(8)
 	return sb

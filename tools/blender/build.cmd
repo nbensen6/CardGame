@@ -25,8 +25,15 @@ set HEXOUT=%ROOT%\game\assets\3d\hexown
 set ICONOUT=%ROOT%\game\assets\icons
 set PORTOUT=%ROOT%\game\assets\portraits
 
-set CAST=frog vine_weaver mountain_climbers goblin_mech lightbearer stone_warden gale_serpent drowned_colossus sunken_warden crag_pup bramble_hog bounder mire_snapper frost_sentinel grove_bear root_lurker sky_snapper riftling shifting_idol
-set GROUNDS=crag_pup bounder bramble_hog root_lurker mire_snapper sky_snapper frost_sentinel shifting_idol grove_bear gale_serpent drowned_colossus sunken_warden riftling stone_warden
+REM The FOLDER is the list, for both. A hardcoded CAST went stale the moment
+REM the cloud routine added fourteen beasts in two days: `build.cmd cast`
+REM rebuilt nineteen models and said nothing about the fourteen it had never
+REM heard of. INFRA names the scripts that are tooling rather than a model.
+set INFRA= kenney beast env hexes icons portraits preview dissect edit look bmcp start_mcp palette frog_smooth 
+set CAST=
+for %%F in ("%HERE%*.py") do call :addcast %%~nF
+set GROUNDS=
+for %%F in ("%HERE%env\*.py") do call :addground %%~nF
 
 if "%~1"=="" (
   echo usage: build.cmd ^<name...^> ^| cast ^| env [name...] ^| map ^| all
@@ -112,6 +119,14 @@ exit /b 0
 echo === card icons
 "%BLENDER%" --background --python "%HERE%icons.py" -- "%ICONOUT%" ^
   | findstr /R "ICON WARNING"
+exit /b 0
+
+:addcast
+echo %INFRA% | findstr /C:" %~1 " >nul || set CAST=%CAST% %~1
+exit /b 0
+
+:addground
+set GROUNDS=%GROUNDS% %~1
 exit /b 0
 
 :reimport
