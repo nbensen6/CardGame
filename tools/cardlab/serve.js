@@ -60,6 +60,48 @@ http
       res.writeHead(404);
       return res.end();
     }
+    // Upload art for one card, straight from the browser into the game.
+    //
+    // Nick asked for the Lab to be where he replaces a card's art, and the
+    // alternative was a round trip through the file system for every one of 187
+    // cards: export, find the folder, get the filename exactly right, refresh.
+    // The Lab already knows the id, so it can name the file itself.
+    //
+    // Writes ONLY to game/assets/cardart/, only .png, and the id is stripped to
+    // its basename and checked against a strict pattern first. A dev server
+    // bound to 0.0.0.0 that accepts writes is worth being careful about even on
+    // a home network.
+    const put = url.match(/^\/upload\/([A-Za-z0-9_]+)$/);
+    if (put && req.method === "POST") {
+      const dir = path.join(ROOT, "game", "assets", "cardart");
+      fs.mkdirSync(dir, { recursive: true });
+      const file = path.join(dir, put[1] + ".png");
+      const chunks = [];
+      let size = 0;
+      req.on("data", (c) => {
+        size += c.length;
+        // 12 MB. A 1024x768 PNG is a few hundred KB; anything past this is a
+        // mistake or a probe, and an unbounded upload is a way to fill a disk.
+        if (size > 12 * 1024 * 1024) { req.destroy(); return; }
+        chunks.push(c);
+      });
+      req.on("end", () => {
+        const buf = Buffer.concat(chunks);
+        // Check it really is a PNG rather than trusting the extension.
+        const png = buf.length > 8 && buf[0] === 0x89 && buf[1] === 0x50 &&
+          buf[2] === 0x4e && buf[3] === 0x47;
+        if (!png) {
+          res.writeHead(400, { "content-type": "text/plain" });
+          return res.end("not a PNG");
+        }
+        fs.writeFileSync(file, buf);
+        console.log("card art: wrote " + put[1] + ".png (" + buf.length + " bytes)");
+        res.writeHead(200, { "content-type": "text/plain" });
+        res.end("ok");
+      });
+      return;
+    }
+
     res.writeHead(404, { "content-type": "text/plain" });
     res.end("not found");
   })

@@ -620,6 +620,11 @@ h1{font-size:1.5rem;margin:0;letter-spacing:-.02em}
 .sub{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase}
 .stamp{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--faint)}
 /* A card's art, opened from its tile in the Hunters deck. */
+label.drop{display:block;margin-top:4px;padding:9px 11px;border:1px dashed var(--line);
+  border-radius:5px;cursor:pointer;font-size:12.5px;color:var(--dim)}
+label.drop:hover{border-color:var(--gold,#c8a44a);color:var(--ink)}
+label.drop input{display:none}
+.upstat{font-size:12px;color:var(--gold,#c8a44a);min-height:15px}
 .dcard[data-id]{cursor:pointer}
 .dcard[data-id]:hover{border-color:var(--gold,#c8a44a)}
 .dcard[data-id]:focus-visible{outline:2px solid var(--sky,#6cf);outline-offset:2px}
@@ -917,10 +922,37 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>goTab(b.dataset
       <div class="cap">
         <h3>\${esc(c.name)}</h3>
         <code>game/assets/cardart/\${esc(id)}.png</code>
+        <label class="drop">
+          <input type="file" accept="image/png" data-card="\${esc(id)}">
+          <span>Choose a PNG to use as this card's art</span>
+        </label>
+        <div class="upstat" id="upstat"></div>
         <div class="why">\${why}</div>
       </div>\`;
     modal.classList.add("on");
   }
+  // Upload straight from the modal. The Lab already knows which card you have
+  // open, so it names the file — which is the whole point of doing it here
+  // rather than in a folder, where getting one of 187 ids wrong is silent.
+  box.addEventListener("change", e => {
+    const inp = e.target.closest("input[type=file]");
+    if(!inp || !inp.files || !inp.files[0]) return;
+    const id = inp.dataset.card, f = inp.files[0];
+    const stat = $("#upstat");
+    stat.textContent = "uploading " + f.name + "...";
+    fetch("/upload/" + encodeURIComponent(id), { method:"POST", body:f })
+      .then(r => r.ok ? r.text() : r.text().then(t => { throw new Error(t); }))
+      .then(() => {
+        stat.textContent = "saved as cardart/" + id + ".png";
+        const img = box.querySelector("img");
+        // Cache-bust, or the browser shows the file it had a moment ago and it
+        // looks like nothing happened.
+        img.src = "/art/" + encodeURIComponent(id) + ".png?t=" + Date.now();
+        img.className = "has";
+      })
+      .catch(err => { stat.textContent = "failed: " + err.message; });
+  });
+
   function closeArt(){ modal.classList.remove("on"); box.innerHTML = ""; }
   document.addEventListener("click", e=>{
     const t = e.target.closest(".dcard[data-id]");
