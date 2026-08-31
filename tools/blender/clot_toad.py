@@ -87,10 +87,10 @@ for wx, wy, wz, wr in ((-0.48, 0.16, 0.72, 0.10), (0.40, -0.14, 0.75, 0.09),
 # that reaches almost as far itself. Off the body's own centreline (x != 0),
 # not on it - the same fix Thrasher's own build needed, since even a SHORT
 # body still gives a centred anchor no single "outward" side to prefer.
-b.ball((0.28, 0.62, 0.56), (0.32, 0.28, 0.22), CLAY, 11, 6)
+b.ball((0.28, 0.62, 0.74), (0.32, 0.28, 0.22), CLAY, 11, 6)
 b.shelf(2, (0.28, 0.60), (0.26, 0.20), CLAY, thickness=0.11, bevel=0.04)
 
-b.ball((0.24, 0.94, 0.86), (0.27, 0.24, 0.20), CLAY, 10, 6)
+b.ball((0.24, 0.94, 1.04), (0.27, 0.24, 0.20), CLAY, 10, 6)
 b.shelf(4, (0.24, 0.92), (0.21, 0.17), CLAY, thickness=0.10, bevel=0.04,
         drop=0.02)
 
@@ -107,7 +107,7 @@ b.foot((0.65, -0.42, 0.24))                                    # onto a foreleg
 # separate object. A gland grows out of a back; it does not hover.
 b.ball((0.16, 1.13, 1.08), (0.27, 0.31, 0.21), BRICK, 10, 6)
 b.box((0.16, 1.04, b.z_for(6) - 0.02), (0.17, 0.10, 0.05), BRICK, bevel=0.03)
-b.mark(at=(0.16, 0.86, b.z_for(6)), size=0.10, facing=(0.20, -1.0, 0.20))
+b.mark(at=(0.16, 0.93, b.z_for(6)), size=0.10, facing=(0.20, -1.0, 0.20))
 # A small scab-crest just behind and above the sigil itself - without SOME
 # geometry reaching higher than the mark, the body's own true top sits right
 # at the mark and the sigil measures as ~87% of the body's height instead of

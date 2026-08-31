@@ -63,3 +63,42 @@ enough on its own without also widening the stance sideways. Also unsure
 how the pale scab-crest ball reads against the WHEAT body warts scattered
 on the back — both use light warm tones and I can't tell from these views
 whether a player would mistake one for the other.
+
+---
+
+## Pass 2 — fixer lane, 2026-08-31
+
+Applied by the **fixer** lane (`tools/fixer/BRIEF.md`), which repairs what the
+cloud reports. Views: `design/renders/clot_toad_pass2_*.png`, captured with
+`look.cmd clot_toad 2`.
+
+| Pass | Sil | Prop | Hygiene | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 1 | 4 | 6 | 5 | 6 | 7 | **28** |
+| 2 | 6 | 6 | 7 | 6 | 7 | **32** |
+
+### Both diagnosed fixes applied
+
+- **Silhouette (4 → 6).** The two ridge mounds (`b.ball((0.28, 0.62, 0.56), ...)`
+  and `b.ball((0.24, 0.94, 0.86), ...)`) raised in Z by 0.18 each, to 0.74 and
+  1.04. Neither the `shelf()` calls nor `z_for()` moved — a shelf's top is
+  fixed by the climb contract, not by the ball it sits on, so this is a purely
+  visual change; `build.cmd`'s own hold check still reports every Height ok.
+  `clot_toad_pass2_sil.png` now shows a jagged, stepped crown at the back —
+  compare `clot_toad_pass1_sil.png`'s single small notch. Not "shippable" yet:
+  the main torso is still one big round mass, which is the untouched
+  Proportion finding, not this pass's job.
+- **Build hygiene (5 → 7).** `mark()`'s anchor pulled from y=0.86 to y=0.93,
+  0.07 toward the gland ball's own centre (y=1.13). `clot_toad_pass2_34.png`
+  and `_side.png` no longer show the sigil ring as a separate floating disc
+  beside the gland the way `clot_toad_pass1_34.png` did — it now sits against
+  the ball's surface.
+
++4 total, not a plateau — kept. Proportion, colour and style were not
+touched, per the brief, and their scores are unchanged from pass 1.
+
+## Unsure about, still
+
+Same open question named in pass 1: whether the ridge/gland stack now reads
+as too tall relative to the torso once it is also visually distinct — a
+proportion question outside the two lines this pass was allowed to touch.
