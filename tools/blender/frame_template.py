@@ -33,12 +33,11 @@ from PIL import Image, ImageDraw, ImageFont
 ## the only thing about this template that is not negotiable: design a frame at
 ## any other shape and it arrives in the game stretched.
 ##
-## The SIZE is negotiable, so it is 768 x 1152 rather than a tidy multiple of the
-## card. Nick had already made a 768 x 1024 canvas in Canva, and changing one
-## number there (the height) is a far better instruction than "make it 704x1056",
-## especially since Canva's own Resize is a paid feature. The 9-slice margin
-## scales with the export either way.
-OUT_W, OUT_H = 768, 1152
+## The SIZE is negotiable and 704x1056 is 4x the largest card, so the 9-slice
+## margin lands on a whole pixel. It briefly became 768x1152 to match a canvas
+## Nick had already made — then he resized to 704x1056 himself while that was
+## being written, so it is back. Any 2:3 works; only the ratio matters.
+OUT_W, OUT_H = 704, 1056
 CARD_W, CARD_H = 176, 264
 SCALE = OUT_W / float(CARD_W)
 MARGIN = 15                      # must match card_view.FRAME_MARGIN
