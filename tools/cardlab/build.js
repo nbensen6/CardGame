@@ -910,8 +910,13 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>goTab(b.dataset
   function openArt(id){
     const c = byId[id];
     if(!c) return;
-    const src = c.hasArt ? "/art/" + encodeURIComponent(id) + ".png"
-                         : "/icon/" + encodeURIComponent(c.icon) + ".png";
+    // Cache-bust ALWAYS, not only right after an upload. Reopening the modal
+    // asks for the same URL the browser already has, so without this you
+    // replace a card's art, close, reopen, and are shown the old picture -
+    // which looks exactly like the upload having failed.
+    const src = c.hasArt
+      ? "/art/" + encodeURIComponent(id) + ".png?t=" + (c.artStamp || 0)
+      : "/icon/" + encodeURIComponent(c.icon) + ".png";
     const why = c.hasArt
       ? "This card has art of its own. Replace the file and refresh to see the new one."
       : "No art yet - this is the shared <b>" + esc(c.icon) + "</b> icon, which "
@@ -944,9 +949,16 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>goTab(b.dataset
       .then(r => r.ok ? r.text() : r.text().then(t => { throw new Error(t); }))
       .then(() => {
         stat.textContent = "saved as cardart/" + id + ".png";
+        // Mark it on the CARD, not just on this modal. D.cards was baked when
+        // the page was built, so hasArt is still false for a card that had none
+        // a moment ago - and reopening the modal would go back to showing the
+        // shared icon. Stamping it here fixes the reopen, the gold marker on
+        // the deck tile, and the next open, all at once.
+        const rec = byId[id];
+        if (rec) { rec.hasArt = true; rec.artStamp = Date.now(); }
+        document.querySelectorAll('.dcard[data-id="' + id + '"]')
+          .forEach(t => t.classList.add("hasart"));
         const img = box.querySelector("img");
-        // Cache-bust, or the browser shows the file it had a moment ago and it
-        // looks like nothing happened.
         img.src = "/art/" + encodeURIComponent(id) + ".png?t=" + Date.now();
         img.className = "has";
       })
