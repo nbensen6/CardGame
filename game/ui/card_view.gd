@@ -187,11 +187,16 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 		# larger share of the screen — at 224 tall the hand ate 40% of a phone and
 		# climbed over the beast. Smaller here keeps the same physical size it has
 		# on a desktop while giving the fight back its room.
+		# Taller and narrower than before, following the Slay the Spire 2 hand
+		# Nick sent. Their proportion is roughly 1:1.55, and the reason is the
+		# ART: at 2:3 with a big rules block there is nowhere for a picture to
+		# go, which is why our art window had shrunk to an icon slot. A taller
+		# card buys the picture back without taking width from the hand.
 		var big := bool(data.get("no_cost", false))
 		if Screen.is_handheld():
-			custom_minimum_size = Vector2(148, 222) if big else Vector2(124, 186)
+			custom_minimum_size = Vector2(140, 226) if big else Vector2(118, 190)
 		else:
-			custom_minimum_size = Vector2(176, 264) if big else Vector2(148, 224)
+			custom_minimum_size = Vector2(166, 268) if big else Vector2(140, 228)
 	disabled = not playable
 	text = ""
 	if not mouse_entered.is_connected(_on_hover):
@@ -233,7 +238,10 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 			tag.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 			tag.custom_minimum_size = Vector2(62, 17)
 			box.add_child(tag)
-		box.add_child(_rich_body(data, 12, 62))
+		# A STRIP, not a panel. Nick: "some words are going off the cards." The
+		# block was 62px of an already-tight card and long rules ran past it;
+		# _rich_body clips rather than grows, so overflow was silent.
+		box.add_child(_rich_body(data, 11, 54))
 
 	_strip = _build_timing_strip()  # hidden until start_timing()
 	box.add_child(_strip)
@@ -498,6 +506,25 @@ func _rich_body(data: Dictionary, size: int, height: int) -> RichTextLabel:
 	var r := RichTextLabel.new()
 	r.bbcode_enabled = true
 	r.text = face_text(data, true)
+	# Shrink the type to fit rather than clip.
+	#
+	# Nick: "some words are going off the cards." This label clips instead of
+	# growing - which keeps the card the right shape and loses the end of the
+	# sentence silently, which is worse than either. Cull the Deck reads "Discard
+	# a card. Deal 3 damage and an additional 1 per card in your discard pile":
+	# 88 characters into a strip sized for about 50.
+	#
+	# Measured off the PLAIN text, not the bbcode, or the keyword markup counts
+	# toward the length and short cards shrink for no reason.
+	var plain := face_text(data, false)
+	var chars := plain.length()
+	if chars > 96:
+		size -= 3
+	elif chars > 68:
+		size -= 2
+	elif chars > 50:
+		size -= 1
+	size = maxi(size, 8)
 	r.fit_content = false
 	r.scroll_active = false      # clip a long line rather than grow the card
 	r.clip_contents = true
@@ -668,6 +695,11 @@ func _plate(tex: Texture2D, slice: int, txt: String, size: int,
 	np.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var lbl := _label(txt, size)
 	lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# Inset by the slice, so the text sits on the FLAT of the plate and not out
+	# over the notched ends. Centred across the whole rect, "Cull the Deck" ran
+	# past the left notch and looked like it had escaped the card.
+	lbl.offset_left = float(slice) * 0.62
+	lbl.offset_right = -float(slice) * 0.62
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -762,10 +794,14 @@ const CARD_ART_ASPECT := 0.75
 func _art(icon: String, portrait: String = "", card_id: String = "") -> Control:
 	var tex := TextureRect.new()
 	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# The art absorbs whatever height the card has spare. Without this the column
+	# packs to the top and a taller card just grows a band of empty dark at the
+	# bottom - which is what a first pass at the Slay the Spire 2 proportions
+	# produced. In the reference the picture is what fills the card.
+	tex.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	# Fixed, modest art size — the icon is an accent, not the card's focus (Nick).
 	# Portraits (character select) keep a larger pane.
-	tex.custom_minimum_size = Vector2(0, 76 if portrait != "" else 42)
-	tex.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	tex.custom_minimum_size = Vector2(0, 76 if portrait != "" else 58)
 	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE  # a big PNG must not force the card taller
 	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	var own := CARD_ART + card_id + ".png"
@@ -773,8 +809,11 @@ func _art(icon: String, portrait: String = "", card_id: String = "") -> Control:
 		# This card has art of its own. Give it a 4:3 window matching what the
 		# artist exported, so it fills the frame instead of sitting letterboxed
 		# inside the icon's slot. Width comes from the card; height follows.
-		var wide: float = maxf(custom_minimum_size.x, 124.0) - 26.0
-		tex.custom_minimum_size = Vector2(0, wide * CARD_ART_ASPECT)
+		# The art is the card. In the reference it runs from under the name
+		# plate to the type pill - well over half the face - and everything else
+		# is a strip. Ours was 42px on a 224px card.
+		var wide: float = maxf(custom_minimum_size.x, 118.0) - 26.0
+		tex.custom_minimum_size = Vector2(0, wide * CARD_ART_ASPECT * 1.18)
 		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 		tex.clip_contents = true
 		tex.texture = load(own)
