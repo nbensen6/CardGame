@@ -152,6 +152,36 @@ Ordered. Source in brackets.
   drowned_colossus, sunken_warden) and the non-beast assets (icons,
   portraits, grounds, map, hunters) remain unscored. No model script
   touched — report only, per this item's own rule. Left unchecked.
+  **Checked 2026-08-31: batch 3, four more beasts, apt-get blender again
+  (same route as batches 1-2; `download.blender.org` still policy-403).**
+  Scored `boulder_ram` (29/50 — the script mirrors a pair of curled TAN ram
+  horns, but every view shows a single grey-and-gold disc-on-a-rod beside
+  the shoulder hump instead, with no second horn visible anywhere),
+  `silk_widow` (31/50 — the red hourglass belly mark is the strongest single
+  element scored this session, but the sigil crest reads as a thin rod with
+  a washer on the end, the same "orbiting part" failure named for the Eyrie
+  Hawk and Clot Toad in earlier batches), `thrasher` (32/50, best of this
+  batch — the raised scorpion-like tail-lash silhouette is genuinely
+  distinct from the rest of the cast, docked only by the same sigil-crest
+  "orbiting part" issue), `bog_leech` (25/50, lowest of this batch and of
+  all twelve beasts scored so far — the "wet sucker-mouth" the module doc
+  calls out as this creature's identity reads as a loose ring of beads
+  hanging off the body rather than a mouth, and the main body's two back
+  humps sit too close in value to separate). Three of these four beasts
+  independently hit the identical thin-rod sigil-crest problem, which is
+  now a pattern across at least five scored assets (also Eyrie Hawk, Clot
+  Toad) rather than a one-off — worth a shared fix if Nick wants one.
+  Full rubric tables, per-line justifications and one concrete (unapplied)
+  fix per asset are in `design/progress/<name>.md`. Twelve beasts scored
+  across three batches (yoke_ox, riptide_eel, glyph_tortoise, eyrie_hawk,
+  flicker_stag, clot_toad, brine_urchin, cinder_jackal, boulder_ram,
+  silk_widow, thrasher, bog_leech); husk_beetle and gloom_moth are the only
+  beasts with a model left unscored in the new rubric format (husk_beetle
+  has an older qualitative critique in `ART-REVIEW.md` from its build, but
+  no `design/progress/husk_beetle.md` — same gap the batch-2 log already
+  named, still open). The non-beast assets (icons, portraits, grounds, map,
+  hunters) remain entirely unscored. No model script touched — report
+  only, per this item's own rule. Left unchecked.
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
   relic") on top of the existing Rest / Thin / Sharpen and `Run.relic_totals()`.
   *Done when:* pickable at a campfire, persists, shows in the relic list.
