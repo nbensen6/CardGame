@@ -80,6 +80,25 @@ LINEN, BISQUE, PUMPKIN, CARROT = (swatch(x, 448) for x in (144, 176, 208, 240))
 CORAL, BRICK, CHARCOAL, GRAPHITE = (swatch(x, 448) for x in (272, 304, 336, 368))
 PEWTER, STONE, NAVY, MIDNIGHT = (swatch(x, 448) for x in (400, 432, 464, 496))
 
+## Every swatch, by name, so an imported model's colours can be matched against
+## the palette instead of being hand-translated. Built from the constants above
+## so it can never drift from them.
+PALETTE = {k: v for k, v in list(globals().items())
+           if k.isupper() and isinstance(v, tuple) and len(v) == 2
+           and all(isinstance(c, float) for c in v)}
+
+## Where the Kenney bundle was extracted. 15,109 models across 54 packs, already
+## on disk and already the exact vocabulary this project was reverse-engineered
+## from — dissect.py measured THESE to work out what the style is. Building a
+## rock by hand when Nature Kit ships 329 of them is work nobody needed to do.
+KITS = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                     "..", "..", "3D assets"))
+
+
+def kit_path(pack, name):
+    """A model in the bundle, by pack and file stem."""
+    return os.path.join(KITS, pack, "Models", "GLTF format", name + ".glb")
+
 
 def out_path():
     """The export path, from the args after `--`."""
@@ -209,6 +228,126 @@ class Build:
 
         self.parts.append(o)
         return o
+
+    def kit(self, path, at=(0.0, 0.0, 0.0), size=1.0, rot=(0.0, 0.0, 0.0),
+            uv=None, up_z=True):
+        """Fold a model from the Kenney bundle into this build.
+
+        Nick, 2026-08-31: "instead of manually building objects can we pull
+        objects from somewhere?" Yes — 15,109 of them are already in the repo
+        root, and they are the same models dissect.py measured to work out what
+        this project's style even is. A hand-coded boulder was always an
+        impression of one of these.
+
+            from kenney import kit_path
+            e.kit(kit_path("Nature Kit", "rock_largeA"), at=(3, 4, 0), size=1.6)
+
+        The one thing that has to happen on the way in is COLOUR. A Kenney model
+        carries two or three flat materials of its own; this project is one mesh
+        with one material and colour carried in the UVs. So each incoming
+        material is matched to its nearest palette swatch by RGB and the faces
+        wearing it are re-pointed there. The model keeps its shape and joins the
+        single atlas material like everything else — no second draw call, no
+        second texture, and `finish()` still exports one mesh.
+
+        Pass `uv` to override the match and paint the whole thing one colour.
+
+        Kenney models are authored Y-up; `up_z` rotates them into this project's
+        Z-up world, which is what every other part here assumes.
+        """
+        if not os.path.exists(path):
+            print("WARNING: no kit model at %s — skipped" % path)
+            return []
+        before = set(bpy.data.objects)
+        bpy.ops.import_scene.gltf(filepath=path)
+        fresh = [o for o in bpy.data.objects if o not in before]
+        meshes = [o for o in fresh if o.type == "MESH"]
+        made = []
+        for o in meshes:
+            # Remember each polygon's colour BEFORE the material slots go away.
+            want = []
+            for poly in o.data.polygons:
+                if uv is not None:
+                    want.append(uv)
+                else:
+                    want.append(self._nearest_swatch(o, poly.material_index))
+            o.data.materials.clear()
+            for m in fresh:
+                if m.type != "MESH":
+                    continue
+            bpy.ops.object.select_all(action="DESELECT")
+            o.select_set(True)
+            bpy.context.view_layer.objects.active = o
+            bpy.ops.object.transform_apply(location=True, rotation=True,
+                                           scale=True)
+            if up_z:
+                o.rotation_euler = (math.pi * 0.5, 0.0, 0.0)
+            o.scale = (size, size, size)
+            o.location = at
+            bpy.ops.object.transform_apply(location=True, rotation=True,
+                                           scale=True)
+            if rot != (0.0, 0.0, 0.0):
+                o.rotation_euler = rot
+                bpy.ops.object.transform_apply(rotation=True)
+            layer = (o.data.uv_layers[0] if o.data.uv_layers
+                     else o.data.uv_layers.new(name="UVMap"))
+            for poly, cell in zip(o.data.polygons, want):
+                for li in poly.loop_indices:
+                    layer.data[li].uv = cell
+            o.data.materials.append(self.mat)
+            self.parts.append(o)
+            made.append(o)
+        # Empties and armatures the import dragged in are not geometry.
+        for o in fresh:
+            if o not in made:
+                bpy.data.objects.remove(o, do_unlink=True)
+        return made
+
+    def _nearest_swatch(self, o, slot):
+        """The palette cell closest in RGB to an imported material's colour."""
+        colour = (0.6, 0.6, 0.6)
+        if slot < len(o.data.materials) and o.data.materials[slot] is not None:
+            m = o.data.materials[slot]
+            if m.use_nodes:
+                for n in m.node_tree.nodes:
+                    if n.type == "BSDF_PRINCIPLED":
+                        c = n.inputs["Base Color"].default_value
+                        colour = (c[0], c[1], c[2])
+                        break
+            else:
+                colour = tuple(m.diffuse_color)[:3]
+        best, best_d = None, 1e9
+        for cell, rgb in self._palette_rgb().items():
+            d = sum((a - b) ** 2 for a, b in zip(colour, rgb))
+            if d < best_d:
+                best_d, best = d, cell
+        return best
+
+    def _palette_rgb(self):
+        """Every swatch's actual colour, read once out of colormap.png.
+
+        Sampled from the atlas rather than kept as a second hand-written table,
+        because a second table is a thing that drifts.
+        """
+        if getattr(self, "_pal_cache", None) is not None:
+            return self._pal_cache
+        img = bpy.data.images.get("colormap")
+        out = {}
+        if img is not None:
+            px = list(img.pixels)
+            w, h = img.size
+            for name, cell in PALETTE.items():
+                x = min(int(cell[0] * w), w - 1)
+                y = min(int((1.0 - cell[1]) * h), h - 1)
+                # nudge into the middle of the 32px cell, off its border
+                x = min(x + 8, w - 1)
+                y = min(y + 8, h - 1)
+                i = ((h - 1 - y) * w + x) * 4
+                if i + 2 < len(px):
+                    out[cell] = (px[i], px[i + 1], px[i + 2])
+        self._pal_cache = out
+        return out
+
 
     def _settle(self, o, scale, rot):
         """Bake scale and rotation into the mesh.

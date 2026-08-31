@@ -213,6 +213,15 @@ var _beast_box := AABB(Vector3(-1, 0, -1), Vector3(2, 2, 2))
 ## below takes over — which is what every beast used to do, and why hunters
 ## hovered in FRONT of a body instead of standing on the shelves it already had.
 var _climb_points: Dictionary = {}
+## The subset of Heights that have real flat footing under them — a shelf the
+## model actually builds, not just a spot on the skin. Hunters JUMP between
+## these; the rest are places they can be, not places they land.
+var _ledges: Dictionary = {}
+## The live climb tween per hunter slot, so a new one can cancel the old.
+## Without this two tweens drive the same node at once and the hunter is dragged
+## between two disagreeing positions — Nick, 2026-08-31: "not quite a smooth
+## animation, it jumps to random places".
+var _climb_tw: Dictionary = {}
 ## How big the pulsing marker is. It used to be a fixed 1.0, which was tuned
 ## when it hung above the body at 88% of the bounding box and was mostly seen
 ## edge-on. Now it sits ON the mark the model wears, at eye level, where a fixed
@@ -1672,6 +1681,7 @@ func _front_of_beast(x: float, y: float) -> float:
 
 func _read_climb_points() -> void:
 	_climb_points.clear()
+	_ledges.clear()
 	if _beast == null:
 		return
 	_gather_climb(_beast, Transform3D.IDENTITY)
@@ -1689,6 +1699,10 @@ func _gather_climb(n: Node, xf: Transform3D) -> void:
 				var tail := nm.substr(6)
 				if tail.is_valid_int():
 					_climb_points[tail.to_int()] = next.origin * _beast_scale
+			elif nm.begins_with("ledge_"):
+				var lt := nm.substr(6)
+				if lt.is_valid_int():
+					_ledges[lt.to_int()] = true
 		_gather_climb(c, next)
 
 
@@ -1730,11 +1744,20 @@ func _stand_on_model(foot: int, side: float) -> Vector3:
 	return Vector3(x, p.y, maxf(p.z, clear))
 
 
-## Every anchor strictly between two footholds, so a hunter climbing from the
-## ankle to the shoulder goes VIA the platform instead of through the chest.
+## The LEDGES strictly between two footholds — the flat ground a hunter can
+## actually land on climbing from the ankle to the shoulder.
+##
+## This used to walk every Height in between, and every Height is anchored (see
+## beast.py's _rungs: a hunter shaken off half way has to have somewhere to be
+## that is not inside the chest). But most of those are a spot on the skin with
+## no footing, and hopping onto each in turn is what made the climb look like it
+## was landing in random places. A hunter passes THROUGH those and lands on a
+## shelf. Falls back to every anchor on a beast built before ledges were
+## exported, which is the old behaviour rather than no route at all.
 func _route_between(from_foot: int, to_foot: int) -> Array:
 	var out: Array = []
-	var rungs := _climb_rungs()
+	var rungs: Array = _ledges.keys() if not _ledges.is_empty() else _climb_rungs()
+	rungs.sort()
 	if to_foot > from_foot:
 		for k in rungs:
 			if int(k) > from_foot and int(k) < to_foot:
@@ -1848,11 +1871,26 @@ func _place_hunters(s: Dictionary) -> void:
 			var way: Array = []
 			if not _climb_points.is_empty() and was != foot:
 				way = _route_between(was, foot)
-			var tw := create_tween()
-			tw.set_trans(Tween.TRANS_QUAD)
-			# Longer than the old slide: a hop needs air time to read as one.
-			var step: float = maxf(0.22, 0.44 / float(way.size() + 1))
+			# Cancel whatever the last move was still doing. Two live tweens on one
+			# node fight over its position every frame, and the hunter gets dragged
+			# between two places that disagree — which is most of why the climb
+			# looked like it was teleporting rather than jumping.
+			var old_tw: Tween = _climb_tw.get(i) as Tween
+			if old_tw != null and old_tw.is_valid():
+				old_tw.kill()
 			var body: Node3D = h.get("body") as Node3D
+			# A killed tween can leave the body mid-squash. Put it back, or the
+			# next hop starts from a shape nobody chose.
+			if body != null and is_instance_valid(body):
+				body.scale = Vector3.ONE
+			var tw := create_tween()
+			_climb_tw[i] = tw
+			tw.set_trans(Tween.TRANS_QUAD)
+			# Per HOP, not split across the whole route. Dividing a fixed budget
+			# by the number of legs made a long climb a blur of tiny twitches and
+			# a short one a slow float — the same jump should take the same time
+			# however many of them there are.
+			var step := 0.34
 			var at: Vector3 = node.position
 			for wp in way:
 				var mid: Vector3 = _stand_on_model(int(wp), side)

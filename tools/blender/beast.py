@@ -40,6 +40,18 @@ FOOT_LOW, FOOT_HIGH = 0.18, 0.80
 ## Every climb point is exported as an empty with this prefix, so the game can
 ## find them by name without a manifest that can drift out of date.
 CLIMB_PREFIX = "climb_"
+## A second empty, only for Heights that have a real SHELF under them.
+##
+## Every Height gets a climb_ point so a hunter knocked off half way has
+## somewhere to be that is not inside the chest (see _rungs). But most of those
+## are just a spot on the skin — no flat ground, nothing to stand on. The game
+## was jumping hunters onto them as if they were ledges, which is Nick's
+## "it jumps to random places ... there should be clear places for the character
+## to land, IE the shelf of the Crag Pup on its shoulders at climb point 2".
+##
+## So the two are told apart in the export: climb_<h> is where a hunter may BE,
+## ledge_<h> is where a hunter may LAND.
+LEDGE_PREFIX = "ledge_"
 
 ## The band a hold is measured in, and how much upward-facing surface it wants,
 ## as a fraction of the model's footprint. Both mirror assetcheck.gd exactly.
@@ -250,6 +262,15 @@ class Beast(Build):
             e.empty_display_size = 0.25
             e.location = p
             bpy.context.collection.objects.link(e)
+            # A shelf() built real flat ground at this Height, or _grow_steps is
+            # about to. Either way there is somewhere to put your feet, so say
+            # so — the game only jumps a hunter onto a Height it can land on.
+            if int(h) in self._ledge_uv or any(st[0] == h for st in steps):
+                g = bpy.data.objects.new(LEDGE_PREFIX + str(h), None)
+                g.empty_display_type = "CUBE"
+                g.empty_display_size = 0.3
+                g.location = p
+                bpy.context.collection.objects.link(g)
 
         if steps:
             self._grow_steps(steps, hs)
