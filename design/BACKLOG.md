@@ -109,6 +109,23 @@ Ordered. Source in brackets.
   `design/progress/<asset>.md`, and this item carries a ranked list of the
   weakest ten so Nick knows where to look first. Left unchecked regardless until
   he has.
+  **Checked 2026-08-31: batch 1, four beasts, apt-get blender again
+  (`download.blender.org` still policy-403; `apt-get install blender
+  python3-numpy libegl1 libgl1-mesa-dri libglx-mesa0` gives a working headless
+  4.0.2, same route #74/#76 used).** Scored `yoke_ox` (31/50 — the yoke bar
+  merges into the horns in silhouette and appears to clip through the near
+  horn), `riptide_eel` (30/50 — every hold and the tail fin sit on one lateral
+  side rather than mirrored, and the near-black body is close to reading as a
+  dark smear), `glyph_tortoise` (36/50 — strong dome silhouette, but the sigil
+  projects off the shell on a stalk that reads as a bolted-on handle rather
+  than a marking), `eyrie_hawk` (33/50 — clean bird silhouette, but the sigil
+  disc floats beside the head with no visible attachment, the same "orbiting
+  part" failure already named in `ART-REVIEW.md` for the Vine-Weaver). Full
+  rubric tables, per-line justifications and one concrete (unapplied) fix per
+  asset are in `design/progress/<name>.md`. Ten of fourteen beasts, all
+  nineteen non-beast assets (icons, portraits, grounds, map, the three
+  hunters), still unscored. No model script touched — report only, per this
+  item's own rule. Left unchecked.
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
   relic") on top of the existing Rest / Thin / Sharpen and `Run.relic_totals()`.
   *Done when:* pickable at a campfire, persists, shows in the relic list.
