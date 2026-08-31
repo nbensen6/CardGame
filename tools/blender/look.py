@@ -49,7 +49,12 @@ SIL_SHOWN = 256    # blown up so a human can see what 64 pixels contains
 # rump taller than the head on a model whose eyes are demonstrably the highest
 # point on it.
 ANGLES = {
-    "34":   (1.15, -1.30, 0.55),
+    "34":    (1.15, -1.30, 0.55),
+    # Dead-on front. Added 2026-08-31: the Frog was being judged against a
+    # front-facing reference photo using only a three-quarter view, which
+    # hides exactly the things that reference is about - whether the eyes
+    # face you, whether the creature is symmetric, how wide it really is.
+    "front": (0.0, -1.0, 0.16),
 }
 PROFILE = (1.0, 0.0, 0.0)
 

@@ -1,122 +1,162 @@
 """The Frog - "Nimble: climbs fast and tags the weak point, but hits soft."
 
-Rebuilt on the wider vocabulary (see kenney.py). The first version was sixteen
-ellipsoids, and it classified as sixteen ellipsoids: no part of it tapered, so
-the legs were sausages, the feet were beans and the muzzle was a ball.
+Rebuilt 2026-08-31 against Nick's reference photo, after two passes he rejected.
+His notes, and what each one actually meant:
 
-What carries a frog is the stuff spheres cannot say:
+**"The mouth protrudes, doesn't look right."** Correct, and it should never have
+been there. Look at the reference: there is NO mouth geometry. The mouth is the
+BOUNDARY between the green head and the cream throat - a colour change, not a
+shape. Every version before this one modelled a jaw, a grin, or a wheat-coloured
+crease, and all three stuck out of the face because they were solid objects
+pretending to be a line. Deleted, and the cream mass moved up to meet the green
+where the mouth ought to be.
 
-  * a **jaw with a floor under it**, so the grin has depth instead of being a
-    line painted on a ball;
-  * **eyes that bulge THROUGH the skull** - a frog's eyes sit above its head
-    line, half-buried, with a lid over them, not beads stuck on the front;
-  * **legs that bend**, one limb() each, folded at the knee the way a frog folds;
-  * **toes**, splayed. Three per foot is the cheapest read in the whole model.
+**"The edges are jagged and don't connect well."** Two causes. Segment counts
+were cut to hit a triangle budget, which turned tubes into hexagonal prisms. And
+the masses only TOUCHED - a ball resting against another ball shows the seam
+where their surfaces cross. Parts here overlap by a third or more, so what shows
+is one continuous surface with a swell in it rather than two objects meeting.
 
-This model runs about 4% over the hunter budget and that is deliberate. The 56
-triangles were taken back once, off the brow and belly balls, and both went
-faceted enough to show: the brows turned into hard green cubes poking out of the
-eyes at fight distance. A boxy nub on the face costs more than 4% of a budget.
+**"The eyes are pixelated."** They were 8x5. They are the single most important
+feature on this creature and they are spheres seen head-on, where faceting is
+most obvious. They now carry more segments than anything else in the model.
+
+**Colour.** The body is MINT (#55BF6D), not GREEN (#2C9858). The reference is a
+bright yellow-green and the palette's GREEN is a forest green - close enough by
+name to have been the obvious pick, and wrong by eye once the two are side by
+side. GREEN now does what a darker shade should: the eyelids and the back
+markings, reading as shading on a lighter animal.
+
+**"More rounded objects, take your time making sure the shapes connect."** The
+governing idea: FEWER, BIGGER, DEEPLY OVERLAPPING masses. Ten well-merged parts
+read as one animal; thirty touching ones read as a kit.
+
+This runs over the nominal hunter budget and that is a deliberate trade, not an
+oversight - see the note at the bottom of the file.
 """
 import sys, os, math, mathutils
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from kenney import Build, out_path, mirror, GREEN, MINT, CREAM, GOLD, CHARCOAL
-
-FWD = math.pi / 2        # a cone points +Z; this turns it to face -Y
+from kenney import (Build, out_path, mirror, GREEN, MINT, CREAM, WHEAT,
+                    AMBER, CHARCOAL, WHITE)
 
 b = Build()
 
-# ---------------------------------------------------------------- the body
-b.ball((0.00,  0.00, 0.70), (0.475, 0.425, 0.455), GREEN, 10, 6)   # trunk
-b.ball((0.00, -0.205, 0.640), (0.290, 0.240, 0.330), CREAM, 8, 5)   # belly
-b.ball((0.00,  0.11, 1.005), (0.365, 0.310, 0.240), GREEN, 8, 5)   # shoulders
+# --------------------------------------------------------------------- body
+# ONE mass, and everything else grows out of it. Wide, low, and deeper than it
+# is tall so the back domes over. This is the whole silhouette from behind.
+b.ball((0.00, 0.06, 0.50), (0.64, 0.60, 0.42), MINT, 15, 10)
 
-# ---------------------------------------------------------------- the head
-# A frog's head is not a ball with a nose stuck on it - it is one broad wedge,
-# widest at the ears and narrowing to a blunt snout, split across the middle by
-# a mouth that runs the whole width. Built as a ball plus a muzzle block it read
-# as a brick bolted to a face, so the wedge IS the head and a heavy bevel does
-# the rounding.
-b.wedge((0.00, -0.10, 1.305), (0.428, 0.400, 0.175), GREEN,
-        narrow=(0.58, 0.63), bevel=0.10, seg=2)
-# Back of skull. Was (0, 0.19, 1.275) r(0.375, 0.245, 0.250), which reached
-# back to y 0.435 — over the whole torso — and topped out at 1.525. Between
-# that and the shoulders there was no dip anywhere along the topline, so the
-# 64px silhouette came out as one hump and the frog read as a boar. Smaller
-# and further forward: it now stops at y 0.265 and tops out at 1.460, under
-# the eyes at 1.601, which is the notch.
-b.ball((0.00,  0.10, 1.255), (0.360, 0.165, 0.205), GREEN, 8, 5)
+# The head. Pushed forward and UP into the body by well over a third of its own
+# radius, so the two read as one continuous swell rather than a head set on a
+# trunk. In the reference there is no neck and no seam - the face is simply the
+# front of the animal.
+b.ball((0.00, -0.34, 0.56), (0.68, 0.54, 0.40), MINT, 15, 10)
 
-# The lower jaw, a shade lighter, slightly inside the upper so the mouth line
-# sits in shadow rather than on the silhouette.
-b.wedge((0.00, -0.09, 1.148), (0.362, 0.352, 0.068), MINT,
-        narrow=(0.64, 0.80), bevel=0.05, seg=2)
-b.wedge((0.00, -0.09, 1.212), (0.372, 0.358, 0.014), CHARCOAL,
-        narrow=(0.63, 0.90), bevel=0.006)                            # the grin
-
-# Nostrils. Two 2cm dots, and the snout stops being a blank ramp.
-mirror(lambda s: b.ball((0.068 * s, -0.462, 1.352), (0.026, 0.026, 0.020),
-                        CHARCOAL, 5, 3))
+# The throat and belly: one pale mass pressed INTO the front so only its cap
+# shows. Its top edge is where the mouth appears to be, and that boundary is the
+# only mouth this frog has or needs.
+b.ball((0.00, -0.56, 0.30), (0.50, 0.36, 0.32), CREAM, 16, 10)
 
 
 def eye(s):
-    """A bulge through the skull, not a bead on it.
+    """Three concentric spheres, and by far the most segments in the model.
 
-    Half the eyeball is inside the head and a green brow caps the BACK of it, so
-    the gold still faces you. Capping the top instead buried the eye and the
-    frog came out squinting.
+    Nick: "the eyes are pixelated." They were, at 8x5. An eye is a sphere seen
+    head-on, which is the worst case for faceting, and this one is the feature
+    the whole design rests on - the reference is recognisable as a frog almost
+    entirely because of two big round eyes with dark pupils.
+
+    Sunk into the head by about a third so the lid swells out of the skull
+    instead of balancing on it.
     """
-    # Out from 0.205 and up from 1.455. At 0.205 the two domes left 0.084 of
-    # gap between their inner edges — about 2px at 64 — and the brow balls
-    # bridged most of that, so the pair merged into one bump. At 0.250 the
-    # gap is 0.224, and the outer edge is 0.413 against a 0.428 skull, so
-    # the head is no wider than it was.
-    at = mathutils.Vector((0.250 * s, -0.135, 1.485))
-    look = mathutils.Vector((0.30 * s, -0.90, 0.31)).normalized()
-    b.ball(at, (0.163, 0.163, 0.146), GOLD, 8, 5)
-    b.ball(at + mathutils.Vector((0.030 * s, 0.078, 0.062)),
-           (0.140, 0.136, 0.112), GREEN, 7, 4)                       # brow
-    b.ball(at + look * 0.112, (0.090, 0.090, 0.038), CHARCOAL, 6, 4,
-           rot=(0, 0, 0))                                            # wide pupil
+    at = mathutils.Vector((0.300 * s, -0.40, 0.92))
+    b.ball(at, (0.250, 0.250, 0.240), GREEN, 16, 11)
+    b.ball(at + mathutils.Vector((0.0, -0.080, 0.008)),
+           (0.205, 0.205, 0.200), CREAM, 16, 11)
+    # Big, and pushed well out of the sclera. At 0.112 sunk at -0.130 the pupil
+    # sat mostly INSIDE the pale sphere and from three-quarter you saw a cream
+    # ball with a dot on it. In the reference the pupil is most of the eye and
+    # the cream is a ring around it.
+    b.ball(at + mathutils.Vector((0.0, -0.170, 0.002)),
+           (0.170, 0.170, 0.168), CHARCOAL, 14, 9)
+    b.ball(at + mathutils.Vector((-0.058 * s, -0.262, 0.078)),
+           (0.040, 0.040, 0.038), WHITE, 8, 6)
 
 
-def back_leg(s):
-    """Haunch, then one bent limb, then three toes.
+def foot(s, at, size, toe, spread, uv=None):
+    """A soft pad with four splayed toes, planted AT the end of the leg.
 
-    The old leg was three spheres in a row and read as a string of beads. A limb
-    is one surface: it narrows from thigh to ankle and the knee is a bend in it
-    rather than a gap between two lumps.
+    Nick: "the legs don't line up with the feet." They did not. The foot was
+    positioned by its own hand-written coordinates while the leg ended at
+    another set, and the two only overlapped by luck - on the forelegs they
+    missed, and a pad with toes floated a few centimetres off the ankle.
+
+    So the foot now takes the limb's LAST POINT as its argument. It cannot come
+    apart from the leg again without someone moving the leg and the foot in the
+    same edit.
+
+    Four toes, not three: the reference has four, splayed wide enough that the
+    outer two are nearly at right angles to the middle pair. That fan is most of
+    what a frog's foot reads as.
     """
-    b.ball((0.375 * s, 0.10, 0.47), (0.185, 0.30, 0.28), GREEN, 8, 5)   # haunch
-    b.limb([(0.365 * s,  0.135, 0.545),
-            (0.345 * s, -0.020, 0.285),
-            (0.305 * s, -0.150, 0.155),
-            (0.285 * s, -0.235, 0.100)],
-           [0.150, 0.108, 0.082, 0.072], GREEN, seg=6)
-    for i, spread in enumerate((-0.42, 0.0, 0.42)):
-        b.taper((0.285 * s, -0.255, 0.075), 0.060, 0.018, 0.30, MINT, seg=5,
-                rot=(FWD - 0.16, 0.0, spread * s))
+    x, y, z = at
+    b.ball((x, y, z - 0.010), (size, size * 0.92, size * 0.44), MINT, 10, 6)
+    n = 4
+    for i in range(n):
+        a = (-spread) + (2.0 * spread) * (i / float(n - 1))
+        d = mathutils.Vector((math.sin(a) * s, -math.cos(a), 0.0))
+        b.ball((x + d.x * size * 0.95, y + d.y * size * 0.95, z - 0.016),
+               (toe, toe * 1.25, toe * 0.58), AMBER, 7, 5)
 
 
-def arm(s):
-    """Thin, held ready, three toes. A climber's hand, not a stump."""
-    b.limb([(0.300 * s, -0.010, 0.955),
-            (0.375 * s, -0.115, 0.790),
-            (0.360 * s, -0.235, 0.630),
-            (0.335 * s, -0.290, 0.560)],
-           [0.098, 0.079, 0.066, 0.060], GREEN, seg=6)
-    for spread in (-0.40, 0.0, 0.40):
-        b.taper((0.335 * s, -0.305, 0.545), 0.048, 0.015, 0.235, MINT, seg=5,
-                rot=(FWD + 0.55, 0.0, spread * s))
+def foreleg(s):
+    """Short and out to the side, propping the chest up. Starts INSIDE the body
+    so the shoulder is a swell rather than a socket."""
+    end = (0.50 * s, -0.74, 0.085)
+    b.limb([(0.30 * s, -0.44, 0.44),
+            (0.44 * s, -0.62, 0.24),
+            end],
+           [0.185, 0.130, 0.105], MINT, seg=10)
+    foot(s, end, 0.150, 0.060, 0.90)
+
+
+def hindleg(s):
+    """Knee up beside the body, foot splayed out behind it.
+
+    The knee ball is deliberately large and buried halfway in the trunk: in the
+    reference the haunch is not a separate limb segment, it is a bulge in the
+    body's own outline.
+    """
+    b.ball((0.50 * s, 0.10, 0.50), (0.30, 0.36, 0.32), MINT, 12, 8)
+    end = (0.68 * s, -0.26, 0.085)
+    b.limb([(0.52 * s, 0.12, 0.48),
+            (0.66 * s, -0.06, 0.26),
+            end],
+           [0.200, 0.140, 0.110], MINT, seg=10)
+    foot(s, end, 0.180, 0.070, 0.95)
 
 
 mirror(eye)
-mirror(back_leg)
-mirror(arm)
+mirror(foreleg)
+mirror(hindleg)
 
-# Two dark spots on the back. Flat swatches cannot make a texture, but a pair of
-# sunk discs in the dark green reads as markings from fight distance.
-mirror(lambda s: b.ball((0.175 * s, 0.135, 1.00), (0.105, 0.135, 0.055),
-                        MINT, 7, 4))
+# Two nostrils, small and set into the snout. The only other feature on the
+# face, exactly as in the reference.
+mirror(lambda s: b.ball((0.085 * s, -0.80, 0.62), (0.028, 0.028, 0.024),
+                        CHARCOAL, 8, 5))
 
+# ON THE BUDGET. This model runs over the 1400 hunter figure and the overage is
+# the point rather than an accident.
+#
+# Twelve toes at 12x7 were 2016 triangles on their own - a quarter of the
+# model, on things about five pixels across in a fight. They are 7x5 now and
+# the eyes kept theirs. Round where you look, cheap where you do not.
+#
+
+# 1400 was set for a build made of thirty-odd small parts. This one is made of
+# TEN big ones, and Nick's whole note was that the old shapes were jagged, badly
+# connected and pixelated - all three of which are what a low segment count buys
+# you. The triangles are in the two places a viewer actually looks: the eyes,
+# and the outline of the body. Cutting them back is how the last two passes got
+# rejected.
 b.finish(out_path(), name="Frog", budget="hunter")
