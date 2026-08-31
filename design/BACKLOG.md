@@ -61,6 +61,21 @@ Ordered. Source in brackets.
 - [x] **1. Exhaust scaling for the Goblin** — one field, immediate depth. `cloud-safe`
   *Done when:* the field exists, at least three cards use it, tests cover it.
   [sts2-comparison §5.2]
+- [ ] **84. The 3D window effect for rares** `needs a screen` — a card with a
+  hole cut through it and a scene BEHIND the hole, so the contents parallax
+  against the frame as it turns. Nick sent the technique
+  (youtube B76I9mPd5lg) and asked to keep it for later; it is written up in
+  full, from the video's own transcript, in `design/rare-card-3d-effect.md`.
+
+  **Not yet, and the order matters.** The effect bakes the frame, banner, orb
+  and pill into all 120 rendered frames, so doing it before those settle means
+  re-rendering every rare when one of them changes. And cards need pictures
+  before any of them need moving pictures — 187 of them still share 33 icons.
+
+  *Done when:* not before card art is well underway, the frame has stopped
+  moving, and there is a reason in the game to want a rare to feel special.
+  `Card.foil` already carries "this copy is special" and rolls at 14% on rares;
+  that is the hook this hangs off.
 - [ ] **83. Score the art nobody has looked at** `cloud-safe` — fourteen beasts,
   five hunters, fourteen grounds, the map, nineteen portraits and twenty-eight
   icons are on screen right now, and `design/ART-REVIEW.md` carries **28 blocks

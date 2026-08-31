@@ -210,7 +210,7 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 	if not compact:
 		# Clear the ribbon, which is drawn over the top edge rather than laid
 		# out in this column.
-		pad.add_theme_constant_override("margin_top", 30)
+		pad.add_theme_constant_override("margin_top", 32)
 	add_child(pad)
 
 	var box := VBoxContainer.new()
@@ -246,8 +246,11 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 		# it does on Nick's Bash card. Inside the padded column it was a
 		# stub about 66px wide once the notched ends took their 26 each,
 		# and "Tongue Snap" ran straight off it.
+		# 13, not 11. The name is the first thing you read on a card and it was
+		# the smallest type on it — a plate is no use if what it carries is
+		# unreadable at hand size.
 		var ban := _plate(BANNER, BANNER_SLICE,
-			String(data.get("name", "")), 11, 22)
+			String(data.get("name", "")), 13, 24)
 		ban.set_anchors_preset(Control.PRESET_TOP_WIDE)
 		# Starts to the RIGHT of the gem rather than under it. The ribbon is
 		# centred text, so an orb sitting on its left end does not just cover
@@ -255,7 +258,7 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 		ban.offset_left = 22.0
 		ban.offset_right = 7.0
 		ban.offset_top = 3.0
-		ban.offset_bottom = 25.0
+		ban.offset_bottom = 27.0
 		add_child(ban)
 		# Added AFTER the ribbon so it draws over it, which is the stacking
 		# order in the reference: the gem sits on the corner of the plate.
