@@ -1322,6 +1322,21 @@ rather than inventing work.
 Newest first. One line per finished item: what, and anything surprising.
 
 - **2026-08-31** — Re-check confirms no actionable cloud-safe/cloud-art work,
+  tree unchanged since the prior check (fetched fresh, tip `20d7e32` — that
+  commit IS the prior check's own log entry). Independently walked the same
+  three items rather than trusting the prior entry's word: #55's own text now
+  reads "any further beasts belong to a future backlog item, not this one" so
+  its numeric and stated bars are both closed; #76 batches 6-7 audited every
+  one of the 187 cards in `cards.json` against its own base text and found
+  nothing left to fix; #80's model and portrait landed 2026-08-25. All three
+  stay unchecked correctly, blocked solely on Nick opening
+  `design/ART-REVIEW.md` (still 28 `NEEDS A PASS`, 0 approved/rejected).
+  Every other unchecked item is `needs a screen`. Did not re-run the
+  PlayerState/Boss/Combatant wire-gap audit the last two entries closed,
+  since none of `game_host.gd`/`player_state.gd`/`boss.gd`/`combatant.gd`
+  changed since that audit ran. No code or data changed this run; not
+  sending a notification since the state it would report hasn't changed.
+- **2026-08-31** — Re-check confirms no actionable cloud-safe/cloud-art work,
   tree unchanged since the prior check. Fetched `origin/main` fresh (tip
   `c65d709`, no stale-HEAD this run) — that commit IS the prior check's own
   "no actionable work" log entry, so nothing landed in between and a full
