@@ -29,15 +29,23 @@ import os
 
 from PIL import Image, ImageDraw, ImageFont
 
-## 4x the largest card the game lays out (176x264), because designing at 176px
-## wide in Canva is miserable and everything downscales cleanly.
-SCALE = 4
+## The card is 2:3 (176x264, 148x224, 124x186 — all of them), and that ratio is
+## the only thing about this template that is not negotiable: design a frame at
+## any other shape and it arrives in the game stretched.
+##
+## The SIZE is negotiable, so it is 768 x 1152 rather than a tidy multiple of the
+## card. Nick had already made a 768 x 1024 canvas in Canva, and changing one
+## number there (the height) is a far better instruction than "make it 704x1056",
+## especially since Canva's own Resize is a paid feature. The 9-slice margin
+## scales with the export either way.
+OUT_W, OUT_H = 768, 1152
 CARD_W, CARD_H = 176, 264
+SCALE = OUT_W / float(CARD_W)
 MARGIN = 15                      # must match card_view.FRAME_MARGIN
 ART_ASPECT = 0.75                # must match card_view.CARD_ART_ASPECT
 
-W, H = CARD_W * SCALE, CARD_H * SCALE
-M = MARGIN * SCALE
+W, H = OUT_W, OUT_H
+M = int(round(MARGIN * SCALE))
 
 GUIDE = (255, 92, 92, 210)
 SOFT = (120, 200, 255, 150)
@@ -90,7 +98,7 @@ def main():
     d.rectangle([0, 0, W - 1, H - 1], outline=GUIDE, width=2)
 
     # where the art window lands, so the border is designed around real content
-    pad = 13 * SCALE
+    pad = int(round(13 * SCALE))
     aw = W - pad * 2
     ah = int(aw * ART_ASPECT)
     top = int(H * 0.20)
