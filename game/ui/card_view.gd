@@ -672,10 +672,18 @@ func _label(text_str: String, size: int) -> Label:
 	return l
 
 
-const FRAME_NORMAL := preload("res://assets/ui/card_normal.png")
-const FRAME_HOVER := preload("res://assets/ui/card_hover.png")
-const FRAME_PRESSED := preload("res://assets/ui/card_pressed.png")
-const FRAME_DISABLED := preload("res://assets/ui/card_disabled.png")
+## One frame per rarity, rendered by tools/blender/frames.py — a real bevel lit
+## from the top left, which is where the "almost 3D" in Nick's reference cards
+## actually comes from. The rarity IS the border now; the old single frame with a
+## tint on it was a difference nobody could see.
+const FRAMES := {
+	"common": preload("res://assets/ui/frame_common.png"),
+	"uncommon": preload("res://assets/ui/frame_uncommon.png"),
+	"rare": preload("res://assets/ui/frame_rare.png"),
+}
+## Must match frames.py's MARGIN. The bevelled corners are in this band and a
+## 9-slice stretches everything outside it — get this wrong and the corners smear.
+const FRAME_MARGIN := 15
 const FRAME_GOLD := preload("res://assets/ui/card_gold.png")
 
 
@@ -714,20 +722,24 @@ func _rarity_pips(data: Dictionary) -> Control:
 	for i in range(int(r["pips"])):
 		var gem := ColorRect.new()
 		gem.color = r["pip"]
-		gem.custom_minimum_size = Vector2(4, 4)
+		gem.custom_minimum_size = Vector2(6, 6)
 		gem.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		gem.pivot_offset = Vector2(2, 2)
+		gem.pivot_offset = Vector2(3, 3)
 		gem.rotation = PI * 0.25          # a diamond reads as a gem; a square reads as a bug
 		row.add_child(gem)
 	return row
 
 
 func _apply_frame() -> void:
-	var tint: Color = _rarity_of(_data)["tint"]
-	add_theme_stylebox_override("normal", _tex_frame(FRAME_NORMAL, tint))
-	add_theme_stylebox_override("hover", _tex_frame(FRAME_HOVER, tint))
-	add_theme_stylebox_override("pressed", _tex_frame(FRAME_PRESSED, tint))
-	add_theme_stylebox_override("disabled", _tex_frame(FRAME_DISABLED))
+	var tex: Texture2D = FRAMES.get(String(_data.get("rarity", "common")),
+		FRAMES["common"])
+	# Hover lifts, pressed sinks, disabled drains. All off ONE rendered frame:
+	# the bevel already carries the form, so the states only have to change how
+	# much light it is catching.
+	add_theme_stylebox_override("normal", _tex_frame(tex, Color(1, 1, 1)))
+	add_theme_stylebox_override("hover", _tex_frame(tex, Color(1.18, 1.16, 1.12)))
+	add_theme_stylebox_override("pressed", _tex_frame(tex, Color(0.82, 0.82, 0.84)))
+	add_theme_stylebox_override("disabled", _tex_frame(tex, Color(0.55, 0.56, 0.60)))
 
 
 ## Ornate 9-slice card frame (baked from Kenney Fantasy UI Borders).
@@ -735,8 +747,10 @@ func _tex_frame(tex: Texture2D, tint: Color = Color.WHITE) -> StyleBoxTexture:
 	var sb := StyleBoxTexture.new()
 	sb.texture = tex
 	sb.modulate_color = tint
-	sb.set_texture_margin_all(14)  # keep the corner ornaments un-stretched
-	sb.set_content_margin_all(8)
+	sb.set_texture_margin_all(FRAME_MARGIN)  # the bevel lives here; never stretch it
+	# Clear of the border, or the rules text sits on the bevel and the card reads
+	# as cramped. The frame's border is about 13% of its width.
+	sb.set_content_margin_all(13)
 	return sb
 
 

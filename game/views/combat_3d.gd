@@ -159,24 +159,20 @@ const GROUND_LIFT := 0.07
 ## Lowest the camera may sit, in world units. Below this it is under the ground
 ## plane and the shot looks up through the floor.
 const CAMERA_FLOOR := 0.8
-## The enclosing wall tools/blender/env.py builds, as a multiple of the floor
-## radius. Must match env.ENCLOSE_OUT — the camera clamp below is the only thing
-## keeping the lens inside the wall, and if these two drift the fight goes back
-## to happening on a plate in an open sky.
-const ENV_ENCLOSE_OUT := 2.90
-## How far out the camera may get, as a fraction of the wall's radius.
+## The furthest the camera may get from the middle of the arena, in floor radii.
 ##
-## Nick, 2026-08-31: "each environment should feel enclosed and you should not be
-## able to see the overworld as easily ... camera still adjustable, but not
-## entirely free to see past the environment."
+## Must stay under env.ENCLOSE_CLEAR (2.55), which is the radius env.py
+## guarantees it builds no wall inside of. Those two numbers are one feature in
+## two files and this comment is the seam.
 ##
-## This is the "not entirely free" half, and it is the half that does the work.
-## Measured first: the camera used to stand 1.5 to 2.4 times further from the
-## beast than the ground was WIDE, so it was outside the arena in every fight at
-## every zoom. No amount of scenery could ever have enclosed it — the walls were
-## all behind the lens. 0.72 keeps it well inside, with enough room that a drag
-## still feels like a drag rather than a rope.
-const CAMERA_REACH := 0.85
+## Nick, 2026-08-31: "make sure the camera doesnt collide with the environment."
+## It did. The wall ring sat at 2.90 R with pieces jittered inward and up to
+## 0.58 R wide, so its innermost face was at 2.15 R while this clamp allowed
+## 2.46 R — four world units of rock in the same place as the lens. env.py now
+## guarantees a clear 2.55 and jitters pieces outward only; 2.40 sits inside
+## that with room, and still clears the ~30 units of standoff a Titan needs to
+## frame (the smallest arena is 12.9 across, and 12.9 * 2.40 = 31.0).
+const CAMERA_MAX_R := 2.40
 ## How far behind the hunters the camera sits when they are on the ground, in
 ## hunter-heights. Nick: "move the characters back away from the beast so we can
 ## place the camera just behind them" — this is the "just behind" number.
@@ -1516,9 +1512,9 @@ func _climb_frame() -> Vector2:
 ##
 ## This is what makes the wall mean something. The geometry alone cannot enclose
 ## anything — a camera is not stopped by a mesh — so the wall and this number are
-## one feature in two files, and ENV_ENCLOSE_OUT is the seam between them.
+## one feature in two files, and CAMERA_MAX_R vs env.ENCLOSE_CLEAR is the seam.
 func _cam_reach() -> float:
-	return maxf(_arena_r, 1.0) * ENV_ENCLOSE_OUT * CAMERA_REACH
+	return maxf(_arena_r, 1.0) * CAMERA_MAX_R
 
 
 ## Pull a camera position back inside the wall, keeping its direction.
@@ -1977,11 +1973,24 @@ func _place_hunters(s: Dictionary) -> void:
 			pos = Vector3(x, y, _front_of_beast(x, y) + HUNTER_HEIGHT * 0.45)
 		var h: Dictionary = _hunters[i]
 		var node: Node3D = h["node"]
-		var moved: bool = (h["home"] as Vector3).distance_to(pos) > 0.05
+		var from_pos: Vector3 = h["home"]
+		var moved: bool = from_pos.distance_to(pos) > 0.05
 		var was: int = int(h.get("foot", foot))
+		var placed: bool = bool(h.get("placed", false))
+		# A JUMP is for a change of HEIGHT. Nothing else.
+		#
+		# This used to hop whenever the target moved more than 0.05, and the
+		# target moves for all sorts of reasons that are not the hunter
+		# climbing: the sigil settles, the beast is rescaled, the surface
+		# sampler returns a slightly different point as the body shakes. Every
+		# one of those fired a full leap. That is Nick's "bouncing in random
+		# places at an awkward cadence" — the cadence was random because the
+		# trigger was.
+		var climbed: bool = placed and was != foot
 		h["home"] = pos
 		h["foot"] = foot
-		if moved:
+		h["placed"] = true
+		if climbed:
 			# Climb VIA the ledges in between, not through the body. Going from
 			# the ankle to the shoulder means stopping on the platform on the way,
 			# which is the whole reason the anchors exist — a straight tween
@@ -2009,13 +2018,24 @@ func _place_hunters(s: Dictionary) -> void:
 			# a short one a slow float — the same jump should take the same time
 			# however many of them there are.
 			var step := 0.34
-			var at: Vector3 = node.position
+			# From where they were STANDING, not from node.position. If a hop was
+			# interrupted the node is somewhere in mid-air, and arcing from there
+			# starts the next jump at a point nobody chose.
+			var at: Vector3 = from_pos
+			node.position = from_pos
 			for wp in way:
 				var mid: Vector3 = _stand_on_model(int(wp), side)
 				_hop(tw, node, body, at, mid, step)
 				at = mid
 			_hop(tw, node, body, at, pos, step)
-		else:
+		elif moved and placed:
+			# The world moved under them — the beast rescaled, the sigil settled.
+			# Slide, do not leap: they have not gone anywhere.
+			var glide := create_tween()
+			_climb_tw[i] = glide
+			var gt := glide.tween_property(node, "position", pos, 0.18)
+			gt.set_trans(Tween.TRANS_SINE)
+			gt.set_ease(Tween.EASE_OUT)
 			node.position = pos
 		# ground hunters stand three-quarter on, turned in toward the beast
 		node.rotation.y = (PI + 0.7 * side) if t <= 0.01 else (PI * 0.5 * -side)

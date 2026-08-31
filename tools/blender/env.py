@@ -84,15 +84,35 @@ ANY = (0.0, math.tau)
 ## Measured before it was picked: the camera used to sit 1.5-2.4x further out
 ## than the ground was WIDE, which is the real reason no amount of scenery ever
 ## enclosed anything — it was all behind the lens.
-ENCLOSE_OUT = 2.90
-ENCLOSE_HIGH = 1.90
+## The GUARANTEED empty radius: nothing enclose() builds comes inside this, ever.
+##
+## This is a contract, not a coincidence, and it exists because the first version
+## was a coincidence and got it wrong. The wall ring sat at 2.90 R with pieces
+## jittered inward by up to 6% and up to 0.58 R wide, so its innermost face
+## landed at 2.15 R — while combat_3d let the camera out to 2.46 R. The camera
+## could stand four world units INSIDE the rock (Nick: "make sure the camera
+## doesnt collide with the environment").
+##
+## Now every piece is placed at CLEAR + its own half-width, and jitter only ever
+## pushes it further out. combat_3d clamps the lens to CAMERA_MAX_R, which is
+## below this number with room to spare, and the two cannot drift apart without
+## someone editing both.
+ENCLOSE_CLEAR = 2.55
+## An upper bound on how wide any wall piece is, in floor radii. Placement adds
+## this to CLEAR so even the widest style keeps its inner face outside.
+ENCLOSE_HALF = 0.62
+ENCLOSE_HIGH = 2.10
 
 ## Higher than a beast's, on purpose. An environment is one static mesh in one
 ## draw call that never moves and never animates, and Nick asked for detail — a
 ## place should have more going on than the creature standing in it, because it
 ## is what tells you WHERE you are. The number is here to stop waste, not to
 ## keep grounds sparse.
-BUDGET["ground"] = 6400
+## Raised again with the enclosure. A wall is not decoration any more — it
+## is the thing that stops a fight reading as a plate in an open sky — and
+## twenty-two pieces of it cost real triangles. Still one static mesh in
+## one draw call that never moves.
+BUDGET["ground"] = 7400
 
 
 class Env(Build):
@@ -270,7 +290,8 @@ class Env(Build):
         still see sky through it, which is the point: one deliberate opening
         reads as a place, a full seal reads as a box.
         """
-        out = self.R * (ENCLOSE_OUT if out is None else out)
+        # Far enough out that the widest piece still clears ENCLOSE_CLEAR.
+        out = self.R * ((ENCLOSE_CLEAR + ENCLOSE_HALF) if out is None else out)
         high = self.R * (ENCLOSE_HIGH if high is None else high)
         pal = self.WALL_PALETTE.get(style, (STONE, None))
         uv = pal[0] if uv is None else uv
@@ -284,7 +305,9 @@ class Env(Build):
             a = math.tau * (i + self.rng.uniform(-0.14, 0.14)) / float(n)
             if gap is not None and gap[0] <= (a % math.tau) <= gap[1]:
                 continue
-            r = out * self.rng.uniform(0.94, 1.08)
+            # Outward only. Jittering inward is what let a piece cross the
+            # clearance line and put rock where the camera is allowed to be.
+            r = out * self.rng.uniform(1.0, 1.12)
             # Every third piece runs tall, so the skyline has a rhythm rather
             # than a uniform noise floor.
             tall = high * (self.rng.uniform(1.10, 1.32) if i % 3 == 0
@@ -329,7 +352,17 @@ class Env(Build):
 
     def _wall_forest(self, at, tall, a, jag, uv, accent):
         """A treeline. The trunks are the wall; the canopy closes the top."""
-        self.tree(Vector((at.x, at.y, at.z)), tall * 0.62,
+        # 0.44, not 0.62. tree() spreads its lowest tier to 0.62 of its size, so
+        # at 0.62 of a 12.6-unit wall the canopy reached 4.8 units INWARD and put
+        # branches at 14.2 — inside the 15.3 the camera clamp relies on. The
+        # Bramble Hog's clearing was the ground that reported it.
+        # Derived, not guessed. tree() spreads its lowest tier to 0.62 of its
+        # size, and nothing may reach further in than ENCLOSE_HALF, so the size
+        # ceiling is ENCLOSE_HALF * R / 0.62. Two passes of eyeballing this
+        # (0.62 then 0.44) both left branches inside the clearance; the third
+        # asks the constraint what the number is.
+        cap = (ENCLOSE_HALF * self.R) / 0.62
+        self.tree(Vector((at.x, at.y, at.z)), min(tall * 0.44, cap),
                   trunk=uv, leaf=accent if accent is not None else GREEN,
                   tiers=3)
 
@@ -358,11 +391,14 @@ class Env(Build):
     def _wall_reed(self, at, tall, a, jag, uv, accent):
         """Marsh growth so dense you cannot see through it. Cheap, and the only
         style that reads as soft."""
+        # Spread ALONG the wall, and never inward past the clearance: the offsets
+        # run tangentially (a + 1.57) so three clumps widen the wall rather than
+        # thicken it toward the middle.
         for k in range(3):
-            o = (k - 1) * self.R * 0.16
+            o = (k - 1) * self.R * 0.13
             self.reed(Vector((at.x + math.cos(a + 1.57) * o,
                               at.y + math.sin(a + 1.57) * o, at.z)),
-                      tall * self.rng.uniform(0.5, 0.8),
+                      tall * self.rng.uniform(0.42, 0.62),
                       uv if accent is None or k != 1 else accent, n=4)
 
     # ----------------------------------------------------------------- done
@@ -402,6 +438,24 @@ class Env(Build):
         reach = max(math.hypot(v.co.x, v.co.y) for v in me.vertices)
         print("GROUND floor %.2f (every environment is built to %.2f), props and "
               "apron reach %.2f" % (self.R, RADIUS, reach))
+        # The camera clamp trusts this number. Prove it every build rather than
+        # assuming it — a hand-placed prop is exactly the thing that would creep
+        # into the lens's space without anyone noticing.
+        clear = ENCLOSE_CLEAR * self.R
+        # WALL-height geometry only. A boulder on the floor is inside the
+        # clearance by design and the camera never goes near it — the first
+        # version of this check flagged the Crag Pup's own scree at 6.01 and
+        # would have cried wolf on every ground in the game. The wall stands
+        # 2.10 R; nothing scattered on the floor comes near 0.6 R.
+        tall = self.R * 0.6
+        near = min((math.hypot(v.co.x, v.co.y) for v in me.vertices
+                    if v.co.z > tall), default=0.0)
+        if near and near < clear:
+            print("WARNING: %s has standing geometry at %.2f, inside the %.2f "
+                  "clearance the camera clamp relies on." % (name, near, clear))
+        else:
+            print("CLEAR %s keeps everything above the floor outside %.2f "
+                  "(nearest standing geometry %.2f)" % (name, clear, near))
 
 
 def env_out():
