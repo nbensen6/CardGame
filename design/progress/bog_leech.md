@@ -2,6 +2,11 @@
 
 Loop: `design/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
 no edits made to `tools/blender/bog_leech.py`.** Views: `design/renders/bog_leech_pass1_*.png`.
+Captured after "Darken the rock, warm the organics" (rock-family palette darkened,
+a UV row-sampling bug fixed) and the three-point lighting rig landed underneath this
+pass via merge — re-rendered against both before scoring rather than scoring stale
+images; geometry is unchanged so silhouette/proportion/hygiene findings below hold,
+colour was checked fresh against the darker body.
 
 | Pass | Sil | Prop | Hygiene | Colour | Style | Total |
 |---|---|---|---|---|---|---|
@@ -33,10 +38,12 @@ disc.
   already flagged this batch in Silk Widow and Thrasher — three of four
   beasts scored this session share the identical "orbiting part" issue on
   their sigil crest.
-- **Colour & read**: the body is close to monochrome — main mass and both
-  back humps sit in the same slate-blue value range with little separation
-  between them. The red ledge bars are the only real colour break and they
-  read as level markers, not body features, which is presumably correct.
+- **Colour & read**: darker now than the pre-fix render (the rock-family
+  swatches this body uses were darkened for the Crag Pup/Stone Warden), but
+  still close to monochrome — main mass and both back humps sit in the same
+  dark slate value range with little separation between them. The red ledge
+  bars are the only real colour break and they read as level markers, not
+  body features, which is presumably correct.
 - **Style consistency**: primitives and bevel style match the rest of the
   cast; nothing here looks out of place beside the other elites.
 

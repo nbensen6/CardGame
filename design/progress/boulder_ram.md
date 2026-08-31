@@ -2,6 +2,10 @@
 
 Loop: `design/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
 no edits made to `tools/blender/boulder_ram.py`.** Views: `design/renders/boulder_ram_pass1_*.png`.
+Captured after "Darken the rock, warm the organics" (palette + UV fix) and the
+three-point lighting rig landed underneath this pass via merge — re-rendered
+against both before scoring; this asset's colours and the horn issue below are
+unchanged from the pre-fix render.
 
 | Pass | Sil | Prop | Hygiene | Colour | Style | Total |
 |---|---|---|---|---|---|---|
