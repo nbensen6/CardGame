@@ -68,3 +68,44 @@ segments" at all, or whether the flat, close-in-value grey across the whole
 body is a deliberate "bog creature" choice that a warmer body colour plus a
 darker/wetter mouth colour would undercut — that's a palette-direction call,
 not a measurement, so it's named rather than guessed at.
+
+---
+
+## Pass 2 — fixer lane, 2026-08-31
+
+Applied by the **fixer** lane (`tools/fixer/BRIEF.md`), which repairs what the
+cloud reports. Views: `design/renders/bog_leech_pass2_*.png`, captured with
+`look.cmd bog_leech 2`.
+
+| Pass | Sil | Prop | Hygiene | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 1 | 5 | 5 | 4 | 5 | 6 | **25** |
+| 2 | 6 | 5 | 6 | 5 | 6 | **28** |
+
+### Both diagnosed fixes applied, together, since they're the same feature
+
+The sucker-mouth ring and its mouth-well ball are one visual unit, so both
+moved as one:
+
+- **Build hygiene (4 → 6).** `ring(..., 14, 5, thickness=0.10)` — a torus thin
+  enough, with few enough major segments, that its facets read as separate
+  lumps rather than one loop. Thickness `0.10 → 0.16` and minor segments
+  `5 → 7` so the tube reads as one rounded ring instead of a string of
+  beads. `bog_leech_pass2_form.png` shows a visibly fatter, rounder loop
+  next to `bog_leech_pass1_34.png`'s thin faceted one.
+- **Silhouette (5 → 6).** Ring and mouth-well pulled 0.12 up (Z) and 0.12
+  forward into the main sac (Y: -1.42 → -1.30, Z: 0.55 → 0.67).
+  `bog_leech_pass2_sil.png` now reads as one connected mass at the front-
+  bottom; compare `bog_leech_pass1_sil.png`, where the mouth is a clearly
+  separate hooked smudge below and left of the body with daylight between
+  them.
+
+Neither line hit "shippable" (8) — from the side (`bog_leech_pass2_side.png`)
+the mouth is now mostly hidden behind the main mass rather than reading as a
+mouth at all, a legibility/hygiene trade Nick may want revisited with a
+purpose-built close camera the way `boulder_ram`'s open finding suggests —
+but both diagnosed lines measurably improved and neither regressed the other
+four, so the pass is kept. +3 total, not a plateau.
+
+Not touched: proportion, colour, style — outside the two diagnosed lines,
+per the brief.

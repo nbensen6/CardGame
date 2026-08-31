@@ -48,9 +48,15 @@ for yy in (-0.85, -0.20, 0.45, 1.05):
 
 # Front sucker-mouth: low, wet, dark, angled down and forward the way a
 # leech's real mouth is on its underside rather than the front of its face.
-b.ring((0.0, -1.42, 0.55), (0.30, 0.30, 0.20), GRAPHITE, 14, 5,
-       rot=point((0.0, -1.0, 0.55)), thickness=0.10)
-b.ball((0.0, -1.44, 0.52), (0.15, 0.11, 0.11), CHARCOAL, 8, 5)        # mouth well
+# Pass-2 fixer pass: the torus read as a string of beads (thin tube, few
+# major segments) split off from the main mass. Fattened the tube so
+# adjacent facets merge into one loop instead of separate lumps, and pulled
+# the whole mouth 0.12 up and 0.12 forward into the main sac's own bounding
+# volume so the two masses overlap in silhouette rather than touching at a
+# single point.
+b.ring((0.0, -1.30, 0.67), (0.30, 0.30, 0.20), GRAPHITE, 14, 7,
+       rot=point((0.0, -1.0, 0.55)), thickness=0.16)
+b.ball((0.0, -1.32, 0.64), (0.15, 0.11, 0.11), CHARCOAL, 8, 5)        # mouth well
 # A pair of small dark eye-spots just above the mouth - barely eyes, enough
 # to read as a face from the front.
 mirror(lambda s: b.ball((0.20 * s, -1.36, 0.86), (0.08, 0.06, 0.07),
