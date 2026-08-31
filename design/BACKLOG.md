@@ -246,6 +246,33 @@ Ordered. Source in brackets.
   and will need the rubric adapted a second way before they can be scored
   under this same loop. No model script touched — report only, per this
   item's own rule. Left unchecked.
+  **Checked 2026-08-31: batch 6, apt-get blender again (same route as
+  batches 1-5).** Scored four more fight grounds: `bounder_ground` (27/50 —
+  the script's own docstring says the flatness IS the point, "a floor you
+  can see it land on," but the enclosure wall fills the fight-camera frame
+  with tall pillars exactly as the earlier stone grounds do, directly
+  contradicting the stated design goal rather than merely under-showing it),
+  `bramble_hog_ground` (29/50 — the first ground scored with a genuinely
+  open, see-through silhouette, since its ring is thin conifer trunks
+  rather than a solid wall, but the hollow floor is flat and featureless at
+  fight-camera distance and reads as generic pine forest rather than the
+  "thicket that IS the beast" the script names), `root_lurker_ground`
+  (28/50 — visually near-identical to `bramble_hog_ground`, same conifer
+  ring and brown hollow, which cuts against this beast's specific "you
+  cannot tell which knot is the beast" gimmick rather than supporting it),
+  `mire_snapper_ground` (26/50, lowest ground scored so far — confirms by
+  direct look the ART-REVIEW batch note's standing concern: the STEEL grey
+  water shapes read as wet rock or slag, not water, which undercuts the
+  script's own "at a glance the beast is one more log [in water]" premise
+  since there is no water to compare the log against). Full rubric tables,
+  per-line justifications and one concrete (unproposed, per this item's
+  report-only rule) diagnosis per asset are in
+  `design/progress/<name>_ground.md`. Six of fourteen grounds now scored
+  (stone_warden, crag_pup, bounder, bramble_hog, root_lurker, mire_snapper);
+  eight grounds (sky_snapper, frost_sentinel, shifting_idol, grove_bear,
+  gale_serpent, drowned_colossus, sunken_warden, riftling), the map, all
+  nineteen portraits and all icon sets remain unscored. No model script
+  touched — report only, per this item's own rule. Left unchecked.
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
   relic") on top of the existing Rest / Thin / Sharpen and `Run.relic_totals()`.
   *Done when:* pickable at a campfire, persists, shows in the relic list.
