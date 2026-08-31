@@ -5214,3 +5214,13 @@ Newest first. One line per finished item: what, and anything surprising.
   zero APPROVED/REJECTED lines. Every other unchecked item is tagged `needs a
   screen`. No code or data changed this run; not re-sending the notification
   since the state it described still hasn't changed.
+- **Thirty-seventh re-check confirms no actionable cloud-safe/cloud-art
+  work** — fetched `origin/main` fresh (tip was `ad0ba00`, no stale-checkout
+  issue this time) and independently re-derived the same conclusion again
+  before reading the 36th check's own text: the only unchecked items
+  carrying either tag are still #55, #76 and #80, all build-complete and
+  blocked solely on Nick opening `design/ART-REVIEW.md`. `design/ART-
+  REVIEW.md` still has 28 NEEDS A PASS blocks and zero APPROVED/REJECTED
+  lines. Every other unchecked item is tagged `needs a screen`. No code or
+  data changed this run; not re-sending the notification since the state it
+  would report hasn't changed.
