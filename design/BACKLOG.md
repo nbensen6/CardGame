@@ -1321,6 +1321,21 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-31** — Forty-first consecutive re-check, no actionable
+  cloud-safe/cloud-art work. Fetched fresh (`git fetch --prune` then rebuilt
+  `main` from `FETCH_HEAD`; tip `a729551`, the fortieth check's own log
+  commit — no stale-checkout issue this time) and independently re-derived
+  the same conclusion before reading the 40th check's own text:
+  `git log --oneline -1 -- game/data/ game/assets/` still points at
+  `2e8310b` (yoke_ox, the commit that closed #55's own 14-beast bar), and
+  `design/ART-REVIEW.md` still has 28 NEEDS A PASS blocks against 0
+  APPROVED/REJECTED lines. The queue's unchecked items are still the same
+  13: 2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 are `needs a screen` (skipped
+  per the rules); 55, 76 and 80 are `cloud-art`, each already past its own
+  "Done when" bar, and stay unchecked on purpose — only Nick opening
+  `design/ART-REVIEW.md` can close them. No code or data changed this run;
+  not sending a notification since the standing condition has already been
+  reported and nothing has changed.
 - **2026-08-31** — Fortieth consecutive re-check, no actionable
   cloud-safe/cloud-art work. Fetched fresh (tip `d36c5f3`, the prior check's
   own log commit) and confirmed `git log 04e31f5..HEAD -- game/ design/`
