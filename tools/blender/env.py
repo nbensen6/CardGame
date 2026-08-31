@@ -142,10 +142,22 @@ class Env(Build):
             self.taper((0.0, 0.0, -dish * 0.5), self.R * 0.66, self.R * 0.20,
                        dish, uv, seg=seg)
 
-    def apron(self, uv, out=1.35, drop=0.55, seg=24):
+    def apron(self, uv, out=2.50, drop=0.55, seg=24):
         """Ground beyond the disc, lower and darker, so the world does not end
-        at a clean circle. The camera catches this at the edges of a wide shot
-        and it is the difference between a stage and a place."""
+        at a clean circle.
+
+        `out` was 1.35 and is now 2.50, and the reason is the wall. The
+        enclosure moved out to ENCLOSE_CLEAR + ENCLOSE_HALF = 3.17 R on
+        2026-08-31 so the camera could not clip into it — which left every
+        ground as a 1.0 R floor with a 1.35 R apron sitting in the middle of a
+        3.17 R ring, i.e. a coin on a table with a fence round the edge. The
+        plan view of sunken_warden is the clearest picture of it, and it very
+        likely explains why eight of the ten lowest-scoring assets under
+        backlog #83 are grounds rather than creatures.
+
+        2.50 tucks the apron just under the wall's inner face (2.55 R), so the
+        ground runs all the way to the rock. Costs nothing: this is one taper of
+        about 96 triangles whatever radius it is drawn at."""
         self.taper((0.0, 0.0, -drop), self.R * out, self.R * out * 0.86,
                    0.5, uv, seg=seg)
 

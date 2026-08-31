@@ -17,7 +17,7 @@ e = Env(seed=23)
 
 # Leaf litter, trodden into a hollow where the thing sleeps.
 e.ground(UMBER, rim=CHARCOAL, dish=0.30)
-e.apron(CHARCOAL, out=1.35, drop=0.60)
+e.apron(CHARCOAL, out=2.50, drop=0.60)
 
 # The wall. Without one a fight happens on a disc in an open sky and reads
 # as a diorama on a plate: thicket closing in on all sides.

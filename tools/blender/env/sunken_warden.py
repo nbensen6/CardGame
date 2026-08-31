@@ -23,7 +23,7 @@ e = Env(seed=199)
 # monoliths in it. STONE lifts the temple floor off the colonnade so the
 # place has a floor rather than a shadow.
 e.ground(STONE, rim=MIDNIGHT, dish=0.16)
-e.apron(MIDNIGHT, out=1.35, drop=0.68)
+e.apron(MIDNIGHT, out=2.50, drop=0.68)
 
 # The wall. Without one a fight happens on a disc in an open sky and reads
 # as a diorama on a plate: deeper in the same drowned city.

@@ -16,7 +16,7 @@ from kenney import (out_path, point, GREEN, MINT, UMBER, BROWN, CLAY, TAN,
 e = Env(seed=149)
 
 e.ground(GREEN, rim=UMBER, dish=0.24)
-e.apron(CHARCOAL, out=1.35, drop=0.66)
+e.apron(CHARCOAL, out=2.50, drop=0.66)
 
 # The wall. Without one a fight happens on a disc in an open sky and reads
 # as a diorama on a plate: a clearing, and the trees own the rest.

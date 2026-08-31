@@ -13,7 +13,7 @@ from kenney import (out_path, SAND, TAN, WHEAT, CREAM, CLAY, BROWN, UMBER, STONE
 e = Env(seed=76)
 
 e.ground(STONE, rim=PEWTER, dish=0.20)
-e.apron(PEWTER, out=1.35, drop=0.60)
+e.apron(PEWTER, out=2.50, drop=0.60)
 
 # The wall. Without one a fight happens on a disc in an open sky and reads as a
 # diorama on a plate.

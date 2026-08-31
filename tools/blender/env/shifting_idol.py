@@ -18,7 +18,7 @@ from kenney import (out_path, point, STONE, PEWTER, SLATE, GRAPHITE, CHARCOAL,
 e = Env(seed=131)
 
 e.ground(STONE, rim=GRAPHITE, dish=0.0)
-e.apron(GRAPHITE, out=1.35, drop=0.62)
+e.apron(GRAPHITE, out=2.50, drop=0.62)
 
 # The wall. Without one a fight happens on a disc in an open sky and reads
 # as a diorama on a plate: the courtyard it was built in.

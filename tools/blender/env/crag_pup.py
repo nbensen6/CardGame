@@ -18,7 +18,7 @@ e = Env(seed=11)
 
 # The floor, dished so the fight happens in a hollow rather than on a plate.
 e.ground(CLAY, rim=UMBER, dish=0.22)
-e.apron(UMBER, out=1.35, drop=0.62)
+e.apron(UMBER, out=2.50, drop=0.62)
 
 # The wall. Without one a fight happens on a disc in an open sky and reads
 # as a diorama on a plate: the ridge this hillside broke off.

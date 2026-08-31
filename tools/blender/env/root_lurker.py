@@ -16,7 +16,7 @@ from kenney import (out_path, point, UMBER, BROWN, CLAY, TAN, GREEN, MINT,
 e = Env(seed=41)
 
 e.ground(UMBER, rim=CHARCOAL, dish=0.26)
-e.apron(CHARCOAL, out=1.35, drop=0.66)
+e.apron(CHARCOAL, out=2.50, drop=0.66)
 
 # The wall. Without one a fight happens on a disc in an open sky and reads
 # as a diorama on a plate: old wood, too dense to see through.

@@ -18,7 +18,7 @@ from kenney import (out_path, point, CHARCOAL, GRAPHITE, MIDNIGHT, NAVY, SLATE,
 e = Env(seed=211)
 
 e.ground(CHARCOAL, rim=MIDNIGHT, dish=0.14)
-e.apron(MIDNIGHT, out=1.35, drop=0.66)
+e.apron(MIDNIGHT, out=2.50, drop=0.66)
 
 # The wall. Without one a fight happens on a disc in an open sky and reads
 # as a diorama on a plate: rock the rift has not finished taking.

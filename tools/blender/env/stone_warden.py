@@ -16,7 +16,7 @@ from kenney import (out_path, point, STONE, PEWTER, SLATE, GRAPHITE, CHARCOAL,
 e = Env(seed=229)
 
 e.ground(SAND, rim=GRAPHITE, dish=0.16)
-e.apron(GRAPHITE, out=1.35, drop=0.68)
+e.apron(GRAPHITE, out=2.50, drop=0.68)
 
 # The wall. Without one a fight happens on a disc in an open sky and reads
 # as a diorama on a plate: the quarry that produced it.

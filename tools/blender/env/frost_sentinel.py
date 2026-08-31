@@ -16,7 +16,7 @@ e = Env(seed=73)
 # Barely dished. A frozen lake is the flattest thing there is, and that is the
 # whole reason this beast gets one.
 e.ground(ICE, rim=STEEL, dish=0.10)
-e.apron(SLATE, out=1.35, drop=0.62)
+e.apron(SLATE, out=2.50, drop=0.62)
 
 # The wall. Without one a fight happens on a disc in an open sky and reads
 # as a diorama on a plate: a crevasse with walls of blue ice.

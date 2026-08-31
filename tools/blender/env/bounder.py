@@ -18,7 +18,7 @@ from kenney import (out_path, point, SAND, WHEAT, TAN, CREAM, CLAY, BROWN,
 e = Env(seed=91)
 
 e.ground(WHEAT, rim=TAN, dish=0.12)
-e.apron(TAN, out=1.35, drop=0.58)
+e.apron(TAN, out=2.50, drop=0.58)
 
 # The wall. Without one a fight happens on a disc in an open sky and reads
 # as a diorama on a plate: a quarry pit with nowhere to bounce out to.
