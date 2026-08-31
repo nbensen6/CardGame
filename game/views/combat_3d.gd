@@ -218,6 +218,8 @@ var _ledges: Dictionary = {}
 ## between two disagreeing positions — Nick, 2026-08-31: "not quite a smooth
 ## animation, it jumps to random places".
 var _climb_tw: Dictionary = {}
+## The card under the pointer, lifted out of the fan.
+var _hand_hover: Control = null
 ## How big the pulsing marker is. It used to be a fixed 1.0, which was tuned
 ## when it hung above the body at 88% of the bounding box and was mostly seen
 ## edge-on. Now it sits ON the mark the model wears, at eye level, where a fixed
@@ -305,7 +307,7 @@ var _log_expanded := false
 ## be able to wear an underline and carry the id a right-click looks up.
 @onready var _intent: RichTextLabel = %Intent
 @onready var _intent_tag: PanelContainer = %IntentTag
-@onready var _hand_row: HBoxContainer = %Hand
+@onready var _hand_row: Control = %Hand
 @onready var _status: Label = %StatusLabel
 @onready var _energy_orb: PanelContainer = %EnergyOrb
 @onready var _energy_label: Label = %EnergyLabel
@@ -2635,6 +2637,64 @@ func _beast_shake() -> void:
 
 # --- hand -----------------------------------------------------------------
 
+## Fan the hand: an arc of overlapping cards, tucked low, rising on hover.
+##
+## Nick sent a Slay the Spire 2 hand and said: "the cards are out of the way
+## until you hover it." That is the whole reason to do this. A flat row of five
+## cards is a wall across the bottom of the screen and the fight is happening
+## behind it; an arc that overlaps and sits low gives the beast its room back,
+## and lifting one on hover is what makes the hidden part readable on demand.
+##
+## The Hand node is a plain Control rather than an HBoxContainer because a
+## container re-sorts its children every layout pass and would overwrite every
+## position this sets. Rotation would have survived; position would not.
+## 0.84, not 0.72. At 0.72 the next card covered nearly a third of the one
+## before it, including the right end of its name plate - so half the hand
+## had its title hidden. The overlap has to leave the NAME readable, which is
+## the only thing you scan a fanned hand for.
+const FAN_OVERLAP := 0.84     # of a card's width - how far the next one sits along
+const FAN_TILT := 0.085       # radians per card away from centre
+const FAN_DROP := 7.0         # px each card sinks per step from centre, making the arc
+const FAN_TUCK := 26.0        # px the whole hand sits below its band, out of the way
+## Enough to clear the screen edge. The fan deliberately lets the bottom of a
+## card fall off the bottom of the screen - that is what "out of the way"
+## means and the reference does exactly the same - so a hover has to lift far
+## enough to bring the rules text back into view, not just nudge it.
+const FAN_RISE := 62.0        # px a hovered card lifts
+
+func _layout_hand() -> void:
+	if _hand_row == null:
+		return
+	var cards: Array = _hand_row.get_children()
+	var n := cards.size()
+	if n == 0:
+		return
+	var w: float = maxf((cards[0] as Control).custom_minimum_size.x, 60.0)
+	var step := w * FAN_OVERLAP
+	# Squeeze further if the hand is wider than the band it has to live in, so a
+	# big hand overlaps more rather than running off the screen.
+	var room: float = _hand_row.size.x
+	if room > 1.0 and step * float(n - 1) + w > room:
+		step = maxf((room - w) / maxf(float(n - 1), 1.0), w * 0.30)
+	var mid := (float(n) - 1.0) * 0.5
+	for i in range(n):
+		var c := cards[i] as Control
+		if c == null:
+			continue
+		var off := float(i) - mid
+		c.size = c.custom_minimum_size
+		c.pivot_offset = Vector2(w * 0.5, c.custom_minimum_size.y * 1.35)
+		var lift: float = FAN_RISE if c == _hand_hover else 0.0
+		c.position = Vector2(
+			room * 0.5 - w * 0.5 + off * step,
+			FAN_TUCK + absf(off) * FAN_DROP - lift)
+		# A hovered card straightens up as it rises, so the face you are reading
+		# is square to you rather than tilted.
+		c.rotation = 0.0 if c == _hand_hover else off * FAN_TILT
+		# and comes to the front, or its neighbours overlap the thing you lifted.
+		c.z_index = 10 if c == _hand_hover else i
+
+
 func _render_hand() -> void:
 	for c in _hand_row.get_children():
 		c.queue_free()
@@ -2659,6 +2719,16 @@ func _render_hand() -> void:
 		cv.setup(card, playable, false)
 		var c_card: Dictionary = card
 		cv.tapped.connect(func() -> void: _on_card_tapped(c_card, cv))
+		# Hover lifts the card out of the fan. Bound here rather than inside
+		# CardView because the fan is a property of the HAND, not of a card:
+		# only the row knows which of its children is on top.
+		cv.mouse_entered.connect(func() -> void:
+			_hand_hover = cv
+			_layout_hand())
+		cv.mouse_exited.connect(func() -> void:
+			if _hand_hover == cv:
+				_hand_hover = null
+				_layout_hand())
 		cv.inspect_requested.connect(_show_card_detail)
 		cv.keyword_requested.connect(_show_keyword)
 		cv.timing_resolved.connect(func(quality: int) -> void:
@@ -2682,6 +2752,11 @@ func _render_hand() -> void:
 
 
 # --- playing a card, including the multi-pick cards -----------------------
+	_hand_hover = null
+	# Positions are set by hand, so nothing lays the fan out unless we do.
+	# Deferred: the cards have no size until the frame after they are added,
+	# and an arc built on zero-width cards stacks them all at the centre.
+	_layout_hand.call_deferred()
 
 func _on_card_tapped(card: Dictionary, cv: CardView) -> void:
 	_dismiss_coach()   # you're playing; you don't need to be told to play

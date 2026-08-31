@@ -220,7 +220,7 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 
 	var box := VBoxContainer.new()
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_theme_constant_override("separation", 6 if not compact else 3)
+	box.add_theme_constant_override("separation", 3 if not compact else 3)
 	pad.add_child(box)
 
 	if compact:
@@ -230,18 +230,22 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 		# The name on its ribbon, the art, then the type on its pill — the
 		# order in Nick's reference cards, and the reason the pill reads as
 		# a label ON the art rather than a heading over the rules.
-		box.add_child(_art(String(data.get("icon", "")),
-			String(data.get("portrait", "")), String(data.get("id", ""))))
+		box.add_child(_art_box(_art(String(data.get("icon", "")),
+			String(data.get("portrait", "")), String(data.get("id", "")))))
 		var kind := String(data.get("type", ""))
 		if kind != "":
-			var tag := _plate(PILL, PILL_SLICE, kind.capitalize(), 10, 17)
+			# Small. Nick: "the attack/skill is really large taking up a lot of
+			# space." In the reference it is a caption on the art, not a heading -
+			# the type is the least important thing on the face and it was taking
+			# more room than the damage number.
+			var tag := _plate(PILL, PILL_SLICE, kind.capitalize(), 8, 12)
 			tag.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-			tag.custom_minimum_size = Vector2(62, 17)
+			tag.custom_minimum_size = Vector2(44, 12)
 			box.add_child(tag)
 		# A STRIP, not a panel. Nick: "some words are going off the cards." The
 		# block was 62px of an already-tight card and long rules ran past it;
 		# _rich_body clips rather than grows, so overflow was silent.
-		box.add_child(_rich_body(data, 11, 54))
+		box.add_child(_rich_body(data, 10, 52))
 
 	_strip = _build_timing_strip()  # hidden until start_timing()
 	box.add_child(_strip)
@@ -263,8 +267,11 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 		# Starts to the RIGHT of the gem rather than under it. The ribbon is
 		# centred text, so an orb sitting on its left end does not just cover
 		# the plate — it eats the first characters of the name.
-		ban.offset_left = 22.0
-		ban.offset_right = 7.0
+		ban.offset_left = 26.0
+		# Inside the card, not overhanging. In a fanned hand the card to the
+		# right sits on top of this one, and anything sticking out that side
+		# is simply covered.
+		ban.offset_right = -3.0
 		ban.offset_top = 3.0
 		ban.offset_bottom = 27.0
 		add_child(ban)
@@ -518,11 +525,11 @@ func _rich_body(data: Dictionary, size: int, height: int) -> RichTextLabel:
 	# toward the length and short cards shrink for no reason.
 	var plain := face_text(data, false)
 	var chars := plain.length()
-	if chars > 96:
+	if chars > 80:
 		size -= 3
-	elif chars > 68:
+	elif chars > 54:
 		size -= 2
-	elif chars > 50:
+	elif chars > 36:
 		size -= 1
 	size = maxi(size, 8)
 	r.fit_content = false
@@ -698,8 +705,11 @@ func _plate(tex: Texture2D, slice: int, txt: String, size: int,
 	# Inset by the slice, so the text sits on the FLAT of the plate and not out
 	# over the notched ends. Centred across the whole rect, "Cull the Deck" ran
 	# past the left notch and looked like it had escaped the card.
-	lbl.offset_left = float(slice) * 0.62
-	lbl.offset_right = -float(slice) * 0.62
+	# 0.34, not 0.62. The ribbon is already inset from the card to clear the cost
+	# orb, so insetting the label by most of a slice on top of that cost about
+	# 42px of a 140px card and truncated "Tongue Snap" to "Tongue Sn...".
+	lbl.offset_left = float(slice) * 0.34
+	lbl.offset_right = -float(slice) * 0.34
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -791,6 +801,34 @@ const CARD_ART_SIZE := Vector2i(1024, 768)
 const CARD_ART_ASPECT := 0.75
 
 
+## The art WINDOW: a recessed box the picture sits inside.
+##
+## Nick: "the art doesn't have its own box." In Slay the Spire the illustration
+## is inset behind a frame with its own lip and shadow, which is most of why
+## those cards read as printed objects. Ours floated an icon on the card body
+## with no boundary at all, so the card had a name, a gap, and some text.
+func _art_box(inner: Control) -> Control:
+	var box := PanelContainer.new()
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var sb := StyleBoxFlat.new()
+	# Darker than the card body, so it reads as a hole rather than a panel laid
+	# on top - a window is something you look INTO.
+	sb.bg_color = Color(0.055, 0.055, 0.065)
+	sb.set_corner_radius_all(3)
+	sb.set_border_width_all(1)
+	sb.border_color = Color(0.62, 0.64, 0.70, 0.55)
+	# A brighter top edge and a dark bottom: the same lit-from-above bevel the
+	# frame and the plates use, so the window belongs to the same object.
+	sb.border_width_top = 2
+	sb.set_content_margin_all(3)
+	sb.shadow_color = Color(0, 0, 0, 0.5)
+	sb.shadow_size = 3
+	box.add_theme_stylebox_override("panel", sb)
+	box.add_child(inner)
+	return box
+
+
 func _art(icon: String, portrait: String = "", card_id: String = "") -> Control:
 	var tex := TextureRect.new()
 	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -801,7 +839,10 @@ func _art(icon: String, portrait: String = "", card_id: String = "") -> Control:
 	tex.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	# Fixed, modest art size — the icon is an accent, not the card's focus (Nick).
 	# Portraits (character select) keep a larger pane.
-	tex.custom_minimum_size = Vector2(0, 76 if portrait != "" else 58)
+	# 86, not 58. The window is the biggest element on a Slay the Spire card
+	# whether or not there is art in it, and sizing it to the ICON made ours
+	# a name over a gap over a paragraph.
+	tex.custom_minimum_size = Vector2(0, 76 if portrait != "" else 86)
 	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE  # a big PNG must not force the card taller
 	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	var own := CARD_ART + card_id + ".png"
@@ -934,9 +975,15 @@ func _tex_frame(tex: Texture2D, tint: Color = Color.WHITE) -> StyleBoxTexture:
 	sb.texture = tex
 	sb.modulate_color = tint
 	sb.set_texture_margin_all(FRAME_MARGIN)  # the bevel lives here; never stretch it
+	# Wider side margins than top/bottom. Nick: "wording still leans off the side
+	# of the card." A uniform margin looks even and reads badly, because the
+	# rules text is the only thing that runs the full width and it was ending
+	# flush against the moulding.
 	# Clear of the border, or the rules text sits on the bevel and the card reads
 	# as cramped. The frame's border is about 13% of its width.
-	sb.set_content_margin_all(15)
+	sb.set_content_margin_all(13)
+	sb.content_margin_left = 17.0
+	sb.content_margin_right = 17.0
 	return sb
 
 
