@@ -377,6 +377,42 @@ Ordered. Source in brackets.
   fourteen grounds, not just batch 7's two. `drowned_colossus_ground`'s
   visible-through-the-gap floor sliver is the first partial counter-example
   to "the wall always hides the floor" found under this item.
+  **Checked 2026-08-31: batch 9, first portrait batch.** All fourteen beasts
+  and all fourteen grounds are scored (batches 1-8); this batch opened the
+  portraits, the next asset class this item's own text calls out as needing
+  "the rubric adapted a second way." Portraits are already-rendered static
+  2D PNGs (`game/assets/portraits/<id>.png`, built by
+  `tools/blender/portraits.py` from the same models) — no Blender render
+  step needed, just the Read tool on the PNG directly, plus a real 34px
+  downsample (Pillow, installed this run: `pip3 install pillow`) rather than
+  eyeballing a shrunk full-size image, to hold the same "actually look, don't
+  guess" standard the 3D loop uses at 64px. The adapted 5-line rubric
+  (Framing / Identity / Readability@34px / Colour & separation / Style
+  consistency, dropping "Build hygiene" — poly budget and floating parts
+  don't mean anything for a flat PNG) is written up in full in
+  `design/progress/frog_portrait.md` and referenced, not repeated, by the
+  other three files in this batch.
+  Scored `frog_portrait` (42/50, best of the batch — bulging eyes and wide
+  mouth read clearly even at a real 34px downsample), `vine_weaver_portrait`
+  (38/50 — the canopy-over-trunk silhouette is the most identity-distinct
+  read in the batch, docked for near-zero headroom above the canopy and a
+  sigil-crest bead cropped to an unidentifiable fragment at the bottom edge),
+  `lightbearer_portrait` (34/50 — the lantern-topped staff loses its own
+  structure at 34px into a soft blob, and the crop leaves real unused space
+  on the right of frame; also carries forward, unresolved, the earlier
+  ART-REVIEW "second light" floating-orb finding, which this single portrait
+  angle can't confirm or clear), `mountain_climbers_portrait` (33/50, lowest
+  of the batch — the pale-blue ice-axe shard the 3D scoring pass already
+  flagged as reading like a jaw growth rather than held gear carries
+  unchanged into the portrait crop, and the chest canteen sits close enough
+  in jacket-blue value to nearly vanish at 34px). Full rubric tables and
+  per-line justifications are in `design/progress/<name>_portrait.md`. Four
+  of nineteen portraits scored (frog, vine_weaver, lightbearer,
+  mountain_climbers); fifteen portraits (goblin_mech plus the fourteen
+  beasts) and all icon sets remain unscored — icons will need a third rubric
+  adaptation again, since an icon has no "identity" or "framing" question in
+  the same sense. No model or portrait script touched — report only, per
+  this item's own rule. Left unchecked.
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
   relic") on top of the existing Rest / Thin / Sharpen and `Run.relic_totals()`.
   *Done when:* pickable at a campfire, persists, shows in the relic list.
