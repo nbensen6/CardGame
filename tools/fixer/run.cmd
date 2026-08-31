@@ -8,7 +8,7 @@ REM Reads tools\fixer\BRIEF.md, picks the lowest-scoring asset the cloud has
 REM scored, applies the two fixes it proposed, rebuilds, LOOKS at the render,
 REM keeps it or reverts it, tests, commits, pushes.
 REM
-REM Runs as a separate process with its own context — not this chat. That is the
+REM Runs as a separate process with its own context - not this chat. That is the
 REM point: the cloud reports, this repairs, and the session stays free for
 REM whatever Nick is actually asking for.
 REM
@@ -28,11 +28,18 @@ REM If this prints "OAuth session expired", run `claude` once in a terminal,
 REM sign in, then close it. The token is reused after that.
 
 setlocal
-set ROOT=%~dp0..\..
+set "ROOT=%~dp0..\.."
 cd /d "%ROOT%"
 
-set MODE=Apply the fixes.
-if /i "%~1"=="--dry" set MODE=DRY RUN. Read, decide and report what you WOULD change, but do not edit, build, commit or push anything.
+REM Quoted form: set "VAR=value", not set VAR=value.
+REM
+REM MODE is also a real Windows command (mode.com), and unquoted SET
+REM leaves cmd able to reach it - invoked from PowerShell this file
+REM printed "'M' is not recognized" half a dozen times before doing its
+REM job. Quoting the assignment also stops a trailing space or a comma in
+REM the value from being parsed as anything.
+set "MODE=Apply the fixes."
+if /i "%~1"=="--dry" set "MODE=DRY RUN. Read, decide and report what you WOULD change, but do not edit, build, commit or push anything."
 
 echo === fixer starting in %ROOT%
 echo === %MODE%
