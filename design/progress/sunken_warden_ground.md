@@ -85,3 +85,61 @@ any other asset scored so far. Genuinely cannot tell from a static render
 under unknown lighting whether the swatch itself is wrong or the light is —
 flagged rather than guessed, same caveat item #83's own notes raise for
 other assets' "too dark" concerns.
+
+
+---
+
+## Pass 2 — fixer lane, 2026-08-31
+
+Applied by the **fixer** lane (`tools/fixer/BRIEF.md`), which repairs what the
+cloud reports. Run by hand in a session rather than by the launcher, because
+the Claude Code CLI's login had expired.
+
+| Pass | Sil | Prop | Hygiene | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 1 | 5 | 5 | 2 | 3 | 6 | **21** |
+| 2 | 5 | 5 | 7 | 5 | 6 | **28** |
+
+### Both of pass 1's diagnoses were wrong, and measuring showed it
+
+**"92% over the 3600 ground budget"** — the budget is **7400**, not 3600. The
+session raised it three times on 2026-08-31 (3600 → 5200 → 6400 → 7400) as the
+enclosure walls became required geometry, while this pass was being scored
+against the old number. At 6908 this ground was never over. Hygiene 2 → 7.
+
+**"The coral cluster reads cool rather than warm"** — pass 1 flagged this
+honestly as something it could not resolve from a static render. Resolved by
+reading the exported mesh instead of looking at it: the UVs the coral geometry
+points at sample `rgb(232,153,150)` and `rgb(241,192,212)` out of the atlas.
+Salmon and pink. The swatches were never wrong.
+
+What was wrong is subtler and pass 1 was right that something was: at ten
+pieces of size 0.44 the coral was too *small* to register, so a ground whose
+own docstring calls coral "the one warm colour in the game's coldest palette"
+read as entirely cool. **An accent nobody can see is not an accent.**
+
+### What was changed
+
+- **Floor `NAVY` → `STONE`.** The floor and the `ruin` wall (PEWTER) sat at
+  near-identical values, so the whole ground read as one dark mass. Kept: the
+  effect is small at three-quarter, where the wall hides most of the floor, but
+  the plan view shows a floor that is now distinguishable from its apron.
+- **Coral 10 × 0.44 → 14 × 0.66.** Warm flecks now register on the floor.
+  Sixteen took the ground to 7628 against a 7400 budget; the count came down to
+  fit rather than the budget going up, per the brief.
+
+### Escalated, not fixed: the wall/floor ratio
+
+The plan view shows the real problem, and it is not this ground's to solve. The
+floor is 1.0 R and the enclosure stands at 3.17 R, so the arena is a small disc
+in the middle of a large empty ring — a coin on a table. The apron reaches only
+1.35 R and the rest is bare.
+
+That is `env.ENCLOSE_CLEAR` + `ENCLOSE_HALF`, pushed out on 2026-08-31 so the
+camera could not clip into the wall. It is **shared by all fourteen grounds**,
+and it very likely explains why eight of the ten lowest scores under item #83
+are grounds rather than creatures.
+
+Not touched: the brief forbids moving a shared constant to make one asset pass,
+and this is exactly that case. It wants either a wider floor or a nearer wall,
+decided once for every ground, by Nick.

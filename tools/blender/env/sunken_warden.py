@@ -14,11 +14,15 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from env import Env, BACK, ANY
 from kenney import (out_path, point, MIDNIGHT, NAVY, INDIGO, IRIS, VIOLET,
                     PERIWINKLE, ICE, STEEL, SILVER, SLATE, GRAPHITE, CHARCOAL,
-                    CORAL, ROSE, BLUSH, MINT, GREEN, GOLD, AMBER)
+                    CORAL, ROSE, BLUSH, MINT, GREEN, GOLD, AMBER, STONE)
 
 e = Env(seed=199)
 
-e.ground(NAVY, rim=MIDNIGHT, dish=0.16)
+# Fix A. The floor was NAVY and the ruin wall is PEWTER — near enough in
+# value that the whole ground read as one dark mass with a ring of
+# monoliths in it. STONE lifts the temple floor off the colonnade so the
+# place has a floor rather than a shadow.
+e.ground(STONE, rim=MIDNIGHT, dish=0.16)
 e.apron(MIDNIGHT, out=1.35, drop=0.68)
 
 # The wall. Without one a fight happens on a disc in an open sky and reads
@@ -61,7 +65,14 @@ def coral(p, r, rng):
                 r * 1.12), (r * 0.13, r * 0.13, r * 0.12), BLUSH, 5, 3)
 
 
-e.scatter(10, coral, near=2.5, far=5.7, size=0.44)
+# Fix B. The docstring calls coral "the one warm colour in the game's
+# coldest palette", and at ten pieces of size 0.44 it was too small to
+# register at all — the cloud's review looked straight at it and read the
+# ground as entirely cool. An accent nobody can see is not an accent.
+# 14, not 16: at 16 this ground came to 7628 against a 7400 budget. The
+# budget is shared by every ground and moving it to suit one is exactly
+# what the fixer's brief forbids, so the count comes down instead.
+e.scatter(14, coral, near=2.4, far=5.7, size=0.66)
 
 # Weed off the slabs, and a scatter of gold where the offerings went.
 e.scatter(12, lambda p, r, rng: e.reed(p, r, MINT if rng.random() < 0.5 else GREEN,
