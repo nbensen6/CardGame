@@ -126,6 +126,32 @@ Ordered. Source in brackets.
   nineteen non-beast assets (icons, portraits, grounds, map, the three
   hunters), still unscored. No model script touched — report only, per this
   item's own rule. Left unchecked.
+  **Checked 2026-08-31: batch 2, four more beasts, same apt-get blender
+  route.** Scored `flicker_stag` (33/50 — the CREAM belly ball reads too
+  close in value to the surrounding RUST/BROWN tones to separate as the
+  palette intends, and its silhouette overlaps the forelegs into one mass),
+  `clot_toad` (28/50, lowest of the batch — the stepped ridge/gland stack
+  that carries its whole climb route reads as a single small notch in
+  silhouette, and the sigil disc floats visibly off the gland ball's
+  surface, the same "orbiting part" failure as #83 batch 1's Eyrie Hawk),
+  `brine_urchin` (33/50 — most of its eight spines foreshorten to near
+  nothing in silhouette because they point toward/away from this camera
+  angle rather than across it, and the body reads as a generic spiked
+  sphere with no face cue despite the module doc's "glowing eye/mouth at
+  the crown"), `cinder_jackal` (32/50 — the module doc's "low... smouldering
+  mane" ridge is built as a stiff rectangular bar standing proud above the
+  spine rather than fur, and the flat tail wedge reads as a horizontal
+  spike continuing the body line rather than a tail). Full rubric tables,
+  per-line justifications and one concrete (unapplied) fix per asset are in
+  `design/progress/<name>.md`. Eight beasts scored across both batches
+  (yoke_ox, riptide_eel, glyph_tortoise, eyrie_hawk, flicker_stag,
+  clot_toad, brine_urchin, cinder_jackal); husk_beetle, gloom_moth,
+  bog_leech, thrasher, silk_widow, boulder_ram plus the eleven-beast batch
+  (bounder, bramble_hog, root_lurker, mire_snapper, sky_snapper,
+  frost_sentinel, shifting_idol, grove_bear, gale_serpent,
+  drowned_colossus, sunken_warden) and the non-beast assets (icons,
+  portraits, grounds, map, hunters) remain unscored. No model script
+  touched — report only, per this item's own rule. Left unchecked.
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
   relic") on top of the existing Rest / Thin / Sharpen and `Run.relic_totals()`.
   *Done when:* pickable at a campfire, persists, shows in the relic list.
