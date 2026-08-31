@@ -1321,6 +1321,21 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-31** — Fortieth consecutive re-check, no actionable
+  cloud-safe/cloud-art work. Fetched fresh (tip `d36c5f3`, the prior check's
+  own log commit) and confirmed `git log 04e31f5..HEAD -- game/ design/`
+  since the last real content commit is Log-only, five commits deep now.
+  Independently re-derived the numbers again rather than trusting them
+  secondhand: `bosses.json` 28 bosses, `cards.json` 187/187 cards with a
+  non-empty `icon` field, `design/ART-REVIEW.md` 28 `NEEDS A PASS` blocks
+  and 0 APPROVED/REJECTED. The queue's unchecked items are still the same
+  13: 2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 are `needs a screen` (skipped
+  per the rules); 55, 76 and 80 are `cloud-art`, each already past its own
+  "Done when" bar, and stay unchecked on purpose — only Nick opening
+  `design/ART-REVIEW.md` can close them. No code or data changed this run,
+  so no test cycle to run. Not sending a notification: this standing
+  condition has already been reported repeatedly and nothing is new.
+
 - **2026-08-31** — Re-check confirms no actionable cloud-safe/cloud-art work,
   tree unchanged since the prior check (fetched fresh, tip `c683b89` — that
   commit IS the prior check's own log entry, and `git log 04e31f5..HEAD --
