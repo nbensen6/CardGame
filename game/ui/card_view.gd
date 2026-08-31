@@ -187,16 +187,21 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 		# larger share of the screen — at 224 tall the hand ate 40% of a phone and
 		# climbed over the beast. Smaller here keeps the same physical size it has
 		# on a desktop while giving the fight back its room.
-		# Taller and narrower than before, following the Slay the Spire 2 hand
-		# Nick sent. Their proportion is roughly 1:1.55, and the reason is the
-		# ART: at 2:3 with a big rules block there is nowhere for a picture to
-		# go, which is why our art window had shrunk to an icon slot. A taller
-		# card buys the picture back without taking width from the hand.
+		# 62:87. That is Slay the Spire 2's own full-card ratio, 0.713 - their
+		# modding docs give 310x435 - and it is measured rather than eyeballed.
+		#
+		# Nick: "theirs is more closer to a square than ours. Ours is more
+		# towards a rectangle." He was right and an earlier guess of "roughly
+		# 1:1.55" made it worse: 140x228 is 0.614, a good deal narrower than
+		# theirs, which is why the face felt cramped no matter how the contents
+		# were arranged. Widened rather than shortened, because the hand band is
+		# already sized for this height and the extra width is what the art
+		# window needed.
 		var big := bool(data.get("no_cost", false))
 		if Screen.is_handheld():
-			custom_minimum_size = Vector2(140, 226) if big else Vector2(118, 190)
+			custom_minimum_size = Vector2(161, 226) if big else Vector2(135, 190)
 		else:
-			custom_minimum_size = Vector2(166, 268) if big else Vector2(140, 228)
+			custom_minimum_size = Vector2(191, 268) if big else Vector2(162, 228)
 	disabled = not playable
 	text = ""
 	if not mouse_entered.is_connected(_on_hover):
@@ -789,16 +794,21 @@ func _header(card_name: String, cost: int, no_cost: bool = false) -> Control:
 ## 187 cards currently share 33 icons — eighteen of them wear the same "lift"
 ## glyph — so this is the slot that turns a spreadsheet into a card game.
 const CARD_ART := "res://assets/cardart/"
-## What to export from Canva: 1024 x 768 PNG.
+## What to export from Canva: 1000 x 760 PNG.
 ##
 ## 4:3 because the art window below is 4:3, so a card fills edge to edge with no
 ## letterboxing and nothing has to be cropped by eye. 1024 because the card
 ## DETAIL view blows a card up far past its size in hand — 512 is enough for the
 ## hand and visibly soft the moment someone inspects it. It is one export either
 ## way, so it may as well be the one that survives being looked at closely.
-const CARD_ART_SIZE := Vector2i(1024, 768)
+const CARD_ART_SIZE := Vector2i(1000, 760)
 ## The art window's height as a fraction of its width. Matches CARD_ART_SIZE.
-const CARD_ART_ASPECT := 0.75
+##
+## 19/25 = 0.76, which is Slay the Spire's own card-art ratio - their atlas
+## images are 250x190 and the recommended export is 1000x760. Ours was 4:3, a
+## 1.3% difference nobody could see, but there is no reason to be near a
+## measured number when you can be on it.
+const CARD_ART_ASPECT := 0.76
 
 
 ## The art WINDOW: a recessed box the picture sits inside.

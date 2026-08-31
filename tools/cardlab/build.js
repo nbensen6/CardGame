@@ -921,7 +921,7 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>goTab(b.dataset
       ? "This card has art of its own. Replace the file and refresh to see the new one."
       : "No art yet - this is the shared <b>" + esc(c.icon) + "</b> icon, which "
         + c.iconShared + " card" + (c.iconShared === 1 ? " uses" : "s use")
-        + ". Export <b>1024 x 768 PNG</b> (4:3) and drop it in at the path above; "
+        + ". Export <b>1000 x 760 PNG</b> (25:19) and drop it in at the path above; "
         + "the game prefers it over the icon automatically.";
     box.innerHTML = \`<img class="\${c.hasArt?"has":""}" src="\${src}" alt="\${esc(c.name)}">
       <div class="cap">
