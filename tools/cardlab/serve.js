@@ -10,7 +10,7 @@ const http = require("http");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
-const { execFileSync, exec } = require("child_process");
+const { execFileSync, execFile, exec } = require("child_process");
 
 const PORT = 5180;
 const DIR = __dirname;
@@ -27,6 +27,45 @@ function lanUrls() {
     }
   }
   return out;
+}
+
+
+/** Commit a piece of uploaded art, and try to push it.
+ *
+ * game/assets/cardart/ is tracked but nothing was putting new files INTO a
+ * commit, so every upload sat untracked in the working tree - one careless
+ * `rm` or `git clean` from gone. That is not hypothetical: on 2026-08-31 a
+ * piece of Nick's art was deleted along with two test files by exactly that
+ * command, and because it had never been committed there was nothing to
+ * recover.
+ *
+ * Best effort, and deliberately AFTER the response has already been sent. The
+ * upload has succeeded by the time this runs; if git is missing, mid-rebase, or
+ * the push is rejected, the artist should never see an error about it. Failures
+ * are logged to the server console and nowhere else.
+ */
+function commitArt(id, file) {
+  const opts = { cwd: ROOT, timeout: 60000 };
+  execFile("git", ["add", "--", file], opts, (addErr) => {
+    if (addErr) return console.log("art commit: git add failed - " + addErr.message);
+    execFile("git", ["commit", "-m",
+      "Card art for " + id + " (uploaded from the Card Lab, committed so it "
+      + "cannot be lost to a stray rm the way an earlier upload was)"
+    ], opts, (cErr) => {
+      if (cErr) return console.log("art commit: nothing to commit, or " + cErr.message);
+      console.log("art commit: committed " + id + ".png");
+      // Push is a bonus, not the point. A local commit already makes the file
+      // recoverable; this just gets it off the machine.
+      execFile("git", ["push", "origin", "HEAD"], opts, (pErr) => {
+        if (pErr) {
+          console.log("art commit: committed but not pushed - it will go with "
+            + "the next push");
+        } else {
+          console.log("art commit: pushed " + id + ".png");
+        }
+      });
+    });
+  });
 }
 
 http
@@ -98,6 +137,7 @@ http
         console.log("card art: wrote " + put[1] + ".png (" + buf.length + " bytes)");
         res.writeHead(200, { "content-type": "text/plain" });
         res.end("ok");
+        commitArt(put[1], file);
       });
       return;
     }
