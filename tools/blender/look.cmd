@@ -19,7 +19,6 @@ set HERE=%~dp0
 set ROOT=%~dp0..\..
 set OUT=%ROOT%\design\renders
 
-set CAST=frog vine_weaver mountain_climbers goblin_mech lightbearer stone_warden gale_serpent drowned_colossus sunken_warden crag_pup bramble_hog bounder mire_snapper frost_sentinel grove_bear root_lurker sky_snapper riftling shifting_idol
 
 if "%~1"=="" (
   echo usage: look.cmd ^<name^> [pass] ^| look.cmd cast [pass] ^| look.cmd env ^<name^> [pass]
@@ -39,7 +38,10 @@ if /i "%~1"=="env" (
 if /i "%~1"=="cast" (
   set PASS=%~2
   if "!PASS!"=="" set PASS=1
-  for %%N in (%CAST%) do call :one %%N !PASS!
+  REM The FOLDER is the list. Hardcoding one here went stale the moment the
+  REM cloud routine added fourteen beasts in two days: this rendered nineteen
+  REM models and said nothing at all about the fourteen it had not heard of.
+  for %%F in ("%DIR%\*.glb") do call :one %%~nF !PASS!
   goto :done
 )
 

@@ -61,6 +61,54 @@ Ordered. Source in brackets.
 - [x] **1. Exhaust scaling for the Goblin** — one field, immediate depth. `cloud-safe`
   *Done when:* the field exists, at least three cards use it, tests cover it.
   [sts2-comparison §5.2]
+- [ ] **83. Score the art nobody has looked at** `cloud-safe` — fourteen beasts,
+  five hunters, fourteen grounds, the map, nineteen portraits and twenty-eight
+  icons are on screen right now, and `design/ART-REVIEW.md` carries **28 blocks
+  marked NEEDS A PASS against 2 DONE**. This routine built most of them, then
+  spent 72 of its last 93 commits logging that there was nothing to do. There
+  is something to do: the looking.
+
+  `design/asset-loop.md` is the loop; `tools/blender/look.sh <asset> <pass>`
+  is its capture step — use the `.sh`, not the `.cmd` beside it, which is
+  Nick's Windows copy and unreadable here. It writes six views, including
+  the model as solid black at 64px, which answers the silhouette question a
+  lit render cannot. `$BLENDER` overrides the binary; bare `blender` is what
+  the apt install puts on PATH. **A run can do this.**
+  Reading a PNG through the Read tool is real vision on a static image,
+  and this routine already proved it once, critiquing its own Husk Beetle
+  honestly: shell segments that pass the hold contract but do not read as
+  distinct plates, antennae that cross oddly from three-quarter. It never did it
+  again only because it was not written down here.
+
+  **Four assets an iteration**, in the batch idiom #76's icon work used. For
+  each: capture, open every view, describe what is actually there rather than
+  what the script was trying to make, score the five rubric lines 1–10 with a
+  one-line justification each into `design/progress/<asset>.md`, then name the
+  two lowest with one concrete fix apiece — "raise the eye domes 0.06 and pull
+  them 0.10 apart", never "improve the silhouette".
+
+  **Report, do not repair.** Hard rule 4 — art direction is Nick's. This item
+  scores and writes down. It edits no model script, and a fix it can see belongs
+  in the progress file as a proposal. It does not tick an ART-REVIEW block to
+  DONE either: that is Nick looking, not a run scoring.
+
+  Commit `_sil.png` and `_34.png` per asset; leave the other four views in the
+  container. Six views across 28 assets is about 33 MB, two is under 6.
+
+  **Calibrate before trusting the notes already there.** `look.py` rolled its
+  cameras 90° on any level shot until 2026-08-27 — `to_track_quat`'s second
+  argument names the camera's LOCAL up axis, which is +Y, and it was being
+  passed "Z". So a three-quarter view of a crouching frog rendered as a hunched
+  quadruped and was written up as one. The frog scored 30/50 through the broken
+  camera and about 35 through the fixed one with no edits at all
+  (`design/progress/frog.md`, which also records two fixes that made it worse
+  and were reverted). Treat every NEEDS A PASS note written before that date as
+  possibly describing the camera rather than the model.
+
+  *Done when:* every asset that has a model has a scored
+  `design/progress/<asset>.md`, and this item carries a ranked list of the
+  weakest ten so Nick knows where to look first. Left unchecked regardless until
+  he has.
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
   relic") on top of the existing Rest / Thin / Sharpen and `Run.relic_totals()`.
   *Done when:* pickable at a campfire, persists, shows in the relic list.
