@@ -68,7 +68,7 @@ Ordered. Source in brackets.
   spent 72 of its last 93 commits logging that there was nothing to do. There
   is something to do: the looking.
 
-  `design/asset-loop.md` is the loop; `tools/blender/look.sh <asset> <pass>`
+  `design/asset-loop.md` is the loop; `bash tools/blender/look.sh <asset> <pass>`
   is its capture step — use the `.sh`, not the `.cmd` beside it, which is
   Nick's Windows copy and unreadable here. It writes six views, including
   the model as solid black at 64px, which answers the silhouette question a

@@ -1,0 +1,4 @@
+# Shell scripts must keep LF endings. The cloud routine runs on Linux, and a
+# .sh checked out with CRLF fails as "bad interpreter: /usr/bin/env bash^M" —
+# which looks like a missing Blender, not a line-ending problem.
+*.sh text eol=lf
