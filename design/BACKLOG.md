@@ -1321,6 +1321,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-31** — Found one more real cloud-safe gap in the same class the
+  sixteenth/twenty-ninth/thirtieth/most-recent Log entries already found (a
+  real value Combat reads that never reached the shared snapshot). Checked
+  every remaining `PlayerState`/`Combatant`/`Boss` field against
+  `game_host.gd`'s `_players_public()`/`_build_shared()` after the previous
+  entry closed the `sigil_rounds`/`boss.limiter` gap, and found one:
+  `PlayerState.prepared` (the string Goblin Jetpack's `prepare` field arms,
+  read every round-start by `Combat._resolve_prepared()` to fire the delayed
+  effect) was never on the wire — not even for the owning player, so a
+  hunter who primed a jetpack had no way to confirm it before it fired next
+  round. Confirmed the gap was real before touching anything (grepped
+  `game/ui/` and `game/views/` for `prepared` — nothing reads it; grepped
+  `game_host.gd` — only the unrelated card-definition `"prepare"` key
+  showed up). Added `"prepared": ps.prepared` to the combat branch of
+  `_players_public()` in `game/session/game_host.gd`, plus
+  `_test_prepared_reaches_the_shared_snapshot` in `tools/run_tests.gd`,
+  same boundary-test shape as the four prior entries in this class — sets
+  it on one player, broadcasts, and reads it back off both players' own
+  views. Audited every other unforwarded `PlayerState` field
+  (`cost_reductions`, `play_counts`, `cards_played_this_turn`,
+  `climb_bonus`, `char_attack_bonus`, `ally_climb`, `poison_lift`) and left
+  them alone — each is internal bookkeeping a card's own preview number
+  already accounts for, not a banked status stack a player or ally needs to
+  see, unlike Frail/Dexterity/Light/sigil_rounds/prepared. `run_tests.gd`
+  (fresh Godot 4.7.1 + `--import`) all green: ALL TESTS PASSED. No numeric
+  value changed, so no balance_sim run — this is visibility only.
 - **2026-08-31** — Found real cloud-safe work in the same class the
   sixteenth/twenty-ninth/thirtieth Log entries already found (a real Combatant/
   PlayerState value cards or a beast's own rule already reads, never forwarded

@@ -300,6 +300,7 @@ func _init() -> void:
 	_test_dexterity_intangible_buffer_plated_armour_reach_the_shared_snapshot()
 	_test_light_reaches_the_shared_snapshot()
 	_test_sigil_rounds_and_boss_limiter_reach_the_shared_snapshot()
+	_test_prepared_reaches_the_shared_snapshot()
 	_test_beast_thorns_and_artifact_are_wired()
 	# Beasts that debuff YOU (backlog #69) — Frail and curses through a boss move
 	_test_frail_move_debuffs_the_targeted_hunter()
@@ -4715,6 +4716,18 @@ func _test_sigil_rounds_and_boss_limiter_reach_the_shared_snapshot() -> void:
 	var p1_view: Dictionary = c0.shared["players"][1]
 	_expect(int(p0_view["sigil_rounds"]) == 1 and int(p1_view["sigil_rounds"]) == 3,
 		"a hunter's own sigil_rounds count reaches the shared snapshot, including the owning player's own view")
+
+
+func _test_prepared_reaches_the_shared_snapshot() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	host._run.combat.players[0].prepared = "jetpack"
+	host._broadcast_state()
+	var p0_view: Dictionary = c0.shared["players"][0]
+	var p1_view: Dictionary = c0.shared["players"][1]
+	_expect(String(p0_view["prepared"]) == "jetpack" and String(p1_view["prepared"]) == "",
+		"a hunter's own primed delayed effect (PlayerState.prepared) reaches the shared snapshot, including the owning player's own view")
 
 
 func _test_beast_thorns_and_artifact_are_wired() -> void:

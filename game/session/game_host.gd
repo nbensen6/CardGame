@@ -454,6 +454,13 @@ func _players_public() -> Array:
 				# a camping hunter, never forwarded — an ally had no way to see a
 				# teammate about to take fatigue damage, or know it themselves.
 				"sigil_rounds": ps.sigil_rounds,
+				# PlayerState.prepared (a delayed effect armed this fight, e.g. Goblin
+				# Jetpack's "prepare" card field) is the same kind of gap once more:
+				# Combat._resolve_prepared() reads it every round-start to fire the
+				# delayed effect, but nothing ever put it on the wire — not even for
+				# the owning player, so a hunter who primed a jetpack had no way to
+				# confirm it before it fired next round.
+				"prepared": ps.prepared,
 				"foothold": ps.foothold, "reached": c.sigil_reached(i),
 				"secure": c.is_secure(i), "next_safe": c.next_safe_height(i),
 				"wp_damage": ps.weak_point_damage,
