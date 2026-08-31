@@ -5198,3 +5198,19 @@ Newest first. One line per finished item: what, and anything surprising.
   lines against its 20 NEEDS A PASS blocks. Every other unchecked item is
   tagged `needs a screen`. No code or data changed this run; not re-sending
   the notification since the state it described still hasn't changed.
+- **Thirty-sixth re-check confirms no actionable cloud-safe/cloud-art work** —
+  fetched `origin/main` fresh (tip was `563d500`, no stale-checkout issue this
+  time), then independently re-derived the same conclusion the 8th through
+  35th checks reached before reading any of them: the only unchecked items
+  carrying either tag are #55, #76 and #80, all build-complete and blocked
+  solely on Nick opening `design/ART-REVIEW.md`. Confirmed directly rather
+  than trusting the prior entry's number: `git log --oneline -1 -- game/data/
+  game/assets/` actually points at `2e8310b` (the yoke_ox commit that closed
+  #55's own 14-beast bar), not `d95d4ac` as the 34th/35th checks claimed —
+  that number was already stale then, since yoke_ox (2026-08-30) postdates
+  batch 6 (2026-08-29) and touches both paths. Either way the conclusion is
+  unchanged: no commit since `2e8310b` has touched `game/data/` or
+  `game/assets/`. `design/ART-REVIEW.md` still has 28 NEEDS A PASS blocks and
+  zero APPROVED/REJECTED lines. Every other unchecked item is tagged `needs a
+  screen`. No code or data changed this run; not re-sending the notification
+  since the state it described still hasn't changed.
