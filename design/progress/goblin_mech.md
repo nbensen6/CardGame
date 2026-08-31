@@ -77,3 +77,44 @@ Whether the raised orange bent arm-shape above the shoulder (clearest in
 camera's default angle, or whether it is mid-animation geometry that
 happens to render static here — the module doc doesn't mention it and this
 scoring pass has no way to tell intent from an accident without asking.
+
+---
+
+## Pass 2 — fixer lane, 2026-08-31
+
+Applied by the **fixer** lane (`tools/fixer/BRIEF.md`), which repairs what the
+cloud reports. Views: `design/renders/goblin_mech_pass2_*.png`, captured with
+`look.cmd goblin_mech 2`.
+
+| Pass | Sil | Prop | Hygiene | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 1 | 5 | 5 | 5 | 7 | 7 | **29** |
+| 2 | 7 | 7 | 5 | 7 | 7 | **33** |
+
+### Both diagnosed fixes applied
+
+- **Silhouette (5 → 7).** The compressor box, its lid and the exhaust pipe it
+  carries (all previously centered at x=0.0) shifted +0.30 in X together, onto
+  the rig's own side. `goblin_mech_pass2_top.png` now shows the whole
+  compressor assembly sitting beside the head instead of behind it, and
+  `goblin_mech_pass2_sil.png` reads as one connected mass on the rig side —
+  compare `goblin_mech_pass1_sil.png`'s separate notch cut into the skyline
+  above the shoulder.
+- **Proportion (5 → 7).** Upper-arm limb radii `[0.098, 0.086, 0.080] →
+  [0.137, 0.120, 0.112]` and wrist limb radii `[0.068, 0.076, 0.082] →
+  [0.095, 0.106, 0.115]`, both roughly ×1.4, closing most of the gap against
+  the 0.12–0.15 half-extent boxes they bridge. `goblin_mech_pass2_form.png`
+  and `_side.png` show the shoulder-to-wrist-to-claw chain reading as one
+  jointed arm rather than boxes strung on a thread.
+
++4 total, not a plateau — kept. Hygiene, colour and style were not touched,
+per the brief; their scores are unchanged from pass 1. Hygiene stays at 5 —
+the tri-budget overage (1484/1400) and the sigil-less rig were not part of
+either diagnosed line, and this pass didn't touch geometry count.
+
+## Unsure about, still
+
+The pass-1 "orbiting part" hygiene framing and the raised orange arm-shape
+above the shoulder are both untouched — outside the two lines this pass was
+allowed to touch. Same open question as pass 1 on whether that shape is
+meant to render statically.

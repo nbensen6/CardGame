@@ -50,20 +50,29 @@ b.box((0.0, -0.190, 0.605), (0.150, 0.038, 0.140), UMBER, bevel=0.024)  # apron
 # Swapping the numbers straight across inflates every part by its corners, and
 # the first pass came out as a stack of grey fridges the goblin was hiding
 # behind. Multiply the old radii by about 0.72 and the volumes match.
-b.box((0.0, 0.278, 0.800), (0.145, 0.098, 0.152), GRAPHITE, bevel=0.026)
-b.box((0.0, 0.278, 0.960), (0.106, 0.078, 0.030), PEWTER, bevel=0.013)   # lid
-b.limb([(0.112, 0.330, 0.880), (0.122, 0.398, 0.995), (0.140, 0.392, 1.088)],
+#
+# The compressor was centered at x=0.0 - dead on the goblin's own centerline,
+# so it sat behind the head in every view instead of hung off the rig's
+# shoulder. Shifted +0.30 in X, with the lid and exhaust it carries moving as
+# one piece with it, so nothing mechanical crosses behind the head.
+b.box((0.30, 0.278, 0.800), (0.145, 0.098, 0.152), GRAPHITE, bevel=0.026)
+b.box((0.30, 0.278, 0.960), (0.106, 0.078, 0.030), PEWTER, bevel=0.013)   # lid
+b.limb([(0.412, 0.330, 0.880), (0.422, 0.398, 0.995), (0.440, 0.392, 1.088)],
        [0.044, 0.040, 0.036], PUMPKIN, seg=6)                           # exhaust
-b.taper((0.142, 0.392, 1.128), 0.057, 0.046, 0.078, CARROT, seg=6, bevel=0.010)
+b.taper((0.442, 0.392, 1.128), 0.057, 0.046, 0.078, CARROT, seg=6, bevel=0.010)
 
 b.box((0.346, 0.030, 0.812), (0.122, 0.126, 0.134), PEWTER, bevel=0.024,
       rot=(0.0, 0.10, 0.0))
+# Upper arm and wrist limbs were 0.086-0.098 radius bridging boxes with
+# 0.12-0.15 half-extents - thin enough that the joints vanished between the
+# bigger masses and the rig read as loose boxes rather than one jointed arm.
+# Thickened ~1.4x so the limb reads as continuous with the boxes it connects.
 b.limb([(0.350, 0.020, 0.766), (0.392, -0.030, 0.652), (0.414, -0.062, 0.580)],
-       [0.098, 0.086, 0.080], STONE, seg=6)                             # upper arm
+       [0.137, 0.120, 0.112], STONE, seg=6)                             # upper arm
 b.box((0.416, -0.068, 0.548), (0.086, 0.090, 0.106), PEWTER, bevel=0.020,
       rot=(0.12, 0.14, 0.0))
 b.limb([(0.420, -0.076, 0.500), (0.438, -0.100, 0.430), (0.450, -0.118, 0.378)],
-       [0.068, 0.076, 0.082], PEWTER, seg=6)                            # wrist
+       [0.095, 0.106, 0.115], PEWTER, seg=6)                            # wrist
 b.box((0.454, -0.128, 0.298), (0.132, 0.138, 0.112), STONE, bevel=0.026,
       rot=(0.18, 0.20, 0.0))
 b.taper((0.454, -0.268, 0.298), 0.072, 0.058, 0.130, CARROT, seg=6, rot=(FWD, 0, 0))
