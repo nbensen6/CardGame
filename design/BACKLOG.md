@@ -288,6 +288,95 @@ Ordered. Source in brackets.
   gale_serpent, drowned_colossus, sunken_warden, riftling), the map, all
   nineteen portraits and all icon sets remain unscored. No model script
   touched — report only, per this item's own rule. Left unchecked.
+  **Checked 2026-08-31: batch 7, apt-get blender again (same route as
+  batches 1-6).** Scored four more fight grounds: `sky_snapper_ground`
+  (25/50 — the crag-column wall fills the fight-camera frame near-black,
+  the same pattern as the earlier stone grounds, and the nest ring of
+  "dragged branches and bones" the docstring names as the one detail that
+  carries the ground is not identifiable as anything but generic dark
+  scatter in any view), `frost_sentinel_ground` (**36/50, the best-reading
+  ground scored under this item so far** — because the ice-shard wall
+  tapers to points rather than staying wide at the base, the radiating
+  floor cracks stay partly visible even at the fight-camera angle, unlike
+  every stone-wall ground scored in batches 5-6, and ICE/SILVER has none
+  of the dark-on-dark problem the other grounds share), `shifting_idol_ground`
+  (23/50, tied lowest of this batch — **5504 tris against the 3600 ground
+  budget, a 53% overage**, the largest found under this item so far; the
+  concentric flagstone rings read as the strongest "made" floor pattern
+  scored under this item from directly above, but none of it survives to
+  the fight-camera angle), `grove_bear_ground` (23/50, tied lowest of this
+  batch — **6300 tris against the 3600 budget, a 75% overage**, surpassing
+  shifting_idol_ground's overage in the same batch; also the third ground
+  scored under this item built from the same conifer-ring recipe as
+  bramble_hog_ground and root_lurker_ground, and reads as visually close
+  to both rather than as a distinct place). Two grounds in one batch each
+  breaking budget by more than half is a pattern, not two isolated
+  findings. Full rubric tables, per-line justifications and one concrete
+  (unproposed, per this item's report-only rule) diagnosis per asset are
+  in `design/progress/<name>_ground.md`. Ten of fourteen grounds now
+  scored (stone_warden, crag_pup, bounder, bramble_hog, root_lurker,
+  mire_snapper, sky_snapper, frost_sentinel, shifting_idol, grove_bear);
+  four grounds (gale_serpent, drowned_colossus, sunken_warden, riftling),
+  the map, all nineteen portraits and all icon sets remain unscored. No
+  model script touched — report only, per this item's own rule. Left
+  unchecked.
+
+  **Ranked weakest ten, updated after batch 7** (of the 29 assets scored
+  across all seven batches — lowest first, out of 50): shifting_idol_ground
+  23, grove_bear_ground 23, bog_leech 25, sky_snapper_ground 25,
+  mire_snapper_ground 26, crag_pup_ground 27, bounder_ground 27,
+  clot_toad 28, root_lurker_ground 28, then a six-way tie at 29
+  (boulder_ram, husk_beetle, stone_warden_ground, bramble_hog_ground,
+  goblin_mech — any one stands in as the tenth). The single lowest scores
+  are now the two batch-7 grounds, both for the same reason — a large tri
+  budget overage plus floor storytelling that does not survive to the
+  fight-camera angle — which, alongside the beasts' "orbiting part"
+  pattern from the batch-4 ranking, makes "budget overage + hidden floor
+  detail" the second cross-batch pattern worth a shared fix if Nick wants
+  one.
+  **Checked 2026-08-31: batch 8, apt-get blender again (same route as
+  batches 1-7).** Scored the last four fight grounds — all fourteen are
+  now done. `gale_serpent_ground` (22/50 — 5906 tris against the 3600
+  budget, 64% over; the floor's one on-concept detail, rock grooves that
+  spiral the same turn as the beast, is only visible from directly above
+  and reads as a flat grey disc from the fight camera; no accent colour
+  anywhere), `drowned_colossus_ground` (26/50, best of this batch — the
+  first `ruin` enclosure built from separate standing pillars with real
+  gaps rather than a joined wall, and a genuine partial exception to the
+  "wall hides the floor" pattern: a sliver of the TAN tide-pool floor is
+  actually visible through the central gap in `_34.png` and `_side.png`,
+  though still 5800 tris, 61% over budget), `sunken_warden_ground` (**21/50,
+  the lowest scored under this item across all eight batches** — 6908 tris
+  against 3600, a 92% overage that beats grove_bear_ground's previous
+  record of 75%, and the docstring's one stated colour goal, "coral, the
+  one warm colour in the game's coldest palette," reads as cool blue/indigo
+  in every view rather than warm; flagged as possibly a lighting artefact
+  of the generic capture rather than a real swatch bug, not confirmed
+  either way), `riftling_ground` (23/50 — the only ground in this batch
+  close to budget, 3748 tris against 3600, just 4% over, but the darkest
+  ground read under this item so far, near-black CHARCOAL/GRAPHITE in every
+  view, and its one defining idea — "the light comes from BELOW here and
+  nowhere else in the game" — cannot be judged at all from a generically-lit
+  static render). Full rubric tables, per-line justifications and one
+  concrete (unproposed, per this item's report-only rule) diagnosis per
+  asset are in `design/progress/<name>_ground.md`. **All fourteen fight
+  grounds now scored.** The map, all nineteen portraits and all icon sets
+  remain unscored. No model script touched — report only, per this item's
+  own rule. Left unchecked.
+
+  **Ranked weakest ten, updated after batch 8** (of the 33 assets scored
+  across all eight batches — lowest first, out of 50): sunken_warden_ground
+  21, gale_serpent_ground 22, shifting_idol_ground 23, grove_bear_ground 23,
+  riftling_ground 23, bog_leech 25, sky_snapper_ground 25,
+  mire_snapper_ground 26, drowned_colossus_ground 26, then a tie at 27
+  (crag_pup_ground, bounder_ground — either stands in as the tenth). Three
+  of this batch's four grounds carry tri overages of 61-92%, and
+  `sunken_warden_ground`'s 92% is now the single worst overage found under
+  this item, ahead of `grove_bear_ground`'s 75% from batch 7 — "budget
+  overage + hidden floor detail" is now the pattern across most of the
+  fourteen grounds, not just batch 7's two. `drowned_colossus_ground`'s
+  visible-through-the-gap floor sliver is the first partial counter-example
+  to "the wall always hides the floor" found under this item.
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
   relic") on top of the existing Rest / Thin / Sharpen and `Run.relic_totals()`.
   *Done when:* pickable at a campfire, persists, shows in the relic list.
