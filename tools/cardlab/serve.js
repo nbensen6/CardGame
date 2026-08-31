@@ -30,6 +30,36 @@ function lanUrls() {
 }
 
 
+/** Godot's headless importer. Without this an uploaded PNG is invisible.
+ *
+ * Godot does not load a raw file from res:// - it loads the .import sidecar it
+ * generates when the editor (or `--headless --import`) first sees the file. So
+ * an upload landed on disk, got committed, and the card went on showing its
+ * shared icon, because ResourceLoader.exists() was quite correctly saying no.
+ *
+ * The path can be overridden with GODOT= for anyone whose install is elsewhere.
+ */
+const GODOT = process.env.GODOT ||
+  "C:/Users/nbens/AppData/Local/Programs/Godot/Godot_v4.7.1-stable_win64_console.exe";
+
+function importArt(id, file) {
+  if (!fs.existsSync(GODOT)) {
+    console.log("art import: no Godot at " + GODOT + " - set GODOT=<path>. " +
+      "The file is saved but the game will not see it until something imports it.");
+    return commitArt(id, file);
+  }
+  execFile(GODOT, ["--headless", "--path", path.join(ROOT, "game"), "--import"],
+    { timeout: 180000 }, (err) => {
+      if (err) console.log("art import: failed - " + err.message);
+      else console.log("art import: " + id + ".png is now visible to the game");
+      // Commit either way, and AFTER the import, so the .import sidecar goes in
+      // the same commit as the picture. Splitting them leaves a checkout where
+      // the art exists and the game cannot see it.
+      commitArt(id, file);
+    });
+}
+
+
 /** Commit a piece of uploaded art, and try to push it.
  *
  * game/assets/cardart/ is tracked but nothing was putting new files INTO a
@@ -46,7 +76,7 @@ function lanUrls() {
  */
 function commitArt(id, file) {
   const opts = { cwd: ROOT, timeout: 60000 };
-  execFile("git", ["add", "--", file], opts, (addErr) => {
+  execFile("git", ["add", "--", file, file + ".import"], opts, (addErr) => {
     if (addErr) return console.log("art commit: git add failed - " + addErr.message);
     execFile("git", ["commit", "-m",
       "Card art for " + id + " (uploaded from the Card Lab, committed so it "
@@ -133,11 +163,26 @@ http
           res.writeHead(400, { "content-type": "text/plain" });
           return res.end("not a PNG");
         }
+        // PNG dimensions live in the IHDR chunk: width and height as big-endian
+        // 32-bit ints at bytes 16 and 20. Read them so a wrong-shaped export is
+        // caught HERE rather than discovered on a card weeks later.
+        //
+        // This is not hypothetical. The first art uploaded was 768x1024 -
+        // portrait, the shape of the CARD - while the art window is 1024x768
+        // landscape, the shape of the WINDOW. It went in, committed, and showed
+        // up letterboxed with bars either side, and the obvious conclusion was
+        // that the upload had not worked.
+        const w = buf.readUInt32BE(16), h = buf.readUInt32BE(20);
+        const want = 4 / 3, got = w / h;
+        const warn = Math.abs(got - want) > 0.08
+          ? "saved, but it is " + w + "x" + h + " and the art window is 4:3 " +
+            "landscape - export 1024x768 or it will be cropped"
+          : "";
         fs.writeFileSync(file, buf);
         console.log("card art: wrote " + put[1] + ".png (" + buf.length + " bytes)");
         res.writeHead(200, { "content-type": "text/plain" });
-        res.end("ok");
-        commitArt(put[1], file);
+        res.end(warn || "ok");
+        importArt(put[1], file);
       });
       return;
     }

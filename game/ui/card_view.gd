@@ -842,7 +842,7 @@ func _art(icon: String, portrait: String = "", card_id: String = "") -> Control:
 	# 86, not 58. The window is the biggest element on a Slay the Spire card
 	# whether or not there is art in it, and sizing it to the ICON made ours
 	# a name over a gap over a paragraph.
-	tex.custom_minimum_size = Vector2(0, 76 if portrait != "" else 86)
+	tex.custom_minimum_size = Vector2(0, 76 if portrait != "" else 0)
 	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE  # a big PNG must not force the card taller
 	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	var own := CARD_ART + card_id + ".png"
@@ -853,8 +853,15 @@ func _art(icon: String, portrait: String = "", card_id: String = "") -> Control:
 		# The art is the card. In the reference it runs from under the name
 		# plate to the type pill - well over half the face - and everything else
 		# is a strip. Ours was 42px on a 224px card.
-		var wide: float = maxf(custom_minimum_size.x, 118.0) - 26.0
-		tex.custom_minimum_size = Vector2(0, wide * CARD_ART_ASPECT * 1.18)
+		# NO minimum height. size_flags_vertical is already EXPAND_FILL, so the
+		# window takes whatever the card has spare - and a minimum on top of that
+		# does not make the art bigger, it makes the CARD bigger.
+		#
+		# That is the bug: a card with real art demanded 100px for its window on
+		# top of the name, pill and rules, blew past its own custom_minimum_size,
+		# and came out visibly taller than its neighbours. Leap was a head above
+		# the rest of the hand, and the fan lays cards out assuming they match.
+		tex.custom_minimum_size = Vector2.ZERO
 		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 		tex.clip_contents = true
 		tex.texture = load(own)

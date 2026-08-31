@@ -947,8 +947,9 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>goTab(b.dataset
     stat.textContent = "uploading " + f.name + "...";
     fetch("/upload/" + encodeURIComponent(id), { method:"POST", body:f })
       .then(r => r.ok ? r.text() : r.text().then(t => { throw new Error(t); }))
-      .then(() => {
-        stat.textContent = "saved as cardart/" + id + ".png";
+      .then(msg => {
+        stat.textContent = (msg && msg !== "ok") ? msg
+          : "saved as cardart/" + id + ".png";
         // Mark it on the CARD, not just on this modal. D.cards was baked when
         // the page was built, so hasArt is still false for a card that had none
         // a moment ago - and reopening the modal would go back to showing the
