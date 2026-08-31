@@ -56,7 +56,7 @@ b.shelf(3, (0.0, 0.66), (0.56, 0.38), SLATE, thickness=0.15, bevel=0.05,
         drop=0.02)
 # A seam down the spine, the classic beetle elytra split, and one running
 # between each pair of shell steps - breaks up the smooth dome into plates.
-b.box((0.0, -0.30, 1.78), (0.020, 1.15, 0.030), CHARCOAL, bevel=0.0)
+b.box((0.0, -0.30, 1.73), (0.020, 1.15, 0.030), CHARCOAL, bevel=0.0)
 b.box((-0.46, 0.30, 1.36), (0.30, 0.020, 0.020), CHARCOAL, bevel=0.0,
       rot=(0.0, 0.0, 0.35))
 b.box((0.46, 0.30, 1.36), (0.30, 0.020, 0.020), CHARCOAL, bevel=0.0,
@@ -74,6 +74,6 @@ b.foot((0.84, -0.66, 0.30))                                   # onto a foreleg
 
 # The sigil, cracked and gold, on the front face of the tail-plate - facing
 # -Y, toward the camera, the same direction every other beast's mark faces.
-b.mark(at=(0.0, -0.20, b.z_for(5)), size=0.16, facing=(0.0, -0.94, 0.30))
+b.mark(at=(0.0, 0.00, b.z_for(5)), size=0.16, facing=(0.0, -0.94, 0.30))
 
 b.done(out_path(), name="HuskBeetle")
