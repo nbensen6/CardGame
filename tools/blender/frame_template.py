@@ -46,10 +46,23 @@ ART_ASPECT = 0.75                # must match card_view.CARD_ART_ASPECT
 W, H = OUT_W, OUT_H
 M = int(round(MARGIN * SCALE))
 
-GUIDE = (255, 92, 92, 210)
-SOFT = (120, 200, 255, 150)
-FILL_CORNER = (255, 92, 92, 26)
-FILL_EDGE = (120, 200, 255, 20)
+## OPAQUE, every one of them, and this is the whole of a bug worth remembering.
+##
+## The bands were written as RGBA with alpha 20 and 26, on the assumption that
+## ImageDraw would composite them onto the dark background. It does not — it
+## writes the value straight in, alpha included. So the top and bottom of the
+## guide came out 92% TRANSPARENT, which looks like nothing at all in a viewer
+## that composites over white, and in Canva shows the white page through it.
+## Nick reported it as "blank space on the canvas" and was told twice, wrongly,
+## that his canvas was the wrong size.
+##
+## These are the same tints, pre-blended against the background by hand, so
+## nothing is left to composite.
+BG = (26, 27, 32, 255)
+GUIDE = (255, 92, 92, 255)
+SOFT = (120, 200, 255, 255)
+FILL_CORNER = (49, 34, 38, 255)
+FILL_EDGE = (33, 40, 49, 255)
 INK = (255, 255, 255, 235)
 DIM = (255, 255, 255, 130)
 ## The two corner callouts sit ON the pale edge band, not on the dark body,
@@ -77,7 +90,7 @@ def main():
     here = os.path.dirname(os.path.abspath(__file__))
     out = os.path.normpath(os.path.join(here, "..", "..", "design",
                                         "card-frame-template.png"))
-    im = Image.new("RGBA", (W, H), (26, 27, 32, 255))
+    im = Image.new("RGBA", (W, H), BG)
     d = ImageDraw.Draw(im, "RGBA")
 
     # the four corners — the safe places for ornament
@@ -131,6 +144,9 @@ def main():
                      "with the middle TRANSPARENT."
                      % (CARD_W, CARD_H, 124, 186, W, H),
                      fill=DIM, font=small, spacing=6)
+    # Flatten. A guide with any transparency in it is indistinguishable
+    # from empty canvas the moment it is placed on a white page.
+    im = im.convert("RGB")
     im.save(out)
     print("TEMPLATE %s  (%dx%d, 9-slice margin %dpx at card size)"
           % (out, W, H, MARGIN))
