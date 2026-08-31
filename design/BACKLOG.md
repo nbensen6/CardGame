@@ -1321,6 +1321,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-08-31** — Re-check after the `prepared`-forwarding fix landed. Fetched
+  `origin/main` fresh (tip `04e31f5`, no stale-HEAD this run). Independently
+  re-verified against the tree, not the log: `bosses.json` now has 28 bosses
+  (the original Titans/beasts plus all fourteen of item #55's new-content
+  beasts) and `design/ART-REVIEW.md` has 28 `NEEDS A PASS` blocks, one per
+  boss; `cards.json` still 187/187 cards with a non-empty `icon` field. The
+  Queue's `- [ ]` items are the same 13 as every recent check — 2, 3, 8, 25,
+  29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
+  `cloud-safe`/`cloud-art`, each past its own "Done when" bar and blocked
+  solely on Nick opening `design/ART-REVIEW.md`. Also went looking for more
+  of the wire-gap class of bug the previous two entries closed (sigil_rounds/
+  boss.limiter, then PlayerState.prepared): read every field on `PlayerState`
+  (`player_state.gd`), `Boss` (`boss.gd`) and `Combatant` (`combatant.gd`) by
+  hand and cross-checked each against `game_host.gd`'s `_players_public()`,
+  the boss dict in `_build_shared()`, and `_slot_private()`. Every field that
+  is a real banked status a player or ally needs to see — frail, artifact,
+  thorns, dexterity, intangible, buffer, plated_armour on both sides; light,
+  sigil_rounds, prepared, foothold, weak_point_damage, strength, rhythm,
+  energy, ended on the player side; vulnerable, strength, wound,
+  weak_point_height, ledges, weak_point_threshold, limiter, art on the boss
+  side — is already forwarded. The remaining unforwarded `PlayerState` fields
+  (`cost_reductions`, `play_counts`, `cards_played_this_turn`, `climb_bonus`,
+  `char_attack_bonus`, `ally_climb`, `poison_lift`) are internal bookkeeping a
+  card's own preview number already accounts for, the same conclusion the
+  `prepared` entry reached — confirmed again rather than trusted secondhand.
+  That vein is dry too. No code or data changed, so no test cycle to run and
+  nothing new to commit beyond this line. Not sending a notification:
+  standing condition unchanged from what's already been reported.
 - **2026-08-31** — Found one more real cloud-safe gap in the same class the
   sixteenth/twenty-ninth/thirtieth/most-recent Log entries already found (a
   real value Combat reads that never reached the shared snapshot). Checked
