@@ -207,6 +207,10 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 	var margin := 6 if compact else 10
 	for side in ["left", "top", "right", "bottom"]:
 		pad.add_theme_constant_override("margin_" + side, margin)
+	if not compact:
+		# Clear the ribbon, which is drawn over the top edge rather than laid
+		# out in this column.
+		pad.add_theme_constant_override("margin_top", 30)
 	add_child(pad)
 
 	var box := VBoxContainer.new()
@@ -218,10 +222,18 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 		box.add_child(_rail_row(data))
 	else:
 		box.add_child(_rarity_pips(data))
-		box.add_child(_header(String(data.get("name", "")), int(data.get("cost", 0)), bool(data.get("no_cost", false))))
+		# The name on its ribbon, the art, then the type on its pill — the
+		# order in Nick's reference cards, and the reason the pill reads as
+		# a label ON the art rather than a heading over the rules.
 		box.add_child(_art(String(data.get("icon", "")),
 			String(data.get("portrait", "")), String(data.get("id", ""))))
-		box.add_child(_rich_body(data, 12, 74))
+		var kind := String(data.get("type", ""))
+		if kind != "":
+			var tag := _plate(PILL, PILL_SLICE, kind.capitalize(), 10, 17)
+			tag.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			tag.custom_minimum_size = Vector2(62, 17)
+			box.add_child(tag)
+		box.add_child(_rich_body(data, 12, 62))
 
 	_strip = _build_timing_strip()  # hidden until start_timing()
 	box.add_child(_strip)
@@ -229,6 +241,27 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 	if bool(data.get("timed", false)):
 		_clock = _clock_badge(compact, int(data.get("timed_hits", 1)))
 		add_child(_clock)
+	if not compact:
+		# The ribbon STRADDLES the top edge and overhangs both sides, the way
+		# it does on Nick's Bash card. Inside the padded column it was a
+		# stub about 66px wide once the notched ends took their 26 each,
+		# and "Tongue Snap" ran straight off it.
+		var ban := _plate(BANNER, BANNER_SLICE,
+			String(data.get("name", "")), 11, 22)
+		ban.set_anchors_preset(Control.PRESET_TOP_WIDE)
+		# Starts to the RIGHT of the gem rather than under it. The ribbon is
+		# centred text, so an orb sitting on its left end does not just cover
+		# the plate — it eats the first characters of the name.
+		ban.offset_left = 22.0
+		ban.offset_right = 7.0
+		ban.offset_top = 3.0
+		ban.offset_bottom = 25.0
+		add_child(ban)
+		# Added AFTER the ribbon so it draws over it, which is the stacking
+		# order in the reference: the gem sits on the corner of the plate.
+		if not bool(data.get("no_cost", false)):
+			add_child(_cost_orb(int(data.get("cost", 0)),
+				String(data.get("character", ""))))
 	_foil = null
 	if bool(data.get("foil", false)) or force_foil:
 		_build_foil(data)
@@ -600,6 +633,74 @@ static func _kw(word: String, id: String, kws: Array, rich: bool) -> String:
 		if String((k as Dictionary).get("id", "")) == id:
 			return "[url=kw:%s][u][color=#%s]%s[/color][/u][/url]" % [id, KEYWORD_COLOR, word]
 	return word
+
+
+const BANNER := preload("res://assets/ui/banner.png")
+const PILL := preload("res://assets/ui/pill.png")
+## Horizontal nine-slice margins — the shaped ends are fixed, the middle
+## stretches. Must match the shapes plates.py renders.
+const BANNER_SLICE := 26
+const PILL_SLICE := 13
+const ORBS := {
+	"frog": preload("res://assets/ui/orb_frog.png"),
+	"vine_weaver": preload("res://assets/ui/orb_vine_weaver.png"),
+	"mountain_climbers": preload("res://assets/ui/orb_mountain_climbers.png"),
+	"goblin_mech": preload("res://assets/ui/orb_goblin_mech.png"),
+	"lightbearer": preload("res://assets/ui/orb_lightbearer.png"),
+	"common": preload("res://assets/ui/orb_common.png"),
+}
+
+
+## A shaped plate with a label centred on it.
+##
+## NinePatchRect rather than TextureRect: "Bash" and "Reckless Charge" are very
+## different widths, and the ribbon's notched ends have to stay notched at both.
+func _plate(tex: Texture2D, slice: int, txt: String, size: int,
+		height: int) -> Control:
+	var np := NinePatchRect.new()
+	np.texture = tex
+	np.patch_margin_left = slice
+	np.patch_margin_right = slice
+	np.custom_minimum_size = Vector2(0, height)
+	np.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var lbl := _label(txt, size)
+	lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	# Dark ink: the plate is steel and deliberately light, because it has to
+	# carry a name on all six border colours.
+	lbl.add_theme_color_override("font_color", Color(0.13, 0.14, 0.17))
+	lbl.add_theme_color_override("font_outline_color", Color(1, 1, 1, 0.35))
+	lbl.add_theme_constant_override("outline_size", 2)
+	np.add_child(lbl)
+	return np
+
+
+## The cost gem, hung off the top-left corner.
+##
+## Added to the CARD rather than to the layout column, because in the reference
+## it overhangs the frame — and anything inside the column is clipped to the
+## content margin, which is exactly the overhang.
+func _cost_orb(cost: int, who: String) -> Control:
+	var tex: Texture2D = ORBS.get(who, ORBS["common"])
+	var orb := TextureRect.new()
+	orb.texture = tex
+	orb.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	var d := 34.0 if not _compact else 24.0
+	orb.custom_minimum_size = Vector2(d, d)
+	orb.size = Vector2(d, d)
+	orb.position = Vector2(-5, -6)
+	orb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var lbl := _label(str(cost), 16 if not _compact else 12)
+	lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.add_theme_color_override("font_color", Color(1, 0.97, 0.9))
+	lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.75))
+	lbl.add_theme_constant_override("outline_size", 4)
+	orb.add_child(lbl)
+	return orb
 
 
 func _header(card_name: String, cost: int, no_cost: bool = false) -> Control:
