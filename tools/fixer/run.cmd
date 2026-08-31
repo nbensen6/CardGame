@@ -23,6 +23,10 @@ REM Left for Nick to run rather than done automatically: registering a task that
 REM edits a repo and pushes to GitHub every hour is his call, not a side effect
 REM of asking how it would work.
 
+REM FIRST TIME: the CLI needs its own login, separate from the desktop app.
+REM If this prints "OAuth session expired", run `claude` once in a terminal,
+REM sign in, then close it. The token is reused after that.
+
 setlocal
 set ROOT=%~dp0..\..
 cd /d "%ROOT%"
