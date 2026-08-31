@@ -705,18 +705,28 @@ func _label(text_str: String, size: int) -> Label:
 	return l
 
 
-## One frame per rarity, rendered by tools/blender/frames.py — a real bevel lit
-## from the top left, which is where the "almost 3D" in Nick's reference cards
-## actually comes from. The rarity IS the border now; the old single frame with a
-## tint on it was a difference nobody could see.
+## One frame per CHARACTER, rendered by tools/blender/frames.py — a real
+## moulding lit from the top left, which is where the "almost 3D" in Nick's
+## reference cards comes from.
+##
+## By character rather than by rarity because that is what he asked for and it
+## is the stronger signal: a hand is one hunter's cards, so the border tells you
+## whose turn you are looking at before you read a word. Rarity is still on the
+## face, as the gem pips.
+##
+## "common" is the fallback for a card with no owner — a reward on offer, a
+## neutral card — not a rarity.
 const FRAMES := {
+	"frog": preload("res://assets/ui/frame_frog.png"),
+	"vine_weaver": preload("res://assets/ui/frame_vine_weaver.png"),
+	"mountain_climbers": preload("res://assets/ui/frame_mountain_climbers.png"),
+	"goblin_mech": preload("res://assets/ui/frame_goblin_mech.png"),
+	"lightbearer": preload("res://assets/ui/frame_lightbearer.png"),
 	"common": preload("res://assets/ui/frame_common.png"),
-	"uncommon": preload("res://assets/ui/frame_uncommon.png"),
-	"rare": preload("res://assets/ui/frame_rare.png"),
 }
-## Must match frames.py's MARGIN. The bevelled corners are in this band and a
-## 9-slice stretches everything outside it — get this wrong and the corners smear.
-const FRAME_MARGIN := 15
+## Must match frames.py's MARGIN. The moulding lives in this band and a 9-slice
+## stretches everything outside it — get this wrong and the corners smear.
+const FRAME_MARGIN := 17
 const FRAME_GOLD := preload("res://assets/ui/card_gold.png")
 
 
@@ -764,7 +774,7 @@ func _rarity_pips(data: Dictionary) -> Control:
 
 
 func _apply_frame() -> void:
-	var tex: Texture2D = FRAMES.get(String(_data.get("rarity", "common")),
+	var tex: Texture2D = FRAMES.get(String(_data.get("character", "")),
 		FRAMES["common"])
 	# Hover lifts, pressed sinks, disabled drains. All off ONE rendered frame:
 	# the bevel already carries the form, so the states only have to change how
@@ -783,7 +793,7 @@ func _tex_frame(tex: Texture2D, tint: Color = Color.WHITE) -> StyleBoxTexture:
 	sb.set_texture_margin_all(FRAME_MARGIN)  # the bevel lives here; never stretch it
 	# Clear of the border, or the rules text sits on the bevel and the card reads
 	# as cramped. The frame's border is about 13% of its width.
-	sb.set_content_margin_all(13)
+	sb.set_content_margin_all(15)
 	return sb
 
 

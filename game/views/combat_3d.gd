@@ -891,6 +891,19 @@ func _update_grip_bar() -> void:
 		who, int(st.get("target", 0)), extra]
 
 
+## Which hunter's cards are on screen — the one whose border the hand wears.
+##
+## Off _client.shared like every other read in this view; there is no
+## _client.state(), which an earlier version of this assumed and which failed
+## at runtime while the screenshot harness still reported SHOT SAVED.
+func _my_character() -> String:
+	var players: Array = _client.shared.get("players", [])
+	var me := _me()
+	if me < 0 or me >= players.size():
+		return ""
+	return String((players[me] as Dictionary).get("character", ""))
+
+
 func _hunter_name(slot: int) -> String:
 	var players: Array = _client.shared.get("players", [])
 	if slot < 0 or slot >= players.size():
@@ -2640,6 +2653,9 @@ func _render_hand() -> void:
 		# chosen in Aug to keep the 3D scene clear; with the camera pulled back and
 		# the beasts scaled up, the bottom strip is affordable again and the cards
 		# read far better at portrait size.
+		# The border is the hunter's, so the card has to know whose hand it is
+		# in. Card data is per-CARD and carries no owner; the hand does.
+		card["character"] = _my_character()
 		cv.setup(card, playable, false)
 		var c_card: Dictionary = card
 		cv.tapped.connect(func() -> void: _on_card_tapped(c_card, cv))
