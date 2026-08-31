@@ -1568,8 +1568,25 @@ check. It never judges its own work. See item 74 for why.
 
 ## Working alongside the cloud routine
 
-Two of us push to `main`: the routine every two hours, and Nick-and-Claude in a
-session. That works, but it has an order to it.
+THREE of us push to `main` now, and each owns different files. Staying in lane
+is what stops three writers on one branch from trampling each other.
+
+| Lane | Runs | Owns | Does |
+|---|---|---|---|
+| **cloud** | hourly, Anthropic infra | `design/progress/**`, this file | scores art, **reports, never repairs** |
+| **fixer** | this PC, `tools/fixer/run.cmd` | `tools/blender/**`, `game/assets/3d/**` | applies the fixes the cloud proposed, one asset a run |
+| **session** | Nick and Claude, live | `game/**` code, everything else | whatever Nick asks for |
+
+The fixer's own brief is `tools/fixer/BRIEF.md`. It is the file to edit to
+change what it does — not this one.
+
+**It has already gone wrong once.** On 2026-08-31 the session raised the ground
+triangle budget three times while the cloud was mid-pass, and nine of the
+cloud's findings were scored against a number that no longer existed. The
+lesson is in the fixer's brief as a hard rule: never move a shared constant —
+a budget, a contract, the palette — to make one asset pass.
+
+That works, but it has an order to it.
 
 **The routine builds engines; the session builds faces.** Almost everything
 tagged `needs a screen` is the visible half of something the routine already
