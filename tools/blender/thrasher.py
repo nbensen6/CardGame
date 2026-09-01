@@ -86,13 +86,22 @@ b.limb([(0.0, 0.95, 1.10), (0.0, 1.32, 1.68), (0.0, 1.10, 2.14),
 # it stopped 0.004 short — the whole mount, taper and mark counted as a
 # separate object floating beside the spine.
 b.ball((0.34, 0.34, b.z_for(5)), (0.16, 0.22, 0.16), GRAPHITE, 8, 5)
-b.taper((0.34, -0.02, b.z_for(5) - 0.02), 0.07, 0.02, 0.46, GRAPHITE, seg=6,
+# Thickened base (0.07 -> 0.13) and shortened by a third (0.46 -> 0.31), same
+# fix as Silk Widow's own crest this batch, so it reads as a stub growing off
+# the tail rather than a wire poking out to the side. Centre moved 0.075
+# forward (y -0.02 -> 0.055) so the shortened length comes off the FRONT
+# (mark) end only - trimming it symmetrically around the old centre would
+# have pulled the thick base end 0.075 further from the ball it is meant to
+# fuse with, the opposite of the fix.
+b.taper((0.34, 0.055, b.z_for(5) - 0.02), 0.13, 0.02, 0.31, GRAPHITE, seg=6,
         rot=point((0.0, -1.0, 0.0)))
 
 b.foot((0.80, -0.62, 0.08))                                    # onto a foreleg
 
 # The sigil, pulled well forward of the crest's own surface rather than
-# sitting at its edge - see the comment above.
-b.mark(at=(0.34, -0.24, b.z_for(5)), size=0.16, facing=(0.0, -0.94, 0.30))
+# sitting at its edge - see the comment above. Pulled in from -0.24 to -0.09
+# to stay seated on the taper's own tip now that the taper's front end sits
+# 0.155 closer than before.
+b.mark(at=(0.34, -0.09, b.z_for(5)), size=0.16, facing=(0.0, -0.94, 0.30))
 
 b.done(out_path(), name="Thrasher")
