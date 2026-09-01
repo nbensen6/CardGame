@@ -41,7 +41,7 @@ FOCUS = {
     "husk_beetle": (0.46, 1.20), "gloom_moth": (0.55, 1.05),
     "bog_leech": (0.39, 1.28), "thrasher": (0.42, 1.55),
     "silk_widow": (0.45, 1.35), "boulder_ram": (0.34, 1.35),
-    "cinder_jackal": (0.45, 1.60), "brine_urchin": (0.62, 1.30),
+    "cinder_jackal": (0.60, 1.35), "brine_urchin": (0.62, 1.30),
     "clot_toad": (0.48, 1.35), "flicker_stag": (0.80, 0.62),
     "eyrie_hawk": (0.78, 0.60), "glyph_tortoise": (0.58, 1.00),
     "riptide_eel": (0.873, 0.62), "yoke_ox": (0.45, 1.25),
@@ -58,6 +58,7 @@ FOCUS = {
 ## than bend the shared formula for one outlier.
 FOCUS_XY = {
     "riptide_eel": (0.02, -1.35),
+    "cinder_jackal": (0.0, -0.7),
 }
 
 ## Three-quarter and a little above: the angle every character in this game was

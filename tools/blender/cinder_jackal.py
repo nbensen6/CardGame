@@ -55,7 +55,14 @@ mirror(lambda s: b.taper((0.15 * s, -0.98, 1.52), 0.11, 0.01, 0.30,
 
 # A low ember-coloured ridge down the spine - the "smouldering, not yet on
 # fire" read that ties to the hurt_pct twist without depicting it literally.
-b.box((0.0, 0.10, 1.60), (0.09, 0.62, 0.09), TANGERINE, bevel=0.03)
+# A limb() rather than a box: the old flat-topped box held one constant Z
+# across the whole spine, so it floated clear of the torso's own curved top
+# surface toward the front (a 0.16 gap at the shoulder) and read as a bolted-
+# on rail rather than fur. Following the torso's curve and tapering the radii
+# down at both ends (matching how the tail below is built) sits it flush and
+# lets it thin out into the body instead of ending in a square edge.
+b.limb([(0.0, -0.52, 1.53), (0.0, -0.05, 1.60), (0.0, 0.40, 1.58),
+        (0.0, 0.72, 1.49)], [0.03, 0.09, 0.08, 0.02], TANGERINE, seg=6)
 
 # --------------------------------------------------------------- the ledges
 # Two haunch/shoulder humps stepping up the spine, each anchored off the
