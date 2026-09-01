@@ -115,6 +115,10 @@ FG_DEPTH = 0.10
 ## faces. They are flat dark slabs either way — the emission ramp already
 ## carries their depth — so it is not visible.
 SHIFT = 0.11
+## And with real layers. Higher, because it can be: with one flat plane more
+## travel just looks like the picture sliding, but layers moving at different
+## rates read as depth, and depth wants room to happen in.
+SHIFT_LAYERED = 0.17
 ## Ortho camera pull-back. Nothing depends on it; it only has to clear the
 ## deepest plane.
 CAM_Y = -3.0
@@ -241,7 +245,14 @@ def painted(o, path, dim=1.0):
     """
     mat = bpy.data.materials.new(os.path.basename(path))
     mat.use_nodes = True
-    mat.blend_method = "HASHED"          # so a --fg plane's alpha cuts out
+    # Real alpha blending. HASHED dithers the edge, which on a frog drawn with
+    # a clean outline reads as the art being noisy. Sorting is unambiguous here:
+    # the planes are at distinct depths and the camera never moves.
+    try:
+        mat.blend_method = "BLEND"
+        mat.show_transparent_back = False
+    except (AttributeError, TypeError):
+        pass
     nt = mat.node_tree
     b = nt.nodes["Principled BSDF"]
     b.inputs["Base Color"].default_value = (0.0, 0.0, 0.0, 1.0)
@@ -261,63 +272,108 @@ def engine(sc):
     return "BLENDER_EEVEE_NEXT" if "BLENDER_EEVEE_NEXT" in ids else "BLENDER_EEVEE"
 
 
+def layer_paths(art):
+    """`<id>_1.png` ... `<id>_N.png` beside the flat art. 1 is FARTHEST.
+
+    Numbered rather than named (bg/mid/fg) because the number of planes is the
+    thing that varies per card: Crescendo wants forest, water, rock, frog, and
+    the next card might want two. A convention that runs out at three is a
+    convention you fight.
+    """
+    base, ext = os.path.splitext(art)
+    out = []
+    i = 1
+    while os.path.exists("%s_%d%s" % (base, i, ext)):
+        out.append("%s_%d%s" % (base, i, ext))
+        i += 1
+    return out
+
+
+def plane_at(path, depth, throw, dim):
+    """One painted layer, sized so its edges are never in frame.
+
+    `throw` is how far this plane slides at full turn. A near plane slides less
+    and so needs less oversize - which means the FOREGROUND of a layered card
+    loses barely any of itself off the edges, while the sky behind loses a
+    little. That is the right way round: the thing you drew carefully is the
+    thing that stays.
+    """
+    span = AW * (1.0 + 2.0 * throw + 0.04)
+    o = quad(os.path.basename(path), span, span * AH / AW, depth)
+    painted(o, path, dim=dim)
+    return o
+
+
 def build(art, fg):
+    """The scene. Returns (camera, planes, wall) where `planes` is a list of
+    (object, throw) - how far each one travels at a full turn.
+
+    ONE plane is a picture sliding behind a hole. Depth is things moving at
+    DIFFERENT rates, so a card with real depth needs several. Nick, having
+    watched the flat version: "for rares how can we give it more depth?" This is
+    the answer that needs no modelling - the same painting exported in pieces.
+    """
     bpy.ops.wm.read_factory_settings(use_empty=True)
 
-    # The painting, hung behind the aperture and oversized so its edges are
-    # never in frame.
-    span = AW * BACK_FIT
-    back = quad("art", span, span * AH / AW, DEPTH)
-    # 0.86, not 1.0: the back of a recess is in its own shade, and a painting
-    # that reads at exactly the same brightness as the card around it is not
-    # behind anything.
-    painted(back, art, dim=0.86)
+    layers = layer_paths(art)
+    planes = []
+
+    if layers:
+        # Spread evenly from the back of the box to just inside the glass. The
+        # travel is proportional to depth, which is what a shear IS.
+        shift = SHIFT_LAYERED
+        n = len(layers)
+        for i, path in enumerate(layers):
+            f: float = 1.0 if n == 1 else 1.0 - float(i) / float(n - 1)
+            depth = FG_DEPTH + (DEPTH - FG_DEPTH) * f
+            throw = shift * 0.5 * (depth / DEPTH)
+            # Far things sit in their own shade. Subtle - this is depth, not a
+            # fog effect, and the art already carries its own aerial perspective.
+            planes.append((plane_at(path, depth, throw,
+                                    0.84 + 0.16 * (1.0 - f)), throw))
+        print("LAYERS %d: %s" % (n, ", ".join(os.path.basename(p) for p in layers)))
+    else:
+        throw = SHIFT * 0.5
+        planes.append((plane_at(art, DEPTH, throw, 0.86), throw))
+        if fg:
+            ft = SHIFT * 0.5 * (FG_DEPTH / DEPTH)
+            planes.append((plane_at(fg, FG_DEPTH, ft, 1.0), ft))
 
     wall = walls(DEPTH)
-
-    front = None
-    if fg:
-        # Close to the glass, so it barely moves while the painting slides
-        # underneath it. Two depths is where this stops being a wobble.
-        fspan = AW * (1.0 + SHIFT * FG_DEPTH / DEPTH + 0.04)
-        front = quad("fg", fspan, fspan * AH / AW, FG_DEPTH)
-        painted(front, fg, dim=1.0)
 
     bpy.ops.object.camera_add(location=(0.0, CAM_Y, 0.0),
                               rotation=(math.pi * 0.5, 0.0, 0.0))
     cam = bpy.context.object
     cam.data.type = "ORTHO"
     # HORIZONTAL, not AUTO. The render is portrait, so AUTO would fit
-    # ortho_scale to the HEIGHT — and AW is a width.
+    # ortho_scale to the HEIGHT - and AW is a width.
     cam.data.sensor_fit = "HORIZONTAL"
     cam.data.ortho_scale = AW
     bpy.context.scene.camera = cam
-    return cam, back, wall, front
+    return cam, planes, wall
 
 
-def set_shear(back, wall, front, t):
+def set_shear(planes, wall, t):
     """Turn the card by `t` in -1..+1.
 
     Under an orthographic camera a turn is exactly a shear: each plane slides
     sideways in proportion to its depth, and the window's inner wall opens by
-    the same amount on the side you are turning away from. Three lines, no
-    projection to get wrong.
+    the same amount on the side you are turning away from.
     """
-    d = t * SHIFT * 0.5 * AW
-    back.location.x = d
-    if front is not None:
-        front.location.x = d * (FG_DEPTH / DEPTH)
-    # The wall's BACK edge travels with the painting; its front edge is the
+    for o, throw in planes:
+        o.location.x = t * throw * AW
+    # The wall's BACK edge travels with the DEEPEST plane; its front edge is the
     # card's own opening and never moves. Whichever side ends up outside the
-    # frame simply is not seen — no need to hide it.
+    # frame simply is not seen - no need to hide it.
+    back_throw: float = planes[0][1] if planes else SHIFT * 0.5
     hx = AW * 0.5
-    for i, s in ((2, -1.0), (3, -1.0), (6, 1.0), (7, 1.0)):
-        wall.data.vertices[i].co.x = s * hx + d
+    for i, sgn in ((2, -1.0), (3, -1.0), (6, 1.0), (7, 1.0)):
+        wall.data.vertices[i].co.x = sgn * hx + t * back_throw * AW
     wall.data.update()
 
 
 def render_views(scene, tmp):
-    cam, back, wall, front = scene
+    cam, planes, wall = scene
     sc = bpy.context.scene
     sc.render.engine = engine(sc)
     sc.render.film_transparent = False    # every pixel is inside the window
@@ -330,13 +386,12 @@ def render_views(scene, tmp):
     for i in range(FRAMES):
         # -1 .. +1 across the turn. Frame 0 is the leftmost view.
         t = (i / float(FRAMES - 1)) * 2.0 - 1.0
-        set_shear(back, wall, front, t)
+        set_shear(planes, wall, t)
         path = os.path.join(tmp, "view_%02d.png" % i)
         sc.render.filepath = path
         bpy.ops.render.render(write_still=True)
         out.append(path)
-        print("VIEW %2d/%d  t=%+.3f  slide=%+.4f card-widths"
-              % (i + 1, FRAMES, t, t * SHIFT * 0.5))
+        print("VIEW %2d/%d  t=%+.3f" % (i + 1, FRAMES, t))
     return out
 
 
@@ -387,7 +442,11 @@ def one(art, out_dir, name, fg=None):
         # How much of the card's width the painting travels, end to end. The
         # game does not need it to play the sheet back; it is here so a future
         # pass can tell whether a rebuild changed the feel or only the picture.
-        "parallax": SHIFT,
+        # The figure ACTUALLY used, not the flat-card constant. A layered card
+        # travels SHIFT_LAYERED, and a sidecar that says otherwise is a number
+        # that will be trusted later and be wrong.
+        "parallax": SHIFT_LAYERED if layer_paths(art) else SHIFT,
+        "layers": len(layer_paths(art)),
         "source": os.path.basename(art),
     }
     with open(os.path.join(out_dir, "%s.json" % name), "w") as fh:
