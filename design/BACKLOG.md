@@ -716,6 +716,65 @@ Ordered. Source in brackets.
   mire_snapper_ground, thrasher_portrait). All four of this batch's icons
   (29-39) scored above the tenth-place value of 26, so none of them enters
   the bottom ten — the list is identical to batch 15's.
+  **Checked 2026-09-01: batch 17, four more icons — the last two of the
+  "going up" family (`lift`, `rally`) plus `design/ART-REVIEW.md`'s own
+  "Strength and Dexterity icons" section (`strength`, `dexterity`), scored
+  as a pair the way it names them.** Same Pillow real-42px-downsample method
+  as batches 14-16, plus a new >10-alpha threshold pass (this batch's own
+  addition) to tell "touches the canvas edge" apart from "clipped there" —
+  worth adding because it caught something a plain `getbbox()` call would
+  have missed. Scored `lift` (haul the ally to you, 38/50 — a clean
+  two-figure-plus-arrow silhouette, docked because the two figures' GREEN
+  and MINT are close enough in hue to read as the same colour, undercutting
+  the "one hauls, one is hauled" story), `strength` (dumbbell, 43/50 — tied
+  with batch 14's `thorns` for the best score recorded under this item
+  across all seventeen batches; an unambiguous, instantly-readable shape
+  with no real defect found), `dexterity` (the feather, 35/50 — confirms
+  `ART-REVIEW.md`'s own stated doubt directly: a confidently distinct blue
+  oval that does not confidently read as *a feather specifically*, and the
+  quill meant to poke through both ends is invisible in the render,
+  clipped off the bottom edge), and `rally` (the horn, 23/50 — **the lowest
+  score recorded under this item across all seventeen batches**, below
+  batch 13's `bog_leech` at 25). `rally` is a genuine, specific defect, not
+  a subjective miss: the render shows two pieces — a bent limb with a
+  mouthpiece ball, and a separate gold wedge meant to be the horn's bell —
+  that do not touch, with visible empty canvas between them at both 256px
+  and the 42px downsample, and the three "call" arcs the build comment
+  describes are not visible anywhere in the render at either size. It reads
+  as two floating unrelated objects, not as one horn, at any size checked.
+  Also found, checked numerically rather than by eye: `rally` and
+  `strength` are both cropped flush against BOTH left and right canvas
+  edges (alpha bbox touches column 0 and column 255), and `lift` (top) and
+  `dexterity` (top and bottom) are each flush against at least one edge —
+  four of this batch's four icons show the same "no margin, touching the
+  canvas edge" pattern batch 15 first named for `wall`. Five icons now
+  across three batches share it; scored as an aside under Style/Silhouette
+  rather than its own line, since none of the four rubric lines it touches
+  actually lost legibility at 42px from it — but it reads as systemic
+  (`icons.py`'s shared framing/camera setup) rather than four independent
+  misses, and worth a shared look if Nick wants one fix. Full rubric
+  tables, per-line justifications and one concrete (unapplied) fix per
+  asset are in `design/progress/<name>_icon.md`. Sixteen of the thirty-six
+  total card icons now scored — the "six are about going up" and "four are
+  about not dying" families are both complete, and the Strength/Dexterity
+  pair is done; twenty remain (`sword`, `bow`, `fire`, `skull`, `flask`,
+  `bomb`, `gadget`, `draw`, `expose`, `taunt`, `relic`, `volley`, `target`,
+  `rhythm`, `timer`, `cog`, `burn`, `stack`, `light`, `frail` — eighteen
+  more of the "twenty-eight card icons" block plus the standalone `light`
+  and `frail` sections). No icon script touched — report only, per this
+  item's own rule. Left unchecked.
+  **Ranked weakest ten, updated after batch 17** (of the 68 assets scored
+  across all seventeen batches — lowest first, out of 50): gale_serpent_ground
+  22, then a five-way tie at 23 (grove_bear_ground, riftling_ground,
+  shifting_idol_ground, yoke_ox_portrait, and this batch's `rally_icon`),
+  sky_snapper_ground 25, then a four-way tie at 26 (bog_leech_portrait,
+  drowned_colossus_ground, mire_snapper_ground, thrasher_portrait) — eleven
+  entries for ten slots since the new tie at 23 doesn't bump anything out
+  cleanly; all eleven are worth Nick's look rather than dropping one on an
+  arbitrary tiebreak. `rally_icon` is the only icon anywhere in the current
+  bottom eleven — everything else is a fight-ground or portrait, the same
+  shape batch 14's note already found. `lift`, `strength` and `dexterity`
+  all scored well clear of this list (35-43).
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
   relic") on top of the existing Rest / Thin / Sharpen and `Run.relic_totals()`.
   *Done when:* pickable at a campfire, persists, shows in the relic list.
@@ -1993,6 +2052,13 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-01** — #83 batch 17: scored `lift` (38/50), `strength` (43/50,
+  tied for the best score under this item so far), `dexterity` (35/50) and
+  `rally` (23/50, the lowest score under this item so far — the render
+  shows two disconnected floating shapes, not one horn, and the build
+  comment's own "call" arcs never show up in the render at any size).
+  Sixteen of thirty-six icons scored; twenty remain. Report only, item left
+  unchecked per its own rule.
 - **2026-08-31** — Forty-first consecutive re-check, no actionable
   cloud-safe/cloud-art work. Fetched fresh (`git fetch --prune` then rebuilt
   `main` from `FETCH_HEAD`; tip `a729551`, the fortieth check's own log
