@@ -2346,6 +2346,23 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-01** — Re-check: no actionable cloud-safe/cloud-art work. Fetched
+  fresh (tip `344a856`, a session commit — the drag/3D-window work, not this
+  lane's). #83's own batch log now runs through batch 22: all fourteen
+  beasts, all fourteen grounds, all nineteen portraits and all thirty-six
+  card icons are scored (88 assets), the map stays correctly reclassified
+  `needs a screen` (no flattened image exists to score), and the item's own
+  "done when" needs Nick to open the ranked list — nothing left for a batch
+  to score. Independently re-derived the standing numbers rather than
+  trusting them secondhand: 28 bosses, 187/187 cards with a non-empty
+  `icon` field, `design/ART-REVIEW.md` still 28 `NEEDS A PASS` / 0
+  APPROVED-REJECTED. #55 (14 beasts) and #76 (36 icons, exhaustive audit)
+  are both already past their own numeric bars, same as every re-check
+  since 2026-08-31. The unchecked queue is unchanged: 2, 3, 8, 25, 29b, 32,
+  31b, 78, 79, 81 are `needs a screen` (skipped); 83, 55, 76 and 80 are
+  past their bars and stay unchecked on purpose — only Nick opening
+  `design/ART-REVIEW.md` closes them. No code or data changed this run.
+
 - **2026-09-01** — #83 batch 17: scored `lift` (38/50), `strength` (43/50,
   tied for the best score under this item so far), `dexterity` (35/50) and
   `rally` (23/50, the lowest score under this item so far — the render
