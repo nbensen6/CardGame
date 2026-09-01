@@ -775,6 +775,58 @@ Ordered. Source in brackets.
   bottom eleven — everything else is a fight-ground or portrait, the same
   shape batch 14's note already found. `lift`, `strength` and `dexterity`
   all scored well clear of this list (35-43).
+  **Checked 2026-09-01: batch 18, four more icons — the "four basic
+  damage-type icons" (`sword`, `bow`, `fire`, `skull`), the plainest four
+  of the "twenty-eight card icons" block and the first not yet scored
+  under this item.** Same Pillow real-42px-downsample method and
+  >10-alpha-threshold edge check as batches 15-17. Scored `bow` (**44/50,
+  the best score recorded under this item across all eighteen
+  batches**, ahead of batch 14's `thorns` and batch 17's
+  `strength`, both 43 — the D-curve, taut string and arrowhead all
+  survive the downsample as distinct, separated shapes, and its alpha
+  bbox sits with comfortable margin on all four sides), `sword` (40/50 —
+  the blade-and-crossguard read clearly, but the grip/pommel below the
+  guard is a sliver only a few pixels wide even at 256px that nearly
+  disappears at 42px; also flush against both the top and bottom canvas
+  edges, the same "no margin" pattern already named for five other icons
+  across batches 15-17, six now across four batches), `skull` (38/50 — a
+  blocky mint-green head with clean internal contrast, docked because the
+  solid oval eye sockets and even rectangular teeth read as a blocky
+  robot or alien face rather than a skull specifically, though the green
+  colour still carries the "poison, wound, death" association well), and
+  `fire` (**23/50, tied for the lowest score recorded under this item
+  across all eighteen batches**, matching batch 17's `rally` — checked
+  numerically, not just by eye: `icons.py`'s own `fire()` specifies three
+  distinct palette colours, `ORANGE`, `TANGERINE` and a brighter `GOLD`
+  core, but direct pixel sampling down the rendered PNG's centre column
+  returns every value clustered inside one narrow muted tan/salmon band,
+  RGB(185-216, 105-160, 60-135) — no bright gold core is visible anywhere,
+  and `ORANGE`/`TANGERINE` are themselves only 3 points apart in the
+  source palette, so the build script asked for two "different" flame
+  colours that were never going to look different even rendered
+  faithfully. The three-cone silhouette also converges uncomfortably on
+  `peak`'s existing three-mountain shape once fire's colour separation is
+  gone). Full rubric tables, per-line justifications and one concrete
+  (unproposed, per this item's report-only rule) diagnosis per asset are
+  in `design/progress/<name>_icon.md`. Twenty of the thirty-six total card
+  icons now scored; sixteen remain (`flask`, `bomb`, `gadget`, `draw`,
+  `expose`, `taunt`, `relic`, `volley`, `target`, `rhythm`, `timer`, `cog`,
+  `burn`, `stack`, `light`, `frail`). No icon script touched — report
+  only, per this item's own rule. Left unchecked.
+  **Ranked weakest ten, updated after batch 18** (of the 72 assets scored
+  across all eighteen batches — lowest first, out of 50): gale_serpent_ground
+  22, then a six-way tie at 23 (grove_bear_ground, riftling_ground,
+  shifting_idol_ground, yoke_ox_portrait, rally_icon, and this batch's
+  `fire_icon`), sky_snapper_ground 25, then a four-way tie at 26
+  (bog_leech_portrait, drowned_colossus_ground, mire_snapper_ground,
+  thrasher_portrait) — twelve entries for ten slots since the new tie at
+  23 doesn't bump anything out cleanly; all twelve are worth Nick's look
+  rather than dropping two on an arbitrary tiebreak. `fire_icon` and
+  `rally_icon` are the only icons anywhere in the current bottom twelve —
+  everything else is a fight-ground or portrait, the same shape every
+  batch since 14 has found. `sword`, `skull` and `bow` all scored well
+  clear of this list (38-44), and `bow` is now the single best score
+  recorded under this item.
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
   relic") on top of the existing Rest / Thin / Sharpen and `Run.relic_totals()`.
   *Done when:* pickable at a campfire, persists, shows in the relic list.
