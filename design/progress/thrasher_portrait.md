@@ -64,3 +64,72 @@ Whether a head-and-shoulders re-crop would still show the tail curl at all
 tightening the frame to the head risks losing this beast's single best
 identity feature rather than just re-balancing it. That trade-off is a
 design call, not a measurement.
+
+## Pass 2 — fixer
+
+Applied both fixes named above, together, since they're the same `FOCUS`
+entry: `portraits.py`'s `FOCUS["thrasher"]` moved from `(0.35, 1.10)` to
+`(0.42, 1.55)`.
+
+A literal "crop to the head" was tried first and rejected before this value:
+`(0.54, 0.88)` (centre pulled up, span cut sharply) made the framing line
+*worse*, clipping the tail tip outright rather than giving it headroom — the
+risk this file's own "Unsure about" named. `(0.35, 1.30)`, span alone widened
+with the centre untouched, still touched the top edge; only past roughly
+`span=2.0` did the tail clear with margin, and that was too loose to read as
+a tightened crop at all. `(0.42, 1.55)` was found by bisecting from there: it
+raises the centre slightly off `0.35` and settles the span partway between
+the too-tight and too-loose extremes, rather than executing the diagnosis's
+literal "head-and-shoulders" framing — which the render evidence says this
+beast's proportions don't support without losing the tail, confirming the
+tension pass 1 already flagged rather than resolving it.
+
+Rebuilt with `build.cmd portraits` — this regenerates every portrait, and
+Blender's WORKBENCH output is not byte-reproducible even for unchanged
+inputs (same non-determinism `silk_widow_portrait.md`'s pass 2 hit), so
+every portrait other than `thrasher.png` was reverted with `git checkout --`
+and only the changed asset kept.
+
+Alpha bbox (Pillow `getbbox()`) is now `(105, 45, 416, 419)` on the 512×512
+canvas — margin on all four sides (left 105, top 45, right 96, bottom 93),
+where pass 1 was `(43, 0, 481, 453)`, touching the top edge outright.
+
+- **Framing (5 → 8):** the tail-and-sigil silhouette now clears the top edge
+  with real headroom instead of touching it. Not a 9+: the margin is
+  unbalanced (45px top vs 93px bottom, 105px left vs 96px right) rather than
+  evenly centred.
+- **Identity (6 → 7):** the tighter crop makes both identity cues bigger in
+  frame — the tail curl and sigil dominate the upper-right the way the
+  module doc's "worn as its own silhouette" describes, and the head with its
+  two red eye dots stays fully in frame at bottom-left. Still not the single
+  dominant feature `frog_portrait`'s eyes are, since the two cues (head, tail)
+  remain at opposite corners of the frame rather than one shape filling it.
+- **Readability @ 34px (5 → 6):** confirmed via a fresh 34px downsample
+  (Pillow `LANCZOS`, composited over the same brown card-face standin,
+  cross-checked with a 16× crop on the head region). The tail-curl-and-sigil
+  shape and the orange belly stripe both read clearly. The red eye dots
+  are a genuine improvement over pass 1's "disappear entirely" but still
+  don't resolve as two distinct dots — the zoomed crop shows a faint
+  reddish tinge merged into the black head, present but not legible as eyes.
+- **Colour & separation (6 → 7):** unchanged palette, but the tighter frame
+  spends more of the fixed pixel budget on the coloured elements (belly
+  stripe, sigil, eye tinge) and less on flat background, so what colour there
+  is reads a little stronger.
+- **Style consistency (4 → 6):** no longer the extreme full-body outlier pass
+  1 flagged — the crop is visibly tighter and closer to the rest of the
+  cast's convention. Not an 8+: this is still a whole-body composition
+  (head to tail both in frame), not the head-and-shoulders crop most of the
+  cast actually uses, for the geometric reason above.
+
+**+8 total (26 → 34), not a plateau — kept.** All five lines moved up and
+none regressed. `run_tests.gd`: **ALL TESTS PASSED**.
+
+## Unsure about (pass 2)
+
+Whether `cinder_jackal_portrait` (the other full-body outlier this file's
+pass-1 diagnosis pointed to as precedent) would hit the same "true
+head-and-shoulders clips the identity feature" wall — this pass only
+confirms it for `thrasher`'s own proportions, not as a rule for the family.
+Also unsure whether the still-imbalanced margin (top tighter than bottom,
+left tighter than right) is worth a further nudge, or whether that's Nick's
+call the same way the crop-vs-identity trade-off was.

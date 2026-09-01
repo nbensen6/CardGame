@@ -39,7 +39,7 @@ FOCUS = {
     "root_lurker": (0.60, 0.96), "sky_snapper": (0.66, 0.84),
     "riftling": (0.75, 0.67), "shifting_idol": (0.72, 0.70),
     "husk_beetle": (0.42, 1.15), "gloom_moth": (0.55, 1.05),
-    "bog_leech": (0.45, 1.35), "thrasher": (0.35, 1.10),
+    "bog_leech": (0.45, 1.35), "thrasher": (0.42, 1.55),
     "silk_widow": (0.45, 1.35), "boulder_ram": (0.34, 1.35),
     "cinder_jackal": (0.45, 1.60), "brine_urchin": (0.62, 1.30),
     "clot_toad": (0.48, 1.35), "flicker_stag": (0.80, 0.62),
