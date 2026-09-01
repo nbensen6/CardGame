@@ -476,6 +476,52 @@ Ordered. Source in brackets.
   identity — worth a shared look across the remaining seven if the pattern
   holds. No model or portrait script touched — report only, per this
   item's own rule. Left unchecked.
+  **Checked 2026-09-01: batch 12, four more portraits.** Scored
+  `gloom_moth_portrait` (35/50, best of this batch and the best-scoring
+  beast portrait yet — checked its alpha-channel bounding box directly
+  rather than eyeballing it, `(50, 44, 429, 512)`, comparable margins to
+  `frog_portrait`'s own good framing), `glyph_tortoise_portrait` (29/50 —
+  alpha bbox `(0, 20, 512, 512)`: content is clipped by the LEFT, RIGHT,
+  *and* BOTTOM edges of the canvas at once, worse edge-clipping than
+  `clot_toad_portrait`'s single-edge crop that scored Framing 3 in batch
+  11, though scored no lower here because the clipped parts are peripheral
+  — legs and chin, not the sigil or shell dome that carry this beast's
+  identity), `riptide_eel_portrait` (29/50 — no clipping, but alpha bbox
+  `(138, 143, 503, 512)` shows the subject pushed into the bottom-right
+  with a large dead zone at top-left; also surfaces a genuine new finding
+  independent of framing: a second eye floats detached in open air above
+  the snout, confirmed real and not a portrait-only artifact by checking
+  it against the kept 3D render `design/renders/riptide_eel_pass1_34.png`,
+  where the same floating eye is visible but was never named in
+  `riptide_eel.md`'s own written scoring), `husk_beetle_portrait` (27/50,
+  lowest of this batch — alpha bbox `(37, 0, 457, 477)` touches the top
+  edge with zero clearance while 35px sits unused at the bottom, the
+  opposite of the bottom-crop convention every other scored portrait uses;
+  rendered from the model's post-fixer geometry, so `husk_beetle.md`'s
+  pre-fix silhouette finding may not carry over unchanged). Full rubric
+  tables, per-line justifications and one concrete (unproposed, per this
+  item's report-only rule) diagnosis per asset are in
+  `design/progress/<name>_portrait.md`. Sixteen of nineteen portraits now
+  scored; three beast portraits (silk_widow, thrasher, yoke_ox) and all
+  icon sets remain unscored. Checking a numeric alpha-channel bounding box
+  instead of eyeballing crops (new this batch) found real, precisely
+  quantifiable clipping in two of four assets — worth carrying into
+  remaining batches. No model or portrait script touched — report only,
+  per this item's own rule. Left unchecked.
+
+  **Ranked weakest ten, updated after batch 12** (of the 49 assets scored
+  across all twelve batches, current scores — i.e. after the five fixer
+  passes landed on `bog_leech`, `clot_toad`, `husk_beetle`, `goblin_mech`
+  and `sunken_warden_ground`, and after `clot_toad_portrait`'s own fixer
+  pass — lowest first, out of 50): gale_serpent_ground 22,
+  grove_bear_ground 23, riftling_ground 23, shifting_idol_ground 23,
+  sky_snapper_ground 25, bog_leech_portrait 26, drowned_colossus_ground 26,
+  mire_snapper_ground 26, then a three-way tie at 27 (bounder_ground,
+  crag_pup_ground, husk_beetle_portrait — any one stands in as the tenth).
+  The fixer passes moved four assets out of the previous (batch 8) weakest
+  ten entirely — `bog_leech` 25→28, `sunken_warden_ground` 21→28 — so this
+  ranking is now grounds- and portrait-heavy rather than beast-heavy; no
+  scored beast model remains in the bottom ten.
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
   relic") on top of the existing Rest / Thin / Sharpen and `Run.relic_totals()`.
   *Done when:* pickable at a campfire, persists, shows in the relic list.
