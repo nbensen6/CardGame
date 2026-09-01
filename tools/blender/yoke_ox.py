@@ -107,7 +107,7 @@ b.foot((0.60, -0.58, 0.04))                                    # onto a foreleg,
 # camera test found it 100% buried behind the hump's own bulk. Moving it to
 # the yoke's own front face, well forward of the hump entirely, fixed it.
 _sigil_z = b.z_for(5)
-b.box((0.20, -1.00, _sigil_z), (0.12, 0.06, 0.10), SAND, bevel=0.03)
+b.box((0.20, -1.00, _sigil_z), (0.12, 0.06, 0.10), CHARCOAL, bevel=0.03)
 b.mark(at=(0.20, -1.12, _sigil_z), size=0.11, facing=(0.0, -0.94, 0.30))
 
 b.done(out_path(), name="YokeOx")

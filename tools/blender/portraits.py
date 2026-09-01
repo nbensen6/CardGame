@@ -44,7 +44,7 @@ FOCUS = {
     "cinder_jackal": (0.45, 1.60), "brine_urchin": (0.62, 1.30),
     "clot_toad": (0.48, 1.35), "flicker_stag": (0.80, 0.62),
     "eyrie_hawk": (0.78, 0.60), "glyph_tortoise": (0.58, 1.00),
-    "riptide_eel": (0.873, 0.62), "yoke_ox": (0.55, 1.00),
+    "riptide_eel": (0.873, 0.62), "yoke_ox": (0.45, 1.25),
 }
 
 ## Per-character override of the focus point's X/Y, for a body the bounding-
