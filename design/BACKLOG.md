@@ -827,6 +827,71 @@ Ordered. Source in brackets.
   batch since 14 has found. `sword`, `skull` and `bow` all scored well
   clear of this list (38-44), and `bow` is now the single best score
   recorded under this item.
+  **Correction to the record, found while re-deriving current scores for
+  this batch's ranked list rather than trusting batch 18's secondhand:**
+  four assets in that just-quoted bottom-twelve list have since moved,
+  again by the separate hand-run "fixer lane"
+  (`tools/fixer/BRIEF.md`, not this routine, not part of item #83's
+  report-only scope, same mechanism batch 14's own correction already
+  named) — `fire_icon` 23→31, `rally_icon` 23→32, `bog_leech_portrait`
+  26→31, `thrasher_portrait` 26→34 (commits `0cdabaa`, `c0a15d6`,
+  `c562295`, `1150775`). None of the four progress files' own score
+  tables carry a fresh bold total for the fixed pass — each states the
+  move as prose ("+8 total (23 → 31)") rather than a new `**NN**` row,
+  which is why grepping for the last bold number in each file (the method
+  used to build this batch's list) silently returned the stale pass-1
+  score for all four until checked by hand against the commit messages.
+  Worth a note for whoever builds the next ranked list the same way.
+  `yoke_ox_portrait` had already moved (23→34, batch 14/before) and its
+  own file's bold total was already current, so it needed no correction
+  here. The batch 18 list above is left as originally written rather than
+  edited, per this item's own log-forward convention; the **ranked ten
+  below is current**.
+  **Checked 2026-09-01: batch 19, four more icons — the first four of the
+  sixteen remaining "twenty-eight card icons," in `card_view.gd`'s own
+  `ICONS` table order** (`flask`, `bomb`, `gadget`, `draw`). Same
+  Pillow real-42px-downsample method and >10-alpha-threshold edge check
+  as batches 15-18. Scored `flask` (a potion, 41/50, tied best of the
+  batch — an unmistakable wide-bottomed, narrow-necked bottle shape,
+  docked only for a cork clipped flush against the canvas top edge),
+  `bomb` (a big one-off blast, 41/50, tied best — the round-body-plus-stem
+  silhouette is the single most conventional, most immediately readable
+  shape scored in this batch, docked because the fuse's spark tip is also
+  clipped flush against the canvas top edge, weakening the "about to go
+  off" read), `gadget` (the Engineer builds something, 36/50, lowest of
+  the batch — a three-tier steel slab stack with two orange antenna
+  spikes and a rivet reads clearly as three distinct bands at 42px, but
+  nothing in the *shape itself* signals construction or mechanism rather
+  than a generic totem/idol, the same "cairn or totem" failure
+  `ART-REVIEW.md` already named for the neighbouring `plated_armour`),
+  `draw` (draw a card, 38/50 — two overlapping card slabs plus an upward
+  arrow is about as literal a match for "draw a card" as this item has
+  scored, docked for a real, specific colour risk no other icon in the
+  set carries: the card slabs are rendered in the same wheat/cream family
+  the game's actual card face uses, so while they separate cleanly from
+  this scoring script's flat-brown standin by real pixel-sampled margin,
+  whether they'd separate as cleanly from the *real* card shader is
+  unconfirmed and `needs a screen` to check). Full rubric tables,
+  per-line justifications and one concrete (unapplied) fix per asset are
+  in `design/progress/<name>_icon.md`. Twenty-four of the thirty-six
+  total card icons now scored; twelve remain (`expose`, `taunt`, `relic`,
+  `volley`, `target`, `rhythm`, `timer`, `cog`, `burn`, `stack`, `light`,
+  `frail`). No icon script touched — report only, per this item's own
+  rule. Left unchecked.
+  **Ranked weakest ten, updated after batch 19 and the fixer-lane
+  correction above** (of the 76 assets scored across all nineteen
+  batches, current scores — lowest first, out of 50): gale_serpent_ground
+  22, then a three-way tie at 23 (grove_bear_ground, riftling_ground,
+  shifting_idol_ground), sky_snapper_ground 25, then a two-way tie at 26
+  (drowned_colossus_ground, mire_snapper_ground), then a three-way tie at
+  27 (bounder_ground, crag_pup_ground, husk_beetle_portrait) — exactly ten
+  with no tenth-place tiebreak needed, the cleanest cutoff this item has
+  had since batch 13. The four fixer-lane corrections above all moved out
+  of the bottom ten entirely (lowest of the four is now 31); no icon
+  remains anywhere in the current bottom ten, and none of this batch's
+  four new icons (36-41) came close to entering it either — the bottom
+  ten is fight-grounds-and-one-portrait only, the same shape it has held
+  since batch 12.
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
   relic") on top of the existing Rest / Thin / Sharpen and `Run.relic_totals()`.
   *Done when:* pickable at a campfire, persists, shows in the relic list.
