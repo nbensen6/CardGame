@@ -61,7 +61,7 @@ b.limb(SPINE, RADII, NAVY, seg=9, cap=False)
 # its whole length, keeps pale.
 BELLY = SPINE[:7]
 b.limb([(x, y, z - 0.05) for x, y, z in BELLY],
-       [r * 0.62 for r in RADII[:7]], MIDNIGHT, seg=7, cap=False)
+       [r * 0.62 for r in RADII[:7]], SLATE, seg=7, cap=False)
 
 # Tail cap and skull-base cap, since cap=False left both ends open.
 b.ball(SPINE[0], (0.05, 0.05, 0.05), NAVY, 6, 4)
@@ -117,6 +117,18 @@ b.ball((0.38, -0.70, _h4), (0.17, 0.18, 0.14), SLATE, 8, 5)
 b.shelf(4, (0.36, -0.66), (0.15, 0.13), STEEL, thickness=0.11, bevel=0.05,
         drop=0.02)
 
+# Mirror plates on the far side, matching the two holds above so the top-down
+# view reads as a dorsal ridge with two sides rather than holds strung along
+# one flank. Built as plain box()/ball() rather than a second shelf() call,
+# since shelf() re-registers the climb anchor for that Height - a second call
+# at the same Height would silently move where a hunter actually stands.
+b.ball((-0.46, 0.05, _h2), (0.20, 0.22, 0.17), SLATE, 9, 5)
+b.box((-0.44, 0.02, _h2 - 0.12), (0.18, 0.16, 0.12), STEEL, bevel=0.05)
+
+b.ball((-0.38, -0.70, _h4), (0.17, 0.18, 0.14), SLATE, 8, 5)
+b.box((-0.36, -0.66, _h4 - 0.02 - 0.11), (0.15, 0.13, 0.11), STEEL,
+      bevel=0.05)
+
 b.foot((0.0, 1.30, 0.10))                                      # onto the low tail
 
 # A small dedicated crest for the sigil, off the spine's own centreline (and
@@ -134,6 +146,13 @@ b.foot((0.0, 1.30, 0.10))                                      # onto the low ta
 _sigil_z = b.z_for(6)
 b.ball((0.30, -0.86, _sigil_z), (0.15, 0.10, 0.15), SLATE, 8, 5)
 b.taper((0.30, -1.06, _sigil_z - 0.02), 0.075, 0.03, 0.24, SLATE, seg=6,
+        rot=point((0.0, -1.0, 0.0)))
+
+# A matching crest on the far side, undecorated (no mark - the sigil itself
+# stays singular, per every other beast in the cast), so the sigil's own
+# crest doesn't read as the one asymmetric growth left on the body.
+b.ball((-0.30, -0.86, _sigil_z), (0.15, 0.10, 0.15), SLATE, 8, 5)
+b.taper((-0.30, -1.06, _sigil_z - 0.02), 0.075, 0.03, 0.24, SLATE, seg=6,
         rot=point((0.0, -1.0, 0.0)))
 
 b.mark(at=(0.30, -1.22, _sigil_z), size=0.15, facing=(0.0, -0.94, 0.28))

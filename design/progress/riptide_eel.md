@@ -50,3 +50,54 @@ Not applying either — this item scores and proposes; a fix is Nick's call.
 Whether the asymmetric hold placement seen from top-down is deliberate (holds
 meant to be reached from one side of the fight ground) or an oversight — worth
 checking against `env` data for this beast's fight before treating it as a bug.
+
+---
+
+## Pass 2 — fixer lane, 2026-09-01
+
+Applied by the **fixer** lane (`tools/fixer/BRIEF.md`), which repairs what the
+cloud reports. Views: `design/renders/riptide_eel_pass2_34.png`,
+`design/renders/riptide_eel_pass2_sil.png`, captured with
+`look.cmd riptide_eel 2`.
+
+| Pass | Sil | Prop | Hygiene | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 1 | 7 | 6 | 5 | 5 | 7 | **30** |
+| 2 | 7 | 6 | 7 | 7 | 7 | **34** |
+
+### Both diagnosed fixes applied
+
+- **Build hygiene (5 → 7).** All four holds and the sigil crest sat on the
+  +X side only. Mirrored, decoratively, onto -X: matching `ball()`s at
+  each hold height plus a plain `box()` plate at each (not a second
+  `shelf()` call — `shelf()` re-registers the climb anchor for that
+  Height, so a second call at the same Height would have silently moved
+  where a hunter actually stands, not just added geometry), and a
+  matching undecorated crest (ball + taper, no `mark()`) beside the sigil.
+  `riptide_eel_pass2_top.png` now shows two holds per side at each height
+  and a symmetric pair of crests, against `riptide_eel_pass1_34.png`'s
+  single-flank read. The sigil itself stays singular, per every other
+  beast in the cast — only its crest got a twin.
+- **Colour & read (5 → 7).** The belly band (`BELLY = SPINE[:7]`) was
+  MIDNIGHT, the darkest swatch in its own colour family and barely
+  distinct from the NAVY spine — the "still close to monochrome" finding.
+  Swapped to SLATE, already imported and already used on this same body
+  for the ridge plates, a genuinely lighter blue-grey rather than another
+  near-black. `riptide_eel_pass2_front.png` shows the belly-facing third
+  reading as a visibly lighter band against the black spine and jaw.
+
+Build log: 1696/2600 tris (was 1316), 1 mesh, every hold and the sigil
+still `ok`, no climb point moved (`CLIMB Height 2 at 39%, contract says
+39% ok`; `CLIMB Height 4 at 59%, contract says 59% ok` — identical to
+pass 1's own numbers). `run_tests.gd` passed (all green) before commit.
+
++4 total, not a plateau — kept. Silhouette, proportion and style were not
+touched, per the brief; their scores are unchanged from pass 1.
+
+## Unsure about, still
+
+Same open question as pass 1: whether the asymmetric hold placement was
+deliberate for the fight ground's own layout. Mirroring it for the
+model's own read doesn't answer that — if the fight ground genuinely
+only offers one side, this pass may have fixed a read at the cost of a
+hint about where to stand, which is Nick's call to weigh.
