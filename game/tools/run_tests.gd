@@ -417,6 +417,14 @@ func _init() -> void:
 	_test_backlog68_shuffle_in_is_deterministic_under_a_seed()
 	_test_backlog68_tutor_pulls_a_named_card_from_the_draw_pile_into_hand()
 	_test_backlog68_tutor_is_a_harmless_no_op_when_the_card_isnt_there()
+	# backlog #86 duty 3: the climb logic in the VIEW (combat_3d) had zero
+	# coverage before this, unlike /core's climb rules — see the pure
+	# route_between_rungs lifted out of combat_3d._route_between below.
+	_test_backlog86_route_between_rungs_stops_at_every_ledge_climbing_up()
+	_test_backlog86_route_between_rungs_stops_at_every_ledge_climbing_down()
+	_test_backlog86_route_between_rungs_excludes_the_endpoints()
+	_test_backlog86_route_between_rungs_is_empty_with_no_ledges_between()
+	_test_backlog86_route_between_rungs_ignores_unsorted_input()
 
 	print("")
 	if _failures == 0:
@@ -6850,6 +6858,46 @@ func _test_backlog74_occlusion_ignores_geometry_that_does_not_cover_the_same_poi
 	var all_tris: Array = mine + elsewhere
 	_expect(not AssetContract.is_occluded_from_front(0.5, 0.5, 0.0, all_tris),
 		"closer geometry that doesn't cover the same (x, y) doesn't occlude")
+
+
+## backlog #86 duty 3 — combat_3d.route_between_rungs is the pure half of
+## _route_between (the hunter climb routing on the beast's model), lifted out
+## specifically so it's testable headless, with no scene tree and no model
+## loaded. It answers: which ledges does a climb from one foothold to another
+## stop on, so a hunter lands on every shelf in between rather than passing
+## through the body (the comment above combat_3d._hop describes why that
+## matters — it's the one moment this game is about).
+const Combat3D := preload("res://views/combat_3d.gd")
+
+
+func _test_backlog86_route_between_rungs_stops_at_every_ledge_climbing_up() -> void:
+	# Ankle at 0, shoulder at 12, with ledges at the hip (4) and chest (8) in
+	# between: a climb from ankle to shoulder should stop at both.
+	var rungs: Array = [0, 4, 8, 12]
+	var route: Array = Combat3D.route_between_rungs(rungs, 0, 12)
+	_expect(route == [4, 8], "climbing ankle to shoulder stops at every ledge strictly between, ascending")
+
+
+func _test_backlog86_route_between_rungs_stops_at_every_ledge_climbing_down() -> void:
+	var rungs: Array = [0, 4, 8, 12]
+	var route: Array = Combat3D.route_between_rungs(rungs, 12, 0)
+	_expect(route == [8, 4], "falling shoulder to ankle passes the same ledges, but in descending order, not the ascending order used going up")
+
+
+func _test_backlog86_route_between_rungs_excludes_the_endpoints() -> void:
+	var rungs: Array = [0, 4, 8, 12]
+	_expect(Combat3D.route_between_rungs(rungs, 4, 8) == [], "a foothold that already sits on a ledge is never re-listed as a stop on the way to an adjacent one")
+
+
+func _test_backlog86_route_between_rungs_is_empty_with_no_ledges_between() -> void:
+	_expect(Combat3D.route_between_rungs([0, 12], 0, 12) == [], "a beast with no anchors between the two footholds routes straight through, not through a phantom ledge")
+
+
+func _test_backlog86_route_between_rungs_ignores_unsorted_input() -> void:
+	# _ledges.keys() makes no promise about order; the route must not depend on
+	# the dictionary's insertion order to come out in climb order.
+	var route: Array = Combat3D.route_between_rungs([12, 0, 8, 4], 0, 12)
+	_expect(route == [4, 8], "the rung list is sorted before routing, regardless of the order it arrives in")
 
 
 func _expect(cond: bool, name: String) -> void:

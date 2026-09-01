@@ -2482,6 +2482,25 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-01** — #86 duty 3 (verify a mechanic), third turn of the rotation.
+  Followed the entry's own pointer: `combat_3d._route_between` (the hunter
+  climb routing on a beast's model — which ledges a climb from one foothold to
+  another stops on) was already nearly pure, reading only `_ledges`/
+  `_climb_points`. Lifted the body into a static
+  `route_between_rungs(rungs, from_foot, to_foot)`, had `_route_between` call
+  it with the same rung set it always computed, and added five tests in
+  `run_tests.gd` proving: it stops at every ledge strictly between the two
+  footholds climbing up, does the same in descending order falling down, never
+  re-lists an endpoint that is itself a ledge, routes straight through when no
+  ledge sits between the two footholds, and sorts the rung list itself rather
+  than trusting `_ledges.keys()`'s (undefined) order. This was a
+  behavior-preserving extraction, not a bug fix — nothing was wrong with
+  `_route_between` — so there is no "fails before, passes after" to show; the
+  new coverage is the point. `combat_3d._stand_on_model` and `_hop` are still
+  untested: `_stand_on_model` needs a live `_beast_box`/`_front_of_beast` to
+  mean anything, and `_hop` is pure animation timing, exactly the kind of
+  presentation logic duty 3 says not to fake a test for.
+  `run_tests.gd`: ALL TESTS PASSED. Next #86 turn is duty 1 (improve an asset).
 - **2026-09-01** — #86 duty 2 (find an error and resolve it), second turn of
   the rotation. Read `game/core/combat.gd`'s `play_card` end to end (plus
   `combatant.gd`, `run_map.gd`, `boss.gd` — clean) looking for the two named

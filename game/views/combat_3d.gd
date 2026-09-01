@@ -1921,16 +1921,24 @@ func _stand_on_model(foot: int, side: float) -> Vector3:
 ## shelf. Falls back to every anchor on a beast built before ledges were
 ## exported, which is the old behaviour rather than no route at all.
 func _route_between(from_foot: int, to_foot: int) -> Array:
-	var out: Array = []
 	var rungs: Array = _ledges.keys() if not _ledges.is_empty() else _climb_rungs()
-	rungs.sort()
+	return route_between_rungs(rungs, from_foot, to_foot)
+
+
+## Pure form of the above: takes the rung set explicitly instead of reading
+## `_ledges`/`_climb_points` off a live beast, so run_tests.gd can prove the
+## routing rule headless, with no scene tree and no model loaded. #86 duty 3.
+static func route_between_rungs(rungs: Array, from_foot: int, to_foot: int) -> Array:
+	var out: Array = []
+	var sorted_rungs: Array = rungs.duplicate()
+	sorted_rungs.sort()
 	if to_foot > from_foot:
-		for k in rungs:
+		for k in sorted_rungs:
 			if int(k) > from_foot and int(k) < to_foot:
 				out.append(int(k))
 	else:
-		for i in range(rungs.size() - 1, -1, -1):
-			var k := int(rungs[i])
+		for i in range(sorted_rungs.size() - 1, -1, -1):
+			var k := int(sorted_rungs[i])
 			if k < from_foot and k > to_foot:
 				out.append(k)
 	return out
