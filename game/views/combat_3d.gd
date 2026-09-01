@@ -2661,6 +2661,15 @@ const FAN_TUCK := 26.0        # px the whole hand sits below its band, out of th
 ## means and the reference does exactly the same - so a hover has to lift far
 ## enough to bring the rules text back into view, not just nudge it.
 const FAN_RISE := 62.0        # px a hovered card lifts
+## How much a hovered card GROWS.
+##
+## Nick, on the Slay the Spire hand: "you cannot even see the information of the
+## card until you highlight it... somehow their cards still feel larger." Both
+## halves are the same mechanism. In the reference a card in hand shows its name
+## and its art and nothing else; hovering blows it up to about a third again its
+## size and THAT is where the rules become readable. Their cards feel larger
+## because the one you are looking at is.
+const FAN_HOVER_SCALE := 1.34
 
 func _layout_hand() -> void:
 	if _hand_row == null:
@@ -2691,6 +2700,14 @@ func _layout_hand() -> void:
 		# A hovered card straightens up as it rises, so the face you are reading
 		# is square to you rather than tilted.
 		c.rotation = 0.0 if c == _hand_hover else off * FAN_TILT
+		# Grow from the BOTTOM CENTRE, so a lifted card rises out of the fan
+		# instead of swelling in all directions and shoving its neighbours.
+		c.scale = (Vector2.ONE * FAN_HOVER_SCALE) if c == _hand_hover else Vector2.ONE
+		# Rules only on the card you are looking at, as in the reference. The
+		# name, the cost and the art stay on every card so the hand still reads.
+		var cv := c as CardView
+		if cv != null:
+			cv.set_details_visible(c == _hand_hover)
 		# and comes to the front, or its neighbours overlap the thing you lifted.
 		c.z_index = 10 if c == _hand_hover else i
 

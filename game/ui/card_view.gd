@@ -127,6 +127,11 @@ var _foil: ColorRect = null
 ## The moulding, drawn as a layer OVER the art rather than as the Button's
 ## stylebox - a stylebox draws behind every child and the art would hide it.
 var _frame_rect: NinePatchRect = null
+## The rules text, the type pill and the panel they sit on. Held so the hand can
+## hide them until a card is highlighted.
+var _rules: RichTextLabel = null
+var _pill: Control = null
+var _panel: ColorRect = null
 
 ## Force every card foil, for looking at it. Set by tools/screenshot.gd's
 ## `foil` flag — a foil is a rare pull by design, so without this there is no
@@ -312,8 +317,14 @@ func _build_face(data: Dictionary) -> void:
 func _build_upper(data: Dictionary) -> void:
 	# 2 - scrim. Cream rules text over a bright sky is unreadable, and the
 	# reference darkens the foot of the art for exactly this reason.
+	# SOLID, not a scrim. Nick: "make sure the black space at the bottom of the
+	# border where the text is solid. I could sort of see the art behind it."
+	# Look at Finisher: the lower half of a Slay the Spire card is an opaque
+	# olive panel, not a darkened piece of the painting. Art showing through is
+	# what makes rules text hard to read at hand size.
 	var scrim := ColorRect.new()
-	scrim.color = Color(0.045, 0.043, 0.052, 0.88)
+	_panel = scrim
+	scrim.color = Color(0.129, 0.145, 0.118, 1.0)
 	_layer(scrim, 0.055, 0.695, 0.945, 0.95)
 
 	# 3 - the moulding. A Button draws its StyleBox BEHIND every child, so the
@@ -330,11 +341,19 @@ func _build_upper(data: Dictionary) -> void:
 	# 4 - the type, straddling the scrim's top edge as a caption on the art.
 	var kind := String(_data.get("type", ""))
 	if kind != "":
-		var tag := _plate(PILL, PILL_SLICE, kind.capitalize(), 8, 13)
-		_layer(tag, 0.30, 0.695, 0.70, 0.695, 0.0, -7.0, 0.0, 6.0)
+		_pill = _plate(PILL, PILL_SLICE, kind.capitalize(), 8, 13)
+		_layer(_pill, 0.30, 0.695, 0.70, 0.695, 0.0, -7.0, 0.0, 6.0)
 
 	# 5 - the rules, on the scrim.
-	_layer(_rich_body(_data, 10, 40), 0.085, 0.735, 0.915, 0.945)
+	# Bigger and centred. Nick: "the text is much clearer" - and it is, because
+	# theirs is large, white and centred on a solid panel while ours was 10px,
+	# left-aligned and fighting a painting.
+	_rules = _rich_body(_data, 13, 40)
+	var body := _rules
+	# [center], not horizontal_alignment - a RichTextLabel has no such property
+	# and it would have thrown the first time a card was drawn.
+	body.text = "[center]" + body.text + "[/center]"
+	_layer(body, 0.075, 0.725, 0.925, 0.95)
 
 	# 6 - rarity pips, top right.
 	_layer(_rarity_pips(_data), 0.60, 0.0, 0.94, 0.0, 0.0, 30.0, 0.0, 40.0)
@@ -347,6 +366,25 @@ func _build_upper(data: Dictionary) -> void:
 	if not bool(_data.get("no_cost", false)):
 		add_child(_cost_orb(int(_data.get("cost", 0)),
 			String(_data.get("character", ""))))
+
+
+
+## Show or hide a card's RULES, leaving its name, cost and art alone.
+##
+## Nick, on the Slay the Spire hand: "you cannot even see the information of the
+## card until you highlight it." Correct, and it is what makes their hand read as
+## a row of paintings rather than a wall of small print. The name, the cost and
+## the picture are always there; the panel, the type and the rules arrive when
+## the card comes up.
+##
+## Always on for a handheld: there is no hover on a touch screen, and a card
+## whose text only appears on something a phone cannot do is a card with no text.
+func set_details_visible(on: bool) -> void:
+	if Screen.is_handheld():
+		on = true
+	for n in [_panel, _pill, _rules]:
+		if n != null and is_instance_valid(n):
+			(n as CanvasItem).visible = on
 
 
 ## The rail form: [cost] [icon] [name / rules text], one row. Everything a
