@@ -49,3 +49,41 @@ Whether the diagonal (corner-to-corner) angle on the yoke bar is intentional
 character design or should be closer to horizontal to read as a "yoke" rather
 than a strap — this is a design call, not a measurement, and is named here
 rather than guessed at.
+
+---
+
+## Pass 2 — fixer lane, 2026-09-01
+
+Applied by the **fixer** lane (`tools/fixer/BRIEF.md`), which repairs what the
+cloud reports. Views: `design/renders/yoke_ox_pass2_*.png`, captured with
+`look.cmd yoke_ox 2`.
+
+| Pass | Sil | Prop | Hygiene | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 1 | 5 | 6 | 6 | 7 | 7 | **31** |
+| 2 | 6 | 6 | 8 | 7 | 7 | **34** |
+
+### Both diagnosed fixes applied, together with the strap loops they carry
+
+- **Build hygiene (6 → 8).** The yoke box moved `z: 1.58 → 1.50`
+  (drop 0.08) and `y: -0.85 → -0.80` (back 0.05), per the diagnosis. The two
+  strap-loop tapers, which hang off the beam's own ends, moved by the same
+  deltas (`y: -0.80 → -0.75`, `z: 1.44 → 1.36`) so they stay attached to the
+  beam instead of floating where it used to be — `build.cmd` printed no
+  floating-part WARNING, confirming nothing came loose. `yoke_ox_pass2_top.png`
+  now shows the beam sitting clearly forward of and below the horn bases, no
+  longer crossing through them the way `yoke_ox_pass1_top.png` did; the
+  `_side.png` profile confirms the same separation from the angle the
+  diagnosis named.
+- **Silhouette (5 → 6).** The same drop pulls the beam out from directly under
+  the horn tips, and `yoke_ox_pass2_sil.png` now shows a small distinct notch
+  above the main mass where a horn tip clears the body outline, versus
+  `yoke_ox_pass1_sil.png`'s single unbroken lump. Not fully separated — the
+  horns and body still read as one mass at 64px more than they read as
+  "ox with horns" — so this stops short of shippable.
+
++3 total (31 → 34), not a plateau — kept. Proportion, colour and style were
+not touched, per the brief; their scores are unchanged from pass 1.
+
+Not re-litigated: the diagonal-angle question pass 1 named under "Unsure
+about" is still a design call, not a measurement, and still Nick's.

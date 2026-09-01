@@ -71,8 +71,8 @@ mirror(lambda s: b.limb([(0.16 * s, -1.05, 0.95), (0.58 * s, -0.90, 1.28),
 # entirely) and raised near the hump's own crest height so it breaks the
 # silhouette instead of hiding inside it - the position a real yoke actually
 # sits, at the neck/shoulder junction, not draped over the back.
-b.box((0.0, -0.85, 1.58), (0.80, 0.09, 0.09), SAND, bevel=0.03)
-mirror(lambda s: b.taper((0.72 * s, -0.80, 1.44), 0.05, 0.05, 0.16,
+b.box((0.0, -0.80, 1.50), (0.80, 0.09, 0.09), SAND, bevel=0.03)
+mirror(lambda s: b.taper((0.72 * s, -0.75, 1.36), 0.05, 0.05, 0.16,
                          CHARCOAL, seg=6, rot=point((0.0, 0.15, -1.0))))  # strap loop
 
 # --------------------------------------------------------------- the ledges
