@@ -115,10 +115,24 @@ FG_DEPTH = 0.10
 ## faces. They are flat dark slabs either way — the emission ramp already
 ## carries their depth — so it is not visible.
 SHIFT = 0.11
-## And with real layers. Higher, because it can be: with one flat plane more
-## travel just looks like the picture sliding, but layers moving at different
-## rates read as depth, and depth wants room to happen in.
-SHIFT_LAYERED = 0.17
+## And with real layers. Nick, on the first layered build: "make the effect a
+## bit heavier... right now it's just a small rotation, and you don't see much."
+##
+## 0.30, up from 0.17 and from 0.11 flat. With one plane, travel this large just
+## reads as the picture sliding about; with four it is the difference between
+## noticing the depth and having to be told it is there. The cost is at the
+## edges - the deepest layer is oversized by its own travel and so shows about
+## 77% of its width at rest - which is why the near layers, which travel least,
+## lose almost nothing.
+SHIFT_LAYERED = 0.30
+## How much of the deepest layer's travel the window's inner wall follows.
+##
+## Not all of it. The wall was carrying the depth back when there was one flat
+## plane, and at the old travel its reveal was about 5% of the card. At 0.30 it
+## would open to 15% - a dark band a sixth of the card wide, competing with the
+## art it is supposed to frame. The layers do the depth now; the wall only has
+## to say there is an edge.
+WALL_FOLLOW = 0.45
 ## Ortho camera pull-back. Nothing depends on it; it only has to clear the
 ## deepest plane.
 CAM_Y = -3.0
@@ -368,7 +382,7 @@ def set_shear(planes, wall, t):
     back_throw: float = planes[0][1] if planes else SHIFT * 0.5
     hx = AW * 0.5
     for i, sgn in ((2, -1.0), (3, -1.0), (6, 1.0), (7, 1.0)):
-        wall.data.vertices[i].co.x = sgn * hx + t * back_throw * AW
+        wall.data.vertices[i].co.x = sgn * hx + t * back_throw * WALL_FOLLOW * AW
     wall.data.update()
 
 

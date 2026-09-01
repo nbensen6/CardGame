@@ -4,7 +4,7 @@
   "rows": 4,
   "cell_w": 310,
   "cell_h": 435,
-  "parallax": 0.17,
+  "parallax": 0.3,
   "layers": 4,
   "source": "crescendo.png"
 }

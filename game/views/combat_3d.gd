@@ -3183,6 +3183,18 @@ const DRAG_SLOP := 9.0
 ## because dropping a card you did not mean to play is the expensive mistake and
 ## putting it back costs nothing.
 const HAND_BAND := 210.0
+## How far a carried card turns at the edges of the screen, in degrees.
+##
+## Nick: "I would like for the rotation to be a little bit more heavy so you'd
+## see a little bit more view of the card. Right now, it's just a small
+## rotation, and you don't see much." The card was not turning AT ALL - only its
+## picture was shifting, and a picture that moves inside a rectangle that plainly
+## still faces you reads as the art being loose. This is the same |cos| squash
+## the deck screen uses, which is what makes it read as a card being angled.
+const DRAG_TILT_DEG := 34.0
+## And a little roll with it. Carrying something in one hand tips it; a card
+## that stays perfectly upright while being swung across a table looks pinned.
+const DRAG_ROLL := 0.085
 
 var _drag: CardView = null
 var _drag_data: Dictionary = {}
@@ -3266,6 +3278,12 @@ func _lift() -> void:
 	_drag.rotation = 0.0
 	_drag.tilt_overridden = true
 	_drag.set_process(true)         # a plain card does not tick until it has to
+	# Squash about the middle, or angling the card walks it sideways.
+	_drag.pivot_offset = _drag.size * 0.5
+	# Stop it taking hover events while it is in the air: CardView sets its own
+	# scale on mouse_entered, and the pointer is permanently over a card it is
+	# carrying - so the hover would overwrite the tilt every frame.
+	_drag.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_layout_hand()                  # the fan closes over the gap
 
 
@@ -3293,6 +3311,12 @@ func _aim_dragged() -> void:
 	# but a sheen has no such limit and a card carried UP the screen catching the
 	# light differently is most of what sells the thing as a physical object.
 	_drag.tilt_override = Vector2(nx * 1.35, ny * 0.75)
+	# And the card itself turns, which is the part that was missing. Same
+	# mechanism as the deck screen: a card seen at an angle is a card that has
+	# got narrower, and doing that in step with the parallax is what makes the
+	# two read as one object rather than as a picture sliding in a frame.
+	_drag.scale = Vector2(cos(nx * deg_to_rad(DRAG_TILT_DEG)), 1.0)
+	_drag.rotation = -nx * DRAG_ROLL
 
 
 ## Put everything back the way the hand expects it, whatever happens next.
@@ -3307,6 +3331,9 @@ func _drop() -> void:
 	card.tilt_overridden = false
 	card.turn_override = 2.0
 	card.z_index = 0
+	card.scale = Vector2.ONE
+	card.rotation = 0.0
+	card.mouse_filter = Control.MOUSE_FILTER_STOP
 	if not live:
 		return
 	# Home first, THEN play. A dragged card is a child of the overlay and the
