@@ -35,6 +35,7 @@ var _ascension := 0
 
 func _ready() -> void:
 	Screen.fit(self)   # a phone gets a physically larger interface
+	Dev.boot()         # `-- borderless foil hand=...`, for looking at rare pulls
 	_compact_for_handheld()
 	Session.reset()
 	Music.play("menu")

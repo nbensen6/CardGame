@@ -460,6 +460,20 @@ func _build_upper(data: Dictionary) -> void:
 # It replaces exactly one node — the ART_LAYER TextureRect — on either
 # treatment, framed or borderless, and every layer above it is untouched. That
 # is what the named constant was reserved for.
+#
+# WHO GETS ONE. Nick, 2026-09-01: "All rares will have the window effect."
+# So it is NOT a pull — unlike foil and borderless, which roll per copy, this is
+# a fixed property of the card, and every rare wears it. That is what makes the
+# three read as a hierarchy instead of three unrelated shinies: the window says
+# what the CARD is, the foil and the border say what this COPY is, and a
+# borderless foil rare has all three at once because they are answering
+# different questions.
+#
+# The policy lives in tools/blender/rare3d.py, which refuses a non-rare without
+# --force and has an --all that builds the whole set from cards.json. This side
+# stays dumb on purpose — a sheet exists, so it is used — because the same
+# rule enforced in two places is a rule that will eventually disagree with
+# itself. 29 rares; one has art so far.
 const CARD_ART_3D := "res://assets/cardart3d/"
 
 
@@ -472,18 +486,9 @@ func _has_window(id: String) -> bool:
 func _window_art(id: String) -> AtlasTexture:
 	if not _has_window(id):
 		return null
-	var meta := CARD_ART_3D + id + ".json"
-	if not ResourceLoader.exists(meta):
+	var grid := _window_grid(CARD_ART_3D + id + ".json")
+	if grid.is_empty():
 		return null
-	# Godot imports a .json into a JSON resource, so this is a load() and not a
-	# FileAccess read — the raw file is not necessarily in an exported build.
-	var res := load(meta)
-	if not (res is JSON):
-		return null
-	var d: Variant = (res as JSON).data
-	if typeof(d) != TYPE_DICTIONARY:
-		return null
-	var grid: Dictionary = d
 	_win_frames = int(grid.get("frames", 0))
 	_win_cols = maxi(int(grid.get("cols", 1)), 1)
 	_win_cell = Vector2i(int(grid.get("cell_w", 0)), int(grid.get("cell_h", 0)))
@@ -495,6 +500,24 @@ func _window_art(id: String) -> AtlasTexture:
 	_turn_window(0.0)          # a still card shows the head-on view
 	set_process(true)          # the window needs a tick even with no foil
 	return _win
+
+
+## The sheet's grid, from its sidecar .json. {} when it cannot be read.
+##
+## Two ways in, because a .json is an awkward thing to ship: Godot's importer
+## turns it into a JSON resource, but a plain-file loader can also pick it up,
+## and which one applies depends on whether the project has been imported since
+## the file appeared. Trying both costs four lines and removes a class of bug
+## where the window silently does not appear on one machine.
+func _window_grid(path: String) -> Dictionary:
+	var d: Variant = null
+	if ResourceLoader.exists(path):
+		var res := load(path)
+		if res is JSON:
+			d = (res as JSON).data
+	if typeof(d) != TYPE_DICTIONARY and FileAccess.file_exists(path):
+		d = JSON.parse_string(FileAccess.get_file_as_string(path))
+	return d if typeof(d) == TYPE_DICTIONARY else {}
 
 
 ## Point the window at the view for `t` in -1..+1, left to right.

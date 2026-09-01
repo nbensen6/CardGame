@@ -256,7 +256,13 @@ func _all_selected() -> bool:
 
 # --- Snapshots (host -> clients) ------------------------------------------
 
+## The combat whose hand has already been stocked from `Dev.hand`, so a forced
+## hand is dealt ONCE per fight rather than refilled after every card played.
+var _dev_stocked: Combat = null
+
+
 func _broadcast_state() -> void:
+	_dev_hand()
 	_autosave()
 	if _run == null:
 		# Lobby: character select. Solo picks both hunters; co-op one each.
@@ -488,6 +494,37 @@ func _players_public() -> Array:
 				"potions": _potion_view(i),
 			})
 	return out
+
+## Deal the hand `-- hand=crescendo,leap` asked for.
+##
+## Host-side rather than in Run, because /core may not read the command line
+## (CLAUDE.md 2, 11) - a run is the same run whatever the launcher said. This is
+## the session layer reaching in exactly the way the screenshot harness does.
+##
+## Once per combat, tracked by the Combat's identity: re-stamping on every
+## broadcast would refill your hand every time you played a card, which is a
+## cheat rather than a dev switch.
+func _dev_hand() -> void:
+	if Dev.hand.is_empty() or _run == null or _run.combat == null:
+		return
+	if _dev_stocked == _run.combat:
+		return
+	_dev_stocked = _run.combat
+	for ps in _run.combat.players:
+		var dealt: Array = []
+		for cid in Dev.hand:
+			var made := Content.make_card(String(cid).strip_edges())
+			# Content.make_card never returns null - an unknown id gets a blank
+			# Card.new() and a push_warning nobody reads. So check the id: a
+			# typo in `hand=` should be a card that is missing, not a nameless
+			# 0-cost blank sitting in the hand looking like a rendering bug.
+			if made.id == "":
+				continue
+			dealt.append(made)
+		if dealt.is_empty():
+			continue
+		ps.hand = dealt
+
 
 func _build_private(pi: int) -> Dictionary:
 	if pi < 0 or _run == null:

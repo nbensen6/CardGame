@@ -79,8 +79,24 @@ Ordered. Source in brackets.
   rules are the game's own, live, on top. Changing the frame does not touch a
   single sheet.
 
-  *Done when:* met. A demo sheet exists for `leap`; delete
-  `game/assets/cardart3d/leap.*` and it falls back to the flat painting.
+  **Who gets one.** Nick, 2026-09-01: "All rares will have the window effect."
+  So it is not a pull — unlike foil and borderless, which roll per copy, this
+  is a fixed property of the CARD, and it is what makes the three read as a
+  hierarchy rather than three unrelated shinies:
+
+  | treatment  | answers            | how you get it                     |
+  |------------|--------------------|------------------------------------|
+  | window     | what the CARD is   | every rare, always                 |
+  | borderless | what the COPY is   | 4 / 7 / 13% by rarity, on a reward |
+  | foil       | what the COPY is   | 6 / 9 / 14% by rarity, on a reward |
+
+  All four combinations exist because the two rolls are independent, so a
+  borderless foil rare — window, border and sheen at once — is about 1 in 55.
+
+  *Done when:* met. `crescendo` has one. The blocker is now ART, not code: 29
+  rares, one painted. `tools\blender\rare3d.cmd all` rebuilds the whole set
+  from cards.json whenever a batch of paintings lands, and rare3d.py refuses a
+  non-rare without `--force`.
 - [ ] **83. Score the art nobody has looked at** `cloud-safe` — fourteen beasts,
   five hunters, fourteen grounds, the map, nineteen portraits and twenty-eight
   icons are on screen right now, and `design/ART-REVIEW.md` carries **28 blocks

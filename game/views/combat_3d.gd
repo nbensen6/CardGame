@@ -1623,6 +1623,18 @@ func _dev_note(text: String) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	# F9 walks the card treatments: framed, borderless, borderless foil, foil.
+	#
+	# Both are rare pulls on purpose, so the only way to judge one used to be to
+	# play until the dice agreed. And the interesting question is never "does
+	# the borderless one look good", it is "does it look BETTER than the framed
+	# one" - which is a comparison you can only make by flipping between them on
+	# the same card, a second apart. Hence live, rather than a launch flag.
+	var key := event as InputEventKey
+	if key != null and key.pressed and key.keycode == KEY_F9:
+		print("DEV cards: %s" % Dev.cycle())
+		_render_hand()
+		return
 	if event is InputEventMouseButton:
 		var mb: InputEventMouseButton = event
 		match mb.button_index:

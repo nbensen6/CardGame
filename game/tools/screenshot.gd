@@ -259,7 +259,9 @@ func _initialize() -> void:
 		ch.players[who].hand.clear()
 		for cid in ids:
 			var made := Content.make_card(String(cid).strip_edges())
-			if made == null:
+			# make_card hands back a blank Card, not null, when the id is
+			# unknown - so the id is what says whether it found anything.
+			if made.id == "":
 				print("HAND unknown card id '%s'" % cid)
 				continue
 			ch.players[who].hand.append(made)

@@ -370,33 +370,10 @@ def pack(views, out_png):
     return rows
 
 
-def main():
-    argv = sys.argv[sys.argv.index("--") + 1:]
-
-    def opt(flag, default=None):
-        return argv[argv.index(flag) + 1] if flag in argv else default
-
-    art = opt("--art")
-    out_dir = opt("--out", "game/assets/cardart3d")
-    name = opt("--name") or os.path.splitext(os.path.basename(art or ""))[0]
-    fg = opt("--fg")
-    if not art:
-        print("usage: rare3d.py -- --art <png> --name <card_id> [--out <dir>] "
-              "[--fg <png>]")
-        return
-    # ABSOLUTE, before anything touches the filesystem. Blender resolves a
-    # relative render filepath against its own idea of the current blend rather
-    # than the shell's cwd, and the first run of this wrote 24 frames to
-    # C:\game\assets\... on the drive root while the pack step looked for them
-    # under the repo. Every path from here down is absolute.
-    art = os.path.abspath(art)
-    out_dir = os.path.abspath(out_dir)
-    if fg:
-        fg = os.path.abspath(fg)
-    os.makedirs(out_dir, exist_ok=True)
+def one(art, out_dir, name, fg=None):
+    """Render one card's window. Paths must already be absolute."""
     tmp = os.path.join(out_dir, "_views")
     os.makedirs(tmp, exist_ok=True)
-
     scene = build(art, fg)
     views = render_views(scene, tmp)
     png = os.path.join(out_dir, "%s.png" % name)
@@ -404,7 +381,6 @@ def main():
     for p in views:
         os.remove(p)
     os.rmdir(tmp)
-
     meta = {
         "frames": FRAMES, "cols": COLS, "rows": rows,
         "cell_w": CELL[0], "cell_h": CELL[1],
@@ -418,6 +394,100 @@ def main():
         json.dump(meta, fh, indent=2)
     print("SHEET %s  %dx%d cells, %d frames, parallax %.1f%% of card width"
           % (os.path.basename(png), COLS, rows, FRAMES, meta["parallax"] * 100.0))
+
+
+def repo_root():
+    return os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                        "..", ".."))
+
+
+def rarity_of(card_id):
+    """What cards.json says this card is, or "" if it says nothing.
+
+    Read rather than assumed, because the WINDOW IS A RARITY EFFECT. Nick,
+    2026-09-01: "All rares will have the window effect." That makes the sheet a
+    consequence of the card's rarity rather than a thing somebody remembered to
+    render, and a rule that is only mostly followed is worse than no rule - so
+    this file checks, and --all builds the whole set from the data.
+    """
+    path = os.path.join(repo_root(), "game", "data", "cards.json")
+    try:
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (IOError, ValueError):
+        return ""
+    cards = data.get("cards", data)
+    entry = cards.get(card_id)
+    return entry.get("rarity", "") if isinstance(entry, dict) else ""
+
+
+def every_rare_with_art():
+    """(card_id, art path) for each RARE that has a painting to hang."""
+    root = repo_root()
+    path = os.path.join(root, "game", "data", "cards.json")
+    with open(path, encoding="utf-8") as fh:
+        data = json.load(fh)
+    cards = data.get("cards", data)
+    out = []
+    for cid, entry in sorted(cards.items()):
+        if not isinstance(entry, dict) or entry.get("rarity") != "rare":
+            continue
+        art = os.path.join(root, "game", "assets", "cardart", "%s.png" % cid)
+        if os.path.exists(art):
+            out.append((cid, art))
+    return out
+
+
+def main():
+    argv = sys.argv[sys.argv.index("--") + 1:]
+
+    def opt(flag, default=None):
+        return argv[argv.index(flag) + 1] if flag in argv else default
+
+    out_dir = os.path.abspath(opt("--out",
+                                  os.path.join(repo_root(), "game", "assets",
+                                               "cardart3d")))
+    os.makedirs(out_dir, exist_ok=True)
+
+    if "--all" in argv:
+        # Every rare that has art. Run it after a batch of paintings lands and
+        # the rule "all rares have the window" is true again with one command.
+        todo = every_rare_with_art()
+        if not todo:
+            print("no rare has art yet - nothing to build")
+            return
+        print("BUILDING %d rare window(s): %s"
+              % (len(todo), ", ".join(c for c, _ in todo)))
+        for cid, art in todo:
+            one(art, out_dir, cid)
+        return
+
+    art = opt("--art")
+    if not art:
+        print("usage: rare3d.py -- --art <png> --name <card_id> [--out <dir>] "
+              "[--fg <png>]")
+        print("       rare3d.py -- --all        every rare that has art")
+        return
+    # ABSOLUTE, before anything touches the filesystem. Blender resolves a
+    # relative render filepath against its own idea of the current blend rather
+    # than the shell's cwd, and the first run of this wrote 24 frames to
+    # C:\gamessets\... on the drive root while the pack step looked for them
+    # under the repo. Every path from here down is absolute.
+    art = os.path.abspath(art)
+    name = opt("--name") or os.path.splitext(os.path.basename(art))[0]
+    fg = opt("--fg")
+    if fg:
+        fg = os.path.abspath(fg)
+
+    rarity = rarity_of(name)
+    if rarity and rarity != "rare" and "--force" not in argv:
+        print("REFUSED %s is %s, and the window is a RARE-only effect." % (name, rarity))
+        print("        Pass --force if you mean it - but a common wearing a")
+        print("        rare's treatment is how a rarity signal stops meaning")
+        print("        anything.")
+        return
+
+    one(art, out_dir, name, fg)
 
 
 main()

@@ -36,8 +36,18 @@ set "ROOT=%~dp0..\.."
 set "ID=%~1"
 
 if "%ID%"=="" (
-  echo usage: rare3d.cmd ^<card id^> [fg]
+  echo usage: rare3d.cmd all ^| ^<card id^> [fg]
   exit /b 1
+)
+
+if /i "%ID%"=="all" (
+  echo === rendering every rare that has art
+  "%BLENDER%" --background --python "%~dp0rare3d.py" -- ^
+    --all --out "%ROOT%\game\assets\cardart3d"
+  echo === reimporting
+  "%GODOT%" --headless --path "%ROOT%\game" --import
+  echo === done
+  exit /b 0
 )
 
 set "ART=%ROOT%\game\assets\cardart\%ID%.png"
