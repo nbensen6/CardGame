@@ -680,6 +680,42 @@ Ordered. Source in brackets.
   mire_snapper_ground, thrasher_portrait). All four of this batch's icons
   (28-41) scored above the tenth-place value of 26, so none of them enters
   the bottom ten — the list is identical to batch 14's.
+  **Checked 2026-09-01: batch 16, the first four of the "six are about going
+  up" family** (`climb`, `ascend`, `peak`, `rope`, `lift`, `rally`) —
+  `design/ART-REVIEW.md`'s own second named pair to check, alongside the
+  "not dying" family batch 15 already scored. Same setup as batch 15: all
+  four rendered and downsampled together to a real 42px (Pillow, `LANCZOS`)
+  over the flat-brown card standin, alpha bounding boxes checked
+  numerically. Scored `climb` (gain Height, 33/50), `ascend` (a big climb,
+  29/50, lowest of the batch), `peak` (a strike that scales with Height,
+  39/50, best of the batch), `rope` (both hunters climb, 33/50). Confirms
+  `ART-REVIEW.md`'s own named worry the same way batch 15 confirmed it for
+  `shield`/`guard`: `climb` and `ascend` share an almost-identical
+  triangle-on-post outer silhouette at 42px, differing only in small base
+  attachments (colour, not shape) — Family distinction scored 3/10 for
+  both, tied with batch 15's `shield`/`guard` pair for the lowest Family
+  line scored under this item. `peak` and `rope` are both clearly distinct
+  by shape from the rest of the family and from each other. New finding
+  outside the family-distinction pattern: `rope`'s tan body sits close
+  enough in value to the brown card standin that it nearly merges with the
+  background at 42px (Colour & contrast 3/10) — the worst colour-separation
+  score recorded under this item so far, worse than batch 14's `intangible`
+  (5/10). Full rubric tables, per-line justifications and one concrete
+  (unapplied) fix per asset are in `design/progress/<name>_icon.md`. Twelve
+  of the thirty-six total card icons now scored (the four-icon "not dying"
+  and "defensive-keyword" families from batches 14-15, plus this batch's
+  four); `lift`, `rally`, and twenty-two more of the "twenty-eight card
+  icons" block, both "Strength and Dexterity" icons, `frail` and `light`
+  remain — twenty-two icons still unscored. No icon script touched —
+  report only, per this item's own rule. Left unchecked.
+  **Ranked weakest ten, unchanged after batch 16** (of the 64 assets scored
+  across all sixteen batches — lowest first, out of 50): gale_serpent_ground
+  22, then a four-way tie at 23 (grove_bear_ground, riftling_ground,
+  shifting_idol_ground, yoke_ox_portrait), sky_snapper_ground 25, then a
+  four-way tie at 26 (bog_leech_portrait, drowned_colossus_ground,
+  mire_snapper_ground, thrasher_portrait). All four of this batch's icons
+  (29-39) scored above the tenth-place value of 26, so none of them enters
+  the bottom ten — the list is identical to batch 15's.
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
   relic") on top of the existing Rest / Thin / Sharpen and `Run.relic_totals()`.
   *Done when:* pickable at a campfire, persists, shows in the relic list.
