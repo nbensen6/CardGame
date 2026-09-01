@@ -2365,6 +2365,26 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-01** — Re-check: still no actionable cloud-safe/cloud-art work, but
+  the framing changed since the last check. Fetched fresh (tip `fab9f26`, a
+  fixer commit) and found `ef700b8` ("Point the fixer at what you can see, and
+  close the art review") landed since: Nick retired the old excuse this lane
+  kept giving — "pending Nick's look at `design/ART-REVIEW.md`" — because that
+  file never held an open decision, only the scoring pass's own boilerplate
+  ("a fix is Nick's call") repeated 87 times. `ART-REVIEW.md` now carries a
+  SUPERSEDED header pointing at `design/progress/`, and #83 (score the art) is
+  ticked done: 88 assets scored across 22 batches, coverage complete. Applying
+  fixes is now explicitly the fixer lane's job (`tools/fixer/BRIEF.md`, this
+  PC, not this sandbox) — not this routine's, and not gated on anyone's
+  approval any more. That doesn't hand this lane new work: #55 (14 beasts) and
+  #76 (36-icon audit, exhaustive as of batch 7) are both still past their own
+  numeric "done when" bars with nothing left to build, and both stay unchecked
+  on purpose — `cloud-art` is never ticked by this routine, only by a human,
+  and that has not changed. Confirmed the queue is otherwise unchanged: 2, 3,
+  8, 25, 29b, 32, 31b, 78, 79, 81 are `needs a screen` (skipped); no new
+  `cloud-safe`/`cloud-art` items exist past #84. No code or data changed this
+  run. Not sending a notification: the standing "nothing actionable" result
+  hasn't changed, only why.
 - **2026-09-01** — Re-check: no actionable cloud-safe/cloud-art work. Fetched
   fresh (tip `344a856`, a session commit — the drag/3D-window work, not this
   lane's). #83's own batch log now runs through batch 22: all fourteen
