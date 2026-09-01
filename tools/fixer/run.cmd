@@ -31,6 +31,27 @@ setlocal
 set "ROOT=%~dp0..\.."
 cd /d "%ROOT%"
 
+REM DO NOT RUN WHILE THE DESKTOP APP IS OPEN.
+REM
+REM This launches claude.exe out of %APPDATA%\Claude\claude-code\<version>\,
+REM which is the desktop app's OWN auto-updating install directory. On
+REM 2026-09-01 the app tried to update 2.1.247 to 2.1.255 while a fixer run was
+REM eight minutes into holding that exe open. The swap could not happen, and
+REM Nick got "this app is being used" and lost the app.
+REM
+REM Matching on the WindowsApps path, not just the name: a Claude Code terminal
+REM is also called claude.exe, and blocking on that would mean the fixer never
+REM runs on a day Nick has a session open - which is most days, and would kill
+REM this lane silently rather than loudly.
+powershell -NoProfile -Command ^
+  "if (Get-Process -Name Claude -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '*WindowsApps*' }) { exit 1 } else { exit 0 }"
+if errorlevel 1 (
+  echo === desktop Claude is open; skipping this run so its updater is not blocked
+  echo === fixer skipped %DATE% %TIME%: desktop app running > "%~dp0last-run.log"
+  endlocal
+  exit /b 0
+)
+
 REM Quoted form: set "VAR=value", not set VAR=value.
 REM
 REM MODE is also a real Windows command (mode.com), and unquoted SET
