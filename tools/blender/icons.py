@@ -306,11 +306,11 @@ def rhythm(i):                                  # the Frog's combo counter
     pts, rad = [], []
     for k in range(9):
         x = -0.52 + k * 0.13
-        pts.append((x, 0.0, math.sin(k * 1.05) * 0.30))
+        pts.append((x, 0.0, math.sin(k * math.pi / 2) * 0.30))
         rad.append(0.045)
     i.limb(pts, rad, SKY, seg=5, cap=False)
     for s in (-1, 1):
-        i.ball((0.52 * s, 0.0, math.sin((8 if s > 0 else 0) * 1.05) * 0.30),
+        i.ball((0.52 * s, 0.0, math.sin((8 if s > 0 else 0) * math.pi / 2) * 0.30),
                (0.09, 0.07, 0.09), ICE, 7, 4)
     i.slabf(0.0, -0.52, 0.44, 0.045, PERIWINKLE)
 

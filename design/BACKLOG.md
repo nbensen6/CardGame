@@ -2482,6 +2482,26 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-01** — #86 duty 1 (improve an asset), fourth turn of the
+  rotation. Picked `rhythm` (icon, 30/50, lowest unfixed portrait/icon —
+  `ascend`'s own 29 was already fixed last duty-1 turn), applied both fixes
+  named in `design/progress/rhythm_icon.md`'s pass-1 diagnosis: the "combo
+  counter" wave's nine points used `math.sin(k * 1.05)`, a phase step that
+  plateaus near each extreme instead of stepping evenly, so it rendered as
+  one dominant V with two flat runs instead of a repeating beat. Changed the
+  phase to `math.sin(k * math.pi / 2)` (`tools/blender/icons.py`'s `rhythm`)
+  — a clean four-beat zigzag with both ends level — which is what actually
+  fixes Mechanic match (reads as a pulse/count now) and, as a consequence,
+  Family distinction (no longer shares `peak`/`climb`/`ascend`'s single-
+  chevron silhouette). Looked at the result at full size, at a real 42px
+  downsample, as a silhouette, and side-by-side with the three "going up"
+  icons before keeping it — all four in `design/renders/rhythm_*_pass2*.png`.
+  Score 30 → 38 (+8), no line regressed. `download.blender.org` is still
+  policy-403 in this environment; rendered with apt's Blender 4.0.2 instead
+  (same route `ascend_icon.md`'s own pass 2 used), which additionally needed
+  `python3-numpy` via apt — this apt build's glTF exporter imports numpy
+  from the system Python and none was installed. `run_tests.gd`: ALL TESTS
+  PASSED. Next #86 turn is duty 2 (find an error and resolve it).
 - **2026-09-01** — #86 duty 3 (verify a mechanic), third turn of the rotation.
   Followed the entry's own pointer: `combat_3d._route_between` (the hunter
   climb routing on a beast's model — which ledges a climb from one foothold to

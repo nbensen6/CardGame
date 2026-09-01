@@ -83,3 +83,63 @@ or is closer to `expose`'s ticks: arguably part of the "reaching to both
 ends" intent of a combo counter rather than an accidental clip. Flagged as
 the same pattern, not scored as a defect on its own line, per that
 convention.
+
+## Pass 2 — cloud, backlog #86 duty 1
+
+Both named lines trace to one cause: `icons.py`'s `rhythm()` built its nine
+points with `math.sin(k * 1.05)`, a phase step that plateaus hard near each
+extreme instead of stepping evenly through a cycle, so what rendered was one
+dominant V flanked by two flat runs rather than a repeating beat. Changed
+the phase step from `1.05` to `math.pi / 2` (both the point loop and the two
+end-ball positions, which read the same formula at `k=0`/`k=8` so they stay
+anchored to the line's own ends): `sin(k * pi/2)` for `k` in `0..8` gives
+`0, +0.30, 0, -0.30, 0, +0.30, 0, -0.30, 0` — a clean four-beat zigzag with
+both ends level, instead of the old asymmetric `0` / `+0.256` endpoints.
+No palette or budget touched; only the two `rhythm()` lines in `icons.py`.
+
+Rendered with a locally apt-installed Blender 4.0.2 (`download.blender.org`
+still policy-403 for a direct download; apt route is the same one #74/#76/#83
+and `ascend_icon.md`'s pass 2 used — needed `python3-numpy` via apt too, since
+this apt build's glTF exporter shells out to the system Python and had none).
+Only `rhythm.png` copied over the shipped asset, no other icon script
+touched. Renders: `design/renders/rhythm_icon_pass2_full.png` (composited on
+the brown card-face standin), `design/renders/rhythm_icon_pass2_42px_big.png`
+(42px Lanczos downsample, nearest-neighbour upscaled for viewing),
+`design/renders/rhythm_icon_pass2_sil.png` (silhouette), and
+`design/renders/rhythm_family_42px_strip_pass2.png` (rhythm next to peak/
+climb/ascend at 42px, same comparison method `ascend_icon.md` pass 2 used).
+Alpha bbox moved from `(0, 50, 256, 255)`/`(0, 50, 256, 254)` to
+`(0, 51, 256, 254)` — the same overall footprint, no new clipping.
+
+| Silhouette@42px | Family | Mechanic | Colour | Style | Total |
+|---|---|---|---|---|---|
+| 8 | 8 | 8 | 7 | 7 | **38** |
+
+- **Silhouette @ 42px (7 → 8, side effect):** looked at the 42px render —
+  the line now reads as two clean peaks and a valley rather than one V,
+  still fully legible with the same end balls and bar. Not one of the two
+  named lines, moved because the shape itself changed.
+- **Family distinction (5 → 8):** the side-by-side strip
+  (`rhythm_family_42px_strip_pass2.png`) shows `rhythm` as a genuine zigzag
+  with a valley, next to `peak`'s single mountain and `climb`/`ascend`'s
+  single arrow-on-post — no longer sharing a silhouette family with the
+  "going up" icons at all. Not a 9-10: still the same SKY/ICE/PERIWINKLE
+  colour language as the rest of the set, which is intentional.
+- **Mechanic match (4 → 8):** the four-beat zigzag reads as a repeating
+  count/pulse rather than a single dip or checkmark — confirmed in both the
+  full render and the 42px downsample.
+- **Colour & contrast (7, unchanged):** not one of the two fixes; the pixel
+  values weren't touched.
+- **Style consistency (7, unchanged):** still the same jointed-limb-plus-
+  end-balls construction; only the phase of an existing curve changed.
+
+**+8 total (30 → 38), not a plateau — kept.** No line regressed.
+`run_tests.gd`: **ALL TESTS PASSED** (icons aren't exercised by the suite
+directly; this confirms no unrelated regression).
+
+## Unsure about (pass 2)
+
+Whether Mechanic match should move even higher now that the pattern is a
+clean repeating wave; left at 8 rather than 9-10 since nothing about the
+shape names "combo" or "counter" specifically beyond "a repeating pulse,"
+which is as far as a wordless glyph can reasonably go.
