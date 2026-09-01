@@ -562,6 +562,83 @@ Ordered. Source in brackets.
   exposes rather than the wider 3D render: an all-edges-touching close crop,
   and a sigil colour that blends into its background only at true portrait/
   34px viewing distance.
+  **Checked 2026-09-01: batch 14, the first four icons — the "four
+  defensive-keyword icons" block (`intangible`, `buffer`, `plated_armour`,
+  `thorns`).** Opened the fourth asset class this item's own text calls out
+  as needing a rubric adaptation ("icons... will need a fourth rubric
+  adaptation — an icon has no 'identity' or 'framing' question"), and picked
+  the block `ART-REVIEW.md` itself already scopes to exactly four icons with
+  its own stated question ("can you tell these four apart from
+  `shield`/`guard`/`wall` at 42px"). No Blender needed — these are already-
+  rendered static PNGs (`game/assets/icons/<name>.png`, built by
+  `tools/blender/icons.py`) read directly via the Read tool, plus a real 42px
+  downsample (Pillow — reinstalled, fresh container) composited over a flat
+  brown standing-in for the card face, the pixel count `ART-REVIEW.md` itself
+  names as the real read distance ("an icon is read at 42 pixels as a
+  silhouette"). The adapted 5-line rubric (Silhouette@42px / Family
+  distinction / Mechanic match / Colour & contrast / Style consistency,
+  dropping the portrait rubric's Framing and Identity, neither of which means
+  anything for a fixed-square icon) is written up in full in
+  `design/progress/intangible_icon.md` and referenced, not repeated, by the
+  other three files in this batch. `shield`, `guard` and `wall` were rendered
+  the same way for side-by-side comparison on the Family-distinction line but
+  are not themselves scored here — they belong to the unscored
+  "twenty-eight card icons" block.
+  Scored `thorns` (43/50, the best score recorded under this item across all
+  fourteen batches — a saturated green spiked ball is unmistakable next to
+  the family's blue/grey palette and reads clearly at 42px), `buffer` (38/50
+  — a hex ring plus a red shard reads as a clean three-part shape at 42px,
+  docked because the shard reads more like a stray flag than "a hit getting
+  deflected"), `plated_armour` (36/50 — the three-lobe tapered-tower
+  silhouette is completely distinct from `shield`/`guard`/`wall`, but with no
+  visible rivets or gaps between plates it reads as a cairn or totem rather
+  than armour), `intangible` (34/50, lowest of the batch — confirms
+  `ART-REVIEW.md`'s own named worry: the palest of its three fading tiles
+  sits close enough in value to the card-face brown that it nearly
+  disappears at 42px, and the three tiles compress into one shaded bar
+  rather than reading as three separate steps). All four are unambiguously
+  distinct from `shield`/`guard`/`wall` by silhouette alone at 42px — a
+  genuinely reassuring finding `ART-REVIEW.md` itself only flagged as
+  "unsure," not a defect. Full rubric tables, per-line justifications and one
+  concrete (unapplied) fix per asset are in `design/progress/<name>_icon.md`.
+  No icon script touched — report only, per this item's own rule. Left
+  unchecked.
+  **Correction to the record, found while re-deriving current scores rather
+  than trusting the batch 13 list secondhand:** two assets this item scored
+  earlier have since been changed by a *separate* mechanism, the "fixer
+  lane" (`tools/fixer/BRIEF.md`, run by hand in a session per its own log,
+  not by this routine and not part of item #83's report-only scope) —
+  `silk_widow` 31→35 and `silk_widow_portrait` 22→31 (commit
+  `42be878`), `riptide_eel` 30→34 (commit `8b8d45f`), and, from an earlier
+  fixer pass this item's own batch logs never mentioned,
+  `sunken_warden_ground` 21→28 (`design/progress/sunken_warden_ground.md`'s
+  own "Pass 2 — fixer lane, 2026-08-31" section — also the source of a
+  standing note worth repeating: the ground tri budget it was scored against
+  was wrong, raised from 3600 to 7400 the same day, so every ground's
+  hygiene line scored in batches 5-8 was checked against a stale number).
+  The batch 13 ranked list above still shows `silk_widow_portrait` at its
+  stale 22 and omits `sunken_warden_ground` entirely — left as originally
+  written rather than edited, since this item's own convention is to log
+  forward, not rewrite prior batches' text, but the **ranked ten below is
+  current**, not the one two paragraphs up.
+  **Ranked weakest ten, updated after batch 14** (of the 56 assets scored
+  across all fourteen batches, current scores — lowest first, out of 50):
+  gale_serpent_ground 22, then a four-way tie at 23 (grove_bear_ground,
+  riftling_ground, shifting_idol_ground, yoke_ox_portrait), sky_snapper_ground
+  25, then a four-way tie at 26 (bog_leech_portrait, drowned_colossus_ground,
+  mire_snapper_ground, thrasher_portrait) — exactly ten with no tenth-place
+  tiebreak needed this time. All four new icons scored well clear of this
+  list (34-43); the bottom ten remains entirely fight grounds and portraits,
+  none of them icons yet. Remaining unscored: the "twenty-eight card icons"
+  and "Strength and Dexterity icons" blocks (30 icons total across two
+  blocks) from `design/ART-REVIEW.md`, plus the overworld map — which, on
+  inspection this batch, is **not actually cloud-scoreable the way icons and
+  portraits are**: unlike a portrait, there is no single flattened map image,
+  only many separate hex-tile `.glb` models assembled at runtime, and
+  `ART-REVIEW.md`'s own preview instructions call for `screenshot.gd`, which
+  this environment cannot run. Worth treating the map as `needs a screen` for
+  scoring purposes even though item #83's original text filed it as
+  `cloud-safe` alongside everything else.
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
   relic") on top of the existing Rest / Thin / Sharpen and `Run.relic_totals()`.
   *Done when:* pickable at a campfire, persists, shows in the relic list.
