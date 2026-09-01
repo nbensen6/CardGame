@@ -227,9 +227,22 @@ def volley(i):                                  # several hits at once
 def guard(i):                                   # block, but timed
     i.slabf(0.0, 0.14, 0.30, 0.26, ICE, bevel=0.05)
     i.spike(0.0, -0.28, 0.30, 0.02, 0.46, ICE, ang=math.pi, seg=4)
-    i.ring((0.0, -0.05, 0.10), (0.20, 0.20, 0.20), STEEL, 14, 5, thickness=0.18)
-    i.slabf(0.0, 0.16, 0.026, 0.10, STEEL, bevel=0.0)
-    i.slabf(0.07, 0.10, 0.075, 0.026, STEEL, bevel=0.0)
+    # Flared shoulder wings: `shield`'s outline is a plain kite, so a pair of
+    # pointed flares at the shoulders separates `guard` by silhouette alone,
+    # not just by the internal mark.
+    for s in (-1, 1):
+        i.spike(0.3675 * s, 0.2387, 0.045, 0.006, 0.14, ICE, ang=s * 1.3, seg=3)
+    # The ring used to sit at y=-0.05, inside the body's own -0.10..0.10 depth
+    # -- entirely behind the body's front face and invisible in every render,
+    # which is the real reason no clock ever read here. Pulled to y=-0.12, in
+    # front of that face, so it actually shows.
+    i.ring((0.0, -0.12, 0.10), (0.20, 0.20, 0.20), STEEL, 14, 5, thickness=0.18)
+    # Two hands from the ring's own centre, at a clear off-12 angle, replacing
+    # the old pair of disconnected slabs that read as a letter "L" rather than
+    # a clock. Kept short of the ring's tube (inner edge ~0.164) so neither
+    # hand hides behind the rim, and pulled forward the same way the ring was.
+    for x, z, length, ang in [(0.0336, 0.1614, 0.14, 0.5), (0.0206, 0.0657, 0.08, 2.6)]:
+        i.spike(x, z, 0.016, 0.005, length, STEEL, ang=ang, seg=4).location.y = -0.12
 
 
 def wall(i):                                    # block that scales

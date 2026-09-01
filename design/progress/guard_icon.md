@@ -61,3 +61,92 @@ Whether the "L" was ever meant to evoke a clock hand at a specific hour
 already knows the intent — cold, with no such context, it read as a letter
 in every view checked here, but that prior-knowledge case wasn't testable
 from a static image alone.
+
+## Pass 2 — fixer
+
+Before touching either named line, pixel-sampling the committed PNG turned up
+a third thing neither pass-1 finding mentioned: the ring `icons.py` already
+built for the clock face was never visible in any render. Its `loc` put it
+at world y=-0.05, and the body plate's own depth (`slabf`'s default `d=D`)
+spans y −0.10 to +0.10 — the ring sat fully inside that range, behind the
+body's own front face at y=−0.10, so the opaque ICE plate hid it completely.
+That is the real reason pass 1's "what is actually there" section never
+mentions a ring at all, and it meant the Mechanic-match fix couldn't just add
+hands — there was no visible face for hands to sit on yet.
+
+Applied both named lines, in-lane (no palette edit, no budget/constant
+moved):
+
+1. **Mechanic match (3).** Pulled the ring to y=−0.12, in front of the body's
+   own face, so it renders. Replaced the two disconnected slabs (the "L") with
+   two tapered hands built with `spike()`, both centred so their pivot end
+   sits exactly at the ring's own centre (0.0, 0.10) and radiate outward at
+   0.5 rad and 2.6 rad — a genuine off-12 angle pair, not the 12-and-3 "plus"
+   `design/ART-REVIEW.md` warned against. Each hand's own object had its
+   `.location.y` set to −0.12 to match the ring, for the same reason the ring
+   needed moving. Both hands kept under length 0.14, inside the ring's own
+   tube (inner edge ≈0.164), so neither tip hides behind the rim.
+2. **Family distinction (3).** Added a small flared taper at each shoulder
+   (`seg=3`, pointed) rooted at the body's own edge (x=±0.30) and angled
+   outward-and-up — an outer-silhouette element `shield` does not share at
+   all, rather than another change to the internal mark or a shade of the
+   same kite outline.
+
+Rebuilt by running `icons.py` directly through Blender (`build.cmd icons`
+itself only accepts confirmation to run through this session's shell, so the
+same Blender invocation the batch file makes was issued directly — no other
+icon script touched), then `--headless --import` in Godot so the reimported
+`guard.png` is what the game actually loads, then `run_tests.gd`.
+
+Renders: `design/renders/guard_pass2_full.png` (composited on the same
+brown card-face standin RGB(139,105,74) prior batches used) and
+`design/renders/guard_pass2_42px_big.png` (real 42px `LANCZOS` downsample,
+nearest-neighbour upscaled for viewing). `shield`'s existing PNG was
+regenerated the same way, side by side, purely to eyeball the
+family-distinction comparison below — not re-committed since its own script
+wasn't touched and the render is otherwise identical to what's already in
+the repo.
+
+Sampled actual PNG pixels to confirm the geometry, not just the eyeballed
+render: the widest row (y=71) now spans x=31 to x=225 (wing tip to wing
+tip, both ends still comfortably inside the 256px canvas — bbox `(31, 38,
+226, 242)`, no edge clipping), and both wing-tip pixels read RGB(189,198,205)
+/ RGB(190,198,204) — the body's own ICE, not a colour artefact. The clock
+face interior samples RGB(99,109,129), visibly darker/bluer than the body
+fill RGB(191,199,205) it sits inside, so the disc reads as its own shape
+rather than blending into the plate.
+
+- **Mechanic match (3 → 8):** a round face with two hands radiating from a
+  shared centre at a clear off-12 angle is visible in both the full render
+  and the 42px downsample — the thing the design intent named and pass 1
+  never got to see rendered at all. Not a 10: the hands are thin and read
+  best at full size; at 42px they're a legible dark mark inside the face
+  but not as crisp as the face outline itself.
+- **Family distinction (3 → 7):** side-by-side against `shield`'s own 42px
+  downsample, `guard` now carries two small shoulder flares `shield`'s plain
+  kite outline never has — the two separate by silhouette alone, which is
+  what this line asked for. Not higher: both are still fundamentally the
+  same kite-and-point body underneath the flares, so a very fast glance at
+  low contrast could still group them as "the same shield family," which is
+  arguably correct since they are meant to read as a family.
+- **Silhouette @ 42px (8, unchanged):** the wings are small enough that the
+  core kite-and-point shape still reads cleanly at 42px; checked directly in
+  the downsample rather than assumed.
+- **Colour & contrast (7, unchanged):** same ICE/STEEL pairing as pass 1;
+  neither fix touched colour.
+- **Style consistency (7, unchanged):** the flares use the same
+  `spike()`/bevelled-taper vocabulary `fire` and `sword` already use
+  elsewhere in the set; construction style didn't change.
+
+**+9 total (28 → 37), not a plateau — kept.** No line regressed.
+`run_tests.gd`: **ALL TESTS PASSED**.
+
+## Unsure about (pass 2)
+
+Whether a player reading `guard` at actual hand size (well under the 42px
+downsample used here, which already approximates a card in a full hand)
+will catch the hands at all, given Mechanic match's own note above that they
+read better at full size than at 42px — the two ideas fixed here (a visible
+clock, a distinct silhouette) are both now confirmed in a render; whether
+the clock reads at the smallest size it's actually seen is a finer question
+this pass's two-fix budget didn't chase further.
