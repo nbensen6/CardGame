@@ -2482,6 +2482,25 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-01** — #86 duty 2 (find an error and resolve it), second turn of
+  the rotation. Read `game/core/combat.gd`'s `play_card` end to end (plus
+  `combatant.gd`, `run_map.gd`, `boss.gd` — clean) looking for the two named
+  families; found a "two copies of one truth" case in the roped-ally-climbs
+  interaction (`ally_climb`, the Mountain Climbers' signature passive).
+  `card.targets_hold` and `card.grip` each had their OWN
+  `if ps.ally_climb > 0: lift the ally` block, so a card carrying BOTH would
+  lift a roped ally twice for one play instead of once. No authored card in
+  `cards.json` sets both flags, but `_meld_cards` (combat.gd:299) ORs
+  `targets_hold` and sums `grip` from its two melded halves, so melding
+  `route_finder` (targets_hold) with any grip card — reachable today by any
+  hunter who draws Meld — reproduces it directly. Consolidated to one
+  `ally_climb` application, gated on whether `ps.foothold` rose at all across
+  both branches (sampled once beforehand) rather than on which branch fired.
+  Wrote `_test_roped_ally_climbs_only_once_per_play` first, confirmed it FAILs
+  against the pre-fix code (stashed the fix, ran the suite, saw the one
+  expected failure, restored it), then verified it passes with the fix.
+  `run_tests.gd`: ALL TESTS PASSED. Next #86 turn is duty 3 (verify a
+  mechanic).
 - **2026-09-01** — #86 duty 1 (improve an asset), first run of the rotation
   since it was created at `4f29462` — the two commits since then
   (`9b0e5c1`, `596c61e`) were both the fixer lane's, so this is the cloud's

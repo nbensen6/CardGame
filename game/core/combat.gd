@@ -662,15 +662,18 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		ps.combatant.plated_armour += card.plated_armour
 		ps.combatant.gain_block(card.plated_armour)
 		_log("%s plays %s — +%d Plated Armour." % [who, card.name, card.plated_armour])
+	# "Roped together" (ally_climb) fires once per PLAY, not once per way this card
+	# raised Height. A card carrying both targets_hold AND grip (only reachable
+	# today via Meld, which ORs targets_hold and sums grip from its two melded
+	# halves) used to hit both branches below and lift the ally twice for a single
+	# play. Sampled before either branch runs so it catches a rise from either one,
+	# or both, without double-counting.
+	var foothold_before_climb := ps.foothold
 	if card.targets_hold:  # climbs straight TO a named hold instead of adding grip (#24)
 		var dest := _resolve_hold_target(pi, hold_target)
 		if dest > ps.foothold:
 			ps.foothold = mini(dest, FOOTHOLD_MAX)
 			_log("%s plays %s — climbs to the hold at Height %d." % [who, card.name, ps.foothold])
-			if ps.ally_climb > 0:  # roped together — the ally climbs with you
-				var roped_h: PlayerState = players[ally_index(pi)]
-				roped_h.foothold = mini(roped_h.foothold + ps.ally_climb, FOOTHOLD_MAX)
-				_log("%s is roped — %s climbs +%d." % [who, roped_h.combatant.name, ps.ally_climb])
 		else:
 			_log("%s plays %s — no hold left to reach from here." % [who, card.name])
 	var climbed: int = int(pv["grip"])
@@ -678,10 +681,10 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		ps.foothold = mini(ps.foothold + climbed, FOOTHOLD_MAX)
 		var flair := "  (nailed it!)" if card.timed else ""
 		_log("%s plays %s — climbs (+%d Height, now %d)%s." % [who, card.name, climbed, ps.foothold, flair])
-		if ps.ally_climb > 0:  # roped together — the ally climbs with you
-			var roped: PlayerState = players[ally_index(pi)]
-			roped.foothold = mini(roped.foothold + ps.ally_climb, FOOTHOLD_MAX)
-			_log("%s is roped — %s climbs +%d." % [who, roped.combatant.name, ps.ally_climb])
+	if ps.foothold > foothold_before_climb and ps.ally_climb > 0:  # roped together — the ally climbs with you
+		var roped: PlayerState = players[ally_index(pi)]
+		roped.foothold = mini(roped.foothold + ps.ally_climb, FOOTHOLD_MAX)
+		_log("%s is roped — %s climbs +%d." % [who, roped.combatant.name, ps.ally_climb])
 	if card.ally_grip > 0:  # vines/ropes that lift the ally up the beast
 		var lifted: PlayerState = players[ally_index(pi)]
 		lifted.foothold = mini(lifted.foothold + card.ally_grip, FOOTHOLD_MAX)

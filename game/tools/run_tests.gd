@@ -356,6 +356,7 @@ func _init() -> void:
 	_test_frog_climb_bonus()
 	_test_vine_lifts_ally()
 	_test_roped_ally_climbs()
+	_test_roped_ally_climbs_only_once_per_play()
 	_test_character_attack_bonus()
 	_test_build_creates_grapple()
 	_test_belay_scales_with_height()
@@ -5409,6 +5410,27 @@ func _test_roped_ally_climbs() -> void:
 	combat.play_card(0, _first_playable(combat, 0))  # Scramble +1; roped -> ally +1
 	_expect(combat.players[0].foothold == 1 and combat.players[1].foothold == 1,
 		"roped: when a Mountain Climber climbs, the ally climbs too")
+
+
+func _test_roped_ally_climbs_only_once_per_play() -> void:
+	# A card that BOTH targets_hold and carries grip used to hit two separate
+	# ally_climb branches in Combat.play_card and lift the ally twice for one
+	# play. No authored card carries both today, but Meld ORs targets_hold and
+	# sums grip from its two halves (combat.gd _meld_cards), so melding a
+	# targets_hold card with a grip card reaches it directly.
+	var boss := _climb_boss(6)
+	boss.ledges = [2, 4]
+	var combat := _new_combat_p([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42,
+		boss, [{"type": "ally_climb", "value": 1}, {}])
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_meld_card(), Content.make_card("route_finder"), Content.make_card("scramble")]
+	ps.energy = 3
+	combat.play_card(0, 0, true, 1, 2)  # meld Route Finder (targets_hold) + Scramble (grip 1)
+	var fused: Card = ps.hand[0]
+	var fused_ok: bool = fused.targets_hold and fused.grip == 1
+	combat.play_card(0, 0)  # play the fused card: hits BOTH the targets_hold and grip branches
+	_expect(fused_ok and combat.players[1].foothold == 1,
+		"a card that both targets a hold and carries grip lifts a roped ally only once, not twice")
 
 
 func _test_character_attack_bonus() -> void:
