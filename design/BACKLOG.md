@@ -442,6 +442,40 @@ Ordered. Source in brackets.
   gloom_moth, husk_beetle, riptide_eel, silk_widow, thrasher, yoke_ox) and
   all icon sets remain unscored. No model or portrait script touched —
   report only, per this item's own rule. Left unchecked.
+  **Checked 2026-09-01: batch 11, four more portraits.** Pillow already
+  present from batch 10, same real-34px-downsample standard. Scored
+  `eyrie_hawk_portrait` (35/50, best of this batch — the hooked beak reads
+  clearly and the sigil disc, whose "orbiting part" gap `eyrie_hawk.md`
+  flagged in 3D, is not visible as a gap at a real 34px downsample, though
+  still visibly detached at full size), `flicker_stag_portrait` (32/50 —
+  the tall thin antlers are the single strongest silhouette element scored
+  this batch, but the CREAM belly ball `flicker_stag.md` already flagged
+  for a colour-separation problem is cropped entirely out of this portrait,
+  so the head and body read as one undifferentiated rust mass instead),
+  `cinder_jackal_portrait` (28/50 — this is a full-body side-on crop rather
+  than the head-and-shoulders convention every other scored portrait uses,
+  which spends most of the frame on four legs that nearly vanish at 34px
+  and leaves little room for the head and mane that actually carry
+  identity — flagged as a possible `FOCUS` outlier, not confirmed
+  deliberate), `clot_toad_portrait` (24/50, **the lowest portrait scored
+  under this item so far**, below batch 10's bog_leech_portrait at 26 — the
+  stepped ridge/gland stack and the sigil disc, the two elements
+  `clot_toad.md`'s own 3D pass names as this beast's whole identity, are
+  cropped by the frame's top-right edge, cutting the sigil roughly in
+  half). Full rubric tables, per-line justifications and one concrete
+  (unproposed, per this item's report-only rule) diagnosis per asset are in
+  `design/progress/<name>_portrait.md`. Twelve of nineteen portraits scored
+  (frog, vine_weaver, lightbearer, mountain_climbers, goblin_mech,
+  boulder_ram, brine_urchin, bog_leech, eyrie_hawk, flicker_stag,
+  cinder_jackal, clot_toad); seven beast portraits (glyph_tortoise,
+  gloom_moth, husk_beetle, riptide_eel, silk_widow, thrasher, yoke_ox) and
+  all icon sets remain unscored. Two portraits this batch (cinder_jackal,
+  clot_toad) show a framing failure distinct from anything a 3D-only pass
+  could catch — `portraits.py`'s per-asset `FOCUS` crop cutting off or
+  de-emphasising the exact part the beast's own build script calls its
+  identity — worth a shared look across the remaining seven if the pattern
+  holds. No model or portrait script touched — report only, per this
+  item's own rule. Left unchecked.
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
   relic") on top of the existing Rest / Thin / Sharpen and `Run.relic_totals()`.
   *Done when:* pickable at a campfire, persists, shows in the relic list.
