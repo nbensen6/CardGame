@@ -2482,6 +2482,28 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-01** — #86 duty 1 (improve an asset), first run of the rotation
+  since it was created at `4f29462` — the two commits since then
+  (`9b0e5c1`, `596c61e`) were both the fixer lane's, so this is the cloud's
+  first turn. Picked `ascend` (icon, 29/50, tied lowest unfixed portrait/icon
+  with `rhythm_icon`), applied both fixes named in
+  `design/progress/ascend_icon.md`'s own pass-1 diagnosis: replaced the
+  single triangle-on-post with two arrowheads stacked with a visible gap
+  (`tools/blender/icons.py`'s `ascend`), which is what actually fixes Family
+  distinction — `climb_icon.md` names the identical shared-silhouette
+  problem from the other side, and only a shape change (not a base-colour
+  change) resolves it — and recoloured the base slab `TAN` → `CHARCOAL` while
+  pulling it inside the render frame (its old z put the bottom edge at
+  -0.635, past the ortho half-extent of 0.575, and the alpha bbox confirmed
+  it was clipped). Rendered with a locally apt-installed Blender 4.0.2
+  (`download.blender.org` still policy-403 for a direct download; apt route
+  is the same one #74/#76/#83 used), looked at the result and at a 42px
+  composite over the card-face brown standin before keeping it — both in
+  `design/renders/ascend_icon_pass2_*.png`. Score 29 → 39 (+10), no line
+  regressed, kept. Copied only `ascend.png` into `game/assets/icons/`; no
+  other icon's render was touched even though `icons.py`'s `main()` rebuilds
+  the whole set, since only `ascend`'s function changed.
+  `run_tests.gd`: ALL TESTS PASSED. Next #86 turn is duty 2 (find an error).
 - **2026-09-01** — Re-check: still no actionable cloud-safe/cloud-art work, but
   the framing changed since the last check. Fetched fresh (tip `fab9f26`, a
   fixer commit) and found `ef700b8` ("Point the fixer at what you can see, and

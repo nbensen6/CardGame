@@ -254,11 +254,22 @@ def wall(i):                                    # block that scales
 
 
 def ascend(i):                                  # a big climb
-    i.spike(0.0, 0.24, 0.44, 0.02, 0.62, WHEAT, seg=3)
-    i.slabf(0.0, -0.20, 0.14, 0.34, WHEAT)
+    # Two arrowheads stacked with a visible gap between them, not one --
+    # `climb`'s silhouette is a single triangle-on-post, and at 42px the two
+    # shared almost the same outline, differing only in the small base
+    # attachments (design/progress/ascend_icon.md, design/progress/
+    # climb_icon.md name the same problem from opposite sides). Doubling the
+    # chevron changes the outer shape instead of only its colour.
+    i.spike(0.0, 0.42, 0.24, 0.02, 0.26, GOLD, seg=3)     # upper head, the tip
+    i.spike(0.0, 0.06, 0.40, 0.06, 0.30, WHEAT, seg=3)    # lower head, blunt
+    i.slabf(0.0, -0.24, 0.11, 0.20, WHEAT)                # the post below both
     for s in (-1, 1):
         i.spike(0.34 * s, -0.30, 0.075, 0.01, 0.34, GOLD, ang=0.3 * s, seg=4)
-    i.slabf(0.0, -0.56, 0.40, 0.075, TAN)
+    # Darkened off the card-face brown standin -- the old TAN slab sat close
+    # enough in value to nearly merge with it at 42px. Also pulled up clear
+    # of the bottom edge: the old slab's low edge at z=-0.635 sat outside the
+    # render frame (ortho half-extent 0.575) and was clipped.
+    i.slabf(0.0, -0.48, 0.40, 0.07, CHARCOAL)
 
 
 def rope(i):                                    # both hunters climb
