@@ -103,10 +103,14 @@ def bow(i):                                     # a ranged strike
 
 def fire(i):                                    # burning damage
     for x, z, h, w, c in [(-0.22, -0.10, 0.62, 0.16, ORANGE),
-                          (0.22, -0.14, 0.52, 0.14, ORANGE),
+                          (0.22, -0.14, 0.52, 0.14, RUST),
                           (0.0, 0.02, 0.86, 0.22, TANGERINE)]:
         i.spike(x, z, w, 0.01, h, c, seg=6)
-    i.spike(0.0, -0.16, 0.13, 0.01, 0.44, GOLD, seg=6)
+    # The hot core used to sit centred inside the TANGERINE cone's own radius
+    # for its whole height, so it never had a chance to render -- one cone
+    # fully enclosed inside a bigger one. Raised and lengthened so its tip
+    # clears the TANGERINE tip (z=0.45) and pokes into open frame space.
+    i.spike(0.0, 0.125, 0.16, 0.01, 0.85, GOLD, seg=6)
 
 
 def skull(i):                                   # poison, wound, death

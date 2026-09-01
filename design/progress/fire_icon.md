@@ -95,3 +95,92 @@ which stage of the pipeline is responsible. Also unconfirmed: whether
 silhouette are ever visible on cards at the same time in an actual hand,
 which would be the real test of whether the shape overlap named above
 matters in practice.
+
+## Pass 2 — fixer
+
+Neither named line was actually a lighting/export bug — pixel-sampling the
+committed PNG (not just eyeballing the render) at the world coordinates of
+each cone showed the real cause: `icons.py`'s `taper()`/`spike()` places a
+cone's *centre* at `loc` and extends `±length/2` along its axis, so the old
+`GOLD` core (`loc=(0.0, -0.16)`, `r0=0.13`, `length=0.44`) spanned world
+z −0.38 to 0.06 — entirely inside the centre `TANGERINE` cone's own z-range
+(−0.41 to 0.45), and at every height in that overlap `TANGERINE`'s radius
+(0.21–0.11) was larger than `GOLD`'s (0.13→0.01). One cone fully enclosed
+inside a bigger one, geometrically, regardless of colour or lighting — the
+"whether it's the render pass or the export step" question in Pass 1's
+Unsure section didn't apply; it never reached either stage.
+
+Applied both named lines with two changes, in-lane (no palette edit, no
+budget/constant moved):
+
+1. **Colour & contrast (2).** The two outer cones were both `ORANGE`
+   (`swatch(16,192)` = RGB 255,126,68); recoloured the right one to `RUST`
+   (`swatch(112,192)` = RGB 231,96,71 — already imported, already in
+   `icons.py`'s top-level import list, not a palette edit) so the two flanks
+   read as distinct hues instead of the same colour twice. Left as `ORANGE`/
+   centre `TANGERINE`/right `RUST` — three genuinely different warm tones
+   instead of two `ORANGE`s and a near-identical `TANGERINE`.
+2. **Mechanic match (3), the hidden core.** Raised and lengthened the
+   `GOLD` cone from `loc=(0.0, -0.16)`, `r0=0.13`, `length=0.44` to
+   `loc=(0.0, 0.125)`, `r0=0.16`, `length=0.85`, so its tip (z=0.55) clears
+   the `TANGERINE` cone's own tip (z=0.45) by a margin comfortably inside
+   the ±0.575 ortho frame — the same off-canvas-clipping trap `rally_icon`'s
+   pass 2 hit, checked for and avoided here. The core is no longer enclosed;
+   it pokes out above the flame body as a visible pale tip.
+
+Rebuilt with `build.cmd icons` — no warnings for `fire`, no other icon
+script touched. Renders: `design/renders/fire_pass2_full.png` (composited
+on the same brown card-face standin Pass 1 used) and
+`design/renders/fire_pass2_42px_big.png` (42px Lanczos downsample, nearest-
+neighbour upscaled for viewing, same method as `rally_icon`/`lift_icon`).
+Alpha bbox moved from `(47, 27, 205, 226)` to `(47, 5, 205, 220)` — taller
+by the raised core, still with margin on all four edges.
+
+Sampled actual PNG pixels (not just eyeballing the render) to confirm the
+separation is real, not a rendering illusion: gold-tip area
+`(195, 159, 100)` vs centre-body `(196, 120, 82)` vs left-orange
+`(195, 116, 80)` vs right-rust `(195, 118, 105)` — G channel spread of 116
+to 159 (was clustered 119–131 across the whole icon in Pass 1) and a
+visible B-channel split between the orange and rust flanks (80 vs 105).
+
+- **Colour & contrast (2 → 6):** the gold core, the tangerine body, and the
+  orange/rust flanks are now four visibly distinct zones in both the full
+  render and the 42px downsample — confirmed by both the crop and the pixel
+  samples above. Not higher: the whole icon is still noticeably darker/more
+  desaturated than the raw palette values (e.g. raw `GOLD` is RGB 255,192,68;
+  the rendered core peaks around 195,159,100) — that muting is `render()`'s
+  shared `BLENDER_WORKBENCH`/`STUDIO`/`exposure=0.85` setup in `icons.py`,
+  used by all 28 icons, not something this pass's two-fix budget can touch
+  without moving a shared constant for every other icon too.
+- **Mechanic match (3 → 6):** a hot core is now visible poking above the
+  main flame body at both 256px and the 42px downsample, which is what this
+  line asked for. Not higher: the three main bodies are still perfectly
+  straight-sided rigid cones (Pass 1's Silhouette line called this out —
+  "real fire silhouettes are usually tapering and irregular/wavy, not
+  perfectly straight triangles"), which neither named fix touched.
+- **Silhouette @ 42px (6 → 7, not one of the two, moved as a side effect):**
+  the raised core adds a second, paler tier to the tallest spike's tip in
+  the 42px downsample — reads more like a flame lick with a hot tip than a
+  single flat triangle. Not fixed further: still three straight cones at
+  root, same caveat as Mechanic above.
+- **Family distinction (5, unchanged):** the three-spike-cluster silhouette
+  itself didn't change shape, so it's still the closest match to `peak`'s
+  triangle-cluster composition in the set; the new colour variety helps a
+  colour-aware glance but this line scores shape, which this pass's two
+  fixes didn't touch.
+- **Style consistency (7, unchanged):** still the same bevelled-cone
+  construction as every other icon in the set; repositioning and recolouring
+  existing primitives doesn't change the build vocabulary.
+
+**+8 total (23 → 31), not a plateau — kept.** No line regressed.
+`run_tests.gd`: **ALL TESTS PASSED**.
+
+## Unsure about (pass 2)
+
+Whether the shared `icons.py` render/lighting setup (`BLENDER_WORKBENCH`,
+`STUDIO` shading, `exposure=0.85`, cavity on) is muting saturation more than
+intended across the whole 28-icon set — flagged here rather than touched,
+since it's shared infrastructure and moving it would silently re-render
+every other committed icon, which is exactly what the hard rules warn
+against. If Nick wants brighter icons generally, that's a one-line change
+in `render()`, reviewed once, not a per-asset fix.
