@@ -1012,6 +1012,63 @@ Ordered. Source in brackets.
   sunken_warden_ground). All four of this batch's icons (30-42) scored
   well clear of the tenth-place value of 28, so the list is identical to
   batch 20's.
+  **Checked 2026-09-01: batch 22, the last four icons — `burn`, `stack`,
+  `light`, `frail`, closing out the "twenty-eight card icons" block and
+  the two standalone Frail/Light sections in `design/ART-REVIEW.md`.** Same
+  Pillow real-42px-downsample method and alpha-threshold edge check as
+  batches 14-21. Scored `burn` (exhaust a card, 33/50 — the card-plus-flame
+  read is literal, but the flame samples as a flat, uniformly-lit
+  orange/brick with no brighter core, so it reads as small pointed spikes
+  rather than fire, and it is the third icon in the set — with `draw` and
+  this batch's own `stack` — built from overlapping pale card-rectangle
+  slabs, a family-distinction concern shared by all three), `stack` (draw /
+  hand size, 35/50, best of the batch — three fanned cards is about as
+  literal a match for "hand size" as this item has scored, docked on the
+  same card-family overlap named for `burn` and for a TAN top bar that
+  separates only 27/16/17-per-channel from the brown standin, the weakest
+  colour line this batch), `light` (generate Light, 41/50 — answers
+  `ART-REVIEW.md`'s own named worry directly: the straight-ray burst is
+  unambiguously distinct from `fire`'s curved tongues and `expose`/
+  `target`'s concentric rings, though the intended long/short ray rhythm
+  compresses into eight near-identical spikes at a real 42px downsample,
+  and the four long GOLD rays separate from the standin mainly by hue —
+  their blue channel, 66-70, actually sits *below* the standin's own 74),
+  `frail` (Block gained is reduced, 32/50, lowest of the batch — answers
+  `ART-REVIEW.md`'s own named question, "does it read as broken/weakened
+  rather than whole," and the honest answer is not cleanly: each of the two
+  shield-halves keeps a full rounded top and full tapered point, the
+  complete silhouette vocabulary of an *intact* shield, so two side-by-side
+  complete outlines risk reading as more protection rather than less before
+  the crack and the small falling chip — the actual "broken" signal —
+  register; also pixel-sampled a real asymmetry, the right-hand half's red
+  channel sits within one point of the standin's own, the closest
+  near-miss on that channel found for any icon under this item). Full
+  rubric tables, per-line justifications and one concrete (unapplied) fix
+  per asset are in `design/progress/<name>_icon.md`.
+  **With this batch, all thirty-six card icons are scored — the icon class
+  is done.** Combined with batches 1-13 (fourteen beasts, fourteen fight
+  grounds, nineteen portraits, all done), every cloud-scoreable asset this
+  item names now has a scored `design/progress/<asset>.md`; the sole
+  exception is the overworld map, reclassified `needs a screen` in batch 14
+  (no single flattened image exists to score — many hex-tile `.glb` models
+  assembled at runtime, and `ART-REVIEW.md`'s own preview instructions call
+  for `screenshot.gd`, unavailable here). No model or icon script touched —
+  report only, per this item's own rule. Left unchecked — this item's own
+  "done when" also requires Nick to have looked at the ranked list, which
+  no batch of this routine's own can satisfy.
+  **Ranked weakest ten, unchanged after batch 22** (of the 88 assets scored
+  across all twenty-two batches — lowest first, out of 50): gale_serpent_ground
+  22, then a three-way tie at 23 (grove_bear_ground, riftling_ground,
+  shifting_idol_ground), sky_snapper_ground 25, then a two-way tie at 26
+  (drowned_colossus_ground, mire_snapper_ground), then a two-way tie at 27
+  (bounder_ground, crag_pup_ground), then a five-way tie at 28 (bog_leech,
+  cinder_jackal_portrait, guard_icon, root_lurker_ground,
+  sunken_warden_ground). All four of this batch's icons (32-41) scored well
+  clear of the tenth-place value of 28, so the list is identical to batch
+  20's and 21's — no icon has ever entered the bottom ten across all
+  twenty-two batches, and none of the fourteen beasts remains in it either;
+  the bottom ten is fight-grounds-and-two-portraits only, the same shape it
+  has held since batch 12.
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
   relic") on top of the existing Rest / Thin / Sharpen and `Run.relic_totals()`.
   *Done when:* pickable at a campfire, persists, shows in the relic list.
