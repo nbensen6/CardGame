@@ -395,7 +395,23 @@ func _report_visibility(view: Node) -> void:
 	var marks: Array = []
 	var hunters: Array = view.get("_hunters")
 	for i in range(hunters.size()):
-		marks.append(["hunter%d" % i, (hunters[i] as Dictionary)["home"]])
+		var home: Vector3 = (hunters[i] as Dictionary)["home"]
+		# The WORLD position too, not just whether it projects on screen. "Off
+		# the right edge" and "standing inside the beast" look identical in a
+		# projected coordinate, and they are completely different bugs.
+		# Where the game THINKS it is, and where the model actually IS. They
+		# disagreed for months and nothing noticed, because every check asked
+		# the game: hunters were created at Vector3.ZERO - the beast's own
+		# centre - and on the first frame nothing assigned node.position, so
+		# both hunters were drawn standing inside the Titan while `home` said
+		# otherwise. A harness that only reports the logical position cannot
+		# see that class of bug at all.
+		var node: Node3D = (hunters[i] as Dictionary)["node"]
+		var drawn: Vector3 = node.position if node != null else home
+		var gap: float = home.distance_to(drawn)
+		print("HUNTER%d home=%v drawn=%v %s" % [i, home, drawn,
+			"OK" if gap < 0.05 else "DRAWN %.2f FROM ITS OWN HOME" % gap])
+		marks.append(["hunter%d" % i, home])
 	# The sigil is only expected on screen once the hunter you're PLAYING is close
 	# enough for the camera's look-ahead to reach it. Below that, a Titan's weak
 	# point being over the horizon of the frame is the scale doing its job, not a

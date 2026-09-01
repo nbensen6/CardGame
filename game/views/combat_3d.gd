@@ -2080,7 +2080,24 @@ func _place_hunters(s: Dictionary) -> void:
 				_hop(tw, node, body, at, mid, step)
 				at = mid
 			_hop(tw, node, body, at, pos, step)
-		elif moved and placed:
+		elif not placed:
+			# FIRST placement: be there, with no animation.
+			#
+			# Nick, 2026-09-01: "hunters have been spawning underneath the
+			# beast." They were, and this is why. Neither branch above could run
+			# on the first pass - `climbed` needs `placed`, and so did the glide
+			# below - so nothing assigned node.position at all, and the hunter
+			# stayed at the Vector3.ZERO it was created with. Zero is the
+			# BEAST'S OWN CENTRE, so every fight opened with both hunters
+			# standing inside the Titan, and they only snapped out later when a
+			# climb or a rescale finally moved them.
+			#
+			# It hid for so long because `h["home"]` was always correct: the
+			# camera framed the right spot, the hold maths measured from the
+			# right spot, and every check that asked the GAME where a hunter was
+			# got the right answer. Only the drawing was wrong.
+			node.position = pos
+		elif moved:
 			# The world moved under them — the beast rescaled, the sigil settled.
 			# Slide, do not leap: they have not gone anywhere.
 			var glide := create_tween()
