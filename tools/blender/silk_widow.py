@@ -41,11 +41,13 @@ b.ball((0.0, -0.95, 0.98), (0.42, 0.46, 0.36), GRAPHITE, 10, 6)
 # Fangs, pointing down and forward.
 mirror(lambda s: b.taper((0.14 * s, -1.28, 0.82), 0.05, 0.012, 0.22, CHARCOAL,
                          seg=5, rot=point((0.10 * s, -0.55, -1.0))))
-# A huddle of small eyes, barely eyes, enough to read as a face.
+# A huddle of small eyes, barely eyes, enough to read as a face. STEEL
+# against the GRAPHITE head so they resolve as two dots instead of
+# disappearing into it (CHARCOAL-on-GRAPHITE never read in any lit view).
 mirror(lambda s: b.ball((0.16 * s, -1.22, 1.14), (0.055, 0.05, 0.05),
-                        CHARCOAL, 6, 4))
+                        STEEL, 6, 4))
 mirror(lambda s: b.ball((0.24 * s, -1.14, 1.08), (0.04, 0.035, 0.035),
-                        CHARCOAL, 6, 4))
+                        STEEL, 6, 4))
 
 # ------------------------------------------------------------------ abdomen
 # The main mass - big, swollen, behind the cephalothorax rather than fused
@@ -97,8 +99,10 @@ b.ball((0.35, 0.15, _sigil_z + 0.08), (0.22, 0.16, 0.22), GRAPHITE, 8, 5)
 # A longer bridge than Bog Leech's or Thrasher's needed - a first attempt at
 # y=-0.22 still came back 51% occluded, so the mark is pulled a further 0.3
 # forward here, well clear of both ridge humps' own measured forward reach
-# (~y=0.19-0.30 at this column).
-b.taper((0.35, -0.35, _sigil_z), 0.10, 0.04, 0.75, GRAPHITE, seg=6,
+# (~y=0.19-0.30 at this column). Thickened base (0.10 -> 0.18) and shortened
+# by a third (0.75 -> 0.50) so it reads as a stubby horn fused to the
+# abdomen instead of a wire with the sigil disc floating at the far end.
+b.taper((0.35, -0.35, _sigil_z), 0.18, 0.04, 0.50, GRAPHITE, seg=6,
         rot=point((0.0, -1.0, 0.0)))
 
 # The sigil: a taut vein-mark on the crest, pulled well forward of the

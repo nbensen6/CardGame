@@ -10,6 +10,7 @@ unchanged from the pre-fix render.
 | Pass | Sil | Prop | Hygiene | Colour | Style | Total |
 |---|---|---|---|---|---|---|
 | 1 | 7 | 6 | 5 | 6 | 7 | **31** |
+| 2 | 7 | 7 | 8 | 6 | 7 | **35** |
 
 ## What is actually there
 
@@ -66,3 +67,54 @@ Not applying either — this item scores and proposes; a fix is Nick's call.
 Whether the eyes are present but simply too small to resolve at this render
 resolution rather than genuinely invisible from a colour clash — a tighter
 head-only crop would settle it, same open question as boulder_ram's horn.
+
+## Pass 2 — fixer
+
+Applied both fixes named above, in `tools/blender/silk_widow.py`.
+
+1. **Build hygiene.** The sigil crest's taper widened from base radius
+   `0.10` to `0.18` and shortened from length `0.75` to `0.50`.
+2. **Colour & read.** Both eye-huddle balls swapped from `CHARCOAL` to
+   `STEEL`.
+
+Rebuilt with `build.cmd silk_widow`, captured a fresh six-view set with
+`look.cmd silk_widow 2`, and viewed every view directly.
+
+- **Silhouette (7):** unchanged — `_sil.png` reads the same as pass 1, the
+  crest was never large enough to register in silhouette either before or
+  after.
+- **Proportion (7):** the crest now reads as a stubby horn growing out of
+  the abdomen in the `_front.png` and `_34.png` views, not a thin rod with
+  the sigil disc floating at the far end — the "extra, disconnected
+  element" pass 1 named is fixed.
+- **Build hygiene (8):** confirmed directly in the lit views — the crest
+  now visibly touches and reads as fused to the abdomen's front hemisphere.
+  Not a 9+: it is still a distinct, separately-coloured lump rather than a
+  seamless part of the same mass, which is a shaping question rather than a
+  hygiene one.
+- **Colour & read (6):** re-checked the eye-huddle directly in `_front.png`,
+  `_side.png`, `_top.png` and 2x crops of each — the STEEL balls did not
+  resolve as two visible dots in any of the six views. The eyes sit on the
+  cephalothorax's forward (-Y) face, which stays turned away from or
+  occluded by neighbouring geometry in every one of `look.py`'s six fixed
+  camera angles, so the colour swap never gets a chance to show. Held at
+  the pass-1 score rather than the plateau this would otherwise be, because
+  the red hourglass mark (unrelated to this fix) is unchanged and still the
+  strongest single colour element.
+- **Style consistency (7):** unchanged — still sits fine beside the rest of
+  the elite-pool beasts.
+
+**+4 total (31 -> 35).** Build hygiene and Proportion both improved from the
+crest fix; Colour & read did not move, honestly, because the eye fix never
+becomes visible from any of the six standard camera angles, not because the
+fix was wrong. `run_tests.gd` passes.
+
+## Unsure about (pass 2)
+
+Same open question as pass 1, now sharpened: the eyes are confirmed present
+and correctly coloured, but no standard camera angle looks squarely enough
+at the cephalothorax's front face to show them. Fixing this would mean
+either repositioning the eyes toward a face that better angles are more
+likely to catch, or accepting they are a detail this creature keeps mostly
+implicit — an art-direction call, not a mechanical one, so flagging rather
+than guessing.
