@@ -658,6 +658,17 @@ func _end_turn() -> void:
 ## the focused button, and the viewport's GUI layer consumes both before unhandled
 ## input ever runs — which, on a HUD you drive by clicking, is always.
 func _input(event: InputEvent) -> void:
+	# A card in hand is being carried. This has to be in _input, not
+	# _unhandled_input, and for the same reason the keys below are: a dragged
+	# card sits UNDER the pointer, so the GUI layer hands the release to the
+	# card and consumes it, and unhandled input never runs. The drag would start
+	# fine and then never end - the card would stay stuck to the cursor.
+	#
+	# It is also ahead of the camera, or dragging a card orbits the fight
+	# behind it.
+	if _drag != null and _drag_input(event):
+		get_viewport().set_input_as_handled()
+		return
 	if not (event is InputEventKey) or not event.is_pressed() or event.is_echo():
 		return
 	var code: int = (event as InputEventKey).keycode
@@ -2766,6 +2777,8 @@ func _render_hand() -> void:
 		cv.setup(card, playable, false)
 		var c_card: Dictionary = card
 		cv.tapped.connect(func() -> void: _on_card_tapped(c_card, cv))
+		# Press starts a candidate drag; the view's _input carries it from there.
+		cv.gui_input.connect(func(e: InputEvent) -> void: _card_pressed(e, cv, c_card))
 		# Hover lifts the card out of the fan. Bound here rather than inside
 		# CardView because the fan is a property of the HAND, not of a card:
 		# only the row knows which of its children is on top.
@@ -3144,3 +3157,164 @@ func _render_log(s: Dictionary) -> void:
 	# history is one tap away when something surprising happens.
 	_log_panel.visible = _log_expanded and not entries.is_empty()
 	_log_toggle.text = "Log ▾" if _log_expanded else "Log ▸"
+
+# --- dragging a card out of the hand ---------------------------------------
+#
+# Nick: "you can highlight a card to have it raised up, but then when you click
+# and drag a card, you can drag it anywhere on the screen... if you drag it to
+# the left hand on the screen, you're kinda looking from the left hand into this
+# window of the card... when you let go of the card it is played unless you slot
+# it back into your hand."
+#
+# So: press and move to pick a card up, release over the fight to play it,
+# release back over the hand to put it down. And while it is up, WHERE IT IS
+# drives the foil and the 3D window, so carrying a rare across the screen walks
+# your eye around the scene inside it.
+#
+# A press that never moves is still a tap, and a tap still plays the card. That
+# is not a nicety: on a phone there is no other way to play one, and making
+# release-over-the-hand mean "put it back" would have made a plain tap a no-op.
+
+## How far the pointer must travel before a press becomes a drag rather than a
+## tap. Below this the card has not really been picked up.
+const DRAG_SLOP := 9.0
+## The band along the bottom that counts as "still in your hand". Release inside
+## it and the card goes back; release above it and it is played. Generous,
+## because dropping a card you did not mean to play is the expensive mistake and
+## putting it back costs nothing.
+const HAND_BAND := 210.0
+
+var _drag: CardView = null
+var _drag_data: Dictionary = {}
+var _drag_grab := Vector2.ZERO     # where in the card you took hold of it
+var _drag_from := Vector2.ZERO     # where the press landed, for the slop test
+var _drag_at := Vector2.ZERO       # the latest pointer position, from the event
+var _drag_index := 0               # its place in the fan, to put it back
+var _drag_live := false            # past the slop, actually carrying it
+
+
+## Called from every card's gui_input. Only starts the candidate — the drag
+## itself is not live until the pointer has moved DRAG_SLOP.
+func _card_pressed(event: InputEvent, cv: CardView, data: Dictionary) -> void:
+	var mb := event as InputEventMouseButton
+	if mb == null or mb.button_index != MOUSE_BUTTON_LEFT or not mb.pressed:
+		return
+	if not _selecting.is_empty() or cv.disabled:
+		return                       # picking a card for another card, or unplayable
+	_drag = cv
+	_drag_data = data
+	_drag_live = false
+	_drag_at = mb.global_position
+	_drag_from = mb.global_position
+	_drag_grab = cv.get_global_rect().position - mb.global_position
+	_drag_index = cv.get_index()
+
+
+## Motion and release while a card is held. On the VIEW rather than on the card:
+## a fast drag outruns the node, and once it does the card stops receiving the
+## motion that is supposed to be moving it.
+func _drag_input(event: InputEvent) -> bool:
+	if _drag == null or not is_instance_valid(_drag):
+		return false
+	# The EVENT's position, never get_viewport().get_mouse_position(). The
+	# cursor is an OS-level thing: it lags a warp, it is wrong when the window
+	# is not focused, and a synthetic event carries no cursor at all - which is
+	# how the first version of this passed on one drag and silently failed on
+	# the next, lifting nothing and reporting success.
+	var mm := event as InputEventMouseMotion
+	if mm != null:
+		_drag_at = mm.global_position
+		if not _drag_live:
+			if _drag_at.distance_to(_drag_from) < DRAG_SLOP:
+				return false
+			_lift()
+		_drag.global_position = _drag_at + _drag_grab
+		_aim_dragged()
+		return true
+
+	var mb := event as InputEventMouseButton
+	if mb != null and mb.button_index == MOUSE_BUTTON_LEFT and not mb.pressed:
+		var here := mb.global_position
+		var card := _drag
+		var data := _drag_data
+		var live := _drag_live
+		_drop()
+		if not live:
+			return false             # a tap; let the Button's own press play it
+		var floor_y: float = get_viewport().get_visible_rect().size.y - HAND_BAND
+		if here.y < floor_y:
+			_on_card_tapped(data, card)
+		return true
+	return false
+
+
+## Take the card out of the fan and put it on the overlay, so it can go
+## anywhere. It cannot simply be moved where it sits: the hand lives in a
+## ScrollContainer, which CLIPS, so a card lifted out of the row would be sliced
+## off at the top edge of the band the moment it rose.
+func _lift() -> void:
+	_drag_live = true
+	_hand_hover = null
+	# The HUD root, NOT the overlay CanvasLayer. A Control inside a CanvasLayer
+	# lives in that layer's coordinate space, so a global_position computed from
+	# a viewport-space event lands somewhere else entirely - the card was going
+	# to the right place on the wrong canvas. Staying in the HUD keeps one
+	# coordinate space, and z_index alone is enough to lift it above the fan.
+	_drag.reparent(_drag_layer())
+	_drag.z_index = 200
+	_drag.scale = Vector2.ONE       # cancel the hover lift; the drag is the lift now
+	_drag.rotation = 0.0
+	_drag.tilt_overridden = true
+	_drag.set_process(true)         # a plain card does not tick until it has to
+	_layout_hand()                  # the fan closes over the gap
+
+
+## Somewhere in the same canvas as the hand, but outside the ScrollContainer
+## that clips it.
+func _drag_layer() -> Control:
+	var hud := get_node_or_null("Hud/Root") as Control
+	return hud if hud != null else _hand_row
+
+
+## Where the card IS becomes where you are STANDING.
+##
+## Nick: "if you drag it to the right hand, you see into the left hand part of
+## the scene inside the card." So the card's own position across the screen is
+## the viewing angle, and the sign follows from what a window does: standing to
+## the right of one, you see the left of the room through it. rare3d.py's +1
+## slides the painting right, which reveals exactly that.
+func _aim_dragged() -> void:
+	var view: Vector2 = get_viewport().get_visible_rect().size
+	var at: Vector2 = _drag.get_global_rect().get_center()
+	var nx: float = clampf(at.x / maxf(view.x, 1.0) * 2.0 - 1.0, -1.0, 1.0)
+	var ny: float = clampf(at.y / maxf(view.y, 1.0) * 2.0 - 1.0, -1.0, 1.0)
+	_drag.turn_override = nx
+	# The foil gets the vertical too. A window only has a horizontal view baked,
+	# but a sheen has no such limit and a card carried UP the screen catching the
+	# light differently is most of what sells the thing as a physical object.
+	_drag.tilt_override = Vector2(nx * 1.35, ny * 0.75)
+
+
+## Put everything back the way the hand expects it, whatever happens next.
+func _drop() -> void:
+	var card := _drag
+	_drag = null
+	_drag_data = {}
+	var live := _drag_live
+	_drag_live = false
+	if card == null or not is_instance_valid(card):
+		return
+	card.tilt_overridden = false
+	card.turn_override = 2.0
+	card.z_index = 0
+	if not live:
+		return
+	# Home first, THEN play. A dragged card is a child of the overlay and the
+	# play path expects a card in the fan - the timing strip anchors to it, the
+	# hit circle measures from its rect. Returning it and calling the ordinary
+	# tap path means drag-to-play and tap-to-play are the same code, so one
+	# cannot rot while the other works.
+	if is_instance_valid(_hand_row):
+		card.reparent(_hand_row)
+		_hand_row.move_child(card, mini(_drag_index, _hand_row.get_child_count() - 1))
+		_layout_hand()

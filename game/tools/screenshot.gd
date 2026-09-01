@@ -18,6 +18,7 @@
 ##   hover=N (lift the Nth card in the hand — the fan hides rules until hover)
 ##   hand=leap,hop,brace (deal exactly these cards, instead of trusting the shuffle)
 ##   console="hand crescendo;foil on" (run dev-console commands, semicolon separated)
+##   drag=2,300,240 (carry the Nth card of the hand to that point, and hold it there)
 extends SceneTree
 
 var _out := "shot.png"
@@ -40,6 +41,10 @@ var _hand := ""
 ## up, semicolon-separated. The console is the thing most likely to break
 ## silently (it reaches into the host's live Run), and a screenshot cannot type.
 var _console := ""
+## drag=2,300,240 — pick card 2 up and carry it to (300,240), then shoot it
+## there without letting go. A screenshot cannot drag, so without this the
+## whole drag-to-play gesture could only ever be claimed to work.
+var _drag := ""
 
 
 func _initialize() -> void:
@@ -56,6 +61,8 @@ func _initialize() -> void:
 			_hand = a.substr(5)
 		if a.begins_with("console="):
 			_console = a.substr(8)
+		if a.begins_with("drag="):
+			_drag = a.substr(5)
 		if a.begins_with("out="):
 			_out = a.substr(4)
 		elif a.begins_with("state="):
@@ -524,6 +531,65 @@ func _capture() -> void:
 				print("CONSOLE %s -> %s" % [String(cmd).strip_edges(),
 					re.sub(said, "", true).replace("\n", " | ")])
 			for _c in 3:
+				await process_frame
+
+	# Carry a card. Driven by calling the view's own drag handlers with real
+	# InputEvents rather than by poking at positions, so what is photographed is
+	# the code path a hand actually takes.
+	if _drag != "" and current_scene != null:
+		var parts: PackedStringArray = _drag.split(",", false)
+		var hand2 := current_scene.get_node_or_null("%Hand")
+		if hand2 == null or parts.size() < 3:
+			print("DRAG needs drag=<card>,<x>,<y> and a hand")
+		else:
+			var which := clampi(int(parts[0]), 0, hand2.get_child_count() - 1)
+			var cv: Control = hand2.get_child(which)
+			var to := Vector2(float(parts[1]), float(parts[2]))
+			var from: Vector2 = cv.get_global_rect().get_center()
+			var down := InputEventMouseButton.new()
+			down.button_index = MOUSE_BUTTON_LEFT
+			down.pressed = true
+			down.position = from
+			down.global_position = from
+			# The REAL card dict, from the same private state the hand was built
+			# from. It is only read on release, to decide what to play - but
+			# passing {} meant the play branch blew up on a missing "index" and
+			# looked like a bug in the drag rather than in this driver.
+			var priv2: Dictionary = current_scene.call("_my_private")
+			var hand_data: Array = priv2.get("hand", [])
+			var cdata: Dictionary = hand_data[which] if which < hand_data.size() else {}
+			current_scene.call("_card_pressed", down, cv, cdata)
+			# Several steps, because the first one only crosses the slop.
+			for step in range(1, 7):
+				var at: Vector2 = from.lerp(to, float(step) / 6.0)
+				var mm := InputEventMouseMotion.new()
+				mm.position = at
+				# global_position is what the view reads. Warping the real cursor
+				# was the first approach and it does not work: the OS position
+				# lags, and it is meaningless when the window has no focus.
+				mm.global_position = at
+				mm.relative = at - from.lerp(to, float(step - 1) / 6.0)
+				current_scene.call("_drag_input", mm)
+				await process_frame
+			print("DRAG card %d carried to %s | rect=%s parent=%s z=%d"
+				% [which, str(to), str(cv.get_global_rect()),
+					str(cv.get_parent().name), cv.z_index])
+			# drag=1,x,y,drop — let go, which is where the whole gesture either
+			# plays the card or puts it back. Without this the release path
+			# could only ever be reasoned about.
+			if parts.size() > 3 and String(parts[3]) == "drop":
+				var up := InputEventMouseButton.new()
+				up.button_index = MOUSE_BUTTON_LEFT
+				up.pressed = false
+				up.position = to
+				up.global_position = to
+				current_scene.call("_drag_input", up)
+				for _r in 6:
+					await process_frame
+				var hand3 := current_scene.get_node_or_null("%Hand")
+				print("DROP at %s -> hand now %d card(s)"
+					% [str(to), 0 if hand3 == null else hand3.get_child_count()])
+			for _d in 3:
 				await process_frame
 
 	if _hover >= 0 and current_scene != null:

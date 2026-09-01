@@ -165,6 +165,16 @@ var _win_at := -1
 ## drags ONE card and everything else on screen should carry on as it was. A
 ## static could not express that.
 var turn_override := 2.0
+## While something else is driving this card's viewing angle, this replaces the
+## pointer-relative tilt the foil normally reads.
+##
+## A dragged card sits UNDER the pointer, so the pointer's offset from the
+## card's centre is roughly zero however far across the screen you have taken
+## it - which means the foil would sit dead still exactly while the card is
+## being waved about. What should drive it there is where the CARD is, not where
+## the pointer is inside it, and only the hand knows that.
+var tilt_override := Vector2.ZERO
+var tilt_overridden := false
 
 
 ## The foil sheen, when this copy pulled one.
@@ -203,6 +213,8 @@ func _build_foil(data: Dictionary) -> void:
 ## the pointer on a desktop, the accelerometer on a phone, and a slow drift
 ## under both so a foil sitting untouched still breathes.
 func _foil_tilt(t: float) -> Vector2:
+	if tilt_overridden:
+		return tilt_override
 	var drift := Vector2(sin(t * 0.6), cos(t * 0.43)) * 0.35
 	var accel := Input.get_accelerometer()
 	if accel.length() > 0.1:
