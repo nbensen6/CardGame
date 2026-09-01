@@ -1,3 +1,39 @@
+# Art waiting for a second pass — SUPERSEDED, 2026-09-01
+
+> **Do not read this document to decide what to fix. Read
+> `design/progress/<asset>.md` instead.** Nothing below is a live queue and
+> nothing here is waiting on Nick.
+>
+> **Why.** This file was the only record of built-but-unlooked-at art. It is not
+> any more: item #83 ran 22 batches over August and re-scored **88 assets**
+> against a five-line rubric — 14 beasts, 14 grounds, 19 portraits, 36 card
+> icons and the hunters — each in its own progress file, each with a total out
+> of 50 and two named fixes. Every one of the 19 assets named individually below
+> now has one. The coverage is complete; this file is the older, vaguer half of
+> the same information.
+>
+> **The five hunter entries near the bottom are actively misleading.**
+> `lightbearer`, `vine_weaver`, `mountain_climbers`, `goblin_mech` and `frog`
+> were all reviewed on 2026-08-25, the day BEFORE `look.py`'s 90° camera roll
+> was found. Their notes may be describing the broken camera rather than the
+> model — the frog scored 30/50 on the bad view and about 35 on the good one
+> with no edits at all. The header below already warned about this; the warning
+> was never acted on and the entries were never re-written. Believe the progress
+> files, which were shot on the fixed camera.
+>
+> **There was never a decision here for Nick to make.** The cloud's runs have
+> been reporting themselves blocked "pending Nick's look at ART-REVIEW.md", and
+> the thing that looked like 87 open design calls is one boilerplate sentence —
+> *"Not applying either — this item scores and proposes; a fix is Nick's call"* —
+> which the scoring pass writes into every file it produces. It means "I score,
+> I do not repair". It does not mean a question is waiting. **This gate is
+> lifted.**
+>
+> **What is still worth having here**, and the only reason this file is not
+> deleted: the four "What building X taught" sections. Those are the lessons
+> from building eleven beasts and fourteen grounds at once, and they are not
+> recorded anywhere else. Everything else is history.
+
 # Art waiting for a second pass
 
 Anything the cloud routine builds in Blender lands here, because a run has no

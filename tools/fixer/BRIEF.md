@@ -20,8 +20,8 @@ existed. Do not add to that.
 
 1. **Fetch first.** `git fetch origin && git merge origin/main`. The cloud
    pushes hourly and you will be behind.
-2. **Pick the lowest-scoring asset** in `design/progress/` that still has an
-   unapplied fix. Lowest total first — that is where the work pays.
+2. **Pick by SCREEN SIZE first, score second.** See "What to work on" below.
+   This changed on 2026-09-01 and it is the most important rule here.
 3. **Read its progress file.** The cloud named two lowest rubric lines and one
    concrete fix for each. Apply **only those two**. Do not restyle. Do not
    improve things it did not mention.
@@ -41,6 +41,59 @@ existed. Do not add to that.
 7. **Run the tests.** `run_tests.gd` must pass before any commit, no exceptions.
 8. **Commit and push.** If the push is rejected, fetch, merge, re-test, push
    again. Never force.
+
+## What to work on
+
+**Lowest score inside the highest tier that still has actionable work.** Not
+lowest score overall.
+
+| # | Tier | Why it is here |
+|---|---|---|
+| 1 | **beasts** — `tools/blender/<beast>.py` | fills the screen for an entire fight |
+| 2 | **grounds** — `tools/blender/env/<beast>.py` | the floor and walls you look at all fight |
+| 3 | **hunters** — frog, vine_weaver, mountain_climbers, goblin_mech, lightbearer | on screen throughout, but small |
+| 4 | **portraits** — `portraits.py` | about 30 screen pixels, in a HUD corner |
+| 5 | **card icons** — `icons.py` | placeholder art, being deleted (see below) |
+
+Only drop a tier when everything above it is at 40/50, has had four passes, or
+has no proposed fix left to apply.
+
+**Why this changed.** Fifteen fixer passes ran before anyone checked what they
+had been spent on: seven touched `portraits.py` and three touched `icons.py`.
+Every one was a real improvement — 26/50 to 34/50 is typical — and Nick could
+not see a single one of them, because he had been looking at cards while the
+lane polished the two smallest things in the game.
+
+The cause was mechanical, not careless. "Lowest score first" sounds obviously
+right and is not: **a score has no idea how big the thing is on screen.**
+Portraits score lowest because they are hard to read at 512px and get judged on
+it, so a rule that only reads the number will pick portraits essentially
+forever. Of the assets carrying an explicit score, the five lowest are all
+portraits.
+
+**Card icons are on their way out.** 36 of the 88 scored assets are icons, and
+every card Nick paints deletes one from view for good — a card with its own art
+never draws its icon again. Improving one is work with a shelf life. Take an
+icon only when there is genuinely nothing above it, and say in the progress file
+that you did so because the tiers above were exhausted.
+
+**A tier is about screen area, not importance.** A portrait at 34/50 that
+somebody has to squint at is a smaller problem than a beast at 38/50 that fills
+the frame, and the number alone will never tell you that.
+
+**Where this stood on 2026-09-01**, as a starting point rather than a list to
+work down — re-derive it each run, because it goes stale the moment you commit.
+Thirteen beasts, hunters and grounds had never had a fixer pass at all, among
+them three of the five hunters and the Thrasher, which sat at 32/50 with two
+concrete fixes proposed and is the beast on screen in most of what Nick looks
+at. There is a tier of genuinely visible work here; it had simply never been
+reached, because portraits kept winning on score.
+
+Note the shape of the Thrasher's file while you are there: of its two proposed
+fixes, the first is a measurement (thicken and shorten the sigil crest) and the
+second ends "which is a design call rather than a measurement". Apply the first.
+Leave the second and say why. That split is common and the hard rules below
+mean it.
 
 ## Hard rules
 

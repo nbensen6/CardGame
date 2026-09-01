@@ -97,7 +97,26 @@ Ordered. Source in brackets.
   rares, one painted. `tools\blender\rare3d.cmd all` rebuilds the whole set
   from cards.json whenever a batch of paintings lands, and rare3d.py refuses a
   non-rare without `--force`.
-- [ ] **83. Score the art nobody has looked at** `cloud-safe` — fourteen beasts,
+- [x] **83. Score the art nobody has looked at** `cloud-safe` — **DONE
+  2026-09-01: 88 assets scored across 22 batches**, every one with a total out
+  of 50 and two named fixes in its own `design/progress/` file. Coverage is
+  complete — 14 beasts, 14 grounds, 19 portraits, 36 icons and the hunters —
+  and every asset ART-REVIEW.md named individually now has a modern file shot on
+  the FIXED camera.
+
+  **The ART-REVIEW gate is lifted; stop reporting yourself blocked on it.**
+  Recent runs have ended "pending Nick's look at design/ART-REVIEW.md". There
+  was never a decision waiting there. What looked like 87 open design calls is
+  one boilerplate sentence — *"a fix is Nick's call"* — that this routine writes
+  into every file it produces, meaning "I score, I do not repair". ART-REVIEW.md
+  now carries a SUPERSEDED header saying so.
+
+  Applying the fixes is the fixer lane's job and it is working through them; see
+  `tools/fixer/BRIEF.md`, which as of 2026-09-01 picks by SCREEN SIZE first and
+  score second. Scoring more is not the bottleneck. Art is.
+
+  Original brief follows, for the record:
+  fourteen beasts,
   five hunters, fourteen grounds, the map, nineteen portraits and twenty-eight
   icons are on screen right now, and `design/ART-REVIEW.md` carries **28 blocks
   marked NEEDS A PASS against 2 DONE**. This routine built most of them, then
