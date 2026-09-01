@@ -171,7 +171,16 @@ def build(name, out_dir):
     bsdf.inputs["Roughness"].default_value = 0.34
     bsdf.inputs["Metallic"].default_value = 0.25
     o.data.materials.append(mat)
-    body(col)
+    # NO body quad: the middle of this texture is TRANSPARENT on purpose.
+    #
+    # Nick, on the Bash and Break references: "it looks like they started with a
+    # full art card then put the border around it." That is what those cards
+    # are - the painting is full bleed and the frame sits ON it - and a frame
+    # with an opaque centre cannot do that, because it hides the picture it is
+    # supposed to be framing.
+    #
+    # card_view draws the art at its own ART_LAYER and this frame above it. A
+    # card with no painting yet gets a dark ground layer instead.
 
     sc = bpy.context.scene
     sc.render.engine = engine(sc)

@@ -173,10 +173,10 @@ http
         // up letterboxed with bars either side, and the obvious conclusion was
         // that the upload had not worked.
         const w = buf.readUInt32BE(16), h = buf.readUInt32BE(20);
-        const want = 25 / 19, got = w / h;
+        const want = 62 / 87, got = w / h;
         const warn = Math.abs(got - want) > 0.08
           ? "saved, but it is " + w + "x" + h + " and the art window is 4:3 " +
-            "landscape - export 1000x760 or it will be cropped"
+            "landscape - export 620x870 PORTRAIT or it will be cropped"
           : "";
         fs.writeFileSync(file, buf);
         console.log("card art: wrote " + put[1] + ".png (" + buf.length + " bytes)");

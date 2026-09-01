@@ -124,6 +124,9 @@ const ENERGY_ICON := preload("res://ui/icons/energy.svg")
 const FOIL_SHADER := preload("res://ui/foil.gdshader")
 
 var _foil: ColorRect = null
+## The moulding, drawn as a layer OVER the art rather than as the Button's
+## stylebox - a stylebox draws behind every child and the art would hide it.
+var _frame_rect: NinePatchRect = null
 
 ## Force every card foil, for looking at it. Set by tools/screenshot.gd's
 ## `foil` flag — a foil is a rare pull by design, so without this there is no
@@ -171,32 +174,64 @@ func _foil_tilt(t: float) -> Vector2:
 	return drift + rel.limit_length(1.5) * 0.5
 
 
+## The card face is a LAYER STACK, not a column.
+##
+## Nick, on the Bash and Break references: "it looks like they started with a
+## full art card then put the border around it." That is what those cards are,
+## and it is a different construction from what we had. Ours was a padded
+## MarginContainer holding a VBox, and a flow layout FILLS its parent - so
+## every attempt to slide a full-bleed painting underneath it ended with the
+## column covering the painting. Mixing flow layout and absolute layers is what
+## broke the first attempt at this.
+##
+## So on a full card nothing flows. Every element is anchored and offset over
+## the art. Child index IS draw order:
+##
+##   0  ground   dark fill, for a card whose art does not exist yet
+##   1  art      the painting, full bleed
+##   2  scrim    darkens the lower third so cream text survives a bright sky
+##   3  frame    the moulding, transparent in the middle
+##   4  pill     the type, straddling the scrim's top edge
+##   5  rules    the text, on the scrim
+##   6  pips     rarity, top right
+##   7  banner   the name, straddling the top edge
+##   8  orb      the cost, hung off the corner
+##   9+ timing strip, clock badge, foil sheen
+##
+## ART_LAYER is deliberately a named index. Backlog #84 wants the Slay the Spire
+## style 3D window on rare cards, and that effect arrives as a 120-frame sprite
+## sequence - it replaces exactly one node, at exactly this index, and every
+## layer above it keeps working untouched. See design/rare-card-3d-effect.md.
+const ART_LAYER := 1
+
+
+## Anchor a node over the card by FRACTIONS of the card, plus pixel nudges.
+## Fractions rather than pixels because the same face is laid out at 135, 162
+## and 191 wide and a hard-coded offset only ever looks right at one of them.
+func _layer(node: Control, l: float, t: float, r: float, b: float,
+		dl: float = 0.0, dt: float = 0.0, dr: float = 0.0, db: float = 0.0) -> Control:
+	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	node.anchor_left = l
+	node.anchor_top = t
+	node.anchor_right = r
+	node.anchor_bottom = b
+	node.offset_left = dl
+	node.offset_top = dt
+	node.offset_right = dr
+	node.offset_bottom = db
+	add_child(node)
+	return node
+
+
 func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> void:
-	# Character/relic cards (no cost pip) carry portraits + longer text — taller frame.
 	_compact = compact
 	_data = data
 	if compact:
 		custom_minimum_size = Vector2(0, RAIL_HEIGHT)
 	else:
-		# 148 wide, not 164: with the energy orb beside the hand, five cards at the
-		# old width overflowed and put a scrollbar under the most-used control on
-		# the screen.
-		#
-		# A handheld runs the interface at fewer logical pixels so everything is
-		# physically bigger (see ui/screen.gd), which means the SAME card is a much
-		# larger share of the screen — at 224 tall the hand ate 40% of a phone and
-		# climbed over the beast. Smaller here keeps the same physical size it has
-		# on a desktop while giving the fight back its room.
-		# 62:87. That is Slay the Spire 2's own full-card ratio, 0.713 - their
-		# modding docs give 310x435 - and it is measured rather than eyeballed.
-		#
-		# Nick: "theirs is more closer to a square than ours. Ours is more
-		# towards a rectangle." He was right and an earlier guess of "roughly
-		# 1:1.55" made it worse: 140x228 is 0.614, a good deal narrower than
-		# theirs, which is why the face felt cramped no matter how the contents
-		# were arranged. Widened rather than shortened, because the hand band is
-		# already sized for this height and the extra width is what the art
-		# window needed.
+		# 62:87 - Slay the Spire 2's own full-card ratio (their modding docs give
+		# 310x435). Measured, not eyeballed: ours was 0.614, a good deal narrower
+		# than theirs, which is why the face felt cramped however it was arranged.
 		var big := bool(data.get("no_cost", false))
 		if Screen.is_handheld():
 			custom_minimum_size = Vector2(161, 226) if big else Vector2(135, 190)
@@ -211,80 +246,28 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 	for child in get_children():
 		child.queue_free()
 
-	var pad := MarginContainer.new()
-	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	pad.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var margin := 6 if compact else 10
-	for side in ["left", "top", "right", "bottom"]:
-		pad.add_theme_constant_override("margin_" + side, margin)
-	if not compact:
-		# Clear the ribbon, which is drawn over the top edge rather than laid
-		# out in this column.
-		pad.add_theme_constant_override("margin_top", 32)
-	add_child(pad)
-
-	var box := VBoxContainer.new()
-	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_theme_constant_override("separation", 3 if not compact else 3)
-	pad.add_child(box)
-
 	if compact:
-		box.add_child(_rail_row(data))
+		var pad := MarginContainer.new()
+		pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		pad.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		for side in ["left", "top", "right", "bottom"]:
+			pad.add_theme_constant_override("margin_" + side, 6)
+		add_child(pad)
+		pad.add_child(_rail_row(data))
 	else:
-		box.add_child(_rarity_pips(data))
-		# The name on its ribbon, the art, then the type on its pill — the
-		# order in Nick's reference cards, and the reason the pill reads as
-		# a label ON the art rather than a heading over the rules.
-		box.add_child(_art_box(_art(String(data.get("icon", "")),
-			String(data.get("portrait", "")), String(data.get("id", "")))))
-		var kind := String(data.get("type", ""))
-		if kind != "":
-			# Small. Nick: "the attack/skill is really large taking up a lot of
-			# space." In the reference it is a caption on the art, not a heading -
-			# the type is the least important thing on the face and it was taking
-			# more room than the damage number.
-			var tag := _plate(PILL, PILL_SLICE, kind.capitalize(), 8, 12)
-			tag.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-			tag.custom_minimum_size = Vector2(44, 12)
-			box.add_child(tag)
-		# A STRIP, not a panel. Nick: "some words are going off the cards." The
-		# block was 62px of an already-tight card and long rules ran past it;
-		# _rich_body clips rather than grows, so overflow was silent.
-		box.add_child(_rich_body(data, 10, 52))
+		_build_face(data)
 
 	_strip = _build_timing_strip()  # hidden until start_timing()
-	box.add_child(_strip)
+	add_child(_strip)
+	_strip.anchor_left = 0.10
+	_strip.anchor_right = 0.90
+	_strip.anchor_top = 0.86
+	_strip.anchor_bottom = 0.86
+	_strip.offset_bottom = 10.0
 	_clock = null
 	if bool(data.get("timed", false)):
 		_clock = _clock_badge(compact, int(data.get("timed_hits", 1)))
 		add_child(_clock)
-	if not compact:
-		# The ribbon STRADDLES the top edge and overhangs both sides, the way
-		# it does on Nick's Bash card. Inside the padded column it was a
-		# stub about 66px wide once the notched ends took their 26 each,
-		# and "Tongue Snap" ran straight off it.
-		# 13, not 11. The name is the first thing you read on a card and it was
-		# the smallest type on it — a plate is no use if what it carries is
-		# unreadable at hand size.
-		var ban := _plate(BANNER, BANNER_SLICE,
-			String(data.get("name", "")), 13, 24)
-		ban.set_anchors_preset(Control.PRESET_TOP_WIDE)
-		# Starts to the RIGHT of the gem rather than under it. The ribbon is
-		# centred text, so an orb sitting on its left end does not just cover
-		# the plate — it eats the first characters of the name.
-		ban.offset_left = 26.0
-		# Inside the card, not overhanging. In a fanned hand the card to the
-		# right sits on top of this one, and anything sticking out that side
-		# is simply covered.
-		ban.offset_right = -3.0
-		ban.offset_top = 3.0
-		ban.offset_bottom = 27.0
-		add_child(ban)
-		# Added AFTER the ribbon so it draws over it, which is the stacking
-		# order in the reference: the gem sits on the corner of the plate.
-		if not bool(data.get("no_cost", false)):
-			add_child(_cost_orb(int(data.get("cost", 0)),
-				String(data.get("character", ""))))
 	_foil = null
 	if bool(data.get("foil", false)) or force_foil:
 		_build_foil(data)
@@ -292,6 +275,78 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 		pressed.connect(_on_self_pressed)
 	if not gui_input.is_connected(_on_card_input):
 		gui_input.connect(_on_card_input)
+
+
+## Every layer of a full card, bottom to top. See the note on ART_LAYER.
+func _build_face(data: Dictionary) -> void:
+	var id := String(data.get("id", ""))
+
+	# 0 - ground.
+	var ground := ColorRect.new()
+	ground.color = Color(0.055, 0.052, 0.062)
+	_layer(ground, 0, 0, 1, 1)
+
+	# 1 - ART_LAYER. Full bleed, cropped to fill rather than letterboxed: the
+	# card is a window onto a painting, not a painting pasted onto a card.
+	var art := TextureRect.new()
+	var own := CARD_ART + id + ".png"
+	if id != "" and ResourceLoader.exists(own):
+		art.texture = load(own)
+	elif ICONS.has(String(data.get("icon", ""))):
+		# No painting yet: the shared icon, small and centred, so the card is
+		# still legible while 187 of these are waiting to be drawn.
+		art.texture = ICONS[String(data.get("icon", ""))]
+		art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		_layer(art, 0.18, 0.12, 0.82, 0.52)
+		_build_upper(data)
+		return
+	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	art.clip_contents = true
+	_layer(art, 0, 0, 1, 1)
+	_build_upper(data)
+
+
+## Layers 2 and up: everything that sits ON the art.
+func _build_upper(data: Dictionary) -> void:
+	# 2 - scrim. Cream rules text over a bright sky is unreadable, and the
+	# reference darkens the foot of the art for exactly this reason.
+	var scrim := ColorRect.new()
+	scrim.color = Color(0.045, 0.043, 0.052, 0.88)
+	_layer(scrim, 0.055, 0.695, 0.945, 0.95)
+
+	# 3 - the moulding. A Button draws its StyleBox BEHIND every child, so the
+	# frame cannot be a stylebox any more or the art would cover it.
+	var fr := NinePatchRect.new()
+	fr.texture = FRAMES.get(String(_data.get("character", "")), FRAMES["common"])
+	fr.patch_margin_left = FRAME_MARGIN
+	fr.patch_margin_right = FRAME_MARGIN
+	fr.patch_margin_top = FRAME_MARGIN
+	fr.patch_margin_bottom = FRAME_MARGIN
+	_frame_rect = fr
+	_layer(fr, 0, 0, 1, 1)
+
+	# 4 - the type, straddling the scrim's top edge as a caption on the art.
+	var kind := String(_data.get("type", ""))
+	if kind != "":
+		var tag := _plate(PILL, PILL_SLICE, kind.capitalize(), 8, 13)
+		_layer(tag, 0.30, 0.695, 0.70, 0.695, 0.0, -7.0, 0.0, 6.0)
+
+	# 5 - the rules, on the scrim.
+	_layer(_rich_body(_data, 10, 40), 0.085, 0.735, 0.915, 0.945)
+
+	# 6 - rarity pips, top right.
+	_layer(_rarity_pips(_data), 0.60, 0.0, 0.94, 0.0, 0.0, 30.0, 0.0, 40.0)
+
+	# 7 - the name, straddling the top edge and clear of the orb.
+	var ban := _plate(BANNER, BANNER_SLICE, String(_data.get("name", "")), 13, 24)
+	_layer(ban, 0.0, 0.0, 1.0, 0.0, 26.0, 3.0, -3.0, 27.0)
+
+	# 8 - the cost, over the ribbon's left end, as in the reference.
+	if not bool(_data.get("no_cost", false)):
+		add_child(_cost_orb(int(_data.get("cost", 0)),
+			String(_data.get("character", ""))))
 
 
 ## The rail form: [cost] [icon] [name / rules text], one row. Everything a
@@ -794,14 +849,28 @@ func _header(card_name: String, cost: int, no_cost: bool = false) -> Control:
 ## 187 cards currently share 33 icons — eighteen of them wear the same "lift"
 ## glyph — so this is the slot that turns a spreadsheet into a card game.
 const CARD_ART := "res://assets/cardart/"
-## What to export from Canva: 1000 x 760 PNG.
+## What to export from Canva: 620 x 870 PNG, PORTRAIT.
+##
+## This changed when the card did. Slay the Spire has two art specs and we now
+## use the second one:
+##
+##   windowed card   25:19 landscape (1000x760) - art inside a frame
+##   FULL-IMAGE card 62:87 portrait  (310x435)  - art fills the whole card
+##
+## Ours is full-bleed now, so the painting has to be the shape of the CARD. A
+## landscape 1000x760 dropped into a 62:87 card is scaled to fill and loses most
+## of its width - Nick's forest came out as a vertical slice of treetops, which
+## is correct behaviour and the wrong source.
+##
+## 620x870 is 2x their 310x435, for the same reason the frame renders at card
+## size: enough for the card detail view without being wasteful.
 ##
 ## 4:3 because the art window below is 4:3, so a card fills edge to edge with no
 ## letterboxing and nothing has to be cropped by eye. 1024 because the card
 ## DETAIL view blows a card up far past its size in hand — 512 is enough for the
 ## hand and visibly soft the moment someone inspects it. It is one export either
 ## way, so it may as well be the one that survives being looked at closely.
-const CARD_ART_SIZE := Vector2i(1000, 760)
+const CARD_ART_SIZE := Vector2i(620, 870)
 ## The art window's height as a fraction of its width. Matches CARD_ART_SIZE.
 ##
 ## 19/25 = 0.76, which is Slay the Spire's own card-art ratio - their atlas
@@ -993,6 +1062,12 @@ func _apply_frame() -> void:
 	# Hover lifts, pressed sinks, disabled drains. All off ONE rendered frame:
 	# the bevel already carries the form, so the states only have to change how
 	# much light it is catching.
+	# Empty on a full card: _build_upper draws the frame as a layer above the
+	# art. The rail form still wants a real stylebox behind its row.
+	if not _compact:
+		for state in ["normal", "hover", "pressed", "disabled", "focus"]:
+			add_theme_stylebox_override(state, StyleBoxEmpty.new())
+		return
 	add_theme_stylebox_override("normal", _tex_frame(tex, Color(1, 1, 1)))
 	add_theme_stylebox_override("hover", _tex_frame(tex, Color(1.18, 1.16, 1.12)))
 	add_theme_stylebox_override("pressed", _tex_frame(tex, Color(0.82, 0.82, 0.84)))
