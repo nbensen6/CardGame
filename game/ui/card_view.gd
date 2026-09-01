@@ -820,7 +820,22 @@ const CARD_ART_ASPECT := 0.76
 func _art_box(inner: Control) -> Control:
 	var box := PanelContainer.new()
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# The window's height is COMPUTED from the card's width and the 25:19 art
+	# ratio, and set as a real minimum. Two other ways were tried and both
+	# failed for the same underlying reason - nothing was telling the column how
+	# tall this thing wanted to be:
+	#
+	#   EXPAND_FILL       swallowed all the leftover height, so a landscape
+	#                     painting sat in a tall narrow hole and was cropped to
+	#                     a vertical strip.
+	#   AspectRatioContainer
+	#                     reports no minimum size of its own, so the column
+	#                     allocated it almost nothing and it drew its child
+	#                     over the type pill and the rules text.
+	#
+	# A number the container can actually see fixes both.
+	var inner_w: float = maxf(custom_minimum_size.x, 118.0) - 34.0
+	box.custom_minimum_size = Vector2(0, inner_w * CARD_ART_ASPECT)
 	var sb := StyleBoxFlat.new()
 	# Darker than the card body, so it reads as a hole rather than a panel laid
 	# on top - a window is something you look INTO.
@@ -842,11 +857,9 @@ func _art_box(inner: Control) -> Control:
 func _art(icon: String, portrait: String = "", card_id: String = "") -> Control:
 	var tex := TextureRect.new()
 	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# The art absorbs whatever height the card has spare. Without this the column
-	# packs to the top and a taller card just grows a band of empty dark at the
-	# bottom - which is what a first pass at the Slay the Spire 2 proportions
-	# produced. In the reference the picture is what fills the card.
-	tex.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# The window's SHAPE decides its height now (see _art_box), so the picture
+	# just fills whatever the window is.
+	tex.size_flags_vertical = Control.SIZE_FILL
 	# Fixed, modest art size — the icon is an accent, not the card's focus (Nick).
 	# Portraits (character select) keep a larger pane.
 	# 86, not 58. The window is the biggest element on a Slay the Spire card
