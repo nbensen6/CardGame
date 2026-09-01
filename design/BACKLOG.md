@@ -892,6 +892,66 @@ Ordered. Source in brackets.
   four new icons (36-41) came close to entering it either — the bottom
   ten is fight-grounds-and-one-portrait only, the same shape it has held
   since batch 12.
+  **Checked 2026-09-01: batch 20, four more icons — the next four of the
+  twelve remaining "twenty-eight card icons," in `card_view.gd`'s own
+  `ICONS` table order** (`expose`, `taunt`, `relic`, `volley`). Same
+  Pillow real-42px-downsample method and >10-alpha-threshold edge check as
+  batches 15-19. Scored `expose` (mark a weak point, 32/50 — a clean
+  bullseye ring-plus-centre-ball silhouette, but rendered and compared
+  directly against `target` at the same 42px scale, the two are near-
+  identical, differing only by `expose`'s four axis-aligned ticks versus
+  `target`'s one diagonal line-and-arrowhead — Family distinction scored
+  3/10, and the two cards this pair of icons wears are the two Expose-
+  family cards most likely to be read side by side), `taunt` (pull the
+  beast's attention, 38/50 — an unmistakable pole-and-banner silhouette,
+  nothing else in the set resembles it, docked only because nothing in
+  the shape itself signals *aggro* specifically rather than a generic
+  signal flag or waypoint), `relic` (a lasting boon, 39/50, best of the
+  batch — a faceted six-point-star-in-a-ring medallion, distinct and
+  legible at 42px, docked on the same "generic treasure" mechanic-match
+  gap as `taunt`: nothing ties the shape to *permanence* over any other
+  reward), `volley` (several hits at once, 30/50, lowest of the batch —
+  the three RUST slab segments meant to read as separate hits fuse into
+  one continuous diagonal streak at 42px, while three SILVER triangles
+  float above it never touching the line or each other; the disconnected
+  triangles are the same "orbiting part" failure this item has named
+  repeatedly for beast sigil crests across the 3D batches, seen here for
+  the first time in a 2D icon rather than a 3D model). Full rubric
+  tables, per-line justifications and one concrete (unapplied) fix per
+  asset are in `design/progress/<name>_icon.md`. Twenty-eight of the
+  thirty-six total card icons now scored; eight remain (`target`,
+  `rhythm`, `timer`, `cog`, `burn`, `stack`, `light`, `frail`). `target`
+  was rendered and downsampled this batch purely for `expose`'s Family-
+  distinction line — not itself scored, still counted among the eight
+  remaining. No icon script touched — report only, per this item's own
+  rule. Left unchecked.
+  **Correction to the record, found while rebuilding the ranked list
+  rather than trusting the last one secondhand — the exact trap batch
+  18's own note named:** `husk_beetle_portrait`, in batch 19's bottom-ten
+  list at 27, moved to 34 by a fixer-lane pass (commit `de54484`,
+  landed between batch 19 and this session, not run by this item) whose
+  progress-file addition follows the same "states the move as prose, no
+  fresh bold total" shape batch 18 already flagged for four other assets
+  — silently confirmed by re-grepping every `design/progress/*.md` file's
+  last bold total this batch: it still returned the stale pass-1 scores
+  23, 23, 26, 26 for `fire_icon`, `rally_icon`, `bog_leech_portrait` and
+  `thrasher_portrait` (actual current: 31, 32, 31, 34, per each file's own
+  "+N total (old → new)" line), the identical four batch 18 already named.
+  Manually cross-checked every candidate for this batch's ranked list
+  against its own fixer-lane section before trusting a grepped number.
+  **Ranked weakest ten, updated after batch 20** (of the 80 assets scored
+  across all twenty batches, current scores — lowest first, out of 50):
+  gale_serpent_ground 22, then a three-way tie at 23 (grove_bear_ground,
+  riftling_ground, shifting_idol_ground), sky_snapper_ground 25, then a
+  two-way tie at 26 (drowned_colossus_ground, mire_snapper_ground), then a
+  two-way tie at 27 (bounder_ground, crag_pup_ground), then a five-way tie
+  at 28 (bog_leech, cinder_jackal_portrait, guard_icon, root_lurker_ground,
+  sunken_warden_ground — any one stands in as the tenth). `husk_beetle_portrait`
+  moved out of the bottom ten entirely per the correction above.
+  `expose_icon` (32) and `volley_icon` (30) both scored above the
+  tenth-place value of 28, so neither of this batch's icons enters the
+  bottom ten — the list is fight-grounds-and-icons-and-portraits, no
+  beast model anywhere in it, the same shape it has held since batch 12.
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
   relic") on top of the existing Rest / Thin / Sharpen and `Run.relic_totals()`.
   *Done when:* pickable at a campfire, persists, shows in the relic list.
