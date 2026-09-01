@@ -9,6 +9,7 @@ only — report, not repair.** Asset: `game/assets/portraits/clot_toad.png`
 | Framing | Identity | Read@34px | Colour | Style | Total |
 |---|---|---|---|---|---|
 | 3 | 4 | 5 | 6 | 6 | **24** |
+| 7 | 7 | 7 | 6 | 6 | **33** |
 
 Lowest portrait scored so far, below `bog_leech_portrait`'s 26 from batch 10.
 
@@ -64,3 +65,48 @@ Whether this is a `portraits.py` `FOCUS` crop bug specific to this asset, or
 whether the underlying model's ridge stack sits high/far enough back that no
 crop choice would fit it and the sigil both in frame without a wider shot —
 this scoring pass can see the cut, not its cause.
+
+## Pass 2 — fixer
+
+Applied the one fix named above: `portraits.py`'s `FOCUS["clot_toad"]` moved
+from `(0.42, 1.15)` to `(0.48, 1.35)` — a higher centre and a wider span, so
+the frame's top edge clears the scab-crest ball at the very top of the ridge
+stack (the model's actual highest point) with room to spare instead of
+landing almost exactly on it. `(0.42, 1.15)` turned out to be `husk_beetle`'s
+own tuned value, unchanged from a copy default rather than tuned for this
+asset's taller stack. Rebuilt with `build.cmd portraits`; every other
+portrait in `FOCUS` re-rendered byte-identical in content but not in file
+bytes (Blender's WORKBENCH output isn't bit-reproducible run to run), so
+those were reverted with `git checkout --` and only `clot_toad.png` was kept.
+
+Re-viewed `game/assets/portraits/clot_toad.png` directly (portraits are not
+part of `look.cmd`'s six-view flow — that renders `.glb` cast/env models, and
+a portrait is already the flattened 2D asset) and a fresh 34px downsample
+built the same way batch 11's pass 1 did.
+
+- **Framing (7):** the ridge/gland stack, the gold sigil disc, and the small
+  scab-crest ball above it are now fully inside the frame with visible
+  margin on the right and top edges — no cropping anywhere the diagnosis
+  named. Not a full 8+: the composition is now slightly more zoomed-out
+  than the other portraits in this batch, so it is not yet as tight a crop
+  as the convention the other scored portraits share.
+- **Identity (7):** with the stack and sigil visible, the beast now reads as
+  the specific "climb route" toad the module doc describes, not a generic
+  tan blob — the recovery the pass-1 diagnosis predicted.
+- **Read@34px (7):** confirmed via a fresh 34px downsample (compared frame
+  by frame against a downsample of the pre-fix PNG pulled from `HEAD`). The
+  stack now survives as a distinct rust-coloured zigzag with a hint of gold
+  at its tip, where pass 1 showed it vanish into an indistinct smear with no
+  sigil at all. The body blob and cream gland lumps read exactly as before —
+  the wider span cost no visible detail there.
+- **Colour & separation (6):** untouched by this fix — same read as pass 1,
+  not one of the two lines named.
+- **Style consistency (6):** untouched by this fix — same read as pass 1,
+  not one of the two lines named.
+
+**+9 total (24 → 33), not a plateau — kept.** Both named lines (Framing,
+Identity) improved, Read@34px improved as a direct consequence of the same
+fix, and neither untouched line (Colour, Style) moved. `game/tools/run_tests.gd`
+passes (headless Godot run, all green) — the change is confined to
+`tools/blender/portraits.py`'s data table and the regenerated PNG, nothing
+in `/core` or `/game` code.
