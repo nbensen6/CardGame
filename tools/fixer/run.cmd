@@ -47,9 +47,15 @@ echo === %MODE%
 REM --permission-mode acceptEdits, not bypassPermissions: this thing edits build
 REM scripts and pushes to main with nobody watching, so it gets to write files
 REM without a prompt but not to run whatever it likes.
+REM Everything below is logged, because the scheduled task failed overnight
+REM with exit 0x1 and there was NOTHING to read - no way to tell a usage
+REM limit from a bad token from a crash. One file, overwritten each run:
+REM the last run is the only one anyone ever asks about.
+echo === fixer run %DATE% %TIME% === > "%~dp0last-run.log"
 claude -p "Read tools/fixer/BRIEF.md and follow it exactly for ONE asset. %MODE%" ^
   --permission-mode acceptEdits ^
-  --allowedTools "Read,Edit,Write,Glob,Grep,Bash"
+  --allowedTools "Read,Edit,Write,Glob,Grep,Bash" >> "%~dp0last-run.log" 2>&1
+echo exit code: %ERRORLEVEL% >> "%~dp0last-run.log"
 
 echo.
 echo === fixer done. Check: git log -3
