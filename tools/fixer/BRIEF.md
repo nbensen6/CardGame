@@ -16,6 +16,49 @@ raised the ground triangle budget three times while the cloud was mid-pass, and
 nine of the cloud's findings were scored against a number that no longer
 existed. Do not add to that.
 
+## Alternate: one run fixes an asset, the next hunts a bug
+
+Check `git log --oneline -1 --author-date-order` for your own last commit. If it
+was an asset pass, this run is a **bug hunt**. If it was a bug hunt, fix an
+asset. Alternate strictly; do not do both in one run.
+
+**You are the only lane with a display.** The cloud runs on Anthropic infra with
+no screen and cannot boot the game at all. You are on Nick's PC, so you can run
+it, photograph it and look at the photograph — and until 2026-09-01 you never
+once did. Fifteen runs, all of them rebuilding Blender meshes, while the game
+itself went unlooked-at.
+
+That is not a small miss. The first time anyone pointed the harness at the fight
+and compared what the game BELIEVED against what it DREW, it turned up hunters
+spawning inside the Titan in every fight since the feature was written. See the
+`not placed` branch in `combat_3d._place_hunters` and the commit that added it.
+
+### The bug-hunt run
+
+```
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:\shot.png state=3d slot=0 beast=<one you have not checked>
+```
+
+Read what it PRINTS as carefully as the image — `HUNTER`, `VIS`, `CAM`, `HAND`,
+`DROP`. Then open the PNG with the Read tool and look at it. Other states worth
+walking: `3dclimb`, `3dstrike`, `3dgrip`, `3dreward`, `3dcampfire`, `3dshop`,
+`3dmap`, and `mobile` / `size=2340x1080` for the phone layout.
+
+What counts as a find:
+
+- something DRAWN somewhere different from where the game says it is
+- something off-screen that should be on it, or overlapping the HUD
+- a `VIS FAIL` or a harness line that disagrees with the picture
+- a state that renders empty, black, or visibly unfinished
+
+**Report every find in `design/progress/bugs.md`** — create it if it is not
+there — with the exact command that reproduces it and what you saw. Fix it ONLY
+if the fix is inside your lane (`tools/blender/**`, `game/assets/3d/**`).
+Anything in `game/**` GDScript is the session's: write it up, do not touch it.
+A reproducible bug report with a command in it is worth more than a guess at a
+patch in someone else's file.
+
 ## Your job, one asset per run
 
 1. **Fetch first.** `git fetch origin && git merge origin/main`. The cloud

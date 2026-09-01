@@ -58,6 +58,59 @@ These exist because nobody is watching. Breaking one is worse than doing nothing
 
 Ordered. Source in brackets.
 
+- [ ] **86. Read the code for bugs, and leave a test behind** `cloud-safe` —
+  **this is the cloud's standing work now that #83 is finished.** Scoring is
+  done; nothing needs more scoring.
+
+  Nick, 2026-09-01, on what this routine is actually for: *"it should do some
+  bug testing like how hunters have been spawning underneath the beast."* That
+  exact bug was real, had been there since the feature was written, and was
+  found by READING — `_place_hunters` ended in two branches that both required
+  `placed`, which is false on the first pass, so nothing ever assigned
+  `node.position` and the hunter stayed at Vector3.ZERO, the beast's own centre.
+  No screen was needed to see that. See commit `5b63bf4`.
+
+  **A run has no display and cannot boot the game.** It does not need one. What
+  it can do:
+  - read a system end to end and ask what happens on the FIRST pass, the LAST
+    one, and when a collection is empty. The spawn bug was a first-pass hole,
+    and there is a family of those.
+  - look for state the game keeps in two places, where one is updated and the
+    other is not. That bug survived because `h["home"]` was always right and
+    only the drawing was wrong, so every check that asked the game got a
+    correct answer.
+  - run `run_tests.gd` headless, which works fine without a screen.
+
+  **Every find gets a regression test in the same commit**, or it comes back.
+  Write the failing test first, watch it fail, then fix it. Where a bug cannot
+  be reached from a test — anything that is purely about drawing — write it up
+  in `design/progress/bugs.md` with the reproduction, and leave it for the fixer
+  lane, which is on Nick's PC and does have a screen.
+
+  *Done when:* it is not. This is a standing duty, one bug per run, like the
+  scoring was.
+
+- [ ] **85. You cannot see your ally** `needs a screen` — hunter1 projects to
+  x=1602 on a 1280-wide viewport and sits off the right edge of the screen in
+  every fight. Measured on three beasts: thrasher 1559, crag_pup 1602,
+  drowned_colossus 1634, all at y=396. It is not one beast's framing, it is the
+  rule.
+
+  The cause is not a defect: `_pivot` locks to the ACTIVE hunter and `_dist` is
+  7.3, and the two hunters stand about 8.7 world units apart, so the other one
+  is simply outside the frame. Both of those numbers were chosen deliberately —
+  Nick asked for the camera to lock onto each character, and for the hunters to
+  stand back far enough to put a camera behind them.
+
+  So this is a DESIGN call, not a bug fix, which is why it is written down
+  rather than quietly patched. In a two-player co-op game about climbing
+  together, never seeing your partner is a real cost. The options are roughly:
+  frame both hunters when they are at similar heights and only lock tight when
+  they separate; pull `_dist` back; or accept it and give the ally presence some
+  other way (an edge marker, a portrait tell).
+
+  *Done when:* Nick has picked one. Do not choose for him.
+
 - [x] **1. Exhaust scaling for the Goblin** — one field, immediate depth. `cloud-safe`
   *Done when:* the field exists, at least three cards use it, tests cover it.
   [sts2-comparison §5.2]
