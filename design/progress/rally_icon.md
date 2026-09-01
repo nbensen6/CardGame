@@ -103,3 +103,80 @@ two it is in the source geometry. Also unsure whether the missing call-arcs
 are absent from the render (culled, wrong colour, or behind another part)
 or simply too thin to survive antialiasing at this resolution — this file
 did not re-render with a debug material to check.
+
+## Pass 2 — fixer
+
+Both named lines came from the same geometry: the `taper`'s `loc` was a
+freestanding position that never actually reached the `limb`'s last point,
+and separately, the call arcs' centre/radius put them outside the camera's
+±0.575 ortho frame — off-canvas, not merely thin or miscoloured (confirmed
+by hand: at the old centre `(0.42, 0.22)` with `r=0.46`, the arc's rightmost
+point projects to x≈0.87, past the 0.575 right edge; the pass-1 diagnosis
+suspected antialiasing or occlusion but the actual cause was clipping).
+
+Applied both:
+
+1. **Mechanic match (2) / Silhouette (3), the gap.** Solved `taper`'s `loc`
+   for the point that puts its near face exactly on the `limb`'s endpoint:
+   moved from `(0.36, 0.0, 0.06)` to `(0.25, 0.0, -0.004)`. A zoomed crop of
+   the join (`design/renders/rally_pass2_junction.png`) shows the tan limb
+   and gold bell meeting with no transparent gap between them — the concave
+   notch that remains where the two tapers meet at an angle is normal
+   silhouette geometry, not disconnection.
+2. **Mechanic match (2), the missing call.** The old arc centre/radius put
+   them past the frame edge regardless of colour or thickness, so a colour
+   change alone (the diagnosis's other option) would not have fixed this.
+   Moved the arcs to open space above the bell — centre `(0.30, 0.42)`,
+   radius shrunk from `(0.30, 0.46)` to `(0.14, 0.20)` so they sit inside the
+   frame with margin — thickened the tube from `0.038` to `0.055`, and
+   recoloured from `ORANGE`/`TANGERINE` (both close to the horn's own
+   gold/amber/tan) to `WHITE`/`ICE` (cool, bright, and nowhere else in this
+   render) so they separate from both the wedge and the card standin. Both
+   the full 256px render and the 42px downsample
+   (`design/renders/rally_pass2_42px_big.png`, nearest-neighbour upscaled
+   for viewing) now show a visible pale accent near the horn; at 42px it
+   reads as a small light mark rather than three distinct arcs, which is an
+   inherent limit of that much curve detail at 42px, not a rendering
+   failure.
+
+Rebuilt with `build.cmd icons` (rebuilds the full 28-icon set; only
+`rally.png` actually changed — no other icon script was touched). Alpha
+bbox (Pillow `getbbox()`) moved from `(0, 40, 255, 226)` to `(0, 13, 256,
+227)` — still flush against the left and right edges, because the gold
+wedge's own width (r1=0.36, untouched — not one of the two named lines)
+already reached both edges before this pass and still does now; not fixed,
+not claimed fixed.
+
+- **Silhouette @ 42px (3 → 7):** the 42px downsample and the `_sil.png`-style
+  solid-black recolour (`design/renders/rally_pass2_sil.png`) both show one
+  connected horn shape — mouthpiece, limb, and bell touching end to end —
+  where pass 1 showed two unrelated floating pieces. The small arc cluster
+  is a separate shape by design (sound coming off the horn, not part of the
+  horn's own body), small enough that it doesn't read as a second competing
+  object.
+- **Family distinction (7, unchanged):** still doesn't resemble any other
+  icon in the set; the reason changed from "distinct because broken" to
+  "distinct because it's a well-formed horn," which the rubric doesn't
+  separately reward, so the number holds.
+- **Mechanic match (2 → 6):** the horn now reads as a horn at both sizes
+  checked, and the call is visible (not absent) at both sizes, which is what
+  this line asked for. Not higher: at 42px the arcs blur into a single pale
+  accent rather than three legible curved lines, so "a horn making a sound"
+  reads more confidently than "a horn calling for a rally" specifically.
+- **Colour & contrast (5, unchanged):** the tan limb's near-miss against the
+  brown card standin (this batch's own diagnosis, not one of the two lines
+  picked) is untouched — out of this pass's two-fix budget.
+- **Style consistency (6 → 7):** the render is now one connected mass built
+  from the set's usual primitives, matching the rest of the committed set's
+  construction the way pass 1 said this one specifically did not.
+
+**+9 total (23 → 32), not a plateau — kept.** No line regressed.
+`run_tests.gd`: **ALL TESTS PASSED**.
+
+## Unsure about (pass 2)
+
+Whether the wedge's own width (`r1=0.36`, roughly 63% of the 1.15 frame)
+should come down — it still reaches both the left and right frame edges
+after this pass, per the alpha bbox above. That's a size call on a part
+neither named rubric line pointed at, not a gap or a missing-arc problem,
+so it's flagged here rather than touched.

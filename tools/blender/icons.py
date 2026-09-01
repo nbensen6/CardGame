@@ -196,17 +196,21 @@ def rally(i):                                   # lift the whole party
     # as a crown at 42px, which is a different card entirely. The second put a
     # backing plate in FRONT of everything: the camera sits at -Y, so a slab
     # centred on y=0 with any depth is nearer the lens than the icon it was
-    # meant to sit behind.
+    # meant to sit behind. The third's bell sat clear of the limb with a visible
+    # gap between them, and its call arcs, out past the frame's right edge,
+    # never rendered at all.
     i.limb([(-0.50, 0.0, -0.30), (-0.16, 0.0, -0.36), (0.16, 0.0, -0.16)],
            [0.070, 0.095, 0.130], AMBER, seg=6)
-    i.taper((0.36, 0.0, 0.06), 0.12, 0.36, 0.36, GOLD, seg=8,
+    i.taper((0.25, 0.0, -0.004), 0.12, 0.36, 0.36, GOLD, seg=8,
             rot=point((0.50, 0.0, 0.87)))
     i.ball((-0.54, 0.0, -0.28), (0.075, 0.06, 0.075), UMBER, 7, 4)
     # The call coming out of it: arcs, not rings, so nothing has to be hidden.
-    for k, r in enumerate((0.30, 0.46)):
-        pts = [(0.42 + math.cos(a) * r, 0.0, 0.22 + math.sin(a) * r)
+    # Pulled up clear of the bell and shrunk to sit inside the frame -- at the
+    # old centre/radius they fell past the right edge and never rendered.
+    for k, r in enumerate((0.14, 0.20)):
+        pts = [(0.30 + math.cos(a) * r, 0.0, 0.42 + math.sin(a) * r)
                for a in (-0.75, -0.15, 0.45)]
-        i.limb(pts, [0.038] * 3, TANGERINE if k else ORANGE, seg=4, cap=False)
+        i.limb(pts, [0.055] * 3, ICE if k else WHITE, seg=4, cap=False)
 
 
 def volley(i):                                  # several hits at once
