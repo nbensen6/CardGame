@@ -13,6 +13,11 @@
 
 These exist because nobody is watching. Breaking one is worse than doing nothing.
 
+0. **Item 86 is the default work, and it is a ROTATION rather than a queue
+   item.** Take a numbered item above it only if one is genuinely actionable;
+   otherwise do the next of #86's three duties. "No actionable work" stopped
+   being a true statement on 2026-09-01 and must not be committed again — 22
+   runs ended that way and Nick noticed that nothing had changed.
 1. **One item per iteration, finished.** Implemented, tests green, verified by
    screenshot where it is visible, committed, pushed, ticked off here with a
    line in the log. Never leave the tree broken — usage can run out mid-iteration
@@ -58,37 +63,96 @@ These exist because nobody is watching. Breaking one is worse than doing nothing
 
 Ordered. Source in brackets.
 
-- [ ] **86. Read the code for bugs, and leave a test behind** `cloud-safe` —
-  **this is the cloud's standing work now that #83 is finished.** Scoring is
-  done; nothing needs more scoring.
+- [ ] **86. THE CLOUD'S STANDING WORK — three duties, one per run, in rotation**
+  `cloud-safe` — **this replaces "take the top queue item". It never completes
+  and it never runs out.**
 
-  Nick, 2026-09-01, on what this routine is actually for: *"it should do some
-  bug testing like how hunters have been spawning underneath the beast."* That
-  exact bug was real, had been there since the feature was written, and was
-  found by READING — `_place_hunters` ended in two branches that both required
-  `placed`, which is false on the first pass, so nothing ever assigned
-  `node.position` and the hunter stayed at Vector3.ZERO, the beast's own centre.
-  No screen was needed to see that. See commit `5b63bf4`.
+  Nick, 2026-09-01, having watched this routine spend 22 runs producing markdown
+  and no visible change: *"It should actively [be] doing three things — improve
+  assets — look for errors and try to resolve them — verifying mechanics are
+  working correctly, ie the jump mechanic on hunters."*
 
-  **A run has no display and cannot boot the game.** It does not need one. What
-  it can do:
-  - read a system end to end and ask what happens on the FIRST pass, the LAST
-    one, and when a collection is empty. The spawn bug was a first-pass hole,
-    and there is a family of those.
-  - look for state the game keeps in two places, where one is updated and the
-    other is not. That bug survived because `h["home"]` was always right and
-    only the drawing was wrong, so every check that asked the game got a
-    correct answer.
-  - run `run_tests.gd` headless, which works fine without a screen.
+  Check your own last commit and do the NEXT duty. Do not do two in one run.
 
-  **Every find gets a regression test in the same commit**, or it comes back.
-  Write the failing test first, watch it fail, then fix it. Where a bug cannot
-  be reached from a test — anything that is purely about drawing — write it up
-  in `design/progress/bugs.md` with the reproduction, and leave it for the fixer
-  lane, which is on Nick's PC and does have a screen.
+  ### 1. Improve an asset — portraits and card icons ONLY
 
-  *Done when:* it is not. This is a standing duty, one bug per run, like the
-  scoring was.
+  Score it, apply the two lowest-scoring fixes, re-render, LOOK at the render
+  with the Read tool, keep it or revert it, re-score. The full loop is
+  `design/asset-loop.md`; `bash tools/blender/look.sh <asset> <pass>` is the
+  capture step (the `.sh`, not the `.cmd` beside it, which is Nick's Windows
+  copy and unreadable here).
+
+  **This lane REPAIRS now.** The old rule — "scores, never repairs" — existed so
+  two agents could not edit one file at once, and it is why 88 scored assets
+  produced nothing anyone could see. The collision is solved by TIER instead:
+  the fixer owns beasts, grounds and hunters, because those must be judged at
+  fight distance on a real screen and it has one. You own portraits and icons,
+  which are judged flat at 512px and which a headless render answers completely.
+  Stay on your side and neither of you can trample the other.
+
+  ### 2. Find an error and resolve it
+
+  Read a system end to end and ask the questions a test never asks. Two families
+  worth hunting, both drawn from a real bug (`5b63bf4`):
+
+  - **First-pass holes.** `_place_hunters` ended in two branches that both
+    required `placed`, false on the first pass — so nothing assigned
+    `node.position` and every hunter spawned at Vector3.ZERO, which is the
+    beast's own centre. Ask of any system: what happens on the FIRST call, the
+    last, and when the collection is empty?
+  - **Two copies of one truth.** That bug hid for months because `h["home"]` was
+    always correct and only the DRAWING was wrong, so every check that asked the
+    game got a right answer. Look for state kept in two places where one is
+    updated and the other is not.
+
+  **The fix and its regression test go in the same commit.** Write the test
+  first, watch it fail, then fix. A bug with no test comes back.
+
+  ### 3. Verify a mechanic actually works
+
+  Pick one rule the game claims to have and PROVE it, in `run_tests.gd`, which
+  runs headless. Nick's example is the hunters' jump: what is testable there is
+  the climb logic under it — that a route between two heights stops at every
+  ledge in between rather than passing through the body, that a hold at a height
+  with no ledge is refused, that Height never exceeds the weak point, that a
+  fall lands where the rules say.
+
+  Where a mechanic is genuinely only presentation — the arc of the hop, the
+  squash — **do not fake a test for it.** Either extract the pure function so it
+  CAN be tested from headless, or write it up in `design/progress/bugs.md` for
+  the fixer lane, which has a screen and now alternates into bug hunts.
+
+  Prefer mechanics nobody has ever tested over adding a fourth case to something
+  already covered. A pass count tells you how much exists; it does not tell you
+  what is missing.
+
+  **Start here, because it was measured on 2026-09-01.** The climb rules in
+  `/core` are covered heavily — foothold, ledges and holds are named a couple of
+  hundred times across `run_tests.gd`. The climb logic in the VIEW has **zero**
+  coverage: `combat_3d._route_between`, `_stand_on_model` and `_hop` are tested
+  by nothing. That is precisely where Nick's jump lives, and precisely where the
+  spawn bug hid for months.
+
+  `_route_between(from, to)` is very nearly pure already — it reads `_ledges`,
+  sorts the rungs and returns the ones strictly between two heights. Lift the
+  body into a static function taking the rung array explicitly, have the method
+  call it, and it becomes testable from headless in about ten lines. Then assert
+  the thing the comment above `_hop` actually promises: that a climb from ankle
+  to shoulder stops on every ledge in between rather than passing through the
+  body, and that it does so in the right order going down as well as up.
+
+  That is one duty-3 run, it is real, and nothing about it needs a screen.
+
+  ### The rules that still hold
+
+  - `run_tests.gd` green before every commit, no exceptions.
+  - Never claim an improvement you have not seen in a render.
+  - Never change a budget, contract or shared constant to make one asset pass.
+  - Art direction, balance and what is *fun* are Nick's. Stop and write it down.
+  - **Never report "nothing to do".** There are 19 portraits, 36 icons, a
+    codebase nobody has read for first-pass holes, and mechanics with no tests.
+    If a duty is genuinely exhausted, take the next one in the rotation and say
+    so in the commit.
 
 - [ ] **85. You cannot see your ally** `needs a screen` — hunter1 projects to
   x=1602 on a 1280-wide viewport and sits off the right edge of the screen in

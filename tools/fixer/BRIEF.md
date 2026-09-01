@@ -6,9 +6,15 @@ There are three of us working on this repo:
 
 | Lane | Runs | Owns | Does |
 |---|---|---|---|
-| **cloud** | hourly, Anthropic infra | `design/progress/**`, `design/BACKLOG.md` | scores art, **reports, never repairs** |
-| **fixer** (you) | on this PC | `tools/blender/**`, `game/assets/3d/**` | applies the fixes the cloud proposed |
+| **cloud** | hourly, Anthropic infra, **no screen** | `design/progress/**`, `design/BACKLOG.md`, **portrait + icon** assets | improves portraits and icons, hunts code bugs, tests mechanics |
+| **fixer** (you) | on this PC, **has a screen** | `tools/blender/**`, `game/assets/3d/**` for **beasts, grounds, hunters** | improves the assets that must be judged at fight distance, and hunts runtime bugs by looking |
 | **session** | Nick and Claude, live | `game/**` code, everything else | whatever Nick asks for |
+
+The split is by CAPABILITY, and as of 2026-09-01 by ASSET TIER too. The cloud
+has no display, so it takes what a flat headless render answers completely —
+portraits and card icons, judged at 512px. You have a display, so you take what
+can only be judged at fight distance: beasts, grounds, hunters. Neither of you
+should ever be editing the same file.
 
 Staying inside your lane is what keeps three writers on one branch from
 trampling each other. It has already gone wrong once: on 2026-08-31 the session
