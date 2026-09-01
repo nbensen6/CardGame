@@ -37,12 +37,32 @@ var _detail: Control = null
 var _turning: Array[CardView] = []
 var _turn := 0.0
 var _dragging := false
+## Pick mode: what to ask, what the confirm button says, and who to tell.
+var _prompt := ""
+var _action := ""
+var _on_pick: Callable = Callable()
 
 
-static func open(on: Node, deck: Array) -> DeckView:
+## PICK MODE. Pass a prompt, a button label and a callable and the screen stops
+## being a browser and becomes the chooser for "remove a card" and "sharpen a
+## card" - the two places the campfire and the trader used to put a grid of text
+## buttons reading "Tongue Snap  1".
+##
+## Choosing from names alone was always a bit thin, and for SHARPEN it was
+## actively bad: the one question you are being asked is what the card becomes,
+## and the answer was not on screen. This screen already draws a card beside its
+## upgraded twin, so pointing the campfire at it is less code AND the better
+## answer.
+##
+## `on_pick` receives the card's index in the deck.
+static func open(on: Node, deck: Array, prompt: String = "",
+		action: String = "", on_pick: Callable = Callable()) -> DeckView:
 	var v := DeckView.new()
 	v.name = "DeckView"
 	v._deck = deck
+	v._prompt = prompt
+	v._action = action
+	v._on_pick = on_pick
 	on.add_child(v)
 	return v
 
@@ -90,19 +110,21 @@ func _build_grid() -> void:
 	var head := HBoxContainer.new()
 	col.add_child(head)
 	var title := Label.new()
-	title.text = "Your Deck  —  %d cards" % _deck.size()
+	title.text = _prompt if _prompt != "" else "Your Deck  —  %d cards" % _deck.size()
 	title.add_theme_font_size_override("font_size", 22)
 	title.add_theme_color_override("font_color", Color(0.96, 0.93, 0.85))
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
 	var hint := Label.new()
-	hint.text = "click a card to inspect it   ·   Esc to close"
+	hint.text = ("click a card to inspect it   ·   Esc to go back" if _picking()
+		else "click a card to inspect it   ·   Esc to close")
 	hint.add_theme_font_size_override("font_size", 13)
 	hint.add_theme_color_override("font_color", Color(0.62, 0.66, 0.60))
 	hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	head.add_child(hint)
+	_picking_note(col)
 	var shut := Button.new()
-	shut.text = "Close"
+	shut.text = "Cancel" if _picking() else "Close"
 	shut.custom_minimum_size = Vector2(90, 34)
 	shut.pressed.connect(queue_free)
 	head.add_child(shut)
@@ -235,6 +257,21 @@ func _open_detail(entry: Dictionary) -> void:
 		done.add_theme_color_override("font_color", Color(0.55, 0.60, 0.54))
 		row.add_child(done)
 
+	if _picking():
+		# The confirm lives HERE, not on the grid tile, and that is the point of
+		# routing the campfire through this screen: you commit to sharpening a
+		# card while looking at what it turns into.
+		var go := Button.new()
+		go.text = _action
+		go.custom_minimum_size = Vector2(240, 40)
+		go.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		var idx := int(entry.get("index", -1))
+		go.pressed.connect(func() -> void:
+			if idx >= 0 and _on_pick.is_valid():
+				_on_pick.call(idx)
+			queue_free())
+		col.add_child(go)
+
 	var hint := Label.new()
 	hint.text = "drag left and right to turn the card   ·   Esc to go back"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -260,6 +297,16 @@ func _captioned(entry: Dictionary, caption: String) -> Control:
 	col.add_child(sizer)
 	_turning.append(sizer.get_meta("card") as CardView)
 	return col
+
+
+func _picking() -> bool:
+	return _on_pick.is_valid()
+
+
+## Nothing extra in the header; kept as a seam so a future pick mode can warn
+## about something (a removal being permanent, say) without touching the layout.
+func _picking_note(_col: Control) -> void:
+	pass
 
 
 ## Turn the open card to `t`, -1..+1. What a drag does, said outright — for the

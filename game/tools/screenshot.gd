@@ -463,6 +463,18 @@ func _first_card(view: Node) -> Control:
 	return null
 
 
+## The first node at or under `root` that has `prop`. The 3D views are mounted
+## by a router, so "the campfire" is not a fixed path from the scene root.
+func _find_with(root: Node, prop: String) -> Node:
+	if root.get(prop) != null:
+		return root
+	for c in root.get_children():
+		var hit := _find_with(c, prop)
+		if hit != null:
+			return hit
+	return null
+
+
 func _capture() -> void:
 	for _i in 15:  # let the scene lay out and draw
 		await process_frame
@@ -478,10 +490,29 @@ func _capture() -> void:
 		for _i in 4:
 			await process_frame
 		print("SLOT active=%s lock=%s pivot=%s at=%s" % [str(current_scene.get("_active_slot")), str(current_scene.get("_lock_slot")), str(current_scene.get("_pivot")), str(current_scene.call("_lock_point"))])
+	# 3dcampfire hold=upgrade / hold=remove — open the campfire's card chooser,
+	# which is a click the harness cannot otherwise perform and is now the whole
+	# deck screen rather than a list of names.
+	if _state == "3dcampfire" and _hold in ["upgrade", "remove"] and current_scene != null:
+		# The campfire is mounted BY game_3d, so current_scene is the router and
+		# the view is somewhere under it. Found by the property rather than by a
+		# node path, which would break the next time the router is rearranged.
+		var cf := _find_with(current_scene, "_deck_pick")
+		if cf == null:
+			print("CAMPFIRE no view with a card picker under %s" % current_scene.name)
+		else:
+			cf.set("_deck_pick", _hold)
+			cf.call("_refresh")
+			for _p in 3:
+				await process_frame
+			print("CAMPFIRE picker open for %s" % _hold)
+
 	# Console commands BEFORE the hover, because most of them change the hand
 	# and a card lifted out of the old one is a card that no longer exists.
 	if _console != "" and current_scene != null:
-		var dc := current_scene.get_node_or_null("DevConsole")
+		# Recursive: the 3D views are mounted by a router, so the console is a
+		# grandchild at a campfire and a direct child in a fight.
+		var dc := current_scene.find_child("DevConsole", true, false)
 		if dc == null:
 			print("CONSOLE none attached to this view")
 		else:

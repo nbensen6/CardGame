@@ -189,8 +189,14 @@ func _submit(text_in: String) -> void:
 func _cmds() -> Dictionary:
 	return {
 		"help": ["list these", _help],
-		"hand": ["hand crescendo,leap — REPLACE your hand with these", _cmd_hand],
-		"add": ["add crescendo — put one card in your hand", _cmd_add],
+		# DECK first, then HAND. Nick asked for "a command to add a card to your
+		# deck" when one already existed called `own` - which is a fine word and
+		# not one anybody guesses. The obvious name goes on the thing people
+		# actually want, and the hand versions say "hand" in their names.
+		"add": ["add crescendo — add a card to your DECK, permanently", _cmd_own],
+		"own": ["same as add (kept so older notes still work)", _cmd_own],
+		"hand": ["hand crescendo,leap — REPLACE the hand you are holding", _cmd_hand],
+		"deal": ["deal crescendo — add one card to the hand you are holding", _cmd_add],
 		"find": ["find leap — card ids matching a word", _cmd_find],
 		"rares": ["which rares exist, and which have art", _cmd_rares],
 		"foil": ["foil on|off — force every card foil", _cmd_foil],
@@ -201,8 +207,7 @@ func _cmds() -> Dictionary:
 		"climb": ["climb 4 — set your Height", _cmd_climb],
 		"beast": ["beast thrasher — swap the thing you are fighting", _cmd_beast],
 		"deck": ["open the deck screen (same as clicking the pile counts)", _cmd_deck],
-		"own": ["own crescendo — add a card to your DECK (not your hand)", _cmd_own],
-		"card": ["card 3 [0.8] — open the deck screen on the Nth card, optionally turned", _cmd_card],
+		"card": ["card 3 0.8 — the Nth card in the deck screen, optionally turned", _cmd_card],
 		"clear": ["wipe the output", _cmd_clear],
 	}
 
@@ -419,8 +424,9 @@ func _cmd_deck(_a: PackedStringArray) -> String:
 	return "deck open"
 
 
-## Add to the DECK rather than the hand. `hand` changes what you are holding
-## this turn; this changes what you own, which is what the deck screen shows.
+## Add to the DECK rather than the hand. `hand` and `deal` change what you are
+## holding this turn and are gone at the end of it; this changes what you OWN,
+## which is what the deck screen shows and what survives the fight.
 func _cmd_own(a: PackedStringArray) -> String:
 	if Session.host == null or Session.host._run == null:
 		return "no host on this machine"
@@ -433,13 +439,22 @@ func _cmd_own(a: PackedStringArray) -> String:
 	for c in cards:
 		deck.append(c)
 	_push()
+	# If the deck screen is open, it is showing a snapshot taken before this
+	# card existed. Reopen it rather than leaving you looking at a list that is
+	# quietly one card short of the truth.
+	var view := get_parent()
+	var dv := view.get_node_or_null("DeckView") if view != null else null
+	if dv != null:
+		dv.free()
+		if view.has_method("open_deck"):
+			view.call("open_deck")
 	return "added %d card(s) to hunter %d's deck (%d cards)" % [
 		cards.size(), _slot(), deck.size()]
 
 
 func _cmd_card(a: PackedStringArray) -> String:
 	if a.is_empty():
-		return "card <n> [turn -1..1] — the position in your deck, from 0"
+		return "card <n> <turn -1..1> — the position in your deck, from 0"
 	var said := _cmd_deck([])
 	if said != "deck open":
 		return said

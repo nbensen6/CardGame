@@ -72,6 +72,9 @@ var _felled_span := 0.0   # size of the body on the plot; the shot backs off for
 
 func _ready() -> void:
 	Screen.fit(self)   # a phone gets a physically larger interface
+	# The console here too, so `deck`, `card` and `own` work at a campfire and a
+	# trader - which is exactly where you are thinking about your deck.
+	DevConsole.attach(self, _refresh)
 	_client = Session.client
 	if _client == null:
 		return
@@ -691,13 +694,16 @@ func _render_campfire(s: Dictionary) -> void:
 		_add_switch()
 		return
 	if _deck_pick != "":
+		var removing := _deck_pick == "remove"
 		_subtitle.text = ("Choose a card to remove — it leaves the deck for good."
-			if _deck_pick == "remove" else "Choose a card to sharpen.")
+			if removing else "Choose a card to sharpen.")
 		var action := _deck_pick
 		_deck_picker(deck, func(i: int) -> void:
 			Sfx.play("reward")
 			_client.campfire(action, i, _cmd_slot())
-			_deck_pick = "")
+			_deck_pick = "",
+			_subtitle.text,
+			"Remove this card for good" if removing else "Sharpen this card")
 		_controls.add_child(_button("Back", func() -> void:
 			_deck_pick = ""
 			_refresh()))
@@ -720,6 +726,7 @@ func _render_campfire(s: Dictionary) -> void:
 	stack.add_child(_button("Sharpen — upgrade a card", func() -> void:
 		_deck_pick = "upgrade"
 		_refresh()))
+	stack.add_child(_button("Look through your deck (%d)" % deck.size(), open_deck))
 	_add_switch()
 
 
@@ -737,7 +744,9 @@ func _render_shop(s: Dictionary) -> void:
 		_deck_picker(_my_private().get("deck", []), func(i: int) -> void:
 			Sfx.play("reward")
 			_client.buy(idx, i)
-			_shop_pick = -1)
+			_shop_pick = -1,
+			_subtitle.text,
+			"Remove this card for good")
 		_controls.add_child(_button("Back", func() -> void:
 			_shop_pick = -1
 			_refresh()))
@@ -752,6 +761,7 @@ func _render_shop(s: Dictionary) -> void:
 	_row.add_child(grid)
 	for i in range(stock.size()):
 		grid.add_child(_stock_button(stock[i], i, gold))
+	_controls.add_child(_button("Your deck", open_deck))
 	_controls.add_child(_button("Move on →", func() -> void:
 		Sfx.play("end_turn")
 		_client.leave_shop()))
@@ -803,19 +813,30 @@ func _stack() -> VBoxContainer:
 ## Your persistent deck, as a grid you pick one card from. Compact buttons rather
 ## than CardViews: a deck runs well past a dozen cards and full card faces don't
 ## fit the strip — the name and cost are what you're choosing on anyway.
-func _deck_picker(deck: Array, on_pick: Callable) -> void:
-	var grid := GridContainer.new()
-	grid.columns = 6
-	grid.add_theme_constant_override("h_separation", 8)
-	grid.add_theme_constant_override("v_separation", 6)
-	_row.add_child(grid)
-	for i in range(deck.size()):
-		var card: Dictionary = deck[i]
-		var idx := i
-		var b := _button("%s   ✦%d" % [String(card.get("name", "?")),
-			int(card.get("cost", 0))], func() -> void: on_pick.call(idx))
-		b.custom_minimum_size = Vector2(196, 36)
-		grid.add_child(b)
+## Choose a card from your deck — the deck SCREEN, not a list of names.
+##
+## This was a grid of text buttons reading "Tongue Snap   1". Fine for
+## "remove a card", thin for anything else, and actively wrong for SHARPEN: the
+## only question being asked is what the card becomes, and the answer was not on
+## screen anywhere. DeckView already draws a card beside its upgraded twin, so
+## the campfire asking its question through that screen is less code here and a
+## better answer there.
+##
+## `prompt` is the question, `action` the confirm button's words.
+func _deck_picker(deck: Array, on_pick: Callable, prompt: String = "",
+		action: String = "Choose this card") -> void:
+	if get_node_or_null("DeckView") != null:
+		return
+	DeckView.open(self, deck, prompt, action, on_pick)
+
+
+## Browse the deck, changing nothing. Reachable from the campfire and the
+## trader, and from the dev console's `deck`.
+func open_deck() -> void:
+	var deck: Array = _my_private().get("deck", [])
+	if deck.is_empty() or get_node_or_null("DeckView") != null:
+		return
+	DeckView.open(self, deck)
 
 
 func _add_switch() -> void:
