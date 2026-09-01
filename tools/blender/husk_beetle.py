@@ -67,8 +67,8 @@ b.box((0.46, 0.30, 1.36), (0.30, 0.020, 0.020), CHARCOAL, bevel=0.0,
 # anything left at the rearmost point of the body sits behind everything else
 # in front of it and never reads. Keeping the plate's mass near the second
 # shelf and putting the mark on its FRONT slope keeps the sigil in the clear.
-b.ball((0.0, 0.35, 2.02), (0.44, 0.36, 0.42), BROWN, 10, 6)
-b.ball((0.0, 0.50, 2.24), (0.27, 0.22, 0.24), UMBER, 9, 5)
+b.ball((0.0, 0.35, 2.02), (0.44, 0.36, 0.42), TAN, 10, 6)
+b.ball((0.0, 0.50, 2.24), (0.27, 0.22, 0.24), TAN, 9, 5)
 
 b.foot((0.84, -0.66, 0.30))                                   # onto a foreleg
 
