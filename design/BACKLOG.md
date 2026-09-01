@@ -413,6 +413,35 @@ Ordered. Source in brackets.
   adaptation again, since an icon has no "identity" or "framing" question in
   the same sense. No model or portrait script touched — report only, per
   this item's own rule. Left unchecked.
+  **Checked 2026-09-01: batch 10, four more portraits.** Installed Pillow
+  (`pip3 install pillow`, not present this container) to keep the real-34px
+  downsample standard batch 9 set. Scored `goblin_mech_portrait` (34/50 —
+  rendered from the model's pass-2 fixer geometry, so nothing mechanical
+  crosses behind the head here as it did pre-fix, but the rig still
+  collapses into one undifferentiated grey mass at a real 34px downsample,
+  worse than the 3D pass's own "scattered blocks" finding since nothing
+  separates at all), `boulder_ram_portrait` (30/50 — confirms the 3D
+  scoring's horn finding carries unchanged into the 2D asset: the ram reads
+  as a generic stocky quadruped, since the curled-horn geometry still
+  renders as a grey-and-gold disc-on-a-rod rather than a horn from this
+  angle either), `brine_urchin_portrait` (32/50 — the one case this batch
+  where the portrait's tighter crop reads *better* than the six fight-camera
+  angles already scored: giving the gold sigil more relative frame area
+  makes it read as an eye at the crown the way the module doc intends,
+  though several identity-carrying spines are now cut mid-shaft at the frame
+  edges instead), `bog_leech_portrait` (26/50, lowest of the batch — the
+  sucker-mouth ring, already a weak read in `bog_leech.md`'s pass 2, is
+  fully illegible at a real 34px downsample, and the near-monochrome slate
+  body from the 3D scoring carries through unchanged). Full rubric tables,
+  per-line justifications and one concrete (unproposed, per this item's
+  report-only rule) diagnosis per asset are in
+  `design/progress/<name>_portrait.md`. Eight of nineteen portraits scored
+  (frog, vine_weaver, lightbearer, mountain_climbers, goblin_mech,
+  boulder_ram, brine_urchin, bog_leech); eleven beast portraits
+  (cinder_jackal, clot_toad, eyrie_hawk, flicker_stag, glyph_tortoise,
+  gloom_moth, husk_beetle, riptide_eel, silk_widow, thrasher, yoke_ox) and
+  all icon sets remain unscored. No model or portrait script touched —
+  report only, per this item's own rule. Left unchecked.
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
   relic") on top of the existing Rest / Thin / Sharpen and `Run.relic_totals()`.
   *Done when:* pickable at a campfire, persists, shows in the relic list.
