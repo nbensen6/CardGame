@@ -639,6 +639,47 @@ Ordered. Source in brackets.
   this environment cannot run. Worth treating the map as `needs a screen` for
   scoring purposes even though item #83's original text filed it as
   `cloud-safe` alongside everything else.
+  **Checked 2026-09-01: batch 15, the first four of the "twenty-eight card
+  icons" block — the "not dying" family (`shield`, `guard`, `wall`,
+  `support`), the exact pair `ART-REVIEW.md` itself names as the one to
+  check first.** Downsampled all four together to a real 42px (Pillow,
+  `LANCZOS`) over the same flat-brown card standin batch 14 used, and
+  checked each alpha bounding box numerically rather than eyeballing crop,
+  the batch-12 standard. Scored `shield` (Block, 32/50), `guard` (Block but
+  timed, 28/50, lowest of the batch — `ART-REVIEW.md`'s own build intent
+  describes "a shield with a clock face," but what actually renders is a
+  plain letter "L," which reads as neither a clock nor as timing at all,
+  even at full 256px), `wall` (block that scales, 35/50 — alpha bbox
+  `(24, 24, 256, 246)`: the brick grid sits flush against the right edge of
+  the canvas and is clipped there, unlike the other three icons in this
+  batch which all carry margin on every side), `support` (help the ally,
+  41/50, best of the batch and the second-best score recorded under this
+  item after batch 14's `thorns` at 43). Confirms `ART-REVIEW.md`'s own
+  named worry directly rather than clearing it: `shield` and `guard` share
+  an effectively identical outer kite silhouette at 42px, differing only by
+  body shade and internal mark — Family distinction scored 3/10 for both,
+  the lowest line either asset carries. Full rubric tables, per-line
+  justifications and one concrete (unapplied) fix per asset are in
+  `design/progress/<name>_icon.md`.
+  **Correction to batch 14's own count, found while checking
+  `design/ART-REVIEW.md` directly rather than trusting the prior batch's
+  tally secondhand:** batch 14 logged "30 icons total across two blocks"
+  remaining after it finished, but `ART-REVIEW.md` carries two more
+  standalone NEEDS A PASS sections neither block name covers — "one Frail
+  icon" and "one Light icon," one asset each — that batch 14's count
+  silently dropped. Four of the twenty-eight "twenty-eight card icons"
+  block are now scored; twenty-four of that block, both "Strength and
+  Dexterity" icons, and `frail` and `light` remain: **28 icons unscored,
+  not 30.** No icon script touched — report only, per this item's own rule.
+  Left unchecked.
+  **Ranked weakest ten, unchanged after batch 15** (of the 60 assets scored
+  across all fifteen batches — lowest first, out of 50): gale_serpent_ground
+  22, then a four-way tie at 23 (grove_bear_ground, riftling_ground,
+  shifting_idol_ground, yoke_ox_portrait), sky_snapper_ground 25, then a
+  four-way tie at 26 (bog_leech_portrait, drowned_colossus_ground,
+  mire_snapper_ground, thrasher_portrait). All four of this batch's icons
+  (28-41) scored above the tenth-place value of 26, so none of them enters
+  the bottom ten — the list is identical to batch 14's.
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
   relic") on top of the existing Rest / Thin / Sharpen and `Run.relic_totals()`.
   *Done when:* pickable at a campfire, persists, shows in the relic list.
