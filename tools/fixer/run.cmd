@@ -31,25 +31,57 @@ setlocal
 set "ROOT=%~dp0..\.."
 cd /d "%ROOT%"
 
-REM DO NOT RUN WHILE THE DESKTOP APP IS OPEN.
+REM RUN OUR OWN COPY OF claude.exe, never the app's.
 REM
-REM This launches claude.exe out of %APPDATA%\Claude\claude-code\<version>\,
-REM which is the desktop app's OWN auto-updating install directory. On
-REM 2026-09-01 the app tried to update 2.1.247 to 2.1.255 while a fixer run was
-REM eight minutes into holding that exe open. The swap could not happen, and
-REM Nick got "this app is being used" and lost the app.
+REM This used to launch claude.exe straight out of
+REM %APPDATA%\Claude\claude-code\<version>\, which is the desktop app's OWN
+REM auto-updating install directory. On 2026-09-01 the app went to update
+REM 2.1.247 to 2.1.255 while a fixer run was eight minutes into holding that
+REM exe open. Windows will not replace a file a process has open, so the swap
+REM failed, Nick got "this app is being used", and the app went down.
 REM
-REM Matching on the WindowsApps path, not just the name: a Claude Code terminal
-REM is also called claude.exe, and blocking on that would mean the fixer never
-REM runs on a day Nick has a session open - which is most days, and would kill
-REM this lane silently rather than loudly.
-powershell -NoProfile -Command ^
-  "if (Get-Process -Name Claude -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '*WindowsApps*' }) { exit 1 } else { exit 0 }"
-if errorlevel 1 (
-  echo === desktop Claude is open; skipping this run so its updater is not blocked
-  echo === fixer skipped %DATE% %TIME%: desktop app running > "%~dp0last-run.log"
+REM The first attempt at fixing this was to skip the run while the desktop app
+REM was open. That was the wrong shape: it stopped the fixer running at exactly
+REM the times Nick is at the machine, it did not actually close the hole (the
+REM update lands when the app RESTARTS, which is when the app is closed, which
+REM is when the fixer runs), and it implied the two cannot run at once. They
+REM can. They always could - two claude.exe processes coexist fine. The problem
+REM was never concurrency, it was a FILE LOCK against an updater.
+REM
+REM So: keep our own copy somewhere the app never looks, and refresh it only
+REM when the version changes. Most runs touch the app's directory not at all;
+REM the refresh reads it for a couple of seconds rather than holding it open
+REM for the length of a whole run.
+set "CCROOT=%APPDATA%\Claude\claude-code"
+set "MYBIN=%LOCALAPPDATA%\TitanSlayersFixer"
+REM Which version to copy. See newest-claude.ps1 - a real [version] sort, in
+REM its own file because cmd's caret escaping mangles PowerShell pipes.
+set "NEWEST="
+for /f "usebackq delims=" %%V in (`powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0newest-claude.ps1"`) do (
+  set "NEWEST=%%V"
+)
+if not defined NEWEST (
+  echo === cannot find %CCROOT% - is Claude Code installed?
   endlocal
-  exit /b 0
+  exit /b 1
+)
+if not exist "%MYBIN%" mkdir "%MYBIN%"
+set "HAVE="
+if exist "%MYBIN%\version.txt" set /p HAVE=<"%MYBIN%\version.txt"
+if not "%HAVE%"=="%NEWEST%" (
+  echo === refreshing the fixer's own claude.exe to %NEWEST%
+  copy /y "%CCROOT%\%NEWEST%\claude.exe" "%MYBIN%\claude.exe" >nul
+  if errorlevel 1 (
+    echo === copy failed; leaving the existing copy in place
+  ) else (
+    echo %NEWEST%>"%MYBIN%\version.txt"
+  )
+)
+set "CLAUDE=%MYBIN%\claude.exe"
+if not exist "%CLAUDE%" (
+  echo === no usable claude.exe at %CLAUDE%
+  endlocal
+  exit /b 1
 )
 
 REM Quoted form: set "VAR=value", not set VAR=value.
@@ -73,7 +105,7 @@ REM with exit 0x1 and there was NOTHING to read - no way to tell a usage
 REM limit from a bad token from a crash. One file, overwritten each run:
 REM the last run is the only one anyone ever asks about.
 echo === fixer run %DATE% %TIME% === > "%~dp0last-run.log"
-claude -p "Read tools/fixer/BRIEF.md and follow it exactly for ONE asset. %MODE%" ^
+"%CLAUDE%" -p "Read tools/fixer/BRIEF.md and follow it exactly for ONE asset. %MODE%" ^
   --permission-mode acceptEdits ^
   --allowedTools "Read,Edit,Write,Glob,Grep,Bash" >> "%~dp0last-run.log" 2>&1
 echo exit code: %ERRORLEVEL% >> "%~dp0last-run.log"
