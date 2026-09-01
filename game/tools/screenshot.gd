@@ -17,6 +17,7 @@
 ##   turn=-1..1 (pin a 3D-window card to one view, so the parallax can be shot)
 ##   hover=N (lift the Nth card in the hand — the fan hides rules until hover)
 ##   hand=leap,hop,brace (deal exactly these cards, instead of trusting the shuffle)
+##   console="hand crescendo;foil on" (run dev-console commands, semicolon separated)
 extends SceneTree
 
 var _out := "shot.png"
@@ -35,6 +36,10 @@ var _taps := false
 var _hover := -1  # taps — report whether the map's nodes can be hit with a thumb
 ## hand=leap,hop — deal these exact cards instead of trusting the shuffle.
 var _hand := ""
+## console=hand crescendo;turn 0.6 — run dev-console commands once the fight is
+## up, semicolon-separated. The console is the thing most likely to break
+## silently (it reaches into the host's live Run), and a screenshot cannot type.
+var _console := ""
 
 
 func _initialize() -> void:
@@ -49,6 +54,8 @@ func _initialize() -> void:
 			_hover = int(a.substr(6))
 		if a.begins_with("hand="):
 			_hand = a.substr(5)
+		if a.begins_with("console="):
+			_console = a.substr(8)
 		if a.begins_with("out="):
 			_out = a.substr(4)
 		elif a.begins_with("state="):
@@ -471,6 +478,23 @@ func _capture() -> void:
 		for _i in 4:
 			await process_frame
 		print("SLOT active=%s lock=%s pivot=%s at=%s" % [str(current_scene.get("_active_slot")), str(current_scene.get("_lock_slot")), str(current_scene.get("_pivot")), str(current_scene.call("_lock_point"))])
+	# Console commands BEFORE the hover, because most of them change the hand
+	# and a card lifted out of the old one is a card that no longer exists.
+	if _console != "" and current_scene != null:
+		var dc := current_scene.get_node_or_null("DevConsole")
+		if dc == null:
+			print("CONSOLE none attached to this view")
+		else:
+			for cmd in _console.split(";", false):
+				var said: String = dc.call("run", String(cmd).strip_edges())
+				# Strip the bbcode; this goes to a terminal, not a RichTextLabel.
+				var re := RegEx.new()
+				re.compile("\\[/?[^\\]]*\\]")
+				print("CONSOLE %s -> %s" % [String(cmd).strip_edges(),
+					re.sub(said, "", true).replace("\n", " | ")])
+			for _c in 3:
+				await process_frame
+
 	if _hover >= 0 and current_scene != null:
 		var hand := current_scene.get_node_or_null("%Hand")
 		if hand != null and _hover < hand.get_child_count():

@@ -200,6 +200,29 @@ static func all_potion_ids() -> Array:
 	return (_read_json(POTIONS_PATH).get("potions", {}) as Dictionary).keys()
 
 ## Characters, in menu order: [{id, name, desc}, ...].
+## Every card id, sorted. For tools and the dev console — anything that wants to
+## OFFER the catalogue rather than look one card up.
+##
+## Sorted, because the only two consumers are a `find` command and a listing,
+## and dictionary order is insertion order in a JSON file nobody maintains
+## alphabetically.
+static func list_card_ids() -> Array:
+	var ids: Array = _read_json(CARDS_PATH).get("cards", {}).keys()
+	ids.sort()
+	return ids
+
+
+## Every beast id, sorted. Same reason.
+##
+## Worth having because build_boss() cannot report failure: an unknown id gives
+## you a Boss called "Titan" with 1 HP rather than null, so the only honest way
+## to check a name is to ask whether it is in this list first.
+static func list_boss_ids() -> Array:
+	var ids: Array = _read_json(BOSSES_PATH).get("bosses", {}).keys()
+	ids.sort()
+	return ids
+
+
 static func list_characters() -> Array:
 	var db := _read_json(CHARACTERS_PATH)
 	var chars: Dictionary = db.get("characters", {})

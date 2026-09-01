@@ -363,6 +363,10 @@ func _ready() -> void:
 		var scroll := _hand_row.get_parent() as Control
 		if scroll != null:
 			scroll.offset_top = -206.0
+	# Backtick opens it. Given the refresh callable so a command that changes
+	# the world - a new hand, a different beast - is on screen by the time you
+	# have finished reading what it printed.
+	DevConsole.attach(self, _refresh)
 	_cam_home = _cam.position
 	_client = Session.client
 	if _client == null:
