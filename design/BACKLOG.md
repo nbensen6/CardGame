@@ -957,6 +957,45 @@ Ordered. Source in brackets.
   tenth-place value of 28, so neither of this batch's icons enters the
   bottom ten — the list is fight-grounds-and-icons-and-portraits, no
   beast model anywhere in it, the same shape it has held since batch 12.
+  **Checked 2026-09-01: batch 21, four more icons — the next four of the
+  eight remaining "twenty-eight card icons," in `card_view.gd`'s own
+  `ICONS` table order** (`target`, `rhythm`, `timer`, `cog`). Same Pillow
+  real-42px-downsample method and >10-alpha-threshold edge check as
+  batches 15-20. Scored `target` (scales off Exposed, 33/50 — confirms
+  batch 20's `expose_icon.md` finding from the other side: `target` and
+  `expose` share the same double-ring-plus-centre-ball recipe and read as
+  near-identical bullseyes at 42px, Family distinction scored 3/10 for
+  both), `rhythm` (the Frog's combo counter, 30/50, lowest of the batch —
+  the build script's nine-point curve mathematically completes more than
+  one oscillation, but the render plateaus hard at each extreme instead of
+  swinging evenly, so what actually shows is one dominant zigzag rather
+  than a repeating beat pattern; reads as a checkmark, not a rhythm,
+  without the keyword already known), `timer` (timed, nothing else,
+  **42/50, the second-best score recorded under this item across all
+  twenty-one batches**, behind only batch 18's `bow` at 44 — a classic
+  hourglass, the single most literal and unambiguous shape scored under
+  this item, Family distinction a clean 10/10 since nothing else in the
+  set shares its double-cone construction), `cog` (meld /
+  fuse, 36/50 — two overlapping toothed gears read clearly as "two things
+  combining," but direct pixel sampling found a real asymmetry: the CLAY
+  gear's tone sits only 29/5/9 per channel from the brown card standin,
+  the weakest colour separation measured for any icon under this item so
+  far, while the same icon's PEWTER gear separates by a strong 54/13/33).
+  Full rubric tables, per-line justifications and one concrete (unapplied)
+  fix per asset are in `design/progress/<name>_icon.md`. Thirty-two of the
+  thirty-six total card icons now scored; four remain (`burn`, `stack`,
+  `light`, `frail`). No icon script touched — report only, per this item's
+  own rule. Left unchecked.
+  **Ranked weakest ten, unchanged after batch 21** (of the 84 assets
+  scored across all twenty-one batches — lowest first, out of 50):
+  gale_serpent_ground 22, then a three-way tie at 23 (grove_bear_ground,
+  riftling_ground, shifting_idol_ground), sky_snapper_ground 25, then a
+  two-way tie at 26 (drowned_colossus_ground, mire_snapper_ground), then a
+  two-way tie at 27 (bounder_ground, crag_pup_ground), then a five-way tie
+  at 28 (bog_leech, cinder_jackal_portrait, guard_icon, root_lurker_ground,
+  sunken_warden_ground). All four of this batch's icons (30-42) scored
+  well clear of the tenth-place value of 28, so the list is identical to
+  batch 20's.
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
   relic") on top of the existing Rest / Thin / Sharpen and `Run.relic_totals()`.
   *Done when:* pickable at a campfire, persists, shows in the relic list.
