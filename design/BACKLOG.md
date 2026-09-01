@@ -522,6 +522,46 @@ Ordered. Source in brackets.
   ten entirely — `bog_leech` 25→28, `sunken_warden_ground` 21→28 — so this
   ranking is now grounds- and portrait-heavy rather than beast-heavy; no
   scored beast model remains in the bottom ten.
+  **Checked 2026-09-01: batch 13, the last three beast portraits.** Pillow
+  reinstalled (fresh container, not present this run), same real-34px
+  downsample standard. Scored `silk_widow_portrait` (22/50, **tied for the
+  lowest score recorded under this item so far**, matching
+  `gale_serpent_ground` — alpha bbox `(0, 0, 512, 512)` touches all four
+  canvas edges at once, the tightest crop scored yet; no eyes visible
+  anywhere, confirming `silk_widow.md`'s own 3D finding that the
+  CHARCOAL-on-GRAPHITE eye-huddle never resolves), `thrasher_portrait`
+  (26/50 — a full-body side-on crop rather than head-and-shoulders, the
+  second instance of exactly the framing outlier batch 11 named for
+  `cinder_jackal_portrait`; the red eye dots that `thrasher.md`'s 3D pass
+  said pop against the black snout do not survive a real 34px downsample,
+  a finding this portrait surfaces that the closer 3D render did not),
+  `yoke_ox_portrait` (23/50, **the new lowest portrait score under this
+  item**, below batch 11's `clot_toad_portrait` at 24 — alpha bbox
+  `(0, 19, 512, 512)` touches three of four edges, and the crop centres
+  exactly on the region `yoke_ox.md`'s own 3D pass already flagged as "yoke
+  bar merges into the horns into one triangular lump," making that merge
+  the whole picture; the YELLOW sigil also sits close enough in value to
+  the surrounding TAN wood that it nearly vanishes at 34px, a
+  colour-separation problem the wider 3D render did not surface). Full
+  rubric tables, per-line justifications and one concrete (unproposed, per
+  this item's report-only rule) diagnosis per asset are in
+  `design/progress/<name>_portrait.md`. **All nineteen portraits are now
+  scored.** Only the icon sets remain unscored, and will need a fourth
+  rubric adaptation — an icon has no "identity" or "framing" question in
+  the same sense a portrait or a 3D model does. No model or portrait script
+  touched — report only, per this item's own rule. Left unchecked.
+
+  **Ranked weakest ten, updated after batch 13** (of the 52 assets scored
+  across all thirteen batches — lowest first, out of 50): gale_serpent_ground
+  22, silk_widow_portrait 22, grove_bear_ground 23, riftling_ground 23,
+  shifting_idol_ground 23, yoke_ox_portrait 23, sky_snapper_ground 25, then
+  a four-way tie at 26 (bog_leech_portrait, drowned_colossus_ground,
+  mire_snapper_ground, thrasher_portrait — any one stands in as the tenth).
+  Two of this batch's three portraits (silk_widow, yoke_ox) landed in the
+  bottom six on their first scoring, both for reasons a portrait crop alone
+  exposes rather than the wider 3D render: an all-edges-touching close crop,
+  and a sigil colour that blends into its background only at true portrait/
+  34px viewing distance.
 - [ ] **2. Campfire relic upgrades** — a fourth campfire option ("empower a `needs a screen`
   relic") on top of the existing Rest / Thin / Sharpen and `Run.relic_totals()`.
   *Done when:* pickable at a campfire, persists, shows in the relic list.
