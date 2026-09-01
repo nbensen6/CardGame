@@ -8,14 +8,14 @@
 ## Three screens' worth of job, in one overlay:
 ##
 ##   GRID     every card you own, at a size you can actually read
-##   DETAIL   one card, big, beside what a campfire would turn it into
+##   DETAIL   one card, most of the screen tall, with a View Upgrades toggle
 ##   TURN     drag that card and it turns, which is the only place the 3D
 ##            window on a rare has ever had the room to be looked at properly
 ##
 ## The turn is the reason the other two exist. The window effect follows the
 ## pointer in a fight, but a card in the fan is 162px wide, half-tucked, and
 ## you are busy — so the parallax reads as a shimmer rather than as depth.
-## Here it is one card, four times the size, and you are holding it.
+## Here it is one card at four times the size, and you are holding it.
 ##
 ## WHERE THE DECK COMES FROM. The private state's `deck`, which is a list of
 ## face dicts, not Cards. Each entry carries its own `upgrade` — the SAME dict
@@ -24,18 +24,37 @@
 class_name DeckView
 extends CanvasLayer
 
-## How much bigger a card is in the detail pane than in a hand.
-const BIG := 1.75
-## Drag this far across the screen to turn the card from edge to edge.
-const DRAG_SPAN := 420.0
+## Pixels of horizontal drag per FULL revolution.
+##
+## Nick: "when you rotate the card, it doesn't really rotate. It just kind of
+## goes slightly on an axis. So you should be able to do a three sixty view."
+## Right - the first pass clamped to 38 degrees, which is all the rendered
+## window sheet actually covers, so the card wobbled and never turned. The card
+## now spins the whole way and the WINDOW is simply along for the ride, at
+## whatever view its 24 frames can offer, until the card edges out of sight.
+const SPIN_SPAN := 620.0
+## Never let the card reach a true zero width - a card exactly edge-on vanishes
+## for one frame and reads as a flicker rather than as an edge.
+const EDGE_ON := 0.015
 
 var _deck: Array = []
 var _dim: ColorRect
 var _grid_root: Control
 var _detail: Control = null
-## The two cards in the detail pane, so a drag can turn both at once.
-var _turning: Array[CardView] = []
-var _turn := 0.0
+## The one card in the detail pane, its back, the node carrying the scale, and
+## the plain Control both sit in.
+var _card: CardView = null
+var _back: Control = null
+var _scaler: Control = null
+var _holder: Control = null
+var _scale := 1.0
+var _toggle: CheckBox = null
+## Which deck entry the pane is showing, so the arrows can step through it.
+var _entry: Dictionary = {}
+var _at := -1
+var _upgraded := false
+## The card's yaw, in radians. 0 is face-on; PI is showing you its back.
+var _angle := 0.0
 var _dragging := false
 ## Pick mode: what to ask, what the confirm button says, and who to tell.
 var _prompt := ""
@@ -160,50 +179,76 @@ func _build_grid() -> void:
 		flow.add_child(card)
 
 
-## One card at `s` times its natural size.
+## The back of the card. Deliberately the same for every card of a hunter: a
+## back you can tell apart from another back is a marked deck.
 ##
-## THREE nodes, and each one is load-bearing:
-##
-##   sizer    plain Control the container lays out. Carries the scaled-up
-##            minimum size, so the row reserves the right amount of room.
-##   scaler   plain Control carrying the scale. It has to be a child rather
-##            than the sizer itself, because a Container LAYS OUT its direct
-##            children and resets their scale doing it - the first version put
-##            the scale on the node in the VBox and the "big" card came out
-##            exactly the same size as the grid cards. One level of remove and
-##            the container never touches it.
-##   card     the CardView, at its natural size.
-##
-## Scaling rather than just asking for a bigger CardView, because the card's
-## font sizes are in pixels: a bigger box would lay out correctly and still
-## have hand-sized text in it, which is the opposite of what a "look closely at
-## this card" pane is for.
-func _slot(entry: Dictionary, s: float, clickable: bool) -> Control:
-	var card := CardView.new()
-	card.setup(entry, true, false)
-	card.size = card.custom_minimum_size
+## Nick said blank white would do. It would, and this is barely more work: the
+## same moulding the front wears, a dark field, and the hunter's own colour in a
+## simple rune. What it must not be is white - a white rectangle appearing
+## mid-spin reads as the card failing to draw, which is exactly the bug report
+## this feature would otherwise generate.
+func _card_back(entry: Dictionary, size: Vector2) -> Control:
+	var root := Control.new()
+	root.custom_minimum_size = size
+	root.size = size
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	var scaler := Control.new()
-	scaler.scale = Vector2(s, s)
-	scaler.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	scaler.add_child(card)
+	var hue: Color = CardView.EDGE.get(String(entry.get("character", "")),
+		CardView.EDGE["common"])
 
-	var sizer := Control.new()
-	sizer.custom_minimum_size = card.custom_minimum_size * s
-	sizer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	sizer.add_child(scaler)
+	var ground := Panel.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.055, 0.052, 0.062)
+	sb.set_corner_radius_all(13)
+	ground.add_theme_stylebox_override("panel", sb)
+	ground.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ground.offset_left = 1.0
+	ground.offset_top = 1.0
+	ground.offset_right = -1.0
+	ground.offset_bottom = -1.0
+	ground.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(ground)
 
-	if clickable:
-		card.tapped.connect(func() -> void: _open_detail(entry))
-	else:
-		card.disabled = true
-		card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	sizer.set_meta("card", card)
-	sizer.set_meta("scaler", scaler)
-	return sizer
+	# Three nested diamonds, dimmest outward. Rotated ColorRects rather than a
+	# texture, so a new hunter colour needs no new art.
+	for i in range(3):
+		var d := ColorRect.new()
+		var w: float = size.x * (0.44 - 0.13 * float(i))
+		d.color = Color(hue, 0.16 + 0.16 * float(i))
+		d.custom_minimum_size = Vector2(w, w)
+		d.size = Vector2(w, w)
+		d.pivot_offset = Vector2(w, w) * 0.5
+		d.rotation = PI * 0.25
+		d.position = (size - Vector2(w, w)) * 0.5
+		d.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		root.add_child(d)
+
+	var fr := NinePatchRect.new()
+	fr.texture = CardView.FRAMES.get(String(entry.get("character", "")),
+		CardView.FRAMES["common"])
+	fr.patch_margin_left = CardView.FRAME_MARGIN
+	fr.patch_margin_right = CardView.FRAME_MARGIN
+	fr.patch_margin_top = CardView.FRAME_MARGIN
+	fr.patch_margin_bottom = CardView.FRAME_MARGIN
+	fr.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	fr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(fr)
+	return root
 
 
-# --- one card, and its upgrade ---------------------------------------------
+# --- one card, filling the screen -------------------------------------------
+#
+# Nick sent Slay the Spire's own card view for reference: ONE card, most of the
+# screen tall, arrows either side to step through the deck, and a "View
+# Upgrades" toggle at the bottom that swaps the card IN PLACE - Strike becomes
+# Strike+ and "Deal 6" becomes "Deal 9" with the 9 in green.
+#
+# That is better than what I built first, which put the card and its upgrade
+# side by side at 1.75x. Side by side makes you compare two objects; swapping in
+# place makes the DIFFERENCE jump, because everything that did not change stays
+# exactly where your eye already was. It also frees the whole screen for one
+# card, which is the only size at which turning it is worth doing.
+
 
 ## Open the detail pane on the Nth card. Public so the dev console can say
 ## `card 3` and so the screenshot harness can photograph a pane that otherwise
@@ -211,159 +256,255 @@ func _slot(entry: Dictionary, s: float, clickable: bool) -> Control:
 func inspect(i: int) -> bool:
 	if i < 0 or i >= _deck.size():
 		return false
+	_at = i
 	_open_detail(_deck[i] as Dictionary)
 	return true
 
 
 func _open_detail(entry: Dictionary) -> void:
 	_close_detail()
-	_turn = 0.0
-	_turning.clear()
+	_angle = 0.0
+	_upgraded = false
+	_entry = entry
+	_at = _deck.find(entry)
 
 	var d := ColorRect.new()
-	d.color = Color(0.02, 0.02, 0.03, 0.86)
+	d.color = Color(0.02, 0.02, 0.03, 0.90)
 	d.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	d.mouse_filter = Control.MOUSE_FILTER_STOP
 	d.gui_input.connect(_detail_input)
 	add_child(d)
 	_detail = d
 
-	var centre := CenterContainer.new()
-	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	d.add_child(centre)
+	# The card sits in a plain full-rect Control and is centred BY HAND rather
+	# than by a CenterContainer. A container lays out its children and resets
+	# their scale doing it - the bug that made the first "big" card come out
+	# hand-sized - and here the scale changes every frame of a spin, so it would
+	# fight continuously rather than only once.
+	_holder = Control.new()
+	_holder.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	d.add_child(_holder)
 
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 14)
-	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	centre.add_child(col)
+	if _deck.size() > 1:
+		d.add_child(_arrow(false))
+		d.add_child(_arrow(true))
 
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 46)
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	col.add_child(row)
+	var bar := VBoxContainer.new()
+	bar.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	bar.offset_top = -92.0
+	bar.alignment = BoxContainer.ALIGNMENT_END
+	bar.add_theme_constant_override("separation", 8)
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	d.add_child(bar)
 
-	row.add_child(_captioned(entry, "In your deck"))
 	var up: Dictionary = entry.get("upgrade", {})
 	if not up.is_empty() and not bool(entry.get("upgraded", false)):
-		row.add_child(_captioned(up, "Sharpened at a campfire"))
-	elif bool(entry.get("upgraded", false)):
-		var done := Label.new()
-		done.text = "already\nsharpened"
-		done.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		done.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		done.add_theme_font_size_override("font_size", 14)
-		done.add_theme_color_override("font_color", Color(0.55, 0.60, 0.54))
-		row.add_child(done)
+		_toggle = CheckBox.new()
+		_toggle.text = "View Upgrades"
+		_toggle.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		_toggle.add_theme_font_size_override("font_size", 17)
+		_toggle.add_theme_color_override("font_color", Color(0.94, 0.83, 0.45))
+		_toggle.add_theme_color_override("font_pressed_color", Color(1.0, 0.90, 0.52))
+		_toggle.add_theme_color_override("font_hover_color", Color(1.0, 0.94, 0.70))
+		_toggle.toggled.connect(func(on: bool) -> void:
+			_upgraded = on
+			_rebuild_card())
+		bar.add_child(_toggle)
 
 	if _picking():
-		# The confirm lives HERE, not on the grid tile, and that is the point of
-		# routing the campfire through this screen: you commit to sharpening a
-		# card while looking at what it turns into.
+		# The confirm lives HERE, and that is the point of routing the campfire
+		# through this screen: you commit to sharpening a card while looking at
+		# what it becomes, one View Upgrades click away.
 		var go := Button.new()
 		go.text = _action
-		go.custom_minimum_size = Vector2(240, 40)
+		go.custom_minimum_size = Vector2(260, 40)
 		go.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		var idx := int(entry.get("index", -1))
 		go.pressed.connect(func() -> void:
+			var idx := int(_entry.get("index", -1))
 			if idx >= 0 and _on_pick.is_valid():
 				_on_pick.call(idx)
 			queue_free())
-		col.add_child(go)
+		bar.add_child(go)
 
 	var hint := Label.new()
-	hint.text = "drag left and right to turn the card   ·   Esc to go back"
+	hint.text = "drag to turn the card   ·   arrows for the next card   ·   Esc to go back"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_font_size_override("font_size", 13)
-	hint.add_theme_color_override("font_color", Color(0.66, 0.70, 0.64))
+	hint.add_theme_color_override("font_color", Color(0.62, 0.66, 0.60))
 	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	col.add_child(hint)
+	bar.add_child(hint)
+
+	_rebuild_card()
+
+
+## One of the two arrows either side of the card.
+func _arrow(forward: bool) -> Control:
+	var b := Button.new()
+	b.text = "▶" if forward else "◀"
+	b.flat = true
+	b.focus_mode = Control.FOCUS_NONE
+	b.add_theme_font_size_override("font_size", 40)
+	b.add_theme_color_override("font_color", Color(0.90, 0.74, 0.30))
+	b.add_theme_color_override("font_hover_color", Color(1.0, 0.88, 0.45))
+	b.set_anchors_preset(Control.PRESET_CENTER_RIGHT if forward
+		else Control.PRESET_CENTER_LEFT)
+	b.offset_top = -37.0
+	b.offset_bottom = 37.0
+	if forward:
+		b.offset_left = -120.0
+		b.offset_right = -46.0
+	else:
+		b.offset_left = 46.0
+		b.offset_right = 120.0
+	b.pressed.connect(func() -> void: step(1 if forward else -1))
+	return b
+
+
+## Move to another card without closing and reopening the pane.
+##
+## The toggle is cleared with set_pressed_no_signal, not by assignment: setting
+## `button_pressed` fires `toggled`, which rebuilds the card - so the card would
+## be built twice on every arrow press, the second time from a stale _entry.
+func step(by: int) -> void:
+	if _deck.size() < 2:
+		return
+	_at = wrapi(_at + by, 0, _deck.size())
+	_entry = _deck[_at]
+	_angle = 0.0
+	_upgraded = false
+	if _toggle != null and is_instance_valid(_toggle):
+		_toggle.set_pressed_no_signal(false)
+		var up: Dictionary = _entry.get("upgrade", {})
+		_toggle.visible = not up.is_empty() and not bool(_entry.get("upgraded", false))
+	_rebuild_card()
+
+
+## Draw (or redraw) the one card, as big as the screen allows.
+##
+## Rebuilt rather than mutated when View Upgrades is toggled: a CardView is
+## built from a snapshot dict in setup(), and there is no cheaper way to say
+## "now be this other card" than to hand it the other dict.
+func _rebuild_card() -> void:
+	if _holder == null or not is_instance_valid(_holder):
+		return
+	for n in _holder.get_children():
+		n.queue_free()
+	var shown: Dictionary = _entry
+	if _upgraded:
+		var up: Dictionary = _entry.get("upgrade", {})
+		if not up.is_empty():
+			shown = up
+
+	_card = CardView.new()
+	_card.setup(shown, true, false)
+	_card.size = _card.custom_minimum_size
+	_card.disabled = true
+	_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	_back = _card_back(shown, _card.custom_minimum_size)
+	_back.visible = false
+
+	# As tall as the screen allows, which is what the reference does - their
+	# card is most of the window. Computed rather than a constant so it is right
+	# on a phone, in a 720p window and on a big monitor.
+	var space: float = float(get_viewport().get_visible_rect().size.y)
+	_scale = clampf((space - 170.0) / maxf(_card.custom_minimum_size.y, 1.0), 1.0, 4.2)
+
+	_scaler = Control.new()
+	_scaler.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_scaler.add_child(_card)
+	_scaler.add_child(_back)
+	_holder.add_child(_scaler)
 	_apply_turn()
 
 
-## A big card under a caption, and registered as something the drag turns.
-func _captioned(entry: Dictionary, caption: String) -> Control:
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 10)
-	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var cap := Label.new()
-	cap.text = caption
-	cap.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cap.add_theme_font_size_override("font_size", 14)
-	cap.add_theme_color_override("font_color", Color(0.86, 0.82, 0.70))
-	col.add_child(cap)
-	var sizer := _slot(entry, BIG, false)
-	col.add_child(sizer)
-	_turning.append(sizer.get_meta("card") as CardView)
-	return col
-
-
-func _picking() -> bool:
-	return _on_pick.is_valid()
-
-
-## Nothing extra in the header; kept as a seam so a future pick mode can warn
-## about something (a removal being permanent, say) without touching the layout.
-func _picking_note(_col: Control) -> void:
-	pass
-
-
-## Turn the open card to `t`, -1..+1. What a drag does, said outright — for the
-## dev console and the screenshot harness, neither of which can drag.
-func turn_to(t: float) -> void:
-	_turn = clampf(t, -1.0, 1.0)
+## Spin the open card to `deg` degrees of yaw. 0 is face-on, 180 is its back.
+## For the dev console and the screenshot harness, neither of which can drag.
+func spin_to(deg: float) -> void:
+	_angle = deg_to_rad(deg)
 	_apply_turn()
+
+
+## Show the upgraded face, or not. Same reason as spin_to: a screenshot cannot
+## click a checkbox, and this is the thing the reference screen is FOR.
+func show_upgrade(on: bool) -> void:
+	_upgraded = on
+	if _toggle != null and is_instance_valid(_toggle):
+		_toggle.set_pressed_no_signal(on)
+	_rebuild_card()
 
 
 func _detail_input(event: InputEvent) -> void:
 	var mb := event as InputEventMouseButton
 	if mb != null and mb.button_index == MOUSE_BUTTON_LEFT:
 		_dragging = mb.pressed
-		# A click that never became a drag is a click, and a click on the
-		# backdrop goes back. Judged on the drag having moved the card, not on
-		# time, because a slow careful turn is still a turn.
-		if not mb.pressed and is_zero_approx(_turn):
+		# A press and release that never turned the card is a click, and a click
+		# on the backdrop goes back. Judged on the card having MOVED rather than
+		# on how long the button was held, because a slow careful turn is still
+		# a turn.
+		if not mb.pressed and is_zero_approx(_angle):
 			_close_detail()
 		return
 	var mm := event as InputEventMouseMotion
 	if mm != null and _dragging:
-		_turn = clampf(_turn + mm.relative.x / DRAG_SPAN, -1.0, 1.0)
+		_angle += mm.relative.x / SPIN_SPAN * TAU
 		_apply_turn()
 
 
-## Turn every card in the detail pane to `_turn`.
+## Point the card at `_angle`, and keep it centred.
 ##
-## Two things happen at once, and they are different mechanisms:
+## THREE things move together, and they are three different mechanisms:
 ##
-##   the WINDOW   turn_override picks the rendered view, so the picture inside
-##                a rare parallaxes against its frame. Real depth, baked in
-##                Blender, and the only part of this that is not a trick.
-##   the CARD     scaled horizontally by cos(angle). A Control cannot be given
-##                a perspective transform, but a turning card is mostly a card
-##                getting narrower, and doing that in step with the parallax is
-##                enough for the eye to read the two as one object.
+##   the WIDTH   scaled by |cos(yaw)|. This IS the rotation: a card seen at an
+##               angle is a card that has got narrower, and at 90 degrees it is
+##               a line. Nothing else here does any turning.
+##   the FACE    past 90 degrees you are behind it, so the front hides and the
+##               back shows. Without this the card just gets wide again and you
+##               have watched it squash rather than turn - which is exactly what
+##               the first version did, and what Nick reported.
+##   the WINDOW  turn_override = sin(yaw), which is how far off-axis the viewer
+##               is. Real parallax, baked in Blender, riding along for the half
+##               of the spin where the front is facing you.
 ##
-## Without the squash the picture slides around inside a card that is plainly
-## still facing you, which reads as the art being loose rather than the card
-## being turned.
+## Centred here rather than by a container because the width changes every frame
+## of a spin: a container would re-centre a frame late and the card would swim
+## sideways as it turned.
 func _apply_turn() -> void:
-	var squash: float = cos(_turn * deg_to_rad(38.0))
-	for c in _turning:
-		if not is_instance_valid(c):
-			continue
-		c.turn_override = _turn
-		# The scaler, not the card: the card sets its own scale on hover and
-		# would stamp on anything written here.
-		var scaler := c.get_parent() as Control
-		if scaler != null:
-			scaler.scale = Vector2(BIG * squash, BIG)
+	if _scaler == null or not is_instance_valid(_scaler):
+		return
+	var facing: float = cos(_angle)
+	var front := facing >= 0.0
+	var width: float = maxf(absf(facing), EDGE_ON)
+	if _card != null and is_instance_valid(_card):
+		_card.visible = front
+		_card.turn_override = clampf(sin(_angle), -1.0, 1.0)
+	if _back != null and is_instance_valid(_back):
+		_back.visible = not front
+	_scaler.scale = Vector2(_scale * width, _scale)
+	var full: Vector2 = _card.custom_minimum_size * _scale
+	var mid: Vector2 = _holder.size * 0.5
+	_scaler.position = Vector2(mid.x - full.x * width * 0.5, mid.y - full.y * 0.5)
 
 
 func _close_detail() -> void:
 	if _detail != null and is_instance_valid(_detail):
 		_detail.queue_free()
 	_detail = null
-	_turning.clear()
+	_holder = null
+	_scaler = null
+	_card = null
+	_back = null
+	_toggle = null
 	_dragging = false
-	_turn = 0.0
+	_angle = 0.0
+
+
+func _picking() -> bool:
+	return _on_pick.is_valid()
+
+
+## Nothing extra in the grid header; kept as a seam so a future pick mode can
+## warn about something (a removal being permanent, say) without a layout edit.
+func _picking_note(_col: Control) -> void:
+	pass

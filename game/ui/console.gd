@@ -207,7 +207,7 @@ func _cmds() -> Dictionary:
 		"climb": ["climb 4 — set your Height", _cmd_climb],
 		"beast": ["beast thrasher — swap the thing you are fighting", _cmd_beast],
 		"deck": ["open the deck screen (same as clicking the pile counts)", _cmd_deck],
-		"card": ["card 3 0.8 — the Nth card in the deck screen, optionally turned", _cmd_card],
+		"card": ["card 3 140 up — the Nth card, spun N degrees, `up` for its upgrade", _cmd_card],
 		"clear": ["wipe the output", _cmd_clear],
 	}
 
@@ -454,7 +454,7 @@ func _cmd_own(a: PackedStringArray) -> String:
 
 func _cmd_card(a: PackedStringArray) -> String:
 	if a.is_empty():
-		return "card <n> <turn -1..1> — the position in your deck, from 0"
+		return "card <n> <degrees> — the position in your deck, from 0"
 	var said := _cmd_deck([])
 	if said != "deck open":
 		return said
@@ -463,12 +463,14 @@ func _cmd_card(a: PackedStringArray) -> String:
 		return "no deck screen opened"
 	if not bool(dv.call("inspect", int(String(a[0]).to_int()))):
 		return "no card at %s" % a[0]
+	if a.size() > 2 and String(a[2]).to_lower() in ["up", "upgrade", "upgraded"]:
+		dv.call("show_upgrade", true)
 	if a.size() > 1:
 		# Turning it from here is how the screenshot harness photographs the
 		# effect at all: a shot cannot drag, and an untouched card is always at
 		# dead centre, which is the one angle where a parallax proves nothing.
-		dv.call("turn_to", clampf(String(a[1]).to_float(), -1.0, 1.0))
-		return "inspecting card %s, turned to %s" % [a[0], a[1]]
+		dv.call("spin_to", String(a[1]).to_float())
+		return "inspecting card %s, spun to %s degrees" % [a[0], a[1]]
 	return "inspecting card %s" % a[0]
 
 
