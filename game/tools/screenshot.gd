@@ -13,7 +13,10 @@
 ## modifiers: hold= (stop a driven sequence at a phase) beast= act= orbit= size=WxH
 ##   mobile (force the handheld layout) slot=N (force the active hunter — camera work)
 ##   foil (force every card foil — a foil is a rare pull, so it needs forcing)
+##   borderless (force the borderless treatment; only bites on cards with art)
+##   turn=-1..1 (pin a 3D-window card to one view, so the parallax can be shot)
 ##   hover=N (lift the Nth card in the hand — the fan hides rules until hover)
+##   hand=leap,hop,brace (deal exactly these cards, instead of trusting the shuffle)
 extends SceneTree
 
 var _out := "shot.png"
@@ -30,14 +33,22 @@ var _taps := false
 ## flag the harness can only ever photograph the resting state, and every claim
 ## about the hover would be an untested claim.
 var _hover := -1  # taps — report whether the map's nodes can be hit with a thumb
+## hand=leap,hop — deal these exact cards instead of trusting the shuffle.
+var _hand := ""
 
 
 func _initialize() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a == "foil":
 			CardView.force_foil = true
+		if a == "borderless":
+			CardView.force_borderless = true
+		if a.begins_with("turn="):
+			CardView.force_turn = float(a.substr(5))
 		if a.begins_with("hover="):
 			_hover = int(a.substr(6))
+		if a.begins_with("hand="):
+			_hand = a.substr(5)
 		if a.begins_with("out="):
 			_out = a.substr(4)
 		elif a.begins_with("state="):
@@ -236,6 +247,26 @@ func _initialize() -> void:
 		c3.players[0].foothold = c3.boss.weak_point_height
 		c3.players[1].foothold = maxi(c3.boss.weak_point_height - 1, 1)
 		Session.host._broadcast_state()
+	# hand=leap,hop,brace — deal a KNOWN hand instead of whatever the shuffle
+	# gave. Card-face work needs a specific card on screen (the one with art,
+	# the one with the longest name, the timed one) and until now the only way
+	# to get one was to re-roll the seed until it turned up. `foil`/`borderless`
+	# apply on top, so any card can be photographed in any treatment.
+	if _hand != "" and Session.host._run != null and Session.host._run.combat != null:
+		var ch: Combat = Session.host._run.combat
+		var who: int = maxi(_slot, 0)
+		var ids: PackedStringArray = _hand.split(",", false)
+		ch.players[who].hand.clear()
+		for cid in ids:
+			var made := Content.make_card(String(cid).strip_edges())
+			if made == null:
+				print("HAND unknown card id '%s'" % cid)
+				continue
+			ch.players[who].hand.append(made)
+		ch.players[who].energy = 9   # so nothing is greyed out as unaffordable
+		print("HAND %s" % ", ".join(ids))
+		Session.host._broadcast_state()
+
 	# the router for anything it stages, the overworld for 3dmap, else the fight
 	var scene := "res://views/combat_3d.tscn"
 	if _state in ["3dgame", "3dloop", "3dreward", "3dwon", "3devent",

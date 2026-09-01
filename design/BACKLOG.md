@@ -61,21 +61,26 @@ Ordered. Source in brackets.
 - [x] **1. Exhaust scaling for the Goblin** — one field, immediate depth. `cloud-safe`
   *Done when:* the field exists, at least three cards use it, tests cover it.
   [sts2-comparison §5.2]
-- [ ] **84. The 3D window effect for rares** `needs a screen` — a card with a
-  hole cut through it and a scene BEHIND the hole, so the contents parallax
-  against the frame as it turns. Nick sent the technique
-  (youtube B76I9mPd5lg) and asked to keep it for later; it is written up in
-  full, from the video's own transcript, in `design/rare-card-3d-effect.md`.
+- [x] **84. The 3D window effect for rares** — a card with a hole cut through it
+  and a scene BEHIND the hole, so the contents parallax against the frame as it
+  turns. Nick sent the technique (youtube B76I9mPd5lg); it is written up from
+  the video's own transcript in `design/rare-card-3d-effect.md`, which now also
+  records what actually shipped and where it departs from the tutorial.
 
-  **Not yet, and the order matters.** The effect bakes the frame, banner, orb
-  and pill into all 120 rendered frames, so doing it before those settle means
-  re-rendering every rare when one of them changes. And cards need pictures
-  before any of them need moving pictures — 187 of them still share 33 icons.
+  Built 2026-09-01, on Nick's ask ("I would like to attempt the 3d for it").
+  `tools/blender/rare3d.py` renders 24 views of one card's window into a sprite
+  sheet; `CardView` plays it as an ANGLE LOOKUP off the same tilt the foil
+  shader uses, so the window follows the player's hand instead of looping.
 
-  *Done when:* not before card art is well underway, the frame has stopped
-  moving, and there is a reason in the game to want a rare to feel special.
-  `Card.foil` already carries "this copy is special" and rolls at 14% on rares;
-  that is the hook this hangs off.
+  The objection that parked it — "the effect bakes the frame into every frame,
+  so a frame change means re-rendering every rare" — was designed out rather
+  than waited out: **only the window's contents are rendered, never the card.**
+  The sheet replaces exactly the ART_LAYER node and the banner, orb, pill and
+  rules are the game's own, live, on top. Changing the frame does not touch a
+  single sheet.
+
+  *Done when:* met. A demo sheet exists for `leap`; delete
+  `game/assets/cardart3d/leap.*` and it falls back to the flat painting.
 - [ ] **83. Score the art nobody has looked at** `cloud-safe` — fourteen beasts,
   five hunters, fourteen grounds, the map, nineteen portraits and twenty-eight
   icons are on screen right now, and `design/ART-REVIEW.md` carries **28 blocks

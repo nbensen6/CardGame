@@ -29,7 +29,7 @@ REM The FOLDER is the list, for both. A hardcoded CAST went stale the moment
 REM the cloud routine added fourteen beasts in two days: `build.cmd cast`
 REM rebuilt nineteen models and said nothing about the fourteen it had never
 REM heard of. INFRA names the scripts that are tooling rather than a model.
-set INFRA= kenney beast env hexes icons portraits preview dissect edit look bmcp start_mcp palette frog_smooth 
+set INFRA= kenney beast env hexes icons portraits preview dissect edit look bmcp start_mcp palette frog_smooth rare3d 
 set CAST=
 for %%F in ("%HERE%*.py") do call :addcast %%~nF
 set GROUNDS=

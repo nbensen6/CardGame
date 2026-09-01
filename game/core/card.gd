@@ -13,6 +13,12 @@ var rarity: String     # "common" | "uncommon" | "rare" — weights how often it
 ## Strikes in the same deck can differ, which is the whole appeal: it is a
 ## pull, not a variant. Purely cosmetic; nothing in combat reads it.
 var foil: bool = false
+## This COPY was printed borderless — full-bleed art, no moulding. Same idea as
+## `foil` and rolled the same way, and the two are INDEPENDENT: a borderless
+## foil is the double pull, which is the point of rolling them separately.
+## Cosmetic only. The view ignores it on a card with no painting of its own,
+## because a borderless card whose art is a shared icon is a black rectangle.
+var borderless: bool = false
 var cost: int          # energy to play
 var damage: int        # dealt to the Titan
 var block: int         # gained by the player who plays it
@@ -136,6 +142,7 @@ static func from_dict(d: Dictionary) -> Card:
 	c.type = String(d.get("type", "skill"))
 	c.rarity = String(d.get("rarity", "common"))
 	c.foil = bool(d.get("foil", false))
+	c.borderless = bool(d.get("borderless", false))
 	c.cost = int(d.get("cost", 0))
 	c.damage = int(d.get("damage", 0))
 	c.block = int(d.get("block", 0))
@@ -215,6 +222,7 @@ static func from_dict(d: Dictionary) -> Card:
 func to_dict() -> Dictionary:
 	return {
 		"id": id, "name": name, "type": type, "rarity": rarity, "foil": foil,
+		"borderless": borderless,
 		"cost": cost, "damage": damage,
 		"block": block, "block_per_play": block_per_play, "ally_block": ally_block,
 		"damage_per_exhausted": damage_per_exhausted,

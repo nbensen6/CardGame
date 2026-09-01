@@ -1,0 +1,9 @@
+{
+  "frames": 24,
+  "cols": 6,
+  "rows": 4,
+  "cell_w": 310,
+  "cell_h": 435,
+  "parallax": 0.11,
+  "source": "crescendo.png"
+}

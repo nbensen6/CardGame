@@ -137,6 +137,27 @@ var _panel: ColorRect = null
 ## `foil` flag — a foil is a rare pull by design, so without this there is no
 ## reliable way to get one on screen to judge.
 static var force_foil := false
+## Same, for the borderless treatment. Also rare by design.
+static var force_borderless := false
+## Pin every 3D window to one view, -1 (left) to +1 (right). Anything outside
+## that range means "off", which is the default. A screenshot cannot move a
+## mouse, so without this the parallax can only ever be photographed at
+## whatever angle the drift happened to be at - and two shots that differ by an
+## unknown amount prove nothing about whether the effect works.
+static var force_turn := 2.0
+
+## Where a borderless card's layers go — the rounded clip box (see
+## _build_borderless). null on a framed card, where they go on the Button
+## itself. _layer() reads this, so nothing else has to know which kind of card
+## it is building.
+var _face_host: Control = null
+
+## The 3D window, when this card has one (backlog #84). See _window_art().
+var _win: AtlasTexture = null
+var _win_frames := 0
+var _win_cols := 1
+var _win_cell := Vector2i.ZERO
+var _win_at := -1
 
 
 ## The foil sheen, when this copy pulled one.
@@ -157,7 +178,14 @@ func _build_foil(data: Dictionary) -> void:
 	# than as two separate objects catching the light.
 	mat.set_shader_parameter("seed", float(String(data.get("id", "")).hash() % 997))
 	_foil.material = mat
-	add_child(_foil)
+	# Inside the clip box on a borderless card. Added to the Button, the sheen
+	# is a square and lights up the four corners the rounded art does not reach —
+	# which is the same class of bug as the black corner tabs, arriving from the
+	# other direction.
+	if _face_host != null:
+		_face_host.add_child(_foil)
+	else:
+		add_child(_foil)
 	set_process(true)
 
 
@@ -224,7 +252,10 @@ func _layer(node: Control, l: float, t: float, r: float, b: float,
 	node.offset_top = dt
 	node.offset_right = dr
 	node.offset_bottom = db
-	add_child(node)
+	if _face_host != null:
+		_face_host.add_child(node)
+	else:
+		add_child(node)
 	return node
 
 
@@ -250,6 +281,8 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 	_apply_frame()
 	for child in get_children():
 		child.queue_free()
+	_face_host = null   # _build_borderless sets it; _layer() and _build_foil read it
+	_win = null         # _window_art() sets it if this card has a 3D window
 
 	if compact:
 		var pad := MarginContainer.new()
@@ -286,6 +319,21 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 func _build_face(data: Dictionary) -> void:
 	var id := String(data.get("id", ""))
 
+	# The borderless pull, before anything else is built — it is a different
+	# card, not a framed card with pieces removed.
+	#
+	# Gated on the painting EXISTING. A borderless card is defined by the art
+	# reaching the edge; run it on one of the 186 cards still wearing a shared
+	# icon and you get a black rectangle with a glyph floating in it, which is
+	# strictly worse than the framed version. /core rolls the flag blind because
+	# it may not touch res:// (CLAUDE.md §11), so the check belongs here, and a
+	# card that rolled borderless with no art simply draws normal.
+	var art_path := CARD_ART + id + ".png"
+	var painted := id != "" and ResourceLoader.exists(art_path) or _has_window(id)
+	if painted and (bool(data.get("borderless", false)) or force_borderless):
+		_build_borderless(data, load(art_path))
+		return
+
 	# 0 - ground, with ROUNDED corners matching the frame's. Nick: "the edges of
 	# the borders of the card are just black squares" - the frame's corners are
 	# rounded and transparent outside the curve, and a square dark rect behind
@@ -305,7 +353,10 @@ func _build_face(data: Dictionary) -> void:
 	# card is a window onto a painting, not a painting pasted onto a card.
 	var art := TextureRect.new()
 	var own := CARD_ART + id + ".png"
-	if id != "" and ResourceLoader.exists(own):
+	var win := _window_art(id)
+	if win != null:
+		art.texture = win
+	elif id != "" and ResourceLoader.exists(own):
 		art.texture = load(own)
 	elif ICONS.has(String(data.get("icon", ""))):
 		# No painting yet: the shared icon, small and centred, so the card is
@@ -391,6 +442,246 @@ func _build_upper(data: Dictionary) -> void:
 		add_child(_cost_orb(int(_data.get("cost", 0)),
 			String(_data.get("character", ""))))
 
+
+
+# --- The 3D window, for rares (backlog #84) --------------------------------
+#
+# Nick sent valdosh's Blender tutorial: a card with a hole cut through it and a
+# scene sitting behind the hole, so turning the card gives the contents real
+# parallax against the frame. tools/blender/rare3d.py renders that — 24 views of
+# one card's window, packed into a single sprite sheet.
+#
+# It is played back as an ANGLE LOOKUP, not as an animation. The frame is picked
+# from the same `tilt` the foil shader uses: the pointer on a desktop, the
+# accelerometer on a phone. A card that loops on a timer reads as a GIF stuck to
+# the face; one that tracks the player's hand reads as an object being turned,
+# which is the entire point of the effect.
+#
+# It replaces exactly one node — the ART_LAYER TextureRect — on either
+# treatment, framed or borderless, and every layer above it is untouched. That
+# is what the named constant was reserved for.
+const CARD_ART_3D := "res://assets/cardart3d/"
+
+
+func _has_window(id: String) -> bool:
+	return id != "" and ResourceLoader.exists(CARD_ART_3D + id + ".png")
+
+
+## The sheet as an AtlasTexture, with the grid read from its sidecar .json.
+## Returns null when this card has no window, which is all but a handful.
+func _window_art(id: String) -> AtlasTexture:
+	if not _has_window(id):
+		return null
+	var meta := CARD_ART_3D + id + ".json"
+	if not ResourceLoader.exists(meta):
+		return null
+	# Godot imports a .json into a JSON resource, so this is a load() and not a
+	# FileAccess read — the raw file is not necessarily in an exported build.
+	var res := load(meta)
+	if not (res is JSON):
+		return null
+	var d: Variant = (res as JSON).data
+	if typeof(d) != TYPE_DICTIONARY:
+		return null
+	var grid: Dictionary = d
+	_win_frames = int(grid.get("frames", 0))
+	_win_cols = maxi(int(grid.get("cols", 1)), 1)
+	_win_cell = Vector2i(int(grid.get("cell_w", 0)), int(grid.get("cell_h", 0)))
+	if _win_frames <= 0 or _win_cell.x <= 0 or _win_cell.y <= 0:
+		return null
+	_win = AtlasTexture.new()
+	_win.atlas = load(CARD_ART_3D + id + ".png")
+	_win_at = -1
+	_turn_window(0.0)          # a still card shows the head-on view
+	set_process(true)          # the window needs a tick even with no foil
+	return _win
+
+
+## Point the window at the view for `t` in -1..+1, left to right.
+func _turn_window(t: float) -> void:
+	if _win == null:
+		return
+	var i := clampi(int(round((clampf(t, -1.0, 1.0) * 0.5 + 0.5)
+		* float(_win_frames - 1))), 0, _win_frames - 1)
+	if i == _win_at:
+		return   # 24 views over a full turn, so most ticks land on the same one
+	_win_at = i
+	var col: int = i % _win_cols
+	var row: int = i / _win_cols
+	_win.region = Rect2(col * _win_cell.x, row * _win_cell.y,
+		_win_cell.x, _win_cell.y)
+
+
+# --- The borderless pull ---------------------------------------------------
+#
+# A second TREATMENT of the same card, in the sense Magic and Slay the Spire's
+# beta art use the word: identical rules, identical size, no moulding. The
+# painting runs to all four rounded corners and the type is printed straight
+# onto it.
+#
+# It is not "the framed card with the frame switched off". Take the border away
+# and three things that were doing quiet work stop:
+#
+#   the moulding      gave the card a defined EDGE against a dark table
+#   the steel banner  gave the name a light plate to be dark ink on
+#   the olive panel   gave the rules a flat opaque field to sit on
+#
+# So each is replaced by something that does the same job without geometry: a
+# hairline stroke in the hunter's colour, an outlined cream name, and a
+# gradient that fades the painting into black under the text. That last one is
+# the difference between borderless and unreadable — a hard-edged dark panel on
+# a card with no frame just looks like the frame came back.
+
+## The corner radius the whole card is cut to. Bigger than the framed card's 13:
+## with no moulding to read the curve off, a tight radius looks like a
+## rectangle someone forgot to round.
+const BORDERLESS_RADIUS := 16
+## The hairline edge, per hunter — the LIP colours from tools/blender/frames.py,
+## which are the highlight on each character's moulding. Using the lip rather
+## than the body colour is deliberate: the stroke is standing in for the bright
+## edge the moulding used to catch, so it should be that colour.
+const EDGE := {
+	"frog": Color("7FB894"),
+	"vine_weaver": Color("A794D6"),
+	"mountain_climbers": Color("9CB8DC"),
+	"goblin_mech": Color("E0AE85"),
+	"lightbearer": Color("F2D492"),
+	"common": Color("9AA0B2"),
+}
+
+
+func _build_borderless(data: Dictionary, tex: Texture2D) -> void:
+	# The clip box. Everything on this card lives inside it, because the whole
+	# claim of a borderless card is that the ART reaches the corner — and a
+	# TextureRect has no corner radius. A Panel that draws a rounded box and
+	# clips its children to that shape does, and it costs one node.
+	var host := Panel.new()
+	var hsb := StyleBoxFlat.new()
+	hsb.bg_color = Color(0.045, 0.043, 0.050)   # only ever seen behind the art
+	hsb.set_corner_radius_all(BORDERLESS_RADIUS)
+	host.add_theme_stylebox_override("panel", hsb)
+	host.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
+	host.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	host.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(host)
+	_face_host = host   # from here _layer() and _build_foil() target the box
+
+	# 1 - ART_LAYER, and on this card it is the whole card. Same index as the
+	# framed face on purpose: backlog #84's 3D window replaces exactly this node
+	# whichever treatment it lands on.
+	var art := TextureRect.new()
+	var win := _window_art(String(_data.get("id", "")))
+	art.texture = win if win != null else tex
+	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	art.clip_contents = true
+	_layer(art, 0, 0, 1, 1)
+
+	# 2 - the fade. Where the framed card has an opaque olive panel, this has
+	# the painting continuing down into black. Three stops rather than two: a
+	# straight linear ramp has a visible start line partway up the art, and the
+	# soft shoulder is what makes it read as the picture going dark rather than
+	# as a translucent rectangle laid over it.
+	_layer(_fade(false, Color(0.02, 0.02, 0.03), 0.97), 0, 0.40, 1, 1)
+	# And a shorter one at the top, for the name. Nothing else needs it.
+	_layer(_fade(true, Color(0.02, 0.02, 0.03), 0.80), 0, 0, 1, 0.19)
+
+	# 4 - the type, small, printed on the art. No steel pill: a plate is
+	# furniture, and this card's argument is that there is none.
+	var kind := String(_data.get("type", ""))
+	if kind != "":
+		var t := _label(kind.to_upper(), 9)
+		t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		t.add_theme_color_override("font_color", _rarity_of(_data)["pip"])
+		t.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+		t.add_theme_constant_override("outline_size", 4)
+		_layer(t, 0.0, 0.555, 1.0, 0.555, 0.0, 0.0, 0.0, 14.0)
+
+	# 5 - the rules, on the fade. Same size and centring as the framed card, so
+	# a borderless copy of a card you own reads at exactly the same speed.
+	_rules = _rich_body(_data, 14, 40)
+	_rules.text = "[center]" + _rules.text + "[/center]"
+	# A shadow, because there is no flat panel underneath any more and cream
+	# text on a dark PAINTING still has to survive whatever the painting does.
+	_rules.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
+	_rules.add_theme_constant_override("shadow_offset_x", 1)
+	_rules.add_theme_constant_override("shadow_offset_y", 1)
+	_rules.add_theme_constant_override("shadow_outline_size", 3)
+	_layer(_rules, 0.085, 0.635, 0.915, 0.95)
+
+	# 6 - rarity pips, bottom right, same place as the framed card.
+	_layer(_rarity_pips(_data), 0.60, 0.955, 0.92, 0.955, 0.0, -12.0, 0.0, -2.0)
+
+	# 7 - the name, printed rather than plated. Cream with a heavy outline is
+	# how every full-art card in every game does this, for the same reason:
+	# it is the only treatment that works over a sky AND over a shadow.
+	var nm := _label(String(_data.get("name", "")), 15)
+	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	nm.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	nm.add_theme_color_override("font_color", Color(0.98, 0.95, 0.87))
+	nm.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.95))
+	nm.add_theme_constant_override("outline_size", 6)
+	# Left edge clears the cost orb, exactly as the banner does on a framed card.
+	_layer(nm, 0.0, 0.0, 1.0, 0.0, 40.0, 6.0, -8.0, 32.0)
+
+	# 8 - the stroke. This is the border's real job, kept: a card with no edge
+	# at all dissolves into a dark background, and a hand of them looks like one
+	# smeared painting. One hairline in the hunter's colour and it is an object
+	# again. Drawn last so it sits over the art at every corner.
+	var edge := Panel.new()
+	var esb := StyleBoxFlat.new()
+	esb.bg_color = Color(0, 0, 0, 0)
+	esb.set_corner_radius_all(BORDERLESS_RADIUS)
+	esb.set_border_width_all(2)
+	esb.border_color = Color(EDGE.get(String(_data.get("character", "")),
+		EDGE["common"]), 0.70)
+	edge.add_theme_stylebox_override("panel", esb)
+	_layer(edge, 0, 0, 1, 1)
+
+	# 9 - the cost. The one plate that survives: it is the number read first and
+	# most often, and printing it flat onto the art costs a real read for a
+	# cosmetic. INSET rather than overhanging the corner, because the clip box
+	# would cut an overhang off.
+	if not bool(_data.get("no_cost", false)):
+		var orb := _cost_orb(int(_data.get("cost", 0)),
+			String(_data.get("character", "")))
+		orb.position = Vector2(4, 4)
+		host.add_child(orb)
+
+
+## A one-directional fade to `to`, as a texture rather than a shader.
+##
+## `from_top` true fades from transparent at the top to opaque at the bottom of
+## its own rect; false is the same ramp upside down. `peak` is how opaque it
+## ever gets — never 1.0 at the very edge on the bottom fade, so the painting
+## is still faintly present behind the last line of text instead of the card
+## ending in a flat black bar.
+func _fade(from_top: bool, to: Color, peak: float) -> TextureRect:
+	var g := Gradient.new()
+	# FOUR stops, not a straight ramp. A linear fade puts alpha at about 0.5
+	# exactly where the rules text lands, and the first shot of this showed the
+	# result: "Climb 4." printed over lit foliage, legible only because of its
+	# shadow. This one stays soft for the first third — which is what hides the
+	# transition — and then commits hard, so the text gets a real bed under it.
+	g.offsets = PackedFloat32Array([0.0, 0.30, 0.60, 1.0])
+	var ramp := [0.0, 0.40, 0.88, 1.0]
+	var cols: PackedColorArray = []
+	for i in range(4):
+		var f: float = ramp[i] if not from_top else ramp[3 - i]
+		cols.append(Color(to, f * peak))
+	g.colors = cols
+	var gt := GradientTexture2D.new()
+	gt.gradient = g
+	gt.width = 4
+	gt.height = 256
+	gt.fill_from = Vector2(0, 0)
+	gt.fill_to = Vector2(0, 1)
+	var r := TextureRect.new()
+	r.texture = gt
+	r.stretch_mode = TextureRect.STRETCH_SCALE
+	r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	return r
 
 
 ## Show or hide a card's RULES, leaving its name, cost and art alone.
@@ -1117,6 +1408,11 @@ func _rarity_pips(data: Dictionary) -> Control:
 		gem.color = r["pip"]
 		gem.custom_minimum_size = Vector2(6, 6)
 		gem.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# SHRINK_CENTER, or the HBox stretches each gem to the row's full height
+		# and the 45 degrees below turns a 6x10 bar into a slightly skewed 6x10
+		# bar. Zoomed, the pair read as a pause button in the corner of the card,
+		# which is the second time this element has been mistaken for a control.
+		gem.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		gem.pivot_offset = Vector2(3, 3)
 		gem.rotation = PI * 0.25          # a diamond reads as a gem; a square reads as a bug
 		row.add_child(gem)
@@ -1253,7 +1549,12 @@ func _fire() -> void:
 
 func _end_timing(quality: int) -> void:
 	_timing = false
-	set_process(false)
+	# Only stop ticking if nothing else needs the tick. A foil card that had
+	# been timed used to freeze its sheen the moment the window resolved,
+	# because this turned _process off wholesale; a 3D window would have frozen
+	# the same way.
+	if _foil == null and _win == null:
+		set_process(false)
 	_strip.visible = false
 	if is_instance_valid(_clock):
 		_clock.visible = true
@@ -1271,11 +1572,16 @@ func _update_count() -> void:
 
 
 func _process(delta: float) -> void:
-	if _foil != null and is_instance_valid(_foil):
-		var mat := _foil.material as ShaderMaterial
-		if mat != null:
-			mat.set_shader_parameter("tilt",
-				_foil_tilt(float(Time.get_ticks_msec()) * 0.001))
+	if _foil != null or _win != null:
+		var tilt := _foil_tilt(float(Time.get_ticks_msec()) * 0.001)
+		if _foil != null and is_instance_valid(_foil):
+			var mat := _foil.material as ShaderMaterial
+			if mat != null:
+				mat.set_shader_parameter("tilt", tilt)
+		# The same tilt drives the window, so on a card that is both foil and
+		# 3D the sheen and the parallax move together — two effects out of step
+		# read as two effects, not as one card being turned.
+		_turn_window(force_turn if absf(force_turn) <= 1.0 else tilt.x)
 	if not _timing:
 		return
 	_elapsed += delta

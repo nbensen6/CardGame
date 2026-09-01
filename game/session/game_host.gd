@@ -522,7 +522,7 @@ func _slot_private(pi: int) -> Dictionary:
 				# because the card reached the client without its foil flag. This
 				# dict is hand-built rather than Card.to_dict(), so anything the
 				# view needs has to be added here on purpose.
-				"id": c.id, "type": c.type, "foil": c.foil,
+				"id": c.id, "type": c.type, "foil": c.foil, "borderless": c.borderless,
 				"text": c.text, "icon": _card_icon(c), "timed": c.timed, "timed_hits": c.timed_hits,
 				"exhaust_pick": c.exhaust_pick, "cheapen_pick": c.cheapen_pick, "meld": c.meld,
 				"playable": _run.combat.can_play(pi, i),
@@ -571,7 +571,7 @@ func _slot_private(pi: int) -> Dictionary:
 				# choosing, not only on one already in your hand — whether a card
 				# needs a timing window is half of whether you want it.
 				choices.append({"index": i, "name": rc.name, "cost": rc.cost, "text": rc.text,
-					"id": rc.id, "type": rc.type, "foil": rc.foil,
+					"id": rc.id, "type": rc.type, "foil": rc.foil, "borderless": rc.borderless,
 					"target": rc.target, "icon": _card_icon(rc), "timed": rc.timed,
 					"timed_hits": rc.timed_hits, "rarity": rc.rarity,
 					# So a card you are DECIDING on can be asked about, which is

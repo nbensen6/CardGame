@@ -112,6 +112,16 @@ var _seed: int
 ## often the moment should happen, not for balance. About one card in
 ## sixteen at common; a foil rare is a couple of runs apart.
 const FOIL_CHANCE := {"common": 0.06, "uncommon": 0.09, "rare": 0.14}
+## And how often it comes out BORDERLESS — full-bleed art, no moulding.
+##
+## Rolled separately from foil and never conditioned on it, so the four
+## combinations all exist and a borderless foil is genuinely two pulls landing
+## at once (about 1 in 45 on a rare) rather than a third tier of one pull.
+##
+## Rarer than foil at every rarity. A foil is the same card catching the light;
+## a borderless is a different-looking object in the hand, and the moment it
+## stops being startling it is just a second art style.
+const BORDERLESS_CHANCE := {"common": 0.04, "uncommon": 0.07, "rare": 0.13}
 
 var _rng := RandomNumberGenerator.new()
 
@@ -817,6 +827,7 @@ func pick_reward(slot: int, choice: int) -> void:
 		# card game uses and the reason a foil rare feels like a real event.
 		var card: Card = choices[choice]
 		card.foil = _rng.randf() < FOIL_CHANCE.get(card.rarity, 0.06)
+		card.borderless = _rng.randf() < BORDERLESS_CHANCE.get(card.rarity, 0.04)
 		decks[slot].append(card)  # cards go to that hunter's deck
 	reward_picked[slot] = true
 	if _all_picked():
