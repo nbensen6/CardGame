@@ -42,19 +42,25 @@ import os
 import sys
 
 W, H = 176, 264          # the biggest card the game lays out, 1:1
-MARGIN = 17              # the 9-slice border, in rendered pixels
+MARGIN = 13              # the 9-slice border, in rendered pixels
 ASPECT = 1.5             # 264 / 176
 BEVEL = 0.012
 CORNER = 0.13
 
 ## (inset, height). See the module docstring — this profile IS the 3D look.
+## Thinner than the first pass. Set the original next to Finisher and the
+## difference is immediate: their border is a slim rail - roughly 5% of the
+## card's width - and the art and text panel are the card. Ours was a picture
+## frame from a furniture shop, over 10% a side plus a fat lip, and a thick
+## frame makes everything inside it feel smaller, which is half of why Nick
+## said their cards "still feel larger".
 PROFILE = [
-    (1.00, 0.00),
-    (0.97, 0.11),
-    (0.86, 0.11),
-    (0.83, 0.16),
-    (0.80, 0.10),
-    (0.78, 0.02),
+    (1.000, 0.00),
+    (0.975, 0.09),
+    (0.905, 0.09),
+    (0.885, 0.13),
+    (0.865, 0.07),
+    (0.850, 0.02),
 ]
 
 ## hunter -> (border colour, lip highlight colour)
@@ -67,13 +73,19 @@ def srgb(h):
     return tuple((int(h[i:i + 2], 16) / 255.0) ** 2.2 for i in (0, 2, 4))
 
 
+## Muted, deliberately. The first set used the palette hues at full strength
+## and the frames came out toy-bright next to the reference - Slay the Spire's
+## borders are desaturated, closer to painted wood than to plastic, and the
+## saturation belongs to the ART, not the thing around it. Each hue is pulled
+## roughly a third of the way toward grey and slightly darkened; the identity
+## survives, the shout does not.
 CHARACTERS = {
-    "frog":              ("2C9858", "7FD9A0"),
-    "vine_weaver":       ("7750C9", "B79BEE"),
-    "mountain_climbers": ("6794D9", "A8C8F2"),
-    "goblin_mech":       ("E38645", "F7BE8E"),
-    "lightbearer":       ("FFC044", "FFE9A8"),
-    # The fallback, for a card with no owner — rewards and neutral cards.
+    "frog":              ("3F7A55", "7FB894"),
+    "vine_weaver":       ("6B58A6", "A794D6"),
+    "mountain_climbers": ("5F82B5", "9CB8DC"),
+    "goblin_mech":       ("C07E4F", "E0AE85"),
+    "lightbearer":       ("D9A94E", "F2D492"),
+    # The fallback, for a card with no owner - rewards and neutral cards.
     "common":            ("5D6171", "9AA0B2"),
 }
 
@@ -168,8 +180,8 @@ def build(name, out_dir):
     mat.use_nodes = True
     bsdf = mat.node_tree.nodes["Principled BSDF"]
     bsdf.inputs["Base Color"].default_value = (col[0], col[1], col[2], 1.0)
-    bsdf.inputs["Roughness"].default_value = 0.34
-    bsdf.inputs["Metallic"].default_value = 0.25
+    bsdf.inputs["Roughness"].default_value = 0.46
+    bsdf.inputs["Metallic"].default_value = 0.12
     o.data.materials.append(mat)
     # NO body quad: the middle of this texture is TRANSPARENT on purpose.
     #

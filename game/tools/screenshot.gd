@@ -13,6 +13,7 @@
 ## modifiers: hold= (stop a driven sequence at a phase) beast= act= orbit= size=WxH
 ##   mobile (force the handheld layout) slot=N (force the active hunter — camera work)
 ##   foil (force every card foil — a foil is a rare pull, so it needs forcing)
+##   hover=N (lift the Nth card in the hand — the fan hides rules until hover)
 extends SceneTree
 
 var _out := "shot.png"
@@ -23,13 +24,20 @@ var _act := 0     # 3dmap: fast-forward to this act, so later regions get looked
 var _orbit := 999.0  # 3D combat: drive the orbit camera to this yaw, in degrees
 var _size := Vector2i.ZERO  # size=WxH — shoot at a different screen shape
 var _slot := -1  # slot=N — force the active hunter, so camera framing can be compared
-var _taps := false  # taps — report whether the map's nodes can be hit with a thumb
+var _taps := false
+## Card index to hover in the hand, or -1. The fan hides a card's rules until
+## it is hovered, and a mouse cannot hover in a headless run - so without this
+## flag the harness can only ever photograph the resting state, and every claim
+## about the hover would be an untested claim.
+var _hover := -1  # taps — report whether the map's nodes can be hit with a thumb
 
 
 func _initialize() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a == "foil":
 			CardView.force_foil = true
+		if a.begins_with("hover="):
+			_hover = int(a.substr(6))
 		if a.begins_with("out="):
 			_out = a.substr(4)
 		elif a.begins_with("state="):
@@ -430,6 +438,14 @@ func _capture() -> void:
 		for _i in 4:
 			await process_frame
 		print("SLOT active=%s lock=%s pivot=%s at=%s" % [str(current_scene.get("_active_slot")), str(current_scene.get("_lock_slot")), str(current_scene.get("_pivot")), str(current_scene.call("_lock_point"))])
+	if _hover >= 0 and current_scene != null:
+		var hand := current_scene.get_node_or_null("%Hand")
+		if hand != null and _hover < hand.get_child_count():
+			current_scene.set("_hand_hover", hand.get_child(_hover))
+			current_scene.call("_layout_hand")
+			for _i in 3:
+				await process_frame
+			print("HOVER card %d lifted" % _hover)
 	if _state.begins_with("3d") and _state not in ["3dmap", "3dloop"]:
 		_report_visibility(current_scene)
 	if _state in ["3dosu", "3dbar", "3dslide"]:  # open a timed card's window and hold it there

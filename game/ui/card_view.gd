@@ -322,10 +322,16 @@ func _build_upper(data: Dictionary) -> void:
 	# Look at Finisher: the lower half of a Slay the Spire card is an opaque
 	# olive panel, not a darkened piece of the painting. Art showing through is
 	# what makes rules text hard to read at hand size.
+	# The seam sits at 56% of the card, not 70%. Measure Finisher: the art is
+	# the band from the banner to just past half way, and the text panel is
+	# nearly HALF the card. That allocation is why their rules text can be big
+	# and centred with air around it, and moving our seam down to give the art
+	# more room was exactly backwards - the art already reads at half size, the
+	# text did not.
 	var scrim := ColorRect.new()
 	_panel = scrim
-	scrim.color = Color(0.129, 0.145, 0.118, 1.0)
-	_layer(scrim, 0.055, 0.695, 0.945, 0.95)
+	scrim.color = Color(0.152, 0.163, 0.134, 1.0)
+	_layer(scrim, 0.055, 0.56, 0.945, 0.95)
 
 	# 3 - the moulding. A Button draws its StyleBox BEHIND every child, so the
 	# frame cannot be a stylebox any more or the art would cover it.
@@ -341,26 +347,28 @@ func _build_upper(data: Dictionary) -> void:
 	# 4 - the type, straddling the scrim's top edge as a caption on the art.
 	var kind := String(_data.get("type", ""))
 	if kind != "":
-		_pill = _plate(PILL, PILL_SLICE, kind.capitalize(), 8, 13)
-		_layer(_pill, 0.30, 0.695, 0.70, 0.695, 0.0, -7.0, 0.0, 6.0)
+		_pill = _plate(PILL, PILL_SLICE, kind.capitalize(), 9, 15)
+		_layer(_pill, 0.30, 0.56, 0.70, 0.56, 0.0, -8.0, 0.0, 7.0)
 
 	# 5 - the rules, on the scrim.
 	# Bigger and centred. Nick: "the text is much clearer" - and it is, because
 	# theirs is large, white and centred on a solid panel while ours was 10px,
 	# left-aligned and fighting a painting.
-	_rules = _rich_body(_data, 13, 40)
+	_rules = _rich_body(_data, 14, 40)
 	var body := _rules
 	# [center], not horizontal_alignment - a RichTextLabel has no such property
 	# and it would have thrown the first time a card was drawn.
 	body.text = "[center]" + body.text + "[/center]"
-	_layer(body, 0.075, 0.725, 0.925, 0.95)
+	_layer(body, 0.085, 0.615, 0.915, 0.945)
 
 	# 6 - rarity pips, top right.
 	_layer(_rarity_pips(_data), 0.60, 0.0, 0.94, 0.0, 0.0, 30.0, 0.0, 40.0)
 
 	# 7 - the name, straddling the top edge and clear of the orb.
-	var ban := _plate(BANNER, BANNER_SLICE, String(_data.get("name", "")), 13, 24)
-	_layer(ban, 0.0, 0.0, 1.0, 0.0, 26.0, 3.0, -3.0, 27.0)
+	# Taller ribbon, bigger name. The name is the one thing readable on every
+	# card in the reference hand - it is their largest type after the cost.
+	var ban := _plate(BANNER, BANNER_SLICE, String(_data.get("name", "")), 14, 26)
+	_layer(ban, 0.0, 0.0, 1.0, 0.0, 28.0, 2.0, -3.0, 30.0)
 
 	# 8 - the cost, over the ribbon's left end, as in the reference.
 	if not bool(_data.get("no_cost", false)):
@@ -830,12 +838,14 @@ func _cost_orb(cost: int, who: String) -> Control:
 	var orb := TextureRect.new()
 	orb.texture = tex
 	orb.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	var d := 34.0 if not _compact else 24.0
+	# 40, up from 34. The gem is the largest single glyph on a Slay the Spire
+	# card - cost is the first thing you check in hand, and theirs says so.
+	var d := 40.0 if not _compact else 24.0
 	orb.custom_minimum_size = Vector2(d, d)
 	orb.size = Vector2(d, d)
 	orb.position = Vector2(-5, -6)
 	orb.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var lbl := _label(str(cost), 16 if not _compact else 12)
+	var lbl := _label(str(cost), 18 if not _compact else 12)
 	lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -1047,7 +1057,7 @@ const FRAMES := {
 }
 ## Must match frames.py's MARGIN. The moulding lives in this band and a 9-slice
 ## stretches everything outside it — get this wrong and the corners smear.
-const FRAME_MARGIN := 17
+const FRAME_MARGIN := 13
 const FRAME_GOLD := preload("res://assets/ui/card_gold.png")
 
 

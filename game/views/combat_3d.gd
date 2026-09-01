@@ -2660,7 +2660,7 @@ const FAN_TUCK := 26.0        # px the whole hand sits below its band, out of th
 ## card fall off the bottom of the screen - that is what "out of the way"
 ## means and the reference does exactly the same - so a hover has to lift far
 ## enough to bring the rules text back into view, not just nudge it.
-const FAN_RISE := 62.0        # px a hovered card lifts
+const FAN_RISE := 96.0        # px a hovered card lifts, clear of the deep tuck
 ## How much a hovered card GROWS.
 ##
 ## Nick, on the Slay the Spire hand: "you cannot even see the information of the
@@ -2686,6 +2686,12 @@ func _layout_hand() -> void:
 	if room > 1.0 and step * float(n - 1) + w > room:
 		step = maxf((room - w) / maxf(float(n - 1), 1.0), w * 0.30)
 	var mid := (float(n) - 1.0) * 0.5
+	# Desktop tucks DEEP - at rest you see the name and the art and the rules
+	# are below the screen edge, which is precisely the Slay the Spire hand:
+	# their resting cards show the top half and nothing else, and that is why
+	# the hand reads as a row of paintings. A handheld keeps the shallow tuck:
+	# no hover means whatever is hidden at rest is hidden forever.
+	var tuck := FAN_TUCK if Screen.is_handheld() else FAN_TUCK + 52.0
 	for i in range(n):
 		var c := cards[i] as Control
 		if c == null:
@@ -2696,7 +2702,7 @@ func _layout_hand() -> void:
 		var lift: float = FAN_RISE if c == _hand_hover else 0.0
 		c.position = Vector2(
 			room * 0.5 - w * 0.5 + off * step,
-			FAN_TUCK + absf(off) * FAN_DROP - lift)
+			tuck + absf(off) * FAN_DROP - lift)
 		# A hovered card straightens up as it rises, so the face you are reading
 		# is square to you rather than tilted.
 		c.rotation = 0.0 if c == _hand_hover else off * FAN_TILT
