@@ -586,6 +586,10 @@ func _slot_private(pi: int) -> Dictionary:
 			})
 		return {
 			"hand": cards, "energy": ps.energy, "ended": ps.ended_turn,
+			# Your own deck, mid-fight. Slay the Spire lets you open the draw
+			# pile during a fight and this is the same promise; it is private
+			# data you already know, so sending it tells you nothing new.
+			"deck": _deck_cards(pi),
 			# Pile sizes. The Goblin's kit scales off the exhaust pile, which was
 			# invisible to the player until now.
 			"draw": ps.draw_pile.size(), "discard": ps.discard_pile.size(),
@@ -715,13 +719,70 @@ func _deck_cards(pi: int) -> Array:
 	var deck: Array = _run.decks[pi]
 	for i in range(deck.size()):
 		var c: Card = deck[i]
-		out.append({
-			"index": i, "name": c.name, "cost": c.cost, "target": c.target,
-			"text": c.text, "icon": _card_icon(c), "upgraded": c.upgraded,
-			"timed": c.timed, "timed_hits": c.timed_hits, "rarity": c.rarity,
-			"keywords": _keywords_of(c),
-		})
+		var face := _deck_face(c, i)
+		face["character"] = _slot_char(pi)
+		# What a campfire would turn it into, computed HERE from the real card.
+		#
+		# The deck view shows a card beside its sharpened version, and the client
+		# cannot work that out for itself: upgraded_copy() reads rule_upgrade,
+		# enchants and the card's own history, and a client holding a face dict
+		# has none of that. Rebuilding it from the id would also be wrong, since
+		# a cheapened or enchanted copy is no longer its printed self.
+		#
+		# No "upgrade" key inside the upgrade, so this cannot recurse.
+		var up := _deck_face(c.upgraded_copy(), i)
+		up["character"] = _slot_char(pi)
+		face["upgrade"] = up
+		out.append(face)
 	return out
+
+
+## One deck entry. Split out so a card and its upgraded twin are described by
+## exactly the same code - if they were not, any difference between them would
+## be ambiguous between "the upgrade did that" and "the two builders disagree".
+func _deck_face(c: Card, i: int) -> Dictionary:
+	return {
+		"index": i, "name": c.name, "cost": c.cost, "target": c.target,
+		"text": c.text, "icon": _card_icon(c), "upgraded": c.upgraded,
+		"timed": c.timed, "timed_hits": c.timed_hits, "rarity": c.rarity,
+		"keywords": _keywords_of(c),
+		# id, type, foil and borderless: the FACE needs all four and this dict
+		# had none of them, so a deck view built on it would have shown no art,
+		# no 3D window, no type pill and no sheen. Exactly the bug the hand and
+		# reward dicts had - the three hand-built payloads have drifted apart
+		# once already, which is why this one is a shared function now.
+		"id": c.id, "type": c.type, "foil": c.foil, "borderless": c.borderless,
+		# The card's OWN numbers, in the shape CardView.face_text expects.
+		#
+		# Without these the face falls back to the authored `text` string, and
+		# an upgraded copy prints the text of the card it was upgraded FROM:
+		# the deck screen showed "Leap / Climb 3." beside "Leap+ / Climb 3.",
+		# which is not just unhelpful, it is wrong. upgraded_copy() moves the
+		# FIELDS; only a face built from the fields can see it.
+		#
+		# preview == preview_miss == base on purpose. There is no fight here to
+		# ask, so nothing is buffed and nothing is timed-bonused, and having all
+		# three agree is what stops the face colouring numbers green as though
+		# something had changed them.
+		"preview": _printed(c), "preview_miss": _printed(c), "base": _printed(c),
+		"fx": {
+			"wound": c.wound, "vulnerable": c.vulnerable, "strength": c.strength,
+			"draw": c.draw, "taunt": c.taunt, "rhythm": c.rhythm,
+			"create": c.create, "prepare": c.prepare, "meld": c.meld,
+			"exhaust_pick": c.exhaust_pick, "cheapen_pick": c.cheapen_pick,
+			"pull_ally": c.pull_ally, "sac_ally_grip": c.sac_ally_grip,
+			"hits": c.hits,
+			"power_effect": c.power_effect, "power_value": c.power_value,
+		},
+	}
+
+
+## What a card says about itself with no fight to ask — its printed values.
+static func _printed(c: Card) -> Dictionary:
+	return {
+		"damage": c.damage, "block": c.block, "grip": c.grip,
+		"ally_block": c.ally_block, "ally_grip": c.ally_grip,
+	}
 
 func _relic_names() -> Array:
 	var out: Array = []

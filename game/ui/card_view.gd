@@ -158,6 +158,13 @@ var _win_frames := 0
 var _win_cols := 1
 var _win_cell := Vector2i.ZERO
 var _win_at := -1
+## THIS card's own turn, -1 (left) to +1 (right). Outside that range means
+## "off", which is the default and the normal case.
+##
+## Beats both the pointer and CardView.force_turn, because the deck inspector
+## drags ONE card and everything else on screen should carry on as it was. A
+## static could not express that.
+var turn_override := 2.0
 
 
 ## The foil sheen, when this copy pulled one.
@@ -1604,7 +1611,13 @@ func _process(delta: float) -> void:
 		# The same tilt drives the window, so on a card that is both foil and
 		# 3D the sheen and the parallax move together — two effects out of step
 		# read as two effects, not as one card being turned.
-		_turn_window(force_turn if absf(force_turn) <= 1.0 else tilt.x)
+		# This card, then the global pin, then the pointer.
+		var t := tilt.x
+		if absf(force_turn) <= 1.0:
+			t = force_turn
+		if absf(turn_override) <= 1.0:
+			t = turn_override
+		_turn_window(t)
 	if not _timing:
 		return
 	_elapsed += delta

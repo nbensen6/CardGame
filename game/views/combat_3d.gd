@@ -662,6 +662,13 @@ func _input(event: InputEvent) -> void:
 		return
 	var code: int = (event as InputEventKey).keycode
 
+	# The dev console owns the keyboard while it is open. This has to be here
+	# and not in _unhandled_input for the same reason the rest of this function
+	# is: _input runs before the focused LineEdit sees the key, so without it
+	# every character typed into the console was also a game command.
+	if DevConsole.open:
+		return
+
 	# Rebinding runs first and swallows everything: while the settings menu is
 	# waiting for a key, that key must land in the binding rather than firing the
 	# action it is currently bound to.
@@ -1284,7 +1291,8 @@ func _frame_beast() -> void:
 ## toward what you are facing instead of burrowing into the floor when you happen
 ## to be looking down. Picking a hunter puts it back.
 func _fly(delta: float) -> void:
-	if _rebinding != "" or (_detail != null and is_instance_valid(_detail)):
+	var overlay := _detail != null and is_instance_valid(_detail)
+	if _rebinding != "" or DevConsole.open or overlay:
 		return                       # a menu owns the keyboard
 	if _cam == null:
 		return
@@ -1634,6 +1642,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	# the borderless one look good", it is "does it look BETTER than the framed
 	# one" - which is a comparison you can only make by flipping between them on
 	# the same card, a second apart. Hence live, rather than a launch flag.
+	if DevConsole.open:
+		return
 	var key := event as InputEventKey
 	if key != null and key.pressed and key.keycode == KEY_F9:
 		print("DEV cards: %s" % Dev.cycle())
@@ -2959,8 +2969,31 @@ func _render_energy(p: Dictionary) -> void:
 	if priv.has("draw"):
 		_piles.text = "draw %d\ndisc %d · burn %d" % [int(priv.get("draw", 0)),
 			int(priv.get("discard", 0)), int(priv.get("exhaust", 0))]
+		# Clicking the pile counts opens the deck. That is where Slay the Spire
+		# puts it and where a hand reaches for it — the number of cards left is
+		# the thing that makes you want to look at what they are.
+		_piles.mouse_filter = Control.MOUSE_FILTER_STOP
+		_piles.tooltip_text = "Look through your deck"
+		if not _piles.gui_input.is_connected(_piles_clicked):
+			_piles.gui_input.connect(_piles_clicked)
 
 
+
+
+func _piles_clicked(event: InputEvent) -> void:
+	var mb := event as InputEventMouseButton
+	if mb != null and mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
+		open_deck()
+
+
+## The deck screen. Public because the dev console opens it too.
+func open_deck() -> void:
+	var deck: Array = _my_private().get("deck", [])
+	if deck.is_empty():
+		return
+	if get_node_or_null("DeckView") != null:
+		return                      # already open; do not stack two of them
+	DeckView.open(self, deck)
 
 
 ## A character's face at a fixed size, tinted frame optional. Portraits are baked

@@ -33,6 +33,20 @@ const HISTORY := 40
 var _panel: PanelContainer
 var _out: RichTextLabel
 var _line: LineEdit
+## Is a console open anywhere? Views ask this before acting on a key.
+##
+## Nick: "disable game controls while using the dev menu. I can type a space
+## because thats my end turn button." Right, and it is worse than it sounds -
+## combat_3d reads keys in _input() rather than _unhandled_input(), deliberately
+## (Space activates a focused Button and TAB is ui_focus_next, and the GUI layer
+## eats both before unhandled input runs). _input() fires BEFORE the focused
+## LineEdit gets the key, so every character typed here was also a game command:
+## space ended the turn, [ and ] swapped the beast you were fighting.
+##
+## Static because the question is "is ANY console open", and the view asking has
+## no reason to know where the node lives.
+static var open := false
+
 var _history: PackedStringArray = []
 var _at := -1
 ## The view that owns us, so a command that changes the world can ask for a
@@ -101,12 +115,29 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _toggle() -> void:
-	_panel.visible = not _panel.visible
+	_set_open(not _panel.visible)
+
+
+## Open or close, stated rather than flipped.
+##
+## `deck` used to call _toggle() to get out of the way of the screen it was
+## opening, which is only correct if the console is already open - driven from
+## the screenshot harness it OPENED the console instead, and the panel sat on
+## top of the deck screen in the shot meant to verify the deck screen.
+func _set_open(want: bool) -> void:
+	_panel.visible = want
+	open = want
 	if _panel.visible:
 		_line.clear()
 		_line.grab_focus()
 	else:
 		_line.release_focus()
+
+
+## Leaving the fight with the console open would strand `open` at true and the
+## next view would ignore every key you pressed.
+func _exit_tree() -> void:
+	open = false
 
 
 ## Up/Down walk the history; Escape closes. On the LineEdit rather than in
@@ -169,6 +200,9 @@ func _cmds() -> Dictionary:
 		"energy": ["energy 9 — set your energy this turn", _cmd_energy],
 		"climb": ["climb 4 — set your Height", _cmd_climb],
 		"beast": ["beast thrasher — swap the thing you are fighting", _cmd_beast],
+		"deck": ["open the deck screen (same as clicking the pile counts)", _cmd_deck],
+		"own": ["own crescendo — add a card to your DECK (not your hand)", _cmd_own],
+		"card": ["card 3 [0.8] — open the deck screen on the Nth card, optionally turned", _cmd_card],
 		"clear": ["wipe the output", _cmd_clear],
 	}
 
@@ -374,6 +408,53 @@ func _cmd_beast(a: PackedStringArray) -> String:
 	_combat().boss = b
 	_push()
 	return "now fighting %s" % b.name
+
+
+func _cmd_deck(_a: PackedStringArray) -> String:
+	var view := get_parent()
+	if view == null or not view.has_method("open_deck"):
+		return "this view has no deck screen"
+	_set_open(false)   # get out of the way of the thing you asked to look at
+	view.call("open_deck")
+	return "deck open"
+
+
+## Add to the DECK rather than the hand. `hand` changes what you are holding
+## this turn; this changes what you own, which is what the deck screen shows.
+func _cmd_own(a: PackedStringArray) -> String:
+	if Session.host == null or Session.host._run == null:
+		return "no host on this machine"
+	if a.is_empty():
+		return "own <id>[,<id>...]"
+	var cards := _make(" ".join(a))
+	if cards.is_empty():
+		return "no card matched"
+	var deck: Array = Session.host._run.decks[_slot()]
+	for c in cards:
+		deck.append(c)
+	_push()
+	return "added %d card(s) to hunter %d's deck (%d cards)" % [
+		cards.size(), _slot(), deck.size()]
+
+
+func _cmd_card(a: PackedStringArray) -> String:
+	if a.is_empty():
+		return "card <n> [turn -1..1] — the position in your deck, from 0"
+	var said := _cmd_deck([])
+	if said != "deck open":
+		return said
+	var dv := get_parent().get_node_or_null("DeckView")
+	if dv == null:
+		return "no deck screen opened"
+	if not bool(dv.call("inspect", int(String(a[0]).to_int()))):
+		return "no card at %s" % a[0]
+	if a.size() > 1:
+		# Turning it from here is how the screenshot harness photographs the
+		# effect at all: a shot cannot drag, and an untouched card is always at
+		# dead centre, which is the one angle where a parallax proves nothing.
+		dv.call("turn_to", clampf(String(a[1]).to_float(), -1.0, 1.0))
+		return "inspecting card %s, turned to %s" % [a[0], a[1]]
+	return "inspecting card %s" % a[0]
 
 
 func _cmd_clear(_a: PackedStringArray) -> String:
