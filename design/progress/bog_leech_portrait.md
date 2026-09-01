@@ -63,3 +63,69 @@ composition) would fix both the framing and identity findings at once, or
 whether the sucker-ring's own geometry (per `bog_leech.md` pass 2) is still
 too weak a shape to read as a mouth even given more frame area — this
 portrait alone can't separate a crop problem from a model problem.
+
+## Pass 2 — fixer
+
+Only one of the two named lines had a fix that was actually applicable here.
+**Readability @ 34px (3)** was explicitly flagged as "none proposable without
+model changes (out of scope)" — nothing for `portraits.py` alone to do, so
+left untouched. Applied the **Identity (5)** fix: `portraits.py`'s
+`FOCUS["bog_leech"]` moved from `(0.45, 1.35)` to `(0.39, 1.28)`, cropping
+tighter and lower so the sucker-ring gets more frame area, per the diagnosis.
+
+Two intermediate values were tried and rejected before this one. `(0.28,
+1.00)` — a direct, aggressive "centre on the ring" crop — clipped the gold
+sigil at the top edge outright (alpha bbox top = 0), trading the framing
+problem this file didn't flag for a worse one it would have. `(0.36, 1.15)`
+still touched the top edge (top = 0, 3px short of clipping the render but
+still zero margin in the bbox). `(0.39, 1.28)` was found by backing off from
+there until real headroom appeared; it keeps both the sigil and the full ring
+inside frame with margin on all four sides.
+
+Rebuilt with `build.cmd portraits` — every portrait regenerates and
+Blender's WORKBENCH output isn't byte-reproducible even for unchanged
+inputs (same non-determinism `thrasher_portrait.md` pass 2 and
+`silk_widow_portrait.md` pass 2 both hit), so every portrait other than
+`bog_leech.png` was reverted with `git checkout --` and only the changed
+asset kept.
+
+Alpha bbox (Pillow `getbbox()`) is now `(81, 12, 462, 443)` on the 512×512
+canvas — margin on all four sides (top only 12px, the tightest, but present;
+left 81, right 50, bottom 69) — where pass 1 was tight enough that the
+sucker-ring sat close to the bottom-left crop edge and the diagnosis named a
+red ledge bar running off the right edge.
+
+- **Framing (6 → 8):** both problems pass 1 named — the ledge bar running off
+  the right edge and the ring sitting close to the bottom-left edge — are
+  gone; all four sides now carry real margin, even if unevenly (top tightest
+  at 12px).
+- **Identity (5 → 6):** the sucker-ring is visibly larger and more central in
+  frame than pass 1's small, corner-crowded version — the frame-area gain the
+  diagnosis asked for. Not higher: at full size the ring still reads as a
+  loose scatter of dark balls and an open loop rather than unambiguously "a
+  mouth," the same open question the pass-1 "Unsure about" section raised.
+  Cropping alone did not resolve it.
+- **Readability @ 34px (3 → 4):** confirmed via a fresh 34px downsample
+  (Pillow `LANCZOS`, composited over the same brown card-face standin used in
+  pass 1). The sucker-ring still does not survive as a distinct shape — same
+  finding as pass 1, no fix was proposed for this line and none was applied.
+  The small bump is incidental: the subject fills slightly more of the fixed
+  frame, so the gold sigil reads a hair clearer.
+- **Colour & separation (5 → 6):** unchanged palette, but the tighter frame
+  spends more of the fixed pixel budget on the coloured sigil, red ledge
+  bars, and ring, and less on flat background — same mechanism
+  `thrasher_portrait.md` pass 2 named for its own colour-line gain.
+- **Style consistency (7, unchanged):** composition class didn't change
+  (still whole-body, not head-and-shoulders), so no change either direction.
+
+**+5 total (26 → 31), not a plateau — kept.** No line regressed.
+`run_tests.gd`: **ALL TESTS PASSED**.
+
+## Unsure about (pass 2)
+
+Whether the sucker-ring needs a geometry change (fatter tube, closed loop, a
+darker mouth-well) to ever clear Identity/Readability past a crop's reach —
+this pass confirms cropping alone hits a ceiling here, consistent with what
+the pass-1 "Unsure about" section already suspected but couldn't confirm
+without trying it. That would be a change to `bog_leech.py`'s model, not this
+file's `portraits.py` FOCUS entry, and outside this run's two-fix budget.
