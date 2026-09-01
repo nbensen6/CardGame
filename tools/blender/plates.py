@@ -107,6 +107,21 @@ def light(lip):
     ko.location = (-2.0, 1.8, 2.6)
     ko.rotation_euler = (0.6, -0.6, 0.0)
     bpy.context.collection.objects.link(ko)
+    # A second key from the top RIGHT at less than half strength. With only the
+    # left key, the ribbon's right end faced away from all light and rendered
+    # as a near-black slab - which on the card read as an untextured black
+    # square wedged between the name and the frame corner, and got reported as
+    # a border bug. The reference ribbon is bright at BOTH ends; the light rig
+    # has to say so.
+    key2 = bpy.data.lights.new("key2", "AREA")
+    key2.energy = 130.0
+    key2.size = 2.0
+    key2.color = (1.0, 0.98, 0.94)
+    k2 = bpy.data.objects.new("key2", key2)
+    k2.location = (2.0, 1.6, 2.4)
+    k2.rotation_euler = (0.6, 0.6, 0.0)
+    bpy.context.collection.objects.link(k2)
+
     fill = bpy.data.lights.new("fill", "AREA")
     fill.energy = 110.0
     fill.size = 3.0

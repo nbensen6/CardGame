@@ -286,10 +286,20 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 func _build_face(data: Dictionary) -> void:
 	var id := String(data.get("id", ""))
 
-	# 0 - ground.
-	var ground := ColorRect.new()
-	ground.color = Color(0.055, 0.052, 0.062)
-	_layer(ground, 0, 0, 1, 1)
+	# 0 - ground, with ROUNDED corners matching the frame's. Nick: "the edges of
+	# the borders of the card are just black squares" - the frame's corners are
+	# rounded and transparent outside the curve, and a square dark rect behind
+	# them showed through as four black tabs at every corner.
+	var ground := Panel.new()
+	var gsb := StyleBoxFlat.new()
+	gsb.bg_color = Color(0.055, 0.052, 0.062)
+	# Radius 13 and inset 1px: the frame's outer curve is about 11px, and a
+	# ground rounded TIGHTER than the frame leaves a dark wedge poking past the
+	# curve at every corner - the zoom of Tongue Snap's top-right showed it
+	# plainly. The ground must always be the smaller shape.
+	gsb.set_corner_radius_all(13)
+	ground.add_theme_stylebox_override("panel", gsb)
+	_layer(ground, 0, 0, 1, 1, 1.0, 1.0, -1.0, -1.0)
 
 	# 1 - ART_LAYER. Full bleed, cropped to fill rather than letterboxed: the
 	# card is a window onto a painting, not a painting pasted onto a card.
@@ -309,7 +319,11 @@ func _build_face(data: Dictionary) -> void:
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.clip_contents = true
-	_layer(art, 0, 0, 1, 1)
+	# Inset to the frame's inner face, top and bottom included. Full-rect, the
+	# painting ran OVER the border - above the banner at the top, past the rail
+	# at the bottom (Nick's screenshot of Leap shows both). The border frames
+	# the art; the art does not wear the border.
+	_layer(art, 0, 0, 1, 1, 8.0, 8.0, -8.0, -10.0)
 	_build_upper(data)
 
 
@@ -361,8 +375,10 @@ func _build_upper(data: Dictionary) -> void:
 	body.text = "[center]" + body.text + "[/center]"
 	_layer(body, 0.085, 0.615, 0.915, 0.945)
 
-	# 6 - rarity pips, top right.
-	_layer(_rarity_pips(_data), 0.60, 0.0, 0.94, 0.0, 0.0, 30.0, 0.0, 40.0)
+	# 6 - rarity pips, tucked into the panel's bottom-right corner. They used
+	# to float over the art's top edge, where they read as stray debris rather
+	# than information - two unexplained blue squares beside the banner.
+	_layer(_rarity_pips(_data), 0.60, 0.955, 0.92, 0.955, 0.0, -12.0, 0.0, -2.0)
 
 	# 7 - the name, straddling the top edge and clear of the orb.
 	# Taller ribbon, bigger name. The name is the one thing readable on every
@@ -387,12 +403,15 @@ func _build_upper(data: Dictionary) -> void:
 ##
 ## Always on for a handheld: there is no hover on a touch screen, and a card
 ## whose text only appears on something a phone cannot do is a card with no text.
-func set_details_visible(on: bool) -> void:
-	if Screen.is_handheld():
-		on = true
-	for n in [_panel, _pill, _rules]:
-		if n != null and is_instance_valid(n):
-			(n as CanvasItem).visible = on
+## Nick, seeing the fan at rest: "it shows them as full art instead of the
+## bordered." Right - Slay the Spire never HIDES the panel. It is always part
+## of the card, and at rest it sits below the screen edge because the card is
+## tucked, which is a completely different thing from toggling it off: a card
+## dragged, mid-animation, or on a short screen still looks like a card. The
+## deep tuck does the concealing; this now does nothing, kept only so old
+## callers do not crash.
+func set_details_visible(_on: bool) -> void:
+	pass
 
 
 ## The rail form: [cost] [icon] [name / rules text], one row. Everything a

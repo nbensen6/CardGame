@@ -2709,11 +2709,9 @@ func _layout_hand() -> void:
 		# Grow from the BOTTOM CENTRE, so a lifted card rises out of the fan
 		# instead of swelling in all directions and shoving its neighbours.
 		c.scale = (Vector2.ONE * FAN_HOVER_SCALE) if c == _hand_hover else Vector2.ONE
-		# Rules only on the card you are looking at, as in the reference. The
-		# name, the cost and the art stay on every card so the hand still reads.
-		var cv := c as CardView
-		if cv != null:
-			cv.set_details_visible(c == _hand_hover)
+		# The panel stays on the card always; the TUCK is what hides it at
+		# rest, exactly as in the reference. Toggling visibility instead made a
+		# resting card read as borderless full art (Nick's screenshots).
 		# and comes to the front, or its neighbours overlap the thing you lifted.
 		c.z_index = 10 if c == _hand_hover else i
 
