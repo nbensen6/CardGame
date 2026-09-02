@@ -2514,6 +2514,41 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 3 (verify a mechanic), fifteenth turn of the
+  rotation. The twelfth turn's log said `combat_3d.gd`'s ten `static func`s
+  were now fully covered and the other views had no static funcs at all to
+  pull an untested pure function from — so this turn widened the search past
+  `views/` and cross-referenced every `static func` in the project against
+  `run_tests.gd` by grep count. Dozens of data-listing accessors
+  (`Content.all_potion_ids`, `Progress.keybind`, etc.) came back at zero
+  calls, but those are plumbing, not a rule the game claims to have. The real
+  find was `CardView.face_text` (`ui/card_view.gd`): the live sentence a
+  player reads on a card in hand — "Deal 5 damage twice.", "All players gain
+  4 Block.", "Burn a card: ally climbs 2." — built fresh from `preview`/`fx`/
+  `base` every server tick, with zero coverage despite being exactly the
+  "misdescribes a real choice" bug class the wayside-event `_stakes` pass
+  caught a few turns ago, one screen over. It was already `static`, no
+  lifting needed — `class_name CardView` already makes it callable directly,
+  same as `Card` elsewhere in the suite. Added eleven tests: single- and
+  multi-hit damage phrasing ("twice" vs "N times"), the matched-vs-mismatched
+  merge rule for both Block and climb (including the ally line's "climbs"
+  conjugation), every non-numeric status/utility line joined in field order,
+  the two Burn variants (`sac_ally_grip` vs `exhaust_pick`/`cheapen_pick`) and
+  — the one that would have caught a real regression — that a card carrying
+  BOTH fields shows only the `sac_ally_grip` line, proving the `elif` really
+  is exclusive and not two independent `if`s waiting to double up. Also
+  covered both fallback paths to the authored `text` string, which turned out
+  to be two different early returns (`pv.is_empty()` for a card with no live
+  preview at all vs `out.is_empty()` for a real preview dict whose values are
+  all zero) — worth telling apart since only the first one also needs to
+  markup keywords in rich mode. First pass at these tests had the empty-
+  preview mistake baked in for the status/Burn tests (`"preview": {}` trips
+  the `pv.is_empty()` early return before `fx` is ever read, since
+  `Dictionary.is_empty()` checks size, not values) — five tests FAILed
+  against the intended behaviour, not a false pass, and the fix was
+  `"preview": {"damage": 0}` instead of `{}` on those five. `run_tests.gd`:
+  ALL TESTS PASSED after the fix. Next #86 turn is duty 1 (improve an asset).
+
 - **2026-09-02** — #86 duty 2 (find an error and resolve it), fourteenth turn
   of the rotation. `Boss.to_dict()`/`apply_dict()` (`core/boss.gd`) is a second,
   independently-written copy of `PlayerState.to_dict()`/`from_dict()`'s

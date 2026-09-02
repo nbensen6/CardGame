@@ -493,6 +493,22 @@ func _init() -> void:
 	_test_backlog86_stakes_describes_a_reward_choice()
 	_test_backlog86_stakes_joins_every_stake_named_at_once()
 	_test_backlog86_stakes_is_blank_for_an_effect_with_nothing_to_show()
+	# backlog #86 duty 3 (fifteenth turn): CardView.face_text, the live line a
+	# player reads on a card in hand to decide whether to play it -- was
+	# already static and pure, and had zero coverage despite being the exact
+	# "misdescribes a real choice" bug class duty 3's stakes pass caught, one
+	# screen over.
+	_test_backlog86_face_text_single_hit_damage()
+	_test_backlog86_face_text_multi_hit_damage_says_times()
+	_test_backlog86_face_text_matched_block_merges_to_all_players()
+	_test_backlog86_face_text_mismatched_block_lists_separately()
+	_test_backlog86_face_text_matched_climb_merges_to_all_players()
+	_test_backlog86_face_text_mismatched_climb_pluralizes_the_allys_line()
+	_test_backlog86_face_text_status_and_utility_lines_join_in_field_order()
+	_test_backlog86_face_text_burn_lines_are_mutually_exclusive()
+	_test_backlog86_face_text_falls_back_to_authored_text_with_no_preview()
+	_test_backlog86_face_text_falls_back_to_authored_text_when_nothing_landed()
+	_test_backlog86_num_colors_only_when_the_live_value_differs_from_printed()
 
 	print("")
 	if _failures == 0:
@@ -7392,6 +7408,131 @@ func _test_backlog86_stakes_joins_every_stake_named_at_once() -> void:
 func _test_backlog86_stakes_is_blank_for_an_effect_with_nothing_to_show() -> void:
 	_expect(Location3D._stakes({}) == "",
 		"a choice with no stated stakes gets no parentheses at all, not an empty '()'")
+
+
+## backlog #86 duty 3 (fifteenth pass): CardView.face_text is the live line a
+## player reads on a card in their hand -- built fresh every server tick from
+## preview/fx/base, never from the authored `text` string once a real fight is
+## running. It was already `static func face_text(data, rich)`, no lifting
+## needed, and had never been called from run_tests.gd: nothing proved that a
+## live damage/block/climb number, a status effect, or a Burn variant actually
+## renders as the sentence a player would read to decide whether to play the
+## card. Exactly the "misdescribes a real choice" bug class the wayside-event
+## stakes pass caught a few turns ago, one screen over -- CardView has no
+## class_name preload of its own to add since `class_name CardView` already
+## makes it a global, the same way `Card` is used elsewhere in this file.
+
+func _test_backlog86_face_text_single_hit_damage() -> void:
+	var data := {"preview": {"damage": 5}, "preview_miss": {"damage": 5},
+		"base": {"damage": 5}, "fx": {"hits": 1}, "keywords": []}
+	_expect(CardView.face_text(data, false) == "Deal 5 damage.",
+		"a plain single-hit card reads as one damage sentence with no hit count")
+
+
+func _test_backlog86_face_text_multi_hit_damage_says_times() -> void:
+	var twice := {"preview": {"damage": 3}, "preview_miss": {"damage": 3},
+		"base": {"damage": 3}, "fx": {"hits": 2}, "keywords": []}
+	_expect(CardView.face_text(twice, false) == "Deal 3 damage twice.",
+		"two hits reads 'twice', not '2 times'")
+	var thrice := {"preview": {"damage": 3}, "preview_miss": {"damage": 3},
+		"base": {"damage": 3}, "fx": {"hits": 3}, "keywords": []}
+	_expect(CardView.face_text(thrice, false) == "Deal 3 damage 3 times.",
+		"three or more hits spells out the count instead")
+
+
+func _test_backlog86_face_text_matched_block_merges_to_all_players() -> void:
+	var data := {"preview": {"block": 4, "ally_block": 4},
+		"preview_miss": {"block": 4, "ally_block": 4},
+		"base": {"block": 4, "ally_block": 4}, "fx": {}, "keywords": []}
+	_expect(CardView.face_text(data, false) == "All players gain 4 Block.",
+		"identical self/ally Block merges into one 'All players' line instead of saying the same fact twice")
+
+
+func _test_backlog86_face_text_mismatched_block_lists_separately() -> void:
+	var data := {"preview": {"block": 4, "ally_block": 6},
+		"preview_miss": {"block": 4, "ally_block": 6},
+		"base": {"block": 4, "ally_block": 6}, "fx": {}, "keywords": []}
+	_expect(CardView.face_text(data, false) == "Gain 4 Block. Ally gains 6 Block.",
+		"different self/ally Block amounts stay two sentences so neither value is lost")
+
+
+func _test_backlog86_face_text_matched_climb_merges_to_all_players() -> void:
+	var data := {"preview": {"grip": 3, "ally_grip": 3},
+		"preview_miss": {"grip": 3, "ally_grip": 3},
+		"base": {"grip": 3, "ally_grip": 3}, "fx": {}, "keywords": []}
+	_expect(CardView.face_text(data, false) == "All players climb 3.",
+		"identical self/ally climb also merges, same rule as Block")
+
+
+func _test_backlog86_face_text_mismatched_climb_pluralizes_the_allys_line() -> void:
+	var data := {"preview": {"grip": 2, "ally_grip": 5},
+		"preview_miss": {"grip": 2, "ally_grip": 5},
+		"base": {"grip": 2, "ally_grip": 5}, "fx": {}, "keywords": []}
+	_expect(CardView.face_text(data, false) == "Climb 2. Ally climbs 5.",
+		"the ally's own climb line conjugates to 'climbs' where the self line reads 'Climb'")
+
+
+func _test_backlog86_face_text_status_and_utility_lines_join_in_field_order() -> void:
+	var data := {"preview": {"damage": 0}, "preview_miss": {}, "base": {}, "keywords": [],
+		"fx": {"wound": 2, "vulnerable": 1, "strength": 3, "rhythm": 1, "draw": 2, "taunt": true}}
+	_expect(CardView.face_text(data, false) ==
+		"Poison 2. Expose 1. Strength 3. Rhythm 1. Draw 2. Taunt.",
+		"every non-numeric effect on one card gets its own sentence, in the order face_text checks them")
+
+
+func _test_backlog86_face_text_burn_lines_are_mutually_exclusive() -> void:
+	var sac := {"preview": {"damage": 0}, "preview_miss": {}, "base": {}, "keywords": [],
+		"fx": {"sac_ally_grip": 2}}
+	_expect(CardView.face_text(sac, false) == "Burn a card: ally climbs 2.",
+		"sac_ally_grip alone reads as the ally-climb Burn variant")
+	var pick := {"preview": {"damage": 0}, "preview_miss": {}, "base": {}, "keywords": [],
+		"fx": {"exhaust_pick": true}}
+	_expect(CardView.face_text(pick, false) == "Burn a card.",
+		"exhaust_pick alone reads as the plain Burn-a-card variant")
+	var cheapen := {"preview": {"damage": 0}, "preview_miss": {}, "base": {}, "keywords": [],
+		"fx": {"exhaust_pick": true, "cheapen_pick": true}}
+	_expect(CardView.face_text(cheapen, false) == "Burn a card to cheapen another.",
+		"exhaust_pick plus cheapen_pick names the cheapen clause")
+	# The source branch is `elif bool(fx.get("exhaust_pick", false))`, so a card
+	# carrying both fields must show only the sac_ally_grip line -- if that ever
+	# changed to two independent `if`s a card could claim to burn twice.
+	var both := {"preview": {"damage": 0}, "preview_miss": {}, "base": {}, "keywords": [],
+		"fx": {"sac_ally_grip": 2, "exhaust_pick": true}}
+	_expect(CardView.face_text(both, false) == "Burn a card: ally climbs 2.",
+		"a card with both fields set shows only the sac_ally_grip line, never both Burn sentences")
+
+
+func _test_backlog86_face_text_falls_back_to_authored_text_with_no_preview() -> void:
+	var data := {"text": "Deal 3 damage.", "keywords": []}
+	_expect(CardView.face_text(data, false) == "Deal 3 damage.",
+		"a card with no live preview at all (an offer on the reward screen, not a card in hand) prints its authored text verbatim")
+	var marked := {"text": "Poison 2.", "keywords": [{"id": "poison"}]}
+	_expect(CardView.face_text(marked, true) ==
+		"[url=kw:poison][u][color=#%s]Poison[/color][/u][/url] 2." % CardView.KEYWORD_COLOR,
+		"the same no-preview fallback still marks up its keywords in rich mode, or a card offered as a reward would show plain text where one held in hand shows gold underlined terms")
+
+
+func _test_backlog86_face_text_falls_back_to_authored_text_when_nothing_landed() -> void:
+	# Distinct from the no-preview case above: here `preview` IS present (a real
+	# fight, a real dict) but every field on it is zero, so no line gets built.
+	# `Dictionary.is_empty()` only checks size, not values -- an all-zero
+	# preview dict is non-empty, so this exercises the OTHER early return
+	# (`if out.is_empty()`), not the `pv.is_empty()` one the test above does.
+	var data := {"text": "Nothing to see.", "preview": {"damage": 0, "block": 0},
+		"preview_miss": {}, "base": {}, "fx": {}, "keywords": []}
+	_expect(CardView.face_text(data, false) == "Nothing to see.",
+		"a real preview dict whose values are all zero still falls back to the authored text rather than an empty string")
+
+
+func _test_backlog86_num_colors_only_when_the_live_value_differs_from_printed() -> void:
+	_expect(CardView._num(3, 3, 3, true) == "3",
+		"a live value equal to what the card prints stays plain even in rich mode")
+	_expect(CardView._num(5, 5, 3, true) == "[color=#%s]5[/color]" % CardView.LIVE_COLOR,
+		"a live value a buff or scaling moved away from the printed base is coloured in rich mode")
+	_expect(CardView._num(5, 5, 3, false) == "5",
+		"the same buffed value stays plain text outside rich mode -- colour is a RichTextLabel-only concern")
+	_expect(CardView._num(0, 4, 0, true) == "[color=#%s]4[/color]" % CardView.LIVE_COLOR,
+		"a card with no guaranteed value (low<=0) prints the landed high instead of a bare 0")
 
 
 func _expect(cond: bool, name: String) -> void:
