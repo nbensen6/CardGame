@@ -516,6 +516,16 @@ func _init() -> void:
 	_test_backlog86_face_text_falls_back_to_authored_text_with_no_preview()
 	_test_backlog86_face_text_falls_back_to_authored_text_when_nothing_landed()
 	_test_backlog86_num_colors_only_when_the_live_value_differs_from_printed()
+	# backlog #86 duty 3 (sixteenth turn): _let_drags_through, the recursive
+	# camera-drag passthrough combat_3d._ready() calls on the top bar -- had
+	# zero coverage despite being exactly the kind of fix the doc comment above
+	# it warns about regressing ("a label added there later cannot quietly
+	# reintroduce" a dead strip). Static and pure: a bare Control tree, no
+	# combat scene needed.
+	_test_backlog86_let_drags_through_sets_the_root_itself()
+	_test_backlog86_let_drags_through_reaches_every_descendant_control()
+	_test_backlog86_let_drags_through_walks_through_a_non_control_node()
+	_test_backlog86_let_drags_through_tolerates_a_null_root()
 
 	print("")
 	if _failures == 0:
@@ -7567,6 +7577,55 @@ func _test_backlog86_num_colors_only_when_the_live_value_differs_from_printed() 
 		"the same buffed value stays plain text outside rich mode -- colour is a RichTextLabel-only concern")
 	_expect(CardView._num(0, 4, 0, true) == "[color=#%s]4[/color]" % CardView.LIVE_COLOR,
 		"a card with no guaranteed value (low<=0) prints the landed high instead of a bare 0")
+
+
+## backlog #86 duty 3 (sixteenth turn) -- combat_3d._let_drags_through walks a
+## whole subtree setting mouse_filter to IGNORE, because Godot's mouse_filter
+## does not inherit: a Control marked IGNORE still leaves its CHILDREN at the
+## STOP default, which is exactly the bug the doc comment above it names (the
+## top bar stayed a dead strip for camera drags even after being marked
+## IGNORE, until every descendant was walked too). These build a bare Control
+## tree with no scene and no combat state -- the function is static and pure.
+func _test_backlog86_let_drags_through_sets_the_root_itself() -> void:
+	var top := Control.new()
+	Combat3D._let_drags_through(top)
+	_expect(top.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+		"the root passed in is itself set to IGNORE, not just its children")
+	top.free()
+
+
+func _test_backlog86_let_drags_through_reaches_every_descendant_control() -> void:
+	var top := Control.new()
+	var mid := Control.new()
+	var leaf := Control.new()
+	top.add_child(mid)
+	mid.add_child(leaf)
+	Combat3D._let_drags_through(top)
+	_expect(mid.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+		"a child added under the top bar must be walked too, or it stays STOP and blocks the drag mouse_filter alone would have missed")
+	_expect(leaf.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+		"a grandchild is reached as well -- the whole subtree, not just one level")
+	top.free()
+
+
+func _test_backlog86_let_drags_through_walks_through_a_non_control_node() -> void:
+	# A plain Node with no mouse_filter of its own (e.g. a layout helper) sits
+	# between two Controls; the walk must not stop just because the middle
+	# node isn't a Control.
+	var top := Control.new()
+	var wrapper := Node.new()
+	var leaf := Control.new()
+	top.add_child(wrapper)
+	wrapper.add_child(leaf)
+	Combat3D._let_drags_through(top)
+	_expect(leaf.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+		"a Control nested under a non-Control node is still reached -- recursion continues past nodes with no mouse_filter of their own")
+	top.free()
+
+
+func _test_backlog86_let_drags_through_tolerates_a_null_root() -> void:
+	Combat3D._let_drags_through(null)
+	_expect(true, "a null root returns immediately instead of crashing on get_children()")
 
 
 func _expect(cond: bool, name: String) -> void:

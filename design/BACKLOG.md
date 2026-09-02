@@ -2514,6 +2514,25 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 3 (verify a mechanic actually works), eighteenth
+  turn of the rotation. Went hunting the view layer for a static, pure
+  function with zero test coverage, same place duty 3 has been finding real
+  gaps all along. `combat_3d._let_drags_through(root)` — the recursive walk
+  that sets `mouse_filter = IGNORE` on the top bar and everything under it,
+  so a camera drag isn't eaten by a Control that defaults to STOP — had
+  none. Its own doc comment names the exact regression this proves against:
+  Godot's `mouse_filter` does not inherit, so marking only the top-level
+  Control IGNORE leaves children at STOP and the bar stays a dead strip; the
+  walk exists specifically so a label added later under that bar can't
+  quietly reintroduce the bug. Added four tests, entirely headless (bare
+  `Control`/`Node` trees, no combat scene, no beast model): the root itself
+  gets set; a child AND a grandchild both get reached, not just one level;
+  a `Control` nested under a plain non-`Control` `Node` (a layout wrapper
+  with no `mouse_filter` of its own) is still walked through rather than
+  stopping recursion; and a `null` root returns instead of crashing on
+  `get_children()`. `run_tests.gd` green (all tests, including the four
+  new ones). No production code changed — this duty proves an existing
+  mechanic, it doesn't fix one.
 - **2026-09-02** — #86 duty 2 (find an error and resolve it), seventeenth
   turn of the rotation. `Combat.incoming_for()` (the damage-preview branch
   the HUD reads) and `Combat._enemy_turn()` (the branch that actually
