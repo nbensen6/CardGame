@@ -441,6 +441,16 @@ func _init() -> void:
 	# end for an early-return that skips a tail statement.
 	_test_backlog86_render_hand_status_always_relayouts_while_selecting()
 	_test_backlog86_render_hand_status_hides_prompt_outside_selection()
+	# backlog #86 duty 3 (third pass): Nick's own example, the jump mechanic
+	# itself — hunter_move_kind, the gate _place_hunters uses to decide a JUMP
+	# from a glide from a first placement. This is the exact rule behind the
+	# "bouncing in random places" bug: a jump must fire for a height change and
+	# ONLY a height change.
+	_test_backlog86_hunter_move_kind_is_first_before_any_placement()
+	_test_backlog86_hunter_move_kind_climbs_on_a_foothold_change()
+	_test_backlog86_hunter_move_kind_glides_when_the_world_moved_under_a_placed_hunter()
+	_test_backlog86_hunter_move_kind_is_none_when_placed_and_settled()
+	_test_backlog86_hunter_move_kind_climb_outranks_moved_even_if_the_point_did_not_move()
 
 	print("")
 	if _failures == 0:
@@ -6998,6 +7008,48 @@ func _test_backlog86_foothold_anchor_ignores_unsorted_key_order() -> void:
 	var anchors := {12: Vector3(0, 12, 0), 0: Vector3(0, 0, 0), 8: Vector3(0, 8, 0), 4: Vector3(0, 4, 0)}
 	var p: Vector3 = Combat3D.foothold_anchor(anchors, 6)
 	_expect(p.is_equal_approx(Vector3(0, 6, 0)), "the bracket is found by sorted Height, regardless of the dictionary's insertion order")
+
+
+## backlog #86 duty 3 (third pass) — hunter_move_kind is the pure gate lifted
+## out of _place_hunters that decides whether a hunter's next position update
+## is a climb, a first placement, a glide, or nothing at all. It is the exact
+## rule behind Nick's jump mechanic, and behind the bug he reported ("bouncing
+## in random places at an awkward cadence"): the fix was to key a JUMP off a
+## foothold change, never off the target point merely having moved.
+func _test_backlog86_hunter_move_kind_is_first_before_any_placement() -> void:
+	# Not yet placed outranks everything else, even a foothold that "changed"
+	# from its zero-value default and a point that "moved" from Vector3.ZERO.
+	_expect(Combat3D.hunter_move_kind(false, 0, 3, true) == "first",
+		"a hunter that has never been placed gets an instant first placement, not a climb or a glide")
+	_expect(Combat3D.hunter_move_kind(false, 0, 0, false) == "first",
+		"first placement holds even when nothing about the foothold or the point looks like it changed")
+
+
+func _test_backlog86_hunter_move_kind_climbs_on_a_foothold_change() -> void:
+	_expect(Combat3D.hunter_move_kind(true, 2, 5, true) == "climb",
+		"a placed hunter whose foothold changed gets a climb, going up")
+	_expect(Combat3D.hunter_move_kind(true, 5, 2, true) == "climb",
+		"and going down — the direction of the foothold change doesn't matter, only that it changed")
+
+
+func _test_backlog86_hunter_move_kind_glides_when_the_world_moved_under_a_placed_hunter() -> void:
+	_expect(Combat3D.hunter_move_kind(true, 3, 3, true) == "glide",
+		"the beast rescaling or the sigil settling under an already-placed hunter at the SAME foothold slides, it does not jump")
+
+
+func _test_backlog86_hunter_move_kind_is_none_when_placed_and_settled() -> void:
+	_expect(Combat3D.hunter_move_kind(true, 3, 3, false) == "none",
+		"nothing changed: same foothold, no meaningful movement — no animation should start at all")
+
+
+func _test_backlog86_hunter_move_kind_climb_outranks_moved_even_if_the_point_did_not_move() -> void:
+	# This is the guard against regressing the exact bug: `moved` (a 0.05m
+	# distance check on the world-space TARGET) and `was != foot` (a foothold
+	# index change) are measuring two different things and can disagree. A
+	# foothold change must still climb even in the edge case where the new
+	# resting point happens to land within 0.05m of the old one.
+	_expect(Combat3D.hunter_move_kind(true, 2, 5, false) == "climb",
+		"a real foothold change climbs even if the two world positions happen to coincide")
 
 
 func _expect(cond: bool, name: String) -> void:

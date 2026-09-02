@@ -2482,6 +2482,30 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 3 (verify a mechanic), ninth turn of the rotation,
+  and Nick's own named example: the jump mechanic itself, not another sibling
+  of `_route_between`. `_place_hunters` decided whether to climb, glide, do an
+  instant first placement, or nothing, with two ad hoc booleans inline
+  (`climbed := placed and was != foot`, then an `elif not placed` / `elif
+  moved` chain) — exactly the logic behind the bug Nick reported and #86 duty
+  2 already fixed once (`7456470`, hunters spawning inside the beast because
+  neither branch could run on the first pass). That gate had never been
+  tested directly; only its downstream effects (`route_between_rungs`,
+  `foothold_anchor`) had. Lifted it into a static
+  `hunter_move_kind(placed, was, foot, moved) -> String` returning `"climb"`,
+  `"first"`, `"glide"`, or `"none"`, and had `_place_hunters` match on it
+  instead of the inline booleans. Five tests: first placement outranks
+  everything else even when the foothold/point look "changed" from their
+  zero defaults; a foothold change climbs going up and going down; the world
+  moving under an already-placed hunter at the SAME foothold glides, never
+  jumps; nothing happening does nothing; and the one case that actually
+  matters — a real foothold change still climbs even in the edge case where
+  the new resting point happens to land within the glide's own 0.05m
+  threshold of the old one, which is exactly the kind of coincidence that
+  would silently undo this fix if `moved` were ever checked first. Behavior-
+  preserving extraction, not a new bug fix — no pre-fix failure to show, same
+  as duty 3's last two turns. `run_tests.gd`: ALL TESTS PASSED (532 PASS
+  lines, up from 525). Next #86 turn is duty 1 (improve an asset).
 - **2026-09-02** — #86 duty 2 (find an error and resolve it), eighth turn of
   the rotation. Read `game/views/combat_3d.gd`'s `_render_hand` end to end
   (the sibling function to `_place_hunters`, both build UI/scene state from

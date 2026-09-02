@@ -2016,6 +2016,32 @@ static func _start_glide(tw: Tween, node: Node3D, to: Vector3, dur: float) -> vo
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 
+## Decides how a hunter's position update should be animated, given only the
+## bookkeeping _place_hunters already has to hand — no Node3D required, so a
+## headless test can pin the rule down directly.
+##
+## A JUMP is for a change of HEIGHT. Nothing else.
+##
+## This used to hop whenever the target moved more than 0.05, and the target
+## moves for all sorts of reasons that are not the hunter climbing: the sigil
+## settles, the beast is rescaled, the surface sampler returns a slightly
+## different point as the body shakes. Every one of those fired a full leap.
+## That is Nick's "bouncing in random places at an awkward cadence" — the
+## cadence was random because the trigger was.
+##
+## `was != foot` outranks `moved`: a foothold change climbs even if the two
+## world positions happen to coincide, and a same-foothold reshuffle never
+## climbs no matter how far the point moved.
+static func hunter_move_kind(placed: bool, was: int, foot: int, moved: bool) -> String:
+	if placed and was != foot:
+		return "climb"
+	if not placed:
+		return "first"
+	if moved:
+		return "glide"
+	return "none"
+
+
 func _place_hunters(s: Dictionary) -> void:
 	var players: Array = s.get("players", [])
 	var boss: Dictionary = s.get("boss", {})
@@ -2070,20 +2096,12 @@ func _place_hunters(s: Dictionary) -> void:
 		var moved: bool = from_pos.distance_to(pos) > 0.05
 		var was: int = int(h.get("foot", foot))
 		var placed: bool = bool(h.get("placed", false))
-		# A JUMP is for a change of HEIGHT. Nothing else.
-		#
-		# This used to hop whenever the target moved more than 0.05, and the
-		# target moves for all sorts of reasons that are not the hunter
-		# climbing: the sigil settles, the beast is rescaled, the surface
-		# sampler returns a slightly different point as the body shakes. Every
-		# one of those fired a full leap. That is Nick's "bouncing in random
-		# places at an awkward cadence" — the cadence was random because the
-		# trigger was.
-		var climbed: bool = placed and was != foot
+		# A JUMP is for a change of HEIGHT. Nothing else — see hunter_move_kind.
+		var kind := hunter_move_kind(placed, was, foot, moved)
 		h["home"] = pos
 		h["foot"] = foot
 		h["placed"] = true
-		if climbed:
+		if kind == "climb":
 			# Climb VIA the ledges in between, not through the body. Going from
 			# the ankle to the shoulder means stopping on the platform on the way,
 			# which is the whole reason the anchors exist — a straight tween
@@ -2121,7 +2139,7 @@ func _place_hunters(s: Dictionary) -> void:
 				_hop(tw, node, body, at, mid, step)
 				at = mid
 			_hop(tw, node, body, at, pos, step)
-		elif not placed:
+		elif kind == "first":
 			# FIRST placement: be there, with no animation.
 			#
 			# Nick, 2026-09-01: "hunters have been spawning underneath the
@@ -2138,7 +2156,7 @@ func _place_hunters(s: Dictionary) -> void:
 			# right spot, and every check that asked the GAME where a hunter was
 			# got the right answer. Only the drawing was wrong.
 			node.position = pos
-		elif moved:
+		elif kind == "glide":
 			# The world moved under them — the beast rescaled, the sigil settled.
 			# Slide, do not leap: they have not gone anywhere.
 			var glide := create_tween()
