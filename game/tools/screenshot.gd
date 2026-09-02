@@ -250,7 +250,7 @@ func _initialize() -> void:
 		# find a height that is neither the ground, a ledge, nor the sigil
 		var unsafe := 1
 		for h in range(1, cg.boss.weak_point_height):
-			if not (h in cg.boss.ledges):
+			if not (h in cg.boss.ledge_heights()):
 				unsafe = h
 				break
 		cg.players[0].foothold = unsafe

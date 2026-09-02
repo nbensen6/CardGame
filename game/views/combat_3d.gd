@@ -461,9 +461,23 @@ func _update_gauge(s: Dictionary) -> void:
 	var heights: Array = []
 	for p in s.get("players", []):
 		heights.append(int((p as Dictionary).get("foothold", 0)))
-	_gauge_data = {"top": top, "ledges": boss.get("ledges", []), "heights": heights}
+	_gauge_data = {"top": top, "ledges": gauge_ledge_heights(boss.get("ledges", [])), "heights": heights}
 	panel.visible = true
 	_gauge.queue_redraw()
+
+
+## Normalize a raw `ledges` array (bare ints/floats, or the Dictionary hold
+## shape from Boss.hold_height()/hold_safe() — backlog #24 unsafe named holds)
+## into plain int Heights. `_draw_gauge` used to call `ledges.has(h)` directly
+## on the raw array: Array.has() compares with `==`, and an int Height never
+## equals a Dictionary hold, so any Dictionary-shaped ledge silently drew as
+## "no ledge here" on the gauge even though /core treated it correctly
+## everywhere else. #86 duty 2 (two copies of one truth).
+static func gauge_ledge_heights(ledges: Array) -> Array:
+	var out: Array = []
+	for l in ledges:
+		out.append(Boss.hold_height(l))
+	return out
 
 
 func _draw_gauge() -> void:

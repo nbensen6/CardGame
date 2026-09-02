@@ -2514,6 +2514,33 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 2 (find an error and resolve it), eleventh turn of
+  the rotation. Fixed the runner-up this same duty flagged and left unfixed
+  two turns ago (`abe2c23`'s log entry): `combat_3d._draw_gauge` checked
+  `ledges.has(h)` straight off the raw `boss.ledges` snapshot to decide which
+  rungs on the climb gauge get drawn as ledges. `Array.has()` compares with
+  `==`, and a named hold (backlog #24) is a Dictionary `{height, safe,
+  exposed_to}` — never `==` to the plain int Height `h` — so a Dictionary
+  ledge would silently draw as "no ledge here" even though `/core` reads it
+  correctly everywhere else via `Boss.hold_height()`/`hold_safe()`. Latent
+  today (grepped `data/bosses.json` — every current boss's `ledges` is still
+  a bare-int array), but a live landmine for the first designer who adds one.
+  `Boss.ledge_heights()` already existed with a doc comment naming this exact
+  call site as an intended consumer, but nothing had ever wired it up —
+  lifted the same normalization into a new pure `combat_3d.gauge_ledge_heights()`
+  (the snapshot here is a plain Dictionary off the wire, not a live `Boss`,
+  so the instance method doesn't reach) and pointed `_update_gauge` at it.
+  Wrote both regression tests first, temporarily reverted the fix to confirm
+  `_test_backlog86_gauge_ledge_heights_recognizes_named_holds` FAILs on the
+  old behaviour (the bare-int test still passed — that's the trap: a scan
+  that only ever tries legacy data stays green), then restored the fix.
+  Also fixed the identical bug in `tools/screenshot.gd` (`h in cg.boss.ledges`
+  -> `h in cg.boss.ledge_heights()`), which runs against a live `Boss` so the
+  instance method applies there directly; unverified visually since that tool
+  needs a screen, but it's the same one-line class of fix. `run_tests.gd`:
+  ALL TESTS PASSED, both before (all other tests, with the revert) and after.
+  Next #86 turn is duty 3 (verify a mechanic).
+
 - **2026-09-02** — #86 duty 1 (improve an asset). `shield`'s icon scored 32/50
   in a scan-only batch months back (`design/progress/shield_icon.md`) with two
   diagnosed, unfixed lines: Family distinction (3 — nearly identical outer

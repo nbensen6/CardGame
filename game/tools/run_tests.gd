@@ -474,6 +474,13 @@ func _init() -> void:
 	_test_backlog86_hull_front_at_finds_the_deepest_point_in_the_neighbourhood()
 	_test_backlog86_hull_front_at_does_not_reach_beyond_its_neighbourhood()
 	_test_backlog86_hull_front_at_ignores_neighbours_outside_hull_bounds()
+	# backlog #86 duty 2 (seventh turn): _draw_gauge compared the raw ledges
+	# snapshot against an int with Array.has() (==), which never matches the
+	# Dictionary named-hold shape (backlog #24) that /core already treats as a
+	# real ledge everywhere else -- a two-copies-of-one-truth bug, the same
+	# family as #45's named-hold boundary test above, on the gauge's own side.
+	_test_backlog86_gauge_ledge_heights_passes_bare_ints_through()
+	_test_backlog86_gauge_ledge_heights_recognizes_named_holds()
 
 	print("")
 	if _failures == 0:
@@ -7019,6 +7026,26 @@ func _test_backlog86_route_between_rungs_ignores_unsorted_input() -> void:
 	# the dictionary's insertion order to come out in climb order.
 	var route: Array = Combat3D.route_between_rungs([12, 0, 8, 4], 0, 12)
 	_expect(route == [4, 8], "the rung list is sorted before routing, regardless of the order it arrives in")
+
+
+## backlog #86 duty 2 — _draw_gauge used to check `ledges.has(h)` straight off
+## the raw `boss.ledges` snapshot, which is a "two copies of one truth" bug:
+## /core reads every ledge through Boss.hold_height()/hold_safe() so bare ints
+## and the Dictionary named-hold shape (backlog #24) are interchangeable, but
+## Array.has() compares with ==, and an int Height never equals a Dictionary
+## hold. A Dictionary-shaped ledge would silently draw as "no ledge here" on
+## the gauge even though the fight itself treated it as a real, unsafe hold.
+## gauge_ledge_heights() normalizes the raw array before the gauge ever
+## compares against it.
+func _test_backlog86_gauge_ledge_heights_passes_bare_ints_through() -> void:
+	_expect(Combat3D.gauge_ledge_heights([0, 4, 8]) == [0, 4, 8],
+		"legacy bare-int ledges normalize to themselves")
+
+
+func _test_backlog86_gauge_ledge_heights_recognizes_named_holds() -> void:
+	var named := [3, {"height": 6, "safe": false, "exposed_to": ["slam"]}]
+	_expect(Combat3D.gauge_ledge_heights(named) == [3, 6],
+		"a Dictionary-shaped named hold still counts as a ledge Height on the gauge, not silently dropped")
 
 
 ## backlog #86 duty 2 — a real bug in `_place_hunters`'s `elif moved:` branch
