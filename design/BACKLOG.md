@@ -2482,6 +2482,27 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 3 (verify a mechanic), sixth turn of the rotation.
+  Duty 3's first pass (`0bf0534`) named two siblings of `_route_between` as
+  still untested and explicitly ruled `_hop` out (pure animation timing, not
+  to be faked a test for) but left `_stand_on_model` open, saying it "needs a
+  live `_beast_box`/`_front_of_beast` to mean anything." That's true of the
+  side-offset and body-clearance half of it, but not of the bracket-and-lerp
+  half above it — the rule the function's own doc comment promises: a
+  foothold lands exactly on a rung when the Height matches one, and on the
+  line between the two that bracket it otherwise. That half reads only the
+  model's Height -> Vector3 anchors, same shape as `route_between_rungs`.
+  Lifted it into a static `foothold_anchor(anchors, foot)`, had
+  `_stand_on_model` call it for the position it then offsets, and added five
+  tests: lands exactly on a matching rung, lerps a quarter of the way between
+  two bracketing rungs, clamps below the lowest rung and above the highest
+  (both untested edge cases — a foothold shaken outside its anchored range
+  should not extrapolate past the model's own ends), and ignores insertion
+  order the same way `route_between_rungs` does. Behavior-preserving
+  extraction, not a bug fix. `run_tests.gd`: ALL TESTS PASSED (77 tests).
+  `_hop` remains the one deliberately-untested piece of this trio, for the
+  reason duty 3's first pass already gave. Next #86 turn is duty 1 (improve
+  an asset).
 - **2026-09-02** — #86 duty 2 (find an error and resolve it), fifth turn of
   the rotation. Read `game/views/combat_3d.gd`'s `_place_hunters` end to end
   (the same function duty 3's own log already names as the site of the

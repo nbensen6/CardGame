@@ -1879,13 +1879,19 @@ func _climb_rungs() -> Array:
 	return keys
 
 
-## Where a hunter at `foot` stands, from the model's own anchors.
+## Pure form of the bracket-and-lerp rule above: given the model's anchors
+## (Height -> Vector3) and a foothold, which two anchors bracket it and where
+## between them the foothold actually sits. Split out static, like
+## route_between_rungs below, so run_tests.gd can prove the rule with no
+## scene tree and no model loaded. #86 duty 3.
 ##
-## Exactly on a rung when the Height matches one, and between the two that
-## bracket it otherwise — so a hunter part-way up a long haul is on the line
-## between the ledge below and the ledge above rather than on a number.
-func _stand_on_model(foot: int, side: float) -> Vector3:
-	var rungs := _climb_rungs()
+## The side-offset and body-clearance math in _stand_on_model stays on the
+## instance because it reads the live beast box; this is only the part of the
+## rule that decides a POSITION on the model, not how far off its surface a
+## hunter stands from that position.
+static func foothold_anchor(anchors: Dictionary, foot: int) -> Vector3:
+	var rungs: Array = anchors.keys()
+	rungs.sort()
 	var lo: int = int(rungs[0])
 	var hi: int = int(rungs[rungs.size() - 1])
 	for k in rungs:
@@ -1894,11 +1900,20 @@ func _stand_on_model(foot: int, side: float) -> Vector3:
 		if int(k) >= foot:
 			hi = int(k)
 			break
-	var a: Vector3 = _climb_points[lo]
-	var b: Vector3 = _climb_points[hi]
-	var p: Vector3 = a
-	if hi != lo:
-		p = a.lerp(b, clampf(float(foot - lo) / float(hi - lo), 0.0, 1.0))
+	var a: Vector3 = anchors[lo]
+	var b: Vector3 = anchors[hi]
+	if hi == lo:
+		return a
+	return a.lerp(b, clampf(float(foot - lo) / float(hi - lo), 0.0, 1.0))
+
+
+## Where a hunter at `foot` stands, from the model's own anchors.
+##
+## Exactly on a rung when the Height matches one, and between the two that
+## bracket it otherwise — so a hunter part-way up a long haul is on the line
+## between the ledge below and the ledge above rather than on a number.
+func _stand_on_model(foot: int, side: float) -> Vector3:
+	var p: Vector3 = foothold_anchor(_climb_points, foot)
 	# Two hunters on one ledge stand apart rather than inside each other.
 	var x: float = p.x + side * (_beast_box.size.x * 0.055 + 0.30)
 	# And OUT to the body's real surface at that spot, not a fraction of the

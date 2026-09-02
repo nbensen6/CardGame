@@ -428,6 +428,14 @@ func _init() -> void:
 	# backlog #86 duty 2: a real bug in the same file, found reading
 	# _place_hunters end to end — see the test and _start_glide for the story.
 	_test_backlog86_glide_is_not_defeated_by_a_synchronous_position_write()
+	# backlog #86 duty 3 (second pass): the OTHER untested climb rule named
+	# alongside route_between_rungs — foothold_anchor, the pure half of
+	# _stand_on_model, deciding WHERE on the model a foothold actually sits.
+	_test_backlog86_foothold_anchor_lands_exactly_on_a_matching_rung()
+	_test_backlog86_foothold_anchor_lerps_between_the_bracketing_rungs()
+	_test_backlog86_foothold_anchor_clamps_below_the_lowest_rung()
+	_test_backlog86_foothold_anchor_clamps_above_the_highest_rung()
+	_test_backlog86_foothold_anchor_ignores_unsorted_key_order()
 
 	print("")
 	if _failures == 0:
@@ -6923,6 +6931,45 @@ func _test_backlog86_glide_is_not_defeated_by_a_synchronous_position_write() -> 
 		"the glide must not be pre-empted by a synchronous position write, or the tween has nothing left to interpolate")
 	tw.kill()
 	node.free()
+
+
+## backlog #86 duty 3 (second pass) — combat_3d.foothold_anchor is the pure
+## half of _stand_on_model, the sibling rule to route_between_rungs above: not
+## which ledges a climb stops on, but WHERE on the model a single foothold
+## actually places a hunter. The doc comment above _stand_on_model promises a
+## hunter is exactly on a rung when the Height matches one, and on the line
+## between the two that bracket it otherwise — none of that had a test before
+## this, same as route_between_rungs before duty 3's first pass.
+func _test_backlog86_foothold_anchor_lands_exactly_on_a_matching_rung() -> void:
+	var anchors := {0: Vector3(0, 0, 0), 4: Vector3(0, 4, 0), 12: Vector3(0, 12, 0)}
+	var p: Vector3 = Combat3D.foothold_anchor(anchors, 4)
+	_expect(p.is_equal_approx(Vector3(0, 4, 0)), "a foothold exactly on an anchored rung returns that anchor untouched, not an interpolation of it with itself")
+
+
+func _test_backlog86_foothold_anchor_lerps_between_the_bracketing_rungs() -> void:
+	var anchors := {0: Vector3(0, 0, 0), 8: Vector3(0, 8, 0)}
+	var p: Vector3 = Combat3D.foothold_anchor(anchors, 2)
+	_expect(p.is_equal_approx(Vector3(0, 2, 0)), "a foothold a quarter of the way from one rung to the next sits a quarter of the way between their anchors, not snapped to either")
+
+
+func _test_backlog86_foothold_anchor_clamps_below_the_lowest_rung() -> void:
+	var anchors := {4: Vector3(0, 4, 0), 8: Vector3(0, 8, 0)}
+	var p: Vector3 = Combat3D.foothold_anchor(anchors, 0)
+	_expect(p.is_equal_approx(Vector3(0, 4, 0)), "a foothold below the lowest anchor clamps to it rather than extrapolating past the model's own lowest rung")
+
+
+func _test_backlog86_foothold_anchor_clamps_above_the_highest_rung() -> void:
+	var anchors := {4: Vector3(0, 4, 0), 8: Vector3(0, 8, 0)}
+	var p: Vector3 = Combat3D.foothold_anchor(anchors, 20)
+	_expect(p.is_equal_approx(Vector3(0, 8, 0)), "a foothold above the highest anchor clamps to it rather than extrapolating past the model's own highest rung")
+
+
+func _test_backlog86_foothold_anchor_ignores_unsorted_key_order() -> void:
+	# Dictionary.keys() makes no promise about order; the bracket search must
+	# not depend on the order the anchors happened to be gathered in.
+	var anchors := {12: Vector3(0, 12, 0), 0: Vector3(0, 0, 0), 8: Vector3(0, 8, 0), 4: Vector3(0, 4, 0)}
+	var p: Vector3 = Combat3D.foothold_anchor(anchors, 6)
+	_expect(p.is_equal_approx(Vector3(0, 6, 0)), "the bracket is found by sorted Height, regardless of the dictionary's insertion order")
 
 
 func _expect(cond: bool, name: String) -> void:
