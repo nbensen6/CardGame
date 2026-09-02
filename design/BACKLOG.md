@@ -2514,6 +2514,30 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 3 (verify a mechanic), twelfth turn of the
+  rotation. The specific starting point named for duty 3 back on 2026-09-01
+  (`combat_3d._route_between`, `_stand_on_model`, `_hop`) is now fully
+  covered — five prior duty-3 passes already lifted and tested
+  `route_between_rungs`, `foothold_anchor`, `hunter_move_kind`,
+  `height_gap_between` and `hull_front_at` — so this turn looked for the next
+  untested-but-real mechanic rather than a fourth case on something already
+  proven. Found `location_3d._stakes`: the text a player reads on a wayside
+  event's button before picking a choice blind (`"+5 HP  ·  -3 gold  ·
+  relic"`), which had zero coverage even though a formatting slip in it (a
+  dropped sign on a `max_hp` penalty, say) would silently misdescribe a real
+  choice. It was already pure — reads only its `eff` argument, no `self` —
+  so it needed lifting to `static`, the same move duty 3 already made for
+  the combat_3d climb rules, not a rewrite. Added eight tests in
+  `run_tests.gd` covering heal (positive and negative), max HP change, gold
+  change, a relic flag, a reward-choice token, all of them joined together
+  on one real multi-effect choice, and the empty case (no stakes named ->
+  no parentheses at all, not `"()"`). `run_tests.gd`: ALL TESTS PASSED.
+  Checked the other views (`game_3d.gd`, `overworld_3d.gd`, `menu.gd`) for
+  the same kind of already-pure-but-untested logic while here: none had any
+  `static func` at all, unlike `combat_3d.gd`'s ten, so there was nothing
+  else pulled out to test without a larger extraction than one turn should
+  take. Next #86 turn is duty 1 (improve an asset).
+
 - **2026-09-02** — #86 duty 2 (find an error and resolve it), eleventh turn of
   the rotation. Fixed the runner-up this same duty flagged and left unfixed
   two turns ago (`abe2c23`'s log entry): `combat_3d._draw_gauge` checked

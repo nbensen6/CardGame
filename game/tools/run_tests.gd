@@ -481,6 +481,17 @@ func _init() -> void:
 	# family as #45's named-hold boundary test above, on the gauge's own side.
 	_test_backlog86_gauge_ledge_heights_passes_bare_ints_through()
 	_test_backlog86_gauge_ledge_heights_recognizes_named_holds()
+	# backlog #86 duty 3 (seventh pass): location_3d._stakes, the wayside-event
+	# stakes text a player reads before picking blind -- lifted static the same
+	# way the combat_3d climb rules were, and given first coverage.
+	_test_backlog86_stakes_describes_a_heal()
+	_test_backlog86_stakes_describes_damage()
+	_test_backlog86_stakes_describes_a_max_hp_change()
+	_test_backlog86_stakes_describes_gold()
+	_test_backlog86_stakes_describes_a_relic()
+	_test_backlog86_stakes_describes_a_reward_choice()
+	_test_backlog86_stakes_joins_every_stake_named_at_once()
+	_test_backlog86_stakes_is_blank_for_an_effect_with_nothing_to_show()
 
 	print("")
 	if _failures == 0:
@@ -7293,6 +7304,63 @@ func _test_backlog86_hull_front_at_ignores_neighbours_outside_hull_bounds() -> v
 	var front: float = Combat3D.hull_front_at(hull, hull_x, hull_y, 0, 0, box)
 	_expect(front == 5.0,
 		"the corner column still finds its own value even with most of its neighbourhood off-grid")
+
+
+## backlog #86 duty 3 (seventh pass): location_3d._stakes is the OTHER
+## untested view-layer mechanic in this rotation's own family — not the climb
+## (combat_3d, five passes done above) but the wayside-event text a player
+## reads before picking a choice blind. It was already pure (only reads its
+## `eff` argument), so it needed lifting to `static` the same way
+## route_between_rungs and foothold_anchor did, not a rewrite.
+const Location3D := preload("res://views/location_3d.gd")
+
+
+func _test_backlog86_stakes_describes_a_heal() -> void:
+	_expect(Location3D._stakes({"heal": 5}) == "(+5 HP)",
+		"a positive heal reads as a gain, sign and all")
+
+
+func _test_backlog86_stakes_describes_damage() -> void:
+	_expect(Location3D._stakes({"heal": -3}) == "(-3 HP)",
+		"a negative heal reads as damage, not as a badly-signed gain")
+
+
+func _test_backlog86_stakes_describes_a_max_hp_change() -> void:
+	_expect(Location3D._stakes({"max_hp": 2}) == "(+2 max HP)",
+		"a max HP gain is labelled max HP, not confused with a heal")
+	_expect(Location3D._stakes({"max_hp": -2}) == "(-2 max HP)",
+		"a max HP loss keeps its sign the same way a heal loss does")
+
+
+func _test_backlog86_stakes_describes_gold() -> void:
+	_expect(Location3D._stakes({"gold": 10}) == "(+10 gold)",
+		"a gold gain is signed and labelled")
+	_expect(Location3D._stakes({"gold": -5}) == "(-5 gold)",
+		"a gold cost is signed and labelled the same way")
+
+
+func _test_backlog86_stakes_describes_a_relic() -> void:
+	_expect(Location3D._stakes({"relic": true}) == "(relic)",
+		"a relic reward is called out on its own, with no number attached")
+
+
+func _test_backlog86_stakes_describes_a_reward_choice() -> void:
+	_expect(Location3D._stakes({"reward": "card"}) == "(choose a card)",
+		"a reward token becomes a plain-English 'choose a ...' phrase")
+
+
+func _test_backlog86_stakes_joins_every_stake_named_at_once() -> void:
+	# A real event choice: heal a little, spend some gold, walk away with a
+	# relic — every one of the three bits above must show, in this order,
+	# joined the same way the button text actually renders them.
+	var eff := {"heal": 5, "gold": -3, "relic": true}
+	_expect(Location3D._stakes(eff) == "(+5 HP  ·  -3 gold  ·  relic)",
+		"multiple stakes on one choice all show, joined and in field order, not just the first one found")
+
+
+func _test_backlog86_stakes_is_blank_for_an_effect_with_nothing_to_show() -> void:
+	_expect(Location3D._stakes({}) == "",
+		"a choice with no stated stakes gets no parentheses at all, not an empty '()'")
 
 
 func _expect(cond: bool, name: String) -> void:

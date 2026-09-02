@@ -538,7 +538,13 @@ func _render_event(s: Dictionary) -> void:
 
 ## Spell the stakes out on the button — an event should never be a blind pick.
 ## Same rule the 2D screen follows, and the same wording.
-func _stakes(eff: Dictionary) -> String:
+##
+## Static, and already pure (only ever reads `eff`) — this is the text a
+## player reads before picking a wayside event choice, and until #86 duty 3
+## it had zero coverage: a formatting slip here (say, the sign on a `max_hp`
+## penalty) would silently misdescribe a real choice to a real player, with
+## nothing in run_tests.gd able to catch it.
+static func _stakes(eff: Dictionary) -> String:
 	var bits: Array[String] = []
 	var h := int(eff.get("heal", 0))
 	if h > 0:
