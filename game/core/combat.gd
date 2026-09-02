@@ -1013,6 +1013,7 @@ func use_potion(pi: int, effect: String, value: int) -> bool:
 			_draw(players[ally_index(pi)], value)
 		"climb":
 			ps.foothold = mini(ps.foothold + value, FOOTHOLD_MAX)
+			_track_climb()
 		"strip_ward":
 			boss.artifact = maxi(boss.artifact - value, 0)
 		_:
@@ -1067,8 +1068,9 @@ func _all_ended() -> bool:
 	return true
 
 ## The peak Height either hunter has reached this fight (backlog #39). Called
-## after anything that can raise a foothold — play_card and the jetpack's
-## _resolve_prepared above — rather than duplicated at each call site.
+## after anything that can raise a foothold — play_card, the jetpack's
+## _resolve_prepared above, and use_potion's "climb" effect — rather than
+## duplicated at each call site.
 func _track_climb() -> void:
 	for ps in players:
 		if ps.foothold > highest_climb:

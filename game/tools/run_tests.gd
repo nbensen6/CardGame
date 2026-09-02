@@ -148,6 +148,7 @@ func _init() -> void:
 	_test_potions_all_load()
 	_test_use_potion_applies_each_effect()
 	_test_use_potion_ally_and_beast_effects()
+	_test_use_potion_climb_updates_highest_climb()
 	_test_use_potion_gating()
 	_test_run_potion_use_and_discard()
 	_test_shop_buys_a_potion()
@@ -2441,6 +2442,29 @@ func _test_use_potion_ally_and_beast_effects() -> void:
 	var stripped_to_floor := combat.use_potion(0, "strip_ward", 5)
 	_expect(stripped_to_floor and combat.boss.artifact == 0,
 		"strip_ward never takes the Titan's Artifact below zero")
+
+
+## _track_climb()'s own doc comment says it must run "after anything that can
+## raise a foothold — play_card and the jetpack's _resolve_prepared" — but a
+## climb POTION also raises ps.foothold directly (combat.gd's use_potion) and
+## was missing from that list. Uncaught, a climb potion drunk before any card
+## climbs this fight leaves highest_climb at 0 even though the hunter is
+## objectively higher, so Run.sync() folds a too-low peak into the run's
+## permanent stats/history and MOMENT_HUNTER_CLIMBS never fires for a climb
+## that really happened.
+func _test_use_potion_climb_updates_highest_climb() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var mover: PlayerState = combat.players[0]
+	var climb_events: Array = []
+	combat._on(Combat.MOMENT_HUNTER_CLIMBS, func(ctx): climb_events.append(ctx))
+	_expect(combat.highest_climb == 0, "no hunter has climbed yet at the start of a fresh fight")
+
+	var climbed := combat.use_potion(0, "climb", 5)
+	_expect(climbed and mover.foothold == 5, "the climb potion raises the drinker's Height")
+	_expect(combat.highest_climb == 5,
+		"a climb POTION counts toward highest_climb exactly like a climb CARD, not just a foothold bump nobody records")
+	_expect(climb_events.size() == 1 and climb_events[0]["player"] == mover and int(climb_events[0]["foothold"]) == 5,
+		"drinking a climb potion fires MOMENT_HUNTER_CLIMBS the same as a climbing card would")
 
 
 func _test_use_potion_gating() -> void:

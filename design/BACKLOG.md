@@ -2514,6 +2514,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 2 (find an error and resolve it). `Combat.
+  use_potion()`'s `"climb"` case raised `ps.foothold` directly but never
+  called `_track_climb()` — a "missed call site" case, the same class as the
+  already-fixed `_height_gap`/first-pass bugs: `_track_climb()`'s own doc
+  comment names exactly two callers that raise a foothold (`play_card`, the
+  jetpack's `_resolve_prepared`) and the climb potion, a third such path, was
+  left off that list. Concretely: drinking a climb potion before any card
+  climbed this fight left `combat.highest_climb` at 0 even though the hunter
+  was objectively higher, so `Run.sync()` would fold a too-low peak into the
+  run's permanent stats/history and `MOMENT_HUNTER_CLIMBS` never fired for a
+  climb that really happened. Wrote the regression test first
+  (`_test_use_potion_climb_updates_highest_climb`), confirmed it FAILs on the
+  pre-fix code (stashed the fix, re-ran, watched both assertions fail), then
+  added the missing `_track_climb()` call and updated the doc comment to name
+  all three call sites so the next reader doesn't repeat the omission.
+  `run_tests.gd`: ALL TESTS PASSED, both before (all other tests) and after
+  the fix. Found via an Explore agent given the duty-2 "first-pass hole" /
+  "two copies of one truth" patterns and two runner-up candidates it also
+  turned up but left unfixed as lower-confidence: `combat_3d.gd`'s climb
+  gauge duplicating `Boss.hold_height()`/`hold_safe()` (latent — no shipped
+  boss data uses the Dictionary hold shape yet) and the "rift" height-gap
+  loop being written twice in `combat.gd` (`incoming_for` vs `_enemy_turn`)
+  with different large sentinels that currently agree only because
+  `FOOTHOLD_MAX` is well under both. Next #86 turn is duty 3 (verify a
+  mechanic).
+
 - **2026-09-02** — #86 duty 1 (improve an asset), portraits/icons lane.
   Ranked every scored portrait and icon by current total; the two lowest
   (`riptide_eel_portrait` 29, `boulder_ram_portrait` 30) both had their two
