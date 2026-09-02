@@ -90,6 +90,14 @@ func skip_reward(slot: int = -1) -> void:
 	_send({"type": "skip_reward", "slot": slot})
 
 
+## Trade this node's relic reward for one of the run's three keys (backlog
+## #64) instead — which key is decided host-side, from the node actually
+## being resolved (Run.take_key(_run.node_type)), so a client can't spoof a
+## key it isn't standing on.
+func take_key(slot: int = -1) -> void:
+	_send({"type": "take_key", "slot": slot})
+
+
 ## Buy shop stock item `index`. A removal also names a card in that deck.
 ## The purse is shared, so either hunter may spend it.
 func buy(index: int, card_index: int = -1) -> void:

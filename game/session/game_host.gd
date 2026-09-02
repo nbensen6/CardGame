@@ -134,6 +134,11 @@ func _on_command(peer_id: int, command: Dictionary) -> void:
 			if not paused and _run != null and sk >= 0:
 				_run.skip_reward(sk)
 			_broadcast_state()
+		"take_key":  # backlog #64 -- trade this node's relic for a key; see Run.take_key
+			var tk := _acting_slot(peer_id, command)
+			if not paused and _run != null and tk >= 0:
+				_run.take_key(_run.node_type)
+			_broadcast_state()
 		"buy":
 			if not paused and _run != null:
 				_run.buy(int(command.get("index", -1)), int(command.get("card_index", -1)))
@@ -308,6 +313,9 @@ func _build_shared() -> Dictionary:
 		"solo": _solo,
 		"ascension": _ascension,
 		"gold": _run.gold,
+		# Which of the run's three keys the team holds (backlog #64) -- the
+		# reward screen needs it to know whether a key is still worth offering.
+		"keys": _run.keys,
 		# Relic effects the CLIENT owns (the grip timer and timing windows are
 		# client-side skill, so their relics have to travel in the snapshot).
 		"mods": _run.relic_totals(),

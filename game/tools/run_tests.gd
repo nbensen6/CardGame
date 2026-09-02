@@ -393,6 +393,11 @@ func _init() -> void:
 	_test_backlog64_take_key_refuses_the_wrong_node_type()
 	_test_backlog64_take_key_refuses_without_gold_or_after_a_pick()
 	_test_backlog64_take_key_is_once_per_node_type_per_run()
+	# backlog #86 duty 2: Run.take_key() was real and unit-tested but never
+	# wired to a GameClient/GameHost command -- these two catch the session
+	# layer, not just /core.
+	_test_backlog86_gamehost_wires_take_key_command_to_run()
+	_test_backlog86_build_shared_exposes_keys_for_the_reward_screen()
 	_test_backlog64_event_key_effect_grants_the_event_key_once()
 	_test_backlog64_boon_effects_never_grant_a_key()
 	_test_backlog64_sealed_hollow_event_grants_a_key_at_a_real_cost()
@@ -6227,6 +6232,55 @@ func _test_backlog64_take_key_is_once_per_node_type_per_run() -> void:
 	var second := run.take_key("treasure")
 	_expect(not second and run.keys == ["treasure"],
 		"a node type only ever pays out its key once, however many times it's visited")
+
+
+## backlog #86 duty 2 (find an error and resolve it): Run.take_key() (backlog
+## #64) was fully implemented and unit-tested by calling it directly on a bare
+## Run above -- but nothing wired a "take_key" GameClient command to it.
+## GameHost._on_command()'s match had no "take_key" case, so a real client's
+## command fell through to the "unknown command" branch and did nothing. In
+## an actual playthrough that meant the "elite" and "treasure" keys were
+## permanently unreachable (only "event" ever granted, via an event's own
+## effect), so `keys.size() < KEY_TYPES.size()` was always true at the final
+## Titan node and every run hit the "sealed door" branch instead of the true
+## final fight -- 100% of the time, in both solo and co-op. No existing test
+## caught it because every take_key test drives Run directly, bypassing
+## GameHost entirely. Fixed with a "take_key" case in game_host.gd and a
+## GameClient.take_key() sender.
+func _test_backlog86_gamehost_wires_take_key_command_to_run() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, true)  # solo
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	_expect(host._run != null, "setup sanity: the solo run started once both hunters were picked")
+	host._run.node_type = "treasure"
+	host._run.gold = 500
+	host._run._begin_reward("relic")
+	var gold_before: int = host._run.gold
+	c.take_key(0)
+	_expect(host._run.keys.has("treasure") and host._run.gold == gold_before - Run.KEY_COST_GOLD,
+		"a 'take_key' command sent through GameClient/GameHost must actually reach Run.take_key -- it used to fall through to the unknown-command branch and do nothing")
+
+
+## The reward screen needs to know how many keys the team already holds, to
+## decide whether "Take a Key instead" is still worth offering (Run.take_key
+## refuses a key already banked) -- _build_shared() never forwarded Run.keys
+## to clients at all before this fix, alongside the missing command above.
+func _test_backlog86_build_shared_exposes_keys_for_the_reward_screen() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, true)  # solo
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	host._run.keys = ["event"]
+	host._broadcast_state()
+	_expect((c.shared.get("keys", []) as Array) == ["event"],
+		"the shared snapshot must carry the run's banked keys so the reward screen can gate its 'Take a Key' option")
 
 
 func _test_backlog64_event_key_effect_grants_the_event_key_once() -> void:

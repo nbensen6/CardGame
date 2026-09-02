@@ -154,6 +154,38 @@ Ordered. Source in brackets.
     If a duty is genuinely exhausted, take the next one in the rotation and say
     so in the commit.
 
+- [ ] **87. Give the reward screen a "Take a Key instead" button** `needs a screen`
+  — backlog #64's `take_key()` trades an elite's or a treasure's relic reward
+  for one of the three keys the final Titan needs. It was fully implemented
+  in `Run` and unit-tested, but until #86's tenth turn (2026-09-02) nothing
+  above `/core` could even call it: `GameHost` had no command case for it and
+  `GameClient` had no sender. That session-layer wiring is now in —
+  `GameClient.take_key(slot)`, a `"take_key"` case in
+  `GameHost._on_command()`, and `"keys": _run.keys` already riding in
+  `_build_shared()` — so this item is now exactly "add one button," not "find
+  out why keys are unreachable."
+
+  What's left: `location_3d.gd`'s `_render_reward()` needs a "Take a Key
+  instead (-N gold)" button beside "Lock In Reward" and "Skip", visible only
+  when `is_relic` and `Run.KEY_TAKE_TYPES.has(node_type)` and the team doesn't
+  already hold that node type's key (`not (s.get("keys",[]) as
+  Array).has(node_type)`), disabled below `Run.KEY_COST_GOLD` gold, calling
+  `_client.take_key(_cmd_slot())`. `Run.take_key()` already refuses
+  everything else (wrong node, already picked, already banked) — the button
+  only needs to decide when it's worth SHOWING.
+
+  Deliberately left undone by a cloud run rather than shipped unverified: a
+  new on-screen control is exactly the kind of change rule 3 (verify by
+  looking) exists for, and the cloud has no display to look with. Until this
+  lands, "elite" and "treasure" keys have no way to reach a real player, and
+  every run's fourth Titan stays a sealed door rather than a real fight —
+  same symptom as before #86's fix, now for lack of a control rather than
+  lack of wiring.
+
+  *Done when:* the button exists, is screenshotted in a real reward screen at
+  least once (elite and treasure both, since they're the two paths), and
+  `run_tests.gd` still passes.
+
 - [ ] **85. You cannot see your ally** `needs a screen` — hunter1 projects to
   x=1602 on a 1280-wide viewport and sits off the right edge of the screen in
   every fight. Measured on three beasts: thrasher 1559, crag_pup 1602,
@@ -2482,6 +2514,47 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 2 (find an error and resolve it), tenth turn of
+  the rotation. Went looking for a real bug in the session layer rather than
+  re-reading `combat_3d.gd` again, and found one: backlog #64's `take_key()`
+  — trade an elite's or a treasure's relic reward for one of the three keys
+  the final Titan needs — was fully implemented in `Run` and covered by five
+  direct unit tests, but nothing above `/core` ever called it. `GameHost.
+  _on_command()`'s match had no `"take_key"` case (an incoming command fell
+  through to the `push_warning("unknown command")` branch and did nothing),
+  `GameClient` had no sender for it, `_build_shared()` never forwarded
+  `Run.keys` to clients at all, and no screen offered the choice —
+  `location_3d.gd`'s reward screen only ever built "Lock In Reward" and
+  "Skip". Net effect: the "elite" and "treasure" keys were unreachable in any
+  real playthrough (only "event" keys were ever granted, via an event's own
+  effect), so `keys.size() < KEY_TYPES.size()` was always true at the fourth
+  Titan and every single run hit the "sealed door" branch instead of the true
+  final fight — 100% reproducible, solo and co-op alike, and `stats.
+  true_ending` could never become true. No existing test caught it because
+  every `take_key` test drives `Run` directly, bypassing `GameHost`
+  entirely — a textbook "the core rule works, the wiring to it doesn't" gap
+  rather than a first-pass hole in a single function.
+  Fixed the session-layer wiring only, deliberately stopping short of the
+  screen: added a `"take_key"` case to `GameHost._on_command()` (derives the
+  key type from `_run.node_type` itself rather than trusting a client-sent
+  value), a `GameClient.take_key()` sender, and `"keys": _run.keys` in
+  `_build_shared()` so a client can see what the team already holds. Two new
+  regression tests drive it end-to-end through a real `GameHost`/`GameClient`
+  pair over `LocalTransport` (not `Run` directly, so this exact gap can't
+  reopen unnoticed): one sends a `take_key` command and checks
+  `Run.keys`/`gold` actually changed, the other checks `keys` rides in the
+  broadcast snapshot. `run_tests.gd`: ALL TESTS PASSED (98 tests).
+  Did NOT add the "Take a Key instead" button `location_3d.gd`'s reward
+  screen needs to actually reach a player — that is a real change to what's
+  on screen, and rule 3 (verify by looking) and the "no UI change nobody
+  looked at" standard apply to it exactly as they would to a queued item,
+  command wiring not being visual is not licence to sneak a new button past
+  that gate. Queued as item 87 (`needs a screen`) instead: the command and
+  the `keys` field are now sitting there ready, so that pass is "add one
+  button" rather than "find out why keys are unreachable" — and until it
+  lands, "elite"/"treasure" keys are still unreachable in a real playthrough
+  exactly as before this run, just for a different reason (no control) than
+  before it (no wiring). Next #86 turn is duty 3 (verify a mechanic).
 - **2026-09-02** — #86 duty 3 (verify a mechanic), ninth turn of the rotation,
   and Nick's own named example: the jump mechanic itself, not another sibling
   of `_route_between`. `_place_hunters` decided whether to climb, glide, do an
