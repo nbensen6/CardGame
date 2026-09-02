@@ -355,6 +355,26 @@ func _meld_cards(a: Card, b: Card) -> Card:
 		"icon": a.icon if a.icon != "" else b.icon,
 		"target": "enemy",
 		"text": "%s  +  %s" % [a.text, b.text],
+		# backlog #86 duty 2 — these five (light_gain/light_cost/damage_per_light/
+		# ally_heal/scry) are backlog #47/#59 fields added after this dict was
+		# written and never backfilled here, same "hand-copied field list drifts"
+		# bug the Card.to_dict/from_dict parity test already guards against for
+		# saves — this dict has no such test, so a meld of e.g. Spark + Peer Ahead
+		# silently granted neither Light nor a Scry.
+		"light_gain": a.light_gain + b.light_gain,
+		"light_cost": a.light_cost + b.light_cost,
+		"damage_per_light": a.damage_per_light + b.damage_per_light,
+		"ally_heal": a.ally_heal + b.ally_heal,
+		"scry": a.scry + b.scry,
+		# String/dict "single slot" effects follow the same idiom `prepare`/
+		# `create` above already use: keep A's if A set one, else B's. A
+		# condition_bonus is paired with whichever condition was actually kept,
+		# so a bonus never rides on the wrong (dropped) condition.
+		"topdeck": a.topdeck if a.topdeck != "" else b.topdeck,
+		"shuffle_in": a.shuffle_in if a.shuffle_in != "" else b.shuffle_in,
+		"tutor": a.tutor if a.tutor != "" else b.tutor,
+		"condition": a.condition if not a.condition.is_empty() else b.condition,
+		"condition_bonus": a.condition_bonus if not a.condition.is_empty() else b.condition_bonus,
 	})
 
 ## A card's cost for a hunter, after any permanent Burn Coal reductions.

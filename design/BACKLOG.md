@@ -2514,6 +2514,51 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 2 (find an error and resolve it), twenty-first turn
+  of the rotation. `Combat._meld_cards` (`combat.gd:299`) is a third hand-copy
+  of `Card`'s field list, alongside `to_dict`/`from_dict` — and the same
+  "hand-copied field list drifts" bug the `to_dict`/`from_dict` parity test
+  already guards against for saves had reopened here with no test watching
+  it: `light_gain`, `light_cost`, `damage_per_light`, `ally_heal`, `scry`,
+  `topdeck`, `shuffle_in`, `tutor`, `condition` and `condition_bonus` — all
+  added to `Card` after this dict literal was written (backlog #47/#59/#67/
+  #68) — were absent from it, so `Card.from_dict` silently defaulted every
+  one to 0/""/{}. Concretely: melding Spark (`light_gain: 2`) into anything
+  produced a fused card whose text still read "Gain 2 Light." but which
+  granted no Light at all when played; the same silent drop applied to a
+  melded Scry, topdeck/shuffle_in/tutor deck effects, ally heals, and a
+  card's `condition`-gated bonus. Used an Explore agent to sweep `game/core`,
+  `game/net` and `game/session` for the duty's two named bug families past
+  what earlier turns already checked (play_card, use_potion, the rift-gap
+  formula, `Boss.to_dict`, `_draw_gauge`, `_place_hunters`, `take_key`
+  wiring); it returned this as the higher-confidence of two candidates.
+  Added the ten missing fields to the dict, following the file's own
+  existing idioms — sum for the additive stat fields, "A's if A set one,
+  else B's" for the single-slot string/Dictionary ones (`prepare`/`create`
+  already use it) — and paired `condition_bonus` with whichever `condition`
+  actually got kept, so a bonus can never ride on the condition that was
+  dropped. Added `_test_meld_carries_light_and_deck_effects`, covering all
+  four melded pairs (Spark+Peer Ahead, Waymark+Depot, Recon+Sunburst, Guiding
+  Light+Harpoon); confirmed red by reverting just the `combat.gd` change and
+  re-running (`1 TEST(S) FAILED`), then restored the fix and confirmed green.
+  Left `power_effect`/`power_value` out on purpose: `_meld_cards` also forces
+  `type` to `"attack"`/`"skill"` and never `"power"` (line 303), so those two
+  fields are inert under current type semantics either way — copying them in
+  without touching `type` would just be dead data, and deciding what a melded
+  power card should even mean (stay in play stacking, like every other power
+  card, or discard like today?) is a design call, not a bug fix; not
+  reachable in a real game either, since `meld: true` and `type: "power"`
+  don't currently coexist on any authored card in `data/cards.json`. Also did
+  NOT touch a second candidate the same Explore pass found: the boss
+  `"curse"` move (`combat.gd:1197`, backlog #69) appends a status card to a
+  hunter's discard pile directly, with no `try_block_debuff()` call, while
+  its sibling `"frail"` move (same backlog item, same file) routes through
+  `_apply_frail()` and IS warded by Artifact — so a hunter holding
+  `open_artifact` gets no protection against mire_snapper/riftling/gloom_moth's
+  curse move even though the ward reads as unconditional. Left unfixed per
+  rule 0 (one duty per run); worth a future duty-2 turn.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless). Next #86 turn is
+  duty 3 (verify a mechanic).
 - **2026-09-02** — #86 duty 3 (verify a mechanic actually works), twentieth
   turn of the rotation. `CardView.shape_text()` — "the authored text minus
   everything the live line already said" (its own doc comment) — is the rule

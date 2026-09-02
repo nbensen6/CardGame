@@ -206,6 +206,7 @@ func _init() -> void:
 	_test_catapult_sacrifices_to_launch_ally()
 	_test_meld_fuses_two_cards()
 	_test_meld_carries_special_effects()
+	_test_meld_carries_light_and_deck_effects()
 	_test_satchel_charge_detonates()
 	_test_rhythm_builds_and_scales()
 	_test_vine_weaver_poison_and_wound()
@@ -2953,6 +2954,45 @@ func _test_meld_carries_special_effects() -> void:
 	var arm_satchel: bool = f2.pull_ally == 3 and f2.timed and f2.timed_hits == 3 and f2.timed_damage == 20
 	_expect(jet_mech and arm_satchel,
 		"a meld keeps BOTH cards' special effects (prepare/block_per_play/pull_ally/timed chain)")
+
+
+func _test_meld_carries_light_and_deck_effects() -> void:
+	# backlog #86 duty 2: light_gain/light_cost/damage_per_light/ally_heal/scry/
+	# topdeck/shuffle_in/tutor/condition/condition_bonus (backlog #47/#59/#67/#68)
+	# were all added to Card after _meld_cards' dict literal was written and
+	# never backfilled — the same "hand-copied field list drifts" bug the
+	# to_dict/from_dict parity test guards against for saves, just for melds.
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	# Spark (light_gain 2) + Peer Ahead (scry 2)
+	ps.hand = [_meld_card(), Content.make_card("spark"), Content.make_card("peer_ahead")]
+	ps.energy = 9
+	combat.play_card(0, 0, true, 1, 2)
+	var f1: Card = ps.hand[0]
+	var spark_peer: bool = f1.light_gain == 2 and f1.scry == 2
+	# Waymark (topdeck scramble) + Depot (shuffle_in grip)
+	ps.hand = [_meld_card(), Content.make_card("waymark"), Content.make_card("depot")]
+	ps.energy = 9
+	combat.play_card(0, 0, true, 1, 2)
+	var f2: Card = ps.hand[0]
+	var waymark_depot: bool = f2.topdeck == "scramble" and f2.shuffle_in == "grip"
+	# Recon (tutor cleave) + Sunburst (damage_per_light 2)
+	ps.hand = [_meld_card(), Content.make_card("recon"), Content.make_card("sunburst")]
+	ps.energy = 9
+	combat.play_card(0, 0, true, 1, 2)
+	var f3: Card = ps.hand[0]
+	var recon_sunburst: bool = f3.tutor == "cleave" and f3.damage_per_light == 2
+	# Guiding Light (light_cost 3, ally_heal 8) + Harpoon (condition above_sigil,
+	# condition_bonus {damage:4}) — the bonus must follow A's kept condition.
+	ps.hand = [_meld_card(), Content.make_card("guiding_light"), Content.make_card("harpoon")]
+	ps.energy = 9
+	combat.play_card(0, 0, true, 1, 2)
+	var f4: Card = ps.hand[0]
+	var light_harpoon: bool = f4.light_cost == 3 and f4.ally_heal == 8 \
+		and String(f4.condition.get("type", "")) == "above_sigil" \
+		and int(f4.condition_bonus.get("damage", 0)) == 4
+	_expect(spark_peer and waymark_depot and recon_sunburst and light_harpoon,
+		"a meld keeps light/scry/topdeck/shuffle_in/tutor/condition effects too, not just the pre-#47 field list")
 
 
 func _test_satchel_charge_detonates() -> void:
