@@ -316,12 +316,23 @@ def ascend(i):                                  # a big climb
 
 
 def rope(i):                                    # both hunters climb
+    # pass 2 (design/progress/rope_icon.md): two named fixes. Colour &
+    # contrast (3/10) -- TAN(217,152,111) against the brown card standin
+    # RGB(139,105,74) sampled a weak per-channel gap; SAND(244,191,151) gives
+    # a real one (+105/+86/+77) instead. Top/bottom edge clipping -- the old
+    # stack's outer ring (radius 0.34 at z=+-0.42) reached z=+-0.76, well past
+    # the camera's ortho half-extent of 0.575, so the coil ran off both the
+    # top and bottom of the frame. Every ring's centre, radius and thickness
+    # (and the carabiner's, at the same ratio) is scaled by one factor so the
+    # coil keeps its proportions instead of being squashed on one axis; the
+    # tallest ring now tops out at z=0.52, inside the frame with margin.
     for k in range(5):
-        z = -0.42 + k * 0.21
-        i.ring((0.0, 0.0, z), (0.34 - abs(k - 2) * 0.03,
-                               0.34 - abs(k - 2) * 0.03, 0.16), TAN, 14, 4,
+        z = -0.23 + k * 0.115
+        r = 0.289 - abs(k - 2) * 0.0255
+        i.ring((0.0, 0.0, z), (r, r, 0.136), SAND, 14, 4,
                rot=(0.0, 0.0, 0.0), thickness=0.22)
-    i.ring((0.30, 0.0, 0.50), (0.16, 0.16, 0.16), SILVER, 12, 4, thickness=0.30)
+    i.ring((0.255, 0.0, 0.274), (0.136, 0.136, 0.136), SILVER, 12, 4,
+           thickness=0.255)
 
 
 def lift(i):                                    # haul the ally to you

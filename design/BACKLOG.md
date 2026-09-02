@@ -2514,6 +2514,30 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 1 (improve an asset), nineteenth turn of the
+  rotation. Picked `rope` (icon, 33/50, tied-lowest un-repaired icon with
+  `target`/`burn`, but the only one of the three whose diagnosis named two
+  fixes both fully self-contained in `tools/blender/icons.py` — `target`'s
+  second-lowest line had no proposed fix at all, and `burn`'s Family fix
+  meant reshaping the card-slab primitive `draw`/`stack` also build from).
+  Colour & contrast (3/10): swapped the coil from `TAN` to `SAND`, a real
+  per-channel gap against the brown card standin instead of a weak one.
+  Top/bottom edge clipping: the coil's own geometry put its outer ring past
+  the camera's ortho half-extent before any render was taken (z=±0.76 against
+  a ±0.575 frame) — scaled every ring's position, radius and thickness, and
+  the carabiner's, down together by one ratio so the coil kept its
+  proportions instead of being squashed into an ellipse on one axis. +5
+  total (33 → 38, design/progress/rope_icon.md), short of the loop's 40/50
+  stop condition — left open for a future duty-1 pass, same as `bog_leech`/
+  `silk_widow` portraits already sitting mid-loop. Confirmed against the
+  actual rendered pixels (old vs. new coil colour sampled directly, not the
+  raw palette swatch) and a real 42px LANCZOS downsample, both read with the
+  Read tool, not assumed from the script. Rebuild regenerates all 36 icons
+  and this container's apt Blender (4.0.2, since the 4.1.1 tarball is still
+  blocked by the egress proxy here) shifts every PNG's bytes even where the
+  build code didn't change, same as `climb_icon.md` pass 2 found — reverted
+  the other 35 with `git checkout --` and kept only `rope.png`.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless).
 - **2026-09-02** — #86 duty 3 (verify a mechanic actually works), eighteenth
   turn of the rotation. Went hunting the view layer for a static, pure
   function with zero test coverage, same place duty 3 has been finding real
