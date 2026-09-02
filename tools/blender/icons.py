@@ -85,10 +85,19 @@ def sword(i):                                   # a plain attack
 
 def shield(i):                                  # block
     i.slabf(0.0, 0.16, 0.34, 0.30, STEEL, bevel=0.05)
-    i.spike(0.0, -0.30, 0.34, 0.02, 0.52, STEEL, ang=math.pi, seg=4)
+    # A forked base: shield_icon.md's Family-distinction finding was that this
+    # single point-and-plate kite matches guard's own body almost exactly --
+    # guard was told apart with shoulder flares (batch 15 pass 2); a split
+    # tail differs by outer silhouette the same way, without copying that fix.
+    for s in (-1, 1):
+        i.spike(0.09 * s, -0.30, 0.15, 0.02, 0.46, STEEL,
+                ang=math.pi + 0.30 * s, seg=4)
     i.slabf(0.0, 0.40, 0.34, 0.055, SILVER)
-    i.slabf(0.0, 0.02, 0.045, 0.34, SILVER)     # the boss and band
-    i.slabf(0.0, 0.02, 0.24, 0.045, SILVER)
+    # A raised centre boss, not the old cross (a vertical bar plus a
+    # horizontal one): shield_icon.md's Mechanic-match finding was that a
+    # plain plus reads as "heal" elsewhere in the genre; a domed stud reads
+    # as "shield" without borrowing that glyph.
+    i.ball((0.0, -0.12, 0.02), (0.12, 0.06, 0.12), SILVER, 8, 5)
 
 
 def bow(i):                                     # a ranged strike

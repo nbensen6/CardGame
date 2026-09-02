@@ -2514,6 +2514,24 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 1 (improve an asset). `shield`'s icon scored 32/50
+  in a scan-only batch months back (`design/progress/shield_icon.md`) with two
+  diagnosed, unfixed lines: Family distinction (3 — nearly identical outer
+  silhouette to `guard`) and Mechanic match (6 — the internal cross reads as
+  "heal" elsewhere in the genre, not "block"). `guard` had since been repaired
+  on its own side (shoulder flares, a real clock face, +9 total) without
+  `shield` ever getting its half of the fix, so the pair's actual current
+  distance was checked fresh in a render rather than assumed. Applied both
+  named fixes in `tools/blender/icons.py`: the single centred base point is
+  now two smaller tapers angled apart (a forked tail, differentiating at the
+  opposite end from `guard`'s shoulder flares), and the old vertical+horizontal
+  cross is replaced with one raised circular boss. Rebuilt with Blender,
+  looked at the real 42px downsample before and after, re-scored: 32 → 38, no
+  line regressed. `run_tests.gd`: ALL TESTS PASSED. Renders and the full
+  pass-2 diagnosis are in `design/progress/shield_icon.md` and
+  `design/renders/shield_pass2_*.png`. Next #86 turn is duty 2 (find an error
+  and resolve it).
+
 - **2026-09-02** — #86 duty 3 (verify a mechanic actually works). Picked
   `combat_3d._front_of_beast` — the rule that decides how far a hunter stands
   from the beast so they don't clip into (or float in front of) the mesh, and
