@@ -2482,6 +2482,29 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 2 (find an error and resolve it), eighth turn of
+  the rotation. Read `game/views/combat_3d.gd`'s `_render_hand` end to end
+  (the sibling function to `_place_hunters`, both build UI/scene state from
+  server data on every update). Found a real first-pass-shaped hole: the
+  `if selecting: ... return` branch — taken whenever an exhaust/cheapen/meld
+  card's pick is in progress — returned before reaching the two statements
+  after it, `_hand_hover = null` and `_layout_hand.call_deferred()`. Those are
+  the ONLY thing that ever sets `c.position` on a `CardView` (a plain
+  `Control`, so nothing else lays it out); every card newly built with a pick
+  open therefore sat at `Control`'s default `(0, 0)`, stacked in the hand's
+  corner, for as long as the pick lasted. A mouse hover incidentally repairs
+  it via `_layout_hand()` on `mouse_entered`, which is exactly why this
+  survived on desktop; a handheld has no hover, so the stack there is
+  permanent until the pick resolves or is cancelled. Pulled the branch's
+  outcome into a pure `static func render_hand_status(selecting) -> Dictionary`
+  (`status_visible`, `layout_needed`, `hover_reset`) so both branches now go
+  through the same unconditional tail, and "layout always runs regardless of
+  selecting" is something a test pins down rather than something that has to
+  be re-read correctly by eye. Two new tests (`run_tests.gd`, backlog86,
+  sixth batch): layout and hover reset stay true whether or not a selection
+  is active; the status prompt's visibility still tracks it correctly.
+  `run_tests.gd`: ALL TESTS PASSED (79 tests). Next #86 turn is duty 3
+  (verify a mechanic).
 - **2026-09-02** — #86 duty 1 (improve an asset), seventh turn of the
   rotation. Picked `volley` (icon, 30/50, lowest unfixed portrait/icon by
   score — `riptide_eel_portrait` scored lower at 29 but both its diagnosed

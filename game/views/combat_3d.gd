@@ -2853,25 +2853,34 @@ func _render_hand() -> void:
 			_client.play_card(idx, quality > Combat.TIMING_MISS, _cmd_slot(), -1, -1, quality))
 	var players: Array = _client.shared.get("players", [])
 	var me: Dictionary = players[_me()] if _me() < players.size() else {}
-	if selecting:
-		_status.text = _selection_prompt()
-		_status.visible = true   # a transient instruction, not an identity
-		_render_energy(me)
-		_show_switch_target(players)
-		_end_btn.disabled = bool(priv.get("ended", false))
-		return
-	_status.visible = false
+	# selecting and non-selecting used to be two branches, one of which
+	# `return`ed before reaching the hover-reset/layout tail below — so every
+	# card built while a pick (exhaust/cheapen/meld) was in progress sat at
+	# Control's default (0,0), stacked in the hand's corner, until a mouse
+	# hover incidentally repaired it. Handheld has no hover, so the stack was
+	# permanent there. Pulled the outcome into a pure function so "layout
+	# always runs, regardless of selecting" is something a test can pin down.
+	var outcome := render_hand_status(selecting)
+	_status.text = _selection_prompt() if selecting else ""
+	_status.visible = bool(outcome["status_visible"])   # a transient instruction, not an identity
 	_render_energy(me)
 	_show_switch_target(players)
 	_end_btn.disabled = bool(priv.get("ended", false))
+	if bool(outcome["hover_reset"]):
+		_hand_hover = null
+	if bool(outcome["layout_needed"]):
+		# Positions are set by hand, so nothing lays the fan out unless we do.
+		# Deferred: the cards have no size until the frame after they are added,
+		# and an arc built on zero-width cards stacks them all at the centre.
+		_layout_hand.call_deferred()
 
 
-# --- playing a card, including the multi-pick cards -----------------------
-	_hand_hover = null
-	# Positions are set by hand, so nothing lays the fan out unless we do.
-	# Deferred: the cards have no size until the frame after they are added,
-	# and an arc built on zero-width cards stacks them all at the centre.
-	_layout_hand.call_deferred()
+static func render_hand_status(selecting: bool) -> Dictionary:
+	return {
+		"status_visible": selecting,
+		"layout_needed": true,
+		"hover_reset": true,
+	}
 
 func _on_card_tapped(card: Dictionary, cv: CardView) -> void:
 	_dismiss_coach()   # you're playing; you don't need to be told to play

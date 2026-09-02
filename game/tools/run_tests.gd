@@ -436,6 +436,11 @@ func _init() -> void:
 	_test_backlog86_foothold_anchor_clamps_below_the_lowest_rung()
 	_test_backlog86_foothold_anchor_clamps_above_the_highest_rung()
 	_test_backlog86_foothold_anchor_ignores_unsorted_key_order()
+	# backlog #86 duty 2 (sixth turn): a real bug in _render_hand, found the
+	# same way as the glide bug above — reading a combat_3d.gd function end to
+	# end for an early-return that skips a tail statement.
+	_test_backlog86_render_hand_status_always_relayouts_while_selecting()
+	_test_backlog86_render_hand_status_hides_prompt_outside_selection()
 
 	print("")
 	if _failures == 0:
@@ -6931,6 +6936,29 @@ func _test_backlog86_glide_is_not_defeated_by_a_synchronous_position_write() -> 
 		"the glide must not be pre-empted by a synchronous position write, or the tween has nothing left to interpolate")
 	tw.kill()
 	node.free()
+
+
+## backlog #86 duty 2 (sixth turn) — a real bug in `_render_hand`: the
+## `if selecting: ... return` branch (a pick in progress for an
+## exhaust/cheapen/meld card) `return`ed before reaching the two statements
+## after the branch — `_hand_hover = null` and `_layout_hand.call_deferred()`
+## — so every CardView built while a pick was open sat at Control's default
+## (0,0), stacked in the hand's corner, until a mouse hover incidentally
+## repaired it. Handheld has no hover, so the stack never recovered.
+## `render_hand_status` is the outcome pulled out static so "layout always
+## runs" is provable without building the whole hand row and its cards.
+func _test_backlog86_render_hand_status_always_relayouts_while_selecting() -> void:
+	var status: Dictionary = Combat3D.render_hand_status(true)
+	_expect(bool(status["layout_needed"]), "the fan must still be laid out while a pick (exhaust/cheapen/meld) is in progress, not only when no selection is active")
+	_expect(bool(status["hover_reset"]), "hover must still be cleared while a pick is in progress, or _layout_hand compares a freed CardView on its next call")
+	_expect(bool(status["status_visible"]), "the selection prompt is shown while picking")
+
+
+func _test_backlog86_render_hand_status_hides_prompt_outside_selection() -> void:
+	var status: Dictionary = Combat3D.render_hand_status(false)
+	_expect(bool(status["layout_needed"]), "the fan is laid out on every render, selecting or not")
+	_expect(bool(status["hover_reset"]), "hover is reset on every render, selecting or not")
+	_expect(not bool(status["status_visible"]), "the selection prompt hides once nothing is being picked")
 
 
 ## backlog #86 duty 3 (second pass) — combat_3d.foothold_anchor is the pure
