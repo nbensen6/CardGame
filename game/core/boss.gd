@@ -135,6 +135,16 @@ func to_dict() -> Dictionary:
 		# same shape weak_point_height already uses for a data-seeded value
 		# that a fight can then change.
 		"frail": frail, "artifact": artifact,
+		# dexterity/intangible/buffer/plated_armour: no beast currently grants
+		# itself any of these, but nothing stops a future move from doing so
+		# (they already reach the shared snapshot — see game_host.gd — same as
+		# a hunter's), and PlayerState.to_dict() round-trips the same four
+		# Combatant fields. Without this they'd silently reset to 0 on a
+		# mid-fight save/resume, same shape as the frail/artifact gap #36 fixed.
+		"dexterity": dexterity, "intangible": intangible,
+		"buffer": buffer, "plated_armour": plated_armour,
+		# thorns is deliberately absent: nothing in combat ever mutates it, so
+		# build_boss() re-seeds the same value from data every time.
 		"weak_point_height": weak_point_height,  # shift_sigil can move it mid-fight
 		"move_index": _move_index,
 	}
@@ -148,5 +158,9 @@ func apply_dict(d: Dictionary) -> void:
 	wound = int(d.get("wound", 0))
 	frail = int(d.get("frail", 0))
 	artifact = int(d.get("artifact", artifact))  # fall back to build_boss's data-seeded value
+	dexterity = int(d.get("dexterity", 0))
+	intangible = int(d.get("intangible", 0))
+	buffer = int(d.get("buffer", 0))
+	plated_armour = int(d.get("plated_armour", 0))
 	weak_point_height = int(d.get("weak_point_height", weak_point_height))
 	_move_index = int(d.get("move_index", 0))

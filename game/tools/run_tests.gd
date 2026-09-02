@@ -333,6 +333,7 @@ func _init() -> void:
 	_test_plated_armour_persists_the_round_reset()
 	_test_plated_armour_decays_only_when_a_hit_gets_hp_through()
 	_test_intangible_buffer_plated_armour_persist_through_save()
+	_test_boss_dexterity_intangible_buffer_plated_armour_persist_through_save()
 	# Cards that reward discarding (backlog #62)
 	_test_discard_field_sends_cards_to_the_discard_pile()
 	_test_discard_stops_early_when_hand_is_short()
@@ -5196,6 +5197,36 @@ func _test_intangible_buffer_plated_armour_persist_through_save() -> void:
 	_expect(bc != null and bc.players[0].combatant.intangible == 2
 			and bc.players[0].combatant.buffer == 1 and bc.players[0].combatant.plated_armour == 3,
 		"Intangible/Buffer/Plated Armour survive a mid-fight save and load")
+
+
+## Two copies of one truth: PlayerState.to_dict()/from_dict() already round-trip
+## every stat on Combatant (this project's Frail/Artifact/Thorns split, plus
+## Dexterity/Intangible/Buffer/Plated Armour), and the test just above proves
+## it for the player's own copy. Boss.to_dict()/apply_dict() is a second,
+## independently written copy of that same round-trip — nothing shares the
+## logic — and it only ever carried Frail/Artifact (backlog #36), never the
+## four newer stats. No beast currently sets its own Dexterity/Intangible/
+## Buffer/Plated Armour, so this never fired in play, but the shared-snapshot
+## test above (_test_dexterity_intangible_buffer_plated_armour_reach_the_shared_
+## snapshot) proves the boss CAN carry these values mid-fight, and a save
+## partway through such a fight silently reset them to 0 on load.
+func _test_boss_dexterity_intangible_buffer_plated_armour_persist_through_save() -> void:
+	var run := Run.new([_deck_of(_slash, 8), _deck_of(_slash, 8)], ["A", "B"], 77, [{}, {}], 0)
+	run.start()
+	_step_into_combat(run)
+	var combat: Combat = run.combat
+	combat.boss.dexterity = 5
+	combat.boss.intangible = 1
+	combat.boss.buffer = 1
+	combat.boss.plated_armour = 2
+
+	RunSave.clear()
+	RunSave.save(run)
+	var back := RunSave.load_run()
+	var bc: Combat = back.combat if back != null else null
+	_expect(bc != null and bc.boss.dexterity == 5 and bc.boss.intangible == 1
+			and bc.boss.buffer == 1 and bc.boss.plated_armour == 2,
+		"the boss's Dexterity/Intangible/Buffer/Plated Armour survive a mid-fight save and load")
 
 
 # --- Cards that reward discarding (backlog #62) ----------------------------

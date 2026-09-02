@@ -2514,6 +2514,29 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 2 (find an error and resolve it), fourteenth turn
+  of the rotation. `Boss.to_dict()`/`apply_dict()` (`core/boss.gd`) is a second,
+  independently-written copy of `PlayerState.to_dict()`/`from_dict()`'s
+  Combatant round-trip, and it had drifted: `PlayerState` saves all seven
+  stacking stats (frail, artifact, thorns, dexterity, intangible, buffer,
+  plated_armour) but `Boss` only ever carried frail/artifact (from the #36
+  fix). No beast currently grants itself dexterity/intangible/buffer/plated
+  armour, so this never fired in real play — but an existing test
+  (`_test_dexterity_intangible_buffer_plated_armour_reach_the_shared_snapshot`)
+  already proves the boss CAN carry those values mid-fight, and a save
+  partway through such a fight silently reset all four to 0 on load. Same
+  shape as the original #36 bug (state kept in two places, one gets updated
+  and the sibling does not), just one call deeper — the save/resume path
+  instead of the broadcast path. Added the four fields to both `to_dict()`
+  and `apply_dict()` (thorns deliberately still excluded — nothing ever
+  mutates it at runtime, so `build_boss()` re-seeds the same value from data
+  every time, unlike the other four which a fight actually can change).
+  Wrote `_test_boss_dexterity_intangible_buffer_plated_armour_persist_through_
+  save`, confirmed it FAILS on the pre-fix code (stashed the boss.gd change
+  and re-ran the suite — 1 failure, exactly this test), then confirmed it
+  passes with the fix restored. `run_tests.gd`: ALL TESTS PASSED. Next #86
+  turn is duty 3 (verify a mechanic actually works).
+
 - **2026-09-02** — #86 duty 1 (improve an asset), thirteenth turn of the
   rotation. `expose`'s icon scored 32/50 (`design/progress/expose_icon.md`)
   with two diagnosed lines sharing one root cause: Family distinction (3 —
