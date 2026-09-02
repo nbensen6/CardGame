@@ -184,3 +184,95 @@ since it's shared infrastructure and moving it would silently re-render
 every other committed icon, which is exactly what the hard rules warn
 against. If Nick wants brighter icons generally, that's a one-line change
 in `render()`, reviewed once, not a per-asset fix.
+
+## Pass 3 — fixer
+
+Picked back up as `#86` duty 1 (lowest-scoring un-plateaued icon at 31/50,
+tied with `rally_icon` at 32 but lower). Pass 2's own notes named the same
+root cause under two different lines: **Family distinction (5)** — the
+three-cone cluster is still the same gestalt as `peak()`'s straight
+triangle-mountain cluster — and **Mechanic match (6, "Not higher: the
+three main bodies are still perfectly straight-sided rigid cones")**. Both
+point at the same fix: the bodies were `spike()` — a straight-sided cone —
+and a straight cone is a mountain, not a flame. Real fire licks and bends;
+`peak()` is deliberately rigid.
+
+Applied one geometry change covering both named lines: replaced all three
+main flame bodies' `spike()` calls with `limb()` — the tapered-tube-through-
+a-path primitive `bow()` already uses for its curved wooden limbs, so this
+introduces no new build vocabulary — threaded through three points each
+(base, a mid-point offset sideways, a near-zero tip), instead of one
+straight axis. Base and tip heights kept identical to the old spikes'
+`z ± length/2` span (e.g. the old TANGERINE spike ran z −0.41 to 0.45;
+the new limb's first and last points sit at the same two z values), so the
+cluster's footprint and reach are unchanged — only the path between base
+and tip now bends. Left the `GOLD` hot-core spike untouched (not one of
+the two named lines, and pass 2 already fixed its own visibility problem).
+
+Rebuilt with `blender --background --python tools/blender/icons.py --
+game/assets/icons` (apt's Blender 4.0.2, headless EGL — same environment
+`frail_icon.md` pass 2 used, `download.blender.org` still unreachable
+through the proxy; needed `pip install numpy` for python3.12 and
+`apt install libegl1 libgles2` first, neither installed in this container
+before this pass). Console: `TRIS 116 PARTS 4 BUDGET 700 ok`, no warnings.
+Diffed all 36 icons against `HEAD` — every icon shows some non-zero diff
+from Blender's WORKBENCH render noise (the same non-determinism `bog_leech_
+portrait.md`/`silk_widow_portrait.md`/this file's own pass 2 all hit
+before), `fire.png` at mean 14.83/max 255 versus every other icon's mean
+0–11.2/max ≤126 — the same noise-vs-content gap those prior passes used to
+draw the line; reverted the other 35 and kept only `fire.png`.
+
+Composited the new PNG over the flat brown card-face standin RGB(139,105,74)
+and looked at it three ways, same method as pass 2 and `frail_icon.md`:
+the full 256px composite (`design/renders/fire_icon_pass3_full.png`), a real
+42px Lanczos downsample nearest-neighbour upscaled for viewing
+(`fire_icon_pass3_42px_big.png`), and a pure black-on-white alpha silhouette
+(`fire_icon_pass3_sil.png`). Also re-rendered `peak.png` composited the same
+way (`/tmp/peak_full.png`, not committed — a scratch comparison, not a new
+asset) to check the family-distinction claim directly rather than by
+memory: `peak` is three dead-straight grey/white triangles with a red flag,
+unmistakably rigid; the new `fire` render shows a visible concave bend in
+the left body's outer edge and a lean/S-curve through the centre body, at
+both 256px and in the 42px downsample, and the silhouette crop shows the
+same bends with colour removed.
+
+- **Family distinction (5 → 8):** the bent, warm-toned cluster no longer
+  shares `peak`'s straight-triangle-mountain gestalt — confirmed by the
+  side-by-side render above, not just the geometry math. Not higher: it is
+  still three tapering bodies clustered vertically, the same broad
+  composition family as `peak`/`ascend`-style icons, just no longer
+  confusable with one specifically.
+- **Mechanic match (6 → 7):** the bend reads as a lick rather than a rigid
+  spike at both 256px and 42px, and the gold core still pokes through from
+  pass 2. Not higher: each body still tapers smoothly from a wide base to
+  one point along its bent path, the same single-taper vocabulary as
+  before — a real flame's silhouette also varies in *width* unevenly along
+  its length, which bending alone doesn't add.
+- **Silhouette @ 42px (7 → 8, not one of the two, moved as a side effect):**
+  the bend survives the downsample — the left body's concave notch and the
+  centre's lean are both visible in `fire_icon_pass3_42px_big.png`, not
+  just at full size.
+- **Colour & contrast (6, unchanged):** this pass touched no palette or
+  material — pass 2's fix stands untouched.
+- **Style consistency (7 → 8, not one of the two, moved as a side effect):**
+  `limb()` is already the primitive `bow()` uses for its curved wooden
+  limbs; bending `fire`'s bodies with it is the *same* vocabulary the set
+  already has, not a new one, which is a stronger form of consistency than
+  pass 1/2 scored this line for (matching the bevel/primitive style
+  generally).
+
+**+6 total (31 → 37), not a plateau — kept.** No line regressed.
+`run_tests.gd`: **ALL TESTS PASSED**.
+
+## Unsure about (pass 3)
+
+Whether "licking, bent flame" reads as *fire specifically* to someone who
+has never been told the build intent, versus just "an organic, non-rigid
+warm shape" — the same kind of open question `frail_icon.md` pass 2 raised
+for its own fix, and not one a static composite against a flat standin can
+settle; that needs a real card-hand read. Also unsure whether a fourth pass
+targeting Colour (6, now tied-lowest with Mechanic) — the tan/orange limb's
+value closeness to the brown standin, the same near-miss class
+`rally_icon.md` pass 2 flagged for its own limb — would be worth the
+remaining budget, or whether 37/50 is close enough to the 40 stop line that
+Nick should look at it before another pass is spent.

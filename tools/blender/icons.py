@@ -102,10 +102,22 @@ def bow(i):                                     # a ranged strike
 
 
 def fire(i):                                    # burning damage
-    for x, z, h, w, c in [(-0.22, -0.10, 0.62, 0.16, ORANGE),
-                          (0.22, -0.14, 0.52, 0.14, RUST),
-                          (0.0, 0.02, 0.86, 0.22, TANGERINE)]:
-        i.spike(x, z, w, 0.01, h, c, seg=6)
+    # pass 3 (design/progress/fire_icon.md): the three main bodies used to be
+    # straight spike() cones, which read as a rigid triangle cluster -- the
+    # same silhouette family as peak()'s mountain spikes, and the reason
+    # scoring capped both Family distinction and Mechanic match. A real flame
+    # licks and curls; a mountain does not. Each body is now a limb() bent
+    # through three points instead of a single straight taper, same base and
+    # tip heights as before so the cluster's footprint and reach are unchanged.
+    for pts, r, c in [
+        ([(-0.22, 0.0, -0.41), (-0.28, 0.0, -0.05), (-0.14, 0.0, 0.21)],
+         [0.16, 0.09, 0.01], ORANGE),
+        ([(0.22, 0.0, -0.40), (0.30, 0.0, -0.14), (0.12, 0.0, 0.12)],
+         [0.14, 0.08, 0.01], RUST),
+        ([(0.0, 0.0, -0.41), (0.09, 0.0, 0.02), (-0.06, 0.0, 0.45)],
+         [0.22, 0.13, 0.01], TANGERINE),
+    ]:
+        i.limb(pts, r, c, seg=6)
     # The hot core used to sit centred inside the TANGERINE cone's own radius
     # for its whole height, so it never had a chance to render -- one cone
     # fully enclosed inside a bigger one. Raised and lengthened so its tip

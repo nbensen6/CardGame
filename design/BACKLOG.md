@@ -2514,6 +2514,37 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 1 (improve an asset), portraits/icons lane.
+  Ranked every scored portrait and icon by current total; the two lowest
+  (`riptide_eel_portrait` 29, `boulder_ram_portrait` 30) both had their two
+  lowest-scoring lines trace to the 3D beast model itself (a detached eye,
+  mis-rendering horns) — out of this lane's tier, so skipped per
+  `frail_icon.md`'s own precedent. Picked `fire` (icon, 31/50, lowest
+  in-lane), whose pass 2 log had already named the same root cause under two
+  different lines — Family distinction and Mechanic match both capped by
+  "the three main bodies are still perfectly straight-sided rigid cones."
+  Replaced the three flame bodies' `spike()` calls with `limb()` (the bent
+  tapered-tube primitive `bow()` already uses, no new vocabulary), threaded
+  through a bent path instead of a straight axis, same base/tip heights as
+  before. Rebuilt the full icon set (`blender --background --python
+  tools/blender/icons.py -- game/assets/icons`), diffed all 36 against HEAD,
+  kept only `fire.png` (mean pixel diff 14.83 vs every other icon's
+  render-noise band of 0–11.2) and reverted the rest. Looked at the full
+  render, a real 42px downsample, and the alpha silhouette, plus a
+  side-by-side against `peak.png` to check the family-distinction claim
+  directly: the bend is visible at both sizes and the cluster no longer
+  reads as `peak`'s straight triangle-mountain shape. Silhouette 7→8,
+  Family 5→8, Mechanic 6→7, Colour unchanged at 6, Style 7→8 (side effect —
+  `limb()` is already the set's own vocabulary via `bow()`). **31→37/50, not
+  a plateau — kept**, third pass of four allowed. Also had to stand up
+  Blender in this container from scratch (`apt-get install blender` after
+  `download.blender.org` 403'd through the proxy again, `pip install numpy`
+  for its system python3.12, `apt-get install libegl1 libgles2` for headless
+  EGL rendering) — none of that was in the container image. `run_tests.gd`:
+  ALL TESTS PASSED. Left `#83`/`#86` unticked, as this lane's own rule
+  requires — a score is Nick's to accept, not the routine's. Next #86 turn
+  is duty 2 (find an error and resolve it).
+
 - **2026-09-02** — #86 duty 3 (verify a mechanic), fourth pass. Went looking
   for another untested piece of the view's climb logic and found a "two
   copies of one truth" case instead of a first-pass hole: `combat_3d.
