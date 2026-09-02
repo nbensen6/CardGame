@@ -2482,6 +2482,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 2 (find an error and resolve it), fifth turn of
+  the rotation. Read `game/views/combat_3d.gd`'s `_place_hunters` end to end
+  (the same function duty 3's own log already names as the site of the
+  original spawn-at-zero bug) looking for the two families this duty hunts:
+  first-pass holes and two-copies-of-one-truth. Found a real one in the
+  sibling `elif moved:` branch (the "beast rescaled / sigil settled, hunter
+  hasn't actually climbed" case, not the first-placement case): it built a
+  glide tween with `tween_property(node, "position", pos, 0.18)` and then, on
+  the very next line, wrote `node.position = pos` directly. That write is
+  synchronous; `Tween.tween_property` only reads its "from" value lazily, the
+  first time the tween actually steps. By the time it stepped, `node.position`
+  already WAS `pos`, so the tween interpolated pos -> pos and every glide that
+  should have slid played as an invisible snap instead — same shape of bug as
+  5b63bf4 (an order-of-operations gap silently defeating the intended
+  position), just in the other branch. Not caught by anything: `_place_hunters`
+  needs a live scene tree and is exercised by no test. Fix: pulled the tween
+  setup into a static `_start_glide(tw, node, to, dur)` with no
+  `node.position` write of its own, and added a headless test that creates a
+  real `Node3D` + `Tween` (via `SceneTree.root.create_tween()` — the first
+  test in this file to touch the scene tree at all) and asserts position is
+  still at its ORIGINAL spot immediately after `_start_glide` runs, since
+  that's synchronous and needs no frame processing or `await`. Verified
+  red/green by hand: temporarily reinstating the `node.position = to` line
+  makes the new test FAIL, removing it makes it PASS. `run_tests.gd`: ALL
+  TESTS PASSED (72 tests). Did not find a second candidate of comparable
+  confidence in `combat.gd`/`combatant.gd`/`boss.gd`/`player_state.gd`/
+  `run.gd`/`run_map.gd` — those are unusually well covered already. Next #86
+  turn is duty 3 (verify a mechanic).
 - **2026-09-01** — #86 duty 1 (improve an asset), fourth turn of the
   rotation. Picked `rhythm` (icon, 30/50, lowest unfixed portrait/icon —
   `ascend`'s own 29 was already fixed last duty-1 turn), applied both fixes

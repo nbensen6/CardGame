@@ -425,6 +425,9 @@ func _init() -> void:
 	_test_backlog86_route_between_rungs_excludes_the_endpoints()
 	_test_backlog86_route_between_rungs_is_empty_with_no_ledges_between()
 	_test_backlog86_route_between_rungs_ignores_unsorted_input()
+	# backlog #86 duty 2: a real bug in the same file, found reading
+	# _place_hunters end to end — see the test and _start_glide for the story.
+	_test_backlog86_glide_is_not_defeated_by_a_synchronous_position_write()
 
 	print("")
 	if _failures == 0:
@@ -6898,6 +6901,28 @@ func _test_backlog86_route_between_rungs_ignores_unsorted_input() -> void:
 	# the dictionary's insertion order to come out in climb order.
 	var route: Array = Combat3D.route_between_rungs([12, 0, 8, 4], 0, 12)
 	_expect(route == [4, 8], "the rung list is sorted before routing, regardless of the order it arrives in")
+
+
+## backlog #86 duty 2 — a real bug in `_place_hunters`'s `elif moved:` branch
+## (the "beast rescaled, sigil settled, hunter hasn't actually climbed" case):
+## it built a glide tween and then wrote `node.position = pos` on the very next
+## line. That write runs synchronously; `Tween.tween_property` only reads its
+## "from" value lazily, on the tween's first step — by then position already
+## WAS `pos`, so the tween interpolated pos -> pos and every glide played as an
+## invisible snap instead of the slide the comment above it promises.
+## `_start_glide` is the fix pulled out static so this is provable with no
+## model loaded and no frame processed: proving the glide isn't pre-empted only
+## needs the SYNCHRONOUS state right after it starts, not real animation time.
+func _test_backlog86_glide_is_not_defeated_by_a_synchronous_position_write() -> void:
+	var node := Node3D.new()
+	node.position = Vector3(1.0, 0.0, 1.0)
+	var target := Vector3(4.0, 0.0, 4.0)
+	var tw := root.create_tween()
+	Combat3D._start_glide(tw, node, target, 0.18)
+	_expect(node.position.is_equal_approx(Vector3(1.0, 0.0, 1.0)),
+		"the glide must not be pre-empted by a synchronous position write, or the tween has nothing left to interpolate")
+	tw.kill()
+	node.free()
 
 
 func _expect(cond: bool, name: String) -> void:

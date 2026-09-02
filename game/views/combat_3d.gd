@@ -1983,6 +1983,24 @@ func _hop(tw: Tween, node: Node3D, body: Node3D, from: Vector3, to: Vector3,
 		tw.tween_property(body, "scale", Vector3.ONE, 0.12) 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
+## Slides a hunter to `to` for a move that is NOT a climb — the beast rescaled,
+## the sigil settled, see the `elif moved:` branch in _place_hunters. Split out,
+## and made static, so a headless test can prove the glide actually plays.
+##
+## `Tween.tween_property` reads its "from" value LAZILY, the first time the
+## tween steps — not when tween_property() is called. The bug that shipped set
+## `node.position = pos` on the very next line after starting the tween, which
+## runs synchronously, so by the time the tween took its first step the
+## "current" position already WAS `pos`: it interpolated pos -> pos and every
+## glide played as a snap. `_place_hunters`'s comment above the sibling
+## `elif not placed:` branch already tells this story once (5b63bf4, hunters
+## spawning at the beast's centre because nothing ran on the first pass) — this
+## is the same shape of bug, an order-of-operations gap, in the other branch.
+static func _start_glide(tw: Tween, node: Node3D, to: Vector3, dur: float) -> void:
+	tw.tween_property(node, "position", to, dur) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+
 func _place_hunters(s: Dictionary) -> void:
 	var players: Array = s.get("players", [])
 	var boss: Dictionary = s.get("boss", {})
@@ -2110,10 +2128,7 @@ func _place_hunters(s: Dictionary) -> void:
 			# Slide, do not leap: they have not gone anywhere.
 			var glide := create_tween()
 			_climb_tw[i] = glide
-			var gt := glide.tween_property(node, "position", pos, 0.18)
-			gt.set_trans(Tween.TRANS_SINE)
-			gt.set_ease(Tween.EASE_OUT)
-			node.position = pos
+			_start_glide(glide, node, pos, 0.18)
 		# ground hunters stand three-quarter on, turned in toward the beast
 		node.rotation.y = (PI + 0.7 * side) if t <= 0.01 else (PI * 0.5 * -side)
 
