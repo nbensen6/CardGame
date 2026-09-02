@@ -2514,6 +2514,33 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 1 (improve an asset), thirteenth turn of the
+  rotation. `expose`'s icon scored 32/50 (`design/progress/expose_icon.md`)
+  with two diagnosed lines sharing one root cause: Family distinction (3 —
+  near-identical double-ring-plus-centre-mark silhouette to `target`, the
+  card it's most often read alongside) and Mechanic match (6 — a round ball
+  plus four axis ticks reads as a generic aim reticle, the same genre
+  `target`'s own diagonal-arrow-on-a-ring already owns, not "weak point").
+  Applied both in `tools/blender/icons.py`: the round centre ball is now an
+  angular two-taper shard (`relic()`'s own gem construction), and the four
+  symmetric ticks are three `spike()` crack-lines at uneven angles/lengths
+  radiating from centre — a fracture read instead of a crosshair, and a
+  silhouette that no longer matches `target`'s at a glance. Installed
+  Blender via `apt-get` again (same route logged repeatedly before; needed
+  `numpy` and `libegl1`/`libegl-mesa0` again too, same as earlier batches),
+  rebuilt the full 36-icon set, and diffed every PNG against the committed
+  set to separate this Blender build's known render noise (mean 0.08-11.2
+  across the other 35) from the real change (`expose.png`, mean 14.77) —
+  kept only `expose.png`. Rendered the 256px composite, a real 42px Lanczos
+  downsample, an alpha silhouette, and a side-by-side strip against `target`
+  at 42px, and looked at all four before scoring: 32 → 40, no line
+  regressed, meets the loop's own 40/50 stop line. `run_tests.gd`: ALL TESTS
+  PASSED. Renders and the full pass-2 diagnosis are in
+  `design/progress/expose_icon.md` and `design/renders/expose_pass2_*.png`.
+  Left `#76` unchecked, same as every icon pass before it — a `cloud-art`
+  item is never ticked by the routine, a human has to look. Next #86 turn is
+  duty 2 (find an error and resolve it).
+
 - **2026-09-02** — #86 duty 3 (verify a mechanic), twelfth turn of the
   rotation. The specific starting point named for duty 3 back on 2026-09-01
   (`combat_3d._route_between`, `_stand_on_model`, `_hop`) is now fully

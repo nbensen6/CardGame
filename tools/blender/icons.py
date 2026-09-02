@@ -187,10 +187,14 @@ def draw(i):                                    # draw a card
 def expose(i):                                  # mark a weak point
     i.ring((0.0, 0.0, 0.0), (0.42, 0.42, 0.42), AMBER, 18, 5, thickness=0.16)
     i.ring((0.0, 0.0, 0.0), (0.22, 0.22, 0.22), GOLD, 14, 5, thickness=0.24)
-    i.ball((0.0, -0.06, 0.0), (0.09, 0.06, 0.09), BRICK, 7, 4)
-    for s in (-1, 1):
-        i.slabf(0.56 * s, 0.0, 0.09, 0.030, AMBER, bevel=0.0)
-        i.slabf(0.0, 0.56 * s, 0.030, 0.09, AMBER, bevel=0.0)
+    # The centre mark is an angular shard, not `target`'s round ball, and the
+    # corona is three uneven crack-lines instead of four symmetric ticks — a
+    # weak point reads as a fracture, not a reticle, and the silhouette no
+    # longer matches `target` at a glance.
+    i.spike(0.0, 0.02, 0.11, 0.02, 0.20, BRICK, seg=5)
+    i.spike(0.0, -0.02, 0.11, 0.02, 0.20, BRICK, ang=math.pi, seg=5)
+    for ang, length in ((0.35, 1.10), (2.05, 1.04), (-1.15, 1.00)):
+        i.spike(0.0, 0.0, 0.012, 0.03, length, BRICK, ang=ang, seg=4)
 
 
 def taunt(i):                                   # pull the beast's attention
