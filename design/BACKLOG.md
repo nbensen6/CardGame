@@ -2482,6 +2482,27 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 1 (improve an asset), seventh turn of the
+  rotation. Picked `volley` (icon, 30/50, lowest unfixed portrait/icon by
+  score — `riptide_eel_portrait` scored lower at 29 but both its diagnosed
+  fixes trace to the 3D beast model, out of this lane's tier). Both of
+  `volley_icon.md`'s named lines (Mechanic match 4, Silhouette 5) traced to
+  one cause: the three RUST marks' spacing was built assuming `slabf`'s `w`
+  was a half-width of `0.11`, but it's actually the Blender object-scale
+  value applied to a base ±1 cube, so the real half-width was `0.22` — the
+  marks sat about 0.047 world units apart, under a pixel at 42px, and fused
+  into one streak. The three SILVER spikes were placed at a fixed offset
+  unrelated to the marks' own position, which is why they floated clear of
+  the line. Rewrote `volley()` (`tools/blender/icons.py`) around one shared
+  diagonal vector with an explicit gap between marks and each spike's apex
+  computed to touch its own mark. First render clipped to the canvas edge
+  (`bbox (0, 43, 228, 186)` on 256px); pulled the mark/spike size in
+  slightly and re-rendered clean (`(2, 49, 222, 183)`). Looked at the full
+  render, a real 42px downsample, the silhouette, and a side-by-side strip
+  against `climb`/`ascend`/`peak` to confirm the new diagonal-plus-triangle
+  shape hadn't drifted into their family — it hadn't. 30 -> 39, no line
+  regressed. `run_tests.gd`: ALL TESTS PASSED. Next #86 turn is duty 2 (find
+  an error and resolve it).
 - **2026-09-02** — #86 duty 3 (verify a mechanic), sixth turn of the rotation.
   Duty 3's first pass (`0bf0534`) named two siblings of `_route_between` as
   still untested and explicitly ruled `_hop` out (pure animation timing, not

@@ -218,10 +218,22 @@ def rally(i):                                   # lift the whole party
 
 
 def volley(i):                                  # several hits at once
-    for k, (x, z) in enumerate([(-0.34, 0.22), (0.0, 0.0), (0.34, -0.22)]):
-        i.slabf(x - 0.06, z, 0.22, 0.030, RUST, rot=0.5)
-        i.spike(x + 0.20, z + 0.20, 0.075, 0.006, 0.16, SILVER,
-                ang=math.pi / 4, seg=4)
+    # Three separated marks along one diagonal, each capped by its own SILVER
+    # spike touching the mark's own leading tip. The old version butted the
+    # three RUST segments end to end -- they fused into one streak at 42px
+    # (design/progress/volley_icon.md) -- and set the spikes at a fixed
+    # offset that floated clear of all three rather than tracking them.
+    rot = 0.5
+    dx, dz = math.cos(rot), -math.sin(rot)        # the diagonal the marks run along
+    hw, gap, spike_len = 0.11, 0.14, 0.13
+    step = hw * 2 + gap
+    ang = math.atan2(dx, dz)
+    for k in (-1, 0, 1):
+        cx, cz = dx * step * k, dz * step * k
+        i.slabf(cx, cz, hw, 0.032, RUST, rot=rot)
+        reach = hw + spike_len / 2
+        i.spike(cx - dx * reach, cz - dz * reach, 0.075, 0.006, spike_len,
+                SILVER, ang=ang, seg=4)
 
 
 def guard(i):                                   # block, but timed
