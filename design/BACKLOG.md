@@ -2514,6 +2514,30 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 1 (improve an asset), twenty-second turn of the
+  rotation. `target.png`'s worst line was Family distinction (3/10,
+  `design/progress/target_icon.md`): its old shaft ran from almost the
+  centre ball's own position out to one edge only, so the icon was still
+  "two rings plus a centre mark," the same recipe as `expose`. Re-centred
+  the shaft on the ball and doubled its reach so it crosses the whole
+  frame on both sides, and moved the arrowhead from buried-near-the-centre
+  to the true outer tip, continuing the same direction. Verified against a
+  real 42px render, not assumed: alpha bbox stayed comfortably inside frame
+  (the outer GOLD ring governs the model's bounding box, not the shaft, so
+  lengthening it carried no clipping risk), and a direct side-by-side
+  composite against `expose.png` (`design/renders/target_icon_pass2_vs_
+  expose_42px.png`) confirmed the two no longer share a silhouette —
+  `expose` reads as a radiating starburst of crack-lines, `target` now
+  reads as one bold diagonal arrow through a ball. Family distinction
+  3 → 8, Mechanic match 7 → 8 (the two named fixes), Silhouette 8 → 9 as a
+  side effect (the arrowhead's point is now isolated in open space instead
+  of tucked near the centre). Total 33 → 40, meeting the loop's stop
+  condition. Only `target.png` touched among the 36 icons — the other 35
+  were rebuilt as a render-noise side effect of running the full batch
+  script and reverted with `git checkout --`, same as every prior duty-1
+  icon pass. `run_tests.gd`: ALL TESTS PASSED, no new tests (an icon
+  geometry pass adds none, matching precedent).
+
 - **2026-09-02** — #86 duty 2 (find an error and resolve it), twenty-first turn
   of the rotation. `Combat._meld_cards` (`combat.gd:299`) is a third hand-copy
   of `Card`'s field list, alongside `to_dict`/`from_dict` — and the same

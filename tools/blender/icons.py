@@ -352,8 +352,16 @@ def target(i):                                  # scales off Exposed
     i.ring((0.0, 0.0, 0.0), (0.48, 0.48, 0.48), GOLD, 18, 5, thickness=0.13)
     i.ring((0.0, 0.0, 0.0), (0.28, 0.28, 0.28), AMBER, 14, 5, thickness=0.20)
     i.ball((0.0, -0.06, 0.0), (0.10, 0.07, 0.10), BRICK, 7, 4)
-    i.slabf(0.22, 0.22, 0.30, 0.028, SILVER, rot=-0.79)
-    i.spike(0.06, 0.06, 0.075, 0.006, 0.16, BRICK, ang=-2.36, seg=4)
+    # pass 2 (design/progress/target_icon.md): the old shaft ran from almost
+    # dead centre out to one edge, so the silhouette was still "two rings plus
+    # one centre mark" -- the same family as expose's own double ring. Centred
+    # on the ball and lengthened so it crosses the whole frame on both sides,
+    # with the arrowhead moved out to the true outer tip instead of buried
+    # near the centre, this reads as one diagonal line piercing straight
+    # through the bullseye, a silhouette expose's shard-and-crack build
+    # doesn't share.
+    i.slabf(0.0, 0.0, 0.58, 0.028, SILVER, rot=-0.79)
+    i.spike(0.39, 0.39, 0.075, 0.006, 0.22, BRICK, ang=0.79, seg=4)
 
 
 def rhythm(i):                                  # the Frog's combo counter

@@ -86,3 +86,110 @@ BRICK tone (both the same base colour) is deliberate — "the arrow struck
 the bullseye's own colour" — or an accident of reusing one palette entry
 for two different parts; the render alone can't distinguish intent from
 coincidence.
+
+## Pass 2 — #86 duty 1
+
+Applied both named fixes in `tools/blender/icons.py`'s `target()`. The old
+shaft (`slabf(0.22, 0.22, 0.30, 0.028, ..., rot=-0.79)`) ran from
+`(0.009, 0.007)` — effectively the centre ball's own location — out to
+`(0.431, 0.433)`, and the arrowhead spike sat with its own tip pointing
+back INTO that same near-centre point. Worked out from the box/taper
+maths (`slabf`'s `rot` is a Y-axis rotation of the local X axis; `spike`'s
+`ang` maps directly to a world direction via `(sin ang, cos ang)`), not
+assumed: on one side of the centre there was a shaft, on the other side
+nothing, so the silhouette was still "two rings plus one centre mark" —
+`expose`'s own family.
+
+1. **Family distinction (3).** Concrete fix: re-centred the shaft on the
+   ball (`slabf(0.0, 0.0, 0.58, 0.028, SILVER, rot=-0.79)`, up from a
+   0.30 half-length off-centre to 0.58 centred) so it runs the full
+   diagonal through the bullseye and out both sides, and moved the
+   arrowhead from `(0.06, 0.06)` (pointing inward, buried near the ball)
+   to `(0.39, 0.39)` pointing outward (`ang=0.79`, continuing the shaft's
+   own direction), so the point sits at the true outer tip instead of
+   hidden at the centre.
+2. **Mechanic match (7).** No separate change — same fix as above; a
+   shaft that visibly threads all the way through the ball to both edges
+   reads more clearly as "already pierced this target" than a stub that
+   stops at the centre.
+
+Rebuilt with `apt`'s Blender 4.0.2, headless EGL (`libegl1`, `libegl-mesa0`,
+`libgles2` and `python3.12 -m pip install numpy` all needed first in this
+container, same packages `fire_icon.md` pass 3 and `dexterity_icon.md`
+needed — `download.blender.org` is still a 403 through the egress proxy).
+Console: `TRIS 208 PARTS 4 BUDGET 700 ok`, no warnings. Ran the full
+`icons.py` batch and diffed all 36 PNGs against `HEAD`; kept only
+`target.png`, reverted the other 35 with `git checkout --` (Blender's own
+render noise touches files whose build code never changed, the same
+finding every icon batch since `rope_icon.md` pass 2 has hit).
+
+Verified three ways before scoring, not just by eyeballing the full-res
+render:
+
+- **Bounding box.** `finish()`'s own `SIZE` print was unchanged at
+  `1.215 0.2 0.908` between the old and new shaft lengths — the model's
+  overall bbox is set by the outer GOLD ring (radius 0.48 + thickness),
+  not by the shaft, so lengthening the shaft carried no clipping risk as
+  long as its own reach stayed under the ring's outer edge, which it
+  does. Confirmed directly on the rendered PNG too: alpha>10 bbox moved
+  from a ring-dominated box to `(7, 8, 248, 247)` of 256 — real margin
+  on all four sides — and the real 42px Lanczos downsample (not the
+  full-res image scaled down) shows alpha>10 at `(1, 1, 40, 40)` of 42,
+  a 1px margin on every edge, comfortably inside frame.
+- **Pixel sample.** Sampled the rendered PNG directly at the shaft
+  midpoint, the arrowhead tip and the centre ball, against the standin
+  `RGB(139,105,74)`: shaft `RGB(150,152,159)` — a cool grey/blue-tinted
+  silver, gap of `(11,47,85)`, strongest on the two channels the standin
+  is weakest on; centre ball `RGB(135,46,40)` and arrowhead tip
+  `RGB(155,66,62)` — both clearly darker/redder than the standin on G
+  and B. No line depends on this (Colour was already scored 7 and this
+  pass didn't touch palette), but it confirms the new geometry didn't
+  accidentally hide anything in shadow.
+- **Direct comparison, not memory.** Rendered a real 42px composite of
+  both `target.png` and `expose.png` side by side
+  (`design/renders/target_icon_pass2_vs_expose_42px.png`) instead of
+  trusting the written description of `expose`'s own shape. `expose`
+  reads as a radiating starburst of thin brick crack-lines around an
+  angular shard, no single dominant line and no ball; the new `target`
+  reads as one bold silver diagonal with a clear pointed tip and a red
+  centre ball. The two are no longer close at a glance the way two
+  double-ring-plus-centre-mark icons were.
+
+- **Family distinction (3 → 8):** confirmed by the side-by-side render
+  above, not assumed from the geometry change alone — the shapes read as
+  different gestalts (starburst vs. single arrow) at 42px, not just
+  different colours or minor details on the same silhouette.
+- **Mechanic match (7 → 8):** the shaft now visibly passes fully through
+  the ball and out the far side, which reads more like "already struck
+  and exploiting an existing mark" than the old stub that only reached
+  the centre from one direction. Not higher: still the same ring-plus-
+  line vocabulary as before; nothing new was added to say "Exposed"
+  specifically rather than "arrow" generally.
+- **Silhouette @ 42px (8 → 9, not one of the two, moved as a side
+  effect):** the arrowhead's point is now isolated in open space beyond
+  the outer ring instead of tucked in near the centre ball where the
+  original render partly absorbed it into the shaft — confirmed in the
+  real 42px downsample, where the tip reads as an unambiguous triangular
+  point rather than a small notch.
+- **Colour & contrast (7, unchanged):** this pass touched no palette or
+  material, only position and length.
+- **Style consistency (8, unchanged):** same primitives (`slabf`,
+  `spike`), same construction vocabulary as every other icon in the set;
+  repositioning them changes nothing about which vocabulary is used.
+
+**+7 total (33 → 40), not a plateau — meets the loop's 40/50 stop
+condition.** No line regressed. `run_tests.gd`: **ALL TESTS PASSED**
+(fresh import, headless). No new tests — an icon geometry/position batch
+adds none, matching every prior icon-only pass under this item.
+
+## Unsure about (pass 2)
+
+Whether "arrow piercing straight through a target" reads unambiguously as
+*exploiting* an existing weak point specifically, versus just "a stronger
+attack" in general, to someone seeing the card cold with no tooltip — the
+same kind of question `expose_icon.md`'s own pass raised for its side of
+this pair, and one a static composite can't settle on its own. Also
+unresolved from pass 1: whether the arrowhead's BRICK tone still reads too
+close to the centre ball's own BRICK tone at 42px now that both are
+farther apart in frame — not sampled again this pass since neither was one
+of the two named fixes.
