@@ -1055,8 +1055,15 @@ func _intent_text(boss: Dictionary, s: Dictionary) -> String:
 
 
 ## Height between the two hunters — what a rift is priced on.
-func _height_gap(s: Dictionary) -> int:
-	var players: Array = s.get("players", [])
+##
+## Lifted to a static, testable twin of Combat.incoming_for's rift branch in
+## /core (combat.gd:511-519), which prices the SAME move with the SAME
+## `maxi(0, hi - lo)` over `foothold`. That is a second copy of one truth —
+## the intent HUD computes its own gap instead of reading the one /core
+## already priced the move on — and the two had zero shared test coverage
+## between them, so a formula edit on one side could silently mismatch the
+## number a player is shown against the damage that actually lands.
+static func height_gap_between(players: Array) -> int:
 	if players.size() < 2:
 		return 0
 	var lo := 9999
@@ -1066,6 +1073,10 @@ func _height_gap(s: Dictionary) -> int:
 		lo = mini(lo, f)
 		hi = maxi(hi, f)
 	return maxi(0, hi - lo)
+
+
+func _height_gap(s: Dictionary) -> int:
+	return height_gap_between(s.get("players", []))
 
 
 # --- the beast ------------------------------------------------------------

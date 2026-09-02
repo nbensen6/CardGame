@@ -2514,6 +2514,31 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 3 (verify a mechanic), fourth pass. Went looking
+  for another untested piece of the view's climb logic and found a "two
+  copies of one truth" case instead of a first-pass hole: `combat_3d.
+  _height_gap` (what the intent HUD prices a `rift` boss move's displayed
+  damage on) recomputes the exact same `maxi(0, hi - lo)` over `foothold`
+  that `Combat.incoming_for`'s `"rift"` branch already computes in `/core`
+  (`combat.gd:511-519`) to price the REAL damage. Nothing tied the two
+  together — a formula edit on either side could drift silently and the only
+  symptom would be a HUD number that lies about what's about to land, which
+  is exactly the class of bug duty 2's "two copies of one truth" pattern
+  warns about, just found on a duty-3 pass instead.
+  Lifted `_height_gap` into a static `height_gap_between(players: Array)`
+  (same extraction shape as the prior three passes' `route_between_rungs`,
+  `foothold_anchor` and `hunter_move_kind`), kept `_height_gap(s)` as a thin
+  wrapper so every existing call site is untouched. Four new tests: zero
+  players and one player both return 0 (matching `/core`'s own loop, which
+  never updates `lo`/`hi` in either case), order-independence, correct
+  behavior across 3+ players (overall spread, not adjacent pairs), and —
+  the one that actually matters — a real `Combat` driven through a rift move
+  with footholds 5 and 1, asserting `height_gap_between` on those same
+  footholds reproduces the exact damage `/core` dealt. `run_tests.gd`: ALL
+  TESTS PASSED. Behavior-preserving extraction, not a bug fix — the two
+  formulas already agreed, this just makes sure they can't quietly stop
+  agreeing.
+
 - **2026-09-02** — #86 duty 2 (find an error and resolve it), tenth turn of
   the rotation. Went looking for a real bug in the session layer rather than
   re-reading `combat_3d.gd` again, and found one: backlog #64's `take_key()`

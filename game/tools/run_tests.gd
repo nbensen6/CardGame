@@ -456,6 +456,15 @@ func _init() -> void:
 	_test_backlog86_hunter_move_kind_glides_when_the_world_moved_under_a_placed_hunter()
 	_test_backlog86_hunter_move_kind_is_none_when_placed_and_settled()
 	_test_backlog86_hunter_move_kind_climb_outranks_moved_even_if_the_point_did_not_move()
+	# backlog #86 duty 3 (fourth pass): height_gap_between, lifted out of
+	# combat_3d._height_gap, is a SECOND copy of the exact gap formula
+	# Combat.incoming_for already prices a rift move on in /core — the intent
+	# HUD and the actual damage had zero shared coverage, so a formula edit on
+	# either side could silently mismatch the number shown against what lands.
+	_test_backlog86_height_gap_between_is_zero_with_fewer_than_two_players()
+	_test_backlog86_height_gap_between_ignores_order()
+	_test_backlog86_height_gap_between_uses_the_overall_min_and_max()
+	_test_backlog86_height_gap_between_matches_the_real_rift_damage_in_core()
 
 	print("")
 	if _failures == 0:
@@ -7104,6 +7113,58 @@ func _test_backlog86_hunter_move_kind_climb_outranks_moved_even_if_the_point_did
 	# resting point happens to land within 0.05m of the old one.
 	_expect(Combat3D.hunter_move_kind(true, 2, 5, false) == "climb",
 		"a real foothold change climbs even if the two world positions happen to coincide")
+
+
+## backlog #86 duty 3 (fourth pass) — height_gap_between is the pure twin of
+## Combat.incoming_for's rift branch in /core (combat.gd:511-519): both walk
+## the players and take `maxi(0, hi - lo)` over `foothold`. The intent HUD
+## calls the view's copy to show the number BEFORE the move resolves;
+## /core's copy is what actually lands. Nothing before this checked the two
+## agree.
+func _test_backlog86_height_gap_between_is_zero_with_fewer_than_two_players() -> void:
+	_expect(Combat3D.height_gap_between([]) == 0,
+		"no players, no gap — matches /core's own loop, which starts hi=0/lo=9999 and never updates either")
+	_expect(Combat3D.height_gap_between([{"foothold": 6}]) == 0,
+		"a lone hunter can't be apart from themselves")
+
+
+func _test_backlog86_height_gap_between_ignores_order() -> void:
+	var forward: int = Combat3D.height_gap_between([{"foothold": 1}, {"foothold": 5}])
+	var backward: int = Combat3D.height_gap_between([{"foothold": 5}, {"foothold": 1}])
+	_expect(forward == 4 and backward == 4,
+		"the gap is a distance, not a signed difference — whichever hunter is listed first doesn't matter")
+
+
+func _test_backlog86_height_gap_between_uses_the_overall_min_and_max() -> void:
+	var gap: int = Combat3D.height_gap_between([
+		{"foothold": 3}, {"foothold": 0}, {"foothold": 7}, {"foothold": 4}])
+	_expect(gap == 7,
+		"three or more entries still take the overall spread (7 - 0), not a pairwise or first/last comparison")
+
+
+## The cross-check that actually matters: build a real Combat with a rift
+## move and drive it to resolution, then confirm height_gap_between over the
+## SAME footholds produces the SAME gap /core priced the damage on. This is
+## the one test that would fail if the two copies of the formula ever drift —
+## a bug that would otherwise show up only as a HUD number that's wrong on a
+## real screen, which is exactly what duty 3 exists to catch before that.
+func _test_backlog86_height_gap_between_matches_the_real_rift_damage_in_core() -> void:
+	var boss := Boss.new("Riftling", 300)
+	boss.moves = [{"type": "rift", "value": 4}]
+	boss.weak_point_height = 4
+	var c := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	c.players[0].foothold = 5
+	c.players[1].foothold = 1   # gap of 4
+	var hp_before: int = c.players[0].combatant.hp
+	c.end_turn(0)
+	c.end_turn(1)
+	var actual_damage: int = hp_before - c.players[0].combatant.hp
+
+	var gap: int = Combat3D.height_gap_between([
+		{"foothold": c.players[0].foothold}, {"foothold": c.players[1].foothold}])
+	var displayed_damage: int = 4 + gap * Combat.RIFT_PER_GAP
+	_expect(displayed_damage == actual_damage,
+		"the number the intent HUD would show for this rift (%d) must equal what actually landed (%d)" % [displayed_damage, actual_damage])
 
 
 func _expect(cond: bool, name: String) -> void:
