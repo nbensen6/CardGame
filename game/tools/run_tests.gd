@@ -526,6 +526,24 @@ func _init() -> void:
 	_test_backlog86_let_drags_through_reaches_every_descendant_control()
 	_test_backlog86_let_drags_through_walks_through_a_non_control_node()
 	_test_backlog86_let_drags_through_tolerates_a_null_root()
+	# backlog #86 duty 3 (twentieth turn): CardView.shape_text, the rule that
+	# decides what authored prose survives ALONGSIDE the live effect line
+	# face_text builds -- static, pure, and covered by nothing despite being
+	# exactly the "misdescribes a real choice" bug class duty 3 hunts: a card
+	# whose live line and authored text disagree because one was updated and
+	# the other wasn't would read as two contradictory descriptions stacked
+	# on top of each other.
+	_test_backlog86_shape_text_passes_authored_text_through_with_no_preview()
+	_test_backlog86_shape_text_is_blank_when_authored_text_is_blank()
+	_test_backlog86_shape_text_drops_a_clause_the_live_line_already_says()
+	_test_backlog86_shape_text_keeps_a_clause_the_live_line_never_says()
+	_test_backlog86_shape_text_drops_a_clause_even_when_its_value_differs_from_the_live_line()
+	_test_backlog86_shape_text_returns_empty_when_every_clause_is_already_said()
+	_test_backlog86_sentences_splits_on_period_space_and_keeps_each_dot()
+	_test_backlog86_sentences_appends_a_missing_trailing_dot()
+	_test_backlog86_sentences_drops_the_empty_fragment_after_a_trailing_period()
+	_test_backlog86_shape_of_strips_digits_so_two_values_of_the_same_line_compare_equal()
+	_test_backlog86_shape_of_leaves_a_line_with_no_digits_untouched()
 
 	print("")
 	if _failures == 0:
@@ -7626,6 +7644,88 @@ func _test_backlog86_let_drags_through_walks_through_a_non_control_node() -> voi
 func _test_backlog86_let_drags_through_tolerates_a_null_root() -> void:
 	Combat3D._let_drags_through(null)
 	_expect(true, "a null root returns immediately instead of crashing on get_children()")
+
+
+## backlog #86 duty 3 (twentieth turn) -- CardView.shape_text() is "the
+## authored text minus everything the live line already said" (its own doc
+## comment). It builds face_text(data, false) as the live line, then keeps
+## only the authored sentences whose SHAPE (digits stripped) doesn't already
+## appear among the live line's sentences. Static and pure: plain
+## Dictionaries in, a String out, no scene needed.
+func _test_backlog86_shape_text_passes_authored_text_through_with_no_preview() -> void:
+	var data := {"text": "Deal 3 damage."}
+	_expect(CardView.shape_text(data) == "Deal 3 damage.",
+		"a card with no live preview (an offer, not a card in hand) shows its authored text untouched -- there is no live line to compare against")
+
+
+func _test_backlog86_shape_text_is_blank_when_authored_text_is_blank() -> void:
+	var data := {"text": "", "preview": {"damage": 3}, "preview_miss": {},
+		"base": {}, "fx": {"hits": 1}, "keywords": []}
+	_expect(CardView.shape_text(data) == "",
+		"a card authored with no prose at all has nothing for the inspector's second line to add, live preview or not")
+
+
+func _test_backlog86_shape_text_drops_a_clause_the_live_line_already_says() -> void:
+	# Live line (face_text) resolves to "Deal 3 damage." alone; the authored
+	# text says the same fact at its PRINTED value.
+	var data := {"text": "Deal 5 damage.", "preview": {"damage": 3},
+		"preview_miss": {}, "base": {}, "fx": {"hits": 1}, "keywords": []}
+	_expect(CardView.shape_text(data) == "",
+		"the authored clause and the live line say the same thing (deal damage) so it is dropped rather than printed twice")
+
+
+func _test_backlog86_shape_text_keeps_a_clause_the_live_line_never_says() -> void:
+	var data := {"text": "Deal 5 damage. 3 more damage per Rhythm.",
+		"preview": {"damage": 3}, "preview_miss": {}, "base": {}, "fx": {"hits": 1},
+		"keywords": []}
+	_expect(CardView.shape_text(data) == "3 more damage per Rhythm.",
+		"the damage clause duplicates the live line and is dropped, but the scaling clause names something the live line never mentions and survives")
+
+
+func _test_backlog86_shape_text_drops_a_clause_even_when_its_value_differs_from_the_live_line() -> void:
+	# This is the whole point of comparing SHAPES rather than exact strings:
+	# "Climb 2" printed against a live line of "Climb 1" is still the same
+	# statement at a different value, not new information.
+	var data := {"text": "Climb 2.", "preview": {"grip": 1}, "preview_miss": {},
+		"base": {}, "fx": {"hits": 1}, "keywords": []}
+	_expect(CardView.shape_text(data) == "",
+		"a printed clause is dropped even when its NUMBER disagrees with the live line, because the shapes (digits stripped) still match")
+
+
+func _test_backlog86_shape_text_returns_empty_when_every_clause_is_already_said() -> void:
+	var data := {"text": "Deal 5 damage. Climb 2.",
+		"preview": {"damage": 3, "grip": 1}, "preview_miss": {}, "base": {},
+		"fx": {"hits": 1}, "keywords": []}
+	_expect(CardView.shape_text(data) == "",
+		"a card with nothing left to add once every authored clause is matched by the live line returns empty, not a stray join artifact")
+
+
+func _test_backlog86_sentences_splits_on_period_space_and_keeps_each_dot() -> void:
+	var out := CardView._sentences("Deal 3 damage. Climb 2.")
+	_expect(out.size() == 2 and out[0] == "Deal 3 damage." and out[1] == "Climb 2.",
+		"two authored sentences split apart on '. ' and each keeps its own trailing period")
+
+
+func _test_backlog86_sentences_appends_a_missing_trailing_dot() -> void:
+	var out := CardView._sentences("Deal 3 damage. Climb 2")
+	_expect(out.size() == 2 and out[1] == "Climb 2.",
+		"a final sentence authored without its trailing period still gets one, or shape_of comparisons against face_text's always-punctuated lines would never match")
+
+
+func _test_backlog86_sentences_drops_the_empty_fragment_after_a_trailing_period() -> void:
+	var out := CardView._sentences("Deal 3 damage. ")
+	_expect(out.size() == 1 and out[0] == "Deal 3 damage.",
+		"a trailing '. ' with nothing after it must not become a bogus empty second sentence")
+
+
+func _test_backlog86_shape_of_strips_digits_so_two_values_of_the_same_line_compare_equal() -> void:
+	_expect(CardView._shape_of("Climb 2.") == CardView._shape_of("Climb 5."),
+		"the same statement at two different values must reduce to the same shape, or shape_text could never recognize a live line as a duplicate")
+
+
+func _test_backlog86_shape_of_leaves_a_line_with_no_digits_untouched() -> void:
+	_expect(CardView._shape_of("Draw a card.") == "Draw a card.",
+		"a sentence with no digits to strip is returned as-is")
 
 
 func _expect(cond: bool, name: String) -> void:

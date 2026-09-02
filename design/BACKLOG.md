@@ -2514,6 +2514,30 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 3 (verify a mechanic actually works), twentieth
+  turn of the rotation. `CardView.shape_text()` — "the authored text minus
+  everything the live line already said" (its own doc comment) — is the rule
+  that decides what prose the card inspector's second line shows once the
+  live effect line (`face_text`) has already stated a fact; it was static,
+  pure, and had zero coverage despite being exactly the class of bug duty 3
+  hunts: it compares SHAPES (digits stripped from each sentence) rather than
+  exact strings, specifically so a printed "Climb 2" is recognized as the
+  same statement as a live "Climb 1" and dropped rather than shown twice —
+  a card whose authored and live text disagreed on a value would otherwise
+  print both. Added 12 tests: `shape_text` passing authored text through
+  untouched with no preview, returning blank for blank authored text,
+  dropping a clause the live line already states, keeping a clause the live
+  line never mentions, dropping a clause even when its NUMBER disagrees with
+  the live line (the shape-comparison point of the whole function), and
+  returning empty (not a stray join artifact) when every clause is already
+  said; plus the two pure helpers it composes, `_sentences()` (splits on
+  ". ", reappends a missing trailing dot, drops the empty fragment after a
+  trailing period) and `_shape_of()` (two values of one statement reduce to
+  the same shape; a line with no digits is untouched). No production code
+  changed — this duty proves an existing mechanic, it doesn't fix one.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless; 15 new PASS
+  lines, no FAILs). Rotation stays 1→3→2: last turn was duty 1 (`rope`
+  icon, `cb105ab`), so this is duty 3; next is duty 2.
 - **2026-09-02** — #86 duty 1 (improve an asset), nineteenth turn of the
   rotation. Picked `rope` (icon, 33/50, tied-lowest un-repaired icon with
   `target`/`burn`, but the only one of the three whose diagnosis named two
