@@ -153,10 +153,16 @@ def flask(i):                                   # a potion
 
 
 def climb(i):                                   # gain Height
-    i.slabf(-0.10, -0.44, 0.42, 0.10, STONE)    # two steps
-    i.slabf(0.14, -0.16, 0.30, 0.10, STONE)
-    i.spike(0.0, 0.26, 0.30, 0.02, 0.44, WHEAT, seg=3)   # the arrow up
-    i.slabf(0.0, -0.02, 0.10, 0.26, WHEAT)
+    # pass 2 (design/progress/climb_icon.md): the old arrow-on-post shared
+    # ascend's own outer silhouette almost exactly, and an up-arrow doesn't
+    # say "climb" any more than it says "a big climb" -- the two cards need
+    # different verb shapes, not two arrows of different size. Rebuilt as a
+    # literal three-step staircase rising left to right, with a small marker
+    # peg on the top step standing in for the climber, instead of a chevron.
+    i.slabf(-0.32, -0.42, 0.20, 0.10, STONE)     # bottom step
+    i.slabf(-0.06, -0.18, 0.20, 0.10, STONE)     # middle step
+    i.slabf(0.20, 0.06, 0.20, 0.10, WHEAT)       # top step, lit to draw the eye up
+    i.slabf(0.20, 0.28, 0.045, 0.14, WHEAT)      # a marker peg standing on the top step
 
 
 def bomb(i):                                    # a big one-off blast

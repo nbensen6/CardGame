@@ -82,3 +82,83 @@ Whether the two dark base bars are meant to be read as "steps" at all
 outside the build comment — nothing about their shape (two plain
 rectangles, one shorter and offset) signals "stairs" without already
 knowing the intent.
+
+## Pass 2 — fixer
+
+Applied both named lines together, since the same root cause — the
+triangle-on-post outer shape — drove both:
+
+1. **Family distinction (3).** Replaced the triangle-on-post with a literal
+   three-step staircase, rising left to right, built from three `slabf()`
+   plates (STONE for the bottom two, WHEAT for the top) plus a small WHEAT
+   marker peg standing on the top step. The outer silhouette no longer
+   shares anything with `ascend`'s arrow-and-wings shape.
+2. **Mechanic match (7).** The two "up" cards now use genuinely different
+   verb shapes — `ascend` keeps the big doubled chevron for "a big climb",
+   `climb` is now literal ascending steps for "gain Height" — rather than
+   two arrows of different size.
+
+Rebuilt by running `icons.py` directly through Blender (no other icon
+script touched — confirmed via `git status`, which showed only
+`climb.png` after restoring the other 35 icons Blender re-rendered as a
+side effect of running the whole script; a different Blender build than
+whatever produced the committed PNGs re-renders every icon with slightly
+different antialiasing, up to 69/255 on a single channel on icons whose
+own build code never changed, so those 35 were checked out back to
+`HEAD` rather than committed). Then `--headless --import` in Godot so the
+reimported `climb.png` is what the game actually loads, then
+`run_tests.gd`.
+
+Renders: `climb_full.png` (composited on the same brown card-face standin
+`RGB(139,105,74)` prior batches used) and `climb_42px_big.png` (real 42px
+`LANCZOS` downsample, nearest-neighbour upscaled for viewing) — both kept
+locally, not committed, per the "commit `_sil.png`/`_34.png`, not every
+view" convention (there's no dedicated silhouette render for a 2D icon
+pass; the 42px composite serves that role here). Alpha bbox `(11, 34,
+218, 245)`, comfortably inside the 256px canvas on all sides.
+
+Sampled actual PNG pixels rather than eyeballing only: bottom step
+RGB(106,109,118), middle step RGB(76,80,91) — both the same STONE
+blue-grey, darkening slightly with distance from camera — top step
+RGB(185,169,150) and peg RGB(203,189,174), both WHEAT and visibly lighter
+than the STONE steps, so the top step and its peg read as one lit
+"you are here" element rather than blending into the staircase body.
+
+- **Family distinction (3 → 8):** side by side with `ascend` at full size
+  and at the 42px downsample, the two no longer share an outer silhouette
+  at all — `climb` is three offset rectangles ascending diagonally,
+  `ascend` is a symmetric arrow-and-wings column. Not a 9 or 10: both are
+  still built from the same STONE/WHEAT/GOLD palette family and the same
+  bevelled-block vocabulary, which is correct (they're meant to read as
+  related "up" cards) but keeps a very fast glance from separating them
+  purely by colour alone.
+- **Mechanic match (7 → 8):** literal ascending steps is a more specific
+  "climb" read than a generic up-arrow, and now visibly differs from
+  `ascend`'s shape rather than only its size. Not higher: the marker peg
+  standing in for "the climber" is a small, non-obvious detail at 42px —
+  confirmed in the actual 42px render, it survives as a small pale mark
+  on the top step but a player would likely read "stairs going up" from
+  the steps alone, with the peg reinforcing rather than doing that work
+  itself.
+- **Silhouette @ 42px (7, unchanged):** checked directly in the 42px
+  downsample — the three-step diagonal stays legible as three discrete
+  blocks rather than compressing into one shape, same as the arrow-on-post
+  did before.
+- **Colour & contrast (8, unchanged):** neither fix touched the palette;
+  the WHEAT-on-STONE top-step lift and the STONE-on-brown-standin body
+  both still separate cleanly.
+- **Style consistency (8, unchanged):** same `slabf()` bevelled-plate
+  construction as the rest of the set; nothing about the rebuild changes
+  the construction style.
+
+**+8 total (33 → 41), not a plateau — kept. Meets the loop's 40/50 stop
+condition.** No line regressed.
+`run_tests.gd`: **ALL TESTS PASSED**.
+
+## Unsure about (pass 2)
+
+Whether the marker peg reads as "a climber" to a player who has never
+seen the build comment, or just as an unexplained bump on the top step —
+the 42px render confirms it survives as a visible mark, not that it
+carries that specific meaning on its own; the staircase shape is doing
+the real identity work here.

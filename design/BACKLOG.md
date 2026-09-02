@@ -2514,6 +2514,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 1 (improve an asset), sixteenth turn of the
+  rotation. Picked `climb` (icon), the lowest-scoring un-repaired icon at
+  33/50, tied with `rope`/`burn`/`target` but the only one of those four
+  whose diagnosis (`design/progress/climb_icon.md`) named two fixes both
+  addressable in `tools/blender/icons.py` alone — `boulder_ram_portrait`
+  and `flicker_stag_portrait` were lower still (30, 32) but both diagnoses
+  traced back to 3D model geometry/material, which is the fixer lane's
+  tier, not mine. Rebuilt `climb()`'s shape from a triangle-on-post — which
+  shared `ascend`'s own outer silhouette almost exactly — into a literal
+  three-step staircase with a lit marker peg on the top step, so the two
+  "up" cards read as genuinely different verbs (steps vs. a doubled
+  chevron) instead of two arrows of different size. +8 total (33 → 41),
+  meets the loop's 40/50 stop condition. Confirmed in a real 42px
+  downsample and a side-by-side composite against `ascend`, both read
+  back with the Read tool, not assumed from the script.
+  Surprising: running `icons.py` re-renders and re-exports all 28 icons in
+  one pass, and this container's Blender (4.0.2 via apt, since the
+  4.1.1 tarball download is blocked by the egress proxy here) renders
+  measurably different antialiasing than whatever built the committed
+  PNGs — up to 69/255 on a single channel on icons whose build code never
+  changed (`sword`, `bow`, ...). Restored all 35 unrelated icon PNGs to
+  `HEAD` after the build and committed only `climb.png`, so this run
+  doesn't silently drag the whole icon set onto a different renderer.
+  Needed `python3-numpy` (glTF export addon import) and `libegl1`/
+  `libgl1`/`libglx-mesa0` (BLENDER_WORKBENCH needs a GL context even
+  headless) on top of the apt `blender` package before the script would
+  run at all — worth remembering for the next `cloud-art`/icon turn on a
+  fresh container. `run_tests.gd`: ALL TESTS PASSED.
+
 - **2026-09-02** — #86 duty 3 (verify a mechanic), fifteenth turn of the
   rotation. The twelfth turn's log said `combat_3d.gd`'s ten `static func`s
   were now fully covered and the other views had no static funcs at all to
