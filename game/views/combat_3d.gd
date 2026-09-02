@@ -1829,26 +1829,32 @@ func _front_of_beast(x: float, y: float) -> float:
 	var box := _beast_box
 	var ix := int(clampf((x - box.position.x) / box.size.x, 0.0, 0.999) * float(HULL_X))
 	var iy := int(clampf((y - box.position.y) / box.size.y, 0.0, 0.999) * float(HULL_Y))
-	# The deepest of this band and the eight around it. Sampling the hunter's own
-	# column alone is not enough and the Grove Bear proves why: at the sigil the
-	# chest reaches 8.5 and the hunter stood at 9.5, correctly outside it — and
-	# was still invisible, because the muzzle in the next column along reaches
-	# 11.4 and the hunter was standing behind its face.
-	#
-	# A 3x3 neighbourhood is the local surface rather than one thin slice. Wider
-	# than that and a single outflung limb starts dragging hunters out into open
-	# air on the other side of the body, which is the opposite failure and looks
-	# just as wrong.
+	return hull_front_at(_hull, HULL_X, HULL_Y, ix, iy, box)
+
+
+## The pure half of _front_of_beast: given a band already resolved to hull
+## indices, the deepest of that band and the eight around it. Sampling the
+## hunter's own column alone is not enough and the Grove Bear proves why: at
+## the sigil the chest reaches 8.5 and the hunter stood at 9.5, correctly
+## outside it — and was still invisible, because the muzzle in the next
+## column along reaches 11.4 and the hunter was standing behind its face.
+##
+## A 3x3 neighbourhood is the local surface rather than one thin slice. Wider
+## than that and a single outflung limb starts dragging hunters out into open
+## air on the other side of the body, which is the opposite failure and looks
+## just as wrong.
+static func hull_front_at(hull: PackedFloat32Array, hull_x: int, hull_y: int,
+		ix: int, iy: int, box: AABB) -> float:
 	var best := -1e9
 	for dy: int in [-2, -1, 0, 1, 2]:
 		var j: int = iy + dy
-		if j < 0 or j >= HULL_Y:
+		if j < 0 or j >= hull_y:
 			continue
 		for dx: int in [-1, 0, 1]:
 			var i: int = ix + dx
-			if i < 0 or i >= HULL_X:
+			if i < 0 or i >= hull_x:
 				continue
-			var f: float = _hull[j * HULL_X + i]
+			var f: float = hull[j * hull_x + i]
 			if f > best:
 				best = f
 	if best < -1e8:

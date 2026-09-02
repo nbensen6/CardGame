@@ -2514,6 +2514,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 3 (verify a mechanic actually works). Picked
+  `combat_3d._front_of_beast` — the rule that decides how far a hunter stands
+  from the beast so they don't clip into (or float in front of) the mesh, and
+  the one the doc comment blames for a real bug: a hunter's own column can
+  read as clear while the body reaches out from the column right next to it
+  (the Grove Bear muzzle vs. chest case named in the code). It had zero
+  coverage, same family as the other view-layer gaps this duty keeps finding.
+  Lifted the pure half — `hull_front_at(hull, hull_x, hull_y, ix, iy, box)`,
+  the 3x3-neighbourhood max-search over the coarse heightmap — out of
+  `_front_of_beast`, which now just resolves (x, y) to grid indices and calls
+  it. Four tests: an empty column falls back to the box's own back rather
+  than its front; the muzzle case (a neighbour column reaching further than
+  the hunter's own); the window is bounded — a value two columns over or
+  three bands up must NOT win, proving the neighbourhood size itself rather
+  than just its existence; and a hunter standing at the very edge of the hull
+  grid doesn't wrap or read out of bounds. One test failed on first run for a
+  reason worth naming: `PackedFloat32Array` is 32-bit, and `11.4` isn't
+  exactly representable in float32, so `front == 11.4` failed on a value that
+  had round-tripped through the real array type the game itself uses (not a
+  test bug in the usual sense — it's the same lossy storage `_build_hull`
+  writes into). Swapped to `11.25`, which is exact in float32, and noted why
+  in the test. `run_tests.gd`: ALL TESTS PASSED. Did not touch the camera
+  framing math in the same file (`_climb_frame`, `_dist_for_window` etc.) —
+  that's where #85 (ally off-screen) actually lives, but #85 is `needs a
+  screen` and this run has none; changing that code without looking at it
+  would be exactly the mistake rule 3 exists to prevent. Next #86 turn is
+  duty 1 (improve an asset).
+
 - **2026-09-02** — #86 duty 2 (find an error and resolve it). `Combat.
   use_potion()`'s `"climb"` case raised `ps.foothold` directly but never
   called `_track_climb()` — a "missed call site" case, the same class as the

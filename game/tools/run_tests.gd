@@ -466,6 +466,14 @@ func _init() -> void:
 	_test_backlog86_height_gap_between_ignores_order()
 	_test_backlog86_height_gap_between_uses_the_overall_min_and_max()
 	_test_backlog86_height_gap_between_matches_the_real_rift_damage_in_core()
+	# backlog #86 duty 3 (fifth pass): hull_front_at, lifted out of
+	# combat_3d._front_of_beast, is the rule that stops a hunter clipping into
+	# (or floating in front of) the beast's own mesh -- the Grove Bear muzzle
+	# case in the doc comment above it, made headless-testable.
+	_test_backlog86_hull_front_at_returns_the_box_back_when_the_column_is_empty()
+	_test_backlog86_hull_front_at_finds_the_deepest_point_in_the_neighbourhood()
+	_test_backlog86_hull_front_at_does_not_reach_beyond_its_neighbourhood()
+	_test_backlog86_hull_front_at_ignores_neighbours_outside_hull_bounds()
 
 	print("")
 	if _failures == 0:
@@ -7189,6 +7197,75 @@ func _test_backlog86_height_gap_between_matches_the_real_rift_damage_in_core() -
 	var displayed_damage: int = 4 + gap * Combat.RIFT_PER_GAP
 	_expect(displayed_damage == actual_damage,
 		"the number the intent HUD would show for this rift (%d) must equal what actually landed (%d)" % [displayed_damage, actual_damage])
+
+
+## backlog #86 duty 3 (fifth pass): hull_front_at, lifted out of
+## combat_3d._front_of_beast — the rule that decides whether a hunter clips
+## into the beast's own mesh. See the Grove Bear story in the doc comment
+## above hull_front_at: a hunter's own column can read as clear while the
+## body reaches out from a column right next to it, so the front of the beast
+## is the deepest point in a 3x3 neighbourhood, not the hunter's own band.
+func _test_backlog86_hull_front_at_returns_the_box_back_when_the_column_is_empty() -> void:
+	var hull := PackedFloat32Array()
+	hull.resize(3 * 3)
+	hull.fill(-1e9)
+	var box := AABB(Vector3(0, 0, -2), Vector3(4, 4, 4))
+	var front: float = Combat3D.hull_front_at(hull, 3, 3, 1, 1, box)
+	_expect(front == box.position.z,
+		"a column with no mesh in it at all is the back of the box, not the front")
+
+
+func _test_backlog86_hull_front_at_finds_the_deepest_point_in_the_neighbourhood() -> void:
+	# Grove Bear shape: the hunter's own band (chest) reaches 8.5; the muzzle,
+	# one column over, reaches 11.4 — the hunter must be pushed out past the
+	# muzzle, not just the chest, or it ends up standing behind its own face.
+	var hull := PackedFloat32Array()
+	hull.resize(3 * 3)
+	hull.fill(0.0)
+	hull[1 * 3 + 1] = 8.5   # centre band (the hunter's own column)
+	hull[1 * 3 + 2] = 11.25  # one column over -- exactly representable in the
+	                          # PackedFloat32Array _build_hull actually uses
+	var box := AABB(Vector3(0, 0, -2), Vector3(4, 4, 4))
+	var front: float = Combat3D.hull_front_at(hull, 3, 3, 1, 1, box)
+	_expect(front == 11.25,
+		"the front of the body is the deepest point NEAR the hunter, not just their own column")
+
+
+func _test_backlog86_hull_front_at_does_not_reach_beyond_its_neighbourhood() -> void:
+	# A wider reach was flagged in the doc comment as the opposite failure —
+	# an outflung limb two bands over would drag a hunter out into open air on
+	# the far side of the body. Fix the window at 3 wide and 5 tall and prove
+	# it: a value just outside that window must never win.
+	var hull_x := 7
+	var hull_y := 7
+	var hull := PackedFloat32Array()
+	hull.resize(hull_x * hull_y)
+	hull.fill(0.0)
+	var cx := 3
+	var cy := 3
+	hull[cy * hull_x + cx] = 1.0          # the hunter's own band
+	hull[cy * hull_x + (cx + 2)] = 99.0    # two columns over: outside the 3-wide window
+	hull[(cy + 3) * hull_x + cx] = 99.0    # three rows up: outside the 5-tall window
+	var box := AABB(Vector3(0, 0, -2), Vector3(4, 4, 4))
+	var front: float = Combat3D.hull_front_at(hull, hull_x, hull_y, cx, cy, box)
+	_expect(front == 1.0,
+		"a limb two columns over or three bands up must not reach into this hunter's front")
+
+
+func _test_backlog86_hull_front_at_ignores_neighbours_outside_hull_bounds() -> void:
+	# Standing at the very edge of the hull grid must not wrap or index out of
+	# bounds — the out-of-range half of the 3x3/5x3 window is simply absent,
+	# not read from the other side of the array.
+	var hull_x := 3
+	var hull_y := 3
+	var hull := PackedFloat32Array()
+	hull.resize(hull_x * hull_y)
+	hull.fill(-1e9)
+	hull[0] = 5.0  # (0, 0), the only real data, at the corner
+	var box := AABB(Vector3(0, 0, -2), Vector3(4, 4, 4))
+	var front: float = Combat3D.hull_front_at(hull, hull_x, hull_y, 0, 0, box)
+	_expect(front == 5.0,
+		"the corner column still finds its own value even with most of its neighbourhood off-grid")
 
 
 func _expect(cond: bool, name: String) -> void:
