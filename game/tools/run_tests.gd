@@ -467,6 +467,13 @@ func _init() -> void:
 	_test_backlog86_height_gap_between_ignores_order()
 	_test_backlog86_height_gap_between_uses_the_overall_min_and_max()
 	_test_backlog86_height_gap_between_matches_the_real_rift_damage_in_core()
+	# backlog #86 duty 2: incoming_for() (the preview) and _enemy_turn() (the
+	# real hit) used to each run their own copy of the rift-gap search, seeded
+	# with different sentinels (9999 vs 99) — safe only because every real
+	# foothold sits under FOOTHOLD_MAX. Deduplicated onto one Combat._rift_gap()
+	# so the two literally cannot disagree any more; this proves it directly at
+	# a foothold value that would have broken the smaller of the old sentinels.
+	_test_backlog86_rift_gap_shared_by_preview_and_resolution()
 	# backlog #86 duty 3 (fifth pass): hull_front_at, lifted out of
 	# combat_3d._front_of_beast, is the rule that stops a hunter clipping into
 	# (or floating in front of) the beast's own mesh -- the Grove Bear muzzle
@@ -7282,6 +7289,33 @@ func _test_backlog86_height_gap_between_matches_the_real_rift_damage_in_core() -
 	var displayed_damage: int = 4 + gap * Combat.RIFT_PER_GAP
 	_expect(displayed_damage == actual_damage,
 		"the number the intent HUD would show for this rift (%d) must equal what actually landed (%d)" % [displayed_damage, actual_damage])
+
+
+## backlog #86 duty 2: Combat.incoming_for() and Combat._enemy_turn() each ran
+## their own min/max search for the rift gap, seeded with a magic sentinel —
+## 9999 in incoming_for, 99 in _enemy_turn. Both stayed correct only while the
+## LOWEST foothold among the players was below the sentinel: `mini(sentinel,
+## foothold)` always finds the real minimum in that case. The bug needs EVERY
+## player's foothold above the sentinel — then the sentinel itself becomes the
+## wrong "minimum" and the gap comes out too large. (Reachable in principle:
+## jetpack's `ps.foothold = boss.weak_point_height` in _resolve_prepared sets
+## foothold with no FOOTHOLD_MAX clamp, unlike every other foothold-setting
+## call site in this file.) Both branches now share one Combat._rift_gap(), so
+## this drives every foothold past the smaller of the two old sentinels and
+## proves the shared helper — and the preview built on it — still gets the
+## real minimum instead of pinning to a sentinel.
+func _test_backlog86_rift_gap_shared_by_preview_and_resolution() -> void:
+	var boss := Boss.new("Riftling", 300)
+	boss.moves = [{"type": "rift", "value": 4}]
+	var c := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	c.players[0].foothold = 150  # both above the old 99 sentinel...
+	c.players[1].foothold = 200  # ...so the old code would have used 99 as "lo" here
+	_expect(Combat._rift_gap(c.players) == 50,
+		"the shared gap helper must use the real minimum foothold (150), not fall back to a sentinel")
+
+	var previewed: Dictionary = c.incoming_for(0)
+	_expect(previewed["raw"] == 4 + 50 * Combat.RIFT_PER_GAP,
+		"incoming_for's preview must be priced off the same shared gap _enemy_turn will resolve the hit with")
 
 
 ## backlog #86 duty 3 (fifth pass): hull_front_at, lifted out of

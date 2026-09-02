@@ -2514,6 +2514,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-02** — #86 duty 2 (find an error and resolve it), seventeenth
+  turn of the rotation. `Combat.incoming_for()` (the damage-preview branch
+  the HUD reads) and `Combat._enemy_turn()` (the branch that actually
+  resolves a `"rift"` move) each ran their own independent min/max search
+  for the gap between the two hunters' footholds — a genuine "two copies of
+  one truth," the exact family duty 2 exists to hunt. The two copies were
+  seeded with DIFFERENT magic sentinels (`9999` in `incoming_for`, `99` in
+  `_enemy_turn`), which stayed silently correct only because the true
+  minimum foothold in play is always found by `mini(sentinel, foothold)` as
+  long as at least one player is below the sentinel — every real foothold
+  sits under `FOOTHOLD_MAX` (16) today, so this has never fired. It is
+  reachable in principle, though: `_resolve_prepared`'s jetpack effect
+  (`ps.foothold = boss.weak_point_height`) is the one foothold-setting call
+  site in the file with no `FOOTHOLD_MAX` clamp, so a beast authored with a
+  large enough `weak_point_height` could push a foothold past 99 and make
+  the previewed damage disagree with what actually lands. Extracted both
+  copies into one `Combat._rift_gap(players)` so the two call sites share
+  the same computation and cannot diverge again, and added a regression
+  test (`_test_backlog86_rift_gap_shared_by_preview_and_resolution`) that
+  drives both players' footholds past the old 99 sentinel and confirms the
+  shared helper — and the preview built on it — still returns the true
+  gap, which the old `_enemy_turn` copy would have gotten wrong. Left the
+  THIRD copy of this same formula, `Combat3D.height_gap_between` in the
+  view layer, alone: it operates on the network-synced Dictionary shape
+  rather than `PlayerState` objects and cannot share code with `/core`
+  across the CLAUDE.md §2 boundary, which is presumably why a prior duty-3
+  turn gave it its own cross-check test instead of deduplicating it.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless).
+
 - **2026-09-02** — #86 duty 1 (improve an asset), sixteenth turn of the
   rotation. Picked `climb` (icon), the lowest-scoring un-repaired icon at
   33/50, tied with `rope`/`burn`/`target` but the only one of those four

@@ -485,6 +485,26 @@ func _condition_met(cond: Dictionary, ps: PlayerState, mate: PlayerState) -> boo
 			return false
 
 
+## Shared by incoming_for() (the damage preview) and _enemy_turn() (the real
+## hit) for the "rift" move's hunter-gap, so the two can never compute it
+## differently. They used to each run their own min/max search seeded with a
+## different magic sentinel (9999 in incoming_for, 99 in _enemy_turn) — safe
+## only because every foothold in play (FOOTHOLD_MAX = 16) stayed well below
+## either number. Seeding lo/hi from the first player's own foothold instead
+## of a sentinel rules the whole class of "sentinel too small" bug out, rather
+## than just picking a bigger magic number.
+static func _rift_gap(ps_list: Array) -> int:
+	if ps_list.is_empty():
+		return 0
+	var lo: int = (ps_list[0] as PlayerState).foothold
+	var hi: int = lo
+	for other in ps_list:
+		var f: int = (other as PlayerState).foothold
+		lo = mini(lo, f)
+		hi = maxi(hi, f)
+	return maxi(0, hi - lo)
+
+
 ## What the beast's telegraphed move will actually cost this hunter, after Block.
 ##
 ## The intent icon already says WHAT is coming; this says whether you survive it.
@@ -511,12 +531,7 @@ func incoming_for(pi: int) -> Dictionary:
 		"rift":        # hits BOTH, and harder the further apart they are
 			# Missing here until 2026-08-16, so the one move whose damage the
 			# player controls was the one move the HUD showed nothing for.
-			var lo := 9999
-			var hi := 0
-			for other in players:
-				lo = mini(lo, other.foothold)
-				hi = maxi(hi, other.foothold)
-			raw = value + maxi(0, hi - lo) * RIFT_PER_GAP
+			raw = value + _rift_gap(players) * RIFT_PER_GAP
 	return {"raw": raw, "through": maxi(raw - ps.combatant.block, 0)}
 
 
@@ -1168,12 +1183,7 @@ func _enemy_turn() -> void:
 			else:
 				_log("%s stamps for %d — %s still on the ground." % [boss.name, dl, ", ".join(caught_low)])
 		"rift":  # the further apart the hunters are, the worse it hurts — climb together
-			var lo := 99
-			var hi := 0
-			for ps2 in players:
-				lo = mini(lo, ps2.foothold)
-				hi = maxi(hi, ps2.foothold)
-			var gap: int = maxi(0, hi - lo)
+			var gap: int = _rift_gap(players)
 			var dr: int = value + boss.strength + gap * RIFT_PER_GAP
 			for ps3 in players:
 				_boss_hits(ps3, dr)
