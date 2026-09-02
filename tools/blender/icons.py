@@ -473,8 +473,18 @@ def frail(i):                # Block gained is reduced while this is stacked
     i.slabf(-0.20, 0.20, 0.24, 0.30, STEEL, bevel=0.045, rot=-0.12)
     i.spike(-0.20, -0.16, 0.24, 0.02, 0.34, STEEL, ang=math.pi - 0.20, seg=4)
     i.slabf(-0.20, 0.44, 0.24, 0.05, SILVER, rot=-0.12)
-    i.slabf(0.22, 0.10, 0.24, 0.28, STEEL, bevel=0.045, rot=0.16)
-    i.spike(0.22, -0.28, 0.24, 0.02, 0.32, STEEL, ang=math.pi + 0.22, seg=4)
+    # The right half used to mirror the left exactly -- its own rounded top
+    # and its own clean taper to a point -- so it read as a second, complete
+    # miniature shield rather than half of one broken shield (frail_icon.md's
+    # scoring: two whole silhouettes side by side risk reading as MORE
+    # protection, not less). Recut its bottom into an uneven jagged edge
+    # instead of a point, and recoloured the whole half a cooler, darker
+    # NAVY -- STEEL's near-zero red-channel gap against the warm card
+    # standin was this icon's weakest measured contrast.
+    i.slabf(0.22, 0.10, 0.24, 0.28, NAVY, bevel=0.045, rot=0.16)
+    i.slabf(0.14, -0.24, 0.15, 0.16, NAVY, rot=0.62, bevel=0.02)
+    i.slabf(0.27, -0.34, 0.11, 0.15, NAVY, rot=-0.40, bevel=0.02)
+    i.slabf(0.19, -0.44, 0.09, 0.11, NAVY, rot=0.85, bevel=0.02)
     i.slabf(0.22, 0.34, 0.24, 0.05, SILVER, rot=0.16)
     for x, z, rot in [(0.0, 0.34, 0.30), (0.03, 0.14, -0.35),
                       (-0.02, -0.06, 0.35), (0.02, -0.26, -0.30)]:

@@ -103,6 +103,100 @@ edge once it sits next to a card's real cost pip and rules text, which
 `ART-REVIEW.md`'s own note flags too and which needs the actual card layout,
 not this flat render, to check — a `needs a screen` question.
 
+## Pass 2 — fixer
+
+Item 86's own text supersedes "scores, never repairs" for portraits and
+icons specifically (they render flat and headless answers them completely),
+so this pass applied both named lines instead of only proposing them.
+Changed `tools/blender/icons.py`'s `frail()`:
+
+1. **Mechanic match (4).** The right half used to mirror the left exactly —
+   its own rounded top slab plus its own clean `spike()` taper to a point —
+   so it read as a second, complete miniature shield rather than half of one
+   broken shield. Replaced the right half's taper with three small, unevenly
+   rotated `slabf()` shards (matching the vocabulary the crack pieces and
+   the falling chip already use, no new primitive), so the bottom of the
+   right half reads as rubble rather than its own intact point. The left
+   half's rounded top and clean point are untouched, so the asymmetry is
+   real: one recognisable (if cracked) shield shape, one shattered edge.
+2. **Colour & contrast (6).** The right half's `slabf` calls (plate, band,
+   and the three new shards) were recoloured from `STEEL` to `NAVY`
+   (`swatch(464,448)`, sampled directly from `colormap.png` at
+   RGB(72,75,89) against `STEEL`'s RGB(124,131,157)) — cooler and
+   markedly darker, specifically targeting the near-zero red-channel gap
+   Pass 1 measured on the right half alone. Left half, band colours, crack
+   and chip untouched.
+
+Rebuilt with `blender --background --python tools/blender/icons.py --
+game/assets/icons` (apt's Blender 4.0.2, headless EGL — `download.blender.org`
+still a 403 through the proxy). Console: `TRIS 560 PARTS 6 BUDGET 700 ok`,
+no warnings. As `yoke_ox.md` already found for this same container/renderer
+combination, EVERY icon PNG comes back with small pixel differences from the
+committed versions even when unchanged (diffed all 35 others directly against
+`HEAD`, up to ~mean 11/255 on some — rendering noise, not content); reverted
+all 35 unrelated icons and kept only `frail.png`, whose diff is real content
+(mean 16.5, max 255 — far past the noise band the other 35 sit in).
+
+Composited both the old (`HEAD`) and new PNGs over the flat brown card-face
+standin RGB(139,105,74) and downsampled to a real 42px with Pillow LANCZOS,
+same method Pass 1 used, and looked at both side by side
+(`/tmp/frail_old_42px_big.png` vs `design/renders/frail_icon_pass2_42px_big.png`,
+plus the 256px composites) — the old render shows two identical clean-pointed
+shields; the new one shows a clean point on the left and an uneven jagged
+cluster on the right, at both sizes. Also rendered a pure black-on-white
+silhouette from the alpha channel (`design/renders/frail_icon_pass2_sil.png`,
+same alpha-mask method the asset-loop's `_sil.png` convention uses for 3D
+models) — the asymmetry the two fixes were meant to produce is visible with
+colour removed entirely: one whole kite outline on the left, a broken,
+multi-piece cluster on the right. Pixel-sampled the new PNG directly to
+confirm the colour change is real, not a rendering illusion: right-half
+mid-tone samples away from the top bevel highlight read RGB(52–89, 57–89,
+68–89) against the old uniform STEEL RGB(103–163, 113–167, 132–177) at the
+same coordinates — a real, measured darkening, though the top bevel
+highlight itself stays similarly bright on both halves regardless of base
+colour (Blender's own rim-light shading, not something this pass's two-fix
+budget touches).
+
+- **Mechanic match (4 → 7):** the right half is now visibly broken rather
+  than a second complete shield, at both 256px and the 42px downsample.
+  Not higher: the left half is still a fully intact miniature shield in its
+  own right (rounded top, clean point) rather than a fragment itself, so
+  the read is "one whole half + one shattered half" rather than "one shape
+  torn unevenly across the whole silhouette" — closer to Frail than before,
+  not a perfect read.
+- **Colour & contrast (6 → 8):** confirmed by direct pixel sampling above;
+  the right half separates from the standin on luminance now, not just the
+  thin hue-only gap Pass 1 measured. Not a 9-10: the shared top bevel
+  highlight still reads similarly bright on both halves, so the separation
+  is strongest in the lower two-thirds of the icon, not total.
+- **Silhouette @ 42px (7 → 8, not one of the two, moved as a side effect):**
+  the jagged shard cluster is larger and more visible at 42px than the
+  single small falling chip Pass 1 docked this line for, so the "something
+  came apart" read survives the downsample better than before, without
+  either named fix targeting this line directly.
+- **Family distinction (7, unchanged):** still reads as "two shapes" next to
+  `shield`/`guard`/`wall`'s single silhouette; the asymmetry between the two
+  halves doesn't change that gestalt count, which is what this line scores.
+- **Style consistency (8, unchanged):** the new shards reuse `slabf()`, the
+  same primitive the crack and the chip already use — no new build
+  vocabulary introduced.
+
+**+6 total (32 → 38), not a plateau — kept.** No line regressed.
+`run_tests.gd`: **ALL TESTS PASSED** (icons aren't exercised by the suite
+directly; this confirms no unrelated regression).
+
+## Unsure about (pass 2)
+
+Whether "one whole half, one shattered half" reads as *Frail specifically*
+rather than just "a damaged shield" in general — the same open question
+Pass 1 raised, not closed by this pass, and ultimately a card-hand read
+this static comparison can't settle. Also unsure whether push the left
+half's own point toward a smaller, less-complete shape would read as "the
+whole thing is breaking down" more than the current whole-half/broken-half
+split — a further asymmetry, not attempted here since neither named line
+asked for it and item 86's own loop caps a fix at the two lowest-scoring
+lines per pass.
+
 ## Batch 22 close-out — all thirty-six card icons scored
 
 With `burn`, `stack`, `light` and `frail`, every icon named across
