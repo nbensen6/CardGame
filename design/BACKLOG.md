@@ -2514,6 +2514,33 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-03** — #86 duty 1 (improve an asset — portraits/icons). Last
+  turn (`adab9d8`) was duty 3, so this was duty 1. Scored the lowest-total
+  portrait on record (`riptide_eel_portrait.md`, 29/50) and applied both
+  diagnosed fixes: both eye balls in `tools/blender/riptide_eel.py` sat
+  outside the skull ball's own ellipsoid (normalized distance 1.26/1.53,
+  where >1 is outside — checked numerically against Eyrie Hawk's own
+  working eye placement at 0.91), so every render showed a small orange
+  dot floating in open air beside the head, caught by the portrait scoring
+  pass but never by `riptide_eel.md`'s own two 3D-model passes or by any
+  automated check. Pulled both eye/pupil balls 22% back toward the skull
+  centre so they sit set into the surface. Also re-centred
+  `portraits.py`'s `FOCUS`/`FOCUS_XY` for this asset — alpha bbox moved
+  from `(138,143,503,512)` (huge dead top-left, crowded bottom-right) to
+  `(44,38,471,512)` (balanced left/right, real headroom). Score 29 → 37
+  (Framing 5→8, Identity 6→8, Read@34px 5→7, Colour unchanged 7, Style
+  6→7). Rebuilt the model and re-ran the full `portraits.py` batch (no
+  single-portrait build path exists); WORKBENCH's render isn't
+  byte-reproducible even for unchanged inputs, so reverted every portrait
+  but `riptide_eel.png`. Along the way, `assetcheck.gd` surfaced a
+  pre-existing, unrelated FAIL on this same beast (`no real gold mark at
+  Height 6`, confirmed present on the untouched baseline too, so not
+  introduced here) — logged in `riptide_eel_portrait.md` and
+  `riptide_eel.md` for a future duty-2 error hunt rather than fixed here,
+  since it's outside this pass's two-fix budget and needs reading
+  `assetcheck.gd`'s UV-band math against `mark()`'s own placement, not a
+  portrait-lane change. `run_tests.gd`: ALL TESTS PASSED (fresh import,
+  headless). Next #86 turn is duty 2 (find an error and resolve it).
 - **2026-09-03** — #86 duty 3 (verify a mechanic actually works). Last turn
   (`d8e265a`) was duty 2, so this was duty 3. Picked `combat_3d._intent_text`
   — the boss telegraph a player reads on the intent tag to decide how to

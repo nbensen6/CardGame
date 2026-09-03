@@ -101,3 +101,30 @@ deliberate for the fight ground's own layout. Mirroring it for the
 model's own read doesn't answer that — if the fight ground genuinely
 only offers one side, this pass may have fixed a read at the cost of a
 hint about where to stand, which is Nick's call to weigh.
+
+## Pass 3 — #86 duty 1, via the portrait lane, 2026-09-03
+
+Neither this file's own two passes ever caught it, but
+`riptide_eel_portrait.md`'s own scoring found both eye balls floating
+clear of the skull surface (normalized ellipsoid distance 1.26/1.53,
+where **> 1** means outside — see that file's Pass 2 for the full
+numbers), a real model geometry bug, not a portrait-camera artifact.
+Fixed in `tools/blender/riptide_eel.py`: both eye and pupil balls pulled
+22% of the way back toward the skull centre. Full diagnosis, fix, and
+verification live in `riptide_eel_portrait.md`'s Pass 2, since the
+portrait render is what the fix was judged against; not duplicated here.
+Direct body-model renders (not through the portrait camera) confirm the
+same fix: `design/renders/riptide_eel_pass1_34.png` (kept from this file's
+own Pass 1, untouched by this edit) still shows the floating eye;
+`riptide_eel_pass3_34.png`/`_front.png` (this pass) show both eyes flush
+against the skull. The `_sil.png` silhouettes of both passes were checked
+too, but the eye ball is too small relative to the body to register as a
+distinct bump at silhouette resolution either way — no claim made from
+those. `assetcheck.gd`'s hold/climb numbers are unchanged by this edit
+(only the head balls moved).
+
+Also surfaced there, **not fixed**: `assetcheck.gd` fails `no real gold
+mark at Height 6` against this model, on the untouched baseline as well as
+after the eye fix — a real, unexplained mismatch between `mark()`'s
+unconditional `GOLD` taper and the check's UV-band math, worth a dedicated
+duty-2 error hunt.

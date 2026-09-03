@@ -76,9 +76,17 @@ b.wedge((0.02, -1.62, 2.56), (0.15, 0.28, 0.12), MIDNIGHT,
         narrow=(0.45, 0.60), bevel=0.03)                              # lower jaw
 b.wedge((0.02, -1.58, 2.68), (0.16, 0.30, 0.10), NAVY,
         narrow=(0.40, 0.55), bevel=0.03)                              # upper jaw
-mirror(lambda s: b.ball((0.16 * s, -1.44, 2.82), (0.055, 0.05, 0.05),
+# Eyes were floating clear of the skull - centre (0.16*s, -1.44, 2.82) sits
+# outside the skull ball's own ellipsoid ((0.02,-1.30,2.66), radii 0.22/0.30/
+# 0.20: normalized distance 1.26-1.53, >1 means outside), so a visible gap of
+# background showed between each eye and the head in every render, caught by
+# `riptide_eel_portrait.md`'s scoring pass, not by any check. Pulled both
+# balls 22% of the way back toward the skull centre (normalized distance now
+# 0.74-0.96, matching Eyrie Hawk's own working eye-on-skull placement at
+# ~0.91) so they sit set into the surface instead of hovering above it.
+mirror(lambda s: b.ball((0.13 * s, -1.41, 2.78), (0.055, 0.05, 0.05),
                         AMBER, 7, 4))                                  # eye
-mirror(lambda s: b.ball((0.16 * s, -1.48, 2.82), (0.028, 0.026, 0.026),
+mirror(lambda s: b.ball((0.13 * s, -1.45, 2.78), (0.028, 0.026, 0.026),
                         CHARCOAL, 6, 4))                               # pupil
 
 # Two short barbels off the jaw - the cheapest read for "eel", the same way
