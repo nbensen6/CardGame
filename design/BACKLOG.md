@@ -2567,6 +2567,38 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-03** — #86 duty 1 (improve an asset, portraits/icons only). Last
+  turn (`43514e7`) was duty 3, so this turn is duty 1. Re-checked
+  `boulder_ram_portrait` (30) and `bog_leech_portrait` (31), the two lowest
+  un-plateaued scores — both still diagnosed as needing beast geometry, not
+  `portraits.py`, same as last time this lane checked, so skipped again as
+  out of this lane's reach. Next lowest was `rally_icon` (32, on its second
+  pass already). Its pass-2 notes named two untouched problems: Colour (5)
+  and Mechanic (6). Measured actual rendered pixels rather than guessing off
+  swatch values — the limb's `AMBER` shaded underside came out `(181,127,57)`
+  against the `(139,105,74)` card standin, a weak-to-reversed per-channel gap
+  (blue channel: 57 vs 74), and the two call-arcs' 0.06 radius gap was
+  smaller than their combined 0.11 tube thickness, i.e. they were
+  geometrically overlapping — the real cause of "blurs into one pale accent,"
+  not just small size. Swapped the limb to `SAND` (re-measured on the real
+  render: a strong positive gap on all three channels along the whole limb
+  body) and widened the arc gap to 0.12 while thinning both tubes to 0.040
+  (no more overlap), leaving the already-safe outer radius untouched.
+  `download.blender.org` was blocked by this container's network policy this
+  run (the known block, but this time on the actual asset-build host, not
+  just a mirror); fell back to `apt-get install blender` (4.0.2), the same
+  fallback the 2026-09-03 duty-1 turn already used. Rebuilt the full
+  36-icon batch and diffed every file against committed by mean per-channel
+  pixel difference rather than eyeballing crops — every icon but `rally.png`
+  came back at mean diff ≤ 6 (ordinary render/AA noise), so those 35 were
+  reverted; kept only `rally.png`. Looked at the real render before scoring:
+  the limb clearly separates from the card standin at both full and 42px
+  size now, and the arc cluster reads as two distinct marks instead of one
+  blur. Silhouette 7→8, Mechanic 6→7, Colour 5→8, Family and Style unchanged
+  at 7 each — total 32→37, not a plateau, below the 40 stop line, 3 of 4
+  passes used. `run_tests.gd`: ALL TESTS PASSED (fresh import, headless).
+  Left the item unticked per #86's own rules — it never completes. Next
+  `#86` turn is duty 2.
 - **2026-09-03** — #86 duty 2 (find an error and resolve it), reported as
   exhausted this turn and rolled forward into duty 3 — the rotation's own
   rule for exactly this case ("if a duty is genuinely exhausted, take the

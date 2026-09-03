@@ -234,18 +234,30 @@ def rally(i):                                   # lift the whole party
     # meant to sit behind. The third's bell sat clear of the limb with a visible
     # gap between them, and its call arcs, out past the frame's right edge,
     # never rendered at all.
+    # rally_icon.md pass 3: the limb's shaded underside (measured off the
+    # actual render, not the flat swatch) came out ~(181,127,57), a weak or
+    # reversed gap against the (139,105,74) card standin on two of three
+    # channels -- the same "flat swatch reads fine, shaded surface doesn't"
+    # trap rope_icon.md's TAN->SAND swap fixed. SAND's own shaded value
+    # keeps a real positive gap on all three channels.
     i.limb([(-0.50, 0.0, -0.30), (-0.16, 0.0, -0.36), (0.16, 0.0, -0.16)],
-           [0.070, 0.095, 0.130], AMBER, seg=6)
+           [0.070, 0.095, 0.130], SAND, seg=6)
     i.taper((0.25, 0.0, -0.004), 0.12, 0.36, 0.36, GOLD, seg=8,
             rot=point((0.50, 0.0, 0.87)))
     i.ball((-0.54, 0.0, -0.28), (0.075, 0.06, 0.075), UMBER, 7, 4)
     # The call coming out of it: arcs, not rings, so nothing has to be hidden.
     # Pulled up clear of the bell and shrunk to sit inside the frame -- at the
     # old centre/radius they fell past the right edge and never rendered.
-    for k, r in enumerate((0.14, 0.20)):
+    # pass 3: radii 0.14/0.20 with a 0.055 tube radius meant the two arcs'
+    # own thickness (0.11 combined) exceeded their 0.06 radius gap -- they
+    # were touching, which is why they blurred into one pale accent at 42px
+    # (rally_icon.md pass 2's own honest read). Widened the gap to 0.12 by
+    # pulling the inner arc in, and thinned the tube so the two no longer
+    # overlap; the outer radius (already confirmed in-frame) is untouched.
+    for k, r in enumerate((0.08, 0.20)):
         pts = [(0.30 + math.cos(a) * r, 0.0, 0.42 + math.sin(a) * r)
                for a in (-0.75, -0.15, 0.45)]
-        i.limb(pts, [0.055] * 3, ICE if k else WHITE, seg=4, cap=False)
+        i.limb(pts, [0.040] * 3, ICE if k else WHITE, seg=4, cap=False)
 
 
 def volley(i):                                  # several hits at once

@@ -180,3 +180,71 @@ should come down — it still reaches both the left and right frame edges
 after this pass, per the alpha bbox above. That's a size call on a part
 neither named rubric line pointed at, not a gap or a missing-arc problem,
 so it's flagged here rather than touched.
+
+## Pass 3 — cloud, backlog #86 duty 1
+
+Pass 2 scored Silhouette 7, Family 7, Mechanic 6, Colour 5, Style 7 (32/50).
+Two lowest: Colour (5) and Mechanic (6).
+
+Sampled the actual rendered pixels rather than guessing from swatch values.
+The limb's shaded underside (`AMBER`, full swatch `(255,171,66)`) rendered at
+`(181,127,57)` against the `(139,105,74)` card standin — a weak, and on the
+blue channel *reversed*, per-channel gap (+42/+22/-17), the same "flat swatch
+reads fine, shaded surface doesn't" trap `rope_icon.md`'s pass 2 named for
+`TAN`. Separately, the two call-arcs (radii 0.14/0.20, tube radius 0.055
+each) had a 0.06 radius gap against a combined 0.11 of tube thickness — they
+were geometrically overlapping, which is the actual cause of pass 2's own
+"blurs into a single pale accent" read, not merely small size.
+
+Applied both:
+
+1. **Colour (5).** Swapped the limb's material from `AMBER` to `SAND`.
+   Re-measured the same shaded-underside pixel on the real render:
+   `(190-206, 165-193, 148-184)` along the limb body against the same
+   `(139,105,74)` standin — a strong positive gap on all three channels
+   everywhere except the tight concave crease where the limb meets the bell,
+   which carries a legitimate AO shadow and isn't part of either named line.
+2. **Mechanic (6).** Pulled the inner arc's radius from 0.14 to 0.08 (gap
+   0.06 → 0.12) and thinned both tubes from 0.055 to 0.040 (combined
+   thickness 0.11 → 0.08), so the two arcs no longer touch. Outer radius
+   (0.20, already confirmed in-frame) untouched, so no new clipping risk.
+
+Rebuilt with the real `blender` binary (apt package, 4.0.2 — the network
+policy in this container blocks `download.blender.org` this run; `apt-get
+install blender` is the same fallback the 2026-09-03 duty-1 turn used).
+Rebuilt the full 36-icon batch, diffed every file against committed by mean
+per-channel pixel difference, not just alpha bbox: every icon except
+`rally.png` came back at mean diff ≤ 6 (ordinary render/AA noise, the same
+threshold `flicker_stag_portrait.md`'s pass 2 used), so those 35 were
+reverted. Kept only `rally.png`.
+
+- **Silhouette @ 42px (7 → 8):** `design/renders/rally_pass3_sil.png` shows
+  the horn as one connected mass, same as pass 2, and the arc cluster now
+  reads as two distinct marks instead of one blurred blob.
+- **Family distinction (7, unchanged):** still the only two-piece silhouette
+  in the set; the rubric doesn't separately reward the reason changing.
+- **Mechanic match (6 → 7):** the horn+call reads more confidently as two
+  separate strokes at 42px (`design/renders/rally_pass3_42px_big.png`)
+  rather than one pale smudge. Not higher: at 42px the two strokes still
+  read as abstract marks near the horn, not unambiguously "sound," which is
+  an inherent limit of that much curve detail at this resolution, not a
+  leftover of this pass's fix.
+- **Colour & contrast (5 → 8):** verified directly off the real render
+  (numbers above) — a real, substantial gap along the whole limb body, not
+  just the flat swatch value.
+- **Style consistency (7, unchanged):** same primitives, still one connected
+  mass; this pass changed a colour and two radii, not the construction.
+
+**+5 total (32 → 37), not a plateau — kept.** No line regressed. Below the
+40/50 stop line; 3 of 4 passes used.
+
+`run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1).
+
+## Unsure about (pass 3)
+
+Whether a 4th pass on the gold bell's own shaded underside (the crease
+shadow noted above, close to the card standin in a small area near the
+limb/bell join) is worth it — it's a normal AO shadow in a concave crease,
+not a flat-colour near-miss like the limb was, so it may not respond to a
+swatch swap the same way. Left for a future pass rather than guessed at
+here.
