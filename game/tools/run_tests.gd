@@ -620,6 +620,21 @@ func _init() -> void:
 	_test_backlog86_card_climb_for_defaults_to_zero_with_no_grip_key()
 	_test_backlog86_card_climb_for_ignores_a_top_level_grip_key()
 	_test_backlog86_card_climb_for_threshold_matches_slider_cutoff()
+	# backlog #86 duty 3 (twenty-sixth pass): the grip/fall timer itself --
+	# Nick's own example is the jump, and this is the OTHER half of it: whether
+	# a hunter who is climbing actually falls in time. grip_after_tick is the
+	# pure countdown _tick_grip runs every frame; climb_state_after_secure_update
+	# is the pure transition _update_climb_state runs off the "secure" flag, and
+	# it is the one that had a real, untested promise in its own doc comment --
+	# "grip only resets on a genuine hold -> climbing transition" -- that
+	# reaching an intermediate ledge mid-hop must NOT hand out a free regrip.
+	_test_backlog86_grip_after_tick_matches_a_full_grip_seconds_countdown()
+	_test_backlog86_grip_after_tick_relic_seconds_extends_the_time_to_zero()
+	_test_backlog86_grip_after_tick_can_go_negative_past_the_fall_threshold()
+	_test_backlog86_climb_state_secure_erases_any_existing_timer()
+	_test_backlog86_climb_state_starts_a_fresh_full_timer_on_first_leaving_a_hold()
+	_test_backlog86_climb_state_does_not_regrip_a_timer_already_draining()
+	_test_backlog86_climb_state_updates_the_target_even_while_preserving_grip()
 
 	print("")
 	if _failures == 0:
@@ -7632,6 +7647,66 @@ func _test_backlog86_hunter_move_kind_climb_outranks_moved_even_if_the_point_did
 	# resting point happens to land within 0.05m of the old one.
 	_expect(Combat3D.hunter_move_kind(true, 2, 5, false) == "climb",
 		"a real foothold change climbs even if the two world positions happen to coincide")
+
+
+## backlog #86 duty 3 (twenty-sixth pass) — grip_after_tick and
+## climb_state_after_secure_update are the pure halves of `_tick_grip` and
+## `_update_climb_state`: the other side of Nick's jump mechanic, the "HOLD ON
+## before your grip gives out" timer that decides whether a climbing hunter
+## falls. grip_after_tick is the countdown; climb_state_after_secure_update is
+## the transition that starts, refreshes, or ends that countdown off the
+## "secure" flag /core sends every turn.
+func _test_backlog86_grip_after_tick_matches_a_full_grip_seconds_countdown() -> void:
+	_expect(is_equal_approx(Combat3D.grip_after_tick(1.0, 5.0, 5.0), 0.0),
+		"a full grip meter drains to exactly empty after grip_seconds worth of delta")
+
+
+func _test_backlog86_grip_after_tick_relic_seconds_extends_the_time_to_zero() -> void:
+	# GRIP_SECONDS is 5.0; a +5 relic doubles it, so the SAME five seconds of
+	# clinging should only burn half the meter, not empty it.
+	var g: float = Combat3D.grip_after_tick(1.0, 5.0, 10.0)
+	_expect(is_equal_approx(g, 0.5),
+		"a grip_seconds relic stretches the timer, so the same delta costs less of the meter, not more")
+
+
+func _test_backlog86_grip_after_tick_can_go_negative_past_the_fall_threshold() -> void:
+	# _tick_grip checks `<= 0.0` on the RESULT, so the arithmetic itself must
+	# not clamp at zero or a hunter who was already almost out of grip could
+	# never register as having fallen this frame.
+	var g: float = Combat3D.grip_after_tick(0.1, 5.0, 5.0)
+	_expect(g < 0.0, "ticking past an already-thin grip must go negative so the caller's <= 0.0 fall check actually fires")
+
+
+func _test_backlog86_climb_state_secure_erases_any_existing_timer() -> void:
+	_expect(Combat3D.climb_state_after_secure_update(true, 0.4, true, 8) == null,
+		"reaching a real hold (secure) erases the climb timer outright, whatever grip was left")
+	_expect(Combat3D.climb_state_after_secure_update(false, 1.0, true, 8) == null,
+		"secure with no prior timer stays erased, not spuriously created")
+
+
+func _test_backlog86_climb_state_starts_a_fresh_full_timer_on_first_leaving_a_hold() -> void:
+	var next: Variant = Combat3D.climb_state_after_secure_update(false, 1.0, false, 4)
+	_expect(next != null, "leaving a hold with no timer running starts one")
+	_expect(is_equal_approx(float((next as Dictionary)["g"]), 1.0),
+		"a genuine hold -> climbing transition starts the grip meter completely full")
+	_expect(int((next as Dictionary)["target"]) == 4, "the fresh timer targets the next safe hold")
+
+
+func _test_backlog86_climb_state_does_not_regrip_a_timer_already_draining() -> void:
+	# This is the rule named in _update_climb_state's own doc comment and never
+	# tested before this: reaching an intermediate ledge mid-hop (still not
+	# secure, still climbing) must NOT refill the meter, or grip effectively
+	# never runs out on a multi-ledge climb.
+	var next: Variant = Combat3D.climb_state_after_secure_update(true, 0.37, false, 8)
+	_expect(next != null, "a timer already running stays running while still not secure")
+	_expect(is_equal_approx(float((next as Dictionary)["g"]), 0.37),
+		"grip already draining is carried through untouched, not reset to full")
+
+
+func _test_backlog86_climb_state_updates_the_target_even_while_preserving_grip() -> void:
+	var next: Variant = Combat3D.climb_state_after_secure_update(true, 0.6, false, 12)
+	_expect(int((next as Dictionary)["target"]) == 12,
+		"the displayed target ledge tracks the current next_safe every update, even though grip itself is left alone")
 
 
 ## backlog #86 duty 3 (fourth pass) — height_gap_between is the pure twin of

@@ -866,6 +866,15 @@ func _grip_seconds() -> float:
 	return GRIP_SECONDS + float(int(_client.shared.get("mods", {}).get("grip_seconds", 0)))
 
 
+## The pure arithmetic behind a single climb-timer tick: how much grip is left
+## after `delta` seconds of clinging out of `grip_seconds` total (relics push
+## `grip_seconds` up, never `g` itself). Pulled out static so the "did this
+## frame let go" threshold is provable without a scene tree, Sfx, or
+## `_client.fall`.
+static func grip_after_tick(g: float, delta: float, grip_seconds: float) -> float:
+	return g - delta / grip_seconds
+
+
 ## Every climbing hunter's timer ticks, whoever is active. An empty timer is a
 ## fall — and in 3D that is worth SEEING, so a slipping hunter shakes harder the
 ## closer they are to letting go.
@@ -874,7 +883,7 @@ func _tick_grip(delta: float) -> void:
 		return
 	for slot in _climb.keys().duplicate():
 		var st: Dictionary = _climb[slot]
-		st["g"] = float(st["g"]) - delta / _grip_seconds()
+		st["g"] = grip_after_tick(float(st["g"]), delta, _grip_seconds())
 		if float(st["g"]) <= 0.0:
 			_climb.erase(slot)
 			Sfx.play("shake")
@@ -891,6 +900,22 @@ func _tick_grip(delta: float) -> void:
 	_update_grip_bar()
 
 
+## The pure decision behind one hunter's "secure" flag: erase the climb timer
+## on a genuine hold (secure), start a fresh full timer on a genuine
+## hold -> climbing transition (not secure, wasn't already climbing), or —
+## the rule the doc comment on `_update_climb_state` names and nothing tested
+## before this — leave a timer already draining ALONE and only refresh its
+## target, so reaching an intermediate ledge mid-hop never grants a free
+## regrip. Returns null to mean "erase."
+static func climb_state_after_secure_update(had_state: bool, prior_g: float,
+		secure: bool, target: int) -> Variant:
+	if secure:
+		return null
+	if not had_state:
+		return {"g": 1.0, "target": target}
+	return {"g": prior_g, "target": target}
+
+
 ## Derive climb bursts from the "secure" flags: leaving a hold starts that
 ## hunter's timer full, reaching one (or falling) ends it. Grip only resets on a
 ## genuine hold -> climbing transition, so it drains continuously across a hop.
@@ -901,12 +926,14 @@ func _update_climb_state(s: Dictionary) -> void:
 		if slot < 0 or slot >= players.size():
 			continue
 		var p: Dictionary = players[slot]
-		if bool(p.get("secure", true)):
+		var target: int = int(p.get("next_safe", int(p.get("foothold", 0))))
+		var prior_g: float = float(_climb[slot]["g"]) if _climb.has(slot) else 1.0
+		var next_state: Variant = climb_state_after_secure_update(
+			_climb.has(slot), prior_g, bool(p.get("secure", true)), target)
+		if next_state == null:
 			_climb.erase(slot)
 		else:
-			if not _climb.has(slot):
-				_climb[slot] = {"g": 1.0}
-			_climb[slot]["target"] = int(p.get("next_safe", int(p.get("foothold", 0))))
+			_climb[slot] = next_state
 	_update_grip_bar()
 
 

@@ -2567,6 +2567,26 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-03** — #86 duty 3 (verify a mechanic actually works). Last turn
+  (`d5d032f`) was duty 2, so this turn is duty 3. Picked the OTHER half of
+  Nick's own jump-mechanic example that duty 3's earlier passes hadn't
+  reached yet: not the routing/placement math (`route_between_rungs`,
+  `foothold_anchor`, `hunter_move_kind` — all already covered), but the
+  grip/fall timer that decides whether a climbing hunter actually lets go —
+  `combat_3d._tick_grip` and `_update_climb_state`, zero coverage before this.
+  Lifted two pure functions: `grip_after_tick(g, delta, grip_seconds)`, the
+  countdown math (proved it does NOT clamp at zero, since the caller's fall
+  check is `<= 0.0` on the raw result), and
+  `climb_state_after_secure_update(had_state, prior_g, secure, target)`, the
+  transition off the "secure" flag. That second one had a real, previously
+  untested promise sitting in its own doc comment — "grip only resets on a
+  genuine hold -> climbing transition" — meaning a hunter reaching an
+  intermediate ledge mid-hop must NOT get a free regrip, only a refreshed
+  target. Wrote the test for exactly that case first, watched it pass against
+  the already-correct code (the bug-shaped failure would have been a full
+  reset to `g=1.0`), then added the rest of the transition table. 7 new
+  tests. `run_tests.gd`: ALL TESTS PASSED (fresh import, headless). Next
+  `#86` turn is duty 1 (improve an asset, portraits/icons only).
 - **2026-09-03** — #86 duty 2 (find an error and resolve it). Last turn
   (`22f3b27`) was duty 1, so this was duty 2. Used an Explore agent to survey
   `core/` and `views/` against the two named bug families first, since ~25
