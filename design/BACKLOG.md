@@ -2514,6 +2514,33 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-03** — #86 duty 1 (improve an asset), twenty-fifth turn of the
+  rotation. `burn_icon.md` was the lowest-scoring never-repaired icon at
+  33/50 (score-only pass 1, no fixer pass yet); its two diagnosed lines —
+  Family distinction (5), sharing `draw`/`stack`'s own plain-rectangle base
+  shape, and Mechanic match (6), a flat single-tone flame with no hot core
+  — were both fixable inside `icons.py` alone, in-lane for this duty. Added
+  three small CHARCOAL `spike()` flecks biting into the card's own top-right
+  corner (nearest the flame) so the card's silhouette itself, not just what
+  sits behind it, breaks from a clean rectangle; and layered one thin GOLD
+  `spike()` inside the tallest BRICK flame cone, based low enough to emerge
+  from its body and tipped past its own tip, the same enclosed-core fix
+  `fire_icon.md` pass 2 already used. Had to install Blender (apt's 4.0.2,
+  no internet route to download.blender.org through the proxy, same as
+  prior passes) plus `libegl1`/`libegl-mesa0`/`libgles2` and `numpy` — the
+  glTF exporter's own import failed until numpy was in the interpreter
+  Blender actually runs (`/usr/bin/python3.12`, not the separate system
+  `python3.11`). Rebuilt the full 36-icon batch (no single-icon build
+  path), diffed all PNGs against `HEAD`, kept only `burn.png` (max diff 255
+  vs. the other 35's render-noise-only 51–126) and reverted the rest.
+  Verified with a real 42px composite of `burn`/`draw`/`stack` side by side
+  and direct pixel sampling of the new charcoal and gold regions before
+  scoring — **+3 (33 → 36)**, not a plateau, no line regressed; full
+  diagnosis and the render paths are in `design/progress/burn_icon.md`.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless). Rotation
+  stays 1→2→3: last turn was duty 3 (twenty-fourth turn), so this was duty
+  1; next is duty 2.
+
 - **2026-09-03** — #86 duty 3 (verify a mechanic actually works), twenty-fourth
   turn of the rotation. `CardView._word_index`, `_is_word_char`, `_kw` and
   `_markup` are the keyword-highlight machinery behind `face_text`'s rich

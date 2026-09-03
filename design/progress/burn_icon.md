@@ -89,3 +89,112 @@ whether this reads differently once seen next to `draw` and `stack` in an
 actual hand rather than compared as three isolated 42px renders side by
 side, which is a `needs a screen` question this static comparison can't
 settle.
+
+## Pass 2 — #86 duty 1
+
+Applied both named fixes in `tools/blender/icons.py`'s `burn()`, in-lane
+(icons only, no beast/portrait geometry, no shared palette or budget
+constant touched):
+
+1. **Family distinction (5).** Concrete fix: the diagnosis named that
+   `draw`, `stack` and `burn` all build from the same plain-rectangle base
+   and only differ in what sits behind the card. Added three small
+   CHARCOAL `spike()` flecks (`(0.14,0.30)`, `(0.20,0.18)`, `(0.10,0.36)`,
+   `ang=0.9`) clustered at the card's own top-right corner — the corner
+   nearest the flame — so the card's own silhouette gets a jagged, bitten
+   edge instead of a clean rectangle, rather than relying only on what's
+   behind it.
+2. **Mechanic match (6).** Concrete fix: the diagnosis pointed at the same
+   enclosed-hot-core trap `fire_icon.md` pass 2 already found and fixed —
+   added one thin GOLD `spike()` (`(0.22, 0.22)`, `r0=0.045`, `length=0.30`)
+   based low enough inside the tallest BRICK cone's own body (base z=0.07)
+   and tipped high enough (tip z=0.37) to clear that cone's own tip
+   (z=0.32) by real margin, so it pokes out as a visible glowing core
+   instead of staying hidden inside a bigger cone the way `fire`'s old core
+   did before its own pass 2.
+
+Rebuilt with apt's Blender 4.0.2, headless EGL (`libegl1`, `libegl-mesa0`,
+`libgles2`, plus `numpy` installed into the interpreter Blender actually
+uses — `/usr/bin/python3.12` via `python3.12 -m pip install numpy
+--break-system-packages`, not the separate system `python3.11` — the glTF
+exporter import failed with `ModuleNotFoundError: No module named 'numpy'`
+until that was in the right interpreter). Console for `burn` itself: `TRIS
+176 PARTS 9 BUDGET 700 ok`, no warnings. Ran the full `icons.py` batch
+(no single-icon build path exists) and diffed all 36 PNGs against `HEAD`;
+`burn.png` was the only one with a real content change (max per-pixel
+diff 255, a full alpha swing at new geometry edges) against the other 35's
+render-noise-only diffs (max 51–126, mean well under 1 for most) — the
+same noise-vs-content split every icon batch since `rope_icon.md` pass 2
+has used. Reverted the other 35 with `git checkout --`, kept only
+`burn.png`.
+
+Verified three ways before scoring, not just by eyeballing the full-res
+render:
+
+- **Bounding box.** Alpha>10 bbox `(38, 36, 229, 231)` of 256 — real margin
+  on all four sides, unchanged from pass 1 (the new geometry sits well
+  inside the old cone-cluster's own reach, so no new clipping risk).
+- **Pixel sample.** Zoomed the rendered PNG on the new geometry directly:
+  the three charcoal flecks sample at roughly RGB(35–90, 36–90, 40–95),
+  clearly darker than both the LINEN card RGB(176–190,154–172,138–159) and
+  the standin RGB(139,105,74); the new gold tip samples at roughly
+  RGB(204–207,170–177,113–136) against the flame body's own
+  RGB(125–170,55–100,55–95) — a real, warm-toned separation on every
+  channel, not a rendering illusion.
+- **Direct comparison, not memory.** Rendered a real 42px composite of
+  `burn.png`, `draw.png` and `stack.png` side by side
+  (`design/renders/burn_icon_pass2_vs_draw_stack_42px.png`) instead of
+  trusting the written description of the other two. `burn` now reads as
+  a jagged-cornered card plus a red cone shape; `draw` reads as two clean
+  overlapping cream/wheat rectangles with a gold arrow; `stack` reads as
+  three clean fanned slabs with a light bar. The plain-rectangle-family
+  problem the diagnosis named is visibly reduced — `burn`'s silhouette no
+  longer starts from the same clean-cornered rectangle the other two share.
+
+- **Family distinction (5 → 7):** confirmed by the side-by-side render
+  above — the jagged corner plus the cone shape behind it separates `burn`
+  from `draw`/`stack`'s clean rectangles at a glance. Not higher: the card
+  BODY itself is still the same plain LINEN slab as the other two: only
+  one corner is broken up, and the fix didn't touch the shared base shape
+  those cards start from, so a fast glance that misses the small corner
+  detail could still group them.
+- **Mechanic match (6 → 8):** the gold-tipped, two-tone flame now visibly
+  pokes above the card's own damaged corner in both the full render and
+  the 42px downsample (`burn_icon_pass2_42px_big.png`) — confirmed in the
+  zoomed crop (`burn_icon_pass2_topcrop.png`), which shows a clean
+  gold-over-brick cone distinct from the flat single-tone cones pass 1
+  scored. Not higher: still a single straight-sided `spike()`, the same
+  "rigid, not licking" caveat `fire_icon.md` pass 1 raised for its own
+  cones before its pass-3 `limb()` rework — not attempted here since
+  neither named line asked for it.
+- **Silhouette @ 42px (7, unchanged):** this pass added detail rather than
+  changing the overall card-plus-cones read; the new corner marks and gold
+  tip both survive the 42px downsample without fusing into noise
+  (confirmed in the downsample render) but weren't one of the two named
+  fixes.
+- **Colour & contrast (7, unchanged):** this pass touched no existing
+  palette entry or the card/band colours; the new CHARCOAL and GOLD marks
+  are both already-used set colours, not new swatches.
+- **Style consistency (8, unchanged):** `spike()` with `CHARCOAL` and
+  `GOLD` are both already this set's vocabulary (`skull` uses CHARCOAL
+  slabs, `fire`'s own pass 2 used a GOLD hot-core spike the same way);
+  nothing new was introduced.
+
+**+3 total (33 → 36), not a plateau — kept.** No line regressed.
+`run_tests.gd`: **ALL TESTS PASSED** (fresh import, headless). No new
+tests — an icon geometry/colour pass adds none, matching every prior
+icon-only pass under this item.
+
+## Unsure about (pass 2)
+
+Whether the corner damage reads unambiguously as "this card is burning"
+rather than "this card is torn or old" to someone who has never seen the
+build intent — the jagged shape alone doesn't carry heat or colour cues
+the way the flame cones do, so the family-distinction fix and the
+mechanic-match fix are doing separate jobs rather than reinforcing one
+reading. Also unsure whether the card body itself staying identical to
+`draw`/`stack` (Family distinction capped at 7, not higher) is worth a
+future pass — tinting the LINEN slab itself toward a scorched tone, rather
+than only marking one corner, is the more thorough fix but wasn't one of
+this pass's two named lines and risks reading as restyling rather than a
+targeted repair.
