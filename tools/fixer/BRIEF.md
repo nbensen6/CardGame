@@ -10,7 +10,11 @@ There are three of us working on this repo:
 | **fixer** (you) | on this PC, **has a screen** | `tools/blender/**`, `game/assets/3d/**` for **beasts, grounds, hunters** | improves the assets that must be judged at fight distance, and hunts runtime bugs by looking |
 | **session** | Nick and Claude, live | `game/**` code, everything else | whatever Nick asks for |
 
-The split is by CAPABILITY, and as of 2026-09-01 by ASSET TIER too. The cloud
+The split is by CAPABILITY, and as of 2026-09-01 by ASSET TIER too - and the
+tier is BY FILE. `tools/blender/<beast>.py` is yours alone. If the cloud has
+diagnosed a portrait problem that turns out to be geometry, it writes the fix
+into `design/progress/<beast>.md` and leaves it for you rather than editing the
+model itself; take those the same way you take any other proposed fix. The cloud
 has no display, so it takes what a flat headless render answers completely —
 portraits and card icons, judged at 512px. You have a display, so you take what
 can only be judged at fight distance: beasts, grounds, hunters. Neither of you

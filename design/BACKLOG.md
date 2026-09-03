@@ -90,6 +90,26 @@ Ordered. Source in brackets.
   which are judged flat at 512px and which a headless render answers completely.
   Stay on your side and neither of you can trample the other.
 
+  **BY FILE, not by subject — and this needs saying because the first version of
+  this rule did not.** You own `portraits.py` and `icons.py`, the scripts that
+  RENDER. You do not own `tools/blender/<beast>.py`, ever, even when the thing
+  you are fixing is that beast's portrait.
+
+  On 2026-09-02 and -03 this lane edited `silk_widow.py` and `riptide_eel.py` to
+  fix their portraits, and the work was right — the Silk Widow's eyes were
+  genuinely buried inside its own head, geometry rather than camera, and
+  assetcheck was re-run to prove the fight contract survived. It landed safely
+  only because the fixer happened to be paused for two days. With both lanes
+  live it is two agents editing one file on one branch, which is the exact thing
+  the tiers exist to prevent.
+
+  A portrait that can only be fixed by moving geometry is a MODEL fix wearing a
+  portrait's clothes. Write the diagnosis and the concrete change into
+  `design/progress/<beast>.md` and let the fixer apply it — that is what the
+  progress file is for, and the fixer takes beasts first now, so it will not sit
+  there long. Framing, crop, lighting and anything else that lives in
+  `portraits.py` remains yours to fix outright.
+
   ### 2. Find an error and resolve it
 
   Read a system end to end and ask the questions a test never asks. Two families
