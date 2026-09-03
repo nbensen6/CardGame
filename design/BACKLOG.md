@@ -2514,6 +2514,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-03** — #86 duty 1 (improve an asset). Last turn (`7a48a36`) was
+  duty 3, so this was duty 1. Of batch 14's four defensive-keyword icons,
+  `intangible` was already repaired (41/50) and `thorns` scores 43/50
+  unrepaired, so between the two still below the 40 stop line —
+  `plated_armour` (36) and `buffer` (38) — picked `plated_armour`, the
+  lower of the two. Both diagnosed lines (Mechanic match 5, Silhouette@42px
+  7) traced to one cause: the three stacked plates' centres (step 0.28) at
+  half-height 0.15 touched with a real 0.02-unit overlap, so only a shading
+  change told them apart and the render read as one tapered snowman/totem
+  rather than three armour plates — confirmed by looking at the pass-1
+  render before touching anything. Widened the step to 0.31 and shrank
+  half-height to 0.12, opening a real ~0.06-0.08 unit transparent gap on
+  each seam (pixel-sampled: alpha 0 at both gap midpoints, 255 at each
+  plate centre) — the same spacing technique `ascend` and `intangible`
+  already use for the identical symptom, not a new colour cue. Rebuilt the
+  full 36-icon batch (apt's Blender 4.0.2, `numpy`/`Pillow` already staged
+  into `/usr/bin/python3.12` from the prior pass) and diffed all 36 PNGs
+  against the committed set: `plated_armour.png` led at 8.51 mean
+  per-pixel diff, the only real content change, against a render-noise
+  tail topping out at 6.70; copied only that one file into
+  `game/assets/icons/`. Verified by looking at the full composite, a real
+  Pillow LANCZOS 42px downsample, and a 64px silhouette, all saved to
+  `design/renders/` — pass 1 fuses into one continuous mass at every size
+  checked, pass 2 holds three plainly separate plates at all three. Scored
+  9/9/7/7/8 = **40/50**, meeting the stop condition exactly; no pass 3.
+  Left `buffer` (38) and the rivet detail (still not visible; outside this
+  pass's two named fixes) for a future duty-1 turn. `run_tests.gd`: ALL
+  TESTS PASSED (fresh import, headless). Next #86 turn is duty 2 (find an
+  error and resolve it).
 - **2026-09-03** — #86 duty 3 (verify a mechanic actually works). Last turn
   (`8b6198d`) was duty 2, so this was duty 3. Picked `overworld_3d._row_in_act`
   — the exact sibling of `_act_ahead` (tested last duty-3 pass) that gates

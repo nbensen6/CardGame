@@ -480,9 +480,18 @@ def plated_armour(i):                           # Block that survives the round
     # Three overlapping plates, widest and darkest at the bottom, narrowest
     # and palest at the top — lamellar scale rather than one kite shield, so
     # it can't be mistaken for `shield`, `guard` or the brick-grid `wall`.
-    for z, w, c in [(-0.30, 0.44, PEWTER), (-0.02, 0.38, STEEL), (0.26, 0.30, SILVER)]:
-        i.slabf(0.0, z, w * 0.5, 0.15, c, bevel=0.045)
-    for x, z in [(-0.12, -0.30), (0.12, -0.02), (0.0, 0.26)]:
+    # pass 2 (design/progress/plated_armour_icon.md): the two lowest lines,
+    # Mechanic match (5) and Silhouette@42px (7), traced to one cause -- the
+    # old centres (-0.30/-0.02/0.26, step 0.28) at half-height 0.15 touched
+    # with a 0.02 overlap, so nothing but a shading change told the plates
+    # apart and they read as one tapered mass at 42px. Same fix `ascend` and
+    # `intangible` already used for the same symptom: a real world-space gap,
+    # not a colour cue. Widened the step to 0.31 and shrank half-height to
+    # 0.12, opening a measured ~0.06-0.08 unit clearance on each seam.
+    plates = [(-0.32, 0.44, PEWTER), (0.0, 0.38, STEEL), (0.30, 0.30, SILVER)]
+    for z, w, c in plates:
+        i.slabf(0.0, z, w * 0.5, 0.12, c, bevel=0.045)
+    for x, z in [(-0.12, -0.32), (0.12, 0.0), (0.0, 0.30)]:
         i.ball((x, -0.07, z), (0.028, 0.02, 0.028), CHARCOAL, 5, 3)
 
 
