@@ -186,6 +186,39 @@ Ordered. Source in brackets.
   least once (elite and treasure both, since they're the two paths), and
   `run_tests.gd` still passes.
 
+- [ ] **88. Five already-shipped beasts' sigils may be buried** `needs a screen`
+  — found while fixing #86 duty 2's `GOLD_UV` bug (see the Log below): once
+  `assetcheck.gd`'s "is there a real gold mark here" check could actually see
+  gold at all, the OCCLUSION check right beside it (`_check_sigil_visible`,
+  same GOLD_UV filter, previously always short-circuiting on `total_area <=
+  0.0`) started running for real too, and it fails against five beasts that
+  were shipped and reviewed under a check that was silently never checking
+  this:
+
+  - `stone_warden` — Height 6, 100% of the sigil's surface occluded
+  - `clot_toad` — Height 6, 83%
+  - `gale_serpent` — Height 9, 73%
+  - `sunken_warden` — Height 13, 72%
+  - `drowned_colossus` — Height 11, 88%
+
+  (`crag_pup`, `eyrie_hawk`, `glyph_tortoise`, `yoke_ox`, `flicker_stag` and
+  `riptide_eel` all PASS now that the check runs at all — this is not every
+  beast, just over a third of the cast with weak points.)
+
+  Not fixed here on purpose: this is "does the sigil actually read as visible
+  from the front," which is exactly the kind of thing rule 3 says needs a
+  render, not a number. It might also be a false positive in the check itself
+  — the same occlusion math already had one false-positive scare against
+  crag_pup during #74's own build (a mark's own back half counted against
+  itself until the gold/other split was added) — so the first step is
+  probably `tools/blender/look.sh <asset> <pass>` on these five and an actual
+  look, not immediately reaching for a model edit.
+
+  *Done when:* each of the five has been looked at — either the mark gets
+  pulled forward / whatever is blocking it gets thinned (a `cloud-art` pass,
+  one beast at a time), or the check is found to be wrong and fixed with a
+  test proving why, same rule as everything else in `assetcheck.gd`.
+
 - [ ] **85. You cannot see your ally** `needs a screen` — hunter1 projects to
   x=1602 on a 1280-wide viewport and sits off the right edge of the screen in
   every fight. Measured on three beasts: thrasher 1559, crag_pup 1602,
@@ -7531,3 +7564,27 @@ Newest first. One line per finished item: what, and anything surprising.
   model/portrait) rather than trusting the tally alone. No code or data
   changed this run; not sending a notification since the standing
   condition has already been reported and nothing has changed.
+- **#86 duty 2 — `AssetContract.GOLD_UV` was one pixel-row off, and it broke
+  the sigil-color check for the entire cast, not one beast.** Picked up on
+  `riptide_eel`'s own portrait-pass commit (`f1564a7`), which logged in
+  passing that `assetcheck.gd` found no gold mark on that beast even
+  untouched. Traced it: `GOLD_UV` was a hand copy of kenney.py's
+  `swatch(464, 320)`, and `swatch()` later picked up a `+16` cell-middle
+  offset (its own docstring names the bug that fix closed) that `GOLD_UV`
+  never followed. Confirmed against real exported UVs, not just the formula:
+  every beast checked (`crag_pup`, `stone_warden`, `eyrie_hawk`,
+  `glyph_tortoise`, `yoke_ox`, `clot_toad`, `flicker_stag`, `riptide_eel`)
+  carries its gold mark at V ~= 0.656, none at the old 0.625 — this had been
+  failing silently across the whole already-shipped cast, confirmed by
+  running `assetcheck.gd` against each by hand, not inferred. Fixed the
+  constant to track the real derivation (`(320.0 + 16.0) / 512.0`) and wrote
+  `_test_backlog86_gold_uv_matches_kenneys_swatch_including_the_16px_offset`
+  in `run_tests.gd` first, watched it fail against the old value, then
+  fixed. Re-ran `assetcheck.gd` against all 11 beasts above plus
+  `gale_serpent`, `sunken_warden` and `drowned_colossus`: all now PASS the
+  gold-mark check. Side effect, not a second fix: fixing this also woke up
+  `_check_sigil_visible` (same GOLD_UV filter, previously always
+  short-circuiting with nothing to check), which now genuinely fails against
+  five of those beasts — logged as new queue item #88 rather than touched
+  here, since judging "is it actually buried" needs a render, not a number.
+  `run_tests.gd`: ALL TESTS PASSED.

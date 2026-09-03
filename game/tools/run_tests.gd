@@ -7210,6 +7210,26 @@ func _test_backlog74_uv_in_cell_matches_gold_exactly_and_rejects_the_next_swatch
 		"a sigil painted the next swatch over does not read as gold")
 
 
+## backlog #86 duty 2, 2026-09-03: GOLD_UV is a hand copy of kenney.py's
+## `swatch(464, 320)`, and it drifted out of sync with the formula it copies
+## when `swatch()` picked up its own +16 cell-middle fix — GOLD_UV kept the
+## pre-fix V (320/512) while every real exported beast moved to (320+16)/512.
+## _check_sigil_color found zero gold on EVERY beast checked (crag_pup,
+## stone_warden, eyrie_hawk, glyph_tortoise, yoke_ox, clot_toad, flicker_stag,
+## riptide_eel — the entire already-shipped cast, not one bad model) because
+## the constant was one pixel-row off from what a correctly-painted sigil
+## actually carries. This pins GOLD_UV to the derivation in kenney.py's own
+## swatch(px, py) — `(px / 512.0, 1.0 - (py + 16.0) / 512.0)`, flipped once
+## more for the glTF export/import round trip, i.e. `(py + 16.0) / 512.0` —
+## so the two can never drift apart again without this test catching it.
+func _test_backlog86_gold_uv_matches_kenneys_swatch_including_the_16px_offset() -> void:
+	var swatch_blender_v := 1.0 - (320.0 + 16.0) / 512.0
+	var expected := Vector2(464.0 / 512.0, 1.0 - swatch_blender_v)
+	_expect(AssetContract.GOLD_UV.is_equal_approx(expected),
+		"GOLD_UV tracks kenney.py's swatch(464, 320), +16 cell-middle offset included (got %s, want %s)"
+			% [AssetContract.GOLD_UV, expected])
+
+
 func _test_backlog74_silhouette_grid_is_invariant_to_scale_and_position() -> void:
 	# An L: a tall rect and a wide rect sharing a corner, missing one quadrant of
 	# their combined bounding box — a shape with a real notch in it, not a solid

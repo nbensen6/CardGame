@@ -20,17 +20,24 @@ const BUDGET := {"hunter": 1400, "beast": 2600, "prop": 500}
 ## with the exact same UV point — swatch(464, 320) — so a correctly-painted
 ## sigil's average UV should land almost exactly here, not just "nearby."
 ##
-## NOT `1.0 - 320.0/512.0`, even though that is what `swatch()` itself returns.
-## `swatch()`'s result is a BLENDER uv (V=0 at the bottom), and Blender's glTF
-## exporter flips V on the way out so the file matches glTF's V=0-at-top
-## convention — which Godot then loads as-is. So the V that actually lands in
-## the imported mesh is the un-flipped `320.0 / 512.0`: flip cancels flip.
-## Measured against a real exported beast (crag_pup) while building this check,
-## whose sigil cluster landed at (0.910, 0.630) against this cell's (0.906,
-## 0.625) — a first version used the swatch()-literal V and found gold nowhere
-## on any of the 14 already-shipped beasts, which was this bug, not fourteen
-## unpainted sigils.
-const GOLD_UV := Vector2(464.0 / 512.0, 320.0 / 512.0)
+## NOT `1.0 - 320.0/512.0`, even though that LOOKS like what "flip cancels
+## flip" should give you. `swatch(px, py)` samples the MIDDLE of a 32px cell,
+## not its top edge, so it returns `1.0 - (py + 16.0) / 512.0` — see its own
+## docstring in kenney.py for why the +16 is there. That's a Blender uv (V=0
+## at the bottom); Blender's glTF exporter flips V on the way out so the file
+## matches glTF's V=0-at-top convention, and Godot loads it as-is. Flip
+## cancels flip, but the +16 survives it: the V that actually lands in the
+## imported mesh is `(320.0 + 16.0) / 512.0`, not the cell's own top-edge
+## `320.0 / 512.0`.
+##
+## This constant carried the pre-+16 value for a while after `swatch()`
+## picked up the offset (design/BACKLOG.md #86 duty 2, 2026-09-03) — a hand
+## copy of a formula, and the formula moved without it. Checked against every
+## already-shipped beast's real exported UVs while fixing it: every one
+## carries its gold mark at V ~= 0.656 (336/512), none at the old 0.625, so
+## this had been failing silently across the whole cast, not flagging one
+## bad model.
+const GOLD_UV := Vector2(464.0 / 512.0, (320.0 + 16.0) / 512.0)
 ## Half the size of one 32px cell in the 512px atlas (32/512/2), minus a
 ## margin so a UV that has drifted into a NEIGHBOURING swatch — the actual
 ## failure this exists to catch — reads as outside, not as a near miss.
