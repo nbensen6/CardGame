@@ -300,7 +300,14 @@ func _meld_cards(a: Card, b: Card) -> Card:
 	return Card.from_dict({
 		"id": "meld_%s_%s" % [a.id, b.id],
 		"name": "%s + %s" % [a.name, b.name],
-		"type": "attack" if (a.type == "attack" or b.type == "attack") else "skill",
+		# backlog #86 duty 2 — "power" wins over "attack"/"skill": a power card
+		# melded into anything used to come out "attack" or "skill" because this
+		# line only ever checked those two, so the fused card silently lost its
+		# whole recurring payoff (never went to ps.powers, power_effect/value
+		# weren't even copied below). Losing the attack-only strength bonus on
+		# the melded damage is the smaller loss of the two.
+		"type": "power" if (a.type == "power" or b.type == "power") \
+			else ("attack" if (a.type == "attack" or b.type == "attack") else "skill"),
 		# An X-cost card (backlog #29, sentinel -1) melded with anything stays
 		# X-cost — summing -1 into an ordinary cost would corrupt the sentinel
 		# into a real (wrong) number instead of "all remaining energy".
@@ -375,6 +382,14 @@ func _meld_cards(a: Card, b: Card) -> Card:
 		"tutor": a.tutor if a.tutor != "" else b.tutor,
 		"condition": a.condition if not a.condition.is_empty() else b.condition,
 		"condition_bonus": a.condition_bonus if not a.condition.is_empty() else b.condition_bonus,
+		# backlog #86 duty 2 — power_value is paired with whichever side's
+		# power_effect was actually kept (the condition/condition_bonus idiom
+		# just above), not summed: a non-power card melded with a power card
+		# has power_value 0 already, but two DIFFERENT power cards melded
+		# together must not add a stray second effect's number onto the one
+		# effect that survives the one-of-a-kind pick.
+		"power_effect": a.power_effect if a.power_effect != "" else b.power_effect,
+		"power_value": a.power_value if a.power_effect != "" else b.power_value,
 	})
 
 ## A card's cost for a hunter, after any permanent Burn Coal reductions.
@@ -603,15 +618,23 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	if enchant_effect == "self_exhaust":  # "Spent" (backlog #50) — leaves the fight instead
 		ps.exhaust_pile.append(card)
 	elif card.type == "power":  # backlog #57 — never discarded; stays in play, stacking
-		# {stacks, value}: `value` sums the PLAYED card's own power_value rather
-		# than re-deriving it later from Content.make_card(id) — a campfire
-		# upgrade only lifts the copy actually played (upgraded_copy() bumps
-		# power_value but keeps the same id), so if a base and an upgraded copy
-		# both land here, each contributes what it actually carries instead of
-		# the ongoing payout silently forgetting the upgrade.
+		# {stacks, value, effect, name}: `value` sums the PLAYED card's own
+		# power_value rather than re-deriving it later from
+		# Content.make_card(id) — a campfire upgrade only lifts the copy
+		# actually played (upgraded_copy() bumps power_value but keeps the same
+		# id), so if a base and an upgraded copy both land here, each
+		# contributes what it actually carries instead of the ongoing payout
+		# silently forgetting the upgrade. `effect`/`name` are captured here
+		# too (backlog #86 duty 2) rather than always re-derived by id: a
+		# melded power card's id ("meld_a_b") isn't in cards.json at all, so
+		# re-deriving by id doesn't just forget an upgrade, it drops the whole
+		# effect and goes silent.
 		var entry: Dictionary = ps.powers.get(card.id, {"stacks": 0, "value": 0})
 		entry["stacks"] = int(entry.get("stacks", 0)) + 1
 		entry["value"] = int(entry.get("value", 0)) + card.power_value
+		entry["effect"] = card.power_effect
+		entry["name"] = card.name
+		entry["text"] = card.text
 		ps.powers[card.id] = entry
 		_log("%s plays %s — it stays in play." % [ps.combatant.name, card.name])
 	else:
@@ -1485,34 +1508,44 @@ func _handle_power_effects(ctx: Dictionary) -> void:
 		var amount: int = int(entry.get("value", 0))
 		if amount == 0:
 			continue
-		var pc := Content.make_card(String(id))
-		if pc.power_effect == "":
+		# Prefer the effect/name captured when the card was played (backlog
+		# #86 duty 2); fall back to the id lookup for older saves and the
+		# hand-built {stacks, value} test entries that predate this field —
+		# both only ever used real content ids, which Content.make_card can
+		# still resolve.
+		var effect: String = String(entry.get("effect", ""))
+		var pname: String = String(entry.get("name", ""))
+		if effect == "":
+			var pc := Content.make_card(String(id))
+			effect = pc.power_effect
+			pname = pc.name
+		if effect == "":
 			continue
-		match pc.power_effect:
+		match effect:
 			"block":
 				ps.combatant.gain_block(amount)
-				_log("%s's %s triggers — +%d Block." % [ps.combatant.name, pc.name, amount])
+				_log("%s's %s triggers — +%d Block." % [ps.combatant.name, pname, amount])
 			"strength":
 				ps.strength += amount
-				_log("%s's %s triggers — +%d Strength." % [ps.combatant.name, pc.name, amount])
+				_log("%s's %s triggers — +%d Strength." % [ps.combatant.name, pname, amount])
 			"thorns":
 				ps.combatant.thorns += amount
-				_log("%s's %s triggers — +%d Thorns." % [ps.combatant.name, pc.name, amount])
+				_log("%s's %s triggers — +%d Thorns." % [ps.combatant.name, pname, amount])
 			"heal":
 				ps.combatant.hp = mini(ps.combatant.hp + amount, ps.combatant.max_hp)
-				_log("%s's %s triggers — heals %d." % [ps.combatant.name, pc.name, amount])
+				_log("%s's %s triggers — heals %d." % [ps.combatant.name, pname, amount])
 			"wound":
 				if boss.try_block_debuff():
 					_log("%s's Artifact wards off %s's Poison." % [boss.name, ps.combatant.name])
 				else:
 					boss.wound += amount
-					_log("%s's %s triggers — Poison %d on %s." % [ps.combatant.name, pc.name, boss.wound, boss.name])
+					_log("%s's %s triggers — Poison %d on %s." % [ps.combatant.name, pname, boss.wound, boss.name])
 			"vulnerable":
 				if boss.try_block_debuff():
 					_log("%s's Artifact wards off %s's Expose." % [boss.name, ps.combatant.name])
 				else:
 					boss.vulnerable += amount
-					_log("%s's %s triggers — %s exposed (%d)." % [ps.combatant.name, pc.name, boss.name, boss.vulnerable])
+					_log("%s's %s triggers — %s exposed (%d)." % [ps.combatant.name, pname, boss.name, boss.vulnerable])
 			"frail":
 				_apply_frail(boss, amount)
 

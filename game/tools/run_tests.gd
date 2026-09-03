@@ -207,6 +207,7 @@ func _init() -> void:
 	_test_meld_fuses_two_cards()
 	_test_meld_carries_special_effects()
 	_test_meld_carries_light_and_deck_effects()
+	_test_meld_carries_power_effect()
 	_test_satchel_charge_detonates()
 	_test_rhythm_builds_and_scales()
 	_test_vine_weaver_poison_and_wound()
@@ -2993,6 +2994,37 @@ func _test_meld_carries_light_and_deck_effects() -> void:
 		and int(f4.condition_bonus.get("damage", 0)) == 4
 	_expect(spark_peer and waymark_depot and recon_sunburst and light_harpoon,
 		"a meld keeps light/scry/topdeck/shuffle_in/tutor/condition effects too, not just the pre-#47 field list")
+
+
+## backlog #86 duty 2: _meld_cards never carried a power card's type/
+## power_effect/power_value at all — melding Iron Husk (power, +3 Block) with
+## anything came out type "skill", so it wasn't even routed to ps.powers when
+## played and the recurring payoff vanished outright. Carrying just the dict
+## fields still wasn't enough: ps.powers used to always re-derive `effect`/
+## `name` via Content.make_card(card.id) at turn end, and a melded card's id
+## ("meld_a_b") isn't in cards.json — so the payoff would have stayed
+## silently dead even with type/power_effect/power_value carried correctly.
+## Proves the whole chain: the fused card's fields, that playing it stays out
+## of the discard pile, and that it actually pays out at turn end.
+func _test_meld_carries_power_effect() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_meld_card(), Content.make_card("iron_husk"), _cleave()]
+	ps.energy = 9
+	combat.play_card(0, 0, true, 1, 2)
+	var fused: Card = ps.hand[0]
+	var carried: bool = fused.type == "power" and fused.power_effect == "block" \
+		and fused.power_value == 3 and fused.damage == 10
+	var discard_before_fused: int = ps.discard_pile.size()  # the "Meld" card itself already
+	# discarded normally above — only the FUSED card must skip the discard pile
+	combat.play_card(0, 0, true)  # play the fused card itself
+	var stayed_out_of_discard: bool = ps.discard_pile.size() == discard_before_fused \
+		and ps.powers.has(fused.id)
+	var block_before := ps.combatant.block
+	combat.end_turn(0)
+	var paid_out: bool = ps.combatant.block == block_before + 3
+	_expect(carried and stayed_out_of_discard and paid_out,
+		"a meld carries a power card's type/effect/value, stays in play, and still pays out — even under a synthetic meld id Content.gd has never heard of")
 
 
 func _test_satchel_charge_detonates() -> void:

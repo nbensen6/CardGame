@@ -399,9 +399,11 @@ func _potion_view(pi: int) -> Array:
 
 ## A hunter's active powers, public (backlog #57 — same reasoning as potions in
 ## _potion_view: a played power is a standing board fact, not a secret hand
-## card, so the ally should see it too). Looks the id up fresh each time
-## (Content.make_card is cached) rather than storing name/text on PlayerState,
-## the same "one generic rule" trick _handle_power_effects uses to apply it.
+## card, so the ally should see it too). Prefers the name/text Combat.gd
+## captured on the entry when the card was played; falls back to an id lookup
+## for older saves. A melded power card (backlog #86 duty 2) has a synthetic
+## id ("meld_a_b") that isn't in cards.json, so the id-only lookup this used
+## to rely on exclusively would show it to the ally with a blank name.
 func _powers_view(pi: int) -> Array:
 	var out: Array = []
 	if _run.phase != Run.Phase.COMBAT or pi < 0 or pi >= _run.combat.players.size():
@@ -412,8 +414,13 @@ func _powers_view(pi: int) -> Array:
 		var stacks: int = int(entry.get("stacks", 0))
 		if stacks <= 0:
 			continue
-		var pc := Content.make_card(String(id))
-		out.append({"id": String(id), "name": pc.name, "text": pc.text, "stacks": stacks})
+		var pname: String = String(entry.get("name", ""))
+		var ptext: String = String(entry.get("text", ""))
+		if pname == "":
+			var pc := Content.make_card(String(id))
+			pname = pc.name
+			ptext = pc.text
+		out.append({"id": String(id), "name": pname, "text": ptext, "stacks": stacks})
 	return out
 
 ## The cards a hunter is currently deciding whether to bin, public (backlog

@@ -2514,6 +2514,49 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-03** — #86 duty 2 (find an error and resolve it), twenty-third
+  turn of the rotation. Used an Explore agent to sweep `game/core` and the
+  view layer for the two named bug families; it returned `Combat._meld_cards`
+  again — the twenty-first turn's own fix had explicitly left
+  `power_effect`/`power_value` out, reasoning "no authored card combines
+  `meld:true` with `type:'power'` today." That's true of single cards, but
+  wrong about reachability: `meld:true`'s `sac_index`/`target_index` pick ANY
+  two cards from hand with no type filter, so a hand holding both the Meld
+  card and a power card (Iron Husk/Old Grudge, both in the real reward pool)
+  hits this today. Confirmed via `_meld_cards`, `combat.gd:303`: `type` was
+  hardcoded to `"attack"`/`"skill"`, never `"power"`, and `power_effect`/
+  `power_value` weren't in the dict at all — so melding Iron Husk into
+  anything produced a card that discarded normally instead of staying in
+  play, with its whole recurring Block payoff gone. Fixing only the dict
+  wasn't the whole bug: `_handle_power_effects` (turn-end payout) and
+  `GameHost._powers_view` (the ally's network snapshot) both re-derive a
+  power's name/effect via `Content.make_card(card.id)` — and a melded card's
+  id (`"meld_iron_husk_cleave"`) isn't in `cards.json`, so even with the type
+  and fields carried, the payout would have stayed silently dead and the
+  snapshot would show a blank name. Fixed by (1) making `type` prefer
+  `"power"` over `"attack"`/`"skill"` when either melded half is a power
+  card, (2) adding `power_effect`/`power_value` to the dict paired the same
+  way `condition`/`condition_bonus` already are (whichever side's effect was
+  kept, not summed), and (3) capturing `effect`/`name`/`text` on the
+  `ps.powers` entry itself at play time in both `Combat.play_card` and
+  `GameHost._powers_view`, falling back to the id lookup only when the entry
+  predates this field (old saves, and the one hand-built test dict that never
+  played a real card) — same "captured at play time, not re-derived" idiom
+  the existing `value` field already used for campfire upgrades. New test
+  `_test_meld_carries_power_effect` drives Iron Husk + Cleave through an
+  actual meld, plays the fused card, and asserts it pays out Block at
+  `end_turn`; first draft asserted `discard_pile.is_empty()` after playing
+  the fused card and failed, because the *Meld card itself* discards normally
+  right before that — fixed the assertion to compare discard-pile size
+  before/after the fused card specifically, not blanket emptiness. Confirmed
+  red against the pre-fix `combat.gd`/`game_host.gd`, then restored the fix.
+  Did NOT touch the runner-up the twenty-first turn already logged and left
+  open — the `"curse"` boss move (`combat.gd:1244`) still skips
+  `try_block_debuff()` where its sibling `"frail"` move doesn't, so Artifact
+  still doesn't ward Curse. Still open for a future duty-2 turn.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless). Next #86 turn is
+  duty 3 (verify a mechanic).
+
 - **2026-09-02** — #86 duty 1 (improve an asset), twenty-second turn of the
   rotation. `target.png`'s worst line was Family distinction (3/10,
   `design/progress/target_icon.md`): its old shaft ran from almost the
