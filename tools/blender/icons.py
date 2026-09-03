@@ -447,9 +447,24 @@ def peak(i):                                    # a strike that scales with Heig
 def intangible(i):                              # a hit past Block is capped at 1
     # A fading diagonal trail of the same diamond, three deep — one foot in
     # this world and one not, rather than a shield that isn't there.
-    i.slabf(0.26, -0.26, 0.15, 0.15, WHITE, rot=0.785, bevel=0.02)
-    i.slabf(0.08, -0.08, 0.17, 0.17, ICE, rot=0.785, bevel=0.025)
-    i.slabf(-0.14, 0.14, 0.19, 0.19, IRIS, rot=0.785, bevel=0.03)
+    #
+    # Pass 2 (design/progress/intangible_icon.md): the three diamonds
+    # overlapped along their shared diagonal by up to 0.065 world units, so
+    # they fused into one shaded bar at 42px instead of reading as three
+    # separate steps. Pulled each tile further out along the same diagonal
+    # so neighbours clear each other by a real ~0.09 units (Silhouette@42px,
+    # scored 6). Separately, the nearest and palest tile (WHITE) was the one
+    # scored closest to fading into the brown card face at 42px (Colour &
+    # contrast, scored 5) — gave it a STEEL backing plate, pushed behind it
+    # in depth (this scene's camera sits at -Y, so a larger Y is further
+    # from the lens — see `rally()`'s note on the same trick), slightly
+    # larger than the white diamond itself, so it shows only as a thin
+    # contrasting rim around WHITE's own edge rather than a colour change to
+    # WHITE.
+    i.slabf(0.32, -0.32, 0.175, 0.175, STEEL, rot=0.785, bevel=0.02).location.y = 0.05
+    i.slabf(0.32, -0.32, 0.13, 0.13, WHITE, rot=0.785, bevel=0.02)
+    i.slabf(0.05, -0.05, 0.155, 0.155, ICE, rot=0.785, bevel=0.025)
+    i.slabf(-0.25, 0.25, 0.18, 0.18, IRIS, rot=0.785, bevel=0.03)
 
 
 def buffer(i):                                  # the next hit is cancelled outright

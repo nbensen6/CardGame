@@ -97,3 +97,116 @@ Not applying either — this item scores and proposes; a fix is Nick's call.
 Whether "afterimage trail" is the read a player gets on first sight with no
 tooltip open, versus needing the keyword text to make sense of it — this
 static comparison can't settle that, only game-context testing could.
+
+## Pass 2 — #86 duty 1
+
+Applied both named fixes in `tools/blender/icons.py`'s `intangible()`,
+in-lane (icons only, no beast/portrait geometry, no shared palette or
+budget constant touched):
+
+1. **Silhouette @ 42px (6).** Concrete fix: increase the offset between
+   the three tiles so the "three steps" read survives the downsample.
+   Measured the actual overlap first rather than guessing at it: along the
+   shared diagonal, a 45°-rotated square's reach toward its neighbour is
+   just its own half-width `w` (not the corner-to-corner diagonal), so
+   pass 1's centres (0.26/0.08/-0.14 stepped by ~0.18-0.22) against radii
+   0.15/0.17/0.19 overlapped by 0.065 and 0.049 units respectively — real
+   overlap, not a near-miss. Re-centred all three (WHITE 0.32,-0.32 w=0.13;
+   ICE 0.05,-0.05 w=0.155; IRIS -0.25,0.25 w=0.18) so each pair clears by a
+   real ~0.09 units, and shrank each tile slightly (0.15→0.13, 0.17→0.155,
+   0.19→0.18) to keep the whole cluster inside the camera's ±0.575 frame
+   with margin.
+2. **Colour & contrast (5).** Concrete fix: shift the palest tile's colour
+   value further from the card-face brown, or add a thin contrasting
+   outline. Took the outline: added a STEEL `slabf` at WHITE's own
+   position and rotation, sized 0.175 (larger than WHITE's new 0.13), with
+   `.location.y = 0.05` to push it behind WHITE in depth (this scene's
+   camera sits at -Y per `rally()`'s own comment on the same trick, so a
+   larger Y is further from the lens) — WHITE occludes it everywhere the
+   two overlap, leaving only a thin rim showing around WHITE's own edge.
+   Didn't touch WHITE's own colour, since darkening it would have reduced
+   contrast against the darker two tiles instead.
+
+Rebuilt via apt's Blender 4.0.2, headless (`libegl1`, `libegl-mesa0`,
+`libgles2`; `numpy` and `Pillow` installed into `/usr/bin/python3.12`, the
+interpreter this Blender actually runs — not the separate system
+`python3.11`). Ran the full `icons.py` batch (no single-icon build path
+exists) and diffed all 36 generated PNGs against the committed set;
+`intangible.png` was the only one with a real content change (mean
+per-pixel diff 19.32) against the rest's render-noise-only diffs (mean
+well under 1 for most, a few up to ~6.7 — likely this apt Blender build
+differing slightly from whatever built the committed set, not this pass's
+doing, since every other icon's *script* was untouched). Reverted the
+other 35 with `git checkout --`, kept only `intangible.png`.
+
+Verified by looking, not just by the numbers:
+
+- **Alpha bbox** `(20, 20, 251, 251)` of 256 — real margin on all four
+  sides, not clipped, even with the wider spread (`ROOM` for concern given
+  the tighter frame budget, checked directly rather than assumed).
+- **Full-render composite over the brown card standin**
+  (`design/renders/intangible_pass2_full.png`): three clearly separate
+  diamonds with real gaps between them, the near-white one now wearing a
+  visible cool grey-blue rim instead of butting straight against brown.
+- **A real 42px Pillow LANCZOS downsample**
+  (`design/renders/intangible_pass2_42_big.png`, nearest-neighbour
+  upscaled for viewing) side by side with the same downsample of the old
+  pass-1 render (`design/renders/intangible_compare_42.png`): pass 1 reads
+  as one elongated lozenge with internal shading bands; pass 2 reads as
+  three distinct diamonds with the palest one visibly outlined, at the
+  exact size the icon is actually seen at.
+- **A 64px solid-black silhouette recolour**
+  (`design/renders/intangible_pass2_sil_64.png`): same three-diamond read
+  holds at the silhouette rubric's own stated test size, not just at 42px.
+- **Pixel-sampled, not eyeballed:** the rendered (lit) WHITE fill samples
+  at roughly RGB(193,194,194) — noticeably darker than the raw WHITE
+  swatch (255,255,255), confirming pass 1's "nearly disappears" finding
+  was about the LIT render, not the raw colour constant. The new STEEL rim
+  samples at roughly RGB(164,164,166), still a real gap on every channel
+  from the brown standin RGB(139,105,74).
+
+- **Silhouette @ 42px (6 → 9):** confirmed by both the 42px downsample and
+  the 64px silhouette test above — three distinct diamonds with visible
+  gaps, not fused into one bar. Not 10: the two nearer tiles (ICE/WHITE)
+  still sit closer to each other than to IRIS, by design (a trail fades
+  outward, it doesn't scatter evenly), so their gap is the thinnest of the
+  two and a very fast glance could still read them as a pair.
+- **Family distinction (9, unchanged):** still the least ambiguous line —
+  nothing else in the set is three separated diagonal diamonds, and this
+  pass didn't touch what makes it distinct.
+- **Mechanic match (6 → 7):** a cluster that visibly reads as three
+  distinct, separating steps is a better match for "leaving something
+  behind as you fade" than a fused bar that could as easily read as a
+  colour ramp. Not higher: this pass added no new shape cue (a ghost
+  silhouette, a fading trail line) that would let a first-time viewer name
+  "afterimage" specifically without the keyword — it made the existing
+  idea read more clearly, not a more literal one.
+- **Colour & contrast (5 → 8):** confirmed by the pixel samples above —
+  the previously fading tile now holds a real, measured gap against the
+  brown standin at its own edge, not just at its centre. Not higher: the
+  outline is deliberately thin (to avoid restyling WHITE itself, which
+  wasn't one of the two named fixes), so a very fast glance could still
+  read fill-plus-rim as one soft two-tone shape rather than two distinct
+  parts.
+- **Style consistency (8, unchanged):** STEEL is already in the shared
+  palette and the outline-behind-a-shape depth trick is the same one
+  `rally()`'s pass 2 and `guard()` already use in this file — nothing new
+  was introduced to the set's vocabulary.
+
+**+7 total (34 → 41), not a plateau — kept.** No line regressed. Meets the
+loop's stop condition (≥40/50) — no pass 3 planned for this asset.
+`run_tests.gd`: **ALL TESTS PASSED** (fresh import, headless). No new
+tests — an icon geometry/colour pass adds none, matching every prior
+icon-only pass under this item.
+
+## Unsure about (pass 2)
+
+Whether the WHITE tile's render-time darkening (255→~193 measured above)
+is worth naming as a general finding for the other icons still using raw
+WHITE/near-white swatches at full brightness — this file only checked the
+one asset it was scoring, and didn't survey whether other icons rely on
+an assumption (raw swatch value = rendered value) pass 1 here shows can be
+off by a real amount. Also unsure whether the two nearer tiles (ICE/WHITE)
+should get the same treatment as IRIS/ICE's spacing in a future pass — not
+touched here since Silhouette's diagnosis only asked for "the three steps"
+to survive the downsample, which they now do, not for even spacing.

@@ -2514,6 +2514,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-03** — #86 duty 1 (improve an asset). Last turn (`a9f1864`) was
+  duty 3, so this was duty 1. `intangible_icon.md` was the lowest-scoring
+  never-repaired ICON at 34/50 (`riptide_eel_portrait`/`boulder_ram_portrait`
+  scored lower but their diagnosed fixes are beast-geometry problems —
+  a floating detached eye, a horn that renders as a flat disc — out of this
+  duty's portraits-and-icons-only lane). Both of `intangible`'s diagnosed
+  lines were fixable inside `icons.py` alone: Silhouette@42px (6) — the
+  three "afterimage" diamonds overlapped along their shared diagonal by up
+  to 0.065 world units (measured, not guessed: a 45°-rotated square's reach
+  toward a neighbour on that diagonal is just its own half-width, not the
+  corner-to-corner diagonal), so they fused into one shaded bar at 42px;
+  re-spaced and slightly shrank all three so each pair clears by ~0.09
+  units, still inside the camera frame with margin. Colour & contrast (5)
+  — the palest (WHITE) tile nearly disappeared against the brown card
+  face; added a STEEL backing plate at its same position, pushed behind it
+  in depth (`rally()`'s own -Y-camera trick), so it shows only as a rim
+  around WHITE's edge rather than restyling WHITE itself. Rebuilt the full
+  36-icon batch (apt's Blender 4.0.2, `numpy`/`Pillow` into
+  `/usr/bin/python3.12`, the interpreter Blender actually runs), diffed
+  every PNG against `HEAD`, kept only `intangible.png` (mean diff 19.32 vs.
+  the rest's render-noise under ~7) and reverted the other 35. Verified
+  with a real 42px Pillow downsample, a 64px solid-black silhouette, a
+  pass-1-vs-pass-2 side-by-side, and direct pixel sampling (the rendered/
+  lit WHITE fill samples at ~(193,194,194), not the raw swatch's
+  (255,255,255) — confirms pass 1's "nearly disappears" finding was about
+  the LIT render) before scoring — **+7 (34 → 41)**, meets the loop's
+  ≥40/50 stop condition, no pass 3 planned. Full diagnosis and render
+  paths in `design/progress/intangible_icon.md`. `run_tests.gd`: ALL TESTS
+  PASSED (fresh import, headless). No new tests — an icon geometry/colour
+  pass adds none. Next #86 turn is duty 2 (find an error and resolve it).
 - **2026-09-03** — #86 duty 3 (verify a mechanic), twenty-second turn of the
   rotation. The backlog entry's own pointer (`combat_3d._route_between`) was
   already covered by an earlier duty-3 turn, so read the view layer for what
