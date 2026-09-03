@@ -7613,3 +7613,31 @@ Newest first. One line per finished item: what, and anything surprising.
   five of those beasts — logged as new queue item #88 rather than touched
   here, since judging "is it actually buried" needs a render, not a number.
   `run_tests.gd`: ALL TESTS PASSED.
+- **2026-09-03** — #86 duty 1 (improve an asset — portraits/icons). Last
+  turn (`7e04c02`) was duty 3, so this was duty 1. Scored the lowest-total
+  un-plateaued portrait (`silk_widow_portrait.md`, 31/50) and picked up its
+  own open "Unsure about" question from pass 2: whether the eye-huddle would
+  read from a different camera angle. Checked the geometry before touching
+  the camera and found the real cause — the opposite of `riptide_eel`'s
+  floating-eye bug. Both eye balls in `tools/blender/silk_widow.py` sat
+  *inside* the cephalothorax ball's own ellipsoid (normalized distance
+  0.83/0.76, where <1 is buried — checked against the same Eyrie Hawk
+  reference at 0.91 `riptide_eel`'s fix used), so the STEEL-vs-GRAPHITE
+  colour swap an earlier pass made had nothing to render against; no camera
+  angle was ever going to reveal geometry sitting inside the head. Pulled
+  both eye balls outward to the same 0.94/0.96 normalized-distance band
+  instead of re-centring the camera. Score 31 → 35 (Framing unchanged 7,
+  Identity 6→8, Read@34px unchanged 6 — confirmed the eye dots still fold
+  into the head blob at 34px in both passes, no fix proposed for this line,
+  Colour 5→7, Style unchanged 7). `assetcheck.gd` against the rebuilt model:
+  PASS on every line, including the sigil (46% occluded, within budget) and
+  all seven climb points at their contracted heights — the two head balls
+  moving didn't touch a ledge or the sigil crest. Rebuilt the full
+  `portraits.py` batch; WORKBENCH's render isn't byte-reproducible even for
+  unchanged inputs, so reverted every portrait but `silk_widow.png` — two of
+  the thirty-three (`frog.png` mean diff 58.2, `goblin_mech.png` 15.2)
+  showed noise well above the rest of the batch's 0–2.6 band despite neither
+  script being touched; flagged in `silk_widow_portrait.md` as worth a look,
+  not investigated further this pass. `run_tests.gd`: ALL TESTS PASSED
+  (fresh import, headless). Next `#86` turn is duty 2 (find an error and
+  resolve it).

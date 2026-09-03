@@ -44,9 +44,9 @@ mirror(lambda s: b.taper((0.14 * s, -1.28, 0.82), 0.05, 0.012, 0.22, CHARCOAL,
 # A huddle of small eyes, barely eyes, enough to read as a face. STEEL
 # against the GRAPHITE head so they resolve as two dots instead of
 # disappearing into it (CHARCOAL-on-GRAPHITE never read in any lit view).
-mirror(lambda s: b.ball((0.16 * s, -1.22, 1.14), (0.055, 0.05, 0.05),
+mirror(lambda s: b.ball((0.18 * s, -1.26, 1.16), (0.055, 0.05, 0.05),
                         STEEL, 6, 4))
-mirror(lambda s: b.ball((0.24 * s, -1.14, 1.08), (0.04, 0.035, 0.035),
+mirror(lambda s: b.ball((0.30 * s, -1.19, 1.11), (0.04, 0.035, 0.035),
                         STEEL, 6, 4))
 
 # ------------------------------------------------------------------ abdomen

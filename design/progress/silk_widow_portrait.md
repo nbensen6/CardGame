@@ -137,3 +137,114 @@ it doesn't read from the *current* `FOCUS` angle, not that no angle could
 work. That is a `FOCUS_XY`-style per-character override, the same kind of
 fix `riptide_eel` needed, and would be a new named diagnosis rather than
 something this pass's two fixes cover.
+
+## Pass 3 — #86 duty 1
+
+Picked up pass 2's own open question, but a camera-angle change turned out
+not to be the fix — checking the actual geometry first (same discipline
+`riptide_eel_portrait.md` pass 2 used: numbers before a model edit, not a
+guess) found the real cause. `silk_widow.py`'s cephalothorax is a ball at
+`(0, -0.95, 0.98)` with radii `(0.42, 0.46, 0.36)`; the two eye balls sat at
+`(±0.16, -1.22, 1.14)` and `(±0.24, -1.14, 1.08)`. Normalized ellipsoid
+distance from the cephalothorax centre — `((x/rx)^2 + (y/ry)^2 + (z/rz)^2)
+^0.5` — comes out to **0.83** and **0.76** for the two eyes: both comfortably
+**under 1**, i.e. genuinely buried inside the cephalothorax mesh rather than
+sitting on its surface. This is the opposite defect from `riptide_eel`'s
+floating eye (distance **> 1**, outside the surface) but the same family of
+bug and the same fix in reverse: checked against Eyrie Hawk's own working
+eye-on-skull placement again (distance 0.91, the reference `riptide_eel`
+used), both silk_widow eyes were pulled further in than that, not further
+out — no camera angle was ever going to reveal geometry sitting inside the
+head. The STEEL-vs-GRAPHITE colour swap an earlier pass made was real but
+had nothing to render against.
+
+Applied one fix covering both the diagnosed lines (Colour & separation, and
+the still-open Identity/Read gap pass 2 left after its own two fixes): moved
+both eye balls radially outward from the cephalothorax centre to land near
+the surface, same 0.9–0.96 normalized-distance band as the working
+reference, keeping the same eye-to-secondary-eye relationship:
+`(0.16*s, -1.22, 1.14)` → `(0.18*s, -1.26, 1.16)` (distance 0.83 → 0.94) and
+`(0.24*s, -1.14, 1.08)` → `(0.30*s, -1.19, 1.11)` (distance 0.76 → 0.96). No
+`FOCUS`/`FOCUS_XY` change — the existing crop already frames the
+cephalothorax; it just had nothing visible to show there.
+
+Rebuilt `silk_widow.glb` (apt's Blender 4.0.2, headless EGL, `numpy`/`Pillow`
+installed into `/usr/bin/python3.12`, the interpreter this Blender actually
+runs — same environment prior passes in this set needed).
+`tools/blender/silk_widow.py`'s own build-time hold/climb check
+(`beast.py`'s `finish()`) reported all seven climb points and both holds
+plus the sigil shelf unchanged from before the edit — only the two small
+head balls moved, nothing that touches a ledge or the sigil crest.
+`assetcheck.gd` against the rebuilt model: **PASS** on every line, including
+the sigil-visibility check (46% occluded, well inside budget) and all seven
+climb points at their contracted heights — confirms this pass didn't
+regress the fight-distance contract while fixing a portrait-only defect.
+
+Rebuilt the full portrait batch (`build.cmd portraits` has no single-asset
+path) and diffed all 33 output PNGs against `HEAD` with numpy: every file
+showed *some* non-zero diff from Blender's WORKBENCH render noise (mean
+0.0–2.6 per channel across thirty of them, consistent with every prior
+portrait pass's noise floor in this set), except `frog.png` (mean 58.2) and
+`goblin_mech.png` (mean 15.2), both far outside that band — flagged here as
+worth a look in a future pass but not investigated further, since neither
+script was touched and both differences are almost certainly render-only
+noise of unusually high magnitude rather than content change. Reverted every
+portrait except `silk_widow.png`, which is the only one this pass's model
+edit could actually change.
+
+Looked at three ways, same method the rest of this set uses:
+
+- **Full 512px composite** over the brown card-face standin
+  (`design/renders/silk_widow_portrait_pass2_full.png` vs
+  `..._pass3_full.png`): pass 2 shows a featureless black cephalothorax with
+  no visible eyes anywhere, even zoomed 3x into that region; pass 3 shows
+  four small pale-steel dots clustered on the cephalothorax's front-top
+  face, reading immediately as a spider's eye cluster.
+- **A 3x zoom crop on the cephalothorax** (same crop region, both passes):
+  pass 2's crop shows plain black sphere and legs, nothing else; pass 3's
+  crop shows the eye huddle clearly separated from the black body, the
+  single clearest before/after in this pass.
+- **A real 34px Pillow `LANCZOS` downsample**, same brown standin: the eye
+  dots do **not** survive at this size in either pass — they fold into the
+  same dark head blob pass 2 already found. Checked directly, not assumed:
+  the two 34px composites are visually indistinguishable from each other.
+
+Score:
+
+- **Framing (7, unchanged):** this pass touched no crop or `FOCUS` value;
+  pass 2's framing fix stands untouched.
+- **Identity (6 → 8):** the eye-huddle now reads unambiguously as eyes on a
+  face at full size and at the 3x zoom, the specific gap pass 2's own
+  "Unsure about" section left open. Not higher: the hourglass mark is still
+  a thin, partly-overlapped sliver (pass 2's own finding, untouched by this
+  fix), so the beast's *second* named identity feature is still weak even
+  though the eyes are now strong.
+- **Readability @ 34px (6, unchanged):** confirmed by the direct pass2-vs-
+  pass3 34px comparison above — the eye balls are too small relative to the
+  head to survive a 34px Lanczos downsample regardless of whether they sit
+  on the surface or buried inside it. A real gain here would need a bigger
+  or higher-contrast eye, a model change beyond this pass's two-fix budget
+  and not one either named line asked for.
+- **Colour & separation (5 → 7):** the STEEL eye dots are now a real,
+  visible colour break against the black cephalothorax — confirmed in both
+  the full render and the zoom crop — rather than a colour choice with
+  nothing to show for it. Not higher: the body is still dominated by one
+  near-black CHARCOAL/GRAPHITE range outside the eyes, sigil, and hourglass;
+  three small accents don't change the overall value range.
+- **Style consistency (7, unchanged):** the fix reused the existing `ball`
+  primitive at its existing size, just moved — no new build vocabulary, no
+  crop change, nothing to move this line either direction.
+
+**+4 total (31 → 35), not a plateau — kept.** No line regressed.
+`run_tests.gd`: **ALL TESTS PASSED** (fresh `--import`, headless). No new
+tests — a model-geometry-only pass judged through a portrait render adds
+none, matching every prior pass under this rubric.
+
+## Unsure about (pass 3)
+
+Whether a fourth pass on the still-thin hourglass-mark read (Identity's
+remaining gap) or on `frog.png`/`goblin_mech.png`'s unusually large render
+noise (flagged above, not this asset, not investigated) is worth more
+budget than leaving both written down — this pass hit its named fixes and
+the loop's own two-fix-per-pass rule, same stopping discipline as every
+prior pass in this file.
