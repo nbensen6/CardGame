@@ -635,6 +635,14 @@ func _init() -> void:
 	_test_backlog86_climb_state_starts_a_fresh_full_timer_on_first_leaving_a_hold()
 	_test_backlog86_climb_state_does_not_regrip_a_timer_already_draining()
 	_test_backlog86_climb_state_updates_the_target_even_while_preserving_grip()
+	# backlog #86 duty 3: Progress's keybind rebind rule -- "binding a key steals
+	# it from whoever else held it" -- had zero coverage; the whole rebind system
+	# (settings screen, combat_3d._apply_rebind) was unproven headless.
+	_test_backlog86_progress_keybind_defaults_before_any_bind()
+	_test_backlog86_progress_set_keybind_steals_the_key_from_its_old_owner()
+	_test_backlog86_progress_action_for_key_finds_the_current_owner()
+	_test_backlog86_progress_rebinding_to_your_own_key_does_not_steal_from_yourself()
+	_test_backlog86_progress_reset_keybinds_restores_every_default()
 
 	print("")
 	if _failures == 0:
@@ -8436,6 +8444,61 @@ func _test_backlog86_card_climb_for_threshold_matches_slider_cutoff() -> void:
 	_expect(Combat3D.card_climb_for({"base": {"grip": 1}}) < Combat3D.SLIDER_CLIMB, "climb 1 stays a plain tap")
 	_expect(Combat3D.card_climb_for({"base": {"grip": 2}}) >= Combat3D.SLIDER_CLIMB, "climb 2 is the rule's own cutoff for a slider")
 	_expect(Combat3D.card_climb_for({"base": {"grip": 5}}) >= Combat3D.SLIDER_CLIMB, "a high climb stays a slider")
+
+
+## backlog #86 duty 3: Progress's keybind rule -- "binding a key steals it from
+## whoever else held it" (its own doc comment: two actions on one key means one
+## of them silently never fires, which reads as a broken game rather than a bad
+## binding). Nothing in run_tests.gd called keybind()/set_keybind()/
+## action_for_key()/reset_keybinds() before this -- the whole rebind system
+## (game/ui/settings, combat_3d._apply_rebind) had zero headless coverage.
+func _test_backlog86_progress_keybind_defaults_before_any_bind() -> void:
+	Progress.use_scratch_slot("run_tests_keybinds")
+	Progress.reset_keybinds()
+	for k in Progress.KEYBINDS:
+		var spec: Dictionary = k
+		_expect(Progress.keybind(String(spec["id"])) == int(spec["default"]),
+			"%s reads back its authored default before anything has ever been bound" % spec["id"])
+
+
+func _test_backlog86_progress_set_keybind_steals_the_key_from_its_old_owner() -> void:
+	Progress.use_scratch_slot("run_tests_keybinds")
+	Progress.reset_keybinds()
+	Progress.set_keybind("swap", KEY_A)
+	_expect(Progress.keybind("swap") == KEY_A, "swap takes the key it was just bound to")
+	Progress.set_keybind("hunter_1", KEY_A)
+	_expect(Progress.keybind("hunter_1") == KEY_A, "hunter_1 takes over the key")
+	_expect(Progress.keybind("swap") == KEY_NONE,
+		"swap loses the key it held -- the exact case the doc comment warns about: two actions on one key must not both silently claim it")
+
+
+func _test_backlog86_progress_action_for_key_finds_the_current_owner() -> void:
+	Progress.use_scratch_slot("run_tests_keybinds")
+	Progress.reset_keybinds()
+	Progress.set_keybind("swap", KEY_A)
+	Progress.set_keybind("hunter_1", KEY_A)  # steals KEY_A from swap, see the test above
+	_expect(Progress.action_for_key(KEY_A) == "hunter_1", "action_for_key reports the CURRENT owner, not the one that lost it")
+	_expect(Progress.action_for_key(KEY_NONE) == "", "an unbound key names no action, even though set_keybind uses KEY_NONE as its own 'stolen' marker")
+
+
+func _test_backlog86_progress_rebinding_to_your_own_key_does_not_steal_from_yourself() -> void:
+	Progress.use_scratch_slot("run_tests_keybinds")
+	Progress.reset_keybinds()
+	Progress.set_keybind("swap", KEY_A)
+	Progress.set_keybind("swap", KEY_A)  # re-bind to the SAME key it already holds
+	_expect(Progress.keybind("swap") == KEY_A,
+		"set_keybind's steal loop guards `other != id` -- rebinding an action to the key it already holds must not clear it as though some OTHER action had it")
+
+
+func _test_backlog86_progress_reset_keybinds_restores_every_default() -> void:
+	Progress.use_scratch_slot("run_tests_keybinds")
+	Progress.set_keybind("swap", KEY_A)
+	Progress.set_keybind("hunter_1", KEY_A)
+	Progress.reset_keybinds()
+	for k in Progress.KEYBINDS:
+		var spec: Dictionary = k
+		_expect(Progress.keybind(String(spec["id"])) == int(spec["default"]),
+			"%s is back to its authored default after reset_keybinds, even one that had just been stolen from" % spec["id"])
 
 
 func _expect(cond: bool, name: String) -> void:

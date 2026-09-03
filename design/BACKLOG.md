@@ -2567,6 +2567,58 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-03** — #86 duty 2 (find an error and resolve it), reported as
+  exhausted this turn and rolled forward into duty 3 — the rotation's own
+  rule for exactly this case ("if a duty is genuinely exhausted, take the
+  next one"). Last turn (`f2f420a`) was duty 1, so this turn opened on duty
+  2. Spent the first half of the run hunting a real bug by hand across
+  `combat.gd`, `boss.gd`, `combatant.gd`, `player_state.gd`, `run.gd`,
+  `run_map.gd`, `progress.gd`, `card.gd`, `game_host.gd`, `content.gd`,
+  `game_client.gd`, `enet_transport.gd`, `net_link.gd`, `run_save.gd` — all
+  read in full — against the two named bug families (first-pass holes,
+  two-copies-of-one-truth). Then delegated a second, independent pass to an
+  Explore-style agent over the files least likely to have already been
+  swept (`content.gd`, `run_save.gd`, `game_client.gd`, `session.gd`, the
+  net/ layer, `card_view.gd`, `coach.gd`, `deck_view.gd`, `cast.gd`,
+  `tiles.gd`, `map_edges.gd`, `hit_circle.gd`, and the full
+  `combat_3d.gd`/`overworld_3d.gd`/`location_3d.gd`/`game_3d.gd`) so the two
+  searches wouldn't retread each other. Between the two passes that is
+  effectively the whole non-test, non-data codebase this run.
+  One candidate surfaced: `card_view.gd`'s `face_text()` prints the ally-climb
+  line (`ally_climb`) as a raw number while its structural twin, the
+  ally-block line, threads its value through `_num()` (the miss/base-aware
+  formatter every other stat line in the function uses). Traced it into
+  `Combat.preview()` and confirmed there is no `timed_ally_grip` field on
+  `Card` and no relic or `condition_bonus` path touches `ally_grip` either —
+  so under every card/relic/enchant currently authored, the miss/live/base
+  values for `ally_grip` are always identical and `_num()` would render
+  byte-for-byte the same output today. A real copy-paste asymmetry in the
+  exact shape of the historical bugs, but not a live one: there is no way to
+  write a test that fails against the current code, which is the rule
+  duty 2 itself sets ("write the test first, watch it fail, then fix").
+  Recorded here rather than "fixed" so it isn't rediscovered from scratch —
+  if a future card/relic ever grants a graded or scaled `ally_grip`, this is
+  the line that will silently stop reflecting it.
+  Rather than stretch that into a fix with no failing test, or invent a
+  weaker issue to justify the duty, took the rotation's own escape hatch and
+  moved to duty 3 instead. Picked `Progress`'s keybind rebind system
+  (`keybind`/`set_keybind`/`action_for_key`/`reset_keybinds`,
+  `game/core/progress.gd`) — a real, documented rule ("binding a key steals
+  it from whoever else held it... two actions on one key means one of them
+  silently never fires") that had exactly zero references anywhere in
+  `run_tests.gd` before this turn, despite backing both the settings screen
+  and `combat_3d._apply_rebind`. Added 13 tests across 5 functions: every
+  action reads its authored default before any bind; rebinding one action to
+  a key another already holds clears the OLD holder (the steal itself);
+  `action_for_key` reports the current owner, not the one just displaced,
+  and reports "" for an unbound key even though `KEY_NONE` is the same
+  sentinel `set_keybind` writes into a stolen slot; rebinding an action to
+  the key it ALREADY holds does not clear itself (the loop's `other != id`
+  guard); and `reset_keybinds` restores every default, including one that
+  had just been stolen from. All passed against the unmodified code — this
+  is duty 3's "prove a real, working rule," not a bug fix. `run_tests.gd`:
+  ALL TESTS PASSED (fresh import, headless), 681 passing. Next `#86` turn is
+  duty 1 (improve an asset).
 - **2026-09-03** — #86 duty 1 (improve an asset, portraits/icons only). Last
   turn (`9de41a4`) was duty 3, so this turn is duty 1. Surveyed every scored
   portrait/icon's current total again (not just the pass-1 table row — the
