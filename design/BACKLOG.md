@@ -2547,6 +2547,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-03** — #86 duty 1 (improve an asset, portraits/icons only). Last
+  turn (`b46bdf8`) was duty 3, so this turn is duty 1. Surveyed every scored
+  portrait and icon's current total (not just its pass-1 score — several
+  files' most recent bolded number is buried mid-paragraph, not the table
+  row) and picked `brine_urchin_portrait.md`, the lowest un-plateaued score
+  (32/50) with a fix actually available in this lane: its Framing line (5)
+  was several spines cut mid-shaft at the frame edges, and its other named
+  line (Readability @ 34px) needs beast geometry changes, out of the
+  portraits/icons lane. `boulder_ram_portrait.md` (30) and
+  `bog_leech_portrait.md`'s worst remaining line were lower/similar but both
+  need beast-model changes for every fix currently diagnosed — skipped, not
+  fixable here.
+  Widened `tools/blender/portraits.py`'s `FOCUS["brine_urchin"]` span from
+  1.30 to 1.45 (same vertical centre, camera pulled back) so all six spines,
+  tips included, sit inside frame with real margin on every side instead of
+  the left one touching the frame boundary at alpha x=0. Rebuilt the full
+  30-portrait batch (no single-portrait build path exists), diffed every
+  output against the committed set, and kept only `brine_urchin.png`.
+  Surprising: two unrelated portraits (`frog.png`, `goblin_mech.png`) also
+  diffed heavily from committed — spot-checking `frog.png` showed a
+  close-up on solid-black eyes, nothing like the committed amber-eyed
+  render, meaning that model has drifted from its portrait at some point
+  since. Left alone (not this pass's asset, not this lane's two-fix budget)
+  and noted in `brine_urchin_portrait.md`'s Unsure section for a future
+  duty-1 or duty-2 turn to pick up. Framing 5 → 9, total 32 → 36 (not a
+  plateau, below the 40 stop line — pass 3 remains available). `run_tests.gd`:
+  ALL TESTS PASSED (fresh import, headless). Left the item unticked per
+  #86's own rules — it never completes. Next `#86` turn is duty 2.
 - **2026-09-03** — #86 duty 3 (verify a mechanic actually works). Last turn
   (`6f8ed70`) was duty 2 and said "next turn is duty 3." Picked
   `Coach.hint_for` (`game/ui/coach.gd`) — the onboarding-hint priority list
