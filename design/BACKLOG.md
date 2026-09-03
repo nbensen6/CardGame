@@ -2567,6 +2567,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-03** — #86 duty 2 (find an error and resolve it). Last turn
+  (`7ecc941`) was duty 1, so this was duty 2. Used a background agent to
+  survey `core/` for a NEW instance of the two named bug families (first-pass
+  holes; two copies of one truth) rather than re-treading the ~dozen
+  hand-copied-field-list drifts already fixed. It found one: `Run.take_key()`
+  (backlog #64) trades a relic-reward node for a key, and its own doc comment
+  is explicit that this is legal "before anyone's taken the relic" — but the
+  guard checked `reward_picked`, which also goes `true` on a plain
+  `skip_reward()` decline (nothing taken at all), not just on `pick_reward()`
+  actually granting one. One hunter declining a relic reward silently locked
+  their ally out of trading that same reward for a key, even though the
+  "team holding neither cleanly" problem the comment names never applied —
+  nobody had taken anything. Also caught the existing regression test
+  (`_test_backlog64_take_key_refuses_without_gold_or_after_a_pick`)
+  simulating "already picked" by hand-setting `reward_picked[0] = true`
+  rather than actually calling `pick_reward`, which is exactly how the bug
+  hid: the test never exercised the `skip_reward` path that's the only OTHER
+  legitimate way that flag goes true. Fixed with a dedicated `_relic_taken`
+  flag (reset per reward, set only where `pick_reward` actually grants a
+  relic, round-tripped through `to_dict`/`from_dict` like `_queued_reward`
+  already is), updated that test to call `pick_reward` for real, and added
+  `_test_backlog86_take_key_survives_an_allys_decline`. Watched the new test
+  fail against the unmodified code (stashed `run.gd` only, confirmed FAIL,
+  restored the fix, confirmed PASS) before committing. `run_tests.gd`: ALL
+  TESTS PASSED (fresh import, headless, godot 4.7.1). Next `#86` turn is
+  duty 3 (verify a mechanic actually works).
 - **2026-09-03** — #86 duty 1 (improve an asset, portraits/icons only). Last
   turn (`43514e7`) was duty 3, so this turn is duty 1. Re-checked
   `boulder_ram_portrait` (30) and `bog_leech_portrait` (31), the two lowest

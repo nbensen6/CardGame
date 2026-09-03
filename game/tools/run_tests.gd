@@ -408,6 +408,7 @@ func _init() -> void:
 	_test_backlog64_take_key_refuses_the_wrong_node_type()
 	_test_backlog64_take_key_refuses_without_gold_or_after_a_pick()
 	_test_backlog64_take_key_is_once_per_node_type_per_run()
+	_test_backlog86_take_key_survives_an_allys_decline()
 	# backlog #86 duty 2: Run.take_key() was real and unit-tested but never
 	# wired to a GameClient/GameHost command -- these two catch the session
 	# layer, not just /core.
@@ -6726,10 +6727,28 @@ func _test_backlog64_take_key_refuses_without_gold_or_after_a_pick() -> void:
 	run.gold = 0
 	var broke := run.take_key("treasure")
 	run.gold = 500
-	run.reward_picked[0] = true  # someone already took the relic instead
+	run.pick_reward(0, 0)  # hunter 0 actually takes a relic, not just a decline
 	var too_late := run.take_key("treasure")
 	_expect(not broke and not too_late,
-		"take_key needs the real cost paid, and closes once anyone's already picked")
+		"take_key needs the real cost paid, and closes once anyone's actually taken the relic")
+
+
+## backlog #86 duty 2 (find an error and resolve it): take_key()'s own doc comment
+## says it's legal "before anyone's taken the relic" — but the guard used to check
+## reward_picked, which also goes true on a plain skip_reward() decline. One hunter
+## declining silently locked the OTHER hunter out of trading the reward for a key,
+## even though nobody had taken anything and the "team holding neither cleanly"
+## concern the comment names never applied. Fixed with a dedicated _relic_taken
+## flag, set only where pick_reward() actually grants a relic.
+func _test_backlog86_take_key_survives_an_allys_decline() -> void:
+	var run := _map_run()
+	run.gold = 500
+	run.node_type = "treasure"
+	run._begin_reward("relic")
+	run.skip_reward(0)  # hunter 0 declines outright — takes nothing
+	var ok := run.take_key("treasure")
+	_expect(ok and run.keys.has("treasure"),
+		"an ally's decline must not block take_key — nobody has taken the relic yet")
 
 
 func _test_backlog64_take_key_is_once_per_node_type_per_run() -> void:

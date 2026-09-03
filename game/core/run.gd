@@ -100,10 +100,20 @@ var is_daily: bool = false      # true when the seed below came from a shared da
 var daily_date: String = ""     # the date string it was derived from, e.g. "2026-08-25"
 var reward_kind: String = "card" # "card" | "relic" — what this REWARD offers
 var reward_choices: Array = []   # per hunter: Array of card OR relic choices (by reward_kind)
-var reward_picked: Array = []    # Array[bool]
+var reward_picked: Array = []    # Array[bool] — true once a hunter has RESPONDED
+                                  # (picked OR skipped); take_key must not read this
+                                  # as "took the relic" (backlog #86 duty 2 — see
+                                  # _relic_taken below, which is the real question).
 # A node can owe TWO rewards (elites and Titans pay a card and then a relic).
 # The second is held here and opened once everyone has taken the first.
 var _queued_reward: String = ""
+# backlog #86 duty 2: take_key()'s own doc comment says it's legal "before anyone's
+# TAKEN the relic" — but it used to check reward_picked, which also goes true on a
+# plain decline (skip_reward). One hunter declining a relic reward silently locked
+# the other out of trading it for a key, even though nobody had actually taken
+# anything. Reset per reward, set only where a relic is genuinely granted
+# (pick_reward's "relic" branch below), so take_key can ask the real question.
+var _relic_taken: bool = false
 
 var _seed: int
 ## How often a card taken as a reward comes out foil, by rarity.
@@ -265,6 +275,7 @@ func to_dict() -> Dictionary:
 		"stats": stats,
 		"reward_kind": reward_kind, "reward_choices": choices,
 		"reward_picked": reward_picked, "queued_reward": _queued_reward,
+		"relic_taken": _relic_taken,
 		"seed": _seed, "rng_state": str(_rng.state),  # a uint64; JSON floats would round it
 		"is_daily": is_daily, "daily_date": daily_date,
 		"combat": combat.to_dict() if (phase == Phase.COMBAT and combat != null) else {},
@@ -325,6 +336,7 @@ static func from_dict(d: Dictionary) -> Run:
 		r.reward_choices.append(one2)
 	r.reward_picked = (d.get("reward_picked", []) as Array).duplicate()
 	r._queued_reward = String(d.get("queued_reward", ""))
+	r._relic_taken = bool(d.get("relic_taken", false))
 	r._rng.state = int(String(d.get("rng_state", "0")))
 	var combat_d: Dictionary = d.get("combat", {})
 	if r.phase == Phase.COMBAT and not combat_d.is_empty():
@@ -825,6 +837,7 @@ func pick_reward(slot: int, choice: int) -> void:
 		return
 	if reward_kind == "relic":
 		team_relics.append(choices[choice])  # relics are team-wide
+		_relic_taken = true
 	else:
 		# The pull. Rolled HERE rather than when the choices are offered, so a
 		# foil is something you got rather than something you could see coming
@@ -852,9 +865,8 @@ func take_key(source: String) -> bool:
 		return false
 	if keys.has(source) or gold < KEY_COST_GOLD:
 		return false
-	for picked in reward_picked:
-		if picked:
-			return false
+	if _relic_taken:
+		return false
 	gold -= KEY_COST_GOLD
 	keys.append(source)
 	for i in range(reward_picked.size()):
@@ -938,6 +950,7 @@ func _begin_reward(kind: String) -> void:
 	reward_kind = kind
 	reward_choices = []
 	reward_picked = []
+	_relic_taken = false
 	# A Titan itself (node_type "boss") pays from its own relic pool — the
 	# tier-gated relics no shop, treasure or elite ever offers (backlog #48).
 	var relic_pool: Array = Content.boss_relic_pool(_unlocked_wins) if node_type == "boss" \
