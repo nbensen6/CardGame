@@ -2514,6 +2514,58 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-03** — #86 duty 2 (find an error and resolve it). Last turn
+  (`633ad00`) was duty 1, so this was duty 2. Used an Explore agent first;
+  it returned two candidates, and both turned out to be false leads on
+  closer reading — worth logging so a future turn doesn't re-chase them.
+  (1) The `"curse"` boss move skipping `try_block_debuff()` where its
+  sibling `"frail"` move doesn't (`combat.gd:1255`, already flagged as
+  "still open" by the twenty-first turn, 2026-09-02) is NOT a bug: #69's own
+  original implementation log (2026-08-26) explicitly chose this — "a curse
+  is a card you're handed, not a debuff stat," matching the precedent an
+  event's own `curse_card` already sets — and a test,
+  `_test_curse_move_ignores_artifact_matching_curse_card_precedent`, has
+  encoded and named that reasoning since the same day. The twenty-first
+  turn's note didn't check for that test before calling it a bug; flipping
+  it now would silently reverse a deliberate design call on a one-agent
+  say-so, which is exactly what rule 4 exists to prevent. Leaving the
+  behavior and the test alone; if Nick wants curses warded, that's his
+  call, not an unsupervised "fix." (2) `CardView.face_text()` dropping a
+  card's `condition`/`condition_bonus` prose (e.g. Harpoon's "Above the
+  sigil, deal 4 more") once a card leaves the reward screen for a real hand
+  also isn't a bug on inspection: `shape_text()` (added by the twentieth
+  turn) exists for exactly this — the inspector's second line is the
+  authored text minus whatever the live line already said, confirmed by
+  hand-tracing Harpoon's own strings through both functions — so the
+  clause survives via tap-to-inspect, satisfying CLAUDE.md §5's
+  no-hover-only-info rule.
+  Kept looking and found a real, unguarded asymmetry: Dexterity is
+  documented as "Strength's own defensive counterpart" (`card.gd:59`) and
+  the two real cards that combine it with Block (`steady_grip`) vs. Strength
+  with Block (`chalk_up`) should read the same way on a card face — but
+  `chalk_up` shows "Gain 2 Block. Strength 1." while `steady_grip` showed
+  only "Gain 4 Block.", silently dropping "Dexterity 1." entirely, with no
+  inspector fallback to rescue it (the effect has no separate authored
+  clause `shape_text` could surface). Root cause: `#60`'s original
+  implementation (2026-08-26) wired Dexterity into `Combatant`, `_meld_cards`,
+  the keyword/tooltip system and the save/load snapshot, but never touched
+  `GameHost`'s two hand-built per-card "fx" dicts (`_slot_private` and
+  `_deck_cards`) or `CardView.face_text()` itself — both of which got a
+  parallel "strength" line and entry that Dexterity was simply never added
+  alongside, unlike every other field #60 touched. Fixed by adding
+  `"dexterity": c.dexterity` to both "fx" dict literals
+  (`game_host.gd:586,785`) and one new branch in `face_text()`
+  (`card_view.gd`, mirroring the existing Strength branch exactly). Three
+  new tests: a synthetic `face_text` unit test for the Block+Dexterity
+  shape, an updated field-order test proving Dexterity's line lands between
+  Strength and Rhythm (matching source order), and an end-to-end test
+  driving a real `steady_grip` card through an actual `GameHost`/
+  `GameClient` pair (not a hand-built dict) confirming its `fx.dexterity`
+  reaches the owner's client — the same "prove the wiring, not just the
+  formatter" idiom `_test_backlog45_retain_and_innate_keywords_reach_the_
+  owners_hand` already uses. `run_tests.gd`: ALL TESTS PASSED (fresh
+  import, headless; 3 new PASS lines, no FAILs). Next #86 turn is duty 3
+  (verify a mechanic).
 - **2026-09-03** — #86 duty 1 (improve an asset). Last turn (`7a48a36`) was
   duty 3, so this was duty 1. Of batch 14's four defensive-keyword icons,
   `intangible` was already repaired (41/50) and `thorns` scores 43/50

@@ -584,6 +584,7 @@ func _slot_private(pi: int) -> Dictionary:
 				# instead of printing a formula beside a live readout.
 				"fx": {
 					"wound": c.wound, "vulnerable": c.vulnerable, "strength": c.strength,
+					"dexterity": c.dexterity,
 					"draw": c.draw, "taunt": c.taunt, "rhythm": c.rhythm,
 					"create": c.create, "prepare": c.prepare, "meld": c.meld,
 					"exhaust_pick": c.exhaust_pick, "cheapen_pick": c.cheapen_pick,
@@ -782,6 +783,7 @@ func _deck_face(c: Card, i: int) -> Dictionary:
 		"preview": _printed(c), "preview_miss": _printed(c), "base": _printed(c),
 		"fx": {
 			"wound": c.wound, "vulnerable": c.vulnerable, "strength": c.strength,
+			"dexterity": c.dexterity,
 			"draw": c.draw, "taunt": c.taunt, "rhythm": c.rhythm,
 			"create": c.create, "prepare": c.prepare, "meld": c.meld,
 			"exhaust_pick": c.exhaust_pick, "cheapen_pick": c.cheapen_pick,

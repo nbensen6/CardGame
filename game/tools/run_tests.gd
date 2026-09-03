@@ -385,6 +385,7 @@ func _init() -> void:
 	_test_backlog45_potions_are_shared_but_only_the_owner_can_drink_them()
 	_test_backlog45_status_curse_card_stays_private_to_its_owner()
 	_test_backlog45_retain_and_innate_keywords_reach_the_owners_hand()
+	_test_backlog86_steady_grip_fx_carries_dexterity_over_the_wire()
 	_test_backlog45_named_holds_cross_to_both_peers_identically()
 	_test_backlog45_graded_timing_quality_reaches_the_host_and_the_preview()
 	# backlog #46: a robustness sweep that is not balance tuning
@@ -517,6 +518,7 @@ func _init() -> void:
 	_test_backlog86_face_text_matched_climb_merges_to_all_players()
 	_test_backlog86_face_text_mismatched_climb_pluralizes_the_allys_line()
 	_test_backlog86_face_text_status_and_utility_lines_join_in_field_order()
+	_test_backlog86_face_text_shows_dexterity_alongside_block()
 	_test_backlog86_face_text_burn_lines_are_mutually_exclusive()
 	_test_backlog86_face_text_falls_back_to_authored_text_with_no_preview()
 	_test_backlog86_face_text_falls_back_to_authored_text_when_nothing_landed()
@@ -5957,6 +5959,27 @@ func _test_backlog45_retain_and_innate_keywords_reach_the_owners_hand() -> void:
 		"an Innate card reaches its owner's hand tagged Innate, and only Innate")
 
 
+## backlog #86 duty 2 — the real bug behind the two synthetic face_text tests
+## above: GameHost's per-card "fx" dict (the one that crosses the wire to a
+## client) never carried "dexterity" at all, so Steady Grip — a real card in
+## the shared reward pool, "Gain 4 Block. Dexterity 1." — reached its owner's
+## hand with Dexterity invisible to CardView.face_text even though every other
+## field needed to render it was present. Drives it through an actual
+## GameHost/GameClient pair, not a hand-built dict, so a regression in the
+## wiring (not just the formatter) would be caught.
+func _test_backlog86_steady_grip_fx_carries_dexterity_over_the_wire() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var steady: Card = Content.make_card("steady_grip")
+	host._run.combat.players[0].hand.append(steady)
+	host._broadcast_state()
+	var hand: Array = c0.private["hand"]
+	var mine: Dictionary = hand[hand.size() - 1]
+	_expect(String(mine["name"]) == steady.name and int((mine["fx"] as Dictionary).get("dexterity", 0)) == 1,
+		"Steady Grip's fx dict carries its Dexterity to the owner's client, not just its Block")
+
+
 ## Named holds (backlog #24) widened Boss.ledges from a bare int array to an
 ## optional Dictionary shape {height, safe, exposed_to}. Prove the richer
 ## shape crosses the snapshot boundary intact and IDENTICALLY to both peers
@@ -7711,10 +7734,26 @@ func _test_backlog86_face_text_mismatched_climb_pluralizes_the_allys_line() -> v
 
 func _test_backlog86_face_text_status_and_utility_lines_join_in_field_order() -> void:
 	var data := {"preview": {"damage": 0}, "preview_miss": {}, "base": {}, "keywords": [],
-		"fx": {"wound": 2, "vulnerable": 1, "strength": 3, "rhythm": 1, "draw": 2, "taunt": true}}
+		"fx": {"wound": 2, "vulnerable": 1, "strength": 3, "dexterity": 4, "rhythm": 1,
+			"draw": 2, "taunt": true}}
 	_expect(CardView.face_text(data, false) ==
-		"Poison 2. Expose 1. Strength 3. Rhythm 1. Draw 2. Taunt.",
+		"Poison 2. Expose 1. Strength 3. Dexterity 4. Rhythm 1. Draw 2. Taunt.",
 		"every non-numeric effect on one card gets its own sentence, in the order face_text checks them")
+
+
+## backlog #86 duty 2 — Dexterity is Strength's own "defensive counterpart"
+## (card.gd's own words) but never got the line Strength did: GameHost's "fx"
+## dict never carried "dexterity" and face_text() had no branch for it, so a
+## card combining Block+Dexterity (the real card Steady Grip: "Gain 4 Block.
+## Dexterity 1.") showed only "Gain 4 Block." on its live face in hand — the
+## Dexterity silently vanished — while its Block+Strength sibling (the real
+## card Chalk Up: "Gain 2 Block. Strength 1.") correctly showed both. Proves
+## the fix with the exact shape Steady Grip's own fx dict has.
+func _test_backlog86_face_text_shows_dexterity_alongside_block() -> void:
+	var data := {"preview": {"damage": 0, "block": 4}, "preview_miss": {}, "base": {"block": 4},
+		"keywords": [], "fx": {"dexterity": 1}}
+	_expect(CardView.face_text(data, false) == "Gain 4 Block. Dexterity 1.",
+		"a card granting both Block and Dexterity states both on its live face, not just Block")
 
 
 func _test_backlog86_face_text_burn_lines_are_mutually_exclusive() -> void:

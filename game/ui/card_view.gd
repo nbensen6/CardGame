@@ -935,6 +935,14 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 		out.append("%s %d." % [_kw("Expose", "expose", kw, rich), int(fx["vulnerable"])])
 	if int(fx.get("strength", 0)) > 0:
 		out.append("%s %d." % [_kw("Strength", "strength", kw, rich), int(fx["strength"])])
+	# backlog #86 duty 2 — Dexterity (Strength's own "defensive counterpart",
+	# card.gd's words) never got this line when Strength did: the fx dict this
+	# reads (GameHost) never carried "dexterity" at all, so a card combining
+	# Block+Dexterity (Steady Grip) showed "Gain 4 Block." on its live face and
+	# silently dropped the Dexterity — while its Block+Strength sibling (Chalk
+	# Up) correctly shows both. Same two-line fix game_host.gd's "fx" dicts got.
+	if int(fx.get("dexterity", 0)) > 0:
+		out.append("%s %d." % [_kw("Dexterity", "dexterity", kw, rich), int(fx["dexterity"])])
 	if int(fx.get("rhythm", 0)) > 0:
 		out.append("%s %d." % [_kw("Rhythm", "rhythm", kw, rich), int(fx["rhythm"])])
 	if int(fx.get("draw", 0)) > 0:
