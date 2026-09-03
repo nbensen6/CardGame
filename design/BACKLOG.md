@@ -2567,6 +2567,40 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-03** — #86 duty 1 (improve an asset, portraits/icons only). Last
+  turn (`9de41a4`) was duty 3, so this turn is duty 1. Surveyed every scored
+  portrait/icon's current total again (not just the pass-1 table row — the
+  running totals live in prose, e.g. `**+N total (X → Y)**`). Lowest
+  un-plateaued scores were `boulder_ram_portrait` (30) and `bog_leech_
+  portrait` (31), but both files' every currently-diagnosed fix needs beast
+  geometry, not `portraits.py` — already logged that way in each file, so
+  skipped as not fixable in this lane. Next lowest was a 32-point tie between
+  `rally_icon` (already on its second repair pass) and `flicker_stag_
+  portrait` (still on its first). Picked `flicker_stag_portrait`: its
+  Framing line (6) was diagnosed as the belly ball being entirely outside
+  the crop, a pure `FOCUS` fix, versus its other named line (Colour, 5)
+  which needs a model palette change and stayed untouched.
+  Moved `portraits.py`'s `FOCUS["flicker_stag"]` from `(0.80, 0.62)` to
+  `(0.70, 0.68)` — lowered and widened the crop, sized off the real mesh
+  bounding box (belly ball at world z 1.46-2.14 out of a 0-3.6 model) rather
+  than guessed. Rebuilt the full 30-portrait batch (no single-portrait build
+  path exists) and diffed every output against committed: `flicker_stag.png`
+  changed for real (mean diff 32.6); `frog.png`/`goblin_mech.png` showed the
+  same pre-existing stale-model-drift `brine_urchin_portrait.md` already
+  flagged, untouched by this pass; `yoke_ox.png`'s small diff (2.6) was
+  ordinary render noise. Kept only `flicker_stag.png`.
+  Looked at a zoomed crop before scoring, not just the numbers: the cream
+  belly ball is genuinely visible now, tucked between the front legs, right
+  where the 3D scoring already placed it. Framing 6 → 8; total 32 → 34, not
+  a plateau, below the 40 stop line (2 of 4 passes used). Surprising: the
+  wider crop also brought all four legs into frame, and the bottom edge is
+  still flush with no margin — same as pass 1's own render already had (one
+  leg was already cut off there too), not a regression this pass caused, so
+  left unscored either direction. Sandbox needed `apt-get update` before
+  `apt-get install blender` would resolve packages (stale index, unrelated
+  to the known `download.blender.org` block). `run_tests.gd`: ALL TESTS
+  PASSED (fresh import, headless). Left the item unticked per #86's own
+  rules — it never completes. Next `#86` turn is duty 2.
 - **2026-09-03** — #86 duty 3 (verify a mechanic actually works). Last turn
   (`d5d032f`) was duty 2, so this turn is duty 3. Picked the OTHER half of
   Nick's own jump-mechanic example that duty 3's earlier passes hadn't

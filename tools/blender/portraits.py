@@ -42,7 +42,7 @@ FOCUS = {
     "bog_leech": (0.39, 1.28), "thrasher": (0.42, 1.55),
     "silk_widow": (0.45, 1.35), "boulder_ram": (0.34, 1.35),
     "cinder_jackal": (0.60, 1.35), "brine_urchin": (0.62, 1.45),
-    "clot_toad": (0.48, 1.35), "flicker_stag": (0.80, 0.62),
+    "clot_toad": (0.48, 1.35), "flicker_stag": (0.70, 0.68),
     "eyrie_hawk": (0.78, 0.60), "glyph_tortoise": (0.50, 1.28),
     "riptide_eel": (0.68, 0.75), "yoke_ox": (0.45, 1.25),
 }
