@@ -197,10 +197,14 @@ static func _act_ahead(rows: Array, cur_row: int, cur_col: int) -> int:
 
 ## Is the row the party stands on part of the region currently drawn? False on
 ## the step across an act boundary, where they stand on the previous act's Titan.
-func _row_in_act(rows: Array, row: int) -> bool:
+static func row_in_act(rows: Array, row: int, act: int) -> bool:
 	if row < 0 or row >= rows.size():
 		return false
-	return int((rows[row] as Array)[0].get("act", 0)) == _act
+	return int((rows[row] as Array)[0].get("act", 0)) == act
+
+
+func _row_in_act(rows: Array, row: int) -> bool:
+	return row_in_act(rows, row, _act)
 
 
 ## Rebuild the region for the act you're in. Node rows land on EVEN hex rows so

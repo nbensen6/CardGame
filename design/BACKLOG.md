@@ -2514,6 +2514,26 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-03** — #86 duty 3 (verify a mechanic actually works). Last turn
+  (`8b6198d`) was duty 2, so this was duty 3. Picked `overworld_3d._row_in_act`
+  — the exact sibling of `_act_ahead` (tested last duty-3 pass) that gates
+  `_stand_at`, the function placing the party's avatar on the hex map. It had
+  zero coverage despite being in the same Titan-boundary bug family Nick's
+  2026-08-16 fix addressed: a Titan's node is the LAST row of its act, so a
+  player standing on it has a row that no longer belongs to the act now drawn
+  on screen (the next act, per `_act_ahead`), and `_row_in_act` is the check
+  that has to say "false" there or `_stand_at` would index into the wrong
+  region instead of falling back to the trailhead. Lifted the body into a
+  static `row_in_act(rows, row, act)` taking `act` as an explicit argument
+  instead of reading `self._act`, following the same pattern `_act_ahead`
+  already used, so it is callable from headless with no map loaded. Five new
+  tests in `run_tests.gd`, including the boundary case itself (row 1 is act
+  0's Titan, row 2 opens act 1 — standing on row 1 must read false once act 1
+  is on screen) and its mirror (row 2 reads true). No bug found this pass —
+  the existing logic was already correct, this only proves it and guards
+  against a future edit breaking it silently. `run_tests.gd`: ALL TESTS
+  PASSED (fresh import, headless). Next #86 turn is duty 1 (improve an
+  asset).
 - **2026-09-03** — #86 duty 2 (find an error and resolve it). Last turn
   (`27d4fb1`) was duty 1, so this was duty 2. `_meld_cards()` in combat.gd has
   now had its hand-copied field list caught missing fields three separate

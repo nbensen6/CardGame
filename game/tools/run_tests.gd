@@ -576,6 +576,17 @@ func _init() -> void:
 	_test_backlog86_act_ahead_looks_at_the_next_row_mid_act()
 	_test_backlog86_act_ahead_on_the_titan_uses_the_current_row_not_a_next_one()
 	_test_backlog86_act_ahead_crosses_into_the_next_act_stepping_off_a_titan()
+	# backlog #86 duty 3 (twenty-third pass): row_in_act, lifted out of
+	# overworld_3d._row_in_act, is _act_ahead's own sibling and had zero
+	# coverage despite gating _stand_at — the function that places the party's
+	# avatar on the map. Same Titan-boundary family as _act_ahead: false is
+	# the correct answer exactly on the row where the party stands on the
+	# PREVIOUS act's Titan, which is what sends _stand_at to the trailhead.
+	_test_backlog86_row_in_act_is_false_for_a_negative_row()
+	_test_backlog86_row_in_act_is_false_past_the_end_of_the_rows()
+	_test_backlog86_row_in_act_is_true_mid_act()
+	_test_backlog86_row_in_act_is_false_standing_on_the_previous_acts_titan()
+	_test_backlog86_row_in_act_is_true_on_the_first_row_of_a_new_act()
 
 	print("")
 	if _failures == 0:
@@ -8017,6 +8028,36 @@ func _test_backlog86_act_ahead_crosses_into_the_next_act_stepping_off_a_titan() 
 	# nothing drawn to walk onto.
 	var rows: Array = [_act_row(0), _act_row(0), _act_row(1)]
 	_expect(Overworld3D._act_ahead(rows, 1, 0) == 1, "standing on the last row of an act, the act ahead is the NEXT act's, not the one just finished")
+
+
+func _test_backlog86_row_in_act_is_false_for_a_negative_row() -> void:
+	var rows: Array = [_act_row(0), _act_row(0)]
+	_expect(not Overworld3D.row_in_act(rows, -1, 0), "row -1 (before the first step) is not part of any drawn act")
+
+
+func _test_backlog86_row_in_act_is_false_past_the_end_of_the_rows() -> void:
+	var rows: Array = [_act_row(0), _act_row(0)]
+	_expect(not Overworld3D.row_in_act(rows, 2, 0), "a row index past the end of the map must not be treated as in-act, let alone index off the array")
+
+
+func _test_backlog86_row_in_act_is_true_mid_act() -> void:
+	var rows: Array = [_act_row(0), _act_row(0), _act_row(0)]
+	_expect(Overworld3D.row_in_act(rows, 1, 0), "a row that belongs to the act currently drawn is in-act")
+
+
+func _test_backlog86_row_in_act_is_false_standing_on_the_previous_acts_titan() -> void:
+	# Row 1 is act 0's Titan (the last row of act 0); row 2 opens act 1. The
+	# region now drawn is act 1 (per _act_ahead), so standing on row 1 must
+	# read as OUT of the currently drawn region -- this is exactly what
+	# sends _stand_at to the trailhead instead of indexing a region that no
+	# longer contains this row.
+	var rows: Array = [_act_row(0), _act_row(0), _act_row(1)]
+	_expect(not Overworld3D.row_in_act(rows, 1, 1), "standing on the act just finished, the row does not belong to the act now on screen")
+
+
+func _test_backlog86_row_in_act_is_true_on_the_first_row_of_a_new_act() -> void:
+	var rows: Array = [_act_row(0), _act_row(0), _act_row(1)]
+	_expect(Overworld3D.row_in_act(rows, 2, 1), "the first row of the new act belongs to the act now drawn")
 
 
 func _expect(cond: bool, name: String) -> void:
