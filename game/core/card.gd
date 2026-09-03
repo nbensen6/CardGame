@@ -292,10 +292,18 @@ func upgraded_copy() -> Card:
 			"damage_per_x", "block_per_x", "frail", "thorns",
 			"light_gain", "damage_per_light", "ally_heal", "power_value", "scry",
 			"intangible", "buffer", "plated_armour",
-			"damage_per_discarded", "block_per_discarded"]:
+			"damage_per_discarded", "block_per_discarded",
+			"grip_per_rhythm", "pull_ally", "sac_ally_grip"]:
 		if int(d[key]) > 0:
 			d[key] = int(d[key]) + 1
 			bumped = true
+	# cheapen_amount can't join the list above: Card.from_dict defaults it to
+	# 1 on every card, used or not, so it would falsely read as "bumped" (and
+	# skip the cost-reduction fallback) on cards that never authored
+	# cheapen_pick at all. Only bump it for cards that actually use it.
+	if bool(d.get("cheapen_pick", false)) and int(d["cheapen_amount"]) > 0:
+		d["cheapen_amount"] = int(d["cheapen_amount"]) + 1
+		bumped = true
 	if not bumped and int(d["cost"]) > 0:
 		d["cost"] = int(d["cost"]) - 1  # nothing to scale — make it cheaper instead
 	d["name"] = String(d["name"]) + "+"

@@ -105,6 +105,8 @@ func _init() -> void:
 	_test_run_survives_a_save_and_load_in_boon()
 	_test_card_upgrade_bumps_numbers()
 	_test_card_rule_upgrade_changes_what_it_does_not_just_a_number()
+	_test_card_upgrade_bumps_grip_per_rhythm_pull_and_sac_ally_grip()
+	_test_card_upgrade_bumps_cheapen_amount_only_when_cheapen_pick_is_set()
 	_test_backlog67_above_sigil_condition_gates_preview_bonus()
 	_test_backlog67_ally_hanging_condition_gates_preview_bonus()
 	_test_backlog67_nth_card_condition_counts_earlier_plays_only()
@@ -1554,6 +1556,44 @@ func _test_card_rule_upgrade_changes_what_it_does_not_just_a_number() -> void:
 			and up_reckless.rule_upgrade.is_empty()  # spent, not carried on the sharpened copy
 		and twice.ethereal == up_reckless.ethereal,      # re-upgrading is a no-op, same as numbers
 		"a rule_upgrade changes what a card DOES instead of bumping its numbers")
+
+
+## #86 duty 2: upgraded_copy()'s two hand-written field lists (card.gd) had
+## drifted from Card's real field set — grip_per_rhythm, pull_ally and
+## sac_ally_grip were never added when those fields were, so campfire-
+## sharpening grand_leap/grappling_arm/catapult either froze their actual
+## payoff (grip_per_rhythm) or did nothing but cheapen a card whose real
+## effect (pull_ally, sac_ally_grip) never scaled.
+func _test_card_upgrade_bumps_grip_per_rhythm_pull_and_sac_ally_grip() -> void:
+	var leap := Content.make_card("grand_leap")            # grip_per_rhythm 2
+	var up_leap := leap.upgraded_copy()
+	var arm := Content.make_card("grappling_arm")          # pull_ally 3, cost 1, nothing else
+	var up_arm := arm.upgraded_copy()
+	var cat := Content.make_card("catapult")                # sac_ally_grip 2, cost 1, nothing else
+	var up_cat := cat.upgraded_copy()
+	_expect(
+		up_leap.grip_per_rhythm == leap.grip_per_rhythm + 1
+		and up_arm.pull_ally == arm.pull_ally + 1 and up_arm.cost == arm.cost   # it scaled, so cost didn't drop
+		and up_cat.sac_ally_grip == cat.sac_ally_grip + 1 and up_cat.cost == cat.cost,
+		"upgrading bumps grip_per_rhythm, pull_ally and sac_ally_grip like every other scaling field")
+
+
+## Same drift, but cheapen_amount defaults to 1 on EVERY card (Card.from_dict),
+## not just ones that use it — so it cannot go in the generic +1 list the way
+## grip_per_rhythm etc. do, or upgrading would silently "bump" it (and skip
+## the cost-reduction fallback) on cards that never authored cheapen_pick at
+## all. It must only bump when the card actually uses it.
+func _test_card_upgrade_bumps_cheapen_amount_only_when_cheapen_pick_is_set() -> void:
+	var coal := Content.make_card("burn_coal")    # cheapen_pick true, cheapen_amount 1, cost 1
+	var up_coal := coal.upgraded_copy()
+	var meld := Content.make_card("meld")         # no cheapen_pick, no other scaling stat, cost 1
+	var up_meld := meld.upgraded_copy()
+	_expect(
+		coal.cheapen_pick and up_coal.cheapen_amount == coal.cheapen_amount + 1
+			and up_coal.cost == coal.cost                   # it scaled, so cost didn't drop
+		and not meld.cheapen_pick and up_meld.cheapen_amount == meld.cheapen_amount  # untouched
+			and up_meld.cost == meld.cost - 1,               # nothing to scale — still cheapens
+		"cheapen_amount only bumps for cards that actually use cheapen_pick")
 
 
 ## Backlog #67: a card can ask a question about the board — "above the sigil",
