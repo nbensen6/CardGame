@@ -133,6 +133,11 @@ func _init() -> void:
 	_test_ascension9_and_10_change_a_rule()
 	_test_coach_teaches_the_right_thing_first()
 	_test_tips_can_be_switched_off_without_losing_your_place()
+	_test_backlog86_coach_teaches_at_sigil_before_armored()
+	_test_backlog86_coach_teaches_timed_card_when_hand_holds_one()
+	_test_backlog86_coach_teaches_ally_stuck_only_when_the_ally_is_actually_grounded()
+	_test_backlog86_coach_falls_back_to_play_card_when_nothing_else_applies()
+	_test_backlog86_coach_hand_has_checks_the_named_flag_not_any_truthy_field()
 	_test_gold_and_shop()
 	_test_shop_buys_a_relic()
 	_test_shop_cannot_thin_below_min_deck()
@@ -2280,6 +2285,78 @@ func _test_coach_teaches_the_right_thing_first() -> void:
 		and String(urgent.get("id", "")) == "climbing"
 		and not_repeated and String(on_map.get("id", "")) == "map",
 		"the coach teaches the most urgent unseen rule, once each")
+
+
+## backlog #86 duty 3 (twenty-fifth pass) -- Coach.hint_for's combat branch has
+## six candidates in priority order (climbing, at_sigil, armored, timed,
+## ally_stuck, play_card) but only the top two -- climbing and armored -- had
+## ever been exercised. The other four, and the fallback, had zero coverage.
+func _test_backlog86_coach_teaches_at_sigil_before_armored() -> void:
+	Progress.reset_hints()
+	# reached the sigil AND still below it (armored would also fire) -- at_sigil
+	# is appended first, so it must win even though armored's condition is true too.
+	var ctx := {"phase": "combat", "boss": {"weak_point_height": 3},
+		"players": [{"foothold": 0, "secure": true, "reached": true},
+			{"foothold": 0, "secure": true, "reached": false}]}
+	var hint: Dictionary = Coach.hint_for(ctx, {"hand": []}, 0)
+	Progress.reset_hints()
+	_expect(String(hint.get("id", "")) == "at_sigil",
+		"reaching the sigil outranks the armored lesson even while both conditions hold")
+
+
+func _test_backlog86_coach_teaches_timed_card_when_hand_holds_one() -> void:
+	Progress.reset_hints()
+	# not secure=false (no climbing), not reached, weak point 0 so armored can't
+	# fire either -- the only candidate above the timed check is impossible here.
+	var ctx := {"phase": "combat", "boss": {"weak_point_height": 0},
+		"players": [{"foothold": 0, "secure": true, "reached": false},
+			{"foothold": 0, "secure": true, "reached": false}]}
+	var with_timed: Dictionary = Coach.hint_for(ctx, {"hand": [{"timed": true}]}, 0)
+	var without_timed: Dictionary = Coach.hint_for(ctx, {"hand": [{"timed": false}]}, 0)
+	Progress.reset_hints()
+	_expect(String(with_timed.get("id", "")) == "timed"
+		and String(without_timed.get("id", "")) == "play_card",
+		"the timed-card hint fires only when the hand actually holds a timed card")
+
+
+func _test_backlog86_coach_teaches_ally_stuck_only_when_the_ally_is_actually_grounded() -> void:
+	Progress.reset_hints()
+	# height > 0 with fh > 0 clears both climbing and armored, leaving the ally
+	# check as the only remaining candidate above the fallback.
+	var ctx := {"phase": "combat", "boss": {"weak_point_height": 3},
+		"players": [{"foothold": 2, "secure": true, "reached": false},
+			{"foothold": 0, "secure": true, "reached": false}]}
+	var ally_grounded: Dictionary = Coach.hint_for(ctx, {"hand": []}, 0)
+	# same shape, but the ally has climbed too -- nobody is stuck, so the hint
+	# must not fire and the coach falls through to the basic lesson instead.
+	var both_up_ctx := {"phase": "combat", "boss": {"weak_point_height": 3},
+		"players": [{"foothold": 2, "secure": true, "reached": false},
+			{"foothold": 1, "secure": true, "reached": false}]}
+	var ally_climbed: Dictionary = Coach.hint_for(both_up_ctx, {"hand": []}, 0)
+	Progress.reset_hints()
+	_expect(String(ally_grounded.get("id", "")) == "ally_stuck"
+		and String(ally_climbed.get("id", "")) == "play_card",
+		"the ally-stuck hint fires only while the ally is actually still on the ground, not whenever the player themself has climbed")
+
+
+func _test_backlog86_coach_falls_back_to_play_card_when_nothing_else_applies() -> void:
+	Progress.reset_hints()
+	var ctx := {"phase": "combat", "boss": {"weak_point_height": 0},
+		"players": [{"foothold": 3, "secure": true, "reached": false},
+			{"foothold": 3, "secure": true, "reached": false}]}
+	var hint: Dictionary = Coach.hint_for(ctx, {"hand": []}, 0)
+	Progress.reset_hints()
+	_expect(String(hint.get("id", "")) == "play_card",
+		"with no weak point, nobody stuck, no timed card and full grip, the coach falls back to the basic play-a-card lesson")
+
+
+func _test_backlog86_coach_hand_has_checks_the_named_flag_not_any_truthy_field() -> void:
+	_expect(Coach._hand_has([{"timed": false, "damage": 4}], "timed") == false,
+		"a card with an unrelated truthy field but timed=false must not count as a timed card")
+	_expect(Coach._hand_has([{"damage": 4}, {"timed": true}], "timed") == true,
+		"the flag can be on any card in the hand, not only the first")
+	_expect(Coach._hand_has([], "timed") == false,
+		"an empty hand has no timed card")
 
 
 func _test_gold_and_shop() -> void:

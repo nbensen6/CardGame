@@ -2547,6 +2547,37 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-03** — #86 duty 3 (verify a mechanic actually works). Last turn
+  (`6f8ed70`) was duty 2 and said "next turn is duty 3." Picked
+  `Coach.hint_for` (`game/ui/coach.gd`) — the onboarding-hint priority list
+  that decides which single lesson a player sees in combat (grip draining,
+  reached the sigil, armoured below the weak point, holding a timed card,
+  ally stuck on the ground, or the generic play-a-card fallback). It had
+  25 prior duty-3 passes' worth of company across the codebase but was
+  itself only exercised for its top two candidates (`climbing`, `armored`)
+  plus the `map` phase and the seen-once/tips-toggle behavior — the other
+  four branches (`at_sigil`, `timed`, `ally_stuck`, the `play_card`
+  fallback) and `_hand_has` had zero coverage. Added five tests: `at_sigil`
+  outranks `armored` even when both conditions hold (order-of-append
+  matters, not just each condition alone); `timed` fires only when the hand
+  actually holds a card with `timed: true`; `ally_stuck` fires only while
+  the ally is still genuinely grounded, not just because the player
+  themself climbed; the fallback to `play_card` when nothing else applies;
+  and `_hand_has` checks the named flag specifically rather than any
+  truthy field on the card.
+  Found and threw away a bad first attempt at the `ally_stuck` test: it
+  tried to assert the `players.size() == 2 and me in [0, 1]` guard by
+  comparing against a single-player `players` array, and that guard turns
+  out not to protect what it looks like it protects — with one player, the
+  `else {}` branch still reads a default `foothold` of 0 off the empty
+  dict, and 0 still satisfies "ally at or below 0," so `ally_stuck` fired
+  anyway. Whether that guard is dead code or a real gap depends on whether
+  `players` can ever legitimately have other than 2 entries in combat,
+  which is a duty-2 question, not this one — not chased further here.
+  Rewrote the test to compare two genuinely reachable two-player states
+  (ally grounded vs. ally climbed) instead. `run_tests.gd`: ALL TESTS
+  PASSED (fresh import, headless), 655 passing. Next `#86` turn is duty 1
+  (improve an asset).
 - **2026-09-03** — #86 duty 3 (verify a mechanic actually works). Bookkeeping
   note first: `7a2aae9` (GOLD_UV fix) landed after the last logged turn and
   reads as duty 2's shape exactly — found a real error via a failing
