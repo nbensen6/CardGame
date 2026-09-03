@@ -210,6 +210,7 @@ func _init() -> void:
 	_test_meld_carries_special_effects()
 	_test_meld_carries_light_and_deck_effects()
 	_test_meld_carries_power_effect()
+	_test_meld_carries_retain_and_ethereal()
 	_test_satchel_charge_detonates()
 	_test_rhythm_builds_and_scales()
 	_test_vine_weaver_poison_and_wound()
@@ -3092,6 +3093,30 @@ func _test_meld_carries_power_effect() -> void:
 	var paid_out: bool = ps.combatant.block == block_before + 3
 	_expect(carried and stayed_out_of_discard and paid_out,
 		"a meld carries a power card's type/effect/value, stays in play, and still pays out — even under a synthetic meld id Content.gd has never heard of")
+
+
+## backlog #86 duty 2: same "hand-copied field list drifts" shape as the two
+## meld bugs above, for retain/ethereal this time. end_turn() reads c.retain/
+## c.ethereal to decide discard vs. keep vs. exhaust (combat.gd ~1014) — with
+## neither field carried, a meld of a Retain card (Bunker Down) came out an
+## ordinary card that end_turn() silently discarded instead of keeping, and a
+## meld of an Ethereal card (Reckless Swing) discarded instead of exhausting.
+func _test_meld_carries_retain_and_ethereal() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	# Bunker Down (retain) + Reckless Swing (ethereal) — fused card must carry both.
+	ps.hand = [_meld_card(), Content.make_card("bunker_down"), Content.make_card("reckless_swing")]
+	ps.energy = 9
+	combat.play_card(0, 0, true, 1, 2)
+	var fused: Card = ps.hand[0]
+	var carried: bool = fused.retain and fused.ethereal
+	# Ethereal is checked first in end_turn() (Retain's opposite) — a card that's
+	# both must exhaust, not linger in hand or fall into the discard pile.
+	combat.end_turn(0)
+	var exhausted: bool = ps.exhaust_pile.has(fused) and not ps.discard_pile.has(fused) \
+		and not ps.hand.has(fused)
+	_expect(carried and exhausted,
+		"a meld keeps retain/ethereal off both source cards, and ethereal (checked first) wins the fused card at end of turn")
 
 
 func _test_satchel_charge_detonates() -> void:

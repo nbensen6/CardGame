@@ -2514,6 +2514,24 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-03** — #86 duty 2 (find an error and resolve it). Last turn
+  (`27d4fb1`) was duty 1, so this was duty 2. `_meld_cards()` in combat.gd has
+  now had its hand-copied field list caught missing fields three separate
+  times this rotation (power_effect/type, then light/scry/topdeck/etc., now
+  retain/ethereal) — same root cause each time: the dict literal was written
+  once and never revisited when Card grew new fields. This pass added
+  `retain`/`ethereal`. Concrete bug: meld Bunker Down (retain) with Reckless
+  Swing (ethereal) — both real reward-pool cards — and the fused card came out
+  with neither flag, so `end_turn()` silently discarded it instead of keeping
+  or exhausting it. `innate` was checked too and deliberately left out: it's
+  only read off cards still sitting in `draw_pile` at the opening draw
+  (`_draw_innate`), and a melded card is created straight into hand, so it can
+  never reach that path either way — added as a comment instead of a field so
+  the next pass doesn't re-diagnose it. Wrote the regression test first,
+  confirmed it failed against the unpatched dict (`FAIL` on
+  `_test_meld_carries_retain_and_ethereal`), then applied the fix and
+  confirmed green. `run_tests.gd`: ALL TESTS PASSED (fresh import, headless).
+  Next #86 turn is duty 3 (verify a mechanic).
 - **2026-09-03** — #86 duty 1 (improve an asset). Last turn (`a9f1864`) was
   duty 3, so this was duty 1. `intangible_icon.md` was the lowest-scoring
   never-repaired ICON at 34/50 (`riptide_eel_portrait`/`boulder_ram_portrait`

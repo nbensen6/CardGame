@@ -390,6 +390,17 @@ func _meld_cards(a: Card, b: Card) -> Card:
 		# effect that survives the one-of-a-kind pick.
 		"power_effect": a.power_effect if a.power_effect != "" else b.power_effect,
 		"power_value": a.power_value if a.power_effect != "" else b.power_value,
+		# backlog #86 duty 2 — same "hand-copied field list drifts" bug this dict
+		# has already been caught missing twice (power_effect/type, then
+		# light/scry/topdeck): retain/ethereal decide what end_turn() does with
+		# the FUSED card if it's still in hand — dropping them silently turned a
+		# meld of e.g. Bunker Down (retain) into an ordinary card that gets
+		# discarded instead of kept. `innate` is deliberately not carried: it
+		# only ever matters for a card sitting in draw_pile at the opening draw
+		# (_draw_innate), and a melded card is created straight into hand, so it
+		# can never reach that check either way.
+		"retain": a.retain or b.retain,
+		"ethereal": a.ethereal or b.ethereal,
 	})
 
 ## A card's cost for a hunter, after any permanent Burn Coal reductions.
