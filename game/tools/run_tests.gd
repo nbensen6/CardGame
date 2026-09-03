@@ -604,6 +604,15 @@ func _init() -> void:
 	_test_backlog86_intent_text_for_curse_is_no_longer_blank()
 	_test_backlog86_intent_text_for_curse_floors_the_card_count_at_one()
 	_test_backlog86_intent_text_for_unknown_kind_is_blank()
+	# backlog #86 duty 3: card_climb_for, lifted out of combat_3d._card_climb --
+	# the rule deciding slider vs. plain tap. Its own comment warns that reading
+	# card.grip (top level) instead of card.base.grip silently returns 0 for
+	# every card in the game, which once flattened the slider path with no error.
+	_test_backlog86_card_climb_for_reads_grip_from_base()
+	_test_backlog86_card_climb_for_defaults_to_zero_with_no_base()
+	_test_backlog86_card_climb_for_defaults_to_zero_with_no_grip_key()
+	_test_backlog86_card_climb_for_ignores_a_top_level_grip_key()
+	_test_backlog86_card_climb_for_threshold_matches_slider_cutoff()
 
 	print("")
 	if _failures == 0:
@@ -8194,6 +8203,39 @@ func _test_backlog86_intent_text_for_curse_floors_the_card_count_at_one() -> voi
 func _test_backlog86_intent_text_for_unknown_kind_is_blank() -> void:
 	var text := Combat3D.intent_text_for(_intent_boss("not_a_real_move", 5, 0), 0)
 	_expect(text == "", "a move type with no keyword entry produces no telegraph rather than a garbled one")
+
+
+## backlog #86 duty 3: card_climb_for, lifted out of combat_3d._card_climb, the
+## rule that decides whether a timed-hit card renders as a multi-note slider
+## (Combat3D.SLIDER_CLIMB and up) or a plain single tap. Its own doc comment
+## warns that reading card.grip directly returns 0 for every card in the game
+## silently -- the printed value lives under card.base.grip -- and that this
+## exact mistake once flattened the slider path for the whole game with no
+## error anywhere. These tests pin the correct path and guard the wrong one.
+func _test_backlog86_card_climb_for_reads_grip_from_base() -> void:
+	var climb := Combat3D.card_climb_for({"base": {"grip": 3}})
+	_expect(climb == 3, "card_climb_for reads the printed grip out of the base dict")
+
+
+func _test_backlog86_card_climb_for_defaults_to_zero_with_no_base() -> void:
+	var climb := Combat3D.card_climb_for({})
+	_expect(climb == 0, "a card with no base dict at all never crashes and never climbs")
+
+
+func _test_backlog86_card_climb_for_defaults_to_zero_with_no_grip_key() -> void:
+	var climb := Combat3D.card_climb_for({"base": {}})
+	_expect(climb == 0, "a base dict with no grip key defaults to 0, not to a slider")
+
+
+func _test_backlog86_card_climb_for_ignores_a_top_level_grip_key() -> void:
+	var climb := Combat3D.card_climb_for({"grip": 9, "base": {"grip": 0}})
+	_expect(climb == 0, "a stray top-level grip key must never leak through -- this is the exact silent-zero bug the function's own comment names")
+
+
+func _test_backlog86_card_climb_for_threshold_matches_slider_cutoff() -> void:
+	_expect(Combat3D.card_climb_for({"base": {"grip": 1}}) < Combat3D.SLIDER_CLIMB, "climb 1 stays a plain tap")
+	_expect(Combat3D.card_climb_for({"base": {"grip": 2}}) >= Combat3D.SLIDER_CLIMB, "climb 2 is the rule's own cutoff for a slider")
+	_expect(Combat3D.card_climb_for({"base": {"grip": 5}}) >= Combat3D.SLIDER_CLIMB, "a high climb stays a slider")
 
 
 func _expect(cond: bool, name: String) -> void:

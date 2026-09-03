@@ -2547,6 +2547,31 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-03** — #86 duty 3 (verify a mechanic actually works). Bookkeeping
+  note first: `7a2aae9` (GOLD_UV fix) landed after the last logged turn and
+  reads as duty 2's shape exactly — found a real error via a failing
+  regression test, fixed it — but its commit title carried no `(#86 duty N)`
+  tag and no Log line was appended, so the rotation record was silently
+  missing a turn. Treating it as duty 2 for rotation purposes (this run is
+  therefore duty 3) rather than re-doing it or guessing further; a future
+  turn should not re-chase GOLD_UV.
+  Picked `combat_3d._card_climb`, the rule deciding whether a timed-hit
+  card renders as a multi-note slider (`SLIDER_CLIMB` and up) or a plain
+  tap — real player-facing feel, and its own doc comment names a live
+  landmine: reading `card.grip` at the top level instead of
+  `card.base.grip` silently returns 0 for every card, which once flattened
+  the slider path for the whole game with no error anywhere. Zero coverage
+  in `run_tests.gd` (grepped for `SLIDER_CLIMB`, `card_climb`, `.grip` —
+  only unrelated `/core` fusion tests hit `.grip`). Already pure with no
+  `self` reads, so just promoted it to `static func card_climb_for`
+  (matching the `intent_text_for`/`route_between_rungs` pattern) and
+  updated its two call sites (`_hold_points`, `_on_card_tapped`) to match.
+  Five new tests: reads grip from `base`, defaults to 0 with no `base`,
+  defaults to 0 with `base` but no `grip` key, ignores a stray top-level
+  `grip` key (the exact bug the comment warns about), and the
+  `SLIDER_CLIMB` threshold itself (1 stays a tap, 2 and 5 both cross into
+  slider). `run_tests.gd`: ALL TESTS PASSED (fresh import, headless). Next
+  `#86` turn is duty 1 (improve an asset).
 - **2026-09-03** — #86 duty 1 (improve an asset — portraits/icons). Last
   turn (`adab9d8`) was duty 3, so this was duty 1. Scored the lowest-total
   portrait on record (`riptide_eel_portrait.md`, 29/50) and applied both

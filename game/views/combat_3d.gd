@@ -572,7 +572,7 @@ const SLIDER_CLIMB := 2
 ## `card.grip` returns 0 for every card in the game, silently, which is exactly
 ## how the slider path came out flat until the harness could not find a climb
 ## card either.
-func _card_climb(card: Dictionary) -> int:
+static func card_climb_for(card: Dictionary) -> int:
 	return int((card.get("base", {}) as Dictionary).get("grip", 0))
 
 
@@ -600,7 +600,7 @@ func _hold_points(card: Dictionary, hits: int, from_screen: Vector2) -> PackedVe
 	if _cam == null:
 		return out
 	var count := maxi(hits, NOTE_MIN)
-	if _card_climb(card) >= SLIDER_CLIMB:
+	if card_climb_for(card) >= SLIDER_CLIMB:
 		count = maxi(count, 3)      # a slider needs a path to travel along
 	# One depth for the whole pattern, so the spacing stays in pixels rather than
 	# stretching with perspective.
@@ -2967,7 +2967,7 @@ func _on_card_tapped(card: Dictionary, cv: CardView) -> void:
 			# happens where you are looking instead of in a strip under the cards.
 			_circle_index = index
 			var anchor := cv.get_global_rect().get_center() - Vector2(0.0, cv.size.y * 0.62)
-			var climb := _card_climb(card)
+			var climb := card_climb_for(card)
 			_circle.begin(bonus, _cam, _hold_points(card, hits, anchor),
 				climb >= SLIDER_CLIMB)
 			return
