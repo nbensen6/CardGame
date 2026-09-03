@@ -2514,6 +2514,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-03** — #86 duty 3 (verify a mechanic actually works). Last turn
+  (`d8e265a`) was duty 2, so this was duty 3. Picked `combat_3d._intent_text`
+  — the boss telegraph a player reads on the intent tag to decide how to
+  react — which had zero coverage despite its own doc comment promising
+  "every move now prints the real figure." Lifted the body into a static
+  `intent_text_for(boss, height_gap)`, following the same pattern
+  `height_gap_between`/`foothold_anchor` already used, so it is callable
+  headless with a bare Dictionary and no scene. Writing the test against
+  every move type `bosses.json` actually uses (grepped, not assumed) found
+  the promise was false for two of them: `"curse"` and `"frail"` (both
+  backlog #69) both have real `keywords.json` entries and are both resolved
+  by `combat.gd`, but neither had a branch in `_intent_text`'s `match` —
+  both fell through every case to the blank `return ""` at the bottom, so a
+  boss about to curse or weaken a hunter told the player nothing was
+  coming. Not the same issue the twenty-first/duty-2 turn already checked
+  and cleared (that was `curse` skipping `try_block_debuff()` in
+  `combat.gd`'s resolution, a deliberate design call per #69's own log,
+  and untouched here) — this is a display-layer omission one level up, in
+  the view that reads the resolved move and describes it before it lands.
+  Added a `"frail"` branch (▼, matching `enrage`'s ▲) and a `"curse"`
+  branch (☠) that floors its count at 1, mirroring `combat.gd`'s own
+  `maxi(value, 1)` so the telegraph never promises zero cards and then
+  hands over one. Ten new tests in `run_tests.gd`, including both new
+  branches and the strength/height-gap arithmetic the existing branches
+  already relied on. `run_tests.gd`: ALL TESTS PASSED (fresh import,
+  headless). Next #86 turn is duty 1 (improve an asset).
 - **2026-09-03** — #86 duty 2 (find an error and resolve it). Last turn
   (`633ad00`) was duty 1, so this was duty 2. Used an Explore agent first;
   it returned two candidates, and both turned out to be false leads on

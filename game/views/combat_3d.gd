@@ -1040,7 +1040,17 @@ func _position_intent_tag() -> void:
 ## "+" was the whole explanation. A telegraph that hides its own arithmetic is
 ## not a telegraph — so every move now prints the real figure and, where the
 ## number depends on where you are standing, says what to do about it.
-func _intent_text(boss: Dictionary, s: Dictionary) -> String:
+##
+## backlog #86 duty 3 (twenty-fourth pass): lifted to a static, testable twin —
+## this instance method's only non-pure input was _height_gap(s), so the whole
+## body moves and the instance just supplies that one number. Writing the test
+## found the match statement silently dropping two move types combat.gd
+## actually resolves — "curse" (backlog #69) and "frail" (backlog #69) both
+## have keyword entries and both fell through every branch to the blank
+## `return ""` at the bottom, so a boss about to curse or weaken a hunter
+## telegraphed nothing at all. Fixed in the same commit: a red test is not
+## something this rotation commits.
+static func intent_text_for(boss: Dictionary, height_gap: int) -> String:
 	var move: Dictionary = boss.get("intent", {})
 	var v := int(move.get("value", 0)) + int(boss.get("strength", 0))
 	var kind := String(move.get("type", ""))
@@ -1060,12 +1070,22 @@ func _intent_text(boss: Dictionary, s: Dictionary) -> String:
 		"rift":
 			# The real total, gap included, the same way a card face shows what it
 			# will actually do rather than the formula behind it.
-			return "⚔ %s %d" % [term, v + _height_gap(s) * Combat.RIFT_PER_GAP]
+			return "⚔ %s %d" % [term, v + height_gap * Combat.RIFT_PER_GAP]
 		"block": return "◆ %s %d" % [term, int(move.get("value", 0))]
 		"enrage": return "▲ %s %d" % [term, int(move.get("value", 0))]
 		"regen": return "✚ %s %d" % [term, int(move.get("value", 0))]
 		"shift_sigil": return "✦ %s — Height %d" % [term, int(move.get("value", 0))]
+		"frail": return "▼ %s %d" % [term, int(move.get("value", 0))]
+		"curse":
+			# combat.gd's own resolution floors the card count at 1 even when
+			# `value` is 0 — match that so the telegraph never promises zero
+			# cards and then hands over one.
+			return "☠ %s %d" % [term, maxi(int(move.get("value", 0)), 1)]
 	return ""
+
+
+func _intent_text(boss: Dictionary, s: Dictionary) -> String:
+	return intent_text_for(boss, _height_gap(s))
 
 
 ## Height between the two hunters — what a rift is priced on.

@@ -589,6 +589,21 @@ func _init() -> void:
 	_test_backlog86_row_in_act_is_true_mid_act()
 	_test_backlog86_row_in_act_is_false_standing_on_the_previous_acts_titan()
 	_test_backlog86_row_in_act_is_true_on_the_first_row_of_a_new_act()
+	# backlog #86 duty 3 (twenty-fourth pass): intent_text_for, lifted out of
+	# combat_3d._intent_text, the boss telegraph a player reads to decide how
+	# to react. Writing this test found two move types combat.gd actually
+	# resolves — curse and frail — silently missing from the match statement,
+	# so the telegraph went blank for them; fixed in the same commit.
+	_test_backlog86_intent_text_for_attack_adds_boss_strength()
+	_test_backlog86_intent_text_for_rift_adds_the_height_gap_times_two()
+	_test_backlog86_intent_text_for_block_ignores_boss_strength()
+	_test_backlog86_intent_text_for_enrage_ignores_boss_strength()
+	_test_backlog86_intent_text_for_regen_ignores_boss_strength()
+	_test_backlog86_intent_text_for_shift_sigil_names_the_destination_height()
+	_test_backlog86_intent_text_for_frail_is_no_longer_blank()
+	_test_backlog86_intent_text_for_curse_is_no_longer_blank()
+	_test_backlog86_intent_text_for_curse_floors_the_card_count_at_one()
+	_test_backlog86_intent_text_for_unknown_kind_is_blank()
 
 	print("")
 	if _failures == 0:
@@ -8097,6 +8112,68 @@ func _test_backlog86_row_in_act_is_false_standing_on_the_previous_acts_titan() -
 func _test_backlog86_row_in_act_is_true_on_the_first_row_of_a_new_act() -> void:
 	var rows: Array = [_act_row(0), _act_row(0), _act_row(1)]
 	_expect(Overworld3D.row_in_act(rows, 2, 1), "the first row of the new act belongs to the act now drawn")
+
+
+## backlog #86 duty 3 (twenty-fourth pass) -- combat_3d.intent_text_for is the
+## boss telegraph a player reads to decide how to react (the doc comment above
+## it promises "every move now prints the real figure"). Writing this test
+## found that promise was false for two move types combat.gd actually
+## resolves -- "curse" and "frail" (both backlog #69) -- which had keyword
+## entries but no match branch, so they fell through to the blank string at
+## the bottom. Both are fixed in the same commit the test was written in.
+func _intent_boss(kind: String, value: int, strength: int = 0) -> Dictionary:
+	return {"intent": {"type": kind, "value": value}, "strength": strength}
+
+
+func _test_backlog86_intent_text_for_attack_adds_boss_strength() -> void:
+	var text := Combat3D.intent_text_for(_intent_boss("attack", 5, 3), 0)
+	_expect(text == "⚔ [u]Attack[/u] 8", "attack's printed number is the move's value plus the boss's strength")
+
+
+func _test_backlog86_intent_text_for_rift_adds_the_height_gap_times_two() -> void:
+	var text := Combat3D.intent_text_for(_intent_boss("rift", 4, 0), 3)
+	var want: int = 4 + 3 * Combat.RIFT_PER_GAP
+	_expect(text == "⚔ [u]Wrench apart[/u] %d" % want, "rift prices in height_gap * RIFT_PER_GAP the same way combat.gd's own resolution does")
+
+
+func _test_backlog86_intent_text_for_block_ignores_boss_strength() -> void:
+	var text := Combat3D.intent_text_for(_intent_boss("block", 6, 99), 0)
+	_expect(text == "◆ [u]Defend[/u] 6", "block's printed number is the move's own value only -- strength does not inflate a defensive move")
+
+
+func _test_backlog86_intent_text_for_enrage_ignores_boss_strength() -> void:
+	var text := Combat3D.intent_text_for(_intent_boss("enrage", 2, 99), 0)
+	_expect(text == "▲ [u]Enrage[/u] 2", "enrage's printed number is the move's own value only")
+
+
+func _test_backlog86_intent_text_for_regen_ignores_boss_strength() -> void:
+	var text := Combat3D.intent_text_for(_intent_boss("regen", 10, 99), 0)
+	_expect(text == "✚ [u]Recover[/u] 10", "regen's printed number is the move's own value only")
+
+
+func _test_backlog86_intent_text_for_shift_sigil_names_the_destination_height() -> void:
+	var text := Combat3D.intent_text_for(_intent_boss("shift_sigil", 4, 99), 0)
+	_expect(text == "✦ [u]Shift its sigil[/u] — Height 4", "shift_sigil reports the destination Height, not a damage number")
+
+
+func _test_backlog86_intent_text_for_frail_is_no_longer_blank() -> void:
+	var text := Combat3D.intent_text_for(_intent_boss("frail", 1, 0), 0)
+	_expect(text == "▼ [u]Frail[/u] 1", "frail is a real boss move combat.gd resolves and must telegraph like every other move, not fall through to a blank string")
+
+
+func _test_backlog86_intent_text_for_curse_is_no_longer_blank() -> void:
+	var text := Combat3D.intent_text_for(_intent_boss("curse", 2, 0), 0)
+	_expect(text == "☠ [u]Curse[/u] 2", "curse is a real boss move combat.gd resolves and must telegraph like every other move, not fall through to a blank string")
+
+
+func _test_backlog86_intent_text_for_curse_floors_the_card_count_at_one() -> void:
+	var text := Combat3D.intent_text_for(_intent_boss("curse", 0, 0), 0)
+	_expect(text == "☠ [u]Curse[/u] 1", "combat.gd's own curse resolution floors the card count at 1 even when value is 0 -- the telegraph must promise the same number it delivers")
+
+
+func _test_backlog86_intent_text_for_unknown_kind_is_blank() -> void:
+	var text := Combat3D.intent_text_for(_intent_boss("not_a_real_move", 5, 0), 0)
+	_expect(text == "", "a move type with no keyword entry produces no telegraph rather than a garbled one")
 
 
 func _expect(cond: bool, name: String) -> void:
