@@ -211,6 +211,7 @@ func _init() -> void:
 	_test_meld_carries_light_and_deck_effects()
 	_test_meld_carries_power_effect()
 	_test_meld_carries_retain_and_ethereal()
+	_test_meld_carries_enchant()
 	_test_satchel_charge_detonates()
 	_test_rhythm_builds_and_scales()
 	_test_vine_weaver_poison_and_wound()
@@ -3154,6 +3155,27 @@ func _test_meld_carries_retain_and_ethereal() -> void:
 		and not ps.hand.has(fused)
 	_expect(carried and exhausted,
 		"a meld keeps retain/ethereal off both source cards, and ethereal (checked first) wins the fused card at end of turn")
+
+
+## backlog #86 duty 2: _meld_cards' dict never carried "enchant" at all — a
+## fourth instance of the same "hand-copied field list drifts from Card's real
+## fields" bug this dict has already been caught missing three times (type,
+## light/scry, retain/ethereal). enchant is a single slot (enchanted_copy()
+## replaces rather than stacks), so a meld involving an enchanted card should
+## keep that enchant, and effective_cost() (combat.gd ~419) should still apply
+## it — with the field dropped, e.g. a "Cheap" (cost_cut) card silently lost
+## its discount the instant it went into a meld.
+func _test_meld_carries_enchant() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var cheap_slash := _slash().enchanted_copy("cheap")  # "Cheap": costs 1 less (backlog #50)
+	ps.hand = [_meld_card(), cheap_slash, _defend()]
+	ps.energy = 9
+	combat.play_card(0, 0, true, 1, 2)
+	var fused: Card = ps.hand[0]
+	var cost_without_enchant := maxi(0, cheap_slash.cost + _defend().cost - 1)
+	_expect(fused.enchant == "cheap" and combat.effective_cost(0, fused) == cost_without_enchant - 1,
+		"a meld carries an attached enchant (single slot, keep A's if set) — dropping it silently stripped e.g. Cheap's cost cut off the fused card")
 
 
 func _test_satchel_charge_detonates() -> void:

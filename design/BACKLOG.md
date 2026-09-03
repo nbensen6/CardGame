@@ -7641,3 +7641,41 @@ Newest first. One line per finished item: what, and anything surprising.
   not investigated further this pass. `run_tests.gd`: ALL TESTS PASSED
   (fresh import, headless). Next `#86` turn is duty 2 (find an error and
   resolve it).
+- **2026-09-03** — #86 duty 2 (find an error and resolve it). Last turn
+  (`67c6bb5`) was duty 1, so this was duty 2. Read `combat.gd`'s `_meld_cards`
+  end to end against `Card`'s real field list (`card.gd`) — this exact dict
+  has already been caught three separate times for the same "hand-copied
+  field list drifts from Card's real fields" defect (type/power_effect,
+  light/scry/topdeck, retain/ethereal). Found a fourth instance: `enchant`
+  was never in the dict at all, so `Card.from_dict` silently defaulted it to
+  `""`. Traced the failure: `effective_cost()` (combat.gd ~419) and several
+  branches in `resolve_card()` read `card.enchant_data()` to apply an
+  attached enchant's effect (e.g. "Cheap" cuts cost by 1, "Sure" always lands
+  a timed hit) — melding an enchanted card into anything silently stripped
+  that enchant off the fused card, with no error and no test catching it,
+  same blind spot the three prior fixes closed for other fields. Confirmed
+  reachable: `sac_card`/`cheapen_card` for a meld come straight from the
+  player's hand (`combat.gd` ~780-786), and any hand card can carry an
+  enchant via `Card.enchanted_copy()`; currently `enchanted_copy()` is only
+  called from test code (backlog #3, granting enchants through a real
+  reward/shop path, is still open and `needs a screen`), so this bug is real
+  but dormant until #3 lands — worth fixing now rather than after, since it
+  would otherwise ship silently broken the day #3 does. Wrote
+  `_test_meld_carries_enchant` first (melds a "Cheap"-enchanted Slash into
+  Brace, asserts the fused card's `enchant` and that `effective_cost()`
+  still applies the cut), watched it fail against the unfixed dict
+  (confirmed by stashing the `combat.gd` change and re-running), then added
+  `"enchant": a.enchant if a.enchant != "" else b.enchant` to the dict,
+  following the same "single slot, keep A's if set else B's" idiom the dict
+  already uses for `prepare`/`create`/`topdeck`. Also looked at, not fixed:
+  `_meld_cards` still drops `status`/`rarity`/`upgraded`, but those are
+  cosmetic/offer-weighting fields with no combat-logic reader, not the same
+  class of bug. Also found a lower-priority sibling while reading
+  `_enemy_turn()`: the Titan's own bleed-from-wound tick doesn't fire
+  `MOMENT_DAMAGE_TAKEN` the way every other boss-damage path does — currently
+  inert (nothing subscribes to that moment yet), logged here rather than
+  queued since it isn't a queue-worthy item on its own, just a note for
+  whoever wires a "boss takes damage" relic later. `run_tests.gd`: ALL TESTS
+  PASSED (fresh import, headless; confirmed the new test both fails without
+  the fix and passes with it). Next `#86` turn is duty 3 (verify a mechanic
+  actually works).

@@ -401,6 +401,14 @@ func _meld_cards(a: Card, b: Card) -> Card:
 		# can never reach that check either way.
 		"retain": a.retain or b.retain,
 		"ethereal": a.ethereal or b.ethereal,
+		# backlog #86 duty 2 — same "hand-copied field list drifts" bug this dict
+		# has been caught missing three times already (type, light/scry, retain/
+		# ethereal): enchant is a single slot (Card.enchanted_copy() replaces
+		# rather than stacks), so it follows the same "keep A's if set, else B's"
+		# idiom as prepare/create/topdeck above rather than being summed.
+		# Dropping it silently stripped e.g. "Cheap" (cost_cut) or "Sure"
+		# (auto_nail) off an enchanted card the moment it went into a meld.
+		"enchant": a.enchant if a.enchant != "" else b.enchant,
 	})
 
 ## A card's cost for a hunter, after any permanent Burn Coal reductions.
