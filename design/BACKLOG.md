@@ -2514,6 +2514,30 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-03** — #86 duty 3 (verify a mechanic actually works), twenty-fourth
+  turn of the rotation. `CardView._word_index`, `_is_word_char`, `_kw` and
+  `_markup` are the keyword-highlight machinery behind `face_text`'s rich
+  mode — the gold underline that is the actual tap target for a keyword's
+  explanation (CLAUDE.md's no-hover-only-info rule leans on this: there is no
+  other way to reach it). All four are static and pure, and every existing
+  test either ran `rich=false` or, in the one `rich=true` case, a single
+  keyword appearing exactly once with no markup already in the string —
+  the word-boundary check, the "skip a match already sitting inside an open
+  BBCode tag" rule, and the "mark only the first occurrence of a repeated
+  keyword" rule (the doc comment names it deliberate but nothing exercised
+  it) had never been called directly. Added 9 tests: `_word_index` finding a
+  bounded word, rejecting a substring inside a longer word ("climb" inside
+  "Unclimbable"), and skipping a tag-embedded occurrence for a later plain
+  one; `_is_word_char` treating digits and punctuation as boundaries, not
+  word characters; `_kw` staying plain both when its id isn't among the
+  card's own keywords (rich mode) and when rich mode is off entirely; and
+  `_markup` leaving text untouched with no rich/no keywords, marking only the
+  first of two same-keyword occurrences, and marking two different keywords
+  independently. No production code changed — this duty proves an existing
+  mechanic, it doesn't fix one. `run_tests.gd`: ALL TESTS PASSED (fresh
+  import, headless; 9 new PASS lines, no FAILs). Rotation stays 1→2→3: last
+  turn was duty 2 (twenty-third turn), so this is duty 3; next is duty 1.
+
 - **2026-09-03** — #86 duty 2 (find an error and resolve it), twenty-third
   turn of the rotation. Used an Explore agent to sweep `game/core` and the
   view layer for the two named bug families; it returned `Combat._meld_cards`

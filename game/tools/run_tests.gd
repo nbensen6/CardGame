@@ -546,6 +546,23 @@ func _init() -> void:
 	_test_backlog86_sentences_drops_the_empty_fragment_after_a_trailing_period()
 	_test_backlog86_shape_of_strips_digits_so_two_values_of_the_same_line_compare_equal()
 	_test_backlog86_shape_of_leaves_a_line_with_no_digits_untouched()
+	# backlog #86 duty 3 (twenty-first pass): _word_index, _is_word_char, _kw
+	# and _markup are the keyword-highlight machinery under face_text's rich
+	# mode -- the gold underline that makes a keyword tappable (CLAUDE.md's
+	# "no hover-only info" rule: this IS the tap target). Every existing test
+	# calls face_text with rich=false except one, which only exercises the
+	# single-word, single-occurrence, no-tag happy path. The boundary check,
+	# the BBCode-tag skip, the first-occurrence-only rule, and _kw's own
+	# id-mismatch fallback had never been called directly.
+	_test_backlog86_word_index_finds_a_whole_word_match()
+	_test_backlog86_word_index_ignores_a_substring_inside_a_longer_word()
+	_test_backlog86_word_index_skips_a_match_already_inside_markup()
+	_test_backlog86_is_word_char_treats_digits_and_punctuation_as_boundaries()
+	_test_backlog86_kw_stays_plain_when_its_id_is_not_among_the_cards_keywords()
+	_test_backlog86_kw_returns_plain_word_outside_rich_mode_even_with_a_matching_id()
+	_test_backlog86_markup_leaves_text_untouched_without_rich_or_without_keywords()
+	_test_backlog86_markup_marks_only_the_first_occurrence_of_a_repeated_keyword()
+	_test_backlog86_markup_marks_each_of_two_different_keywords_once()
 
 	print("")
 	if _failures == 0:
@@ -7798,6 +7815,86 @@ func _test_backlog86_shape_of_strips_digits_so_two_values_of_the_same_line_compa
 func _test_backlog86_shape_of_leaves_a_line_with_no_digits_untouched() -> void:
 	_expect(CardView._shape_of("Draw a card.") == "Draw a card.",
 		"a sentence with no digits to strip is returned as-is")
+
+
+## backlog #86 duty 3 (twenty-first pass) -- _word_index, _is_word_char, _kw
+## and _markup are the keyword-highlight machinery behind face_text's rich
+## mode: the gold underline is the tap target a player uses to ask "what does
+## this word mean" (CLAUDE.md's no-hover-only-info rule -- there is no other
+## way to reach a keyword's explanation). All four are static and pure. Every
+## test above this either runs rich=false or, in the one rich=true case, a
+## single keyword appearing exactly once with no markup already in the
+## string -- the boundary check, the "don't re-tag something already inside
+## a BBCode tag" rule, and the "mark only the first occurrence" rule were
+## never exercised.
+func _test_backlog86_word_index_finds_a_whole_word_match() -> void:
+	var at: int = CardView._word_index("Climb 2 to gain Block.", "Climb")
+	_expect(at == 0, "a word bounded by the string start and a space is found at its own position")
+
+
+func _test_backlog86_word_index_ignores_a_substring_inside_a_longer_word() -> void:
+	# "climb" is a real substring of "Unclimbable" but not a real word in it --
+	# the word-boundary check must reject it rather than marking half a word.
+	var at: int = CardView._word_index("Unclimbable terrain.", "climb")
+	_expect(at == -1, "a substring embedded inside a longer word is not a match, even though String.find would happily locate it")
+
+
+func _test_backlog86_word_index_skips_a_match_already_inside_markup() -> void:
+	# The first "Block" sits inside an open tag's own attribute text (between
+	# an unmatched "[" and the word); the second sits in plain text after the
+	# tag closes. Only the second is a legal place to splice in a new tag.
+	var at: int = CardView._word_index("[x:Block]Block[/x]", "Block")
+	_expect(at == 9, "a word that reads as text but sits inside an unclosed BBCode tag is skipped in favour of the next, genuinely plain occurrence")
+
+
+func _test_backlog86_is_word_char_treats_digits_and_punctuation_as_boundaries() -> void:
+	_expect(CardView._is_word_char("a"), "a letter is a word character")
+	_expect(CardView._is_word_char("_"), "underscore counts as a word character even though upper/lower are identical for it")
+	_expect(not CardView._is_word_char("3"), "a digit has no case distinction, so it reads as a boundary, not a word character -- '3Block' still bounds 'Block'")
+	_expect(not CardView._is_word_char("."), "punctuation is a boundary")
+	_expect(not CardView._is_word_char(""), "past the end of the string counts as a boundary too")
+
+
+func _test_backlog86_kw_stays_plain_when_its_id_is_not_among_the_cards_keywords() -> void:
+	# face_text calls _kw for every structured effect it prints, whether or not
+	# that effect's keyword id actually made it into data["keywords"] -- a
+	# mismatch there (the two-copies-of-one-truth bug class duty 3 hunts)
+	# would otherwise show live Block text that isn't tappable.
+	var out: String = CardView._kw("Block", "player_block", [{"id": "poison"}], true)
+	_expect(out == "Block", "rich mode still prints a plain word when the id it was asked to highlight isn't in this card's own keyword list")
+
+
+func _test_backlog86_kw_returns_plain_word_outside_rich_mode_even_with_a_matching_id() -> void:
+	var out: String = CardView._kw("Block", "player_block", [{"id": "player_block"}], false)
+	_expect(out == "Block", "rich=false always prints the bare word, even when the id matches -- colour and the tap target are a RichTextLabel-only concern")
+
+
+func _test_backlog86_markup_leaves_text_untouched_without_rich_or_without_keywords() -> void:
+	_expect(CardView._markup("Climb 2.", [{"id": "height"}], false) == "Climb 2.",
+		"rich=false leaves the text untouched even though a matching keyword is present")
+	_expect(CardView._markup("Climb 2.", [], true) == "Climb 2.",
+		"rich mode with no keywords on the card leaves the text untouched")
+	_expect(CardView._markup("", [{"id": "height"}], true) == "",
+		"an empty line stays empty rather than crashing on the first word search")
+
+
+func _test_backlog86_markup_marks_only_the_first_occurrence_of_a_repeated_keyword() -> void:
+	# _markup's inner loop breaks after the first hit for each keyword id --
+	# deliberate, per the comment above it ("this keyword is marked; move to
+	# the next"), but never actually checked against text with the word twice.
+	var out: String = CardView._markup("Climb 2. Climb 3.", [{"id": "height"}], true)
+	var wrapped: String = "[url=kw:height][u][color=#%s]Climb[/color][/u][/url]" % CardView.KEYWORD_COLOR
+	_expect(out == "%s 2. Climb 3." % wrapped,
+		"only the first 'Climb' in the line becomes a tap target; a second, later use of the same word is left as plain text")
+
+
+func _test_backlog86_markup_marks_each_of_two_different_keywords_once() -> void:
+	var out: String = CardView._markup("Climb 2. Gain 4 Block.",
+		[{"id": "height"}, {"id": "player_block"}], true)
+	var climb: String = "[url=kw:height][u][color=#%s]Climb[/color][/u][/url]" % CardView.KEYWORD_COLOR
+	var block: String = "[url=kw:player_block][u][color=#%s]Block[/color][/u][/url]" % CardView.KEYWORD_COLOR
+	_expect(out == "%s 2. Gain 4 %s." % [climb, block],
+		"two different keywords on one line each get their own tag, and marking the second doesn't disturb the first")
 
 
 func _expect(cond: bool, name: String) -> void:
