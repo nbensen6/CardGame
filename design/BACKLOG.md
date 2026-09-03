@@ -2514,6 +2514,25 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-03** — #86 duty 3 (verify a mechanic), twenty-second turn of the
+  rotation. The backlog entry's own pointer (`combat_3d._route_between`) was
+  already covered by an earlier duty-3 turn, so read the view layer for what
+  was still untested instead. Found `overworld_3d._act_ahead` — the function
+  that picks which act's region the hex map draws, i.e. the exact bug Nick
+  hit 2026-08-16 (a Titan's node is the LAST row of its act, so "the region
+  you stand in" and "the region you're about to walk into" disagree there;
+  the old code used the former and act one had nowhere to go once you
+  reached its Titan) — with zero test coverage, including of that bug. It
+  was already pure (reads only its three arguments, no instance state), so
+  made it `static` — no call-site changes needed, GDScript resolves a
+  static call from an instance method the same way — and added five tests
+  in `run_tests.gd`: no rows at all, before any step, mid-act looking ahead,
+  standing on the map's last row with no next row to read, and the actual
+  bug scenario (standing on an act's Titan with a next act's row already in
+  the array). This is a behavior-preserving extraction, not a fix — nothing
+  is currently broken — so there's no pre-change failure to show; the new
+  coverage is the point. `run_tests.gd`: ALL TESTS PASSED. Next #86 turn is
+  duty 1 (improve an asset).
 - **2026-09-03** — #86 duty 1 (improve an asset), twenty-fifth turn of the
   rotation. `burn_icon.md` was the lowest-scoring never-repaired icon at
   33/50 (score-only pass 1, no fixer pass yet); its two diagnosed lines —

@@ -565,6 +565,16 @@ func _init() -> void:
 	_test_backlog86_markup_leaves_text_untouched_without_rich_or_without_keywords()
 	_test_backlog86_markup_marks_only_the_first_occurrence_of_a_repeated_keyword()
 	_test_backlog86_markup_marks_each_of_two_different_keywords_once()
+	# backlog #86 duty 3 (twenty-second pass): overworld_3d._act_ahead, the map
+	# region picker, had zero coverage — including of the exact bug it fixed
+	# (Nick, 2026-08-16): a Titan's node is the last row of ITS act, so "the
+	# region you stand in" and "the region you're about to walk into" disagree
+	# there, and the old code drew the region you'd just finished.
+	_test_backlog86_act_ahead_is_zero_with_no_rows()
+	_test_backlog86_act_ahead_before_any_step_uses_the_first_row()
+	_test_backlog86_act_ahead_looks_at_the_next_row_mid_act()
+	_test_backlog86_act_ahead_on_the_titan_uses_the_current_row_not_a_next_one()
+	_test_backlog86_act_ahead_crosses_into_the_next_act_stepping_off_a_titan()
 
 	print("")
 	if _failures == 0:
@@ -7935,6 +7945,53 @@ func _test_backlog86_markup_marks_each_of_two_different_keywords_once() -> void:
 	var block: String = "[url=kw:player_block][u][color=#%s]Block[/color][/u][/url]" % CardView.KEYWORD_COLOR
 	_expect(out == "%s 2. Gain 4 %s." % [climb, block],
 		"two different keywords on one line each get their own tag, and marking the second doesn't disturb the first")
+
+
+## backlog #86 duty 3 (twenty-second pass) -- overworld_3d._act_ahead decides
+## which act's region is drawn on the hex map: the one containing the row the
+## party may step to NEXT, not the one they stand on. Those are the same row
+## everywhere except a Titan's node, which is the LAST row of its act -- and
+## that mismatch is the exact bug Nick hit 2026-08-16 (act one had nowhere to
+## go once you reached its Titan, because the region drawn was the one just
+## finished). Made static above so this is provable with no map loaded.
+const Overworld3D := preload("res://views/overworld_3d.gd")
+
+
+func _act_row(act: int) -> Array:
+	return [{"act": act}]
+
+
+func _test_backlog86_act_ahead_is_zero_with_no_rows() -> void:
+	_expect(Overworld3D._act_ahead([], -1, 0) == 0, "no map rows at all falls back to act 0 rather than indexing an empty array")
+
+
+func _test_backlog86_act_ahead_before_any_step_uses_the_first_row() -> void:
+	var rows: Array = [_act_row(0), _act_row(0)]
+	_expect(Overworld3D._act_ahead(rows, -1, 0) == 0, "cur_row -1 (before the first step) reads the act off row 0, not off a negative index")
+
+
+func _test_backlog86_act_ahead_looks_at_the_next_row_mid_act() -> void:
+	# Standing on row 1 of act 0 with more of act 0 still ahead: the region on
+	# screen should already be act 0, read from the row about to be entered.
+	var rows: Array = [_act_row(0), _act_row(0), _act_row(0)]
+	_expect(Overworld3D._act_ahead(rows, 1, 0) == 0, "mid-act, the act ahead is read from cur_row + 1, not the row currently stood on")
+
+
+func _test_backlog86_act_ahead_on_the_titan_uses_the_current_row_not_a_next_one() -> void:
+	# The Titan is the final row overall -- there is no cur_row + 1 to read,
+	# so this must fall back to the row (and column) actually stood on rather
+	# than indexing past the end of the array.
+	var rows: Array = [_act_row(0), _act_row(0)]
+	_expect(Overworld3D._act_ahead(rows, 1, 0) == 0, "on the last row of the map, the act ahead comes from cur_row/cur_col, since there is no next row to look at")
+
+
+func _test_backlog86_act_ahead_crosses_into_the_next_act_stepping_off_a_titan() -> void:
+	# The bug itself: row 1 is act 0's Titan (last row of act 0), row 2 opens
+	# act 1. Standing ON the Titan (row 1), the act ahead must already be 1 --
+	# the next act's region -- or a player who just cleared act 1's Titan has
+	# nothing drawn to walk onto.
+	var rows: Array = [_act_row(0), _act_row(0), _act_row(1)]
+	_expect(Overworld3D._act_ahead(rows, 1, 0) == 1, "standing on the last row of an act, the act ahead is the NEXT act's, not the one just finished")
 
 
 func _expect(cond: bool, name: String) -> void:

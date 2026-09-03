@@ -179,7 +179,13 @@ func _refresh() -> void:
 
 ## The act whose region should be on screen: the one containing the row you may
 ## step to next. On the final Titan there is no next row, so it stays where it is.
-func _act_ahead(rows: Array, cur_row: int, cur_col: int) -> int:
+##
+## Static (no instance state read) so run_tests.gd can prove the exact bug this
+## fixed (Nick, 2026-08-16): a Titan's node is the LAST row of its act, so
+## "the region you stand in" and "the region you're about to walk into" differ
+## there, and using the former left act one with nowhere drawn to go once you
+## reached its Titan.
+static func _act_ahead(rows: Array, cur_row: int, cur_col: int) -> int:
 	if rows.is_empty():
 		return 0
 	if cur_row < 0:
