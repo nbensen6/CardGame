@@ -139,6 +139,7 @@ func _init() -> void:
 	_test_backlog86_coach_falls_back_to_play_card_when_nothing_else_applies()
 	_test_backlog86_coach_hand_has_checks_the_named_flag_not_any_truthy_field()
 	_test_gold_and_shop()
+	_test_shop_removal_charges_the_price_it_showed()
 	_test_shop_buys_a_relic()
 	_test_shop_cannot_thin_below_min_deck()
 	_test_status_card_removable_at_shop()
@@ -2407,6 +2408,31 @@ func _test_gold_and_shop() -> void:
 	_expect(earned and stocked and bought and got_card and not twice
 		and thinned and pricier and broke and run.phase == Run.Phase.MAP,
 		"gold is earned, the shop trades, removal gets pricier, and you can't overspend")
+
+
+## Backlog #86 duty 2: shop_stock[index] IS `item` (Dictionary is by-
+## reference, per the same rule combat.gd already comments on), and it was
+## still "sold" == false when buy()'s "remove" branch repriced "the other,
+## not-yet-sold" removal slots — so it matched and repriced ITSELF too,
+## before the charge on the next line re-read its now-bumped price. Every
+## deck-thin purchase silently cost one tier (25g) more than the price it
+## showed and gated affordability against.
+func _test_shop_removal_charges_the_price_it_showed() -> void:
+	var run := _map_run()
+	run.gold = 500
+	run.map_row = 0
+	run.node_type = "shop"
+	run._begin_shop()
+	var rem_i := -1
+	for i in range(run.shop_stock.size()):
+		if String(run.shop_stock[i]["kind"]) == "remove":
+			rem_i = i
+			break
+	var shown_price: int = int(run.shop_stock[rem_i]["price"])
+	var purse_before: int = run.gold
+	var bought := run.buy(rem_i, 0)
+	_expect(bought and run.gold == purse_before - shown_price,
+		"a deck-thin purchase charges exactly the price it showed, not the next tier up")
 
 
 ## Backlog #19: the card/removal paths above were covered, but a relic

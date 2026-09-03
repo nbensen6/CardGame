@@ -457,6 +457,7 @@ func buy(index: int, card_index: int = -1) -> bool:
 	var item: Dictionary = shop_stock[index]
 	if bool(item["sold"]) or gold < int(item["price"]):
 		return false
+	var price := int(item["price"])  # captured before "remove" can reprice this same entry
 	var slot := int(item["slot"])
 	match String(item["kind"]):
 		"card":
@@ -473,13 +474,19 @@ func buy(index: int, card_index: int = -1) -> bool:
 				return false
 			deck.remove_at(card_index)
 			removes_bought += 1
-			# the next removal in this shop reprices immediately
-			for other in shop_stock:
+			# the next removal in this shop reprices immediately — but not this
+			# one: shop_stock[index] IS `item` (Dictionary is by-reference) and
+			# is still "sold" == false here, so skip it by index or this loop
+			# reprices the entry being bought too, before it's even charged
+			for oi in range(shop_stock.size()):
+				if oi == index:
+					continue
+				var other: Dictionary = shop_stock[oi]
 				if String(other["kind"]) == "remove" and not bool(other["sold"]):
 					other["price"] = remove_price()
 		_:
 			return false
-	gold -= int(item["price"])
+	gold -= price
 	item["sold"] = true
 	return true
 

@@ -2547,6 +2547,26 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-03** — #86 duty 2 (find an error and resolve it). Last turn
+  (`22f3b27`) was duty 1, so this was duty 2. Used an Explore agent to survey
+  `core/` and `views/` against the two named bug families first, since ~25
+  prior duty-2 turns had already swept most of the obvious hand-copied-field
+  drift; it found a real one anyway. `Run.buy()`'s `"remove"` branch reprices
+  every OTHER not-yet-sold removal slot in the shop after a purchase
+  (`removes_bought` rises each use) — but `item` (the slot being bought) IS
+  `shop_stock[index]` (Dictionary is by-reference) and its own `"sold"` flag
+  wasn't set to `true` until two lines later, so the reprice loop's `not
+  sold` guard also matched the entry being bought and silently bumped its
+  own price one tier (25g) higher a moment before `gold -= item["price"]`
+  read it back — every deck-thin purchase in the game charged 25g more than
+  the price it showed and gated affordability against. Fixed by capturing
+  the price to charge before the reprice loop runs, and by skipping the
+  purchased slot in that loop by index rather than relying on Dictionary
+  equality. Added `_test_shop_removal_charges_the_price_it_showed`, watched
+  it fail against the unmodified code (temporarily reverted `run.gd` only,
+  confirmed FAIL, restored the fix, confirmed PASS) before committing.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless). Next `#86` turn
+  is duty 3 (verify a mechanic actually works).
 - **2026-09-03** — #86 duty 1 (improve an asset, portraits/icons only). Last
   turn (`b46bdf8`) was duty 3, so this turn is duty 1. Surveyed every scored
   portrait and icon's current total (not just its pass-1 score — several
