@@ -2567,6 +2567,38 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 2 (find an error and resolve it). Last turn
+  (`72ba3a8`) was duty 1, so this one was due for duty 2. A prior duty-2 run
+  (`design/BACKLOG.md` history, commit `9b25b48`) had already found and
+  explicitly deferred this: "Roped together" (`ps.ally_climb`, Mountain
+  Climbers' signature passive — "the ally climbs with you") was only ever
+  honored at ONE of the three places a hunter's foothold can rise —
+  `play_card()` — and silently skipped at the other two: `use_potion()`'s
+  `"climb"` case (the Grapple Tonic potion, in the shared reward pool) and
+  `_resolve_prepared()`'s `"jetpack"` case (Goblin Jetpack, a real rare card
+  in at least one character's own `reward_pool`). A Mountain Climbers player
+  who drank a climb potion or fired a Jetpack instead of playing an ordinary
+  climbing card left their roped ally behind with nothing in the log to say
+  so — reachable any real run where that character draws either source,
+  not a contrived case. Wrote `_test_roped_ally_climbs_from_a_potion` and
+  `_test_roped_ally_climbs_from_a_jetpack` first (mirroring the existing
+  `_test_roped_ally_climbs` shape), confirmed both FAIL on the pre-fix tree
+  (stashed only `combat.gd`, reran — exactly these two failed, nothing
+  else), then factored the existing `play_card` check (`ps.foothold >
+  foothold_before and ps.ally_climb > 0`) out into a shared
+  `Combat._lift_roped_ally(pi, foothold_before)` and called it from all
+  three sites — `_resolve_prepared` needed its signature changed from
+  `PlayerState` to `pi: int` (and its one caller, `_begin_round`'s player
+  loop) since lifting an ally requires `ally_index(pi)`, not just the
+  climbing hunter's own state. Reran with the fix: both new tests pass, and
+  the existing `_test_roped_ally_climbs_only_once_per_play` (which guards
+  against double-counting a single play) still passes unchanged.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1).
+  `balance_sim.gd` run as a smoke test only — nothing exploded (200 runs/
+  policy, coordinated win rate still 48% at Ascension 0), not tuned to; no
+  relic/card/balance values changed, this is a pure bug fix. Next `#86`
+  turn is duty 3 (verify a mechanic actually works).
+
 - **2026-09-04** — #86 duty 1 (improve an asset — icon `gadget`, 36/50). Last
   turn (`58fc651`) was duty 3, so this one was due for duty 1. Recomputed
   every scored portrait/icon's *current* total (several files only bold

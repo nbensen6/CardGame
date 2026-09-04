@@ -377,6 +377,8 @@ func _init() -> void:
 	_test_vine_lifts_ally()
 	_test_roped_ally_climbs()
 	_test_roped_ally_climbs_only_once_per_play()
+	_test_roped_ally_climbs_from_a_potion()
+	_test_roped_ally_climbs_from_a_jetpack()
 	_test_character_attack_bonus()
 	_test_build_creates_grapple()
 	_test_belay_scales_with_height()
@@ -6266,6 +6268,31 @@ func _test_roped_ally_climbs_only_once_per_play() -> void:
 	combat.play_card(0, 0)  # play the fused card: hits BOTH the targets_hold and grip branches
 	_expect(fused_ok and combat.players[1].foothold == 1,
 		"a card that both targets a hold and carries grip lifts a roped ally only once, not twice")
+
+
+## #86 duty 2 — play_card's ally_climb check used to be the only one of the three
+## foothold-raising sites (a card, a climb potion, a Jetpack) that honored "roped
+## together". A Mountain Climbers hunter who climbed via potion or Jetpack silently
+## left their ally behind. Both now share Combat._lift_roped_ally.
+func _test_roped_ally_climbs_from_a_potion() -> void:
+	var combat := _new_combat_p([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42,
+		_dummy_boss(200), [{"type": "ally_climb", "value": 1}, {}])
+	combat.use_potion(0, "climb", 5)
+	_expect(combat.players[0].foothold == 5 and combat.players[1].foothold == 1,
+		"roped: a climb potion lifts the drinker AND the ally, same as a climbing card")
+
+
+func _test_roped_ally_climbs_from_a_jetpack() -> void:
+	var boss := Boss.new("Jet", 500)
+	boss.moves = [{"type": "block", "value": 0}]  # benign enemy turn
+	boss.weak_point_height = 4
+	var combat := _new_combat_p([_deck_of(_jetpack, 10), _deck_of(_slash, 10)], 42,
+		boss, [{"type": "ally_climb", "value": 1}, {}])
+	combat.play_card(0, _first_playable(combat, 0))  # prime the jetpack (not immediate)
+	combat.end_turn(0)
+	combat.end_turn(1)  # round turns over -> jetpack fires at next turn's start
+	_expect(combat.players[0].foothold == 4 and combat.players[1].foothold == 1,
+		"roped: a fired Jetpack lifts the drinker AND the ally, same as a climbing card")
 
 
 func _test_character_attack_bonus() -> void:

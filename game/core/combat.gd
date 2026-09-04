@@ -175,6 +175,19 @@ func player_count() -> int:
 func ally_index(pi: int) -> int:
 	return (pi + 1) % players.size()
 
+## "Roped together" (ally_climb, Mountain Climbers' passive) lifts the ally by the
+## same amount whenever THIS hunter's own foothold rises, from ANY source — a played
+## card, a climb potion, or a fired Jetpack. Shared here (backlog #86 duty 2)
+## because the three call sites had drifted: only play_card ever checked
+## ps.ally_climb, so a Mountain Climbers hunter who climbed via potion or Jetpack
+## silently left their roped ally behind.
+func _lift_roped_ally(pi: int, foothold_before: int) -> void:
+	var ps: PlayerState = players[pi]
+	if ps.foothold > foothold_before and ps.ally_climb > 0:
+		var roped: PlayerState = players[ally_index(pi)]
+		roped.foothold = mini(roped.foothold + ps.ally_climb, FOOTHOLD_MAX)
+		_log("%s is roped — %s climbs +%d." % [ps.combatant.name, roped.combatant.name, ps.ally_climb])
+
 ## True when hunter `pi` has climbed high enough to strike the beast's sigil.
 func sigil_reached(pi: int) -> bool:
 	if pi < 0 or pi >= players.size():
@@ -761,10 +774,7 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		ps.foothold = mini(ps.foothold + climbed, FOOTHOLD_MAX)
 		var flair := "  (nailed it!)" if card.timed else ""
 		_log("%s plays %s — climbs (+%d Height, now %d)%s." % [who, card.name, climbed, ps.foothold, flair])
-	if ps.foothold > foothold_before_climb and ps.ally_climb > 0:  # roped together — the ally climbs with you
-		var roped: PlayerState = players[ally_index(pi)]
-		roped.foothold = mini(roped.foothold + ps.ally_climb, FOOTHOLD_MAX)
-		_log("%s is roped — %s climbs +%d." % [who, roped.combatant.name, ps.ally_climb])
+	_lift_roped_ally(pi, foothold_before_climb)  # roped together — the ally climbs with you, from any climb source (#86 duty 2)
 	if card.ally_grip > 0:  # vines/ropes that lift the ally up the beast
 		var lifted: PlayerState = players[ally_index(pi)]
 		lifted.foothold = mini(lifted.foothold + card.ally_grip, FOOTHOLD_MAX)
@@ -1099,8 +1109,10 @@ func use_potion(pi: int, effect: String, value: int) -> bool:
 		"draw_ally":
 			_draw(players[ally_index(pi)], value)
 		"climb":
+			var foothold_before_potion := ps.foothold
 			ps.foothold = mini(ps.foothold + value, FOOTHOLD_MAX)
 			_track_climb()
+			_lift_roped_ally(pi, foothold_before_potion)  # #86 duty 2 — a climb potion ropes the ally too
 		"strip_ward":
 			boss.artifact = maxi(boss.artifact - value, 0)
 		_:
@@ -1113,7 +1125,8 @@ func use_potion(pi: int, effect: String, value: int) -> bool:
 func _begin_round() -> void:
 	phase = Phase.PLAYERS
 	_forced_target = -1  # taunts last only their own round
-	for ps in players:
+	for pi in players.size():
+		var ps: PlayerState = players[pi]
 		var start_ctx := {"player": ps, "carried_block": 0}
 		_fire(MOMENT_TURN_START, start_ctx)
 		# maxi(0, ...): a downside relic (#30) can push either bonus negative;
@@ -1127,7 +1140,7 @@ func _begin_round() -> void:
 		if _mod("rhythm_keeps") <= 0:
 			ps.rhythm = 0  # combo resets each turn (a relic can keep it)
 		ps.cards_played_this_turn = 0  # backlog #67 — a card's "nth_card" question is per-round
-		_resolve_prepared(ps)
+		_resolve_prepared(pi)
 		# Innate (backlog #28): guaranteed in the opening hand of the fight —
 		# only round 1, before the normal draw, so it never displaces a card
 		# that would otherwise have been drawn this round.
@@ -1140,13 +1153,16 @@ func _begin_round() -> void:
 
 
 ## Fire any delayed effect a hunter armed last turn (Goblin Jetpack, etc.).
-func _resolve_prepared(ps: PlayerState) -> void:
+func _resolve_prepared(pi: int) -> void:
+	var ps: PlayerState = players[pi]
 	match ps.prepared:
 		"jetpack":  # rockets you straight to the weak point — the Engineer's climb answer
 			ps.prepared = ""
 			if boss.weak_point_height > 0:
+				var foothold_before_jetpack := ps.foothold
 				ps.foothold = boss.weak_point_height
 				_log("%s's jetpack fires — rocketed to the weak point!" % ps.combatant.name)
+				_lift_roped_ally(pi, foothold_before_jetpack)  # #86 duty 2 — the jetpack ropes the ally too
 
 func _all_ended() -> bool:
 	for ps in players:
