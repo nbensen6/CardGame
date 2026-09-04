@@ -644,6 +644,18 @@ func _init() -> void:
 	_test_backlog86_progress_action_for_key_finds_the_current_owner()
 	_test_backlog86_progress_rebinding_to_your_own_key_does_not_steal_from_yourself()
 	_test_backlog86_progress_reset_keybinds_restores_every_default()
+	# backlog #86 duty 3: next_selection_state, lifted out of
+	# combat_3d._pick_for_selection -- the tap-to-pick state machine behind
+	# meld/exhaust_pick/cheapen_pick cards. Its own comment names the one hard
+	# invariant: the two picks must land on different cards, matching
+	# core/combat.gd's server-side `target_index != sac_index` guard. Zero
+	# coverage before this pass -- the state only ever moved through a live
+	# scene tap.
+	_test_backlog86_next_selection_state_cancels_on_the_selecting_card_itself()
+	_test_backlog86_next_selection_state_records_the_first_pick_as_sac()
+	_test_backlog86_next_selection_state_ignores_repicking_the_same_sac_card()
+	_test_backlog86_next_selection_state_fires_once_both_picks_land()
+	_test_backlog86_next_selection_state_fires_immediately_for_a_one_pick_card()
 
 	print("")
 	if _failures == 0:
@@ -8518,6 +8530,53 @@ func _test_backlog86_progress_reset_keybinds_restores_every_default() -> void:
 		var spec: Dictionary = k
 		_expect(Progress.keybind(String(spec["id"])) == int(spec["default"]),
 			"%s is back to its authored default after reset_keybinds, even one that had just been stolen from" % spec["id"])
+
+
+## backlog #86 duty 3: next_selection_state, lifted out of
+## combat_3d._pick_for_selection -- the tap-to-pick state machine behind
+## meld/exhaust_pick/cheapen_pick cards. Its own doc comment names the one hard
+## invariant: the two picks must land on different cards, the same rule
+## core/combat.gd enforces server-side with `target_index != sac_index`
+## (combat.gd:621). Before this pass the state only ever advanced through a
+## live scene tap, so nothing proved a repicked sac card actually gets ignored
+## rather than silently becoming the target.
+func _test_backlog86_next_selection_state_cancels_on_the_selecting_card_itself() -> void:
+	var selecting := {"play_index": 2, "mode": "meld", "picks": 2, "step": 0, "sac": -1, "target": -1}
+	var result := Combat3D.next_selection_state(selecting, 2)
+	_expect(String(result.get("action", "")) == "cancel",
+		"tapping the card being played again cancels the selection instead of picking it as a sac")
+
+
+func _test_backlog86_next_selection_state_records_the_first_pick_as_sac() -> void:
+	var selecting := {"play_index": 2, "mode": "meld", "picks": 2, "step": 0, "sac": -1, "target": -1}
+	var result := Combat3D.next_selection_state(selecting, 0)
+	_expect(String(result.get("action", "")) == "continue", "one pick of two does not fire yet")
+	var next: Dictionary = result.get("selecting", {})
+	_expect(int(next.get("sac", -1)) == 0 and int(next.get("step", -1)) == 1,
+		"the first tap becomes the sac card and advances the step")
+
+
+func _test_backlog86_next_selection_state_ignores_repicking_the_same_sac_card() -> void:
+	var selecting := {"play_index": 2, "mode": "meld", "picks": 2, "step": 1, "sac": 0, "target": -1}
+	var result := Combat3D.next_selection_state(selecting, 0)
+	_expect(String(result.get("action", "")) == "ignore",
+		"the sac card and the target card must be different -- retapping the sac card is a no-op, not a second pick that reuses it as the target")
+
+
+func _test_backlog86_next_selection_state_fires_once_both_picks_land() -> void:
+	var selecting := {"play_index": 2, "mode": "meld", "picks": 2, "step": 1, "sac": 0, "target": -1}
+	var result := Combat3D.next_selection_state(selecting, 1)
+	_expect(String(result.get("action", "")) == "fire", "the second, distinct pick completes a two-pick card")
+	_expect(int(result.get("play_index", -1)) == 2 and int(result.get("sac", -1)) == 0 and int(result.get("target", -1)) == 1,
+		"the fired result carries the original play index plus both distinct picks")
+
+
+func _test_backlog86_next_selection_state_fires_immediately_for_a_one_pick_card() -> void:
+	var selecting := {"play_index": 5, "mode": "exhaust", "picks": 1, "step": 0, "sac": -1, "target": -1}
+	var result := Combat3D.next_selection_state(selecting, 3)
+	_expect(String(result.get("action", "")) == "fire", "a plain exhaust card fires on its single pick")
+	_expect(int(result.get("sac", -1)) == 3 and int(result.get("target", -1)) == -1,
+		"a one-pick card's only pick lands as sac with no target, matching play_card's -1 default")
 
 
 func _expect(cond: bool, name: String) -> void:

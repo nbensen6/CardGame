@@ -2567,6 +2567,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 3 (verify a mechanic actually works). Last turn
+  (`ab4dc4f`) was duty 2 and its own message named duty 3 as next. Used a
+  background agent to survey `views/` and `core/` for a genuinely untested
+  mechanic, ruling out everything the last several duty-3 turns already
+  covered (climb routing, the grip/fall timer, `card_climb_for`, the keybind
+  rebind rule). It found `combat_3d._pick_for_selection`, the tap-to-pick
+  state machine behind meld/exhaust_pick/cheapen_pick cards
+  (`sac_index`/`target_index` for `Combat.play_card`): zero references in
+  `run_tests.gd`, and its own comment names a real invariant — "the two
+  picks must be different cards" — that mirrors `core/combat.gd`'s
+  server-side `target_index != sac_index` guard but is enforced separately
+  on the view side. Lifted the body to a pure `static func
+  next_selection_state(selecting, idx) -> Dictionary` returning one of
+  cancel/ignore/continue/fire, leaving `_pick_for_selection` a thin dispatch
+  wrapper — same pattern as `route_between_rungs` and `card_climb_for`.
+  Five new tests: cancel on tapping the selecting card again, first pick
+  becomes sac, repicking the same sac card is ignored (not silently promoted
+  to target), a two-pick card fires with both distinct picks, a one-pick
+  card fires immediately with target left at -1. Proved the guard test bites
+  by temporarily deleting the `elif idx == sac: return ignore` branch,
+  confirming that exact test FAILs, then restoring it and confirming green
+  again — caught my own mistake here: `git checkout --` to undo the
+  temporary break reverted the whole file including the real extraction, not
+  just the break, so the extraction had to be reapplied before re-testing.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1).
+  Next `#86` turn is duty 1 (improve an asset, portraits/icons only).
 - **2026-09-03** — #86 duty 2 (find an error and resolve it). Last turn
   (`7ecc941`) was duty 1, so this was duty 2. Used a background agent to
   survey `core/` for a NEW instance of the two named bug families (first-pass

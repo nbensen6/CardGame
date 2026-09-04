@@ -3039,27 +3039,46 @@ func _start_selection(card: Dictionary) -> void:
 	_render_hand()
 
 
+## What one tap does to an in-progress meld/exhaust_pick/cheapen_pick selection.
+## Its one hard invariant: the two picks must land on different cards — the
+## same rule `core/combat.gd` enforces server-side with `target_index !=
+## sac_index` (combat.gd:621). Tapping the already-chosen sac card again is not
+## a second pick; the state does not advance and no target is ever recorded.
+static func next_selection_state(selecting: Dictionary, idx: int) -> Dictionary:
+	if idx == int(selecting.get("play_index", -1)):
+		return {"action": "cancel"}
+	var next: Dictionary = selecting.duplicate()
+	if int(selecting.get("step", 0)) == 0:
+		next["sac"] = idx
+	elif idx == int(selecting.get("sac", -1)):
+		return {"action": "ignore"}
+	else:
+		next["target"] = idx
+	next["step"] = int(selecting.get("step", 0)) + 1
+	if int(next["step"]) >= int(selecting.get("picks", 1)):
+		return {"action": "fire", "play_index": int(selecting.get("play_index", -1)),
+			"sac": int(next.get("sac", -1)), "target": int(next.get("target", -1))}
+	return {"action": "continue", "selecting": next}
+
+
 func _pick_for_selection(idx: int) -> void:
-	if idx == int(_selecting.get("play_index", -1)):
-		_selecting = {}  # tapped the selection card again — cancel
-		_render_hand()
-		return
-	if int(_selecting.get("step", 0)) == 0:
-		_selecting["sac"] = idx
-	elif idx == int(_selecting.get("sac", -1)):
-		return  # the two picks must be different cards
-	else:
-		_selecting["target"] = idx
-	_selecting["step"] = int(_selecting.get("step", 0)) + 1
-	if int(_selecting["step"]) >= int(_selecting.get("picks", 1)):  # all picks in — fire
-		var play_index := int(_selecting.get("play_index", -1))
-		var sac := int(_selecting.get("sac", -1))
-		var target := int(_selecting.get("target", -1))
-		_selecting = {}
-		Sfx.play("card")
-		_client.play_card(play_index, true, _cmd_slot(), sac, target)
-	else:
-		_render_hand()
+	var result := next_selection_state(_selecting, idx)
+	match String(result.get("action", "")):
+		"cancel":
+			_selecting = {}  # tapped the selection card again — cancel
+			_render_hand()
+		"ignore":
+			pass  # the two picks must be different cards
+		"fire":
+			var play_index := int(result["play_index"])
+			var sac := int(result["sac"])
+			var target := int(result["target"])
+			_selecting = {}
+			Sfx.play("card")
+			_client.play_card(play_index, true, _cmd_slot(), sac, target)
+		"continue":
+			_selecting = result["selecting"]
+			_render_hand()
 
 
 # --- the party and the run's standing ------------------------------------
