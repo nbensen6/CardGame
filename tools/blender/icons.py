@@ -411,10 +411,24 @@ def timer(i):                                   # timed, nothing else
 
 
 def cog(i):                                     # meld / fuse
-    for cx, cz, r, c in [(-0.16, 0.10, 0.30, CLAY), (0.24, -0.18, 0.22, PEWTER)]:
+    # pass 2 (design/progress/cog_icon.md): two named lowest lines.
+    # Colour & contrast (5/10) pixel-sampled CLAY at a weak 29/5/9-per-channel
+    # gap against the standin -- the smallest colour separation measured for
+    # any icon under this item. PUMPKIN sits in the same warm-orange family
+    # (this set's own palette.py, not a new swatch) but is both lighter and
+    # more saturated, widening every channel's gap.
+    # Silhouette@42px (7/10) named the seam where the two rings cross as the
+    # one place teeth lose their square shape at a real downsample. Both
+    # gears started their 6 teeth at k*tau/6 from angle zero, so a tooth
+    # sits at the same absolute angle on both rings; offsetting the smaller
+    # ring's teeth by half a step (tau/12) interleaves them with the larger
+    # ring's teeth in the overlap zone instead of colliding with them --
+    # the way two real meshing gears actually mesh.
+    for cx, cz, r, c, phase in [(-0.16, 0.10, 0.30, PUMPKIN, 0.0),
+                                 (0.24, -0.18, 0.22, PEWTER, math.tau / 12.0)]:
         i.ring((cx, 0.0, cz), (r, r, r), c, 14, 5, thickness=0.34)
         for k in range(6):
-            a = k * math.tau / 6.0
+            a = phase + k * math.tau / 6.0
             i.slabf(cx + math.cos(a) * r * 1.12, cz + math.sin(a) * r * 1.12,
                     r * 0.20, r * 0.20, c, rot=0.0, bevel=0.012)
         i.ball((cx, -0.04, cz), (r * 0.28, r * 0.20, r * 0.28), UMBER, 6, 4)

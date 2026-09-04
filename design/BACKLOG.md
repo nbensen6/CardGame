@@ -2567,6 +2567,31 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 1 (improve an asset — icon `cog`, 36/50). Last
+  turn (`9e3ab8e`) was duty 3, so this one was due for duty 1. Picked the
+  lowest-scoring un-plateaued portrait or icon after recomputing every
+  file's *current* score (several files only have a pass-1 score table and
+  record later gains as prose, e.g. "23 → 31" — a naive grep of the last
+  bolded number understates a fixed asset's real score). Two portraits
+  tied lowest (`boulder_ram` 30, `bog_leech` 31) but both diagnoses point
+  at beast geometry already flagged for the fixer lane, out of
+  `portraits.py`'s scope — so went to the next tier, icons, which have no
+  separate beast script to defer to. `cog_icon.md` (36/50, pass 1 only)
+  named two concrete, in-lane fixes: `CLAY`'s colour sat only 65/11/3 off
+  the card standin in the raw palette (weakest of any swatch checked), and
+  the two gears' teeth collide into one jagged shape at the one place the
+  rings actually cross. Recoloured the larger gear to `PUMPKIN` (existing
+  swatch, not new) and offset the smaller gear's tooth phase by half a
+  step so the teeth interleave instead of colliding — the way real meshing
+  gears mesh. Rendered before/after, pixel-sampled the gear body (colour
+  gap sum 33→74, more than doubled) and cropped/zoomed the seam
+  (`design/renders/cog_icon_pass2_seam_{before,after}.png`) to confirm the
+  fused-tooth shape actually resolved into two clean squares rather than
+  trusting the geometry math. +6 (36→42). Installed Blender via apt (same
+  4.0.2 + EGL + numpy recipe prior passes in this file used) since none
+  was present in this container. `run_tests.gd`: ALL TESTS PASSED. Next
+  `#86` turn is duty 2 (find an error and resolve it).
+
 - **2026-09-04** — #86 duty 3 (verify a mechanic actually works). Last turn
   (`09c3b74`) was duty 2, so this one was due for duty 3. The climb mechanic
   Nick named as the example is now covered heavily (29 passes deep across
