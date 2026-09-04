@@ -435,7 +435,15 @@ def stack(i):                                   # draw / hand size
                                         (0.0, -0.06, 0.0, CREAM),
                                         (0.26, -0.16, -0.30, WHEAT)]):
         i.slabf(x, z, 0.20, 0.32, c, rot=rot)
-    i.slabf(0.0, 0.34, 0.30, 0.055, TAN)
+    # pass 2 (design/progress/stack_icon.md): Family distinction (5/10) named
+    # the plain TAN bar as the same "card slab plus one accent" gestalt as
+    # draw's arrow and burn's flame, and Colour (6/10) named the same bar as
+    # a near-miss against the brown card standin. Three GOLD pips in a
+    # shallow arc replace the flat bar -- a "count" badge that differs in
+    # silhouette from both siblings' single accent shapes, and GOLD carries a
+    # far wider gap against the standin than TAN did.
+    for x, z in [(-0.14, 0.30), (0.0, 0.38), (0.14, 0.30)]:
+        i.ball((x, 0.0, z), (0.065, 0.05, 0.065), GOLD, 7, 4)
 
 
 def peak(i):                                    # a strike that scales with Height

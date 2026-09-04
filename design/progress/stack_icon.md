@@ -81,3 +81,75 @@ above too harsh. Same open question as `burn_icon.md`'s: whether the
 family-distinction concern actually costs anything once `draw`, `stack` and
 `burn` are seen together in a real hand rather than compared as isolated
 42px renders — a `needs a screen` question.
+
+## Pass 2 — cloud, backlog #86 duty 1
+
+Applied both named lines, in `icons.py`'s `stack()` only — no other icon
+script touched, no shared constant moved:
+
+1. **Family distinction (5).** Replaced the flat `i.slabf(0.0, 0.34, 0.30,
+   0.055, TAN)` bar with three `i.ball()` pips in a shallow arc (`(-0.14,
+   0.30)`, `(0.0, 0.38)`, `(0.14, 0.30)`, radius `(0.065, 0.05, 0.065)`,
+   `GOLD`) — a "count" badge instead of a plain rectangle, so the accent
+   shape itself now differs from `draw`'s single arrow and `burn`'s flame
+   cluster, not just the card count underneath it.
+2. **Colour & contrast (6).** The replacement pips are `GOLD` rather than
+   `TAN` — already the fix direction the diagnosis proposed ("toward a
+   contrasting accent colour entirely").
+
+Rebuilt the full 36-icon set with the real `blender` binary (apt package,
+4.0.2 — `download.blender.org` blocked through the proxy this run, same apt
+fallback prior duty-1 passes used; needed `python3.12 -m pip install
+--break-system-packages numpy` first, not installed in this container
+before this pass). Diffed every PNG against committed by mean and max
+per-channel pixel difference: `stack.png` alone showed a max of 255 (a real
+opaque/transparent edge moved); every other icon's max stayed ≤120 — the
+same AA/lighting-noise ceiling `fire_icon.md` pass 3 and `rally_icon.md`
+pass 3 measured for their own untouched icons. Reverted the other 35, kept
+only `stack.png`.
+
+Composited the new PNG over the flat brown card-face standin
+`RGB(139,105,74)`, the same method as every prior batch:
+`design/renders/stack_pass2_full.png` (256px), `stack_pass2_42px_big.png`
+(real 42px Lanczos downsample, nearest-neighbour upscaled for viewing), and
+`stack_pass2_sil.png` (alpha silhouette). Looked at all three, plus
+regenerated (scratch, not committed) silhouettes of `draw.png`/`burn.png`
+for a direct side-by-side rather than relying on memory of their shapes.
+
+Pixel-sampled the centre pip directly off the render: `(198,161,99)`
+against the `(139,105,74)` standin — a `+59/+56/+25` per-channel gap,
+against the old TAN bar's `+27/+16/+17` (this file's own pass-1 numbers).
+
+- **Silhouette @ 42px (8, unchanged):** the fan-of-cards read is untouched;
+  this pass didn't touch the card seams pass 1 docked a point for.
+- **Family distinction (5 → 8):** `stack_pass2_sil.png` shows three
+  distinct round bumps atop the fan, clearly different from `draw`'s single
+  triangular arrow-tip silhouette (checked directly, not from memory) and
+  from `burn`'s flame-and-notch. Not higher: still the same broad
+  composition family (a card fan plus one small accent) as `draw`/`burn`,
+  which the two-fix budget didn't change.
+- **Mechanic match (8, unchanged):** already the strongest line in the
+  batch pre-fix; a pip cluster doesn't add or subtract from "a fan of
+  cards is a hand of cards."
+- **Colour & contrast (6 → 9):** verified off real render pixels (numbers
+  above), a substantially wider gap than the old TAN bar's near-miss. Not
+  10: the pips sit close together and slightly overlap in the full render
+  (visible in `stack_pass2_full.png`), which isn't a colour problem but
+  keeps this from being a clean, fully separated read.
+- **Style consistency (8, unchanged):** `ball()` pips are already the set's
+  vocabulary (`sword`'s pommel, `taunt`'s bell) — as consistent as the flat
+  bar was, not more or less.
+
+**+6 total (35 → 41), not a plateau — kept. Crosses the 40 stop line.**
+No line regressed.
+
+`run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1).
+
+## Unsure about (pass 2)
+
+Whether the two outer pips sitting close enough to the centre pip to
+visually touch at 256px (not confirmed as a hard silhouette-merge, just
+close) is worth a follow-up spacing pass — the 42px downsample and the
+silhouette crop both still read three distinct bumps, so this is a
+polish note, not a diagnosed failure, and the total is already past the
+40 stop line.

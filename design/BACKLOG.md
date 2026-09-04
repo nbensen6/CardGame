@@ -2567,6 +2567,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 1 (improve an asset, portraits/icons only). Last
+  turn (`4a57fc0`) was duty 3 and its own log entry named duty 1 as next.
+  Scanned every scored icon/portrait's progress file for the lowest total
+  that (a) had never had a fixer pass and (b) was diagnosed as fixable
+  inside `icons.py` alone rather than needing a beast/hunter model edit —
+  `boulder_ram_portrait` (30) and `mountain_climbers_portrait` (33) scored
+  lower but both diagnoses explicitly point at geometry, out of this lane's
+  file ownership. `stack_icon` (35/50, batch 22, never fixed) was the
+  next-lowest with both named lines fixable in `icons.py`: Family
+  distinction (5) and Colour (6) both pointed at the same plain `TAN` bar
+  on top of the card fan. Replaced it with three `GOLD` `ball()` pips in a
+  shallow arc — a distinct "count badge" silhouette instead of a flat
+  rectangle, and a colour with real separation from the brown card standin
+  (pixel-verified: old bar `+27/+16/+17` per-channel gap, new pips
+  `+59/+56/+25`). Rebuilt the full 36-icon set with apt's Blender 4.0.2
+  headless (`download.blender.org` blocked through the proxy this run;
+  needed `python3.12 -m pip install --break-system-packages numpy` first),
+  diffed every PNG against committed by max per-channel difference to
+  separate real content change (`stack.png`, max 255) from WORKBENCH render
+  noise (every other icon, max ≤120), and reverted everything but
+  `stack.png`. Looked at the full render, a real 42px Lanczos downsample,
+  and a silhouette crop, plus regenerated (scratch) silhouettes of `draw`/
+  `burn` for a direct side-by-side rather than trusting memory of their
+  shapes — the three-pip cluster reads as clearly distinct from both.
+  Score 35→41 (Family 5→8, Colour 6→9, Silhouette/Mechanic/Style
+  unchanged), crosses the 40 stop line, not a plateau, kept. Full diagnosis
+  and pixel math in `design/progress/stack_icon.md`. `run_tests.gd`: ALL
+  TESTS PASSED (fresh import, headless, godot 4.7.1). Next `#86` turn is
+  duty 2 (find an error and resolve it).
+
 - **2026-09-04** — #86 duty 2 (find an error and resolve it), attempted then
   pivoted to duty 3. Last turn (`35ecba7`) was duty 1, so this one was due for
   duty 2. Spent the whole run hunting: two independent Explore passes over
