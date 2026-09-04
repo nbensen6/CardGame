@@ -2567,6 +2567,29 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 3 (verify a mechanic actually works). Last turn
+  (`12313f0`) was duty 2, so this one was due for duty 3. `combat_3d`'s own
+  climb-routing functions (`route_between_rungs`, `foothold_anchor`,
+  `hunter_move_kind`, and the rest of duty 3's earlier passes) are by now
+  thoroughly covered, so this pass went looking elsewhere for a rule the game
+  claims but never proves: `ui/cast.gd` and `ui/tiles.gd` both document the
+  identical "your own art wins; only when there isn't one does it fall back
+  to the Kenney stand-in" rule (the rule backlog #80 and hard rule 10 exist
+  because of), and neither `Cast.model_path`/`is_yours` nor
+  `Tiles.path`/`is_ours` had ever been called from a unit test. The only
+  existing coverage, `_test_everyone_wears_their_own_art`, only ever proves
+  the "you already have your own art" branch, because every shipped
+  character and tile currently does — the fallback branch, and the
+  empty/unknown-id guard ahead of it (`character_id != "" and
+  ResourceLoader.exists(own)`), had zero coverage. Added four tests: the
+  own-art branch for a real character (`frog`) and a real tile (`dirt`), and
+  the fallback branch for an empty id and a synthetic unknown id/name for
+  both classes. All eight assertions passed against the existing code —
+  this was a real, previously-unproven rule, not a bug; duty 2 is where a
+  fix would belong if one had been found.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1).
+  Next `#86` turn is duty 1 (improve a portrait or icon).
+
 - **2026-09-04** — #86 duty 2 (find an error and resolve it). Last turn
   (`8750f15`) was duty 1, so this one was due for duty 2. Read `game_host.gd`,
   `game_client.gd`, `net_link.gd`, `run_map.gd`, `content.gd`, `combatant.gd`

@@ -669,6 +669,18 @@ func _init() -> void:
 	# was covered; the falling-DOWN half of the same rule was not.
 	_test_backlog86_soft_fall_skips_an_unsafe_hold_when_landing()
 	_test_backlog86_soft_fall_drops_to_base_when_only_hold_below_is_unsafe()
+	# backlog #86 duty 3 (twenty-eighth pass): Cast.model_path/is_yours and
+	# Tiles.path/is_ours both claim the identical rule -- "your own art wins,
+	# and only when there isn't one does it fall back to the Kenney stand-in"
+	# -- and neither had ever been called from a unit test. The only existing
+	# coverage (_test_everyone_wears_their_own_art) only ever exercises the
+	# "you already have your own art" branch, because every shipped character
+	# and tile does; the fallback branch itself, and the empty/unknown-id
+	# guard ahead of it, had never been proved.
+	_test_backlog86_cast_model_path_prefers_your_own_art()
+	_test_backlog86_cast_model_path_falls_back_when_theres_no_own_art()
+	_test_backlog86_tiles_path_prefers_your_own_art()
+	_test_backlog86_tiles_path_falls_back_when_theres_no_own_art()
 
 	print("")
 	if _failures == 0:
@@ -3059,6 +3071,40 @@ func _test_backlog86_soft_fall_drops_to_base_when_only_hold_below_is_unsafe() ->
 	combat.fall(0)
 	_expect(ps.foothold == 0,
 		"soft_fall drops all the way to the base when the only hold below is unsafe")
+
+
+func _test_backlog86_cast_model_path_prefers_your_own_art() -> void:
+	_expect(Cast.model_path("frog") == Cast.DIR + "frog.glb",
+		"the Frog's own model wins over its Kenney stand-in")
+	_expect(Cast.is_yours("frog"), "the Frog is flagged as wearing its own art")
+
+
+func _test_backlog86_cast_model_path_falls_back_when_theres_no_own_art() -> void:
+	# The guard is `character_id != "" and ResourceLoader.exists(own)` -- an
+	# empty id must short-circuit straight to the default stand-in rather than
+	# ever asking the loader about "res://assets/3d/cast/.glb".
+	_expect(Cast.model_path("") == Cast.DIR + "bunny.glb",
+		"an empty character id falls back to the default stand-in")
+	_expect(not Cast.is_yours(""), "an empty character id never counts as your own art")
+	# An id with no own model AND no PLACEHOLDER entry -- the general fallback,
+	# not just the five named hand-offs.
+	var fake_id := "nobody_built_this_hunter_yet"
+	_expect(Cast.model_path(fake_id) == Cast.DIR + "bunny.glb",
+		"an id with no own model and no PLACEHOLDER entry falls back to the same default stand-in")
+	_expect(not Cast.is_yours(fake_id), "an id with no own model never counts as your own art")
+
+
+func _test_backlog86_tiles_path_prefers_your_own_art() -> void:
+	_expect(Tiles.path("dirt") == Tiles.OWN + "dirt.glb",
+		"the dirt tile's own model wins over its Kenney stand-in")
+	_expect(Tiles.is_ours("dirt"), "the dirt tile is flagged as wearing its own art")
+
+
+func _test_backlog86_tiles_path_falls_back_when_theres_no_own_art() -> void:
+	var fake_name := "nobody_built_this_tile_yet"
+	_expect(Tiles.path(fake_name) == Tiles.KENNEY + fake_name + ".glb",
+		"a tile with no own model falls back to its Kenney stand-in")
+	_expect(not Tiles.is_ours(fake_name), "a tile with no own model never counts as your own art")
 
 
 func _test_targets_hold_card_climbs_to_a_named_hold() -> void:
