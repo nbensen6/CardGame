@@ -2567,6 +2567,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 1 (improve a portrait or icon). Last turn
+  (`c2de529`) was duty 3, so this one was due for duty 1. Scanned every
+  portrait/icon progress file's latest score; `lightbearer_portrait.md` was
+  the lowest-scoring untouched (pass 1 only) portrait whose diagnosis had a
+  fixable line — `boulder_ram`/`mountain_climbers` were lower but both
+  named-only model-geometry fixes, out of `portraits.py` scope, same as
+  the 2026-09-02 duty 1 turn found. Checked the alpha bounding box directly
+  rather than trusting the old write-up's description and found a worse
+  problem than either of its two named lines: the bottom edge was fully
+  opaque — the robe's lower panels were being cut clean off the 512px
+  canvas, not just "off-balance" as pass 1 said. Projected the model's own
+  vertices through `portraits.py`'s exact camera math (focus point, EYE
+  direction, ortho scale) in a standalone script to search `(at, span)`
+  values numerically instead of guessing-and-rendering blind; the simulated
+  margins matched the real render within 1px once built. New `FOCUS`
+  `(0.47, 1.15)`, up from `(0.69, 0.78)` — all four edges clear for the
+  first time, margins symmetric (L=R=148, T=B=26). Scored 34 → 38, no line
+  regressed; readability at 34px held rather than improved (the fluted robe
+  base is newly visible small, but the staff and lantern bars, already
+  thin, are now a little smaller too — logged as a real trade, not a free
+  win). The second named line (lantern structure lost at 34px) needs the
+  model itself, not the portrait crop, so it's written up in
+  `lightbearer.md` for the fixer lane instead of applied here.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1).
+  Next `#86` turn is duty 2 (find an error and resolve it).
+
 - **2026-09-04** — #86 duty 3 (verify a mechanic actually works). Last turn
   (`12313f0`) was duty 2, so this one was due for duty 3. `combat_3d`'s own
   climb-routing functions (`route_between_rungs`, `foothold_anchor`,

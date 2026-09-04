@@ -59,3 +59,14 @@ Whether the hood reads as a hood or a party hat, per the existing
 ART-REVIEW note — this render doesn't resolve that either way; it's a
 genuinely close call and worth a second, less flattering angle before
 deciding.
+
+## Flagged by the portrait pass (out of `portraits.py` scope)
+
+`lightbearer_portrait.md` pass 2 (backlog #86 duty 1) fixed a framing crop
+but left one of its two named lines untouched because it is a model change:
+at 34px the lantern's frame bars collapse to a soft blob and the staff shaft
+thins to a near-invisible single-pixel diagonal. Concrete fix, same shape as
+this file's own pass-1 diagnosis: a bulkier lantern head (wider bars, or a
+solid block instead of an open frame) and a slightly thicker staff shaft
+would both survive downsampling better — the open frame reads fine at full
+render size and disappears specifically at party-panel scale.

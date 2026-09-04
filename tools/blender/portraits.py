@@ -29,7 +29,7 @@ from mathutils import Vector
 FOCUS = {
     "frog": (0.71, 0.75), "vine_weaver": (0.77, 0.67),
     "mountain_climbers": (0.73, 0.72), "goblin_mech": (0.62, 0.94),
-    "lightbearer": (0.69, 0.78),
+    "lightbearer": (0.47, 1.15),
 
     "stone_warden": (0.73, 0.67), "gale_serpent": (0.87, 0.44),
     "drowned_colossus": (0.83, 0.49), "sunken_warden": (0.81, 0.49),
