@@ -2567,6 +2567,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 2 (find an error and resolve it). Last turn
+  (`a07f298`) was duty 1, so this one was due for duty 2. Sent an Explore
+  agent through `run.gd`, `card.gd`, `content.gd`, `progress.gd` and
+  `run_save.gd` end to end (combat.gd, combatant.gd, boss.gd, run_map.gd and
+  player_state.gd were already read clean this session) looking for the two
+  named bug families. Found a real one: `campfire_action`'s "upgrade" path
+  explicitly refuses a status card (`c.upgraded or c.status`, run.gd:543 —
+  "a curse has nothing to sharpen — only remove it"), but the event/boon
+  `sharpen_card` effect (`_apply_effect_block`, shared by every event and
+  boon that names it) re-implemented the same "what's sharpenable" filter
+  independently and only checked `.upgraded`, not `.status` — a second copy
+  of one rule, the exact shape duty 2 hunts for. The game's one curse,
+  `bruised_grip`, has cost 1 and no other numeric field, so
+  `Card.upgraded_copy()`'s generic fallback ("nothing to bump — cut cost by
+  1 instead") silently zeroed its cost and renamed it "Bruised Grip+" —
+  removing the one downside a status card has, through a path campfire
+  explicitly closed off for the identical card. Reachable any time a run
+  event or boon grants `sharpen_card` after a `curse_card` effect has landed
+  a curse in a hand — not a contrived case, `boons.json` offers `sharpen_card`
+  as a run's very first choice and events can curse a deck well before that
+  point in the run. Wrote `_test_backlog86_sharpen_card_skips_status_cards`
+  first (a deck of nothing but the curse, so the RNG pick is deterministic),
+  confirmed it fails on the pre-fix tree (`1 TEST(S) FAILED`, reverted-file
+  check), then added `and not cj.status` to the candidate filter in
+  `_apply_effect_block` and confirmed it passes. `run_tests.gd`: ALL TESTS
+  PASSED (fresh import, headless, godot 4.7.1). Next `#86` turn is duty 3
+  (verify a mechanic actually works).
+
 - **2026-09-04** — #86 duty 1 (improve an asset — icon `cog`, 36/50). Last
   turn (`9e3ab8e`) was duty 3, so this one was due for duty 1. Picked the
   lowest-scoring un-plateaued portrait or icon after recomputing every

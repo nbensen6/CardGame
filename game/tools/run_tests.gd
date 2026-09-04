@@ -90,6 +90,7 @@ func _init() -> void:
 	_test_event_remove_card_effect()
 	_test_event_remove_card_respects_min_deck()
 	_test_event_sharpen_card_effect()
+	_test_backlog86_sharpen_card_skips_status_cards()
 	_test_event_curse_card_effect()
 	_test_backlog17_four_events_touch_the_deck()
 	_test_event_potion_effect()
@@ -1443,6 +1444,32 @@ func _test_event_sharpen_card_effect() -> void:
 	var size_before: int = run2.decks[0].size()
 	run2.pick_event(0)
 	_expect(run2.decks[0].size() == size_before, "sharpen_card quietly no-ops on a fully-upgraded deck")
+
+
+## Backlog #86 duty 2: campfire_action's "upgrade" explicitly refuses a status
+## card ("a curse has nothing to sharpen — only remove it", run.gd:543), but
+## the event/boon sharpen_card effect re-implemented the same "what counts as
+## sharpenable" filter independently and forgot that exclusion. Since
+## Card.upgraded_copy() falls back to cutting cost by 1 when a card has no
+## number to bump, sharpening bruised_grip (cost 1, no other fields) used to
+## silently zero its cost — the one downside a status card has — through a
+## path campfire explicitly closed off for the exact same card. A deck of
+## nothing but the curse makes the RNG pick deterministic.
+func _test_backlog86_sharpen_card_skips_status_cards() -> void:
+	var curse_maker := func() -> Card: return Content.make_card("bruised_grip")
+	var decks := [_deck_of(curse_maker, 5), _deck_of(_slash, 5)]
+	var run := Run.new(decks, ["A", "B"], 4242, [{}, {}])
+	run.start()
+	run.event = {"title": "T", "text": "x", "choices": [
+		{"label": "drill", "result": "!", "effects": {"sharpen_card": true}},
+	]}
+	run.phase = Run.Phase.EVENT
+	run.map_row = 0
+	run.pick_event(0)
+	for c in run.decks[0]:
+		var card: Card = c
+		_expect(not card.upgraded and card.status and card.cost == 1,
+			"sharpen_card must never touch a status card — a curse has nothing to sharpen, same rule campfire_action already enforces")
 
 
 ## Backlog #27: an event can punish you into your OWN deck with a status card,

@@ -641,7 +641,8 @@ func _apply_effect_block(eff: Dictionary) -> void:
 			var deck2: Array = decks[i]
 			var candidates: Array = []
 			for j in range(deck2.size()):
-				if not (deck2[j] as Card).upgraded:
+				var cj: Card = deck2[j]
+				if not cj.upgraded and not cj.status:  # a curse has nothing to sharpen — campfire_action's own rule (run.gd:543)
 					candidates.append(j)
 			if not candidates.is_empty():
 				var idx := int(candidates[_rng.randi_range(0, candidates.size() - 1)])
