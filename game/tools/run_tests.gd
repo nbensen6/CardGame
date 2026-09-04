@@ -687,6 +687,31 @@ func _init() -> void:
 	# glance" number -- only ever subtracted Block, a second copy of the rule
 	# that fell behind when Buffer/Intangible were added after it was written.
 	_test_backlog86_incoming_through_reckons_buffer_and_intangible_too()
+	# backlog #86 duty 3 (twenty-ninth pass): Screen.is_handheld/fit -- the
+	# mobile-scaling lever CLAUDE.md §5 exists to require and screen.gd's own
+	# doc comment calls "the one knob to turn if the phone build reads too
+	# small" -- had never been called from a test. Every root scene calls
+	# Screen.fit(self) in _ready() and a dozen call sites across combat_3d,
+	# overworld_3d, location_3d and menu gate touch-target size and layout off
+	# is_handheld(), so a break here is silent everywhere at once.
+	_test_backlog86_is_handheld_follows_the_force_flag()
+	_test_backlog86_is_handheld_matches_the_os_feature_when_not_forced()
+	_test_backlog86_fit_does_nothing_without_a_window()
+
+	# fit()'s window-scaling path reads node.get_window(), which resolves to
+	# null for every node during _init() -- the whole tree, root included, is
+	# not "inside tree" yet until the engine's main loop actually starts, one
+	# frame after _init() returns (proved with a throwaway script before
+	# writing this: root.is_inside_tree() is false here). Deferring these two
+	# gives them a real window to scale, the same as every _ready() call site
+	# has in the live game; nothing above this line needed a window and stays
+	# synchronous.
+	call_deferred("_finish_with_deferred_tests")
+
+
+func _finish_with_deferred_tests() -> void:
+	_test_backlog86_fit_shrinks_the_logical_viewport_on_handheld()
+	_test_backlog86_fit_resets_the_logical_viewport_on_desktop()
 
 	print("")
 	if _failures == 0:
@@ -8847,6 +8872,68 @@ func _test_backlog86_next_selection_state_fires_immediately_for_a_one_pick_card(
 	_expect(String(result.get("action", "")) == "fire", "a plain exhaust card fires on its single pick")
 	_expect(int(result.get("sac", -1)) == 3 and int(result.get("target", -1)) == -1,
 		"a one-pick card's only pick lands as sac with no target, matching play_card's -1 default")
+
+
+## backlog #86 duty 3 (twenty-ninth pass) -- Screen.is_handheld() and
+## Screen.fit() are the entire mobile-readiness mechanism: one static flag and
+## one static function that every root scene calls in _ready(), and that a
+## dozen other call sites read to decide touch-target size, font scale and tap
+## reach. force_handheld exists specifically so tools can flip it
+## (screenshot.gd does, to shoot the phone layout from a desktop) -- these
+## tests do the same and restore it afterward so later tests see the default.
+func _test_backlog86_is_handheld_follows_the_force_flag() -> void:
+	var was := Screen.force_handheld
+	Screen.force_handheld = true
+	_expect(Screen.is_handheld(), "force_handheld true reports handheld regardless of the real OS")
+	Screen.force_handheld = false
+	Screen.force_handheld = was
+
+
+func _test_backlog86_is_handheld_matches_the_os_feature_when_not_forced() -> void:
+	var was := Screen.force_handheld
+	Screen.force_handheld = false
+	_expect(Screen.is_handheld() == OS.has_feature("mobile"),
+		"with the force flag off, is_handheld defers entirely to the real OS feature check")
+	Screen.force_handheld = was
+
+
+func _test_backlog86_fit_shrinks_the_logical_viewport_on_handheld() -> void:
+	var was := Screen.force_handheld
+	var prior_scale := root.content_scale_factor
+	var node := Node.new()
+	root.add_child(node)
+	Screen.force_handheld = true
+	Screen.fit(node)
+	_expect(is_equal_approx(root.content_scale_factor, Screen.DESKTOP_HEIGHT / Screen.HANDHELD_HEIGHT),
+		"fit() on a handheld scales the logical viewport down by DESKTOP_HEIGHT/HANDHELD_HEIGHT, making every pixel physically bigger")
+	node.queue_free()
+	Screen.force_handheld = was
+	root.content_scale_factor = prior_scale
+
+
+func _test_backlog86_fit_resets_the_logical_viewport_on_desktop() -> void:
+	var was := Screen.force_handheld
+	var prior_scale := root.content_scale_factor
+	var node := Node.new()
+	root.add_child(node)
+	Screen.force_handheld = true
+	Screen.fit(node)  # first push it away from 1.0 so the next call proves a real reset, not a value that was already 1.0
+	Screen.force_handheld = false
+	Screen.fit(node)
+	_expect(is_equal_approx(root.content_scale_factor, 1.0),
+		"fit() on desktop resets the logical viewport to 1:1, undoing any earlier handheld scale")
+	node.queue_free()
+	Screen.force_handheld = was
+	root.content_scale_factor = prior_scale
+
+
+func _test_backlog86_fit_does_nothing_without_a_window() -> void:
+	var prior_scale := root.content_scale_factor
+	var orphan := Node.new()  # deliberately never added to the tree, so get_window() is null
+	Screen.fit(orphan)
+	_expect(is_equal_approx(root.content_scale_factor, prior_scale),
+		"fit() on a node with no window is a no-op rather than crashing on a null Window")
+	orphan.free()
 
 
 func _expect(cond: bool, name: String) -> void:

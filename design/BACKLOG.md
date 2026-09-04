@@ -2567,6 +2567,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 3 (verify a mechanic actually works). Last turn
+  (`09c3b74`) was duty 2, so this one was due for duty 3. The climb mechanic
+  Nick named as the example is now covered heavily (29 passes deep across
+  `route_between_rungs`, `foothold_anchor`, `hunter_move_kind`, the grip/fall
+  timer and more), so went looking elsewhere for a mechanic with zero
+  coverage rather than adding a thirtieth case to something already proven.
+  Found one: `Screen.is_handheld()` / `Screen.fit()` (`game/ui/screen.gd`) —
+  the entire mobile-scaling mechanism CLAUDE.md §5 requires and the file's
+  own doc comment calls "the one knob to turn if the phone build reads too
+  small." Every root scene calls `Screen.fit(self)` in `_ready()`, and a
+  dozen call sites across `combat_3d`, `overworld_3d`, `location_3d` and
+  `menu` gate touch-target size, font scale and tap reach off
+  `is_handheld()` — and none of it had ever been called from a test. Added
+  five tests: the force-flag override, that `is_handheld()` defers to the
+  real OS feature when not forced, that `fit()` scales the logical viewport
+  down by `DESKTOP_HEIGHT/HANDHELD_HEIGHT` on handheld, that it resets to
+  1:1 on desktop, and that it's a no-op (not a crash) on a node with no
+  window. Hit a real harness limit doing it: `node.get_window()` resolves to
+  null for *any* node during `_init()`, because the whole tree — `root`
+  included — isn't "inside tree" yet until the engine's main loop actually
+  starts, one frame after `_init()` returns; proved that with a throwaway
+  `--script` before touching the real file rather than guessing. The two
+  tests that need a real window (`fit()`'s scaling behavior) now run from a
+  `call_deferred` at the end of `_init()` instead of inline with everything
+  else, so they get one real frame first — same as every `_ready()` call
+  site does in the live game. Everything else in the suite is unaffected;
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1).
+  Next `#86` turn is duty 1 (improve a portrait or icon).
+
 - **2026-09-04** — #86 duty 2 (find an error and resolve it). Last turn
   (`2836e72`) was duty 1, so this one was due for duty 2. Read `incoming_for()`
   (`core/combat.gd`) end to end against `Combatant.take_damage()`
