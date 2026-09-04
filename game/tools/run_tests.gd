@@ -26,6 +26,7 @@ func _init() -> void:
 	_test_boss_pattern_loops()
 	# backlog #40: beast moves that react to where you are
 	_test_backlog40_min_height_condition_picks_fallback_when_unmet()
+	_test_backlog86_max_height_condition_picks_fallback_when_unmet()
 	_test_backlog40_at_sigil_condition_needs_a_hunter_on_it()
 	_test_backlog40_undefended_condition_reads_block()
 	_test_backlog40_missing_fallback_defaults_safely()
@@ -706,6 +707,28 @@ func _test_backlog40_min_height_condition_picks_fallback_when_unmet() -> void:
 		"min_height unmet falls back to the plain move")
 	_expect(high["type"] == "attack_all" and int(high["value"]) == 10,
 		"min_height met (one hunter at/above 5) fires the reactive move")
+
+
+## backlog #86 duty 3: Boss._condition_met() dispatches on four "when" types
+## (min_height, at_sigil, undefended, max_height — boss.gd's own doc comment
+## names all four). Three of them were exercised by the tests around this one;
+## max_height — a beast reacting to a hunter being LOW rather than high, the
+## mirror image of min_height — had never been called by any test, in
+## isolation or through a real beast. No shipped beast currently authors one
+## (Content.beast_pool() data has zero "max_height" moves today), so a bug in
+## this branch would have shipped silently the moment a beast first used it,
+## exactly the class of "added but never exercised" gap rule 3 exists to close.
+func _test_backlog86_max_height_condition_picks_fallback_when_unmet() -> void:
+	var b := Boss.new("B", 30)
+	b.moves = [{"type": "attack_all", "value": 10,
+		"when": {"type": "max_height", "value": 2},
+		"fallback": {"type": "attack", "value": 14}}]
+	var high := b.current_move({"footholds": [3, 5], "blocks": [0, 0]})
+	var low := b.current_move({"footholds": [1, 5], "blocks": [0, 0]})
+	_expect(high["type"] == "attack" and int(high["value"]) == 14,
+		"max_height unmet (nobody at/below 2) falls back to the plain move")
+	_expect(low["type"] == "attack_all" and int(low["value"]) == 10,
+		"max_height met (one hunter at/below 2) fires the reactive move")
 
 
 func _test_backlog40_at_sigil_condition_needs_a_hunter_on_it() -> void:

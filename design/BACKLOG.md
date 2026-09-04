@@ -2567,6 +2567,37 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 2 (find an error and resolve it), attempted then
+  pivoted to duty 3. Last turn (`35ecba7`) was duty 1, so this one was due for
+  duty 2. Spent the whole run hunting: two independent Explore passes over
+  every file in `game/views`, `game/ui`, `game/net`, `game/session` (including
+  a full read of `game_host.gd`/`game_client.gd`, previously only skimmed as
+  "thin"), plus my own manual read of `run.gd` (reward/shop/campfire/event/key
+  flows), `card.gd` (`to_dict`/`from_dict` field parity — all 77 fields
+  match), `combat.gd` (`_meld_cards`, `preview()`/`play_card()`'s shared
+  formula, `_apply_limiter`, `_enemy_turn`'s 12 move types), `boss.gd` +
+  `combatant.gd` (save/resume field parity — confirmed already fixed),
+  `player_state.gd`, `run_map.gd`, `run_save.gd`'s migration, `progress.gd`'s
+  keybind-steal logic, and `content.gd`. Found nothing new — every promising
+  lead (Boss missing Dexterity/Intangible/Buffer/Plated Armour in save,
+  `_meld_cards` dropping fields, GOLD_UV, shop removal repricing) turned out
+  to be a bug this exact rotation already caught and fixed on an earlier
+  turn. Duty 2 is genuinely exhausted right now in every file I could reach
+  in one run, so per the "rules that still hold" escape valve, pivoted to
+  duty 3 instead and said so here rather than committing nothing.
+  Duty 3: swept every `static func` in the view/UI layer against
+  `run_tests.gd` by name and found one real, live gap — `Boss._condition_met`
+  dispatches on four "when" types (`min_height`, `at_sigil`, `undefended`,
+  `max_height`), and `max_height` (a beast reacting to a hunter being LOW,
+  the mirror of `min_height`) had never been called by any test, in isolation
+  or through a real beast. No shipped beast currently authors one, so a bug
+  there would ship silently the moment a beast first used it. Added
+  `_test_backlog86_max_height_condition_picks_fallback_when_unmet`
+  (`run_tests.gd`) mirroring the existing `min_height` test; the
+  implementation itself turned out correct (no bug, just a coverage hole) —
+  both assertions pass. `run_tests.gd`: ALL TESTS PASSED (fresh import,
+  headless, godot 4.7.1). Next `#86` turn is duty 1 (improve an asset).
+
 - **2026-09-04** — #86 duty 1 (improve an asset, portraits/icons only). Last
   turn (`d54278b`) was duty 3, so this one is duty 1. Scanned every scored
   portrait/icon's progress file for the lowest total that (a) had never had
