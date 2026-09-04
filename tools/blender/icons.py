@@ -454,14 +454,15 @@ def burn(i):                                    # exhaust a card
     i.slabf(-0.10, -0.06, 0.26, 0.38, LINEN, rot=0.12)
     i.slabf(-0.10, 0.16, 0.22, 0.10, CHARCOAL, rot=0.12)
     for x, z, h in [(0.22, 0.10, 0.44), (0.36, -0.06, 0.32), (0.10, 0.26, 0.30)]:
-        i.spike(x, z, 0.10, 0.008, h, BRICK if x > 0.2 else ORANGE, seg=5)
+        i.spike(x, z, 0.10, 0.008, h, TANGERINE, seg=5)
     # pass 2 (design/progress/burn_icon.md): Family distinction (5/10) named
     # `draw` and this batch's own `stack` as the same base rectangle -- a
     # plain card slab plus one extra element, three times over. Biting a
     # jagged charred notch into the card's own top-right corner, right where
     # the flame already licks it, breaks the rectangle silhouette itself
     # instead of relying only on what sits behind it.
-    for x, z, s in [(0.14, 0.30, 0.09), (0.20, 0.18, 0.07), (0.10, 0.36, 0.06)]:
+    for x, z, s in [(0.14, 0.30, 0.09), (0.20, 0.18, 0.07), (0.10, 0.36, 0.06),
+                    (0.02, 0.32, 0.07), (0.16, 0.06, 0.05)]:
         i.spike(x, z, s, 0.01, s * 1.6, CHARCOAL, ang=0.9, seg=3)
     # Mechanic match (6/10): the three flame bodies pixel-sampled as one flat,
     # uniformly-lit brick/orange band with no brighter core -- the same
@@ -471,6 +472,15 @@ def burn(i):                                    # exhaust a card
     # cone's own tip (z=0.10+0.22=0.32), reads as a glowing core rather than
     # a flat spike.
     i.spike(0.22, 0.22, 0.045, 0.006, 0.30, GOLD, seg=5)
+    # pass 3 (#86 duty 1): Family (7/10) named the card BODY itself as still
+    # the same plain LINEN slab `draw`/`stack` use, only one small corner
+    # broken up by pass 2's three flecks. Two more CHARCOAL flecks spread the
+    # jagged edge further along the top and down the right side, so the
+    # charred silhouette reads as a bigger burnt bite out of the card rather
+    # than a single small nick. Colour (7/10) named the BRICK/ORANGE cone
+    # bodies as the icon's weakest-separated element against the brown card
+    # standin; swapped both to TANGERINE, the same saturated flame tone
+    # `fire()` already uses, for a stronger measured gap.
 
 
 def stack(i):                                   # draw / hand size

@@ -8547,3 +8547,29 @@ Newest first. One line per finished item: what, and anything surprising.
   PASSED (fresh import, headless; confirmed the new test both fails without
   the fix and passes with it). Next `#86` turn is duty 3 (verify a mechanic
   actually works).
+- **2026-09-04** — #86 duty 1 (improve an asset — portraits/icons). Last turn
+  (`9faa748`) was duty 3, so this was duty 1. `burn_icon.md` was tied lowest
+  (37/50 by its own per-line values, though pass 2's own summary line
+  mis-added them as 36 — noted, not corrected further) alongside `rally_icon`
+  and `fire_icon`, both already 3 of 4 passes deep; picked `burn` for having
+  a clean pass left. Two lowest lines: Family (7) and Colour (7). First
+  attempt at Family — a solid BRICK patch over the card's LINEN corner —
+  rendered as a red sticker sitting on top of the corner and hid pass 2's own
+  charcoal flecks underneath; looked at the render, didn't like it, reverted
+  before scoring it. Replaced with two more small charcoal flecks extending
+  pass 2's existing jagged-corner technique further along the top and right
+  edges instead. For Colour, swapped the flame cones from BRICK/ORANGE to
+  TANGERINE; pixel-sampled the actual rendered cone body before and after —
+  old sampled `(144,87,78)` against the `(139,105,74)` card standin (a
+  near-zero, green-reversed gap), new sampled `(174,119,89)` (a real positive
+  gap on all three channels) — the same "flat swatch reads fine, shaded
+  surface doesn't" trap prior icon passes have hit. Score 37 → 41 (Family
+  7→8, Colour 7→9, Silhouette 7→8 as a side effect of the bigger charred
+  bite, Mechanic and Style unchanged at 8). Crosses the 40/50 stop line, so
+  this asset is done for now per `asset-loop.md`'s own stop condition.
+  Rebuilt the full `icons.py` batch (apt Blender 4.0.2, headless EGL);
+  diffed all 36 PNGs against `HEAD` by mean pixel difference and reverted the
+  35 that only carried WORKBENCH render noise, keeping `burn.png` (mean 1.96,
+  clearly real content). `run_tests.gd`: ALL TESTS PASSED (fresh import,
+  headless, godot 4.7.1). Next `#86` turn is duty 2 (find an error and
+  resolve it).

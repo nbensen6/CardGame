@@ -198,3 +198,105 @@ future pass — tinting the LINEN slab itself toward a scorched tone, rather
 than only marking one corner, is the more thorough fix but wasn't one of
 this pass's two named lines and risks reading as restyling rather than a
 targeted repair.
+
+## Pass 3 — #86 duty 1
+
+Note first: pass 2's own per-line table (Silhouette 7, Family 7, Mechanic 8,
+Colour 7, Style 8) sums to 37, not the 36 its own "+3 total (33 → 36)" line
+claims — a pre-existing arithmetic slip in that pass's own summary, not
+touched here. Took the per-line values (37) as the real baseline, not the
+stated sum.
+
+Two lowest of those five: Family (7) and Colour (7), tied with Silhouette
+(7) — picked Family and Colour because both already had a named, unapplied
+concrete fix on record (this file's own pass-2 Unsure section, and pass 1's
+original Colour diagnosis about the cone body's weak separation).
+
+Tried the first idea for Family — a solid BRICK patch box laid over the
+LINEN slab's corner, the same overlapping-slab construction `draw()` uses —
+and rejected it after actually looking: `design/renders/burn_icon_pass3_full.png`
+(first attempt, not committed) showed a clean rectangular red patch sitting
+on the corner like a second card or a sticker, not a scorch mark, and it
+fully hid the pass-2 charcoal flecks underneath instead of joining them. Per
+the honesty rule, reverted rather than kept a fix that looked worse on
+inspection.
+
+Applied instead:
+
+1. **Family (7).** Concrete fix: two more CHARCOAL `spike()` flecks
+   (`(0.02, 0.32, 0.07)`, `(0.16, 0.06, 0.05)`) added to the existing three,
+   spreading the jagged charred edge further along the top and partway down
+   the right side, so the bite out of the card's silhouette is bigger and
+   less like a single small nick — same primitive and colour as pass 2, more
+   of it.
+2. **Colour (7).** Concrete fix: the diagnosis in pass 1 named the BRICK/
+   ORANGE cone bodies as reading close to the brown card standin; swapped
+   both to TANGERINE (`fire()`'s own flame tone, already this set's warm-fire
+   vocabulary).
+
+Rebuilt with apt's Blender 4.0.2, headless EGL. Console for `burn`: `TRIS 258
+PARTS 6 BUDGET 700 ok`, no warnings. Diffed all 36 icons by mean per-channel
+pixel difference against `HEAD`: every icon but `burn.png` came back ≤6.7
+(ordinary WORKBENCH render noise, the threshold prior passes have used),
+`burn.png` at mean 1.96/max 255 — real content change. Reverted the other 35,
+kept only `burn.png`.
+
+Verified both fixes directly, not from the geometry alone:
+
+- **Colour, pixel-sampled.** Cropped a clean patch of cone body
+  (`x∈[150,210], y∈[140,190]`, no gold/charcoal in frame) from both the old
+  and new PNG. Old (BRICK) sampled `(144, 87, 78)` against the standin
+  `(139, 105, 74)` — a near-zero, and on green *reversed*, gap (+5, −18, +4).
+  New (TANGERINE) sampled `(174, 119, 89)` against the same standin — a real
+  positive gap on all three channels (+35, +14, +15). The exact "flat swatch
+  reads fine, shaded surface doesn't" trap `rope_icon.md`/`rally_icon.md`
+  both hit, confirmed and fixed the same way: measure the rendered pixel, not
+  the palette entry.
+- **Family, by render comparison.** `design/renders/burn_icon_pass3_sil.png`
+  against pass 2's own `burn_icon_pass2_sil.png`: pass 2's charred bite is a
+  small ragged point near the top corner; pass 3's spreads across more of the
+  top edge and partway down the right side, a visibly bigger break from the
+  clean rectangle `draw`/`stack` still are. Same comparison at 42px
+  (`burn_icon_pass3_42px_big.png` against the pass-2 equivalent) shows the
+  same gap, smaller but still visible at that size.
+
+| Pass | Silhouette@42px | Family | Mechanic | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 1 | 7 | 5 | 6 | 7 | 8 | **33** |
+| 2 | 7 | 7 | 8 | 7 | 8 | **37** |
+| 3 | 8 | 8 | 8 | 9 | 8 | **41** |
+
+- **Family distinction (7 → 8):** confirmed by the silhouette comparison
+  above — a bigger, more spread charred bite. Not higher: the card BODY
+  itself is still the same plain LINEN slab `draw`/`stack` share; every fix
+  so far has stayed at the edge rather than touching the base shape.
+- **Colour & contrast (7 → 9):** the measured pixel gap went from
+  near-zero/reversed to a solid positive margin on all three channels,
+  addressing pass 1's own "weakest element" finding directly. Not a 10: the
+  tight concave crease where a cone meets the card (an AO shadow, not a flat
+  swatch) wasn't re-measured and may still sit closer to the standin.
+- **Silhouette @ 42px (7 → 8, side effect, not one of the two named lines):**
+  the same enlarged charred bite that fixed Family also reads more clearly
+  as a non-rectangular notch at 42px, confirmed in the downsample comparison
+  above.
+- **Mechanic match (8, unchanged):** neither fix touched the flame-plus-card
+  reading itself.
+- **Style consistency (8, unchanged):** `spike()` with `CHARCOAL` and
+  `TANGERINE` are both already this set's vocabulary; nothing new was
+  introduced.
+
+**+4 total (37 → 41), not a plateau — kept. Crosses the 40/50 stop line.**
+No line regressed. `run_tests.gd`: **ALL TESTS PASSED** (fresh import,
+headless, godot 4.7.1). Stopping here per `design/asset-loop.md`'s own stop
+condition — 3 of 4 passes used, and another pass would be chasing points
+past the line the loop itself says is "shippable and good."
+
+## Unsure about (pass 3)
+
+Whether the charred-corner read is specific to fire (versus "torn or old",
+this file's own pass-2 Unsure question) is still open — nothing this pass
+did addresses it, since both fixes were colour/spread, not a new cue. Also
+unsure whether the concave-crease shadow noted under Colour above is worth a
+fourth pass; it's a normal AO shadow in a tight corner, not a flat-colour
+near-miss, so it may not respond to a swatch swap the way the cone bodies
+did, and the score is already past the stop line.
