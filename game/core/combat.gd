@@ -1158,7 +1158,7 @@ func _resolve_prepared(pi: int) -> void:
 	match ps.prepared:
 		"jetpack":  # rockets you straight to the weak point — the Engineer's climb answer
 			ps.prepared = ""
-			if boss.weak_point_height > 0:
+			if boss.weak_point_height > ps.foothold:  # never knock a hunter who climbed past the sigil back down
 				var foothold_before_jetpack := ps.foothold
 				ps.foothold = boss.weak_point_height
 				_log("%s's jetpack fires — rocketed to the weak point!" % ps.combatant.name)

@@ -210,6 +210,7 @@ func _init() -> void:
 	_test_detonator_does_not_count_its_own_sacrifice()
 	# Goblin Engineer cards
 	_test_jetpack_prepares_climb()
+	_test_jetpack_never_lowers_a_higher_foothold()
 	_test_grappling_arm_pulls_ally()
 	_test_build_mech_scales()
 	_test_burn_coal_exhaust_and_cheapen()
@@ -3285,6 +3286,19 @@ func _test_jetpack_prepares_climb() -> void:
 	combat.end_turn(1)  # round turns over -> jetpack fires at next turn's start
 	_expect(armed and combat.players[0].foothold == 4 and combat.players[0].prepared == "",
 		"Goblin Jetpack arms now and rockets to the weak point next turn")
+
+
+func _test_jetpack_never_lowers_a_higher_foothold() -> void:
+	var boss := Boss.new("Jet", 500)
+	boss.moves = [{"type": "block", "value": 0}]  # benign enemy turn
+	boss.weak_point_height = 4
+	var combat := _new_combat([_deck_of(_jetpack, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.play_card(0, _first_playable(combat, 0))  # prime the jetpack (not immediate)
+	combat.players[0].foothold = 10  # already climbed well past the sigil via ordinary cards
+	combat.end_turn(0)
+	combat.end_turn(1)  # round turns over -> jetpack fires at next turn's start
+	_expect(combat.players[0].foothold == 10,
+		"Goblin Jetpack only raises foothold to the weak point, never knocks a higher climb back down")
 
 
 func _test_grappling_arm_pulls_ally() -> void:

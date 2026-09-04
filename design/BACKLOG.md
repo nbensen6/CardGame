@@ -2567,6 +2567,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 2 (find an error and resolve it). Last turn
+  (`22e53fa`) was duty 1 (burn icon), so this one was due for duty 2. Read
+  `combat.gd`'s foothold-mutating call sites end to end looking for the "two
+  copies of one truth" / "first-pass hole" shapes duty 2 hunts for, and found
+  a real one in `_resolve_prepared()`'s Goblin Jetpack case: every other
+  foothold-raising call site in the file either adds to the current foothold
+  or checks the destination is higher before writing it, but the jetpack's
+  delayed-fire branch did `ps.foothold = boss.weak_point_height`
+  unconditionally. A hunter who climbs past the sigil first with ordinary
+  grip cards (normal play for the `damage_per_foothold` archetype — see
+  Mountain Climbers) and then has a jetpack fire on top of that gets knocked
+  BACK DOWN to the weak point, silently erasing the climb, its foothold-scaling
+  bonuses, and any lift a roped ally would otherwise have gotten (`_lift_roped_ally`
+  only fires on a net increase, so it correctly did nothing — the bug was
+  entirely the unconditional overwrite one line above it). The two existing
+  jetpack tests never caught this because both start the hunter at foothold 0,
+  which is below every boss's `weak_point_height`. Wrote a failing test first
+  (`_test_jetpack_never_lowers_a_higher_foothold`, foothold set to 10 against a
+  weak point of 4), watched it fail (`foothold == 4`, expected `10`), then
+  fixed it by gating the whole branch on `boss.weak_point_height > ps.foothold`
+  instead of `> 0`, so the jetpack is a no-op (correctly, since nothing
+  happened) once the hunter is already at or past the sigil. `run_tests.gd`:
+  ALL TESTS PASSED (fresh import, headless, godot 4.7.1) — new test added,
+  no existing test touched. No gameplay values changed, this is a bug fix
+  plus a regression test. Runner-up not pursued: `_adds_turn()`'s add-attack
+  branch omits `add.strength` that the boss's own attack branch includes, but
+  it's unreachable with live data today (no add sets nonzero `strength`), so
+  it's a latent asymmetry worth a comment or fix later, not a live bug now.
+  Next `#86` turn is duty 3 (verify a mechanic actually works).
+
 - **2026-09-04** — #86 duty 3 (verify a mechanic actually works). Last turn
   (`a65b691`) was duty 2, so this one was due for duty 3. Every static pure
   function already lifted out of `combat_3d.gd`, `overworld_3d.gd` and
