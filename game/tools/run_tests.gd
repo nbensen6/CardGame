@@ -433,6 +433,7 @@ func _init() -> void:
 	_test_backlog59_scry_survives_playerstate_dict_round_trip()
 	_test_backlog59_scry_survives_mid_combat_save_and_load()
 	_test_backlog59_ally_sees_the_scry_reveal()
+	_test_backlog86_second_scry_before_resolve_does_not_lose_the_first_batch()
 	# Reaching into the draw pile (backlog #68): put a card on top, shuffle one
 	# in, pull a named one out — the draw pile's order stops being pure luck.
 	_test_backlog68_topdeck_puts_a_card_on_top_of_the_draw_pile()
@@ -7066,6 +7067,49 @@ func _test_backlog59_scry_reveals_and_resolve_scry_bins_and_keeps_order() -> voi
 		and (ps.draw_pile[3] as Card).id == "e" and (ps.draw_pile[2] as Card).id == "c"
 		and (ps.draw_pile[1] as Card).id == "b" and (ps.draw_pile[0] as Card).id == "a",
 		"kept cards return to the top of the draw pile in the same order they were revealed")
+
+
+## #86 duty 2: play_card()'s scry branch used to OVERWRITE ps.scry_pending
+## outright, and _peek_top() already pops its cards straight off draw_pile —
+## so a second scry played before the first was resolved didn't just discard
+## the first reveal, it destroyed those cards: not in hand, draw, discard or
+## exhaust, gone for the rest of the fight. Reachable with cards.json's own
+## "Peer Ahead" (cost 1, scry 2) and "Read The Climb" (cost 1, scry 4) — two
+## cheap cards, no UI gate forces a resolve between plays.
+func _test_backlog86_second_scry_before_resolve_does_not_lose_the_first_batch() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var a := Card.from_dict({"id": "a", "name": "A", "type": "skill", "cost": 0})
+	var b := Card.from_dict({"id": "b", "name": "B", "type": "skill", "cost": 0})
+	var c := Card.from_dict({"id": "c", "name": "C", "type": "skill", "cost": 0})
+	var d := Card.from_dict({"id": "d", "name": "D", "type": "skill", "cost": 0})
+	var e := Card.from_dict({"id": "e", "name": "E", "type": "skill", "cost": 0})
+	var f := Card.from_dict({"id": "f", "name": "F", "type": "skill", "cost": 0})
+	var g := Card.from_dict({"id": "g", "name": "G", "type": "skill", "cost": 0})
+	ps.draw_pile = [a, b, c, d, e, f, g]   # g is the "top" — pop_back() draws it first
+	ps.hand = [
+		Card.from_dict({"id": "peer_ahead", "name": "Peer Ahead", "type": "skill", "cost": 1, "scry": 2}),
+		Card.from_dict({"id": "read_the_climb", "name": "Read The Climb", "type": "skill", "cost": 1, "scry": 3}),
+	]
+	ps.energy = 3
+	combat.play_card(0, 0)   # scries g, f
+	_expect(ps.scry_pending.size() == 2, "the first scry reveals its own cards before a second is played")
+	combat.play_card(0, 0)   # the second card slid to index 0 once the first left the hand
+	var ids: Array = []
+	for card_v in ps.scry_pending:
+		ids.append((card_v as Card).id)
+	_expect(ids == ["g", "f", "e", "d", "c"],
+		"a second scry played before the first resolves APPENDS to the pending reveal instead of replacing it, so no card is lost")
+
+	var ok := combat.resolve_scry(0, [0, 4])   # bin "g" and "c", keep f, e, d
+	_expect(ok and ps.scry_pending.is_empty(), "resolve_scry still clears the whole merged reveal")
+	# draw_pile was [a, b] after both peeks popped g,f,e,d,c off it; kept (f, e,
+	# d) return to the top in the same order they were revealed, so f is next.
+	_expect(ps.draw_pile.size() == 5
+		and (ps.draw_pile[4] as Card).id == "f" and (ps.draw_pile[3] as Card).id == "e"
+		and (ps.draw_pile[2] as Card).id == "d" and (ps.draw_pile[1] as Card).id == "b"
+		and (ps.draw_pile[0] as Card).id == "a",
+		"the kept cards from both batches return to the top of the draw pile in reveal order")
 
 
 func _test_backlog59_resolve_scry_validates_bad_input() -> void:

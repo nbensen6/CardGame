@@ -2567,6 +2567,33 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 2 (find an error and resolve it). Last turn
+  (`9b474b0`) was duty 1, so this one was due for duty 2. Delegated a focused
+  Explore pass over `combat.gd` (1639 lines) end to end, looking specifically
+  for "first-pass holes" and "two copies of one truth" — the two bug families
+  named in this duty's own instructions — since an earlier duty 2 run today
+  had already swept `game_host.gd`/`game_client.gd`/`run.gd` and most of
+  `combat.gd`'s named functions clean. It found a real one in the Scry
+  mechanic (backlog #59), a corner nobody had looked at yet: `play_card()`'s
+  scry branch did `ps.scry_pending = _peek_top(ps, card.scry)` — a bare
+  overwrite, not an append. `_peek_top()` physically pops cards off
+  `draw_pile` before handing them back, so they exist NOWHERE ELSE while
+  pending. Nothing stopped a hunter from playing a second scry card
+  (cards.json has two, both cost 1, `BASE_ENERGY` is 3) before calling
+  `resolve_scry()` on the first — the second play's overwrite silently
+  destroyed the first batch: not in hand, draw, discard, or exhaust, gone for
+  the rest of the fight (and through a save, since `to_dict` just serializes
+  whatever `scry_pending` happens to hold). All five existing scry tests only
+  ever played one scry card before resolving, so none caught it. Fixed by
+  appending the new peek onto `scry_pending` instead of replacing it, which
+  also keeps the reveal in correct draw order since `_peek_top` continues
+  from wherever the previous peek left off. Wrote
+  `_test_backlog86_second_scry_before_resolve_does_not_lose_the_first_batch`
+  first, confirmed it fails on the pre-fix code (reverted the fix, reran,
+  watched it fail — restored it), then confirmed it passes with the fix.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1).
+  Next `#86` turn is duty 3 (verify a mechanic actually works).
+
 - **2026-09-04** — #86 duty 1 (improve an asset, portraits/icons only). Last
   turn (`4a57fc0`) was duty 3 and its own log entry named duty 1 as next.
   Scanned every scored icon/portrait's progress file for the lowest total

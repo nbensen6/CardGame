@@ -870,9 +870,16 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		_draw(ps, keen_draw)
 		_log("%s's Keen card draws %d more." % [who, keen_draw])
 	if card.scry > 0:  # backlog #59 — reveal, then resolve_scry() decides what stays
-		ps.scry_pending = _peek_top(ps, card.scry)
-		if not ps.scry_pending.is_empty():
-			_log("%s plays %s — scries the top %d." % [who, card.name, ps.scry_pending.size()])
+		# APPEND, never overwrite: a second scry played before the first is
+		# resolved used to replace ps.scry_pending outright, and the cards it
+		# was pointing at were already popped off draw_pile by _peek_top() —
+		# not in hand, draw, discard or exhaust, just gone for the rest of the
+		# fight (#86 duty 2). Appending keeps both batches, front-to-back in
+		# the same order they'd have been drawn.
+		var peeked := _peek_top(ps, card.scry)
+		if not peeked.is_empty():
+			ps.scry_pending.append_array(peeked)
+			_log("%s plays %s — scries the top %d." % [who, card.name, peeked.size()])
 	if card.topdeck != "":  # backlog #68 — put a card on TOP of the draw pile: the end of
 		# the array, the same end _draw()/_peek_top() pop from.
 		var topped := Content.make_card(card.topdeck)
