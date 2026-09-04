@@ -222,6 +222,7 @@ func _init() -> void:
 	_test_satchel_charge_detonates()
 	_test_rhythm_builds_and_scales()
 	_test_vine_weaver_poison_and_wound()
+	_test_backlog86_power_triggered_poison_lifts_the_vine_weaver_ally()
 	_test_summit_strike_scales_with_both()
 	# step 4: run / meta-progression
 	_test_run_starts_in_combat()
@@ -3179,6 +3180,22 @@ func _test_vine_weaver_poison_and_wound() -> void:
 	combat.play_card(0, 0, true)  # Wound 1 -> 2 + 2*1 + 3 = 7
 	_expect(d1 == 5 and lifted and before2 - combat.boss.hp == 7,
 		"Vine-Weaver: poison lifts the ally, and strikes scale with Wound stacks")
+
+
+func _test_backlog86_power_triggered_poison_lifts_the_vine_weaver_ally() -> void:
+	# play_card()'s own Poison branch checks poison_lift and lifts the ally, but
+	# _handle_power_effects()'s "wound" case (the turn_end payout for a power
+	# card like Seeping Venom) is a separate copy of that same Poison landing
+	# and never checked it — so a power-triggered Poison silently skipped the
+	# Vine-Weaver's climb bonus while a played Poison card granted it (#86 duty 2).
+	var combat := _new_combat_p([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42,
+		_dummy_boss(300), [{"type": "poison_lift", "value": 1}, {}])
+	var ps: PlayerState = combat.players[0]
+	ps.powers["test_poison"] = {"stacks": 1, "value": 2, "effect": "wound", "name": "Test Poison"}
+	var ally_before: int = combat.players[1].foothold
+	combat.end_turn(0)
+	_expect(combat.boss.wound == 2 and combat.players[1].foothold == ally_before + 1,
+		"a power's recurring Poison lifts the Vine-Weaver's ally too, not just a played card's")
 
 
 func _test_summit_strike_scales_with_both() -> void:

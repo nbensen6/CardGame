@@ -2567,6 +2567,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 2 (find an error and resolve it). Last turn
+  (`ffcedff`) was duty 1, so this one was due for duty 2. Delegated an Explore
+  pass over every `game/core/*.gd` file plus `combat_3d.gd`, hunting the two
+  named bug families; it ranked two real "two copies of one truth" findings in
+  `combat.gd`, both a character passive coded once at ONE call site for a
+  piece of state instead of at every place that state actually changes. Took
+  the higher-severity one: `play_card()`'s Poison branch (line ~721) checks
+  `ps.poison_lift` and lifts the Vine-Weaver's ally when a Poison CARD lands,
+  but `_handle_power_effects()`'s `"wound"` case — the turn_end payout for a
+  power card like Seeping Venom (`power_effect:"wound"`, a real, draftable
+  card) — does the identical `boss.wound += amount` with no `poison_lift`
+  check at all. A Vine-Weaver who drafts Seeping Venom instead of (or beside)
+  Toxic Lash silently loses the ally-lift every single turn the power pays
+  out, with nothing in the log or the UI to say so. `_test_vine_weaver_
+  poison_and_wound` only ever exercised the played-card path, so this sat
+  unnoticed since the power-effects payout path was added. Wrote
+  `_test_backlog86_power_triggered_poison_lifts_the_vine_weaver_ally` first
+  (hand-builds a `ps.powers` entry with `effect:"wound"` and calls
+  `end_turn(0)`, mirroring `_test_artifact_wards_off_a_power_triggered_poison_
+  and_expose`'s existing pattern for reaching this same payout site),
+  confirmed it fails on the pre-fix code (1 test failed, exactly this one),
+  then added the missing `poison_lift` branch to `_handle_power_effects`'s
+  `"wound"` case — needed threading `ctx["index"]` through as `pi` since the
+  handler previously only unpacked `ctx["player"]` — and confirmed it passes.
+  Left the second finding from the same Explore pass (Mountain Climbers'
+  `ally_climb` never firing from a climb potion or the Jetpack, same family,
+  same file) for the next duty-2 run rather than doing two fixes in one turn.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1).
+  Next `#86` turn is duty 3 (verify a mechanic actually works).
+
 - **2026-09-04** — #86 duty 1 (improve an asset, portraits/icons only). Last
   turn (`8aa62a1`) was duty 3, so this one was due for duty 1.
   `boulder_ram_portrait` (30) and `mountain_climbers_portrait` (33) were the

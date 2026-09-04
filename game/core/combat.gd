@@ -1529,6 +1529,7 @@ func _handle_opening_relics(ctx: Dictionary) -> void:
 ## already use for their own {effect, value} pair.
 func _handle_power_effects(ctx: Dictionary) -> void:
 	var ps: PlayerState = ctx["player"]
+	var pi: int = int(ctx["index"])
 	for id in ps.powers.keys():
 		var entry: Dictionary = ps.powers[id]
 		var amount: int = int(entry.get("value", 0))
@@ -1566,6 +1567,10 @@ func _handle_power_effects(ctx: Dictionary) -> void:
 				else:
 					boss.wound += amount
 					_log("%s's %s triggers — Poison %d on %s." % [ps.combatant.name, pname, boss.wound, boss.name])
+					if ps.poison_lift > 0:  # Vine-Weaver: the vines feed on the poison and lift the ally (same rule play_card's Poison branch applies)
+						var fed_ally: PlayerState = players[ally_index(pi)]
+						fed_ally.foothold = mini(fed_ally.foothold + ps.poison_lift, FOOTHOLD_MAX)
+						_log("%s's vines surge — %s climbs +%d." % [ps.combatant.name, fed_ally.combatant.name, ps.poison_lift])
 			"vulnerable":
 				if boss.try_block_debuff():
 					_log("%s's Artifact wards off %s's Expose." % [boss.name, ps.combatant.name])
