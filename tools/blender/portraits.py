@@ -28,7 +28,7 @@ from mathutils import Vector
 ## shoulders near the top; the exceptions are creatures whose face is not there.
 FOCUS = {
     "frog": (0.71, 0.75), "vine_weaver": (0.77, 0.67),
-    "mountain_climbers": (0.73, 0.72), "goblin_mech": (0.67, 0.84),
+    "mountain_climbers": (0.73, 0.72), "goblin_mech": (0.62, 0.94),
     "lightbearer": (0.69, 0.78),
 
     "stone_warden": (0.73, 0.67), "gale_serpent": (0.87, 0.44),

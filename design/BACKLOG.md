@@ -2567,6 +2567,44 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 1 (improve an asset, portraits/icons only). Last
+  turn (`8aa62a1`) was duty 3, so this one was due for duty 1.
+  `boulder_ram_portrait` (30) and `mountain_climbers_portrait` (33) were the
+  two lowest-scoring items never fixed, but both diagnoses point squarely at
+  model geometry (horn shape, an ice-axe shard), out of this lane's file
+  ownership. Next lowest, `goblin_mech_portrait` (34), had one line
+  (Framing) genuinely fixable in `portraits.py` and one (Readability@34px)
+  already flagged as model-only — same shape as the prior two duty-1
+  passes on `bog_leech_portrait`/`thrasher_portrait`, apply the one that's
+  in-lane. Re-rendering the committed PNG before touching anything (apt
+  Blender 4.0.2) matched it exactly (0 pixel diff), then a measured alpha
+  bbox turned up a real disagreement with this file's own pass-1 write-up:
+  the write-up named the orange exhaust "crowding the top-right corner",
+  but the actual clipped element was the ordinary green arm's hand, touching
+  the frame's *left* edge (`x: 0-447` on a 512 canvas). Fixed the one
+  actually broken, not the one described: `FOCUS["goblin_mech"]` moved from
+  `(0.67, 0.84)` to `(0.62, 0.94)`, found by sweeping `span` and `at`
+  independently and reading the alpha bbox after each render rather than by
+  eye — one sweep direction went the opposite of the intuitive guess
+  (lowering `at` shrank top headroom instead of growing it), which a blind
+  "nudge down" would have gotten backwards. New bbox `(16, 57, 486, 511)`:
+  hand clip gone, top/bottom margins preserved from pass 1. Rebuilding the
+  full 33-portrait set to get the one changed file surfaced a second,
+  unrelated finding: `frog.png`, `thrasher.png` and `yoke_ox.png` rendered
+  with far larger diffs than the usual WORKBENCH noise floor, and `frog` in
+  particular came out as a completely different image — an extreme,
+  mistaken close-up on one eye instead of the committed head shot,
+  reproduced twice in isolation. Not chased down here (out of scope for a
+  one-line framing fix); written up as an open question in
+  `design/progress/goblin_mech_portrait.md` for whichever duty-2 run reads
+  it next — worth a look since it means at least one model/FOCUS
+  combination renders wrong under this container's Blender 4.0.2 even
+  though most of the cast doesn't. All three reverted along with the other
+  29 untouched portraits; only `goblin_mech.png` is committed. Framing 7→9,
+  total 34→37/50, not a plateau. `run_tests.gd`: ALL TESTS PASSED (fresh
+  import, headless, godot 4.7.1). Next `#86` turn is duty 2 (find an error
+  and resolve it).
+
 - **2026-09-04** — #86 duty 3 (verify a mechanic actually works). Last turn
   (`52418dc`) was duty 2, so this one was due for duty 3. The rotation's own
   "start here" pointer (the untested VIEW-layer climb math in `combat_3d.gd`)
