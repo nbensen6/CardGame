@@ -661,6 +661,13 @@ func _init() -> void:
 	_test_backlog86_next_selection_state_ignores_repicking_the_same_sac_card()
 	_test_backlog86_next_selection_state_fires_once_both_picks_land()
 	_test_backlog86_next_selection_state_fires_immediately_for_a_one_pick_card()
+	# backlog #86 duty 3: soft_fall's landing spot (_hold_below, behind
+	# Combat.fall()) has its own unsafe-hold skip, mirroring next_safe_height's,
+	# but nothing had ever proved a fall actually lands where the rules say --
+	# Nick's own words for duty 3. next_safe_height's unsafe-skip (climbing UP)
+	# was covered; the falling-DOWN half of the same rule was not.
+	_test_backlog86_soft_fall_skips_an_unsafe_hold_when_landing()
+	_test_backlog86_soft_fall_drops_to_base_when_only_hold_below_is_unsafe()
 
 	print("")
 	if _failures == 0:
@@ -3018,6 +3025,39 @@ func _test_named_holds_dict_shape_and_unsafe_flag() -> void:
 	var skips_unsafe_hold: bool = combat.next_safe_height(0) == 8  # 5 is unsafe — straight to the sigil
 	_expect(unsafe_hold_not_secure and legacy_int_still_secure and skips_unsafe_hold,
 		"a named hold can be marked unsafe, and legacy bare-int ledges keep working alongside it")
+
+
+func _test_backlog86_soft_fall_skips_an_unsafe_hold_when_landing() -> void:
+	# _hold_below (fall()'s soft_fall landing spot) has its own unsafe-skip
+	# check, mirroring next_safe_height's -- but nothing ever proved it. A
+	# hunter clinging above an unsafe named hold with a safe one further down
+	# must land on the safe hold, not the nearer unsafe one.
+	var boss := _climb_boss(8)
+	boss.ledges = [2, {"height": 4, "safe": false, "exposed_to": ["swipe"]}]
+	var combat := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)],
+		[Combatant.new("A", 42), Combatant.new("B", 42)], boss, 42, 0, 0, 0, 0, [], {"soft_fall": 1})
+	combat.start()
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 5  # clinging above the unsafe hold at 4
+	combat.fall(0)
+	_expect(ps.foothold == 2,
+		"soft_fall lands on the nearest SAFE hold below, skipping an unsafe named one in between")
+
+
+func _test_backlog86_soft_fall_drops_to_base_when_only_hold_below_is_unsafe() -> void:
+	# Same rule, the harder edge: when the only hold below is unsafe, there is
+	# no safe rest stop at all, so the fall goes all the way to the base --
+	# same as if no ledges existed down there.
+	var boss := _climb_boss(8)
+	boss.ledges = [{"height": 3, "safe": false, "exposed_to": ["swipe"]}]
+	var combat := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)],
+		[Combatant.new("A", 42), Combatant.new("B", 42)], boss, 42, 0, 0, 0, 0, [], {"soft_fall": 1})
+	combat.start()
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 5
+	combat.fall(0)
+	_expect(ps.foothold == 0,
+		"soft_fall drops all the way to the base when the only hold below is unsafe")
 
 
 func _test_targets_hold_card_climbs_to_a_named_hold() -> void:

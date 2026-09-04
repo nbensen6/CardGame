@@ -2567,6 +2567,25 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 3 (verify a mechanic actually works). Last turn
+  (`9b25b48`) was duty 2, so this one was due for duty 3. Nick's own duty-3
+  wording names two things to prove about the climb: "Height never exceeds
+  the weak point" and "a fall lands where the rules say" — the first already
+  has coverage, the second's harder edge did not. `next_safe_height` (climbing
+  UP) has a proven unsafe-hold skip (`_test_named_holds_dict_shape_and_
+  unsafe_flag`), but `_hold_below` — the mirror-image rule behind
+  `Combat.fall()`'s `soft_fall` relic, deciding where a hunter lands when they
+  lose their grip — had zero references anywhere in `run_tests.gd` despite
+  carrying the identical `if not Boss.hold_safe(l): continue` skip in its own
+  loop. Added two tests: falling with an unsafe named hold between the hunter
+  and a safe one below lands on the safe hold, not the nearer unsafe one; and
+  falling with *only* an unsafe hold below goes all the way to the base, same
+  as if no ledge existed there at all. Both passed against the existing code
+  with no fix needed — this was a real, previously-unproven rule, not a bug;
+  duty 2 is where a fix would belong if one had been found.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1).
+  Next `#86` turn is duty 1 (improve a portrait or icon).
+
 - **2026-09-04** — #86 duty 2 (find an error and resolve it). Last turn
   (`ffcedff`) was duty 1, so this one was due for duty 2. Delegated an Explore
   pass over every `game/core/*.gd` file plus `combat_3d.gd`, hunting the two
