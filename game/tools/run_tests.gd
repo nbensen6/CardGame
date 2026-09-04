@@ -698,6 +698,20 @@ func _init() -> void:
 	_test_backlog86_is_handheld_follows_the_force_flag()
 	_test_backlog86_is_handheld_matches_the_os_feature_when_not_forced()
 	_test_backlog86_fit_does_nothing_without_a_window()
+	# backlog #86 duty 3 (thirtieth pass): climb_marker_for, lifted out of
+	# combat_3d._gather_climb -- the rule upstream of route_between_rungs and
+	# foothold_anchor (both already covered): whether a beast model's own child
+	# node NAME is even recognised as a climb or ledge anchor in the first
+	# place. Neither of those two functions can fail on a marker that was
+	# never read, so this is the one untested step between a Blender export
+	# and a hunter having somewhere to stand.
+	_test_backlog86_climb_marker_for_reads_a_climb_anchor()
+	_test_backlog86_climb_marker_for_reads_a_ledge_anchor()
+	_test_backlog86_climb_marker_for_rejects_a_non_numeric_tail()
+	_test_backlog86_climb_marker_for_rejects_an_empty_tail()
+	_test_backlog86_climb_marker_for_ignores_an_unrelated_name()
+	_test_backlog86_climb_marker_for_is_case_sensitive_on_the_prefix()
+	_test_backlog86_climb_marker_for_accepts_a_negative_height()
 
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
@@ -7862,6 +7876,58 @@ func _test_backlog86_route_between_rungs_ignores_unsorted_input() -> void:
 	# the dictionary's insertion order to come out in climb order.
 	var route: Array = Combat3D.route_between_rungs([12, 0, 8, 4], 0, 12)
 	_expect(route == [4, 8], "the rung list is sorted before routing, regardless of the order it arrives in")
+
+
+## backlog #86 duty 3 (thirtieth pass) — climb_marker_for is the pure half of
+## _gather_climb, the step upstream of route_between_rungs and foothold_anchor
+## above: whether a child node's own NAME even registers as a climb or ledge
+## anchor at all. A beast built with a misnamed marker never throws — it just
+## has one fewer place a hunter can stand, silently, which is exactly the
+## first-pass-hole shape duty 2 keeps finding elsewhere in this file.
+func _test_backlog86_climb_marker_for_reads_a_climb_anchor() -> void:
+	var m: Dictionary = Combat3D.climb_marker_for("climb_5")
+	_expect(String(m["kind"]) == "climb" and int(m["height"]) == 5,
+		"a 'climb_<N>' node name is read as a climb anchor at Height N")
+
+
+func _test_backlog86_climb_marker_for_reads_a_ledge_anchor() -> void:
+	var m: Dictionary = Combat3D.climb_marker_for("ledge_8")
+	_expect(String(m["kind"]) == "ledge" and int(m["height"]) == 8,
+		"a 'ledge_<N>' node name is read as a ledge anchor at Height N")
+
+
+func _test_backlog86_climb_marker_for_rejects_a_non_numeric_tail() -> void:
+	var m: Dictionary = Combat3D.climb_marker_for("climb_top")
+	_expect(String(m["kind"]) == "none",
+		"a non-numeric tail ('climb_top') must be dropped rather than silently mis-parsed to Height 0 -- a beast.py typo should lose the anchor loudly, not put it at the ankle")
+
+
+func _test_backlog86_climb_marker_for_rejects_an_empty_tail() -> void:
+	var m: Dictionary = Combat3D.climb_marker_for("climb_")
+	_expect(String(m["kind"]) == "none",
+		"a bare 'climb_' with nothing after it is not a valid anchor")
+
+
+func _test_backlog86_climb_marker_for_ignores_an_unrelated_name() -> void:
+	_expect(String(Combat3D.climb_marker_for("mesh_body").get("kind")) == "none",
+		"an ordinary mesh node name is not mistaken for a climb or ledge anchor")
+	_expect(String(Combat3D.climb_marker_for("prop_climb_5").get("kind")) == "none",
+		"the prefix must lead the name -- 'climb_' buried mid-name (a marker parented under a differently-named group) does not count")
+
+
+func _test_backlog86_climb_marker_for_is_case_sensitive_on_the_prefix() -> void:
+	_expect(String(Combat3D.climb_marker_for("Climb_5").get("kind")) == "none",
+		"'Climb_5' (wrong case) is not recognised -- Blender node names are typed by hand, and a silent miss here is precisely the kind of anchor a beast quietly ships without")
+
+
+func _test_backlog86_climb_marker_for_accepts_a_negative_height() -> void:
+	# String.is_valid_int() accepts a leading '-', and beast.py is free to
+	# author a climb point below the model's own origin -- proven against the
+	# engine rather than assumed, since a false assumption here would silently
+	# drop a real anchor exactly like the bugs this whole pass is about.
+	var m: Dictionary = Combat3D.climb_marker_for("climb_-2")
+	_expect(String(m["kind"]) == "climb" and int(m["height"]) == -2,
+		"a negative Height in a marker name parses same as a positive one")
 
 
 ## backlog #86 duty 2 — _draw_gauge used to check `ledges.has(h)` straight off

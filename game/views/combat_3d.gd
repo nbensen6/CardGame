@@ -1931,6 +1931,28 @@ func _read_climb_points() -> void:
 	_gather_climb(_beast, Transform3D.IDENTITY)
 
 
+## Pure form of the marker-naming rule below: what a single child node's NAME
+## means for climb anchors, decoupled from walking the model's tree. #86 duty
+## 3 — this is the step upstream of route_between_rungs and foothold_anchor
+## (both already covered): those assume _climb_points/_ledges are already
+## right, and this is the rule that actually reads them off a beast's own
+## Blender export. A marker a beast.py script misnames — "climb5" with no
+## underscore, "climb_" with nothing after it, a stray "Climb_5" with the
+## wrong case — silently drops that Height's anchor with no error anywhere,
+## which is exactly the kind of first-pass hole duty 2 keeps finding: nothing
+## crashes, the beast just has one fewer place to stand.
+static func climb_marker_for(node_name: String) -> Dictionary:
+	if node_name.begins_with("climb_"):
+		var tail := node_name.substr(6)
+		if tail.is_valid_int():
+			return {"kind": "climb", "height": tail.to_int()}
+	elif node_name.begins_with("ledge_"):
+		var tail := node_name.substr(6)
+		if tail.is_valid_int():
+			return {"kind": "ledge", "height": tail.to_int()}
+	return {"kind": "none", "height": 0}
+
+
 ## Walks the transform down rather than reading global_position, which is only
 ## meaningful once the node is in the tree and settled.
 func _gather_climb(n: Node, xf: Transform3D) -> void:
@@ -1938,15 +1960,12 @@ func _gather_climb(n: Node, xf: Transform3D) -> void:
 		var next := xf
 		if c is Node3D:
 			next = xf * (c as Node3D).transform
-			var nm := String(c.name)
-			if nm.begins_with("climb_"):
-				var tail := nm.substr(6)
-				if tail.is_valid_int():
-					_climb_points[tail.to_int()] = next.origin * _beast_scale
-			elif nm.begins_with("ledge_"):
-				var lt := nm.substr(6)
-				if lt.is_valid_int():
-					_ledges[lt.to_int()] = true
+			var marker := climb_marker_for(String(c.name))
+			match String(marker["kind"]):
+				"climb":
+					_climb_points[int(marker["height"])] = next.origin * _beast_scale
+				"ledge":
+					_ledges[int(marker["height"])] = true
 		_gather_climb(c, next)
 
 

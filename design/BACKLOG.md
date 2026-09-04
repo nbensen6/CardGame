@@ -2567,6 +2567,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 3 (verify a mechanic actually works). Last turn
+  (`3596987`) was duty 2, so this one was due for duty 3. The climb logic in
+  `combat_3d.gd` already has heavy coverage from 29 prior duty-3 passes
+  (`route_between_rungs`, `foothold_anchor`, `hunter_move_kind`,
+  `hull_front_at`, and more), so I read `_gather_climb` — the one step
+  upstream of all of them — end to end looking for a genuinely uncovered
+  rule rather than a fourth case on something already proven. It reads a
+  beast model's child node NAMES ("climb_5", "ledge_3") to build the
+  `_climb_points`/`_ledges` dictionaries that every already-tested function
+  above assumes are already correct; nothing had ever proven that the
+  name-parsing itself is right. A beast.py typo here (wrong case, missing
+  underscore, non-numeric tail) drops that Height's anchor with no error
+  anywhere — the exact "first-pass hole" shape duty 2 keeps finding, just
+  one layer further upstream. Lifted the parsing rule out as a pure static
+  `Combat3D.climb_marker_for(node_name) -> {"kind", "height"}`, a faithful
+  refactor of the existing `begins_with`/`substr(6)`/`is_valid_int` logic
+  (behaviour unchanged — `_gather_climb` now calls it instead of inlining
+  it). Added seven tests: climb anchor, ledge anchor, non-numeric tail
+  rejected, empty tail rejected, an unrelated name ignored, prefix must
+  lead (not just appear mid-name), case sensitivity, and a negative
+  Height — the last one checked against the running engine first
+  (`String.is_valid_int()` does accept a leading `-`) rather than assumed,
+  since a wrong assumption there would have shipped a test asserting the
+  wrong thing. `run_tests.gd`: ALL TESTS PASSED (fresh import, headless,
+  godot 4.7.1). Next `#86` turn is duty 1 (improve an asset).
+
 - **2026-09-04** — #86 duty 2 (find an error and resolve it). Last turn
   (`a07f298`) was duty 1, so this one was due for duty 2. Sent an Explore
   agent through `run.gd`, `card.gd`, `content.gd`, `progress.gd` and
