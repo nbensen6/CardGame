@@ -301,11 +301,24 @@ def guard(i):                                   # block, but timed
 
 
 def wall(i):                                    # block that scales
-    for row, (z, off) in enumerate([(-0.42, 0.0), (-0.16, 0.16), (0.10, 0.0),
-                                    (0.36, 0.16)]):
+    # pass 2 (design/progress/wall_icon.md): two named fixes.
+    # Silhouette @ 42px (6): off alternated 0.0/0.16 -- an uncentred
+    # half-brick stagger whose rightmost column (x=0.48) cleared the ortho
+    # frame's own +-0.575 half-extent and was clipped flush at the canvas
+    # edge (bbox right = 256). Recentred to +-0.08 -- still a 0.16 relative
+    # stagger row to row, the same running-bond offset -- so the widest
+    # column now sits at 0.545, inside the frame on both sides.
+    # Mechanic match / Colour & contrast (tied 6): PEWTER/STONE alternated
+    # brick to brick with no row-to-row trend, so nothing suggested a wall
+    # being built up. One shade per row now, darkest at the bottom rising to
+    # lightest at the top -- a real gradient at 42px instead of a two-tone
+    # flicker, with a bigger value gap between rows than the old checker had
+    # between neighbours.
+    for row, (z, off, uv) in enumerate([
+        (-0.42, -0.08, STONE), (-0.16, 0.08, PEWTER),
+        (0.10, -0.08, SLATE), (0.36, 0.08, STEEL)]):
         for k in (-1, 0, 1):
-            i.slabf(k * 0.32 + off, z, 0.145, 0.105,
-                    PEWTER if (row + k) % 2 else STONE)
+            i.slabf(k * 0.32 + off, z, 0.145, 0.105, uv)
 
 
 def ascend(i):                                  # a big climb

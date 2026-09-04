@@ -2567,6 +2567,33 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 1 (improve an asset, portraits/icons only). Last
+  turn (`83b8d24`) was duty 3, so this one was due for duty 1. Picked
+  `wall_icon.md` — lowest-scoring un-plateaued icon at 35/50 with a fix
+  already diagnosed and no fixer-only (model-geometry) blocker, unlike the
+  lower-scoring portraits checked first (`boulder_ram_portrait`,
+  `mountain_climbers_portrait`): both of those diagnosed fixes needed
+  `tools/blender/<beast>.py` geometry changes, out of this lane's file
+  ownership, so they stay logged for the fixer and untouched here. Applied
+  both of `wall_icon.md`'s named fixes in `icons.py`'s `wall()`: recentred
+  the running-bond `off` from `0.0`/`0.16` to `+-0.08` per row (same 0.16
+  relative stagger, no longer pushed off the camera's own `+-0.575` ortho
+  frame — the alpha bbox was flush at `x=256` before, `(6, 24, 250, 246)`
+  after), and replaced the two-tone `PEWTER`/`STONE` per-brick checkerboard
+  with one swatch per row (`STONE` at the bottom rising through `PEWTER`,
+  `SLATE`, to `STEEL` at the top) so the grid reads as a wall being built up
+  rather than a flat pattern. Rebuilt with apt's Blender 4.0.2 (needed
+  `apt install blender python3-numpy` first — a fresh container, same
+  numpy-for-the-gltf-exporter gap `fire_icon.md`/`rally_icon.md`'s passes
+  hit); diffed all 36 icons against `HEAD` and reverted the 35 the rebuild
+  touched but this pass didn't, keeping only `wall.png`. Looked at the
+  full render, a real 42px Lanczos downsample, and the alpha silhouette —
+  full detail and score in `design/progress/wall_icon.md`. 35 → 41/50,
+  clearing the loop's 40-point stop line in one pass; both named lines
+  gained and nothing regressed.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1).
+  Next `#86` turn is duty 2 (find an error and resolve it).
+
 - **2026-09-04** — #86 duty 3 (verify a mechanic actually works). Last turn
   (`9b25b48`) was duty 2, so this one was due for duty 3. Nick's own duty-3
   wording names two things to prove about the climb: "Height never exceeds
