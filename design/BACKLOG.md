@@ -2567,6 +2567,31 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 3 (verify a mechanic actually works). Last turn
+  (`52418dc`) was duty 2, so this one was due for duty 3. The rotation's own
+  "start here" pointer (the untested VIEW-layer climb math in `combat_3d.gd`)
+  turned out to already be fully covered — `route_between_rungs`,
+  `foothold_anchor` and everything else it named had already had 26 prior
+  duty-3 passes written against them, one of which literally is that exact
+  suggestion. Went hunting elsewhere instead: `Combatant.try_block_debuff()`
+  (Artifact's ward-off-a-debuff rule, backlog #36) is called from FOUR sites
+  in `combat.gd` — a played Poison card, a played Expose card, and each of
+  those again as a power's recurring `turn_end` payout (backlog #57) — but
+  only the played-Expose site had ever been exercised by a test
+  (`_test_artifact_wards_off_a_debuff_then_is_spent`). The played-Poison
+  sibling right next to it, and both power-triggered copies, had never been
+  proven to actually reach `try_block_debuff()` rather than just reading like
+  they do. Wrote `_test_artifact_wards_off_a_poison_card_then_is_spent`
+  (mirrors the existing Expose test with Venom Dart/wound) and
+  `_test_artifact_wards_off_a_power_triggered_poison_and_expose` (hand-builds
+  `ps.powers` entries with `effect: "wound"`/`"vulnerable"` to hit the
+  turn_end payout directly, cycling a full round between each `end_turn(0)`
+  since `ended_turn` only resets at `_begin_round()` — a second call on the
+  same round is a silent no-op, not a re-fire). All four call sites turned
+  out to already work correctly; this closes the coverage gap rather than
+  fixing a bug. `run_tests.gd`: ALL TESTS PASSED (fresh import, headless,
+  godot 4.7.1). Next `#86` turn is duty 1 (improve an asset).
+
 - **2026-09-04** — #86 duty 2 (find an error and resolve it). Last turn
   (`9b474b0`) was duty 1, so this one was due for duty 2. Delegated a focused
   Explore pass over `combat.gd` (1639 lines) end to end, looking specifically

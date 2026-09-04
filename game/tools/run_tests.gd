@@ -307,6 +307,8 @@ func _init() -> void:
 	_test_frail_reduces_block_gained()
 	_test_frail_card_cuts_the_boss_own_block_move()
 	_test_artifact_wards_off_a_debuff_then_is_spent()
+	_test_artifact_wards_off_a_poison_card_then_is_spent()
+	_test_artifact_wards_off_a_power_triggered_poison_and_expose()
 	_test_thorns_reflects_a_landed_boss_attack()
 	_test_beast_thorns_reflects_card_damage_dealt_to_it()
 	_test_frail_artifact_thorns_persist_through_save()
@@ -5132,6 +5134,48 @@ func _test_artifact_wards_off_a_debuff_then_is_spent() -> void:
 		"Artifact wards off Expose and spends a stack doing it")
 	combat.play_card(0, _first_playable(combat, 0))  # Expose again — no ward left
 	_expect(combat.boss.vulnerable == 2, "once Artifact is spent, the next debuff lands normally")
+
+
+## backlog #86 duty 3 (twenty-seventh pass): try_block_debuff() guards FOUR
+## call sites in combat.gd — a played Poison card (wound), a played Expose
+## card (vulnerable), and each of those again as a power's recurring turn_end
+## payout. Only the played-Expose path (above) had ever been exercised; the
+## played-Poison sibling right next to it in play_card(), and both of the
+## power-triggered copies, were never proven to actually reach
+## try_block_debuff() at all rather than just looking like they do.
+func _test_artifact_wards_off_a_poison_card_then_is_spent() -> void:
+	var combat := _new_combat([_deck_of(_venom_dart, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	combat.boss.artifact = 1
+	combat.play_card(0, _first_playable(combat, 0))  # Venom Dart (Poison 2) — warded off
+	_expect(combat.boss.wound == 0 and combat.boss.artifact == 0,
+		"Artifact wards off a Poison card and spends a stack doing it, same as it does for Expose")
+	combat.play_card(0, _first_playable(combat, 0))  # Venom Dart again — no ward left
+	_expect(combat.boss.wound == 2, "once Artifact is spent, the next Poison card lands normally")
+
+
+## The recurring payout (backlog #57's _handle_power_effects, turn_end) reads
+## its effect straight off ps.powers rather than replaying play_card, so the
+## ward has to be proven again here rather than assumed from the card test
+## above — it is a second call site, not the same code path.
+func _test_artifact_wards_off_a_power_triggered_poison_and_expose() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	combat.boss.artifact = 2
+	ps.powers["test_poison"] = {"stacks": 1, "value": 2, "effect": "wound", "name": "Test Poison"}
+	combat.end_turn(0)
+	_expect(combat.boss.wound == 0 and combat.boss.artifact == 1,
+		"a power's recurring Poison is warded off by Artifact too, not just a card's")
+	combat.end_turn(1)  # close the round — ended_turn only resets when a new round begins
+	ps.powers.clear()
+	ps.powers["test_expose"] = {"stacks": 1, "value": 2, "effect": "vulnerable", "name": "Test Expose"}
+	combat.end_turn(0)
+	_expect(combat.boss.vulnerable == 0 and combat.boss.artifact == 0,
+		"a power's recurring Expose is warded off by Artifact too, spending the last stack")
+	combat.end_turn(1)
+	ps.powers.clear()
+	ps.powers["test_poison2"] = {"stacks": 1, "value": 2, "effect": "wound", "name": "Test Poison"}
+	combat.end_turn(0)
+	_expect(combat.boss.wound == 2, "once Artifact is spent, a power's recurring Poison lands normally")
 
 
 func _test_thorns_reflects_a_landed_boss_attack() -> void:
