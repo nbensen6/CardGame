@@ -2567,6 +2567,42 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 3 (verify a mechanic actually works). Last turn
+  (`4b23dcf`) was duty 2, so this one was due for duty 3. Checked #55 (More
+  beasts) and #76 (Card icons): both already hit their own numeric "Done
+  when" bar and their most recent entries say plainly there is no more
+  in-scope work (#55: "any further beasts belong to a future backlog item,
+  not this one"; #76's batches 6-7: "an exhaustive audit... found nothing
+  left to fix") — correctly left unchecked pending Nick's look, but neither
+  is actionable work for this run, so fell through to #86. The prior duty-3
+  log entry (`9faa748`) already listed every static pure function lifted out
+  of the view layer across 30 passes as covered, so re-checked that list
+  first (still true) rather than trust it blind, then went looking at a
+  different layer: `ui/hit_circle.gd`, the osu-style timing tap Nick asked
+  for by name, had ZERO references anywhere in `run_tests.gd` — not a
+  missing case of something tested, an entire mechanic with no coverage at
+  all. It is a second, independent implementation of the same grading
+  `CardView._fire()` and Combat's TIMING_PERFECT/GOOD/MISS constants (#33)
+  already do, so it can be wrong on its own even with the rule it's copying
+  proven correct elsewhere — the "two copies of one truth" shape duty 2
+  hunts for, just checked here instead of assumed. `HitCircle.new()` +
+  `begin(0.0, null, points, false)` instantiates and runs `_fire()` fine off
+  the scene tree with a null camera, since neither touches `_cam` — only
+  `_draw()`/`_screen()` do, and no test calls those. Added six tests: a
+  zero-offset tap grades PERFECT; an offset between PERFECT_WINDOW and
+  GOOD_WINDOW grades GOOD; past GOOD_WINDOW grades MISS and closes the
+  window (`is_live()` false); `zone_bonus` widens the MISS boundary but caps
+  at GOOD, never upgrades to PERFECT (the literal claim behind Nick's own bug
+  report, "sometimes im clicking in the circle but it says miss"); a
+  two-note chain's final quality is its WORST window, not its last — the doc
+  comment's own promise, unchecked until now; and `_process()`'s own timeout
+  branch (no tap at all before the window closes) resolves MISS the same as
+  an explicit late tap. All six pass against the existing implementation —
+  this pass verified the mechanic, it did not find it broken.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1),
+  6 new tests, nothing else touched. No gameplay values changed. Next `#86`
+  turn is duty 1 (improve an asset).
+
 - **2026-09-04** — #86 duty 2 (find an error and resolve it). Last turn
   (`22e53fa`) was duty 1 (burn icon), so this one was due for duty 2. Read
   `combat.gd`'s foothold-mutating call sites end to end looking for the "two

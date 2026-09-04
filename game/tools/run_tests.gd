@@ -727,6 +727,23 @@ func _init() -> void:
 	_test_backlog86_phase_string_for_maps_every_named_phase()
 	_test_backlog86_phase_string_for_defaults_unmapped_phases_to_combat()
 	_test_backlog86_phase_string_for_never_produces_a_screen_game_3d_lacks()
+	# backlog #86 duty 3 (thirty-second pass): HitCircle, the osu-style timing
+	# tap Nick asked for by name ("change the timing mechanic to mimicc osu").
+	# Every prior duty-3 pass on combat_3d proved the ROUTE a hunter's climb
+	# takes; nothing had ever proven the TAP that resolves each step of it,
+	# which is the same "mimicc osu" gesture #33's rules-half already grades
+	# (TIMING_PERFECT / GOOD / MISS) but a second, independent implementation
+	# of when a tap lands inside those windows -- exactly the "two copies of
+	# one truth" shape duty 2 keeps finding, just not yet proven wrong or
+	# right for this copy. HitCircle instantiates fine off the scene tree
+	# (Control.new(), no add_child) as long as nothing calls _draw() or reads
+	# a real Camera3D; _fire() and _process()'s timeout branch touch neither.
+	_test_backlog86_hit_circle_fire_perfect_on_the_beat()
+	_test_backlog86_hit_circle_fire_good_inside_the_wider_window()
+	_test_backlog86_hit_circle_fire_miss_outside_the_good_window()
+	_test_backlog86_hit_circle_zone_bonus_widens_the_good_window_not_the_perfect_one()
+	_test_backlog86_hit_circle_chain_quality_is_its_worst_window_not_its_last()
+	_test_backlog86_hit_circle_process_times_out_a_silent_window_as_a_miss()
 
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
@@ -9121,6 +9138,118 @@ func _test_backlog86_phase_string_for_never_produces_a_screen_game_3d_lacks() ->
 		var s := GameHost.phase_string_for(phase)
 		_expect((Game3D.SCENES as Dictionary).has(s),
 			"phase_string_for(%d) = '%s' must be a screen game_3d.gd's SCENES table actually has" % [phase, s])
+
+
+## backlog #86 duty 3 (thirty-second pass) -- HitCircle is the osu-style timing
+## tap drawn at the hold itself (ui/hit_circle.gd), Nick's own words: "change
+## the timing mechanic to mimicc osu so something pops up and you do a quick
+## osu like timing thing". Combat.TIMING_PERFECT / GOOD / MISS (backlog #33)
+## is the rules half and already has heavy coverage; nothing had ever proven
+## THIS half -- the grading in HitCircle._fire() that decides which of those
+## three a real tap earns from how close it lands to the beat. It is a SECOND,
+## independent implementation of the same rule CardView._fire() already grades
+## (both emit the same three constants and nothing downstream can tell them
+## apart), so it can be wrong on its own even though the rule it is copying is
+## proven correct elsewhere -- precisely the "two copies of one truth" shape
+## duty 2 keeps finding, just checked here rather than assumed.
+##
+## begin()'s only use of the Camera3D it's handed is to store it for later
+## screen-space reads (_screen, _draw); passing null is safe as long as a test
+## never calls those, which none of the tests below do.
+func _hit_circle_fired_quality(hc: HitCircle) -> int:
+	var got := [-1]
+	var conn := func(q: int) -> void: got[0] = q
+	hc.resolved.connect(conn)
+	hc._fire()
+	return int(got[0])
+
+
+func _test_backlog86_hit_circle_fire_perfect_on_the_beat() -> void:
+	var hc := HitCircle.new()
+	hc.begin(0.0, null, PackedVector3Array([Vector3.ZERO]), false)
+	hc._t = hc._approach  # _offset() == 0: dead on the beat
+	var quality := _hit_circle_fired_quality(hc)
+	_expect(quality == Combat.TIMING_PERFECT,
+		"a tap with zero offset from the beat grades TIMING_PERFECT, not just 'a hit'")
+	hc.free()
+
+
+func _test_backlog86_hit_circle_fire_good_inside_the_wider_window() -> void:
+	var hc := HitCircle.new()
+	hc.begin(0.0, null, PackedVector3Array([Vector3.ZERO]), false)
+	hc._t = hc._approach + 0.13  # between PERFECT_WINDOW (0.070) and GOOD_WINDOW (0.185)
+	var quality := _hit_circle_fired_quality(hc)
+	_expect(quality == Combat.TIMING_GOOD,
+		"a tap outside the perfect window but inside the good one grades TIMING_GOOD, not PERFECT or MISS")
+	hc.free()
+
+
+func _test_backlog86_hit_circle_fire_miss_outside_the_good_window() -> void:
+	var hc := HitCircle.new()
+	hc.begin(0.0, null, PackedVector3Array([Vector3.ZERO]), false)
+	hc._t = hc._approach + 0.20  # past GOOD_WINDOW (0.185) with no zone bonus
+	var quality := _hit_circle_fired_quality(hc)
+	_expect(quality == Combat.TIMING_MISS,
+		"a tap past the good window grades TIMING_MISS")
+	_expect(not hc.is_live(), "a graded tap closes the window -- is_live() must go false, or the next click could grade the same note twice")
+	hc.free()
+
+
+func _test_backlog86_hit_circle_zone_bonus_widens_the_good_window_not_the_perfect_one() -> void:
+	# Nick's own bug report this constant exists to fix ("sometimes im clicking
+	# in the circle but it says miss") was about the window being too narrow,
+	# never about PERFECT itself moving -- so a relic's zone_bonus widening the
+	# MISS boundary must still cap out at GOOD, not upgrade a wide tap to PERFECT.
+	var off := 0.22  # past the bare GOOD_WINDOW (0.185)
+
+	var narrow := HitCircle.new()
+	narrow.begin(0.0, null, PackedVector3Array([Vector3.ZERO]), false)
+	narrow.zone_bonus = 0.0
+	narrow._t = narrow._approach + off
+	_expect(_hit_circle_fired_quality(narrow) == Combat.TIMING_MISS,
+		"with no zone bonus, a tap 0.22s off the beat misses")
+	narrow.free()
+
+	var widened := HitCircle.new()
+	widened.begin(0.0, null, PackedVector3Array([Vector3.ZERO]), false)
+	widened.zone_bonus = 0.2  # good window becomes 0.185 + 0.2*0.35 = 0.255, clearing 0.22
+	widened._t = widened._approach + off
+	_expect(_hit_circle_fired_quality(widened) == Combat.TIMING_GOOD,
+		"the same 0.22s-late tap, with zone_bonus 0.2, clears the widened good window instead of missing -- but still only GOOD, never PERFECT")
+	widened.free()
+
+
+func _test_backlog86_hit_circle_chain_quality_is_its_worst_window_not_its_last() -> void:
+	# The comment above _fire() promises this explicitly: "a chain's quality is
+	# its WORST window rather than its last". A shaky first hit followed by a
+	# dead-perfect second hit must still resolve as GOOD, or the promise is
+	# just a comment nobody checked.
+	var hc := HitCircle.new()
+	hc.begin(0.0, null, PackedVector3Array([Vector3.ZERO, Vector3.ONE]), false)
+	hc._t = hc._approach + 0.13  # first note: GOOD, downgrades _worst
+	hc._fire()
+	_expect(hc.is_live(), "a two-note chain is still open after its first note lands")
+	hc._t = hc._approach  # second note: dead-on PERFECT by itself
+	var quality := _hit_circle_fired_quality(hc)
+	_expect(quality == Combat.TIMING_GOOD,
+		"a chain's final quality is its worst single window (GOOD from note 1), not its last (PERFECT from note 2)")
+	hc.free()
+
+
+func _test_backlog86_hit_circle_process_times_out_a_silent_window_as_a_miss() -> void:
+	# The other way a window resolves: nobody taps at all before it closes.
+	# _fire() is never called here -- only _process()'s own timeout branch.
+	var hc := HitCircle.new()
+	hc.begin(0.0, null, PackedVector3Array([Vector3.ZERO]), false)
+	var got := [-1]
+	var conn := func(q: int) -> void: got[0] = q
+	hc.resolved.connect(conn)
+	hc._t = hc._approach + 0.185 + 0.08 + 0.001  # just past the closing threshold
+	hc._process(0.0)
+	_expect(int(got[0]) == Combat.TIMING_MISS,
+		"a window that closes with no tap resolves as TIMING_MISS via _process(), the same as an explicit late tap")
+	_expect(not hc.is_live(), "a timed-out window is no longer live")
+	hc.free()
 
 
 func _expect(cond: bool, name: String) -> void:
