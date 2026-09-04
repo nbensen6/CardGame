@@ -626,13 +626,17 @@ def dexterity(i):                             # gain Dexterity (adds to Block ga
     # blades) both rendered wrong — a fir tree, then a tent with the barbs
     # floating clear of it — caught only by looking at the render, since
     # icons have no assetcheck. This one is one soft-edged vane (two
-    # overlapping balls, the way `flask`'s body gets its two-tone shading)
-    # with the quill poking through both ends and it, and a few thin grooves
-    # across it for barb texture, small enough to read as detail rather than
-    # define the outline.
-    i.ball((0.0, 0.0, 0.02), (0.30, 0.16, 0.56), SKY, 12, 8)          # the vane
-    i.ball((-0.08, -0.05, 0.02), (0.20, 0.14, 0.52), ICE, 12, 8)      # its lit half
-    i.spike(0.0, -0.58, 0.020, 0.006, 1.20, TAN, seg=4)                # the quill
+    # overlapping balls, the way `flask`'s body gets its two-tone shading),
+    # capped with a straight-sided taper so the top comes to an actual point
+    # instead of an ellipsoid's rounded dome, and a quill that runs the
+    # full height and pokes past both the point and the vane's base rather
+    # than clipping off-canvas below it, plus a few thin grooves across it
+    # for barb texture, small enough to read as detail rather than define
+    # the outline.
+    i.ball((0.0, 0.0, 0.02), (0.30, 0.16, 0.364), SKY, 12, 8)          # the vane
+    i.ball((-0.08, -0.05, 0.02), (0.20, 0.14, 0.338), ICE, 12, 8)      # its lit half
+    i.spike(0.0, 0.40, 0.21, 0.01, 0.24, SKY, seg=6)                   # its pointed tip
+    i.spike(0.0, 0.04, 0.020, 0.006, 1.00, TAN, seg=4)                 # the quill
     for k in range(4):                          # barb grooves, pulled in front of
         z = -0.18 + k * 0.16                    # both balls (y=-0.22) or they'd be
         i.box((0.0, -0.22, z), (0.15, 0.03, 0.012), WHITE, rot=(0.0, 0.4, 0.0))

@@ -2567,6 +2567,42 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 1 (improve an asset, portraits/icons only). Last
+  turn (`d54278b`) was duty 3, so this one is duty 1. Scanned every scored
+  portrait/icon's progress file for the lowest total that (a) had never had
+  a fixer pass and (b) was diagnosed as fixable inside `icons.py`/
+  `portraits.py` alone, not a model geometry problem — `boulder_ram_portrait`
+  (30) and `mountain_climbers_portrait` (33/34) scored lower but both
+  diagnoses explicitly need a beast/hunter model edit, out of this lane's
+  file ownership per the tier rule above. `dexterity_icon` (35/50, batch 17,
+  never fixed) was the next-lowest with two lines both fixable in
+  `icons.py`. Root-caused the actual defect rather than trusting the
+  diagnosis's guess: `spike()`'s `z` argument is the taper's CENTRE, so the
+  quill (`loc.z=-0.58`, `length=1.20`) spanned world z `-1.18` to `0.02` —
+  its thin tip landed *inside* the vane's own ellipsoid (centred at
+  `z=0.02`), never poking past the top at all, and its thick base sat almost
+  entirely below the camera's `±0.575` ortho frame. Shrunk both vane balls'
+  `z` radius (`0.56`→`0.364`, `0.52`→`0.338`, same ratio) to make room, added
+  a straight-sided `spike()` cap so the top comes to an actual point instead
+  of an ellipsoid's rounded dome, and rebuilt the quill as one taper running
+  the full height, `0.116` past the vane's new base and `0.02` past the new
+  point's own tip. Rebuilt with apt's Blender 4.0.2 headless (this container
+  had no Blender or Python image libs at all yet — installed `blender`,
+  `libegl1`/`libgles2`, and `pip install numpy pillow` into the
+  `/usr/bin/python3.12` Blender's `bpy` runs under). Diffed all 36 icons
+  against `HEAD` by mean pixel difference to isolate WORKBENCH render noise
+  (≤6.70 on the other 35) from real content (`dexterity.png` at 16.46) and
+  reverted everything but the one asset. Looked at the full render, a real
+  42px Lanczos downsample, a black-on-white silhouette, and a 4x zoom on the
+  new point's tip: it now reads as a pointed teardrop/leaf with a visible
+  quill stem below it, a real improvement over pass 1's plain rounded oval,
+  though the quill's *top* tip is too small to survive the 42px downsample —
+  only the bottom stem reads at party-panel size. Score 35→39 (Silhouette
+  6→8, Mechanic 5→7, Family/Colour/Style unchanged), not a plateau, kept.
+  Full diagnosis and pixel math in `design/progress/dexterity_icon.md`.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1).
+  Next `#86` turn is duty 2 (find an error and resolve it).
+
 - **2026-09-04** — #86 duty 3 (verify a mechanic actually works). Last turn
   (`ab4dc4f`) was duty 2 and its own message named duty 3 as next. Used a
   background agent to survey `views/` and `core/` for a genuinely untested

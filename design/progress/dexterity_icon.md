@@ -87,3 +87,96 @@ is a bar this icon can clear at all without a genuinely spiked/pointed
 outline, versus needing the tooltip to carry that meaning the way
 `ART-REVIEW.md`'s own text already allows for the strength icon's cleaner
 case.
+
+## Pass 2 — cloud, backlog #86 duty 1
+
+Confirmed by pixel math rather than guessing why the quill never showed:
+`spike(x, z, r0, r1, length)` centres its taper at `z`, so the old
+`i.spike(0.0, -0.58, 0.020, 0.006, 1.20, TAN, seg=4)` spanned world z
+`-1.18` (thick base) to `0.02` (thin tip) — the thin end landed *inside*
+the vane's own body (the SKY ball's centre sits at `z=0.02`, radius
+`0.56`), not past its top, and the thick end sat almost entirely below the
+camera's `±0.575` ortho frame (`FRAME=1.15`), which is why pass 1 found
+only a faint sliver reaching the bottom edge and nothing above the vane at
+all — the quill was never built to poke through both ends, only to stop
+short inside one of them.
+
+Applied both named lines with one shared change to the vane's silhouette
+plus a corrected quill span:
+
+1. **Silhouette @ 42px (6).** The vane's two balls kept their `x`/`y`
+   radii and centres but had their `z` radius cut from `0.56`→`0.364` and
+   `0.52`→`0.338` (same 0.65 ratio on both, so the two-tone joint is
+   unchanged) to make room for a capping taper: `i.spike(0.0, 0.40, 0.21,
+   0.01, 0.24, SKY, seg=6)`, based one radius-width (`0.21`, the SKY
+   ellipsoid's own radius at `z=0.28` by
+   `rx*sqrt(1-((z-cz)/rz)^2)=0.30*sqrt(1-(0.26/0.364)^2)=0.21`) onto the
+   ball's surface at `z=0.28` and narrowing to `0.01` at `z=0.52`, well
+   inside the `0.575` edge. A straight-sided cone reads as a point where an
+   ellipsoid's pole only ever reads as a rounded dome.
+2. **Mechanic match (5).** Rebuilt the quill as one taper spanning the
+   whole figure: `i.spike(0.0, 0.04, 0.020, 0.006, 1.00, TAN, seg=4)` runs
+   from `z=-0.46` (thick end, `0.116` below the vane's own new base at
+   `-0.344`) to `z=0.54` (thin end, `0.02` above the new point's own tip at
+   `0.52`) — visibly past both the vane and the point now, both ends still
+   inside the `±0.575` frame with margin.
+
+Rebuilt with `blender --background --python tools/blender/icons.py --
+game/assets/icons` (apt's Blender 4.0.2, headless; `download.blender.org`
+unreachable through this container's proxy, same fallback prior duty-1
+passes used; needed `libegl1`/`libgles2` and `pip install numpy pillow`
+into the `/usr/bin/python3.12` Blender's `bpy` actually runs, neither
+present before this pass). Console: `TRIS ... PARTS ... BUDGET 700 ok`, no
+warnings. Diffed all 36 icons against `HEAD` by mean per-channel pixel
+difference: every icon except `dexterity.png` came back at mean ≤ 6.70
+(the same WORKBENCH render-noise band `fire_icon.md`/`rally_icon.md`'s
+passes used to draw this line), `dexterity.png` at mean 16.46 — clearly
+content, not noise. Reverted the other 35, kept only `dexterity.png`.
+
+Looked at it three ways, same method as `fire_icon.md`/`rally_icon.md`:
+the full 256px composite over the brown card-face standin
+(`design/renders/dexterity_icon_pass2_full.png`, vs a same-method render
+of the committed `HEAD` blob kept alongside it for the side-by-side), a
+real 42px Lanczos downsample nearest-neighbour upscaled for viewing
+(`..._pass2_42px_big.png`), and a pure black-on-white alpha silhouette
+(`..._pass2_sil.png`), plus a 4× zoom crop on the new point's tip
+(`..._pass2_topzoom.png`) to check the quill's top end specifically.
+
+- **Silhouette @ 42px (6 → 8):** the 42px composite and the silhouette
+  crop both show a teardrop/leaf outline — a straight-sided point at top,
+  a rounded body, a thin quill stem at bottom — where pass 1 was a plain
+  rounded oval. Not higher: the body itself is still a simple rounded
+  mass: the point and stem are the only two features carrying the read.
+- **Family distinction (8, unchanged):** still the only icon in the set
+  with this outline; the new shape is if anything more specific, but the
+  rubric doesn't separately reward that.
+- **Mechanic match (5 → 7):** the point plus the visible quill stem
+  sticking out below the body reads far more specifically as "a feather"
+  than pass 1's ambiguous oval — confirmed at both 256px and the 42px
+  downsample. Not higher: the top zoom crop shows the quill's thin tip
+  does poke a couple of pixels past the point (`..._pass2_topzoom.png`),
+  matching the build comment's "poking through both ends," but it is far
+  too small to survive the 42px downsample — only the bottom stem reads
+  at that size, so the "poking through both ends" idea only half survives
+  to the size the card panel actually draws at.
+- **Colour & contrast (8, unchanged):** this pass touched no palette —
+  same SKY/ICE/TAN as pass 1.
+- **Style consistency (8, unchanged):** the new point reuses the existing
+  `spike()`/taper primitive every other icon already uses (e.g. `fire`'s
+  cones, `rally`'s bell); no new build vocabulary.
+
+**+4 total (35 → 39), not a plateau — kept.** No line regressed. Below the
+40/50 stop line; 2 of 4 passes used.
+
+`run_tests.gd`: ALL TESTS PASSED (fresh `--import`, headless, Godot 4.7.1).
+
+## Unsure about (pass 2)
+
+Whether a third pass shortening the vane's rounded body further (so more
+of the silhouette's height is the point rather than the oval mass) would
+help Silhouette and Mechanic more than it costs Family distinction by
+making the shape read as a plain triangle — a size trade this pass's two
+named fixes didn't ask for and didn't touch. Also unsure whether the
+quill's top tip is worth enlarging in a future pass specifically so it
+survives the 42px downsample, or whether a single visible stem (the
+bottom one) already clears the bar this line needs.
