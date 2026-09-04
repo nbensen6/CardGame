@@ -2567,6 +2567,31 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 2 (find an error and resolve it). Last turn
+  (`2836e72`) was duty 1, so this one was due for duty 2. Read `incoming_for()`
+  (`core/combat.gd`) end to end against `Combatant.take_damage()`
+  (`core/combatant.gd`) it's supposed to preview — the "survivability at a
+  glance" HUD number `game_host.gd`'s `_players_public()` forwards as
+  `"incoming"`. `take_damage()` gates a hit through Block, then Buffer, then
+  Intangible (backlog #61) before it ever touches HP, but `incoming_for()`'s
+  `"through"` field was a bare `raw - block`, never updated when Buffer and
+  Intangible were added on top of Block afterward — a second copy of the same
+  rule going stale, the same shape as duty 2's earlier rift-gap sentinel bug
+  in this identical function. The bug hides well: it only shows up as a wrong
+  HUD number exactly when a hunter is safest (holding a Buffer or Intangible
+  stack), never as a crash or a wrong HP total, since the real damage
+  resolution path (`Combat._boss_hits` → `take_damage()`) was always correct.
+  Added `Combatant.predicted_damage(amount)`, a pure no-mutation preview of
+  `take_damage()`'s Block/Buffer/Intangible math (deliberately NOT Plated
+  Armour, which only decays after the fact and never changes what lands), and
+  pointed `incoming_for()` at it instead of the inline block subtraction.
+  Wrote the regression test first (`_test_backlog86_incoming_through_reckons_
+  buffer_and_intangible_too`), confirmed it fails on the pre-fix tree — HUD
+  claims the raw hit lands even with a full Buffer stack up — then applied
+  the fix and confirmed it passes. `run_tests.gd`: ALL TESTS PASSED (fresh
+  import, headless, godot 4.7.1). Next `#86` turn is duty 3 (verify a
+  mechanic actually works).
+
 - **2026-09-04** — #86 duty 1 (improve a portrait or icon). Last turn
   (`c2de529`) was duty 3, so this one was due for duty 1. Scanned every
   portrait/icon progress file's latest score; `lightbearer_portrait.md` was

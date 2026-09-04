@@ -681,6 +681,12 @@ func _init() -> void:
 	_test_backlog86_cast_model_path_falls_back_when_theres_no_own_art()
 	_test_backlog86_tiles_path_prefers_your_own_art()
 	_test_backlog86_tiles_path_falls_back_when_theres_no_own_art()
+	# backlog #86 duty 2: Combatant.take_damage() gates a hit through Block,
+	# then Buffer, then Intangible (#61) before it touches HP, but
+	# incoming_for()'s "through" field -- the HUD's own "survivability at a
+	# glance" number -- only ever subtracted Block, a second copy of the rule
+	# that fell behind when Buffer/Intangible were added after it was written.
+	_test_backlog86_incoming_through_reckons_buffer_and_intangible_too()
 
 	print("")
 	if _failures == 0:
@@ -4848,6 +4854,36 @@ func _test_incoming_reckons_damage_after_block() -> void:
 	_expect(int(hit["raw"]) == 10 and int(hit["through"]) == 6 and int(safe["raw"]) == 0
 		and int(airborne["raw"]) == 0 and int(grounded["raw"]) == 8,
 		"incoming shows what lands after Block, for the hunter the move can actually reach")
+
+
+## backlog #86 duty 2: incoming_for()'s "through" field used to be a plain
+## `raw - block`, which was the whole rule the day it was written -- but
+## Buffer and Intangible (#61) arrived later and take_damage() already gates
+## every real hit through both, past Block. The HUD number never learned
+## that, so a hunter holding a Buffer or Intangible stack saw a bigger number
+## than the hit would actually do -- lying loudest exactly when the stack
+## made them safest. Cross-checks the HUD's number against what take_damage()
+## actually does with the same raw amount, the same shape as the rift-gap
+## cross-check above.
+func _test_backlog86_incoming_through_reckons_buffer_and_intangible_too() -> void:
+	var boss := _dummy_boss(200, 10)
+	var c := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var aimed := c.boss_target_index()
+	var target: Combatant = c.players[aimed].combatant
+
+	target.buffer = 1
+	var buffered := c.incoming_for(aimed)
+	var hp_before_buffer := target.hp
+	target.take_damage(int(buffered["raw"]))
+	_expect(int(buffered["through"]) == 0 and target.hp == hp_before_buffer,
+		"a Buffer stack cancels the hit outright -- the HUD must show 0 incoming, not the raw amount")
+
+	target.intangible = 1
+	var capped := c.incoming_for(aimed)
+	var hp_before_intangible := target.hp
+	target.take_damage(int(capped["raw"]))
+	_expect(int(capped["through"]) == 1 and hp_before_intangible - target.hp == 1,
+		"an Intangible stack caps the hit at 1 -- the HUD must match, not the raw amount")
 
 
 ## The card FACE shows preview(); play_card resolves through the same call. The

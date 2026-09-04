@@ -78,6 +78,24 @@ func take_damage(amount: int) -> void:
 		plated_armour -= 1
 	hp = maxi(hp - remaining, 0)
 
+## Pure preview of what take_damage(amount) would do to HP, with no mutation —
+## spends no Block, Buffer or Intangible stack. Combat.incoming_for() (the
+## "survivability at a glance" HUD number) is built on this so it prices a hit
+## the same way take_damage() actually will (backlog #86 duty 2). Before this,
+## incoming_for()'s "through" field only ever subtracted Block, so a hunter
+## holding a Buffer or Intangible stack (#61, added after incoming_for was
+## written) saw the HUD claim a bigger hit than would actually land — the
+## exact moment those two newer mitigations make a hunter safest is when the
+## number told them the least truth about it.
+func predicted_damage(amount: int) -> int:
+	var remaining := maxi(amount, 0)
+	remaining -= mini(block, remaining)
+	if remaining > 0 and buffer > 0:
+		return 0
+	if remaining > 0 and intangible > 0:
+		return mini(remaining, 1)
+	return remaining
+
 ## Frail (backlog #36) cuts what actually lands here — a source that grants
 ## 4 Block still says it grants 4 (the card face never lies about a number it
 ## doesn't control), but only 3 show up on the sheet while Frail holds.

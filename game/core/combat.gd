@@ -586,7 +586,10 @@ func incoming_for(pi: int) -> Dictionary:
 			# Missing here until 2026-08-16, so the one move whose damage the
 			# player controls was the one move the HUD showed nothing for.
 			raw = value + _rift_gap(players) * RIFT_PER_GAP
-	return {"raw": raw, "through": maxi(raw - ps.combatant.block, 0)}
+	# predicted_damage(), not a plain "raw - block": Buffer and Intangible
+	# (backlog #61) can cut what actually lands well below that, and this HUD
+	# number is supposed to say what will really happen (backlog #86 duty 2).
+	return {"raw": raw, "through": ps.combatant.predicted_damage(raw)}
 
 
 ## timed card's throw (client skill) — true grants the card's timed bonus.
