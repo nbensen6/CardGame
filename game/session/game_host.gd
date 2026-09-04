@@ -888,7 +888,19 @@ func _player_name(slot: int) -> String:
 	return "Hunter %d" % (slot + 1)
 
 func _phase_string() -> String:
-	match _run.phase:
+	return phase_string_for(_run.phase)
+
+
+## The wire-protocol half of the phase split: every screen game_3d.gd can show
+## is keyed by one of these strings (its SCENES table), so this match is the
+## other copy of that same list — the "two copies of one truth" shape backlog
+## #86 duty 2 keeps finding, just here it's deliberate rather than a bug: the
+## default case means an enum value with no case above (Run.Phase.BOON is the
+## one that exists today, not yet wired into any run per Run.offer_run_start_
+## boon()'s own comment) still resolves to a screen that exists rather than a
+## phase string game_3d.gd's SCENES table has never heard of.
+static func phase_string_for(phase: int) -> String:
+	match phase:
 		Run.Phase.MAP: return "map"
 		Run.Phase.EVENT: return "event"
 		Run.Phase.CAMPFIRE: return "campfire"

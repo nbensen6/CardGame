@@ -2567,6 +2567,42 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 3 (verify a mechanic actually works). Last turn
+  (`a65b691`) was duty 2, so this one was due for duty 3. Every static pure
+  function already lifted out of `combat_3d.gd`, `overworld_3d.gd` and
+  `location_3d.gd` across 30 prior duty-3 passes turned out to already have
+  tests (`climb_marker_for`, `route_between_rungs`, `foothold_anchor`,
+  `hunter_move_kind`, `hull_front_at`, `gauge_ledge_heights`,
+  `intent_text_for`, `height_gap_between`, `card_climb_for`,
+  `grip_after_tick`, `climb_state_after_secure_update`, `render_hand_status`,
+  `next_selection_state`, `_stakes`, `_act_ahead`, `row_in_act`) — so rather
+  than add a fourth case to one of those, read one layer up: `game_3d.gd`'s
+  `SCENES` table is the phase router every 3D screen swap goes through
+  (CLAUDE.md §2's client/server split made concrete — one table keyed by
+  phase string), and `GameHost._phase_string()` is the ONLY other place that
+  produces that string, from the authoritative `Run.Phase` enum. Two copies
+  of one truth (the exact shape duty 2 hunts for, just genuinely untested
+  rather than already broken): nothing had ever proven the two agree. Lifted
+  `_phase_string()`'s body into a static `GameHost.phase_string_for(phase)`
+  (thin wrapper left calling it), then wrote three tests: the eight named
+  mappings, the `Run.Phase.BOON` / out-of-range fallback to `"combat"`
+  (`Run.Phase.BOON` exists in the enum but is deliberately unwired per
+  `Run.offer_run_start_boon()`'s own comment — confirmed that's still true
+  before treating the fallback as correct rather than another hole), and the
+  actual invariant that matters: looping `Run.Phase.values()` and asserting
+  `phase_string_for(v)` is a key `Game3D.SCENES` (newly preloaded into
+  `run_tests.gd`, same pattern as the existing `Combat3D`/`Location3D`/
+  `Overworld3D` preloads) actually has, so `game_3d.gd`'s "no 3D client for
+  phase" error path can never fire for a phase the core can produce. Proved
+  the invariant test isn't vacuous by temporarily deleting `"reward"` from
+  `SCENES` and rerunning — `phase_string_for(5) = 'reward'` failed exactly as
+  expected — then restored the file (confirmed clean via `git diff`) before
+  rerunning clean. `run_tests.gd`: ALL TESTS PASSED (fresh import, headless,
+  godot 4.7.1). `balance_sim.gd` run as a smoke test only — nothing exploded
+  (200 runs/policy, coordinated win rate still 48% at Ascension 0), not tuned
+  to; no gameplay values changed, this is a test-only + one-function-lift
+  change. Next `#86` turn is duty 1 (improve an asset).
+
 - **2026-09-04** — #86 duty 2 (find an error and resolve it). Last turn
   (`72ba3a8`) was duty 1, so this one was due for duty 2. A prior duty-2 run
   (`design/BACKLOG.md` history, commit `9b25b48`) had already found and

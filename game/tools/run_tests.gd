@@ -714,6 +714,18 @@ func _init() -> void:
 	_test_backlog86_climb_marker_for_ignores_an_unrelated_name()
 	_test_backlog86_climb_marker_for_is_case_sensitive_on_the_prefix()
 	_test_backlog86_climb_marker_for_accepts_a_negative_height()
+	# backlog #86 duty 3 (thirty-first pass): GameHost.phase_string_for, lifted
+	# out of GameHost._phase_string -- the wire-protocol mapping from Run.Phase
+	# to the string game_3d.gd's SCENES table routes on. Every prior duty-3
+	# pass in this file proved something about ONE screen once you're on it;
+	# this is the one untested step upstream of all of them -- whether a hunter
+	# ever gets a screen to begin with. Verifies both the per-phase mapping and
+	# the actual invariant that matters: every value Run.Phase can hold maps to
+	# a key game_3d.gd's SCENES table actually has, so _sync()'s "no 3D client
+	# for phase" error path can never fire for a phase the core can produce.
+	_test_backlog86_phase_string_for_maps_every_named_phase()
+	_test_backlog86_phase_string_for_defaults_unmapped_phases_to_combat()
+	_test_backlog86_phase_string_for_never_produces_a_screen_game_3d_lacks()
 
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
@@ -9054,6 +9066,47 @@ func _test_backlog86_fit_does_nothing_without_a_window() -> void:
 	_expect(is_equal_approx(root.content_scale_factor, prior_scale),
 		"fit() on a node with no window is a no-op rather than crashing on a null Window")
 	orphan.free()
+
+
+## backlog #86 duty 3 (thirty-first pass) -- GameHost.phase_string_for is the
+## wire-protocol half of the private/shared split (CLAUDE.md §2): it turns the
+## authoritative Run.Phase into the string every 3D client routes screens off
+## of. game_3d.gd's SCENES table is the OTHER copy of this same list, keyed by
+## string rather than enum, and nothing had ever proven the two agree.
+const Game3D := preload("res://views/game_3d.gd")
+
+
+func _test_backlog86_phase_string_for_maps_every_named_phase() -> void:
+	_expect(GameHost.phase_string_for(Run.Phase.MAP) == "map", "MAP maps to the overworld screen's phase string")
+	_expect(GameHost.phase_string_for(Run.Phase.EVENT) == "event", "EVENT maps to its own phase string")
+	_expect(GameHost.phase_string_for(Run.Phase.CAMPFIRE) == "campfire", "CAMPFIRE maps to its own phase string")
+	_expect(GameHost.phase_string_for(Run.Phase.SHOP) == "shop", "SHOP maps to its own phase string")
+	_expect(GameHost.phase_string_for(Run.Phase.COMBAT) == "combat", "COMBAT maps to its own phase string")
+	_expect(GameHost.phase_string_for(Run.Phase.REWARD) == "reward", "REWARD maps to its own phase string")
+	_expect(GameHost.phase_string_for(Run.Phase.WON) == "won", "WON maps to its own phase string")
+	_expect(GameHost.phase_string_for(Run.Phase.LOST) == "lost", "LOST maps to its own phase string")
+
+
+func _test_backlog86_phase_string_for_defaults_unmapped_phases_to_combat() -> void:
+	# Run.Phase.BOON exists in the enum but is deliberately not wired into any
+	# real run yet (Run.offer_run_start_boon()'s own comment: no 3D screen for
+	# it exists). It must still resolve to a real screen rather than a phase
+	# string game_3d.gd has never heard of.
+	_expect(GameHost.phase_string_for(Run.Phase.BOON) == "combat", "the one phase with no case of its own (BOON) falls back to a real screen, not an unrouted string")
+	_expect(GameHost.phase_string_for(-1) == "combat", "a value outside the enum entirely still falls back rather than returning an empty or garbage string")
+
+
+func _test_backlog86_phase_string_for_never_produces_a_screen_game_3d_lacks() -> void:
+	# The actual mechanic this whole file's climbing/routing/hunter-move tests
+	# all assume: a player always lands on SOME 3D screen. Every value the core
+	# Phase enum can hold -- named cases and BOON alike -- must map to a string
+	# that is a real key in game_3d.gd's SCENES table, or _sync()'s "no 3D
+	# client for phase" error path (game_3d.gd's dead-code-today safety net)
+	# would fire for a real run.
+	for phase in Run.Phase.values():
+		var s := GameHost.phase_string_for(phase)
+		_expect((Game3D.SCENES as Dictionary).has(s),
+			"phase_string_for(%d) = '%s' must be a screen game_3d.gd's SCENES table actually has" % [phase, s])
 
 
 func _expect(cond: bool, name: String) -> void:
