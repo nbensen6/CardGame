@@ -229,6 +229,7 @@ func _init() -> void:
 	_test_run_win_flows_through_reward_to_next_encounter()
 	_test_run_hp_carries_between_encounters()
 	_test_run_defeat_when_a_hunter_falls()
+	_test_run_hp_syncs_on_defeat_too()
 	_test_backlog39_stats_accumulate_across_fights()
 	_test_content_make_card_and_reward_pool()
 	# phase 3: 3rd titan, relics, longer runs
@@ -3910,6 +3911,25 @@ func _test_run_defeat_when_a_hunter_falls() -> void:
 	run.combat.phase = Combat.Phase.OVER
 	run.sync()
 	_expect(run.phase == Run.Phase.LOST, "a hunter falling loses the whole run")
+
+## #86 duty 2: `run.hp` is a second copy of combat.players[i].combatant.hp --
+## `_bank_hp()` keeps it in sync on a WIN (see the test above this one), but
+## sync()'s LOSE branch used to skip that entirely, so a fallen hunter's `hp`
+## stayed at whatever it was BEFORE the losing fight (full, here) instead of
+## reflecting the death, and the survivor's `hp` stayed stale too. That value
+## still rides every broadcast (game_host.gd's _players_public()) for as long
+## as the LOST screen is up, so it should say what actually happened.
+func _test_run_hp_syncs_on_defeat_too() -> void:
+	var run := _map_run()
+	_step_into_combat(run)
+	var pre_fight_hp: int = run.hp[0]
+	run.combat.players[0].combatant.hp = 0       # this hunter fell...
+	run.combat.players[1].combatant.hp = 7       # ...mid-swing, the other took a hit too
+	run.combat.phase = Combat.Phase.OVER
+	run.sync()
+	_expect(run.phase == Run.Phase.LOST and run.hp[0] == 0 and run.hp[1] == 7
+		and pre_fight_hp > 0,
+		"a losing fight banks the real final HP too, not the stale pre-fight number")
 
 ## Backlog #39: a finished run should say something about itself. Walk a real
 ## Run through a won fight (playing a real card, so damage/cards actually

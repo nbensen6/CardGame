@@ -757,6 +757,16 @@ func sync() -> void:
 		_begin_reward("card")
 	else:
 		stats["died_to"] = combat.boss.name
+		# `hp` is a second copy of combat.players[i].combatant.hp (the "carry
+		# damage between encounters" bookkeeping _bank_hp() does on a WIN) --
+		# the WIN branch above keeps it in sync but this one never did, so a
+		# fallen hunter's `hp` stayed at whatever it was BEFORE the losing
+		# fight rather than reflecting the death. The run ends here either
+		# way, but `hp` still rides every broadcast (_players_public()) for
+		# as long as the LOST screen is up, so it should say what actually
+		# happened rather than a stale, pre-fight number.
+		for i in range(names.size()):
+			hp[i] = maxi(combat.players[i].combatant.hp, 0)
 		phase = Phase.LOST
 
 ## One reward is settled. If this node still owes another (an elite's or Titan's

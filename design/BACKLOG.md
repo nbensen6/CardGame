@@ -2567,6 +2567,33 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 2 (find an error and resolve it). Last turn
+  (`8750f15`) was duty 1, so this one was due for duty 2. Read `game_host.gd`,
+  `game_client.gd`, `net_link.gd`, `run_map.gd`, `content.gd`, `combatant.gd`
+  and `boss.gd` end to end, and cross-checked every JSON-driven vocabulary
+  against its GDScript dispatcher (ascension effect types, boss limiter
+  types, boss move types, power_effect types, event/boon effect keys,
+  keyword ids) the way the "two copies of one truth" family suggests —
+  none of those were mismatched; that class of bug already got fixed on
+  earlier turns. Found the real one in `Run.sync()`: `hp` (the "carried
+  current hp per hunter" that survives between encounters) is a second copy
+  of `combat.players[i].combatant.hp`, and the WIN branch banks it
+  (`_bank_hp()`) but the LOSE branch never did — a fallen hunter's `hp`
+  stayed at whatever it was BEFORE the losing fight instead of reflecting
+  the death, and the survivor's stayed stale too. `_players_public()` sends
+  `hp` on every broadcast regardless of phase, LOST included, so this was a
+  real, honest data bug even though nothing currently renders that broadcast
+  on the LOST screen to make it visible today — exactly the kind of
+  "hid because nothing looked wrong" gap the duty asks for, not a
+  console-obvious crash. Wrote the regression test first
+  (`_test_run_hp_syncs_on_defeat_too`), confirmed it FAILS on the
+  pre-fix tree (`git stash` the fix, rerun, watch it fail, `stash pop`),
+  then the fix: sync()'s LOSE branch now banks each hunter's real final HP
+  the same way the WIN branch does (no between-fight heal, since the run is
+  over either way).
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1).
+  Next `#86` turn is duty 3 (verify a mechanic actually works).
+
 - **2026-09-04** — #86 duty 1 (improve an asset, portraits/icons only). Last
   turn (`83b8d24`) was duty 3, so this one was due for duty 1. Picked
   `wall_icon.md` — lowest-scoring un-plateaued icon at 35/50 with a fix
