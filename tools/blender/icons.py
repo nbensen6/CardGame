@@ -175,12 +175,28 @@ def bomb(i):                                    # a big one-off blast
 
 
 def gadget(i):                                  # the Engineer builds something
-    i.slabf(0.0, -0.34, 0.40, 0.14, PEWTER)
-    i.slabf(0.0, -0.02, 0.26, 0.20, STEEL)
-    i.slabf(0.0, 0.30, 0.32, 0.10, PEWTER)
+    # pass 2 (design/progress/gadget_icon.md): two named lowest lines, one
+    # cause. Mechanic match (5/10) -- three grey plates and one plain rivet
+    # read as a totem or trophy, nothing in the shape says *assembled*.
+    # Silhouette@42px (7/10) -- the same cause from the outline: the bottom
+    # and middle slabs actually OVERLAPPED (bottom top -0.20 vs middle
+    # bottom -0.22) and the middle/top gap was a bare 0.02, so at a real
+    # downsample the three plates fused into one solid mass. Fixed the way
+    # `plated_armour` fixed the identical symptom -- a real ~0.07-0.10
+    # world-space gap between plates, not a shading trick -- plus a toothed
+    # rivet (six small nubs around the ball, the same radial idea `cog`
+    # already uses for its own gear teeth) so the one fastener reads as
+    # hardware instead of a decorative dot.
+    i.slabf(0.0, -0.36, 0.40, 0.11, PEWTER)
+    i.slabf(0.0, -0.02, 0.26, 0.15, STEEL)
+    i.slabf(0.0, 0.32, 0.32, 0.09, PEWTER)
     for s in (-1, 1):
         i.spike(0.30 * s, 0.44, 0.055, 0.02, 0.22, CARROT, ang=0.4 * s, seg=4)
     i.ball((0.0, -0.10, -0.02), (0.09, 0.06, 0.09), CARROT, 7, 4)
+    for k in range(6):
+        a = k * math.tau / 6.0
+        i.ball((math.cos(a) * 0.12, -0.10, -0.02 + math.sin(a) * 0.12),
+               (0.028, 0.045, 0.028), CARROT, 5, 3)
 
 
 def draw(i):                                    # draw a card

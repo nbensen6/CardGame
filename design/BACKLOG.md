@@ -2567,6 +2567,45 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-04** — #86 duty 1 (improve an asset — icon `gadget`, 36/50). Last
+  turn (`58fc651`) was duty 3, so this one was due for duty 1. Recomputed
+  every scored portrait/icon's *current* total (several files only bold
+  the pass-1 number and record later gains as prose) rather than trusting
+  a naive grep. The lowest few scores are all beast portraits already
+  established as blocked for this lane — `boulder_ram_portrait` (30) and
+  `bog_leech_portrait` (31) by a prior run's own note, `mountain_climbers_
+  portrait` (33, checked fresh this run) the same way: both its diagnosed
+  fixes name the model's own jaw-shard geometry and canteen colour, neither
+  reachable from `portraits.py`. `cinder_jackal_portrait`/`clot_toad_
+  portrait` (33 each) already had a second pass from the old undivided
+  fixer lane; their remaining two lowest lines are a beast-geometry mane
+  colour and an open art-direction question, both out of lane again.
+  `eyrie_hawk_portrait`/`gloom_moth_portrait` (35 each) are the same shape.
+  The lowest score with both diagnosed fixes actually inside `icons.py`
+  was `gadget_icon.md` (36, never touched): "Mechanic match" (5) and
+  "Silhouette@42px" (7) traced to one cause — the three stacked slabs
+  overlapped or sat a bare 0.02 apart, fusing into one totem-shaped mass at
+  a real downsample, with a plain ball for a rivet. Opened real ~0.08-0.10
+  world-space gaps between the three plates (same magnitude
+  `plated_armour_icon.md`'s own pass 2 used for the identical symptom) and
+  turned the rivet into a six-tooth bolt (radial teeth, the same idea
+  `cog_icon.md`'s pass 2 already used for its own gears, scaled down).
+  Verified by rendering before/after, confirming a real 22px/18px
+  transparent gap between the plates at the actual 256px render (not
+  assumed from the world-space numbers alone), and by rendering an actual
+  black silhouette downsampled to the rubric's 42px — before, one fused
+  blob; after, three clean separated rectangles — which also showed the
+  tooth nubs sit entirely inside the middle plate's own silhouette
+  footprint, so the gap and the teeth each answer exactly one of the two
+  named lines with no overlap between them. +3 (36→39, `design/progress/
+  gadget_icon.md` has the full write-up and renders). Installed Blender
+  via apt (4.0.2) since this container had none yet; the glTF export
+  failed on a missing `numpy` even after installing it for the system
+  `python3` — Blender's own `sys.executable` is `/usr/bin/python3.12`, a
+  different interpreter, and numpy had to go there instead.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1).
+  Next `#86` turn is duty 2 (find an error and resolve it).
+
 - **2026-09-04** — #86 duty 3 (verify a mechanic actually works). Last turn
   (`3596987`) was duty 2, so this one was due for duty 3. The climb logic in
   `combat_3d.gd` already has heavy coverage from 29 prior duty-3 passes
