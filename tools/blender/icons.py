@@ -555,7 +555,12 @@ def intangible(i):                              # a hit past Block is capped at 
 def buffer(i):                                  # the next hit is cancelled outright
     # A hex-faceted energy bubble (low-segment ring, not the round `guard`
     # ring) with the stopped hit shown bouncing off it rather than landing.
-    i.ring((0.0, 0.0, 0.0), (0.40, 0.40, 0.40), SKY, 6, 4, thickness=0.11)
+    # pass 2 (design/progress/buffer_icon.md): Silhouette@42px (8) named the
+    # ring's line weight thinning enough at 42px to round the six corners
+    # toward an octagon. Thickened the outer ring by ~1/5 (0.11 -> 0.13) per
+    # that pass's own concrete fix -- a thicker tube keeps more of each facet
+    # flat before the downsample blurs it round.
+    i.ring((0.0, 0.0, 0.0), (0.40, 0.40, 0.40), SKY, 6, 4, thickness=0.13)
     i.ring((0.0, 0.02, 0.0), (0.20, 0.20, 0.20), ICE, 6, 4, thickness=0.07)
     i.spike(0.32, 0.32, 0.02, 0.10, 0.24, BRICK, ang=2.36, seg=4)
     i.ball((0.0, -0.02, 0.0), (0.06, 0.05, 0.06), WHITE, 6, 4)
