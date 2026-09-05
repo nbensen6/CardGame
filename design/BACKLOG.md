@@ -2567,6 +2567,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-05** — #86 duty 3 (verify a mechanic actually works). Last turn
+  (`bda1973`) was duty 2, so this one was due for duty 3. The VIEW's climb
+  routing this duty started on (`_route_between`/`_stand_on_model`/`_hop`)
+  turned out to already be thoroughly covered by prior duty-3 passes —
+  `route_between_rungs`, `foothold_anchor`, `hunter_move_kind` and
+  `_start_glide` are all lifted static and tested — so went looking for a
+  still-untested rule elsewhere instead of adding a fourth case to something
+  already proven. `RunMap._ensure_shop`'s own doc comment claims "every act
+  offers a trader" (Nick, 2026-08-16, on the exact bug this fixed: a shop
+  that only showed up in about a third of acts by the dice, sometimes before
+  the party had earned anything to spend). That guarantee had never been
+  tested directly — only the separate elite/treasure/event key guarantee
+  (backlog #64) was swept across seeds; the shop guarantee that predates it
+  and uses the identical "insert one if the dice didn't already" idiom had
+  no test of its own. Wrote `_test_backlog86_map_guarantees_a_shop_every_act`
+  in the same style as #64's sweep (seeds 1–24, `Run.ENCOUNTERS.size()`
+  acts), asserting every act's `ROWS_PER_ACT` rows contain at least one shop
+  node. Proved the test actually catches a regression before trusting it:
+  temporarily made `_ensure_shop` a no-op, re-ran the suite, watched this
+  new test fail at seed 2 act 1 (confirming the natural per-row dice alone
+  do leave some acts shop-less, same as the doc comment's own "about a
+  third" claim), then reverted the no-op and confirmed it passes again.
+  `run_tests.gd`: ALL TESTS PASSED (811 passing, up from 806; fresh
+  `--import`, headless, Godot 4.7.1-stable). Next `#86` turn is duty 1
+  (improve an asset — portraits/icons).
+
 - **2026-09-05** — #86 duty 2 (find an error and resolve it). Last turn
   (`4620e83`) was duty 1, so this one was due for duty 2. Read `combat.gd`,
   `run.gd`, `card.gd`, `boss.gd`, `content.gd` and the session layer end to

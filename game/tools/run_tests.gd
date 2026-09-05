@@ -77,6 +77,7 @@ func _init() -> void:
 	# the run map (branching route)
 	_test_map_generates_connected_rows()
 	_test_map_is_deterministic_per_seed()
+	_test_backlog86_map_guarantees_a_shop_every_act()
 	_test_backlog38_same_seed_reproduces_map_shop_and_rewards()
 	_test_backlog49_daily_seed_is_stable_and_shared()
 	_test_backlog49_daily_run_saves_and_loads_the_flag()
@@ -1302,6 +1303,38 @@ func _test_map_is_deterministic_per_seed() -> void:
 	var same := str(m1.rows) == str(m2.rows)
 	var different := str(m1.rows) != str(m3.rows)
 	_expect(same and different, "the same seed maps the same route; a new seed re-rolls it")
+
+
+## #86 duty 3 — RunMap._ensure_shop's own doc comment claims "every act offers
+## a trader" (Nick, 2026-08-16: a shop that only shows up in ~a third of acts
+## by the dice left a purse with nothing to spend it on before the Titan). That
+## guarantee had no test of its own — only the SEPARATE elite/treasure/event key
+## guarantee (backlog #64) was swept across seeds. Same shape of check, same
+## seed range, for the rule that predates it.
+func _test_backlog86_map_guarantees_a_shop_every_act() -> void:
+	var ok := true
+	var bad_seed := -1
+	var bad_act := -1
+	var acts := Run.ENCOUNTERS.size()
+	var rows_per_act := RunMap.ROWS_PER_ACT + 1  # + the act's own boss row
+	for s in range(1, 25):
+		var rng := RandomNumberGenerator.new()
+		rng.seed = s
+		var m := RunMap.new(acts, rng)
+		for a in range(acts):
+			var has_shop := false
+			for r in range(a * rows_per_act, a * rows_per_act + RunMap.ROWS_PER_ACT):
+				for n in m.rows[r]:
+					if String((n as Dictionary)["type"]) == "shop":
+						has_shop = true
+			if not has_shop:
+				ok = false
+				bad_seed = s
+				bad_act = a
+				break
+		if not ok:
+			break
+	_expect(ok, "every act guarantees a shop node exists (failed seed %d act %d)" % [bad_seed, bad_act])
 
 
 ## Backlog #38: a shareable seed is only worth sharing if replaying it actually
