@@ -28,7 +28,7 @@ import sys, os, math
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from beast import Beast
 from kenney import out_path, mirror, point, RUST, BROWN, UMBER, CREAM, \
-                   WHEAT, SAND, GRAPHITE
+                   WHEAT, SAND, GRAPHITE, WHITE
 
 
 def _seg(b, start, end, r0, r1, uv, seg=8, bevel=0.0):
@@ -67,7 +67,7 @@ for sx in (-1, 1):
 
 # ------------------------------------------------------------------ the mass
 b.ball((0.0, 0.0, 2.05), (0.56, 0.92, 0.60), RUST, 13, 7)            # torso
-b.ball((0.0, -0.05, 1.80), (0.44, 0.78, 0.34), CREAM, 11, 6)         # pale chest/belly, lower
+b.ball((0.0, -0.05, 1.80), (0.44, 0.78, 0.34), WHITE, 11, 6)         # pale chest/belly, lower
 
 # Neck: arches up and forward, carrying a hunter's climb from the shoulders
 # to the head the same way a real stag's neck is the tall middle of it.

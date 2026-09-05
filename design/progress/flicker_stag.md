@@ -7,6 +7,7 @@ no edits made to `tools/blender/flicker_stag.py`.** Views:
 | Pass | Sil | Prop | Hygiene | Colour | Style | Total |
 |---|---|---|---|---|---|---|
 | 1 | 6 | 7 | 7 | 5 | 8 | **33** |
+| 2 | 6 | 7 | 7 | 8 | 8 | **36** |
 
 ## What is actually there
 
@@ -48,6 +49,43 @@ different from the cast's low quadrupeds) comes through.
    opens between it and the forelegs in the black silhouette.
 
 Not applying either — this item scores and proposes; a fix is Nick's call.
+
+## Pass 2 — fixer, applying pass 1's two proposed fixes
+
+Views: `design/renders/flicker_stag_pass2_*.png`.
+
+1. **Colour (5 → 8).** No per-part brightness control exists in this pipeline
+   (colour is carried entirely by which palette cell a part's UV points at, in
+   `kenney.Build._paint`), so "raise the value" had to mean picking a
+   different named swatch rather than tuning CREAM itself — and `CREAM` (lum
+   231 per `palette.py --report`) was already the second-lightest warm swatch
+   in the atlas; only `WHITE` (lum 255, zero saturation) is genuinely lighter
+   and less saturated. Swapped the belly ball from `CREAM` to `WHITE`,
+   position unchanged. Rendered a same-camera before/after crop
+   (`_tmp_cmp_orig.png` / `_tmp_cmp_coloronly.png`, not kept) and it is a real
+   improvement: the patch reads as a distinct pale chest against the
+   surrounding RUST/BROWN instead of another shade of brown. Kept.
+2. **Silhouette (6 → 6, reverted).** Tried pulling the belly ball back in Y
+   by +0.12 (toward the torso centre, within the suggested 0.10–0.15 range),
+   combined with the colour fix, then rendered and compared against the
+   original pixel-for-pixel. Two problems, both measured rather than
+   guessed: (a) the ball's own Y half-extent is 0.78 — more than five times
+   the suggested nudge — so even at +0.15 its front edge (would reach
+   y≈-0.68) still doesn't clear the foreleg hip point at y=-0.58; the
+   silhouette diff between pass 1 and this attempt was 628 pixels out of
+   65536 (64×64), effectively noise, not a visible separation. (b) Worse,
+   the shift tucked the ball far enough back that in the front view it
+   retreats almost entirely behind/inside the torso mass, hiding the pale
+   patch that fix 1 had just improved — a visible regression, confirmed by
+   diffing front-view renders at matching pixels. Reverted this one change
+   (kept the colour swap) and rebuilt; this file's Silhouette score is
+   unchanged at 6. A fix that actually clears the hip point would need to
+   move the centre by roughly +0.25, well outside the 0.10–0.15 the pass 1
+   diagnosis proposed, or shrink the ball's Y radius — either is a bigger
+   shape change than "pull it back", so leaving it rather than guessing past
+   what was diagnosed.
+
+`run_tests.gd`: ALL TESTS PASSED (fresh import, headless).
 
 ## Unsure about
 
