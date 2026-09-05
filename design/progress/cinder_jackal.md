@@ -58,3 +58,56 @@ add a softer, multi-segment ridge instead of one box) or a deliberate
 than guessing at intent. Also unsure whether the flat tail wedge reads
 differently once the beast is mid-attack-animation in the real fight camera
 versus this static capture.
+
+---
+
+## Pass 2 — fixer lane, 2026-09-05
+
+Applied by the **fixer** lane (`tools/fixer/BRIEF.md`), which repairs what the
+cloud reports. Views: `design/renders/cinder_jackal_pass2_*.png`, captured
+with `look.cmd cinder_jackal 2`.
+
+| Pass | Sil | Prop | Hygiene | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 1 | 5 | 5 | 7 | 8 | 7 | **32** |
+| 2 | 6 | 7 | 7 | 8 | 7 | **35** |
+
+### Both diagnosed fixes applied
+
+- **Proportion (5 → 7).** The spine ridge (`b.limb(...)`, `tools/blender/cinder_jackal.py`)
+  dropped 0.09 in Z at every control point (1.53/1.60/1.58/1.49 →
+  1.44/1.51/1.49/1.40) so it sits against the torso's own top surface instead
+  of standing clear of it, and its end radii pulled from 0.03/0.02 down to
+  0.01/0.01 so the tube tapers to a near-point instead of ending in the flat
+  hex cap `limb()`'s `cap=True` draws at a non-zero radius — that cap was the
+  "machined part" edge the diagnosis named. `cinder_jackal_pass2_34.png` and
+  `_top.png` now show the ridge as a low tangerine stripe following the
+  torso's curve; compare `cinder_jackal_pass1_34.png`, where it stands up off
+  the back as a distinct raised bar.
+- **Silhouette (5 → 6).** The tail's (`b.limb(...)`) far end dropped 0.15 in Z
+  (0.42 → 0.27). `cinder_jackal_pass2_side.png` now shows the tail angling
+  down and away from the torso; the flat wedge no longer continues the
+  body's own horizontal line. The `_sil.png` change is real but
+  smaller — pixel-diffed against `cinder_jackal_pass1_sil.png`, about 1.6% of
+  the 64px silhouette changed, concentrated where the tail sits — the tail
+  drops far enough to blend toward the leg cluster rather than reading as a
+  clean horizontal spike, but does not fully separate into its own shape at
+  64px. Not "shippable" (8) on this line yet.
+
+`build.cmd cinder_jackal`: 1180/2600 tris, 1 mesh, no floating-part warning,
+every climb Height and the sigil hold still `ok`. `run_tests.gd`: **ALL TESTS
+PASSED**.
+
+**+3 total (32 → 35), not a plateau — kept.** Build hygiene, colour and style
+were not touched, per the brief; their scores are unchanged from pass 1.
+
+## Unsure about, still
+
+Same open questions as pass 1: whether the ridge's stiffness was a budget
+constraint or a deliberate "ember" read (moot now that it sits flush — worth
+revisiting only if a future pass wants a softer, multi-segment ridge), and
+whether the tail reads differently mid-attack-animation in the real fight
+camera than in this static capture. New from this pass: whether the tail
+needs a further Z drop, or a sideways pull off the torso's Y-axis the way
+`clot_toad`'s ridge-mounds fix widened its stance, to fully separate at 64px
+— a further measurement a future pass could try, not a design call.

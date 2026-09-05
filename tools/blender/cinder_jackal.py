@@ -61,8 +61,8 @@ mirror(lambda s: b.taper((0.15 * s, -0.98, 1.52), 0.11, 0.01, 0.30,
 # on rail rather than fur. Following the torso's curve and tapering the radii
 # down at both ends (matching how the tail below is built) sits it flush and
 # lets it thin out into the body instead of ending in a square edge.
-b.limb([(0.0, -0.52, 1.53), (0.0, -0.05, 1.60), (0.0, 0.40, 1.58),
-        (0.0, 0.72, 1.49)], [0.03, 0.09, 0.08, 0.02], TANGERINE, seg=6)
+b.limb([(0.0, -0.52, 1.44), (0.0, -0.05, 1.51), (0.0, 0.40, 1.49),
+        (0.0, 0.72, 1.40)], [0.01, 0.09, 0.08, 0.01], TANGERINE, seg=6)
 
 # --------------------------------------------------------------- the ledges
 # Two haunch/shoulder humps stepping up the spine, each anchored off the
@@ -83,7 +83,7 @@ b.shelf(4, (0.28, 0.30), (0.14, 0.12), TAN, thickness=0.09, bevel=0.05,
 # ----------------------------------------------------------------- the tail
 # Bushy, low and trailing behind rather than raised - a hunting stance, not a
 # lashing one, unlike Thrasher's tail curling up over its spine.
-b.limb([(0.0, 0.88, 0.98), (0.0, 1.28, 0.72), (0.0, 1.58, 0.42)],
+b.limb([(0.0, 0.88, 0.98), (0.0, 1.28, 0.72), (0.0, 1.58, 0.27)],
        [0.15, 0.12, 0.03], RUST, seg=6)
 
 b.foot((0.32, -0.56, 0.14))                                    # onto a foreleg,
