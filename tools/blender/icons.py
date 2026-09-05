@@ -227,7 +227,7 @@ def taunt(i):                                   # pull the beast's attention
     for k, (w, z, c) in enumerate([(0.44, 0.30, ORANGE), (0.34, 0.06, TANGERINE),
                                    (0.22, -0.14, ORANGE)]):
         i.slabf(-0.26 + w * 0.5, z, w * 0.5, 0.085, c)
-    i.ball((-0.30, 0.0, 0.44), (0.075, 0.06, 0.075), GOLD, 7, 4)
+    i.ball((-0.30, 0.0, 0.46), (0.095, 0.075, 0.095), GOLD, 7, 4)
 
 
 def support(i):                                 # help the ally

@@ -20,6 +20,8 @@ match / Colour & contrast / Style consistency.
 |---|---|---|---|---|---|
 | 7 | 9 | 6 | 8 | 8 | **38** |
 
+Pass 2: 9 | 9 | 6 | 8 | 8 | **40** — see below.
+
 ## What is actually there
 
 A dark UMBER flagpole topped with a small GOLD ball, carrying three
@@ -71,3 +73,86 @@ Whether "signal flag" reads as *taunt* specifically to a player with no
 tooltip open, or whether it needs the keyword text to land — the same
 kind of open question `intangible_icon.md` already named for "afterimage,"
 and not settleable from a static render alone.
+
+## Pass 2 — cloud, backlog #86 duty 1
+
+Only the **Silhouette @ 42px (7)** line had a fix that stays in `icons.py`
+without touching design. **Mechanic match (6)** was diagnosed as needing a
+new motif (an arrow or eye worked into the topmost flag) that the pass-1
+scorer explicitly left to Nick ("if Nick wants one") — that is a design
+call, not a technical one, so left untouched here, the same split every
+prior pass under this item has made for its own two-fix budget.
+
+Applied the **Silhouette** fix: `icons.py`'s `taunt()` ball moved from
+`((-0.30, 0.0, 0.44), (0.075, 0.06, 0.075), GOLD, 7, 4)` to
+`((-0.30, 0.0, 0.46), (0.095, 0.075, 0.095), GOLD, 7, 4)` — radius up ~27%
+in x/z (+25% in y-depth) and the centre raised 0.02 to keep clearance from
+the topmost flag (flag top edge at world z 0.385; new ball bottom at
+0.46-0.095=0.365, still 0.02 clear, versus the old ball's 0.365-clearance-
+by-coincidence at 0.44-0.075=0.365 — the same gap, just carried by a bigger
+ball instead of a smaller one).
+
+Built via apt's Blender 4.0.2, headless (`apt-get install blender libegl1
+libegl-mesa0 libgles2`; `numpy`/`Pillow` via `python3.12 -m pip install
+--break-system-packages` — blender's bundled interpreter reads
+`/usr/lib/python3.12`'s site-packages, not `python3`'s default 3.11, the
+same 3.12-vs-3.11 split worth naming for the next pass that hits it fresh).
+No single-icon build path exists, so ran the full `icons.py` batch (all 36)
+twice — once before the edit, once after — and diffed pass-2 against
+pass-1 (both from this session, isolating the code change from cross-run
+WORKBENCH render noise) rather than against the committed set directly:
+only `taunt.png` moved (mean per-pixel diff 0.79); every other icon's
+diff against the *committed* set (2-9 mean) was already present in the
+pre-edit pass-1 render too, matching the ordinary render-noise range prior
+passes (`flicker_stag_portrait.md` pass 2, `yoke_ox_portrait.md`) already
+named. Copied only the changed `taunt.png` into `game/assets/icons/`.
+
+Verified by looking, not just by the numbers:
+
+- **Alpha bbox** (Pillow `getbbox()`, >10 alpha threshold) moved from
+  `(44, 13, 169, 251)` to `(40, 4, 169, 251)` — the ball's growth pushed the
+  top margin from 13px to 4px, still clear of the canvas edge, not clipped.
+- **Full 256px render**
+  (`design/renders/taunt_icon_pass2_before_full.png` vs `..._after_full.png`):
+  the ball is visibly larger and rounder against the pole top; nothing else
+  in the icon moved.
+- **A real 42px downsample** (Pillow `LANCZOS`, nearest-neighbour upscaled
+  for viewing, brown-standin `RGB(139,105,74)` composite, same method every
+  prior icon pass under this item used):
+  `design/renders/taunt_icon_pass2_before_42px.png` vs `..._after_42px.png`
+  — the old ball is a barely-there smear at the pole top; the new one is an
+  unambiguous round gold cap, clearly a deliberate element rather than a
+  stray dot, with the three flag bands still reading as three distinct
+  bars underneath it exactly as before.
+
+- **Silhouette @ 42px (7 → 9):** the cap now reads as a deliberate rounded
+  element rather than a shrinking dot, and the flag stack below it is
+  unaffected — confirmed in the 42px comparison above. Not 10: the pole's
+  own thin line still softens slightly at this size, unrelated to this fix.
+- **Family distinction (9, unchanged):** no other icon in the set gained or
+  lost a pole-with-banners silhouette; this pass didn't touch the flags.
+- **Mechanic match (6, unchanged):** untouched by design — still reads as
+  "a signal/marker" rather than specifically "taunt," the same finding pass
+  1 left as Nick's call.
+- **Colour & contrast (8, unchanged):** the ball is still GOLD, same hue,
+  just larger; no new colour introduced.
+- **Style consistency (8, unchanged):** a bigger ball-cap doesn't change
+  the shared "spike-plus-ball" vocabulary `support`/`relic` already use in
+  this same batch — if anything it now matches their proportions more
+  closely (`support`'s cap ball is `(0.12, 0.08, 0.12)`, `relic`'s inner
+  ball `(0.09, 0.055, 0.09)` — this pass's `(0.095, 0.075, 0.095)` sits
+  between the two rather than being the smallest of the three as before).
+
+**+2 total (38 → 40), meets the loop's 40/50 stop line — kept.** No line
+regressed.
+`run_tests.gd`: **ALL TESTS PASSED** (fresh import, headless). No new
+tests — an icon-geometry-only pass adds none, matching every prior
+portrait/icon-only pass under this item.
+
+## Unsure about (pass 2)
+
+Whether `Mechanic match` is worth a future pass at all, or whether "signal
+flag reads as a marker, not specifically aggro" is a permanent ceiling for
+this shape family without the redesign pass 1 flagged (an arrow/eye motif)
+— that's Nick's call, not this lane's, and 40/50 already meets the loop's
+stop condition, so no pass 3 is planned for this asset.
