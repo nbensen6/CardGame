@@ -384,6 +384,7 @@ func _init() -> void:
 	_test_add_attack_adds_its_own_strength()
 	_test_add_block_reseeds_each_round_like_the_bosss_own()
 	_test_add_thorns_bites_the_attacking_add_not_the_boss()
+	_test_thorns_reflects_card_damage_dealt_to_an_add()
 	_test_incoming_for_includes_a_living_adds_own_attack()
 	_test_incoming_for_ignores_a_dead_adds_attack()
 	_test_adds_round_trip_through_save_and_load()
@@ -6499,6 +6500,25 @@ func _test_add_thorns_bites_the_attacking_add_not_the_boss() -> void:
 	combat.end_turn(1)
 	_expect(add.hp == 27 and boss.hp == 300,
 		"Thorns on the hunter an add hit reflects onto the ADD that hit them, not the main boss standing next to it")
+
+
+## backlog #86 duty 2: _damage_boss() has reflected a Titan's own Thorns onto
+## the hunter who hit it since #36 (see _test_beast_thorns_reflects_card_
+## damage_dealt_to_it above); _damage_add(), the sibling path #63 added for
+## a card that targets one of the boss's adds instead, never grew the same
+## check, despite combat.gd's own doc comment on `adds` promising an add is
+## "a real Boss instance ... thorns all work for free." It didn't.
+func _test_thorns_reflects_card_damage_dealt_to_an_add() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var add := Boss.new("Grub", 30)
+	add.thorns = 3
+	combat.adds.append(add)
+	var hp0: int = combat.players[0].combatant.hp
+	# enemy_index 0 redirects the card's damage to the add instead of the boss.
+	combat.play_card(0, _first_playable(combat, 0), true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
+	_expect(add.hp == 24, "the card's own damage (Slash, 6) still lands on the add")
+	_expect(combat.players[0].combatant.hp == hp0 - 3,
+		"a Thorned add bites back when a hunter's card lands on it, same as a Thorned beast does")
 
 
 ## backlog #89: _adds_turn() always sends a living add's "attack" at

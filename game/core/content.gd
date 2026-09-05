@@ -367,5 +367,8 @@ static func build_boss_adds(id: String) -> Array:
 		a.id = String(ad.get("id", ""))
 		a.moves = ad.get("moves", [])
 		a.art = String(ad.get("art", ""))
+		a.thorns = int(ad.get("thorns", 0))  # backlog #86 duty 2: was parsed for
+		# the main boss (build_boss()) but never for an add, so _damage_add()'s
+		# own Thorns reflection (also fixed this pass) had no data path to reach.
 		out.append(a)
 	return out

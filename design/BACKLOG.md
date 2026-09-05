@@ -2592,6 +2592,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-05** — #86 duty 2 (find an error and resolve it). Last turn
+  (`ddb2e4e`) was duty 1, so this one was due for duty 2. Delegated the
+  initial read-through of `combat.gd`/`run.gd`/`boss.gd`/`content.gd`/`net/*`
+  to a search pass hunting for the two named shapes (first-pass holes, two
+  copies of one truth), then verified the finding by hand before touching
+  anything. Found: `_damage_boss()` (the path for a card hitting the main
+  Titan) has reflected the boss's own Thorns onto the attacking hunter since
+  backlog #36 — `_damage_add()`, the sibling path backlog #63 added for a
+  card that targets one of the boss's *adds* instead, never grew the same
+  check, despite `combat.gd`'s own doc comment on `adds` claiming an add is
+  "a real Boss instance ... thorns all work for free." It wasn't: an add with
+  Thorns took card damage same as ever but never bit back. A prior duty-2 run
+  (fixing the unrelated ascension-scaling-never-reaches-adds bug) had already
+  spotted this exact gap and deliberately deferred it rather than touch three
+  things at once — this run closed it. Two-line fix: `_damage_add()` now
+  reflects `add.thorns` the same way `_damage_boss()` does, and
+  `Content.build_boss_adds()` now parses a `thorns` key off an add's own JSON
+  (it never did — so even with the engine fixed there was no data path to
+  reach it; no add in `bosses.json` sets one today, so this is inert until
+  content wants it, exactly like `weak_point_height`/`artifact` were before
+  a beast used them). Added `_test_thorns_reflects_card_damage_dealt_to_an_add`
+  right beside the existing `_test_add_thorns_bites_the_attacking_add_not_
+  the_boss` (which covers the opposite direction — an add's own attack
+  reflecting the hunter's Thorns back onto the add) — first version had the
+  wrong expected HP (copied the sibling test's number without checking it
+  came from a different move's value), caught by the test actually failing
+  rather than by inspection. `--import` then `run_tests.gd`: ALL TESTS
+  PASSED (830 passed). Next `#86` turn is duty 3 (verify a mechanic).
+
 - **2026-09-05** — #89: `Combat.incoming_for()` now sums a living add's own
   telegraphed "attack" onto whichever hunter `boss_target_index()` names,
   same target `_adds_turn()` already sends that add's real hit to — before

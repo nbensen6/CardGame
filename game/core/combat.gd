@@ -1044,6 +1044,11 @@ func _damage_add(idx: int, amount: int, pi: int) -> int:
 	if add.is_dead():
 		return 0
 	add.take_damage(amount)
+	if add.thorns > 0:  # backlog #86 duty 2: _damage_boss() has always done this
+		# (backlog #36); an add is a real Boss too (combat.gd's own doc comment
+		# on `adds` says so) but this sibling path never grew the same check.
+		players[pi].combatant.take_damage(add.thorns)
+		_log("%s's thorns bite back — %s takes %d." % [add.name, players[pi].combatant.name, add.thorns])
 	damage_dealt_total += amount
 	_fire(MOMENT_DAMAGE_TAKEN, {"target": add, "amount": amount, "player_index": pi})
 	if add.is_dead():
