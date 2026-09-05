@@ -2567,6 +2567,41 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-05** — #86 duty 2 (find an error and resolve it). Last turn
+  (`4620e83`) was duty 1, so this one was due for duty 2. Read `combat.gd`,
+  `run.gd`, `card.gd`, `boss.gd`, `content.gd` and the session layer end to
+  end myself and found nothing fresh (several of the obvious "hand-copied
+  field list drifts" spots are already fixed from prior duty-2 runs); handed
+  the remaining view-layer files to an Explore agent rather than skim them
+  shallowly. It found a real one in `location_3d.gd`'s `_stakes()` — the
+  wayside-event "spell the stakes out on the button" text (its own doc
+  comment: "an event should never be a blind pick"). `_stakes()` hand-lists
+  the effect keys it knows how to describe (`heal`/`max_hp`/`gold`/`relic`/
+  `reward`) and had drifted from the real list `Run._apply_effect_block`
+  (and `events.json`'s own `_comment`) actually applies: `potion`/
+  `random_potion`/`take_potion`/`key` were silently invisible. Worst case:
+  `the_sealed_hollow`'s "Force the seal" (`{"heal": -6, "key": true}`) grants
+  one of the three keys the real final Titan needs — arguably the single
+  most consequential effect any event grants — and showed the player only
+  "(-6 HP)", the key nowhere on the button. `abandoned_apothecary`'s "Take
+  the marked vial" (`{"potion": "field_dressing"}` alone) was worse: with no
+  HP/gold/relic/reward to fall back on, `bits` stayed empty and the button
+  showed no stakes text at all, indistinguishable from a genuine no-op
+  choice. (`curse_card`/`remove_card`/`sharpen_card` are NOT the same gap —
+  every event using them already spells the effect out in its own
+  hand-authored label text, e.g. "Push on rattled (gain gold, a Bruised Grip
+  joins each deck)" — so those were left alone.) Wrote four tests first
+  (`_test_backlog86_stakes_describes_a_key`,
+  `_test_backlog86_stakes_describes_a_named_potion`,
+  `_test_backlog86_stakes_describes_a_random_potion`,
+  `_test_backlog86_stakes_describes_losing_a_potion`), confirmed all four
+  failed against the unfixed function (stashed the fix, ran the suite, saw
+  4 FAILs, popped the stash back), then added the four missing branches to
+  `_stakes()`, naming a `potion` effect by its real `Content.make_potion()`
+  name rather than its raw id. `run_tests.gd`: ALL TESTS PASSED (fresh
+  `--import`, headless, Godot 4.7.1-stable). Pure-text static function, no
+  screen needed to verify it — same shape the existing `_stakes` tests
+  already use. Next `#86` turn is duty 3 (verify a mechanic actually works).
 - **2026-09-05** — #86 duty 1 (improve an asset). Last turn (`8ef2ae0`) was
   duty 3, so this one was due for duty 1. Picked `gloom_moth_portrait.md`
   (35/50, no pass 2 yet, lowest-scoring portrait with no fixer-only

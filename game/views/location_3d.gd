@@ -544,6 +544,20 @@ func _render_event(s: Dictionary) -> void:
 ## it had zero coverage: a formatting slip here (say, the sign on a `max_hp`
 ## penalty) would silently misdescribe a real choice to a real player, with
 ## nothing in run_tests.gd able to catch it.
+##
+## backlog #86 duty 2: this hand-lists the effect keys it knows how to
+## describe, and it had drifted from the real list — `Run._apply_effect_block`
+## (and events.json's own `_comment`) also handle `potion`/`random_potion`/
+## `take_potion`/`key` (curse_card and remove_card/sharpen_card already spell
+## themselves out in every event's hand-authored label text, so they're not
+## the same gap). Worst case was `the_sealed_hollow`'s "Force the seal"
+## (`{"heal": -6, "key": true}`), which grants one of the three keys the real
+## final Titan needs — the single most consequential effect any event can
+## grant — and showed the player only "(-6 HP)", with the key invisible.
+## `abandoned_apothecary`'s "Take the marked vial" (`{"potion": "..."}` alone)
+## was worse still: no HP/gold/relic/reward to fall back on, so `bits` stayed
+## empty and the button showed no stakes at all, indistinguishable from a
+## true no-op choice.
 static func _stakes(eff: Dictionary) -> String:
 	var bits: Array[String] = []
 	var h := int(eff.get("heal", 0))
@@ -562,6 +576,15 @@ static func _stakes(eff: Dictionary) -> String:
 	var rw := String(eff.get("reward", ""))
 	if rw != "":
 		bits.append("choose a " + rw)
+	var pid := String(eff.get("potion", ""))
+	if pid != "":
+		bits.append(String(Content.make_potion(pid).get("name", pid)))
+	if bool(eff.get("random_potion", false)):
+		bits.append("a potion")
+	if bool(eff.get("take_potion", false)):
+		bits.append("-1 potion")
+	if bool(eff.get("key", false)):
+		bits.append("a key")
 	return "(%s)" % "  ·  ".join(bits) if not bits.is_empty() else ""
 
 

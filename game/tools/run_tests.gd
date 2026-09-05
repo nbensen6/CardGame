@@ -537,6 +537,12 @@ func _init() -> void:
 	_test_backlog86_stakes_describes_a_reward_choice()
 	_test_backlog86_stakes_joins_every_stake_named_at_once()
 	_test_backlog86_stakes_is_blank_for_an_effect_with_nothing_to_show()
+	# backlog #86 duty 2: _stakes' hand-copied effect-key list had drifted from
+	# the real one -- key/potion/random_potion/take_potion were invisible.
+	_test_backlog86_stakes_describes_a_key()
+	_test_backlog86_stakes_describes_a_named_potion()
+	_test_backlog86_stakes_describes_a_random_potion()
+	_test_backlog86_stakes_describes_losing_a_potion()
 	# backlog #86 duty 3 (fifteenth turn): CardView.face_text, the live line a
 	# player reads on a card in hand to decide whether to play it -- was
 	# already static and pure, and had zero coverage despite being the exact
@@ -8645,6 +8651,32 @@ func _test_backlog86_stakes_joins_every_stake_named_at_once() -> void:
 func _test_backlog86_stakes_is_blank_for_an_effect_with_nothing_to_show() -> void:
 	_expect(Location3D._stakes({}) == "",
 		"a choice with no stated stakes gets no parentheses at all, not an empty '()'")
+
+
+## backlog #86 duty 2: _stakes' own hand-copied effect-key list had drifted
+## from the real one (Run._apply_effect_block / events.json's `_comment`) —
+## key/potion/random_potion/take_potion were silently invisible to the player
+## picking a real event choice. See the_sealed_hollow and abandoned_apothecary,
+## named in _stakes' own updated doc comment.
+func _test_backlog86_stakes_describes_a_key() -> void:
+	_expect(Location3D._stakes({"heal": -6, "key": true}) == "(-6 HP  ·  a key)",
+		"the_sealed_hollow's 'Force the seal' must not hide the single most consequential thing it grants")
+
+
+func _test_backlog86_stakes_describes_a_named_potion() -> void:
+	var expected := "(%s)" % String(Content.make_potion("field_dressing").get("name", ""))
+	_expect(Location3D._stakes({"potion": "field_dressing"}) == expected,
+		"a choice with ONLY a named potion effect must not render as blank stakes")
+
+
+func _test_backlog86_stakes_describes_a_random_potion() -> void:
+	_expect(Location3D._stakes({"random_potion": true}) == "(a potion)",
+		"a random-potion grant is named, not silently dropped")
+
+
+func _test_backlog86_stakes_describes_losing_a_potion() -> void:
+	_expect(Location3D._stakes({"take_potion": true, "gold": 40}) == "(+40 gold  ·  -1 potion)",
+		"the gambling crow's potion downside shows up alongside the gold it also names")
 
 
 ## backlog #86 duty 3 (fifteenth pass): CardView.face_text is the live line a
