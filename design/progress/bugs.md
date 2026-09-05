@@ -200,3 +200,56 @@ than touched.
 run — both hunters, the rest-site geometry, and all five campfire actions
 were visible and legible, no harness `VIS` line exists for this state but
 nothing was off-frame or overlapping.
+
+## 2026-09-05 — right-click card inspector never opens; neither does its own left-click self-test
+
+**Command:**
+```
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:\shot_inspect.png state=3dinspect slot=0 beast=thrasher
+```
+
+**What the harness printed:**
+```
+RIGHTCLICK opened_inspector=false  FAIL
+KEYWORD panel=["Timed", "Play it on the sweeping bar. A dead-centre hit pays the bonus in full, catching  OK
+LEFTCLICK body=false on_keyword=false  FAIL
+```
+The middle check (hovering a keyword, then right-clicking) passes — the
+keyword-specific popup answers correctly once `_hover_meta` is faked to
+`"kw:timed"`. Both of the checks either side of it fail: a right-click
+anywhere else on the card body never sets `combat_3d._detail`, and the
+follow-up left-click checks (`card._timing` after a body click, and after a
+`RichTextLabel.meta_clicked` emit) never set `card._timing` either.
+
+**What I saw in the PNG:** confirmed by eye — no inspector overlay is showing
+in the frame at all; just the ordinary hand of five cards, matching
+`opened_inspector=false`.
+
+**Why it matters:** `card_view.gd:1600-1608` documents right-click as the
+*accelerator* for the tap-driven "?" inspector button, added 2026-08-16 per
+Nick ("I would like the ability to right click on things like keywords... For
+example, poison. What does poison do?"), with the comment "The '?' button
+stays: CLAUDE.md §5 keeps a tap path for everything... This is the
+accelerator, not the only way in." The `?` button itself
+(`card_view.gd:858`) is a separate code path from what this harness state
+drives and isn't shown as failing here — so the tap-first, CLAUDE.md-compliant
+path may still work — but the right-click accelerator that was built for it
+does not, per the game's own functional self-check, not just my read of the
+picture.
+
+**Where to look:** `card_view.gd`'s `_on_card_input()` (~line 1609, connected
+to `gui_input` at line 333-334) is wired alongside a second `gui_input`
+listener the hand itself adds in `combat_3d.gd` (`_card_pressed`, line 2961,
+which early-returns for anything but a left button press, so it shouldn't be
+swallowing the right-click) — the fact that even the *keyword* branch works
+but the *plain-card* branch (`inspect_requested.emit(_data)`, line 1624)
+doesn't suggests the emit itself, or its `combat_3d.gd:2972` connection to
+`_show_card_detail`, not the input routing. This is `game/**` GDScript,
+outside `tools/blender/**` / `game/assets/3d/**`, so written up rather than
+touched.
+
+**Checked and clean, for the record:** `3devent` (a forced narrative event)
+rendered correctly this run — both hunters, the hex-tile overworld geometry,
+event title/body text and both choice buttons were all visible and legible,
+no `VIS FAIL`.
