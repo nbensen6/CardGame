@@ -2567,6 +2567,42 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-05** — #86 duty 3 (verify a mechanic actually works). Last turn
+  (`57c5032`) was duty 2, so this one was due for duty 3. Surveyed every
+  `static func` under `core/`, `views/`, `ui/`, and `session/` against
+  `run_tests.gd` by name to find what genuinely has zero coverage rather than
+  adding a fourth case to something already tested — the view-layer climb
+  routing this duty's write-up singled out (`_route_between`, `foothold_anchor`,
+  `hunter_move_kind`, etc.) turned out to already have thorough coverage from
+  earlier passes of this same rotation. The real gap was
+  `RunSave._whole_numbers` (`core/run_save.gd:115`): its own doc comment names
+  a real bug class — JSON has one number type, so every int in a save file
+  round-trips as a float, and the HUD would print "HP 17.0/42.0" without this
+  function repairing it before `Run.from_dict` reads the dict — but nothing had
+  ever called it directly, and the existing save/load round-trip tests only
+  ever checked VALUE equality (`17 == 17.0` in GDScript), which stays green
+  even if the TYPE quietly rotted to float. Confirmed the real exposure by
+  reading `Run.from_dict`: `r.hp`/`r.max_hp` and `r.team_relics` are assigned
+  straight off the parsed dict with `.duplicate()`/`.duplicate(true)` and no
+  `int()` coercion of their own (unlike `boss.gd`/`player_state.gd`, which
+  both defend themselves) — they depend entirely on `_whole_numbers` having
+  already fixed the type upstream in `load_run()`. Added eight tests: six unit
+  tests on `_whole_numbers` directly (integral float → int, a genuine fraction
+  like a relic's 0.06 timing bonus stays float, recursion into arrays and into
+  nested dict-of-dicts-of-arrays, non-numeric values pass through untouched,
+  and a float past the doc comment's own `9.0e15` safe-range guard is left
+  alone rather than truncated) plus two integration tests proving the
+  guarantee holds at the real call sites: a full `RunSave.save`/`load_run`
+  round trip returns `typeof(back.hp[0]) == TYPE_INT`, and a saved relic's
+  `"value"` field survives nested inside `team_relics` as an int too. No bug
+  found — `_whole_numbers` was already correct — but the guarantee had never
+  been proven before now, and it is exactly the class of "checks that stay
+  green while the real property silently degrades" this rotation exists to
+  catch. `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot
+  4.7.1-stable; all 8 new PASS lines present, no FAILs). Left #86 itself
+  unchecked — it is the standing rotation, not a completable item. Next `#86`
+  turn is duty 1 (improve an asset).
+
 - **2026-09-05** — #86 duty 2 (find an error and resolve it). Last turn
   (`c4e69c5`) was duty 1, so this one was due for duty 2. Recognised the
   bug family from the last two duty-2 log entries (Dexterity, `d8e265a`;

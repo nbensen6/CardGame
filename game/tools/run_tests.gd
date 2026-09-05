@@ -284,6 +284,14 @@ func _init() -> void:
 	_test_backlog39_older_save_backfills_missing_stats()
 	_test_load_run_rejects_a_save_from_a_newer_build()
 	_test_load_run_rejects_a_corrupt_file()
+	_test_whole_numbers_converts_an_integral_float_to_int()
+	_test_whole_numbers_preserves_a_genuine_fraction()
+	_test_whole_numbers_recurses_into_arrays()
+	_test_whole_numbers_recurses_into_dictionaries_and_nested_mixes()
+	_test_whole_numbers_leaves_non_numeric_values_alone()
+	_test_whole_numbers_leaves_a_float_past_the_safe_int_range_alone()
+	_test_load_run_returns_int_typed_hp_not_float()
+	_test_load_run_returns_int_typed_relic_value_not_float()
 	_test_every_card_declares_a_rarity()
 	_test_card_type_matches_whether_it_deals_damage()
 	_test_strength_only_lifts_attack_type_cards()
@@ -4960,6 +4968,97 @@ func _test_load_run_rejects_a_corrupt_file() -> void:
 	f.close()
 
 	_expect(RunSave.load_run() == null, "an unreadable file loads as \"no save\" rather than crashing")
+	RunSave.clear()
+
+
+## backlog #86 duty 3 — _whole_numbers is the one thing standing between every
+## saved int and the "HP 17.0/42.0" bug its own doc comment names: JSON has one
+## number type, so `_migrate`'s output and everything else load_run() reads
+## comes back with every int reincarnated as a float, and Run.from_dict trusts
+## several fields (hp, max_hp, nested relic dicts) with no int() coercion of
+## its own to repair that. Nothing had ever called _whole_numbers directly or
+## proven the guarantee its comment claims — the round-trip tests below only
+## ever checked VALUE equality (17 == 17.0 in GDScript), which is exactly the
+## kind of check that stays green while the TYPE quietly rots to float.
+func _test_whole_numbers_converts_an_integral_float_to_int() -> void:
+	var out: Variant = RunSave._whole_numbers(17.0)
+	_expect(typeof(out) == TYPE_INT and int(out) == 17,
+		"an integral float becomes a real int, not just a float that happens to compare equal to one")
+
+
+func _test_whole_numbers_preserves_a_genuine_fraction() -> void:
+	var out: Variant = RunSave._whole_numbers(0.06)
+	_expect(typeof(out) == TYPE_FLOAT and is_equal_approx(float(out), 0.06),
+		"a genuine fraction (a relic's timing-zone bonus, per the doc comment) must survive as a float, not get floored to 0")
+
+
+func _test_whole_numbers_recurses_into_arrays() -> void:
+	var out: Variant = RunSave._whole_numbers([17.0, 29.0, 0.5])
+	var arr: Array = out
+	_expect(typeof(arr[0]) == TYPE_INT and typeof(arr[1]) == TYPE_INT and typeof(arr[2]) == TYPE_FLOAT,
+		"an hp-shaped array of floats comes back with only the integral entries converted, element by element")
+
+
+func _test_whole_numbers_recurses_into_dictionaries_and_nested_mixes() -> void:
+	var out: Variant = RunSave._whole_numbers({"value": 2.0, "downside_value": 0.06, "nested": [{"stacks": 3.0}]})
+	var d: Dictionary = out
+	_expect(typeof(d["value"]) == TYPE_INT and typeof(d["downside_value"]) == TYPE_FLOAT
+		and typeof((d["nested"][0] as Dictionary)["stacks"]) == TYPE_INT,
+		"a dict-of-dicts-of-arrays (the real shape of a saved relic) is walked all the way down, not just at the top level")
+
+
+func _test_whole_numbers_leaves_non_numeric_values_alone() -> void:
+	var out: Variant = RunSave._whole_numbers({"name": "Iron Thews", "picked": true, "event": {}})
+	var d: Dictionary = out
+	_expect(String(d["name"]) == "Iron Thews" and bool(d["picked"]) == true and (d["event"] as Dictionary).is_empty(),
+		"strings, bools and empty dicts pass through untouched -- this is a number filter, not a generic rewrite")
+
+
+func _test_whole_numbers_leaves_a_float_past_the_safe_int_range_alone() -> void:
+	# The doc comment's own guard is `absf(f) < 9.0e15`; a float past that would
+	# lose precision as an int, so it must be left a float rather than "fixed"
+	# into a wrong number.
+	var huge := 1.0e16
+	var out: Variant = RunSave._whole_numbers(huge)
+	_expect(typeof(out) == TYPE_FLOAT and float(out) == huge,
+		"a float past the safe int range is left alone rather than truncated into a different number")
+
+
+## The integration half: prove the guarantee actually holds at the one call
+## site that relies on it, not just inside _whole_numbers itself. Run.from_dict
+## assigns `r.hp = (d.get("hp", []) as Array).duplicate()` with no int()
+## coercion of its own (core/run.gd) -- unlike boss.gd and player_state.gd,
+## which both defend themselves with an explicit int() cast, hp trusts
+## load_run() to have already fixed the type upstream via _whole_numbers.
+func _test_load_run_returns_int_typed_hp_not_float() -> void:
+	var run := Run.new([_deck_of(_slash, 6), _deck_of(_slash, 5)], ["A", "B"], 57, [{}, {}])
+	run.start()
+	run.hp[0] = 17
+	run.max_hp[0] = 42
+
+	RunSave.clear()
+	RunSave.save(run)
+	var back := RunSave.load_run()
+	_expect(back != null and typeof(back.hp[0]) == TYPE_INT and typeof(back.max_hp[0]) == TYPE_INT,
+		"hp and max_hp come back as real ints after a save/load round trip, not floats that merely print as the right number until the HUD concatenates them")
+	RunSave.clear()
+
+
+## Team relics are the other unguarded case: `team_relics = (d.get("team_relics",
+## []) as Array).duplicate(true)` in Run.from_dict never touches the relic
+## dicts' own fields (relics.json's "value"), so a relic's numeric strength
+## depends entirely on _whole_numbers having walked inside the array already.
+func _test_load_run_returns_int_typed_relic_value_not_float() -> void:
+	var run := Run.new([_deck_of(_slash, 6), _deck_of(_slash, 5)], ["A", "B"], 58, [{}, {}])
+	run.start()
+	run.team_relics.append(Content.make_relic("iron_thews"))
+
+	RunSave.clear()
+	RunSave.save(run)
+	var back := RunSave.load_run()
+	var value: Variant = back.team_relics[0].get("value") if back != null and not back.team_relics.is_empty() else null
+	_expect(value != null and typeof(value) == TYPE_INT,
+		"a relic's own numeric field survives the round trip as an int, not a float, even nested inside team_relics")
 	RunSave.clear()
 
 
