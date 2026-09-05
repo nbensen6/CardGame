@@ -2567,6 +2567,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-05** — #86 duty 1 (improve an asset). Last turn (`ddf73f1`) was
+  duty 3, so this one was due for duty 1. Surveyed every un-plateaued
+  portrait/icon for the lowest score: `boulder_ram_portrait` (30),
+  `mountain_climbers_portrait` (33) and `eyrie_hawk_portrait` (35) were
+  lower, but each one's two lowest rubric lines trace to the 3D model's own
+  geometry or palette (a horn that renders as a disc, a jaw shard, a sigil
+  gap) — a portrait fix wearing a model's clothes, already written up for
+  the fixer lane in their own beast progress files, nothing left for
+  `portraits.py` to do. `taunt_icon` (38, one pass done) was the next
+  lowest with a genuinely in-lane fix: its top ball shrinks to a near-
+  invisible smear once downsampled to the 42px a card is actually read at.
+  Grew the ball in `icons.py` (0.075→0.095 radius, centre nudged up 0.02 to
+  keep its existing clearance from the flag below), left `Mechanic match`
+  untouched since the pass-1 scorer already named that fix as a new motif
+  "if Nick wants one" — a design call, not a technical one. Installed
+  Blender 4.0.2 via apt (`download.blender.org` unreachable through the
+  proxy, same as prior passes found) plus `numpy`/`pillow` for its bundled
+  3.12 interpreter specifically (system `python3` defaults to 3.11 and
+  installing there does nothing for Blender). Isolated the real change by
+  diffing this session's own before/after render batch against each other,
+  not against the committed set, so 2-9-point cross-run WORKBENCH noise on
+  unrelated icons didn't get mistaken for something this pass touched —
+  only `taunt.png` moved. Looked at the real 42px downsample before and
+  after (`design/renders/taunt_icon_pass2_*`): the cap reads as a
+  deliberate round element now, not a stray dot. 38 → 40, meets the loop's
+  stop line. `run_tests.gd`: ALL TESTS PASSED (fresh `--import`, headless,
+  Godot 4.7.1-stable) — no new tests, an icon-geometry-only pass adds none.
+  Next `#86` turn is duty 2 (find an error and resolve it).
+
 - **2026-09-05** — #86 duty 3 (verify a mechanic actually works). Last turn
   (`9c685d0`) was duty 2, so this one was due for duty 3. The backlog's own
   "start here" pointer (`_route_between`/`_stand_on_model`/`_hop`) turned out
