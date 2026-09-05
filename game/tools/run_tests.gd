@@ -771,6 +771,22 @@ func _init() -> void:
 	_test_backlog86_hit_circle_zone_bonus_widens_the_good_window_not_the_perfect_one()
 	_test_backlog86_hit_circle_chain_quality_is_its_worst_window_not_its_last()
 	_test_backlog86_hit_circle_process_times_out_a_silent_window_as_a_miss()
+	# backlog #86 duty 3: the thirty-second pass proved HitCircle's plain TAP
+	# grading, but begin()'s own `slider` argument (used for a climb card whose
+	# window is one held note rather than a series of taps -- combat_3d's
+	# SLIDER_CLIMB) is a second, separate code path through the exact same
+	# class, and nothing had ever passed `true` for it. Every prior HitCircle
+	# test calls begin(..., false). The doc comments above SLIDE_RESCUE and
+	# _fire()/_gui_input() promise a specific three-way split (miss the press
+	# entirely -> MISS; hold to the end -> the press's own quality, which can be
+	# PERFECT; let go early but past the rescue mark -> downgraded to GOOD, never
+	# better and never MISS) that had never been exercised.
+	_test_backlog86_hit_circle_slider_press_on_beat_holds_rather_than_finishing()
+	_test_backlog86_hit_circle_slider_held_to_the_end_keeps_the_press_quality()
+	_test_backlog86_hit_circle_slider_released_before_rescue_misses_even_a_perfect_press()
+	_test_backlog86_hit_circle_slider_released_past_rescue_downgrades_to_good()
+	_test_backlog86_hit_circle_slider_ignores_a_second_press_while_holding()
+	_test_backlog86_hit_circle_slider_press_outside_the_window_still_misses_immediately()
 	# backlog #86 duty 3 (thirty-third pass): Dev.cycle(), the F9 live-swap
 	# between a card's four rarity treatments (framed / borderless / borderless
 	# foil / foil) dev.gd's own header asks for by name -- "does the borderless
@@ -9670,6 +9686,103 @@ func _test_backlog86_hit_circle_process_times_out_a_silent_window_as_a_miss() ->
 	_expect(int(got[0]) == Combat.TIMING_MISS,
 		"a window that closes with no tap resolves as TIMING_MISS via _process(), the same as an explicit late tap")
 	_expect(not hc.is_live(), "a timed-out window is no longer live")
+	hc.free()
+
+
+## backlog #86 duty 3 -- HitCircle's SLIDER path (begin(..., true)): a climb
+## card whose window is one held note, pressed on the beat and then held while
+## the follower runs the path, rather than a series of taps. The tap-grading
+## tests above never pass slider=true, and grepping the rest of the file for
+## `_slider`/`_holding`/SLIDE_RESCUE turns up nothing outside hit_circle.gd
+## itself -- the whole hold-and-release rule was unproven: press quality is
+## banked at press time (_press_quality), a full hold to _slide >= 1.0 pays
+## that banked quality outright (so a perfect press can still resolve
+## PERFECT), and letting go early only pays at all past SLIDE_RESCUE, and even
+## then never better than GOOD ("releasing a hair early is a slip", the
+## comment above the constant).
+func _test_backlog86_hit_circle_slider_press_on_beat_holds_rather_than_finishing() -> void:
+	var hc := HitCircle.new()
+	hc.begin(0.0, null, PackedVector3Array([Vector3.ZERO, Vector3.ONE]), true)
+	hc._t = hc._approach  # dead on the beat
+	var resolved_at_all := [false]
+	hc.resolved.connect(func(_q: int) -> void: resolved_at_all[0] = true)
+	hc._fire()
+	_expect(hc._holding, "a slider's press does not finish the window -- it starts the hold")
+	_expect(hc.is_live(), "a slider stays live through the hold, not just through the press")
+	_expect(not resolved_at_all[0], "pressing a slider on the beat must not emit resolved() until the hold finishes or breaks")
+	hc.free()
+
+
+func _test_backlog86_hit_circle_slider_held_to_the_end_keeps_the_press_quality() -> void:
+	var hc := HitCircle.new()
+	hc.begin(0.0, null, PackedVector3Array([Vector3.ZERO, Vector3.ONE]), true)
+	hc._t = hc._approach  # perfect press
+	hc._fire()
+	var got := [-1]
+	hc.resolved.connect(func(q: int) -> void: got[0] = q)
+	hc._process(1.0)  # SLIDE_SECONDS is 0.85, so a full second drains the whole path
+	_expect(int(got[0]) == Combat.TIMING_PERFECT,
+		"holding a perfectly-pressed slider all the way to the end resolves PERFECT, not capped at GOOD")
+	_expect(not hc.is_live(), "a slider finished by holding to the end is no longer live")
+	hc.free()
+
+
+func _test_backlog86_hit_circle_slider_released_before_rescue_misses_even_a_perfect_press() -> void:
+	var hc := HitCircle.new()
+	hc.begin(0.0, null, PackedVector3Array([Vector3.ZERO, Vector3.ONE]), true)
+	hc._t = hc._approach  # perfect press
+	hc._fire()
+	hc._slide = 0.3  # well short of SLIDE_RESCUE (0.72)
+	var got := [-1]
+	hc.resolved.connect(func(q: int) -> void: got[0] = q)
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	hc._gui_input(release)
+	_expect(int(got[0]) == Combat.TIMING_MISS,
+		"letting go of a slider well before the rescue point misses, even though the press itself was a perfect PERFECT")
+	hc.free()
+
+
+func _test_backlog86_hit_circle_slider_released_past_rescue_downgrades_to_good() -> void:
+	var hc := HitCircle.new()
+	hc.begin(0.0, null, PackedVector3Array([Vector3.ZERO, Vector3.ONE]), true)
+	hc._t = hc._approach  # perfect press
+	hc._fire()
+	hc._slide = 0.9  # past SLIDE_RESCUE (0.72) but short of the full 1.0
+	var got := [-1]
+	hc.resolved.connect(func(q: int) -> void: got[0] = q)
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	hc._gui_input(release)
+	_expect(int(got[0]) == Combat.TIMING_GOOD,
+		"letting go of a slider past the rescue point still pays, but capped at GOOD even though the press itself was PERFECT")
+	hc.free()
+
+
+func _test_backlog86_hit_circle_slider_ignores_a_second_press_while_holding() -> void:
+	var hc := HitCircle.new()
+	hc.begin(0.0, null, PackedVector3Array([Vector3.ZERO, Vector3.ONE]), true)
+	hc._t = hc._approach  # perfect press
+	hc._fire()
+	hc._slide = 0.5
+	hc._fire()  # a second press while already holding must be ignored
+	_expect(hc._slide == 0.5 and hc._holding,
+		"_fire() while already holding a slider is a no-op -- it must not reset progress or re-fire the hold")
+	hc.free()
+
+
+func _test_backlog86_hit_circle_slider_press_outside_the_window_still_misses_immediately() -> void:
+	var hc := HitCircle.new()
+	hc.begin(0.0, null, PackedVector3Array([Vector3.ZERO, Vector3.ONE]), true)
+	hc._t = hc._approach + 0.30  # past GOOD_WINDOW with no zone bonus
+	var got := [-1]
+	hc.resolved.connect(func(q: int) -> void: got[0] = q)
+	hc._fire()
+	_expect(int(got[0]) == Combat.TIMING_MISS,
+		"a slider's press still has to land inside the window -- missing the press entirely never starts a hold to rescue")
+	_expect(not hc._holding, "a missed press never enters the holding state")
 	hc.free()
 
 

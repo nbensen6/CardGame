@@ -2592,6 +2592,43 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-05** — #86 duty 3 (verify a mechanic actually works). Last turn
+  (`87831c0`) was duty 2, so this one was due for duty 3. Surveyed function
+  coverage across `/views` and `/core` first and kept finding the opposite of
+  a gap — climb routing, RunMap's guarantees, Coach's hint priority,
+  `predicted_damage`'s Buffer/Intangible pricing, the Cast/Tiles art-fallback
+  rule, all already proven, several indirectly (through a caller) rather than
+  by the function's own name, which flat name-grepping in `run_tests.gd`
+  missed at first. Handed the search to an Explore agent with that lesson
+  stated up front; it found `ui/hit_circle.gd`'s SLIDER path (`begin(...,
+  true)`, used for a climb card whose window is one held note rather than a
+  series of taps) had never been exercised — every existing HitCircle test
+  passes `slider=false`, and grepping for `_slider`/`_holding`/`SLIDE_RESCUE`
+  turned up nothing outside the file itself. This is a second, independent
+  implementation of the same PERFECT/GOOD/MISS grading `CardView._fire()`
+  already covers for the tap path (backlog #33), so it can be wrong on its
+  own even though the rule it copies is proven correct elsewhere — the "two
+  copies of one truth" shape duty 2 keeps finding, just checked here instead
+  of assumed. Wrote six tests: a press starts the hold rather than resolving
+  immediately; holding to `_slide >= 1.0` pays the press's own banked quality
+  (so a perfectly-timed press can still resolve PERFECT); releasing before
+  `SLIDE_RESCUE` (0.72) misses outright even off a perfect press; releasing
+  past it pays but capped at GOOD, never better; a second press while already
+  holding is a no-op; and a press outside the timing window never starts a
+  hold at all. First run: 4 of the 6 FAILED — not a bug in `hit_circle.gd`,
+  a bug in the tests. `begin()`'s own guard is `_slider = slider and
+  points.size() > 1` (a one-point path has nothing to "run"), and four tests
+  passed a single-point `PackedVector3Array`, so `_slider` silently came back
+  `false` and they were driving the plain-tap branch instead. Fixed by giving
+  those tests a two-point path, matching the one working test that already
+  had one; re-ran, all six passed for the right reason this time. Left alone
+  on purpose: `EnetTransport`/`NetLink` (real networking, not headless-
+  testable beyond what `net_smoke.gd` already does live) and `ui/sfx.gd`/
+  `ui/music.gd` (presentation — tone synthesis — which duty 3's own rules say
+  not to fake a test for). `--import` then `run_tests.gd`: ALL TESTS PASSED
+  (822 passing, up from 816; fresh cache, Godot 4.7.1-stable, headless). Next
+  `#86` turn is duty 1 (improve an asset — portraits and icons only).
+
 - **2026-09-05** — #86 duty 2 (find an error and resolve it). Last turn
   (`cb65d4d`) was duty 1, so this one was due for duty 2. Read `combat.gd`,
   `run.gd`, `boss.gd`, `combatant.gd`, `card.gd`, `player_state.gd`,
