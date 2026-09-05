@@ -59,6 +59,15 @@ FOCUS = {
 FOCUS_XY = {
     "riptide_eel": (0.5, -1.0),
     "cinder_jackal": (0.0, -0.7),
+    # Gloom Moth's mesh is X-symmetric (bbox centre 0.02) but the fixed
+    # three-quarter EYE angle still renders it off-centre — antennae and
+    # wings reach further forward/up on one side of the view than the
+    # other, and that Y/Z spread projects onto screen X under an oblique
+    # camera even though nothing in X itself is asymmetric. Measured: the
+    # default focus put the alpha bbox's centre 16.5px left of the 512px
+    # canvas's own centre; -0.10 here brings it to -0.5px (design/progress/
+    # gloom_moth_portrait.md's "Framing" fix).
+    "gloom_moth": (-0.10, 0.0),
 }
 
 ## Three-quarter and a little above: the angle every character in this game was

@@ -2567,6 +2567,33 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-05** — #86 duty 1 (improve an asset). Last turn (`8ef2ae0`) was
+  duty 3, so this one was due for duty 1. Picked `gloom_moth_portrait.md`
+  (35/50, no pass 2 yet, lowest-scoring portrait with no fixer-only
+  blocker) over `boulder_ram_portrait` (30, but its whole two-fix budget
+  is the horn-geometry bug already deferred to the fixer) and
+  `eyrie_hawk_portrait` (35, both named fixes are model geometry). Of
+  `gloom_moth_portrait.md`'s two lowest lines, only **Framing (7)** had a
+  fix inside `portraits.py`'s scope — **Readability @ 34px (6)** needs the
+  sigil moved on the antenna, which is `gloom_moth.py` model geometry and
+  stays with the fixer lane. Measured before touching anything: the mesh
+  is X-symmetric (bbox centre x=0.022) but rendered 16.5px off-centre,
+  because the fixed three-quarter camera angle projects the model's
+  fore-and-aft (Y/Z) spread onto screen X even with nothing asymmetric in
+  X itself — a real finding worth naming since "off-centre" reads like a
+  lopsided model and isn't one. Swept `FOCUS_XY`'s world-X offset
+  empirically (rendering test crops, not guessing) and landed on -0.10,
+  which brings the alpha-bbox centre to -0.5px off true centre. Verified
+  by rendering the full 32-portrait batch before and after and diffing:
+  only `gloom_moth.png` moved. Looked at both the full 512px composite and
+  a real 34px downsample before keeping it — the wing-hump is visibly
+  centred in the after render, margins close to even. +1 (35→36); below
+  the loop's 40 stop line but the in-scope half of the two-fix budget is
+  spent, the other fix stays with the fixer. `run_tests.gd`: ALL TESTS
+  PASSED (fresh `--import`, headless, Godot 4.7.1-stable). Left #86 itself
+  unchecked — standing rotation, not a completable item. Next `#86` turn
+  is duty 2 (find an error and resolve it).
+
 - **2026-09-05** — #86 duty 3 (verify a mechanic actually works). Last turn
   (`ca099da`) was duty 2, so this one was due for duty 3. Checked #87/#88
   (`needs a screen`) and #85 (Nick's design call) first, nothing actionable
