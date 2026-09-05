@@ -135,13 +135,26 @@ def fire(i):                                    # burning damage
 
 
 def skull(i):                                   # poison, wound, death
+    # pass 2 (design/progress/skull_icon.md): solid ovoid eyes and three even
+    # slab "teeth" read as a blocky robot/alien face, not a skull. Sockets are
+    # now a taper() pointing down -- wide at the brow, pointed toward the nose,
+    # the way a real hollow orbit reads -- and the teeth are tapered fangs on a
+    # narrowed jaw instead of uniform bars.
     i.slabf(0.0, 0.10, 0.32, 0.30, MINT, bevel=0.10)
-    i.slabf(0.0, -0.30, 0.20, 0.14, MINT, bevel=0.05)
+    i.slabf(0.0, -0.30, 0.16, 0.13, MINT, bevel=0.05)
     for s in (-1, 1):
-        i.ball((0.15 * s, -0.06, 0.14), (0.10, 0.09, 0.11), CHARCOAL, 7, 4)
+        i.taper((0.15 * s, -0.06, 0.16), 0.12, 0.02, 0.22, CHARCOAL, seg=6,
+                rot=point((0.0, 0.0, -1.0)))
     i.slabf(0.0, -0.14, 0.045, 0.06, CHARCOAL, bevel=0.0)
-    for s in (-1, 0, 1):
-        i.slabf(0.11 * s, -0.36, 0.030, 0.055, CHARCOAL, bevel=0.0)
+    # spike() centres its taper at y=0.0 -- flush with the jaw plate's own
+    # centre, so its front-most point (y=-r0, at most -0.034) never reaches
+    # past the jaw's own front face at y=-0.05 and the tooth renders fully
+    # hidden behind it, the same occlusion `guard_icon.md` pass 2 found in its
+    # clock ring. Called taper() directly with y=-0.08 to pull each tooth in
+    # front of that face instead.
+    for s, r0 in ((-1, 0.026), (0, 0.034), (1, 0.026)):
+        i.taper((0.10 * s, -0.08, -0.33), r0, 0.006, 0.14, CHARCOAL, seg=4,
+                rot=point((0.0, 0.0, -1.0)))
 
 
 def flask(i):                                   # a potion

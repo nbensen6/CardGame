@@ -2592,6 +2592,27 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-05** — #86 duty 1 (improve an asset, portraits/icons only). Last
+  turn (`17c4fc8`) was duty 3, so this one was due for duty 1. Scanned every
+  scored `*_portrait.md`/`*_icon.md` for the lowest current total; the true
+  lowest three (`boulder_ram_portrait` 30, `bog_leech_portrait` 31,
+  `mountain_climbers_portrait` 33) all diagnose a fix that needs the beast's
+  own model geometry, out of this lane's `portraits.py`/`icons.py`-only
+  scope — skipped those rather than touch a `.py` file that isn't mine.
+  Picked `skull_icon.md` (38/50, `icons.py`-only diagnosis): the two solid
+  `ball()` eyes read as a robot/alien face, not a skull. Replaced them with
+  a `taper()` each pointed straight down (wide at the brow, a point toward
+  the nose) for a real hollow-orbit look, narrowed the jaw, and swapped the
+  three uniform teeth-bars for tapered fangs. First build hid every tooth
+  completely — they were centred at the jaw plate's own depth, so the plate's
+  opaque front face occluded them, the identical bug class `guard_icon.md`
+  pass 2 found in its clock ring — fixed by pulling the teeth in front of
+  that face. Rendered and looked at the result directly (full-size, a real
+  42px downsample, and a silhouette): the eye-socket fix is a clear, visible
+  win; the fangs only read at full size, a smudge at 42px. +2 total (38 →
+  40), no line regressed. `--import` then `run_tests.gd`: ALL TESTS PASSED.
+  Next `#86` turn is duty 2 (find an error and resolve it).
+
 - **2026-09-05** — #86 duty 2 (find an error and resolve it). Last turn
   (`ddb2e4e`) was duty 1, so this one was due for duty 2. Delegated the
   initial read-through of `combat.gd`/`run.gd`/`boss.gd`/`content.gd`/`net/*`
