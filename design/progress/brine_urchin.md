@@ -60,3 +60,53 @@ rather than assuming the fix; a design call, not a measurement. Also unsure
 whether the tendrils gripping the base read as "clinging" at fight
 distance or just as short stubby legs — could not tell from these six
 views alone.
+
+---
+
+## Pass 2 — fixer lane, 2026-09-05
+
+Applied by the **fixer** lane (`tools/fixer/BRIEF.md`), which repairs what the
+cloud reports. Views: `design/renders/brine_urchin_pass2_*.png`, captured with
+`look.cmd brine_urchin 2`, compared against the existing
+`brine_urchin_pass1_34.png` / `_sil.png`.
+
+| Pass | Sil | Prop | Hygiene | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 1 | 4 | 6 | 8 | 8 | 7 | **33** |
+| 2 | 6 | 7 | 8 | 8 | 7 | **36** |
+
+### Both diagnosed fixes applied
+
+- **Silhouette (4 → 6).** Spines 4 and 9 (`ang = i * 36.0`, at 144° and 324°)
+  sit almost exactly on the 3/4 fight camera's own viewing axis — one nearly
+  facing it, one nearly facing away — so they foreshortened to near-dots
+  instead of visible spikes. Rotated both 20° around Z
+  (`ang = i * 36.0 + (20.0 if i in (4, 9) else 0.0)`), off that axis, without
+  touching the other eight or the 18° gap the sigil column already depends on
+  at 252°/288°. `brine_urchin_pass2_34.png` shows the spine that used to sit
+  as a small violet dot right of the sigil now reading as a full spike with
+  its tip clear of the body, next to `brine_urchin_pass1_34.png`'s dot. Still
+  not shippable — most of the ring still foreshortens from this angle — but a
+  real, visible gain, and the top view (`brine_urchin_pass2_top.png`) confirms
+  no new overlap between the rotated spines and their neighbours.
+- **Proportion (6 → 7).** The BRICK backing plate the gold sigil mounts on
+  (`b.box(..., (0.16, 0.06, 0.16), BRICK, ...)`) enlarged ~30% to
+  `(0.21, 0.08, 0.21)`, per the diagnosis's own two options — size over rim
+  colour, since the palette is off-limits for a one-model fix. `_34.png` and
+  `_side.png` now show a distinctly wider dark plate behind the gold disc,
+  reading closer to a socketed eye than a small medallion; compare
+  `brine_urchin_pass1_34.png`'s thin rim.
+
++3 total, not a plateau — kept. Colour and style were not touched, per the
+brief, and their scores are unchanged from pass 1.
+
+`run_tests.gd` passed (all green) before commit. Build log: 1768/2600 tris, 1
+mesh, every climb Height and the sigil hold still `ok` — the socket enlarge
+only grew the backing plate, not the sigil's own `mark()` size, so the sigil
+hold contract was untouched.
+
+## Unsure about, still
+
+Same open question named in pass 1: whether the "sea mine" read is a bug or
+the correct read for this boss's own punish-camping mechanic — a design call,
+not something this pass's two measurement fixes could resolve either way.

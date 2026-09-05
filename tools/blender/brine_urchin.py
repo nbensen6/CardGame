@@ -61,7 +61,11 @@ b.ball((0.0, 0.0, 0.66), (0.66, 0.66, 0.42), BRICK, 12, 7)   # darker underside 
 # came back detached. Centring the cone on `base + d*len/2` instead puts its
 # true ends at `base` (embedded in the body) and `base + d*len` (the tip).
 for i in range(10):
-    ang = i * 36.0
+    # Spines 4 and 9 sit almost exactly on the 3/4 fight camera's own viewing
+    # axis (one facing it, one facing away) and foreshorten to near-dots in
+    # the silhouette as a result - rotated 20 degrees off that axis so more
+    # of the ring projects sideways into the outline instead of end-on.
+    ang = i * 36.0 + (20.0 if i in (4, 9) else 0.0)
     rad = math.radians(ang)
     dz = 0.34 if i % 2 else 0.12
     dx, dy = math.cos(rad), math.sin(rad)
@@ -106,7 +110,7 @@ _sigil_z = b.z_for(6)
 _frac = (_sigil_z - 1.35) / 0.82
 _r_xy = math.sqrt(max(0.0, 1.0 - _frac * _frac)) * 0.88
 _sigil_y = -(_r_xy + 0.06)
-b.box((0.0, _sigil_y, _sigil_z - 0.02), (0.16, 0.06, 0.16), BRICK, bevel=0.03)
+b.box((0.0, _sigil_y, _sigil_z - 0.02), (0.21, 0.08, 0.21), BRICK, bevel=0.03)
 b.mark(at=(0.0, _sigil_y - 0.10, _sigil_z), size=0.16, facing=(0.0, -1.0, 0.0))
 
 b.done(out_path(), name="BrineUrchin")
