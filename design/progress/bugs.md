@@ -124,3 +124,79 @@ Act 1 overworld all showed both hunters/HUD/nodes exactly where expected, no
 
 Not fixed here: `game/**` GDScript camera framing, outside
 `tools/blender/**` / `game/assets/3d/**`.
+
+## 2026-09-05 — two damage popups land on top of each other at Titan scale
+
+**Command:**
+```
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:\shot_strike.png state=3dstrike slot=0 beast=thrasher
+```
+
+**What the harness printed:** all `VIS OK` — hunters, sigil, camera all where
+expected. No `VIS FAIL` here; this find is about legibility, not placement.
+
+**What I saw in the PNG:** a huge yellow "34" (the weak-point hit) and a
+smaller red "11" (the ally's own hit, `on_hunter=true`) rendered almost fully
+overlapping, centred on the sigil. Both numbers are individually legible as
+glyphs but stacked, neither is readable as its own number at a glance — you see
+a blur of two overlapping digits, not "34" and "11".
+
+**Why:** `screenshot.gd`'s `3dstrike` state fires both popups on purpose to
+exercise the juice (`_damage_popup(34, where, true, false)` and
+`_damage_popup(11, where + Vector3(-1.6, -1.2, 0.0), false, true)` —
+`tools/screenshot.gd:1086`), so a 1.6/1.2-unit spatial offset is intentional
+and *should* separate them. It doesn't, because `_damage_popup` in
+`combat_3d.gd:2791` sizes its `Label3D` off `_beast_box.size.y` (`reach`) so the
+text stays legible against a Titan — but that scaling grows the GLYPH, not the
+offset between glyphs. Against a beast tall enough, a fixed 1.6-unit gap
+becomes small relative to 128pt text scaled by `reach`, and two popups that
+land close together (a weak-point hit and a hunter's own hit on the same
+swing, or two hits in the same combo) overlap instead of sitting side by side.
+The Thrasher here is a mid-sized beast; a Titan would be worse, not better.
+
+**Where to look:** `_damage_popup()` in `game/views/combat_3d.gd` — the offset
+between two popups spawned close in time needs to scale with the same `reach`
+factor the font size already does, or popups need a screen-space (not
+world-space) minimum separation. This is `game/**` GDScript, outside this
+lane's file ownership, so written up rather than touched.
+
+## 2026-09-05 — hand's rightmost card sits flush against the edge on the phone aspect ratio
+
+**Command:**
+```
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:\shot_mobile.png state=3d slot=0 beast=thrasher mobile size=2340x1080
+```
+
+**What the harness printed:** the same combat-start `VIS FAIL hunter1`
+already logged above (this run just confirms it again on the actual mobile
+render, not a new find). No harness line for the hand itself — `screenshot.gd`
+does not check card-fan bounds.
+
+**What I saw in the PNG:** on the 1170x540 mobile render (2340x1080 halved),
+the same 5-card fan that sits comfortably inset from both edges at 1280x720
+desktop now has its rightmost card ("Tongue Flick") cut flush against the
+right edge of the screen — its cost badge and card border run off-canvas,
+with no margin, where the desktop render leaves roughly 150px of clearance.
+The leftmost card's name is truncated to "Tongue Sn..." inside its own card
+face, which may be a separate, smaller instance of the same cause (a fan
+width sized for the wider desktop viewport, not scaled down for the phone
+aspect ratio).
+
+**Why it matters:** CLAUDE.md's mobile-readiness constraints call for
+anchor-based, scalable UI across aspect ratios specifically so a phone layout
+isn't a rewrite — a hand of cards clipped at the screen edge is exactly the
+kind of thing that constraint exists to prevent, and it's on screen every
+single turn, not an edge case.
+
+**Where to look:** wherever the hand fan lays out card positions/widths in
+`game/views/combat_3d.gd` (or a shared hand-layout helper) — it looks sized
+against a fixed pixel width rather than the viewport's actual width. This is
+`game/**` GDScript, outside this lane's file ownership, so written up rather
+than touched.
+
+**Checked and clean, for the record:** `3dcampfire` rendered correctly this
+run — both hunters, the rest-site geometry, and all five campfire actions
+were visible and legible, no harness `VIS` line exists for this state but
+nothing was off-frame or overlapping.
