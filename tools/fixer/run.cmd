@@ -29,7 +29,18 @@ REM sign in, then close it. The token is reused after that.
 
 setlocal
 set "ROOT=%~dp0..\.."
+set "LOG=%~dp0last-run.log"
 cd /d "%ROOT%"
+
+REM OPEN THE LOG BEFORE ANYTHING THAT CAN BAIL.
+REM
+REM Twice now this script has failed in a way nobody could see, because the
+REM early exits ran before the log was opened and left the PREVIOUS run's file
+REM sitting there looking current. On 2026-09-05 the scheduled task exited 1
+REM every hour while last-run.log still showed a successful manual run from
+REM earlier that morning - so the evidence said "fine" while the lane was dead.
+REM Every exit path below appends its reason to this file.
+echo === fixer run %DATE% %TIME% > "%LOG%"
 
 REM RUN OUR OWN COPY OF claude.exe, never the app's.
 REM
@@ -53,59 +64,72 @@ REM when the version changes. Most runs touch the app's directory not at all;
 REM the refresh reads it for a couple of seconds rather than holding it open
 REM for the length of a whole run.
 set "CCROOT=%APPDATA%\Claude\claude-code"
-set "MYBIN=%LOCALAPPDATA%\TitanSlayersFixer"
-REM Which version to copy. See newest-claude.ps1 - a real [version] sort, in
-REM its own file because cmd's caret escaping mangles PowerShell pipes.
+REM ON G:, NOT IN %LOCALAPPDATA%.
+REM
+REM The scheduled task cannot read the user's AppData. Not "the path is wrong"
+REM - the paths expand correctly and whoami reports the same
+REM desktop-qkugefc\nbensen this shell runs as - but `dir` on
+REM %LOCALAPPDATA%\TitanSlayersFixer answers "File Not Found" (the directory
+REM exists, its CONTENTS are invisible) while two other tools on this machine
+REM list a 217MB claude.exe sitting in it. The same blindness hides every
+REM version folder under %APPDATA%\Claude\claude-code, which is why version
+REM detection returns nothing under the scheduler and works fine by hand.
+REM
+REM I did not get to the bottom of WHY, and chasing it further was costing more
+REM than it was worth. What is certain is that the task reads run.cmd and
+REM writes last-run.log on G: without trouble, so the binary lives there. That
+REM sidesteps the question entirely.
+REM
+REM The cost, stated: version detection still cannot see the app's install
+REM directory from the task, so the copy will not refresh itself on a scheduled
+REM run. It goes stale until someone runs the fixer by hand. That is a much
+REM smaller problem than a lane that does not run at all, and the refresh is
+REM best-effort by design now.
+set "MYBIN=G:\fixer-bin"
+REM Refreshing our copy is BEST EFFORT. Having one is what matters.
+REM
+REM This block used to `exit /b 1` when it could not work out the newest
+REM version, which is how the lane spent 2026-09-03 to -05 dead: the detection
+REM failed under Task Scheduler (it works fine from an interactive shell), and
+REM the script killed itself even though a perfectly good claude.exe was
+REM already sitting in %MYBIN% from the previous run.
+REM
+REM That is the wrong dependency. An optional optimisation - "run the newest
+REM build" - must never be able to stop the job. Detect if we can, copy if it
+REM is new, and carry on regardless with whatever copy we already have. The
+REM only fatal case is having no copy at all.
 set "NEWEST="
-for /f "usebackq delims=" %%V in (`powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0newest-claude.ps1"`) do (
+for /f "usebackq delims=" %%V in (`powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0newest-claude.ps1" 2^>^>"%LOG%"`) do (
   set "NEWEST=%%V"
 )
 if not defined NEWEST (
-  echo === cannot find %CCROOT% - is Claude Code installed?
-  endlocal
-  exit /b 1
+  echo === could not detect the newest Claude Code; using the copy we have
+  echo === NOTE: version detect found nothing under %CCROOT% ^(APPDATA=%APPDATA%^) >> "%LOG%"
+) else (
+  if not exist "%MYBIN%" mkdir "%MYBIN%"
+  set "HAVE="
+  if exist "%MYBIN%\version.txt" set /p HAVE=<"%MYBIN%\version.txt"
+  call :refresh
 )
-if not exist "%MYBIN%" mkdir "%MYBIN%"
-set "HAVE="
-if exist "%MYBIN%\version.txt" set /p HAVE=<"%MYBIN%\version.txt"
-if not "%HAVE%"=="%NEWEST%" (
-  echo === refreshing the fixer's own claude.exe to %NEWEST%
-  copy /y "%CCROOT%\%NEWEST%\claude.exe" "%MYBIN%\claude.exe" >nul
-  if errorlevel 1 (
-    echo === copy failed; leaving the existing copy in place
-  ) else (
-    echo %NEWEST%>"%MYBIN%\version.txt"
-  )
-)
-REM THE TOKEN, READ EXPLICITLY. Do not trust the inherited environment.
-REM
-REM setx wrote CLAUDE_CODE_OAUTH_TOKEN to the USER environment, and an
-REM interactive shell gets it. A scheduled task does not reliably: Task
-REM Scheduler builds a child environment that does not always carry user
-REM variables set after the session started, so run.cmd inherited nothing and
-REM claude.exe reported "OAuth session expired and could not be refreshed".
-REM
-REM That is a misleading error - the token was fine the whole time, it simply
-REM was not there. It cost two days: the task ran every hour from 2026-09-03 to
-REM -05, exited 1 every time, and committed nothing, and nobody noticed until
-REM Nick asked how the lanes were doing.
-if not defined CLAUDE_CODE_OAUTH_TOKEN (
-  for /f "usebackq delims=" %%T in (`powershell -NoProfile -Command ^
-    "[Environment]::GetEnvironmentVariable('CLAUDE_CODE_OAUTH_TOKEN','User')"`) do (
-    set "CLAUDE_CODE_OAUTH_TOKEN=%%T"
-  )
-)
-if not defined CLAUDE_CODE_OAUTH_TOKEN (
-  echo === no CLAUDE_CODE_OAUTH_TOKEN in this process OR the user environment.
-  echo === run `claude setup-token` in a terminal, then setx it. Nothing was run.
-  echo === fixer FAILED %DATE% %TIME%: no OAuth token > "%~dp0last-run.log"
-  endlocal
-  exit /b 1
-)
+goto :afterrefresh
 
+:refresh
+if "%HAVE%"=="%NEWEST%" goto :eof
+echo === refreshing the fixer's own claude.exe to %NEWEST%
+echo === refreshing claude.exe to %NEWEST% >> "%LOG%"
+copy /y "%CCROOT%\%NEWEST%\claude.exe" "%MYBIN%\claude.exe" >nul
+if errorlevel 1 (
+  echo === copy failed; leaving the existing copy in place >> "%LOG%"
+) else (
+  echo %NEWEST%>"%MYBIN%\version.txt"
+)
+goto :eof
+
+:afterrefresh
 set "CLAUDE=%MYBIN%\claude.exe"
 if not exist "%CLAUDE%" (
-  echo === no usable claude.exe at %CLAUDE%
+  echo === no usable claude.exe at %CLAUDE% and none could be copied
+  echo === FAILED: no claude.exe at %CLAUDE%, and version detect found none to copy >> "%LOG%"
   endlocal
   exit /b 1
 )
@@ -130,11 +154,11 @@ REM Everything below is logged, because the scheduled task failed overnight
 REM with exit 0x1 and there was NOTHING to read - no way to tell a usage
 REM limit from a bad token from a crash. One file, overwritten each run:
 REM the last run is the only one anyone ever asks about.
-echo === fixer run %DATE% %TIME% === > "%~dp0last-run.log"
+echo === launching, mode: %MODE% >> "%LOG%"
 "%CLAUDE%" -p "Read tools/fixer/BRIEF.md and follow it exactly for ONE asset. %MODE%" ^
   --permission-mode acceptEdits ^
-  --allowedTools "Read,Edit,Write,Glob,Grep,Bash" >> "%~dp0last-run.log" 2>&1
-echo exit code: %ERRORLEVEL% >> "%~dp0last-run.log"
+  --allowedTools "Read,Edit,Write,Glob,Grep,Bash" >> "%LOG%" 2>&1
+echo exit code: %ERRORLEVEL% >> "%LOG%"
 
 echo.
 echo === fixer done. Check: git log -3
