@@ -2567,6 +2567,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-05** — #86 duty 3 (verify a mechanic actually works). Last turn
+  (`ca099da`) was duty 2, so this one was due for duty 3. Checked #87/#88
+  (`needs a screen`) and #85 (Nick's design call) first, nothing actionable
+  there. Swept `static func`s under `core/`, `views/`, `ui/`, `session/`
+  against `run_tests.gd` for zero coverage; `Content.boss_from_dict` (the
+  save/resume path for a mid-fight boss) stood out because its own sibling,
+  `Boss.to_dict()`, carries a doc comment claiming max_hp is "static data...
+  rebuilt from `id`" — true when that comment was written, false since
+  ascension's boss_hp_pct started mutating `boss.max_hp` in place at
+  `Run._start_encounter()`. Wrote the test end-to-end through the real
+  save/resume path (`Run.to_dict()` / `Run.from_dict()` while
+  `phase == COMBAT`, not calling `Boss.to_dict()`/`apply_dict()` directly,
+  so a fix touching only one of the two wouldn't fool it) rather than
+  re-deriving the arithmetic: play an Ascension-1 run into combat (boss_hp_pct
+  +10%), knock `hp` down by 3, save, reload, assert both survive. It failed
+  before the fix (`max_hp=48 hp=49` — the resumed boss had MORE current HP
+  than its own max) confirming a real, live bug: any save made mid-fight at
+  a boss_hp_pct ascension tier and reloaded resets the boss (and any add,
+  same `to_dict`/`apply_dict` pair) to its unscaled `bosses.json` max_hp
+  while `hp` keeps the larger saved number — a health bar reading over
+  100%, and a fight quietly easier than its ascension after a reload. Fixed
+  by adding `max_hp` to `Boss.to_dict()`'s dict and restoring it in
+  `apply_dict()` (falling back to the freshly-`build_boss()`'d value for
+  older saves, same idiom `weak_point_height`/`artifact` already use), and
+  corrected the now-wrong doc comment. `run_tests.gd`: ALL TESTS PASSED
+  (fresh `--import`, headless, Godot 4.7.1-stable; 806 passing, confirmed
+  the new test both fails without the fix and passes with it). Left #86
+  itself unchecked — it is the standing rotation, not a completable item.
+  Next `#86` turn is duty 1 (improve an asset).
+
 - **2026-09-05** — #86 duty 2 (find an error and resolve it). Last turn
   (`5ae38e3`) was duty 1, so this one was due for duty 2. Sibling gap to
   the *previous* duty-2 fix (`9c685d0`, boss_hp_pct never reaching a

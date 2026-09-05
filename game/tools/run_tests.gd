@@ -132,6 +132,7 @@ func _init() -> void:
 	_test_rhythm_card_grants_combo()
 	_test_ascension_makes_the_run_harder()
 	_test_ascension_tier_effects_reach_the_run()
+	_test_backlog86_boss_max_hp_survives_a_mid_fight_save_resume()
 	_test_backlog86_ascension_hp_pct_reaches_an_adds_own_hp_too()
 	_test_backlog86_ascension_boss_strength_reaches_an_adds_own_strength_too()
 	_test_ascension9_and_10_change_a_rule()
@@ -2433,6 +2434,32 @@ func _test_ascension_tier_effects_reach_the_run() -> void:
 	_expect(t1_ok and t2_ok and t3_ok and t4_ok and t5_ok and t6_ok and t7_ok and t8_ok,
 		"every ascension tier's own effect reaches the run, not just Content.ascension_mods() [%s]"
 			% [[t1_ok, t2_ok, t3_ok, t4_ok, t5_ok, t6_ok, t7_ok, t8_ok]])
+
+
+## Backlog #86 duty 3: `Boss.to_dict()`'s own doc comment claims "the static
+## data (moves, ledges, limiter, art, max_hp) is rebuilt from `id` via
+## Content.boss_from_dict()" — but max_hp stopped being static the moment
+## Run._start_encounter() started scaling it per-ascension (boss_hp_pct),
+## and nothing updated this comment or the dict to match. A fight saved
+## mid-combat (Run.to_dict() while phase == COMBAT, e.g. quitting) rebuilds
+## the boss from raw `bosses.json` on resume — the UNSCALED max_hp — while
+## `hp` comes back as whatever it was when saved, which can be a number the
+## "restored" max_hp no longer supports (or simply the wrong ratio on the
+## health bar). This drives the exact path a save/resume takes rather than
+## calling Boss.to_dict()/apply_dict() directly, so a fix that only patches
+## one of the two call sites still fails it.
+func _test_backlog86_boss_max_hp_survives_a_mid_fight_save_resume() -> void:
+	var run := _asc_run(1)  # tier 1: boss_hp_pct +10, applied to boss.max_hp in _start_encounter
+	_step_into_combat(run)
+	var scaled_max: int = run.combat.boss.max_hp
+	var unscaled_max: int = int(scaled_max * 100 / 110.0)
+	_expect(scaled_max > unscaled_max,
+		"sanity: ascension 1 must have actually scaled this boss's max_hp before we save it")
+	run.combat.boss.hp = scaled_max - 3
+	var loaded := Run.from_dict(run.to_dict())
+	_expect(loaded.combat.boss.max_hp == scaled_max and loaded.combat.boss.hp == scaled_max - 3,
+		"a boss's ascension-scaled max_hp must survive a mid-fight save/resume, not reset to bosses.json's unscaled value [max_hp=%d hp=%d]"
+			% [loaded.combat.boss.max_hp, loaded.combat.boss.hp])
 
 
 ## Backlog #86 duty 2: `data/ascension.json`'s own text is "every beast has

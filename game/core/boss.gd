@@ -123,11 +123,17 @@ func ledge_heights() -> Array:
 	return out
 
 ## Only the DYNAMIC per-fight state (what a fight can actually change) — the
-## static data (moves, ledges, limiter, art, max_hp) is rebuilt from `id` via
+## static data (moves, ledges, limiter, art) is rebuilt from `id` via
 ## Content.boss_from_dict(), the same split Run/PlayerState use for cards.
+## max_hp is NOT static despite coming from build_boss()'s data: ascension's
+## boss_hp_pct (Run._start_encounter / _scale_adds_for_ascension) scales it
+## in place once combat starts, so a fight saved mid-combat must carry that
+## scaled value forward too, or a resume rebuilds the boss at its unscaled
+## bosses.json max_hp while `hp` keeps whatever (possibly larger) value was
+## saved — backlog #86 duty 3.
 func to_dict() -> Dictionary:
 	return {
-		"id": id, "hp": hp, "block": block, "vulnerable": vulnerable,
+		"id": id, "hp": hp, "max_hp": max_hp, "block": block, "vulnerable": vulnerable,
 		"strength": strength, "wound": wound,
 		# frail/artifact (backlog #36) are dynamic too — frail only ever
 		# starts at 0 and grows from a card, same as vulnerable/wound; artifact
@@ -151,6 +157,7 @@ func to_dict() -> Dictionary:
 
 ## Restore the dynamic state saved above onto a freshly rebuilt Boss.
 func apply_dict(d: Dictionary) -> void:
+	max_hp = int(d.get("max_hp", max_hp))  # fall back to build_boss's unscaled value for older saves
 	hp = int(d.get("hp", hp))
 	block = int(d.get("block", 0))
 	vulnerable = int(d.get("vulnerable", 0))
