@@ -819,6 +819,19 @@ func _init() -> void:
 	_test_backlog86_timing_style_round_trips_circle()
 	_test_backlog86_timing_style_sanitizes_an_unrecognised_saved_value()
 
+	# backlog #86 duty 3 (thirty-fifth pass): pattern_shove is the pure half of
+	# combat_3d._hold_points's on-screen correction -- a hitstream note you
+	# can't reach is a note you can't play (Nick, 2026-08-25, on notes landing
+	# across the screen from each other and off the edge of it). The pattern's
+	# random lean/curve/wobble was never provable headless, but the shove that
+	# keeps it playable is pure geometry and had zero coverage of its own.
+	_test_backlog86_pattern_shove_leaves_a_pattern_that_already_fits_alone()
+	_test_backlog86_pattern_shove_pushes_a_pattern_off_the_left_edge_back_on()
+	_test_backlog86_pattern_shove_pushes_a_pattern_off_the_right_edge_back_on()
+	_test_backlog86_pattern_shove_pushes_a_pattern_off_the_top_edge_back_on()
+	_test_backlog86_pattern_shove_pushes_a_pattern_off_the_bottom_edge_back_on()
+	_test_backlog86_pattern_shove_cancels_out_when_the_pattern_is_wider_than_the_window()
+
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
 	# not "inside tree" yet until the engine's main loop actually starts, one
@@ -9953,6 +9966,69 @@ func _test_backlog86_timing_style_sanitizes_an_unrecognised_saved_value() -> voi
 	cfg.save(Progress.path)
 	_expect(Progress.timing_style() == Progress.TIMING_CIRCLE,
 		"a saved value that is neither \"bar\" nor \"circle\" -- a stale format, a hand-edited config, a removed third style -- falls back to the circle instead of being handed straight to the combat screen's style check")
+
+
+## backlog #86 duty 3 (thirty-fifth pass): combat_3d.pattern_shove, lifted out
+## of _hold_points, the hitstream-note geometry. `lo`/`hi` bound a randomly
+## leaning/curving pattern before the shove; pad keeps every note clear of the
+## screen edge rather than exactly on it.
+func _test_backlog86_pattern_shove_leaves_a_pattern_that_already_fits_alone() -> void:
+	var shove: Vector2 = Combat3D.pattern_shove(Vector2(200, 200), Vector2(300, 300), Vector2(1920, 1080), 96.0)
+	_expect(shove.is_equal_approx(Vector2.ZERO), "a pattern already clear of both edges on both axes needs no correction")
+
+
+func _test_backlog86_pattern_shove_pushes_a_pattern_off_the_left_edge_back_on() -> void:
+	var lo := Vector2(-50, 200)
+	var hi := Vector2(50, 300)
+	var view := Vector2(1920, 1080)
+	var pad := 96.0
+	var shove: Vector2 = Combat3D.pattern_shove(lo, hi, view, pad)
+	_expect(is_equal_approx(lo.x + shove.x, pad),
+		"a pattern poking past the left edge is pushed right until its near corner sits exactly at the padded margin")
+	_expect(is_zero_approx(shove.y), "a purely horizontal overrun doesn't push the pattern vertically too")
+
+
+func _test_backlog86_pattern_shove_pushes_a_pattern_off_the_right_edge_back_on() -> void:
+	var lo := Vector2(700, 200)
+	var hi := Vector2(850, 300)
+	var view := Vector2(800, 1080)
+	var pad := 96.0
+	var shove: Vector2 = Combat3D.pattern_shove(lo, hi, view, pad)
+	_expect(is_equal_approx(hi.x + shove.x, view.x - pad),
+		"a pattern poking past the right edge is pushed left until its far corner sits exactly at the padded margin")
+
+
+func _test_backlog86_pattern_shove_pushes_a_pattern_off_the_top_edge_back_on() -> void:
+	var lo := Vector2(200, -40)
+	var hi := Vector2(300, 60)
+	var view := Vector2(1920, 1080)
+	var pad := 96.0
+	var shove: Vector2 = Combat3D.pattern_shove(lo, hi, view, pad)
+	_expect(is_equal_approx(lo.y + shove.y, pad),
+		"a pattern poking past the top edge is pushed down until its near corner sits exactly at the padded margin")
+	_expect(is_zero_approx(shove.x), "a purely vertical overrun doesn't push the pattern horizontally too")
+
+
+func _test_backlog86_pattern_shove_pushes_a_pattern_off_the_bottom_edge_back_on() -> void:
+	var lo := Vector2(200, 1000)
+	var hi := Vector2(300, 1100)
+	var view := Vector2(1920, 1080)
+	var pad := 96.0
+	var shove: Vector2 = Combat3D.pattern_shove(lo, hi, view, pad)
+	_expect(is_equal_approx(hi.y + shove.y, view.y - pad),
+		"a pattern poking past the bottom edge is pushed up until its far corner sits exactly at the padded margin")
+
+
+func _test_backlog86_pattern_shove_cancels_out_when_the_pattern_is_wider_than_the_window() -> void:
+	# A pattern wider than the whole padded window overruns both edges at once;
+	# the two correction terms fight and cancel rather than compromise, so the
+	# shove is a no-op and the pattern stays off-screen on both sides. This is
+	# a real limit of a pure translate-to-fit fix, not the desired behaviour --
+	# recorded here so a future change to the shove has to notice it, not
+	# silently assume the pattern is always narrower than the window.
+	var shove: Vector2 = Combat3D.pattern_shove(Vector2(-100, 200), Vector2(900, 300), Vector2(800, 1080), 96.0)
+	_expect(shove.is_equal_approx(Vector2.ZERO),
+		"a pattern wider than the padded window overruns both edges equally here and the corrections cancel to zero")
 
 
 func _expect(cond: bool, name: String) -> void:

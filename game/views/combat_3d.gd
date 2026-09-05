@@ -633,12 +633,22 @@ func _hold_points(card: Dictionary, hits: int, from_screen: Vector2) -> PackedVe
 	# Shove the whole pattern back on screen rather than bending it out of shape.
 	var pad := 96.0
 	var view := get_viewport().get_visible_rect().size
-	var shove := Vector2(
-		maxf(0.0, pad - lo.x) - maxf(0.0, hi.x - (view.x - pad)),
-		maxf(0.0, pad - lo.y) - maxf(0.0, hi.y - (view.y - pad)))
+	var shove := pattern_shove(lo, hi, view, pad)
 	for at in pattern:
 		out.append(_cam.project_position(at + shove, depth))
 	return out
+
+
+## The pure half of the on-screen shove above, lifted out so it's provable
+## without a camera, a viewport, or a scene tree: a hitstream note you can't
+## reach is a note you can't play (Nick, 2026-08-25, on notes landing across
+## the screen from each other and off the edge of it). `lo`/`hi` bound the
+## pattern before the shove; a corner already inside [pad, view - pad] on both
+## axes needs no push at all.
+static func pattern_shove(lo: Vector2, hi: Vector2, view: Vector2, pad: float) -> Vector2:
+	return Vector2(
+		maxf(0.0, pad - lo.x) - maxf(0.0, hi.x - (view.x - pad)),
+		maxf(0.0, pad - lo.y) - maxf(0.0, hi.y - (view.y - pad)))
 
 
 ## The one place a turn ends, so the button and the key can never drift apart.

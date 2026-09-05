@@ -9251,3 +9251,34 @@ Newest first. One line per finished item: what, and anything surprising.
   clearly real content). `run_tests.gd`: ALL TESTS PASSED (fresh import,
   headless, godot 4.7.1). Next `#86` turn is duty 2 (find an error and
   resolve it).
+
+- **2026-09-05** — #86 duty 3 (verify a mechanic actually works), thirty-fifth
+  pass. This log had fallen behind actual git history (the last several `#86`
+  turns — Thorns not reflecting onto the add that owns it, an add's
+  telegraphed move missing the shared snapshot, HitCircle's slider
+  hold-and-release grading, `Progress.timing_style()`'s fallback — landed
+  without a line here); rotating off the most recent `#86` commit
+  (`81e27b7`, duty 2) makes this turn duty 3, so picking up there rather than
+  trying to reconstruct the missing lines.
+  Went hunting for a view-layer mechanic with zero test coverage, the way
+  duty 3 has been working through `combat_3d.gd`'s static functions one at a
+  time. Every static function in `combat_3d.gd`, `location_3d.gd` and
+  `overworld_3d.gd` already had at least one test except `_key_name` (trivial
+  keybind-label formatting, not a mechanic) — so instead of stretching that,
+  extracted a new one: `_hold_points`'s on-screen "shove" for the hitstream
+  pattern (the fix behind Nick's 2026-08-25 "dont make them acros the
+  screen") was inline arithmetic, untestable without a camera and a
+  viewport, and had never been proven. Lifted it out as
+  `combat_3d.pattern_shove(lo, hi, view, pad) -> Vector2`, pure geometry with
+  no instance state, and wired `_hold_points` to call it instead of
+  repeating the formula inline. Six tests: a pattern already inside the
+  padded bounds gets no push; a pattern poking past each of the four edges
+  gets pushed back until that edge sits exactly on the pad, and only on that
+  axis; and one documenting a real limit rather than hiding it — a pattern
+  wider than the whole padded window overruns both edges at once, the two
+  correction terms cancel, and the shove is a no-op (the pattern stays
+  off-screen on both sides). That last case isn't a bug to fix this turn —
+  `NOTE_STEP`/`NOTE_SWAY` keep real patterns well inside typical viewports —
+  but a future change to the shove now has a test that will catch it if that
+  stops being true. `run_tests.gd`: ALL TESTS PASSED (fresh import,
+  headless, godot 4.7.1). Next `#86` turn is duty 1 (improve an asset).
