@@ -512,12 +512,28 @@ def stack(i):                                   # draw / hand size
 
 
 def peak(i):                                    # a strike that scales with Height
+    # pass 2 (design/progress/peak_icon.md): two lowest lines.
+    # Silhouette@42px (8) named real edge clipping at full size (alpha bbox
+    # (4, 0, 256, 238) touched both the top and right edges before this pass)
+    # -- the flagpole/flag reached z=0.67/0.675 and the back peak's own base
+    # radius reached x=0.64, both past the frame's own +-0.575 half-extent
+    # (FRAME=1.15). Pulled the back peak (and its snow cap, same x offset)
+    # left by 0.09 so its base tops out at x=0.55, and shortened+lowered the
+    # pole/flag so their top edge sits at z<=0.555 -- both now sit inside the
+    # canvas with a real margin instead of relying on the 42px downsample to
+    # hide the crop.
+    # Mechanic match (6) named the icon as "a mountain" (terrain) rather than
+    # "a strike" (the card's actual effect) -- added a small crack-burst at
+    # the summit, same thin-to-wide radiating-spike vocabulary `expose()`
+    # already uses for a fracture, so the peak reads as a point of impact.
     i.spike(-0.06, -0.06, 0.52, 0.02, 0.86, SLATE, seg=5)
-    i.spike(0.34, -0.24, 0.30, 0.02, 0.50, PEWTER, seg=5)
+    i.spike(0.25, -0.24, 0.30, 0.02, 0.50, PEWTER, seg=5)
     i.spike(-0.06, 0.30, 0.15, 0.02, 0.22, WHITE, seg=5)
-    i.spike(0.30, 0.02, 0.075, 0.01, 0.12, WHITE, seg=5)
-    i.spike(-0.06, 0.52, 0.020, 0.016, 0.30, UMBER, seg=4)
-    i.slabf(0.10, 0.60, 0.16, 0.075, RED)
+    i.spike(0.21, 0.02, 0.075, 0.01, 0.12, WHITE, seg=5)
+    i.spike(-0.06, 0.46, 0.020, 0.016, 0.18, UMBER, seg=4)
+    i.slabf(0.10, 0.48, 0.16, 0.075, RED)
+    for ang, length in ((-0.55, 0.16), (0.0, 0.20), (0.55, 0.16)):
+        i.spike(-0.06, 0.34, 0.014, 0.035, length, BRICK, ang=ang, seg=4)
 
 
 # ------------------------------------------------------- backlog #76, batch 2

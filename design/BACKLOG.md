@@ -2592,6 +2592,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-05** — #86 duty 1 (improve an asset — portraits and icons only).
+  Last turn (`02c23a2`) was duty 3, so this one was due for duty 1. Scored
+  candidates across `design/progress/*_portrait.md` and `*_icon.md` for the
+  lowest totals with a single un-repeated pass; the three lowest portraits
+  (`boulder_ram_portrait` 30, `mountain_climbers_portrait` 33,
+  `eyrie_hawk_portrait` 35) all diagnosed to beast-model geometry (a horn,
+  a jaw shard, a sigil's own position) rather than anything `portraits.py`
+  can fix — camera framing can't repair a shape the model doesn't have —
+  so picked `peak_icon` (39/50) instead, whose two named fixes were both
+  squarely in `icons.py`, which this lane owns outright. Fix 1: the
+  flagpole/flag and the back peak's own base radius both reached past the
+  frame's real half-extent (0.575 world units, `FRAME=1.15`) at full size —
+  measured, not guessed, then confirmed by alpha bbox before `(4, 0, 256,
+  238)` and after `(4, 4, 247, 238)`. Fix 2: added a small `BRICK`
+  crack-burst at the summit (reusing `expose()`'s own radiating-taper
+  vocabulary rather than inventing a new one) so the icon reads as a point
+  of impact, not just a mountain. Built the full `icons.py` batch (all 36,
+  no single-icon path exists) and diffed pixel arrays, not raw bytes —
+  Blender's PNG writer changes the raw bytes on every run even for an
+  unchanged scene; 12 of the other 35 icons showed real (if small) pixel
+  drift from WORKBENCH's own AO/cavity non-determinism, so kept only
+  `peak.png` (44% of pixels changed, clearly the real edit) and reverted
+  the rest. Looked at the actual render before scoring: summit crop and a
+  real 42px downsample both saved to `design/renders/peak_icon_pass2_*`.
+  Silhouette 8→9, Mechanic 6→7 (honestly capped — the burst compresses to
+  a soft blob at 42px, not a countable crack), Family/Colour/Style
+  unchanged. **39→41, stop condition met (≥40) after one pass.** `--import`
+  then `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2 (find an
+  error and resolve it).
+
 - **2026-09-05** — #86 duty 3 (verify a mechanic actually works). Last turn
   (`87831c0`) was duty 2, so this one was due for duty 3. Surveyed function
   coverage across `/views` and `/core` first and kept finding the opposite of
