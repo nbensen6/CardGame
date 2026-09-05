@@ -384,6 +384,8 @@ func _init() -> void:
 	_test_add_attack_adds_its_own_strength()
 	_test_add_block_reseeds_each_round_like_the_bosss_own()
 	_test_add_thorns_bites_the_attacking_add_not_the_boss()
+	_test_incoming_for_includes_a_living_adds_own_attack()
+	_test_incoming_for_ignores_a_dead_adds_attack()
 	_test_adds_round_trip_through_save_and_load()
 	_test_adds_reach_the_shared_snapshot()
 	_test_add_intent_reaches_the_shared_snapshot()
@@ -6497,6 +6499,51 @@ func _test_add_thorns_bites_the_attacking_add_not_the_boss() -> void:
 	combat.end_turn(1)
 	_expect(add.hp == 27 and boss.hp == 300,
 		"Thorns on the hunter an add hit reflects onto the ADD that hit them, not the main boss standing next to it")
+
+
+## backlog #89: _adds_turn() always sends a living add's "attack" at
+## boss_target_index() -- the same hunter the main boss is about to hit --
+## but incoming_for() (the HUD's "what will actually land on me" preview)
+## used to only ever read boss.current_move(), so a Root Tendril-style add
+## hit landed with no warning. Plays the round out for real and checks the
+## previewed number against the real HP loss, per the backlog item's own
+## "done when".
+func _test_incoming_for_includes_a_living_adds_own_attack() -> void:
+	var boss := _dummy_boss(300, 8)  # attacks player 0 for 8 on round 1
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Root Tendril", 30)
+	add.moves = [{"type": "attack", "value": 5}]
+	combat.adds.append(add)
+
+	var previewed := combat.incoming_for(0)
+	_expect(previewed["raw"] == 13,
+		"incoming_for must sum the boss's 8 and the living add's own 5 -- both target the same hunter this round")
+	_expect(previewed["through"] == 13,
+		"with no Block, through should match raw exactly")
+
+	var not_targeted := combat.incoming_for(1)
+	_expect(not_targeted["raw"] == 0,
+		"the hunter the boss and its add are NOT targeting this round should show no incoming damage")
+
+	var hp_before: int = combat.players[0].combatant.hp
+	combat.end_turn(0)
+	combat.end_turn(1)
+	var actual_damage: int = hp_before - combat.players[0].combatant.hp
+	_expect(actual_damage == 13,
+		"the previewed 13 must equal what the boss (8) and its add (5) actually land on the same hunter")
+
+
+## A dead add's stale "attack" move must never haunt the preview once it can no
+## longer act -- _adds_turn() already skips a dead add's turn entirely.
+func _test_incoming_for_ignores_a_dead_adds_attack() -> void:
+	var boss := _dummy_boss(300, 8)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Root Tendril", 30)
+	add.moves = [{"type": "attack", "value": 5}]
+	add.hp = 0
+	combat.adds.append(add)
+	_expect(combat.incoming_for(0)["raw"] == 8,
+		"a dead add contributes nothing to the preview, same as it contributes nothing to the real round")
 
 
 func _test_adds_round_trip_through_save_and_load() -> void:

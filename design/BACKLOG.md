@@ -239,7 +239,7 @@ Ordered. Source in brackets.
   one beast at a time), or the check is found to be wrong and fixed with a
   test proving why, same rule as everything else in `assetcheck.gd`.
 
-- [ ] **89. An add's own damage never reaches the incoming-hit HUD** `cloud-safe`
+- [x] **89. An add's own damage never reaches the incoming-hit HUD** `cloud-safe` — **done 2026-09-05**, see Log.
   — found alongside #86 duty 2's fix for the same neighbourhood: an add's
   telegraphed move now reaches the shared snapshot (`game_host.gd`'s
   `add_views`), but `Combat.incoming_for()` — the "what will actually land
@@ -2591,6 +2591,21 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-09-05** — #89: `Combat.incoming_for()` now sums a living add's own
+  telegraphed "attack" onto whichever hunter `boss_target_index()` names,
+  same target `_adds_turn()` already sends that add's real hit to — before
+  this the HUD's "through" number only ever read `boss.current_move()`, so a
+  Root Lurker's Root Tendril landed on top of a hit the player thought they'd
+  survived. Straightforward once `_adds_turn()`'s own logic was read closely:
+  every living add only ever honours "attack" (add its `value + strength`,
+  gated on `boss_target_index() == pi`) and "block" (irrelevant to a damage
+  preview), so no new move-type handling was needed. Added two tests —
+  one plays a boss+add round for real and checks the previewed 13 against
+  the actual HP loss, the other proves a dead add's stale move contributes
+  nothing to the preview, matching `_adds_turn()` skipping a dead add's turn
+  outright. `run_tests.gd` passes (fresh `--import` first, per the known
+  cache issue).
 
 - **2026-09-05** — #86 duty 1 (improve an asset — portraits and icons only).
   Last turn (`02c23a2`) was duty 3, so this one was due for duty 1. Scored

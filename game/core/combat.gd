@@ -599,6 +599,20 @@ func incoming_for(pi: int) -> Dictionary:
 			# Missing here until 2026-08-16, so the one move whose damage the
 			# player controls was the one move the HUD showed nothing for.
 			raw = value + _rift_gap(players) * RIFT_PER_GAP
+	# backlog #89: _adds_turn() always sends a living add's "attack" move at
+	# boss_target_index() — the same hunter the main boss is about to hit —
+	# but that damage never reached this preview, so "5 incoming, I have 6
+	# Block" could still eat an unseen Root Tendril hit on top. Adds only
+	# ever honour "attack" and "block" (_adds_turn()), so "attack" is the
+	# only move type this needs to sum in.
+	if boss_target_index() == pi:
+		for add_v in adds:
+			var add: Boss = add_v
+			if add.is_dead():
+				continue
+			var add_move := add.current_move()
+			if String(add_move.get("type", "")) == "attack":
+				raw += int(add_move.get("value", 0)) + add.strength
 	# predicted_damage(), not a plain "raw - block": Buffer and Intangible
 	# (backlog #61) can cut what actually lands well below that, and this HUD
 	# number is supposed to say what will really happen (backlog #86 duty 2).
