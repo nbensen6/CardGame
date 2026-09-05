@@ -132,6 +132,7 @@ func _init() -> void:
 	_test_rhythm_card_grants_combo()
 	_test_ascension_makes_the_run_harder()
 	_test_ascension_tier_effects_reach_the_run()
+	_test_backlog86_ascension_hp_pct_reaches_an_adds_own_hp_too()
 	_test_ascension9_and_10_change_a_rule()
 	_test_coach_teaches_the_right_thing_first()
 	_test_tips_can_be_switched_off_without_losing_your_place()
@@ -2415,6 +2416,26 @@ func _test_ascension_tier_effects_reach_the_run() -> void:
 	_expect(t1_ok and t2_ok and t3_ok and t4_ok and t5_ok and t6_ok and t7_ok and t8_ok,
 		"every ascension tier's own effect reaches the run, not just Content.ascension_mods() [%s]"
 			% [[t1_ok, t2_ok, t3_ok, t4_ok, t5_ok, t6_ok, t7_ok, t8_ok]])
+
+
+## Backlog #86 duty 2: `data/ascension.json`'s own text is "every beast has
+## +N% more HP", not "the boss" — an add (e.g. Root Lurker's Root Tendril) is
+## a beast in that same fight. Combat._init rebuilds `adds` fresh from raw
+## data with no knowledge of the scaling Run._start_encounter already applied
+## to `boss`, so this drives the exact private method _start_encounter calls
+## (`_scale_adds_for_ascension`) against a real add rather than reimplementing
+## the arithmetic in the test.
+func _test_backlog86_ascension_hp_pct_reaches_an_adds_own_hp_too() -> void:
+	var run := Run.new([_deck_of(_slash, 10), _deck_of(_slash, 10)], ["A", "B"], 0, [{}, {}], 1)
+	run.start()  # Ascension 1 -> _asc["boss_hp_pct"] == 10
+	run.combat = _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, Content.build_boss("root_lurker"))
+	_expect(run.combat.adds.size() == 1, "sanity: root_lurker starts with its one add")
+	var add: Boss = run.combat.adds[0]
+	var base_hp := add.max_hp
+	add.hp = add.max_hp - 3  # prove hp is reset to the new max, not just left alone
+	run._scale_adds_for_ascension(int(run._asc.get("boss_hp_pct", 0)))
+	_expect(add.max_hp == int(base_hp * 110 / 100.0) and add.hp == add.max_hp,
+		"ascension's boss_hp_pct ('every beast's HP') must reach a Titan's own adds, not just the Titan itself")
 
 
 ## Backlog #56: the ladder up to tier 8 only ever bumps a number. Tiers 9 and

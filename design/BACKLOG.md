@@ -2567,6 +2567,37 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-05** — #86 duty 2 (find an error and resolve it). Last turn
+  (`96fffdd`) was duty 1, so this one was due for duty 2. Read
+  `data/ascension.json`'s own `_comment` closely — "boss_hp_pct (+% to
+  **every beast's** HP)" and "boss_strength (**beasts** begin every fight
+  with +N Strength)", plural, not "the boss" — then checked whether an add
+  (backlog #63's secondary combatants, e.g. Root Lurker's Root Tendril) is
+  actually a "beast" under that wording. It isn't, in code: `Run
+  ._start_encounter()` scales the local `boss` object for ascension before
+  building `Combat`, but `Combat._init()` rebuilds `adds` straight from
+  `Content.build_boss_adds(boss.id)` — raw data, no scaling applied — so
+  Root Tendril shipped with the same 14 max HP whether the run was
+  Ascension 0 or Ascension 10, while the Titan standing next to it got
+  correctly thicker. `_test_ascension_tier_effects_reach_the_run` only
+  ever asserted against `combat.boss`, never `combat.adds`, so this had
+  zero coverage. Fixed by extracting the scaling into
+  `Run._scale_adds_for_ascension(hp_pct)`, called right after `combat` (and
+  so `combat.adds`) exists in `_start_encounter()`. Added a regression test
+  that builds a real root_lurker `Combat` via the existing `_new_combat`
+  helper and calls that exact private method directly (not a
+  reimplementation of the arithmetic), asserting both `max_hp` and `hp`
+  scale by the same percentage the Titan gets. Two related but separate
+  gaps found and deliberately NOT touched here, to keep this one commit to
+  one bug: `build_boss_adds()` also never parses `thorns`/`strength`/
+  `artifact` off an add's own data (currently inert — no add in
+  `bosses.json` sets any of the three), and `_adds_turn()`'s own `"attack"`
+  branch never adds `add.strength` to its hit at all, which the
+  2026-09-04 duty-2 entry already found and deliberately deferred as
+  unreachable. Left both as-is rather than touch three things at once.
+  `run_tests.gd`: ALL TESTS PASSED (fresh `--import`, headless, Godot
+  4.7.1-stable). Next `#86` turn is duty 3 (verify a mechanic).
+
 - **2026-09-05** — #86 duty 1 (improve an asset). Last turn (`e898070`) was
   duty 3, so this one was due for duty 1. Scored icons and portraits by
   total and by how many repair passes each has already had

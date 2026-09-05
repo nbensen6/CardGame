@@ -904,8 +904,24 @@ func _start_encounter() -> void:
 	# Distinct per-encounter seed so each fight shuffles differently but reproducibly.
 	combat = Combat.new(decks, combatants, boss, _encounter_seed(),
 		mods["energy"], mods["attack"], mods["block"], mods["strength"], player_passives, mods)
+	_scale_adds_for_ascension(hp_pct)
 	combat.start()
 	phase = Phase.COMBAT
+
+## backlog #86 duty 2: `data/ascension.json`'s own text is "every beast has
+## +N% more HP" — plural, not "the boss" — but Combat._init rebuilds `adds`
+## fresh from raw data (Content.build_boss_adds), with no knowledge of the
+## boss_hp_pct scaling already applied to `boss` a few lines above. An add
+## (e.g. Root Lurker's Root Tendril) fought at Ascension 10 shipped with the
+## exact same HP as one fought at Ascension 0. Scale it here, once `combat`
+## (and so `combat.adds`) exists.
+func _scale_adds_for_ascension(hp_pct: int) -> void:
+	if hp_pct <= 0:
+		return
+	for add_v in combat.adds:
+		var add: Boss = add_v
+		add.max_hp = int(add.max_hp * (100 + hp_pct) / 100.0)
+		add.hp = add.max_hp
 
 ## Sum the team's relic effects. The flat five feed Combat's old parameters; the
 ## rest are rule changes Combat and the client read from `mods`.
