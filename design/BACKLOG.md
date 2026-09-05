@@ -2567,6 +2567,33 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-05** — #86 duty 3 (verify a mechanic actually works). Last turn
+  (`d7a94d4`) was duty 2, so this one was due for duty 3. Checked #87 and #88
+  (both `needs a screen`, so not actionable this run) and #85 (a design call
+  for Nick, not a bug) before falling through to the rotation. Went looking
+  for a view-layer mechanic with genuinely zero test coverage rather than
+  padding one already proven: walked every `static func` across
+  `game/views/*.gd` and `game/ui/*.gd` and diffed the list against
+  `run_tests.gd` by name. Every one of combat_3d's, overworld_3d's,
+  location_3d's, card_view's, coach's, cast's and tiles' static helpers
+  already had a test — that surface really is as covered as the last several
+  duty-3 logs claim. `game/ui/dev.gd`'s `Dev.cycle()`/`Dev._name_now()` was
+  the one exception: zero references anywhere in `run_tests.gd`. It's the F9
+  live-swap between a card's four rarity treatments (framed / borderless /
+  borderless foil / foil) that dev.gd's own header quotes Nick asking for by
+  name, and it is exactly the kind of small state machine this rotation keeps
+  finding broken elsewhere (hunter_move_kind, next_selection_state) — a wrong
+  successor or a step that doesn't loop back would silently make F9 useless
+  without ever showing up as a crash. Added five tests proving each of the
+  four transitions in `Dev.CYCLE`'s order (framed→borderless→borderless
+  foil→foil→framed) plus that four calls in a row visit all four exactly
+  once and land back at the start. No bug found this pass — the
+  implementation was already correct — but the mechanic had never been
+  proven before now. Tests save and restore `CardView.force_borderless`/
+  `force_foil`/`Dev.on` around themselves since they're static globals shared
+  with card-rendering code elsewhere in the same process. `run_tests.gd`:
+  ALL TESTS PASSED (fresh import, headless, godot 4.7.1-stable).
+
 - **2026-09-05** — #86 duty 2 (find an error and resolve it). Last turn
   (`57aee3d`) was duty 1, so this one was due for duty 2. Read through every
   `/core` file plus `game_host.gd` without finding a fresh bug — that surface

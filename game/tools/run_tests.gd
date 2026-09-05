@@ -745,6 +745,19 @@ func _init() -> void:
 	_test_backlog86_hit_circle_zone_bonus_widens_the_good_window_not_the_perfect_one()
 	_test_backlog86_hit_circle_chain_quality_is_its_worst_window_not_its_last()
 	_test_backlog86_hit_circle_process_times_out_a_silent_window_as_a_miss()
+	# backlog #86 duty 3 (thirty-third pass): Dev.cycle(), the F9 live-swap
+	# between a card's four rarity treatments (framed / borderless / borderless
+	# foil / foil) dev.gd's own header asks for by name -- "does the borderless
+	# one look better than the framed one... a comparison you can only make by
+	# flipping between them quickly on the same card." It reads and writes
+	# CardView.force_borderless/force_foil and nothing had ever called it, so
+	# the treatment ORDER (and whether it loops back to framed rather than
+	# drifting past the end of Dev.CYCLE) was unproven.
+	_test_backlog86_dev_cycle_advances_framed_to_borderless()
+	_test_backlog86_dev_cycle_advances_borderless_to_borderless_foil()
+	_test_backlog86_dev_cycle_advances_borderless_foil_to_foil()
+	_test_backlog86_dev_cycle_wraps_foil_back_to_framed()
+	_test_backlog86_dev_cycle_completes_a_full_loop_of_four()
 
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
@@ -9276,6 +9289,76 @@ func _test_backlog86_hit_circle_process_times_out_a_silent_window_as_a_miss() ->
 		"a window that closes with no tap resolves as TIMING_MISS via _process(), the same as an explicit late tap")
 	_expect(not hc.is_live(), "a timed-out window is no longer live")
 	hc.free()
+
+
+## Dev.cycle()/_name_now() read and write CardView's own static force flags,
+## which every other test leaves at their defaults (false/false) -- save and
+## restore them so this pass cannot leak state into a card-rendering test that
+## runs later in the same process.
+func _test_backlog86_dev_cycle_advances_framed_to_borderless() -> void:
+	var save_b: bool = CardView.force_borderless
+	var save_f: bool = CardView.force_foil
+	var save_on: bool = Dev.on
+	CardView.force_borderless = false
+	CardView.force_foil = false
+	Dev.on = false
+	var picked: String = Dev.cycle()
+	_expect(picked == "borderless", "cycling from framed lands on borderless first, matching Dev.CYCLE's own order")
+	_expect(CardView.force_borderless and not CardView.force_foil, "borderless sets the borderless flag alone")
+	_expect(Dev.on, "cycling turns the dev-forced flag on, so a view knows to say so on screen")
+	CardView.force_borderless = save_b
+	CardView.force_foil = save_f
+	Dev.on = save_on
+
+
+func _test_backlog86_dev_cycle_advances_borderless_to_borderless_foil() -> void:
+	var save_b: bool = CardView.force_borderless
+	var save_f: bool = CardView.force_foil
+	CardView.force_borderless = true
+	CardView.force_foil = false
+	var picked: String = Dev.cycle()
+	_expect(picked == "borderless foil", "cycling from borderless lands on borderless foil, not straight to plain foil")
+	_expect(CardView.force_borderless and CardView.force_foil, "borderless foil sets both flags at once")
+	CardView.force_borderless = save_b
+	CardView.force_foil = save_f
+
+
+func _test_backlog86_dev_cycle_advances_borderless_foil_to_foil() -> void:
+	var save_b: bool = CardView.force_borderless
+	var save_f: bool = CardView.force_foil
+	CardView.force_borderless = true
+	CardView.force_foil = true
+	var picked: String = Dev.cycle()
+	_expect(picked == "foil", "cycling from borderless foil drops the border, landing on plain foil")
+	_expect(not CardView.force_borderless and CardView.force_foil, "foil alone clears borderless but keeps foil")
+	CardView.force_borderless = save_b
+	CardView.force_foil = save_f
+
+
+func _test_backlog86_dev_cycle_wraps_foil_back_to_framed() -> void:
+	var save_b: bool = CardView.force_borderless
+	var save_f: bool = CardView.force_foil
+	CardView.force_borderless = false
+	CardView.force_foil = true
+	var picked: String = Dev.cycle()
+	_expect(picked == "framed", "the fourth cycle step wraps back to framed rather than drifting past the end of Dev.CYCLE")
+	_expect(not CardView.force_borderless and not CardView.force_foil, "framed clears both flags")
+	CardView.force_borderless = save_b
+	CardView.force_foil = save_f
+
+
+func _test_backlog86_dev_cycle_completes_a_full_loop_of_four() -> void:
+	var save_b: bool = CardView.force_borderless
+	var save_f: bool = CardView.force_foil
+	CardView.force_borderless = false
+	CardView.force_foil = false
+	var seen: Array = []
+	for i in range(4):
+		seen.append(Dev.cycle())
+	_expect(seen == ["borderless", "borderless foil", "foil", "framed"],
+		"four calls in a row visit every treatment exactly once, in Dev.CYCLE's own order, and land back where they started")
+	CardView.force_borderless = save_b
+	CardView.force_foil = save_f
 
 
 func _expect(cond: bool, name: String) -> void:
