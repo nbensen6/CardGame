@@ -27,7 +27,7 @@ from mathutils import Vector
 ## on, how much of the height to fit in the frame). Default is head-and-
 ## shoulders near the top; the exceptions are creatures whose face is not there.
 FOCUS = {
-    "frog": (0.71, 0.75), "vine_weaver": (0.77, 0.67),
+    "frog": (0.71, 0.75), "vine_weaver": (0.74, 0.85),
     "mountain_climbers": (0.73, 0.72), "goblin_mech": (0.62, 0.94),
     "lightbearer": (0.47, 1.15),
 

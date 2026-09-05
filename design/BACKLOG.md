@@ -2567,6 +2567,40 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-05** — #86 duty 1 (improve an asset — portraits and icons only).
+  Last turn (`1e56c64`) was duty 3, so this one was due for duty 1. Scanned
+  every `*_portrait.md`/`*_icon.md` for the lowest-scoring un-plateaued asset
+  under 4 passes with a fix genuinely available in `portraits.py`/`icons.py`
+  (not a model-geometry issue wearing a portrait's clothes): `boulder_ram_
+  portrait` (30/50) and `mountain_climbers_portrait` (33/50) both had every
+  named fix diagnosed as model-only already; `vine_weaver_portrait` (38/50,
+  pass 1 only) had one in-lane fix left — Framing (6/10), the canopy nearly
+  touching the top edge and a purple vine-flower bead cropped to an
+  unidentifiable sliver at the bottom. Measured the actual alpha bbox rather
+  than trusting the old description: `(0, 93, 478, 512)` — left AND bottom
+  both flush at 0 margin, not just a tight top. Worked out the bead's world-
+  z from `vine_weaver.py`'s own vine path math, moved `FOCUS["vine_weaver"]`
+  from `(0.77, 0.67)` to `(0.74, 0.85)` (lower the focus point, zoom out) so
+  the frame clears the bead's z-range with margin instead of landing right on
+  the cutoff line. Installed Blender 4.0.2 via apt (`download.blender.org`
+  still unreachable through the proxy) plus `libegl1`/`libgles2` and `pip
+  install numpy Pillow` for the embedded `python3.12`; rebuilt all 30
+  portraits and diffed against committed (mean per-pixel), `vine_weaver.png`
+  at 36.85 the one real change, `frog.png`'s 58.2 the same pre-existing
+  stale-model-drift noise prior passes already flagged, everything else
+  0–2.6 render noise — kept only the one file. Looked at the result: new bbox
+  `(34, 110, 431, 512)`, the bead now a whole small ball with clear margin
+  instead of an edge sliver, both arms fully in frame; the bottom still
+  touches on the left hand's fingertips alone, a peripheral limb-tip crop
+  several other cast portraits already carry, not the three-edge failure
+  pass 1 had. Framing 6→8, nothing else touched (Colour's red-canopy-mark
+  question is a model question, left for Nick same as before).
+  **+2 total (38 → 40), hit this item's own 40/50 stop line — done for now.**
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1). No
+  new tests — a portrait-crop-only pass adds none, matching every prior
+  portrait/icon pass under this item. Next `#86` turn is duty 2 (find an
+  error and resolve it).
+
 - **2026-09-04** — #86 duty 3 (verify a mechanic actually works). Last turn
   (`4b23dcf`) was duty 2, so this one was due for duty 3. Checked #55 (More
   beasts) and #76 (Card icons): both already hit their own numeric "Done
