@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "permissions": {
+    "allow": [
+      "Bash(tools\\blender\\build.cmd:*)",
+      "Bash(tools/blender/build.cmd:*)",
+      "Bash(cmd /c tools\\blender\\build.cmd:*)",
+      "Bash(tools\\blender\\look.cmd:*)",
+      "Bash(tools/blender/look.cmd:*)",
+      "Bash(cmd /c tools\\blender\\look.cmd:*)",
+      "Bash(bash tools/blender/look.sh:*)",
+      "Bash(tools\\blender\\rare3d.cmd:*)",
+      "Bash(C:\\Users\\nbens\\AppData\\Local\\Programs\\Godot\\Godot_v4.7.1-stable_win64_console.exe:*)",
+      "Bash(C:/Users/nbens/AppData/Local/Programs/Godot/Godot_v4.7.1-stable_win64_console.exe:*)",
+      "Bash(git fetch:*)",
+      "Bash(git merge:*)",
+      "Bash(git pull:*)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git diff:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push origin:*)",
+      "Bash(git checkout --:*)",
+      "Bash(git rev-parse:*)"
+    ],
+    "deny": [
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean:*)"
+    ]
+  }
+}
