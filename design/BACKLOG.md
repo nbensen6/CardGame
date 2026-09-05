@@ -2567,6 +2567,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-05** — #86 duty 2 (find an error and resolve it). Last turn
+  (`57aee3d`) was duty 1, so this one was due for duty 2. Read through every
+  `/core` file plus `game_host.gd` without finding a fresh bug — that surface
+  is unusually well picked over already, thick with comments documenting
+  prior fixes. Sent an Explore agent after the less-audited view/session/UI
+  layers instead, hunting the same "first-pass hole" / "two copies of one
+  truth" shapes. It found one: `CardView.face_text()` (`game/ui/card_view.gd`)
+  had no branch for `fx.power_effect`/`fx.power_value`, even though
+  `game_host.gd`'s two per-card `fx` dicts have carried both since backlog
+  #57, and a melded power card carries them too since `79821cd`. The gap only
+  showed for a melded power card that ALSO deals damage or grants Block/
+  Height: `out` stops being empty, so the function skips its "fall back to
+  authored text" case and shows only the damage/Block line, with the whole
+  recurring payoff invisible on the one card that actually has it — e.g.
+  Iron Husk (a real +3-Block-every-turn-end card, in the normal reward pool)
+  melded with Cleave mechanically still pays its Block but reads as just
+  "Deal 10 damage." on the live face in hand. Exact same shape as the
+  Dexterity fix (`d8e265a`) one duty-2 turn back: GameHost grew a field,
+  `face_text()` never grew the matching branch. Fixed by adding that branch
+  (mapping the six effect ids `game_host.gd`'s own icon inference already
+  recognises — block/strength/wound/vulnerable/frail/thorns — to their
+  existing keyword ids, generic fallback for anything else) and, as a side
+  effect, a PLAIN unmelded power card (no other numeric field) now also gets
+  a live line instead of always falling back to its authored text, same as
+  every other one-off effect on this face already does. Regression tests
+  added and proven to fail pre-fix: `CardView.face_text()` on a melded
+  damage+power card, and on a plain power card. `run_tests.gd`: ALL TESTS
+  PASSED (fresh import, headless, godot 4.7.1.1-stable).
+
 - **2026-09-05** — #86 duty 1 (improve an asset — portraits and icons only).
   Last turn (`1e56c64`) was duty 3, so this one was due for duty 1. Scanned
   every `*_portrait.md`/`*_icon.md` for the lowest-scoring un-plateaued asset

@@ -943,6 +943,25 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 	# Up) correctly shows both. Same two-line fix game_host.gd's "fx" dicts got.
 	if int(fx.get("dexterity", 0)) > 0:
 		out.append("%s %d." % [_kw("Dexterity", "dexterity", kw, rich), int(fx["dexterity"])])
+	# backlog #86 duty 2 — game_host.gd's "fx" dict has carried power_effect/
+	# power_value since backlog #57 (the recurring-power cards themselves), and
+	# a melded power card (79821cd) carries them too once fused — but this
+	# function never grew a matching branch, so any melded card that ALSO deals
+	# damage or grants Block/Height (out.is_empty() then false, skipping the
+	# "fall back to authored text" case below) shows only that one line: melding
+	# Iron Husk (a real recurring +3 Block card) into Cleave mechanically still
+	# pays Block every turn end, but its live face reads just "Deal 10 damage." —
+	# the whole recurring payoff is invisible on the card that has it. Same
+	# "GameHost grew the field, face_text() didn't" shape as Dexterity above.
+	var power_val := int(fx.get("power_value", 0))
+	if String(fx.get("power_effect", "")) != "" and power_val > 0:
+		var peff := String(fx["power_effect"])
+		var pword: String = {"block": "Block", "strength": "Strength", "wound": "Poison",
+			"vulnerable": "Expose", "frail": "Frail", "thorns": "Thorns"}.get(peff, peff.capitalize())
+		var pkw: String = {"block": "player_block", "strength": "strength", "wound": "poison",
+			"vulnerable": "expose", "frail": "frail", "thorns": "thorns"}.get(peff, "power")
+		out.append("%s: %s %d each turn end." % [_kw("Power", "power", kw, rich),
+			_kw(pword, pkw, kw, rich), power_val])
 	if int(fx.get("rhythm", 0)) > 0:
 		out.append("%s %d." % [_kw("Rhythm", "rhythm", kw, rich), int(fx["rhythm"])])
 	if int(fx.get("draw", 0)) > 0:

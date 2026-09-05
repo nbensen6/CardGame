@@ -537,6 +537,7 @@ func _init() -> void:
 	_test_backlog86_face_text_mismatched_climb_pluralizes_the_allys_line()
 	_test_backlog86_face_text_status_and_utility_lines_join_in_field_order()
 	_test_backlog86_face_text_shows_dexterity_alongside_block()
+	_test_backlog86_face_text_shows_a_melded_powers_recurring_payoff()
 	_test_backlog86_face_text_burn_lines_are_mutually_exclusive()
 	_test_backlog86_face_text_falls_back_to_authored_text_with_no_preview()
 	_test_backlog86_face_text_falls_back_to_authored_text_when_nothing_landed()
@@ -8495,6 +8496,31 @@ func _test_backlog86_face_text_shows_dexterity_alongside_block() -> void:
 		"keywords": [], "fx": {"dexterity": 1}}
 	_expect(CardView.face_text(data, false) == "Gain 4 Block. Dexterity 1.",
 		"a card granting both Block and Dexterity states both on its live face, not just Block")
+
+## backlog #86 duty 2 — same "GameHost's fx dict grew a field, face_text()
+## never grew the matching branch" shape as Dexterity above, this time for
+## power_effect/power_value. GameHost has carried both since backlog #57 (the
+## recurring-power cards) and a melded power card carries them too since
+## 79821cd — but this function had no branch for either, so a melded card that
+## ALSO deals damage or grants Block skipped the "no live line, fall back to
+## authored text" case and showed ONLY the damage/Block line. Reproduces the
+## exact real-play shape: Iron Husk (power, +3 Block each turn end) melded with
+## Cleave (10 damage) is reachable from the normal reward pool and mechanically
+## still pays its Block (see _test_meld_carries_power_effect) — before this fix
+## its live face read just "Deal 10 damage.", with the whole recurring payoff
+## invisible on the one card that has it.
+func _test_backlog86_face_text_shows_a_melded_powers_recurring_payoff() -> void:
+	var data := {"preview": {"damage": 10}, "preview_miss": {}, "base": {"damage": 10},
+		"keywords": [], "fx": {"power_effect": "block", "power_value": 3}}
+	_expect(CardView.face_text(data, false) == "Deal 10 damage. Power: Block 3 each turn end.",
+		"a melded power card states its recurring payoff on its live face, not just its damage")
+	# A plain (unmelded) power card with nothing else to show used to fall back
+	# to its authored text entirely; it now gets the same compact live line
+	# every other one-off effect gets, same as Poison/Expose/Strength above.
+	var plain := {"preview": {"damage": 0}, "preview_miss": {}, "base": {},
+		"keywords": [], "fx": {"power_effect": "strength", "power_value": 1}}
+	_expect(CardView.face_text(plain, false) == "Power: Strength 1 each turn end.",
+		"a plain recurring-power card also states its payoff via the live line")
 
 
 func _test_backlog86_face_text_burn_lines_are_mutually_exclusive() -> void:
