@@ -59,9 +59,9 @@ b.ball((0.0, -0.30, 1.72), (0.36, 0.46, 0.40), CREAM, 10, 6)         # pale brea
 # contract - a "wing" this size and this squared-off has no bird in it).
 # Pulled in tight against the body and re-cut as a single taper instead.
 def wing(s):
-    b.taper((0.42 * s, 0.10, 2.10), 0.30, 0.09, 1.05, SLATE, seg=8,
+    b.taper((0.42 * s, 0.10, 2.10), 0.30, 0.054, 1.05, SLATE, seg=8,
            rot=point((0.28 * s, 1.0, -0.35)))                        # folded mass
-    for i, spread in enumerate((-0.16, 0.02, 0.20)):
+    for i, spread in enumerate((-0.16, 0.02, 0.20, 0.38, 0.56)):
         b.taper((0.50 * s, 0.78 + i * 0.05, 1.80 - i * 0.10), 0.045, 0.009, 0.48,
                CHARCOAL, seg=4,
                rot=point((0.14 * s + spread * s, 1.0, -0.22)))       # trailing primaries
@@ -127,7 +127,7 @@ b.anchor(5, (0.17, -0.48, b.z_for(5)))
 # HOLDS and marks both need: a mark at x=0 on a head this size sits inside the
 # head's own front bulge and gets buried regardless of how far forward it is
 # pushed, so the mount (and the sigil that sits on it) live off to one side.
-b.ball((0.16, -0.90, b.z_for(6)), (0.13, 0.14, 0.10), TAN, 8, 5)
-b.mark(at=(0.16, -1.10, b.z_for(6)), size=0.12, facing=(0.10, -0.98, 0.05))
+b.ball((0.10, -0.69, b.z_for(6)), (0.13, 0.14, 0.10), TAN, 8, 5)
+b.mark(at=(0.10, -0.89, b.z_for(6)), size=0.12, facing=(0.10, -0.98, 0.05))
 
 b.done(out_path(), name="EyrieHawk")
