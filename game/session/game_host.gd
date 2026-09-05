@@ -347,11 +347,21 @@ func _build_shared() -> Dictionary:
 		# backlog #63: secondary "adds" alongside the boss, if this beast has
 		# any — public the same way the rest of the boss dict already is
 		# (there's nothing PRIVATE about an enemy combatant).
+		# backlog #86 duty 2: an add's own telegraphed move never reached this dict,
+		# even though boss.gd's own header rule is "intent is always visible to the
+		# player" and the main boss's "intent" key a few lines below has always
+		# honoured it. Root Lurker's Root Tendril (bosses.json) carries a real
+		# "attack" move and has shipped able to hit a hunter with zero warning —
+		# the one enemy in the game the intent-is-always-visible rule didn't reach.
+		# current_move() with no context, same as _adds_turn()'s own call: an add's
+		# move never carries a "when" condition today, so there is no boss_context()
+		# to build for it.
 		var add_views: Array = []
 		for add_v in c.adds:
 			var av: Boss = add_v
 			add_views.append({"id": av.id, "name": av.name, "hp": av.hp,
-				"max_hp": av.max_hp, "block": av.block, "art": av.art})
+				"max_hp": av.max_hp, "block": av.block, "art": av.art,
+				"intent": av.current_move()})
 		s["boss"] = {
 			"id": b.id, "name": b.name, "hp": b.hp, "max_hp": b.max_hp, "block": b.block,
 			"intent": b.current_move(c.boss_context()), "target": c.boss_target_index(),

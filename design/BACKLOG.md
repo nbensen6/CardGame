@@ -239,6 +239,31 @@ Ordered. Source in brackets.
   one beast at a time), or the check is found to be wrong and fixed with a
   test proving why, same rule as everything else in `assetcheck.gd`.
 
+- [ ] **89. An add's own damage never reaches the incoming-hit HUD** `cloud-safe`
+  — found alongside #86 duty 2's fix for the same neighbourhood: an add's
+  telegraphed move now reaches the shared snapshot (`game_host.gd`'s
+  `add_views`), but `Combat.incoming_for()` — the "what will actually land
+  on me" number the HUD shows — still only ever reads `boss.current_move()`.
+  Root Lurker's Root Tendril can attack the same hunter the main boss is
+  about to hit, for real HP, and the HUD's "through" number never accounts
+  for it: a hunter reading "5 incoming, I have 6 Block" could still take a
+  Tendril hit on top and not know it was coming.
+
+  Not folded into #86 duty 2's own fix on purpose (one error per duty-2
+  turn) and not a pure telegraph gap like that one was — this changes what
+  a real gameplay NUMBER claims, so it wants its own dedicated pass rather
+  than a rider on an unrelated commit. The fix is probably summing every
+  living add's own `current_move()` attack value (when its move type deals
+  direct damage to the SAME target this hunter would be) into `raw`/
+  `through`, the same way the boss's own value already does — `_adds_turn()`
+  only ever honours "attack" and "block" for an add, so that's the only
+  move type this needs to cover.
+
+  *Done when:* `incoming_for()`'s number matches what a hunter actually
+  takes when both the boss and a living, attacking add target them the same
+  round, proven by a test that plays it out and checks the real HP loss
+  against the predicted one — and `run_tests.gd` still passes.
+
 - [ ] **85. You cannot see your ally** `needs a screen` — hunter1 projects to
   x=1602 on a 1280-wide viewport and sits off the right edge of the screen in
   every fight. Measured on three beasts: thrasher 1559, crag_pup 1602,
@@ -2566,6 +2591,41 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-09-05** — #86 duty 2 (find an error and resolve it). Last turn
+  (`cb65d4d`) was duty 1, so this one was due for duty 2. Read `combat.gd`,
+  `run.gd`, `boss.gd`, `combatant.gd`, `card.gd`, `player_state.gd`,
+  `content.gd`, `run_map.gd`, `run_save.gd` and `progress.gd` end to end;
+  most of the obvious "hand-copied field list drifts" and "two copies of
+  one truth" spots are already fixed from prior duty-2 runs (their own
+  comments say so). Also ran `robustness_sweep.gd` (360 seeded runs, 0 dead
+  ends) and a throwaway invariant-fuzzer over `Combat` (224 beast/seed
+  combos, random legal plays, checked HP/foothold/energy/block/light never
+  go negative or over their caps) — both clean, so the bug wasn't in the
+  numbers `/core` already guards.
+  Found it instead by re-reading `boss.gd`'s own header rule — "Intent is
+  always visible to the player (no hover — CLAUDE.md §5)" — against what
+  `GameHost._build_shared()` actually sends. The main boss's dict has always
+  carried `"intent": b.current_move(...)`; the `adds` array (backlog #63)
+  never got the same field, even though an add can carry a real "attack"
+  move — Root Lurker's Root Tendril (`bosses.json`) does, live, today. A
+  fight against it has been shipping with one enemy on the board the
+  intent-is-always-visible rule never reached: the Tendril could hit a
+  hunter with zero warning, the one attack in the whole game with no
+  telegraph. Added `"intent": av.current_move()` to `game_host.gd`'s
+  `add_views` entries (no context arg — same as `_adds_turn()`'s own call;
+  an add's move never carries a "when" condition today). Wrote
+  `_test_add_intent_reaches_the_shared_snapshot` right beside the existing
+  `_test_adds_reach_the_shared_snapshot` (same `_make_session()` /
+  `LocalTransport` shape), giving a real add a real `attack` move and
+  asserting the snapshot's `adds[0]["intent"]` matches it — this fails
+  without the fix (no `"intent"` key on that dict at all) and passes with
+  it. `incoming_for()`'s own HUD number still doesn't fold an add's damage
+  into what a hunter is told is coming, which is a related but separate
+  gap (a real number, not just a missing telegraph) — left in the queue
+  rather than folded into this fix, since duty 2 is one error per run.
+  `--import` then `run_tests.gd`: ALL TESTS PASSED (Godot 4.7.1-stable,
+  headless, fresh cache). Next `#86` turn is duty 3 (verify a mechanic).
 
 - **2026-09-05** — #86 duty 3 (verify a mechanic actually works). Last turn
   (`bda1973`) was duty 2, so this one was due for duty 3. The VIEW's climb
