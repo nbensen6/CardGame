@@ -386,6 +386,7 @@ func _init() -> void:
 	_test_add_thorns_bites_the_attacking_add_not_the_boss()
 	_test_adds_round_trip_through_save_and_load()
 	_test_adds_reach_the_shared_snapshot()
+	_test_add_intent_reaches_the_shared_snapshot()
 	# characters (per-player climb + signature passives)
 	_test_frog_climb_bonus()
 	_test_vine_lifts_ally()
@@ -6516,6 +6517,29 @@ func _test_adds_reach_the_shared_snapshot() -> void:
 	_expect(adds_view.size() == 1 and String(adds_view[0]["name"]) == "Grub"
 			and int(adds_view[0]["hp"]) == 9 and int(adds_view[0]["max_hp"]) == 15,
 		"an add's identity and current HP reach the shared snapshot")
+
+
+## Backlog #86 duty 2: boss.gd's own header rule is "intent is always visible
+## to the player (no hover — CLAUDE.md §5)" and the main boss's own "intent"
+## key has always honoured it, but an add's telegraphed move never reached
+## this dict at all — Root Lurker's Root Tendril (bosses.json) has shipped
+## with a real "attack" move and no way for a player to see it coming. Same
+## shape as _test_adds_reach_the_shared_snapshot just above: prove the FIELD
+## crosses the host/client boundary, on a real add with a real move.
+func _test_add_intent_reaches_the_shared_snapshot() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	host._run.combat.adds.clear()
+	var add := Boss.new("Grub", 15)
+	add.id = "grub"
+	add.moves = [{"type": "attack", "value": 4}]
+	host._run.combat.adds.append(add)
+	host._broadcast_state()
+	var adds_view: Array = c0.shared["boss"]["adds"]
+	_expect(adds_view.size() == 1 and String(adds_view[0]["intent"]["type"]) == "attack"
+			and int(adds_view[0]["intent"]["value"]) == 4,
+		"an add's own telegraphed move reaches the shared snapshot, same as the boss's")
 
 
 # --- Characters (per-player climb + signature passives) -------------------
