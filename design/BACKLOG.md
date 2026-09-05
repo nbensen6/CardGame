@@ -2567,6 +2567,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-05** — #86 duty 1 (improve an asset — portraits and card icons).
+  Last turn (`f5de9ac`) was duty 3, so this one was due for duty 1. Checked
+  #87 and #88 (both `needs a screen`) before falling through to the rotation.
+  Scanned every `_portrait.md`/`_icon.md` progress file for its current
+  total; `lift_icon.md` was the lowest score with a diagnosis both of whose
+  two named fixes were actually in `icons.py`'s scope rather than a model
+  change Nick would have to weigh in on (most of the other low scorers —
+  `boulder_ram`, `bog_leech`, `mountain_climbers`, `clot_toad` — had their
+  lowest lines pinned on beast geometry, out of lane here). Applied both:
+  recoloured `lift()`'s upper-right figure from `MINT` to `TAN` (GREEN and
+  MINT are the same organic-green family and measured a weak 13.9 mean
+  per-channel gap; GREEN vs TAN measures 38.7, roughly 3x), and gave the
+  lower-left figure's body slab a `rot=0.35` lean so the two hauler/hauled
+  figures aren't identical static blobs. Installed Blender 4.0.2 via apt
+  (`download.blender.org` unreachable through the proxy) plus `numpy`/
+  `Pillow` for the `python3.12` Blender itself embeds. Rebuilt the full
+  icon batch straight into `game/assets/icons`, diffed every output against
+  the committed set, and reverted everything but `lift.png` — the other
+  icons' build functions are untouched by this edit, and two independent
+  re-renders of unchanged icons came back byte-identical in this
+  environment (worth noting since several prior portrait passes' logs
+  describe WORKBENCH renders as non-reproducible run to run; that wasn't
+  true here). Score: 38 → 42, crossing the loop's 40/50 stop line — kept,
+  full log and pixel measurements in `design/progress/lift_icon.md`.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot
+  4.7.1-stable). No new tests — an icon recolour/pose pass adds none, same
+  as every prior icon-only pass.
+
 - **2026-09-05** — #86 duty 3 (verify a mechanic actually works). Last turn
   (`d7a94d4`) was duty 2, so this one was due for duty 3. Checked #87 and #88
   (both `needs a screen`, so not actionable this run) and #85 (a design call

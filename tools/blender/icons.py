@@ -380,9 +380,18 @@ def lift(i):                                    # haul the ally to you
     # TWO of you, one hauling the other up. The first attempt was two offset
     # plates and read as a letter Z. Against its neighbours it has to be clearly
     # not `support` (one open hand) and not `rope` (a coil).
-    for x, z, c in [(-0.26, -0.34, GREEN), (0.26, 0.24, MINT)]:
+    #
+    # pass 2 (design/progress/lift_icon.md): two named fixes. Colour & contrast
+    # (6/10) -- GREEN and MINT sit in the same organic-green family and read as
+    # one colour at both 256px and the 42px downsample; the upper-right figure
+    # (the one being hauled up) is now TAN, matching the grip and arrow, so
+    # "hauler" and "hauled" separate by colour as well as position. Mechanic
+    # match (7/10) -- two identical upright blobs read as a static diagram, not
+    # an action; the lower-left figure (doing the hauling) now leans into the
+    # pull, the upper-right figure (already hauled) stays upright.
+    for x, z, c, rot in [(-0.26, -0.34, GREEN, 0.35), (0.26, 0.24, TAN, 0.0)]:
         i.ball((x, 0.0, z + 0.20), (0.14, 0.10, 0.14), c, 8, 5)     # head
-        i.slabf(x, z - 0.06, 0.15, 0.16, c, bevel=0.06)             # body
+        i.slabf(x, z - 0.06, 0.15, 0.16, c, rot=rot, bevel=0.06)    # body
     i.limb([(-0.18, 0.0, -0.16), (0.0, 0.0, 0.02), (0.18, 0.0, 0.20)],
            [0.045, 0.045, 0.045], TAN, seg=5)                       # the grip
     i.spike(0.0, 0.44, 0.22, 0.02, 0.30, GOLD, seg=3)               # going up
