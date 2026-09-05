@@ -584,12 +584,13 @@ func _slot_private(pi: int) -> Dictionary:
 				# instead of printing a formula beside a live readout.
 				"fx": {
 					"wound": c.wound, "vulnerable": c.vulnerable, "strength": c.strength,
-					"dexterity": c.dexterity,
+					"dexterity": c.dexterity, "frail": c.frail, "thorns": c.thorns,
 					"draw": c.draw, "taunt": c.taunt, "rhythm": c.rhythm,
 					"create": c.create, "prepare": c.prepare, "meld": c.meld,
 					"exhaust_pick": c.exhaust_pick, "cheapen_pick": c.cheapen_pick,
 					"pull_ally": c.pull_ally, "sac_ally_grip": c.sac_ally_grip,
-					"hits": c.hits,
+					"hits": c.hits, "light_gain": c.light_gain, "ally_energy": c.ally_energy,
+					"discard": c.discard,
 					"power_effect": c.power_effect, "power_value": c.power_value,
 				},
 				# The card's PRINTED values. The face compares live against these to
@@ -783,12 +784,13 @@ func _deck_face(c: Card, i: int) -> Dictionary:
 		"preview": _printed(c), "preview_miss": _printed(c), "base": _printed(c),
 		"fx": {
 			"wound": c.wound, "vulnerable": c.vulnerable, "strength": c.strength,
-			"dexterity": c.dexterity,
+			"dexterity": c.dexterity, "frail": c.frail, "thorns": c.thorns,
 			"draw": c.draw, "taunt": c.taunt, "rhythm": c.rhythm,
 			"create": c.create, "prepare": c.prepare, "meld": c.meld,
 			"exhaust_pick": c.exhaust_pick, "cheapen_pick": c.cheapen_pick,
 			"pull_ally": c.pull_ally, "sac_ally_grip": c.sac_ally_grip,
-			"hits": c.hits,
+			"hits": c.hits, "light_gain": c.light_gain, "ally_energy": c.ally_energy,
+			"discard": c.discard,
 			"power_effect": c.power_effect, "power_value": c.power_value,
 		},
 	}

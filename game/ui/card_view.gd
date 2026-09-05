@@ -933,6 +933,13 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 		out.append("%s %d." % [_kw("Poison", "poison", kw, rich), int(fx["wound"])])
 	if int(fx.get("vulnerable", 0)) > 0:
 		out.append("%s %d." % [_kw("Expose", "expose", kw, rich), int(fx["vulnerable"])])
+	# backlog #86 duty 2 — same shape as Dexterity/power_effect below: GameHost's
+	# "fx" dict never carried "frail", so a card combining damage with Frail
+	# (Crippling Blow: "Deal 5 damage. Frail 2.") showed only "Deal 5 damage."
+	# once the damage line made `out` non-empty and skipped the authored-text
+	# fallback. Frail is applied to the Titan, like Poison/Expose above.
+	if int(fx.get("frail", 0)) > 0:
+		out.append("%s %d." % [_kw("Frail", "frail", kw, rich), int(fx["frail"])])
 	if int(fx.get("strength", 0)) > 0:
 		out.append("%s %d." % [_kw("Strength", "strength", kw, rich), int(fx["strength"])])
 	# backlog #86 duty 2 — Dexterity (Strength's own "defensive counterpart",
@@ -943,6 +950,12 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 	# Up) correctly shows both. Same two-line fix game_host.gd's "fx" dicts got.
 	if int(fx.get("dexterity", 0)) > 0:
 		out.append("%s %d." % [_kw("Dexterity", "dexterity", kw, rich), int(fx["dexterity"])])
+	# backlog #86 duty 2 — same gap, this time Thorns (a self-buff, like
+	# Strength/Dexterity above, not a Titan debuff): Spinebrace ("Gain 5 Block.
+	# Thorns 2.") showed only "Gain 5 Block." once the Block line made `out`
+	# non-empty.
+	if int(fx.get("thorns", 0)) > 0:
+		out.append("%s %d." % [_kw("Thorns", "thorns", kw, rich), int(fx["thorns"])])
 	# backlog #86 duty 2 — game_host.gd's "fx" dict has carried power_effect/
 	# power_value since backlog #57 (the recurring-power cards themselves), and
 	# a melded power card (79821cd) carries them too once fused — but this
@@ -968,14 +981,37 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 		out.append("Draw %d." % int(fx["draw"]))
 	if bool(fx.get("taunt", false)):
 		out.append("%s." % _kw("Taunt", "taunt", kw, rich))
+	# backlog #86 duty 2 — same gap again: Light (Beacon "Gain 4 Block. Gain 3
+	# Light."; Kindled Strike "Deal 3 damage. Gain 2 Light.") had no branch, so
+	# both showed only their Block/damage line once that line made `out`
+	# non-empty.
+	if int(fx.get("light_gain", 0)) > 0:
+		out.append("Gain %d %s." % [int(fx["light_gain"]), _kw("Light", "light", kw, rich)])
 	if int(fx.get("pull_ally", 0)) > 0:
 		out.append("Pull your ally up to you.")
+	# backlog #86 duty 2 — Ally Energy is its own field (distinct from
+	# ally_block/ally_grip above, which read pv/base, not fx), so cards that
+	# pair it with a live-tracked effect (Alpine Focus: "Strength 2. Ally gains
+	# 1 Energy."; Summit Call: "Ally climbs 1. Ally gains 1 Energy.") dropped
+	# the Energy line entirely. Rally alone was never affected — with no other
+	# fx field set, `out` stayed empty and it fell back to authored text.
+	if int(fx.get("ally_energy", 0)) > 0:
+		out.append("Ally gains %d %s." % [int(fx["ally_energy"]), _kw("Energy", "energy", kw, rich)])
 	if int(fx.get("sac_ally_grip", 0)) > 0:
 		out.append("%s a card: ally climbs %d." % [_kw("Burn", "burn", kw, rich),
 			int(fx["sac_ally_grip"])])
 	elif bool(fx.get("exhaust_pick", false)):
 		out.append("%s a card%s." % [_kw("Burn", "burn", kw, rich),
 			"" if not bool(fx.get("cheapen_pick", false)) else " to cheapen another"])
+	# backlog #86 duty 2 — Discard is an action, not a stat (like Burn above),
+	# so it needs its own line rather than falling out of the numeric branches:
+	# Quick Purge ("Discard 2 cards. Draw 1.") showed only "Draw 1." once Draw
+	# made `out` non-empty, and Cull the Deck / Landfill likewise dropped
+	# "Discard a card." alongside their damage/Block line.
+	if int(fx.get("discard", 0)) > 0:
+		var discard_n := int(fx["discard"])
+		out.append("%s %s." % [_kw("Discard", "discard", kw, rich),
+			"a card" if discard_n == 1 else "%d cards" % discard_n])
 	if String(fx.get("create", "")) != "":
 		out.append("Build a tool into your hand.")
 	if String(fx.get("prepare", "")) != "":

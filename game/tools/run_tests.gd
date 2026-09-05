@@ -402,6 +402,7 @@ func _init() -> void:
 	_test_backlog45_status_curse_card_stays_private_to_its_owner()
 	_test_backlog45_retain_and_innate_keywords_reach_the_owners_hand()
 	_test_backlog86_steady_grip_fx_carries_dexterity_over_the_wire()
+	_test_backlog86_crippling_blow_fx_carries_frail_over_the_wire()
 	_test_backlog45_named_holds_cross_to_both_peers_identically()
 	_test_backlog45_graded_timing_quality_reaches_the_host_and_the_preview()
 	# backlog #46: a robustness sweep that is not balance tuning
@@ -538,6 +539,11 @@ func _init() -> void:
 	_test_backlog86_face_text_status_and_utility_lines_join_in_field_order()
 	_test_backlog86_face_text_shows_dexterity_alongside_block()
 	_test_backlog86_face_text_shows_a_melded_powers_recurring_payoff()
+	_test_backlog86_face_text_shows_frail_alongside_damage()
+	_test_backlog86_face_text_shows_thorns_alongside_block()
+	_test_backlog86_face_text_shows_light_gain_alongside_block_or_damage()
+	_test_backlog86_face_text_shows_ally_energy_alongside_another_effect()
+	_test_backlog86_face_text_shows_discard_alongside_draw_or_damage()
 	_test_backlog86_face_text_burn_lines_are_mutually_exclusive()
 	_test_backlog86_face_text_falls_back_to_authored_text_with_no_preview()
 	_test_backlog86_face_text_falls_back_to_authored_text_when_nothing_landed()
@@ -6542,6 +6548,24 @@ func _test_backlog86_steady_grip_fx_carries_dexterity_over_the_wire() -> void:
 		"Steady Grip's fx dict carries its Dexterity to the owner's client, not just its Block")
 
 
+## backlog #86 duty 2 — same wiring gap, this time Frail: Crippling Blow
+## ("Deal 5 damage. Frail 2.") is a real card in the shared reward pool, and
+## its Frail — applied to the TITAN, unlike Dexterity above — was just as
+## invisible on the wire. Drives it through a real GameHost/GameClient pair
+## rather than a hand-built dict, same idiom as Steady Grip above.
+func _test_backlog86_crippling_blow_fx_carries_frail_over_the_wire() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var crippling: Card = Content.make_card("crippling_blow")
+	host._run.combat.players[0].hand.append(crippling)
+	host._broadcast_state()
+	var hand: Array = c0.private["hand"]
+	var mine: Dictionary = hand[hand.size() - 1]
+	_expect(String(mine["name"]) == crippling.name and int((mine["fx"] as Dictionary).get("frail", 0)) == 2,
+		"Crippling Blow's fx dict carries its Frail to the owner's client, not just its damage")
+
+
 ## Named holds (backlog #24) widened Boss.ledges from a bare int array to an
 ## optional Dictionary shape {height, safe, exposed_to}. Prove the richer
 ## shape crosses the snapshot boundary intact and IDENTICALLY to both peers
@@ -8534,6 +8558,77 @@ func _test_backlog86_face_text_shows_a_melded_powers_recurring_payoff() -> void:
 		"keywords": [], "fx": {"power_effect": "strength", "power_value": 1}}
 	_expect(CardView.face_text(plain, false) == "Power: Strength 1 each turn end.",
 		"a plain recurring-power card also states its payoff via the live line")
+
+
+## backlog #86 duty 2 (find an error and resolve it) — a fourth instance of
+## the same "GameHost's fx dict grew a field, face_text() never grew the
+## matching branch" shape as Dexterity/power_effect above, this time hitting
+## five real shipped cards at once: Frail (Crippling Blow), Thorns
+## (Spinebrace), Light (Beacon/Kindled Strike/Steady Flame), Ally Energy
+## (Alpine Focus/Summit Call/Pass the Beat/Croak Chorus) and Discard as an
+## ACTION rather than a stat (Quick Purge/Cull the Deck/Landfill). Each of
+## these fields combines with an already-handled field on a real card, so the
+## already-handled line made `out` non-empty and silently dropped the rest —
+## exactly the failure mode `_test_backlog86_face_text_falls_back_to_
+## authored_text_when_nothing_landed` above proves is otherwise safe.
+func _test_backlog86_face_text_shows_frail_alongside_damage() -> void:
+	# Crippling Blow: "Deal 5 damage. Frail 2."
+	var data := {"preview": {"damage": 5}, "preview_miss": {}, "base": {"damage": 5},
+		"keywords": [], "fx": {"frail": 2}}
+	_expect(CardView.face_text(data, false) == "Deal 5 damage. Frail 2.",
+		"a card dealing damage AND applying Frail states both on its live face, not just the damage")
+
+
+func _test_backlog86_face_text_shows_thorns_alongside_block() -> void:
+	# Spinebrace: "Gain 5 Block. Thorns 2."
+	var data := {"preview": {"block": 5}, "preview_miss": {}, "base": {"block": 5},
+		"keywords": [], "fx": {"thorns": 2}}
+	_expect(CardView.face_text(data, false) == "Gain 5 Block. Thorns 2.",
+		"a card granting Block AND Thorns states both on its live face, not just the Block")
+
+
+func _test_backlog86_face_text_shows_light_gain_alongside_block_or_damage() -> void:
+	# Beacon: "Gain 4 Block. Gain 3 Light."
+	var beacon := {"preview": {"block": 4}, "preview_miss": {}, "base": {"block": 4},
+		"keywords": [], "fx": {"light_gain": 3}}
+	_expect(CardView.face_text(beacon, false) == "Gain 4 Block. Gain 3 Light.",
+		"a card granting Block AND Light states both on its live face, not just the Block")
+	# Kindled Strike: "Deal 3 damage. Gain 2 Light."
+	var kindled := {"preview": {"damage": 3}, "preview_miss": {}, "base": {"damage": 3},
+		"keywords": [], "fx": {"light_gain": 2}}
+	_expect(CardView.face_text(kindled, false) == "Deal 3 damage. Gain 2 Light.",
+		"a card dealing damage AND granting Light states both on its live face, not just the damage")
+
+
+func _test_backlog86_face_text_shows_ally_energy_alongside_another_effect() -> void:
+	# Alpine Focus: "Strength 2. Ally gains 1 Energy."
+	var alpine := {"preview": {"damage": 0}, "preview_miss": {}, "base": {},
+		"keywords": [], "fx": {"strength": 2, "ally_energy": 1}}
+	_expect(CardView.face_text(alpine, false) == "Strength 2. Ally gains 1 Energy.",
+		"a card granting Strength AND Ally Energy states both on its live face, not just the Strength")
+	# Rally has no other fx field set, so `out` stays empty and it must still
+	# fall back to authored text rather than gaining a line of its own here.
+	var rally := {"text": "Ally gains 1 Energy.", "preview": {"damage": 0},
+		"preview_miss": {}, "base": {}, "keywords": [], "fx": {"ally_energy": 1}}
+	_expect(CardView.face_text(rally, false) == "Ally gains 1 Energy.",
+		"Ally Energy alone still reads correctly via the authored-text fallback, unaffected by this fix")
+
+
+func _test_backlog86_face_text_shows_discard_alongside_draw_or_damage() -> void:
+	# Quick Purge: "Discard 2 cards. Draw 1."
+	var purge := {"preview": {"damage": 0}, "preview_miss": {}, "base": {},
+		"keywords": [], "fx": {"draw": 1, "discard": 2}}
+	_expect(CardView.face_text(purge, false) == "Draw 1. Discard 2 cards.",
+		"a card that draws AND discards states both on its live face, not just the draw")
+	# Cull the Deck: "Discard a card. Deal 3 damage and an additional 1 per
+	# card in your discard pile." -- singular phrasing at discard=1, and the
+	# live damage number already carries the per-discard scaling (that's
+	# `preview.damage`, computed elsewhere), so this only proves the action
+	# line itself survives.
+	var cull := {"preview": {"damage": 3}, "preview_miss": {}, "base": {"damage": 3},
+		"keywords": [], "fx": {"discard": 1}}
+	_expect(CardView.face_text(cull, false) == "Deal 3 damage. Discard a card.",
+		"a card that deals damage AND discards states both on its live face, not just the damage")
 
 
 func _test_backlog86_face_text_burn_lines_are_mutually_exclusive() -> void:

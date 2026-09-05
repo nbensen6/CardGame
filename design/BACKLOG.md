@@ -2567,6 +2567,42 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-05** — #86 duty 2 (find an error and resolve it). Last turn
+  (`c4e69c5`) was duty 1, so this one was due for duty 2. Recognised the
+  bug family from the last two duty-2 log entries (Dexterity, `d8e265a`;
+  melded power_effect, `d7a94d4`): `GameHost`'s per-card `"fx"` dict — the
+  one that crosses the wire and is the only thing `CardView.face_text()`
+  reads to build a card's LIVE description in hand — keeps missing fields
+  that `Card` itself has carried for a while, so any card combining that
+  field with an already-handled one (damage/Block/Height/Strength/etc.)
+  silently drops everything face_text has no branch for once the handled
+  field makes its `out` array non-empty. Rather than chase one more field
+  and leave the same gap for a fourth/fifth/sixth duty-2 turn, read every
+  field `Card` declares against both `fx` dicts (`game_host.gd:585`,
+  `:785`, kept identical since `6ac6644`) and found FIVE more real, live
+  gaps, each hitting at least one shipped reward-pool card: Frail
+  (`crippling_blow`: "Deal 5 damage. Frail 2." → showed only the damage),
+  Thorns (`spinebrace`: "Gain 5 Block. Thorns 2." → showed only the
+  Block), Light (`beacon`, `kindled_strike`, `steady_flame`), Ally Energy
+  (`alpine_focus`, `summit_call`, `pass_the_beat`, `croak_chorus` — `rally`
+  alone was never affected, since with no other `fx` field set `out` stays
+  empty and it correctly falls back to authored text), and Discard as an
+  ACTION rather than a stat (`quick_purge`, `cull_the_deck`, `landfill`).
+  Fixed by adding `frail`, `thorns`, `light_gain`, `ally_energy` and
+  `discard` to both `fx` dict literals and one matching branch each in
+  `card_view.gd`'s `face_text()`, using the exact keyword ids `game_host.gd`'s
+  own `_keywords_of()` already derives for these fields (`frail`, `thorns`,
+  `light`, `energy`, `discard`) so tap-to-inspect still names the right
+  keyword. Seven new tests: five synthetic `face_text` unit tests (one per
+  field, each proving the real card's exact two-effect combination renders
+  both lines, plus the Rally-alone case proving the fallback path is
+  unaffected) and one end-to-end test driving `crippling_blow` through a
+  real `GameHost`/`GameClient` pair (mirroring `_test_backlog86_steady_
+  grip_fx_carries_dexterity_over_the_wire`) to prove the WIRING, not just
+  the formatter. `run_tests.gd`: ALL TESTS PASSED (fresh import, headless,
+  godot 4.7.1-stable; all 7 new PASS lines present, no FAILs). Left #86
+  itself unchecked — it is the standing rotation, not a completable item.
+  Next `#86` turn is duty 3 (verify a mechanic).
 - **2026-09-05** — #86 duty 1 (improve an asset — portraits and card icons).
   Last turn (`f5de9ac`) was duty 3, so this one was due for duty 1. Checked
   #87 and #88 (both `needs a screen`) before falling through to the rotation.
