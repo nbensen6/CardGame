@@ -2567,6 +2567,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-05** — #86 duty 1 (improve an asset). Last turn (`e898070`) was
+  duty 3, so this one was due for duty 1. Scored icons and portraits by
+  total and by how many repair passes each has already had
+  (`design/progress/*_icon.md`, `*_portrait.md`); the lowest un-repaired
+  candidates that traced to real 3D geometry (`boulder_ram`'s horn,
+  `mountain_climbers`' canteen colour) are the FIXER's territory, not mine,
+  so picked the lowest un-repaired **icon** instead, since an icon is pure
+  `icons.py` geometry with no beast model underneath it to trip the tier
+  boundary: `draw` (38/50, batch 19, never repaired). Diagnosis's two lowest
+  were Silhouette@42px (arrowhead rounds off at small size — concrete fix,
+  widen the base 30%) and Colour & contrast (flagged as an unconfirmed risk
+  that the card slabs might blend into a real card face). Applied the first
+  directly. For the second, read `card_view.gd` instead of leaving it open:
+  the icon is only ever shown on a card with NO unique art, and that
+  branch's background is the near-black `ground` panel
+  (`Color(0.055,0.052,0.062)`), not a card-face tone at all — the risk named
+  in scoring doesn't exist once you know what's actually behind it. Pixel-
+  sampled the render and composited both before/after over the real ground
+  colour to prove the ~170-point gap rather than assert it. Rendering needed
+  `apt-get install blender` (4.0.2) plus `libegl1`/`libgl1-mesa-dri` for
+  headless GL and `numpy`/`pillow` in the system python3.12 Blender embeds —
+  none of that was on the container image. Rebuilt the full icon batch
+  twice (baseline + fix) to scratch dirs per the "WORKBENCH isn't
+  reproducible" rule prior passes already found, kept only the changed
+  `draw.png`, confirmed with `git status` that nothing else moved. **38 →
+  42, crosses the loop's stop line.** `run_tests.gd`: ALL TESTS PASSED
+  (fresh import, headless, godot 4.7.1-stable). Full writeup, before/after
+  renders and pixel samples in `design/progress/draw_icon.md`. Next `#86`
+  turn is duty 2 (find an error and resolve it).
+
 - **2026-09-05** — #86 duty 3 (verify a mechanic actually works). Last turn
   (`57c5032`) was duty 2, so this one was due for duty 3. Surveyed every
   `static func` under `core/`, `views/`, `ui/`, and `session/` against

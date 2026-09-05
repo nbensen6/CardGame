@@ -202,7 +202,10 @@ def gadget(i):                                  # the Engineer builds something
 def draw(i):                                    # draw a card
     i.slabf(-0.16, -0.10, 0.24, 0.34, WHEAT, rot=0.18)
     i.slabf(0.06, 0.06, 0.24, 0.34, CREAM, rot=-0.10)
-    i.spike(0.34, 0.30, 0.16, 0.02, 0.26, GOLD, seg=3)
+    # pass 2 (design/progress/draw_icon.md): base radius widened 0.16 -> 0.21
+    # (+31%) so the arrowhead's triangular point survives a 42px downsample
+    # instead of rounding off into a blunt wedge.
+    i.spike(0.34, 0.30, 0.21, 0.02, 0.26, GOLD, seg=3)
     i.slabf(0.34, 0.06, 0.055, 0.16, GOLD)
 
 
