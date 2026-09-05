@@ -82,3 +82,45 @@ grip framing).
 
 Not fixed here: both are `game/**` GDScript camera behaviour, outside
 `tools/blender/**` / `game/assets/3d/**`.
+
+## 2026-09-05 — ally hunter shrinks into the HUD corner during the climb
+
+**Command:**
+```
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:\shot.png state=3dclimb slot=0 beast=yoke_ox
+```
+
+**What the harness printed:**
+```
+CAM pos=(0.650241, 17.844931, 19.908562) pivot=(0.650241, 16.787361, 9.368150) dist=10.59
+HUNTER0 home=(0.650241, 15.947361, 9.368150) drawn=(0.650241, 15.983228, 9.368150) OK
+HUNTER1 home=(9.440349, 13.101646, 8.503277) drawn=(9.440349, 13.123976, 8.503277) OK
+VIS OK hunter0: (640, 423)
+VIS FAIL hunter1: (1241, 604)
+VIS OK sigil: (780, 446)
+```
+`HUNTER1` is drawn exactly at its own `home` again — a third camera path with the
+same shape of bug as the two already logged above (opening framing, grip
+framing), not a placement problem.
+
+**What I saw in the PNG:** The Frog (active, at the sigil) fills the centre of
+the frame as intended. The Goblin Engineer is not off-frame this time — he is
+on-screen at (1241, 604), but that point sits inside the bottom-right party +
+turn-order HUD block, and in the render he is a barely-visible sliver of a
+figure wedged behind/under the "Switch" button and the turn gauge, easy to
+miss entirely rather than read as your co-op partner mid-climb.
+
+**Why it matters:** same first-impression problem as the other two — three
+separate camera states (combat-start, grip, climb) all independently fail to
+budget room for wherever the OTHER hunter happens to be, which suggests the
+fix belongs in whatever shared framing logic computes `dist`/pivot from the
+active hunter alone, not in three separate per-state patches.
+
+**Checked and clean, for the record:** `3dreward`, `3dshop`, and `3dmap` all
+rendered correctly this run — beast-fall reward screen, trader shop, and the
+Act 1 overworld all showed both hunters/HUD/nodes exactly where expected, no
+`VIS FAIL` and no `WALK FAIL`.
+
+Not fixed here: `game/**` GDScript camera framing, outside
+`tools/blender/**` / `game/assets/3d/**`.
