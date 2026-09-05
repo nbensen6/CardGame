@@ -70,6 +70,11 @@ func start_new_run() -> void:
 		passives.append(Content.character_passive(cid))
 	if _daily_date != "":
 		_run = Run.new_daily(decks, names, _daily_date, passives, _unlocked_wins)
+		_ascension = _run.ascension  # backlog #86 duty 2: Run.new_daily() pins ascension
+		# to DAILY_ASCENSION regardless of whatever tier the menu selected — re-sync
+		# the same way resume_run() already does for a loaded save, or the stale
+		# menu value leaks into the shared "ascension" HUD field and into
+		# Progress.record_win()'s unlock check on a win.
 	else:
 		_run = Run.new(decks, names, _seed, passives, _ascension, _unlocked_wins)
 	_history_recorded = false

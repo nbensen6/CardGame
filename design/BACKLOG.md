@@ -2592,6 +2592,42 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-05** — #86 duty 2 (find an error and resolve it). Last turn
+  (`6b5d8ef`) was duty 1, so this one was due for duty 2. Delegated the
+  initial read across `game/core/run.gd`, `run_map.gd`, `run_save.gd`,
+  `boss.gd`, `combatant.gd`, `player_state.gd`, `game/session/game_host.gd`,
+  `game_client.gd`, `net/*` and `content.gd` to a search pass hunting for
+  the two named shapes (first-pass holes, two copies of one truth), then
+  verified the finding by hand before touching anything. Found a real
+  instance of "two copies of one truth": `GameHost._ascension` duplicates
+  `Run.ascension` and `resume_run()` already re-syncs it explicitly
+  (`_ascension = saved.ascension`) precisely because the two numbers can
+  drift — but `start_new_run()`'s daily branch never does the same.
+  `Run.new_daily()` unconditionally pins the fresh run to
+  `Run.DAILY_ASCENSION` (0) regardless of whatever ascension `GameHost` was
+  constructed with, so a daily game hosted from a menu that had a harder
+  tier selected kept broadcasting that stale, higher ascension in the
+  shared snapshot's `"ascension"` field, and — the real-money bug — fed
+  that same stale value into `Progress.record_win()` on a win, which would
+  fraudulently unlock every ascension tier up to it even though the fight
+  actually ran (and was won) at ascension 0. Confirmed the existing daily-
+  host test (`_test_backlog49_host_can_start_a_shared_daily`) couldn't have
+  caught this: it builds the host with `ascension=0`, which happens to
+  already equal `DAILY_ASCENSION`, masking the drift. Currently dormant —
+  `menu.gd` never passes a `daily_date` yet — same "real but unreachable
+  until the UI lands" shape as the meld/enchant bug this same duty found on
+  2026-09-03, and worth closing now for the same reason: it would otherwise
+  ship silently broken the day the daily-run menu entry lands. Wrote
+  `_test_backlog86_daily_host_ascension_matches_the_pinned_run` first
+  (constructs a solo daily host as if ascension 5 were menu-selected,
+  checks the broadcast `"ascension"` field, forces a win, checks
+  `Progress.unlocked_ascension()`), watched both assertions fail against
+  the unfixed code, then added one line — `_ascension = _run.ascension`
+  right after the daily branch builds `_run` — following the exact idiom
+  `resume_run()` already uses. `--import` then `run_tests.gd`: ALL TESTS
+  PASSED (fresh import, headless, godot 4.7.1). Next `#86` turn is duty 3
+  (verify a mechanic actually works).
+
 - **2026-09-05** — #86 duty 1 (improve an asset, portraits/icons only). Last
   turn (`17c4fc8`) was duty 3, so this one was due for duty 1. Scanned every
   scored `*_portrait.md`/`*_icon.md` for the lowest current total; the true

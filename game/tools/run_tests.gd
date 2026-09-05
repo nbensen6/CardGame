@@ -82,6 +82,7 @@ func _init() -> void:
 	_test_backlog49_daily_seed_is_stable_and_shared()
 	_test_backlog49_daily_run_saves_and_loads_the_flag()
 	_test_backlog49_host_can_start_a_shared_daily()
+	_test_backlog86_daily_host_ascension_matches_the_pinned_run()
 	_test_run_walks_the_map()
 	_test_rest_node_heals_and_returns_to_map()
 	_test_event_choice_applies_effects()
@@ -1450,6 +1451,40 @@ func _test_backlog49_host_can_start_a_shared_daily() -> void:
 	_expect(bool(c0.shared.get("is_daily", false)) and int(c0.shared.get("seed", -1)) == expected_seed
 		and int(c0.shared.get("ascension", -1)) == Run.DAILY_ASCENSION,
 		"a host given a daily_date starts a run flagged as daily, pinned to DAILY_ASCENSION, seeded from the date")
+
+
+## Backlog #86 duty 2: `GameHost._ascension` is a second copy of the same
+## number `Run.ascension` already carries — `resume_run()` re-syncs it
+## (`_ascension = saved.ascension`) precisely because the two can drift, but
+## `start_new_run()`'s daily branch never does the same: `Run.new_daily()`
+## unconditionally pins the fresh Run to `Run.DAILY_ASCENSION` regardless of
+## whatever ascension the host was constructed with, and `_ascension` is left
+## holding the menu-selected value. That stale copy leaks into two places: the
+## shared snapshot's "ascension" field (a wrong HUD badge) and
+## `Progress.record_win()`'s unlock check (a fraudulent unlock of a HARDER
+## tier than the daily — pinned to ascension 0 — actually asked for). The
+## existing daily-host test above can't catch this: it constructs the host
+## with ascension 0, which happens to already equal DAILY_ASCENSION.
+func _test_backlog86_daily_host_ascension_matches_the_pinned_run() -> void:
+	Progress.use_scratch_slot("run_tests_backlog86_daily_ascension")
+	var cfg := ConfigFile.new()
+	cfg.set_value(Progress.SECTION, "unlocked_ascension", 0)
+	cfg.save(Progress.path)
+	var t := LocalTransport.new()
+	# Solo host built as if ascension 5 were selected at the menu, but daily-flagged.
+	var host := GameHost.new(t, 0, 2, true, 5, Content.UNLOCKED_ALL, "2026-08-25")
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	_expect(int(c.shared.get("ascension", -1)) == Run.DAILY_ASCENSION,
+		"a daily run's broadcast ascension is the pinned DAILY_ASCENSION, not whatever tier was selected at the menu")
+
+	host._run.phase = Run.Phase.WON
+	host._broadcast_state()
+	_expect(Progress.unlocked_ascension() == Run.DAILY_ASCENSION + 1,
+		"winning a daily run only unlocks the tier just past DAILY_ASCENSION, never the stale menu-selected ascension")
 
 
 func _test_run_walks_the_map() -> void:
