@@ -70,3 +70,65 @@ whether it is built correctly but this creature's curled-horn shape simply
 doesn't read at this poly budget from any of the six standard camera
 angles — a tighter head-only crop would settle this and is worth doing
 before anyone spends a fix on it.
+
+---
+
+## Pass 2 — fixer lane, 2026-09-05
+
+Applied by the **fixer** lane (`tools/fixer/BRIEF.md`). Views:
+`design/renders/boulder_ram_pass1_front.png` (the dead-on angle `look.py`
+gained on 2026-08-31, after this asset's pass-1 diagnosis was written — the
+diagnosis above was scored without it) and
+`design/renders/boulder_ram_pass2_*.png`.
+
+| Pass | Sil | Prop | Hygiene | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 1 | 7 | 6 | 4 | 5 | 7 | **29** |
+| 2 | 7 | 6 | 4 | 5 | 7 | **29** |
+
+### Colour (5) — investigated, not a bug, nothing changed
+
+`TAN` resolves to `swatch(272, 320)` in `kenney.py` — an interior cell of the
+atlas, 16px clear of every edge, same as every other named swatch. Not
+off-atlas.
+
+The dedicated close look this item asked for (`boulder_ram_pass1_front.png`)
+shows why the diagnosis read "grey-and-gold, not TAN": **the grey-and-gold
+disc-with-rod is not the horn.** It is the sigil assembly mounted on the
+hump's own front face two lines below the horn call in the script
+(`boulder_ram.py:108-109`, a STONE box plus the gold `mark()`), sitting a
+few centimetres from the horn's own end point in the `34`/`side`/`top`
+renders and reading as one object there. In the front view, both TAN horns
+are plainly visible, correctly coloured, correctly mirrored, symmetric
+either side of the head. There is no colour bug and no missing second
+horn — both were an artifact of scoring against a render set that did not
+yet include the front angle. Nothing to fix here; leaving the code as-is.
+
+### Build hygiene (4) — tried and reverted
+
+Tried thickening the horn tube to see if a thin cross-section was why it
+reads as a flat disc from the fight camera: `[0.09, 0.07, 0.05, 0.02] ->
+[0.16, 0.13, 0.09, 0.05]` in `boulder_ram.py`'s `limb()` call (radii only,
+same points, same seg=6).
+
+Rebuilt and compared `boulder_ram_pass2_34.png`, `_side.png` and `_top.png`
+against the pass-1 versions side by side: no visible change in any of the
+three. The horn is still essentially unreadable from the fight camera, the
+side, and the top — it only reads (as a flat wedge, not a curl) from the
+front angle, which the actual game camera never uses. Thickness was not
+the problem, so reverted (`git checkout -- tools/blender/boulder_ram.py`,
+rebuilt to confirm the shipped glb matches).
+
+**Real cause, as best determined by looking:** the curl sits low against
+the head and nearly edge-on to every camera except the front one — from
+`34`/`side`/`top` it is occluded by or foreshortened flat against the head
+and hump, not merely thin. Fixing that means moving or re-angling the curl
+so it projects clear of the head from the fight-camera direction, which is
+a shape change to how prominently a "ram horn" silhouette should read
+against this body, not a measurement — flagging rather than guessing at it
+inside this run's two-fix budget.
+
+Total unchanged (29), a plateau on the numbers, but not wasted: one of the
+two named problems (colour) turns out not to exist, and the real hygiene
+problem is now stated correctly (occlusion/angle, not thickness or a
+missing horn) for whoever takes the next pass.
