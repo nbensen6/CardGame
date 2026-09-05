@@ -77,6 +77,32 @@ if not "%HAVE%"=="%NEWEST%" (
     echo %NEWEST%>"%MYBIN%\version.txt"
   )
 )
+REM THE TOKEN, READ EXPLICITLY. Do not trust the inherited environment.
+REM
+REM setx wrote CLAUDE_CODE_OAUTH_TOKEN to the USER environment, and an
+REM interactive shell gets it. A scheduled task does not reliably: Task
+REM Scheduler builds a child environment that does not always carry user
+REM variables set after the session started, so run.cmd inherited nothing and
+REM claude.exe reported "OAuth session expired and could not be refreshed".
+REM
+REM That is a misleading error - the token was fine the whole time, it simply
+REM was not there. It cost two days: the task ran every hour from 2026-09-03 to
+REM -05, exited 1 every time, and committed nothing, and nobody noticed until
+REM Nick asked how the lanes were doing.
+if not defined CLAUDE_CODE_OAUTH_TOKEN (
+  for /f "usebackq delims=" %%T in (`powershell -NoProfile -Command ^
+    "[Environment]::GetEnvironmentVariable('CLAUDE_CODE_OAUTH_TOKEN','User')"`) do (
+    set "CLAUDE_CODE_OAUTH_TOKEN=%%T"
+  )
+)
+if not defined CLAUDE_CODE_OAUTH_TOKEN (
+  echo === no CLAUDE_CODE_OAUTH_TOKEN in this process OR the user environment.
+  echo === run `claude setup-token` in a terminal, then setx it. Nothing was run.
+  echo === fixer FAILED %DATE% %TIME%: no OAuth token > "%~dp0last-run.log"
+  endlocal
+  exit /b 1
+)
+
 set "CLAUDE=%MYBIN%\claude.exe"
 if not exist "%CLAUDE%" (
   echo === no usable claude.exe at %CLAUDE%
