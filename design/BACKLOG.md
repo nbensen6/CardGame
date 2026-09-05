@@ -2567,6 +2567,27 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-05** — #86 duty 3 (verify a mechanic actually works). Last turn
+  (`9c685d0`) was duty 2, so this one was due for duty 3. The backlog's own
+  "start here" pointer (`_route_between`/`_stand_on_model`/`_hop`) turned out
+  to already be fully covered by prior duty-3 passes — `route_between_rungs`,
+  `foothold_anchor` and `climb_marker_for` all have tests, and `_hop` itself
+  is presentational (an arc/tween, not a rule) so it stays out per the "do
+  not fake a test for it" clause. Swept every `static func` in `game/views`
+  and `game/core` against `run_tests.gd` for one with zero coverage instead;
+  `Progress.timing_style()` had none, despite gating a real on-screen switch
+  (`combat_3d._on_card_tapped` reads it to choose the osu-style HitCircle vs.
+  the sweep bar, and the settings-menu label reads it too) that both faces
+  already have tests for individually. Its own doc comment names an
+  invariant nothing proved: a saved value that is neither `"bar"` nor
+  `"circle"` must fall back to `TIMING_CIRCLE` rather than being trusted.
+  Added four tests: default-with-no-config, both round-trips, and — the one
+  that actually matters — a `ConfigFile` write of `"sweep_wheel"` (a style
+  that has never existed) proving the sanitizer catches it rather than
+  handing garbage straight to the combat screen's style check.
+  `run_tests.gd`: ALL TESTS PASSED (fresh `--import`, headless, Godot
+  4.7.1-stable). Next `#86` turn is duty 1 (improve an asset).
+
 - **2026-09-05** — #86 duty 2 (find an error and resolve it). Last turn
   (`96fffdd`) was duty 1, so this one was due for duty 2. Read
   `data/ascension.json`'s own `_comment` closely — "boss_hp_pct (+% to

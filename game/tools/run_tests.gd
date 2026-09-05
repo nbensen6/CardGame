@@ -773,6 +773,21 @@ func _init() -> void:
 	_test_backlog86_dev_cycle_advances_borderless_foil_to_foil()
 	_test_backlog86_dev_cycle_wraps_foil_back_to_framed()
 	_test_backlog86_dev_cycle_completes_a_full_loop_of_four()
+	# backlog #86 duty 3 (thirty-fourth pass): Progress.timing_style(), the
+	# switch behind Nick's "mimicc osu" ask (combat_3d._on_card_tapped reads it
+	# to decide between the osu-style HitCircle and the sweep bar, and the
+	# settings-menu label at combat_3d.gd:2547 reads it too) had never been
+	# called from a test despite HitCircle and the bar timing both being
+	# covered on their own. Its own doc comment names a real invariant nothing
+	# proved: a saved value that is neither "bar" nor "circle" — an old build's
+	# format, a hand-edited config, a third style added later and then removed
+	# — falls back to TIMING_CIRCLE rather than being trusted, the exact
+	# "reads state without validating it" shape duty 2 keeps finding, just
+	# guarded here instead of broken.
+	_test_backlog86_timing_style_defaults_to_circle_with_no_config()
+	_test_backlog86_timing_style_round_trips_bar()
+	_test_backlog86_timing_style_round_trips_circle()
+	_test_backlog86_timing_style_sanitizes_an_unrecognised_saved_value()
 
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
@@ -9574,6 +9589,38 @@ func _test_backlog86_dev_cycle_completes_a_full_loop_of_four() -> void:
 		"four calls in a row visit every treatment exactly once, in Dev.CYCLE's own order, and land back where they started")
 	CardView.force_borderless = save_b
 	CardView.force_foil = save_f
+
+
+## backlog #86 duty 3 (thirty-fourth pass): Progress.timing_style() gates which
+## face the timing window wears (combat_3d._on_card_tapped, line 3010) and
+## nothing had ever called it. See the note above its registration for why the
+## sanitizing test is the one that matters.
+func _test_backlog86_timing_style_defaults_to_circle_with_no_config() -> void:
+	Progress.use_scratch_slot("run_tests_backlog86_timing_style_fresh")
+	_expect(Progress.timing_style() == Progress.TIMING_CIRCLE,
+		"with no config file at all yet, timing_style defaults to the circle, same as the doc comment promises")
+
+
+func _test_backlog86_timing_style_round_trips_bar() -> void:
+	Progress.use_scratch_slot("run_tests_backlog86_timing_style_bar")
+	Progress.set_timing_style(Progress.TIMING_BAR)
+	_expect(Progress.timing_style() == Progress.TIMING_BAR, "the sweep bar choice round-trips through save and read")
+
+
+func _test_backlog86_timing_style_round_trips_circle() -> void:
+	Progress.use_scratch_slot("run_tests_backlog86_timing_style_circle")
+	Progress.set_timing_style(Progress.TIMING_BAR)
+	Progress.set_timing_style(Progress.TIMING_CIRCLE)
+	_expect(Progress.timing_style() == Progress.TIMING_CIRCLE, "switching back to the hit circle round-trips too, not just the non-default value")
+
+
+func _test_backlog86_timing_style_sanitizes_an_unrecognised_saved_value() -> void:
+	Progress.use_scratch_slot("run_tests_backlog86_timing_style_garbage")
+	var cfg := ConfigFile.new()
+	cfg.set_value(Progress.SECTION, "timing_style", "sweep_wheel")  # a style that has never existed
+	cfg.save(Progress.path)
+	_expect(Progress.timing_style() == Progress.TIMING_CIRCLE,
+		"a saved value that is neither \"bar\" nor \"circle\" -- a stale format, a hand-edited config, a removed third style -- falls back to the circle instead of being handed straight to the combat screen's style check")
 
 
 func _expect(cond: bool, name: String) -> void:
