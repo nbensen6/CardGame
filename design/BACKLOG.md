@@ -2567,6 +2567,28 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-05** — #86 duty 2 (find an error and resolve it). Last turn
+  (`5ae38e3`) was duty 1, so this one was due for duty 2. Sibling gap to
+  the *previous* duty-2 fix (`9c685d0`, boss_hp_pct never reaching a
+  Titan's own adds): `ascension.json`'s "Meaner Beasts" tier
+  (`boss_strength`) uses the same plural "Beasts begin every fight with
+  +N Strength" wording, but `Run._start_encounter()` only ever applied
+  `boss_strength` to the main `boss`, never to `combat.adds` — and even if
+  it had, `Combat._adds_turn()`'s `"attack"` case used the move's flat
+  `value` alone, with no `+ add.strength` term the way every branch in
+  `_enemy_turn()` has. Both halves were silent: no crash, no test, an add
+  simply hit for the same number at Ascension 0 and Ascension 10. Fixed by
+  widening `_scale_adds_for_ascension` to take `boss_strength` alongside
+  `hp_pct` and by adding `add.strength` into `_adds_turn`'s attack damage.
+  Two new tests (`_test_backlog86_ascension_boss_strength_reaches_an_adds_own_strength_too`,
+  `_test_add_attack_adds_its_own_strength`) plus one existing call site
+  updated for the new signature. Only one add exists in shipped content
+  today (Root Lurker's Root Tendril) so nobody has actually fought this at
+  a high ascension yet — this was caught by reading the rule, not by a
+  player report. `run_tests.gd`: ALL TESTS PASSED (fresh `--import`,
+  headless, Godot 4.7.1-stable). Next `#86` turn is duty 3 (verify a
+  mechanic actually works).
+
 - **2026-09-05** — #86 duty 1 (improve an asset). Last turn (`ddf73f1`) was
   duty 3, so this one was due for duty 1. Surveyed every un-plateaued
   portrait/icon for the lowest score: `boulder_ram_portrait` (30),

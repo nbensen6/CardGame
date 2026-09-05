@@ -1317,6 +1317,11 @@ func _enemy_turn() -> void:
 ## thin — only "attack" (at the same hunter the boss is currently targeting)
 ## and "block" are handled; an add is a small secondary threat, not a second
 ## full beast with the whole move vocabulary.
+##
+## `+ add.strength` (#86 duty 2): the main boss's every attack branch in
+## _enemy_turn() adds its own `.strength` to `value`; this one didn't, so an
+## add ignored its own Strength entirely — silent even under ascension's
+## boss_strength ("Meaner Beasts"), which run.gd now grants to adds too.
 func _adds_turn() -> void:
 	for add_v in adds:
 		var add: Boss = add_v
@@ -1327,9 +1332,10 @@ func _adds_turn() -> void:
 		var value := int(move.get("value", 0))
 		match String(move.get("type", "")):
 			"attack":
+				var dmg := value + add.strength
 				var target: PlayerState = players[boss_target_index()]
-				_boss_hits(target, value, add)
-				_log("%s attacks %s for %d." % [add.name, target.combatant.name, value])
+				_boss_hits(target, dmg, add)
+				_log("%s attacks %s for %d." % [add.name, target.combatant.name, dmg])
 			"block":
 				add.gain_block(value)
 				_log("%s defends (+%d block)." % [add.name, value])

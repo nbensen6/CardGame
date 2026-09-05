@@ -133,6 +133,7 @@ func _init() -> void:
 	_test_ascension_makes_the_run_harder()
 	_test_ascension_tier_effects_reach_the_run()
 	_test_backlog86_ascension_hp_pct_reaches_an_adds_own_hp_too()
+	_test_backlog86_ascension_boss_strength_reaches_an_adds_own_strength_too()
 	_test_ascension9_and_10_change_a_rule()
 	_test_coach_teaches_the_right_thing_first()
 	_test_tips_can_be_switched_off_without_losing_your_place()
@@ -378,6 +379,7 @@ func _init() -> void:
 	_test_hits_all_enemies_skips_a_dead_add()
 	_test_killing_an_add_does_not_end_the_fight()
 	_test_add_acts_on_its_own_turn()
+	_test_add_attack_adds_its_own_strength()
 	_test_add_block_reseeds_each_round_like_the_bosss_own()
 	_test_add_thorns_bites_the_attacking_add_not_the_boss()
 	_test_adds_round_trip_through_save_and_load()
@@ -2448,9 +2450,43 @@ func _test_backlog86_ascension_hp_pct_reaches_an_adds_own_hp_too() -> void:
 	var add: Boss = run.combat.adds[0]
 	var base_hp := add.max_hp
 	add.hp = add.max_hp - 3  # prove hp is reset to the new max, not just left alone
-	run._scale_adds_for_ascension(int(run._asc.get("boss_hp_pct", 0)))
+	run._scale_adds_for_ascension(int(run._asc.get("boss_hp_pct", 0)), 0)
 	_expect(add.max_hp == int(base_hp * 110 / 100.0) and add.hp == add.max_hp,
 		"ascension's boss_hp_pct ('every beast's HP') must reach a Titan's own adds, not just the Titan itself")
+
+
+## Sibling gap to the hp_pct test above, same plural "Beasts" wording in
+## ascension.json ("Meaner Beasts" / "Beasts begin every fight with +N
+## Strength"): boss_strength was applied only to `boss` in _start_encounter,
+## never to `combat.adds`. Ascension 3 clears tier 3 (Meaner Beasts,
+## boss_strength +1) on top of tier 1's boss_hp_pct +10, so this also proves
+## the two scale independently in one call.
+func _test_backlog86_ascension_boss_strength_reaches_an_adds_own_strength_too() -> void:
+	var run := Run.new([_deck_of(_slash, 10), _deck_of(_slash, 10)], ["A", "B"], 0, [{}, {}], 3)
+	run.start()  # Ascension 3 -> _asc["boss_strength"] == 1 (tier 3), boss_hp_pct == 10 (tier 1)
+	run.combat = _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, Content.build_boss("root_lurker"))
+	var add: Boss = run.combat.adds[0]
+	var base_strength := add.strength
+	run._scale_adds_for_ascension(int(run._asc.get("boss_hp_pct", 0)), int(run._asc.get("boss_strength", 0)))
+	_expect(add.strength == base_strength + 1,
+		"ascension's boss_strength ('every beast's Strength') must reach a Titan's own adds, not just the Titan itself")
+
+
+## The other half of the same gap: even a nonzero add.strength did nothing,
+## because _adds_turn()'s "attack" case used the move's flat `value` alone —
+## unlike every attack branch in _enemy_turn(), which adds `boss.strength`.
+func _test_add_attack_adds_its_own_strength() -> void:
+	var boss := _dummy_boss(300, 0)  # 0-damage boss isolates the add's own hit
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Grub", 30)
+	add.moves = [{"type": "attack", "value": 5}]
+	add.strength = 4
+	combat.adds.append(add)
+	var hp_before: int = combat.players[0].combatant.hp
+	combat.end_turn(0)
+	combat.end_turn(1)
+	_expect(combat.players[0].combatant.hp == hp_before - 9,
+		"an add's attack adds its own Strength to the move's flat value, same as the main boss's attack branches do")
 
 
 ## Backlog #56: the ladder up to tier 8 only ever bumps a number. Tiers 9 and

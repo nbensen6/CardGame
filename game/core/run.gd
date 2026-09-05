@@ -899,12 +899,13 @@ func _start_encounter() -> void:
 	if hp_pct > 0:  # ascension: thicker hides
 		boss.max_hp = int(boss.max_hp * (100 + hp_pct) / 100.0)
 		boss.hp = boss.max_hp
-	boss.strength += int(_asc.get("boss_strength", 0))  # ascension: meaner beasts
+	var boss_strength := int(_asc.get("boss_strength", 0))
+	boss.strength += boss_strength  # ascension: meaner beasts
 	var mods := relic_totals()
 	# Distinct per-encounter seed so each fight shuffles differently but reproducibly.
 	combat = Combat.new(decks, combatants, boss, _encounter_seed(),
 		mods["energy"], mods["attack"], mods["block"], mods["strength"], player_passives, mods)
-	_scale_adds_for_ascension(hp_pct)
+	_scale_adds_for_ascension(hp_pct, boss_strength)
 	combat.start()
 	phase = Phase.COMBAT
 
@@ -915,13 +916,20 @@ func _start_encounter() -> void:
 ## (e.g. Root Lurker's Root Tendril) fought at Ascension 10 shipped with the
 ## exact same HP as one fought at Ascension 0. Scale it here, once `combat`
 ## (and so `combat.adds`) exists.
-func _scale_adds_for_ascension(hp_pct: int) -> void:
-	if hp_pct <= 0:
+##
+## `boss_strength` ("Meaner Beasts", same plural wording) had the identical
+## gap: an add's own `.strength` was never bumped, and even if it had been,
+## Combat._adds_turn's "attack" case ignored it (see the fix there) — so a
+## Titan's add attacked for the same flat number at Ascension 0 and 10.
+func _scale_adds_for_ascension(hp_pct: int, boss_strength: int) -> void:
+	if hp_pct <= 0 and boss_strength <= 0:
 		return
 	for add_v in combat.adds:
 		var add: Boss = add_v
-		add.max_hp = int(add.max_hp * (100 + hp_pct) / 100.0)
-		add.hp = add.max_hp
+		if hp_pct > 0:
+			add.max_hp = int(add.max_hp * (100 + hp_pct) / 100.0)
+			add.hp = add.max_hp
+		add.strength += boss_strength
 
 ## Sum the team's relic effects. The flat five feed Combat's old parameters; the
 ## rest are rule changes Combat and the client read from `mods`.
