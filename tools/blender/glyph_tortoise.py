@@ -20,7 +20,7 @@ rune-glyphs (the ward made literal rather than left as a pure number), a
 small retracted head. The shell doubles as both climb ledges - two plates
 stepping up its own ridge - the same "the ledges ARE the shape" trick
 Husk Beetle and Boulder Ram already use for a shelled/armoured body. Cool
-stone/slate tones (SLATE, STONE, PEWTER) for the shell against a warm
+stone/slate tones (SLATE, STONE) for the shell against a warm
 CLAY/BROWN hide, with the glyphs picked out in AMBER so they read as
 carved marks rather than a texture - distinct from Boulder Ram's flatter
 grey rock read and Husk Beetle's warm beetle-shell one.
@@ -28,7 +28,7 @@ grey rock read and Husk Beetle's warm beetle-shell one.
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from beast import Beast
-from kenney import out_path, mirror, point, SLATE, STONE, PEWTER, CLAY, \
+from kenney import out_path, mirror, SLATE, STONE, CLAY, \
                    BROWN, UMBER, AMBER, TAN
 
 b = Beast("glyph_tortoise", height=2.6, span=(0.02, 1.80))
@@ -72,11 +72,11 @@ for gx, gy, gz in ((-0.30, -0.30, 1.62), (0.28, -0.10, 1.68),
 # all hit and all fixed the same way.
 _h2 = b.z_for(2)
 b.ball((0.30, -0.15, _h2), (0.20, 0.22, 0.15), STONE, 9, 5)
-b.shelf(2, (0.28, -0.15), (0.19, 0.17), PEWTER, thickness=0.11, bevel=0.05)
+b.shelf(2, (0.28, -0.15), (0.19, 0.17), TAN, thickness=0.11, bevel=0.05)
 
 _h4 = b.z_for(4)
 b.ball((0.26, 0.42, _h4), (0.18, 0.20, 0.14), STONE, 8, 5)
-b.shelf(4, (0.24, 0.38), (0.16, 0.14), PEWTER, thickness=0.10, bevel=0.05,
+b.shelf(4, (0.24, 0.38), (0.16, 0.14), TAN, thickness=0.10, bevel=0.05,
         drop=0.02)
 
 b.foot((0.66, -0.62, 0.10))                                    # onto a foreleg
@@ -88,15 +88,14 @@ b.foot((0.66, -0.62, 0.10))                                    # onto a foreleg
 # far sideways it is nudged (the "ball crest wraps past its own centre"
 # lesson Cinder Jackal's and Boulder Ram's write-ups both already named,
 # just larger here because the shell is a much bigger dome). A first attempt
-# used a thin taper for the bridge and read as a flagpole with a coin on it
-# in the rendered preview - looking at the render, not the contract, caught
-# it. Rebuilt as a stubby wedge() (a shape this file's own vocabulary calls
-# out for "a slab at one end and an edge at the other") so the prow reads as
-# a grown shell ridge rather than an antenna.
+# bridged the gap with a thin taper and the sigil at its tip read as a
+# flagpole with a coin on it, a separate part rather than a marking - the
+# fixer pass named in this file's progress log removed the taper and set the
+# mark directly into the dome's own front slope instead (the prow ball stays
+# fully inside the shell's volume either way, so it never breaks the surface
+# on its own).
 _sigil_z = b.z_for(5)
 b.ball((0.20, -0.35, _sigil_z - 0.02), (0.14, 0.12, 0.13), STONE, 8, 5)
-b.taper((0.20, -0.65, _sigil_z), 0.10, 0.04, 0.55, STONE, seg=7,
-        rot=point((0.0, -1.0, 0.15)))
-b.mark(at=(0.20, -0.91, _sigil_z), size=0.08, facing=(0.0, -1.0, 0.0))
+b.mark(at=(0.20, -0.60, _sigil_z), size=0.08, facing=(0.0, -1.0, 0.0))
 
 b.done(out_path(), name="GlyphTortoise")
