@@ -2592,6 +2592,29 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-06** — #86 duty 3 (thirty-eighth pass): verify a mechanic. Last
+  commit (`21b0360`, the deck-preview fx fix) was duty 2, and the two before
+  that ran duty 1 then duty 3, so this run was due for duty 3. Picked
+  `game/ui/console.gd` (the dev console) — zero mentions anywhere in
+  `run_tests.gd` despite being a real, Nick-requested feature with its own
+  documented safety promise: "a pure client that joined someone else's game
+  gets 'no host here' rather than a lie." Proved six things headless, with no
+  screen and no `Session.host` set up at all: unknown-command dispatch names
+  itself and points at `help`; `help` actually lists all seventeen registered
+  commands (a drift risk since the registry is hand-written); `_on_off`
+  (shared by `foil`/`borderless`) takes an explicit on/off and TOGGLES with no
+  argument; `turn`'s clamp to [-1, 1] and its `off` case (which deliberately
+  sets 2.0, outside the clamp, to mean "follow the pointer"); `_make`'s
+  comma-and-space splitting and its silent drop of an id `Content.make_card`
+  doesn't recognise (so a typo can't add a blank card to the table); and the
+  actual safety promise — `climb`/`energy`/`hand`/`deal`/`beast` all refuse
+  with the documented message rather than doing nothing quietly when
+  `Session.host` is null. One wrinkle: `DevConsole.new()` never runs
+  `_ready()` off the scene tree, so `_panel`/`_out`/`_line` stay null; the
+  `_make` test hands it a standalone `RichTextLabel` for `_say()` to write
+  into rather than calling `_ready()` itself, since `_ready()` also wires up
+  input handling this test has no business touching. `run_tests.gd` green
+  (these six tests plus the full suite) before commit.
 - **2026-09-06** — #86 duty 2 (find an error and resolve it). Last commit
   (`ed4f9dc`, rally icon pass 4) was duty 1, and the cycle before that ran
   duty 3 then duty 2 in turn, so this run was due for duty 2. Found a "two

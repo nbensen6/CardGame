@@ -898,6 +898,23 @@ func _init() -> void:
 	_test_backlog86_enet_transport_forwards_a_dropped_peer()
 	_test_backlog86_enet_transport_forwards_the_host_going_away()
 
+	# backlog #86 duty 3 (thirty-eighth pass): DevConsole, the debug console
+	# Nick asked for on 2026-09-01 ("can we put in a dev console... so we can
+	# add lines like that for me to add cards to my hand to test?") -- had zero
+	# lines of coverage anywhere in this suite. Its own doc comment makes a
+	# specific safety promise: "a pure client that joined someone else's game
+	# gets 'no host here' rather than a lie" -- every combat-editing command
+	# must refuse outright rather than silently no-op when Session.host is
+	# null. Dispatch, unknown-command handling, the on/off parsing shared by
+	# foil/borderless, and the turn clamp all need no host and no screen --
+	# console.gd is UI-shaped but its command layer is plain text in, text out.
+	_test_backlog86_dev_console_unknown_command_names_itself_and_points_at_help()
+	_test_backlog86_dev_console_help_lists_every_registered_command()
+	_test_backlog86_dev_console_on_off_parses_explicit_and_toggles_with_no_arg()
+	_test_backlog86_dev_console_turn_clamps_to_documented_range_and_off_resets()
+	_test_backlog86_dev_console_make_splits_on_commas_and_spaces_and_drops_unknown_ids()
+	_test_backlog86_dev_console_combat_commands_refuse_without_a_host()
+
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
 	# not "inside tree" yet until the engine's main loop actually starts, one
@@ -10666,6 +10683,90 @@ func _test_backlog86_enet_transport_forwards_the_host_going_away() -> void:
 	link.host_dropped.emit()
 	_expect(got.get("fired") == true, "the host disconnecting on the link is forwarded as Transport.server_lost")
 	link.free()
+
+
+## backlog #86 duty 3 (thirty-eighth pass) -- DevConsole.run() is the one path
+## every command in console.gd shares, and nothing had ever driven it. None of
+## these need the node in the scene tree: run() only touches _cmds() (bound
+## Callables), Content and CardView's statics, never _panel/_out/_line, which
+## only exist after _ready() (which never fires on a detached node).
+func _test_backlog86_dev_console_unknown_command_names_itself_and_points_at_help() -> void:
+	var c := DevConsole.new()
+	var out := c.run("frobnicate")
+	_expect(out.contains("no such command: frobnicate"), "an unknown command names itself in the error")
+	_expect(out.contains("help"), "an unknown command's error points at help")
+	c.free()
+
+
+func _test_backlog86_dev_console_help_lists_every_registered_command() -> void:
+	var c := DevConsole.new()
+	var out := c.run("help")
+	for cmd_name in ["help", "add", "own", "hand", "deal", "find", "rares", "foil",
+			"borderless", "treatment", "turn", "energy", "climb", "beast", "deck", "card", "clear"]:
+		_expect(out.contains(cmd_name), "help lists the '%s' command" % cmd_name)
+	c.free()
+
+
+## foil and borderless share _on_off(a, now): an explicit on/off wins, and no
+## argument at all TOGGLES the current flag rather than requiring one.
+func _test_backlog86_dev_console_on_off_parses_explicit_and_toggles_with_no_arg() -> void:
+	var c := DevConsole.new()
+	var save_foil: bool = CardView.force_foil
+	var save_border: bool = CardView.force_borderless
+	CardView.force_foil = false
+	CardView.force_borderless = true
+	_expect(c.run("foil on").contains("foil on") and CardView.force_foil, "foil on sets the flag explicitly")
+	_expect(c.run("foil off").contains("foil off") and not CardView.force_foil, "foil off clears the flag explicitly")
+	_expect(c.run("foil").contains("foil on") and CardView.force_foil, "foil with no argument toggles rather than requiring on/off")
+	_expect(c.run("borderless").contains("borderless off") and not CardView.force_borderless, "borderless with no argument toggles the same way")
+	CardView.force_foil = save_foil
+	CardView.force_borderless = save_border
+	c.free()
+
+
+func _test_backlog86_dev_console_turn_clamps_to_documented_range_and_off_resets() -> void:
+	var c := DevConsole.new()
+	var save_turn: float = CardView.force_turn
+	_expect(c.run("turn").contains("turn <-1..1> | off"), "turn with no argument shows its own usage instead of doing nothing silently")
+	_expect(c.run("turn 5").contains("1.00") and is_equal_approx(CardView.force_turn, 1.0), "turn clamps a value above 1 down to 1")
+	_expect(c.run("turn -5").contains("-1.00") and is_equal_approx(CardView.force_turn, -1.0), "turn clamps a value below -1 up to -1")
+	_expect(c.run("turn 0.3").contains("0.30") and is_equal_approx(CardView.force_turn, 0.3), "turn accepts a value inside the range unchanged")
+	_expect(c.run("turn off").contains("pointer") and is_equal_approx(CardView.force_turn, 2.0), "turn off hands control back to the pointer with 2.0, deliberately outside the clamped range")
+	CardView.force_turn = save_turn
+	c.free()
+
+
+## _make() is the parser behind hand/deal/own: commas or spaces, either way,
+## and Content.make_card's "empty Card with no id" for an unknown id is
+## reported and dropped rather than silently added as a blank card on the
+## table (the doc comment above _make names this exact failure mode).
+func _test_backlog86_dev_console_make_splits_on_commas_and_spaces_and_drops_unknown_ids() -> void:
+	var c := DevConsole.new()
+	c._out = RichTextLabel.new()  # _make() reports an unknown id via _say(); _ready() never ran to build one
+	var cards: Array = c._make("leap, bogus_card_xyz slash")
+	var ids: Array = []
+	for card in cards:
+		ids.append(card.id)
+	_expect(ids.size() == 2 and "leap" in ids and "slash" in ids, "_make splits on both commas and spaces")
+	_expect(not ("bogus_card_xyz" in ids), "_make drops an id nothing recognises rather than adding a blank Card")
+	c._out.free()
+	c.free()
+
+
+## The console's own doc comment: "a pure client that joined someone else's
+## game gets 'no host here' rather than a lie." Every command that edits a
+## live Combat goes through _need_combat(), which must refuse before it ever
+## touches Session.host._run, _combat(), or a card/boss lookup -- proven here
+## by never setting Session.host up at all.
+func _test_backlog86_dev_console_combat_commands_refuse_without_a_host() -> void:
+	var c := DevConsole.new()
+	var save_host: GameHost = Session.host
+	Session.host = null
+	var refusal := "no host on this machine — the console only works solo or as the host"
+	for cmd_line in ["climb 4", "energy 9", "hand leap", "deal leap", "beast thrasher"]:
+		_expect(c.run(cmd_line) == refusal, "'%s' refuses rather than silently doing nothing when there is no host" % cmd_line)
+	Session.host = save_host
+	c.free()
 
 
 func _expect(cond: bool, name: String) -> void:
