@@ -112,6 +112,7 @@ func _init() -> void:
 	_test_card_rule_upgrade_changes_what_it_does_not_just_a_number()
 	_test_card_upgrade_bumps_grip_per_rhythm_pull_and_sac_ally_grip()
 	_test_card_upgrade_bumps_cheapen_amount_only_when_cheapen_pick_is_set()
+	_test_card_upgrade_bumps_condition_bonus_too()
 	_test_backlog67_above_sigil_condition_gates_preview_bonus()
 	_test_backlog67_ally_hanging_condition_gates_preview_bonus()
 	_test_backlog67_nth_card_condition_counts_earlier_plays_only()
@@ -2110,6 +2111,31 @@ func _test_card_upgrade_bumps_cheapen_amount_only_when_cheapen_pick_is_set() -> 
 		and not meld.cheapen_pick and up_meld.cheapen_amount == meld.cheapen_amount  # untouched
 			and up_meld.cost == meld.cost - 1,               # nothing to scale — still cheapens
 		"cheapen_amount only bumps for cards that actually use cheapen_pick")
+
+
+## #86 duty 2: condition_bonus (backlog #67) is a nested dict — {damage:3} on
+## dagger, {block:3} on brace, {ally_block:4} on safety_line — so neither of
+## upgraded_copy()'s hand-written top-level field lists ever saw it. A
+## sharpened Dagger's base damage went 3 -> 6, but its condition_bonus.damage
+## (added when it's the turn's 3rd+ card) silently stayed at 3 forever: half
+## the card's real payoff on turn 3+ never scaled with the campfire.
+func _test_card_upgrade_bumps_condition_bonus_too() -> void:
+	var dagger := Content.make_card("dagger")        # damage 3, condition_bonus {damage:3}
+	var up_dagger := dagger.upgraded_copy()
+	var brace := Content.make_card("brace")          # block 5, condition_bonus {block:3}
+	var up_brace := brace.upgraded_copy()
+	var safety := Content.make_card("safety_line")   # condition_bonus {ally_block:4}
+	var up_safety := safety.upgraded_copy()
+	_expect(
+		int(up_dagger.condition_bonus.get("damage", 0)) == int(dagger.condition_bonus.get("damage", 0)) + 3
+			and up_dagger.damage == dagger.damage + 3    # base field still scales too
+		and int(up_brace.condition_bonus.get("block", 0)) == int(brace.condition_bonus.get("block", 0)) + 3
+		and int(up_safety.condition_bonus.get("ally_block", 0)) == int(safety.condition_bonus.get("ally_block", 0)) + 3
+		# and the base card's own dict wasn't mutated in the process — to_dict()
+		# hands condition_bonus back by reference, so bumping it in place
+		# without a duplicate() would have rewritten dagger's own condition_bonus too
+		and int(dagger.condition_bonus.get("damage", 0)) == 3,
+		"upgrading scales condition_bonus the same way it scales the matching top-level field, without mutating the original card")
 
 
 ## Backlog #67: a card can ask a question about the board — "above the sigil",

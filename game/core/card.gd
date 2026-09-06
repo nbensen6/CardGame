@@ -304,6 +304,26 @@ func upgraded_copy() -> Card:
 	if bool(d.get("cheapen_pick", false)) and int(d["cheapen_amount"]) > 0:
 		d["cheapen_amount"] = int(d["cheapen_amount"]) + 1
 		bumped = true
+	# condition_bonus (backlog #67) is the same payoff as its matching
+	# top-level field, just gated behind `condition` -- brace/dagger/harpoon/
+	# sunlight_blade/safety_line/draw_aggro all carry one. It's a nested
+	# dict, so neither loop above ever sees it; without this it silently
+	# never scaled, and a sharpened Dagger's conditional bonus (half its
+	# total damage on turn 3+) stayed frozen at the base value forever.
+	# to_dict() hands back condition_bonus by reference (Dictionary is a
+	# reference type in GDScript) — duplicate before mutating, or bumping it
+	# here would also silently rewrite the original card's own dict, breaking
+	# the immutability this class's own doc comment promises.
+	var cb: Dictionary = (d.get("condition_bonus", {}) as Dictionary).duplicate()
+	if not cb.is_empty():
+		for key in ["damage", "block", "ally_block"]:
+			if int(cb.get(key, 0)) > 0:
+				cb[key] = int(cb[key]) + 3
+				bumped = true
+		if int(cb.get("grip", 0)) > 0:
+			cb["grip"] = int(cb["grip"]) + 1
+			bumped = true
+		d["condition_bonus"] = cb
 	if not bumped and int(d["cost"]) > 0:
 		d["cost"] = int(d["cost"]) - 1  # nothing to scale — make it cheaper instead
 	d["name"] = String(d["name"]) + "+"

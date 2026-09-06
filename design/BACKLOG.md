@@ -2592,6 +2592,30 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-06** — #86 duty 2 (find an error and resolve it). Last commit
+  (`74bcd74`, frail icon pass 3) was duty 1, so this run was due for duty 2.
+  Read `Card.upgraded_copy()` (`game/core/card.gd`) against `condition_bonus`
+  (backlog #67's "gated bonus on top of the base number" idiom, used by
+  `dagger`, `brace`, `harpoon`, `sunlight_blade`, `safety_line`,
+  `draw_aggro`) — a "two copies of one truth" bug: the top-level field
+  (e.g. `damage`) and its `condition_bonus` twin are supposed to move
+  together on a campfire sharpen, but `upgraded_copy()`'s two hand-written
+  field-name lists only ever walk top-level keys, so the nested dict was
+  silently skipped. A sharpened Dagger's base damage went 3 -> 6, but its
+  conditional +3 (half its total damage on turn 3+) stayed frozen at 3
+  forever — the same "field list drifted from the real fields" shape as the
+  `grip_per_rhythm`/`pull_ally`/`sac_ally_grip` bug this same duty found and
+  fixed on 2026-09-0x, just hiding in a dict instead of a flat field.
+  Fixed by bumping `condition_bonus`'s `damage`/`block`/`ally_block` by the
+  same +3 the top-level fields get and `grip` by the same +1. Writing the
+  test first caught a SECOND bug before it ever shipped: `to_dict()` hands
+  back `condition_bonus` by reference (Dictionary is a reference type in
+  GDScript), so the first version of the fix mutated the dict in place and
+  silently rewrote the ORIGINAL card's own `condition_bonus` too — exactly
+  the mutation this class's own doc comment says cards must never undergo.
+  `.duplicate()` before mutating fixed it; the regression test now also
+  asserts the base card is untouched after upgrading. `run_tests.gd`:
+  ALL TESTS PASSED.
 - **2026-09-06** — #86 duty 1 (improve an asset — portraits/icons only),
   thirty-ninth pass. Last commit (`7d24f0f`, the dev console tests) was duty
   3, so this run was due for duty 1. Scanned every portrait's and icon's own
