@@ -2592,6 +2592,28 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-06** — #86 duty 1 (improve an asset — portrait). Last three turns
+  were duty 1 (`78ccf44`), duty 2 (`6555553`), duty 3 (`dcfbc95`), so this one
+  was due for duty 1. `download.blender.org` was unreachable this run (a
+  fresh network-policy rejection, not the stale-checkout bug); rendered with
+  the `bpy` PyPI wheel instead, driving `tools/blender/portraits.py`
+  unmodified, and checked it against the pass 2 baseline before trusting it
+  (exact alpha-bbox match on the unchanged asset) — a same-session spot check
+  on `frog` under the same tool rendered badly wrong compared to its shipped
+  portrait, so this stayed scoped to the one asset that checked out, nothing
+  wider. `glyph_tortoise_portrait.md` pass 3: fixed the two lines pass 2 tied
+  at 7 (Framing, Style), both by centring `FOCUS_XY["glyph_tortoise"]`
+  (+0.09 off bbox-centre X) so left/right margins go from 27px/3px to 15px/
+  15px. Total held flat at 38/50 — not a wash, though: the two fixed lines
+  both improved and neither regressed, but Readability and Colour dropped
+  because this was also the first time the portrait was rendered against
+  `374389e`'s already-committed model change (sigil moved off its stalk),
+  and the flush mark turns out to be unreadable at the 34px the party panel
+  shows — a real finding, not caused by this pass, and not fixable from
+  `portraits.py`; flagged for the fixer lane in `glyph_tortoise.md`. Meets
+  the loop's plateau stop condition (gain < 2) — not pursuing further passes
+  on this asset.
+
 - **2026-09-06** — #86 duty 3 (verify a mechanic actually works). Last two
   turns were duty 1 (`78ccf44`) then duty 2 (`6555553`), so this one was due
   for duty 3. `_route_between`/`_stand_on_model`/`_hop` — the mechanic

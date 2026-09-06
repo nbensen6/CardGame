@@ -105,3 +105,16 @@ Same open question as pass 1: whether the holds are meant to be
 inconspicuous. Not resolved either way by this pass — TAN was applied
 because the cloud named it as the concrete fix, not because this pass has a
 view on the design question.
+
+## Flag for the fixer lane, from the portrait side (2026-09-06)
+
+`design/progress/glyph_tortoise_portrait.md` pass 3 re-rendered the
+portrait for the first time since this file's pass 2 moved the sigil mark
+off its stalk onto the shell's flat front slope. That fix was correct for
+the *3D* Build-hygiene complaint it targeted, but its 2D consequence had
+never been looked at: the flush mark is a thin, low-contrast crescent at
+512px and disappears entirely at the 34px the party panel actually shows.
+Diagnosis, not a fix — this is a mark size/contrast question on the model
+itself (bigger, or a colour with more separation from the shell's blue-grey
+at small sizes), not something `tools/blender/portraits.py`'s crop or
+camera can reach. Left to whoever next has a screen for this beast.

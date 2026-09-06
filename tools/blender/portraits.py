@@ -68,6 +68,12 @@ FOCUS_XY = {
     # canvas's own centre; -0.10 here brings it to -0.5px (design/progress/
     # gloom_moth_portrait.md's "Framing" fix).
     "gloom_moth": (-0.10, 0.0),
+    # glyph_tortoise_portrait.md pass 2 left this named but unattempted: the
+    # bbox-centre focus put the alpha bbox at margins (27, 40, 3, 19) — the
+    # right edge nearly clipped while the left had room to spare. Measured
+    # directly (pass 3): +0.09 off the bbox-centre X (0.0554 -> 0.145) brings
+    # it to (15, 38/39, 15/16, 20/21), left and right balanced within 1px.
+    "glyph_tortoise": (0.145, 0.0),
 }
 
 ## Three-quarter and a little above: the angle every character in this game was
