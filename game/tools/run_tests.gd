@@ -667,6 +667,19 @@ func _init() -> void:
 	_test_backlog86_stand_at_is_the_trailhead_on_the_previous_acts_titan()
 	_test_backlog86_stand_at_centres_the_first_row_of_the_act_on_the_hex_grid()
 	_test_backlog86_stand_at_counts_act_index_from_rows_of_other_acts_too()
+	# backlog #86 duty 3 (forty-first pass): _hex_x, the function stand_at and
+	# _lay_field both build their world positions from, had zero coverage of
+	# its own -- every existing test only ever calls it through stand_at with
+	# an EVEN hex_row (act_index * 2), so the odd-row half-tile offset that
+	# the function's own comment says "is what makes it a hex grid" has never
+	# been exercised. _lay_field's filler-tile loop does pass odd rows, and
+	# even a NEGATIVE one (range(-1, ...)), so both matter for real.
+	_test_backlog86_hex_x_is_bare_column_on_an_even_row()
+	_test_backlog86_hex_x_offsets_half_a_tile_on_an_odd_row()
+	_test_backlog86_hex_x_treats_negative_odd_rows_as_odd()
+	_test_backlog86_hex_x_treats_negative_even_rows_as_even()
+	_test_backlog86_hex_x_column_spacing_is_one_tile_regardless_of_row()
+	_test_backlog86_hex_x_adjacent_rows_interlock_by_half_a_column()
 	# backlog #86 duty 3 (twenty-fourth pass): intent_text_for, lifted out of
 	# combat_3d._intent_text, the boss telegraph a player reads to decide how
 	# to react. Writing this test found two move types combat.gd actually
@@ -9918,6 +9931,50 @@ func _test_backlog86_stand_at_counts_act_index_from_rows_of_other_acts_too() -> 
 	var rows: Array = [_row_of(1, 2), _row_of(0, 2), _row_of(0, 2)]
 	var pos: Vector3 = Overworld3D.stand_at(rows, 0, 2, 0)
 	_expect(pos == Vector3(-1.0, Overworld3D.TILE_TOP, -2.0 * Overworld3D.ROW_STEP), "the act-index used for hex_row counts only rows that belong to the act being drawn, skipping the unrelated row ahead of them")
+
+
+## backlog #86 duty 3 (forty-first pass) -- _hex_x, lifted out of nothing (it
+## was already a static function): both stand_at above and _lay_field's
+## landmark/filler placement build every tile's world X off this one function,
+## and it had zero coverage. HEX_W is 1.0, so the formula collapses to
+## "hex_col, plus half a tile if the row is odd" -- these tests are written
+## against that simplified shape but call the real function so a future change
+## to HEX_W would still be caught by the "one tile" and "half a column" tests
+## below rather than silently going stale.
+func _test_backlog86_hex_x_is_bare_column_on_an_even_row() -> void:
+	_expect(is_equal_approx(Overworld3D._hex_x(3, 0), 3.0), "an even hex_row applies no offset at all")
+	_expect(is_equal_approx(Overworld3D._hex_x(-2, 4), -2.0), "row 4 is still even -- same bare column, no offset")
+
+
+func _test_backlog86_hex_x_offsets_half_a_tile_on_an_odd_row() -> void:
+	_expect(is_equal_approx(Overworld3D._hex_x(3, 1), 3.5), "an odd hex_row is offset half a tile -- this IS the hex grid, per the function's own comment")
+	_expect(is_equal_approx(Overworld3D._hex_x(0, 3), 0.5), "row 3 is odd too -- the offset isn't special-cased to row 1")
+
+
+func _test_backlog86_hex_x_treats_negative_odd_rows_as_odd() -> void:
+	# _lay_field's filler loop runs hr from -1 upward (range(-1, act_rows.size()
+	# * 2)), so hex_row == -1 is a real value the game passes, not a synthetic
+	# edge case. absi() is what has to make GDScript's % (which keeps the sign
+	# of a negative left-hand side) come out right here.
+	_expect(is_equal_approx(Overworld3D._hex_x(2, -1), 2.5), "row -1, the first filler row above the top landmark row, must offset the same as row 1 -- it's the same parity")
+
+
+func _test_backlog86_hex_x_treats_negative_even_rows_as_even() -> void:
+	_expect(is_equal_approx(Overworld3D._hex_x(2, -2), 2.0), "row -2 is even -- no offset, same as row 2")
+
+
+func _test_backlog86_hex_x_column_spacing_is_one_tile_regardless_of_row() -> void:
+	for hex_row in [0, 1, -1, 4, 7]:
+		var step: float = Overworld3D._hex_x(1, hex_row) - Overworld3D._hex_x(0, hex_row)
+		_expect(is_equal_approx(step, 1.0), "adjacent columns on hex_row %d must sit exactly one tile apart -- the row offset is a constant added to every column on that row, so it must cancel out of the difference" % hex_row)
+
+
+func _test_backlog86_hex_x_adjacent_rows_interlock_by_half_a_column() -> void:
+	# The property that actually makes two neighbouring rows nest into a hex
+	# grid instead of stacking into a plain rectangular one: the same column
+	# index on the next row must land exactly half a tile over.
+	var shift: float = Overworld3D._hex_x(0, 1) - Overworld3D._hex_x(0, 0)
+	_expect(is_equal_approx(shift, 0.5), "column 0 on row 1 must sit half a tile from column 0 on row 0, or the rows would stack instead of interlocking")
 
 
 ## backlog #86 duty 3 (twenty-fourth pass) -- combat_3d.intent_text_for is the

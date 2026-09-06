@@ -2592,6 +2592,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-06** — #86 duty 3 (verify a mechanic actually works), forty-first
+  pass of the rotation. Last `#86` turn (`04eeedf`, the Poison/Frail-hits-the-
+  add fix) was duty 2, so this was due for duty 3. Went looking for the next
+  zero-coverage static function in the views, the same family duty 3 has been
+  clearing turn after turn, and found `overworld_3d._hex_x` — the function
+  that turns a (hex_col, hex_row) pair into the world X every map tile is
+  actually placed at. Both `stand_at` (already tested, thirty-seventh pass)
+  and `_lay_field`'s landmark/filler placement route every tile position
+  through it, and it had zero coverage of its own.
+  The interesting part wasn't just "untested" — the ONE existing caller with
+  tests, `stand_at`, only ever passes an EVEN `hex_row` (`act_index * 2`), so
+  the odd-row half-tile offset that the function's own comment calls out as
+  "what makes it a hex grid" had never been exercised by anything, even
+  indirectly. `_lay_field`'s filler-tile loop does pass odd rows, and its
+  `range(-1, act_rows.size() * 2)` even passes a NEGATIVE one — a real value
+  the game sends every single time it draws a region, not a synthetic edge
+  case — which only comes out right because of the `absi()` guarding the `%
+  2` (GDScript's `%` keeps the sign of a negative left operand).
+  Added six tests: a bare column on an even row (including a negative even
+  row), the half-tile offset on an odd row (checked at row 1 AND row 3, so
+  it isn't special-cased to just one), the negative-odd-row case explicitly
+  (`_hex_x(2, -1)`, matching `_lay_field`'s real `hr = -1` call), the
+  negative-even-row case, that adjacent columns on the same row always sit
+  exactly one tile apart regardless of row (five different rows checked),
+  and — the property that actually makes it a hex grid rather than a plain
+  rectangle — that the same column on two adjacent rows sits exactly half a
+  tile apart. All ten assertions passed against the existing implementation
+  unchanged, so this is coverage, not a fix; nothing in `_hex_x` changed.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1).
+  Next `#86` turn is duty 1 (improve an asset — portraits/icons only).
 - **2026-09-06** — #86 duty 2 (find an error and resolve it). Last commit
   (`6ff2f9e`, shield icon pass 3) was duty 1, so this run was due for duty 2.
   Read `Combat.play_card()`'s debuff application against its own damage
