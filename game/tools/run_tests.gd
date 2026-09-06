@@ -258,6 +258,10 @@ func _init() -> void:
 	_test_backlog47_ally_heal_caps_at_max_hp()
 	_test_backlog47_light_survives_playerstate_dict_round_trip()
 	_test_backlog47_light_survives_mid_combat_save_and_load()
+	# #86 duty 3: light and scry_pending were proven to round-trip through
+	# PlayerState.to_dict()/from_dict() but nothing had ever driven the other
+	# ~20 fields through the same seam.
+	_test_backlog86_playerstate_round_trips_every_status_and_passive_field()
 	_test_backlog47_lightbearer_plays_a_full_run()
 	_test_everyone_wears_their_own_art()
 	# backlog #74: the shape contract's data-only half (AssetContract)
@@ -8152,6 +8156,67 @@ func _test_backlog47_light_survives_playerstate_dict_round_trip() -> void:
 	ps.light = 7
 	var back := PlayerState.from_dict(ps.to_dict())
 	_expect(back.light == 7, "PlayerState.light round-trips through to_dict/from_dict")
+
+
+## #86 duty 3: only light and scry_pending had ever been driven through
+## PlayerState.to_dict()/from_dict() — the exact seam that dropped boss max_hp
+## on a mid-fight save/resume at ascension (fixed under this same duty
+## earlier). Every status effect (Combatant) and every character passive
+## (PlayerState) shares that seam and none of them had a test proving it
+## survives the round trip rather than silently resetting to its default.
+func _test_backlog86_playerstate_round_trips_every_status_and_passive_field() -> void:
+	var ps := PlayerState.new()
+	ps.combatant = Combatant.new("X", 30)
+	ps.combatant.hp = 19
+	ps.combatant.block = 5
+	ps.combatant.frail = 2
+	ps.combatant.artifact = 1
+	ps.combatant.thorns = 3
+	ps.combatant.dexterity = 4
+	ps.combatant.intangible = 1
+	ps.combatant.buffer = 2
+	ps.combatant.plated_armour = 6
+	ps.energy = 3
+	ps.strength = 2
+	ps.foothold = 8
+	ps.weak_point_damage = 4
+	ps.ended_turn = true
+	ps.prepared = "jetpack"
+	ps.rhythm = 5
+	ps.cost_reductions = {"burn_coal": 1}
+	ps.play_counts = {"slash": 3}
+	ps.sigil_rounds = 2
+	ps.cards_played_this_turn = 4
+	ps.powers = {"iron_husk": {"stacks": 2, "value": 3}}
+	ps.character = "frog"
+	ps.climb_bonus = 1
+	ps.char_attack_bonus = 2
+	ps.ally_climb = 1
+	ps.poison_lift = 1
+
+	var back := PlayerState.from_dict(ps.to_dict())
+
+	_expect(back.combatant.hp == 19 and back.combatant.block == 5,
+		"PlayerState round trip keeps the combatant's own hp/block")
+	_expect(back.combatant.frail == 2 and back.combatant.artifact == 1
+		and back.combatant.thorns == 3 and back.combatant.dexterity == 4
+		and back.combatant.intangible == 1 and back.combatant.buffer == 2
+		and back.combatant.plated_armour == 6,
+		"every Combatant status effect on a hunter round-trips through PlayerState.to_dict/from_dict, not just the ones a combat test happens to touch")
+	_expect(back.energy == 3 and back.strength == 2 and back.foothold == 8
+		and back.weak_point_damage == 4 and back.ended_turn == true
+		and back.prepared == "jetpack" and back.rhythm == 5
+		and back.sigil_rounds == 2 and back.cards_played_this_turn == 4,
+		"PlayerState's own fight-scoped scalars round-trip")
+	_expect(back.cost_reductions.get("burn_coal", 0) == 1
+		and back.play_counts.get("slash", 0) == 3,
+		"per-card dictionaries (cost_reductions, play_counts) round-trip by key, not just by size")
+	var back_power: Dictionary = back.powers.get("iron_husk", {})
+	_expect(int(back_power.get("stacks", 0)) == 2 and int(back_power.get("value", 0)) == 3,
+		"a melded power's nested {stacks, value} dict survives the round trip, not just the top-level key")
+	_expect(back.character == "frog" and back.climb_bonus == 1
+		and back.char_attack_bonus == 2 and back.ally_climb == 1 and back.poison_lift == 1,
+		"character passives round-trip too, since a run relic or ascension can make them differ from a fresh Content.character_passive() lookup")
 
 
 ## The real chain, not just the leaf: a mid-fight save (#14) must carry Light

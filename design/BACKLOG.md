@@ -2592,6 +2592,29 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-06** — #86 duty 3 (verify a mechanic actually works). Last two
+  turns were duty 1 (`78ccf44`) then duty 2 (`6555553`), so this one was due
+  for duty 3. `_route_between`/`_stand_on_model`/`_hop` — the mechanic
+  Nick's rule names by example — turned out to already have extensive
+  headless coverage from many earlier duty-3 passes (`route_between_rungs`,
+  `foothold_anchor`, `_gather_climb`, `card_climb_for`, `intent_text_for`,
+  `hunter_move_kind`, `_let_drags_through`, and more). Surveyed every
+  `static func` under `game/` against `run_tests.gd` reference counts to find
+  what was still genuinely untested rather than adding a fourth case to
+  something already covered. `PlayerState.to_dict()/from_dict()` — the exact
+  save/resume seam that dropped boss `max_hp` on a mid-fight resume at
+  ascension a few duty-3 turns back — had only ever been proven for `light`
+  and `scry_pending`; every Combatant status effect (frail, artifact, thorns,
+  dexterity, intangible, buffer, plated_armour) and every character passive
+  (climb_bonus, char_attack_bonus, ally_climb, poison_lift), plus
+  cost_reductions, play_counts, sigil_rounds, cards_played_this_turn, and a
+  melded power's nested `{stacks, value}` dict, had never been driven through
+  that seam by any test. Added
+  `_test_backlog86_playerstate_round_trips_every_status_and_passive_field`,
+  which sets all of them to non-default values and asserts they survive a
+  round trip. It passed on the first run — no bug found this time, but the
+  mechanic was previously unverified and now is.
+
 - **2026-09-05** — #86 duty 2 (find an error and resolve it). Last turn
   (`6b5d8ef`) was duty 1, so this one was due for duty 2. Delegated the
   initial read across `game/core/run.gd`, `run_map.gd`, `run_save.gd`,
