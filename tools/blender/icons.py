@@ -383,10 +383,21 @@ def rope(i):                                    # both hunters climb
     # (and the carabiner's, at the same ratio) is scaled by one factor so the
     # coil keeps its proportions instead of being squashed on one axis; the
     # tallest ring now tops out at z=0.52, inside the frame with margin.
+    #
+    # pass 3 (design/progress/rope_icon.md): SAND is still a warm tan, the
+    # same hue family as the brown card standin, so the render's own workbench
+    # shading kept compressing the red channel back toward the background --
+    # pass 2's own pixel sample found the coil's rendered red gap barely
+    # moved even though the raw swatch gap looked fine on paper. STEEL
+    # (124,131,157) is a cool blue-grey, the opposite hue family from the
+    # warm brown standin entirely, so the separation doesn't depend on a
+    # single channel surviving the render's warm key light. Reads as a
+    # steel cable now rather than a tan rope, which is still on-genre for
+    # "climbing gear" paired with the carabiner.
     for k in range(5):
         z = -0.23 + k * 0.115
         r = 0.289 - abs(k - 2) * 0.0255
-        i.ring((0.0, 0.0, z), (r, r, 0.136), SAND, 14, 4,
+        i.ring((0.0, 0.0, z), (r, r, 0.136), STEEL, 14, 4,
                rot=(0.0, 0.0, 0.0), thickness=0.22)
     i.ring((0.255, 0.0, 0.274), (0.136, 0.136, 0.136), SILVER, 12, 4,
            thickness=0.255)

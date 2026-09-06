@@ -9416,3 +9416,41 @@ Newest first. One line per finished item: what, and anything surprising.
   registered dead and `result() == Result.WIN`. `run_tests.gd`: ALL TESTS
   PASSED (fresh import, headless, godot 4.7.1). Next `#86` turn is duty 1
   (improve an asset — portraits/icons only).
+- **2026-09-06** — #86 duty 1 (improve an asset — portraits/icons only).
+  Last `#86` turn (`e27f5ca`) was duty 3, so this was duty 1. Scanned every
+  icon's own progress file for its current total and pass count rather than
+  trusting stale text: the lowest scores left with real budget were
+  `fire_icon`/`rally_icon` (37/50, 3 of 4 passes already used, one pass
+  left) and `frail`/`rhythm`/`rope`/`shield` (38/50, 2 of 4 used). Picked
+  `rope_icon` — the only one of that group of four whose own last pass had
+  already named a concrete, unaddressed next fix (`design/progress/
+  rope_icon.md`: "the concrete next fix would be the red channel
+  specifically") rather than a vague maybe.
+  Rendered the committed icon fresh and looked at it before touching
+  anything, per the loop: the SAND coil visibly nears the brown card
+  standin along its edges, matching the file's own read. Diagnosed why
+  pass 2's colour fix only got halfway — the rendered coil and the standin
+  differ only in VALUE (both warm-hued, coil just lighter), which is
+  exactly what this render's workbench shading compresses first. Swapped
+  the coil from `SAND` to `STEEL` in `tools/blender/icons.py`'s `rope()` —
+  a cool blue-grey, the opposite hue family from the brown standin, so
+  separation no longer depends on one channel surviving the warm key
+  light. Left `Style consistency` (the tied second-lowest line) unfixed
+  and said so honestly: the ring-stack shape's mismatch with the set's
+  flat-faceted vocabulary has no two-line tweak available in `icons.py`
+  alone (`Build.ring()` has no bevel parameter, and rebuilding the coil out
+  of slabs would be a redesign, not this loop's budget).
+  Rebuilt all 36 icons (apt Blender 4.0.2, headless — `download.blender.org`
+  still blocked through this container's proxy), diffed every PNG against
+  `HEAD` by mean pixel difference, and kept only `rope.png` (mean diff 9.44
+  vs everywhere else ≤4.44, the usual apt-Blender antialiasing noise band).
+  Verified the carabiner still reads as a separate element rather than
+  fusing with the now-cool-toned coil, by a 3x zoom crop and direct pixel
+  samples, after a first region-average sample gave a misleading near-match
+  that a real look caught. Colour & contrast 6→8, total 38→40 — crosses the
+  loop's 40/50 stop line. `run_tests.gd`: ALL TESTS PASSED (fresh import,
+  headless, godot 4.7.1 — this pass touches only `tools/blender/icons.py`
+  and the regenerated `rope.png`, no `game/**` GDScript). Full log,
+  per-line justifications and the "Unsure about" notes are in
+  `design/progress/rope_icon.md`'s Pass 3 section. Next `#86` turn is duty
+  2 (find an error and resolve it).

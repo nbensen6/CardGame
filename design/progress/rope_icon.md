@@ -155,3 +155,116 @@ less "coiled" than pass 1's more separated rings — both versions read as a
 ribbed cylinder in the renders checked here, but this file only compared
 the two directly, not against how the change reads next to the rest of a
 real hand of cards, which is a `needs a screen` question.
+
+## Pass 3 — cloud, backlog #86 duty 1
+
+Picked back up as the lowest-scoring icon with real budget left (38/50, 2 of
+4 passes used, tied with `frail`/`rhythm`/`shield` but the only one of that
+group whose own log already named a concrete, unaddressed next fix rather
+than a vague "maybe").
+
+Re-scored fresh rather than trusting the pass-2 numbers untouched — rendered
+the committed PNG, composited it over the standin, and looked at both the
+full and 42px views before touching anything. Confirmed pass 2's own
+read still holds: **Colour & contrast (6)** is genuinely the weakest line —
+the SAND coil is legible but visibly nears the brown standin along its
+lower/side edges, same as the committed render shows. **Style consistency
+(7)** is the tied second-lowest, unchanged from pass 2.
+
+Diagnosed why pass 2's own colour fix only got halfway. Sampled the
+*rendered* pixels (not the raw swatch) of the committed SAND coil against
+the standin RGB(139,105,74): body averaged RGB(171,148,131) — a per-channel
+gap of (32,43,57). Every one of those three numbers is a **value**
+difference (the coil is uniformly lighter than the standin) inside the
+*same warm hue family* — R still leads G still leads B on both sides. A
+value-only gap is exactly what workbench shading compresses first, which is
+why pass 2's own log said "red barely moved" even after the TAN→SAND swap.
+
+1. **Colour & contrast (6).** Concrete fix: swap the coil from `SAND` to
+   `STEEL` (a cool blue-grey, `RGB(124,131,157)` on the flat swatch) —
+   not just a different warm tone, but the opposite hue family from the
+   brown standin entirely, so the separation stops depending on one channel
+   surviving the render's warm key light.
+2. **Style consistency (7).** No concrete fix found. The line's own
+   complaint (pass 1: "the ring-stack construction is a different
+   vocabulary from the flat-faceted blocks most of the rest of the set
+   uses") is a shape-family mismatch, not a two-line tweak — `Build.ring()`
+   has no bevel parameter to adjust in-lane, and the only other lever is
+   rebuilding the coil out of slabs/tapers instead of tori, which is a
+   redesign of the asset's whole construction, not the two-fix budget this
+   loop allows. Left alone rather than forcing a change that would either
+   restyle the icon or do nothing. Not applying — this is a real, honestly
+   named limit, not a skipped step.
+
+Applied only the one named fix (`tools/blender/icons.py`'s `rope()`,
+`SAND` → `STEEL` on all five rings; the carabiner's own `SILVER` untouched).
+
+Rebuilt with `blender --background --python tools/blender/icons.py --
+game/assets/icons` (apt Blender 4.0.2, headless; `download.blender.org`
+still blocked by this container's egress proxy). Diffed all 36 icons
+against `HEAD` by mean per-channel pixel difference: `rope.png` came back
+at mean 9.44, every other icon ≤4.44 (ordinary apt-Blender antialiasing
+noise, the same band prior passes used to draw this line) — reverted the
+other 35, kept only `rope.png`. Alpha bbox unchanged at `(49, 13, 222,
+242)`, confirming only colour moved, no geometry.
+
+Looked at the result three ways: the full 256px composite
+(`design/renders/rope_pass3_full.png`), a real 42px `LANCZOS` downsample
+nearest-neighbour upscaled for viewing (`design/renders/rope_pass3_42px_big.png`),
+and a 3× zoom crop on the carabiner/coil boundary
+(`design/renders/rope_pass3_carabiner_zoom.png`) to check the two didn't
+fuse into one blob now that both are cool-toned.
+
+- **Colour & contrast (6 → 8):** the coil reads as a visibly different
+  colour family from the card standin now, not a lighter shade of the same
+  one — confirmed in both the full render and the 42px downsample, where
+  the previous version's edges blended noticeably and the new one doesn't.
+  Point-sampled the actual PNG rather than trusting a region average (a
+  first attempt at a region-average sample gave a misleading near-match,
+  caught by cropping and looking at the pixels directly instead of
+  trusting the number): true coil-body pixels run RGB(91–114, 100–124,
+  119–143) against the standin's RGB(139,105,74) — R and G both move
+  *down* from the standin while B moves *up*, a hue crossing rather than a
+  value shift, which is the real reason it reads as different at a glance
+  even though the raw per-channel gaps (25–48, 5–19, 45–69) aren't
+  uniformly larger than pass 2's own numbers. Not a 9-10: the G-channel gap
+  is still small in places (as little as 5), so it isn't a clean, wide
+  separation on every channel the way this item's best-scoring icons are.
+- **Style consistency (7, unchanged):** this pass touched only a swatch
+  value; the ring-stack construction itself, and its mismatch with the
+  set's flat-faceted vocabulary, is exactly as before.
+- **Silhouette @ 42px (8, unchanged):** geometry untouched — same alpha
+  bbox, same shape. Verified the carabiner still reads as a separate
+  element rather than merging with the now-cool-toned coil: a 3× zoom crop
+  (`rope_pass3_carabiner_zoom.png`) shows the carabiner as a distinctly
+  lighter silver-white ring against the darker steel-blue coil, and direct
+  pixel samples confirm it — carabiner RGB(168–172, 170–174, 177–180)
+  against coil-body RGB(91–114, 100–124, 119–143), a real gap on every
+  channel, not a fusion.
+- **Family distinction (9, unchanged):** this rubric line is shape-only by
+  its own definition ("told apart... by shape alone, not colour"); geometry
+  didn't move.
+- **Mechanic match (8, unchanged):** a coiled steel cable with a carabiner
+  is still on-genre for "climbing gear" — arguably more so than a tan rope,
+  since climbing protection is commonly steel cable/wire rather than fibre
+  rope, though that reading wasn't tested against a player.
+
+**+2 total (38 → 40), meets the loop's 40/50 stop line — kept.** No line
+regressed.
+
+`run_tests.gd`: **ALL TESTS PASSED** (fresh `--import`, headless, Godot
+4.7.1 — this pass touches only `tools/blender/icons.py` and the regenerated
+`rope.png`, no `game/**` GDScript).
+
+## Unsure about (pass 3)
+
+Whether a cool steel-cable reading is actually the better fit for the card's
+own flavour than a fibre rope, or whether Nick would rather keep the warm
+tan and solve Colour a different way (a thin dark outline, per pass 2's
+other named option, never tried) — a flavour call, not a legibility one, so
+left for a look rather than guessed past. Also unsure whether `Build.ring()`
+gaining an optional bevel parameter (project-wide, reviewed once rather than
+per-asset) would be worth it for `rope`'s own Style line and any other
+ring-based icon — flagged rather than touched, since it's shared
+infrastructure across every `ring()` call in the codebase, not a one-icon
+fix.
