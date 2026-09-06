@@ -2592,6 +2592,24 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-06** — #86 duty 2 (find an error and resolve it). Last commit
+  (`ed4f9dc`, rally icon pass 4) was duty 1, and the cycle before that ran
+  duty 3 then duty 2 in turn, so this run was due for duty 2. Found a "two
+  copies of one truth" bug in `game_host.gd`: `_slot_private()`'s fx dict
+  (the in-combat hand) and `_deck_face()`'s fx dict (the deck view's "View
+  Upgrades" preview) are two hand-copied field lists meant to be kept in
+  sync by hand. The most recent duty-2 fix (`8c84bc8`) added
+  `intangible`/`buffer`/`plated_armour` to `_slot_private()`'s copy but
+  missed the sibling in `_deck_face()`. Effect: a campfire-sharpened Ghost
+  Step/Overhang/Hardshell's "View Upgrades" preview had no fx value to read,
+  so `CardView.face_text()` fell back to the card's stale, unbumped authored
+  `text` — "Plated Armour 3." shown for a card `upgraded_copy()` had actually
+  bumped to 4, i.e. the sharpen preview lied about what sharpening does.
+  Added the same three keys to `_deck_face()`'s fx dict and a regression
+  test (`_test_backlog86_deck_view_upgrade_preview_shows_defensive_stacks`)
+  that builds the upgraded cards directly and asserts both the fx dict and
+  `face_text()`'s rendered string show the sharpened value, not the printed
+  one. `run_tests.gd` green (this test plus the full suite) before commit.
 - **2026-09-06** — #86 duty 1 (improve an asset), rally icon pass 4 (its
   fourth and final under the loop's own cap). Last commit (`ca30531`, the
   EnetTransport signal-routing tests) was duty 3, so this turn was due for

@@ -433,6 +433,7 @@ func _init() -> void:
 	_test_backlog86_crippling_blow_fx_carries_frail_over_the_wire()
 	_test_backlog86_warm_glow_fx_carries_ally_heal_over_the_wire()
 	_test_backlog86_defensive_stacks_fx_carry_over_the_wire()
+	_test_backlog86_deck_view_upgrade_preview_shows_defensive_stacks()
 	_test_backlog45_named_holds_cross_to_both_peers_identically()
 	_test_backlog45_graded_timing_quality_reaches_the_host_and_the_preview()
 	# backlog #46: a robustness sweep that is not balance tuning
@@ -7166,6 +7167,31 @@ func _test_backlog86_defensive_stacks_fx_carry_over_the_wire() -> void:
 			and int(by_name["Overhang"].get("buffer", 0)) == 1
 			and int(by_name["Hardshell"].get("plated_armour", 0)) == 3,
 		"Ghost Step/Overhang/Hardshell's fx dicts carry Intangible/Buffer/Plated Armour to the owner's client")
+
+
+## backlog #86 duty 2 — `_slot_private()`'s fx dict (the hand, proven above)
+## and `_deck_face()`'s fx dict (the deck view's "View Upgrades" preview) are
+## two hand-copied lists of the same fields, kept in sync by hand rather than
+## sharing code -- exactly the "two copies of one truth" shape. The
+## Intangible/Buffer/Plated Armour fix above only touched `_slot_private()`;
+## `_deck_face()` still lacked all three keys, so a sharpened Ghost Step/
+## Overhang/Hardshell's deck-view preview had no fx value to read and
+## face_text() fell back to the card's stale, UNBUMPED authored `text` --
+## "Plated Armour 3." on a card that upgraded_copy() had actually bumped to 4.
+func _test_backlog86_deck_view_upgrade_preview_shows_defensive_stacks() -> void:
+	var host := GameHost.new(LocalTransport.new(), 1, 2)
+	_kept.append(host)
+	var ghost_up := host._deck_face(Content.make_card("ghost_step").upgraded_copy(), 0)
+	var overhang_up := host._deck_face(Content.make_card("overhang").upgraded_copy(), 0)
+	var hardshell_up := host._deck_face(Content.make_card("hardshell").upgraded_copy(), 0)
+	_expect(int((ghost_up["fx"] as Dictionary).get("intangible", 0)) == 3
+			and int((overhang_up["fx"] as Dictionary).get("buffer", 0)) == 2
+			and int((hardshell_up["fx"] as Dictionary).get("plated_armour", 0)) == 4,
+		"_deck_face()'s fx dict carries the SHARPENED Intangible/Buffer/Plated Armour value, not just the printed one")
+	_expect(CardView.face_text(ghost_up) == "Intangible 3."
+			and CardView.face_text(overhang_up) == "Buffer 2."
+			and CardView.face_text(hardshell_up) == "Plated Armour 4.",
+		"the deck view's upgrade preview states the sharpened value, not the stale authored text of the un-upgraded card")
 
 
 ## Named holds (backlog #24) widened Boss.ledges from a bare int array to an

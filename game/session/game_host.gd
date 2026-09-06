@@ -829,6 +829,15 @@ func _deck_face(c: Card, i: int) -> Dictionary:
 			# (_slot_private); kept in sync here since a deck-view card is built
 			# by this function, not that one.
 			"ally_heal": c.ally_heal, "scry": c.scry,
+			# backlog #86 duty 2 — the hand dict's fx (_slot_private) gained
+			# these three in the very same rotation cycle that copy was fixed
+			# for ally_heal/scry, and this sibling copy was missed again: a
+			# campfire-sharpened Ghost Step/Overhang/Hardshell's "View
+			# Upgrades" preview fell back to the card's stale printed `text`
+			# (e.g. "Plated Armour 3.") instead of the sharpened value (4),
+			# because face_text() had no fx.plated_armour to read here.
+			"intangible": c.intangible, "buffer": c.buffer,
+			"plated_armour": c.plated_armour,
 		},
 	}
 
