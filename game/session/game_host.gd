@@ -614,6 +614,17 @@ func _slot_private(pi: int) -> Dictionary:
 					# light_gain also fired, and a melded Spark + Peer Ahead dropped
 					# its scry behind the Light line.
 					"ally_heal": c.ally_heal, "scry": c.scry,
+					# backlog #86 duty 2 — same "hand-copied field list drifts" gap
+					# again: Intangible/Buffer/Plated Armour (#60/#61) reached
+					# _keywords_of() below and _players_public()'s own status dict long
+					# ago, but never this fx dict, so Combat._meld_cards() (which has
+					# summed all three correctly since #60/#61 landed) could fuse e.g.
+					# Ghost Step (intangible 2) into a real attack and the live face
+					# would show only "Deal N damage." — the Intangible silently
+					# invisible on the one card that has it, same failure CardView
+					# already caught for Frail/Dexterity/Thorns/Light/ally_heal/scry.
+					"intangible": c.intangible, "buffer": c.buffer,
+					"plated_armour": c.plated_armour,
 				},
 				# The card's PRINTED values. The face compares live against these to
 				# know which numbers a buff or scaling changed, and highlights only

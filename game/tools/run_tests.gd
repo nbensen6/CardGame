@@ -432,6 +432,7 @@ func _init() -> void:
 	_test_backlog86_steady_grip_fx_carries_dexterity_over_the_wire()
 	_test_backlog86_crippling_blow_fx_carries_frail_over_the_wire()
 	_test_backlog86_warm_glow_fx_carries_ally_heal_over_the_wire()
+	_test_backlog86_defensive_stacks_fx_carry_over_the_wire()
 	_test_backlog45_named_holds_cross_to_both_peers_identically()
 	_test_backlog45_graded_timing_quality_reaches_the_host_and_the_preview()
 	# backlog #46: a robustness sweep that is not balance tuning
@@ -581,6 +582,7 @@ func _init() -> void:
 	_test_backlog86_face_text_shows_discard_alongside_draw_or_damage()
 	_test_backlog86_face_text_shows_ally_heal_alongside_another_effect()
 	_test_backlog86_face_text_shows_scry_alongside_another_effect()
+	_test_backlog86_face_text_shows_defensive_stacks_alongside_another_effect()
 	_test_backlog86_face_text_burn_lines_are_mutually_exclusive()
 	_test_backlog86_face_text_falls_back_to_authored_text_with_no_preview()
 	_test_backlog86_face_text_falls_back_to_authored_text_when_nothing_landed()
@@ -7116,6 +7118,31 @@ func _test_backlog86_warm_glow_fx_carries_ally_heal_over_the_wire() -> void:
 		"Warm Glow's fx dict carries its ally_heal to the owner's client, not just its Light")
 
 
+## backlog #86 duty 2 — same wiring gap a fourth time, this time all three of
+## Intangible/Buffer/Plated Armour (#60/#61) at once: none of the three ever
+## joined GameHost's "fx" dict, so Ghost Step/Overhang/Hardshell (real shipped
+## cards) reached the client with a working preview but no way for the face to
+## say what they actually do — invisible on the one wire that matters, same
+## idiom as Steady Grip/Crippling Blow/Warm Glow above.
+func _test_backlog86_defensive_stacks_fx_carry_over_the_wire() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	host._run.combat.players[0].hand.append(Content.make_card("ghost_step"))
+	host._run.combat.players[0].hand.append(Content.make_card("overhang"))
+	host._run.combat.players[0].hand.append(Content.make_card("hardshell"))
+	host._broadcast_state()
+	var hand: Array = c0.private["hand"]
+	var by_name := {}
+	for card_v in hand:
+		var card: Dictionary = card_v
+		by_name[String(card["name"])] = card["fx"] as Dictionary
+	_expect(int(by_name["Ghost Step"].get("intangible", 0)) == 2
+			and int(by_name["Overhang"].get("buffer", 0)) == 1
+			and int(by_name["Hardshell"].get("plated_armour", 0)) == 3,
+		"Ghost Step/Overhang/Hardshell's fx dicts carry Intangible/Buffer/Plated Armour to the owner's client")
+
+
 ## Named holds (backlog #24) widened Boss.ledges from a bare int array to an
 ## optional Dictionary shape {height, safe, exposed_to}. Prove the richer
 ## shape crosses the snapshot boundary intact and IDENTICALLY to both peers
@@ -9310,6 +9337,36 @@ func _test_backlog86_face_text_shows_scry_alongside_another_effect() -> void:
 		"keywords": [], "fx": {"light_gain": 2, "scry": 2}}
 	_expect(CardView.face_text(spark_peer, false) == "Gain 2 Light. Scry 2.",
 		"a melded card granting Light AND Scry states both on its live face, not just the Light")
+
+
+## backlog #86 duty 2 (find an error and resolve it) — a fifth instance of the
+## "GameHost's fx dict grew a field, face_text() never grew the matching
+## branch" shape, this time all three of Intangible/Buffer/Plated Armour
+## (#60/#61) at once. Each is a real shipped card alone (Ghost Step/Overhang/
+## Hardshell all have no other fx field, so they read fine via the authored-
+## text fallback today) but Combat._meld_cards() already sums all three
+## correctly, so melding any of them into a card that ALSO deals damage or
+## grants Block would silently drop the defensive stack from the live face —
+## exactly the failure `_test_backlog86_face_text_falls_back_to_authored_
+## text_when_nothing_landed` proves is otherwise safe, and exactly the bug
+## `_test_backlog86_defensive_stacks_fx_carry_over_the_wire` proves no longer
+## starts at the wire either.
+func _test_backlog86_face_text_shows_defensive_stacks_alongside_another_effect() -> void:
+	# A melded Ghost Step + a real attack: "Deal 6 damage. Intangible 2."
+	var intangible := {"preview": {"damage": 6}, "preview_miss": {}, "base": {"damage": 6},
+		"keywords": [], "fx": {"intangible": 2}}
+	_expect(CardView.face_text(intangible, false) == "Deal 6 damage. Intangible 2.",
+		"a melded card dealing damage AND granting Intangible states both, not just the damage")
+	# A melded Overhang + a Block card: "Gain 4 Block. Buffer 1."
+	var buffer_c := {"preview": {"block": 4}, "preview_miss": {}, "base": {"block": 4},
+		"keywords": [], "fx": {"buffer": 1}}
+	_expect(CardView.face_text(buffer_c, false) == "Gain 4 Block. Buffer 1.",
+		"a melded card granting Block AND Buffer states both, not just the Block")
+	# A melded Hardshell + Strength: "Strength 2. Plated Armour 3."
+	var plated := {"preview": {"damage": 0}, "preview_miss": {}, "base": {},
+		"keywords": [], "fx": {"strength": 2, "plated_armour": 3}}
+	_expect(CardView.face_text(plated, false) == "Strength 2. Plated Armour 3.",
+		"a melded card granting Strength AND Plated Armour states both, not just the Strength")
 
 
 func _test_backlog86_face_text_burn_lines_are_mutually_exclusive() -> void:

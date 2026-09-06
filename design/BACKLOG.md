@@ -2592,6 +2592,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-06** — #86 duty 2 (find an error and resolve it). Last commit
+  (`39e8ea2`, relic icon) was duty 1, so this turn was duty 2. This rotation
+  has already fixed the "GameHost's fx dict grew a field, CardView.face_text()
+  never grew the matching branch" bug repeatedly (Dexterity, Frail, Thorns,
+  Light, Ally Energy, Discard, ally_heal, Scry all hit it before). Read
+  `_slot_private()`'s `fx` dict against every field `Card` actually carries
+  and found three more: Intangible/Buffer/Plated Armour (#60/#61) reach
+  `_keywords_of()` and `_players_public()`'s status dict but never joined
+  `fx`, and `card_view.gd`'s `face_text()` had no branches for them either —
+  so `Combat._meld_cards()` (which already sums all three correctly) could
+  fuse Ghost Step/Overhang/Hardshell into a real attack or Block card and the
+  live face would show only the other line, silently dropping the defensive
+  stack. No live card currently combines one of the three with anything
+  else, so today's symptom is meld-only — same "correct engine, blind face"
+  shape as every earlier instance of this bug, just not yet hit by a shipped
+  non-meld card. Also spent real time on a decoy: an Explore pass flagged
+  Mountain Climbers' roped-ally chain (`_lift_roped_ally`) as broken when two
+  hunters share the passive, but tracing it through confirms that's the
+  intentional bidirectional "roped together" mechanic (deliberately
+  implemented, one hop, non-recursive, matches CLAUDE.md's co-op-combo goal)
+  — not a bug, so left alone; whether two players may pick the same
+  character at all is a design call for Nick, not something to silently
+  change here. Fix + a wire-level test (`_test_backlog86_defensive_stacks_fx_
+  carry_over_the_wire`, real Ghost Step/Overhang/Hardshell through a real
+  GameHost/GameClient pair) + three `face_text()` tests
+  (`_test_backlog86_face_text_shows_defensive_stacks_alongside_another_effect`)
+  landed in the same commit. `run_tests.gd`: ALL TESTS PASSED.
+
 - **2026-09-06** — #86 duty 1 (improve an asset — icons/portraits only). Last
   commit (`4155e07`) was duty 3, so this turn was duty 1. Scanned every
   scored portrait and icon for the lowest score with a fix still available

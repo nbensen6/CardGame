@@ -968,6 +968,18 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 	# non-empty.
 	if int(fx.get("thorns", 0)) > 0:
 		out.append("%s %d." % [_kw("Thorns", "thorns", kw, rich), int(fx["thorns"])])
+	# backlog #86 duty 2 — same gap once more, this time Intangible/Buffer/
+	# Plated Armour (#60/#61): game_host.gd's "fx" dict never carried any of the
+	# three, so a card combining one with damage/Block (or a meld fusing e.g.
+	# Ghost Step's Intangible into a real attack — Combat._meld_cards() already
+	# sums all three correctly) showed only the other line and silently dropped
+	# the defensive stack.
+	if int(fx.get("intangible", 0)) > 0:
+		out.append("%s %d." % [_kw("Intangible", "intangible", kw, rich), int(fx["intangible"])])
+	if int(fx.get("buffer", 0)) > 0:
+		out.append("%s %d." % [_kw("Buffer", "buffer", kw, rich), int(fx["buffer"])])
+	if int(fx.get("plated_armour", 0)) > 0:
+		out.append("%s %d." % [_kw("Plated Armour", "plated_armour", kw, rich), int(fx["plated_armour"])])
 	# backlog #86 duty 2 — game_host.gd's "fx" dict has carried power_effect/
 	# power_value since backlog #57 (the recurring-power cards themselves), and
 	# a melded power card (79821cd) carries them too once fused — but this
