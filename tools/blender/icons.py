@@ -118,13 +118,25 @@ def fire(i):                                    # burning damage
     # licks and curls; a mountain does not. Each body is now a limb() bent
     # through three points instead of a single straight taper, same base and
     # tip heights as before so the cluster's footprint and reach are unchanged.
+    #
+    # pass 4: two more fixes named in pass 3's own "Unsure about". Colour --
+    # the left body's ORANGE rendered with almost no B-channel gap against the
+    # brown card standin (raw swatch gap (116,21,-6); PEACH's is (102,46,34),
+    # positive on every channel). Mechanic -- every body still tapered evenly
+    # from base to tip along its bent path, which is one width profile, not
+    # the uneven, pinched-and-flared width a real flame lick has; the centre
+    # (tallest, most prominent) body gets one extra waypoint partway up, radius
+    # pinched well below what a straight taper there would give, so the
+    # silhouette narrows and flares again before the final point takes it to
+    # the tip.
     for pts, r, c in [
         ([(-0.22, 0.0, -0.41), (-0.28, 0.0, -0.05), (-0.14, 0.0, 0.21)],
-         [0.16, 0.09, 0.01], ORANGE),
+         [0.16, 0.09, 0.01], PEACH),
         ([(0.22, 0.0, -0.40), (0.30, 0.0, -0.14), (0.12, 0.0, 0.12)],
          [0.14, 0.08, 0.01], RUST),
-        ([(0.0, 0.0, -0.41), (0.09, 0.0, 0.02), (-0.06, 0.0, 0.45)],
-         [0.22, 0.13, 0.01], TANGERINE),
+        ([(0.0, 0.0, -0.41), (0.036, 0.0, -0.238), (0.09, 0.0, 0.02),
+          (-0.06, 0.0, 0.45)],
+         [0.22, 0.07, 0.13, 0.01], TANGERINE),
     ]:
         i.limb(pts, r, c, seg=6)
     # The hot core used to sit centred inside the TANGERINE cone's own radius

@@ -276,3 +276,120 @@ value closeness to the brown standin, the same near-miss class
 `rally_icon.md` pass 2 flagged for its own limb — would be worth the
 remaining budget, or whether 37/50 is close enough to the 40 stop line that
 Nick should look at it before another pass is spent.
+
+## Pass 4 — cloud, backlog #86 duty 1 (fourth and final pass)
+
+Picked back up per pass 3's own open question — 37/50, tied-lowest lines
+Colour (6) and Mechanic (7), both named there as candidates and neither
+touched yet. This is the last of the loop's 4 allowed passes either way.
+
+Sampled the actual rendered pixels of the left `ORANGE` body (not just the
+raw swatch) before touching anything: `(203,129,94)` against the standin
+`(139,105,74)` — gap `(64,24,20)`, weak on G and B, the same "R survives,
+G/B don't" shape `rope_icon.md` and `rally_icon.md` both hit for their own
+warm limbs.
+
+Applied both named lines with two changes, in-lane (`tools/blender/icons.py`
+only, no palette edit, no shared constant moved):
+
+1. **Colour & contrast (6).** Swapped the left body from `ORANGE` to
+   `PEACH` — raw swatch gap `(102,46,34)`, positive on every channel, versus
+   `ORANGE`'s `(116,21,-6)`. `RUST` (right) and `TANGERINE` (centre) left
+   untouched; the diagnosis named "the tan/orange limb" specifically, and
+   pass 2's own sampling already found `RUST`'s rendered B-gap acceptable.
+2. **Mechanic match (7).** Every body still tapered evenly from a wide base
+   to one point, one width profile — the diagnosis's own words. Added one
+   extra waypoint to the centre (tallest, most prominent) `TANGERINE` body's
+   `limb()` call, a third of the way up from the base, radius pinched to
+   `0.07` where a straight taper through the old two points would put it at
+   roughly `0.19` — a real waist, not a cosmetic nudge — so the body narrows
+   then flares back out to the existing mid-point before tapering to the
+   tip. Base and tip radii/positions untouched, so the cluster's footprint
+   and reach are unchanged, same discipline pass 3 used for the bend.
+
+Rebuilt with the real `blender` binary (apt package, 4.0.2 — headless; this
+container's copy needed `libegl1`/`libgles2` installed and a working
+`numpy` for its embedded Python 3.12 before it would run the exporter at
+all, same missing pieces `fire_icon.md` pass 3 and `frail_icon.md` pass 2
+both hit; `download.blender.org` is still unreachable through this
+container's egress proxy, confirmed again this run). Rebuilt the full
+36-icon set and diffed every file against `HEAD` by mean per-channel pixel
+difference: most icons came back at 0.000 (bit-identical), a handful of
+untouched icons (`relic` 4.439, `strength` 4.228, `bow` 2.843, `timer`
+2.810, `light` 1.713, `support` 0.719, `thorns` 0.701, `bomb` 0.547,
+`flask` 0.159, `sword` 0.296) showed nonzero drift from this run's
+particular Blender/driver combination — a wider noise band than prior
+passes recorded, and specifically wide enough that `fire.png`'s own whole-
+image mean (4.205) sits *inside* it, not clearly above it. Given that,
+whole-image mean diff was not trusted alone this pass — reverted the other
+35 icons and confirmed the `fire.png` change by direct inspection instead:
+alpha bbox unchanged at `(48, 5, 210, 228)` (no new clipping), and a
+region-sampled pixel average, not a whole-canvas one, on the left body
+specifically.
+
+Looked at the result three ways: a full 256px composite against the flat
+brown card-face standin (`design/renders/fire_icon_pass4_full.png`), a real
+42px `LANCZOS` downsample nearest-neighbour upscaled for viewing
+(`fire_icon_pass4_42px_big.png`), and a solid black-on-white alpha
+silhouette (`fire_icon_pass4_sil.png`), each placed beside the pre-pass
+version. A 3x zoom crop on the centre body's base
+(`fire_icon_pass4_centrezoom.png`) was also read directly to confirm the
+waist reads as a concave notch rather than a rendering artefact.
+
+- **Colour & contrast (6 → 8):** region-sampled the left body's actual
+  rendered pixels (not the raw swatch): old average `(203,129,94)` against
+  standin `(139,105,74)`, gap `(64,24,20)`; new average `(193,145,121)`, gap
+  `(54,40,47)` — R eased slightly but G nearly doubled and B moved from a
+  weak +20 to a strong +47. Confirmed visible, not just numeric, in both the
+  full composite and the 42px downsample: the left body reads as a clearly
+  different, cooler-leaning tone from the card face where it used to nearly
+  match it. Not a 9-10: `RUST` and `TANGERINE` were untouched by this pass's
+  two-fix budget and the centre body's own near-standin patches (visible in
+  the zoom crop, in the concave crease the waist introduces) remain a real
+  AO-shadow near-miss, the same kind pass 3 flagged as not responding to a
+  swatch swap.
+- **Mechanic match (7 → 8):** the centre body now narrows to a visible waist
+  roughly a third of the way up before flaring back out, confirmed in the
+  full composite, the 42px downsample, and the zoom crop — a real width
+  variation along the body's own length, which is exactly what the
+  diagnosis asked for and a bend alone (pass 3's own fix) didn't add. Not
+  higher: only one of the three bodies got the treatment, so the cluster as
+  a whole still reads mostly as three smoothly-tapered shapes with one
+  irregular member, not a fully organic flame.
+- **Silhouette @ 42px (8 → 9, not one of the two, moved as a side effect):**
+  the waist is a real geometry change, so it shows in the pure alpha
+  silhouette too, not just the coloured render — the side-by-side
+  silhouette crop shows a new concave notch low on the centre spike that
+  the pre-pass outline doesn't have, adding a touch of the irregularity
+  pass 1's own Silhouette line originally asked for beyond what pass 3's
+  bend alone gave it.
+- **Family distinction (8, unchanged):** the cluster is still three bodies
+  of the same broad vertical-taper composition; neither fix changed the
+  count or arrangement of parts.
+- **Style consistency (8, unchanged):** `limb()` with an extra waypoint is
+  the same primitive already in use, not a new construction; a colour swap
+  touches no geometry vocabulary at all.
+
+**+4 total (37 → 41), not a plateau — clears the loop's 40/50 stop line —
+kept.** No line regressed. Fourth and final pass under this loop's own
+4-pass cap either way.
+
+`run_tests.gd`: **ALL TESTS PASSED** (fresh `--import`, headless, Godot
+4.7.1 — this pass touches only `tools/blender/icons.py` and the
+regenerated `fire.png`, no `game/**` GDScript).
+
+## Unsure about (pass 4)
+
+Whether the whole-image mean-pixel-diff check this item and several others
+(`rope_icon.md`, `rally_icon.md`, this file's own pass 3) have used to tell
+a real change from render noise is still reliable on this container's
+particular Blender/driver combination — this run's noise band (up to 4.439
+on an untouched icon) came close enough to `fire.png`'s own whole-image
+mean (4.205) that the diff alone would have been ambiguous; a region-
+sampled pixel average and a direct look at the composite were needed to
+settle it here, and a future pass on any icon should sample a region, not
+just trust the whole-canvas number, if the two are close. Also unsure
+whether the remaining `RUST`/`TANGERINE` near-standin patches (visible only
+in the tight zoom crop, not in the full-size or 42px views) are worth a
+fifth pass if the loop's cap is ever revisited — this file is at its
+4-pass limit regardless.

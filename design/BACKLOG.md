@@ -2592,6 +2592,45 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-06** — #86 duty 1 (improve an asset — portraits/icons only). Last
+  three turns were duty 3 (`dcfbc95`), duty 3 again (`2fa1b0a`, framing
+  applies once "duty 3" and "duty 2 came back empty, did duty 3 instead"
+  both count), duty 2 (`0ad3693`, unlocked-wins gate) — the standing rotation
+  is 1→2→3→1, and the last actual `#86 duty 1` commit was `78ccf44` (rope
+  icon), so this turn was duty 1. Checked every numbered item above #86 first
+  (87, 88 `needs a screen`; 89 done; 85 a design call for Nick) — nothing
+  actionable there, so took the rotation.
+  Surveyed `design/progress/*_icon.md`/`*_portrait.md` for the lowest score
+  with real budget left that wasn't already blocked on model geometry (the
+  fixer's lane, not this one) — `boulder_ram_portrait.md` (30) and
+  `bog_leech_portrait.md` (31) were both lower but their own diagnoses
+  already say the remaining fix needs the beast's own geometry, out of
+  `portraits.py`'s reach. `fire_icon.md` was next at 37/50, 3 of 4 passes
+  used, with its own pass-3 log naming a concrete, unapplied fix for each of
+  its two lowest lines (Colour 6, Mechanic 7) — a clean fourth-and-final pass
+  entirely inside `icons.py`.
+  Swapped the left flame body from `ORANGE` to `PEACH` (raw swatch gap vs the
+  card standin goes from `(116,21,-6)` to `(102,46,34)` — positive on every
+  channel) and added one waypoint to the centre body's `limb()` call, radius
+  pinched to a real waist instead of a straight taper, so the tallest body
+  narrows and flares rather than tapering evenly. Rebuilt with apt's headless
+  Blender 4.0.2 (`download.blender.org` still blocked by this container's
+  egress proxy; needed `libegl1`/`libgles2` and a clean `numpy` for its
+  embedded Python 3.12 before the exporter would run at all — the same gaps
+  prior duty-1 turns hit). This run's own render noise band ran unusually
+  wide (an untouched icon, `relic`, diffed at whole-image mean 4.439 against
+  `fire.png`'s own 4.205), wide enough that the whole-canvas mean check prior
+  passes leaned on would have been ambiguous here — fell back to a
+  region-sampled pixel average on the changed body plus a direct look at the
+  full, 42px-downsample and silhouette composites instead of trusting the
+  single number, and confirmed both fixes read clearly in all three: the
+  left body visibly separates from the card face at 42px now, and the waist
+  shows as a real concave notch in the pure alpha silhouette, not just the
+  coloured render. Colour 6→8, Mechanic 7→8, Silhouette 8→9 as a side
+  effect, total 37→41 — clears the loop's 40/50 stop line on this, the
+  fourth and last pass this asset gets either way. Reverted the other 35
+  regenerated icons; only `fire.png` and `tools/blender/icons.py` changed.
+  `run_tests.gd`: ALL TESTS PASSED (fresh `--import`, headless, Godot 4.7.1).
 - **2026-09-06** — #86 duty 3 (verify a mechanic actually works). Last three
   turns were duty 1 (`499b130`, portrait), duty 2 (`0ad3693`, unlocked-wins
   gate), duty 3 (`dcfbc95` before that), so this one was due for duty 3. The
