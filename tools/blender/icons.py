@@ -84,7 +84,12 @@ def sword(i):                                   # a plain attack
 
 
 def shield(i):                                  # block
-    i.slabf(0.0, 0.16, 0.34, 0.30, STEEL, bevel=0.05)
+    # pass 3 (design/progress/shield_icon.md): bevel was 0.05, rounder than
+    # slabf's own 0.02 default -- softer top corners than the forked base and
+    # top slab below/above it, and the same roundness `guard`'s own untouched
+    # plate still uses. Sharpened to slabf's default so shield reads with a
+    # visibly more angular top edge than guard's, without touching guard.
+    i.slabf(0.0, 0.16, 0.34, 0.30, STEEL, bevel=0.02)
     # A forked base: shield_icon.md's Family-distinction finding was that this
     # single point-and-plate kite matches guard's own body almost exactly --
     # guard was told apart with shoulder flares (batch 15 pass 2); a split
@@ -92,12 +97,16 @@ def shield(i):                                  # block
     for s in (-1, 1):
         i.spike(0.09 * s, -0.30, 0.15, 0.02, 0.46, STEEL,
                 ang=math.pi + 0.30 * s, seg=4)
-    i.slabf(0.0, 0.40, 0.34, 0.055, SILVER)
+    # pass 3: SILVER (raw swatch RGB 174,174,187) sits only ~40 value points
+    # from STEEL's 124,131,157 -- WHITE (255,255,255) triples that gap on
+    # every channel, a real Colour & contrast fix rather than a body/accent
+    # pair this close in value.
+    i.slabf(0.0, 0.40, 0.34, 0.055, WHITE)
     # A raised centre boss, not the old cross (a vertical bar plus a
     # horizontal one): shield_icon.md's Mechanic-match finding was that a
     # plain plus reads as "heal" elsewhere in the genre; a domed stud reads
     # as "shield" without borrowing that glyph.
-    i.ball((0.0, -0.12, 0.02), (0.12, 0.06, 0.12), SILVER, 8, 5)
+    i.ball((0.0, -0.12, 0.02), (0.12, 0.06, 0.12), WHITE, 8, 5)
 
 
 def bow(i):                                     # a ranged strike

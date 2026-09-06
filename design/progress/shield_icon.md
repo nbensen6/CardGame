@@ -172,3 +172,97 @@ size wasn't checked. Also carrying forward pass 1's original "unsure":
 whether the cross-as-heal association was ever strong enough to mislead a
 player in practice — moot now that the cross is gone, but never confirmed
 either way.
+
+## Pass 3 — cloud, backlog #86 duty 1
+
+Picked up per pass 2's own two remaining lowest lines, tied at 7: Family
+distinction and Colour & contrast. Applied both, in-lane
+(`tools/blender/icons.py`'s `shield()` only, no palette edit, no shared
+constant or budget moved):
+
+1. **Family distinction (7).** The main plate's box used `bevel=0.05`,
+   rounder than `slabf`'s own `bevel=0.02` default that the top slab and
+   every other icon's plain plates use — and the same roundness `guard`'s
+   own untouched plate still has. Dropped it to `0.02` (slabf's default,
+   not a new value invented for this fix) so shield's top corners read
+   sharper/more angular than guard's stay-rounded ones, without touching
+   `guard` at all.
+2. **Colour & contrast (7).** Sampled the actual rendered pixels rather
+   than the raw swatch: the old SILVER top slab/boss averaged
+   `(171,173,178)` against the STEEL body's `(162,165,173)` — gap
+   `(10,8,5)`, weak on every channel and especially B. Swapped both to
+   WHITE, already used elsewhere in this file (`target`, `expose`);
+   raw swatch gap against STEEL is roughly triple SILVER's on every
+   channel.
+
+Rebuilt with the real `blender` binary (apt package, 4.0.2 — headless;
+needed `libegl1`/`libgles2` and a working `numpy` for its embedded
+Python 3.12 exporter first, same missing pieces `fire_icon.md` pass 4 and
+`frail_icon.md` pass 2 both hit; `download.blender.org` still unreachable
+through this container's egress proxy). Rebuilt the full 36-icon set and
+diffed every file against `HEAD` by mean per-channel pixel difference:
+most came back bit-identical, the same handful of untouched icons
+(`bomb`, `bow`, `flask`, `light`, `strength`, `support`, `sword`,
+`thorns`, `timer`) drifted from this run's particular Blender/driver
+combination exactly as `fire_icon.md` pass 4 recorded, all of them at or
+above `shield.png`'s own whole-image mean diff (2.919) — so, same as that
+pass, whole-image mean wasn't trusted alone. Reverted all nine untouched
+icons and kept only `shield.png`, confirmed by region-sampled pixels
+(below), not a whole-canvas number.
+
+Looked at the result three ways, each old pass 2 render placed beside
+this pass's new one: a full 256px composite on the same brown card-face
+standin (`design/renders/shield_icon_pass3_compare_full.png`), a real
+42px `LANCZOS` downsample nearest-neighbour upscaled for viewing
+(`shield_icon_pass3_compare_42px.png`), and a solid black-on-white alpha
+silhouette (`shield_icon_pass3_compare_sil.png`).
+
+Sampled actual rendered pixels, not the raw swatch, at the boss/slab and
+a body point clear of both: old gap (boss/slab minus body) `(10.0, 7.9,
+5.1)`; new gap `(38.7, 35.8, 27.9)` — roughly tripled on every channel,
+none of them weak any more.
+
+- **Family distinction (7 → 8):** the silhouette crop shows it directly —
+  the new render's top corners are visibly more squared/angular than the
+  old render's rounded ones, and than `guard`'s own untouched plate,
+  confirmed side by side rather than assumed from the script. Not a 9-10:
+  underneath the sharper corners, the fork tail, and the boss, it is
+  still fundamentally the same flat-top kite body `guard` also uses —
+  the same ceiling pass 2 named for the identical reason.
+- **Colour & contrast (7 → 9):** confirmed in both the full composite and
+  the 42px downsample — the boss and top slab now read as a distinctly
+  brighter, cooler mark against the body rather than a same-value accent,
+  and the measured pixel gap backs it up. Not a 10: the fix only touched
+  the accent pieces — the STEEL body itself and the fork tail (still
+  STEEL) are unchanged, so the icon's dominant colour mass has no new
+  separation of its own.
+- **Silhouette @ 42px (8, unchanged):** the kite outline, fork, and boss
+  all still read cleanly at 42px; sharper corners are a real change but
+  not a legibility gain or loss on a line that was already strong.
+- **Mechanic match (8, unchanged):** neither fix touched the boss's own
+  shape or the fork's; the "domed stud, not a plus sign" read is
+  unaffected by bevel radius or accent colour.
+- **Style consistency (8, unchanged):** `0.02` is `slabf`'s own default,
+  not a new value, and WHITE is already load-bearing elsewhere in this
+  same file; neither fix introduces a construction the set doesn't
+  already use.
+
+**+3 total (38 → 41), not a plateau — clears the loop's 40/50 stop line —
+kept.** No line regressed. Third pass; stopping here per the loop's own
+stop condition rather than spending the fourth.
+
+`run_tests.gd`: **ALL TESTS PASSED** (fresh `--import`, headless, Godot
+4.7.1 — this pass touches only `tools/blender/icons.py` and the
+regenerated `shield.png`, no `game/**` GDScript, so no new test).
+
+## Unsure about (pass 3)
+
+Whether the sharper top corners survive a real hand-card size as
+distinctly as they do in this 42px, standin-brown composite — a genuine
+geometry change, confirmed in the silhouette crop at this scale, but a
+smaller real render was not checked, the same caveat every batch at this
+fidelity carries. Also unconfirmed: whether tripling the accent/body
+colour gap while leaving the fork tail STEEL creates a slightly
+inconsistent read where the boss and top slab look like they belong to a
+different, whiter object than the rest of the shield — a full composite
+look didn't raise it, but it wasn't measured directly.
