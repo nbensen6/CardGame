@@ -9339,3 +9339,37 @@ Newest first. One line per finished item: what, and anything surprising.
   but a future change to the shove now has a test that will catch it if that
   stops being true. `run_tests.gd`: ALL TESTS PASSED (fresh import,
   headless, godot 4.7.1). Next `#86` turn is duty 1 (improve an asset).
+- **2026-09-06** — #86 duty 1 (improve an asset — portraits/icons only).
+  Last `#86` turn (`17c4fc8`) was duty 3, so this was duty 1. Scanned every
+  portrait and icon's own progress file for its current total and pass
+  count: the lowest-scoring assets left (`boulder_ram_portrait` 30,
+  `bog_leech_portrait` 31, `mountain_climbers_portrait` 33,
+  `cinder_jackal_portrait` 33, `clot_toad_portrait` 33) all diagnose their
+  two lowest lines as needing the beast's own model geometry or colour —
+  out of this lane's scope, which owns `portraits.py`/`icons.py` only, not
+  `tools/blender/<beast>.py`. `guard_icon` (37/50, 2 of 4 passes used) was
+  the lowest asset whose own diagnosis stayed entirely inside `icons.py`.
+  Rendered it fresh and looked at it beside `shield`/`wall`/`sword` at 42px
+  before picking lines, rather than trusting the old written scores alone —
+  confirmed Colour and Style (tied lowest at 7, alongside Family) were
+  naming the same real problem from two angles: the `ICE` body reads
+  visibly pale/washed-out next to the rest of the cast's mid-toned palette.
+  Swapped `guard()`'s body swatch (plate, base point, both shoulder flares)
+  from `ICE` to `SKY` in `tools/blender/icons.py` — a different cool-blue
+  swatch, not `shield`'s own `STEEL`, so the colour-based half of Family
+  distinction wasn't traded away. Rebuilt the full 36-icon batch and diffed
+  every PNG by mean pixel difference against the committed set; only
+  `guard.png` came back above the render-noise band (mean 8.47 vs ≤5.87
+  elsewhere), so only it was kept. Pixel-sampled the result (body now
+  RGB(172,184,198)/RGB(135,158,182), a real blue, against the unchanged
+  `STEEL` ring/hands at RGB(111,121,139) — the same ~60-point contrast
+  margin held) and confirmed the alpha bbox is unchanged (30,38,226,242),
+  so no geometry or clipping moved, only colour. Colour 7→9, Style 7→9,
+  total 37→41 — crosses the 40/50 stop line, 3 of 4 passes used. Left
+  Family (7) alone: pass 2 already split `guard`/`shield` by silhouette at
+  both ends, and chasing a third differentiator felt like re-litigating a
+  question pass 2's own log already settled as "arguably correct to share
+  a family resemblance." `run_tests.gd`: ALL TESTS PASSED (fresh import,
+  headless, godot 4.7.1 — this pass touches an icon PNG and a Blender
+  build script only, no `game/**` GDScript). Next `#86` turn is duty 2
+  (find an error and resolve it).

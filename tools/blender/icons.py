@@ -312,13 +312,13 @@ def volley(i):                                  # several hits at once
 
 
 def guard(i):                                   # block, but timed
-    i.slabf(0.0, 0.14, 0.30, 0.26, ICE, bevel=0.05)
-    i.spike(0.0, -0.28, 0.30, 0.02, 0.46, ICE, ang=math.pi, seg=4)
+    i.slabf(0.0, 0.14, 0.30, 0.26, SKY, bevel=0.05)
+    i.spike(0.0, -0.28, 0.30, 0.02, 0.46, SKY, ang=math.pi, seg=4)
     # Flared shoulder wings: `shield`'s outline is a plain kite, so a pair of
     # pointed flares at the shoulders separates `guard` by silhouette alone,
     # not just by the internal mark.
     for s in (-1, 1):
-        i.spike(0.3675 * s, 0.2387, 0.045, 0.006, 0.14, ICE, ang=s * 1.3, seg=3)
+        i.spike(0.3675 * s, 0.2387, 0.045, 0.006, 0.14, SKY, ang=s * 1.3, seg=3)
     # The ring used to sit at y=-0.05, inside the body's own -0.10..0.10 depth
     # -- entirely behind the body's front face and invisible in every render,
     # which is the real reason no clock ever read here. Pulled to y=-0.12, in

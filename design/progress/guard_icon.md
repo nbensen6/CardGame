@@ -150,3 +150,117 @@ read better at full size than at 42px — the two ideas fixed here (a visible
 clock, a distinct silhouette) are both now confirmed in a render; whether
 the clock reads at the smallest size it's actually seen is a finer question
 this pass's two-fix budget didn't chase further.
+
+## Pass 3 — #86 duty 1
+
+Lowest-scoring icon/portrait left in this lane's scope (icons.py/
+portraits.py only) at the time of picking — `mountain_climbers_portrait`,
+`bog_leech_portrait`, `cinder_jackal_portrait` and `clot_toad_portrait` all
+score lower or the same but each names a fix that needs the beast's own
+model geometry (out of bounds for this lane); `guard` was the lowest whose
+own diagnosis stayed inside `icons.py`.
+
+Three lines were tied lowest at 7: Family, Colour, Style. Rendered the
+current PNG fresh (`blender --background --python tools/blender/icons.py --
+<tmp dir>`, apt Blender 4.0.2, headless) and looked at it beside `shield`,
+`wall` and `sword` (`design/renders/guard_icon_pass3_vs_family_42px.png`,
+all four at a real 42px `LANCZOS` downsample) before picking which two to
+chase, rather than assuming from the written scores alone.
+
+The render confirmed something the numbers alone didn't say clearly: next
+to its neighbours, `guard`'s `ICE` body reads as visibly pale and washed
+out — closer to white than to any other icon's value — where pass 1's own
+Colour finding had already called it "the lightest of the four in this
+batch" and Style's finding called it out for sitting "further from the
+rest of the set's generally mid-toned palette." Both lines were naming the
+same root cause from two angles, not two separate problems. Left Family
+alone: pass 2 already gave `guard` and `shield` different silhouettes at
+both ends (flares vs. fork), and pushing a third differentiator risked
+re-litigating the "arguably correct to share a family resemblance" point
+pass 2's own log already settled.
+
+**Colour (7) / Style (7), single fix for both.** Swapped the body swatch
+(main plate, base point, both shoulder flares — every `ICE` call in
+`guard()`) to `SKY`, three lines in `tools/blender/icons.py`. Tried `SKY`
+first because it sits in the same cool-blue family as `ICE` (`kenney.py`'s
+`BLUE, INDIGO, ICE, SKY = swatch(x, 192)` row) but is not `shield`'s own
+`STEEL`, so the fix wouldn't trade the colour-based half of Family
+distinction away.
+
+Rebuilt the full 36-icon batch (no single-icon build path exists) and
+diffed every PNG against the committed `game/assets/icons/` by mean
+per-channel pixel difference: every icon but `guard.png` came back at or
+under mean 5.87 (the same WORKBENCH render-noise band prior batches have
+used, e.g. `burn_icon.md` pass 3's ≤6.7), `guard.png` alone at mean 8.47,
+max 116 — real content change. Kept only `guard.png`, left the other 35
+untouched.
+
+Verified three ways before scoring:
+
+- **Pixel-sampled the committed PNG.** Body samples RGB(172,184,198) and
+  RGB(135,158,182) at two points on the plate — a real blue, not the old
+  near-neutral pale grey (previously ~RGB(150-195,160-209,170-209), barely
+  distinguishable channel to channel). The `STEEL` ring/hands sample
+  RGB(111,121,139) — still roughly a 60-point value gap below the new body,
+  the same contrast margin the old ICE/STEEL pairing had, so the swap
+  didn't trade contrast for saturation.
+- **Alpha bbox unchanged.** `(30, 38, 226, 242)`, identical to pass 2 —
+  only colour changed, no geometry touched, so no new clipping risk.
+- **Side-by-side render**, not memory:
+  `design/renders/guard_icon_pass3_vs_family_42px.png` puts the new
+  `guard` beside `shield`, `wall` and `sword` at 42px. `guard` now sits
+  inside the same mid-toned value range as its neighbours instead of
+  standing out as the one pale/white icon in the row — the exact complaint
+  both named lines raised. `design/renders/guard_icon_pass3_full.png` and
+  `_42px_big.png` show the same at full size and at the actual downsample.
+  `design/renders/guard_icon_pass3_sil.png` (fresh silhouette, alpha>10
+  threshold) is unchanged in shape from pass 2's, confirming the fix is
+  colour-only.
+
+| Pass | Silhouette@42px | Family | Mechanic | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 1 | 8 | 3 | 3 | 7 | 7 | **28** |
+| 2 | 8 | 7 | 8 | 7 | 7 | **37** |
+| 3 | 8 | 7 | 8 | 9 | 9 | **41** |
+
+- **Colour & contrast (7 → 9):** the body now reads as a genuine saturated
+  blue rather than a near-white/grey value, confirmed by direct pixel
+  sample rather than the palette name alone (the same "measure the
+  rendered pixel, not the swatch" standard `burn_icon.md` pass 3 used) —
+  and the ~60-point value gap against the `STEEL` ring/hands held, so
+  nothing was traded to get there. Not a 10: the ring's own hue is close
+  enough to the new body hue that the contrast is still carried mostly by
+  value, not by a hue split the way `shield`'s white-on-blue cross had.
+- **Style consistency (7 → 9):** side by side with `shield`/`wall`/`sword`,
+  `guard` no longer reads as the one washed-out icon in the row — it now
+  sits in the same value band the rest of the cast uses. Not a 10: `SKY`
+  is still a fairly light/cool value next to `shield`'s darker `STEEL`, so
+  the family isn't identically toned, just no longer an outlier.
+- **Family distinction (7, unchanged):** not one of the two named lines.
+  The new `SKY` body is a visibly different hue from `shield`'s `STEEL`
+  (confirmed in the side-by-side render), which if anything helps this
+  line as a side effect, but the underlying kite-and-point body the two
+  share is untouched, so the number wasn't moved on the strength of an
+  unplanned side effect alone.
+- **Silhouette @ 42px (8, unchanged) / Mechanic match (8, unchanged):**
+  neither touched by a colour-only fix; confirmed by the unchanged alpha
+  bbox and the unchanged clock-face geometry.
+
+**+4 total (37 → 41), not a plateau — kept. Crosses the 40/50 stop line.**
+No line regressed. `run_tests.gd`: **ALL TESTS PASSED** (fresh import,
+headless, Godot 4.7.1). Stopping here per `design/asset-loop.md`'s stop
+condition — 3 of 4 passes used, and past the line the loop calls
+"shippable and good."
+
+## Unsure about (pass 3)
+
+Whether `guard` and `shield` should ever share a hue on purpose (the
+"family" reading) rather than being deliberately split further — this pass
+picked a different hue only as a side effect of fixing the washed-out
+value complaint, not as a targeted Family fix, so the question pass 2 left
+open about how similar the family should look is still open, and is
+closer to Nick's call than a rubric-line fix. Also unsure whether `SKY`
+specifically was the best of the ICE-family alternatives (`BLUE`, `INDIGO`
+were not tried) or just the first one that measured well — picked the
+first candidate that fixed the named problem without introducing a new
+one, per the loop's "smallest change that fixes it" spirit.
