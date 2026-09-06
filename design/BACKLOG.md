@@ -2592,6 +2592,18 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-06** — #86 duty 3 (verify a mechanic actually works), thirty-ninth
+  pass. Last commit (`fc98847`, the condition_bonus sharpen bug) was duty 2, so
+  this run was due for duty 3. `Run._gold_for(kind)` — the entire gold-payout
+  table for a felled beast (fight=25, elite=55, boss=80) — had zero coverage:
+  its sibling `_card_price()` three lines below it is tested by name, but the
+  only test that touches `_gold_for`'s call site (`_test_gold_and_shop`) only
+  ever asserted gold went UP after a win, never by how much, and never that a
+  fight/elite/boss pay different amounts. It's already pure (a plain match on
+  a string constant, no `self` access at all) so no lifting was needed — added
+  `_test_backlog86_gold_for_pays_by_encounter_kind`, asserting all three tiers
+  pay their own distinct constant and an unrecognised kind falls back to the
+  fight-tier default rather than erroring. `run_tests.gd`: ALL TESTS PASSED.
 - **2026-09-06** — #86 duty 2 (find an error and resolve it). Last commit
   (`74bcd74`, frail icon pass 3) was duty 1, so this run was due for duty 2.
   Read `Card.upgraded_copy()` (`game/core/card.gd`) against `condition_bonus`

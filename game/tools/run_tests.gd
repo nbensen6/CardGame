@@ -916,6 +916,16 @@ func _init() -> void:
 	_test_backlog86_dev_console_make_splits_on_commas_and_spaces_and_drops_unknown_ids()
 	_test_backlog86_dev_console_combat_commands_refuse_without_a_host()
 
+	# backlog #86 duty 3 (thirty-ninth pass): Run._gold_for(node_type) is the
+	# ENTIRE payout table for a felled beast (fight=25, elite=55, boss=80) --
+	# its sibling _card_price() three lines below gets its own coverage by
+	# name, but _gold_for never has, and the only test that touches its call
+	# site (_test_gold_and_shop) only asserts gold went UP, never by how much
+	# or that a boss and a fight pay different amounts. A retuned GOLD_ELITE
+	# constant, or a typo'd match string ("Boss" instead of "boss") silently
+	# falling through to the fight-tier default, would land clean.
+	_test_backlog86_gold_for_pays_by_encounter_kind()
+
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
 	# not "inside tree" yet until the engine's main loop actually starts, one
@@ -10793,6 +10803,26 @@ func _test_backlog86_dev_console_combat_commands_refuse_without_a_host() -> void
 		_expect(c.run(cmd_line) == refusal, "'%s' refuses rather than silently doing nothing when there is no host" % cmd_line)
 	Session.host = save_host
 	c.free()
+
+
+## backlog #86 duty 3 (thirty-ninth pass) -- Run._gold_for(kind) is the whole
+## gold-payout table for a felled beast, a plain match on a string constant
+## with no self access at all, exactly like _card_price() three lines below
+## it (which already has its own coverage by name). This one never did:
+## _test_gold_and_shop only checks that gold went UP after a win, never by
+## how much, so a retuned GOLD_ELITE/GOLD_BOSS constant or a typo'd match
+## string ("Boss" instead of "boss", silently falling through to the fight-
+## tier default) would pass the whole suite while paying a Titan kill like a
+## trash fight.
+func _test_backlog86_gold_for_pays_by_encounter_kind() -> void:
+	var run := _map_run()
+	var fight_ok: bool = run._gold_for("fight") == Run.GOLD_FIGHT
+	var elite_ok: bool = run._gold_for("elite") == Run.GOLD_ELITE
+	var boss_ok: bool = run._gold_for("boss") == Run.GOLD_BOSS
+	var unknown_falls_back: bool = run._gold_for("shop") == Run.GOLD_FIGHT
+	var distinct: bool = Run.GOLD_FIGHT != Run.GOLD_ELITE and Run.GOLD_ELITE != Run.GOLD_BOSS
+	_expect(fight_ok and elite_ok and boss_ok and unknown_falls_back and distinct,
+		"gold_for pays fight/elite/boss at their own distinct rates, and anything else falls back to fight-tier")
 
 
 func _expect(cond: bool, name: String) -> void:
