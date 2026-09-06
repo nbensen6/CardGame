@@ -295,7 +295,14 @@ def rally(i):                                   # lift the whole party
     # keeps a real positive gap on all three channels.
     i.limb([(-0.50, 0.0, -0.30), (-0.16, 0.0, -0.36), (0.16, 0.0, -0.16)],
            [0.070, 0.095, 0.130], SAND, seg=6)
-    i.taper((0.25, 0.0, -0.004), 0.12, 0.36, 0.36, GOLD, seg=8,
+    # pass 4 (final): r1 was 0.36 -- the bell's own flare, projected through its
+    # tilt, reached world x=0.652 against the frame's x=0.575 half-width, so the
+    # wide end was clipped by the canvas edge and rendered as a hard straight cut
+    # instead of a rounded rim. That is why it read as a flat wedge/flag rather
+    # than a horn's bell. Shrinking r1 to 0.24 keeps the near (limb-joining) end
+    # untouched -- only the far end's spread comes down -- and brings the whole
+    # flare back inside the frame with margin.
+    i.taper((0.25, 0.0, -0.004), 0.12, 0.24, 0.36, GOLD, seg=8,
             rot=point((0.50, 0.0, 0.87)))
     i.ball((-0.54, 0.0, -0.28), (0.075, 0.06, 0.075), UMBER, 7, 4)
     # The call coming out of it: arcs, not rings, so nothing has to be hidden.
@@ -307,9 +314,20 @@ def rally(i):                                   # lift the whole party
     # (rally_icon.md pass 2's own honest read). Widened the gap to 0.12 by
     # pulling the inner arc in, and thinned the tube so the two no longer
     # overlap; the outer radius (already confirmed in-frame) is untouched.
-    for k, r in enumerate((0.08, 0.20)):
-        pts = [(0.30 + math.cos(a) * r, 0.0, 0.42 + math.sin(a) * r)
-               for a in (-0.75, -0.15, 0.45)]
+    # pass 4 (final): the arc pivot at (0.30, 0.42) sat well clear of the bell's
+    # own mouth, and the sample angles (-0.75..0.45) swept AWAY from the bell's
+    # own flare direction -- the call read as a random floating mark rather than
+    # sound coming off the horn. Moved the pivot to (0.38, 0.36), just past the
+    # (now smaller) bell's own rim along the same axis the bell flares toward,
+    # and rotated the sweep to (0.52..1.72) so the arcs curve open on the side
+    # facing away from the bell, the way a sound cue radiates outward from its
+    # source rather than from an arbitrary point. x=0.38 (not the first-tried
+    # 0.42) leaves room for the tube's own 0.04 radius -- at 0.42 the outer arc's
+    # tube clipped the right edge by a couple of pixels even though the sample
+    # points themselves were in-frame.
+    for k, r in enumerate((0.06, 0.16)):
+        pts = [(0.38 + math.cos(a) * r, 0.0, 0.36 + math.sin(a) * r)
+               for a in (0.52, 1.12, 1.72)]
         i.limb(pts, [0.040] * 3, ICE if k else WHITE, seg=4, cap=False)
 
 

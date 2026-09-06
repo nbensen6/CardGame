@@ -248,3 +248,131 @@ limb/bell join) is worth it — it's a normal AO shadow in a concave crease,
 not a flat-colour near-miss like the limb was, so it may not respond to a
 swatch swap the same way. Left for a future pass rather than guessed at
 here.
+
+## Pass 4 — cloud, backlog #86 duty 1 (fourth and final pass)
+
+Pass 3 scored Silhouette 8, Family 7, Mechanic 7, Colour 8, Style 7 (37/50),
+a three-way tie for lowest at 7 (Family, Mechanic, Style). Rather than pick
+two of the tie by coin flip, looked at the fresh render first, per the loop's
+own "look before diagnosing" step, and found a defect none of the three prior
+passes had actually named: pass 2 had flagged in its own "Unsure about" that
+the bell's `r1=0.36` "still reaches both the left and right frame edges" but
+never connected that to a symptom, and pass 3 didn't revisit it. Measuring the
+taper's real geometry (`loc=(0.25,0,-0.004)`, `rot` towards `(0.50,0,0.87)`,
+`depth=0.36`) puts the wide (`r1`) end's centre at world `(0.340, 0.152)`; the
+circle's own rightward reach from there is `r1` along the perpendicular to the
+tilt, landing at world x ≈ 0.652 — past the frame's own 0.575 half-width. The
+render confirms it directly: the alpha bbox was `(0, 13, 256, 227)` before this
+pass, touching column 255, and a 4x crop of that corner
+(`design/renders/rally_pass4_rightedge_crop.png`, captured pre-fix at the same
+coordinates) shows a straight canvas-edge cut, not a curved rim. That is very
+likely why the bell reads as a flat wedge instead of a horn's bell — a real
+cone's mouth is round, and this one's right side was a ruler-straight line
+because the canvas cut it off, not because the geometry made it that way.
+
+Diagnosed two fixes, deliberately not the literal two lowest-numbered lines,
+and said why above rather than silently deviating:
+
+1. **The clip (feeds Silhouette and, indirectly, Mechanic).** Shrink the
+   bell's `r1` from 0.36 to 0.24. The near end (`r0`, the face touching the
+   limb) is untouched, so pass 2's junction fix doesn't move; only the far
+   end's spread comes down, bringing the whole flare inside the frame with
+   margin (computed target ≤0.575, chose 0.24 for a ~0.03 margin, confirmed
+   by the rebuilt bbox below).
+2. **Mechanic (tied-lowest).** The call arcs' pivot `(0.30, 0.42)` and sweep
+   `(-0.75..0.45)` put them well clear of the bell and curving in a direction
+   unrelated to where the bell actually opens — they read as a random floating
+   mark, not sound coming off a horn. Moved the pivot to `(0.38, 0.36)`, just
+   past the (now smaller) bell's own rim along the same axis the bell flares
+   toward, and rotated the sweep to `(0.52..1.72)` so the curve's open side
+   faces away from the bell, the way an expanding sound cue would.
+
+Applied both, then iterated on the exact pivot before finalising: a first try
+at pivot x=0.42 rebuilt clean by the sample-point math but the rebuilt render's
+alpha bbox still touched column 255 (`(0, 3, 256, 227)`) — traced to forgetting
+the arc's own tube radius (0.04) in the reach calculation, which the sample
+points' bare coordinates don't include. Pulled the pivot to x=0.38 to leave
+room for the tube and confirmed by direct pixel inspection, not just bbox,
+that no row touches either edge column.
+
+Rebuilt with the real `blender` binary (apt package, 4.0.2, headless; this
+container needed `numpy`+`Pillow` installed for the embedded Python 3.12
+gltf exporter and `libegl1`/`libgles2` for the renderer itself, the same two
+missing pieces `fire_icon.md` pass 3/4 and `frail_icon.md` pass 2 already hit —
+`download.blender.org` is still unreachable through this container's egress
+proxy). Rebuilt the full 36-icon set and diffed every file against the
+committed set by mean per-channel pixel difference: `rally.png` came back at
+8.011 on the first try (well above the noise band) and the other nine files
+that showed any drift at all (`bomb` 0.547, `bow` 2.843, `flask` 0.159,
+`light` 1.713, `strength` 4.228, `support` 0.719, `sword` 0.296, `thorns`
+0.701, `timer` 2.81) all sat inside the ≤4.4 band this item has recorded
+before as ordinary apt-Blender render noise (`relic_icon.md` pass 2,
+`fire_icon.md` pass 4) — `strength` at 4.228 is the closest to that ceiling
+and still clearly inside it. Reverted all nine; copied only `rally.png`.
+`TRIS 134 PARTS 5 BUDGET 700 ok`, unchanged from pass 3 — this pass moves
+existing geometry, it doesn't add any.
+
+Looked at the result three ways, all regenerated directly from the file now
+committed at `game/assets/icons/rally.png`: the full 256px composite over the
+flat brown card-face standin (`design/renders/rally_pass4_full.png`), a real
+42px `LANCZOS` downsample nearest-neighbour upscaled for viewing
+(`design/renders/rally_pass4_42px_big.png`), and a solid black-on-white alpha
+silhouette (`design/renders/rally_pass4_sil.png`), plus a 4x crop of the same
+corner the old clip lived in (`design/renders/rally_pass4_rightedge_crop.png`)
+to confirm the fix directly rather than by bbox numbers alone. Alpha bbox
+moved from `(0, 13, 256, 227)` to `(0, 3, 251, 227)` — no longer touching
+either the right edge (was column 255, now stops at 250) or, after the arc
+reposition, the bottom is unchanged and the top moved from row 13 to row 3
+because the re-aimed arc cluster now reaches slightly higher, confirmed
+deliberate in the full composite (the arcs sit just off the bell's upper-right
+shoulder) rather than a stray artifact.
+
+- **Silhouette @ 42px (8 → 9):** the corner crop shows a clean triangular
+  point where the frame cut a straight edge before — the main mass (ball,
+  limb, bell) now reads as one complete, uncut shape at both 256px and the
+  42px downsample. Not a 10: the arc cluster is still a visibly separate
+  second mark, smaller and closer to the bell than pass 3's version but not
+  merged with it.
+- **Family distinction (7, unchanged):** still the only two-piece silhouette
+  scored under this item; repositioning the second piece doesn't change the
+  count or the broad shape family it does or doesn't resemble.
+- **Mechanic match (7 → 8):** the call now sits at the bell's own
+  upper-right shoulder instead of floating in open space away from it, and
+  curves open away from the bell rather than in an unrelated direction — a
+  real read of "sound leaving the horn" in the full composite and the 42px
+  downsample both. Not a 9: at 42px the two arcs still compress into a small
+  ambiguous accent rather than an unmistakable sound-wave symbol: an inherent
+  limit of that much curve detail at this resolution, the same ceiling pass 2
+  and 3 both already ran into.
+- **Colour & contrast (8, unchanged):** this pass touched no colours or
+  swatches, only positions and one radius.
+- **Style consistency (7 → 8):** the flush-against-the-canvas-edge clip was
+  the one respect in which this icon visibly broke from every other icon in
+  the committed set (none of which run a part against the border by
+  accident, as opposed to `strength`'s and `bow`'s own deliberate edge-to-edge
+  compositions noted elsewhere in this item's sibling files). With the clip
+  gone, the remaining two-piece construction reads as a deliberate choice
+  built from the set's usual primitives, not as an unfinished edge case.
+
+**+3 total (37 → 40), not a plateau — meets the loop's 40/50 stop line —
+kept.** No line regressed. Fourth and final pass under this loop's own 4-pass
+cap either way.
+
+`run_tests.gd`: **ALL TESTS PASSED** (fresh `--import`, headless, Godot 4.7.1
+— this pass touches only `tools/blender/icons.py` and the regenerated
+`rally.png`, no `game/**` GDScript).
+
+## Unsure about (pass 4)
+
+Whether "sound leaving a horn" is legible from the arc cluster alone to
+someone who hasn't read this diagnosis, versus reading as a generic small
+accent mark near a cone-shaped object — the same kind of open question
+`relic_icon.md` and `fire_icon.md` have both left standing for their own
+final passes, and one a static composite against a flat standin can't fully
+settle. Also unsure whether `Family distinction` and `Style consistency`
+could have climbed further with a fix aimed squarely at them instead — this
+pass chose the clip and the call-arc placement because they had concrete,
+measurable causes, not because they were confirmed to be the highest-value
+targets among the three-way tie. This is the last of the loop's four passes
+either way, so that question is now moot for `rally` specifically, but the
+same tie-breaking judgement call may come up again for another icon.

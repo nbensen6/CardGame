@@ -2592,6 +2592,46 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-06** — #86 duty 1 (improve an asset), rally icon pass 4 (its
+  fourth and final under the loop's own cap). Last commit (`ca30531`, the
+  EnetTransport signal-routing tests) was duty 3, so this turn was due for
+  duty 1. Surveyed every icon's own progress file for its latest total and
+  pass count; `rally_icon.md` was lowest with real budget left (37/50, 3 of
+  4 passes used — its last chance). Looked at the current render before
+  diagnosing anything and found a defect none of the first three passes had
+  actually named, though pass 2's own "Unsure about" had brushed against it:
+  the bell taper's `r1=0.36` flare, projected through its own tilt, reaches
+  world x≈0.652 against the frame's 0.575 half-width, so its wide end was
+  being clipped by the canvas edge — a straight cut, not a curved rim — which
+  is very likely why the whole thing read as a flat wedge instead of a horn's
+  bell. Shrank `r1` to 0.24 (leaving the near end that joins the limb
+  untouched) and separately moved the call-arcs' pivot from a point floating
+  well clear of the bell to one nestled just past its (now smaller) rim,
+  along the same axis the bell flares toward, with the arc sweep rotated to
+  open away from the bell instead of in an unrelated direction. Named these
+  two over the three-way tie at the actual lowest score (Family/Mechanic/
+  Style, all 7) and said so in `rally_icon.md` rather than picking silently —
+  the clip had a measurable cause and touched the read on more than one line,
+  where the tied three had no equally concrete fix on offer. First attempt at
+  the arc's pivot (x=0.42) rebuilt clean by the sample-point maths but still
+  clipped the right edge by a couple of pixels once rendered — traced to
+  forgetting the arc tube's own 0.04 radius in the reach calculation — so
+  pulled it to x=0.38 and confirmed by direct pixel inspection, not just the
+  alpha bbox. Rebuilt the full 36-icon set with apt Blender 4.0.2 headless
+  (needed `numpy`/`Pillow` for the embedded Python 3.12 gltf exporter and
+  `libegl1`/`libgles2` for the renderer itself — this container had neither
+  preinstalled), diffed every file against committed by mean pixel
+  difference, and kept only `rally.png` (8.011, well above the ≤4.4 noise
+  band nine untouched icons showed from this run's own Blender/driver
+  combination). Looked at the result three ways (full composite, 42px
+  downsample, alpha silhouette) plus a corner crop confirming the clip is
+  gone. Colour & contrast, Family distinction unchanged (8, 7); Silhouette
+  8→9, Mechanic 7→8, Style 7→8. **+3 total (37→40), crosses the loop's
+  40/50 stop line on the last pass it had.** `run_tests.gd`: ALL TESTS
+  PASSED (fresh import, headless, Godot 4.7.1 — this pass touches only
+  `tools/blender/icons.py` and the regenerated `rally.png`, no `game/**`
+  GDScript). Next `#86` turn is duty 2 (find an error and resolve it).
+
 - **2026-09-06** — #86 duty 3 (verify a mechanic actually works), thirty-seventh
   pass. Last commit (`8c84bc8`, the meld defensive-stacks fx fix) was duty 2, so
   this turn was duty 3. Checked #87/#88 (both `needs a screen`) and #85 (a
