@@ -872,6 +872,31 @@ func _init() -> void:
 	_test_backlog86_window_for_clamps_to_the_documented_range()
 	_test_backlog86_ground_pivot_puts_world_zero_at_the_top_of_the_card_strip()
 
+	# backlog #86 duty 3 (thirty-seventh pass): EnetTransport, the real
+	# multiplayer transport CLAUDE.md's build order names as step 3 ("two-player
+	# online co-op on PC") and net/README.md's whole reason to exist -- had zero
+	# lines of coverage anywhere in this suite, versus LocalTransport's 19
+	# mentions. Its own doc comments claim two specific loopback shortcuts (the
+	# host's own local client's command "skips the wire" on the way out, and
+	# peer 1's message "is delivered locally" on the way back) plus two
+	# passthrough mappings for a REAL remote peer (a command that actually
+	# arrived over NetLink, and a message that actually arrived over NetLink).
+	# All four are provable with no socket at all: NetLink is a plain Node
+	# whose four signals can be emitted directly without ever adding it to the
+	# tree (its _ready(), which is the only place it touches the live
+	# `multiplayer` singleton, never runs on a detached node), and the two
+	# loopback branches never call into NetLink to begin with. What is NOT
+	# tested here on purpose: send_command as a real client and send_to a real
+	# remote peer, both of which end in `_link.to_server()`/`_link.to_peer()`
+	# -> `.rpc_id()`, which needs an actual ENetMultiplayerPeer and belongs to
+	# tools/net_smoke.gd, not a headless unit test.
+	_test_backlog86_enet_transport_server_send_command_bypasses_the_link_for_its_own_client()
+	_test_backlog86_enet_transport_client_send_to_the_server_peer_bypasses_the_link()
+	_test_backlog86_enet_transport_relays_a_remote_clients_command_arriving_on_the_link()
+	_test_backlog86_enet_transport_relays_the_hosts_message_arriving_on_the_link()
+	_test_backlog86_enet_transport_forwards_a_dropped_peer()
+	_test_backlog86_enet_transport_forwards_the_host_going_away()
+
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
 	# not "inside tree" yet until the engine's main loop actually starts, one
@@ -10533,6 +10558,88 @@ func _test_backlog86_ground_pivot_puts_world_zero_at_the_top_of_the_card_strip()
 	var pivot := Combat3D._ground_pivot(window)
 	_expect(is_equal_approx(pivot, window * (0.5 - Combat3D.HUD_BOTTOM_FRACTION + 0.04)),
 		"the ground pivot lifts world y=0 by (0.5 - HUD_BOTTOM_FRACTION + 0.04) window-fractions, matching the derivation in the comment above it")
+
+
+## backlog #86 duty 3 (thirty-seventh pass) -- EnetTransport. A NetLink never
+## added to a SceneTree never runs _ready(), so it never touches the live
+## `multiplayer` singleton; its four signals are ordinary signals and can be
+## emitted directly. That is what makes the whole file testable with no socket.
+func _test_backlog86_enet_transport_server_send_command_bypasses_the_link_for_its_own_client() -> void:
+	var link := NetLink.new()
+	var t := EnetTransport.new(link, true)
+	# GDScript lambdas capture outer locals BY VALUE, so a plain `var got := -1`
+	# assigned to from inside the callback never updates the outer copy -- a
+	# one-element Array/Dictionary is captured by value too, but the OBJECT it
+	# points at is shared, so mutating its contents is visible outside.
+	var got := {}
+	t.command_received.connect(func(peer_id: int, command: Dictionary) -> void:
+		got["peer"] = peer_id
+		got["cmd"] = command)
+	t.send_command(7, {"cmd": "end_turn"})
+	_expect(got.get("peer") == 7 and got.get("cmd") == {"cmd": "end_turn"},
+		"a server's own local client's command reaches command_received directly, with no trip over the link")
+	link.free()
+
+
+func _test_backlog86_enet_transport_client_send_to_the_server_peer_bypasses_the_link() -> void:
+	var link := NetLink.new()
+	var t := EnetTransport.new(link, false)
+	var got := {}
+	t.message_received.connect(func(message: Dictionary) -> void:
+		got["fired"] = true
+		got["msg"] = message)
+	t.send_to(EnetTransport.SERVER_PEER, {"snapshot": 1})
+	_expect(got.get("fired") == true and got.get("msg") == {"snapshot": 1},
+		"a message addressed to peer 1 (the host's own client) reaches message_received directly, with no trip over the link")
+	link.free()
+
+
+func _test_backlog86_enet_transport_relays_a_remote_clients_command_arriving_on_the_link() -> void:
+	var link := NetLink.new()
+	var t := EnetTransport.new(link, true)
+	var got := {}
+	t.command_received.connect(func(peer_id: int, command: Dictionary) -> void:
+		got["peer"] = peer_id
+		got["cmd"] = command)
+	# This is what a REAL remote client's RPC looks like once it lands: NetLink
+	# emits command_arrived with the sender's peer id, no wire involved in the test.
+	link.command_arrived.emit(3, {"cmd": "play_card", "index": 0})
+	_expect(got.get("peer") == 3 and got.get("cmd") == {"cmd": "play_card", "index": 0},
+		"a command that actually arrived over the link is relayed to command_received with the sender's real peer id")
+	link.free()
+
+
+func _test_backlog86_enet_transport_relays_the_hosts_message_arriving_on_the_link() -> void:
+	var link := NetLink.new()
+	var t := EnetTransport.new(link, false)
+	var got := {}
+	t.message_received.connect(func(message: Dictionary) -> void:
+		got["fired"] = true
+		got["msg"] = message)
+	link.message_arrived.emit({"snapshot": 2})
+	_expect(got.get("fired") == true and got.get("msg") == {"snapshot": 2},
+		"a message that actually arrived over the link is relayed to message_received unchanged")
+	link.free()
+
+
+func _test_backlog86_enet_transport_forwards_a_dropped_peer() -> void:
+	var link := NetLink.new()
+	var t := EnetTransport.new(link, true)
+	var got := {}
+	t.peer_left.connect(func(peer_id: int) -> void: got["id"] = peer_id)
+	link.peer_dropped.emit(9)
+	_expect(got.get("id") == 9, "a peer dropping on the link is forwarded as Transport.peer_left with the same id")
+	link.free()
+
+
+func _test_backlog86_enet_transport_forwards_the_host_going_away() -> void:
+	var link := NetLink.new()
+	var t := EnetTransport.new(link, false)
+	var got := {}
+	t.server_lost.connect(func() -> void: got["fired"] = true)
+	link.host_dropped.emit()
+	_expect(got.get("fired") == true, "the host disconnecting on the link is forwarded as Transport.server_lost")
+	link.free()
 
 
 func _expect(cond: bool, name: String) -> void:

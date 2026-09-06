@@ -2592,6 +2592,40 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-06** — #86 duty 3 (verify a mechanic actually works), thirty-seventh
+  pass. Last commit (`8c84bc8`, the meld defensive-stacks fx fix) was duty 2, so
+  this turn was duty 3. Checked #87/#88 (both `needs a screen`) and #85 (a
+  design call for Nick) first — nothing actionable above the rotation. Grepped
+  `run_tests.gd` for every class name under `game/net` and `game/session`:
+  `LocalTransport` had 19 mentions, `GameClient` 63, but `EnetTransport` and
+  `NetLink` had zero — the actual multiplayer transport CLAUDE.md's build order
+  names as step 3 ("two-player online co-op on PC") had never been touched by
+  the suite at all. `enet_transport.gd`'s own doc comments claim two loopback
+  shortcuts (the host's own local client's command "skips the wire" going out;
+  peer 1's message "is delivered locally" coming back) plus two passthrough
+  mappings for a real remote peer's traffic arriving over `NetLink`. All four
+  are provable with no socket: a `NetLink` never added to a `SceneTree` never
+  runs `_ready()` (the only place it touches the live `multiplayer` singleton),
+  so its four signals can be emitted directly to fake "traffic arrived" without
+  a real ENet connection, and the two loopback branches never call into the
+  link at all. Deliberately NOT tested: `send_command` as a real client and
+  `send_to` a real remote peer, both of which end in `.rpc_id()` and need an
+  actual `ENetMultiplayerPeer` — that's what `tools/net_smoke.gd` is for, not a
+  headless unit test. First pass at the six tests all failed with no error
+  printed — turned out to be a real GDScript gotcha, not a bug in the code
+  under test: lambdas capture outer locals BY VALUE, so `var got_peer := -1`
+  assigned to from inside a `.connect(func(...))` callback never updates the
+  outer copy. Fixed by capturing a shared Dictionary and mutating its contents
+  instead (the same `got[0] = x`-shaped workaround `_test_backlog86_hit_circle_*`
+  already uses one array-slot at a time). Verified the tests actually bite by
+  temporarily forcing `send_command`'s `if _is_server:` to `if false:` and
+  confirming the affected test failed, then reverted. Also had to add
+  `link.free()` at the end of each test — a `NetLink` is a `Node`, not
+  `RefCounted`, and six of them going out of scope unfreed turned into "19
+  ObjectDB instances leaked at exit" that the baseline run doesn't have.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1).
+  Next `#86` turn is duty 1 (improve an asset).
+
 - **2026-09-06** — #86 duty 2 (find an error and resolve it). Last commit
   (`39e8ea2`, relic icon) was duty 1, so this turn was duty 2. This rotation
   has already fixed the "GameHost's fx dict grew a field, CardView.face_text()
