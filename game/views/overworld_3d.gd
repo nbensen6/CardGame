@@ -328,7 +328,7 @@ func _add_ribbon_mesh(mesh: ImmediateMesh, color: Color) -> void:
 	_field.add_child(mi)
 
 
-func _hex_x(hex_col: int, hex_row: int) -> float:
+static func _hex_x(hex_col: int, hex_row: int) -> float:
 	# odd hex rows are offset half a tile — that's what makes it a hex grid
 	return (hex_col * 0.5 + (0.25 if absi(hex_row) % 2 == 1 else 0.0)) * HEX_W * 2.0
 
@@ -451,11 +451,19 @@ func _place_avatar(s: Dictionary, cur_row: int, cur_col: int) -> void:
 ## at the mouth of this region with its first row ahead of you.
 func _stand_at(cur_row: int, cur_col: int) -> Vector3:
 	var rows: Array = _client.shared.get("map", {}).get("rows", [])
-	if cur_row < 0 or not _row_in_act(rows, cur_row):
+	return stand_at(rows, _act, cur_row, cur_col)
+
+
+## Pure form of the above: takes the map's rows and the drawn act explicitly
+## instead of reading `_client.shared` and `_act` off the live scene, so
+## run_tests.gd can prove the trailhead/on-node split headless, with no map
+## loaded. #86 duty 3.
+static func stand_at(rows: Array, act: int, cur_row: int, cur_col: int) -> Vector3:
+	if cur_row < 0 or not row_in_act(rows, cur_row, act):
 		return Vector3(0.0, TILE_TOP, ROW_STEP * 1.6)
 	var act_index := 0
 	for r in range(rows.size()):
-		if int((rows[r] as Array)[0].get("act", 0)) == _act:
+		if int((rows[r] as Array)[0].get("act", 0)) == act:
 			if r == cur_row:
 				break
 			act_index += 1

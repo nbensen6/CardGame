@@ -2592,6 +2592,28 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-06** — #86 duty 3 (verify a mechanic actually works). Last commit
+  (`74d8361`, the roped-ally lift fix) was duty 2, so this turn was duty 3.
+  Went looking in the view layer, since /core's climb rules are already
+  covered heavily and this rotation has now put 36 passes into combat_3d,
+  location_3d, overworld_3d and friends. Found `overworld_3d._stand_at` —
+  the function that places the party's avatar on the overworld hex map —
+  had zero coverage of its own, even though its two gating siblings
+  (`_act_ahead`, `row_in_act`, both from earlier passes) exist specifically
+  to steer it away from the Titan-boundary bug they were written to catch.
+  Nothing had ever proven that a correct trailhead/in-act verdict actually
+  turns into the right on-screen position: the act-index counting loop (how
+  many rows of THIS act come before the one stood on, skipping rows that
+  belong to other acts) and the row-width hex-centering math were both
+  untested. Lifted the body to a static `stand_at(rows, act, cur_row,
+  cur_col)` (and made the trivial `_hex_x` helper static too, since it has
+  no instance state), added 5 tests: the no-rows-at-all and
+  before-the-first-step trailhead cases, the previous-act's-Titan trailhead
+  case, first-row hex centering, and — the one that would have caught a real
+  miscount — an act-index test with an unrelated act's row mixed into the
+  map ahead of the rows that matter. All green;
+  `res://tools/run_tests.gd` prints ALL TESTS PASSED.
+
 - **2026-09-06** — #86 duty 2 (find an error and resolve it). Last commit
   (`3af8131`) was duty 1, so this turn was duty 2 per the 1→2→3→1 rotation.
   `_lift_roped_ally` (the "roped together" / Mountain Climbers passive) only

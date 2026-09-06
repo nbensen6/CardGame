@@ -651,6 +651,15 @@ func _init() -> void:
 	_test_backlog86_row_in_act_is_true_mid_act()
 	_test_backlog86_row_in_act_is_false_standing_on_the_previous_acts_titan()
 	_test_backlog86_row_in_act_is_true_on_the_first_row_of_a_new_act()
+	# backlog #86 duty 3 (thirty-seventh pass): stand_at, lifted out of
+	# overworld_3d._stand_at, is the function row_in_act and _act_ahead exist to
+	# gate -- it places the party's avatar on the hex map -- and had zero
+	# coverage of its own despite being the one Nick would actually see break.
+	_test_backlog86_stand_at_is_the_trailhead_with_no_rows_at_all()
+	_test_backlog86_stand_at_is_the_trailhead_before_the_first_step()
+	_test_backlog86_stand_at_is_the_trailhead_on_the_previous_acts_titan()
+	_test_backlog86_stand_at_centres_the_first_row_of_the_act_on_the_hex_grid()
+	_test_backlog86_stand_at_counts_act_index_from_rows_of_other_acts_too()
 	# backlog #86 duty 3 (twenty-fourth pass): intent_text_for, lifted out of
 	# combat_3d._intent_text, the boss telegraph a player reads to decide how
 	# to react. Writing this test found two move types combat.gd actually
@@ -9644,6 +9653,54 @@ func _test_backlog86_row_in_act_is_false_standing_on_the_previous_acts_titan() -
 func _test_backlog86_row_in_act_is_true_on_the_first_row_of_a_new_act() -> void:
 	var rows: Array = [_act_row(0), _act_row(0), _act_row(1)]
 	_expect(Overworld3D.row_in_act(rows, 2, 1), "the first row of the new act belongs to the act now drawn")
+
+
+## backlog #86 duty 3 (thirty-seventh pass) -- stand_at, lifted out of
+## overworld_3d._stand_at, is the function _act_ahead and row_in_act exist to
+## gate: where the party's avatar actually sits on the hex map. Both of its
+## siblings were covered already, but nothing had ever proven that a correct
+## trailhead/in-act verdict actually turns into the right position -- the
+## act-index counting loop and the row-width centering math had zero coverage
+## of their own.
+func _row_of(act: int, size: int) -> Array:
+	var row: Array = []
+	for i in range(size):
+		row.append({"act": act})
+	return row
+
+
+func _test_backlog86_stand_at_is_the_trailhead_with_no_rows_at_all() -> void:
+	var pos: Vector3 = Overworld3D.stand_at([], 0, 0, 0)
+	_expect(pos == Vector3(0.0, Overworld3D.TILE_TOP, Overworld3D.ROW_STEP * 1.6), "no map rows at all sends the avatar to the trailhead rather than indexing an empty array")
+
+
+func _test_backlog86_stand_at_is_the_trailhead_before_the_first_step() -> void:
+	var rows: Array = [_row_of(0, 2)]
+	var pos: Vector3 = Overworld3D.stand_at(rows, 0, -1, 0)
+	_expect(pos == Vector3(0.0, Overworld3D.TILE_TOP, Overworld3D.ROW_STEP * 1.6), "cur_row -1, before the run has started, is the trailhead regardless of what the map holds")
+
+
+func _test_backlog86_stand_at_is_the_trailhead_on_the_previous_acts_titan() -> void:
+	# Row 1 is act 0's Titan; row 2 opens act 1, which is what's drawn. Standing
+	# on row 1 must land at the trailhead, not be indexed into act 1's geometry.
+	var rows: Array = [_row_of(0, 2), _row_of(0, 2), _row_of(1, 2)]
+	var pos: Vector3 = Overworld3D.stand_at(rows, 1, 1, 0)
+	_expect(pos == Vector3(0.0, Overworld3D.TILE_TOP, Overworld3D.ROW_STEP * 1.6), "standing on the act just finished, the avatar is placed at the mouth of the new region, not on the old act's geometry")
+
+
+func _test_backlog86_stand_at_centres_the_first_row_of_the_act_on_the_hex_grid() -> void:
+	var rows: Array = [_row_of(0, 2), _row_of(0, 2)]
+	var pos: Vector3 = Overworld3D.stand_at(rows, 0, 0, 0)
+	_expect(pos == Vector3(-1.0, Overworld3D.TILE_TOP, 0.0), "the first column of a two-wide first row sits one hex left of centre, on row 0 of the grid")
+
+
+func _test_backlog86_stand_at_counts_act_index_from_rows_of_other_acts_too() -> void:
+	# Row 0 belongs to a different act entirely. The act-index count that turns
+	# into hex_row must skip it rather than mis-counting -- it walks every row
+	# of the MAP, not every row of the act.
+	var rows: Array = [_row_of(1, 2), _row_of(0, 2), _row_of(0, 2)]
+	var pos: Vector3 = Overworld3D.stand_at(rows, 0, 2, 0)
+	_expect(pos == Vector3(-1.0, Overworld3D.TILE_TOP, -2.0 * Overworld3D.ROW_STEP), "the act-index used for hex_row counts only rows that belong to the act being drawn, skipping the unrelated row ahead of them")
 
 
 ## backlog #86 duty 3 (twenty-fourth pass) -- combat_3d.intent_text_for is the
