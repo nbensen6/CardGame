@@ -404,6 +404,10 @@ func _init() -> void:
 	_test_roped_ally_climbs_only_once_per_play()
 	_test_roped_ally_climbs_from_a_potion()
 	_test_roped_ally_climbs_from_a_jetpack()
+	_test_roped_ally_climbs_when_lifted_by_ally_grip()
+	_test_roped_ally_climbs_when_launched_by_catapult()
+	_test_roped_ally_climbs_when_pulled_by_grapple_arm()
+	_test_roped_ally_climbs_when_fed_by_poison_lift()
 	_test_character_attack_bonus()
 	_test_build_creates_grapple()
 	_test_belay_scales_with_height()
@@ -6832,6 +6836,49 @@ func _test_roped_ally_climbs_from_a_jetpack() -> void:
 	combat.end_turn(1)  # round turns over -> jetpack fires at next turn's start
 	_expect(combat.players[0].foothold == 4 and combat.players[1].foothold == 1,
 		"roped: a fired Jetpack lifts the drinker AND the ally, same as a climbing card")
+
+
+## #86 duty 2 continued — the four tests above all put ally_climb on the ACTING
+## hunter and had that hunter do their own climbing. _lift_roped_ally was only ever
+## called from the acting player's own side (`_lift_roped_ally(pi, ...)`), so a card
+## that lifts the OTHER player directly (ally_grip, sac_ally_grip, pull_ally,
+## poison_lift) never checked whether the hunter it just lifted is themselves the
+## Mountain Climber. Each test below puts ally_climb on player 1, the one being
+## lifted, so player 1's own rise is what must rope player 0 back.
+func _test_roped_ally_climbs_when_lifted_by_ally_grip() -> void:
+	var combat := _new_combat_p([_deck_of(_vine, 10), _deck_of(_slash, 10)], 42,
+		_dummy_boss(200), [{}, {"type": "ally_climb", "value": 1}])
+	combat.play_card(0, _first_playable(combat, 0))  # Vine: self +1, ally +2 -- the ally is the one roped
+	_expect(combat.players[0].foothold == 2 and combat.players[1].foothold == 2,
+		"roped: ally_grip lifting the ally still ropes back when the ALLY is the Mountain Climber")
+
+
+func _test_roped_ally_climbs_when_launched_by_catapult() -> void:
+	var combat := _new_combat_p([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42,
+		_dummy_boss(200), [{}, {"type": "ally_climb", "value": 1}])
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_catapult(), _slash()]  # play 0, sacrifice 1
+	ps.energy = 3
+	combat.play_card(0, 0, true, 1, -1)  # Catapult launches the ally +2
+	_expect(combat.players[0].foothold == 1 and combat.players[1].foothold == 2,
+		"roped: Catapult launching the ally still ropes back when the ALLY is the Mountain Climber")
+
+
+func _test_roped_ally_climbs_when_pulled_by_grapple_arm() -> void:
+	var combat := _new_combat_p([_deck_of(_grapple_arm, 10), _deck_of(_slash, 10)], 42,
+		_dummy_boss(200), [{}, {"type": "ally_climb", "value": 1}])
+	combat.players[0].foothold = 3  # something up here for the ally to be pulled to
+	combat.play_card(0, _first_playable(combat, 0))  # Grappling Arm pulls the ally up to Height 3
+	_expect(combat.players[0].foothold == 4 and combat.players[1].foothold == 3,
+		"roped: pull_ally pulling the ally up still ropes back when the ALLY is the Mountain Climber")
+
+
+func _test_roped_ally_climbs_when_fed_by_poison_lift() -> void:
+	var combat := _new_combat_p([_deck_of(_venom_dart, 10), _deck_of(_slash, 10)], 42,
+		_dummy_boss(200), [{"type": "poison_lift", "value": 2}, {"type": "ally_climb", "value": 1}])
+	combat.play_card(0, _first_playable(combat, 0))  # Venom Dart Poisons -- Vine-Weaver's vines feed the ally +2
+	_expect(combat.players[0].foothold == 1 and combat.players[1].foothold == 2,
+		"roped: poison_lift feeding the ally still ropes back when the ALLY is the Mountain Climber")
 
 
 func _test_character_attack_bonus() -> void:

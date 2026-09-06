@@ -177,10 +177,12 @@ func ally_index(pi: int) -> int:
 
 ## "Roped together" (ally_climb, Mountain Climbers' passive) lifts the ally by the
 ## same amount whenever THIS hunter's own foothold rises, from ANY source — a played
-## card, a climb potion, or a fired Jetpack. Shared here (backlog #86 duty 2)
-## because the three call sites had drifted: only play_card ever checked
-## ps.ally_climb, so a Mountain Climbers hunter who climbed via potion or Jetpack
-## silently left their roped ally behind.
+## card, a climb potion, a fired Jetpack, or another card lifting THEM directly
+## (ally_grip/sac_ally_grip/pull_ally/poison_lift). Called from `pi`'s own side after
+## every foothold-raising event, whichever side of the play caused it, so it also
+## catches a Mountain Climbers hunter being climbed BY their ally rather than
+## climbing themselves — a card like Hoist (pure ally_grip) used to leave them
+## behind because only the acting player's own climb was ever checked (#86 duty 2).
 func _lift_roped_ally(pi: int, foothold_before: int) -> void:
 	var ps: PlayerState = players[pi]
 	if ps.foothold > foothold_before and ps.ally_climb > 0:
@@ -750,8 +752,10 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 			_log("%s plays %s — Poison %d on %s." % [who, card.name, boss.wound, boss.name])
 			if ps.poison_lift > 0:  # Vine-Weaver: the vines feed on the poison and lift the ally
 				var fed_ally: PlayerState = players[ally_index(pi)]
+				var fed_ally_before := fed_ally.foothold
 				fed_ally.foothold = mini(fed_ally.foothold + ps.poison_lift, FOOTHOLD_MAX)
 				_log("%s's vines surge — %s climbs +%d." % [who, fed_ally.combatant.name, ps.poison_lift])
+				_lift_roped_ally(ally_index(pi), fed_ally_before)  # the lifted ally might themselves be roped (#86 duty 2)
 	if card.frail > 0:  # Frail on the Titan — reduces the Block it gains (backlog #36)
 		_apply_frail(boss, card.frail)
 	if card.thorns > 0:  # Thorns on the player — reflects a landed boss attack (backlog #36)
@@ -791,8 +795,10 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	_lift_roped_ally(pi, foothold_before_climb)  # roped together — the ally climbs with you, from any climb source (#86 duty 2)
 	if card.ally_grip > 0:  # vines/ropes that lift the ally up the beast
 		var lifted: PlayerState = players[ally_index(pi)]
+		var lifted_before := lifted.foothold
 		lifted.foothold = mini(lifted.foothold + card.ally_grip, FOOTHOLD_MAX)
 		_log("%s plays %s — lifts %s (+%d Height, now %d)." % [who, card.name, lifted.combatant.name, card.ally_grip, lifted.foothold])
+		_lift_roped_ally(ally_index(pi), lifted_before)  # the lifted ally might themselves be roped (#86 duty 2)
 	if card.create != "":
 		var built := Content.make_card(card.create)
 		ps.hand.append(built)
@@ -808,8 +814,10 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 				_log("%s makes %s cost %d less this fight." % [who, cheapen_card.name, card.cheapen_amount])
 			if card.sac_ally_grip > 0:  # Catapult: launch the ally up
 				var launched: PlayerState = players[ally_index(pi)]
+				var launched_before := launched.foothold
 				launched.foothold = mini(launched.foothold + card.sac_ally_grip, FOOTHOLD_MAX)
 				_log("%s catapults %s up (+%d Height, now %d)." % [who, launched.combatant.name, card.sac_ally_grip, launched.foothold])
+				_lift_roped_ally(ally_index(pi), launched_before)  # the launched ally might themselves be roped (#86 duty 2)
 		else:
 			_log("%s plays %s — but sacrifices nothing." % [who, card.name])
 	if card.meld:  # fuse two chosen cards into one combined card
@@ -825,8 +833,10 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		var yanked: PlayerState = players[ally_index(pi)]
 		var gap := ps.foothold - yanked.foothold
 		if gap > 0 and gap <= card.pull_ally:
+			var yanked_before := yanked.foothold
 			yanked.foothold = ps.foothold
 			_log("%s grapples %s up to Height %d." % [who, yanked.combatant.name, ps.foothold])
+			_lift_roped_ally(ally_index(pi), yanked_before)  # the yanked ally might themselves be roped (#86 duty 2)
 		else:
 			_log("%s plays %s — no ally in grapple range." % [who, card.name])
 	if card.prepare != "":  # arm a delayed effect (resolves at the start of your next turn)
@@ -1613,8 +1623,10 @@ func _handle_power_effects(ctx: Dictionary) -> void:
 					_log("%s's %s triggers — Poison %d on %s." % [ps.combatant.name, pname, boss.wound, boss.name])
 					if ps.poison_lift > 0:  # Vine-Weaver: the vines feed on the poison and lift the ally (same rule play_card's Poison branch applies)
 						var fed_ally: PlayerState = players[ally_index(pi)]
+						var fed_ally_before := fed_ally.foothold
 						fed_ally.foothold = mini(fed_ally.foothold + ps.poison_lift, FOOTHOLD_MAX)
 						_log("%s's vines surge — %s climbs +%d." % [ps.combatant.name, fed_ally.combatant.name, ps.poison_lift])
+						_lift_roped_ally(ally_index(pi), fed_ally_before)  # the lifted ally might themselves be roped (#86 duty 2)
 			"vulnerable":
 				if boss.try_block_debuff():
 					_log("%s's Artifact wards off %s's Expose." % [boss.name, ps.combatant.name])

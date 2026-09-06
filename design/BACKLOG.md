@@ -2592,6 +2592,33 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-06** — #86 duty 2 (find an error and resolve it). Last commit
+  (`3af8131`) was duty 1, so this turn was duty 2 per the 1→2→3→1 rotation.
+  `_lift_roped_ally` (the "roped together" / Mountain Climbers passive) only
+  ever checked roping from the ACTING hunter's own side —
+  `_lift_roped_ally(pi, foothold_before)` fires after a hunter's own climb,
+  a climb potion, or a fired Jetpack. But four other spots raise the OTHER
+  player's foothold directly and never asked whether *that* player is the
+  one roped to an ally: `ally_grip` (Vine, Hoist, ...), `sac_ally_grip`
+  (Catapult), `pull_ally` (Grappling Arm), and `poison_lift`
+  (Vine-Weaver's passive, both in `play_card`'s own Poison branch and in
+  `_handle_power_effects`'s relic-triggered copy). Concretely: a Mountain
+  Climbers hunter lifted by their ally's Hoist climbed on their own, alone
+  — the ally who did the lifting never climbed with them, exactly the
+  "checked at some call sites, not others" shape the potion/Jetpack fix
+  already patched from the other direction. Same "first find the shape,
+  then check every site that shape applies to" lesson as that earlier fix,
+  just one layer further out — an Explore agent surfaced the gap by
+  re-reading `_lift_roped_ally`'s own doc comment against every mutation of
+  `.foothold` in `combat.gd`, not from a test failing.
+  Fixed by sampling the lifted player's foothold before each of those five
+  mutations and calling `_lift_roped_ally(ally_index(pi), before)` right
+  after — the same helper, just invoked from the receiving side too.
+  Wrote 4 new regression tests (`ally_grip`, Catapult, Grappling Arm,
+  poison_lift, each with `ally_climb` on the LIFTED player rather than the
+  actor, unlike the four existing roped-ally tests) — confirmed all four
+  fail red on the pre-fix code (reverted `combat.gd` via `git stash`,
+  reran, restored) before shipping green.
 - **2026-09-06** — #86 duty 1 (improve an asset — portraits/icons only). Last
   three turns were duty 3 (`dcfbc95`), duty 3 again (`2fa1b0a`, framing
   applies once "duty 3" and "duty 2 came back empty, did duty 3 instead"
