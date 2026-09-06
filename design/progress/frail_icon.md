@@ -197,6 +197,108 @@ split — a further asymmetry, not attempted here since neither named line
 asked for it and item 86's own loop caps a fix at the two lowest-scoring
 lines per pass.
 
+## Pass 3 — cloud, backlog #86 duty 1 (third pass)
+
+Picked back up as the lowest-scoring un-plateaued icon with real budget left
+(38/50, tied with `rhythm_icon`/`shield_icon` but the only one of the three
+with a concrete next fix already named in its own file — pass 2's own
+"Unsure about" note above). Tied-lowest lines after pass 2: **Family
+distinction (7)** and **Mechanic match (7)**.
+
+Applied both named lines, in-lane (`tools/blender/icons.py` only, no palette
+edit, no budget or shared constant moved):
+
+1. **Family distinction (7).** Pulled both halves 0.03 toward the centre
+   (left half's three shapes from `x=-0.20` to `x=-0.17`; right half's five
+   shapes from `x=0.22`/`0.14`/`0.27`/`0.19` to `x=0.19`/`0.11`/`0.24`/`0.16`,
+   same relative offsets preserved) so the gap between them narrows rather
+   than sitting as two clearly separate objects. The crack shards (unmoved,
+   already centred near `x=0.0`) now bridge a tighter span.
+2. **Mechanic match (7).** Pass 2's own "Unsure about" named this exact fix:
+   the left half's point was still a fully clean taper (`spike` with
+   `r1=0.02`, `length=0.34`) — a complete miniature shield in its own right.
+   Blunted it short (`r1` raised to `0.05`, `length` cut to `0.24`, same
+   base position and angle) and added one small STEEL `slabf` shard
+   (`(-0.11, -0.42, 0.09, 0.10)`, `rot=0.45`) below-right of the new blunt
+   tip — a single fallen piece, not the right half's three-shard cluster, so
+   the asymmetry pass 2 established (one half closer to whole, one half
+   closer to shattered) survives rather than collapsing into a mirrored pair.
+
+Rebuilt with `blender --background --python tools/blender/icons.py --
+/tmp/icons_out` (apt-installed Blender 4.0.2, headless EGL —
+`download.blender.org` still unreachable through this container's proxy;
+needed `apt-get install python3-numpy libegl1 libgles2` first, the exporter's
+`ModuleNotFoundError: No module named 'numpy'` and EGL library errors prior
+passes on other icons also hit). Console: `TRIS 560 PARTS 6 BUDGET 700 ok`,
+no warnings. Diffed all 36 icons against the committed set with a pure-Pillow
+per-pixel mean/max (no render noise this run — every untouched icon came back
+bit-identical, mean 0.0000/max 0, unlike the WORKBENCH-noise band earlier
+passes on other icons had to filter out): only `frail.png` changed, mean
+16.02/max 255. Kept only that file.
+
+Composited the new PNG over the flat brown card-face standin
+`RGB(139,105,74)` and looked at it three ways: the full 256px composite
+(`design/renders/frail_icon_pass3_full.png`), a real 42px `LANCZOS`
+downsample nearest-neighbour upscaled for viewing
+(`design/renders/frail_icon_pass3_42px_big.png`), and a pure black-on-white
+alpha silhouette (`design/renders/frail_icon_pass3_sil.png`), each read
+beside the pass-2 versions rather than from memory. Also pixel-scanned rows
+across the gap region directly (not just eyeballed): at `y=60..150` (the
+main body height) there is now zero background pixel between the two
+halves across `x=80..180` — they touch — while the CHARCOAL crack still
+renders visibly over the seam in every view, so the "broken" read survives
+the halves reading as one silhouette rather than two. A 3x zoom crop on the
+left half's new blunt tip and shard
+(`/tmp/frail_leftpoint_zoom.png`, not committed — a scratch check) confirmed
+the tip reads as a short, cut-off wedge with a separate fallen piece below
+it, not a rendering artefact.
+
+- **Family distinction (7 → 9):** the silhouette crop shows one continuous
+  blob at the top with a shallow notch at the seam, not two separate kite
+  outlines — confirmed by the zero-gap pixel scan above, not assumed from
+  the script. Not a 10: it is still visibly two different body colours
+  (STEEL/NAVY) meeting at a crack, which is correct for Frail but keeps this
+  short of a single unbroken silhouette.
+- **Mechanic match (7 → 8):** both halves now show damage — the right half's
+  jagged rubble (pass 2) and the left half's blunted tip plus its own fallen
+  shard (this pass) — instead of one whole miniature shield next to one
+  broken one. Not higher: the left half's top is still a fully intact
+  rounded slab, so the asymmetry pass 2 established (one half closer to
+  whole) is weaker but still present, not eliminated.
+- **Silhouette @ 42px (8, unchanged):** confirmed directly in the 42px
+  render — both halves, the crack, and all the rubble (old and new) stay
+  distinct at the downsample; narrowing the gap didn't fuse anything into a
+  smudge.
+- **Colour & contrast (8, unchanged):** this pass touched no palette; the
+  moved shapes kept their existing STEEL/NAVY/SILVER assignments.
+- **Style consistency (8, unchanged):** the new shard reuses `slabf`,
+  already this icon's own vocabulary for the crack and the right half's
+  rubble; the blunted spike is the same primitive with different
+  parameters, not a new construction.
+
+**+3 total (38 → 41), not a plateau — crosses the loop's 40/50 stop line —
+kept.** No line regressed. Third pass; stopping here per the loop's own stop
+condition rather than spending the fourth.
+
+`run_tests.gd`: **ALL TESTS PASSED** (fresh import, headless, Godot 4.7.1 —
+this pass touches only `tools/blender/icons.py` and the regenerated
+`frail.png`, no `game/**` GDScript).
+
+## Unsure about (pass 3)
+
+Whether narrowing the gap enough to reach zero background pixels between
+the halves risks reading, at a real hand-card size well under the 42px
+downsample used here, as one intact shield with a paint-on crack rather
+than two separate pieces — the crack colour and the rubble both still carry
+the "broken" read at 42px and above, but a smaller size than that wasn't
+checked, and this pass's own render environment (apt Blender 4.0.2,
+bit-identical diffs against every untouched icon this run) can't stand in
+for a real card-hand look. Also unsure whether the left half's fallen shard,
+being singular against the right half's three, reads as an intentional
+asymmetry or as "the fixer forgot one" without the two halves' history
+being known — a risk pass 2 already flagged for its own asymmetric split and
+not newly introduced here.
+
 ## Batch 22 close-out — all thirty-six card icons scored
 
 With `burn`, `stack`, `light` and `frail`, every icon named across

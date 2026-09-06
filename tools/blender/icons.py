@@ -729,9 +729,23 @@ def frail(i):                # Block gained is reduced while this is stacked
     # `plated_armour` are all a single intact silhouette, so a split shield
     # with a jagged crack bridging the gap and a chip already fallen free
     # reads as "weakened" rather than "protected" even at card size.
-    i.slabf(-0.20, 0.20, 0.24, 0.30, STEEL, bevel=0.045, rot=-0.12)
-    i.spike(-0.20, -0.16, 0.24, 0.02, 0.34, STEEL, ang=math.pi - 0.20, seg=4)
-    i.slabf(-0.20, 0.44, 0.24, 0.05, SILVER, rot=-0.12)
+    #
+    # Pass 3 (backlog #86 duty 1) narrows the gap between the two halves
+    # (each pulled 0.03 toward the centre) so the pair reads as ONE kite
+    # silhouette split by a crack rather than two separate shapes sitting
+    # side by side -- frail_icon.md pass 2's own tied-lowest Family line.
+    i.slabf(-0.17, 0.20, 0.24, 0.30, STEEL, bevel=0.045, rot=-0.12)
+    # The left half's point used to taper cleanly to a tip -- a fully
+    # intact miniature shield in its own right, per pass 2's own "Not
+    # higher" note on Mechanic match. Blunted the tip short (r1 raised,
+    # length cut) and dropped one small broken-off STEEL shard below it,
+    # so the left half also reads as "missing a piece" instead of whole --
+    # smaller and singular next to the right half's three-shard rubble, so
+    # the asymmetry pass 2 established (one more-whole half, one more-
+    # broken half) survives rather than becoming a mirrored pair again.
+    i.spike(-0.17, -0.14, 0.22, 0.05, 0.24, STEEL, ang=math.pi - 0.20, seg=4)
+    i.slabf(-0.11, -0.42, 0.09, 0.10, STEEL, rot=0.45, bevel=0.02)
+    i.slabf(-0.17, 0.44, 0.24, 0.05, SILVER, rot=-0.12)
     # The right half used to mirror the left exactly -- its own rounded top
     # and its own clean taper to a point -- so it read as a second, complete
     # miniature shield rather than half of one broken shield (frail_icon.md's
@@ -740,11 +754,11 @@ def frail(i):                # Block gained is reduced while this is stacked
     # instead of a point, and recoloured the whole half a cooler, darker
     # NAVY -- STEEL's near-zero red-channel gap against the warm card
     # standin was this icon's weakest measured contrast.
-    i.slabf(0.22, 0.10, 0.24, 0.28, NAVY, bevel=0.045, rot=0.16)
-    i.slabf(0.14, -0.24, 0.15, 0.16, NAVY, rot=0.62, bevel=0.02)
-    i.slabf(0.27, -0.34, 0.11, 0.15, NAVY, rot=-0.40, bevel=0.02)
-    i.slabf(0.19, -0.44, 0.09, 0.11, NAVY, rot=0.85, bevel=0.02)
-    i.slabf(0.22, 0.34, 0.24, 0.05, SILVER, rot=0.16)
+    i.slabf(0.19, 0.10, 0.24, 0.28, NAVY, bevel=0.045, rot=0.16)
+    i.slabf(0.11, -0.24, 0.15, 0.16, NAVY, rot=0.62, bevel=0.02)
+    i.slabf(0.24, -0.34, 0.11, 0.15, NAVY, rot=-0.40, bevel=0.02)
+    i.slabf(0.16, -0.44, 0.09, 0.11, NAVY, rot=0.85, bevel=0.02)
+    i.slabf(0.19, 0.34, 0.24, 0.05, SILVER, rot=0.16)
     for x, z, rot in [(0.0, 0.34, 0.30), (0.03, 0.14, -0.35),
                       (-0.02, -0.06, 0.35), (0.02, -0.26, -0.30)]:
         i.slabf(x, z, 0.028, 0.16, CHARCOAL, rot=rot, bevel=0.0)

@@ -2592,6 +2592,38 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-06** — #86 duty 1 (improve an asset — portraits/icons only),
+  thirty-ninth pass. Last commit (`7d24f0f`, the dev console tests) was duty
+  3, so this run was due for duty 1. Scanned every portrait's and icon's own
+  progress file for its current total: every portrait left under 40 diagnoses
+  its own next fix as beast-model geometry (out of this lane's scope, which
+  owns `portraits.py`/`icons.py` only), so picked from icons instead —
+  `frail_icon` (38/50, 2 of 4 passes used), tied lowest with `rhythm_icon`/
+  `shield_icon` but the only one of the three with a concrete next fix
+  already named in its own file (pass 2's own "Unsure about": push the left
+  half's point toward a smaller, less-complete shape). Tied-lowest lines:
+  Family distinction (7) and Mechanic match (7). Pulled the two shield halves
+  0.03 each toward the centre (narrows the "two separate objects" gap) and
+  blunted the left half's clean taper into a short stub plus one small fallen
+  shard (so both halves now show damage, not one whole + one broken).
+  Rebuilt with a freshly `apt-get install`ed Blender 4.0.2 (`blender` package
+  wasn't on this container yet; needed `python3-numpy`/`libegl1`/`libgles2`
+  too, the exporter's now-familiar `ModuleNotFoundError: numpy` otherwise).
+  Diffed all 36 icons against the committed set — this run's renderer came
+  back bit-identical on every untouched icon (mean 0.0000), so `frail.png`'s
+  mean-16.02 diff was unambiguous; kept only it. Looked at the full
+  composite, a real 42px Lanczos downsample, and the alpha silhouette side by
+  side with pass 2's own, plus a direct pixel scan across the seam
+  (`y=60..150` now has zero background gap between the halves, confirming
+  the silhouette reads as one shape) and a 3x zoom crop on the new left-side
+  chip. Family 7→9, Mechanic 7→8, total 38→41 — crosses the 40/50 stop line
+  on the third of four allowed passes; stopped there rather than spending the
+  fourth. Full per-line reasoning and the "Unsure about" notes are in
+  `design/progress/frail_icon.md`'s Pass 3 section. `run_tests.gd`: ALL TESTS
+  PASSED (fresh import, headless, godot 4.7.1 — this pass touches only
+  `tools/blender/icons.py`, one icon PNG, and its own progress file, no
+  `game/**` GDScript). Next `#86` turn is duty 2 (find an error and resolve
+  it).
 - **2026-09-06** — #86 duty 3 (thirty-eighth pass): verify a mechanic. Last
   commit (`21b0360`, the deck-preview fx fix) was duty 2, and the two before
   that ran duty 1 then duty 3, so this run was due for duty 3. Picked
