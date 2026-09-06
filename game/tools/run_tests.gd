@@ -83,6 +83,7 @@ func _init() -> void:
 	_test_backlog49_daily_run_saves_and_loads_the_flag()
 	_test_backlog49_host_can_start_a_shared_daily()
 	_test_backlog86_daily_host_ascension_matches_the_pinned_run()
+	_test_backlog86_restart_refreshes_unlocked_wins_after_a_win()
 	_test_run_walks_the_map()
 	_test_rest_node_heals_and_returns_to_map()
 	_test_event_choice_applies_effects()
@@ -1493,6 +1494,44 @@ func _test_backlog86_daily_host_ascension_matches_the_pinned_run() -> void:
 	host._broadcast_state()
 	_expect(Progress.unlocked_ascension() == Run.DAILY_ASCENSION + 1,
 		"winning a daily run only unlocks the tier just past DAILY_ASCENSION, never the stale menu-selected ascension")
+
+
+## Backlog #86 duty 2: `GameHost._unlocked_wins` is a snapshot of
+## `Progress.total_wins()` taken when the host was built (menu.gd) or a save
+## was resumed (`resume_run()` re-reads it) — but nothing refreshed it after a
+## live win. "Hunt again" on the won/lost screen (`location_3d.gd` ->
+## `GameClient.restart()` -> the host's "restart" command -> `start_new_run()`)
+## reuses the SAME host instance, so a win that crosses a content-unlock
+## threshold (backlog #42's `wins` gate on `Content.reward_pool()`/
+## `relic_pool()`) stayed locked for the very next run, even though
+## `Progress.record_win()` had already banked the new total to disk. Only
+## fully quitting to the menu (which reconstructs the host from `Progress`
+## fresh) picked it up.
+func _test_backlog86_restart_refreshes_unlocked_wins_after_a_win() -> void:
+	Progress.use_scratch_slot("run_tests_backlog86_restart_unlocked_wins")
+	var cfg := ConfigFile.new()
+	cfg.set_value(Progress.SECTION, "total_wins", 0)
+	cfg.save(Progress.path)
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 0, 2, true, 0, Progress.total_wins())  # solo, as if built fresh at 0 career wins
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	_expect(host._run.unlocked_wins() == 0,
+		"the first run is gated on the career total captured when the host was built")
+
+	host._run.phase = Run.Phase.WON
+	host._broadcast_state()  # records the win, banking Progress.total_wins() to 1
+	_expect(Progress.total_wins() == 1,
+		"the win is banked to the real, on-disk career total")
+
+	host.start_new_run()  # the exact call "Hunt again" -> restart triggers, same host
+	_expect(host._run.unlocked_wins() == 1,
+		"a same-session restart must re-read the just-updated career total, not replay " +
+		"the pre-win snapshot the host was constructed with, or newly unlocked content " +
+		"stays locked until the app restarts")
 
 
 func _test_run_walks_the_map() -> void:

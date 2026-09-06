@@ -945,6 +945,16 @@ func _note_progress() -> void:
 	_history_recorded = true  # broadcasts repeat on a finished run; the log must not
 	if _run.phase == Run.Phase.WON:
 		Progress.record_win(_ascension)
+		# backlog #86 duty 2: _unlocked_wins is a snapshot of Progress.total_wins()
+		# taken when the host was constructed (menu.gd) or a save was resumed —
+		# record_win() just bumped the real, on-disk total, but nothing re-read it
+		# back into this running host. "Hunt again" (location_3d.gd's button ->
+		# GameClient.restart() -> the "restart" command below -> start_new_run(),
+		# all on this SAME host instance) reuses _unlocked_wins as-is, so a win that
+		# crosses a content-unlock threshold stayed locked for the very next run
+		# until the player quit to the menu and relaunched, which is the only other
+		# place that reads Progress fresh.
+		_unlocked_wins = Progress.total_wins()
 	Progress.record_run(_run.history_entry())
 
 func _result_string() -> String:

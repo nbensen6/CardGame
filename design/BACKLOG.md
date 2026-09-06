@@ -2592,6 +2592,38 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-06** — #86 duty 2 (find an error and resolve it). Last `#86` turn
+  (`499b130`) was duty 1, so this was due for duty 2. Started down the wrong
+  path first: began a duty-1 portrait fix on `clot_toad` (a real left-edge
+  crop the earlier passes missed) before checking `design/BACKLOG.md`'s own
+  Log section against `git log`'s commit subjects, which don't all literally
+  say "#86 duty N" — `499b130`'s subject line doesn't, but the Log entry
+  below it does confirm it was duty 1. Reverted that work cleanly (nothing
+  committed) once the mismatch surfaced, rather than run two duties in one
+  turn or leave the rotation order broken for the next session to untangle.
+  For duty 2 itself: `GameHost._unlocked_wins` is a snapshot of
+  `Progress.total_wins()` taken when the host is built (`menu.gd`) or a save
+  is resumed (`resume_run()` re-reads it) — the same "two copies of one
+  truth" shape the ascension bug this rotation already fixed. Nothing
+  re-read it after a LIVE win: `_note_progress()` calls
+  `Progress.record_win()`, which banks the real total to disk, but
+  `_unlocked_wins` sat unchanged. "Hunt again" on the won/lost screen
+  (`location_3d.gd` -> `GameClient.restart()` -> the host's "restart"
+  command -> `start_new_run()`) reuses the SAME host instance, so a win that
+  crossed backlog #42's content-unlock threshold left that content locked
+  for the very next run — only fully quitting to the menu (which rebuilds
+  the host from `Progress` fresh) actually picked it up. Wrote
+  `_test_backlog86_restart_refreshes_unlocked_wins_after_a_win` first
+  (solo host built at 0 career wins, forces a win, asserts
+  `Progress.total_wins()` climbed, then calls `start_new_run()` directly —
+  the exact call "restart" makes — and asserts the new `Run`'s
+  `unlocked_wins()` reflects the bump), confirmed it fails without a fix
+  (temporarily stripped the one-line change, re-ran, watched this exact
+  test fail alone, restored it), then added `_unlocked_wins =
+  Progress.total_wins()` right after `record_win()` in `_note_progress()`.
+  `--import` then `run_tests.gd`: ALL TESTS PASSED (fresh import, headless,
+  Godot 4.7.1).
+
 - **2026-09-06** — #86 duty 1 (improve an asset — portrait). Last three turns
   were duty 1 (`78ccf44`), duty 2 (`6555553`), duty 3 (`dcfbc95`), so this one
   was due for duty 1. `download.blender.org` was unreachable this run (a
