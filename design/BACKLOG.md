@@ -9373,3 +9373,46 @@ Newest first. One line per finished item: what, and anything surprising.
   headless, godot 4.7.1 — this pass touches an icon PNG and a Blender
   build script only, no `game/**` GDScript). Next `#86` turn is duty 2
   (find an error and resolve it).
+- **2026-09-06** — #86 duty 2 (find an error and resolve it), reported
+  exhausted this turn; did duty 3 instead (verify a mechanic actually works).
+  Last `#86` turn (`e3e7924`) was duty 1, so this was due for duty 2. Spent the
+  whole turn hunting for the two named shapes (first-pass holes, two copies of
+  one truth) across `run.gd`, `run_map.gd`, `run_save.gd`, `boss.gd`, `card.gd`,
+  `player_state.gd`, `content.gd`, `progress.gd`, `combat.gd` end to end,
+  `game_host.gd`, `game_client.gd`, `net/*`, `menu.gd`, `overworld_3d.gd`,
+  `location_3d.gd`, `combat_3d.gd`, `deck_view.gd`, `hit_circle.gd`,
+  `console.gd`, `dev.gd`, `cast.gd`, `screen.gd`, `coach.gd`, plus a
+  cross-check of every relic/potion/enchant/keyword/move-type effect string in
+  `data/*.json` against the code that reads it (the exact shape that caught the
+  `_meld_cards` and `GOLD_UV` bugs before). Ran a dedicated search subagent over
+  the same two shapes in parallel (72 tool calls, ~250k tokens) — it also came
+  back with nothing new. Every match either shape's PATTERN turned up was
+  already fixed and self-documented ("backlog #86 duty 2" comments already on
+  it), or was a real gap already correctly deferred: the "adds" targeting UI
+  (queue #79, `needs a screen`) and the "wide"/`timing_zone` enchant never
+  reaching the client's zone_bonus (logged 2026-08-23 under #12, also
+  `needs a screen` — widening a window is a feel question nobody can judge
+  without looking). Found two genuinely loose threads NOT worth touching this
+  pass: `Boss.hold_exposed_to()` has a getter, a doc comment, and unit tests of
+  the getter itself, but no beast's data ever sets `exposed_to` and no combat
+  code ever reads it to change a fight — a fully wired mechanism with nothing
+  plugged into either end, which is a design call (what should standing on an
+  exposed hold actually do?) rather than a bug; and `RunMap._ensure_key_sources`
+  can convert ANY "fight" node system-wide into an elite/treasure/event,
+  including an act's row-0 node that `_roll_type`'s own comment promises
+  "eases in with a fight" — a real but low-probability pacing wrinkle, not a
+  crash or a contradicted save/data invariant, so also left for Nick rather
+  than guessed at. Per the rotation's own rule ("if a duty is genuinely
+  exhausted, take the next one"), moved to duty 3. Read `Combat._damage_boss()`
+  end to end and noticed it fires a Thorned beast's reflect AFTER
+  `boss.take_damage()`, in the same call `play_card()` uses to land the killing
+  blow — so a hunter finishing off a low-HP, high-Thorns beast can die to the
+  reflect in that exact play, both combatants dead from one action.
+  `_check_end()` and `result()` both happen to check `boss.is_dead()` before
+  scanning the players, so the tie always resolves as a WIN, and the two have
+  always agreed — but nothing had ever forced both deaths at once to ask.
+  Added `_test_boss_death_wins_a_tie_against_thorns_killing_the_attacker`
+  (6-HP boss with Thorns 10, a 5-HP attacker, one Slash) proving both are
+  registered dead and `result() == Result.WIN`. `run_tests.gd`: ALL TESTS
+  PASSED (fresh import, headless, godot 4.7.1). Next `#86` turn is duty 1
+  (improve an asset — portraits/icons only).

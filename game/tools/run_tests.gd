@@ -328,6 +328,7 @@ func _init() -> void:
 	_test_artifact_wards_off_a_power_triggered_poison_and_expose()
 	_test_thorns_reflects_a_landed_boss_attack()
 	_test_beast_thorns_reflects_card_damage_dealt_to_it()
+	_test_boss_death_wins_a_tie_against_thorns_killing_the_attacker()
 	_test_frail_artifact_thorns_persist_through_save()
 	_test_frail_artifact_thorns_reach_the_shared_snapshot()
 	_test_dexterity_intangible_buffer_plated_armour_reach_the_shared_snapshot()
@@ -5791,6 +5792,28 @@ func _test_beast_thorns_reflects_card_damage_dealt_to_it() -> void:
 	var hp0: int = combat.players[0].combatant.hp
 	combat.play_card(0, _first_playable(combat, 0))  # Slash deals card damage to the boss
 	_expect(combat.players[0].combatant.hp == hp0 - 2, "a Thorned beast bites back when a hunter's card lands on it")
+
+
+## _damage_boss() lands the killing blow on the boss, then (same function call,
+## same play_card()) the boss's own Thorns reflects onto the attacker — so a
+## hunter finishing off a Thorned beast can die to the reflect in that exact
+## play. Nothing before this ever forced BOTH combatants dead from one action:
+## _check_end() checks `boss.is_dead()` before scanning the players, and
+## result() reads the fields in that same order, so the two have always AGREED
+## with each other on the tie — but nothing proved it, because no test had ever
+## put both to death at once to ask. If either ever reordered its checks on its
+## own, this would start disagreeing with the other silently.
+func _test_boss_death_wins_a_tie_against_thorns_killing_the_attacker() -> void:
+	var boss := _dummy_boss(6)  # a single Slash (6 damage) kills it outright
+	boss.thorns = 10            # more than the attacker's own max HP
+	var players := [Combatant.new("A", 5), Combatant.new("B", 42)]
+	var combat := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)], players, boss, 42)
+	combat.start()
+	combat.play_card(0, _first_playable(combat, 0))
+	_expect(combat.boss.is_dead() and combat.players[0].combatant.is_dead(),
+		"the killing blow on the boss and the boss's own Thorns land in the same play")
+	_expect(combat.phase == Combat.Phase.OVER and combat.result() == Combat.Result.WIN,
+		"a simultaneous double death resolves as a WIN — _check_end() and result() both check the boss first")
 
 
 ## Mirrors #14/#15's own insistence on going through the real file (RunSave),
