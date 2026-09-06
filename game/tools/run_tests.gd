@@ -422,6 +422,7 @@ func _init() -> void:
 	_test_backlog45_retain_and_innate_keywords_reach_the_owners_hand()
 	_test_backlog86_steady_grip_fx_carries_dexterity_over_the_wire()
 	_test_backlog86_crippling_blow_fx_carries_frail_over_the_wire()
+	_test_backlog86_warm_glow_fx_carries_ally_heal_over_the_wire()
 	_test_backlog45_named_holds_cross_to_both_peers_identically()
 	_test_backlog45_graded_timing_quality_reaches_the_host_and_the_preview()
 	# backlog #46: a robustness sweep that is not balance tuning
@@ -569,6 +570,8 @@ func _init() -> void:
 	_test_backlog86_face_text_shows_light_gain_alongside_block_or_damage()
 	_test_backlog86_face_text_shows_ally_energy_alongside_another_effect()
 	_test_backlog86_face_text_shows_discard_alongside_draw_or_damage()
+	_test_backlog86_face_text_shows_ally_heal_alongside_another_effect()
+	_test_backlog86_face_text_shows_scry_alongside_another_effect()
 	_test_backlog86_face_text_burn_lines_are_mutually_exclusive()
 	_test_backlog86_face_text_falls_back_to_authored_text_with_no_preview()
 	_test_backlog86_face_text_falls_back_to_authored_text_when_nothing_landed()
@@ -6981,6 +6984,24 @@ func _test_backlog86_crippling_blow_fx_carries_frail_over_the_wire() -> void:
 		"Crippling Blow's fx dict carries its Frail to the owner's client, not just its damage")
 
 
+## backlog #86 duty 2 — same wiring gap, this time ally_heal: Warm Glow ("Heal
+## an ally 4. Gain 1 Light.") is a real shipped card, and its fx dict never
+## carried ally_heal at all (only its Light did), so the field was invisible
+## before it ever reached CardView.face_text — the wiring bug behind the
+## synthetic face_text tests above, same idiom as Steady Grip/Crippling Blow.
+func _test_backlog86_warm_glow_fx_carries_ally_heal_over_the_wire() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var warm_glow: Card = Content.make_card("warm_glow")
+	host._run.combat.players[0].hand.append(warm_glow)
+	host._broadcast_state()
+	var hand: Array = c0.private["hand"]
+	var mine: Dictionary = hand[hand.size() - 1]
+	_expect(String(mine["name"]) == warm_glow.name and int((mine["fx"] as Dictionary).get("ally_heal", 0)) == 4,
+		"Warm Glow's fx dict carries its ally_heal to the owner's client, not just its Light")
+
+
 ## Named holds (backlog #24) widened Boss.ledges from a bare int array to an
 ## optional Dictionary shape {height, safe, exposed_to}. Prove the richer
 ## shape crosses the snapshot boundary intact and IDENTICALLY to both peers
@@ -9070,6 +9091,50 @@ func _test_backlog86_face_text_shows_discard_alongside_draw_or_damage() -> void:
 		"keywords": [], "fx": {"discard": 1}}
 	_expect(CardView.face_text(cull, false) == "Deal 3 damage. Discard a card.",
 		"a card that deals damage AND discards states both on its live face, not just the damage")
+
+
+## backlog #86 duty 2 (find an error and resolve it) — the same "GameHost's fx
+## dict grew a field, face_text() never grew a matching branch" shape as
+## Frail/Thorns/Light/Discard above, this time for ally_heal (the
+## Lightbearer's Mend) and Scry. Both fields have carried through
+## Combat._meld_cards() correctly since an earlier duty-2 pass
+## (_test_meld_carries_light_and_deck_effects proves the CARD ends up with the
+## right numbers) but nothing had ever proven the FACE actually shows them —
+## and it didn't: game_host.gd's "fx" dict never included either key at all,
+## so a lone Warm Glow ("Heal an ally 4. Gain 1 Light.") had its heal line
+## eaten by its own Light line, and a melded Guiding Light + Harpoon or
+## Spark + Peer Ahead would silently drop the heal or the scry behind
+## whatever damage/Light line fired first.
+func _test_backlog86_face_text_shows_ally_heal_alongside_another_effect() -> void:
+	# Warm Glow: "Heal an ally 4. Gain 1 Light."
+	var warm_glow := {"preview": {"damage": 0}, "preview_miss": {}, "base": {},
+		"keywords": [], "fx": {"ally_heal": 4, "light_gain": 1}}
+	_expect(CardView.face_text(warm_glow, false) == "Heal an ally 4. Gain 1 Light.",
+		"a card healing the ally AND granting Light states both on its live face, not just the Light")
+	# Guiding Light melded with a real attack (Harpoon): the heal must survive
+	# alongside actual damage, not just alongside another utility line.
+	var melded := {"preview": {"damage": 8}, "preview_miss": {}, "base": {"damage": 8},
+		"keywords": [], "fx": {"ally_heal": 8}}
+	_expect(CardView.face_text(melded, false) == "Deal 8 damage. Heal an ally 8.",
+		"a melded card dealing damage AND healing the ally states both, not just the damage")
+
+
+func _test_backlog86_face_text_shows_scry_alongside_another_effect() -> void:
+	# Peer Ahead alone: now that Scry has its own branch, its live face reads
+	# "Scry 2." -- the same "keyword word + number" shorthand every other
+	# numeric fx field already uses (Poison/Expose/Frail/Thorns), rather than
+	# the old authored-text fallback it got by accident for having no OTHER
+	# fx field to trip over. The full explanation stays one tap away, same as
+	# every other keyword.
+	var alone := {"text": "Look at the top 2 cards of your draw pile. Bin any of them.",
+		"preview": {"damage": 0}, "preview_miss": {}, "base": {}, "keywords": [], "fx": {"scry": 2}}
+	_expect(CardView.face_text(alone, false) == "Scry 2.",
+		"Scry alone now reads via its own live-line branch, consistent with every other numeric fx field")
+	# A melded Spark + Peer Ahead: "Gain 2 Light." must not eat the Scry.
+	var spark_peer := {"preview": {"damage": 0}, "preview_miss": {}, "base": {},
+		"keywords": [], "fx": {"light_gain": 2, "scry": 2}}
+	_expect(CardView.face_text(spark_peer, false) == "Gain 2 Light. Scry 2.",
+		"a melded card granting Light AND Scry states both on its live face, not just the Light")
 
 
 func _test_backlog86_face_text_burn_lines_are_mutually_exclusive() -> void:

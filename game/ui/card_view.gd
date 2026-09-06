@@ -929,6 +929,18 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 		if ally_climb > 0:
 			out.append("Ally %ss %d." % [_kw("climb", "height", kw, rich), ally_climb])
 
+	# backlog #86 duty 2 — same shape as Dexterity/Frail/Thorns below: GameHost's
+	# "fx" dict never carried "ally_heal" (card.gd's name for the Lightbearer's
+	# Mend), so a card combining it with an already-handled effect showed only
+	# the other line and silently dropped the heal — a lone Warm Glow ("Heal an
+	# ally 4. Gain 1 Light.") hit this the moment its light_gain line fired
+	# first, and a melded Guiding Light + Harpoon (ally_heal 8, real damage from
+	# Harpoon) hides its entire heal behind "Deal 8 damage." _meld_cards() itself
+	# already carries ally_heal correctly (run_tests.gd's
+	# _test_meld_carries_light_and_deck_effects) — only the FACE never grew a
+	# branch for it.
+	if int(fx.get("ally_heal", 0)) > 0:
+		out.append("%s an ally %d." % [_kw("Heal", "mend", kw, rich), int(fx["ally_heal"])])
 	if int(fx.get("wound", 0)) > 0:
 		out.append("%s %d." % [_kw("Poison", "poison", kw, rich), int(fx["wound"])])
 	if int(fx.get("vulnerable", 0)) > 0:
@@ -1012,6 +1024,14 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 		var discard_n := int(fx["discard"])
 		out.append("%s %s." % [_kw("Discard", "discard", kw, rich),
 			"a card" if discard_n == 1 else "%d cards" % discard_n])
+	# backlog #86 duty 2 — same "fx never grew a branch" gap as ally_heal above,
+	# this time Scry: a lone Peer Ahead/Read The Climb never surfaces it (no
+	# other fx field is set, so `out` stays empty and the authored text wins),
+	# but a melded Spark + Peer Ahead (light_gain 2, scry 2) shows only "Gain 2
+	# Light." and drops the reveal entirely, even though the meld itself already
+	# carries scry correctly.
+	if int(fx.get("scry", 0)) > 0:
+		out.append("%s %d." % [_kw("Scry", "scry", kw, rich), int(fx["scry"])])
 	if String(fx.get("create", "")) != "":
 		out.append("Build a tool into your hand.")
 	if String(fx.get("prepare", "")) != "":

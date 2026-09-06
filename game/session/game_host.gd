@@ -607,6 +607,13 @@ func _slot_private(pi: int) -> Dictionary:
 					"hits": c.hits, "light_gain": c.light_gain, "ally_energy": c.ally_energy,
 					"discard": c.discard,
 					"power_effect": c.power_effect, "power_value": c.power_value,
+					# backlog #86 duty 2 — ally_heal (the Lightbearer's Mend) and scry
+					# were added to Card by backlog #47/#59 but never joined this
+					# hand-copied field list, so CardView.face_text() could never see
+					# either: a lone Warm Glow's live face dropped its heal the moment
+					# light_gain also fired, and a melded Spark + Peer Ahead dropped
+					# its scry behind the Light line.
+					"ally_heal": c.ally_heal, "scry": c.scry,
 				},
 				# The card's PRINTED values. The face compares live against these to
 				# know which numbers a buff or scaling changed, and highlights only
@@ -807,6 +814,10 @@ func _deck_face(c: Card, i: int) -> Dictionary:
 			"hits": c.hits, "light_gain": c.light_gain, "ally_energy": c.ally_energy,
 			"discard": c.discard,
 			"power_effect": c.power_effect, "power_value": c.power_value,
+			# backlog #86 duty 2 — same field-list drift as the hand dict above
+			# (_slot_private); kept in sync here since a deck-view card is built
+			# by this function, not that one.
+			"ally_heal": c.ally_heal, "scry": c.scry,
 		},
 	}
 

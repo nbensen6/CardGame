@@ -9454,3 +9454,40 @@ Newest first. One line per finished item: what, and anything surprising.
   per-line justifications and the "Unsure about" notes are in
   `design/progress/rope_icon.md`'s Pass 3 section. Next `#86` turn is duty
   2 (find an error and resolve it).
+- **2026-09-06** — #86 duty 2 (find an error and resolve it). Last `#86` turn
+  (`78ccf44`) was duty 1, so this was due for duty 2. Rather than re-sweeping
+  the same files an exhaustive pass already cleared two turns ago, checked the
+  files that sweep's own log never named: `combatant.gd` and `session.gd`
+  turned out clean (the former already carries an in-line fix from a prior
+  duty-2 pass; the latter is three static var assignments), then went looking
+  in `card_view.gd`'s `face_text()` — the live line a card's face shows in
+  hand — since that file already had five documented instances of the exact
+  same bug shape (a field lands on `Card`, `GameHost`'s hand-copied `fx` dict
+  never grows a matching key, `face_text()` never grows a matching branch) and
+  nothing had checked whether the fix generalised to every field or just the
+  five already caught. It didn't: `ally_heal` (the Lightbearer's Mend) and
+  `scry` were never in the `fx` dict at all, in EITHER of `game_host.gd`'s two
+  hand-copied builders (`_slot_private`'s hand cards and `_deck_face`'s deck
+  view), despite `Combat._meld_cards()` correctly carrying both since an
+  earlier duty-2 pass (`_test_meld_carries_light_and_deck_effects`) — that
+  test proved the CARD ends up with the right numbers after a meld, but
+  nothing had ever proven the FACE actually shows them, and it silently
+  didn't. Concretely: Warm Glow ("Heal an ally 4. Gain 1 Light.") had its heal
+  line eaten by its own Light line the moment `light_gain` populated `out`
+  first; a melded Guiding Light + Harpoon (real ally_heal 8, real damage from
+  Harpoon) would show "Deal 8 damage." and never mention the heal it actually
+  applies; a melded Spark + Peer Ahead would show "Gain 2 Light." and never
+  mention the Scry it actually runs. Fixed both `fx` dicts in `game_host.gd`
+  to include `ally_heal`/`scry`, and added matching branches to
+  `face_text()` in `card_view.gd`. Scry alone (Peer Ahead, Read The Climb) now
+  reads "Scry 2." via its own branch instead of falling back to the fuller
+  authored sentence by accident — a deliberate side effect, not a miss: every
+  other numeric fx field already renders as "Keyword N.", and Scry was the
+  only one still exempt only because nothing had wired it up yet. Wrote five
+  regression tests: two hand-built `CardView.face_text()` cases (ally_heal
+  alongside Light and alongside real damage; scry alone and alongside Light),
+  plus one end-to-end GameHost/GameClient wire test on the real Warm Glow card
+  (`_test_backlog86_warm_glow_fx_carries_ally_heal_over_the_wire`), matching
+  the existing Steady Grip/Crippling Blow wire-test idiom rather than trusting
+  a hand-built dict alone. `run_tests.gd`: ALL TESTS PASSED (fresh import,
+  headless, godot 4.7.1). Next `#86` turn is duty 3 (verify a mechanic).
