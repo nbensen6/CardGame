@@ -2592,6 +2592,31 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-06** — #86 duty 2 (find an error and resolve it). Last commit
+  (`6ff2f9e`, shield icon pass 3) was duty 1, so this run was due for duty 2.
+  Read `Combat.play_card()`'s debuff application against its own damage
+  redirection and found the exact "two copies of one truth" shape the last
+  three duty-2 runs kept finding in this neighbourhood (Thorns not biting an
+  add back, boss_strength not reaching an add, condition_bonus not scaling):
+  `enemy_index`/`valid_add` correctly redirects a card's DAMAGE to a chosen
+  add instead of the main boss, but the two debuffs that ride alongside
+  damage on real cards — `card.wound` (Poison, e.g. Toxic Lash, Bloomburst,
+  Crippling Blow's own Frail) — always hit `boss` regardless, hardcoded, so a
+  card aimed at an add via enemy_index would chip the add for damage and then
+  Poison/Frail the main boss standing next to it instead. (Vulnerable was
+  left alone on purpose — `_damage_add()`'s own comment already says adds
+  don't get the sigil's Vulnerable bonus, so a stack parked on one would
+  never be spent; redirecting it would just be dead state.) Fixed by hoisting
+  `valid_add` out of the damage block into a `debuff_target` (add or boss)
+  read by both the Poison and Frail branches. That surfaced a second, deeper
+  hole while writing the test: even a correctly-Poisoned add would never
+  actually bleed, because `_adds_turn()` — unlike `_enemy_turn()` — never
+  once read `add.wound` at the start of its turn; Poison landed on an add
+  had nowhere to pay out. Fixed alongside it (same duty-2 "one error" scope:
+  it's the other half of the same disconnect the wound-redirect fix exposed,
+  not a second unrelated bug). Three new tests, each proven to fail against
+  the pre-fix code before being confirmed to pass after. `run_tests.gd`: ALL
+  TESTS PASSED.
 - **2026-09-06** — #86 duty 3 (verify a mechanic actually works), thirty-ninth
   pass. Last commit (`fc98847`, the condition_bonus sharpen bug) was duty 2, so
   this run was due for duty 3. `Run._gold_for(kind)` — the entire gold-payout

@@ -395,6 +395,9 @@ func _init() -> void:
 	_test_thorns_reflects_card_damage_dealt_to_an_add()
 	_test_incoming_for_includes_a_living_adds_own_attack()
 	_test_incoming_for_ignores_a_dead_adds_attack()
+	_test_poison_lands_on_the_targeted_add_not_the_boss()
+	_test_frail_lands_on_the_targeted_add_not_the_boss()
+	_test_add_bleeds_from_its_own_poison_on_its_turn()
 	_test_adds_round_trip_through_save_and_load()
 	_test_adds_reach_the_shared_snapshot()
 	_test_add_intent_reaches_the_shared_snapshot()
@@ -6745,6 +6748,59 @@ func _test_thorns_reflects_card_damage_dealt_to_an_add() -> void:
 	_expect(add.hp == 24, "the card's own damage (Slash, 6) still lands on the add")
 	_expect(combat.players[0].combatant.hp == hp0 - 3,
 		"a Thorned add bites back when a hunter's card lands on it, same as a Thorned beast does")
+
+
+## backlog #86 duty 2: card.wound (Poison) always landed on `boss`, ignoring
+## enemy_index entirely, even though the card's own damage in the same play
+## correctly redirects to the add via `valid_add` -- the exact disconnect
+## _test_thorns_reflects_card_damage_dealt_to_an_add() above found and fixed
+## for Thorns. A card with both damage and Poison (Toxic Lash, Bloomburst,
+## Blightbloom...) aimed at an add via enemy_index would chip the add but
+## Poison the main boss standing next to it instead.
+func _test_poison_lands_on_the_targeted_add_not_the_boss() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Grub", 30)
+	combat.adds.append(add)
+	combat.players[0].hand = [Card.from_dict({"id": "toxic_dart", "name": "Toxic Dart",
+		"type": "skill", "cost": 1, "damage": 2, "wound": 3, "target": "enemy"})]
+	combat.play_card(0, 0, true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
+	_expect(add.wound == 3 and boss.wound == 0,
+		"a card that Poisons its target lands the Poison on the add enemy_index picked, not the main boss")
+	_expect(add.hp == 28,
+		"the same play's damage still lands on that add too, exactly as enemy_index already promised")
+
+
+## Same disconnect as Poison above, for Frail -- card.frail always reduced
+## `boss.frail`, never the add enemy_index actually picked.
+func _test_frail_lands_on_the_targeted_add_not_the_boss() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Grub", 30)
+	combat.adds.append(add)
+	combat.players[0].hand = [Card.from_dict({"id": "crippling_blow", "name": "Crippling Blow",
+		"type": "attack", "cost": 1, "damage": 5, "frail": 2, "target": "enemy"})]
+	combat.play_card(0, 0, true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
+	_expect(add.frail == 2 and boss.frail == 0,
+		"a card that applies Frail lands it on the add enemy_index picked, not the main boss")
+
+
+## Poison on the boss bleeds it at the start of ITS turn (_enemy_turn()); an
+## add carries the same `wound` stat (Boss extends Combatant) but
+## _adds_turn() never once read it, so Poison parked on an add -- now that
+## play_card() can actually land it there, per the test above -- had nowhere
+## to pay out. Same shape as the Strength gap _test_add_attack_adds_its_own_
+## strength() found: a stat every add already has that this loop skipped.
+func _test_add_bleeds_from_its_own_poison_on_its_turn() -> void:
+	var boss := _dummy_boss(300, 0)  # 0-damage boss isolates the add's own bleed
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Grub", 30)
+	add.wound = 4
+	combat.adds.append(add)
+	combat.end_turn(0)
+	combat.end_turn(1)
+	_expect(add.hp == 26 and boss.hp == 300,
+		"an add bleeds from its own Poison at the start of its turn, same as the main boss does")
 
 
 ## backlog #89: _adds_turn() always sends a living add's "attack" at

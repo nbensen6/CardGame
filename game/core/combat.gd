@@ -711,17 +711,21 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	ps.play_counts[card.id] = int(ps.play_counts.get(card.id, 0)) + 1
 	ps.cards_played_this_turn += 1  # backlog #67 — bumped AFTER the preview this
 	# card itself resolved with, same "counts only earlier plays" idiom as play_counts above
+	# backlog #63: hits_all_enemies (Cleave) always hits the boss AND every
+	# living add, ignoring enemy_index entirely — it's not a choice. A plain
+	# enemy_index in range redirects the hit (and, #86 duty 2, any Poison/Frail
+	# the same card also carries) to that add instead of the boss; out of range
+	# (including the default -1) hits the boss, exactly as every card behaved
+	# before adds existed. Vulnerable stays boss-only on purpose — _damage_add's
+	# own comment says adds don't carry the sigil's Vulnerable bonus, so a stack
+	# parked on an add would never be spent.
+	var valid_add := enemy_index >= 0 and enemy_index < adds.size() \
+		and not (adds[enemy_index] as Boss).is_dead()
+	var debuff_target: Boss = adds[enemy_index] if valid_add else boss
 	var base_damage: int = int(pv["damage"])
 	if base_damage > 0:
 		var hit_count := maxi(card.hits, 1)
 		var dealt := 0
-		# backlog #63: hits_all_enemies (Cleave) always hits the boss AND every
-		# living add, ignoring enemy_index entirely — it's not a choice. A plain
-		# enemy_index in range redirects the hit to that add instead of the
-		# boss; out of range (including the default -1) hits the boss, exactly
-		# as every card behaved before adds existed.
-		var valid_add := enemy_index >= 0 and enemy_index < adds.size() \
-			and not (adds[enemy_index] as Boss).is_dead()
 		for _h in hit_count:
 			if card.hits_all_enemies:
 				dealt += _damage_boss(base_damage, pi)
@@ -743,21 +747,24 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		ps.strength += card.strength
 		_log("%s plays %s — +%d Strength." % [who, card.name, card.strength])
 	if card.wound > 0:
-		# Artifact (backlog #36) wards the boss against a debuff before it lands —
-		# same gate Expose gets below, so a warded Titan shrugs off Poison too.
-		if boss.try_block_debuff():
-			_log("%s plays %s — %s's Artifact wards off the Poison." % [who, card.name, boss.name])
+		# Artifact (backlog #36) wards the target against a debuff before it lands —
+		# same gate Expose gets below, so a warded Titan (or a warded add) shrugs
+		# off Poison too. #86 duty 2: this used to always poison `boss` even when
+		# enemy_index picked an add — the same disconnect Thorns had before it.
+		if debuff_target.try_block_debuff():
+			_log("%s plays %s — %s's Artifact wards off the Poison." % [who, card.name, debuff_target.name])
 		else:
-			boss.wound += card.wound
-			_log("%s plays %s — Poison %d on %s." % [who, card.name, boss.wound, boss.name])
+			debuff_target.wound += card.wound
+			_log("%s plays %s — Poison %d on %s." % [who, card.name, debuff_target.wound, debuff_target.name])
 			if ps.poison_lift > 0:  # Vine-Weaver: the vines feed on the poison and lift the ally
 				var fed_ally: PlayerState = players[ally_index(pi)]
 				var fed_ally_before := fed_ally.foothold
 				fed_ally.foothold = mini(fed_ally.foothold + ps.poison_lift, FOOTHOLD_MAX)
 				_log("%s's vines surge — %s climbs +%d." % [who, fed_ally.combatant.name, ps.poison_lift])
 				_lift_roped_ally(ally_index(pi), fed_ally_before)  # the lifted ally might themselves be roped (#86 duty 2)
-	if card.frail > 0:  # Frail on the Titan — reduces the Block it gains (backlog #36)
-		_apply_frail(boss, card.frail)
+	if card.frail > 0:  # Frail — reduces the Block gained (backlog #36); #86 duty 2:
+		# redirected to the chosen add, same as Poison above, instead of always the boss.
+		_apply_frail(debuff_target, card.frail)
 	if card.thorns > 0:  # Thorns on the player — reflects a landed boss attack (backlog #36)
 		ps.combatant.thorns += card.thorns
 		_log("%s plays %s — +%d Thorns." % [who, card.name, card.thorns])
@@ -1351,11 +1358,24 @@ func _enemy_turn() -> void:
 ## _enemy_turn() adds its own `.strength` to `value`; this one didn't, so an
 ## add ignored its own Strength entirely — silent even under ascension's
 ## boss_strength ("Meaner Beasts"), which run.gd now grants to adds too.
+##
+## Poison bleed (#86 duty 2): _enemy_turn() ticks `boss.wound` at the start of
+## the boss's own turn, but a card that Poisons the chosen add (now that
+## play_card() can actually land Poison on one — see the `debuff_target` fix
+## above) had nowhere to ever pay out, since this loop never read `add.wound`
+## at all. Same shape as the Strength gap above: a stat every add already
+## carries (Boss extends Combatant) that this loop simply never consulted.
 func _adds_turn() -> void:
 	for add_v in adds:
 		var add: Boss = add_v
 		if add.is_dead():
 			continue
+		if add.wound > 0:
+			add.hp = maxi(add.hp - add.wound, 0)
+			_log("%s bleeds for %d." % [add.name, add.wound])
+			if add.is_dead():
+				_log("%s falls." % add.name)
+				continue
 		add.block = add.plated_armour  # reseeded each round, same as the boss's own reset above
 		var move := add.current_move()
 		var value := int(move.get("value", 0))
