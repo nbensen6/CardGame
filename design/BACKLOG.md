@@ -2592,6 +2592,26 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-06** — #86 duty 1 (improve an asset — icons/portraits only). Last
+  commit (`4155e07`) was duty 3, so this turn was duty 1. Scanned every
+  scored portrait and icon for the lowest score with a fix still available
+  in-lane (`tools/blender/portraits.py`/`icons.py` only, never a beast's own
+  model file — the exact split #86's own notes call out after the
+  `silk_widow.py`/`riptide_eel.py` incidents). Most low-scoring portraits
+  (`bog_leech`, `boulder_ram`, `mountain_climbers`, `yoke_ox`, ...) turned
+  out to have already spent their crop-only fix in an earlier pass, leaving
+  only model-geometry fixes their own diagnoses had already flagged as out
+  of lane. `relic_icon` (39/50, one point under the stop line, no repair
+  pass yet) had a real one: its diagnosed Mechanic-match fix pointed at a
+  LILAC centre ball that turned out to be fully hidden, not just
+  underwhelming — `taper()`'s cone cross-section bulges toward the camera by
+  its own radius (~0.21 at the ball's height, computed from the two star
+  spikes' own geometry), which sat nearer the lens than the ball's `y=-0.10`
+  regardless of colour. Moved it to `y=-0.32` and recoloured GOLD to match
+  the ring (the diagnosis's own "glow cue" option); +2, 39 → 41, crosses the
+  loop's 40/50 line. Full writeup in `design/progress/relic_icon.md`.
+  `run_tests.gd`: ALL TESTS PASSED.
+
 - **2026-09-06** — #86 duty 3 (verify a mechanic actually works). Last commit
   (`74d8361`, the roped-ally lift fix) was duty 2, so this turn was duty 3.
   Went looking in the view layer, since /core's climb rules are already

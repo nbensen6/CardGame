@@ -267,7 +267,16 @@ def relic(i):                                   # a lasting boon
     i.spike(0.0, 0.16, 0.30, 0.02, 0.52, VIOLET, seg=6)
     i.spike(0.0, -0.02, 0.30, 0.02, 0.44, ORCHID, ang=math.pi, seg=6)
     i.ring((0.0, 0.10, 0.06), (0.34, 0.34, 0.34), GOLD, 16, 5, thickness=0.12)
-    i.ball((0.0, -0.10, 0.06), (0.09, 0.055, 0.09), LILAC, 7, 4)
+    # relic_icon.md's diagnosis: this ball used to sit at y=-0.10, LILAC on
+    # VIOLET/ORCHID -- both a weak colour step and, at z=0.06, well inside the
+    # star cones' own cross-section radius there (~0.21, since a spike()'s
+    # radius is measured around its +Z axis in the X-Y plane, per taper()'s
+    # own doc), so the cone's front surface sat nearer the camera (more
+    # negative Y) than the ball and buried it. Pulled forward past that
+    # radius with margin and recoloured GOLD to match the ring, so the centre
+    # reads as one lasting, precious core held inside the ring rather than a
+    # hidden dot -- the "glow cue" option the diagnosis named.
+    i.ball((0.0, -0.32, 0.06), (0.11, 0.07, 0.11), GOLD, 7, 4)
 
 
 def rally(i):                                   # lift the whole party
