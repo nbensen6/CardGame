@@ -128,3 +128,82 @@ score (3, unchanged, since `climb.py` wasn't touched) should be revisited
 in a future pass now that `ascend` no longer anchors the shared-silhouette
 problem from both sides — `climb_icon.md` is left as scored, since backlog
 #86 rule 1 caps this pass at one asset.
+
+## Pass 3 — cloud, backlog #86 duty 1
+
+Before touching anything, rebuilt both `ascend` and `climb` fresh
+(`blender --background --python tools/blender/icons.py -- <out>`) and looked
+at them side by side again — `climb_icon.md`'s pass 2 rebuilt `climb` from
+an arrow-on-post into a three-step staircase (see `climb()`), which happened
+after this file's own pass 2 was written. That pass 2 entry above still
+describes `climb` as "one triangle on a post," which is stale: the current
+`climb.png` shares nothing with `ascend`'s silhouette any more. Correcting
+that observation alone (no geometry touched) moves **Family distinction
+(8 → 9)** — not a full 10, for the same reason pass 2 gave: both icons still
+use the shared wheat/gold "up" colour language on purpose.
+
+That leaves **Mechanic match (6)** as the one genuinely low line. Diagnosis:
+a doubled arrow reads as "up," same as `climb`'s staircase, with nothing in
+the shape saying *bigger* beyond a mild, easy-to-miss-at-42px size
+difference between the two heads. Concrete fix: widen the size gap between
+the two heads dramatically instead of subtly — shrink the top head (base
+0.24 → 0.16, height 0.26 → 0.20) and grow the bottom head (base 0.40 → 0.44,
+height 0.30 → 0.32, tip tapered 0.06 → 0.05 so it still necks cleanly into
+the post) — so the shape reads as one small head building into a much
+bigger one, rather than two similar chevrons. That same size swing widens
+the gap between the two heads from 0.08 to 0.11 world units, which also
+hardens **Silhouette @ 42px (8)** against the downsample ever fusing the
+notch shut — the other named-lowest line, addressed as a side effect of the
+same two-number change rather than a second, separate fix.
+
+Rebuilt with `blender --background --python tools/blender/icons.py --
+"$PWD/game/assets/icons"` (the `build.cmd icons` equivalent available on
+this run) and reimported with the Godot 4.7.1 headless binary — only
+`ascend.png` differed from the shipped set after the rebuild; every other
+icon came back byte-different too (background renderer is Blender 4.0.2 via
+apt here, not the 4.1.1 this project normally uses, and produces
+sub-pixel anti-aliasing differences — max channel diff 69/255, mean 0.3),
+so those were reverted with `git checkout` and only `ascend.png` was kept.
+Alpha bbox stayed clear of every edge: `(38, 12, 217, 250)` on a 256px
+canvas, no clipping. Triangle count unchanged at 656/700 (icon budget) —
+every change this pass was to existing primitives' size and position, not
+new geometry.
+
+Compared fresh at 42px against `climb`
+(`design/renders/ascend_climb_family_42px_strip_pass3.png`), the full
+render (`design/renders/ascend_icon_pass3_full.png`), the downsample
+(`design/renders/ascend_icon_pass3_42px_big.png`) and the silhouette
+(`design/renders/ascend_icon_pass3_sil.png`):
+
+- **Silhouette @ 42px (8 → 9):** the notch between the two heads is now
+  clearly wider and survives the downsample even more comfortably than
+  pass 2's already-adequate gap; still one connected mass, not two floating
+  pieces.
+- **Family distinction (8 → 9):** correcting the stale pass-2 comparison,
+  not a fix — `climb` is a staircase now, sharing nothing with `ascend`'s
+  outline. Not a 10: same reasoning as pass 2, the shared colour language is
+  deliberate.
+- **Mechanic match (6 → 7):** the small-cap-on-a-big-head read now clearly
+  signals escalation/growth rather than "two arrows of slightly different
+  size," which is a real gain — not higher, because the connection to
+  *climbing* specifically (rather than just "growing" in the abstract) is
+  still carried by position and colour, not shape alone.
+- **Colour & contrast (8, unchanged):** neither swatch nor slab position
+  changed this pass.
+- **Style consistency (8, unchanged):** still the set's bevelled-block
+  vocabulary; a size change to existing primitives doesn't touch it.
+
+**+2 total (39 → 41) — crosses the 40 stop line.** No line regressed.
+`run_tests.gd`: **ALL TESTS PASSED** (fresh `--import`, headless, Godot
+4.7.1.1).
+
+## Unsure about (pass 3)
+
+Whether Mechanic match could still climb further with a change this pass
+didn't make — e.g. a third, even smaller head above the current tip, or a
+short motion-line trail beside the post — both cost triangles this asset
+has little budget left for (656/700) and neither was tried. Also: whether
+`climb_icon.md`'s own Family score (still 3, last touched when `climb` was
+rebuilt) should be revisited now that this file's side of the comparison
+has moved past it a second time — left as scored, one-asset-per-pass still
+holds.

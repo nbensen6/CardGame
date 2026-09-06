@@ -403,13 +403,27 @@ def wall(i):                                    # block that scales
 
 def ascend(i):                                  # a big climb
     # Two arrowheads stacked with a visible gap between them, not one --
-    # `climb`'s silhouette is a single triangle-on-post, and at 42px the two
-    # shared almost the same outline, differing only in the small base
-    # attachments (design/progress/ascend_icon.md, design/progress/
-    # climb_icon.md name the same problem from opposite sides). Doubling the
-    # chevron changes the outer shape instead of only its colour.
-    i.spike(0.0, 0.42, 0.24, 0.02, 0.26, GOLD, seg=3)     # upper head, the tip
-    i.spike(0.0, 0.06, 0.40, 0.06, 0.30, WHEAT, seg=3)    # lower head, blunt
+    # `climb` used to be a single triangle-on-post sharing almost this same
+    # outline at 42px (design/progress/ascend_icon.md, design/progress/
+    # climb_icon.md name the same problem from opposite sides); `climb` has
+    # since been rebuilt into a staircase (see `climb()` below), so the two
+    # no longer compete for one silhouette, but the double-chevron here still
+    # stands on its own merits and is kept.
+    #
+    # pass 3 (design/progress/ascend_icon.md): Mechanic match (6/10) -- a
+    # doubled arrow reads as "up," same as `climb`, with nothing about it
+    # signalling *bigger* beyond a mild size difference easy to miss at 42px.
+    # Widened the gap between the two heads' sizes -- the top head shrinks
+    # (0.24 base / 0.26 tall -> 0.16 / 0.20) while the bottom head grows
+    # (0.40 base / 0.30 tall -> 0.44 base / 0.32 tall, tip tapered from 0.06
+    # to 0.05 so it necks down into the post without a visible step) -- so
+    # the shape reads as one head building into a much bigger one rather
+    # than two similar chevrons, a stronger "escalating, big climb" cue.
+    # That size swing also widens the gap between the two heads from 0.08 to
+    # 0.11 world units, which was Silhouette@42px's other named line: more
+    # margin before a downsample risks fusing the notch shut.
+    i.spike(0.0, 0.42, 0.16, 0.02, 0.20, GOLD, seg=3)     # upper head, the tip
+    i.spike(0.0, 0.05, 0.44, 0.05, 0.32, WHEAT, seg=3)    # lower head, blunt
     i.slabf(0.0, -0.24, 0.11, 0.20, WHEAT)                # the post below both
     for s in (-1, 1):
         i.spike(0.34 * s, -0.30, 0.075, 0.01, 0.34, GOLD, ang=0.3 * s, seg=4)

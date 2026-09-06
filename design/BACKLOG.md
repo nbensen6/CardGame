@@ -2592,6 +2592,31 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-06** — #86 duty 1 (improve an asset — portraits/icons only),
+  forty-second pass of the rotation. Last `#86` turn (`4b61f6d`, the
+  `_hex_x` coverage) was duty 3, so this was due for duty 1. Surveyed every
+  portrait's and icon's current score and picked `ascend_icon.md`: 39/50
+  after two passes, not plateaued, two passes still available under the
+  4-pass cap. Rebuilt `ascend` and `climb` fresh before scoring anything,
+  since `climb_icon.md`'s own pass 2 had since rebuilt `climb` from an
+  arrow-on-post into a staircase — `ascend_icon.md`'s pass 2 text still
+  described `climb` as "one triangle on a post," which the fresh render
+  showed was stale, so Family distinction moved 8 → 9 as a correction, not a
+  fix. The one real fix: Mechanic match (6/10) — a doubled arrow said "up"
+  but nothing said *bigger*. Shrank the top arrowhead and grew the bottom
+  one (parameter changes only, no new geometry) so the shape reads as one
+  small head building into a much bigger one; the same size swing widened
+  the gap between the two heads, hardening Silhouette@42px against the
+  downsample ever fusing the notch shut. +2 total (39 → 41), crosses the 40
+  stop line — this asset is done. Rebuilding via `icons.py` regenerated
+  every icon in the set with sub-pixel anti-aliasing differences (Blender
+  4.0.2 via apt here, not the project's usual 4.1.1 — download.blender.org
+  is blocked by this environment's egress policy, apt's 4.0.2 was used
+  instead and needed `numpy` and `libegl1`/`libgl1-mesa-dri` installed
+  before it would export or render at all); reverted every icon except
+  `ascend.png` so nothing un-reviewed shipped. `run_tests.gd`: ALL TESTS
+  PASSED (fresh `--import`, headless, Godot 4.7.1). Next `#86` turn is
+  duty 2 (find an error and resolve it).
 - **2026-09-06** — #86 duty 3 (verify a mechanic actually works), forty-first
   pass of the rotation. Last `#86` turn (`04eeedf`, the Poison/Frail-hits-the-
   add fix) was duty 2, so this was due for duty 3. Went looking for the next
