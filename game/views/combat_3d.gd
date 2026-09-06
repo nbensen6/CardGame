@@ -1525,7 +1525,7 @@ func _aim_camera(delta: float, snap: bool) -> void:
 ## against them and threw both hunters off opposite edges of the screen.
 ## The window the camera must hold for `want` world-units to stay visible ABOVE the
 ## card strip, clamped to the framing range.
-func _window_for(want: float) -> float:
+static func _window_for(want: float) -> float:
 	return clampf(want / (1.0 - HUD_BOTTOM_FRACTION), VIEW_WINDOW_MIN, VIEW_WINDOW_MAX)
 
 
@@ -1542,7 +1542,7 @@ func _window_for(want: float) -> float:
 ## Derivation: for world y=0 to sit at screen fraction (1 - HUD_BOTTOM_FRACTION),
 ## the pivot must be (0.5 - HUD_BOTTOM_FRACTION) * window. The small margin keeps
 ## the feet just clear of the card edge rather than tangent to it.
-func _ground_pivot(window: float) -> float:
+static func _ground_pivot(window: float) -> float:
 	return window * (0.5 - HUD_BOTTOM_FRACTION + 0.04)
 
 
@@ -1574,21 +1574,40 @@ func _climb_frame() -> Vector2:
 	var ys: Array[float] = []
 	for h in _hunters:
 		ys.append(float((h["home"] as Vector3).y) + eye)
+	var sigil_visible := _sigil != null and _sigil.visible
+	var sigil_y := _sigil.position.y if sigil_visible else 0.0
+	var out := climb_frame_for(tall, ys, _me(), sigil_visible, sigil_y)
+	_climb_t = out.z
+	return Vector2(out.x, out.y)
+
+
+## Pure half of _climb_frame above, lifted out (backlog #86 duty 3) so it's
+## provable headless, with no beast, camera or scene tree — the climb camera
+## framing had zero coverage of its own despite being exactly where "where is
+## my partner" (bugs.md, 2026-09-05: the ally hunter thrown off three separate
+## camera frames) actually lives. `ys` is every hunter's eye-line height
+## (already `home.y + eye`, same as the caller builds); `active_slot` indexes
+## it the way `_me()` does. Returns (focus height, window height, climb_t) —
+## climb_t is the same 0..1 "how far up the beast" ratio `_climb_frame` used to
+## set as a side effect, folded into the return here instead of split across
+## two places that have to agree.
+static func climb_frame_for(tall: float, ys: Array, active_slot: int,
+		sigil_visible: bool, sigil_y: float) -> Vector3:
+	var eye := HUNTER_HEIGHT * 0.6
 	if ys.is_empty():
 		var w0 := _window_for(tall * 1.18)
-		return Vector2(_ground_pivot(w0), w0)
+		return Vector3(_ground_pivot(w0), w0, 0.0)
 	var lo: float = ys.min()
 	var hi: float = ys.max()
 	if hi < eye + 0.05:  # nobody has left the ground
-		_climb_t = 0.0
 		var window := _window_for(tall * 1.18)
 		# A beast small enough to fit the window is met face to face — cropping a
 		# Crag Pup's head isn't imposing, it just looks like a mistake. Only the
 		# ones too big to hold get the looming shot, which makes towering a thing
 		# the act Titans do rather than something every fight does.
-		return Vector2(_ground_pivot(window), window)
-	var active: float = ys[_me()] if _me() < ys.size() else hi
-	_climb_t = clampf(active / maxf(tall * 0.55, 1.0), 0.0, 1.0)
+		return Vector3(_ground_pivot(window), window, 0.0)
+	var active: float = ys[active_slot] if active_slot < ys.size() else hi
+	var climb_t := clampf(active / maxf(tall * 0.55, 1.0), 0.0, 1.0)
 	# Look a little way up the road — from where YOU are, not from wherever the
 	# party's highest climber got to. Framing purely on hunters put the sigil just
 	# off the top of the screen for the whole ascent, so you climb toward a target
@@ -1599,8 +1618,8 @@ func _climb_frame() -> Vector2:
 	# Strictly after the ground test: applied before it, a hunter standing at the
 	# feet already "sees" 3 units of headroom, the ground branch never fires, and
 	# the looming shot this whole change exists for is silently lost.
-	if _sigil != null and _sigil.visible:
-		hi = maxf(hi, minf(_sigil.position.y, active + 3.0))
+	if sigil_visible:
+		hi = maxf(hi, minf(sigil_y, active + 3.0))
 	# Enough air around the pair to read the body they're clinging to, then aim so
 	# the HIGHER hunter lands around 42% down the frame rather than centred. The
 	# top ~200px belong to the grip bar and the coach, and the higher hunter is
@@ -1621,8 +1640,9 @@ func _climb_frame() -> Vector2:
 	# still has their HP and Height.
 	# Climbing: the subject is the hunters, so bias the pair into the clear band
 	# above the hand rather than the middle of the whole screen.
-	return Vector2(clampf(hi - window * (0.19 + HUD_BOTTOM_FRACTION * 0.5),
-		active - window * 0.30, active + window * 0.30), window)
+	var focus := clampf(hi - window * (0.19 + HUD_BOTTOM_FRACTION * 0.5),
+		active - window * 0.30, active + window * 0.30)
+	return Vector3(focus, window, climb_t)
 
 
 ## Spherical position around the beast. Everything else (shake, the strike flash)

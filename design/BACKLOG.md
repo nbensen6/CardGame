@@ -2592,6 +2592,37 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-06** — #86 duty 3 (verify a mechanic actually works). Last three
+  turns were duty 1 (`499b130`, portrait), duty 2 (`0ad3693`, unlocked-wins
+  gate), duty 3 (`dcfbc95` before that), so this one was due for duty 3. The
+  backlog's own worked example (`combat_3d._route_between`) was already
+  extracted and tested in an earlier pass, so surveyed the rest of
+  `combat_3d.gd`'s camera code against `run_tests.gd` next and found
+  `_window_for`, `_ground_pivot`, `_dist_for_window` and `_climb_frame` at
+  zero coverage — exactly the camera framing `design/progress/bugs.md`
+  (2026-09-05) already flagged for throwing the ally hunter off three
+  separate frames (combat-start, grip, climb). `_climb_frame` is the one of
+  the three the code was already written to account for both hunters on
+  (its own doc comment says so), which makes it the one worth actually
+  proving rather than just diagnosing. Marked `_window_for`/`_ground_pivot`
+  `static` (they never touched `self`) and lifted the rest of `_climb_frame`
+  into a new static `climb_frame_for(tall, ys, active_slot, sigil_visible,
+  sigil_y) -> Vector3` (focus, window, climb_t), same shape as the earlier
+  `route_between_rungs`/`foothold_anchor` extractions; `_climb_frame` itself
+  is now a thin wrapper that gathers the instance state and unpacks the
+  result. Added 8 tests covering the grounded/no-hunters fallback, the
+  climbing window sizing off the hunter gap, the documented "active hunter
+  stays in the middle 60% of frame" clamp actually binding when the ally has
+  fallen far behind, the out-of-range active-slot fallback, the sigil
+  headroom cap at active+3.0 in both directions, and `_window_for`/
+  `_ground_pivot`'s own clamp and derivation. All passed on the first run —
+  this function does what its comment claims; the ally-off-screen bugs in
+  `bugs.md` live in the OTHER two camera paths (combat-start framing,
+  `_focus_camera`/`_frame_beast`, and the grip framing), which don't
+  reference `_hunters` at all and are still open for a future duty 2.
+  `--import` then `run_tests.gd`: ALL TESTS PASSED (fresh import, headless,
+  Godot 4.7.1).
+
 - **2026-09-06** — #86 duty 2 (find an error and resolve it). Last `#86` turn
   (`499b130`) was duty 1, so this was due for duty 2. Started down the wrong
   path first: began a duty-1 portrait fix on `clot_toad` (a real left-edge

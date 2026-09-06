@@ -842,6 +842,21 @@ func _init() -> void:
 	_test_backlog86_pattern_shove_pushes_a_pattern_off_the_bottom_edge_back_on()
 	_test_backlog86_pattern_shove_cancels_out_when_the_pattern_is_wider_than_the_window()
 
+	# backlog #86 duty 3 (thirty-sixth pass): climb_frame_for is the pure half
+	# of combat_3d._climb_frame, the camera aim/window rule that is supposed to
+	# keep BOTH hunters on screen while climbing. bugs.md (2026-09-05) found the
+	# ally hunter thrown off three separate camera frames and none of the three
+	# had ever been proven headless -- this is the one already written to
+	# account for the ally, so it's the one to actually check the claim on.
+	_test_backlog86_climb_frame_for_grounded_pair_uses_beast_only_framing()
+	_test_backlog86_climb_frame_for_no_hunters_yet_falls_back_to_ground_framing()
+	_test_backlog86_climb_frame_for_climbing_pins_the_active_hunter_in_the_middle_band()
+	_test_backlog86_climb_frame_for_out_of_range_active_slot_falls_back_to_the_highest_hunter()
+	_test_backlog86_climb_frame_for_a_visible_sigil_extends_headroom_capped_three_above_active()
+	_test_backlog86_climb_frame_for_a_sigil_already_below_the_highest_hunter_changes_nothing()
+	_test_backlog86_window_for_clamps_to_the_documented_range()
+	_test_backlog86_ground_pivot_puts_world_zero_at_the_top_of_the_card_strip()
+
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
 	# not "inside tree" yet until the engine's main loop actually starts, one
@@ -10256,6 +10271,107 @@ func _test_backlog86_pattern_shove_cancels_out_when_the_pattern_is_wider_than_th
 	var shove: Vector2 = Combat3D.pattern_shove(Vector2(-100, 200), Vector2(900, 300), Vector2(800, 1080), 96.0)
 	_expect(shove.is_equal_approx(Vector2.ZERO),
 		"a pattern wider than the padded window overruns both edges equally here and the corrections cancel to zero")
+
+
+## backlog #86 duty 3 (thirty-sixth pass): climb_frame_for is the pure half of
+## combat_3d._climb_frame — the camera aim/window that decides whether both
+## hunters actually stay on screen. bugs.md (2026-09-05) found the ally hunter
+## thrown off three separate camera frames (combat-start, grip, climb) and
+## none of the three had ever been proven headless. This is the one of the
+## three that was already written to account for both hunters rather than the
+## active one alone (per its own doc comment) — but "was written to" and "is
+## proven to" are different claims, and nothing had ever called it.
+func _test_backlog86_climb_frame_for_grounded_pair_uses_beast_only_framing() -> void:
+	# Both hunters still at their spawn height (home.y == 0, so ys == eye for
+	# both): "nobody has left the ground" must hold regardless of how many
+	# hunters are in the array, and frame on the beast alone, same as the
+	# no-hunters-yet case below.
+	var eye: float = Combat3D.HUNTER_HEIGHT * 0.6
+	var out: Vector3 = Combat3D.climb_frame_for(6.0, [eye, eye], 0, false, 0.0)
+	var window: float = Combat3D._window_for(6.0 * 1.18)
+	_expect(is_equal_approx(out.y, window), "grounded framing sizes the window off the beast's own height, not the (zero) gap between two grounded hunters")
+	_expect(is_equal_approx(out.x, Combat3D._ground_pivot(window)), "grounded framing pivots on the same ground-pivot rule _frame_beast uses")
+	_expect(is_zero_approx(out.z), "climb_t is 0 while both hunters are still on the ground")
+
+
+func _test_backlog86_climb_frame_for_no_hunters_yet_falls_back_to_ground_framing() -> void:
+	# Before _place_hunters has run there are no entries in _hunters at all --
+	# ys arrives empty, not a list of zeros. A beast met for the first time
+	# must still get a sane establishing frame, not a divide against an empty
+	# array.
+	var out: Vector3 = Combat3D.climb_frame_for(4.5, [], 0, false, 0.0)
+	var window: float = Combat3D._window_for(4.5 * 1.18)
+	_expect(is_equal_approx(out.y, window) and is_equal_approx(out.x, Combat3D._ground_pivot(window)),
+		"an empty hunter list frames the beast alone, exactly like the grounded-pair case")
+	_expect(is_zero_approx(out.z), "climb_t is 0 with no hunters placed")
+
+
+func _test_backlog86_climb_frame_for_climbing_pins_the_active_hunter_in_the_middle_band() -> void:
+	# A carry in progress: the active hunter (slot 1) is far above the ally
+	# (slot 0), the gap alone would want a window past VIEW_WINDOW_MAX, and the
+	# doc comment above _climb_frame claims the active hunter stays "inside the
+	# middle 60% of frame" even when the ally has to fall off the edge to make
+	# room. Assert that clamp actually binds rather than trusting the comment.
+	var out: Vector3 = Combat3D.climb_frame_for(10.0, [2.0, 6.0], 1, false, 0.0)
+	var window: float = Combat3D._window_for((6.0 - 2.0) * 1.5 + 4.0)
+	_expect(is_equal_approx(out.y, window), "the climbing window is sized off the gap between the lowest and highest hunter, not the beast's height")
+	var active := 6.0
+	_expect(out.x >= active - window * 0.30 - 0.001 and out.x <= active + window * 0.30 + 0.001,
+		"the focus point never drifts the active hunter outside the middle 60% of the frame, however far below the ally has fallen")
+	_expect(is_equal_approx(out.z, clampf(active / maxf(10.0 * 0.55, 1.0), 0.0, 1.0)),
+		"climb_t tracks the ACTIVE hunter's own height up the beast, not the ally's")
+
+
+func _test_backlog86_climb_frame_for_out_of_range_active_slot_falls_back_to_the_highest_hunter() -> void:
+	# _me() indexing _hunters can't actually run past the array in the live
+	# game, but the fallback (`ys[active_slot] if active_slot < ys.size() else
+	# hi`) exists on purpose -- prove it takes the branch it claims to rather
+	# than throwing or silently reading slot 0.
+	var out: Vector3 = Combat3D.climb_frame_for(10.0, [2.0, 6.0], 7, false, 0.0)
+	var in_range: Vector3 = Combat3D.climb_frame_for(10.0, [2.0, 6.0], 1, false, 0.0)
+	_expect(out.is_equal_approx(in_range), "an out-of-range active slot falls back to treating the HIGHEST hunter as active, same as slot 1 here")
+
+
+func _test_backlog86_climb_frame_for_a_visible_sigil_extends_headroom_capped_three_above_active() -> void:
+	# The sigil sits 20 units above the active hunter -- far past the doc
+	# comment's promised 3-unit cap, so the frame must not chase it there and
+	# hand the whole screen to empty air over the sigil.
+	var capped: Vector3 = Combat3D.climb_frame_for(10.0, [2.0, 6.0], 1, true, 26.0)
+	var uncapped: Vector3 = Combat3D.climb_frame_for(10.0, [2.0, 6.0], 1, false, 0.0)
+	var window_if_capped_at_3: float = Combat3D._window_for((9.0 - 2.0) * 1.5 + 4.0)
+	_expect(is_equal_approx(capped.y, window_if_capped_at_3),
+		"headroom for a distant sigil is capped at active + 3.0, not the sigil's real height")
+	_expect(capped.y > uncapped.y, "a visible sigil still widens the window versus no sigil at all, just not all the way to where the sigil actually is")
+
+
+func _test_backlog86_climb_frame_for_a_sigil_already_below_the_highest_hunter_changes_nothing() -> void:
+	# The sigil sits below the party's own high point (e.g. the active hunter
+	# already climbed past it toward a higher ledge) -- maxf(hi, ...) must not
+	# let a LOW sigil pull the frame down from where the hunters already put it.
+	var with_low_sigil: Vector3 = Combat3D.climb_frame_for(10.0, [2.0, 6.0], 1, true, 3.0)
+	var without_sigil: Vector3 = Combat3D.climb_frame_for(10.0, [2.0, 6.0], 1, false, 0.0)
+	_expect(with_low_sigil.is_equal_approx(without_sigil),
+		"a sigil below the party's own high point never shrinks the frame back down to it")
+
+
+func _test_backlog86_window_for_clamps_to_the_documented_range() -> void:
+	_expect(is_equal_approx(Combat3D._window_for(1.0), Combat3D.VIEW_WINDOW_MIN),
+		"a tiny beast still gets at least VIEW_WINDOW_MIN of window, not a sliver the size of its own height")
+	_expect(is_equal_approx(Combat3D._window_for(100.0), Combat3D.VIEW_WINDOW_MAX),
+		"a Titan-sized ask is clamped at VIEW_WINDOW_MAX rather than pushing the camera arbitrarily far back")
+	var mid := 13.2
+	_expect(is_equal_approx(Combat3D._window_for(mid), mid / (1.0 - Combat3D.HUD_BOTTOM_FRACTION)),
+		"inside the clamped range the window is exactly want scaled up to make room for the card strip below it")
+
+
+func _test_backlog86_ground_pivot_puts_world_zero_at_the_top_of_the_card_strip() -> void:
+	# The doc comment derives this as (0.5 - HUD_BOTTOM_FRACTION) * window plus
+	# a small 0.04 margin -- proven against the actual formula the derivation
+	# claims, not just re-typed.
+	var window := 20.0
+	var pivot := Combat3D._ground_pivot(window)
+	_expect(is_equal_approx(pivot, window * (0.5 - Combat3D.HUD_BOTTOM_FRACTION + 0.04)),
+		"the ground pivot lifts world y=0 by (0.5 - HUD_BOTTOM_FRACTION + 0.04) window-fractions, matching the derivation in the comment above it")
 
 
 func _expect(cond: bool, name: String) -> void:
