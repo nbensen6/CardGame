@@ -76,6 +76,14 @@ mirror(lambda s: b.ball((0.62 * s, 0.10, 1.86), (0.14, 0.15, 0.04), ORCHID,
 # than a slab standing proud of them.
 b.shelf(2, (0.0, -0.30), (0.46, 0.30), SLATE, thickness=0.12, bevel=0.04)
 b.shelf(4, (0.0, -0.12), (0.40, 0.26), SLATE, thickness=0.12, bevel=0.04)
+
+# Two shallow points break the wing-hump's trailing edge, so the black
+# silhouette shows an actual wing tip instead of a smooth rounded dome. Set
+# off the UPPER FOLD ball (the piece that actually forms the visible rim in
+# the fight camera's 3/4 angle) rather than the base wing mass, which the
+# upper fold sits in front of and would otherwise hide the point behind.
+mirror(lambda s: b.taper((0.55 * s, 0.38, 2.61), 0.22, 0.07, 0.30, VIOLET,
+                         seg=6, rot=point((0.65 * s, 0.42, 0.63)), bevel=0.03))
 # Off to one side of the spine seam - a hunter stands ON one wing, not on the
 # centreline between two - which also keeps the auto-push small: the
 # centreline default points it toward the round head looming forward of it.
@@ -85,9 +93,11 @@ b.anchor(4, (0.42, -0.24, b.z_for(4)))
 b.foot((0.70, -0.68, 0.30))                                    # onto a foreleg
 
 # The sigil: a pale dust-marking on the head's forehead, facing -Y toward the
-# camera, the same direction every other beast's mark faces. The head is the
-# highest point of the body, which is where Height 5 - one above the top wing
-# panel - naturally lands.
-b.mark(at=(0.0, -1.02, b.z_for(5)), size=0.15, facing=(0.0, -0.94, 0.30))
+# camera, the same direction every other beast's mark faces. Sits at the
+# forehead crest ball's own top pole (z 1.86 + its 0.24 z-radius) rather than
+# z_for(5) - that default landed the disc 0.1 above the crest, up near the
+# antennae's own curve, reading as a bead threaded on a wire. This keeps it
+# inside the Height-5 climb band while resting the base directly on the head.
+b.mark(at=(0.0, -1.02, 2.10), size=0.15, facing=(0.0, -0.94, 0.30))
 
 b.done(out_path(), name="GloomMoth")
