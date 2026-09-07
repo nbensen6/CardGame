@@ -31,7 +31,7 @@ FOCUS = {
     "mountain_climbers": (0.73, 0.72), "goblin_mech": (0.62, 0.94),
     "lightbearer": (0.47, 1.15),
 
-    "stone_warden": (0.73, 0.67), "gale_serpent": (0.87, 0.44),
+    "stone_warden": (0.73, 0.67), "gale_serpent": (0.80, 0.55),
     "drowned_colossus": (0.83, 0.49), "sunken_warden": (0.81, 0.49),
     "crag_pup": (0.60, 0.90), "bramble_hog": (0.54, 1.01),
     "bounder": (0.64, 0.84), "mire_snapper": (0.53, 1.13),

@@ -2627,6 +2627,46 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-07** — #86 duty 1 (improve an asset — portraits and icons only),
+  forty-eighth pass of the rotation. Last `#86` turn (`ae76edd`,
+  `_node_under_mouse`) was duty 3, so this was due for duty 1. Every icon
+  under 40/50 with pass budget left (`buffer`, `rhythm`, `volley`) turned out
+  to have already spent its only in-scope fix: each one's remaining low line
+  either needs a different visual idea (Nick's call, `buffer`'s Mechanic
+  match) or traces to a root cause pass 2 already found nothing wrong with
+  (`rhythm`/`volley`'s Colour & Style, both pixel-sampled as separating
+  cleanly with "no colour problem found"). Rather than force a fix with
+  nothing diagnosed behind it, checked whether every in-game asset actually
+  had a progress file at all — it didn't: `game/data/bosses.json` lists 14
+  real beasts (`gale_serpent`, `stone_warden`, `drowned_colossus` among them)
+  whose portraits have shipped with a `FOCUS` entry and a rendered PNG since
+  batch 9-11 of #83, but never got a `_portrait.md`, unlike their own 3D
+  model and ground scores. Picked `gale_serpent` (a Frost Peak boss beast)
+  and scored it fresh: Framing (4/10) was a real, measured defect, not a
+  nitpick — alpha bbox `(0, 90, 417, 512)` showed a horn/tusk root sliced
+  off on the left while 95px of canvas sat unused on the right, and the
+  coiled body was cut to a sliver at a flush-0 bottom margin, all from one
+  `FOCUS` value (`(0.87, 0.44)`) zoomed in past the frame's usable width.
+  Swept `(at, span)` numerically against the real alpha bbox (Blender 4.0.2,
+  apt install — `download.blender.org` still proxy-blocked) rather than
+  guessing: `(0.80, 0.55)` balanced left/right to within 1px (10 vs 11)
+  without clipping the head, simply by pulling the camera back — the
+  asymmetry traced to being over-zoomed, not to an off-centre focus point.
+  Applied it, rebuilt the full 30-portrait set, diffed every PNG against
+  committed (`gale_serpent.png` alone showed the intended 41.8 mean diff),
+  and kept only that one file. Looked at both the full composite and a real
+  34px downsample before and after: the coil and its small fin spikes, named
+  as identity features by `gale_serpent.md`'s own 3D score, are now visible
+  in the portrait for the first time, at both sizes. Framing 4→8, Identity
+  6→8, Read@34px 7→8, total 33→40 — crosses the loop's stop line on the
+  first pass. Surprising, and not chased further per rule 3 (needs a
+  screen): rebuilding the batch also surfaced a new, previously-unflagged
+  render diff on `eyrie_hawk.png` (8.55 mean, its own untouched `FOCUS`)
+  that doesn't match the already-known `frog`/`goblin_mech`/`thrasher`/
+  `yoke_ox` stale-drift list any prior pass named — left for a duty-2 turn,
+  noted in `gale_serpent_portrait.md`'s own "Unsure about". `run_tests.gd`:
+  ALL TESTS PASSED (fresh `--import`, headless, Godot 4.7.1). Next `#86`
+  turn is duty 2 (find an error and resolve it).
 - **2026-09-07** — #86 duty 3 (verify a mechanic actually works), forty-
   seventh pass of the rotation. Last `#86` turn (`a5c0c6f`) was duty 2, so
   this was due for duty 3. `overworld_3d._node_under_mouse` — the rule that
