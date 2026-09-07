@@ -253,3 +253,60 @@ touched.
 rendered correctly this run — both hunters, the hex-tile overworld geometry,
 event title/body text and both choice buttons were all visible and legible,
 no `VIS FAIL`.
+
+## 2026-09-07 — picking a hunter never actually punches the camera in
+
+**Command:**
+```
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:\shot.png state=3dfocus slot=0 beast=sky_snapper
+```
+(`sky_snapper` had no prior fixer pass or bug-hunt check on it; first time
+this beast has been looked at in either lane)
+
+**What the harness printed:**
+```
+CAM pos=(-5.016482, 1.310973, 21.867125) pivot=(-5.016482, 0.840000, 14.620000) dist=7.30 pitch=-0.120 h=-0.00 v=-0.51
+FOCUS dist 7.3 -> 7.3 (in 100%) -> 7.3 after 90 frames | pivot x -5.02 -> 5.02  FAIL
+FOCUS re-pick after flying off: dist 7.3, pan (0.0, 0.0, 0.0)  OK
+```
+The self-test wants `_switch_to` to punch the distance in to under half of
+what it started at (`punched < before * 0.5`). Here it does not move at all —
+`before`, `punched`, and `settled` are all exactly `7.3`. Only the pivot's `x`
+moves (from the first hunter's position to the second's); nothing about the
+zoom changes.
+
+**What I saw in the PNG:** `state=3dsettings` on the same beast this run shows
+the game's own help text for this feature: *"Picking a hunter puts the camera
+back on them."* That is the punch-in the harness is checking for, and it is
+documented player-facing behaviour, not an internal assumption of the test.
+
+**Why it matters, and why it's probably the SAME bug as the very first entry
+in this log:** `_focus_camera()` (`combat_3d.gd:788`) sets
+`_dist = maxf(_dist_for_window(FOCUS_WINDOW), 2.6)` — a tight, single-hunter
+framing. The self-test failing with a flat `7.3 -> 7.3` means that tight
+distance is ALREADY what the fight settles to at combat start, for `slot=0`,
+before anyone picks anything — there is no wider shot left to punch in FROM.
+That is exactly the shape of the "ally hunter off-screen at the start of every
+fight" bug logged above: the opening framing is computed as if only the
+active hunter needs to fit in frame, so by the time `_switch_to` runs, the
+camera has nowhere left to move. One root cause, two symptoms: the ally is
+off-screen at rest, AND the explicit "put the camera back on them" gesture the
+settings panel promises has no visible effect because it's already there.
+
+**Where to look:** `_focus_camera()` (`combat_3d.gd:788`) and whatever feeds
+`_working_dist` / `_dist_for_window` the framing box at combat start
+(`combat_3d.gd:1375-1385`, `1510`) — the box that framing is computed against
+needs to include both hunters' `home` positions, not just the active one, so
+there is an actual wide-to-tight range for `_switch_to` to punch across. This
+is `game/**` GDScript, outside `tools/blender/**` / `game/assets/3d/**`, so
+written up rather than touched.
+
+**Checked and clean, for the record, this run:** `3dwon` (full run-to-victory,
+including `Hunt again` / `Return to menu`), `3dselect` (the five-hunter pick
+screen — all five models sit evenly spaced with no overlap or clipping),
+`3dswap`, `3drebind`, `3dsettings`, `3dsel`, `3dloop` (router walks
+map -> combat -> reward -> map correctly), and `3dcross` (act-boundary framing
+at row 5, `Act 2 of 4`) all printed clean harness lines with no new `FAIL`.
+`3dswap`/`3drebind`/`3dsettings`/`3dsel` all still show the already-logged
+`VIS FAIL hunter1` at combat start (same known cause above, not a new find).
