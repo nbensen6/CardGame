@@ -2627,6 +2627,39 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-07** — #86 duty 2 (find an error and resolve it), fifty-second
+  pass of the rotation. Last `#86` turn (`5c031dd`, dexterity icon) was duty
+  1, so this was due for duty 2. Same "two copies of one truth" shape duty 2
+  keeps finding, one level deeper than the two already-fixed instances it
+  points at: `GameHost._public_state()`'s boss dict forwards Vulnerable/
+  Strength/Wound/Frail/Artifact/Thorns/Dexterity/Intangible/Buffer/Plated
+  Armour (backlog Later/#54, #60/#61), but the `add_views` loop three lines
+  below it — built the same run, same function — only ever forwarded id/
+  name/hp/max_hp/block/art/intent, seven of the ~17 fields. `combat.gd`'s own
+  `debuff_target` (line 724) can legally be an add, so an add's `Boss`
+  instance (extends `Combatant`) really does carry these stacks exactly like
+  the main boss's does — confirmed by grepping the commits that added Frail/
+  Thorns/Artifact application to `adds[i]` (`04eeedf`, `81e27b7`, `4e501cd`).
+  Added the missing ten fields to `add_views`' dict literal in
+  `game/session/game_host.gd`, mirroring the boss dict's own field list and
+  comments. Wrote `_test_an_adds_status_effects_reach_the_shared_snapshot`
+  in `run_tests.gd` (and registered it in `_init` — this codebase calls tests
+  explicitly by name rather than auto-discovering `_test_*`, easy to miss)
+  in the same style as the two tests it's modeled on; proved it actually
+  catches the bug by `git stash`-ing just the `game_host.gd` fix and
+  rerunning — without the fix the test doesn't cleanly FAIL, it throws a
+  `SCRIPT ERROR: Invalid access to property or key 'vulnerable'` and aborts
+  that test function (Godot's `--script` mode swallows the error and moves
+  on to the next test rather than failing the run), so the crash itself is
+  the proof, not a red assertion. Honest caveat the agent's own research
+  raised: nothing reads `s["boss"]["adds"]` yet (backlog #90 — adds don't
+  render at all), so this has no visible effect today. Fixed anyway because
+  the codebase already set the precedent of forwarding a field ahead of
+  anything granting it, specifically so the two stay symmetric and correct
+  the moment a renderer reads them (see the boss dict's own dexterity/
+  intangible/buffer/plated_armour comment, added before any beast granted
+  those). `run_tests.gd`: fresh `--import`, headless, Godot 4.7.1, ALL TESTS
+  PASSED. Next `#86` turn is duty 3 (verify a mechanic actually works).
 - **2026-09-07** — #86 duty 1 (improve an asset — portraits and icons only),
   fifty-first pass of the rotation. Last `#86` turn (`06f682b`, shop button
   test) was duty 3, so this was due for duty 1. `dexterity_icon.md` (39/50,

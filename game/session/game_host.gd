@@ -361,12 +361,27 @@ func _build_shared() -> Dictionary:
 		# current_move() with no context, same as _adds_turn()'s own call: an add's
 		# move never carries a "when" condition today, so there is no boss_context()
 		# to build for it.
+		# backlog #86 duty 2 (second pass): the same gap as the main boss's own
+		# frail/artifact/thorns/dexterity/intangible/buffer/plated_armour fix
+		# (backlog Later, #60/#61) existed here too and nothing had ever closed
+		# it. combat.gd's own debuff_target (line 724) can be an add, so an
+		# add's Combatant fields carry real Vulnerable/Frail/Thorns/etc stacks
+		# exactly like the boss's do (see 04eeedf/81e27b7/4e501cd) — but this
+		# dict only ever forwarded 7 of the ~17 fields the boss side forwards.
+		# Not consumed by any view yet (#90 — adds don't render at all), same
+		# as the boss's own dexterity/intangible/buffer/plated_armour were
+		# forwarded ahead of anything granting them, so the two stay symmetric
+		# and correct the moment a renderer reads them.
 		var add_views: Array = []
 		for add_v in c.adds:
 			var av: Boss = add_v
 			add_views.append({"id": av.id, "name": av.name, "hp": av.hp,
 				"max_hp": av.max_hp, "block": av.block, "art": av.art,
-				"intent": av.current_move()})
+				"intent": av.current_move(),
+				"vulnerable": av.vulnerable, "strength": av.strength, "wound": av.wound,
+				"frail": av.frail, "artifact": av.artifact, "thorns": av.thorns,
+				"dexterity": av.dexterity, "intangible": av.intangible,
+				"buffer": av.buffer, "plated_armour": av.plated_armour})
 		s["boss"] = {
 			"id": b.id, "name": b.name, "hp": b.hp, "max_hp": b.max_hp, "block": b.block,
 			"intent": b.current_move(c.boss_context()), "target": c.boss_target_index(),

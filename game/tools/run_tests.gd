@@ -413,6 +413,7 @@ func _init() -> void:
 	_test_adds_round_trip_through_save_and_load()
 	_test_adds_reach_the_shared_snapshot()
 	_test_add_intent_reaches_the_shared_snapshot()
+	_test_an_adds_status_effects_reach_the_shared_snapshot()
 	# characters (per-player climb + signature passives)
 	_test_frog_climb_bonus()
 	_test_vine_lifts_ally()
@@ -7038,6 +7039,43 @@ func _test_add_intent_reaches_the_shared_snapshot() -> void:
 	_expect(adds_view.size() == 1 and String(adds_view[0]["intent"]["type"]) == "attack"
 			and int(adds_view[0]["intent"]["value"]) == 4,
 		"an add's own telegraphed move reaches the shared snapshot, same as the boss's")
+
+
+## Backlog #86 duty 2 (second pass): same shared-snapshot boundary as
+## _test_frail_artifact_thorns_reach_the_shared_snapshot and _test_dexterity_
+## intangible_buffer_plated_armour_reach_the_shared_snapshot did for the main
+## boss and a hunter, but an add's own copy of these fields never got the
+## same check -- and had never been forwarded at all. combat.gd's own
+## debuff_target (line 724) can legally be an add, so an add really can carry
+## Vulnerable/Frail/Thorns/etc; this proves the FIELD crosses the host/client
+## boundary, not just that the engine computes it.
+func _test_an_adds_status_effects_reach_the_shared_snapshot() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	host._run.combat.adds.clear()
+	var add := Boss.new("Grub", 15)
+	add.id = "grub"
+	add.vulnerable = 2
+	add.strength = 1
+	add.wound = 3
+	add.frail = 1
+	add.artifact = 2
+	add.thorns = 4
+	add.dexterity = 5
+	add.intangible = 1
+	add.buffer = 1
+	add.plated_armour = 2
+	host._run.combat.adds.append(add)
+	host._broadcast_state()
+	var av: Dictionary = c0.shared["boss"]["adds"][0]
+	_expect(int(av["vulnerable"]) == 2 and int(av["strength"]) == 1 and int(av["wound"]) == 3,
+		"an add's own Vulnerable/Strength/Wound reach the shared snapshot, same as the boss's")
+	_expect(int(av["frail"]) == 1 and int(av["artifact"]) == 2 and int(av["thorns"]) == 4,
+		"an add's own Frail/Artifact/Thorns reach the shared snapshot, same as the boss's")
+	_expect(int(av["dexterity"]) == 5 and int(av["intangible"]) == 1
+		and int(av["buffer"]) == 1 and int(av["plated_armour"]) == 2,
+		"an add's own Dexterity/Intangible/Buffer/Plated Armour reach the shared snapshot too")
 
 
 # --- Characters (per-player climb + signature passives) -------------------
