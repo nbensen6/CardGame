@@ -318,6 +318,7 @@ func _init() -> void:
 	_test_whole_numbers_leaves_a_float_past_the_safe_int_range_alone()
 	_test_load_run_returns_int_typed_hp_not_float()
 	_test_load_run_returns_int_typed_relic_value_not_float()
+	_test_run_save_summary_describes_the_saved_run()
 	_test_every_card_declares_a_rarity()
 	_test_card_type_matches_whether_it_deals_damage()
 	_test_strength_only_lifts_attack_type_cards()
@@ -5682,6 +5683,34 @@ func _test_load_run_returns_int_typed_relic_value_not_float() -> void:
 	var value: Variant = back.team_relics[0].get("value") if back != null and not back.team_relics.is_empty() else null
 	_expect(value != null and typeof(value) == TYPE_INT,
 		"a relic's own numeric field survives the round trip as an int, not a float, even nested inside team_relics")
+	RunSave.clear()
+
+
+## backlog #86 duty 3 — RunSave.summary() is the one thing menu.gd's Continue
+## button trusts to decide both whether it shows at all and what it says
+## ("Act 2  ·  The Frog & The Goblin Engineer"), and nothing had ever called it.
+## Three shapes worth proving: no save means no button, a real save's act number
+## is `encounter_index + 1` (an easy off-by-one -- encounter_index is 0-based
+## internally, the display is 1-based), and the "no names" branch (an empty
+## `names` array, defensive per the function's own if/else) falls back to a
+## bare "Act N" with no dangling " · " and no crash on an empty join.
+func _test_run_save_summary_describes_the_saved_run() -> void:
+	RunSave.clear()
+	_expect(RunSave.summary() == "", "no save on the slot means no summary to show a Continue button")
+
+	var run := Run.new([_deck_of(_slash, 6), _deck_of(_slash, 5)], ["Robin", "Sam"], 61, [{}, {}])
+	run.start()
+	run.encounter_index = 2  # 0-based internally -- the display owes this a +1
+	RunSave.save(run)
+	_expect(RunSave.summary() == "Act 3  ·  Robin & Sam",
+		"the summary reads act as encounter_index + 1 and joins every hunter's real name with \" & \"")
+	RunSave.clear()
+
+	var solo := Run.new([], [], 62)
+	solo.start()
+	RunSave.save(solo)
+	_expect(RunSave.summary() == "Act 1",
+		"a save with no hunter names falls back to a bare \"Act N\" instead of joining an empty list or crashing")
 	RunSave.clear()
 
 

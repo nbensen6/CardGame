@@ -2640,6 +2640,24 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-07** — #86 duty 3 (verify a mechanic actually works). Last commit
+  (`80d8a09`) was duty 2, so this turn is duty 3; duty 1 (asset pass) stays
+  blocked — confirmed again, `download.blender.org` still 403s at this
+  container's egress proxy. Checked the queue's own topmost items first
+  (87, 88, 90, 85) — all `needs a screen` or a design call for Nick, so none
+  actionable here; #89 is already done. `RunSave.summary()` (`run_save.gd`)
+  had never been called by any test despite being exactly what `menu.gd`'s
+  Continue button trusts to decide both whether it shows at all and what it
+  says — a real player-facing invariant, not presentation. Added
+  `_test_run_save_summary_describes_the_saved_run`: no save means no
+  summary; a real save's displayed act is `encounter_index + 1` (the
+  1-based/0-based seam is exactly the kind of off-by-one that would show
+  the wrong act on the menu forever and nothing would catch it); and a save
+  with an empty `names` array (defensive branch) falls back to a bare
+  "Act N" instead of joining an empty list or crashing. All three assertions
+  pass against the real function, no mocking. `run_tests.gd`: fresh
+  `--import`, headless, Godot 4.7.1: ALL TESTS PASSED.
+
 - **2026-09-07** — #86 duty 2 (find an error and resolve it). Two prior duty
   commits went unlogged before this run and are covered here rather than
   left silent: `0a44712` (duty 2 — `combat.ogg` shipped since forever but
