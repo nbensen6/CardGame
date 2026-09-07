@@ -10505,3 +10505,40 @@ Newest first. One line per finished item: what, and anything surprising.
   can't build a `Boss` from. Four new tests, all passing.
   `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1).
   Next `#86` turn is duty 1 (asset pass, portraits/icons).
+
+- **2026-09-07** — #86 duty 1 attempted, blocked again, fell back to duty 2
+  (find an error and resolve it). Last `#86` turn (`06ae46e`) explicitly asked
+  whether the `download.blender.org` block was container-specific before
+  assuming it again — confirmed it is not: `curl` to
+  `download.blender.org/release/Blender4.1/...` gets a 403 at the CONNECT
+  tunnel from this container's own egress proxy too
+  (`recentRelayFailures: connect_rejected, "gateway answered 403 to CONNECT
+  (policy denial or upstream failure)"`), so this is a standing policy on
+  `download.blender.org`, not a one-off outage. Moved to duty 2 rather than
+  retrying.
+  Found a real first-pass hole: `ui/music.gd`'s own header comment names
+  "menu, combat" as the two shipped tracks (`assets/music/menu.ogg` and
+  `assets/music/combat.ogg` both exist on disk), but the only call to
+  `Music.play()` anywhere in `game/**` was `menu.gd`'s `Music.play("menu")`
+  on the title screen. `game_3d.gd`'s `_sync()` — the one place that watches
+  every phase transition of a run (map/combat/reward/event/campfire/shop/
+  won/lost) and swaps the 3D scene for it — never touched `Music` at all.
+  So once a player left the title screen, the menu track kept playing
+  forever, straight through every fight, and `combat.ogg` was never
+  reachable by any player action in the game as shipped — an asset that
+  looked wired (named in its own class's doc comment) but wasn't.
+  Fixed at the same choke point `_sync()` already reads phase from: added
+  `Game3D.music_for_phase(phase)` (a static, pure function — `"combat"` for
+  the combat phase, `"menu"` for the other eight, one generic rule per
+  CLAUDE.md §11 rather than a per-phase branch) and call
+  `Music.play(music_for_phase(phase))` on every `_sync()`. `Music.play()`
+  already no-ops when the requested track is already playing, so this adds
+  no audible chatter on ticks that don't change phase. Two regression tests
+  against the real `SCENES` table (`Game3D.music_for_phase("combat") ==
+  "combat"`; every other key in `SCENES` maps to `"menu"`), the same
+  preload-the-script-as-a-const pattern `_felled_height` and
+  `route_between_rungs` already use, so provable headless with no display —
+  this is wiring logic, not the audio itself, so it clears the "extract the
+  pure function" bar duty 3's own rule sets for presentation mechanics.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1).
+  Next `#86` turn is duty 3 (verify a mechanic actually works).

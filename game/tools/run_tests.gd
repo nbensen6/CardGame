@@ -839,6 +839,18 @@ func _init() -> void:
 	_test_backlog86_phase_string_for_maps_every_named_phase()
 	_test_backlog86_phase_string_for_defaults_unmapped_phases_to_combat()
 	_test_backlog86_phase_string_for_never_produces_a_screen_game_3d_lacks()
+	# backlog #86 duty 2: assets/music/combat.ogg has sat in the repo since it
+	# was added, and ui/music.gd's own header comment names "menu, combat" as
+	# the two tracks -- but the only call to Music.play() anywhere in game/**
+	# was menu.gd's own "menu" on the title screen. game_3d.gd's _sync() swaps
+	# the 3D scene for every phase transition and never touched Music at all,
+	# so once a run left the title screen the menu track played forever,
+	# straight through combat, and combat.ogg was never reachable by any
+	# player action. Fixed by routing music off the same phase _sync() already
+	# reads, through a lifted static music_for_phase() so the mapping is
+	# provable without a display.
+	_test_backlog86_music_for_phase_picks_combat_track_in_combat()
+	_test_backlog86_music_for_phase_picks_ambient_track_everywhere_else()
 	# backlog #86 duty 3 (thirty-second pass): HitCircle, the osu-style timing
 	# tap Nick asked for by name ("change the timing mechanic to mimicc osu").
 	# Every prior duty-3 pass on combat_3d proved the ROUTE a hunter's climb
@@ -10644,6 +10656,24 @@ func _test_backlog86_phase_string_for_never_produces_a_screen_game_3d_lacks() ->
 		var s := GameHost.phase_string_for(phase)
 		_expect((Game3D.SCENES as Dictionary).has(s),
 			"phase_string_for(%d) = '%s' must be a screen game_3d.gd's SCENES table actually has" % [phase, s])
+
+
+## backlog #86 duty 2 -- game_3d.music_for_phase is the mapping _sync() now
+## feeds to Music.play() on every state update, added because nothing did:
+## assets/music/combat.ogg shipped and was never once reachable by a player,
+## since the only Music.play() call anywhere was menu.gd's own "menu" on the
+## title screen. Static and pure, same as SCENES itself, so provable headless.
+func _test_backlog86_music_for_phase_picks_combat_track_in_combat() -> void:
+	_expect(Game3D.music_for_phase("combat") == "combat",
+		"the combat screen plays assets/music/combat.ogg, not the ambient track it inherited from the title screen")
+
+
+func _test_backlog86_music_for_phase_picks_ambient_track_everywhere_else() -> void:
+	for phase in (Game3D.SCENES as Dictionary).keys():
+		if phase == "combat":
+			continue
+		_expect(Game3D.music_for_phase(phase) == "menu",
+			"phase '%s' is not a fight, so it keeps the same ambient track the title screen already started" % phase)
 
 
 ## backlog #86 duty 3 (thirty-second pass) -- HitCircle is the osu-style timing

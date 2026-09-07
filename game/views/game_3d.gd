@@ -29,6 +29,9 @@ const SCENES := {
 	"lost": "res://views/location_3d.tscn",
 }
 
+const MUSIC_COMBAT := "combat"
+const MUSIC_AMBIENT := "menu"
+
 var _client: GameClient
 var _current := ""   # the scene path on screen, so identical phases don't churn
 var _view: Node
@@ -47,6 +50,7 @@ func _sync() -> void:
 	var phase := String(_client.shared.get("phase", ""))
 	if phase.is_empty():
 		return
+	Music.play(music_for_phase(phase))
 	if not SCENES.has(phase):
 		push_error("game_3d: no 3D client for phase '%s' — staying on %s" % [phase, _current])
 		return
@@ -65,3 +69,10 @@ func _sync() -> void:
 		return
 	_view = scene.instantiate()
 	add_child(_view)
+
+
+## Which track a phase's screen should be playing. Only two tracks exist
+## (menu.ogg, combat.ogg — see ui/music.gd), so every phase reduces to one of
+## the two rather than needing an entry per phase the way SCENES does.
+static func music_for_phase(phase: String) -> String:
+	return MUSIC_COMBAT if phase == "combat" else MUSIC_AMBIENT
