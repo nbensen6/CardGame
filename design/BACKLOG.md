@@ -2640,6 +2640,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-07** — #86 duty 1 (improve an asset — portraits/icons only). Last
+  commit (`b781d22`) was duty 3, so this turn is duty 1.
+  `download.blender.org` is still 403'd at this container's egress proxy
+  (confirmed again), but `apt-get install blender python3-numpy libegl1
+  libgl1-mesa-dri libglx-mesa0` (after `apt-get update`, since the cached
+  index had gone stale enough to 404 several packages) pulled a working
+  headless Blender 4.0.2, the same fallback route #74/#76/#83 already used —
+  so this run did not fall through to duty 2. Picked `flicker_stag_portrait`
+  (34/50, 2 of 4 passes used): looking at the committed render before
+  trusting the rubric's own "two lowest" (Colour 5, Read@34px 6) found pass
+  2's own reported alpha bbox already named the real defect — bottom margin
+  0, all four legs cut off flush at the canvas edge — which outranks both
+  named lines the same way `clot_toad_portrait.md` pass 3 and
+  `lightbearer_portrait.md` pass 2 both treated an edge-clip as overriding
+  the numeric diagnosis. Swept `portraits.py`'s `FOCUS["flicker_stag"]`
+  from `(0.70, 0.68)` to `(0.50, 1.10)` by rendering trial crops and
+  measuring each alpha bbox directly (not guessed): legs now clear on every
+  side (margins 133/36/117/28). Rebuilt the full 32-portrait set, diffed
+  every PNG against committed, kept only `flicker_stag.png` (the other
+  drift — `frog.png`, `eyrie_hawk.png`, `cinder_jackal.png`, `yoke_ox.png` —
+  matches render-noise already flagged in `goblin_mech_portrait.md` pass 2,
+  no `FOCUS` entry for those touched). Scored 34 → 37 (Framing 8→9,
+  Read@34px 6→7, Style 7→8, Colour and Identity unchanged); full pass
+  write-up in `design/progress/flicker_stag_portrait.md`. `run_tests.gd`:
+  fresh `--import`, headless Godot 4.7.1.1: ALL TESTS PASSED.
+
 - **2026-09-07** — #86 duty 3 (verify a mechanic actually works). Last commit
   (`80d8a09`) was duty 2, so this turn is duty 3; duty 1 (asset pass) stays
   blocked — confirmed again, `download.blender.org` still 403s at this

@@ -11,6 +11,7 @@ only — report, not repair.** Asset: `game/assets/portraits/flicker_stag.png`
 | 6 | 8 | 6 | 5 | 7 | **32** |
 
 Pass 2: 8 | 8 | 6 | 5 | 7 | **34** — see below.
+Pass 3: 9 | 8 | 7 | 5 | 8 | **37** — see below.
 
 ## What is actually there
 
@@ -157,3 +158,94 @@ than either extreme" principle `bog_leech_portrait.md`/`vine_weaver_
 portrait.md` already named) would be worth it, or whether 34/50 is close
 enough to the 40 stop line that Nick should see it before another pass —
 2 of 4 passes used, 2 remain.
+
+## Pass 3 — cloud, backlog #86 duty 1
+
+Went in to score the current two lowest lines (Colour 5, Read@34px 6), but
+looking at the committed render first (this lane's own rule: a look
+overrides a stale number) found pass 2's own open question already
+answered by the alpha bbox pass 2 itself measured and reported: bottom
+margin **0**, the legs cut off flush at the canvas edge. Pass 2 called this
+"a pre-existing characteristic, not something this pass introduced," which
+is true but is still a real, confirmed defect nobody had fixed — the same
+class of issue `clot_toad_portrait.md` pass 3 and `lightbearer_portrait.md`
+pass 2 both treated as outranking whatever the rubric's two lowest lines
+said, and the same reasoning applies here: a body part missing from the
+frame is worse than either Colour or Read@34px, and both of those are
+diagnosed as out of `portraits.py`'s reach anyway (Colour is
+`flicker_stag.py`'s own material choice; Read@34px's belly ball is a size
+problem no crop fixes without re-hiding it again).
+
+**Framing, the real fix.** Rendered a series of trial crops directly through
+`portraits.py`'s own `look()` (not guessed) and measured each one's alpha
+bbox: holding `span` near pass 2's 0.68-1.1 range left the bottom margin
+pinned at 0 regardless of `at` — the legs' full length only clears the
+frame once `span` opens enough to include the whole standing height, not
+just the head-and-shoulders `at` used to isolate. Swept from there and
+settled on `FOCUS["flicker_stag"] = (0.50, 1.10)` (from `(0.70, 0.68)`):
+alpha bbox is now `(133, 36, 379, 476)` on the 512×512 canvas — margins
+**L 133, T 36, R 117, B 28**, every edge clear, left/right and top/bottom
+each within ~16px and ~8px of each other rather than one pinned at 0.
+
+This is a full-body composition rather than a head crop, the same
+composition class `bog_leech`, `thrasher` and `boulder_ram` already use in
+this set (`goblin_mech_portrait.md` pass 2's own note: "a wider,
+more whole-body crop is not a new composition class in this set").
+
+Rebuilt the full 32-portrait set through `portraits.py` directly (apt's
+Blender 4.0.2, headless) and diffed every PNG against the committed set by
+mean/max per-channel pixel difference: `flicker_stag.png` alone at mean
+51.15/max 255 (a real content change); `frog.png` (58.2) and
+`eyrie_hawk.png` (8.5) repeat the same render-environment drift
+`goblin_mech_portrait.md` pass 2 already flagged for this container's
+particular Blender build (neither asset's `FOCUS` entry touched);
+`cinder_jackal.png` (4.7) and `yoke_ox.png` (2.6) sit in the same noise
+band prior passes measured. Kept only `flicker_stag.png`, reverted the
+other 31 with `git checkout --`.
+
+Looked at the result three ways, composited on the same brown card-face
+standin every prior pass used: the full 512px render
+(`design/renders/flicker_stag_portrait_pass3_full.png`), and a real 34px
+`LANCZOS` downsample nearest-neighbour upscaled for viewing
+(`..._pass3_34px_big.png`), compared side by side against pass 2's own
+equivalent renders.
+
+- **Framing (8 → 9):** the leg-clip is gone — all four legs and their small
+  blue hoof-guard plates are fully in frame with real margin on every side,
+  confirmed by the bbox measurement and the full composite. Not a 10: the
+  margins are close but not pixel-matched (L133/R117, T36/B28).
+- **Identity (8, unchanged):** the antlers are smaller in frame than pass
+  2's tighter crop (the trade this wider composition costs), but they are
+  still the clearest silhouette element, and the now-visible legs and hoof
+  plates add a second recognisable cue rather than diluting the first —
+  looked at side by side with pass 2's render, neither reads as a clear
+  gain or loss over the other.
+- **Readability @ 34px (6 → 7):** confirmed via a fresh 34px downsample
+  compared frame-by-frame against pass 2's own. The antlers and body blob
+  read the same as before; the real change is the legs, which now resolve
+  as four complete limbs with small pale hoof accents at 34px instead of
+  ending in a hard cut a few pixels above the canvas edge — a small but
+  genuine gain, not the belly-ball fix pass 2 left open (that line still
+  doesn't register at this size, unchanged).
+- **Colour & separation (5, unchanged):** not touched — still the model's
+  own material choice, out of `portraits.py`'s reach, same conclusion pass
+  1 and 2 both reached.
+- **Style consistency (7 → 8):** no longer carrying the one defect
+  (edge-clipping) none of the other properly-framed portraits in the set
+  have; the full-body composition itself was already an established class
+  in this cast, not a new one.
+
+**+3 total (34 → 37), not a plateau — kept.** No line regressed.
+`run_tests.gd`: **ALL TESTS PASSED** (fresh `--import`, headless, Godot
+4.7.1 — this pass touches only `tools/blender/portraits.py`'s data table
+and the regenerated `flicker_stag.png`, no `game/**` GDScript).
+
+## Unsure about (pass 3)
+
+Whether Identity's antler-vs-leg trade nets out as a real gain or a wash
+to someone who hasn't seen pass 2's tighter crop for comparison — scored
+unchanged here for lack of a clear signal either way, but a fresh pair of
+eyes might call it differently. Also unresolved, same as pass 1 and 2:
+Colour & separation needs a `flicker_stag.py` material change to move at
+all, which is the fixer lane's call, not this one's — 3 of 4 passes used,
+1 remains, at 37/50, 3 short of the loop's 40 stop line.
