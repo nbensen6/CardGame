@@ -2627,6 +2627,25 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-07** — #86 duty 3 (verify a mechanic actually works), fiftieth
+  pass of the rotation. Last `#86` turn (duty 2, artifact-on-adds) was duty 2,
+  so this was due for duty 3. Went hunting for the "two copies of one truth"
+  shape duty 2 keeps finding, but on the view side: `location_3d.gd`'s shop
+  screen builds its own "SOLD" / `b.disabled` state from `sold`/`gold`/`price`
+  independently of the authoritative gate in `Run.buy()` (`run.gd:470`,
+  `sold or gold < price`). The many `run.buy()` calls elsewhere in
+  `run_tests.gd` only prove the server-side gate works; nothing proved the
+  view's copy of the same condition actually agreed with it, or shared its
+  exact `<` (not `<=`) boundary. Lifted the boolean into
+  `location_3d.shop_slot_disabled(sold, gold, price)`, had `_stock_button`
+  call it instead of repeating the expression inline, and added four tests:
+  sold-stays-disabled-regardless-of-gold, short-on-gold, exact-price-is-
+  affordable (the boundary case, `<` not `<=`), and affordable-and-unsold.
+  No divergence found this pass — the two copies already agreed — so this is
+  a regression guard against the two formulas drifting apart later, same
+  value as the tap-picking and `_stakes` passes before it. `run_tests.gd`:
+  fresh `--import`, headless, Godot 4.7.1, ALL TESTS PASSED. Next `#86` turn
+  is duty 1 (improve an asset).
 - **2026-09-07** — #86 duty 2 (find an error and resolve it), forty-ninth
   pass of the rotation. Last `#86` turn (`73c7ce2`, gale_serpent portrait)
   was duty 1, so this was due for duty 2. Re-read `combat.gd`'s add-facing

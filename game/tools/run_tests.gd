@@ -986,6 +986,17 @@ func _init() -> void:
 	_test_backlog86_nearest_open_node_on_screen_is_negative_one_past_reach()
 	_test_backlog86_nearest_open_node_on_screen_is_negative_one_with_no_open_nodes()
 
+	# backlog #86 duty 3: location_3d.shop_slot_disabled is a second copy of
+	# Run.buy()'s own gate (run.gd:470, "sold or gold < price") -- the shop
+	# button a player sees has to agree with what the server will actually
+	# accept, or a slot can look buyable when the server would refuse it (or
+	# look grayed-out on a purchase the server would allow). Lifted the same
+	# way as the tap-picking helpers above: three scalars in, one bool out.
+	_test_backlog86_shop_slot_disabled_stays_disabled_once_sold_regardless_of_gold()
+	_test_backlog86_shop_slot_disabled_is_true_when_short_on_gold()
+	_test_backlog86_shop_slot_disabled_is_false_at_the_exact_price()
+	_test_backlog86_shop_slot_disabled_is_false_when_affordable_and_unsold()
+
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
 	# not "inside tree" yet until the engine's main loop actually starts, one
@@ -11171,6 +11182,32 @@ func _test_backlog86_nearest_open_node_on_screen_is_negative_one_with_no_open_no
 	var screen_positions := {0: Vector2(0, 0)}
 	var best: int = Overworld3D.nearest_open_node_on_screen(nodes, screen_positions, Vector2(0, 0), 34.0)
 	_expect(best == -1, "a closed node right under the finger is still refused by the fallback -- only the world-space test may hit a closed node")
+
+
+## backlog #86 duty 3 -- location_3d.shop_slot_disabled mirrors Run.buy()'s own
+## gate (run.gd:470) so the shop button's grayed-out state never lies about
+## what the server will actually accept. No test touched _stock_button's
+## b.disabled line before this; the many run.buy() calls elsewhere in this
+## suite only prove the AUTHORITATIVE check works, never that the view's own
+## copy of the same condition agrees with it.
+func _test_backlog86_shop_slot_disabled_stays_disabled_once_sold_regardless_of_gold() -> void:
+	_expect(Location3D.shop_slot_disabled(true, 999, 1),
+		"a sold slot stays disabled no matter how much gold the party has")
+
+
+func _test_backlog86_shop_slot_disabled_is_true_when_short_on_gold() -> void:
+	_expect(Location3D.shop_slot_disabled(false, 5, 10),
+		"an unsold slot the party can't afford is disabled")
+
+
+func _test_backlog86_shop_slot_disabled_is_false_at_the_exact_price() -> void:
+	_expect(not Location3D.shop_slot_disabled(false, 10, 10),
+		"exact gold is enough to buy -- the boundary is '<', matching Run.buy()'s own check, not '<=' which would wrongly block an exact-price purchase")
+
+
+func _test_backlog86_shop_slot_disabled_is_false_when_affordable_and_unsold() -> void:
+	_expect(not Location3D.shop_slot_disabled(false, 11, 10),
+		"an affordable, unsold slot stays enabled")
 
 
 func _expect(cond: bool, name: String) -> void:

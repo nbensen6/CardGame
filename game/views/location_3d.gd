@@ -797,6 +797,14 @@ func _render_shop(s: Dictionary) -> void:
 	_add_switch()
 
 
+## Mirrors Run.buy()'s own gate (run.gd:470) so the button a player sees never
+## lies about what the server will actually accept — a sold slot stays
+## disabled regardless of gold, and affording exactly the price is enough
+## (the boundary is "<", not "<=", same as the server's check).
+static func shop_slot_disabled(sold: bool, gold: int, price: int) -> bool:
+	return sold or gold < price
+
+
 func _stock_button(item: Dictionary, index: int, gold: int) -> Button:
 	var price := int(item["price"])
 	var sold := bool(item["sold"])
@@ -807,7 +815,7 @@ func _stock_button(item: Dictionary, index: int, gold: int) -> Button:
 	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	b.text = "%s\n%s%s\n%s" % ["SOLD" if sold else "%d gold" % price,
 		String(item.get("name", "?")), who, String(item.get("text", ""))]
-	b.disabled = sold or gold < price
+	b.disabled = shop_slot_disabled(sold, gold, price)
 	if not b.disabled:
 		var idx := index
 		b.pressed.connect(func() -> void:
