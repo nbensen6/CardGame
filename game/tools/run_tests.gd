@@ -734,6 +734,14 @@ func _init() -> void:
 	_test_backlog86_progress_action_for_key_finds_the_current_owner()
 	_test_backlog86_progress_rebinding_to_your_own_key_does_not_steal_from_yourself()
 	_test_backlog86_progress_reset_keybinds_restores_every_default()
+	# backlog #86 duty 3 (forty-fourth pass): the rebind system above proves the
+	# STEALING rule (Progress.set_keybind/action_for_key), but nothing had ever
+	# proven the button TEXT a player actually reads is right -- combat_3d._key_name
+	# had zero coverage. The stealing rule can be flawless and a player still
+	# rebinds the wrong key if the label lies about what is bound.
+	_test_backlog86_key_name_reports_unbound_for_key_none()
+	_test_backlog86_key_name_overrides_space_explicitly()
+	_test_backlog86_key_name_falls_back_to_the_os_keycode_string()
 	# backlog #86 duty 3: next_selection_state, lifted out of
 	# combat_3d._pick_for_selection -- the tap-to-pick state machine behind
 	# meld/exhaust_pick/cheapen_pick cards. Its own comment names the one hard
@@ -9000,6 +9008,38 @@ func _test_backlog86_hunter_move_kind_climb_outranks_moved_even_if_the_point_did
 	# resting point happens to land within 0.05m of the old one.
 	_expect(Combat3D.hunter_move_kind(true, 2, 5, false) == "climb",
 		"a real foothold change climbs even if the two world positions happen to coincide")
+
+
+## backlog #86 duty 3 (forty-fourth pass) -- _key_name is the display half of
+## the rebind system: Progress owns WHICH key is bound (already proven above),
+## this owns what the settings-screen button actually SAYS is bound. The two
+## are two copies of one fact -- the raw keycode int, and the label a player
+## reads -- and duty 3's own house rule (see the top of this file) is to hunt
+## exactly that shape of bug: state kept in two places where only one is
+## checked. A wrong label here means a player rebinds the wrong key with full
+## confidence, because the button told them they'd just unbound the right one.
+func _test_backlog86_key_name_reports_unbound_for_key_none() -> void:
+	_expect(Combat3D._key_name(KEY_NONE) == "unbound",
+		"an action with nothing bound must say so plainly, not print a blank or a raw zero")
+
+
+func _test_backlog86_key_name_overrides_space_explicitly() -> void:
+	# The comment beside this branch in combat_3d.gd claims OS.get_keycode_string
+	# already returns "Space" and the override is only there to "be sure" -- so
+	# prove the override actually produces "Space" rather than trusting the
+	# comment's claim about what the engine does when nobody is looking.
+	_expect(Combat3D._key_name(KEY_SPACE) == "Space",
+		"Space must render as the word 'Space', not whatever raw string the OS call would give a bare key")
+
+
+func _test_backlog86_key_name_falls_back_to_the_os_keycode_string() -> void:
+	# Any key that isn't one of the two special-cased constants goes straight to
+	# the engine's own name for it. This is the one line of the function nothing
+	# above exercises, and it's the one every OTHER key on the keyboard takes.
+	_expect(Combat3D._key_name(KEY_A) == OS.get_keycode_string(KEY_A),
+		"an ordinary key falls through to the engine's own keycode string, unmodified")
+	_expect(Combat3D._key_name(KEY_ESCAPE) == OS.get_keycode_string(KEY_ESCAPE),
+		"Escape is not special-cased by this function -- it's refused earlier, in _apply_rebind -- so it must still get a real label here")
 
 
 ## backlog #86 duty 3 (twenty-sixth pass) — grip_after_tick and

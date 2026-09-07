@@ -2592,6 +2592,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-07** — #86 duty 3 (verify a mechanic actually works), forty-fourth
+  pass of the rotation. Last `#86` turn (`c24ccd6`, `intent_is_hostile`) was
+  duty 2, so this was due for duty 3. Surveyed every `static func` in the
+  codebase against `run_tests.gd` for zero string-match hits, the same method
+  the forty-first pass used to find `_hex_x`. Most zero-hit names turned out
+  to be private helpers already exercised indirectly through a public
+  round-trip (`PlayerState._cards_to_dicts`/`_cards_from_dicts` via
+  `to_dict`/`from_dict`; `Progress._keybinds`/`_seen_hints` via `keybind()`)
+  — real coverage, just not a literal name match, so those are not gaps.
+  `combat_3d._key_name` was a real one: the rebind system's "binding a key
+  steals it from its old owner" rule (Progress.set_keybind/action_for_key)
+  already had tests, but nothing had ever proven the LABEL a player actually
+  reads on the settings-screen button is correct — the display half of the
+  same two-copies-of-one-truth shape duty 3 keeps hunting (raw keycode int
+  vs. the string shown for it). Also checked whether `Boss.hold_exposed_to`
+  (a static accessor with real logic, zero test hits, zero call sites outside
+  `boss.gd` and no beast in `data/bosses.json` ever setting `exposed_to`) was
+  a first-pass hole worth wiring up — decided against it: nothing in the game
+  ever reads the field today, so making it DO something would be new scope
+  (rule 6), not verifying an existing mechanic. Left it alone; noting it here
+  in case a future duty-2 pass wants to chase why a documented hold shape has
+  no consumer. Added three tests for `_key_name`: `KEY_NONE` → "unbound",
+  `KEY_SPACE` → the explicit "Space" override (proving the comment's claim
+  that the engine already returns "Space" was previously untested, not just
+  unverified), and an ordinary key (`KEY_A`, `KEY_ESCAPE`) falling through
+  unmodified to `OS.get_keycode_string`. All three passed on the first run —
+  no bug found this time, unlike the last two duty-3 passes. `run_tests.gd`:
+  ALL TESTS PASSED (fresh `--import`, headless, Godot 4.7.1). Next `#86` turn
+  is duty 1 (improve an asset).
 - **2026-09-07** — #86 duty 2 (find an error and resolve it), forty-third pass
   of the rotation. Last `#86` turn (`e909723`, the ascend icon pass) was duty
   1, so this was due for duty 2. Read `combat_3d.gd`'s boss-intent telegraph
