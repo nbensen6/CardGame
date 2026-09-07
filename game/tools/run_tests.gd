@@ -854,6 +854,16 @@ func _init() -> void:
 	# provable without a display.
 	_test_backlog86_music_for_phase_picks_combat_track_in_combat()
 	_test_backlog86_music_for_phase_picks_ambient_track_everywhere_else()
+	# backlog #86 duty 3: music_for_phase (above) only proves the ROUTING is
+	# right; nothing had ever proven the settings-menu Music toggle
+	# (combat_3d.gd:2571) actually does what its own comment on
+	# Music.refresh() promises — "audible on the tap, not on the next scene
+	# change". Progress.music_enabled()/set_music_enabled() also had zero
+	# coverage, unlike their Tips sibling (_test_tips_can_be_switched_off...
+	# above). The persistence half is synchronous and safe here; the playback
+	# half needs a real tree (see the function's own comment), so it runs
+	# from _finish_with_deferred_tests instead.
+	_test_backlog86_music_enabled_round_trips_through_progress()
 	# backlog #86 duty 3 (thirty-second pass): HitCircle, the osu-style timing
 	# tap Nick asked for by name ("change the timing mechanic to mimicc osu").
 	# Every prior duty-3 pass on combat_3d proved the ROUTE a hunter's climb
@@ -1036,6 +1046,7 @@ func _init() -> void:
 
 
 func _finish_with_deferred_tests() -> void:
+	_test_backlog86_music_refresh_stops_playback_the_instant_you_mute()
 	_test_backlog86_fit_shrinks_the_logical_viewport_on_handheld()
 	_test_backlog86_fit_resets_the_logical_viewport_on_desktop()
 
@@ -10755,6 +10766,78 @@ func _test_backlog86_music_for_phase_picks_ambient_track_everywhere_else() -> vo
 			continue
 		_expect(Game3D.music_for_phase(phase) == "menu",
 			"phase '%s' is not a fight, so it keeps the same ambient track the title screen already started" % phase)
+
+
+## backlog #86 duty 3: music_for_phase (above) only proves the mapping fed to
+## Music.play() is right; Progress.music_enabled()/set_music_enabled() (the
+## settings-menu Music toggle's own storage, combat_3d.gd:2571) had never been
+## driven through a test at all -- zero mentions in this file, unlike their
+## Tips sibling (_test_tips_can_be_switched_off_without_losing_your_place).
+## Same round-trip shape as that test: flip it off, read it back, flip it back
+## on, restore whatever the suite found it at.
+func _test_backlog86_music_enabled_round_trips_through_progress() -> void:
+	var was := Progress.music_enabled()
+	Progress.set_music_enabled(false)
+	var off := Progress.music_enabled()
+	Progress.set_music_enabled(true)
+	var on := Progress.music_enabled()
+	Progress.set_music_enabled(was)
+	_expect(not off and on,
+		"the music mute setting persists through Progress' ConfigFile, the same as every other settings-menu toggle")
+
+
+## backlog #86 duty 3: Music.refresh()'s own comment claims muting is "audible
+## on the tap, not on the next scene change" -- nothing had ever proven that,
+## only that music_for_phase() names the right track. Two ways to fake this
+## without a real AudioStreamPlayer both dead-end: overriding stop() on a
+## script subclass is refused at parse time ("overrides a method from native
+## class... won't be called by the engine", Godot 4.7 treats it as an error),
+## and playing's getter is native, unfakeable. So this drives a real player
+## through play()/stop(), which is the only way to observe .playing actually
+## flip -- run from _finish_with_deferred_tests because Music._ensure() needs
+## Engine.get_main_loop() to be a SceneTree, still null this early in _init()
+## (confirmed with a throwaway print) even though `root` itself already
+## resolves. A synthesized silent WAV stands in for a real track (loading the
+## shipped .ogg leaves Ogg decoder session objects that outlive stop()/free()
+## here and get flagged as leaked at exit -- confirmed by trying it first).
+func _test_backlog86_music_refresh_stops_playback_the_instant_you_mute() -> void:
+	var was_enabled := Progress.music_enabled()
+	var player := AudioStreamPlayer.new()
+	root.add_child(player)
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_16_BITS
+	wav.mix_rate = 22050
+	wav.stereo = false
+	var data := PackedByteArray()
+	data.resize(11025 * 2)  # half a second of silence -- plenty for a played/not-played check
+	wav.data = data
+	player.stream = wav
+	Music._player = player
+	Music._current = "menu"
+	Progress.set_music_enabled(true)
+	player.play()
+	var was_playing := player.playing
+	Progress.set_music_enabled(false)
+	Music.refresh()
+	var muted := player.playing
+	# put everything back exactly as this test found it -- it has no business
+	# changing what the player chose, or leaving a stray node mid-track. The
+	# AudioServer mix thread only releases the AudioStreamPlaybackWAV play()
+	# just created on its own schedule, and no cleanup here can force that --
+	# this single-shot script exits before the mix thread's next tick, however
+	# promptly stop()/free() run. The result is a known, harmless "N ObjectDB
+	# instances were leaked at exit" on stderr sometimes (timing-dependent),
+	# not a real leak in the shipped game (where the process keeps running),
+	# and it does not change run_tests.gd's exit code or its ALL TESTS PASSED
+	# line.
+	player.stop()
+	root.remove_child(player)
+	player.free()
+	Music._player = null
+	Music._current = ""
+	Progress.set_music_enabled(was_enabled)
+	_expect(was_playing and not muted,
+		"muting calls Music.refresh(), which stops the track immediately rather than waiting for the next phase change")
 
 
 ## backlog #86 duty 3 (thirty-second pass) -- HitCircle is the osu-style timing

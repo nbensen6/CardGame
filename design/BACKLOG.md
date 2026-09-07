@@ -10608,3 +10608,42 @@ Newest first. One line per finished item: what, and anything surprising.
   Next `#86` turn is duty 1 (asset pass) — worth re-checking the Blender
   block again by then, since a standing egress policy is still just a
   policy, not a guarantee it never changes.
+
+- **2026-09-07, #86 duty 2 (find an error and resolve it — backfilled).** This
+  entry is for `5e5f086`, which never got one at the time. Duty 1 attempted
+  again first and confirmed still blocked (same 403 at the CONNECT tunnel to
+  `download.blender.org`). Found a real "two copies of one truth" bug:
+  `Run.campfire_action()`'s rest branch has always cut `REST_HEAL` by
+  ascension's `rest_heal` tiers (Cold Camps, level 5+), but
+  `game_host.gd`'s `_build_shared()` sent the CAMPFIRE snapshot's "heal"
+  straight from the bare `Run.REST_HEAL` constant, never asking `Run` what a
+  rest actually grants — at Ascension 5+ the button told every player
+  "recover 9 HP" while the real grant was 5. Pulled the shared formula into
+  `Run.rest_heal_amount()` so both call sites read one source, and added a
+  regression test at Ascension 5. `run_tests.gd`: ALL TESTS PASSED.
+
+- **2026-09-07, #86 duty 3 (verify a mechanic actually works).** Last commit
+  (`5e5f086`) was duty 2, so this turn is duty 3. Re-confirmed duty 1 still
+  blocked (`download.blender.org` 403 at the CONNECT tunnel) before falling
+  back. The queue's own named starting point
+  (`combat_3d._route_between`/`_stand_on_model`) was already fully lifted and
+  tested in an earlier pass, so hunted for a genuinely untested mechanic
+  instead. Found the settings-menu Music toggle
+  (`combat_3d.gd:2571`/`ui/music.gd`): `Progress.music_enabled()`,
+  `Progress.set_music_enabled()` and `Music.refresh()` had zero mentions
+  anywhere in `run_tests.gd`, unlike their Tips sibling. Added a
+  ConfigFile round-trip test for the setting itself, and a second test
+  proving `Music.refresh()` actually stops an already-playing track the
+  instant the setting flips off ("audible on the tap, not the next scene
+  change", per `refresh()`'s own comment) rather than merely trusting the
+  comment. The playback test drives a real `AudioStreamPlayer` (a script
+  subclass overriding `stop()` to fake it was refused at parse time — Godot
+  4.7 treats overriding a native method as an error), which sometimes leaves
+  a harmless "N ObjectDB instances were leaked at exit" warning on stderr:
+  the AudioServer mix thread releases the playback object it made on its own
+  schedule, and this single-shot script can exit before that tick regardless
+  of how promptly the test calls `stop()`/`free()`. Confirmed this doesn't
+  affect the exit code or the `ALL TESTS PASSED` line (several repeat runs,
+  all exit 0). `run_tests.gd`: fresh `--import`, headless, Godot 4.7.1: ALL
+  TESTS PASSED. Next `#86` turn is duty 1 (asset pass) — worth re-checking
+  the Blender block again by then.
