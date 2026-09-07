@@ -172,6 +172,17 @@ for turn, lift, col in ((0.35, 0.0, GREEN), (math.pi + 0.35, 0.05, MINT)):
         px, py, pz = path[at]
         b.ball((px * 1.16, py * 1.16, pz + 0.030), (0.062, 0.058, 0.026),
                col, 5, 3)
-    b.ball(path[-1], (0.055, 0.052, 0.046), LILAC, 6, 4)
+    # Pulled inward along its own radial offset by roughly half its own radius
+    # so it nests into the vine coil instead of resting beside it. A full-radius
+    # pull (0.05) put its centre inside the trunk surface (offset 0.030 from
+    # trunk_r, radius ~0.05) and buried it entirely behind the trunk mesh in
+    # both the 3/4 and front views - confirmed by rendering that attempt and
+    # comparing against this one; reverted to this smaller pull, which overlaps
+    # the vine coil without crossing the trunk wall.
+    lx, ly, lz = path[-1]
+    ty = trunk_y(lz)
+    frac = 1.0 - 0.025 / math.hypot(lx, ly - ty)
+    b.ball((lx * frac, ty + (ly - ty) * frac, lz), (0.055, 0.052, 0.046),
+           LILAC, 6, 4)
 
 b.finish(out_path(), name="VineWeaver", budget="hunter")
