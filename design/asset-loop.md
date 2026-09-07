@@ -16,14 +16,19 @@ start to finish.
 3. **Look** — read the images back in. Describe what is actually there, not what
    the script was trying to make. **If you cannot see the render, stop and say
    so.** Do not continue blind.
-4. **Score** — 1–10 on each rubric line, with a one-line justification each,
+4. **Gate** — `python tools/blender/silmetrics.py <asset>`. Solidity must be
+   **under 0.80** and distinctness **over 0.25**. A failing gate outranks every
+   rubric line below and dictates what this pass fixes; see
+   `design/art-target.md`. Confirm the progress file carries its **ANCHOR**
+   sentence, and write one if it does not.
+5. **Score** — 1–10 on each rubric line, with a one-line justification each,
    into `design/progress/<asset>.md`.
-5. **Diagnose** — name the two lowest lines and write one concrete fix for each.
+6. **Diagnose** — name the two lowest lines and write one concrete fix for each.
    Concrete means "raise the eye domes 0.06 and pull them 0.10 apart so the
    silhouette has two bumps instead of one hump", not "improve the silhouette".
-6. **Apply** — commit first, then apply **only those two fixes**. Do not restyle
+7. **Apply** — commit first, then apply **only those two fixes**. Do not restyle
    the whole asset.
-7. Repeat from 2.
+8. Repeat from 2.
 
 ## Stop conditions
 
@@ -113,9 +118,15 @@ a pass" will grind on the joinery of furniture that needs redesigning.
   `tools/blender/dissect.py` on the real packs gives ~575 tris median, ~80% of
   faces smooth-shaded, ~30% of edges in a 25–50° bevel band, parts built from
   tubes, boxes and tapers. `tools/blender/kenney.py` is that vocabulary.
-- **Reference:** the Kenney models still in `game/assets/3d/` as stand-ins, and
-  `dissect.py` output. There is no reference image per creature — that is the
-  single biggest quality ceiling here, and the template says so.
+- **Reference:** `design/art-target.md` — read it before the first pass on any
+  asset. The short version: the Kenney models in `game/assets/3d/` are the
+  reference and they are CC0, so `dissect.py` and `silmetrics.py` can both be
+  run over them to get target numbers from art a professional made and sold in
+  this exact style. Do not download screenshots of other games into this repo
+  and do not score against a memory of one. There is still no reference image
+  per creature — that remains the single biggest quality ceiling here, it is
+  Nick's to supply, and until it exists a pass can fix defects but cannot chase
+  a look.
 - **Poly budget** (`kenney.BUDGET`): hunter 1400, beast 2600, prop 500,
   ground 3600, tile 460, landmark 900, icon 700.
 - **Engine target:** Godot 4.7. A build **must** end in `--import` or the game
