@@ -59,6 +59,8 @@ func _init() -> void:
 	_test_boss_death_is_a_win()
 	_test_boss_waits_for_all_players_to_end()
 	_test_deterministic_shuffle_same_seed()
+	_test_draw_reshuffles_discard_mid_call()
+	_test_draw_is_a_safe_noop_when_both_piles_are_empty()
 	_test_full_coop_fight_reaches_terminal_state()
 	_test_content_loads_from_data()
 	# step 4: new combo mechanics + titan moves
@@ -1368,6 +1370,52 @@ func _test_deterministic_shuffle_same_seed() -> void:
 	var b := _hand_names(_new_combat([_mixed_deck(), _mixed_deck()], 1234, _dummy_boss(200)), 0)
 	var c := _hand_names(_new_combat([_mixed_deck(), _mixed_deck()], 9999, _dummy_boss(200)), 0)
 	_expect(a == b and a != c, "same seed -> same shuffle; different seed -> different")
+
+
+## Combat._draw's reshuffle-on-empty rule can fire MID-CALL: drawing more
+## cards than remain in draw_pile must pull the last real card first, then
+## reshuffle discard_pile into a fresh draw_pile and keep going from there,
+## rather than stopping short or drawing from an unshuffled discard pile.
+func _test_draw_reshuffles_discard_mid_call() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(200))
+	var ps: PlayerState = combat.players[0]
+	var top_card := Card.from_dict({"id": "top", "name": "Top", "type": "attack", "cost": 1, "damage": 6})
+	var discard_ids := ["d0", "d1", "d2"]
+	var discard_cards: Array = []
+	for id in discard_ids:
+		discard_cards.append(Card.from_dict({"id": id, "name": id, "type": "attack", "cost": 1, "damage": 6}))
+	ps.hand.clear()
+	ps.draw_pile = [top_card]
+	ps.discard_pile = discard_cards.duplicate()
+
+	combat._draw(ps, 3)  # 1 real card, then reshuffle, then 2 more from it
+
+	_expect(ps.hand.size() == 3, "drawing 3 across an empty draw_pile still yields 3 cards")
+	_expect(ps.hand[0].id == "top", "the last real card is drawn before the reshuffle, not after")
+	_expect(ps.discard_pile.is_empty(), "the reshuffle empties discard_pile into draw_pile")
+	_expect(ps.draw_pile.size() == 1, "the un-drawn reshuffled cards stay in draw_pile")
+	var seen := {}
+	for c in ps.hand:
+		seen[c.id] = true
+	for c in ps.draw_pile:
+		seen[c.id] = true
+	seen.erase("top")
+	_expect(seen.keys().size() == 3 and seen.has("d0") and seen.has("d1") and seen.has("d2"),
+		"every reshuffled discard card ends up drawn or still in the pile, none lost or duplicated")
+
+
+## Both piles empty is not a crash or an infinite loop -- _draw just stops
+## having drawn fewer than n, per its own early `return`.
+func _test_draw_is_a_safe_noop_when_both_piles_are_empty() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(200))
+	var ps: PlayerState = combat.players[0]
+	ps.hand.clear()
+	ps.draw_pile.clear()
+	ps.discard_pile.clear()
+
+	combat._draw(ps, 5)
+
+	_expect(ps.hand.is_empty(), "drawing with both piles empty leaves hand empty, not an error")
 
 
 func _test_full_coop_fight_reaches_terminal_state() -> void:

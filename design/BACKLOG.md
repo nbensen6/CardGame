@@ -10542,3 +10542,38 @@ Newest first. One line per finished item: what, and anything surprising.
   pure function" bar duty 3's own rule sets for presentation mechanics.
   `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1).
   Next `#86` turn is duty 3 (verify a mechanic actually works).
+
+- **2026-09-07** — #86 duty 3 (verify a mechanic actually works). Last `#86`
+  turn (`0a44712`, music wiring) was duty 2 and named duty 3 as next
+  explicitly. Re-checked `download.blender.org` before writing off duty 1
+  again: still a 403 at the CONNECT tunnel, so it stays blocked in this
+  container, not fixed since the last few passes.
+  Went hunting for a mechanic with zero coverage rather than adding a fourth
+  case to the climb system, which duty 3 has already covered heavily. Found
+  `Combat._draw()`: pulls cards from `draw_pile` into `hand`, and whenever
+  `draw_pile` runs dry it reshuffles `discard_pile` into a fresh `draw_pile`
+  — the "reshuffle your discard when you run out" rule every deckbuilder
+  needs and every card in this game depends on. Nothing had proven the case
+  where that reshuffle fires MID-CALL — drawing more cards than remain
+  before the discard is exhausted, rather than only at the start of a draw
+  with an already-empty pile. Every existing scry/topdeck test deliberately
+  keeps `draw_pile` oversized to avoid ever touching this branch, and
+  `_test_deterministic_shuffle_same_seed` only covers the very first
+  shuffle at combat start, not this in-fight one.
+  Added `_test_draw_reshuffles_discard_mid_call`: with 1 known card left in
+  `draw_pile` and 3 known cards in `discard_pile`, drawing 3 proves the
+  pre-reshuffle card comes out first (not lost or reordered behind the
+  reshuffle), the reshuffle empties `discard_pile` into `draw_pile`, and
+  every discard card ends up drawn or still in the pile — none lost, none
+  duplicated. A second test, `_test_draw_is_a_safe_noop_when_both_piles_are_empty`,
+  proves both piles empty is a quiet no-op matching `_draw`'s own early
+  `return`, not a crash or an infinite loop. `_draw` reads `self._rng` so it
+  isn't pure, but no static lift was needed — the suite already calls
+  private `Combat` methods directly on a real instance (e.g. `_track_climb`),
+  so this built one via the existing `_new_combat()` helper, overwrote
+  `ps.draw_pile`/`ps.discard_pile` directly (the established pattern for
+  pile-content tests), and called `combat._draw(ps, n)` the same way.
+  `run_tests.gd`: fresh `--import`, headless, Godot 4.7.1: ALL TESTS PASSED.
+  Next `#86` turn is duty 1 (asset pass) — worth re-checking the Blender
+  block again by then, since a standing egress policy is still just a
+  policy, not a guarantee it never changes.
