@@ -168,6 +168,17 @@ func _init() -> void:
 	_test_use_potion_climb_updates_highest_climb()
 	_test_use_potion_gating()
 	_test_run_potion_use_and_discard()
+	# backlog #86 duty 3 (forty-fifth pass): Run.discard_potion's own doc comment
+	# claims it is legal "any time you're carrying one, not just mid-fight", and
+	# game_host.gd's "discard_potion" command handler repeats the same claim in
+	# its own comment ("legal any phase you're carrying one -- not gated on
+	# combat"). Neither half has ever been proven outside combat: the only
+	# existing coverage (_test_run_potion_use_and_discard, just above) discards
+	# AFTER stepping into a fight. A phase gate silently added to either the
+	# Run method or the GameHost handler later would pass every test in the
+	# suite and still contradict what both comments promise a player.
+	_test_discard_potion_works_outside_combat()
+	_test_backlog86_gamehost_discard_potion_command_works_outside_combat()
 	_test_shop_buys_a_potion()
 	_test_potion_slots_are_capped()
 	_test_fight_wins_grant_a_potion()
@@ -3392,6 +3403,46 @@ func _test_run_potion_use_and_discard() -> void:
 	var bad_index := not run.use_potion(0, 0)  # nothing left to use
 	_expect(used and used_slot_shrank and healed and discarded and empty_now and bad_index,
 		"a used potion applies its effect and empties the slot; a discarded one just empties it")
+
+
+## backlog #86 duty 3 (forty-fifth pass): Run.discard_potion() has no phase
+## check at all -- unlike use_potion(), which is COMBAT-only -- and its own
+## doc comment says exactly why: "legal any time you're carrying one, not
+## just mid-fight, since a bad potion clogging your one open slot before a
+## fight shouldn't have to wait for one." _test_run_potion_use_and_discard
+## just above only ever calls it AFTER _step_into_combat, so that half of the
+## promise has never actually been exercised.
+func _test_discard_potion_works_outside_combat() -> void:
+	var run := _map_run()
+	_expect(run.phase == Run.Phase.MAP,
+		"setup sanity: a fresh run starts on the map, not in combat")
+	run.potions[0] = [Content.make_potion("guard_oil")]
+	var discarded := run.discard_potion(0, 0)
+	_expect(discarded and run.potions[0].is_empty(),
+		"discard_potion must work outside combat too -- its own doc comment promises 'not just mid-fight', not 'only mid-fight'")
+
+
+## The network half of the same claim: game_host.gd's "discard_potion" command
+## handler carries its own comment ("legal any phase you're carrying one --
+## not gated on combat"), unlike every other potion/campfire/shop command,
+## which all guard on `_run.phase`. Same shape as the take_key wiring test
+## above (_test_backlog86_gamehost_wires_take_key_command_to_run) -- prove the
+## command actually reaches Run.discard_potion, and that it does so from the
+## MAP phase specifically, not just from inside a fight.
+func _test_backlog86_gamehost_discard_potion_command_works_outside_combat() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, true)  # solo
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	_expect(host._run != null and host._run.phase == Run.Phase.MAP,
+		"setup sanity: a fresh solo run starts on the map, not in combat")
+	host._run.potions[0] = [Content.make_potion("guard_oil")]
+	c.discard_potion(0, 0)
+	_expect(host._run.potions[0].is_empty(),
+		"a 'discard_potion' command sent through GameClient/GameHost must reach Run.discard_potion even outside combat, matching the handler's own 'not gated on combat' comment")
 
 
 func _test_shop_buys_a_potion() -> void:

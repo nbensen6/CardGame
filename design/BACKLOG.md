@@ -264,6 +264,41 @@ Ordered. Source in brackets.
   round, proven by a test that plays it out and checks the real HP loss
   against the predicted one — and `run_tests.gd` still passes.
 
+- [ ] **90. A boss's own "adds" never render at all** `needs a screen` — found
+  during #86 duty 2 (2026-09-07), the forty-sixth pass. Backlog #63 built a
+  secondary-enemy system (a parasite/guardian alongside the boss, e.g. the
+  Root Lurker's Root Tendril) with full engine and network coverage: `Combat`
+  resolves its damage, Thorns, Poison, and its own attack; ascension scales
+  its HP and Strength; `game_host.gd`'s `_build_shared()` puts it in the
+  snapshot as `boss.adds` (id, name, hp, max_hp, block, art, intent) — the
+  exact same shape the main boss's own dict already uses. But
+  `grep -rn "adds" game/views/*.gd game/ui/*.gd` returns nothing: no view or
+  UI file anywhere reads `s["boss"]["adds"]`, `add_views`, or anything else
+  that name could plausibly be. This is not a stale copy of the truth (the
+  "two copies" shape duty 2 usually hunts) — it is a copy that was never made
+  at all. A fight against the Root Lurker renders its Root Tendril nowhere:
+  no model, no HP bar, no intent icon, even though it can and does land real
+  damage on a hunter (see #89, already fixed, which taught the incoming-hit
+  HUD about exactly this attack). This is a different, deeper gap than the
+  already-queued #79 ("a card face for choosing which enemy to hit") — #79 is
+  about not being able to TARGET an add everyone can already see; this is the
+  add not being visible at all. The one thing softening it: `_adds_turn()`'s
+  own `_log()` calls do reach the shared combat log text, so a player at
+  least reads "Root Tendril attacks Frog for 4." even with no body on screen
+  to match it to.
+
+  Left unfixed here on purpose — building the add's model, HP readout, intent
+  tag and budgeting camera room for it (the same "where is my partner" class
+  of problem items #85 and the bugs.md camera entries already name) is a real
+  3D-scene change that has to be judged by eye, and this cloud pass has no
+  screen. `Content.build_boss_adds()`'s only current beast is the Root
+  Lurker, so the blast radius today is one fight, not the whole game.
+
+  *Done when:* a fight against a beast with `adds` shows each living add's
+  body (or a deliberate placeholder, per the Hard Rules' #10), HP and
+  telegraphed intent on screen, camera-framed the same way the main boss is —
+  and it's been looked at.
+
 - [ ] **85. You cannot see your ally** `needs a screen` — hunter1 projects to
   x=1602 on a 1280-wide viewport and sits off the right edge of the screen in
   every fight. Measured on three beasts: thrasher 1559, crag_pup 1602,
@@ -2592,6 +2627,46 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-07** — #86 duty 2 (find an error and resolve it), forty-sixth
+  pass of the rotation. Last `#86` turn (`d147e44`, gadget icon pass 3) was
+  duty 1, so this was due for duty 2. Read `combat.gd`, `boss.gd`,
+  `combatant.gd`, `card.gd`, `content.gd`, `run.gd`, `run_map.gd`,
+  `run_save.gd`, `player_state.gd`, `progress.gd`, `game_host.gd`,
+  `game_client.gd`, `net/*` and `card_view.gd` end to end hunting the two
+  named shapes (first-pass holes, two copies of one truth). Two things
+  checked and left alone as already-correct: `_deck_face`'s `fx` dict against
+  `_slot_private`'s (they list the same fields — a prior pass already closed
+  that gap) and `card_view.face_text`'s `cheapen_pick`-without-`exhaust_pick`
+  branch (currently unreachable — only `burn_coal` ever sets `cheapen_pick`,
+  and it always carries `exhaust_pick` too, so the two can't drift apart
+  through any card in `data/cards.json` today). Found one genuine,
+  previously-undocumented gap, though: `game_host.gd` has forwarded
+  `boss.adds` (backlog #63's secondary enemies) in the shared snapshot since
+  the feature landed, with the engine side fully wired (damage, Thorns,
+  Poison, its own intent, ascension scaling — all covered by name in
+  `run_tests.gd`), but nothing in `game/views/**` or `game/ui/**` ever reads
+  it — confirmed by grep, not by eye. Filed as queue item **90**
+  (`needs a screen` — a real 3D-scene/HUD change nobody can judge blind), not
+  fixed here. Duty 2 otherwise came up clean across every file above, so per
+  the rotation's own rule ("if a duty is genuinely exhausted, take the next
+  one"), rolled forward into duty 3 rather than force a marginal fix.
+
+  Duty 3: `Run.discard_potion()`'s own doc comment claims it's legal "any
+  time you're carrying one, not just mid-fight," and `game_host.gd`'s
+  "discard_potion" handler repeats the same claim in its own comment ("not
+  gated on combat") — unlike every other potion/campfire/shop command in
+  that same match block, which all guard on `_run.phase`. The only existing
+  test (`_test_run_potion_use_and_discard`) only ever calls it AFTER
+  `_step_into_combat`, so the "not just mid-fight" half of the promise had
+  never actually been exercised — a phase gate quietly added to either side
+  later would pass the whole suite and still contradict both comments. Added
+  two tests: `Run.discard_potion` called straight from a fresh MAP-phase run
+  (no combat involved at all), and the same command sent end-to-end through
+  `GameClient`/`GameHost` (same shape as the existing `take_key` wiring
+  test) proving the network command reaches `Run.discard_potion` outside
+  combat too. Both passed first run — the claim was true, just unproven.
+  `run_tests.gd`: ALL TESTS PASSED (fresh `--import`, headless, Godot
+  4.7.1). Next `#86` turn is duty 1 (improve an asset).
 - **2026-09-07** — #86 duty 1 (improve an asset), forty-fifth pass of the
   rotation. Last `#86` turn (`adfa556`, `_key_name`) was duty 3, so this was
   due for duty 1 — portraits and icons only. Surveyed every scored icon and
