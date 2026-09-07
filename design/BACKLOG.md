@@ -2627,6 +2627,38 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-07** — #86 duty 3 (verify a mechanic actually works), fifty-third
+  pass of the rotation. Last `#86` turn (`04ade4d`, artifact/thorns/etc on
+  `add_views`) was duty 2, so this was due for duty 3. Went looking for a
+  session-layer mechanic with zero test coverage rather than adding a fourth
+  case to the climb system, which duty 3's own passes have already covered
+  heavily. Built a table of every function in `game/net/*.gd` and
+  `game/session/*.gd` against `run_tests.gd` by name and found
+  `GameHost._on_peer_left()` has two branches — mid-run (pause, hold the
+  seat) and lobby (erase the peer, `_reindex_slots()`) — but every existing
+  disconnect/reconnect test (`_test_host_pauses_on_disconnect`,
+  `_test_dropped_hunter_can_rejoin_mid_fight`) builds its session through
+  `_make_session()`, which always already has a run going. The LOBBY branch,
+  taken when a peer drops during character select, had never been exercised
+  at all. `_reindex_slots()` renumbers every remaining peer by its new
+  position in `_peers` rather than leaving a gap, so a still-connected peer's
+  own slot can silently shift out from under it — worth proving that shift
+  actually reaches the survivor's own snapshot (`you`), not just the host's
+  internal `_slot_of`, and that a fresh join lands in the freed slot rather
+  than being turned away or landing on a third slot beyond `_required`.
+  Added `_test_lobby_drop_reindexes_the_remaining_peer_and_frees_the_slot`:
+  two peers join the lobby, peer 0 drops before either selects a character,
+  the survivor's own `you` is asserted to move from 1 to 0 and the lobby's
+  `joined` count to drop to 1, a third peer joins and lands in the freed
+  slot 1, and both then pick characters and reach real combat rather than a
+  stuck lobby. Proved the test actually catches a regression, not just
+  passing by construction: stubbed `_reindex_slots()` to a no-op, re-ran, and
+  only that one test failed (the survivor's own snapshot never picks up the
+  shift); reverted the stub with `cp`/diff confirmed clean before re-running
+  green. No bug found this pass — the mechanism already worked — so this is
+  a regression guard, same value as several other duty-3 passes before it.
+  `run_tests.gd`: fresh `--import`, headless, Godot 4.7.1, ALL TESTS PASSED.
+  Next `#86` turn is duty 1 (improve an asset — portraits and icons only).
 - **2026-09-07** — #86 duty 2 (find an error and resolve it), fifty-second
   pass of the rotation. Last `#86` turn (`5c031dd`, dexterity icon) was duty
   1, so this was due for duty 2. Same "two copies of one truth" shape duty 2

@@ -438,6 +438,7 @@ func _init() -> void:
 	_test_session_private_view_is_isolated()
 	_test_host_pauses_on_disconnect()
 	_test_dropped_hunter_can_rejoin_mid_fight()
+	_test_lobby_drop_reindexes_the_remaining_peer_and_frees_the_slot()
 	_test_host_autosaves_and_resumes()
 	_test_host_autosaves_and_resumes_mid_combat()
 	_test_solo_controls_both_hunters()
@@ -7759,6 +7760,50 @@ func _test_dropped_hunter_can_rejoin_mid_fight() -> void:
 	# The dead connection's old peer id is forgotten, not left as a live seat.
 	transport.emit_signal("peer_left", 99)
 	_expect(host.paused, "the SAME slot dropping again re-pauses, proving 99 (not 20) now owns it")
+
+
+## Backlog #86 duty 3: _on_peer_left's OTHER branch, never exercised by
+## _test_host_pauses_on_disconnect or _test_dropped_hunter_can_rejoin_mid_fight
+## above — both build their session through _make_session(), which always has
+## a run already going, so only the mid-run "pause and hold the seat" path
+## ever got proven. A peer leaving the LOBBY (before _run exists) takes the
+## other branch entirely: it erases the peer outright and calls
+## _reindex_slots(), which renumbers every remaining peer by its new position
+## in _peers rather than leaving a gap — so a still-connected peer's own slot
+## can silently shift. Worth proving that shift actually reaches the
+## survivor's own snapshot (not just the host's internal _slot_of), and that
+## a fresh join lands in the freed slot rather than being turned away or
+## bumping into a third slot beyond _required.
+func _test_lobby_drop_reindexes_the_remaining_peer_and_frees_the_slot() -> void:
+	var transport := LocalTransport.new()
+	var host := GameHost.new(transport, 42, 2)
+	_kept.append(host)
+	var c0 := GameClient.new(transport, 10)
+	var c1 := GameClient.new(transport, 20)
+	c0.join()  # slot 0
+	c1.join()  # slot 1
+	_expect(c0.you == 0 and c1.you == 1 and int(c0.shared.get("joined", 0)) == 2,
+		"both peers land in the lobby, one per slot, before either picks a character")
+
+	transport.emit_signal("peer_left", 10)  # slot 0 drops before selecting
+	_expect(host._peers.size() == 1 and int(host._peers[0]) == 20,
+		"the departed peer is gone; the survivor remains the only peer")
+	_expect(c1.you == 0,
+		"reindexing shifts the survivor down into the freed slot 0, and its own snapshot reflects the shift")
+	_expect(int(c1.shared.get("joined", -1)) == 1,
+		"the lobby's own joined count drops back to 1")
+
+	var c2 := GameClient.new(transport, 30)
+	c2.join()
+	_expect(c2.you == 1 and host._peers.size() == 2,
+		"a fresh join fills the freed slot 1 rather than a third slot beyond _required")
+
+	c1.select_character("frog")
+	c2.select_character("mountain_climbers")
+	_expect(host._run != null,
+		"both slots picking a character starts the run even after a lobby-stage reshuffle")
+	_expect(not bool(c1.shared.get("waiting", true)) and not bool(c2.shared.get("waiting", true)),
+		"both the reindexed survivor and the fresh join see real combat, not a stuck lobby")
 
 
 # --- helpers --------------------------------------------------------------
