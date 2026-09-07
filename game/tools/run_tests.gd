@@ -412,6 +412,7 @@ func _init() -> void:
 	_test_incoming_for_ignores_a_dead_adds_attack()
 	_test_poison_lands_on_the_targeted_add_not_the_boss()
 	_test_frail_lands_on_the_targeted_add_not_the_boss()
+	_test_damage_per_wound_reads_the_targeted_adds_own_wound()
 	_test_add_artifact_wards_off_poison_landed_on_it()
 	_test_add_bleeds_from_its_own_poison_on_its_turn()
 	_test_adds_round_trip_through_save_and_load()
@@ -7040,6 +7041,31 @@ func _test_frail_lands_on_the_targeted_add_not_the_boss() -> void:
 	combat.play_card(0, 0, true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
 	_expect(add.frail == 2 and boss.frail == 0,
 		"a card that applies Frail lands it on the add enemy_index picked, not the main boss")
+
+
+## backlog #86 duty 2: preview()'s damage_per_wound term always read
+## `boss.wound`, regardless of `enemy_index` -- a stale invariant left over
+## from before an add could carry its own Wound at all (`_adds_turn()`'s
+## bleed fix, same rotation, taught adds to bleed their own `.wound`; this
+## spot was never revisited). A card like Toxic Lash/Rot Bloom/Bloomburst
+## aimed at an add via enemy_index computed its "extra per Poison" bonus off
+## the BOSS's stacks instead of the add's it was actually hitting -- and this
+## number is not cosmetic, it's the real damage `_damage_add()` applies.
+## Boss and add are given DIFFERENT wound counts on purpose so a bug reading
+## the wrong one produces a different, discriminating total (12 vs. the
+## correct 6) rather than a coincidental match.
+func _test_damage_per_wound_reads_the_targeted_adds_own_wound() -> void:
+	var boss := _dummy_boss(300)
+	boss.wound = 5
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Grub", 30)
+	add.wound = 2
+	combat.adds.append(add)
+	combat.players[0].hand = [Card.from_dict({"id": "wound_reader", "name": "Wound Reader",
+		"type": "attack", "cost": 1, "damage": 2, "damage_per_wound": 2, "target": "enemy"})]
+	combat.play_card(0, 0, true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
+	_expect(add.hp == 24 and boss.hp == 300,
+		"damage_per_wound (2 + 2 per Poison) reads the TARGETED add's own 2 Poison (total 6), not the boss's 5 (which would total 12)")
 
 
 ## backlog #86 duty 2: play_card's Poison/Frail branches already ward off a

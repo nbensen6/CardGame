@@ -479,14 +479,30 @@ func is_over() -> bool:
 ## already spent that energy down to zero. Cards that aren't X-cost never set
 ## `damage_per_x`/`block_per_x`, so this is a no-op for them either way.
 ##
+## Which creature's Wound stack a card's `damage_per_wound` should read, and
+## the same creature play_card's own Poison/Frail redirect lands on — one
+## question, shared, so the two can't independently drift the way they did
+## before this fix (backlog #86 duty 2: preview() always read `boss.wound`
+## even when play_card's `debuff_target` was about to Poison an add instead).
+## -1 (every caller before `enemy_index` existed) and a dead/out-of-range
+## index both mean "the boss", exactly as before this param existed.
+func _wound_target(enemy_index: int) -> Boss:
+	if enemy_index >= 0 and enemy_index < adds.size() and not (adds[enemy_index] as Boss).is_dead():
+		return adds[enemy_index]
+	return boss
+
 ## The damage NUMBER never depends on which enemy it will land on (backlog
 ## #63 — same as Slay-the-Spire: a card doesn't do less to an add than to the
-## boss). `damage_per_vulnerable`/`damage_per_wound` read the main boss's
-## stacks regardless of target; adds don't carry their own in this pass. Who
-## it actually lands on is decided at play time (see `enemy_index` on
-## play_card()), not here.
+## boss), with one exception: `damage_per_wound` pays out on whichever
+## creature the Poison itself would land on (see `_wound_target` — an add can
+## carry its own Wound since the `_adds_turn()` bleed fix, backlog #86 duty 2).
+## `damage_per_vulnerable` stays boss-only regardless of target — Vulnerable
+## itself never redirects to an add (see play_card's own `card.vulnerable`
+## branch), so there is no add-side stack to read. Who the DAMAGE actually
+## lands on is decided at play time (see `enemy_index` on play_card()), not
+## here — only the wound bonus's SOURCE depends on it.
 func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PERFECT,
-		x_spent: int = -1) -> Dictionary:
+		x_spent: int = -1, enemy_index: int = -1) -> Dictionary:
 	var ps: PlayerState = players[pi]
 	var mate: PlayerState = players[ally_index(pi)]
 	var hit := card.timed and nailed
@@ -502,7 +518,7 @@ func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PER
 
 	var dmg := card.damage + card.damage_per_vulnerable * boss.vulnerable \
 		+ card.damage_per_foothold * ps.foothold + card.damage_per_rhythm * ps.rhythm \
-		+ card.damage_per_wound * boss.wound \
+		+ card.damage_per_wound * _wound_target(enemy_index).wound \
 		+ card.damage_per_ally_foothold * int(mate.foothold) \
 		+ card.damage_per_exhausted * exhausted + card.damage_per_x * x \
 		+ card.damage_per_light * ps.light + card.damage_per_discarded * discarded
@@ -706,8 +722,10 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	#
 	# Taken BEFORE play_counts is bumped and before this card's own exhaust_pick
 	# fires, so Build Mech counts only EARLIER plays and Detonator doesn't secretly
-	# count its own sacrifice.
-	var pv := preview(pi, card, true, timing_quality, x_spent)
+	# count its own sacrifice. Threaded with enemy_index (backlog #86 duty 2) so
+	# damage_per_wound reads the SAME creature's Wound this play is about to land
+	# Poison on, rather than always the boss's.
+	var pv := preview(pi, card, true, timing_quality, x_spent, enemy_index)
 	ps.play_counts[card.id] = int(ps.play_counts.get(card.id, 0)) + 1
 	ps.cards_played_this_turn += 1  # backlog #67 — bumped AFTER the preview this
 	# card itself resolved with, same "counts only earlier plays" idiom as play_counts above
@@ -719,9 +737,8 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	# before adds existed. Vulnerable stays boss-only on purpose — _damage_add's
 	# own comment says adds don't carry the sigil's Vulnerable bonus, so a stack
 	# parked on an add would never be spent.
-	var valid_add := enemy_index >= 0 and enemy_index < adds.size() \
-		and not (adds[enemy_index] as Boss).is_dead()
-	var debuff_target: Boss = adds[enemy_index] if valid_add else boss
+	var debuff_target: Boss = _wound_target(enemy_index)
+	var valid_add := debuff_target != boss
 	var base_damage: int = int(pv["damage"])
 	if base_damage > 0:
 		var hit_count := maxi(card.hits, 1)

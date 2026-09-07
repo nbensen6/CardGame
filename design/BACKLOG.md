@@ -10647,3 +10647,47 @@ Newest first. One line per finished item: what, and anything surprising.
   all exit 0). `run_tests.gd`: fresh `--import`, headless, Godot 4.7.1: ALL
   TESTS PASSED. Next `#86` turn is duty 1 (asset pass) — worth re-checking
   the Blender block again by then.
+
+- **2026-09-07, #86 duty 2 (find an error and resolve it).** Last commit
+  (`0365cc9`) was duty 3, so duty 1 was next; re-confirmed still blocked —
+  `download.blender.org` and four other mirrors all still 403 at this
+  container's egress proxy (`connect_rejected`), same standing policy as
+  every prior run. Fell back to duty 2. Spent the pass re-auditing
+  `Run`/`Card`'s `to_dict`/`from_dict` round-trips and `game_host.gd`'s
+  snapshot dicts field-by-field against their source structs (the family
+  that has paid off most in recent duty-2 turns) — both came back clean,
+  every declared field present on both sides, confirmed with a small Python
+  diff script rather than eyeballing. The real find was in
+  `Combat.preview()`: its `damage_per_wound` term has always read
+  `boss.wound` unconditionally, and its own doc comment said so outright —
+  "adds don't carry their own [wound] in this pass." That was true when
+  written (backlog #63) but stopped being true the moment a later #86 duty-2
+  pass taught `_adds_turn()` to bleed `add.wound` and taught `play_card` to
+  land Poison on a targeted add via `enemy_index` (see the `debuff_target`
+  fix, same rotation) — nobody went back to update the ONE OTHER place that
+  read `.wound`. A card with `damage_per_wound` (Toxic Lash, Rot Bloom,
+  Bloomburst, Wither, Sap, Heartrot, Toxin Bloom, Venom Cascade, Withering
+  Grasp — nine cards, not an edge case) aimed at an add via `enemy_index`
+  computed its "extra per Poison" bonus off the BOSS's stacks instead of the
+  add actually being hit, and this number isn't cosmetic: it's the real
+  damage `_damage_add()` applies. `enemy_index` is engine-only today (#79,
+  the choose-an-enemy card face, hasn't shipped), but it's already a real,
+  callable parameter — the same "fix it now, the UI can wire it in later"
+  reasoning every other `enemy_index` redirect bug on this rotation has used
+  (Thorns, Poison, Frail). Fixed by adding a shared `_wound_target(enemy_index)`
+  helper (one question — "which creature does this land on" — instead of
+  `preview()` and `play_card()` separately re-deriving it, which is the exact
+  drift that caused the bug) and threading `enemy_index` through the
+  `preview()` call `play_card()` already makes. `damage_per_vulnerable`
+  stays boss-only, confirmed correct as-is: `card.vulnerable` itself never
+  redirects to an add (`play_card`'s own comment says so on purpose), so
+  there's no add-side stack to misread. Added
+  `_test_damage_per_wound_reads_the_targeted_adds_own_wound`, giving the
+  boss and add deliberately different Wound counts (5 vs. 2) so a bug
+  reading the wrong one produces a different, discriminating total (12 vs.
+  the correct 6) rather than a coincidental match; verified it actually
+  catches the bug by reverting the `combat.gd` fix (`git stash`) and
+  watching it fail before restoring. Fresh `--import`, headless, Godot
+  4.7.1, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 3 (verify
+  a mechanic actually works) — worth re-checking the Blender block again by
+  the turn after that.
