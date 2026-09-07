@@ -42,7 +42,7 @@ FOCUS = {
     "bog_leech": (0.39, 1.28), "thrasher": (0.42, 1.55),
     "silk_widow": (0.45, 1.35), "boulder_ram": (0.34, 1.35),
     "cinder_jackal": (0.60, 1.35), "brine_urchin": (0.62, 1.45),
-    "clot_toad": (0.48, 1.35), "flicker_stag": (0.70, 0.68),
+    "clot_toad": (0.48, 1.46), "flicker_stag": (0.70, 0.68),
     "eyrie_hawk": (0.78, 0.60), "glyph_tortoise": (0.50, 1.28),
     "riptide_eel": (0.68, 0.75), "yoke_ox": (0.45, 1.25),
 }
@@ -74,6 +74,13 @@ FOCUS_XY = {
     # directly (pass 3): +0.09 off the bbox-centre X (0.0554 -> 0.145) brings
     # it to (15, 38/39, 15/16, 20/21), left and right balanced within 1px.
     "glyph_tortoise": (0.145, 0.0),
+    # clot_toad_portrait.md pass 3: bbox-centre X (~0.001) left the front-left
+    # leg clipped at the canvas edge (alpha bbox left=0) while the ridge/sigil
+    # stack on the opposite side sat only 3px from the right edge — the two
+    # extremes are close enough in screen-space that no span alone clears
+    # both without also re-centring. -0.08 off bbox-centre, paired with the
+    # FOCUS span bump to 1.46, balances left/right margins within a few px.
+    "clot_toad": (-0.08, 0.0),
 }
 
 ## Three-quarter and a little above: the angle every character in this game was

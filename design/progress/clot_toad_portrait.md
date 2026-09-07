@@ -10,6 +10,7 @@ only — report, not repair.** Asset: `game/assets/portraits/clot_toad.png`
 |---|---|---|---|---|---|
 | 3 | 4 | 5 | 6 | 6 | **24** |
 | 7 | 7 | 7 | 6 | 6 | **33** |
+| 9 | 7 | 7 | 6 | 6 | **35** |
 
 Lowest portrait scored so far, below `bog_leech_portrait`'s 26 from batch 10.
 
@@ -110,3 +111,79 @@ fix, and neither untouched line (Colour, Style) moved. `game/tools/run_tests.gd`
 passes (headless Godot run, all green) — the change is confined to
 `tools/blender/portraits.py`'s data table and the regenerated PNG, nothing
 in `/core` or `/game` code.
+
+## Pass 3 — a real look at pass 2's own render found a clip it didn't name
+
+Pass 2's write-up scored Framing 7 on "no cropping anywhere the diagnosis
+named" but only checked the top and right edges by eye. Measuring the actual
+committed `clot_toad.png` with `PIL.Image.getbbox()` (not eyeballed) gave
+`(0, 19, 509, 492)` — **left margin 0**, i.e. the front-left leg is cut by the
+canvas edge, confirmed by cropping and zooming that exact region: a rust-
+orange leg is sliced off mid-shape at column 0. Pass 2's own "visible margin
+on the right and top" was true but incomplete — it never looked left.
+
+Two lowest going in were recorded as Colour (6) and Style (6), but neither is
+fixable from `portraits.py` (Colour is the model's own material choice;
+`FOCUS`/`FOCUS_XY` don't touch materials) — and a real edge-clipping defect
+outranks both regardless of what the table says, per this lane's own rule
+that a look overrides a stale number. Treating **Framing** as the one real
+fix here.
+
+**Framing.** Swept `FOCUS["clot_toad"]`'s span and `FOCUS_XY["clot_toad"]`
+together (rendered ~20 trial crops via a scratch script calling
+`portraits.look()` directly, measuring `getbbox()` each time rather than
+guessing): at the old span (1.35) the leg and the ridge/sigil stack on the
+opposite side are close enough to both edges at once that no `FOCUS_XY` shift
+alone clears both — moving the centre left to save the leg immediately
+clipped the stack on the right instead (e.g. `fx=-0.10` gave left=3, right=0).
+Widened the span to 1.46 and set `FOCUS_XY["clot_toad"] = (-0.08, 0.0)`
+(bbox-centre X is ~0.001), which cleared both sides with several pixels to
+spare. Rebuilt via `blender --background --python tools/blender/portraits.py
+-- <dir>` (all 32), kept only `clot_toad.png`, reverted the other 31 with
+`git checkout --` (same WORKBENCH non-determinism every prior pass has hit).
+
+Measured the committed result directly: alpha bbox `(11, 38, 501, 476)` →
+margins **11, 38, 11, 36** — left and right balanced within a pixel, top and
+bottom balanced within 2px, no edge touching 0.
+
+- **Framing (7 → 9):** the actual defect (left-edge leg clipping) is gone,
+  confirmed by bbox measurement, not assumption. Not 10: the composition is
+  now somewhat more zoomed-out than pass 2's (subject fills ~90% of width,
+  ~80% of height, against pass 2's ~99%/93%), which is the cost of clearing
+  both extremes at once — a real but minor trade against the crispest
+  possible crop.
+- **Identity (7, unchanged):** the leg was never load-bearing for reading
+  this as the climb-route toad — the ridge stack and body were already fully
+  visible pre-fix. Slightly more headroom around the whole body if anything.
+- **Read@34px (7, unchanged):** built a fresh 34px downsample
+  (`design/renders/clot_toad_portrait_pass3_34px_big.png`, Pillow `LANCZOS`,
+  composited on the same brown card-face standin prior passes used) and
+  compared it frame-by-frame against pass 2's own baseline downsample — the
+  rust zigzag stack, cream gland lumps and body blob all read the same as
+  before; the slightly smaller subject cost no visible detail at this size.
+- **Colour & separation (6, unchanged):** not touched — this is a model
+  material question (`clot_toad.py`'s own swatch choices), out of
+  `portraits.py`'s reach, same conclusion pass 1 and 2 both reached.
+- **Style consistency (6, unchanged):** not touched by this fix; the
+  three-quarter full-body idiom is the same as pass 2, just less tightly
+  cropped.
+
+**+2 total (33 → 35), not chasing a plateau — kept regardless.** The two
+scored lines with any real movement (Framing) improved by 2, nothing
+regressed, and the fix removes an actual, confirmed defect (a body part
+missing from the frame) that no amount of extra Colour/Style tuning would be
+worth leaving in place. `run_tests.gd`: **ALL TESTS PASSED** (fresh
+`--import`, headless Godot, this pass touches only `tools/blender/
+portraits.py`'s data tables and the regenerated `clot_toad.png` — no
+`game/**` GDScript).
+
+## Unsure about (pass 3)
+
+Whether the now-larger top/bottom headroom (38/36px against pass 2's ~19/20)
+reads as intentional breathing room or as under-filling the frame relative to
+the rest of the cast — this lane's only two levers (`FOCUS` span, `FOCUS_XY`)
+are exhausted for clearing the clip without reopening it, so a tighter crop
+that also clears both side edges isn't available from `portraits.py` alone.
+Also unresolved, same as pass 1 and 2: whether Colour & Style are worth a
+model-side pass (`clot_toad.py`) — that's the fixer lane's call, not this
+one's to make.

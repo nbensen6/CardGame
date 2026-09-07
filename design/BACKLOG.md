@@ -2627,6 +2627,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-07** — #86 duty 1 (improve an asset — portraits and icons only),
+  fifty-fourth pass of the rotation. Last `#86` turn (`97244cf`, lobby-drop
+  reindex test) was duty 3 and named duty 1 as next explicitly. Rather than
+  starting a fresh scoring batch, picked up `clot_toad_portrait.md`, which was
+  mid-loop at pass 2 (33/50, not a plateau) with two lines recorded as
+  lowest — Colour and Style — but both are model-material questions, out of
+  `portraits.py`'s reach. Looked at the actual committed render with the Read
+  tool instead of trusting the written score, and pass 2's own "visible
+  margin on the right and top" turned out to be half the story: measuring the
+  real PNG's alpha channel (`PIL.Image.getbbox()`) showed the left edge at
+  margin 0 — a front leg sliced off mid-shape, confirmed by cropping and
+  zooming that region. Pass 2 had never checked the left side. Swept
+  `FOCUS`/`FOCUS_XY` for this asset via ~20 trial renders (a scratch script
+  calling `portraits.look()` directly, each checked by measured bbox, not
+  eyeballed) and found the leg and the opposite-side ridge/sigil stack sit
+  close enough to both edges that no recentring alone clears both at the old
+  span — had to widen `FOCUS["clot_toad"]`'s span from 1.35 to 1.46 and add
+  `FOCUS_XY["clot_toad"] = (-0.08, 0.0)` together. Rebuilt all 32 portraits
+  (Blender's WORKBENCH isn't byte-reproducible run to run) and reverted every
+  file but `clot_toad.png`. Confirmed by measurement and by looking: bbox
+  `(11, 38, 501, 476)`, no edge touching 0, a fresh 34px downsample compared
+  against pass 2's own shows no readability loss. Framing 7 → 9, total 33 →
+  35 — a smaller gain than a from-scratch two-fix pass, but the fix removes a
+  real, confirmed defect (a missing body part) rather than chasing the
+  recorded-lowest lines, which this lane can't move anyway. `run_tests.gd`:
+  fresh `--import`, headless, Godot 4.7.1, ALL TESTS PASSED. Blender itself
+  needed `python3-numpy`, `libegl1`, `libgl1-mesa-dri` and `libglx-mesa0`
+  installed via `apt-get` beyond the base `blender` package before headless
+  rendering worked in this container. Next `#86` turn is duty 2 (find an
+  error and resolve it).
 - **2026-09-07** — #86 duty 3 (verify a mechanic actually works), fifty-third
   pass of the rotation. Last `#86` turn (`04ade4d`, artifact/thorns/etc on
   `add_views`) was duty 2, so this was due for duty 3. Went looking for a
