@@ -2640,6 +2640,53 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-07** — #86 duty 2 (find an error and resolve it). Last commit
+  (`559bb80`) was a fixer-lane bug hunt written up in `bugs.md`, not a duty-2
+  commit; the last actual rotation commit (`4275cd8`) was duty 1, so this turn
+  is duty 2. Checked the queue's own topmost items first (87, 88, 90, 85) —
+  all `needs a screen` or already done — so none actionable here. Read
+  `combat.gd`, `run.gd`, `content.gd`, `boss.gd`, `card.gd`, `player_state.gd`,
+  `combatant.gd`, `run_map.gd`, `run_save.gd`, `progress.gd`, `game_host.gd`,
+  `game_client.gd` and every `net/*.gd` file end to end myself first, and
+  cross-checked every hand-written "key list must match another list" table
+  in them (`Run.relic_totals()`'s keys vs every `Combat._mod()` call and every
+  `relics.json` effect; `Content.ascension_mods()` vs `ascension.json`;
+  `Run._apply_effect_block()`'s handled keys vs every `events.json`/
+  `boons.json` effect; `Card.upgraded_copy()`'s two bump-lists vs every
+  numeric `Card` field; `_meld_cards()` vs every `Card` field;
+  `_keywords_of()` vs `keywords.json`; every `.foothold =` assignment in
+  `combat.gd` vs `_lift_roped_ally()`) plus a duplicate-JSON-key scan across
+  every file in `game/data/*.json` — all came back clean, no drift found
+  anywhere in that list. Handed the same two bug families to a
+  general-purpose subagent with the full list of what I'd already ruled out,
+  so it wouldn't retread the same ground. It found a real one in
+  `game/views/combat_3d.gd`'s `_render_party()`: the red "aimed at" border on
+  a party card (its own doc comment calls this "the single most
+  time-critical fact on the screen") used a hand-written
+  `move_type in ["attack_all", "swipe_high", "swipe_low"]` list to decide
+  which telegraphed moves hit every hunter regardless of
+  `boss_target_index()` — the exact same classification
+  `Combat.incoming_for()` makes for the numeric `⚔N` preview right beside
+  that border, fixed there back on 2026-08-16 to include `"rift"`
+  (`Combat._enemy_turn`'s own `"rift"` case hits every player
+  unconditionally, same shape as `"attack_all"` right above it) but never
+  ported to this sibling list. An ally not currently named by
+  `boss_target_index()` saw a correct nonzero incoming-damage number next to
+  a border that still read "safe" the moment the pattern rolled around to
+  Rift. Fixed by lifting the list into a pure `Combat3D.move_hits_every_hunter()`
+  static function (now the one copy both the border and, going forward, any
+  other reader can share) and adding `"rift"` to it; three new regression
+  tests in `run_tests.gd` cover rift-like/attack_all, the position-dependent
+  swipes, and single-target/utility moves staying false. Verified TDD-style
+  (reverting only the `combat_3d.gd` fix while keeping the tests fails at
+  parse time) and against a fresh `--import`, headless Godot 4.7.1.1: ALL
+  TESTS PASSED. Deliberately did not touch a second candidate the same
+  search turned up — the `"leech"` boss move heals the boss by the raw
+  attack value rather than by damage actually dealt past Block/Buffer/
+  Intangible — because that changes what a mechanic actually *does*, not
+  what a display says, which is a numbers/balance judgement call for Nick,
+  not an unambiguous bug.
+
 - **2026-09-07** — #86 duty 1 (improve an asset — portraits/icons only). Last
   commit (`b781d22`) was duty 3, so this turn is duty 1.
   `download.blender.org` is still 403'd at this container's egress proxy

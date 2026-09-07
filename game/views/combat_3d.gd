@@ -3148,6 +3148,24 @@ func _pick_for_selection(idx: int) -> void:
 
 # --- the party and the run's standing ------------------------------------
 
+## Which move kinds put every hunter's card in the red "aimed at" border,
+## regardless of who boss_target_index() names.
+##
+## "rift" was missing here: Combat._enemy_turn's own "rift" case hits every
+## player unconditionally (`for ps3 in players: _boss_hits(ps3, dr)`), the
+## exact same shape as "attack_all" right above it, and Combat.incoming_for()
+## already knows this — its own match statement prices "rift" for every `pi`
+## with no boss_target_index() check, the fix that comment dates to
+## 2026-08-16. This sibling list, which decides the red border rather than the
+## ⚔ number, never got the same fix: a party card showed the correct nonzero
+## incoming damage next to a border that read "safe" for whichever hunter
+## wasn't boss_target_index() the moment the pattern rolled around to Rift —
+## the single fact its own doc comment calls "the most time-critical... on the
+## screen," wrong for the one move a co-op team most needs to see coming.
+static func move_hits_every_hunter(move_type: String) -> bool:
+	return move_type in ["attack_all", "swipe_high", "swipe_low", "rift"]
+
+
 ## Co-op means your ally's state is not optional information: HP, block,
 ## Energy, how high they've climbed, whether they're hanging, and whether the
 ## beast is about to hit them. The 3D scene shows WHERE they are; this says how
@@ -3156,7 +3174,7 @@ func _render_party(s: Dictionary, boss_target: int, move_type: String) -> void:
 	for c in _party.get_children():
 		c.queue_free()
 	var players: Array = s.get("players", [])
-	var sweeps: bool = move_type in ["attack_all", "swipe_high", "swipe_low"]
+	var sweeps: bool = move_hits_every_hunter(move_type)
 	for i in range(players.size()):
 		var p: Dictionary = players[i]
 		var aimed: bool = sweeps or i == boss_target

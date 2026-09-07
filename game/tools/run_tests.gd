@@ -731,6 +731,9 @@ func _init() -> void:
 	_test_backlog86_intent_is_hostile_true_for_every_attack_kind()
 	_test_backlog86_intent_is_hostile_true_for_frail_and_curse()
 	_test_backlog86_intent_is_hostile_false_for_defensive_and_utility_kinds()
+	_test_backlog86_move_hits_every_hunter_true_for_rift_like_attack_all()
+	_test_backlog86_move_hits_every_hunter_true_for_position_dependent_swipes()
+	_test_backlog86_move_hits_every_hunter_false_for_single_target_and_utility_kinds()
 	# backlog #86 duty 3: card_climb_for, lifted out of combat_3d._card_climb --
 	# the rule deciding slider vs. plain tap. Its own comment warns that reading
 	# card.grip (top level) instead of card.base.grip silently returns 0 for
@@ -10565,6 +10568,34 @@ func _test_backlog86_intent_is_hostile_true_for_frail_and_curse() -> void:
 func _test_backlog86_intent_is_hostile_false_for_defensive_and_utility_kinds() -> void:
 	for kind in ["block", "regen", "enrage", "shift_sigil"]:
 		_expect(not Combat3D.intent_is_hostile(kind), "%s targets the boss itself or is merely utility -- it must not wear the alarm colour" % kind)
+
+
+## move_hits_every_hunter is _render_party's own list of which telegraphed
+## moves put every hunter's party card in the red "aimed at" border, regardless
+## of boss_target_index() -- the same purpose Combat.incoming_for() serves for
+## the numeric preview beside it. Combat._enemy_turn's "rift" case hits every
+## player unconditionally, the identical shape as "attack_all" right above it
+## in that match statement, and Combat.incoming_for() already prices "rift" for
+## every hunter with no boss_target_index() check -- but this sibling list had
+## never grown a "rift" branch, so the ally kept a "safe" green border while
+## Combat's own preview showed them taking real damage from the same move.
+func _test_backlog86_move_hits_every_hunter_true_for_rift_like_attack_all() -> void:
+	_expect(Combat3D.move_hits_every_hunter("attack_all"),
+		"attack_all hits every hunter unconditionally -- it must aim at everyone")
+	_expect(Combat3D.move_hits_every_hunter("rift"),
+		"rift hits every hunter unconditionally, the same shape as attack_all -- it must aim at everyone too")
+
+
+func _test_backlog86_move_hits_every_hunter_true_for_position_dependent_swipes() -> void:
+	for kind in ["swipe_high", "swipe_low"]:
+		_expect(Combat3D.move_hits_every_hunter(kind),
+			"%s's real target depends on foothold, which can still change before the boss acts -- both hunters must be warned" % kind)
+
+
+func _test_backlog86_move_hits_every_hunter_false_for_single_target_and_utility_kinds() -> void:
+	for kind in ["attack", "leech", "frail", "curse", "block", "regen", "enrage", "shift_sigil"]:
+		_expect(not Combat3D.move_hits_every_hunter(kind),
+			"%s targets one hunter (or the boss itself) -- it must not put the OTHER hunter in the aimed-at border" % kind)
 
 
 ## backlog #86 duty 3: card_climb_for, lifted out of combat_3d._card_climb, the
