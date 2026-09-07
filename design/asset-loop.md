@@ -27,18 +27,30 @@ start to finish.
 
 ## Stop conditions
 
-Whichever comes first:
+**The bar depends on how big the thing is on screen.** Changed 2026-09-07,
+because a single 40/50 line was letting the assets that fill the frame stop at
+the same score as a 34px portrait.
 
-- total ≥ **40/50**, or
-- a pass gains fewer than 2 points (plateaued), or
-- 4 passes done.
+| Tier | Stop at | Why |
+|---|---|---|
+| **beasts, grounds** | **44/50** | on screen for an entire fight, at full size |
+| hunters | 42/50 | on screen throughout, but small |
+| portraits, icons | 40/50 | 34px and 42px respectively |
 
-Then report: final score, the per-pass history, and the one thing you would fix
-next given another pass.
+Or: 4 passes done. Then report final score, the per-pass history, and the one
+thing you would fix next.
 
-40 is an average of 8. At this fidelity 8 is "shippable and good"; 10 is a
-Kenney model that a professional made and sold, and chasing it on nineteen
-characters is how the schedule dies.
+**A plateau is not a stop for a tier-1 asset — it is a verdict.** The old rule
+retired anything that gained fewer than 2 points in a pass. On a beast, gaining
+under 2 points twice running means the remaining faults are not reachable by
+measurements, and the loop should say so out loud rather than quietly declare
+victory. See "The rebuild verdict" below.
+
+44 is an average of 8.8; 40 is an average of 8. At this fidelity 8 is
+"shippable and good" and 10 is a Kenney model a professional made and sold.
+Chasing 10 on nineteen characters is how the schedule dies — but stopping the
+Titan that fills the screen at the same number as its own thumbnail is how the
+fights stay looking cheap.
 
 ## Rubric (1–10 each)
 
@@ -49,6 +61,51 @@ characters is how the schedule dies.
 | **Build hygiene** | Within budget, one mesh, one material, no floating islands, no part spaced away from the body, tris spent where the reading is. |
 | **Colour & read** | Do the palette swatches separate the parts? Legible at **34px** in the party panel, not just at 512? Nothing dark-on-dark. |
 | **Style consistency** | Does it sit beside the approved assets without looking like it came from a different game? |
+
+### Anchors for Silhouette and Proportion
+
+Added 2026-09-07. These two lines were being scored 6 and 7 on models that are
+visibly a box with four cylinders for legs, which left the remaining points
+sitting in Build hygiene — so every pass went to gem placement and floating
+ridges while the creature stayed blocky. That is backwards. Silhouette and
+Proportion are where a beast's missing points belong, and the scale has to be
+harsh enough at the bottom to put them there.
+
+| Score | What it means |
+|---|---|
+| 1–3 | Unmodified primitives. A box body, cylinder limbs, a sphere head. Reads as a shape assembly, not a creature. |
+| 4–5 | Primitives with taper, bevel or rotation applied, but the underlying box/cylinder is still the first thing you see. |
+| 6–7 | The forms have been worked — masses flow into each other, the silhouette has intent — but a specific part still fails (limbs too even, head too generic). |
+| 8–9 | Reads as the named creature in solid black at 64px with nothing else on screen. |
+| 10 | A Kenney pack model. |
+
+**Score the silhouette PNG, not the lit render, and score it before reading the
+previous pass's number.** Anchoring on last pass's score is how a 32 becomes a
+35 without anything visibly changing.
+
+## The rebuild verdict
+
+Some assets cannot be fixed two measurements at a time. If a tier-1 asset is
+below its stop line and **either** of these is true —
+
+- two consecutive passes each gained fewer than 2 points, or
+- Silhouette or Proportion scored 5 or below and the honest concrete fix is
+  "rebuild the body from a worked form rather than a primitive"
+
+— then **stop passing on it.** Write `VERDICT: REBUILD` at the top of its
+progress file with: the current score, what the base forms actually are, and
+what it would need to be built from instead. Then move to the next asset.
+
+Do not perform the rebuild. A rebuild is a bigger change than two fixes and it
+throws away whatever was good; it is Nick's call, per BACKLOG hard rule 4. The
+verdict is the deliverable.
+
+**Why this exists.** On 2026-09-07 six beasts had been through passes that moved
+them 31→34, 32→35, 33→36, 33→37, 34→37, 36→39 — every point real and verified in
+a render — and every one of them was still a box with cylinders for legs. Nick's
+words were "each beast is a bit of a blocky mess", and three-point hygiene passes
+were never going to answer that. A loop with no way to say "this needs more than
+a pass" will grind on the joinery of furniture that needs redesigning.
 
 ## Hard constraints
 

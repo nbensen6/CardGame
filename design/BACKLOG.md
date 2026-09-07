@@ -74,13 +74,52 @@ Ordered. Source in brackets.
 
   Check your own last commit and do the NEXT duty. Do not do two in one run.
 
-  ### 1. Improve an asset — portraits and card icons ONLY
+  ### 1. Improve an asset — DIAGNOSE the biggest thing on screen first
 
-  Score it, apply the two lowest-scoring fixes, re-render, LOOK at the render
-  with the Read tool, keep it or revert it, re-score. The full loop is
-  `design/asset-loop.md`; `bash tools/blender/look.sh <asset> <pass>` is the
-  capture step (the `.sh`, not the `.cmd` beside it, which is Nick's Windows
-  copy and unreadable here).
+  **Rewritten 2026-09-07.** The old version of this duty read "portraits and
+  card icons ONLY", and the lane obeyed it exactly: on 09/07 it spent every
+  asset run of the day on card icons, which are tier 5, are 42px on screen, and
+  are deleted for good the moment Nick paints that card. Meanwhile no beast had
+  been diagnosed since 09/06, so the fixer — the lane that can actually rebuild
+  a beast — ran out of work and fell through to a hunter. Nick's report was
+  that he could not see any change from either lane, and he was right.
+
+  **Your first duty each asset run is to DIAGNOSE the highest tier that needs
+  it, and that is beasts.** Work down the fixer's own tier table in
+  `tools/fixer/BRIEF.md`: beasts, grounds, hunters, portraits, icons.
+
+  **You can do this without a screen and you always could.** The fixer commits
+  its renders to `design/renders/<asset>_pass<N>_*.png` — six views including
+  `_sil.png` — and you can open a PNG with the Read tool as well as anyone. You
+  do not need to boot the game to score a silhouette. If the newest renders for
+  an asset are stale relative to `tools/blender/<asset>.py`, say so in the
+  progress file and pick another asset; do not score a picture of an old model.
+
+  Score against the five rubric lines and the **anchors** in
+  `design/asset-loop.md` — the anchors are new and they are strict, because
+  Silhouette and Proportion had been scoring 6 and 7 on models that are visibly
+  a box with four cylinders. Then name the two lowest lines, write one concrete
+  fix for each into `design/progress/<asset>.md`, and stop. The fixer applies
+  it. If the asset meets the rebuild criteria, write `VERDICT: REBUILD` instead
+  and move on — that is a finished, useful run, not a failed one.
+
+  **Only when nothing above them needs diagnosis** do you fall to portraits and
+  icons, which you own outright and may repair yourself: score, apply the two
+  lowest fixes, re-render with `bash tools/blender/look.sh <asset> <pass>` (the
+  `.sh`, not the `.cmd` beside it, which is Nick's Windows copy and unreadable
+  here), LOOK at the render with the Read tool, keep it or revert it, re-score.
+  The full loop is `design/asset-loop.md`.
+
+  **Card icons are last, and say so when you take one.** 36 of the 88 scored
+  assets are icons and every painted card retires one permanently. Taking an
+  icon is only correct when every tier above it is at its stop line, has had
+  four passes, or carries a rebuild verdict — and the progress file must say
+  which of those applied.
+
+  **Diagnosing a beast is not editing a beast.** The file rule below is
+  unchanged and absolute: you write `design/progress/<beast>.md`, never
+  `tools/blender/<beast>.py`. Diagnosis has always been on your side of that
+  line; the old wording just never told you to use it.
 
   **This lane REPAIRS now.** The old rule — "scores, never repairs" — existed so
   two agents could not edit one file at once, and it is why 88 scored assets

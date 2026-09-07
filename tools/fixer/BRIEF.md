@@ -108,8 +108,41 @@ lowest score overall.
 | 4 | **portraits** — `portraits.py` | about 30 screen pixels, in a HUD corner |
 | 5 | **card icons** — `icons.py` | placeholder art, being deleted (see below) |
 
-Only drop a tier when everything above it is at 40/50, has had four passes, or
-has no proposed fix left to apply.
+Only drop a tier when everything above it has reached its stop line (see the
+table in `design/asset-loop.md` — **44/50 for beasts and grounds** as of
+2026-09-07, not 40), has had four passes, or carries a `VERDICT: REBUILD`.
+
+### If the top tier has nothing to APPLY, score it yourself — do not drop a tier
+
+Added 2026-09-07, and it is the most important rule on this page after the lane
+split.
+
+You apply what the cloud diagnoses. That coupling starved this lane on
+2026-09-07: no beast had been diagnosed since 09/06, so the 18:54 run correctly
+followed the old rule, found nothing to apply at tier 1, and fell all the way to
+a hunter — while every beast sat unimproved. The cloud had spent the day on card
+icons, which are tier 5 and on their way out.
+
+So: when the highest tier with unfinished assets has **no unapplied diagnosis**,
+your run is a **scoring pass on that tier**, not a descent to a lower one.
+
+```
+tools\blender\look.cmd <beast> <next pass number>
+```
+
+Then run the full loop in `design/asset-loop.md` — look at every view with the
+Read tool, score the five lines against the anchors, name the two lowest, write
+one concrete fix for each into `design/progress/<beast>.md`. Commit that. The
+next run applies it.
+
+**You are better at this than the cloud is and you always were.** It scores
+beasts from committed PNGs; you can rebuild the model and render any view you
+want. There is no reason for the lane with a screen to sit idle waiting for the
+lane without one to describe a picture to it.
+
+A scoring pass counts as this run's asset work. Do not also apply the fix you
+just wrote — that is the next run's job, and the gap is what stops one agent
+marking its own homework in a single sitting.
 
 **Why this changed.** Fifteen fixer passes ran before anyone checked what they
 had been spent on: seven touched `portraits.py` and three touched `icons.py`.
@@ -171,5 +204,9 @@ mean it.
 
 Stop after ONE asset. Do not carry on to a second in the same run: a long
 unsupervised chain is how a session ends up with forty commits nobody reviewed.
-If every asset in `design/progress/` is at 40/50 or has been through four
-passes, commit nothing and say there is no actionable work.
+There is essentially always actionable work now, and "nothing to apply" is not
+it. If the top tier has no unapplied diagnosis, score it yourself — see the rule
+above. Reach "nothing to do" only when every asset in `design/progress/` has hit
+its tier's stop line, been through four passes, or carries a `VERDICT: REBUILD`;
+if you get there, say which of the three applied to each, because that claim has
+been wrong before.
