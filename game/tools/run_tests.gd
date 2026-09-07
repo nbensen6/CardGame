@@ -408,6 +408,7 @@ func _init() -> void:
 	_test_incoming_for_ignores_a_dead_adds_attack()
 	_test_poison_lands_on_the_targeted_add_not_the_boss()
 	_test_frail_lands_on_the_targeted_add_not_the_boss()
+	_test_add_artifact_wards_off_poison_landed_on_it()
 	_test_add_bleeds_from_its_own_poison_on_its_turn()
 	_test_adds_round_trip_through_save_and_load()
 	_test_adds_reach_the_shared_snapshot()
@@ -6879,6 +6880,31 @@ func _test_frail_lands_on_the_targeted_add_not_the_boss() -> void:
 	combat.play_card(0, 0, true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
 	_expect(add.frail == 2 and boss.frail == 0,
 		"a card that applies Frail lands it on the add enemy_index picked, not the main boss")
+
+
+## backlog #86 duty 2: play_card's Poison/Frail branches already ward off a
+## debuff through `debuff_target.try_block_debuff()` -- generic Combatant
+## behaviour that works for an add exactly the same way it works for the main
+## boss, since Boss extends Combatant. What was actually missing was a data
+## path to ever GIVE an add a nonzero `artifact` (Content.build_boss_adds()
+## parsed "thorns" off an add's own JSON but not "artifact" -- fixed beside
+## this test), and nothing had ever proven the combat-side gate honours it for
+## an add specifically. Sets `add.artifact` directly (same idiom
+## _test_thorns_reflects_card_damage_dealt_to_an_add() above uses) rather than
+## through content, since no beast's data carries one yet.
+func _test_add_artifact_wards_off_poison_landed_on_it() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Grub", 30)
+	add.artifact = 1
+	combat.adds.append(add)
+	combat.players[0].hand = [Card.from_dict({"id": "toxic_dart", "name": "Toxic Dart",
+		"type": "skill", "cost": 1, "damage": 2, "wound": 3, "target": "enemy"})]
+	combat.play_card(0, 0, true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
+	_expect(add.wound == 0 and add.artifact == 0,
+		"an add's own Artifact wards off a Poison enemy_index landed on it, and is spent doing it")
+	_expect(add.hp == 28,
+		"the same play's damage still lands on the add -- only the Poison was warded, not the hit")
 
 
 ## Poison on the boss bleeds it at the start of ITS turn (_enemy_turn()); an

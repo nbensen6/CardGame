@@ -370,5 +370,14 @@ static func build_boss_adds(id: String) -> Array:
 		a.thorns = int(ad.get("thorns", 0))  # backlog #86 duty 2: was parsed for
 		# the main boss (build_boss()) but never for an add, so _damage_add()'s
 		# own Thorns reflection (also fixed this pass) had no data path to reach.
+		a.artifact = int(ad.get("artifact", 0))  # backlog #86 duty 2: same gap,
+		# found alongside the Thorns one above -- build_boss() has parsed a
+		# beast's own "artifact" (backlog #36's ward) since before adds existed,
+		# but this sibling builder never grew the matching line. Combat's own
+		# debuff gates (play_card's Poison/Frail branches call
+		# debuff_target.try_block_debuff(), and debuff_target can be an add via
+		# enemy_index) already work for whatever `artifact` a Boss instance
+		# carries -- they just never had a data path to put a nonzero value on
+		# an add's, same as Thorns didn't until the fix beside this one.
 		out.append(a)
 	return out

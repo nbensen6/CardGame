@@ -2627,6 +2627,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-07** — #86 duty 2 (find an error and resolve it), forty-ninth
+  pass of the rotation. Last `#86` turn (`73c7ce2`, gale_serpent portrait)
+  was duty 1, so this was due for duty 2. Re-read `combat.gd`'s add-facing
+  code (`_damage_add`, `play_card`'s Poison/Frail/Thorns branches) against
+  `content.gd`'s two beast builders side by side, since that exact pairing
+  (`build_boss()` parses a field, `build_boss_adds()` doesn't) has produced
+  two prior duty-2 fixes already (Thorns in `81e27b7`, and before that the
+  same shape for ascension HP/Strength scaling). It had one more instance
+  left: `build_boss()` has parsed a beast's own `artifact` (backlog #36's
+  debuff ward) off `bosses.json` since before adds existed; `build_boss_adds()`
+  never grew the matching line, so an add's `Boss.artifact` could never be
+  anything but 0 no matter what its own JSON said — the combat-side gate
+  (`debuff_target.try_block_debuff()` in `play_card`'s Poison/Frail branches)
+  already honours it correctly for any `Boss`, same generic `Combatant`
+  method the main boss uses, so this was purely a missing data path, same as
+  Thorns was. No beast's `adds` entry sets one yet (only `root_lurker`'s
+  `root_tendril` exists, and it carries neither `thorns` nor `artifact`), so
+  this is inert until content wants it — same "no data path to reach" note
+  the Thorns fix left. Fixed `Content.build_boss_adds()` to parse `artifact`
+  and added `_test_add_artifact_wards_off_poison_landed_on_it` (manually sets
+  `add.artifact` the same way the existing Thorns-on-add test sets
+  `add.thorns`, since no data example exists to build one through `Content`):
+  a Poison card redirected at the add via `enemy_index` is warded off and the
+  stack spent, while the same play's damage still lands. `run_tests.gd`: ALL
+  TESTS PASSED (fresh `--import`, headless, Godot 4.7.1). Next `#86` turn is
+  duty 3 (verify a mechanic actually works).
 - **2026-09-07** — #86 duty 1 (improve an asset — portraits and icons only),
   forty-eighth pass of the rotation. Last `#86` turn (`ae76edd`,
   `_node_under_mouse`) was duty 3, so this was due for duty 1. Every icon
