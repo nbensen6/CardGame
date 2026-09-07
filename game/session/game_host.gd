@@ -353,8 +353,15 @@ func _build_shared() -> Dictionary:
 	if _run.phase == Run.Phase.SHOP:
 		s["shop"] = {"stock": _run.shop_stock, "min_deck": Run.MIN_DECK}
 	if _run.phase == Run.Phase.CAMPFIRE:
+		# backlog #86 duty 2: this used to forward the bare Run.REST_HEAL constant
+		# (9) — a "two copies of one truth" bug, since Run.campfire_action()'s own
+		# "rest" branch has computed the REAL amount as REST_HEAL minus ascension's
+		# "rest_heal" tiers (Cold Camps, level 5+) all along. At Ascension 5+ the
+		# Rest button told every player they'd recover 9 HP while actually granting
+		# only 5 (or less, at a higher tier) — a real-money-adjacent lie about what
+		# pressing the button does, not a display nicety.
 		s["campfire"] = {"done": _run.campfire_done, "min_deck": Run.MIN_DECK,
-			"heal": Run.REST_HEAL}
+			"heal": _run.rest_heal_amount()}
 	if _run.phase == Run.Phase.COMBAT:
 		var c: Combat = _run.combat
 		var b: Boss = c.boss

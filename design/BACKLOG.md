@@ -2640,6 +2640,37 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-07** — #86 duty 2 (find an error and resolve it). Two prior duty
+  commits went unlogged before this run and are covered here rather than
+  left silent: `0a44712` (duty 2 — `combat.ogg` shipped since forever but
+  `game_3d.gd`'s phase `_sync()` never once called `Music.play()`, so the
+  menu track played straight through every fight; routed music off the same
+  phase switch via a pure `music_for_phase()`) and `3a4dbfc` (duty 3 —
+  `Combat._draw()`'s discard-reshuffle-mid-call branch had zero coverage;
+  every existing draw test kept `draw_pile` oversized specifically to dodge
+  it). Both attempted duty 1 first and hit the same wall this run also hit:
+  `download.blender.org` still 403s at this container's egress proxy
+  (`CONNECT tunnel failed, response 403`) — confirmed again directly before
+  falling back, so this remains a standing policy, not a stale one-off.
+  Duty 2 this run found a real "two copies of one truth" bug:
+  `Run.campfire_action()`'s `"rest"` branch has always cut the heal by
+  ascension's `rest_heal` tiers (Cold Camps, level 5+: `REST_HEAL - 4`,
+  floored at 1), but `game_host.gd`'s `_build_shared()` sent the CAMPFIRE
+  snapshot's `"heal"` field straight from the bare `Run.REST_HEAL` constant
+  (9) — never asking `Run` what a rest actually grants. At Ascension 5+ the
+  Rest button told every player "recover 9 HP" while `campfire_action()`
+  only ever granted 5 (or less at a higher tier). Pulled the shared formula
+  into `Run.rest_heal_amount()` so both call sites read one source instead
+  of two that can drift; `campfire_action()` and `_build_shared()` both call
+  it now. Added `_test_backlog86_campfire_snapshot_heal_matches_ascension_scaled_amount`
+  — solo `GameHost` at Ascension 5, forced into `CAMPFIRE`, asserts the
+  broadcast snapshot's `campfire.heal` equals both `rest_heal_amount()` and
+  `REST_HEAL - 4` (5, not 9) — verified it actually catches the bug by
+  reverting the fix and watching it fail before restoring. Fresh `--import`,
+  headless Godot 4.7.1.1, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn
+  is duty 3 (verify a mechanic actually works); worth re-checking whether
+  the Blender block has lifted before assuming duty 1 is still closed.
+
 - **2026-09-07** — #86, this container's rotation was mid-cycle at duty 1
   next (last duty commit `7d442bb` was duty 3, unlogged — it never appended
   a Log line or ticked anything, so this entry also covers that gap:

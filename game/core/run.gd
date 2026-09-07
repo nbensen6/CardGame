@@ -527,6 +527,16 @@ func _begin_campfire() -> void:
 		campfire_done.append(false)
 
 
+## The HP a "rest" actually restores right now — REST_HEAL cut by ascension's
+## "rest_heal" tiers (Cold Camps and beyond), floored at 1 so a high enough
+## tier never rounds a rest down to nothing. Pulled out so a caller OUTSIDE
+## Run (game_host.gd's snapshot) can show the real number instead of quietly
+## re-deriving (or, until this existed, simply not deriving) the same
+## ascension cut campfire_action() applies — see game_host.gd's own comment
+## on `"campfire"]["heal"]` for the bug this closes.
+func rest_heal_amount() -> int:
+	return maxi(1, REST_HEAL - int(_asc.get("rest_heal", 0)))
+
 ## `action` is "rest" | "remove" | "upgrade". Removing or sharpening needs
 ## `card_index` into that hunter's own deck. Each hunter acts once.
 func campfire_action(slot: int, action: String, card_index: int = -1) -> bool:
@@ -537,7 +547,7 @@ func campfire_action(slot: int, action: String, card_index: int = -1) -> bool:
 	var deck: Array = decks[slot]
 	match action:
 		"rest":
-			hp[slot] = mini(hp[slot] + maxi(1, REST_HEAL - int(_asc.get("rest_heal", 0))), max_hp[slot])
+			hp[slot] = mini(hp[slot] + rest_heal_amount(), max_hp[slot])
 		"remove":
 			if card_index < 0 or card_index >= deck.size() or deck.size() <= MIN_DECK:
 				return false

@@ -126,6 +126,7 @@ func _init() -> void:
 	_test_enchants_all_load()
 	_test_campfire_rest_remove_upgrade()
 	_test_campfire_rest_heals_and_caps_at_max()
+	_test_backlog86_campfire_snapshot_heal_matches_ascension_scaled_amount()
 	_test_campfire_guards_against_illegal_actions()
 	_test_status_card_cannot_be_sharpened_but_can_be_removed_at_campfire()
 	_test_skip_reward_keeps_the_deck_lean()
@@ -2471,6 +2472,38 @@ func _test_campfire_rest_heals_and_caps_at_max() -> void:
 	run2._begin_campfire()
 	run2.campfire_action(0, "rest")
 	_expect(run2.hp[0] == run2.max_hp[0], "a campfire rest cannot overheal past max HP")
+
+
+## backlog #86 duty 2: "two copies of one truth". Run.campfire_action()'s
+## "rest" branch has always cut REST_HEAL by ascension's "rest_heal" tiers
+## (Cold Camps, level 5+ — proven above, in the ascension-ladder test) before
+## touching `hp`. But game_host.gd's `_build_shared()` built the CAMPFIRE
+## snapshot's `"heal"` field straight from the bare `Run.REST_HEAL` constant,
+## never asking Run what a rest actually does at the run's own ascension. At
+## Ascension 5+ the Rest button told every player "recover 9 HP" while
+## campfire_action() was really only granting 5 (or less, at a higher tier) —
+## the same "one copy correct, the other stale" shape as `h["home"]`, just on
+## a number instead of a position. Fixed by giving Run a single
+## `rest_heal_amount()` both call sites share, so they cannot drift apart
+## again the way the two independent copies just did.
+func _test_backlog86_campfire_snapshot_heal_matches_ascension_scaled_amount() -> void:
+	var t := LocalTransport.new()
+	# Solo, Ascension 5 ("Cold Camps": rest_heal -4, so a rest heals 9-4=5, not 9).
+	var host := GameHost.new(t, 42, 2, true, 5)
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	_expect(host._run != null, "setup sanity: a fresh solo run exists before forcing CAMPFIRE")
+	host._run.phase = Run.Phase.CAMPFIRE
+	host._run._begin_campfire()
+	host._broadcast_state()
+	var shown := int((c.shared.get("campfire", {}) as Dictionary).get("heal", -1))
+	_expect(shown == host._run.rest_heal_amount() and shown == Run.REST_HEAL - 4,
+		"the campfire snapshot's 'heal' must show the ASCENSION-SCALED rest amount " +
+		"(5 at Ascension 5's Cold Camps), not the bare Run.REST_HEAL constant (9) " +
+		"the Rest button used to advertise regardless of ascension")
 
 
 func _test_campfire_guards_against_illegal_actions() -> void:
