@@ -827,10 +827,18 @@ def dexterity(i):                             # gain Dexterity (adds to Block ga
     # than clipping off-canvas below it, plus a few thin grooves across it
     # for barb texture, small enough to read as detail rather than define
     # the outline.
+    # pass 3 (design/progress/dexterity_icon.md): the quill's thin end was
+    # 0.006 -- so close to zero it vanished into the point's own taper, and
+    # the "pokes past both ends" the comment above promises only ever
+    # happened at the bottom. Widened to 0.018 and pushed 0.03 further past
+    # the tip so a real sliver of shaft clears the point at 42px too, giving
+    # the icon a through-line (quill piercing vane) that a plain teardrop
+    # doesn't have. A shorter-vane/taller-point trial was tried first and
+    # reverted -- it read as an onion dome, not a feather; see the log.
     i.ball((0.0, 0.0, 0.02), (0.30, 0.16, 0.364), SKY, 12, 8)          # the vane
     i.ball((-0.08, -0.05, 0.02), (0.20, 0.14, 0.338), ICE, 12, 8)      # its lit half
     i.spike(0.0, 0.40, 0.21, 0.01, 0.24, SKY, seg=6)                   # its pointed tip
-    i.spike(0.0, 0.04, 0.020, 0.006, 1.00, TAN, seg=4)                 # the quill
+    i.spike(0.0, 0.055, 0.020, 0.018, 1.03, TAN, seg=4)                # the quill
     for k in range(4):                          # barb grooves, pulled in front of
         z = -0.18 + k * 0.16                    # both balls (y=-0.22) or they'd be
         i.box((0.0, -0.22, z), (0.15, 0.03, 0.012), WHITE, rot=(0.0, 0.4, 0.0))

@@ -2627,6 +2627,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-07** — #86 duty 1 (improve an asset — portraits and icons only),
+  fifty-first pass of the rotation. Last `#86` turn (`06f682b`, shop button
+  test) was duty 3, so this was due for duty 1. `dexterity_icon.md` (39/50,
+  two of four passes used, not plateaued) had the clearest already-diagnosed
+  next step of the un-plateaued portraits/icons: pass 2's own "Unsure about"
+  section named two untried ideas and didn't pick between them, so this pass
+  tried the cheaper one first with a standalone one-icon trial script rather
+  than the full 36-icon `icons.py` batch, verified against a real `icons.py`
+  build (mean diff 0.0035, WORKBENCH noise) before trusting it. Trial 1
+  (shorten the vane, lengthen the point, the "more height is the point"
+  idea) made it read like an onion dome, not a feather — worse Mechanic
+  match, not better — and was reverted; the honest write-up is in
+  `design/progress/dexterity_icon.md`'s Pass 3 section, including the exact
+  numbers so nobody retries the same trial blind. Trial 2 (widen the quill's
+  own thin end from `0.006` to `0.018` and let it clear the point's own
+  taper by `0.05` instead of `0.02`) worked: the quill now visibly pierces
+  both ends of the vane at 42px, not just the bottom, which the build
+  comment always claimed but the numbers never delivered. Applied to
+  `tools/blender/icons.py`'s `dexterity()`, rebuilt all 36 icons (apt
+  Blender 4.0.2, headless), diffed every PNG against `HEAD` by mean pixel
+  difference (`dexterity.png` genuinely changed despite a low 0.161 mean —
+  the changed pixels are a thin line on a 256×256 canvas — confirmed by
+  looking at the rendered views, not the number alone; everywhere else fell
+  in the usual ≤6.70 apt-Blender noise band), reverted the other 35 with
+  `git checkout --`. Silhouette 8→9, Mechanic 7→8, total 39→41 — crosses the
+  loop's 40/50 stop line at three of four passes. `run_tests.gd`: fresh
+  `--import`, headless, Godot 4.7.1, ALL TESTS PASSED (icon-only change,
+  touches no `game/**` GDScript). Next `#86` turn is duty 2 (find an error
+  and resolve it).
 - **2026-09-07** — #86 duty 3 (verify a mechanic actually works), fiftieth
   pass of the rotation. Last `#86` turn (duty 2, artifact-on-adds) was duty 2,
   so this was due for duty 3. Went hunting for the "two copies of one truth"

@@ -180,3 +180,115 @@ named fixes didn't ask for and didn't touch. Also unsure whether the
 quill's top tip is worth enlarging in a future pass specifically so it
 survives the 42px downsample, or whether a single visible stem (the
 bottom one) already clears the bar this line needs.
+
+## Pass 3 — cloud, backlog #86 duty 1
+
+Tried the pass 2 "unsure about" question first, since it was the more
+speculative of the two and the cheaper one to rule out. A standalone trial
+script (not `icons.py`, so it renders one variant in a couple of seconds
+instead of the full 36-icon batch) reproduced the vane/point/quill build
+exactly — a `dexterity.png` from it diffed against a real `icons.py` build
+at mean 0.0035/max 40 (WORKBENCH noise band), confirming the trial is
+faithful before trusting any of its output.
+
+**Trial 1 — shorten the vane, lengthen the point (reverted).** Cut both
+vane balls' `z` radius by the same 0.75 ratio pass 2's own 0.65 cut used
+(`0.364→0.273`, `0.338→0.2535`), dropped the shared centre from `z=0.02` to
+`z=-0.10` to keep the now-longer point inside the `±0.575` ortho frame, and
+stretched the tip taper from `length=0.24` to `0.45` (recomputing its base
+radius off the ball's own surface at the same 0.714 height-fraction pass 2
+used, which lands on the same `r0=0.21` pass 2 already found — the fraction
+cancels the ball's own size out). Rendered and looked
+(`design/renders/dexterity_icon_pass3_trial1_*` — not committed, reverted
+with everything else this trial touched): the body reads rounder, not more
+oval, because only the `z` radius shrank while `x` (`0.30`) stayed fixed —
+a wider-looking ball under a long straight cone reads as an onion dome or a
+water balloon, not a feather, which is a worse Mechanic-match read than
+pass 2's plain teardrop, not a better one. This is exactly the risk pass
+2's own "Unsure about" section named before trying it. Not applied.
+
+**Trial 2 — widen and extend the quill instead (applied).** The build
+comment already claimed the quill "pokes past both the point and the
+vane's base," but pass 2's own numbers show it barely does: the thin end
+was `r1=0.006`, thin enough to disappear into the point's own taper by
+eye, and the "Unsure about" section flagged this exact gap. Left the vane
+and point untouched and widened the quill's thin end to `0.018` (still
+much thinner than the `0.020` thick end, so it stays a taper, not a rod),
+pushing the point-side end from `0.02` past the tip to `0.05` past it so
+the wider sliver has room to clear the point's own taper before the frame
+edge: `i.spike(0.0, 0.04, 0.020, 0.006, 1.00, TAN, seg=4)` →
+`i.spike(0.0, 0.055, 0.020, 0.018, 1.03, TAN, seg=4)`. A `0.028` thin end
+was also tried and rejected — thick enough that the top blurred into the
+point's own taper instead of reading as a distinct shaft, the opposite of
+what the fix wants. `0.018` was the widest that still read as a separate
+sliver against the point.
+
+Rebuilt with `blender --background --python tools/blender/icons.py --
+game/assets/icons` (apt's Blender 4.0.2, headless). Console: `TRIS 544
+PARTS 8 BUDGET 700 ok`, no warnings for `dexterity`. Diffed all 36 icons
+against `HEAD` by mean per-channel pixel difference: every icon except
+`dexterity.png` fell in the same ≤6.70 WORKBENCH noise band prior
+duty-1/fixer passes established (`strength.png` 5.635 the highest of the
+batch, unrelated to this change), `dexterity.png` at only 0.161 — low
+because the changed pixels are a thin line across a 256×256 canvas, not
+because nothing changed; confirmed by re-rendering the actual committed
+`game/assets/icons/dexterity.png` through the same 42px/silhouette/topzoom
+views used below and seeing the new sliver directly. Reverted the other 35
+icons with `git checkout --`, kept only `dexterity.png`.
+
+Verified by looking, not just the diff number:
+
+- **Full 256px composite** over the brown card-face standin
+  (`design/renders/dexterity_icon_pass3_full.png` vs `..._pass2_full.png`):
+  pass 2 shows the point's own tip as the topmost thing in frame with the
+  quill only visible below the vane; pass 3 shows a thin tan sliver poking
+  out past the point's tip as well, with clear background margin around it
+  (a top-edge zoom crop, `..._pass3_topzoom.png`, confirms the sliver has
+  real alpha margin above it, not a clip against the canvas edge — row 0
+  carries only a 3-of-255 antialiasing fringe, row 1 is already 199/255).
+- **A real 42px downsample** (Pillow `LANCZOS`, nearest-neighbour upscaled
+  for viewing, same brown-standin composite,
+  `..._pass3_42px_big.png` vs `..._pass2_42px_big.png`): the new sliver
+  survives the downsample as a thin vertical line running through both
+  ends of the oval — a "shaft piercing a vane" read that pass 2's version,
+  where the quill only showed below, didn't have.
+
+Score:
+
+- **Silhouette @ 42px (8 → 9):** the through-line is a genuine new
+  silhouette feature at 42px, not just a texture detail that fades at
+  distance — confirmed in the downsample comparison above. Not a 10: the
+  body outline is still a plain oval-with-point: one line through it
+  doesn't make the outline itself feather-shaped.
+- **Mechanic match (7 → 8):** a shaft visibly piercing both ends of the
+  vane is a specific "feather" cue (a quill through a plume) that a bare
+  oval-with-point doesn't carry, matching the build comment's own original
+  intent for the first time. Not a 9-10: no barb split, still a smooth
+  solid body rather than two separated lobes either side of the shaft.
+- **Family distinction (8, unchanged):** still the only oval-with-point
+  shape in the set; the new sliver makes it more distinct, not less, but
+  the rubric doesn't separately reward that.
+- **Colour & contrast (8, unchanged):** no palette touched this pass.
+- **Style consistency (8, unchanged):** the widened quill reuses the same
+  `spike` taper every other icon in this file already builds with; no new
+  vocabulary.
+
+**+2 total (39 → 41), not a plateau — crosses the loop's 40/50 stop line.**
+No line regressed. Three of four passes used.
+
+`run_tests.gd`: **ALL TESTS PASSED** (fresh `--import`, headless, Godot
+4.7.1, Blender 4.0.2 apt install). No new tests — an icon-geometry-only
+change, same as every prior icon pass under this item.
+
+## Unsure about (pass 3)
+
+Whether the shaft would read even more clearly as a quill with two full
+barb-lobes either side (an actual split down the centre) rather than one
+solid vane crossed by diagonal grooves — that's real new geometry, not a
+parameter nudge on the existing build, and out of this pass's two-fix
+budget. Also unsure whether Trial 1's core idea (more of the height being
+"point," less "oval") could still help if paired with a genuinely
+elongated vane (narrower `x`, not just shorter `z`) rather than the
+uniform-`z`-shrink this pass tried and rejected — not attempted, since
+that is a proportion change to the whole body, not one of the two named
+lines.
