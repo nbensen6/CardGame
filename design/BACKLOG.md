@@ -2615,6 +2615,19 @@ rather than inventing work.
   pool. Which is authoritative is a design call, not a cleanup.
 - **Is it fun.** No amount of unsupervised work answers this. It needs him, and
   then a stranger.
+- **`Boss.hold_exposed_to()` (#24's named-hold `exposed_to` field) has no
+  gameplay effect.** It parses, round-trips and crosses the network boundary
+  correctly (tested), but no beast in `bosses.json` sets it and nothing in
+  `combat.gd`'s move resolution ever reads it. #24's own text promises it as
+  the thing that makes climbing positional ("the high hold is closer to the
+  sigil but in reach of the sweep, the low one is safe but slow"), but
+  `swipe_high`/`swipe_low` already partition every hunter by raw
+  foothold>0/<=0 with no gap left for a hold-specific override to change —
+  wiring it means either changing what those two moves already do to every
+  beast that has them, or deciding it should gate some other move
+  (`attack`/`leech`'s single-target pick, `attack_all`'s hits-everyone) in a
+  way nothing currently specifies. That's a "what should the danger actually
+  be" call, not a bug with one obvious fix (2026-09-07, #86 duty 2).
 
 ## Later — parked, not forgotten
 
@@ -2626,6 +2639,59 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-09-07** — #86, this container's rotation was mid-cycle at duty 1
+  next (last duty commit `7d442bb` was duty 3, unlogged — it never appended
+  a Log line or ticked anything, so this entry also covers that gap:
+  `location_3d._felled_height` got its first test coverage). Duty 1 was
+  blocked outright this run: `download.blender.org` is rejected by this
+  container's egress policy (`connect_rejected`, confirmed via the proxy's
+  own status endpoint, and checked against several mirrors — all blocked the
+  same way), so no Blender binary could be fetched and no render/look/score
+  step was possible. `github.com` releases (Godot itself) were reachable
+  fine, so this is specifically a Blender-hosting gap in this container, not
+  a general network outage. Skipped to duty 2 (find an error and resolve
+  it): spent a long pass over `game_host.gd`, `run.gd`, `combat.gd`,
+  `boss.gd`, `player_state.gd`, `run_map.gd` and `progress.gd` hunting the
+  usual two families. One real-looking find turned out to be a false
+  positive caught before commit: `Run.pick_reward()`'s relic branch lets
+  every hunter in co-op add their OWN independently-rolled relic to
+  `team_relics` from one relic-reward node (reproduced directly, no race
+  needed) — looked exactly like the class of bug `take_key`'s `_relic_taken`
+  gate already exists to prevent, so wrote a gate and a regression test. Ran
+  the FULL suite before committing (not just the new test) and
+  `_test_elite_pays_a_card_then_a_relic` failed — its own comment says
+  outright that a relic reward growing by `player_count()` is the intended
+  design, not a bug. Reverted both the fix and the test rather than force a
+  design call unsupervised; `git diff --stat` confirmed clean before moving
+  on. Also found `Boss.hold_exposed_to()` (backlog #24's named-hold
+  `exposed_to` field) has zero live beasts using it and zero call sites
+  outside test fixtures — its own item narrative promises it gates which
+  boss moves can hit a hunter on a given hold, but `combat.gd`'s
+  `swipe_high`/`swipe_low` are already a strict foothold>0/<=0 partition
+  that leaves it no room to add anything without changing move semantics
+  Nick hasn't blessed — moved to Needs Nick rather than guessing. No safe,
+  unambiguous duty-2 fix survived the hour, so fell back to duty 3 (verify a
+  mechanic): `Boss._active_moves()`'s hurt_pct/hurt_moves switch (#44) reads
+  `hp`/`max_hp` live off the Boss, and `Run._start_encounter()` scales
+  `boss.max_hp` for ascension's `boss_hp_pct` before Combat is ever built —
+  on paper the hurt threshold should scale for free, but nothing had proven
+  it end to end: #44's own tests use a bare Boss with a fixed `max_hp`, and
+  the ascension-scaling tests use beasts with no `hurt_pct`. Wrote
+  `_test_backlog86_hurt_pct_threshold_scales_with_ascensions_hp_pct`
+  against `gale_serpent` (a fixed `ENCOUNTERS` Titan, so `node_type =
+  "boss"` picks it with no RNG) at Ascension 1: hp 55 sits below the
+  ascension-SCALED threshold (56.7) but above the stale unscaled one (51.8)
+  — a clean discriminator that would fail if the switch were ever reading
+  bosses.json's raw `max_hp` instead of the live, already-scaled value.
+  First draft used `crag_pup` and set `run.beast_id` directly, which
+  `_start_encounter()` immediately clobbers with `_roll_beast()` — caught
+  because the sanity assertion on `max_hp` failed loudly (got a doubled,
+  unrelated number) rather than silently testing the wrong beast; switched
+  to a fixed-Titan node_type instead of fighting the roll. Fresh `--import`,
+  headless, Godot 4.7.1: ALL TESTS PASSED. Next `#86` turn is duty 1, same
+  as this one was — worth checking whether the Blender block is
+  container-specific before assuming it again.
 
 - **2026-09-07** — #86 duty 2 (find an error and resolve it), fifty-fifth pass
   of the rotation. Last `#86` turn (`1fca8de`, clot_toad portrait) was duty 1

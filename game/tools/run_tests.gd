@@ -39,6 +39,7 @@ func _init() -> void:
 	_test_backlog44_disabled_by_default()
 	_test_backlog44_hurt_moves_resolve_through_a_real_enemy_turn()
 	_test_backlog44_at_least_three_beasts_have_a_second_pattern()
+	_test_backlog86_hurt_pct_threshold_scales_with_ascensions_hp_pct()
 	# backlog #42: something to unlock between runs
 	_test_backlog42_progress_total_wins_climbs_on_every_win()
 	_test_backlog42_relic_pool_respects_unlock_wins()
@@ -1213,6 +1214,39 @@ func _test_backlog44_disabled_by_default() -> void:
 	b.hp = 1  # would be well under any reasonable threshold
 	_expect(int(b.current_move()["value"]) == 5,
 		"a beast with hurt_pct 0 (the default) never switches, unchanged from before this item")
+
+
+## backlog #86 duty 3 (verify a mechanic actually works): Boss._active_moves()
+## switches to hurt_moves when `hp <= max_hp * hurt_pct`, reading both off the
+## live Boss object -- and Run._start_encounter() scales `boss.max_hp` for
+## ascension's boss_hp_pct BEFORE Combat (and so the hurt-move check) ever
+## runs. On paper the threshold should just scale along for free with no
+## extra code, but nothing had ever proven that end to end through the real
+## encounter-start path: #44's own tests build a bare Boss with a fixed
+## max_hp (never touched by ascension), and #22/#86's ascension-scaling tests
+## use beasts with no hurt_pct at all. gale_serpent (bosses.json: max_hp 148,
+## hurt_pct 0.35, and one of the four fixed ENCOUNTERS Titans so node_type
+## "boss" picks it with no RNG involved) makes a clean discriminator at
+## Ascension 1 (boss_hp_pct +10%): unscaled threshold floor(148*0.35)=51.8,
+## scaled threshold floor(162*0.35)=56.7 -- hp 55 sits BELOW the scaled
+## threshold (should be hurt) but ABOVE the stale unscaled one (would wrongly
+## read as healthy if the switch were ever comparing against bosses.json's
+## raw max_hp instead of the live, already-scaled value).
+func _test_backlog86_hurt_pct_threshold_scales_with_ascensions_hp_pct() -> void:
+	var run := Run.new([_deck_of(_slash, 10), _deck_of(_slash, 10)], ["A", "B"], 0, [{}, {}], 1)
+	run.start()  # Ascension 1 -> _asc["boss_hp_pct"] == 10
+	run.node_type = "boss"
+	run.encounter_index = 1  # ENCOUNTERS[1] == "gale_serpent" -- no RNG roll involved
+	run._start_encounter()
+	var b: Boss = run.combat.boss
+	_expect(b.id == "gale_serpent" and b.max_hp == 162,
+		"sanity: gale_serpent's max_hp 148 scales to 162 at ascension 1's +10%% [id=%s max_hp=%d]" % [b.id, b.max_hp])
+	b.hp = 58  # above both the scaled (56.7) and unscaled (51.8) thresholds
+	var above_ok: bool = int(b.current_move()["value"]) == 10  # moves[0]
+	b.hp = 55  # below the SCALED threshold only -- the discriminating point
+	var at_scaled_ok: bool = int(b.current_move()["value"]) == 12  # hurt_moves[0]
+	_expect(above_ok and at_scaled_ok,
+		"gale_serpent's hurt_pct threshold tracks its ascension-scaled max_hp (162), not bosses.json's unscaled 148")
 
 
 func _test_backlog44_hurt_moves_resolve_through_a_real_enemy_turn() -> void:
