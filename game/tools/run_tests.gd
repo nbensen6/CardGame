@@ -473,6 +473,7 @@ func _init() -> void:
 	# layer, not just /core.
 	_test_backlog86_gamehost_wires_take_key_command_to_run()
 	_test_backlog86_build_shared_exposes_keys_for_the_reward_screen()
+	_test_backlog86_felled_snapshot_clears_for_a_later_non_combat_reward()
 	_test_backlog64_event_key_effect_grants_the_event_key_once()
 	_test_backlog64_boon_effects_never_grant_a_key()
 	_test_backlog64_sealed_hollow_event_grants_a_key_at_a_real_cost()
@@ -8177,6 +8178,34 @@ func _test_backlog86_build_shared_exposes_keys_for_the_reward_screen() -> void:
 	host._broadcast_state()
 	_expect((c.shared.get("keys", []) as Array) == ["event"],
 		"the shared snapshot must carry the run's banked keys so the reward screen can gate its 'Take a Key' option")
+
+
+## backlog #86 duty 2: `Run.combat` is set once a run's first fight starts
+## (_start_encounter()) and is never cleared afterward -- neither pick_node()'s
+## "treasure"/"event" branches nor _after_node() touch it. _build_shared()'s
+## "felled" field read `_run.combat.boss.id` gated only on
+## `phase == Phase.REWARD`, so once a party had fought anything, EVERY later
+## non-combat reward (a treasure chest, an event's card/relic payout) still
+## reported the earlier beast as "felled" -- the reward screen would announce
+## a Titan felled over an open chest, exactly the lie node_type's own comment
+## a few lines above this fix says was already handled.
+func _test_backlog86_felled_snapshot_clears_for_a_later_non_combat_reward() -> void:
+	var s := _make_session()  # row 0 is always a fight -- host._run.combat is a real, live boss
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var fought_id: String = host._run.combat.boss.id
+	host._run._begin_reward("card")  # what Run.sync() calls on a real win, node_type still "fight"
+	host._broadcast_state()
+	_expect(String(c0.shared.get("felled", "")) == fought_id,
+		"a real fight's own reward screen still names the beast that was actually felled")
+	# The party banks that reward and later steps onto a treasure node in the
+	# SAME run. Run.combat is never cleared, so before this fix it still held
+	# the earlier fight's boss.
+	host._run.node_type = "treasure"
+	host._run._begin_reward("relic")
+	host._broadcast_state()
+	_expect(String(c0.shared.get("felled", "")) == "",
+		"a treasure node's reward screen must not claim a beast was felled just because Run.combat still points at an earlier fight")
 
 
 func _test_backlog64_event_key_effect_grants_the_event_key_once() -> void:

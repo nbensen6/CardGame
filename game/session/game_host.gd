@@ -336,8 +336,17 @@ func _build_shared() -> Dictionary:
 			"boss_art": _boss_art_per_act(),
 		}
 	# the reward screen is staged over the beast you just felled, so the view
-	# needs to know which one it was — combat is gone by every other measure
-	if _run.phase == Run.Phase.REWARD and _run.combat != null and _run.combat.boss != null:
+	# needs to know which one it was — combat is gone by every other measure.
+	# backlog #86 duty 2: `_run.combat` is set once at the run's first fight and
+	# never cleared afterward (pick_node()'s "treasure"/"event" branches never
+	# touch it), so a treasure or event reward later in the same run inherited
+	# whatever beast was fought LAST, not "none" — the reward screen would lie
+	# about a Titan being felled over an open chest. Gate on node_type, the same
+	# field this dict already carries specifically so the view can tell a
+	# chest's REWARD phase apart from a felled boss's (see node_type's own
+	# comment two lines above).
+	if _run.phase == Run.Phase.REWARD and _run.node_type in Run.COMBAT_NODE_TYPES \
+			and _run.combat != null and _run.combat.boss != null:
 		s["felled"] = _run.combat.boss.id
 	if _run.phase == Run.Phase.EVENT:
 		s["event"] = _run.event

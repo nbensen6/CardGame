@@ -14,6 +14,12 @@ extends RefCounted
 enum Phase { MAP, COMBAT, EVENT, CAMPFIRE, SHOP, REWARD, WON, LOST, BOON }
 
 const ENCOUNTERS := ["stone_warden", "gale_serpent", "drowned_colossus", "sunken_warden"]
+# node_type values that mean "a real fight happened here" — pick_node()'s own
+# match falls through to _start_encounter() for exactly these three (backlog
+# #86 duty 2). `combat` is never cleared once a run's first fight starts (see
+# game_host.gd's own "felled" read), so anything reporting what was FOUGHT
+# must gate on node_type being one of these, not merely on `combat` existing.
+const COMBAT_NODE_TYPES := ["fight", "elite", "boss"]
 const REST_HEAL := 9   # a campfire "rest" patches you up
 const MIN_DECK := 5    # you may thin a deck, but not into nothing
 # Gold is a SHARED purse — "do we buy your card or my relic?" is a co-op decision.

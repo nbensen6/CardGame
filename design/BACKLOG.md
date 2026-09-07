@@ -2627,6 +2627,37 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-07** — #86 duty 2 (find an error and resolve it), fifty-fifth pass
+  of the rotation. Last `#86` turn (`1fca8de`, clot_toad portrait) was duty 1
+  and named duty 2 as next explicitly. Dispatched a research pass over
+  `game/core/*.gd` and `game/session/*.gd` (card play, relics, save/load
+  round-tripping, reward economy, `game_host.gd` command dispatch) since the
+  obvious "two copies of truth" targets from recent duty-2 turns — boss/add
+  debuff forwarding, ascension scaling of adds, boss `max_hp` save round-trip
+  — are already fixed and test-covered. Found a real one they missed:
+  `Run.combat` is set once at a run's first fight (`_start_encounter()`) and
+  is never cleared afterward — `pick_node()`'s "treasure" and "event"
+  branches call `_begin_reward()` directly and never touch it. `game_host.gd`
+  `_build_shared()`'s `"felled"` field (what the reward screen announces was
+  killed) was gated only on `phase == Phase.REWARD`, not on `node_type`, so
+  every non-combat reward for the rest of a run — any treasure chest or event
+  payout after the party's first fight — kept reporting the LAST beast
+  fought as freshly felled. Confirmed by reading `pick_node()`'s match
+  (`"treasure"` → `_begin_reward("relic")` with no `combat` touch) and by a
+  regression test that reproduces it end to end: win-shaped reward off a real
+  fight reports the right beast, then forcing a treasure node's reward
+  without clearing `combat` used to still report it — verified the test
+  actually catches the bug by reverting the fix and watching it fail before
+  restoring. Fix: added `Run.COMBAT_NODE_TYPES := ["fight","elite","boss"]`
+  and gated the `"felled"` read on `node_type` being one of those, matching
+  the exact branch `pick_node()` uses to reach `_start_encounter()`. Left
+  `Run.combat` itself uncleared rather than nulling it after a node resolves
+  — other reads (`sync()`, `to_dict()`) already gate on
+  `phase == Phase.COMBAT` correctly, so the narrower fix at the one bad call
+  site is lower-risk than changing when `combat` itself is retained. Fresh
+  `--import`, headless, Godot 4.7.1, `run_tests.gd`: ALL TESTS PASSED (0
+  failures, 991 passes). Next `#86` turn is duty 3 (verify a mechanic
+  actually works).
 - **2026-09-07** — #86 duty 1 (improve an asset — portraits and icons only),
   fifty-fourth pass of the rotation. Last `#86` turn (`97244cf`, lobby-drop
   reindex test) was duty 3 and named duty 1 as next explicitly. Rather than
