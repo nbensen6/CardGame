@@ -186,3 +186,75 @@ the *act* of building" gap (this file's original Unsure section) is worth
 the budget, given the shape-level fix (assembled hardware, not fused mass)
 already answers the more literal "does the shape suggest construction"
 reading this item was scored against.
+
+## Pass 3 — cloud, backlog #86 duty 1
+
+Two lowest, tied at 7: **Mechanic match** and **Colour & contrast**. Only
+one had a fix that was actually in-lane. Mechanic's own pass-2 note named
+the real gap — "a static assembled object... still doesn't depict the
+*act* of building" — and that's a design question about what the icon
+should depict, not a primitive to nudge; left untouched, same split every
+prior pass under this item makes when one of the two lowest has no
+concrete geometry fix available. Colour's cause was named explicitly in
+pass 2 and never addressed: "the antenna-spike thinness this line was
+docked for is still there."
+
+Applied the **Colour & contrast** fix: `icons.py`'s `gadget()` antenna
+`spike()` radii widened from `(0.055, 0.02)` to `(0.075, 0.032)` — both
+base and tip roughly 40-60% thicker, same length (0.22) and angle
+(`ang=0.4*s`) so the silhouette's outline shape is unchanged, only the
+carrot-orange patch each spike puts on screen gets bigger.
+
+Rebuilt with apt's Blender 4.0.2, headless EGL (same setup prior duty-1
+passes under this item used). Ran the full `icons.py` batch and diffed
+every output against the committed set: `gadget.png` at mean diff 1.54,
+inside the same noise band several unrelated icons already show from
+WORKBENCH non-determinism (`strength.png` 4.23, `bow.png` 2.84 this same
+run, neither script touched) — so the diff number alone doesn't prove
+content the way it did for `rhythm`/`volley`'s bigger reshapes. Confirmed
+by direct measurement instead: scanned the right antenna's alpha-mask
+width at four rows near its tip, old vs new — `y=10`: 13px → 18px,
+`y=20`: 16px → 23px, `y=30`: 20px → 27px (`y=40`, inside the top slab's
+own silhouette, 61px → 65px, expected to barely move since that row is
+mostly slab, not antenna) — a real, verified geometry change, not noise.
+Copied only `gadget.png` into `game/assets/icons/`; `icons.py`'s other 35
+functions were untouched and their renders reverted.
+
+Looked at it four ways: the full 256px composite over the brown
+card-face standin (`design/renders/gadget_icon_pass3_full.png`), a real
+42px Lanczos downsample nearest-neighbour upscaled for viewing
+(`..._pass3_42px_big.png`), a pure black-on-white alpha silhouette
+(`..._pass3_sil.png`), and a 3× zoom crop on the antenna pair specifically
+(`..._pass3_antenna_zoom.png`).
+
+- **Colour & contrast (7 → 9):** the zoom crop shows both antennae as
+  clearly solid carrot-orange cones now, not the thin near-hairline wires
+  pass 1 and 2 both left docked — the fix directly answers "read closer to
+  hairline marks than solid shapes once downsampled." Not a 10: the tip
+  end (`r=0.032`) is still meaningfully thinner than the base (`r=0.075`),
+  so it's a thickened spike, not a bold uniform mark.
+- **Mechanic match (7, unchanged):** not one of this pass's fix, and the
+  antenna width has nothing to do with "assembled vs carved" — the gap
+  pass 2 named is still open.
+- **Silhouette @ 42px (8, unchanged):** the silhouette crop above shows
+  the same three-band-plus-antenna shape as pass 2, just with slightly
+  fatter antenna prongs — re-checked specifically for a family drift risk
+  and found none; still nothing like `climb`/`ascend`/`peak`'s vertical
+  post-and-mountain outlines.
+- **Family distinction (9, unchanged):** shape class untouched.
+- **Style consistency (8, unchanged):** same `spike()` primitive, only its
+  two radius arguments changed; no new build vocabulary.
+
+**+2 total (39 → 41) — crosses the loop's 40/50 stop line.** No line
+regressed. `run_tests.gd`: **ALL TESTS PASSED** (fresh `--import`,
+headless, Godot 4.7.1 — this pass touches only `tools/blender/icons.py`
+and the regenerated `gadget.png`, nothing in `/core` or `/game` code).
+
+## Unsure about (pass 3)
+
+Whether Colour could climb past 9 with a further-thickened tip, or whether
+that starts trading into Silhouette by making the antenna read as a solid
+wedge rather than a tapered spike — not attempted, since the loop's own
+stop condition (≥40) is met and the "assembled vs carved" Mechanic
+question this file has now carried since pass 1 is the more open item for
+whoever picks this file up again.

@@ -2592,6 +2592,31 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-07** — #86 duty 1 (improve an asset), forty-fifth pass of the
+  rotation. Last `#86` turn (`adfa556`, `_key_name`) was duty 3, so this was
+  due for duty 1 — portraits and icons only. Surveyed every scored icon and
+  portrait under batches 14-21/#83 for one below the 40/50 stop line with
+  passes still available: `dexterity_icon.md` (39/50, 2 of 4 passes used)
+  looked like the best candidate first — its lowest line, Mechanic match
+  (7/10), had an already-diagnosed concrete fix (enlarge the quill tip so it
+  survives the 42px downsample). Tried it twice, each time verified against
+  a real 42px render: doubling the tip radius, then a chunkier separate
+  accent cone with a 0.032 base radius, both vanished into 1-2 barely-shifted
+  pixels at 42px — the frame has only ~0.055 world units of headroom above
+  the point before it clips, nowhere near enough room to make a tip register
+  at that size. Reverted both attempts rather than commit a change with no
+  visible effect (the loop's own honesty rule). Moved to `gadget_icon.md`
+  (39/50, 1 of 4 passes used) instead: its Colour & contrast line (7/10) was
+  docked in pass 2 for "antenna-spike thinness," a fix pass 2 named but never
+  applied. Widened the antenna `spike()` radii in `icons.py`'s `gadget()`
+  from `(0.055, 0.02)` to `(0.075, 0.032)` — verified this time by measuring
+  the antenna's actual alpha-mask width in the render (13→18px, 16→23px,
+  20→27px at three rows near the tip), not just eyeballing it, since the
+  whole-icon mean-pixel-diff (1.54) sat inside the same WORKBENCH noise band
+  several untouched icons already showed this run. Colour & contrast 7→9,
+  total 39→41, crosses the loop's 40/50 stop line. `run_tests.gd`: ALL TESTS
+  PASSED (fresh `--import`, headless, Godot 4.7.1). Next `#86` turn is duty 2
+  (find an error and resolve it).
 - **2026-09-07** — #86 duty 3 (verify a mechanic actually works), forty-fourth
   pass of the rotation. Last `#86` turn (`c24ccd6`, `intent_is_hostile`) was
   duty 2, so this was due for duty 3. Surveyed every `static func` in the

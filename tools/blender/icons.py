@@ -225,7 +225,7 @@ def gadget(i):                                  # the Engineer builds something
     i.slabf(0.0, -0.02, 0.26, 0.15, STEEL)
     i.slabf(0.0, 0.32, 0.32, 0.09, PEWTER)
     for s in (-1, 1):
-        i.spike(0.30 * s, 0.44, 0.055, 0.02, 0.22, CARROT, ang=0.4 * s, seg=4)
+        i.spike(0.30 * s, 0.44, 0.075, 0.032, 0.22, CARROT, ang=0.4 * s, seg=4)
     i.ball((0.0, -0.10, -0.02), (0.09, 0.06, 0.09), CARROT, 7, 4)
     for k in range(6):
         a = k * math.tau / 6.0
