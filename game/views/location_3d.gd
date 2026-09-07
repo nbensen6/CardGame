@@ -277,7 +277,10 @@ func _widen_plot(rng: RandomNumberGenerator, radius: float) -> void:
 ## How big the body lying here should be, from the climb the beast demanded.
 ## Reads the beast's own data rather than anything the snapshot happens to carry,
 ## so it stays right if the reward payload ever changes shape.
-func _felled_height(beast_id: String) -> float:
+##
+## Static and untouched by anything on self, so run_tests.gd can prove the size
+## curve headless — no scene tree, no model loaded. #86 duty 3.
+static func _felled_height(beast_id: String) -> float:
 	var boss: Boss = Content.build_boss(beast_id)
 	if boss == null:
 		return FELLED_MIN

@@ -581,6 +581,14 @@ func _init() -> void:
 	_test_backlog86_stakes_describes_a_named_potion()
 	_test_backlog86_stakes_describes_a_random_potion()
 	_test_backlog86_stakes_describes_losing_a_potion()
+	# backlog #86 duty 3: location_3d._felled_height sizes the beast's body on
+	# the reward screen from the fight it just lost -- how far you had to climb
+	# it, not the raw HP bar. Lifted static (it never touched self) and given
+	# first coverage: nothing proved the curve actually floors, caps or scales.
+	_test_backlog86_felled_height_floors_at_the_min_size_for_a_short_climb()
+	_test_backlog86_felled_height_caps_at_the_max_size_past_the_reference_climb()
+	_test_backlog86_felled_height_scales_between_the_floor_and_the_cap()
+	_test_backlog86_felled_height_defaults_to_the_min_size_for_an_unknown_beast()
 	# backlog #86 duty 3 (fifteenth turn): CardView.face_text, the live line a
 	# player reads on a card in hand to decide whether to play it -- was
 	# already static and pure, and had zero coverage despite being the exact
@@ -9548,6 +9556,46 @@ func _test_backlog86_stakes_describes_a_random_potion() -> void:
 func _test_backlog86_stakes_describes_losing_a_potion() -> void:
 	_expect(Location3D._stakes({"take_potion": true, "gold": 40}) == "(+40 gold  ·  -1 potion)",
 		"the gambling crow's potion downside shows up alongside the gold it also names")
+
+
+func _test_backlog86_felled_height_floors_at_the_min_size_for_a_short_climb() -> void:
+	# crag_pup and bounder both sit at the roster's actual shortest climb
+	# (weak_point_height 4, not the "1..8" the comment above the constant
+	# describes) -- the floor still has to hold below the reference span.
+	var h: float = Location3D._felled_height("crag_pup")
+	_expect(h > Location3D.FELLED_MIN and h < Location3D.FELLED_MAX,
+		"the roster's shortest climb still lands inside the compressed range, not on either rail: got %s" % h)
+	_expect(is_equal_approx(h, Location3D._felled_height("bounder")),
+		"crag_pup and bounder share weak_point_height 4, so they share a felled size")
+
+
+func _test_backlog86_felled_height_caps_at_the_max_size_past_the_reference_climb() -> void:
+	# gale_serpent (9) and sunken_warden (13) both sit past FELLED_MAX_WP (8) --
+	# a colossus climbed higher than the reference span must not render bigger
+	# than a beast climbed exactly to it, only render the same trophy size.
+	var past_ref: float = Location3D._felled_height("gale_serpent")
+	var far_past_ref: float = Location3D._felled_height("sunken_warden")
+	_expect(is_equal_approx(past_ref, Location3D.FELLED_MAX),
+		"a climb past the reference span caps at the max felled size, not beyond it")
+	_expect(is_equal_approx(far_past_ref, Location3D.FELLED_MAX),
+		"a climb far past the reference span still caps at the same max, not a taller one")
+
+
+func _test_backlog86_felled_height_scales_between_the_floor_and_the_cap() -> void:
+	# A taller climb must lie strictly between a shorter one and the cap, or
+	# the "recognisably the thing you just beat" size cue the comment above
+	# the constants promises is a coin flip rather than a curve.
+	var short_climb: float = Location3D._felled_height("crag_pup")       # height 4
+	var mid_climb: float = Location3D._felled_height("stone_warden")     # height 6
+	var tall_climb: float = Location3D._felled_height("frost_sentinel")  # height 7
+	_expect(short_climb < mid_climb, "a taller climb than crag_pup's renders a bigger body")
+	_expect(mid_climb < tall_climb, "a taller climb than stone_warden's renders a bigger body still")
+	_expect(tall_climb < Location3D.FELLED_MAX, "short of the reference span, the size never reaches the cap")
+
+
+func _test_backlog86_felled_height_defaults_to_the_min_size_for_an_unknown_beast() -> void:
+	_expect(is_equal_approx(Location3D._felled_height("no_such_beast"), Location3D.FELLED_MIN),
+		"an id Content can't build a Boss from falls back to the smallest trophy, never a crash or a zero-size body")
 
 
 ## backlog #86 duty 3 (fifteenth pass): CardView.face_text is the live line a

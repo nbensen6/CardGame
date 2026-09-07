@@ -10415,3 +10415,27 @@ Newest first. One line per finished item: what, and anything surprising.
   the existing Steady Grip/Crippling Blow wire-test idiom rather than trusting
   a hand-built dict alone. `run_tests.gd`: ALL TESTS PASSED (fresh import,
   headless, godot 4.7.1). Next `#86` turn is duty 3 (verify a mechanic).
+
+- **2026-09-07, #86 duty 3 (verify a mechanic).** Last commit before this run
+  was duty 2 (`eb6c9b5`), so this turn is duty 3. The specific starting point
+  the queue names (`combat_3d._route_between`/`_stand_on_model`) turned out to
+  already be fully lifted and tested — `route_between_rungs` and
+  `foothold_anchor` both exist as static functions with their own test blocks,
+  done in an earlier pass (`536c7a4`) — so this pass hunted for a still-zero-
+  coverage view mechanic instead of adding a fourth case to something already
+  covered, per the rule against that. Found `location_3d._felled_height`: the
+  formula that sizes a felled beast's body on the reward screen from how far
+  you had to climb it (`weak_point_height`), compressed into a
+  [FELLED_MIN, FELLED_MAX] range so a Titan still dwarfs a Crag Pup without
+  burying the reward cards. It never touched `self`, so lifted it `static`
+  (no behaviour change) and gave it first coverage: floors at the roster's
+  actual shortest climb (height 4 — crag_pup and bounder — not the "1..8" the
+  comment above `FELLED_MAX_WP` describes; the clamp handles the mismatch
+  correctly, so left the stale comment alone as out of scope for a duty-3
+  pass), caps at the reference span and stays capped further past it
+  (gale_serpent height 9, sunken_warden height 13 both hit the same max
+  rather than a taller one), scales strictly between two heights in between,
+  and falls back to the min size rather than crashing for an id `Content`
+  can't build a `Boss` from. Four new tests, all passing.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1).
+  Next `#86` turn is duty 1 (asset pass, portraits/icons).
