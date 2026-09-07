@@ -82,6 +82,7 @@ func _init() -> void:
 	_test_map_is_deterministic_per_seed()
 	_test_backlog86_map_guarantees_a_shop_every_act()
 	_test_backlog38_same_seed_reproduces_map_shop_and_rewards()
+	_test_backlog86_encounter_seed_reproduces_the_exact_same_shuffle()
 	_test_backlog49_daily_seed_is_stable_and_shared()
 	_test_backlog49_daily_run_saves_and_loads_the_flag()
 	_test_backlog49_host_can_start_a_shared_daily()
@@ -1681,6 +1682,62 @@ func _test_backlog38_same_seed_reproduces_map_shop_and_rewards() -> void:
 	var different_map: bool = str(run_a.map.rows) != str(run_c.map.rows)
 	_expect(same_map and same_seed_readback and same_shop and same_reward and different_map,
 		"two runs from the same seed roll identical maps, shops and rewards; a new seed re-rolls all three")
+
+
+## #38/#49 above prove the map, shop and reward rolls are seed-reproducible, but
+## their own comments opt out of combat itself ("resolving one isn't what this
+## test is about") — so the one rule `Run._encounter_seed()` exists to serve
+## ("each fight shuffles differently but reproducibly," per its own call-site
+## comment) has never been checked against a real deck shuffle. `_encounter_seed()`
+## folds `map_row`/`map_col` into the run's seed before handing it to
+## `Combat.new()`, so this drives two identically-seeded runs into the SAME map
+## node and a third into a DIFFERENT one, then reads the actual post-shuffle
+## draw_pile order back out.
+func _test_backlog86_encounter_seed_reproduces_the_exact_same_shuffle() -> void:
+	var deck: Array = []
+	for i in range(10):
+		deck.append(Card.from_dict({"id": "c%d" % i, "name": "c%d" % i, "type": "attack", "cost": 1, "damage": 6}))
+
+	var run_a := Run.new([deck.duplicate(true), deck.duplicate(true)], ["A", "B"], 4242, [{}, {}])
+	run_a.map_row = 0
+	run_a.map_col = 0
+	run_a.node_type = "fight"
+	run_a._start_encounter()
+
+	var run_b := Run.new([deck.duplicate(true), deck.duplicate(true)], ["A", "B"], 4242, [{}, {}])
+	run_b.map_row = 0
+	run_b.map_col = 0
+	run_b.node_type = "fight"
+	run_b._start_encounter()
+
+	# start() already fired and drew the opening hand out of draw_pile before
+	# this reads it back, so what's left is the deck size minus a hand's worth
+	# -- still shuffled by the same _rng draw_pile was populated with, so it's
+	# just as good a witness to the shuffle order as the full pile would be.
+	var ids_a := _ids_of(run_a.combat.players[0].draw_pile)
+	var ids_b := _ids_of(run_b.combat.players[0].draw_pile)
+	_expect(not ids_a.is_empty() and ids_a == ids_b,
+		"two runs from the same seed, resolving the identical map node, shuffle a hunter's deck into the exact same order")
+
+	# A DIFFERENT node from the same seed must derive a DIFFERENT encounter seed
+	# (map_row folds into it) -- otherwise every fight on a seeded run would deal
+	# the identical draw order, which defeats the entire point of deriving a
+	# per-encounter seed instead of reusing the run's seed outright.
+	var run_c := Run.new([deck.duplicate(true), deck.duplicate(true)], ["A", "B"], 4242, [{}, {}])
+	run_c.map_row = 1
+	run_c.map_col = 0
+	run_c.node_type = "fight"
+	run_c._start_encounter()
+	var ids_c := _ids_of(run_c.combat.players[0].draw_pile)
+	_expect(not ids_c.is_empty() and ids_c != ids_a,
+		"a different map node on the same seed shuffles differently from the first node's fight")
+
+
+func _ids_of(cards: Array) -> Array:
+	var out: Array = []
+	for c in cards:
+		out.append((c as Card).id)
+	return out
 
 
 ## Backlog #49: the daily's whole promise is "same date -> same run", built on

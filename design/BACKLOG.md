@@ -2679,6 +2679,40 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-07** — #86 duty 3 (verify a mechanic actually works). Last actual
+  rotation commit (`07f6fb7`, the rift-border fix) was duty 2, so this turn is
+  duty 3 (the fixer-lane commits `559bb80` and `102317c` in between don't count
+  toward the rotation). Checked the queue's own topmost items first (87, 88,
+  90, 85) — all `needs a screen` — so none actionable here. Used a research
+  subagent to survey `/core` and `game/session` for a genuinely untested rule,
+  after confirming the climb/route family, `phase_string_for`, the
+  pause/reconnect/reclaim-slot flow, `_migrate`/`_whole_numbers`, and the
+  hex/map/shop/reward seed tests were all already covered by earlier duty-3
+  passes. Landed on `Run._encounter_seed()` (`run.gd:979`) — the function that
+  folds `map_row`/`map_col` into a seeded run's seed before handing it to
+  `Combat.new()`, so "each fight shuffles differently but reproducibly" per its
+  own call-site comment. #38's and #49's own seed-reproducibility tests
+  explicitly opt out of combat ("resolving one isn't what this test is about"),
+  so the one rule `_encounter_seed()` exists to serve had never been checked
+  against an actual deck shuffle. Added
+  `_test_backlog86_encounter_seed_reproduces_the_exact_same_shuffle`: two runs
+  built from the identical seed, driven to the identical map node via
+  `_start_encounter()`, shuffle a hunter's deck into the exact same
+  `draw_pile` order; a third run at a different `map_row` shuffles into a
+  different order, proving the per-node derivation actually does something
+  rather than every fight on a seeded run dealing the same hand. Verified
+  TDD-style: temporarily replaced the derivation with a bare `return _seed`
+  and watched the "different node" half fail, then reverted. Fresh `--import`,
+  headless Godot 4.7.1.1: ALL TESTS PASSED. Noted but did not chase: the
+  subagent flagged that `_encounter_seed()`'s arithmetic can land on exactly
+  `0` for some `(map_row, map_col)` if `_seed` were ever negative, which
+  `Combat._init` treats as "randomize instead of seed" — today's only seed
+  sources (`daily_seed()`'s `String.hash()`, a manual positive int) can't hit
+  it, so it's a latent trap for a future negative-seed entry point, not a live
+  bug; leaving it written down here rather than guarding a case nothing can
+  reach yet. Next `#86` turn is duty 1 (improve an asset — portraits/icons
+  only).
+
 - **2026-09-07** — #86 duty 2 (find an error and resolve it). Last commit
   (`559bb80`) was a fixer-lane bug hunt written up in `bugs.md`, not a duty-2
   commit; the last actual rotation commit (`4275cd8`) was duty 1, so this turn
