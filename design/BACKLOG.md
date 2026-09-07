@@ -2627,6 +2627,30 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-07** — #86 duty 3 (verify a mechanic actually works), forty-
+  seventh pass of the rotation. Last `#86` turn (`a5c0c6f`) was duty 2, so
+  this was due for duty 3. `overworld_3d._node_under_mouse` — the rule that
+  decides which hex a click or touch resolves to — had zero coverage,
+  unlike combat_3d's climb-routing functions the rotation already lifted
+  out. It encodes two real rules: a precise world-space raycast hit
+  resolves to ANY node within 0.62 units, open or closed (closed gets
+  refused upstream); failing that, a touch gets a forgiving screen-space
+  radius (18px desktop / 34px handheld) but snaps to OPEN nodes only, so a
+  locked tile a few pixels nearer never steals a forgiving tap from a
+  walkable one. Lifted both halves into pure static functions the same way
+  as `route_between_rungs`/`foothold_anchor` — `nearest_node_at_hit(nodes,
+  hit, world_reach)` and `nearest_open_node_on_screen(nodes,
+  screen_positions, screen, reach)`, with a camera-behind node encoded as
+  simply absent from `screen_positions` rather than passed as a separate
+  flag — and `_node_under_mouse` now just gathers the ray/unproject data
+  and delegates. Added 8 tests: closest-within-reach, a closed node still
+  winning the precise hit test, past-world-reach, empty input, the open-
+  beats-nearer-closed fallback rule itself, a camera-behind node being
+  skipped, past-screen-reach, and an all-closed screen set finding nothing.
+  All passed on the first run — this function does what its comments
+  claim. `--import` then `run_tests.gd`: ALL TESTS PASSED (fresh import,
+  headless, Godot 4.7.1).
+
 - **2026-09-07** — #86 duty 2 (find an error and resolve it), forty-sixth
   pass of the rotation. Last `#86` turn (`d147e44`, gadget icon pass 3) was
   duty 1, so this was due for duty 2. Read `combat.gd`, `boss.gd`,

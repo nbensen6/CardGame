@@ -504,13 +504,7 @@ func _node_under_mouse(screen: Vector2) -> int:
 	if t <= 0.0:
 		return -1
 	var hit := origin + dir * t
-	var best := -1
-	var best_d := 0.62  # a hex is 1.0 across, so this is "on that tile"
-	for col in _nodes:
-		var d: float = hit.distance_to(_nodes[col]["pos"] as Vector3)
-		if d < best_d:
-			best_d = d
-			best = int(col)
+	var best := nearest_node_at_hit(_nodes, hit, 0.62)
 	if best >= 0:
 		return best
 
@@ -527,14 +521,41 @@ func _node_under_mouse(screen: Vector2) -> int:
 	# feedback; but a forgiving tap should snap to somewhere you can walk, not to
 	# the locked tile that happened to be a pixel nearer.
 	var reach := TAP_REACH_TOUCH if Screen.is_handheld() else TAP_REACH
-	var best_px := reach
+	var screen_positions := {}
 	for col in _nodes:
-		if not bool(_nodes[col]["open"]):
-			continue
 		var at: Vector3 = _nodes[col]["pos"]
-		if _cam.is_position_behind(at):
+		if not _cam.is_position_behind(at):
+			screen_positions[col] = _cam.unproject_position(at)
+	return nearest_open_node_on_screen(_nodes, screen_positions, screen, reach)
+
+
+## Pure form of the world-space half above: takes the node positions explicitly
+## instead of casting a camera ray, so run_tests.gd can prove the hit-test
+## headless, with no camera and no scene tree. #86 duty 3.
+static func nearest_node_at_hit(nodes: Dictionary, hit: Vector3, world_reach: float) -> int:
+	var best := -1
+	var best_d := world_reach
+	for col in nodes:
+		var d: float = hit.distance_to(nodes[col]["pos"] as Vector3)
+		if d < best_d:
+			best_d = d
+			best = int(col)
+	return best
+
+
+## Pure form of the screen-space fallback above: takes the already-unprojected
+## screen positions explicitly (a camera-behind node is simply absent from
+## `screen_positions`) instead of calling into a live camera. #86 duty 3.
+static func nearest_open_node_on_screen(nodes: Dictionary, screen_positions: Dictionary,
+		screen: Vector2, reach: float) -> int:
+	var best := -1
+	var best_px := reach
+	for col in nodes:
+		if not bool(nodes[col]["open"]):
 			continue
-		var d := screen.distance_to(_cam.unproject_position(at))
+		if not screen_positions.has(col):
+			continue
+		var d: float = screen.distance_to(screen_positions[col] as Vector2)
 		if d < best_px:
 			best_px = d
 			best = int(col)

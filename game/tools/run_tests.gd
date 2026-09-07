@@ -968,6 +968,23 @@ func _init() -> void:
 	# falling through to the fight-tier default, would land clean.
 	_test_backlog86_gold_for_pays_by_encounter_kind()
 
+	# backlog #86 duty 3: the overworld's tap-resolution rule
+	# (overworld_3d._node_under_mouse) had zero coverage -- which hex a click or
+	# touch resolves to, including the deliberate two-tier fallback (a precise
+	# world-space hit resolves to ANY node, open or closed; the touch-forgiving
+	# screen-space fallback snaps to OPEN nodes only, so a locked tile never
+	# steals a forgiving tap from a walkable one a few pixels farther away).
+	# Lifted the same way as route_between_rungs/foothold_anchor above: plain
+	# data in, plain data out, no camera and no scene tree needed.
+	_test_backlog86_nearest_node_at_hit_returns_the_closest_node_within_reach()
+	_test_backlog86_nearest_node_at_hit_hits_a_closed_node_at_close_range()
+	_test_backlog86_nearest_node_at_hit_is_negative_one_past_the_world_reach()
+	_test_backlog86_nearest_node_at_hit_is_negative_one_with_no_nodes()
+	_test_backlog86_nearest_open_node_on_screen_prefers_the_open_node_over_a_nearer_closed_one()
+	_test_backlog86_nearest_open_node_on_screen_skips_a_node_missing_from_screen_positions()
+	_test_backlog86_nearest_open_node_on_screen_is_negative_one_past_reach()
+	_test_backlog86_nearest_open_node_on_screen_is_negative_one_with_no_open_nodes()
+
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
 	# not "inside tree" yet until the engine's main loop actually starts, one
@@ -11057,6 +11074,77 @@ func _test_backlog86_gold_for_pays_by_encounter_kind() -> void:
 	var distinct: bool = Run.GOLD_FIGHT != Run.GOLD_ELITE and Run.GOLD_ELITE != Run.GOLD_BOSS
 	_expect(fight_ok and elite_ok and boss_ok and unknown_falls_back and distinct,
 		"gold_for pays fight/elite/boss at their own distinct rates, and anything else falls back to fight-tier")
+
+
+## backlog #86 duty 3 -- nearest_node_at_hit/nearest_open_node_on_screen are
+## the two pure halves of overworld_3d._node_under_mouse, lifted out the same
+## way as combat_3d's route_between_rungs/foothold_anchor: plain node data in,
+## a column index out, no camera and no scene tree. Together they decide which
+## hex a click or touch resolves to -- the overworld's entire tap-picking rule,
+## which had zero coverage before this.
+func _test_backlog86_nearest_node_at_hit_returns_the_closest_node_within_reach() -> void:
+	var nodes := {
+		0: {"pos": Vector3(0, 0.2, 0), "open": true},
+		1: {"pos": Vector3(5, 0.2, 0), "open": true},
+	}
+	var best: int = Overworld3D.nearest_node_at_hit(nodes, Vector3(0.1, 0.2, 0), 0.62)
+	_expect(best == 0, "a hit near node 0 resolves to node 0, not the farther node 1")
+
+
+func _test_backlog86_nearest_node_at_hit_hits_a_closed_node_at_close_range() -> void:
+	# The world-space test is deliberately blind to `open` -- a precise click
+	# still resolves to whatever tile it actually hit, closed or not, and gets
+	# refused upstream with the usual feedback rather than silently missing it.
+	var nodes := {2: {"pos": Vector3(0, 0.2, 0), "open": false}}
+	var best: int = Overworld3D.nearest_node_at_hit(nodes, Vector3(0, 0.2, 0), 0.62)
+	_expect(best == 2, "a precise hit resolves to a closed node too -- the open/closed decision belongs upstream, not to the hit test")
+
+
+func _test_backlog86_nearest_node_at_hit_is_negative_one_past_the_world_reach() -> void:
+	var nodes := {0: {"pos": Vector3(0, 0.2, 0), "open": true}}
+	var best: int = Overworld3D.nearest_node_at_hit(nodes, Vector3(1.0, 0.2, 0), 0.62)
+	_expect(best == -1, "a hit past the world-space reach finds nothing, so the caller can fall through to the screen-space fallback")
+
+
+func _test_backlog86_nearest_node_at_hit_is_negative_one_with_no_nodes() -> void:
+	var best: int = Overworld3D.nearest_node_at_hit({}, Vector3(0, 0.2, 0), 0.62)
+	_expect(best == -1, "an empty node set never crashes and never picks a node")
+
+
+func _test_backlog86_nearest_open_node_on_screen_prefers_the_open_node_over_a_nearer_closed_one() -> void:
+	# This is the rule the whole fallback exists for: a forgiving tap should
+	# snap to somewhere you can walk, never to a locked tile that happened to
+	# sit a few pixels nearer on screen.
+	var nodes := {
+		0: {"open": false},
+		1: {"open": true},
+	}
+	var screen_positions := {0: Vector2(10, 10), 1: Vector2(20, 10)}
+	var best: int = Overworld3D.nearest_open_node_on_screen(nodes, screen_positions, Vector2(10, 10), 34.0)
+	_expect(best == 1, "the nearer closed node must never win the touch fallback over a farther open one")
+
+
+func _test_backlog86_nearest_open_node_on_screen_skips_a_node_missing_from_screen_positions() -> void:
+	# A node absent from screen_positions is how the caller encodes "behind the
+	# camera" (is_position_behind) -- it must be skipped, not treated as (0, 0).
+	var nodes := {0: {"open": true}, 1: {"open": true}}
+	var screen_positions := {1: Vector2(100, 100)}
+	var best: int = Overworld3D.nearest_open_node_on_screen(nodes, screen_positions, Vector2(10, 10), 200.0)
+	_expect(best == 1, "a node with no screen position (behind the camera) is never picked, even if it would otherwise be nearest")
+
+
+func _test_backlog86_nearest_open_node_on_screen_is_negative_one_past_reach() -> void:
+	var nodes := {0: {"open": true}}
+	var screen_positions := {0: Vector2(100, 0)}
+	var best: int = Overworld3D.nearest_open_node_on_screen(nodes, screen_positions, Vector2(0, 0), 18.0)
+	_expect(best == -1, "a node farther than the reach radius is not a fallback match")
+
+
+func _test_backlog86_nearest_open_node_on_screen_is_negative_one_with_no_open_nodes() -> void:
+	var nodes := {0: {"open": false}}
+	var screen_positions := {0: Vector2(0, 0)}
+	var best: int = Overworld3D.nearest_open_node_on_screen(nodes, screen_positions, Vector2(0, 0), 34.0)
+	_expect(best == -1, "a closed node right under the finger is still refused by the fallback -- only the world-space test may hit a closed node")
 
 
 func _expect(cond: bool, name: String) -> void:
