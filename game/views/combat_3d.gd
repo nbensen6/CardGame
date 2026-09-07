@@ -1030,7 +1030,7 @@ func _set_intent(boss: Dictionary, s: Dictionary) -> void:
 		return
 	var kind := String(boss.get("intent", {}).get("type", ""))
 	_intent_kind = kind
-	var hostile: bool = kind in ["attack", "attack_all", "swipe_high", "swipe_low", "leech", "rift"]
+	var hostile: bool = intent_is_hostile(kind)
 	_intent.add_theme_color_override("default_color",
 		Color(0.98, 0.55, 0.44) if hostile else Color(0.72, 0.84, 0.62))
 	var style := StyleBoxFlat.new()
@@ -1078,6 +1078,22 @@ func _position_intent_tag() -> void:
 ## not a telegraph — so every move now prints the real figure and, where the
 ## number depends on where you are standing, says what to do about it.
 ##
+## Which move kinds the intent tag's alarm styling (_set_intent) should treat
+## as dangerous. backlog #86 duty 2: this used to be an inline list on
+## _set_intent with no test of its own, and it silently omitted "frail" and
+## "curse" (backlog #69) — real, targeted debuff moves (combat.gd's
+## _enemy_turn hits players[boss_target_index()] with both, chipping Block or
+## dumping a curse card in the hunter's discard pile) that combat_3d's OWN
+## intent_text_for below already telegraphs with real numbers. A hunter would
+## read the calm green/"safe" banner intent_text_for and _set_intent's caller
+## both feed from, right before losing Block or gaining a junk card — the
+## exact "two copies of one truth" this rotation's duty 2 hunts for: one list
+## (what to print) got fixed for frail/curse, the sibling list (how alarming
+## to make it look) did not.
+static func intent_is_hostile(kind: String) -> bool:
+	return kind in ["attack", "attack_all", "swipe_high", "swipe_low", "leech", "rift", "frail", "curse"]
+
+
 ## backlog #86 duty 3 (twenty-fourth pass): lifted to a static, testable twin —
 ## this instance method's only non-pure input was _height_gap(s), so the whole
 ## body moves and the instance just supplies that one number. Writing the test

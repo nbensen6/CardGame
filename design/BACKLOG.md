@@ -2592,6 +2592,30 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-07** — #86 duty 2 (find an error and resolve it), forty-third pass
+  of the rotation. Last `#86` turn (`e909723`, the ascend icon pass) was duty
+  1, so this was due for duty 2. Read `combat_3d.gd`'s boss-intent telegraph
+  end to end (`_set_intent`, `intent_text_for`) looking for the "two copies of
+  one truth" family the last duty-2 pass (`04eeedf`) named. Found it: when a
+  previous pass (backlog #69) fixed `intent_text_for`'s match statement so
+  `frail`/`curse` print real telegraph text instead of a blank string, it
+  never touched the SEPARATE `hostile` list a few lines above in `_set_intent`
+  that decides the tag's alarm colour/border. `frail` chips the targeted
+  hunter's Block and `curse` dumps a status card in their discard pile —
+  `combat.gd`'s `_enemy_turn` resolves both as targeted debuffs via
+  `players[boss_target_index()]` — but the tag still rendered them in the
+  calm green "safe" style identical to `block`/`regen`/`enrage`, exactly
+  backwards from what the banner promises ("a turn where the beast isn't
+  swinging reads as safe at a glance"). Several real bosses in
+  `data/bosses.json` carry `frail`/`curse` in their normal move pattern, so
+  this fires in actual play, not just a synthetic edge case. Fixed by lifting
+  the list to a static `Combat3D.intent_is_hostile(kind)` (same pattern as
+  `intent_text_for`'s own static twin) that includes `frail`/`curse`. Nine new
+  tests written against it afterward, not red-green first, since the fix and
+  the extraction happened as one edit: every attack kind reads hostile,
+  `frail`/`curse` read hostile, and `block`/`regen`/`enrage`/`shift_sigil`
+  still don't. `run_tests.gd`: ALL TESTS PASSED (fresh `--import`, headless,
+  Godot 4.7.1). Next `#86` turn is duty 3 (verify a mechanic actually works).
 - **2026-09-06** — #86 duty 1 (improve an asset — portraits/icons only),
   forty-second pass of the rotation. Last `#86` turn (`4b61f6d`, the
   `_hex_x` coverage) was duty 3, so this was due for duty 1. Surveyed every

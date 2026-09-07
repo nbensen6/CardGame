@@ -695,6 +695,13 @@ func _init() -> void:
 	_test_backlog86_intent_text_for_curse_is_no_longer_blank()
 	_test_backlog86_intent_text_for_curse_floors_the_card_count_at_one()
 	_test_backlog86_intent_text_for_unknown_kind_is_blank()
+	# backlog #86 duty 2 (forty-third pass): intent_is_hostile, the sibling list
+	# that decides the intent tag's alarm styling. It never learned frail/curse
+	# when intent_text_for's match statement was fixed for them above, so both
+	# rendered in the calm "safe" green despite being targeted debuffs.
+	_test_backlog86_intent_is_hostile_true_for_every_attack_kind()
+	_test_backlog86_intent_is_hostile_true_for_frail_and_curse()
+	_test_backlog86_intent_is_hostile_false_for_defensive_and_utility_kinds()
 	# backlog #86 duty 3: card_climb_for, lifted out of combat_3d._card_climb --
 	# the rule deciding slider vs. plain tap. Its own comment warns that reading
 	# card.grip (top level) instead of card.base.grip silently returns 0 for
@@ -10037,6 +10044,29 @@ func _test_backlog86_intent_text_for_curse_floors_the_card_count_at_one() -> voi
 func _test_backlog86_intent_text_for_unknown_kind_is_blank() -> void:
 	var text := Combat3D.intent_text_for(_intent_boss("not_a_real_move", 5, 0), 0)
 	_expect(text == "", "a move type with no keyword entry produces no telegraph rather than a garbled one")
+
+
+## backlog #86 duty 2 (forty-third pass): intent_is_hostile is the sibling of
+## intent_text_for above -- what _set_intent's alarm colour/border reads to
+## decide whether the tag looks dangerous or safe. It used to be an inline
+## list on _set_intent, never updated when frail/curse got real telegraph
+## text a few lines below it, so both moves rendered in the calm green style
+## identical to block/regen/enrage even though combat.gd resolves them as
+## targeted debuffs against a hunter (frail chips their Block, curse dumps a
+## status card in their discard pile).
+func _test_backlog86_intent_is_hostile_true_for_every_attack_kind() -> void:
+	for kind in ["attack", "attack_all", "swipe_high", "swipe_low", "leech", "rift"]:
+		_expect(Combat3D.intent_is_hostile(kind), "%s is a damage move and must read as hostile" % kind)
+
+
+func _test_backlog86_intent_is_hostile_true_for_frail_and_curse() -> void:
+	_expect(Combat3D.intent_is_hostile("frail"), "frail chips the targeted hunter's Block -- it must read as hostile, not safe")
+	_expect(Combat3D.intent_is_hostile("curse"), "curse hands the targeted hunter a status card -- it must read as hostile, not safe")
+
+
+func _test_backlog86_intent_is_hostile_false_for_defensive_and_utility_kinds() -> void:
+	for kind in ["block", "regen", "enrage", "shift_sigil"]:
+		_expect(not Combat3D.intent_is_hostile(kind), "%s targets the boss itself or is merely utility -- it must not wear the alarm colour" % kind)
 
 
 ## backlog #86 duty 3: card_climb_for, lifted out of combat_3d._card_climb, the
