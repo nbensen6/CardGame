@@ -30,12 +30,39 @@ per-beast cost. Phase 3 rolls them out by adding names to a list.
 
 ## Next up
 
-- [ ] **1. Widen the value range.** The single biggest remaining gap. Measured,
-      only 2.4% of the jackal sits above 80% luminance and its body sits in the
-      middle of the range everywhere. The reference runs near-black so its
-      accents can scream. Try: darken the body swatches for this beast, and let
-      the embers carry all the brightness. Watch that it stays readable against a
-      dark biome — check `rift` and `drowned`, not just `quarry`.
+- [ ] **1. Widen the value range — and NOT by swapping swatches.**
+
+      The single biggest remaining gap. Measured, only ~2.4% of the jackal sits
+      above 80% luminance and its body sits mid-range everywhere; the reference
+      runs near-black so its accents can scream.
+
+      **The swatch-swap route was tried on 2026-09-08 and does not work.**
+      Branch `builder/2026-09-08-widen-value-range` swapped RUST→BRICK and
+      TAN→UMBER across the body, correctly leaving the ember swatches alone. It
+      executed the brief properly and the result barely moved:
+
+      ```
+                median   above 80%   below 20%   p01-p99 range
+      before     117.9      2.59%      31.05%        209
+      after      113.8      2.36%      32.74%        209
+      ```
+
+      Four points darker, nothing brighter, range unchanged. Two reasons, and
+      they are both structural rather than a matter of picking better swatches:
+      the palette's warm cells simply are not very dark, so the reachable move is
+      small; and **a swatch swap cannot raise the top of the range at all**,
+      which is the half that actually creates contrast.
+
+      The lever is the SHADER, not the palette. Something like a per-beast
+      albedo multiplier plus an ember gain, both uniforms on
+      `creature.gdshader`, set from `combat_3d` beside `EMBERS`: darken the lit
+      body and push the emissive up in the same change, so the gap opens from
+      both ends. That is also a pipeline step — every beast gets it for free in
+      phase 3, where a swatch swap would have to be re-authored per animal.
+
+      Ignore the old advice to check `rift` and `drowned`: the builder found
+      that cinder_jackal is only ever fought in `quarry`, which was a better
+      catch than the instruction it was given.
 
 - [ ] **2. Surface breakup.** Ours is flat swatches, one colour per face, no
       variation anywhere; theirs carries scarring and tonal variation. Cheapest
