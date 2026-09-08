@@ -123,8 +123,34 @@ REM prompt; it does not get to run arbitrary commands.
 "%CLAUDE%" -p "Read tools/builder/BRIEF.md and follow it exactly for ONE queue item. %MODE%" ^
   --permission-mode acceptEdits ^
   --allowedTools "Read,Edit,Write,Glob,Grep,Bash" >> "%LOG%" 2>&1
-echo exit code: %ERRORLEVEL% >> "%LOG%"
+set "RC=%ERRORLEVEL%"
+echo exit code: %RC% >> "%LOG%"
 
 echo.
 echo === builder done. Check: git branch -a, then git log origin/main..^<branch^>
+
+REM KEEP GOING, if the panel asked for it.
+REM
+REM loop.flag is created and removed by the Loop tick-box in tools\lanes.ps1.
+REM Four hours between runs is a long time to wait when the queue has a dozen
+REM items in it and each run is ten to forty minutes; this chains them instead.
+REM
+REM Two guards, both deliberate. A non-zero exit does NOT loop -- an expired
+REM token or a crash would otherwise spin flat out, and the fixer has already
+REM spent days failing once an hour where failing once would have been noticed
+REM sooner. And the 60-second gap gives the panel's Kill button, and a person, a
+REM window to stop the chain without racing it.
+if not "%RC%"=="0" (
+  echo === exit %RC%, so not looping even if asked >> "%LOG%"
+  goto :fin
+)
+if exist "%~dp0loop.flag" (
+  echo === loop.flag set, going again in 60s >> "%LOG%"
+  echo === loop.flag set, going again in 60s
+  timeout /t 60 /nobreak >nul
+  REM Re-check: a minute is plenty of time for someone to untick the box.
+  if exist "%~dp0loop.flag" start "" /b cmd /c "%~f0"
+)
+
+:fin
 endlocal

@@ -161,8 +161,24 @@ echo === launching, mode: %MODE% >> "%LOG%"
 "%CLAUDE%" -p "Read tools/fixer/BRIEF.md and follow it exactly for ONE inspection pass. %MODE%" ^
   --permission-mode acceptEdits ^
   --allowedTools "Read,Edit,Write,Glob,Grep,Bash" >> "%LOG%" 2>&1
-echo exit code: %ERRORLEVEL% >> "%LOG%"
+set "RC=%ERRORLEVEL%"
+echo exit code: %RC% >> "%LOG%"
 
 echo.
 echo === fixer done. Check: git log -3
+
+REM KEEP GOING, if the panel asked for it. Same mechanism and the same two
+REM guards as tools\builder\run.cmd -- see the longer note there. A non-zero
+REM exit never loops, and there is a minute's grace to untick the box.
+if not "%RC%"=="0" (
+  echo === exit %RC%, so not looping even if asked >> "%LOG%"
+  goto :fin
+)
+if exist "%~dp0loop.flag" (
+  echo === loop.flag set, going again in 60s >> "%LOG%"
+  timeout /t 60 /nobreak >nul
+  if exist "%~dp0loop.flag" start "" /b cmd /c "%~f0"
+)
+
+:fin
 endlocal

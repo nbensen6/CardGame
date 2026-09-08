@@ -24,9 +24,11 @@ $ROOT = Split-Path -Parent $PSScriptRoot
 $LANES = @(
     @{ Name = 'Builder'; Task = 'TitanSlayers Builder'
        Cmd = Join-Path $ROOT 'tools\builder\run.cmd'; Match = 'tools/builder/BRIEF.md'
+       Flag = Join-Path $ROOT 'tools\builder\loop.flag'
        Blurb = 'One system change per run, on a branch' }
     @{ Name = 'Inspector'; Task = 'TitanSlayers Fixer'
        Cmd = Join-Path $ROOT 'tools\fixer\run.cmd'; Match = 'tools/fixer/BRIEF.md'
+       Flag = Join-Path $ROOT 'tools\fixer\loop.flag'
        Blurb = 'Plays the game and files findings' }
 )
 
@@ -99,14 +101,28 @@ foreach ($lane in $LANES) {
         $bx += 104
     }
 
-    $rows += @{ Lane = $lane; Status = $status; Buttons = $buttons }
+    # Keep going: chain runs instead of waiting for the four-hourly trigger.
+    # A tick-box rather than a button because it is a STATE, not an action --
+    # and the state lives in a file (loop.flag) so it survives this window
+    # closing, and so run.cmd can read it at the end of a run.
+    $loop = New-Object Windows.Forms.CheckBox
+    $loop.Text = 'Keep going'
+    $loop.Location = New-Object Drawing.Point(($bx + 6), ($y + 51))
+    $loop.Size = New-Object Drawing.Size(100, 22)
+    $form.Controls.Add($loop)
+
+    $rows += @{ Lane = $lane; Status = $status; Buttons = $buttons; Loop = $loop }
     $y += 106
 }
 
 function Refresh-All {
     foreach ($r in $script:rows) {
         $s = Get-LaneState $r.Lane
-        $r.Status.Text = $s.Text
+        $looping = Test-Path $r.Lane.Flag
+        # The tick-box is set from the FILE, not remembered in the window, so
+        # two panels open at once agree and a reopened one tells the truth.
+        if ($r.Loop.Checked -ne $looping) { $r.Loop.Checked = $looping }
+        $r.Status.Text = if ($looping -and -not $s.Running) { $s.Text + '  ·  keep going' } else { $s.Text }
         $r.Status.ForeColor = $s.Colour
         # One button that says what it will DO, rather than two that look the
         # same and only one of which is meaningful.
@@ -131,6 +147,11 @@ foreach ($r in $rows) {
         }
         Refresh-All
     }.GetNewClosure())
+    $r.Loop.Add_Click({
+        if (Test-Path $lane.Flag) { Remove-Item $lane.Flag -Force -ErrorAction SilentlyContinue }
+        else { New-Item $lane.Flag -ItemType File -Force | Out-Null }
+        Refresh-All
+    }.GetNewClosure())
     $r.Buttons['Kill'].Add_Click({
         Get-LaneProc $lane.Match | ForEach-Object {
             Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
@@ -141,7 +162,7 @@ foreach ($r in $rows) {
 }
 
 $note = New-Object Windows.Forms.Label
-$note.Text = 'Pause stops future runs. Kill stops one already in flight.'
+$note.Text = 'Pause stops future runs. Kill stops one in flight. Keep going chains them.'
 $note.ForeColor = 'DimGray'
 $note.Location = New-Object Drawing.Point(16, ($y + 4))
 $note.Size = New-Object Drawing.Size(420, 18)
