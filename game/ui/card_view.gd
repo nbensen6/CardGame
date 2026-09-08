@@ -912,16 +912,23 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 
 	# Both-hunters effects merge into one line. "Gain 2 Block. Ally gains 2 Block."
 	# is the same fact typed twice; "All players gain 2 Block" is the card.
-	var blk := int(pv.get("block", 0))
-	var ally_blk := int(pv.get("ally_block", 0))
-	var blk_n := _num(int(miss.get("block", 0)), blk, int(base.get("block", blk)), rich)
+	# backlog #86 duty 2: read "*_after_mods" (Dexterity/Frail already folded
+	# in, matching what Combatant.gain_block() will actually produce) rather
+	# than the raw "block"/"ally_block", which is what play_card() still feeds
+	# gain_block() and no longer what the player should be told to expect. A
+	# live preview lacking the new key (the printed-only fallback outside
+	# combat, `_printed()`) has no combatant to modify against anyway, so
+	# falling back to the raw number there is exactly right, not a compromise.
+	var blk := int(pv.get("block_after_mods", pv.get("block", 0)))
+	var ally_blk := int(pv.get("ally_block_after_mods", pv.get("ally_block", 0)))
+	var blk_n := _num(int(miss.get("block_after_mods", miss.get("block", 0))), blk, int(base.get("block", blk)), rich)
 	if blk > 0 and blk == ally_blk:
 		out.append("All players gain %s %s." % [blk_n, _kw("Block", "player_block", kw, rich)])
 	else:
 		if blk > 0:
 			out.append("Gain %s %s." % [blk_n, _kw("Block", "player_block", kw, rich)])
 		if ally_blk > 0:
-			out.append("Ally gains %s %s." % [_num(int(miss.get("ally_block", 0)), ally_blk,
+			out.append("Ally gains %s %s." % [_num(int(miss.get("ally_block_after_mods", miss.get("ally_block", 0))), ally_blk,
 				int(base.get("ally_block", ally_blk)), rich), _kw("Block", "player_block", kw, rich)])
 
 	var climb := int(pv.get("grip", 0))
