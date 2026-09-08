@@ -159,4 +159,20 @@ mirror(lambda s: b.ball((0.085 * s, -0.80, 0.62), (0.028, 0.028, 0.024),
 # you. The triangles are in the two places a viewer actually looks: the eyes,
 # and the outline of the body. Cutting them back is how the last two passes got
 # rejected.
-b.finish(out_path(), name="Frog", budget="hunter")
+# Fitted SHORTER than the common eye level, and deliberately.
+#
+# Nick, 2026-09-08: "the frog is too big and should be scaled down to the
+# relative size for a frog." Measured, the problem is not height -- every hunter
+# is fitted to TARGET_HEIGHT 1.85 and the frog obeyed it. It is FOOTPRINT: at
+# that height the frog came out 2.77 x 2.51 against the Vine-Weaver's
+# 1.34 x 0.80. A squat animal fitted by height becomes enormous in volume,
+# because height is the one dimension a frog does not have much of.
+#
+# This is also why its portrait was a close-up of one eye and nothing else: the
+# portrait camera frames on height, and a body nearly twice as wide as any other
+# hunter overflows the frame in the axis nobody measured.
+#
+# 1.15 puts its footprint at roughly 1.7 wide -- still the broadest of the cast,
+# which is right for a frog, without being twice everyone else. The common eye
+# level stays the rule for everyone with a normal body plan.
+b.finish(out_path(), height=1.15, name="Frog", budget="hunter")

@@ -27,7 +27,14 @@ from mathutils import Vector
 ## on, how much of the height to fit in the frame). Default is head-and-
 ## shoulders near the top; the exceptions are creatures whose face is not there.
 FOCUS = {
-    "frog": (0.71, 0.75), "vine_weaver": (0.74, 0.85),
+    # The frog frames its WHOLE body, not head-and-shoulders. Nick, 2026-09-08:
+    # the menu, the character select and the fight HP bar all showed a close-up
+    # of one eye. The span here is a fraction of the model's HEIGHT, and a frog
+    # has almost no height and a great deal of width -- its head IS its body, so
+    # there is no head to frame separately. 0.75 of a 1.15-tall frog is 0.86
+    # units against a body 1.72 wide, which is how the camera ended up inside
+    # its face. Everything else in this table has a neck and is fine as it is.
+    "frog": (0.48, 2.30), "vine_weaver": (0.74, 0.85),
     "mountain_climbers": (0.73, 0.72), "goblin_mech": (0.62, 0.94),
     "lightbearer": (0.47, 1.15),
 
