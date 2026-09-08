@@ -98,7 +98,7 @@ for %%N in (%NAMES%) do (
     REM block the plain form is expanded when the block is PARSED, so it reads
     REM the errorlevel from before the loop ran and every beast takes the same
     REM branch.
-    findstr /C:" %%N" "%HERE%union.txt" >nul 2>&1
+    findstr /B /C:"%%N" "%HERE%union.txt" >nul 2>&1
     if !errorlevel! equ 0 (
       echo   --- union+remesh %%N
       "%BLENDER%" --background --python "%HERE%unionremesh.py" -- ^

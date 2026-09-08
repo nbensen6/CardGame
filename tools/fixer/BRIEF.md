@@ -62,6 +62,60 @@ What counts as a find:
 - a `VIS FAIL` or a harness line that disagrees with the picture
 - a state that renders empty, black, or visibly unfinished
 
+### And the class this lane kept missing
+
+Added 2026-09-08. Nick, having watched both lanes run for a week:
+
+> *"There are several things I was hoping the cloud would pick up on... I would
+> like the cloud/fixer to catch bigger things that could help move the game
+> closer to the quality of STS II."*
+
+His four examples, none of which either lane had ever reported:
+
+1. **The beast grew and shrank.** `_process` multiplied the beast's UNIFORM
+   scale by `1.0 + sin(_time * 1.6) * 0.02` as a "breathe". Real.
+2. **Cards in hand sometimes drift off the side of the screen.**
+3. **The Frog is far too big** — every hunter is fitted to one
+   `HUNTER_HEIGHT`, so a frog stands as tall as a person.
+4. **The main menu still shows the old Frog** — `menu.tscn` points at
+   `assets/portraits/frog.png`, baked 2026-09-01, while `frog.glb` was rebuilt
+   on 09-08. It also still references sloth, goat, monkey and rhino portraits
+   for characters that have no build script at all.
+
+**Why the existing rules could not catch any of them.** Every criterion above is
+a CONTRADICTION test — drawn versus believed, on-screen versus off. All four of
+Nick's are judgement calls a player makes in motion, and three of them are
+invisible in a single frame:
+
+- A 2% scale pulse cannot be seen in one screenshot. It needs the SAME state
+  captured at two times and diffed.
+- "Too big for a frog" is a proportion question against the real world. No
+  contradiction exists — the code does exactly what it says.
+- "The menu shows the old one" needs the same subject compared ACROSS surfaces:
+  menu, fight, portrait, card art.
+
+So add these three passes to the rotation, and prefer them over another
+contradiction sweep until each has been run at least once:
+
+**Temporal.** Shoot one state twice, seconds apart, and diff the frames.
+Anything that changes which should not — a size, a position at rest, a colour —
+is a find. This is the only way to see idle animation, and it is how #1 would
+have been caught on day one.
+
+**Cross-surface.** Take one subject and look at every place it appears: the 3D
+model, its portrait, its card art, the menu, the character select. Ask which is
+oldest. A baked asset that is older than its source is stale by definition, and
+that is a date comparison, not an opinion — `frog.png` 09-01 against `frog.glb`
+09-08 needed nobody's taste to spot.
+
+**Proportion against the real world.** Stand the cast side by side and ask
+whether the sizes mean anything. A frog the size of a person is not a bug in any
+contradiction sense and is obviously wrong to anyone who looks.
+
+**The bar is Slay the Spire II, not "does it crash".** If something would make a
+player think this looks unfinished, it is a find — write it up even when nothing
+in the code disagrees with anything else in the code.
+
 **Report every find in `design/progress/bugs.md`** — create it if it is not
 there — with the exact command that reproduces it and what you saw. Fix it ONLY
 if the fix is inside your lane (`tools/blender/**`, `game/assets/3d/**`).

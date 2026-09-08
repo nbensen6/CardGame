@@ -28,6 +28,7 @@ size soften or vanish, and every hard edge the bevel gave the model is lost.
 That is the trade being tested. Check the render, not the tri count.
 """
 import bpy
+import bmesh
 import sys
 import os
 import mathutils
@@ -49,6 +50,47 @@ def args():
 
 def tris(ob):
     return sum(len(p.vertices) - 2 for p in ob.data.polygons)
+
+
+def swatch(px, py):
+    """Mirrors kenney.swatch — colour lives in the UV, one cell per face."""
+    return (px / 512.0, 1.0 - (py + 16.0) / 512.0)
+
+
+def keep_swatches(name):
+    """Accent swatches for this asset, from union.txt.
+
+    A line is `<name> [px:py ...]`. The extra pairs name palette cells whose
+    faces must NOT be remeshed.
+
+    Why this exists: the first union of cinder_jackal cut its TANGERINE spine
+    ridge from 2.9% of faces to 0.5% and its AMBER eyes from 18.7% to 2.9%. A
+    voxel remesh cannot keep a feature thinner than its voxel, and the ridge is
+    built from radii of 0.01-0.09 against a 0.06 voxel. Those two swatches are
+    exactly what the emissive channel in creature.gdshader lights, so the union
+    was quietly deleting the accents that the glow exists to show -- one
+    improvement eating the other.
+
+    Held-out parts are separate closed shells to begin with (a ball, a tapered
+    limb), so lifting them out leaves the body watertight and the remesh still
+    unions everything that remains. They also stay CRISP, which is what an
+    accent wants: on the reference Nick gave, the megalodon's spines and glowing
+    cracks are the sharpest things on it.
+    """
+    here = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.join(here, "union.txt")
+    if not os.path.exists(path):
+        return []
+    for line in open(path, encoding="utf-8"):
+        bits = line.split()
+        if bits and bits[0] == name:
+            out = []
+            for b in bits[1:]:
+                if ":" in b:
+                    px, py = b.split(":")
+                    out.append(swatch(float(px), float(py)))
+            return out
+    return []
 
 
 def main():
@@ -79,6 +121,40 @@ def main():
     ob = bpy.context.view_layer.objects.active
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 
+    # Lift the accent swatches out before anything touches the geometry.
+    accents = None
+    keep = keep_swatches(os.path.basename(src)[:-4])
+    if keep:
+        # Through bmesh, in edit mode. Setting polygon.select in OBJECT mode does
+        # not survive the switch -- the first attempt did exactly that, every
+        # face came through selected, separate moved the WHOLE model into the
+        # accents object and the union silently became a no-op that still
+        # reported success.
+        picked = 0
+        bpy.ops.object.mode_set(mode="EDIT")
+        bpy.ops.mesh.select_mode(type="FACE")
+        bpy.ops.mesh.select_all(action="DESELECT")
+        bm = bmesh.from_edit_mesh(ob.data)
+        uvl = bm.loops.layers.uv.active
+        if uvl is not None:
+            for f in bm.faces:
+                u = f.loops[0][uvl].uv
+                if any((u[0] - s[0]) ** 2 + (u[1] - s[1]) ** 2 < 0.012 ** 2
+                       for s in keep):
+                    f.select_set(True)
+                    picked += 1
+            bmesh.update_edit_mesh(ob.data)
+        if picked:
+            bpy.ops.mesh.separate(type="SELECTED")
+        bpy.ops.object.mode_set(mode="OBJECT")
+        if picked:
+            others = [o for o in bpy.context.selected_objects if o is not ob]
+            if others:
+                accents = others[0]
+                accents.name = "accents"
+        print("UNION holding %d accent face(s) out of the remesh across %d swatch(es)"
+              % (picked, len(keep)))
+
     # Keep the original as the colour reference before anything destroys it.
     ref = ob.copy()
     ref.data = ob.data.copy()
@@ -104,9 +180,14 @@ def main():
     bpy.ops.object.modifier_apply(modifier=rm.name)
     remeshed = tris(ob)
 
-    if remeshed > budget:
+    # The accents are rejoined AFTER this, so the body's share of the budget is
+    # what is left once they are paid for. Decimating to the full budget first
+    # put the jackal at 2732 against a 2600 ceiling.
+    held = tris(accents) if accents is not None else 0
+    body_budget = max(200, budget - held)
+    if remeshed > body_budget:
         dec = ob.modifiers.new("decimate", "DECIMATE")
-        dec.ratio = float(budget) / float(remeshed)
+        dec.ratio = float(body_budget) / float(remeshed)
         bpy.ops.object.modifier_apply(modifier=dec.name)
     after = tris(ob)
 
@@ -139,6 +220,18 @@ def main():
           % (os.path.basename(src), before, voxel, remeshed, after, misses))
 
     bpy.data.objects.remove(ref, do_unlink=True)
+
+    # Put the accents back onto the remeshed body, crisp and with their original
+    # UVs untouched.
+    if accents is not None:
+        bpy.ops.object.select_all(action="DESELECT")
+        accents.select_set(True)
+        ob.select_set(True)
+        bpy.context.view_layer.objects.active = ob
+        bpy.ops.object.join()
+        ob = bpy.context.view_layer.objects.active
+        print("UNION rejoined accents: %d tris total" % tris(ob))
+
     bpy.ops.object.select_all(action="DESELECT")
     ob.select_set(True)
     for o in markers:

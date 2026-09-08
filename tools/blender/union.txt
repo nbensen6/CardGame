@@ -1,1 +1,13 @@
- cinder_jackal
+# Beasts that get the union+remesh pass in build.cmd, one per line.
+#
+#   <name> [px:py ...]
+#
+# The optional px:py pairs are palette cells (kenney.swatch coordinates) whose
+# faces are held OUT of the remesh and rejoined afterwards, crisp. Use them for
+# small accents a voxel remesh would eat -- glowing parts especially, since
+# creature.gdshader's ember channel keys on exactly these swatches and can only
+# light faces that still exist.
+#
+# cinder_jackal: 48:192 is TANGERINE, the smouldering spine ridge.
+#                496:320 is AMBER, the eyes.
+cinder_jackal 48:192 496:320

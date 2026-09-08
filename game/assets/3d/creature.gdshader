@@ -46,6 +46,35 @@ uniform float rim_width : hint_range(1.0, 8.0) = 3.0;
 uniform float rough : hint_range(0.0, 1.0) = 0.86;
 uniform float spec : hint_range(0.0, 1.0) = 0.10;
 
+// EMBERS — palette swatches that glow.
+//
+// Added 2026-09-08 after measuring the jackal against the Sea of Thieves
+// megalodon Nick sent: only 2.5% of our beast sat above 80% luminance and
+// nothing in the frame told the eye where to look, while that shark's whole
+// design hangs off white-hot cracks and eyes against a near-black body.
+//
+// Keyed on the swatch's UV rather than on its colour, which is exact rather
+// than a guess: kenney.swatch(px, py) == (px/512, 1 - (py+16)/512), colour
+// lives in the UV, and every face points at exactly one cell. Colour-keying
+// would have caught the jackal's RUST body along with its TANGERINE ridge.
+uniform vec2 ember_uv[4];
+uniform int ember_count = 0;
+uniform float ember_gain : hint_range(0.0, 8.0) = 2.6;
+// Smouldering, not burning: the glow breathes instead of sitting flat. This is
+// the one place a pulse belongs — it is light, not geometry, so nothing changes
+// size and nothing leaves the ground.
+uniform float ember_pulse : hint_range(0.0, 1.0) = 0.22;
+uniform float ember_rate : hint_range(0.1, 4.0) = 1.1;
+// Hot things go WHITE at the core, and this is the difference between "an
+// orange part" and "a glowing part". Measured: turning the ridge and eyes on at
+// full saturation moved the beast's share of pixels above 80% luminance from
+// 2.5% to 2.4% — visible, but not BRIGHT, because saturated orange
+// (255,140,40) only reaches 62% luminance no matter how far the gain is pushed.
+// The reference this is chasing — the Sea of Thieves megalodon — runs
+// near-white at the centre of every crack and orange only at the edges. With no
+// bloom available on gl_compatibility, ramping to white IS the effect.
+uniform float ember_white : hint_range(0.0, 1.0) = 0.55;
+
 // Volume cue: the underside of a form reads cooler and darker than its top.
 // Cheap, and it survives being 200px tall on screen where AO detail does not.
 uniform vec4 ground_tint : source_color = vec4(0.42, 0.44, 0.58, 1.0);
@@ -68,14 +97,32 @@ void fragment() {
     float down = clamp(-world_normal.y, 0.0, 1.0);
     vec3 tinted = mix(base, base * ground_tint.rgb, down * ground_strength);
 
-    ALBEDO = tinted * ao;
-    ROUGHNESS = rough;
-    SPECULAR = spec;
+    // How much of this face is an ember swatch. A half-cell radius: swatch
+    // centres are 32px apart on a 512 atlas, so 0.0625 apart in UV — keying
+    // inside 0.012 cannot reach a neighbour.
+    float ember = 0.0;
+    for (int i = 0; i < ember_count; i++) {
+        ember = max(ember, 1.0 - smoothstep(0.004, 0.012, distance(UV, ember_uv[i])));
+    }
+    float beat = 1.0 + sin(TIME * ember_rate) * ember_pulse;
+
+    // An ember is its own light source, so neither the crevice shading nor the
+    // ground bounce has any business darkening it.
+    // The core runs hotter than the edge: strongest where the face sits dead on
+    // the swatch, cooling to the swatch's own colour at the fringe.
+    vec3 hot = mix(base, vec3(1.0), ember_white * ember);
+
+    ALBEDO = mix(tinted * ao, hot, ember);
+    ROUGHNESS = mix(rough, 1.0, ember);
+    SPECULAR = spec * (1.0 - ember);
 
     float fres = pow(1.0 - clamp(dot(normalize(NORMAL), normalize(VIEW)), 0.0, 1.0), rim_width);
-    RIM = fres * rim_strength;
+    RIM = fres * rim_strength * (1.0 - ember);
     RIM_TINT = 0.6;
     // Rim as emission too, so it still separates the beast from a dark ground
-    // in a biome whose key light is behind it.
-    EMISSION = rim_color.rgb * fres * rim_strength * 0.35 * ao;
+    // in a biome whose key light is behind it — plus the embers themselves,
+    // which are the only thing here that is allowed to be the brightest object
+    // in the frame.
+    EMISSION = rim_color.rgb * fres * rim_strength * 0.35 * ao
+             + hot * ember * ember_gain * beat;
 }

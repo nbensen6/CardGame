@@ -18,6 +18,24 @@ const CAST := "res://assets/3d/cast/"
 ## _shade_model, and game/assets/3d/creature.gdshader for what it does and why
 ## each part of it is safe on the gl_compatibility renderer.
 const CREATURE := preload("res://assets/3d/creature.gdshader")
+
+## Which palette swatches GLOW, per beast.
+##
+## Mirrors kenney.swatch(px, py) == (px/512, 1 - (py+16)/512), so a name here is
+## the same cell the Blender script painted with. Keyed by swatch rather than by
+## colour because a colour key cannot tell the jackal's TANGERINE spine ridge
+## from its RUST body.
+##
+## Nick, 2026-09-08, on the Sea of Thieves megalodon: its whole design hangs off
+## white-hot cracks against a near-black body, and measured, only 2.5% of our
+## jackal sat above 80% luminance with nothing telling the eye where to look.
+## cinder_jackal.py already asks for this in words — "a low ember-coloured ridge
+## down the spine, the smouldering-not-yet-on-fire read" — and rendered none.
+const SWATCH_TANGERINE := Vector2(48.0 / 512.0, 1.0 - 208.0 / 512.0)
+const SWATCH_AMBER := Vector2(496.0 / 512.0, 1.0 - 336.0 / 512.0)
+const EMBERS := {
+	"cinder_jackal": [SWATCH_TANGERINE, SWATCH_AMBER],   # spine ridge, eyes
+}
 const ENV := "res://assets/3d/env/"
 ## Every environment is built to this floor radius — see tools/blender/env.py.
 const ENV_RADIUS := 6.0
@@ -837,9 +855,19 @@ func _my_private() -> Dictionary:
 func _process(delta: float) -> void:
 	_time += delta
 	if _beast != null:
-		var breathe := 1.0 + sin(_time * 1.6) * 0.02
+		# No breathing pulse. Nick, 2026-09-08: "for whatever reason the beast
+		# gets bigger and smaller. we can get rid of that." It was
+		# `1.0 + sin(_time * 1.6) * 0.02` multiplied into the beast's UNIFORM
+		# scale, which is the wrong shape for the idea twice over: real breathing
+		# swells a chest, it does not resize an animal, and scaling uniformly
+		# about the origin lifts the feet off the ground every cycle. On a Titan
+		# filling the frame, 2% is plainly visible.
+		#
+		# The recoil stays: that is a hit landing, and it is meant to be seen.
+		# If an idle is wanted back, it belongs in the ember pulse in
+		# creature.gdshader, which breathes LIGHT rather than size.
 		var recoil := 1.0 - _beast_punch * 0.10
-		_beast.scale = Vector3.ONE * _beast_scale * breathe * recoil
+		_beast.scale = Vector3.ONE * _beast_scale * recoil
 		_beast.position.z = -_beast_punch * 0.35
 	_beast_punch = maxf(0.0, _beast_punch - delta * 3.5)
 	for i in range(_hunters.size()):
@@ -1943,6 +1971,20 @@ func _shade_model(root: Node, is_ground := false) -> void:
 		mat.shader = CREATURE
 		if tex != null:
 			mat.set_shader_parameter("atlas", tex)
+		# Only the beast glows. A hunter standing beside it painted from the same
+		# palette would otherwise light up for sharing a swatch.
+		if not is_ground and root == _beast:
+			var lit: Array = EMBERS.get(_beast_id, [])
+			if not lit.is_empty():
+				var uvs := PackedVector2Array()
+				for uv in lit:
+					uvs.append(uv as Vector2)
+				# The shader's array is fixed at 4; pad so the tail is never a
+				# stale value from whatever the driver had there.
+				while uvs.size() < 4:
+					uvs.append(Vector2(-1.0, -1.0))
+				mat.set_shader_parameter("ember_uv", uvs)
+				mat.set_shader_parameter("ember_count", mini(lit.size(), 4))
 		if is_ground:
 			# Ground wants the shading but not the outline. A rim traces every
 			# edge it is given, and a floor made of slabs has hundreds — lit up,
