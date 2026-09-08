@@ -468,6 +468,8 @@ func _init() -> void:
 	_test_backlog86_deck_view_upgrade_preview_shows_defensive_stacks()
 	_test_backlog86_reach_and_cleave_fx_carry_over_the_wire()
 	_test_backlog86_deck_view_shows_reach_and_cleave_too()
+	_test_backlog86_route_finder_fx_carries_targets_hold_over_the_wire()
+	_test_backlog86_deck_view_shows_targets_hold_too()
 	_test_backlog45_named_holds_cross_to_both_peers_identically()
 	_test_backlog45_graded_timing_quality_reaches_the_host_and_the_preview()
 	# backlog #46: a robustness sweep that is not balance tuning
@@ -630,6 +632,7 @@ func _init() -> void:
 	_test_backlog86_face_text_shows_discard_alongside_draw_or_damage()
 	_test_backlog86_face_text_shows_ally_heal_alongside_another_effect()
 	_test_backlog86_face_text_shows_scry_alongside_another_effect()
+	_test_backlog86_face_text_shows_targets_hold_alongside_another_effect()
 	_test_backlog86_face_text_shows_defensive_stacks_alongside_another_effect()
 	_test_backlog86_face_text_burn_lines_are_mutually_exclusive()
 	_test_backlog86_face_text_falls_back_to_authored_text_with_no_preview()
@@ -7984,6 +7987,47 @@ func _test_backlog86_deck_view_shows_reach_and_cleave_too() -> void:
 		"the deck view states the shuffle-in and cleave clauses too, not just the hand view")
 
 
+## backlog #86 duty 2 — targets_hold (#24, Route Finder) never joined
+## `_slot_private()`'s fx dict, the same "hand-copied field list drifts" gap
+## `_test_backlog86_reach_and_cleave_fx_carry_over_the_wire` caught for
+## topdeck/shuffle_in/tutor/hits_all_enemies above. No standalone card
+## combines targets_hold with another effect, so the drop was invisible until
+## melded: fuse Route Finder into Harpoon (real damage) and the live face
+## used to state only the damage, exactly as `_test_backlog86_face_text_
+## shows_targets_hold_alongside_another_effect` proves at the unit level.
+func _test_backlog86_route_finder_fx_carries_targets_hold_over_the_wire() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var combat: Combat = host._run.combat
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_meld_card(), Content.make_card("route_finder"), Content.make_card("harpoon")]
+	ps.energy = 9
+	combat.play_card(0, 0, true, 1, 2)  # meld Route Finder (targets_hold) + Harpoon (damage)
+	host._broadcast_state()
+	var hand: Array = c0.private["hand"]
+	var fused: Dictionary = hand[0]
+	_expect(bool((fused["fx"] as Dictionary).get("targets_hold", false)),
+		"a melded Route Finder + Harpoon's fx dict carries targets_hold to the owner's client")
+	_expect(CardView.face_text(fused).contains("Climb straight to the next hold."),
+		"the live face states the climb-to-hold clause alongside the damage and Expose, not just those")
+
+
+## backlog #86 duty 2 — `_slot_private()`'s fx dict (proven above) and
+## `_deck_face()`'s fx dict (the deck view) are two hand-copied lists of the
+## same fields kept in sync by hand; only a test on each copy proves neither
+## was missed, the same reasoning `_test_backlog86_deck_view_shows_reach_and_
+## cleave_too` already applied to topdeck/shuffle_in/tutor/hits_all_enemies.
+func _test_backlog86_deck_view_shows_targets_hold_too() -> void:
+	var host := GameHost.new(LocalTransport.new(), 1, 2)
+	_kept.append(host)
+	var route_finder := host._deck_face(Content.make_card("route_finder"), 0)
+	_expect(bool((route_finder["fx"] as Dictionary).get("targets_hold", false)),
+		"_deck_face()'s fx dict carries targets_hold, not just the printed numbers")
+	_expect(CardView.face_text(route_finder) == "Climb straight to the next hold.",
+		"the deck view states the climb-to-hold clause via its own live branch too")
+
+
 ## Named holds (backlog #24) widened Boss.ledges from a bare int array to an
 ## optional Dictionary shape {height, safe, exposed_to}. Prove the richer
 ## shape crosses the snapshot boundary intact and IDENTICALLY to both peers
@@ -10354,6 +10398,29 @@ func _test_backlog86_face_text_shows_scry_alongside_another_effect() -> void:
 		"keywords": [], "fx": {"light_gain": 2, "scry": 2}}
 	_expect(CardView.face_text(spark_peer, false) == "Gain 2 Light. Scry 2.",
 		"a melded card granting Light AND Scry states both on its live face, not just the Light")
+
+
+## backlog #86 duty 2 — targets_hold (#24, Route Finder) had the same
+## "fx never grew a branch" gap as ally_heal/scry above: standalone Route
+## Finder only ever read right by accident (no other fx field set, so
+## face_text() fell back to its authored text), but Combat._meld_cards()
+## already ORs targets_hold through a meld, so fusing it with a real attack
+## silently dropped the climb-to-hold clause from the live face even though
+## Combat.play_card() genuinely still climbed the hunter.
+func _test_backlog86_face_text_shows_targets_hold_alongside_another_effect() -> void:
+	# Route Finder alone: reads via its own branch now, not the authored-text
+	# fallback it got by accident.
+	var alone := {"text": "Climb straight to the next hold.",
+		"preview": {"damage": 0}, "preview_miss": {}, "base": {}, "keywords": [],
+		"fx": {"targets_hold": true}}
+	_expect(CardView.face_text(alone, false) == "Climb straight to the next hold.",
+		"targets_hold alone now reads via its own live-line branch, consistent with every other fx field")
+	# A melded Route Finder + Harpoon (real damage): "Deal 8 damage." must not
+	# eat the climb-to-hold clause.
+	var melded := {"preview": {"damage": 8}, "preview_miss": {}, "base": {"damage": 8},
+		"keywords": [], "fx": {"targets_hold": true}}
+	_expect(CardView.face_text(melded, false) == "Deal 8 damage. Climb straight to the next hold.",
+		"a melded card dealing damage AND targeting a hold states both, not just the damage")
 
 
 ## backlog #86 duty 2 (find an error and resolve it) — a fifth instance of the

@@ -934,6 +934,14 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 			out.append("%s %s." % [_kw("Climb", "height", kw, rich), climb_n])
 		if ally_climb > 0:
 			out.append("Ally %ss %d." % [_kw("climb", "height", kw, rich), ally_climb])
+	# backlog #86 duty 2 — targets_hold (#24, Route Finder) never grew a branch
+	# here: Combat.preview() never folds a hold-climb into `grip` (that's
+	# resolved separately in play_card()), so face_text() had no live number to
+	# read for it at all. Standalone Route Finder only read right by accident
+	# (no other fx field set, so `out` stayed empty and the authored text won);
+	# melding it with a real attack or Block card silently dropped the climb.
+	if bool(fx.get("targets_hold", false)):
+		out.append("%s straight to the next hold." % _kw("Climb", "height", kw, rich))
 
 	# backlog #86 duty 2 — same shape as Dexterity/Frail/Thorns below: GameHost's
 	# "fx" dict never carried "ally_heal" (card.gd's name for the Lightbearer's

@@ -2679,6 +2679,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-08** — #86 duty 2 (find an error and resolve it). Last rotation
+  commit (`9b40403`) was duty 1, so this turn is duty 2. Delegated the initial
+  search, then verified the finding by reading the code myself before
+  touching anything. Found a sixth instance of the recurring "two copies of
+  one truth" shape this duty keeps catching in `game_host.gd`'s hand-copied
+  `fx` dictionaries: `Card.targets_hold` (#24, Route Finder — "climbs
+  straight to a named hold instead of adding grip") was never mirrored into
+  either `_slot_private()`'s or `_deck_face()`'s `fx` dict, and
+  `Combat.preview()` never folds a hold-climb into its `grip` number either
+  (that only resolves inside `play_card()`), so `CardView.face_text()` had no
+  live signal at all for it and no branch to read one even if it had.
+  Standalone Route Finder read right only by accident — no other `fx` field
+  set, so `face_text()` fell to the authored-text fallback — but
+  `Combat._meld_cards()` already ORs `targets_hold` through a meld correctly,
+  so fusing Route Finder with a real attack (e.g. Harpoon) silently dropped
+  the climb-to-hold clause from the live face while the mechanic itself kept
+  working underneath. Added `targets_hold` to both `fx` dicts and a matching
+  branch in `face_text()`. Wrote the regression tests FIRST (a unit test on
+  `face_text()` and two wire-level tests through a real `GameHost`/
+  `GameClient` session, one melded via `Combat._meld_cards` since no
+  standalone card combines `targets_hold` with anything else), watched all
+  four fail against the unfixed code (confirmed by `git stash` on just the
+  two fix files, tests kept), then applied the fix and watched them pass.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1).
+  Next `#86` turn is duty 3 (verify a mechanic actually works).
+
 - **2026-09-08** — #86 duty 1 (improve an asset — diagnose beasts first). Last
   rotation commit (`eff7bf7`) was duty 3, so this turn is duty 1. Surveyed the
   14 new-cast beasts (the only beasts a diagnosis can currently trust — the 14

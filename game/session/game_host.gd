@@ -674,6 +674,17 @@ func _slot_private(pi: int) -> Dictionary:
 					# also hits every add.
 					"topdeck": c.topdeck, "shuffle_in": c.shuffle_in, "tutor": c.tutor,
 					"hits_all_enemies": c.hits_all_enemies,
+					# backlog #86 duty 2 — the same gap yet again, this time
+					# targets_hold (#24). Standalone Route Finder only ever read
+					# right by accident (no other fx field set, so face_text()
+					# fell back to its authored text) — Combat._meld_cards()
+					# already ORs targets_hold through a meld correctly, so
+					# fusing Route Finder with any card that deals damage or
+					# grants Block made `out` non-empty and silently dropped the
+					# climb-to-hold clause, even though Combat.play_card()
+					# genuinely still climbs the hunter when the fused card is
+					# played.
+					"targets_hold": c.targets_hold,
 				},
 				# The card's PRINTED values. The face compares live against these to
 				# know which numbers a buff or scaling changed, and highlights only
@@ -894,6 +905,9 @@ func _deck_face(c: Card, i: int) -> Dictionary:
 			# entry read "Deal 8 damage." with no mention of hitting every add.
 			"topdeck": c.topdeck, "shuffle_in": c.shuffle_in, "tutor": c.tutor,
 			"hits_all_enemies": c.hits_all_enemies,
+			# backlog #86 duty 2 — same gap as the hand dict's fx above:
+			# targets_hold (#24) never joined this sibling copy either.
+			"targets_hold": c.targets_hold,
 		},
 	}
 
