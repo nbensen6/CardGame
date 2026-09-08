@@ -201,21 +201,54 @@ per-beast cost. Phase 3 rolls them out by adding names to a list.
       "orbiting the fight camera" around a beast does nothing without also
       rotating `_beast` directly.
 
-- [ ] **2. Surface breakup.** Ours is flat swatches, one colour per face, no
-      variation anywhere; theirs carries scarring and tonal variation. Cheapest
-      route that needs no textures and no per-asset work: a subtle triplanar or
-      world-space noise in the shader, modulating value only, never hue. Keep it
-      under the threshold where it reads as noise rather than as surface.
+- [~] **2. Surface breakup — BUILT, PARKED, not merged.** Nick's call,
+      2026-09-08. Branch `builder/2026-09-08-surface-breakup` adds triplanar
+      object-space value noise (`breakup_strength`/`breakup_scale`, opt-in via
+      `combat_3d.SURFACE_BREAKUP`). The mechanism is right and object space was
+      the correct choice.
+
+      **It is invisible at fight distance.** Measured on the branch's own proof
+      frames, cropped 1:1 with no upscaling: mean diff 1.19/255, 4.2% of pixels
+      changed, 0.6% changed by more than 20. The creature shader, for scale,
+      moved 6.22/255 and 8.8% and was obvious instantly. Side by side at 1:1 the
+      two frames cannot be told apart.
+
+      The run's own proof crop was at **3x zoom**, where it looks convincing.
+      That is the whole trap: fine noise dies to the downsample. If this is
+      revived, the fix is a much LARGER `breakup_scale` — broad tonal blotching
+      rather than fine speckle — judged at 1:1 only.
+
+      Third finding of this shape today, after the aobake result and the swatch
+      swap. **Anything whose detail is finer than a few screen pixels will not
+      survive this camera.** Prefer levers that change large areas.
 
 - [ ] **3. Material variation.** One roughness for the whole animal is why it
       reads as one substance. Give the atlas a second channel, or key off swatch
       the way the embers do, so chitin can shine and fur cannot.
 
-- [ ] **4. One exaggerated anchor.** The reference hangs off enormous dorsal
-      spines you could identify from any distance. The jackal's ember ridge is a
-      strip you have to hunt for. This is per-beast authoring and it is a
-      DESIGN question — propose it in this file with a render, do not just
-      enlarge the ridge.
+- [ ] **4. One exaggerated anchor. ← DO THIS NEXT (Nick, 2026-09-08).**
+
+      The reference hangs off enormous dorsal spines you could identify from any
+      distance. The jackal's ember ridge is a strip you have to hunt for — item
+      1a proved only 2 of its 44 faces even clear the remeshed body, and
+      concluded that the fix is a bigger, redesigned ridge rather than more
+      pipeline work to expose the small one.
+
+      This is the item the last three failures all point at. Baked AO, the
+      swatch swap and surface breakup were each real, correct, and too FINE to
+      survive a beast that is ~250px tall. An anchor is the opposite: geometry
+      big enough that the downsample cannot erase it.
+
+      Per-beast authoring, and a DESIGN question. Propose it here with a 1:1
+      render before building it out — do not just scale the existing ridge up.
+      Worth knowing: the ridge sits along the spine's top edge, which the fight
+      camera views nearly end-on, so an anchor that lives only on the topline
+      will lose most of its area no matter how big it is. Something that breaks
+      the silhouette to the SIDE will read from this camera; something flat on
+      the back will not.
+
+      Judge it at 1:1 against `design/renders/cinder_jackal_breakup_before.png`,
+      same camera and box as every proof above.
 
 - [ ] **5. A face.** Measured against the CC0 Kenney animals, the biggest gap in
       the whole cast is that theirs have eyes, a snout and ears on a head that is

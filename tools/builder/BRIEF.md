@@ -93,9 +93,17 @@ described here and in `art-target.md`; work from the description.
    pipeline or a list file, put it there rather than in one beast's script —
    that is what makes phase 3 cheap. If it genuinely must be authored per beast,
    say so in the commit so the recipe records it.
-5. **Prove it.** Capture the beast in a real fight, same camera and biome as the
-   previous capture, and put the before/after in the commit. A number is not
-   proof.
+5. **Prove it, AT 1:1.** Capture the beast in a real fight, same camera and
+   biome as the previous capture, and put the before/after in the commit. A
+   number is not proof.
+
+   **The acceptance crop is never scaled up.** Crop the fight frame, do not
+   zoom it. A 3x crop has passed work three times now that turned out to be
+   invisible at the size a player sees: baked ambient occlusion, a palette
+   swatch swap, and the surface-breakup noise — each real, each correct, each
+   below the resolution of a beast that is about 250 pixels tall. Zoomed crops
+   are fine for diagnosing WHY something looks wrong; they must never be what
+   decides that it looks right.
 6. **Test.** `run_tests.gd` must print ALL TESTS PASSED. No exceptions.
 7. **Push the branch.** `git push -u origin <branch>`. **Do not push main and do
    not merge.** Nick reviews.
