@@ -2679,6 +2679,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-08** — #86 duty 2 (find an error and resolve it). Last rotation
+  commit (`f07c799`) was duty 1, so this turn is duty 2. Read `combat_3d.gd`'s
+  `_place_hunters` end to end, the same function the "first" branch's own
+  comment already documents one shipped bug in (`5b63bf4`, spawning at
+  Vector3.ZERO on the first call). Found a second, sibling bug in the `elif
+  kind == "glide":` branch right below it: the `climb` branch explicitly kills
+  whatever tween is sitting in `_climb_tw[i]` before starting a new one
+  ("two live tweens on one node fight over its position every frame"), but
+  the `glide` branch — added later, animating the SAME dictionary slot and the
+  SAME node.position — never did, so it just overwrote `_climb_tw[i]` and
+  left the old tween running unchilled. A rescale/settle glide landing while
+  an earlier climb (or glide) was still mid-flight for the same hunter left
+  both tweens driving node.position — and, when the pre-empted tween was a
+  climb, body.scale too — every frame, exactly the "dragged between two
+  places that disagree" symptom the climb branch's own comment names, just
+  unguarded on this path. Pulled the shared cleanup out into a static
+  `_cancel_pending_tween(climb_tw, i, body)` (mirroring `_start_glide` beside
+  it), call it from both branches now, and added
+  `_test_backlog86_cancel_pending_tween_kills_the_old_tween_and_body_scale`
+  plus a no-op-safety test, both in `run_tests.gd`, proving the old tween is
+  actually killed and the body's squash scale is put back to Vector3.ONE —
+  written to fail against the pre-fix code first, then made to pass.
+  Considered instead going after duty 1's own flagged candidate (the
+  `look.sh`/`look.cmd` beast/ground filename collision from the prior log
+  entry) but that lives in shell tooling with no natural home in
+  `run_tests.gd`'s GDScript suite, so it stays open for whichever duty picks
+  it up next with a plan for how to test it. `run_tests.gd`: ALL TESTS
+  PASSED (fresh `--import`, headless, Godot 4.7.1).
+
 - **2026-09-08** — #86 duty 1 (improve an asset — diagnose the highest tier
   first, which is beasts). Last actual rotation commit (`09938ea`, the
   encounter-seed test) was duty 3, and named duty 1 as next explicitly; the

@@ -517,6 +517,10 @@ func _init() -> void:
 	# backlog #86 duty 2: a real bug in the same file, found reading
 	# _place_hunters end to end — see the test and _start_glide for the story.
 	_test_backlog86_glide_is_not_defeated_by_a_synchronous_position_write()
+	# backlog #86 duty 2 (another pass): the glide branch's sibling bug —
+	# it never cancelled a still-running tween the way the climb branch does.
+	_test_backlog86_cancel_pending_tween_kills_the_old_tween_and_body_scale()
+	_test_backlog86_cancel_pending_tween_is_a_noop_with_nothing_running()
 	# backlog #86 duty 3 (second pass): the OTHER untested climb rule named
 	# alongside route_between_rungs — foothold_anchor, the pure half of
 	# _stand_on_model, deciding WHERE on the model a foothold actually sits.
@@ -9382,6 +9386,38 @@ func _test_backlog86_glide_is_not_defeated_by_a_synchronous_position_write() -> 
 		"the glide must not be pre-empted by a synchronous position write, or the tween has nothing left to interpolate")
 	tw.kill()
 	node.free()
+
+
+## backlog #86 duty 2 — a real bug in _place_hunters's `elif kind == "glide":`
+## branch: it built a fresh tween and overwrote _climb_tw[i] with it, but
+## unlike the `climb` branch right above it, never killed whatever tween
+## _climb_tw[i] already held. A rescale/settle glide landing while an earlier
+## climb (or glide) was still mid-flight for the same hunter left BOTH tweens
+## driving node.position — and, when the pre-empted tween was a climb,
+## body.scale too — every frame, so the hunter was dragged between two
+## places that disagree: exactly the symptom the climb branch's own comment
+## says the cancellation exists to prevent, just unguarded on this path.
+## `_cancel_pending_tween` is the cleanup both branches now share, pulled out
+## static so this is provable with no model loaded and no frame processed.
+func _test_backlog86_cancel_pending_tween_kills_the_old_tween_and_body_scale() -> void:
+	var node := Node3D.new()
+	var body := Node3D.new()
+	body.scale = Vector3(0.7, 1.3, 0.7)
+	var old_tw := root.create_tween()
+	old_tw.tween_property(node, "position", Vector3(9.0, 9.0, 9.0), 10.0)
+	var climb_tw := {0: old_tw}
+	Combat3D._cancel_pending_tween(climb_tw, 0, body)
+	_expect(not old_tw.is_valid(),
+		"a still-running tween left in the slot must be killed before a new one starts, or the two fight over node.position every frame")
+	_expect(body.scale.is_equal_approx(Vector3.ONE),
+		"a killed tween can leave the body mid-squash; cancellation must put it back or the next move starts from a shape nobody chose")
+	node.free()
+	body.free()
+
+
+func _test_backlog86_cancel_pending_tween_is_a_noop_with_nothing_running() -> void:
+	Combat3D._cancel_pending_tween({}, 0, null)
+	_expect(true, "cancelling an empty slot with no body must not crash")
 
 
 ## backlog #86 duty 2 (sixth turn) — a real bug in `_render_hand`: the

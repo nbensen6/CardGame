@@ -2159,6 +2159,23 @@ static func _start_glide(tw: Tween, node: Node3D, to: Vector3, dur: float) -> vo
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 
+## Kills whatever tween last owned this hunter's slot in `climb_tw` and puts
+## its body back to Vector3.ONE. Shared by the `climb` and `glide` branches
+## of _place_hunters: an old tween left running while a new one starts keeps
+## driving the SAME node.position (and, if it was a climb, the SAME
+## body.scale) in parallel with the new one, so the hunter is dragged between
+## two places that disagree instead of playing one clean move in its place.
+## Pulled out static, like _start_glide beside it, so a headless test can
+## prove the cancellation actually happens without a live tween running real
+## frames.
+static func _cancel_pending_tween(climb_tw: Dictionary, i: int, body: Node3D) -> void:
+	var old_tw: Tween = climb_tw.get(i) as Tween
+	if old_tw != null and old_tw.is_valid():
+		old_tw.kill()
+	if body != null and is_instance_valid(body):
+		body.scale = Vector3.ONE
+
+
 ## Decides how a hunter's position update should be animated, given only the
 ## bookkeeping _place_hunters already has to hand — no Node3D required, so a
 ## headless test can pin the rule down directly.
@@ -2252,18 +2269,12 @@ func _place_hunters(s: Dictionary) -> void:
 			var way: Array = []
 			if not _climb_points.is_empty() and was != foot:
 				way = _route_between(was, foot)
+			var body: Node3D = h.get("body") as Node3D
 			# Cancel whatever the last move was still doing. Two live tweens on one
 			# node fight over its position every frame, and the hunter gets dragged
 			# between two places that disagree — which is most of why the climb
 			# looked like it was teleporting rather than jumping.
-			var old_tw: Tween = _climb_tw.get(i) as Tween
-			if old_tw != null and old_tw.is_valid():
-				old_tw.kill()
-			var body: Node3D = h.get("body") as Node3D
-			# A killed tween can leave the body mid-squash. Put it back, or the
-			# next hop starts from a shape nobody chose.
-			if body != null and is_instance_valid(body):
-				body.scale = Vector3.ONE
+			_cancel_pending_tween(_climb_tw, i, body)
 			var tw := create_tween()
 			_climb_tw[i] = tw
 			tw.set_trans(Tween.TRANS_QUAD)
@@ -2302,6 +2313,17 @@ func _place_hunters(s: Dictionary) -> void:
 		elif kind == "glide":
 			# The world moved under them — the beast rescaled, the sigil settled.
 			# Slide, do not leap: they have not gone anywhere.
+			#
+			# The climb branch above cancels whatever tween _climb_tw[i] still
+			# holds before it starts a new one; this branch overwrote the same
+			# dict entry without ever doing that. A rescale/settle landing while
+			# an earlier climb (or glide) is still mid-flight for this hunter
+			# left BOTH tweens driving node.position — and, when the pre-empted
+			# tween was a climb, body.scale too — every frame, so the hunter got
+			# dragged between two places that disagree: the exact symptom the
+			# climb branch's own comment exists to prevent, just unguarded here.
+			var body: Node3D = h.get("body") as Node3D
+			_cancel_pending_tween(_climb_tw, i, body)
 			var glide := create_tween()
 			_climb_tw[i] = glide
 			_start_glide(glide, node, pos, 0.18)
