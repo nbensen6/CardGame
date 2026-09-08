@@ -89,6 +89,22 @@ for %%N in (%NAMES%) do (
     echo === cast %%N
     "%BLENDER%" --background --python "%HERE%%%N.py" -- "%CASTOUT%\%%N.glb" ^
       | findstr /R "TRIS PARTS CLIMB HOLD ROOM SPAN GREW WARNING FAIL"
+    REM Opt-in union+remesh, one name per line in union.txt. WITHOUT this the
+    REM step would be a landmine: the union is a post-process on the .glb, so
+    REM the next build.cmd on that beast would silently revert it to a pile of
+    REM intersecting primitives and nothing would report the loss.
+    REM
+    REM `if !errorlevel!` and not `if errorlevel`: inside a parenthesised for
+    REM block the plain form is expanded when the block is PARSED, so it reads
+    REM the errorlevel from before the loop ran and every beast takes the same
+    REM branch.
+    findstr /C:" %%N" "%HERE%union.txt" >nul 2>&1
+    if !errorlevel! equ 0 (
+      echo   --- union+remesh %%N
+      "%BLENDER%" --background --python "%HERE%unionremesh.py" -- ^
+        "%CASTOUT%\%%N.glb" "%CASTOUT%\%%N.glb" ^
+        | findstr /R "UNION"
+    )
   ) else ( echo   SKIP %%N - no tools\blender\%%N.py )
 )
 exit /b 0
