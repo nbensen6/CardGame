@@ -632,6 +632,16 @@ func _slot_private(pi: int) -> Dictionary:
 				"exhaust_pick": c.exhaust_pick, "cheapen_pick": c.cheapen_pick, "meld": c.meld,
 				"playable": _run.combat.can_play(pi, i),
 				"rarity": c.rarity, "keywords": _keywords_of(c),
+				# backlog #86 duty 2: the "Wide" enchant ("A much wider timing window
+				# for this card", effect timing_zone) never reached the client at all —
+				# _keywords_of() above adds a bare "enchant" tag for the tap-to-inspect
+				# tooltip, but nothing carried the actual effect/value a timed card's
+				# own timing window needs to read. combat_3d.gd's zone-bonus calc only
+				# ever consulted the team-wide relic mod, so enchanting a card Wide was
+				# a silent no-op in real play — the enchant existed, attached, and did
+				# nothing. See Combat3D.timing_zone_bonus().
+				"enchant_effect": String(c.enchant_data().get("effect", "")),
+				"enchant_value": int(c.enchant_data().get("value", 0)),
 				"preview": hit, "preview_miss": miss, "preview_good": good,
 				# The non-numeric effects, so the face can write ONE sentence
 				# instead of printing a formula beside a live readout.

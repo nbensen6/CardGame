@@ -3065,6 +3065,26 @@ static func render_hand_status(selecting: bool) -> Dictionary:
 		"hover_reset": true,
 	}
 
+## The timing-window bonus a played card actually gets, as a fraction (10% ==
+## 0.10): the team-wide relic mod (`mods.timing_zone`, a percent) plus, if
+## THIS card carries the "Wide" enchant (data/enchants.json: effect
+## "timing_zone", "A much wider timing window for this card"), its own value
+## on top. Before this existed, `_on_card_tapped` only ever read the relic
+## mod — enchanting a card Wide attached fine (Card.enchanted_copy is
+## generic, backlog #12) and `_test_enchanted_copy_attaches_to_any_card`
+## confirmed the DATA was right, but nothing downstream ever read
+## `enchant_effect`/`enchant_value` off the card: game_host.gd's hand dict
+## never sent them (only a bare "enchant" keyword for the inspect tooltip),
+## so a Wide-enchanted card graded PERFECT/GOOD/MISS on exactly the same
+## window as an unenchanted one. The enchant was real, attached, and did
+## nothing (backlog #86 duty 2).
+static func timing_zone_bonus(team_mod_pct: int, card_enchant_effect: String, card_enchant_value_pct: int) -> float:
+	var pct := team_mod_pct
+	if card_enchant_effect == "timing_zone":
+		pct += card_enchant_value_pct
+	return float(pct) / 100.0
+
+
 func _on_card_tapped(card: Dictionary, cv: CardView) -> void:
 	_dismiss_coach()   # you're playing; you don't need to be told to play
 	var index := int(card["index"])
@@ -3072,8 +3092,11 @@ func _on_card_tapped(card: Dictionary, cv: CardView) -> void:
 		_pick_for_selection(index)
 		return
 	if bool(card.get("timed", false)):
-		# a relic can widen the window, so pass the team's bonus through
-		var bonus := float(int(_client.shared.get("mods", {}).get("timing_zone", 0))) / 100.0
+		# a relic can widen the window for the whole team, and this one card can
+		# carry its own "Wide" enchant on top — combine both into the one bonus
+		# HitCircle/CardView actually read.
+		var bonus := timing_zone_bonus(int(_client.shared.get("mods", {}).get("timing_zone", 0)),
+			String(card.get("enchant_effect", "")), int(card.get("enchant_value", 0)))
 		var hits := int(card.get("timed_hits", 1))
 		if Progress.timing_style() == Progress.TIMING_CIRCLE and _circle != null:
 			# Same grading, a different face: the circle opens ON the beast at the

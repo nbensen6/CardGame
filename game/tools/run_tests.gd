@@ -131,6 +131,8 @@ func _init() -> void:
 	_test_backlog67_unmet_condition_never_costs_the_printed_numbers()
 	_test_enchanted_copy_attaches_to_any_card()
 	_test_enchants_all_load()
+	_test_backlog86_timing_zone_bonus_combines_relic_and_enchant()
+	_test_backlog86_wide_enchant_reaches_the_wire()
 	_test_campfire_rest_remove_upgrade()
 	_test_campfire_rest_heals_and_caps_at_max()
 	_test_backlog86_campfire_snapshot_heal_matches_ascension_scaled_amount()
@@ -9679,6 +9681,56 @@ func _test_backlog86_climb_marker_for_accepts_a_negative_height() -> void:
 	var m: Dictionary = Combat3D.climb_marker_for("climb_-2")
 	_expect(String(m["kind"]) == "climb" and int(m["height"]) == -2,
 		"a negative Height in a marker name parses same as a positive one")
+
+
+## backlog #86 duty 2: `_on_card_tapped` used to read ONLY the team's relic mod
+## (mods.timing_zone) when opening a timed card's window -- a card carrying
+## its own "Wide" enchant (data/enchants.json: effect "timing_zone", value 30)
+## added nothing on top, because nothing ever combined the two. Proven as a
+## pure function, the same "two copies of one truth" shape as
+## climb_marker_for above: two sources feed one number, and only a test that
+## exercises both together catches one of them silently being dropped.
+func _test_backlog86_timing_zone_bonus_combines_relic_and_enchant() -> void:
+	_expect(Combat3D.timing_zone_bonus(0, "", 0) == 0.0,
+		"no relic mod and no enchant is no bonus at all")
+	_expect(Combat3D.timing_zone_bonus(10, "", 0) == 0.10,
+		"a relic-only bonus (no enchant on this card) still applies on its own")
+	_expect(Combat3D.timing_zone_bonus(0, "timing_zone", 30) == 0.30,
+		"a Wide-enchanted card gets its own +30% even with no team relic")
+	_expect(Combat3D.timing_zone_bonus(10, "timing_zone", 30) == 0.40,
+		"a relic AND a Wide enchant on the same card stack, not override each other")
+	_expect(Combat3D.timing_zone_bonus(10, "auto_nail", 0) == 0.10,
+		"a card enchanted with something other than Wide (e.g. Sure/auto_nail) never adds a phantom window bonus")
+
+
+## Same bug, driven through a real GameHost/GameClient pair rather than the
+## pure function directly -- proves the wiring _test_backlog86_timing_zone_
+## bonus_combines_relic_and_enchant above assumes actually exists. Before this
+## fix, `enchant_effect`/`enchant_value` were not on the hand dict at all
+## (only a bare "enchant" keyword for the inspect tooltip), so
+## _on_card_tapped had nothing to combine even after the pure function
+## existed -- the same "the data was right, the wire was empty" shape
+## _test_enchanted_copy_attaches_to_any_card already proved for the enchant's
+## own data, and the fx-over-the-wire tests above proved for half a dozen
+## other card fields.
+func _test_backlog86_wide_enchant_reaches_the_wire() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var wide_slash: Card = _slash().enchanted_copy("wide")
+	host._run.combat.players[0].hand.append(wide_slash)
+	host._broadcast_state()
+	var hand: Array = c0.private["hand"]
+	var mine: Dictionary = hand[hand.size() - 1]
+	_expect(String(mine.get("enchant_effect", "")) == "timing_zone" and int(mine.get("enchant_value", 0)) == 30,
+		"a Wide-enchanted card's timing_zone effect and value reach the owner's client, not just a bare 'enchant' keyword")
+	var plain: Card = _slash()
+	host._run.combat.players[0].hand.append(plain)
+	host._broadcast_state()
+	var hand2: Array = c0.private["hand"]
+	var mine2: Dictionary = hand2[hand2.size() - 1]
+	_expect(String(mine2.get("enchant_effect", "")) == "" and int(mine2.get("enchant_value", 0)) == 0,
+		"an unenchanted card carries no enchant_effect/enchant_value at all, not a stale leftover")
 
 
 ## backlog #86 duty 2 — _draw_gauge used to check `ledges.has(h)` straight off

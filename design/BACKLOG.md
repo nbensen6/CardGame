@@ -11248,3 +11248,44 @@ Newest first. One line per finished item: what, and anything surprising.
   4.7.1, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 3 (verify
   a mechanic actually works) — worth re-checking the Blender block again by
   the turn after that.
+
+- **2026-09-08, #86 duty 2 (find an error and resolve it).** Last commit
+  (`e6c1198`) was duty 1, so this turn is duty 2. Read `combat.gd`'s
+  `preview()`/`play_card()`/`_damage_boss`/`_damage_add`/`_enemy_turn`/
+  `_adds_turn` in full looking for another `enemy_index`-shaped redirect
+  gap and found the surrounding logic already consistent (Vulnerable and
+  the power-effect payouts are deliberately boss-only, confirmed against
+  their own doc comments); cross-checked `relics.json`'s 25 distinct
+  `effect`/`downside_effect` values against `Run._apply_relic_effect` and
+  `relic_totals()` — all 25 accounted for, nothing orphaned; cross-checked
+  every boss/add move `type` in `bosses.json` against `_enemy_turn()` and
+  `_adds_turn()`'s match statements — all handled. The real find was in
+  `data/enchants.json`: the "Wide" enchant (`{"effect": "timing_zone",
+  "value": 30}`, "A much wider timing window for this card") attaches to
+  any card fine (`Card.enchanted_copy`, backlog #12, is generic) and
+  `_test_enchanted_copy_attaches_to_any_card` already proved the DATA was
+  right — but nothing downstream ever read it. `game_host.gd`'s
+  `_slot_private()` hand dict never sent the card's `enchant_effect`/
+  `enchant_value` over the wire at all (only a bare `"enchant"` keyword
+  for the tap-to-inspect tooltip), and `combat_3d.gd`'s `_on_card_tapped`
+  computed the timing-window bonus from `mods.timing_zone` (the team relic)
+  alone. A card enchanted Wide graded PERFECT/GOOD/MISS on exactly the same
+  window as an unenchanted one — the enchant existed, attached, and did
+  nothing, the whole time it's shipped. Fixed by sending
+  `enchant_effect`/`enchant_value` on every hand card and adding
+  `Combat3D.timing_zone_bonus(team_mod_pct, card_enchant_effect,
+  card_enchant_value_pct)`, a pure static function combining both sources,
+  same "lift it out so it's testable headless" trick `climb_marker_for`
+  already used for the equivalent view-layer gap. Added
+  `_test_backlog86_timing_zone_bonus_combines_relic_and_enchant` (the pure
+  function, all four combinations) and
+  `_test_backlog86_wide_enchant_reaches_the_wire` (a real GameHost/
+  GameClient pair, Wide-enchanted card vs. plain card); verified both catch
+  the bug — reverting `combat_3d.gd` breaks the suite at parse time
+  (`Static function "timing_zone_bonus()" not found`), and reverting only
+  `game_host.gd` fails the wire test cleanly with the function still
+  present. Restored both, fresh `--import`, headless, Godot 4.7.1,
+  `run_tests.gd`: ALL TESTS PASSED, exit 0, 1069 passed / 0 failed. Not
+  screenshotted — this is a numeric wiring fix in `/session` and `/views`
+  logic, nothing new on screen, same as every other duty-2 fix on this
+  rotation. Next `#86` turn is duty 3 (verify a mechanic actually works).
