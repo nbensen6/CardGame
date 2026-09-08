@@ -898,6 +898,17 @@ func _init() -> void:
 	# half needs a real tree (see the function's own comment), so it runs
 	# from _finish_with_deferred_tests instead.
 	_test_backlog86_music_enabled_round_trips_through_progress()
+	# backlog #86 duty 3: Sfx (ui/sfx.gd) is the sibling of Music above and had
+	# ZERO mentions anywhere in this file -- Sfx.play/_ensure/_load_or_synth/
+	# _synth were all unproven. Its own header comment makes a specific claim:
+	# every event synthesizes a placeholder tone in code, but a real .ogg in
+	# res://audio/ "overrides the synthesized tone" automatically. Nothing had
+	# ever proven either half -- that the preference logic actually picks the
+	# shipped file over the tone, or that the code fallback it falls back TO
+	# is not silently broken (it can't be heard failing; there's no ear on this
+	# rotation). Both are pure/static, no SceneTree needed, so no deferral.
+	_test_backlog86_sfx_load_or_synth_prefers_every_shipped_audio_file()
+	_test_backlog86_sfx_synth_square_and_sine_actually_differ_in_shape()
 	# backlog #86 duty 3 (thirty-second pass): HitCircle, the osu-style timing
 	# tap Nick asked for by name ("change the timing mechanic to mimicc osu").
 	# Every prior duty-3 pass on combat_3d proved the ROUTE a hunter's climb
@@ -11541,6 +11552,80 @@ func _test_backlog86_music_refresh_stops_playback_the_instant_you_mute() -> void
 	Progress.set_music_enabled(was_enabled)
 	_expect(was_playing and not muted,
 		"muting calls Music.refresh(), which stops the track immediately rather than waiting for the next phase change")
+
+
+## backlog #86 duty 3: Sfx's own header comment promises a real file in
+## res://audio/ "overrides the synthesized tone" for any event, and every one
+## of Sfx.DEFS' 14 events currently ships an .ogg there (tools/gen_sfx.gd) --
+## but nothing tied those two facts together. If a future event were added to
+## DEFS with no matching file, or a shipped file were ever deleted or
+## renamed, the game would silently start playing the code tone in place of
+## the real sound, with no test to catch it and nothing audible to this
+## rotation. Proves both halves: every DEFS event has a real file on disk,
+## AND _load_or_synth actually picks it (an AudioStreamOggVorbis, not the
+## AudioStreamWAV the synth path returns) rather than merely finding it.
+func _test_backlog86_sfx_load_or_synth_prefers_every_shipped_audio_file() -> void:
+	var all_shipped := true
+	var all_ogg := true
+	for event in Sfx.DEFS:
+		var event_name: String = String(event)
+		if not ResourceLoader.exists(Sfx.AUDIO_DIR + event_name + ".ogg"):
+			all_shipped = false
+			continue
+		var stream: AudioStream = Sfx._load_or_synth(event_name)
+		if not (stream is AudioStreamOggVorbis):
+			all_ogg = false
+	_expect(all_shipped,
+		"every Sfx.DEFS event ships a real res://audio/<event>.ogg -- add the file in the same commit as a new event or it silently plays the code tone")
+	_expect(all_ogg,
+		"_load_or_synth returns the shipped .ogg (AudioStreamOggVorbis), not the synthesized fallback, whenever the real file is present")
+
+
+## backlog #86 duty 3: _synth is the code fallback tone generator every Sfx
+## event falls back to if its shipped .ogg ever goes missing (see the test
+## above) -- entirely unproven. Prove its two documented shapes ("sine"|
+## "square" in DEFS) actually differ rather than both collapsing to the same
+## waveform, and prove the "quick decay" its own inline comment claims is
+## real: loud at the start, quiet by the end. A sine wave crosses zero every
+## half-cycle even while the envelope is near its peak; a square wave, by
+## construction (s = 1.0 or -1.0 before the envelope is applied), never sits
+## near zero except right at the very end where the envelope itself has
+## decayed close to zero -- so "does the first half of the tone contain a
+## near-silent sample" tells the two waveforms apart without recomputing the
+## whole formula by hand.
+func _test_backlog86_sfx_synth_square_and_sine_actually_differ_in_shape() -> void:
+	var dur := 0.05
+	var freq := 440.0
+	var sine: AudioStreamWAV = Sfx._synth(freq, dur, "sine")
+	var square: AudioStreamWAV = Sfx._synth(freq, dur, "square")
+	var n := int(22050 * dur)
+	_expect(sine.data.size() == n * 2 and square.data.size() == n * 2,
+		"a 0.05s tone at the documented 22050Hz sample rate is n*2 bytes (16-bit mono)")
+	_expect(sine.mix_rate == 22050 and not sine.stereo and sine.format == AudioStreamWAV.FORMAT_16_BITS,
+		"_synth's stream matches the format Sfx's own player pool expects")
+
+	var first_half := n / 2
+
+	var sine_has_near_zero := false
+	for i in range(first_half):
+		if absi(sine.data.decode_s16(i * 2)) < 800:
+			sine_has_near_zero = true
+			break
+	_expect(sine_has_near_zero,
+		"a sine wave crosses zero every half-cycle even near the loud start of the tone -- this one never dipped near zero in its first half, so it isn't actually a sine")
+
+	var square_stays_loud := true
+	for i in range(first_half):
+		if absi(square.data.decode_s16(i * 2)) < 800:
+			square_stays_loud = false
+			break
+	_expect(square_stays_loud,
+		"a square wave is hard-clipped to +/-envelope with no zero crossing -- this one dipped near zero early in the tone, so it's shaped like a sine instead")
+
+	var head := absi(square.data.decode_s16(0))
+	var tail := absi(square.data.decode_s16((n - 1) * 2))
+	_expect(tail < head / 3,
+		"the envelope decays quickly (pow(1-i/n, 1.5)) so the tail is much quieter than the head, matching _synth's own 'quick decay' comment")
 
 
 ## backlog #86 duty 3 (thirty-second pass) -- HitCircle is the osu-style timing

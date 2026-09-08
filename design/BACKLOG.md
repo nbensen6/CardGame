@@ -11356,3 +11356,41 @@ Newest first. One line per finished item: what, and anything surprising.
   screenshotted — this is a numeric wiring fix in `/session` and `/views`
   logic, nothing new on screen, same as every other duty-2 fix on this
   rotation. Next `#86` turn is duty 3 (verify a mechanic actually works).
+
+- **2026-09-08, #86 duty 3 (verify a mechanic actually works).** Last commit
+  (`e3da77f`, the Wide-enchant wiring fix) was duty 2, so this turn is duty 3.
+  Climb (`_route_between`/`_stand_on_model`/`_hop`) has been covered heavily
+  by earlier duty-3 passes, so hunted for a mechanic with zero coverage
+  instead. Found `ui/sfx.gd` (`Sfx`) — Music's sibling, tested a few turns
+  back — had never once been mentioned in `run_tests.gd`: `play()`,
+  `_ensure()`, `_load_or_synth()` and `_synth()` were all unproven. Its own
+  header comment makes a specific, checkable claim: every event synthesizes a
+  placeholder tone in code, but a real `.ogg` in `res://audio/` "overrides
+  the synthesized tone" automatically — and today all 14 `Sfx.DEFS` events
+  do ship a real file, so the synth path is currently dead in practice, not
+  proven, and nothing would notice if a future event lost its file or the
+  preference logic broke.
+  Added two tests. `_test_backlog86_sfx_load_or_synth_prefers_every_shipped_audio_file`
+  proves both halves: every `DEFS` event has a matching `res://audio/<event>.ogg`
+  on disk, and `_load_or_synth` actually returns that file (`AudioStreamOggVorbis`)
+  rather than the synth fallback (`AudioStreamWAV`) when it exists — this is
+  the "new event with no shipped file, or a shipped file gets deleted, plays
+  the placeholder tone in production with no one noticing" bug this rotation
+  hunts for, just not yet triggered.
+  `_test_backlog86_sfx_synth_square_and_sine_actually_differ_in_shape` proves
+  the code-fallback tone generator itself is not silently broken: right byte
+  length and format for the requested duration, the two documented waveforms
+  actually differ (a sine dips near zero in its first half from its own zero
+  crossings; a square wave, built as `s = 1.0 if s >= 0.0 else -1.0` before
+  the envelope, never does), and the "quick decay" the inline comment claims
+  is real (tail sample well under a third of the head sample's amplitude).
+  Both functions are already pure/static (no `SceneTree` needed), unlike
+  `Music`'s equivalent test, so no `_finish_with_deferred_tests` deferral was
+  needed. Verified the second test actually catches a regression: temporarily
+  removed the square-wave clip branch in `sfx.gd` (making it fall through to
+  a plain sine), re-ran the suite, watched both waveform-shape assertions
+  fail with `2 TEST(S) FAILED`, then restored the file from a copy taken
+  before the edit (confirmed clean via `git diff`). Fresh `--import`,
+  headless, Godot 4.7.1, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is
+  duty 1 (asset pass, portraits/icons — the beast/ground/hunter tiers above
+  them stay the fixer lane's, per the tier split in #86's own text).
