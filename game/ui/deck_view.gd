@@ -49,6 +49,9 @@ var _scaler: Control = null
 var _holder: Control = null
 var _scale := 1.0
 var _toggle: CheckBox = null
+## The button bar the toggle (and Confirm/hint) live in — kept so step() can
+## add a toggle _open_detail() didn't need to build yet (see step()'s comment).
+var _bar: VBoxContainer = null
 ## Which deck entry the pane is showing, so the arrows can step through it.
 var _entry: Dictionary = {}
 var _at := -1
@@ -297,19 +300,10 @@ func _open_detail(entry: Dictionary) -> void:
 	bar.add_theme_constant_override("separation", 8)
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	d.add_child(bar)
+	_bar = bar
 
-	var up: Dictionary = entry.get("upgrade", {})
-	if not up.is_empty() and not bool(entry.get("upgraded", false)):
-		_toggle = CheckBox.new()
-		_toggle.text = "View Upgrades"
-		_toggle.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		_toggle.add_theme_font_size_override("font_size", 17)
-		_toggle.add_theme_color_override("font_color", Color(0.94, 0.83, 0.45))
-		_toggle.add_theme_color_override("font_pressed_color", Color(1.0, 0.90, 0.52))
-		_toggle.add_theme_color_override("font_hover_color", Color(1.0, 0.94, 0.70))
-		_toggle.toggled.connect(func(on: bool) -> void:
-			_upgraded = on
-			_rebuild_card())
+	if _wants_toggle(entry):
+		_toggle = _build_toggle()
 		bar.add_child(_toggle)
 
 	if _picking():
@@ -361,11 +355,44 @@ func _arrow(forward: bool) -> Control:
 	return b
 
 
+## Whether `entry` has a real, not-yet-applied upgrade worth offering a
+## toggle for. Shared by _open_detail() (deciding whether to BUILD one) and
+## step() (deciding whether the pane needs one it doesn't have yet).
+static func _wants_toggle(entry: Dictionary) -> bool:
+	var up: Dictionary = entry.get("upgrade", {})
+	return not up.is_empty() and not bool(entry.get("upgraded", false))
+
+
+## Build the "View Upgrades" checkbox. Split out of _open_detail() so step()
+## can build one too (see step()'s own comment below — backlog #86 duty 2).
+func _build_toggle() -> CheckBox:
+	var t := CheckBox.new()
+	t.text = "View Upgrades"
+	t.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	t.add_theme_font_size_override("font_size", 17)
+	t.add_theme_color_override("font_color", Color(0.94, 0.83, 0.45))
+	t.add_theme_color_override("font_pressed_color", Color(1.0, 0.90, 0.52))
+	t.add_theme_color_override("font_hover_color", Color(1.0, 0.94, 0.70))
+	t.toggled.connect(func(on: bool) -> void:
+		_upgraded = on
+		_rebuild_card())
+	return t
+
+
 ## Move to another card without closing and reopening the pane.
 ##
 ## The toggle is cleared with set_pressed_no_signal, not by assignment: setting
 ## `button_pressed` fires `toggled`, which rebuilds the card - so the card would
 ## be built twice on every arrow press, the second time from a stale _entry.
+##
+## backlog #86 duty 2 (first-pass hole): this used to only ever show/hide a
+## toggle _open_detail() had already built — `if _toggle != null: ... .visible
+## = ...` — so a pane opened on a card with no upgrade (or an already-upgraded
+## one) never got a `_toggle` at all, and every later arrow-step onto a card
+## that DOES have one found `_toggle` still null and silently did nothing. The
+## checkbox then never appeared for the rest of that browsing session, until
+## the pane was closed and reopened straight onto that card via the grid. Now
+## step() builds one on demand, the same way _open_detail() does.
 func step(by: int) -> void:
 	if _deck.size() < 2:
 		return
@@ -373,10 +400,15 @@ func step(by: int) -> void:
 	_entry = _deck[_at]
 	_angle = 0.0
 	_upgraded = false
-	if _toggle != null and is_instance_valid(_toggle):
+	if _wants_toggle(_entry):
+		if _toggle == null or not is_instance_valid(_toggle):
+			_toggle = _build_toggle()
+			_bar.add_child(_toggle)
 		_toggle.set_pressed_no_signal(false)
-		var up: Dictionary = _entry.get("upgrade", {})
-		_toggle.visible = not up.is_empty() and not bool(_entry.get("upgraded", false))
+		_toggle.visible = true
+	elif _toggle != null and is_instance_valid(_toggle):
+		_toggle.set_pressed_no_signal(false)
+		_toggle.visible = false
 	_rebuild_card()
 
 
@@ -496,6 +528,7 @@ func _close_detail() -> void:
 	_card = null
 	_back = null
 	_toggle = null
+	_bar = null
 	_dragging = false
 	_angle = 0.0
 

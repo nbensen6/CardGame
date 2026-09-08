@@ -1099,6 +1099,7 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_music_refresh_stops_playback_the_instant_you_mute()
 	_test_backlog86_fit_shrinks_the_logical_viewport_on_handheld()
 	_test_backlog86_fit_resets_the_logical_viewport_on_desktop()
+	_test_backlog86_deck_view_step_builds_a_toggle_the_open_pane_never_needed()
 
 	print("")
 	if _failures == 0:
@@ -11523,6 +11524,41 @@ func _test_backlog86_fit_does_nothing_without_a_window() -> void:
 	_expect(is_equal_approx(root.content_scale_factor, prior_scale),
 		"fit() on a node with no window is a no-op rather than crashing on a null Window")
 	orphan.free()
+
+
+## backlog #86 duty 2 (first-pass hole): DeckView.step() used to only ever
+## show/hide a "View Upgrades" toggle _open_detail() had already built for
+## whichever card the pane OPENED on -- `if _toggle != null: ... .visible =
+## ...` -- it never built one for a card the pane steps ONTO later. Opening on
+## an already-upgraded card builds no toggle at all (entry.gd's own gate:
+## `upgraded == true` means nothing left to show), so arrowing from there to a
+## card that DOES carry a real upgrade found `_toggle` still null and
+## silently did nothing -- the checkbox for that card, and every card after
+## it, never appeared for the rest of the browsing session, until the pane
+## was closed and reopened straight onto that card from the grid (which calls
+## _open_detail() fresh). Proven against the real DeckView node rather than a
+## lifted pure function: the bug is entirely in WHICH CheckBox instance
+## exists, not in a formula's return value, so there is no pure half to pull
+## it into. Needs a real Viewport (_rebuild_card() reads get_viewport()),
+## hence deferred -- see this function's own header comment on why `root`
+## only resolves a real window one frame after _init() returns.
+func _test_backlog86_deck_view_step_builds_a_toggle_the_open_pane_never_needed() -> void:
+	var already_upgraded := {"id": "a", "name": "A", "upgraded": true, "upgrade": {}}
+	var has_upgrade := {"id": "b", "name": "B", "upgraded": false,
+		"upgrade": {"id": "b", "name": "B+", "upgraded": true}}
+	var deck := [already_upgraded, has_upgrade]
+	var view := DeckView.open(root, deck)
+	view.inspect(0)
+	_expect(view._toggle == null,
+		"opening the pane on an already-upgraded card builds no toggle at all")
+	view.step(1)
+	_expect(view._toggle != null and is_instance_valid(view._toggle) and view._toggle.visible,
+		"stepping onto a card with a real upgrade must BUILD (not just show) the toggle")
+	view.step(-1)
+	_expect(view._toggle != null and is_instance_valid(view._toggle) and not view._toggle.visible,
+		"stepping back to the already-upgraded card hides the toggle it built, without freeing it")
+	view.free()  # immediate, not queue_free() -- this function returns straight into quit(), with
+	# no frame boundary left for a deferred free to run, so a queued one would leak at exit
 
 
 ## backlog #86 duty 3 (thirty-first pass) -- GameHost.phase_string_for is the

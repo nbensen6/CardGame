@@ -2726,6 +2726,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-08** — #86 duty 2 (find an error and resolve it). Last own commit
+  was `e849eaa` (a Bug hunt pass, not this rotation's own — my own last was
+  `643da95`, duty 3), so this turn is duty 2. `combat.gd`, `run.gd`,
+  `boss.gd`, `combatant.gd`, `player_state.gd`, `card.gd`, `content.gd`,
+  `run_map.gd`, `progress.gd`, `run_save.gd`, `game_host.gd` and the
+  `combat_3d.gd` climb/route logic are all extremely well-picked-over by now
+  (dozens of prior duty-2 passes) and turned up nothing new; found this one
+  by widening the search to the UI layer, which had far less of this
+  scrutiny. `game/ui/deck_view.gd`'s "View Upgrades" toggle was a first-pass
+  hole: `_open_detail()` only builds the `CheckBox` when the card the pane
+  OPENED on has a real, unused upgrade, but `step()` (arrow-browsing between
+  cards without closing the pane) only ever showed/hid an *existing* toggle —
+  it never built one. Opening on an already-upgraded card (no toggle built at
+  all) and then arrowing to a card with a genuine upgrade left `_toggle` null
+  forever; the checkbox for that card, and every card after it, silently
+  never appeared for the rest of the browsing session, recoverable only by
+  closing the pane and reopening it straight onto that card from the grid.
+  Fixed by extracting the toggle's build logic (`_build_toggle()`) and the
+  show/hide gate (`_wants_toggle()`) out of `_open_detail()` so `step()` can
+  call both — it now builds one on demand instead of assuming one already
+  exists. Proven against a REAL `DeckView` node (not a lifted pure function —
+  the bug is which `CheckBox` instance exists, not a formula's output),
+  needing `root.add_child()` deferred to `_finish_with_deferred_tests()` for
+  a real `Viewport` (`_rebuild_card()` reads `get_viewport()`). Watched the
+  new test fail against the pre-fix `deck_view.gd` (`git stash` on just that
+  file), confirmed it passes clean with the fix restored. `run_tests.gd`:
+  ALL TESTS PASSED (fresh import, headless, godot 4.7.1-stable). Next `#86`
+  turn is duty 3 (verify a mechanic actually works).
+
 - **2026-09-08** — #86 duty 3 (verify a mechanic actually works), post-rewrite.
   Last own commit was `b3476ca` (duty 2), so this turn is duty 3. Went
   hunting for a mechanic nobody had ever exercised in `run_tests.gd`, which
