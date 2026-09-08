@@ -47,6 +47,15 @@ const EMBERS := {
 const VALUE_RANGE := {
 	"cinder_jackal": {"body_gain": 0.55, "ember_gain": 4.5},
 }
+
+## Per-beast surface breakup (BUILDER-QUEUE.md item 2): a triplanar value
+## noise on creature.gdshader, modulating brightness only — never hue, so the
+## palette-swatch read survives. Uniforms default to a no-op (breakup_strength
+## 0.0); a beast only breaks up once it has an entry here. Their skin carries
+## scarring and tonal variation; ours is flat swatches, one colour per face.
+const SURFACE_BREAKUP := {
+	"cinder_jackal": {"strength": 0.25, "scale": 16.0},
+}
 const ENV := "res://assets/3d/env/"
 ## Every environment is built to this floor radius — see tools/blender/env.py.
 const ENV_RADIUS := 6.0
@@ -2001,6 +2010,11 @@ func _shade_model(root: Node, is_ground := false) -> void:
 				mat.set_shader_parameter("body_gain", vr["body_gain"])
 			if vr.has("ember_gain"):
 				mat.set_shader_parameter("ember_gain", vr["ember_gain"])
+			var sb: Dictionary = SURFACE_BREAKUP.get(_beast_id, {})
+			if sb.has("strength"):
+				mat.set_shader_parameter("breakup_strength", sb["strength"])
+			if sb.has("scale"):
+				mat.set_shader_parameter("breakup_scale", sb["scale"])
 		if is_ground:
 			# Ground wants the shading but not the outline. A rim traces every
 			# edge it is given, and a floor made of slabs has hundreds — lit up,

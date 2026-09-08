@@ -89,15 +89,63 @@ uniform float ember_white : hint_range(0.0, 1.0) = 0.55;
 // EMBERS) renders exactly as before.
 uniform float body_gain : hint_range(0.0, 1.0) = 1.0;
 
+// Surface breakup — BUILDER-QUEUE.md item 2. Their skin carries scarring and
+// tonal variation; ours is flat swatches, one colour per face, no variation
+// anywhere. No textures and no per-asset work: a triplanar value noise, in
+// OBJECT space so it stays glued to the surface through idle sway and
+// breathing rather than swimming across it, modulating brightness only —
+// never hue, so the palette-swatch read this game depends on survives.
+// Default 0.0 is a no-op, same shape as body_gain: a beast only breaks up
+// once it has an entry in combat_3d.SURFACE_BREAKUP.
+uniform float breakup_strength : hint_range(0.0, 1.0) = 0.0;
+uniform float breakup_scale : hint_range(0.1, 20.0) = 3.0;
+
 // Volume cue: the underside of a form reads cooler and darker than its top.
 // Cheap, and it survives being 200px tall on screen where AO detail does not.
 uniform vec4 ground_tint : source_color = vec4(0.42, 0.44, 0.58, 1.0);
 uniform float ground_strength : hint_range(0.0, 1.0) = 0.22;
 
 varying vec3 world_normal;
+varying vec3 object_pos;
+varying vec3 object_normal;
 
 void vertex() {
     world_normal = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
+    // Object space, not world: these models only ever translate/rotate as a
+    // whole (no skinning), so noise keyed here rides along with the beast
+    // instead of sliding across its skin as it breathes and sways.
+    object_pos = VERTEX;
+    object_normal = NORMAL;
+}
+
+// Cheap 2D value noise — no textures, so this has to be analytic. Smoothstep
+// interpolation between hashed lattice corners; nothing fancier is needed to
+// read as scarring at fight distance (~250px tall on screen). Triplanar only
+// ever samples a 2D projection of object space, so the noise stays 2D too.
+float _breakup_hash(vec2 p) {
+    p = fract(p * vec2(0.1031, 0.1030));
+    p += dot(p, p.yx + 33.33);
+    return fract((p.x + p.y) * p.x);
+}
+
+float _breakup_noise(vec2 x) {
+    vec2 i = floor(x);
+    vec2 f = fract(x);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(_breakup_hash(i + vec2(0.0, 0.0)), _breakup_hash(i + vec2(1.0, 0.0)), f.x),
+               mix(_breakup_hash(i + vec2(0.0, 1.0)), _breakup_hash(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+
+// Triplanar: blend the three axis-aligned projections by how much the
+// (object-space) normal faces each one, so a flat low-poly face never shows a
+// single projection stretched across it.
+float _breakup_triplanar(vec3 pos, vec3 nrm, float scale) {
+    vec3 w = abs(normalize(nrm));
+    w /= (w.x + w.y + w.z + 0.0001);
+    float nx = _breakup_noise(pos.yz * scale);
+    float ny = _breakup_noise(pos.xz * scale);
+    float nz = _breakup_noise(pos.xy * scale);
+    return nx * w.x + ny * w.y + nz * w.z;
 }
 
 void fragment() {
@@ -109,7 +157,12 @@ void fragment() {
 
     // Downward-facing surfaces pick up the ground tint, upward ones do not.
     float down = clamp(-world_normal.y, 0.0, 1.0);
-    vec3 tinted = mix(base, base * ground_tint.rgb, down * ground_strength) * body_gain;
+    // -1..1 around zero, so strength 0 multiplies by exactly 1.0 — a true
+    // no-op, not just a small one — and the noise darkens as often as it
+    // lightens rather than flattening the body's own gain.
+    float breakup = (_breakup_triplanar(object_pos, object_normal, breakup_scale) - 0.5) * 2.0;
+    vec3 tinted = mix(base, base * ground_tint.rgb, down * ground_strength)
+                * body_gain * (1.0 + breakup * breakup_strength);
 
     // How much of this face is an ember swatch. A half-cell radius: swatch
     // centres are 32px apart on a 512 atlas, so 0.0625 apart in UV — keying

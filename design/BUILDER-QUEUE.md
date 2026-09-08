@@ -201,11 +201,59 @@ per-beast cost. Phase 3 rolls them out by adding names to a list.
       "orbiting the fight camera" around a beast does nothing without also
       rotating `_beast` directly.
 
-- [ ] **2. Surface breakup.** Ours is flat swatches, one colour per face, no
-      variation anywhere; theirs carries scarring and tonal variation. Cheapest
-      route that needs no textures and no per-asset work: a subtle triplanar or
-      world-space noise in the shader, modulating value only, never hue. Keep it
-      under the threshold where it reads as noise rather than as surface.
+- [x] **2. Surface breakup.** Done 2026-09-08, builder.
+
+      Two uniforms on `creature.gdshader` (`breakup_strength`, `breakup_scale`)
+      and a triplanar value-noise function, multiplying the same `tinted` term
+      `body_gain` already owns — so it stacks with the value-range lever rather
+      than fighting it, and never touches ember pixels (they're mixed in after).
+      No textures: an analytic 2D hash noise, blended across the three
+      axis-aligned projections by the object-space normal so a flat low-poly
+      face never shows one projection stretched across it.
+
+      **Object space, not world space, and that choice is load-bearing.** These
+      models never skin, only translate/rotate as a whole (idle sway,
+      breathing), so noise keyed to `VERTEX` (object-space position, sampled in
+      `vertex()` before `MODEL_MATRIX`) rides along with the beast instead of
+      swimming across its skin frame to frame. World-space noise was not
+      shipped, only reasoned about — object space was obviously right before
+      writing a line, and re-deriving that on a future beast would be a wasted
+      render.
+
+      **Default 0.0 is a true no-op** (`1.0 + breakup*0.0 == 1.0` exactly), same
+      shape as `body_gain` — every beast without an entry in the new
+      `combat_3d.SURFACE_BREAKUP` dict renders unchanged. Only `cinder_jackal`
+      opted in: `strength 0.25, scale 16.0`.
+
+      **The scale number is not a guess — the first two tries were wrong in a
+      way worth recording.** `strength 0.16 scale 3.0` (chosen from the
+      uniform's original comment default) was invisible at fight distance —
+      measured, torso-crop luminance std moved 52.18 → 52.42, noise nobody
+      would see. `strength 0.35 scale 6.0` was visible but wrong: at that scale
+      each low-poly face only spans roughly one noise cell, so instead of
+      blotchy scarring it produced smooth horizontal BANDING across the tan
+      belly plate — an artifact, not the "scarring and tonal variation" the
+      reference has. `scale 16.0` puts several noise cells across each face,
+      which is what turns the same lever into mottling instead of banding;
+      `strength` dropped to `0.25` alongside it stayed plenty visible. Proof:
+      `design/renders/cinder_jackal_breakup_before.png` /
+      `_after.png`, same real fight camera as every other item in this queue
+      (state=3d beast=cinder_jackal, dist 31.44, identical box to the
+      value-range proof). Zoomed 3x crops of the torso/haunch
+      (`_before_crop3x.png` / `_after_crop3x.png`) are what actually shows it —
+      at native 1280x720 the mottling reads as a subtle darkening of the tan
+      belly plate and orange flank, visible but not loud, which is the point:
+      louder than `scale 6` reads as noise, this doesn't.
+
+      Measured in the same torso crop as the value-range proof (270×250,
+      no HUD): mean pixel diff 1.46/255, 8.6% of the crop moved by more than
+      8/255, luminance std 52.18 → 52.36. Small numbers next to the
+      value-range lever's, on purpose — this item's whole brief was "keep it
+      under the threshold where it reads as noise", not "make it loud".
+
+      **What this did NOT try:** a second material channel (roughness
+      variation) — that's item 3, a different lever, and mixing them into one
+      item would have made it harder to tell which one was doing the work.
 
 - [ ] **3. Material variation.** One roughness for the whole animal is why it
       reads as one substance. Give the atlas a second channel, or key off swatch
