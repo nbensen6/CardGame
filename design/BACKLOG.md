@@ -2679,6 +2679,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-08** — #86 duty 2 (find an error and resolve it). The last two
+  commits (`b2d5d63`, `2bb3958`) were both duty-1 asset work (a render-pipeline
+  naming-collision fix, then a bulk re-capture and gate recalibration) with no
+  Log line of their own, so this turn reads as duty 2 either way. Hunted for
+  the two named shapes (first-pass holes, two-copies-of-one-truth) with a
+  delegated read of `core`/`views`/`net`, then verified the strongest finding
+  by hand before touching anything. `Combat.preview()` computed `blk`/`ally_blk`
+  as a raw, independent sum with no reference to `dexterity` or `frail`, while
+  `play_card()` feeds that same number to `Combatant.gain_block()` a moment
+  later, which DOES apply both — the live "Gain N Block" on a card face was
+  told the pre-modifier number, not what the hunter actually receives, for the
+  entire rest of any fight where either stat is nonzero (confirmed against
+  `_test_dexterity_card_lifts_a_later_different_cards_block`'s own math: Brace
+  prints "Gain 5", the hunter gets 7). Same gap on `ally_block` against the
+  ALLY's own dexterity/frail, not the caster's. Fixed by extracting
+  `Combatant.block_after_modifiers()` (the pure half of `gain_block()`) and
+  having `preview()` call it to populate two new keys, `block_after_mods` /
+  `ally_block_after_mods`, which `CardView.face_text()` now reads instead of
+  the raw `block`/`ally_block`. Deliberately did NOT change what `block`/
+  `ally_block` themselves mean — `play_card()` still feeds those raw numbers to
+  `gain_block()`, and the "Bonded" enchant's echo re-derives the echoed-to
+  ally's own dexterity/frail from that same raw number, so changing it would
+  have either double-applied modifiers or silently broken that enchant. Wrote
+  the regression tests first (a `Combat`-level test pinning both the caster's
+  Dexterity and the ally's Frail against what actually lands, plus two
+  `face_text()` unit tests), watched all four fail by temporarily reverting the
+  two new local vars to the raw sum, confirmed `git diff` was clean after
+  restoring. `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot
+  4.7.1-stable). Next `#86` turn is duty 3 (verify a mechanic actually works).
+
 - **2026-09-08** — #86 duty 3 (verify a mechanic actually works). Last rotation
   commit (`8818b99`) was duty 2, so this turn is duty 3. `combat_3d.gd`'s
   climb-route static functions were already fully mined by earlier duty-3
