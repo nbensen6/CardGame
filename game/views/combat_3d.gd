@@ -36,6 +36,17 @@ const SWATCH_AMBER := Vector2(496.0 / 512.0, 1.0 - 336.0 / 512.0)
 const EMBERS := {
 	"cinder_jackal": [SWATCH_TANGERINE, SWATCH_AMBER],   # spine ridge, eyes
 }
+
+## Per-beast value range (BUILDER-QUEUE.md item 1): darkens the lit body and
+## lifts the ember gain in the same change, so the gap to the reference opens
+## from both ends. Both are uniforms on creature.gdshader that default to a
+## no-op (body_gain 1.0, the shader's own ember_gain 2.6); a beast only
+## renders differently once it has an entry here. A swatch swap was tried
+## first and could not move the top of the range at all — see
+## design/BUILDER-QUEUE.md for the measurement.
+const VALUE_RANGE := {
+	"cinder_jackal": {"body_gain": 0.55, "ember_gain": 4.5},
+}
 const ENV := "res://assets/3d/env/"
 ## Every environment is built to this floor radius — see tools/blender/env.py.
 const ENV_RADIUS := 6.0
@@ -1985,6 +1996,11 @@ func _shade_model(root: Node, is_ground := false) -> void:
 					uvs.append(Vector2(-1.0, -1.0))
 				mat.set_shader_parameter("ember_uv", uvs)
 				mat.set_shader_parameter("ember_count", mini(lit.size(), 4))
+			var vr: Dictionary = VALUE_RANGE.get(_beast_id, {})
+			if vr.has("body_gain"):
+				mat.set_shader_parameter("body_gain", vr["body_gain"])
+			if vr.has("ember_gain"):
+				mat.set_shader_parameter("ember_gain", vr["ember_gain"])
 		if is_ground:
 			# Ground wants the shading but not the outline. A rim traces every
 			# edge it is given, and a floor made of slabs has hundreds — lit up,

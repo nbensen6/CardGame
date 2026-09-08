@@ -53,12 +53,52 @@ per-beast cost. Phase 3 rolls them out by adding names to a list.
       small; and **a swatch swap cannot raise the top of the range at all**,
       which is the half that actually creates contrast.
 
-      The lever is the SHADER, not the palette. Something like a per-beast
-      albedo multiplier plus an ember gain, both uniforms on
-      `creature.gdshader`, set from `combat_3d` beside `EMBERS`: darken the lit
-      body and push the emissive up in the same change, so the gap opens from
-      both ends. That is also a pipeline step — every beast gets it for free in
-      phase 3, where a swatch swap would have to be re-authored per animal.
+      **The shader-lever half was tried on 2026-09-08, branch
+      `builder/2026-09-08-value-range-shader`, and the darkening half works —
+      the brightening half could not be confirmed.** Two new uniforms on
+      `creature.gdshader`: `body_gain` (an albedo multiplier applied to
+      everything the ember mix does NOT own, default 1.0 = no-op) and the
+      existing `ember_gain` made overridable per beast. Both are set from a new
+      `combat_3d.VALUE_RANGE` dict beside `EMBERS`, opt-in only, so every other
+      beast renders unchanged. `cinder_jackal` set to `body_gain 0.55`,
+      `ember_gain 4.5` (up from the shader default 2.6).
+
+      Proof is the same real fight camera as the swatch-swap attempt (state=3d
+      beast=cinder_jackal, dist 31.44, identical box):
+      `design/renders/cinder_jackal_valuerange_before.png` /
+      `_after.png`. The body darkening is visibly obvious side by side — not a
+      number nobody could see. Measured in a clean 270×290 crop of the torso
+      alone (no HUD, no ground, no embers in it):
+
+      ```
+                median   above 80%   below 20%   p01-p99 range   mean
+      before     113.6      1.38%      34.23%        199.1       91.4
+      after       74.0      0.00%      44.45%        141.7       76.5
+      ```
+
+      Median dropped 40 points and the near-black fraction climbed 10 points —
+      that half of the lever works and is visible. **What did NOT work:** every
+      pixel this run could find that carries the AMBER/TANGERINE ember swatches
+      (the gold ear studs, a spec highlight low on the chest) got DARKER after
+      the change, same as the rest of the body, not brighter — meaning none of
+      them are actually inside the ember UV keying at this camera angle. Hunted
+      for any pixel that got brighter anywhere on the beast across the whole
+      frame and found none except two stray specular flecks on the hunter
+      figurines at the beast's feet (unrelated, camera-idle noise). This is the
+      union-remesh cost the brief already named: eyes fell from 18.7% of faces
+      to 2.9%, ridge from 2.9% to 0.5%, and from this angle what little survives
+      is not facing the camera. So `ember_gain 4.5` is live in the shader and
+      genuinely a no-op on every other beast, but **nobody has SEEN it do
+      anything yet** — the fix is not a bigger gain, it is getting ember-tagged
+      geometry to face the fight camera at all, which is queue item 5 (a face)
+      territory, not this item's.
+
+      **Next step for this item:** either re-tag which faces carry the ember
+      swatch AFTER the union remesh (so it survives with enough coverage to be
+      camera-facing), or orbit the fight camera across a few yaw angles and
+      check whether the surviving 0.5–2.9% ever faces it at all before spending
+      more on `ember_gain`. Don't re-run the darkening half again — it is
+      proven and committed; only the brightening half is still open.
 
       Ignore the old advice to check `rift` and `drowned`: the builder found
       that cinder_jackal is only ever fought in `quarry`, which was a better
