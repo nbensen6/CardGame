@@ -546,9 +546,26 @@ func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PER
 		ally_blk += int(card.condition_bonus.get("ally_block", 0))
 		climb += int(card.condition_bonus.get("grip", 0))
 
+	# backlog #86 duty 2: `blk`/`ally_blk` above are the raw, pre-modifier sum
+	# and stay that way -- play_card() still feeds them through
+	# Combatant.gain_block(), which is the one place Dexterity/Frail actually
+	# apply, so changing what "block"/"ally_block" mean here would either
+	# double-apply those modifiers in play_card() or silently drop them from
+	# the "Bonded" enchant's echo (combat.gd's echo_block branch, which
+	# deliberately re-derives the ally's OWN Dexterity/Frail from this same
+	# raw number). What was missing is a way to PREDICT the real outcome
+	# without touching that path: these two keys run the exact same math
+	# gain_block() will run, against the stats the block is actually headed
+	# for, so the card face can finally show what the hunter will end up
+	# with instead of the pre-modifier number gain_block() was always going
+	# to change out from under it.
+	var blk_shown := Combatant.block_after_modifiers(blk, ps.combatant.dexterity, ps.combatant.frail)
+	var ally_blk_shown := Combatant.block_after_modifiers(ally_blk, mate.combatant.dexterity, mate.combatant.frail)
+
 	return {
 		"damage": maxi(dmg, 0), "hits": maxi(card.hits, 1),
 		"block": maxi(blk, 0), "ally_block": maxi(ally_blk, 0),
+		"block_after_mods": blk_shown, "ally_block_after_mods": ally_blk_shown,
 		"grip": maxi(climb, 0), "ally_grip": card.ally_grip,
 	}
 

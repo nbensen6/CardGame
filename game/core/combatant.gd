@@ -104,12 +104,23 @@ func predicted_damage(amount: int) -> int:
 ## should: Dexterity's bonus is diminished by Frail like everything else, but
 ## never zeroed out by it.
 func gain_block(amount: int) -> void:
+	block += block_after_modifiers(amount, dexterity, frail)
+
+## The pure half of gain_block() above, split out (backlog #86 duty 2) so
+## Combat.preview() can predict the real number a hunter will end up with
+## instead of keeping its own second copy of this math — the second copy is
+## exactly how the live "Gain N Block" on a card face went stale the moment
+## Dexterity or Frail entered the fight, the same shape that's bitten this
+## project before (fx dicts drifting from Card, GameHost dicts drifting from
+## Card). This function makes drift here structurally impossible instead of
+## just fixed once.
+static func block_after_modifiers(amount: int, dex: int, fr: int) -> int:
 	var gained := maxi(amount, 0)
 	if gained > 0:
-		gained += dexterity
-	if frail > 0 and gained > 0:
+		gained += dex
+	if fr > 0 and gained > 0:
 		gained -= gained / FRAIL_BLOCK_DIVISOR
-	block += gained
+	return gained
 
 ## Artifact (backlog #36): a ward against debuffs. One stack blocks one
 ## debuff application and is spent doing it — the caller applying a debuff

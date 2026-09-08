@@ -308,6 +308,7 @@ func _init() -> void:
 	_test_backlog74_occlusion_flags_a_surface_hidden_behind_a_closer_one()
 	_test_backlog74_occlusion_ignores_geometry_that_does_not_cover_the_same_point()
 	_test_preview_matches_what_the_card_actually_does()
+	_test_backlog86_preview_predicts_block_after_dexterity_and_frail()
 	_test_incoming_reckons_damage_after_block()
 	_test_every_derived_keyword_resolves()
 	_test_player_block_keyword_is_not_shadowed_by_the_boss_move()
@@ -630,6 +631,7 @@ func _init() -> void:
 	_test_backlog86_face_text_multi_hit_damage_says_times()
 	_test_backlog86_face_text_matched_block_merges_to_all_players()
 	_test_backlog86_face_text_mismatched_block_lists_separately()
+	_test_backlog86_face_text_uses_block_after_mods_not_the_raw_number()
 	_test_backlog86_face_text_matched_climb_merges_to_all_players()
 	_test_backlog86_face_text_mismatched_climb_pluralizes_the_allys_line()
 	_test_backlog86_face_text_status_and_utility_lines_join_in_field_order()
@@ -6150,6 +6152,44 @@ func _test_preview_matches_what_the_card_actually_does() -> void:
 		"preview() is exactly what the card deals and blocks (%d dmg, %d block)" % [dealt, gained])
 
 
+## backlog #86 duty 2: Combat.preview()'s "block"/"ally_block" never consulted
+## Dexterity or Frail, even though Combatant.gain_block() -- the function
+## play_card() actually resolves through a moment later -- always has. A
+## hunter carrying either was shown a "Gain N Block" number that was flatly
+## wrong for the rest of the fight (see Combatant.block_after_modifiers()'s
+## doc comment). "block_after_mods"/"ally_block_after_mods" fix the display by
+## running gain_block()'s own math ahead of time; the raw "block"/"ally_block"
+## keys deliberately stay untouched, since play_card() still feeds THOSE to
+## gain_block() and the "Bonded" enchant's echo still needs the un-modified
+## number to apply the echoed-to ally's own stats. Pin both halves: the
+## caster's own Dexterity lifting a plain block card, and Frail on the ALLY
+## receiving an ally_block card (not the caster's Frail).
+func _test_backlog86_preview_predicts_block_after_dexterity_and_frail() -> void:
+	var combat := _new_combat([_deck_of(_defend, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.combatant.dexterity = 3
+	var ci := _first_playable(combat, 0)
+	var pv := combat.preview(0, ps.hand[ci], true)
+	_expect(int(pv["block"]) == 5 and int(pv["block_after_mods"]) == 8,
+		"raw 'block' stays the printed 5 (still what play_card feeds gain_block); 'block_after_mods' shows the Dexterity-lifted 8 the hunter will actually get")
+	var before: int = ps.combatant.block
+	combat.play_card(0, ci, true)
+	_expect(ps.combatant.block - before == int(pv["block_after_mods"]),
+		"what actually landed matches what block_after_mods predicted, not the raw printed number")
+
+	var combat2 := _new_combat([_deck_of(_assist, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var mate: PlayerState = combat2.players[1]
+	mate.combatant.frail = 1   # the ALLY receiving the block is Frailed, not the caster
+	var ci2 := _first_playable(combat2, 0)
+	var pv2 := combat2.preview(0, combat2.players[0].hand[ci2], true)
+	_expect(int(pv2["ally_block"]) == 6 and int(pv2["ally_block_after_mods"]) == 5,
+		"raw 'ally_block' stays the printed 6; 'ally_block_after_mods' shows Frail's cut (6 - 6/4 = 5) on the ally receiving it")
+	var mate_before: int = mate.combatant.block
+	combat2.play_card(0, ci2, true)
+	_expect(mate.combatant.block - mate_before == int(pv2["ally_block_after_mods"]),
+		"the ally's actual gain matches ally_block_after_mods, not the raw printed number")
+
+
 ## An unset rarity silently defaults to "common", which would quietly make a new
 ## rare card as frequent as filler. Every drafted card must declare one.
 func _test_every_card_declares_a_rarity() -> void:
@@ -10371,6 +10411,27 @@ func _test_backlog86_face_text_mismatched_block_lists_separately() -> void:
 		"base": {"block": 4, "ally_block": 6}, "fx": {}, "keywords": []}
 	_expect(CardView.face_text(data, false) == "Gain 4 Block. Ally gains 6 Block.",
 		"different self/ally Block amounts stay two sentences so neither value is lost")
+
+
+## backlog #86 duty 2: face_text() must print "block_after_mods", not the raw
+## "block", once Dexterity/Frail put daylight between them -- the exact number
+## that used to silently disagree with what the hunter actually received.
+## Mismatched raw/after_mods values also change whether the self/ally lines
+## merge: equal RAW amounts that end up unequal after modifiers must NOT read
+## as "All players gain N", since the two hunters would no longer be getting
+## the same thing.
+func _test_backlog86_face_text_uses_block_after_mods_not_the_raw_number() -> void:
+	var lifted := {"preview": {"block": 4, "block_after_mods": 7, "ally_block": 0},
+		"preview_miss": {"block": 4, "block_after_mods": 7, "ally_block": 0},
+		"base": {"block": 4}, "fx": {}, "keywords": []}
+	_expect(CardView.face_text(lifted, false) == "Gain 7 Block.",
+		"Dexterity's lifted number reaches the face, not the raw printed 4")
+
+	var equal_raw_unequal_after := {"preview": {"block": 4, "block_after_mods": 4, "ally_block": 4, "ally_block_after_mods": 3},
+		"preview_miss": {"block": 4, "block_after_mods": 4, "ally_block": 4, "ally_block_after_mods": 3},
+		"base": {"block": 4, "ally_block": 4}, "fx": {}, "keywords": []}
+	_expect(CardView.face_text(equal_raw_unequal_after, false) == "Gain 4 Block. Ally gains 3 Block.",
+		"raw block/ally_block matching is not enough to merge once a Frailed ally actually gets a different amount")
 
 
 func _test_backlog86_face_text_matched_climb_merges_to_all_players() -> void:
