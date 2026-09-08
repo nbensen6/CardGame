@@ -104,31 +104,9 @@ per-beast cost. Phase 3 rolls them out by adding names to a list.
       that cinder_jackal is only ever fought in `quarry`, which was a better
       catch than the instruction it was given.
 
-      **The shader lever has since been BUILT, on branch
-      `builder/2026-09-08-value-range-shader`.** Do not build it again — read
-      that branch first. It adds `body_gain` and an overridable `ember_gain` to
-      `creature.gdshader`, set per beast from a new `combat_3d.VALUE_RANGE`
-      dict, opt-in with a 1.0 no-op default.
-
-      Half of it works and half does not, and the run proved both rather than
-      claiming either:
-
-      - **Darkening works.** Torso-crop median luminance 113.6 → 74.0,
-        near-black fraction 34% → 44%, in a real fight capture.
-      - **Brightening does not show at all.** The run hunted the whole frame for
-        any beast pixel that got brighter and found none — every ember-coloured
-        surface darkened along with the body, meaning almost nothing left on the
-        model actually sits inside the ember UV keying from the fight camera.
-
-      **So the real blocker is the union pass eating the accents, again.** It had
-      already cut the jackal's ridge faces to 0.5% and its eyes to 2.9%; the
-      `union.txt` accent hold-out was supposed to fix that and is evidently not
-      catching enough. Until an ember surface actually survives and faces the
-      camera, the value range can only ever open from the dark end.
-
-      **Next step is therefore NOT more shader work.** It is: re-measure what
-      ember-swatch area survives the union and faces the fight camera, and fix
-      the hold-out until it does. That is item 1a below.
+      **This lever is now MERGED to main** (2026-09-08). The darkening half is
+      done and proven; only the brightening half is open, and it is blocked by
+      item 1a rather than by anything in the shader.
 
 - [ ] **1a. Make the accents survive the union pass — blocks item 1.**
       `unionremesh.py` holds `union.txt` accent swatches out of the remesh and
