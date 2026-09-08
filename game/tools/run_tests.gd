@@ -396,6 +396,8 @@ func _init() -> void:
 	_test_dexterity_and_frail_interact_correctly()
 	_test_dexterity_card_lifts_later_block_not_its_own()
 	_test_relic_start_dexterity()
+	_test_log_reports_block_after_dexterity_not_raw_card_number()
+	_test_log_reports_ally_block_after_ally_frail_not_raw_card_number()
 	# Intangible, Buffer and Plated Armour, the tier above Block (backlog #61)
 	_test_intangible_caps_a_hit_that_gets_past_block()
 	_test_intangible_is_not_spent_when_block_fully_absorbs_the_hit()
@@ -7004,6 +7006,39 @@ func _test_dexterity_card_lifts_later_block_not_its_own() -> void:
 	combat.play_card(0, _first_playable(combat, 0))  # a second Steady Wrap: Dexterity is live now
 	_expect(ps.combatant.block == 4 + (4 + 1),
 		"the banked Dexterity from the first play lifts the second card's own Block")
+
+
+## #86 duty 2 (e3da77f) fixed preview()'s "block_after_mods" so the card FACE
+## shows the real, Dexterity/Frail-adjusted number before a card is played.
+## play_card()'s own combat.log line was never touched and still prints the
+## raw, pre-modifier pv["block"]/pv["ally_block"] straight through -- the
+## exact "two copies of one truth" shape this codebase has hit before: the
+## combatant's real `block` field and the log text describing how it got
+## there drift apart the moment Dexterity or Frail is on the board, and no
+## existing test reads combat.log's content to catch it.
+func _test_log_reports_block_after_dexterity_not_raw_card_number() -> void:
+	var combat := _new_combat([_deck_of(_defend, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.combatant.dexterity = 3
+	var ci := _first_playable(combat, 0)
+	combat.play_card(0, ci, true)
+	_expect(ps.combatant.block == 8, "sanity: Dexterity lifts the real Block gain to 8")
+	var last: String = combat.log[-1]
+	_expect(last.contains("+8 block") and not last.contains("+5 block"),
+		"the log reports the real Dexterity-lifted gain (8), not Defend's raw printed number (5): %s" % last)
+
+
+func _test_log_reports_ally_block_after_ally_frail_not_raw_card_number() -> void:
+	var combat := _new_combat([_deck_of(_assist, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var mate: PlayerState = combat.players[1]
+	mate.combatant.frail = 1   # the ALLY receiving the block is Frailed, not the caster
+	var ci := _first_playable(combat, 0)
+	var before: int = mate.combatant.block
+	combat.play_card(0, ci, true)
+	_expect(mate.combatant.block - before == 5, "sanity: Frail cuts the ally's real Block gain to 5")
+	var last: String = combat.log[-1]
+	_expect(last.contains("+5 block to") and not last.contains("+6 block to"),
+		"the log reports the ally's real Frail-cut gain (5), not Assist's raw printed number (6): %s" % last)
 
 
 func _test_relic_start_dexterity() -> void:

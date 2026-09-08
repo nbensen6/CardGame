@@ -888,19 +888,28 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	# mistiming a defensive card means eating the blow bare.
 	var blk: int = int(pv["block"])
 	if blk > 0:
+		# The log must print what the combatant actually ends up with, not the
+		# raw card number -- pv["block"] is deliberately pre-modifier (see the
+		# comment above Combat.preview()'s blk_shown/ally_blk_shown), so a
+		# Dexterity or Frail hunter's log line drifted from their real Block
+		# gain the same way the card-face preview did before #86 duty 2 fixed
+		# that half of this exact bug (e3da77f).
+		var real_blk := Combatant.block_after_modifiers(blk, ps.combatant.dexterity, ps.combatant.frail)
 		ps.combatant.gain_block(blk)
 		var guard := "  (nailed it!)" if card.timed and card.timed_block > 0 else ""
-		_log("%s plays %s — +%d block%s." % [who, card.name, blk, guard])
+		_log("%s plays %s — +%d block%s." % [who, card.name, real_blk, guard])
 		if enchant_effect == "echo_block":  # "Bonded" (backlog #50) — the ally feels it too
 			var bonded: PlayerState = players[ally_index(pi)]
+			var real_bonded_blk := Combatant.block_after_modifiers(blk, bonded.combatant.dexterity, bonded.combatant.frail)
 			bonded.combatant.gain_block(blk)
-			_log("%s's Bonded card echoes +%d block to %s." % [who, blk, bonded.combatant.name])
+			_log("%s's Bonded card echoes +%d block to %s." % [who, real_bonded_blk, bonded.combatant.name])
 	var ally_blk: int = int(pv["ally_block"])
 	if ally_blk > 0:
 		var ally: PlayerState = players[ally_index(pi)]
+		var real_ally_blk := Combatant.block_after_modifiers(ally_blk, ally.combatant.dexterity, ally.combatant.frail)
 		ally.combatant.gain_block(ally_blk)
 		var anchored := "  (nailed it!)" if card.timed and card.timed_ally_block > 0 else ""
-		_log("%s plays %s — +%d block to %s%s." % [who, card.name, ally_blk, ally.combatant.name, anchored])
+		_log("%s plays %s — +%d block to %s%s." % [who, card.name, real_ally_blk, ally.combatant.name, anchored])
 	if card.dexterity > 0:  # backlog #60 — lifts Block gained for the REST of the
 		# fight, same as Strength lifts damage; applied after this card's own Block
 		# above so a card carrying both fields doesn't inflate its own printed number.

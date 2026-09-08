@@ -2726,6 +2726,37 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-08** — #86 duty 2 (find an error and resolve it), post-rewrite.
+  Art (old duty 1) is dead per the 2026-09-08 rewrite, so with the last valid
+  duty commit being `94dcedc` (duty 3, verify a mechanic) this turn is duty 2
+  (`77f11d4`, the duty-1 art commit right after it, landed just before the
+  rewrite and doesn't count). Delegated a read of `game/core` and
+  `game/session` for the two named shapes and got a real "two copies of one
+  truth": `#86 duty 2`'s own prior fix (`e3da77f`) taught `Combat.preview()`
+  to predict the real, Dexterity/Frail-adjusted Block a card will grant
+  (`block_after_mods`/`ally_block_after_mods`, so the card FACE stopped
+  lying) but never touched `play_card()`'s `combat.log` lines a few dozen
+  lines below it, which still print the raw, pre-modifier `pv["block"]`/
+  `pv["ally_block"]` straight through — so the log narrating what a play did
+  drifted from what the combatant's own `block` field actually holds, on the
+  same Dexterity/Frail axis, in the same function, right next to the fix that
+  covered the other half of this exact bug. Confirmed by hand: a hunter with
+  Dexterity 3 who plays Defend (raw 5 Block) really gains 8, but the log kept
+  saying "+5 block."; a Frailed ally hit by Assist's 6 ally_block really
+  gains 5, but the log kept saying "+6 block to <ally>." Fixed by computing
+  `Combatant.block_after_modifiers()` against each affected combatant's own
+  stats (caster, the "Bonded" echo's ally, and the ally_block recipient) right
+  before their `gain_block()` call and logging that instead of the raw
+  number — `gain_block()` itself, and what `pv["block"]`/`pv["ally_block"]`
+  mean, are both untouched, so nothing else in the resolution path shifts.
+  Wrote the regression tests first (log-content assertions — nothing in
+  `run_tests.gd` previously read `combat.log`'s text at all, which is why an
+  already-partially-fixed bug like this survived undetected), watched both
+  fail against the un-fixed `combat.gd` (confirmed by stashing only that
+  file), then confirmed green after restoring the fix. `run_tests.gd`: ALL
+  TESTS PASSED (fresh import, headless, godot 4.7.1-stable). Next `#86` turn
+  is duty 3 (verify a mechanic actually works).
+
 - **2026-09-08** — #86 duty 1 (improve an asset — diagnose). Last own commit
   (`94dcedc`) was duty 3, so this turn is duty 1: beasts first, per the
   fixer's tier table. `husk_beetle` and `bog_leech` both just got a fixer
