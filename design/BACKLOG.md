@@ -2693,6 +2693,27 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-08** — #86 duty 1 (improve an asset — diagnose). Last own commit
+  (`94dcedc`) was duty 3, so this turn is duty 1: beasts first, per the
+  fixer's tier table. `husk_beetle` and `bog_leech` both just got a fixer
+  pass 4 applied and are ripe for re-diagnosis, but their own progress files
+  flag them as already 4 passes deep with no plateau/rebuild trigger yet —
+  picked a beast with a bigger gap instead. The naming-collision fix
+  (`b2d5d63`) and bulk re-capture (`2bb3958`) that landed since my last turn
+  unblocked all 14 original-cast beasts that had never had a real render —
+  `gale_serpent.md` went from "cannot score" to its first actual pass. Scored
+  it (32/50: Sil 6, Prop 7, Hygiene 5, Colour 7, Style 7) and found a clean,
+  computed root cause for the two lowest lines: `beast.py`'s `shelf()` boxes
+  at climb Heights 3 and 6 are sized independent of the coil tube's own local
+  radius (solved from `z_for()` and the script's own `radii` formula) and
+  overhang it by 0.19-0.20 units on every side — a flat plank read where a
+  worn ledge was intended, the same "part spaced away from the body" fault
+  named on other beasts. Wrote the two-line diagnosis and a concrete fix (two
+  numeric size changes) into `gale_serpent.md`; did not touch
+  `tools/blender/gale_serpent.py` — that's the fixer's file. `run_tests.gd`:
+  ALL TESTS PASSED (fresh import, headless, godot 4.7.1-stable). Next `#86`
+  turn is duty 2 (find an error and resolve it).
+
 - **2026-09-08** — #86 duty 2 (find an error and resolve it). The last two
   commits (`b2d5d63`, `2bb3958`) were both duty-1 asset work (a render-pipeline
   naming-collision fix, then a bulk re-capture and gate recalibration) with no

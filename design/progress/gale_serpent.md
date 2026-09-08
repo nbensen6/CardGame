@@ -1,6 +1,9 @@
 # gale_serpent — refinement log
 
-**Cannot score this pass — see below. No diagnosis, no fix proposed.**
+**Scored for the first time in Pass 1 below (2026-09-08), after the naming
+collision that blocked every earlier attempt was fixed.** The section
+immediately following this line is the original, now-historical account of
+that block — kept for the record, not current status.
 
 ## What happened
 
@@ -100,3 +103,108 @@ This raises the floor on why `look.sh`/`look.cmd`'s naming fix matters: it
 isn't blocking one flagged beast, it's blocking a first real look at half the
 cast. Still not fixed here, for the same reason as above — shared tooling,
 duty-2 shaped, not a single beast's diagnosis.
+
+---
+
+## Pass 1 — the first real score, #86 duty 1, 2026-09-08
+
+The block above is now history, not a live blocker. `b2d5d63` fixed
+`look.sh`/`look.cmd`'s output naming (grounds now write `<name>_env_pass<N>_*`)
+and `2bb3958` bulk re-captured the whole cast under it — `gale_serpent` landed
+at `design/renders/gale_serpent_pass2_*.png` (`_34`, `_front`, `_sil`; no
+`_side`/`_top`/`_form`/`_wire` were taken for this asset in that sweep,
+scoring against what exists rather than blocking on renders nobody has, same
+as `husk_beetle.md` pass 3). Confirmed this is a real cast capture, not
+another collision: `gale_serpent_env_pass1_sil.png` exists alongside it as a
+separate file for the first time, and `gale_serpent_pass2_34.png` actually
+shows a serpent — head, hood, coiled body — not a ring of stones.
+
+**What is actually there.** A tall, tapering spiral: a horned, hooded head at
+the top with two amber eyes and a gold sigil ring at the throat, the body one
+continuous coiling limb narrowing from a wide base to the neck, a paler belly
+band on the inside of the coil, small periwinkle fins along the outer spine,
+and two flat silver ledges jutting off the coil at two heights.
+
+| Pass | Sil | Prop | Hygiene | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 1 | 6 | 7 | 5 | 7 | 7 | **32** |
+
+- **Silhouette (6):** `gale_serpent_pass2_sil.png` reads as an unmistakable
+  coiled S-shape at 64px — nothing else in the cast turns, per the script's
+  own docstring, and this is the one place that claim actually pays off.
+  Held below the 8-9 anchor band because the outline isn't a clean taper: a
+  handful of small hard points break it along the upper-right of the coil,
+  where geometry sits proud of the tube surface (see Hygiene below for the
+  measured cause of at least two of them). Anchor band 6-7: "the forms have
+  been worked... but a specific part still fails" — the read is strong, the
+  failing part is real.
+- **Proportion (7):** the coil narrows convincingly from a wide floor base to
+  a slim throat, matching the docstring ("no body under the coil, the coil is
+  the body"), and the hooded head sits at a believable scale against the
+  taper beneath it. Not higher because the two ledges (see Hygiene) sit
+  noticeably wider than the coil they're mounted on, which reads as added
+  mass the taper doesn't actually have.
+- **Build hygiene (5):** `b.shelf(3, on_coil(b.z_for(3)), (0.62, 0.52), ...)`
+  and `b.shelf(6, on_coil(b.z_for(6)), (0.54, 0.46), ...)` are sized without
+  reference to the coil tube's own local radius at those points. Computed it
+  directly from `beast.py`'s `z_for` and the script's own `radii` formula:
+  `z_for(3)` = 1.930 model-z, which lands at `t=0.4951` along the coil
+  parametrisation, where the tube radius is `0.52 - 0.20*0.4951 = 0.421`.
+  `z_for(6)` = 3.015, `t=0.8508`, tube radius `0.52 - 0.20*0.8508 = 0.350`.
+  Both shelves are centred ON the coil centreline (`on_coil` returns the
+  centreline x/y) but sized bigger than the tube around it: shelf 3's
+  half-width `0.62` exceeds the `0.421` tube radius by `0.199` (47% over),
+  half-depth `0.52` exceeds it by `0.099`; shelf 6's half-width `0.54`
+  exceeds `0.350` by `0.190` (54% over), half-depth `0.46` exceeds it by
+  `0.110`. That is a box overhanging the tube it sits on by roughly a fifth
+  to half its own radius on every side — the same "part spaced away from the
+  body" fault named on Yoke Ox, Silk Widow and Husk Beetle's earlier passes,
+  here on a flat slab instead of a rod. `gale_serpent_pass2_34.png` and
+  `_front.png` show it directly: two grey rectangular plates projecting past
+  the coil's edge rather than sitting flush as a worn step in it.
+- **Colour & read (7):** sky-blue coil, pale ice belly, indigo/blue hood,
+  gold sigil ring and silver ledges all separate cleanly by value in
+  `_34.png`; nothing dark-on-dark.
+- **Style consistency (7):** kenney-primitive vocabulary (tapers, wedges,
+  balls), sits fine beside the rest of the cast.
+
+## Diagnosis — two lowest
+
+Both trace to the same measured root cause (the shelf boxes' overhang past
+the tube surface), same "one visual unit" precedent as `husk_beetle.md` and
+`bog_leech.md`:
+
+1. **Build hygiene (5).** Concrete fix: shrink both shelf sizes to sit inside
+   (with a small margin, not flush-exact) the coil tube's local radius rather
+   than the coil's spiral radius. Change
+   `b.shelf(3, on_coil(b.z_for(3)), (0.62, 0.52), SILVER, thickness=0.12)`
+   to `(0.46, 0.42)`, and
+   `b.shelf(6, on_coil(b.z_for(6)), (0.54, 0.46), SILVER, thickness=0.12)`
+   to `(0.38, 0.36)` — both now sit just outside their local tube radius
+   (0.421 and 0.350) by 0.03-0.04 instead of 0.10-0.20, reading as a lip worn
+   into the coil rather than a plank bolted onto it.
+2. **Silhouette (6).** Same edit — the shelves are the largest, most cleanly
+   measured deviation from the tube surface, so shrinking them is the honest
+   first attempt at the silhouette notches too, rather than inventing a
+   second, unmeasured fix.
+
+Not applying either — this is a diagnosis pass; `tools/blender/
+gale_serpent.py` is the fixer's file (`tools/fixer/BRIEF.md`).
+
+**Flag for whoever applies this:** `shelf()`'s `size[1]` (half-depth) also
+sets the climb anchor's lip offset (`at[1] - size[1] * lip`), so shrinking
+`size` moves the exact spot a hunter stands, not just the visual box. That's
+expected — re-run `run_tests.gd` and check the build log's `HOLD` lines after
+rebuild, same as every other shelf/hold edit in this project, rather than
+assuming the contract survives untouched.
+
+## Unsure about
+
+Whether the silhouette notches are entirely explained by the two shelves or
+whether the periwinkle spine fins (`b.wedge` calls, `for i in range(9, N-4,
+5)`) also contribute — there are more fin insertions (7) than shelves (2)
+spread across more of the coil's height, and their own overhang past the
+tube wasn't separately measured this pass; the shelf math was clean and
+computable, the fin geometry (rotated wedges via `aim()`) is not, without
+rendering the change. If shrinking the shelves doesn't clear the remaining
+notches, look at the fins next.
