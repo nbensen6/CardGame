@@ -871,6 +871,17 @@ func _init() -> void:
 	_test_backlog86_climb_marker_for_ignores_an_unrelated_name()
 	_test_backlog86_climb_marker_for_is_case_sensitive_on_the_prefix()
 	_test_backlog86_climb_marker_for_accepts_a_negative_height()
+	# backlog #86 duty 3 (forty-first pass): Combat3D.hop_arc -- the pure shape
+	# of the hunter jump between ledges (Nick's own named example of a
+	# mechanic to verify was "the jump mechanic on hunters"). Every prior pass
+	# on the jump proved the CLIMB rules under it; nothing had ever proven the
+	# arc of the hop itself.
+	_test_backlog86_hop_arc_clamps_the_rise_for_a_short_hop()
+	_test_backlog86_hop_arc_clamps_the_rise_for_a_long_hop()
+	_test_backlog86_hop_arc_scales_with_distance_inside_the_clamp()
+	_test_backlog86_hop_arc_leans_the_apex_toward_the_landing()
+	_test_backlog86_hop_arc_splits_the_step_into_a_rise_and_a_fall()
+	_test_backlog86_hop_arc_never_lets_the_fall_reach_zero()
 	# backlog #86 duty 3 (thirty-first pass): GameHost.phase_string_for, lifted
 	# out of GameHost._phase_string -- the wire-protocol mapping from Run.Phase
 	# to the string game_3d.gd's SCENES table routes on. Every prior duty-3
@@ -9957,6 +9968,64 @@ func _test_backlog86_climb_marker_for_accepts_a_negative_height() -> void:
 	var m: Dictionary = Combat3D.climb_marker_for("climb_-2")
 	_expect(String(m["kind"]) == "climb" and int(m["height"]) == -2,
 		"a negative Height in a marker name parses same as a positive one")
+
+
+## backlog #86 duty 3 (forty-first pass) -- Combat3D.hop_arc, the pure shape
+## of the hunter jump between ledges. Nick's own named example of a mechanic
+## to verify was "the jump mechanic on hunters"; every prior duty-3 pass on
+## that jump proved the CLIMB rules under it (route_between_rungs,
+## foothold_anchor, climb_marker_for) but never the arc of the hop itself.
+## hop_arc is genuinely a rule with failure modes, not just presentation --
+## an unclamped hop over a long haul would arc absurdly high, and a fall half
+## that hit zero would snap the landing instead of easing into it -- so it
+## earns real assertions rather than a fake one on Tween timing.
+func _test_backlog86_hop_arc_clamps_the_rise_for_a_short_hop() -> void:
+	var arc: Dictionary = Combat3D.hop_arc(Vector3.ZERO, Vector3(0.05, 0, 0), 0.3)
+	_expect(is_equal_approx(float(arc["hop"]), Combat3D.HUNTER_HEIGHT * 0.5),
+		"a very short hop still rises at least half a hunter's height, per the documented floor")
+
+
+func _test_backlog86_hop_arc_clamps_the_rise_for_a_long_hop() -> void:
+	var arc: Dictionary = Combat3D.hop_arc(Vector3.ZERO, Vector3(50, 0, 0), 0.3)
+	_expect(is_equal_approx(float(arc["hop"]), Combat3D.HUNTER_HEIGHT * 2.5),
+		"a very long hop is capped at 2.5x a hunter's height, per the documented ceiling")
+
+
+func _test_backlog86_hop_arc_scales_with_distance_inside_the_clamp() -> void:
+	var from := Vector3.ZERO
+	var near := Combat3D.hop_arc(from, Vector3(1.0, 0, 0), 0.3)
+	var far := Combat3D.hop_arc(from, Vector3(2.0, 0, 0), 0.3)
+	_expect(float(far["hop"]) > float(near["hop"]),
+		"between the clamps, a farther hop rises higher than a nearer one")
+
+
+func _test_backlog86_hop_arc_leans_the_apex_toward_the_landing() -> void:
+	var from := Vector3.ZERO
+	var to := Vector3(10.0, 0, 0)
+	var arc: Dictionary = Combat3D.hop_arc(from, to, 0.3)
+	var apex: Vector3 = arc["apex"]
+	# 0.58 of the way from 'from' to 'to' on the flat axis -- past the midpoint,
+	# so the arc reads as a jump ONTO the landing rather than a lob up the middle.
+	_expect(apex.x > 5.0 and apex.x < 10.0,
+		"the apex sits past the midpoint toward the landing (documented 0.58 lerp), not centred or past the end")
+	_expect(apex.y > 0.0, "the apex rises above the flat line between the two footholds")
+
+
+func _test_backlog86_hop_arc_splits_the_step_into_a_rise_and_a_fall() -> void:
+	var arc: Dictionary = Combat3D.hop_arc(Vector3.ZERO, Vector3(1, 0, 0), 1.0)
+	_expect(is_equal_approx(float(arc["rise"]), 0.55) and is_equal_approx(float(arc["fall"]), 0.45),
+		"a 1-second hop splits into a 0.55s rise and a 0.45s fall, decelerating up and accelerating down")
+	_expect(is_equal_approx(float(arc["rise"]) + float(arc["fall"]), 1.0),
+		"the two halves account for the whole step -- no gap and no overlap")
+
+
+func _test_backlog86_hop_arc_never_lets_the_fall_reach_zero() -> void:
+	# A near-zero step (a very fast re-grip) would otherwise hand tween_property
+	# a 0-duration fall, which SNAPS the landing instead of easing into it --
+	# exactly the "no weight" complaint this whole mechanic exists to fix.
+	var arc: Dictionary = Combat3D.hop_arc(Vector3.ZERO, Vector3(1, 0, 0), 0.02)
+	_expect(float(arc["fall"]) >= 0.05,
+		"the fall half is floored at 0.05s even for a near-instant step, per the documented maxf floor")
 
 
 ## backlog #86 duty 2: `_on_card_tapped` used to read ONLY the team's relic mod

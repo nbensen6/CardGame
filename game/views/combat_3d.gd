@@ -2263,13 +2263,10 @@ static func route_between_rungs(rungs: Array, from_foot: int, to_foot: int) -> A
 ## stay exactly the size it was.
 func _hop(tw: Tween, node: Node3D, body: Node3D, from: Vector3, to: Vector3,
 		step: float) -> void:
-	var hop: float = clampf(from.distance_to(to) * 0.18, HUNTER_HEIGHT * 0.5,
-		HUNTER_HEIGHT * 2.5)
-	# Lean the apex toward the landing, so it reads as a jump ONTO something
-	# rather than a lob. Straight up the middle looks like a fountain.
-	var apex := from.lerp(to, 0.58) + Vector3.UP * hop
-	var rise := step * 0.55
-	var fall: float = maxf(step - rise, 0.05)
+	var arc := hop_arc(from, to, step)
+	var apex: Vector3 = arc["apex"]
+	var rise: float = arc["rise"]
+	var fall: float = arc["fall"]
 	var live: bool = body != null and is_instance_valid(body)
 	tw.tween_property(node, "position", apex, rise).set_ease(Tween.EASE_OUT)
 	if live:
@@ -2281,6 +2278,28 @@ func _hop(tw: Tween, node: Node3D, body: Node3D, from: Vector3, to: Vector3,
 			fall).set_ease(Tween.EASE_IN)
 		# The landing squash is the half people actually read as weight.
 		tw.tween_property(body, "scale", Vector3.ONE, 0.12) 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+## Pure form of the arc above: the apex the hop rises to and the two halves'
+## durations, from nothing but the two endpoints and the step time -- no
+## Tween, no node, no scale. #86 duty 3 (verify a mechanic actually works) --
+## Nick's own named example was "the jump mechanic on hunters"; this is the
+## one part of that jump that is not pure presentation (the squash/tween
+## calls right above stay untested, correctly, since Tween timing itself
+## isn't something a headless run can observe). This is the shape of the arc
+## itself: how high it rises and where its two halves split, both real rules
+## with real failure modes (an unclamped hop over a long haul would arc
+## absurdly high; a fall half that hit zero would snap the landing instead of
+## easing into it).
+static func hop_arc(from: Vector3, to: Vector3, step: float) -> Dictionary:
+	var hop: float = clampf(from.distance_to(to) * 0.18, HUNTER_HEIGHT * 0.5,
+		HUNTER_HEIGHT * 2.5)
+	# Lean the apex toward the landing, so it reads as a jump ONTO something
+	# rather than a lob. Straight up the middle looks like a fountain.
+	var apex := from.lerp(to, 0.58) + Vector3.UP * hop
+	var rise := step * 0.55
+	var fall: float = maxf(step - rise, 0.05)
+	return {"apex": apex, "rise": rise, "fall": fall, "hop": hop}
 
 
 ## Slides a hunter to `to` for a move that is NOT a climb — the beast rescaled,

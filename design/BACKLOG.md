@@ -2726,6 +2726,28 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-08** — #86 duty 3 (verify a mechanic actually works). Last own
+  commit was `5e2c8cb` (duty 2, the Burn Coal cheapen-amount fix), so this
+  turn is duty 3. This section names Nick's own example directly: "the jump
+  mechanic on hunters." Every prior duty-3 pass on the jump proved the CLIMB
+  rules under it (`route_between_rungs`, `foothold_anchor`, `climb_marker_for`
+  — all already covered) but none had ever touched the arc of the hop itself
+  in `combat_3d.gd`'s `_hop()`. Grepped this file for "hop"/"_apex" and found
+  zero hits — genuinely untested. Split the pure geometry (how high the hop
+  rises, where the apex leans, how the step splits into a rise and a fall)
+  out into a static `hop_arc(from, to, step) -> Dictionary`, leaving `_hop()`
+  to just apply it to the Tween/node/body — same shape as every prior
+  extraction in this file. Added six tests: the rise clamps at both the
+  documented floor (0.5x hunter height) and ceiling (2.5x), scales with
+  distance in between, the apex leans past the midpoint toward the landing
+  (documented 0.58 lerp) rather than sitting in the middle, the step splits
+  0.55/0.45 rise/fall with no gap or overlap, and the fall half never reaches
+  a zero duration (which would snap the landing instead of easing into it —
+  exactly the "no weight" complaint this mechanic exists to fix). All pass
+  against the real constants, not reimplementations. `run_tests.gd`: ALL
+  TESTS PASSED (fresh import, headless, godot 4.7.1-stable). Next `#86` turn
+  is duty 2 (find an error and resolve it).
+
 - **2026-09-08** — #86 duty 2 (find an error and resolve it). Last own commit
   was `69296d0` (duty 3, CardView's sweep-bar timing grade), so this turn is
   duty 2. Found the same "hand-copied fx dict drifts" shape this rotation has
