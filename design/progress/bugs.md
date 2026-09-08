@@ -5,7 +5,114 @@ score sheets. Per `tools/fixer/BRIEF.md`: fix it only if it's inside
 `tools/blender/**` / `game/assets/3d/**`; anything in `game/**` GDScript gets
 written up here for the session, not touched.
 
-## 2026-09-08 — the Frog is fit to a person's height, so it reads as a person-sized frog everywhere it stands next to another hunter
+## 2026-09-08 — the main menu shows four characters that don't exist in this game (Sloth, Goat, Monkey heroes; a Rhino "Beast"), while the real 5-hunter roster and every Titan are absent from it
+
+**Pass C (cross-surface) — first run of this pass since the brief rewrite.**
+Subject: "who/what does the main menu claim this game is about," traced against
+`game/data/characters.json` (the real hunter roster) and `game/data/bosses.json`
+(the real beast/Titan pools), then against the deeper character-select screen
+that already gets this right.
+
+**Command:**
+```
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:\shot_menu.png state=menu
+```
+No `beast=`/`slot=` needed — this is the title screen, first thing any player
+sees before a run starts.
+
+**What the harness printed:** nothing relevant — `state=menu` has no `HUNTER`/`VIS`
+self-test, so this is a looking-at-the-picture find like Pass D's, not a `FAIL` line.
+
+**What I saw in the PNG:** Under the "TITAN-SLAYERS" title, the row of four small
+"Heroes" icons reads, left to right: a 3D-rendered Frog (correct — matches the
+current roster), then three flat, differently-styled cartoon icons captioned
+nothing on-screen but sourced (per `game/views/menu.tscn:6-8`) from
+`assets/portraits/sloth.png`, `goat.png`, `monkey.png`. To the right, a large
+"Beast" showcase image (`menu.tscn:41-54`) fills a third of the screen with
+`assets/portraits/rhino.png`, a flat cartoon rhino head.
+
+**Why this is wrong, not a style opinion:** I grepped `game/data/characters.json`
+and `game/data/bosses.json` for `"sloth"`, `"goat"`, `"monkey"`, `"rhino"` as ids
+— zero matches, in either file, anywhere. The actual 5-hunter roster is The Frog,
+The Vine-Weaver, The Mountain Climbers, The Goblin Engineer, The Lightbearer
+(`characters.json` name fields). The actual beast pool across regular/elite/titan
+is `crag_pup`, `bramble_hog`, `bounder`, `root_lurker`, `sky_snapper`, `riftling`,
+`husk_beetle`, `thrasher`, `boulder_ram`, `cinder_jackal`, `glyph_tortoise`,
+`yoke_ox`, `mire_snapper`, `frost_sentinel`, `grove_bear`, `shifting_idol`,
+`gloom_moth`, `bog_leech`, `silk_widow`, `brine_urchin`, `clot_toad`,
+`flicker_stag`, `eyrie_hawk`, `riptide_eel`, `stone_warden`, `gale_serpent`,
+`drowned_colossus`, `sunken_warden` — no rhino among them either. Sloth, goat,
+monkey and rhino are leftover assets from an older placeholder animal set
+(`game/assets/portraits/{sloth,goat,monkey,rhino,...}.png`, all dated Jul 28 —
+by a wide margin the oldest files in that whole folder, untouched since,
+alongside other unused leftovers of the same set: bear, crocodile, dog, owl,
+penguin, pig, rabbit, snake, walrus, whale). This is the same species of bug as
+the frog.glb/frog.png staleness this brief was rewritten over, but worse in
+kind: not a render that lags its source by a day, but four character slots on
+the first screen of the game that were never repointed at the real roster when
+it was built out to five named hunters, so the menu still promotes a cast that
+was, at best, a very early prototype and, per data, never existed as playable
+content at all.
+
+**Confirmed correct for comparison, same run:** `state=3dselect` (the actual
+hunter-pick screen, one screen deeper than the menu) shows all five real
+hunters — Frog, Vine-Weaver, Mountain Climbers, Goblin Engineer, Lightbearer —
+as their current 3D models with correct ability text, so this is not a
+roster-wide problem; it's specifically `game/views/menu.tscn` never having
+been updated. The little HP-panel hunter icons during combat (`state=3d`) also
+correctly show Frog/Goblin Engineer, not the old set. The menu is the one
+surface still wrong.
+
+**Not fixed here** — `game/views/menu.tscn` is a scene resource, outside
+`tools/blender/**` / `game/assets/3d/**` and outside this lane's job under the
+new brief (this lane changes nothing at all now). Whoever picks this up needs
+either real portrait art for the current roster's "hero row" use case (the
+existing `portraits/*.png` for Frog/Vine-Weaver/Mountain Climbers/Goblin
+Engineer/Lightbearer are all 3D renders sized for cards, not small flat icons —
+worth deciding whether the menu should reuse those directly or want a distinct
+icon-style asset) and a real Titan for the "Beast" showcase (`cinder_jackal` or
+whichever the game wants to lead with) in place of `rhino.png`.
+
+**Second, smaller find from the same subject-trace — a portrait that already
+went stale within today's own build:** while tracing `cinder_jackal` across
+surfaces (3D model in a live fight vs. its baked portrait) to get to the menu
+finding above, I caught the model and portrait disagreeing with each other by
+about 40 minutes:
+```
+game/assets/3d/cast/cinder_jackal.glb            2026-09-08 13:42:36
+game/assets/portraits/cinder_jackal.png          2026-09-08 13:02:00
+```
+Commit `0db698f` ("Phase 1: darken cinder_jackal's body swatches, let the ember
+ridge scream", 13:42:26) recoloured the model's body swatches (RUST→BRICK,
+TAN→UMBER per the commit message) *after* the batch portrait bake at
+13:01:57–13:02:00 that produced every other beast's portrait that same run.
+I opened both: `assets/portraits/cinder_jackal.png` (the baked portrait, still
+bright rust-orange) against a fresh `state=3d beast=cinder_jackal` capture (the
+live fight model, visibly the darker brick/umber the commit describes) —
+they no longer match. Lower-severity than the menu find because I could not
+find anywhere in the current UI that actually displays this portrait: `boss.art`
+is threaded all the way from `content.gd` through `game_host.gd`'s
+`_boss_art_per_act()` into the client state dict under `"boss_art"`
+(`game_host.gd:343,437-441`), but no `game/views/**` or `game/ui/**` file reads
+`boss_art` or loads a boss's `.art` texture anywhere — I grepped for both and
+found zero consumers. So today this is data that's already wrong, sitting
+behind a wire nobody has connected to a screen yet; worth knowing before
+someone connects it and inherits a stale asset on day one the way the frog did.
+**Checked, not verified further:** whether this class of "rebuilt after the
+portrait batch" staleness also hit any other beast besides `cinder_jackal` —
+I checked all four Sep-08-dated cast models (`bog_leech`, `husk_beetle`,
+`frog`, `cinder_jackal`) against the 13:01:57–13:02:00 portrait-batch window
+specifically because those were the only glbs young enough to be in question;
+`cinder_jackal` was the only one rebuilt after its own portrait.
+
+**Could not check this pass:** card art (`game/assets/cardart/**`) for any of
+the five hunters or any beast — the subject trace this run went model → portrait
+→ menu → roster data instead, since that's where the actual finds were. Also
+did not check the party panel outside of the one combat screenshot above, and
+did not check `mobile`/`size=2340x1080` for either the menu or select screen.
+
+
 
 **Pass D (proportion) — first run of this pass under the rewritten brief.**
 Rotation so far had only ever done Pass A (single-screenshot contradiction
