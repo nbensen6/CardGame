@@ -3084,7 +3084,19 @@ func _layout_hand() -> void:
 	var step := w * FAN_OVERLAP
 	# Squeeze further if the hand is wider than the band it has to live in, so a
 	# big hand overlaps more rather than running off the screen.
-	var room: float = _hand_row.size.x
+	#
+	# ROOM IS THE VIEWPORT, NOT THE CONTENT. %Hand is a plain Control inside a
+	# ScrollContainer, and cards are placed by absolute position — which does not
+	# feed a Control's minimum size, but the ScrollContainer still sizes its
+	# content child around what it holds. Centring on `_hand_row.size.x` centred
+	# the fan on the CONTENT, so every layout that widened the content moved the
+	# centre right, which placed the next fan further right again. Nick, 2026-09-08,
+	# reproduced it by booting a run and ending the first turn: the hand ends up
+	# in the bottom-right corner over the End Turn and Switch buttons.
+	#
+	# The scroll viewport's width is fixed by the HUD, so it cannot run away.
+	var scroller := _hand_row.get_parent() as Control
+	var room: float = scroller.size.x if scroller != null else _hand_row.size.x
 	if room > 1.0 and step * float(n - 1) + w > room:
 		step = maxf((room - w) / maxf(float(n - 1), 1.0), w * 0.30)
 	var mid := (float(n) - 1.0) * 0.5
