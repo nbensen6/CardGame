@@ -25,6 +25,7 @@ var _out := "shot.png"
 var _state := "combat"
 var _hold := ""   # 3dloop: stop the lap at this phase instead of finishing it
 var _beast := ""  # force a specific beast, to check a model that RNG rarely picks
+var _shade := ""  # "ao" | "shader" | "full" — the rendering prototype, see _apply_shade
 var _act := 0     # 3dmap: fast-forward to this act, so later regions get looked at
 var _orbit := 999.0  # 3D combat: drive the orbit camera to this yaw, in degrees
 var _size := Vector2i.ZERO  # size=WxH — shoot at a different screen shape
@@ -71,6 +72,11 @@ func _initialize() -> void:
 			_hold = a.substr(5)
 		elif a.begins_with("beast="):
 			_beast = a.substr(6)
+		elif a.begins_with("shade="):
+			# shade=ao | shade=shader | shade=full — the 2026-09-08 rendering
+			# prototype. Off by default, so every existing capture is unchanged
+			# and a before/after is the same command twice.
+			_shade = a.substr(6)
 		elif a.begins_with("act="):
 			_act = int(a.substr(4))
 		elif a.begins_with("orbit="):
@@ -294,6 +300,64 @@ func _initialize() -> void:
 	_capture()
 
 
+## The 2026-09-08 rendering prototype, applied to the live fight.
+##
+## Nick: "many of the base models are fine, but the quality needs to increase."
+## They are — the models were never what made them look cheap. Every beast
+## renders on one material, one flat palette swatch per part, roughness 1.0, no
+## normal map, no AO, and no shader (kenney.py:204). This applies the two things
+## that change that, so the difference can be SEEN rather than argued:
+##
+##   shade=ao      swap in <beast>_ao.glb, whose vertex colours carry baked
+##                 ambient occlusion (tools/blender/aobake.py)
+##   shade=shader  apply assets/3d/creature.gdshader — rim light, specular,
+##                 a ground tint on downward faces, AO honoured if present
+##   shade=full    both
+##
+## Nothing here is wired into the game. It is a switch on the harness so the
+## before and the after are the same command twice.
+func _apply_shade(view: Node) -> void:
+	var beast: Node3D = view.get("_beast") as Node3D
+	if beast == null:
+		print("SHADE n/a: %s has no _beast" % view)
+		return
+	var meshes: Array[MeshInstance3D] = []
+	_collect_meshes(beast, meshes)
+	if meshes.is_empty():
+		print("SHADE n/a: no MeshInstance3D under the beast")
+		return
+
+	if _shade in ["ao", "full"] and _beast != "":
+		var path := "res://assets/3d/cast/%s_ao.glb" % _beast
+		if not ResourceLoader.exists(path):
+			print("SHADE no baked model at %s — run tools/blender/aobake.py" % path)
+		else:
+			var root := (load(path) as PackedScene).instantiate()
+			var baked: Array[MeshInstance3D] = []
+			_collect_meshes(root, baked)
+			# One joined mesh per model is the export contract (asset-loop.md),
+			# so index alignment is safe; guard anyway rather than assume.
+			for i in mini(meshes.size(), baked.size()):
+				meshes[i].mesh = baked[i].mesh
+			print("SHADE swapped %d mesh(es) for the AO bake" % mini(meshes.size(), baked.size()))
+			root.free()   # the meshes are referenced now; the scene itself is not
+
+	if _shade in ["shader", "full"]:
+		var mat := ShaderMaterial.new()
+		mat.shader = load("res://assets/3d/creature.gdshader")
+		mat.set_shader_parameter("atlas", load("res://assets/3d/cast/Textures/colormap.png"))
+		for m in meshes:
+			m.material_override = mat
+		print("SHADE applied creature.gdshader to %d mesh(es)" % meshes.size())
+
+
+func _collect_meshes(n: Node, into: Array[MeshInstance3D]) -> void:
+	if n is MeshInstance3D:
+		into.append(n)
+	for c in n.get_children():
+		_collect_meshes(c, into)
+
+
 ## Can a thumb hit the map's nodes?
 ##
 ## A screenshot cannot answer this: a node can be perfectly legible and still be
@@ -502,6 +566,10 @@ func _capture() -> void:
 	for _i in 15:  # let the scene lay out and draw
 		await process_frame
 	await _await_camera(current_scene)
+	if _shade != "":
+		_apply_shade(current_scene)
+		for _i in 3:
+			await process_frame
 	if _taps:
 		_tap_check(current_scene)
 	if _slot >= 0 and current_scene != null and current_scene.has_method("_switch_to"):
