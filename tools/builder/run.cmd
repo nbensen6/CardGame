@@ -36,7 +36,36 @@ REM a task that edits a repo and pushes on a schedule is his call.
 setlocal
 set "ROOT=%~dp0..\.."
 set "LOG=%~dp0last-run.log"
-cd /d "%ROOT%"
+
+REM RUN IN A SEPARATE WORKTREE, NOT NICK'S CHECKOUT.
+REM
+REM The first version of this script worked in G:\Co Op Game itself, which is
+REM the tree Nick plays the game from and the session edits. `git checkout -b`
+REM in a shared checkout moves EVERYONE: on 2026-09-08 a builder run left the
+REM repo sitting on builder/2026-09-08-value-range-shader with its edits
+REM uncommitted, so the game would have launched off a half-built branch and a
+REM session edit made during the run landed on the builder's branch instead of
+REM main. The run also had to step around an unrelated uncommitted file it found
+REM and correctly refused to touch.
+REM
+REM A worktree is the same repository and the same history in a second
+REM directory, so branch switches here are invisible to everything else.
+set "WORK=G:\ts-builder"
+if not exist "%WORK%\.git" (
+  echo === creating the builder's worktree at %WORK%
+  echo === creating worktree %WORK% >> "%LOG%"
+  git -C "%ROOT%" worktree add --detach "%WORK%" origin/main
+)
+
+REM Start every run from a known state. --force discards leftovers from a run
+REM that crashed part-way; this is a scratch tree whose only job is to hold one
+REM branch at a time, and state leaking between runs is worth more trouble than
+REM anything it could destroy. Untracked files (build output, the .godot import
+REM cache) are deliberately left alone -- rebuilding them costs minutes.
+git -C "%WORK%" fetch origin --quiet
+git -C "%WORK%" checkout --detach --force origin/main --quiet
+
+cd /d "%WORK%"
 
 REM Log opened FIRST, before anything that can bail. The fixer spent two
 REM separate outages invisible because its early exits ran before this line and
