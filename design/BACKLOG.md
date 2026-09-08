@@ -2679,6 +2679,30 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-08** — #86 duty 3 (verify a mechanic actually works). Last rotation
+  commit (`01212d2`) was duty 2, so this turn is duty 3. Surveyed `/core` for
+  functions with zero mentions in `run_tests.gd` and picked
+  `Combat._handle_energy_handoff` — the energy_handoff relic, one of the
+  co-op hand-off mechanics CLAUDE.md §6 calls out as the thing that
+  separates a good co-op deckbuilder from two solo games side by side. It
+  already had a test (`_test_backlog10_new_rule_changing_relics`), but only
+  for the happy path: an ally who hasn't ended their turn yet receiving the
+  hand-off. The guard clause — `if mate.ended_turn: return` — had never been
+  exercised. With exactly 2 players, the ally can only already-have-ended
+  when the current end_turn() call is the round's last, which means
+  `_all_ended()` fires `_enemy_turn()` -> next round's `_begin_round()` in
+  that same call and resets both players' Energy before a test could read
+  it — so a naive state-based test would pass whether the guard fired or
+  not. Wrote the test against the LOG instead: a real hand-off always
+  appends "X hands off N unspent Energy to Y." before "X ends their turn.",
+  so its absence in the log lines appended during the second end_turn() call
+  proves the guard blocked it, independent of the round-reset that hides it
+  from state. Verified the test is meaningful by temporarily deleting the
+  guard clause from `combat.gd` and confirming the new test fails, then
+  restoring it. `--import` then `run_tests.gd`: ALL TESTS PASSED (fresh
+  import, headless, godot 4.7.1). Next `#86` turn is duty 1 (improve an
+  asset — diagnose beasts first).
+
 - **2026-09-08** — #86 duty 2 (find an error and resolve it). Last rotation
   commit (`e52f040`) was duty 1, so this turn is duty 2. Read `game/session/
   game_host.gd` end to end hunting the "two copies of one truth" shape —

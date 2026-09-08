@@ -139,6 +139,7 @@ func _init() -> void:
 	_test_skip_reward_keeps_the_deck_lean()
 	_test_rule_changing_relics()
 	_test_backlog10_new_rule_changing_relics()
+	_test_backlog86_energy_handoff_skips_an_ally_who_already_ended()
 	_test_shake_resist_relic()
 	_test_backlog13_six_relics_change_a_rule()
 	_test_relics_all_load()
@@ -2909,6 +2910,36 @@ func _test_backlog10_new_rule_changing_relics() -> void:
 
 	_expect(carried_block and never_bucked and soft_landing and handed_off,
 		"backlog #10's new relics carry Block, cancel the buck, soften a fall, and hand off Energy")
+
+
+## #86 duty 3: _test_backlog10_new_rule_changing_relics above only ever proves
+## energy_handoff's happy path (the ally hasn't ended their turn yet). The
+## function's own guard clause — "if mate.ended_turn: return" — has never been
+## exercised: with exactly 2 players, the ally can only already-have-ended
+## when THIS end_turn() call is the second and last of the round, which means
+## _all_ended() fires _enemy_turn() -> _begin_round() in the very same call
+## and resets both players' Energy before a test could read it. So this reads
+## the LOG instead of post-call Energy: a real handoff always appends "X hands
+## off N unspent Energy to Y." before "X ends their turn.", so its absence
+## proves the guard fired, immune to the round-reset that hides it from state.
+func _test_backlog86_energy_handoff_skips_an_ally_who_already_ended() -> void:
+	var c := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)],
+		[Combatant.new("A", 42), Combatant.new("B", 42)], _dummy_boss(300), 42,
+		0, 0, 0, 0, [], {"energy_handoff": 1})
+	c.start()
+	c.end_turn(1)  # B ends first, with leftover Energy — hands off to A, who hasn't ended
+	var b_handed_off_first: bool = false
+	for line in c.log:
+		if String(line).begins_with("B hands off"):
+			b_handed_off_first = true
+	var log_before_a_ends: int = c.log.size()
+	c.end_turn(0)  # A ends second/last — but B (the ally) already ended, so the guard must block A's own handoff
+	var a_tried_to_hand_off: bool = false
+	for i in range(log_before_a_ends, c.log.size()):
+		if String(c.log[i]).begins_with("A hands off"):
+			a_tried_to_hand_off = true
+	_expect(b_handed_off_first and not a_tried_to_hand_off,
+		"energy_handoff fires for an ally who hasn't ended yet, and is skipped once they have")
 
 
 func _test_shake_resist_relic() -> void:
