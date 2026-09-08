@@ -75,6 +75,20 @@ uniform float ember_rate : hint_range(0.1, 4.0) = 1.1;
 // bloom available on gl_compatibility, ramping to white IS the effect.
 uniform float ember_white : hint_range(0.0, 1.0) = 0.55;
 
+// Value range — BUILDER-QUEUE.md item 1. Measured against the Sea of Thieves
+// megalodon: their body runs near-black so the embers can scream, ours sits
+// mid-range everywhere and only 2.4% of it clears 80% luminance.
+//
+// A swatch swap was tried first (builder/2026-09-08-widen-value-range) and
+// could not move the top of the range at all — it can only pick a different
+// point ALONG the palette's existing luminance band, and that band is not
+// very dark to begin with. This is the actual lever: multiply the lit body
+// down and the embers up in the same draw call, so the gap opens from both
+// ends instead of sliding along one narrow band. Default 1.0 is a no-op, so
+// every beast that has not opted in (set from combat_3d.VALUE_RANGE, beside
+// EMBERS) renders exactly as before.
+uniform float body_gain : hint_range(0.0, 1.0) = 1.0;
+
 // Volume cue: the underside of a form reads cooler and darker than its top.
 // Cheap, and it survives being 200px tall on screen where AO detail does not.
 uniform vec4 ground_tint : source_color = vec4(0.42, 0.44, 0.58, 1.0);
@@ -95,7 +109,7 @@ void fragment() {
 
     // Downward-facing surfaces pick up the ground tint, upward ones do not.
     float down = clamp(-world_normal.y, 0.0, 1.0);
-    vec3 tinted = mix(base, base * ground_tint.rgb, down * ground_strength);
+    vec3 tinted = mix(base, base * ground_tint.rgb, down * ground_strength) * body_gain;
 
     // How much of this face is an ember swatch. A half-cell radius: swatch
     // centres are 32px apart on a 512 atlas, so 0.0625 apart in UV — keying
