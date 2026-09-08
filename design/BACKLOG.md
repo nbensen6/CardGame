@@ -2679,6 +2679,56 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-08** — #86 duty 1 (improve an asset — diagnose the highest tier
+  first, which is beasts). Last actual rotation commit (`09938ea`, the
+  encounter-seed test) was duty 3, and named duty 1 as next explicitly; the
+  two commits since (`4578473` silmetrics/iconmetrics tooling, `ec171ef` a
+  fixer-lane bug hunt) are neither one a rotation commit, same as the
+  fixer-lane commits noted in earlier log entries. Went to diagnose the four
+  beasts `silmetrics.py` (new in `4578473`) flagged as the cast's worst —
+  `gale_serpent`, `stone_warden`, `crag_pup`, `bounder`, all BLOCKY and
+  mutual TWINs, all with no bare-name progress file — and before writing a
+  single score, opened the renders it was reading from. **All four are the
+  wrong asset.** `design/renders/<name>_pass<N>_*.png` for every one of them
+  is a ring-of-standing-stones fight ARENA, not the beast's own body —
+  confirmed independently against each one's own `<name>_ground.md`, which
+  documents the identical files as its own ground capture ("`look.sh env
+  <name> 1`"). Root cause: `tools/blender/look.sh`/`look.cmd` write every
+  capture to `design/renders/<name>_pass<N>_*.png` using only the bare asset
+  name — the `env`/`cast` distinction picks the source `.glb` but never
+  reaches the output filename, so a beast and its same-named ground collide
+  on the identical path and whichever was captured last wins silently, with
+  nothing on disk saying which kind survived. Not beast-specific: 28 of the
+  cast's 33 real beasts (everything from item #83's ground batch) share a
+  name with an env asset and carry the same risk; only the five hunters and
+  the unused raw Kenney animal packs are immune. `silmetrics`'s own "12 of 36
+  fail a gate" list is reading ground silhouettes as beast silhouettes for
+  at least these four, which is exactly why the 2026-09-07 tooling commit's
+  "four worst models in the game" framing was wrong — they aren't beast
+  models at all, and the actual beast bodies have never been captured under
+  a name that survived. Wrote this up as `design/progress/gale_serpent.md`
+  (full account), `stone_warden.md`, `crag_pup.md`, `bounder.md` (each
+  pointing back at it) rather than scoring a picture of the wrong model —
+  same principle as the existing "stale renders" rule, just a wrong-asset
+  render instead of an old one. Did not fix `look.sh`/`look.cmd`'s naming:
+  shared tooling both lanes call, shaped like a duty-2 "two copies of one
+  truth" find rather than a duty-1 diagnosis, and landing it here would be
+  two duties in one run — left for duty 2 or the fixer. Fell through to the
+  next actionable beast instead: `clot_toad` (pass 2, 32/50, well under the
+  beast/ground 44 stop line and only 2 of 4 passes used), re-scored fresh
+  against the anchor table added 2026-09-07 rather than anchoring on pass
+  2's numbers (Sil 6→5, Prop 6→5, both using the real `.py` coordinates —
+  the leg balls sit just inside the torso's own silhouette edge and
+  contribute nothing to the outline, and the ridge/gland/crest stack's own
+  peak sits 80% taller than the torso it grows out of). Diagnosis and two
+  concrete fixes (leg X offset, crest/gland ball radii, neither touching the
+  climb-hold `shelf()`/`mark()`/`z_for()` contract) written into
+  `clot_toad.md` for the fixer to apply. No `game/**` or `tools/blender/**`
+  files touched this run — diagnosis and progress-file writes only, per the
+  file-ownership split — so `run_tests.gd` was run as a sanity check rather
+  than because anything it covers could plausibly have broken. Next `#86`
+  turn is duty 2 (find an error and resolve it).
+
 - **2026-09-07** — #86 duty 3 (verify a mechanic actually works). Last actual
   rotation commit (`07f6fb7`, the rift-border fix) was duty 2, so this turn is
   duty 3 (the fixer-lane commits `559bb80` and `102317c` in between don't count
