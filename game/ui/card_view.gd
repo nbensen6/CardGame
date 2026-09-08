@@ -901,8 +901,14 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 	if dmg > 0:
 		var n := int(fx.get("hits", 1))
 		var times := "" if n <= 1 else (" twice" if n == 2 else " %d times" % n)
-		out.append("Deal %s damage%s." % [_num(int(miss.get("damage", 0)), dmg,
-			int(base.get("damage", dmg)), rich), times])
+		# backlog #86 duty 2 — Cleave (#63, hits_all_enemies) reached this dict's
+		# sibling `_keywords_of()` tag long ago but never this line: Sweeping
+		# Strike's live face read "Deal 8 damage." with no hint it also hits
+		# every add, same "reads as a smaller, wrong card" failure every other
+		# fx gap this function has caught produces.
+		var cleave := " to the Titan and every add it has" if bool(fx.get("hits_all_enemies", false)) else ""
+		out.append("Deal %s damage%s%s." % [_num(int(miss.get("damage", 0)), dmg,
+			int(base.get("damage", dmg)), rich), times, cleave])
 
 	# Both-hunters effects merge into one line. "Gain 2 Block. Ally gains 2 Block."
 	# is the same fact typed twice; "All players gain 2 Block" is the card.
@@ -1048,6 +1054,21 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 		out.append("Build a tool into your hand.")
 	if String(fx.get("prepare", "")) != "":
 		out.append("Primed for next turn.")
+	# backlog #86 duty 2 — Reach (#68: topdeck/shuffle_in/tutor) had the same
+	# "fx never grew a branch" gap as create/prepare just above: Depot ("Gain 3
+	# Block. Shuffle a Grip into your draw pile.") showed only "Gain 3 Block."
+	# once the Block line made `out` non-empty, and Recon/Waymark (no other fx
+	# field set) fell back to their authored text ONLY by accident — a melded
+	# copy pairing either with a live-tracked effect would have silently
+	# dropped the draw-pile touch entirely, the same way ally_heal/scry did.
+	# Generic wording, not the specific card named: face_text() only ever gets
+	# an id here, and create/prepare already made the same call above.
+	if String(fx.get("topdeck", "")) != "":
+		out.append("Put a card on top of your draw pile.")
+	if String(fx.get("shuffle_in", "")) != "":
+		out.append("Shuffle a card into your draw pile.")
+	if String(fx.get("tutor", "")) != "":
+		out.append("Search your draw pile for a card and pull it into your hand.")
 	if bool(fx.get("meld", false)):
 		out.append("Fuse two cards into one that costs 1 less.")
 

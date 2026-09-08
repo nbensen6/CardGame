@@ -465,6 +465,8 @@ func _init() -> void:
 	_test_backlog86_warm_glow_fx_carries_ally_heal_over_the_wire()
 	_test_backlog86_defensive_stacks_fx_carry_over_the_wire()
 	_test_backlog86_deck_view_upgrade_preview_shows_defensive_stacks()
+	_test_backlog86_reach_and_cleave_fx_carry_over_the_wire()
+	_test_backlog86_deck_view_shows_reach_and_cleave_too()
 	_test_backlog45_named_holds_cross_to_both_peers_identically()
 	_test_backlog45_graded_timing_quality_reaches_the_host_and_the_preview()
 	# backlog #46: a robustness sweep that is not balance tuning
@@ -7889,6 +7891,66 @@ func _test_backlog86_deck_view_upgrade_preview_shows_defensive_stacks() -> void:
 			and CardView.face_text(overhang_up) == "Buffer 2."
 			and CardView.face_text(hardshell_up) == "Plated Armour 4.",
 		"the deck view's upgrade preview states the sharpened value, not the stale authored text of the un-upgraded card")
+
+
+## backlog #86 duty 2 — the same wiring gap yet again, this time Reach (#68:
+## topdeck/shuffle_in/tutor) and Cleave (#63: hits_all_enemies). All four have
+## been tagged "reach"/"cleave" by `_keywords_of()` below since each backlog
+## item shipped, but none of them ever joined GameHost's "fx" dict, so
+## `CardView.face_text()` had no way to say what they do. Depot ("Gain 3
+## Block. Shuffle a Grip into your draw pile.") reached its owner's hand with
+## the shuffle silently dropped once the Block line made `out` non-empty; a
+## lone Recon/Waymark only LOOKED fine because with no other fx field set,
+## `out` stayed empty and the authored-text fallback hid the gap by accident —
+## the same trap the ally_heal/scry tests above already caught. Sweeping
+## Strike's whole cleave clause vanished behind "Deal 8 damage." for the same
+## reason. Drives it through a real GameHost/GameClient pair, same idiom as
+## Steady Grip/Crippling Blow/Warm Glow/the defensive stacks above.
+func _test_backlog86_reach_and_cleave_fx_carry_over_the_wire() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	host._run.combat.players[0].hand.append(Content.make_card("depot"))
+	host._run.combat.players[0].hand.append(Content.make_card("recon"))
+	host._run.combat.players[0].hand.append(Content.make_card("sweeping_strike"))
+	host._broadcast_state()
+	var hand: Array = c0.private["hand"]
+	var by_name := {}
+	for card_v in hand:
+		var card: Dictionary = card_v
+		by_name[String(card["name"])] = card
+	var depot_fx: Dictionary = by_name["Depot"]["fx"]
+	var recon_fx: Dictionary = by_name["Recon"]["fx"]
+	var sweep_fx: Dictionary = by_name["Sweeping Strike"]["fx"]
+	_expect(String(depot_fx.get("shuffle_in", "")) == "grip"
+			and String(recon_fx.get("tutor", "")) == "cleave"
+			and bool(sweep_fx.get("hits_all_enemies", false)),
+		"Depot/Recon/Sweeping Strike's fx dicts carry shuffle_in/tutor/hits_all_enemies to the owner's client")
+	_expect(CardView.face_text(by_name["Depot"]) == "Gain 3 Block. Shuffle a card into your draw pile."
+			and CardView.face_text(by_name["Sweeping Strike"]) == "Deal 8 damage to the Titan and every add it has.",
+		"the live face states the shuffle-in and cleave clauses, not just the other effect on the same card")
+
+
+## backlog #86 duty 2 — `_slot_private()`'s fx dict (proven above) and
+## `_deck_face()`'s fx dict (the deck view) are two hand-copied lists of the
+## same fields kept in sync by hand, the exact "two copies of one truth" shape
+## `_test_backlog86_deck_view_upgrade_preview_shows_defensive_stacks` above
+## already caught once for Intangible/Buffer/Plated Armour — this fix touched
+## both copies at once, but only a test on EACH copy proves neither was missed
+## again the way `_deck_face()` was the first time.
+func _test_backlog86_deck_view_shows_reach_and_cleave_too() -> void:
+	var host := GameHost.new(LocalTransport.new(), 1, 2)
+	_kept.append(host)
+	var depot := host._deck_face(Content.make_card("depot"), 0)
+	var waymark := host._deck_face(Content.make_card("waymark"), 0)
+	var sweep := host._deck_face(Content.make_card("sweeping_strike"), 0)
+	_expect(String((depot["fx"] as Dictionary).get("shuffle_in", "")) == "grip"
+			and String((waymark["fx"] as Dictionary).get("topdeck", "")) == "scramble"
+			and bool((sweep["fx"] as Dictionary).get("hits_all_enemies", false)),
+		"_deck_face()'s fx dict carries shuffle_in/topdeck/hits_all_enemies, not just the printed numbers")
+	_expect(CardView.face_text(depot) == "Gain 3 Block. Shuffle a card into your draw pile."
+			and CardView.face_text(sweep) == "Deal 8 damage to the Titan and every add it has.",
+		"the deck view states the shuffle-in and cleave clauses too, not just the hand view")
 
 
 ## Named holds (backlog #24) widened Boss.ledges from a bare int array to an

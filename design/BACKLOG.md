@@ -2679,6 +2679,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-08** — #86 duty 2 (find an error and resolve it). Last rotation
+  commit (`e52f040`) was duty 1, so this turn is duty 2. Read `game/session/
+  game_host.gd` end to end hunting the "two copies of one truth" shape —
+  it's had six prior duty-2 fixes for exactly this ("hand-copied field list
+  drifts"), one field at a time, so a fresh read of the same two fx-dict
+  builders (`_slot_private`, `_deck_face`) was the obvious place to check
+  whether another field had been missed the same way. It had: `topdeck`,
+  `shuffle_in`, `tutor` (#68) and `hits_all_enemies` (#63, Cleave) all reached
+  `_keywords_of()`'s tap-inspectable "reach"/"cleave" tags long ago, but never
+  either fx dict, so `CardView.face_text()` had no field to read for any of
+  the four. Concretely: Depot ("Gain 3 Block. Shuffle a Grip into your draw
+  pile.") showed only "Gain 3 Block." on its live face and deck entry alike —
+  the shuffle silently dropped the moment the Block line made `out`
+  non-empty — and Sweeping Strike's live face read "Deal 8 damage." with no
+  mention it also hits every add. A lone Recon/Waymark only looked fine
+  because with no other fx field set, `out` stayed empty and the
+  authored-text fallback hid the gap by accident, same trap the ally_heal/
+  scry fixes earlier in this rotation already named. Added all four fields to
+  both fx dicts, plus three new `face_text()` branches (topdeck/shuffle_in/
+  tutor share generic wording, same idiom as `create`/`prepare` above them —
+  face_text() only ever gets an id, never the target card's name) and folded
+  the cleave clause into the existing damage line. Wrote two new tests
+  (`_test_backlog86_reach_and_cleave_fx_carry_over_the_wire`,
+  `_test_backlog86_deck_view_shows_reach_and_cleave_too`) covering both fx
+  dicts and both new face_text() shapes; confirmed they fail against the
+  unfixed code (`git stash` on just `game_host.gd`/`card_view.gd`, keeping
+  the new tests) before restoring the fix. `--import` then `run_tests.gd`:
+  ALL TESTS PASSED (fresh import, headless, godot 4.7.1). Next `#86` turn is
+  duty 3 (verify a mechanic actually works).
+
 - **2026-09-08** — #86 duty 1 (improve an asset — diagnose beasts first). Last
   rotation commit (`169314b`) was duty 3, so this turn is duty 1. `bog_leech`
   (28) and `clot_toad` (26) — the two lowest uncollided beasts — already had

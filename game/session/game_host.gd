@@ -663,6 +663,17 @@ func _slot_private(pi: int) -> Dictionary:
 					# already caught for Frail/Dexterity/Thorns/Light/ally_heal/scry.
 					"intangible": c.intangible, "buffer": c.buffer,
 					"plated_armour": c.plated_armour,
+					# backlog #86 duty 2 — same "hand-copied field list drifts" gap
+					# one more time: topdeck/shuffle_in/tutor (#68) and
+					# hits_all_enemies (#63, Cleave) reached _keywords_of() below
+					# (the "reach"/"cleave" tap-inspectable tags) long ago, but
+					# never this fx dict, so face_text() had no way to say what
+					# they do — Depot's live face read "Gain 3 Block." and
+					# silently dropped "Shuffle a Grip into your draw pile.", and
+					# Sweeping Strike's read "Deal 8 damage." with no mention it
+					# also hits every add.
+					"topdeck": c.topdeck, "shuffle_in": c.shuffle_in, "tutor": c.tutor,
+					"hits_all_enemies": c.hits_all_enemies,
 				},
 				# The card's PRINTED values. The face compares live against these to
 				# know which numbers a buff or scaling changed, and highlights only
@@ -876,6 +887,13 @@ func _deck_face(c: Card, i: int) -> Dictionary:
 			# because face_text() had no fx.plated_armour to read here.
 			"intangible": c.intangible, "buffer": c.buffer,
 			"plated_armour": c.plated_armour,
+			# backlog #86 duty 2 — same field-list drift as the hand dict's fx
+			# above, missed again for topdeck/shuffle_in/tutor (#68) and
+			# hits_all_enemies (#63): a campfire-sharpened Recon's deck-view
+			# face couldn't show its Search line, and Sweeping Strike's deck
+			# entry read "Deal 8 damage." with no mention of hitting every add.
+			"topdeck": c.topdeck, "shuffle_in": c.shuffle_in, "tutor": c.tutor,
+			"hits_all_enemies": c.hits_all_enemies,
 		},
 	}
 
