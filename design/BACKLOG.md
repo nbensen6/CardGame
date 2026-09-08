@@ -2679,6 +2679,42 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-08** — #86 duty 1 (improve an asset — diagnose beasts first). Last
+  rotation commit (`eff7bf7`) was duty 3, so this turn is duty 1. Surveyed the
+  14 new-cast beasts (the only beasts a diagnosis can currently trust — the 14
+  original-cast beasts stay blocked on the `look.sh`/`look.cmd` output-naming
+  collision this same file's log already names) for the lowest score with no
+  pending diagnosis: `bog_leech` and `clot_toad` already carry unapplied
+  pass-3 fixes from earlier rotations, `boulder_ram` was diagnosed earlier
+  this same rotation, so the next candidate was `husk_beetle` at 33/50 (pass
+  2, applied by the fixer, never re-scored since). Confirmed
+  `tools/blender/husk_beetle.py` hasn't changed since `husk_beetle_pass2_*`
+  was captured, so the renders are current, and opened both committed views
+  with the Read tool before scoring.
+  Pass 2's own writeup had already spotted a real defect — the spine-seam box
+  poking out past the shell's curved surface — but never revised the rubric
+  numbers it damages. Confirmed by looking: two loose black diagonal strokes
+  sit outside the shell in `husk_beetle_pass2_34.png`, and a matching jagged
+  spike breaks the otherwise-clean outline in `_sil.png` at roughly 10
+  o'clock — geometry, not a shading artefact. Traced it to real coordinates
+  in `husk_beetle.py`: the spine seam box (`y` half-extent 1.15, centred at
+  `y=-0.30`) only stays under the thorax ball's curved surface at `z=1.73`
+  for `y` in roughly [-0.52, 0.72] (solved from the ball's own radii), so both
+  ends of the current box hang in open air. Re-scored Build hygiene 7→5 and
+  Silhouette 6→5 for this one shared cause (total 33→30, an honest
+  correction, not a regression in the model itself, since nothing was
+  rebuilt this pass), and wrote one concrete fix for both — shrink the seam's
+  `y` half-extent from 1.15 to ~0.20 — for the fixer to apply. Also checked
+  pass 1's original Colour complaint ("the shell's two humps are close in
+  value") against the actual palette: sampled `colormap.png` at `kenney.
+  swatch`'s real UV convention and found UMBER (the shell) and TAN (the
+  tail-plate) 67 values apart on a 0-255 scale, not close — left Colour
+  unchanged rather than repeating a claim the numbers don't support.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot 4.7.1 — this
+  pass touches only `design/progress/husk_beetle.md`, no `game/**` or
+  `tools/blender/**`). Next `#86` turn is duty 2 (find an error and resolve
+  it).
+
 - **2026-09-08** — #86 duty 3 (verify a mechanic actually works). Last rotation
   commit (`01212d2`) was duty 2, so this turn is duty 3. Surveyed `/core` for
   functions with zero mentions in `run_tests.gd` and picked

@@ -116,3 +116,98 @@ Whether the notch reads as intentional "two-segment shell" or as a stray
 seam artefact once looked at closely — the mechanism is a floating decal
 edge, not carved geometry, so a future pass with more budget might replace
 it with an actual stepped profile rather than relying on this coincidence.
+
+---
+
+## Pass 3 diagnosis — #86 duty 1, 2026-09-08
+
+Lowest-scoring beast with no pending diagnosis and a current, uncollided
+render on disk (`bog_leech` and `clot_toad` already carry unapplied pass-3
+fixes from earlier rotations; `boulder_ram` was diagnosed earlier this same
+rotation; the 14 original-cast beasts — see `gale_serpent.md` — cannot be
+scored at all until `look.sh`/`look.cmd`'s output-naming collision is fixed,
+which is duty-2 shaped, not this pass's job). Confirmed `tools/blender/
+husk_beetle.py` unchanged since the renders were captured (both land in the
+same commit, `8c84bc8`), so `husk_beetle_pass2_34.png` and `_sil.png` are
+current. No `_side`/`_front`/`_top` were captured for this asset in either
+pass — scoring against what exists rather than blocking on renders nobody
+has.
+
+Re-scored from the actual images rather than anchoring on pass 2's numbers,
+per the anchor rule.
+
+| Pass | Sil | Prop | Hygiene | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 1 | 5 | 5 | 5 | 6 | 8 | 29 |
+| 2 | 6 | 6 | 7 | 6 | 8 | 33 |
+| 3 (re-score, no geometry change yet) | 5 | 6 | 5 | 6 | 8 | 30 |
+
+**What pass 2 under-scored.** Pass 2's own writeup already named the cause —
+"the seam box's own poke-out is an existing build fault this pass did not
+touch and did not diagnose" — but never revised the two rubric lines that
+poke-out actually damages. Looking again at `husk_beetle_pass2_34.png`: two
+loose black diagonal strokes sit clearly OUTSIDE the shell surface, upper-
+left of the tail-plate, reading as broken twigs or scratches laid over the
+beetle rather than a seam cut into it — the single most visually prominent
+defect in the render, more so than anything pass 2 actually fixed.
+`husk_beetle_pass2_sil.png` confirms it isn't just a lit-render shading
+artefact: a thin jagged spike pokes out of the otherwise-clean blob outline
+at roughly 10 o'clock, which is geometry breaking the silhouette, not a
+texture read.
+
+**Root cause, from the actual coordinates in `husk_beetle.py`.** The main
+spine seam is `b.box((0.0, -0.30, 1.73), (0.020, 1.15, 0.030), CHARCOAL)` —
+a flat plate at constant z=1.73 with a y half-extent of 1.15, laid across the
+curved thorax ball (`b.ball((0.0, 0.10, 1.02), (0.96, 1.35, 0.80), UMBER,
+...)`). Solving for where that ellipsoid's surface is still above z=1.73 at
+x=0: `((y-0.10)/1.35)^2 <= 1 - ((1.73-1.02)/0.80)^2 = 0.2123`, so the dome
+only clears z=1.73 for `y` in roughly **[-0.52, 0.72]**. The box is centred
+at y=-0.30 with half-extent 1.15, spanning **y in [-1.45, 0.85]** — well
+outside that window at both ends, so both tips of the flat plate exit the
+dome's curved surface and hang in open air, exactly the "loose stroke"
+visible in the render. This is the same shape of fault named on Yoke Ox's
+and Silk Widow's earlier passes ("a part spaced away from the body"), just
+never connected to a rubric number here until now.
+
+**Colour (6, unchanged) — checked, not the problem pass 1 guessed.** Pass
+1's diagnosis blamed "the shell's two humps" being close in value. Sampled
+`tools/blender/colormap.png` at the actual swatch centres (`kenney.swatch`'s
+`+16` convention): UMBER (the main shell) is `rgb(144,85,60)`, value ≈100;
+TAN (the tail-plate the sigil sits on) is `rgb(217,152,111)`, value ≈167 — a
+67-point gap on a 0–255 scale, not "close." `husk_beetle_pass2_34.png`
+confirms it by eye too: the tail-plate reads as a distinctly lighter warm
+brown against the darker main mass. Leaving Colour's score where pass 2 left
+it and not proposing a colour fix this pass — the real defect is geometry,
+not palette.
+
+## Diagnosis — two lowest (pass 3)
+
+Both trace to the same root cause (the spine seam's poke-through), so one
+fix, same precedent as `bog_leech.md` pass 2 and `boulder_ram.md` pass 3
+("one visual unit").
+
+1. **Build hygiene (5).** Concrete fix: shrink the main spine seam's y
+   half-extent in `husk_beetle.py` from `1.15` to about `0.20` — i.e.
+   `b.box((0.0, -0.30, 1.73), (0.020, 0.20, 0.030), CHARCOAL, bevel=0.0)` —
+   which keeps the whole box inside the `[-0.52, 0.72]` window the dome
+   actually clears at z=1.73, with margin, instead of overshooting it by
+   roughly a full unit at the far end.
+2. **Silhouette (5).** Same fix as above — the jagged spike in `_sil.png` is
+   this exact box's far tip breaking the outline; shortening it removes both
+   the render artefact and the silhouette spike in one change, not two
+   separate edits.
+
+Not applying either — this item scores and proposes; `tools/blender/
+husk_beetle.py` is the fixer's file (`tools/fixer/BRIEF.md`).
+
+## Unsure about (pass 3)
+
+Whether `0.20` leaves the seam long enough to still read as a spine mark at
+all once actually rendered — the geometry math only proves where it stops
+poking out, not how short is too short to be seen. Also unsure whether the
+two smaller diagonal side-seam boxes (`(-0.46, 0.30, 1.36)` and
+`(0.46, 0.30, 1.36)`, half-extent 0.30, rotated ±0.35 rad) contribute to
+either visible mark or are a separate, smaller instance of the same
+poke-through — they were not checked against the ball's surface the way the
+main spine seam was, and this run's two-fix budget went to the confirmed
+larger defect instead.
