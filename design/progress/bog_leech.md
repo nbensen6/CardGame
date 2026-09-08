@@ -185,3 +185,61 @@ unsure whether resizing the second hump changes its own sigil-adjacency —
 `bog_leech` is not one of backlog #88's five flagged sigil-occlusion beasts,
 but nobody has re-checked that since this pass's proposed resize, and #88
 is explicitly `needs a screen`.
+
+---
+
+## Pass 4 — fixer lane, 2026-09-08
+
+Applied by the **fixer** lane (`tools/fixer/BRIEF.md`). Both pass-3 fixes
+applied exactly as measured, together, since they're the same visual unit
+(the back-hump stack). Views: `design/renders/bog_leech_pass4_*.png`,
+captured with `look.cmd bog_leech 4` against `bog_leech_pass3_*.png` (the
+freshly re-captured, geometry-unchanged baseline from the naming-collision
+fix, not the older pass2 set).
+
+| Pass | Sil | Prop | Hygiene | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 1 | 5 | 5 | 4 | 5 | 6 | 25 |
+| 2 | 6 | 5 | 6 | 5 | 6 | 28 |
+| 3 (re-score, no geometry change) | 5 | 4 | 6 | 5 | 6 | 26 |
+| 4 | 6 | 6 | 6 | 5 | 6 | 29 |
+
+- **Silhouette (5 → 6).** `bog_leech.py`: first hump Z centre `1.95 → 1.80`,
+  radii untouched. `HOLD hold Height 2` still reports `ok` after rebuild —
+  the shelf reads its height off the climb contract, not the ball, exactly
+  as pass 3 predicted. Diffed `bog_leech_pass3_sil.png` against
+  `_pass4_sil.png` pixel-for-pixel (`ImageChops.difference`, bbox
+  `(98,41)-(183,110)`): the change is real but small — the former
+  hump1/hump2 step at the silhouette's top-right now rounds into one
+  continuous curve instead of a squared shelf-like notch. Real improvement,
+  not a plateau-hiding non-change, but modest: the two masses read as
+  closer to "flowing into each other" without fully clearing the 6–7 band's
+  bar.
+- **Proportion (4 → 6).** Second hump radii Y `0.38 → 0.50`, Z `0.32 →
+  0.40` (height 0.64 → 0.80, now 91% of hump1's 0.88 vs 73% before).
+  `bog_leech_pass4_34.png` and `_front.png` against the pass-3 equivalents:
+  the two back humps now read as a near-matched pair before the visibly
+  smaller tail-sac, closer to the doc's "two fed-fat body-segments...a
+  raised tail-sac" than pass 3's smooth four-step taper. Not pushed to 7+
+  since the first hump/main-sac join (the silhouette finding above) still
+  keeps the whole stack reading a little perched rather than fully grown
+  out of the body.
+
+Both diagnosed lines moved (+1 each, +3 total) and neither of the other
+three regressed — kept. `run_tests.gd`: ALL TESTS PASSED.
+
+Not touched: hygiene, colour, style — outside the two diagnosed lines, per
+the brief.
+
+## Unsure about (pass 4)
+
+Whether the sigil crest and its bridge (`tools/blender/bog_leech.py`
+lines 97-104, anchored at `y=-0.30`/`z=2.32`, independent of the two humps
+just moved) still clear the now-larger second hump from every angle —
+`bog_leech_pass4_top.png` shows the sigil disc sitting clear of both humps
+from above, but nobody has re-measured the gap numerically. Also: at 29/50
+this asset is 4 passes in (1 initial, 2 and 4 applied, 3 a re-score) and
+still 15 points under the beast stop line of 44 — the remaining low lines
+(Colour 5, Hygiene 6, Style 6) haven't had a pass since pass 2, and the
+next diagnosis should probably look there rather than the back-hump stack
+again.

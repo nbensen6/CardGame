@@ -66,10 +66,10 @@ mirror(lambda s: b.ball((0.20 * s, -1.36, 0.86), (0.08, 0.06, 0.07),
 # Two fed-fat segments stepping up the back, each a hump the shelf grows out
 # of - the same "hump, then a flat step on its own front slope" trick
 # crag_pup and gloom_moth use, rather than a slab standing free of the body.
-b.ball((0.0, 0.15, 1.95), (0.62, 0.58, 0.44), STONE, 10, 6)          # first hump
+b.ball((0.0, 0.15, 1.80), (0.62, 0.58, 0.44), STONE, 10, 6)          # first hump
 b.shelf(2, (0.30, 0.14), (0.34, 0.32), SLATE, thickness=0.14, bevel=0.05)
 
-b.ball((0.0, 0.62, 2.28), (0.44, 0.38, 0.32), PEWTER, 9, 5)          # second hump
+b.ball((0.0, 0.62, 2.28), (0.44, 0.50, 0.40), PEWTER, 9, 5)          # second hump
 b.shelf(4, (0.24, 0.60), (0.26, 0.24), SLATE, thickness=0.13, bevel=0.05,
         drop=0.02)
 
