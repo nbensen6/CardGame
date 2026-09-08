@@ -125,3 +125,92 @@ floating-part warning), captured with `look.cmd thrasher 2`, viewed every
 tracked view directly. `run_tests.gd`: **ALL TESTS PASSED**.
 
 **+2 total (32 → 34), not a plateau — kept.** No line regressed.
+
+---
+
+## Pass 3 diagnosis — #86 duty 1, 2026-09-08
+
+Lowest-scoring beast tier candidate with no pending diagnosis and a current
+render on disk: `tools/blender/thrasher.py` and `design/renders/thrasher_
+pass2_*.png` land in the same commit (`21b0360`), so the pass-2 renders are
+current. Re-scored from the actual images rather than anchoring on pass 2's
+numbers, per the anchor rule. `thrasher_pass2_sil.png`,`_34.png` and
+`_front.png` are the only three views captured for this asset (no side/top/
+wire) — scoring against what exists.
+
+| Pass | Sil | Prop | Hygiene | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 1 | 8 | 6 | 5 | 6 | 7 | 32 |
+| 2 | 8 | 6 | 7 | 6 | 7 | 34 |
+| 3 (re-score, no geometry change yet) | 8 | 6 | 7 | 6 | 7 | 34 |
+
+No score moved — pass 2's own numbers hold up against a fresh read of
+`thrasher_pass2_sil.png` (still the clearest silhouette in this batch) and
+`_front.png`. Proportion and Hygiene tie for lowest at 6/7 respectively but
+Hygiene is genuinely the worse defect on screen — see below — so this pass
+treats both as one root cause the way `husk_beetle.md` pass 3 and
+`boulder_ram.md` pass 3 did.
+
+**What `_front.png` actually shows.** The gold sigil disc sits at the end of
+a visibly thin dark rod poking sideways off the crest, distinct from the
+head/horn mass behind it — a clear gap of background-coloured shading
+between the rod's thin midsection and the body proper. Pass 2's own notes
+already called this "not a full fix... reads as its own part," and the
+render confirms it is still the single most visible defect in the image.
+
+**Root cause, from the actual coordinates in `thrasher.py`.** The crest ball
+is `b.ball((0.34, 0.34, z5), (0.16, 0.22, 0.16), ...)`, so its near edge
+(toward the mark, −Y) sits at `y = 0.34 − 0.22 = 0.12`. The mount taper is
+`b.taper((0.34, 0.055, z5−0.02), 0.13, 0.02, 0.31, ...)` — centre `y=0.055`,
+half-depth `0.155`, so its thick (base) end sits at `y=0.21` (inside the
+ball, embedded 0.09 deep — good) and its thin (tip) end sits at `y=−0.10`.
+That means `0.12 − (−0.10) = 0.22` of the taper's own `0.31` total length
+pokes out **past the ball's own surface** as bare, thinning rod before the
+mark (`at y=−0.09`) even begins — this is the floating-rod read, not a
+lighting artefact, and it is a bigger exposed length than the ball's own
+radius that is supposed to be hiding it.
+
+This same geometry also explains the tied Proportion score: at `(0.16, 0.22,
+0.16)` the crest ball is close in scale to the leg-joint balls elsewhere on
+this model, so it reads as a second small head riding beside the tail-curl
+rather than a mount — competing with the tail-curl for the silhouette's one
+dramatic shape, which is this asset's best feature (per pass 1's own note).
+Not the same finding as pass 1's "move the sigil onto the tail curl's own
+surface," which is still a design call and is left alone here — this is a
+pure scale measurement on the mount ball, no relocation involved.
+
+## Diagnosis — two lowest (pass 3)
+
+One root cause (the oversized, under-embedded sigil mount), same "one visual
+unit" precedent as `husk_beetle.md` and `boulder_ram.md` pass 3:
+
+1. **Build hygiene (7).** Concrete fix: shorten the taper's exposed length by
+   moving its embedding rather than its overall size. Move the taper centre
+   from `(0.34, 0.055, z5−0.02)` to `(0.34, 0.125, z5−0.02)` and shrink depth
+   from `0.31` to `0.17`, keeping the base end anchored at `y=0.21` (still
+   embedded 0.09 into the ball) while the tip moves from `y=−0.10` to
+   `y=0.04` — cutting the bare-rod length outside the ball from `0.22` to
+   about `0.08`. Move the mark's `at` from `(0.34, −0.09, z5)` to
+   `(0.34, 0.02, z5)` to match the shortened tip.
+2. **Proportion (6).** Concrete fix: shrink the crest ball's radii from
+   `(0.16, 0.22, 0.16)` to about `(0.13, 0.17, 0.13)` — small enough that it
+   reads as a mount rather than a second bump, while still large enough to
+   keep the taper's base (fix 1, now at `y=0.21`) inside its new surface: at
+   the unchanged centre `y=0.34` with the shrunk `r_y=0.17`, the ball spans
+   `y` in `[0.17, 0.51]`, which still covers `y=0.21` — embedded 0.04 deep
+   rather than fix 1's own 0.09, shallower but still inside, not floating.
+
+Not applying either — this item scores and proposes; `tools/blender/
+thrasher.py` is the fixer's file (`tools/fixer/BRIEF.md`).
+
+## Unsure about (pass 3)
+
+Whether shrinking the crest ball to `(0.13, 0.17, 0.13)` still reads as
+"grown from the tail" once actually rendered, or starts to look like the
+taper is now oversized relative to its own mount — the math only proves the
+embedding stays valid, not how the proportions of ball-to-taper read at a
+glance. Also unsure whether Colour (6, unchanged) deserves its own pass —
+pass 1's note about the tail-curl's two dark segments sitting close in value
+against the black body is still true in `_34.png`, but it reads as a minor
+issue next to the mount's own defects, and this run's two-fix budget went to
+the confirmed larger one instead.

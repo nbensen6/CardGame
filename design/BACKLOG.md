@@ -2679,6 +2679,27 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-08** — #86 duty 1 (improve an asset — diagnose). Last rotation
+  commit (`1571acc`) was duty 3, so this turn is duty 1. Worked the fixer's
+  own tier table: the 14 original-cast beasts are still blocked on the
+  `look.sh`/`look.cmd` naming collision (duty-2 shaped, not this pass's job),
+  and `bog_leech`, `clot_toad`, `boulder_ram` and `husk_beetle` already carry
+  unapplied diagnoses from earlier rotations. `thrasher` (34/50, tied lowest
+  among beasts with a current render and no pending diagnosis) was next.
+  Re-scored fresh from `thrasher_pass2_{sil,34,front}.png` against the anchor
+  rubric — no line moved from pass 2's own numbers, they held up. Diagnosed
+  Build hygiene and Proportion as one root cause, the way `husk_beetle.md`
+  and `boulder_ram.md` pass 3 did: the sigil crest's mount ball and taper,
+  computed from `thrasher.py`'s actual coordinates, leave 0.22 of the
+  taper's 0.31 length exposed as bare thinning rod past the crest ball's own
+  surface (the floating-rod read `_front.png` shows plainly), and the same
+  oversized ball reads as a second small head competing with the tail-curl
+  for the silhouette. Wrote two concrete fixes (re-embed the taper, shrink
+  the crest ball) into `design/progress/thrasher.md`; not applied —
+  `tools/blender/thrasher.py` is the fixer's file. `run_tests.gd`: ALL TESTS
+  PASSED (fresh import, headless, godot 4.7.1). Next `#86` turn is duty 2
+  (find an error and resolve it).
+
 - **2026-09-08** — #86 duty 3 (verify a mechanic actually works). Last rotation
   commit (`f356840`) was duty 2, so this turn is duty 3. The backlog's own
   "start here" pointer (the view-layer climb route, `_route_between`/
