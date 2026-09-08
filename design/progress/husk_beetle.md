@@ -211,3 +211,55 @@ either visible mark or are a separate, smaller instance of the same
 poke-through — they were not checked against the ball's surface the way the
 main spine seam was, and this run's two-fix budget went to the confirmed
 larger defect instead.
+
+---
+
+## Pass 4 — fixer lane, 2026-09-08
+
+Applied pass 3's diagnosed fix. Views: `design/renders/husk_beetle_pass4_*.png`,
+captured with `look.cmd husk_beetle 4`.
+
+| Pass | Sil | Prop | Hygiene | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 3 (re-score, no geometry change yet) | 5 | 6 | 5 | 6 | 8 | 30 |
+| 4 | 5 | 6 | 7 | 6 | 8 | **32** |
+
+### The one diagnosed fix, applied
+
+Changed `b.box((0.0, -0.30, 1.73), (0.020, 1.15, 0.030), CHARCOAL, bevel=0.0)`
+to `(0.020, 0.20, 0.030)`, exactly as diagnosed — the main spine seam no
+longer overshoots the thorax dome's clearance window.
+
+- **Build hygiene (5 → 7).** `husk_beetle_pass2_34.png` showed a long dark
+  plate crossing loose in open air above the shell, top-left of the
+  tail-plate, plus a second shorter loose stroke below it — the pokethrough
+  named in the pass 3 diagnosis. `husk_beetle_pass4_34.png` and `_top.png`
+  show that plate gone: what remains of the seam sits flush on the dome as a
+  short dash, the same fix pattern as `bog_leech` pass 2. Not a 9 — see
+  below.
+- **Silhouette: unchanged (5), not the claimed fix.** The diagnosis
+  attributed the jagged spike in `_sil.png` at roughly 10 o'clock to this
+  same box and expected shortening it to remove the spike. Comparing
+  `husk_beetle_pass2_sil.png` and `husk_beetle_pass4_sil.png` pixel-for-pixel:
+  the spike is still there, in the same place, unchanged. `_front.png`
+  explains why — the two smaller diagonal side-seam boxes at `(-0.46, 0.30,
+  1.36)` and `(0.46, 0.30, 1.36)`, flagged as "unsure about" in the pass 3
+  notes and explicitly left untouched, visibly poke past the shell's outer
+  edge on both shoulders in the pass 4 front render. That is almost
+  certainly the real source of the silhouette spike, not the main seam this
+  pass fixed. Leaving the score at 5 rather than claiming an improvement the
+  render does not show — the honesty rule in `design/asset-loop.md`.
+  Colour and Style untouched, scores carried over from pass 3.
+
++2 total. Not a plateau on its own (pass 3 was a re-score, not a geometry
+pass), so no rebuild verdict triggered.
+
+`run_tests.gd` passed (all green) before commit. Build log: 1396/2600 tris,
+1 mesh, every climb Height and the sigil hold still `ok`.
+
+## Unsure about, still
+
+The two side-seam boxes now read as the likely cause of the persistent
+silhouette spike (see above) — next diagnosis pass should check them against
+the thorax ball's surface the same way pass 3 checked the main seam, instead
+of assuming the fix already covered it.

@@ -56,7 +56,7 @@ b.shelf(3, (0.0, 0.66), (0.56, 0.38), SLATE, thickness=0.15, bevel=0.05,
         drop=0.02)
 # A seam down the spine, the classic beetle elytra split, and one running
 # between each pair of shell steps - breaks up the smooth dome into plates.
-b.box((0.0, -0.30, 1.73), (0.020, 1.15, 0.030), CHARCOAL, bevel=0.0)
+b.box((0.0, -0.30, 1.73), (0.020, 0.20, 0.030), CHARCOAL, bevel=0.0)
 b.box((-0.46, 0.30, 1.36), (0.30, 0.020, 0.020), CHARCOAL, bevel=0.0,
       rot=(0.0, 0.0, 0.35))
 b.box((0.46, 0.30, 1.36), (0.30, 0.020, 0.020), CHARCOAL, bevel=0.0,
