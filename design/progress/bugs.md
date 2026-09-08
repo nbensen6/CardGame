@@ -5,6 +5,118 @@ score sheets. Per `tools/fixer/BRIEF.md`: fix it only if it's inside
 `tools/blender/**` / `game/assets/3d/**`; anything in `game/**` GDScript gets
 written up here for the session, not touched.
 
+## 2026-09-08 — Pass B (temporal), first run of this pass: nothing found beyond two already-intentional, sub-visible idle motions; the beast breathing-pulse bug (fixed 2026-09-08) does not appear to have regressed
+
+**Pass B (temporal) — first run of this pass ever.** Grepped this whole log for
+"Pass B" before starting: zero hits (Pass A, C, D all have entries; B did not).
+So this is the pass that had gone longest without a run, per the brief's
+rotation rule, not a free choice.
+
+**Method:** `game/tools/screenshot.gd` captures once and exits, so "the same
+state twice, a few seconds apart" means two separate process launches, several
+real seconds apart, same `state=`/`beast=`/`slot=` args, different `out=`
+paths, then a pixel diff. Used Python/PIL (`ImageChops.difference` + a NumPy
+threshold) since no diff tool ships in this repo. Every state below was
+diffed this way; I opened every resulting PNG (both raw shots for the states
+that showed a diff, plus zoomed crops of the diff region) rather than trusting
+the diff numbers alone.
+
+**Commands (one pair per state, ~3-4s apart):**
+```
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:\shot_A.png state=3dselect
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:\shot_B.png state=3dselect
+
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:\shot_A.png state=3d slot=0 beast=thrasher
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:\shot_B.png state=3d slot=0 beast=thrasher
+
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:\shot_A.png state=3dmap
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:\shot_B.png state=3dmap
+
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:\shot_A.png state=3dcampfire
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:\shot_B.png state=3dcampfire
+
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:\shot_A.png state=menu
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:\shot_B.png state=menu
+
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:\shot_A.png state=3dwon slot=0 beast=thrasher
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:\shot_B.png state=3dwon slot=0 beast=thrasher
+
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:\shot_A.png state=3dshop
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:\shot_B.png state=3dshop
+```
+
+**What the harness printed:** nothing relevant to this pass — no state has a
+temporal self-test, so every finding here is from diffing and looking at the
+picture, same as Pass C/D's entries above.
+
+**What I saw:** `menu` and `3dmap` came back pixel-identical between the two
+launches (zero pixels over a diff threshold of 10/255) — clean. `3dshop` had
+exactly one pixel differ by more than threshold, in the sliver of hex tile
+still visible below the trader's card panels; that's compression/dither noise,
+not a rendered difference (opened `shot_shop1.png` — the trader screen covers
+almost the entire hex map with five gold-cost card panels and three
+deck/nav buttons, leaving only a small triangle of ground visible at
+bottom-centre; nothing there moved).
+
+`3dselect`, `3d` (combat open), `3dcampfire`, and `3dwon` each showed the same
+shape of small, tightly-bounded diff (order of 20-200 pixels out of ~920,000,
+always confined to a box a few hundred pixels wide around chest/head height on
+a hunter or the sigil) every time. Cropping and zooming those regions 2-3x and
+looking at the two frames side by side (not just trusting the diff count), I
+could not see the difference by eye in any of them — confirmed on
+`3dselect`'s five-hunter row and `3d`'s active-hunter/sigil close-up. Tracing
+the code for what's actually moving there:
+- `location_3d.gd:91` (`3dselect`, `3dcampfire`, `3dwon`, `3dreward` all
+  share this view): `n.position.y = TILE_TOP + sin(_time * 2.1 + i * 1.7) *
+  0.035` — a documented "gentle idle" per the same pattern in combat.
+- `combat_3d.gd:889`: hunters sway `sin(_time * 2.3 + i * 1.7) * 0.045`,
+  explicitly commented "a gentle out-of-phase idle so the two hunters don't
+  look cloned."
+- `combat_3d.gd:891`: the weak-point sigil pulses scale by `sin(_time * 3.0) *
+  0.14` — the biggest amplitude of the three, and still not visible by eye at
+  normal viewing size in my crops.
+
+**Specifically checked for a regression of the already-known "beast grew and
+shrank" bug** (`combat_3d.gd:868-879`, removed 2026-09-08 per Nick — it was
+`1.0 + sin(_time * 1.6) * 0.02` on the beast's uniform scale): the `state=3d`
+diff bbox did NOT include the beast's body at all, only the sigil floating
+above it. Confirmed by eye on the cropped pair (beast fills most of the crop,
+sigil is the small triangle above it) — the beast itself is pixel-identical
+between the two captures. No sign this has come back.
+
+**Why none of this is a finding:** the brief's bar is "would a player think
+this looks unfinished," and the whole reason the beast pulse counted was that
+at 2% on a Titan filling the frame, it was "plainly visible" (the code
+comment's own words). These three idle motions are an order of magnitude
+smaller in screen-space terms (a few pixels of sub-degree sway on a
+728x720-ish render) and I could not see any of them without diffing two
+frames and zooming in — which is the opposite of "obviously wrong to anyone
+who looks" that Pass D's bar (and this brief's bar generally) sets. Reporting
+them as bugs would be the "two-point art fixes nobody could see" failure mode
+this brief was rewritten to get the fixer OFF of, just relocated to this lane.
+
+**A caveat on the method, for whoever runs Pass B next:** because
+`screenshot.gd` captures after a small fixed frame count from scene-ready
+(`_capture()`, ~15 frames plus camera settle) rather than after a fixed
+wall-clock delay, two separate launches land at nearly the same *scene* time
+(a few tenths of a second in, judging by the hunter-sway values printed by
+`SLOT`/`HUNTER` lines across my two `3d` runs: `0.036049` vs `0.035834`) even
+though several real seconds separate the two commands. It still caught the
+sigil pulse and hunter sway because those cycle in ~2-3 seconds, but a defect
+that only becomes visible after many seconds of true idling (someone leaving
+a screen up) would need a state with a longer built-in wait before capture,
+not just two cold launches — I don't know of one in this harness today.
+
+**Could not check this pass:** mobile (`size=2340x1080`) temporal diffs for
+any state; the driven/animated states (`3dclimb`, `3dstrike`, `3dgrip`,
+`3dreward`) where two launches don't land at comparable moments because part
+of the sequence is itself randomized on purpose (the climb note pattern,
+`combat_3d.gd:648-651`, is deliberately re-randomized per Nick, 2026-08-25 —
+diffing two launches of `3dclimb` would just show that intentional variety,
+not a bug, so I left it out rather than report noise); any beast other than
+`thrasher`; and `3dsettings`/`3devent`/`3dsel`/`3dswap`/`3drebind`, which I
+did not get to this pass.
+
 ## 2026-09-08 — the main menu shows four characters that don't exist in this game (Sloth, Goat, Monkey heroes; a Rhino "Beast"), while the real 5-hunter roster and every Titan are absent from it
 
 **Pass C (cross-surface) — first run of this pass since the brief rewrite.**
