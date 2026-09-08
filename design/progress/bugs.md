@@ -310,3 +310,106 @@ map -> combat -> reward -> map correctly), and `3dcross` (act-boundary framing
 at row 5, `Act 2 of 4`) all printed clean harness lines with no new `FAIL`.
 `3dswap`/`3drebind`/`3dsettings`/`3dsel` all still show the already-logged
 `VIS FAIL hunter1` at combat start (same known cause above, not a new find).
+
+## 2026-09-07 — reward screen's "picks:" prompt is drawn behind the reward cards in solo
+
+**Command:**
+```
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:\shot.png state=3dreward slot=0 beast=mire_snapper
+```
+(`mire_snapper` had no prior fixer pass or bug-hunt check; reproduces
+identically on `beast=thrasher`, so this is not beast-specific — see below)
+
+**What the harness printed:** no dedicated harness line for this screen; this
+is a looking-at-the-picture find, not a self-check failure.
+
+**What I saw in the PNG:** the reward screen's status line reads "The Frog
+picks:   Tap a card to select" (this run is in solo — one player controls
+both hunters, hence the `%s picks:` prefix and the "▶ Switch to The Goblin
+Engineer" button also visible), but almost the entire line is hidden behind
+the three reward-card panels: only ragged fragments poke out above the cards'
+top edge ("The Fro...", "...ki?", "Tap a card to...", a trailing "t"), nothing
+readable as a full sentence. Confirmed twice, independently, on two different
+beasts (`mire_snapper`, `thrasher`) — pixel-identical overlap in both, so this
+is a layout bug, not a render fluke.
+
+**Why:** `location_3d.gd:472-473` sets this text —
+```gdscript
+_prompt.text = "%sTap a %s to select" % [
+    ("%s picks:   " % _hunter_name(_active_slot)) if solo else "", noun]
+```
+— on the `%Prompt` label, and `location_3d.tscn` anchors `Prompt` and `Row`
+(the reward-card container) to the same bottom edge only 34px apart:
+`Prompt` at `offset_top = -302.0` (location_3d.tscn:109), `Row` at
+`offset_top = -268.0` (location_3d.tscn:129). In co-op, the un-prefixed
+"Tap a card to select" fits in that headroom. In solo, the `"<hunter> picks:  "`
+prefix this run adds is exactly what's missing from the frame — the label
+still exists and still holds the right string (this isn't a logic bug, the
+game knows what it wants to say), it is just being visually painted over by
+the card row that starts almost immediately below it.
+
+**Why it matters:** solo is a real, reachable mode (the "▶ Switch to X" button
+exists specifically for it), and this is the line that tells a solo player
+*which of their two hunters* is making the current pick — the one piece of
+information this screen most needs to communicate in solo, on the only screen
+mode where it's needed at all, unreadable every single time a beast falls.
+
+**Where to look:** `location_3d.gd`'s `_render_reward()` (line 446, prompt set
+at 472-473) and/or the `Prompt`/`Row` anchor offsets in `location_3d.tscn`
+(109 and 129) — either give the solo prompt more clearance above the row, or
+shrink/wrap it to fit the existing 34px gap. This is `game/**` GDScript (and
+its `.tscn`), outside `tools/blender/**` / `game/assets/3d/**`, so written up
+rather than touched.
+
+## 2026-09-07 — hand of cards renders skewed and cut off during the grip minigame
+
+**Command:**
+```
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:\shot.png state=3dgrip slot=0 beast=mire_snapper
+```
+
+**What the harness printed:** `GRIP OK: foothold 1 -> 0 after the timer
+emptied` — the grip mechanic itself resolves correctly. No harness line
+checks hand layout, so this is a looking-at-the-picture find.
+
+**What I saw in the PNG:** the five-card hand, which sits flat and legible
+along the bottom edge in every other state I checked (`3d`, `3dclimb`,
+`3dstrike`), is instead drawn as a steep diagonal running from screen centre
+up to the top-right, each card cut off mid-face by the screen edge, cost pips
+and names sliding off at an angle rather than sitting in a gentle horizontal
+fan. Reproduced identically across two independent runs on `mire_snapper`.
+
+**Why this isn't just the normal fan tilt:** `combat_3d.gd`'s `_layout_hand()`
+(line 2927) sets `c.rotation = off * FAN_TILT` with `FAN_TILT := 0.085`
+(combat_3d.gd:2909) — at most ~2 cards off-centre, that's under 10° of tilt at
+either end, which is exactly what the flat fan in `3d`/`3dclimb`/`3dstrike`
+shows. What's on screen in `3dgrip` is a much steeper, one-directional skew
+that per-card fan tilt alone doesn't account for. I checked `_layout_hand`,
+the drag-roll code (`_aim_dragged`, line 3566, which only ever rotates the one
+dragged card, and no drag is active in this state) and the `location_3d.tscn`
+/ `combat_3d.tscn` node trees for a static rotation on `Hand`, `HandScroll`,
+`Root`, or the `Hud` `CanvasLayer` — none carries one, so whatever is doing
+this is applied at runtime and I could not pin down where.
+
+**One correlating detail for whoever picks this up:** `3dgrip` is the only
+state I checked where `%GripBar` is visible (`_update_grip_bar`,
+combat_3d.gd:952, sets `_grip_bar.visible = not _climb.is_empty()`) at the same
+time the hand is on screen — none of `3d`, `3dclimb`, or `3dstrike` show both
+at once from what I captured. Worth checking whether GripBar becoming visible
+changes the `Hand`/`HandScroll` container's available rect in a way that
+`_layout_hand()`'s `room`/`step` math (combat_3d.gd:2938-2940) doesn't expect.
+
+**Also noted, not chased down:** `state=3dgrip beast=thrasher` twice hit
+`SHOT TIMEOUT` (the harness's 10-second wall-clock failsafe,
+`screenshot.gd:1195-1198) instead of saving a PNG, even though the console
+showed `GRIP OK` had already printed — i.e. the capture's own post-loop code
+ran long enough to lose the race, on `thrasher` specifically, not on
+`mire_snapper`. Might be the same underlying cost as the skew above (something
+in the grip path doing more work than it should), might be unrelated machine
+load. Flagging rather than claiming a connection.
+
+**Where to look:** `combat_3d.gd`'s `_layout_hand()` (2927) and
+`_update_grip_bar()` (952) interaction. This is `game/**` GDScript, outside
+`tools/blender/**` / `game/assets/3d/**`, so written up rather than touched.
