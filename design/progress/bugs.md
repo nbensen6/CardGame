@@ -5,6 +5,76 @@ score sheets. Per `tools/fixer/BRIEF.md`: fix it only if it's inside
 `tools/blender/**` / `game/assets/3d/**`; anything in `game/**` GDScript gets
 written up here for the session, not touched.
 
+## 2026-09-08 — the Frog is fit to a person's height, so it reads as a person-sized frog everywhere it stands next to another hunter
+
+**Pass D (proportion) — first run of this pass under the rewritten brief.**
+Rotation so far had only ever done Pass A (single-screenshot contradiction
+checks); nothing had compared the cast's sizes against each other or the real
+world before this run. This is the exact bug Nick named when the brief changed
+("a frog the size of a person") — confirmed here independently, with three
+separate repros, before reading that it was already known.
+
+**Commands (three independent repros, same result in each):**
+```
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:\shot_select.png state=3dselect
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:\shot_reward.png state=3dreward slot=0 beast=thrasher
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:\shot_won.png state=3dwon slot=0 beast=thrasher
+```
+(no `beast=` needed for `3dselect`; `thrasher` chosen arbitrarily for the
+other two, not beast-specific — the bug is in how hunter bodies are scaled,
+which doesn't depend on which Titan is present)
+
+**What the harness printed:** nothing relevant — no self-test covers hunter
+proportion, so all three are looking-at-the-picture finds, not `FAIL` lines.
+
+**What I saw in the PNGs:**
+- `3dselect` (the five-hunter pick screen): The Frog stands shoulder-to-head
+  with the Vine-Weaver, Mountain Climbers, Goblin Engineer, and Lightbearer —
+  all five character portraits sit at essentially the same head height on the
+  same ground plane. The Frog's body is also roughly 1.5-2x as WIDE as any of
+  the four humanoids at that same height (measured on-screen: Frog's footprint
+  spans roughly x=290-430px; Mountain Climbers, standing at comparable depth,
+  spans roughly x=600-670px).
+- `3dreward` (beast-fall reward screen): The Frog and Goblin Engineer stand
+  together at the foot of the fallen Titan; the Frog's head is level with the
+  Goblin Engineer's.
+- `3dwon` (run-clear screen): worst of the three — The Frog is visibly
+  LARGER overall than the Goblin Engineer standing right beside it, not just
+  equal height. A frog bigger than a goblin, on the screen that's supposed to
+  be the triumphant final shot of a run, is the kind of thing that reads as
+  unfinished on sight, no code contradiction required.
+
+**Why:** `combat_3d.gd`'s `_fit_height()` (line 1399) scales every hunter body
+uniformly — `node.scale = Vector3.ONE * factor` — so that its height matches
+the single constant `HUNTER_HEIGHT := 0.7` (line 125), called for each hunter
+at line 2476. That comment at line 120 says the quiet part out loud: "Hunters
+are the scale reference." Every hunter model, however short or squat its
+source art, gets stretched until its head reaches the same fixed height. A
+frog's real proportions (short legs, wide flat body, low-slung head) don't
+change relative to itself under uniform scaling — but forcing a frog-shaped
+body up to person-height makes it read as a person-sized frog, and because
+the scale factor applies to width and depth too, it comes out visibly
+chunkier than its human-shaped neighbors at the same height, exactly the trap
+this brief's Pass D warns about ("every hunter is fitted to a common HEIGHT,
+so a squat animal comes out enormous in WIDTH").
+
+**Not fixed here** — `game/**` GDScript (`combat_3d.gd:125,1399,2476`),
+outside this lane's job entirely under the new brief (this lane changes
+nothing at all now, not just outside `tools/blender/**`/`game/assets/3d/**`).
+
+**Checked, not chased further this pass:** the other four hunters
+(Vine-Weaver, Mountain Climbers, Goblin Engineer, Lightbearer) are all
+roughly human-shaped, so `HUNTER_HEIGHT` fitting doesn't visibly distort any
+of them against each other — The Frog is the only one of the five with a body
+plan far enough from human proportions to make the bug obvious to the eye.
+Did not check Titan-vs-Titan proportion this pass (beasts are framed by
+`_frame_beast()`'s window sizing, not scaled to a common height the way
+hunters are, so the same trap may not apply there the same way — worth a
+separate Pass D pass to confirm rather than assumed clean here).
+
 ## 2026-09-05 — ally hunter off-screen at the start of every fight
 
 **Command:**
