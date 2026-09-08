@@ -2679,6 +2679,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-08** — #86 duty 3 (verify a mechanic actually works). Last rotation
+  commit (`f356840`) was duty 2, so this turn is duty 3. The backlog's own
+  "start here" pointer (the view-layer climb route, `_route_between`/
+  `_stand_on_model`) turned out to already be fully extracted and tested —
+  `route_between_rungs`, `foothold_anchor`, `hunter_move_kind`,
+  `_cancel_pending_tween` and `_start_glide` are all covered by name in
+  `run_tests.gd` from earlier duty-3 turns, so scoring that a second time
+  would have been padding, not proof. Grepped every function in `core/*.gd`
+  against `run_tests.gd` for zero mentions instead, which surfaced
+  `Combat._resolve_hold_target`/`_is_named_hold` — the rule duty 2 just
+  touched (`targets_hold`, #24, Route Finder) — with no coverage at all.
+  Read its doc comment against `next_safe_height`'s: an explicit hold
+  request is honored on ANY named hold regardless of `safe`, while the
+  untargeted default only ever offers a safe one — a real, deliberate split
+  (`_test_named_holds_dict_shape_and_unsafe_flag` already proved it on the
+  bare `next_safe_height`/`is_secure` functions) that nothing had ever
+  proven through the actual card play a hunter uses it from. Added two
+  tests: playing Route Finder with an explicit unsafe hold named lands on
+  it (and leaves the hunter genuinely `not is_secure`), while the same card
+  played with no explicit target on the same board skips that unsafe hold
+  entirely and climbs straight to the sigil. Proved both are real assertions
+  by temporarily making `_is_named_hold` filter on `hold_safe` too, watching
+  the new test fail, then reverting — confirmed `git diff` was clean before
+  committing. `run_tests.gd`: ALL TESTS PASSED (fresh import, headless,
+  godot 4.7.1). Next `#86` turn is duty 1 (improve an asset).
+
 - **2026-09-08** — #86 duty 2 (find an error and resolve it). Last rotation
   commit (`9b40403`) was duty 1, so this turn is duty 2. Delegated the initial
   search, then verified the finding by reading the code myself before

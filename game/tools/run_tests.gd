@@ -201,6 +201,12 @@ func _init() -> void:
 	_test_hold_helpers_read_both_shapes()
 	_test_named_holds_dict_shape_and_unsafe_flag()
 	_test_targets_hold_card_climbs_to_a_named_hold()
+	# #86 duty 3: _is_named_hold checks height alone (any safety), unlike
+	# next_safe_height's safe-only default — proven at the pure-function level
+	# by _test_named_holds_dict_shape_and_unsafe_flag, but never through the
+	# actual card play a hunter uses it from.
+	_test_backlog86_targets_hold_card_can_be_aimed_at_an_unsafe_hold()
+	_test_backlog86_targets_hold_card_default_climb_skips_an_unsafe_hold()
 	_test_fall_drops_to_base()
 	_test_fall_noop_when_secure()
 	_test_weakpoint_threshold_bucks()
@@ -4156,6 +4162,48 @@ func _test_targets_hold_card_climbs_to_a_named_hold() -> void:
 	_expect(untargeted_ok and explicit_ok and invalid_falls_back_ok and noop_at_top_ok,
 		"a targets_hold card climbs straight to a named hold, defaults to the nearest one, " +
 		"ignores a fake target, and no-ops safely with nothing left above")
+
+
+## backlog #86 duty 3 — _resolve_hold_target's doc comment says an explicit
+## request lands on any hold that NAMES a real Height ("a ledge, any safety"),
+## while the untargeted default (next_safe_height) only ever offers a SAFE
+## one. `_test_named_holds_dict_shape_and_unsafe_flag` proved that split on
+## the bare `next_safe_height`/`is_secure` functions directly; nothing had
+## ever played the actual targets_hold card at an unsafe hold to prove the
+## rule a hunter would really see: deliberately aiming Route Finder at an
+## exposed ledge should work, at the cost of standing somewhere unsafe.
+func _test_backlog86_targets_hold_card_can_be_aimed_at_an_unsafe_hold() -> void:
+	var boss := _climb_boss(8)
+	boss.ledges = [2, {"height": 5, "safe": false, "exposed_to": ["swipe_low"]}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 1
+	ps.hand = [Content.make_card("route_finder")]
+	ps.energy = 3
+	combat.play_card(0, 0, true, -1, -1, 5)  # explicitly name the unsafe hold
+	_expect(ps.foothold == 5,
+		"a targets_hold card can be deliberately aimed at an unsafe named hold, " +
+		"not just the safe ones next_safe_height would offer by default")
+	_expect(not combat.is_secure(0),
+		"landing on that unsafe hold on purpose leaves the hunter genuinely unsafe there")
+
+
+## The other half of the same rule: with NO explicit target, the same climb
+## must never land a hunter on an unsafe hold by default — it has to skip
+## straight past it to the next safe one (here, the sigil itself), same as
+## next_safe_height promises on its own.
+func _test_backlog86_targets_hold_card_default_climb_skips_an_unsafe_hold() -> void:
+	var boss := _climb_boss(8)
+	boss.ledges = [2, {"height": 5, "safe": false, "exposed_to": ["swipe_low"]}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 3
+	ps.hand = [Content.make_card("route_finder")]
+	ps.energy = 3
+	combat.play_card(0, 0)  # no explicit hold_target -> next SAFE hold only
+	_expect(ps.foothold == 8,
+		"an untargeted climb skips the unsafe hold at 5 entirely and goes straight to " +
+		"the sigil, the next hold next_safe_height actually considers safe")
 
 
 func _test_fall_drops_to_base() -> void:
