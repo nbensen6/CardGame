@@ -74,6 +74,9 @@ func _init() -> void:
 	_test_sigil_bonus_requires_climb()
 	_test_exposed_banks_until_climbed()
 	_test_height0_titan_no_sigil_bonus()
+	_test_backlog86_chip_relic_softens_the_armored_divisor()
+	_test_backlog86_vuln_bonus_relic_adds_to_an_exposed_hit()
+	_test_backlog86_sigil_bonus_relic_adds_to_a_reached_hit()
 	_test_attack_all_shakes_down_a_hold()
 	_test_backlog86_weakpoint_buck_does_not_fire_below_threshold()
 	_test_backlog86_weakpoint_buck_never_fires_off_the_sigil()
@@ -1603,6 +1606,59 @@ func _test_height0_titan_no_sigil_bonus() -> void:
 	var before := combat.boss.hp
 	combat.play_card(0, _first_playable(combat, 0))
 	_expect(combat.boss.hp == before - 6, "a low-sigil Titan gives no climb bonus")
+
+
+## backlog #86 duty 3: prying_bar's chip relic (_mod("chip"), read by
+## _damage_boss's armored-hide divisor) had never been exercised by any test
+## with a nonzero value — only the unmodified ARMORED_DIVISOR path was
+## checked (_test_sigil_bonus_requires_climb above). Also proves the floor:
+## maxi(2, ARMORED_DIVISOR - chip) never lets the divisor drop below 2, so a
+## large enough chip stack can't turn the armored hide into a free hit.
+func _test_backlog86_chip_relic_softens_the_armored_divisor() -> void:
+	var boss := _dummy_boss(300)
+	boss.weak_point_height = 3  # armored below the sigil; foothold stays 0
+	var combat := _new_combat_mods([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss, {"chip": 1})
+	var before := combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))  # divisor 4-1=3 -> slash 6/3 = 2
+	_expect(combat.boss.hp == before - 2, "chip 1 sharpens the armored divisor from 4 to 3")
+
+	var boss2 := _dummy_boss(300)
+	boss2.weak_point_height = 3
+	var combat2 := _new_combat_mods([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss2, {"chip": 5})
+	var before2 := combat2.boss.hp
+	combat2.play_card(0, _first_playable(combat2, 0))  # divisor floors at maxi(2, 4-5) = 2, not 0 or negative
+	_expect(combat2.boss.hp == before2 - 3, "chip past ARMORED_DIVISOR still floors the divisor at 2, never removes the armor entirely")
+
+
+## backlog #86 duty 3: hunters_mark's vuln_bonus relic (_mod("vuln_bonus"))
+## stacks on top of the base VULN_BONUS an Exposed hit already deals
+## (_test_expose_adds_bonus_damage above) — never proven with a nonzero mod.
+## weak_point_height stays 0 so the sigil bonus can't leak into the number.
+func _test_backlog86_vuln_bonus_relic_adds_to_an_exposed_hit() -> void:
+	var boss := _dummy_boss(300)
+	boss.vulnerable = 1
+	var combat := _new_combat_mods([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss, {"vuln_bonus": 3})
+	var before := combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))  # 6 + VULN_BONUS(4) + relic(3) = 13
+	_expect(combat.boss.hp == before - (6 + Combat.VULN_BONUS + 3) and combat.boss.vulnerable == 0,
+		"vuln_bonus adds on top of the base Exposed bonus and still consumes the stack")
+
+
+## backlog #86 duty 3: sigil_lens's sigil_bonus relic (_mod("sigil_bonus"))
+## stacks on top of the base SIGIL_BONUS a reached-weak-point hit already
+## deals (_test_sigil_bonus_requires_climb above) — never proven with a
+## nonzero mod. Also checks the relic bonus feeds weak_point_damage, the
+## same counter the buck-off threshold reads, not just boss.hp.
+func _test_backlog86_sigil_bonus_relic_adds_to_a_reached_hit() -> void:
+	var boss := _dummy_boss(300)
+	boss.weak_point_height = 2
+	var combat := _new_combat_mods([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss, {"sigil_bonus": 4})
+	combat.players[0].foothold = 2  # reached the sigil
+	var before := combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))  # 6 + SIGIL_BONUS(5) + relic(4) = 15
+	_expect(combat.boss.hp == before - (6 + Combat.SIGIL_BONUS + 4)
+			and combat.players[0].weak_point_damage == 6 + Combat.SIGIL_BONUS + 4,
+		"sigil_bonus adds on top of the base reached-sigil bonus, and the relic bonus counts toward the buck threshold too")
 
 
 func _test_attack_all_shakes_down_a_hold() -> void:
@@ -8561,6 +8617,17 @@ func _dummy_boss(hp: int, value: int = 8) -> Boss:
 	var b := Boss.new("Dummy", hp)
 	b.moves = [{"type": "attack", "value": value}]
 	return b
+
+
+## Same shape as _new_combat, but threads a relic-totals dict through to
+## Combat._init's run_mods param (see Run.relic_totals) — for proving a
+## specific _mod() key actually changes a number, the same pattern
+## _test_backlog70_fight_start_relics_apply_before_round_one uses inline.
+func _new_combat_mods(decks: Array, seed_value: int, boss: Boss, mods: Dictionary) -> Combat:
+	var players := [Combatant.new("P1", 42), Combatant.new("P2", 42)]
+	var c := Combat.new(decks, players, boss, seed_value, 0, 0, 0, 0, [], mods)
+	c.start()
+	return c
 
 
 ## A started 2-player Combat with the given relic modifiers applied.

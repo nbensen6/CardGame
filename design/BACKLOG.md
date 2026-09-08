@@ -2726,6 +2726,39 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-08** — #86 duty 3 (verify a mechanic actually works), post-rewrite.
+  Last own commit was `b3476ca` (duty 2), so this turn is duty 3. Went
+  hunting for a mechanic nobody had ever exercised in `run_tests.gd`, which
+  after ~15 prior duty-3 passes turned out to be hard — `combat_3d.gd`'s
+  climb-routing static funcs, `boss.gd`'s move conditions, and the reward
+  rarity/tag-lean roll are all covered by name or through their caller.
+  Found the gap by diffing `relics.json`'s 40 relic `effect` keys against
+  `run_tests.gd`: three of `Combat._damage_boss()`'s own `_mod()` reads —
+  `"chip"` (prying_bar, softens the armored-hide divisor below the weak
+  point), `"vuln_bonus"` (hunters_mark, stacks on Exposed's bonus damage) and
+  `"sigil_bonus"` (sigil_lens, stacks on the reached-sigil bonus and feeds
+  `weak_point_damage`, the same counter the buck-off threshold reads) — had
+  never been called with a nonzero value by any test. The un-modified paths
+  (plain armored chip, plain Exposed, plain sigil bonus) were well covered;
+  only the relic's OWN effect was unproven, so a broken `_mod("chip")` read
+  (wrong key, sign flipped, wired to the wrong divisor) could have shipped
+  silently. Added three tests (`_test_backlog86_chip_relic_softens_the_
+  armored_divisor`, `..._vuln_bonus_relic_adds_to_an_exposed_hit`,
+  `..._sigil_bonus_relic_adds_to_a_reached_hit`) plus a small
+  `_new_combat_mods()` helper mirroring the existing fight-start-relics test's
+  inline `Combat.new(..., run_mods)` pattern. The chip test also pins the
+  `maxi(2, ARMORED_DIVISOR - chip)` floor — a chip stack past 4 still leaves
+  the hide armored at divisor 2 rather than going to 0/negative. Watched all
+  three fail against a `combat.gd` with the `_mod()` reads temporarily
+  stubbed to 0 (confirms they'd catch a real regression), then confirmed
+  green against the real file. `run_tests.gd`: ALL TESTS PASSED (fresh
+  import, headless, godot 4.7.1-stable). `grip_seconds` (chalk_pouch/
+  tar_gloves) is the one relic effect still unproven with a nonzero value —
+  it's read in `combat_3d.gd` (the VIEW) off `_client.shared["mods"]`, not
+  `/core`, so exercising it needs a real `CombatClient` rather than a bare
+  `Combat`; left for a future duty-3 pass rather than reaching for a fake
+  client here. Next `#86` turn is duty 2 (find an error and resolve it).
+
 - **2026-09-08** — #86 duty 2 (find an error and resolve it), post-rewrite.
   Art (old duty 1) is dead per the 2026-09-08 rewrite, so with the last valid
   duty commit being `94dcedc` (duty 3, verify a mechanic) this turn is duty 2
