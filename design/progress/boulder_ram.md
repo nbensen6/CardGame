@@ -132,3 +132,86 @@ Total unchanged (29), a plateau on the numbers, but not wasted: one of the
 two named problems (colour) turns out not to exist, and the real hygiene
 problem is now stated correctly (occlusion/angle, not thickness or a
 missing horn) for whoever takes the next pass.
+
+---
+
+## Pass 3 diagnosis — #86 duty 1, 2026-09-08
+
+Lowest-scoring beast among the uncollided (non-`_ground`-paired) cast with no
+pending diagnosis — `bog_leech` (28) and `clot_toad` (26) already have
+unapplied pass-3 fixes waiting on the fixer as of this same rotation, and
+`boulder_ram`'s own pass 2 ended in a plateau with an open "for whoever takes
+the next pass" line, so this is that pass. Re-read `boulder_ram_pass2_34.png`,
+`_front.png` and `_sil.png` (no `_side`/`_top` committed for this asset) and
+`tools/blender/boulder_ram.py`'s actual coordinates before rescoring, per the
+anchor table's own warning not to anchor on the previous number.
+
+| Pass | Sil | Prop | Hygiene | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 1 | 7 | 6 | 4 | 5 | 7 | 29 |
+| 2 (reverted, no net change) | 7 | 6 | 4 | 5 | 7 | 29 |
+| 3 (re-score, no geometry change yet) | 7 | 6 | 4 | 7 | 7 | 31 |
+
+- **Colour & read (5 → 7).** Pass 2 already established this pass's own
+  "grey-and-gold, not TAN" complaint was a misattribution — the disc-with-rod
+  is the shoulder sigil (`boulder_ram.py:108-109`), not the horn, and
+  `boulder_ram_pass2_front.png` shows both horns correctly, cleanly TAN, with
+  no metallic or off-swatch read anywhere. That finding was never carried
+  through to the scoreboard; doing so now rather than re-scoring blind. Body
+  colours (CLAY/UMBER/BROWN/CHARCOAL/TAN) separate cleanly at both viewed
+  sizes and nothing sits dark-on-dark. Not touching Style, Silhouette or
+  Proportion on the same basis — no equivalent misattribution found in those.
+- **Silhouette (7, unchanged) and Proportion (6, unchanged).** Re-confirmed
+  against `boulder_ram_pass2_sil.png`: the stocky charging-quadruped shape
+  reads cleanly with or without the horn (Sil holds at 7), and Proportion
+  stays capped at 6 for the reason pass 1 named — the doc calls curled horns
+  the feature that reads "ram" rather than "dog or boar," and with the horn
+  reading as a flat sliver from every angle except front (see below), that
+  identity work still isn't landing.
+
+With Colour cleared, the two lowest lines are now **Build hygiene (4)** and
+**Proportion (6)**, and both trace to the same root cause pass 2 isolated by
+looking rather than measuring: the horn curl's four control points move
+mostly in Y (front-to-back) and Z (up), and barely in X (left-right) —
+`(0.18*s, -1.15, 0.78) → (0.40*s, -1.05, 1.08) → (0.54*s, -0.82, 1.20) →
+(0.48*s, -0.60, 1.10)`, X only ever spanning 0.18 to 0.54 before *pulling
+back in* to 0.48 at the very tip. A curl whose whole arc lives in one
+near-planar sheet reads with real width only from the one camera roughly
+normal to that sheet (front, which is why `_front.png` alone shows it
+cleanly) and edge-on/foreshortened from every other angle, exactly what pass
+2 saw and confirmed wasn't a thickness problem.
+
+## Diagnosis — two lowest (pass 3)
+
+1. **Build hygiene (4).** Concrete fix: keep the base point fixed (it anchors
+   to the head) and make every following point's X grow **monotonically and
+   by more each step**, instead of peaking at the third point and retreating
+   at the tip: `(0.18*s, -1.15, 0.78) → (0.44*s, -1.02, 1.10) → (0.70*s,
+   -0.85, 1.22) → (0.92*s, -0.68, 1.08)`. Total X swing goes from 0.36 (and
+   *closing* to 0.06 short of that at the tip) to 0.74, monotonic the whole
+   way — the curl sweeps continuously outward rather than curling back toward
+   centreline exactly where the tip most needs to clear the head/hump
+   silhouette. This is a position/spread change, not a thickness change (pass
+   2 already tried and reverted thickness), so it doesn't repeat a dead end.
+2. **Proportion (6).** Concrete fix: none beyond the same edit — this is the
+   same root cause pass 2 named, not a second defect, so applying fix 1 and
+   re-scoring both lines off the same render is the honest path rather than
+   inventing an unrelated second change. Precedent: `bog_leech.md` pass 2
+   moved two rubric lines with one edit for the same reason ("one visual
+   unit").
+
+Not applying — this is a diagnosis pass; `tools/blender/boulder_ram.py` is
+the fixer's file (`tools/fixer/BRIEF.md`).
+
+## Unsure about (pass 3)
+
+Whether pushing the tip out to X=0.92 (nearly double the old peak) reads as a
+confident curled horn or overshoots into looking detached from the head once
+actually rendered — the plane-collapse argument is sound from the coordinates
+alone, but a fix that measures right can still look wrong (same caveat
+`bog_leech.md` pass 3 and `clot_toad.md` pass 2 both flagged on similarly
+reasoned changes), and this run has no way to render and check. Also unsure
+whether widening the horn this much changes its own clearance from the
+shoulder sigil crest at `(0.32, -0.68, z_for(5))` — the horn's nearest point
+to the crest is well above and forward of it in the current geometry, but
+nobody has re-measured that gap against the proposed new points.

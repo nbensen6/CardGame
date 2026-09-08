@@ -2679,6 +2679,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-08** — #86 duty 1 (improve an asset — diagnose beasts first). Last
+  rotation commit (`169314b`) was duty 3, so this turn is duty 1. `bog_leech`
+  (28) and `clot_toad` (26) — the two lowest uncollided beasts — already had
+  unapplied pass-3 diagnoses waiting on the fixer from the last two duty-1
+  turns, so picked the next lowest with no pending diagnosis: `boulder_ram`
+  (29), whose own pass 2 had ended in a plateau with an explicit "for whoever
+  takes the next pass" line. Re-read `boulder_ram_pass2_34.png`, `_front.png`
+  and `_sil.png` directly rather than trusting the old scoreboard, and found
+  pass 2's own investigation had never been carried through to the numbers:
+  it had already proven the "grey-and-gold, not TAN" colour complaint was a
+  misattribution (the disc-with-rod is the shoulder sigil, not the horn — the
+  horn is correctly TAN in `_front.png`), but Colour was still sitting at 5.
+  Corrected it to 7. That promotes Proportion (6) to co-lowest alongside
+  Build hygiene (4), and both trace to the one root cause pass 2 isolated by
+  looking: the horn curl's four control points move almost entirely in Y/Z
+  and barely in X (0.18→0.54, then pulling back to 0.48 at the tip), so the
+  curl lives in one near-planar sheet that only shows real width from the
+  front camera and reads edge-on/foreshortened from every other angle — not
+  a thickness problem, which pass 2 already tried and reverted. Wrote one
+  concrete fix (make X grow monotonically and by more each step instead of
+  retreating at the tip: `0.18→0.44→0.70→0.92` in place of `0.18→0.40→0.54→
+  0.48`) that serves both lines at once, the same one-edit-two-lines shape
+  `bog_leech.md` pass 2 used. Diagnosis only, not applied — `boulder_ram.py`
+  is the fixer's file. `run_tests.gd`: ALL TESTS PASSED (fresh `--import`,
+  headless, Godot 4.7.1) — no code touched this turn, ran it to confirm the
+  tree stayed green. Next `#86` turn is duty 2 (find an error and resolve
+  it).
+
 - **2026-09-08** — #86 duty 3 (verify a mechanic actually works). Last rotation
   commit (`fa3f787`) was duty 2, so this turn is duty 3. Picked
   `Combat._check_weakpoint_buck` — "you can't camp the weak point," Nick's own
