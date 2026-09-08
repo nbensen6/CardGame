@@ -63,13 +63,20 @@ foreach ($lane in $LANES) {
     $title = New-Object Windows.Forms.Label
     $title.Text = $lane.Name
     $title.Font = New-Object Drawing.Font('Segoe UI', 11, [Drawing.FontStyle]::Bold)
+    $title.AutoSize = $false
     $title.Location = New-Object Drawing.Point(16, $y)
-    $title.Size = New-Object Drawing.Size(150, 22)
+    $title.Size = New-Object Drawing.Size(112, 22)
     $form.Controls.Add($title)
 
     $status = New-Object Windows.Forms.Label
-    $status.Location = New-Object Drawing.Point(150, ($y + 3))
-    $status.Size = New-Object Drawing.Size(290, 20)
+    # Starts clear of the title's box. These two overlapped by 16px at first,
+    # and because the title is added to Controls FIRST it draws on top — so it
+    # painted over the front of every status string. "RUNNING now" came out as
+    # "INNING now" and "idle, next run 14:54" as "e, next run 14:54", which
+    # reads like a text bug and is really a z-order one.
+    $status.AutoSize = $false
+    $status.Location = New-Object Drawing.Point(136, ($y + 3))
+    $status.Size = New-Object Drawing.Size(300, 20)
     $status.Font = New-Object Drawing.Font('Segoe UI', 9, [Drawing.FontStyle]::Bold)
     $form.Controls.Add($status)
 
