@@ -81,6 +81,8 @@ func _init() -> void:
 	_test_map_generates_connected_rows()
 	_test_map_is_deterministic_per_seed()
 	_test_backlog86_map_guarantees_a_shop_every_act()
+	_test_backlog86_aligned_keeps_paths_straight_and_endpoints_pinned()
+	_test_backlog86_aligned_guards_singleton_rows()
 	_test_backlog38_same_seed_reproduces_map_shop_and_rewards()
 	_test_backlog86_encounter_seed_reproduces_the_exact_same_shuffle()
 	_test_backlog49_daily_seed_is_stable_and_shared()
@@ -1660,6 +1662,51 @@ func _test_backlog86_map_guarantees_a_shop_every_act() -> void:
 		if not ok:
 			break
 	_expect(ok, "every act guarantees a shop node exists (failed seed %d act %d)" % [bad_seed, bad_act])
+
+
+## #86 duty 3 — RunMap._aligned's own doc comment claims it maps an index in a
+## row of `from_n` onto "the proportionally matching index in a row of `to_n`,
+## so paths run roughly straight instead of criss-crossing." Every prior map
+## test (`_test_map_generates_connected_rows`, the shop guarantee above) checks
+## outcomes of `_link()` — reachability, node counts — never the index math
+## `_link()` actually calls to decide which node lines up with which. Nothing
+## in the suite asserts "roughly straight" means anything at all.
+## Already pure (explicit int args, no scene-tree or instance state), so no
+## extraction needed — call it straight off a throwaway RunMap instance the
+## same way the shop test above reaches into `m.rows`.
+func _test_backlog86_aligned_keeps_paths_straight_and_endpoints_pinned() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 1
+	var m := RunMap.new(1, rng)
+	# equal-width rows: a straight path means every index maps to itself, not
+	# just "close to" itself.
+	var identity_ok := true
+	for i in range(5):
+		if m._aligned(i, 5, 5) != i:
+			identity_ok = false
+	# the first and last node in a row must land on the first and last node of
+	# the next row no matter how the widths differ — the ends of a path never
+	# drift inward.
+	var first_pinned := m._aligned(0, 3, 7) == 0 and m._aligned(0, 7, 3) == 0
+	var last_pinned := m._aligned(2, 3, 7) == 6 and m._aligned(6, 7, 3) == 2
+	# a widening row (3 -> 2) rounds the half-integer case away from zero, per
+	# the doc comment's "proportionally matching" claim.
+	var rounds_ok := m._aligned(1, 3, 2) == 1
+	_expect(identity_ok and first_pinned and last_pinned and rounds_ok,
+		"_aligned keeps equal-width rows straight and pins both ends of a widening/narrowing row")
+
+
+func _test_backlog86_aligned_guards_singleton_rows() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 1
+	var m := RunMap.new(1, rng)
+	# a one-node row has nowhere to be "proportional" to — every index must
+	# collapse to that row's only slot (0) rather than dividing by zero.
+	var from_singleton := m._aligned(0, 1, 5) == 0
+	var to_singleton := m._aligned(3, 5, 1) == 0
+	var both_singleton := m._aligned(0, 1, 1) == 0
+	_expect(from_singleton and to_singleton and both_singleton,
+		"_aligned never divides by a singleton row's own missing width")
 
 
 ## Backlog #38: a shareable seed is only worth sharing if replaying it actually

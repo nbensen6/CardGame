@@ -2679,6 +2679,29 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-08** — #86 duty 3 (verify a mechanic actually works). Last rotation
+  commit (`15de589`) was duty 2, so this turn is duty 3. `combat_3d.gd`'s climb
+  routing (the specific example the rotation's own text points at) already has
+  five-plus prior duty-3 passes on it (`route_between_rungs`, `foothold_anchor`,
+  `_gather_climb`, `_front_of_beast`, `_let_drags_through`, and more), so went
+  looking elsewhere in `/core` for a rule with zero coverage rather than adding
+  a sixth case to an already-proven system. `RunMap._aligned()`
+  (`core/run_map.gd:209`) is the index math `_link()` uses to wire one row's
+  nodes to the next row's — its own doc comment claims it keeps paths "roughly
+  straight instead of criss-crossing," but every existing map test
+  (`_test_map_generates_connected_rows`, the shop-guarantee test) only checks
+  outcomes of `_link()`, never this rule directly. Added
+  `_test_backlog86_aligned_keeps_paths_straight_and_endpoints_pinned` (equal
+  rows map index-to-index for a truly straight path; the first/last node of a
+  row always lands on the first/last node of the next row regardless of width
+  change; a widening row's half-integer case rounds away from zero) and
+  `_test_backlog86_aligned_guards_singleton_rows` (a one-node row never divides
+  by its own missing width, from either side, or both). Verified both catch a
+  real regression by stubbing `_aligned` to `return 0` and watching the first
+  test fail, then restored the real implementation and reran the full suite
+  clean. `run_tests.gd`: ALL TESTS PASSED (fresh `--import`, headless, Godot
+  4.7.1).
+
 - **2026-09-08** — #86 duty 2 (find an error and resolve it). Last rotation
   commit (`f07c799`) was duty 1, so this turn is duty 2. Read `combat_3d.gd`'s
   `_place_hunters` end to end, the same function the "first" branch's own
