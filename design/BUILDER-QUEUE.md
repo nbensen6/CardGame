@@ -30,7 +30,7 @@ per-beast cost. Phase 3 rolls them out by adding names to a list.
 
 ## Next up
 
-- [ ] **1. Widen the value range — and NOT by swapping swatches.**
+- [x] **1. Widen the value range — and NOT by swapping swatches.**
 
       The single biggest remaining gap. Measured, only ~2.4% of the jackal sits
       above 80% luminance and its body sits mid-range everywhere; the reference
@@ -108,14 +108,98 @@ per-beast cost. Phase 3 rolls them out by adding names to a list.
       done and proven; only the brightening half is open, and it is blocked by
       item 1a rather than by anything in the shader.
 
-- [ ] **1a. Make the accents survive the union pass — blocks item 1.**
+      **Correction, 2026-09-08 (builder, item 1a): the brightening half is
+      NOT blocked — it already works, and this item's own committed proof
+      shows it.** `design/renders/cinder_jackal_valuerange_after.png` (and
+      `_before.png`) both show the two AMBER eyes as a bright white-gold
+      highlight punched into the dark charcoal head — sampled directly,
+      (255,187,70) at the eye core against (16,8,2) two inches away on the
+      same head. That is `hot = mix(base, white, ember_white*ember)` plus
+      `EMISSION += hot*ember*ember_gain*beat` doing exactly its job. A zoomed
+      crop of the same committed frame is at
+      `design/renders/cinder_jackal_embercheck_eyes.png` for anyone who wants
+      to see it without doing the pixel-sampling themselves.
+      **So: FIXED, not blocked.** See item 1a below for what was actually
+      wrong (a measurement bug, not the render) and what is genuinely still
+      open (the ridge, not the eyes).
+
+- [x] **1a. Make the accents survive the union pass.** Resolved 2026-09-08,
+      builder — narrower and better news than the open item was.
+
       `unionremesh.py` holds `union.txt` accent swatches out of the remesh and
       rejoins them, and the face counts said it worked (44 ridge, 288 eye faces
-      preserved). But the value-range run found no ember pixel on screen, so
-      either those faces are not where the camera looks, or they are being lost
-      later in the build. Measure it, do not reason about it: render the beast
-      and count pixels whose UV falls in an ember cell, from the actual fight
-      camera. Fix whichever half is lying.
+      preserved). The item above said the value-range run found no ember pixel
+      on screen anywhere and asked to measure the real fight camera rather than
+      reason about it. Done — and the "no ember pixel" claim does not survive
+      the measurement:
+
+      **The eyes are fine.** They read as a clear, bright accent in the fight
+      camera right now, in both of item 1's own already-committed proof
+      images (see above). The previous run's own whole-frame brightness diff
+      between `_before.png`/`_after.png` was correct on its own terms — zero
+      eye pixels got BRIGHTER from the `ember_gain 2.6→4.5` change — but that
+      is because the eyes were already white-hot and visually saturated
+      *before* the bump, not because they were invisible. A gain increase on
+      an already-clipped pixel has no headroom to show. Confirmed by
+      re-diffing the two committed PNGs directly: the only pixels that moved
+      were on the hunter figurines at the beast's feet, exactly as the
+      original run said.
+
+      **The ridge is the real gap, and it is a geometry problem, not a gain
+      problem.** Measured directly (not reasoned about): for every held-out
+      accent face, cast a ray from just outside it along its own normal and
+      count how many times it re-enters the remeshed body before reaching
+      open space. On cinder_jackal that comes back 246/288 eye faces exposed
+      to open space against only 2/44 ridge faces — the eyes mostly clear the
+      remeshed skin, the ridge mostly does not. That is a real, reproducible
+      split, and it is why one accent works and the other is invisible: not a
+      camera angle (a magenta-flagged Blender render of the built glb from
+      five angles spanning a full sphere — front/back/side/above/34 — never
+      shows the ridge either), and not a shader gain (`ember_gain` already
+      applies to whatever ridge geometry exists; there is just not enough of
+      it on screen to move).
+
+      **Tried and did not clear the bar: pushing buried accent shells outward
+      after rejoin, gated to shells more than 50% buried** (so the
+      already-working eyes are left alone — a first, ungated version of this
+      push visibly popped one eye into a detached floating ball, which is a
+      worse defect than the one it fixes; checked by rendering it, not
+      assumed). Gated, it raised the ridge's exposed-pixel count by roughly
+      30% across the same five-angle Blender sweep with the eyes provably
+      untouched. But rebuilt into the actual game and shot from the real
+      combat camera (`state=3d beast=cinder_jackal`, same box as every proof
+      above), the difference is not visible — the ridge sits along the
+      spine's top edge and this camera views that edge nearly on end either
+      way, so more exposed area does not turn into more screen area. Not
+      shipped: a measured improvement that does not clear this lane's own
+      bar ("a player would notice") is not a finished item, and the code was
+      reverted rather than landed unused. If a future run wants it: the
+      approach is a per-shell (not per-accent-object — `union.txt` can name
+      several disjoint pieces at once) outward nudge along the direction from
+      the remeshed body's own centre, gated on the ray-cast exposure test
+      above so it never touches a shell that already reads correctly.
+
+      **What this really argues for is item 4** (a bigger, redesigned ridge)
+      **rather than more pipeline work on this one** — the geometry-exposure
+      lever is real but caps out too small at fight distance to matter, the
+      same shape of finding as the aobake result below.
+
+      **A caution for the next measurement, since this run hit three
+      different false negatives before getting a true reading and each one
+      looked exactly like a real bug:** (1) creating a new Blender data layer
+      (e.g. `mesh.vertex_colors.new()`) can silently invalidate an
+      already-fetched reference to another layer on the same mesh — reads
+      after that point return stale/zeroed data with no error, not an
+      exception. Read everything you need from a layer BEFORE creating a new
+      one, not after. (2) Blender's default Filmic view transform desaturates
+      bright/saturated debug colours (a pure magenta debug flag rendered as a
+      muted grey-pink, undercounting a real signal by roughly 40x in this
+      session) — set `scene.view_settings.view_transform = "Standard"` for
+      any render whose PIXELS are being measured, not just judged by eye.
+      (3) `screenshot.gd`'s `orbit=` flag only calls `_apply_orbit`, which
+      only exists on the overworld view — it silently no-ops on Combat3D, so
+      "orbiting the fight camera" around a beast does nothing without also
+      rotating `_beast` directly.
 
 - [ ] **2. Surface breakup.** Ours is flat swatches, one colour per face, no
       variation anywhere; theirs carries scarring and tonal variation. Cheapest
