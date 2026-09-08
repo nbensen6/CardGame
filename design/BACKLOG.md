@@ -2726,6 +2726,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-08** — #86 duty 3 (verify a mechanic actually works). Last own
+  commit was `72299a0` (duty 2, the DeckView toggle fix), so this turn is
+  duty 3. Delegated the hunt for an untested mechanic to a research pass:
+  `_route_between`/`_stand_on_model`/`hunter_move_kind` (the "start here"
+  climb logic named in this file's own duty-3 section) turned out already
+  covered by ~15 prior passes, as were relic mods, energy handoff, campfire
+  heals, map generation, the daily challenge, and both of HitCircle's timing
+  paths (tap and slider). Found the gap one level over: `CardView`'s sweep-bar
+  timing minigame (`game/ui/card_view.gd`, the non-osu alternative
+  `Progress.timing_style()` switches to) grades taps with the exact same
+  "worst window of the chain wins" rule `HitCircle._fire()` already has
+  thorough coverage for — but `CardView`'s own copy of that rule had never
+  been called from a test at all (grepped `run_tests.gd` for `start_timing`,
+  `CardView.new()`, `zone_bonus`, `CORE_MIN`/`CORE_MAX`, `ZONE_MIN`/`ZONE_MAX`:
+  zero hits). Two independent implementations of one promised rule, one
+  proven and one not — the same drift risk the climb-logic tests exist to
+  prevent. Lifted the grading out of `_fire()` into a static
+  `CardView.fire_quality(t, zone_bonus, hits_done, hits_needed,
+  worst_quality) -> Dictionary`, the same shape as `route_between_rungs` and
+  `hunter_move_kind`: plain scalars in, a plain Dictionary out, no Control
+  node and no signal needed to test it headless. Seven new tests cover
+  PERFECT-in-core, GOOD-in-zone, MISS-outside-zone, `zone_bonus` widening the
+  zone without moving the core, a multi-hit chain reporting its worst window
+  rather than its last, a miss ending the chain mid-way through regardless of
+  the running worst, and a chain resolving only once `hits_done` reaches
+  `hits_needed`. `_fire()` itself is now a thin caller of the static
+  function, behaviour unchanged. `run_tests.gd`: ALL TESTS PASSED (fresh
+  import, headless, godot 4.7.1-stable). Next `#86` turn is duty 2 (find an
+  error and resolve it).
+
 - **2026-09-08** — #86 duty 2 (find an error and resolve it). Last own commit
   was `e849eaa` (a Bug hunt pass, not this rotation's own — my own last was
   `643da95`, duty 3), so this turn is duty 2. `combat.gd`, `run.gd`,

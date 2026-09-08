@@ -1084,6 +1084,24 @@ func _init() -> void:
 	_test_backlog86_shop_slot_disabled_is_false_at_the_exact_price()
 	_test_backlog86_shop_slot_disabled_is_false_when_affordable_and_unsold()
 
+	# backlog #86 duty 3 (fortieth pass): CardView.fire_quality, the sweep-bar
+	# timing minigame's own grading rule -- the sibling of HitCircle's already
+	# thoroughly-tested _fire() (see _hit_circle_fired_quality above), which
+	# resolves the exact same promise ("a chain's quality is its worst window,
+	# not its last") through a different UI face. Grepping for start_timing,
+	# CardView.new(), zone_bonus, CORE_MIN/CORE_MAX, ZONE_MIN/ZONE_MAX turned
+	# up nothing in this file before this pass -- the bar's own copy of the
+	# rule had never been exercised, only the circle's. Lifted the same way as
+	# route_between_rungs/hunter_move_kind: no Control, no signal, plain
+	# scalars in and a plain Dictionary out.
+	_test_backlog86_fire_quality_is_perfect_dead_centre_in_the_core()
+	_test_backlog86_fire_quality_is_good_inside_the_zone_but_outside_the_core()
+	_test_backlog86_fire_quality_misses_outside_the_zone()
+	_test_backlog86_fire_quality_zone_bonus_widens_the_good_window_not_the_core()
+	_test_backlog86_fire_quality_chain_reports_its_worst_window_not_its_last()
+	_test_backlog86_fire_quality_a_miss_ends_the_chain_even_mid_way_through()
+	_test_backlog86_fire_quality_resolves_only_once_hits_done_reaches_hits_needed()
+
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
 	# not "inside tree" yet until the engine's main loop actually starts, one
@@ -12522,6 +12540,84 @@ func _test_backlog86_shop_slot_disabled_is_false_at_the_exact_price() -> void:
 func _test_backlog86_shop_slot_disabled_is_false_when_affordable_and_unsold() -> void:
 	_expect(not Location3D.shop_slot_disabled(false, 11, 10),
 		"an affordable, unsold slot stays enabled")
+
+
+## backlog #86 duty 3 (fortieth pass) -- CardView.fire_quality is the sweep-bar
+## timing minigame's grading rule, lifted out of _fire() the same way
+## route_between_rungs was lifted out of combat_3d._route_between: plain
+## scalars in, a plain Dictionary out ({quality, hits_done, resolved}), no
+## Control node and no signal required. See card_view.gd's ZONE_MIN/ZONE_MAX
+## (0.40/0.60) and CORE_MIN/CORE_MAX (0.47/0.53) for the bands these tests
+## land in and out of.
+func _test_backlog86_fire_quality_is_perfect_dead_centre_in_the_core() -> void:
+	var r := CardView.fire_quality(0.50, 0.0, 0, 1, Combat.TIMING_PERFECT)
+	_expect(int(r["quality"]) == Combat.TIMING_PERFECT,
+		"a tap dead in the CORE band (0.47-0.53) grades PERFECT")
+	_expect(bool(r["resolved"]), "the only window in a one-hit chain resolves immediately")
+	_expect(int(r["hits_done"]) == 1, "the landed hit counts toward hits_done")
+
+
+func _test_backlog86_fire_quality_is_good_inside_the_zone_but_outside_the_core() -> void:
+	var r := CardView.fire_quality(0.42, 0.0, 0, 1, Combat.TIMING_PERFECT)
+	_expect(int(r["quality"]) == Combat.TIMING_GOOD,
+		"a tap inside the wider zone (0.40-0.60) but off the CORE bullseye grades GOOD, not PERFECT")
+
+
+func _test_backlog86_fire_quality_misses_outside_the_zone() -> void:
+	var r := CardView.fire_quality(0.35, 0.0, 0, 1, Combat.TIMING_PERFECT)
+	_expect(int(r["quality"]) == Combat.TIMING_MISS,
+		"a tap outside the success zone (below 0.40) misses outright")
+	_expect(bool(r["resolved"]), "a miss resolves the window immediately, same as a landed final hit")
+	_expect(int(r["hits_done"]) == 0, "a miss does not count as a landed hit")
+
+
+func _test_backlog86_fire_quality_zone_bonus_widens_the_good_window_not_the_core() -> void:
+	# Same offset (0.36, four hundredths below the bare zone) with no bonus
+	# misses; with a relic's zone_bonus widening the zone by 0.1 each side it
+	# clears the zone -- but the CORE band never moves, so it can only ever
+	# grade GOOD, mirroring HitCircle's own zone_bonus test one section above.
+	var narrow := CardView.fire_quality(0.36, 0.0, 0, 1, Combat.TIMING_PERFECT)
+	_expect(int(narrow["quality"]) == Combat.TIMING_MISS,
+		"with no zone bonus, 0.36 (below the bare 0.40 floor) misses")
+	var widened := CardView.fire_quality(0.36, 0.1, 0, 1, Combat.TIMING_PERFECT)
+	_expect(int(widened["quality"]) == Combat.TIMING_GOOD,
+		"the same 0.36 tap, with zone_bonus 0.1 (floor moves to 0.30), clears the widened zone -- but only GOOD, never PERFECT, since the CORE band is untouched by zone_bonus")
+
+
+func _test_backlog86_fire_quality_chain_reports_its_worst_window_not_its_last() -> void:
+	# The doc comment above _fire() promises this explicitly, and it's the
+	# same invariant _test_backlog86_hit_circle_chain_quality_is_its_worst_window_not_its_last
+	# already proves for HitCircle -- the bar's own copy had never been checked.
+	var first := CardView.fire_quality(0.42, 0.0, 0, 2, Combat.TIMING_PERFECT)  # GOOD
+	_expect(int(first["quality"]) == Combat.TIMING_GOOD and not bool(first["resolved"]),
+		"a two-hit chain's first window (GOOD) does not resolve the chain yet")
+	var second := CardView.fire_quality(0.50, 0.0, int(first["hits_done"]), 2, int(first["quality"]))  # dead-on PERFECT
+	_expect(int(second["quality"]) == Combat.TIMING_GOOD,
+		"a chain's final quality is its worst single window (GOOD from hit 1), not its last (PERFECT from hit 2)")
+	_expect(bool(second["resolved"]) and int(second["hits_done"]) == 2,
+		"the chain resolves once hits_done reaches hits_needed")
+
+
+func _test_backlog86_fire_quality_a_miss_ends_the_chain_even_mid_way_through() -> void:
+	var r := CardView.fire_quality(0.90, 0.0, 1, 3, Combat.TIMING_PERFECT)
+	_expect(int(r["quality"]) == Combat.TIMING_MISS,
+		"a miss on the second window of a three-hit chain still misses, discarding the running worst_quality entirely")
+	_expect(bool(r["resolved"]), "a miss ends the whole chain immediately, it doesn't wait for the remaining hits")
+	_expect(int(r["hits_done"]) == 1, "a missed window does not add to hits_done")
+
+
+func _test_backlog86_fire_quality_resolves_only_once_hits_done_reaches_hits_needed() -> void:
+	var first := CardView.fire_quality(0.50, 0.0, 0, 3, Combat.TIMING_PERFECT)
+	_expect(not bool(first["resolved"]) and int(first["hits_done"]) == 1,
+		"hit 1 of 3 does not resolve the chain")
+	var second := CardView.fire_quality(0.50, 0.0, int(first["hits_done"]), 3, int(first["quality"]))
+	_expect(not bool(second["resolved"]) and int(second["hits_done"]) == 2,
+		"hit 2 of 3 still does not resolve the chain")
+	var third := CardView.fire_quality(0.50, 0.0, int(second["hits_done"]), 3, int(second["quality"]))
+	_expect(bool(third["resolved"]) and int(third["hits_done"]) == 3,
+		"hit 3 of 3 finally resolves the chain")
+	_expect(int(third["quality"]) == Combat.TIMING_PERFECT,
+		"three dead-centre hits resolve PERFECT, the worst of three PERFECTs")
 
 
 func _expect(cond: bool, name: String) -> void:

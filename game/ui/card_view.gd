@@ -1699,19 +1699,36 @@ func _on_self_pressed() -> void:
 		tapped.emit()
 
 
+## Pure grading for one tap of the sweep-bar timing minigame, lifted out of
+## _fire() below so a headless test can prove it without building the strip's
+## UI. Mirrors HitCircle's own worst-window rule (see the tests beside
+## _test_backlog86_hit_circle_chain_quality_is_its_worst_window_not_its_last):
+## a tap outside the zone MISSES outright, discarding whatever `worst_quality`
+## the chain already earned — a miss ends the chain, it doesn't average into
+## it. A tap inside the zone but off the CORE band caps the running worst at
+## GOOD; landing in CORE leaves it unchanged. The chain resolves once
+## `hits_done` reaches `hits_needed`.
+static func fire_quality(t: float, zone_bonus: float, hits_done: int,
+		hits_needed: int, worst_quality: int) -> Dictionary:
+	if t < ZONE_MIN - zone_bonus or t > ZONE_MAX + zone_bonus:
+		return {"quality": Combat.TIMING_MISS, "hits_done": hits_done, "resolved": true}
+	var worst := worst_quality
+	if t < CORE_MIN or t > CORE_MAX:
+		worst = mini(worst, Combat.TIMING_GOOD)
+	var done := hits_done + 1
+	return {"quality": worst, "hits_done": done, "resolved": done >= hits_needed}
+
+
 ## One tap during timing. A miss ends the whole chain (fizzle); a hit either
 ## advances to the next window or, on the last one, resolves at whatever
 ## quality the chain earned — the CORE band (already drawn as the bullseye)
 ## is "perfect", the rest of the zone is "good"; a chain's quality is its
 ## WORST window, not its last one, so a shaky early hit still costs you.
 func _fire() -> void:
-	if _t < ZONE_MIN - zone_bonus or _t > ZONE_MAX + zone_bonus:
-		_end_timing(Combat.TIMING_MISS)
-		return
-	if _t < CORE_MIN or _t > CORE_MAX:
-		_worst_quality = mini(_worst_quality, Combat.TIMING_GOOD)
-	_hits_done += 1
-	if _hits_done >= _hits_needed:
+	var result := fire_quality(_t, zone_bonus, _hits_done, _hits_needed, _worst_quality)
+	_worst_quality = int(result["quality"])
+	_hits_done = int(result["hits_done"])
+	if result["resolved"]:
 		_end_timing(_worst_quality)
 		return
 	_t = 0.0  # reset the sweep for the next window
