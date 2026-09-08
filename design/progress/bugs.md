@@ -5,6 +5,221 @@ score sheets. Per `tools/fixer/BRIEF.md`: fix it only if it's inside
 `tools/blender/**` / `game/assets/3d/**`; anything in `game/**` GDScript gets
 written up here for the session, not touched.
 
+## 2026-09-08 — Pass A (the walk): two hunters render fully merged into one blob when the Goblin Engineer is picked first, and the free camera refuses to drag from three screen regions it should not refuse
+
+**Pass A (the walk) — first run of this pass since the brief rewrite.** Grepped
+this log before starting: B, C, and D each already had a first post-rewrite
+entry dated 2026-09-08; A did not (its most recent entries were all
+pre-rewrite, 2026-09-05/07). So this is the pass that had gone longest without
+a run, per the brief's rotation rule. Walked states not opened by any prior
+entry in this log (`3dosu`, `3dbar`, `3dslide`, `goblin`, `3dfreecam`) plus a
+beast never checked before (`drowned_colossus`), and re-walked `menu`/`3dselect`
+at the mobile size.
+
+### Finding 1 — the Frog and the Goblin Engineer draw fully interpenetrated, standing on top of each other, whenever the Goblin Engineer is the first-picked character
+
+**Command:**
+```
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:\Users\<you>\AppData\Local\Temp\shot.png state=goblin slot=0 beast=drowned_colossus
+```
+Reproduced a second time with a completely different beast to rule out a
+beast-specific cause:
+```
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:\Users\<you>\AppData\Local\Temp\shot2.png state=goblin slot=0 beast=thrasher
+```
+(`state=goblin` is an existing harness state — `screenshot.gd:143-145` — that
+picks `goblin_mech` into slot 0 and `frog` into slot 1, the mirror image of
+every other combat state's default order. Nothing beast-specific about it;
+identical result on both beasts.)
+
+**What the harness printed:** nothing relevant to hunter placement — see "A
+coverage gap," below. No `HUNTER`/`CAM`/`VIS` lines are emitted for this state
+at all, on either run.
+
+**What I saw in the PNG:** opened both, then cropped and 2x-zoomed the hunter
+area on each. On both beasts, the two hunters are not side by side (as they
+are in every other combat-start shot in this log, ~9 units apart on X, one of
+them typically off-screen per the already-logged "ally hunter off-screen"
+bug) — they are drawn one **inside** the other, both anchored to the same
+point in screen space: The Frog's rounded green body and long tongue overlap
+directly with the Goblin Engineer's dark armoured torso and legs, the tongue
+poking out through the goblin's hip, the goblin's boots visible planted
+between the frog's own feet. Confirmed by eye on the zoomed crop, not just a
+compression artefact — the two silhouettes are genuinely superimposed, at
+matching scale and matching ground shadow, in both screenshots.
+
+**Why this looks like a placement bug, not a camera illusion:** `_place_hunters()`
+(`combat_3d.gd:2347`) computes each hunter's `side` purely from its array index
+(`side := -1.0 if i == 0 else 1.0`, line 2357) and offsets X by
+`side * (_beast_box.size.x * 0.22 + 0.6)` at rest (line 2373) — nothing in that
+formula reads which *character* occupies index 0 or 1, so swapping
+Goblin-first vs. Frog-first shouldn't change the spacing at all if this path
+is what's running. That it visibly does change is why I'm flagging this for
+someone who can put a breakpoint or a print on `_place_hunters`/`_spawn_hunter`
+rather than guessing further from screenshots alone.
+
+**A coverage gap that let this hide:** `_report_visibility()` — the function
+that prints every `HUNTER`/`CAM`/`VIS` line elsewhere in this log — is only
+called when `_state.begins_with("3d")` (`screenshot.gd:687-688`). `"goblin"`
+does not start with `3d`, so this state has never been checked by the harness's
+own contradiction test, on any prior pass. Two hunters standing inside each
+other is exactly the shape of bug that test exists to catch (see the comment
+at `screenshot.gd:463-471` about hunters once being drawn stacked at the
+beast's centre for months, undetected, "because every check asked the game"
+instead of comparing the picture) — it just couldn't catch it here because the
+state name doesn't match the prefix the check gates on. Not fixed or reported
+as a code change per this lane's rules, but worth someone widening that
+`begins_with("3d")` gate, or renaming this state, since it's the second time a
+state-name mismatch has hidden exactly the class of bug this brief exists to
+surface.
+
+**Could not check:** whether `3dosu`, which shares the same
+`goblin_mech`-first/`frog`-second character order (`screenshot.gd:143`), has
+the same overlap — its shot is a tight `_focus_camera()` close-up on the
+active hunter alone (see `shot_osu.png` in Finding 3 below), so the second
+hunter is off-frame regardless and the picture can't confirm or rule this out.
+
+### Finding 2 — the free camera refuses to drag from three screen regions the game's own test says it should not, and right-drag-to-slide does nothing
+
+**Command:**
+```
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:\Users\<you>\AppData\Local\Temp\shot.png state=3dfreecam slot=0 beast=drowned_colossus
+```
+(first time this state has appeared in this log at all)
+
+**What the harness printed:**
+```
+FREECAM centre        drags
+FREECAM sky-left      drags
+FREECAM party-panel   DEAD
+FREECAM over-cards    DEAD
+FREECAM ground-gap    DEAD
+FREECAM gauge         DEAD
+FREECAM top-bar       DEAD
+FREECAM dead: party-panel, over-cards, ground-gap, gauge, top-bar  |  unexpected: ground-gap, gauge, top-bar
+FREECAM wasd: all six move the camera
+FREECAM pan (0.0, 0.0, 0.0) -> (0.0, 0.0, 0.0) STUCK | select clears it: yes
+```
+This test's own comment (`screenshot.gd:920-922`) states the rule directly:
+*"The party cards and the hand are meant to eat their own clicks... Anywhere
+ELSE that refuses a drag is a bug, and the top bar was one."* `party-panel`
+and `over-cards` are the only two zones the test expects dead
+(`screenshot.gd:923`); everything else it found dead — the gap in the ground
+between the hunters and the beast, the ascension/momentum gauge column on the
+right edge, and the top HUD bar — is the harness declaring a regression, in
+its own "unexpected:" line, not a judgement call I'm adding on top. Separately,
+right-drag ("slide," per the Settings screen's own text) produced no pan
+change at all across four frames of motion (`pan0 == pan1`, printed `STUCK`).
+
+**What I saw in the PNG:** confirms there's a real, unobstructed 3D scene under
+all five zones the test dragged against — the ground gap between hunters and
+boss, the gauge, and the top bar are all plainly empty space or translucent
+HUD over the 3D view in the captured frame, not solid panels that would
+legitimately eat a click the way the party cards or hand do.
+
+**Why it matters:** this is not a debug-only harness feature — the Settings
+screen documents this exact control scheme to players verbatim: *"Drag to
+look around. Right-drag to slide. Wheel to zoom."* (confirmed by eye this same
+run, `state=3dsettings`). It's the camera every player has during every 3D
+combat, climb, and reward screen in the game. A player whose mouse happens to
+be over the gauge, the top bar, or the gap of ground between the party and the
+boss — all ordinary places to rest a cursor — gets a camera that simply will
+not turn from there, and right-click-drag to slide the view does not work at
+all, anywhere, per this test.
+
+**Where to look:** whatever routes mouse-drag input to the free camera in
+`combat_3d.gd` (the `_gui_input`/`_input`-level handling `_yaw`/`_pan`, near
+where `3dswap`'s and `3dfocus`'s camera code already live) — this is `game/**`
+GDScript, outside `tools/blender/**` / `game/assets/3d/**`, so written up
+rather than touched.
+
+### Finding 3 (lower confidence) — the "Sweep bar" timing style may render no visible timing indicator at all
+
+**Command:**
+```
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:\Users\<you>\AppData\Local\Temp\shot_bar.png state=3dbar slot=0 beast=drowned_colossus
+```
+
+**What the harness printed:** `TIMING style=bar card=Tongue Snap windows=1
+circle_live=false` — the game's own report that a timed card was tapped and
+the sweep-bar path (not the hit-circle path) is live for it.
+
+**What I saw in the PNG:** cropped the tapped card ("Tongue Snap") and
+pixel-diffed it against the same card in an untouched resting-hand screenshot
+taken moments earlier. The diff bounding box is 41x7 pixels out of a
+1050x660 crop — nothing a person would call a visible change; side by side the
+two crops look identical. No sweep strip, marker, or colour change is visible
+anywhere on the card.
+
+**Why, from reading the code, not just the picture:** `start_timing()`
+(`card_view.gd:1646`) does set `_strip.visible = true`, but `_strip` is
+anchored at `anchor_top = anchor_bottom = 0.86` of the CARD's own height
+(`card_view.gd:317-323`) — right near the bottom edge. `_layout_hand()`
+(`combat_3d.gd:3092`) deliberately tucks a card DEEP at rest, "below the screen
+edge" for anything past the name and art, per its own comment at
+`combat_3d.gd:3119-3123` — the only thing that lifts a card clear of that tuck
+is `_hand_hover`, which is set exclusively by a `mouse_entered` signal
+(`combat_3d.gd:3178-3180`). My repro calls `_on_card_tapped()` directly
+(mirroring how `screenshot.gd` drives every other timed-card state), which
+never fires `mouse_entered`, so the card stayed in its deep-tucked rest
+position for the shot — meaning the strip may simply have been positioned
+off past the bottom of the frame, the same place the card's own rules text
+gets tucked to.
+
+**Why this is flagged lower-confidence, not a plain finding:** on a real
+desktop click, the mouse must pass over the card before it can be clicked,
+which fires `mouse_entered` and lifts the card before the tap — so an actual
+player's mouse-driven play may never hit this path at all. I could not
+simulate that sequence through this harness (it calls the tap handler
+directly, not a synthesized hover-then-click), so I don't know whether a real
+click leaves the card raised for the sweep that follows. What I can say for
+certain: on **handheld, there is no `mouse_entered` at all** — the code's own
+comment (`combat_3d.gd:3120-3123`) says so in as many words ("no hover means
+whatever is hidden at rest is hidden forever") — so if the strip does depend
+on hover-lift to clear the tuck, "Sweep bar" timing would be structurally
+unplayable on touch specifically, which is exactly the kind of thing CLAUDE.md
+§5's "no hover-only information" rule exists to prevent. **Not confirmed** —
+someone who can drive a real mouse (or touch) through this needs to check
+whether the strip appears once a card is actually clicked in a live session,
+on both desktop and a handheld-sized window.
+
+**Where to look, if confirmed:** `card_view.gd`'s `_build_timing_strip()` /
+`start_timing()` (1646, 1783) and its dependency on `_hand_hover` in
+`combat_3d.gd` (3092-3146). Not touched — `game/**` GDScript.
+
+### A tooling gotcha for whoever runs this pass next
+
+The brief's own example command writes to `out=C:\shot.png` — directly at the
+drive root. On this machine, that **silently fails**: Godot printed
+`ERROR: Can't save PNG at path: 'C:/shot_a1.png'` to stderr and then *still*
+printed `SHOT SAVED: C:/shot_a1.png (1280x720)` on the next line, and no file
+was written (confirmed — `ls` on the path came back "No such file or
+directory"). Writing to a subdirectory instead
+(`%LOCALAPPDATA%\Temp\<name>.png`, or anywhere else non-root) worked every
+time this run. I don't know if this is a permissions quirk specific to this
+shell/session or a real gap in `screenshot.gd`'s error handling, but the
+harness's own success line cannot be trusted at face value when the output
+path is drive-root — which is worth knowing given this brief's own history of
+"the log looked fine while the lane was dead."
+
+**Checked and clean, for the record, this run:** `state=3dsettings`,
+`state=3dstrike`, `state=3dslide`, `state=3dosu` (aside from Finding 3, all
+printed clean self-tests and looked correct by eye) — all captured against
+`drowned_colossus`, a beast with no prior fixer or bug-hunt entry against it.
+`state=menu` and `state=3dselect` at `mobile size=2340x1080` both reproduce
+already-logged bugs (the Sloth/Goat/Monkey/Rhino roster, and the Frog's
+oversized proportions) with nothing new at this aspect ratio.
+
+**Could not check this pass:** `3dgame`, `3dcross` at a beast other than
+already logged, and any mobile-size capture of `3dfreecam`, `goblin`, or the
+timed-card states above — ran out of pass budget after the two headline
+finds. `drowned_colossus`'s own model/portrait/menu cross-surface consistency
+also wasn't traced (that's Pass C's job, not this one).
+
 ## 2026-09-08 — Pass B (temporal), first run of this pass: nothing found beyond two already-intentional, sub-visible idle motions; the beast breathing-pulse bug (fixed 2026-09-08) does not appear to have regressed
 
 **Pass B (temporal) — first run of this pass ever.** Grepped this whole log for
