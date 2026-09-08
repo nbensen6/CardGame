@@ -75,6 +75,9 @@ func _init() -> void:
 	_test_exposed_banks_until_climbed()
 	_test_height0_titan_no_sigil_bonus()
 	_test_attack_all_shakes_down_a_hold()
+	_test_backlog86_weakpoint_buck_does_not_fire_below_threshold()
+	_test_backlog86_weakpoint_buck_never_fires_off_the_sigil()
+	_test_backlog86_weakpoint_buck_disabled_when_threshold_is_zero()
 	_test_sunlight_blade_scales_with_exposed()
 	_test_bowshot_deals_and_exposes()
 	# the run map (branching route)
@@ -1583,6 +1586,61 @@ func _test_attack_all_shakes_down_a_hold() -> void:
 	combat.end_turn(1)  # attack_all -> shake each down a hold
 	_expect(combat.players[0].foothold == 2 and combat.players[1].foothold == 0,
 		"a sweep shakes each hunter down to the ledge below")
+
+
+## backlog #86 duty 3 (forty-fifth pass): _check_weakpoint_buck — "you can't
+## camp the weak point" (Combat.gd's own comment above it), Nick's own example
+## mechanic in #86's own text — turned out to have ONE case covered
+## (_test_weakpoint_threshold_bucks: a hit that clears the threshold bucks the
+## hunter down a hold) and every other shape of the same rule untested: a hit
+## that falls short, the guard against a stale counter firing off the sigil,
+## and threshold 0's documented "no limit" meaning. All three below call the
+## real play_card path (or, for the off-sigil guard, the private check
+## directly — same pattern as the existing _draw/_track_climb tests above).
+
+## A hit that doesn't yet reach the threshold must neither buck the hunter
+## nor lose the damage that's already banked toward it — the counter has to
+## survive to add up over more than one strike.
+func _test_backlog86_weakpoint_buck_does_not_fire_below_threshold() -> void:
+	var boss := _climb_boss(6)
+	boss.ledges = [2, 4]
+	boss.weak_point_threshold = 20
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.players[0].foothold = 6
+	combat.play_card(0, _first_playable(combat, 0))  # 11 damage, threshold is 20
+	_expect(combat.players[0].foothold == 6 and combat.players[0].weak_point_damage == 11,
+		"a strike short of the threshold neither bucks the hunter nor loses its banked damage")
+
+
+## The guard the buck depends on to stay meaningful: weak_point_damage is only
+## ever meant to accumulate WHILE a hunter sits on the sigil. If a hunter's
+## stale counter from a previous visit could still buck them after they've
+## since fallen off the sigil, the "climb back up" loop the comment above
+## _check_weakpoint_buck describes would fire off the beast's own hide instead.
+func _test_backlog86_weakpoint_buck_never_fires_off_the_sigil() -> void:
+	var boss := _climb_boss(6)
+	boss.ledges = [2, 4]
+	boss.weak_point_threshold = 1
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 4  # a ledge, NOT the sigil (weak_point_height 6)
+	ps.weak_point_damage = 999  # a leftover counter that would clear any threshold
+	combat._check_weakpoint_buck(0)
+	_expect(ps.foothold == 4, "the buck never fires for a hunter who isn't standing on the sigil")
+
+
+## weak_point_threshold's own documented meaning: 0 is "no limit", not "buck on
+## the first hit" — a beast with a sigil but no stated threshold must let a
+## hunter camp it indefinitely.
+func _test_backlog86_weakpoint_buck_disabled_when_threshold_is_zero() -> void:
+	var boss := _climb_boss(6)  # weak_point_threshold defaults to 0
+	boss.ledges = [2, 4]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.players[0].foothold = 6
+	for _i in 5:
+		combat.play_card(0, _first_playable(combat, 0))
+	_expect(combat.players[0].foothold == 6,
+		"weak_point_threshold 0 means no limit, however much sigil damage lands")
 
 
 func _climb_boss(height: int) -> Boss:

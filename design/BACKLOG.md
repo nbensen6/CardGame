@@ -2679,6 +2679,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-08** — #86 duty 3 (verify a mechanic actually works). Last rotation
+  commit (`fa3f787`) was duty 2, so this turn is duty 3. Picked
+  `Combat._check_weakpoint_buck` — "you can't camp the weak point," Nick's own
+  named example mechanic in #86's text (the jump loop it drives: climb, strike
+  the sigil, get bucked down a hold, climb back up). Searched for existing
+  coverage by function name first and found none, which was misleading: a
+  test (`_test_weakpoint_threshold_bucks`) already covers the single case of a
+  hit that clears the threshold, just under a name with no "weakpoint_buck" or
+  "_check_weakpoint_buck" in it. Wrote a first duplicate test before noticing
+  and cut it once `grep -n "buck"` turned up the existing one — worth the
+  extra search, since shipping it would have been a wasted test slot pretending
+  to be new coverage. Every OTHER shape of the same guard clause was genuinely
+  untested: a hit that falls short of the threshold (must neither buck nor
+  drop the banked damage), the guard against a stale `weak_point_damage`
+  bucking a hunter who has since climbed down off the sigil entirely (proved
+  meaningful by temporarily deleting the `not sigil_reached(pi)` clause from
+  `combat.gd` and confirming the new test fails, then restoring it — a real
+  regression this test would have caught), and `weak_point_threshold == 0`'s
+  documented "no limit" meaning, which nothing had ever exercised on the
+  unmodified rule (only via the unrelated `sigil_fatigue` limiter and the
+  balance-shaped `_test_weak_point_threshold_still_means_something`, neither
+  of which touches this guard). Added three tests next to the existing climb
+  tests in `tools/run_tests.gd`. `--import` then `run_tests.gd`: ALL TESTS
+  PASSED (fresh import, headless, godot 4.7.1). Next `#86` turn is duty 1
+  (improve an asset — diagnose beasts first).
+
 - **2026-09-08** — #86 duty 2 (find an error and resolve it). Last rotation
   commit (`c08dd55`) was duty 1, so this turn is duty 2. Delegated an initial
   read across the less-picked-over core files (`run.gd`, `card.gd`,
