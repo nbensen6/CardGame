@@ -2726,6 +2726,33 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-08** — #86 duty 2 (find an error and resolve it). Last own commit
+  was `69296d0` (duty 3, CardView's sweep-bar timing grade), so this turn is
+  duty 2. Found the same "hand-copied fx dict drifts" shape this rotation has
+  already fixed roughly a dozen times, this time for `cheapen_amount`
+  (`game/core/card.gd:51`, the number `cheapen_pick` actually cuts a chosen
+  card's cost by). `Card.upgraded_copy()` deliberately bumps it 1 -> 2 for
+  Burn Coal, and `Combat.play_card()` reads it correctly at the rules level —
+  but `GameHost._slot_private()` (the hand) and `_deck_face()` (the deck
+  view) both hand-copy a list of non-numeric card fields into an `fx` dict
+  for the client, and neither ever included `cheapen_amount`, only the
+  `cheapen_pick` bool. `CardView.face_text()`'s matching branch never printed
+  a number either. Net effect: a campfire-sharpened Burn Coal really cut a
+  target's cost by 2 in play, but its live face printed the exact same "Burn
+  a card to cheapen another." as the un-upgraded card — the upgrade's whole
+  visible effect was invisible to the player who paid for it. Invisible to
+  `run_tests.gd` because `_test_backlog86_face_text_burn_lines_are_mutually_
+  exclusive` asserted the no-number sentence as correct, without ever
+  constructing an `fx` dict with `cheapen_amount > 1`. Fixed both `fx` dicts
+  to forward the field, fixed `face_text()`'s Burn branch to interpolate it
+  (defaulting to 1 to match `Card.from_dict`'s own default), updated the
+  stale test and added four new ones: the base/upgraded number reaching the
+  live face directly, and both `_slot_private` and `_deck_face` wiring it
+  over the wire end to end (the same two-copy shape needs a test on each
+  copy, per this rotation's own established pattern). `run_tests.gd`: ALL
+  TESTS PASSED (fresh import, headless, godot 4.7.1-stable). Next `#86` turn
+  is duty 3 (verify a mechanic actually works).
+
 - **2026-09-08** — #86 duty 3 (verify a mechanic actually works). Last own
   commit was `72299a0` (duty 2, the DeckView toggle fix), so this turn is
   duty 3. Delegated the hunt for an untested mechanic to a research pass:

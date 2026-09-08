@@ -1046,8 +1046,15 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 		out.append("%s a card: ally climbs %d." % [_kw("Burn", "burn", kw, rich),
 			int(fx["sac_ally_grip"])])
 	elif bool(fx.get("exhaust_pick", false)):
+		# backlog #86 duty 2 — cheapen_amount (game/core/card.gd:51) is the
+		# number upgraded_copy() actually bumps (1 -> 2), but this branch never
+		# read it, only the cheapen_pick bool: a campfire-sharpened Burn Coal
+		# really did cut a target's cost by 2, and the live face still printed
+		# the exact same "to cheapen another" as the un-upgraded card, with the
+		# upgrade's whole effect invisible to the player who paid for it.
 		out.append("%s a card%s." % [_kw("Burn", "burn", kw, rich),
-			"" if not bool(fx.get("cheapen_pick", false)) else " to cheapen another"])
+			"" if not bool(fx.get("cheapen_pick", false))
+				else " to cheapen another by %d" % int(fx.get("cheapen_amount", 1))])
 	# backlog #86 duty 2 — Discard is an action, not a stat (like Burn above),
 	# so it needs its own line rather than falling out of the numeric branches:
 	# Quick Purge ("Discard 2 cards. Draw 1.") showed only "Draw 1." once Draw

@@ -486,6 +486,8 @@ func _init() -> void:
 	_test_backlog86_deck_view_shows_reach_and_cleave_too()
 	_test_backlog86_route_finder_fx_carries_targets_hold_over_the_wire()
 	_test_backlog86_deck_view_shows_targets_hold_too()
+	_test_backlog86_cheapen_amount_fx_carries_over_the_wire()
+	_test_backlog86_deck_view_shows_cheapen_amount_too()
 	_test_backlog45_named_holds_cross_to_both_peers_identically()
 	_test_backlog45_graded_timing_quality_reaches_the_host_and_the_preview()
 	# backlog #46: a robustness sweep that is not balance tuning
@@ -8292,6 +8294,55 @@ func _test_backlog86_deck_view_shows_targets_hold_too() -> void:
 		"the deck view states the climb-to-hold clause via its own live branch too")
 
 
+## backlog #86 duty 2 — `_slot_private()`'s fx dict never carried
+## cheapen_amount, only the cheapen_pick bool: `Card.upgraded_copy()` bumps
+## Burn Coal's cheapen_amount from 1 to 2 (`_test_card_upgrade_bumps_cheapen_
+## amount_only_when_cheapen_pick_is_set` proves the /core value is right), and
+## `Combat.play_card()` genuinely cuts the target's cost by that sharpened
+## number -- but the live hand face had no way to show it, always printing
+## the exact same sentence as the un-upgraded card. Same "hand-copied field
+## list drifts" shape `_test_backlog86_reach_and_cleave_fx_carry_over_the_wire`
+## caught for topdeck/shuffle_in/tutor/hits_all_enemies above.
+func _test_backlog86_cheapen_amount_fx_carries_over_the_wire() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	host._run.combat.players[0].hand.append(Content.make_card("burn_coal"))
+	host._run.combat.players[0].hand.append(Content.make_card("burn_coal").upgraded_copy())
+	host._broadcast_state()
+	var hand: Array = c0.private["hand"]
+	var by_name := {}
+	for card_v in hand:
+		var card: Dictionary = card_v
+		by_name[String(card["name"])] = card
+	var base_card: Dictionary = by_name["Burn Coal"]
+	var up_card: Dictionary = by_name["Burn Coal+"]
+	_expect(int((base_card["fx"] as Dictionary).get("cheapen_amount", 0)) == 1
+			and int((up_card["fx"] as Dictionary).get("cheapen_amount", 0)) == 2,
+		"Burn Coal's fx dict carries cheapen_amount to the owner's client, sharpened by upgraded_copy()")
+	_expect(CardView.face_text(base_card) == "Burn a card to cheapen another by 1."
+			and CardView.face_text(up_card) == "Burn a card to cheapen another by 2.",
+		"the live face states the actual cheapen amount, so an upgraded Burn Coal reads differently from the base card")
+
+
+## backlog #86 duty 2 — `_deck_face()`'s fx dict (the deck view's "View
+## Upgrades" preview) is a second hand-copied copy of the same field list and
+## had the identical cheapen_amount gap as `_slot_private()` above; only a
+## test on each copy proves neither was missed, the same reasoning
+## `_test_backlog86_deck_view_shows_reach_and_cleave_too` already applied.
+func _test_backlog86_deck_view_shows_cheapen_amount_too() -> void:
+	var host := GameHost.new(LocalTransport.new(), 1, 2)
+	_kept.append(host)
+	var base := host._deck_face(Content.make_card("burn_coal"), 0)
+	var up := host._deck_face(Content.make_card("burn_coal").upgraded_copy(), 0)
+	_expect(int((base["fx"] as Dictionary).get("cheapen_amount", 0)) == 1
+			and int((up["fx"] as Dictionary).get("cheapen_amount", 0)) == 2,
+		"_deck_face()'s fx dict carries cheapen_amount, sharpened for the upgraded copy")
+	_expect(CardView.face_text(base) == "Burn a card to cheapen another by 1."
+			and CardView.face_text(up) == "Burn a card to cheapen another by 2.",
+		"a campfire-sharpened Burn Coal's deck-view 'View Upgrades' preview shows the sharpened amount, not the base card's")
+
+
 ## Named holds (backlog #24) widened Boss.ledges from a bare int array to an
 ## optional Dictionary shape {height, safe, exposed_to}. Prove the richer
 ## shape crosses the snapshot boundary intact and IDENTICALLY to both peers
@@ -10809,9 +10860,27 @@ func _test_backlog86_face_text_burn_lines_are_mutually_exclusive() -> void:
 	_expect(CardView.face_text(pick, false) == "Burn a card.",
 		"exhaust_pick alone reads as the plain Burn-a-card variant")
 	var cheapen := {"preview": {"damage": 0}, "preview_miss": {}, "base": {}, "keywords": [],
+		"fx": {"exhaust_pick": true, "cheapen_pick": true, "cheapen_amount": 1}}
+	_expect(CardView.face_text(cheapen, false) == "Burn a card to cheapen another by 1.",
+		"exhaust_pick plus cheapen_pick names the cheapen clause and its amount")
+	# backlog #86 duty 2 — game_host.gd's fx dict never carried cheapen_amount
+	# at all, only the cheapen_pick bool, so a campfire-sharpened Burn Coal
+	# (cheapen_amount bumped 1 -> 2 by Card.upgraded_copy()) really cut a
+	# target's cost by 2 but the live face showed the exact same sentence as
+	# the un-upgraded card. Both game_host.gd copies (_slot_private, _deck_face)
+	# now forward the field, and this asserts the higher value actually reaches
+	# the printed line.
+	var cheapen_upgraded := {"preview": {"damage": 0}, "preview_miss": {}, "base": {}, "keywords": [],
+		"fx": {"exhaust_pick": true, "cheapen_pick": true, "cheapen_amount": 2}}
+	_expect(CardView.face_text(cheapen_upgraded, false) == "Burn a card to cheapen another by 2.",
+		"an upgraded cheapen_amount of 2 reaches the printed line, not the base card's number")
+	# No cheapen_amount key at all (an fx dict built before this field existed,
+	# or any caller that omits it) must default to 1, not 0 -- a card that
+	# cheapens by nothing is not what cheapen_pick means.
+	var cheapen_no_amount := {"preview": {"damage": 0}, "preview_miss": {}, "base": {}, "keywords": [],
 		"fx": {"exhaust_pick": true, "cheapen_pick": true}}
-	_expect(CardView.face_text(cheapen, false) == "Burn a card to cheapen another.",
-		"exhaust_pick plus cheapen_pick names the cheapen clause")
+	_expect(CardView.face_text(cheapen_no_amount, false) == "Burn a card to cheapen another by 1.",
+		"a missing cheapen_amount key defaults to 1, matching Card.from_dict's own default")
 	# The source branch is `elif bool(fx.get("exhaust_pick", false))`, so a card
 	# carrying both fields must show only the sac_ally_grip line -- if that ever
 	# changed to two independent `if`s a card could claim to burn twice.

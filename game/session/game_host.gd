@@ -651,6 +651,12 @@ func _slot_private(pi: int) -> Dictionary:
 					"draw": c.draw, "taunt": c.taunt, "rhythm": c.rhythm,
 					"create": c.create, "prepare": c.prepare, "meld": c.meld,
 					"exhaust_pick": c.exhaust_pick, "cheapen_pick": c.cheapen_pick,
+					# backlog #86 duty 2 — cheapen_amount (the number
+					# cheapen_pick actually cuts a chosen card's cost by, bumped
+					# 1 -> 2 by upgraded_copy()) never joined this dict, only
+					# the bool did: a sharpened Burn Coal really cut a target's
+					# cost by 2 but the live face had no number to show for it.
+					"cheapen_amount": c.cheapen_amount,
 					"pull_ally": c.pull_ally, "sac_ally_grip": c.sac_ally_grip,
 					"hits": c.hits, "light_gain": c.light_gain, "ally_energy": c.ally_energy,
 					"discard": c.discard,
@@ -891,6 +897,11 @@ func _deck_face(c: Card, i: int) -> Dictionary:
 			"draw": c.draw, "taunt": c.taunt, "rhythm": c.rhythm,
 			"create": c.create, "prepare": c.prepare, "meld": c.meld,
 			"exhaust_pick": c.exhaust_pick, "cheapen_pick": c.cheapen_pick,
+			# backlog #86 duty 2 — same field-list drift as the hand dict's fx
+			# above, missed for cheapen_amount: a campfire-sharpened Burn
+			# Coal's deck-view face couldn't show the sharpened cost cut (1 -> 2),
+			# only the un-numbered cheapen_pick bool.
+			"cheapen_amount": c.cheapen_amount,
 			"pull_ally": c.pull_ally, "sac_ally_grip": c.sac_ally_grip,
 			"hits": c.hits, "light_gain": c.light_gain, "ally_energy": c.ally_energy,
 			"discard": c.discard,
