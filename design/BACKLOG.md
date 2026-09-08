@@ -2679,6 +2679,43 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-08** — #86 duty 1 (improve an asset — diagnose beasts first). Last
+  rotation commit (`ab55ca9`) was duty 3, so this turn is duty 1. Went down the
+  fixer's tier table looking for the next beast to diagnose and checked the
+  nine remaining original-cast beasts with no bare-name progress file
+  (`bramble_hog`, `root_lurker`, `mire_snapper`, `sky_snapper`,
+  `frost_sentinel`, `shifting_idol`, `grove_bear`, `drowned_colossus`,
+  `sunken_warden`) plus `riftling` (ground scored, beast never). All ten are
+  the same `look.sh`/`look.cmd` naming collision the previous duty-1 turn
+  found on four other beasts (`gale_serpent.md`): every `<name>_pass1_*.png`
+  on disk is the ground, not the body, confirmed against each one's own
+  `<name>_ground.md`. That closes out the count — all 14 of the original
+  pre-#55 cast (the exact 14 names that also have a ground) are now confirmed
+  to have zero scoreable beast render on disk; the 14 beasts #55 added later
+  have no same-named ground and are unaffected. Wrote the extended finding
+  into `gale_serpent.md` and ten short cross-reference files (one per name
+  above). Did not touch `look.sh` itself — shared tooling, duty-2 shaped, per
+  the same reasoning the previous turn gave.
+
+  Fell through to the next actionable beast: with the whole original cast
+  blocked, picked the lowest-scoring beast among #55's cast that still has a
+  pending diagnosis, `bog_leech` (28/50 after its fixer-applied pass 2, no
+  pass-3 diagnosis yet written — lower than every other candidate at the same
+  stage). Re-scored fresh against the 2026-09-07 anchor table using real
+  coordinates from `tools/blender/bog_leech.py`: the main sac and first hump
+  overlap by only 38% of the hump's own diameter (the weakest of the four
+  joins in the stack, versus 67% and 100% elsewhere), which is why the pass-2
+  render reads as a ball sitting on the body rather than a grown segment
+  (Sil 6→5); the four stacked masses taper smoothly by height (88%, 73%, 81%,
+  62% of the previous one each) with no size break anywhere, so "two fed-fat
+  segments, then a smaller tail-sac" reads instead as one continuous cone
+  (Prop 5→4). Two concrete fixes written (drop the first hump 0.15 in Z to
+  raise the sac/hump overlap to 56%; enlarge the second hump toward the
+  first's size to create a matched pair) for the fixer to apply.
+
+  `run_tests.gd`: ALL TESTS PASSED (fresh `--import`, headless, Godot 4.7.1) —
+  no code touched this turn, ran it to confirm the tree stayed green.
+
 - **2026-09-08** — #86 duty 3 (verify a mechanic actually works). Last rotation
   commit (`15de589`) was duty 2, so this turn is duty 3. `combat_3d.gd`'s climb
   routing (the specific example the rotation's own text points at) already has

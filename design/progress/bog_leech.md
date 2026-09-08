@@ -109,3 +109,79 @@ four, so the pass is kept. +3 total, not a plateau.
 
 Not touched: proportion, colour, style — outside the two diagnosed lines,
 per the brief.
+
+---
+
+## Pass 3 diagnosis — #86 duty 1, 2026-09-08
+
+Lowest-scoring beast in the cast with an unblocked (non-collided) capture —
+`bog_leech` has no same-named ground, so unlike this run's other candidates
+(see `sunken_warden.md` and its siblings) `bog_leech_pass2_sil.png` and
+`_34.png` are genuinely the beast. No pass-3 diagnosis had been written since
+the fixer applied pass 2 on 2026-08-31; scored fresh against the two
+committed pass-2 views (no `_side`/`_top`/`_wire` exist for this pass) and
+the anchor table added 2026-09-07, pulling real coordinates from
+`tools/blender/bog_leech.py` rather than re-describing the prose.
+
+| Pass | Sil | Prop | Hygiene | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 1 | 5 | 5 | 4 | 5 | 6 | 25 |
+| 2 | 6 | 5 | 6 | 5 | 6 | 28 |
+| 3 (re-score, no geometry change yet) | 5 | 4 | 6 | 5 | 6 | 26 |
+
+- **Silhouette (6 → 5).** Computed the actual Z-spans of the four stacked
+  masses from the script: main sac `ball((0,-0.05,1.05),(0.94,1.38,0.80))`
+  spans z=[0.25, 1.85]; first hump `ball((0,0.15,1.95),(0.62,0.58,0.44))`
+  spans z=[1.51, 2.39]. The two overlap by only 0.34 (38% of the hump's own
+  0.88 diameter) — the weakest join in the whole stack. By contrast the next
+  two joins overlap far more: hump1/hump2 by 0.43 (67% of hump2's 0.64
+  diameter), hump2/tail-ball1 by 0.52 (100% of the tail ball's own 0.52
+  diameter). The sac and different-coloured (PEWTER vs STONE) first hump
+  meet at their weakest, most point-like contact, which is exactly why
+  `bog_leech_pass2_sil.png` reads as a body with a ball perched on it rather
+  than one mass with a stepped back — the anchor table's 6–7 band asks for
+  masses that "flow into each other," and a 39%-diameter kiss between two
+  different-coloured balls doesn't clear that bar.
+- **Proportion (5 → 4).** The doc calls for "two fed-fat body-segments
+  stepping up its back... a raised tail-sac" — three distinct ideas. The
+  actual half-extents taper smoothly instead: first hump height 0.88, second
+  hump (`ball((0,0.62,2.28),(0.44,0.38,0.32))`) height 0.64 (73% of hump1),
+  tail-ball-1 height 0.52 (81% of hump2), tail-ball-2 height 0.32 (62% of
+  ball1). Four balls each roughly three-quarters the height of the last is
+  one continuous cone, not "two matched segments, then a separate smaller
+  sac" — there is no size break anywhere in the stack for the eye to read as
+  "segment pair ends here."
+
+## Diagnosis — two lowest (pass 3)
+
+1. **Silhouette (5).** Concrete fix: drop the first hump's Z centre from
+   1.95 to about 1.80 (no change to its (0.62,0.58,0.44) radii). New span
+   [1.36, 2.24] overlaps the sac's [0.25,1.85] by 0.49 — 56% of the hump's
+   diameter, in line with the 67%/100% joins that already read well — so the
+   hump reads as emerging from the sac instead of resting on it. Same
+   precedent as `clot_toad.md` pass 3: `shelf(2, ...)`'s hold height comes
+   from the climb contract via `z_for()`, not from the ball it decorates, so
+   moving the ball alone shouldn't move the Height-2 hold.
+2. **Proportion (4).** Concrete fix: enlarge the second hump's radii toward
+   the first hump's — Y 0.38 → 0.50, Z 0.32 → 0.40 (height 0.64 → 0.80, 91%
+   of hump1's 0.88, a matched pair) — and leave both tail-sac balls
+   untouched, so the stack reads as [big hump][near-twin big hump] then a
+   visibly smaller tail-sac, instead of one smooth four-step taper. As with
+   the silhouette fix, `shelf(4, ...)` reads its own hold height from the
+   contract, not the ball's radius.
+
+Not applying either — this is a diagnosis pass, not a repair; the fixer
+(`tools/fixer/BRIEF.md`) owns `tools/blender/bog_leech.py`.
+
+## Unsure about (pass 3)
+
+Whether burying the first hump 56%-deep into the main sac leaves enough of
+it visible above the sac's own surface to still read as a "step" at all
+once actually rendered — the arithmetic says the overlap fraction matches
+the other two joins, but I have no way to render this without a screen, and
+a fix that measures right can still look wrong (see `clot_toad.md` pass 2's
+own "not fully separated" note on a similarly-reasoned change). Also
+unsure whether resizing the second hump changes its own sigil-adjacency —
+`bog_leech` is not one of backlog #88's five flagged sigil-occlusion beasts,
+but nobody has re-checked that since this pass's proposed resize, and #88
+is explicitly `needs a screen`.

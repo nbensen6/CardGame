@@ -63,3 +63,40 @@ placeholder rather than a real diagnosis; `silmetrics`'s "worst in the cast"
 verdict for this name should be read as "worst *ground*", which is already
 covered by `gale_serpent_ground.md`'s own pass-1 score (not re-litigated
 here).
+
+## Update — #86 duty 1, 2026-09-08: this is every original-cast beast, not four
+
+Went looking for the next beast to diagnose and checked the nine remaining
+names that have never had a bare-name progress file at all — `bramble_hog`,
+`root_lurker`, `mire_snapper`, `sky_snapper`, `frost_sentinel`,
+`shifting_idol`, `grove_bear`, `drowned_colossus`, `sunken_warden` — plus
+`riftling`, which also has a ground but no beast file. Same check as this
+file's own original one: open `<name>_pass1_34.png` and cross-read
+`<name>_ground.md`. **All ten are the identical failure.** Every one of
+`<name>_ground.md` names `design/renders/<name>_pass1_*.png` as its own
+ground capture via `look.sh env <name> 1`, and every one of those PNGs shows
+the same ring-of-standing-stones-or-slabs arena this file already described,
+not a body. `sunken_warden` even has a `_pass2` — also the ring, near-pixel-
+identical to its own `_pass1` (mean channel delta 0.4/255 on the silhouette),
+so whatever produced pass 2 didn't change anything either.
+
+Cross-referenced in each name's own new file (`bramble_hog.md`,
+`root_lurker.md`, `mire_snapper.md`, `sky_snapper.md`, `frost_sentinel.md`,
+`shifting_idol.md`, `grove_bear.md`, `drowned_colossus.md`,
+`sunken_warden.md`, `riftling.md`) rather than repeated here.
+
+**That closes out the count.** The 14 original-cast beasts that predate
+item #55 (the eleven "had no body until 2026-08-25" plus the three older
+`stone_warden`/`crag_pup`/`riftling`) are exactly the 14 names with a
+same-named ground built under #83. All 14 are now confirmed contaminated —
+4 found this same day earlier in this file, 10 more just now. **Zero of the
+original 14 beasts currently have a scoreable body render on disk.** The 14
+beasts added later by #55 (`yoke_ox` through `gloom_moth`) have no ground of
+their own and are not at risk — that's the entire explanation for why every
+bare-name progress file that exists and holds a real multi-pass score belongs
+to one of those 14, never one of the original cast.
+
+This raises the floor on why `look.sh`/`look.cmd`'s naming fix matters: it
+isn't blocking one flagged beast, it's blocking a first real look at half the
+cast. Still not fixed here, for the same reason as above — shared tooling,
+duty-2 shaped, not a single beast's diagnosis.
