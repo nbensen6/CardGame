@@ -14,6 +14,10 @@
 extends Node3D
 
 const CAST := "res://assets/3d/cast/"
+## The stylized creature shader every beast and hunter renders through. See
+## _shade_model, and game/assets/3d/creature.gdshader for what it does and why
+## each part of it is safe on the gl_compatibility renderer.
+const CREATURE := preload("res://assets/3d/creature.gdshader")
 const ENV := "res://assets/3d/env/"
 ## Every environment is built to this floor radius — see tools/blender/env.py.
 const ENV_RADIUS := 6.0
@@ -1182,6 +1186,7 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 		return
 	_beast = (load(path) as PackedScene).instantiate()
 	_rig.add_child(_beast)
+	_shade_model(_beast)
 	_beast_scale = _fit_height(_beast, want)
 	_beast_box = _merged_aabb(_beast)
 	_read_climb_points()
@@ -1329,6 +1334,10 @@ func _show_env(beast_id: String, want_r: float, ground: CSGCylinder3D) -> void:
 func _light_for(beast_id: String) -> void:
 	var name: String = String(BEAST_BIOME.get(beast_id, "crag"))
 	var b: Dictionary = BIOME.get(name, BIOME["crag"])
+	# The creatures' rim belongs to the same lighting decision as the sun and the
+	# fog, so it is set here rather than left on whatever biome was loaded when
+	# the models happened to be built.
+	_tint_rims()
 	var sun := get_node_or_null("%Sun") as DirectionalLight3D
 	if sun != null:
 		sun.light_color = b["key"]
@@ -1896,6 +1905,70 @@ const HULL_Y := 20     # bands up it
 var _hull: PackedFloat32Array = PackedFloat32Array()
 
 
+## Put every creature on the stylized shader.
+##
+## Nick, 2026-09-08: "many of the base models are fine, but the quality needs to
+## increase." They were — the models were never what made them look cheap. Until
+## this, every one of them rendered on one material, one flat palette swatch per
+## part, roughness 1.0, no normal map and no shader at all (kenney.py:204). A
+## matte flat-coloured blob by construction, which is why six beasts each gained
+## three points of geometry polish and still read as an asset pack.
+##
+## Measured on cinder_jackal in a real fight before this landed: the shader
+## moved 8.8% of the pixels of the beast (mean 6.22/255). A baked-AO pass on top
+## of it moved almost nothing at this camera distance and was left out; see
+## tools/blender/aobake.py, which is kept for portraits where the camera is
+## close enough for a crease to survive.
+##
+## The texture comes off the model's OWN material rather than a hardcoded atlas
+## path, so a model that ever ships its own texture keeps it.
+func _shade_model(root: Node) -> void:
+	if CREATURE == null:
+		return
+	for node in _all_meshes(root):
+		var mi := node as MeshInstance3D
+		if mi == null or mi.mesh == null:
+			continue
+		var tex: Texture2D = null
+		for s in range(mi.mesh.get_surface_count()):
+			var had := mi.mesh.surface_get_material(s)
+			if had is StandardMaterial3D and (had as StandardMaterial3D).albedo_texture != null:
+				tex = (had as StandardMaterial3D).albedo_texture
+				break
+		var mat := ShaderMaterial.new()
+		mat.shader = CREATURE
+		if tex != null:
+			mat.set_shader_parameter("atlas", tex)
+		mi.material_override = mat
+	_tint_rims()
+
+
+## The rim has to belong to the biome it is standing in.
+##
+## A cool blue rim reads as sky bounce on a crag and as nothing at all on a lava
+## floor. The biome already names a `fill` colour — the light coming from
+## everywhere that is not the sun — which is exactly what a rim is picking up,
+## so take it from there rather than inventing a second table to keep in sync.
+## Walks the rig rather than keeping a list of the materials it handed out. A
+## ShaderMaterial is a Resource, so an array of them keeps every material from
+## every beast this fight ever loaded alive for the life of the view — the list
+## can never shrink, because holding the reference is exactly what stops it
+## being freed. The scene already knows which meshes exist; ask it.
+func _tint_rims() -> void:
+	if _rig == null:
+		return
+	var name: String = String(BEAST_BIOME.get(_beast_id, "crag"))
+	var b: Dictionary = BIOME.get(name, BIOME["crag"])
+	var rim: Color = (b["fill"] as Color).lightened(0.35)
+	for node in _all_meshes(_rig):
+		var mi := node as MeshInstance3D
+		if mi == null:
+			continue
+		var mat := mi.material_override as ShaderMaterial
+		if mat != null and mat.shader == CREATURE:
+			mat.set_shader_parameter("rim_color", rim)
+
+
 func _build_hull() -> void:
 	_hull = PackedFloat32Array()
 	if _beast == null:
@@ -2346,6 +2419,7 @@ func _spawn_hunter(slot: int, players: Array) -> Dictionary:
 	if ResourceLoader.exists(path):
 		var m := (load(path) as PackedScene).instantiate()
 		holder.add_child(m)
+		_shade_model(m)
 		_fit_height(m, HUNTER_HEIGHT)
 		body = m
 	holder.add_child(_hunter_pip(slot))
