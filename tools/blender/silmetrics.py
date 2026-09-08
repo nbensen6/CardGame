@@ -48,26 +48,65 @@ RENDERS = os.path.join(ROOT, "design", "renders")
 # scratch pairs from a single pass, not assets.
 SKIP = ("icon", "portrait", "compare", "control", "_old", "_new")
 
-BLOCKY = 0.80   # solidity at or above this fails the gate
-TWINNED = 0.25  # distinctness at or below this fails the gate
+# The Kenney animal packs sitting unused in game/assets/3d/cast are CC0, are
+# what design/asset-loop.md already names as the reference, and are the closest
+# thing this project has to "art a professional made and sold in this style".
+# Measured 2026-09-08 they are the calibration, not a decoration.
+KENNEY = {"beaver", "bunny", "cat", "caterpillar", "crab", "deer", "dog",
+          "elephant", "fox", "koala", "lion", "monkey", "panda", "parrot",
+          "penguin", "pig", "polar", "tiger"}
+
+# NO PASS/FAIL SOLIDITY THRESHOLD -- and that is a finding, not an omission.
+#
+# This tool shipped on 2026-09-07 with a solidity gate at 0.80 ("at or above,
+# the model is a shape assembly with no negative space") and a distinctness gate
+# at 0.25. Both numbers were invented from reasoning, not measured. The first
+# time they were checked against the reference, on 2026-09-08, they were
+# refuted outright:
+#
+#     KENNEY REFERENCE   solidity 0.82-0.95, median 0.92   distinct 0.04-0.15
+#     OUR CAST           solidity 0.46-0.90, median 0.75   distinct 0.15-0.69
+#
+# Every Kenney animal fails both gates. Our beasts have MORE negative space and
+# are MORE distinct from each other than the professional reference, and they
+# still look worse -- so whatever "a blocky mess" is, these two numbers are not
+# it. Kenney's animals are simpler than ours, not more complex: one confident
+# body, a clear head, few parts, strong colour blocks.
+#
+# So solidity and fill are reported as DESCRIPTION, against the reference band,
+# and nothing here fails an asset. The one number still worth acting on is a
+# near-twin inside our own cast, because two beasts a player fights across one
+# run reading identically is a gameplay problem -- and even that is a "look at
+# these two", not a verdict.
+TWIN_LOOK = 0.20  # distinctness at or below this, within our own cast, is worth a look
 
 
-def ambiguous(name):
-    """True if a bare-name render for `name` could be either the beast or its
-    same-named ground.
+def ambiguous(name, path):
+    """True if the bare-name render at `path` could be the beast OR its ground.
 
     Until 2026-09-08 `look.sh env <name> <pass>` wrote to the SAME
     design/renders/<name>_pass<N>_*.png files as `look.sh <name> <pass>`, and
     whichever ran last silently won. That is how this tool reported four arena
     grounds -- gale_serpent, stone_warden, crag_pup, bounder -- as the four
     worst beasts in the game on its first run. 28 of the cast share a name with
-    an env asset. The wrappers now suffix `_env`, so a fresh capture is
-    unambiguous; a render taken before that fix is not, and cannot be made so
-    after the fact. Refuse it rather than report a number that might describe
-    the floor.
+    an env asset.
+
+    The wrappers now send grounds to `<name>_env_pass<N>_*.png`, so the test is
+    a date one and it is exact: an `_env` render can only have been produced
+    AFTER the naming fix, because that naming did not exist before it. So a
+    bare-name render newer than the newest `_env` render for the same name is
+    necessarily a post-fix capture, and a post-fix bare-name capture can only
+    have come from the cast. Older than it, or with no `_env` render to compare
+    against, and there is no way to tell after the fact -- refuse it rather
+    than report a number that might describe the floor.
     """
-    return os.path.exists(os.path.join(ROOT, "game", "assets", "3d", "env",
-                                       name + ".glb"))
+    if not os.path.exists(os.path.join(ROOT, "game", "assets", "3d", "env",
+                                       name + ".glb")):
+        return False
+    env = glob.glob(os.path.join(RENDERS, f"{name}_env_pass*_sil.png"))
+    if not env:
+        return True
+    return os.path.getmtime(path) <= max(os.path.getmtime(e) for e in env)
 
 
 def newest_sils(only=None):
@@ -84,12 +123,15 @@ def newest_sils(only=None):
             continue
         # `<name>_env_pass1_sil.png` parses out as name="<name>_env", which is
         # exactly the point: it is its own asset here and never collides.
-        if not name.endswith(("_env", "_map")) and ambiguous(name):
+        if not name.endswith(("_env", "_map")) and ambiguous(name, p):
             suspect.append(name)
             continue
         if name not in best or n > best[name][0]:
             best[name] = (n, p)
-    return {k: v[1] for k, v in sorted(best.items())}, sorted(set(suspect))
+    # A name is only genuinely suspect if NO render for it survived the check --
+    # one stale pre-fix pass alongside a fresh trustworthy one is not a problem.
+    return ({k: v[1] for k, v in sorted(best.items())},
+            sorted({s for s in suspect if s not in best}))
 
 
 def mask(path):
@@ -177,21 +219,43 @@ def main(argv):
                 worst, twin = iou, other
         r += [1.0 - worst, twin]
 
+    def band(subset, i):
+        vals = sorted(r[i] for r in subset)
+        return vals[0], vals[len(vals) // 2], vals[-1]
+
+    ref = [r for r in rows if r[0] in KENNEY]
+    ours = [r for r in rows if r[0] not in KENNEY
+            and not r[0].endswith(("_env", "_map"))]
+    if ref and ours:
+        rs, rm, rx = band(ref, 1)
+        os_, om, ox = band(ours, 1)
+        rd0, _, rd1 = band(ref, 3)
+        od0, _, od1 = band(ours, 3)
+        print(f"KENNEY REFERENCE  n={len(ref):2}  solidity {rs:.2f}-{rx:.2f} "
+              f"median {rm:.2f}   distinct {rd0:.2f}-{rd1:.2f}")
+        print(f"OUR CAST          n={len(ours):2}  solidity {os_:.2f}-{ox:.2f} "
+              f"median {om:.2f}   distinct {od0:.2f}-{od1:.2f}")
+        print("Solidity and fill are DESCRIPTIVE. Nothing here fails an asset — "
+              "see the note in this file.\n")
+
     rows.sort(key=lambda r: -r[1])
     print(f"{'asset':22}{'solidity':>9}{'fill':>7}{'distinct':>10}  nearest twin")
     print("-" * 74)
+    ourset = {r[0] for r in ours}
     for name, sol, fil, dis, twin in rows:
-        flags = []
-        if sol >= BLOCKY:
-            flags.append("BLOCKY")
-        if dis <= TWINNED:
-            flags.append(f"TWIN OF {twin.upper()}")
-        tail = ("   <-- " + ", ".join(flags)) if flags else ""
-        print(f"{name:22}{sol:9.2f}{fil:7.2f}{dis:10.2f}  {twin}{tail}")
+        tag = "  reference" if name in KENNEY else ""
+        if not tag and name in ourset and twin in ourset and dis <= TWIN_LOOK:
+            tag = f"   <-- near-twin of {twin}, worth a look"
+        print(f"{name:22}{sol:9.2f}{fil:7.2f}{dis:10.2f}  {twin}{tag}")
 
-    bad = [r for r in rows if r[1] >= BLOCKY or r[3] <= TWINNED]
-    print(f"\n{len(bad)} of {len(rows)} fail a gate "
-          f"(solidity >= {BLOCKY:.2f} or distinctness <= {TWINNED:.2f})")
+    pairs = {tuple(sorted((r[0], r[4]))) for r in rows
+             if r[0] in ourset and r[4] in ourset and r[3] <= TWIN_LOOK}
+    if pairs:
+        print(f"\n{len(pairs)} near-twin pair(s) inside our own cast:")
+        for a, b in sorted(pairs):
+            print(f"  {a} / {b}")
+    else:
+        print("\nno near-twin pairs inside our own cast")
     return 0
 
 

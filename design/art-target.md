@@ -20,30 +20,27 @@ kind of fix you can derive without a picture of where you are going.
 Nobody ever wrote "this does not read as a jackal", because there was nothing to
 read it against.
 
-## What was measured on 2026-09-07
+## What was measured — and the first result was wrong
 
-`tools/blender/silmetrics.py` scores every committed silhouette. First run:
+`tools/blender/silmetrics.py` reads every committed silhouette. Its first run,
+2026-09-07, reported `gale_serpent`, `stone_warden`, `crag_pup` and `bounder`
+as the four worst models in the game — solidity 0.90+, distinctness 0.09–0.13,
+twins of each other — and claimed none had ever been scored.
 
-| asset | solidity | distinct | nearest twin |
-|---|---|---|---|
-| gale_serpent | 0.93 | **0.09** | stone_warden |
-| stone_warden | 0.92 | **0.09** | gale_serpent |
-| crag_pup | 0.92 | **0.13** | gale_serpent |
-| bounder | 0.90 | **0.10** | stone_warden |
-| … | | | |
-| flicker_stag | 0.50 | 0.48 | eyrie_hawk |
-| mire_snapper | 0.50 | 0.49 | drowned_colossus |
+**All four are arena grounds, not beasts.** Four rings of standing stones are
+of course near-identical in silhouette and of course have no negative space.
+Each already had a `<name>_ground.md` scoring it correctly as a ground. The
+cloud caught it on 2026-09-08 by opening the render before writing the
+diagnosis, which is the rule that saved it; the root cause was `look.sh` and
+`look.cmd` sending a beast and its same-named ground to the identical
+`design/renders/<name>_pass<N>_*.png` files, whichever ran last winning
+silently. Fixed in `b2d5d63` — grounds now write `<name>_env_*` — and the whole
+cast was re-captured on 2026-09-08 so every asset has a render that can be
+trusted.
 
-**12 of 36 fail a gate.** Two things fall out of it:
-
-1. **A serpent and a stone warden share 91% of their outline.** So do a pup and
-   a serpent. These are not the same *kind* of creature and they should not be
-   confusable at any distance, let alone the 64px the eye actually resolves of
-   a beast across the arena.
-2. **The four worst models in the game had never been scored at all** — no
-   progress file, never in the queue, while the loop spent 09/07 on 42px card
-   icons. The queue was never ordered by anything that correlates with quality,
-   because nothing measured quality.
+The corrected numbers are in Layer 1 below, and they refuted the thresholds
+this document originally proposed. Read that section rather than reasoning from
+this one.
 
 ## What the games we want to look like actually do
 
@@ -79,6 +76,32 @@ same thing more bluntly because it has fewer polygons to hide behind:
   `look.py` shoots a flat studio render on grey. Keep that for scoring
   silhouettes, but do not conclude from it how the beast looks in a fight.
 
+## What the reference actually has that we do not
+
+Put five Kenney animals beside five of our beasts, lit render over 64px
+silhouette, and the difference is not subtle and not what the metrics were
+looking for. Three things, in order of size:
+
+1. **Kenney's animals have FACES. Ours do not.** Big flat eyes, a defined
+   snout, ears that read as ears — placed on a head that is a distinct colour
+   block from the body. Our beasts have a featureless head and a sigil disc
+   roughly where a face would go. In a style with this little geometry, the
+   face is the single strongest readability device available, and we are not
+   using it at all. This is almost certainly the biggest quality gap in the
+   cast.
+2. **Kenney's proportions are chunky; ours are spindly.** Their limbs are thick
+   stubs; ours are thin sticks. Thin limbs on a low-poly model read as fragile
+   and cheap, and they are also what drags our solidity down — the number that
+   looked like "we have good negative space" is partly just "our legs are too
+   thin".
+3. **Kenney separates head from body by colour.** Ours are largely one brown
+   mass with a slightly different brown on top. The palette is shared and flat,
+   which is right, but each creature still has to decide where its contrast
+   goes.
+
+None of this is a silhouette problem, which is why a silhouette metric could
+not see it. All three are cheap to act on and none of them is a rebuild.
+
 ## The reference set — and why it is legal
 
 Do not download screenshots of other games into this repo, and do not score
@@ -98,20 +121,53 @@ exists, a pass can fix *defects* but cannot chase a *look*.
 
 ## The system: three layers, in this order
 
-### Layer 1 — measured gates (automatic, either lane, no screen)
+### Layer 1 — measurement, and what it turned out to be worth
 
 ```
 python tools/blender/silmetrics.py <asset>
 ```
 
-- **solidity < 0.80.** At or above, the model is a shape assembly with no
-  negative space. This is a gate, not a score line: fail it and the diagnosis
-  *must* be about carving space into the form, not about a detail.
-- **distinctness > 0.25.** At or below, something else in the cast has nearly
-  the same outline. Fail it and name the twin in the progress file; the fix is
-  to change the anchor shape, not to nudge a part.
+**This layer shipped as two gates and the reference destroyed both of them
+within a day. Read this before trusting any number in it.**
 
-A failing gate outranks every rubric line. It is the reason the pass exists.
+The gates were solidity < 0.80 ("at or above, the model is a shape assembly
+with no negative space") and distinctness > 0.25. Both numbers were reasoned
+out, not measured. On 2026-09-08 the whole cast was re-captured — including the
+eighteen unused Kenney animal packs, which are CC0 and are what this project
+already calls its reference:
+
+```
+KENNEY REFERENCE  n=18  solidity 0.82-0.95 median 0.92   distinct 0.04-0.15
+OUR CAST          n=36  solidity 0.46-0.90 median 0.75   distinct 0.15-0.69
+```
+
+**Every Kenney animal fails both gates.** Kenney's dog and pig share 96% of
+their silhouette; cat and tiger 95%. Our beasts have *more* negative space and
+are *more* distinct from one another than art a professional made and sold in
+this exact style — and they still look worse. So whatever "a blocky mess" is,
+solidity and distinctness are not measuring it.
+
+The instructive part is the direction. **Kenney's animals are simpler than
+ours, not more complex** — one confident body, a clear head, few parts, strong
+colour blocks. Our beasts are busier and gappier and read worse for it. If
+there is a lesson in the numbers it is the opposite of the one the gates
+assumed: the fix for a beast that reads badly is more likely to be *simplify
+and commit to the primary form* than *carve more negative space into it*.
+
+So:
+
+- **Solidity and fill are descriptive.** Report them against the reference
+  band. They fail nothing.
+- **Near-twins inside our own cast are worth acting on**, because two beasts a
+  player meets across one run reading identically is a gameplay problem even
+  when it is stylistically defensible. As of 2026-09-08: `boulder_ram`/`yoke_ox`,
+  `riftling`/`sunken_warden`, `root_lurker`/`shifting_idol`.
+- **No number here outranks the eye.** That was the mistake.
+
+The tool's real value so far has not been its metrics at all: it was pointing
+at four "worst beasts" that turned out to be arena grounds, which is how the
+`look.sh`/`look.cmd` filename collision was found. A measurement that is wrong
+in a checkable way is still worth having.
 
 ### Layer 2 — the named anchor (a sentence, written once per creature)
 
@@ -134,20 +190,22 @@ to argue a gate away.
 
 ## How we get from here to there
 
-1. **Score the unscored.** `gale_serpent`, `stone_warden`, `crag_pup`,
-   `bounder` have no progress file and are the four worst models in the game.
-   They come first, ahead of anything already at 34/50.
-2. **Write the ANCHOR line for every beast.** Cheap, one sentence, and it is
+1. **Write the ANCHOR line for every beast.** Cheap, one sentence, and it is
    what every later judgement hangs off. Several will fail at this step, which
-   is information, not failure.
-3. **Fix gate failures before rubric points.** A beast at 0.92 solidity does not
-   need its sigil nested; it needs a leg gap, a neck, and a tail that leaves the
-   body.
-4. **Break the twins.** Four models share one outline. Two of them should change
-   anchor shape entirely — that is a rebuild, and rebuilds are Nick's call.
-5. **Then, and only then, chase points.** Detail work on a model that passes the
-   gates is worth doing. Detail work on one that fails them is what produced six
-   beasts that each gained 3 points and still look like boxes.
+   is information, not failure. This is now step one because it is the only
+   layer of the three that the reference did not knock down.
+2. **Score the beasts that have never had a bare-name progress file.** Nine of
+   them as of 2026-09-08. They now have trustworthy renders for the first time.
+3. **Look at Kenney beside our worst, at 64px, before proposing anything.** The
+   reference is eighteen models in `game/assets/3d/cast` and it is free to open.
+   The gap is not negative space — measured, we already have more of it than
+   they do. It is confidence of form and separation of colour.
+4. **Break the three near-twin pairs** — `boulder_ram`/`yoke_ox`,
+   `riftling`/`sunken_warden`, `root_lurker`/`shifting_idol`. Changing an
+   anchor shape is a rebuild, and rebuilds are Nick's call.
+5. **Then chase rubric points.** Detail work on a model whose ANCHOR sentence
+   is honest is worth doing. Detail work on one that has no such sentence is
+   what produced six beasts that each gained 3 points and still look like boxes.
 
 ## Card icons — a different problem with a sharper answer
 

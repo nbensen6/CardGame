@@ -16,11 +16,14 @@ start to finish.
 3. **Look** — read the images back in. Describe what is actually there, not what
    the script was trying to make. **If you cannot see the render, stop and say
    so.** Do not continue blind.
-4. **Gate** — `python tools/blender/silmetrics.py <asset>`. Solidity must be
-   **under 0.80** and distinctness **over 0.25**. A failing gate outranks every
-   rubric line below and dictates what this pass fixes; see
-   `design/art-target.md`. Confirm the progress file carries its **ANCHOR**
-   sentence, and write one if it does not.
+4. **Measure** — `python tools/blender/silmetrics.py <asset>`. Read the numbers
+   against the Kenney reference band it prints. **These are not gates and they
+   do not fail an asset** — the thresholds this step shipped with on 2026-09-07
+   were invented and the reference refuted them a day later; see
+   `design/art-target.md`. The one output worth acting on is a **near-twin pair
+   inside our own cast**. Confirm the progress file carries its **ANCHOR**
+   sentence, and write one if it does not — that sentence, not the numbers, is
+   what the rest of the loop is judged against.
 5. **Score** — 1–10 on each rubric line, with a one-line justification each,
    into `design/progress/<asset>.md`.
 6. **Diagnose** — name the two lowest lines and write one concrete fix for each.
