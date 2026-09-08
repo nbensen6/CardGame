@@ -2679,6 +2679,29 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-08** — #86 duty 3 (verify a mechanic actually works). Last rotation
+  commit (`8818b99`) was duty 2, so this turn is duty 3. `combat_3d.gd`'s
+  climb-route static functions were already fully mined by earlier duty-3
+  passes (checked every `static func` in every `game/views/*.gd` file against
+  `run_tests.gd` by name — all had coverage), so went looking one layer over:
+  `RunMap.available(row, col)`, the rule that decides which map columns a
+  player may step to next, had zero tests of its own — only the *generator*
+  that fills in `next` (`_test_map_generates_connected_rows`) was checked, and
+  the one existing rejection test (`_test_run_walks_the_map`) only ever tried
+  column 99 against a 2-3-wide row, which is rejected by simple bounds-checking
+  alone and would pass even if `pick_node` checked `col < row.size()` instead
+  of the real edge list — the same "checks the happy path, never the boundary"
+  shape as the spawn bug this duty exists to hunt for. Added
+  `_test_backlog86_run_map_available_before_start_and_out_of_bounds` (the
+  row<0 "every opening, col ignored" branch, and the past-the-edge-of-the-map
+  branches) and `_test_backlog86_pick_node_rejects_an_in_bounds_column_not_reached_by_the_current_edges`
+  (a column that's a real, in-bounds node in the next row but not one THIS
+  node's own edges reach — forged directly via `run.map.rows` for determinism
+  rather than hunting a seed). Sanity-checked the second test actually bites:
+  swapped `pick_node`'s real edge check for a naive bounds check, reran, watched
+  it fail, reverted. `run_tests.gd`: ALL TESTS PASSED (fresh import, headless,
+  godot 4.7.1-stable). Next `#86` turn is duty 1 (improve an asset — diagnose).
+
 - **2026-09-08** — #86 duty 1 (improve an asset — diagnose). Last rotation
   commit (`1571acc`) was duty 3, so this turn is duty 1. Worked the fixer's
   own tier table: the 14 original-cast beasts are still blocked on the

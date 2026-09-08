@@ -86,6 +86,8 @@ func _init() -> void:
 	_test_backlog86_map_guarantees_a_shop_every_act()
 	_test_backlog86_aligned_keeps_paths_straight_and_endpoints_pinned()
 	_test_backlog86_aligned_guards_singleton_rows()
+	_test_backlog86_run_map_available_before_start_and_out_of_bounds()
+	_test_backlog86_pick_node_rejects_an_in_bounds_column_not_reached_by_the_current_edges()
 	_test_backlog38_same_seed_reproduces_map_shop_and_rewards()
 	_test_backlog86_encounter_seed_reproduces_the_exact_same_shuffle()
 	_test_backlog49_daily_seed_is_stable_and_shared()
@@ -1780,6 +1782,57 @@ func _test_backlog86_aligned_guards_singleton_rows() -> void:
 	var both_singleton := m._aligned(0, 1, 1) == 0
 	_expect(from_singleton and to_singleton and both_singleton,
 		"_aligned never divides by a singleton row's own missing width")
+
+
+## #86 duty 3 — RunMap.available() is the rule that decides which columns a
+## player may step onto next; it had zero coverage of its own (only outcomes
+## of the *generator* that feeds it — `_test_map_generates_connected_rows` —
+## were checked). Two branches nothing exercised: "before the run starts"
+## (row < 0, which the doc comment says returns every opening column and
+## ignores `col` entirely) and "past the edge of the map" (a row or column
+## index the map simply doesn't have).
+func _test_backlog86_run_map_available_before_start_and_out_of_bounds() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3
+	var m := RunMap.new(1, rng)
+	var width: int = m.rows[0].size()
+	var opening: Array = m.available(-1, 0)
+	var opening_ignores_col: Array = m.available(-1, 999)
+	var want: Array = []
+	for i in range(width):
+		want.append(i)
+	var past_last_row := m.available(m.rows.size(), 0)
+	var negative_col := m.available(0, -1)
+	var past_last_col := m.available(0, m.rows[0].size())
+	_expect(opening == want and opening_ignores_col == want
+		and past_last_row.is_empty() and negative_col.is_empty() and past_last_col.is_empty(),
+		"available() offers every opening column before the run starts (ignoring col entirely) " +
+		"and returns nothing for a row or column the map doesn't have")
+
+
+## #86 duty 3 — the branching route only means anything if a player can be
+## RESTRICTED to the edges a node actually has, not merely kept inside the
+## bounds of the array. The only existing rejection test (`_test_run_walks_the_map`)
+## picks column 99 against a 2-3 wide row — always out of bounds, never a
+## first-pass hole. This is the case that check misses: a column that is a
+## real, in-bounds node in the next row, but one this specific node's own
+## `next` list does not reach — exactly the shape of bug `_aligned`/`_link`
+## exist to prevent, and the one thing `pick_node` must refuse to let through.
+func _test_backlog86_pick_node_rejects_an_in_bounds_column_not_reached_by_the_current_edges() -> void:
+	var run := _map_run()
+	run.map_row = 2
+	run.map_col = 0
+	run.map.rows[2] = [{"type": "fight", "act": 0, "next": [0]}]
+	run.map.rows[3] = [{"type": "fight", "act": 0, "next": []},
+		{"type": "fight", "act": 0, "next": []}]
+	var avail: Array = run.available_nodes()
+	var rejected := not run.pick_node(1)  # in-bounds for row 3, but not one of row 2's edges
+	var still_on_map := run.phase == Run.Phase.MAP and run.map_row == 2 and run.map_col == 0
+	var accepted := run.pick_node(0)  # the one edge this node actually has
+	var stepped := run.map_row == 3 and run.map_col == 0
+	_expect(avail == [0] and rejected and still_on_map and accepted and stepped,
+		"pick_node refuses an in-bounds column the current node's edges don't reach, " +
+		"not just one wildly outside the row, and still accepts the edge that's really there")
 
 
 ## Backlog #38: a shareable seed is only worth sharing if replaying it actually
