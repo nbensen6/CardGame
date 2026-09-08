@@ -69,12 +69,19 @@ func start_new_run() -> void:
 		names.append(Content.character_name(cid))
 		passives.append(Content.character_passive(cid))
 	if _daily_date != "":
-		_run = Run.new_daily(decks, names, _daily_date, passives, _unlocked_wins)
+		_run = Run.new_daily(decks, names, _daily_date, passives)
 		_ascension = _run.ascension  # backlog #86 duty 2: Run.new_daily() pins ascension
 		# to DAILY_ASCENSION regardless of whatever tier the menu selected — re-sync
 		# the same way resume_run() already does for a loaded save, or the stale
 		# menu value leaks into the shared "ascension" HUD field and into
 		# Progress.record_win()'s unlock check on a win.
+		_unlocked_wins = _run.unlocked_wins()  # backlog #86 duty 2: same drift, second axis —
+		# new_daily() now pins _unlocked_wins to DAILY_UNLOCKED_WINS too (it used to pass
+		# the caller's real, unpinned value straight through), so this host's own copy
+		# must be re-synced the same way _ascension is above, or a reward/shop roll
+		# built from this stale, real _unlocked_wins would hand two players on the
+		# SAME daily seed reward pools of different sizes, landing the identical
+		# RNG draw on different cards/relics for each of them.
 	else:
 		_run = Run.new(decks, names, _seed, passives, _ascension, _unlocked_wins)
 	_history_recorded = false

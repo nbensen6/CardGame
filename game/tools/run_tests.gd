@@ -89,6 +89,7 @@ func _init() -> void:
 	_test_backlog49_daily_run_saves_and_loads_the_flag()
 	_test_backlog49_host_can_start_a_shared_daily()
 	_test_backlog86_daily_host_ascension_matches_the_pinned_run()
+	_test_backlog86_daily_unlocked_wins_is_pinned_and_fair()
 	_test_backlog86_restart_refreshes_unlocked_wins_after_a_win()
 	_test_run_walks_the_map()
 	_test_rest_node_heals_and_returns_to_map()
@@ -1879,6 +1880,50 @@ func _test_backlog86_daily_host_ascension_matches_the_pinned_run() -> void:
 	host._broadcast_state()
 	_expect(Progress.unlocked_ascension() == Run.DAILY_ASCENSION + 1,
 		"winning a daily run only unlocks the tier just past DAILY_ASCENSION, never the stale menu-selected ascension")
+
+
+## Backlog #86 duty 2: the same drift as the test above, on the OTHER
+## career-progress axis Run.new_daily() is supposed to pin. It used to pin
+## ascension but pass the caller's real, unpinned `_unlocked_wins` straight
+## through — so a veteran host (high real career total_wins) and a fresh one
+## starting the identical daily date got reward/shop pools of DIFFERENT SIZES
+## out of Content.reward_pool()/relic_pool()'s unlock_wins gate, and the same
+## seeded RNG draw then landed on a different card/relic index for each —
+## defeating the "everyone gets the same daily" promise #49 exists for. Unlike
+## the host_can_start_a_shared_daily test above (built at unlocked_wins =
+## Content.UNLOCKED_ALL, which happened to mask nothing here), this one uses
+## two DIFFERENT real values on purpose so the pools can only match if both
+## are actually pinned.
+func _test_backlog86_daily_unlocked_wins_is_pinned_and_fair() -> void:
+	var t1 := LocalTransport.new()
+	var fresh_host := GameHost.new(t1, 0, 2, true, 0, 0, "2026-08-25")  # as if 0 career wins
+	_kept.append(fresh_host)
+	var c1 := GameClient.new(t1, 1)
+	c1.join()
+	c1.select_character("frog", 0)
+	c1.select_character("goblin_mech", 1)
+
+	var t2 := LocalTransport.new()
+	# same daily date, as if this player had already unlocked every gated card/relic
+	var veteran_host := GameHost.new(t2, 0, 2, true, 0, Content.UNLOCKED_ALL, "2026-08-25")
+	_kept.append(veteran_host)
+	var c2 := GameClient.new(t2, 1)
+	c2.join()
+	c2.select_character("frog", 0)
+	c2.select_character("goblin_mech", 1)
+
+	_expect(fresh_host._run.unlocked_wins() == Run.DAILY_UNLOCKED_WINS
+		and veteran_host._run.unlocked_wins() == Run.DAILY_UNLOCKED_WINS
+		and fresh_host._unlocked_wins == Run.DAILY_UNLOCKED_WINS
+		and veteran_host._unlocked_wins == Run.DAILY_UNLOCKED_WINS,
+		"a daily run's unlocked-wins gate is pinned to DAILY_UNLOCKED_WINS for every player, and the host's own copy is re-synced to match rather than left holding whatever career total it was built with")
+
+	fresh_host._run.map_row = 0
+	fresh_host._run._begin_shop()
+	veteran_host._run.map_row = 0
+	veteran_host._run._begin_shop()
+	_expect(str(fresh_host._run.shop_stock) == str(veteran_host._run.shop_stock),
+		"a brand-new player and a veteran starting the same daily see the identical shop roll, not one drawn from a bigger unlocked pool")
 
 
 ## Backlog #86 duty 2: `GameHost._unlocked_wins` is a snapshot of

@@ -2679,6 +2679,43 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-08** — #86 duty 2 (find an error and resolve it). Last rotation
+  commit (`c08dd55`) was duty 1, so this turn is duty 2. Delegated an initial
+  read across the less-picked-over core files (`run.gd`, `card.gd`,
+  `run_save.gd`, `progress.gd`, and the parts of `combat.gd` not already
+  covered by prior duty-2 rounds) to a research pass hunting the two named bug
+  shapes, then verified the finding by hand before touching anything. Found a
+  real "two copies of one truth" bug, and it's the exact same shape as the
+  ascension drift 2026-09-05's duty 2 fixed, just on the OTHER axis:
+  `Run.new_daily()`'s doc comment says it pins the run "so the race is fair
+  regardless of career progress," and it does pin `ascension` to
+  `DAILY_ASCENSION` — but it took the caller's real, unpinned `_unlocked_wins`
+  (backlog #42's career-total gate on locked cards/relics) and passed it
+  straight through unpinned. `game_host.gd` feeds it the real
+  `Progress.total_wins()`-derived value, so a brand-new player and a veteran
+  starting the identical daily date got `Content.reward_pool()`/`relic_pool()`
+  pools of different SIZES on the same map node, and the same seeded RNG draw
+  then landed on a different card/relic index for each of them — defeating
+  the whole "everyone gets the same daily" promise #49 exists for. Untested:
+  every `Run.new_daily()` call site (tests included) omitted the parameter, so
+  it always silently defaulted to `Content.UNLOCKED_ALL` and the divergence
+  was never exercised. Added `Run.DAILY_UNLOCKED_WINS := 0` beside
+  `DAILY_ASCENSION` (0 is the one total_wins value every player is guaranteed
+  to have, same reasoning as ascension's 0), dropped `new_daily()`'s
+  `p_unlocked_wins` parameter entirely (it must never be caller-supplied,
+  the exact mistake that caused this), and re-synced `GameHost._unlocked_wins`
+  from the pinned run right where the existing `_ascension` re-sync already
+  sits in `start_new_run()`'s daily branch. Wrote
+  `_test_backlog86_daily_unlocked_wins_is_pinned_and_fair` first — two hosts
+  built with genuinely different `unlocked_wins` (0 vs `Content.UNLOCKED_ALL`,
+  not the ascension test's accidentally-already-equal values) for the same
+  daily date — watched it fail against the unfixed code (confirmed by
+  temporarily restoring the pass-through and re-running: both the pin
+  assertion and the identical-shop-roll assertion failed), then confirmed it
+  passes fixed. `--import` then `run_tests.gd`: ALL TESTS PASSED (fresh
+  import, headless, godot 4.7.1). Next `#86` turn is duty 3 (verify a
+  mechanic actually works).
+
 - **2026-09-08** — #86 duty 1 (improve an asset — diagnose beasts first). Last
   rotation commit (`ab55ca9`) was duty 3, so this turn is duty 1. Went down the
   fixer's tier table looking for the next beast to diagnose and checked the

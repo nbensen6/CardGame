@@ -64,6 +64,16 @@ const PLAYER_HP := 42
 ## races fair if everyone plays the same difficulty, and 0 is the one tier
 ## every player has unlocked regardless of career wins (#42).
 const DAILY_ASCENSION := 0
+## The other career-progress axis a daily must pin (backlog #86 duty 2):
+## `_unlocked_wins` (#42) gates which cards/relics a reward/shop roll can draw,
+## and a shared seed only hands out the SAME options to everyone if that gate
+## is the same too — 0 is the one value every player has regardless of career
+## total_wins, same reasoning as DAILY_ASCENSION above. Before this, new_daily()
+## pinned ascension but passed the caller's real, unpinned _unlocked_wins
+## straight through, so a veteran and a new player rolling the identical daily
+## node got reward pools of different SIZES and the seeded RNG index landed on
+## different cards/relics for each of them.
+const DAILY_UNLOCKED_WINS := 0
 
 var phase: int = Phase.MAP
 var encounter_index: int = 0     # which act/Titan we're on (display + seeding)
@@ -224,12 +234,13 @@ static func daily_seed(date_string: String) -> int:
 	return h if h != 0 else 1
 
 ## Builds today's (or any given date's) shared run: the derived seed above,
-## pinned to DAILY_ASCENSION so the race is fair regardless of career
-## progress, flagged and dated so a save and a snapshot can both say so.
+## pinned to DAILY_ASCENSION and DAILY_UNLOCKED_WINS so the race is fair
+## regardless of career progress, flagged and dated so a save and a snapshot
+## can both say so.
 static func new_daily(p_decks: Array, p_names: Array, date_string: String,
-		p_passives: Array = [], p_unlocked_wins: int = Content.UNLOCKED_ALL) -> Run:
+		p_passives: Array = []) -> Run:
 	return Run.new(p_decks, p_names, daily_seed(date_string), p_passives,
-		DAILY_ASCENSION, p_unlocked_wins, true, date_string)
+		DAILY_ASCENSION, DAILY_UNLOCKED_WINS, true, date_string)
 
 ## The career-wins gate this run was built with (backlog #42) — readable so a
 ## resumed run's host can carry it forward instead of losing it on reload.
