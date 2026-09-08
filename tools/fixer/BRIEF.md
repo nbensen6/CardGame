@@ -1,266 +1,126 @@
-# The fixer — brief for the local agent
+# The inspector — brief for the local agent
 
-You are the third lane. Read all of this before touching anything.
+You are the lane with a screen. Read all of this before touching anything.
 
-There are three of us working on this repo:
+**Your directory is still called `fixer` and so is your scheduled task. That is
+history, not your job.** As of 2026-09-08 you do not fix things. You play the
+game, look at it, and write down what is wrong. Someone else repairs it.
 
-| Lane | Runs | Owns | Does |
-|---|---|---|---|
-| **cloud** | hourly, Anthropic infra, **no screen** | `design/progress/**`, `design/BACKLOG.md`, **portrait + icon** assets | improves portraits and icons, hunts code bugs, tests mechanics |
-| **fixer** (you) | on this PC, **has a screen** | `tools/blender/**`, `game/assets/3d/**` for **beasts, grounds, hunters** | improves the assets that must be judged at fight distance, and hunts runtime bugs by looking |
-| **session** | Nick and Claude, live | `game/**` code, everything else | whatever Nick asks for |
+## Why this changed
 
-The split is by CAPABILITY, and as of 2026-09-01 by ASSET TIER too - and the
-tier is BY FILE. `tools/blender/<beast>.py` is yours alone. If the cloud has
-diagnosed a portrait problem that turns out to be geometry, it writes the fix
-into `design/progress/<beast>.md` and leaves it for you rather than editing the
-model itself; take those the same way you take any other proposed fix. The cloud
-has no display, so it takes what a flat headless render answers completely —
-portraits and card icons, judged at 512px. You have a display, so you take what
-can only be judged at fight distance: beasts, grounds, hunters. Neither of you
-should ever be editing the same file.
+Nick, 2026-09-08, after listing four things wrong with the game that neither
+lane had ever reported — a beast that grew and shrank, the hand fan drifting
+into the corner over the buttons, a frog the size of a person, and a main menu
+still showing a frog model that had been rebuilt a week earlier:
 
-Staying inside your lane is what keeps three writers on one branch from
-trampling each other. It has already gone wrong once: on 2026-08-31 the session
-raised the ground triangle budget three times while the cloud was mid-pass, and
-nine of the cloud's findings were scored against a number that no longer
-existed. Do not add to that.
+> *"These are a lot of things that I think the cloud/fixer should be able to
+> pick up on."*
 
-## Alternate: one run fixes an asset, the next hunts a bug
+He is right, and the reason they were missed is structural. Every criterion this
+brief used to carry was a **contradiction test** — is the thing drawn where the
+game believes it is, is something off-screen that should be on it. All four of
+his are judgement calls a player makes in motion, and three of them contradict
+nothing at all: the code did exactly what it said.
 
-Check `git log --oneline -1 --author-date-order` for your own last commit. If it
-was an asset pass, this run is a **bug hunt**. If it was a bug hunt, fix an
-asset. Alternate strictly; do not do both in one run.
+Meanwhile you spent most runs applying two-point art fixes nobody could see. So
+the art work moved to the builder lane, which can change a whole pipeline at
+once, and you got the job you were always the only lane able to do.
 
-**You are the only lane with a display.** The cloud runs on Anthropic infra with
-no screen and cannot boot the game at all. You are on Nick's PC, so you can run
-it, photograph it and look at the photograph — and until 2026-09-01 you never
-once did. Fifteen runs, all of them rebuilding Blender meshes, while the game
-itself went unlooked-at.
+## The four lanes
 
-That is not a small miss. The first time anyone pointed the harness at the fight
-and compared what the game BELIEVED against what it DREW, it turned up hunters
-spawning inside the Titan in every fight since the feature was written. See the
-`not placed` branch in `combat_3d._place_hunters` and the commit that added it.
+| Lane | Runs | Does |
+|---|---|---|
+| **cloud** | hourly, Anthropic infra, no screen | reads systems end to end, hunts bugs, writes regression tests. No art. |
+| **inspector** (you) | hourly, this PC, has a screen | plays the game and looks at it. **Changes nothing.** |
+| **builder** | every few hours, this PC | one system-level change per run, on a branch |
+| **session** | Nick and Claude, live | whatever Nick is actually asking for |
 
-### The bug-hunt run
+**You are the only lane that can see the game.** The cloud runs on Anthropic
+infra with no screen and cannot boot it at all. Use that, every run.
+
+## Your job, one pass per run
+
+1. **Fetch first.** `git fetch origin && git merge origin/main`. Three other
+   writers are ahead of you.
+2. **Pick the pass you have not run in longest** — the four below, in rotation.
+3. **Run it, and LOOK.** Open every PNG with the Read tool. You can see images.
+4. **Write every find into `design/progress/bugs.md`** with the exact command
+   that reproduces it and what you saw. One file, append, newest at the top.
+5. **Commit and push.** Findings only.
+
+### Pass A — the walk
 
 ```
 %GODOT% --path game --script res://tools/screenshot.gd -- ^
-    out=C:\shot.png state=3d slot=0 beast=<one you have not checked>
+    out=C:\shot.png state=3d beast=<one you have not checked>
 ```
 
 Read what it PRINTS as carefully as the image — `HUNTER`, `VIS`, `CAM`, `HAND`,
-`DROP`. Then open the PNG with the Read tool and look at it. Other states worth
-walking: `3dclimb`, `3dstrike`, `3dgrip`, `3dreward`, `3dcampfire`, `3dshop`,
-`3dmap`, and `mobile` / `size=2340x1080` for the phone layout.
+`DROP`. Then open the PNG and look at it. Other states worth walking: `3dclimb`,
+`3dstrike`, `3dgrip`, `3dreward`, `3dsettings`, `3dcampfire`, `3dshop`, `3dmap`,
+`3dselect`, `menu`, and `mobile` / `size=2340x1080` for the phone layout.
 
-What counts as a find:
+Finds: something drawn somewhere different from where the game says it is;
+something off-screen that should be on it, or overlapping the HUD; a `VIS FAIL`;
+a state that renders empty, black, cut off at the screen edge, or visibly
+unfinished.
 
-- something DRAWN somewhere different from where the game says it is
-- something off-screen that should be on it, or overlapping the HUD
-- a `VIS FAIL` or a harness line that disagrees with the picture
-- a state that renders empty, black, or visibly unfinished
+### Pass B — temporal
 
-### And the class this lane kept missing
+Shoot the SAME state twice, a few seconds apart, and diff the frames. Anything
+that changes which should not — a size, a position at rest, a colour — is a
+find.
 
-Added 2026-09-08. Nick, having watched both lanes run for a week:
+This is the only way to see idle animation, and it is how the beast's 2% scale
+pulse would have been caught on day one instead of by Nick. A single screenshot
+cannot show it.
 
-> *"There are several things I was hoping the cloud would pick up on... I would
-> like the cloud/fixer to catch bigger things that could help move the game
-> closer to the quality of STS II."*
+### Pass C — cross-surface
 
-His four examples, none of which either lane had ever reported:
+Take one subject and look at every place it appears: the 3D model, its portrait,
+its card art, the menu, the character select, the party panel. Ask which is
+oldest.
 
-1. **The beast grew and shrank.** `_process` multiplied the beast's UNIFORM
-   scale by `1.0 + sin(_time * 1.6) * 0.02` as a "breathe". Real.
-2. **Cards in hand sometimes drift off the side of the screen.**
-3. **The Frog is far too big** — every hunter is fitted to one
-   `HUNTER_HEIGHT`, so a frog stands as tall as a person.
-4. **The main menu still shows the old Frog** — `menu.tscn` points at
-   `assets/portraits/frog.png`, baked 2026-09-01, while `frog.glb` was rebuilt
-   on 09-08. It also still references sloth, goat, monkey and rhino portraits
-   for characters that have no build script at all.
+**A baked asset older than its source is stale by definition** — that is a date
+comparison, not an opinion. `frog.png` at 09-01 against `frog.glb` at 09-08
+needed nobody's taste to spot, and it was wrong on three screens at once.
 
-**Why the existing rules could not catch any of them.** Every criterion above is
-a CONTRADICTION test — drawn versus believed, on-screen versus off. All four of
-Nick's are judgement calls a player makes in motion, and three of them are
-invisible in a single frame:
+### Pass D — proportion
 
-- A 2% scale pulse cannot be seen in one screenshot. It needs the SAME state
-  captured at two times and diffed.
-- "Too big for a frog" is a proportion question against the real world. No
-  contradiction exists — the code does exactly what it says.
-- "The menu shows the old one" needs the same subject compared ACROSS surfaces:
-  menu, fight, portrait, card art.
+Stand the cast side by side and ask whether the sizes mean anything against each
+other and against the real world. A frog the size of a person contradicts
+nothing in the code and is obviously wrong to anyone who looks.
 
-So add these three passes to the rotation, and prefer them over another
-contradiction sweep until each has been run at least once:
+Watch for the trap that one hid in: every hunter is fitted to a common HEIGHT,
+so a squat animal comes out enormous in WIDTH. Check footprints, not just
+heights.
 
-**Temporal.** Shoot one state twice, seconds apart, and diff the frames.
-Anything that changes which should not — a size, a position at rest, a colour —
-is a find. This is the only way to see idle animation, and it is how #1 would
-have been caught on day one.
+## The bar
 
-**Cross-surface.** Take one subject and look at every place it appears: the 3D
-model, its portrait, its card art, the menu, the character select. Ask which is
-oldest. A baked asset that is older than its source is stale by definition, and
-that is a date comparison, not an opinion — `frog.png` 09-01 against `frog.glb`
-09-08 needed nobody's taste to spot.
-
-**Proportion against the real world.** Stand the cast side by side and ask
-whether the sizes mean anything. A frog the size of a person is not a bug in any
-contradiction sense and is obviously wrong to anyone who looks.
-
-**The bar is Slay the Spire II, not "does it crash".** If something would make a
-player think this looks unfinished, it is a find — write it up even when nothing
-in the code disagrees with anything else in the code.
-
-**Report every find in `design/progress/bugs.md`** — create it if it is not
-there — with the exact command that reproduces it and what you saw. Fix it ONLY
-if the fix is inside your lane (`tools/blender/**`, `game/assets/3d/**`).
-Anything in `game/**` GDScript is the session's: write it up, do not touch it.
-A reproducible bug report with a command in it is worth more than a guess at a
-patch in someone else's file.
-
-## Your job, one asset per run
-
-1. **Fetch first.** `git fetch origin && git merge origin/main`. The cloud
-   pushes hourly and you will be behind.
-2. **Pick by SCREEN SIZE first, score second.** See "What to work on" below.
-   This changed on 2026-09-01 and it is the most important rule here.
-3. **Read its progress file.** The cloud named two lowest rubric lines and one
-   concrete fix for each. Apply **only those two**. Do not restyle. Do not
-   improve things it did not mention.
-4. **Rebuild and LOOK.**
-   ```
-   tools\blender\build.cmd <name>        (or: build.cmd env <name>)
-   tools\blender\look.cmd <name> <pass>
-   ```
-   Then open every view in `design/renders/` with the Read tool. You can see
-   images. Use that.
-5. **Score it again** against the same five rubric lines in
-   `design/asset-loop.md`, and append the pass to the progress file.
-6. **If it did not improve, put it back.** `git checkout -- <the script>`,
-   rebuild, and write in the progress file that the fix was tried and reverted
-   and why. This is not failure; it is the job. On the frog, two of four fixes
-   made it worse and reverting them was the correct outcome.
-7. **Run the tests.** `run_tests.gd` must pass before any commit, no exceptions.
-8. **Commit and push.** If the push is rejected, fetch, merge, re-test, push
-   again. Never force.
-
-## What to work on
-
-**Lowest score inside the highest tier that still has actionable work.** Not
-lowest score overall.
-
-| # | Tier | Why it is here |
-|---|---|---|
-| 1 | **beasts** — `tools/blender/<beast>.py` | fills the screen for an entire fight |
-| 2 | **grounds** — `tools/blender/env/<beast>.py` | the floor and walls you look at all fight |
-| 3 | **hunters** — frog, vine_weaver, mountain_climbers, goblin_mech, lightbearer | on screen throughout, but small |
-| 4 | **portraits** — `portraits.py` | about 30 screen pixels, in a HUD corner |
-| 5 | **card icons** — `icons.py` | placeholder art, being deleted (see below) |
-
-Only drop a tier when everything above it has reached its stop line (see the
-table in `design/asset-loop.md` — **44/50 for beasts and grounds** as of
-2026-09-07, not 40), has had four passes, or carries a `VERDICT: REBUILD`.
-
-### If the top tier has nothing to APPLY, score it yourself — do not drop a tier
-
-Added 2026-09-07, and it is the most important rule on this page after the lane
-split.
-
-You apply what the cloud diagnoses. That coupling starved this lane on
-2026-09-07: no beast had been diagnosed since 09/06, so the 18:54 run correctly
-followed the old rule, found nothing to apply at tier 1, and fell all the way to
-a hunter — while every beast sat unimproved. The cloud had spent the day on card
-icons, which are tier 5 and on their way out.
-
-So: when the highest tier with unfinished assets has **no unapplied diagnosis**,
-your run is a **scoring pass on that tier**, not a descent to a lower one.
-
-```
-tools\blender\look.cmd <beast> <next pass number>
-```
-
-Then run the full loop in `design/asset-loop.md` — look at every view with the
-Read tool, score the five lines against the anchors, name the two lowest, write
-one concrete fix for each into `design/progress/<beast>.md`. Commit that. The
-next run applies it.
-
-**You are better at this than the cloud is and you always were.** It scores
-beasts from committed PNGs; you can rebuild the model and render any view you
-want. There is no reason for the lane with a screen to sit idle waiting for the
-lane without one to describe a picture to it.
-
-A scoring pass counts as this run's asset work. Do not also apply the fix you
-just wrote — that is the next run's job, and the gap is what stops one agent
-marking its own homework in a single sitting.
-
-**Why this changed.** Fifteen fixer passes ran before anyone checked what they
-had been spent on: seven touched `portraits.py` and three touched `icons.py`.
-Every one was a real improvement — 26/50 to 34/50 is typical — and Nick could
-not see a single one of them, because he had been looking at cards while the
-lane polished the two smallest things in the game.
-
-The cause was mechanical, not careless. "Lowest score first" sounds obviously
-right and is not: **a score has no idea how big the thing is on screen.**
-Portraits score lowest because they are hard to read at 512px and get judged on
-it, so a rule that only reads the number will pick portraits essentially
-forever. Of the assets carrying an explicit score, the five lowest are all
-portraits.
-
-**Card icons are on their way out.** 36 of the 88 scored assets are icons, and
-every card Nick paints deletes one from view for good — a card with its own art
-never draws its icon again. Improving one is work with a shelf life. Take an
-icon only when there is genuinely nothing above it, and say in the progress file
-that you did so because the tiers above were exhausted.
-
-**A tier is about screen area, not importance.** A portrait at 34/50 that
-somebody has to squint at is a smaller problem than a beast at 38/50 that fills
-the frame, and the number alone will never tell you that.
-
-**Where this stood on 2026-09-01**, as a starting point rather than a list to
-work down — re-derive it each run, because it goes stale the moment you commit.
-Thirteen beasts, hunters and grounds had never had a fixer pass at all, among
-them three of the five hunters and the Thrasher, which sat at 32/50 with two
-concrete fixes proposed and is the beast on screen in most of what Nick looks
-at. There is a tier of genuinely visible work here; it had simply never been
-reached, because portraits kept winning on score.
-
-Note the shape of the Thrasher's file while you are there: of its two proposed
-fixes, the first is a measurement (thicken and shorten the sigil crest) and the
-second ends "which is a design call rather than a measurement". Apply the first.
-Leave the second and say why. That split is common and the hard rules below
-mean it.
+**Slay the Spire II, not "does it crash".** If something would make a player
+think this looks unfinished, it is a find — write it up even when nothing in the
+code disagrees with anything else in the code. That sentence is the whole
+difference between this brief and the one before it.
 
 ## Hard rules
 
-- **Two fixes per run, maximum.** A rewrite discards whatever was good.
-- **Never claim an improvement you have not seen in a render.** This is the
-  whole reason the loop ends in looking.
-- **Do not touch `design/BACKLOG.md`.** That is the cloud's. If you need to say
-  something to it, say it in the progress file.
-- **Do not touch `game/**` GDScript.** That is the session's.
-- **Do not change a budget, a contract or a shared constant to make a fix
-  pass.** `kenney.BUDGET`, `env.ENCLOSE_CLEAR`, `combat_3d.CAMERA_MAX_R` and
-  the palette atlas are shared; moving one to suit one asset silently changes
-  every other. If an asset cannot be fixed without moving one, stop and write
-  that in the progress file instead.
-- **The palette is Nick's.** `tools/blender/colormap.png` and `palette.py` set
-  the colour of the entire game. Never edit them to fix one model.
-- **If a fix would need a judgement about art direction** — what a creature
-  should BE, not whether it reads as what it is — stop and say so. That is
-  Nick's, per BACKLOG hard rule 4.
+- **Change nothing.** No asset edits, no code fixes, no retuning. A reproducible
+  report with a command in it is worth more than a patch, and every hour you
+  spend patching is an hour the game goes unlooked-at.
+- **Never report something you have not seen.** Open the image. This project's
+  history of trouble is claims nobody looked at.
+- **A find needs a repro.** The exact command, the state, the beast. A finding
+  nobody can reproduce is a rumour.
+- **Do not touch `design/BACKLOG.md`** (the cloud's) or
+  `design/BUILDER-QUEUE.md` (the builder's). Say it in `bugs.md`; they read it.
+- **Say what you could not check.** A pass you skipped is more useful admitted
+  than quietly dropped — this lane has twice been dead for days while its log
+  looked fine.
 
 ## Stop conditions
 
-Stop after ONE asset. Do not carry on to a second in the same run: a long
-unsupervised chain is how a session ends up with forty commits nobody reviewed.
-There is essentially always actionable work now, and "nothing to apply" is not
-it. If the top tier has no unapplied diagnosis, score it yourself — see the rule
-above. Reach "nothing to do" only when every asset in `design/progress/` has hit
-its tier's stop line, been through four passes, or carries a `VERDICT: REBUILD`;
-if you get there, say which of the three applied to each, because that claim has
-been wrong before.
+Stop after ONE pass. If a pass turns up nothing, say which pass and what you
+looked at — "nothing found in the campfire, shop and reward states at desktop
+and phone size" is a useful report. **"No actionable work" is not**, and it is
+forbidden by BACKLOG hard rule 0: there is always another state, another beast,
+another size, another pair of frames to diff.

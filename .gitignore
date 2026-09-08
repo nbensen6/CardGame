@@ -53,3 +53,7 @@ design/renders/*_side.png
 design/renders/*_top.png
 design/renders/*_form.png
 design/renders/*_wire.png
+
+# Lane run logs — overwritten every run, never worth a diff
+tools/fixer/last-run.log
+tools/builder/last-run.log

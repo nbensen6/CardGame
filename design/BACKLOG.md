@@ -88,18 +88,51 @@ Ordered. Source in brackets.
 
   Check your own last commit and do the NEXT duty. Do not do two in one run.
 
-  ### 1. Improve an asset — DIAGNOSE the biggest thing on screen first
+  ### 1. Art is no longer yours. Do not do it.
 
-  **Rewritten 2026-09-07.** The old version of this duty read "portraits and
-  card icons ONLY", and the lane obeyed it exactly: on 09/07 it spent every
-  asset run of the day on card icons, which are tier 5, are 42px on screen, and
-  are deleted for good the moment Nick paints that card. Meanwhile no beast had
-  been diagnosed since 09/06, so the fixer — the lane that can actually rebuild
-  a beast — ran out of work and fell through to a hunter. Nick's report was
-  that he could not see any change from either lane, and he was right.
+  **Rewritten 2026-09-08.** This duty read "portraits and card icons ONLY", then
+  for one day "diagnose the biggest thing on screen". Both are gone, and not
+  because the work was bad — because the SHAPE was.
 
-  **Your first duty each asset run is to DIAGNOSE the highest tier that needs
-  it, and that is beasts.** Work down the fixer's own tier table in
+  Nick, after a week of watching: *"it does not feel like the cloud/fixer are
+  making good progress."* The record backs him. Twenty-odd hourly asset passes
+  each moved one asset a few rubric points, every one of them real and verified
+  in a render, and he could not see a single one. Everything that visibly
+  changed the game came from changing a SYSTEM: one shader file lifted every
+  beast and hunter at once, one build step changed the ceiling for the whole
+  cast, one emissive channel gave every beast a focal point. **A lane restricted
+  to two fixes on one asset per run cannot ever do that, however good its
+  judgement is.**
+
+  So art moved to the **builder** (`tools/builder/BRIEF.md`), which makes one
+  system-level change per run on a reviewed branch; and looking at the game
+  moved to the **inspector** (`tools/fixer/BRIEF.md`), which has a screen and now
+  spends every run using it.
+
+  **You keep the two duties you were provably good at.** You found the render
+  filename collision that had four arena grounds masquerading as the four worst
+  beasts in the game; a `combat.ogg` that shipped but was never once reachable;
+  a campfire Rest button quoting the wrong heal from Ascension 5 up; a reward
+  screen naming a felled beast over a treasure chest. That is reading a system
+  end to end and asking what nobody thought to ask — exactly what a lane with no
+  screen should do.
+
+  Do not score assets. Do not edit `portraits.py` or `icons.py`. If you notice
+  something wrong with the art while reading code, write it into
+  `design/progress/bugs.md` and carry on.
+
+  **Two duties now, not three.** Check your own last commit and do the other one.
+
+  ### 1b. The old art duty, kept only as history
+
+  **DEAD. DO NOT FOLLOW ANYTHING BELOW THIS LINE.** It is kept because it
+  records why the tiering existed and what it cost, and the builder's brief
+  refers back to it. Everything in it is written in the imperative and none of
+  it is addressed to you any more. Duty 1 is the section above: art is not
+  yours.
+
+  ~~**Your first duty each asset run is to DIAGNOSE the highest tier that needs
+  it, and that is beasts.**~~ Work down the fixer's own tier table in
   `tools/fixer/BRIEF.md`: beasts, grounds, hunters, portraits, icons.
 
   **You can do this without a screen and you always could.** The fixer commits

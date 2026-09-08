@@ -141,8 +141,11 @@ REM leaves cmd able to reach it - invoked from PowerShell this file
 REM printed "'M' is not recognized" half a dozen times before doing its
 REM job. Quoting the assignment also stops a trailing space or a comma in
 REM the value from being parsed as anything.
-set "MODE=Apply the fixes."
-if /i "%~1"=="--dry" set "MODE=DRY RUN. Read, decide and report what you WOULD change, but do not edit, build, commit or push anything."
+REM As of 2026-09-08 this lane INSPECTS. It does not repair -- the art work moved
+REM to tools\builder, which can change a whole pipeline at once instead of one
+REM asset at a time. The only thing this run writes is findings.
+set "MODE=Write up what you find."
+if /i "%~1"=="--dry" set "MODE=DRY RUN. Look and report, but do not write bugs.md, commit or push anything."
 
 echo === fixer starting in %ROOT%
 echo === %MODE%
@@ -155,7 +158,7 @@ REM with exit 0x1 and there was NOTHING to read - no way to tell a usage
 REM limit from a bad token from a crash. One file, overwritten each run:
 REM the last run is the only one anyone ever asks about.
 echo === launching, mode: %MODE% >> "%LOG%"
-"%CLAUDE%" -p "Read tools/fixer/BRIEF.md and follow it exactly for ONE asset. %MODE%" ^
+"%CLAUDE%" -p "Read tools/fixer/BRIEF.md and follow it exactly for ONE inspection pass. %MODE%" ^
   --permission-mode acceptEdits ^
   --allowedTools "Read,Edit,Write,Glob,Grep,Bash" >> "%LOG%" 2>&1
 echo exit code: %ERRORLEVEL% >> "%LOG%"
