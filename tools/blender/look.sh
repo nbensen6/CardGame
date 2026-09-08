@@ -45,7 +45,15 @@ shoot() {          # shoot <asset> <pass>
     echo "  SKIP $1 - no $glb"
     return 0
   fi
-  "$BLENDER" --background --python "$HERE/look.py" -- "$glb" "$OUT" "$1" "$2" \
+  # The STEM carries the kind, the source path does not. A beast and its
+  # same-named ground used to write the identical design/renders/<name>_pass<N>
+  # files and whichever ran last silently won -- which is how silmetrics.py came
+  # to report four arena grounds as the four worst beasts in the game on
+  # 2026-09-07. 28 of the cast share a name with an env asset. See
+  # design/progress/gale_serpent.md for the full diagnosis.
+  local stem="$1"
+  [ "$kind" = "cast" ] || stem="$1_$kind"
+  "$BLENDER" --background --python "$HERE/look.py" -- "$glb" "$OUT" "$stem" "$2" \
     | grep -E "LOOK|SIZE|Error" || true
 }
 

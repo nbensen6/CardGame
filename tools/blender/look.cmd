@@ -55,7 +55,15 @@ if not exist "%DIR%\%~1.glb" (
   echo   SKIP %~1 - no %DIR%\%~1.glb
   exit /b 0
 )
-"%BLENDER%" --background --python "%HERE%look.py" -- "%DIR%\%~1.glb" "%OUT%" %~1 %~2 ^
+REM The STEM carries the kind, the source path does not. A beast and its
+REM same-named ground used to write the identical design\renders\<name>_pass<N>
+REM files and whichever ran last silently won - which is how silmetrics.py came
+REM to report four arena grounds as the four worst beasts in the game on
+REM 2026-09-07. 28 of the cast share a name with an env asset. See
+REM design\progress\gale_serpent.md for the full diagnosis.
+set "STEM=%~1"
+if /i not "%KIND%"=="cast" set "STEM=%~1_%KIND%"
+"%BLENDER%" --background --python "%HERE%look.py" -- "%DIR%\%~1.glb" "%OUT%" !STEM! %~2 ^
   | findstr /R "LOOK SIZE Error"
 exit /b 0
 

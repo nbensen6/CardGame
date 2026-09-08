@@ -52,8 +52,26 @@ BLOCKY = 0.80   # solidity at or above this fails the gate
 TWINNED = 0.25  # distinctness at or below this fails the gate
 
 
+def ambiguous(name):
+    """True if a bare-name render for `name` could be either the beast or its
+    same-named ground.
+
+    Until 2026-09-08 `look.sh env <name> <pass>` wrote to the SAME
+    design/renders/<name>_pass<N>_*.png files as `look.sh <name> <pass>`, and
+    whichever ran last silently won. That is how this tool reported four arena
+    grounds -- gale_serpent, stone_warden, crag_pup, bounder -- as the four
+    worst beasts in the game on its first run. 28 of the cast share a name with
+    an env asset. The wrappers now suffix `_env`, so a fresh capture is
+    unambiguous; a render taken before that fix is not, and cannot be made so
+    after the fact. Refuse it rather than report a number that might describe
+    the floor.
+    """
+    return os.path.exists(os.path.join(ROOT, "game", "assets", "3d", "env",
+                                       name + ".glb"))
+
+
 def newest_sils(only=None):
-    best = {}
+    best, suspect = {}, []
     for p in glob.glob(os.path.join(RENDERS, "*_sil.png")):
         b = os.path.basename(p)
         if any(s in b for s in SKIP):
@@ -64,9 +82,14 @@ def newest_sils(only=None):
         name, n = m.group(1), int(m.group(2))
         if only and name not in only:
             continue
+        # `<name>_env_pass1_sil.png` parses out as name="<name>_env", which is
+        # exactly the point: it is its own asset here and never collides.
+        if not name.endswith(("_env", "_map")) and ambiguous(name):
+            suspect.append(name)
+            continue
         if name not in best or n > best[name][0]:
             best[name] = (n, p)
-    return {k: v[1] for k, v in sorted(best.items())}
+    return {k: v[1] for k, v in sorted(best.items())}, sorted(set(suspect))
 
 
 def mask(path):
@@ -115,9 +138,14 @@ def normalised(pts, size=128):
 
 def main(argv):
     only = set(argv) or None
-    sils = newest_sils(only)
+    sils, suspect = newest_sils(only)
+    if suspect:
+        print(f"EXCLUDED — {len(suspect)} name(s) whose bare-name render could be "
+              f"the beast OR its same-named ground:\n  " + ", ".join(suspect))
+        print("  Re-capture with `look.sh <name> <pass>` (cast) to get a render "
+              "this tool can trust.\n  See design/progress/gale_serpent.md.\n")
     if not sils:
-        print("no silhouette renders found under design/renders/")
+        print("no usable silhouette renders found under design/renders/")
         return 1
 
     rows, norms = [], {}
