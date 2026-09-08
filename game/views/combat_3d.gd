@@ -1317,6 +1317,10 @@ func _show_env(beast_id: String, want_r: float, ground: CSGCylinder3D) -> void:
 		return
 	_env = (load(path) as PackedScene).instantiate()
 	_rig.add_child(_env)
+	# The ground gets the same shader as its occupant. Nick, 2026-09-08: with only
+	# the creatures shaded, a beast carried more finish than the arena it stood
+	# in, which reads as two art passes in one frame.
+	_shade_model(_env, true)
 	# tools/blender/env.py builds every floor to ENV_RADIUS. Scaling by a
 	# CONSTANT rather than by measured bounds is deliberate: an environment's
 	# apron and props deliberately overhang its floor, so its bounds say nothing
@@ -1922,7 +1926,7 @@ var _hull: PackedFloat32Array = PackedFloat32Array()
 ##
 ## The texture comes off the model's OWN material rather than a hardcoded atlas
 ## path, so a model that ever ships its own texture keeps it.
-func _shade_model(root: Node) -> void:
+func _shade_model(root: Node, is_ground := false) -> void:
 	if CREATURE == null:
 		return
 	for node in _all_meshes(root):
@@ -1939,6 +1943,13 @@ func _shade_model(root: Node) -> void:
 		mat.shader = CREATURE
 		if tex != null:
 			mat.set_shader_parameter("atlas", tex)
+		if is_ground:
+			# Ground wants the shading but not the outline. A rim traces every
+			# edge it is given, and a floor made of slabs has hundreds — lit up,
+			# they pull the eye off the fight and onto the scenery.
+			mat.set_shader_parameter("rim_strength", 0.10)
+			mat.set_shader_parameter("spec", 0.04)
+			mat.set_shader_parameter("ground_strength", 0.10)
 		mi.material_override = mat
 	_tint_rims()
 

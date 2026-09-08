@@ -39,6 +39,21 @@ for sx in (-1, 1):
 
 # ------------------------------------------------------------------ the mass
 b.ball((0.0, 0.05, 1.20), (0.42, 0.92, 0.38), RUST, 12, 7)             # ribby torso
+
+# Shoulders and haunches. Nick, 2026-09-08: "limbs still don't seem like they
+# are attached properly." They were not. A limb() tube simply ended INSIDE the
+# torso ellipsoid, so where a shoulder should be there was a hard intersection
+# curve and nothing else - and because the leg is CHARCOAL against a RUST body,
+# that curve was also the strongest colour boundary on the model. Maximum
+# contrast exactly where the eye looks for a joint reads as a part bolted on.
+#
+# Two things fix it and both are cheap: a mass in the BODY's colour that the leg
+# emerges from, and moving the colour break off the joint and down the limb.
+# These are the shoulders; the leg tops now sit inside them rather than inside
+# the torso.
+for _sx in (-1, 1):
+    for _ly in (-0.56, 0.52):
+        b.ball((0.29 * _sx, _ly, 1.00), (0.19, 0.25, 0.21), RUST, 9, 6)
 b.box((0.0, 0.05, 0.90), (0.32, 0.66, 0.09), TAN, bevel=0.03)          # pale underbelly
 
 # Head: a wedge lowered slightly forward for a hunting posture, not a ball,

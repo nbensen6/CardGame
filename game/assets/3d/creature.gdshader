@@ -40,8 +40,11 @@ uniform float rim_width : hint_range(1.0, 8.0) = 3.0;
 // Flat swatches give the eye nothing to catch. A little specular puts a moving
 // highlight on the form as the camera orbits, which is most of what separates
 // "a shape" from "a thing made of something".
-uniform float rough : hint_range(0.0, 1.0) = 0.62;
-uniform float spec : hint_range(0.0, 1.0) = 0.35;
+// Toned down 2026-09-08 — Nick: "tone down the shine." The first values
+// (0.62 / 0.35) put a plastic sheen on the crag pup and the clot toad. These
+// keep the form-reading highlight and drop the wet look.
+uniform float rough : hint_range(0.0, 1.0) = 0.86;
+uniform float spec : hint_range(0.0, 1.0) = 0.10;
 
 // Volume cue: the underside of a form reads cooler and darker than its top.
 // Cheap, and it survives being 200px tall on screen where AO detail does not.
