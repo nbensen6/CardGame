@@ -89,6 +89,19 @@ uniform float ember_white : hint_range(0.0, 1.0) = 0.55;
 // EMBERS) renders exactly as before.
 uniform float body_gain : hint_range(0.0, 1.0) = 1.0;
 
+// Material variation — BUILDER-QUEUE.md item 3. One roughness for the whole
+// animal is why every beast reads as one substance no matter how much the
+// geometry improves: wet body, matte fins and glowing cracks are three
+// materials on the reference and one on ours. Keyed on swatch UV exactly like
+// the ember channel above — a beast opts a swatch into "shine" (SHINE_UV,
+// combat_3d.MATERIAL) and only that swatch gets a harder, wetter finish while
+// the rest of the animal keeps its matte fur roughness. shine_count 0 is a
+// no-op, so every beast that has not opted in renders exactly as before.
+uniform vec2 shine_uv[4];
+uniform int shine_count = 0;
+uniform float shine_rough : hint_range(0.0, 1.0) = 0.25;
+uniform float shine_spec : hint_range(0.0, 1.0) = 0.55;
+
 // Volume cue: the underside of a form reads cooler and darker than its top.
 // Cheap, and it survives being 200px tall on screen where AO detail does not.
 uniform vec4 ground_tint : source_color = vec4(0.42, 0.44, 0.58, 1.0);
@@ -120,6 +133,12 @@ void fragment() {
     }
     float beat = 1.0 + sin(TIME * ember_rate) * ember_pulse;
 
+    // Same swatch-radius test as the ember channel, for the shine channel.
+    float shine = 0.0;
+    for (int i = 0; i < shine_count; i++) {
+        shine = max(shine, 1.0 - smoothstep(0.004, 0.012, distance(UV, shine_uv[i])));
+    }
+
     // An ember is its own light source, so neither the crevice shading nor the
     // ground bounce has any business darkening it.
     // The core runs hotter than the edge: strongest where the face sits dead on
@@ -127,8 +146,10 @@ void fragment() {
     vec3 hot = mix(base, vec3(1.0), ember_white * ember);
 
     ALBEDO = mix(tinted * ao, hot, ember);
-    ROUGHNESS = mix(rough, 1.0, ember);
-    SPECULAR = spec * (1.0 - ember);
+    // Shine only touches non-ember pixels — an ember is a glowing crack, not a
+    // wet surface, and it already owns ROUGHNESS/SPECULAR outright below.
+    ROUGHNESS = mix(mix(rough, shine_rough, shine), 1.0, ember);
+    SPECULAR = mix(spec, shine_spec, shine) * (1.0 - ember);
 
     float fres = pow(1.0 - clamp(dot(normalize(NORMAL), normalize(VIEW)), 0.0, 1.0), rim_width);
     RIM = fres * rim_strength * (1.0 - ember);

@@ -222,9 +222,59 @@ per-beast cost. Phase 3 rolls them out by adding names to a list.
       swap. **Anything whose detail is finer than a few screen pixels will not
       survive this camera.** Prefer levers that change large areas.
 
-- [ ] **3. Material variation.** One roughness for the whole animal is why it
-      reads as one substance. Give the atlas a second channel, or key off swatch
-      the way the embers do, so chitin can shine and fur cannot.
+- [~] **3. Material variation — BUILT, PARKED, not merged.** Branch
+      `builder/2026-09-09-material-variation` adds a second, opt-in shader
+      channel (`shine_uv`/`shine_count`/`shine_rough`/`shine_spec` on
+      `creature.gdshader`, wired from a new `combat_3d.MATERIAL` dict, keyed
+      on swatch UV exactly like `EMBERS`). No-op by default, same pattern as
+      `VALUE_RANGE`.
+
+      **No beast is opted in — the pathfinder itself could not clear this
+      lane's bar, and it was measured properly rather than assumed.** First
+      pick was the head wedge's GRAPHITE swatch for a wet nose; wrong before
+      it even got to lighting, because the default ground camera crops
+      cinder_jackal at the neck (already on record, `design/progress/bugs.md`
+      2026-09-09 Pass D — 26 of 28 beasts get this crop). Moved to CHARCOAL
+      (the legs and ears), which the crop does not cut off.
+
+      Still invisible. Measured a real before/after, `state=3d
+      beast=cinder_jackal` mid-climb (the best-lit real state this run could
+      find — the default ground framing puts every visible surface in its
+      own shadow, 0 mean diff on its own before any shine was even added):
+      `design/renders/cinder_jackal_material_before.png` /
+      `_after.png` (shine_rough 0.25, shine_spec 0.55, the shader's own
+      defaults) came back at 0.0006 mean pixel difference across the WHOLE
+      1280x720 frame — not a small real number, noise. Pushed the lever to
+      its absolute end to rule out "too subtle" rather than "not working at
+      all": `_mirror.png` is shine_rough 0.02, shine_spec 1.0 (a literal
+      mirror) and still 0.0006 — same tiny hotspot both times, traced to an
+      unrelated animated HUD icon, not the beast. Also re-ran at 10x the
+      keying radius in case the union remesh was blurring the swatch's UV
+      precision (a real risk — CHARCOAL is not one of the two swatches
+      `union.txt` holds out crisp) — same result, so it is not a UV-precision
+      miss either.
+
+      **The actual cause: a ROUGHNESS/SPECULAR-only lever needs a direct-light
+      reflection to land in the camera at all, and across four tested angles
+      (default, orbit left, orbit right, mid-climb) it never once did** on
+      this beast's visible CHARCOAL geometry. Fourth finding of the
+      "real, correct, and invisible at fight distance" shape this queue keeps
+      producing (baked AO, the swatch swap, surface breakup) — but a
+      different mechanism of failure than the first three: those were too
+      FINE to survive the downsample; this one is not fine, it simply has no
+      light to catch from these angles. Worth naming too: the base shader
+      already carries a deliberate "tone down the shine" call from Nick
+      (`creature.gdshader`'s own rough/spec comment) — even an angle where
+      this DID land would be pushing back into territory he already vetoed
+      once.
+
+      **Kept, not reverted:** the channel is a correct, no-op-by-default
+      building block, same reasoning as the parked surface-breakup mechanism
+      below. The next attempt at this item should carry the material cue on
+      ALBEDO (a genuine colour/tint difference) instead of on a specular
+      highlight this camera's lighting apparently never lets land, and should
+      pick a swatch already held out by `union.txt` if it wants to stay clear
+      of the remesh entirely.
 
 - [ ] **4. One exaggerated anchor. ← DO THIS NEXT (Nick, 2026-09-08).**
 

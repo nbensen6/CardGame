@@ -53,6 +53,23 @@ const EMBERS := {
 const VALUE_RANGE := {
 	"cinder_jackal": {"body_gain": 0.55, "ember_gain": 4.5},
 }
+
+## Material variation (BUILDER-QUEUE.md item 3): one roughness for the whole
+## animal is why every beast reads as one substance no matter how good the
+## geometry gets. Keyed on swatch UV like EMBERS, so a beast opts specific
+## PARTS into a harder, wetter finish rather than the whole body going shiny.
+## No beast is opted in — see BUILDER-QUEUE.md item 3 for why cinder_jackal,
+## the pathfinder, could not be: a ROUGHNESS/SPECULAR-only lever needs a
+## direct-light reflection to land in frame at all, and measured across three
+## real-fight camera angles (default, orbit left/right, mid-climb) and at
+## three strengths up to a full mirror (rough 0.02, spec 1.0), the visible
+## CHARCOAL geometry (legs, ears) never once picked one up — 0.0 mean pixel
+## difference every time, not merely a small one. The channel is kept because
+## it is a correct, no-op-by-default building block; the next attempt should
+## carry the material cue on ALBEDO instead of on a highlight that this
+## camera's lighting apparently never lets land.
+const SWATCH_CHARCOAL := Vector2(336.0 / 512.0, 1.0 - 464.0 / 512.0)
+const MATERIAL := {}
 const ENV := "res://assets/3d/env/"
 ## Every environment is built to this floor radius — see tools/blender/env.py.
 const ENV_RADIUS := 6.0
@@ -2070,6 +2087,15 @@ func _shade_model(root: Node, is_ground := false) -> void:
 				mat.set_shader_parameter("body_gain", vr["body_gain"])
 			if vr.has("ember_gain"):
 				mat.set_shader_parameter("ember_gain", vr["ember_gain"])
+			var shiny: Array = MATERIAL.get(_beast_id, [])
+			if not shiny.is_empty():
+				var suv := PackedVector2Array()
+				for suv_v in shiny:
+					suv.append(suv_v as Vector2)
+				while suv.size() < 4:
+					suv.append(Vector2(-1.0, -1.0))
+				mat.set_shader_parameter("shine_uv", suv)
+				mat.set_shader_parameter("shine_count", mini(shiny.size(), 4))
 		if is_ground:
 			# Ground wants the shading but not the outline. A rim traces every
 			# edge it is given, and a floor made of slabs has hundreds — lit up,
