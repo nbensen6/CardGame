@@ -24,6 +24,25 @@
 class_name DeckView
 extends CanvasLayer
 
+## Fires once, synchronously, whenever this screen shuts itself -- Cancel/Close
+## or top-level Escape, never the successful-pick path (that one tells its own
+## caller directly, via `on_pick`, and already resets its own flag before
+## freeing). The opener needs this for the two-copies-of-one-truth bug #86
+## duty 2 found: `location_3d.gd` tracked "a picker is open" in BOTH a string/
+## int flag (`_deck_pick` / `_shop_pick`) AND this node's own existence, and
+## only the flag's owner (a successful pick, or the `_controls` "Back" button
+## that a full-screen DeckView on top of it makes unreachable) ever cleared
+## it. Cancelling out of "Thin the deck" left `_deck_pick == "remove"` on the
+## opener; the next unrelated `state_updated` (an ally acting, a periodic
+## sync) re-ran `_render_campfire`, saw the stale flag, and popped the picker
+## back open with nobody having clicked anything. `tree_exiting` looked like
+## the natural signal for this but doesn't work here: it only fires once the
+## queued free is actually processed at a frame boundary, and this project's
+## own test harness (see run_tests.gd's DeckView tests) runs with no frame
+## boundary to wait on. Emitting explicitly, before queue_free(), makes the
+## opener's cleanup happen in the same call and lets it be proven without one.
+signal closed
+
 ## Pixels of horizontal drag per FULL revolution.
 ##
 ## Nick: "when you rotate the card, it doesn't really rotate. It just kind of
@@ -111,7 +130,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _detail != null:
 			_close_detail()
 		else:
-			queue_free()
+			_shut()
 		get_viewport().set_input_as_handled()
 
 
@@ -148,7 +167,7 @@ func _build_grid() -> void:
 	var shut := Button.new()
 	shut.text = "Cancel" if _picking() else "Close"
 	shut.custom_minimum_size = Vector2(90, 34)
-	shut.pressed.connect(queue_free)
+	shut.pressed.connect(_shut)
 	head.add_child(shut)
 
 	var scroll := ScrollContainer.new()
@@ -531,6 +550,15 @@ func _close_detail() -> void:
 	_bar = null
 	_dragging = false
 	_angle = 0.0
+
+
+## Close the whole screen WITHOUT a pick -- Cancel/Close and top-level Escape
+## both route here. Emits `closed` before freeing so an opener tracking "is a
+## picker open" in its own flag can clear it in the same call; see the
+## `closed` signal's own doc comment for the bug this exists to close.
+func _shut() -> void:
+	closed.emit()
+	queue_free()
 
 
 func _picking() -> bool:

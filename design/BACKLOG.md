@@ -2726,6 +2726,47 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-09** — #86 duty 2 (find an error and resolve it). Last own
+  commit was `f367191` (duty 3, `RunMap`'s pacing table), so this turn is
+  duty 2. Two copies of one truth again, this time in the UI layer rather
+  than a combat number: `location_3d.gd` tracks "a deck picker is open" in
+  BOTH a flag (`_deck_pick`/`_shop_pick`) AND the actual presence of a
+  `DeckView` child node — `_render_campfire`/`_render_shop` reopen the
+  picker whenever the flag is set, regardless of how the node last closed.
+  Only a *successful* pick, or the `_controls` "Back" button, ever cleared
+  the flag — but that Back button sits underneath `DeckView`'s own
+  full-screen, input-stopping overlay, so it's unreachable while the picker
+  is actually up. `DeckView` itself had no signal at all for closing, and
+  its Cancel button / top-level Escape just called `queue_free()`. Result:
+  cancel out of "Thin the deck" at a campfire, then let *any* unrelated
+  `state_updated` land while still on that campfire (an ally acting, a
+  periodic sync) — `_refresh()` sees the stale flag and pops the picker
+  back open with nobody having clicked anything. Same failure exists for
+  the shop's removal picker via `_shop_pick`. Fix: gave `DeckView` a
+  `closed` signal, emitted from a new `_shut()` that both the Cancel/Close
+  button and top-level Escape now route through (deliberately NOT the
+  successful-pick path, which already tells its caller directly via
+  `on_pick` and resets its own flag); `location_3d._deck_picker` connects
+  `closed` to reset both flags and refresh. `tree_exiting` looked like the
+  natural signal but doesn't work headless — it only fires once a queued
+  free is actually processed at a frame boundary, and this test run has
+  none to wait on, so emitting explicitly before `queue_free()` was the
+  only way to make it provable without one. Added
+  `_test_backlog86_deck_view_closed_fires_on_cancel_and_escape_not_on_pick`,
+  proving `closed` fires on Cancel and on top-level Escape, and does NOT
+  fire on a successful pick. Hit GDScript's own trap writing it: a lambda
+  captures outer locals BY VALUE, so a plain `var closed_via_cancel :=
+  false` mutated inside a connected `Callable` silently updates its own
+  private copy and the assertion passes no matter what the signal does —
+  had to switch to the single-element-Array box this file's own HoldCircle
+  tests already use for exactly this reason. Verified the tests catch a
+  real regression by reverting the `_shut()` wiring back to plain
+  `queue_free()` on a copy, re-running (`2 TEST(S) FAILED`, both new
+  assertions), then restoring the fix from the pre-edit copy (confirmed
+  clean via `git diff`). Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 3 (verify a
+  mechanic actually works).
+
 - **2026-09-09** — #86 duty 3 (verify a mechanic actually works). Last own
   commit was `c067da5` (duty 2, the power-card Block-log fix), so this turn
   is duty 3. Went looking for a rule nothing has ever asked a direct question

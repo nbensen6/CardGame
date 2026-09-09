@@ -886,7 +886,18 @@ func _deck_picker(deck: Array, on_pick: Callable, prompt: String = "",
 		action: String = "Choose this card") -> void:
 	if get_node_or_null("DeckView") != null:
 		return
-	DeckView.open(self, deck, prompt, action, on_pick)
+	var v := DeckView.open(self, deck, prompt, action, on_pick)
+	# backlog #86 duty 2 (two copies of one truth): "a picker is open" lived in
+	# both _deck_pick/_shop_pick and this node's own existence. Cancelling out
+	# of the picker (Escape, or its own Cancel button) used to free the node
+	# and leave the flag set, so the next unrelated refresh (an ally acting,
+	# a periodic sync) popped the picker back open unprompted. A successful
+	# pick already clears its own flag from inside `on_pick`, so resetting it
+	# again here is a harmless no-op on that path.
+	v.closed.connect(func() -> void:
+		_deck_pick = ""
+		_shop_pick = -1
+		_refresh())
 
 
 ## Browse the deck, changing nothing. Reachable from the campfire and the

@@ -1158,6 +1158,7 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_fit_shrinks_the_logical_viewport_on_handheld()
 	_test_backlog86_fit_resets_the_logical_viewport_on_desktop()
 	_test_backlog86_deck_view_step_builds_a_toggle_the_open_pane_never_needed()
+	_test_backlog86_deck_view_closed_fires_on_cancel_and_escape_not_on_pick()
 
 	print("")
 	if _failures == 0:
@@ -11901,6 +11902,73 @@ func _test_backlog86_deck_view_step_builds_a_toggle_the_open_pane_never_needed()
 		"stepping back to the already-upgraded card hides the toggle it built, without freeing it")
 	view.free()  # immediate, not queue_free() -- this function returns straight into quit(), with
 	# no frame boundary left for a deferred free to run, so a queued one would leak at exit
+
+
+## backlog #86 duty 2 (two copies of one truth, found reading location_3d.gd
+## end to end): "a picker is open" used to live in BOTH a flag on the opener
+## (_deck_pick/_shop_pick) and this node's own existence, and only a
+## SUCCESSFUL pick ever cleared the flag -- Cancel and top-level Escape both
+## just called queue_free() with nothing telling the opener. Cancel out of
+## "Thin the deck" at a campfire, then let ANY unrelated state_updated land
+## (an ally acting, a periodic sync) while still on that campfire, and
+## _render_campfire saw the stale flag and popped the picker back open with
+## nobody having clicked anything. `closed` is the new signal the fix hangs
+## the opener's cleanup on; this proves the signal's contract directly
+## against the real node, the same way the sibling test above proves step()'s:
+## it fires on Cancel, it fires on top-level Escape, and it must NOT fire on a
+## successful pick -- that path already tells its caller through `on_pick`,
+## and firing `closed` too would trigger a second, redundant reset-and-refresh
+## on the opener for no reason.
+##
+## Deferred alongside the sibling DeckView test above, for the same reason:
+## the top-level Escape path calls get_viewport(), which is null until the
+## tree has run at least one frame.
+func _test_backlog86_deck_view_closed_fires_on_cancel_and_escape_not_on_pick() -> void:
+	var deck := [{"id": "a", "name": "A", "index": 0}]
+
+	# GDScript lambdas capture outer locals BY VALUE, not by reference -- a
+	# plain `var closed := false` reassigned inside a connected Callable would
+	# silently mutate its own private copy and the test would pass no matter
+	# what the signal did. A single-element Array is the mutable box the rest
+	# of this file already reaches for (see e.g. the HoldCircle tests' `got`).
+	# The Cancel button, in picking mode.
+	var picked_via_cancel := [false]
+	var closed_via_cancel := [false]
+	var v1 := DeckView.open(root, deck, "Choose one", "Take it",
+		func(_i: int) -> void: picked_via_cancel[0] = true)
+	v1.closed.connect(func() -> void: closed_via_cancel[0] = true)
+	var cancel_btn: Button = null
+	for b in v1.find_children("*", "Button", true, false):
+		if (b as Button).text == "Cancel":
+			cancel_btn = b
+	_expect(cancel_btn != null, "picking mode must draw a Cancel button")
+	cancel_btn.pressed.emit()
+	_expect(closed_via_cancel[0], "pressing Cancel must fire `closed`")
+	_expect(not picked_via_cancel[0], "cancelling must never invoke on_pick")
+	v1.free()
+
+	# Top-level Escape, plain browsing (no detail pane open).
+	var closed_via_escape := [false]
+	var v2 := DeckView.open(root, deck)
+	v2.closed.connect(func() -> void: closed_via_escape[0] = true)
+	var esc := InputEventKey.new()
+	esc.keycode = KEY_ESCAPE
+	esc.pressed = true
+	v2._unhandled_input(esc)
+	_expect(closed_via_escape[0], "top-level Escape must fire `closed` too")
+	v2.free()
+
+	# A successful pick must NOT fire `closed` -- it tells the opener directly
+	# through on_pick, and location_3d.gd's own callback resets its flag there.
+	var closed_via_pick := [false]
+	var v3 := DeckView.open(root, deck, "Choose one", "Take it", func(_i: int) -> void: pass)
+	v3.closed.connect(func() -> void: closed_via_pick[0] = true)
+	v3.inspect(0)
+	for b in v3._bar.get_children():
+		if b is Button and (b as Button).text == "Take it":
+			(b as Button).pressed.emit()
+	_expect(not closed_via_pick[0], "a successful pick must free the screen without firing `closed`")
+	v3.free()
 
 
 ## backlog #86 duty 3 (thirty-first pass) -- GameHost.phase_string_for is the
