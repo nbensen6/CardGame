@@ -1092,6 +1092,22 @@ func _apply_frail(target: Combatant, amount: int) -> void:
 
 ## Deal card damage to the Titan, consuming one "exposed" stack for bonus.
 ## Returns the actual damage dealt (so the log can flag the bonus).
+##
+## backlog #86 duty 2: this docstring has always promised "actual damage
+## dealt", but both branches returned the pre-mitigation swing — the number
+## handed to take_damage(), not what it actually did to boss.hp. A "block"
+## boss move (18 of the 34 beasts carry one — see bosses.json) leaves
+## boss.block sitting through the whole next player round (it only resets at
+## the START of the boss's OWN next turn, in _enemy_turn(), not at
+## _begin_round()), so any hunter who swings at a Titan currently holding
+## Block was told — in the play-by-play log AND the run-end damage_dealt
+## stat (#39) — that their card did more than actually reached HP. Same
+## shape as the leech fix one commit up: a number take_damage() computes
+## correctly (via the same predicted_damage() preview incoming_for() already
+## trusts) and never asked for by its neighbour. weak_point_damage (the
+## buck-off meter) is left reading the intended swing, same as before —
+## that's "how hard you struck the sigil", not "what got through Block", and
+## changing what THAT counts is a mechanic-identity call, not this fix.
 func _damage_boss(amount: int, pi: int) -> int:
 	var dealt := 0
 	# Below the weak point, the beast's hide is armored — attacks barely chip it,
@@ -1099,8 +1115,9 @@ func _damage_boss(amount: int, pi: int) -> int:
 	# You have to CLIMB to deal real damage. This is what makes it a climb, not a fight.
 	if boss.weak_point_height > 0 and not sigil_reached(pi):
 		var divisor: int = maxi(2, ARMORED_DIVISOR - _mod("chip"))
-		dealt = maxi(1, amount / divisor)
-		boss.take_damage(dealt)
+		var swing: int = maxi(1, amount / divisor)
+		dealt = boss.predicted_damage(swing)
+		boss.take_damage(swing)
 	else:
 		# At the weak point (or a beast with no high sigil): full strike + bonuses.
 		var total := amount
@@ -1110,8 +1127,8 @@ func _damage_boss(amount: int, pi: int) -> int:
 		if boss.weak_point_height > 0:
 			total += SIGIL_BONUS + _mod("sigil_bonus")
 			players[pi].weak_point_damage += total  # counts toward the buck-off threshold
+		dealt = boss.predicted_damage(total)
 		boss.take_damage(total)
-		dealt = total
 	if boss.thorns > 0:  # Thorns (backlog #36): touching a spined beast costs you
 		players[pi].combatant.take_damage(boss.thorns)
 		_log("%s's thorns bite back — %s takes %d." % [boss.name, players[pi].combatant.name, boss.thorns])
@@ -1125,23 +1142,32 @@ func _damage_boss(amount: int, pi: int) -> int:
 ## boss's own sigil mechanics. Returns the actual damage dealt (0 if the
 ## index is out of range or the add is already down, so a caller doesn't
 ## have to check first).
+##
+## backlog #86 duty 2: same gap as _damage_boss() (fixed one function up) —
+## an add's own "block" move (_adds_turn()'s "block" case) gains real Block
+## that survives into the players' next round exactly like the main boss's
+## does, but this always returned the raw pre-mitigation `amount` rather
+## than what take_damage() actually took off `add.hp`, overstating the log
+## line and the damage_dealt run stat whenever an add was hit while holding
+## Block.
 func _damage_add(idx: int, amount: int, pi: int) -> int:
 	if idx < 0 or idx >= adds.size():
 		return 0
 	var add: Boss = adds[idx]
 	if add.is_dead():
 		return 0
+	var dealt := add.predicted_damage(amount)
 	add.take_damage(amount)
 	if add.thorns > 0:  # backlog #86 duty 2: _damage_boss() has always done this
 		# (backlog #36); an add is a real Boss too (combat.gd's own doc comment
 		# on `adds` says so) but this sibling path never grew the same check.
 		players[pi].combatant.take_damage(add.thorns)
 		_log("%s's thorns bite back — %s takes %d." % [add.name, players[pi].combatant.name, add.thorns])
-	damage_dealt_total += amount
-	_fire(MOMENT_DAMAGE_TAKEN, {"target": add, "amount": amount, "player_index": pi})
+	damage_dealt_total += dealt
+	_fire(MOMENT_DAMAGE_TAKEN, {"target": add, "amount": dealt, "player_index": pi})
 	if add.is_dead():
 		_log("%s falls." % add.name)
-	return amount
+	return dealt
 
 ## Player pi ends their turn. When every player has ended, the boss acts.
 func end_turn(pi: int) -> void:

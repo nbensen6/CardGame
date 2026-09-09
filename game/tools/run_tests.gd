@@ -363,6 +363,10 @@ func _init() -> void:
 	_test_leech_drains_and_heals()
 	_test_leech_heals_nothing_when_fully_blocked()
 	_test_leech_heals_only_what_gets_through_block()
+	_test_damage_boss_reports_only_what_gets_through_block()
+	_test_damage_boss_reports_nothing_when_fully_blocked()
+	_test_armored_damage_boss_reports_only_what_gets_through_block()
+	_test_damage_to_add_reports_only_what_gets_through_block()
 	_test_wound_decay_limiter_sheds_poison()
 	_test_sigil_fatigue_limiter_punishes_camping()
 	_test_height_split_limiter_punishes_hoarding()
@@ -6856,6 +6860,76 @@ func _test_leech_heals_only_what_gets_through_block() -> void:
 	combat.end_turn(1)
 	_expect(combat.players[0].combatant.hp == 35 and combat.boss.hp == 57,
 		"leech heals only the 7 that actually reached HP, not the raw 12")
+
+
+## backlog #86 duty 2 — the SAME shape of gap the three leech tests above just
+## closed, one function over: _damage_boss()'s own docstring promises "the
+## actual damage dealt", but both branches returned the pre-mitigation swing
+## handed to take_damage(), not what it actually took off boss.hp. 18 of the
+## 34 beasts carry a "block" move, and boss.block only resets at the START of
+## the boss's own NEXT turn (_enemy_turn(), not _begin_round()) -- so it sits
+## through the whole following player round, and every card played against a
+## Titan holding Block overstated its own damage in the play-by-play log and
+## in damage_dealt_total (backlog #39's run-summary stat). No weak point on
+## this dummy boss, so this exercises the full-strike branch.
+func _test_damage_boss_reports_only_what_gets_through_block() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	boss.block = 4  # Slash hits for 6 -- 4 absorbed, 2 gets through
+	var hp_before: int = combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))
+	_expect(combat.boss.hp == hp_before - 2 and combat.damage_dealt_total == 2,
+		"a partially-blocked hit reports only the 2 that actually reached HP, not the raw 6")
+
+
+## Same bug, full mitigation: a hit Block swallows entirely must report (and
+## count toward the run's damage_dealt stat) exactly 0, not the card's face
+## value.
+func _test_damage_boss_reports_nothing_when_fully_blocked() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	boss.block = 20  # more than enough to eat the whole 6
+	var hp_before: int = combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))
+	_expect(combat.boss.hp == hp_before and combat.damage_dealt_total == 0,
+		"a fully-blocked hit deals and reports zero, not the card's raw damage")
+
+
+## Same gap, the OTHER branch of _damage_boss(): below the weak point the hide
+## is armored (chip damage only), and that chip still has to pass through
+## whatever Block the Titan is holding -- proven separately from the
+## full-strike tests above because the two branches compute their own
+## pre-mitigation swing independently.
+func _test_armored_damage_boss_reports_only_what_gets_through_block() -> void:
+	var boss := Boss.new("Armored", 300)
+	boss.weak_point_height = 5  # a hunter at foothold 0 hasn't reached it -- armored branch
+	var combat := _new_combat([_deck_of(_bash, 10), _deck_of(_slash, 10)], 42, boss)
+	boss.block = 1  # Cleave (10 dmg) chips for max(1, 10/4) = 2 -- 1 absorbed, 1 gets through
+	var hp_before: int = combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))
+	_expect(combat.boss.hp == hp_before - 1 and combat.damage_dealt_total == 1,
+		"armored chip damage against a Titan's Block reports only what got through, not the full chip")
+
+
+## The same _damage_boss() gap has a sibling in _damage_add() (backlog #63) --
+## an add's own "block" move (_adds_turn()) grants it real Block that
+## survives into the players' next round exactly like the main boss's does
+## (see _test_add_block_reseeds_each_round_like_the_bosss_own), but damage to
+## an add used the raw swing directly with no mitigation preview at all.
+func _test_damage_to_add_reports_only_what_gets_through_block() -> void:
+	var boss := _dummy_boss(300, 0)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Grub", 30)
+	add.moves = [{"type": "block", "value": 6}]
+	combat.adds.append(add)
+	combat.end_turn(0)
+	combat.end_turn(1)  # add's own "block" move fires -> add.block == 6, into round 2
+	_expect(add.block == 6, "sanity: the add is holding Block going into the next player round")
+	var hp_before: int = add.hp
+	combat.players[0].hand = [_slash()]  # 6 damage, fully absorbed by the add's own 6 Block
+	combat.play_card(0, 0, true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
+	_expect(add.hp == hp_before and combat.damage_dealt_total == 0,
+		"an add's Block absorbs a hit fully -- the log/stat must report 0, not the raw swing")
 
 
 func _test_wound_decay_limiter_sheds_poison() -> void:

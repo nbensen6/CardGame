@@ -12086,3 +12086,38 @@ Newest first. One line per finished item: what, and anything surprising.
   already-tested mechanic — and it came out `[0, 1, 2, 3]` as expected. Fresh
   `--import`, headless, Godot 4.7.1, `run_tests.gd`: ALL TESTS PASSED. Next
   `#86` turn is duty 2 (find an error and resolve it).
+
+- **2026-09-09 (later), #86 duty 2 (find an error and resolve it).** Last
+  commit (`864e45a`) was duty 3, so this turn is duty 2. Both `_damage_boss()`
+  and `_damage_add()` carry a doc comment promising "the actual damage
+  dealt" as their return value, so I checked whether either actually
+  delivers on it — neither did. Both computed the swing (card damage, plus
+  Vulnerable/sigil bonuses for the boss), called `take_damage()` with it, and
+  then returned that SAME pre-mitigation number rather than asking
+  `take_damage()`'s own neighbour `predicted_damage()` what actually reached
+  HP — the identical shape of gap `d55b90d`'s leech fix closed one function
+  up, and just as reachable: 18 of the 34 beasts carry a "block" move, and
+  `boss.block` (same for an add's own Block, `_adds_turn()`) only resets at
+  the START of the beast's own NEXT turn (`_enemy_turn()`, not
+  `_begin_round()`), so it sits through the whole following player round —
+  every card played against a beast currently holding Block over-reported
+  its own damage, both in the play-by-play log line the player reads
+  (`play_card`'s `"%d damage"`) and in `damage_dealt_total`, which backlog
+  #39's run-end summary shows as a career/run stat. `_damage_add()` was
+  worse: it never even computed a mitigated number at all, just re-used the
+  raw `amount` throughout. Fixed both by taking a `predicted_damage()`
+  preview immediately before the existing `take_damage()` call and returning
+  THAT, leaving every actual HP/Block/Vulnerable/sigil number untouched —
+  this changes only what gets reported and accumulated, not what happens.
+  Left `weak_point_damage` (the sigil buck-off meter) reading the intended
+  swing, same as before: that meter is "how hard you struck the sigil," not
+  "what got through Block," and changing what IT counts is a mechanic-
+  identity call, not this fix. Wrote four regression tests (full-strike hit
+  partially blocked, full-strike hit fully blocked, the armored/below-weak-
+  point chip branch partially blocked, and an add's own Block absorbing a
+  hit) and watched all four fail honestly against the unfixed `combat.gd`
+  (stashed just that file, reran, restored) before trusting the fix. Fresh
+  `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED
+  (1197 passed). Re-ran the shipped `robustness_sweep.gd` (10x3x6x2 = 360
+  runs, unmodified) as a smoke test: clean, 0 dead ends / 0 crashes. Next
+  `#86` turn is duty 3 (verify a mechanic actually works).
