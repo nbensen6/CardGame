@@ -421,6 +421,8 @@ func _init() -> void:
 	_test_buffer_card_grants_the_stat()
 	_test_plated_armour_persists_the_round_reset()
 	_test_plated_armour_decays_only_when_a_hit_gets_hp_through()
+	_test_backlog86_buffer_voiding_a_hit_spares_plated_armour_from_decay()
+	_test_backlog86_intangibles_capped_hit_still_decays_plated_armour()
 	_test_intangible_buffer_plated_armour_persist_through_save()
 	_test_boss_dexterity_intangible_buffer_plated_armour_persist_through_save()
 	# Cards that reward discarding (backlog #62)
@@ -7549,6 +7551,44 @@ func _test_plated_armour_decays_only_when_a_hit_gets_hp_through() -> void:
 	combat.end_turn(1)  # round 1: boss_target_index() is player 0; 3 Block absorbs, 2 gets through
 	_expect(ps.combatant.hp == hp0 - 2, "Block still absorbs what it can before Plated Armour's decay check")
 	_expect(ps.combatant.plated_armour == 2, "Plated Armour decays by 1 once real HP damage gets through")
+
+
+## Backlog #86 duty 3: take_damage()'s own doc comment claims "Plated Armour
+## decays last, and only when real HP damage still lands — a hit Buffer or
+## Intangible fully neutralised costs it nothing", but nothing had ever put
+## Plated Armour on the same combatant as either stat and checked the decay.
+## The two existing Plated Armour tests only ever vary Block (full absorb vs.
+## partial), and the Buffer/Intangible tests above never carry a Plated
+## Armour stack at all — this is the untested cross-product of two mechanics
+## each already proven alone. Buffer's full cancel takes `remaining` to 0
+## before take_damage()'s Plated Armour check ever sees it, so the stack
+## must survive untouched.
+func _test_backlog86_buffer_voiding_a_hit_spares_plated_armour_from_decay() -> void:
+	var c := Combatant.new("Test", 30)
+	c.buffer = 1
+	c.plated_armour = 2
+	c.take_damage(10)
+	_expect(c.hp == 30 and c.buffer == 0,
+		"Buffer still cancels the hit outright and spends its own stack")
+	_expect(c.plated_armour == 2,
+		"a hit Buffer fully neutralised must not decay Plated Armour at all")
+
+
+## The mirror case: Intangible only CAPS a hit at 1, it doesn't zero it, so
+## Plated Armour's "only when real HP damage still lands" condition is still
+## met and it decays — unlike Buffer's full cancel above. A fix that made
+## Plated Armour treat Intangible the same as Buffer (skipping decay whenever
+## either mitigation fires, not just a full cancel) would pass every existing
+## test and still be wrong.
+func _test_backlog86_intangibles_capped_hit_still_decays_plated_armour() -> void:
+	var c := Combatant.new("Test", 30)
+	c.intangible = 1
+	c.plated_armour = 2
+	c.take_damage(10)
+	_expect(c.hp == 29 and c.intangible == 0,
+		"Intangible still caps the hit at 1 damage and spends its own stack")
+	_expect(c.plated_armour == 1,
+		"the 1 HP that got through despite Intangible still decays Plated Armour by 1")
 
 
 func _test_intangible_buffer_plated_armour_persist_through_save() -> void:

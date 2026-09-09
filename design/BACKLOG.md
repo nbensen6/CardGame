@@ -2726,6 +2726,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-09, #86 duty 3 (verify a mechanic actually works).** Last own
+  commit (`45e1f6e`) was duty 2, so this turn is duty 3. Spent most of this
+  run hunting for a genuinely untested mechanic rather than taking the
+  first candidate — grepped every private/static function across `/core`,
+  `/views`, `/session` and `/ui` for zero mentions in `run_tests.gd`, and
+  every single hit turned out to already be covered end to end by a
+  black-box test that never calls the function by name (`_discard_random`,
+  `_ensure_key_sources`, `_reclaim_slot`, `boss_from_dict`, `predicted_damage`
+  via `incoming_for`, all four `Boss._condition_met` branches, every enchant
+  effect, every limiter type — all already proven, several by earlier
+  duty-3 passes). That is worth recording so a future run doesn't burn the
+  same search: this codebase's coverage is now deep enough that "grep for
+  zero mentions" mostly returns false positives. Found the real gap by
+  reading doc comments instead of grepping names:
+  `Combatant.take_damage()`'s own comment claims Plated Armour "decays
+  last, and only when real HP damage still lands — a hit Buffer or
+  Intangible fully neutralised costs it nothing," but no test ever put a
+  Plated Armour stack on the same combatant as a Buffer or Intangible
+  stack — the two existing Plated Armour tests only vary Block, and the
+  four existing Buffer/Intangible tests never carry Plated Armour. Added
+  two direct `Combatant` tests: a Buffer stack that voids a hit entirely
+  must leave Plated Armour undecayed (`remaining` hits 0 before the decay
+  check), while an Intangible stack that only CAPS a hit at 1 still lets
+  that 1 HP decay it — the two mitigations are NOT interchangeable here,
+  and a "simplification" that treated them the same would pass every
+  pre-existing test and still be wrong. Fresh `--import`, headless, Godot
+  4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED, both new tests confirmed
+  in the output.
+
 - **2026-09-09, #86 duty 2 (find an error and resolve it).** Last own commit
   (`ebf4438`) was duty 3, so this turn is duty 2. The previous duty-2 pass
   fixed a real softlock (a duplicate `warlords_girdle` flooring energy at
