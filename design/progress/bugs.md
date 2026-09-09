@@ -5,6 +5,91 @@ score sheets. Per `tools/fixer/BRIEF.md`: fix it only if it's inside
 `tools/blender/**` / `game/assets/3d/**`; anything in `game/**` GDScript gets
 written up here for the session, not touched.
 
+## 2026-09-09 — Pass D (proportion): beasts get the same common-HEIGHT trap already on record for hunters — two Titans at the identical difficulty tier can have a 2.75x spread in footprint width because `_fit_height` scales every beast body to a height that only knows `weak_point_height`, never the model's own shape
+
+**Pass D (proportion) — rotation choice.** `git log --format='%h %ad %s' --date=format:'%Y-%m-%d %H:%M:%S' -- design/progress/bugs.md`: A 2026-09-09 17:00:54, B 16:13:40, C 15:57:53, D 15:05:16. D was oldest by nearly two hours and hadn't run since that morning, so it's due.
+
+The prior Pass D entry (2026-09-09, below) chased the same `weak_point_height`-driven height formula but stopped at camera framing — the window clamp that crops almost every beast's head. It explicitly left "footprints, not just heights" unchecked for beasts, and the 2026-09-08 Pass D entry (below that) found the exact same trap already confirmed for HUNTERS: `HUNTER_HEIGHT` fits every hunter body to one constant height uniformly, so the Frog reads person-sized and wider than its neighbors. This run asks the brief's own question of beasts instead: do beasts sharing a difficulty tier — and therefore an identical *imposed* height — end up with footprints that mean anything next to each other, or does the same trap apply one level up?
+
+**Commands (beasts grouped by `weak_point_height`, same state, only `beast=` varies):**
+```
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:/fixer_shots/beast_<name>.png state=3d beast=<name>
+```
+Tier `weak_point_height: 5` (12.0 + 1.6*5 = 20.0 units, forced height): `glyph_tortoise`,
+`husk_beetle`, `cinder_jackal`, `yoke_ox`, `bramble_hog`.
+Tier `weak_point_height: 6` (21.6 units, forced height): `eyrie_hawk`, `clot_toad`,
+`riptide_eel`.
+
+**What the harness printed** — the `CAM ... box size=(...)` line for each, `size.y` (height)
+confirmed identical within a tier as `_show_beast`'s formula predicts, `size.x` (width) is the
+finding:
+- Tier 5 (all `size.y = 20.000000`): `yoke_ox` width **23.62**, `glyph_tortoise` width 19.995,
+  `husk_beetle` width 17.10, `bramble_hog` width 16.16, `cinder_jackal` width **13.05** — Ox is
+  **1.81x** Jackal's width at the identical forced height.
+- Tier 6 (all `size.y = 21.600000`): `clot_toad` width **25.08**, `eyrie_hawk` width 9.13,
+  `riptide_eel` width 10.63 — Toad is **2.75x** Hawk's width at the identical forced height.
+- `cinder_jackal` also has the tier's largest depth (`size.z = 39.03`, roughly triple its own
+  width) — a separate axis distortion in the opposite direction, an elongated body rather than a
+  wide one, from the same uniform-scale mechanism.
+
+**What I saw in the PNGs** (all eight, all at `state=3d`, same camera rig, same platform,
+frog/goblin-engineer party visible in every shot as a size reference): `yoke_ox` and
+`glyph_tortoise` and `husk_beetle` stand on thick pillar-legs planted wide apart, filling most of
+the frame's width even cropped at the neck. `cinder_jackal`, same tier, same forced height,
+shows two thin canine legs close together near frame-center — visibly scrawnier, not just
+numerically. The starkest is tier 6: `clot_toad`'s pale bulbous mass spans edge-to-edge of the
+1280px frame and visually overruns the fighting platform's own disc, while `eyrie_hawk`, one tier
+up in nominal difficulty, stands on two slender stork-like legs occupying a strip maybe 150px
+wide dead center of the same frame. Side by side, nothing about Toad-vs-Hawk or Ox-vs-Jackal
+reads as "these are both roughly this tier of threat" — it reads as two completely different
+scales of creature that happen to share a difficulty number.
+
+**Why, from the code:** `_show_beast()` (`combat_3d.gd:1263-1279`) computes `want =
+BEAST_BASE_HEIGHT (12.0) + BEAST_HEIGHT_PER_CLIMB (1.6) * weak_point_height` — a number that
+depends on nothing but the tuning field — then calls `_fit_height(_beast, want)`
+(`combat_3d.gd:1460-1464`): `factor = want / raw_height; node.scale = Vector3.ONE * factor`. That
+is the identical function, and the identical shape of scaling, the 2026-09-08 Pass D entry
+already traced for hunters via `HUNTER_HEIGHT` — a single isotropic scalar computed purely from a
+target height, applied to whatever the source model's native footprint happens to be. It doesn't
+distort a model's own internal proportions (an ox still looks like an ox), but it erases every
+beast's *starting* size relative to every other beast: an Ox modeled at real-world stocky
+proportions and a Jackal modeled at real-world lean proportions get driven to the exact same
+20-unit height because they happen to share a `weak_point_height`, and the same scalar that
+achieves that also carries each one's native width along for the ride — proportionally further
+for whichever model started squatter relative to its own height. `weak_point_height` is a combat
+pacing number (how many Climb Heights this fight has); nothing in `bosses.json` or the code
+ties it to how bulky a creature's silhouette should read, so two creatures that should plainly be
+different scales of threat (a bird of prey, a toad) can land on the same tier and inherit the
+same forced height by coincidence of tuning.
+
+**Why it matters:** this is the same failure Nick already named for the Frog, one level up the
+cast — CLAUDE.md doesn't cover creature scale directly, but the brief's own Pass D warning
+("every hunter is fitted to a common HEIGHT, so a squat animal comes out enormous in WIDTH ...
+check footprints, not just heights") describes this exactly, and it isn't a rare coincidence:
+10 of the 28 beasts in `bosses.json` share `weak_point_height: 5` and 11 share `weak_point_height:
+6` — 21 of 28 beasts, three-quarters of the roster, are in a tier with at least one other beast,
+so this isn't a one-off pairing, it's the default condition for most of the game's fights.
+
+**Where to look:** `combat_3d.gd:1460-1464` (`_fit_height`) and its beast call site
+`combat_3d.gd:1263-1279` (`_show_beast`) — the same fix shape as the already-logged hunter
+version: either stop tying beast scale purely to `weak_point_height`, or give the height formula
+(or a new per-beast field in `bosses.json`) enough information to keep footprint proportional to
+something other than "this model's own native height-to-width ratio, stretched to a pacing
+number." `game/**` GDScript + `game/data/bosses.json` shape, not `tools/blender/**` /
+`game/assets/3d/**`, so written up rather than touched.
+
+**Also checked, no finding:** all eight beasts above still show the same top-of-frame head crop
+already on record from the 2026-09-09 Pass D entry below (window-clamp ceiling, not a new
+issue — not re-logged); `HUNTER0`/`HUNTER1` `VIS OK` on every shot, hunters render at consistent
+screen position regardless of which beast is loaded.
+
+**Could not check this pass:** whether the width spread is visible during the establishing/climb
+shots (`_climb_frame`) rather than the fixed working shot used here; `mobile size=2340x1080` for
+any of these eight; the remaining beasts outside these two tiers (`weak_point_height` 4, 7, 9, 11,
+13 — one or two beasts each, so no same-tier pair to compare footprint against; worth revisiting
+if the roster grows a second beast into one of those tiers).
+
 ## 2026-09-09 — Pass A (the walk): a reward card's own rules text gets clipped by its own frame on the phone layout, mid-sentence, because the handheld card shrinks but the font-size shrink table that's supposed to prevent exactly this does not know it shrank
 
 **Pass A (the walk) — rotation choice.** Per-pass last-run times from `git log
