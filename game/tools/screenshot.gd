@@ -48,7 +48,37 @@ var _console := ""
 var _drag := ""
 
 
+## Take the shot without stealing the screen.
+##
+## Nick, 2026-09-09: the builder lane "pulls up godot over my screen and the
+## mouse alt tabs for a moment" while he is playing something else. A lane that
+## interrupts the machine every run is a lane he turns off.
+##
+## Godot cannot screenshot under --headless — that mode has no renderer at all —
+## so a real window has to exist. It does not have to be focused, on top, or
+## anywhere he can see:
+##
+##   NO_FOCUS       stops the alt-tab. This is the one that matters; the flick
+##                  of focus is what interrupts a game, not the window itself.
+##   position       far off the desktop, so it cannot cover anything even for
+##                  the frame before the flag takes effect.
+##   MOUSE_PASSTHROUGH so a window that somehow lands on screen still cannot
+##                  swallow a click meant for whatever is underneath it.
+##
+## Deliberately NOT minimised: a minimised window on Windows can stop presenting
+## frames, and the capture would come back blank or stale — which is exactly the
+## sort of silent wrong answer this harness exists to avoid.
+func _stay_out_of_the_way() -> void:
+	var w := root
+	if w == null:
+		return
+	w.set_flag(Window.FLAG_NO_FOCUS, true)
+	w.set_flag(Window.FLAG_MOUSE_PASSTHROUGH, true)
+	w.position = Vector2i(-8000, -8000)
+
+
 func _initialize() -> void:
+	_stay_out_of_the_way()
 	for a in OS.get_cmdline_user_args():
 		if a == "foil":
 			CardView.force_foil = true
