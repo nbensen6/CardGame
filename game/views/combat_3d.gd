@@ -173,6 +173,18 @@ const FLY_SPEED := 0.34
 ## lose the fight around them (Nick: "zoom the camera out a bit"); at 6.5 the
 ## hunter still plainly owns the frame and you can see what they are standing on.
 const FOCUS_WINDOW := 6.5
+
+## The DEFAULT third-person shot, as opposed to the deliberate hold above.
+##
+## Nick, 2026-09-09: "make the camera mainly 3rd person." Reusing FOCUS_WINDOW
+## for that was wrong and looked it — at 6.5 the Frog filled the middle of the
+## screen at ground level and the beast was three legs and a shadow off the top
+## edge, which is a close-up, not a third-person camera. A third-person shot has
+## to hold BOTH the hunter and the thing they are climbing.
+##
+## 15 units: the hunter still reads clearly at the bottom of the frame and the
+## beast owns the rest of it, which is the composition the whole fight is about.
+const THIRD_WINDOW := 15.0
 const ZOOM_STEP := 0.12
 ## Sideways truck, in world units per unit of camera distance, that pushes the
 ## beast right so it centres in the space left of the HUD rather than on the
@@ -291,6 +303,16 @@ var _lock_slot := 0         # the hunter the camera is locked onto (CAMERA_LOCK)
 var _circle: HitCircle      # the osu-style timing face, when that setting is on
 var _circle_index := -1     # the hand index whose window the circle is holding open
 var _focused := false       # the camera is held close on the hunter you picked
+## Third person is the DEFAULT now, not a thing you opt into by clicking a
+## hunter. Set when a fight opens; cleared the moment the shot actually settles
+## onto someone, or the moment the player takes the camera themselves.
+var _want_third := false
+## How far above the hunter the focused shot aims, in world units. Held as state
+## rather than passed once, because _aim_camera recomputes _pivot_target from
+## the hunter's height EVERY frame — a lift applied only in _focus_camera was
+## silently undone on the next one, and the shot looked identical to not having
+## done it at all.
+var _focus_lift := 0.0
 ## Free offset from whatever the camera is locked to. Orbiting alone can only
 ## ever look AT the subject from a new angle; panning is what lets you go and
 ## look at something else, which is the difference between an orbit and a free
@@ -831,7 +853,11 @@ func _switch_to(slot: int) -> void:
 ##
 ## Also the one way back from free look, which is why it clears the pan and the
 ## manual framing rather than only re-aiming.
-func _focus_camera() -> void:
+## `lift` raises the aim point by a fraction of the window, which is what turns
+## a close hold into a third-person shot. At 0 the hunter sits dead centre and
+## half the frame is floor; at 0.3 they sit low and the beast owns everything
+## above them, which is the composition the fight is actually about.
+func _focus_camera(window := FOCUS_WINDOW, lift := 0.0) -> void:
 	_pan = Vector3.ZERO
 	_establishing = false
 	if _hunters.is_empty() or _cam == null:
@@ -848,9 +874,11 @@ func _focus_camera() -> void:
 	# the screen with beast and left the hunter under the cards, which answers the
 	# wrong question — the whole point is showing you WHO you are holding.
 	var slot: int = _lock_slot if _lock_slot >= 0 and _lock_slot < _hunters.size() else _me()
+	_focus_lift = window * lift
 	if slot >= 0 and slot < _hunters.size():
-		_pivot.y = float((_hunters[slot]["home"] as Vector3).y) + HUNTER_HEIGHT * 1.4
-	_dist = maxf(_dist_for_window(FOCUS_WINDOW), 2.6)
+		_pivot.y = float((_hunters[slot]["home"] as Vector3).y) \
+			+ HUNTER_HEIGHT * 1.4 + _focus_lift
+	_dist = maxf(_dist_for_window(window), 2.6)
 	_apply_orbit()
 
 
@@ -1446,7 +1474,13 @@ func _frame_beast() -> void:
 	_user_framed = false
 	_lock_slot = _me()
 	_pan = Vector3.ZERO
-	_focused = false          # a new beast is met wide, then you pick someone
+	# A new beast is still met WIDE — the establishing shot is the one moment you
+	# get to see the whole thing — but the camera no longer waits to be asked to
+	# come in. Nick, 2026-09-09: "make the camera mainly 3rd person." So the wide
+	# is now a beat, not a mode: `_settle_third` below drops into the over-the-
+	# shoulder shot the instant the establishing push finishes.
+	_focused = false
+	_want_third = true
 	# Open on the whole creature, however far back that has to be, then fall in to
 	# the working shot. You get to see what you've picked a fight with once —
 	# after that, the climb is the subject and the rest of it is off-screen.
@@ -1569,7 +1603,8 @@ func _aim_camera(delta: float, snap: bool) -> void:
 		# the body as they climb instead of sliding back to the beast's framing.
 		var fs: int = _lock_slot if _lock_slot >= 0 and _lock_slot < _hunters.size() else _me()
 		if fs >= 0 and fs < _hunters.size():
-			_pivot_target.y = float((_hunters[fs]["home"] as Vector3).y) 				+ HUNTER_HEIGHT * 1.2 + _pan.y
+			_pivot_target.y = float((_hunters[fs]["home"] as Vector3).y) \
+				+ HUNTER_HEIGHT * 1.2 + _focus_lift + _pan.y
 	_pivot_target.x = lock.x + _pan.x
 	_pivot_target.z = lock.y + _pan.z
 	if not _user_framed:
@@ -1590,6 +1625,18 @@ func _aim_camera(delta: float, snap: bool) -> void:
 		if _pivot.distance_to(_pivot_target) > 0.005 or _establishing:
 			# frame-rate independent ease: the same feel at 30fps and 144
 			_pivot = _pivot.lerp(_pivot_target, 1.0 - exp(-delta * 3.2))
+	# Once the establishing push has landed, fall in behind the active hunter
+	# without being asked. Deliberately AFTER the ease above rather than at fight
+	# start: cutting straight to the shoulder shot throws away the one moment the
+	# player gets to see the size of the thing they picked a fight with.
+	if _want_third and not _establishing and not _user_framed and not _hunters.is_empty():
+		_want_third = false
+		# 0.20, measured against the card fan rather than guessed. At 0.30 the
+		# hunters landed at y=538 on a 720 frame, which is behind the hand; at 0
+		# they sat dead centre with half the screen given to floor. 0.20 puts
+		# them just clear of the cards with the beast owning the rest.
+		_focus_camera(THIRD_WINDOW, 0.20)
+		return
 	if not _user_framed:
 		# Tilted up at the base, flattening out as you gain height — and only ever
 		# flattening. A camera that tips DOWN at the top looks at a Titan's scalp,
