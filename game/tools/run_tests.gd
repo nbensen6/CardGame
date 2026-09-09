@@ -367,6 +367,7 @@ func _init() -> void:
 	_test_power_cards_stay_in_play_and_stack()
 	_test_power_effects_fire_every_turn_end_and_persist()
 	_test_barbed_hide_power_grants_thorns_every_turn_end_and_it_compounds()
+	_test_seeping_venom_power_poisons_the_titan_every_turn_end_and_it_bleeds_for_it()
 	_test_power_block_log_reports_real_dexterity_lifted_amount_not_raw_value()
 	_test_power_stacks_multiply_and_different_powers_coexist()
 	_test_power_upgrade_value_is_not_lost_by_the_recurring_payout()
@@ -6755,6 +6756,41 @@ func _test_barbed_hide_power_grants_thorns_every_turn_end_and_it_compounds() -> 
 	combat.end_turn(0)  # round 2, no card played this turn — the power still fires on its own
 	_expect(ps.combatant.thorns == 4,
 		"the power keeps paying out every turn and Thorns COMPOUNDS (2 + 2 = 4) instead of being overwritten")
+
+
+## backlog #86 duty 3 (verify a mechanic actually works): Seeping Venom
+## ("Power. Poison the Titan for 2 at the end of each of your turns") is the
+## fourth and last power-type card (data/cards.json) and, like Barbed Hide
+## before it, had never been played by any test — _handle_power_effects()'s
+## "wound" match arm was only ever exercised through a synthetic
+## ps.powers["test_poison"] entry (_test_artifact_wards_off_a_power_triggered_
+## poison_and_expose and its neighbour), never through Content.make_card
+## resolving the real card's own power_effect/power_value fields, and never
+## proven to actually cost the Titan real HP rather than just accumulating a
+## number nobody reads. Wound is also a different shape from Block or Thorns:
+## nothing in this engine ever decrements boss.wound on its own (the only
+## other write site is the wound_decay LIMITER, a per-Titan special rule) — a
+## Titan bleeds for its full accumulated Wound, every one of its own turns,
+## forever, so the card's own claim only really holds if the payout survives
+## the round boundary AND the bleed tick that spends it as damage.
+func _power_venom() -> Card:
+	return Content.make_card("seeping_venom")
+
+func _test_seeping_venom_power_poisons_the_titan_every_turn_end_and_it_bleeds_for_it() -> void:
+	var combat := _new_combat([_deck_of(_power_venom, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300, 8))
+	var boss := combat.boss
+	combat.play_card(0, 0)  # Seeping Venom: Poison the Titan for 2 at the end of each of your turns
+	combat.end_turn(0)
+	_expect(boss.wound == 2, "the power poisons the Titan for 2 the same turn it's played")
+	var boss_hp_before := boss.hp
+	combat.end_turn(1)  # closes round 1 — the Titan's own turn bleeds it before it acts
+	_expect(boss.hp == boss_hp_before - 2,
+		"the Wound Seeping Venom granted actually bleeds the Titan for that much on its own turn, not just a number nobody reads")
+	_expect(boss.wound == 2,
+		"unlike Block, and unlike a card's Poison ticking down elsewhere, this engine's Wound is not reduced by the bleed tick that just spent it")
+	combat.end_turn(0)  # round 2, no card played this turn — the power still fires on its own
+	_expect(boss.wound == 4,
+		"the power keeps paying out every turn and Wound COMPOUNDS (2 + 2 = 4) instead of being overwritten")
 
 
 ## b3476ca fixed play_card()'s own Block log lines (pv["block"] is

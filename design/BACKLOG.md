@@ -2727,6 +2727,44 @@ rather than inventing work.
 Newest first. One line per finished item: what, and anything surprising.
 
 - **2026-09-09** — #86 duty 3 (verify a mechanic actually works). Last own
+  commit was `a7fc5d6` (duty 2, the duplicate-relic-reward softlock fix), and
+  its own entry named duty 3 as next. Went looking for another first-pass
+  hole in the `views/*.gd` static functions the way earlier duty-3 passes
+  did, but every one of them — `combat_3d.gd`, `location_3d.gd`,
+  `overworld_3d.gd`, plus `Boss`'s hold helpers, `Combat._rift_gap`,
+  `_start_glide` — already has a dedicated test; forty-plus duty-3 turns have
+  been thorough there. Went looking at real card DATA instead, the same
+  angle that found Barbed Hide two turns ago: cross-checked every card id
+  against `tools/run_tests.gd` and found the fourth and last `power`-type
+  card, Seeping Venom ("Power. Poison the Titan for 2 at the end of each of
+  your turns", `data/cards.json`), had never been played by any test either
+  — `_handle_power_effects()`'s `"wound"` match arm was only ever exercised
+  through a synthetic `ps.powers["test_poison"]` entry, never through
+  `Content.make_card("seeping_venom")` resolving the real card's own fields.
+  Wound also turned out to be a genuinely different shape than Thorns:
+  reading `_enemy_turn()` showed the Titan bleeds for its FULL accumulated
+  Wound every one of its own turns, and nothing in the engine ever
+  decrements `boss.wound` afterwards (the only other write site is the
+  `wound_decay` limiter, a per-Titan special rule) — so the card's claim
+  only really holds if the payout both survives the round boundary and
+  survives the very bleed tick that just spent it as damage.
+  Added `_test_seeping_venom_power_poisons_the_titan_every_turn_end_and_it_bleeds_for_it`,
+  proving: the power pays out 2 Wound the same turn it's played; the
+  Titan's own turn actually bleeds for that much real HP, not just a number
+  nobody reads; the bleed tick does NOT reduce Wound afterwards (unlike
+  Block resetting at round start); and the payout compounds turn over turn
+  (2 → 4) without a second copy ever being played. Verified the new
+  assertions actually catch a regression: blanked the `"wound"` branch's
+  `boss.wound += amount` line to a no-op, re-ran, watched all four new
+  assertions fail alongside two of the pre-existing synthetic-entry tests
+  (`6 TEST(S) FAILED` total — confirms this is a real, reachable code path,
+  not a redundant check), then restored `core/combat.gd` from a pre-edit
+  copy (confirmed clean via `git diff`). Fresh `--import`, headless, Godot
+  4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Not screenshotted — a pure
+  `/core` rules proof, nothing new on screen. Next `#86` turn is duty 2
+  (find an error and resolve it).
+
+- **2026-09-09** — #86 duty 3 (verify a mechanic actually works). Last own
   commit was `f69a984` (duty 2, the deck-picker fix), and its own entry named
   duty 3 as next. Every static function in `combat_3d.gd`/`location_3d.gd`/
   `overworld_3d.gd` and every `Boss`/`Combat` "when"/limiter condition already
