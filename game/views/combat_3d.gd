@@ -2285,16 +2285,42 @@ func _hop(tw: Tween, node: Node3D, body: Node3D, from: Vector3, to: Vector3,
 	var rise: float = arc["rise"]
 	var fall: float = arc["fall"]
 	var live: bool = body != null and is_instance_valid(body)
+
+	# ANTICIPATION. A jump that starts the instant it is asked for reads as a
+	# teleport with an arc drawn on it; the crouch is what says the hunter
+	# DECIDED to go. Short — long enough to see, not long enough to feel like a
+	# delay on your own input.
+	if live:
+		tw.tween_property(body, "scale", Vector3(1.12, 0.86, 1.12), step * 0.16) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+	# RISE, stretched. Pushing off is the one moment the body is taller than wide.
 	tw.tween_property(node, "position", apex, rise).set_ease(Tween.EASE_OUT)
 	if live:
-		tw.parallel().tween_property(body, "scale", Vector3(0.88, 1.20, 0.88),
-			rise * 0.5).set_ease(Tween.EASE_OUT)
+		tw.parallel().tween_property(body, "scale", Vector3(0.88, 1.22, 0.88),
+			rise * 0.45).set_ease(Tween.EASE_OUT)
+		# Back toward neutral over the top: a body at the apex is momentarily
+		# weightless and should not still look mid-launch.
+		tw.parallel().tween_property(body, "scale", Vector3(0.97, 1.05, 0.97),
+			rise * 0.55).set_delay(rise * 0.45).set_ease(Tween.EASE_IN_OUT)
+
+	# FALL, stretching again as it gathers speed.
+	#
+	# This is what was wrong. The squash used to play across the WHOLE fall, so
+	# the hunter descended already flattened — as though they had landed a moment
+	# early — and arrived at their most compressed, with nothing left to read as
+	# impact. Falling bodies elongate; the squash belongs at contact and nowhere
+	# else.
 	tw.tween_property(node, "position", to, fall).set_ease(Tween.EASE_IN)
 	if live:
-		tw.parallel().tween_property(body, "scale", Vector3(1.14, 0.84, 1.14),
+		tw.parallel().tween_property(body, "scale", Vector3(0.90, 1.16, 0.90),
 			fall).set_ease(Tween.EASE_IN)
-		# The landing squash is the half people actually read as weight.
-		tw.tween_property(body, "scale", Vector3.ONE, 0.12) 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		# IMPACT, then recover — the half people actually read as weight, now
+		# that it happens when the feet arrive rather than in mid-air.
+		tw.tween_property(body, "scale", Vector3(1.20, 0.78, 1.20), 0.06) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(body, "scale", Vector3.ONE, 0.16) \
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 ## Pure form of the arc above: the apex the hop rises to and the two halves'
