@@ -79,6 +79,24 @@ mirror(lambda s: b.taper((0.15 * s, -0.98, 1.52), 0.11, 0.01, 0.30,
 b.limb([(0.0, -0.52, 1.44), (0.0, -0.05, 1.51), (0.0, 0.40, 1.49),
         (0.0, 0.72, 1.40)], [0.01, 0.09, 0.08, 0.01], TANGERINE, seg=6)
 
+# --------------------------------------------------------------- the anchor
+# Queue item 4. The ridge above is real but the fight camera views the
+# spine's TOP edge nearly end-on (item 1a: only 2/44 of its faces clear the
+# remeshed body from that angle), so more ridge does not turn into more
+# screen area. The queue's own fix direction: something that breaks the
+# silhouette to the SIDE instead, off the neck/shoulders. This is that -
+# a mirrored pair of smouldering hackle spikes rooted at the base of the
+# neck, swept up and back and out past the torso's own half-width (0.42),
+# so they add to the SAME axis (screen-space left/right) this near-frontal
+# fight camera actually reads, the way the mirrored ears already prove reads
+# from here. Base radius 0.17 against unionremesh.py's 0.06 voxel is roughly
+# 3x the voxel size, so it is meant to survive the remesh as a chunky bump
+# on its own, unlike the thin ridge and the eyes - no union.txt hold-out
+# added for it; see the queue write-up for whether that held up in the
+# rebuilt, remeshed model.
+mirror(lambda s: b.taper((0.15 * s, -0.55, 1.40), 0.17, 0.05, 1.2, TANGERINE,
+                         seg=7, rot=point((0.9 * s, 0.15, 0.35))))
+
 # --------------------------------------------------------------- the ledges
 # Two haunch/shoulder humps stepping up the spine, each anchored off the
 # body's own centreline (x=0.24-0.27) rather than on it. A centred anchor on

@@ -250,6 +250,65 @@ per-beast cost. Phase 3 rolls them out by adding names to a list.
       Judge it at 1:1 against `design/renders/cinder_jackal_breakup_before.png`,
       same camera and box as every proof above.
 
+      **PROPOSAL BUILT, 2026-09-09, builder — not merged, awaiting Nick's
+      go/no-go.** Branch `builder/2026-09-09-side-anchor-proposal`.
+
+      What was built: a mirrored pair of `taper()` "hackle spikes" rooted at
+      the base of the neck (`tools/blender/cinder_jackal.py`, right after the
+      existing ridge), swept up and back and OUT to the side — base at
+      `(0.15*s, -0.55, 1.40)`, base radius 0.17, tip radius 0.05, depth 1.2,
+      pointed along `(0.9*s, 0.15, 0.35)`. Same TANGERINE ember swatch as the
+      ridge, so it inherits the "smouldering mane" read rather than
+      introducing a new colour. Chunky on purpose (base radius 0.17 against
+      `unionremesh.py`'s 0.06 voxel, roughly 3x) so it would survive the
+      remesh as a bump on its own — tried route (a) from the brief, not (b):
+      **no `union.txt` hold-out was added**, and the build log confirms it
+      wasn't needed (`HOLD`/`ROOM`/`CLIMB` all `ok`, no `FAIL`/`WARNING`).
+
+      Why the SIDE direction: this beast's real fight camera (`state=3d
+      beast=cinder_jackal`, dist 31.44) is near-frontal, not a side profile —
+      confirmed by opening `cinder_jackal_anchor_before.png` (a fresh capture
+      of the unmodified beast, pixel-identical to the existing
+      `_breakup_before.png`/`_valuerange_before.png` proofs) and seeing the
+      mirrored ears sit left/right of centre in screen space. World X maps
+      directly onto screen left/right from this angle, the same axis the
+      existing ridge does NOT use (it runs front-to-back along the topline,
+      which this camera views nearly end-on — item 1a's finding). So a
+      feature that grows in ±X grows in the one direction this specific shot
+      can actually show.
+
+      Proof: `design/renders/cinder_jackal_anchor_before.png` /
+      `_after.png`, same command, same seed, same camera parameters (dist
+      31.44, pitch -0.120, h -0.00, v -2.20 — identical numbers in both
+      runs' `CAM` log line) as every prior proof in this item. Not scaled;
+      both are the full 1280x720 capture. (The screenshot harness's own
+      auto-fit box widened between the two shots — that is the harness
+      reacting to the model actually being wider, not a different crop or
+      zoom applied by the builder.)
+
+      **Honest verdict: yes, this clears the "a player would notice" bar,**
+      and by a wide margin — clearer than expected. Two large orange
+      flare shapes now stick out well past both shoulders, roughly doubling
+      the beast's visible width at that height. Side by side at 1:1 there is
+      no ambiguity; nobody would need a diff tool. It is a much bigger visual
+      change than any of the last three items (baked AO, the swatch swap,
+      surface breakup) and it survives the union remesh intact — the point
+      of choosing a chunky base over a `union.txt` hold-out.
+
+      **What I'm NOT confident about, and why this stays a proposal, not a
+      checked box:** whether it still reads as a "smouldering mane" or as
+      something else — antlers, wings, blades. At this size and this angle
+      the shape communicates "big and dangerous" clearly, but the specific
+      read of "hackles/mane" the beast's own design note asks for is a
+      judgement call, not something the ray-cast/HOLD checks can confirm.
+      That is exactly the kind of art-direction question BRIEF.md says is
+      Nick's, so the checkbox stays unticked pending his look. If it reads
+      as wrong-shaped rather than wrong-sized, the fix is narrowing the
+      taper's cross-section (e.g. swap to a flattened `limb()` with `flat`
+      < 1, which is closer to a fin/hackle than a round horn) rather than
+      shrinking it back toward invisible — shrinking is the mistake item 1a
+      already ruled out.
+
 - [ ] **5. A face.** Measured against the CC0 Kenney animals, the biggest gap in
       the whole cast is that theirs have eyes, a snout and ears on a head that is
       its own colour block, and ours have a featureless head with a sigil where a
