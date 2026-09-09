@@ -278,6 +278,11 @@ var _ledge_marks: Dictionary = {}
 var _climb_tw: Dictionary = {}
 ## The card under the pointer, lifted out of the fan.
 var _hand_hover: Control = null
+## The card actively running the sweep-bar timing minigame, lifted out of the
+## fan the same way hover does — see card_is_raised(). A handheld tap never
+## fires mouse_entered, so without this a touch player starting a timed card's
+## sweep never sees the strip at all (bugs.md Finding 3, 2026-09-08).
+var _timing_card: Control = null
 ## How big the pulsing marker is. It used to be a fixed 1.0, which was tuned
 ## when it hung above the body at 88% of the bounding box and was mostly seen
 ## edge-on. Now it sits ON the mark the model wears, at eye level, where a fixed
@@ -3332,21 +3337,22 @@ func _layout_hand() -> void:
 		var off := float(i) - mid
 		c.size = c.custom_minimum_size
 		c.pivot_offset = Vector2(w * 0.5, c.custom_minimum_size.y * 1.35)
-		var lift: float = FAN_RISE if c == _hand_hover else 0.0
+		var raised := card_is_raised(c, _hand_hover, _timing_card)
+		var lift: float = FAN_RISE if raised else 0.0
 		c.position = Vector2(
 			room * 0.5 - w * 0.5 + off * step,
 			tuck + absf(off) * FAN_DROP - lift)
 		# A hovered card straightens up as it rises, so the face you are reading
 		# is square to you rather than tilted.
-		c.rotation = 0.0 if c == _hand_hover else off * FAN_TILT
+		c.rotation = 0.0 if raised else off * FAN_TILT
 		# Grow from the BOTTOM CENTRE, so a lifted card rises out of the fan
 		# instead of swelling in all directions and shoving its neighbours.
-		c.scale = (Vector2.ONE * FAN_HOVER_SCALE) if c == _hand_hover else Vector2.ONE
+		c.scale = (Vector2.ONE * FAN_HOVER_SCALE) if raised else Vector2.ONE
 		# The panel stays on the card always; the TUCK is what hides it at
 		# rest, exactly as in the reference. Toggling visibility instead made a
 		# resting card read as borderless full art (Nick's screenshots).
 		# and comes to the front, or its neighbours overlap the thing you lifted.
-		c.z_index = 10 if c == _hand_hover else i
+		c.z_index = 10 if raised else i
 
 
 func _render_hand() -> void:
@@ -3409,6 +3415,7 @@ func _render_hand() -> void:
 	_end_btn.disabled = bool(priv.get("ended", false))
 	if bool(outcome["hover_reset"]):
 		_hand_hover = null
+		_timing_card = null
 	if bool(outcome["layout_needed"]):
 		# Positions are set by hand, so nothing lays the fan out unless we do.
 		# Deferred: the cards have no size until the frame after they are added,
@@ -3422,6 +3429,18 @@ static func render_hand_status(selecting: bool) -> Dictionary:
 		"layout_needed": true,
 		"hover_reset": true,
 	}
+
+## A card is "raised" — lifted clear of the fan's deep tuck, squared to the
+## screen instead of tilted — if the mouse is hovering it OR it is the card
+## actively running the sweep-bar timing minigame. Before `_timing_card`
+## existed only hover raised a card, and the timing strip is anchored near the
+## card's own bottom edge (card_view.gd, anchor 0.86) — inside that tuck. A
+## handheld tap never fires mouse_entered (CLAUDE.md §5: no hover-only info),
+## so starting a timed card's sweep on touch left the strip clipped off-screen
+## for the whole minigame. bugs.md Finding 3 (2026-09-08). #86 duty 2 (two
+## copies of one truth: "the card in focus" had two real causes, one checked).
+static func card_is_raised(card: Variant, hover: Variant, timing: Variant) -> bool:
+	return card == hover or card == timing
 
 ## The timing-window bonus a played card actually gets, as a fraction (10% ==
 ## 0.10): the team-wide relic mod (`mods.timing_zone`, a percent) plus, if
@@ -3467,6 +3486,11 @@ func _on_card_tapped(card: Dictionary, cv: CardView) -> void:
 				climb >= SLIDER_CLIMB)
 			return
 		cv.zone_bonus = bonus
+		# Raise the card the same way hover would -- a handheld tap never fires
+		# mouse_entered, and the sweep strip lives inside the deep tuck a
+		# resting card sits in (see card_is_raised).
+		_timing_card = cv
+		_layout_hand()
 		cv.start_timing(hits)
 		return
 	if bool(card.get("exhaust_pick", false)) or bool(card.get("cheapen_pick", false)) 			or bool(card.get("meld", false)):

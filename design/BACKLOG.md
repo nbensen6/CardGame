@@ -2746,6 +2746,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-09 (yet later still), #86 duty 2 (find an error and resolve it).**
+  Last commit tagged for this rotation (`7c94887`) was duty 3, so this turn
+  is duty 2 (the intervening `797fea0`/`5f2ac0a`/`2952790`/`d03c56a`/`6777cf1`
+  are builder/fixer-lane commits, not this rotation's). No numbered queue
+  item above #86 was actionable — the only unchecked `cloud-safe`/`cloud-art`
+  items left (#55, #76) are art-creation work, which moved to the builder
+  lane on 2026-09-08 and is no longer this rotation's to do — so this ran
+  duty 2 against the fixer's own `design/progress/bugs.md`, which exists
+  precisely to hand `game/**` GDScript findings to this lane. Picked
+  Finding 3 (2026-09-08, Pass A): a handheld tap on a card with the
+  "Sweep bar" timing style never fired `mouse_entered`, so nothing ever
+  raised the card out of the fan's deep tuck, and the timing strip
+  (`card_view.gd`, anchored at 0.86 of the card's own height) stayed
+  clipped off-screen for the entire minigame — a real CLAUDE.md §5
+  violation ("no hover-only information"), not just the "lower confidence"
+  guess the fixer's write-up flagged it as. Added a second raise-cause,
+  `_timing_card`, alongside the existing `_hand_hover` in
+  `combat_3d.gd`, set the moment a bar-style timed card is tapped, and
+  pulled the OR decision into a pure `card_is_raised(card, hover, timing)`
+  so it's provable headless — two new tests in `run_tests.gd` cover being
+  raised by hover alone and by active timing with zero hover, the exact
+  shape of the bug (two real causes for "the card in focus," only one ever
+  checked). `run_tests.gd`: ALL TESTS PASSED. **Could not verify by eye** —
+  no display in this session, so the raised card has not actually been
+  looked at on desktop or handheld; the fix is proven at the decision layer,
+  not the screen. Wrote the fix and the gap up in `bugs.md` under the
+  original Finding 3 rather than leaving it "not confirmed."
+
 - **2026-09-09 (later still), #86 duty 3 (verify a mechanic actually works).**
   Last commit on this rotation (`d92b8dd`) was duty 2, so this turn is duty 3
   (the intervening `f7a9fd2`/`6c01fb2`/`a2f043a`/`74c9492`/`797fea0` are

@@ -490,6 +490,24 @@ on both desktop and a handheld-sized window.
 `start_timing()` (1646, 1783) and its dependency on `_hand_hover` in
 `combat_3d.gd` (3092-3146). Not touched — `game/**` GDScript.
 
+**Fixed 2026-09-09 (#86 duty 2), confirmed rather than left at "not confirmed"
+above.** The hover dependency was real, not just plausible: `_on_card_tapped`
+called `cv.start_timing(hits)` with nothing raising the card first, so on a
+handheld tap (no `mouse_entered`, ever) the strip stayed inside the deep tuck
+for the whole minigame, exactly as this entry predicted. Added `_timing_card`
+alongside `_hand_hover`, set it the moment a bar-style timed card is tapped
+(before `start_timing`, so `_layout_hand()` raises it immediately), and
+folded the raise decision into a pure `card_is_raised(card, hover, timing)`
+so it's provable without building the hand row's UI —
+`_test_backlog86_card_is_raised_by_hover` and
+`_test_backlog86_card_is_raised_by_active_timing_with_no_hover` in
+`run_tests.gd`. Reset alongside `_hand_hover` in `render_hand_status`'s
+existing hover-reset path, so it can't outlive a freed CardView across a
+hand rebuild. **Could not verify the visual result** — no display in this
+session, so nobody has looked at the raised card on either desktop or a
+handheld-sized window; the fix is proven at the logic layer (which card the
+game decides to raise), not by eye.
+
 ### A tooling gotcha for whoever runs this pass next
 
 The brief's own example command writes to `out=C:\shot.png` — directly at the

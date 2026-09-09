@@ -587,6 +587,11 @@ func _init() -> void:
 	# end for an early-return that skips a tail statement.
 	_test_backlog86_render_hand_status_always_relayouts_while_selecting()
 	_test_backlog86_render_hand_status_hides_prompt_outside_selection()
+	# backlog #86 duty 2: card_is_raised — a handheld tap on a timed card never
+	# fired mouse_entered, so the sweep-bar strip (bugs.md Finding 3) stayed
+	# clipped in the fan's tuck for the whole timing minigame on touch.
+	_test_backlog86_card_is_raised_by_hover()
+	_test_backlog86_card_is_raised_by_active_timing_with_no_hover()
 	# backlog #86 duty 3 (third pass): Nick's own example, the jump mechanic
 	# itself — hunter_move_kind, the gate _place_hunters uses to decide a JUMP
 	# from a glide from a first placement. This is the exact rule behind the
@@ -11058,6 +11063,26 @@ func _test_backlog86_render_hand_status_hides_prompt_outside_selection() -> void
 	_expect(bool(status["layout_needed"]), "the fan is laid out on every render, selecting or not")
 	_expect(bool(status["hover_reset"]), "hover is reset on every render, selecting or not")
 	_expect(not bool(status["status_visible"]), "the selection prompt hides once nothing is being picked")
+
+
+## backlog #86 duty 2 — card_is_raised is the pure half of _layout_hand's
+## per-card lift/rotation/scale/z_index decision. Before `_timing_card`
+## existed, only `c == _hand_hover` raised a card, and the sweep-bar timing
+## strip (card_view.gd, anchored at 0.86 of the card's own height) sits
+## inside the deep tuck a resting card sits in — so tapping a timed card on
+## a handheld (no mouse_entered, ever) started the sweep with the strip
+## clipped off-screen for its whole duration. bugs.md Finding 3, 2026-09-08.
+func _test_backlog86_card_is_raised_by_hover() -> void:
+	_expect(Combat3D.card_is_raised(1, 1, -1), "the hovered card must be raised")
+	_expect(not Combat3D.card_is_raised(2, 1, -1), "a card that is neither hovered nor timing must stay in the fan")
+
+
+func _test_backlog86_card_is_raised_by_active_timing_with_no_hover() -> void:
+	# This is the exact case a handheld tap produces: nothing is ever hovered
+	# (null == null would wrongly match if this compared against null instead
+	# of a real "no card" sentinel), but the tapped card IS the one timing.
+	_expect(Combat3D.card_is_raised(1, -1, 1), "a card actively running the timing minigame must be raised even with no hover at all")
+	_expect(not Combat3D.card_is_raised(2, -1, 1), "a card not being timed and not hovered must stay in the fan")
 
 
 ## backlog #86 duty 3 (second pass) — combat_3d.foothold_anchor is the pure
