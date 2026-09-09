@@ -86,6 +86,8 @@ func _init() -> void:
 	# the run map (branching route)
 	_test_map_generates_connected_rows()
 	_test_map_is_deterministic_per_seed()
+	_test_backlog86_is_last_row_is_true_only_for_the_maps_final_row()
+	_test_backlog86_full_clear_beats_every_acts_titan_before_won()
 	_test_backlog86_map_guarantees_a_shop_every_act()
 	_test_backlog86_aligned_keeps_paths_straight_and_endpoints_pinned()
 	_test_backlog86_aligned_guards_singleton_rows()
@@ -1855,6 +1857,91 @@ func _test_map_is_deterministic_per_seed() -> void:
 	var same := str(m1.rows) == str(m2.rows)
 	var different := str(m1.rows) != str(m3.rows)
 	_expect(same and different, "the same seed maps the same route; a new seed re-rolls it")
+
+
+## #86 duty 3 — RunMap.is_last_row() is the gate Run._after_node() reads to
+## decide WON vs. back-to-the-map (run.gd:813): `if map.is_last_row(map_row):
+## phase = Phase.WON`. Nothing had ever asked this function a direct question.
+## The dangerous failure mode is a boundary that's too EAGER — true at an
+## earlier act's own boss row instead of only the run's true last row — because
+## that would end the run a Titan early, and (see the test right after this
+## one) the existing full-clear integration test could not have caught it: it
+## only checks "eventually WON, having seen a card and a relic somewhere",
+## both of which an early act's own boss already pays.
+func _test_backlog86_is_last_row_is_true_only_for_the_maps_final_row() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 99
+	var acts := 3
+	var m := RunMap.new(acts, rng)
+	var rows_per_act := RunMap.ROWS_PER_ACT + 1  # + the act's own boss row
+	var act0_boss_row := rows_per_act - 1        # act 0's own Titan -- not the run's last row
+	var act1_boss_row := rows_per_act * 2 - 1    # act 1's own Titan -- likewise not last
+	var final_row := m.total_rows() - 1          # act 2's Titan -- the actual last row
+	var setup_ok := String(m.node_at(act0_boss_row, 0)["type"]) == "boss" \
+		and String(m.node_at(act1_boss_row, 0)["type"]) == "boss" \
+		and String(m.node_at(final_row, 0)["type"]) == "boss"
+	_expect(setup_ok, "sanity check: the three rows this test reads off are actually boss rows")
+	_expect(not m.is_last_row(0), "row 0, the very first row of the run, is never the last row")
+	_expect(not m.is_last_row(act0_boss_row),
+		"act 0's own Titan is a real fight but NOT the run's last row -- the run must continue into act 1")
+	_expect(not m.is_last_row(act1_boss_row),
+		"act 1's own Titan is likewise not the run's last row -- the run must continue into act 2")
+	_expect(m.is_last_row(final_row),
+		"the run's true final row -- act 2's Titan, the last row generated -- is the last row")
+	_expect(m.is_last_row(final_row + 5),
+		"a row past the generated map entirely still reads as 'last' (the defensive >= in is_last_row), never wrapping back to false")
+
+
+## #86 duty 3 — the existing full-clear walk (below, _test_run_relic_reward_
+## and_full_clear) only asserts the run EVENTUALLY reaches WON having seen a
+## card and a relic reward. A bug that made RunMap.is_last_row() fire after
+## the FIRST act's Titan instead of the last would still satisfy that: the
+## first act pays a card (every fight does) and a relic (every boss does), so
+## the loop would stop early and the test would still pass -- while the game
+## itself would have just ended the run three Titans short. This walks the
+## same route but records which act's Titan is beaten and in what order, which
+## is the one thing that actually proves Run._after_node()/RunMap.is_last_row()
+## gate correctly across every act boundary, not just the very last one.
+func _test_backlog86_full_clear_beats_every_acts_titan_before_won() -> void:
+	var run := _map_run()
+	# Hand the party every key up front (backlog #64's OWN gate on the final
+	# Titan is a separate, already-tested mechanic -- see
+	# _test_backlog64_final_titan_is_a_real_fight_with_all_three_keys). Without
+	# this, a plain "always pick the first open node" walk has no reason to
+	# collect the optional, costly elite/treasure/event keys, so it hits the
+	# fourth Titan's SEALED-DOOR branch (pick_node, run.gd:387-390) instead of
+	# a real fight -- which would end this test's walk one act short through a
+	# wholly different, already-covered path, not the bug this test is for.
+	run.keys = Run.KEY_TYPES.duplicate()
+	var guard := 0
+	var bosses_beaten: Array = []  # encounter_index recorded each time a "boss" node's fight is won
+	while not run.is_over() and guard < 200:
+		guard += 1
+		match run.phase:
+			Run.Phase.MAP:
+				run.pick_node(int(run.available_nodes()[0]))
+			Run.Phase.COMBAT:
+				var was_boss := run.node_type == "boss"
+				var idx := run.encounter_index
+				_force_win(run)
+				if was_boss:
+					bosses_beaten.append(idx)
+			Run.Phase.EVENT:
+				run.pick_event(0)
+			Run.Phase.CAMPFIRE:
+				for slot in range(run.player_count()):
+					run.campfire_action(slot, "rest")
+			Run.Phase.SHOP:
+				run.leave_shop()
+			Run.Phase.REWARD:
+				_pick_both(run)
+	var expected: Array = []
+	for i in range(run.total_encounters()):
+		expected.append(i)
+	_expect(run.phase == Run.Phase.WON and bosses_beaten == expected,
+		("the run reaches WON only after every act's own Titan is beaten IN ORDER (0..%d) -- got %s" +
+			" -- a too-eager is_last_row would end the run after act 0 alone")
+			% [run.total_encounters() - 1, str(bosses_beaten)])
 
 
 ## #86 duty 3 — RunMap._ensure_shop's own doc comment claims "every act offers

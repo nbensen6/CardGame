@@ -12060,3 +12060,29 @@ Newest first. One line per finished item: what, and anything surprising.
   relic's `effect`/`value`/`downside_value` was touched, only whether the
   identical relic can be offered twice. Next `#86` turn is duty 3 (verify a
   mechanic actually works).
+
+- **2026-09-09, #86 duty 3 (verify a mechanic actually works).** Last commit
+  (`d55b90d`) was duty 2, so this turn is duty 3. Swept core functions for
+  ones `run_tests.gd` never once names and found `RunMap.is_last_row()` —
+  public, zero references anywhere in the suite, and yet it is the exact
+  gate `Run._after_node()` reads to decide WON vs. back-to-the-map
+  (`run.gd:813`). The dangerous failure mode is "too eager": if it read true
+  at an EARLIER act's own boss row instead of only the run's true last row,
+  the run would end a Titan short — and the existing full-clear integration
+  test (`_test_run_relic_reward_and_full_clear`) could not have caught that,
+  because it only asserts "eventually WON, having seen a card and a relic
+  somewhere", both of which the first act's own boss already pays on its
+  own. Added two tests: a pure boundary check on `is_last_row()` itself
+  (false at act 0's and act 1's own boss rows, true only at the real final
+  row, still true past the end of the generated map) and a walk of the whole
+  four-act map that records which act's Titan is beaten and in what order,
+  asserting it comes out `[0, 1, 2, 3]` before WON fires. First run of the
+  second test failed honestly — not a game bug, a test-setup miss: a plain
+  "always pick the first open node" walk never bothers collecting the
+  optional, costly elite/treasure/event keys backlog #64 gates the fourth
+  Titan behind, so it hit the SEALED-DOOR branch instead of a real fourth
+  fight and stopped one act short (`got [0, 1, 2]`). Handed the walk
+  `run.keys = Run.KEY_TYPES.duplicate()` up front — that gate is a separate,
+  already-tested mechanic — and it came out `[0, 1, 2, 3]` as expected. Fresh
+  `--import`, headless, Godot 4.7.1, `run_tests.gd`: ALL TESTS PASSED. Next
+  `#86` turn is duty 2 (find an error and resolve it).
