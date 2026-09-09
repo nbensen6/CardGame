@@ -1124,6 +1124,20 @@ func _init() -> void:
 	_test_backlog86_fire_quality_a_miss_ends_the_chain_even_mid_way_through()
 	_test_backlog86_fire_quality_resolves_only_once_hits_done_reaches_hits_needed()
 
+	# backlog #86 duty 3: DeckView._wants_toggle is the rule behind the bug
+	# _test_backlog86_deck_view_step_builds_a_toggle_the_open_pane_never_needed
+	# regression-tests end to end against a real node (that test's own header
+	# says so: "the bug is entirely in WHICH CheckBox instance exists, not in
+	# a formula's return value"). But the formula itself -- what counts as "a
+	# real, not-yet-applied upgrade worth offering a toggle for" -- had never
+	# been asked a single direct question. Pure Dictionary in, bool out, no
+	# scene tree needed.
+	_test_backlog86_wants_toggle_is_true_with_a_real_unapplied_upgrade()
+	_test_backlog86_wants_toggle_is_false_once_the_upgrade_is_applied()
+	_test_backlog86_wants_toggle_is_false_with_no_upgrade_key_at_all()
+	_test_backlog86_wants_toggle_is_false_with_an_empty_upgrade_dict()
+	_test_backlog86_wants_toggle_defaults_upgraded_to_false_when_the_key_is_missing()
+
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
 	# not "inside tree" yet until the engine's main loop actually starts, one
@@ -11723,6 +11737,42 @@ func _test_backlog86_fit_does_nothing_without_a_window() -> void:
 	_expect(is_equal_approx(root.content_scale_factor, prior_scale),
 		"fit() on a node with no window is a no-op rather than crashing on a null Window")
 	orphan.free()
+
+
+## backlog #86 duty 3: the pure rule under the step()/CheckBox bug proven
+## below. "Worth a toggle" is not just "has an upgrade" -- an entry already
+## upgraded still carries its (now pointless) `upgrade` dict, so the
+## `upgraded` flag has to gate it too, or the checkbox would offer to preview
+## a change that already happened.
+func _test_backlog86_wants_toggle_is_true_with_a_real_unapplied_upgrade() -> void:
+	var e := {"id": "a", "upgraded": false, "upgrade": {"id": "a", "name": "A+"}}
+	_expect(DeckView._wants_toggle(e), "a real, not-yet-applied upgrade earns a toggle")
+
+
+func _test_backlog86_wants_toggle_is_false_once_the_upgrade_is_applied() -> void:
+	var e := {"id": "a", "upgraded": true, "upgrade": {"id": "a", "name": "A+"}}
+	_expect(not DeckView._wants_toggle(e),
+		"an already-upgraded entry offers no toggle, even though it still carries an `upgrade` dict")
+
+
+func _test_backlog86_wants_toggle_is_false_with_no_upgrade_key_at_all() -> void:
+	var e := {"id": "a", "upgraded": false}
+	_expect(not DeckView._wants_toggle(e), "a card with no upgrade at all has nothing to preview")
+
+
+func _test_backlog86_wants_toggle_is_false_with_an_empty_upgrade_dict() -> void:
+	var e := {"id": "a", "upgraded": false, "upgrade": {}}
+	_expect(not DeckView._wants_toggle(e),
+		"an empty upgrade dict is the same as no upgrade -- not just a falsy `upgraded` flag")
+
+
+## `entry.get("upgraded", false)` is the only thing stopping every base card in
+## a fresh deck (no "upgraded" key written yet) from reading as upgraded and
+## hiding a toggle it should show.
+func _test_backlog86_wants_toggle_defaults_upgraded_to_false_when_the_key_is_missing() -> void:
+	var e := {"id": "a", "upgrade": {"id": "a", "name": "A+"}}
+	_expect(DeckView._wants_toggle(e),
+		"a base entry with no `upgraded` key yet must default to not-upgraded, not silently hide the toggle")
 
 
 ## backlog #86 duty 2 (first-pass hole): DeckView.step() used to only ever

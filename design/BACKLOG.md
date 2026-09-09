@@ -2726,6 +2726,26 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-09** — #86 duty 3 (verify a mechanic actually works). Last own
+  commit was `0f092be` (duty 2, `a_bold_trade`'s stakes), so this turn is
+  duty 3. Went looking for a pure rule with zero direct coverage rather than
+  a fourth case on something already proven — most of the obvious candidates
+  (climb anchors, tap-picking, shop gating, timing grades) turned out to
+  already have dedicated tests from earlier passes. Found one:
+  `DeckView._wants_toggle(entry)`, the rule deciding whether the "View
+  Upgrades" checkbox is worth showing for a deck entry. It's the exact logic
+  behind a real fixed bug (`72299a0`, the toggle silently vanishing while
+  arrow-browsing) — that fix already has a thorough end-to-end regression
+  test against a real `DeckView` node (its own comment says so: "the bug is
+  entirely in WHICH CheckBox instance exists, not in a formula's return
+  value") — but the formula itself, "a real, not-yet-applied upgrade," had
+  never been asked a direct question: an empty `upgrade` dict, an upgrade
+  already applied, no `upgrade` key at all, and the `upgraded` default when
+  the key is simply missing (the case every base card starts in). Added five
+  tests calling the static function directly, no scene tree needed.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot
+  4.7.1-stable). Next `#86` turn is duty 2 (find an error and resolve it).
+
 - **2026-09-09** — #86 duty 2 (find an error and resolve it). Last own commit
   was `33d25e3` (duty 3, the hunter hop's arc), so this turn is duty 2. Same
   "two copies of one truth" shape this duty keeps finding, this time in
