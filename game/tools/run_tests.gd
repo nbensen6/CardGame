@@ -295,6 +295,7 @@ func _init() -> void:
 	_test_backlog86_titan_relic_reward_never_repeats_a_held_relic()
 	_test_backlog86_shop_relic_stock_never_repeats_a_held_relic()
 	_test_backlog86_event_relic_grant_never_repeats_a_held_relic()
+	_test_backlog86_two_hunters_cannot_both_pick_the_same_relic_reward()
 	# backlog #47: a fifth hunter, driven by a resource (Light)
 	_test_backlog47_light_gain_banks_across_the_round_reset()
 	_test_backlog47_light_cost_gates_and_spends()
@@ -5670,6 +5671,43 @@ func _test_backlog86_event_relic_grant_never_repeats_a_held_relic() -> void:
 		"an event's relic grant is a no-op once the team already holds the entire pool")
 
 
+## The gap none of the three tests above covers: `_relics_not_held` is only
+## checked ONCE per `_begin_reward`, before EITHER hunter has picked anything,
+## and `_begin_reward` rolls each hunter's own relic choice list independently
+## from that one shared snapshot. Nothing removes a relic from hunter B's list
+## once hunter A has taken it, so the two lists can land on the identical
+## relic and both hunters can pick their own copy of it -- the exact softlock
+## fixed two commits ago (a duplicate `warlords_girdle` flooring energy at
+## zero forever), just via the reward screen's OTHER slot instead of a second
+## visit. `robustness_sweep.gd` found this live: fortress_ward and
+## warlords_girdle both shipped doubled inside a single boss reward.
+func _test_backlog86_two_hunters_cannot_both_pick_the_same_relic_reward() -> void:
+	var run := _map_run()
+	_step_into_combat(run)
+	run.node_type = "boss"
+	_force_win(run)
+	_pick_both(run)  # take the card each; opens the queued relic reward
+	_expect(run.reward_kind == "relic", "a Titan's second reward stage is a relic")
+	# Force the exact overlap the sweep hit: both hunters offered the same
+	# relic as their own first choice, inside two otherwise different lists.
+	var shared := Content.make_relic("fortress_ward")
+	run.reward_choices[0] = [shared, Content.make_relic("iron_thews")]
+	run.reward_choices[1] = [shared, Content.make_relic("warding_totem")]
+	run.pick_reward(0, 0)
+	_expect((run.reward_choices[1] as Array).size() == 1
+			and String((run.reward_choices[1][0] as Dictionary).get("id", "")) == "warding_totem",
+		"once hunter A takes the shared relic it disappears from hunter B's own still-open list")
+	run.pick_reward(1, 0)
+	var copies := 0
+	for r in run.team_relics:
+		if String((r as Dictionary).get("id", "")) == "fortress_ward":
+			copies += 1
+	_expect(copies == 1,
+		"two hunters offered the same relic reward can't both walk away with a copy of it")
+	_expect(run.phase == Run.Phase.MAP or run.is_over(),
+		"the reward still finishes once both hunters have picked something")
+
+
 ## GameHost._keywords_of derives keyword ids in CODE; keywords.json defines them.
 ## A typo in either silently drops a tooltip and the card goes back to being
 ## unexplained, which is the exact problem the keyword layer exists to fix.
@@ -6532,8 +6570,17 @@ func _test_frog_has_enough_rares() -> void:
 
 
 func _pick_both(run: Run) -> void:
-	run.pick_reward(0, 0)
-	run.pick_reward(1, 0)
+	for slot in range(2):
+		# A relic reward can legitimately run out of choices for one hunter
+		# before the other has picked -- backlog #86 duty 2's own fix strikes a
+		# just-claimed relic out of the OTHER hunter's still-open list, and late
+		# in a run that can be their only option. skip_reward is the real
+		# client's own escape hatch for exactly this (location_3d.gd always
+		# offers Skip); index 0 would just be out of range.
+		if (run.reward_choices[slot] as Array).is_empty():
+			run.skip_reward(slot)
+		else:
+			run.pick_reward(slot, 0)
 
 
 # --- content batch: strength, wound, multi-hit, leech ---------------------

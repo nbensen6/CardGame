@@ -2726,6 +2726,59 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-09, #86 duty 2 (find an error and resolve it).** Last own commit
+  (`ebf4438`) was duty 3, so this turn is duty 2. The previous duty-2 pass
+  fixed a real softlock (a duplicate `warlords_girdle` flooring energy at
+  zero forever) by adding `Run._relics_not_held()` to all three relic-draw
+  sites. Ran `robustness_sweep.gd` again first as a smoke test, but widened it
+  privately (not committed — a throwaway copy in `/tmp`, 11 ascensions x 15
+  seeds instead of the shipped 3x6) to search harder before assuming that fix
+  was complete. It found 5 fresh `[TIMEOUT]`s the shipped sweep's narrower
+  seed set doesn't reach, and two of them (`frog+lightbearer` A2/A4/A5,
+  `vine_weaver+goblin_mech` A1) dumped `team_relics` with an exact duplicate
+  boss relic (`fortress_ward` and `warlords_girdle` respectively) still
+  present — the "fix" from two commits ago wasn't complete.
+  Root cause: `Run._begin_reward()` calls `_relics_not_held()` exactly ONCE
+  per node, before either hunter has picked anything, then rolls EACH
+  hunter's own relic choice list independently from that single snapshot
+  (`run.gd`'s per-slot loop in `_begin_reward`). Nothing stops the two
+  independent rolls landing on the same relic, and nothing stops both hunters
+  then picking their own copy of it in `pick_reward()` — the filter only ever
+  checked the pool once, never the two hunters against EACH OTHER's pick
+  within the same reward screen. That's a fourth, distinct draw-collision
+  shape the three-site fix from last turn didn't cover, because it's not a
+  fourth SITE, it's a race between two players at the same site.
+  Fixed in `pick_reward()`: when a hunter takes a relic, strike that relic's
+  id from every other still-unpicked hunter's own `reward_choices` right
+  then, so a second hunter can never subsequently pick the same one in this
+  screen. If that empties another hunter's list, that's the same "zero relics
+  left" case the shop already handles — `location_3d.gd`'s reward screen
+  always offers Skip regardless of choice count, so this isn't a new stranded
+  state, just a rarer trigger for an escape hatch that already existed.
+  Wrote `_test_backlog86_two_hunters_cannot_both_pick_the_same_relic_reward`
+  first (forces the exact overlap the sweep hit — both hunters offered
+  `fortress_ward` as their own choice 0 inside two different lists) and
+  watched it fail against the unfixed `pick_reward` (reverted just `run.gd`
+  via `git stash`, confirmed `2 TEST(S) FAILED`, restored). Fixing it broke
+  a different, older test (`_test_run_relic_reward_and_full_clear`) that
+  assumed `_pick_both`'s test helper could always blindly call
+  `pick_reward(slot, 0)` — once a relic gets stolen out from under a hunter's
+  list that can now legitimately be empty, so `_pick_both` now skips instead
+  of picking when a slot's choices are empty, matching what the real client
+  already does. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Re-ran the widened sweep after the fix:
+  4 of the 5 fresh timeouts are gone (confirmed neither `fortress_ward` nor
+  `warlords_girdle` doubles up anymore); one unrelated timeout remains
+  (`frog+goblin_mech` A1 seed=27795, policy=random) that a first debugging
+  pass did not reach a diagnosis on (the debug harness itself hung — a
+  missing `quit()` in a throwaway `SceneTree` script, not a game bug) and is
+  left for the next duty-2 turn rather than chased further this run. Not
+  screenshotted — a pure `/core` rules fix, nothing new on screen. The
+  shipped `robustness_sweep.gd` itself is untouched (still 3x6, per backlog
+  #46's own intent as a fast smoke test); the widened copy used to hunt this
+  down was never committed. Next `#86` turn is duty 3 (verify a mechanic
+  actually works).
+
 - **2026-09-09** — #86 duty 3 (verify a mechanic actually works). Last own
   commit was `a7fc5d6` (duty 2, the duplicate-relic-reward softlock fix), and
   its own entry named duty 3 as next. Went looking for another first-pass

@@ -874,8 +874,26 @@ func pick_reward(slot: int, choice: int) -> void:
 	if choice < 0 or choice >= choices.size():
 		return
 	if reward_kind == "relic":
-		team_relics.append(choices[choice])  # relics are team-wide
+		var picked_relic: Dictionary = choices[choice]
+		team_relics.append(picked_relic)  # relics are team-wide
 		_relic_taken = true
+		# _relics_not_held (above) is only checked once, when _begin_reward rolls
+		# BOTH hunters' choice lists from the same held-relic snapshot -- before
+		# either of them has picked anything. That leaves the two lists free to
+		# land on the identical relic, and both hunters picking their own copy
+		# of it reproduces the exact softlock #86 duty 2 just fixed one draw
+		# site over (robustness_sweep.gd: fortress_ward and warlords_girdle both
+		# doubled up this way). A relic just claimed by one hunter is claimed
+		# for the whole team, so strike it from anyone else's still-open list.
+		var picked_id := String(picked_relic.get("id", ""))
+		for other in range(reward_choices.size()):
+			if other == slot or bool(reward_picked[other]):
+				continue
+			var kept: Array = []
+			for r in (reward_choices[other] as Array):
+				if String((r as Dictionary).get("id", "")) != picked_id:
+					kept.append(r)
+			reward_choices[other] = kept
 	else:
 		# The pull. Rolled HERE rather than when the choices are offered, so a
 		# foil is something you got rather than something you could see coming
