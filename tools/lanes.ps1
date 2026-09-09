@@ -135,7 +135,12 @@ function Refresh-All {
 foreach ($r in $rows) {
     $lane = $r.Lane
     $r.Buttons['Start now'].Add_Click({
-        Start-Process cmd.exe -ArgumentList '/c', "`"$($lane.Cmd)`"" -WindowStyle Hidden
+        # Through hidden.vbs, same as the scheduled task. -WindowStyle Hidden on
+        # Start-Process only governs the process IT creates; the console cmd.exe
+        # opens is a separate window and appears anyway, which is the flash that
+        # tabbed Nick out of his game.
+        Start-Process wscript.exe -ArgumentList '//nologo',
+            "`"$(Join-Path $ROOT 'tools\hidden.vbs')`"", "`"$($lane.Cmd)`""
         Start-Sleep -Milliseconds 900
         Refresh-All
     }.GetNewClosure())
