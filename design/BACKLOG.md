@@ -2746,6 +2746,38 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-09, #86 duty 3 (verify a mechanic actually works).** Last own
+  commit (`f8524cc`) was duty 2, so this turn is duty 3. Went hunting for an
+  untested mechanic and hit false positives for a long stretch first —
+  `_handle_block_carries`/`_handle_energy_handoff`/`_handle_opening_relics`,
+  `_apply_passive`, `_weighted_index`, `Tiles.path`/`is_ours`,
+  `_ensure_key_sources` all showed zero direct name-mentions in
+  `run_tests.gd` but turned out fully proven already, either by dedicated
+  tests calling them under a different local var name or by black-box
+  coverage that never names the function — exactly the false-positive shape
+  an earlier duty-3 log entry warned this search throws once coverage gets
+  deep. The real gap: `_test_backlog86_grip_after_tick_relic_seconds_
+  extends_the_time_to_zero` (an earlier pass) proves the grip-timer countdown
+  math is correct when handed a raw `grip_seconds=10.0`, and its own comment
+  says "a +5 relic doubles it" — but nothing had ever proven a REAL relic
+  produces that number. Two separate gaps stacked: `Run.relic_totals()`'s
+  stacking test (`_test_relic_downside`) covers attack/block/draw/energy but
+  never `grip_seconds` itself, and `combat_3d._grip_seconds()` — the only
+  place that ever reads `mods.grip_seconds` back out of a client's shared
+  state and adds it to the base `GRIP_SECONDS` constant — had zero coverage
+  at all. Added two tests: one proving `chalk_pouch` (+2) and `tar_gloves`
+  (+4) stack to +6 in `relic_totals()`, the same generic summing every other
+  key already gets; one building a real `GameClient` with `shared["mods"]`
+  shaped exactly like a live snapshot and proving `_grip_seconds()` actually
+  adds that value to `GRIP_SECONDS` (plus the empty-mods case reads as
+  untouched, not some stray key). `Combat3D.new()` with no scene tree and a
+  hand-set `_client` was enough — `_grip_seconds()` touches nothing but that
+  one var, same as the file's existing `HitCircle.new()`-with-no-tree tests
+  already lean on for a different class. Fresh `--import`, headless, Godot
+  4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED (1200 passed, up from 1197).
+  Re-ran `robustness_sweep.gd` (360 runs, unmodified) as a smoke test: clean,
+  0 dead ends / 0 crashes.
+
 - **2026-09-09, #86 duty 2 (find an error and resolve it).** Last own commit
   (`037c2eb`) was duty 3, so this turn is duty 2. Followed up the one loose
   thread the last duty-2 pass left behind: `frog+goblin_mech A1 seed=27795,

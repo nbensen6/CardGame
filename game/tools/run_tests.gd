@@ -821,6 +821,19 @@ func _init() -> void:
 	_test_backlog86_grip_after_tick_matches_a_full_grip_seconds_countdown()
 	_test_backlog86_grip_after_tick_relic_seconds_extends_the_time_to_zero()
 	_test_backlog86_grip_after_tick_can_go_negative_past_the_fall_threshold()
+	# backlog #86 duty 3 (forty-fourth pass): the test right above this one feeds
+	# grip_after_tick a raw 10.0-second window by hand and says "a +5 relic
+	# doubles it" -- but nothing ever proved a real grip_seconds relic actually
+	# PRODUCES that number. relic_totals()'s summing of the "grip_seconds" key
+	# had zero coverage (every other key in its stacking test -- attack, block,
+	# draw, energy -- is proven by _test_relic_downside; this one, alone among
+	# them, never was), and neither had combat_3d._grip_seconds(), the client-side
+	# read of mods.grip_seconds that's the only place that summed number ever
+	# actually reaches the countdown. Same "two copies of one truth" shape duty 2
+	# keeps finding: a pure function proven correct in isolation, and the wiring
+	# that's supposed to feed it a real value never asked for.
+	_test_backlog86_grip_seconds_relic_stacks_in_relic_totals()
+	_test_backlog86_combat3d_grip_seconds_reads_the_relic_mod_from_shared_state()
 	_test_backlog86_climb_state_secure_erases_any_existing_timer()
 	_test_backlog86_climb_state_starts_a_fresh_full_timer_on_first_leaving_a_hold()
 	_test_backlog86_climb_state_does_not_regrip_a_timer_already_draining()
@@ -11003,6 +11016,49 @@ func _test_backlog86_grip_after_tick_can_go_negative_past_the_fall_threshold() -
 	# never register as having fallen this frame.
 	var g: float = Combat3D.grip_after_tick(0.1, 5.0, 5.0)
 	_expect(g < 0.0, "ticking past an already-thin grip must go negative so the caller's <= 0.0 fall check actually fires")
+
+
+## backlog #86 duty 3 (forty-fourth pass): relic_totals() sums 19 relic-mod
+## keys by the same generic rule (_apply_relic_effect's `if t.has(e): t[e] += v`
+## fallback) and _test_relic_downside already proves several of them stack
+## correctly -- attack, block, draw, energy -- but never grip_seconds, the one
+## the grip-timer test above assumes is fed by real relics. chalk_pouch (+2)
+## and tar_gloves (+4) held together should sum to +6, exactly like any other
+## stacked pair.
+func _test_backlog86_grip_seconds_relic_stacks_in_relic_totals() -> void:
+	var run := _map_run()
+	run.team_relics = [Content.make_relic("chalk_pouch"), Content.make_relic("tar_gloves")]
+	var totals := run.relic_totals()
+	_expect(int(totals.get("grip_seconds", -1)) == 6,
+		"chalk_pouch (+2) and tar_gloves (+4) stack in relic_totals()'s grip_seconds key, the same generic summing every other relic mod already gets")
+
+
+## The other half: relic_totals()'s "grip_seconds" key rides GameHost's
+## "mods" straight into GameClient.shared (session/game_host.gd:333), and
+## combat_3d._grip_seconds() is the ONLY place that ever reads it back out --
+## the function the grip-timer test above never actually calls, feeding
+## grip_after_tick a hand-picked 10.0 instead. Neither half had ever run
+## through the other: this builds a real GameClient, hands it a shared dict
+## shaped exactly like a live snapshot's "mods", and proves the base
+## GRIP_SECONDS constant is what actually gets extended -- and that with no
+## relic at all (an empty mods dict, same as a fresh fight with none held)
+## the timer is untouched rather than reading a stray key as its own value.
+func _test_backlog86_combat3d_grip_seconds_reads_the_relic_mod_from_shared_state() -> void:
+	var c3d := Combat3D.new()
+	var client := GameClient.new(LocalTransport.new(), 1)
+	client.shared = {"mods": {"grip_seconds": 5}}
+	c3d._client = client
+	_expect(is_equal_approx(c3d._grip_seconds(), Combat3D.GRIP_SECONDS + 5.0),
+		"a relic's grip_seconds mod, exactly as it arrives in a client's real shared state, extends the base GRIP_SECONDS by its value")
+	c3d.free()
+
+	var c3d_none := Combat3D.new()
+	var client_none := GameClient.new(LocalTransport.new(), 1)
+	client_none.shared = {"mods": {}}
+	c3d_none._client = client_none
+	_expect(is_equal_approx(c3d_none._grip_seconds(), Combat3D.GRIP_SECONDS),
+		"no grip_seconds relic held at all leaves the base timer untouched, not misread as some other stray value")
+	c3d_none.free()
 
 
 func _test_backlog86_climb_state_secure_erases_any_existing_timer() -> void:
