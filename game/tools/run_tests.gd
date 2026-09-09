@@ -621,6 +621,15 @@ func _init() -> void:
 	_test_backlog86_stakes_describes_a_named_potion()
 	_test_backlog86_stakes_describes_a_random_potion()
 	_test_backlog86_stakes_describes_losing_a_potion()
+	# backlog #86 duty 2 (second pass): _stakes' own doc comment excused
+	# remove_card/sharpen_card/curse_card as "already spelled out in every
+	# event's label text" -- true of events.json, false of boons.json's
+	# a_bold_trade, which shares the same effects dict shape (run.gd's
+	# _apply_effect_block is shared between pick_event and pick_boon).
+	_test_backlog86_stakes_describes_removing_a_card()
+	_test_backlog86_stakes_describes_sharpening_a_card()
+	_test_backlog86_stakes_describes_a_curse_card()
+	_test_backlog86_stakes_describes_a_bold_trade()
 	# backlog #86 duty 3: location_3d._felled_height sizes the beast's body on
 	# the reward screen from the fight it just lost -- how far you had to climb
 	# it, not the raw HP bar. Lifted static (it never touched self) and given
@@ -10577,6 +10586,40 @@ func _test_backlog86_stakes_describes_a_random_potion() -> void:
 func _test_backlog86_stakes_describes_losing_a_potion() -> void:
 	_expect(Location3D._stakes({"take_potion": true, "gold": 40}) == "(+40 gold  ·  -1 potion)",
 		"the gambling crow's potion downside shows up alongside the gold it also names")
+
+
+## backlog #86 duty 2 (second pass): remove_card/sharpen_card/curse_card were
+## excused as "the label already says it", which is only true of events.json.
+## boons.json's a_bold_trade shares the same effect keys through a different,
+## non-descriptive label and rendered blank stakes for it -- fixed by giving
+## these three the same explicit treatment scavenger_raid/quiet_technique/
+## the_shaken_pitch's labels used to cover for.
+func _test_backlog86_stakes_describes_removing_a_card() -> void:
+	_expect(Location3D._stakes({"remove_card": true}) == "(-1 card)",
+		"scavenger_raid's 'Chase it down' must not need its own label to say what it costs")
+
+
+func _test_backlog86_stakes_describes_sharpening_a_card() -> void:
+	_expect(Location3D._stakes({"sharpen_card": true}) == "(sharpen a card)",
+		"quiet_technique's 'Drill the fundamentals' names its own upgrade, not just its label")
+
+
+func _test_backlog86_stakes_describes_a_curse_card() -> void:
+	var expected := "(+1 %s)" % Content.make_card("bruised_grip").name
+	_expect(Location3D._stakes({"curse_card": "bruised_grip"}) == expected,
+		"a curse card names itself the same way a named potion does, not just an anonymous 'a card'")
+
+
+func _test_backlog86_stakes_describes_a_bold_trade() -> void:
+	# The actual gap: boons.json's a_bold_trade combines sharpen_card and
+	# curse_card behind a label ("Take the bold trade") that names neither --
+	# before this fix _stakes({"sharpen_card": true, "curse_card": "bruised_grip"})
+	# returned "", indistinguishable from a_bold_trade's own no-op sibling.
+	var eff: Dictionary = Content.make_boon("a_bold_trade").get("effects", {})
+	_expect(Location3D._stakes(eff) != "",
+		"a_bold_trade's stakes must not render blank just because its own label doesn't name them")
+	_expect(Location3D._stakes(eff) == "(sharpen a card  ·  +1 %s)" % Content.make_card("bruised_grip").name,
+		"a_bold_trade's two effects both show, in field order, same as any other multi-effect choice")
 
 
 func _test_backlog86_felled_height_floors_at_the_min_size_for_a_short_climb() -> void:

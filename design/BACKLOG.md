@@ -2726,6 +2726,33 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-09** — #86 duty 2 (find an error and resolve it). Last own commit
+  was `33d25e3` (duty 3, the hunter hop's arc), so this turn is duty 2. Same
+  "two copies of one truth" shape this duty keeps finding, this time in
+  `location_3d.gd`'s `_stakes()` — the pure function that spells out an
+  event/boon choice's consequences on its button so a player never picks
+  blind. Its own doc comment excused three effect keys (`remove_card`,
+  `sharpen_card`, `curse_card`) as "already spelled out in every event's
+  hand-authored label text," true of every events.json choice that uses
+  them, but `Run._apply_effect_block` is shared between `pick_event` and
+  `pick_boon` (a boon IS an event choice, run.gd:639) and boons.json's
+  `a_bold_trade` (`{"sharpen_card": true, "curse_card": "bruised_grip"}`)
+  breaks the assumption behind a label ("Take the bold trade") that names
+  neither effect — `_stakes()` returned `""` for it, the same
+  indistinguishable-from-a-no-op failure `abandoned_apothecary` already
+  demonstrated for `potion` a few turns back. Not reachable through the UI
+  today (`game_3d.gd`'s phase router has no case for `Phase.BOON` yet) so
+  nobody has seen this specific screen go blank, but the data and the
+  authoritative effect-application code are both live, and this is exactly
+  the kind of thing that ships invisibly the day that screen gets wired up.
+  Added explicit branches for all three keys (matching the treatment every
+  other key here already gets) and four new tests, including one against
+  `Content.make_boon("a_bold_trade")` itself rather than a hand-built dict,
+  so the regression is pinned to the real data, not a reconstruction of it.
+  `run_tests.gd`: ALL TESTS PASSED (fresh import, headless, godot
+  4.7.1-stable). Next `#86` turn is duty 3 (verify a mechanic actually
+  works).
+
 - **2026-09-08** — #86 duty 3 (verify a mechanic actually works). Last own
   commit was `5e2c8cb` (duty 2, the Burn Coal cheapen-amount fix), so this
   turn is duty 3. This section names Nick's own example directly: "the jump

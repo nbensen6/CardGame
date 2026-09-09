@@ -551,9 +551,7 @@ func _render_event(s: Dictionary) -> void:
 ## backlog #86 duty 2: this hand-lists the effect keys it knows how to
 ## describe, and it had drifted from the real list — `Run._apply_effect_block`
 ## (and events.json's own `_comment`) also handle `potion`/`random_potion`/
-## `take_potion`/`key` (curse_card and remove_card/sharpen_card already spell
-## themselves out in every event's hand-authored label text, so they're not
-## the same gap). Worst case was `the_sealed_hollow`'s "Force the seal"
+## `take_potion`/`key`. Worst case was `the_sealed_hollow`'s "Force the seal"
 ## (`{"heal": -6, "key": true}`), which grants one of the three keys the real
 ## final Titan needs — the single most consequential effect any event can
 ## grant — and showed the player only "(-6 HP)", with the key invisible.
@@ -561,6 +559,20 @@ func _render_event(s: Dictionary) -> void:
 ## was worse still: no HP/gold/relic/reward to fall back on, so `bits` stayed
 ## empty and the button showed no stakes at all, indistinguishable from a
 ## true no-op choice.
+##
+## backlog #86 duty 2 (second pass): the note above used to excuse
+## `remove_card`/`sharpen_card`/`curse_card` as "already spelled out in every
+## event's hand-authored label text" — true of every events.json choice that
+## uses them, but `_apply_effect_block` is shared with `pick_boon` (a boon IS
+## an event choice, run.gd:639), and boons.json's `a_bold_trade`
+## (`{"sharpen_card": true, "curse_card": "bruised_grip"}`) breaks the
+## assumption: its label is just "Take the bold trade", naming neither
+## effect. That left `_stakes` silently blank for a live data entry the day
+## the BOON phase gets a screen (it has none yet — `game_3d.gd`'s phase
+## router has no case for Phase.BOON), same "no stakes shown"
+## failure `abandoned_apothecary` already demonstrates. Give these three the
+## same explicit treatment as every other key here instead of trusting labels
+## to cover for it.
 static func _stakes(eff: Dictionary) -> String:
 	var bits: Array[String] = []
 	var h := int(eff.get("heal", 0))
@@ -576,6 +588,13 @@ static func _stakes(eff: Dictionary) -> String:
 		bits.append("%+d gold" % g)
 	if bool(eff.get("relic", false)):
 		bits.append("relic")
+	if bool(eff.get("remove_card", false)):
+		bits.append("-1 card")
+	if bool(eff.get("sharpen_card", false)):
+		bits.append("sharpen a card")
+	var cc := String(eff.get("curse_card", ""))
+	if cc != "":
+		bits.append("+1 %s" % Content.make_card(cc).name)
 	var rw := String(eff.get("reward", ""))
 	if rw != "":
 		bits.append("choose a " + rw)
