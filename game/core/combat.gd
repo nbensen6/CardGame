@@ -1244,8 +1244,14 @@ func use_potion(pi: int, effect: String, value: int) -> bool:
 		"climb":
 			var foothold_before_potion := ps.foothold
 			ps.foothold = mini(ps.foothold + value, FOOTHOLD_MAX)
-			_track_climb()
 			_lift_roped_ally(pi, foothold_before_potion)  # #86 duty 2 — a climb potion ropes the ally too
+			# ^ must run BEFORE _track_climb(): a roped ally's rise can itself be a
+			# brand-new peak, and _track_climb only ever looks at CURRENT footholds.
+			# Tracking first (the old order) read the drinker's own peak and then
+			# silently missed the ally's, so a Mountain Climbers ally roped past the
+			# tracked high point never updated highest_climb or fired
+			# MOMENT_HUNTER_CLIMBS for their own climb.
+			_track_climb()
 		"strip_ward":
 			boss.artifact = maxi(boss.artifact - value, 0)
 		_:

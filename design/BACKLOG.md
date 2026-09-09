@@ -2746,6 +2746,39 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-09 (yet later), #86 duty 2 (find an error and resolve it).** Last
+  commit on this rotation (`1745b14`) was duty 3, so this turn is duty 2 (the
+  intervening `9564fe3` is a builder-lane art commit, not this rotation's).
+  Found the exact "first-pass hole" shape the item's own examples describe, in
+  `Combat.use_potion`'s `"climb"` case (`game/core/combat.gd`): it called
+  `_track_climb()` *before* `_lift_roped_ally()`, the only one of the three
+  foothold-raising sites (card, potion, jetpack) to get that order backwards —
+  every other site (`play_card`'s single end-of-function `_track_climb()`,
+  `_begin_round`'s post-loop call covering the jetpack) already ropes first,
+  tracks after. `_lift_roped_ally` never touches `highest_climb` itself, so a
+  peak created purely by the roping — the ally's OWN foothold rising past the
+  fight's tracked high point while the drinker's new foothold stays below it —
+  was silently dropped: `highest_climb` never moved and `MOMENT_HUNTER_CLIMBS`
+  never fired for the ally's climb. That stat feeds the run summary (#39) and
+  its history (#65), so a Mountain Climbers ally who got roped past the
+  party's high point by a potion would lose credit for it. The existing
+  `_test_roped_ally_climbs_from_a_potion` never caught this because it only
+  asserted final footholds, never `highest_climb` or the moment — same gap
+  shape the item's own "two copies of one truth" warning describes: one
+  correct copy (foothold) and one that silently didn't update
+  (`highest_climb`). Swapped the two calls and added
+  `_test_roped_ally_climb_from_a_potion_past_the_tracked_peak_updates_highest_climb`,
+  which fails against the old order (confirmed by reverting the fix and
+  re-running before restoring it) and passes with the fix. `run_tests.gd`
+  green, ALL TESTS PASSED. Used a general-purpose research agent to read
+  `combat.gd`/`run.gd`/`combat_3d.gd` end to end and rule out everything
+  already fixed by prior duty-2 runs before proposing this one, rather than
+  re-deriving that reading myself — it also flagged a second, currently-inert
+  gap in `_track_climb()` itself (two players reaching the exact same new peak
+  in one call: only the first fires the moment) but nothing subscribes to that
+  moment from game code today, so it's not a live bug — left as a note here
+  rather than a fix, to avoid inventing scope nobody asked for.
+
 - **2026-09-09 (even later still), #86 duty 3 (verify a mechanic actually
   works).** Last commit (`4f7f03c`) was duty 2, so this turn is duty 3. The
   take_key wiring bug this same rotation found and fixed (`GameHost._on_command`

@@ -190,6 +190,7 @@ func _init() -> void:
 	_test_use_potion_applies_each_effect()
 	_test_use_potion_ally_and_beast_effects()
 	_test_use_potion_climb_updates_highest_climb()
+	_test_roped_ally_climb_from_a_potion_past_the_tracked_peak_updates_highest_climb()
 	_test_use_potion_gating()
 	_test_run_potion_use_and_discard()
 	# backlog #86 duty 3 (forty-fifth pass): Run.discard_potion's own doc comment
@@ -4193,6 +4194,35 @@ func _test_use_potion_climb_updates_highest_climb() -> void:
 		"a climb POTION counts toward highest_climb exactly like a climb CARD, not just a foothold bump nobody records")
 	_expect(climb_events.size() == 1 and climb_events[0]["player"] == mover and int(climb_events[0]["foothold"]) == 5,
 		"drinking a climb potion fires MOMENT_HUNTER_CLIMBS the same as a climbing card would")
+
+
+## #86 duty 2 — use_potion's "climb" case ran _track_climb() BEFORE
+## _lift_roped_ally(), the only one of the three foothold-raising sites
+## (card, potion, jetpack) to get that order backwards. _lift_roped_ally
+## itself never updates highest_climb, so a peak created purely by roping —
+## the ally rising past the fight's tracked high point while the DRINKER's
+## own new foothold stays below it — was silently dropped: highest_climb
+## never moved and MOMENT_HUNTER_CLIMBS never fired for the ally's own climb.
+## _test_roped_ally_climbs_from_a_potion (above, in the roped-ally block)
+## only ever asserted final footholds, so it passed clean either way.
+func _test_roped_ally_climb_from_a_potion_past_the_tracked_peak_updates_highest_climb() -> void:
+	var combat := _new_combat_p([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42,
+		_dummy_boss(300), [{"type": "ally_climb", "value": 1}, {}])
+	var drinker: PlayerState = combat.players[0]
+	var ally: PlayerState = combat.players[1]
+	ally.foothold = 10
+	combat._track_climb()
+	_expect(combat.highest_climb == 10, "setup: the ally already holds the fight's tracked peak")
+
+	var climb_events: Array = []
+	combat._on(Combat.MOMENT_HUNTER_CLIMBS, func(ctx): climb_events.append(ctx))
+	combat.use_potion(0, "climb", 3)  # drinker rises to 3 — well under the tracked peak
+	_expect(drinker.foothold == 3, "the drinker's own Height rose by the potion's value")
+	_expect(ally.foothold == 11, "roped: the ally climbs +1 alongside the drinker, past the old peak")
+	_expect(combat.highest_climb == 11,
+		"the roped ally's own new peak must update highest_climb even though the DRINKER never set one")
+	_expect(climb_events.size() == 1 and climb_events[0]["player"] == ally and int(climb_events[0]["foothold"]) == 11,
+		"MOMENT_HUNTER_CLIMBS must fire for the roped ally's climb, not just the drinker's")
 
 
 func _test_use_potion_gating() -> void:
