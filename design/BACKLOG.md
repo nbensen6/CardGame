@@ -2727,6 +2727,33 @@ rather than inventing work.
 Newest first. One line per finished item: what, and anything surprising.
 
 - **2026-09-09, #86 duty 3 (verify a mechanic actually works).** Last own
+  commit (`0191055`) was duty 2, so this turn is duty 3. `_handle_power_effects()`
+  (backlog #57, the turn_end payout for a `type: "power"` card) has a
+  seven-branch match on `effect`: block, strength, thorns, heal, wound,
+  vulnerable, frail. Earlier duty-3 passes had proven block, strength,
+  thorns, wound and vulnerable through this exact call site (as opposed to
+  the card-played path, which is a second call site per `_test_artifact_
+  wards_off_a_power_triggered_poison_and_expose`'s own comment) — but
+  `heal` and `frail` had never been exercised by anything, because no card
+  in `cards.json` currently ships a power with either effect; the function's
+  own comment names them as vocabulary reserved for "a future power" that
+  "can pick from the same list without new code." That claim was untested:
+  nothing had ever put a `ps.powers` entry with `effect: "heal"` or
+  `effect: "frail"` in front of the fight and asked what happened. Added two
+  tests: `heal` clamps at max_hp exactly the way the "regen" boss-move
+  branch and `use_potion`'s own heal already do, proven across two
+  consecutive turn_end payouts (one that hits the clamp, one that doesn't);
+  `frail`, which the code routes onto the BOSS via `_apply_frail(boss,
+  amount)` rather than the player, is warded by Artifact the same as a
+  power's Poison/Expose already were, decays a stack the same way once
+  landed, and — new ground beyond the existing wound/vulnerable pair —
+  actually cuts the Titan's own next "block" move's gain, the same
+  downstream check `_test_frail_card_cuts_the_boss_own_block_move` already
+  does for the card-applied version. Fresh `--import`, headless, Godot
+  4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED, all five new assertions
+  confirmed in the output.
+
+- **2026-09-09, #86 duty 3 (verify a mechanic actually works), earlier pass.** Last own
   commit (`45e1f6e`) was duty 2, so this turn is duty 3. Spent most of this
   run hunting for a genuinely untested mechanic rather than taking the
   first candidate — grepped every private/static function across `/core`,

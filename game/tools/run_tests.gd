@@ -380,6 +380,8 @@ func _init() -> void:
 	_test_artifact_wards_off_a_debuff_then_is_spent()
 	_test_artifact_wards_off_a_poison_card_then_is_spent()
 	_test_artifact_wards_off_a_power_triggered_poison_and_expose()
+	_test_power_effect_heal_pays_out_every_turn_end_and_clamps_at_max_hp()
+	_test_power_effect_frail_pays_out_onto_the_boss_and_cuts_its_own_block_move()
 	_test_thorns_reflects_a_landed_boss_attack()
 	_test_beast_thorns_reflects_card_damage_dealt_to_it()
 	_test_boss_death_wins_a_tie_against_thorns_killing_the_attacker()
@@ -7109,6 +7111,56 @@ func _test_artifact_wards_off_a_power_triggered_poison_and_expose() -> void:
 	ps.powers["test_poison2"] = {"stacks": 1, "value": 2, "effect": "wound", "name": "Test Poison"}
 	combat.end_turn(0)
 	_expect(combat.boss.wound == 2, "once Artifact is spent, a power's recurring Poison lands normally")
+
+
+## _handle_power_effects()'s match statement has seven branches (block,
+## strength, thorns, heal, wound, vulnerable, frail); backlog #86's own duty-3
+## runs had proven block/strength/thorns/wound/vulnerable by the time this was
+## written, but no card in cards.json has ever shipped a power with
+## power_effect "heal" or "frail" (see the comment above _handle_power_effects:
+## "Vocabulary matches use_potion()'s ... so a FUTURE power can pick from the
+## same list without new code"). "Without new code" is only true if the two
+## unused branches actually work — nothing had ever run them. #86 duty 3.
+##
+## heal: clamped at max_hp, same rule regen (boss.gd's own turn_end payout,
+## `_enemy_turn`'s "regen" branch) already gets — proven here because a power
+## reads `entry.value` and calls `mini()` itself rather than sharing that code.
+func _test_power_effect_heal_pays_out_every_turn_end_and_clamps_at_max_hp() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.combatant.hp = ps.combatant.max_hp - 3
+	ps.powers["test_regen"] = {"stacks": 1, "value": 5, "effect": "heal", "name": "Test Regen"}
+	combat.end_turn(0)
+	_expect(ps.combatant.hp == ps.combatant.max_hp,
+		"a power's recurring heal is clamped at max HP rather than overhealing")
+	combat.end_turn(1)  # close the round — ended_turn only resets when a new round begins
+	ps.combatant.hp = ps.combatant.max_hp - 10
+	combat.end_turn(0)
+	_expect(ps.combatant.hp == ps.combatant.max_hp - 5,
+		"a power's recurring heal pays out again on the next turn_end when there's room for it")
+
+
+## frail: routed through _apply_frail(boss, amount) same as a card's Frail
+## debuff, so it has to feel Artifact's ward AND actually cut the Titan's next
+## Block move — Combatant.gain_block() doesn't know or care where the Frail
+## stack came from, but nothing had ever put a Frail stack there from a power.
+func _test_power_effect_frail_pays_out_onto_the_boss_and_cuts_its_own_block_move() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	combat.boss.artifact = 1
+	ps.powers["test_grind"] = {"stacks": 1, "value": 2, "effect": "frail", "name": "Test Grind"}
+	combat.end_turn(0)
+	_expect(combat.boss.frail == 0 and combat.boss.artifact == 0,
+		"Artifact wards off a power's recurring Frail too, spending a stack")
+	combat.end_turn(1)
+	combat.end_turn(0)
+	_expect(combat.boss.frail == 2, "once Artifact is spent, a power's recurring Frail lands normally")
+	ps.powers.clear()  # isolate the next round's Block move from a third payout
+	combat.end_turn(1)
+	combat.boss.moves = [{"type": "block", "value": 8}]
+	combat.end_turn(0)
+	combat.end_turn(1)  # boss defends for a stated 8 — the power-applied Frail cuts what it actually gains
+	_expect(combat.boss.block == 6, "a power-applied Frail cuts the Titan's own Block move, same as a card's would")
 
 
 func _test_thorns_reflects_a_landed_boss_attack() -> void:
