@@ -363,6 +363,7 @@ func _init() -> void:
 	# Powers: cards that stay played (backlog #57)
 	_test_power_cards_stay_in_play_and_stack()
 	_test_power_effects_fire_every_turn_end_and_persist()
+	_test_barbed_hide_power_grants_thorns_every_turn_end_and_it_compounds()
 	_test_power_block_log_reports_real_dexterity_lifted_amount_not_raw_value()
 	_test_power_stacks_multiply_and_different_powers_coexist()
 	_test_power_upgrade_value_is_not_lost_by_the_recurring_payout()
@@ -6656,6 +6657,40 @@ func _test_power_effects_fire_every_turn_end_and_persist() -> void:
 	combat.end_turn(0)  # no card played this round — the power still fires on its own
 	_expect(ps.combatant.block == 3,
 		"the power keeps paying out on later turns with no card played that turn")
+
+
+## backlog #86 duty 3 (verify a mechanic actually works): Barbed Hide ("Power.
+## Gain 2 Thorns at the end of each of your turns") is a real shipped card
+## (data/cards.json) that no test has ever played — every other
+## _handle_power_effects() branch has its own dedicated test (Iron Husk for
+## "block", Old Grudge for "strength", synthetic entries for "wound" and
+## "vulnerable"), but the "thorns" match arm has sat there untouched since
+## backlog #57. Thorns is also a different shape than Block: nothing in
+## _begin_round() resets Combatant.thorns the way it resets block, so the
+## card's own claim only really holds if the payout both compounds turn over
+## turn AND survives the round boundary that wipes Block clean.
+func _power_thorns() -> Card:
+	return Content.make_card("barbed_hide")
+
+func _test_barbed_hide_power_grants_thorns_every_turn_end_and_it_compounds() -> void:
+	var combat := _new_combat([_deck_of(_power_thorns, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300, 8))
+	var ps: PlayerState = combat.players[0]
+	var thorns_before := ps.combatant.thorns
+	combat.play_card(0, 0)  # Barbed Hide: +2 Thorns at the end of each of your turns
+	combat.end_turn(0)
+	_expect(ps.combatant.thorns == thorns_before + 2,
+		"the power pays out 2 Thorns at the end of the same turn it was played")
+	var hp0: int = ps.combatant.hp
+	var boss_hp_before := combat.boss.hp
+	combat.end_turn(1)  # closes round 1: boss_target_index() is player 0, so its attack lands here
+	_expect(ps.combatant.hp == hp0 - 8, "the boss's attack still lands in full (no Block was played)")
+	_expect(combat.boss.hp == boss_hp_before - 2,
+		"the Thorns Barbed Hide granted actually reflects that much damage off the boss's own attack, not just a number nobody reads")
+	_expect(ps.combatant.thorns == 2,
+		"unlike Block, Thorns is not reset at round start — Barbed Hide's payout carries into round 2")
+	combat.end_turn(0)  # round 2, no card played this turn — the power still fires on its own
+	_expect(ps.combatant.thorns == 4,
+		"the power keeps paying out every turn and Thorns COMPOUNDS (2 + 2 = 4) instead of being overwritten")
 
 
 ## b3476ca fixed play_card()'s own Block log lines (pv["block"] is

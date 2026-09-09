@@ -2726,6 +2726,39 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-09** — #86 duty 3 (verify a mechanic actually works). Last own
+  commit was `f69a984` (duty 2, the deck-picker fix), and its own entry named
+  duty 3 as next. Every static function in `combat_3d.gd`/`location_3d.gd`/
+  `overworld_3d.gd` and every `Boss`/`Combat` "when"/limiter condition already
+  had a dedicated test from earlier duty-3 passes, so rather than add a
+  fourth case to something already covered, cross-referenced every branch of
+  `_handle_power_effects()` (backlog #57's recurring per-turn power payout)
+  against real content: `block` (Iron Husk) and `strength` (Old Grudge) each
+  have their own test, `wound`/`vulnerable` are proven through synthetic
+  `ps.powers` entries, but the `thorns` branch — the one real shipped card
+  behind it, Barbed Hide ("Power. Gain 2 Thorns at the end of each of your
+  turns") — had never been played by any test, and nothing in `.gd` code
+  even references `barbed_hide` by id.
+  Added `_test_barbed_hide_power_grants_thorns_every_turn_end_and_it_compounds`,
+  using `Content.make_card("barbed_hide")` (the real data entry, not a
+  hand-rolled stand-in) so the test also stands as proof the shipped card
+  data itself resolves correctly. Proves four things a card's own text
+  promises but nothing checked: the power pays out 2 Thorns the same turn
+  it's played; the accumulated Thorns actually reflects damage off a real
+  boss attack (not just a number nobody reads) when `boss_target_index()`
+  lands the attack on the hunter holding it; Thorns is NOT reset at round
+  start the way Block is (`_begin_round()` has no `thorns` line at all,
+  unlike `block`), so the payout survives into round 2; and the payout
+  COMPOUNDS turn over turn (2 → 4) rather than being overwritten, without a
+  second copy of the card ever being played. Verified the new assertions
+  actually catch a regression: blanked the `thorns` match arm in
+  `_handle_power_effects` down to a no-op, re-ran, watched all four new
+  assertions fail (`4 TEST(S) FAILED`), then restored `core/combat.gd` from
+  a pre-edit copy (confirmed clean via `git diff`). Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED (1153
+  passed / 0 failed). Not screenshotted — a pure `/core` rules fix, nothing
+  new on screen. Next `#86` turn is duty 2 (find an error and resolve it).
+
 - **2026-09-09** — #86 duty 2 (find an error and resolve it). Last own
   commit was `f367191` (duty 3, `RunMap`'s pacing table), so this turn is
   duty 2. Two copies of one truth again, this time in the UI layer rather
