@@ -2746,6 +2746,31 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-09 (later still yet again), #86 duty 3 (verify a mechanic
+  actually works).** Last own commit (`6006b2a`) was duty 2, so this turn is
+  duty 3. `_test_rhythm_builds_and_scales` proves the LANDED half of
+  `player_state.gd`'s own doc comment on Rhythm ("+1 per timed card you LAND
+  this turn"), but nothing ever proved the fumble half: `play_card()`
+  (`combat.gd`) returns early on a missed timing bar *before* the
+  `_fire(MOMENT_CARD_PLAYED, ...)` call that `_handle_timed_rhythm` listens
+  on, and that ordering is the only thing stopping a whiffed timed swing from
+  still building the Frog's combo meter. Added
+  `_test_backlog86_fumbled_timed_card_does_not_build_rhythm`
+  (`run_tests.gd`), asserting `ps.rhythm == 0` and that the fumbled card
+  reaches neither hand nor discard pile after a `play_card(0, 0, false)`.
+  Proved the test isn't tautological before trusting it: moved the
+  `_fire(MOMENT_CARD_PLAYED, ...)` call to fire before the fumble's early
+  return (the exact regression the item's own log format calls for), reran,
+  watched it fail (`FAIL  a fumbled timed card must not build Rhythm`), then
+  restored `combat.gd` from a backup and confirmed `git status` shows no diff
+  on it before rerunning clean. Used a general-purpose research agent to
+  survey `game/core/*.gd`, `game/net/*.gd` and the climb logic in
+  `combat_3d.gd` for an untested mechanic first, seeded with the long list of
+  things earlier duty-3 passes already covered, to avoid re-deriving that
+  search myself or re-finding an already-closed gap. Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86`
+  turn is duty 2.
+
 - **2026-09-09 (yet later still), #86 duty 2 (find an error and resolve it).**
   Last commit tagged for this rotation (`7c94887`) was duty 3, so this turn
   is duty 2 (the intervening `797fea0`/`5f2ac0a`/`2952790`/`d03c56a`/`6777cf1`

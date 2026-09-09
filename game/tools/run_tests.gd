@@ -272,6 +272,7 @@ func _init() -> void:
 	_test_meld_carries_enchant()
 	_test_satchel_charge_detonates()
 	_test_rhythm_builds_and_scales()
+	_test_backlog86_fumbled_timed_card_does_not_build_rhythm()
 	_test_vine_weaver_poison_and_wound()
 	_test_backlog86_power_triggered_poison_lifts_the_vine_weaver_ally()
 	_test_backlog86_power_triggered_poison_lift_reaches_highest_climb()
@@ -4834,6 +4835,23 @@ func _test_rhythm_builds_and_scales() -> void:
 	combat.play_card(0, 0, true)  # Tongue Snap: 2 + 3*Rhythm(1) + 3 timed = 8
 	_expect(r0 == 0 and r1 == 1 and before - combat.boss.hp == 8,
 		"a timed card builds Rhythm; a Rhythm card scales with it (2 +3/Rhythm +3 nailed)")
+
+
+## backlog #86 duty 3 — _test_rhythm_builds_and_scales above only proves the
+## LANDED half of player_state.gd's own doc comment ("+1 per timed card you
+## LAND this turn"). A fumble slips the card away via an early return in
+## play_card() (combat.gd) *before* the MOMENT_CARD_PLAYED fire that
+## _handle_timed_rhythm listens on — correctness here rests entirely on that
+## ordering, and nothing asserted the fumble actually leaves Rhythm alone.
+func _test_backlog86_fumbled_timed_card_does_not_build_rhythm() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_flick()]
+	ps.energy = 3
+	combat.play_card(0, 0, false)  # fumble the timing bar
+	_expect(ps.rhythm == 0, "a fumbled timed card must not build Rhythm — only a LANDED one does")
+	_expect(ps.hand.is_empty() and ps.discard_pile.is_empty(),
+		"a fumbled timed card slips away entirely — it never reaches the discard pile either")
 
 
 func _test_meld_carries_special_effects() -> void:
