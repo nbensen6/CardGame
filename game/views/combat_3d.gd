@@ -19,6 +19,12 @@ const CAST := "res://assets/3d/cast/"
 ## each part of it is safe on the gl_compatibility renderer.
 const CREATURE := preload("res://assets/3d/creature.gdshader")
 
+## Jump-point rings. Dim for "you could stand here", warm for the next rung up.
+## Both deliberately low-alpha: these sit on the beast all fight, and a marker
+## that competes with the beast is worse than no marker.
+const LEDGE_COLOR := Color(0.78, 0.84, 0.96, 0.55)
+const LEDGE_NEXT := Color(1.0, 0.84, 0.38, 0.95)
+
 ## Which palette swatches GLOW, per beast.
 ##
 ## Mirrors kenney.swatch(px, py) == (px/512, 1 - (py+16)/512), so a name here is
@@ -246,6 +252,13 @@ var _climb_points: Dictionary = {}
 ## model actually builds, not just a spot on the skin. Hunters JUMP between
 ## these; the rest are places they can be, not places they land.
 var _ledges: Dictionary = {}
+## One ring per LEDGE, drawn on the beast where a hunter can actually land.
+##
+## Nick, 2026-09-08: "having clear jump points for characters to jump to." The
+## data was already there and nothing drew it — `_ledges` has been the subset of
+## Heights with real footing since it was written, and the only way to find out
+## where you could go was to try.
+var _ledge_marks: Dictionary = {}
 ## The live climb tween per hunter slot, so a new one can cancel the old.
 ## Without this two tweens drive the same node at once and the hunter is dragged
 ## between two disagreeing positions — Nick, 2026-08-31: "not quite a smooth
@@ -1048,6 +1061,9 @@ func _refresh() -> void:
 		int(boss.get("weak_point_height", 0)))
 	_place_sigil(s)
 	_place_hunters(s)
+	# After placement, so "the ledge under the active hunter" and "the next rung
+	# up" are both read from where the hunters actually ended up.
+	_refresh_ledge_marks()
 	_update_climb_state(s)
 	_update_gauge(s)
 	_render_party(s, int(boss.get("target", -1)), String(boss.get("intent", {}).get("type", "")))
@@ -1230,6 +1246,7 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	_beast_box = _merged_aabb(_beast)
 	_read_climb_points()
 	_build_hull()
+	_build_ledge_marks()   # needs the hull, so it goes after it
 	# Grow the arena with its occupant. A 9-unit disc was generous under a bear and
 	# is a dinner plate under a Titan — it ran out mid-frame and left the bottom of
 	# the shot as void, which reads as a hole rather than as ground.
@@ -2538,6 +2555,85 @@ func _hunter_pip(slot: int) -> Node3D:
 	pip.rotation.z = PI  # point down at the hunter it marks
 	pip.position = Vector3(0, 0.72, 0)
 	return pip
+
+
+## Draw a ring on every ledge a hunter could stand on.
+##
+## Placed with `_stand_on_model`, the same call that puts a hunter there, so the
+## ring is exactly where you would arrive rather than near it. Flat to the
+## ground and slightly proud of the surface, because a ring standing upright on
+## a beast's flank reads as a part of the beast.
+##
+## Built after `_build_hull`, not with the climb points: `_stand_on_model` needs
+## `_front_of_beast`, which needs the hull.
+func _build_ledge_marks() -> void:
+	for m in _ledge_marks.values():
+		(m as Node3D).queue_free()
+	_ledge_marks.clear()
+	if _beast == null or _ledges.is_empty():
+		return
+	for h in _ledges.keys():
+		var height := int(h)
+		if not _climb_points.has(height):
+			continue
+		var ring := MeshInstance3D.new()
+		var torus := TorusMesh.new()
+		# Sized off the hunter, not the beast: it marks a place a PERSON stands,
+		# and it has to stay legible on a Titan without swallowing a small beast.
+		torus.inner_radius = HUNTER_HEIGHT * 0.46
+		torus.outer_radius = HUNTER_HEIGHT * 0.60
+		torus.rings = 16
+		torus.ring_segments = 6
+		ring.mesh = torus
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = LEDGE_COLOR
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		# Depth test ON, unlike the hunter pips: a jump point behind the beast is
+		# not a jump point you can take, and drawing it through the body would
+		# say the far side is reachable.
+		ring.material_override = mat
+		ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var p := _stand_on_model(height, 0.0)
+		# UPRIGHT, not flat on the ledge. A TorusMesh lies in XZ by default, and
+		# the fight camera looks at a beast's flank from roughly level — so a
+		# flat ring presents almost no area and the first version was invisible
+		# on screen even though it was drawn exactly where it should be. Standing
+		# it up trades physical plausibility for being seeable, which is the
+		# entire job of a marker.
+		ring.rotation.x = PI * 0.5
+		# Clear of the skin so the body does not eat the lower half of it.
+		ring.position = Vector3(p.x, p.y + HUNTER_HEIGHT * 0.55, p.z + HUNTER_HEIGHT * 0.10)
+		_rig.add_child(ring)
+		_ledge_marks[height] = ring
+	_refresh_ledge_marks()
+
+
+## Which rings are lit, and how brightly.
+##
+## The ledge the active hunter is standing on is hidden outright — a marker
+## under your own feet is clutter, not information. Everything else is dim
+## except the next rung up, which is the one the climb is actually asking about.
+func _refresh_ledge_marks() -> void:
+	if _ledge_marks.is_empty():
+		return
+	var foot := -1
+	if _active_slot >= 0 and _active_slot < _hunters.size():
+		foot = int((_hunters[_active_slot] as Dictionary).get("foot", 0))
+	var rungs := _climb_rungs()
+	var next := 9999
+	for r in rungs:
+		var rh := int(r)
+		if rh > foot and rh < next and _ledges.has(rh):
+			next = rh
+	for h in _ledge_marks.keys():
+		var height := int(h)
+		var ring: MeshInstance3D = _ledge_marks[height]
+		ring.visible = height != foot
+		var mat := ring.material_override as StandardMaterial3D
+		if mat == null:
+			continue
+		mat.albedo_color = LEDGE_NEXT if height == next else LEDGE_COLOR
 
 
 ## The weak point sits atop the beast and pulses, so the target of the whole
