@@ -273,6 +273,7 @@ func _init() -> void:
 	_test_rhythm_builds_and_scales()
 	_test_vine_weaver_poison_and_wound()
 	_test_backlog86_power_triggered_poison_lifts_the_vine_weaver_ally()
+	_test_backlog86_power_triggered_poison_lift_reaches_highest_climb()
 	_test_summit_strike_scales_with_both()
 	# step 4: run / meta-progression
 	_test_run_starts_in_combat()
@@ -4722,6 +4723,36 @@ func _test_backlog86_power_triggered_poison_lifts_the_vine_weaver_ally() -> void
 	combat.end_turn(0)
 	_expect(combat.boss.wound == 2 and combat.players[1].foothold == ally_before + 1,
 		"a power's recurring Poison lifts the Vine-Weaver's ally too, not just a played card's")
+
+
+func _test_backlog86_power_triggered_poison_lift_reaches_highest_climb() -> void:
+	# The test above only ever checked ps.foothold, which an earlier duty-2
+	# pass's fix already got right — but _track_climb()
+	# (highest_climb, backlog #39's run-summary stat, and MOMENT_HUNTER_CLIMBS)
+	# is a SEPARATE piece of bookkeeping play_card() and use_potion() both
+	# reach by calling _track_climb() unconditionally once before returning.
+	# _handle_power_effects() fires from end_turn() -> _fire(MOMENT_TURN_END,
+	# ...) instead, and end_turn() never calls _track_climb() itself — the
+	# NEXT _begin_round() does, but only if the fight is still ONGOING when it
+	# gets there. Isolate the gap the same way _test_use_potion_climb_updates_
+	# highest_climb does: check highest_climb and MOMENT_HUNTER_CLIMBS right
+	# after the triggering call, before anything else in the fight has a
+	# chance to paper over a stale value.
+	var combat := _new_combat_p([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42,
+		_dummy_boss(300), [{"type": "poison_lift", "value": 3}, {}])
+	var ps: PlayerState = combat.players[0]
+	var ally: PlayerState = combat.players[1]
+	ps.powers["test_poison"] = {"stacks": 1, "value": 2, "effect": "wound", "name": "Test Poison"}
+	var climb_events: Array = []
+	combat._on(Combat.MOMENT_HUNTER_CLIMBS, func(ctx): climb_events.append(ctx))
+	_expect(combat.highest_climb == 0, "no hunter has climbed yet at the start of a fresh fight")
+
+	combat.end_turn(0)
+	_expect(ally.foothold == 3, "the power's recurring Poison still lifts the roped ally by poison_lift")
+	_expect(combat.highest_climb == 3,
+		"a POWER-triggered Poison's ally-lift counts toward highest_climb exactly like a played card's or a potion's, not just a foothold bump nobody records")
+	_expect(climb_events.size() == 1 and climb_events[0]["player"] == ally and int(climb_events[0]["foothold"]) == 3,
+		"a power-triggered climb fires MOMENT_HUNTER_CLIMBS the same as a card or potion would")
 
 
 func _test_summit_strike_scales_with_both() -> void:

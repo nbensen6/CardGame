@@ -1305,7 +1305,8 @@ func _all_ended() -> bool:
 
 ## The peak Height either hunter has reached this fight (backlog #39). Called
 ## after anything that can raise a foothold — play_card, the jetpack's
-## _resolve_prepared above, and use_potion's "climb" effect — rather than
+## _resolve_prepared above, use_potion's "climb" effect, and
+## _handle_power_effects' own poison_lift branch below — rather than
 ## duplicated at each call site.
 func _track_climb() -> void:
 	for ps in players:
@@ -1760,6 +1761,22 @@ func _handle_power_effects(ctx: Dictionary) -> void:
 						fed_ally.foothold = mini(fed_ally.foothold + ps.poison_lift, FOOTHOLD_MAX)
 						_log("%s's vines surge — %s climbs +%d." % [ps.combatant.name, fed_ally.combatant.name, ps.poison_lift])
 						_lift_roped_ally(ally_index(pi), fed_ally_before)  # the lifted ally might themselves be roped (#86 duty 2)
+						# backlog #86 duty 2: play_card()'s own poison_lift branch (a few
+						# hundred lines up) sits inside a function that unconditionally
+						# calls _track_climb() once before returning, so a played Poison
+						# card's ally-lift always reached highest_climb (#39) immediately.
+						# This copy fires from end_turn() -> _fire(MOMENT_TURN_END, ...)
+						# instead, and end_turn() never calls _track_climb() itself — the
+						# next _begin_round() does, but only if the fight is still ONGOING
+						# when it gets there. A fight that ends in the very next
+						# _enemy_turn() (the boss's own Wound bleed finishing it off, or
+						# its telegraphed move downing a hunter) never reaches another
+						# _begin_round(), so a new peak reached by THIS climb was silently
+						# dropped from the run-end summary stat forever, even though
+						# ps.foothold itself was already correct (the _test_backlog86_
+						# power_triggered_poison_lifts_the_vine_weaver_ally test above
+						# only ever checked the foothold, never highest_climb).
+						_track_climb()
 			"vulnerable":
 				if boss.try_block_debuff():
 					_log("%s's Artifact wards off %s's Expose." % [boss.name, ps.combatant.name])

@@ -2746,6 +2746,54 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-09 (later still), #86 duty 2 (find an error and resolve it).** Last
+  commit (`f917472`) was duty 3, so this turn is duty 2. `_track_climb()`'s own
+  doc comment names every place that can raise a foothold and must call it —
+  `play_card`, the jetpack's `_resolve_prepared`, `use_potion`'s "climb"
+  effect (an earlier duty-2 pass's own find) — and each of those three
+  functions does call it exactly once before returning. `_handle_power_effects`'s
+  "wound" case has its own, separate poison_lift ally-lift (Vine-Weaver's
+  passive triggered by a power like Seeping Venom, not just a played Poison
+  card — real, reachable content: `seeping_venom` sits in every character's
+  reward pool, `vine_weaver` included) and was missing from that list. It
+  fires from `end_turn()` -> `_fire(MOMENT_TURN_END, ...)`, and `end_turn()`
+  never calls `_track_climb()` itself — the next `_begin_round()` does, but
+  only if the fight is still ONGOING when it gets there. A fight that ends in
+  the very next `_enemy_turn()` (the boss's own Wound bleed finishing it off,
+  or its telegraphed move downing a hunter — both checked before any other
+  round gets a chance to start) never reaches another `_begin_round()`, so a
+  new peak Height reached by this specific climb was silently dropped from
+  `highest_climb` (backlog #39's run-summary/history stat) forever, and
+  `MOMENT_HUNTER_CLIMBS` never fired for it either — even though
+  `ps.foothold` itself was already correct (an earlier duty-2 pass's own
+  regression test for this exact code path,
+  `_test_backlog86_power_triggered_poison_lifts_the_vine_weaver_ally`, only
+  ever checked the foothold, never `highest_climb`). Fixed with one line —
+  `_track_climb()` at the end of the poison_lift branch, the same call
+  `play_card()`'s identical branch already gets for free by being inside a
+  function that calls it unconditionally once at the end. Added
+  `_test_backlog86_power_triggered_poison_lift_reaches_highest_climb`
+  (modelled on the existing potion-climb regression test, checking both
+  `highest_climb` and that `MOMENT_HUNTER_CLIMBS` fires with the right
+  player/foothold) and watched it fail honestly against the unfixed
+  `combat.gd` (`git stash` just that file, reran, restored) before trusting
+  the fix. Before landing on this, spent real time on two dead ends worth
+  recording so a future pass doesn't repeat them: (1) a wide, throwaway,
+  uncommitted `robustness_sweep.gd` copy (all 11 ascension tiers instead of
+  the shipped [0,4,8], seeds 6->10) surfaced exactly one timeout,
+  `frog+goblin_mech A1 seed=27795 policy=random` — but that is the SAME
+  `mire_snapper` curse-compounding softlock already written up under **Needs
+  Nick** on 2026-09-09, not a fresh find; (2) an audit of every `effect`/
+  `downside_effect` in `relics.json`, every `effect` in `potions.json`,
+  `enchants.json` and `boons.json`/`events.json`, and `ascension.json`'s own
+  tier effects against their consuming code in `run.gd`/`combat.gd`/
+  `content.gd` came back with zero orphaned keys — all previously closed by
+  earlier duty-2 passes. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED (1204 passed, 0 failed). Re-ran the
+  shipped `robustness_sweep.gd` (360 runs, unmodified) as a smoke test:
+  clean, 0 dead ends / 0 crashes. Next `#86` turn is duty 3 (verify a
+  mechanic actually works).
+
 - **2026-09-09, #86 duty 3 (verify a mechanic actually works).** Last own
   commit (`f8524cc`) was duty 2, so this turn is duty 3. Went hunting for an
   untested mechanic and hit false positives for a long stretch first —
