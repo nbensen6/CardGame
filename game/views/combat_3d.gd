@@ -2390,7 +2390,22 @@ func _place_hunters(s: Dictionary) -> void:
 		var p: Dictionary = players[i]
 		var foot: int = int(p.get("foothold", 0))
 		var t: float = clampf(float(foot) / float(height), 0.0, 1.0)
-		var side: float = -1.0 if i == 0 else 1.0
+		# Step aside ONLY when someone else is on this Height.
+		#
+		# Nick, 2026-09-08: hunters "are floating in mid air". Part of it was the
+		# union remesh melting the grown steps (fixed in union.txt), and part was
+		# this: the offset was unconditional, so a lone hunter was pushed a third
+		# of a body-width off the anchor the step was grown at, and stood beside
+		# their own footing rather than on it. Two hunters sharing a ledge still
+		# need to not occupy each other.
+		var shared := false
+		for j in range(players.size()):
+			if j != i and int((players[j] as Dictionary).get("foothold", 0)) == foot:
+				shared = true
+				break
+		var side: float = 0.0
+		if shared:
+			side = -1.0 if i == 0 else 1.0
 		var pos: Vector3
 		if t <= 0.01:
 			# At the feet, close in. Flanking scales with the body, and the bodies

@@ -10,4 +10,19 @@
 #
 # cinder_jackal: 48:192 is TANGERINE, the smouldering spine ridge.
 #                496:320 is AMBER, the eyes.
-cinder_jackal 48:192 496:320
+#                304:320 is TAN, the SHELVES a hunter stands on.
+#
+# The shelves are not decoration and holding them out is not a style choice.
+# Nick, 2026-09-08: hunters "are floating in mid air" on this beast. They were.
+# beast.py grows a real step out to every climb point the ledges do not reach
+# (the build prints "GREW 4 step(s) ... H0, H2, H3, H4"), and on every
+# un-unioned beast you can see them — the Thrasher's stick out plainly and the
+# Frog stands on one. On the jackal the voxel remesh had melted all four back
+# into the body, so the game jumped hunters onto footing that no longer existed
+# visually. Same failure as the spine ridge, with gameplay consequences instead
+# of cosmetic ones.
+# 48:320 is SLATE — beast.py's _grow_steps paints a grown step in the ledge's
+# own colour when a shelf() declared one, and SLATE when none did. The jackal
+# only declares shelves at Heights 2 and 4, so its H0 and H3 steps are SLATE and
+# holding out TAN alone still left hunters floating at those two.
+cinder_jackal 48:192 496:320 304:320 48:320
