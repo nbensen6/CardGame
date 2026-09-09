@@ -292,6 +292,9 @@ func _init() -> void:
 	_test_backlog48_relic_pool_and_boss_relic_pool_partition_by_tier()
 	_test_backlog48_titan_relic_reward_draws_only_from_the_boss_pool()
 	_test_backlog48_elite_relic_reward_never_offers_a_boss_relic()
+	_test_backlog86_titan_relic_reward_never_repeats_a_held_relic()
+	_test_backlog86_shop_relic_stock_never_repeats_a_held_relic()
+	_test_backlog86_event_relic_grant_never_repeats_a_held_relic()
 	# backlog #47: a fifth hunter, driven by a resource (Light)
 	_test_backlog47_light_gain_banks_across_the_round_reset()
 	_test_backlog47_light_cost_gates_and_spends()
@@ -5603,6 +5606,67 @@ func _test_backlog48_elite_relic_reward_never_offers_a_boss_relic() -> void:
 				saw_boss_tier = true
 	_expect(run.reward_kind == "relic" and not saw_boss_tier,
 		"an elite's relic reward never offers a boss-tier relic")
+
+
+## Backlog #86 duty 2: robustness_sweep.gd found a real dead end — nothing
+## stopped a Titan's own relic reward from re-offering (and a team from
+## re-picking) a relic they already hold. Most relics stacking is harmless,
+## but a DOWNSIDE relic (#30) compounds every repeat: warlords_girdle costs 1
+## energy per copy, and three of them (all from ordinary Titan-relic rewards,
+## nothing illegal) drove `_energy_bonus` to -3 — maxi(0, BASE_ENERGY - 3)
+## floors every round at ZERO energy forever, so no card was ever playable
+## again (frog+lightbearer, ascension 0, seed 36677). Write it first: with the
+## fix reverted this fails because warlords_girdle is offered a second time.
+func _test_backlog86_titan_relic_reward_never_repeats_a_held_relic() -> void:
+	var run := _map_run()
+	run.team_relics = [Content.make_relic("warlords_girdle")]
+	_step_into_combat(run)
+	run.node_type = "boss"
+	_force_win(run)
+	_pick_both(run)  # take the card, opening the relic reward
+	var offered_again := false
+	for choices in run.reward_choices:
+		for r in (choices as Array):
+			if String((r as Dictionary).get("id", "")) == "warlords_girdle":
+				offered_again = true
+	_expect(run.reward_kind == "relic" and not offered_again,
+		"a Titan's relic reward never re-offers a relic the team already holds")
+
+
+## The same gap, at the shop's own relic-stocking draw (run.gd:450) — a trader
+## with deep enough pockets could sell the team a second copy of a relic they
+## already own just as easily as a Titan could hand one over for free.
+## `relic_pool()` is boss-tier-free (warlords_girdle, the one that actually
+## broke a run, only ever comes from `boss_relic_pool()` — see the reward test
+## above), so a single held id would only fail this by luck; holding EVERY
+## non-boss relic makes "the only legal draws are all duplicates" the whole
+## pool, not a coin flip.
+func _test_backlog86_shop_relic_stock_never_repeats_a_held_relic() -> void:
+	var run := _map_run()
+	for id in Content.relic_pool():
+		run.team_relics.append(Content.make_relic(String(id)))
+	run.map_row = 0
+	run.node_type = "shop"
+	run._begin_shop()
+	var stocked_a_relic := false
+	for item in run.shop_stock:
+		if String((item as Dictionary).get("kind", "")) == "relic":
+			stocked_a_relic = true
+	_expect(not stocked_a_relic,
+		"the shop stocks no relic once the team already holds the entire pool")
+
+
+## The third draw site: an event's (or boon's) bare `"relic": true` effect
+## (run.gd:655, shared by pick_event and pick_boon). Same "hold the whole
+## pool" trick as the shop test above, for the same reason.
+func _test_backlog86_event_relic_grant_never_repeats_a_held_relic() -> void:
+	var run := _map_run()
+	for id in Content.relic_pool():
+		run.team_relics.append(Content.make_relic(String(id)))
+	var held_before: int = run.team_relics.size()
+	run._apply_effect_block({"relic": true})
+	_expect(run.team_relics.size() == held_before,
+		"an event's relic grant is a no-op once the team already holds the entire pool")
 
 
 ## GameHost._keywords_of derives keyword ids in CODE; keywords.json defines them.

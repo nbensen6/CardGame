@@ -11797,3 +11797,44 @@ Newest first. One line per finished item: what, and anything surprising.
   headless, Godot 4.7.1, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is
   duty 1 (asset pass, portraits/icons — the beast/ground/hunter tiers above
   them stay the fixer lane's, per the tier split in #86's own text).
+
+- **2026-09-09, #86 duty 2 (find an error and resolve it).** Last commit
+  (`08e9f0f`) was duty 3, so this turn is duty 2. Read a lot of `/core` and
+  `/session` end to end without finding a fresh bug the last twenty-odd
+  duty-2 passes hadn't already caught, so switched from reading to running:
+  `tools/robustness_sweep.gd` (backlog #46's own crash/dead-end smoke test,
+  explicitly allowed unattended) instead of manual inspection. It found two
+  real dead ends: `frog+lightbearer` and `mountain_climbers+lightbearer`,
+  both ascension 0, both `policy=random`, both `[TIMEOUT]` — never reached
+  WON/LOST in 4000 phase-steps. Reproduced the first (seed 36677) with an
+  instrumented copy of the sweep and traced it to a genuine softlock: the
+  team held THREE copies of `warlords_girdle` (a boss-tier relic, -1 energy
+  downside each), all picked from ordinary Titan-relic rewards across three
+  different acts — nothing illegal, nothing the game warns against. Three
+  stacked copies drove `Run.relic_totals()["energy"]` to -3, and
+  `Combat._begin_round()`'s `maxi(0, BASE_ENERGY + _energy_bonus)` (BASE_ENERGY
+  = 3) floors that at exactly 0 EVERY round for the rest of the run — not a
+  temporary dip, a permanent one, since the relic is permanent. With 0 energy
+  every round, no card with a real cost is ever playable again; the fight (and
+  the run) can never end. Confirmed `maxi(0, ...)` flooring energy at zero is
+  itself intentional/tested (`_test_relic_downside`, item #30) — the actual
+  gap is one level up: nothing in `Run` ever filtered a relic-reward pool
+  (a Titan's own reward, a shop's stock, or an event's/boon's bare
+  `"relic": true` grant — `run.gd:450`, `:655`, `:1018`) against
+  `team_relics` already held, so the identical relic (with its identical
+  downside) could be re-offered and re-picked without limit. Fixed with one
+  generic filter, `Run._relics_not_held(pool)`, wired into all three draw
+  sites — a relic already told its story once; a shop, a Titan, or an event
+  offering the SAME one again was never new content, and for a downside
+  relic it silently turned a one-time cost into a repeatable one. Wrote the
+  regression tests FIRST and watched them fail: reverted just `run.gd`
+  and confirmed the suite failed 3 tests (a Titan's relic reward re-offering
+  a held boss relic; the shop stocking a relic once the team already holds
+  the entire non-boss pool; an event's relic grant handing out a duplicate
+  under the same condition) before restoring the fix. Fresh `--import`,
+  headless, Godot 4.7.1, `run_tests.gd`: ALL TESTS PASSED. Re-ran
+  `robustness_sweep.gd` after the fix (360 runs, same seeds): `0 dead ends,
+  0 crashes` — both original timeouts are gone. Not a balance change: no
+  relic's `effect`/`value`/`downside_value` was touched, only whether the
+  identical relic can be offered twice. Next `#86` turn is duty 3 (verify a
+  mechanic actually works).

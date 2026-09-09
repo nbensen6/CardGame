@@ -447,7 +447,7 @@ func _begin_shop() -> void:
 			var cid := String(pool[_rng.randi_range(0, pool.size() - 1)])
 			pool.erase(cid)
 			_stock_card(slot, cid)
-	var relics: Array = Content.relic_pool(_unlocked_wins)
+	var relics: Array = _relics_not_held(Content.relic_pool(_unlocked_wins))
 	for _r in range(2):
 		if relics.is_empty():
 			break
@@ -652,7 +652,7 @@ func _apply_effect_block(eff: Dictionary) -> void:
 	# Events can ask a price, but never put the purse in debt.
 	gold = maxi(0, gold + int(eff.get("gold", 0)))
 	if bool(eff.get("relic", false)):
-		var pool: Array = Content.relic_pool(_unlocked_wins)
+		var pool: Array = _relics_not_held(Content.relic_pool(_unlocked_wins))
 		if not pool.is_empty():
 			team_relics.append(Content.make_relic(String(pool[_rng.randi_range(0, pool.size() - 1)])))
 	# Deck-touching effects (backlog #17): a random card per hunter, same "whole
@@ -987,6 +987,30 @@ func _apply_relic_effect(t: Dictionary, e: String, v: int) -> void:
 			if t.has(e):
 				t[e] += v
 
+## `pool` with every id the team already holds removed — a relic already told
+## its story once, so a shop, a Titan's own reward, or an event's "relic"
+## grant offering the SAME one again is never new content. For a plain relic
+## that just stacks a number this was merely repetitive; for a downside relic
+## (#30) it silently turns a one-time cost into a repeatable one. Robustness
+## sweep #46 caught the real shape of that: warlords_girdle (-1 energy) offered
+## and picked from three different Titan-relic rewards across one run put
+## `_energy_bonus` at -3 — maxi(0, BASE_ENERGY - 3) floors every round at ZERO
+## energy forever, and with it the one hunter's whole hand stuck permanently
+## unplayable (frog+lightbearer, ascension 0, seed 36677 — nothing illegal,
+## just the identical relic reoffered by three different pool draws that never
+## checked what the team was already carrying). All three draw sites share
+## this one filter so none of them can hand out the duplicate the others
+## already refuse.
+func _relics_not_held(pool: Array) -> Array:
+	var held := {}
+	for r in team_relics:
+		held[String((r as Dictionary).get("id", ""))] = true
+	var out: Array = []
+	for id in pool:
+		if not held.has(String(id)):
+			out.append(id)
+	return out
+
 func _encounter_seed() -> int:
 	if _seed == 0:
 		return 0  # keep it random
@@ -1015,8 +1039,8 @@ func _begin_reward(kind: String) -> void:
 	_relic_taken = false
 	# A Titan itself (node_type "boss") pays from its own relic pool — the
 	# tier-gated relics no shop, treasure or elite ever offers (backlog #48).
-	var relic_pool: Array = Content.boss_relic_pool(_unlocked_wins) if node_type == "boss" \
-		else Content.relic_pool(_unlocked_wins)
+	var relic_pool: Array = _relics_not_held(Content.boss_relic_pool(_unlocked_wins) if node_type == "boss" \
+		else Content.relic_pool(_unlocked_wins))
 	for i in range(names.size()):
 		# Cards come from that hunter's own pool, so each can draft their archetype.
 		var pool: Array = relic_pool if reward_kind == "relic" else Content.reward_pool(_character_of(i), _unlocked_wins)
