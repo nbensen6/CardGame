@@ -2746,6 +2746,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-09 (even later still), #86 duty 3 (verify a mechanic actually
+  works).** Last commit (`4f7f03c`) was duty 2, so this turn is duty 3. The
+  take_key wiring bug this same rotation found and fixed (`GameHost._on_command`
+  had no `"take_key"` case, so a real client's command silently did nothing,
+  even though `Run.take_key()` itself was fully unit-tested) is a whole class
+  of bug, not a one-off: `grep`ping every `GameClient` sender against every
+  test in `run_tests.gd` showed `buy`, `leave_shop`, `campfire`, `skip_reward`,
+  `pick_card` and `restart` had real `Run`-level test coverage (the shop,
+  campfire, reward and map suites) but had **never once** been sent through
+  the actual `GameClient -> GameHost -> Run` path in any test — only
+  `select_character`, `pick_node`, `discard_potion`, `take_key`, `play_card`
+  and `end_turn` had. A case silently dropped from `_on_command`'s `match` for
+  any of those six would have passed every existing test, the identical
+  failure mode `take_key`'s own bug just proved is real. Added six new tests
+  (`_test_backlog86_gamehost_wires_<command>_command_to_run`), each driving a
+  solo `GameHost`/`GameClient` pair through `LocalTransport` and asserting the
+  real `Run` state changed — gold spent and stock sold for `buy`, phase left
+  `SHOP` for `leave_shop`, `campfire_done`/`hp` for `campfire`, `reward_picked`
+  for `skip_reward`, `reward_picked` + deck size for `pick_card`, a genuinely
+  new `Run` instance with full HP for `restart`. All six passed on the first
+  run — reading `_on_command`'s `match` block by eye, every case really is
+  wired correctly today; this was pure verification with no bug to fix, which
+  is a legitimate duty-3 outcome (the item's own rules: "prefer mechanics
+  nobody has ever tested"), not a wasted one — the wiring layer as a whole was
+  untested and had already bitten this game once. `run_tests.gd` now reports
+  1212 passing (was 1206). Left `resolve_scry`, `use_potion`, `fall` and
+  `pick_event`'s own wiring alone — those four are exercised through
+  `GameClient` elsewhere in the file already (`c1.use_potion`, `c1.resolve_scry`,
+  `c2.fall`/`c3.fall`), so they were never actually part of this gap.
+
 - **2026-09-09 (later still), #86 duty 2 (find an error and resolve it).** Last
   commit (`f917472`) was duty 3, so this turn is duty 2. `_track_climb()`'s own
   doc comment names every place that can raise a foothold and must call it —

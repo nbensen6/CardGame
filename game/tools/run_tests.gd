@@ -1181,6 +1181,17 @@ func _init() -> void:
 	_test_backlog86_wants_toggle_is_false_with_an_empty_upgrade_dict()
 	_test_backlog86_wants_toggle_defaults_upgraded_to_false_when_the_key_is_missing()
 
+	# backlog #86 duty 3: buy/leave_shop/campfire/skip_reward/pick_card/restart
+	# had Run-level tests but had never once been sent through the real
+	# GameClient -> GameHost -> Run path, the same gap that hid take_key's own
+	# missing _on_command case.
+	_test_backlog86_gamehost_wires_buy_command_to_run()
+	_test_backlog86_gamehost_wires_leave_shop_command_to_run()
+	_test_backlog86_gamehost_wires_campfire_command_to_run()
+	_test_backlog86_gamehost_wires_skip_reward_command_to_run()
+	_test_backlog86_gamehost_wires_pick_card_command_to_run()
+	_test_backlog86_gamehost_wires_restart_command_to_run()
+
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
 	# not "inside tree" yet until the engine's main loop actually starts, one
@@ -9800,6 +9811,109 @@ func _test_backlog86_build_shared_exposes_keys_for_the_reward_screen() -> void:
 	host._broadcast_state()
 	_expect((c.shared.get("keys", []) as Array) == ["event"],
 		"the shared snapshot must carry the run's banked keys so the reward screen can gate its 'Take a Key' option")
+
+
+## backlog #86 duty 3 (verify a mechanic actually works): the take_key wiring
+## bug just above proved that a command tested only by calling Run directly
+## proves nothing about whether a real client's message ever reaches it --
+## GameHost._on_command's match was missing a "take_key" case entirely and
+## every existing take_key test still passed, because none of them went
+## through GameClient. buy/leave_shop/campfire/skip_reward/pick_card/restart
+## all have Run-level test coverage elsewhere in this file (the shop,
+## campfire, reward and map suites) but until now not one of them had ever
+## been sent through the real GameClient -> GameHost -> Run path, so a case
+## dropped from _on_command's match -- exactly what take_key's own bug was --
+## would have gone undetected by every test in this file for any of them.
+## Six commands, six gaps, one test each.
+func _test_backlog86_gamehost_wires_buy_command_to_run() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, true)  # solo
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	host._run.gold = 99999
+	host._run._begin_shop()
+	_expect(host._run.shop_stock.size() > 0, "setup sanity: the shop actually stocked something")
+	var gold_before: int = host._run.gold
+	c.buy(0)
+	_expect(bool(host._run.shop_stock[0]["sold"]) and host._run.gold < gold_before,
+		"a 'buy' command sent through GameClient/GameHost must actually reach Run.buy -- untested through this path until now, the same gap take_key's own missing case hid in")
+
+
+func _test_backlog86_gamehost_wires_leave_shop_command_to_run() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, true)  # solo
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	host._run._begin_shop()
+	_expect(host._run.phase == Run.Phase.SHOP, "setup sanity: the run is actually in the shop")
+	c.leave_shop()
+	_expect(host._run.phase != Run.Phase.SHOP,
+		"a 'leave_shop' command sent through GameClient/GameHost must actually reach Run.leave_shop and move the run on")
+
+
+func _test_backlog86_gamehost_wires_campfire_command_to_run() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, true)  # solo
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	host._run._begin_campfire()
+	host._run.hp[0] = 1
+	c.campfire("rest", -1, 0)
+	_expect(host._run.campfire_done[0] and host._run.hp[0] > 1,
+		"a 'campfire' command sent through GameClient/GameHost must actually reach Run.campfire_action and heal the acting slot")
+
+
+func _test_backlog86_gamehost_wires_skip_reward_command_to_run() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, true)  # solo
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	host._run._begin_reward("card")
+	c.skip_reward(0)
+	_expect(host._run.reward_picked[0],
+		"a 'skip_reward' command sent through GameClient/GameHost must actually reach Run.skip_reward")
+
+
+func _test_backlog86_gamehost_wires_pick_card_command_to_run() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, true)  # solo
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	host._run._begin_reward("card")
+	var deck_size_before: int = host._run.decks[0].size()
+	c.pick_card(0, 0)
+	_expect(host._run.reward_picked[0] and host._run.decks[0].size() == deck_size_before + 1,
+		"a 'pick_card' command sent through GameClient/GameHost must actually reach Run.pick_reward and add the card to that hunter's deck")
+
+
+func _test_backlog86_gamehost_wires_restart_command_to_run() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, true)  # solo
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	var first_run := host._run
+	host._run.hp[0] = 1
+	c.restart()
+	_expect(host._run != first_run and host._run.hp[0] == host._run.max_hp[0],
+		"a 'restart' command sent through GameClient/GameHost must actually reach GameHost.start_new_run and hand back a fresh run")
 
 
 ## backlog #86 duty 2: `Run.combat` is set once a run's first fight starts
