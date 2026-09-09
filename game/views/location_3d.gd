@@ -312,7 +312,9 @@ func _place_hunters(s: Dictionary) -> void:
 			continue
 		var n: Node3D = (load(path) as PackedScene).instantiate()
 		_plot.add_child(n)
-		_fit_height(n, HUNTER_HEIGHT)
+		# Width capped a shade under the height, so the widest hunter still reads
+		# as one of the row rather than as scenery.
+		_fit_height(n, HUNTER_HEIGHT, HUNTER_HEIGHT * 0.9)
 		n.position = Vector3(-0.78 + 1.56 * float(i), TILE_TOP, -0.15)
 		# facing the camera, angled toward each other — models face +Z, so PI
 		# here would show you nothing but their backs
@@ -321,8 +323,28 @@ func _place_hunters(s: Dictionary) -> void:
 
 
 ## Scale a model to a target world height, measured — see design/blender-pipeline.md.
-func _fit_height(node: Node3D, want: float) -> void:
-	node.scale = Vector3.ONE * (want / maxf(_bounds(node).size.y, 0.001))
+func _fit_height(node: Node3D, want: float, max_wide := 0.0) -> void:
+	var box := _bounds(node)
+	var k := want / maxf(box.size.y, 0.001)
+	# HEIGHT ALONE IS THE WRONG MEASURE FOR A SQUAT BODY.
+	#
+	# Nick, 2026-09-08: the Frog is still enormous on the character select. It is
+	# fitted to the same HUNTER_HEIGHT as everyone else and obeys it exactly —
+	# but a frog is 1.72 wide and 1.15 tall where the Vine-Weaver is 0.80 wide
+	# and 1.85 tall, so making them equally TALL makes the frog nearly three
+	# times as WIDE on screen.
+	#
+	# Worse, shortening the frog's model (2026-09-08, frog.py height 1.85 -> 1.15)
+	# made this screen worse rather than better: less height to reach the target
+	# means a bigger multiplier, so the width grew again. The model change was
+	# right for the fight and wrong here, because here nothing was clamping width.
+	#
+	# So take whichever limit binds first. Anything with a normal body plan is
+	# unaffected — their height is what binds, exactly as before.
+	if max_wide > 0.0:
+		var wide := maxf(box.size.x, box.size.z)
+		k = minf(k, max_wide / maxf(wide, 0.001))
+	node.scale = Vector3.ONE * k
 
 
 ## Bounds of everything under `node`, in NODE'S OWN space.
@@ -726,7 +748,9 @@ func _show_roster(roster: Array) -> void:
 			continue
 		var n: Node3D = (load(path) as PackedScene).instantiate()
 		_plot.add_child(n)
-		_fit_height(n, HUNTER_HEIGHT)
+		# Width capped a shade under the height, so the widest hunter still reads
+		# as one of the row rather than as scenery.
+		_fit_height(n, HUNTER_HEIGHT, HUNTER_HEIGHT * 0.9)
 		n.position = Vector3(left + span * float(i), TILE_TOP, -0.4)
 		_hunters.append(n)
 
