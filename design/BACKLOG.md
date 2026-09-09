@@ -2746,6 +2746,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-09 (later still), #86 duty 3 (verify a mechanic actually works).**
+  Last commit on this rotation (`d92b8dd`) was duty 2, so this turn is duty 3
+  (the intervening `f7a9fd2`/`6c01fb2`/`a2f043a`/`74c9492`/`797fea0` are
+  builder/fixer-lane commits, not this rotation's). The dev console
+  (`game/ui/console.gd`, the tool Nick asked for on 2026-09-01 "so we can add
+  lines like that for me to add cards to my hand to test") got its first
+  coverage in the thirty-eighth pass, but every one of those tests proved only
+  the REFUSAL path — dispatch, unknown-command handling, and
+  `_need_combat()` returning "no host on this machine" with `Session.host`
+  left null the whole time. Nothing had ever driven a console command WITH a
+  real host and combat in place, which is the entire point of the tool: does
+  `energy`/`climb` actually write into the live `PlayerState` and reach the
+  owning client's own snapshot after the command's `_push()`? Does `beast`
+  swap `Combat.boss` on the wire, not just the host's local copy, and refuse
+  an unknown id without falling through to `Content.build_boss`'s own silent
+  "Titan, 1 HP" default? Does `hand`/`deal`/`own` actually respect the
+  REPLACE/ADD/DECK-not-hand distinction the file's own doc comment draws
+  between them? Added three tests driving all of that through a real
+  `_make_session()` host/client pair with `Session.host` set to the real
+  host, asserting on the console's own echoed return string, the host's live
+  `Combat`/`Run` state, and the broadcast snapshot the owning client actually
+  received. All landed clean on the first pass — the console's own code was
+  already correct, this was purely a coverage gap. `run_tests.gd`: ALL TESTS
+  PASSED (confirmed against a pre-existing, unrelated flake: a nondeterministic
+  "2 ObjectDB instances leaked at exit" warning reproduces on both this branch
+  and the unmodified prior commit at roughly the same rate — not something
+  this run introduced).
+
 - **2026-09-09 (yet later), #86 duty 2 (find an error and resolve it).** Last
   commit on this rotation (`1745b14`) was duty 3, so this turn is duty 2 (the
   intervening `9564fe3` is a builder-lane art commit, not this rotation's).

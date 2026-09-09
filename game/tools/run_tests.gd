@@ -1111,6 +1111,14 @@ func _init() -> void:
 	_test_backlog86_dev_console_turn_clamps_to_documented_range_and_off_resets()
 	_test_backlog86_dev_console_make_splits_on_commas_and_spaces_and_drops_unknown_ids()
 	_test_backlog86_dev_console_combat_commands_refuse_without_a_host()
+	# backlog #86 duty 3: the refusal path above is the only path this suite had
+	# ever driven -- every command that actually touches a live Combat, WITH a
+	# real host present, had never once been run. That is the entire point of
+	# the console (Nick asked for it to "add cards to my hand to test"); a
+	# console proven only to refuse is not proven to work.
+	_test_backlog86_dev_console_energy_and_climb_edit_the_live_hunter_and_broadcast()
+	_test_backlog86_dev_console_beast_swaps_the_live_boss_or_refuses_an_unknown_id()
+	_test_backlog86_dev_console_hand_deal_and_own_target_the_right_pile()
 
 	# backlog #86 duty 3 (thirty-ninth pass): Run._gold_for(node_type) is the
 	# ENTIRE payout table for a felled beast (fight=25, elite=55, boss=80) --
@@ -13618,6 +13626,114 @@ func _test_backlog86_dev_console_combat_commands_refuse_without_a_host() -> void
 		_expect(c.run(cmd_line) == refusal, "'%s' refuses rather than silently doing nothing when there is no host" % cmd_line)
 	Session.host = save_host
 	c.free()
+
+
+## backlog #86 duty 3 -- the OTHER half of the console: with a real host in
+## place (via _make_session, the same host/client pair every #45/#49 test
+## drives), does `energy`/`climb` actually reach the live PlayerState AND ride
+## the next broadcast out to the owning client's own snapshot? _slot() falls
+## back to 0 with no parent view, which happens to be c0's slot (frog, joined
+## first) -- exactly the case this proves.
+func _test_backlog86_dev_console_energy_and_climb_edit_the_live_hunter_and_broadcast() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var save_host: GameHost = Session.host
+	Session.host = host
+	var c := DevConsole.new()
+
+	var energy_out := c.run("energy 9")
+	_expect(energy_out == "energy 9", "energy echoes the value it set")
+	_expect(int(host._run.combat.players[0].energy) == 9,
+		"energy writes straight into the live PlayerState")
+	_expect(int(c0.private["energy"]) == 9,
+		"energy's own _push() broadcasts, so the change reaches the owning client's private snapshot")
+
+	var climb_out := c.run("climb 4")
+	_expect(climb_out == "hunter 0 is at Height 4", "climb echoes the hunter and the Height it set")
+	_expect(int(host._run.combat.players[0].foothold) == 4, "climb writes straight into the live foothold")
+	_expect(int(c0.shared["players"][0]["foothold"]) == 4,
+		"climb's broadcast reaches the shared snapshot, where an ally would see it too")
+
+	Session.host = save_host
+	c.free()
+
+
+## backlog #86 duty 3 -- `beast <id>` swaps Combat.boss outright, live, without
+## restarting the fight. Prove the swap actually lands on the wire (not just on
+## the host's own copy) and that an unknown id is refused with the fight left
+## exactly as it was, rather than falling through to build_boss()'s own "Titan,
+## 1 HP" default the way _cmd_beast's comment warns a naive caller could.
+func _test_backlog86_dev_console_beast_swaps_the_live_boss_or_refuses_an_unknown_id() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var save_host: GameHost = Session.host
+	Session.host = host
+	var c := DevConsole.new()
+
+	var starting_boss := String(c0.shared["boss"]["id"])
+	var target := "crag_pup" if starting_boss != "crag_pup" else "thrasher"
+	var swap_out := c.run("beast " + target)
+	var expected_name := Content.build_boss(target).name
+	_expect(swap_out == "now fighting %s" % expected_name, "beast echoes the new boss's own name")
+	_expect(String(host._run.combat.boss.id) == target, "beast writes the new boss straight into the live Combat")
+	_expect(String(c0.shared["boss"]["id"]) == target,
+		"the swap's own broadcast reaches the shared snapshot, not just the host's local copy")
+
+	var refuse_out := c.run("beast not_a_real_beast_id")
+	_expect(refuse_out.begins_with("no such beast: not_a_real_beast_id"),
+		"an unknown beast id is refused by name rather than silently building Content's Titan/1-HP fallback")
+	_expect(String(host._run.combat.boss.id) == target and String(c0.shared["boss"]["id"]) == target,
+		"a refused swap leaves the fight exactly as the last GOOD swap left it")
+
+	Session.host = save_host
+	c.free()
+
+
+## backlog #86 duty 3 -- console.gd's own doc comment draws a line between
+## `hand`/`deal` (this TURN's hand, gone at end of turn) and `own` (the DECK
+## you keep). Prove the three commands actually respect that line rather than
+## all three quietly writing to the same pile: `hand` replaces the hand
+## wholesale, `deal` adds to it without disturbing what's already there, and
+## `own` never touches the hand at all -- it only grows the deck.
+func _test_backlog86_dev_console_hand_deal_and_own_target_the_right_pile() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var save_host: GameHost = Session.host
+	Session.host = host
+	var c := DevConsole.new()
+
+	var hand_out := c.run("hand leap,slash")
+	_expect(hand_out == "dealt 2 card(s) to hunter 0", "hand reports the hunter it dealt to and how many cards")
+	var mine := _hand_ids(c0)
+	_expect(mine.size() == 2 and "leap" in mine and "slash" in mine,
+		"hand REPLACES whatever hunter 0 was holding with exactly the named cards")
+
+	var deal_out := c.run("deal scramble")
+	_expect(deal_out == "added 1 card(s)", "deal reports how many cards it added")
+	mine = _hand_ids(c0)
+	_expect(mine.size() == 3 and "leap" in mine and "slash" in mine and "scramble" in mine,
+		"deal ADDS to the hand rather than replacing what hand already put there")
+
+	var deck_before: int = host._run.decks[0].size()
+	var own_out := c.run("own dagger")
+	_expect(own_out == "added 1 card(s) to hunter 0's deck (%d cards)" % (deck_before + 1),
+		"own reports the DECK's new size, not the hand's")
+	_expect(host._run.decks[0].size() == deck_before + 1, "own grows the persistent deck")
+	_expect(_hand_ids(c0).size() == 3, "own never touches the hand hunter 0 is currently holding")
+
+	Session.host = save_host
+	c.free()
+
+
+## Shared by the hand/deal/own test above.
+func _hand_ids(client: GameClient) -> Array:
+	var out: Array = []
+	for card in (client.private["hand"] as Array):
+		out.append(String(card["id"]))
+	return out
 
 
 ## backlog #86 duty 3 (thirty-ninth pass) -- Run._gold_for(kind) is the whole
