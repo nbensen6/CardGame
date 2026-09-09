@@ -5,6 +5,98 @@ score sheets. Per `tools/fixer/BRIEF.md`: fix it only if it's inside
 `tools/blender/**` / `game/assets/3d/**`; anything in `game/**` GDScript gets
 written up here for the session, not touched.
 
+## 2026-09-09 — Pass C (cross-surface): the cinder_jackal portrait/model mismatch flagged yesterday wasn't fixed — it was rebuilt on `main` twice more since the flag, and the colour gap has gone from ~40 minutes old to over a day old
+
+**Pass C (cross-surface) — rotation choice.** Per-pass last-run times from `git
+log --format='%h %ad %s' --date=format:'%Y-%m-%d %H:%M:%S' -- design/progress/bugs.md`:
+A 2026-09-08 17:08:40, B 2026-09-08 16:05:26, C 2026-09-08 15:00:47, D 2026-09-09
+15:05:16 (today's entry, below). C was the pass that had gone longest without a
+run — older than B and A, and D had just gone — so it's due.
+
+**Subject: `cinder_jackal`, continuing the trace the last Pass C entry (below,
+"Second, smaller find") started** rather than opening a new one, because that
+entry's own close said the gap was worth re-checking, and the asset has visibly
+moved since. That prior entry found the portrait bake (2026-09-08 13:01:57–13:02:00,
+the batch run for every beast) already 40 minutes stale against a same-day colour
+recolour committed at 13:42:26 (`0db698f`, "darken cinder_jackal's body swatches").
+
+**What changed since that flag was written (2026-09-08 15:00:47) — checked via
+`git log --format='%h %ad %s' -- game/assets/3d/cast/cinder_jackal.glb` and file
+mtimes, not assumption:**
+```
+6c01fb2 2026-09-09 14:52:42  Put the hunters back on solid ground        <- on main, rebuilds cinder_jackal.glb
+15082b6 2026-09-08 13:02:39  The Frog is frog-sized, portrait is a frog again  <- the portrait batch bake
+0db698f 2026-09-08 13:42:26  Phase 1: darken cinder_jackal's body swatches      <- already flagged stale, above
+```
+(A fourth commit, `7eea909` "a side-flaring hackle-spike anchor for cinder_jackal",
+2026-09-09 14:13:31, also rebuilds the glb but lives on
+`builder/2026-09-09-side-anchor-proposal` — confirmed with `git merge-base
+--is-ancestor 7eea909 HEAD` → not an ancestor of `main`. Not counted below since
+it isn't live in the game yet, but it's a second pending rebuild of the same
+asset stacked behind the one that already is.)
+
+`game/assets/portraits/cinder_jackal.png` mtime is still 2026-09-08 13:02:00 —
+unchanged. So the live model on `main` has been rebuilt **twice** since the
+staleness was written up (once for the colour swatches the previous entry
+caught, and again today for footing/steps), and the portrait has been rebuilt
+**zero** times. The gap the previous entry measured at 40 minutes is now, by
+mtime subtraction, **25h50m** (13:02:00 on the 8th to 14:52 on the 9th) and
+still growing every time this beast gets touched.
+
+**What I looked at, not just dates:**
+```
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:/fixer_shots/cinder_jackal_3d.png state=3d beast=cinder_jackal
+```
+opened alongside `game/assets/portraits/cinder_jackal.png`. The live fight
+camera is too tight on this beast to read colour confidently by itself (see
+today's Pass D entry above — `weak_point_height: 5` beasts get cropped to
+mostly-legs at this distance; confirmed the same here, `CAM ... dist=16.85`),
+so I also opened the two images the darkening commit itself produced for
+comparison, since they're already sitting in the repo and I didn't need to
+render anything new: `design/renders/cinder_jackal_valuerange_before.png` and
+`..._after.png` (both mtime 2026-09-08 14:36:02, i.e. taken to document
+`0db698f`). `_before` is the bright rust-orange torso with a light tan
+underbelly; `_after` is visibly darker brick-brown on the torso and near-black
+umber on the underbelly, ember ridge unchanged and now standing out more, per
+the commit message's own intent. `game/assets/portraits/cinder_jackal.png`
+matches `_before` — bright rust-orange body, light tan underbelly — not
+`_after`. Three images, one clear mismatch: the portrait is the pre-darkening
+colour, and the game has looked like the post-darkening colour in every fight
+for over a day.
+
+**Why this is worth a second write-up instead of a one-line "still broken":**
+the previous entry logged this as a same-day, 40-minute gap and explicitly
+flagged it as "sitting behind a wire nobody has connected to a screen yet" —
+i.e. low severity because nothing in the current UI reads `boss_art`/the
+portrait for this beast (still true; grepped again, still zero consumers in
+`game/views/**`/`game/ui/**`). What's different now is that the *model itself*
+has been rebuilt on `main` a second time without anyone touching the portrait
+in between, which means whatever process re-bakes portraits either isn't
+running per-asset when a cast model changes, or only ran once as a one-off
+batch on the 8th and nothing re-triggers it. That's a process gap, not just
+one stale file — worth knowing before the day someone does wire `boss_art` up
+and ships whichever version of this beast the portrait happens to remember.
+
+**Where to look:** whatever produced the 2026-09-08 13:01:57–13:02:00 portrait
+batch (not in `tools/blender/**` under a name I could find by inspection alone —
+worth the cloud or builder lane grepping for the actual bake entry point) needs
+either to run again for `cinder_jackal` specifically, or to be wired to run
+per-beast whenever that beast's `.glb`/`.py` changes instead of as a manual
+batch. Not touched — outside this lane's job under the rewritten brief, and the
+portrait bake pipeline isn't `tools/blender/**` model geometry even if it lives
+nearby.
+
+**Could not check this pass:** whether any beast besides `cinder_jackal` has
+been rebuilt since the 09-08 13:01:57–13:02:00 portrait batch — checked all 28
+cast `.glb` mtimes and `cinder_jackal` is the only one dated after that window,
+but I did not re-open every other portrait against its model to confirm by eye,
+only by date, so a same-day rebuild-without-visible-colour-change on another
+beast could still be hiding. Card art (`game/assets/cardart/**`) against any
+hunter or beast — still not traced this pass either, two Pass C runs running.
+The party panel outside of the one combat screenshot above. `mobile`/
+`size=2340x1080` for any of this.
+
 ## 2026-09-09 — Pass D (proportion): the code's own "Crag Pup fits, Sunken Warden looms" contrast is true for 2 of the game's 28 beasts — everyone else gets the looming crop the comment says is reserved for Titans, and the wide "meet it once" establishing shot never fires for anyone
 
 **Pass D (proportion) — rotation choice.** `git log --format='%h %ad %s' --date=format:'%Y-%m-%d %H:%M:%S' -- design/progress/bugs.md` shows the four post-rewrite passes ran D (2026-09-08 14:02) → C (15:00) → B (16:05) → A (17:08), in that order, and nothing since. D ran longest ago, so it's due.
