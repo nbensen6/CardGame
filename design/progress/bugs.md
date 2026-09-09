@@ -5,6 +5,160 @@ score sheets. Per `tools/fixer/BRIEF.md`: fix it only if it's inside
 `tools/blender/**` / `game/assets/3d/**`; anything in `game/**` GDScript gets
 written up here for the session, not touched.
 
+## 2026-09-09 — Pass A (the walk): a reward card's own rules text gets clipped by its own frame on the phone layout, mid-sentence, because the handheld card shrinks but the font-size shrink table that's supposed to prevent exactly this does not know it shrank
+
+**Pass A (the walk) — rotation choice.** Per-pass last-run times from `git log
+--format='%h %ad %s' --date=format:'%Y-%m-%d %H:%M:%S' -- design/progress/bugs.md`:
+A 2026-09-08 17:08:40, B 2026-09-09 16:13:40, C 2026-09-09 15:57:53, D 2026-09-09
+15:05:16. A was oldest by nearly a full day and the only pass not run since the
+8th, so it's due.
+
+**States walked, and why:** `3dgame` (never opened by any prior entry in this
+log — see "a harness coverage gap" below), `3dreward` at `mobile
+size=2340x1080` (never shot at this size before — grepped this log for
+`3dreward` and `2340x1080` together, no hit), `goblin` at `mobile
+size=2340x1080` (the last Pass A entry's merged-hunters find, Finding 1 below
+it, was desktop-only and explicitly listed mobile as unchecked), and
+`3dclimb` against `sunken_warden` (`weak_point_height: 13`, the tallest beast
+in `bosses.json` per yesterday's Pass D entry — checking whether the tallest
+beast's climb state holds together when combined with height, not just
+combat).
+
+### Finding — the longest reward card's body text is cut off by its own card border on the phone layout; the same card, same text, fits completely at desktop size
+
+**Commands:**
+```
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:\fixer_shots\reward_mobile.png state=3dreward slot=0 beast=sunken_warden mobile size=2340x1080
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:\fixer_shots\reward_desktop.png state=3dreward slot=0 beast=sunken_warden
+```
+Reproduced a second time against a completely different beast to rule out a
+beast-specific reward pool:
+```
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:\fixer_shots\reward_cragpup.png state=3dreward slot=0 beast=crag_pup
+```
+(This harness seeds a deterministic solo run — `GameHost.new(transport, 42, 2,
+true)`, `screenshot.gd:170` — so all three of these draw the identical
+3-card reward pool: Snap Volley, Metronome, Crescendo.)
+
+**What the harness printed:** nothing for any of the three — `3dreward` routes
+through the game_3d router to `Location3D`, and `_report_visibility()` only
+fires anything for a view with a `_climb_frame` method (`screenshot.gd:479`),
+which the router doesn't have. See "a harness coverage gap," below.
+
+**What I saw in the PNGs:** at desktop size (1280x720), all three reward
+cards' body text is fully readable, including Crescendo's, the longest of the
+three: "Deal 3 damage and an additional 5 per Rhythm. Climb 1 and an
+additional 1 per Rhythm." — the complete sentence, inside its own card
+border, on both `sunken_warden` and `crag_pup`. At `mobile size=2340x1080`
+(rendered 1170x540 — this machine halves anything over 1900px wide per
+`screenshot.gd`'s own comment at line ~148, the aspect is what's under test,
+not the pixel count), the same card on the same beast shows only "Deal 3
+damage and an additional 5 per Rhythm. Climb 1 and an additional 1" — the
+sentence stops mid-clause, no ellipsis, no second line, no scroll indicator,
+and the last visible word sits flush against the card's own bottom edge as if
+sliced by a straight edge. Zoomed 3x crop of the card confirms it: the text
+isn't small and complete, it's cut, the same way a photo gets cropped by a
+frame. Snap Volley and Metronome — the two shorter cards in the same reward
+row, same screenshot — show their full text at both sizes; only the longest
+card clips.
+
+**Why, from the code, not just the picture:** two facts that don't know about
+each other.
+1. `card_view.gd:291-294` (`setup()`) gives a handheld card a *smaller* box
+   than desktop — `Vector2(161, 226)` vs `Vector2(191, 268)` for a "big" card,
+   about 16% narrower — specifically because `Screen.is_handheld()` branches
+   the `custom_minimum_size`.
+2. `_rich_body()` (`card_view.gd:1108-1134`), which builds the RichTextLabel
+   the rules text lives in, is called with a **fixed font size of 14** from
+   both call sites that build a full card face (`card_view.gd:441` and `:644`
+   — neither reads `Screen.is_handheld()`). It does shrink that size for a
+   long string — `chars > 80` (Crescendo's plain text is 85) drops it by 3,
+   the largest tier the table has (`card_view.gd:1124-1130`) — but that tier
+   is the same whether the box it has to fit into is 191px wide or 161px wide.
+   The comment directly above it (`card_view.gd:1112-1118`) states the
+   intended contract in Nick's own words — *"some words are going off the
+   cards... clips instead of growing"* — and then sets `r.scroll_active =
+   false` and `r.clip_contents = true` (`:1132-1133`) specifically so an
+   overflow clips silently rather than resizing the card. That policy is
+   working exactly as written; it was tuned against the desktop box only, so
+   on the 16%-narrower handheld box the same "already at max shrink" text has
+   nowhere left to go and the clip these two lines guarantee is what fires.
+
+**Why it matters:** this is CLAUDE.md §5's own rule — "Flexible, anchor-based,
+scalable UI... Size interactive targets for a thumb" and no hard-coded
+pixel assumptions for one resolution — and a fixed font size read off a box
+that scales is exactly the gap that rule exists to close. It will not be rare
+in play: 85 characters is what one Attack-that-scales-with-a-keyword card
+needs to say once, and the campfire's own card-sharpen screen (`state=3dcampfire
+hold=upgrade`, checked clean this run, screenshot below) shows the deck
+already has several cards in this length range ("All players climb 2",
+"Pull your ally up to you", the Meld card's two-line fuse text) — any of
+which would be one more mechanic clause away from the same clip on a phone.
+
+**Where to look:** `card_view.gd`'s `_rich_body()` (1108) and its two call
+sites (441, 644) — either read `Screen.is_handheld()` into the same shrink
+table `setup()` already reads it into for the box size, or size the font off
+the box's actual width rather than a fixed constant. `game/**` GDScript, not
+`tools/blender/**` / `game/assets/3d/**`, so written up rather than touched.
+
+**A harness coverage gap, noted rather than silently dropped:** `3dreward`
+(and by the same logic `3dwon`, `3dcampfire`, `3dshop`, `3dselect` — every
+state routed through `game_3d.tscn`'s router rather than mounting
+`combat_3d.tscn` directly) never gets a `_report_visibility()` line, because
+that function keys off `view.has_method("_climb_frame")`
+(`screenshot.gd:479`), a method the router doesn't have. Same shape of gap
+the 2026-09-08 Pass A entry flagged for `"goblin"` not matching the
+`begins_with("3d")` prefix check — a different guard, same effect: a whole
+family of states the harness visits produces no machine-readable
+contradiction test, only the picture. Not fixed (this lane changes nothing),
+but worth whoever owns `screenshot.gd` widening the check past
+`_climb_frame` specifically.
+
+**Also checked, no finding:**
+- `state=3dgame beast=husk_beetle` — never opened by any prior entry. Renders
+  the same combat scene `state=3d` would (router steps off the map into a
+  fight); Husk Beetle's head crops off the top of frame exactly as
+  yesterday's Pass D entry predicted for a `weak_point_height: 5` beast, which
+  is that already-logged finding, not a new one. Nothing else wrong with it.
+- `state=goblin beast=husk_beetle mobile size=2340x1080` — the merged-hunters
+  bug from the 2026-09-08 Pass A entry (Finding 1: Frog and Goblin Engineer
+  draw fully interpenetrated when the Goblin Engineer is picked first)
+  reproduces identically at the phone aspect ratio, zoomed crop confirmed by
+  eye. Extends a known bug to a size it hadn't been shown at yet; not written
+  up as a second finding since the cause and the fix pointer are already on
+  record.
+- `state=3dclimb beast=sunken_warden` — the tallest beast in the game, mid-climb.
+  Harness printed `VIS OK` for both hunters and the sigil, `HUNTER0`/`HUNTER1`
+  both `OK` (drawn within 0.05 of home); the PNG agrees — both hunters and the
+  sigil sit clearly inside the frame, hold-timer bar and warning banner fully
+  legible. No cropping despite this being the largest box in the roster.
+- `state=3dcampfire hold=upgrade beast=husk_beetle` — opens the card-sharpen
+  chooser (10 cards in a clean grid, "Choose a card to sharpen" header, Cancel
+  button). Nothing overlapping, nothing cut off.
+- Re-confirmed, not re-logged: the reward screen's `"<hunter> picks:  Tap a
+  card to select"` prompt text is still overlapped by the reward-card row in
+  solo, on both `sunken_warden` and `crag_pup` at desktop size — this is the
+  2026-09-07 entry below ("reward screen's 'picks:' prompt is drawn behind the
+  reward cards in solo"), still unfixed, same fragment pattern ("The
+  Fro...ks...Tap a card to...t"). I initially misread this as the *3D beast
+  corpse* occluding the text (the fallen beast's model sits in the same
+  region); zooming in showed the occlusion edge is flat and matches the card
+  row's top edge exactly, not the model's silhouette, so it's the same
+  `Prompt`/`Row` anchor gap already on record, not a new layering bug.
+
+**Could not check this pass:** `3dwon`, `3dcampfire`, `3dshop`, `3dselect` at
+mobile size with the router-coverage gap in mind (all four share it, only
+`3dreward` was actually shot this run). `3dfreecam` at
+mobile size, still outstanding from the last Pass A entry. Any card besides
+Crescendo actually clipping at mobile size in a live hand or shop (the
+campfire chooser's long-text cards were only seen at desktop this run).
+Whether the same fixed-font-size gap affects the compact rail-mode card face
+(`card_view.gd:788`, a third call site with its own `12`/`RAIL_HEIGHT` args,
+not audited this run).
+
 ## 2026-09-09 — Pass B (temporal): nothing found in the five states the last Pass B run flagged as unchecked — every diff traces to the same already-accepted sub-pixel idle sway, none of it visible without diffing
 
 **Pass B (temporal) — rotation choice.** Per-pass last-run times from `git log
