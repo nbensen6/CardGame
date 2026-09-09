@@ -5,6 +5,110 @@ score sheets. Per `tools/fixer/BRIEF.md`: fix it only if it's inside
 `tools/blender/**` / `game/assets/3d/**`; anything in `game/**` GDScript gets
 written up here for the session, not touched.
 
+## 2026-09-09 — Pass B (temporal): nothing found in the five states the last Pass B run flagged as unchecked — every diff traces to the same already-accepted sub-pixel idle sway, none of it visible without diffing
+
+**Pass B (temporal) — rotation choice.** Per-pass last-run times from `git log
+--format='%h %ad %s' --date=format:'%Y-%m-%d %H:%M:%S' -- design/progress/bugs.md`:
+A 2026-09-08 17:08:40, B 2026-09-08 16:05:26, C 2026-09-09 15:57:53, D 2026-09-09
+15:05:16. B was oldest by a wide margin (over a day, and the only pass not run
+since the 8th), so it's due.
+
+**Subject: the five states the last Pass B entry (2026-09-08 16:05:26) explicitly
+listed as not gotten to** — `3dsettings`, `3devent`, `3dsel`, `3dswap`, `3drebind` —
+rather than re-running states that entry already cleared (`3dselect`, `3d`,
+`3dmap`, `3dcampfire`, `menu`, `3dwon`, `3dshop`).
+
+**Method, same as the prior Pass B entry:** `game/tools/screenshot.gd` captures
+once and exits, so "twice, a few seconds apart" means two process launches
+(~4s apart, real wall-clock time), same args, different `out=`, then a pixel
+diff. Used Python 3.14 (`C:\Python314\python.exe`) with PIL/NumPy — the
+`python3`/`python` names on this machine's PATH resolve to the Microsoft Store
+alias shim, not a real interpreter (`Python was not found; run without
+arguments to install from the Microsoft Store`); the working copy has to be
+invoked by its full path. Threshold: per-channel diff > 10/255. Opened every
+resulting PNG pair, plus 2x-zoomed crops of every diff bounding box, not just
+the pixel counts.
+
+**Commands (one pair per state, ~4s apart):**
+```
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:/fixer_shots/3dsettings_A.png state=3dsettings
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:/fixer_shots/3dsettings_B.png state=3dsettings
+
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:/fixer_shots/3devent_A.png state=3devent
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:/fixer_shots/3devent_B.png state=3devent
+
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:/fixer_shots/3dsel_A.png state=3dsel
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:/fixer_shots/3dsel_B.png state=3dsel
+
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:/fixer_shots/3dswap_A.png state=3dswap
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:/fixer_shots/3dswap_B.png state=3dswap
+
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:/fixer_shots/3drebind_A.png state=3drebind
+%GODOT% --path game --script res://tools/screenshot.gd -- out=C:/fixer_shots/3drebind_B.png state=3drebind
+```
+
+**What the harness printed:** `3dsettings`, `3dswap`, `3drebind` all print the
+same `CAM`/`HUNTER0`/`HUNTER1`/`VIS OK` lines as ordinary `3d` combat (this is
+combat with an overlay on top); `3dswap` additionally prints `SWAP start=0
+tab=1 key1=0 key2=1  OK` and `SPACE slot=1 ended false -> true  OK`;
+`3drebind` prints `REBIND listening=end_turn bound=E label=E  OK`. `3devent`
+and `3dsel` print nothing beyond `SHOT SAVED` — no self-test for either state
+in the harness. No `FAIL` anywhere.
+
+**What I saw, per state:**
+- `3dsettings`: **0 pixels differed** between the two launches (threshold
+  10/255, full 1280x720 frame) — pixel-identical.
+- `3devent` ("The Toll Crow"): 680 px differed, bbox (498,250)-(804,345) —
+  matches exactly where the Frog and Goblin Engineer figures stand on the
+  hex tile in this event scene. Zoomed crop of both frames side by side:
+  could not see a difference by eye.
+- `3dsel` (Meld target-pick flow): 239 px, bbox (621,438)-(1010,480) — matches
+  the harness's own printed hunter screen positions, `(640, 476)` and
+  `(1000, 476)`. Zoomed crop: no visible difference by eye.
+- `3dswap`: 134 px, but scattered essentially randomly across the *entire*
+  frame (`x` from 7 to 1270, `y` from 5 to 674, no spatial clustering) —
+  checked the actual differing coordinates, not just the bbox, because a
+  bbox that size on a 134-pixel diff is a flag for scattered noise rather
+  than a moving object. Viewed both full frames side by side: identical by
+  eye, same shape as the single stray pixel the 2026-09-08 Pass B entry
+  found in `3dshop` and attributed to compression/dither noise.
+- `3drebind`: 6 px, bbox (990,444)-(1006,475) — matches only `HUNTER1`'s
+  printed position, not `HUNTER0`'s; too small to see even zoomed 2x.
+
+**Why none of this is a finding:** every non-zero diff lands either exactly on
+a hunter's printed on-screen position or (for `3dswap`) shows no spatial
+pattern at all, and none was visible by eye in a zoomed crop or a full-frame
+side-by-side. This is the same conclusion and the same magnitude the prior
+Pass B entry reached for `location_3d.gd:91` and `combat_3d.gd:889`'s
+documented "gentle idle" sway — this run just confirms it holds, without
+surprises, across five more states layered on top of that same combat/board
+scene (a settings modal, a rebind listen, a Meld pick, a swap, a forced
+event). Reporting sub-pixel sway that requires a diff tool to see would be
+exactly the "two-point fix nobody could see" failure mode this brief was
+rewritten to stop.
+
+**One thing noticed but not reportable as a visual finding:** both `3dsel`
+launches (A and B) printed identical engine-level warnings on exit —
+`ERROR: Texture with GL ID of ... leaked ... bytes`, `41 ObjectDB instances
+were leaked at exit`, `5 resources still in use at exit` — that none of the
+other four states in this run produced. Deterministic across both launches,
+so it's not a one-off. Not a screen-visible defect and outside what this
+lane evaluates by looking, but consistent and worth the cloud lane's
+attention if it greps `combat_3d.gd`'s Meld-pick teardown path — flagging it
+here rather than silently dropping it, per the brief's "say what you could
+not check" spirit.
+
+**Could not check this pass:** mobile (`size=2340x1080`) temporal diffs for
+any state — still not done in either Pass B run. The driven/animated states
+this run didn't reach: `goblin`, `3dinspect`, `3dstrike`, `3dgame`,
+`3dreward`, `3dfreecam`, `3dfocus`, `3dosu`, `3dbar`, `3dslide`, `3dcross`,
+`3dloop`. `3dclimb` and `3dgrip` are still deliberately excluded (per the
+prior entry: both have intentional per-launch randomization that would make
+a diff show noise, not a bug). Any beast other than whichever the harness
+defaults to when `beast=` is omitted (`thrasher`, per the prior entry) —
+did not vary `beast=` this run since the point was state coverage, not
+per-beast coverage.
+
 ## 2026-09-09 — Pass C (cross-surface): the cinder_jackal portrait/model mismatch flagged yesterday wasn't fixed — it was rebuilt on `main` twice more since the flag, and the colour gap has gone from ~40 minutes old to over a day old
 
 **Pass C (cross-surface) — rotation choice.** Per-pass last-run times from `git
