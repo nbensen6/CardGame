@@ -2746,6 +2746,63 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-09 (even later still), #86 duty 2 (find an error and resolve
+  it) — came up empty, fell through to duty 3.** Last own commit
+  (`4aa3218`) was duty 3, so this turn opened as duty 2. Spent the whole
+  run hunting and found nothing new: read `combat.gd`, `run.gd`,
+  `run_map.gd`, `boss.gd`, `combatant.gd`, `player_state.gd`, `card.gd`,
+  `content.gd`, `progress.gd` end to end; `game_host.gd`/`game_client.gd`/
+  `session.gd` and all four `net/*.gd` files; and the view-layer logic in
+  `game_3d.gd`, `overworld_3d.gd`, `location_3d.gd`'s phase dispatch,
+  `menu.gd`, `screen.gd`, `coach.gd`, `dev.gd`, `music.gd` and
+  `map_edges.gd` (the last one turned out to be dead code — nothing
+  references `MapEdges` anywhere, a leftover from before the 3D pivot, but
+  removing unused code isn't the "wrong behaviour" this duty hunts for, so
+  left it alone rather than smuggling in unrelated cleanup). Cross-checked
+  every data-driven effect/condition/move-type vocabulary a handler
+  dispatches on (`ascension.json`, `relics.json`, `potions.json`,
+  `events.json`, `boons.json`, `bosses.json`'s move types and adds'
+  move types, `cards.json`'s `condition`/`rule_upgrade` keys,
+  `keywords.json` against `_keywords_of()`) against Python scripts reading
+  the same JSON — zero dangling references either direction. Ran the
+  shipped `robustness_sweep.gd` (360 runs, unmodified): clean. Wrote a
+  second, heavier fuzzer (potions drunk and discarded through `Run`, scry
+  resolved every time it's offered, meld/exhaust/cheapen/add-targeting
+  randomised on every eligible play, `take_key` exercised, full ascension
+  range, and a mid-combat `Run.to_dict()`/`from_dict()` round-trip checked
+  for exact JSON equality on ~15% of combat steps) across all ten character
+  pairs at four ascension tiers: also clean. The one real candidate this
+  search turned up — `enchanted_copy()` is called from nowhere but test
+  code, so none of the eight fully-implemented enchants are reachable by a
+  real player — is already tracked and correctly triaged: backlog #3 (the
+  economy/UI half) is `needs a screen` and open on purpose, #12 (the
+  engine half) is `cloud-safe` and already shipped. Not this duty's to
+  touch. Rather than force a fix that isn't there, fell through to duty 3
+  per this item's own "never report nothing to do" rule and the escape
+  hatch that follows it — logging the empty duty-2 pass honestly (rule 8)
+  instead of padding it out.
+
+- **2026-09-09 (even later still), #86 duty 3 (verify a mechanic actually
+  works), continuing straight on from the duty-2 pass above.** The
+  `buy`/`leave_shop`/`campfire`/`skip_reward`/`pick_card`/`restart` wiring
+  sweep (`1745b14`) never reached the four `GameClient` senders that only
+  matter mid-fight: `fall`, `use_potion`, `discard_potion`, `resolve_scry`.
+  Each already has real `Run`/`Combat`-level test coverage elsewhere in
+  `run_tests.gd`, but none had ever been sent through a live
+  `GameClient`/`GameHost`/`LocalTransport` session — the exact shape of gap
+  `take_key`'s own missing `_on_command` case hid in before that duty-3
+  pass found it. Added one wiring test per command in the same style as
+  the existing six: a solo `GameHost`/`GameClient` pair, direct state setup
+  (a hunter mid-climb for `fall`, a hand-built potion dict for
+  `use_potion`/`discard_potion`, a seeded `scry_pending` for
+  `resolve_scry`), the real client call, then an assertion against `Run`/
+  `Combat` state. All four passed on the first run — the wiring reads
+  correct today, same as the six-command sweep found, so this is
+  verification with no bug to fix, but the untested layer had already
+  proven once that "reads correct" and "is tested" are different claims.
+  Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS
+  PASSED. Next `#86` turn is duty 2.
+
 - **2026-09-09 (later still yet again), #86 duty 3 (verify a mechanic
   actually works).** Last own commit (`6006b2a`) was duty 2, so this turn is
   duty 3. `_test_rhythm_builds_and_scales` proves the LANDED half of

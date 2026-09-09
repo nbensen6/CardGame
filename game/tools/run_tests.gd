@@ -1207,6 +1207,22 @@ func _init() -> void:
 	_test_backlog86_gamehost_wires_pick_card_command_to_run()
 	_test_backlog86_gamehost_wires_restart_command_to_run()
 
+	# backlog #86 duty 2 (search) turned up nothing new after an exhaustive
+	# pass over /core, /session, /net and the views (content-integrity
+	# cross-checks, the robustness sweep, and a custom fuzzer covering
+	# potions/scry/melding/keys/shops/save-load all came back clean) -- so
+	# this run falls to duty 3 instead, closing a gap the search itself
+	# turned up: fall/use_potion/discard_potion/resolve_scry were the four
+	# GameClient senders the buy/leave_shop/campfire/skip_reward/pick_card/
+	# restart sweep above never got to. Same class of gap take_key's own
+	# missing _on_command case hid in -- each has real Run/Combat-level
+	# coverage elsewhere in this file but had never once been sent through
+	# the actual GameClient -> GameHost -> Run path.
+	_test_backlog86_gamehost_wires_fall_command_to_run()
+	_test_backlog86_gamehost_wires_use_potion_command_to_run()
+	_test_backlog86_gamehost_wires_discard_potion_command_to_run()
+	_test_backlog86_gamehost_wires_resolve_scry_command_to_run()
+
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
 	# not "inside tree" yet until the engine's main loop actually starts, one
@@ -9975,6 +9991,62 @@ func _test_backlog86_gamehost_wires_restart_command_to_run() -> void:
 	c.restart()
 	_expect(host._run != first_run and host._run.hp[0] == host._run.max_hp[0],
 		"a 'restart' command sent through GameClient/GameHost must actually reach GameHost.start_new_run and hand back a fresh run")
+
+
+## backlog #86 duty 3: the wiring sweep above (take_key, then
+## buy/leave_shop/campfire/skip_reward/pick_card/restart) never reached the
+## four commands that only matter mid-fight -- fall/use_potion/
+## discard_potion/resolve_scry all have real Run/Combat-level tests
+## elsewhere in this file, but until now none of them had ever been sent
+## through a live GameClient/GameHost/LocalTransport session. A dropped
+## case in GameHost._on_command's match for any of these would have passed
+## every existing test, exactly the shape take_key's own missing case hid
+## in. Four commands, four gaps, one test each.
+func _test_backlog86_gamehost_wires_fall_command_to_run() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var combat: Combat = host._run.combat
+	combat.boss.weak_point_height = 10
+	combat.boss.ledges = []
+	combat.players[0].foothold = 5
+	combat.players[0].combatant.hp = 30
+	_expect(not combat.is_secure(0), "setup sanity: the hunter is hanging between holds, not on a safe one")
+	c0.fall()
+	_expect(combat.players[0].foothold == 0 and combat.players[0].combatant.hp < 30,
+		"a 'fall' command sent through GameClient/GameHost must actually reach Combat.fall and drop the acting hunter")
+
+
+func _test_backlog86_gamehost_wires_use_potion_command_to_run() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	host._run.potions[0] = [{"name": "Test Tonic", "text": "", "effect": "heal", "value": 10}]
+	host._run.combat.players[0].combatant.hp = 5
+	c0.use_potion(0)
+	_expect(host._run.combat.players[0].combatant.hp == 15 and host._run.potions[0].is_empty(),
+		"a 'use_potion' command sent through GameClient/GameHost must actually reach Run.use_potion, apply its effect and empty the slot")
+
+
+func _test_backlog86_gamehost_wires_discard_potion_command_to_run() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	host._run.potions[0] = [{"name": "Unwanted", "text": "", "effect": "heal", "value": 1}]
+	c0.discard_potion(0)
+	_expect(host._run.potions[0].is_empty(),
+		"a 'discard_potion' command sent through GameClient/GameHost must actually reach Run.discard_potion and free the slot")
+
+
+func _test_backlog86_gamehost_wires_resolve_scry_command_to_run() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var ps: PlayerState = host._run.combat.players[0]
+	ps.scry_pending = [_slash()]
+	c0.resolve_scry([0])
+	_expect(ps.scry_pending.is_empty() and ps.discard_pile.size() == 1 and (ps.discard_pile[0] as Card).id == "slash",
+		"a 'resolve_scry' command sent through GameClient/GameHost must actually reach Combat.resolve_scry and bin the chosen card")
 
 
 ## backlog #86 duty 2: `Run.combat` is set once a run's first fight starts
