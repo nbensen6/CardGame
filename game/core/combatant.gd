@@ -96,6 +96,36 @@ func predicted_damage(amount: int) -> int:
 		return mini(remaining, 1)
 	return remaining
 
+## Same preview as predicted_damage(), but first simulates `prior_chip` damage
+## landing before `amount` does -- the exact order a sigil_fatigue/height_split
+## limiter (Combat._apply_limiter()) and the boss's own telegraphed move resolve
+## in a real round: the limiter spends Block/Buffer/Intangible for real BEFORE
+## the move gets a turn at them (backlog #86 duty 2; see Combat.incoming_for()).
+## Passing prior_chip <= 0 is identical to predicted_damage(amount). Mirrors
+## take_damage()'s own cascade (Block, then Buffer, then Intangible) without
+## mutating this Combatant -- plated_armour is left out on purpose, same as
+## predicted_damage(): it only decays on a real hit, it never reduces one.
+func predicted_damage_after(prior_chip: int, amount: int) -> int:
+	var chip := maxi(prior_chip, 0)
+	if chip <= 0:
+		return predicted_damage(amount)
+	var block_left := maxi(block - chip, 0)
+	var chip_through := chip - mini(block, chip)
+	var buffer_left := buffer
+	var intangible_left := intangible
+	if chip_through > 0 and buffer_left > 0:
+		buffer_left -= 1
+	elif chip_through > 0 and intangible_left > 0:
+		intangible_left -= 1
+
+	var remaining := maxi(amount, 0)
+	remaining -= mini(block_left, remaining)
+	if remaining > 0 and buffer_left > 0:
+		return 0
+	if remaining > 0 and intangible_left > 0:
+		return mini(remaining, 1)
+	return remaining
+
 ## Frail (backlog #36) cuts what actually lands here — a source that grants
 ## 4 Block still says it grants 4 (the card face never lies about a number it
 ## doesn't control), but only 3 show up on the sheet while Frail holds.

@@ -607,6 +607,30 @@ static func _rift_gap(ps_list: Array) -> int:
 	return maxi(0, hi - lo)
 
 
+## Read-only mirror of what _apply_limiter() would chip THIS hunter for at the
+## start of the boss's next turn. sigil_fatigue and height_split both call
+## Combatant.take_damage() directly, spending the same Block incoming_for()'s
+## move preview below is about to price -- and in the SAME order, because
+## _enemy_turn() runs _apply_limiter() BEFORE resolving the telegraphed move.
+## wound_decay only ever touches boss.wound, never a hunter, so it has nothing
+## to predict here. Kept in lockstep with _apply_limiter() by hand, the same
+## idiom incoming_for()'s own add-attack branch already uses for _adds_turn().
+func _predicted_limiter_damage(pi: int) -> int:
+	if boss.limiter.is_empty():
+		return 0
+	var value: int = int(boss.limiter.get("value", 0))
+	var ps: PlayerState = players[pi]
+	match String(boss.limiter.get("type", "")):
+		"sigil_fatigue":
+			if sigil_reached(pi) and ps.sigil_rounds + 1 > value:
+				return SIGIL_FATIGUE_DAMAGE
+		"height_split":
+			var mate: PlayerState = players[ally_index(pi)]
+			var excess: int = ps.foothold - mate.foothold - value
+			if excess > 0:
+				return excess
+	return 0
+
 ## What the beast's telegraphed move will actually cost this hunter, after Block.
 ##
 ## The intent icon already says WHAT is coming; this says whether you survive it.
@@ -648,10 +672,14 @@ func incoming_for(pi: int) -> Dictionary:
 			var add_move := add.current_move()
 			if String(add_move.get("type", "")) == "attack":
 				raw += int(add_move.get("value", 0)) + add.strength
-	# predicted_damage(), not a plain "raw - block": Buffer and Intangible
-	# (backlog #61) can cut what actually lands well below that, and this HUD
-	# number is supposed to say what will really happen (backlog #86 duty 2).
-	return {"raw": raw, "through": ps.combatant.predicted_damage(raw)}
+	# predicted_damage_after(), not a plain predicted_damage(): a sigil_fatigue
+	# or height_split limiter spends this same Block/Buffer/Intangible for real
+	# BEFORE the telegraphed move ever resolves (_enemy_turn() calls
+	# _apply_limiter() first), so a hunter camped past their allowance saw this
+	# preview claim they'd survive a hit that would actually land against
+	# defenses the limiter had already spent (backlog #86 duty 2).
+	var limiter_chip := _predicted_limiter_damage(pi)
+	return {"raw": raw, "through": ps.combatant.predicted_damage_after(limiter_chip, raw)}
 
 
 ## timed card's throw (client skill) — true grants the card's timed bonus.

@@ -868,6 +868,13 @@ func _init() -> void:
 	# glance" number -- only ever subtracted Block, a second copy of the rule
 	# that fell behind when Buffer/Intangible were added after it was written.
 	_test_backlog86_incoming_through_reckons_buffer_and_intangible_too()
+	# backlog #86 duty 2: incoming_for() was still blind to sigil_fatigue and
+	# height_split limiters -- _apply_limiter() spends this same Block for
+	# real BEFORE the telegraphed move it prices, so a hunter camped past a
+	# limiter's allowance saw a survivable number that lied.
+	_test_predicted_damage_after_matches_take_damage_dealt_in_the_same_order()
+	_test_backlog86_incoming_through_reckons_a_sigil_fatigue_limiter_chip()
+	_test_backlog86_incoming_through_reckons_a_height_split_limiter_chip()
 	# backlog #86 duty 3 (twenty-ninth pass): Screen.is_handheld/fit -- the
 	# mobile-scaling lever CLAUDE.md §5 exists to require and screen.gd's own
 	# doc comment calls "the one knob to turn if the phone build reads too
@@ -6419,6 +6426,96 @@ func _test_backlog86_incoming_through_reckons_buffer_and_intangible_too() -> voi
 	target.take_damage(int(capped["raw"]))
 	_expect(int(capped["through"]) == 1 and hp_before_intangible - target.hp == 1,
 		"an Intangible stack caps the hit at 1 -- the HUD must match, not the raw amount")
+
+
+## backlog #86 duty 2: Combatant.predicted_damage_after() cross-checked against
+## take_damage() dealing the same two hits for real, in the same order
+## _enemy_turn() actually resolves them (_apply_limiter()'s chip, then the
+## telegraphed move) -- the same idiom the Buffer/Intangible test above uses,
+## just with a chip landing first. Covers both shapes a chip can leave a
+## Buffer/Intangible stack in: fully absorbed by Block (the stack survives for
+## the move behind it) and big enough to reach past Block (the stack is spent
+## by the chip itself, so the move gets no mitigation at all).
+func _test_predicted_damage_after_matches_take_damage_dealt_in_the_same_order() -> void:
+	var cases: Array[Dictionary] = [
+		{"block": 5, "buffer": 1, "intangible": 0, "chip": 2, "move": 10},  # chip fully absorbed
+		{"block": 5, "buffer": 1, "intangible": 0, "chip": 8, "move": 10},  # chip spends Buffer
+		{"block": 3, "buffer": 0, "intangible": 1, "chip": 5, "move": 6},   # chip spends Intangible
+		{"block": 10, "buffer": 0, "intangible": 0, "chip": 4, "move": 8},  # plain Block only
+		{"block": 0, "buffer": 0, "intangible": 0, "chip": 0, "move": 8},   # no chip at all
+	]
+	for c in cases:
+		var preview := Combatant.new("Preview", 100)
+		preview.block = int(c["block"])
+		preview.buffer = int(c["buffer"])
+		preview.intangible = int(c["intangible"])
+		var predicted := preview.predicted_damage_after(int(c["chip"]), int(c["move"]))
+
+		var real := Combatant.new("Real", 100)
+		real.block = int(c["block"])
+		real.buffer = int(c["buffer"])
+		real.intangible = int(c["intangible"])
+		real.take_damage(int(c["chip"]))
+		var hp_before_move := real.hp
+		real.take_damage(int(c["move"]))
+		var actual := hp_before_move - real.hp
+		_expect(predicted == actual,
+			("predicted_damage_after(chip=%d, move=%d) with block=%d buffer=%d intangible=%d " +
+			 "predicted %d but take_damage() dealing the same two hits for real did %d") % [
+				c["chip"], c["move"], c["block"], c["buffer"], c["intangible"], predicted, actual])
+
+
+## backlog #86 duty 2: Combat._apply_limiter()'s "sigil_fatigue" branch spends
+## this hunter's real Block via take_damage() BEFORE the telegraphed move
+## resolves (_enemy_turn() calls it first) -- but incoming_for() never
+## consulted boss.limiter at all, so a hunter who had camped the sigil one
+## round too long saw the HUD claim they'd survive a hit that would actually
+## land against Block the fatigue chip had already spent. Plays the round out
+## for real, same shape as the add-attack and rift-gap cross-checks above.
+func _test_backlog86_incoming_through_reckons_a_sigil_fatigue_limiter_chip() -> void:
+	var boss := _dummy_boss(300, 8)  # attacks player 0 for 8 on round 1
+	boss.weak_point_height = 3
+	boss.limiter = {"type": "sigil_fatigue", "value": 1}
+	var c := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	c.players[0].foothold = 3        # at the sigil
+	c.players[0].sigil_rounds = 1    # already at the limiter's allowance --
+	                                  # one more round at the sigil trips it
+	c.players[0].combatant.block = 10  # enough to fully absorb the 4-damage chip
+
+	var previewed := c.incoming_for(0)
+	_expect(int(previewed["raw"]) == 8, "sanity: the telegraphed move itself is still just the boss's 8")
+	_expect(int(previewed["through"]) == 2,
+		"the sigil_fatigue chip (4) must eat Block before the move's 8 does -- 10 Block leaves 6, so 2 of the 8 gets through")
+
+	var hp_before: int = c.players[0].combatant.hp
+	c.end_turn(0)
+	c.end_turn(1)
+	var actual: int = hp_before - c.players[0].combatant.hp
+	_expect(actual == 2,
+		"the previewed 2 must equal what the round actually costs once the fatigue chip has spent its share of Block (got %d)" % actual)
+
+
+## Same shape as the sigil_fatigue test above, for the other hunter-facing
+## limiter: "height_split" chips whichever hunter has climbed too far above
+## their ally, and that chip lands via the same Combat._apply_limiter() call,
+## before the same move.
+func _test_backlog86_incoming_through_reckons_a_height_split_limiter_chip() -> void:
+	var boss := _dummy_boss(300, 6)  # attacks player 0 for 6 on round 1
+	boss.limiter = {"type": "height_split", "value": 4}
+	var c := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	c.players[0].foothold = 9  # 9 - 0 - 4 = 5 Height past the allowance
+	c.players[0].combatant.block = 10  # enough to fully absorb the 5-damage chip
+
+	var previewed := c.incoming_for(0)
+	_expect(int(previewed["through"]) == 1,
+		"the height_split chip (5) must eat Block before the move's 6 does -- 10 Block leaves 5, so 1 of the 6 gets through")
+
+	var hp_before: int = c.players[0].combatant.hp
+	c.end_turn(0)
+	c.end_turn(1)
+	var actual: int = hp_before - c.players[0].combatant.hp
+	_expect(actual == 1,
+		"the previewed 1 must equal what the round actually costs once the height_split chip has spent its share of Block (got %d)" % actual)
 
 
 ## The card FACE shows preview(); play_card resolves through the same call. The
