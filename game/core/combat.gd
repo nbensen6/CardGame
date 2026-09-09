@@ -1343,8 +1343,17 @@ func _enemy_turn() -> void:
 		"leech":
 			var ldmg := value + boss.strength
 			var lt: PlayerState = players[boss_target_index()]
+			# backlog #86 duty 2 — heal on what actually reached HP, not the raw
+			# pre-mitigation value: previewed BEFORE _boss_hits() spends the
+			# target's Block/Buffer/Intangible, the same predicted_damage()
+			# incoming_for() already previews a hit with. A fully-Blocked (or
+			# Buffered/Intangible-capped) "drain" wasn't a drain at all — nothing
+			# left the target — but the Titan recovered the full ldmg regardless,
+			# turning a well-blocked hit into a free heal for the boss instead of
+			# the whiff a real drain would be.
+			var real_dmg := lt.combatant.predicted_damage(ldmg)
 			_boss_hits(lt, ldmg)
-			var healed := mini(ldmg, boss.max_hp - boss.hp)
+			var healed := mini(real_dmg, boss.max_hp - boss.hp)
 			boss.hp += healed
 			_log("%s drains %s for %d and recovers %d." % [boss.name, lt.combatant.name, ldmg, healed])
 		"attack_all":

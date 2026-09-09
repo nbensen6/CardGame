@@ -359,6 +359,8 @@ func _init() -> void:
 	_test_wound_bleeds_the_titan()
 	_test_flurry_multi_hit()
 	_test_leech_drains_and_heals()
+	_test_leech_heals_nothing_when_fully_blocked()
+	_test_leech_heals_only_what_gets_through_block()
 	_test_wound_decay_limiter_sheds_poison()
 	_test_sigil_fatigue_limiter_punishes_camping()
 	_test_height_split_limiter_punishes_hoarding()
@@ -6729,6 +6731,44 @@ func _test_leech_drains_and_heals() -> void:
 	combat.end_turn(1)  # leech hits hunter 1 for 12, Titan heals 12
 	_expect(combat.players[0].combatant.hp == 30 and combat.boss.hp == 62,
 		"leech drains a hunter and heals the Titan")
+
+
+## backlog #86 duty 2 — a "leech" move healed the Titan by its raw, pre-Block
+## value even when the target's Block fully absorbed the hit: _enemy_turn()'s
+## "leech" branch called mini(ldmg, ...) straight off the move's own `value`,
+## never asking take_damage() (or its own predicted_damage() preview) what
+## actually reached HP. A well-blocked "drain" isn't a drain — nothing left
+## the target — so a Titan with this move in its pattern could farm free heals
+## off a hunter tanking behind a wall of Block, which is exactly backwards
+## from what "leech" is supposed to reward.
+func _test_leech_heals_nothing_when_fully_blocked() -> void:
+	var boss := Boss.new("Leech", 100)
+	boss.hp = 50
+	boss.moves = [{"type": "leech", "value": 12}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.players[0].combatant.block = 20  # more than enough to eat the whole 12
+	combat.end_turn(0)
+	# leech hits hunter 0 for 12, fully blocked -> nothing to drain. (end_turn(1)
+	# also starts the next round synchronously once the enemy turn resolves, which
+	# re-seeds Block for the new round -- so this only asserts HP and the Titan's
+	# own heal, not the post-round Block value, which is unrelated to this bug.)
+	combat.end_turn(1)
+	_expect(combat.players[0].combatant.hp == 42 and combat.boss.hp == 50,
+		"a fully-blocked leech drains nothing and heals the Titan nothing")
+
+
+## Same bug, partial mitigation: only the Block-through amount should heal the
+## Titan, not the move's full raw value.
+func _test_leech_heals_only_what_gets_through_block() -> void:
+	var boss := Boss.new("Leech", 100)
+	boss.hp = 50
+	boss.moves = [{"type": "leech", "value": 12}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.players[0].combatant.block = 5  # 5 of the 12 is absorbed, 7 gets through
+	combat.end_turn(0)
+	combat.end_turn(1)
+	_expect(combat.players[0].combatant.hp == 35 and combat.boss.hp == 57,
+		"leech heals only the 7 that actually reached HP, not the raw 12")
 
 
 func _test_wound_decay_limiter_sheds_poison() -> void:

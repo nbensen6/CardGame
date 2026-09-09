@@ -2714,6 +2714,26 @@ rather than inventing work.
   (`attack`/`leech`'s single-target pick, `attack_all`'s hits-everyone) in a
   way nothing currently specifies. That's a "what should the danger actually
   be" call, not a bug with one obvious fix (2026-09-07, #86 duty 2).
+- **A boss's "curse" move can compound forever within one fight, with no way
+  out.** Every other repeating boss-move effect either resolves instantly
+  (attack/block) or decays/spends a stack over time (frail decays,
+  wound_decay sheds Wound, artifact/buffer/intangible spend one per use) —
+  "curse" alone hands the targeted hunter a real, permanent `bruised_grip`
+  card with no exhaust, no decay, and no per-fight cap, and it can come up
+  in the SAME beast's pattern every 5 moves indefinitely (`mire_snapper`,
+  `bosses.json`; three other beasts also carry it). Confirmed via a
+  reproduced `robustness_sweep.gd` timeout (`frog+goblin_mech`, ascension 1,
+  seed 27795, ~900 rounds): both hunters' piles end up 95%+ dead cards with
+  no way to ever shed one mid-fight. Under any plausible real pace (an 83 HP
+  boss should die in ~10-15 rounds) this never bites — it only shows up
+  because a fight stalled far longer than intended — so it isn't fixed here.
+  What "fixing" it even means is the open question: should a status card
+  from a boss move be unplayable (like a classic curse), auto-exhaust if
+  held (`ethereal` already exists for this shape but isn't wired to any
+  card), or cap the move's uses per fight? Any of those changes what a curse
+  card IS and how "curse" reads as a threat, which is a design call about
+  the mechanic's identity, not a generic structural fix (2026-09-09, #86
+  duty 2).
 
 ## Later — parked, not forgotten
 
@@ -2725,6 +2745,61 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-09-09, #86 duty 2 (find an error and resolve it).** Last own commit
+  (`037c2eb`) was duty 3, so this turn is duty 2. Followed up the one loose
+  thread the last duty-2 pass left behind: `frog+goblin_mech A1 seed=27795,
+  policy=random` still timing out in a widened (uncommitted) robustness
+  sweep, undiagnosed because "the debug harness itself hung." Reproduced it
+  standalone (a throwaway instrumented copy of the sweep loop, deleted
+  before committing) and traced the timeout to a real elite fight
+  (`mire_snapper`) that never progresses under a policy that always plays
+  whatever's legal: its "curse" move fires unconditionally every 5th round
+  forever with no cap and no way for the resulting `bruised_grip` cards to
+  ever leave a hunter's piles (no exhaust, no decay — unlike every other
+  recurring debuff in the game), so over ~900 rounds both hands fill with
+  95%+ dead cards. That part is a real gap (every repeating boss effect
+  either resolves instantly or decays; this one alone compounds forever),
+  but closing it means deciding how a curse card is meant to behave
+  (unplayable? auto-exhausts? capped per fight?) — a call about what a
+  curse IS, not a generic rule with an unambiguous fix, so it stayed
+  untouched rather than reshaping a mechanic on my own judgement. Read on
+  past it instead of stopping there, and while reading `_enemy_turn()`'s
+  move-resolution `match` for the curse move, found a second, smaller, and
+  actually fixable bug sitting right next to it: `mire_snapper`'s own
+  "leech" move (five other beasts share the type) healed the Titan by the
+  move's raw, PRE-Block value every time, not by what actually reached HP —
+  `_boss_hits()` runs the hit through the target's real Block/Buffer/
+  Intangible via `take_damage()`, but the heal line computed `mini(ldmg,
+  boss.max_hp - boss.hp)` off the untouched `ldmg`, so a hunter who fully
+  blocks a "drain" for real still hands the Titan a free full heal — this is
+  very likely why `mire_snapper`'s HP was pinned near max the entire 4000-step
+  timeout despite the fight supposedly being winnable. Same class of bug this
+  rotation has fixed twice before on the SAME move family (`incoming_for`
+  never pricing Buffer/Intangible; a power's Block log reporting the raw
+  amount instead of the Dexterity/Frail-adjusted one) — a number computed
+  correctly in one place (`Combatant.predicted_damage()`, built for exactly
+  this) and never asked for by its neighbour. Fixed by previewing the real
+  damage with `predicted_damage(ldmg)` BEFORE `_boss_hits()` spends the
+  target's mitigation, then healing off that instead of `ldmg` — no move
+  value, Titan HP, or Ascension number touched, only what "actually landed"
+  means for the heal. Added two tests (fully-blocked -> heals 0; Block 5 of
+  12 -> heals only the 7 that got through) and watched both fail against the
+  unfixed code first (reverted `combat.gd` only, ran, `2 TEST(S) FAILED`,
+  restored). Hit one snag writing them: asserting the target's own Block
+  value after the hit failed even on the fixed code, because `end_turn()`'s
+  second call also starts the next round synchronously once the enemy turn
+  resolves, and `_begin_round()` re-seeds Block for the new round before the
+  assertion ever runs — not a bug, just not what those two tests are about,
+  so they assert HP and the Titan's own HP only. Fresh `--import`, headless,
+  Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED (1185 passed). Re-ran
+  the shipped `robustness_sweep.gd` (3x6, unmodified) as a smoke test after:
+  clean, 360 runs / 0 dead ends / 0 crashes. Did not re-chase the original
+  seed=27795 timeout with the widened sweep — the curse-accumulation gap
+  that actually causes it is still there on purpose (see above), so it would
+  still time out; the leech fix is a real, separate, resolved bug found
+  along the way, not a claim that seed=27795 now finishes. Next `#86` turn
+  is duty 3 (verify a mechanic actually works).
 
 - **2026-09-09, #86 duty 3 (verify a mechanic actually works).** Last own
   commit (`0191055`) was duty 2, so this turn is duty 3. `_handle_power_effects()`
