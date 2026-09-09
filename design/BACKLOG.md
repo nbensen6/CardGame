@@ -2726,6 +2726,33 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-09** — #86 duty 3 (verify a mechanic actually works). Last own
+  commit was `c067da5` (duty 2, the power-card Block-log fix), so this turn
+  is duty 3. Went looking for a rule nothing has ever asked a direct question
+  of, rather than a fourth case on climb/timing/toggle logic already covered
+  by earlier passes. Found `RunMap._roll_type` (`core/run_map.gd`) — the run
+  map's pacing table, deciding whether a row offers a fight, a breather, or
+  the risk/reward spread in between. Its own doc comment makes three claims
+  nothing checked: row 0 of every act is *always* a fight; the run-up to
+  each Titan *never* offers a fight or a shop (only rest/treasure/event/
+  elite); the middle rows split six ways on specific cutoffs. Every existing
+  map test (`_test_map_generates_connected_rows`, the shop/key guarantees)
+  only checks outcomes of the whole generator, never this table directly.
+  Lifted the roll-to-type logic out to a pure `static func type_for_roll
+  (row_in_act, roll) -> String`, leaving `_roll_type` a one-line wrapper
+  around `rng.randi_range(0, 99)` — same "extract so every boundary is
+  exact, not seed-hunted" move `route_between_rungs`/`hop_arc` used before
+  it. Added three tests: row 0 across a spread of rolls is always "fight";
+  an exhaustive 0..99 sweep of the pre-boss row never returns "fight" or
+  "shop" and does hit all four allowed types; an exact pairing of every
+  middle-row cutoff (0/33/34/53/54/69/70/81/82/91/92/99) to its documented
+  type. Verified the tests actually catch a regression: temporarily changed
+  the pre-boss row's first branch to return "shop" instead of "rest",
+  re-ran, watched `1 TEST(S) FAILED`, restored from a pre-edit copy
+  (confirmed clean via `git diff`). Fresh `--import`, headless, Godot
+  4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2
+  (find an error and resolve it).
+
 - **2026-09-09** — #86 duty 2 (find an error and resolve it). Last own
   commit was `3c7868d` (duty 3, `DeckView`'s toggle rule), so this turn is
   duty 2. Same "two copies of one truth" shape this duty keeps finding, and

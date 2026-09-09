@@ -151,9 +151,15 @@ func _make_row(act: int, row_in_act: int, rng: RandomNumberGenerator) -> Array:
 ## Each act eases in with a fight and tends to offer a breather before the boss;
 ## the middle is where the risk/reward spread lives.
 func _roll_type(row_in_act: int, rng: RandomNumberGenerator) -> String:
+	return type_for_roll(row_in_act, rng.randi_range(0, 99))
+
+
+## The pacing table `_roll_type` reads, lifted out to a pure `(row_in_act, roll)
+## -> type` lookup so every boundary can be asserted exactly headless instead of
+## by hunting for a seed that happens to land the right side of a cutoff.
+static func type_for_roll(row_in_act: int, roll: int) -> String:
 	if row_in_act == 0:
 		return "fight"
-	var roll := rng.randi_range(0, 99)
 	if row_in_act >= ROWS_PER_ACT - 1:  # the run-up to the Titan
 		if roll < 36:
 			return "rest"

@@ -90,6 +90,9 @@ func _init() -> void:
 	_test_backlog86_aligned_keeps_paths_straight_and_endpoints_pinned()
 	_test_backlog86_aligned_guards_singleton_rows()
 	_test_backlog86_run_map_available_before_start_and_out_of_bounds()
+	_test_backlog86_type_for_roll_row_zero_is_always_a_fight()
+	_test_backlog86_type_for_roll_preboss_row_never_offers_fight_or_shop()
+	_test_backlog86_type_for_roll_middle_row_covers_every_boundary()
 	_test_backlog86_pick_node_rejects_an_in_bounds_column_not_reached_by_the_current_edges()
 	_test_backlog38_same_seed_reproduces_map_shop_and_rewards()
 	_test_backlog86_encounter_seed_reproduces_the_exact_same_shuffle()
@@ -1935,6 +1938,69 @@ func _test_backlog86_run_map_available_before_start_and_out_of_bounds() -> void:
 		and past_last_row.is_empty() and negative_col.is_empty() and past_last_col.is_empty(),
 		"available() offers every opening column before the run starts (ignoring col entirely) " +
 		"and returns nothing for a row or column the map doesn't have")
+
+
+## #86 duty 3 — `RunMap._roll_type`'s own doc comment claims a pacing curve
+## ("eases in with a fight... a breather before the boss... the middle is where
+## the risk/reward spread lives") that nothing has ever checked directly: every
+## existing map test asserts outcomes of the whole generator (connectivity, a
+## guaranteed shop, a guaranteed key source) but never the row-by-row TYPE rule
+## those outcomes are built from. Lifted the roll-to-type table out to a pure
+## `type_for_roll(row_in_act, roll)` so every cutoff can be hit exactly, rather
+## than hunting for a seed that happens to land on the right side of one.
+##
+## Row 0 of every act is documented as "eases in with a fight" — always, not
+## just usually. `_test_map_generates_connected_rows` only ever checked total
+## node/boss counts, never that row 0 specifically is exempt from the dice.
+func _test_backlog86_type_for_roll_row_zero_is_always_a_fight() -> void:
+	var ok := true
+	for roll in [0, 1, 33, 34, 53, 54, 69, 70, 81, 82, 91, 92, 98, 99]:
+		if RunMap.type_for_roll(0, roll) != "fight":
+			ok = false
+	_expect(ok, "row 0 of an act is always a fight, whatever the roll")
+
+
+## The run-up to the Titan (row_in_act == ROWS_PER_ACT - 1) is documented as a
+## breather: `_ensure_shop`'s own comment calls the shop "the same as no shop
+## at all" if it lands too early, and the pre-boss weighting excludes "fight"
+## and "shop" from its four branches entirely (rest/treasure/event/elite only).
+## Nothing has ever proven that exclusion — a stray "shop" or "fight" here would
+## contradict `_ensure_shop`'s back-half guarantee and hand a player a fight
+## with no room left to rest first, silently.
+func _test_backlog86_type_for_roll_preboss_row_never_offers_fight_or_shop() -> void:
+	var row := RunMap.ROWS_PER_ACT - 1
+	var seen := {}
+	var forbidden := false
+	for roll in range(0, 100):
+		var t := RunMap.type_for_roll(row, roll)
+		seen[t] = true
+		if t == "fight" or t == "shop":
+			forbidden = true
+	var allowed := seen.has("rest") and seen.has("treasure") and seen.has("event") and seen.has("elite")
+	_expect(not forbidden and allowed and seen.size() == 4,
+		"the run-up to the Titan only ever offers rest/treasure/event/elite, and every one of those four is reachable")
+
+
+## The middle rows (1..ROWS_PER_ACT-2) are the only place "fight"/"event"/
+## "elite"/"shop"/"treasure"/"rest" all compete — an exhaustive sweep of every
+## roll pins each of the six cutoffs (34/54/70/82/92) exactly, so a future edit
+## that shifts a boundary or drops a branch (leaving a roll with no type, or two
+## branches overlapping) fails here instead of shipping as a quieter shift in
+## the run's overall difficulty curve.
+func _test_backlog86_type_for_roll_middle_row_covers_every_boundary() -> void:
+	var row := 2  # any row strictly between 0 and ROWS_PER_ACT - 1
+	var pairs := {
+		0: "fight", 33: "fight", 34: "event", 53: "event",
+		54: "elite", 69: "elite", 70: "shop", 81: "shop",
+		82: "treasure", 91: "treasure", 92: "rest", 99: "rest",
+	}
+	var ok := true
+	var bad_roll := -1
+	for roll in pairs.keys():
+		if RunMap.type_for_roll(row, roll) != pairs[roll]:
+			ok = false
+			bad_roll = roll
+	_expect(ok, "every middle-row cutoff lands on the documented type (failed at roll %d)" % bad_roll)
 
 
 ## #86 duty 3 — the branching route only means anything if a player can be
