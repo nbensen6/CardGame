@@ -5,6 +5,109 @@ score sheets. Per `tools/fixer/BRIEF.md`: fix it only if it's inside
 `tools/blender/**` / `game/assets/3d/**`; anything in `game/**` GDScript gets
 written up here for the session, not touched.
 
+## 2026-09-09 — Pass D (proportion): the code's own "Crag Pup fits, Sunken Warden looms" contrast is true for 2 of the game's 28 beasts — everyone else gets the looming crop the comment says is reserved for Titans, and the wide "meet it once" establishing shot never fires for anyone
+
+**Pass D (proportion) — rotation choice.** `git log --format='%h %ad %s' --date=format:'%Y-%m-%d %H:%M:%S' -- design/progress/bugs.md` shows the four post-rewrite passes ran D (2026-09-08 14:02) → C (15:00) → B (16:05) → A (17:08), in that order, and nothing since. D ran longest ago, so it's due.
+
+The prior Pass D entry below (2026-09-08) found the Frog forced to person-height by `_fit_height`'s common `HUNTER_HEIGHT`, and explicitly flagged as unchecked: *"Did not check Titan-vs-Titan proportion this pass ... worth a separate Pass D pass to confirm rather than assumed clean here."* This run is that check — not of hunters, but of how the beasts themselves are framed against each other.
+
+**Commands (10 beasts, same state, only `beast=` varies):**
+```
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:/shot_<name>.png state=3d beast=<name>
+```
+Run for `crag_pup`, `bounder`, `bog_leech`, `brine_urchin`, `eyrie_hawk`, `boulder_ram`,
+`glyph_tortoise`, `stone_warden`, `drowned_colossus`, `sunken_warden`.
+
+**What the harness printed** — the `CAM ... box pos=... size=(...)` line, one per beast. The
+box's Y size (height) came out, across the ten: `crag_pup` 18.4, `bounder` 18.4, `boulder_ram`
+20.0, `glyph_tortoise` 20.0, `husk_beetle`(see below) 20.0, `bog_leech` 21.6, `brine_urchin`
+21.6, `eyrie_hawk` 21.6, `stone_warden` 21.6, `drowned_colossus` 29.6, `sunken_warden` 32.8. The
+printed camera `dist` was **31.44 for all ten, to two decimal places, regardless of height** —
+the same distance for an 18.4-unit beast as a 32.8-unit one.
+
+**What I saw in the PNGs:** `crag_pup` and `bounder` (both traced to `weak_point_height: 4`,
+the lowest value in `bosses.json`) sit fully inside the frame with clear headroom between the
+top of the model and the top HUD bar. Every other beast I opened — `boulder_ram`,
+`glyph_tortoise`, `stone_warden`, `bog_leech`, `brine_urchin`, `eyrie_hawk`, `drowned_colossus`,
+`sunken_warden`, and `husk_beetle` (`weak_point_height: 5`, one step above the two that fit) —
+has its head, horns, or crown sliced off flat by the top edge of the screen, several of them
+overlapping the top HUD bar with what's left. `stone_warden`'s is the starkest: the whole top of
+its head is a flat cut at the frame boundary, mid-model, not a silhouette that happens to reach
+the edge.
+
+**Why — traced to three numbers, not a judgement call:**
+1. `_show_beast()` (`combat_3d.gd:1230`, called `combat_3d.gd:1060-1061`) sets a beast's height
+   to `BEAST_BASE_HEIGHT (12.0) + BEAST_HEIGHT_PER_CLIMB (1.6) * boss["weak_point_height"]`
+   (`combat_3d.gd:102-103,1232`) — confirmed against `bosses.json`'s own `weak_point_height`
+   field, which every one of the ten boxes above matches exactly (e.g. `crag_pup`
+   `weak_point_height: 4` → 12 + 1.6×4 = 18.4; `sunken_warden` `weak_point_height: 13` →
+   12 + 1.6×13 = 32.8).
+2. `_frame_beast()` (`combat_3d.gd:1441`) sizes the camera window to `tall * 1.18` (working) or
+   `tall * 1.35` (establishing), both routed through `_window_for()` (`combat_3d.gd:1613-1614`):
+   `clampf(want / (1.0 - HUD_BOTTOM_FRACTION), VIEW_WINDOW_MIN, VIEW_WINDOW_MAX)`, i.e.
+   `clampf(want / 0.66, 9.0, 28.0)`.
+3. `bosses.json`'s `weak_point_height` ranges from **4 (its own minimum, held by Crag Pup and
+   Bounder) to 13**. Solving the clamp: the *working* window only stays under its 28.0 ceiling
+   for `tall ≤ 15.66` (`weak_point_height ≤ ~2.29`) and the wider *establishing* window only
+   stays under it for `tall ≤ 13.69` (`weak_point_height ≤ ~0.87`). **No beast in the data has a
+   `weak_point_height` that low** — the lowest is 4, already past both thresholds. So every
+   single beast in the game hits the same `VIEW_WINDOW_MAX = 28.0` ceiling, on both the wide and
+   the close shot, and gets the exact same camera distance out of `_dist_for_window()`
+   (`combat_3d.gd:1634-1640`) — which is exactly the "31.44 for all ten" the harness printed.
+   Only the two shortest beasts (`weak_point_height: 4`) are short enough, in absolute terms, to
+   still fit inside that fixed 28-unit window with margin; everything else pokes out the top by
+   however much its own height exceeds it.
+
+**A second, sharper consequence of the same clamp:** `_frame_beast()`'s own doc comment
+(`combat_3d.gd:1434-1452`) says the game "opens on the whole creature, however far back that has
+to be, then falls in to the working shot... you get to see what you've picked a fight with once"
+— an eased transition gated by `_establishing = _dist > _working_dist + 0.1` (`combat_3d.gd:1454`,
+consumed at `1584-1590`). Since both `_dist` (established via the `*1.35` window) and
+`_working_dist` (via `*1.18`) clamp to the identical `28.0` ceiling for every beast in the current
+data (per point 3 above), `_dist` and `_working_dist` are numerically equal from the first frame,
+`_establishing` evaluates false immediately, and the eased wide-to-working fall-in this comment
+describes never plays for any beast currently in `bosses.json`. The "meet it once, full body"
+reveal is not a rare thing that only the biggest Titans skip — it's dead code against the whole
+roster as it's currently tuned.
+
+**Why this reads as unfinished, not just technically true to the code:** `climb_frame_for()`'s
+own comment (`combat_3d.gd:1689-1692`) states the intent in so many words: *"cropping a Crag
+Pup's head isn't imposing, it just looks like a mistake. Only the ones too big to hold get the
+looming shot, which makes towering a thing the act Titans do rather than something every fight
+does."* That line describes a game where most fights look like `crag_pup` (clean, fits) and a
+few big Titans loom. The data makes the opposite true: **26 of the 28 beasts in `bosses.json`**
+have `weak_point_height ≥ 5` (I checked the field for all 28; only `crag_pup` and `bounder` sit
+at the minimum of 4), so 26 of 28 first impressions in this game are the "looks like a mistake"
+crop the code was written to avoid, including beasts with no Titan/act-boss framing at all —
+`husk_beetle`, `boulder_ram`, and `glyph_tortoise` looked, by eye, like completely ordinary
+mid-tier fights, not the towering set-piece the cropped shot is supposed to be reserved for.
+
+**Where to look:** `combat_3d.gd:102-103` (`BEAST_BASE_HEIGHT`, `BEAST_HEIGHT_PER_CLIMB`),
+`combat_3d.gd:110-111` (`VIEW_WINDOW_MIN`, `VIEW_WINDOW_MAX`), `combat_3d.gd:1434-1458`
+(`_frame_beast`), `combat_3d.gd:1613-1640` (`_window_for`, `_dist_for_window`) — either the
+height formula's constants or the window clamp need to move relative to each other so the
+`weak_point_height` range that actually exists in `bosses.json` (4–13) produces the fits/looms
+split the comments describe, instead of a split that only exists between 4 and 5. Not touched —
+`game/**` GDScript.
+
+**Could not check this pass:** the remaining 18 beasts in `bosses.json` by screenshot (I relied
+on the `weak_point_height` field, already confirmed to predict the box size exactly for all ten
+I did shoot, to extrapolate the other 18 — worth a by-eye pass if that inference is doubted); the
+climb-in-progress framing (`_climb_frame`/`climb_frame_for`, `combat_3d.gd:1656-1699`), which
+reads the same `_window_for` clamp once a hunter leaves the ground and may or may not hit the
+same ceiling differently; and any of this at `mobile`/`size=2340x1080`, where `HUD_BOTTOM_FRACTION`
+reserving the same screen fraction on a much narrower frame could plausibly make the crop worse,
+not better.
+
+**A tooling note for whoever runs this pass next:** passing `out=` with backslashes
+(`C:\fixer_shots\shot.png`) through this session's Bash tool silently produced
+`C:fixer_shotsshot.png` — every backslash vanished, not just at drive-root (the already-logged
+gotcha below is a different failure). Godot still printed `SHOT SAVED` and no file existed at
+the intended path. Forward slashes (`out=C:/fixer_shots/shot.png`) worked every time this run.
+If you're driving this from PowerShell directly rather than through this tool, this may not
+reproduce — but it cost real time here, so worth knowing.
+
 ## 2026-09-08 — Pass A (the walk): two hunters render fully merged into one blob when the Goblin Engineer is picked first, and the free camera refuses to drag from three screen regions it should not refuse
 
 **Pass A (the walk) — first run of this pass since the brief rewrite.** Grepped
