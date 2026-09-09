@@ -5,6 +5,122 @@ score sheets. Per `tools/fixer/BRIEF.md`: fix it only if it's inside
 `tools/blender/**` / `game/assets/3d/**`; anything in `game/**` GDScript gets
 written up here for the session, not touched.
 
+## 2026-09-09 — Pass C (cross-surface): the Frog's own deck is a patchwork of painted scenery and bare icons, side by side on the same screen, and every other hunter's deck is nothing but the icons — the cardart layer exists for one hunter in five
+
+**Pass C (cross-surface) — rotation choice.** `git log --format='%h %ad %s'
+--date=format:'%Y-%m-%d %H:%M:%S' -- design/progress/bugs.md`: D 2026-09-09
+17:57:26, A 17:00:54, B 16:13:40, C 15:57:53. C was oldest, so it's due.
+
+**Subject.** The last two Pass C entries both spent their whole run tracing
+`cinder_jackal` specifically and both explicitly listed `game/assets/cardart/**`
+as unchecked ("Card art... still not traced this pass either, two Pass C runs
+running"). This run picks that up, but not beast-by-beast — it follows one
+hunter, **the Frog**, across every screen that lays its own cards out, since
+that is the actual "same subject, many surfaces" comparison Pass C asks for,
+just applied to a hunter's deck instead of a beast's body.
+
+**Commands:**
+```
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:/fixer_shots/frog_hand.png state=3d beast=thrasher
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:/fixer_shots/frog_reward.png state=3dreward slot=0 beast=thrasher
+%GODOT% --path game --script res://tools/screenshot.gd -- ^
+    out=C:/fixer_shots/frog_campfire.png state=3dcampfire hold=upgrade beast=husk_beetle
+```
+(All three default to Frog in slot 0 / Goblin Engineer in slot 1 per
+`screenshot.gd:176-178`, so no extra args needed to put the Frog's own deck on
+screen in three different layouts: a 5-card hand mid-fight, a 3-card reward
+choice, and the full 10-card campfire "choose a card to sharpen" grid — the
+one screen in the game that lays out an entire starting deck side by side on
+purpose.)
+
+**What the harness printed:** the usual `CAM`/`HUNTER`/`VIS OK` lines for the
+combat shot, nothing state-specific for the reward or campfire shots (both
+route through the `game_3d` router — the same `_report_visibility()` coverage
+gap the 2026-09-09 Pass A entry already flagged for `3dreward`). Not a
+contradiction test either way; this is a looking-at-the-picture find.
+
+**What I saw in the PNGs:** in the mid-fight hand, the five cards read left to
+right as **Tongue Snap** (a flat white zigzag glyph on black), **Leap** (a full
+painted forest path, sky, and a tiny frog on a branch), **Tongue Snap** again
+(the same flat glyph), **Scramble** (a full painted blue-crystal rockface),
+**Tongue Flick** (a flat white sword glyph). Two photoreal-style paintings sit
+directly between three bare line-art glyphs in the same five-card row. The
+reward screen (Snap Volley / Metronome / Crescendo, the same pool the
+2026-09-09 Pass A entry already screenshotted for a different reason) repeats
+it in miniature: Snap Volley and Metronome are both flat glyph-on-black,
+Crescendo — planted between them — is a full painted scene, forest, rockface,
+frog, music notes and all. The campfire grid is the starkest: all ten of the
+Frog's cards laid out in one clean 5-wide, 2-row grid, and exactly **two** of
+the ten (Leap, Scramble, top-left) are painted; the other eight (both Tongue
+Snaps, Tongue Flick, Pounce, Hop, Leapfrog, Brace, Take Aim) are the same
+handful of reused glyphs — Leapfrog and Take Aim aren't even different glyphs
+from cards elsewhere in this same grid's family, they're a coil-spring icon
+and a stack-of-sandbags icon that read as generic "skill" clip art next to
+Leap's actual painted forest one slot to their left. Side by side, in a grid
+built specifically so a player compares ten cards at once, it doesn't read as
+"a deck," it reads as two finished cards sitting in a half-built shelf.
+
+**Why, from the code, not just the picture:** `card_view.gd`'s own comments
+say this plainly rather than hiding it — `CARD_ART := "res://assets/cardart/"`
+(`card_view.gd:1389`) is documented at `:1387` as **"187 cards currently share
+33 icons"**, and the fallback that makes a Tongue Snap render at all lives at
+`:378-384`: check `res://assets/cardart/<id>.png` first, and if it isn't
+there, "no painting yet: the shared icon, small and centred, so the card is
+still legible while 187 of these are waiting to be drawn." This is a
+deliberate, graceful, intentional degrade, not a bug in the sense this brief
+usually means — but the rollout isn't evenly thin, it's concentrated on one
+hunter. Counted directly: `game/assets/cardart/` holds exactly **8 PNGs
+covering 4 unique cards** (`crescendo` + its 4 layered-rarity variants, plus
+`leap`, `lily_pad`, `scramble`) against **187 cards total** in
+`game/data/cards.json` — 2% of the card pool. Cross-referencing
+`game/data/characters.json`'s `starter_deck`/`reward_pool` for all five
+hunters: `leap`, `lily_pad`, and `crescendo` only ever appear under `frog`;
+`scramble` is the one card every hunter's pool shares. So of the four painted
+cards that exist, **three are Frog-exclusive and the fourth is the only one
+any other hunter can ever draw** — Vine-Weaver, Mountain Climbers, Goblin
+Engineer, and Lightbearer each have, at absolute best, one painted card in
+their whole deck, the rest permanently the shared glyph set, while the Frog
+alone gets the four-card sample of what a finished deck is meant to look like.
+
+**Why this reads as unfinished, not a style choice:** CLAUDE.md doesn't speak
+to card art specifically, but the brief's own bar does — "if something would
+make a player think this looks unfinished, it is a find... even when nothing
+in the code disagrees with anything else in the code." Nothing here is a
+contradiction: the fallback is working exactly as its own comment says it
+should. What it produces, in the one screen designed to lay a whole deck out
+for comparison, is a deck that looks like the artist got two cards in and
+stopped — and because the three finished Frog cards aren't spread out to
+make every hunter's early game look equally patchy, they're stacked on the
+one hunter a new player is steered toward first (`characters.json:"order"`
+lists `frog` first), so the other four hunters' decks look strictly more
+unfinished than the one most players will see first.
+
+**Where to look:** not a code fix — `card_view.gd:350-384` (the painted/icon
+fallback) is doing what its own comment says to do, and `game/assets/cardart/`
+is content, not `tools/blender/**` / `game/assets/3d/**`, so not touched here
+either way. Worth the human knowing the four existing paintings are all
+sitting on one hunter's deck rather than spread thin across five, if the goal
+of painting more cards is to make *every* hunter's first few fights look
+equally finished rather than making one hunter finished and the rest
+untouched.
+
+**Could not check this pass:** whether Vine-Weaver/Mountain Climbers/Goblin
+Engineer/Lightbearer's own campfire grids visually confirm the same
+all-icon look — `slot=1` (tried, on the theory it might force the second
+hunter's deck into the campfire chooser) had no effect; the campfire chooser
+opened Frog's deck both with and without it, and nothing in `screenshot.gd`
+exposes a way to put a different hunter in slot 0 for `state=3dcampfire`
+short of the `"goblin"`/`3dosu` special-case (which doesn't reach the
+campfire branch at all). The data cross-reference above should hold regardless
+(the pool membership is what it is), but nobody has actually looked at, say,
+the Goblin Engineer's ten-card grid the way I looked at the Frog's. Also
+`mobile size=2340x1080` for all three screens above — the campfire grid in
+particular may reflow to fewer columns on a narrower frame, which could change
+how jarring the painted/icon mix reads. Card-art coverage for any beast-side
+surface (this run only followed a hunter).
+
 ## 2026-09-09 — Pass D (proportion): beasts get the same common-HEIGHT trap already on record for hunters — two Titans at the identical difficulty tier can have a 2.75x spread in footprint width because `_fit_height` scales every beast body to a height that only knows `weak_point_height`, never the model's own shape
 
 **Pass D (proportion) — rotation choice.** `git log --format='%h %ad %s' --date=format:'%Y-%m-%d %H:%M:%S' -- design/progress/bugs.md`: A 2026-09-09 17:00:54, B 16:13:40, C 15:57:53, D 15:05:16. D was oldest by nearly two hours and hadn't run since that morning, so it's due.
