@@ -12402,3 +12402,36 @@ Newest first. One line per finished item: what, and anything surprising.
   (1197 passed). Re-ran the shipped `robustness_sweep.gd` (10x3x6x2 = 360
   runs, unmodified) as a smoke test: clean, 0 dead ends / 0 crashes. Next
   `#86` turn is duty 3 (verify a mechanic actually works).
+
+- **2026-09-09 (later still), #86 duty 2 (find an error and resolve it).**
+  Last commit (`0b9bc5a`) was a fixer-lane bug hunt, and before that
+  `08f9c16` was duty 3, so this turn is duty 2. Found the "Sure" enchant
+  (`auto_nail`) pays ZERO timed bonus on a genuine miss instead of the full
+  bonus its own text promises ("this card's timing always lands, even on a
+  fumble"). `play_card()`'s fumble check (`combat.gd:726`) already lets
+  `auto_nail` past a miss so the card doesn't slip away, but nothing forced
+  `timing_quality` back up to `TIMING_PERFECT` the way the neighbouring
+  "True Eye" branch does for GOOD — so `preview()`'s `scale` (keyed off
+  `quality`, not `hit`) computed `0.0` for a real `TIMING_MISS`, and a
+  Sure-enchanted card resolved as an ordinary untimed play on a whiff.
+  Concrete case: Pounce (`damage:4, timed_damage:5`) enchanted with Sure,
+  missed outright — expected 9 damage, actual 4. The existing test
+  (`_test_sure_enchant_lands_even_on_a_fumble`) never caught this because it
+  called `play_card(..., false)` with `timing_quality` left at its
+  `TIMING_PERFECT` default — a combination no real caller produces, since
+  both real client call sites (`combat_3d.gd`'s two `play_card()` calls)
+  derive `timing_hit` and `timing_quality` from the same graded result.
+  Wrote a second regression test that sends the real pairing
+  (`timing_hit=false, timing_quality=Combat.TIMING_MISS`) and watched it
+  fail honestly against the unfixed `combat.gd` before fixing. Fix: force
+  `timing_quality = TIMING_PERFECT` when `auto_nail` carries a card past the
+  fumble check, mirroring the existing True-Eye special-case a few lines
+  down. Note for whoever wires up enchant-granting: I could not find any
+  current path (relic/event/shop/boon) that actually grants "Sure" to a
+  player's card today — `enchanted_copy()` is only called from
+  `run_tests.gd` — so this bug was real and verified but dormant until that
+  lands; worth re-checking then. Fresh `--import`, headless, Godot
+  4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Re-ran
+  `robustness_sweep.gd` (360 runs, unmodified) as a smoke test: clean, 0
+  dead ends / 0 crashes. Next `#86` turn is duty 3 (verify a mechanic
+  actually works).

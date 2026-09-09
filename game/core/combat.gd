@@ -727,6 +727,14 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		_log("%s fumbles %s — it slips away." % [ps.combatant.name, card.name])
 		_check_end()
 		return true
+	# "Sure" (auto_nail) carries a genuine miss past the fumble check above, but
+	# every real caller derives `timing_quality` from the same graded result as
+	# `timing_hit` (see combat_3d.gd's play_card() calls), so a true miss also
+	# sends TIMING_MISS — which `preview()` scales to a zero bonus below unless
+	# forced back up here, same as "True Eye" forces GOOD up to PERFECT a few
+	# lines down (backlog #86 duty 2).
+	if card.timed and not timing_hit and enchant_effect == "auto_nail":
+		timing_quality = TIMING_PERFECT
 	if enchant_effect == "self_exhaust":  # "Spent" (backlog #50) — leaves the fight instead
 		ps.exhaust_pile.append(card)
 	elif card.type == "power":  # backlog #57 — never discarded; stays in play, stacking

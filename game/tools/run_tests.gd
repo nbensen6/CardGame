@@ -225,6 +225,7 @@ func _init() -> void:
 	_test_weakpoint_threshold_bucks()
 	_test_timed_damage_bonus()
 	_test_sure_enchant_lands_even_on_a_fumble()
+	_test_sure_enchant_pays_full_bonus_on_a_genuine_miss_not_just_a_bare_fumble()
 	_test_cheap_enchant_cuts_cost()
 	_test_keen_enchant_draws_an_extra_card()
 	_test_spent_enchant_exhausts_instead_of_discarding()
@@ -5053,6 +5054,29 @@ func _test_sure_enchant_lands_even_on_a_fumble() -> void:
 	combat.play_card(0, idx, false)  # a fumbled timing hit — Sure carries it anyway
 	_expect(before - combat.boss.hp == 9,  # 4 base + 5 timed_damage, same as a nailed hit
 		"a Sure-enchanted card lands its timed bonus even when the timing is missed")
+
+
+## Backlog #86 duty 2: the test above only ever decoupled `timing_hit=false`
+## from the DEFAULT `timing_quality` (TIMING_PERFECT), a combination no real
+## caller produces — every actual client call site (combat_3d.gd's two
+## play_card() calls) derives both `timing_hit` and `timing_quality` from the
+## same graded result, so a genuine miss sends `timing_hit=false` together
+## with `timing_quality=TIMING_MISS`. That real combination pays ZERO timed
+## bonus: `preview()`'s `scale` is keyed off `quality`, not `hit`, and nothing
+## forced `timing_quality` up to PERFECT the way the fumble check forgives
+## `timing_hit`, so a Sure-enchanted card that is genuinely whiffed still
+## resolves as an ordinary untimed play — exactly what the enchant's own text
+## ("this card's timing always lands, even on a fumble") promises it won't.
+func _test_sure_enchant_pays_full_bonus_on_a_genuine_miss_not_just_a_bare_fumble() -> void:
+	var combat := _new_combat([_deck_of(_pounce, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var before: int = combat.boss.hp
+	var idx := _first_playable(combat, 0)
+	combat.players[0].hand[idx] = combat.players[0].hand[idx].enchanted_copy("sure")
+	# A real miss: timing_hit=false AND timing_quality=TIMING_MISS together,
+	# the pairing every actual client call site produces.
+	combat.play_card(0, idx, false, -1, -1, -1, Combat.TIMING_MISS)
+	_expect(before - combat.boss.hp == 9,  # 4 base + 5 timed_damage, same as a nailed hit
+		"a Sure-enchanted card pays its full timed bonus on a genuine miss (timing_hit=false, quality=MISS), not just a bare fumble call with the quality param left at its PERFECT default")
 
 
 ## Six more enchants (backlog #50): #12 built the engine with two proving
