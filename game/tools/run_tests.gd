@@ -360,6 +360,7 @@ func _init() -> void:
 	# Powers: cards that stay played (backlog #57)
 	_test_power_cards_stay_in_play_and_stack()
 	_test_power_effects_fire_every_turn_end_and_persist()
+	_test_power_block_log_reports_real_dexterity_lifted_amount_not_raw_value()
 	_test_power_stacks_multiply_and_different_powers_coexist()
 	_test_power_upgrade_value_is_not_lost_by_the_recurring_payout()
 	_test_powers_survive_save_and_load()
@@ -6588,6 +6589,32 @@ func _test_power_effects_fire_every_turn_end_and_persist() -> void:
 	combat.end_turn(0)  # no card played this round — the power still fires on its own
 	_expect(ps.combatant.block == 3,
 		"the power keeps paying out on later turns with no card played that turn")
+
+
+## b3476ca fixed play_card()'s own Block log lines (pv["block"] is
+## deliberately the raw, pre-modifier card number) so a Dexterity or Frail
+## hunter's combat.log matches the real Block their `block` field ends up
+## with. _handle_power_effects()'s turn-end payout is the same math on a
+## sibling path — a power like Iron Husk calls the same Combatant.gain_block()
+## — but its own log line was never touched, so it kept printing the raw
+## power_value straight through Dexterity/Frail. Reproduces with Iron Husk
+## (+3 Block) against 3 Dexterity: the real gain is 6, and the old log text
+## claimed 3.
+func _test_power_block_log_reports_real_dexterity_lifted_amount_not_raw_value() -> void:
+	var combat := _new_combat([_deck_of(_power_block, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.combatant.dexterity = 3
+	combat.play_card(0, 0)  # Iron Husk: +3 Block at the end of each of your turns
+	var block_before_end := ps.combatant.block
+	combat.end_turn(0)
+	_expect(ps.combatant.block == block_before_end + 6,
+		"sanity: Dexterity lifts Iron Husk's real recurring Block gain to 6")
+	# The power's own log line is fired mid-end_turn(), before end_turn() appends
+	# its own "ends their turn" line right after -- so the power's line is the
+	# second-to-last entry, not the last one.
+	var power_line: String = combat.log[-2]
+	_expect(power_line.contains("+6 Block") and not power_line.contains("+3 Block"),
+		"the power's log line reports the real Dexterity-lifted gain (6), not its raw power_value (3): %s" % power_line)
 
 
 ## Stacks actually MULTIPLY the payout rather than just being counted, and a

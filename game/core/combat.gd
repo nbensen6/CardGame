@@ -1667,8 +1667,15 @@ func _handle_power_effects(ctx: Dictionary) -> void:
 			continue
 		match effect:
 			"block":
+				# The log must print what the combatant actually ends up with, not
+				# the raw power number -- b3476ca fixed this exact drift for
+				# play_card()'s own Block lines (pv["block"] is deliberately
+				# pre-modifier), but this sibling turn-end payout still logged
+				# `amount` straight through, so a power like Iron Husk misreported
+				# its real gain the moment Dexterity or Frail was on the board.
+				var real_amount := Combatant.block_after_modifiers(amount, ps.combatant.dexterity, ps.combatant.frail)
 				ps.combatant.gain_block(amount)
-				_log("%s's %s triggers — +%d Block." % [ps.combatant.name, pname, amount])
+				_log("%s's %s triggers — +%d Block." % [ps.combatant.name, pname, real_amount])
 			"strength":
 				ps.strength += amount
 				_log("%s's %s triggers — +%d Strength." % [ps.combatant.name, pname, amount])

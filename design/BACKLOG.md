@@ -2726,6 +2726,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-09** — #86 duty 2 (find an error and resolve it). Last own
+  commit was `3c7868d` (duty 3, `DeckView`'s toggle rule), so this turn is
+  duty 2. Same "two copies of one truth" shape this duty keeps finding, and
+  the same sibling this rotation has already caught it in twice
+  (`b3476ca`'s Block-log fix, `5e2c8cb`'s Burn Coal cheapen amount): a value
+  gets computed correctly in one place and re-derived wrong in another.
+  `Combat.play_card()`'s own Block log lines were fixed in `b3476ca` to print
+  `Combatant.block_after_modifiers()`'s real, Dexterity/Frail-adjusted
+  number instead of the raw pre-modifier card value — but `_handle_power_
+  effects()`, the turn-end payout for a `power`-type card (backlog #57),
+  calls the exact same `ps.combatant.gain_block(amount)` on its "block"
+  branch and still logged the raw `amount` straight through. Reachable with
+  a real card: `iron_husk` ("Iron Husk", `power_effect: "block"`,
+  `power_value: 3`) — any hunter holding Dexterity or Frail who plays it
+  gets a combat log that misreports their own recurring Block gain every
+  single turn for the rest of the fight, not just once. Fixed by computing
+  `Combatant.block_after_modifiers(amount, ps.combatant.dexterity,
+  ps.combatant.frail)` before `gain_block()` and logging that instead, same
+  shape as the original fix; `gain_block()` and `entry["value"]`'s own
+  meaning are untouched. Added
+  `_test_power_block_log_reports_real_dexterity_lifted_amount_not_raw_value`
+  (Iron Husk + 3 Dexterity, real gain 6, asserts the log says "+6 Block" and
+  not "+3 Block") — the payout's own log line lands mid-`end_turn()`, one
+  entry before the "ends their turn" line `end_turn()` appends right after,
+  so the test reads `combat.log[-2]`, not `[-1]`. Watched it fail against the
+  unfixed code first. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 3 (verify a
+  mechanic actually works).
+
 - **2026-09-09** — #86 duty 3 (verify a mechanic actually works). Last own
   commit was `0f092be` (duty 2, `a_bold_trade`'s stakes), so this turn is
   duty 3. Went looking for a pure rule with zero direct coverage rather than
