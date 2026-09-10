@@ -1138,6 +1138,7 @@ func _init() -> void:
 	# console.gd is UI-shaped but its command layer is plain text in, text out.
 	_test_backlog86_dev_console_unknown_command_names_itself_and_points_at_help()
 	_test_backlog86_dev_console_help_lists_every_registered_command()
+	_test_backlog86_dev_console_find_matches_ids_case_insensitively()
 	_test_backlog86_dev_console_on_off_parses_explicit_and_toggles_with_no_arg()
 	_test_backlog86_dev_console_turn_clamps_to_documented_range_and_off_resets()
 	_test_backlog86_dev_console_make_splits_on_commas_and_spaces_and_drops_unknown_ids()
@@ -14301,6 +14302,24 @@ func _test_backlog86_dev_console_help_lists_every_registered_command() -> void:
 	for cmd_name in ["help", "add", "own", "hand", "deal", "find", "rares", "foil",
 			"borderless", "treatment", "turn", "energy", "climb", "beast", "deck", "card", "clear"]:
 		_expect(out.contains(cmd_name), "help lists the '%s' command" % cmd_name)
+	c.free()
+
+
+## find is only ever exercised above as a name inside help's own listing --
+## nothing had ever driven _cmd_find's real matching/formatting logic: the
+## no-argument usage string, the case-fold on both the query and each id, the
+## "nothing matching" miss, and the "<count>: id, id, ..." hit format.
+func _test_backlog86_dev_console_find_matches_ids_case_insensitively() -> void:
+	var c := DevConsole.new()
+	_expect(c.run("find") == "find <part of an id or name>", "find with no argument shows its own usage instead of doing nothing silently")
+	_expect(c.run("find zzz_nonexistent_card_id") == "nothing matching 'zzz_nonexistent_card_id'", "find reports a clean miss by echoing the (lowercased) query back")
+	var all_ids: Array = Content.list_card_ids()
+	var expected: Array = all_ids.filter(func(id: String) -> bool: return id.to_lower().contains("leap"))
+	_expect(not expected.is_empty(), "the fixture assumption that some shipped card id contains 'leap' still holds")
+	var lower := c.run("find leap")
+	var upper := c.run("find LEAP")
+	_expect(lower == upper, "find case-folds the query, so an uppercase search matches the same ids as lowercase")
+	_expect(lower == "%d: %s" % [expected.size(), ", ".join(expected)], "find's hit format is '<count>: id, id, ...' over every id containing the query, sorted the same way Content.list_card_ids() is")
 	c.free()
 
 

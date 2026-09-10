@@ -2746,7 +2746,33 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-10 (latest), #86 duty 2 (find an error and resolve it) —
+- **2026-09-10 (latest), #86 duty 3 (verify a mechanic actually works) —
+  the dev console's `find` command had never once been run by the suite.**
+  Last own commit (`1072c67`) was duty 2, so this turn opened as duty 3.
+  `run_tests.gd` mentions `"find"` exactly once, as a name inside
+  `_test_backlog86_dev_console_help_lists_every_registered_command`'s help-
+  text listing — `_cmd_find` (`console.gd:317`) itself was never invoked by
+  any test, unlike every sibling command (`hand`, `deal`, `own`, `foil`,
+  `borderless`, `turn`, `_make`) which each have a dedicated test in the
+  DevConsole block. `_cmd_find` does real work: a no-argument usage string,
+  a case-fold on both the query and every candidate id, a substring
+  containment check over `Content.list_card_ids()`, and two different
+  output formats (a "nothing matching" miss vs. a "<count>: id, id, ..."
+  hit). Added `_test_backlog86_dev_console_find_matches_ids_case_
+  insensitively`, asserting the no-arg usage string, the miss message
+  echoing the query back, that an uppercase and lowercase search for
+  "leap" return identical results (proving the case-fold), and that the
+  hit string's count and id list match an independently-computed filter
+  over `Content.list_card_ids()` rather than a hardcoded card list. Proved
+  the test actually catches a regression: temporarily dropped the
+  `.to_lower()` calls in `_cmd_find` (case-sensitive search), reran, watched
+  `find LEAP` disagree with `find leap` and fail with `1 TEST(S) FAILED`,
+  then restored the file from a pre-edit copy (confirmed clean via
+  `git diff`). Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED (1313 passed). Next `#86` turn is duty 2
+  (find an error and resolve it).
+
+- **2026-09-10, #86 duty 2 (find an error and resolve it) —
   two Lightbearers picked for the same run could never win against a
   high-sigil beast: a real, reproducible soft-lock, not just a bad matchup.**
   Last own commit (`d4ecc60`) was duty 3, so this turn opened as duty 2. Spent
