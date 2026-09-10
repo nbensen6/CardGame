@@ -2746,7 +2746,42 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-10 (latest), #86 duty 3 (verify a mechanic actually works) —
+- **2026-09-10 (latest), #86 duty 2 attempted, fell back to duty 3 (verify a
+  mechanic actually works) — RunMap._link()'s "no unreachable node" promise
+  had only ever been checked by luck.** Last commit (`ac15f56`) was duty 3, so
+  this turn opened as duty 2. Spent a full pass hunting a genuine new bug — a
+  dedicated research agent plus my own manual read of `run_map.gd`, `boss.gd`,
+  `card.gd`/`_meld_cards` (the exact field-drift class of bug that has bitten
+  this function four times already), `content.gd`, `run_save.gd`,
+  `progress.gd`, `enchants.json`/`ascension.json` wiring, and every case in
+  `GameHost._on_command` against its `run_tests.gd` wiring coverage — and came
+  up clean everywhere: everything I checked was already hardened by an earlier
+  duty-2 pass, usually with a comment on the exact bug class it was written to
+  prevent. (`Boss.hold_exposed_to()` looked like a live lead — a fully-wired
+  accessor nothing reads — until "Needs Nick" turned out to already carry it,
+  2026-09-07, as exactly the "what should the danger be" design call it is,
+  not a bug with an obvious fix.) Per the item's own rule ("if a duty is
+  genuinely exhausted, take the next one in the rotation and say so"),
+  switched to duty 3 rather than force a weak fix.
+  `RunMap._link()`'s own doc comment promises every node in a row gets at
+  least one incoming edge from the row before it — a broken version of that
+  promise strands a player on a real run — and the only prior check of it
+  (`_test_map_generates_connected_rows`) drew that guarantee from one fixed
+  seed's four-act generation, never deliberately driving `_link()` across
+  every row-width transition the generator can actually produce (rows are
+  always 2 or 3 wide, plus the width-1 boss row). Added
+  `_test_backlog86_run_map_link_reaches_every_node_across_every_width_pair`,
+  which drives `_link()` directly (the same `RunMap.new(0, ...)` + hand-set
+  `.rows` trick `from_dict()` already uses) across all eight width pairs the
+  game can produce, dozens of seeds each, asserting every next-row column
+  gets at least one incoming edge and every edge stays in range. All pairs
+  passed on the first run — by hand-tracing the fixup loop first I was fairly
+  confident it already closed every gap correctly, and the test confirms it —
+  this is pure verification with no bug to fix, the same legitimate duty-3
+  outcome the `buy`/`leave_shop`/etc. wiring pass (`1745b14`) already set
+  precedent for. `run_tests.gd` all green.
+
+- **2026-09-10, #86 duty 3 (verify a mechanic actually works) —
   the dev console's `find` command had never once been run by the suite.**
   Last own commit (`1072c67`) was duty 2, so this turn opened as duty 3.
   `run_tests.gd` mentions `"find"` exactly once, as a name inside

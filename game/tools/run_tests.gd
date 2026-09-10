@@ -87,6 +87,7 @@ func _init() -> void:
 	_test_bowshot_deals_and_exposes()
 	# the run map (branching route)
 	_test_map_generates_connected_rows()
+	_test_backlog86_run_map_link_reaches_every_node_across_every_width_pair()
 	_test_map_is_deterministic_per_seed()
 	_test_backlog86_is_last_row_is_true_only_for_the_maps_final_row()
 	_test_backlog86_full_clear_beats_every_acts_titan_before_won()
@@ -2033,6 +2034,62 @@ func _test_map_generates_connected_rows() -> void:
 	var last_is_boss: bool = m.rows[m.rows.size() - 1].size() == 1 		and String(m.rows[m.rows.size() - 1][0]["type"]) == "boss"
 	_expect(rows_ok and every_node_reachable and bosses == 4 and last_is_boss,
 		"the map generates connected rows with one Titan capping each act")
+
+
+## #86 duty 3 — RunMap._link()'s own doc comment promises "every node in the
+## next row is guaranteed at least one way in (no unreachable dead ends)," and
+## a broken version of that promise is a run-breaking bug (a player stranded on
+## a node with no route forward). The only existing check of it
+## (_test_map_generates_connected_rows above) draws that guarantee from ONE
+## fixed seed's full four-act generation — real, but incidental: it never
+## deliberately drives _link() across every row-width TRANSITION the game can
+## actually produce (rows are always MIN_WIDTH..MAX_WIDTH = 2..3 wide, plus the
+## width-1 boss row), so a fixup that only misbehaves on, say, a 2-wide row
+## into a 3-wide one could pass that single seed by luck and still strand a
+## player on a real run.
+##
+## This drives _link() directly (RunMap.new(0, ...) builds an empty map, same
+## trick RunMap.from_dict() already uses, so rows can be hand-set to a chosen
+## width pair) across EVERY width pair the generator can produce -- (1,2),
+## (1,3), (2,1), (3,1), (2,2), (3,3), (2,3), (3,2) -- and across many seeds
+## per pair, since the fixup path is only reached on an unlucky roll of
+## _link()'s own coin-flip extra edge.
+func _test_backlog86_run_map_link_reaches_every_node_across_every_width_pair() -> void:
+	var pairs: Array = [[1, 2], [1, 3], [2, 1], [3, 1], [2, 2], [3, 3], [2, 3], [3, 2]]
+	var bad: String = ""
+	for pair in pairs:
+		var cur_w: int = pair[0]
+		var nxt_w: int = pair[1]
+		for s in range(1, 60):
+			var m := RunMap.new(0, RandomNumberGenerator.new())  # 0 acts: empty, rows hand-set below
+			var cur_row: Array = []
+			for _i in range(cur_w):
+				cur_row.append({"type": "fight", "act": 0, "next": []})
+			var nxt_row: Array = []
+			for _j in range(nxt_w):
+				nxt_row.append({"type": "fight", "act": 0, "next": []})
+			m.rows = [cur_row, nxt_row]
+			var rng := RandomNumberGenerator.new()
+			rng.seed = s
+			m._link(rng)
+			var reached := {}
+			for n in cur_row:
+				var edges: Array = (n as Dictionary)["next"]
+				if edges.is_empty():
+					bad = "pair %s seed %d: a node has no outgoing edge at all" % [str(pair), s]
+				for e in edges:
+					if int(e) < 0 or int(e) >= nxt_w:
+						bad = "pair %s seed %d: edge %s is out of range for a %d-wide row" % [str(pair), s, str(e), nxt_w]
+					reached[int(e)] = true
+			for j in range(nxt_w):
+				if not reached.has(j):
+					bad = "pair %s seed %d: column %d of the next row has no incoming edge" % [str(pair), s, j]
+			if bad != "":
+				break
+		if bad != "":
+			break
+	_expect(bad == "", "RunMap._link() leaves no unreachable node for any width pair the generator " +
+		"can produce, across many seeds (first failure: %s)" % bad)
 
 
 func _test_map_is_deterministic_per_seed() -> void:
