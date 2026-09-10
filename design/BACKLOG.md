@@ -2746,7 +2746,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-10 (latest), #86 duty 3 (verify a mechanic actually works) —
+- **2026-09-10 (latest), #86 duty 2 (find an error and resolve it) — a
+  Thorned leech target let the Titan quietly refund its own bite.** Last own
+  commit (`7e2b914`) was duty 3, so this turn opened as duty 2. Spawned a
+  background research pass over `core/combat.gd`, `core/run.gd` and
+  `session/game_host.gd`; it surfaced `_enemy_turn()`'s `"leech"` branch
+  (combat.gd:1384-1399). `real_dmg` (what actually got through Block/
+  Buffer/Intangible) is correctly previewed *before* `_boss_hits()` runs —
+  that was the fix duty 2 already made one pass up — but the heal's CAP,
+  `boss.max_hp - boss.hp`, was still read straight off `boss.hp` *after*
+  `_boss_hits()` ran. If the leeched hunter is carrying Thorns (`spinebrace`,
+  or the `briar_wrap`/`open_thorns` relic), `_boss_hits()` reflects that
+  Thorns damage onto the boss's own hp first, which manufactures extra
+  headroom out of the boss's own self-inflicted wound and lets the
+  immediately-following heal refund part (or all) of the bite the boss
+  should have actually paid — a `leech` move parked next to Thorns quietly
+  cancels the debuff's whole point. Moved the headroom read to before
+  `_boss_hits()`, alongside the existing `real_dmg` preview, so both are
+  snapshotted pre-mutation. Added
+  `_test_leech_heal_cap_ignores_its_own_thorns_reflection` (boss at 95/100
+  hp, leech for 12 into a hunter holding 5 Thorns): confirmed it fails on
+  the old code (boss ends at 100, the Thorns bite fully absorbed by
+  manufactured headroom) and passes on the fix (boss ends at 95, net -3 as
+  the numbers actually owe). `run_tests.gd`: ALL TESTS PASSED before and
+  after.
+
+- **2026-09-10, #86 duty 3 (verify a mechanic actually works) —
   `relic_totals()`'s generic pass-through, proven for only one key out of
   twenty.** Last own commit (`684a658`) was duty 2, so this turn opened as
   duty 3. `Run.relic_totals()` sums ~20 relic-mod keys (start_foothold,

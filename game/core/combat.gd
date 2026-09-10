@@ -1392,9 +1392,16 @@ func _enemy_turn() -> void:
 			# left the target — but the Titan recovered the full ldmg regardless,
 			# turning a well-blocked hit into a free heal for the boss instead of
 			# the whiff a real drain would be.
+			# backlog #86 duty 2 — headroom is ALSO previewed before _boss_hits(),
+			# not read off boss.hp afterward: if the target carries Thorns,
+			# _boss_hits() reflects that damage onto the boss's own hp first,
+			# which shrinks boss.hp and manufactures extra headroom out of the
+			# boss's own self-inflicted wound, letting the heal quietly refund
+			# part of the Thorns bite the boss should have actually paid.
 			var real_dmg := lt.combatant.predicted_damage(ldmg)
+			var headroom := boss.max_hp - boss.hp
 			_boss_hits(lt, ldmg)
-			var healed := mini(real_dmg, boss.max_hp - boss.hp)
+			var healed := mini(real_dmg, headroom)
 			boss.hp += healed
 			_log("%s drains %s for %d and recovers %d." % [boss.name, lt.combatant.name, ldmg, healed])
 		"attack_all":

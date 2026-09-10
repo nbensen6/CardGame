@@ -368,6 +368,7 @@ func _init() -> void:
 	_test_leech_drains_and_heals()
 	_test_leech_heals_nothing_when_fully_blocked()
 	_test_leech_heals_only_what_gets_through_block()
+	_test_leech_heal_cap_ignores_its_own_thorns_reflection()
 	_test_damage_boss_reports_only_what_gets_through_block()
 	_test_damage_boss_reports_nothing_when_fully_blocked()
 	_test_armored_damage_boss_reports_only_what_gets_through_block()
@@ -7097,6 +7098,26 @@ func _test_leech_heals_nothing_when_fully_blocked() -> void:
 	combat.end_turn(1)
 	_expect(combat.players[0].combatant.hp == 42 and combat.boss.hp == 50,
 		"a fully-blocked leech drains nothing and heals the Titan nothing")
+
+
+## backlog #86 duty 2 — a second, separate gap in the same "leech" branch: the
+## heal's cap (boss.max_hp - boss.hp) was read AFTER _boss_hits() ran, but
+## _boss_hits() reflects the target's Thorns straight back onto the boss's own
+## hp first. That self-inflicted Thorns damage manufactured extra headroom
+## which the heal then immediately refilled, letting a Thorns bite the boss
+## should have actually paid for get partially (or fully) refunded by its own
+## drain. The cap must be previewed BEFORE _boss_hits() runs, same as real_dmg
+## already is.
+func _test_leech_heal_cap_ignores_its_own_thorns_reflection() -> void:
+	var boss := Boss.new("Leech", 100)
+	boss.hp = 95  # only 5 headroom before this move's own Thorns reflection
+	boss.moves = [{"type": "leech", "value": 12}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.players[0].combatant.thorns = 5  # this round's target (boss_target_index)
+	combat.end_turn(0)
+	combat.end_turn(1)  # leech drains 12, thorns bites the boss for 5, heal is capped by the PRE-thorns headroom
+	_expect(combat.players[0].combatant.hp == 30 and combat.boss.hp == 95,
+		"leech's heal cap must not count headroom its own Thorns reflection just created")
 
 
 ## Same bug, partial mitigation: only the Block-through amount should heal the
