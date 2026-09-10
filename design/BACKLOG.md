@@ -2746,6 +2746,26 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-10 (later), #86 duty 3 (verify a mechanic actually works) —
+  the hunter-roster card width had zero coverage.** Last own commit
+  (`08a7870`) was duty 2, so this turn opened as duty 3. Surveyed
+  `game/views/*.gd` and `game/ui/*.gd` for pure logic with no test: the
+  climb-routing, hop-arc, hex-grid and event-stakes mechanics duty 3 has
+  already proven over past runs cover most of it, but
+  `location_3d._roster_card_width` — the clamp math that decides how wide
+  each hunter card is on the lobby and reward screens, from the viewport
+  width and the headcount — had never been touched. Lifted its arithmetic
+  into a static `_roster_card_width_for(wide, count, floor_w)`, leaving the
+  instance method to just read `get_viewport()`/`Screen.is_handheld()` and
+  forward to it (same pattern as `_felled_height` and `_hex_x` before it),
+  and added five tests: the floor clamp for a squeezed roster, the cap
+  clamp for a lone hunter on a wide screen, the unclamped division in
+  between, a zero-count roster sized identically to a one-hunter roster
+  (the `maxi(_, 0/1)` guards exist precisely so this doesn't divide by
+  zero), and the handheld floor (168) landing distinctly from the desktop
+  floor (190) under the same squeeze. `run_tests.gd` was green before and
+  after.
+
 - **2026-09-10, #86 duty 2 (find an error and resolve it) — the same relic
   is two very different relics depending on a Settings toggle nobody
   should be able to feel.** Last own commit (`5e46f10`) was duty 3, so

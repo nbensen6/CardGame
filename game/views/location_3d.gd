@@ -650,6 +650,15 @@ func _render_over(s: Dictionary, phase: String) -> void:
 		get_tree().change_scene_to_file("res://views/menu.tscn")))
 
 
+## Pure form of the clamp math below: takes the viewport width and the
+## handheld/desktop floor explicitly instead of reading get_viewport() and
+## Screen.is_handheld(), so run_tests.gd can prove the curve headless -- no
+## scene tree, no viewport. #86 duty 3.
+static func _roster_card_width_for(wide: float, count: int, floor_w: float) -> float:
+	var room: float = wide - 40.0 - 10.0 * float(maxi(count - 1, 0))
+	return clampf(room / float(maxi(count, 1)), floor_w, 268.0)
+
+
 ## How wide one hunter card can be, given how many there are and how much room.
 ##
 ## Clamped BELOW as well as above: past a point a narrower card just wraps its
@@ -659,9 +668,8 @@ func _roster_card_width(count: int) -> float:
 	# viewport's visible rect is already in the same scaled space Controls
 	# lay out in, which is what the cards are measured against.
 	var wide: float = get_viewport().get_visible_rect().size.x
-	var room: float = wide - 40.0 - 10.0 * float(maxi(count - 1, 0))
 	var floor_w := 168.0 if Screen.is_handheld() else 190.0
-	return clampf(room / float(maxi(count, 1)), floor_w, 268.0)
+	return _roster_card_width_for(wide, count, floor_w)
 
 
 func _button(text: String, on_press: Callable) -> Button:

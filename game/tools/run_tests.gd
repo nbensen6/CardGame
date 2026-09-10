@@ -669,6 +669,18 @@ func _init() -> void:
 	_test_backlog86_felled_height_caps_at_the_max_size_past_the_reference_climb()
 	_test_backlog86_felled_height_scales_between_the_floor_and_the_cap()
 	_test_backlog86_felled_height_defaults_to_the_min_size_for_an_unknown_beast()
+	# backlog #86 duty 3: location_3d._roster_card_width sizes every hunter card
+	# on the lobby/reward roster from the viewport width and the headcount --
+	# the exact math that decides whether a two-hunter party gets full-size
+	# cards or a four-hunter party's cards get squeezed to the floor before
+	# wrapping their text into single words. Lifted the clamp math into a
+	# static _roster_card_width_for (wide, count, floor_w) so it can be proven
+	# headless; it had zero coverage before this.
+	_test_backlog86_roster_card_width_clamps_to_the_floor_when_the_roster_is_wide()
+	_test_backlog86_roster_card_width_clamps_to_the_cap_for_a_lone_hunter_on_a_wide_screen()
+	_test_backlog86_roster_card_width_scales_between_floor_and_cap()
+	_test_backlog86_roster_card_width_treats_an_empty_roster_like_a_single_hunter()
+	_test_backlog86_roster_card_width_honours_the_handheld_floor_distinctly_from_desktop()
 	# backlog #86 duty 3 (fifteenth turn): CardView.face_text, the live line a
 	# player reads on a card in hand to decide whether to play it -- was
 	# already static and pure, and had zero coverage despite being the exact
@@ -11818,6 +11830,53 @@ func _test_backlog86_felled_height_scales_between_the_floor_and_the_cap() -> voi
 func _test_backlog86_felled_height_defaults_to_the_min_size_for_an_unknown_beast() -> void:
 	_expect(is_equal_approx(Location3D._felled_height("no_such_beast"), Location3D.FELLED_MIN),
 		"an id Content can't build a Boss from falls back to the smallest trophy, never a crash or a zero-size body")
+
+
+## backlog #86 duty 3: location_3d._roster_card_width_for is the clamp math
+## behind every hunter card on the lobby/reward roster -- pure arithmetic on
+## the viewport width, the headcount and the handheld/desktop floor, lifted
+## out of _roster_card_width (which still reads get_viewport() and
+## Screen.is_handheld() and forwards here) so run_tests.gd can prove the curve
+## with no viewport and no scene tree. It had zero coverage before this.
+func _test_backlog86_roster_card_width_clamps_to_the_floor_when_the_roster_is_wide() -> void:
+	# A narrow screen with four hunters would math out to ~82px per card --
+	# the floor exists exactly so this squeeze never wraps the description
+	# into a column of single words.
+	var w: float = Location3D._roster_card_width_for(400.0, 4, 190.0)
+	_expect(is_equal_approx(w, 190.0), "four hunters on a 400px-wide screen clamp to the floor, not the raw ~82px division")
+
+
+func _test_backlog86_roster_card_width_clamps_to_the_cap_for_a_lone_hunter_on_a_wide_screen() -> void:
+	# One hunter alone on a wide monitor would math out to ~1960px per card --
+	# the cap exists so a solo hunter's card doesn't sprawl across the screen.
+	var w: float = Location3D._roster_card_width_for(2000.0, 1, 190.0)
+	_expect(is_equal_approx(w, 268.0), "a lone hunter on a wide screen clamps to the cap, not the raw ~1960px division")
+
+
+func _test_backlog86_roster_card_width_scales_between_floor_and_cap() -> void:
+	# Three hunters on a 750px screen land at exactly 230px per card -- neither
+	# clamp fires, so this proves the actual division, not just its clamps.
+	var w: float = Location3D._roster_card_width_for(750.0, 3, 190.0)
+	_expect(is_equal_approx(w, 230.0), "unclamped, width is (wide - 40 - 10*(count-1)) / count")
+
+
+func _test_backlog86_roster_card_width_treats_an_empty_roster_like_a_single_hunter() -> void:
+	# What happens when the collection is empty? Both the room and the divisor
+	# guard with maxi(_, 0/1), so a count of zero must not divide by zero or
+	# under-reserve the 10px-per-gap margin a real single hunter gets.
+	var empty: float = Location3D._roster_card_width_for(900.0, 0, 190.0)
+	var solo: float = Location3D._roster_card_width_for(900.0, 1, 190.0)
+	_expect(is_equal_approx(empty, solo), "an empty roster sizes exactly like a one-hunter roster, never a crash or a divide-by-zero")
+
+
+func _test_backlog86_roster_card_width_honours_the_handheld_floor_distinctly_from_desktop() -> void:
+	# Same squeeze (five hunters, 400px), two different floors -- proves the
+	# caller's handheld/desktop choice actually reaches the clamp rather than
+	# being ignored in favour of a hard-coded number.
+	var handheld: float = Location3D._roster_card_width_for(400.0, 5, 168.0)
+	var desktop: float = Location3D._roster_card_width_for(400.0, 5, 190.0)
+	_expect(is_equal_approx(handheld, 168.0), "a squeeze on a handheld floor clamps to 168, the handheld floor")
+	_expect(is_equal_approx(desktop, 190.0), "the same squeeze on the desktop floor clamps to 190, not the handheld number")
 
 
 ## backlog #86 duty 3 (fifteenth pass): CardView.face_text is the live line a
