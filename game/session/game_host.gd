@@ -1016,6 +1016,18 @@ func _card_icon(c: Card) -> String:
 func _slot_char(slot: int) -> String:
 	if _solo:
 		return String(_solo_chars[slot]) if slot < _solo_chars.size() else ""
+	# Once a run exists, _run.player_passives (set once at run start, indexed
+	# by SLOT) is the source of truth. _character_of is a peer_id-keyed lobby
+	# mirror of the same fact, and _reclaim_slot migrates _peers/_slot_of to
+	# a reconnecting peer's NEW id without touching it -- so after a mid-run
+	# drop and rejoin it's still keyed by the dead peer id and returns "" for
+	# the reconnected slot (the exact "every hunter but the Frog rendered as
+	# the Frog's bunny" bug above, this time from a reconnect instead of a
+	# first join).
+	if _run != null:
+		if slot < _run.player_passives.size():
+			return String((_run.player_passives[slot] as Dictionary).get("character", ""))
+		return ""
 	if slot < _peers.size():
 		return String(_character_of.get(_peers[slot], ""))
 	return ""

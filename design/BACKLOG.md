@@ -2746,6 +2746,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-10 (latest), #86 duty 2 (find an error and resolve it) — a
+  reconnected hunter's character silently went blank after their next fight
+  ended.** Last own commit (`921a7cf`) was duty 3, so this turn opened as
+  duty 2. Ran a background research pass over `game/core`, `game/session`
+  and `game/net` end to end for first-pass holes and dual-state bugs; it
+  surfaced `game_host.gd`'s `_slot_char()`, which reads `_character_of`, a
+  `peer_id → character id` dict populated once at lobby select. `_reclaim_slot()`
+  (the mid-run reconnect path, backlog #51) migrates `_peers`/`_slot_of` to a
+  rejoining peer's new id but never touches `_character_of` — its own doc
+  comment even claims the old peer id "is forgotten... a stale key nothing
+  looks up again," which is wrong: `_slot_char()` looks it up by the new peer
+  id every time, so after any real reconnect (ENet always hands out a fresh
+  peer id) the dict has a value under the dead key and nothing under the
+  live one. Combat itself was unaffected (`_players_public()`'s COMBAT branch
+  reads `PlayerState.character` directly), so the hole was invisible until
+  the fight ended and the campfire/shop/reward branch fell back to
+  `_slot_char()` — reproducing, from a reconnect instead of a first join,
+  the exact "every hunter but the Frog rendered as the Frog's bunny" bug
+  already fixed once for lobby select. Fixed `_slot_char()` to read
+  `_run.player_passives` (set once at run start, indexed by SLOT — the actual
+  source of truth once a run exists) whenever a run is live, falling back to
+  the peer-keyed lobby dict only pre-run. Added
+  `_test_backlog86_reconnected_hunter_keeps_their_character_after_combat`,
+  which reproduces the drop/reconnect/win sequence and checks the
+  reconnected hunter's character on the far side of combat; confirmed it
+  fails on the old code (blank character) and passes on the fix.
+  `run_tests.gd`: ALL TESTS PASSED before and after.
+
 - **2026-09-10 (later still), #86 duty 3 (verify a mechanic actually works) —
   `Run.pick_reward()`'s foil/borderless roll had zero test coverage.** Last
   own commit (`5f8f1ea`) was duty 2, so this turn opened as duty 3. Ran a

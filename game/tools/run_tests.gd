@@ -495,6 +495,7 @@ func _init() -> void:
 	_test_session_private_view_is_isolated()
 	_test_host_pauses_on_disconnect()
 	_test_dropped_hunter_can_rejoin_mid_fight()
+	_test_backlog86_reconnected_hunter_keeps_their_character_after_combat()
 	_test_lobby_drop_reindexes_the_remaining_peer_and_frees_the_slot()
 	_test_host_autosaves_and_resumes()
 	_test_host_autosaves_and_resumes_mid_combat()
@@ -9577,6 +9578,31 @@ func _test_dropped_hunter_can_rejoin_mid_fight() -> void:
 	# The dead connection's old peer id is forgotten, not left as a live seat.
 	transport.emit_signal("peer_left", 99)
 	_expect(host.paused, "the SAME slot dropping again re-pauses, proving 99 (not 20) now owns it")
+
+
+## Backlog #86 duty 2: _slot_char() read _character_of, a peer_id-keyed lobby
+## dict, even mid-run -- but _reclaim_slot() (the reconnect path proven above)
+## only migrates _peers/_slot_of to the new peer id, never _character_of. So
+## the SAME reconnect that _test_dropped_hunter_can_rejoin_mid_fight proves
+## resumes play also left a stale, now-unreachable key in _character_of,
+## invisible to that test because combat reads a hunter's character straight
+## off PlayerState (correct all along) rather than through _slot_char() --
+## only the non-combat branch of _players_public() calls _slot_char(), so the
+## gap only shows up once the fight actually ends.
+func _test_backlog86_reconnected_hunter_keeps_their_character_after_combat() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var transport: LocalTransport = s["transport"]
+	transport.emit_signal("peer_left", 20)  # mountain_climbers (slot 1) drops
+	var c_new := GameClient.new(transport, 99)  # fresh peer id reclaims slot 1
+	c_new.join()
+	_expect(not host.paused, "sanity: the reconnect resumed play")
+
+	_force_win(host._run)
+	host._broadcast_state()
+	_expect(String(c0.shared["players"][1]["character"]) == "mountain_climbers",
+		"the reconnected hunter's character survives past combat instead of reading blank from a stale peer-id key")
 
 
 ## Backlog #86 duty 3: _on_peer_left's OTHER branch, never exercised by
