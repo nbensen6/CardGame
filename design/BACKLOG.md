@@ -2746,7 +2746,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-10 (latest), #86 duty 2 (find an error and resolve it) —
+- **2026-09-10 (latest), #86 duty 3 (verify a mechanic actually works) —
+  `combat_3d.gd`'s `_model_key()`, the fallback ladder that decides which 3D
+  body a beast wears, had zero coverage.** Last commit (`6c7d60f`) was duty 2,
+  so this turn is duty 3. Re-checked `combat_3d.gd`'s static-helper surface
+  first — every `static func` in every `game/views/*.gd` file (combat_3d,
+  location_3d, overworld_3d, game_3d, menu) already has a
+  `_test_backlog86_*` test; the climb/hop/gauge cluster Nick's own jump
+  example points at has been through 41+ duty-3 passes and is genuinely
+  exhausted now. `_model_key` was the one instance method left with real
+  branching game-rule logic and no test at all: own exported art wins, else
+  an exact `MODELS` id mapping, else a substring match of a mapped id's name
+  (underscored → spaced) inside the beast's display name, else give up to
+  the elephant. The doc comment above it names the bug this ladder exists to
+  prevent — several beasts shared one 2D portrait, so guessing the model off
+  the portrait path silently resolved half the roster to the wrong body.
+  Split the priority order into a static `model_key_for(beast_id,
+  beast_name, has_own_art)` that takes the `ResourceLoader.exists` result as
+  a plain bool instead of probing the filesystem itself, so `run_tests.gd`
+  can drive all four rungs headless with no assets on disk; `_model_key`
+  itself now just does the probe and calls it, and recomputes whether the
+  result was a real match (own art / MODELS / name) purely to decide whether
+  its `push_warning` should fire, unchanged in behavior. Added five tests
+  covering each rung and the priority order between them (own art beats a
+  MODELS mapping for the same id; MODELS beats a name match). Fresh
+  `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED
+  (1363 passing, 0 failing). Next `#86` turn is duty 2 (find an error and
+  resolve it).
+
+- **2026-09-10, #86 duty 2 (find an error and resolve it) —
   `GameHost._keywords_of()` tagged nearly every card in the game with a false
   "Cheapen" entry in the tap-to-inspect keyword panel.** Last commit
   (`d555d65`) was duty 3, so this turn is duty 2. The gate read

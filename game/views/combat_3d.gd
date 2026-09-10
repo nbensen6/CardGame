@@ -1970,11 +1970,14 @@ func _take_manual_control() -> void:
 ## which cannot work — several beasts share one portrait (two use crocodile.png),
 ## so half the roster resolved to the wrong body or fell back to the elephant.
 ## The name is kept only as a fallback for a beast added without a mapping.
-func _model_key(beast_id: String, beast_name: String) -> String:
-	# Your own art wins, exactly as it does for hunters (ui/cast.gd): a file named
-	# cast/<beast_id>.glb replaces the Kenney stand-in with no code change, so
-	# making a beast is exporting a file and nothing else.
-	if beast_id != "" and ResourceLoader.exists(CAST + beast_id + ".glb"):
+##
+## Static and split from the ResourceLoader.exists probe below so run_tests.gd
+## can prove the fallback ladder headless, with no scene tree and no files on
+## disk. #86 duty 3 — the ladder itself (id has its own art / id is mapped /
+## name substring-matches a mapped id / give up to elephant) had zero coverage;
+## only its sibling ladder, _card_icon, had ever been tested.
+static func model_key_for(beast_id: String, beast_name: String, has_own_art: bool) -> String:
+	if has_own_art:
 		return beast_id
 	if MODELS.has(beast_id):
 		return String(MODELS[beast_id])
@@ -1982,8 +1985,25 @@ func _model_key(beast_id: String, beast_name: String) -> String:
 	for id in MODELS:
 		if lower.contains(String(id).replace("_", " ")):
 			return String(MODELS[id])
-	push_warning("combat_3d: no model for beast '%s' — falling back" % beast_id)
 	return "elephant"
+
+
+func _model_key(beast_id: String, beast_name: String) -> String:
+	# Your own art wins, exactly as it does for hunters (ui/cast.gd): a file named
+	# cast/<beast_id>.glb replaces the Kenney stand-in with no code change, so
+	# making a beast is exporting a file and nothing else.
+	var has_own_art := beast_id != "" and ResourceLoader.exists(CAST + beast_id + ".glb")
+	var key := model_key_for(beast_id, beast_name, has_own_art)
+	var matched := has_own_art or MODELS.has(beast_id)
+	if not matched:
+		var lower := beast_name.to_lower()
+		for id in MODELS:
+			if lower.contains(String(id).replace("_", " ")):
+				matched = true
+				break
+	if not matched:
+		push_warning("combat_3d: no model for beast '%s' — falling back" % beast_id)
+	return key
 
 
 ## World-space bounds of a model, so hunters can be placed ON it whatever its

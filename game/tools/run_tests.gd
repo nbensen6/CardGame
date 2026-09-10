@@ -973,6 +973,19 @@ func _init() -> void:
 	_test_backlog86_hop_arc_leans_the_apex_toward_the_landing()
 	_test_backlog86_hop_arc_splits_the_step_into_a_rise_and_a_fall()
 	_test_backlog86_hop_arc_never_lets_the_fall_reach_zero()
+	# backlog #86 duty 3 (forty-second pass): Combat3D.model_key_for -- the
+	# fallback ladder that picks a beast's 3D body. Its sibling ladder,
+	# _card_icon, was proven a duty-3 pass ago; this one -- own art file wins,
+	# else an exact MODELS mapping, else a name substring match, else give up
+	# to the elephant -- had never been exercised at all. The comment above it
+	# names the real bug this fixed: several beasts shared one 2D portrait, so
+	# a guess keyed off the portrait path silently resolved half the roster to
+	# the wrong body.
+	_test_backlog86_model_key_for_prefers_the_beasts_own_art()
+	_test_backlog86_model_key_for_falls_back_to_an_exact_models_mapping()
+	_test_backlog86_model_key_for_falls_back_to_a_name_substring_match()
+	_test_backlog86_model_key_for_gives_up_to_the_elephant()
+	_test_backlog86_model_key_for_own_art_wins_over_a_models_mapping()
 	# backlog #86 duty 3 (thirty-first pass): GameHost.phase_string_for, lifted
 	# out of GameHost._phase_string -- the wire-protocol mapping from Run.Phase
 	# to the string game_3d.gd's SCENES table routes on. Every prior duty-3
@@ -11811,6 +11824,49 @@ func _test_backlog86_hop_arc_never_lets_the_fall_reach_zero() -> void:
 	var arc: Dictionary = Combat3D.hop_arc(Vector3.ZERO, Vector3(1, 0, 0), 0.02)
 	_expect(float(arc["fall"]) >= 0.05,
 		"the fall half is floored at 0.05s even for a near-instant step, per the documented maxf floor")
+
+
+## backlog #86 duty 3 (forty-second pass) -- Combat3D.model_key_for, the pure
+## half of _model_key's fallback ladder that decides which 3D body a beast
+## wears. Split from the ResourceLoader.exists probe (which needs real files
+## on disk) so the LADDER's own priority order is provable with no scene tree
+## and no assets: own art beats an exact MODELS mapping beats a name
+## substring match beats the elephant. "shifting_idol" is used below because
+## it maps to "tiger" and its name shares no substring with any other MODELS
+## key, so a broken priority order can't accidentally still pick the right
+## answer.
+func _test_backlog86_model_key_for_prefers_the_beasts_own_art() -> void:
+	# has_own_art=true must win even though "shifting_idol" is ALSO a real
+	# MODELS entry (-> "tiger") -- own art always outranks the mapping.
+	_expect(Combat3D.model_key_for("shifting_idol", "Shifting Idol", true) == "shifting_idol",
+		"a beast with its own exported model wears it, even when a MODELS fallback exists too")
+
+
+func _test_backlog86_model_key_for_falls_back_to_an_exact_models_mapping() -> void:
+	_expect(Combat3D.model_key_for("shifting_idol", "Shifting Idol", false) == "tiger",
+		"with no own art, an exact id match in MODELS picks that stand-in body")
+
+
+func _test_backlog86_model_key_for_falls_back_to_a_name_substring_match() -> void:
+	# No beast_id at all (or one absent from MODELS), but the display name
+	# contains a mapped id with its underscore swapped for a space -- the
+	# documented fallback for a beast added without its own mapping.
+	_expect(Combat3D.model_key_for("unmapped_id", "The Crag Pup Reborn", false) == "dog",
+		"a beast id missing from MODELS still resolves by matching a mapped id's name inside the beast's own display name")
+
+
+func _test_backlog86_model_key_for_gives_up_to_the_elephant() -> void:
+	_expect(Combat3D.model_key_for("no_such_beast", "Totally Unrelated Name", false) == "elephant",
+		"a beast with no own art, no MODELS entry, and no name match falls back to the elephant rather than erroring")
+
+
+func _test_backlog86_model_key_for_own_art_wins_over_a_models_mapping() -> void:
+	# Same rung as the first test but from the other direction: prove the
+	# ladder stops at the FIRST rung that matches rather than falling through
+	# to a later, also-correct rung -- has_own_art short-circuits before
+	# MODELS or the name loop are even consulted.
+	_expect(Combat3D.model_key_for("stone_warden", "Not A Real Name", true) == "stone_warden",
+		"own art returns the beast's own id outright, without consulting MODELS or the name at all")
 
 
 ## backlog #86 duty 2: `_on_card_tapped` used to read ONLY the team's relic mod
