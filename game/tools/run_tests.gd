@@ -1303,6 +1303,26 @@ func _init() -> void:
 	_test_backlog86_gamehost_wires_pick_event_command_to_run()
 	_test_backlog86_pick_node_and_pick_event_are_shared_choices_over_the_wire()
 
+	# backlog #86 duty 3: GameHost._card_icon picks the silhouette a card's
+	# face renders with, and its own doc comment claims a strict priority
+	# ladder -- power_effect before taunt before meld/create before ... down
+	# to a plain damage/block guess and finally blank. Every real card in
+	# cards.json ships an explicit icon (Card.icon), so this ladder had never
+	# once been exercised by any wiring test that walks a real deck -- the
+	# "icon" key shows up in _slot_private/_deck_face's dictionaries in this
+	# file already, but always for a card whose OWN icon short-circuits the
+	# whole function on line 1. Zero coverage of the fallback itself, direct
+	# or incidental, confirmed by grepping this file for "_card_icon" and for
+	# every icon value this ladder can produce. Made static first (it already
+	# read nothing but its own argument) so these can call it with bare Card
+	# objects, no GameHost or Run needed.
+	_test_backlog86_card_icon_prefers_an_explicit_override()
+	_test_backlog86_card_icon_reads_a_powers_recurring_payoff_before_its_own_numbers()
+	_test_backlog86_card_icon_taunt_and_meld_outrank_a_plain_attack()
+	_test_backlog86_card_icon_climb_and_support_signals_outrank_each_other_in_order()
+	_test_backlog86_card_icon_a_damaging_card_shows_sword_even_while_also_exposing()
+	_test_backlog86_card_icon_falls_through_numeric_tiers_to_sword_then_shield_then_blank()
+
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
 	# not "inside tree" yet until the engine's main loop actually starts, one
@@ -15096,6 +15116,132 @@ func _test_backlog86_turn_window_is_a_noop_with_no_window_art() -> void:
 	cv._turn_window(0.3)
 	_expect(cv._win_at == -1, "a card with no 3D window (the ordinary case -- 28 of 29 rares) must not touch window state at all when ticked")
 	cv.free()
+
+
+## backlog #86 duty 3: GameHost._card_icon's fallback ladder, driven with
+## plain Card objects now that it's static. Tier 1 -- an explicit icon short-
+## circuits everything else, even a card that would otherwise scream "attack"
+## (damage) and "skill" (block) and "gadget" (meld) all at once.
+func _test_backlog86_card_icon_prefers_an_explicit_override() -> void:
+	var c := Card.new()
+	c.icon = "custom_icon"
+	c.damage = 10
+	c.block = 5
+	c.meld = true
+	_expect(GameHost._card_icon(c) == "custom_icon",
+		"an explicit icon wins even over a card that also looks like an attack, a skill and a meld")
+
+
+## Tier 2 -- a power card's recurring payoff picks the icon, ahead of the
+## card's own one-off numbers (a power card can still deal damage or grant
+## Block on the turn it's played, same as Iron Husk's sibling cards).
+func _test_backlog86_card_icon_reads_a_powers_recurring_payoff_before_its_own_numbers() -> void:
+	var wound_power := Card.new()
+	wound_power.power_effect = "wound"
+	wound_power.damage = 10
+	wound_power.block = 5
+	_expect(GameHost._card_icon(wound_power) == "skull",
+		"a power that inflicts Wound shows skull even though the card also deals damage and grants Block")
+	var thorns_power := Card.new()
+	thorns_power.power_effect = "thorns"
+	thorns_power.damage = 10
+	_expect(GameHost._card_icon(thorns_power) == "shield",
+		"a power effect maps thorns to shield, not the damage field's own sword")
+
+
+## Tiers 3-6 -- taunt, meld/create, exhaust_pick and prepare each outrank a
+## plain numeric field further down the ladder.
+func _test_backlog86_card_icon_taunt_and_meld_outrank_a_plain_attack() -> void:
+	var taunt := Card.new()
+	taunt.taunt = true
+	taunt.damage = 10
+	_expect(GameHost._card_icon(taunt) == "taunt", "taunt outranks a card's own damage number")
+	var melded := Card.new()
+	melded.meld = true
+	melded.block = 10
+	_expect(GameHost._card_icon(melded) == "gadget", "meld outranks a card's own Block number")
+	var built := Card.new()
+	built.create = "goblin_mech"
+	built.damage = 5
+	_expect(GameHost._card_icon(built) == "gadget", "a card that BUILDS another card (create) is a gadget too, even if it also deals damage")
+	var picked := Card.new()
+	picked.exhaust_pick = true
+	picked.grip = 3
+	_expect(GameHost._card_icon(picked) == "bomb", "exhaust_pick outranks a Foothold number further down the ladder")
+	var delayed := Card.new()
+	delayed.prepare = "some_effect"
+	delayed.pull_ally = 2
+	_expect(GameHost._card_icon(delayed) == "climb", "prepare outranks the support-signal tier that comes after it")
+
+
+## Tiers 7-10 -- the four combo/climb tiers only settle in the order the
+## ladder checks them, not in the order a card's fields happen to be set.
+func _test_backlog86_card_icon_climb_and_support_signals_outrank_each_other_in_order() -> void:
+	var lift := Card.new()
+	lift.pull_ally = 2
+	lift.grip = 3
+	_expect(GameHost._card_icon(lift) == "support", "an ally-lift field is checked before grip, so it wins when both are set")
+	var sac := Card.new()
+	sac.sac_ally_grip = 1
+	sac.damage = 5
+	_expect(GameHost._card_icon(sac) == "support", "sac_ally_grip is a support signal even on a card that also deals damage")
+	var climber := Card.new()
+	climber.grip = 3
+	climber.damage = 10
+	_expect(GameHost._card_icon(climber) == "climb", "grip outranks damage -- a climb card that also hits stays a climb card")
+	var roped := Card.new()
+	roped.ally_grip = 2
+	roped.block = 5
+	_expect(GameHost._card_icon(roped) == "climb", "ally_grip outranks block the same way grip does")
+	var mend := Card.new()
+	mend.ally_heal = 4
+	mend.light_gain = 3
+	_expect(GameHost._card_icon(mend) == "support", "ally_heal is checked before light_gain, so it wins when both are set")
+	var banked := Card.new()
+	banked.light_gain = 3
+	banked.wound = 2
+	_expect(GameHost._card_icon(banked) == "flask", "light_gain is checked before wound, so it wins when both are set")
+
+
+## The one non-monotonic step in the whole ladder: vulnerable only reads as
+## "expose" when the card does NOTHING else that outranks it -- specifically
+## its own damage field, checked later, still has to be zero. A card that
+## exposes AND hits (a very normal attack shape) has to read as an attack.
+func _test_backlog86_card_icon_a_damaging_card_shows_sword_even_while_also_exposing() -> void:
+	var pure_expose := Card.new()
+	pure_expose.vulnerable = 2
+	_expect(GameHost._card_icon(pure_expose) == "expose", "a card that only exposes, with no damage of its own, reads as expose")
+	var expose_and_hit := Card.new()
+	expose_and_hit.vulnerable = 2
+	expose_and_hit.damage = 5
+	_expect(GameHost._card_icon(expose_and_hit) == "sword",
+		"a card that exposes AND deals damage reads as an attack (sword), not expose -- the vulnerable branch's own damage==0 guard")
+
+
+## The remaining numeric tiers, in the order the ladder actually checks them,
+## down to the empty string a card with none of these fields falls back to.
+func _test_backlog86_card_icon_falls_through_numeric_tiers_to_sword_then_shield_then_blank() -> void:
+	var strong := Card.new()
+	strong.strength = 3
+	strong.dexterity = 2
+	_expect(GameHost._card_icon(strong) == "flask", "strength is checked before dexterity, so it wins when both are set")
+	var deft := Card.new()
+	deft.dexterity = 2
+	deft.draw = 1
+	_expect(GameHost._card_icon(deft) == "shield", "dexterity is checked before the draw/scry/discard tier")
+	var cantrip := Card.new()
+	cantrip.draw = 2
+	cantrip.damage = 5
+	_expect(GameHost._card_icon(cantrip) == "draw", "draw is checked before damage, so it wins on a cantrip that also hits")
+	var attack := Card.new()
+	attack.damage = 5
+	attack.block = 5
+	_expect(GameHost._card_icon(attack) == "sword", "damage is checked before block, so a card with both reads as an attack")
+	var defend := Card.new()
+	defend.block = 5
+	_expect(GameHost._card_icon(defend) == "shield", "a plain Block card falls all the way to the block tier")
+	var blank := Card.new()
+	_expect(GameHost._card_icon(blank) == "", "a card with none of these fields set gets no inferred icon at all")
 
 
 func _expect(cond: bool, name: String) -> void:

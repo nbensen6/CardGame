@@ -2746,7 +2746,38 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-10 (latest), #86 duty 2 (find an error and resolve it) —
+- **2026-09-10 (latest), #86 duty 3 (verify a mechanic actually works) —
+  `GameHost._card_icon()`'s ~20-branch fallback ladder (which silhouette icon
+  a card's face renders with, when the data file leaves `icon` blank) had
+  never been driven by anything.** Last commit (`f25eeb3`) was duty 2, so this
+  turn is duty 3. Checked `combat_3d.gd`'s whole static-helper surface first
+  (route/foothold/hop/climb-frame/hand-status/timing/selection-state/
+  move-kind) — all already covered by prior duty-3 passes. Every real card in
+  `cards.json` ships an explicit `icon`, so `_card_icon`'s fallback ladder,
+  which only fires for a card that doesn't (today: a melded card whose two
+  halves both leave `icon` blank), was true zero coverage — confirmed by
+  grepping `run_tests.gd` for `_card_icon` and for every icon value the
+  ladder can produce. The function already read nothing but its own `Card`
+  argument, so it was lifted to `static func` (same idiom as
+  `route_between_rungs`/`foothold_anchor`) with no behaviour change — all
+  three call sites (`_slot_private`, `_deck_face`, and the reward-card path)
+  call it unqualified within the same class. Added six tests
+  (`_test_backlog86_card_icon_*`) driving the ladder end to end with plain
+  `Card.new()` objects: explicit override beats everything, a power's
+  recurring payoff beats its own numbers, taunt/meld/create/exhaust_pick/
+  prepare each outrank a plain numeric field, the climb/support tiers settle
+  in check-order rather than field-set-order, and the one non-monotonic step
+  (`vulnerable` only reads as "expose" when the card's own `damage` is
+  exactly zero — a card that exposes AND hits reads as "sword"). Proved the
+  tests are load-bearing, not just descriptive: temporarily dropped the
+  `and c.damage == 0` guard and reran — exactly one test failed, the one
+  naming that guard — then restored it (`git diff` clean on that revert).
+  Came up clean, no bug: the ladder already does exactly what its doc
+  comment claims. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED (1355 tests). Next `#86` turn is duty 2
+  (find an error and resolve it).
+
+- **2026-09-10, #86 duty 2 (find an error and resolve it) —
   `Combat.incoming_for()` folded the main boss move and a living add's own
   attack into one lump number before pricing Buffer/Intangible against it,
   even though they land as two SEPARATE `take_damage()` calls for real

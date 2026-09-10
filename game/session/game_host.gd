@@ -1016,7 +1016,15 @@ func _first_unpicked_solo() -> int:
 	return -1
 
 ## A silhouette-icon key for a card, chosen by its dominant effect (view art).
-func _card_icon(c: Card) -> String:
+##
+## Static (#86 duty 3): reads nothing but the Card passed in, so it was already
+## pure in every way that matters except the keyword — lifted the same way as
+## combat_3d's route_between_rungs/foothold_anchor, so run_tests.gd can drive
+## the whole priority ladder with plain Card objects and no GameHost/Run at
+## all. Every real card in cards.json carries an explicit `icon` already (see
+## Card.icon above), so this ladder is the fallback for cards that don't —
+## today, only a melded card whose two halves both left `icon` blank.
+static func _card_icon(c: Card) -> String:
 	if c.icon != "":
 		return c.icon  # explicit override from cards.json
 	if c.power_effect != "":  # backlog #57 — infer from the recurring payoff, not a one-off field
