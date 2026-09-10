@@ -12435,3 +12435,27 @@ Newest first. One line per finished item: what, and anything surprising.
   `robustness_sweep.gd` (360 runs, unmodified) as a smoke test: clean, 0
   dead ends / 0 crashes. Next `#86` turn is duty 3 (verify a mechanic
   actually works).
+
+- **2026-09-10, #86 duty 3 (verify a mechanic actually works).** Last commit
+  (`2a20998`) was duty 2, so this turn is duty 3. The two prior wiring
+  sweeps (`1745b14`'s buy/leave_shop/campfire/skip_reward/pick_card/restart
+  and `08f9c16`'s fall/use_potion/discard_potion/resolve_scry) never reached
+  `pick_node`/`pick_event`, the map's two commands. They weren't untested —
+  `_make_session()`'s own setup loop sends `pick_node` through a real
+  `GameClient`/`GameHost` pair every time any other test needs to get off
+  the map — but that only ever exercises the happy path with the FIRST
+  available column, never proves an out-of-reach column is refused over the
+  wire, and never proves the "any hunter may choose" claim in `Run.pick_node`'s
+  own comment: unlike `play_card`/`fall`/etc, `_acting_slot` never gates
+  either command, so a claimed slot is ignored entirely — genuinely
+  untested behaviour, not just an untested code path. Added three tests:
+  one wiring `pick_node` end to end (rejects an out-of-range column, then
+  actually steps `Run.map_row`/`map_col` on a valid one), one doing the same
+  for `pick_event` (forced straight onto a live host's `Run`, resolved
+  through a real `GameClient`), and one proving both commands are genuinely
+  ownerless in a co-op session — sent from whichever peer joined SECOND,
+  not the one every other wiring test in this file reaches for by habit.
+  All five assertions passed first try; no bug found, same honest outcome
+  `08f9c16` logged for its own four commands. Fresh `--import`, headless,
+  Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is
+  duty 2 (find an error and resolve it).

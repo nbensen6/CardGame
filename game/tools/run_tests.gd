@@ -1224,6 +1224,20 @@ func _init() -> void:
 	_test_backlog86_gamehost_wires_discard_potion_command_to_run()
 	_test_backlog86_gamehost_wires_resolve_scry_command_to_run()
 
+	# backlog #86 duty 3: the two wiring sweeps above never reached pick_node/
+	# pick_event -- both are exercised incidentally by every session test that
+	# has to walk c0 off the map to reach a fight (_make_session() itself calls
+	# c0.pick_node in a loop), which proves the happy path works but never
+	# checks the actual contract: that an in-bounds-but-unreachable column is
+	# refused over the wire, and that either hunter -- not just whoever sent
+	# the last command -- may make the call, since pick_node/pick_event are
+	# the map's own shared decisions (Run.pick_node's own comment: "Any hunter
+	# may choose"), unlike the _acting_slot-gated commands the two sweeps above
+	# already covered.
+	_test_backlog86_gamehost_wires_pick_node_command_to_run()
+	_test_backlog86_gamehost_wires_pick_event_command_to_run()
+	_test_backlog86_pick_node_and_pick_event_are_shared_choices_over_the_wire()
+
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
 	# not "inside tree" yet until the engine's main loop actually starts, one
@@ -10071,6 +10085,90 @@ func _test_backlog86_gamehost_wires_resolve_scry_command_to_run() -> void:
 	c0.resolve_scry([0])
 	_expect(ps.scry_pending.is_empty() and ps.discard_pile.size() == 1 and (ps.discard_pile[0] as Card).id == "slash",
 		"a 'resolve_scry' command sent through GameClient/GameHost must actually reach Combat.resolve_scry and bin the chosen card")
+
+
+## backlog #86 duty 3: pick_node/pick_event are the two map commands neither
+## wiring sweep above ever exercised as their OWN contract -- every session
+## test that needs to get a client off the map and into a fight already sends
+## pick_node through the wire (_make_session() itself loops on it), which
+## proves the happy path but never proves a bad column is refused over the
+## wire, the same "reads correct, never actually tested" gap take_key's own
+## missing _on_command case hid in. Column 5 is never a real edge here: row 0
+## is 2-3 columns wide (RunMap.MIN_WIDTH/MAX_WIDTH), so 5 is out of range no
+## matter what the seed rolled.
+func _test_backlog86_gamehost_wires_pick_node_command_to_run() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, true)  # solo
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	_expect(host._run != null and host._run.phase == Run.Phase.MAP,
+		"setup sanity: the solo run opens on the map")
+	c.pick_node(5)  # never a real edge -- row 0 is at most 3 columns wide
+	_expect(host._run.phase == Run.Phase.MAP and host._run.map_row == -1,
+		"a 'pick_node' command naming a column with no edge to it must be refused over the wire, same as Run.pick_node itself")
+	c.pick_node(0)  # before the run starts, every column of row 0 is a valid opening
+	_expect(host._run.map_row == 0 and host._run.map_col == 0 and host._run.phase != Run.Phase.MAP,
+		"a 'pick_node' command sent through GameClient/GameHost must actually reach Run.pick_node and step onto the chosen node")
+
+
+## Mirrors the pick_node test above for the map's other shared choice: an
+## event. Built by forcing the event straight onto a live host's Run (the
+## same way the /core-level event tests build one on a bare Run), then
+## resolving it through a real GameClient rather than calling Run.pick_event
+## directly.
+func _test_backlog86_gamehost_wires_pick_event_command_to_run() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, true)  # solo
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	host._run.phase = Run.Phase.EVENT
+	host._run.map_row = 0  # standing on a node -- resolving hands back to the map
+	host._run.event = {"title": "T", "text": "x", "choices": [
+		{"label": "loot", "result": "!", "effects": {"gold": 7}},
+	]}
+	var gold_before: int = host._run.gold
+	c.pick_event(0)
+	_expect(host._run.gold == gold_before + 7 and host._run.phase == Run.Phase.MAP
+			and host._run.event_result == "!",
+		"a 'pick_event' command sent through GameClient/GameHost must actually reach Run.pick_event and apply its chosen effects")
+
+
+## Unlike play_card/end_turn/fall/use_potion/etc, which _acting_slot always
+## resolves to the SENDING peer's own slot, pick_node and pick_event carry no
+## slot at all -- Run.pick_node's own comment calls the route "a shared
+## decision" and GameHost._on_command's cases for both call straight into Run
+## with nothing gating who sent it. A co-op session with two real peers proves
+## it here: the ally's connection makes both calls, not the peer who joined
+## first or who every other wiring test above happens to use.
+func _test_backlog86_pick_node_and_pick_event_are_shared_choices_over_the_wire() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2)  # co-op, two real peers
+	_kept.append(host)
+	var c0 := GameClient.new(t, 10)
+	var c1 := GameClient.new(t, 20)
+	c0.join()
+	c1.join()
+	c0.select_character("frog")
+	c1.select_character("mountain_climbers")
+	_expect(host._run != null and host._run.phase == Run.Phase.MAP,
+		"setup sanity: the co-op run opens on the map")
+	c1.pick_node(0)  # the ALLY sends it, not the peer any other test would reach for
+	_expect(host._run.map_row == 0 and host._run.phase != Run.Phase.MAP,
+		"pick_node has no owner -- either hunter's connection may make the shared route choice")
+	host._run.phase = Run.Phase.EVENT
+	host._run.event = {"title": "T", "text": "x", "choices": [
+		{"label": "chase", "result": "!", "effects": {"gold": 3}},
+	]}
+	var gold_before: int = host._run.gold
+	c0.pick_event(0)  # this time the OTHER peer sends it
+	_expect(host._run.gold == gold_before + 3,
+		"pick_event has no owner either -- either hunter's connection may answer the shared event")
 
 
 ## backlog #86 duty 2: `Run.combat` is set once a run's first fight starts
