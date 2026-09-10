@@ -2746,7 +2746,39 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-10 (latest), #86 duty 3 (verify a mechanic actually works) —
+- **2026-09-10 (latest), #86 duty 2 (find an error and resolve it) —
+  `shift_sigil` reset the "get bucked" meter for every hunter but left the
+  sigil_fatigue limiter's own clock running.** Last own commit (`4a0e8f8`) was
+  duty 3, so this turn opened as duty 2. Spawned a background research pass
+  over `core/combat.gd` and friends; it flagged `_enemy_turn()`'s
+  `"shift_sigil"` branch (combat.gd:1443) next to `_apply_limiter()`'s
+  `sigil_fatigue` branch (combat.gd:1065). `sigil_reached(pi)` is
+  `foothold >= weak_point_height`, and `ps.sigil_rounds` — the fatigue
+  limiter's "how many rounds has this hunter camped THIS sigil" counter — only
+  ever resets when `sigil_reached` flips *false*. `shift_sigil` already
+  zeroes the sibling `weak_point_damage` counter for exactly this reason
+  ("whatever you climbed is now wrong"), but never touched `sigil_rounds` —
+  so a shift that lands at or below a hunter's current foothold (straight
+  down, or onto their own foothold) leaves `sigil_reached` continuously true
+  right through the move, the reset branch never runs, and the fatigue clock
+  from the OLD sigil silently carries onto the new one. Concretely: a hunter
+  fine after one round at the old sigil could take an immediate,
+  un-telegraphed `SIGIL_FATIGUE_DAMAGE` hit on what should have been their
+  FIRST round at the new one. No shipped Titan combines `sigil_fatigue` and
+  `shift_sigil` yet (checked `bosses.json`), so this was latent rather than
+  live — same class of gap as #86 duty 2's earlier leech/Thorns bug, a value
+  read from the wrong side of a state change. Fixed by zeroing `sigil_rounds`
+  alongside `weak_point_damage` in the `shift_sigil` branch. Added
+  `_test_shift_sigil_resets_the_sigil_fatigue_clock`, which builds a boss with
+  both a `sigil_fatigue` limiter and a `shift_sigil` move that relocates the
+  sigil downward while the hunter stays above it, and proves the hunter takes
+  no damage on their first round at the new sigil; confirmed it actually
+  catches the bug by reverting the fix and re-running (1 test failed, exactly
+  that one), then restored the fix. `run_tests.gd`: ALL TESTS PASSED before
+  and after (with the fix in), 1 FAILED (only the new test) with the fix
+  reverted.
+
+- **2026-09-10, #86 duty 3 (verify a mechanic actually works) —
   backlog #84's 3D card-window art had zero test coverage on either half.**
   Last own commit (`f323008`) was duty 2, so this turn opened as duty 3.
   Grepping `run_tests.gd` for `_turn_window`, `_win_frames`, `_window_grid`

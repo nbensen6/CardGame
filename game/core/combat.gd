@@ -1445,6 +1445,14 @@ func _enemy_turn() -> void:
 			boss.weak_point_height = moved
 			for ps4 in players:
 				ps4.weak_point_damage = 0
+				# sigil_rounds (backlog #86 duty 2) is a second, derived "how long
+				# have I been camping THIS sigil" counter next to weak_point_damage
+				# above, and it has the same problem: if the shift lands at or
+				# below a hunter's current foothold, sigil_reached() stays true
+				# straight through it, so _apply_limiter()'s own reset (which only
+				# fires when sigil_reached flips false) never runs and the fatigue
+				# clock from the OLD sigil silently carries onto the new one.
+				ps4.sigil_rounds = 0
 			_log("%s's sigil shifts to Height %d." % [boss.name, moved])
 		"frail":  # backlog #69 — a debuff move: chips Block gained rather than HP
 			var ft: PlayerState = players[boss_target_index()]

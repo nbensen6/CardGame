@@ -375,6 +375,7 @@ func _init() -> void:
 	_test_damage_to_add_reports_only_what_gets_through_block()
 	_test_wound_decay_limiter_sheds_poison()
 	_test_sigil_fatigue_limiter_punishes_camping()
+	_test_shift_sigil_resets_the_sigil_fatigue_clock()
 	_test_height_split_limiter_punishes_hoarding()
 	_test_every_titan_carries_a_known_limiter()
 	_test_relic_start_strength()
@@ -7263,6 +7264,37 @@ func _test_sigil_fatigue_limiter_punishes_camping() -> void:
 	combat.end_turn(1)  # round 2 — camped past the allowance, grip burns
 	_expect(after_round1 == hp0 and ps.combatant.hp == hp0 - Combat.SIGIL_FATIGUE_DAMAGE,
 		"sigil_fatigue limiter chips a hunter who camps the weak point too long")
+
+
+## backlog #86 duty 2: shift_sigil resets weak_point_damage (the "get bucked"
+## meter) for every hunter, but left sigil_rounds -- the sigil_fatigue
+## limiter's OWN "how long have I been camping THIS sigil" counter -- alone.
+## sigil_reached() only flips false, and only THEN does _apply_limiter() zero
+## sigil_rounds, when a hunter's foothold falls below the new weak point. A
+## shift to a height a hunter is already above (here: straight down, from 8 to
+## 3, with the hunter standing at 8) never flips it, so the fatigue clock from
+## the OLD sigil silently carries onto the new one -- a hunter who was fine
+## after one round at the old sigil takes an immediate, un-telegraphed hit on
+## what should be their first round at the new one.
+func _test_shift_sigil_resets_the_sigil_fatigue_clock() -> void:
+	var boss := Boss.new("Shifter", 500)
+	boss.moves = [{"type": "shift_sigil", "value": 3}]
+	boss.weak_point_height = 8
+	boss.limiter = {"type": "sigil_fatigue", "value": 1}
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 8  # at the old sigil
+	var hp0: int = ps.combatant.hp
+
+	combat.end_turn(0)
+	combat.end_turn(1)  # round 1 at the old sigil (within allowance) -- and it shifts to Height 3
+	var after_round1: int = ps.combatant.hp
+	var shifted_and_still_above: bool = combat.boss.weak_point_height == 3 and combat.sigil_reached(0)
+
+	combat.end_turn(0)
+	combat.end_turn(1)  # round 2 -- the hunter's FIRST round camping the new sigil, still within allowance
+	_expect(after_round1 == hp0 and shifted_and_still_above and ps.combatant.hp == hp0,
+		"shift_sigil resets the sigil_fatigue clock along with weak_point_damage, so a hunter who stays above the new sigil isn't charged for time spent at the old one")
 
 
 func _test_height_split_limiter_punishes_hoarding() -> void:
