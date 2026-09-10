@@ -217,6 +217,17 @@ func _on_peer_left(peer_id: int) -> void:
 	if _run == null:
 		_peers.erase(peer_id)
 		_slot_of.erase(peer_id)
+		# backlog #86 duty 2: _character_of is keyed by peer_id, a SEPARATE
+		# piece of state from _peers/_slot_of above -- erasing the peer there
+		# but not here left a departed peer's character claim standing forever.
+		# _character_taken_by_another_peer() reads ALL of _character_of, not
+		# just current peers, so a player who picked a character then dropped
+		# before the run started (crash, bad connection, backing out) locked
+		# that character out of the lobby permanently -- unpickable by anyone
+		# else, and unpickable by the SAME player rejoining with a fresh peer
+		# id, with no visible reason since _selections() (built from _peers)
+		# never showed them as having picked it in the first place.
+		_character_of.erase(peer_id)
 		_reindex_slots()
 	else:
 		paused = true

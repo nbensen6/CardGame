@@ -511,6 +511,7 @@ func _init() -> void:
 	_test_solo_controls_both_hunters()
 	_test_backlog86_solo_cannot_pick_the_same_character_for_both_hunters()
 	_test_backlog86_coop_cannot_pick_the_same_character_twice()
+	_test_backlog86_a_lobby_drop_frees_the_character_they_had_claimed()
 	_test_session_shared_state_exposes_the_seed()
 	# backlog #45: prove the new mechanics cross the client/server boundary
 	_test_backlog45_potions_are_shared_but_only_the_owner_can_drink_them()
@@ -9845,6 +9846,43 @@ func _test_backlog86_coop_cannot_pick_the_same_character_twice() -> void:
 		"a co-op peer cannot claim a character another peer already picked")
 	c1.select_character("mountain_climbers")  # a distinct character is accepted
 	_expect(host._run != null, "two distinct co-op picks start the run as usual")
+
+
+## backlog #86 duty 2: _character_of (peer_id -> claimed character) is a
+## SEPARATE piece of lobby state from _peers/_slot_of, and _on_peer_left only
+## ever cleaned up the latter. A peer who picked a character and then dropped
+## before the run started -- a crash, a bad connection, backing out -- left
+## their claim standing in _character_of forever, and
+## _character_taken_by_another_peer() reads every entry in it, not just
+## current peers. Result: that character became permanently unpickable by
+## anyone in the lobby, including the SAME player rejoining with a fresh peer
+## id, with no visible reason (_selections(), built from _peers, never showed
+## them as having picked it once they were gone).
+func _test_backlog86_a_lobby_drop_frees_the_character_they_had_claimed() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, false)  # co-op
+	_kept.append(host)
+	var c0 := GameClient.new(t, 10)
+	var c1 := GameClient.new(t, 20)
+	c0.join()
+	c1.join()
+	c0.select_character("lightbearer")
+	_expect(String(c0.private.get("selected", "")) == "lightbearer",
+		"peer 10 holds the character it picked, before dropping")
+
+	t.emit_signal("peer_left", 10)  # peer 10 drops before the run starts
+	_expect(not host._character_of.has(10),
+		"the departed peer's claim is erased along with its slot")
+
+	c1.select_character("lightbearer")  # nobody real still holds this claim
+	_expect(host._peers.size() == 1 and String(c1.private.get("selected", "")) == "lightbearer",
+		"the survivor can now claim the character the departed peer had picked")
+
+	var c2 := GameClient.new(t, 30)  # peer 10's old id is never reused by ENet, but a
+	c2.join()                        # fresh peer standing in for "peer 10, rejoined" must
+	c2.select_character("mountain_climbers")
+	_expect(host._run != null,
+		"the lobby fills and starts normally once both live peers have distinct picks")
 
 
 func _test_host_pauses_on_disconnect() -> void:

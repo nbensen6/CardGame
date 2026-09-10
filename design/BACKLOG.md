@@ -2746,6 +2746,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-10 (latest), #86 duty 2 (find an error and resolve it) — a hunter
+  who picked a character then dropped from the lobby before the run started
+  locked that character out forever, for everyone, including themselves.**
+  Last commit (`ee45c05`) was duty 3, so this turn is duty 2. Read
+  `game_host.gd`'s lobby/disconnect path end to end (`_on_peer_left`,
+  `_handle_join`, `_character_of`, `_character_taken_by_another_peer`) against
+  the "two copies of one truth" question this duty keeps finding real bugs
+  under: peer presence is tracked by `_peers`/`_slot_of`, and a peer's claimed
+  character is tracked SEPARATELY by `_character_of`, keyed by peer_id.
+  `_on_peer_left`'s lobby branch (`_run == null`) already erased the peer from
+  `_peers`/`_slot_of` (the both-hunters-drop fix a few turns back lives right
+  next to this), but never touched `_character_of` — and
+  `_character_taken_by_another_peer()` reads every entry in that dictionary,
+  not just current peers. So a peer who picked a character and then dropped
+  (crash, bad connection, backing out before the run starts) left a claim
+  standing that nothing could ever clear: the character stayed refused to
+  every future pick in that lobby, including the same real player rejoining
+  under a fresh peer id, with no visible reason — `_selections()` (built from
+  `_peers`) never even showed them as having picked it once they were gone,
+  so from the lobby screen the character just looked broken. Fixed by erasing
+  `_character_of[peer_id]` alongside the existing `_peers`/`_slot_of` cleanup
+  in `_on_peer_left`'s lobby branch. Wrote the regression test first
+  (`_test_backlog86_a_lobby_drop_frees_the_character_they_had_claimed`) —
+  peer drops after picking Lightbearer, a survivor then picks Lightbearer too
+  — watched it fail three ways against the unfixed code (stale entry still
+  present, the re-pick refused, the lobby never fills) before applying the
+  fix. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL
+  TESTS PASSED. Next `#86` turn is duty 3 (verify a mechanic actually works).
+
 - **2026-09-10 (latest), #86 duty 3 (verify a mechanic actually works) —
   Coach.hint_for's event/shop/campfire/reward branches had never once been
   called with those phase strings.** Last commit (`279532d`) was duty 2, so
