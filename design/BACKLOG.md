@@ -2746,7 +2746,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-10 (latest), #86 duty 2 (find an error and resolve it) —
+- **2026-09-10 (latest), #86 duty 3 (verify a mechanic actually works) —
+  Burn Coal's permanent cheapen effect was only ever proven for a single play.**
+  Last own commit (`79c188a`) was duty 2, so this turn opened as duty 3. Spent
+  most of the run confirming there was still a genuine gap left: every static
+  helper in `combat_3d.gd`/`overworld_3d.gd`/`location_3d.gd`, `RunMap`'s
+  generation guarantees (shop placement, the three key-source types, no
+  unreachable rows, `pick_node` rejecting an in-bounds-but-unreachable
+  column), and the ENet transport relay were already covered by ~15 prior
+  duty-3 passes — a background research pass over the rest of `game/core` and
+  `game/views` surfaced `combat.gd:890`, `ps.cost_reductions[cid] = ... +
+  card.cheapen_amount`, as a real hole: the only existing test
+  (`_test_burn_coal_exhaust_and_cheapen`) plays Burn Coal exactly once, so it
+  could not tell that `+=` apart from a plain `=` that just kept overwriting
+  the same reduction — and two copies of Burn Coal in one deck is reachable
+  content. Added `_test_backlog86_burn_coal_cheapen_stacks_across_repeated_plays`,
+  which plays it three times against the same target (Cleave, cost 2): after
+  two plays the reduction must read 2, not 1 (the value an overwrite would
+  leave behind), proving accumulation; after the third, where the reduction
+  (3) exceeds the target's own cost, `effective_cost` must still floor at 0
+  rather than go negative (`combat.gd:439`'s `maxi(0, ...)`). First draft of
+  the test read the cheapen target back by a hand INDEX after each play and
+  failed — `play_card`'s `remove_at`/`erase` shift everything behind the
+  played card, so the index that pointed at Cleave after play 1 pointed at
+  the next Burn Coal after play 2. Fixed by looking the card up by `id`
+  instead of tracking indices; reran and it passed. `run_tests.gd`: ALL
+  TESTS PASSED (the pre-existing "2 ObjectDB instances leaked at exit"
+  warning at process exit reproduces identically on a clean `git stash`, so
+  it predates this change and isn't from the new test).
+
+- **2026-09-10, #86 duty 2 (find an error and resolve it) —
   the sigil_fatigue clock leak that `c08d198` fixed for `shift_sigil` had two
   more live call sites: the weak-point buck and the `attack_all` sweep.**
   Last own commit (`9c913b2`) was duty 3, so this turn opened as duty 2.

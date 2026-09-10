@@ -267,6 +267,7 @@ func _init() -> void:
 	_test_grappling_arm_pulls_ally()
 	_test_build_mech_scales()
 	_test_burn_coal_exhaust_and_cheapen()
+	_test_backlog86_burn_coal_cheapen_stacks_across_repeated_plays()
 	_test_catapult_sacrifices_to_launch_ally()
 	_test_meld_fuses_two_cards()
 	_test_meld_carries_special_effects()
@@ -4936,6 +4937,48 @@ func _test_burn_coal_exhaust_and_cheapen() -> void:
 		and ps.hand.size() == 1 and String(ps.hand[0].id) == "cleave"
 		and combat.effective_cost(0, ps.hand[0]) == cleave_before - 1,
 		"Burn Coal exhausts the sacrificed card and permanently cheapens the chosen one")
+
+
+## #86 duty 3 — combat.gd:890 writes the cheapen amount with `+=`, and the only
+## existing coverage (`_test_burn_coal_exhaust_and_cheapen` above) plays Burn
+## Coal exactly once, so it can't tell that `+=` apart from a plain `=` that
+## just kept overwriting the same reduction. Two real copies of Burn Coal in
+## one deck is reachable content, so this plays it three times against the
+## same target: after two plays the reduction must be 2, not 1 (the value an
+## overwrite would leave behind) — proving accumulation — and after a third
+## play, where the reduction (3) exceeds the target's own cost (2), effective
+## cost must still floor at 0 rather than go negative (`combat.gd:439`'s
+## `maxi(0, ...)`).
+func _cleave_in(ps: PlayerState) -> Card:
+	for c in ps.hand:
+		if String((c as Card).id) == "cleave":
+			return c
+	return null
+
+
+func _test_backlog86_burn_coal_cheapen_stacks_across_repeated_plays() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_burn_coal(), _burn_coal(), _burn_coal(), _cleave(), _slash(), _slash(), _slash()]
+	ps.energy = 10
+	var cleave_before: int = combat.effective_cost(0, _cleave_in(ps))
+	# Each play's burn coal and its sacrifice both sit ahead of the cleave/slash
+	# tail, so the fixed indices below (burn coal at 0, its sacrifice just past
+	# the shrinking hand's front, cleave right after) hold across all three
+	# plays even as ps.hand.remove_at()/erase() shift everything behind them.
+	var ok1: bool = combat.play_card(0, 0, true, 4, 3)  # burn #1: sac slash, cheapen cleave
+	var after_one: int = combat.effective_cost(0, _cleave_in(ps))
+	var ok2: bool = combat.play_card(0, 0, true, 3, 2)  # burn #2: sac slash, cheapen cleave
+	var after_two: int = combat.effective_cost(0, _cleave_in(ps))
+	var ok3: bool = combat.play_card(0, 0, true, 2, 1)  # burn #3: sac slash, cheapen cleave
+	var after_three: int = combat.effective_cost(0, _cleave_in(ps))
+	var reduction: int = int(ps.cost_reductions.get("cleave", 0))
+	_expect(ok1 and ok2 and ok3 and cleave_before == 2 and after_one == 1
+		and after_two == 0 and after_three == 0 and reduction == 3,
+		"Burn Coal's cheapen ACCUMULATES across repeated plays on the same card " +
+		"(reduction reaches 3 from three +1 plays, not stuck at 1 the way an " +
+		"overwrite would leave it) and effective cost floors at 0 rather than " +
+		"going negative once the reduction outgrows the card's own cost")
 
 
 func _test_catapult_sacrifices_to_launch_ally() -> void:
