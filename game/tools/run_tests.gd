@@ -498,6 +498,7 @@ func _init() -> void:
 	_test_host_pauses_on_disconnect()
 	_test_dropped_hunter_can_rejoin_mid_fight()
 	_test_backlog86_reconnected_hunter_keeps_their_character_after_combat()
+	_test_backlog86_same_peer_id_rejoin_clears_the_pause_without_reclaiming()
 	_test_lobby_drop_reindexes_the_remaining_peer_and_frees_the_slot()
 	_test_host_autosaves_and_resumes()
 	_test_host_autosaves_and_resumes_mid_combat()
@@ -9689,6 +9690,48 @@ func _test_backlog86_reconnected_hunter_keeps_their_character_after_combat() -> 
 	host._broadcast_state()
 	_expect(String(c0.shared["players"][1]["character"]) == "mountain_climbers",
 		"the reconnected hunter's character survives past combat instead of reading blank from a stale peer-id key")
+
+
+## Backlog #86 duty 3: _handle_join's OWN-peer-id branch — every reconnect test
+## above rejoins with a FRESH peer id (99), which is the only thing a real ENet
+## connection can ever hand out, so they all exercise _reclaim_slot(). But
+## _handle_join's comment (game_host.gd:226-233) claims a second path exists:
+## a rejoin that lands on the SAME peer id the dropped connection had — "unusual
+## for ENet... but the local loopback transport used in tests can" — and that
+## path was never proven, only asserted in a comment. It skips _reclaim_slot()
+## entirely (peer_id is already a known key in _slot_of, so _handle_join takes
+## its OTHER branch) and instead just clears `paused`/`_disconnected_slot`
+## directly. A GameClient built with the loopback transport is exactly the case
+## the comment names: `c1` still carries peer id 20 after the drop, so calling
+## c1.join() again resends "join" from that same id.
+func _test_backlog86_same_peer_id_rejoin_clears_the_pause_without_reclaiming() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var c1: GameClient = s["c1"]
+	var transport: LocalTransport = s["transport"]
+	transport.emit_signal("peer_left", 20)  # mountain_climbers (slot 1) drops
+	_expect(host.paused, "host pauses when hunter 2 drops")
+
+	c1.join()  # same GameClient, same peer id 20 -- not a fresh connection
+	_expect(not host.paused and host._disconnected_slot == -1,
+		"a rejoin on the SAME peer id clears the pause, same as a fresh peer id would")
+	_expect(c1.you == 1 and int(host._slot_of.get(20, -1)) == 1,
+		"the seat is unchanged -- this path never touched _slot_of, unlike _reclaim_slot")
+	_expect(not bool(c0.shared.get("paused", false)),
+		"the still-connected hunter's own snapshot reflects the resume too")
+
+	# Play resumes for hunter 2 through the SAME client that dropped and rejoined.
+	var idx := _first_playable_client(c1)
+	_expect(idx >= 0, "the rejoined client still has hunter 2's real hand")
+	var energy_before: int = c1.shared["players"][1]["energy"]
+	c1.play_card(idx)
+	_expect(int(c1.shared["players"][1]["energy"]) < energy_before,
+		"a command from the rejoined connection acts on hunter 2 again")
+
+	# Peer id 20 still owns slot 1 (never migrated away), so it can drop again.
+	transport.emit_signal("peer_left", 20)
+	_expect(host.paused, "the same peer id dropping again re-pauses the same seat")
 
 
 ## Backlog #86 duty 3: _on_peer_left's OTHER branch, never exercised by

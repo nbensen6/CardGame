@@ -2746,7 +2746,28 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-10 (latest), #86 duty 2 (find an error and resolve it) —
+- **2026-09-10 (latest), #86 duty 3 (verify a mechanic actually works) —
+  proved the "same peer id rejoin" path in `GameHost._handle_join`, which
+  had only ever been asserted in a comment.** Last own commit (`c08d198`)
+  was duty 2, so this turn opened as duty 3. Every existing reconnect test
+  (`_test_dropped_hunter_can_rejoin_mid_fight`,
+  `_test_backlog86_reconnected_hunter_keeps_their_character_after_combat`)
+  rejoins with a FRESH peer id, which is the only thing a real ENet
+  connection can hand out, so all of them exercise `_reclaim_slot()`.
+  `_handle_join`'s own comment (game_host.gd:226-233) claims a second,
+  narrower path exists — a rejoin that lands on the SAME peer id the dropped
+  connection had, which it says the local loopback transport used in tests
+  CAN produce — but nothing ever built that scenario to check the claim.
+  Added `_test_backlog86_same_peer_id_rejoin_clears_the_pause_without_reclaiming`,
+  which drops peer 20 mid-fight then calls `.join()` again on the SAME
+  `GameClient` (still carrying peer id 20), and checks the pause clears,
+  the seat/`_slot_of` mapping is untouched (unlike `_reclaim_slot`, which
+  migrates it), play resumes through that same client, and the same peer id
+  can drop and re-pause the seat again afterward. It passed on the first
+  run — the comment's claim was correct — so this is a coverage gap closed,
+  not a bug fix.
+
+- **2026-09-10, #86 duty 2 (find an error and resolve it) —
   `shift_sigil` reset the "get bucked" meter for every hunter but left the
   sigil_fatigue limiter's own clock running.** Last own commit (`4a0e8f8`) was
   duty 3, so this turn opened as duty 2. Spawned a background research pass
