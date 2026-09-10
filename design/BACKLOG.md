@@ -2746,7 +2746,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-10 (latest), #86 duty 2 (find an error and resolve it) — a
+- **2026-09-10 (latest), #86 duty 3 (verify a mechanic actually works) —
+  backlog #84's 3D card-window art had zero test coverage on either half.**
+  Last own commit (`f323008`) was duty 2, so this turn opened as duty 3.
+  Grepping `run_tests.gd` for `_turn_window`, `_win_frames`, `_window_grid`
+  and `_has_window` (the mechanism behind a rare card whose art is a
+  turntable sheet, spinning to a different rendered angle as the card tilts
+  or drags) turned up nothing at all. Two real risks, both named in the
+  code's own doc comments but never checked: `CardView._window_grid()`'s
+  "two ways in" sidecar loader (an imported JSON resource vs. a raw-file
+  fallback, there specifically because a stale import can silently drop the
+  window on one machine and not another) and `_turn_window()`'s frame-index
+  math, where a swapped `col = i % cols` / `row = i / cols` would still land
+  on some valid-looking region in the sheet — invisible to any check that
+  only asks whether an index is in range. Added ten tests against
+  `crescendo` (the one card that currently ships this art, per the file's
+  own "29 rares; one has art so far") plus a fabricated 24-frame/6-column
+  sheet matching its real shape: the sidecar reads its real frames/cols/cell
+  size, a card with no sidecar or no shipped `.png` gets an empty grid/null
+  atlas instead of a crash, tilt maps to the first/last/centre frame and
+  clamps beyond ±1, and — the one that would have caught a real regression —
+  frame 6 of a 6-wide sheet resolves to the exact rect for column 0/row 1,
+  not whatever a swapped formula would produce. All ten passed against the
+  existing code; this was a coverage gap, not a live bug. `run_tests.gd`:
+  ALL TESTS PASSED (1293) before and after.
+
+- **2026-09-10, #86 duty 2 (find an error and resolve it) — a
   Thorned leech target let the Titan quietly refund its own bite.** Last own
   commit (`7e2b914`) was duty 3, so this turn opened as duty 2. Spawned a
   background research pass over `core/combat.gd`, `core/run.gd` and

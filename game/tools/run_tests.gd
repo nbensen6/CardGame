@@ -1202,6 +1202,38 @@ func _init() -> void:
 	_test_backlog86_fire_quality_a_miss_ends_the_chain_even_mid_way_through()
 	_test_backlog86_fire_quality_resolves_only_once_hits_done_reaches_hits_needed()
 
+	# backlog #86 duty 3 (forty-sixth pass): backlog #84's "3D window" card art
+	# (a card whose art is a turntable sheet, so tilting/dragging the card spins
+	# it to a different rendered angle) had zero coverage in this file — grepping
+	# for _turn_window, _win_frames, _window_grid or _has_window turned up
+	# nothing before this pass, on either half of the mechanic:
+	#  - CardView._window_grid()'s own doc comment names the exact risk: two
+	#    ways to read the sidecar .json (the Godot-imported JSON resource, or a
+	#    raw-file fallback) "because a .json is an awkward thing to ship", with
+	#    "a class of bug where the window silently does not appear on one
+	#    machine" as the stated cost of getting it wrong. Tested here against
+	#    the one card that actually ships this art (crescendo.json/.png,
+	#    "29 rares; one has art so far" per the file's own comment), not a
+	#    fabricated fixture, so a real regression in either loading path fails.
+	#  - CardView._turn_window(t)'s frame-index math (t in -1..1 -> a frame in
+	#    the sheet, then the col/row that frame sits at in the atlas) is the
+	#    part of the mechanic that decides WHICH rendered angle a player
+	#    actually sees. A swapped col/row (i % cols vs i / cols) is invisible to
+	#    every check that only proves an index landed in range — it would still
+	#    pick a valid-looking region, just the wrong one — so this checks the
+	#    real region rect, not just that an index exists.
+	_test_backlog86_window_grid_reads_the_real_shipped_sidecar()
+	_test_backlog86_window_grid_is_empty_for_a_card_with_no_sidecar()
+	_test_backlog86_has_window_is_true_only_for_a_card_with_shipped_art()
+	_test_backlog86_window_art_builds_a_real_atlas_from_the_shipped_sheet()
+	_test_backlog86_window_art_is_null_for_a_card_with_no_shipped_art()
+	_test_backlog86_turn_window_maps_full_left_to_the_first_frame()
+	_test_backlog86_turn_window_maps_full_right_to_the_last_frame()
+	_test_backlog86_turn_window_maps_dead_centre_to_the_middle_frame()
+	_test_backlog86_turn_window_clamps_a_tilt_beyond_plus_or_minus_one()
+	_test_backlog86_turn_window_picks_the_right_column_and_row_in_a_multirow_sheet()
+	_test_backlog86_turn_window_is_a_noop_with_no_window_art()
+
 	# backlog #86 duty 3: DeckView._wants_toggle is the rule behind the bug
 	# _test_backlog86_deck_view_step_builds_a_toggle_the_open_pane_never_needed
 	# regression-tests end to end against a real node (that test's own header
@@ -14453,6 +14485,135 @@ func _test_backlog86_fire_quality_resolves_only_once_hits_done_reaches_hits_need
 		"hit 3 of 3 finally resolves the chain")
 	_expect(int(third["quality"]) == Combat.TIMING_PERFECT,
 		"three dead-centre hits resolve PERFECT, the worst of three PERFECTs")
+
+
+## backlog #86 duty 3 (forty-sixth pass) -- backlog #84's 3D card-window art:
+## a rare card's art can be a turntable sheet instead of a flat painting, and
+## tilting/dragging the card is supposed to spin it to a different rendered
+## angle. See the call-site comment above this test's own entry in the master
+## list for why both halves (the sidecar loader and the frame-index math)
+## went unchecked. "crescendo" is the one card that currently ships this art
+## (game/assets/cardart3d/crescendo.json + .png) -- real shipped data, not a
+## fixture invented for the test.
+const _WINDOW_CARD_ID := "crescendo"
+const _WINDOW_JSON := "res://assets/cardart3d/crescendo.json"
+
+func _test_backlog86_window_grid_reads_the_real_shipped_sidecar() -> void:
+	var cv := CardView.new()
+	var grid := cv._window_grid(_WINDOW_JSON)
+	_expect(int(grid.get("frames", -1)) == 24 and int(grid.get("cols", -1)) == 6
+		and int(grid.get("cell_w", -1)) == 310 and int(grid.get("cell_h", -1)) == 435,
+		"_window_grid reads crescendo.json's real frames/cols/cell size, through whichever of its two loading paths this machine's import state takes")
+	cv.free()
+
+
+func _test_backlog86_window_grid_is_empty_for_a_card_with_no_sidecar() -> void:
+	var cv := CardView.new()
+	var grid := cv._window_grid("res://assets/cardart3d/no_such_card.json")
+	_expect(grid.is_empty(), "a card with no sidecar .json reads back an empty grid, not a crash or stale data")
+	cv.free()
+
+
+func _test_backlog86_has_window_is_true_only_for_a_card_with_shipped_art() -> void:
+	var cv := CardView.new()
+	_expect(cv._has_window(_WINDOW_CARD_ID), "crescendo ships a .png under cardart3d and must report having a window")
+	_expect(not cv._has_window("slash"), "an ordinary card with no cardart3d/<id>.png must not claim a window")
+	_expect(not cv._has_window(""), "an empty id must not claim a window")
+	cv.free()
+
+
+func _test_backlog86_window_art_builds_a_real_atlas_from_the_shipped_sheet() -> void:
+	var cv := CardView.new()
+	var win := cv._window_art(_WINDOW_CARD_ID)
+	_expect(win != null, "_window_art builds a real AtlasTexture for the one card that ships turntable art")
+	_expect(cv._win_frames == 24 and cv._win_cols == 6 and cv._win_cell == Vector2i(310, 435),
+		"_window_art carries the sidecar's real frame count, column count and cell size onto the CardView")
+	# _window_art() calls _turn_window(0.0) itself so a still card shows the
+	# head-on view -- frame 12 of 24 (round(0.5 * 23) == 12), which sits at
+	# column 0, row 2 of a 6-wide sheet.
+	_expect(win.region == Rect2(0, 870, 310, 435),
+		"a freshly-built window defaults to its head-on frame (12 of 24, col 0 row 2), not frame 0 or whatever region an AtlasTexture starts with")
+	cv.free()
+
+
+func _test_backlog86_window_art_is_null_for_a_card_with_no_shipped_art() -> void:
+	var cv := CardView.new()
+	_expect(cv._window_art("slash") == null, "a card with no cardart3d sheet gets no AtlasTexture at all")
+	cv.free()
+
+
+## The four tests below drive _turn_window() directly with a fabricated
+## 24-frame/6-column sheet (the real crescendo shape) instead of round-tripping
+## through _window_art(), so the frame-index math is proven on its own -- the
+## same "lift the pure rule out and hit it with plain scalars" idiom as
+## route_between_rungs/foothold_anchor/climb_marker_for above.
+func _window_cv() -> CardView:
+	var cv := CardView.new()
+	cv._win = AtlasTexture.new()
+	cv._win_frames = 24
+	cv._win_cols = 6
+	cv._win_cell = Vector2i(310, 435)
+	cv._win_at = -1
+	return cv
+
+
+func _test_backlog86_turn_window_maps_full_left_to_the_first_frame() -> void:
+	var cv := _window_cv()
+	cv._turn_window(-1.0)
+	_expect(cv._win_at == 0 and cv._win.region == Rect2(0, 0, 310, 435),
+		"tilting the card all the way left shows frame 0, the sheet's first column and row")
+	cv.free()
+
+
+func _test_backlog86_turn_window_maps_full_right_to_the_last_frame() -> void:
+	var cv := _window_cv()
+	cv._turn_window(1.0)
+	_expect(cv._win_at == 23 and cv._win.region == Rect2(5 * 310, 3 * 435, 310, 435),
+		"tilting the card all the way right shows the sheet's last frame (23 of 24), the bottom-right cell of a 6x4 grid")
+	cv.free()
+
+
+func _test_backlog86_turn_window_maps_dead_centre_to_the_middle_frame() -> void:
+	var cv := _window_cv()
+	cv._turn_window(0.0)
+	_expect(cv._win_at == 12 and cv._win.region == Rect2(0, 2 * 435, 310, 435),
+		"a still, untilted card shows its head-on frame (12 of 24, round(0.5 * 23)), not the sheet's first or last view")
+	cv.free()
+
+
+func _test_backlog86_turn_window_clamps_a_tilt_beyond_plus_or_minus_one() -> void:
+	var lo := _window_cv()
+	lo._turn_window(-7.5)
+	_expect(lo._win_at == 0, "a tilt magnitude beyond -1 still clamps to the first frame, not an out-of-range index")
+	lo.free()
+	var hi := _window_cv()
+	hi._turn_window(7.5)
+	_expect(hi._win_at == 23, "a tilt magnitude beyond +1 still clamps to the last frame, not an out-of-range index")
+	hi.free()
+
+
+## The column/row split (col = i % cols, row = i / cols) is exactly the kind
+## of thing a swap silently survives: both orderings produce SOME valid-looking
+## region inside the sheet, so only checking the actual rect (not just that an
+## index landed in range) can catch it. Frame 6 sits at the start of row 1 in a
+## 6-wide sheet (col 0, row 1) -- a swapped formula would instead read col 6%4
+## in a different grid or otherwise miss this exact rect, so this pins the real
+## numbers rather than just asserting "some region was set".
+func _test_backlog86_turn_window_picks_the_right_column_and_row_in_a_multirow_sheet() -> void:
+	var cv := _window_cv()
+	var t_for_frame_6 := 2.0 * 6.0 / 23.0 - 1.0  # inverse of _turn_window's own mapping
+	cv._turn_window(t_for_frame_6)
+	_expect(cv._win_at == 6, "the chosen tilt lands exactly on frame 6 of 24")
+	_expect(cv._win.region == Rect2(0, 435, 310, 435),
+		"frame 6 of a 6-wide sheet is column 0 of row 1 -- not row 0, and not column 6 of a swapped formula")
+	cv.free()
+
+
+func _test_backlog86_turn_window_is_a_noop_with_no_window_art() -> void:
+	var cv := CardView.new()
+	cv._turn_window(0.3)
+	_expect(cv._win_at == -1, "a card with no 3D window (the ordinary case -- 28 of 29 rares) must not touch window state at all when ticked")
+	cv.free()
 
 
 func _expect(cond: bool, name: String) -> void:
