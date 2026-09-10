@@ -2746,7 +2746,25 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-10 (latest), #86 duty 2 attempted, fell back to duty 3 (verify a
+- **2026-09-10 (latest), #86 duty 3 (verify a mechanic actually works) —
+  Coach.hint_for's event/shop/campfire/reward branches had never once been
+  called with those phase strings.** Last commit (`279532d`) was duty 2, so
+  this turn opened as duty 3. `hint_for`'s own doc comment promises "each rule
+  of the game announces itself at the exact moment it first matters" across
+  six phase branches (map, event, shop, campfire, reward, combat); prior
+  duty-3 passes (`_test_coach_teaches_the_right_thing_first` and four more)
+  had exhaustively covered map and every combat-branch candidate (climbing,
+  at_sigil, armored, timed, ally_stuck, play_card) but never once constructed
+  a snapshot with `phase` set to event/shop/campfire/reward — a plain grep for
+  those phase strings in `run_tests.gd` came back empty. Added
+  `_test_backlog86_coach_teaches_event_shop_campfire_and_reward_hints`, which
+  asserts each of the four returns its own id (not map's or combat's), and
+  that marking one seen (`shop`) retires only that hint while the others stay
+  owed — the same fire-once contract already proven for map/combat. Came up
+  clean, no bug: all four branches did exactly what their one-line bodies
+  say. `run_tests.gd` all green.
+
+- **2026-09-10, #86 duty 2 attempted, fell back to duty 3 (verify a
   mechanic actually works) — RunMap._link()'s "no unreachable node" promise
   had only ever been checked by luck.** Last commit (`ac15f56`) was duty 3, so
   this turn opened as duty 2. Spent a full pass hunting a genuine new bug — a

@@ -174,6 +174,7 @@ func _init() -> void:
 	_test_backlog86_coach_teaches_ally_stuck_only_when_the_ally_is_actually_grounded()
 	_test_backlog86_coach_falls_back_to_play_card_when_nothing_else_applies()
 	_test_backlog86_coach_hand_has_checks_the_named_flag_not_any_truthy_field()
+	_test_backlog86_coach_teaches_event_shop_campfire_and_reward_hints()
 	_test_gold_and_shop()
 	_test_shop_removal_charges_the_price_it_showed()
 	_test_shop_buys_a_relic()
@@ -4014,6 +4015,33 @@ func _test_backlog86_coach_hand_has_checks_the_named_flag_not_any_truthy_field()
 		"the flag can be on any card in the hand, not only the first")
 	_expect(Coach._hand_has([], "timed") == false,
 		"an empty hand has no timed card")
+
+
+## backlog #86 duty 3: hint_for's match has six phase branches -- map and combat
+## were both exercised above, but event/shop/campfire/reward, a quarter of the
+## function's own candidate list, had never been called with those phase
+## strings at all. Each is a one-candidate branch so "does the id match" is the
+## whole contract, but the fire-once promise (Progress.mark_hint_seen retiring
+## it, same as every other hint) was equally unproven for these four.
+func _test_backlog86_coach_teaches_event_shop_campfire_and_reward_hints() -> void:
+	Progress.reset_hints()
+	var event: Dictionary = Coach.hint_for({"phase": "event"}, {}, 0)
+	var shop: Dictionary = Coach.hint_for({"phase": "shop"}, {}, 0)
+	var campfire: Dictionary = Coach.hint_for({"phase": "campfire"}, {}, 0)
+	var reward: Dictionary = Coach.hint_for({"phase": "reward"}, {}, 0)
+	# mark just the shop hint seen -- the other three must be unaffected, and
+	# asking again for shop must not hand it back a second time.
+	Progress.mark_hint_seen("shop")
+	var shop_again: Dictionary = Coach.hint_for({"phase": "shop"}, {}, 0)
+	var event_still_owed: Dictionary = Coach.hint_for({"phase": "event"}, {}, 0)
+	Progress.reset_hints()
+	_expect(String(event.get("id", "")) == "event"
+		and String(shop.get("id", "")) == "shop"
+		and String(campfire.get("id", "")) == "campfire"
+		and String(reward.get("id", "")) == "reward",
+		"the event/shop/campfire/reward phases each teach their own hint, not the map or combat lesson")
+	_expect(shop_again.is_empty() and String(event_still_owed.get("id", "")) == "event",
+		"marking the shop hint seen retires only that hint -- the others stay owed until they fire")
 
 
 func _test_gold_and_shop() -> void:
