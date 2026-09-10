@@ -2746,7 +2746,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-10 (latest), #86 duty 3 (verify a mechanic actually works) —
+- **2026-09-10 (latest), #86 duty 2 (find an error and resolve it) —
+  `GameHost._keywords_of()` tagged nearly every card in the game with a false
+  "Cheapen" entry in the tap-to-inspect keyword panel.** Last commit
+  (`d555d65`) was duty 3, so this turn is duty 2. The gate read
+  `c.cheapen_pick or c.cheapen_amount > 0`, but `Card.from_dict()` defaults
+  `cheapen_amount` to 1 on every card regardless of `cheapen_pick` — the same
+  trap `card.gd`'s `upgraded_copy()` already had to route around, per its own
+  comment there. Confirmed only 1 of 187 cards in `cards.json` (Burn Coal)
+  sets `cheapen_pick`; the other 186 were silently tagged "Cheapen" the
+  moment a player tapped "?" on them, explaining a mechanic the card doesn't
+  have. Fixed by gating on `cheapen_pick` alone. Fixing it exposed a second,
+  pre-existing gap: the generic reflection test
+  (`_test_every_field_a_player_must_understand_has_a_keyword`) probes every
+  Card field in isolation and expects a non-empty keyword list back, but
+  `foil`/`borderless` (a purely cosmetic per-copy shimmer/border roll,
+  rendered directly on the card face) have never carried a keyword — that
+  gap was invisible before because the cheapen false-positive made every
+  probed card's keyword list non-empty regardless of which field was under
+  test. Added `foil`, `borderless`, and `cheapen_amount` to that test's
+  `self_evident` list (with comments explaining why each needs no tooltip),
+  and added a new regression test,
+  `_test_keywords_of_does_not_falsely_tag_an_ordinary_card_as_cheapen`,
+  proving an ordinary card is never tagged "cheapen" while Burn Coal still
+  is. Confirmed the new test fails on the pre-fix code via `git stash`, then
+  restored the fix. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 3 (verify a
+  mechanic actually works).
+
+- **2026-09-10, #86 duty 3 (verify a mechanic actually works) —
   `GameHost._card_icon()`'s ~20-branch fallback ladder (which silhouette icon
   a card's face renders with, when the data file leaves `icon` blank) had
   never been driven by anything.** Last commit (`f25eeb3`) was duty 2, so this

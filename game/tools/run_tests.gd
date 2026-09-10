@@ -335,6 +335,7 @@ func _init() -> void:
 	_test_incoming_reckons_damage_after_block()
 	_test_every_derived_keyword_resolves()
 	_test_player_block_keyword_is_not_shadowed_by_the_boss_move()
+	_test_keywords_of_does_not_falsely_tag_an_ordinary_card_as_cheapen()
 	_test_every_field_a_player_must_understand_has_a_keyword()
 	_test_timed_keyword_explains_graded_quality()
 	_test_every_boss_move_type_resolves()
@@ -6393,6 +6394,32 @@ func _test_player_block_keyword_is_not_shadowed_by_the_boss_move() -> void:
 		"the resolved keyword is actually the player's own Block explanation")
 
 
+## backlog #86 duty 2: Card.from_dict defaults cheapen_amount to 1 on every
+## card, used or not (card.gd's own upgraded_copy() has to route around the
+## same trap — see its comment there). _keywords_of()'s gate used to read
+## `c.cheapen_pick or c.cheapen_amount > 0`, so the `> 0` half fired on every
+## ordinary card in the game and tagged it "Cheapen" in the tap-to-inspect
+## panel, explaining a mechanic the card doesn't have. Only cheapen_pick
+## actually turns the mechanic on; that's the only thing allowed to gate it.
+func _test_keywords_of_does_not_falsely_tag_an_ordinary_card_as_cheapen() -> void:
+	var host := GameHost.new(LocalTransport.new(), 1, 2)
+	_kept.append(host)
+	var plain := Content.make_card("meld")  # no cheapen_pick; cheapen_amount still defaults to 1
+	var coal := Content.make_card("burn_coal")  # the one real card that sets cheapen_pick
+	var plain_ids := []
+	for k in host._keywords_of(plain):
+		plain_ids.append(String((k as Dictionary).get("id", "")))
+	var coal_ids := []
+	for k in host._keywords_of(coal):
+		coal_ids.append(String((k as Dictionary).get("id", "")))
+	_expect(not plain.cheapen_pick and plain.cheapen_amount > 0,
+		"the test card actually reproduces the trap: cheapen_pick unset, cheapen_amount still nonzero")
+	_expect(not plain_ids.has("cheapen"),
+		"an ordinary card with no cheapen_pick is never tagged 'cheapen'")
+	_expect(coal_ids.has("cheapen"),
+		"a real cheapen_pick card (Burn Coal) is still tagged 'cheapen'")
+
+
 ## Backlog #16: the check above only catches an id that's misspelled in one
 ## place and not the other. It says nothing about a NEW field on Card that
 ## nobody wired into _keywords_of at all — that ships silently unexplained.
@@ -6415,9 +6442,22 @@ func _test_every_field_a_player_must_understand_has_a_keyword() -> void:
 	# the probe can't fake, and never shown to the player as fields — a card
 	# that carries one spells the question out in its own printed `text`
 	# ("Above the sigil: 4 more damage."), same as rule_upgrade's cards do.
+	# cheapen_amount (backlog #86 duty 2, same reasoning as upgraded_copy()'s own
+	# comment in card.gd): Card.from_dict defaults it to 1 on every card whether
+	# cheapen_pick is set or not, so it means nothing probed alone — only
+	# cheapen_pick (already covered on its own below) actually turns the field
+	# on, and that's the field that carries the "cheapen" keyword.
+	#
+	# foil/borderless (backlog #86 duty 2): a per-copy cosmetic roll, rendered
+	# directly on the card face (card_view.gd's own shimmer/border build) with
+	# no rules meaning to explain — self-evident the same way `icon` already
+	# is. This pair only surfaced once cheapen_amount's false-positive above
+	# stopped masking it: _keywords_of() used to return "cheapen" for every
+	# probed card regardless of which field was under test, so this loop's
+	# is_empty() check never actually caught a truly untagged field before now.
 	var self_evident := ["id", "name", "type", "rarity", "cost", "damage", "draw",
 		"target", "icon", "text", "upgraded", "timed_hits", "rule_upgrade",
-		"condition", "condition_bonus"]
+		"condition", "condition_bonus", "cheapen_amount", "foil", "borderless"]
 	# A handful of int fields are meaningless at the generic probe value of 1
 	# because 1 IS their neutral default (a single hit, no repeat) — probe
 	# those with a value that's actually "used" instead.

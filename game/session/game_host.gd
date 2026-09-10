@@ -839,7 +839,13 @@ func _keywords_of(c: Card) -> Array:
 		ids.append("build")
 	if c.prepare != "":
 		ids.append("prime")
-	if c.cheapen_pick or c.cheapen_amount > 0:
+	# backlog #86 duty 2: cheapen_amount alone can't gate this, same reason
+	# upgraded_copy() (card.gd) already can't treat it as "used" on its own —
+	# Card.from_dict defaults cheapen_amount to 1 on EVERY card, cheapen_pick
+	# or not, so `or c.cheapen_amount > 0` used to tag all 186 non-Burn-Coal
+	# cards in the game with a false "Cheapen" entry in the tap-to-inspect
+	# keyword panel, explaining a mechanic the card doesn't have.
+	if c.cheapen_pick:
 		ids.append("cheapen")
 	if c.meld:
 		ids.append("meld")
