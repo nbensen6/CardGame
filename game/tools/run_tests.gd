@@ -78,9 +78,11 @@ func _init() -> void:
 	_test_backlog86_vuln_bonus_relic_adds_to_an_exposed_hit()
 	_test_backlog86_sigil_bonus_relic_adds_to_a_reached_hit()
 	_test_attack_all_shakes_down_a_hold()
+	_test_backlog86_attack_all_sweep_resets_the_sigil_fatigue_clock()
 	_test_backlog86_weakpoint_buck_does_not_fire_below_threshold()
 	_test_backlog86_weakpoint_buck_never_fires_off_the_sigil()
 	_test_backlog86_weakpoint_buck_disabled_when_threshold_is_zero()
+	_test_backlog86_weakpoint_buck_resets_the_sigil_fatigue_clock()
 	_test_sunlight_blade_scales_with_exposed()
 	_test_bowshot_deals_and_exposes()
 	# the run map (branching route)
@@ -1884,6 +1886,34 @@ func _test_attack_all_shakes_down_a_hold() -> void:
 		"a sweep shakes each hunter down to the ledge below")
 
 
+## backlog #86 duty 2: attack_all's own sweep resets weak_point_damage when it
+## shakes a hunter down a hold, but left the sibling sigil_rounds -- the
+## sigil_fatigue limiter's own "how long have I been camping THIS sigil"
+## counter -- alone, the same gap c08d198 already fixed for shift_sigil and
+## the sibling test below fixes for _check_weakpoint_buck. _hold_below only
+## promises a ledge below the HEIGHT it's given, not below weak_point_height
+## itself, and nothing enforces that every named ledge sits under the sigil
+## (only Boss.ledges' own doc comment says so) -- a hunter who climbed past
+## the sigil (foothold is capped to FOOTHOLD_MAX, not weak_point_height —
+## see ally_grip/poison_lift/sac_ally_grip) and gets swept onto a ledge
+## that's still at or above weak_point_height never flips sigil_reached(),
+## so the fatigue clock from before the sweep would otherwise survive it.
+func _test_backlog86_attack_all_sweep_resets_the_sigil_fatigue_clock() -> void:
+	var boss := Boss.new("Shaker", 500)
+	boss.moves = [{"type": "attack_all", "value": 5}]
+	boss.weak_point_height = 6
+	boss.ledges = [8]  # a ledge ABOVE the sigil — the doc comment forbids this, the code does not
+	var combat := _new_combat([_deck_of(_grip, 10), _deck_of(_grip, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 9  # climbed past the sigil, onto the far side of the (invalid) ledge
+	ps.sigil_rounds = 3  # a leftover fatigue clock from before the sweep
+	combat.end_turn(0)
+	combat.end_turn(1)  # attack_all -> shake down a hold
+	var swept_but_still_at_sigil: bool = ps.foothold == 8 and combat.sigil_reached(0)
+	_expect(swept_but_still_at_sigil and ps.sigil_rounds == 0,
+		"an attack_all sweep resets the sigil_fatigue clock even when it lands a hunter on a hold that's still at or above the sigil")
+
+
 ## backlog #86 duty 3 (forty-fifth pass): _check_weakpoint_buck — "you can't
 ## camp the weak point" (Combat.gd's own comment above it), Nick's own example
 ## mechanic in #86's own text — turned out to have ONE case covered
@@ -1923,6 +1953,32 @@ func _test_backlog86_weakpoint_buck_never_fires_off_the_sigil() -> void:
 	ps.weak_point_damage = 999  # a leftover counter that would clear any threshold
 	combat._check_weakpoint_buck(0)
 	_expect(ps.foothold == 4, "the buck never fires for a hunter who isn't standing on the sigil")
+
+
+## backlog #86 duty 2: the buck resets weak_point_damage, but left its sibling
+## sigil_rounds -- the sigil_fatigue limiter's own "how long have I been
+## camping THIS sigil" counter -- alone, the same gap c08d198 already fixed
+## for shift_sigil. _hold_below only promises a ledge below the HEIGHT it's
+## given, not below weak_point_height itself, and nothing enforces that a
+## named ledge sits under the sigil (only Boss.ledges' own doc comment says
+## so) -- a hunter who climbed past the sigil (foothold is capped to
+## FOOTHOLD_MAX, not weak_point_height — see ally_grip/poison_lift/
+## sac_ally_grip) and gets bucked onto a ledge that's still at or above
+## weak_point_height never flips sigil_reached(), so the fatigue clock from
+## before the buck would otherwise silently survive it.
+func _test_backlog86_weakpoint_buck_resets_the_sigil_fatigue_clock() -> void:
+	var boss := _climb_boss(6)
+	boss.ledges = [8]  # a ledge ABOVE the sigil — the doc comment forbids this, the code does not
+	boss.weak_point_threshold = 1
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 9  # climbed past the sigil, onto the far side of the (invalid) ledge
+	ps.sigil_rounds = 3  # a leftover fatigue clock from before the buck
+	ps.weak_point_damage = 999  # clears any threshold
+	combat._check_weakpoint_buck(0)
+	var bucked_but_still_at_sigil: bool = ps.foothold == 8 and combat.sigil_reached(0)
+	_expect(bucked_but_still_at_sigil and ps.sigil_rounds == 0,
+		"a weak-point buck resets the sigil_fatigue clock even when it lands the hunter on a hold that's still at or above the sigil")
 
 
 ## weak_point_threshold's own documented meaning: 0 is "no limit", not "buck on

@@ -2746,7 +2746,43 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-10 (latest), #86 duty 3 (verify a mechanic actually works) —
+- **2026-09-10 (latest), #86 duty 2 (find an error and resolve it) —
+  the sigil_fatigue clock leak that `c08d198` fixed for `shift_sigil` had two
+  more live call sites: the weak-point buck and the `attack_all` sweep.**
+  Last own commit (`9c913b2`) was duty 3, so this turn opened as duty 2.
+  Spawned a background research pass over `core/combat.gd`; it correctly
+  flagged the same "two copies of one truth" shape `c08d198` had just fixed
+  for `shift_sigil`, but also claimed `fall()` (combat.gd:267) as a third
+  site. Checked that one by hand before touching anything: `fall()` only
+  runs past its own `is_secure(pi)` guard, and `is_secure` is unconditionally
+  true whenever `foothold >= weak_point_height` — so `fall()` can never
+  execute while `sigil_reached(pi)` is true in the first place, and adding a
+  reset there would be dead code, not a fix. The other two held up:
+  `_check_weakpoint_buck` (combat.gd:1042) and `attack_all`'s sweep
+  (combat.gd:1420) both drop a hunter's foothold via `_hold_below(ps.foothold)`
+  without touching `sigil_rounds`, and `_hold_below` only promises a ledge
+  below the height it's GIVEN, not below `weak_point_height` itself — nothing
+  in code enforces `Boss.ledges`' own doc comment that every named ledge sits
+  under the sigil. A hunter who climbed past the sigil (foothold caps at
+  `FOOTHOLD_MAX`, not `weak_point_height` — `ally_grip`/`poison_lift`/
+  `sac_ally_grip` all push straight past it) and gets bucked or swept onto a
+  ledge that's still at or above `weak_point_height` never flips
+  `sigil_reached`, so `_apply_limiter()`'s own implicit reset never runs and
+  the fatigue clock survives a hold-change that's supposed to end the visit.
+  Same reachability note as `c08d198`: no beast in `bosses.json` currently
+  carries a ledge at or above its own `weak_point_height`, so this is latent
+  against real content, not live — but nothing in code stops a future beast
+  or a future card from creating the shape, and the invariant was only ever a
+  comment. Fixed by zeroing `sigil_rounds` alongside `weak_point_damage` at
+  both sites. Added `_test_backlog86_weakpoint_buck_resets_the_sigil_fatigue_clock`
+  and `_test_backlog86_attack_all_sweep_resets_the_sigil_fatigue_clock`, each
+  building a boss with a ledge planted above its own `weak_point_height` and a
+  hunter who climbed past it, and confirming `sigil_rounds` clears even though
+  `sigil_reached` stays true after the hold-change. Verified both fail without
+  the fix (reverted `combat.gd` only, reran — exactly those 2 of the suite
+  failed) and pass with it restored. `run_tests.gd`: ALL TESTS PASSED.
+
+- **2026-09-10, #86 duty 3 (verify a mechanic actually works) —
   proved the "same peer id rejoin" path in `GameHost._handle_join`, which
   had only ever been asserted in a comment.** Last own commit (`c08d198`)
   was duty 2, so this turn opened as duty 3. Every existing reconnect test

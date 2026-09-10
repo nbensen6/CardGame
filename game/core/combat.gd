@@ -1046,6 +1046,19 @@ func _check_weakpoint_buck(pi: int) -> void:
 	if ps.weak_point_damage >= boss.weak_point_threshold + _mod("threshold"):
 		ps.foothold = _hold_below(ps.foothold)
 		ps.weak_point_damage = 0
+		# sigil_rounds (backlog #86 duty 2, same shape as shift_sigil's own fix
+		# in _enemy_turn) is a second, derived "how long have I been camping
+		# THIS sigil" counter next to weak_point_damage above. _hold_below only
+		# promises a ledge BELOW the height it's given, not below weak_point_height
+		# itself -- nothing in Boss.ledges' own data enforces that a named ledge
+		# sits under the sigil, only its doc comment says so. If a hunter climbed
+		# past the sigil (foothold can reach FOOTHOLD_MAX, not just weak_point_height
+		# -- see ally_grip/poison_lift/sac_ally_grip) and the buck lands them on a
+		# ledge still at or above weak_point_height, sigil_reached(pi) never flips
+		# false, so _apply_limiter()'s own reset (which only fires on that flip)
+		# never runs and the fatigue clock silently survives a buck that's supposed
+		# to end this visit to the sigil.
+		ps.sigil_rounds = 0
 		_log("The Titan bucks %s off the weak point — climb back up!" % ps.combatant.name)
 
 
@@ -1411,6 +1424,12 @@ func _enemy_turn() -> void:
 				if _mod("shake_resist") <= 0:  # a relic can anchor you against sweeps
 						ps.foothold = _hold_below(ps.foothold)
 						ps.weak_point_damage = 0
+						# Same sigil_rounds gap as _check_weakpoint_buck above and
+						# shift_sigil in this same function (backlog #86 duty 2): a
+						# sweep that lands a hunter on a ledge still at/above
+						# weak_point_height never flips sigil_reached(), so the
+						# fatigue clock from before the sweep would otherwise survive it.
+						ps.sigil_rounds = 0
 			_log("%s sweeps both hunters for %d and shakes them down a hold." % [boss.name, dmg_all])
 		"swipe_high":  # a lash along the flank — only hunters off the ground are hit
 			var dh := value + boss.strength
