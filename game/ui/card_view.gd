@@ -1663,8 +1663,9 @@ func start_timing(hits: int = 1) -> void:
 	_update_count()
 	var zone := _strip.get_node_or_null("Zone")
 	if zone != null:  # relics may have widened the window since setup()
-		(zone as Control).anchor_left = maxf(0.0, ZONE_MIN - zone_bonus)
-		(zone as Control).anchor_right = minf(1.0, ZONE_MAX + zone_bonus)
+		var bonus_t := zone_bonus_t(zone_bonus)
+		(zone as Control).anchor_left = maxf(0.0, ZONE_MIN - bonus_t)
+		(zone as Control).anchor_right = minf(1.0, ZONE_MAX + bonus_t)
 	_strip.modulate = Color(1, 1, 1)
 	_strip.visible = true
 	if is_instance_valid(_clock):
@@ -1706,6 +1707,27 @@ func _on_self_pressed() -> void:
 		tapped.emit()
 
 
+## Converts a raw `timing_zone` fraction (HitCircle.zone_bonus's own units —
+## 0.12 for a 12% relic) into the sweep bar's t-space (0..1 across the strip).
+## HitCircle turns the same fraction into `zone_bonus * 0.35` EXTRA SECONDS of
+## forgiveness on each side of the beat; t here advances at SWEEP_SPEED units
+## per second (see _process), so the same seconds of forgiveness is
+## `zone_bonus * 0.35 * SWEEP_SPEED` in t.
+##
+## Before this, fire_quality() and _build_timing_strip()/start_timing() added
+## the raw fraction straight onto the bar's 0..1 zone bounds with no
+## conversion at all, so the exact same relic widened HitCircle's window by a
+## few percent but blew the bar's zone open by several times as much — and at
+## the combined bonus two shipped relics plus a Wide-enchanted card already
+## reach today (Steady Hands 6% + Metronome Shell 12% + Wide 30% = 48%), the
+## bar's zone bounds clamped past both ends of the strip and MISS became
+## impossible on that face while the circle still carried real risk for the
+## identical cards (backlog #86 duty 2 — two faces of one rule silently
+## disagreeing on what the rule was).
+static func zone_bonus_t(zone_bonus: float) -> float:
+	return zone_bonus * 0.35 * SWEEP_SPEED
+
+
 ## Pure grading for one tap of the sweep-bar timing minigame, lifted out of
 ## _fire() below so a headless test can prove it without building the strip's
 ## UI. Mirrors HitCircle's own worst-window rule (see the tests beside
@@ -1717,7 +1739,8 @@ func _on_self_pressed() -> void:
 ## `hits_done` reaches `hits_needed`.
 static func fire_quality(t: float, zone_bonus: float, hits_done: int,
 		hits_needed: int, worst_quality: int) -> Dictionary:
-	if t < ZONE_MIN - zone_bonus or t > ZONE_MAX + zone_bonus:
+	var bonus_t := zone_bonus_t(zone_bonus)
+	if t < ZONE_MIN - bonus_t or t > ZONE_MAX + bonus_t:
 		return {"quality": Combat.TIMING_MISS, "hits_done": hits_done, "resolved": true}
 	var worst := worst_quality
 	if t < CORE_MIN or t > CORE_MAX:
@@ -1821,8 +1844,9 @@ func _build_timing_strip() -> Control:
 	var zone := ColorRect.new()
 	zone.name = "Zone"
 	zone.color = Color(0.33, 0.72, 0.36)
-	zone.anchor_left = maxf(0.0, ZONE_MIN - zone_bonus)
-	zone.anchor_right = minf(1.0, ZONE_MAX + zone_bonus)
+	var bonus_t := zone_bonus_t(zone_bonus)
+	zone.anchor_left = maxf(0.0, ZONE_MIN - bonus_t)
+	zone.anchor_right = minf(1.0, ZONE_MAX + bonus_t)
 	zone.anchor_top = 0.0
 	zone.anchor_bottom = 1.0
 	zone.offset_left = 0.0

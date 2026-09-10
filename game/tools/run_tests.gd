@@ -1179,6 +1179,8 @@ func _init() -> void:
 	_test_backlog86_fire_quality_is_good_inside_the_zone_but_outside_the_core()
 	_test_backlog86_fire_quality_misses_outside_the_zone()
 	_test_backlog86_fire_quality_zone_bonus_widens_the_good_window_not_the_core()
+	_test_backlog86_fire_quality_zone_bonus_matches_hit_circles_seconds_of_forgiveness()
+	_test_backlog86_fire_quality_zone_bonus_cannot_eliminate_a_miss_entirely()
 	_test_backlog86_fire_quality_chain_reports_its_worst_window_not_its_last()
 	_test_backlog86_fire_quality_a_miss_ends_the_chain_even_mid_way_through()
 	_test_backlog86_fire_quality_resolves_only_once_hits_done_reaches_hits_needed()
@@ -14121,15 +14123,51 @@ func _test_backlog86_fire_quality_misses_outside_the_zone() -> void:
 
 func _test_backlog86_fire_quality_zone_bonus_widens_the_good_window_not_the_core() -> void:
 	# Same offset (0.36, four hundredths below the bare zone) with no bonus
-	# misses; with a relic's zone_bonus widening the zone by 0.1 each side it
-	# clears the zone -- but the CORE band never moves, so it can only ever
-	# grade GOOD, mirroring HitCircle's own zone_bonus test one section above.
+	# misses; with a relic's zone_bonus of 0.1 (converted to the bar's own
+	# t-space by CardView.zone_bonus_t -- see that function's own header for
+	# why the conversion exists) the floor moves to roughly 0.334 and 0.36
+	# clears it -- but the CORE band never moves, so it can only ever grade
+	# GOOD, mirroring HitCircle's own zone_bonus test one section above.
 	var narrow := CardView.fire_quality(0.36, 0.0, 0, 1, Combat.TIMING_PERFECT)
 	_expect(int(narrow["quality"]) == Combat.TIMING_MISS,
 		"with no zone bonus, 0.36 (below the bare 0.40 floor) misses")
 	var widened := CardView.fire_quality(0.36, 0.1, 0, 1, Combat.TIMING_PERFECT)
 	_expect(int(widened["quality"]) == Combat.TIMING_GOOD,
-		"the same 0.36 tap, with zone_bonus 0.1 (floor moves to 0.30), clears the widened zone -- but only GOOD, never PERFECT, since the CORE band is untouched by zone_bonus")
+		"the same 0.36 tap, with zone_bonus 0.1 (floor moves to ~0.334), clears the widened zone -- but only GOOD, never PERFECT, since the CORE band is untouched by zone_bonus")
+
+
+func _test_backlog86_fire_quality_zone_bonus_matches_hit_circles_seconds_of_forgiveness() -> void:
+	# The whole point of zone_bonus_t(): HitCircle turns a raw timing_zone
+	# fraction into `zone_bonus * 0.35` extra SECONDS of forgiveness on each
+	# side of the beat. The bar's own t advances at SWEEP_SPEED units per
+	# second (CardView._process), so the same seconds of forgiveness in the
+	# bar's t-space is that quantity times SWEEP_SPEED. Before this existed,
+	# fire_quality() added the raw fraction straight onto its 0..1 zone bounds
+	# with no conversion, so the exact same relic meant a few percent more
+	# forgiveness on the circle face and several times that on the bar face.
+	var bonus := 0.12  # Metronome Shell alone
+	var expected_t: float = bonus * 0.35 * CardView.SWEEP_SPEED
+	_expect(is_equal_approx(CardView.zone_bonus_t(bonus), expected_t),
+		"the bar converts a relic's zone_bonus into the same seconds of forgiveness HitCircle grants, just expressed in its own t-space")
+
+
+func _test_backlog86_fire_quality_zone_bonus_cannot_eliminate_a_miss_entirely() -> void:
+	# Steady Hands (6%, data/relics.json) + Metronome Shell (12%, same file),
+	# both real relics that stack via Combat3D.timing_zone_bonus(), plus a
+	# Wide-enchanted card (30%, data/enchants.json) on top, combine to a 48%
+	# zone_bonus reachable in a real run today. Before this fix, fire_quality()
+	# added that raw 0.48 straight onto the bar's 0..1 zone bounds: 0.40-0.48
+	# and 0.60+0.48 both clamped past the strip's own ends, so the miss zone
+	# vanished outright and EVERY tap, anywhere on the strip, graded at least
+	# GOOD -- while HitCircle, scaling the identical fraction into seconds,
+	# still carried real risk for the exact same cards (backlog #86 duty 2).
+	var combined := 0.06 + 0.12 + 0.30
+	var leftmost := CardView.fire_quality(0.0, combined, 0, 1, Combat.TIMING_PERFECT)
+	_expect(int(leftmost["quality"]) == Combat.TIMING_MISS,
+		"a tap at the very start of the sweep still misses even with every shipped timing_zone source stacked")
+	var rightmost := CardView.fire_quality(1.0, combined, 0, 1, Combat.TIMING_PERFECT)
+	_expect(int(rightmost["quality"]) == Combat.TIMING_MISS,
+		"a tap at the very end of the sweep still misses even with every shipped timing_zone source stacked")
 
 
 func _test_backlog86_fire_quality_chain_reports_its_worst_window_not_its_last() -> void:

@@ -2746,6 +2746,37 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-10, #86 duty 2 (find an error and resolve it) — the same relic
+  is two very different relics depending on a Settings toggle nobody
+  should be able to feel.** Last own commit (`5e46f10`) was duty 3, so
+  this turn opened as duty 2. `Combat3D.timing_zone_bonus()` computes one
+  fraction (0.12 for a 12% relic) and hands it unchanged to whichever
+  timing face `Progress.timing_style()` has picked — `HitCircle` and
+  `CardView`'s sweep bar are meant to be "the same grading, a different
+  face" (hit_circle.gd's own header). `HitCircle._fire()` scales the
+  fraction into `zone_bonus * 0.35` extra SECONDS of forgiveness on each
+  side of the beat; `CardView.fire_quality()` instead added the raw
+  fraction straight onto its 0..1 zone bounds with no conversion at all —
+  a leftover from porting the mechanic to the second face that nothing
+  ever caught, because the existing tests each check a face against
+  itself, never the two against each other. Two shipped relics (Steady
+  Hands 6%, Metronome Shell 12%) plus one Wide-enchanted card (30%) stack
+  to 48% today, and at that combined bonus the bar's zone bounds clamp
+  past both ends of the strip — the miss zone vanishes outright and every
+  tap, anywhere on the strip, grades at least GOOD, while the circle face
+  still carries real risk for the identical cards. Added
+  `CardView.zone_bonus_t()`, which converts the same fraction into the
+  bar's own t-space via the bar's actual sweep rate (`SWEEP_SPEED`) rather
+  than a second invented constant, wired it into all three places that had
+  been adding the raw fraction (`fire_quality`, `start_timing`,
+  `_build_timing_strip`), and added three tests: one locking the
+  conversion itself against HitCircle's formula, and two proving a tap at
+  either extreme of the sweep still misses at the full 48% stacked bonus.
+  `run_tests.gd` was green before and after; the one existing test whose
+  comment named an exact "floor moves to 0.30" value needed its comment
+  (not its assertion — it only ever checked GOOD, not the exact floor)
+  updated to the new ~0.334.
+
 - **2026-09-09 (even later still), #86 duty 2 (find an error and resolve
   it) — came up empty, fell through to duty 3.** Last own commit
   (`4aa3218`) was duty 3, so this turn opened as duty 2. Spent the whole
