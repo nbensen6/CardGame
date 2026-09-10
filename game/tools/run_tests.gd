@@ -808,6 +808,7 @@ func _init() -> void:
 	_test_backlog86_intent_text_for_enrage_ignores_boss_strength()
 	_test_backlog86_intent_text_for_regen_ignores_boss_strength()
 	_test_backlog86_intent_text_for_shift_sigil_names_the_destination_height()
+	_test_backlog86_beast_changed_ignores_a_shift_sigil_height_change()
 	_test_backlog86_intent_text_for_frail_is_no_longer_blank()
 	_test_backlog86_intent_text_for_curse_is_no_longer_blank()
 	_test_backlog86_intent_text_for_curse_floors_the_card_count_at_one()
@@ -12672,6 +12673,28 @@ func _test_backlog86_intent_text_for_regen_ignores_boss_strength() -> void:
 func _test_backlog86_intent_text_for_shift_sigil_names_the_destination_height() -> void:
 	var text := Combat3D.intent_text_for(_intent_boss("shift_sigil", 4, 99), 0)
 	_expect(text == "✦ [u]Shift its sigil[/u] — Height 4", "shift_sigil reports the destination Height, not a damage number")
+
+
+## backlog #86 duty 2: _show_beast used to decide whether to tear the beast down
+## and rebuild it (model reload, hull, ledges, environment, lighting, and a
+## _frame_beast() camera reset) by comparing the RENDER HEIGHT it would derive
+## from boss.weak_point_height against the last one it built at. shift_sigil
+## (Combat._enemy_turn) changes weak_point_height for the SAME beast mid-fight —
+## several bosses in data/bosses.json use the move — so the very next refresh
+## after it fired saw a changed height and ran the full rebuild path for a
+## beast that never actually changed, throwing away the player's camera framing
+## mid-fight. beast_changed() is the pure decision lifted out of that method;
+## it must say "no" when only the height moved and "yes" only when the beast
+## itself did.
+func _test_backlog86_beast_changed_ignores_a_shift_sigil_height_change() -> void:
+	_expect(not Combat3D.beast_changed("stone_warden", "stone_warden", true),
+		"the same beast, already built, is not a rebuild just because its weak point moved")
+	_expect(Combat3D.beast_changed("stone_warden", "clot_toad", true),
+		"a genuinely different beast id must still trigger a rebuild")
+	_expect(Combat3D.beast_changed("stone_warden", "stone_warden", false),
+		"no beast built yet (first spawn, or one just freed) must still trigger a build even for a repeated id")
+	_expect(Combat3D.beast_changed("stone_warden", "", true),
+		"the very first beast of a fresh view (no boss id recorded yet) must build")
 
 
 func _test_backlog86_intent_text_for_frail_is_no_longer_blank() -> void:

@@ -248,6 +248,19 @@ var _client: GameClient
 var _beast: Node3D
 var _env: Node3D
 var _beast_id := ""
+## The boss's own data id, as passed to _show_beast — kept separate from
+## `_beast_id` (the resolved MODEL key, which several beasts can share via
+## fallback art) so a rebuild is gated on "is this actually a different
+## beast" rather than on the render height derived from it. backlog #86
+## duty 2: shift_sigil (Combat._enemy_turn) moves boss.weak_point_height
+## mid-fight, and _show_beast used to re-derive its target height from that
+## live value on every refresh — so the moment a boss with a shift_sigil
+## move (several in bosses.json) used it, the guard below saw a changed
+## height, and the "first spawn" path ran again in full: the beast was
+## freed and reloaded, the hull/ledges/environment rebuilt, and
+## _frame_beast() reset the camera to the wide establishing shot, mid-fight,
+## for a beast that never actually changed.
+var _beast_boss_id := ""
 var _beast_box := AABB(Vector3(-1, 0, -1), Vector3(2, 2, 2))
 ## Height -> where a hunter at that Height actually stands, in rig space.
 ##
@@ -1260,11 +1273,22 @@ func _height_gap(s: Dictionary) -> int:
 
 # --- the beast ------------------------------------------------------------
 
+## Whether _show_beast needs to tear down and rebuild the beast — lifted out as
+## a pure decision (backlog #86 duty 2) so run_tests.gd can prove shift_sigil
+## does not retrigger it, with no scene tree needed. Gated on the boss's own
+## id, not the height it would be rendered at: shift_sigil changes
+## weak_point_height for the SAME beast mid-fight (see _beast_boss_id's own
+## comment on the field), and that must not read as a new beast appearing.
+static func beast_changed(beast_id: String, current_boss_id: String, beast_built: bool) -> bool:
+	return beast_id != current_boss_id or not beast_built
+
+
 func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
+	if not beast_changed(beast_id, _beast_boss_id, is_instance_valid(_beast)):
+		return
+	_beast_boss_id = beast_id
 	var key := _model_key(beast_id, beast_name)
 	var want := BEAST_BASE_HEIGHT + BEAST_HEIGHT_PER_CLIMB * float(weak_point)
-	if key == _beast_id and is_instance_valid(_beast) 			and is_equal_approx(want, _beast_height):
-		return
 	_beast_id = key
 	_beast_height = want
 	if _beast != null:

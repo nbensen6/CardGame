@@ -2746,6 +2746,39 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-10 (even later), #86 duty 2 (find an error and resolve it) —
+  shift_sigil silently tore the beast down and reset the camera mid-fight.**
+  Last own commit (`b84c485`) was duty 3, so this turn opened as duty 2.
+  `combat_3d._show_beast()` decided whether to rebuild the beast (free and
+  reload the model, rebuild the hull/ledge marks/environment/lighting, and
+  call `_frame_beast()`, which resets yaw/pitch/pan and drops back to the
+  wide establishing shot) by comparing the RENDER HEIGHT it derives from
+  `boss.weak_point_height` against the height it last built at, rather than
+  by asking whether the beast itself had changed. `shift_sigil`
+  (`combat.gd`'s `_enemy_turn`, "the weak point moves") reassigns
+  `boss.weak_point_height` for the same beast mid-fight, and several bosses
+  in `data/bosses.json` carry the move — so the very next refresh after one
+  used it saw a changed derived height and ran the full first-spawn rebuild
+  path for a beast that never actually changed size or left the fight,
+  throwing the player's camera framing away at exactly the moment a boss
+  ability just fired. Confirmed `_place_sigil`/`_refresh_ledge_marks` (called
+  every refresh regardless) already read `boss.weak_point_height` fresh and
+  look the new height up in `_climb_points` — a map of physical marker
+  positions read once off the model's own anatomy, unrelated to which one is
+  currently "the" weak point — so skipping the rebuild does not strand the
+  sigil glow or ledge highlighting at a stale spot. Lifted the decision into
+  a pure `Combat3D.beast_changed(beast_id, current_boss_id, beast_built)`
+  gated on the boss's own id instead, added a new `_beast_boss_id` field to
+  track it separately from `_beast_id` (the resolved MODEL key, which
+  several beasts already share via fallback art), and four headless tests
+  covering: same id/already built (no rebuild), a genuinely different id
+  (rebuild), no beast built yet even for a repeated id (rebuild), and the
+  very first call on a fresh view (rebuild). Found by a background research
+  pass over `combat_3d.gd` reading for exactly this shape of bug per this
+  item's own two named families; verified by reading the actual call sites
+  and data rather than taking the finding on faith. `run_tests.gd`: ALL
+  TESTS PASSED before and after.
+
 - **2026-09-10 (later), #86 duty 3 (verify a mechanic actually works) —
   the hunter-roster card width had zero coverage.** Last own commit
   (`08a7870`) was duty 2, so this turn opened as duty 3. Surveyed
