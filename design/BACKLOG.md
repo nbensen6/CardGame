@@ -2746,7 +2746,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-10 (latest), #86 duty 2 (find an error and resolve it) — a hunter
+- **2026-09-10 (latest), #86 duty 3 (verify a mechanic actually works) —
+  `Progress.record_win()`'s ascension-ladder unlock had never been driven near
+  either of its own two guards.** Last commit (`a7b1b63`) was duty 2, so this
+  turn opened as duty 3. `record_win()`'s doc comment promises two things:
+  clearing tier N unlocks N+1, capped at `Content.max_ascension()`
+  (`mini(ascension + 1, Content.max_ascension())`), and a win never drags the
+  ceiling back down (`if top > unlocked_ascension()`). The only existing test
+  that calls `record_win()` directly
+  (`_test_backlog42_progress_total_wins_climbs_on_every_win`) has a comment
+  reading "replaying tier 0 again -> ladder doesn't move, but this still
+  counts" — but only ever asserts `total_wins()` afterward, never
+  `unlocked_ascension()`; a background research pass confirmed a grep for
+  `Content.max_ascension` across the whole 15,000-line suite came back empty.
+  Added `_test_backlog86_record_win_caps_at_max_ascension_and_never_regresses`,
+  which climbs the real ladder tier by tier to `Content.max_ascension()`, then
+  calls `record_win()` with an out-of-range tier (`top + 5`, the "stale save
+  from a build with more tiers" shape) and asserts the ceiling still reads
+  exactly `top`, then replays tier 0 (already cleared) and asserts the
+  ceiling still hasn't moved. Proved the test actually catches a regression:
+  temporarily dropped the `mini()` cap and the `if top >` guard in
+  `progress.gd`, reran, watched exactly this one test fail (`1 TEST(S)
+  FAILED`), then restored the file from a pre-edit copy (confirmed clean via
+  `git diff` — no other file touched). Came up clean, no bug: `record_win()`
+  already does exactly what its doc comment says. Fresh `--import`, headless,
+  Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is
+  duty 2 (find an error and resolve it).
+
+- **2026-09-10, #86 duty 2 (find an error and resolve it) — a hunter
   who picked a character then dropped from the lobby before the run started
   locked that character out forever, for everyone, including themselves.**
   Last commit (`ee45c05`) was duty 3, so this turn is duty 2. Read

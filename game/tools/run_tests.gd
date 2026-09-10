@@ -42,6 +42,7 @@ func _init() -> void:
 	_test_backlog86_hurt_pct_threshold_scales_with_ascensions_hp_pct()
 	# backlog #42: something to unlock between runs
 	_test_backlog42_progress_total_wins_climbs_on_every_win()
+	_test_backlog86_record_win_caps_at_max_ascension_and_never_regresses()
 	_test_backlog42_relic_pool_respects_unlock_wins()
 	_test_backlog42_reward_pool_respects_unlock_wins()
 	_test_backlog42_run_threads_unlocked_wins_into_the_shop()
@@ -5926,6 +5927,43 @@ func _test_backlog42_progress_total_wins_climbs_on_every_win() -> void:
 	Progress.record_win(0)  # replaying tier 0 again -> ladder doesn't move, but this still counts
 	_expect(Progress.total_wins() == before + 2,
 		"total_wins climbs on every win, even a replay that doesn't advance the ascension ladder")
+
+
+## #86 duty 3 — record_win()'s own doc comment promises two things the
+## sibling test above never checks (it only ever reads total_wins()):
+## clearing tier N unlocks N+1, and the two guards around that are each a
+## boundary this suite had never driven: `mini(ascension + 1,
+## Content.max_ascension())` must never let unlocked_ascension exceed the
+## real top tier even when the ascension argument itself is out of range
+## (a corrupted save, or a future tier added on one side of a mismatched
+## build), and `if top > unlocked_ascension()` must never let a win at an
+## ALREADY-CLEARED, lower tier drag the ceiling back down — the two-copies-
+## of-one-truth shape this duty keeps finding, here between "the tier this
+## win happened at" and "the highest tier ever banked".
+func _test_backlog86_record_win_caps_at_max_ascension_and_never_regresses() -> void:
+	Progress.use_scratch_slot("run_tests_backlog86_record_win")
+	var cfg := ConfigFile.new()
+	cfg.set_value(Progress.SECTION, "total_wins", 0)
+	cfg.set_value(Progress.SECTION, "unlocked_ascension", 0)
+	cfg.save(Progress.path)
+	var top: int = Content.max_ascension()
+	# Climb the ladder for real, one tier at a time, up to the last one.
+	for tier in range(top):
+		Progress.record_win(tier)
+	var reached_the_real_top: bool = Progress.unlocked_ascension() == top
+	# A win reported at a tier past the real ladder (out-of-range input —
+	# a stale save from a build with more tiers, say) must still cap at the
+	# same ceiling, never climb past it.
+	Progress.record_win(top + 5)
+	var cap_holds_on_out_of_range_input: bool = Progress.unlocked_ascension() == top
+	# Replaying an ALREADY-CLEARED, lower tier must never drag the ceiling
+	# back down to that tier's own unlock level.
+	Progress.record_win(0)
+	var replay_of_a_lower_tier_does_not_regress: bool = Progress.unlocked_ascension() == top
+	_expect(reached_the_real_top and cap_holds_on_out_of_range_input
+		and replay_of_a_lower_tier_does_not_regress,
+		"record_win() climbs the ladder tier by tier, caps at max_ascension() even for an " +
+		"out-of-range win, and never regresses the ceiling on a replayed lower tier")
 
 
 ## relic_pool()'s `wins` gate: a relic tagged unlock_wins only appears once the
