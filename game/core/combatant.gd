@@ -96,35 +96,45 @@ func predicted_damage(amount: int) -> int:
 		return mini(remaining, 1)
 	return remaining
 
-## Same preview as predicted_damage(), but first simulates `prior_chip` damage
-## landing before `amount` does -- the exact order a sigil_fatigue/height_split
-## limiter (Combat._apply_limiter()) and the boss's own telegraphed move resolve
-## in a real round: the limiter spends Block/Buffer/Intangible for real BEFORE
-## the move gets a turn at them (backlog #86 duty 2; see Combat.incoming_for()).
-## Passing prior_chip <= 0 is identical to predicted_damage(amount). Mirrors
-## take_damage()'s own cascade (Block, then Buffer, then Intangible) without
-## mutating this Combatant -- plated_armour is left out on purpose, same as
-## predicted_damage(): it only decays on a real hit, it never reduces one.
-func predicted_damage_after(prior_chip: int, amount: int) -> int:
-	var chip := maxi(prior_chip, 0)
-	if chip <= 0:
-		return predicted_damage(amount)
-	var block_left := maxi(block - chip, 0)
-	var chip_through := chip - mini(block, chip)
+## Same cascade as take_damage() (Block, then Buffer, then Intangible), applied
+## to a whole ORDERED sequence of hits without mutating this Combatant --
+## because a round can land more than one SEPARATE take_damage() call on the
+## same hunter (Combat._apply_limiter()'s chip, then the boss's own telegraphed
+## move, then _adds_turn() firing again for every living add), and a Buffer or
+## Intangible stack only ever spends a stack cancelling/capping ONE of those
+## real hits -- summing every stage into one lump `amount` and pricing it as a
+## single hit let a single stack silently cancel the whole round's damage
+## instead of just the one hit that would actually spend it for real (backlog
+## #86 duty 2; see Combat.incoming_for()). Returns, in order, what each amount
+## in `amounts` would do to HP if the whole sequence landed for real, one after
+## another. plated_armour is left out on purpose, same as predicted_damage():
+## it only decays on a real hit, it never reduces one.
+func predicted_damage_chain(amounts: Array) -> Array:
+	var block_left := block
 	var buffer_left := buffer
 	var intangible_left := intangible
-	if chip_through > 0 and buffer_left > 0:
-		buffer_left -= 1
-	elif chip_through > 0 and intangible_left > 0:
-		intangible_left -= 1
+	var results: Array = []
+	for amount_v in amounts:
+		var remaining := maxi(int(amount_v), 0)
+		var absorbed := mini(block_left, remaining)
+		block_left -= absorbed
+		remaining -= absorbed
+		if remaining > 0 and buffer_left > 0:
+			buffer_left -= 1
+			remaining = 0
+		elif remaining > 0 and intangible_left > 0:
+			intangible_left -= 1
+			remaining = mini(remaining, 1)
+		results.append(remaining)
+	return results
 
-	var remaining := maxi(amount, 0)
-	remaining -= mini(block_left, remaining)
-	if remaining > 0 and buffer_left > 0:
-		return 0
-	if remaining > 0 and intangible_left > 0:
-		return mini(remaining, 1)
-	return remaining
+## Two-stage convenience wrapper over predicted_damage_chain(): `prior_chip`
+## lands first (its own damage discarded by the caller -- the chip already
+## happened for real elsewhere), then `amount` lands against whatever
+## Block/Buffer/Intangible the chip left behind. Passing prior_chip <= 0 is
+## identical to predicted_damage(amount).
+func predicted_damage_after(prior_chip: int, amount: int) -> int:
+	return int(predicted_damage_chain([prior_chip, amount])[1])
 
 ## Frail (backlog #36) cuts what actually lands here — a source that grants
 ## 4 Block still says it grants 4 (the card face never lies about a number it

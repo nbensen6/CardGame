@@ -644,26 +644,48 @@ func incoming_for(pi: int) -> Dictionary:
 	var move := boss.current_move(boss_context())
 	var value := int(move.get("value", 0)) + boss.strength
 	var raw := 0
+	var hits: Array[int] = []  # every SEPARATE real hit this hunter is about to
+	                            # take this round, in the order _enemy_turn() and
+	                            # _adds_turn() actually resolve them — the main
+	                            # boss move first, then each living add in turn.
 	match String(move.get("type", "")):
 		"attack", "leech":
 			if boss_target_index() == pi:
 				raw = value
+				hits.append(value)
 		"attack_all":
 			raw = value
+			hits.append(value)
 		"swipe_high":  # only catches hunters off the ground
-			raw = value if ps.foothold > 0 else 0
+			if ps.foothold > 0:
+				raw = value
+				hits.append(value)
 		"swipe_low":   # only catches hunters still on the ground
-			raw = value if ps.foothold <= 0 else 0
+			if ps.foothold <= 0:
+				raw = value
+				hits.append(value)
 		"rift":        # hits BOTH, and harder the further apart they are
 			# Missing here until 2026-08-16, so the one move whose damage the
 			# player controls was the one move the HUD showed nothing for.
 			raw = value + _rift_gap(players) * RIFT_PER_GAP
+			hits.append(raw)
 	# backlog #89: _adds_turn() always sends a living add's "attack" move at
 	# boss_target_index() — the same hunter the main boss is about to hit —
 	# but that damage never reached this preview, so "5 incoming, I have 6
 	# Block" could still eat an unseen Root Tendril hit on top. Adds only
 	# ever honour "attack" and "block" (_adds_turn()), so "attack" is the
-	# only move type this needs to sum in.
+	# only move type this needs to add in.
+	#
+	# backlog #86 duty 2: each add's attack is a SEPARATE take_damage() call in
+	# _adds_turn(), resolved after the main move — it was never one lump hit,
+	# even though `raw` sums it into one number for the headline total.
+	# Appending each add's damage to `hits` instead of folding it into a shared
+	# amount is what lets the chain below spend a Buffer/Intangible stack
+	# against whichever ONE real hit would actually spend it, rather than
+	# letting one stack cancel/cap the whole round's combined total — a Buffer
+	# stack previously reported 0 incoming for a boss-hit-then-add-hit round
+	# where the boss's hit alone would spend the stack and the add's hit would
+	# land in full with nothing left to stop it.
 	if boss_target_index() == pi:
 		for add_v in adds:
 			var add: Boss = add_v
@@ -671,15 +693,27 @@ func incoming_for(pi: int) -> Dictionary:
 				continue
 			var add_move := add.current_move()
 			if String(add_move.get("type", "")) == "attack":
-				raw += int(add_move.get("value", 0)) + add.strength
-	# predicted_damage_after(), not a plain predicted_damage(): a sigil_fatigue
-	# or height_split limiter spends this same Block/Buffer/Intangible for real
-	# BEFORE the telegraphed move ever resolves (_enemy_turn() calls
-	# _apply_limiter() first), so a hunter camped past their allowance saw this
-	# preview claim they'd survive a hit that would actually land against
-	# defenses the limiter had already spent (backlog #86 duty 2).
+				var add_dmg := int(add_move.get("value", 0)) + add.strength
+				raw += add_dmg
+				hits.append(add_dmg)
+	# predicted_damage_chain(), not a single predicted_damage_after(): a
+	# sigil_fatigue or height_split limiter spends this same
+	# Block/Buffer/Intangible for real BEFORE the telegraphed move ever
+	# resolves (_enemy_turn() calls _apply_limiter() first), so the chip goes
+	# in as the chain's own first stage — priced, but not counted into
+	# "through" below, since the limiter's own damage was never part of what
+	# this preview calls "incoming" (backlog #86 duty 2). Every entry in
+	# `hits` then prices against whatever the chip (and each other, in order)
+	# left behind, matching the real sequential order _enemy_turn() +
+	# _adds_turn() resolve in.
 	var limiter_chip := _predicted_limiter_damage(pi)
-	return {"raw": raw, "through": ps.combatant.predicted_damage_after(limiter_chip, raw)}
+	var amounts: Array[int] = [limiter_chip]
+	amounts.append_array(hits)
+	var chain := ps.combatant.predicted_damage_chain(amounts)
+	var through := 0
+	for i in range(1, chain.size()):
+		through += int(chain[i])
+	return {"raw": raw, "through": through}
 
 
 ## timed card's throw (client skill) — true grants the card's timed bonus.

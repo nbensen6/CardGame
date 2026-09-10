@@ -469,6 +469,7 @@ func _init() -> void:
 	_test_add_thorns_bites_the_attacking_add_not_the_boss()
 	_test_thorns_reflects_card_damage_dealt_to_an_add()
 	_test_incoming_for_includes_a_living_adds_own_attack()
+	_test_backlog86_incoming_through_only_spends_a_buffer_stack_on_one_of_the_boss_and_add_hits()
 	_test_incoming_for_ignores_a_dead_adds_attack()
 	_test_poison_lands_on_the_targeted_add_not_the_boss()
 	_test_frail_lands_on_the_targeted_add_not_the_boss()
@@ -8950,6 +8951,40 @@ func _test_incoming_for_includes_a_living_adds_own_attack() -> void:
 	var actual_damage: int = hp_before - combat.players[0].combatant.hp
 	_expect(actual_damage == 13,
 		"the previewed 13 must equal what the boss (8) and its add (5) actually land on the same hunter")
+
+
+## backlog #86 duty 2: a Buffer or Intangible stack only ever spends ONE stack
+## cancelling/capping a SINGLE real take_damage() call -- but a living add's
+## attack lands as its OWN separate take_damage() in _adds_turn(), after the
+## main boss move already resolved in _enemy_turn(). incoming_for() used to
+## fold the two into one lump `amount` before pricing Buffer/Intangible
+## against it, so a single Buffer stack reported the WHOLE round (boss + add)
+## as safe -- when for real it can only ever cancel whichever hit lands
+## first, leaving the second hit to land with nothing left to stop it. Plays
+## the round out for real, same idiom as
+## _test_incoming_for_includes_a_living_adds_own_attack above.
+func _test_backlog86_incoming_through_only_spends_a_buffer_stack_on_one_of_the_boss_and_add_hits() -> void:
+	var boss := _dummy_boss(300, 8)  # attacks player 0 for 8 on round 1
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Root Tendril", 30)
+	add.moves = [{"type": "attack", "value": 5}]
+	combat.adds.append(add)
+	combat.players[0].combatant.buffer = 1
+
+	var previewed := combat.incoming_for(0)
+	_expect(previewed["raw"] == 13,
+		"sanity: raw still sums the boss's 8 and the add's 5")
+	_expect(previewed["through"] == 5,
+		"one Buffer stack cancels only the FIRST real hit (the boss's 8, which resolves before the add's) -- the add's 5 must land with nothing left to stop it, not 0 and not 13")
+
+	var hp_before: int = combat.players[0].combatant.hp
+	combat.end_turn(0)
+	combat.end_turn(1)
+	var actual_damage: int = hp_before - combat.players[0].combatant.hp
+	_expect(actual_damage == 5,
+		"the previewed 5 must equal what actually lands: Buffer eats the boss's 8, the add's 5 goes through untouched")
+	_expect(combat.players[0].combatant.buffer == 0,
+		"the Buffer stack was spent on the boss's hit, same as a real single-hit round would spend it")
 
 
 ## A dead add's stale "attack" move must never haunt the preview once it can no

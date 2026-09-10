@@ -2746,7 +2746,39 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-10 (latest), #86 duty 3 (verify a mechanic actually works) —
+- **2026-09-10 (latest), #86 duty 2 (find an error and resolve it) —
+  `Combat.incoming_for()` folded the main boss move and a living add's own
+  attack into one lump number before pricing Buffer/Intangible against it,
+  even though they land as two SEPARATE `take_damage()` calls for real
+  (`_enemy_turn()`'s own hit, then `_adds_turn()`'s, in that order).** Last
+  commit (`afa3b92`) was duty 3, so this turn is duty 2. Buffer and
+  Intangible (backlog #61) only ever spend one stack cancelling/capping a
+  SINGLE hit, but `incoming_for()` summed `raw` = boss + add damage and
+  handed the total to `predicted_damage_after()` as if it were one hit — so
+  a hunter holding 1 Buffer stack against a boss-8 + add-5 round saw the HUD
+  promise 0 incoming, when for real the boss's 8 spends the stack and the
+  add's 5 then lands with nothing left to stop it. Concretely reproducible
+  against the Root Lurker's own Root Tendril add. Neither existing test
+  caught it: `_test_incoming_for_includes_a_living_adds_own_attack` only
+  ever ran the add case with zero Block/Buffer/Intangible (where
+  combined-vs-sequential math happens to agree), and
+  `_test_backlog86_incoming_through_reckons_buffer_and_intangible_too` only
+  ever ran Buffer/Intangible against a single boss hit with no add present —
+  the two were never exercised together. Fixed by generalizing
+  `Combatant.predicted_damage_after(prior_chip, amount)` into
+  `predicted_damage_chain(amounts)`, which walks the same Block→Buffer→
+  Intangible cascade `take_damage()` uses across a whole ORDERED sequence of
+  hits without mutating state (`predicted_damage_after` is now a two-stage
+  wrapper over it, unchanged in behaviour); `incoming_for()` now builds the
+  real hit order — limiter chip, then the boss's own move, then each living
+  add's attack in turn — and sums only the post-chip stages for "through".
+  Added `_test_backlog86_incoming_through_only_spends_a_buffer_stack_on_one_of_the_boss_and_add_hits`,
+  confirmed it fails on the pre-fix code (`1 TEST(S) FAILED`, the new test
+  only) via `git stash`, then restored the fix. Fresh `--import`, headless,
+  Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED (1333 tests). Next
+  `#86` turn is duty 3 (verify a mechanic actually works).
+
+- **2026-09-10, #86 duty 3 (verify a mechanic actually works) —
   `Progress.record_win()`'s ascension-ladder unlock had never been driven near
   either of its own two guards.** Last commit (`a7b1b63`) was duty 2, so this
   turn opened as duty 3. `record_win()`'s doc comment promises two things:
