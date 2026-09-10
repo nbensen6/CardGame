@@ -2746,7 +2746,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-10 (latest), #86 duty 2 (find an error and resolve it) — a
+- **2026-09-10 (latest), #86 duty 3 (verify a mechanic actually works) —
+  `relic_totals()`'s generic pass-through, proven for only one key out of
+  twenty.** Last own commit (`684a658`) was duty 2, so this turn opened as
+  duty 3. `Run.relic_totals()` sums ~20 relic-mod keys (start_foothold,
+  timing_zone, the four `open_*` fight-openers, etc.) through one generic
+  rule in `_apply_relic_effect`'s default branch (`if t.has(e): t[e] += v`,
+  run.gd:1004-1006) — but grepping `run_tests.gd` found only `grip_seconds`
+  (backlog #86's forty-fourth pass) and the four keys `_test_relic_downside`
+  happens to cover (attack/block/draw/energy) had ever been proven to carry
+  a REAL relic's value through relic_totals() itself; the other eighteen
+  keys were only ever exercised downstream through Combat's own `_mod()`
+  reads, a different call path. Spent most of this run's search budget
+  ruling out candidates that turned out already covered — this codebase's
+  duty-3 history runs ~44+ passes deep, and `_route_between`/`_stand_on_model`,
+  the shop's guaranteed-rare slot (#71), the map's key-source guarantee
+  (#64), `EnetTransport`'s local-bypass routing, and the keybind-steal rule
+  were each independently re-discovered as candidates and each already had a
+  named test. Added `_test_backlog86_every_relic_mod_key_reaches_relic_totals`,
+  which holds one real relic per remaining key (`climbers_boots`,
+  `nimble_wraps`, `deep_hooks`, `steady_hands`, `warded_hide`, etc. — 18 in
+  all, values checked directly against `relics.json`) and asserts
+  `relic_totals()` reports exactly that relic's declared value under that
+  key. All eighteen matched on the first run — no bug found, just a real gap
+  in proof closed; a future typo or one-sided rename between a relic's
+  `effect` string and relic_totals()'s seeded key list would now fail loudly
+  instead of silently totalling zero. `run_tests.gd` passes (ALL TESTS
+  PASSED, new assertion included).
+
+- **2026-09-10, #86 duty 2 (find an error and resolve it) — a
   reconnected hunter's character silently went blank after their next fight
   ended.** Last own commit (`921a7cf`) was duty 3, so this turn opened as
   duty 2. Ran a background research pass over `game/core`, `game/session`

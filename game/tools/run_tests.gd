@@ -857,6 +857,7 @@ func _init() -> void:
 	# keeps finding: a pure function proven correct in isolation, and the wiring
 	# that's supposed to feed it a real value never asked for.
 	_test_backlog86_grip_seconds_relic_stacks_in_relic_totals()
+	_test_backlog86_every_relic_mod_key_reaches_relic_totals()
 	_test_backlog86_combat3d_grip_seconds_reads_the_relic_mod_from_shared_state()
 	_test_backlog86_climb_state_secure_erases_any_existing_timer()
 	_test_backlog86_climb_state_starts_a_fresh_full_timer_on_first_leaving_a_hold()
@@ -11556,6 +11557,61 @@ func _test_backlog86_grip_seconds_relic_stacks_in_relic_totals() -> void:
 	var totals := run.relic_totals()
 	_expect(int(totals.get("grip_seconds", -1)) == 6,
 		"chalk_pouch (+2) and tar_gloves (+4) stack in relic_totals()'s grip_seconds key, the same generic summing every other relic mod already gets")
+
+
+## backlog #86 duty 3: the comment above proved grip_seconds reaches
+## relic_totals() through a REAL relic, because the grip-timer test elsewhere
+## only ever assumed it. But relic_totals()'s generic pass-through
+## (_apply_relic_effect's `if t.has(e): t[e] += v` default branch, run.gd
+## 1004-1006) seeds ~20 keys, and only grip_seconds here plus attack/block/
+## draw/energy in _test_relic_downside had ever been proven to carry a real
+## relic's value through. The other eighteen keys -- start_foothold,
+## start_dexterity, fall_safe, rhythm_keeps, threshold, chip, sigil_bonus,
+## vuln_bonus, shake_resist, timing_zone, block_carries, no_buck, soft_fall,
+## energy_handoff and the four "open_*" fight-openers -- were only ever
+## exercised downstream, through Combat's own _mod() reads, which is a
+## different call path (see the comment above combat_3d._grip_seconds() on
+## exactly that gap for grip_seconds). Every test above the totals layer
+## builds team_relics with Content.make_relic() reading the SAME relics.json
+## this does, so a key that only matched by accident (a typo on one side,
+## a key renamed on only one of relic_totals()'s seed list or a relic's own
+## `effect` string) would silently total zero here and nothing would catch
+## it -- the same "declared but never wired" shape #71's shop-rare and #64's
+## key-source guarantees exist to rule out elsewhere in this same file.
+func _test_backlog86_every_relic_mod_key_reaches_relic_totals() -> void:
+	var by_key := {
+		"start_foothold": ["climbers_boots", 1],
+		"start_dexterity": ["nimble_wraps", 2],
+		"fall_safe": ["feather_harness", 1],
+		"rhythm_keeps": ["drummers_hide", 1],
+		"threshold": ["deep_hooks", 8],
+		"chip": ["prying_bar", 2],
+		"sigil_bonus": ["sigil_lens", 3],
+		"vuln_bonus": ["hunters_mark", 3],
+		"shake_resist": ["anchor_pin", 1],
+		"timing_zone": ["steady_hands", 6],
+		"block_carries": ["riveted_plates", 1],
+		"no_buck": ["grapnel_clamp", 1],
+		"soft_fall": ["safety_line", 1],
+		"energy_handoff": ["relay_baton", 1],
+		"open_power": ["smoldering_husk", 1],
+		"open_artifact": ["warded_hide", 1],
+		"open_thorns": ["briar_wrap", 2],
+		"open_intangible": ["veiled_step", 1],
+	}
+	var run := _map_run()
+	var bad: Array = []
+	for key in by_key.keys():
+		var pair: Array = by_key[key]
+		var rid := String(pair[0])
+		var want := int(pair[1])
+		run.team_relics = [Content.make_relic(rid)]
+		var totals := run.relic_totals()
+		var got := int(totals.get(key, -9999))
+		if got != want:
+			bad.append("%s (%s): want %d got %d" % [key, rid, want, got])
+	_expect(bad.is_empty(),
+		"every relic-mod key reaches relic_totals() with its real relic's value, not just grip_seconds/attack/block/draw/energy [%s]" % ", ".join(bad))
 
 
 ## The other half: relic_totals()'s "grip_seconds" key rides GameHost's
