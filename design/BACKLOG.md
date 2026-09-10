@@ -12893,3 +12893,37 @@ Newest first. One line per finished item: what, and anything surprising.
   `08f9c16` logged for its own four commands. Fresh `--import`, headless,
   Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is
   duty 2 (find an error and resolve it).
+
+- **2026-09-10 (later), #86 duty 2 (find an error and resolve it).** Last
+  commit (`b3e0b23`) was duty 3, so this turn is duty 2. Read
+  `game_host.gd`'s disconnect/reconnect handling (`_on_peer_left`,
+  `_handle_join`, `_reclaim_slot`) end to end against a question the
+  existing reconnect tests never asked: what happens when BOTH hunters drop
+  mid-run, not just one? Found a real bug — `_disconnected_slot` was a
+  single `int`, not a collection, so a second drop while the first was
+  still pending silently overwrote it. Consequence, traced by hand and then
+  reproduced in a test: the FIRST hunter to reconnect claimed whichever
+  seat the overwrite happened to leave behind (the wrong one, if the two
+  drops didn't reconnect in the same order they disconnected), and the
+  SECOND hunter to reconnect arrived after `paused` had already cleared and
+  `_peers.size() == _required` already looked satisfied — `_handle_join`
+  fell through to the "party already full" branch and handed them no seat
+  at all, with no error, just a `GameClient` whose `you` stays `-1` and a
+  connection the host never sends another message to again. A co-op pair
+  losing their connection together (one router hiccup, or one drop
+  followed by the other rage-quitting to retry) would permanently lock one
+  of them out of their own run. Fixed by replacing the single int with
+  `_disconnected_slots: Array`, appended in drop order and popped from the
+  front on reclaim, so multiple pending drops queue correctly instead of
+  clobbering each other; `paused` now tracks whether that array is empty
+  rather than a magic `-1` sentinel. Also renamed the shared-state field
+  `disconnected_slot` → `disconnected_slots` (nothing in `/ui` or `/views`
+  reads it yet, so this was a safe rename, not a breaking one). Wrote the
+  regression test first — dropped both hunters, reconnected with two fresh
+  peer ids, asserted each got their OWN original seat back and could both
+  act — and watched it fail three ways against the unfixed code (wrong
+  seat on the first reconnect, second reconnect got no seat, and the test
+  itself then crashed dereferencing an empty snapshot) before applying the
+  fix. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL
+  TESTS PASSED. Next `#86` turn is duty 3 (verify a mechanic actually
+  works).

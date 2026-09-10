@@ -503,6 +503,7 @@ func _init() -> void:
 	_test_dropped_hunter_can_rejoin_mid_fight()
 	_test_backlog86_reconnected_hunter_keeps_their_character_after_combat()
 	_test_backlog86_same_peer_id_rejoin_clears_the_pause_without_reclaiming()
+	_test_both_hunters_dropping_mid_fight_both_get_their_own_seat_back()
 	_test_lobby_drop_reindexes_the_remaining_peer_and_frees_the_slot()
 	_test_host_autosaves_and_resumes()
 	_test_host_autosaves_and_resumes_mid_combat()
@@ -9915,7 +9916,7 @@ func _test_backlog86_same_peer_id_rejoin_clears_the_pause_without_reclaiming() -
 	_expect(host.paused, "host pauses when hunter 2 drops")
 
 	c1.join()  # same GameClient, same peer id 20 -- not a fresh connection
-	_expect(not host.paused and host._disconnected_slot == -1,
+	_expect(not host.paused and host._disconnected_slots.is_empty(),
 		"a rejoin on the SAME peer id clears the pause, same as a fresh peer id would")
 	_expect(c1.you == 1 and int(host._slot_of.get(20, -1)) == 1,
 		"the seat is unchanged -- this path never touched _slot_of, unlike _reclaim_slot")
@@ -9933,6 +9934,54 @@ func _test_backlog86_same_peer_id_rejoin_clears_the_pause_without_reclaiming() -
 	# Peer id 20 still owns slot 1 (never migrated away), so it can drop again.
 	transport.emit_signal("peer_left", 20)
 	_expect(host.paused, "the same peer id dropping again re-pauses the same seat")
+
+
+## Backlog #86 duty 2: every reconnect test above drops exactly ONE hunter.
+## `_on_peer_left`'s mid-run branch recorded the dropped seat in a single
+## `_disconnected_slot: int`, so a SECOND drop while the first is still
+## pending overwrote it outright -- a co-op pair losing connection together
+## (a host's own router hiccup takes both LAN players out at once, or one
+## drops and the other quits to retry) left only the LATER seat remembered.
+## The first hunter to reconnect then reclaimed the WRONG seat (the one the
+## overwrite left behind), and the second hunter to reconnect found
+## `_peers.size() == _required` already and `paused` already cleared, so
+## `_handle_join` fell through to the "party full" branch and handed them no
+## seat at all -- a real join, sent by a real fresh connection, that the host
+## silently drops on the floor forever.
+func _test_both_hunters_dropping_mid_fight_both_get_their_own_seat_back() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var transport: LocalTransport = s["transport"]
+	transport.emit_signal("peer_left", 10)  # frog (slot 0) drops first
+	transport.emit_signal("peer_left", 20)  # mountain_climbers (slot 1) drops second
+	_expect(host.paused, "host pauses once either hunter is gone")
+
+	# First reconnect must reclaim slot 0 -- the FIRST seat vacated -- not
+	# whichever slot a single-int tracker last happened to remember.
+	var c_first := GameClient.new(transport, 99)
+	c_first.join()
+	_expect(c_first.you == 0, "the first reconnect gets the first hunter's own seat back")
+	_expect(host.paused, "the second hunter is still gone, so play stays paused")
+
+	# Second reconnect must still find an open seat -- not be turned away for
+	# a party that only LOOKS full because of a stale dead peer id.
+	var c_second := GameClient.new(transport, 100)
+	c_second.join()
+	_expect(c_second.you == 1, "the second reconnect gets the second hunter's own seat back")
+	_expect(not host.paused, "both seats filled -- play resumes")
+
+	# Both reconnected hunters can actually act.
+	var idx0 := _first_playable_client(c_first)
+	var idx1 := _first_playable_client(c_second)
+	_expect(idx0 >= 0 and idx1 >= 0, "both reconnected clients received their real hands")
+	var e0_before: int = c_first.shared["players"][0]["energy"]
+	var e1_before: int = c_second.shared["players"][1]["energy"]
+	c_first.play_card(idx0)
+	c_second.play_card(idx1)
+	_expect(int(c_first.shared["players"][0]["energy"]) < e0_before,
+		"the first reconnect's command lands on hunter 1")
+	_expect(int(c_second.shared["players"][1]["energy"]) < e1_before,
+		"the second reconnect's command lands on hunter 2")
 
 
 ## Backlog #86 duty 3: _on_peer_left's OTHER branch, never exercised by

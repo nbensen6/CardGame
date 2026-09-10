@@ -18,7 +18,10 @@ var _required: int
 var _slot_of: Dictionary = {}  # peer_id -> hunter slot
 var _peers: Array = []         # peer_ids in join order (slot = position)
 var paused: bool = false       # a hunter dropped mid-run; play is halted
-var _disconnected_slot: int = -1
+# Hunter slots currently dropped mid-run, in the order they dropped (backlog
+# #86 duty 2: this used to be a single int, so a SECOND drop while the first
+# was still pending overwrote it outright -- see _on_peer_left/_handle_join).
+var _disconnected_slots: Array = []
 var _character_of: Dictionary = {}  # peer_id -> chosen character id (lobby select)
 # Solo: one player controls BOTH hunters. required=1; both characters picked by
 # the one peer; commands carry an explicit "slot".
@@ -217,7 +220,9 @@ func _on_peer_left(peer_id: int) -> void:
 		_reindex_slots()
 	else:
 		paused = true
-		_disconnected_slot = _slot(peer_id)
+		var slot := _slot(peer_id)
+		if not _disconnected_slots.has(slot):
+			_disconnected_slots.append(slot)
 	_broadcast_state()
 
 func _reindex_slots() -> void:
@@ -231,17 +236,20 @@ func _handle_join(peer_id: int) -> void:
 		# which hands out a fresh one, but the local loopback transport used in
 		# tests can) still needs to clear the pause -- otherwise it sits
 		# "known" but frozen forever.
-		if paused and _slot(peer_id) == _disconnected_slot:
-			paused = false
-			_disconnected_slot = -1
+		if paused and _disconnected_slots.has(_slot(peer_id)):
+			_disconnected_slots.erase(_slot(peer_id))
+			paused = not _disconnected_slots.is_empty()
 		_try_start_or_broadcast()
 		return
 	# backlog #51: a hunter dropped mid-run leaves their slot held (_on_peer_left
 	# does not erase it) so the NEXT unrecognised "join" -- a fresh ENet
 	# connection, since a rejoin always gets a new peer id -- reclaims that
 	# slot instead of being turned away for the party already being full.
-	if paused and _disconnected_slot >= 0:
-		_reclaim_slot(peer_id, _disconnected_slot)
+	# backlog #86 duty 2: reclaims the FIRST slot that dropped, so a second
+	# connection lost while the first is still pending doesn't strand either
+	# hunter's real seat behind the other's.
+	if paused and not _disconnected_slots.is_empty():
+		_reclaim_slot(peer_id, _disconnected_slots.pop_front())
 		return
 	if _peers.size() < _required:
 		_slot_of[peer_id] = _peers.size()
@@ -256,8 +264,7 @@ func _reclaim_slot(peer_id: int, slot: int) -> void:
 	_slot_of.erase(old_peer_id)
 	_peers[slot] = peer_id
 	_slot_of[peer_id] = slot
-	paused = false
-	_disconnected_slot = -1
+	paused = not _disconnected_slots.is_empty()
 	_broadcast_state()
 
 ## Start the run once everyone has joined AND chosen a character; else broadcast.
@@ -351,7 +358,7 @@ func _build_shared() -> Dictionary:
 		"players": _players_public(),
 		"relics": _relic_names(),
 		"paused": paused,
-		"disconnected_slot": _disconnected_slot,
+		"disconnected_slots": _disconnected_slots,
 		"solo": _solo,
 		"ascension": _ascension,
 		"gold": _run.gold,
