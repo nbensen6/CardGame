@@ -185,6 +185,7 @@ func _init() -> void:
 	_test_backlog72_archetype_tags_are_derived_from_fields()
 	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
 	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
+	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
 	# potions (backlog #26)
 	_test_potions_all_load()
 	_test_use_potion_applies_each_effect()
@@ -4149,6 +4150,69 @@ func _test_backlog72_relic_rolls_are_unaffected_by_deck_tags() -> void:
 			all_relics = false
 	_expect(not choices.is_empty() and all_relics,
 		"a relic roll still returns relics (plain dicts) even when handed non-empty deck tag counts")
+
+
+## Backlog #86 duty 3: pick_reward()'s foil/borderless roll (run.gd:904-906) is a
+## real, falsifiable rule -- FOIL_CHANCE/BORDERLESS_CHANCE by rarity, rolled
+## independently of each other -- with zero coverage anywhere in this suite before
+## now. Same statistical shape as _test_rarity_weighting_favours_commons: loose
+## bounds, wide enough to absorb tuning drift, tight enough to catch the roll being
+## wired up backwards, flat across rarities, or accidentally conditioned on the
+## other roll (which would empty the both-at-once bucket the last assertion checks).
+func _test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity() -> void:
+	var run := _map_run()
+	run._begin_reward("card")
+	var common_card := Card.from_dict(
+		{"id": "t_common", "name": "Common Test Card", "type": "attack", "cost": 1, "damage": 1, "rarity": "common"})
+	var rare_card := Card.from_dict(
+		{"id": "t_rare", "name": "Rare Test Card", "type": "attack", "cost": 1, "damage": 1, "rarity": "rare"})
+	var n := 3000
+
+	var common_foil := 0
+	var common_borderless := 0
+	for _i in range(n):
+		run.phase = Run.Phase.REWARD
+		run.reward_picked[0] = false
+		run.reward_choices[0] = [common_card]
+		run.pick_reward(0, 0)
+		if common_card.foil:
+			common_foil += 1
+		if common_card.borderless:
+			common_borderless += 1
+	var common_foil_pct := float(common_foil) / float(n)
+	var common_borderless_pct := float(common_borderless) / float(n)
+
+	var rare_foil := 0
+	var rare_borderless := 0
+	var rare_both := 0
+	for _i in range(n):
+		run.phase = Run.Phase.REWARD
+		run.reward_picked[0] = false
+		run.reward_choices[0] = [rare_card]
+		run.pick_reward(0, 0)
+		if rare_card.foil:
+			rare_foil += 1
+		if rare_card.borderless:
+			rare_borderless += 1
+		if rare_card.foil and rare_card.borderless:
+			rare_both += 1
+	var rare_foil_pct := float(rare_foil) / float(n)
+	var rare_borderless_pct := float(rare_borderless) / float(n)
+
+	_expect(common_foil_pct > 0.03 and common_foil_pct < 0.09,
+		"a common reward foils at roughly FOIL_CHANCE.common (0.06), got %.3f over %d trials"
+			% [common_foil_pct, n])
+	_expect(common_borderless_pct > 0.02 and common_borderless_pct < 0.06,
+		"a common reward goes borderless at roughly BORDERLESS_CHANCE.common (0.04), got %.3f over %d trials"
+			% [common_borderless_pct, n])
+	_expect(rare_foil_pct > 0.10 and rare_foil_pct < 0.18,
+		"a rare reward foils at roughly FOIL_CHANCE.rare (0.14), got %.3f over %d trials"
+			% [rare_foil_pct, n])
+	_expect(rare_foil_pct > common_foil_pct and rare_borderless_pct > common_borderless_pct,
+		"a rare reward rolls both foil and borderless more often than a common one (foil %.3f vs %.3f, borderless %.3f vs %.3f)"
+			% [rare_foil_pct, common_foil_pct, rare_borderless_pct, common_borderless_pct])
+	_expect(rare_both > 0,
+		"foil and borderless roll independently -- a rare comes out both at once at least once in %d trials" % n)
 
 
 # --- potions (backlog #26): held per-hunter, same data shape as relics -----

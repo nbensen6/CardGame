@@ -2746,6 +2746,30 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-10 (later still), #86 duty 3 (verify a mechanic actually works) —
+  `Run.pick_reward()`'s foil/borderless roll had zero test coverage.** Last
+  own commit (`5f8f1ea`) was duty 2, so this turn opened as duty 3. Ran a
+  background research pass to find a genuinely untested rule rather than
+  padding an already-covered one — it traced ~50 zero/low-grep-hit
+  candidates across `core/*.gd`, `views/combat_3d.gd`'s statics and
+  `net/*.gd` and found every other one already exercised indirectly by
+  existing tests. The one real gap: `core/run.gd:904-906` rolls a rewarded
+  card's `foil` and `borderless` flags independently, each against a
+  rarity-scaled constant (`FOIL_CHANCE`/`BORDERLESS_CHANCE`), and nothing in
+  `run_tests.gd` ever asserted on either flag — the only hits for "foil" or
+  "borderless" were the unrelated dev-console art-preview override. Added
+  `_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity`,
+  same statistical shape as `_test_rarity_weighting_favours_commons`: drives
+  `Run._begin_reward("card")` then `pick_reward(0, 0)` 3000 times each on a
+  fixed common and a fixed rare test card, asserting the empirical rates
+  land near the documented constants, that rare foils/borderlesses more
+  often than common, and — the assertion that actually proves independence,
+  since a roll accidentally conditioned on the other would zero this bucket
+  out silently — that a rare comes out foil AND borderless at once at least
+  once across the run. All five assertions passed on the first run at the
+  constants' own values (0.058/0.048/0.141 against 0.06/0.04/0.14).
+  `run_tests.gd`: ALL TESTS PASSED before and after.
+
 - **2026-09-10 (even later), #86 duty 2 (find an error and resolve it) —
   shift_sigil silently tore the beast down and reset the camera mid-fight.**
   Last own commit (`b84c485`) was duty 3, so this turn opened as duty 2.
