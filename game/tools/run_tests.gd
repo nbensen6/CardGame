@@ -506,6 +506,8 @@ func _init() -> void:
 	_test_host_autosaves_and_resumes()
 	_test_host_autosaves_and_resumes_mid_combat()
 	_test_solo_controls_both_hunters()
+	_test_backlog86_solo_cannot_pick_the_same_character_for_both_hunters()
+	_test_backlog86_coop_cannot_pick_the_same_character_twice()
 	_test_session_shared_state_exposes_the_seed()
 	# backlog #45: prove the new mechanics cross the client/server boundary
 	_test_backlog45_potions_are_shared_but_only_the_owner_can_drink_them()
@@ -9714,6 +9716,48 @@ func _test_solo_controls_both_hunters() -> void:
 	c.play_card(idx, true, 1)  # act as hunter 2
 	_expect(int(c.shared["players"][1]["energy"]) < energy_before,
 		"solo: a command with slot=1 acts on hunter 2")
+
+
+## Backlog #86 duty 2: nothing stopped a solo player picking the SAME
+## character for both hunter slots -- and the Lightbearer is the one
+## character with no climb card in its starter deck and no ally-lift
+## passive, so two Lightbearers can only ever reach a high-sigil weak point
+## on the luck of a reward draft. A headless sweep of exactly this pairing
+## sat at Foothold 0 for 200,000 simulated rounds against a weak_point_height
+## 11 beast, the boss's own HP oscillating in a band and never dying -- a
+## real, reachable soft-lock, not a slow win. select_character must refuse a
+## duplicate pick rather than silently double-book it.
+func _test_backlog86_solo_cannot_pick_the_same_character_for_both_hunters() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, true)  # solo
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("lightbearer", 0)
+	c.select_character("lightbearer", 1)  # refused -- slot 0 already has it
+	_expect(host._run == null and int(c.shared.get("current_slot", -1)) == 1,
+		"a duplicate pick is refused; the lobby still waits on hunter 2")
+	c.select_character("frog", 1)  # a distinct character is accepted
+	_expect(host._run != null and String(c.shared.get("phase", "")) != "select",
+		"a distinct second pick is accepted and the run starts")
+
+
+## Same rule, on the co-op path: two DIFFERENT peers, not one solo player
+## naming a slot, so the refusal has to key off the peer id instead.
+func _test_backlog86_coop_cannot_pick_the_same_character_twice() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, false)  # co-op
+	_kept.append(host)
+	var c0 := GameClient.new(t, 10)
+	var c1 := GameClient.new(t, 20)
+	c0.join()
+	c1.join()
+	c0.select_character("lightbearer")
+	c1.select_character("lightbearer")  # refused -- peer 10 already committed to it
+	_expect(host._run == null and String(c1.private.get("selected", "not empty")) == "",
+		"a co-op peer cannot claim a character another peer already picked")
+	c1.select_character("mountain_climbers")  # a distinct character is accepted
+	_expect(host._run != null, "two distinct co-op picks start the run as usual")
 
 
 func _test_host_pauses_on_disconnect() -> void:

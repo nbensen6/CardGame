@@ -2746,7 +2746,48 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-10 (latest), #86 duty 3 (verify a mechanic actually works) —
+- **2026-09-10 (latest), #86 duty 2 (find an error and resolve it) —
+  two Lightbearers picked for the same run could never win against a
+  high-sigil beast: a real, reproducible soft-lock, not just a bad matchup.**
+  Last own commit (`d4ecc60`) was duty 3, so this turn opened as duty 2. Spent
+  most of the run reading `combat.gd`/`run.gd`/`game_host.gd` by hand — both
+  are extraordinarily well-picked-over by ~18 prior duty-2 passes, every
+  field-drift and first-pass-hole shape I checked was already caught and
+  fixed with a comment naming the fix. Switched to actually RUNNING
+  `tools/robustness_sweep.gd` (backlog #46's exhaustive seeded-run dead-end
+  hunter) instead of reading more code, then wrote an extended copy that also
+  sweeps EVERY ascension tier (the shipped sweep only samples 0/4/8 of 10)
+  and, critically, character pairs where `i == j` — the shipped sweep only
+  ever tries DISTINCT pairs, so "the same character twice" had never once
+  been exercised. That extended sweep found 9 timeouts, every one
+  `lightbearer+lightbearer`. Root cause: the Lightbearer is the only
+  character in `characters.json` with no climb card (`grip`/`targets_hold`)
+  in its starter deck and no ally-lift passive (`ally_climb`/`poison_lift`)
+  — every other character has at least one of the two, so any OTHER pairing
+  always has a hunter who can reach a beast's weak point on their own kit.
+  Two Lightbearers can only ever climb if the run's random reward draws
+  happen to offer Scramble (the one neutral climb card) before a high-sigil
+  fight, and nothing enforces that. Confirmed it wasn't just slow: pinned one
+  failing seed (`drowned_colossus`, weak_point_height 11) and ran it to
+  200,000 simulated rounds — both hunters sat at Foothold 0 the entire time,
+  boss HP oscillating in a 230–242/242 band, no progress toward a win.
+  Nothing in `game_host.gd`'s lobby (`_on_command`'s `select_character`
+  handler, `_all_selected()`) ever stopped a solo player or two co-op peers
+  from picking the same character, so this is genuinely reachable, not a
+  sweep-only artifact. Fixed by refusing a duplicate character pick in
+  `GameHost._on_command` (new `_solo_character_taken()` /
+  `_character_taken_by_another_peer()` helpers) rather than touching balance
+  or the Lightbearer's kit — this is a lobby-legality rule (backlog #46's own
+  lineage: "no dead end without a legal way out"), not a card-power change.
+  Added two regression tests (`_test_backlog86_solo_cannot_pick_the_same_
+  character_for_both_hunters`, `_test_backlog86_coop_cannot_pick_the_same_
+  character_twice`) proving a duplicate pick is refused and a distinct one
+  still starts the run normally, for both the solo and co-op paths. Reran
+  the ORIGINAL (unmodified) `robustness_sweep.gd` after the fix: still 360
+  runs, 0 dead ends. `run_tests.gd`: ALL TESTS PASSED. The extended sweep
+  script itself was scratch-only and was not committed.
+
+- **2026-09-10, #86 duty 3 (verify a mechanic actually works) —
   Burn Coal's permanent cheapen effect was only ever proven for a single play.**
   Last own commit (`79c188a`) was duty 2, so this turn opened as duty 3. Spent
   most of the run confirming there was still a genuine gap left: every static

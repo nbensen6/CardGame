@@ -96,10 +96,14 @@ func _on_command(peer_id: int, command: Dictionary) -> void:
 			_handle_join(peer_id)
 		"select_character":
 			if _run == null:
+				var char_id := String(command.get("character", ""))
 				if _solo:
-					_solo_chars[clampi(int(command.get("slot", 0)), 0, 1)] = String(command.get("character", ""))
-				else:
-					_character_of[peer_id] = String(command.get("character", ""))
+					var slot := clampi(int(command.get("slot", 0)), 0, 1)
+					if char_id == "" or not _solo_character_taken(char_id, slot):
+						_solo_chars[slot] = char_id
+				elif char_id == "" or not _character_taken_by_another_peer(char_id, peer_id):
+					_character_of[peer_id] = char_id
+				# else: refused -- see _solo_character_taken()'s own comment for why.
 			_try_start_or_broadcast()
 		"play_card":
 			var ps0 := _acting_slot(peer_id, command)
@@ -270,6 +274,32 @@ func _all_selected() -> bool:
 		if not _character_of.has(pid):
 			return false
 	return true
+
+## backlog #86 duty 2: nothing ever stopped both hunters picking the SAME
+## character -- and the Lightbearer is the one character with no climb card
+## in its starter deck and no ally-lift passive (every other character has
+## at least one of the two). Two Lightbearers can only ever reach a
+## weak_point_height boss's sigil if the run's random reward draws happen to
+## offer a climb card (Scramble) before that fight -- and when they don't,
+## the fight is unwinnable, not just hard: a headless sweep of this exact
+## pairing (drowned_colossus, weak_point_height 11) sat at Foothold 0 for
+## 200,000 simulated rounds with the boss's own HP oscillating in a band,
+## never dying. Refusing a duplicate pick keeps this reachable-but-cursed
+## lobby state from ever existing -- every remaining pairing has at least one
+## hunter who can always climb on their own kit.
+func _solo_character_taken(char_id: String, exclude_slot: int) -> bool:
+	for i in range(_solo_chars.size()):
+		if i != exclude_slot and String(_solo_chars[i]) == char_id:
+			return true
+	return false
+
+## Same rule as _solo_character_taken() above, for co-op: a peer other than
+## the one asking has already committed to this character.
+func _character_taken_by_another_peer(char_id: String, exclude_peer: int) -> bool:
+	for pid in _character_of:
+		if pid != exclude_peer and String(_character_of[pid]) == char_id:
+			return true
+	return false
 
 # --- Snapshots (host -> clients) ------------------------------------------
 
