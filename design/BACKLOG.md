@@ -2782,7 +2782,44 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-11 (latest), #86 duty 2 — a keyword on a full card can never be
+- **2026-09-11 (latest, later still), #86 duty 3 (verify a mechanic actually
+  works) — `GameHost._result_string()`, the shared snapshot's win/lose/ongoing
+  mapping, had zero test coverage.** Last commit (`64afb24`) was duty 2, so
+  this turn is duty 3. Checked the queue above #86 first: 87, 88, 90, 91 and
+  85 are all still `needs a screen`, nothing new above #86 to take instead.
+  Dispatched an Explore agent to map coverage across `game/core`,
+  `game/session` and `game/net` against all ~870 tests in `run_tests.gd`; it
+  found `_build_shared()`'s `"result"` field (`game_host.gd:368`, fed by
+  `_result_string()` at line 1145 — a three-way match, `Run.Phase.WON` ->
+  `"win"`, `LOST` -> `"lose"`, anything else -> `"ongoing"`) had never once
+  been asserted. This is a second, independent copy of the exact win/lose
+  mapping `Run.history_entry()` already computes and already has tests for
+  (backlog #65) — the "two copies of one truth" shape duty 2 hunts for bugs
+  in, just caught here as a pure coverage gap: grepping this file for
+  `_result_string` and for the wire value `"ongoing"` both came back empty,
+  and nothing under `game/views`/`game/ui` reads the `"result"` key yet
+  either (the client's own win/lose screen logic branches on `"phase"`
+  instead), so a swapped mapping or a broken default arm would ship
+  unnoticed. Added `_test_backlog86_shared_result_reflects_run_phase()`: a
+  solo `GameHost`, asserting `_build_shared()` reports `"ongoing"` on a fresh
+  map-phase run (the default arm — no other test had ever read a snapshot
+  taken mid-run before checking win/lose), then setting `_run.phase` to
+  `WON` and `LOST` directly and re-checking `_build_shared()` each time,
+  mirroring the existing `_boss_art_per_act` wiring test's style of calling
+  `_build_shared()` directly rather than through a full broadcast (this
+  sidesteps `_note_progress()`'s on-win/on-loss `Progress` writes entirely,
+  since `_build_shared()` is a pure query and never triggers them). Proved
+  the test itself works by temporarily replacing `_result_string()` with
+  `return ""` — watched all three assertions fail honestly, then restored
+  the file (confirmed clean via `git diff`) before running for real. No bug
+  found: all three branches were already correct, same honest outcome the
+  `_boss_art_per_act` and `pick_node`/`pick_event` duty-3 runs logged before
+  it. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL
+  TESTS PASSED. Re-ran `robustness_sweep.gd` (360 runs, unmodified) as a
+  smoke test: clean, 0 dead ends / 0 crashes. Next `#86` turn is duty 2
+  (find an error and resolve it).
+
+- **2026-09-11, #86 duty 2 — a keyword on a full card can never be
   identified, because `_layer()` silently undoes the one line that made it
   possible.** Last commit was duty 3, so this turn opened as duty 2. Read
   through `design/progress/bugs.md` (the fixer's own findings, gated to

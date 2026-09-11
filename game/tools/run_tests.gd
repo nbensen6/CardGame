@@ -114,6 +114,7 @@ func _init() -> void:
 	_test_backlog86_elite_node_fights_from_the_elite_pool_not_the_fight_pool()
 	_test_backlog86_boss_art_per_act_matches_encounters_in_order()
 	_test_backlog86_map_snapshot_wires_boss_art_per_act()
+	_test_backlog86_shared_result_reflects_run_phase()
 	_test_rest_node_heals_and_returns_to_map()
 	_test_event_choice_applies_effects()
 	_test_event_reward_choice_routes_to_reward()
@@ -2873,6 +2874,41 @@ func _test_backlog86_map_snapshot_wires_boss_art_per_act() -> void:
 	var map: Dictionary = s.get("map", {})
 	_expect(map.has("boss_art") and (map["boss_art"] as Array) == host._boss_art_per_act(),
 		"the map snapshot's boss_art must be exactly what _boss_art_per_act() computes, not missing or stale [map=%s]" % [map])
+
+
+## Backlog #86 duty 3: _build_shared()'s "result" field is GameHost's own
+## second copy of the win/lose mapping — a three-way match in
+## _result_string() (WON -> "win", LOST -> "lose", anything else ->
+## "ongoing") that nothing had ever exercised. Grepping this file for
+## "_result_string" and for the wire value "ongoing" both come back empty
+## before this test; every other hit for "result" here belongs to unrelated
+## event/boon choice text or to Run.history_entry()'s own separate copy of
+## the same win/lose mapping (already covered by the backlog #65 run-history
+## tests), which is exactly the "two copies of one truth" shape duty 2 hunts
+## for — just caught here as a coverage gap rather than a live divergence.
+## The default "ongoing" arm is the one most likely to have never been hit at
+## all: every other test that reaches a WON/LOST run does so at the very end
+## of a scenario and never reads a snapshot taken mid-run first.
+func _test_backlog86_shared_result_reflects_run_phase() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 7, 2, true)  # solo, reaches MAP with no combat setup needed
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	_expect(host._run != null and host._run.phase == Run.Phase.MAP,
+		"setup sanity: a fresh solo run starts on the map, not in combat")
+	_expect(String(host._build_shared().get("result", "")) == "ongoing",
+		"a run still in progress must report 'ongoing', not a stale win/lose")
+
+	host._run.phase = Run.Phase.WON
+	_expect(String(host._build_shared().get("result", "")) == "win",
+		"a WON run must report 'win' in the shared snapshot")
+
+	host._run.phase = Run.Phase.LOST
+	_expect(String(host._build_shared().get("result", "")) == "lose",
+		"a LOST run must report 'lose' in the shared snapshot")
 
 
 func _test_rest_node_heals_and_returns_to_map() -> void:
