@@ -385,6 +385,42 @@ Ordered. Source in brackets.
   telegraphed intent on screen, camera-framed the same way the main boss is —
   and it's been looked at.
 
+- [ ] **91. A full card has no tap-accessible way into its own inspector**
+  `needs a screen` — found during #86 duty 2 (2026-09-11) while fixing the
+  keyword-hover bug above it in this same log entry. `card_view.gd`'s
+  `_on_card_input()` doc comment claims "The '?' button stays: CLAUDE.md §5
+  keeps a tap path for everything... This is the accelerator, not the only
+  way in" about right-click — but `_inspect_button()`, the "?" that emits
+  `inspect_requested`, is built in exactly ONE place, `_rail_row()` (the
+  compact form `DeckView` uses). `_build_face()` — the FULL card layout used
+  for every hand card during combat and every reward-pick card — never calls
+  it. So for those cards, right-click (fixed above, and only reachable in
+  `combat_3d.gd`, which is the only screen that connects
+  `inspect_requested` at all — `location_3d.gd`'s reward screen deliberately
+  has no full inspector, only a single-keyword popup, per its own comment) is
+  the ONLY path to the full card inspector, and right-click does not exist on
+  a touch device. CLAUDE.md §5: "no action may require right-click... as its
+  only path." Confirmed by grep, not just reading: `_inspect_button(` has one
+  call site in the whole file, and no `long_press`/double-tap/alternate
+  gesture exists anywhere in `card_view.gd` or `combat_3d.gd` to reach
+  `inspect_requested` on a full card by any means but the mouse.
+
+  Left unfixed here on purpose: the honest fix is adding a real, visible,
+  thumb-sized tap target to the full-card layout (most likely the same "?"
+  already proven in the rail form, placed somewhere it doesn't collide with
+  the cost orb, clock badge or rarity pips) — a genuine on-screen change that
+  has to be judged by eye, and this cloud pass has no screen. Do not paper
+  over this with an invisible wiring trick (e.g. quietly repurposing an
+  existing IGNORE-filtered decorative layer's tap) — that is exactly the
+  "claiming a UI change works without looking at it" the Hard Rules warn
+  against, just without the courtesy of a visible button to eventually notice
+  is placed badly.
+
+  *Done when:* every full CardView (hand, reward) carries a tap-reachable
+  path to `inspect_requested` that a thumb can actually hit, placed somewhere
+  a screenshot confirms doesn't overlap the cost/clock/rarity furniture — and
+  it's been looked at.
+
 - [ ] **85. You cannot see your ally** `needs a screen` — hunter1 projects to
   x=1602 on a 1280-wide viewport and sits off the right edge of the screen in
   every fight. Measured on three beasts: thrasher 1559, crag_pup 1602,
@@ -2746,7 +2782,51 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-11 (latest), #86 duty 2 attempted, fell back to duty 3 (verify a
+- **2026-09-11 (latest), #86 duty 2 — a keyword on a full card can never be
+  identified, because `_layer()` silently undoes the one line that made it
+  possible.** Last commit was duty 3, so this turn opened as duty 2. Read
+  through `design/progress/bugs.md` (the fixer's own findings, gated to
+  art/blender work and explicitly barred from touching `game/**` GDScript) and
+  picked up its 2026-09-05 entry, "right-click card inspector never opens,"
+  which the fixer traced partway into `card_view.gd` and then had to write up
+  rather than fix. Reading `_build_upper()`/`_build_borderless()` end to end:
+  `_rich_body()` deliberately sets its RichTextLabel to `MOUSE_FILTER_PASS`
+  ("the label has to SEE the pointer to know which keyword is under it" — its
+  own comment), but every caller immediately hands that same node to
+  `_layer()`, whose first line is `mouse_filter = MOUSE_FILTER_IGNORE` —
+  correct for the seven purely decorative layers it also places, wrong for
+  this one, and it has no way to know the difference. With IGNORE, the label
+  never sees a hover or a click at all: `meta_hover_started`/`_ended` never
+  fire, `_hover_meta` stays `""` forever, and a right-click dead-centre on a
+  keyword word falls through to the generic inspector instead of answering
+  that keyword — which is exactly why the fixer's harness could only make the
+  keyword path pass by *faking* `_hover_meta` directly (its own comment says
+  so), bypassing the broken hover chain entirely rather than proving it works.
+  The compact rail form (`_rail_row`, what `DeckView` uses) never hit this: it
+  adds the label straight to its row instead of through `_layer()`, so this
+  was invisible everywhere except the two full-card builders (the hand during
+  combat, and reward-card choices). Confirmed live with a throwaway headless
+  repro before touching anything (`cv.setup(...)` then read
+  `cv._rules.mouse_filter` — came back IGNORE(2), not PASS(1)), fixed by
+  re-asserting `mouse_filter = PASS` right after each of the two `_layer()`
+  calls that place the rules body, and added
+  `_test_backlog86_full_card_rules_body_keeps_its_mouse_filter_after_layering`
+  — proven to fail on the pre-fix code and pass after. `_build_borderless()`
+  carries the identical shape and got the identical fix, by code symmetry
+  rather than a second live test (that path only runs for a card with real
+  shipped art, which isn't worth dragging into this test for no extra proof).
+  Deliberately a one-property fix with zero visual footprint (mouse_filter has
+  no pixels of its own), specifically because this session has no display and
+  cannot run `tools/screenshot.gd` — a fix that changed layout or added a
+  visible element would have needed eyes on it first. `run_tests.gd` and
+  `tools/robustness_sweep.gd` both clean afterward. What this does NOT fix:
+  full cards (hand and reward) still have no TAP-accessible way to reach the
+  inspector at all — only `_rail_row()` gets the "?" button; a full card's
+  only door in is the right-click this fix repairs, which does not exist on
+  touch. That is a CLAUDE.md §5 gap (worth a `needs a screen` queue item, not
+  a same-session fix), noted here rather than left to be rediscovered.
+
+- **2026-09-11, #86 duty 2 attempted, fell back to duty 3 (verify a
   mechanic actually works) — `GameHost._boss_art_per_act()` had zero test
   coverage.** Last commit (`33b7938`) was duty 3, so this turn opened as
   duty 2. Dispatched an Explore agent to hunt the two named bug families

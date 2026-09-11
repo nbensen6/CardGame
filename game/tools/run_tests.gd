@@ -1327,6 +1327,15 @@ func _init() -> void:
 	_test_backlog86_body_font_size_shrinks_further_on_handheld_than_desktop()
 	_test_backlog86_body_font_size_shrinks_a_short_card_on_handheld_too()
 	_test_backlog86_body_font_size_never_drops_below_the_readable_floor()
+
+	# backlog #86 duty 2: design/progress/bugs.md 2026-09-05's "right-click card
+	# inspector never opens" -- the fixer traced it to CardView but game/**
+	# GDScript is outside its own lane, so it wrote the finding up rather than
+	# touching it. Root cause: _layer() resets every node it places to
+	# MOUSE_FILTER_IGNORE, including the rules-body RichTextLabel that
+	# _rich_body() had just, deliberately, set to PASS so it can see hovers and
+	# clicks over its keywords. See the test's own comment for the full chain.
+	_test_backlog86_full_card_rules_body_keeps_its_mouse_filter_after_layering()
 	_test_backlog86_body_font_size_uses_the_big_no_cost_box_ratio_when_set()
 
 	# backlog #86 duty 3: DeckView._wants_toggle is the rule behind the bug
@@ -16103,6 +16112,43 @@ func _test_backlog86_body_font_size_never_drops_below_the_readable_floor() -> vo
 	# handheld.
 	_expect(CardView.body_font_size(data, 11, true) == 8,
 		"the readable floor (8) still holds once the handheld ratio is applied on top of the length shrink")
+
+
+## backlog #86 duty 2: a real, first-hand repro of design/progress/bugs.md's
+## 2026-09-05 "right-click card inspector never opens" finding -- the fixer
+## flagged it and stopped there (game/** GDScript is outside its own lane), so
+## this picks it up. `_rich_body()` sets its RichTextLabel's mouse_filter to
+## PASS with a whole paragraph explaining why ("the label has to SEE the
+## pointer to know which keyword is under it... anything it doesn't accept
+## still reaches the card Button beneath") -- but on a real full card, that
+## label is immediately handed to `_layer()`, which unconditionally resets
+## mouse_filter to IGNORE for every node it places (correct for the seven
+## purely decorative layers around it, wrong for this one). With IGNORE, the
+## label never receives a hover or a click at all, so meta_hover_started/
+## _ended can never fire, `_hover_meta` stays "" forever, and a right-click
+## dead-centre on a keyword word falls through to the generic inspector
+## instead of answering that keyword -- exactly what the harness saw (the
+## fixer's own "KEYWORD" check only passed because it fakes `_hover_meta`
+## directly, bypassing hover entirely; see its comment). The compact rail
+## form (_rail_row, used by DeckView) never hit this: it adds the label
+## straight to its row instead of routing it through `_layer()`.
+##
+## `_build_borderless()` carries the exact same shape (its own `_rules` also
+## goes through `_layer()`) and got the identical one-line fix, checked by
+## code symmetry rather than a second live case here -- driving it for real
+## needs a card with genuine shipped art (`_build_borderless` only runs when
+## `painted` is true), which drags in the real asset pipeline for no proof
+## this test doesn't already give.
+func _test_backlog86_full_card_rules_body_keeps_its_mouse_filter_after_layering() -> void:
+	var data := {
+		"id": "slash", "name": "Slash", "type": "attack", "cost": 1,
+		"text": "Deal 6 damage.", "icon": "sword", "rarity": "common",
+	}
+	var framed := CardView.new()
+	framed.setup(data, true, false)
+	_expect(framed._rules.mouse_filter == Control.MOUSE_FILTER_PASS,
+		"a framed full card's rules body must stay MOUSE_FILTER_PASS after _layer() places it, or keyword hover/click never reaches it")
+	framed.free()
 
 
 func _test_backlog86_body_font_size_uses_the_big_no_cost_box_ratio_when_set() -> void:

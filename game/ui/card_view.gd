@@ -457,6 +457,20 @@ func _build_upper(data: Dictionary) -> void:
 	# and it would have thrown the first time a card was drawn.
 	body.text = "[center]" + body.text + "[/center]"
 	_layer(body, 0.085, 0.615, 0.915, 0.945)
+	# _layer() defaults every node it places to MOUSE_FILTER_IGNORE -- right for
+	# the seven decorative layers around it, wrong for this one: _rich_body()
+	# just set PASS a few lines up so the label can see the pointer and answer
+	# "which keyword is this" (its own comment explains why), and _layer() was
+	# stomping that back to IGNORE unconditionally, since it has no idea this
+	# particular node already asked for something else. With IGNORE, the label
+	# never receives a hover or a click at all, so meta_hover_started/_ended
+	# never fire, _hover_meta stays "" forever, and _on_card_input's own
+	# `_hover_meta.begins_with("kw:")` branch can never be true on a real full
+	# card -- right-clicking (or, once it's tappable, tapping) directly on a
+	# keyword word can never answer that keyword, only ever fall through to the
+	# generic inspector. The compact rail form (_rail_row) never hit this: it
+	# adds the label straight to its row instead of through _layer().
+	body.mouse_filter = Control.MOUSE_FILTER_PASS
 
 	# 6 - rarity pips, tucked into the panel's bottom-right corner. They used
 	# to float over the art's top edge, where they read as stray debris rather
@@ -663,6 +677,10 @@ func _build_borderless(data: Dictionary, tex: Texture2D) -> void:
 	_rules.add_theme_constant_override("shadow_offset_y", 1)
 	_rules.add_theme_constant_override("shadow_outline_size", 3)
 	_layer(_rules, 0.085, 0.635, 0.915, 0.95)
+	# Same _layer()-stomps-PASS-back-to-IGNORE gap as the framed face's own
+	# rules body (_build_upper, a few functions up) -- a borderless pull goes
+	# through this builder instead, so it needs the identical restore.
+	_rules.mouse_filter = Control.MOUSE_FILTER_PASS
 
 	# 6 - rarity pips, bottom right, same place as the framed card.
 	_layer(_rarity_pips(_data), 0.60, 0.955, 0.92, 0.955, 0.0, -12.0, 0.0, -2.0)
