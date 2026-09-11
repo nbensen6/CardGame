@@ -2746,7 +2746,40 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-10 (latest), #86 duty 3 (verify a mechanic actually works) —
+- **2026-09-11 (latest), #86 duty 2 (find an error and resolve it) —
+  the dev console's `own`/`add` command could silently pop a stale
+  campfire/trader deck-picker back open, the exact bug class #86 duty 2
+  already fixed once for Cancel and top-level Escape.** Last commit
+  (`80e1b5a`) was duty 3, so this turn is duty 2. Read `console.gd` end to
+  end: `_cmd_own` reopens the deck screen with the just-bought card by
+  discarding whatever `DeckView` is currently on screen and asking the
+  parent view to build a fresh one — but it did that with a bare
+  `dv.free()`. `DeckView`'s own `closed` signal (added for exactly this
+  reason, see its doc comment) only fires from `_shut()` — Cancel, the
+  campfire's own "Back" button, and top-level Escape — so freeing the node
+  any other way leaves `location_3d.gd`'s `_deck_pick`/`_shop_pick` flag
+  set with nothing left to clear it. Run `own <card>` in the console while
+  a "Thin the deck" or "Sharpen" picker is open, and the next unrelated
+  `state_updated` (an ally acting, a periodic sync) pops the picker back
+  open with nobody having clicked anything — same symptom as the original
+  bug, reached through a third path (console commands) nobody had covered.
+  Fixed by adding `DeckView.close_now()`, which emits `closed` and then
+  detaches itself from its parent immediately (not `queue_free()`'s
+  deferred removal, which the console's own follow-up `open_deck()` call —
+  right after, in the same function — would still have seen as "already
+  open" and no-op'd against). First attempt had `close_now()` call `free()`
+  on itself directly and hit a real Godot constraint caught only by the
+  test: the console reaches it through `Object.call("close_now")`, which
+  locks the object for the call's duration the same way a signal emission
+  does, and freeing a locked object outright is refused — `queue_free()`
+  after an explicit `remove_child()` is what `_shut()` was already doing
+  this dance for. Regression test opens a real picker, drives it through
+  `DevConsole.run("own dagger")`, and proves both that `closed` fires and
+  that the node is gone from its parent in the same call. Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED (1365
+  passing, 0 failing). Next `#86` turn is duty 3.
+
+- **2026-09-10, #86 duty 3 (verify a mechanic actually works) —
   `combat_3d.gd`'s `_model_key()`, the fallback ladder that decides which 3D
   body a beast wears, had zero coverage.** Last commit (`6c7d60f`) was duty 2,
   so this turn is duty 3. Re-checked `combat_3d.gd`'s static-helper surface

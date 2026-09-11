@@ -561,6 +561,43 @@ func _shut() -> void:
 	queue_free()
 
 
+## Close RIGHT NOW instead of deferred -- for a caller that needs to open a
+## fresh DeckView in the very same call (the dev console's `own`/`add`
+## commands, which discard whatever DeckView is on screen and reopen one
+## showing the card they just added). `queue_free()` cannot be used for
+## that: the freed node stays resolvable via get_node_or_null("DeckView")
+## until the next frame boundary, and every opener (open_deck(),
+## _deck_picker()) guards against a second DeckView by checking exactly
+## that name -- so the "fresh" reopen in the same call would see the dying
+## node, believe one is already open, and silently do nothing.
+##
+## Still emits `closed` first, same as _shut(): this node can just as
+## easily be a PICKER (location_3d.gd's _deck_picker, mid "Thin the deck"
+## or "Sharpen") as a plain browse screen, and a bare free() with no signal
+## is exactly the flag-vs-node-existence split `closed` was added to close
+## -- reintroduced through this second, previously uncovered path (backlog
+## #86 duty 2).
+##
+## detach-then-queue_free, not a bare free(): the console reaches this
+## through Object.call("close_now") (a String-name dispatch, since console
+## only ever holds the opened screen as a plain Node), and Godot's generic
+## call dispatcher holds its own lock on the object for the whole call --
+## the same lock a signal emission holds, which is the actual reason _shut()
+## above has always used queue_free() rather than free(). Freeing self
+## synchronously from inside that lock fails outright ("Object is locked and
+## can't be freed"), caught by this function's own regression test.
+## remove_child() only detaches, so it isn't blocked by that lock -- and
+## detaching is all a same-call reopen actually needs, since every opener
+## checks get_node_or_null("DeckView") against the PARENT, not against
+## whether this object has been destructed yet.
+func close_now() -> void:
+	closed.emit()
+	var p := get_parent()
+	if p != null:
+		p.remove_child(self)
+	queue_free()
+
+
 func _picking() -> bool:
 	return _on_pick.is_valid()
 

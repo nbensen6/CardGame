@@ -1354,6 +1354,7 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_fit_resets_the_logical_viewport_on_desktop()
 	_test_backlog86_deck_view_step_builds_a_toggle_the_open_pane_never_needed()
 	_test_backlog86_deck_view_closed_fires_on_cancel_and_escape_not_on_pick()
+	_test_backlog86_console_own_closes_an_open_picker_through_closed_not_a_bare_free()
 
 	print("")
 	if _failures == 0:
@@ -13880,6 +13881,56 @@ func _test_backlog86_deck_view_closed_fires_on_cancel_and_escape_not_on_pick() -
 			(b as Button).pressed.emit()
 	_expect(not closed_via_pick[0], "a successful pick must free the screen without firing `closed`")
 	v3.free()
+
+
+## backlog #86 duty 2 (two copies of one truth, found reading console.gd end
+## to end after the sibling test above proved `closed`'s own contract): the
+## console's `own`/`add` command reopens the deck screen with the
+## just-added card by discarding whatever DeckView is currently on screen
+## and asking the view to build a fresh one -- but until now it did that
+## with a bare `dv.free()`, the exact same "remove the node and tell nobody"
+## shape Cancel/Escape used to have before `closed` was added. If the
+## DeckView it discards out from under itself is a PICKER (location_3d.gd's
+## _deck_picker, open for "Thin the deck" or "Sharpen"), freeing it with no
+## signal leaves the opener's own `_deck_pick`/`_shop_pick` flag stale --
+## reintroduced through a THIRD path (console commands) nobody had covered,
+## after the first two (Cancel, top-level Escape) were fixed together.
+## Fixed by routing through DeckView.close_now() (emits `closed`, then
+## detaches from its parent immediately and queue_frees itself, so the
+## console's own follow-up `open_deck()` call -- right after, in the same
+## function -- sees no "DeckView" child on the parent to collide with, even
+## though the object itself only actually dies next frame).
+func _test_backlog86_console_own_closes_an_open_picker_through_closed_not_a_bare_free() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var save_host: GameHost = Session.host
+	Session.host = host
+
+	var view := Node.new()
+	root.add_child(view)
+	var c := DevConsole.new()
+	view.add_child(c)
+
+	var deck := [{"id": "a", "name": "A", "index": 0}]
+	var picker := DeckView.open(view, deck, "Choose a card to remove",
+		"Remove this card for good", func(_i: int) -> void: pass)
+	var closed_fired := [false]
+	picker.closed.connect(func() -> void: closed_fired[0] = true)
+
+	c.run("own dagger")
+
+	_expect(closed_fired[0],
+		"own must close an open DeckView through `closed`, the same contract Cancel/Escape already honour -- a bare free() leaves a picker's opener flag stale")
+	_expect(view.get_node_or_null("DeckView") == null,
+		"the stale picker must be detached from its parent in the SAME call, not merely queued to die next frame -- a caller reopening a fresh DeckView right after needs get_node_or_null to already come back empty")
+
+	Session.host = save_host
+	if is_instance_valid(picker):
+		picker.free()  # immediate: close_now() only queue_frees it, and this
+		# function returns straight into quit(), with no frame boundary left
+		# for that queued free to ever run (same reasoning as the sibling
+		# DeckView test's own "immediate, not queue_free()" comment above)
+	view.free()
 
 
 ## backlog #86 duty 3 (thirty-first pass) -- GameHost.phase_string_for is the

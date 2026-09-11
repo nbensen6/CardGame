@@ -442,10 +442,17 @@ func _cmd_own(a: PackedStringArray) -> String:
 	# If the deck screen is open, it is showing a snapshot taken before this
 	# card existed. Reopen it rather than leaving you looking at a list that is
 	# quietly one card short of the truth.
+	#
+	# close_now() rather than a bare free(): the open DeckView could just as
+	# easily be a campfire/trader PICKER as a plain browse screen, and freeing
+	# it without firing `closed` leaves the opener's own "a picker is open"
+	# flag (_deck_pick/_shop_pick in location_3d.gd) stale -- the exact
+	# two-copies-of-one-truth bug `closed` exists to prevent, reached through
+	# a path that bypassed it (backlog #86 duty 2).
 	var view := get_parent()
 	var dv := view.get_node_or_null("DeckView") if view != null else null
 	if dv != null:
-		dv.free()
+		dv.call("close_now")
 		if view.has_method("open_deck"):
 			view.call("open_deck")
 	return "added %d card(s) to hunter %d's deck (%d cards)" % [
