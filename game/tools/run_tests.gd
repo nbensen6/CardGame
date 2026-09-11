@@ -1337,6 +1337,8 @@ func _init() -> void:
 	_test_backlog86_card_icon_climb_and_support_signals_outrank_each_other_in_order()
 	_test_backlog86_card_icon_a_damaging_card_shows_sword_even_while_also_exposing()
 	_test_backlog86_card_icon_falls_through_numeric_tiers_to_sword_then_shield_then_blank()
+	_test_backlog86_continue_button_state_shows_the_save_warning_when_a_save_exists()
+	_test_backlog86_continue_button_state_clears_the_save_warning_when_no_save_exists()
 
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
@@ -15414,6 +15416,36 @@ func _test_backlog86_card_icon_falls_through_numeric_tiers_to_sword_then_shield_
 	_expect(GameHost._card_icon(defend) == "shield", "a plain Block card falls all the way to the block tier")
 	var blank := Card.new()
 	_expect(GameHost._card_icon(blank) == "", "a card with none of these fields set gets no inferred icon at all")
+
+
+## Backlog #86 duty 2: menu.gd's _refresh_continue() kept the same fact in two
+## places -- _continue_btn.visible (always reassigned from RunSave.summary())
+## and _solo_btn.text (a "New run (overwrites your save)" warning that used to
+## only ever be WRITTEN inside the "a save exists" branch, with no else
+## resetting it). A save that disappeared mid-session -- exactly the case
+## _on_continue()'s own "could not be read" path exists to handle, which calls
+## _refresh_continue() again -- left the overwrite warning on screen with no
+## Continue button left to overwrite anything. Lifted the pure decision out to
+## continue_button_state() so both fields can be checked together, headless,
+## with no scene tree.
+const MenuView := preload("res://views/menu.gd")
+
+
+func _test_backlog86_continue_button_state_shows_the_save_warning_when_a_save_exists() -> void:
+	var state: Dictionary = MenuView.continue_button_state("Act 2 · The Frog & The Goblin Engineer")
+	_expect(state["visible"] == true, "a real save summary makes the Continue button visible")
+	_expect(state["continue_text"] == "Continue  —  Act 2 · The Frog & The Goblin Engineer",
+		"the Continue button names the run it would resume")
+	_expect(state["solo_text"] == "New run  (overwrites your save)",
+		"Solo warns that starting fresh would overwrite the save that exists")
+
+
+func _test_backlog86_continue_button_state_clears_the_save_warning_when_no_save_exists() -> void:
+	var state: Dictionary = MenuView.continue_button_state("")
+	_expect(state["visible"] == false, "an empty summary (no save, or one that failed to load) hides Continue")
+	_expect(state["solo_text"] == "Solo  (play both hunters)",
+		"Solo's text resets to its plain default -- it must not keep warning about " +
+		"overwriting a save that no longer exists, which is the bug this test guards")
 
 
 func _expect(cond: bool, name: String) -> void:

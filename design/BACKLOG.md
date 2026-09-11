@@ -2746,7 +2746,29 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-11 (latest), #86 duty 3 (verify a mechanic actually works) —
+- **2026-09-11 (latest), #86 duty 2 (find an error and resolve it) —
+  menu.gd's `_refresh_continue()` kept one fact ("does a save exist") in two
+  places that could drift apart.** Last commit (`79d5dcd`) was duty 3, so
+  this turn is duty 2. `_continue_btn.visible` was unconditionally
+  reassigned from `RunSave.summary()` every call, but `_solo_btn.text` —
+  the "New run (overwrites your save)" warning — was only ever WRITTEN
+  inside the `summary != ""` branch, with no `else` resetting it back to
+  "Solo (play both hunters)". `_on_continue()`'s own "That save could not
+  be read" path calls `_refresh_continue()` again after a save vanishes
+  mid-session, which is exactly the case that exposed it: Continue
+  correctly disappears, but Solo is left warning about overwriting a save
+  that no longer exists. Lifted the decision into a pure static
+  `continue_button_state(summary)` (same pattern as `Combat3D.route_between_rungs`
+  and `Location3D._stakes`) so both fields come from one place and a test
+  can catch them diverging with no scene tree needed. Added
+  `_test_backlog86_continue_button_state_shows_the_save_warning_when_a_save_exists`
+  and `_test_backlog86_continue_button_state_clears_the_save_warning_when_no_save_exists`
+  in `run_tests.gd`; proved the second one actually catches the bug by
+  temporarily reverting the empty-summary branch to the old stale text and
+  watching it fail, then restored the fix. `run_tests.gd` passes: ALL TESTS
+  PASSED.
+
+- **2026-09-11, #86 duty 3 (verify a mechanic actually works) —
   an elite node fighting from the ELITE beast pool, not the fight pool, had
   zero test coverage.** Last commit (`e99674b`) was duty 2, so this turn is
   duty 3. `_test_run_walks_the_map` already proved a plain "fight" node

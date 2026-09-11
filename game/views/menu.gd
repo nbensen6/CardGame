@@ -88,13 +88,30 @@ func _compact_for_handheld() -> void:
 ## run — "Act 2 · The Frog & The Goblin Engineer" — because the one thing you
 ## want to know before pressing it is whether it is the run you remember.
 func _refresh_continue() -> void:
-	var summary := RunSave.summary()
-	_continue_btn.visible = summary != ""
-	if summary != "":
-		_continue_btn.text = "Continue  —  %s" % summary
+	var state := continue_button_state(RunSave.summary())
+	_continue_btn.visible = state["visible"]
+	_continue_btn.text = state["continue_text"]
+	_solo_btn.text = state["solo_text"]
+
+
+## Pure half of _refresh_continue, lifted out so it's testable headless and so
+## a test can catch _continue_btn's visibility and _solo_btn's warning text
+## drifting apart the way they used to: _continue_btn.visible always tracked
+## whether a save exists, but _solo_btn.text was only ever written inside the
+## "a save exists" branch and never reset in the other one. A save that
+## disappeared mid-session (_on_continue()'s own "could not be read" path
+## calls _refresh_continue() again) left the "overwrites your save" warning
+## on screen with no Continue button left to overwrite anything.
+static func continue_button_state(summary: String) -> Dictionary:
+	if summary == "":
+		return {"visible": false, "continue_text": "Continue", "solo_text": "Solo  (play both hunters)"}
+	return {
+		"visible": true,
+		"continue_text": "Continue  —  %s" % summary,
 		# Starting a new run would overwrite the save, so say so rather than
 		# letting someone lose an hour to a misread button.
-		_solo_btn.text = "New run  (overwrites your save)"
+		"solo_text": "New run  (overwrites your save)",
+	}
 
 
 ## Resume the saved run. Solo only, and the character-select lobby is skipped —
