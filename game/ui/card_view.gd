@@ -35,6 +35,19 @@ const NAILED_COLOR := "ffd35c"
 ## A rules term with a tooltip behind it. Never used decoratively.
 const KEYWORD_COLOR := "f0b45a"
 
+## A full card's own box, big (no_cost) vs normal, desktop vs handheld — named
+## so setup() (which picks the box) and _rich_body() (which has to size the
+## font that fits inside it) read the same numbers instead of each keeping
+## its own copy. They used to: setup() knew the handheld box was ~16%
+## narrower and _rich_body()'s length-based shrink table didn't, tuned against
+## the desktop width alone, so the longest reward card's text clipped mid-
+## sentence on the phone layout with nowhere left to shrink to (found by the
+## fixer lane, design/progress/bugs.md 2026-09-09 Pass A).
+const BOX_DESKTOP_BIG := Vector2(191, 268)
+const BOX_DESKTOP_NORMAL := Vector2(162, 228)
+const BOX_HANDHELD_BIG := Vector2(161, 226)
+const BOX_HANDHELD_NORMAL := Vector2(135, 190)
+
 const ZONE_MIN := 0.40
 const ZONE_MAX := 0.60
 ## The bullseye core within the zone — already drawn brighter in
@@ -289,9 +302,9 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 		# than theirs, which is why the face felt cramped however it was arranged.
 		var big := bool(data.get("no_cost", false))
 		if Screen.is_handheld():
-			custom_minimum_size = Vector2(161, 226) if big else Vector2(135, 190)
+			custom_minimum_size = BOX_HANDHELD_BIG if big else BOX_HANDHELD_NORMAL
 		else:
-			custom_minimum_size = Vector2(191, 268) if big else Vector2(162, 228)
+			custom_minimum_size = BOX_DESKTOP_BIG if big else BOX_DESKTOP_NORMAL
 	disabled = not playable
 	text = ""
 	if not mouse_entered.is_connected(_on_hover):
@@ -1105,6 +1118,35 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 ## The card's one description, as rich text so a single number or keyword can be
 ## coloured. A plain Label can only tint the whole line, which is why modified values
 ## and keyword terms were invisible before.
+## The length-based shrink below was tuned against the DESKTOP box only
+## (BOX_DESKTOP_*) — the handheld box is ~16% narrower (BOX_HANDHELD_* vs
+## BOX_DESKTOP_*, set in setup()) and a fixed font size read off desktop-tuned
+## thresholds had nowhere left to shrink to on the narrower box, so the
+## longest reward card's text clipped mid-sentence on the phone layout with no
+## ellipsis or scroll indicator (found by the fixer lane,
+## design/progress/bugs.md 2026-09-09 Pass A). Lifted out as a pure function,
+## `handheld`/`big` passed in explicitly rather than read from Screen/data here,
+## so it can be hit directly from run_tests.gd the way route_between_rungs and
+## fire_quality already are.
+static func body_font_size(data: Dictionary, base_size: int, handheld: bool) -> int:
+	var size := base_size
+	# Measured off the PLAIN text, not the bbcode, or the keyword markup counts
+	# toward the length and short cards shrink for no reason.
+	var chars := face_text(data, false).length()
+	if chars > 80:
+		size -= 3
+	elif chars > 54:
+		size -= 2
+	elif chars > 36:
+		size -= 1
+	if handheld:
+		var big := bool(data.get("no_cost", false))
+		var desktop_w: float = (BOX_DESKTOP_BIG if big else BOX_DESKTOP_NORMAL).x
+		var handheld_w: float = (BOX_HANDHELD_BIG if big else BOX_HANDHELD_NORMAL).x
+		size = int(round(size * (handheld_w / desktop_w)))
+	return maxi(size, 8)
+
+
 func _rich_body(data: Dictionary, size: int, height: int) -> RichTextLabel:
 	var r := RichTextLabel.new()
 	r.bbcode_enabled = true
@@ -1116,18 +1158,7 @@ func _rich_body(data: Dictionary, size: int, height: int) -> RichTextLabel:
 	# sentence silently, which is worse than either. Cull the Deck reads "Discard
 	# a card. Deal 3 damage and an additional 1 per card in your discard pile":
 	# 88 characters into a strip sized for about 50.
-	#
-	# Measured off the PLAIN text, not the bbcode, or the keyword markup counts
-	# toward the length and short cards shrink for no reason.
-	var plain := face_text(data, false)
-	var chars := plain.length()
-	if chars > 80:
-		size -= 3
-	elif chars > 54:
-		size -= 2
-	elif chars > 36:
-		size -= 1
-	size = maxi(size, 8)
+	size = body_font_size(data, size, Screen.is_handheld())
 	r.fit_content = false
 	r.scroll_active = false      # clip a long line rather than grow the card
 	r.clip_contents = true

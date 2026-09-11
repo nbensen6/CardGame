@@ -1279,6 +1279,25 @@ func _init() -> void:
 	_test_backlog86_turn_window_picks_the_right_column_and_row_in_a_multirow_sheet()
 	_test_backlog86_turn_window_is_a_noop_with_no_window_art()
 
+	# backlog #86 duty 2: the fixer lane's own 2026-09-09 Pass A entry in
+	# design/progress/bugs.md -- the longest reward card's rules text (85
+	# plain characters, Crescendo's) clipped mid-sentence, no ellipsis, on
+	# the handheld layout, and NOT at desktop size for the identical card and
+	# text. Root cause: CardView.setup() has known since the box was split
+	# that the handheld full-card box is ~16% narrower than desktop's
+	# (BOX_HANDHELD_* vs BOX_DESKTOP_*), but _rich_body()'s length-based font
+	# shrink table was a single copy of that knowledge behind, tuned only
+	# against the desktop width -- the exact "two copies of one truth, one
+	# updated and the other not" shape this duty hunts. Lifted the shrink rule
+	# into CardView.body_font_size(), a pure static function, so it can be hit
+	# directly with plain scalars/Dictionaries the same way route_between_rungs
+	# and fire_quality already are, rather than needing a live RichTextLabel.
+	_test_backlog86_body_font_size_matches_desktop_shrink_for_a_long_card()
+	_test_backlog86_body_font_size_shrinks_further_on_handheld_than_desktop()
+	_test_backlog86_body_font_size_shrinks_a_short_card_on_handheld_too()
+	_test_backlog86_body_font_size_never_drops_below_the_readable_floor()
+	_test_backlog86_body_font_size_uses_the_big_no_cost_box_ratio_when_set()
+
 	# backlog #86 duty 3: DeckView._wants_toggle is the rule behind the bug
 	# _test_backlog86_deck_view_step_builds_a_toggle_the_open_pane_never_needed
 	# regression-tests end to end against a real node (that test's own header
@@ -15541,6 +15560,62 @@ func _test_backlog86_turn_window_is_a_noop_with_no_window_art() -> void:
 	cv._turn_window(0.3)
 	_expect(cv._win_at == -1, "a card with no 3D window (the ordinary case -- 28 of 29 rares) must not touch window state at all when ticked")
 	cv.free()
+
+
+## backlog #86 duty 2: CardView.body_font_size, lifted out of _rich_body() so
+## the fixer's Pass A find (design/progress/bugs.md 2026-09-09) -- a fixed
+## font size read off a shrink table tuned only against the DESKTOP box, on a
+## handheld box ~16% narrower -- has a real regression test instead of only a
+## write-up. "x".repeat(N) fixtures rather than a real card: face_text() with
+## no "preview" key returns data["text"] verbatim (card_view.gd:900-906,
+## _markup() with rich=false is a no-op per :1249-1251), so these pin exact
+## character counts against the ladder's own 36/54/80 breakpoints instead of
+## depending on some real card staying that exact length.
+func _test_backlog86_body_font_size_matches_desktop_shrink_for_a_long_card() -> void:
+	var data := {"text": "x".repeat(85)}   # > 80 chars, Crescendo's own real length
+	_expect(CardView.body_font_size(data, 14, false) == 11,
+		"85 plain characters on desktop drops the base size 14 by the table's largest tier (3), same as before this fix")
+
+
+func _test_backlog86_body_font_size_shrinks_further_on_handheld_than_desktop() -> void:
+	var data := {"text": "x".repeat(85)}
+	var desktop := CardView.body_font_size(data, 14, false)
+	var handheld := CardView.body_font_size(data, 14, true)
+	_expect(desktop == 11 and handheld == 9,
+		"the same long card must shrink FURTHER on handheld (9) than desktop (11) -- desktop's own max shrink tier had nowhere left to go on the narrower box, which is exactly what clipped Crescendo's text")
+
+
+func _test_backlog86_body_font_size_shrinks_a_short_card_on_handheld_too() -> void:
+	var data := {"text": "x".repeat(10)}   # well under the 36-char first tier
+	var desktop := CardView.body_font_size(data, 14, false)
+	var handheld := CardView.body_font_size(data, 14, true)
+	_expect(desktop == 14 and handheld == 12,
+		"a short card that never trips the length-based ladder must still shrink on handheld (12 of 14) -- the fix is the box-width ratio applying to every card, not a special case patched onto only the cards that were already clipping")
+
+
+func _test_backlog86_body_font_size_never_drops_below_the_readable_floor() -> void:
+	var data := {"text": "x".repeat(85)}
+	# base 11, -3 for length = 8 (already sitting exactly on the floor on
+	# desktop); the handheld ratio alone would take it to 7 (round(8 * 135/162)
+	# == 7) -- the floor has to apply AFTER the ratio, not just after the
+	# length-based shrink, or a legal desktop size becomes illegally small on
+	# handheld.
+	_expect(CardView.body_font_size(data, 11, true) == 8,
+		"the readable floor (8) still holds once the handheld ratio is applied on top of the length shrink")
+
+
+func _test_backlog86_body_font_size_uses_the_big_no_cost_box_ratio_when_set() -> void:
+	var big := {"text": "x".repeat(10), "no_cost": true}
+	var normal := {"text": "x".repeat(10)}
+	# base_size 191 is not a real font size -- chosen only so the big box's
+	# ratio (161/191) lands on an exact whole number (161) while the normal
+	# box's ratio (135/162) lands on a clearly different one (159), proving
+	# the function actually reads no_cost and picks BOX_HANDHELD_BIG /
+	# BOX_DESKTOP_BIG rather than always using the normal-card pair.
+	_expect(CardView.body_font_size(big, 191, true) == 161,
+		"a no_cost (\"big\") card must shrink by the wide-box ratio (191 -> 161), not the normal-box one")
+	_expect(CardView.body_font_size(normal, 191, true) == 159,
+		"an ordinary card must shrink by the normal-box ratio (191 -> 159), distinct from the big-box result above")
 
 
 ## backlog #86 duty 3: GameHost._card_icon's fallback ladder, driven with

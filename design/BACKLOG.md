@@ -2746,7 +2746,42 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-11 (latest), #86 duty 3 (verify a mechanic actually works) — the
+- **2026-09-11 (latest), #86 duty 2 (find an error and resolve it) — the
+  fixer lane's own Pass A find (bugs.md, 2026-09-09): the longest reward
+  card's rules text clipped mid-sentence on the handheld layout, with no
+  ellipsis, while the identical card and text fit completely at desktop
+  size.** Last commit (`b8f75c6`) was duty 3, so this turn is duty 2, and the
+  bug was already found and root-caused by the fixer, just not fixed (it's
+  `game/**` GDScript, outside the fixer's own lane). Root cause: two copies
+  of one fact that fell out of sync. `CardView.setup()` (`card_view.gd`)
+  knows the handheld full-card box is ~16% narrower than desktop's (161x226
+  vs 191x268 for a "big"/no_cost card, 135x190 vs 162x228 otherwise), but
+  `_rich_body()`'s length-based font-shrink table (chars>80/54/36 -> -3/-2/-1)
+  was tuned only against the desktop width, so a card already at the table's
+  maximum shrink on desktop had nowhere left to go on the narrower handheld
+  box. Fixed by naming the four box sizes as shared constants
+  (`BOX_DESKTOP_BIG/NORMAL`, `BOX_HANDHELD_BIG/NORMAL`) so `setup()` and the
+  font sizer read the same numbers, and lifting the shrink rule into a new
+  pure static `CardView.body_font_size(data, base_size, handheld)` that
+  applies the actual box-width ratio on top of the existing length-based
+  shrink, floored at the same readable minimum (8) as before. Tried
+  reproducing the original click-driven bug report in this same file
+  (right-click card inspector, bugs.md 2026-09-05) first and gave it up
+  cleanly: `screenshot.gd`'s own header says headless has no renderer, and a
+  direct probe confirmed `Input.parse_input_event()` never reaches a
+  Control's `gui_input` at all under `--headless` here (nothing printed from
+  a debug line inside `_on_card_input` even once) — calling `_on_card_input`
+  directly, bypassing viewport routing entirely, showed the emit logic
+  itself (`inspect_requested`/`keyword_requested`/`_on_self_pressed`) is
+  already correct, so whatever is actually broken lives in real click
+  routing/dismissal timing that only a live window can show — genuinely
+  "needs a screen," not turned into a blind, unverified code change. Added
+  five tests (`_test_backlog86_body_font_size_*`) against fabricated
+  `"x".repeat(N)` fixtures rather than a real card, so the 36/54/80
+  breakpoints and both box ratios are pinned exactly rather than depending on
+  Crescendo staying 85 characters long. `run_tests.gd`: ALL TESTS PASSED.
+
+- **2026-09-11, #86 duty 3 (verify a mechanic actually works) — the
   "heal_on_clear" relic effect (Old Remedy, +8 HP after each beast falls) had
   never been driven by anything in `run_tests.gd`.** Last commit (`f2c55b8`)
   was duty 2, so this turn is duty 3. `Run._bank_hp()` adds
