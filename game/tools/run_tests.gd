@@ -955,6 +955,12 @@ func _init() -> void:
 	_test_predicted_damage_after_matches_take_damage_dealt_in_the_same_order()
 	_test_backlog86_incoming_through_reckons_a_sigil_fatigue_limiter_chip()
 	_test_backlog86_incoming_through_reckons_a_height_split_limiter_chip()
+	# backlog #86 duty 3: those two wrapper tests only ever drove
+	# _predicted_limiter_damage() through the case where it trips. Pin its
+	# quiet cases (no limiter, wound_decay, exactly at the allowance) and
+	# cross-check it directly against _apply_limiter()'s real HP loss.
+	_test_backlog86_predicted_limiter_damage_is_zero_when_the_condition_isnt_met()
+	_test_backlog86_predicted_limiter_damage_matches_apply_limiter_across_both_limiter_types()
 	# backlog #86 duty 3 (twenty-ninth pass): Screen.is_handheld/fit -- the
 	# mobile-scaling lever CLAUDE.md §5 exists to require and screen.gd's own
 	# doc comment calls "the one knob to turn if the phone build reads too
@@ -7344,6 +7350,86 @@ func _test_backlog86_incoming_through_reckons_a_height_split_limiter_chip() -> v
 	var actual: int = hp_before - c.players[0].combatant.hp
 	_expect(actual == 1,
 		"the previewed 1 must equal what the round actually costs once the height_split chip has spent its share of Block (got %d)" % actual)
+
+
+## backlog #86 duty 3: Combat._predicted_limiter_damage() is a hand-maintained
+## mirror of _apply_limiter() (see the doc comment above it) -- the two tests
+## above only ever drove the mirror through cases where it trips. Every case
+## where it must stay quiet -- no limiter at all, a limiter type that never
+## touches a hunter, and each limiter sitting exactly AT its allowance rather
+## than past it -- had no coverage, which is exactly the gap a "> value" vs
+## ">= value" typo could hide behind: the wrapper tests above would still pass
+## because they only ever set up the tripped case.
+func _test_backlog86_predicted_limiter_damage_is_zero_when_the_condition_isnt_met() -> void:
+	var c := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+
+	# No limiter at all.
+	c.boss.limiter = {}
+	_expect(c._predicted_limiter_damage(0) == 0, "an empty limiter predicts no damage")
+
+	# wound_decay only ever touches boss.wound -- never a hunter -- however
+	# large the value or the wound stack.
+	c.boss.limiter = {"type": "wound_decay", "value": 3}
+	c.boss.wound = 50
+	_expect(c._predicted_limiter_damage(0) == 0, "wound_decay never chips a hunter")
+	_expect(c._predicted_limiter_damage(1) == 0, "wound_decay never chips a hunter")
+
+	# sigil_fatigue: camped exactly AT the allowance (sigil_rounds + 1 == value,
+	# not > value) must not trip yet -- same boundary _apply_limiter() itself
+	# gates on ("if ps.sigil_rounds > value").
+	c.boss.limiter = {"type": "sigil_fatigue", "value": 2}
+	c.boss.weak_point_height = 3
+	c.players[0].foothold = 3
+	c.players[0].sigil_rounds = 1
+	_expect(c._predicted_limiter_damage(0) == 0,
+		"one round short of the sigil_fatigue allowance predicts no chip")
+
+	# sigil_fatigue: high sigil_rounds means nothing if the hunter isn't
+	# actually AT the sigil right now.
+	c.players[0].foothold = 0
+	c.players[0].sigil_rounds = 99
+	_expect(c._predicted_limiter_damage(0) == 0,
+		"a hunter off the sigil predicts no sigil_fatigue chip, however long sigil_rounds has been counting")
+
+	# height_split: exactly at the allowance (excess == 0, not > 0) must not
+	# trip, and neither must a hunter whose ally is the one who climbed ahead.
+	c.boss.limiter = {"type": "height_split", "value": 4}
+	c.players[0].foothold = 4
+	c.players[1].foothold = 0
+	_expect(c._predicted_limiter_damage(0) == 0, "exactly at the height_split allowance predicts no chip")
+	c.players[0].foothold = 0
+	c.players[1].foothold = 9
+	_expect(c._predicted_limiter_damage(0) == 0,
+		"a hunter whose ALLY is the one who climbed ahead predicts no chip for themselves")
+
+
+## The positive half of the same mirror: where the two limiter types DO trip,
+## _predicted_limiter_damage()'s number, read before _apply_limiter() runs,
+## must equal the real HP _apply_limiter() actually spends -- with Block at 0
+## so nothing absorbs the chip and the comparison is exact.
+func _test_backlog86_predicted_limiter_damage_matches_apply_limiter_across_both_limiter_types() -> void:
+	var c1 := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	c1.boss.limiter = {"type": "sigil_fatigue", "value": 2}
+	c1.boss.weak_point_height = 3
+	c1.players[0].foothold = 3       # at the sigil
+	c1.players[0].sigil_rounds = 2   # one more round trips it: 2 + 1 > 2
+	var predicted_sigil := c1._predicted_limiter_damage(0)
+	var hp_before_sigil: int = c1.players[0].combatant.hp
+	c1._apply_limiter()
+	var actual_sigil: int = hp_before_sigil - c1.players[0].combatant.hp
+	_expect(predicted_sigil == actual_sigil and actual_sigil == Combat.SIGIL_FATIGUE_DAMAGE,
+		"predicted sigil_fatigue chip (%d) must equal what _apply_limiter() actually took (%d)" % [predicted_sigil, actual_sigil])
+
+	var c2 := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	c2.boss.limiter = {"type": "height_split", "value": 4}
+	c2.players[0].foothold = 9  # 9 - 0 - 4 = 5 past the allowance
+	c2.players[1].foothold = 0
+	var predicted_split := c2._predicted_limiter_damage(0)
+	var hp_before_split: int = c2.players[0].combatant.hp
+	c2._apply_limiter()
+	var actual_split: int = hp_before_split - c2.players[0].combatant.hp
+	_expect(predicted_split == actual_split and actual_split == 5,
+		"predicted height_split chip (%d) must equal what _apply_limiter() actually took (%d)" % [predicted_split, actual_split])
 
 
 ## The card FACE shows preview(); play_card resolves through the same call. The

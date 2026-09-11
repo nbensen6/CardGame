@@ -2746,7 +2746,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-11 (latest), #86 duty 2 (find an error and resolve it) — the
+- **2026-09-11 (latest), #86 duty 3 (verify a mechanic actually works) —
+  `Combat._predicted_limiter_damage()`, the HUD's read-only mirror of what
+  `_apply_limiter()` is about to chip a hunter for, had only ever been driven
+  through its wrapper (`incoming_for()`) and only ever through the case where
+  it TRIPS.** Last commit (`dbfb3ad`) was duty 2, so this turn is duty 3. The
+  function's own doc comment names the risk directly — "kept in lockstep with
+  `_apply_limiter()` by hand" — which is exactly the two-copies-of-one-truth
+  shape this duty looks for, and every quiet case (no limiter set, the
+  `wound_decay` type which never touches a hunter, and both limiters sitting
+  exactly AT their allowance rather than past it) had zero coverage, plus the
+  mirror had never been checked directly against `_apply_limiter()`'s real
+  HP loss — only against `incoming_for()`'s post-Block "through" number,
+  which can't tell a raw-chip bug from a Block-math bug. Added
+  `_test_backlog86_predicted_limiter_damage_is_zero_when_the_condition_isnt_met`
+  (six quiet-case assertions: no limiter, `wound_decay`, off-the-sigil,
+  sigil_fatigue and height_split both exactly at their allowance, and a
+  hunter whose ally is the one who climbed ahead) and
+  `_test_backlog86_predicted_limiter_damage_matches_apply_limiter_across_both_limiter_types`,
+  which reads the predicted value, then calls `_apply_limiter()` for real
+  with Block at 0 and asserts the two numbers are identical for both limiter
+  types. Both pure/near-pure, no refactor needed — called directly on a
+  `Combat` instance from `_new_combat()`, the same pattern already used for
+  `Combat._rift_gap()` elsewhere in this file. `run_tests.gd`: ALL TESTS
+  PASSED (fresh `--import` first, per the hard rules).
+
+- **2026-09-11, #86 duty 2 (find an error and resolve it) — the
   fixer lane's own Pass A find (bugs.md, 2026-09-09): the longest reward
   card's rules text clipped mid-sentence on the handheld layout, with no
   ellipsis, while the identical card and text fit completely at desktop
