@@ -2746,6 +2746,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-11 (still later), #86 duty 2 (find an error and resolve it) —
+  `Combat.preview()`'s `ally_blk` formula carried only `block_per_exhausted`
+  of the four scaling terms the caster's own `blk` gets.** Last commit
+  (`88ecb0d`) was duty 3, so this turn is duty 2. Dispatched an Explore agent
+  to hunt the two named bug families; it found this one and I verified and
+  fixed it by hand. `blk` (combat.gd:540) sums `card.block` plus
+  `block_per_play`, `block_per_exhausted`, `block_per_x` and
+  `block_per_discarded`; `ally_blk` (line 550) had only ever picked up
+  `block_per_exhausted` (added for Scrap Shield). No single authored card
+  pairs `ally_block` with the other three, but `Combat._meld_cards()` sums
+  every field independently regardless of which source card carried which,
+  so melding Cover (`ally_block: 6`) with Landfill (`block: 3,
+  block_per_discarded: 2`) makes the combination real: with the discard pile
+  at 3 when the fused card resolves, the caster's own Block correctly scaled
+  to 3 + 2*3 = 9, but the ally's share silently stayed flat instead of
+  scaling the same way to 6 + 2*3 = 12. Fix: added the three missing terms to
+  `ally_blk` in `game/core/combat.gd`. Regression test
+  (`_test_backlog86_melded_ally_block_scales_by_discard_too`) melds Cover +
+  Landfill and asserts both sides. Confirmed it fails honestly against the
+  unpatched code (`git stash` of just `combat.gd`, reran, restored) and
+  passes with the fix — first attempt at the test's numbers was wrong (missed
+  that the played card lands in its own discard pile before `preview()` reads
+  the pile size, an established convention `_test_block_per_discarded_scales_
+  with_pile_size` already documents), caught by actually running it rather
+  than trusting the arithmetic. Fresh `--import`, headless, Godot
+  4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 3
+  (verify a mechanic actually works).
+
 - **2026-09-11 (yet again), #86 duty 3 (verify a mechanic actually works).**
   Last commit (`70c84ea`) was duty 2, so this turn is duty 3. Taunt
   (`_forced_target` in `combat.gd`) is a real co-op mechanic — one hunter

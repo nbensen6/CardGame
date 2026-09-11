@@ -278,6 +278,7 @@ func _init() -> void:
 	_test_block_per_exhausted_scales_with_the_burn_pile()
 	_test_spent_enchanted_block_per_exhausted_counts_its_own_burn()
 	_test_scrap_shields_ally_gets_the_per_burn_bonus_too()
+	_test_backlog86_melded_ally_block_scales_by_discard_too()
 	# Goblin Engineer cards
 	_test_jetpack_prepares_climb()
 	_test_jetpack_never_lowers_a_higher_foothold()
@@ -6101,6 +6102,33 @@ func _test_scrap_shields_ally_gets_the_per_burn_bonus_too() -> void:
 	combat.play_card(0, _first_playable(combat, 0))          # 3 + 2*2 = 7, both sides
 	_expect(ps.combatant.block == 7 and mate.combatant.block == 7,
 		"Scrap Shield's ally gets the same per-burn bonus as the caster, not just the flat 3")
+
+
+## backlog #86 duty 2: the fix above only carried block_per_exhausted into
+## ally_blk — block_per_play, block_per_x and block_per_discarded are the same
+## "scale ally_block the way blk scales" idiom, and no single authored card
+## pairs any of them with ally_block, but Combat._meld_cards() sums both
+## fields independently regardless of which source card carried which, so
+## melding Cover (ally_block: 6) with Landfill (block: 3, block_per_discarded:
+## 2) makes the combination real: with two cards already sitting in the
+## discard pile, the pile at resolution time is 3 (the two plus the fused
+## card itself, same "counts itself once played" convention
+## _test_block_per_discarded_scales_with_pile_size already pins), so the
+## caster's own block correctly scales to 3 + 2*3 = 9, but the ally's share
+## silently stayed at the flat 6 instead of also scaling to 6 + 2*3 = 12.
+func _test_backlog86_melded_ally_block_scales_by_discard_too() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var mate: PlayerState = combat.players[1]
+	ps.hand = [_meld_card(), _assist(), _landfill()]
+	ps.energy = 10
+	combat.play_card(0, 0, true, 1, 2)  # meld Cover + Landfill
+	ps.discard_pile.clear()             # drop the meld action's own card, for a clean count
+	ps.discard_pile.append(_slash())
+	ps.discard_pile.append(_slash())    # two cards already in the discard pile
+	combat.play_card(0, 0)              # play the fused card
+	_expect(ps.combatant.block == 9 and mate.combatant.block == 12,
+		"a melded ally_block card scales the ally's share by block_per_discarded too, not just the flat ally_block")
 
 
 ## Content.make_card returns an EMPTY card for an unknown id rather than failing,
