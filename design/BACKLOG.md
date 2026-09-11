@@ -2746,7 +2746,31 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-11 (latest), #86 duty 2 (find an error and resolve it) —
+- **2026-09-11 (latest), #86 duty 3 (verify a mechanic actually works) —
+  a Buffer/Intangible stack cancelling only ONE hit had never been proven
+  past two real hits in a round.** Last commit (`fffe1e1`) was duty 2, so
+  this turn is duty 3. The duty-2 fix in `f25eeb3` made
+  `Combatant.predicted_damage_chain()` and `Combat.incoming_for()` price an
+  arbitrary-length sequence of real hits one stage at a time instead of one
+  lump sum, specifically so a boss's main move plus a living add's own
+  attack couldn't let one Buffer stack cancel both. Every test proving that,
+  though, used exactly one add — a chain of two real hits — even though
+  `combat.adds` is a plain array and `_adds_turn()` walks it in order,
+  resolving each living add's attack as its own separate `take_damage()`
+  call after the main move. Added
+  `_test_backlog86_incoming_through_spends_one_stack_across_the_boss_and_two_living_adds`,
+  giving a boss two living adds (5 and 3 damage) alongside its own 8-damage
+  move and one Buffer stack on the target: confirmed `incoming_for()` prices
+  `raw=16`/`through=8` (the stack eats only the first, earliest-resolving
+  hit — the boss's own — leaving both adds' hits to land in full), then
+  played the round out for real and confirmed the actual HP loss matches the
+  preview exactly and the stack is spent. No beast in `bosses.json` carries
+  two adds today, so this was previously unreachable in play, but the engine
+  already advertises support for it generically and the preview/reality
+  contract needed proving before content adds a second one. `run_tests.gd`
+  passes: ALL TESTS PASSED.
+
+- **2026-09-11, #86 duty 2 (find an error and resolve it) —
   menu.gd's `_refresh_continue()` kept one fact ("does a save exist") in two
   places that could drift apart.** Last commit (`79d5dcd`) was duty 3, so
   this turn is duty 2. `_continue_btn.visible` was unconditionally

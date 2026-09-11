@@ -472,6 +472,12 @@ func _init() -> void:
 	_test_thorns_reflects_card_damage_dealt_to_an_add()
 	_test_incoming_for_includes_a_living_adds_own_attack()
 	_test_backlog86_incoming_through_only_spends_a_buffer_stack_on_one_of_the_boss_and_add_hits()
+	# backlog #86 duty 3: the fix above was only ever proven with ONE living
+	# add (a chain of two real hits). combat.adds supports any number of them
+	# and _adds_turn() resolves each as its own take_damage() call, but nothing
+	# had ever driven a round with two adds attacking together to prove the
+	# chain still spends exactly one stack on the earliest of THREE real hits.
+	_test_backlog86_incoming_through_spends_one_stack_across_the_boss_and_two_living_adds()
 	_test_incoming_for_ignores_a_dead_adds_attack()
 	_test_poison_lands_on_the_targeted_add_not_the_boss()
 	_test_frail_lands_on_the_targeted_add_not_the_boss()
@@ -9086,6 +9092,47 @@ func _test_backlog86_incoming_through_only_spends_a_buffer_stack_on_one_of_the_b
 		"the previewed 5 must equal what actually lands: Buffer eats the boss's 8, the add's 5 goes through untouched")
 	_expect(combat.players[0].combatant.buffer == 0,
 		"the Buffer stack was spent on the boss's hit, same as a real single-hit round would spend it")
+
+
+## backlog #86 duty 3: incoming_for()'s add loop (combat.gd) appends every
+## living add's attack to `hits` in `adds` order, and predicted_damage_chain()
+## (Combatant) prices an arbitrary-length array one stage at a time -- both
+## already claim to generalise past a single add, but every existing test
+## (the one directly above) only ever drove a chain of TWO real hits (the
+## boss's own move, then one add). A boss with two living adds turns one
+## round into THREE separate take_damage() calls in a row (main move, add A,
+## add B, in that order -- _adds_turn() iterates `adds` in list order after
+## _enemy_turn() resolves the main move), and nothing had ever proven a single
+## Buffer stack still only cancels the FIRST of three, leaving the other two
+## to land in full, or that incoming_for()'s "through" matches what the round
+## actually does once there are that many stages to walk. Same idiom as
+## _test_backlog86_incoming_through_only_spends_a_buffer_stack_on_one_of_the_boss_and_add_hits
+## above, extended to a second add.
+func _test_backlog86_incoming_through_spends_one_stack_across_the_boss_and_two_living_adds() -> void:
+	var boss := _dummy_boss(300, 8)  # attacks player 0 for 8 on round 1
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add_a := Boss.new("Root Tendril A", 30)
+	add_a.moves = [{"type": "attack", "value": 5}]
+	var add_b := Boss.new("Root Tendril B", 30)
+	add_b.moves = [{"type": "attack", "value": 3}]
+	combat.adds.append(add_a)
+	combat.adds.append(add_b)
+	combat.players[0].combatant.buffer = 1
+
+	var previewed := combat.incoming_for(0)
+	_expect(previewed["raw"] == 16,
+		"sanity: raw sums the boss's 8 and both adds' 5 and 3")
+	_expect(previewed["through"] == 8,
+		"one Buffer stack cancels only the FIRST real hit (the boss's 8) -- both adds' hits (5 and 3) must land in full with nothing left to stop them, not 0 and not 16")
+
+	var hp_before: int = combat.players[0].combatant.hp
+	combat.end_turn(0)
+	combat.end_turn(1)
+	var actual_damage: int = hp_before - combat.players[0].combatant.hp
+	_expect(actual_damage == 8,
+		"the previewed 8 must equal what actually lands: Buffer eats the boss's 8, both adds' hits (5 and 3) go through untouched")
+	_expect(combat.players[0].combatant.buffer == 0,
+		"the Buffer stack was spent on the boss's hit, same as the single-add round already proved")
 
 
 ## A dead add's stale "attack" move must never haunt the preview once it can no
