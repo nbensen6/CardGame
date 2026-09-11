@@ -2746,6 +2746,43 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-11 (latest), #86 duty 2 attempted, fell back to duty 3 (verify a
+  mechanic actually works) — `GameHost._boss_art_per_act()` had zero test
+  coverage.** Last commit (`33b7938`) was duty 3, so this turn opened as
+  duty 2. Dispatched an Explore agent to hunt the two named bug families
+  (first-pass holes; two copies of one truth) across `game/net`, `game/session`
+  and the less-visited `game/core` files (`boss.gd`, `combatant.gd`,
+  `content.gd`, `player_state.gd`, `progress.gd`, `run_map.gd`, `run_save.gd`),
+  plus every `to_dict()`/`from_dict()` pair and every data-file vocabulary
+  against its code handler. It read all of those files end to end, cross-
+  checked git history to confirm which files had never had a bug-fix commit,
+  and came back with nothing it was confident was a live, reachable bug —
+  every promising lead turned out to be already-fixed, explicitly intentional,
+  or unreachable with the game's actual current data. Rather than force a weak
+  fix, switched to duty 3 (same fallback this rotation used once before, see
+  the 2026-09-10 entry below). Dispatched a second Explore agent to find a
+  real, currently-untested mechanic; it read all ~615 test names in
+  `run_tests.gd` to map existing coverage and found `_boss_art_per_act()`
+  (`game/session/game_host.gd:485`) — the map snapshot's `"boss_art"` array,
+  one Titan portrait per `Run.ENCOUNTERS` act, that the route screen is meant
+  to use to show what each act is building toward. Grepping for both the
+  function name and the wire key `"boss_art"` found no test and no consumer
+  anywhere under `game/views` or `game/ui` either — a swapped order, an
+  off-by-one against `ENCOUNTERS`, or stale art from `Content.build_boss()`
+  would currently ship unnoticed. Added two tests:
+  `_test_backlog86_boss_art_per_act_matches_encounters_in_order` (direct call,
+  asserts each entry equals `Content.build_boss(id).art` in `ENCOUNTERS`
+  order) and `_test_backlog86_map_snapshot_wires_boss_art_per_act` (a solo
+  `GameHost`/`GameClient` reaching `Run.Phase.MAP`, asserting `_build_shared()`'s
+  `s["map"]["boss_art"]` is exactly what the first test already proved
+  correct — catching a forgotten wire-up or wrong key separately from a bug
+  in the function itself). Confirmed the first test fails honestly by
+  blanking the function's output to `""` for every act, reran, watched it
+  fail with the empty-string array printed, then restored the file from a
+  backup copy (confirmed clean via `git diff`). Fresh `--import`, headless,
+  Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is
+  duty 2.
+
 - **2026-09-11 (later still), #86 duty 3 (verify a mechanic actually works) —
   the private-hand promise (CLAUDE.md §2) had never been proven against a
   client's own defenses.** Last commit (`cc07b7c`) was duty 2, so this turn

@@ -112,6 +112,8 @@ func _init() -> void:
 	_test_backlog86_restart_refreshes_unlocked_wins_after_a_win()
 	_test_run_walks_the_map()
 	_test_backlog86_elite_node_fights_from_the_elite_pool_not_the_fight_pool()
+	_test_backlog86_boss_art_per_act_matches_encounters_in_order()
+	_test_backlog86_map_snapshot_wires_boss_art_per_act()
 	_test_rest_node_heals_and_returns_to_map()
 	_test_event_choice_applies_effects()
 	_test_event_reward_choice_routes_to_reward()
@@ -2821,6 +2823,47 @@ func _test_backlog86_elite_node_fights_from_the_elite_pool_not_the_fight_pool() 
 	var fight_pool: Array = Content.beast_pool("fight")
 	_expect(elite_pool.has(run.beast_id) and not fight_pool.has(run.beast_id),
 		"an elite node fights a beast from the elite pool, not the fight pool [beast_id=%s]" % run.beast_id)
+
+
+## Backlog #86 duty 3: game_host.gd's own doc comment on _boss_art_per_act()
+## promises "each act's Titan portrait, so the route can show what it's
+## building toward" -- one entry per Run.ENCOUNTERS, in that order, each the
+## REAL portrait for that act's Titan. Nothing ever checked it: grepping this
+## file for "_boss_art_per_act" and for the wire key "boss_art" both come back
+## empty before this test, and nothing under game/views or game/ui consumes
+## the key yet either, so a swapped order, an off-by-one against ENCOUNTERS,
+## or a stale/wrong art path would currently ship unnoticed. GameHost extends
+## RefCounted, so this needs no display, no scene tree, and no running combat.
+func _test_backlog86_boss_art_per_act_matches_encounters_in_order() -> void:
+	var host := GameHost.new(LocalTransport.new(), 0, 2)
+	_kept.append(host)
+	var art: Array = host._boss_art_per_act()
+	var ok: bool = art.size() == Run.ENCOUNTERS.size()
+	for i in range(art.size()):
+		var expected: String = Content.build_boss(String(Run.ENCOUNTERS[i])).art
+		ok = ok and art[i] == expected and expected != ""
+	_expect(ok, "boss_art_per_act must return one real portrait per act, in Run.ENCOUNTERS order [art=%s]" % [art])
+
+
+## The network half of the same claim: _build_shared() only attaches "boss_art"
+## while s["map"] exists (Run.Phase.MAP), and nothing ever asserted that the
+## array actually reaching a client's snapshot is the same one
+## _boss_art_per_act() computes -- a wrong key name or a forgotten call
+## would pass the pure test above and still leave the route with no art.
+func _test_backlog86_map_snapshot_wires_boss_art_per_act() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 7, 2, true)  # solo, reaches MAP with no combat setup needed
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	_expect(host._run != null and host._run.phase == Run.Phase.MAP,
+		"setup sanity: a fresh solo run starts on the map, not in combat")
+	var s: Dictionary = host._build_shared()
+	var map: Dictionary = s.get("map", {})
+	_expect(map.has("boss_art") and (map["boss_art"] as Array) == host._boss_art_per_act(),
+		"the map snapshot's boss_art must be exactly what _boss_art_per_act() computes, not missing or stale [map=%s]" % [map])
 
 
 func _test_rest_node_heals_and_returns_to_map() -> void:
