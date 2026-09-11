@@ -2746,7 +2746,40 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-11 (latest), #86 duty 3 (verify a mechanic actually works) —
+- **2026-09-11 (latest), #86 duty 2 (find an error and resolve it) — a
+  FOURTH copy of "who does this telegraphed move hit" was still wrong, on a
+  path the last two duty-2 fixes (rift, then the swipes) never gated.**
+  Last commit (`d990e6e`) was duty 3, so this turn is duty 2.
+  `combat_3d.gd`'s `_render_party()` set a hunter's red "about to be hit"
+  border with `sweeps or i == boss_target or swipe_catches(...)` — that
+  middle clause fired for `i == boss_target_index()` on ANY move type not
+  already caught by the other two, including `"block"`, `"enrage"`,
+  `"regen"` and `"shift_sigil"`. Every one of those four has its own
+  `Combat._enemy_turn()` case, and every one of them only touches `boss`
+  (`gain_block`/`strength`/`hp`/`weak_point_height`) — never any entry in
+  `players[]`. Whichever hunter happened to satisfy the round-robin
+  `boss_target_index()` got a red alarm border next to an ⚔ number that
+  (correctly, via `Combat.incoming_for()`, which has no case for those four
+  kinds either) read 0 — the exact contradictory-HUD shape the rift and
+  swipe fixes both closed, on a fourth path nothing had gated. Every beast
+  in `data/bosses.json` mixes at least one of these four into its pattern,
+  so this fired constantly, not on some rare beast.
+  Extracted a single pure `hunter_is_aimed_at(move_type, boss_target, i,
+  foothold)` that now owns all three conditions (`move_hits_every_hunter`,
+  `swipe_catches`, and a new `SINGLE_TARGET_KINDS = ["attack", "leech",
+  "frail", "curse"]` gate on the boss-target match), and `_render_party`
+  calls only that. `"frail"`/`"curse"` stayed in the single-target set
+  because they genuinely do land on that hunter (a Block debuff, a curse
+  card into their discard) even though neither deals HP damage — confirmed
+  against `intent_is_hostile()` a few hundred lines up, which already drew
+  that exact line for the boss's own intent icon. Proved the fix earns its
+  keep by reintroducing the bare `i == boss_target` bug locally and
+  confirming the new tests go red (8 failures, all four boss-only kinds ×
+  both hunters) before reverting to the real fix — not just proving the fix
+  compiles, but that a regression would actually be caught.
+  `run_tests.gd`: ALL TESTS PASSED.
+
+- **2026-09-11, #86 duty 3 (verify a mechanic actually works) —
   a Thorned beast's bite-back at its own attacker had never been proven to
   respect that attacker's own Block/Buffer/Intangible.** Last commit
   (`172e668`) was duty 2, so this turn is duty 3. `_damage_boss()` reflects

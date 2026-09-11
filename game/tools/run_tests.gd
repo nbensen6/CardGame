@@ -849,6 +849,9 @@ func _init() -> void:
 	_test_backlog86_move_hits_every_hunter_false_for_position_dependent_swipes()
 	_test_backlog86_move_hits_every_hunter_false_for_single_target_and_utility_kinds()
 	_test_backlog86_swipe_catches_matches_enemy_turns_foothold_gate()
+	_test_backlog86_hunter_is_aimed_at_ignores_boss_only_utility_moves()
+	_test_backlog86_hunter_is_aimed_at_true_for_single_target_kinds_on_the_named_hunter()
+	_test_backlog86_hunter_is_aimed_at_still_defers_to_sweeps_and_unconditional_hits()
 	# backlog #86 duty 3: card_climb_for, lifted out of combat_3d._card_climb --
 	# the rule deciding slider vs. plain tap. Its own comment warns that reading
 	# card.grip (top level) instead of card.base.grip silently returns 0 for
@@ -13687,6 +13690,48 @@ func _test_backlog86_swipe_catches_matches_enemy_turns_foothold_gate() -> void:
 	_expect(not Combat3D.swipe_catches("swipe_low", 1), "swipe_low spares a hunter off the ground")
 	_expect(not Combat3D.swipe_catches("attack_all", 5), "swipe_catches only answers for the two foothold-gated swipes, whatever the foothold")
 	_expect(not Combat3D.swipe_catches("attack", 0), "swipe_catches only answers for the two foothold-gated swipes, whatever the foothold")
+
+
+## backlog #86 duty 2 -- hunter_is_aimed_at is the FOURTH copy of "who does
+## this move hit" in this file, and the one _render_party actually calls now.
+## Before this fix, its inline `i == boss_target` fired for ANY move_type not
+## already caught by move_hits_every_hunter()/swipe_catches() -- including
+## "block"/"enrage"/"regen"/"shift_sigil", whose own Combat._enemy_turn()
+## cases (see combat.gd) only ever touch `boss`, never any hunter. Whichever
+## hunter happened to satisfy boss_target_index() that round got a red
+## "about to be hit" border next to an ⚔ number that (correctly, via
+## Combat.incoming_for(), which has no case for those four kinds) read 0 --
+## the same contradictory-HUD shape the rift and swipe fixes above both
+## closed, on a path neither of those fixes gated.
+func _test_backlog86_hunter_is_aimed_at_ignores_boss_only_utility_moves() -> void:
+	for kind in ["block", "enrage", "regen", "shift_sigil"]:
+		_expect(not Combat3D.hunter_is_aimed_at(kind, 0, 0, 0),
+			"%s only touches the boss itself -- boss_target_index() naming hunter 0 must not put a border on them" % kind)
+		_expect(not Combat3D.hunter_is_aimed_at(kind, 1, 1, 0),
+			"%s only touches the boss itself -- boss_target_index() naming hunter 1 must not put a border on them" % kind)
+
+
+## The sibling case: attack/leech/frail/curse DO genuinely land on whichever
+## hunter boss_target_index() names (HP damage for the first two, a Block
+## debuff or a curse card for the other two -- see combat.gd's "frail"/"curse"
+## cases), so hunter_is_aimed_at must still say yes for exactly that hunter,
+## and no for anyone else, exactly as the old inline check did for these kinds.
+func _test_backlog86_hunter_is_aimed_at_true_for_single_target_kinds_on_the_named_hunter() -> void:
+	for kind in ["attack", "leech", "frail", "curse"]:
+		_expect(Combat3D.hunter_is_aimed_at(kind, 0, 0, 0),
+			"%s targets boss_target_index() -- hunter 0 must be aimed at when boss_target is 0" % kind)
+		_expect(not Combat3D.hunter_is_aimed_at(kind, 0, 1, 0),
+			"%s targets only boss_target_index() -- hunter 1 must not be aimed at when boss_target is 0" % kind)
+
+
+## hunter_is_aimed_at must still delegate the sweeps and rift-likes correctly
+## -- it is meant to fully replace the three checks _render_party used to OR
+## together by hand, not just add a fourth on top.
+func _test_backlog86_hunter_is_aimed_at_still_defers_to_sweeps_and_unconditional_hits() -> void:
+	_expect(Combat3D.hunter_is_aimed_at("attack_all", -1, 0, 0), "attack_all hits everyone regardless of boss_target or foothold")
+	_expect(Combat3D.hunter_is_aimed_at("rift", -1, 1, 0), "rift hits everyone regardless of boss_target or foothold")
+	_expect(Combat3D.hunter_is_aimed_at("swipe_high", -1, 0, 1), "swipe_high must still catch a hunter off the ground even with no boss_target match")
+	_expect(not Combat3D.hunter_is_aimed_at("swipe_high", -1, 0, 0), "swipe_high must still spare a hunter on the ground")
 
 
 ## backlog #86 duty 3: card_climb_for, lifted out of combat_3d._card_climb, the

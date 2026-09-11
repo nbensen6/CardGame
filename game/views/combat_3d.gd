@@ -3660,6 +3660,33 @@ static func swipe_catches(move_type: String, foothold: int) -> bool:
 		_: return false
 
 
+## Move kinds where boss_target_index() genuinely names a hunter this move
+## does something TO. "attack"/"leech" deal HP damage to that hunter;
+## "frail"/"curse" (backlog #69) don't touch HP but still land squarely on
+## them (a Block debuff, a curse card in their discard). Deliberately NOT
+## here: "block"/"enrage"/"regen"/"shift_sigil" (Combat._enemy_turn()'s own
+## cases for these touch only `boss`, never `players[]`) — see
+## hunter_is_aimed_at() below for why that matters.
+const SINGLE_TARGET_KINDS: Array[String] = ["attack", "leech", "frail", "curse"]
+
+
+## backlog #86 duty 2 — a FOURTH copy of "who does this move hit" drifted the
+## same wrong way as the swipes above: _render_party's `i == boss_target`
+## fired unconditionally for ANY move_type that wasn't already caught by
+## move_hits_every_hunter() or swipe_catches(), including "block", "enrage",
+## "regen" and "shift_sigil" — four move types whose own Combat._enemy_turn()
+## cases only ever touch `boss` (gain_block/strength/hp/weak_point_height),
+## never any entry in `players[]`. Whichever hunter happened to satisfy
+## boss_target_index() that round got a red "about to be hit" border next to
+## an ⚔ number that (correctly, via Combat.incoming_for()'s own match
+## statement, which has no case for those four kinds either) read 0 — the
+## same contradictory-HUD shape the swipe and rift fixes above both closed,
+## on a fourth path nothing had gated yet.
+static func hunter_is_aimed_at(move_type: String, boss_target: int, i: int, foothold: int) -> bool:
+	return move_hits_every_hunter(move_type) or swipe_catches(move_type, foothold) \
+		or (i == boss_target and move_type in SINGLE_TARGET_KINDS)
+
+
 ## Co-op means your ally's state is not optional information: HP, block,
 ## Energy, how high they've climbed, whether they're hanging, and whether the
 ## beast is about to hit them. The 3D scene shows WHERE they are; this says how
@@ -3668,11 +3695,9 @@ func _render_party(s: Dictionary, boss_target: int, move_type: String) -> void:
 	for c in _party.get_children():
 		c.queue_free()
 	var players: Array = s.get("players", [])
-	var sweeps: bool = move_hits_every_hunter(move_type)
 	for i in range(players.size()):
 		var p: Dictionary = players[i]
-		var aimed: bool = sweeps or i == boss_target \
-			or swipe_catches(move_type, int(p.get("foothold", 0)))
+		var aimed: bool = hunter_is_aimed_at(move_type, boss_target, i, int(p.get("foothold", 0)))
 		_party.add_child(_party_card(p, i, aimed))
 	var bits: Array = ["Gold %d" % int(s.get("gold", 0))]
 	var relics: Array = s.get("relics", [])
