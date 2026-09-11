@@ -173,7 +173,11 @@ func _process(delta: float) -> void:
 		return
 	if _live:
 		_t += delta
-		if _t > _approach + GOOD_WINDOW + 0.08:
+		# Same boundary _fire() judges a tap against, plus the 0.08s grace below --
+		# otherwise a relic/enchant zone_bonus (Wide alone is 0.30) widens what a
+		# tap grades but not when the window gives up on one ever arriving, and an
+		# on-time-per-the-rules late tap lands on a control this already killed.
+		if _t > _approach + GOOD_WINDOW + zone_bonus * 0.35 + 0.08:
 			_finish(Combat.TIMING_MISS)   # the window closed with no tap
 			return
 	elif _flash <= 0.0:

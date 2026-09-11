@@ -1071,6 +1071,7 @@ func _init() -> void:
 	_test_backlog86_hit_circle_zone_bonus_widens_the_good_window_not_the_perfect_one()
 	_test_backlog86_hit_circle_chain_quality_is_its_worst_window_not_its_last()
 	_test_backlog86_hit_circle_process_times_out_a_silent_window_as_a_miss()
+	_test_backlog86_hit_circle_process_timeout_honors_zone_bonus()
 	# backlog #86 duty 3: the thirty-second pass proved HitCircle's plain TAP
 	# grading, but begin()'s own `slider` argument (used for a climb card whose
 	# window is one held note rather than a series of taps -- combat_3d's
@@ -14638,6 +14639,25 @@ func _test_backlog86_hit_circle_process_times_out_a_silent_window_as_a_miss() ->
 	_expect(int(got[0]) == Combat.TIMING_MISS,
 		"a window that closes with no tap resolves as TIMING_MISS via _process(), the same as an explicit late tap")
 	_expect(not hc.is_live(), "a timed-out window is no longer live")
+	hc.free()
+
+
+func _test_backlog86_hit_circle_process_timeout_honors_zone_bonus() -> void:
+	# _fire() grades a tap against GOOD_WINDOW + zone_bonus*0.35 (see the zone-bonus
+	# test above). _process()'s own timeout has to give up no earlier than that, or
+	# a relic/enchant that widens the window (Wide alone grants 0.30) gets silently
+	# clipped for exactly its late slice: the control dies via _finish(MISS) before
+	# a tap that _fire() would still have graded GOOD ever lands.
+	var hc := HitCircle.new()
+	hc.begin(0.0, null, PackedVector3Array([Vector3.ZERO]), false)
+	hc.zone_bonus = 0.3  # widened good window: 0.185 + 0.3*0.35 = 0.29
+	hc._t = hc._approach + 0.27  # past the bare 0.185+0.08 = 0.265 cutoff, but still inside 0.29
+	hc._process(0.0)
+	_expect(hc.is_live(),
+		"a window widened by zone_bonus must still be live at 0.27s -- the old hardcoded +0.08 timeout closed it before the widened window did")
+	var quality := _hit_circle_fired_quality(hc)
+	_expect(quality == Combat.TIMING_GOOD,
+		"a tap inside the zone_bonus-widened window still grades GOOD after _process() ticks, not silently dropped by an early timeout")
 	hc.free()
 
 
