@@ -2746,7 +2746,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-11 (latest), #86 duty 2 (find an error and resolve it) —
+- **2026-09-11 (latest), #86 duty 3 (verify a mechanic actually works) —
+  a Thorned beast's bite-back at its own attacker had never been proven to
+  respect that attacker's own Block/Buffer/Intangible.** Last commit
+  (`172e668`) was duty 2, so this turn is duty 3. `_damage_boss()` reflects
+  `boss.thorns` onto the attacking hunter via
+  `players[pi].combatant.take_damage(boss.thorns)` — the exact same
+  Block→Buffer→Intangible→Plated-Armour cascade every other hit in the game
+  resolves through — but every existing Thorns test
+  (`_test_beast_thorns_reflects_card_damage_dealt_to_it`,
+  `_test_boss_death_wins_a_tie_against_thorns_killing_the_attacker`) left the
+  attacker holding none of those, so a flat `hp -= boss.thorns` would have
+  looked identical and passed every test that existed. The one test that
+  combines Thorns with Buffer (`_test_buffer_and_thorns_still_retaliate_
+  when_a_hit_is_voided`) proves the *other* direction — a hunter's own Thorns
+  still bites the boss even when that hunter's Buffer voided the boss's
+  incoming attack — never the case where the hunter is the one landing the
+  hit and receiving the bite-back. Added
+  `_test_backlog86_attackers_own_mitigation_reduces_a_thorned_beasts_bite_back`,
+  proving standing Block absorbs part of the bite-back and Buffer cancels it
+  outright, spending its own stack either way. Confirmed the test actually
+  catches the gap by temporarily replacing `take_damage(boss.thorns)` with a
+  raw `hp -= boss.thorns` and watching both new assertions fail, then
+  reverted. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`:
+  ALL TESTS PASSED.
+
+- **2026-09-11, #86 duty 2 (find an error and resolve it) —
   a swipe's red "aimed at" border lied about who it actually hits.**
   Last commit (`0c4124d`) was duty 3, so this turn is duty 2. A first
   candidate this run (`DeckView._open_detail()` recomputing a card's slot

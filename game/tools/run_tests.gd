@@ -442,6 +442,7 @@ func _init() -> void:
 	_test_buffer_cancels_a_hit_that_gets_past_block()
 	_test_buffer_is_spent_before_intangible()
 	_test_buffer_and_thorns_still_retaliate_when_a_hit_is_voided()
+	_test_backlog86_attackers_own_mitigation_reduces_a_thorned_beasts_bite_back()
 	_test_intangible_card_grants_the_stat()
 	_test_buffer_card_grants_the_stat()
 	_test_plated_armour_persists_the_round_reset()
@@ -8527,6 +8528,41 @@ func _test_buffer_and_thorns_still_retaliate_when_a_hit_is_voided() -> void:
 	_expect(ps.combatant.hp == hp0, "Buffer cancels the boss's attack outright — no HP lost")
 	_expect(ps.combatant.buffer == 0, "the cancel spends the Buffer stack")
 	_expect(combat.boss.hp == boss_hp - 3, "Thorns still reflects the landed attack even though Buffer voided it")
+
+
+## The mirror direction of the test above: there, a hunter's Buffer voids the
+## boss's ATTACK but the hunter's own Thorns still bites the boss back. Here,
+## the hunter is the one landing a card on a Thorned beast (_damage_boss()
+## calling players[pi].combatant.take_damage(boss.thorns), see combat.gd) —
+## and every test that covers THAT direction
+## (_test_beast_thorns_reflects_card_damage_dealt_to_it,
+## _test_boss_death_wins_a_tie_against_thorns_killing_the_attacker) leaves the
+## attacker's own Block/Buffer/Intangible untouched, so the bite-back always
+## lands as a flat, unmitigated hp loss. take_damage() is the one shared
+## cascade every hit in this game resolves through (Block, then Buffer, then
+## Intangible, then Plated Armour) -- nothing before this proved the Thorns
+## reflection actually goes through the SAME cascade rather than a raw `hp -=`
+## that happens to look identical when the attacker is holding none of those.
+func _test_backlog86_attackers_own_mitigation_reduces_a_thorned_beasts_bite_back() -> void:
+	# Standing Block absorbs part of the bite-back, same as any other hit.
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	combat.boss.thorns = 5
+	ps.combatant.block = 2
+	var hp0: int = ps.combatant.hp
+	combat.play_card(0, _first_playable(combat, 0))  # Slash lands on the boss; the boss bites back
+	_expect(ps.combatant.hp == hp0 - 3 and ps.combatant.block == 0,
+		"standing Block absorbs part of a Thorned beast's bite-back at its attacker, same as any other hit")
+
+	# Buffer, the stronger mitigation, cancels the bite-back outright.
+	var combat2 := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps2: PlayerState = combat2.players[0]
+	combat2.boss.thorns = 5
+	ps2.combatant.buffer = 1
+	var hp2: int = ps2.combatant.hp
+	combat2.play_card(0, _first_playable(combat2, 0))
+	_expect(ps2.combatant.hp == hp2 and ps2.combatant.buffer == 0,
+		"Buffer voids a Thorned beast's bite-back at its own attacker and spends its stack, exactly like any incoming hit")
 
 
 func _test_intangible_card_grants_the_stat() -> void:
