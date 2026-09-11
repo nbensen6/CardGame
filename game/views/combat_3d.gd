@@ -3633,8 +3633,31 @@ func _pick_for_selection(idx: int) -> void:
 ## wasn't boss_target_index() the moment the pattern rolled around to Rift —
 ## the single fact its own doc comment calls "the most time-critical... on the
 ## screen," wrong for the one move a co-op team most needs to see coming.
+##
+## backlog #86 duty 2 — a THIRD copy of "who does this move hit" drifted the
+## other way: swipe_high/swipe_low were lumped in here as if they were
+## unconditional sweeps like attack_all/rift, but Combat._enemy_turn's own
+## swipe_high/swipe_low cases (and Combat.incoming_for(), which prices the
+## ⚔ number on the very same card) only hit whichever hunter's `foothold`
+## does or doesn't clear the ground. Any co-op fight where the two hunters
+## are at different heights when a swipe is telegraphed — completely
+## ordinary climb-together play — put a red "you're about to be hit" border
+## on BOTH cards while only one of them actually takes damage, right next to
+## an ⚔ number that (correctly) read 0 for the safe hunter. Only attack_all
+## and rift genuinely hit every hunter no matter what; swipe_high/swipe_low
+## need the same per-hunter foothold check their own damage does.
 static func move_hits_every_hunter(move_type: String) -> bool:
-	return move_type in ["attack_all", "swipe_high", "swipe_low", "rift"]
+	return move_type in ["attack_all", "rift"]
+
+
+## Whether THIS hunter is the one a foothold-gated swipe actually catches —
+## the same condition Combat._enemy_turn()/incoming_for() price the hit with,
+## re-read here so the red border and the ⚔ number never disagree again.
+static func swipe_catches(move_type: String, foothold: int) -> bool:
+	match move_type:
+		"swipe_high": return foothold > 0   # only hunters off the ground
+		"swipe_low": return foothold <= 0   # only hunters still on the ground
+		_: return false
 
 
 ## Co-op means your ally's state is not optional information: HP, block,
@@ -3648,7 +3671,8 @@ func _render_party(s: Dictionary, boss_target: int, move_type: String) -> void:
 	var sweeps: bool = move_hits_every_hunter(move_type)
 	for i in range(players.size()):
 		var p: Dictionary = players[i]
-		var aimed: bool = sweeps or i == boss_target
+		var aimed: bool = sweeps or i == boss_target \
+			or swipe_catches(move_type, int(p.get("foothold", 0)))
 		_party.add_child(_party_card(p, i, aimed))
 	var bits: Array = ["Gold %d" % int(s.get("gold", 0))]
 	var relics: Array = s.get("relics", [])

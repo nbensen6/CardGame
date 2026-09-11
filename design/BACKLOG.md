@@ -2746,7 +2746,40 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-11 (latest), #86 duty 3 (verify a mechanic actually works) —
+- **2026-09-11 (latest), #86 duty 2 (find an error and resolve it) —
+  a swipe's red "aimed at" border lied about who it actually hits.**
+  Last commit (`0c4124d`) was duty 3, so this turn is duty 2. A first
+  candidate this run (`DeckView._open_detail()` recomputing a card's slot
+  via `_deck.find(entry)` instead of trusting its own `"index"` field) did
+  NOT hold up under a real regression test — every real deck entry
+  (`GameHost._deck_face()`) stamps a unique positional `index`, so two
+  duplicate cards can never be Dictionary-equal and `find()` never actually
+  collides; the test passed even with the "buggy" code left in, so it was
+  discarded rather than committed as a fix for a bug that cannot happen.
+  The real bug: `combat_3d.gd`'s `move_hits_every_hunter()` — the sibling
+  list of "who does this telegraphed move hit" beside `Combat._enemy_turn()`
+  (the actual rule) and `Combat.incoming_for()` (the ⚔ number preview,
+  already correct) — lumped `swipe_high`/`swipe_low` in with the genuinely
+  unconditional `attack_all`/`rift`, even though both swipes only catch
+  whichever hunter's `foothold` clears (or fails to clear) the ground,
+  exactly as `_enemy_turn()`/`incoming_for()` already check. Any co-op fight
+  against a beast that swipes (Bounder, Sky Snapper, Thrasher, Mire Snapper,
+  Root Lurker — all ordinary fight/elite pool beasts) with the two hunters
+  at different heights put a red "about to be hit" border on BOTH party
+  cards, right beside an ⚔ number that correctly read 0 for the hunter the
+  foothold check actually spared. Split out a new pure `swipe_catches(type,
+  foothold)` re-reading the identical gate, removed swipes from
+  `move_hits_every_hunter()`, and OR'd `swipe_catches()` into `_render_party`'s
+  per-hunter `aimed` check. Caught an existing test
+  (`_test_backlog86_move_hits_every_hunter_true_for_position_dependent_swipes`)
+  that had enshrined the wrong behaviour with a plausible-sounding but
+  inconsistent rationale ("foothold can still change before the boss acts");
+  `_render_party` is rebuilt from the same live snapshot on every single
+  `state_updated`, so the border is exactly as current as the ⚔ number next
+  to it — flipped that test and added direct coverage for `swipe_catches()`.
+  `run_tests.gd`: ALL TESTS PASSED.
+
+- **2026-09-11, #86 duty 3 (verify a mechanic actually works) —
   a Buffer/Intangible stack cancelling only ONE hit had never been proven
   past two real hits in a round.** Last commit (`fffe1e1`) was duty 2, so
   this turn is duty 3. The duty-2 fix in `f25eeb3` made

@@ -845,8 +845,9 @@ func _init() -> void:
 	_test_backlog86_intent_is_hostile_true_for_frail_and_curse()
 	_test_backlog86_intent_is_hostile_false_for_defensive_and_utility_kinds()
 	_test_backlog86_move_hits_every_hunter_true_for_rift_like_attack_all()
-	_test_backlog86_move_hits_every_hunter_true_for_position_dependent_swipes()
+	_test_backlog86_move_hits_every_hunter_false_for_position_dependent_swipes()
 	_test_backlog86_move_hits_every_hunter_false_for_single_target_and_utility_kinds()
+	_test_backlog86_swipe_catches_matches_enemy_turns_foothold_gate()
 	# backlog #86 duty 3: card_climb_for, lifted out of combat_3d._card_climb --
 	# the rule deciding slider vs. plain tap. Its own comment warns that reading
 	# card.grip (top level) instead of card.base.grip silently returns 0 for
@@ -13610,16 +13611,46 @@ func _test_backlog86_move_hits_every_hunter_true_for_rift_like_attack_all() -> v
 		"rift hits every hunter unconditionally, the same shape as attack_all -- it must aim at everyone too")
 
 
-func _test_backlog86_move_hits_every_hunter_true_for_position_dependent_swipes() -> void:
+## backlog #86 duty 2 (found reading combat_3d.gd end to end after the rift
+## fix above): this test used to assert the OPPOSITE of what's below, on the
+## reasoning that "foothold can still change before the boss acts, so warn
+## both." That reasoning doesn't hold up: _render_party() is rebuilt from
+## scratch on every _refresh(), which runs on every single state_updated (any
+## card played, any climb) -- the exact same snapshot `s` that
+## Combat.incoming_for() reads for the ⚔ number right next to this border.
+## If a hunter's foothold can go stale between renders, the number is
+## exactly as stale as the border would be; nobody argues the number should
+## show nonzero damage for both hunters "just in case." Treating swipe_high/
+## swipe_low as unconditional sweeps put a red "you're about to be hit"
+## border on BOTH cards every time one was telegraphed, even mid-round with
+## the two hunters at very different heights -- ordinary co-op climbing,
+## not an edge case -- while the ⚔ number correctly read 0 for whichever one
+## the foothold check actually spared. See swipe_catches() below, which
+## re-reads the identical foothold condition _enemy_turn()/incoming_for() hit
+## with, so the border and the number can never disagree again.
+func _test_backlog86_move_hits_every_hunter_false_for_position_dependent_swipes() -> void:
 	for kind in ["swipe_high", "swipe_low"]:
-		_expect(Combat3D.move_hits_every_hunter(kind),
-			"%s's real target depends on foothold, which can still change before the boss acts -- both hunters must be warned" % kind)
+		_expect(not Combat3D.move_hits_every_hunter(kind),
+			"%s only catches whichever hunter's foothold clears the gate -- it is not an unconditional sweep like attack_all/rift" % kind)
 
 
 func _test_backlog86_move_hits_every_hunter_false_for_single_target_and_utility_kinds() -> void:
 	for kind in ["attack", "leech", "frail", "curse", "block", "regen", "enrage", "shift_sigil"]:
 		_expect(not Combat3D.move_hits_every_hunter(kind),
 			"%s targets one hunter (or the boss itself) -- it must not put the OTHER hunter in the aimed-at border" % kind)
+
+
+## swipe_catches() is the per-hunter half of the same fix: the exact foothold
+## condition Combat._enemy_turn()'s "swipe_high"/"swipe_low" cases (and
+## Combat.incoming_for(), pricing the ⚔ number beside this border) already
+## use to decide who a swipe actually connects with.
+func _test_backlog86_swipe_catches_matches_enemy_turns_foothold_gate() -> void:
+	_expect(Combat3D.swipe_catches("swipe_high", 1), "swipe_high catches a hunter off the ground (foothold > 0)")
+	_expect(not Combat3D.swipe_catches("swipe_high", 0), "swipe_high spares a hunter still on the ground")
+	_expect(Combat3D.swipe_catches("swipe_low", 0), "swipe_low catches a hunter still on the ground (foothold <= 0)")
+	_expect(not Combat3D.swipe_catches("swipe_low", 1), "swipe_low spares a hunter off the ground")
+	_expect(not Combat3D.swipe_catches("attack_all", 5), "swipe_catches only answers for the two foothold-gated swipes, whatever the foothold")
+	_expect(not Combat3D.swipe_catches("attack", 0), "swipe_catches only answers for the two foothold-gated swipes, whatever the foothold")
 
 
 ## backlog #86 duty 3: card_climb_for, lifted out of combat_3d._card_climb, the
