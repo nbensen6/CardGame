@@ -531,7 +531,14 @@ func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PER
 		+ card.block_per_x * x + card.block_per_discarded * discarded
 	if hit:
 		blk += int(card.timed_block * scale)
-	var ally_blk := card.ally_block + (int(card.timed_ally_block * scale) if hit else 0)
+	# backlog #86 duty 2: Scrap Shield ("gain 3 Block and an additional 2 per
+	# card burned") is the one card that pairs ally_block with block_per_*
+	# scaling, and its text says "All players" — so the ally's cut needs the
+	# same per-burn term the caster's own `blk` gets above, not just the flat
+	# card.ally_block. Left out until now, the ally silently got 3 no matter
+	# how many cards had been burned while the caster's own block kept scaling.
+	var ally_blk := card.ally_block + card.block_per_exhausted * exhausted \
+		+ (int(card.timed_ally_block * scale) if hit else 0)
 
 	var climb := card.grip + (int(card.timed_grip * scale) if hit else 0)
 	if climb > 0:  # the climb bonus rides an actual climb, not a zero

@@ -267,6 +267,7 @@ func _init() -> void:
 	_test_detonator_does_not_count_its_own_sacrifice()
 	_test_block_per_exhausted_scales_with_the_burn_pile()
 	_test_spent_enchanted_block_per_exhausted_counts_its_own_burn()
+	_test_scrap_shields_ally_gets_the_per_burn_bonus_too()
 	# Goblin Engineer cards
 	_test_jetpack_prepares_climb()
 	_test_jetpack_never_lowers_a_higher_foothold()
@@ -5827,6 +5828,23 @@ func _test_spent_enchanted_block_per_exhausted_counts_its_own_burn() -> void:
 		"a Spent-enchanted Pressure Valve counts its own burn: 4 + 3*1 = 7, unlike Detonator's exhaust_pick")
 
 
+## backlog #86 duty 2: preview()'s `ally_blk` used to read only `card.ally_block`,
+## with no `block_per_exhausted` term at all — so Scrap Shield ("All players
+## gain 3 Block and an additional 2 per card burned") scaled the caster's own
+## block with the burn pile but paid the ally a flat 3 regardless of how many
+## cards had been exhausted, breaking the card's own printed promise. Confirm
+## both hunters see the same per-burn math once two cards are already burned.
+func _test_scrap_shields_ally_gets_the_per_burn_bonus_too() -> void:
+	var combat := _new_combat([_deck_of(_scrap_shield, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var mate: PlayerState = combat.players[1]
+	ps.exhaust_pile.append(_slash())
+	ps.exhaust_pile.append(_slash())                          # two cards burned
+	combat.play_card(0, _first_playable(combat, 0))          # 3 + 2*2 = 7, both sides
+	_expect(ps.combatant.block == 7 and mate.combatant.block == 7,
+		"Scrap Shield's ally gets the same per-burn bonus as the caster, not just the flat 3")
+
+
 ## Content.make_card returns an EMPTY card for an unknown id rather than failing,
 ## so a typo in a deck or pool is silently a blank card in someone's hand. Catch it.
 func _test_every_referenced_card_id_resolves() -> void:
@@ -10564,6 +10582,8 @@ func _scrap_drive() -> Card:
 	return Card.from_dict({"id": "scrap_drive", "name": "Scrap Drive", "type": "attack", "cost": 1, "damage": 3, "damage_per_exhausted": 3})
 func _pressure_valve() -> Card:
 	return Card.from_dict({"id": "pressure_valve", "name": "Pressure Valve", "type": "skill", "cost": 1, "block": 4, "block_per_exhausted": 3})
+func _scrap_shield() -> Card:
+	return Card.from_dict({"id": "scrap_shield", "name": "Scrap Shield", "type": "skill", "cost": 1, "block": 3, "block_per_exhausted": 2, "ally_block": 3, "target": "ally"})
 func _detonator() -> Card:
 	return Card.from_dict({"id": "detonator", "name": "Detonator", "type": "attack", "cost": 3, "damage": 4, "damage_per_exhausted": 6, "exhaust_pick": true})
 func _anchor_brace() -> Card:

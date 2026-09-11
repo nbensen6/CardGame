@@ -2746,7 +2746,30 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-11 (latest), #86 duty 3 (verify a mechanic actually works) —
+- **2026-09-11 (latest), #86 duty 2 (find an error and resolve it) — Scrap
+  Shield's own printed text lied to its ally: "All players gain 3 Block and
+  an additional 2 per card burned" only ever paid the CASTER the per-burn
+  bonus.** Last commit (`d2471ca`) was duty 3, so this turn is duty 2, and the
+  bug was already found and logged in that same commit rather than invented
+  fresh: `Combat.preview()`'s `ally_blk` (combat.gd:534) summed only
+  `card.ally_block` plus the timed bonus, with no `block_per_exhausted` term
+  at all — the caster's own `blk` a few lines above it scales with
+  `ps.exhaust_pile.size()`, but the ally's cut never did. `pv["ally_block"]`
+  is what `play_card()` actually feeds the ally's `Combatant.gain_block()`
+  (combat.gd:976-980), so this wasn't cosmetic: the more cards a hunter had
+  already burned, the bigger the real gap between what Scrap Shield promised
+  both players and what the ally actually received. Fixed by adding the same
+  `card.block_per_exhausted * exhausted` term to `ally_blk` that `blk`
+  already has — checked cards.json first: Scrap Shield is the only card that
+  pairs `ally_block` with any `block_per_*` field, so this doesn't reach for
+  `block_per_play`/`block_per_x`/`block_per_discarded`, which nothing
+  combines with `ally_block` today. Added
+  `_test_scrap_shields_ally_gets_the_per_burn_bonus_too` (with a new
+  `_scrap_shield()` test-card helper), asserting caster and ally both land on
+  3 + 2*2 = 7 after two cards are already burned. `run_tests.gd`: ALL TESTS
+  PASSED.
+
+- **2026-09-11, #86 duty 3 (verify a mechanic actually works) —
   `block_per_exhausted` (Pressure Valve, Scrap Shield), the Block-side twin of
   `damage_per_exhausted`, had never been driven by anything in
   `run_tests.gd`.** Last commit (`2dab2bd`) was duty 2, so this turn is duty
