@@ -2746,6 +2746,40 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-11, #86 duty 3 (verify a mechanic actually works) —
+  `condition_bonus.grip`, the one field of the backlog #67 condition-bonus
+  system (damage/block/ally_block/grip) that had never been driven by
+  anything.** Last commit (`b47895a`) was duty 2, so this turn is duty 3.
+  Manually ruled out most of `combat_3d.gd`, `boss.gd`, `run.gd`'s reward
+  weighting/tag-lean/elite-relic-chain/key mechanics as already covered by
+  prior duty-3 passes (dozens of `_test_backlog86_*` tests already exist for
+  each), then dispatched an Explore agent to sweep the rest; it confirmed
+  `condition_bonus.grip` as the one real gap: `_test_card_upgrade_bumps_condition_bonus_too`
+  and the `#67` condition tests only ever exercise damage/block/ally_block —
+  no card in `cards.json` pairs `condition` with `condition_bonus.grip`, so
+  the branch was only reachable through a synthetic card, and nobody had
+  written one. It's also its own code path, not a fourth case riding the
+  existing loop: `card.gd`'s upgrade bump treats it as a separate `if`
+  bumping by 1 (matching the base `grip` field's own increment) rather than
+  joining the shared damage/block/ally_block +3 loop. Added five tests:
+  the upgrade bump itself, that a grip-only condition_bonus alone marks the
+  card "bumped" (skipping the cost-discount fallback), that `preview()`
+  gates the bonus on the condition the same as the other three keys, that
+  `play_card()` resolves it as real Height through a live play (not just the
+  preview number), and one pinning a genuine order-dependence: `combat.gd`
+  gates the Frog's `climb_bonus`/rhythm scaling behind `if climb > 0`,
+  read from the card's PRINTED grip alone, three lines before
+  `condition_bonus.grip` is added — so a card that climbs purely through its
+  condition bonus skips that scaling entirely, while an otherwise-identical
+  card with even 1 point of base grip gets it applied to the combined total.
+  That's an existing, commented guard ("the climb bonus rides an actual
+  climb, not a zero"), not a bug, so it's pinned as observed behavior rather
+  than changed. Proved the new tests actually catch a regression: blanked
+  the `condition_bonus.grip` line in `combat.gd`, reran, 3 of the 5 new
+  assertions failed honestly, restored from a backup copy (confirmed clean
+  via `git diff`). Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED.
+
 - **2026-09-11 (later still), #86 duty 2 attempted, exhausted, fell through
   to duty 3 — `HitCircle._path_point()`, the slider follower's own on-screen
   position, had zero coverage anywhere in the suite.** Last commit

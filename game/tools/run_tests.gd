@@ -144,6 +144,11 @@ func _init() -> void:
 	_test_backlog67_nth_card_counter_resets_each_round()
 	_test_backlog67_condition_bonus_resolves_through_a_real_play()
 	_test_backlog67_unmet_condition_never_costs_the_printed_numbers()
+	_test_backlog86_condition_bonus_grip_bumps_by_one_not_three_on_upgrade()
+	_test_backlog86_condition_bonus_grip_alone_bumps_and_skips_the_cost_discount()
+	_test_backlog86_condition_bonus_grip_gates_preview_climb()
+	_test_backlog86_condition_bonus_grip_resolves_through_a_real_play()
+	_test_backlog86_condition_bonus_grip_skips_climb_bonus_when_base_grip_is_zero()
 	_test_enchanted_copy_attaches_to_any_card()
 	_test_enchants_all_load()
 	_test_backlog86_timing_zone_bonus_combines_relic_and_enchant()
@@ -3366,6 +3371,98 @@ func _test_backlog67_unmet_condition_never_costs_the_printed_numbers() -> void:
 	var pv := combat.preview(0, harpoon)
 	_expect(int(pv["damage"]) == 8,
 		"an unmet condition leaves the card doing exactly its printed numbers, never less")
+
+
+## Backlog #86 duty 3: condition_bonus supports four keys -- damage, block,
+## ally_block and grip (combat.gd:551-554) -- and the tests just above drive
+## the first three against real cards (dagger/brace/safety_line). grip never
+## has: no card in cards.json pairs `condition` with a `condition_bonus.grip`
+## (grep confirms it), and card.gd's upgrade bump treats it as its OWN branch
+## (card.gd:323-325) rather than joining the shared damage/block/ally_block
+## loop three lines above it -- a +1 bump, matching the base `grip` field's
+## own increment, not damage/block's +3. That branch has never once run
+## against anything but this synthetic card.
+func _test_backlog86_condition_bonus_grip_bumps_by_one_not_three_on_upgrade() -> void:
+	var card := Card.from_dict({"id": "t_climb_cond", "name": "Test Climb Cond", "type": "skill",
+		"cost": 1, "grip": 2, "condition": {"type": "above_sigil"}, "condition_bonus": {"grip": 2}})
+	var up := card.upgraded_copy()
+	_expect(int(up.condition_bonus.get("grip", 0)) == 3 and up.grip == 3
+			and int(card.condition_bonus.get("grip", 0)) == 2,  # original untouched -- to_dict() hands the dict back by reference
+		"upgrading a card with a grip condition_bonus bumps it by 1, same as the base grip field's own increment, without mutating the original")
+
+
+## Same isolation the damage/block/ally_block sibling test relies on implicitly
+## by using real cards that already have a nonzero base field: with base grip
+## at 0, the shared bump loop (card.gd:287-299) never touches this card and
+## never sets `bumped`, so condition_bonus.grip's own dedicated branch is the
+## ONLY thing that can mark it "already got bigger" -- proven by checking the
+## cost-discount fallback (upgraded_copy's "nothing to scale, make it cheaper"
+## else-branch) never fires.
+func _test_backlog86_condition_bonus_grip_alone_bumps_and_skips_the_cost_discount() -> void:
+	var card := Card.from_dict({"id": "t_climb_cond2", "name": "Test Climb Cond 2", "type": "skill",
+		"cost": 2, "condition": {"type": "above_sigil"}, "condition_bonus": {"grip": 2}})
+	var up := card.upgraded_copy()
+	_expect(int(up.condition_bonus.get("grip", 0)) == 3 and up.cost == 2,
+		"a grip-only condition_bonus alone marks the card as bumped, skipping the cost-discount fallback -- the same rule a damage/block/ally_block-only condition bonus already gets")
+
+
+func _test_backlog86_condition_bonus_grip_gates_preview_climb() -> void:
+	var boss := _dummy_boss(300)
+	boss.weak_point_height = 4
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 7, boss)
+	var card := Card.from_dict({"id": "t_climb_cond3", "name": "Test Climb Cond 3", "type": "skill",
+		"cost": 1, "grip": 2, "condition": {"type": "above_sigil"}, "condition_bonus": {"grip": 3}})
+	combat.players[0].foothold = 0
+	var below := combat.preview(0, card)
+	combat.players[0].foothold = 4
+	var at_sigil := combat.preview(0, card)
+	_expect(int(below["grip"]) == 2 and int(at_sigil["grip"]) == 5,
+		"condition_bonus.grip adds to the previewed climb only once the condition holds, same as damage/block/ally_block already do")
+
+
+## End to end through real play_card resolution, not just preview()'s
+## prediction -- mirrors _test_backlog67_condition_bonus_resolves_through_a_real_play
+## but for grip: proves the bonus actually moves ps.foothold, not just the
+## number the card face shows.
+func _test_backlog86_condition_bonus_grip_resolves_through_a_real_play() -> void:
+	var boss := _dummy_boss(300)
+	boss.weak_point_height = 4
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 7, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [Card.from_dict({"id": "t_climb_cond4", "name": "Test Climb Cond 4", "type": "skill",
+		"cost": 1, "grip": 2, "condition": {"type": "above_sigil"}, "condition_bonus": {"grip": 3}})]
+	ps.foothold = 4  # camped at the sigil already, so the condition holds
+	ps.energy = 5
+	combat.play_card(0, 0)
+	_expect(ps.foothold == 4 + 2 + 3,
+		"an above_sigil card's condition_bonus.grip resolves as real Height gained through play_card, not just the preview number")
+
+
+## combat.gd:544-545 gates the Frog's climb_bonus/rhythm scaling behind
+## `if climb > 0` -- evaluated from the card's PRINTED grip alone, BEFORE
+## condition_bonus.grip is added three lines later at 554 ("the climb bonus
+## rides an actual climb, not a zero", per that guard's own comment). So a
+## card that climbs purely through its condition_bonus (zero printed grip)
+## skips climb_bonus/rhythm scaling entirely, while an otherwise-identical
+## card with even 1 point of base grip gets the bonus applied to the combined
+## total. That order-dependence had never been driven by anything -- pins it
+## as real, observed behavior rather than an assumption about how the two
+## systems interact.
+func _test_backlog86_condition_bonus_grip_skips_climb_bonus_when_base_grip_is_zero() -> void:
+	var boss := _dummy_boss(300)
+	boss.weak_point_height = 1
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 7, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.climb_bonus = 5  # the Frog's passive: extra Height per climb card
+	ps.foothold = 1  # already at/above the (deliberately low) sigil, so the condition holds
+	var zero_base := Card.from_dict({"id": "t_climb_cond5", "name": "Test Climb Cond 5", "type": "skill",
+		"cost": 1, "condition": {"type": "above_sigil"}, "condition_bonus": {"grip": 3}})
+	var one_base := Card.from_dict({"id": "t_climb_cond6", "name": "Test Climb Cond 6", "type": "skill",
+		"cost": 1, "grip": 1, "condition": {"type": "above_sigil"}, "condition_bonus": {"grip": 3}})
+	var pv_zero := combat.preview(0, zero_base)
+	var pv_one := combat.preview(0, one_base)
+	_expect(int(pv_zero["grip"]) == 3 and int(pv_one["grip"]) == 1 + 5 + 3,
+		"climb_bonus only scales a climb that already has printed grip of its own -- a card that climbs purely through its condition_bonus skips it entirely, per combat.gd's own 'not a zero' guard")
 
 
 ## The enchant engine (backlog #12): one generic copy trick, same shape as
