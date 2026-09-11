@@ -2746,6 +2746,26 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-11 (later still), #86 duty 2 (find an error and resolve it) —
+  `Card.archetype_tags()`'s "climb" check listed every field that grants
+  Height EXCEPT `timed_grip` (bonus Height on a well-timed throw), even
+  though the sibling "block" tag a few lines below already covers the same
+  "timed_X counts toward the X tag" idiom via `timed_block`/
+  `timed_ally_block`.** Last commit (`57f509e`) was duty 3, so this turn is
+  duty 2. Found by cross-checking cards.json against `archetype_tags()`'s
+  field lists rather than reading the file top to bottom: `tempo_trap`
+  carries `timed_grip: 2`, `grip: 0`, and none of the other climb fields, so
+  it rolled through `reward_pool()`/`_weighted_index()` with NO archetype
+  tag at all — a hunter building a climbing deck got zero lean
+  (backlog #72's `TAG_LEAN_BONUS`) toward the one card whose entire point is
+  Height on a nailed throw. Fix: added `timed_grip > 0` to the climb
+  condition in `game/core/card.gd`. Regression test
+  (`_test_backlog86_archetype_tags_recognise_a_timed_grip_only_card`) pins
+  Tempo Trap's own tags. Confirmed it fails honestly against the unpatched
+  code (`git stash` of just `card.gd`, reran, restored) and passes with the
+  fix. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL
+  TESTS PASSED.
+
 - **2026-09-11 (later), #86 duty 2 (find an error and resolve it) —
   `Combat._meld_cards()` never carried `rule_upgrade`, the SIXTH field this
   one hand-copied dict literal has now been caught dropping (after type,

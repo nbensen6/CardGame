@@ -360,7 +360,7 @@ func enchanted_copy(enchant_id: String) -> Card:
 func archetype_tags() -> Array:
 	var tags: Array = []
 	if grip > 0 or targets_hold or ally_grip > 0 or damage_per_foothold > 0 \
-			or damage_per_ally_foothold > 0 or pull_ally > 0 or sac_ally_grip > 0:
+			or damage_per_ally_foothold > 0 or pull_ally > 0 or sac_ally_grip > 0 or timed_grip > 0:
 		tags.append("climb")
 	if rhythm > 0 or damage_per_rhythm > 0 or grip_per_rhythm > 0:
 		tags.append("rhythm")

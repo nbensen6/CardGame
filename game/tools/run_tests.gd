@@ -194,6 +194,7 @@ func _init() -> void:
 	_test_status_cards_never_offered_as_a_reward()
 	# backlog #72: rewards that know what you are building
 	_test_backlog72_archetype_tags_are_derived_from_fields()
+	_test_backlog86_archetype_tags_recognise_a_timed_grip_only_card()
 	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
 	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
@@ -4495,6 +4496,19 @@ func _test_backlog72_archetype_tags_are_derived_from_fields() -> void:
 			and slash_tags.is_empty(),
 		"archetype tags follow from a card's own fields [rend=%s sharpen=%s cadence=%s slash=%s]"
 			% [rend_tags, sharpen_tags, cadence_tags, slash_tags])
+
+
+## backlog #86 duty 2: archetype_tags()'s "climb" check listed every field that
+## grants Height EXCEPT timed_grip (bonus Height on a well-timed throw) — the
+## same "timed_X" idiom the "block" tag a few lines below already covers via
+## timed_block/timed_ally_block. Tempo Trap (cards.json) carries timed_grip: 2
+## and grip: 0 and nothing else on the climb list, so it rolled through
+## reward_pool() with NO archetype tag at all: a hunter building a climbing
+## deck got no lean toward it (backlog #72's TAG_LEAN_BONUS), even though its
+## whole point is Height on a nailed throw.
+func _test_backlog86_archetype_tags_recognise_a_timed_grip_only_card() -> void:
+	var tags: Array = Content.card_tags("tempo_trap")
+	_expect(tags.has("climb"), "Tempo Trap (timed_grip 2, grip 0) is tagged climb [tags=%s]" % [tags])
 
 
 ## Backlog #72: a card reward roll should lean toward the archetype a hunter is
