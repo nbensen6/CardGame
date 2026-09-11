@@ -13544,3 +13544,32 @@ Newest first. One line per finished item: what, and anything surprising.
   fix. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL
   TESTS PASSED. Next `#86` turn is duty 3 (verify a mechanic actually
   works).
+
+- **2026-09-11 (later still), #86 duty 3 (verify a mechanic actually
+  works).** Last commit (`47a5a9f`) was duty 2, so this turn is duty 3.
+  `Combat.preview()` shares one `scale` formula (combat.gd:519-521) across
+  all four timed bonuses — `timed_damage`, `timed_grip`, `timed_block`,
+  `timed_ally_block` — TIMING_PERFECT pays the full bonus, TIMING_GOOD pays
+  `TIMING_GOOD_SCALE` (half) of it, a miss pays none. The `timed` keyword's
+  own tooltip promises this "half on a scraped edge" payout as a general
+  rule (an existing test, `_test_timed_keyword_explains_graded_quality`,
+  checks the tooltip TEXT says "half"), not a damage-only one. But every
+  existing test for the other three fields
+  (`_test_timed_block_guards_on_a_hit`, `_test_timed_ally_block_anchors_the_ally`,
+  `_test_timed_grapple`) only ever drove the two ends of that formula —
+  a dead-centre PERFECT hit (the default when `timing_quality` is omitted)
+  and a fumble. TIMING_GOOD itself had only ever been exercised for
+  `timed_damage` (the True Eye and X-cost tests). A bug that broke the GOOD
+  grade specifically for grip/block/ally_block — say, a stray condition that
+  only gated the damage line — could ship today and every test in this file
+  would still pass. Added three tests driving a real `play_card` with
+  `Combat.TIMING_GOOD`: Grappling Hook climbs base grip (1) + half its
+  timed_grip (2 → 1) = 2, not the full 3 or the bare 1; Dig In grants base
+  block (4) + half its timed_block (6 → 3) = 7, not the full 10 or the bare
+  4; Anchor Brace shields the ally for base ally_block (4) + half its
+  timed_ally_block (6 → 3) = 7, while the caster's own untimed block stays
+  unaffected by the grade. All three passed on the first run — the formula
+  itself turned out to be correctly shared, this just closes the gap where
+  nothing had ever asked. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2 (find an
+  error and resolve it).
