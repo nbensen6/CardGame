@@ -2746,6 +2746,55 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-11 (later still), #86 duty 2 attempted, exhausted, fell through
+  to duty 3 — `HitCircle._path_point()`, the slider follower's own on-screen
+  position, had zero coverage anywhere in the suite.** Last commit
+  (`e2c846c`) was duty 3, so this turn should have been duty 2. Spent the
+  bulk of the run hunting for a genuine bug the "first-pass hole" / "two
+  copies of one truth" patterns catch: read `core/run_save.gd`,
+  `core/progress.gd`, `core/run_map.gd`, `core/combatant.gd`, `core/boss.gd`,
+  `core/card.gd` (a full field-by-field audit of `upgraded_copy()`'s three
+  bump lists against every numeric `Card` field — nothing missing),
+  `core/content.gd`, `core/player_state.gd` (`to_dict`/`from_dict` audited
+  field-by-field against `Combatant`'s own fields — complete round trip),
+  and `core/run.gd`'s shop/campfire/event/boon/key functions by hand, then
+  dispatched a fresh-eyes Explore agent at `ui/*.gd`, `views/*.gd`,
+  `combat_3d.gd`, `location_3d.gd`, `game_3d.gd`, cross-referential
+  `data/*.json` integrity (every `create`/`topdeck`/`shuffle_in`/`tutor`/
+  `curse_card`/`potion`/`enchant` id it names, every event `effects` key)
+  and the remaining untouched corners of `run.gd`. Both came back clean —
+  this codebase has had over forty prior duty-3 passes and at least twenty
+  duty-2 passes, and it shows: the agent's own conclusion was that "prior
+  passes have already swept the areas you pointed me to," and I could not
+  find anywhere to disagree. Per this item's own rule ("never report
+  nothing to do... take the next one in the rotation and say so"), fell
+  through to duty 3 instead of ending the run empty. Found `_path_point()`
+  (the arc-length walk that positions the slider ball while a climb card's
+  held note runs — every reader in `_draw_slider()`, the lit ticks, the
+  "road behind you" trail, the follow circle, positions itself from it) had
+  never once been called from `run_tests.gd`, despite HitCircle's tap/hold/
+  release grading already being thoroughly covered by an earlier duty-3
+  pass. Its own doc comment makes a specific, checkable claim — "walking
+  the path by arc length so it moves at a constant speed rather than
+  hurrying through the short legs" — that a naive index-based lerp would
+  violate while still passing every existing HitCircle test, since none of
+  them touch drawing. Added three tests: constant-speed proportionality
+  across two very different leg lengths (a naive index lerp would treat
+  both legs as equal shares of `t`), the endpoint/clamped-range boundary
+  (t=0, t=1, t<0, t>1), and the degenerate cases (`path.size()` 0 and 1, a
+  zero-length leg from two coincident points not dividing by zero, a whole
+  path of zero total length). Proved the tests actually catch a regression
+  by swapping `_path_point()` for the exact naive index-based lerp the doc
+  comment warns against, re-running: 4 of the 11 new assertions failed
+  honestly (`4 TEST(S) FAILED`), then restored the original from a copy
+  taken before the edit (confirmed clean via `git diff`). No bug found in
+  the function itself — same honest "no bug, real coverage" outcome most
+  duty-3 passes on this heavily-swept codebase log now. Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED (1434
+  assertions). Next `#86` turn is duty 2 again — worth trying fresh
+  territory rather than re-treading what this run and its predecessors
+  already ruled out.
+
 - **2026-09-11 (latest), #86 duty 3 (verify a mechanic actually works) —
   `Combat._predicted_limiter_damage()`, the HUD's read-only mirror of what
   `_apply_limiter()` is about to chip a hunter for, had only ever been driven

@@ -1087,6 +1087,14 @@ func _init() -> void:
 	_test_backlog86_hit_circle_slider_released_past_rescue_downgrades_to_good()
 	_test_backlog86_hit_circle_slider_ignores_a_second_press_while_holding()
 	_test_backlog86_hit_circle_slider_press_outside_the_window_still_misses_immediately()
+	# backlog #86 duty 3: HitCircle._path_point, the slider follower's own
+	# on-screen position, was the one piece of the slider path with zero
+	# coverage of its own -- every test above proves the PRESS/HOLD/RELEASE
+	# grading, none of them ever call _path_point. Pure geometry, no camera
+	# needed, same "call the private method directly" trick as _fire() above.
+	_test_backlog86_hit_circle_path_point_walks_constant_speed_not_by_index()
+	_test_backlog86_hit_circle_path_point_endpoints_and_clamped_range()
+	_test_backlog86_hit_circle_path_point_degenerate_paths_never_divide_by_zero()
 	# backlog #86 duty 3 (thirty-third pass): Dev.cycle(), the F9 live-swap
 	# between a card's four rarity treatments (framed / borderless / borderless
 	# foil / foil) dev.gd's own header asks for by name -- "does the borderless
@@ -14727,6 +14735,69 @@ func _test_backlog86_hit_circle_slider_press_outside_the_window_still_misses_imm
 	_expect(int(got[0]) == Combat.TIMING_MISS,
 		"a slider's press still has to land inside the window -- missing the press entirely never starts a hold to rescue")
 	_expect(not hc._holding, "a missed press never enters the holding state")
+	hc.free()
+
+
+## backlog #86 duty 3: HitCircle._path_point is the slider's OWN follower
+## position -- the ball drawn along the path while a climb card's held note
+## runs, and the thing every reader in _draw_slider() (the lit ticks, the
+## "road behind you" trail, the follow circle) positions itself from. Its own
+## doc comment makes a specific, checkable claim -- "walking the path by arc
+## length so it moves at a constant speed rather than hurrying through the
+## short legs" -- and nothing in this file had ever called it: grepping for
+## `_path_point` outside hit_circle.gd itself turns up nothing. A naive
+## index-based lerp (t * (path.size()-1) rather than arc length) would draw
+## the ball rushing through a short leg and crawling through a long one, and
+## every existing HitCircle test would still pass, since none of them touch
+## drawing. Pure geometry -- no camera, no scene tree -- so it's called
+## directly the same way _aligned() (RunMap's own private index math) is
+## tested elsewhere in this file.
+func _test_backlog86_hit_circle_path_point_walks_constant_speed_not_by_index() -> void:
+	var hc := HitCircle.new()
+	# Two legs of very different lengths: 0->30 (30 units) then 30->40 (10 units).
+	# An index-based lerp would treat both legs as "half the path" each; arc
+	# length must not.
+	var path := PackedVector2Array([Vector2(0, 0), Vector2(30, 0), Vector2(40, 0)])
+	var quarter: Vector2 = hc._path_point(path, 0.375)  # 0.375 * 40 = 15: halfway down the FIRST leg
+	var boundary: Vector2 = hc._path_point(path, 0.75)  # 0.75 * 40 = 30: exactly the junction
+	var far_leg: Vector2 = hc._path_point(path, 0.875)  # 0.875 * 40 = 35: halfway down the SECOND leg
+	_expect(quarter.is_equal_approx(Vector2(15, 0)),
+		"halfway down the long first leg by DISTANCE lands at (15,0), not at some index-based fraction of the path")
+	_expect(boundary.is_equal_approx(Vector2(30, 0)),
+		"t = (first leg's own share of the total) lands exactly on the junction between the two legs")
+	_expect(far_leg.is_equal_approx(Vector2(35, 0)),
+		"halfway down the short second leg still lands at its own true midpoint, not rushed past it")
+	hc.free()
+
+
+func _test_backlog86_hit_circle_path_point_endpoints_and_clamped_range() -> void:
+	var hc := HitCircle.new()
+	var path := PackedVector2Array([Vector2(0, 0), Vector2(30, 0), Vector2(40, 0)])
+	_expect(hc._path_point(path, 0.0).is_equal_approx(Vector2(0, 0)), "t=0 sits at the very start of the path")
+	_expect(hc._path_point(path, 1.0).is_equal_approx(Vector2(40, 0)), "t=1 sits exactly at the very end of the path")
+	_expect(hc._path_point(path, -5.0).is_equal_approx(Vector2(0, 0)),
+		"a t before 0 clamps to the start rather than extrapolating backward")
+	_expect(hc._path_point(path, 5.0).is_equal_approx(Vector2(40, 0)),
+		"a t past 1 clamps to the end rather than extrapolating past it")
+	hc.free()
+
+
+func _test_backlog86_hit_circle_path_point_degenerate_paths_never_divide_by_zero() -> void:
+	var hc := HitCircle.new()
+	_expect(hc._path_point(PackedVector2Array(), 0.5) == Vector2.ZERO,
+		"an empty path (no notes at all) returns the zero vector rather than indexing off the end")
+	var one := PackedVector2Array([Vector2(7, 3)])
+	_expect(hc._path_point(one, 0.5) == Vector2(7, 3) and hc._path_point(one, 0.0) == Vector2(7, 3),
+		"a single-point path returns that point for every t -- there is nowhere else to walk")
+	# Two coincident points then a real leg: the zero-length first leg must be
+	# skipped over rather than crashing on a 0/0 division.
+	var zero_leg := PackedVector2Array([Vector2(0, 0), Vector2(0, 0), Vector2(10, 0)])
+	_expect(hc._path_point(zero_leg, 0.05).is_equal_approx(Vector2(0.5, 0)),
+		"a zero-length leg (two coincident points) is skipped without dividing by zero, and the walk continues correctly into the next leg")
+	# Every point coincident: total path length is zero.
+	var all_zero := PackedVector2Array([Vector2(5, 5), Vector2(5, 5)])
+	_expect(hc._path_point(all_zero, 0.9) == Vector2(5, 5),
+		"a path with zero total length (every point the same) returns that point rather than dividing by a zero total")
 	hc.free()
 
 
