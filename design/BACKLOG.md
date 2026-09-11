@@ -2746,6 +2746,30 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-11 (later), #86 duty 2 (find an error and resolve it) —
+  `Combat._meld_cards()` never carried `rule_upgrade`, the SIXTH field this
+  one hand-copied dict literal has now been caught dropping (after type,
+  light/scry/topdeck, retain/ethereal, and enchant, each its own prior
+  duty-2 fix).** Last commit (`0a23cd6`) was duty 3, so this turn is duty 2.
+  Dispatched an Explore agent to hunt the two named bug families across
+  `/core`, `/session` and `/net`; it found this one and I verified it by
+  hand before touching anything. `rule_upgrade` is a card's recipe for what
+  campfire sharpening should DO to it (backlog #66) instead of the generic
+  +3 number bump — e.g. Reckless Swing's `rule_upgrade` cures its own
+  Ethereal. Melding Reckless Swing into anything silently dropped that
+  recipe, so a hunter who fused it and later sharpened the fused card at a
+  campfire got a numeric bump instead of ever losing Ethereal — permanent,
+  silent, and only visible by comparing the card's own text to what
+  upgrading it actually did. Fix: added `rule_upgrade` to the dict using
+  the same "keep A's if set, else B's" idiom already used for
+  `condition`/`prepare`/`enchant` in that same literal. Added two tests
+  (`_test_backlog86_meld_carries_rule_upgrade`): the fused card carries the
+  recipe, and sharpening it afterward actually applies the rule change
+  (cures Ethereal) rather than bumping its numbers. Confirmed both fail
+  honestly against the unpatched code (`git stash` of just `combat.gd`,
+  reran, restored) and pass with the fix. Fresh `--import`, headless,
+  Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
+
 - **2026-09-11, #86 duty 3 (verify a mechanic actually works) —
   `condition_bonus.grip`, the one field of the backlog #67 condition-bonus
   system (damage/block/ally_block/grip) that had never been driven by

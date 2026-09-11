@@ -397,6 +397,16 @@ func _meld_cards(a: Card, b: Card) -> Card:
 		"tutor": a.tutor if a.tutor != "" else b.tutor,
 		"condition": a.condition if not a.condition.is_empty() else b.condition,
 		"condition_bonus": a.condition_bonus if not a.condition.is_empty() else b.condition_bonus,
+		# backlog #86 duty 2 — same "hand-copied field list drifts" bug this dict
+		# has now been caught missing SIX times (type, light/scry, retain/
+		# ethereal, enchant, and now this): rule_upgrade (#66) is what a
+		# campfire sharpen applies INSTEAD of the generic number bump, so
+		# dropping it here doesn't just lose an effect, it changes what
+		# sharpening a melded card does later — e.g. melding Reckless Swing
+		# (rule_upgrade drops Ethereal) meant the fused card could never be
+		# cured of Ethereal at a campfire; it silently fell back to a numeric
+		# bump instead, same one-of-a-kind idiom as condition/prepare above.
+		"rule_upgrade": a.rule_upgrade if not a.rule_upgrade.is_empty() else b.rule_upgrade,
 		# backlog #86 duty 2 — power_value is paired with whichever side's
 		# power_effect was actually kept (the condition/condition_bonus idiom
 		# just above), not summed: a non-power card melded with a power card

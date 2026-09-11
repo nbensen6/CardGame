@@ -287,6 +287,7 @@ func _init() -> void:
 	_test_meld_carries_power_effect()
 	_test_meld_carries_retain_and_ethereal()
 	_test_meld_carries_enchant()
+	_test_backlog86_meld_carries_rule_upgrade()
 	_test_satchel_charge_detonates()
 	_test_rhythm_builds_and_scales()
 	_test_backlog86_fumbled_timed_card_does_not_build_rhythm()
@@ -5534,6 +5535,31 @@ func _test_meld_carries_enchant() -> void:
 	var cost_without_enchant := maxi(0, cheap_slash.cost + _defend().cost - 1)
 	_expect(fused.enchant == "cheap" and combat.effective_cost(0, fused) == cost_without_enchant - 1,
 		"a meld carries an attached enchant (single slot, keep A's if set) — dropping it silently stripped e.g. Cheap's cost cut off the fused card")
+
+
+## backlog #86 duty 2: _meld_cards' dict never carried "rule_upgrade" at all —
+## the SIXTH instance of the same "hand-copied field list drifts from Card's
+## real fields" bug this dict has now been caught missing (type, light/scry,
+## retain/ethereal, enchant, and now this). rule_upgrade (#66) is a card's
+## recipe for what campfire sharpening should DO to it instead of the generic
+## number bump — dropping it on meld meant a fused card that should have had a
+## rule change (e.g. Reckless Swing losing Ethereal) silently fell back to
+## getting its numbers bumped by +3 instead, the exact bug
+## _test_card_rule_upgrade_changes_what_it_does_not_just_a_number already
+## guards against for an UN-melded card.
+func _test_backlog86_meld_carries_rule_upgrade() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var reckless := Content.make_card("reckless_swing")  # rule_upgrade: drop Ethereal
+	ps.hand = [_meld_card(), reckless, _defend()]
+	ps.energy = 9
+	combat.play_card(0, 0, true, 1, 2)
+	var fused: Card = ps.hand[0]
+	_expect(not fused.rule_upgrade.is_empty() and fused.rule_upgrade.get("ethereal") == false,
+		"a meld carries the sacrificed card's rule_upgrade recipe (single slot, keep A's if set, same idiom as condition/prepare) -- dropping it meant a melded card's rule_upgrade silently vanished")
+	var sharpened := fused.upgraded_copy()
+	_expect(fused.ethereal and not sharpened.ethereal and sharpened.damage == fused.damage,
+		"sharpening a melded card at a campfire must still apply its carried rule_upgrade (curing Ethereal) instead of silently falling back to a numeric bump")
 
 
 func _test_satchel_charge_detonates() -> void:
