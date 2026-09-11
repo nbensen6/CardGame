@@ -109,6 +109,7 @@ func _init() -> void:
 	_test_backlog86_daily_unlocked_wins_is_pinned_and_fair()
 	_test_backlog86_restart_refreshes_unlocked_wins_after_a_win()
 	_test_run_walks_the_map()
+	_test_backlog86_elite_node_fights_from_the_elite_pool_not_the_fight_pool()
 	_test_rest_node_heals_and_returns_to_map()
 	_test_event_choice_applies_effects()
 	_test_event_reward_choice_routes_to_reward()
@@ -2685,6 +2686,30 @@ func _test_run_walks_the_map() -> void:
 	var pooled: bool = Content.beast_pool("fight").has(run.beast_id)
 	_expect(started_on_map and opening.size() >= 2 and rejected and in_combat and pooled,
 		"a run starts on the map, rejects unreachable nodes, and fights what it steps on")
+
+
+## Backlog #86 duty 3: Run._roll_beast() reads Content.beast_pool(node_type),
+## so "fight" and "elite" nodes MUST draw from separate pools -- but only the
+## fight side ever had a test (_test_run_walks_the_map, above). A node_type
+## typo or a swapped argument in _roll_beast/_start_encounter would still pass
+## every existing test, because nothing ever checked what an ELITE node
+## fights. bosses.json's "fight" and "elite" pools share zero ids, so this is
+## a real discriminator, not a coincidence of overlapping data: landing on a
+## beast from the wrong pool fails immediately rather than by luck.
+##
+## Drives it the same way _test_backlog86_hurt_pct_threshold_scales_with_ascensions_hp_pct
+## does -- set node_type directly and call the private _start_encounter() --
+## because reaching a real elite node through pick_node() would tie this test
+## to a specific map seed's layout, which is what RunMap's own tests are for.
+func _test_backlog86_elite_node_fights_from_the_elite_pool_not_the_fight_pool() -> void:
+	var run := Run.new([_deck_of(_slash, 10), _deck_of(_slash, 10)], ["A", "B"], 4242, [{}, {}])
+	run.start()
+	run.node_type = "elite"
+	run._start_encounter()
+	var elite_pool: Array = Content.beast_pool("elite")
+	var fight_pool: Array = Content.beast_pool("fight")
+	_expect(elite_pool.has(run.beast_id) and not fight_pool.has(run.beast_id),
+		"an elite node fights a beast from the elite pool, not the fight pool [beast_id=%s]" % run.beast_id)
 
 
 func _test_rest_node_heals_and_returns_to_map() -> void:

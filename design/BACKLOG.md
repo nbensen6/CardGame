@@ -2746,7 +2746,25 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-11 (latest), #86 duty 2 (find an error and resolve it) —
+- **2026-09-11 (latest), #86 duty 3 (verify a mechanic actually works) —
+  an elite node fighting from the ELITE beast pool, not the fight pool, had
+  zero test coverage.** Last commit (`e99674b`) was duty 2, so this turn is
+  duty 3. `_test_run_walks_the_map` already proved a plain "fight" node
+  draws from `Content.beast_pool("fight")`, but nothing ever checked the
+  other side of `Run._roll_beast()` — a node_type typo or a swapped
+  argument there would still pass every existing test, because nothing
+  fought from an elite node in the suite. `bosses.json`'s "fight" and
+  "elite" pools share zero beast ids, so the two pools make a real
+  discriminator: I proved this by temporarily hardcoding `_roll_beast()` to
+  always read the fight pool and re-running — the new test failed
+  immediately (`beast_id=boulder_ram`, a fight-pool beast, on a node forced
+  to `node_type = "elite"`), then reverted the break and confirmed green
+  again. Added `_test_backlog86_elite_node_fights_from_the_elite_pool_not_the_fight_pool`
+  in `run_tests.gd`, same pattern as the existing ascension `_start_encounter()`
+  tests (set `node_type` directly rather than depending on a map seed's
+  layout). `run_tests.gd` passes: ALL TESTS PASSED.
+
+- **2026-09-11, #86 duty 2 (find an error and resolve it) —
   the dev console's `own`/`add` command could silently pop a stale
   campfire/trader deck-picker back open, the exact bug class #86 duty 2
   already fixed once for Cancel and top-level Escape.** Last commit
