@@ -293,6 +293,8 @@ func _init() -> void:
 	_test_run_starts_in_combat()
 	_test_run_win_flows_through_reward_to_next_encounter()
 	_test_run_hp_carries_between_encounters()
+	_test_relic_heal_on_clear_adds_to_the_between_fight_heal()
+	_test_relic_heal_on_clear_still_clamps_to_max_hp()
 	_test_run_defeat_when_a_hunter_falls()
 	_test_run_hp_syncs_on_defeat_too()
 	_test_backlog39_stats_accumulate_across_fights()
@@ -5982,6 +5984,35 @@ func _test_run_hp_carries_between_encounters() -> void:
 	_expect(banked == 20 + Run.HEAL_BETWEEN
 		and run.combat.players[0].combatant.hp == run.hp[0],
 		"damage carries between encounters (plus a small heal), through whatever the route offers")
+
+## #86 duty 3: `_bank_hp()` adds `relic_totals()["heal"]` on top of the base
+## `HEAL_BETWEEN` heal, fed by the "heal_on_clear" relic effect (old_remedy,
+## +8 -- game/data/relics.json). Every existing _bank_hp() test (the one
+## above, and the ascension heal_between tier test) leaves team_relics
+## empty, so relic_totals()["heal"] is always 0 in them and this additive
+## term has never actually been exercised.
+func _test_relic_heal_on_clear_adds_to_the_between_fight_heal() -> void:
+	var run := _map_run()
+	run.team_relics.append(Content.make_relic("old_remedy"))  # heal_on_clear, +8
+	_step_into_combat(run)
+	run.combat.players[0].combatant.hp = 20
+	_force_win(run)
+	_expect(run.hp[0] == 20 + Run.HEAL_BETWEEN + 8,
+		"old_remedy's heal_on_clear bonus stacks with the base between-fight heal")
+
+
+## The same relic bonus must still respect the `mini(..., max_hp[i])` clamp
+## right next to it in _bank_hp() -- a big enough heal_on_clear bonus (or a
+## hunter who took little damage) must not push HP above their max.
+func _test_relic_heal_on_clear_still_clamps_to_max_hp() -> void:
+	var run := _map_run()
+	run.team_relics.append(Content.make_relic("old_remedy"))  # heal_on_clear, +8
+	_step_into_combat(run)
+	run.combat.players[0].combatant.hp = run.max_hp[0] - 1  # 1 below max
+	_force_win(run)
+	_expect(run.hp[0] == run.max_hp[0],
+		"a relic heal that would overheal still clamps to the hunter's max HP")
+
 
 func _test_run_defeat_when_a_hunter_falls() -> void:
 	var run := _map_run()

@@ -2746,7 +2746,23 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-11 (latest), #86 duty 2 (find an error and resolve it) — Scrap
+- **2026-09-11 (latest), #86 duty 3 (verify a mechanic actually works) — the
+  "heal_on_clear" relic effect (Old Remedy, +8 HP after each beast falls) had
+  never been driven by anything in `run_tests.gd`.** Last commit (`f2c55b8`)
+  was duty 2, so this turn is duty 3. `Run._bank_hp()` adds
+  `relic_totals()["heal"]` on top of the base `HEAL_BETWEEN` heal, but the
+  only existing `_bank_hp()` coverage (`_test_run_hp_carries_between_encounters`
+  and the ascension `heal_between` tier test) always leaves `team_relics`
+  empty, so that additive term was always 0 and had literally never been
+  exercised, despite every sibling flat relic effect on the same aggregation
+  path (`max_energy`, `round_block`, `start_strength`) already having its own
+  test. Added `_test_relic_heal_on_clear_adds_to_the_between_fight_heal`
+  (asserts the relic's +8 stacks with `HEAL_BETWEEN` after a win) and
+  `_test_relic_heal_on_clear_still_clamps_to_max_hp` (asserts the same
+  `mini(..., max_hp[i])` clamp still holds when the relic heal would
+  overheal). `run_tests.gd`: ALL TESTS PASSED.
+
+- **2026-09-11, #86 duty 2 (find an error and resolve it) — Scrap
   Shield's own printed text lied to its ally: "All players gain 3 Block and
   an additional 2 per card burned" only ever paid the CASTER the per-burn
   bonus.** Last commit (`d2471ca`) was duty 3, so this turn is duty 2, and the
