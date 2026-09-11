@@ -68,6 +68,8 @@ func _init() -> void:
 	_test_rally_gives_ally_energy()
 	_test_expose_adds_bonus_damage()
 	_test_taunt_redirects_the_boss()
+	_test_backlog86_taunt_redirects_a_leech_move()
+	_test_backlog86_taunt_redirects_an_adds_attack_too()
 	_test_attack_all_hits_both()
 	_test_enrage_raises_attack()
 	# phase 2: climb / weak-point loop
@@ -1854,6 +1856,51 @@ func _test_taunt_redirects_the_boss() -> void:
 	combat.end_turn(1)  # boss attacks hunter 2 (8 dmg, 6 blocked -> 2 to hp)
 	_expect(combat.players[1].combatant.hp == 40 and combat.players[0].combatant.hp == 42,
 		"boss hit the taunter (blocked), sparing the ally")
+
+
+## backlog #86 duty 3: `_forced_target` (the taunt override) is read by
+## boss_target_index(), and _enemy_turn()'s "attack", "leech", "frail" and
+## "curse" branches all resolve their target through that same one function —
+## so by construction a taunt should redirect all four, not just "attack".
+## Nothing had ever driven that past "attack": _test_taunt_redirects_the_boss
+## above is the only test that plays a taunt through a real Combat, and the
+## only move in its boss's pattern is "attack". This proves the same
+## redirect holds for "leech", the next branch down that also spends
+## boss_target_index() to pick a single hunter to hit.
+func _test_backlog86_taunt_redirects_a_leech_move() -> void:
+	var boss := Boss.new("Leech", 100)
+	boss.hp = 50
+	boss.moves = [{"type": "leech", "value": 12}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_taunt, 10)], 42, boss)
+	_expect(combat.boss_target_index() == 0, "default target is hunter 1")
+	combat.play_card(1, _first_playable(combat, 1))  # hunter 2 taunts (+6 block, becomes target)
+	_expect(combat.boss_target_index() == 1, "taunt redirects leech's target the same as a plain attack")
+	combat.end_turn(0)
+	combat.end_turn(1)  # leech should drain the taunter (6 through her block), not the untouched ally
+	_expect(combat.players[1].combatant.hp == 36 and combat.players[0].combatant.hp == 42,
+		"leech drained the taunter (12 - 6 block = 6), sparing the hunter it would have hit by default")
+	_expect(combat.boss.hp == 56, "the Titan heals off whatever actually reached HP on the taunter, same rule as an unredirected leech")
+
+
+## The sibling gap: _adds_turn()'s own "attack" branch also targets
+## players[boss_target_index()] (combat.gd), so an add should chase the same
+## taunter the main boss just got redirected to, in the SAME round — nothing
+## had ever driven a taunt and a living add through one fight together.
+func _test_backlog86_taunt_redirects_an_adds_attack_too() -> void:
+	var boss := _dummy_boss(300, 8)  # attacks the default target for 8
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_taunt, 10)], 42, boss)
+	var add := Boss.new("Root Tendril", 30)
+	add.moves = [{"type": "attack", "value": 5}]
+	combat.adds.append(add)
+	combat.play_card(1, _first_playable(combat, 1))  # hunter 2 taunts (+6 block, becomes target)
+	_expect(combat.boss_target_index() == 1, "taunt redirects the boss to the taunter")
+	var hp_before: int = combat.players[1].combatant.hp
+	combat.end_turn(0)
+	combat.end_turn(1)  # boss's 8 (6 blocked, 2 through) then the add's 5 (no block left) both land on the taunter
+	_expect(combat.boss_target_index() == 1,
+		"the taunt still holds for the add's own turn -- _forced_target only resets at the start of the next round")
+	_expect(hp_before - combat.players[1].combatant.hp == 7 and combat.players[0].combatant.hp == 42,
+		"both the boss's hit and the add's own hit chased the taunter, sparing the ally entirely")
 
 
 func _test_attack_all_hits_both() -> void:

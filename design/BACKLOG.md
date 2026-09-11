@@ -2746,6 +2746,29 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-11 (yet again), #86 duty 3 (verify a mechanic actually works).**
+  Last commit (`70c84ea`) was duty 2, so this turn is duty 3. Taunt
+  (`_forced_target` in `combat.gd`) is a real co-op mechanic — one hunter
+  eats the boss's attack so the other doesn't — and `boss_target_index()`
+  is the single choke point every targeted boss move reads it through:
+  "attack", "leech", "frail" and "curse" in `_enemy_turn()`, and
+  `_adds_turn()`'s own "attack" branch for a living add. But
+  `_test_taunt_redirects_the_boss`, the only test that ever plays a taunt
+  through a real `Combat`, uses a boss whose only move is plain "attack" —
+  every other branch's redirect was pure inference from reading the code,
+  never actually driven. Added two tests: one taunting into a "leech" boss
+  (confirms the drain lands on the taunter, 12 - 6 block = 6 to hp, and the
+  Titan heals that same 6 rather than the raw 12 — reusing the existing
+  leech-heals-only-what-lands rule) and one taunting with a living add in
+  play (confirms both the boss's own hit AND the add's separate "attack"
+  branch chase the taunter in the same round, and that `_forced_target`
+  still holds for the add's turn since it only resets in `_begin_round()`).
+  Both passed on the first run — the shared choke point does what its
+  construction implies, this just closes the gap where nothing had ever
+  asked leech/adds specifically. No bug found, an honest result. Fresh
+  `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS
+  PASSED. Next `#86` turn is duty 2 (find an error and resolve it).
+
 - **2026-09-11 (later still), #86 duty 2 (find an error and resolve it) —
   `Card.archetype_tags()`'s "climb" check listed every field that grants
   Height EXCEPT `timed_grip` (bonus Height on a well-timed throw), even
