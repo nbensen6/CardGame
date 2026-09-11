@@ -265,6 +265,8 @@ func _init() -> void:
 	_test_content_integrity_graph()
 	_test_exhaust_scaling_grows_with_the_burn_pile()
 	_test_detonator_does_not_count_its_own_sacrifice()
+	_test_block_per_exhausted_scales_with_the_burn_pile()
+	_test_spent_enchanted_block_per_exhausted_counts_its_own_burn()
 	# Goblin Engineer cards
 	_test_jetpack_prepares_climb()
 	_test_jetpack_never_lowers_a_higher_foothold()
@@ -5788,6 +5790,43 @@ func _test_detonator_does_not_count_its_own_sacrifice() -> void:
 		"Detonator scales off the pile before its own sacrifice, and still burns one")
 
 
+## block_per_exhausted is damage_per_exhausted's Block-side twin (Pressure
+## Valve) and had never been driven by anything in this file — same shape as
+## the exhaust/discard scaling above, but nothing had ever proven the Block
+## math reads the SAME `ps.exhaust_pile.size()` preview() already reads for
+## damage, rather than some second, drifted copy.
+func _test_block_per_exhausted_scales_with_the_burn_pile() -> void:
+	var combat := _new_combat([_deck_of(_pressure_valve, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	combat.play_card(0, _first_playable(combat, 0))          # nothing burned yet: 4 block
+	var cold: int = ps.combatant.block
+	ps.exhaust_pile.append(_slash())                          # two cards burned
+	ps.exhaust_pile.append(_slash())
+	var mid: int = ps.combatant.block
+	combat.play_card(0, _first_playable(combat, 0))          # 4 + 3*2 = 10
+	_expect(cold == 4 and ps.combatant.block - mid == 10,
+		"block_per_exhausted scales with cards burned this fight")
+
+
+## Detonator's exhaust_pick fires AFTER preview() (combat.gd's exhaust_pick
+## branch runs well below the `var pv := preview(...)` line), so it never
+## counts its own sacrifice — the test above this one. "Spent" (self_exhaust)
+## is the opposite ordering: it appends the played card to exhaust_pile
+## BEFORE preview() is called (combat.gd's `enchant_effect == "self_exhaust"`
+## branch runs ahead of `var pv := preview(...)`), so a Spent-enchanted
+## block_per_exhausted card pays itself for its own burn. Both orderings are
+## real and neither is a bug; this pins the one damage_per_exhausted's own
+## Spent case never had a test for either.
+func _test_spent_enchanted_block_per_exhausted_counts_its_own_burn() -> void:
+	var combat := _new_combat([_deck_of(_pressure_valve, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var idx := _first_playable(combat, 0)
+	ps.hand[idx] = ps.hand[idx].enchanted_copy("spent")
+	combat.play_card(0, idx)
+	_expect(ps.combatant.block == 7 and ps.exhaust_pile.size() == 1,
+		"a Spent-enchanted Pressure Valve counts its own burn: 4 + 3*1 = 7, unlike Detonator's exhaust_pick")
+
+
 ## Content.make_card returns an EMPTY card for an unknown id rather than failing,
 ## so a typo in a deck or pool is silently a blank card in someone's hand. Catch it.
 func _test_every_referenced_card_id_resolves() -> void:
@@ -10523,6 +10562,8 @@ func _dig_in() -> Card:
 	return Card.from_dict({"id": "dig_in", "name": "Dig In", "type": "skill", "cost": 1, "block": 4, "timed": true, "timed_block": 6})
 func _scrap_drive() -> Card:
 	return Card.from_dict({"id": "scrap_drive", "name": "Scrap Drive", "type": "attack", "cost": 1, "damage": 3, "damage_per_exhausted": 3})
+func _pressure_valve() -> Card:
+	return Card.from_dict({"id": "pressure_valve", "name": "Pressure Valve", "type": "skill", "cost": 1, "block": 4, "block_per_exhausted": 3})
 func _detonator() -> Card:
 	return Card.from_dict({"id": "detonator", "name": "Detonator", "type": "attack", "cost": 3, "damage": 4, "damage_per_exhausted": 6, "exhaust_pick": true})
 func _anchor_brace() -> Card:

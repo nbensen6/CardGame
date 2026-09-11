@@ -2746,7 +2746,37 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-11 (latest), #86 duty 2 (find an error and resolve it) — a
+- **2026-09-11 (latest), #86 duty 3 (verify a mechanic actually works) —
+  `block_per_exhausted` (Pressure Valve, Scrap Shield), the Block-side twin of
+  `damage_per_exhausted`, had never been driven by anything in
+  `run_tests.gd`.** Last commit (`2dab2bd`) was duty 2, so this turn is duty
+  3. A repo-wide sweep of every `Card` field against `run_tests.gd` found it
+  was the only scaling field with zero mentions — its exact sibling
+  `damage_per_exhausted` already had two tests (plain scaling, plus a
+  Detonator ordering guard) and this had none. Added
+  `_test_block_per_exhausted_scales_with_the_burn_pile`, mirroring the
+  damage-side scaling test (empty-pile first call reads 4 block only; two
+  burns later reads 4 + 3\*2 = 10), and a second test,
+  `_test_spent_enchanted_block_per_exhausted_counts_its_own_burn`, pinning
+  the ordering the Detonator test does NOT cover: "Spent" (`self_exhaust`)
+  appends the played card to `exhaust_pile` in `combat.gd`'s
+  `enchant_effect == "self_exhaust"` branch, which runs BEFORE `preview()` is
+  called a few lines down — the opposite order from `exhaust_pick`, whose
+  sacrifice fires after `preview()`. So a Spent-enchanted Pressure Valve
+  legitimately counts its own burn (4 + 3\*1 = 7) where a Detonator does not
+  count its own sacrifice. Neither ordering is a bug; nothing had proven
+  either for the Block side before this. Along the way, confirmed a
+  genuine but separate finding for a future duty-2 run: `preview()`'s
+  `ally_blk` (combat.gd:534) is `card.ally_block` alone, with no
+  `block_per_exhausted` term — so Scrap Shield's own card text ("All players
+  gain 3 Block and an additional 2 per card burned") pays the caster the
+  per-burn bonus but not the ally. Left unfixed and untouched this run
+  (that's duty-2 scope, not duty 3); noting it here rather than
+  `design/progress/bugs.md` since it's a `/core` logic gap, not a
+  presentation-only one that needs a screen.
+  `run_tests.gd`: ALL TESTS PASSED.
+
+- **2026-09-11, #86 duty 2 (find an error and resolve it) — a
   FOURTH copy of "who does this telegraphed move hit" was still wrong, on a
   path the last two duty-2 fixes (rift, then the swipes) never gated.**
   Last commit (`d990e6e`) was duty 3, so this turn is duty 2.
