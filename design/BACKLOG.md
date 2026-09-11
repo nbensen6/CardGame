@@ -2746,6 +2746,31 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-11 (later still), #86 duty 3 (verify a mechanic actually works) —
+  the private-hand promise (CLAUDE.md §2) had never been proven against a
+  client's own defenses.** Last commit (`cc07b7c`) was duty 2, so this turn
+  is duty 3. `GameClient._on_message` drops any snapshot whose `for_peer`
+  doesn't match its own peer id — one `if` — and `LocalTransport.send_to`'s
+  own comment says that filter is the ONLY thing standing between "every
+  client gets every message" (the loopback transport really does broadcast
+  every snapshot to every client) and a player's hand staying private.
+  Every existing session test only drove the HOST addressing snapshots
+  correctly; none ever fed a client a snapshot meant for somebody else and
+  checked it got refused. Added
+  `_test_backlog86_game_client_drops_a_snapshot_addressed_to_another_peer`
+  in `game/tools/run_tests.gd` (Session / client-server split section): two
+  `GameClient`s on one bare `LocalTransport`, no `GameHost` at all (same
+  "poke the transport directly" trick the `EnetTransport` tests already
+  use) — sends a snapshot addressed to peer 10, confirms peer 20's
+  private/shared state is untouched, then sends one addressed to peer 20
+  and confirms peer 10's hand from the FIRST message is still exactly what
+  it was, never overwritten by its ally's cards. Proved the test means
+  something by breaking the filter (`!=` to `==` in `_on_message`) and
+  confirming it fails, then restoring it. No bug found — the filter is
+  correct — only that nothing proved it before. Fresh `--import`, headless,
+  Godot 4.7.1-stable, `run_tests.gd`: 1459 passed, 0 failed, ALL TESTS
+  PASSED. Next `#86` turn is duty 2.
+
 - **2026-09-11 (still later), #86 duty 2 (find an error and resolve it) —
   `Combat.preview()`'s `ally_blk` formula carried only `block_per_exhausted`
   of the four scaling terms the caster's own `blk` gets.** Last commit

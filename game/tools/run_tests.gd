@@ -542,6 +542,7 @@ func _init() -> void:
 	_test_backlog86_coop_cannot_pick_the_same_character_twice()
 	_test_backlog86_a_lobby_drop_frees_the_character_they_had_claimed()
 	_test_session_shared_state_exposes_the_seed()
+	_test_backlog86_game_client_drops_a_snapshot_addressed_to_another_peer()
 	# backlog #45: prove the new mechanics cross the client/server boundary
 	_test_backlog45_potions_are_shared_but_only_the_owner_can_drink_them()
 	_test_backlog45_status_curse_card_stays_private_to_its_owner()
@@ -9940,6 +9941,36 @@ func _test_session_shared_state_exposes_the_seed() -> void:
 	var c0_99: GameClient = s99["c0"]
 	_expect(int(c0_42.shared["seed"]) == 42 and int(c0_99.shared["seed"]) == 99,
 		"the run's seed rides along in the shared snapshot, matching what it was started with")
+
+
+## #86 duty 3: the private-hand promise (CLAUDE.md §2 — "a player's hand is
+## only ever seen by that player") has exactly one line of code standing
+## behind it in GameClient._on_message: dropping any snapshot whose
+## "for_peer" doesn't match this client's own peer id. LocalTransport.send_to
+## says outright, in its own comment, that this filter is the ONLY thing
+## between "every client gets every message" and real hand privacy — the
+## loopback transport broadcasts every snapshot to every client and trusts
+## each one to filter itself. Nothing in this file had ever driven that
+## filter directly: every session test above only proves the HOST addresses
+## snapshots correctly, never that a client actually defends itself against
+## one addressed to somebody else. Driven with no host at all, the same
+## "poke the transport directly" trick the EnetTransport tests use below.
+func _test_backlog86_game_client_drops_a_snapshot_addressed_to_another_peer() -> void:
+	var t := LocalTransport.new()
+	var c0 := GameClient.new(t, 10)
+	var c1 := GameClient.new(t, 20)
+	t.send_to(-1, {"type": "snapshot", "for_peer": 10, "you": 0,
+		"shared": {"turn": 1}, "private": {"hand": ["frog_bite"]}})
+	_expect(c0.private.get("hand", []) == ["frog_bite"] and int(c0.shared.get("turn", 0)) == 1,
+		"the addressed peer accepts its own snapshot")
+	_expect(c1.private.is_empty() and c1.shared.is_empty(),
+		"a client discards a snapshot addressed to another peer, never touching its own private/shared state")
+	t.send_to(-1, {"type": "snapshot", "for_peer": 20, "you": 1,
+		"shared": {"turn": 2}, "private": {"hand": ["mountain_climbers_slam"]}})
+	_expect(c1.private.get("hand", []) == ["mountain_climbers_slam"] and int(c1.shared.get("turn", 0)) == 2,
+		"the other peer accepts the next snapshot addressed to it")
+	_expect(c0.private.get("hand", []) == ["frog_bite"] and int(c0.shared.get("turn", 0)) == 1,
+		"the first client's private hand is untouched by a snapshot meant for its ally -- it never even sees the ally's cards")
 
 
 # --- Backlog #45: six /core mechanics, proven across a real host/client pair -
