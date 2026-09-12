@@ -419,6 +419,8 @@ func _init() -> void:
 	_test_damage_boss_reports_nothing_when_fully_blocked()
 	_test_armored_damage_boss_reports_only_what_gets_through_block()
 	_test_damage_to_add_reports_only_what_gets_through_block()
+	_test_boss_hits_reports_only_what_gets_through_block()
+	_test_boss_hits_reports_nothing_when_fully_blocked()
 	_test_wound_decay_limiter_sheds_poison()
 	_test_sigil_fatigue_limiter_punishes_camping()
 	_test_shift_sigil_resets_the_sigil_fatigue_clock()
@@ -8493,6 +8495,43 @@ func _test_damage_to_add_reports_only_what_gets_through_block() -> void:
 	combat.play_card(0, 0, true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
 	_expect(add.hp == hp_before and combat.damage_dealt_total == 0,
 		"an add's Block absorbs a hit fully -- the log/stat must report 0, not the raw swing")
+
+
+## The same _damage_boss()/_damage_add() gap, in the OTHER direction: the
+## boss hitting a hunter. _boss_hits() fired MOMENT_DAMAGE_TAKEN with the raw
+## pre-mitigation swing handed to take_damage(), not what actually reached
+## the hunter's hp -- so a relic/power/stat listening for "how much damage
+## did this hunter actually take" would overstate it exactly like the
+## player-hits-boss direction used to, on every "attack"/"attack_all"/
+## "swipe_*"/"rift" boss move (every _boss_hits() caller).
+func _test_boss_hits_reports_only_what_gets_through_block() -> void:
+	var boss := _dummy_boss(300, 6)  # boss attacks for 6 every turn
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var events: Array = []
+	combat._on(Combat.MOMENT_DAMAGE_TAKEN, func(ctx):
+		if ctx.get("from_boss", false):
+			events.append(ctx))
+	combat.players[0].combatant.block = 4  # 4 of the 6 absorbed, 2 gets through
+	combat.end_turn(0)
+	combat.end_turn(1)
+	_expect(events.size() == 1 and int(events[0]["amount"]) == 2,
+		"a partially-blocked boss hit fires MOMENT_DAMAGE_TAKEN with the 2 that actually reached hp, not the raw 6")
+
+
+## Same gap, full mitigation: a boss hit Block swallows entirely must report
+## exactly 0 through the moment, not the move's raw value.
+func _test_boss_hits_reports_nothing_when_fully_blocked() -> void:
+	var boss := _dummy_boss(300, 6)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var events: Array = []
+	combat._on(Combat.MOMENT_DAMAGE_TAKEN, func(ctx):
+		if ctx.get("from_boss", false):
+			events.append(ctx))
+	combat.players[0].combatant.block = 20  # more than enough to eat the whole 6
+	combat.end_turn(0)
+	combat.end_turn(1)
+	_expect(events.size() == 1 and int(events[0]["amount"]) == 0,
+		"a fully-blocked boss hit reports zero through MOMENT_DAMAGE_TAKEN, not the move's raw value")
 
 
 func _test_wound_decay_limiter_sheds_poison() -> void:

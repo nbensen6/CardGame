@@ -1480,10 +1480,19 @@ func boss_context() -> Dictionary:
 ## caller) means the boss itself, exactly as before this param existed; an add's
 ## own attack (see _adds_turn()) passes itself so Thorns reflects onto the add
 ## that actually landed the hit, not the main boss standing next to it.
+##
+## backlog #86 duty 2: same gap _damage_boss()/_damage_add() already had —
+## this fired MOMENT_DAMAGE_TAKEN with the raw pre-mitigation `dmg`, not what
+## take_damage() actually took off the hunter's hp. A hunter holding
+## Block/Buffer/Intangible against a boss "attack"/"attack_all"/"swipe_*"/
+## "rift" move (every _boss_hits() caller in _enemy_turn()/_adds_turn()) would
+## have this moment overstate the hit exactly the way the player-hits-boss
+## direction used to, before those two were fixed.
 func _boss_hits(ps: PlayerState, dmg: int, attacker: Combatant = null) -> void:
 	var atk: Combatant = attacker if attacker != null else boss
+	var dealt := ps.combatant.predicted_damage(dmg)
 	ps.combatant.take_damage(dmg)
-	_fire(MOMENT_DAMAGE_TAKEN, {"target": ps, "amount": dmg, "from_boss": true})
+	_fire(MOMENT_DAMAGE_TAKEN, {"target": ps, "amount": dealt, "from_boss": true})
 	if ps.combatant.thorns > 0:
 		atk.take_damage(ps.combatant.thorns)
 		_log("%s's thorns bite back — %s takes %d." % [ps.combatant.name, atk.name, ps.combatant.thorns])

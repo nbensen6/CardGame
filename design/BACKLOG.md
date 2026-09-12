@@ -2782,7 +2782,30 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-12 (newest), #86 duty 2 attempted (false alarm, reverted), duty 3:
+- **2026-09-12 (newest), #86 duty 2: `_boss_hits()` fired `MOMENT_DAMAGE_TAKEN`
+  with the raw pre-mitigation swing, not what actually reached the hunter's
+  hp.** Last commit (`8f0096a`) was duty 3, so this run was duty 2. Same
+  shape as the already-fixed `_damage_boss()`/`_damage_add()` gap (the two
+  fixes right below this one in the file) but on the mirror-image function —
+  the boss hitting a PLAYER instead of a player hitting the boss/an add.
+  `_boss_hits()` called `ps.combatant.take_damage(dmg)` (which spends
+  Block/Buffer/Intangible) and then fired the moment with the same `dmg` it
+  was handed, never asking `Combatant.predicted_damage(dmg)` — the exact
+  helper its two siblings already use — what actually landed. Concrete case:
+  a hunter holding 4 Block against a boss "attack" for 6 takes 0 real
+  damage (fully into Block after the first 4, 2 gets through to hp — so hp
+  drops by 2), but the fired event claimed 6. `"from_boss"` is a brand-new
+  key with zero other readers in the tree today (no relic/stat/view consumes
+  it yet), so this was dormant, not a live regression — same status the
+  Sure-enchant fix logged on 2026-09-09. Fixed by computing `dealt` via
+  `predicted_damage()` BEFORE `take_damage()` spends the mitigation, mirroring
+  the two sibling fixes exactly. Added
+  `_test_boss_hits_reports_only_what_gets_through_block` (partial block) and
+  `_test_boss_hits_reports_nothing_when_fully_blocked` (full block); both
+  fail on the pre-fix code (checked via `git stash` on just `combat.gd`) and
+  pass after. Full suite still prints `ALL TESTS PASSED`.
+
+- **2026-09-12, #86 duty 2 attempted (false alarm, reverted), duty 3:
   `rest_heal_amount()`'s own floor-at-1 promise had never been exercised at
   its actual boundary.** Last commit (`5776e67`) was duty 3, so this turn
   opened as duty 2. A research agent's first candidate was `views/
