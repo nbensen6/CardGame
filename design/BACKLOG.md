@@ -2782,7 +2782,48 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-12 (latest), #86 duty 2 attempted (came up clean a third time),
+- **2026-09-12 (latest), #86 duty 2: light_cost (#47's bank-and-spend cost)
+  never joined the two hand-copied "fx" dicts (`game_host.gd`'s
+  `_slot_private()` and `_deck_face()`), only `light_gain` did.** Last commit
+  (`ee33c53`) was duty 3, so this turn opened on duty 2. This is the same
+  "hand-copied field list drifts" shape duty 2 has now fixed a dozen times
+  over (cheapen_amount, ally_heal, scry, intangible/buffer/plated_armour,
+  topdeck/shuffle_in/tutor, hits_all_enemies, targets_hold, dexterity, thorns,
+  frail) — dispatched a research agent to hunt fresh territory
+  (`game_host.gd`'s snapshot-building beyond what #89/#90 already found,
+  `game/data/*.json` field cross-references, `deck_view.gd`/`card_view.gd`,
+  and the simulation harnesses for a second copy of combat math) rather than
+  re-tread the views/gesture code the last three runs already covered, and it
+  landed on this one first try.
+
+  `Card.light_cost` is real and load-bearing — `Combat.can_play()` gates on it
+  and `Combat.play_card()` spends it — but `CardView.face_text()` builds its
+  live description entirely from the `fx`/`preview`/`base` dicts and falls
+  back to the authored `text` string only when nothing else fires first.
+  Guiding Light ("Spend 3 Light. Heal an ally 8.") and Flare ("Spend 5 Light.
+  Deal 14 damage.") both have another effect that fills the output first, so
+  both cards' live faces — in hand mid-fight, and in the deck/campfire view —
+  silently dropped the Light cost entirely: a player saw what looked like a
+  free effect beyond the energy cost, then found the card unplayable once
+  their banked Light ran low, with nothing on the card ever having said why.
+
+  Added `"light_cost": c.light_cost` to both fx dict literals and a new
+  branch in `face_text()` (printed first, matching the authored text's own
+  "Spend N Light." lead clause). Five new tests: the wire test (hand snapshot
+  via `_broadcast_state()`), the `_deck_face()` sibling copy, and a direct
+  `face_text()` test against hand-built dicts for both Guiding Light and
+  Flare. Verified the tests actually catch the regression: reverted the new
+  `face_text()` branch, reran — exactly the four tests touching that output
+  string failed (the two wire/deck-face fx-dict assertions still passed,
+  correctly, since the dict field itself was untouched), nothing else did —
+  restored it, fresh `--import`, full suite green. One test bug caught along
+  the way: the wire test first assumed the appended card would land at
+  `hand[0]`, which broke because the starting hand already holds drawn cards
+  and the append lands at the end — fixed by looking the card up by name,
+  the same pattern the cheapen_amount test already used. Next `#86` turn is
+  duty 3.
+
+- **2026-09-12, #86 duty 2 attempted (came up clean a third time),
   duty 3: combat_3d's own card-drag rule (press-and-move to pick a card up,
   release over the fight to play it, release back over the hand to put it
   down, and a plain tap still plays the card) had zero coverage.** Last

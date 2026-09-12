@@ -928,6 +928,19 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 	var kw: Array = data.get("keywords", [])
 	var out: PackedStringArray = []
 
+	# backlog #86 duty 2 — the same "GameHost's fx dict never carried this
+	# field" gap as light_gain/ally_heal/dexterity/etc. above, this time for
+	# light_cost (#47's bank-and-spend cost, Combat.can_play()/play_card()):
+	# Guiding Light ("Spend 3 Light. Heal an ally 8.") and Flare ("Spend 5
+	# Light. Deal 14 damage.") both have another effect that fires first and
+	# fills `out`, so their live face silently dropped the Light cost entirely
+	# — a player saw a card that looked free beyond its energy cost, then
+	# found it unplayable once their banked Light ran low with nothing on the
+	# card ever having said why. Printed first, matching the authored text's
+	# own "Spend N Light." lead clause.
+	if int(fx.get("light_cost", 0)) > 0:
+		out.append("Spend %d %s." % [int(fx["light_cost"]), _kw("Light", "light", kw, rich)])
+
 	var dmg := int(pv.get("damage", 0))
 	if dmg > 0:
 		var n := int(fx.get("hits", 1))

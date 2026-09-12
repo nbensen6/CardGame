@@ -708,6 +708,11 @@ func _slot_private(pi: int) -> Dictionary:
 					"pull_ally": c.pull_ally, "sac_ally_grip": c.sac_ally_grip,
 					"hits": c.hits, "light_gain": c.light_gain, "ally_energy": c.ally_energy,
 					"discard": c.discard,
+					# backlog #86 duty 2 — light_cost (#47's bank-and-spend cost)
+					# never joined this dict, only light_gain did: Guiding Light's
+					# and Flare's live faces silently dropped "Spend N Light."
+					# the moment their own ally_heal/damage line filled `out`.
+					"light_cost": c.light_cost,
 					"power_effect": c.power_effect, "power_value": c.power_value,
 					# backlog #86 duty 2 — ally_heal (the Lightbearer's Mend) and scry
 					# were added to Card by backlog #47/#59 but never joined this
@@ -960,6 +965,10 @@ func _deck_face(c: Card, i: int) -> Dictionary:
 			"pull_ally": c.pull_ally, "sac_ally_grip": c.sac_ally_grip,
 			"hits": c.hits, "light_gain": c.light_gain, "ally_energy": c.ally_energy,
 			"discard": c.discard,
+			# backlog #86 duty 2 — same field-list drift as the hand dict's fx
+			# above, missed for light_cost: a campfire Guiding Light/Flare's
+			# deck-view face couldn't show its Light cost either.
+			"light_cost": c.light_cost,
 			"power_effect": c.power_effect, "power_value": c.power_value,
 			# backlog #86 duty 2 — same field-list drift as the hand dict above
 			# (_slot_private); kept in sync here since a deck-view card is built

@@ -568,6 +568,9 @@ func _init() -> void:
 	_test_backlog86_deck_view_shows_targets_hold_too()
 	_test_backlog86_cheapen_amount_fx_carries_over_the_wire()
 	_test_backlog86_deck_view_shows_cheapen_amount_too()
+	_test_backlog86_light_cost_fx_carries_over_the_wire()
+	_test_backlog86_deck_view_shows_light_cost_too()
+	_test_backlog86_face_text_shows_light_cost_alongside_another_effect()
 	_test_backlog45_named_holds_cross_to_both_peers_identically()
 	_test_backlog45_graded_timing_quality_reaches_the_host_and_the_preview()
 	# backlog #46: a robustness sweep that is not balance tuning
@@ -10709,6 +10712,55 @@ func _test_backlog86_deck_view_shows_cheapen_amount_too() -> void:
 	_expect(CardView.face_text(base) == "Burn a card to cheapen another by 1."
 			and CardView.face_text(up) == "Burn a card to cheapen another by 2.",
 		"a campfire-sharpened Burn Coal's deck-view 'View Upgrades' preview shows the sharpened amount, not the base card's")
+
+
+## backlog #86 duty 2 — the same "GameHost's fx dict never carried this field"
+## gap as cheapen_amount/targets_hold above, this time for light_cost (#47's
+## bank-and-spend cost): Guiding Light (light_cost 3, ally_heal 8) and Flare
+## (light_cost 5, damage 14) both have another effect that fills `out` first,
+## so their live face silently dropped "Spend N Light." even though
+## Combat.can_play()/play_card() genuinely still gate and spend it.
+func _test_backlog86_light_cost_fx_carries_over_the_wire() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	host._run.combat.players[0].hand.append(Content.make_card("guiding_light"))
+	host._broadcast_state()
+	var hand: Array = c0.private["hand"]
+	var card: Dictionary = {}
+	for card_v in hand:
+		if String((card_v as Dictionary)["name"]) == "Guiding Light":
+			card = card_v
+	_expect(int((card["fx"] as Dictionary).get("light_cost", 0)) == 3,
+		"Guiding Light's fx dict carries light_cost to the owner's client")
+	_expect(CardView.face_text(card) == "Spend 3 Light. Heal an ally 8.",
+		"the live face states the Light cost alongside the heal, not just the heal")
+
+
+## `_deck_face()`'s fx dict is a second hand-copied copy of the same field
+## list and had the identical light_cost gap as `_slot_private()` above.
+func _test_backlog86_deck_view_shows_light_cost_too() -> void:
+	var host := GameHost.new(LocalTransport.new(), 1, 2)
+	_kept.append(host)
+	var flare := host._deck_face(Content.make_card("flare"), 0)
+	_expect(int((flare["fx"] as Dictionary).get("light_cost", 0)) == 5,
+		"_deck_face()'s fx dict carries light_cost")
+	_expect(CardView.face_text(flare) == "Spend 5 Light. Deal 14 damage.",
+		"a campfire deck-view Flare states its Light cost alongside its damage")
+
+
+## face_text() itself never grew a branch for light_cost at all -- prove it
+## directly against a hand-built preview dict, the same shape as the
+## ally_heal/scry duty-2 tests above, rather than only through the wire.
+func _test_backlog86_face_text_shows_light_cost_alongside_another_effect() -> void:
+	var guiding_light := {"preview": {"damage": 0}, "preview_miss": {}, "base": {},
+		"keywords": [], "fx": {"light_cost": 3, "ally_heal": 8}}
+	_expect(CardView.face_text(guiding_light, false) == "Spend 3 Light. Heal an ally 8.",
+		"a card spending Light AND healing the ally states both, not just the heal")
+	var flare := {"preview": {"damage": 14}, "preview_miss": {}, "base": {"damage": 14},
+		"keywords": [], "fx": {"light_cost": 5}}
+	_expect(CardView.face_text(flare, false) == "Spend 5 Light. Deal 14 damage.",
+		"a card spending Light AND dealing damage states both, not just the damage")
 
 
 ## Named holds (backlog #24) widened Boss.ledges from a bare int array to an
