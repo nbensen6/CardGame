@@ -1130,6 +1130,21 @@ func _init() -> void:
 	_test_backlog86_hit_circle_path_point_walks_constant_speed_not_by_index()
 	_test_backlog86_hit_circle_path_point_endpoints_and_clamped_range()
 	_test_backlog86_hit_circle_path_point_degenerate_paths_never_divide_by_zero()
+	# backlog #86 duty 3: combat_3d.gd's own header comment quotes Nick's spec
+	# for dragging a card out of the hand -- press-and-move picks it up,
+	# release over the fight plays it, release back over the hand puts it
+	# down, and "a press that never moves is still a tap, and a tap still
+	# plays the card... on a phone there is no other way to play one." Two
+	# decisions carry that promise (when a press becomes a live drag at all,
+	# and whether a release plays the card or returns it) and neither had ANY
+	# coverage -- grepping DRAG_SLOP/HAND_BAND/_drag_live/_drag_input against
+	# this whole file found nothing. Lifted the same way route_between_rungs
+	# and drag_latch were: plain scalars in, plain bool out.
+	_test_backlog86_card_drag_becomes_live_stays_false_inside_the_slop()
+	_test_backlog86_card_drag_becomes_live_trips_at_the_slop_boundary()
+	_test_backlog86_drag_release_plays_card_never_fires_on_a_plain_tap()
+	_test_backlog86_drag_release_plays_card_returns_a_release_inside_the_hand_band()
+	_test_backlog86_drag_release_plays_card_plays_a_release_above_the_hand_band()
 	# _test_backlog86_hit_circle_gui_input_ignores_a_press_far_from_the_live_note lives
 	# in _finish_with_deferred_tests below: it needs a real Camera3D actually inside
 	# the tree (unproject_position/is_position_behind both require it), and root
@@ -15528,6 +15543,41 @@ func _test_backlog86_hit_circle_path_point_degenerate_paths_never_divide_by_zero
 	_expect(hc._path_point(all_zero, 0.9) == Vector2(5, 5),
 		"a path with zero total length (every point the same) returns that point rather than dividing by a zero total")
 	hc.free()
+
+
+## backlog #86 duty 3: Combat3D.card_drag_becomes_live/drag_release_plays_card --
+## whether a press has really left the tap zone, and whether letting go plays the
+## card or puts it back. Matches the real `_drag_input` comparisons: the slop
+## check is `>=`, so a sample exactly AT the slop counts as having left it.
+func _test_backlog86_card_drag_becomes_live_stays_false_inside_the_slop() -> void:
+	_expect(not Combat3D.card_drag_becomes_live(3.0, Combat3D.DRAG_SLOP),
+		"a motion sample still inside the slop radius must not trip the drag -- it might still be a tap, the only way to play a card on a touch device")
+
+
+func _test_backlog86_card_drag_becomes_live_trips_at_the_slop_boundary() -> void:
+	_expect(Combat3D.card_drag_becomes_live(Combat3D.DRAG_SLOP, Combat3D.DRAG_SLOP),
+		"a sample AT the slop radius counts as having left it, matching the >= in the real handler")
+
+
+func _test_backlog86_drag_release_plays_card_never_fires_on_a_plain_tap() -> void:
+	_expect(not Combat3D.drag_release_plays_card(false, 0.0, 500.0),
+		"a release that never went live is a tap -- this path must never play it, or a plain tap-to-play (the only way to play a card on a phone) would double-fire through the Button's own press")
+	_expect(not Combat3D.drag_release_plays_card(false, 999.0, 500.0),
+		"the same holds regardless of where an un-lifted release lands")
+
+
+func _test_backlog86_drag_release_plays_card_returns_a_release_inside_the_hand_band() -> void:
+	var floor_y := 600.0 - Combat3D.HAND_BAND
+	_expect(not Combat3D.drag_release_plays_card(true, floor_y + 1.0, floor_y),
+		"a live drag released back inside the HAND_BAND -- still in your hand -- goes home rather than playing")
+	_expect(not Combat3D.drag_release_plays_card(true, floor_y, floor_y),
+		"the floor itself belongs to the band (a strict < in the real handler), so a release exactly on it still goes home")
+
+
+func _test_backlog86_drag_release_plays_card_plays_a_release_above_the_hand_band() -> void:
+	var floor_y := 600.0 - Combat3D.HAND_BAND
+	_expect(Combat3D.drag_release_plays_card(true, floor_y - 1.0, floor_y),
+		"a live drag released above the HAND_BAND floor -- out over the fight -- plays the card")
 
 
 ## backlog #86 duty 3: prove HitCircle's own click-gating actually works, through

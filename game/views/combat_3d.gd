@@ -4019,6 +4019,23 @@ var _drag_index := 0               # its place in the fan, to put it back
 var _drag_live := false            # past the slop, actually carrying it
 
 
+## One motion sample's effect on whether a press has become a real drag yet.
+## Matches the `<` in `_drag_input` below (so `distance_from_press == slop`
+## already counts) — below that, the pointer might still be settling into a
+## tap, which is the ONLY way to play a card on a device with no right-click.
+static func card_drag_becomes_live(distance_from_press: float, slop: float) -> bool:
+	return distance_from_press >= slop
+
+
+## Whether letting go plays the card, as opposed to putting it back in the
+## fan. A release that never went live is a tap — left alone here so the
+## card's own Button press plays it, never this path — and a live drag only
+## plays when it lands above the HAND_BAND floor along the bottom; released
+## inside the band, it goes home instead.
+static func drag_release_plays_card(was_live: bool, release_y: float, floor_y: float) -> bool:
+	return was_live and release_y < floor_y
+
+
 ## Called from every card's gui_input. Only starts the candidate — the drag
 ## itself is not live until the pointer has moved DRAG_SLOP.
 func _card_pressed(event: InputEvent, cv: CardView, data: Dictionary) -> void:
@@ -4051,7 +4068,7 @@ func _drag_input(event: InputEvent) -> bool:
 	if mm != null:
 		_drag_at = mm.global_position
 		if not _drag_live:
-			if _drag_at.distance_to(_drag_from) < DRAG_SLOP:
+			if not card_drag_becomes_live(_drag_at.distance_to(_drag_from), DRAG_SLOP):
 				return false
 			_lift()
 		_drag.global_position = _drag_at + _drag_grab
@@ -4068,7 +4085,7 @@ func _drag_input(event: InputEvent) -> bool:
 		if not live:
 			return false             # a tap; let the Button's own press play it
 		var floor_y: float = get_viewport().get_visible_rect().size.y - HAND_BAND
-		if here.y < floor_y:
+		if drag_release_plays_card(live, here.y, floor_y):
 			_on_card_tapped(data, card)
 		return true
 	return false

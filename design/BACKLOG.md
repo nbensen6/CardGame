@@ -2782,7 +2782,49 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-12 (latest), #86 duty 2 attempted (came up clean again), duty 3:
+- **2026-09-12 (latest), #86 duty 2 attempted (came up clean a third time),
+  duty 3: combat_3d's own card-drag rule (press-and-move to pick a card up,
+  release over the fight to play it, release back over the hand to put it
+  down, and a plain tap still plays the card) had zero coverage.** Last
+  commit (`f2fc7a5`) was duty 3, so this turn opened on duty 2. Dispatched a
+  research agent to read `game/ui/*.gd` in full and the presentation-heavy
+  parts of `game/views/*.gd` (`game_3d.gd`, `location_3d.gd`,
+  `overworld_3d.gd`, `combat_3d.gd`'s reaction/camera/drag code) for a
+  first-pass-hole or two-copies-of-truth bug — a third pass over largely the
+  same UI/view territory the two immediately preceding runs (`8e56f4d`,
+  `f2fc7a5`) already covered. It came back clean again: every candidate it
+  found (sentinel vars like `_win_at`/`_framed_act`, the `fx` dict built
+  twice for the hand payload vs. the deck screen, `combat_3d._react`'s
+  frame-1 HP-delta sentinels) traced out as already correct or already fixed
+  with its own regression test. Per the item's own escape clause, fell
+  through to duty 3 in the same run.
+
+  A second research agent found `combat_3d.gd`'s card-drag handler
+  (`_card_pressed`/`_drag_input`/`_lift`/`_drop`, lines ~3975-4162): its own
+  header comment quotes Nick's spec directly ("press and move to pick a card
+  up... a press that never moves is still a tap, and a tap still plays the
+  card... on a phone there is no other way to play one"), but grepping
+  `DRAG_SLOP`/`HAND_BAND`/`_drag_live`/`_drag_input` against `run_tests.gd`
+  found zero hits — the two decisions that carry that promise (when a press
+  becomes a live drag past `DRAG_SLOP`, and whether a release plays the card
+  or returns it to the fan depending on `HAND_BAND`) had never been proven,
+  the same shape as the overworld's `drag_latch`/`is_look_release` and
+  HitCircle's click-gating, just never touched by either of those passes.
+
+  Lifted two pure statics out of `_drag_input` the same way:
+  `card_drag_becomes_live(distance_from_press, slop)` and
+  `drag_release_plays_card(was_live, release_y, floor_y)`, wired the real
+  handler to call them instead of inlining the comparisons. Added five tests
+  covering the slop boundary (matching the real `>=`), a plain tap never
+  playing regardless of release position, a live release inside `HAND_BAND`
+  going home, and one above it playing. Verified both decisions actually
+  matter: broke `drag_release_plays_card` to ignore `was_live`, reran the
+  suite — only the "never fires on a plain tap" test failed; separately
+  broke `card_drag_becomes_live`'s `>=` to `>`, reran — only the boundary
+  test failed. Restored both, fresh `--import`, full suite green (894
+  tests). Next `#86` turn is duty 2.
+
+- **2026-09-12, #86 duty 2 attempted (came up clean again), duty 3:
   HitCircle's own click-gating (HIT_RADIUS) had zero coverage through its
   real entry point.** Last commit (`8e56f4d`) was duty 3, so this turn opened
   on duty 2. Dispatched a research agent to re-read `boss.gd`, `content.gd`,
