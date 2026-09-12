@@ -473,6 +473,7 @@ func _init() -> void:
 	_test_plated_armour_decays_only_when_a_hit_gets_hp_through()
 	_test_backlog86_buffer_voiding_a_hit_spares_plated_armour_from_decay()
 	_test_backlog86_intangibles_capped_hit_still_decays_plated_armour()
+	_test_backlog86_block_carries_carries_plated_armours_own_block_too()
 	_test_intangible_buffer_plated_armour_persist_through_save()
 	_test_boss_dexterity_intangible_buffer_plated_armour_persist_through_save()
 	# Cards that reward discarding (backlog #62)
@@ -9401,6 +9402,32 @@ func _test_backlog86_intangibles_capped_hit_still_decays_plated_armour() -> void
 		"Intangible still caps the hit at 1 damage and spends its own stack")
 	_expect(c.plated_armour == 1,
 		"the 1 HP that got through despite Intangible still decays Plated Armour by 1")
+
+
+## Another cross-product of two Plated Armour mechanics each proven alone.
+## _handle_block_carries()'s own doc comment is unqualified: "half of last
+## round's unspent Block survives the reset" — it reads whatever
+## `ps.combatant.block` actually holds, with no carve-out for where that Block
+## came from. _begin_round() re-seeds Plated Armour into `block` every round
+## (`round_block + carried_block + plated_armour`), so a hunter carrying both
+## relics should have the carry apply to Plated Armour's own contribution
+## exactly the same as any other Block. The existing block_carries test
+## (backlog #10, ~line 3868) only ever sets a bare `combatant.block` value by
+## hand; the two Plated Armour persistence tests above carry no block_carries
+## relic at all — neither ever put both on the same hunter.
+func _test_backlog86_block_carries_carries_plated_armours_own_block_too() -> void:
+	var boss := _dummy_boss(300, 0)  # a 0-damage attack — proves the carry math, not decay
+	var combat := _new_combat_mods([_deck_of(_hardshell, 10), _deck_of(_slash, 10)], 42,
+		boss, {"block_carries": 1})
+	var ps: PlayerState = combat.players[0]
+	combat.play_card(0, 0)  # Hardshell: Plated Armour 3 — block is now 3, all of it from the relic
+	_expect(ps.combatant.block == 3, "Plated Armour still grants ordinary Block immediately")
+	combat.end_turn(0)
+	combat.end_turn(1)  # round 2 begins: carried_block = floor(3 / 2) = 1, then +3 Plated Armour re-seed
+	_expect(ps.combatant.block == 4,
+		"block_carries reads whatever Block was actually left, Plated Armour included, not just round_block")
+	_expect(ps.combatant.plated_armour == 3,
+		"the Plated Armour stack itself is untouched by the carry — only the Block number compounds")
 
 
 func _test_intangible_buffer_plated_armour_persist_through_save() -> void:

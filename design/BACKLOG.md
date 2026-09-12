@@ -2782,6 +2782,45 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-12 (latest), #86 duty 3 (verify a mechanic actually works) —
+  block_carries had never been proven against a hunter who ALSO carries
+  Plated Armour.** Last commit (`504d0ab`) was duty 2, so this turn opened on
+  duty 3. Dispatched a research agent to read `combat.gd`/`boss.gd`/
+  `combatant.gd`/`card.gd`/`run.gd`/`run_map.gd`/`content.gd`/`progress.gd`/
+  `run_save.gd` end to end for a genuinely untested rule, cross-checked
+  against `run_tests.gd` (16.7k lines) by behavior, not just function names.
+  It surfaced two candidates. The first — mutual `ally_climb` (Mountain
+  Climbers' "roped together" passive) never propagating a SECOND hop back
+  through `_lift_roped_ally` when the just-lifted ally is themselves roped —
+  is a real code-level gap, but I traced it further and it's currently
+  unreachable: `ally_climb` exists on exactly one character (Mountain
+  Climbers) in `characters.json`, no relic or card grants it, and duplicate
+  character picks are already refused
+  (`_test_backlog86_coop_cannot_pick_the_same_character_twice`), so no fight
+  can ever have two hunters with `ally_climb > 0` at once — there is nothing
+  to regression-test against yet, same shape as the still-open conditional-add
+  gap noted in the prior duty-2 log entry. Took the second instead:
+  `_handle_block_carries()`'s own doc comment claims "half of last round's
+  unspent Block survives the reset" with no carve-out for where that Block
+  came from, and `_begin_round()` re-seeds Plated Armour into `block` every
+  round on top of whatever carries — so a hunter with both relics should have
+  the carry apply to Plated Armour's own contribution the same as any other
+  Block. The existing block_carries test (backlog #10) only ever sets a bare
+  `combatant.block` by hand; both existing Plated Armour persistence tests
+  carry no block_carries relic at all — neither ever combined the two.
+  Confirmed the code already does the documented thing correctly (this was a
+  coverage gap, not a bug): Hardshell (Plated Armour 3) played round 1 leaves
+  `block == 3`; round 2 re-seeds to `carried_block (floor(3/2)=1) + Plated
+  Armour (3) == 4`. Added
+  `_test_backlog86_block_carries_carries_plated_armours_own_block_too()`
+  and proved it actually catches a regression: temporarily changed
+  `_handle_block_carries` to exclude `plated_armour` from the carried amount
+  (a plausible-looking "fix a double count" patch someone might genuinely
+  write, believing it a bug), reran — the new test failed exactly as
+  expected (block_carries stalled) while nothing else did, then reverted.
+  Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS
+  PASSED. Next `#86` turn is duty 2 (find an error and resolve it).
+
 - **2026-09-12 (later still), #86 duty 2 (find an error and resolve it) —
   `_meld_cards()` dropped rarity/foil/borderless/upgraded/status, the SEVENTH
   time this exact dict has been caught missing fields that Card actually
