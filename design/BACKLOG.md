@@ -2782,6 +2782,45 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-12 (later still), #86 duty 2 (find an error and resolve it) —
+  `_meld_cards()` dropped rarity/foil/borderless/upgraded/status, the SEVENTH
+  time this exact dict has been caught missing fields that Card actually
+  has.** Last commit (`4576a79`) was duty 3, so this turn opened on duty 2.
+  Dispatched a research agent to read `combat.gd`/`run.gd`/`boss.gd`/
+  `combatant.gd`/`run_map.gd`/`content.gd`/`card.gd`/`progress.gd`/
+  `run_save.gd`/`game/net`/`game/session` end to end for a first-pass-hole or
+  two-copies-of-truth bug; it surfaced two candidates and I picked the
+  stronger one. `_meld_cards()`'s dict literal (combat.gd) has already been
+  caught missing type, light/scry, retain/ethereal, enchant, rule_upgrade and
+  power_value across six prior duty-2 turns (each with its own comment) — but
+  `rarity`, `foil`, `borderless`, `upgraded` and `status` were never in it at
+  all and had no comment explaining why, so `Card.from_dict()` silently
+  defaulted every one of them (rarity always came back "common", the rest
+  always `false`) regardless of what the two source cards actually were.
+  Fixed with the same generic idiom the rest of the function already uses:
+  booleans OR (matching taunt/retain/ethereal above them), rarity keeps
+  whichever side is rarer (new small `_RARITY_RANK` lookup, common/uncommon/
+  rare). Added `_test_backlog86_meld_carries_rarity_foil_borderless_upgraded_
+  and_status()`, melding a foil+borderless rare into an upgraded status
+  (curse) card and asserting the fused card is rare, foil, borderless,
+  upgraded and status all at once; confirmed it actually catches the bug by
+  reverting the fix and re-running — the three new assertions failed exactly
+  as expected while nothing else in the suite did, then restored the fix.
+  Honest caveat: today this is a latent-quality fix, not a live one — a
+  melded card is built straight into `ps.hand` and never gets copied back
+  into `Run.decks` (`decks[i]` only feeds `Combat` at fight start, nothing
+  writes a fused card back out), so nothing in the game currently reads
+  `status`/`upgraded` off a fused card, and `rarity`/`foil`/`borderless` only
+  ever mattered for how the card would render in-hand mid-fight, which this
+  cloud pass has no screen to confirm. The other candidate the research agent
+  found — `Boss._condition_met()` always sees an empty `context` for an add's
+  own `current_move()`, so any add given a conditional `"when"` would always
+  fall through to its `fallback` — is real but even more latent: no add in
+  `bosses.json` currently authors a `"when"` at all, so there's nothing to
+  regression-test against yet. Left it out of scope rather than write a test
+  against a scenario the data doesn't exercise; worth a future duty-2 turn
+  once a conditional add move actually ships.
+
 - **2026-09-12 (still later again), #86 duty 3 (verify a mechanic actually
   works) — a multi-hit card against a Thorned boss/add had never been proven
   to bite back once PER HIT.** Last commit (`b4124ab`) was duty 2, so this

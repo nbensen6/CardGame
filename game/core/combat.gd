@@ -311,6 +311,7 @@ func can_play(pi: int, ci: int) -> bool:
 ## card has one. If either was timed the result is one timed card carrying both
 ## timed bonuses and the LONGER chain. Only `meld` itself doesn't carry (no
 ## recursive fuse-cards).
+const _RARITY_RANK := {"common": 0, "uncommon": 1, "rare": 2}
 func _meld_cards(a: Card, b: Card) -> Card:
 	return Card.from_dict({
 		"id": "meld_%s_%s" % [a.id, b.id],
@@ -435,6 +436,17 @@ func _meld_cards(a: Card, b: Card) -> Card:
 		# Dropping it silently stripped e.g. "Cheap" (cost_cut) or "Sure"
 		# (auto_nail) off an enchanted card the moment it went into a meld.
 		"enchant": a.enchant if a.enchant != "" else b.enchant,
+		# backlog #86 duty 2 — the SEVENTH instance of this same drift: rarity/
+		# foil/borderless/upgraded/status were never in this dict at all, so
+		# Card.from_dict() silently defaulted every one of them (rarity
+		# "common", the rest false). Booleans OR the same way taunt/retain/
+		# ethereal already do above; rarity keeps whichever side is rarer, so
+		# fusing a common into a rare never reports the fused card as common.
+		"rarity": a.rarity if _RARITY_RANK.get(a.rarity, 0) >= _RARITY_RANK.get(b.rarity, 0) else b.rarity,
+		"foil": a.foil or b.foil,
+		"borderless": a.borderless or b.borderless,
+		"upgraded": a.upgraded or b.upgraded,
+		"status": a.status or b.status,
 	})
 
 ## A card's cost for a hunter, after any permanent Burn Coal reductions.

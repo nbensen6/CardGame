@@ -299,6 +299,7 @@ func _init() -> void:
 	_test_meld_carries_retain_and_ethereal()
 	_test_meld_carries_enchant()
 	_test_backlog86_meld_carries_rule_upgrade()
+	_test_backlog86_meld_carries_rarity_foil_borderless_upgraded_and_status()
 	_test_satchel_charge_detonates()
 	_test_rhythm_builds_and_scales()
 	_test_backlog86_fumbled_timed_card_does_not_build_rhythm()
@@ -5792,6 +5793,30 @@ func _test_backlog86_meld_carries_rule_upgrade() -> void:
 	var sharpened := fused.upgraded_copy()
 	_expect(fused.ethereal and not sharpened.ethereal and sharpened.damage == fused.damage,
 		"sharpening a melded card at a campfire must still apply its carried rule_upgrade (curing Ethereal) instead of silently falling back to a numeric bump")
+
+
+## backlog #86 duty 2 — the SEVENTH instance of _meld_cards' "hand-copied field
+## list drifts from Card's real fields" bug: rarity/foil/borderless/upgraded/
+## status were never in the dict at all, so Card.from_dict() silently
+## defaulted every one of them (rarity "common", the rest false) no matter
+## what the two source cards actually were.
+func _test_backlog86_meld_carries_rarity_foil_borderless_upgraded_and_status() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var rare_card := Content.make_card("goblin_jetpack")  # rarity "rare"
+	rare_card.foil = true
+	rare_card.borderless = true
+	var cursed := Content.make_card("bruised_grip").upgraded_copy()  # rarity "common", status true, upgraded true
+	ps.hand = [_meld_card(), rare_card, cursed]
+	ps.energy = 9
+	combat.play_card(0, 0, true, 1, 2)
+	var fused: Card = ps.hand[0]
+	_expect(fused.rarity == "rare",
+		"a meld keeps the RARER of the two source cards' rarity — dropping the field silently reported every fused card as common")
+	_expect(fused.foil and fused.borderless,
+		"a meld carries foil/borderless off either source card (OR, same idiom as taunt/retain/ethereal) — dropping them silently un-foiled a fused card")
+	_expect(fused.upgraded and fused.status,
+		"a meld carries upgraded/status off either source card (OR) — dropping them meant a fused card built from an already-sharpened or a curse card silently forgot both facts")
 
 
 func _test_satchel_charge_detonates() -> void:
