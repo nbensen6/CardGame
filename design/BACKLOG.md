@@ -2782,7 +2782,46 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-12 (latest), #86 duty 2: light_cost (#47's bank-and-spend cost)
+- **2026-09-12 (latest), #86 duty 3: `_draw_innate()` pulled EVERY innate
+  card out of the draw pile uncapped, overflowing the opening hand past
+  `HAND_SIZE` once a deck holds more innate cards than that — a real bug,
+  not just a coverage gap.** Last commit (`65e7734`) was duty 2, so this
+  turn opened on duty 3. Dispatched a research agent to read `game/core/*.gd`,
+  `game/session/*.gd`, `game/net/*.gd` and the rules-bearing (non-presentation)
+  logic in `game/views/*.gd`/`game/ui/*.gd` against the accumulated exclusion
+  list of ~35 mechanics prior duty-3 runs already covered.
+
+  It landed on `Combat._begin_round()`/`_draw_innate()`. Innate's own doc
+  comment (backlog #28) and `_begin_round`'s own comment both promise an
+  innate card "fills one of the normal draw's slots rather than adding to
+  the hand size", and the existing test
+  (`_test_innate_is_guaranteed_in_the_opening_hand`) pins exactly that: hand
+  size stays at `Combat.HAND_SIZE` (5) with one innate card in the deck. But
+  `_draw_innate()` pulled every innate card out of the draw pile with no cap
+  at all — with one copy that's a no-op difference, but every existing test
+  ever put exactly one innate card in a deck, so the uncapped loop had never
+  been exercised past that. `first_strike` (the only always-innate card)
+  carries no per-copy limit anywhere in `Card`/`Run`/`Content`, and
+  `Content.reward_pool()` never excludes cards already in a hunter's deck
+  the way `Run._relics_not_held` (backlog #86, 2026-09-09) does for relics —
+  so a real run drafting First Strike repeatedly across several reward
+  screens is a plausible end state, not a contrived one, and it would have
+  handed that hunter an opening hand bigger than five cards with nothing on
+  screen explaining why.
+
+  Wrote the regression test first: a deck with six `first_strike` copies
+  plus four Slash, and watched it fail honestly against the unfixed code —
+  `ps.hand.size() == 6`, all six First Strikes drawn, the normal draw
+  correctly contributing zero (`maxi(0, 5-6) == 0`) but nothing capping the
+  innate pull itself. Fixed by giving `_draw_innate` an explicit `cap`
+  parameter (`HAND_SIZE + _mod("draw")`, the same total the normal draw is
+  already clamped against) and stopping the pull once `pulled >= cap`,
+  leaving any overflow innate cards in the draw pile to be drawn normally
+  in a later round like any other card. Restored the fix, fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED (1530
+  passed). Next `#86` turn is duty 2 (find an error and resolve it).
+
+- **2026-09-12, #86 duty 2: light_cost (#47's bank-and-spend cost)
   never joined the two hand-copied "fx" dicts (`game_host.gd`'s
   `_slot_private()` and `_deck_face()`), only `light_gain` did.** Last commit
   (`ee33c53`) was duty 3, so this turn opened on duty 2. This is the same

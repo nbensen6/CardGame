@@ -260,6 +260,7 @@ func _init() -> void:
 	_test_retain_survives_into_the_next_round()
 	_test_innate_is_guaranteed_in_the_opening_hand()
 	_test_innate_does_not_reappear_every_round()
+	_test_backlog86_innate_caps_at_hand_size_with_more_innate_than_that()
 	# Ethereal (backlog #58)
 	_test_ethereal_exhausts_if_still_in_hand_at_end_of_turn()
 	_test_ethereal_played_card_is_not_exhausted()
@@ -6099,6 +6100,27 @@ func _test_innate_does_not_reappear_every_round() -> void:
 	combat.end_turn(1)  # round 2: a normal draw, not another guaranteed copy
 	_expect(ps.hand.size() == Combat.HAND_SIZE,
 		"round 2 draws a normal hand size — innate only guarantees round 1")
+
+
+## #86 duty 3: _draw_innate() pulled EVERY innate card out of the draw pile
+## uncapped, so a deck holding more innate cards than HAND_SIZE (reachable in
+## real play — first_strike carries no per-copy limit and duplicate reward
+## picks are never filtered the way relics are) overflowed the opening hand
+## past the size the test above pins. Innate is supposed to fill a normal-
+## draw SLOT, not exceed the hand itself.
+func _test_backlog86_innate_caps_at_hand_size_with_more_innate_than_that() -> void:
+	var deck: Array = []
+	for _i in range(6):
+		deck.append(_first_strike())
+	deck += _deck_of(_slash, 4)
+	var combat := _new_combat([deck, _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var innate_in_hand := 0
+	for c in ps.hand:
+		if c.innate:
+			innate_in_hand += 1
+	_expect(ps.hand.size() == Combat.HAND_SIZE and innate_in_hand == Combat.HAND_SIZE,
+		"6 innate cards in the deck must not overflow the opening hand past HAND_SIZE — got %d cards, %d innate" % [ps.hand.size(), innate_in_hand])
 
 
 ## Ethereal (backlog #58): Retain's opposite. A card left in hand at end of

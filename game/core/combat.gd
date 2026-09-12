@@ -1399,7 +1399,7 @@ func _begin_round() -> void:
 		# that would otherwise have been drawn this round.
 		var innate_drawn := 0
 		if round_num == 1:
-			innate_drawn = _draw_innate(ps)
+			innate_drawn = _draw_innate(ps, HAND_SIZE + _mod("draw"))
 		_draw(ps, maxi(0, HAND_SIZE + _mod("draw") - innate_drawn))
 	_track_climb()  # a jetpack (_resolve_prepared) can raise a foothold before any card is played this round
 	_log("— Round %d —" % round_num)
@@ -1737,11 +1737,15 @@ func resolve_scry(pi: int, bin_indices: Array) -> bool:
 ## shuffled) draw pile into the opening hand, in whatever order they fell —
 ## no need to reshuffle what's left, since removing entries doesn't bias it.
 ## Returns how many were pulled, so the normal draw can make room for them.
-func _draw_innate(ps: PlayerState) -> int:
+## Innate fills a normal-draw SLOT (backlog #28) — never more of them than the
+## round's own draw would hand out, so a deck holding more innate cards than
+## `cap` (reachable: first_strike carries no per-copy limit) leaves the
+## overflow in the draw pile instead of blowing past the opening hand size.
+func _draw_innate(ps: PlayerState, cap: int) -> int:
 	var kept: Array = []
 	var pulled := 0
 	for c in ps.draw_pile:
-		if c.innate:
+		if c.innate and pulled < cap:
 			ps.hand.append(c)
 			pulled += 1
 		else:
