@@ -1463,11 +1463,26 @@ func _enemy_turn() -> void:
 		_log("%s bleeds for %d." % [boss.name, boss.wound])
 		if _check_end():
 			return
+	# backlog #86 duty 2: resolved BEFORE _apply_limiter() below, not after. Every
+	# client-facing preview of this move — incoming_for() and game_host.gd's own
+	# "intent" snapshot key — reads boss_context() live, during the player's turn,
+	# which is necessarily BEFORE a sigil_fatigue/height_split limiter has spent
+	# anything. _apply_limiter() spends a hunter's Block (Combatant.take_damage())
+	# before this line used to read it, so a move gated on COND_UNDEFENDED could
+	# resolve to its "when" branch here while every client spent the whole player
+	# turn being shown the "fallback" — a Titan whose intent icon said "13" and
+	# then hit for 17, breaking boss_context()'s own stated contract ("must
+	# resolve a conditional move the same way _enemy_turn() will actually resolve
+	# it") and boss.gd's header rule that intent is always visible. Capturing the
+	# move here, against the same context every preview already saw, keeps the
+	# two in agreement; _apply_limiter()'s own damage still lands in the same
+	# place afterward, so incoming_for()'s "limiter chip spends Block first"
+	# chain (see _predicted_limiter_damage()) is unaffected.
+	var move := boss.current_move(boss_context())
 	_apply_limiter()
 	if _check_end():
 		return
 	boss.block = boss.plated_armour  # backlog #61 — re-seeded rather than wiped, same as the players' reset
-	var move := boss.current_move(boss_context())
 	var value := int(move.get("value", 0))
 	match String(move.get("type", "")):
 		"attack":

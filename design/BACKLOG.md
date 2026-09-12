@@ -2782,6 +2782,44 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-12 (yet later), #86 duty 2 (find an error and resolve it) — the
+  telegraphed boss "intent" could lie about which move was actually about to
+  land, the moment a sigil_fatigue/height_split limiter's own Block-chip
+  flipped a `COND_UNDEFENDED` move's condition out from under it.** Last
+  commit (`be48d69`) was duty 3, so this turn opened on duty 2. Dispatched a
+  research agent at `combat.gd` (2000 lines, and the file this rotation has
+  hit hardest — expected it to come up clean like the last few duty-2 passes
+  logged above); it came back with a genuine, previously-undocumented find.
+  `Boss.boss_context()`'s own doc comment states the contract plainly: a
+  conditional move "must resolve a conditional move the same way
+  `_enemy_turn()` will actually resolve it, or the intent icon would lie
+  about what's coming." Every client-facing preview honours that —
+  `Combat.incoming_for()` (the HUD's damage-at-a-glance number) and
+  `game_host.gd`'s own `"intent"` snapshot key both read `boss_context()`
+  live, during the PLAYER's own turn — necessarily before that same turn's
+  `_apply_limiter()` has run. But `_enemy_turn()` itself fetched the real
+  move (`boss.current_move(boss_context())`) AFTER calling `_apply_limiter()`,
+  which spends a hunter's Block via `Combatant.take_damage()` for a
+  `sigil_fatigue`/`height_split` chip — so a move gated on `COND_UNDEFENDED`
+  (Block at or below some value) could read "guarded" for the entire player
+  turn and then, the instant the limiter's own chip drained the last of that
+  same hunter's Block, resolve to its reactive branch instead — a Titan whose
+  intent read "13" all turn hitting for "17" with zero warning. Confirmed by
+  hand before touching anything: built a `Boss` with exactly that move/limiter
+  pair, showed `current_move(boss_context())` reads the guarded fallback
+  before `_apply_limiter()` runs and the reactive branch after, on the
+  identical state. Fixed by capturing `move` BEFORE `_apply_limiter()` instead
+  of after — the limiter's own damage still resolves at the same point
+  relative to everything else (so `_predicted_limiter_damage()`'s "chip
+  spends Block first" chain, which `incoming_for()` relies on, is untouched),
+  only WHICH move variant gets selected moved earlier, back in line with what
+  every preview had already shown. Added
+  `_test_backlog86_a_height_split_chip_must_not_flip_which_move_the_intent_already_showed()`,
+  written and confirmed failing (42 - 17 = 25, not the fallback's 42 - 13 =
+  29) against the pre-fix code via a manual revert before restoring the fix.
+  Fresh `--import`, headless Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS
+  PASSED. Also ran `robustness_sweep.gd` (360 runs) and `balance_sim.gd` (200
+  runs/policy, smoke test only, not tuned against) — both clean, no crashes.
 - **2026-09-12 (still later), #86 duty 2 attempted (came up clean), duty 3:
   `MapEdges.edge_point_of()` — the map's own "which node leads where" line
   geometry — had never been touched by any test in this file.** Last commit

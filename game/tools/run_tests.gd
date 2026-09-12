@@ -984,6 +984,14 @@ func _init() -> void:
 	# cross-check it directly against _apply_limiter()'s real HP loss.
 	_test_backlog86_predicted_limiter_damage_is_zero_when_the_condition_isnt_met()
 	_test_backlog86_predicted_limiter_damage_matches_apply_limiter_across_both_limiter_types()
+	# backlog #86 duty 2: _enemy_turn() used to pick the telegraphed move AFTER
+	# _apply_limiter() had already spent a hunter's Block, so a COND_UNDEFENDED
+	# move could resolve to its reactive "when" branch even though every
+	# client-facing preview (incoming_for(), game_host.gd's "intent" key) reads
+	# boss_context() during the player's own turn -- necessarily before that
+	# same limiter chip -- and so had shown the "fallback" branch the whole
+	# time. The intent icon lied about which move was coming.
+	_test_backlog86_a_height_split_chip_must_not_flip_which_move_the_intent_already_showed()
 	# backlog #86 duty 3 (twenty-ninth pass): Screen.is_handheld/fit -- the
 	# mobile-scaling lever CLAUDE.md §5 exists to require and screen.gd's own
 	# doc comment calls "the one knob to turn if the phone build reads too
@@ -7880,6 +7888,42 @@ func _test_backlog86_predicted_limiter_damage_matches_apply_limiter_across_both_
 	var actual_split: int = hp_before_split - c2.players[0].combatant.hp
 	_expect(predicted_split == actual_split and actual_split == 5,
 		"predicted height_split chip (%d) must equal what _apply_limiter() actually took (%d)" % [predicted_split, actual_split])
+
+
+## backlog #86 duty 2: boss_context()'s own doc comment requires that a
+## conditional move "resolve the same way _enemy_turn() will actually resolve
+## it" as every client-facing preview (incoming_for(), game_host.gd's "intent"
+## key) — both of which read boss_context() live, during the player's own
+## turn, necessarily BEFORE a sigil_fatigue/height_split limiter has spent
+## anything. _enemy_turn() used to fetch the telegraphed move AFTER
+## _apply_limiter() had already run, so a COND_UNDEFENDED move could resolve
+## to its reactive "when" branch the instant the SAME limiter chip spent the
+## last of a hunter's Block — a Titan whose intent icon said "13" all through
+## the player's turn and then hit for 17 the moment it actually swung.
+func _test_backlog86_a_height_split_chip_must_not_flip_which_move_the_intent_already_showed() -> void:
+	var boss := Boss.new("Splitter", 500)
+	boss.moves = [{"type": "attack", "value": 17,
+		"when": {"type": "undefended", "value": 0},
+		"fallback": {"type": "attack", "value": 13}}]
+	boss.limiter = {"type": "height_split", "value": 4}
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var p0: PlayerState = combat.players[0]
+	var p1: PlayerState = combat.players[1]
+	p0.foothold = 5
+	p1.foothold = 0  # gap 5, 1 over height_split's allowance of 4 — chips p0 for exactly 1
+	p0.combatant.block = 1  # guarded going into the enemy turn, by exactly the amount the chip spends
+	p1.combatant.block = 5
+	# This is exactly what every client saw all through the player's own turn —
+	# neither hunter has 0 Block, so the reactive "undefended" branch has never
+	# once been live in a preview.
+	var shown := boss.current_move(combat.boss_context())
+	_expect(int(shown["value"]) == 13,
+		"sanity: the telegraphed intent is the guarded fallback before anything spends p0's Block")
+	combat.end_turn(0)
+	combat.end_turn(1)  # both ended — the real enemy turn resolves here, targeting p0 (round 1)
+	_expect(p0.combatant.hp == 42 - 13,
+		"the move that actually lands must be the one already shown (fallback, 13) — not the one " +
+		"height_split's own Block-chip unlocks a moment later (the reactive 17)")
 
 
 ## The card FACE shows preview(); play_card resolves through the same call. The
