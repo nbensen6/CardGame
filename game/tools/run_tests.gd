@@ -281,6 +281,7 @@ func _init() -> void:
 	_test_block_per_exhausted_scales_with_the_burn_pile()
 	_test_spent_enchanted_block_per_exhausted_counts_its_own_burn()
 	_test_scrap_shields_ally_gets_the_per_burn_bonus_too()
+	_test_backlog86_hopscotch_ally_climb_scales_with_rhythm()
 	_test_backlog86_melded_ally_block_scales_by_discard_too()
 	# Goblin Engineer cards
 	_test_jetpack_prepares_climb()
@@ -6193,6 +6194,39 @@ func _test_scrap_shields_ally_gets_the_per_burn_bonus_too() -> void:
 		"Scrap Shield's ally gets the same per-burn bonus as the caster, not just the flat 3")
 
 
+## backlog #86 duty 2: preview()'s ally_grip used to read only the raw
+## card.ally_grip, with no grip_per_rhythm term at all -- the exact
+## "ally_blk vs block_per_exhausted" shape fixed above for Scrap Shield, but
+## on the climb axis. Hopscotch ("All players climb 1 and an additional 2 per
+## Rhythm") scaled the caster's own climb with Rhythm but paid the ally a flat
+## 1 no matter how much Rhythm was banked, breaking the card's own printed
+## promise. The fix can't just reuse grip_per_rhythm for the ally the way
+## block_per_exhausted was reused for ally_blk, though: Ripple Leap carries
+## the exact same pair of fields (grip_per_rhythm + ally_grip) with a
+## DIFFERENT intent — "Climb 1 and an additional 2 per Rhythm. Ally climbs
+## 3." — the ally is deliberately flat there, so the two cards are
+## indistinguishable from grip_per_rhythm/ally_grip alone. That's why the fix
+## adds its own ally_grip_per_rhythm field instead. Prove both halves: at the
+## same Rhythm, Hopscotch's ally shares the scaling and Ripple Leap's ally
+## stays flat.
+func _test_backlog86_hopscotch_ally_climb_scales_with_rhythm() -> void:
+	var combat := _new_combat([_deck_of(_hopscotch, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var mate: PlayerState = combat.players[1]
+	ps.rhythm = 3
+	combat.play_card(0, _first_playable(combat, 0))  # 1 + 2*3 = 7, both sides
+	_expect(ps.foothold == 7 and mate.foothold == 7,
+		"Hopscotch's ally climbs with the same per-Rhythm bonus as the caster, not just the flat 1")
+
+	var combat2 := _new_combat([_deck_of(_ripple_leap, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps2: PlayerState = combat2.players[0]
+	var mate2: PlayerState = combat2.players[1]
+	ps2.rhythm = 3
+	combat2.play_card(0, _first_playable(combat2, 0))  # caster: 1 + 2*3 = 7; ally stays a flat 3
+	_expect(ps2.foothold == 7 and mate2.foothold == 3,
+		"Ripple Leap's ally climb stays the printed flat 3 -- it does not share the caster's Rhythm scaling")
+
+
 ## backlog #86 duty 2: the fix above only carried block_per_exhausted into
 ## ally_blk — block_per_play, block_per_x and block_per_discarded are the same
 ## "scale ally_block the way blk scales" idiom, and no single authored card
@@ -11098,6 +11132,10 @@ func _pressure_valve() -> Card:
 	return Card.from_dict({"id": "pressure_valve", "name": "Pressure Valve", "type": "skill", "cost": 1, "block": 4, "block_per_exhausted": 3})
 func _scrap_shield() -> Card:
 	return Card.from_dict({"id": "scrap_shield", "name": "Scrap Shield", "type": "skill", "cost": 1, "block": 3, "block_per_exhausted": 2, "ally_block": 3, "target": "ally"})
+func _hopscotch() -> Card:
+	return Card.from_dict({"id": "hopscotch", "name": "Hopscotch", "type": "skill", "cost": 1, "grip": 1, "grip_per_rhythm": 2, "ally_grip": 1, "ally_grip_per_rhythm": 2, "target": "ally"})
+func _ripple_leap() -> Card:
+	return Card.from_dict({"id": "ripple_leap", "name": "Ripple Leap", "type": "skill", "cost": 2, "grip": 1, "grip_per_rhythm": 2, "ally_grip": 3, "target": "ally"})
 func _detonator() -> Card:
 	return Card.from_dict({"id": "detonator", "name": "Detonator", "type": "attack", "cost": 3, "damage": 4, "damage_per_exhausted": 6, "exhaust_pick": true})
 func _anchor_brace() -> Card:

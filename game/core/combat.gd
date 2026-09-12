@@ -340,6 +340,7 @@ func _meld_cards(a: Card, b: Card) -> Card:
 		"taunt": a.taunt or b.taunt,
 		"grip": a.grip + b.grip, "targets_hold": a.targets_hold or b.targets_hold,
 		"ally_grip": a.ally_grip + b.ally_grip,
+		"ally_grip_per_rhythm": a.ally_grip_per_rhythm + b.ally_grip_per_rhythm,
 		"pull_ally": maxi(a.pull_ally, b.pull_ally),
 		"sac_ally_grip": a.sac_ally_grip + b.sac_ally_grip,
 		"exhaust_pick": a.exhaust_pick or b.exhaust_pick,
@@ -565,6 +566,18 @@ func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PER
 	if climb > 0:  # the climb bonus rides an actual climb, not a zero
 		climb += ps.climb_bonus + card.grip_per_rhythm * ps.rhythm
 
+	# backlog #86 duty 2: Hopscotch ("All players climb 1 and an additional 2
+	# per Rhythm") paired grip_per_rhythm with ally_grip and only the CASTER's
+	# own climb read the rhythm term -- the ally always got the flat 1 no
+	# matter how much Rhythm was banked. grip_per_rhythm can't be reused for
+	# both sides the way block_per_exhausted was for ally_blk below: Ripple
+	# Leap carries the exact same two fields (grip_per_rhythm + ally_grip) but
+	# its text is "Climb 1... per Rhythm. Ally climbs 3." -- the ally is
+	# deliberately flat there. The two cards are indistinguishable from
+	# grip_per_rhythm/ally_grip alone, so sharing the scaling needs its own
+	# field rather than a shared one.
+	var ally_climb := card.ally_grip + card.ally_grip_per_rhythm * ps.rhythm
+
 	# backlog #67: a card's optional `condition` gates `condition_bonus` — added
 	# on top of everything above, never taken away, so the printed numbers stay
 	# the floor and the condition is pure upside when it holds.
@@ -594,7 +607,7 @@ func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PER
 		"damage": maxi(dmg, 0), "hits": maxi(card.hits, 1),
 		"block": maxi(blk, 0), "ally_block": maxi(ally_blk, 0),
 		"block_after_mods": blk_shown, "ally_block_after_mods": ally_blk_shown,
-		"grip": maxi(climb, 0), "ally_grip": card.ally_grip,
+		"grip": maxi(climb, 0), "ally_grip": maxi(ally_climb, 0),
 	}
 
 
@@ -932,11 +945,17 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		var flair := "  (nailed it!)" if card.timed else ""
 		_log("%s plays %s — climbs (+%d Height, now %d)%s." % [who, card.name, climbed, ps.foothold, flair])
 	_lift_roped_ally(pi, foothold_before_climb)  # roped together — the ally climbs with you, from any climb source (#86 duty 2)
-	if card.ally_grip > 0:  # vines/ropes that lift the ally up the beast
+	# backlog #86 duty 2: reads pv["ally_grip"] (Combat.preview()'s already-scaled
+	# figure), not the raw card.ally_grip -- Hopscotch's "an additional 2 per
+	# Rhythm" is promised to BOTH players, but the ally's lift used to ignore
+	# that term entirely. See preview()'s own comment for why this needed a new
+	# field (ally_grip_per_rhythm) instead of reusing grip_per_rhythm outright.
+	var ally_climbed: int = int(pv["ally_grip"])
+	if ally_climbed > 0:  # vines/ropes that lift the ally up the beast
 		var lifted: PlayerState = players[ally_index(pi)]
 		var lifted_before := lifted.foothold
-		lifted.foothold = mini(lifted.foothold + card.ally_grip, FOOTHOLD_MAX)
-		_log("%s plays %s — lifts %s (+%d Height, now %d)." % [who, card.name, lifted.combatant.name, card.ally_grip, lifted.foothold])
+		lifted.foothold = mini(lifted.foothold + ally_climbed, FOOTHOLD_MAX)
+		_log("%s plays %s — lifts %s (+%d Height, now %d)." % [who, card.name, lifted.combatant.name, ally_climbed, lifted.foothold])
 		_lift_roped_ally(ally_index(pi), lifted_before)  # the lifted ally might themselves be roped (#86 duty 2)
 	if card.create != "":
 		var built := Content.make_card(card.create)

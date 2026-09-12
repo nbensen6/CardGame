@@ -2782,6 +2782,43 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-12, #86 duty 2 (find an error and resolve it) — Hopscotch's own
+  "All players climb 1 and an additional 2 per Rhythm" only ever paid the
+  Rhythm bonus to the caster; the ally always got a flat 1.** Last commit
+  (`51960e7`) was duty 3, so this turn is duty 2. Dispatched an Explore agent
+  first for the two named shapes (first-pass holes, two copies of one truth)
+  across `game/core`; it came back with `RunMap._ensure_key_sources` (can
+  convert an act's row-0 "fight" node into an elite/treasure/event) and
+  `Boss.hold_exposed_to()` (wired end to end but nothing plugs into it) — both
+  already logged and correctly left for Nick's judgement, so not new. Sent a
+  second agent after data/code mismatches and the files outside the 2026-09-06
+  exhaustive sweep; it found `Combat.preview()`/`Combat.play_card()`'s
+  `ally_grip` (combat.gd:597/935, now 597-609/942-953 after this fix) read only
+  the raw `card.ally_grip` field, with no `grip_per_rhythm` term at all — the
+  same "flat field, missing scaling" shape already fixed for Scrap Shield's
+  `ally_blk` (`cc07b7c`), just on the climb axis this time. Couldn't just
+  reuse `grip_per_rhythm` for the ally the way `block_per_exhausted` was reused
+  for `ally_blk`, though: Ripple Leap carries the exact same pair of fields
+  (`grip_per_rhythm` + `ally_grip`) with a DIFFERENT intent — "Climb 1 and an
+  additional 2 per Rhythm. Ally climbs 3." — the ally is deliberately flat
+  there, so the two cards are indistinguishable from `grip_per_rhythm`/
+  `ally_grip` alone. Added a new field, `ally_grip_per_rhythm` (data plus one
+  generic rule, not a special case for Hopscotch's id): wired through
+  `Card.from_dict`/`to_dict`, `upgraded_copy`'s scaling-field bump list,
+  `archetype_tags()` (climb/rhythm/ally tags), `Combat._meld_cards()`, and
+  `GameHost._keywords_of()` (rhythm + height/armoured tags — caught by the
+  existing "every card field has a keyword" reflection test, which correctly
+  failed until this was wired). `Combat.play_card()`'s real effect now reads
+  `pv["ally_grip"]` (the already-scaled preview figure) instead of
+  recomputing, so the live face and the real effect can never drift apart.
+  Set `hopscotch`'s data to `ally_grip_per_rhythm: 2`; `ripple_leap` untouched.
+  Added `_test_backlog86_hopscotch_ally_climb_scales_with_rhythm()`: at
+  Rhythm 3, Hopscotch lifts both players to Height 7 (1 + 2×3); the same test
+  confirms Ripple Leap's ally still lands on the printed flat 3, not 7, as a
+  regression guard against over-generalizing the fix. Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86`
+  turn is duty 3 (verify a mechanic actually works).
+
 - **2026-09-11 (latest, later still), #86 duty 3 (verify a mechanic actually
   works) — `GameHost._result_string()`, the shared snapshot's win/lose/ongoing
   mapping, had zero test coverage.** Last commit (`64afb24`) was duty 2, so

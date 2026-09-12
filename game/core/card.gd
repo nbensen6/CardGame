@@ -40,6 +40,12 @@ var damage_per_rhythm: int  # bonus damage per Rhythm (Frog combo) you've built 
 var grip_per_rhythm: int    # bonus Height per Rhythm you've built this turn
 var rhythm: int             # Rhythm granted outright (the Frog's combo starter)
 var ally_grip: int     # Foothold given to the ALLY (vines/ropes — shared climbing)
+var ally_grip_per_rhythm: int  # bonus ALLY Height per Rhythm (Hopscotch: "All players ...
+                        # per Rhythm" — grip_per_rhythm alone only ever scaled the CASTER's
+                        # own climb; a card whose text explicitly shares the rhythm bonus
+                        # with the ally needs its own field, because Ripple Leap proves the
+                        # two can't be inferred from grip_per_rhythm+ally_grip alone: it also
+                        # carries both, but its ally gets a flat climb, no rhythm scaling)
 var create: String     # card id this card builds and adds to your hand (Goblin Mech)
 var pull_ally: int     # grapple the ally UP to your Height, if the gap is within this
 var block_per_play: int # extra Block for each earlier time you've played this card this fight
@@ -162,6 +168,7 @@ static func from_dict(d: Dictionary) -> Card:
 	c.grip_per_rhythm = int(d.get("grip_per_rhythm", 0))
 	c.rhythm = int(d.get("rhythm", 0))
 	c.ally_grip = int(d.get("ally_grip", 0))
+	c.ally_grip_per_rhythm = int(d.get("ally_grip_per_rhythm", 0))
 	c.create = String(d.get("create", ""))
 	c.pull_ally = int(d.get("pull_ally", 0))
 	c.block_per_play = int(d.get("block_per_play", 0))
@@ -228,7 +235,8 @@ func to_dict() -> Dictionary:
 		"damage_per_exhausted": damage_per_exhausted,
 		"block_per_exhausted": block_per_exhausted,
 		"ally_energy": ally_energy, "vulnerable": vulnerable, "taunt": taunt,
-		"grip": grip, "targets_hold": targets_hold, "ally_grip": ally_grip, "pull_ally": pull_ally,
+		"grip": grip, "targets_hold": targets_hold, "ally_grip": ally_grip,
+		"ally_grip_per_rhythm": ally_grip_per_rhythm, "pull_ally": pull_ally,
 		"sac_ally_grip": sac_ally_grip, "exhaust_pick": exhaust_pick,
 		"cheapen_pick": cheapen_pick, "cheapen_amount": cheapen_amount, "meld": meld,
 		"prepare": prepare, "create": create,
@@ -293,7 +301,7 @@ func upgraded_copy() -> Card:
 			"light_gain", "damage_per_light", "ally_heal", "power_value", "scry",
 			"intangible", "buffer", "plated_armour",
 			"damage_per_discarded", "block_per_discarded",
-			"grip_per_rhythm", "pull_ally", "sac_ally_grip"]:
+			"grip_per_rhythm", "ally_grip_per_rhythm", "pull_ally", "sac_ally_grip"]:
 		if int(d[key]) > 0:
 			d[key] = int(d[key]) + 1
 			bumped = true
@@ -360,9 +368,10 @@ func enchanted_copy(enchant_id: String) -> Card:
 func archetype_tags() -> Array:
 	var tags: Array = []
 	if grip > 0 or targets_hold or ally_grip > 0 or damage_per_foothold > 0 \
-			or damage_per_ally_foothold > 0 or pull_ally > 0 or sac_ally_grip > 0 or timed_grip > 0:
+			or damage_per_ally_foothold > 0 or pull_ally > 0 or sac_ally_grip > 0 or timed_grip > 0 \
+			or ally_grip_per_rhythm > 0:
 		tags.append("climb")
-	if rhythm > 0 or damage_per_rhythm > 0 or grip_per_rhythm > 0:
+	if rhythm > 0 or damage_per_rhythm > 0 or grip_per_rhythm > 0 or ally_grip_per_rhythm > 0:
 		tags.append("rhythm")
 	if wound > 0 or damage_per_wound > 0:
 		tags.append("poison")
@@ -374,7 +383,7 @@ func archetype_tags() -> Array:
 	if dexterity > 0:
 		tags.append("dexterity")
 	if ally_block > 0 or ally_energy > 0 or ally_grip > 0 or pull_ally > 0 \
-			or sac_ally_grip > 0 or ally_heal > 0:
+			or sac_ally_grip > 0 or ally_heal > 0 or ally_grip_per_rhythm > 0:
 		tags.append("ally")
 	if exhaust_pick or damage_per_exhausted > 0 or block_per_exhausted > 0:
 		tags.append("burn")

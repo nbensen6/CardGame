@@ -807,7 +807,8 @@ func _keywords_of(c: Card) -> Array:
 		ids.append("poison")
 	if c.vulnerable > 0 or c.damage_per_vulnerable > 0:
 		ids.append("expose")
-	if c.rhythm > 0 or c.damage_per_rhythm > 0 or c.grip_per_rhythm > 0:
+	if c.rhythm > 0 or c.damage_per_rhythm > 0 or c.grip_per_rhythm > 0 \
+			or c.ally_grip_per_rhythm > 0:
 		ids.append("rhythm")
 	if c.strength > 0:
 		ids.append("strength")
@@ -824,7 +825,7 @@ func _keywords_of(c: Card) -> Array:
 		ids.append("player_block")
 	if c.grip > 0 or c.ally_grip > 0 or c.timed_grip > 0 or c.pull_ally > 0 \
 			or c.sac_ally_grip > 0 or c.damage_per_foothold > 0 or c.damage_per_ally_foothold > 0 \
-			or c.targets_hold:
+			or c.targets_hold or c.ally_grip_per_rhythm > 0:
 		ids.append("height")
 		ids.append("armoured")
 	if c.taunt:
