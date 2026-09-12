@@ -47,6 +47,14 @@ func _draw() -> void:
 ## Controls have no to_local(), and UI here is unrotated, so subtracting our own
 ## global origin is the conversion.
 func _edge_point(node: Control, top: bool) -> Vector2:
-	var r := node.get_global_rect()
-	var p := Vector2(r.position.x + r.size.x * 0.5, r.position.y + (0.0 if top else r.size.y))
-	return p - global_position
+	return edge_point_of(node.get_global_rect(), top, global_position)
+
+
+## The pure half of _edge_point() above, lifted out (backlog #86 duty 3) so the
+## anchor math a route's whole legibility depends on -- "leaving from the top
+## of one node, arriving at the bottom of the next" -- can be proven headless,
+## with no Control, no tree, and no viewport, the same way overworld_3d's own
+## screen-space geometry was already pulled out for testing.
+static func edge_point_of(rect: Rect2, top: bool, origin: Vector2) -> Vector2:
+	var p := Vector2(rect.position.x + rect.size.x * 0.5, rect.position.y + (0.0 if top else rect.size.y))
+	return p - origin

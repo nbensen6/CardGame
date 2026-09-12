@@ -1254,6 +1254,23 @@ func _init() -> void:
 	_test_backlog86_nearest_open_node_on_screen_is_negative_one_past_reach()
 	_test_backlog86_nearest_open_node_on_screen_is_negative_one_with_no_open_nodes()
 
+	# backlog #86 duty 3: MapEdges._edge_point (the map's own "which node leads
+	# where" line-drawing) had zero coverage anywhere in this file -- confirmed
+	# by grepping for "MapEdges" and finding nothing. It is the geometry the
+	# map's own doc comment says is the point of the overlay ("you can see an
+	# act's shape but not which node a choice leads to... most of what a
+	# roguelike map is for"), so it is a real claim to prove, not decoration:
+	# a route drawn from the wrong edge of a node reads as connecting to the
+	# wrong neighbour, which is exactly the kind of thing nobody would notice
+	# by eye but would plan a run around getting wrong. Lifted to a static
+	# function taking a Rect2 and an origin, the same "no Control needed" shape
+	# overworld_3d's screen-space helpers already used, since get_global_rect()
+	# needs a live tree/viewport this suite doesn't have.
+	_test_backlog86_edge_point_of_is_top_centre_leaving_a_node()
+	_test_backlog86_edge_point_of_is_bottom_centre_arriving_at_a_node()
+	_test_backlog86_edge_point_of_subtracts_the_overlays_own_origin()
+	_test_backlog86_edge_point_of_centres_on_an_asymmetric_rect()
+
 	# backlog #86 duty 3: location_3d.shop_slot_disabled is a second copy of
 	# Run.buy()'s own gate (run.gd:470, "sold or gold < price") -- the shop
 	# button a player sees has to agree with what the server will actually
@@ -16010,6 +16027,41 @@ func _test_backlog86_nearest_open_node_on_screen_is_negative_one_with_no_open_no
 	var screen_positions := {0: Vector2(0, 0)}
 	var best: int = Overworld3D.nearest_open_node_on_screen(nodes, screen_positions, Vector2(0, 0), 34.0)
 	_expect(best == -1, "a closed node right under the finger is still refused by the fallback -- only the world-space test may hit a closed node")
+
+
+## backlog #86 duty 3 -- MapEdges.edge_point_of() is "the node you're leaving,
+## from the top". A route line has to start where the departure node visually
+## ends, or it reads as leaving from empty space above it.
+func _test_backlog86_edge_point_of_is_top_centre_leaving_a_node() -> void:
+	var rect := Rect2(Vector2(10, 20), Vector2(40, 30))
+	var p := MapEdges.edge_point_of(rect, true, Vector2.ZERO)
+	_expect(p == Vector2(30, 20), "top edge is the horizontal centre of the rect, at its own y (10 + 40/2 = 30, y stays 20)")
+
+
+## The other end of the same line: "the node you're arriving at, from the
+## bottom" -- a lower row's node is reached from underneath, not its centre.
+func _test_backlog86_edge_point_of_is_bottom_centre_arriving_at_a_node() -> void:
+	var rect := Rect2(Vector2(10, 20), Vector2(40, 30))
+	var p := MapEdges.edge_point_of(rect, false, Vector2.ZERO)
+	_expect(p == Vector2(30, 50), "bottom edge is the same horizontal centre, at y + height (20 + 30 = 50)")
+
+
+## MapEdges draws in its OWN local space, not the node buttons' global one --
+## Controls have no to_local(), so the overlay's own global_position has to be
+## subtracted, or every line would be offset by wherever the overlay itself
+## sits on screen.
+func _test_backlog86_edge_point_of_subtracts_the_overlays_own_origin() -> void:
+	var rect := Rect2(Vector2(110, 220), Vector2(40, 30))
+	var p := MapEdges.edge_point_of(rect, true, Vector2(100, 200))
+	_expect(p == Vector2(30, 20), "the overlay's own global_position is subtracted from the node's global point, converting it to the overlay's local space")
+
+
+## A node button is not always square -- a wide "boss" row button and a narrow
+## ordinary one must both centre on their OWN width, not a shared assumption.
+func _test_backlog86_edge_point_of_centres_on_an_asymmetric_rect() -> void:
+	var wide := MapEdges.edge_point_of(Rect2(Vector2(0, 0), Vector2(200, 50)), true, Vector2.ZERO)
+	var narrow := MapEdges.edge_point_of(Rect2(Vector2(0, 0), Vector2(20, 50)), true, Vector2.ZERO)
+	_expect(wide.x == 100.0 and narrow.x == 10.0, "each rect centres on its own width (200/2=100, 20/2=10), not a shared or hard-coded midpoint")
 
 
 ## backlog #86 duty 3 -- location_3d.shop_slot_disabled mirrors Run.buy()'s own

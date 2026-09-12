@@ -2782,6 +2782,38 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-12 (still later), #86 duty 2 attempted (came up clean), duty 3:
+  `MapEdges.edge_point_of()` — the map's own "which node leads where" line
+  geometry — had never been touched by any test in this file.** Last commit
+  (`649cbde`) was duty 3, so this turn opened on duty 2. Dispatched a
+  research agent with an explicit exclusion list of every file the prior
+  ~25 duty-2 passes had already gone through (`combat.gd`, `card.gd`,
+  `game_host.gd`, `combat_3d.gd`, `combatant.gd`, `run.gd`, `run_map.gd`,
+  `progress.gd`, `run_save.gd`, `player_state.gd`, `boss.gd`,
+  `game_client.gd`, the `net/` files, `game_3d.gd`, `console.gd`,
+  `map_edges.gd`, `tiles.gd`), and separately re-read `run_map.gd`,
+  `combatant.gd`, `boss.gd`, `run.gd`'s shop/campfire/reward/event
+  functions, `player_state.gd`, `content.gd`, `card_view.gd` and
+  `hit_circle.gd` myself. The agent spent real effort (125 tool calls) and
+  came back with one honestly-reported find: a solo-mode reward-screen
+  prompt label overlapping the card row in `location_3d.tscn` — real, but
+  already written up in `design/progress/bugs.md` (2026-09-07) and a scene
+  layout issue only a screenshot can confirm fixed, not a headless "first
+  pass hole" or "two copies of one truth" this duty can close. Nothing else
+  turned up a genuine, currently-reachable logic bug in that scope — this
+  codebase's easy headless-reachable bugs have plainly already been found
+  over ~25 prior passes. Fell through to duty 3. `run_tests.gd` had grown
+  thorough coverage of `card.gd`, `boss.gd`, `overworld_3d.gd` and
+  `hit_circle.gd`'s pure geometry (grepped each one directly), but
+  `MapEdges` — the overlay that draws the actual route lines on the run
+  map, whose own doc comment calls this "most of what a roguelike map is
+  for" — had zero mentions anywhere in the test file. Lifted `_edge_point`'s
+  math into a static `edge_point_of(rect, top, origin)`, the same
+  no-Control-needed shape `overworld_3d`'s own screen-space helpers already
+  used, and added four tests: top-centre on departure, bottom-centre on
+  arrival, the overlay's own origin subtracted correctly, and an
+  asymmetric-width rect centring on its own width rather than a shared
+  assumption. `run_tests.gd` still prints ALL TESTS PASSED.
 - **2026-09-12 (later), #86 duty 3 (verify a mechanic actually works) —
   `Card.archetype_tags()` had 12 branches but only 4 of them (climb, poison,
   strength, rhythm) were ever directly asserted.** Last commit (`f103eee`)
