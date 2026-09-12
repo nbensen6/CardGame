@@ -2782,6 +2782,39 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-12 (later still), #86 duty 3 (verify a mechanic actually
+  works).** Last commit (`e7a2028`) was duty 2, so this turn is duty 3.
+  `Combat._peek_top()` (Scry's "look without drawing," backlog #59) carries
+  a doc comment claiming it reshuffles the discard pile mid-call "same as
+  `_draw` does if it runs out" — an explicit claim of parity with `_draw()`,
+  whose own reshuffle branch already has a dedicated test
+  (`_test_draw_reshuffles_discard_mid_call`). But every existing scry test
+  (`_test_backlog59_scry_reveals_and_resolve_scry_bins_and_keeps_order`,
+  `_test_backlog86_second_scry_before_resolve_does_not_lose_the_first_batch`,
+  and the rest) deliberately keeps `draw_pile` at least as large as the
+  scry amount, so `_peek_top`'s reshuffle branch had never actually run in
+  any test — a gap identical in shape to the one a 2026-09-07 duty-3 entry
+  found and fixed for `_draw()` itself, just never checked against its
+  sibling. Reachable in real play: "Read The Climb" scries 4, and a
+  10-card starter deck's draw pile shrinks below that well before the
+  discard pile is empty. Added `_test_backlog86_peek_top_reshuffles_discard_mid_call`,
+  built directly on `_test_draw_reshuffles_discard_mid_call`'s own shape:
+  one real card left in `draw_pile`, three in `discard_pile`, peek for 3.
+  First draft of the test failed even against the correct, unmodified
+  `_peek_top()` — not a real bug, a test-setup miss: I never cleared
+  `ps.hand`, which already held the combat setup's own opening hand, so the
+  "peeking never moves anything into hand" assertion tripped on cards that
+  were there before the peek ran at all; the sibling `_draw` test already
+  clears `hand` for exactly this reason and I'd missed copying it. Fixed
+  the test, then proved it honest the other way: reverted `_peek_top()` to
+  a naive version with no reshuffle branch (stashed just that one function),
+  reran, watched all five of the new test's assertions fail, then restored
+  the real function from a pre-edit copy (confirmed clean via `git diff`).
+  The implementation itself needed no fix — it already matched `_draw()`'s
+  contract correctly; this only closes the coverage gap. Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next
+  `#86` turn is duty 2 (find an error and resolve it).
+
 - **2026-09-12 (even later still), #86 duty 2: `Run.to_dict()`/`from_dict()`
   only saved and restored `combat` while `phase == Phase.COMBAT`, but
   `game_host.gd`'s own "felled" snapshot key reads `combat.boss.id` all

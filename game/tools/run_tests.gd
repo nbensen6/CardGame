@@ -617,6 +617,7 @@ func _init() -> void:
 	_test_backlog59_scry_survives_mid_combat_save_and_load()
 	_test_backlog59_ally_sees_the_scry_reveal()
 	_test_backlog86_second_scry_before_resolve_does_not_lose_the_first_batch()
+	_test_backlog86_peek_top_reshuffles_discard_mid_call()
 	# Reaching into the draw pile (backlog #68): put a card on top, shuffle one
 	# in, pull a named one out — the draw pile's order stops being pure luck.
 	_test_backlog68_topdeck_puts_a_card_on_top_of_the_draw_pile()
@@ -12306,6 +12307,43 @@ func _test_backlog86_second_scry_before_resolve_does_not_lose_the_first_batch() 
 		and (ps.draw_pile[2] as Card).id == "d" and (ps.draw_pile[1] as Card).id == "b"
 		and (ps.draw_pile[0] as Card).id == "a",
 		"the kept cards from both batches return to the top of the draw pile in reveal order")
+
+
+## #86 duty 3: _peek_top()'s own doc comment claims it reshuffles the discard
+## pile mid-call "same as _draw does if it runs out" — but every existing
+## scry test deliberately keeps draw_pile at least as big as the scry amount,
+## so that branch (structurally identical to _test_draw_reshuffles_discard_mid_call
+## above, fixed for _draw() itself back in backlog #86) had never actually
+## been exercised for _peek_top(). Reachable in real play: "Read The Climb"
+## scries 4, and a 10-card starter deck's draw pile shrinks below that well
+## before the discard pile empties.
+func _test_backlog86_peek_top_reshuffles_discard_mid_call() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var top_card := Card.from_dict({"id": "top", "name": "Top", "type": "skill", "cost": 0})
+	var discard_ids := ["d0", "d1", "d2"]
+	var discard_cards: Array = []
+	for id in discard_ids:
+		discard_cards.append(Card.from_dict({"id": id, "name": id, "type": "skill", "cost": 0}))
+	ps.hand.clear()
+	ps.draw_pile = [top_card]
+	ps.discard_pile = discard_cards.duplicate()
+
+	var peeked: Array = combat._peek_top(ps, 3)  # 1 real card, then reshuffle, then 2 more from it
+
+	_expect(peeked.size() == 3, "peeking 3 across an empty draw_pile still yields 3 cards")
+	_expect((peeked[0] as Card).id == "top", "the last real card is revealed before the reshuffle, not after")
+	_expect(ps.discard_pile.is_empty(), "the reshuffle empties discard_pile into draw_pile")
+	_expect(ps.draw_pile.size() == 1, "the un-revealed reshuffled cards stay in draw_pile, not drawn into hand")
+	_expect(ps.hand.is_empty(), "peeking never moves anything into hand, reshuffle included")
+	var seen := {}
+	for c in peeked:
+		seen[(c as Card).id] = true
+	for c in ps.draw_pile:
+		seen[(c as Card).id] = true
+	seen.erase("top")
+	_expect(seen.keys().size() == 3 and seen.has("d0") and seen.has("d1") and seen.has("d2"),
+		"every reshuffled discard card ends up revealed or still in the pile, none lost or duplicated")
 
 
 func _test_backlog59_resolve_scry_validates_bad_input() -> void:
