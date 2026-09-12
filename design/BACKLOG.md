@@ -2782,7 +2782,50 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-12 (newest), #86 duty 2 attempted (came up clean), duty 3:
+- **2026-09-12 (newest), #86 duty 2 attempted (false alarm, reverted), duty 3:
+  `rest_heal_amount()`'s own floor-at-1 promise had never been exercised at
+  its actual boundary.** Last commit (`5776e67`) was duty 3, so this turn
+  opened as duty 2. A research agent's first candidate was `views/
+  combat_3d.gd`'s `_hold_points()` constructing a `RandomNumberGenerator`
+  without calling `.randomize()` or setting `.seed` — plausible-looking
+  (every other RNG in the codebase does seed itself, and the surrounding
+  comment specifically credits a fix for "the circles are in the same
+  position everytime") but WRONG: verified empirically with a throwaway
+  headless script (`RandomNumberGenerator.new()` three times in a row) that
+  Godot 4.7.1 already auto-randomizes a fresh instance's seed on
+  construction, so there was no bug. Implemented the "fix" and its test
+  first as the rules require, watched a `_hold_points`-adjacent test I'd
+  written FAIL for the wrong reason (asserting two unseeded RNGs must
+  collide — they didn't), caught the false premise before committing,
+  fully reverted both files (`git checkout --`), and logged it here rather
+  than let a fix for a non-bug stand. This is what rule 8 ("log honestly")
+  is for — worth recording so nobody re-derives this from scratch, and so
+  the general lesson lands: engine-default behavior is worth one empirical
+  check before it goes in a commit message as a claimed bug.
+
+  Second duty-2 sweep, with that lesson folded into its brief, came back
+  clean — no other first-pass hole or two-copies-of-truth candidate
+  survived a close read. Fell through to duty 3.
+
+  `core/run.gd`'s `rest_heal_amount()` doc comment states the floor as a
+  safety property, not an implementation detail: "floored at 1 so a high
+  enough tier never rounds a rest down to nothing." Every test touching it
+  (the ascension-ladder test, the campfire snapshot test) only ever
+  exercises `ascension.json`'s one shipped `rest_heal` tier (-4, Cold
+  Camps), nowhere near `REST_HEAL` (9) — so the `maxi(1, ...)` branch had
+  never once executed under test. Added
+  `_test_backlog86_rest_heal_amount_never_rounds_down_to_nothing()`, which
+  sets `_asc["rest_heal"] = 999` directly (matching the existing convention
+  of tests reading `run._asc` straight, e.g. the boss_hp_pct/boss_strength
+  add-scaling tests) and checks both the raw getter AND a real
+  `campfire_action(0, "rest")` call land on exactly 1, never 0 or negative.
+  Verified the test actually bites by temporarily removing the `maxi(1,
+  ...)` floor and confirming both new assertions failed, then restored the
+  real code before committing. No extraction needed. Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86`
+  turn is duty 2 (find an error and resolve it).
+
+- **2026-09-12 (latest), #86 duty 2 attempted (came up clean), duty 3:
   potions.json's own `pool` promise had never been proven the way relics'
   sibling promise has.** Last commit (`3b694dd`) was duty 3, so this turn
   opened as duty 2. Dispatched a research agent to sweep `game/net`,

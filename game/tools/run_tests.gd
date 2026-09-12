@@ -163,6 +163,7 @@ func _init() -> void:
 	_test_campfire_rest_remove_upgrade()
 	_test_campfire_rest_heals_and_caps_at_max()
 	_test_backlog86_campfire_snapshot_heal_matches_ascension_scaled_amount()
+	_test_backlog86_rest_heal_amount_never_rounds_down_to_nothing()
 	_test_campfire_guards_against_illegal_actions()
 	_test_status_card_cannot_be_sharpened_but_can_be_removed_at_campfire()
 	_test_skip_reward_keeps_the_deck_lean()
@@ -3832,6 +3833,31 @@ func _test_backlog86_campfire_snapshot_heal_matches_ascension_scaled_amount() ->
 		"the campfire snapshot's 'heal' must show the ASCENSION-SCALED rest amount " +
 		"(5 at Ascension 5's Cold Camps), not the bare Run.REST_HEAL constant (9) " +
 		"the Rest button used to advertise regardless of ascension")
+
+
+## backlog #86 duty 3: rest_heal_amount()'s own doc comment claims the floor
+## ("floored at 1 so a high enough tier never rounds a rest down to nothing")
+## as a safety property, not just an implementation detail -- if it ever broke,
+## `campfire_action`'s "rest" branch would let a hunter who deliberately rests
+## end up healed by 0 or, if the floor were ever dropped, actively hurt by a
+## rest. Only ascension.json's one shipped `rest_heal` tier (-4, Cold Camps)
+## has ever been exercised anywhere in this suite -- nowhere near REST_HEAL
+## (9), so the `maxi(1, ...)` branch itself has never once executed under
+## test. Forces a cut far past REST_HEAL, at both the raw getter and through
+## a real campfire_action("rest") call, so a regression here can't hide
+## behind "the getter looked right but nothing acted on it" the way the
+## snapshot bug above did.
+func _test_backlog86_rest_heal_amount_never_rounds_down_to_nothing() -> void:
+	var run := _map_run()
+	run._asc["rest_heal"] = 999   # a cut nobody ships, but far past REST_HEAL (9)
+	_expect(run.rest_heal_amount() == 1,
+		"an absurd ascension cut must still floor at 1, never 0 or negative")
+
+	run.hp[0] = 5
+	run._begin_campfire()
+	run.campfire_action(0, "rest")
+	_expect(run.hp[0] == 6,
+		"a real campfire rest under the same absurd cut must still heal by exactly the floored amount (1), never 0 or negative")
 
 
 func _test_campfire_guards_against_illegal_actions() -> void:
