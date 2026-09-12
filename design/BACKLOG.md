@@ -14538,3 +14538,37 @@ Newest first. One line per finished item: what, and anything surprising.
   and never closed. Fresh `--import`, headless, Godot 4.7.1-stable,
   `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2 (find an
   error and resolve it).
+
+- **2026-09-12 (later) — #86 duty 2 attempted (came up clean), duty 3:
+  the campfire's "Thin the deck" button had never been proven against
+  Run's own floor.** Last commit was duty 3, so this turn opened on duty 2:
+  read `game/core/*.gd`, `game/session/*.gd`, `game/net/*.gd` end to end
+  hunting a first-pass hole or a two-copies-of-truth split. The one lead
+  that looked real — `Boss.hold_exposed_to()`, a fully-wired getter with its
+  own tests but zero beasts in `bosses.json` setting `exposed_to` and zero
+  combat code reading it — turned out to already be a known, extensively
+  logged dead end (this same file's own log flags it at least six times
+  since 2026-08, most recently the 13940 entry, always the same verdict:
+  content gap, not a bug). No other candidate survived a close read. Rather
+  than force a fix onto a lead that wasn't one, pivoted to duty 3 in the
+  same run, same as the `ee33c53` precedent.
+
+  `location_3d.gd`'s `_render_campfire` computed the "Thin the deck"
+  button's enabled state inline (`deck.size() > int(cf.get("min_deck", 5))`)
+  with no test ever touching that line — the only campfire-floor coverage
+  in the suite proves `Run.campfire_action()` itself refuses at
+  `deck.size() <= MIN_DECK` (run.gd:583), never that the VIEW's own copy of
+  that same boundary agrees with it. Exactly the "two copies of one truth"
+  shape duty 2 hunts for, just caught here as a coverage gap rather than a
+  live bug — the two copies do agree today, but nothing was stopping them
+  from drifting apart the next time either one was edited. Lifted it into
+  `Location3D.campfire_can_thin(deck_size, min_deck)`, the same static-pure
+  pattern already used for `shop_slot_disabled` right above it, and added
+  four tests: one card above the floor stays offered, exactly at the floor
+  refuses (the boundary is `<=`, matching the server, not `<`), already
+  below the floor refuses, and a degenerate zero-floor/empty-deck pair
+  refuses rather than flipping true. All four passed on the first run — the
+  button was already correct, this just closes the gap where nothing had
+  ever asked. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`:
+  ALL TESTS PASSED. Next `#86` turn is duty 2 (find an error and resolve
+  it).

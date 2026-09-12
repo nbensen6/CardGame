@@ -1333,6 +1333,16 @@ func _init() -> void:
 	_test_backlog86_shop_slot_disabled_is_false_at_the_exact_price()
 	_test_backlog86_shop_slot_disabled_is_false_when_affordable_and_unsold()
 
+	# backlog #86 duty 3: location_3d.campfire_can_thin is the campfire's own
+	# copy of Run.campfire_action()'s "remove" gate (run.gd:583, "deck.size()
+	# <= MIN_DECK" refuses) -- the "Thin the deck" button has to agree with the
+	# server's floor or a player can be shown a live button for a trim the
+	# server will refuse. Lifted the same way as shop_slot_disabled above.
+	_test_backlog86_campfire_can_thin_is_true_one_card_above_the_floor()
+	_test_backlog86_campfire_can_thin_is_false_exactly_at_the_floor()
+	_test_backlog86_campfire_can_thin_is_false_below_the_floor()
+	_test_backlog86_campfire_can_thin_is_false_at_a_zero_floor_with_an_empty_deck()
+
 	# backlog #86 duty 3 (fortieth pass): CardView.fire_quality, the sweep-bar
 	# timing minigame's own grading rule -- the sibling of HitCircle's already
 	# thoroughly-tested _fire() (see _hit_circle_fired_quality above), which
@@ -16658,6 +16668,33 @@ func _test_backlog86_shop_slot_disabled_is_false_at_the_exact_price() -> void:
 func _test_backlog86_shop_slot_disabled_is_false_when_affordable_and_unsold() -> void:
 	_expect(not Location3D.shop_slot_disabled(false, 11, 10),
 		"an affordable, unsold slot stays enabled")
+
+
+## backlog #86 duty 3 -- location_3d.campfire_can_thin mirrors Run.
+## campfire_action()'s own "remove" gate (run.gd:583, "deck.size() <=
+## MIN_DECK" refuses) so the "Thin the deck" button's enabled state never
+## lies about what the server will actually accept. No test touched the
+## `can_thin`/`thin.disabled` line before this; the campfire tests elsewhere
+## in this suite only prove Run.campfire_action() itself refuses at the
+## floor, never that the view's own copy of the same condition agrees.
+func _test_backlog86_campfire_can_thin_is_true_one_card_above_the_floor() -> void:
+	_expect(Location3D.campfire_can_thin(6, 5),
+		"one card above MIN_DECK, thinning is offered")
+
+
+func _test_backlog86_campfire_can_thin_is_false_exactly_at_the_floor() -> void:
+	_expect(not Location3D.campfire_can_thin(5, 5),
+		"exactly at the floor the button must refuse -- the boundary is '<=', matching Run.campfire_action()'s own check, not '<' which would wrongly let one more removal through")
+
+
+func _test_backlog86_campfire_can_thin_is_false_below_the_floor() -> void:
+	_expect(not Location3D.campfire_can_thin(4, 5),
+		"a deck already under the floor must never read as thinnable")
+
+
+func _test_backlog86_campfire_can_thin_is_false_at_a_zero_floor_with_an_empty_deck() -> void:
+	_expect(not Location3D.campfire_can_thin(0, 0),
+		"an empty deck against a zero floor still refuses rather than flipping true at the degenerate boundary")
 
 
 ## backlog #86 duty 3 (fortieth pass) -- CardView.fire_quality is the sweep-bar

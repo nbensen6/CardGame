@@ -798,8 +798,7 @@ func _render_campfire(s: Dictionary) -> void:
 		func() -> void:
 			Sfx.play("reward")
 			_client.campfire("rest", -1, _cmd_slot())))
-	# thinning past the floor would let a deck shrink away to nothing
-	var can_thin: bool = deck.size() > int(cf.get("min_deck", 5))
+	var can_thin: bool = campfire_can_thin(deck.size(), int(cf.get("min_deck", 5)))
 	var thin := _button("Thin the deck — remove a card" if can_thin
 		else "Thin the deck — deck too small", func() -> void:
 			_deck_pick = "remove"
@@ -857,6 +856,14 @@ func _render_shop(s: Dictionary) -> void:
 ## (the boundary is "<", not "<=", same as the server's check).
 static func shop_slot_disabled(sold: bool, gold: int, price: int) -> bool:
 	return sold or gold < price
+
+
+## Mirrors Run.campfire_action()'s own gate (run.gd:583) so the "Thin the
+## deck" button never offers a trim the server will refuse — the boundary is
+## "<=", not "<": a deck sitting exactly on the floor may not shrink further,
+## the same rule campfire_action() enforces for "remove". #86 duty 3.
+static func campfire_can_thin(deck_size: int, min_deck: int) -> bool:
+	return deck_size > min_deck
 
 
 func _stock_button(item: Dictionary, index: int, gold: int) -> Button:
