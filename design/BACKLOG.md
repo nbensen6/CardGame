@@ -2782,6 +2782,29 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-12, #86 duty 3 (verify a mechanic actually works) — `Combat._wound_target`'s
+  boss-fallback branch had never been driven.** Last commit (`b277929`) was duty
+  2, so this turn is duty 3. `_wound_target(enemy_index)` is the single gate
+  both `preview()`'s `damage_per_wound` read AND `play_card()`'s own
+  `debuff_target`/`valid_add` redirect share (the fix that made it a shared
+  function in the first place was itself a duty-2 catch a few rotations back)
+  — so a bug in its fallback branch would silently misroute a real hit, not
+  just a flavour number. Every existing test only ever drove the "add is alive
+  and in range" happy path; grepping `run_tests.gd` for the function and for
+  `player_passives`-shaped coverage gaps turned up this one as the load-bearing
+  function with zero coverage of its actual guard clause. Added two tests:
+  `_test_backlog86_wound_target_falls_back_to_boss_when_the_add_is_dead()`
+  (an add at `enemy_index` with `hp == 0`) and
+  `_test_backlog86_wound_target_falls_back_to_boss_when_enemy_index_is_out_of_range()`
+  (a living add present, but `enemy_index` past the end of `adds`) — both
+  assert the hit lands on the boss for the wound-bonus number AND that the
+  named add's hp is completely untouched, not just "not credited as the
+  target". Proved the tests actually discriminate by temporarily dropping the
+  `is_dead()` guard from `_wound_target` and confirming the dead-add test
+  fails (`FAIL aiming at a dead add falls back to the boss...`), then
+  reverting. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`:
+  ALL TESTS PASSED. Next `#86` turn is duty 2 (find an error and resolve it).
+
 - **2026-09-12, #86 duty 2 (find an error and resolve it) — Hopscotch's own
   "All players climb 1 and an additional 2 per Rhythm" only ever paid the
   Rhythm bonus to the caster; the ally always got a flat 1.** Last commit

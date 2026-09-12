@@ -504,6 +504,8 @@ func _init() -> void:
 	_test_poison_lands_on_the_targeted_add_not_the_boss()
 	_test_frail_lands_on_the_targeted_add_not_the_boss()
 	_test_damage_per_wound_reads_the_targeted_adds_own_wound()
+	_test_backlog86_wound_target_falls_back_to_boss_when_the_add_is_dead()
+	_test_backlog86_wound_target_falls_back_to_boss_when_enemy_index_is_out_of_range()
 	_test_add_artifact_wards_off_poison_landed_on_it()
 	_test_add_bleeds_from_its_own_poison_on_its_turn()
 	_test_adds_round_trip_through_save_and_load()
@@ -9598,6 +9600,49 @@ func _test_damage_per_wound_reads_the_targeted_adds_own_wound() -> void:
 	combat.play_card(0, 0, true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
 	_expect(add.hp == 24 and boss.hp == 300,
 		"damage_per_wound (2 + 2 per Poison) reads the TARGETED add's own 2 Poison (total 6), not the boss's 5 (which would total 12)")
+
+
+## backlog #86 duty 3: `_wound_target` is the single gate both the wound-bonus
+## read above AND play_card's own `valid_add` redirect share (see combat.gd's
+## `debuff_target`/`valid_add` right after the preview() call) — so a bug in
+## its fallback branch would silently misroute a real hit, not just a
+## flavour number. Every existing test only ever drove the "add is alive and
+## in range" branch; the fallback that everything else depends on had never
+## been proven at all. Boss and add carry different Poison stacks for the
+## same reason the test above does: a bug reading the wrong one produces a
+## different, discriminating total.
+func _test_backlog86_wound_target_falls_back_to_boss_when_the_add_is_dead() -> void:
+	var boss := _dummy_boss(300)
+	boss.wound = 5
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Grub", 30)
+	add.wound = 2
+	add.hp = 0  # already dead before this card is ever played
+	combat.adds.append(add)
+	combat.players[0].hand = [Card.from_dict({"id": "wound_reader_dead", "name": "Wound Reader",
+		"type": "attack", "cost": 1, "damage": 2, "damage_per_wound": 2, "target": "enemy"})]
+	combat.play_card(0, 0, true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
+	_expect(boss.hp == 288 and add.hp == 0,
+		"aiming at a dead add falls back to the boss for both the wound bonus (2 + 2*5=10, total 12) and the hit itself, leaving the corpse at 0 rather than negative")
+
+
+## Sibling to the dead-add case above: the add at `enemy_index` is alive and
+## well, but the index itself is past the end of `adds` — the same shape of
+## mistake a caller could make with a stale index after an earlier add died
+## and was never re-checked. The living add must come out completely
+## untouched, not just "not the wound target".
+func _test_backlog86_wound_target_falls_back_to_boss_when_enemy_index_is_out_of_range() -> void:
+	var boss := _dummy_boss(300)
+	boss.wound = 5
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Grub", 30)
+	add.wound = 2
+	combat.adds.append(add)
+	combat.players[0].hand = [Card.from_dict({"id": "wound_reader_oob", "name": "Wound Reader",
+		"type": "attack", "cost": 1, "damage": 2, "damage_per_wound": 2, "target": "enemy"})]
+	combat.play_card(0, 0, true, -1, -1, -1, Combat.TIMING_PERFECT, 5)
+	_expect(boss.hp == 288 and add.hp == 30,
+		"an enemy_index past the end of adds falls back to the boss (2 + 2*5=10, total 12), leaving the untouched living add exactly at its starting 30 hp")
 
 
 ## backlog #86 duty 2: play_card's Poison/Frail branches already ward off a
