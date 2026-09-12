@@ -295,9 +295,24 @@ func to_dict() -> Dictionary:
 		"relic_taken": _relic_taken,
 		"seed": _seed, "rng_state": str(_rng.state),  # a uint64; JSON floats would round it
 		"is_daily": is_daily, "daily_date": daily_date,
-		"combat": combat.to_dict() if (phase == Phase.COMBAT and combat != null) else {},
+		# backlog #86 duty 2: `combat` must survive a save for as long as
+		# anything still reads it, not just while `phase == Phase.COMBAT` —
+		# `game_host.gd`'s own "felled" snapshot key reads `combat.boss.id`
+		# all through a real fight's REWARD screen too (the node_type gate a
+		# few lines up combat.gd — see COMBAT_NODE_TYPES's own comment — this
+		# one must match). A live session never notices the gap (`combat` is
+		# "never cleared"), but a save taken while parked on that reward
+		# screen used to write `{}` here regardless, so resuming it silently
+		# lost which beast had just been felled.
+		"combat": combat.to_dict() if combat != null and _combat_worth_saving() else {},
 	}
 
+## Whether `combat` still needs to ride along in a save — the same question
+## `from_dict()` below asks on the way back in, and `game_host.gd`'s own
+## `"felled"` read asks live. Kept as one function so the two can't drift
+## the way `to_dict()`'s own stale `phase == Phase.COMBAT` check just did.
+func _combat_worth_saving() -> bool:
+	return phase == Phase.COMBAT or (phase == Phase.REWARD and node_type in COMBAT_NODE_TYPES)
 
 static func from_dict(d: Dictionary) -> Run:
 	# _init regenerates a map and burns RNG; both are overwritten straight after.
@@ -356,7 +371,12 @@ static func from_dict(d: Dictionary) -> Run:
 	r._relic_taken = bool(d.get("relic_taken", false))
 	r._rng.state = int(String(d.get("rng_state", "0")))
 	var combat_d: Dictionary = d.get("combat", {})
-	if r.phase == Phase.COMBAT and not combat_d.is_empty():
+	# backlog #86 duty 2: mirrors to_dict()'s own _combat_worth_saving() check —
+	# an older save (written before this fix) simply has combat_d empty outside
+	# Phase.COMBAT, same as before, and is backfilled the same additive way
+	# every other field above already is: no combat, no felled beast, nothing
+	# else affected.
+	if r._combat_worth_saving() and not combat_d.is_empty():
 		r.combat = Combat.from_dict(combat_d)
 	elif r.phase == Phase.COMBAT:
 		# Should never happen post-#14 (save always includes combat when the

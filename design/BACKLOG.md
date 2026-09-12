@@ -2782,6 +2782,49 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-12 (even later still), #86 duty 2: `Run.to_dict()`/`from_dict()`
+  only saved and restored `combat` while `phase == Phase.COMBAT`, but
+  `game_host.gd`'s own "felled" snapshot key reads `combat.boss.id` all
+  through a real fight's REWARD screen too (the `node_type in
+  COMBAT_NODE_TYPES` gate an earlier duty-2 fix added for exactly that).**
+  Last commit (`617283a`) was duty 3, so this turn opened on duty 2.
+  Dispatched a research agent to grep the accumulated `duty 2` log entries
+  for an exclusion list and hunt fresh territory across `game/core`,
+  `game/session`, `game/net`, and the rules-bearing logic in
+  `game/views`/`game/ui`.
+
+  A live session never notices the gap — `Run.combat` is deliberately
+  "never cleared," so the same in-memory object survives untouched all the
+  way through the reward screen. But solo autosaves on every broadcast
+  (`GameHost._autosave()`), including while parked on a real fight's reward
+  screen, and a save taken there wrote `{}` for `combat`. Resuming it left
+  `combat == null` while `node_type` still said a beast was just felled —
+  the "felled" field silently disappeared on resume, even though nothing
+  about the live run had changed.
+
+  Fixed by adding `Run._combat_worth_saving()` (`phase == Phase.COMBAT or
+  (phase == Phase.REWARD and node_type in COMBAT_NODE_TYPES)`) and using it
+  in both `to_dict()`'s save condition and `from_dict()`'s restore
+  condition, so the two checks can no longer drift the way they just had.
+  Regression test `_test_backlog86_a_reward_after_a_real_fight_survives_a_save_reload`
+  wins a real fight, confirms the live run sits on REWARD with `combat`
+  still pointing at the felled beast, round-trips it through
+  `Run.from_dict(run.to_dict())`, and asserts the reloaded run still knows
+  which beast it felled. Confirmed it fails pre-fix (the reload lost
+  `combat` entirely) and passes after. Fresh `--import`, headless, Godot
+  4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED (1541 passed). Older saves
+  degrade additively — no version bump needed. Also swept clean and not
+  needing re-coverage: `Card.to_dict/from_dict` and `upgraded_copy()`'s
+  field-bump lists, `Combat._meld_cards()`, `game_host.gd`'s
+  `_slot_private()`/`_deck_face()` fx/base dicts against `CardView.face_text()`,
+  `_keywords_of()` against `keywords.json`, relic/ascension/enchant effect
+  tables against their JSON, boss move/limiter/`when`-condition vocabularies,
+  `_draw_innate`/`_discard_random`/`_peek_top`/`resolve_scry`/`use_potion`/
+  `_adds_turn`/`_damage_boss`/`_damage_add`/`_apply_limiter` preview-vs-reality
+  parity, `RunMap`/`RunSave`/`Progress`, all three net transports, and
+  `location_3d.gd`'s client-side shop/campfire gating against
+  `Run.buy()`/`campfire_action()`. Next `#86` turn is duty 3.
+
 - **2026-09-12 (yet later), #86 duty 2: `Combat.play_card()` spent a card's
   own `light_cost` off `ps.light` BEFORE calling `preview()` to compute the
   resolved play, so `damage_per_light` scored its bonus against the Light

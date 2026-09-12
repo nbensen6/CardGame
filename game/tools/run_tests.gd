@@ -597,6 +597,7 @@ func _init() -> void:
 	_test_backlog86_gamehost_wires_take_key_command_to_run()
 	_test_backlog86_build_shared_exposes_keys_for_the_reward_screen()
 	_test_backlog86_felled_snapshot_clears_for_a_later_non_combat_reward()
+	_test_backlog86_a_reward_after_a_real_fight_survives_a_save_reload()
 	_test_backlog64_event_key_effect_grants_the_event_key_once()
 	_test_backlog64_boon_effects_never_grant_a_key()
 	_test_backlog64_sealed_hollow_event_grants_a_key_at_a_real_cost()
@@ -12010,6 +12011,38 @@ func _test_backlog86_felled_snapshot_clears_for_a_later_non_combat_reward() -> v
 	host._broadcast_state()
 	_expect(String(c0.shared.get("felled", "")) == "",
 		"a treasure node's reward screen must not claim a beast was felled just because Run.combat still points at an earlier fight")
+
+
+## backlog #86 duty 2: the fix directly above this test gated `_build_shared()`'s
+## "felled" read on `node_type` being a real combat node (fight/elite/boss), so
+## it reads `_run.combat.boss.id` for as long as the run SITS on the reward
+## screen after a real fight -- not just while `phase` is still COMBAT. A live
+## session never notices a gap, because `Run.combat` is "never cleared" (see
+## COMBAT_NODE_TYPES's own comment on that) -- the same in-memory object
+## survives untouched all the way through the reward screen. But `Run.to_dict()`
+## only ever serialized `combat` when `phase == Phase.COMBAT`, and
+## `Run.from_dict()` only ever rebuilt it under that same stale condition -- a
+## save taken while parked on a real fight's reward screen (solo autosave fires
+## on every broadcast, see GameHost._autosave()) wrote `{}` for combat, and
+## resuming that save landed back on the identical reward screen, for the
+## identical felled beast, with `combat` now null: the "felled" field silently
+## vanishes and the carcass it's meant to show never appears, even though
+## `node_type` still says a real beast was just felled.
+func _test_backlog86_a_reward_after_a_real_fight_survives_a_save_reload() -> void:
+	var run := Run.new([_deck_of(_slash, 10), _deck_of(_slash, 10)], ["A", "B"], 7, [{}, {}])
+	run.start()
+	run.pick_node(int(run.available_nodes()[0]))  # row 0 is always a fight
+	var fought_id: String = run.beast_id
+	_force_win(run)
+	_expect(run.phase == Run.Phase.REWARD and run.node_type in Run.COMBAT_NODE_TYPES \
+			and run.combat != null and run.combat.boss.id == fought_id,
+		"setup sanity: a real fight's win parks the run on REWARD with combat still pointing at the beast just felled")
+
+	var loaded := Run.from_dict(run.to_dict())
+	_expect(loaded.phase == Run.Phase.REWARD and loaded.node_type == run.node_type,
+		"setup sanity: the save/load round trip keeps the reward screen's own phase and node_type")
+	_expect(loaded.combat != null and loaded.combat.boss != null and loaded.combat.boss.id == fought_id,
+		"a reward screen following a real fight must still know which beast was felled after a save/reload, not just within the same live, unsaved session")
 
 
 func _test_backlog64_event_key_effect_grants_the_event_key_once() -> void:
