@@ -1112,7 +1112,8 @@ func _refresh() -> void:
 	_refresh_ledge_marks()
 	_update_climb_state(s)
 	_update_gauge(s)
-	_render_party(s, int(boss.get("target", -1)), String(boss.get("intent", {}).get("type", "")))
+	_render_party(s, int(boss.get("target", -1)), String(boss.get("intent", {}).get("type", "")),
+		any_add_attacking(boss.get("adds", [])))
 	_update_coach(s)
 	_render_log(s)
 	_react(s)
@@ -3682,22 +3683,53 @@ const SINGLE_TARGET_KINDS: Array[String] = ["attack", "leech", "frail", "curse"]
 ## statement, which has no case for those four kinds either) read 0 — the
 ## same contradictory-HUD shape the swipe and rift fixes above both closed,
 ## on a fourth path nothing had gated yet.
-static func hunter_is_aimed_at(move_type: String, boss_target: int, i: int, foothold: int) -> bool:
+##
+## backlog #86 duty 2 (this rotation) — a FIFTH copy, and the one #89 left
+## behind: Combat.incoming_for() has added a living add's own "attack" move
+## to the ⚔ number at boss_target_index() since #89, but this function, the
+## sibling that decides the red border, never gained the matching check —
+## it only ever looks at the MAIN boss's move_type, exactly as it did before
+## #89. Root Lurker's Root Tendril (the same add #89's own commit message
+## names) can attack while the main boss's own move is "block"/"enrage"/
+## "regen"/"shift_sigil" (none of which are SINGLE_TARGET_KINDS), which
+## produced the identical contradiction the four fixes above all closed: a
+## nonzero ⚔ number next to a border that reads "safe". `add_attacking` is
+## true when ANY living add's telegraphed move is "attack" — adds have no
+## target of their own (_adds_turn(), Combat.incoming_for()'s own add
+## branch), they always land on whoever boss_target already names.
+static func hunter_is_aimed_at(move_type: String, boss_target: int, i: int, foothold: int,
+		add_attacking: bool = false) -> bool:
 	return move_hits_every_hunter(move_type) or swipe_catches(move_type, foothold) \
-		or (i == boss_target and move_type in SINGLE_TARGET_KINDS)
+		or (i == boss_target and (move_type in SINGLE_TARGET_KINDS or add_attacking))
+
+
+## Whether any living add's telegraphed move will actually land — the same
+## "attack" gate Combat.incoming_for()'s own add branch uses (adds only ever
+## honour "attack" and "block" per _adds_turn()). Reads `adds` in the shape
+## game_host.gd's `_build_shared` puts on the wire: each a Dictionary with
+## "hp" and "intent" (itself a Dictionary with "type").
+static func any_add_attacking(adds: Array) -> bool:
+	for add_v in adds:
+		var add: Dictionary = add_v
+		if int(add.get("hp", 0)) <= 0:
+			continue
+		if String((add.get("intent", {}) as Dictionary).get("type", "")) == "attack":
+			return true
+	return false
 
 
 ## Co-op means your ally's state is not optional information: HP, block,
 ## Energy, how high they've climbed, whether they're hanging, and whether the
 ## beast is about to hit them. The 3D scene shows WHERE they are; this says how
 ## they're doing.
-func _render_party(s: Dictionary, boss_target: int, move_type: String) -> void:
+func _render_party(s: Dictionary, boss_target: int, move_type: String, add_attacking: bool) -> void:
 	for c in _party.get_children():
 		c.queue_free()
 	var players: Array = s.get("players", [])
 	for i in range(players.size()):
 		var p: Dictionary = players[i]
-		var aimed: bool = hunter_is_aimed_at(move_type, boss_target, i, int(p.get("foothold", 0)))
+		var aimed: bool = hunter_is_aimed_at(move_type, boss_target, i, int(p.get("foothold", 0)),
+			add_attacking)
 		_party.add_child(_party_card(p, i, aimed))
 	var bits: Array = ["Gold %d" % int(s.get("gold", 0))]
 	var relics: Array = s.get("relics", [])

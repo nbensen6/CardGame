@@ -877,6 +877,8 @@ func _init() -> void:
 	_test_backlog86_hunter_is_aimed_at_ignores_boss_only_utility_moves()
 	_test_backlog86_hunter_is_aimed_at_true_for_single_target_kinds_on_the_named_hunter()
 	_test_backlog86_hunter_is_aimed_at_still_defers_to_sweeps_and_unconditional_hits()
+	_test_backlog86_hunter_is_aimed_at_true_when_an_add_is_attacking_even_if_the_boss_move_is_utility()
+	_test_backlog86_any_add_attacking_matches_incoming_fors_own_add_gate()
 	# backlog #86 duty 3: card_climb_for, lifted out of combat_3d._card_climb --
 	# the rule deciding slider vs. plain tap. Its own comment warns that reading
 	# card.grip (top level) instead of card.base.grip silently returns 0 for
@@ -14390,6 +14392,47 @@ func _test_backlog86_hunter_is_aimed_at_still_defers_to_sweeps_and_unconditional
 	_expect(Combat3D.hunter_is_aimed_at("rift", -1, 1, 0), "rift hits everyone regardless of boss_target or foothold")
 	_expect(Combat3D.hunter_is_aimed_at("swipe_high", -1, 0, 1), "swipe_high must still catch a hunter off the ground even with no boss_target match")
 	_expect(not Combat3D.hunter_is_aimed_at("swipe_high", -1, 0, 0), "swipe_high must still spare a hunter on the ground")
+
+
+## backlog #86 duty 2 (this rotation) -- hunter_is_aimed_at is a FIFTH copy of
+## "who does this move hit", and the one #89 left behind: incoming_for() has
+## added a living add's own "attack" to the ⚔ number at boss_target_index()
+## since #89, but this function never gained the matching check, so it kept
+## reading only the main boss's move_type exactly as before #89. A Root
+## Lurker whose Root Tendril add is attacking while the MAIN boss's own move
+## is a boss-only utility kind ("block"/"enrage"/"regen"/"shift_sigil", none
+## of them SINGLE_TARGET_KINDS) must still put the border on boss_target --
+## the exact contradiction ("5 incoming, no border") the four fixes above
+## all closed, on the one path none of them gated.
+func _test_backlog86_hunter_is_aimed_at_true_when_an_add_is_attacking_even_if_the_boss_move_is_utility() -> void:
+	for kind in ["block", "enrage", "regen", "shift_sigil"]:
+		_expect(Combat3D.hunter_is_aimed_at(kind, 0, 0, 0, true),
+			"%s alone spares the hunter, but a living add's own attack still lands on boss_target_index()" % kind)
+		_expect(not Combat3D.hunter_is_aimed_at(kind, 0, 1, 0, true),
+			"%s plus an attacking add still must not aim at a hunter boss_target_index() doesn't name" % kind)
+	_expect(not Combat3D.hunter_is_aimed_at("block", 0, 0, 0, false),
+		"with no add attacking, a boss-only utility move must still spare the hunter (add_attacking defaults false)")
+
+
+## any_add_attacking() is the gate hunter_is_aimed_at's add_attacking param
+## reads from the shared snapshot's "adds" array (game_host.gd's add_views
+## shape: {"hp", "intent": {"type"}, ...}). It must match Combat.incoming_for()'s
+## own add branch exactly: only a LIVING add (hp > 0) whose move is "attack"
+## counts -- a dead add's stale intent, or a living add mid-"block", must not
+## trip a border nothing will actually hit anyone with.
+func _test_backlog86_any_add_attacking_matches_incoming_fors_own_add_gate() -> void:
+	_expect(not Combat3D.any_add_attacking([]), "no adds at all -- nothing to attack with")
+	_expect(Combat3D.any_add_attacking([{"hp": 5, "intent": {"type": "attack"}}]),
+		"a living add telegraphing attack must count")
+	_expect(not Combat3D.any_add_attacking([{"hp": 0, "intent": {"type": "attack"}}]),
+		"a dead add's leftover intent must not count -- combat.gd's own add loop skips is_dead() adds")
+	_expect(not Combat3D.any_add_attacking([{"hp": 5, "intent": {"type": "block"}}]),
+		"a living add telegraphing anything but attack must not count -- _adds_turn() only ever honours attack/block")
+	_expect(Combat3D.any_add_attacking([
+		{"hp": 0, "intent": {"type": "attack"}},
+		{"hp": 3, "intent": {"type": "block"}},
+		{"hp": 7, "intent": {"type": "attack"}},
+	]), "one attacking add among several must be enough, regardless of the others' state")
 
 
 ## backlog #86 duty 3: card_climb_for, lifted out of combat_3d._card_climb, the

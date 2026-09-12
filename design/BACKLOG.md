@@ -2782,6 +2782,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-12, #86 duty 2 (find an error and resolve it) — the red "about to
+  be hit" border on a party card never accounted for an attacking add, even
+  though #89 taught the ⚔ number beside it to.** Last commit (`ef749a9`) was
+  duty 3, so this turn is duty 2. `combat_3d.gd`'s `hunter_is_aimed_at()` is
+  already documented as the FOURTH copy of "who does this move hit" the game
+  keeps drifting on (three earlier ones for rift/swipe/utility-move kinds are
+  logged above) — read it end to end and found a fifth: it only ever inspects
+  the MAIN boss's `move_type`. `Combat.incoming_for()` has included a living
+  add's own "attack" damage in the ⚔ preview since #89 (Root Lurker's Root
+  Tendril, named in that commit), but `_render_party`'s border check never
+  gained the matching add-awareness. Concretely: if the main boss's own move
+  that round is `block`/`enrage`/`regen`/`shift_sigil` (none of them
+  `SINGLE_TARGET_KINDS`) while a living add is telegraphing `attack` at the
+  same `boss_target_index()` (adds have no target of their own — they always
+  land on whoever the main boss targets, per `_adds_turn()`), the HUD would
+  show real nonzero incoming damage next to a border reading "safe" — the
+  exact contradiction the four prior fixes in this family all closed, just on
+  a path none of them happened to cover. Fixed by adding an `add_attacking`
+  parameter to `hunter_is_aimed_at()` (default `false`, so the seven existing
+  tests calling it with the old four-arg signature are untouched) and a new
+  `any_add_attacking(adds)` helper mirroring `incoming_for()`'s own gate
+  (living, i.e. `hp > 0`, and `intent.type == "attack"`). `_render_party()` and
+  its one call site now thread `any_add_attacking(boss.get("adds", []))`
+  through. Added `_test_backlog86_hunter_is_aimed_at_true_when_an_add_is_attacking_even_if_the_boss_move_is_utility()`
+  and `_test_backlog86_any_add_attacking_matches_incoming_fors_own_add_gate()`
+  — the latter also checks a dead add's stale "attack" intent and a living
+  add mid-"block" both correctly do NOT trip the border. Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86`
+  turn is duty 3 (verify a mechanic actually works).
+
 - **2026-09-12, #86 duty 3 (verify a mechanic actually works) — `Combat._wound_target`'s
   boss-fallback branch had never been driven.** Last commit (`b277929`) was duty
   2, so this turn is duty 3. `_wound_target(enemy_index)` is the single gate
