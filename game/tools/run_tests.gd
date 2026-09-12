@@ -70,6 +70,8 @@ func _init() -> void:
 	_test_taunt_redirects_the_boss()
 	_test_backlog86_taunt_redirects_a_leech_move()
 	_test_backlog86_taunt_redirects_an_adds_attack_too()
+	_test_backlog86_taunt_redirects_a_frail_move()
+	_test_backlog86_taunt_redirects_a_curse_move()
 	_test_attack_all_hits_both()
 	_test_enrage_raises_attack()
 	# phase 2: climb / weak-point loop
@@ -1985,6 +1987,42 @@ func _test_backlog86_taunt_redirects_an_adds_attack_too() -> void:
 		"the taunt still holds for the add's own turn -- _forced_target only resets at the start of the next round")
 	_expect(hp_before - combat.players[1].combatant.hp == 7 and combat.players[0].combatant.hp == 42,
 		"both the boss's hit and the add's own hit chased the taunter, sparing the ally entirely")
+
+
+## backlog #86 duty 3: the two branches the leech test's own doc comment named
+## and never followed through on. "frail" and "curse" both read
+## players[boss_target_index()] exactly like "attack" and "leech" do (combat.gd
+## lines 1606-1617), so a taunt should redirect these too -- but nothing had
+## ever driven either past the untargeted default, so a future edit that broke
+## just these two branches (a hard-coded index, a reordered match arm) would
+## pass every existing test while quietly leaving a taunter's ally to eat a
+## debuff or a curse card the taunt was supposed to draw onto the taunter.
+func _test_backlog86_taunt_redirects_a_frail_move() -> void:
+	var boss := Boss.new("Clawmother", 100)
+	boss.hp = 50
+	boss.moves = [{"type": "frail", "value": 3}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_taunt, 10)], 42, boss)
+	_expect(combat.boss_target_index() == 0, "default target is hunter 1")
+	combat.play_card(1, _first_playable(combat, 1))  # hunter 2 taunts (+6 block, becomes target)
+	_expect(combat.boss_target_index() == 1, "taunt redirects frail's target the same as a plain attack")
+	combat.end_turn(0)
+	combat.end_turn(1)  # frail should land on the taunter, not the untouched ally
+	_expect(combat.players[1].combatant.frail == 3 and combat.players[0].combatant.frail == 0,
+		"frail lands on the taunter, sparing the ally it would have hit by default")
+
+
+func _test_backlog86_taunt_redirects_a_curse_move() -> void:
+	var boss := Boss.new("Hexbound", 100)
+	boss.hp = 50
+	boss.moves = [{"type": "curse", "value": 1}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_taunt, 10)], 42, boss)
+	_expect(combat.boss_target_index() == 0, "default target is hunter 1")
+	combat.play_card(1, _first_playable(combat, 1))  # hunter 2 taunts (+6 block, becomes target)
+	_expect(combat.boss_target_index() == 1, "taunt redirects curse's target the same as a plain attack")
+	combat.end_turn(0)
+	combat.end_turn(1)  # the curse card should land in the taunter's discard, not the untouched ally's
+	_expect(_has_id(combat.players[1].discard_pile, "bruised_grip") and not _has_id(combat.players[0].discard_pile, "bruised_grip"),
+		"the curse card lands in the taunter's discard pile, sparing the ally it would have hit by default")
 
 
 func _test_attack_all_hits_both() -> void:

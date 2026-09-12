@@ -14381,3 +14381,26 @@ Newest first. One line per finished item: what, and anything surprising.
   nothing had ever asked. Fresh `--import`, headless, Godot 4.7.1-stable,
   `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2 (find an
   error and resolve it).
+
+- **2026-09-12 — #86 duty 3: taunt's redirect was unproven for the boss's
+  "frail" and "curse" move types.** `_enemy_turn()`'s "frail" and "curse"
+  branches (`combat.gd:1606-1617`) both resolve their target through
+  `boss_target_index()`, exactly like "attack" and "leech" do — and the doc
+  comment on `_test_backlog86_taunt_redirects_a_leech_move` already said so
+  in as many words, naming all four branches and then only following through
+  on "leech". Grepped the whole suite for `taunt` next to `frail`/`curse`:
+  nothing. Both move types are live content (6 "frail" moves and 4 "curse"
+  moves across real beasts in `bosses.json`), so a future edit that
+  hard-coded a target or reordered the match arms in just these two branches
+  would pass every existing test while quietly leaving a taunter's ally to
+  eat the debuff or the curse card the taunt card's own text promises goes
+  to the taunter instead. Added `_test_backlog86_taunt_redirects_a_frail_move`
+  and `_test_backlog86_taunt_redirects_a_curse_move`, built on the same
+  synthetic-boss-plus-real-`Combat` pattern as the existing leech/add taunt
+  tests: play a taunt, assert `boss_target_index()` flips to the taunter,
+  end both turns, assert the frail stack / curse card landed on the taunter
+  and the untouched ally shows none. Both passed on the first run — the
+  redirect held; this closes the gap the leech test's own comment flagged
+  and never closed. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2 (find an
+  error and resolve it).
