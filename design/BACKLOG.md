@@ -2782,6 +2782,49 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-12 (still later again), #86 duty 3 (verify a mechanic actually
+  works) — a multi-hit card against a Thorned boss/add had never been proven
+  to bite back once PER HIT.** Last commit (`b4124ab`) was duty 2, so this
+  turn opened on duty 3. `_damage_boss()`/`_damage_add()` (combat.gd) each
+  check `if boss.thorns > 0` (or `add.thorns > 0`) and reflect it onto the
+  attacker with no "already bit back this play" guard, and `play_card()`'s
+  hit loop calls one of those two functions once PER HIT for a `hits > 1`
+  card (Flurry, Double Tap, Snap Volley, Sap, Matched Pace, Turret, Finale,
+  Venom Cascade, Rivet Gun, Trailmaster's Cut all carry `hits: 2` or more) —
+  so a 2-hit card against a Thorns-3 boss should cost the attacker 3+3=6, not
+  3. Dispatched a research agent (110 tool calls) to hunt for a genuinely
+  untested mechanic after two of my own manual candidates turned out to
+  already be covered (GameHost's duplicate-character-pick refusal — my first
+  guess — already has dedicated solo AND co-op tests I'd missed by grepping
+  the wrong phrasing; a lesson worth repeating: grep for BEHAVIOR, not just
+  function names, before concluding something is untested). It found this
+  one: every existing Thorns test
+  (`_test_thorns_reflects_a_landed_boss_attack`,
+  `_test_beast_thorns_reflects_card_damage_dealt_to_it`,
+  `_test_add_thorns_bites_the_attacking_add_not_the_boss`,
+  `_test_thorns_reflects_card_damage_dealt_to_an_add`, etc.) only ever drives
+  a single-hit Slash, and the one multi-hit test
+  (`_test_flurry_multi_hit`) uses a boss with no Thorns set at all — the two
+  were never combined. Added
+  `_test_multistrike_thorns_bites_back_once_per_hit()`, covering both the
+  main-boss path and the `_damage_add()` sibling path (backlog #63's
+  enemy_index targeting) in one test. Confirmed it actually catches the bug
+  it's named for: temporarily added an instance-level "already bit back this
+  play" guard to both reflection sites (simulating the exact "moved the
+  Thorns check outside the loop" regression the test guards against), reran
+  — both new assertions failed (would-be 3/2 instead of the correct 6/4) while
+  every other test in the file still passed, then reverted the guard. Also
+  hit a red herring while double-checking: an intermittent "2 ObjectDB
+  instances were leaked at exit" warning appeared on some runs regardless of
+  this change (0/4 on the pre-change tree, ~4/5 after) — `--verbose` named the
+  leaked objects as `AudioStreamPlaybackWAV`/`AudioStreamWAV`, the same
+  audio-teardown timing flake already documented earlier in this log (Music
+  toggle test, audio mix thread frees on its own schedule), unrelated to
+  Thorns/Combat entirely and not something this change caused. Exit code was
+  0 and `ALL TESTS PASSED` printed on every run regardless. Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86`
+  turn is duty 2 (find an error and resolve it).
+
 - **2026-09-12 (yet later), #86 duty 2 (find an error and resolve it) — the
   telegraphed boss "intent" could lie about which move was actually about to
   land, the moment a sigil_fatigue/height_split limiter's own Block-chip

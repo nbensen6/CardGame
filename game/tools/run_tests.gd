@@ -395,6 +395,7 @@ func _init() -> void:
 	_test_strength_mechanic()
 	_test_wound_bleeds_the_titan()
 	_test_flurry_multi_hit()
+	_test_multistrike_thorns_bites_back_once_per_hit()
 	_test_leech_drains_and_heals()
 	_test_leech_heals_nothing_when_fully_blocked()
 	_test_leech_heals_only_what_gets_through_block()
@@ -8124,6 +8125,43 @@ func _test_flurry_multi_hit() -> void:
 	c2.play_card(0, _first_playable(c2, 0))  # (4+4)+(4+4) = 16, vulnerable 2->0
 	_expect(c2.boss.hp == b2 - 16 and c2.boss.vulnerable == 0,
 		"each Flurry hit can strike an Exposed weak point")
+
+
+## backlog #86 duty 3: _damage_boss()'s Thorns reflection ("touching a spined
+## beast costs you") has no "already bit back this play" guard -- it just
+## fires every time the function is called. play_card()'s multi-hit loop
+## (ten real cards carry hits>1: Flurry, Double Tap, Snap Volley, Sap, Matched
+## Pace, Turret, Finale, Venom Cascade, Rivet Gun, Trailmaster's Cut) calls
+## _damage_boss() once PER HIT, not once per card, so a 2-hit card against a
+## Thorns-3 boss should bite back 3+3=6, not 3. Every existing Thorns test
+## (_test_thorns_reflects_a_landed_boss_attack,
+## _test_beast_thorns_reflects_card_damage_dealt_to_it, and the two add-thorns
+## tests below) only ever drives a single-hit Slash; the one multi-hit test
+## above (_test_flurry_multi_hit) uses a boss with no Thorns set at all. A bug
+## that moved the Thorns check outside the hit loop (summing total damage and
+## reflecting once) would make multistrike decks silently immune to a real
+## defensive mechanic, and every test in this file would still pass.
+func _test_multistrike_thorns_bites_back_once_per_hit() -> void:
+	var combat := _new_combat([_deck_of(_flurry, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	combat.boss.thorns = 3
+	var hp0: int = combat.players[0].combatant.hp
+	var boss_hp0 := combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))  # Flurry: 4 damage x2 hits
+	_expect(combat.boss.hp == boss_hp0 - 8, "Flurry still lands both 4-damage hits against the Thorns")
+	_expect(combat.players[0].combatant.hp == hp0 - 6,
+		"a Thorned boss bites back once PER HIT of a multistrike card (3+3=6), not once per card play (3)")
+
+	# Same rule on the sibling _damage_add() path (backlog #63's add-targeting).
+	var add := Boss.new("Grub", 30)
+	add.thorns = 2
+	var c2 := _new_combat([_deck_of(_flurry, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	c2.adds.append(add)
+	var hp1: int = c2.players[0].combatant.hp
+	# enemy_index 0 redirects Flurry's two hits to the add instead of the boss.
+	c2.play_card(0, _first_playable(c2, 0), true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
+	_expect(add.hp == 22, "Flurry's two hits still land on the add (30 - 4 - 4)")
+	_expect(c2.players[0].combatant.hp == hp1 - 4,
+		"a Thorned add bites back once per hit too (2+2=4), not once per card play")
 
 
 func _test_leech_drains_and_heals() -> void:
