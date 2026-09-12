@@ -2782,7 +2782,39 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-12 (latest), #86 duty 2 (find an error and resolve it).** Last
+- **2026-09-12 (latest), #86 duty 3 (verify a mechanic actually works).**
+  Last commit (`9a4edb6`) was duty 2, so this turn is duty 3. Every
+  non-combat `_on_command` handler in `game_host.gd` (`buy`, `leave_shop`,
+  `pick_card`, `campfire`, `skip_reward`, `take_key`, `pick_node`,
+  `pick_event`, `discard_potion`) is gated `if not paused and _run != null
+  and ... :`, the same shape `_in_combat_action` uses for `play_card`/
+  `end_turn`/`fall`/`use_potion`/`resolve_scry` — the implicit claim being
+  that a disconnect halts the whole run, not just a fight in progress, and
+  a reconnect resumes it correctly wherever the run is parked (shop,
+  campfire, reward, map, event). Dispatched a research agent first to find
+  a genuinely fresh mechanic rather than rehash the climb-route duty-3
+  history (`_route_between`/`_stand_on_model`/`_hop`), which is already
+  covered many passes deep. It found this: every existing pause/reconnect
+  test builds its session through `_make_session()`, which always steps
+  straight into combat, so only the combat branch of this gate had ever
+  actually been driven — the shop/campfire/reward/map/event branches were
+  asserted only by code shape, never exercised.
+
+  Added `_test_backlog86_pause_blocks_shop_commands_and_reconnect_resumes_them`
+  (`game/tools/run_tests.gd`): force a real session into the SHOP phase
+  (win combat, set gold, call `_begin_shop()` directly — the same
+  established shortcut `_test_gold_and_shop` already uses), drop hunter 2's
+  peer, assert the host pauses and a `buy` command from the still-connected
+  hunter is silently ignored (gold and stock unchanged), reconnect with a
+  fresh peer id, assert the pause clears and the reconnected client's own
+  snapshot shows the shop it rejoined into, then assert a `buy` command
+  succeeds again. All five assertions passed against the existing code —
+  this closes a real coverage gap rather than fixing a bug; the gate itself
+  already worked correctly outside combat, it had just never been proven.
+  Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS
+  PASSED. Next `#86` turn is duty 2.
+
+- **2026-09-12 (earlier), #86 duty 2 (find an error and resolve it).** Last
   commit (`7b161b8`) was duty 3, so this turn is duty 2. Picked up an
   already-diagnosed but unfixed finding from `design/progress/bugs.md`
   (2026-09-05, "two damage popups land on top of each other at Titan scale"):

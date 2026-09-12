@@ -549,6 +549,7 @@ func _init() -> void:
 	_test_backlog86_same_peer_id_rejoin_clears_the_pause_without_reclaiming()
 	_test_both_hunters_dropping_mid_fight_both_get_their_own_seat_back()
 	_test_lobby_drop_reindexes_the_remaining_peer_and_frees_the_slot()
+	_test_backlog86_pause_blocks_shop_commands_and_reconnect_resumes_them()
 	_test_host_autosaves_and_resumes()
 	_test_host_autosaves_and_resumes_mid_combat()
 	_test_solo_controls_both_hunters()
@@ -11352,6 +11353,58 @@ func _test_lobby_drop_reindexes_the_remaining_peer_and_frees_the_slot() -> void:
 		"both slots picking a character starts the run even after a lobby-stage reshuffle")
 	_expect(not bool(c1.shared.get("waiting", true)) and not bool(c2.shared.get("waiting", true)),
 		"both the reindexed survivor and the fresh join see real combat, not a stuck lobby")
+
+
+## Backlog #86 duty 3: every `_on_command` handler outside combat -- `buy`,
+## `leave_shop`, `pick_card`, `campfire`, `skip_reward`, `take_key`,
+## `pick_node`, `pick_event`, `discard_potion` -- is written `if not paused
+## and _run != null and ... :`, the same shape `_in_combat_action` uses to gate
+## `play_card`/`end_turn`/`fall`/`use_potion`/`resolve_scry`. The implicit
+## claim: a disconnect halts the WHOLE run, not just a fight in progress, and
+## a reconnect resumes it correctly wherever the run is parked. But every
+## existing pause/reconnect test above builds its session through
+## _make_session(), which always steps straight into combat -- none of them
+## ever call peer_left while the run is sitting in the shop (or campfire, or
+## reward, or map, or an event), so the non-combat branches of that gate have
+## never actually been driven, only their combat sibling has.
+func _test_backlog86_pause_blocks_shop_commands_and_reconnect_resumes_them() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var transport: LocalTransport = s["transport"]
+	_force_win(host._run)
+	host._run.gold = 500
+	host._run.node_type = "shop"
+	host._run._begin_shop()
+	host._broadcast_state()
+	var first_unsold := -1
+	for i in range(host._run.shop_stock.size()):
+		if not bool(host._run.shop_stock[i]["sold"]):
+			first_unsold = i
+			break
+	_expect(String(c0.shared.get("phase", "")) == "shop" and not host.paused and first_unsold >= 0,
+		"sanity: both hunters are looking at a real, unpaused shop before anyone drops")
+
+	transport.emit_signal("peer_left", 20)  # hunter 2 (peer 20) drops
+	_expect(host.paused and bool(c0.shared.get("paused", false)),
+		"the host pauses on a drop outside combat too, here in the shop")
+
+	var gold_before: int = host._run.gold
+	var stock_before := str(host._run.shop_stock)
+	c0.buy(first_unsold)
+	_expect(host._run.gold == gold_before and str(host._run.shop_stock) == stock_before,
+		"a buy command from the still-connected hunter is ignored while paused, in the shop same as combat")
+
+	# The reconnect: a fresh peer id, exactly what a real ENet connection gets.
+	var c_new := GameClient.new(transport, 99)
+	c_new.join()
+	_expect(not host.paused, "rejoining clears the pause outside combat too")
+	_expect(String(c_new.shared.get("phase", "")) == "shop",
+		"the reconnected hunter's own snapshot shows the shop it rejoined into, not a stuck lobby or map")
+
+	c0.buy(first_unsold)
+	_expect(host._run.gold < gold_before and bool(host._run.shop_stock[first_unsold]["sold"]),
+		"a buy command from the still-connected hunter succeeds again once the pause clears")
 
 
 # --- helpers --------------------------------------------------------------
