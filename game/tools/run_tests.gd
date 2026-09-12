@@ -338,6 +338,7 @@ func _init() -> void:
 	_test_backlog47_light_gain_banks_across_the_round_reset()
 	_test_backlog47_light_cost_gates_and_spends()
 	_test_backlog47_damage_per_light_scales_without_spending()
+	_test_backlog86_damage_per_light_reads_light_before_this_cards_own_spend()
 	_test_backlog47_ally_heal_caps_at_max_hp()
 	_test_backlog47_light_survives_playerstate_dict_round_trip()
 	_test_backlog47_light_survives_mid_combat_save_and_load()
@@ -12438,6 +12439,47 @@ func _test_backlog47_damage_per_light_scales_without_spending() -> void:
 	var dealt := before - combat.boss.hp
 	_expect(dealt == 10 and ps.light == 4,
 		"Sunburst's damage scales with banked Light (2 + 2*4 = 10) without spending any of it")
+
+
+## backlog #86 duty 2 — no single authored card carries both `light_cost`
+## (Flare) and `damage_per_light` (Sunburst) at once, so the two tests above
+## only ever proved each field in isolation. Combat._meld_cards() sums both
+## independently, though, and _test_meld_carries_light_and_deck_effects
+## already proves a fused card carries both fields correctly — it just never
+## checked what PLAYING that fused card actually deals.
+##
+## Combat.preview()'s `x_spent` param exists specifically so damage_per_x
+## reads the energy an X-cost card drained BEFORE play_card() zeroes
+## ps.energy (see preview()'s own doc comment) — the live HUD preview
+## (called before the card is played) and the real resolved play must price
+## the SAME card the same way. damage_per_light never got the equivalent
+## treatment: play_card() spent card.light_cost off ps.light before calling
+## preview() for the real play, so a card combining both fields scored its
+## own damage_per_light bonus against the Light left AFTER paying for
+## itself, not the Light banked when the player saw the card and chose to
+## play it — the live preview and the actual damage dealt silently
+## disagreed on the very same play.
+func _test_backlog86_damage_per_light_reads_light_before_this_cards_own_spend() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	# Flare (light_cost 5, damage 14) melded with Sunburst (damage_per_light 2,
+	# damage 2) -> one card: damage 16, light_cost 5, damage_per_light 2.
+	ps.hand = [_meld_card(), Content.make_card("flare"), Content.make_card("sunburst")]
+	ps.energy = 9
+	combat.play_card(0, 0, true, 1, 2)  # meld Flare + Sunburst
+	var fused: Card = ps.hand[0]
+	ps.light = 5  # exactly enough to pay the fused card's own light_cost
+	# The live HUD preview a player sees before tapping the card: preview()
+	# reads ps.light LIVE, still at its full pre-spend 5, with no card of
+	# this play's own having touched it yet.
+	var shown := combat.preview(0, fused, true)
+	var before: int = combat.boss.hp
+	combat.play_card(0, 0)  # play the fused card for real
+	var dealt := before - combat.boss.hp
+	_expect(int(shown["damage"]) == 26,
+		"the live preview scales damage_per_light off Light banked before this card's own spend (16 + 2*5)")
+	_expect(dealt == 26,
+		"the card actually deals what its own live preview just promised, not less because playing it paid its own Light cost first")
 
 
 ## The Lightbearer's mend targets the ally directly, clamped the same way

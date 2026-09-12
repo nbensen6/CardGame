@@ -502,6 +502,19 @@ func is_over() -> bool:
 ## already spent that energy down to zero. Cards that aren't X-cost never set
 ## `damage_per_x`/`block_per_x`, so this is a no-op for them either way.
 ##
+## `light_before` (backlog #86 duty 2) is the SAME fix, for `damage_per_light`
+## (#47): left at -1, it's read live off `ps.light`, correct for a DISPLAY
+## preview taken before the card is played. `play_card` spends `card.light_cost`
+## off `ps.light` before it calls this for the resolved play (same "win or
+## fumble" timing `x_spent`'s own energy drain uses) — without threading the
+## pre-spend amount through the same way `x_spent` already does, a card
+## carrying BOTH `light_cost` and `damage_per_light` (unreachable on a single
+## authored card today, but real the moment two cards combine that way — see
+## Combat._meld_cards, which already sums both fields independently, e.g.
+## Flare + Sunburst) would scale its own bonus off the Light left AFTER paying
+## for itself instead of the Light banked when the player saw the card and chose
+## to play it, silently dealing less than its own live preview just promised.
+##
 ## Which creature's Wound stack a card's `damage_per_wound` should read, and
 ## the same creature play_card's own Poison/Frail redirect lands on — one
 ## question, shared, so the two can't independently drift the way they did
@@ -525,7 +538,7 @@ func _wound_target(enemy_index: int) -> Boss:
 ## lands on is decided at play time (see `enemy_index` on play_card()), not
 ## here — only the wound bonus's SOURCE depends on it.
 func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PERFECT,
-		x_spent: int = -1, enemy_index: int = -1) -> Dictionary:
+		x_spent: int = -1, enemy_index: int = -1, light_before: int = -1) -> Dictionary:
 	var ps: PlayerState = players[pi]
 	var mate: PlayerState = players[ally_index(pi)]
 	var hit := card.timed and nailed
@@ -538,13 +551,14 @@ func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PER
 	# same "counts only earlier plays" idiom damage_per_exhausted already uses.
 	var prior := int(ps.play_counts.get(card.id, 0))
 	var x := x_spent if x_spent >= 0 else (ps.energy if card.cost == -1 else 0)
+	var light := light_before if light_before >= 0 else ps.light
 
 	var dmg := card.damage + card.damage_per_vulnerable * boss.vulnerable \
 		+ card.damage_per_foothold * ps.foothold + card.damage_per_rhythm * ps.rhythm \
 		+ card.damage_per_wound * _wound_target(enemy_index).wound \
 		+ card.damage_per_ally_foothold * int(mate.foothold) \
 		+ card.damage_per_exhausted * exhausted + card.damage_per_x * x \
-		+ card.damage_per_light * ps.light + card.damage_per_discarded * discarded
+		+ card.damage_per_light * light + card.damage_per_discarded * discarded
 	if hit:
 		dmg += int(card.timed_damage * scale)
 	if card.type == "attack":  # buffs lift real attacks, not incidental scaling
@@ -805,6 +819,12 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	# read it live the way a display-only preview call does.
 	var pay := effective_cost(pi, card)
 	var x_spent := pay if card.cost == -1 else 0
+	# Same reason, same fix, for Light (backlog #86 duty 2 — see preview()'s
+	# own `light_before` doc comment): captured before this card's own
+	# light_cost drains `ps.light` a few lines down, so `damage_per_light`
+	# scales off what was banked when the play was made, matching the live
+	# preview the player actually saw before committing to it.
+	var light_before := ps.light
 	ps.energy -= pay
 	ps.light -= card.light_cost  # the Lightbearer's own currency — spent alongside energy, win or fumble (backlog #47)
 	ps.hand.remove_at(ci)
@@ -864,8 +884,10 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	# fires, so Build Mech counts only EARLIER plays and Detonator doesn't secretly
 	# count its own sacrifice. Threaded with enemy_index (backlog #86 duty 2) so
 	# damage_per_wound reads the SAME creature's Wound this play is about to land
-	# Poison on, rather than always the boss's.
-	var pv := preview(pi, card, true, timing_quality, x_spent, enemy_index)
+	# Poison on, rather than always the boss's. Threaded with light_before
+	# (backlog #86 duty 2, same reasoning as x_spent above) so damage_per_light
+	# reads the Light banked before THIS card's own light_cost spent it.
+	var pv := preview(pi, card, true, timing_quality, x_spent, enemy_index, light_before)
 	ps.play_counts[card.id] = int(ps.play_counts.get(card.id, 0)) + 1
 	ps.cards_played_this_turn += 1  # backlog #67 — bumped AFTER the preview this
 	# card itself resolved with, same "counts only earlier plays" idiom as play_counts above

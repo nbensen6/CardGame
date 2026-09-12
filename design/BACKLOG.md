@@ -2782,6 +2782,52 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-12 (yet later), #86 duty 2: `Combat.play_card()` spent a card's
+  own `light_cost` off `ps.light` BEFORE calling `preview()` to compute the
+  resolved play, so `damage_per_light` scored its bonus against the Light
+  left after paying for itself instead of the Light banked when the player
+  saw the live preview and chose to play the card.** Last commit (`807bd38`)
+  was duty 3, so this turn opened on duty 2. Dispatched a research agent to
+  grep the accumulated `duty 2` log entries for an exclusion list and hunt
+  fresh territory across `game/core`, `game/session`, `game/net`, and the
+  rules-bearing logic in `game/views`/`game/ui`, following the two named
+  bug families (first-pass holes; two copies of one truth).
+
+  It found this one by analogy: `preview()`'s own `x_spent` parameter exists
+  for exactly this reason on X-cost cards — its doc comment already explains
+  that `play_card` must thread the pre-spend amount through explicitly,
+  since by the time it calls `preview()` for the real play it has already
+  spent the energy down. `damage_per_light` (backlog #47) never got the same
+  treatment. No single authored card in `data/cards.json` carries both
+  `light_cost` and `damage_per_light` today, but `Combat._meld_cards()` sums
+  both fields independently and any two hand cards can be fused via the
+  generic meld catalyst — melding Flare (`light_cost:5, damage:14`) with
+  Sunburst (`damage_per_light:2, damage:2`) yields one card with all three
+  fields. With 5 Light banked, the live preview shown to the player reads
+  `16 + 2*5 = 26`; the actual resolved play, computed after `ps.light` was
+  already spent to 0, dealt only `16 + 2*0 = 16` — a silent 10-damage
+  shortfall versus what the player was just shown and chose to spend on.
+
+  Fixed the same way `x_spent` already is: added `light_before` to
+  `preview()`'s signature (defaulting to -1, read live off `ps.light` when
+  unset, so every existing display-only preview call is untouched), and had
+  `play_card()` capture `ps.light` before its own spend line and thread it
+  through its internal `preview()` call. Wrote the regression test first
+  (`_test_backlog86_damage_per_light_reads_light_before_this_cards_own_spend`)
+  — melds Flare+Sunburst, banks exactly 5 Light, takes the live preview,
+  plays the card, and asserts the actual damage dealt matches what the
+  preview promised. Verified it actually catches the bug: stashed the
+  `combat.gd` fix alone, reran, watched exactly this one test fail
+  (`FAIL the card actually deals what its own live preview just promised`)
+  with everything else still green, restored the fix. Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. The
+  research agent also swept `Card.to_dict/from_dict`, every relic/potion/
+  event/boon/ascension effect key, every JSON data file for duplicate keys,
+  every `ps.foothold` mutation site, `game_host.gd`'s full dispatch table
+  and snapshot builders, and `combat_3d.gd`'s target-matching against every
+  boss move type — all found consistent, so that ground doesn't need
+  re-covering. Next `#86` turn is duty 3.
+
 - **2026-09-12 (latest), #86 duty 3: `_draw_innate()` pulled EVERY innate
   card out of the draw pile uncapped, overflowing the opening hand past
   `HAND_SIZE` once a deck holds more innate cards than that — a real bug,
