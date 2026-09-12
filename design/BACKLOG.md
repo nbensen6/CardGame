@@ -2782,7 +2782,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-12 (latest), #86 duty 2 attempted (came up clean), duty 3:
+- **2026-09-12 (latest), #86 duty 2 attempted (came up clean again), duty 3:
+  HitCircle's own click-gating (HIT_RADIUS) had zero coverage through its
+  real entry point.** Last commit (`8e56f4d`) was duty 3, so this turn opened
+  on duty 2. Dispatched a research agent to re-read `boss.gd`, `content.gd`,
+  `run.gd`, `combat.gd`/`combatant.gd`, `run_map.gd` and the small UI/view
+  files not yet touched by a duty fix, cross-referencing every `game/data/*.json`
+  field against the code that reads it. It came back clean — independently
+  confirming the immediately preceding run's own "came up clean" result over
+  much of the same file set — with nothing forced. I separately reviewed
+  `run_save.gd`, `progress.gd`, `player_state.gd`, `card.gd`, `game_client.gd`
+  and `session.gd` myself (complete to_dict/from_dict round trips, no drift).
+  Per the item's own escape clause, fell through to duty 3.
+
+  For duty 3, picked `HitCircle._gui_input`'s click-gating: HIT_RADIUS's own
+  doc comment names a real historical bug it exists to prevent ("clicking the
+  circle you are looking at while an earlier one is still live used to grade
+  that earlier one, early, and report a miss you did not make"), but every
+  existing HitCircle test drives `_fire()`/`_process()` directly and never
+  once calls `_gui_input` — so the actual promise HIT_RADIUS makes had zero
+  coverage. Proving it needed a real `Camera3D` (`unproject_position`/
+  `is_position_behind` both read the viewport it's attached to), which first
+  failed with "Camera is not inside scene" because `root.add_child()` during
+  `_init()` doesn't actually attach until the next frame (same reason the
+  `fit()`/DeckView tests are deferred) — moved the new test into
+  `_finish_with_deferred_tests` and it passed. Verified the test actually
+  catches the regression it claims to: neutered the gate in `hit_circle.gd`
+  (`if false and ...`), confirmed only this new test failed, restored the
+  real code, confirmed the full suite green again.
+
+- **2026-09-12, #86 duty 2 attempted (came up clean), duty 3:
   Overworld3D's tap-vs-drag gesture latch had zero coverage.** Last commit
   (`d0fb82e`) was duty 3, so this turn opened on duty 2. Dispatched a
   research agent to read `game/core/*.gd`, `game/net/*`, `game/session/*` and

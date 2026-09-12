@@ -1130,6 +1130,10 @@ func _init() -> void:
 	_test_backlog86_hit_circle_path_point_walks_constant_speed_not_by_index()
 	_test_backlog86_hit_circle_path_point_endpoints_and_clamped_range()
 	_test_backlog86_hit_circle_path_point_degenerate_paths_never_divide_by_zero()
+	# _test_backlog86_hit_circle_gui_input_ignores_a_press_far_from_the_live_note lives
+	# in _finish_with_deferred_tests below: it needs a real Camera3D actually inside
+	# the tree (unproject_position/is_position_behind both require it), and root
+	# isn't inside its own tree yet here -- same reason fit()'s window tests are deferred.
 	# backlog #86 duty 3 (thirty-third pass): Dev.cycle(), the F9 live-swap
 	# between a card's four rarity treatments (framed / borderless / borderless
 	# foil / foil) dev.gd's own header asks for by name -- "does the borderless
@@ -1479,6 +1483,7 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_deck_view_step_builds_a_toggle_the_open_pane_never_needed()
 	_test_backlog86_deck_view_closed_fires_on_cancel_and_escape_not_on_pick()
 	_test_backlog86_console_own_closes_an_open_picker_through_closed_not_a_bare_free()
+	_test_backlog86_hit_circle_gui_input_ignores_a_press_far_from_the_live_note()
 
 	print("")
 	if _failures == 0:
@@ -15523,6 +15528,55 @@ func _test_backlog86_hit_circle_path_point_degenerate_paths_never_divide_by_zero
 	_expect(hc._path_point(all_zero, 0.9) == Vector2(5, 5),
 		"a path with zero total length (every point the same) returns that point rather than dividing by a zero total")
 	hc.free()
+
+
+## backlog #86 duty 3: prove HitCircle's own click-gating actually works, through
+## the real entry point (_gui_input) rather than the pure _fire() harness every
+## test above uses. HIT_RADIUS's own doc comment names the exact regression this
+## exists to prevent: "clicking the circle you are looking at while an earlier
+## one is still live used to grade that earlier one, early, and report a miss
+## you did not make" — but every _fire() test calls _fire() directly, skipping
+## the position check in _gui_input entirely, so that promise itself had zero
+## coverage. This needs a real Camera3D (unproject_position/is_position_behind
+## both read the viewport the camera is attached to), so it goes through `root`
+## the same way the Screen.fit() tests above do, rather than through the null
+## camera _hit_circle_fired_quality's own header comment says is only safe
+## because those tests never call _screen()/_gui_input.
+func _test_backlog86_hit_circle_gui_input_ignores_a_press_far_from_the_live_note() -> void:
+	var cam := Camera3D.new()
+	root.add_child(cam)
+	cam.position = Vector3(0, 0, 10)  # identity rotation: looks straight down -Z at both notes below
+	var points := PackedVector3Array([Vector3(-3, 0, 0), Vector3(3, 0, 0)])
+	# Read the notes' real screen positions off the same camera the circle itself
+	# will use, rather than guessing FOV/aspect math — the test only needs the two
+	# to land far enough apart, not any particular coordinate.
+	var s0: Vector2 = cam.unproject_position(points[0])
+	var s1: Vector2 = cam.unproject_position(points[1])
+	_expect(s0.distance_to(s1) > HitCircle.HIT_RADIUS,
+		"setup sanity: the two notes must project farther apart than HIT_RADIUS or this test proves nothing")
+	var hc := HitCircle.new()
+	hc.size = Vector2(1280, 720)
+	hc.begin(0.0, cam, points, false)
+	hc._t = hc._approach  # note 0 is dead on the beat right now
+
+	var far_press := InputEventMouseButton.new()
+	far_press.button_index = MOUSE_BUTTON_LEFT
+	far_press.pressed = true
+	far_press.position = s1  # aimed at the SECOND note, nowhere near the live first one
+	hc._gui_input(far_press)
+	_expect(hc.is_live() and hc._hits_done == 0,
+		"a press nowhere near the live note must be ignored outright, not judged as a miss on it")
+
+	var near_press := InputEventMouseButton.new()
+	near_press.button_index = MOUSE_BUTTON_LEFT
+	near_press.pressed = true
+	near_press.position = s0  # the live note's own real screen position
+	hc._gui_input(near_press)
+	_expect(hc._hits_done == 1,
+		"a press that actually lands on the live note's screen position must fire and grade it")
+
+	hc.free()
+	cam.queue_free()
 
 
 ## Dev.cycle()/_name_now() read and write CardView's own static force flags,
