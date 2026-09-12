@@ -354,6 +354,14 @@ var _dev_biome := "crag"
 var _climb_t := 0.0
 var _beast_punch := 0.0           # recoil when the beast is struck
 var _time := 0.0
+## backlog #86 duty 2: two damage popups spawned close together (a weak-point
+## hit and the hunter's own hit on the same swing) used to land on top of each
+## other at Titan scale -- see popup_offset() below. _last_popup_guard counts
+## down each frame; while it's positive, the popup it was set for is still
+## fresh enough on screen that a new one has to steer clear of it.
+var _last_popup_at := Vector3.ZERO
+var _last_popup_guard := 0.0
+const POPUP_OVERLAP_WINDOW := 0.5  # seconds a popup counts as "still there" for the next one to avoid
 # snapshot deltas drive the juice, exactly like the 2D view
 var _prev_hp := -1
 var _prev_foot: Array = []
@@ -940,6 +948,7 @@ func _process(delta: float) -> void:
 		_beast.scale = Vector3.ONE * _beast_scale * recoil
 		_beast.position.z = -_beast_punch * 0.35
 	_beast_punch = maxf(0.0, _beast_punch - delta * 3.5)
+	_last_popup_guard = maxf(0.0, _last_popup_guard - delta)
 	for i in range(_hunters.size()):
 		var h: Dictionary = _hunters[i]
 		var node: Node3D = h["node"]
@@ -3252,9 +3261,33 @@ func _detail_rule() -> Control:
 ##
 ## Sized against the beast's own height so it stays legible whether you're fighting
 ## a pup or a Titan (the camera pulls back with the beast, so a fixed size shrinks).
+## backlog #86 duty 2: a weak-point hit and the hunter's own hit on the same
+## swing spawn two popups within a frame of each other, and the fixed
+## world-space gap the screenshot harness nudges them apart by
+## (`tools/screenshot.gd`'s 1.6/1.2-unit offset) does not scale — the glyph
+## grows with `reach` two lines below, but a fixed gap next to a Titan-scaled
+## glyph shrinks to nothing relative to the text, and the two numbers render
+## as one unreadable blur. Pure so it can be proven headless: the minimum
+## separation it enforces has to grow with `reach` the same way the glyph does.
+static func popup_offset(new_at: Vector3, prev_at: Vector3, reach: float) -> Vector3:
+	var min_sep: float = reach * 0.5
+	var delta: Vector3 = new_at - prev_at
+	delta.y = 0.0
+	if delta.length() >= min_sep:
+		return new_at
+	var dir: Vector3 = Vector3(1.0, 0.0, 0.0) if delta.length() < 0.0001 else delta.normalized()
+	return prev_at + dir * min_sep + Vector3(0.0, new_at.y - prev_at.y, 0.0)
+
+
 func _damage_popup(amount: int, at: Vector3, weak_point: bool, on_hunter: bool = false) -> void:
 	if amount <= 0:
 		return
+	var reach: float = maxf(_beast_box.size.y, 2.0)
+	var placed_at := at
+	if _last_popup_guard > 0.0:
+		placed_at = popup_offset(at, _last_popup_at, reach)
+	_last_popup_at = placed_at
+	_last_popup_guard = POPUP_OVERLAP_WINDOW
 	var lbl := Label3D.new()
 	lbl.text = str(amount)
 	lbl.font_size = 128
@@ -3262,7 +3295,6 @@ func _damage_popup(amount: int, at: Vector3, weak_point: bool, on_hunter: bool =
 	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	lbl.no_depth_test = true          # never lost inside the beast's mesh
 	lbl.fixed_size = false
-	var reach: float = maxf(_beast_box.size.y, 2.0)
 	lbl.pixel_size = (0.0010 if not weak_point else 0.0014) * reach
 	if on_hunter:
 		lbl.pixel_size = 0.0009 * reach
@@ -3272,13 +3304,13 @@ func _damage_popup(amount: int, at: Vector3, weak_point: bool, on_hunter: bool =
 	else:
 		lbl.modulate = Color(0.95, 0.93, 0.88)
 	lbl.outline_modulate = Color(0.08, 0.05, 0.04, 0.95)
-	lbl.position = at
+	lbl.position = placed_at
 	_rig.add_child(lbl)
 
 	var rise := reach * 0.22
 	var tw := create_tween()
 	tw.set_parallel(true)
-	tw.tween_property(lbl, "position", at + Vector3(0.0, rise, 0.0), 0.85) \
+	tw.tween_property(lbl, "position", placed_at + Vector3(0.0, rise, 0.0), 0.85) \
 		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	tw.tween_property(lbl, "modulate:a", 0.0, 0.45).set_delay(0.4)
 	tw.chain().tween_callback(lbl.queue_free)

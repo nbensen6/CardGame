@@ -1488,6 +1488,9 @@ func _init() -> void:
 	_test_backlog86_card_icon_falls_through_numeric_tiers_to_sword_then_shield_then_blank()
 	_test_backlog86_continue_button_state_shows_the_save_warning_when_a_save_exists()
 	_test_backlog86_continue_button_state_clears_the_save_warning_when_no_save_exists()
+	_test_backlog86_damage_popup_offset_leaves_well_separated_popups_alone()
+	_test_backlog86_damage_popup_offset_scales_the_minimum_gap_with_reach()
+	_test_backlog86_damage_popup_offset_still_separates_two_popups_at_the_same_spot()
 
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
@@ -17094,6 +17097,43 @@ func _test_backlog86_continue_button_state_clears_the_save_warning_when_no_save_
 	_expect(state["solo_text"] == "Solo  (play both hunters)",
 		"Solo's text resets to its plain default -- it must not keep warning about " +
 		"overwriting a save that no longer exists, which is the bug this test guards")
+
+
+## backlog #86 duty 2 (found via design/progress/bugs.md, 2026-09-05 -- "two
+## damage popups land on top of each other at Titan scale"): _damage_popup's
+## own font size scales with `reach` (the beast's own height) so the glyph
+## stays legible against a Titan, but the offset BETWEEN two popups spawned
+## close together did not scale the same way -- a gap that read fine next to
+## a mid-sized beast shrank to nothing relative to the text once the beast was
+## tall enough, and a weak-point hit landing the same frame as the hunter's
+## own hit on it rendered as one unreadable blur. popup_offset() is the pure
+## half of the fix: it enforces a minimum separation that scales with `reach`,
+## the same way the font size already does.
+func _test_backlog86_damage_popup_offset_leaves_well_separated_popups_alone() -> void:
+	var prev := Vector3(0.0, 2.0, 0.0)
+	var far := Vector3(10.0, 1.5, 0.0)  # 10 units apart horizontally, reach is 4 -> min_sep 2.0
+	var placed: Vector3 = Combat3D.popup_offset(far, prev, 4.0)
+	_expect(placed == far, "already far enough apart (relative to reach), the popup's own spot is kept")
+
+
+func _test_backlog86_damage_popup_offset_scales_the_minimum_gap_with_reach() -> void:
+	var prev := Vector3(0.0, 2.0, 0.0)
+	var close := Vector3(1.0, 1.5, 0.0)  # 1 unit apart horizontally -- too close at either reach below
+	var small: Vector3 = Combat3D.popup_offset(close, prev, 4.0)
+	var big: Vector3 = Combat3D.popup_offset(close, prev, 40.0)
+	var small_gap := Vector2(small.x - prev.x, small.z - prev.z).length()
+	var big_gap := Vector2(big.x - prev.x, big.z - prev.z).length()
+	_expect(is_equal_approx(small_gap, 2.0), "reach 4.0 enforces a 0.5x minimum gap of 2.0 units")
+	_expect(is_equal_approx(big_gap, 20.0), "reach 40.0 (a Titan) enforces a proportionally bigger gap of 20.0 units")
+	_expect(is_equal_approx(small.y, close.y), "the popup's own height above the ground is preserved, only the horizontal spot moves")
+
+
+func _test_backlog86_damage_popup_offset_still_separates_two_popups_at_the_same_spot() -> void:
+	var prev := Vector3(3.0, 1.0, 5.0)
+	var placed: Vector3 = Combat3D.popup_offset(prev, prev, 8.0)  # identical spot -- no direction to push along
+	_expect(not placed.is_equal_approx(prev), "two popups spawned at the exact same point still end up apart")
+	_expect(is_equal_approx(Vector2(placed.x - prev.x, placed.z - prev.z).length(), 4.0),
+		"falls back to a fixed direction (+X) when there's no delta to steer by, but the DISTANCE still scales with reach")
 
 
 func _expect(cond: bool, name: String) -> void:

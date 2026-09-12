@@ -2782,6 +2782,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-12 (latest), #86 duty 2 (find an error and resolve it).** Last
+  commit (`7b161b8`) was duty 3, so this turn is duty 2. Picked up an
+  already-diagnosed but unfixed finding from `design/progress/bugs.md`
+  (2026-09-05, "two damage popups land on top of each other at Titan scale"):
+  `_damage_popup()` in `game/views/combat_3d.gd` sizes its glyph off the
+  beast's own `reach` (height) so the number stays legible against a Titan,
+  but the SEPARATION between two popups spawned close together (a weak-point
+  hit and the hunter's own hit on the same swing, which land in the same
+  frame in real play whenever a hunter is standing at the sigil) was a fixed
+  world-space distance that did not scale the same way — fine next to a
+  mid-sized beast, invisible next to a Titan. Added a pure static
+  `popup_offset(new_at, prev_at, reach)` that enforces a minimum separation
+  of `reach * 0.5`, tracked which popup is still "fresh" via a new
+  `_last_popup_guard` countdown (same decay-each-frame pattern `_shake` and
+  `_beast_punch` already use, wired into the existing `_process()`), and
+  proved the geometry with three new headless tests in `run_tests.gd`
+  (already-separated popups are left alone; the gap scales proportionally
+  at a small and a Titan-scale `reach`; two popups spawned at the identical
+  point still end up apart). Wrote the fix up in `bugs.md` under the
+  original finding rather than a new entry, per that file's own convention.
+  **Could not verify by eye** — no display in this session, so the fix is
+  proven at the geometry layer, not by watching two real popups land apart
+  on screen; noted as such in both places. Fresh `--import`, headless,
+  Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is
+  duty 3 (verify a mechanic actually works).
+
 - **2026-09-12 (later still), #86 duty 3 (verify a mechanic actually
   works).** Last commit (`e7a2028`) was duty 2, so this turn is duty 3.
   `Combat._peek_top()` (Scry's "look without drawing," backlog #59) carries

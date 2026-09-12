@@ -1337,6 +1337,24 @@ factor the font size already does, or popups need a screen-space (not
 world-space) minimum separation. This is `game/**` GDScript, outside this
 lane's file ownership, so written up rather than touched.
 
+**Fixed 2026-09-12 (#86 duty 2).** Added `popup_offset(new_at, prev_at, reach)`,
+a pure static on `Combat3D`: it enforces a minimum horizontal separation of
+`reach * 0.5` between a new popup and whichever one spawned within the last
+`POPUP_OVERLAP_WINDOW` (0.5s, tracked by a new `_last_popup_guard` countdown
+decremented in `_process`, same pattern `_shake`/`_beast_punch` already use),
+nudging the new one along the direction between them (or a fixed +X when they
+land at the exact same point) rather than leaving them stacked. Because the
+minimum scales with `reach`, the fix holds at any beast size instead of the
+fixed 1.6/1.2-unit offset the screenshot harness was relying on. Proven headless
+with three new tests in `run_tests.gd`
+(`_test_backlog86_damage_popup_offset_leaves_well_separated_popups_alone` and
+its two siblings) that check the pure function directly: already-separated
+popups are left alone, the gap scales proportionally at both a small and a
+Titan-scale `reach`, and two popups spawned at the identical point still end
+up apart. **Could not verify by eye** — no display in this session, so nobody
+has watched two real popups land apart on screen; the fix is proven at the
+geometry layer (the enforced minimum distance), not by looking at the render.
+
 ## 2026-09-05 — hand's rightmost card sits flush against the edge on the phone aspect ratio
 
 **Command:**
