@@ -208,6 +208,15 @@ func _init() -> void:
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
 	# potions (backlog #26)
 	_test_potions_all_load()
+	# #86 duty 3: potions.json's own _comment claims "'pool' lists what fights
+	# and shops can offer" -- an explicit promise every id under "potions" is
+	# reachable through "pool". relics.json makes the identical claim and has
+	# had a partition test (_test_backlog48_relic_pool_and_boss_relic_pool_
+	# partition_by_tier) since backlog #48; potions never got the sibling
+	# check, so a potion added to the dict and left out of the pool would
+	# pass every existing test (including _test_potions_all_load, which only
+	# ever walks the pool) while being permanently unreachable in play.
+	_test_backlog86_every_potion_is_reachable_from_the_pool()
 	_test_use_potion_applies_each_effect()
 	_test_use_potion_ally_and_beast_effects()
 	_test_use_potion_climb_updates_highest_climb()
@@ -4949,6 +4958,26 @@ func _test_potions_all_load() -> void:
 				or not known_effects.has(String(p.get("effect", ""))) or int(p.get("value", 0)) <= 0:
 			ok = false
 	_expect(ok, "the potion pool is stocked and every entry has a real name/text/effect/value")
+
+
+## Mirrors _test_backlog48_relic_pool_and_boss_relic_pool_partition_by_tier:
+## every potion id in the data file must round-trip through the pool (or a
+## potion is orphaned -- defined but never offered), and every pool entry must
+## point at a real potion (or a typo'd id silently offers nothing).
+func _test_backlog86_every_potion_is_reachable_from_the_pool() -> void:
+	var all_ids: Array = Content.all_potion_ids()
+	var pool: Array = Content.potion_pool()
+	var orphaned: Array = []
+	for id in all_ids:
+		if not pool.has(id):
+			orphaned.append(id)
+	var dangling: Array = []
+	for id in pool:
+		if not all_ids.has(id):
+			dangling.append(id)
+	_expect(orphaned.is_empty() and dangling.is_empty(),
+		"every potion in potions.json is reachable from the pool and every pool entry names a real potion (orphaned: %s, dangling: %s)"
+			% [orphaned, dangling])
 
 
 ## Combat.use_potion() reads the same {effect, value} shape a relic does — one

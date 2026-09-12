@@ -2782,6 +2782,40 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-12 (newest), #86 duty 2 attempted (came up clean), duty 3:
+  potions.json's own `pool` promise had never been proven the way relics'
+  sibling promise has.** Last commit (`3b694dd`) was duty 3, so this turn
+  opened as duty 2. Dispatched a research agent to sweep `game/net`,
+  `game/session`, `game/ui` utility scripts, and the views/data not already
+  covered by 40+ prior duty-2 passes; it came back clean — no first-pass
+  hole or two-copies-of-truth bug found, everything it checked (net/session
+  symmetry, `game_host.gd` command-field parity, `enchants.json` effect
+  wiring, `Music`/`Sfx` first-call handling, `RunMap`/`RunSave`) was already
+  correct. Fell through to duty 3 per the established convention.
+
+  A second research agent then found that `potions.json`'s own `_comment`
+  claims `"'pool' lists what fights and shops can offer"` — the identical
+  claim `relics.json` makes, which has had a partition test
+  (`_test_backlog48_relic_pool_and_boss_relic_pool_partition_by_tier`) since
+  backlog #48. Potions never got the sibling test: `_test_potions_all_load`
+  only ever walks `Content.potion_pool()`, so a potion added to the
+  `potions` dict and left out of `pool` would pass every existing test
+  while being permanently unreachable in play — defined, but never offered
+  by a fight or a shop. Checked the shipped data directly first (17
+  potions, 17 pool entries, exact match, no existing drift) so this closes
+  a coverage gap rather than fixing a live bug.
+
+  Added `_test_backlog86_every_potion_is_reachable_from_the_pool()` in
+  `game/tools/run_tests.gd`, mirroring the relic partition test's shape:
+  every id in `Content.all_potion_ids()` must appear in
+  `Content.potion_pool()` (catches an orphaned potion) and every id in
+  `potion_pool()` must be a real key in `all_potion_ids()` (catches a
+  typo'd pool entry pointing at nothing), reporting both lists by name on
+  failure. No extraction needed — both functions were already pure static
+  `Content` calls. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2 (find an
+  error and resolve it).
+
 - **2026-09-12 (latest), #86 duty 3 (verify a mechanic actually works).**
   Last commit (`9a4edb6`) was duty 2, so this turn is duty 3. Every
   non-combat `_on_command` handler in `game_host.gd` (`buy`, `leave_shop`,
