@@ -200,6 +200,7 @@ func _init() -> void:
 	# backlog #72: rewards that know what you are building
 	_test_backlog72_archetype_tags_are_derived_from_fields()
 	_test_backlog86_archetype_tags_recognise_a_timed_grip_only_card()
+	_test_backlog86_archetype_tags_cover_every_branch_not_just_the_first_four()
 	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
 	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
@@ -4651,6 +4652,52 @@ func _test_backlog72_archetype_tags_are_derived_from_fields() -> void:
 func _test_backlog86_archetype_tags_recognise_a_timed_grip_only_card() -> void:
 	var tags: Array = Content.card_tags("tempo_trap")
 	_expect(tags.has("climb"), "Tempo Trap (timed_grip 2, grip 0) is tagged climb [tags=%s]" % [tags])
+
+
+## backlog #86 duty 3 (verify a mechanic actually works): archetype_tags() has
+## 12 branches, each an OR of up to 7 fields, but _test_backlog72_..._are_
+## derived_from_fields above (and the timed_grip fix right above this comment)
+## only ever pinned "climb", "poison", "strength" and "rhythm" -- grepping
+## run_tests.gd for `has("block")`, `has("ally")`, `has("burn")`,
+## `has("light")`, `has("discard")`, `has("vulnerable")` and `has("dexterity")`
+## turns up zero hits against archetype_tags anywhere in this file (the one
+## `has("block")` match in the whole suite is an unrelated keyword-hint check).
+## Seven of twelve branches -- more than half the function -- have never been
+## proven to fire at all, let alone proven not to bleed into a NEIGHBOURING
+## tag, which is exactly the shape the timed_grip bug above was: a real field
+## silently missing from its branch's OR-list reads identically to a test
+## suite with no coverage of that branch, so a card added with only
+## `intangible`/`ally_heal`/`exhaust_pick`/etc set could roll through
+## backlog #72's reward-lean with no archetype tag at all and nobody would
+## notice, the same way Tempo Trap did for "climb" until #86 caught it.
+##
+## Six real cards, each isolating one previously-unproven field so a false
+## positive from a NEIGHBOURING OR-term can't hide behind it, plus one card
+## (Warm Glow) that must independently set two tags from two different
+## fields on the SAME card -- an elif-instead-of-independent-if bug would
+## drop one of the two silently, the same "two copies of one truth" shape
+## duty 2 hunts for, just inside one function instead of across two.
+func _test_backlog86_archetype_tags_cover_every_branch_not_just_the_first_four() -> void:
+	var ghost_step: Array = Content.card_tags("ghost_step")     # intangible 2, nothing else
+	var expose: Array = Content.card_tags("expose")             # vulnerable 2, nothing else
+	var burn_coal: Array = Content.card_tags("burn_coal")       # exhaust_pick, nothing else
+	var sure_footing: Array = Content.card_tags("sure_footing") # dexterity 2, nothing else
+	var trash_strike: Array = Content.card_tags("trash_strike") # damage_per_discarded 1, plus flat damage
+	var warm_glow: Array = Content.card_tags("warm_glow")       # ally_heal 4 AND light_gain 1 together
+
+	_expect(ghost_step.has("block") and ghost_step.size() == 1,
+		"Ghost Step (Intangible only) is tagged block and nothing else [tags=%s]" % [ghost_step])
+	_expect(expose.has("vulnerable") and expose.size() == 1,
+		"Expose (Vulnerable only) is tagged vulnerable and nothing else [tags=%s]" % [expose])
+	_expect(burn_coal.has("burn") and burn_coal.size() == 1,
+		"Burn Coal (exhaust_pick only) is tagged burn and nothing else [tags=%s]" % [burn_coal])
+	_expect(sure_footing.has("dexterity") and not sure_footing.has("strength") and sure_footing.size() == 1,
+		"Sure Footing (Dexterity only) is tagged dexterity, never strength [tags=%s]" % [sure_footing])
+	_expect(trash_strike.has("discard") and not trash_strike.has("block"),
+		"Trash Strike (damage_per_discarded, plain damage) is tagged discard [tags=%s]" % [trash_strike])
+	_expect(warm_glow.has("ally") and warm_glow.has("light") and not warm_glow.has("block"),
+		"Warm Glow (ally_heal AND light_gain on one card) is tagged BOTH ally and light [tags=%s]"
+			% [warm_glow])
 
 
 ## Backlog #72: a card reward roll should lean toward the archetype a hunter is

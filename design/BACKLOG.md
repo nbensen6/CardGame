@@ -2782,6 +2782,41 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-12 (later), #86 duty 3 (verify a mechanic actually works) —
+  `Card.archetype_tags()` had 12 branches but only 4 of them (climb, poison,
+  strength, rhythm) were ever directly asserted.** Last commit (`f103eee`)
+  was duty 2, so this turn is duty 3. Dispatched two research agents in
+  sequence: the first proposed `Combat._handle_opening_relics()` (the
+  fight-start relic openers), which turned out to already have 5 dedicated
+  tests (`_test_backlog70_fight_start_relics_apply_before_round_one` and
+  siblings) covering the multi-effect combo, the payout chain, negative-mod
+  no-ops, and no-reapply-on-reload — a false lead, caught by reading the
+  actual test file rather than trusting the grep the agent reported. Also
+  ruled out by hand: every `_mod()` key in combat.gd, Boss's `_condition_met`/
+  `hurt_pct` pattern-switch, and game_host.gd's disconnect/reclaim flow — all
+  already have 2+ dedicated tests apiece from prior rotations. The second
+  agent, given that exclusion list, found the real gap: grepping
+  `has("block")`, `has("ally")`, `has("burn")`, `has("light")`,
+  `has("discard")`, `has("vulnerable")` and `has("dexterity")` against the
+  whole suite turns up zero hits tied to `archetype_tags()` (the one
+  `has("block")` match anywhere is an unrelated keyword-hint test). That's
+  the same shape as the timed_grip bug `#86` already fixed once for the
+  "climb" branch (a card whose only archetype field lives in an untested
+  branch rolls through backlog #72's reward-lean with no tag at all, silently
+  never leaning that hunter's rewards toward the deck they're actually
+  building) — just never swept for the other eleven branches. Added
+  `_test_backlog86_archetype_tags_cover_every_branch_not_just_the_first_four()`:
+  six real cards (`ghost_step` Intangible-only, `expose` Vulnerable-only,
+  `burn_coal` exhaust_pick-only, `sure_footing` Dexterity-only, `trash_strike`
+  damage_per_discarded, and `warm_glow` which must independently set BOTH
+  "ally" and "light" from two different fields on one card — an
+  elif-instead-of-if bug would drop one silently). Each single-field card
+  also asserts it does NOT pick up a neighbouring tag (e.g. Sure Footing
+  reads dexterity, never strength), guarding the same OR-list-bleed shape the
+  timed_grip fix already proved real. Fresh `--import`, headless, Godot
+  4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED (1491 passing). Next `#86`
+  turn is duty 2 (find an error and resolve it).
+
 - **2026-09-12, #86 duty 2 (find an error and resolve it) — the red "about to
   be hit" border on a party card never accounted for an attacking add, even
   though #89 taught the ⚔ number beside it to.** Last commit (`ef749a9`) was
