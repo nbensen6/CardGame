@@ -2782,7 +2782,52 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-12 (latest), #86 duty 3 (verify a mechanic actually works) —
+- **2026-09-12 (latest), #86 duty 2 attempted (came up clean), duty 3:
+  Overworld3D's tap-vs-drag gesture latch had zero coverage.** Last commit
+  (`d0fb82e`) was duty 3, so this turn opened on duty 2. Dispatched a
+  research agent to read `game/core/*.gd`, `game/net/*`, `game/session/*` and
+  the data-adjacent logic in `game/views/*.gd` end to end for a first-pass-
+  hole or two-copies-of-truth bug, explicitly excluding `_meld_cards()` field
+  drift (already fixed seven times) and `Boss._condition_met()`'s empty
+  add-context (already known, still unreachable — no add authors a
+  conditional `"when"`). It checked two borderline candidates
+  (`PlayerState.cost_reductions`/`play_counts` keyed by card id rather than
+  instance — confirmed intentional, matches an existing test's own comment;
+  a third peer joining a full lobby in `GameHost._handle_join` — real but a
+  lobby edge case, not a fit for either bug family) and reported everything
+  else already hardened. Per the item's own escape clause and this file's own
+  precedent (`b3e0b23`), fell through to duty 3 in the same run rather than
+  force a weak candidate.
+
+  A second research agent, given the accumulated exclusion list of ~28
+  already-covered duty-3 mechanics, found `overworld_3d.gd`'s tap-vs-drag
+  gesture handling: `_unhandled_input`'s own doc comment promises "dragging
+  over a landmark and letting go therefore studies the map instead of
+  committing you to a fight you didn't choose", but the actual rule is a
+  LATCH (`_dragged`), not a final-distance check — once the pointer crosses
+  `DRAG_SLOP` it stays "dragged" for the rest of the press even if it drifts
+  back near the start before release, and right-click release is
+  unconditionally a look regardless of distance. Grepping `DRAG_SLOP`,
+  `_dragged` and `was_look` against `run_tests.gd` turned up nothing; the
+  existing overworld tap tests (`nearest_node_at_hit` etc.) only cover WHICH
+  hex a point resolves to, never WHETHER a release counts as a tap at all.
+
+  Lifted two pure statics the same way `_act_ahead`/`row_in_act`/`stand_at`
+  were already lifted from this file: `drag_latch(already_dragged,
+  distance_from_start, slop)` (one motion sample's effect on the latch) and
+  `is_look_release(dragged, button_index)` (the release-time verdict),
+  wired `_unhandled_input` to call them instead of inlining the logic.
+  Behavior is unchanged — verified by proving the new latch-survives-drift
+  test actually catches a regression: reverted `drag_latch` to a naive
+  `distance_from_start >= slop` (ignoring `already_dragged`, the bug a naive
+  re-implementation would actually ship) and re-ran the suite — exactly the
+  one new test built to catch that failed, nothing else did — then restored
+  the fix and confirmed the full suite green again. Six new tests total:
+  the latch staying false inside the slop, tripping at the boundary,
+  surviving a drift back toward the start, and `is_look_release`'s three
+  cases (never dragged = pick, latched = look, right-click always a look).
+
+- **2026-09-12 (earlier), #86 duty 3 (verify a mechanic actually works) —
   block_carries had never been proven against a hunter who ALSO carries
   Plated Armour.** Last commit (`504d0ab`) was duty 2, so this turn opened on
   duty 3. Dispatched a research agent to read `combat.gd`/`boss.gd`/

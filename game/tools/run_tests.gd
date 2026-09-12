@@ -1265,6 +1265,17 @@ func _init() -> void:
 	_test_backlog86_nearest_open_node_on_screen_is_negative_one_past_reach()
 	_test_backlog86_nearest_open_node_on_screen_is_negative_one_with_no_open_nodes()
 
+	# backlog #86 duty 3: Overworld3D.drag_latch/is_look_release -- whether a
+	# press-and-release counts as looking around versus picking a destination
+	# had zero coverage, including the latch's own defining trait (it does not
+	# untrip if the pointer drifts back near the start before release).
+	_test_backlog86_drag_latch_stays_false_inside_the_slop()
+	_test_backlog86_drag_latch_trips_at_the_slop_boundary()
+	_test_backlog86_drag_latch_never_untrips_once_the_pointer_drifts_back()
+	_test_backlog86_is_look_release_is_a_pick_when_never_dragged()
+	_test_backlog86_is_look_release_is_a_look_once_the_latch_tripped()
+	_test_backlog86_is_look_release_right_click_never_travels()
+
 	# backlog #86 duty 3: MapEdges._edge_point (the map's own "which node leads
 	# where" line-drawing) had zero coverage anywhere in this file -- confirmed
 	# by grepping for "MapEdges" and finding nothing. It is the geometry the
@@ -16161,6 +16172,46 @@ func _test_backlog86_nearest_open_node_on_screen_is_negative_one_with_no_open_no
 	var screen_positions := {0: Vector2(0, 0)}
 	var best: int = Overworld3D.nearest_open_node_on_screen(nodes, screen_positions, Vector2(0, 0), 34.0)
 	_expect(best == -1, "a closed node right under the finger is still refused by the fallback -- only the world-space test may hit a closed node")
+
+
+## backlog #86 duty 3 -- Overworld3D.drag_latch/is_look_release decide the ONE
+## thing every other overworld tap-picking test above assumes already happened
+## correctly: whether a press-and-release counts as looking around (camera
+## drag) or picking a destination (travel), per _unhandled_input's own doc
+## comment ("Dragging over a landmark and letting go therefore studies the map
+## instead of committing you to a fight you didn't choose"). Nothing anywhere
+## in this file (DRAG_SLOP, drag_latch, is_look_release) had ever exercised
+## this before -- the geometric tap-resolution tests above only ever cover
+## "which node does a point resolve to", never "does this release count as a
+## tap at all".
+func _test_backlog86_drag_latch_stays_false_inside_the_slop() -> void:
+	_expect(not Overworld3D.drag_latch(false, 3.0, Overworld3D.DRAG_SLOP), "a motion sample still inside the slop radius must not trip the latch -- it might yet be a tap")
+
+
+func _test_backlog86_drag_latch_trips_at_the_slop_boundary() -> void:
+	_expect(Overworld3D.drag_latch(false, Overworld3D.DRAG_SLOP, Overworld3D.DRAG_SLOP), "a sample AT the slop radius counts as having left it, matching the >= in the real handler")
+
+
+func _test_backlog86_drag_latch_never_untrips_once_the_pointer_drifts_back() -> void:
+	# The crux of the doc comment's promise: yank the camera away from the
+	# start (tripping the latch), then drift back to well inside the slop
+	# radius before release. A naive re-implementation that judged only the
+	# FINAL sample's distance would wrongly call this a tap.
+	var dragged := Overworld3D.drag_latch(false, 50.0, Overworld3D.DRAG_SLOP)
+	dragged = Overworld3D.drag_latch(dragged, 1.0, Overworld3D.DRAG_SLOP)
+	_expect(dragged, "once the slop threshold is crossed the latch must hold for the rest of the press, even if a later sample drifts back near the start")
+
+
+func _test_backlog86_is_look_release_is_a_pick_when_never_dragged() -> void:
+	_expect(not Overworld3D.is_look_release(false, MOUSE_BUTTON_LEFT), "a left-button release that never crossed the slop is the actual tap-to-travel path -- it must not be swallowed as a look")
+
+
+func _test_backlog86_is_look_release_is_a_look_once_the_latch_tripped() -> void:
+	_expect(Overworld3D.is_look_release(true, MOUSE_BUTTON_LEFT), "a release after the drag latch tripped is a look, never a pick, regardless of where the pointer ends up")
+
+
+func _test_backlog86_is_look_release_right_click_never_travels() -> void:
+	_expect(Overworld3D.is_look_release(false, MOUSE_BUTTON_RIGHT), "right-click has no travel meaning at all -- it reads as a look even at zero displacement")
 
 
 ## backlog #86 duty 3 -- MapEdges.edge_point_of() is "the node you're leaving,

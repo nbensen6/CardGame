@@ -107,6 +107,34 @@ func _process(delta: float) -> void:
 		m.rotation.y += delta * 1.4
 
 
+## Whether a press-and-release counts as a LOOK (camera drag) rather than a
+## PICK (travel), lifted out for headless testing.
+##
+## `dragged` LATCHES for the rest of one press once the slop threshold is
+## crossed (set by `drag_latch` below) — it never resets until the next
+## `pressed` event, even if the pointer drifts back near the start before the
+## button is released. That latch is the whole point: dragging away from a
+## landmark and letting go back near it must still read as "studying the
+## map", never as a pick, or the doc comment's promise above `_unhandled_input`
+## ("Dragging over a landmark and letting go therefore studies the map
+## instead of committing you to a fight you didn't choose") would only hold
+## for a release that happens to land far from the start, not one that drifts
+## back close first.
+##
+## Right-click release is unconditionally a look and never a pick, regardless
+## of distance moved — right-click has no travel meaning at all.
+static func is_look_release(dragged: bool, button_index: int) -> bool:
+	return dragged or button_index == MOUSE_BUTTON_RIGHT
+
+
+## One motion sample's effect on the drag latch. `already_dragged` is this
+## press's latch so far; `distance_from_start` is THIS sample's distance from
+## where the press began. Once true, stays true regardless of what any later
+## sample measures — see `is_look_release` above for why that matters.
+static func drag_latch(already_dragged: bool, distance_from_start: float, slop: float) -> bool:
+	return already_dragged or distance_from_start >= slop
+
+
 ## One pointer, two jobs: drag to look around the region, tap to set off for a
 ## landmark. They're told apart by distance travelled, not by which button — the
 ## pick fires on RELEASE, and only if the pointer barely moved. Dragging over a
@@ -130,7 +158,7 @@ func _unhandled_input(event: InputEvent) -> void:
 					_dragged = false
 					_drag_from = mb.position
 					return
-				var was_look := _dragged or mb.button_index == MOUSE_BUTTON_RIGHT
+				var was_look := is_look_release(_dragged, mb.button_index)
 				_dragging = false
 				_dragged = false
 				if was_look or _walking:
@@ -140,9 +168,9 @@ func _unhandled_input(event: InputEvent) -> void:
 					_travel_to(col)
 	elif event is InputEventMouseMotion and _dragging:
 		var mm: InputEventMouseMotion = event
-		if not _dragged and mm.position.distance_to(_drag_from) < DRAG_SLOP:
+		_dragged = drag_latch(_dragged, mm.position.distance_to(_drag_from), DRAG_SLOP)
+		if not _dragged:
 			return          # still inside the slop — might yet be a tap
-		_dragged = true
 		_user_framed = true
 		_yaw -= mm.relative.x * LOOK_SENSITIVITY
 		_pitch += mm.relative.y * LOOK_SENSITIVITY
