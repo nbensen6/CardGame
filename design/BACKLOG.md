@@ -2782,6 +2782,28 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-13, #86 duty 3: the reward screen's headline/subtitle/prompt rule
+  had zero test coverage.** Last commit (`39d3663`) was duty 2, so this turn
+  is duty 3. Ran an Explore agent over the less-picked-over view/session
+  files (`location_3d.gd`, `overworld_3d.gd`, `menu.gd`, `game_host.gd`,
+  `game_client.gd`, `/net`) since `combat_3d.gd` has already had ~24 of its
+  static helpers lifted and tested in prior duty-3 passes (all confirmed
+  covered by grep before starting, so as not to redo work). Found
+  `location_3d.gd`'s `_render_reward()` picks its title by `node_type`
+  ("boss" claims a felled Titan with the encounter count, "elite"/"treasure"/
+  default get their own lines), its subtitle by relic-vs-card, and its
+  prompt by picked/selected/solo state naming the active hunter — a real
+  three-part rule with no test touching `_title`/`_subtitle`/`_prompt.text`
+  before this, the same shape as the already-tested `shop_slot_disabled` and
+  `campfire_can_thin` on the sibling screens in this same file. Lifted it
+  into `reward_header_text(node_type, encounter, total_encounters, is_relic,
+  picked, has_selection, solo, active_hunter_name) -> Dictionary`, verbatim
+  logic, `_render_reward()` now just computes the plain args and assigns the
+  three returned strings. Added ten tests covering all four node_type
+  branches, both reward kinds, and all four prompt states (locked / has a
+  selection / solo naming the active hunter / co-op omitting the name).
+  `run_tests.gd` ALL TESTS PASSED.
+
 - **2026-09-13, #86 duty 2: a restart after a mid-run reconnect silently
   discarded the reconnected hunter's real character.** Last commit (`8c62111`)
   was duty 3, so this turn is duty 2. Ran an Explore agent over the

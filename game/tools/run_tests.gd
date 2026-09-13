@@ -1371,6 +1371,24 @@ func _init() -> void:
 	_test_backlog86_campfire_can_thin_is_false_below_the_floor()
 	_test_backlog86_campfire_can_thin_is_false_at_a_zero_floor_with_an_empty_deck()
 
+	# backlog #86 duty 3: location_3d.reward_header_text is the reward screen's
+	# own headline/subtitle/prompt rule -- the same one menu.gd's
+	# ascension_display_state and continue_button_state already got lifted for.
+	# The REWARD phase is reached three ways (a felled beast, a felled Titan, or
+	# a walked-up-to treasure) and only one of those is a Titan, so a node_type
+	# typo here would misname what a player just did on the single screen that
+	# tells them. No test touched _title/_subtitle/_prompt.text before this.
+	_test_backlog86_reward_header_text_names_a_felled_titan_with_the_encounter_count()
+	_test_backlog86_reward_header_text_names_a_felled_elite()
+	_test_backlog86_reward_header_text_names_a_treasure_cache()
+	_test_backlog86_reward_header_text_falls_back_to_a_felled_beast()
+	_test_backlog86_reward_header_text_subtitle_calls_out_a_relic()
+	_test_backlog86_reward_header_text_subtitle_calls_out_a_card()
+	_test_backlog86_reward_header_text_prompt_when_locked_in()
+	_test_backlog86_reward_header_text_prompt_offers_a_change_once_something_is_selected()
+	_test_backlog86_reward_header_text_prompt_names_the_active_hunter_in_solo()
+	_test_backlog86_reward_header_text_prompt_omits_the_hunter_name_in_co_op()
+
 	# backlog #86 duty 3 (fortieth pass): CardView.fire_quality, the sweep-bar
 	# timing minigame's own grading rule -- the sibling of HitCircle's already
 	# thoroughly-tested _fire() (see _hit_circle_fired_quality above), which
@@ -17147,6 +17165,66 @@ func _test_backlog86_campfire_can_thin_is_false_below_the_floor() -> void:
 func _test_backlog86_campfire_can_thin_is_false_at_a_zero_floor_with_an_empty_deck() -> void:
 	_expect(not Location3D.campfire_can_thin(0, 0),
 		"an empty deck against a zero floor still refuses rather than flipping true at the degenerate boundary")
+
+
+func _test_backlog86_reward_header_text_names_a_felled_titan_with_the_encounter_count() -> void:
+	var h := Location3D.reward_header_text("boss", 2, 4, false, false, false, false, "Frog")
+	_expect(h["title"] == "Titan felled!   (2 / 4)",
+		"a boss node names itself a felled Titan and carries the encounter counter, the one node_type that gets to claim a Titan fell")
+
+
+func _test_backlog86_reward_header_text_names_a_felled_elite() -> void:
+	var h := Location3D.reward_header_text("elite", 1, 1, false, false, false, false, "Frog")
+	_expect(h["title"] == "The elite falls.",
+		"an elite node must not borrow the boss's 'Titan felled' headline")
+
+
+func _test_backlog86_reward_header_text_names_a_treasure_cache() -> void:
+	var h := Location3D.reward_header_text("treasure", 1, 1, true, false, false, false, "Frog")
+	_expect(h["title"] == "A cache in the rocks",
+		"a treasure node never claims anything was felled at all -- nothing fought back")
+
+
+func _test_backlog86_reward_header_text_falls_back_to_a_felled_beast() -> void:
+	var h := Location3D.reward_header_text("fight", 1, 1, false, false, false, false, "Frog")
+	_expect(h["title"] == "The beast falls.",
+		"an ordinary fight node falls through the match's default branch to the generic beast headline")
+
+
+func _test_backlog86_reward_header_text_subtitle_calls_out_a_relic() -> void:
+	var h := Location3D.reward_header_text("boss", 1, 1, true, false, false, false, "Frog")
+	_expect(String(h["subtitle"]).findn("relic") >= 0,
+		"a relic reward's subtitle names it a relic so a player never confuses it with a card")
+
+
+func _test_backlog86_reward_header_text_subtitle_calls_out_a_card() -> void:
+	var h := Location3D.reward_header_text("boss", 1, 1, false, false, false, false, "Frog")
+	_expect(String(h["subtitle"]).findn("card") >= 0 and String(h["subtitle"]).findn("relic") < 0,
+		"a card reward's subtitle talks about strengthening the deck, not a relic")
+
+
+func _test_backlog86_reward_header_text_prompt_when_locked_in() -> void:
+	var h := Location3D.reward_header_text("boss", 1, 1, false, true, true, true, "Frog")
+	_expect(String(h["prompt"]).findn("locked in") >= 0,
+		"picked always wins the prompt regardless of selection or solo state -- a locked-in player is waiting on their ally, not still choosing")
+
+
+func _test_backlog86_reward_header_text_prompt_offers_a_change_once_something_is_selected() -> void:
+	var h := Location3D.reward_header_text("boss", 1, 1, false, false, true, false, "Frog")
+	_expect(String(h["prompt"]).findn("lock in") >= 0,
+		"once a card is tapped but not yet locked, the prompt offers locking it in rather than repeating the initial 'tap a card' instruction")
+
+
+func _test_backlog86_reward_header_text_prompt_names_the_active_hunter_in_solo() -> void:
+	var h := Location3D.reward_header_text("boss", 1, 1, false, false, false, true, "Frog")
+	_expect(String(h["prompt"]).begins_with("Frog picks:"),
+		"solo mode plays both hunters from one seat, so the initial prompt has to say WHICH hunter is choosing or a player can lock in the wrong one's reward")
+
+
+func _test_backlog86_reward_header_text_prompt_omits_the_hunter_name_in_co_op() -> void:
+	var h := Location3D.reward_header_text("boss", 1, 1, false, false, false, false, "Frog")
+	_expect(not String(h["prompt"]).contains("Frog"),
+		"co-op has one hunter per seat already, so naming them in the prompt would be redundant noise every reward screen")
 
 
 ## backlog #86 duty 3 (fortieth pass) -- CardView.fire_quality is the sweep-bar

@@ -465,34 +465,48 @@ func _show_keyword(kw: Dictionary) -> void:
 
 # --- the reward ------------------------------------------------------------
 
+## The REWARD phase is reached three ways — a felled beast, a felled Titan, or a
+## treasure cache you simply walked up to — and only one of them involves
+## felling a Titan. Lifted out of _render_reward so the headline/subtitle/
+## prompt rules can be tested without a scene tree.
+static func reward_header_text(node_type: String, encounter: int, total_encounters: int,
+		is_relic: bool, picked: bool, has_selection: bool, solo: bool,
+		active_hunter_name: String) -> Dictionary:
+	var title: String
+	match node_type:
+		"boss":
+			title = "Titan felled!   (%d / %d)" % [encounter, total_encounters]
+		"elite":
+			title = "The elite falls."
+		"treasure":
+			title = "A cache in the rocks"
+		_:
+			title = "The beast falls."
+	var subtitle := ("Choose a RELIC — a lasting boon for the team."
+		if is_relic else "Choose a card to strengthen your deck for the next Titan.")
+	var noun := "relic" if is_relic else "card"
+	var prompt: String
+	if picked:
+		prompt = "Locked in — waiting for your ally"
+	elif has_selection:
+		prompt = "Tap another to change, or Lock In your %s" % noun
+	else:
+		prompt = "%sTap a %s to select" % [
+			("%s picks:   " % active_hunter_name) if solo else "", noun]
+	return {"title": title, "subtitle": subtitle, "prompt": prompt}
+
+
 func _render_reward(s: Dictionary) -> void:
 	var reward: Dictionary = _my_private().get("reward", {})
 	var is_relic := String(reward.get("kind", "card")) == "relic"
 	var picked := bool(reward.get("picked", false))
-	var noun := "relic" if is_relic else "card"
 	var solo := _is_solo()
-	# The REWARD phase is reached three ways — a felled beast, a felled Titan, or a
-	# treasure cache you simply walked up to — and only one of them involves
-	# felling a Titan.
-	match String(s.get("node_type", "boss")):
-		"boss":
-			_title.text = "Titan felled!   (%d / %d)" % [
-				int(s.get("encounter", 1)), int(s.get("total_encounters", 1))]
-		"elite":
-			_title.text = "The elite falls."
-		"treasure":
-			_title.text = "A cache in the rocks"
-		_:
-			_title.text = "The beast falls."
-	_subtitle.text = ("Choose a RELIC — a lasting boon for the team."
-		if is_relic else "Choose a card to strengthen your deck for the next Titan.")
-	if picked:
-		_prompt.text = "Locked in — waiting for your ally"
-	elif _selected >= 0:
-		_prompt.text = "Tap another to change, or Lock In your %s" % noun
-	else:
-		_prompt.text = "%sTap a %s to select" % [
-			("%s picks:   " % _hunter_name(_active_slot)) if solo else "", noun]
+	var header := reward_header_text(String(s.get("node_type", "boss")),
+		int(s.get("encounter", 1)), int(s.get("total_encounters", 1)),
+		is_relic, picked, _selected >= 0, solo, _hunter_name(_active_slot))
+	_title.text = String(header["title"])
+	_subtitle.text = String(header["subtitle"])
+	_prompt.text = String(header["prompt"])
 
 	for c in _row.get_children():
 		c.queue_free()
