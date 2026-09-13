@@ -208,6 +208,7 @@ func _init() -> void:
 	_test_backlog72_archetype_tags_are_derived_from_fields()
 	_test_backlog86_archetype_tags_recognise_a_timed_grip_only_card()
 	_test_backlog86_archetype_tags_cover_every_branch_not_just_the_first_four()
+	_test_backlog86_archetype_tags_recognise_block_per_play_and_block_per_x_only_cards()
 	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
 	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
@@ -5127,6 +5128,38 @@ func _test_backlog86_archetype_tags_cover_every_branch_not_just_the_first_four()
 	_expect(warm_glow.has("ally") and warm_glow.has("light") and not warm_glow.has("block"),
 		"Warm Glow (ally_heal AND light_gain on one card) is tagged BOTH ally and light [tags=%s]"
 			% [warm_glow])
+
+
+## backlog #86 duty 2: the exact same "timed_grip missing from its own OR-list"
+## shape as the fix two tests above, just on the "block" branch instead of
+## "climb". `block_per_play` (extra Block for each earlier play this fight)
+## and `block_per_x` (bonus Block per point of energy spent, backlog #29) both
+## grant Block outright but neither was listed in archetype_tags()'s "block"
+## OR-chain -- only `block`/`ally_block`/`timed_block`/`timed_ally_block`/
+## `plated_armour`/`buffer`/`intangible` were. It stayed hidden because the two
+## shipped block_per_play cards (Build Mech, Bramble Wall) both ALSO carry a
+## flat `block` value that separately trips the branch -- _build_mech() here
+## is exactly that masking case. X Brace (_x_brace(): block_per_x 4, no flat
+## block) has no such cover: it rolled through backlog #72's reward-lean with
+## no archetype tag at all, so a hunter stacking Block cards got zero lean
+## toward the one card that is nothing BUT Block.
+func _test_backlog86_archetype_tags_recognise_block_per_play_and_block_per_x_only_cards() -> void:
+	var x_brace_tags: Array = _x_brace().archetype_tags()
+	_expect(x_brace_tags.has("block") and x_brace_tags.size() == 1,
+		"X Brace (block_per_x 4, no flat block) is tagged block and nothing else [tags=%s]" % [x_brace_tags])
+
+	var play_only := Card.new()
+	play_only.block_per_play = 3
+	var play_only_tags: Array = play_only.archetype_tags()
+	_expect(play_only_tags.has("block") and play_only_tags.size() == 1,
+		"a bare card with only block_per_play set is tagged block [tags=%s]" % [play_only_tags])
+
+	# masking case: Build Mech ALSO carries a flat `block`, so this alone would
+	# have kept passing even with block_per_play missing from the OR-list --
+	# kept here to prove the fix doesn't regress the already-masked card.
+	var build_mech_tags: Array = _build_mech().archetype_tags()
+	_expect(build_mech_tags.has("block") and build_mech_tags.size() == 1,
+		"Build Mech (flat block AND block_per_play) is still tagged block, once [tags=%s]" % [build_mech_tags])
 
 
 ## Backlog #72: a card reward roll should lean toward the archetype a hunter is

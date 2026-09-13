@@ -376,7 +376,8 @@ func archetype_tags() -> Array:
 	if wound > 0 or damage_per_wound > 0:
 		tags.append("poison")
 	if block > 0 or ally_block > 0 or timed_block > 0 or timed_ally_block > 0 \
-			or plated_armour > 0 or buffer > 0 or intangible > 0:
+			or plated_armour > 0 or buffer > 0 or intangible > 0 \
+			or block_per_play > 0 or block_per_x > 0:
 		tags.append("block")
 	if strength > 0:
 		tags.append("strength")

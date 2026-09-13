@@ -2782,6 +2782,31 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-13 — #86 duty 2: `archetype_tags()`'s "block" branch was missing
+  `block_per_play` and `block_per_x`, the exact same "timed_grip missing from
+  its own OR-list" shape as the earlier "climb" fix in this same rotation.**
+  Last commit (`9370e1a`) was duty 3, so this turn opened on duty 2. Spawned
+  an Explore agent to read `/core` for a first-pass hole or a duplicated-truth
+  bug distinct from the ~28 already fixed across this rotation's history; it
+  found `core/card.gd`'s `archetype_tags()` (line 378) listing every
+  Block-granting field except `block_per_play` (extra Block per earlier play
+  this fight) and `block_per_x` (bonus Block per energy spent, backlog #29) —
+  both real Block fields, neither in the "block" OR-chain. It stayed hidden
+  because the two shipped `block_per_play` cards (Build Mech, Bramble Wall)
+  both also carry a flat `block` that separately trips the branch; a test
+  fixture already in `run_tests.gd` (`_x_brace()`, `block_per_x: 4`, no flat
+  block) proved the gap immediately once checked. Fixed by adding both fields
+  to the OR-list; added
+  `_test_backlog86_archetype_tags_recognise_block_per_play_and_block_per_x_only_cards`
+  (three assertions: X Brace, a bare block_per_play-only card, and the
+  already-masked Build Mech case, to prove the fix doesn't regress it) —
+  confirmed it fails on the pre-fix code (reverted via `git stash`, reran,
+  both new assertions failed as expected) before restoring the fix. Full
+  suite green (961 tests). Consequence if left unfixed: any future card
+  authored with `block_per_x`/`block_per_play` as its only Block field would
+  get zero archetype tag and never benefit from backlog #72's reward-lean
+  toward a Block-heavy deck.
+
 - **2026-09-13 — #86 duty 3: cards.json never had the reverse reachability
   check relics.json (#48) and potions.json (duty 3) both already have.**
   Last commit (`af8b3a0`) was duty 2, so this turn opened on duty 3. The two
