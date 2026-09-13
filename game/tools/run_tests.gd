@@ -1277,6 +1277,7 @@ func _init() -> void:
 	_test_backlog86_dev_console_unknown_command_names_itself_and_points_at_help()
 	_test_backlog86_dev_console_help_lists_every_registered_command()
 	_test_backlog86_dev_console_find_matches_ids_case_insensitively()
+	_test_backlog86_dev_console_rares_partitions_every_rare_by_real_art()
 	_test_backlog86_dev_console_on_off_parses_explicit_and_toggles_with_no_arg()
 	_test_backlog86_dev_console_turn_clamps_to_documented_range_and_off_resets()
 	_test_backlog86_dev_console_make_splits_on_commas_and_spaces_and_drops_unknown_ids()
@@ -16801,6 +16802,39 @@ func _test_backlog86_dev_console_find_matches_ids_case_insensitively() -> void:
 	var upper := c.run("find LEAP")
 	_expect(lower == upper, "find case-folds the query, so an uppercase search matches the same ids as lowercase")
 	_expect(lower == "%d: %s" % [expected.size(), ", ".join(expected)], "find's hit format is '<count>: id, id, ...' over every id containing the query, sorted the same way Content.list_card_ids() is")
+	c.free()
+
+
+## backlog #86 duty 3: `rares` is the ONLY thing that tells a human (or another
+## lane) how many of backlog #84's 29 rares still need a painted 3D window --
+## `design/rare-card-3d-effect.md` and #84's own log cite this exact count --
+## and nothing had ever driven it. A rare that silently landed in BOTH buckets,
+## or neither, would misreport real unfinished art as done (or vice versa)
+## with nobody able to tell from the console's own output.
+func _test_backlog86_dev_console_rares_partitions_every_rare_by_real_art() -> void:
+	var c := DevConsole.new()
+	var rare_ids: Array = Content.list_card_ids().filter(
+		func(id: String) -> bool: return Content.card_rarity(String(id)) == "rare")
+	_expect(not rare_ids.is_empty(), "the fixture assumption that at least one shipped card is rare still holds")
+	var with_art: Array = rare_ids.filter(
+		func(id: String) -> bool: return ResourceLoader.exists(CardView.CARD_ART_3D + String(id) + ".png"))
+	var without: Array = rare_ids.filter(
+		func(id: String) -> bool: return not ResourceLoader.exists(CardView.CARD_ART_3D + String(id) + ".png"))
+	_expect(with_art.size() + without.size() == rare_ids.size(),
+		"every rare lands in exactly one of the two buckets, never both or neither")
+	var out := c.run("rares")
+	for id in with_art:
+		_expect(out.contains(String(id)), "a rare with a real .png shows up in rares' output at all: %s" % id)
+	_expect(out.contains("window built (%d)" % with_art.size()),
+		"rares' 'window built' count matches how many rares actually have a .png on disk")
+	_expect(out.contains("still flat (%d)" % without.size()),
+		"rares' 'still flat' count matches how many rares actually have no .png on disk")
+	if without.is_empty():
+		_expect(out.contains("still flat (0):[/color] -"),
+			"an empty 'still flat' bucket prints the '-' fallback rather than a blank list")
+	if with_art.is_empty():
+		_expect(out.contains("window built (0):[/color] -"),
+			"an empty 'window built' bucket prints the '-' fallback rather than a blank list")
 	c.free()
 
 

@@ -2782,6 +2782,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-13, #86 duty 3: the dev console's `rares` command had zero test
+  coverage.** Last commit (`d8ac84a`) was duty 2, so this turn is duty 3.
+  Spent most of this run confirming there was genuinely nothing left in the
+  obvious places before picking a target: every `combat_3d.gd` static helper
+  (route_between_rungs, foothold_anchor, hop_arc, gauge_ledge_heights,
+  card_climb_for, pattern_shove, grip_after_tick, climb_state_after_secure_update,
+  intent_is_hostile, intent_text_for, height_gap_between, beast_changed,
+  climb_frame_for, model_key_for, hull_front_at, climb_marker_for,
+  hunter_move_kind, and more), every `location_3d.gd`/`overworld_3d.gd`/
+  `menu.gd`/`card_view.gd`/`hit_circle.gd` static helper, and several
+  session-layer rules that LOOKED untested by grepping function names
+  (`_solo_character_taken`, `_ensure_key_sources`, `_finish_reward`'s
+  card-then-relic queue, `_note_progress`) turned out to already be proven —
+  just through the public API rather than by name, which is why a plain
+  `grep <func_name> run_tests.gd` undercounts real coverage in this codebase
+  and has to be followed up by reading the actual test bodies before trusting
+  a "0 hits" result. `DevConsole._cmd_rares()` (`console.gd:330`) was the
+  first genuine miss: it partitions every rare card into "window built" (has
+  a real `.png` under `CardView.CARD_ART_3D`) vs "still flat", and it is the
+  literal tool `#84`'s own log uses to track "29 rares, 1 painted" — a bug in
+  the bucket split or the join/`-`-fallback formatting would misreport real
+  art progress with nothing else to catch it. Added
+  `_test_backlog86_dev_console_rares_partitions_every_rare_by_real_art`,
+  asserting the two buckets are a true partition of every rare id (never
+  both, never neither), the printed counts match `ResourceLoader.exists`
+  reality, every rare with real art is actually named in the output, and the
+  `-` fallback prints for whichever bucket happens to be empty today (window
+  built, since only `crescendo` has art). `run_tests.gd`: ALL TESTS PASSED.
+
 - **2026-09-13, #86 duty 2: `_draw_roads()` guarded one of its two twin meshes
   against an empty-vertex `surface_end()` and forgot the other.** Last commit
   (`9320705`) was duty 3, so this turn is duty 2. Ran an Explore agent over
