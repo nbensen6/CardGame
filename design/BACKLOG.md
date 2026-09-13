@@ -2782,6 +2782,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-13 — #86 duty 3: `Combat._meld_cards()` has needed a manually
+  rediscovered missing field SEVEN separate times across earlier duty-2 fixes
+  (type/power routing, light/scry/deck effects, power_effect/power_value,
+  retain/ethereal, enchant, rule_upgrade, then rarity/foil/borderless/
+  upgraded/status) — every one a Card field added after the dict literal was
+  written and never backfilled, caught only because a specific card broke and
+  someone noticed. Last commit (`068beca`) was duty 2, so this turn is duty 3.
+  Rather than add an eighth named-field test (the shape that let the first
+  seven each slip through until something else broke), wrote
+  `_test_backlog86_meld_carries_every_card_field_it_is_not_deliberately_dropping`:
+  it reads `Card.new().get_property_list()` at test time — no hardcoded field
+  list — sets every bool/int/string field to a shared non-default value on two
+  source cards, melds them through the real `combat._meld_cards()`, and fails
+  by name if any field reverted to its own zero value. Dictionary fields
+  (`rule_upgrade`/`condition`/`condition_bonus`) are skipped, already covered
+  by their own named tests; `id`/`name`/`text`/`target`/`rarity`/`meld`/
+  `innate` are excluded with a documented reason each (templated, hardcoded,
+  rank-compared, or deliberately not carried). Verified it has teeth: with
+  `strength` temporarily commented out of `_meld_cards`'s dict it failed with
+  `dropped: ["strength"]`; restored, it passes with 69 fields swept. A field
+  added to `card.gd` tomorrow and forgotten in `_meld_cards` now fails this
+  test by name with no test file edit required, rather than waiting for the
+  eighth bug report. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2 (find an error
+  and resolve it).
+
 - **2026-09-13 — #86 duty 2: a meld'd hits_all_enemies Poison card fed the
   Vine-Weaver's ally-lift once per living enemy poisoned instead of once per
   card played.** Last commit (`07b49eb`) was duty 3, so this turn opened on

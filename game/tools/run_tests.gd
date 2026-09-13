@@ -319,6 +319,7 @@ func _init() -> void:
 	_test_meld_carries_enchant()
 	_test_backlog86_meld_carries_rule_upgrade()
 	_test_backlog86_meld_carries_rarity_foil_borderless_upgraded_and_status()
+	_test_backlog86_meld_carries_every_card_field_it_is_not_deliberately_dropping()
 	_test_satchel_charge_detonates()
 	_test_rhythm_builds_and_scales()
 	_test_backlog86_fumbled_timed_card_does_not_build_rhythm()
@@ -6245,6 +6246,86 @@ func _test_backlog86_meld_carries_rarity_foil_borderless_upgraded_and_status() -
 		"a meld carries foil/borderless off either source card (OR, same idiom as taunt/retain/ethereal) — dropping them silently un-foiled a fused card")
 	_expect(fused.upgraded and fused.status,
 		"a meld carries upgraded/status off either source card (OR) — dropping them meant a fused card built from an already-sharpened or a curse card silently forgot both facts")
+
+
+## backlog #86 duty 3 — the seven tests above each caught _meld_cards' dict
+## missing ONE MORE field it had silently defaulted (type/power routing, then
+## light/scry/deck effects, then power_effect/power_value, retain/ethereal,
+## enchant, rule_upgrade, and finally rarity/foil/borderless/upgraded/status).
+## Every one of those was a Card field added after the dict literal was
+## written and never backfilled into it — a human had to notice the specific
+## card that broke. Proving field #8 by name would not stop a NINTH from
+## doing the same thing quietly.
+##
+## This test does not know any field's name. It reads Card's own live
+## property list — so a field added to card.gd tomorrow is swept in with no
+## edit to this file — and for every bool/int/string field, sets it to a
+## shared non-default value on BOTH source cards, melds them, and checks the
+## result never reverted to that field's own zero value. That is the exact
+## shape all seven fixes above share, generalised: a field _meld_cards forgets
+## shows up as THIS test failing, by name, without anyone having to catch the
+## specific card that exposed it first.
+##
+## Excluded, each for a documented reason that is not "nobody's checked yet":
+##   id/name/text — built from a fixed "A + B" template, not carried per-field
+##   target       — _meld_cards always sets this "enemy" outright
+##   rarity       — rank comparison, not keep-first, and its own default
+##                  ("common") is already non-empty, so a drop wouldn't even
+##                  read as empty here; covered by the named test just above
+##   meld         — deliberately not carried: a fused card must not itself
+##                  reopen a second meld picker
+##   innate       — deliberately not carried, per _meld_cards' own comment: it
+##                  only matters for a card sitting in draw_pile at the
+##                  opening hand, and a melded card is created straight into
+##                  hand
+## Dictionary fields (rule_upgrade/condition/condition_bonus) are skipped —
+## "keep A's if set, else B's" isn't a zero-value check, and each already has
+## its own named carry-forward test.
+func _test_backlog86_meld_carries_every_card_field_it_is_not_deliberately_dropping() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var deliberately_excluded := ["id", "name", "text", "target", "rarity", "meld", "innate"]
+	var a := Card.new()
+	var b := Card.new()
+	a.id = "t_meld_sweep_a"; a.name = "Sweep A"
+	b.id = "t_meld_sweep_b"; b.name = "Sweep B"
+	var checked: Array = []
+	for prop in Card.new().get_property_list():
+		if not (int(prop.get("usage", 0)) & PROPERTY_USAGE_SCRIPT_VARIABLE):
+			continue
+		var fname: String = prop["name"]
+		if deliberately_excluded.has(fname):
+			continue
+		match int(prop["type"]):
+			TYPE_BOOL:
+				a.set(fname, true)
+				b.set(fname, true)
+			TYPE_INT:
+				a.set(fname, 3)
+				b.set(fname, 5)
+			TYPE_STRING:
+				a.set(fname, "a_" + fname)
+				b.set(fname, "b_" + fname)
+			_:
+				continue  # Dictionary fields — see the doc comment above
+		checked.append(fname)
+	var fused: Card = combat._meld_cards(a, b)
+	var dropped: Array = []
+	for fname in checked:
+		var v = fused.get(fname)
+		match typeof(v):
+			TYPE_BOOL:
+				if not v:
+					dropped.append(fname)
+			TYPE_INT, TYPE_FLOAT:
+				if v == 0:
+					dropped.append(fname)
+			TYPE_STRING:
+				if v == "":
+					dropped.append(fname)
+	_expect(dropped.is_empty(),
+		"every meldable Card field survives a fuse without an explicit, documented exclusion — dropped: %s" % [dropped])
+	_expect(checked.size() >= 60,
+		"the reflection sweep actually covered a realistic number of fields (%d) rather than an empty or broken property list" % checked.size())
 
 
 func _test_satchel_charge_detonates() -> void:
