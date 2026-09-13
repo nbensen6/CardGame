@@ -1831,8 +1831,29 @@ static func climb_frame_for(tall: float, ys: Array, active_slot: int,
 ## This is what makes the wall mean something. The geometry alone cannot enclose
 ## anything — a camera is not stopped by a mesh — so the wall and this number are
 ## one feature in two files, and CAMERA_MAX_R vs env.ENCLOSE_CLEAR is the seam.
+##
+## Lifted to a static, testable twin (backlog #86 duty 3) — `_arena_r` was the
+## only non-pure input either of these two functions ever read, so passing it
+## in explicitly makes both provable headless, with no camera or scene tree.
+## Nothing had ever pinned that the reach scales with the arena, floors at 1.0
+## for a degenerate/unset radius, or that the wall clamp actually preserves
+## height and direction while pulling the flat radius in — exactly the shape
+## of bug that would send the lens straight through the arena wall with
+## nothing on screen to say why.
+static func cam_reach_for(arena_r: float) -> float:
+	return maxf(arena_r, 1.0) * CAMERA_MAX_R
+
+
+static func inside_wall_at(p: Vector3, arena_r: float) -> Vector3:
+	var flat := Vector2(p.x, p.z)
+	var reach := cam_reach_for(arena_r)
+	if flat.length() > reach:
+		flat = flat.normalized() * reach
+	return Vector3(flat.x, p.y, flat.y)
+
+
 func _cam_reach() -> float:
-	return maxf(_arena_r, 1.0) * CAMERA_MAX_R
+	return cam_reach_for(_arena_r)
 
 
 ## Pull a camera position back inside the wall, keeping its direction.
@@ -1841,11 +1862,7 @@ func _cam_reach() -> float:
 ## arena from up near the wall's top is a shot worth having, and it cannot see
 ## out past anything.
 func _inside_wall(p: Vector3) -> Vector3:
-	var flat := Vector2(p.x, p.z)
-	var reach := _cam_reach()
-	if flat.length() > reach:
-		flat = flat.normalized() * reach
-	return Vector3(flat.x, p.y, flat.y)
+	return inside_wall_at(p, _arena_r)
 
 
 func _apply_orbit() -> void:

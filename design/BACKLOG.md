@@ -2782,6 +2782,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-13 — #86 duty 3: the fight camera's own arena-wall clamp
+  (`combat_3d.gd`'s `_cam_reach`/`_inside_wall`) had zero test coverage.**
+  Last commit (`3d6ac85`) was duty 2, so this turn is duty 3. Manually
+  auditing the usual candidates (opening relics, discard-scaling cards, the
+  elite/Titan queued-relic reward chain, `RunMap._ensure_key_sources`, all
+  eight card enchantments, every `Boss` move condition, `hurt_pct`) turned up
+  nothing — every one of them already has a real test from an earlier duty-3
+  pass; the codebase is thoroughly hardened by now and a keyword search
+  against an effect string is not enough to prove a mechanic untested, since
+  several of these are only exercised through helper names two or three
+  layers removed (e.g. `enchanted_copy("true_eye")` rather than the
+  `quality_up` effect string it sets). Spawned an Explore agent instead to
+  read `combat_3d.gd`, `location_3d.gd` and `overworld_3d.gd` for pure helpers
+  that had never been through this project's own "lift to a static func, test
+  it headless" idiom. It found `_cam_reach()`/`_inside_wall(p)`: the fight
+  camera's own doc comment states plainly that "a camera is not stopped by a
+  mesh," so this pair of functions is the ONLY thing keeping the orbiting
+  lens on the inside of the arena wall `env.py` builds — nothing had ever
+  proven the reach actually scales with the arena radius, floors sanely for a
+  degenerate radius, or that the wall clamp preserves height and bearing
+  while only pulling the flat radius in. Lifted both to static
+  `cam_reach_for(arena_r)` / `inside_wall_at(p, arena_r)` (the instance
+  methods are now one-line wrappers reading `_arena_r`), and added five tests
+  covering the scale, the floor, the already-inside no-op, the exact-reach
+  clamp, and that a diagonal clamp keeps the same bearing and height. Fresh
+  `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
+  Next `#86` turn is duty 2 (find an error and resolve it).
+
 - **2026-09-13 — #86 duty 2: the per-hunter idle sway raced every climb and
   glide tween for `node.position.y` and won, so a climb never visibly
   arced.** Last commit (`95517a1`) was duty 3, so this turn opened on duty 2.

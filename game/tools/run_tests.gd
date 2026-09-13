@@ -1572,6 +1572,16 @@ func _init() -> void:
 	_test_backlog86_damage_popup_offset_leaves_well_separated_popups_alone()
 	_test_backlog86_damage_popup_offset_scales_the_minimum_gap_with_reach()
 	_test_backlog86_damage_popup_offset_still_separates_two_popups_at_the_same_spot()
+	# backlog #86 duty 3 (forty-seventh pass): combat_3d.cam_reach_for/
+	# inside_wall_at are the fight camera's own wall clamp -- the geometry
+	# alone cannot enclose anything a camera is not stopped by a mesh, per the
+	# doc comment above cam_reach_for -- and had zero coverage. See the two
+	# functions in views/combat_3d.gd for why this matters.
+	_test_backlog86_cam_reach_for_scales_with_the_arena_radius()
+	_test_backlog86_cam_reach_for_floors_at_one_for_a_tiny_or_zero_arena()
+	_test_backlog86_inside_wall_at_leaves_a_point_already_inside_untouched()
+	_test_backlog86_inside_wall_at_pulls_a_point_outside_back_to_exactly_the_reach()
+	_test_backlog86_inside_wall_at_preserves_direction_and_height_while_clamping()
 
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
@@ -17993,6 +18003,55 @@ func _test_backlog86_damage_popup_offset_still_separates_two_popups_at_the_same_
 	_expect(not placed.is_equal_approx(prev), "two popups spawned at the exact same point still end up apart")
 	_expect(is_equal_approx(Vector2(placed.x - prev.x, placed.z - prev.z).length(), 4.0),
 		"falls back to a fixed direction (+X) when there's no delta to steer by, but the DISTANCE still scales with reach")
+
+
+## backlog #86 duty 3 (forty-seventh pass) -- the fight camera's own wall clamp.
+## combat_3d.gd's own doc comment above cam_reach_for is blunt about the
+## stakes: "a camera is not stopped by a mesh" -- env.py builds a wall mesh
+## around the arena, but nothing about that geometry actually keeps the LENS
+## on the inside of it. cam_reach_for/inside_wall_at are the one thing that
+## does, and until now nothing proved either half: not that the reach scales
+## with the arena radius, not that it floors sanely for a degenerate radius,
+## and not that the wall clamp actually preserves a position's height and
+## direction while only pulling the flat radius in. A broken clamp here reads
+## as the camera flying straight through the wall into empty space mid-fight,
+## with nothing else on screen to explain why.
+func _test_backlog86_cam_reach_for_scales_with_the_arena_radius() -> void:
+	_expect(is_equal_approx(Combat3D.cam_reach_for(10.0), 10.0 * Combat3D.CAMERA_MAX_R),
+		"a 10-unit arena's camera reach is CAMERA_MAX_R times that radius")
+	_expect(is_equal_approx(Combat3D.cam_reach_for(20.0), 20.0 * Combat3D.CAMERA_MAX_R),
+		"doubling the arena radius doubles the reach -- it's a straight scale, not a fixed bonus")
+
+
+func _test_backlog86_cam_reach_for_floors_at_one_for_a_tiny_or_zero_arena() -> void:
+	_expect(is_equal_approx(Combat3D.cam_reach_for(0.0), Combat3D.CAMERA_MAX_R),
+		"an arena radius of 0 (unset) floors to 1.0 before scaling, rather than collapsing the reach to 0")
+	_expect(is_equal_approx(Combat3D.cam_reach_for(0.3), Combat3D.CAMERA_MAX_R),
+		"a radius smaller than the floor is clamped up to 1.0 the same way, not just an exact 0")
+
+
+func _test_backlog86_inside_wall_at_leaves_a_point_already_inside_untouched() -> void:
+	var p := Vector3(1.0, 5.0, 1.0)
+	var out := Combat3D.inside_wall_at(p, 12.0)  # reach = 28.8; flat length ~1.41, well inside
+	_expect(out.is_equal_approx(p), "a camera position already inside the wall is returned unchanged")
+
+
+func _test_backlog86_inside_wall_at_pulls_a_point_outside_back_to_exactly_the_reach() -> void:
+	var out := Combat3D.inside_wall_at(Vector3(100.0, 7.0, 0.0), 12.0)  # reach = 28.8
+	_expect(is_equal_approx(Vector2(out.x, out.z).length(), Combat3D.cam_reach_for(12.0)),
+		"a position outside the wall is pulled in to land exactly on the reach, not merely somewhere closer")
+	_expect(is_equal_approx(out.y, 7.0), "height is never touched by the wall clamp, only the flat radius")
+
+
+func _test_backlog86_inside_wall_at_preserves_direction_and_height_while_clamping() -> void:
+	var p := Vector3(30.0, 2.0, 40.0)  # flat length 50, well outside a 10-unit arena's 24.0 reach
+	var out := Combat3D.inside_wall_at(p, 10.0)
+	var reach := Combat3D.cam_reach_for(10.0)
+	_expect(is_equal_approx(Vector2(out.x, out.z).length(), reach),
+		"the clamped point sits exactly on the wall, not somewhere inside or still past it")
+	_expect(is_equal_approx(out.x / out.z, p.x / p.z),
+		"the clamp keeps the camera on the same bearing from centre -- it pulls straight in, it doesn't swing around")
+	_expect(is_equal_approx(out.y, 2.0), "height survives the clamp on the diagonal case too")
 
 
 func _expect(cond: bool, name: String) -> void:
