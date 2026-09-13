@@ -511,6 +511,8 @@ func _init() -> void:
 	_test_enemy_index_out_of_range_falls_back_to_the_boss()
 	_test_hits_all_enemies_hits_boss_and_every_living_add()
 	_test_hits_all_enemies_skips_a_dead_add()
+	_test_hits_all_enemies_poisons_every_living_target_not_just_one()
+	_test_hits_all_enemies_frails_every_living_target_not_just_one()
 	_test_killing_an_add_does_not_end_the_fight()
 	_test_add_acts_on_its_own_turn()
 	_test_add_attack_adds_its_own_strength()
@@ -10032,6 +10034,49 @@ func _test_hits_all_enemies_skips_a_dead_add() -> void:
 	combat.play_card(0, 0)
 	_expect(living_add.hp == 12 and dead_add.hp == 0,
 		"a hits_all_enemies card never revives a dead add or logs damage for one")
+
+
+## backlog #86 duty 2: hits_all_enemies fans DAMAGE to the boss and every
+## living add (proven above), but before this fix Poison/Frail only ever
+## landed on ONE of them (`_wound_target`'s single `debuff_target`) even on
+## a card that also cleaves -- reachable today via `meld`: Sweeping Strike
+## (the only hits_all_enemies card) fused with any Poison or Frail card. A
+## hand-built card stands in for that fusion here since meld's own field
+## carry-over is already covered elsewhere.
+func _test_hits_all_enemies_poisons_every_living_target_not_just_one() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var dead_add := Boss.new("Grub Dead", 5)
+	dead_add.hp = 0
+	var living_add := Boss.new("Grub Alive", 20)
+	combat.adds.append(dead_add)
+	combat.adds.append(living_add)
+	var card := Card.from_dict({"id": "cleave_and_poison", "name": "Cleave and Poison",
+		"type": "attack", "cost": 2, "damage": 8, "hits_all_enemies": true, "wound": 3,
+		"target": "enemy"})
+	combat.players[0].hand = [card]
+	combat.play_card(0, 0)
+	_expect(boss.wound == 3 and living_add.wound == 3,
+		"a hits_all_enemies card's Poison lands on the boss AND every living add, not just one")
+	_expect(dead_add.wound == 0, "a dead add never gets poisoned")
+
+
+func _test_hits_all_enemies_frails_every_living_target_not_just_one() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var dead_add := Boss.new("Grub Dead", 5)
+	dead_add.hp = 0
+	var living_add := Boss.new("Grub Alive", 20)
+	combat.adds.append(dead_add)
+	combat.adds.append(living_add)
+	var card := Card.from_dict({"id": "cleave_and_frail", "name": "Cleave and Frail",
+		"type": "attack", "cost": 2, "damage": 8, "hits_all_enemies": true, "frail": 2,
+		"target": "enemy"})
+	combat.players[0].hand = [card]
+	combat.play_card(0, 0)
+	_expect(boss.frail == 2 and living_add.frail == 2,
+		"a hits_all_enemies card's Frail lands on the boss AND every living add, not just one")
+	_expect(dead_add.frail == 0, "a dead add never gets frailed")
 
 
 func _test_killing_an_add_does_not_end_the_fight() -> void:

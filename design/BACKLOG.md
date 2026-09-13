@@ -2782,6 +2782,38 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-13, #86 duty 2: a `hits_all_enemies` card's Poison/Frail only ever
+  landed on ONE enemy, even though its own damage fans out to all of them.**
+  Last commit (`c2afee0`) was duty 3, so this turn is duty 2. Read
+  `combat.gd`'s `play_card()` end to end looking for a "two copies of one
+  truth" split, the same shape as the meld-dict drift this file has caught
+  eight times: the DAMAGE half of a `hits_all_enemies` card (Sweeping
+  Strike, the game's only such card) fans out to the boss and every living
+  add (line ~909, backlog #63), but the POISON/FRAIL half only ever knew
+  about the single `debuff_target` `_wound_target(enemy_index)` resolves to
+  — the same variable `enemy_index`'s own redirect comment (line ~896)
+  claims carries "any Poison/Frail the same card also carries" along with
+  the hit, which is true for a plain redirect but silently false for the
+  cleave case. Reachable in a real game today via `meld`: fusing Sweeping
+  Strike with any of the ~26 Poison cards (or a Frail card) produces a card
+  that damages every enemy but poisons/frails only the boss — `_meld_cards`
+  itself already ORs `hits_all_enemies` and sums `wound`/`frail`
+  independently and correctly, so nothing there needed touching. Fixed by
+  deriving one `debuff_targets` list (boss + every living add when
+  `hits_all_enemies`, else the same single `debuff_target` as before) and
+  having both the Poison and Frail blocks iterate it, each still gated by
+  that target's own Artifact ward — so a warded add still shrugs off just
+  its own Poison, same as before. Left `preview()`'s `damage_per_wound`
+  reading alone (it already documents reading `_wound_target`'s single
+  creature on purpose, a different and narrower question than "who does
+  this play poison"). Added two tests
+  (`_test_hits_all_enemies_poisons_every_living_target_not_just_one`,
+  `..._frails_every_living_target_not_just_one`) that fail against the old
+  code (asserted, then reverted the fix and confirmed the failure, then
+  restored) and pass now; both also check a dead add is skipped, matching
+  the existing damage-side test's own contract. Fresh `--import`, headless
+  `run_tests.gd`: ALL TESTS PASSED.
+
 - **2026-09-13, #86 duty 3: a melded power card's own captured name/text had
   never been proven to reach an ally over the real network snapshot.** Last
   commit (`1b8ed43`) was duty 2, so this turn is duty 3. Dispatched a

@@ -925,25 +925,43 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	if card.strength > 0:
 		ps.strength += card.strength
 		_log("%s plays %s — +%d Strength." % [who, card.name, card.strength])
+	# backlog #86 duty 2: hits_all_enemies fans DAMAGE to the boss and every
+	# living add (the loop above), but Poison/Frail below only ever knew about
+	# the single `debuff_target` `enemy_index` names — so a card that both
+	# cleaves and carries Poison/Frail (reachable today via `meld`: Sweeping
+	# Strike, the game's only hits_all_enemies card, fused with any of the two
+	# dozen Poison cards or a Frail card) hit every enemy for damage but only
+	# ever poisoned/frailed one of them, the two halves of one "cleave" card
+	# silently disagreeing about how wide it hits. Both now reuse the same
+	# fan-out rule the damage loop above already applies, so they can't drift
+	# from it again independently.
+	var debuff_targets: Array = ([boss] + adds) if card.hits_all_enemies else [debuff_target]
 	if card.wound > 0:
-		# Artifact (backlog #36) wards the target against a debuff before it lands —
-		# same gate Expose gets below, so a warded Titan (or a warded add) shrugs
-		# off Poison too. #86 duty 2: this used to always poison `boss` even when
-		# enemy_index picked an add — the same disconnect Thorns had before it.
-		if debuff_target.try_block_debuff():
-			_log("%s plays %s — %s's Artifact wards off the Poison." % [who, card.name, debuff_target.name])
-		else:
-			debuff_target.wound += card.wound
-			_log("%s plays %s — Poison %d on %s." % [who, card.name, debuff_target.wound, debuff_target.name])
-			if ps.poison_lift > 0:  # Vine-Weaver: the vines feed on the poison and lift the ally
-				var fed_ally: PlayerState = players[ally_index(pi)]
-				var fed_ally_before := fed_ally.foothold
-				fed_ally.foothold = mini(fed_ally.foothold + ps.poison_lift, FOOTHOLD_MAX)
-				_log("%s's vines surge — %s climbs +%d." % [who, fed_ally.combatant.name, ps.poison_lift])
-				_lift_roped_ally(ally_index(pi), fed_ally_before)  # the lifted ally might themselves be roped (#86 duty 2)
+		for dt in debuff_targets:
+			var t: Boss = dt
+			if t.is_dead():
+				continue
+			# Artifact (backlog #36) wards the target against a debuff before it lands —
+			# same gate Expose gets below, so a warded Titan (or a warded add) shrugs
+			# off Poison too. #86 duty 2: this used to always poison `boss` even when
+			# enemy_index picked an add — the same disconnect Thorns had before it.
+			if t.try_block_debuff():
+				_log("%s plays %s — %s's Artifact wards off the Poison." % [who, card.name, t.name])
+			else:
+				t.wound += card.wound
+				_log("%s plays %s — Poison %d on %s." % [who, card.name, t.wound, t.name])
+				if ps.poison_lift > 0:  # Vine-Weaver: the vines feed on the poison and lift the ally
+					var fed_ally: PlayerState = players[ally_index(pi)]
+					var fed_ally_before := fed_ally.foothold
+					fed_ally.foothold = mini(fed_ally.foothold + ps.poison_lift, FOOTHOLD_MAX)
+					_log("%s's vines surge — %s climbs +%d." % [who, fed_ally.combatant.name, ps.poison_lift])
+					_lift_roped_ally(ally_index(pi), fed_ally_before)  # the lifted ally might themselves be roped (#86 duty 2)
 	if card.frail > 0:  # Frail — reduces the Block gained (backlog #36); #86 duty 2:
 		# redirected to the chosen add, same as Poison above, instead of always the boss.
-		_apply_frail(debuff_target, card.frail)
+		for dt in debuff_targets:
+			var t: Boss = dt
+			if not t.is_dead():
+				_apply_frail(t, card.frail)
 	if card.thorns > 0:  # Thorns on the player — reflects a landed boss attack (backlog #36)
 		ps.combatant.thorns += card.thorns
 		_log("%s plays %s — +%d Thorns." % [who, card.name, card.thorns])
