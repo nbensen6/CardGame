@@ -1333,6 +1333,18 @@ func _init() -> void:
 	_test_backlog86_is_look_release_is_a_look_once_the_latch_tripped()
 	_test_backlog86_is_look_release_right_click_never_travels()
 
+	# backlog #86 duty 2: overworld_3d._draw_roads() guarded its "bright" (the
+	# one walkable) ImmediateMesh against ending a surface with zero vertices,
+	# but called the "faint" (every other edge) mesh's surface_end()
+	# unconditionally right below it -- an asymmetric fix, the exact "one path
+	# was patched, its twin wasn't" shape this duty hunts for. Lifted the edge
+	# list into the pure Overworld3D._road_edges() so the "every edge in this
+	# row pair turned out to be the walkable one, leaving faint empty" case can
+	# be proven directly, with no ImmediateMesh or scene tree involved.
+	_test_backlog86_road_edges_all_bright_when_the_only_edge_is_walkable()
+	_test_backlog86_road_edges_marks_only_the_current_position_bright()
+	_test_backlog86_road_edges_skips_a_next_pointing_at_an_unknown_spot()
+
 	# backlog #86 duty 3: MapEdges._edge_point (the map's own "which node leads
 	# where" line-drawing) had zero coverage anywhere in this file -- confirmed
 	# by grepping for "MapEdges" and finding nothing. It is the geometry the
@@ -17077,6 +17089,48 @@ func _test_backlog86_is_look_release_is_a_look_once_the_latch_tripped() -> void:
 
 func _test_backlog86_is_look_release_right_click_never_travels() -> void:
 	_expect(Overworld3D.is_look_release(false, MOUSE_BUTTON_RIGHT), "right-click has no travel meaning at all -- it reads as a look even at zero displacement")
+
+
+## backlog #86 duty 2 -- _draw_roads() guarded "bright" against a zero-vertex
+## surface_end() but not its sibling "faint", right below it, under the same
+## comment. This is the exact input that makes faint end up with nothing: a
+## row pair whose only edge is the one currently walkable.
+func _test_backlog86_road_edges_all_bright_when_the_only_edge_is_walkable() -> void:
+	var rows: Array = [
+		[{"next": [0]}],
+		[{"next": []}],
+	]
+	var spot := {"0,0": Vector2i(0, 0), "1,0": Vector2i(0, 2)}
+	var edges: Array = Overworld3D._road_edges(rows, [0, 1], spot, 0, 0)
+	_expect(edges.size() == 1, "one node feeding one node is exactly one edge")
+	_expect(edges[0]["bright"], "the sole edge out of the party's own node is the walkable one")
+	# Before the fix, this is precisely the case where faint.surface_end() ran
+	# on a mesh nothing had ever added a vertex to.
+
+
+func _test_backlog86_road_edges_marks_only_the_current_position_bright() -> void:
+	var rows: Array = [
+		[{"next": [0]}, {"next": [0]}],
+		[{"next": []}],
+	]
+	var spot := {
+		"0,0": Vector2i(-1, 0), "0,1": Vector2i(1, 0),
+		"1,0": Vector2i(0, 2),
+	}
+	var edges: Array = Overworld3D._road_edges(rows, [0, 1], spot, 0, 1)
+	_expect(edges.size() == 2, "both row-0 nodes have an edge into the single row-1 node")
+	_expect(not edges[0]["bright"], "the node the party is NOT standing on stays faint")
+	_expect(edges[1]["bright"], "only column 1, matching cur_col, is walkable")
+
+
+func _test_backlog86_road_edges_skips_a_next_pointing_at_an_unknown_spot() -> void:
+	var rows: Array = [
+		[{"next": [5]}],  # points past every column spot actually knows about
+		[{"next": []}],
+	]
+	var spot := {"0,0": Vector2i(0, 0), "1,0": Vector2i(0, 2)}
+	var edges: Array = Overworld3D._road_edges(rows, [0, 1], spot, 0, 0)
+	_expect(edges.is_empty(), "a next-index with no matching spot must be skipped, not read as an edge to (0,0)")
 
 
 ## backlog #86 duty 3 -- MapEdges.edge_point_of() is "the node you're leaving,

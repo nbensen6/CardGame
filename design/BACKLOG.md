@@ -2782,6 +2782,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-13, #86 duty 2: `_draw_roads()` guarded one of its two twin meshes
+  against an empty-vertex `surface_end()` and forgot the other.** Last commit
+  (`9320705`) was duty 3, so this turn is duty 2. Ran an Explore agent over
+  `progress.gd`, `content.gd`, `game/net/*`, `game_client.gd`, and the
+  less-traveled command paths in `run.gd`/`game_host.gd` (buy, campfire,
+  potions, scry, take_key, skip_reward) — it came back with everything else
+  already correct or already tested, but found `overworld_3d.gd`'s
+  `_draw_roads()` (lines 300-333) has a comment explaining that ending an
+  `ImmediateMesh` surface with zero vertices is an engine error, and guards
+  exactly one of its two meshes against it: `bright` (the currently-walkable
+  road) checks `any_bright` before calling `surface_end()`, but `faint`
+  (every other road) calls it unconditionally, right below, under the same
+  comment. Today's map-generation constants happen to always give `faint` at
+  least one vertex, so this has never fired — but a row pair where the
+  walkable edge is the ONLY edge (a width-1 node feeding a width-1 node) would
+  leave `faint` empty and crash on `surface_end()`, and nothing enforces that
+  such a row pair can't occur. Lifted the edge-building loop into a static,
+  scene-free `Overworld3D._road_edges(rows, act_rows, spot, cur_row, cur_col)`
+  (the same "extract the pure half" pattern already used for every other
+  `overworld_3d` helper, since `_draw_roads` itself needs `_field` and can't
+  run without an instantiated scene) and applied the same `any_faint` guard
+  `bright` already had. Added three tests: one row pair whose only edge is
+  the walkable one (proving `_road_edges` really does return zero faint
+  edges for that shape — the exact input that would have crashed), one
+  mixed row confirming only the current column's edge comes back bright,
+  and one confirming a `next` index with no matching spot is skipped rather
+  than treated as an edge. `run_tests.gd`: ALL TESTS PASSED.
+
 - **2026-09-13, #86 duty 3: the reward screen's headline/subtitle/prompt rule
   had zero test coverage.** Last commit (`39d3663`) was duty 2, so this turn
   is duty 3. Ran an Explore agent over the less-picked-over view/session

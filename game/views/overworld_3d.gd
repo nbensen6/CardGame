@@ -294,16 +294,24 @@ func _lay_field(rows: Array, act: int, cur_row: int, cur_col: int, avail: Array)
 	_frame_camera(act_rows.size())
 
 
-## One road per EDGE, drawn between the two landmarks it joins. Roads you can
-## take right now are bright; the rest are faint, so the route can be read
-## several rows ahead exactly like the 2D map's edges.
-func _draw_roads(rows: Array, act_rows: Array, spot: Dictionary,
-		cur_row: int, cur_col: int) -> void:
-	var bright := ImmediateMesh.new()
-	var faint := ImmediateMesh.new()
-	bright.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
-	faint.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
-	var any_bright := false
+## Every road edge in the drawn act, as plain endpoints plus whether it's the
+## one route currently walkable. Pulled out of _draw_roads() so the "which
+## edges exist" question can be tested headless, with no ImmediateMesh
+## involved.
+##
+## backlog #86 duty 2: _draw_roads() guarded `bright.surface_end()` against
+## zero vertices (a trailhead, or any act boundary, has no walkable edge yet)
+## but called `faint.surface_end()` unconditionally right below it — the same
+## "ending a surface with no vertices is an engine error" comment, applied to
+## only one of the two twin meshes. It never fired with today's map-generation
+## constants (every row pair the generator can produce has at least one node
+## NOT on the walkable path), but a row pair where the walkable edge is the
+## ONLY edge — a width-1 row feeding a width-1 row, one node to one node —
+## makes every edge bright and leaves faint with nothing, and nothing stopped
+## a future map change from producing exactly that.
+static func _road_edges(rows: Array, act_rows: Array, spot: Dictionary,
+		cur_row: int, cur_col: int) -> Array:
+	var edges: Array = []
 	for i in range(act_rows.size() - 1):
 		var r: int = act_rows[i]
 		var row: Array = rows[r]
@@ -317,18 +325,40 @@ func _draw_roads(rows: Array, act_rows: Array, spot: Dictionary,
 				var a := Vector3(_hex_x(from.x, from.y), TILE_TOP + 0.012, -from.y * ROW_STEP)
 				var b := Vector3(_hex_x(to.x, to.y), TILE_TOP + 0.012, -to.y * ROW_STEP)
 				var walkable: bool = (r == cur_row and c == cur_col)
-				any_bright = any_bright or walkable
-				_ribbon(bright if walkable else faint, a, b)
-	# Ending a surface that got no vertices is an engine error, and at a trailhead
+				edges.append({"a": a, "b": b, "bright": walkable})
+	return edges
+
+## One road per EDGE, drawn between the two landmarks it joins. Roads you can
+## take right now are bright; the rest are faint, so the route can be read
+## several rows ahead exactly like the 2D map's edges.
+func _draw_roads(rows: Array, act_rows: Array, spot: Dictionary,
+		cur_row: int, cur_col: int) -> void:
+	var bright := ImmediateMesh.new()
+	var faint := ImmediateMesh.new()
+	bright.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	faint.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	var any_bright := false
+	var any_faint := false
+	for e in _road_edges(rows, act_rows, spot, cur_row, cur_col):
+		var walkable: bool = e["bright"]
+		any_bright = any_bright or walkable
+		any_faint = any_faint or not walkable
+		_ribbon(bright if walkable else faint, e["a"], e["b"])
+	# Ending a surface that got no vertices is an engine error. At a trailhead
 	# — the run's first step, and now every act boundary — there are no bright
 	# roads to draw, because the party is standing beside the region rather than
-	# on one of its nodes.
+	# on one of its nodes. Symmetrically, a row pair whose only edge happens to
+	# be the walkable one leaves faint with nothing to draw.
 	if any_bright:
 		bright.surface_end()
 	else:
 		bright.clear_surfaces()
-	faint.surface_end()
-	_add_ribbon_mesh(faint, Color(0.55, 0.44, 0.3, 0.85))
+	if any_faint:
+		faint.surface_end()
+	else:
+		faint.clear_surfaces()
+	if any_faint:
+		_add_ribbon_mesh(faint, Color(0.55, 0.44, 0.3, 0.85))
 	if any_bright:
 		_add_ribbon_mesh(bright, Color(1.0, 0.87, 0.5, 0.95))
 
