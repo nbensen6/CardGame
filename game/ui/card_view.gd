@@ -1720,6 +1720,14 @@ func set_selected(on: bool) -> void:
 
 # --- Timing minigame (on the card) ----------------------------------------
 
+## Whether this card is currently mid-sweep on the timing minigame. Public
+## because the hand row (combat_3d._render_hand) needs to know, from outside,
+## whether THIS card is the one a player's thumb is still on — see the
+## should_rebuild_hand gate.
+func is_timing() -> bool:
+	return _timing
+
+
 ## Begin the timing sweep. `hits` sequential windows must all land (Satchel = 3);
 ## the next tap fires each one. The green zone is anchored (see _build_timing_strip)
 ## so it sizes itself once the strip is laid out.

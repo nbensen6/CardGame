@@ -688,6 +688,11 @@ func _init() -> void:
 	# clipped in the fan's tuck for the whole timing minigame on touch.
 	_test_backlog86_card_is_raised_by_hover()
 	_test_backlog86_card_is_raised_by_active_timing_with_no_hover()
+	# backlog #86 duty 2: should_rebuild_hand -- state_updated fires on EVERY
+	# player's action, not just this client's own, so a teammate's turn used
+	# to blow away this player's own in-flight sweep-bar timing card mid-swing.
+	_test_backlog86_should_rebuild_hand_runs_normally_with_no_timing_card()
+	_test_backlog86_should_rebuild_hand_skips_while_local_timing_is_active()
 	# backlog #86 duty 3 (third pass): Nick's own example, the jump mechanic
 	# itself — hunter_move_kind, the gate _place_hunters uses to decide a JUMP
 	# from a glide from a first placement. This is the exact rule behind the
@@ -13973,6 +13978,25 @@ func _test_backlog86_card_is_raised_by_active_timing_with_no_hover() -> void:
 	# of a real "no card" sentinel), but the tapped card IS the one timing.
 	_expect(Combat3D.card_is_raised(1, -1, 1), "a card actively running the timing minigame must be raised even with no hover at all")
 	_expect(not Combat3D.card_is_raised(2, -1, 1), "a card not being timed and not hovered must stay in the fan")
+
+
+## backlog #86 duty 2 — a real bug in `_render_hand`: `state_updated` fires on
+## every player's action (GameHost._broadcast_state sends to all `_peers` on
+## every play_card/end_turn/use_potion), so a teammate simply taking their own
+## turn reached this client too, and `_render_hand` used to `queue_free()`
+## every CardView unconditionally and rebuild fresh ones from the snapshot --
+## including the one THIS player was mid-swing on in the sweep-bar timing
+## minigame. Freeing a CardView stops its `_process` along with it, so the
+## sweep just silently stopped: no `timing_resolved`, no command sent, the
+## replacement card came back resting, and the player had no idea their tap
+## had been thrown away. `should_rebuild_hand` is the gate pulled out static,
+## same pattern as `render_hand_status`/`card_is_raised` above.
+func _test_backlog86_should_rebuild_hand_runs_normally_with_no_timing_card() -> void:
+	_expect(Combat3D.should_rebuild_hand(false), "with no local card mid-swing, a snapshot must still rebuild the hand normally")
+
+
+func _test_backlog86_should_rebuild_hand_skips_while_local_timing_is_active() -> void:
+	_expect(not Combat3D.should_rebuild_hand(true), "a snapshot arriving while THIS player's card is mid-swing on the timing minigame must not blow the hand away underneath their thumb")
 
 
 ## backlog #86 duty 3 (second pass) — combat_3d.foothold_anchor is the pure

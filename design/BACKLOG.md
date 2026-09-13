@@ -2782,6 +2782,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-13 — #86 duty 2: a teammate's own turn could silently cancel the
+  OTHER player's in-flight sweep-bar timing minigame, mid-swing, with no
+  feedback.** `GameHost._broadcast_state()` sends a fresh snapshot to every
+  peer on every `play_card`/`end_turn`/`use_potion` — not just the acting
+  player's own client. `combat_3d._refresh()` (called from every
+  `state_updated`) unconditionally calls `_render_hand()`, which
+  `queue_free()`'d every `CardView` in the hand and rebuilt fresh ones from
+  the snapshot, with no check for whether one of them was the card the LOCAL
+  player was currently mid-swing on in the sweep-bar timing face
+  (`Progress.TIMING_CIRCLE`'s sibling; the circle face survives because its
+  state is a bare `int` on `combat_3d` itself, not on the node). Freeing a
+  `CardView` stops its `_process` along with it, so a co-op partner simply
+  taking their own turn — completely unrelated to the timing player's hand —
+  silently killed the sweep with no `timing_resolved`, no command sent, and
+  the replacement card came back resting as if nothing had been tapped. Two
+  copies of "which play is in flight" (`combat_3d._timing_card` for layout,
+  and the CardView's own private `_timing` for whether the minigame is still
+  running) had never been checked together before deciding to rebuild.
+  Fixed by adding a public `CardView.is_timing()` accessor and a static,
+  headless-testable `Combat3D.should_rebuild_hand(timing_card_active)` gate
+  that `_render_hand()` now checks before tearing down the hand; retyped
+  `_timing_card` from `Control` to `CardView` so the compiler can see the new
+  method. Wrote the test first against the not-yet-existing function (a
+  compile failure, this codebase's stand-in for "watch it fail" on a pure
+  static gate), then implemented it: `_test_backlog86_should_rebuild_hand_runs_normally_with_no_timing_card`
+  and `_test_backlog86_should_rebuild_hand_skips_while_local_timing_is_active`.
+  Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS
+  PASSED. Next `#86` turn is duty 3 (verify a mechanic).
+
 - **2026-09-13 — #86 duty 3: `Combat._meld_cards()` has needed a manually
   rediscovered missing field SEVEN separate times across earlier duty-2 fixes
   (type/power routing, light/scry/deck effects, power_effect/power_value,

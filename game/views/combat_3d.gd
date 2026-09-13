@@ -295,7 +295,7 @@ var _hand_hover: Control = null
 ## fan the same way hover does — see card_is_raised(). A handheld tap never
 ## fires mouse_entered, so without this a touch player starting a timed card's
 ## sweep never sees the strip at all (bugs.md Finding 3, 2026-09-08).
-var _timing_card: Control = null
+var _timing_card: CardView = null
 ## How big the pulsing marker is. It used to be a fixed 1.0, which was tuned
 ## when it hung above the body at 88% of the bounding box and was mostly seen
 ## edge-on. Now it sits ON the mark the model wears, at eye level, where a fixed
@@ -3466,7 +3466,29 @@ func _layout_hand() -> void:
 		c.z_index = 10 if raised else i
 
 
+## Whether a hand rebuild should run at all this refresh. A `state_updated`
+## snapshot reaches every peer on EVERY player's action (GameHost._broadcast_state
+## sends to all `_peers` on every play_card/end_turn/use_potion), not only the
+## acting player's own client — so a teammate ending their turn used to reach
+## this client too, mid-swing, while THIS player's own card was running the
+## sweep-bar timing minigame. `_render_hand` unconditionally `queue_free()`'d
+## every CardView and rebuilt fresh ones from the snapshot; Godot frees a freed
+## node's _process along with it, so the sweep just silently stopped -- no
+## timing_resolved, no command ever sent, the replacement card came back
+## resting as if nothing had been tapped, and the player had no idea why their
+## tap did nothing. The timing minigame's state (_timing/_t/_hits_done) lives
+## only on that one CardView node, nowhere in the snapshot, so a blanket
+## resync cannot tell "the hand actually changed" from "someone else acted"
+## without asking first. Pulled out static, same as render_hand_status/
+## card_is_raised above, so the gate is provable without a scene tree.
+static func should_rebuild_hand(timing_card_active: bool) -> bool:
+	return not timing_card_active
+
+
 func _render_hand() -> void:
+	if not should_rebuild_hand(_timing_card != null and is_instance_valid(_timing_card)
+			and _timing_card.is_timing()):
+		return
 	for c in _hand_row.get_children():
 		c.queue_free()
 	var priv := _my_private()
