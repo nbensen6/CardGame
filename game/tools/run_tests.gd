@@ -136,6 +136,7 @@ func _init() -> void:
 	_test_backlog37_four_events_touch_potions()
 	_test_backlog53_event_then_beat_replaces_choices_and_stays_in_event_phase()
 	_test_backlog53_then_beat_effects_land_and_reward_routes_from_final_beat()
+	_test_backlog86_a_then_beat_can_itself_have_a_then_beat()
 	_test_backlog53_four_events_use_then()
 	_test_boons_load_and_are_well_formed()
 	_test_boon_offer_and_pick_applies_effects()
@@ -3510,6 +3511,56 @@ func _test_backlog53_then_beat_effects_land_and_reward_routes_from_final_beat() 
 	_expect(run.hp[0] == hp_before - 1 and run.gold == 10 and run.phase == Run.Phase.REWARD
 		and run.reward_kind == "card",
 		"both beats of a two-step event apply their own effects, and reward routing waits for the final beat")
+
+
+## pick_event()'s own doc comment promises a "then" beat walks in "exactly
+## like a fresh event -- recursively, if a 'then' choice itself has a 'then'."
+## Nothing had ever driven a THIRD beat: every existing then-chain test above
+## stops at two, and no event in events.json nests a "then" inside a "then"
+## either (the deepest today, napping_beast/rockslide_altar/the_toll_crow/
+## the_gambling_crow, is one level). pick_event() has no explicit recursion —
+## it just swaps event["choices"] for the picked choice's "then" and returns,
+## so a second beat whose own choice carries a "then" is only handled because
+## the NEXT call to pick_event() re-reads whatever event.choices holds now.
+## That's a reasonable bet, not a proven one: a future change keying off
+## event["id"] or event["title"] instead of the live event dict, or a stray
+## early-return keyed to a hardcoded first "then", would break the third beat
+## while every current test (capped at two) kept passing.
+func _test_backlog86_a_then_beat_can_itself_have_a_then_beat() -> void:
+	var run := _map_run()
+	run.event = {"title": "The Deep Ledge", "text": "first beat", "choices": [
+		{"label": "climb down", "result": "you descend", "effects": {"heal": -1}, "then": {
+			"text": "second beat",
+			"choices": [
+				{"label": "keep going", "result": "further still", "effects": {"gold": 3}, "then": {
+					"text": "third beat",
+					"choices": [
+						{"label": "take the cache", "result": "!", "effects": {"reward": "card", "gold": 7}},
+					],
+				}},
+			],
+		}},
+	]}
+	run.phase = Run.Phase.EVENT
+	run.map_row = 0
+	var hp_before: int = run.hp[0]
+
+	run.pick_event(0)  # first beat: -1 hp, hands to the second beat
+	var after_first: bool = (run.phase == Run.Phase.EVENT and run.hp[0] == hp_before - 1
+		and String(run.event.get("title", "")) == "The Deep Ledge"
+		and String(run.event.get("text", "")) == "second beat")
+
+	run.pick_event(0)  # second beat: +3 gold, hands to the THIRD beat -- the untested step
+	var after_second: bool = (run.phase == Run.Phase.EVENT and run.gold == 3
+		and String(run.event.get("text", "")) == "third beat"
+		and (run.event.get("choices", []) as Array).size() == 1)
+
+	run.pick_event(0)  # third (final) beat: +7 gold, routes to the reward screen
+	var after_third: bool = (run.gold == 10 and run.hp[0] == hp_before - 1
+		and run.phase == Run.Phase.REWARD and run.reward_kind == "card")
+
+	_expect(after_first and after_second and after_third,
+		"a then-beat can itself carry a then-beat, and the chain walks all three levels before routing a reward")
 
 
 func _test_backlog53_four_events_use_then() -> void:

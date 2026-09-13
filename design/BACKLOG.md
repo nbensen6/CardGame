@@ -15211,3 +15211,33 @@ Newest first. One line per finished item: what, and anything surprising.
   dict, same as every other duty-2 fix in this file. Fresh `--import`,
   headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86`
   turn is duty 3 (verify a mechanic actually works).
+
+- **2026-09-13 — #86 duty 3: a "then" beat's own doc-promised recursion
+  ("if a 'then' choice itself has a 'then'") had never been driven past two
+  beats.** Last commit (`d8ac84a`) was duty 2, so this turn opened on duty 3.
+  Searched hard for a genuinely zero-coverage mechanic first — nearly every
+  candidate that looked untested by grepping a function/effect/event name
+  turned out to already have a dedicated test exercising it through the
+  public API instead (energy_handoff, the four "open_*" fight-openers, all
+  eight card enchants, EnetTransport, the three boss limiters, both the solo
+  and co-op duplicate-character-pick guards, RunSave's migration and
+  summary()) — this codebase has been gone over by a lot of prior duty-3
+  passes. `Run.pick_event()`'s own comment claims a "then" beat is handled
+  "exactly like a fresh event — recursively, if a 'then' choice itself has a
+  'then'," but the two existing then-chain tests
+  (`_test_backlog53_event_then_beat_replaces_choices_and_stays_in_event_phase`,
+  `_test_backlog53_then_beat_effects_land_and_reward_routes_from_final_beat`)
+  both stop at two beats, and no event in `events.json` nests a "then" inside
+  a "then" either (the deepest today is one level, across 4 events). The
+  claim held — `pick_event()` has no explicit recursion, it just swaps
+  `event["choices"]` for the picked choice's "then" and returns, so a third
+  beat only works because the next call re-reads whatever `event.choices`
+  holds by then — but nothing had proven it, and a future change keyed off
+  `event["id"]`/`event["title"]` instead of the live dict could break the
+  third beat while every existing (two-beat-capped) test kept passing. Added
+  `_test_backlog86_a_then_beat_can_itself_have_a_then_beat`: a synthetic
+  three-beat chain (heal, then gold, then reward), asserting each beat's own
+  effects land, the event dict's title survives every swap, and reward
+  routing waits for the true final beat. Passed on the first run. Fresh
+  `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
+  Next `#86` turn is duty 2 (find an error and resolve it).
