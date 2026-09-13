@@ -1526,6 +1526,11 @@ func _init() -> void:
 	_test_backlog86_card_icon_falls_through_numeric_tiers_to_sword_then_shield_then_blank()
 	_test_backlog86_continue_button_state_shows_the_save_warning_when_a_save_exists()
 	_test_backlog86_continue_button_state_clears_the_save_warning_when_no_save_exists()
+	_test_backlog86_ascension_display_state_at_zero_with_nothing_unlocked()
+	_test_backlog86_ascension_display_state_at_zero_notes_what_is_unlocked()
+	_test_backlog86_ascension_display_state_at_the_top_of_what_is_unlocked()
+	_test_backlog86_ascension_display_state_lists_only_tiers_at_or_below_the_level()
+	_test_backlog86_ascension_display_state_sorts_by_level_regardless_of_array_order()
 	_test_backlog86_damage_popup_offset_leaves_well_separated_popups_alone()
 	_test_backlog86_damage_popup_offset_scales_the_minimum_gap_with_reach()
 	_test_backlog86_damage_popup_offset_still_separates_two_popups_at_the_same_spot()
@@ -17607,6 +17612,62 @@ func _test_backlog86_continue_button_state_clears_the_save_warning_when_no_save_
 	_expect(state["solo_text"] == "Solo  (play both hunters)",
 		"Solo's text resets to its plain default -- it must not keep warning about " +
 		"overwriting a save that no longer exists, which is the bug this test guards")
+
+
+## backlog #86 duty 3: menu.gd's ascension picker (_set_ascension /
+## _refresh_ascension) had zero test coverage even though its sibling two
+## methods above, _refresh_continue(), had already been split into a pure
+## half specifically so it could be tested headless. ascension_display_state()
+## gets the same treatment: label text and both arrow-disabled flags, first
+## call (ascension 0, nothing unlocked), the empty case (0 unlocked), the top
+## of the range (up arrow disabled), and the cumulative tier list in between --
+## plus a guard against a latent ordering bug data/ascension.json doesn't
+## currently trigger: the tier-listing loop used to walk Content.ascension_tiers()
+## in raw array order with nothing sorting by "level", so an out-of-order data
+## file would have described a run's difficulty out of sequence even though
+## Content.ascension_mods() would still have priced it correctly (it only sums).
+func _test_backlog86_ascension_display_state_at_zero_with_nothing_unlocked() -> void:
+	var state: Dictionary = MenuView.ascension_display_state(0, 0, Content.ascension_tiers())
+	_expect(state["label"] == "Ascension 0", "label always names the selected tier")
+	_expect(state["down_disabled"] == true, "can't go below the base climb")
+	_expect(state["up_disabled"] == true, "nothing is unlocked above it yet")
+	_expect(state["text"] == "The base climb.", "no unlocked note when nothing is unlocked")
+
+
+func _test_backlog86_ascension_display_state_at_zero_notes_what_is_unlocked() -> void:
+	var state: Dictionary = MenuView.ascension_display_state(0, 3, Content.ascension_tiers())
+	_expect(state["down_disabled"] == true, "still can't go below the base climb")
+	_expect(state["up_disabled"] == false, "ascension 3 is unlocked and selectable")
+	_expect(state["text"] == "The base climb.  (unlocked: 3)",
+		"sitting at 0 with tiers unlocked says so, so a player knows to raise it")
+
+
+func _test_backlog86_ascension_display_state_at_the_top_of_what_is_unlocked() -> void:
+	var state: Dictionary = MenuView.ascension_display_state(3, 3, Content.ascension_tiers())
+	_expect(state["down_disabled"] == false, "can still step back down from the top")
+	_expect(state["up_disabled"] == true, "can't select past what's unlocked")
+
+
+func _test_backlog86_ascension_display_state_lists_only_tiers_at_or_below_the_level() -> void:
+	var tiers: Array = [
+		{"level": 1, "name": "Thicker Hides", "text": "More HP."},
+		{"level": 2, "name": "Long Roads", "text": "Less healing."},
+		{"level": 3, "name": "Meaner Beasts", "text": "More Strength."},
+	]
+	var state: Dictionary = MenuView.ascension_display_state(2, 3, tiers)
+	_expect(state["text"] == "Thicker Hides — More HP.\nLong Roads — Less healing.",
+		"ascension 2 stacks tiers 1-2 and stops before tier 3, since tiers are cumulative")
+
+
+func _test_backlog86_ascension_display_state_sorts_by_level_regardless_of_array_order() -> void:
+	var tiers: Array = [
+		{"level": 3, "name": "Meaner Beasts", "text": "More Strength."},
+		{"level": 1, "name": "Thicker Hides", "text": "More HP."},
+		{"level": 2, "name": "Long Roads", "text": "Less healing."},
+	]
+	var state: Dictionary = MenuView.ascension_display_state(3, 3, tiers)
+	_expect(state["text"] == "Thicker Hides — More HP.\nLong Roads — Less healing.\nMeaner Beasts — More Strength.",
+		"the description lists tiers in level order even when the data array isn't sorted")
 
 
 ## backlog #86 duty 2 (found via design/progress/bugs.md, 2026-09-05 -- "two

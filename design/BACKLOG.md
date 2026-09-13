@@ -2782,6 +2782,30 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-13, #86 duty 3: menu.gd's ascension picker had zero test
+  coverage.** Last commit (`5ae0eec`) was duty 2, so this turn is duty 3. Ran
+  an Explore agent over the low-coverage corners of `/net`, `/session` and
+  `/views` (net_link.gd and local_transport.gd showed 0 direct grep hits,
+  but that was a false signal from grepping the filename instead of the
+  class name — `LocalTransport`/`NetLink` are in fact well covered under
+  their `class_name`). The real find: `menu.gd`'s `_set_ascension`/
+  `_refresh_ascension` — the difficulty picker on the main menu — had never
+  been touched by a test, even though its sibling method two lines above,
+  `_refresh_continue()`, was already split into a pure `continue_button_state()`
+  specifically so it could be tested headless. Lifted the same way into
+  `ascension_display_state(ascension, unlocked, tiers)`, returning the label
+  text and both arrow-disabled flags. Along the way found (and guarded
+  against, not "fixed" — nothing is broken today) a latent ordering bug: the
+  tier-listing loop walked `Content.ascension_tiers()` in raw JSON array
+  order with nothing sorting by `level`, while `Content.ascension_mods()`
+  right next to it only ever *sums* matching tiers so is order-independent.
+  `data/ascension.json` happens to already be sorted, so no player has ever
+  seen this go wrong, but a future edit to that file wouldn't have been
+  caught by anything. Added an explicit sort by `level` in the display
+  function and a test that builds tiers out of order and asserts the
+  description still lists them ascending. Five new tests, `run_tests.gd`
+  still green.
+
 - **2026-09-13, #86 duty 2: the Goblin Jetpack fizzled with zero log line when
   it fired too late to matter.** Last commit (`404c983`) was duty 3, so this
   turn is duty 2. Spent this run's research budget on an Explore agent

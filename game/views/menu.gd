@@ -157,20 +157,42 @@ func _set_ascension(v: int) -> void:
 
 
 func _refresh_ascension() -> void:
-	var unlocked := Progress.unlocked_ascension()
-	_asc_label.text = "Ascension %d" % _ascension
-	_asc_down.disabled = _ascension <= 0
-	_asc_up.disabled = _ascension >= unlocked
-	if _ascension <= 0:
-		_asc_text.text = "The base climb." if unlocked == 0 else "The base climb.  (unlocked: %d)" % unlocked
-		return
-	# list what's stacked up at this tier
-	var lines: Array[String] = []
-	for t in Content.ascension_tiers():
+	var state := ascension_display_state(_ascension, Progress.unlocked_ascension(), Content.ascension_tiers())
+	_asc_label.text = state["label"]
+	_asc_down.disabled = state["down_disabled"]
+	_asc_up.disabled = state["up_disabled"]
+	_asc_text.text = state["text"]
+
+
+## Pure half of _refresh_ascension, lifted out the same way continue_button_state
+## was (see the test file for why): label text and both arrow-disabled flags a
+## test can assert on headless, with no scene tree. Tiers are sorted by `level`
+## explicitly rather than trusting data/ascension.json's own array order --
+## Content.ascension_mods() only ever SUMS the matching tiers so a reordered
+## file would still price a run correctly, but this loop was building the
+## on-screen description off raw file order with nothing enforcing it stayed
+## sorted, so a future out-of-order tier would list "Sealed Market" above
+## "Thicker Hides" even though it unlocked ten climbs later.
+static func ascension_display_state(ascension: int, unlocked: int, tiers: Array) -> Dictionary:
+	var state := {
+		"label": "Ascension %d" % ascension,
+		"down_disabled": ascension <= 0,
+		"up_disabled": ascension >= unlocked,
+	}
+	if ascension <= 0:
+		state["text"] = "The base climb." if unlocked == 0 else "The base climb.  (unlocked: %d)" % unlocked
+		return state
+	var applicable: Array = []
+	for t in tiers:
 		var tier: Dictionary = t
-		if int(tier.get("level", 99)) <= _ascension:
-			lines.append("%s — %s" % [String(tier.get("name", "")), String(tier.get("text", ""))])
-	_asc_text.text = "\n".join(lines)
+		if int(tier.get("level", 99)) <= ascension:
+			applicable.append(tier)
+	applicable.sort_custom(func(a, b) -> bool: return int(a.get("level", 99)) < int(b.get("level", 99)))
+	var lines: Array[String] = []
+	for tier in applicable:
+		lines.append("%s — %s" % [String(tier.get("name", "")), String(tier.get("text", ""))])
+	state["text"] = "\n".join(lines)
+	return state
 
 
 func _on_host() -> void:
