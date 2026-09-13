@@ -1501,27 +1501,31 @@ func _enemy_turn() -> void:
 	phase = Phase.ENEMY
 	if _check_end():
 		return
+	# backlog #86 duty 2: resolved before EITHER of the two things below that can
+	# mutate the board this same turn — the wound bleed and _apply_limiter().
+	# Every client-facing preview of this move — incoming_for() and
+	# game_host.gd's own "intent" snapshot key — reads boss.current_move()
+	# live, during the player's turn, which is necessarily before this turn's
+	# own bleed has landed and before a sigil_fatigue/height_split limiter has
+	# spent anything. The move used to be captured AFTER the bleed below,
+	# which mutates boss.hp the exact same way _apply_limiter() mutates player
+	# state (already fixed once for that half): a beast pairing hurt_pct/
+	# hurt_moves (#44) with enough Wound to bleed itself across that threshold
+	# switched from its healthy pattern to its hurt one the instant its OWN
+	# bleed crossed the line, even though every client spent the whole
+	# preceding player turn being shown a move from the healthy list — a
+	# Titan whose intent icon said "attack 10" the entire turn and then
+	# actually swung for 30. Capturing the move here, against the exact state
+	# every preview already saw, keeps the two in agreement; the bleed and
+	# _apply_limiter()'s own damage still land in the same place afterward, so
+	# incoming_for()'s "limiter chip spends Block first" chain (see
+	# _predicted_limiter_damage()) is unaffected.
+	var move := boss.current_move(boss_context())
 	if boss.wound > 0:  # bleed ignores the Titan's block
 		boss.hp = maxi(boss.hp - boss.wound, 0)
 		_log("%s bleeds for %d." % [boss.name, boss.wound])
 		if _check_end():
 			return
-	# backlog #86 duty 2: resolved BEFORE _apply_limiter() below, not after. Every
-	# client-facing preview of this move — incoming_for() and game_host.gd's own
-	# "intent" snapshot key — reads boss_context() live, during the player's turn,
-	# which is necessarily BEFORE a sigil_fatigue/height_split limiter has spent
-	# anything. _apply_limiter() spends a hunter's Block (Combatant.take_damage())
-	# before this line used to read it, so a move gated on COND_UNDEFENDED could
-	# resolve to its "when" branch here while every client spent the whole player
-	# turn being shown the "fallback" — a Titan whose intent icon said "13" and
-	# then hit for 17, breaking boss_context()'s own stated contract ("must
-	# resolve a conditional move the same way _enemy_turn() will actually resolve
-	# it") and boss.gd's header rule that intent is always visible. Capturing the
-	# move here, against the same context every preview already saw, keeps the
-	# two in agreement; _apply_limiter()'s own damage still lands in the same
-	# place afterward, so incoming_for()'s "limiter chip spends Block first"
-	# chain (see _predicted_limiter_damage()) is unaffected.
-	var move := boss.current_move(boss_context())
 	_apply_limiter()
 	if _check_end():
 		return

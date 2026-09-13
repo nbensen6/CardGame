@@ -40,6 +40,7 @@ func _init() -> void:
 	_test_backlog44_hurt_moves_resolve_through_a_real_enemy_turn()
 	_test_backlog44_at_least_three_beasts_have_a_second_pattern()
 	_test_backlog86_hurt_pct_threshold_scales_with_ascensions_hp_pct()
+	_test_backlog86_wound_bleed_must_not_flip_which_pattern_the_intent_already_showed()
 	# backlog #42: something to unlock between runs
 	_test_backlog42_progress_total_wins_climbs_on_every_win()
 	_test_backlog86_record_win_caps_at_max_ascension_and_never_regresses()
@@ -1794,6 +1795,48 @@ func _test_backlog44_at_least_three_beasts_have_a_second_pattern() -> void:
 					"beast '%s' actually switches pattern once hurt" % id)
 				count += 1
 	_expect(count >= 3, "at least three beasts change their pattern when hurt (found %d)" % count)
+
+
+## backlog #86 duty 2: `_enemy_turn()`'s own doc comment (combat.gd:1509-1523,
+## the fix beside `_test_backlog86_a_height_split_chip_must_not_flip_which_
+## move_the_intent_already_showed`) already establishes the rule for this
+## exact family of bug — the move resolved must be the one already telegraphed
+## to every client throughout the player's own turn, captured against the
+## SAME state a preview saw, not one this turn's own resolution has since
+## mutated. That fix moved the `boss.current_move(boss_context())` capture to
+## before `_apply_limiter()` — but left it AFTER the wound-bleed block a few
+## lines above it, which mutates `boss.hp` the exact same way `_apply_limiter()`
+## mutates player state. A beast pairing `hurt_pct`/`hurt_moves` (#44 — six
+## real beasts: gale_serpent, crag_pup, mire_snapper, cinder_jackal, clot_toad,
+## flicker_stag) with enough banked Wound (an ordinary, universal player
+## mechanic, not beast-specific data) to bleed itself across that threshold
+## resolves from `hurt_moves` the instant its own bleed crosses the line —
+## even though every client-facing preview during the whole preceding player
+## turn (`game_host.gd`'s "intent" key, built from `b.current_move(...)` on
+## whatever `hp` currently stood at, before this turn's bleed) showed a move
+## from the healthy `moves` list the whole time. Concrete case below: a boss
+## sitting 5 HP above a 50%-of-500 threshold, carrying 10 Wound, tells the
+## player "attack 10" all through their turn and then actually swings for 30.
+func _test_backlog86_wound_bleed_must_not_flip_which_pattern_the_intent_already_showed() -> void:
+	var boss := Boss.new("Bleeder", 500)
+	boss.moves = [{"type": "attack", "value": 10}]
+	boss.hurt_pct = 0.5   # threshold: hp <= 250
+	boss.hurt_moves = [{"type": "attack", "value": 30}]
+	boss.hp = 255         # above the threshold — the healthy pattern, for now
+	boss.wound = 10       # this turn's own bleed drops it to 245 — below the threshold
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	# This is exactly what every client saw all through the player's own turn —
+	# the bleed that is about to happen inside the enemy turn hasn't yet, so
+	# `hp` is still healthy and the intent reads the plain pattern.
+	var shown := boss.current_move(combat.boss_context())
+	_expect(int(shown["value"]) == 10,
+		"sanity: the telegraphed intent is the healthy pattern before this turn's own bleed lands")
+	combat.end_turn(0)
+	combat.end_turn(1)  # both ended — the real enemy turn resolves here, targeting p0 (round 1)
+	_expect(combat.players[0].combatant.hp == 42 - 10,
+		"the move that actually lands must be the one already shown (healthy pattern, 10) — not " +
+		"the reactive hurt_moves value (30) that only exists because the SAME turn's own wound " +
+		"bleed silently crossed the hurt_pct threshold after the intent was already telegraphed")
 
 
 # --- Co-op combat rules ---------------------------------------------------

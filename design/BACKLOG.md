@@ -2782,6 +2782,27 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-13, #86 duty 2: a beast's own Wound bleed could flip which move
+  pattern its ALREADY-TELEGRAPHED intent resolved from.** Last commit
+  (`ce9844d`) was duty 3, so this turn is duty 2. `_enemy_turn()` had already
+  been fixed once (an earlier duty 2) to capture `boss.current_move()` before
+  `_apply_limiter()` runs, so a limiter's own chip couldn't retroactively
+  change which conditional branch of a move resolved versus what every
+  client's "intent" preview had shown all through the player's turn — but
+  that fix left the capture AFTER the wound-bleed block a few lines above it,
+  which mutates `boss.hp` the exact same way. Six beasts (#44's hurt_pct/
+  hurt_moves: gale_serpent, crag_pup, mire_snapper, cinder_jackal, clot_toad,
+  flicker_stag) switch their whole pattern below a HP fraction, and a beast
+  carrying enough banked Wound (an ordinary player mechanic, not
+  beast-specific) to bleed itself across that threshold on its own turn
+  would resolve from `hurt_moves` — even though the intent icon had shown a
+  `moves` entry the whole preceding player turn. Moved the capture above
+  both mutations. Dispatched a research agent to find it (told it the full
+  list of ~30 already-fixed duty-2 bugs so it wouldn't retread them); it
+  wrote `_test_backlog86_wound_bleed_must_not_flip_which_pattern_the_intent_already_showed`
+  first, watched it fail (hunter took 30 instead of the telegraphed 10), then
+  fixed it. `run_tests.gd` reruns clean: `ALL TESTS PASSED`.
+
 - **2026-09-13, #86 duty 3: the reward-roll tag lean's own doc comment
   promised it would "never" open a gap wider than `RARITY_WEIGHT`'s
   common-rare gap, and nothing had ever proven it.** Last commit
