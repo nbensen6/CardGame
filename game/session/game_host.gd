@@ -304,7 +304,15 @@ func _all_selected() -> bool:
 	if _solo:
 		return _solo_chars[0] != "" and _solo_chars[1] != ""
 	for pid in _peers:
-		if not _character_of.has(pid):
+		# backlog #86 duty 2: select_character lets a peer send "" to deselect
+		# (mirroring the solo path, which already checks the VALUE here, not
+		# just whether a slot has ever been written). Checking .has(pid) alone
+		# let a deselected peer still count as "selected" once every peer had
+		# been written to at least once -- _try_start_or_broadcast() would
+		# start the run with that peer's _character_of entry sitting at "",
+		# and Content.character_deck("") is an empty deck: a permanently
+		# unplayable hunter for the whole run.
+		if String(_character_of.get(pid, "")) == "":
 			return false
 	return true
 

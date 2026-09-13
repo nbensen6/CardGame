@@ -582,6 +582,7 @@ func _init() -> void:
 	_test_backlog86_solo_cannot_pick_the_same_character_for_both_hunters()
 	_test_backlog86_coop_cannot_pick_the_same_character_twice()
 	_test_backlog86_a_lobby_drop_frees_the_character_they_had_claimed()
+	_test_backlog86_coop_deselecting_a_character_keeps_the_lobby_waiting()
 	_test_session_shared_state_exposes_the_seed()
 	_test_backlog86_game_client_drops_a_snapshot_addressed_to_another_peer()
 	# backlog #45: prove the new mechanics cross the client/server boundary
@@ -11793,6 +11794,36 @@ func _test_backlog86_a_lobby_drop_frees_the_character_they_had_claimed() -> void
 	c2.select_character("mountain_climbers")
 	_expect(host._run != null,
 		"the lobby fills and starts normally once both live peers have distinct picks")
+
+
+## backlog #86 duty 2: select_character lets a co-op peer send "" to deselect
+## (same allowance the solo path already has per-slot), but _all_selected()'s
+## co-op branch only checked _character_of.has(pid) -- dictionary KEY
+## presence, not whether the stored value is a real character id. So a peer
+## who picked then deselected still counted as "selected" the moment the
+## OTHER peer picked, and _try_start_or_broadcast() started the run with
+## that peer's _character_of entry sitting at "" -- Content.character_deck("")
+## returns an empty array, so that hunter's deck, hand and every future draw
+## are permanently empty: a real, reachable soft-lock from nothing more than
+## changing your mind once in the lobby. _selections() (the lobby-display
+## list) already computed "picked" correctly (cid != ""), so this was two
+## copies of one truth disagreeing -- the visible lobby state and the actual
+## start-gate.
+func _test_backlog86_coop_deselecting_a_character_keeps_the_lobby_waiting() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, false)  # co-op
+	_kept.append(host)
+	var c0 := GameClient.new(t, 10)
+	var c1 := GameClient.new(t, 20)
+	c0.join()
+	c1.join()
+	c0.select_character("frog")
+	c0.select_character("")  # peer 10 changes their mind before c1 ever picks
+	c1.select_character("mountain_climbers")
+	_expect(host._run == null,
+		"the run must not start while a peer's own selection is empty")
+	c0.select_character("frog")  # peer 10 commits to a real character
+	_expect(host._run != null, "the run starts once every peer holds a real pick")
 
 
 func _test_host_pauses_on_disconnect() -> void:

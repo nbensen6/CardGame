@@ -2782,6 +2782,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-13 — #86 duty 2: deselecting a character in the co-op lobby could
+  start the run anyway, with that hunter's deck permanently empty.**
+  Last commit (`5ee2344`) was duty 3, so this turn opened on duty 2. Spawned
+  an Explore agent to hunt `/core` and the host/client session layer for the
+  two known bug shapes (first-pass holes; two copies of one truth); it found
+  a real one in `game_host.gd`. `select_character` lets a co-op peer send
+  `""` to deselect (`_character_of[peer_id] = char_id` accepts an empty
+  string, same as the solo path's per-slot deselect), but `_all_selected()`'s
+  co-op branch only checked `_character_of.has(pid)` — dictionary KEY
+  presence — while the solo branch beside it correctly checks the VALUE
+  (`_solo_chars[0] != "" and _solo_chars[1] != ""`). So: peer A picks
+  "frog", peer A deselects (`""`, key stays present), peer B picks
+  "mountain_climbers" — `_all_selected()` now sees both peers' keys present
+  and returns true, and `_try_start_or_broadcast()` starts the run with
+  peer A's entry still `""`. `Content.character_deck("")` returns `[]`, so
+  peer A's deck, hand and every future draw are empty for the whole run — a
+  real, reachable soft-lock from nothing more than changing your mind once
+  in the lobby. `_selections()` (the lobby-display list) already computed
+  "picked" the correct way (`cid != ""`), so this was two copies of one
+  truth disagreeing: the visible lobby state and the actual start-gate.
+  Wrote `_test_backlog86_coop_deselecting_a_character_keeps_the_lobby_waiting`,
+  confirmed it FAILS against the pre-fix code, then fixed `_all_selected()`
+  to check the value the same way the solo branch does. Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86`
+  turn is duty 3 (verify a mechanic actually works).
+
 - **2026-09-13 — #86 duty 2: a teammate's own turn could silently cancel the
   OTHER player's in-flight sweep-bar timing minigame, mid-swing, with no
   feedback.** `GameHost._broadcast_state()` sends a fresh snapshot to every
