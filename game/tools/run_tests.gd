@@ -164,6 +164,7 @@ func _init() -> void:
 	_test_backlog86_wide_enchant_reaches_the_wire()
 	_test_campfire_rest_remove_upgrade()
 	_test_campfire_rest_heals_and_caps_at_max()
+	_test_backlog86_campfire_upgrade_that_grants_innate_reaches_the_opening_hand()
 	_test_backlog86_campfire_snapshot_heal_matches_ascension_scaled_amount()
 	_test_backlog86_rest_heal_amount_never_rounds_down_to_nothing()
 	_test_campfire_guards_against_illegal_actions()
@@ -3930,6 +3931,47 @@ func _test_campfire_rest_remove_upgrade() -> void:
 	var sharpened: bool = (run.decks[1][0] as Card).name == name_before + "+"
 	_expect(thinned and waiting and sharpened and run.phase == Run.Phase.MAP,
 		"a campfire thins one deck, sharpens the other, then hands back to the map")
+
+
+## backlog #86 duty 3 — Card.upgraded_copy()'s rule_upgrade path is proven at
+## the pure-function level (_test_card_rule_upgrade_changes_what_it_does_not_
+## just_a_number: belay_strike's upgraded copy flips .innate true) and
+## _draw_innate()'s own tests prove a Card built with innate:true already set
+## lands in the opening hand — but nothing had ever driven a card through the
+## real path a player actually takes: pick "upgrade" at a campfire on a card
+## that only gains Innate from its data-file rule_upgrade recipe (belay_strike
+## is the one real card that does), then start the very next fight and check
+## the exact Card the campfire produced is the one guaranteed into the opening
+## hand. Combat._init seeds draw_pile with `decks[i].duplicate()` — a SHALLOW
+## copy that keeps the very Card reference campfire_action() just wrote into
+## the deck — so this only holds together because nothing between the two
+## systems re-copies or rebuilds that reference. A future change that deep-
+## copied the deck on the way into Combat (dropping the campfire's edit) or
+## that made _draw_innate re-read printed data instead of the live Card would
+## pass every existing test in both files and still silently ship a card whose
+## own upgrade text promises Innate without ever actually granting it.
+func _test_backlog86_campfire_upgrade_that_grants_innate_reaches_the_opening_hand() -> void:
+	var deck: Array = _deck_of(_slash, 9)
+	deck.append(Content.make_card("belay_strike"))  # real card: rule_upgrade grants Innate
+	var belay_index := deck.size() - 1
+	var run := Run.new([deck, _deck_of(_slash, 10)], ["A", "B"], 4242, [{}, {}])
+	run.start()
+	_expect(not (run.decks[0][belay_index] as Card).innate,
+		"setup sanity: belay_strike starts without Innate")
+	run._begin_campfire()
+	run.campfire_action(0, "upgrade", belay_index)
+	run.campfire_action(1, "rest")
+	_expect(run.phase == Run.Phase.MAP, "both hunters acted -- the campfire hands back to the map")
+	_expect((run.decks[0][belay_index] as Card).innate,
+		"the campfire's own upgraded copy carries the Innate its rule_upgrade recipe promised")
+	run._start_encounter()
+	var innate_in_hand := false
+	for c in run.combat.players[0].hand:
+		if String((c as Card).id) == "belay_strike" and (c as Card).innate:
+			innate_in_hand = true
+	_expect(innate_in_hand,
+		"a card that only became Innate via a campfire's rule_upgrade is still guaranteed into " +
+		"the very next fight's opening hand -- the campfire's edit and the opening draw agree")
 
 
 ## Backlog #19: "rest" itself, and the guards that keep a campfire from being

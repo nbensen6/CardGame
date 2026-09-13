@@ -14985,3 +14985,33 @@ Newest first. One line per finished item: what, and anything surprising.
   ever asked. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`:
   ALL TESTS PASSED. Next `#86` turn is duty 2 (find an error and resolve
   it).
+
+- **2026-09-13 — #86 duty 3: a campfire upgrade that only grants Innate had
+  never been proven to actually reach the next fight's opening hand.** Last
+  commit (`002e1d7`) was duty 2, so this turn opened on duty 3. Two halves of
+  this exact mechanic already had tests: `Card.upgraded_copy()`'s
+  `rule_upgrade` path proves `belay_strike`'s sharpened copy flips `.innate`
+  to true in isolation (`_test_card_rule_upgrade_changes_what_it_does_not_
+  just_a_number`), and `_draw_innate()`'s own tests prove a Card constructed
+  with `innate: true` already set lands in the opening hand. Nobody had ever
+  driven a card through the real path a player takes: pick "upgrade" at a
+  campfire on a card that only gains Innate from its data-file recipe, then
+  start the very next fight and check the exact Card object the campfire
+  produced is the one guaranteed into the opening hand. `Combat._init` seeds
+  `draw_pile` with `decks[i].duplicate()` — a shallow copy that keeps the
+  very Card reference `campfire_action()` just wrote into the deck — so the
+  two systems agreeing today is real but unproven; a future change that deep-
+  copied the deck on the way into Combat, or made `_draw_innate` re-read
+  printed data instead of the live Card, would have passed every existing
+  test in both files while quietly shipping a card whose own upgrade text
+  promises Innate without ever granting it. Added
+  `_test_backlog86_campfire_upgrade_that_grants_innate_reaches_the_opening_hand`:
+  builds a real deck holding the real `belay_strike` card, upgrades it through
+  `Run.campfire_action(0, "upgrade", ...)`, finishes the campfire, calls the
+  same private `_start_encounter()` other Run integration tests already use,
+  and checks the upgraded `belay_strike` (by id, with `.innate` still true)
+  actually appears in hunter 0's opening hand. Passed on the first run — the
+  two systems do agree — closing the gap where nothing had ever asked
+  end-to-end rather than in each half alone. Fresh `--import`, headless,
+  Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is
+  duty 2 (find an error and resolve it).
