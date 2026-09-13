@@ -567,6 +567,7 @@ func _init() -> void:
 	_test_host_pauses_on_disconnect()
 	_test_dropped_hunter_can_rejoin_mid_fight()
 	_test_backlog86_reconnected_hunter_keeps_their_character_after_combat()
+	_test_backlog86_restart_after_reconnect_keeps_the_reconnected_character()
 	_test_backlog86_same_peer_id_rejoin_clears_the_pause_without_reclaiming()
 	_test_both_hunters_dropping_mid_fight_both_get_their_own_seat_back()
 	_test_lobby_drop_reindexes_the_remaining_peer_and_frees_the_slot()
@@ -11613,6 +11614,32 @@ func _test_backlog86_reconnected_hunter_keeps_their_character_after_combat() -> 
 	host._broadcast_state()
 	_expect(String(c0.shared["players"][1]["character"]) == "mountain_climbers",
 		"the reconnected hunter's character survives past combat instead of reading blank from a stale peer-id key")
+
+
+## Backlog #86 duty 2: the test above proves the FINISHED run still shows the
+## reconnected hunter's real character in its snapshot -- that path already
+## reads _run.player_passives (_slot_char()), which _reclaim_slot() never
+## touches and so never breaks. Restarting is the path that DID break:
+## start_new_run() (called for "restart", with no is_over() gate) rebuilds a
+## brand-new Run from _co_op_char_ids(), which used to read _character_of --
+## a peer_id-keyed lobby mirror that _reclaim_slot() migrates _peers/_slot_of
+## away from without ever updating. After a mid-run reconnect, _character_of
+## still only knows the DEAD peer id, so _co_op_char_ids() silently defaulted
+## the reconnected seat back to "frog" and a restart discarded the player's
+## real character choice with no error and no input from anyone.
+func _test_backlog86_restart_after_reconnect_keeps_the_reconnected_character() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var transport: LocalTransport = s["transport"]
+	transport.emit_signal("peer_left", 20)  # mountain_climbers (slot 1) drops
+	var c_new := GameClient.new(transport, 99)  # fresh peer id reclaims slot 1
+	c_new.join()
+	_expect(not host.paused, "sanity: the reconnect resumed play")
+
+	c0.restart()  # either hunter may request a fresh run; no is_over() gate
+	_expect(String((host._run.player_passives[1] as Dictionary).get("character", "")) == "mountain_climbers",
+		"restarting after a reconnect rebuilds the new run with the reconnected hunter's REAL character, not the 'frog' default")
 
 
 ## Backlog #86 duty 3: _handle_join's OWN-peer-id branch — every reconnect test

@@ -2782,6 +2782,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-13, #86 duty 2: a restart after a mid-run reconnect silently
+  discarded the reconnected hunter's real character.** Last commit (`8c62111`)
+  was duty 3, so this turn is duty 2. Ran an Explore agent over the
+  unreviewed corners of `game_host.gd`/`run.gd` (I'd already hand-verified
+  `card.gd`, `_meld_cards`, `boss.gd`, the hand/deck "fx" dicts, `run_map.gd`,
+  `player_state.gd`, `combatant.gd` and `run_save.gd` clean). It found a real
+  "two copies of one truth" bug: character selection is tracked in both
+  `_character_of` (peer_id-keyed lobby bookkeeping) and `_run.player_passives`
+  (slot-keyed, authoritative once a run exists — `_slot_char()` already
+  prefers the latter for exactly this reason, per its own comment).
+  `_reclaim_slot()` (the mid-run reconnect path, backlog #51) migrates
+  `_peers`/`_slot_of` to the reconnecting peer's new id but never touches
+  `_character_of`, so after a drop-and-reconnect it still only holds the dead
+  peer's id. `_co_op_char_ids()` — read only by `start_new_run()`, including
+  the no-`is_over()`-gate "restart" command — read `_character_of`
+  unconditionally, so restarting after any mid-run reconnect silently rebuilt
+  the new run with the reconnected seat defaulted to "frog", discarding
+  whatever character that player actually picked, no error, no warning.
+  Fixed by making `_co_op_char_ids()` prefer `_run.player_passives` by slot
+  when a run exists, falling back to `_character_of` only for the pre-run
+  lobby-select case — the same idiom `_slot_char()` already uses, so the two
+  can't drift apart again independently. Added
+  `_test_backlog86_restart_after_reconnect_keeps_the_reconnected_character`,
+  confirmed it fails without the fix (reverted the .gd change, reran, watched
+  it FAIL) and passes with it restored. `run_tests.gd` green.
+
 - **2026-09-13, #86 duty 3: menu.gd's ascension picker had zero test
   coverage.** Last commit (`5ae0eec`) was duty 2, so this turn is duty 3. Ran
   an Explore agent over the low-coverage corners of `/net`, `/session` and

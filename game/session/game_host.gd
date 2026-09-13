@@ -204,10 +204,25 @@ func _acting_slot(peer_id: int, command: Dictionary) -> int:
 		return int(command.get("slot", -1))
 	return _slot(peer_id)
 
+## backlog #86 duty 2: once a run exists, _run.player_passives (slot-indexed) is
+## the source of truth for who is playing which hunter -- the same reason
+## _slot_char() below prefers it over _character_of, this dict's peer_id-keyed
+## lobby mirror. _co_op_char_ids() used to read _character_of unconditionally,
+## which is exactly wrong on "restart": _reclaim_slot() migrates _peers/_slot_of
+## to a reconnecting peer's NEW id after a mid-run drop but never touches
+## _character_of, so the finished run's _character_of still only knows the DEAD
+## peer id. A restart after that silently rebuilt the new run with the
+## reconnected player defaulted back to "frog" -- their real character choice,
+## which _run.player_passives had correctly tracked all along, thrown away with
+## no error and no input from anyone.
 func _co_op_char_ids() -> Array:
 	var ids: Array = []
-	for pid in _peers:
-		ids.append(String(_character_of.get(pid, "frog")))
+	for i in range(_peers.size()):
+		var pid: int = _peers[i]
+		var from_run := ""
+		if _run != null and i < _run.player_passives.size():
+			from_run = String((_run.player_passives[i] as Dictionary).get("character", ""))
+		ids.append(from_run if from_run != "" else String(_character_of.get(pid, "frog")))
 	return ids
 
 ## A hunter dropped. In the lobby we free their slot; mid-run we pause.
