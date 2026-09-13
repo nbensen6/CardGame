@@ -663,6 +663,11 @@ func _init() -> void:
 	# it never cancelled a still-running tween the way the climb branch does.
 	_test_backlog86_cancel_pending_tween_kills_the_old_tween_and_body_scale()
 	_test_backlog86_cancel_pending_tween_is_a_noop_with_nothing_running()
+	# backlog #86 duty 2 (this turn): the per-frame idle sway raced those same
+	# tweens from the other side, rewriting node.position.y every frame with
+	# no idea one was live.
+	_test_backlog86_tween_is_live_true_while_a_climb_tween_is_running()
+	_test_backlog86_tween_is_live_false_once_killed_or_absent()
 	# backlog #86 duty 3 (second pass): the OTHER untested climb rule named
 	# alongside route_between_rungs — foothold_anchor, the pure half of
 	# _stand_on_model, deciding WHERE on the model a foothold actually sits.
@@ -13770,6 +13775,41 @@ func _test_backlog86_cancel_pending_tween_kills_the_old_tween_and_body_scale() -
 func _test_backlog86_cancel_pending_tween_is_a_noop_with_nothing_running() -> void:
 	Combat3D._cancel_pending_tween({}, 0, null)
 	_expect(true, "cancelling an empty slot with no body must not crash")
+
+
+## backlog #86 duty 2 (this turn) — a real bug in `_process`'s per-hunter idle
+## sway: it wrote `node.position.y = h["home"].y + wobble` on every frame with
+## no idea a climb/glide tween might be live for that hunter. `_place_hunters`
+## sets `h["home"]` to the FINAL target synchronously, before the tween that
+## eases `node.position` toward it takes its first step (the same
+## order-of-operations shape `_start_glide`'s own comment already documents
+## for a different write) — so the very next `_process` tick snapped
+## node.position.y straight to the destination and refought the tween every
+## frame after that. Every climb read as a flat slide instead of a jump, the
+## whole point of the anticipation/apex/squash arc in `_hop`.
+## `_tween_is_live` is the guard pulled out static, like `_cancel_pending_tween`
+## beside it, so this is provable with a real Tween and no frame of the scene
+## actually rendered.
+func _test_backlog86_tween_is_live_true_while_a_climb_tween_is_running() -> void:
+	var node := Node3D.new()
+	var tw := root.create_tween()
+	tw.tween_property(node, "position", Vector3(5.0, 5.0, 5.0), 10.0)
+	_expect(Combat3D._tween_is_live(tw),
+		"a freshly-started tween is still running; the idle sway must back off or it fights the tween for node.position.y every frame")
+	tw.kill()
+	node.free()
+
+
+func _test_backlog86_tween_is_live_false_once_killed_or_absent() -> void:
+	var node := Node3D.new()
+	var tw := root.create_tween()
+	tw.tween_property(node, "position", Vector3(5.0, 5.0, 5.0), 10.0)
+	tw.kill()
+	_expect(not Combat3D._tween_is_live(tw),
+		"a killed tween is no longer live; the sway must resume or the hunter's idle wobble stays frozen forever")
+	_expect(not Combat3D._tween_is_live(null),
+		"a hunter with no entry in _climb_tw has nothing to race; the sway must run for a hunter that has never climbed")
+	node.free()
 
 
 ## backlog #86 duty 2 (sixth turn) — a real bug in `_render_hand`: the

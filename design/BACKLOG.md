@@ -2782,6 +2782,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-13 — #86 duty 2: the per-hunter idle sway raced every climb and
+  glide tween for `node.position.y` and won, so a climb never visibly
+  arced.** Last commit (`95517a1`) was duty 3, so this turn opened on duty 2.
+  Spawned an Explore agent to hunt the two named bug shapes across
+  `game_host.gd`, `combat.gd`, `run.gd`, `combat_3d.gd` and `overworld_3d.gd`;
+  most candidates it found in the host/client layer were already-fixed
+  instances with a comment closing the historical bug. It found one live one:
+  `combat_3d.gd`'s `_process()` writes `node.position.y = h["home"].y +
+  wobble` for every hunter, every frame, unconditionally. `_place_hunters`
+  sets `h["home"]` to the hunter's FINAL destination synchronously the moment
+  a climb or glide is decided — before the `Tween` that's supposed to ease
+  `node.position` toward it takes a single step (the same order-of-operations
+  gap `_start_glide`'s own comment already names for a different write in the
+  same function). So the very next `_process` tick after a climb starts
+  snapped `node.position.y` straight to the destination height and refought
+  the tween every frame for the rest of its run — the carefully-built
+  anticipation/apex/squash hop in `_hop()` never visibly arced; only x/z
+  glided while y sat at the target the whole time. This fires on every single
+  climb, no constant change needed. Fix: a `_tween_is_live(tw)` static guard
+  (mirrors `_cancel_pending_tween` beside it — `tw != null and tw.is_valid()
+  and tw.is_running()`) checked against `_climb_tw.get(i)` before the sway
+  writes `node.position.y`, so the sway backs off while a climb/glide tween
+  owns the hunter and resumes the instant it finishes or is killed. Two new
+  tests prove the guard directly with a real `root.create_tween()` and no
+  frame of the scene actually run: live while running, not live once killed
+  or when the slot is empty. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 3 (verify a
+  mechanic actually works).
+
 - **2026-09-13, #86 duty 3: the dev console's `rares` command had zero test
   coverage.** Last commit (`d8ac84a`) was duty 2, so this turn is duty 3.
   Spent most of this run confirming there was genuinely nothing left in the

@@ -952,7 +952,14 @@ func _process(delta: float) -> void:
 	for i in range(_hunters.size()):
 		var h: Dictionary = _hunters[i]
 		var node: Node3D = h["node"]
-		if is_instance_valid(node):
+		# Skip the sway while a climb/glide tween owns this hunter. `h["home"]`
+		# is written to the FINAL target the instant _place_hunters decides to
+		# move (see the "climb"/"glide" branches there), before the tween that
+		# eases node.position toward it has taken a single step — so an
+		# unconditional write here every frame snapped node.position.y straight
+		# to the destination on frame one and fought the tween for the rest of
+		# its run. Every climb read as a flat slide instead of a jump.
+		if is_instance_valid(node) and not _tween_is_live(_climb_tw.get(i) as Tween):
 			# a gentle out-of-phase idle so the two hunters don't look cloned
 			node.position.y = float((h["home"] as Vector3).y) + sin(_time * 2.3 + i * 1.7) * 0.045
 	if _sigil != null and _sigil.visible:
@@ -2484,6 +2491,16 @@ static func _cancel_pending_tween(climb_tw: Dictionary, i: int, body: Node3D) ->
 		old_tw.kill()
 	if body != null and is_instance_valid(body):
 		body.scale = Vector3.ONE
+
+
+## Whether `tw` (a `_climb_tw[i]` entry, or null) is still actively driving a
+## hunter's `node.position` this frame. A killed tween is invalid; a finished
+## one is valid but not running; either way nothing is left to race, so the
+## per-frame idle sway in `_process` is free to touch `node.position.y` again.
+## Pulled out static, like its neighbours above, so "the sway backs off while
+## a climb/glide is live" is provable with a real Tween and no scene frame run.
+static func _tween_is_live(tw: Tween) -> bool:
+	return tw != null and tw.is_valid() and tw.is_running()
 
 
 ## Decides how a hunter's position update should be animated, given only the
