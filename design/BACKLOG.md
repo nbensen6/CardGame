@@ -2782,6 +2782,31 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-13 — #86 duty 2: a meld'd hits_all_enemies Poison card fed the
+  Vine-Weaver's ally-lift once per living enemy poisoned instead of once per
+  card played.** Last commit (`07b49eb`) was duty 3, so this turn opened on
+  duty 2. Spawned two Explore agents in sequence: the first found a real gap
+  (an add's own `current_move()` is never called with `boss_context()`, so a
+  conditional "when" move on an add could never fire) but `git blame` showed
+  it was already found and deliberately deferred by a prior duty-2 run
+  (`game_host.gd:441-449` — no add currently sets "when", so it isn't live),
+  so that wasn't a fresh finding. The second agent found a real regression
+  introduced by the MOST RECENT commit to touch this code
+  (`2fec17e`, "a hits_all_enemies card's Poison/Frail only ever hit one
+  enemy"): fixing Poison/Frail to fan out to every living enemy moved
+  `play_card()`'s `poison_lift` block verbatim into the new per-target loop,
+  so a fused Sweeping-Strike-plus-Poison card poisoning the boss and one add
+  lifted the Vine-Weaver's ally Foothold twice instead of once (three times
+  with two adds, etc.) — every other per-play payoff in that function
+  (Strength, Thorns, ally-climb) fires exactly once per card regardless of
+  how many enemies it hits; this was the one exception. Wrote
+  `_test_backlog86_hits_all_enemies_poison_lifts_the_ally_only_once_per_play`
+  in `run_tests.gd`, confirmed it FAILS against the pre-fix code (`git stash`
+  round-trip), then hoisted the ally-lift out of the loop to fire once, after
+  it, only if at least one target actually got poisoned. Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86`
+  turn is duty 3 (verify a mechanic actually works).
+
 - **2026-09-13 — #86 duty 3: the fight camera's own arena-wall clamp
   (`combat_3d.gd`'s `_cam_reach`/`_inside_wall`) had zero test coverage.**
   Last commit (`3d6ac85`) was duty 2, so this turn is duty 3. Manually

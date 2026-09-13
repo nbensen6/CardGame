@@ -937,6 +937,17 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	# from it again independently.
 	var debuff_targets: Array = ([boss] + adds) if card.hits_all_enemies else [debuff_target]
 	if card.wound > 0:
+		# #86 duty 2: poison_lift used to live INSIDE this loop, so a
+		# hits_all_enemies Poison card (reachable via meld: Sweeping Strike
+		# fused with any Poison card) fed the Vine-Weaver's ally-lift once
+		# per living enemy poisoned instead of once per card played — a card
+		# poisoning the boss and one add lifted the ally's Foothold twice,
+		# two adds lifted it three times, and so on. Every other per-play
+		# payoff here (Strength, Thorns, ally-climb) fires exactly once no
+		# matter how many enemies the card's damage/debuff fans out to;
+		# poison_lift now matches that by firing once, after the loop, only
+		# if at least one target actually got poisoned.
+		var any_poisoned := false
 		for dt in debuff_targets:
 			var t: Boss = dt
 			if t.is_dead():
@@ -950,12 +961,13 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 			else:
 				t.wound += card.wound
 				_log("%s plays %s — Poison %d on %s." % [who, card.name, t.wound, t.name])
-				if ps.poison_lift > 0:  # Vine-Weaver: the vines feed on the poison and lift the ally
-					var fed_ally: PlayerState = players[ally_index(pi)]
-					var fed_ally_before := fed_ally.foothold
-					fed_ally.foothold = mini(fed_ally.foothold + ps.poison_lift, FOOTHOLD_MAX)
-					_log("%s's vines surge — %s climbs +%d." % [who, fed_ally.combatant.name, ps.poison_lift])
-					_lift_roped_ally(ally_index(pi), fed_ally_before)  # the lifted ally might themselves be roped (#86 duty 2)
+				any_poisoned = true
+		if any_poisoned and ps.poison_lift > 0:  # Vine-Weaver: the vines feed on the poison and lift the ally
+			var fed_ally: PlayerState = players[ally_index(pi)]
+			var fed_ally_before := fed_ally.foothold
+			fed_ally.foothold = mini(fed_ally.foothold + ps.poison_lift, FOOTHOLD_MAX)
+			_log("%s's vines surge — %s climbs +%d." % [who, fed_ally.combatant.name, ps.poison_lift])
+			_lift_roped_ally(ally_index(pi), fed_ally_before)  # the lifted ally might themselves be roped (#86 duty 2)
 	if card.frail > 0:  # Frail — reduces the Block gained (backlog #36); #86 duty 2:
 		# redirected to the chosen add, same as Poison above, instead of always the boss.
 		for dt in debuff_targets:
