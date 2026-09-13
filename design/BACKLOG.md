@@ -2782,6 +2782,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-13, #86 duty 2: the dev console's `beast <id>` swap left a
+  beast's own "adds" behind when it changed the boss.** Last commit
+  (`d99bb0a`) was duty 3, so this turn is duty 2. `Combat._init()` builds
+  `adds` from the same id `boss` is built from
+  (`Content.build_boss_adds(boss.id)`, combat.gd:131) and never touches it
+  again on its own — `DevConsole._cmd_beast()` (console.gd) is the only OTHER
+  place `boss` is ever reassigned mid-fight, and it only ever wrote
+  `_combat().boss = b`, never touching `_combat().adds`. `root_lurker` is the
+  one beast in bosses.json that carries an add (Root Tendril): swapping AWAY
+  from it via `beast <id>` left its Root Tendril standing in the new fight —
+  still alive, still attacking, still shown on the wire in
+  `s["boss"]["adds"]` — with no relation to the beast actually on screen;
+  swapping TO it left `adds` empty in a fight whose data says it should have
+  one. Exactly the "two copies of one truth" family duty 2 hunts for — `boss`
+  and `adds` are supposed to name the same beast and nothing kept the second
+  one in sync on this path. Fixed by rebuilding `adds` the same way `_init()`
+  does, right after the boss swap. This is dev-tooling (no player ever runs
+  `beast <id>` in a real game), but it is real, live code with no build flag
+  gating it out — CLAUDE.md's own `Content.build_boss_adds` doc note about a
+  beast's adds needing to travel with it applies here exactly the same as
+  anywhere else. Wrote
+  `_test_backlog86_dev_console_beast_swap_keeps_adds_in_sync_with_the_new_boss`,
+  which fails without the fix (`FAIL swapping to root_lurker populates its
+  Root Tendril add on the live Combat`) and passes with it, in both swap
+  directions plus a round-trip. `run_tests.gd` is clean: `ALL TESTS PASSED`.
+
 - **2026-09-13, #86 duty 3: a multistrike card's weak-point damage had never
   been proven to accumulate across its own hits before the buck-off check
   reads it.** Last commit (`4db38a3`) was duty 2, so this turn is duty 3.

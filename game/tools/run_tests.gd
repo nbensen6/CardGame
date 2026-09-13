@@ -1281,6 +1281,12 @@ func _init() -> void:
 	# console proven only to refuse is not proven to work.
 	_test_backlog86_dev_console_energy_and_climb_edit_the_live_hunter_and_broadcast()
 	_test_backlog86_dev_console_beast_swaps_the_live_boss_or_refuses_an_unknown_id()
+	# backlog #86 duty 2: the swap test above only ever proves `boss` lands
+	# correctly -- combat.gd's own `adds` array (Boss's secondary "adds",
+	# backlog #63) is a SEPARATE piece of state _cmd_beast never touched, and
+	# nothing here had ever driven a swap involving the one beast that carries
+	# one (root_lurker's Root Tendril).
+	_test_backlog86_dev_console_beast_swap_keeps_adds_in_sync_with_the_new_boss()
 	_test_backlog86_dev_console_hand_deal_and_own_target_the_right_pile()
 
 	# backlog #86 duty 3 (thirty-ninth pass): Run._gold_for(node_type) is the
@@ -16645,6 +16651,47 @@ func _test_backlog86_dev_console_beast_swaps_the_live_boss_or_refuses_an_unknown
 		"an unknown beast id is refused by name rather than silently building Content's Titan/1-HP fallback")
 	_expect(String(host._run.combat.boss.id) == target and String(c0.shared["boss"]["id"]) == target,
 		"a refused swap leaves the fight exactly as the last GOOD swap left it")
+
+	Session.host = save_host
+	c.free()
+
+
+## backlog #86 duty 2 -- Combat._init() builds `adds` from the SAME id `boss`
+## is built from (Content.build_boss_adds(boss.id), combat.gd:131) and never
+## touches it again on its own; `_cmd_beast` is the only OTHER place `boss` is
+## ever reassigned mid-fight, and until now it left `adds` exactly as the
+## previous beast set it. root_lurker is the one beast in bosses.json that
+## carries an add (Root Tendril) -- prove a swap AWAY from it clears the
+## stale add out, and a swap TO it populates the real one, in both directions,
+## rather than a beast's `adds` silently belonging to whichever beast was
+## fought before it.
+func _test_backlog86_dev_console_beast_swap_keeps_adds_in_sync_with_the_new_boss() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var save_host: GameHost = Session.host
+	Session.host = host
+	var c := DevConsole.new()
+
+	# Swap TO the one beast with an add: `adds` must come alive with it.
+	c.run("beast root_lurker")
+	_expect(host._run.combat.adds.size() == 1 and String(host._run.combat.adds[0].id) == "root_tendril",
+		"swapping to root_lurker populates its Root Tendril add on the live Combat")
+	_expect(String(c0.shared["boss"]["adds"][0]["id"]) == "root_tendril",
+		"the newly-populated add reaches the shared snapshot too, not just the host's own copy")
+
+	# Swap AWAY to a beast with none: the Root Tendril must not survive the swap.
+	var away := "crag_pup" if String(host._run.combat.boss.id) != "crag_pup" else "thrasher"
+	c.run("beast " + away)
+	_expect(host._run.combat.adds.is_empty(),
+		"swapping away from root_lurker clears its Root Tendril rather than carrying it into the new fight")
+	_expect((c0.shared["boss"]["adds"] as Array).is_empty(),
+		"the cleared adds list reaches the shared snapshot too")
+
+	# And back again, to prove this isn't a one-way fix.
+	c.run("beast root_lurker")
+	_expect(host._run.combat.adds.size() == 1 and String(host._run.combat.adds[0].id) == "root_tendril",
+		"swapping back to root_lurker a second time still rebuilds its own add")
 
 	Session.host = save_host
 	c.free()

@@ -411,6 +411,19 @@ func _cmd_beast(a: PackedStringArray) -> String:
 			id, ", ".join(Content.list_boss_ids())]
 	var b := Content.build_boss(id)
 	_combat().boss = b
+	# backlog #86 duty 2: this used to leave `adds` exactly as the PREVIOUS
+	# beast left them -- Combat._init() is the only other place `adds` is ever
+	# assigned (Content.build_boss_adds(boss.id), combat.gd:131), so a plain
+	# `boss = b` here is the same "two copies of one truth" gap the reward-roll
+	# and campfire-heal fixes above have already closed elsewhere: `boss.id`
+	# and `adds` are supposed to name the SAME beast and nothing kept them in
+	# sync on this path. Swapping FROM root_lurker (the one beast with an add,
+	# Root Tendril) TO any other beast left its Root Tendril standing in the
+	# new fight, still targetable and still attacking, with no relation to the
+	# beast now on screen; swapping the other way left `adds` empty in a fight
+	# whose data says it should have one. Rebuilding here the exact same way
+	# _init() does keeps the two in lockstep whichever direction the swap goes.
+	_combat().adds = Content.build_boss_adds(id)
 	_push()
 	return "now fighting %s" % b.name
 
