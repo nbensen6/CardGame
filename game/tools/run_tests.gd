@@ -94,6 +94,7 @@ func _init() -> void:
 	# the run map (branching route)
 	_test_map_generates_connected_rows()
 	_test_backlog86_run_map_link_reaches_every_node_across_every_width_pair()
+	_test_backlog86_run_map_link_caps_edges_except_a_lone_source_into_three()
 	_test_map_is_deterministic_per_seed()
 	_test_backlog86_is_last_row_is_true_only_for_the_maps_final_row()
 	_test_backlog86_full_clear_beats_every_acts_titan_before_won()
@@ -2445,6 +2446,57 @@ func _test_backlog86_run_map_link_reaches_every_node_across_every_width_pair() -
 			break
 	_expect(bad == "", "RunMap._link() leaves no unreachable node for any width pair the generator " +
 		"can produce, across many seeds (first failure: %s)" % bad)
+
+
+## #86 duty 3 — _link()'s own doc comment promises "every node gets 1-2
+## forward edges." Never tested: the test above only proves reachability, not
+## the edge-COUNT half of the promise. Tracing (1, 3) by hand shows it's false
+## there: a boss row is the only width-1 row the generator makes, and when it
+## feeds a 3-wide act opener, the lone source node must reach all three
+## columns to satisfy the OTHER promise ("no unreachable dead ends") on the
+## same line -- there is no second source node to share the load with. Both
+## of _link()'s own branches drive this: the base-aligned edge only ever lands
+## on column 0 for a width-1 source (_aligned's from_n<=1 case), the "extra
+## edge" coin flip can reach column 1 at best (it only steps by 1), and the
+## backfill loop that guarantees reachability then routes column 2 back onto
+## the same, only, source node -- so it is not a rare unlucky roll, it is
+## EVERY roll. Confirmed by hand-tracing every RNG branch, not by running it
+## and eyeballing the output.
+##
+## Every other pair the generator can produce stays within 2 (also traced by
+## hand: a width-1 source only ever gets 1 edge into a same-or-narrower row,
+## since a single column has nowhere else to send a second edge, and every
+## width>=2 source has a sibling node to share the backfill routing with).
+func _test_backlog86_run_map_link_caps_edges_except_a_lone_source_into_three() -> void:
+	var pairs: Array = [[1, 2], [1, 3], [2, 1], [3, 1], [2, 2], [3, 3], [2, 3], [3, 2]]
+	var bad: String = ""
+	for pair in pairs:
+		var cur_w: int = pair[0]
+		var nxt_w: int = pair[1]
+		var expected_max: int = nxt_w if cur_w == 1 else 2
+		for s in range(1, 60):
+			var m := RunMap.new(0, RandomNumberGenerator.new())
+			var cur_row: Array = []
+			for _i in range(cur_w):
+				cur_row.append({"type": "fight", "act": 0, "next": []})
+			var nxt_row: Array = []
+			for _j in range(nxt_w):
+				nxt_row.append({"type": "fight", "act": 0, "next": []})
+			m.rows = [cur_row, nxt_row]
+			var rng := RandomNumberGenerator.new()
+			rng.seed = s
+			m._link(rng)
+			for n in cur_row:
+				var edges: Array = (n as Dictionary)["next"]
+				if edges.size() > expected_max:
+					bad = "pair %s seed %d: a node got %d edges, more than the %d this pair should ever need" % [str(pair), s, edges.size(), expected_max]
+			if bad != "":
+				break
+		if bad != "":
+			break
+	_expect(bad == "",
+		"RunMap._link() never hands out more edges than a width pair actually needs, " +
+		"except a lone source forced to cover all three columns of a wide row (first failure: %s)" % bad)
 
 
 func _test_map_is_deterministic_per_seed() -> void:

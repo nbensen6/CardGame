@@ -183,6 +183,15 @@ static func type_for_roll(row_in_act: int, roll: int) -> String:
 
 ## Wire each row to the next: every node gets 1–2 forward edges, and every node
 ## in the next row is guaranteed at least one way in (no unreachable dead ends).
+##
+## #86 duty 3: those two promises collide for a boss row (the only width-1 row
+## the generator ever makes) feeding a 3-wide act opener — one source node
+## cannot reach three destinations while also capping itself at 2, and the
+## "no unreachable dead ends" guarantee wins, deterministically, every time:
+## see _test_backlog86_run_map_link_caps_edges_except_a_lone_source_into_three
+## below. So read "1-2" as the normal case, not an absolute ceiling; the true
+## rule the code enforces is "1-2, except a lone source into a 3-wide row
+## takes all 3 rather than strand a node."
 func _link(rng: RandomNumberGenerator) -> void:
 	for r in range(rows.size() - 1):
 		var cur: Array = rows[r]

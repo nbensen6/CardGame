@@ -2782,6 +2782,26 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-13, #86 duty 3: `RunMap._link()`'s own doc comment ("every node
+  gets 1-2 forward edges") was never checked — only reachability was.**
+  Last commit (`2fec17e`) was duty 2, so this turn is duty 3. Hand-traced
+  `_link()`'s two branches (base-aligned edge, coin-flip extra edge, and the
+  reachability backfill) across every width pair the generator can produce.
+  Found the "1-2" half of the promise is deterministically FALSE for one
+  pair: a boss row (the only width-1 row the generator ever makes) feeding a
+  3-wide act opener always ends with exactly 3 outgoing edges, every single
+  roll, not just on unlucky RNG — with only one source node, the "no
+  unreachable dead ends" guarantee on the same line can't be met any other
+  way, so it wins. Every other width pair (traced by hand, not just
+  sampled) stays within 2. This isn't a bug to fix in the usual sense: the
+  only ways to actually cap it at 2 are to strand a map node (worse) or
+  change `MIN_WIDTH`/`ROWS_PER_ACT` (a balance/design call, Nick's, out of
+  scope). So fixed the doc comment on `_link()` to state the real rule and
+  added `_test_backlog86_run_map_link_caps_edges_except_a_lone_source_into_three`,
+  which drives `_link()` over all 8 width pairs and ~60 seeds each and
+  asserts the true bound (2 normally, 3 only for a width-1 source into a
+  width-3 row) — it passes against current code, since the actual routing
+  logic is correct; only the promise describing it was wrong.
 - **2026-09-13, #86 duty 2: a `hits_all_enemies` card's Poison/Frail only ever
   landed on ONE enemy, even though its own damage fans out to all of them.**
   Last commit (`c2afee0`) was duty 3, so this turn is duty 2. Read
