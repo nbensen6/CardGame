@@ -15015,3 +15015,33 @@ Newest first. One line per finished item: what, and anything surprising.
   end-to-end rather than in each half alone. Fresh `--import`, headless,
   Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is
   duty 2 (find an error and resolve it).
+
+- **2026-09-13 — #86 duty 2: a fused Catapult+Burn Coal meld card hid half of
+  its own resolved effect on its face.** Last commit (`1abe813`) was duty 3, so
+  this turn opened on duty 2. `card_view.gd`'s `face_text()` treated
+  `sac_ally_grip` (Catapult: "ally climbs N") and `cheapen_pick` (Burn Coal:
+  "cheapen another by N") as mutually exclusive with an `if`/`elif` — true of
+  every authored card, since no single card has ever carried both. But
+  `Combat._meld_cards()` sums `sac_ally_grip` and ORs `cheapen_pick`
+  independently of each other (combat.gd:346-349), so fusing Catapult into
+  Burn Coal produces one card with both fields set, and `play_card()`
+  (combat.gd:1016-1029) genuinely resolves both: it cheapens the picked
+  `cheapen_card` AND launches the ally via `sac_ally_grip`, one after the
+  other, unconditionally, inside the same `exhaust_pick` block. The `elif`
+  meant the live card face only ever printed "Burn a card: ally climbs 2." —
+  the cheapen clause, and the second card the player is actively prompted by
+  `combat_3d.gd`'s own two-step picker to choose, was invisible on the card
+  that was doing it. This is the same "two copies of one truth" shape as the
+  Scry/Light/Discard gaps this exact function already carries fixes for
+  earlier in its own history (all landed the same way: `_meld_cards()` treats
+  fields as independent and additive; `face_text()`'s branching had not caught
+  up) — just one combination those earlier passes didn't reach. Added
+  `sac_ally_grip and cheapen_pick` as its own branch ahead of the two existing
+  ones, printing "Burn a card: ally climbs N, cheapen another by N." without
+  touching either single-effect string, and a new test
+  (`_test_backlog86_face_text_burn_lines_are_mutually_exclusive`, extended)
+  covering the fused case build from a real Catapult+Burn Coal `fx` dict shape.
+  No screen needed — `face_text()` is a pure static function over a plain
+  dict, same as every other duty-2 fix in this file. Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86`
+  turn is duty 3 (verify a mechanic actually works).

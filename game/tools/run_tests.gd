@@ -14775,6 +14775,19 @@ func _test_backlog86_face_text_burn_lines_are_mutually_exclusive() -> void:
 		"fx": {"sac_ally_grip": 2, "exhaust_pick": true}}
 	_expect(CardView.face_text(both, false) == "Burn a card: ally climbs 2.",
 		"a card with both fields set shows only the sac_ally_grip line, never both Burn sentences")
+	# backlog #86 duty 2 — the case above (sac_ally_grip + exhaust_pick, no
+	# cheapen_pick) is every authored card, but Combat._meld_cards() sums
+	# sac_ally_grip and ORs cheapen_pick independently, so melding Catapult
+	# into Burn Coal produces one fused card carrying all three fields.
+	# combat.gd:1021-1029 resolves both the cheapen branch AND the
+	# sac_ally_grip branch for such a card (mechanically it really does both),
+	# so the face must show both -- the old if/elif here showed only the
+	# ally-climb line and hid the cheapen half of the fused card's real effect.
+	var melded_sac_and_cheapen := {"preview": {"damage": 0}, "preview_miss": {}, "base": {}, "keywords": [],
+		"fx": {"sac_ally_grip": 2, "exhaust_pick": true, "cheapen_pick": true, "cheapen_amount": 1}}
+	_expect(CardView.face_text(melded_sac_and_cheapen, false) ==
+		"Burn a card: ally climbs 2, cheapen another by 1.",
+		"a fused Catapult+Burn Coal meld card shows both the ally-climb and the cheapen clause, not just one")
 
 
 func _test_backlog86_face_text_falls_back_to_authored_text_with_no_preview() -> void:

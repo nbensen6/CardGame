@@ -1086,7 +1086,18 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 	# fx field set, `out` stayed empty and it fell back to authored text.
 	if int(fx.get("ally_energy", 0)) > 0:
 		out.append("Ally gains %d %s." % [int(fx["ally_energy"]), _kw("Energy", "energy", kw, rich)])
-	if int(fx.get("sac_ally_grip", 0)) > 0:
+	if int(fx.get("sac_ally_grip", 0)) > 0 and bool(fx.get("cheapen_pick", false)):
+		# backlog #86 duty 2 — _meld_cards() sums sac_ally_grip and ORs
+		# cheapen_pick independently, so fusing Catapult (sac_ally_grip) with
+		# Burn Coal (cheapen_pick) produces one card whose exhaust_pick block
+		# genuinely does both (combat.gd:1021-1029 runs the cheapen branch and
+		# the sac_ally_grip branch unconditionally, one after the other). This
+		# was an if/elif that only ever showed the ally-climb line, so the
+		# fused card's cheapen half — the one the player is actively prompted
+		# to pick a second card for — was invisible on its own face.
+		out.append("%s a card: ally climbs %d, cheapen another by %d." % [_kw("Burn", "burn", kw, rich),
+			int(fx["sac_ally_grip"]), int(fx.get("cheapen_amount", 1))])
+	elif int(fx.get("sac_ally_grip", 0)) > 0:
 		out.append("%s a card: ally climbs %d." % [_kw("Burn", "burn", kw, rich),
 			int(fx["sac_ally_grip"])])
 	elif bool(fx.get("exhaust_pick", false)):
