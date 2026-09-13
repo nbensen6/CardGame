@@ -1456,6 +1456,15 @@ func _resolve_prepared(pi: int) -> void:
 				ps.foothold = boss.weak_point_height
 				_log("%s's jetpack fires — rocketed to the weak point!" % ps.combatant.name)
 				_lift_roped_ally(pi, foothold_before_jetpack)  # #86 duty 2 — the jetpack ropes the ally too
+			else:
+				# backlog #86 duty 2: every other no-op resolution in this file logs why
+				# nothing happened (a hold out of reach, a meld with one card, a grapple
+				# with no ally in range...) — this was the one silent exception. A hunter
+				# who primes the jetpack and then climbs past the sigil some other way
+				# before it fires (an ally's grapple, a climb potion, a second climbing
+				# card) had it clear with no explanation at all: nothing in the log said
+				# the prime was even spent, let alone why it did nothing.
+				_log("%s's jetpack fizzles — already at the weak point." % ps.combatant.name)
 
 func _all_ended() -> bool:
 	for ps in players:

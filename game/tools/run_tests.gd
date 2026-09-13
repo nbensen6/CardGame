@@ -304,6 +304,7 @@ func _init() -> void:
 	# Goblin Engineer cards
 	_test_jetpack_prepares_climb()
 	_test_jetpack_never_lowers_a_higher_foothold()
+	_test_jetpack_fizzle_logs_why_nothing_happened()
 	_test_grappling_arm_pulls_ally()
 	_test_build_mech_scales()
 	_test_burn_coal_exhaust_and_cheapen()
@@ -5744,6 +5745,27 @@ func _test_jetpack_never_lowers_a_higher_foothold() -> void:
 	combat.end_turn(1)  # round turns over -> jetpack fires at next turn's start
 	_expect(combat.players[0].foothold == 10,
 		"Goblin Jetpack only raises foothold to the weak point, never knocks a higher climb back down")
+
+
+## backlog #86 duty 2: _resolve_prepared's jetpack branch cleared `prepared`
+## and returned silently whenever the hunter had already reached (or passed)
+## the sigil some other way before it fired — every OTHER no-op resolution in
+## combat.gd (no hold in reach, a one-card meld, a grapple with no ally in
+## range...) logs why nothing happened; this was the one silent exception.
+func _test_jetpack_fizzle_logs_why_nothing_happened() -> void:
+	var boss := Boss.new("Jet", 500)
+	boss.moves = [{"type": "block", "value": 0}]  # benign enemy turn
+	boss.weak_point_height = 4
+	var combat := _new_combat([_deck_of(_jetpack, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.play_card(0, _first_playable(combat, 0))  # prime the jetpack (not immediate)
+	combat.players[0].foothold = 10  # already climbed well past the sigil via ordinary cards
+	combat.end_turn(0)
+	combat.end_turn(1)  # round turns over -> the primed jetpack resolves and fizzles
+	# log[-1] is _begin_round's own "-- Round N --" line, logged right after
+	# _resolve_prepared for every player; the fizzle line lands just before it.
+	var last: String = combat.log[-2]
+	_expect(last.contains("jetpack") and last.contains("fizzle"),
+		"a jetpack that fizzles because the hunter is already past the sigil says so in the log, same as every other no-op resolution")
 
 
 func _test_grappling_arm_pulls_ally() -> void:

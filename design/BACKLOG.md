@@ -2782,6 +2782,30 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-13, #86 duty 2: the Goblin Jetpack fizzled with zero log line when
+  it fired too late to matter.** Last commit (`404c983`) was duty 3, so this
+  turn is duty 2. Spent this run's research budget on an Explore agent
+  reading `combat.gd`, `game_host.gd` and `run_map.gd` end to end for a first-
+  pass hole or a two-copies-of-one-truth split; nearly everything it traced
+  (an adds-vs-limiter gap, a shift-sigil buck landing on a ledge at/above the
+  new sigil, a reward-card dict missing `fx`) turned out to be either already
+  covered by an existing test or correct-as-designed — this codebase has been
+  through enough duty-2/3 passes that the obvious game-logic bugs are mostly
+  gone. The one real, live gap: `_resolve_prepared()`'s jetpack branch
+  (`combat.gd:1452-1458`) unconditionally clears `ps.prepared` but only logs
+  and climbs `if boss.weak_point_height > ps.foothold` — every OTHER no-op
+  resolution in this file (no hold in reach, a one-card meld, a grapple with
+  no ally in range) logs why nothing happened; this was the one silent
+  exception. Reachable in an ordinary co-op turn: prime the jetpack, then
+  have anything else raise that hunter's foothold to/past the sigil before
+  next round starts (an ally's grapple, a climb potion, a second climbing
+  card) and the prime vanishes with no explanation at all. Added the `else`
+  log line and `_test_jetpack_fizzle_logs_why_nothing_happened` (asserts on
+  `combat.log`, using the existing `_test_jetpack_never_lowers_a_higher_foothold`
+  setup). One surprise: my first version of the test checked `log[-1]` and
+  failed, because `_begin_round()` appends its own "— Round N —" line right
+  after `_resolve_prepared` runs for every player — the fizzle line is
+  `log[-2]`, not the last line. `ALL TESTS PASSED` after the fix.
 - **2026-09-13, #86 duty 3: `RunMap._link()`'s own doc comment ("every node
   gets 1-2 forward edges") was never checked — only reachability was.**
   Last commit (`2fec17e`) was duty 2, so this turn is duty 3. Hand-traced
