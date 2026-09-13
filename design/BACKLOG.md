@@ -2782,6 +2782,45 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-13, #86 duty 3: a melded power card's own captured name/text had
+  never been proven to reach an ally over the real network snapshot.** Last
+  commit (`1b8ed43`) was duty 2, so this turn is duty 3. Dispatched a
+  research agent first, giving it the long list of territory already well
+  covered (climb routing, energy_handoff, multistrike sigil, dev console
+  beast/adds sync, wound bleed timing, reward-roll tag cap, boss_hits
+  mitigation, the reward two-stage sequence, the map's guaranteed
+  shop/key-source rules, scry's co-op broadcast, taunt redirects, the
+  campfire floor check, TIMING_GOOD's non-damage fields) so it wouldn't
+  retread known ground. It found that `_powers_view()` (game_host.gd:508)
+  falls back to `Content.make_card(String(id))` when a power entry has no
+  captured `name` — a fallback that exists specifically because a melded
+  power's id ("meld_a_b") is synthetic and isn't in cards.json, per
+  combat.gd's own comment on why `entry["name"]`/`entry["text"]` are
+  captured from the played card rather than re-derived. Two existing tests
+  sit right next to this and never actually combine: one drives
+  `_powers_view` through a real id ("iron_husk") so it only proves the
+  id-lookup fallback; the other proves a melded power's name/effect survive
+  on a bare `Combat` but never touches `GameHost` at all. So the one
+  combination that matters to a real co-op player — a fused power's name
+  reaching the ALLY's client — had zero coverage; a future cleanup that
+  dropped the captured fields as an apparently-redundant copy of
+  `Content.make_card(id)` would have passed both existing tests while
+  showing every ally a blank-named, blank-text power on their shared board.
+  Wrote `_test_backlog86_melded_powers_captured_name_reaches_the_ally_over_the_network`
+  (built on the existing `_make_session`/`_test_meld_carries_power_effect`
+  patterns: meld Iron Husk + Cleave, play the fused power, broadcast state,
+  check both `c0.shared` and `c1.shared`). First draft asserted the wrong
+  fused name (assumed "Meld + Iron Husk"; `_meld_cards(sac_card,
+  cheapen_card)` actually names it "Iron Husk + Cleave" — the Meld card
+  itself never appears in the fused name), caught immediately by the test
+  failing against working code. Fixed the assertion, then proved the test
+  actually guards something: temporarily deleted the two `entry["name"]`/
+  `entry["text"]` capture lines in `combat.gd`, reran, watched exactly this
+  test's two assertions FAIL and nothing else, then restored the file
+  (confirmed clean via `git diff`). Fresh `--import`, headless, Godot
+  4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2
+  (find an error and resolve it).
+
 - **2026-09-13, #86 duty 2: the dev console's `beast <id>` swap left a
   beast's own "adds" behind when it changed the boss.** Last commit
   (`d99bb0a`) was duty 3, so this turn is duty 2. `Combat._init()` builds

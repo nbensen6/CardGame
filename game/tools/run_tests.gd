@@ -441,6 +441,7 @@ func _init() -> void:
 	_test_power_upgrade_value_is_not_lost_by_the_recurring_payout()
 	_test_powers_survive_save_and_load()
 	_test_powers_reach_the_snapshot_and_are_visible_to_the_ally()
+	_test_backlog86_melded_powers_captured_name_reaches_the_ally_over_the_network()
 	# the debuff axis (backlog #36): Frail, Artifact, Thorns
 	_test_frail_reduces_block_gained()
 	_test_frail_card_cuts_the_boss_own_block_move()
@@ -8997,6 +8998,42 @@ func _test_powers_reach_the_snapshot_and_are_visible_to_the_ally() -> void:
 		"an active power reaches its owner's public snapshot with its name and stack count")
 	_expect(theirs.size() == 1 and String(theirs[0]["name"]) == "Iron Husk" and int(theirs[0]["stacks"]) == 2,
 		"the ally sees a teammate's active power too — it's board state, not a secret")
+
+
+## #86 duty 3: the test right above only ever drives _powers_view() with a
+## REAL card id ("iron_husk"), so it only proves the id-lookup fallback
+## (`Content.make_card(String(id))`, game_host.gd:521) works. `_test_meld_
+## carries_power_effect` separately proves a melded power's captured name/
+## effect survive on a bare Combat — but never routes through GameHost at
+## all. Neither test drives the one combination that actually matters for a
+## real player: a MELDED power card's id is synthetic ("meld_a_b", not in
+## cards.json), and combat.gd's play_card() only avoids a blank name/text on
+## the network by capturing entry["name"]/["text"] from the played card
+## itself rather than re-deriving them by id (see its own comment). A future
+## edit that dropped those captured fields as an apparently-redundant copy of
+## Content.make_card(id) — exactly the "two copies of one truth" shape duty 2
+## hunts for — would pass both existing tests while showing every ally a
+## blank-named, blank-text power on their shared board.
+func _test_backlog86_melded_powers_captured_name_reaches_the_ally_over_the_network() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var c1: GameClient = s["c1"]
+	var ps: PlayerState = host._run.combat.players[0]
+	ps.hand = [_meld_card(), Content.make_card("iron_husk"), _cleave()]
+	ps.energy = 9
+	host._run.combat.play_card(0, 0, true, 1, 2)  # fuse Iron Husk (sac) + Cleave (target) via Meld
+	host._run.combat.play_card(0, 0, true)  # play the fused power card — synthetic "meld_..." id
+	host._broadcast_state()
+	# _meld_cards(sac_card, cheapen_card) names the fused card "sac + target",
+	# not "Meld + sac" — the Meld card itself never appears in the fused name.
+	var fused_name := "%s + %s" % [Content.make_card("iron_husk").name, _cleave().name]
+	var mine: Array = c0.shared["players"][0]["powers"]
+	var theirs: Array = c1.shared["players"][0]["powers"]
+	_expect(mine.size() == 1 and String(mine[0]["name"]) == fused_name and not String(mine[0]["text"]).is_empty(),
+		"a melded power's own captured name/text reach the owner's public snapshot, not the blank Content.make_card('meld_...') fallback")
+	_expect(theirs.size() == 1 and String(theirs[0]["name"]) == fused_name and not String(theirs[0]["text"]).is_empty(),
+		"the ally sees the melded power's real name and text too, not a blank id-lookup miss")
 
 
 # --- The debuff axis (backlog #36): Frail, Artifact, Thorns ---------------
