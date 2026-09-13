@@ -207,6 +207,8 @@ func _init() -> void:
 	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
 	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
+	_test_backlog86_reward_weight_caps_stacked_tag_lean_at_the_rarity_gap()
+	_test_backlog86_hopscotchs_three_shared_tags_stay_within_the_rarity_gap()
 	# potions (backlog #26)
 	_test_potions_all_load()
 	# #86 duty 3: potions.json's own _comment claims "'pool' lists what fights
@@ -4970,6 +4972,62 @@ func _test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rari
 			% [rare_foil_pct, common_foil_pct, rare_borderless_pct, common_borderless_pct])
 	_expect(rare_both > 0,
 		"foil and borderless roll independently -- a rare comes out both at once at least once in %d trials" % n)
+
+
+## Backlog #86 duty 3: TAG_LEAN_BONUS's own doc comment promises the tag lean
+## "never" opens a gap wider than RARITY_WEIGHT's common-rare gap -- proving
+## that meant testing a candidate with more than one shared tag, which no
+## existing #72 test does (both use single-tag pools). Tests Run.reward_weight()
+## directly -- the pure function backlog #86 lifted out of _weighted_index for
+## exactly this -- so the cap is checked deterministically, no RNG sampling.
+func _test_backlog86_reward_weight_caps_stacked_tag_lean_at_the_rarity_gap() -> void:
+	var common: int = Run.RARITY_WEIGHT["common"]
+	var rare: int = Run.RARITY_WEIGHT["rare"]
+	var lean: int = Run.TAG_LEAN_BONUS
+	var gap: int = common - rare
+
+	_expect(Run.reward_weight("common", ["climb"], {}) == common,
+		"an empty deck_tag_counts leaves the rarity-only weight untouched")
+	_expect(Run.reward_weight("common", ["climb"], {"climb": 1}) == common + lean,
+		"one shared tag adds exactly one TAG_LEAN_BONUS")
+	_expect(Run.reward_weight("common", ["climb", "rhythm"], {"climb": 1, "rhythm": 1}) == common + lean * 2,
+		"two shared tags still stack below the common-rare gap (%d < %d)" % [lean * 2, gap])
+	_expect(Run.reward_weight("common", ["climb"], {"rhythm": 1}) == common,
+		"a tag the candidate doesn't carry adds nothing even with other tags in the deck")
+
+	var three_tags: Array = ["climb", "rhythm", "ally"]
+	var three_tag_deck: Dictionary = {"climb": 1, "rhythm": 1, "ally": 1}
+	var naive_sum := common + lean * three_tags.size()
+	_expect(naive_sum > common + gap,
+		"sanity check on the test itself: three uncapped tag matches (%d) must exceed the promised ceiling (%d) or this proves nothing"
+			% [naive_sum, common + gap])
+	_expect(Run.reward_weight("common", three_tags, three_tag_deck) == common + gap,
+		"three shared tags cap at the common-rare gap (%d), not the naive per-tag sum (%d)"
+			% [common + gap, naive_sum])
+
+
+## Backlog #86 duty 3: the same cap proven against a real, shipped card rather
+## than synthetic tags. Hopscotch (game/data/cards.json) sets grip,
+## grip_per_rhythm, ally_grip and ally_grip_per_rhythm, which derives all three
+## of climb/rhythm/ally at once (Card.archetype_tags()) -- the exact shape the
+## cap above exists for. A hunter with any climb card, any rhythm card and any
+## ally card already in the deck would, pre-fix, see Hopscotch weighted past
+## the rarity gap the game's own comment says can never happen.
+func _test_backlog86_hopscotchs_three_shared_tags_stay_within_the_rarity_gap() -> void:
+	var tags := Content.card_tags("hopscotch")
+	_expect(tags.has("climb") and tags.has("rhythm") and tags.has("ally") and tags.size() == 3,
+		"hopscotch derives climb, rhythm and ally, and nothing else, from its fields (got %s)" % [tags])
+
+	var deck_tag_counts: Dictionary = {"climb": 1, "rhythm": 1, "ally": 1}
+	var rarity := Content.card_rarity("hopscotch")
+	var capped := Run.RARITY_WEIGHT["uncommon"] + (Run.RARITY_WEIGHT["common"] - Run.RARITY_WEIGHT["rare"])
+	var naive := Run.RARITY_WEIGHT["uncommon"] + Run.TAG_LEAN_BONUS * 3
+	_expect(rarity == "uncommon" and naive > capped,
+		"sanity check: hopscotch is uncommon and its naive triple-tag weight (%d) must exceed the capped one (%d)"
+			% [naive, capped])
+	_expect(Run.reward_weight(rarity, tags, deck_tag_counts) == capped,
+		"a deck already building climb, rhythm and ally leans on hopscotch by the rarity gap (%d), not the uncapped sum (%d)"
+			% [capped, naive])
 
 
 # --- potions (backlog #26): held per-hunter, same data shape as relics -----

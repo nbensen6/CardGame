@@ -55,8 +55,11 @@ const RARITY_WEIGHT := {"common": 55, "uncommon": 35, "rare": 10}
 ## it shares with the hunter's current deck — a GENTLE lean toward what they're
 ## already building (backlog #72), layered on TOP of RARITY_WEIGHT above rather
 ## than replacing it: one tag match is worth exactly one step of rarity (the
-## common-uncommon gap), never the larger common-rare gap, so it nudges which
-## card of a given rarity shows up more than it decides whether a rare does.
+## common-uncommon gap). Stacks per extra shared tag, but reward_weight() below
+## caps the total at RARITY_WEIGHT common-rare (the larger gap) so a card with
+## several tags in common still nudges which card of a given rarity shows up
+## more than it decides whether a rare does (backlog #86 duty 3 — that cap was
+## promised here but never actually enforced until a 3-tag card exposed it).
 const TAG_LEAN_BONUS := 20
 const HEAL_BETWEEN := 4  # hunters recover a little after each beast falls
 const PLAYER_HP := 42
@@ -1116,17 +1119,37 @@ func _roll_choices(pool: Array, deck_tag_counts: Dictionary = {}) -> Array:
 	return out
 
 
+## A candidate's reward-roll weight: RARITY_WEIGHT for its rarity, plus the tag
+## lean (backlog #72) for every archetype tag it shares with a non-empty
+## `deck_tag_counts` — a card whose tag isn't in the deck at all, or an empty
+## dict (relics; no deck in scope), leaves the rarity-only weight untouched.
+##
+## Backlog #86 duty 3: the tag lean's own doc comment (TAG_LEAN_BONUS above)
+## promises it never opens a gap wider than rarity itself does — "never the
+## larger common-rare gap" — but a card can share several tags at once
+## (Hopscotch: climb, rhythm and ally all at once), and summing TAG_LEAN_BONUS
+## once per tag with no ceiling broke that promise the first time a candidate
+## had three. Capped at RARITY_WEIGHT common-rare so the lean can keep
+## stacking per tag (still the deliberate #72 design) without ever letting the
+## deck's build lean decide a rarity-tier question the rarity weights alone
+## are supposed to settle. Lifted out of _weighted_index as a pure function
+## (rarity/tags in, no Content/RNG lookups) so this cap is provable headless.
+static func reward_weight(rarity: String, tags: Array, deck_tag_counts: Dictionary) -> int:
+	var w: int = int(RARITY_WEIGHT.get(rarity, RARITY_WEIGHT["common"]))
+	if deck_tag_counts.is_empty():
+		return w
+	var tag_bonus := 0
+	for t in tags:
+		if int(deck_tag_counts.get(t, 0)) > 0:
+			tag_bonus += TAG_LEAN_BONUS
+	return w + mini(tag_bonus, RARITY_WEIGHT["common"] - RARITY_WEIGHT["rare"])
+
 ## Pick an index from `ids`, weighted by rarity, so commons carry the drafting and
 ## a rare feels like a find rather than another option. Without this, a 40-card
 ## pool offers its best payoff as often as its filler.
 ##
 ## With the current catalog (61 common / 61 uncommon / 20 rare) these weights land
 ## at roughly 59% / 37% / 4% of cards actually offered.
-##
-## `deck_tag_counts` (backlog #72) adds TAG_LEAN_BONUS per archetype tag a
-## candidate shares with a non-empty count — a card whose tag isn't in the deck
-## at all, or an empty dict (relics; no deck in scope), leaves the rarity-only
-## weight untouched.
 func _weighted_index(ids: Array, deck_tag_counts: Dictionary = {}) -> int:
 	if ids.size() <= 1:
 		return 0
@@ -1135,11 +1158,7 @@ func _weighted_index(ids: Array, deck_tag_counts: Dictionary = {}) -> int:
 	var weights: Array = []
 	var total := 0
 	for id in ids:
-		var w: int = int(RARITY_WEIGHT.get(Content.card_rarity(String(id)), RARITY_WEIGHT["common"]))
-		if not deck_tag_counts.is_empty():
-			for t in Content.card_tags(String(id)):
-				if int(deck_tag_counts.get(t, 0)) > 0:
-					w += TAG_LEAN_BONUS
+		var w := reward_weight(Content.card_rarity(String(id)), Content.card_tags(String(id)), deck_tag_counts)
 		weights.append(w)
 		total += w
 	if total <= 0:

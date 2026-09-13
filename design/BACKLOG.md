@@ -2782,6 +2782,38 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-13, #86 duty 3: the reward-roll tag lean's own doc comment
+  promised it would "never" open a gap wider than `RARITY_WEIGHT`'s
+  common-rare gap, and nothing had ever proven it.** Last commit
+  (`70af83b`) was duty 2, so this turn is duty 3. Dispatched a research
+  agent first to find fresh territory rather than rehash the well-covered
+  climb-route history; it found `Run._weighted_index()` adds
+  `TAG_LEAN_BONUS` (20) once per archetype tag a candidate shares with the
+  deck, with no ceiling — fine for the one- and two-tag cases both existing
+  #72 tests exercise (20 and 40, still under the 45-point common-rare gap),
+  but a real shipped card (Hopscotch: `grip`, `grip_per_rhythm`,
+  `ally_grip`, `ally_grip_per_rhythm`) derives three tags at once
+  (climb/rhythm/ally), which sums to 60 — past the ceiling the comment
+  states as an absolute. Confirmed via `git blame`/the original #72 log
+  entry that per-tag stacking was the deliberate design; only the missing
+  cap was the bug.
+
+  Lifted the per-candidate weight math out of `_weighted_index()` into a
+  new pure static `Run.reward_weight(rarity, tags, deck_tag_counts)` (no
+  `Content`/RNG calls, callable directly from tests) and capped the summed
+  tag bonus at `RARITY_WEIGHT.common - RARITY_WEIGHT.rare`, so stacking
+  still rewards a build-aligned card without ever out-weighing what rarity
+  alone is supposed to decide. Wrote two regression tests first
+  (`_test_backlog86_reward_weight_caps_stacked_tag_lean_at_the_rarity_gap`,
+  synthetic tags; `_test_backlog86_hopscotchs_three_shared_tags_stay_within_the_rarity_gap`,
+  the real card), watched both fail against the pre-fix uncapped code
+  (verified with a throwaway `sed` swap back to `w + tag_bonus`, reran, saw
+  exactly those two tests FAIL and nothing else), then restored the capped
+  version and reran clean. No other caller of the old inline weight logic
+  existed to update. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2 (find an
+  error and resolve it).
+
 - **2026-09-12 (newest), #86 duty 2: `_boss_hits()` fired `MOMENT_DAMAGE_TAKEN`
   with the raw pre-mitigation swing, not what actually reached the hunter's
   hp.** Last commit (`8f0096a`) was duty 3, so this run was duty 2. Same
