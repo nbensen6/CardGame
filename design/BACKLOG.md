@@ -2782,7 +2782,27 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-13 — #86 duty 2: deselecting a character in the co-op lobby could
+- **2026-09-13 — #86 duty 3: cards.json never had the reverse reachability
+  check relics.json (#48) and potions.json (duty 3) both already have.**
+  Last commit (`af8b3a0`) was duty 2, so this turn opened on duty 3. The two
+  existing card-content tests (`_test_every_referenced_card_id_resolves`,
+  `_test_content_integrity_graph`) only prove the FORWARD direction — every
+  id a deck/pool/create/topdeck/shuffle_in/tutor field names resolves to
+  real content — never the reverse: that every id actually declared under
+  `"cards"` in `cards.json` is reachable from anywhere. Spawned an Explore
+  agent to hunt `/core` for an unproven rule; it flagged this gap and I
+  verified it directly (a Python scan of the current data confirmed zero
+  orphans today, so this is a real, currently-true invariant with no
+  regression test). Added `_test_backlog86_every_card_is_reachable_from_
+  somewhere()` to `run_tests.gd`: builds the reachable set from the global
+  starter_deck/reward_pool, every character's own starter_deck/reward_pool,
+  every card's create/topdeck/shuffle_in/tutor fields, and status cards
+  (which are never pooled), then asserts every id in `Content.all_card_ids()`
+  is in it. Proved the test isn't vacuous by injecting a throwaway orphan
+  card into `cards.json`, confirming the test failed with the injected id
+  named in the output, then reverting before committing. All 187 cards in
+  today's data are reachable; the test guards against that silently
+  regressing the way potions and relics both nearly did.
   start the run anyway, with that hunter's deck permanently empty.**
   Last commit (`5ee2344`) was duty 3, so this turn opened on duty 2. Spawned
   an Explore agent to hunt `/core` and the host/client session layer for the

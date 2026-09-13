@@ -296,6 +296,19 @@ func _init() -> void:
 	_test_graded_timing_default_quality_is_perfect()
 	_test_every_referenced_card_id_resolves()
 	_test_content_integrity_graph()
+	# #86 duty 3: the two tests above only prove the FORWARD direction — every
+	# id a deck/pool/create/topdeck/shuffle_in/tutor field NAMES resolves to
+	# real content. Neither proves the REVERSE: that every id actually
+	# declared under "cards" in cards.json is named by something. relics.json
+	# got that reverse check at backlog #48
+	# (_test_backlog48_relic_pool_and_boss_relic_pool_partition_by_tier) and
+	# potions.json got its own sibling above
+	# (_test_backlog86_every_potion_is_reachable_from_the_pool); cards.json,
+	# the largest and most central content file, never did. A card added to
+	# cards.json and left out of every starter deck, reward pool, and other
+	# card's create/topdeck/shuffle_in/tutor field would pass every existing
+	# test and sit permanently undraftable.
+	_test_backlog86_every_card_is_reachable_from_somewhere()
 	_test_exhaust_scaling_grows_with_the_burn_pile()
 	_test_detonator_does_not_count_its_own_sacrifice()
 	_test_block_per_exhausted_scales_with_the_burn_pile()
@@ -7025,6 +7038,47 @@ func _test_content_integrity_graph() -> void:
 			bad.append("%s potion: %s" % [bid, bpid])
 	_expect(bad.is_empty(),
 		"create/prepare/topdeck/shuffle_in/tutor fields, beast pool ids, curse_card and potion refs all resolve [%s]" % ", ".join(bad))
+
+
+## The reverse of _test_content_integrity_graph above: every id declared under
+## "cards" in cards.json must be reachable in real play, through the global
+## starter_deck/reward_pool, a character's own starter_deck/reward_pool, some
+## other card's create/topdeck/shuffle_in/tutor field, or being a `status`
+## (inflicted) card, which never sits in a pool at all. Same shape as
+## _test_backlog86_every_potion_is_reachable_from_the_pool above, just with
+## more sources feeding "reachable" because cards, unlike potions, are handed
+## out from several different places at once.
+func _test_backlog86_every_card_is_reachable_from_somewhere() -> void:
+	var reachable: Dictionary = {}
+	for card in Content.build_starter_deck():
+		reachable[card.id] = true
+	for id in Content.reward_pool():
+		reachable[String(id)] = true
+	for c in Content.list_characters():
+		var cid := String(c["id"])
+		for card in Content.character_deck(cid):
+			reachable[card.id] = true
+		for id in Content.reward_pool(cid):
+			reachable[String(id)] = true
+	for id in Content.all_card_ids():
+		var card2 := Content.make_card(String(id))
+		if card2.status:
+			reachable[String(id)] = true
+		if card2.create != "":
+			reachable[card2.create] = true
+		if card2.topdeck != "":
+			reachable[card2.topdeck] = true
+		if card2.shuffle_in != "":
+			reachable[card2.shuffle_in] = true
+		if card2.tutor != "":
+			reachable[card2.tutor] = true
+	var orphaned: Array = []
+	for id in Content.all_card_ids():
+		if not reachable.has(String(id)):
+			orphaned.append(id)
+	_expect(orphaned.is_empty(),
+		"every card in cards.json is reachable from a starter deck, a reward pool, another card's create/topdeck/shuffle_in/tutor, or is a status card (orphaned: %s)"
+			% [orphaned])
 
 
 func _test_sunlight_blade_scales_with_exposed() -> void:
