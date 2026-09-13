@@ -2782,6 +2782,25 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-13, #86 duty 3: a multistrike card's weak-point damage had never
+  been proven to accumulate across its own hits before the buck-off check
+  reads it.** Last commit (`4db38a3`) was duty 2, so this turn is duty 3.
+  `_damage_boss()`'s sigil branch does `players[pi].weak_point_damage += total`
+  once per call, and `play_card()`'s multi-hit loop calls `_damage_boss()`
+  once per hit of a `hits > 1` card (Flurry, Double Tap, Snap Volley, Sap,
+  Matched Pace, and five others) — so a 2-hit card at the sigil should sum
+  both hits into the same buck-off counter `_check_weakpoint_buck()` reads
+  once after the whole play resolves, not just its first or last hit. Every
+  existing weak-point-threshold/buck test only ever drove a single-hit Slash,
+  so a bug that recorded only one hit's worth toward the counter would have
+  passed the whole suite. Wrote
+  `_test_backlog86_multistrike_sigil_damage_accumulates_across_hits`: a
+  threshold of 15 that one Flurry hit (4 + SIGIL_BONUS 5 = 9) can't clear
+  alone, but two hits (18) do — proving the buck actually fires on the
+  summed total. It already worked (no bug found, code was correct); this
+  just closes a real gap in coverage per duty 3's own mandate. `run_tests.gd`
+  is clean: `ALL TESTS PASSED`.
+
 - **2026-09-13, #86 duty 2: a beast's own Wound bleed could flip which move
   pattern its ALREADY-TELEGRAPHED intent resolved from.** Last commit
   (`ce9844d`) was duty 3, so this turn is duty 2. `_enemy_turn()` had already

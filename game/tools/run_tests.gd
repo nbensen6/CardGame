@@ -414,6 +414,7 @@ func _init() -> void:
 	_test_wound_bleeds_the_titan()
 	_test_flurry_multi_hit()
 	_test_multistrike_thorns_bites_back_once_per_hit()
+	_test_backlog86_multistrike_sigil_damage_accumulates_across_hits()
 	_test_leech_drains_and_heals()
 	_test_leech_heals_nothing_when_fully_blocked()
 	_test_leech_heals_only_what_gets_through_block()
@@ -8457,6 +8458,27 @@ func _test_multistrike_thorns_bites_back_once_per_hit() -> void:
 	_expect(add.hp == 22, "Flurry's two hits still land on the add (30 - 4 - 4)")
 	_expect(c2.players[0].combatant.hp == hp1 - 4,
 		"a Thorned add bites back once per hit too (2+2=4), not once per card play")
+
+
+## backlog #86 duty 3: _damage_boss()'s sigil branch adds `players[pi].weak_point_damage
+## += total` once PER CALL, and play_card()'s multi-hit loop calls _damage_boss() once
+## per hit (the same loop _test_multistrike_thorns_bites_back_once_per_hit above proved
+## for Thorns) — so a multistrike card at the sigil should sum every hit's damage into
+## the buck-off counter before _check_weakpoint_buck() reads it, not just its last hit.
+## Never proven: every existing weak_point_threshold/buck test (_test_weakpoint_threshold_bucks,
+## _test_backlog86_sigil_bonus_relic_adds_to_a_reached_hit) drives a single-hit Slash.
+## Flurry (4 damage x2, SIGIL_BONUS 5) lands 9 per hit — under a threshold of 15 on its
+## own, so a bug that only counted the LAST hit (or the FIRST) toward the buck would
+## leave the hunter un-bucked here even though the two hits together clear it.
+func _test_backlog86_multistrike_sigil_damage_accumulates_across_hits() -> void:
+	var boss := _climb_boss(6)
+	boss.weak_point_threshold = 15  # one Flurry hit (4 + SIGIL_BONUS 5 = 9) alone can't clear this
+	var combat := _new_combat([_deck_of(_flurry, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 6  # at the sigil
+	combat.play_card(0, _first_playable(combat, 0))  # Flurry: two 9-damage hits, 18 total
+	_expect(ps.foothold == 0 and ps.weak_point_damage == 0,
+		"a multistrike card's weak-point damage sums across every hit before the buck check fires, not just one hit's worth")
 
 
 func _test_leech_drains_and_heals() -> void:
