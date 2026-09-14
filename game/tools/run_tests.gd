@@ -361,6 +361,7 @@ func _init() -> void:
 	_test_run_is_four_titans()
 	_test_run_relic_reward_and_full_clear()
 	_test_elite_pays_a_card_then_a_relic()
+	_test_backlog86_queued_relic_survives_a_save_reload_mid_card_reward()
 	_test_backlog48_relic_pool_and_boss_relic_pool_partition_by_tier()
 	_test_backlog48_titan_relic_reward_draws_only_from_the_boss_pool()
 	_test_backlog48_elite_relic_reward_never_offers_a_boss_relic()
@@ -7514,6 +7515,36 @@ func _test_elite_pays_a_card_then_a_relic() -> void:
 		and run.team_relics.size() == relics_before + run.player_count()
 		and run.phase == Run.Phase.MAP,
 		"an elite pays a card and THEN a relic before the route reopens")
+
+
+## Backlog #86 duty 3: an elite/Titan owes a card THEN a relic (_queued_reward,
+## run.gd's "A node can owe TWO rewards" field), and it is serialized in
+## to_dict()/from_dict() — but no test ever round-tripped it while it was
+## actually non-empty. _test_elite_pays_a_card_then_a_relic drives the whole
+## flow live, never touching save/load; the one save/reload reward test
+## (_test_backlog86_a_reward_after_a_real_fight_survives_a_save_reload) steps
+## onto row 0, which is always a plain fight, so _queued_reward is "" the
+## whole time there. If a save landed mid-card-stage on an elite/Titan node
+## and _queued_reward did not survive, reloading would release the run
+## straight to the map and the owed relic would simply vanish.
+func _test_backlog86_queued_relic_survives_a_save_reload_mid_card_reward() -> void:
+	var run := _map_run()
+	_step_into_combat(run)
+	run.node_type = "elite"
+	var relics_before: int = run.team_relics.size()
+	_force_win(run)
+	_expect(run.phase == Run.Phase.REWARD and run.reward_kind == "card",
+		"setup sanity: an elite win parks the run on the CARD stage first")
+
+	var loaded := Run.from_dict(run.to_dict())  # save/reload while the relic is still only QUEUED, not yet open
+	_pick_both(loaded)  # take the card on the reloaded run
+	_expect(loaded.phase == Run.Phase.REWARD and loaded.reward_kind == "relic",
+		"a save/reload mid-card-stage must not lose the elite's still-queued relic — finishing the card must still open it")
+
+	_pick_both(loaded)  # take the relic
+	_expect(loaded.phase == Run.Phase.MAP
+			and loaded.team_relics.size() == relics_before + loaded.player_count(),
+		"the queued relic that survived a save/reload still pays out and releases the run to the map")
 
 
 ## Backlog #48: relics carry a tier, and relic_pool()/boss_relic_pool() are a

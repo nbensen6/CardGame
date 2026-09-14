@@ -2782,6 +2782,26 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 3: an elite/Titan's queued second reward
+  (`Run._queued_reward`, the relic owed after the card) had never been
+  round-tripped through save/load while actually non-empty.** Last commit
+  (`9ed143d`) was duty 2, so this turn opened on duty 3. Spawned an Explore
+  agent to hunt `/core` for a promise with zero test coverage; it found that
+  `_test_elite_pays_a_card_then_a_relic` drives the two-stage card-then-relic
+  flow entirely live, never touching `to_dict()`/`from_dict()`, while the one
+  save/reload reward test always steps onto row 0 (always a plain fight, so
+  `_queued_reward` stays `""` the whole time there) — so the one case where
+  `_queued_reward` is actually non-empty across a save/reload had never been
+  exercised. Added
+  `_test_backlog86_queued_relic_survives_a_save_reload_mid_card_reward`: win
+  an elite fight, save/reload while still parked on the CARD stage (relic
+  only queued, not yet open), then prove finishing the card on the RELOADED
+  run still opens the relic (not the map) and that taking it still pays out
+  and releases the run normally. Reading the implementation first suggested
+  this was already correct (a plain `String` field with a sane
+  `.get(..., "")` default) — the test confirms that read: it passes as
+  written, closing a real gap rather than a live bug. Full suite green.
+
 - **2026-09-13 — #86 duty 2: `archetype_tags()`'s "block" branch was missing
   `block_per_play` and `block_per_x`, the exact same "timed_grip missing from
   its own OR-list" shape as the earlier "climb" fix in this same rotation.**
