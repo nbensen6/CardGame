@@ -324,6 +324,8 @@ func _init() -> void:
 	_test_jetpack_fizzle_logs_why_nothing_happened()
 	_test_grappling_arm_pulls_ally()
 	_test_build_mech_scales()
+	_test_backlog86_build_grapple_puts_a_real_grapple_in_hand()
+	_test_backlog86_grand_contraption_damages_and_builds_the_same_play()
 	_test_burn_coal_exhaust_and_cheapen()
 	_test_backlog86_burn_coal_cheapen_stacks_across_repeated_plays()
 	_test_catapult_sacrifices_to_launch_ally()
@@ -6023,6 +6025,62 @@ func _test_build_mech_scales() -> void:
 	combat.play_card(0, _first_playable(combat, 0))  # +4 (grows) -> 6 total
 	_expect(b1 == 2 and combat.players[0].combatant.block == 6,
 		"Build Mech's Block grows each time it's played this fight")
+
+
+## backlog #86 duty 3 — `create` (Goblin gadgets: Build Grapple/Bomb/Winch/
+## Turret/Drone, Deploy Bulwark, Grand Contraption) has been checked only for
+## GRAPH integrity: _test_content_integrity_graph proves `card.create` names
+## a real card id, and _test_backlog86_every_card_is_reachable_from_somewhere
+## proves that id is reachable from SOMEWHERE. Neither ever plays the card and
+## looks at the hand afterward, so the one thing seven cards' own text promises
+## — "Build a tool into your hand" — had never actually been proven true. The
+## `_build()` helper below already existed for this (returns Build Grapple,
+## create: "grapple") but nothing in the suite ever called it before this test.
+func _test_backlog86_build_grapple_puts_a_real_grapple_in_hand() -> void:
+	var combat := _new_combat([_deck_of(_build, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var before_size := ps.hand.size()
+	combat.play_card(0, _first_playable(combat, 0))  # Build Grapple: cost 0, create "grapple"
+	var built: Card = null
+	for c in ps.hand:
+		if (c as Card).id == "grapple":
+			built = c
+	_expect(ps.hand.size() == before_size and built != null,
+		"playing Build Grapple removes itself from hand and adds a real Grappling Hook, " +
+		"net hand size unchanged [size=%d built=%s]" % [ps.hand.size(), built])
+	_expect(built != null and built.grip == 1 and built.timed and built.timed_grip == 2,
+		"the built card carries Grappling Hook's own real fields, not an empty stand-in")
+	# The whole point of "into your hand", not the discard pile — it must be
+	# playable THIS SAME TURN, same as any other card drawn or granted mid-turn.
+	var idx := ps.hand.find(built)
+	_expect(idx >= 0 and combat.can_play(0, idx),
+		"a card built by `create` is immediately playable the same turn it's built")
+
+
+## The other half: Grand Contraption is BOTH a real attack (damage,
+## damage_per_exhausted) AND a `create` card in the same play. Both effects
+## must land from one play_card() call — the exact shape (two effects sharing
+## one card) that has bitten this project before when only one branch of a
+## card's own logic actually fired.
+func _test_backlog86_grand_contraption_damages_and_builds_the_same_play() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.exhaust_pile = [_slash(), _slash()]  # 2 already-exhausted cards -> +4*2 = 8 bonus
+	ps.hand = [Content.make_card("grand_contraption")]
+	ps.energy = 3
+	var hp_before := combat.boss.hp
+	var hand_before := ps.hand.size()
+	var ok := combat.play_card(0, 0)
+	var built: Card = null
+	for c in ps.hand:
+		if (c as Card).id == "bomb":
+			built = c
+	_expect(ok and combat.boss.hp == hp_before - (6 + 4 * 2),
+		"Grand Contraption's damage (6 base + 4 per exhausted card) actually lands [hp_before=%d hp=%d]"
+			% [hp_before, combat.boss.hp])
+	_expect(built != null and ps.hand.size() == hand_before,
+		"the SAME play also builds a Bomb into hand (net hand size unchanged: itself " +
+		"leaves, Bomb arrives), not one effect at the expense of the other")
 
 
 func _test_burn_coal_exhaust_and_cheapen() -> void:

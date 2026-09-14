@@ -2782,6 +2782,38 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 3: proved the `create` mechanic (Goblin gadgets —
+  Build Grapple/Bomb/Winch/Turret/Drone, Deploy Bulwark, Grand Contraption)
+  actually builds a card into hand, which nothing had ever tested.** Last
+  commit was duty 2, so this turn opened on duty 3. Went looking for a real
+  rule with no behavioral test by cross-referencing every field on `Card`
+  against `run_tests.gd`'s match count — climb, rhythm, block, ally, poison,
+  ascension tiers, relic effects, potion effects, event/boon effect keys, and
+  every `combat_3d.gd`/`overworld_3d.gd`/`location_3d.gd` static (pure) helper
+  all turned out to already be covered, several exhaustively (`archetype_tags`,
+  `upgraded_copy`, `Card.to_dict`/`from_dict` field parity, `predicted_damage_chain`,
+  the whole climb-routing/hop-arc pair, every ascension tier, every relic and
+  potion effect string). `card.create` was the one real gap: two existing
+  tests (`_test_content_integrity_graph`, `_test_backlog86_every_card_is_reachable_from_somewhere`)
+  only proved the id a `create` field names RESOLVES and is REACHABLE — neither
+  ever called `play_card()` and looked at the resulting hand. A `_build()` Card
+  factory already sat in the test file (returns Build Grapple), unused by any
+  test — a leftover intention nobody finished. Added
+  `_test_backlog86_build_grapple_puts_a_real_grapple_in_hand` (plays the card,
+  confirms a real Grappling Hook — correct `grip`/`timed`/`timed_grip` fields,
+  not an empty stand-in — lands in hand at net-unchanged size, and is
+  immediately playable the same turn) and
+  `_test_backlog86_grand_contraption_damages_and_builds_the_same_play` (proves
+  a card that both deals damage AND builds fires BOTH effects from one
+  `play_card()` call, not one at the expense of the other — the exact
+  "two effects on one card" shape that has broken before). Both passed on the
+  actual game code with no production fix needed this run — the mechanic
+  itself was already correct, only unproven. First draft of the second test
+  asserted hand shrinks by one on a build-and-play; that's wrong (the played
+  card leaves, the built card arrives, net size is unchanged) and failed
+  honestly on the first run — fixed the assertion, not the game. `run_tests.gd`
+  green.
+
 - **2026-09-14 — #86 duty 2: `grip_per_rhythm` was missing from
   `archetype_tags()`'s own "climb" OR-chain.** Last commit was duty 3, so this
   turn opened on duty 2. Spawned an Explore agent to hunt for a real
