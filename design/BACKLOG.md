@@ -2782,6 +2782,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 2: merged GameHost's two hand-copied `fx` dicts
+  (`_slot_private`'s live hand, `_deck_face`'s deck view) into one shared
+  `_card_fx(Card)`, and added a reflection test so a ninth drift can't ship
+  silently.** Last commit did duty 2 (clean) + duty 3, so this run opened on
+  duty 2. Read `card.gd`/`combat.gd` again looking for a fresh gap in
+  `archetype_tags()`, `_meld_cards()` and `preview()` — all three are now
+  reflection-tested or exhaustively commented from past passes and came back
+  clean, same as last run. Widened the search to `game_host.gd` (never swept
+  end-to-end before) and found the real "two copies of one truth": the
+  per-card `fx` dict — "the non-numeric effects" a card face reads to write
+  its live sentence — was typed out TWICE, once inline in `_slot_private()`
+  and once inline in `_deck_face()`, and the code's own comments record eight
+  separate missed-field fixes between them, twice because a fix landed in one
+  copy and "this sibling copy was missed again" in the very same rotation.
+  The two dicts happened to be back in sync right now (no live bug to fix
+  today), so the actual fix is structural: pulled both into one
+  `static func _card_fx(c: Card) -> Dictionary` that both call, so a future
+  field literally has only one copy left to be added to. Added
+  `_test_backlog86_card_fx_carries_every_non_numeric_effect_field`, the same
+  `get_property_list()` reflection trick the meld sweep test already uses, so
+  a field added to Card tomorrow that isn't wired into `_card_fx()` (and isn't
+  on the documented exclusion list — the numeric fields that already surface
+  through `preview()`/`base` instead) fails by name instead of shipping quiet.
+  `run_tests.gd` green (1 new test), no regressions, no balance numbers
+  touched.
+
 - **2026-09-14 — #86 duty 2 attempted (came up clean), duty 3: proved sharpening
   a melded `rule_upgrade` card still scales its carried `condition_bonus`.**
   Last commit was duty 3, so this turn opened on duty 2. Read `card.gd`,

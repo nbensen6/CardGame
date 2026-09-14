@@ -344,6 +344,7 @@ func _init() -> void:
 	_test_backlog86_upgrading_a_melded_rule_upgrade_card_still_bumps_its_condition_bonus()
 	_test_backlog86_meld_carries_rarity_foil_borderless_upgraded_and_status()
 	_test_backlog86_meld_carries_every_card_field_it_is_not_deliberately_dropping()
+	_test_backlog86_card_fx_carries_every_non_numeric_effect_field()
 	_test_satchel_charge_detonates()
 	_test_rhythm_builds_and_scales()
 	_test_backlog86_fumbled_timed_card_does_not_build_rhythm()
@@ -6668,6 +6669,98 @@ func _test_backlog86_meld_carries_every_card_field_it_is_not_deliberately_droppi
 	_expect(dropped.is_empty(),
 		"every meldable Card field survives a fuse without an explicit, documented exclusion — dropped: %s" % [dropped])
 	_expect(checked.size() >= 60,
+		"the reflection sweep actually covered a realistic number of fields (%d) rather than an empty or broken property list" % checked.size())
+
+
+## backlog #86 duty 2: GameHost's per-card `fx` dict — "the non-numeric
+## effects, so the face can write ONE sentence instead of printing a formula
+## beside a live readout" — used to be two hand-copied dicts, one inline in
+## _slot_private() (the live hand) and one inline in _deck_face() (the deck
+## view), literally the same field list typed out twice. Between them a field
+## was caught missing EIGHT separate times (cheapen_amount, light_cost,
+## ally_heal/scry, intangible/buffer/plated_armour, topdeck/shuffle_in/tutor/
+## hits_all_enemies, targets_hold...), and twice that was because a fix landed
+## in one copy and the sibling copy was "missed again" in the very same
+## rotation — the two dicts drifting from EACH OTHER, not just from Card. This
+## run pulled both into one shared GameHost._card_fx(Card) so there is only
+## one copy left to miss; this test is the other half, applying the same
+## reflection trick _test_backlog86_meld_carries_every_card_field... already
+## uses for _meld_cards() so a NINTH missing field shows up here by name
+## instead of silently shipping.
+##
+## Excluded, each for a documented reason that is not "nobody's checked yet":
+##   id/name/type/rarity/foil/borderless/cost/target/icon/text/upgraded/
+##     enchant/status — reach the client some other way (their own top-level
+##     keys, or status's own "curse" tag from _keywords_of()) — never fx's job.
+##   damage/block/ally_block/grip/ally_grip — the printed numbers, sent via
+##     "base"/"preview" instead; a buff or scaling field changes the NUMBER
+##     there rather than needing a separate fx line.
+##   timed/timed_hits — their own top-level keys already.
+##   Every timed_*/`*_per_*` scaling field (timed_grip, timed_damage,
+##     timed_block, timed_ally_block, damage_per_rhythm, grip_per_rhythm,
+##     ally_grip_per_rhythm, damage_per_vulnerable, damage_per_foothold,
+##     damage_per_wound, damage_per_ally_foothold, damage_per_x, block_per_x,
+##     damage_per_light, damage_per_discarded, block_per_discarded,
+##     damage_per_exhausted, block_per_exhausted, block_per_play) — folded
+##     into Combat.preview()'s own live "damage"/"block"/"grip"/"ally_grip"
+##     numbers; nothing here is invisible to the player, it shows up as a
+##     bigger number rather than a named fx line.
+##   retain/ethereal/innate — covered by _keywords_of()'s own tags instead
+##     (see _test_every_field_a_player_must_understand_has_a_keyword).
+## Dictionary fields (rule_upgrade/condition/condition_bonus) are skipped —
+## the probe below only knows bool/int/string, and each already has its own
+## named carry-forward test elsewhere.
+func _test_backlog86_card_fx_carries_every_non_numeric_effect_field() -> void:
+	var excluded := ["id", "name", "type", "rarity", "foil", "borderless", "cost",
+		"target", "icon", "text", "upgraded", "enchant", "status",
+		"damage", "block", "ally_block", "grip", "ally_grip",
+		"timed", "timed_hits",
+		"timed_grip", "timed_damage", "timed_block", "timed_ally_block",
+		"damage_per_rhythm", "grip_per_rhythm", "ally_grip_per_rhythm",
+		"damage_per_vulnerable", "damage_per_foothold", "damage_per_wound",
+		"damage_per_ally_foothold", "damage_per_x", "block_per_x",
+		"damage_per_light", "damage_per_discarded", "block_per_discarded",
+		"damage_per_exhausted", "block_per_exhausted", "block_per_play",
+		"retain", "ethereal", "innate"]
+	var probe := Card.new()
+	var checked: Array = []
+	for p in probe.get_property_list():
+		var prop: Dictionary = p
+		if int(prop.get("usage", 0)) & PROPERTY_USAGE_SCRIPT_VARIABLE == 0:
+			continue
+		var fname: String = prop["name"]
+		if excluded.has(fname):
+			continue
+		match int(prop["type"]):
+			TYPE_BOOL:
+				probe.set(fname, true)
+			TYPE_INT:
+				probe.set(fname, 3)
+			TYPE_STRING:
+				probe.set(fname, "probe_" + fname)
+			_:
+				continue  # Dictionary fields — see the doc comment above
+		checked.append(fname)
+	var fx: Dictionary = GameHost._card_fx(probe)
+	var missing: Array = []
+	for fname in checked:
+		if not fx.has(fname):
+			missing.append(fname)
+			continue
+		var v = fx[fname]
+		match typeof(v):
+			TYPE_BOOL:
+				if not v:
+					missing.append(fname)
+			TYPE_INT, TYPE_FLOAT:
+				if v == 0:
+					missing.append(fname)
+			TYPE_STRING:
+				if v == "":
+					missing.append(fname)
+	_expect(missing.is_empty(),
+		"_card_fx() carries every non-numeric Card field it is not deliberately excluding — missing: %s" % [missing])
+	_expect(checked.size() >= 30,
 		"the reflection sweep actually covered a realistic number of fields (%d) rather than an empty or broken property list" % checked.size())
 
 

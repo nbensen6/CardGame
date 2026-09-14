@@ -715,69 +715,11 @@ func _slot_private(pi: int) -> Dictionary:
 				"enchant_value": int(c.enchant_data().get("value", 0)),
 				"preview": hit, "preview_miss": miss, "preview_good": good,
 				# The non-numeric effects, so the face can write ONE sentence
-				# instead of printing a formula beside a live readout.
-				"fx": {
-					"wound": c.wound, "vulnerable": c.vulnerable, "strength": c.strength,
-					"dexterity": c.dexterity, "frail": c.frail, "thorns": c.thorns,
-					"draw": c.draw, "taunt": c.taunt, "rhythm": c.rhythm,
-					"create": c.create, "prepare": c.prepare, "meld": c.meld,
-					"exhaust_pick": c.exhaust_pick, "cheapen_pick": c.cheapen_pick,
-					# backlog #86 duty 2 — cheapen_amount (the number
-					# cheapen_pick actually cuts a chosen card's cost by, bumped
-					# 1 -> 2 by upgraded_copy()) never joined this dict, only
-					# the bool did: a sharpened Burn Coal really cut a target's
-					# cost by 2 but the live face had no number to show for it.
-					"cheapen_amount": c.cheapen_amount,
-					"pull_ally": c.pull_ally, "sac_ally_grip": c.sac_ally_grip,
-					"hits": c.hits, "light_gain": c.light_gain, "ally_energy": c.ally_energy,
-					"discard": c.discard,
-					# backlog #86 duty 2 — light_cost (#47's bank-and-spend cost)
-					# never joined this dict, only light_gain did: Guiding Light's
-					# and Flare's live faces silently dropped "Spend N Light."
-					# the moment their own ally_heal/damage line filled `out`.
-					"light_cost": c.light_cost,
-					"power_effect": c.power_effect, "power_value": c.power_value,
-					# backlog #86 duty 2 — ally_heal (the Lightbearer's Mend) and scry
-					# were added to Card by backlog #47/#59 but never joined this
-					# hand-copied field list, so CardView.face_text() could never see
-					# either: a lone Warm Glow's live face dropped its heal the moment
-					# light_gain also fired, and a melded Spark + Peer Ahead dropped
-					# its scry behind the Light line.
-					"ally_heal": c.ally_heal, "scry": c.scry,
-					# backlog #86 duty 2 — same "hand-copied field list drifts" gap
-					# again: Intangible/Buffer/Plated Armour (#60/#61) reached
-					# _keywords_of() below and _players_public()'s own status dict long
-					# ago, but never this fx dict, so Combat._meld_cards() (which has
-					# summed all three correctly since #60/#61 landed) could fuse e.g.
-					# Ghost Step (intangible 2) into a real attack and the live face
-					# would show only "Deal N damage." — the Intangible silently
-					# invisible on the one card that has it, same failure CardView
-					# already caught for Frail/Dexterity/Thorns/Light/ally_heal/scry.
-					"intangible": c.intangible, "buffer": c.buffer,
-					"plated_armour": c.plated_armour,
-					# backlog #86 duty 2 — same "hand-copied field list drifts" gap
-					# one more time: topdeck/shuffle_in/tutor (#68) and
-					# hits_all_enemies (#63, Cleave) reached _keywords_of() below
-					# (the "reach"/"cleave" tap-inspectable tags) long ago, but
-					# never this fx dict, so face_text() had no way to say what
-					# they do — Depot's live face read "Gain 3 Block." and
-					# silently dropped "Shuffle a Grip into your draw pile.", and
-					# Sweeping Strike's read "Deal 8 damage." with no mention it
-					# also hits every add.
-					"topdeck": c.topdeck, "shuffle_in": c.shuffle_in, "tutor": c.tutor,
-					"hits_all_enemies": c.hits_all_enemies,
-					# backlog #86 duty 2 — the same gap yet again, this time
-					# targets_hold (#24). Standalone Route Finder only ever read
-					# right by accident (no other fx field set, so face_text()
-					# fell back to its authored text) — Combat._meld_cards()
-					# already ORs targets_hold through a meld correctly, so
-					# fusing Route Finder with any card that deals damage or
-					# grants Block made `out` non-empty and silently dropped the
-					# climb-to-hold clause, even though Combat.play_card()
-					# genuinely still climbs the hunter when the fused card is
-					# played.
-					"targets_hold": c.targets_hold,
-				},
+				# instead of printing a formula beside a live readout. Built by
+				# _card_fx() (backlog #86 duty 2), shared with _deck_face()'s own
+				# copy below — see that function's doc comment for why sharing
+				# it matters more than the fields it happens to carry today.
+				"fx": _card_fx(c),
 				# The card's PRINTED values. The face compares live against these to
 				# know which numbers a buff or scaling changed, and highlights only
 				# those — that's how a player learns their Strength is doing something.
@@ -974,49 +916,7 @@ func _deck_face(c: Card, i: int) -> Dictionary:
 		# three agree is what stops the face colouring numbers green as though
 		# something had changed them.
 		"preview": _printed(c), "preview_miss": _printed(c), "base": _printed(c),
-		"fx": {
-			"wound": c.wound, "vulnerable": c.vulnerable, "strength": c.strength,
-			"dexterity": c.dexterity, "frail": c.frail, "thorns": c.thorns,
-			"draw": c.draw, "taunt": c.taunt, "rhythm": c.rhythm,
-			"create": c.create, "prepare": c.prepare, "meld": c.meld,
-			"exhaust_pick": c.exhaust_pick, "cheapen_pick": c.cheapen_pick,
-			# backlog #86 duty 2 — same field-list drift as the hand dict's fx
-			# above, missed for cheapen_amount: a campfire-sharpened Burn
-			# Coal's deck-view face couldn't show the sharpened cost cut (1 -> 2),
-			# only the un-numbered cheapen_pick bool.
-			"cheapen_amount": c.cheapen_amount,
-			"pull_ally": c.pull_ally, "sac_ally_grip": c.sac_ally_grip,
-			"hits": c.hits, "light_gain": c.light_gain, "ally_energy": c.ally_energy,
-			"discard": c.discard,
-			# backlog #86 duty 2 — same field-list drift as the hand dict's fx
-			# above, missed for light_cost: a campfire Guiding Light/Flare's
-			# deck-view face couldn't show its Light cost either.
-			"light_cost": c.light_cost,
-			"power_effect": c.power_effect, "power_value": c.power_value,
-			# backlog #86 duty 2 — same field-list drift as the hand dict above
-			# (_slot_private); kept in sync here since a deck-view card is built
-			# by this function, not that one.
-			"ally_heal": c.ally_heal, "scry": c.scry,
-			# backlog #86 duty 2 — the hand dict's fx (_slot_private) gained
-			# these three in the very same rotation cycle that copy was fixed
-			# for ally_heal/scry, and this sibling copy was missed again: a
-			# campfire-sharpened Ghost Step/Overhang/Hardshell's "View
-			# Upgrades" preview fell back to the card's stale printed `text`
-			# (e.g. "Plated Armour 3.") instead of the sharpened value (4),
-			# because face_text() had no fx.plated_armour to read here.
-			"intangible": c.intangible, "buffer": c.buffer,
-			"plated_armour": c.plated_armour,
-			# backlog #86 duty 2 — same field-list drift as the hand dict's fx
-			# above, missed again for topdeck/shuffle_in/tutor (#68) and
-			# hits_all_enemies (#63): a campfire-sharpened Recon's deck-view
-			# face couldn't show its Search line, and Sweeping Strike's deck
-			# entry read "Deal 8 damage." with no mention of hitting every add.
-			"topdeck": c.topdeck, "shuffle_in": c.shuffle_in, "tutor": c.tutor,
-			"hits_all_enemies": c.hits_all_enemies,
-			# backlog #86 duty 2 — same gap as the hand dict's fx above:
-			# targets_hold (#24) never joined this sibling copy either.
-			"targets_hold": c.targets_hold,
-		},
+		"fx": _card_fx(c),
 	}
 
 
@@ -1026,6 +926,40 @@ static func _printed(c: Card) -> Dictionary:
 		"damage": c.damage, "block": c.block, "grip": c.grip,
 		"ally_block": c.ally_block, "ally_grip": c.ally_grip,
 	}
+
+
+## The non-numeric effects, so the face can write ONE sentence instead of
+## printing a formula beside a live readout — everything a card DOES that
+## doesn't already show up in a scaled damage/block/grip number.
+##
+## backlog #86 duty 2: this used to be two separately hand-copied dicts, one
+## inline in _slot_private() (the live hand) and one inline in _deck_face()
+## (the deck view) — literally the same field list, typed out twice. Between
+## them they were caught missing a field EIGHT separate times (cheapen_amount,
+## light_cost, ally_heal/scry, intangible/buffer/plated_armour, topdeck/
+## shuffle_in/tutor/hits_all_enemies, targets_hold...), and twice that was
+## because a fix landed in one copy and the sibling was "missed again" in the
+## very same rotation cycle — the two dicts drifting from EACH OTHER, not just
+## from Card. A ninth field added to Card tomorrow only has one copy of this
+## list to be added to now, so there is no sibling left to miss.
+static func _card_fx(c: Card) -> Dictionary:
+	return {
+		"wound": c.wound, "vulnerable": c.vulnerable, "strength": c.strength,
+		"dexterity": c.dexterity, "frail": c.frail, "thorns": c.thorns,
+		"draw": c.draw, "taunt": c.taunt, "rhythm": c.rhythm,
+		"create": c.create, "prepare": c.prepare, "meld": c.meld,
+		"exhaust_pick": c.exhaust_pick, "cheapen_pick": c.cheapen_pick,
+		"cheapen_amount": c.cheapen_amount,
+		"pull_ally": c.pull_ally, "sac_ally_grip": c.sac_ally_grip,
+		"hits": c.hits, "light_gain": c.light_gain, "ally_energy": c.ally_energy,
+		"discard": c.discard, "light_cost": c.light_cost,
+		"power_effect": c.power_effect, "power_value": c.power_value,
+		"ally_heal": c.ally_heal, "scry": c.scry,
+		"intangible": c.intangible, "buffer": c.buffer, "plated_armour": c.plated_armour,
+		"topdeck": c.topdeck, "shuffle_in": c.shuffle_in, "tutor": c.tutor,
+		"hits_all_enemies": c.hits_all_enemies, "targets_hold": c.targets_hold,
+	}
+
 
 func _relic_names() -> Array:
 	var out: Array = []
