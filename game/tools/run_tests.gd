@@ -552,6 +552,8 @@ func _init() -> void:
 	_test_add_attack_adds_its_own_strength()
 	_test_add_block_reseeds_each_round_like_the_bosss_own()
 	_test_add_thorns_bites_the_attacking_add_not_the_boss()
+	_test_backlog86_an_adds_conditional_move_reacts_to_the_real_board()
+	_test_backlog86_an_adds_conditional_move_preview_matches_what_actually_lands()
 	_test_thorns_reflects_card_damage_dealt_to_an_add()
 	_test_incoming_for_includes_a_living_adds_own_attack()
 	_test_backlog86_incoming_through_only_spends_a_buffer_stack_on_one_of_the_boss_and_add_hits()
@@ -11043,6 +11045,58 @@ func _test_add_thorns_bites_the_attacking_add_not_the_boss() -> void:
 	combat.end_turn(1)
 	_expect(add.hp == 27 and boss.hp == 300,
 		"Thorns on the hunter an add hit reflects onto the ADD that hit them, not the main boss standing next to it")
+
+
+## backlog #86 duty 2: _adds_turn() called add.current_move() with NO context,
+## while the main boss's own call (combat.gd:711, :1583) always threads
+## boss_context() through. Boss.current_move() defaults an omitted context to
+## {}, and Boss._condition_met() reads that context's (empty) footholds/blocks
+## -- so an add authored with a "when" condition (#40:
+## min_height/max_height/at_sigil/undefended) could NEVER actually fire its
+## reactive move; it always fell back, no matter the real board state. No
+## shipped add currently authors a "when" (only root_lurker's root_tendril
+## exists, and its moves are both unconditional), so this shipped silently.
+## This proves the real resolution through a live enemy turn, the same way
+## _test_backlog40_conditional_move_resolves_through_a_real_enemy_turn() does
+## for the main boss.
+func _test_backlog86_an_adds_conditional_move_reacts_to_the_real_board() -> void:
+	var boss := _dummy_boss(300, 0)  # 0-damage boss isolates the add's own hit
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Root Tendril", 30)
+	add.weak_point_height = 4
+	add.moves = [{"type": "attack", "value": 14,
+		"when": {"type": "at_sigil"},
+		"fallback": {"type": "attack", "value": 10}}]
+	combat.adds.append(add)
+	combat.players[0].foothold = add.weak_point_height  # camped on the add's own weak point
+	combat.end_turn(0)
+	combat.end_turn(1)  # the add acts on its own turn, targeting boss_target_index() (hunter 0)
+	_expect(combat.players[0].combatant.hp == 42 - 14,
+		"a hunter on the add's own sigil provokes the add's reactive move, the same way it would for the main boss")
+
+
+## Sibling of the test above, proving the OTHER broken call site:
+## incoming_for()'s add loop (combat.gd) shows the player what an add is about
+## to do before it acts -- it must agree with what _adds_turn() actually
+## resolves, or the intent icon lies. Off the sigil this round, the add's
+## preview and its real hit must both land on the weaker fallback.
+func _test_backlog86_an_adds_conditional_move_preview_matches_what_actually_lands() -> void:
+	var boss := _dummy_boss(300, 0)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Root Tendril", 30)
+	add.weak_point_height = 4
+	add.moves = [{"type": "attack", "value": 14,
+		"when": {"type": "at_sigil"},
+		"fallback": {"type": "attack", "value": 10}}]
+	combat.adds.append(add)
+	combat.players[0].foothold = 1  # nowhere near the sigil -> condition unmet
+	var shown := combat.incoming_for(0)
+	_expect(int(shown["through"]) == 10,
+		"off the sigil, the preview must already show the add's fallback (10), not its reactive move")
+	combat.end_turn(0)
+	combat.end_turn(1)
+	_expect(combat.players[0].combatant.hp == 42 - 10,
+		"the add's real hit must match what the preview already promised")
 
 
 ## backlog #86 duty 2: _damage_boss() has reflected a Titan's own Thorns onto

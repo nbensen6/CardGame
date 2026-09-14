@@ -753,12 +753,21 @@ func incoming_for(pi: int) -> Dictionary:
 	# stack previously reported 0 incoming for a boss-hit-then-add-hit round
 	# where the boss's hit alone would spend the stack and the add's hit would
 	# land in full with nothing left to stop it.
+	#
+	# backlog #86 duty 2: current_move() defaults its context to {} when
+	# omitted (boss.gd), and an omitted context reads every "when" condition
+	# (#40) against empty footholds/blocks -- COND_MIN_HEIGHT/MAX_HEIGHT/
+	# AT_SIGIL/UNDEFENDED can then never hold, so an add with a conditional
+	# move always fell back, never its reactive branch, regardless of the
+	# real board state. The main boss's own two current_move() calls
+	# (combat.gd:711, :1574) already thread boss_context() through; this
+	# add-preview call and _adds_turn()'s own call below silently didn't.
 	if boss_target_index() == pi:
 		for add_v in adds:
 			var add: Boss = add_v
 			if add.is_dead():
 				continue
-			var add_move := add.current_move()
+			var add_move := add.current_move(boss_context())
 			if String(add_move.get("type", "")) == "attack":
 				var add_dmg := int(add_move.get("value", 0)) + add.strength
 				raw += add_dmg
@@ -1726,7 +1735,13 @@ func _adds_turn() -> void:
 				_log("%s falls." % add.name)
 				continue
 		add.block = add.plated_armour  # reseeded each round, same as the boss's own reset above
-		var move := add.current_move()
+		# backlog #86 duty 2: same missing-context gap as incoming_for()'s add
+		# loop above (see that comment) -- the omitted context meant an add's
+		# "when"-conditioned move (min_height/max_height/at_sigil/undefended,
+		# #40) could never actually resolve its reactive branch here either,
+		# so the real hit would silently disagree with what a correctly-fixed
+		# preview started promising.
+		var move := add.current_move(boss_context())
 		var value := int(move.get("value", 0))
 		match String(move.get("type", "")):
 			"attack":

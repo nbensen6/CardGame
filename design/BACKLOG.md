@@ -2782,6 +2782,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 2: fixed an add's own conditional move ("when")
+  reading an empty board context, so it could never fire its reactive
+  branch.** Last commit did duty 3, so this run opened on duty 2. Every
+  boss/add move that carries a `"when"` (#40 — `min_height`/`max_height`/
+  `at_sigil`/`undefended`) is evaluated by `Boss.current_move(context)`
+  against a board `context` built by `Combat.boss_context()`; the MAIN boss's
+  two call sites (`combat.gd:711`, `:1583`) always pass it, but `_adds_turn()`
+  and `incoming_for()`'s add loop both called `add.current_move()` with no
+  argument at all, and `current_move()` defaults an omitted context to `{}`
+  — empty footholds and blocks — so `_condition_met()` could never find a
+  hunter meeting any condition, and an add's reactive move silently fell back
+  to its plain move every single time, regardless of the real board state.
+  Currently dormant (no add in `bosses.json` authors a `"when"` yet — only
+  `root_lurker`'s `root_tendril`, whose two moves are both unconditional), so
+  nothing playable was wrong today, but it's the exact same shape as bugs
+  already fixed twice for the main boss in this file, and would have shipped
+  silently the moment content gave an add a conditional move. Threaded
+  `boss_context()` through both call sites. Added two regression tests: one
+  proves the real hit through a live `end_turn()` (a hunter camped on the
+  add's own sigil now provokes its reactive move, matching the main boss's
+  existing sigil test), the other proves `incoming_for()`'s preview agrees
+  with what actually lands. Verified both fail on the old code (reverted the
+  fix, reran — 1 failure, the sigil-provokes-reactive assertion) before
+  restoring the fix. `run_tests.gd` green (1717 assertions), no balance
+  numbers touched.
+
 - **2026-09-14 — #86 duty 3: proved `energy_handoff` actually hands unspent
   Energy to an ally.** Last commit did duty 2, so this run took duty 3.
   `energy_handoff` (relics.json:217, wired to `MOMENT_TURN_END` since backlog
