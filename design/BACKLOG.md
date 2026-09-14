@@ -2782,6 +2782,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 2: `pull_ally` re-validated its own grapple gap AFTER
+  this same play's own climb had already moved it, so a card carrying both
+  `grip` and `pull_ally` (only reachable via Meld — e.g. Scramble fused with
+  Grappling Arm) could climb itself clear of a gap `can_play()` had just
+  approved, and silently no-op the pull with the ally never moving at all,
+  spending the card's cost for nothing.** Last commit (`bde57a5`) was duty 3,
+  so this turn opened on duty 2. Spawned an Explore agent to hunt `/core` for
+  a first-pass hole or a duplicated-truth bug distinct from the ~29 already
+  fixed across this rotation's history; it traced `Combat.play_card()`'s
+  `pull_ally` block re-reading `ps.foothold`/the ally's live `foothold` after
+  the SAME play's own `grip` (and, symmetrically, `ally_grip`/`sac_ally_grip`/
+  `poison_lift`) had already resolved above it — two independent computations
+  of "the gap between them," one taken before the play's effects run
+  (`can_play()`) and one taken after (the old `play_card()` line), which only
+  agree when the card carries no climb effect of its own. Fixed by capturing
+  the ally's pre-play foothold at the very top of `play_card()` (alongside
+  the caster's own `foothold_before_climb`, which the code already captured
+  for an unrelated reason) and validating the grapple against that frozen
+  pre-play gap instead of the live one — the actual pull still lands the ally
+  at the caster's final (post-climb) height, only the legality check changed.
+  Added `_test_pull_ally_survives_this_plays_own_climb`; watched it fail
+  against the unfixed code first (confirmed by stashing the `combat.gd`
+  change and re-running), then confirmed it passes with the fix. Full suite
+  green (this file's own regression test plus the rest, all previously
+  passing).
+
 - **2026-09-14 — #86 duty 3: an elite/Titan's queued second reward
   (`Run._queued_reward`, the relic owed after the card) had never been
   round-tripped through save/load while actually non-empty.** Last commit

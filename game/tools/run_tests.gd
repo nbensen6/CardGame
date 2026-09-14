@@ -571,6 +571,7 @@ func _init() -> void:
 	_test_roped_ally_climbs_when_launched_by_catapult()
 	_test_roped_ally_climbs_when_pulled_by_grapple_arm()
 	_test_roped_ally_climbs_when_fed_by_poison_lift()
+	_test_pull_ally_survives_this_plays_own_climb()
 	_test_character_attack_bonus()
 	_test_build_creates_grapple()
 	_test_belay_scales_with_height()
@@ -11083,6 +11084,24 @@ func _test_roped_ally_climbs_when_pulled_by_grapple_arm() -> void:
 	combat.play_card(0, _first_playable(combat, 0))  # Grappling Arm pulls the ally up to Height 3
 	_expect(combat.players[0].foothold == 4 and combat.players[1].foothold == 3,
 		"roped: pull_ally pulling the ally up still ropes back when the ALLY is the Mountain Climber")
+
+
+## #86 duty 2: pull_ally re-read the ally's LIVE foothold after this same
+## play's own climb had already resolved (Combat.play_card resolves grip
+## BEFORE pull_ally), so a card carrying grip and pull_ally together — only
+## reachable via Meld, e.g. Scramble fused with Grappling Arm — could climb
+## itself clear of a grapple gap can_play() had just approved using the
+## PRE-climb gap, and silently whiff the pull with the ally never moving.
+func _test_pull_ally_survives_this_plays_own_climb() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(200))
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 3  # exactly at Grappling Arm's reach (3) above the ally at 0
+	ps.hand = [_meld_card(), _scramble(), _grapple_arm()]  # fuses to grip 1 + pull_ally 3
+	ps.energy = 5
+	combat.play_card(0, 0, true, 1, 2)  # meld Scramble + Grappling Arm
+	combat.play_card(0, 0)  # play the fused card: climbs +1, then must still pull the ally
+	_expect(combat.players[0].foothold == 4 and combat.players[1].foothold == 4,
+		"pull_ally: this play's own climb (fused in by Meld) must not shrink the grapple gap can_play() already approved")
 
 
 func _test_roped_ally_climbs_when_fed_by_poison_lift() -> void:

@@ -804,6 +804,14 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		return false
 	var ps: PlayerState = players[pi]
 	var card: Card = ps.hand[ci]
+	# Captured before ANY of this play's own effects can move it — poison_lift,
+	# ally_grip and sac_ally_grip below all raise the ally's foothold as a SIDE
+	# EFFECT of this same play, and pull_ally used to re-read the ally's live
+	# foothold after those had already run, so a card carrying pull_ally
+	# alongside any of them (reachable via meld) could shrink or close its own
+	# grapple gap mid-resolution and silently whiff a pull that can_play() just
+	# approved using this same pre-play value (backlog #86 duty 2).
+	var ally_foothold_before_play: int = players[ally_index(pi)].foothold
 	var enchant_effect := String(card.enchant_data().get("effect", ""))  # read once (backlog #50)
 	# Capture selection targets by reference BEFORE any removal (indices are into the
 	# current hand, and must not point at the card being played).
@@ -1053,7 +1061,11 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 			_log("%s plays %s — needs two cards to meld." % [who, card.name])
 	if card.pull_ally > 0:  # grapple the ally UP to your Height, if they're within reach
 		var yanked: PlayerState = players[ally_index(pi)]
-		var gap := ps.foothold - yanked.foothold
+		# Same pre-play gap can_play() already validated (foothold_before_climb /
+		# ally_foothold_before_play), not the live footholds — this card's own
+		# climb, or an earlier ally_grip/sac_ally_grip/poison_lift lift already
+		# resolved above, must not un-approve a pull can_play() just allowed.
+		var gap: int = foothold_before_climb - ally_foothold_before_play
 		if gap > 0 and gap <= card.pull_ally:
 			var yanked_before := yanked.foothold
 			yanked.foothold = ps.foothold
