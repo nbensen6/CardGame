@@ -335,6 +335,8 @@ func _init() -> void:
 	_test_backlog86_burn_coal_cheapen_stacks_across_repeated_plays()
 	_test_catapult_sacrifices_to_launch_ally()
 	_test_meld_fuses_two_cards()
+	_test_backlog86_meld_cost_floor_holds_when_both_cards_are_free()
+	_test_backlog86_meld_cost_floor_holds_through_play_card()
 	_test_meld_carries_special_effects()
 	_test_meld_carries_light_and_deck_effects()
 	_test_meld_carries_power_effect()
@@ -6787,6 +6789,38 @@ func _test_meld_fuses_two_cards() -> void:
 	_expect(ok and one_card and fused.damage == 10 and fused.grip == 1
 		and fused.timed and fused.timed_grip == 2 and fused.cost == 1,
 		"Meld fuses two cards into one that does both, at cost sum -1")
+
+
+## backlog #86 duty 3: `_meld_cards`'s `"cost": -1 if ... else maxi(0, a.cost +
+## b.cost - 1)` floor is only ever LIVE when `a.cost + b.cost <= 0` — every
+## meld test above pairs at least one 1+-cost card, so `maxi(0, ...)` never
+## actually clamped anything; it could have been a plain subtraction and every
+## existing test would still pass. ~1/5 of cards.json ships at 0 cost
+## (grapple, scramble, bowshot, flick...), so two of them landing in the same
+## meld is an ordinary hand, not a contrived edge case.
+func _test_backlog86_meld_cost_floor_holds_when_both_cards_are_free() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var floored: Card = combat._meld_cards(_scramble(), _grapple())  # 0-cost + 0-cost: 0+0-1 = -1, must floor to 0
+	_expect(floored.cost == 0,
+		"melding two 0-cost cards floors the fused cost at 0 instead of letting it go negative")
+	var not_floored: Card = combat._meld_cards(_scramble(), _slash())  # 0-cost + 1-cost: 0+1-1 = 0 without the floor engaging
+	_expect(not_floored.cost == 0,
+		"a 0-cost and a 1-cost card meld to cost 0 through ordinary sum-minus-one arithmetic, not because the floor engaged")
+
+
+## Same floor, proven through the real player-facing path (energy charged,
+## hand mutated), not just the private helper — a fused card that came out
+## negative would let a player play it and gain energy back next turn instead
+## of spending any.
+func _test_backlog86_meld_cost_floor_holds_through_play_card() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_meld_card(), _scramble(), _grapple()]  # meld two 0-cost cards
+	ps.energy = 1  # exactly enough for the meld card itself; no spare to hide a negative-cost bug
+	var ok: bool = combat.play_card(0, 0, true, 1, 2)
+	var fused: Card = ps.hand[0] if ps.hand.size() == 1 else null
+	_expect(ok and fused != null and fused.cost == 0,
+		"melding two free cards through the real play_card path still floors the fused card's cost at 0")
 
 
 func _test_timed_damage_bonus() -> void:

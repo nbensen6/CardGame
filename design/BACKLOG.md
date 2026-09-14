@@ -2782,6 +2782,24 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 3: proved `_meld_cards()`'s cost floor
+  (`maxi(0, a.cost + b.cost - 1)`) actually holds when both melded cards are
+  free.** Last commit did duty 2, so this run opened on duty 3. Every one of
+  the ~10 existing meld tests pairs at least one 1+-cost card, so the floor —
+  live only when `a.cost + b.cost <= 0` — had never actually been exercised;
+  it could have been a bare subtraction and nothing would have caught it.
+  ~1/5 of `cards.json` ships at 0 cost (grapple, scramble, bowshot, flick,
+  ...), so two of them landing in one meld is an ordinary hand, not a
+  contrived case. Spawned an Explore agent first to hunt for the gap across
+  `run_tests.gd`'s ~973 existing tests and the view-layer static functions —
+  all of those already had direct coverage, this was the one real hole it
+  found. Added three tests: the floor engaging (0+0), the boundary case where
+  the same result (cost 0) comes from plain arithmetic instead (0+1), both
+  calling `combat._meld_cards()` directly, plus one through the real
+  `play_card()` path (hand mutation, energy charged) so the private-helper
+  checks aren't the only proof. `run_tests.gd` green (3 new tests, 976
+  total), no regressions, no balance numbers touched.
+
 - **2026-09-14 — #86 duty 2: merged GameHost's two hand-copied `fx` dicts
   (`_slot_private`'s live hand, `_deck_face`'s deck view) into one shared
   `_card_fx(Card)`, and added a reflection test so a ninth drift can't ship
