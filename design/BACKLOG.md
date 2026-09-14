@@ -2782,6 +2782,37 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 2: an add's intent SNAPSHOT was the third copy of
+  "what will this add do next" and the only one still reading an empty board
+  context.** Last commit (`acfad32`) was duty 3, so this run opened on duty
+  2. Today's earlier duty-2 commit (`157a861`) fixed `_adds_turn()` (the real
+  resolution) and `incoming_for()` (the damage preview) to thread
+  `Combat.boss_context()` through `add.current_move()`, so an add's `"when"`-
+  conditioned move (#40) can now fire its reactive branch in both places —
+  but `combat.gd:1567`'s own comment names a THIRD caller that must agree
+  with those two: `game_host.gd`'s own "intent" snapshot, the dict a client
+  actually reads to draw the icon. That call site still said
+  `av.current_move()` with no argument at all, and its own comment still
+  claimed "an add's move never carries a 'when' condition today, so there is
+  no `boss_context()` to build for it" — true before `157a861`, stale the
+  moment it landed. Found by an Explore agent tasked with hunting a fresh
+  bug after being given the (very long) list of shapes already fixed this
+  rotation. Currently dormant, same caveat as `157a861` (no add in
+  `bosses.json` authors a `"when"` yet), but the instant one does, the real
+  hit and the preview would react to a hunter camped on the add's sigil while
+  the on-screen intent icon kept showing the plain fallback — a live version
+  of exactly the "intent is always visible" lie boss.gd's header rule exists
+  to prevent. Fixed with `av.current_move(c.boss_context())`, matching the
+  main boss's own `"intent"` key three lines below. Added
+  `_test_backlog86_an_adds_intent_snapshot_reacts_to_the_real_board`: builds
+  a `"when": {"type": "at_sigil"}` add move with a distinct fallback value,
+  asserts the snapshot shows the fallback while no hunter's foothold meets
+  the sigil, then asserts it flips to the reactive value once one does.
+  Verified it fails without the fix — reverted the one-line change, reran,
+  got exactly one failure (the new test, correctly), restored the fix. Fresh
+  `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
+  Next `#86` turn is duty 3 (verify a mechanic actually works).
+
 - **2026-09-14 — #86 duty 3: proved a multi-hit card's own Poison/Expose/Frail
   applies once per PLAY, not once per HIT.** Last commit (`17af714`) was duty
   2, so this run took duty 3. `play_card()`'s multi-hit loop (`combat.gd:925`)

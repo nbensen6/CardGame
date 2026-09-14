@@ -452,9 +452,17 @@ func _build_shared() -> Dictionary:
 		# honoured it. Root Lurker's Root Tendril (bosses.json) carries a real
 		# "attack" move and has shipped able to hit a hunter with zero warning —
 		# the one enemy in the game the intent-is-always-visible rule didn't reach.
-		# current_move() with no context, same as _adds_turn()'s own call: an add's
-		# move never carries a "when" condition today, so there is no boss_context()
-		# to build for it.
+		# current_move() with no context, same as _adds_turn()'s own call.
+		# backlog #86 duty 2 (third pass): 157a861 fixed _adds_turn() and
+		# incoming_for()'s add loop to thread boss_context() through, so the
+		# claim above ("no boss_context() to build for it") stopped being true
+		# the moment that commit landed -- but this THIRD call site, the one
+		# combat.gd:1567 names by file as a caller that must agree with the
+		# other two, was never touched. Same "two copies of one truth" shape:
+		# an add's reactive move ("when": min_height/max_height/at_sigil/
+		# undefended, #40) now resolves correctly in _adds_turn() and
+		# incoming_for(), but the intent ICON here would still show the plain
+		# fallback, because current_move() defaults an omitted context to {}.
 		# backlog #86 duty 2 (second pass): the same gap as the main boss's own
 		# frail/artifact/thorns/dexterity/intangible/buffer/plated_armour fix
 		# (backlog Later, #60/#61) existed here too and nothing had ever closed
@@ -471,7 +479,7 @@ func _build_shared() -> Dictionary:
 			var av: Boss = add_v
 			add_views.append({"id": av.id, "name": av.name, "hp": av.hp,
 				"max_hp": av.max_hp, "block": av.block, "art": av.art,
-				"intent": av.current_move(),
+				"intent": av.current_move(c.boss_context()),
 				"vulnerable": av.vulnerable, "strength": av.strength, "wound": av.wound,
 				"frail": av.frail, "artifact": av.artifact, "thorns": av.thorns,
 				"dexterity": av.dexterity, "intangible": av.intangible,

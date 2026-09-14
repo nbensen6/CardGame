@@ -578,6 +578,7 @@ func _init() -> void:
 	_test_adds_round_trip_through_save_and_load()
 	_test_adds_reach_the_shared_snapshot()
 	_test_add_intent_reaches_the_shared_snapshot()
+	_test_backlog86_an_adds_intent_snapshot_reacts_to_the_real_board()
 	_test_an_adds_status_effects_reach_the_shared_snapshot()
 	# characters (per-player climb + signature passives)
 	_test_frog_climb_bonus()
@@ -11568,6 +11569,40 @@ func _test_add_intent_reaches_the_shared_snapshot() -> void:
 	_expect(adds_view.size() == 1 and String(adds_view[0]["intent"]["type"]) == "attack"
 			and int(adds_view[0]["intent"]["value"]) == 4,
 		"an add's own telegraphed move reaches the shared snapshot, same as the boss's")
+
+
+## Backlog #86 duty 2 (third pass): 157a861 threaded Combat.boss_context()
+## through _adds_turn() and incoming_for()'s add loop so an add's "when"-
+## conditioned move (#40) resolves its reactive branch correctly in both real
+## resolution and damage preview -- but game_host.gd's own intent SNAPSHOT,
+## the one combat.gd:1567 names by file as a caller that must agree with the
+## other two, still called av.current_move() with no context at all, so it
+## always showed the plain "fallback" regardless of the real board. Same
+## "two copies of one truth" shape as the commit right above this test in
+## history: prove the FIELD a client actually reads reacts to the board, not
+## just that the engine's own resolution does.
+func _test_backlog86_an_adds_intent_snapshot_reacts_to_the_real_board() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	host._run.combat.adds.clear()
+	var add := Boss.new("Root Tendril", 30)
+	add.id = "root_tendril"
+	add.weak_point_height = 4
+	add.moves = [{"type": "attack", "value": 14,
+		"when": {"type": "at_sigil"},
+		"fallback": {"type": "attack", "value": 10}}]
+	host._run.combat.adds.append(add)
+	host._run.combat.players[0].foothold = 0  # nobody at the sigil yet
+	host._broadcast_state()
+	var away_intent: Dictionary = (c0.shared["boss"]["adds"][0] as Dictionary)["intent"]
+	_expect(int(away_intent["value"]) == 10,
+		"an add's intent snapshot shows the fallback move while no hunter meets its 'when'")
+	host._run.combat.players[0].foothold = add.weak_point_height  # now camped on its sigil
+	host._broadcast_state()
+	var sigil_intent: Dictionary = (c0.shared["boss"]["adds"][0] as Dictionary)["intent"]
+	_expect(int(sigil_intent["value"]) == 14,
+		"an add's intent snapshot reacts to the real board the same way _adds_turn() and incoming_for() already do, instead of always showing the fallback")
 
 
 ## Backlog #86 duty 2 (second pass): same shared-snapshot boundary as
