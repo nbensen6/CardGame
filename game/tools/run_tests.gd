@@ -341,6 +341,7 @@ func _init() -> void:
 	_test_meld_carries_retain_and_ethereal()
 	_test_meld_carries_enchant()
 	_test_backlog86_meld_carries_rule_upgrade()
+	_test_backlog86_upgrading_a_melded_rule_upgrade_card_still_bumps_its_condition_bonus()
 	_test_backlog86_meld_carries_rarity_foil_borderless_upgraded_and_status()
 	_test_backlog86_meld_carries_every_card_field_it_is_not_deliberately_dropping()
 	_test_satchel_charge_detonates()
@@ -6532,6 +6533,38 @@ func _test_backlog86_meld_carries_rule_upgrade() -> void:
 	var sharpened := fused.upgraded_copy()
 	_expect(fused.ethereal and not sharpened.ethereal and sharpened.damage == fused.damage,
 		"sharpening a melded card at a campfire must still apply its carried rule_upgrade (curing Ethereal) instead of silently falling back to a numeric bump")
+
+
+## Card.upgraded_copy() has two upgrade paths: a card with `rule_upgrade` set
+## REPLACES a rule instead of bumping numbers and returns early (see its own
+## comment — "REPLACES the generic number bump rather than stacking with it"),
+## while every other card falls through to the generic bump loop, which is the
+## ONLY place that also scales `condition_bonus` (backlog #67). Standalone this
+## never collides — no authored card carries both rule_upgrade and
+## condition_bonus — but _meld_cards() carries each as its own independent
+## "keep A's if set, else B's" slot (see _test_backlog86_meld_carries_rule_upgrade
+## and _test_card_upgrade_bumps_condition_bonus_too above), so fusing ANY
+## rule_upgrade card (reckless_swing) with ANY condition_bonus card (dagger) is
+## reachable in one ordinary meld and produces a fused card carrying both. Before
+## this fix, sharpening that fused card at a campfire took the rule_upgrade
+## branch, returned immediately, and never touched condition_bonus at all — the
+## card's still-live conditional bonus silently stopped scaling with upgrades,
+## the same "collateral omission" shape the ally_block/grip_per_rhythm meld bugs
+## already caught in combat.gd's preview(), just one level up in the pipeline.
+func _test_backlog86_upgrading_a_melded_rule_upgrade_card_still_bumps_its_condition_bonus() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var reckless := Content.make_card("reckless_swing")  # rule_upgrade: drop Ethereal; no condition
+	var dagger := Content.make_card("dagger")             # condition_bonus {damage: 3}; no rule_upgrade
+	ps.hand = [_meld_card(), reckless, dagger]
+	ps.energy = 9
+	combat.play_card(0, 0, true, 1, 2)
+	var fused: Card = ps.hand[0]
+	_expect(not fused.rule_upgrade.is_empty() and not fused.condition_bonus.is_empty(),
+		"meld carries reckless_swing's rule_upgrade AND dagger's condition_bonus onto the same fused card -- each its own one-slot idiom, neither should block the other")
+	var sharpened := fused.upgraded_copy()
+	_expect(int(sharpened.condition_bonus.get("damage", 0)) == int(fused.condition_bonus.get("damage", 0)) + 3,
+		"sharpening a melded card that takes the rule_upgrade path must still scale its carried condition_bonus the same way the generic bump path already does for every other card")
 
 
 ## backlog #86 duty 2 — the SEVENTH instance of _meld_cards' "hand-copied field

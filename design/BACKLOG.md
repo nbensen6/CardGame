@@ -2782,6 +2782,39 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 2 attempted (came up clean), duty 3: proved sharpening
+  a melded `rule_upgrade` card still scales its carried `condition_bonus`.**
+  Last commit was duty 3, so this turn opened on duty 2. Read `card.gd`,
+  `combat.gd`, `boss.gd`, `combatant.gd`, `progress.gd`, `run.gd` and
+  `run_map.gd` end to end (also spawned an Explore agent across the same
+  ground independently) looking for a first-pass hole or a two-copies-of-one-
+  truth drift; both came back empty — `archetype_tags()`, `preview()`/
+  `play_card()`, `relic_totals()`, the `fx` dict `_keywords_of()`/`face_text()`
+  read, and `RunMap`'s guarantees are now so densely re-verified by past
+  duty-2/3 passes that nothing new turned up. (Also chased a real-looking lead
+  in `design/progress/bugs.md`'s 2026-09-05 right-click-inspector entry —
+  reproduced its FAIL under `--headless`, but `tools/screenshot.gd`'s own doc
+  comment says headless has no renderer at all and needs a real window; a
+  control build using the visually-CENTRED, unrotated hand card failed
+  identically, and a keyboard-only rebind test in the same run passed clean,
+  so the failure tracks a headless GUI-input limitation, not game code —
+  correctly out of reach here, not a finding.) Took duty 3 instead. Found one
+  genuine gap by reading `Card.upgraded_copy()` against `Combat._meld_cards()`:
+  `upgraded_copy()` has two paths — a card with `rule_upgrade` set REPLACES a
+  rule and returns immediately; every other card falls through to the generic
+  number-bump loop, which is the ONLY path that also scales `condition_bonus`
+  (backlog #67). No authored card carries both fields, so this never collided
+  — but `_meld_cards()` carries `rule_upgrade` and `condition_bonus` as two
+  independent "keep A's if set, else B's" slots, so fusing `reckless_swing`
+  (rule_upgrade) with `dagger` (condition_bonus) — one ordinary meld — produces
+  a fused card carrying both, and sharpening it at a campfire silently never
+  scaled the condition_bonus, forever, for the rest of the run. Wrote
+  `_test_backlog86_upgrading_a_melded_rule_upgrade_card_still_bumps_its_condition_bonus`
+  first, watched it FAIL, then moved the `condition_bonus` bump ahead of the
+  `rule_upgrade` branch (computed once, before either path, so both reach it)
+  and deleted the now-dead second copy further down. `run_tests.gd` green,
+  1 new assertion pair, no regressions, no balance numbers touched.
+
 - **2026-09-14 — #86 duty 3: proved `Run._apply_effect_block`'s unconditional
   `hp[i] = mini(hp[i], max_hp[i])` (run.gd:674) actually pulls current HP down
   when `max_hp` shrinks with no accompanying `heal`.** Last commit was duty 2,

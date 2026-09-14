@@ -276,17 +276,48 @@ func upgraded_copy() -> Card:
 	var d := to_dict()
 	if upgraded:
 		return Card.from_dict(d)  # already sharpened — no double-dipping
+	# condition_bonus (backlog #67) is the same payoff as its matching
+	# top-level field, just gated behind `condition` -- brace/dagger/harpoon/
+	# sunlight_blade/safety_line/draw_aggro all carry one. Computed here, ahead
+	# of the rule_upgrade branch below (backlog #86 duty 2), because a meld can
+	# carry rule_upgrade from ONE source card and condition_bonus from the
+	# OTHER (each its own independent "keep A's if set, else B's" slot in
+	# _meld_cards()) — reckless_swing (rule_upgrade) fused with dagger
+	# (condition_bonus) is one ordinary meld away. The rule_upgrade branch
+	# returns immediately, so bumping condition_bonus only after it (as this
+	# used to) meant a fused card that took that branch never got its
+	# condition_bonus scaled at all: the payoff stayed frozen at its printed
+	# value through every campfire sharpen for the rest of the run.
+	# to_dict() hands back condition_bonus by reference (Dictionary is a
+	# reference type in GDScript) — duplicate before mutating, or bumping it
+	# here would also silently rewrite the original card's own dict, breaking
+	# the immutability this class's own doc comment promises.
+	var cb: Dictionary = (d.get("condition_bonus", {}) as Dictionary).duplicate()
+	var cb_bumped := false
+	if not cb.is_empty():
+		for key in ["damage", "block", "ally_block"]:
+			if int(cb.get(key, 0)) > 0:
+				cb[key] = int(cb[key]) + 3
+				cb_bumped = true
+		if int(cb.get("grip", 0)) > 0:
+			cb["grip"] = int(cb["grip"]) + 1
+			cb_bumped = true
+		d["condition_bonus"] = cb
 	if not rule_upgrade.is_empty():
 		# A rule change (backlog #66) — REPLACES the generic number bump rather
 		# than stacking with it, the same way an authored card is either "bigger
-		# numbers" or "does something new", never both.
+		# numbers" or "does something new", never both. condition_bonus (just
+		# above) is the one exception: it's an orthogonal mechanic, not part of
+		# "the generic number bump", so it still applies here — unless
+		# rule_upgrade itself names condition_bonus explicitly, which the loop
+		# below then correctly overrides with.
 		for key in rule_upgrade.keys():
 			d[key] = rule_upgrade[key]
 		d["rule_upgrade"] = {}
 		d["name"] = String(d["name"]) + "+"
 		d["upgraded"] = true
 		return Card.from_dict(d)
-	var bumped := false
+	var bumped := cb_bumped
 	for key in ["damage", "block", "ally_block", "timed_damage",
 			"timed_block", "timed_ally_block"]:
 		if int(d[key]) > 0:
@@ -312,26 +343,6 @@ func upgraded_copy() -> Card:
 	if bool(d.get("cheapen_pick", false)) and int(d["cheapen_amount"]) > 0:
 		d["cheapen_amount"] = int(d["cheapen_amount"]) + 1
 		bumped = true
-	# condition_bonus (backlog #67) is the same payoff as its matching
-	# top-level field, just gated behind `condition` -- brace/dagger/harpoon/
-	# sunlight_blade/safety_line/draw_aggro all carry one. It's a nested
-	# dict, so neither loop above ever sees it; without this it silently
-	# never scaled, and a sharpened Dagger's conditional bonus (half its
-	# total damage on turn 3+) stayed frozen at the base value forever.
-	# to_dict() hands back condition_bonus by reference (Dictionary is a
-	# reference type in GDScript) — duplicate before mutating, or bumping it
-	# here would also silently rewrite the original card's own dict, breaking
-	# the immutability this class's own doc comment promises.
-	var cb: Dictionary = (d.get("condition_bonus", {}) as Dictionary).duplicate()
-	if not cb.is_empty():
-		for key in ["damage", "block", "ally_block"]:
-			if int(cb.get(key, 0)) > 0:
-				cb[key] = int(cb[key]) + 3
-				bumped = true
-		if int(cb.get("grip", 0)) > 0:
-			cb["grip"] = int(cb["grip"]) + 1
-			bumped = true
-		d["condition_bonus"] = cb
 	if not bumped and int(d["cost"]) > 0:
 		d["cost"] = int(d["cost"]) - 1  # nothing to scale — make it cheaper instead
 	d["name"] = String(d["name"]) + "+"
