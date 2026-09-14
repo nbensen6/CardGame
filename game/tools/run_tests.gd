@@ -1648,6 +1648,8 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_deck_view_closed_fires_on_cancel_and_escape_not_on_pick()
 	_test_backlog86_console_own_closes_an_open_picker_through_closed_not_a_bare_free()
 	_test_backlog86_hit_circle_gui_input_ignores_a_press_far_from_the_live_note()
+	_test_backlog86_hit_circle_screen_clamps_a_note_projecting_above_the_frame()
+	_test_backlog86_hit_circle_screen_leaves_an_onscreen_note_untouched()
 
 	print("")
 	if _failures == 0:
@@ -17283,6 +17285,70 @@ func _test_backlog86_hit_circle_gui_input_ignores_a_press_far_from_the_live_note
 	hc._gui_input(near_press)
 	_expect(hc._hits_done == 1,
 		"a press that actually lands on the live note's screen position must fire and grade it")
+
+	hc.free()
+	cam.queue_free()
+
+
+## backlog #86 duty 3: HitCircle._screen()'s own doc comment names a real,
+## already-fixed regression -- "on a tall beast the far end of [the path] can
+## be above the top of the frame ... you would tap 1 and 2 and never find 3"
+## (Nick, 2026-08-25) -- and claims clamping the projected point onto the
+## visible rect is what turns that back from "a guaranteed miss" into a real
+## note. That promise had zero coverage: the only other test that reaches
+## _screen() (_hit_circle_gui_input_ignores_a_press_far_from_the_live_note,
+## just above) deliberately projects both notes comfortably inside the
+## Control's rect, so it never exercises the clamp itself. Prove a note whose
+## world position projects above the top of the frame is pulled back onto the
+## visible rect instead of vanishing off it.
+func _test_backlog86_hit_circle_screen_clamps_a_note_projecting_above_the_frame() -> void:
+	var cam := Camera3D.new()
+	root.add_child(cam)
+	cam.position = Vector3(0, 0, 10)  # looks straight down -Z
+	var high := Vector3(0, 40, 0)  # far above the camera's forward axis
+	var hc := HitCircle.new()
+	hc.size = Vector2(1280, 720)
+	hc.begin(0.0, cam, PackedVector3Array([high]), false)
+
+	var raw: Vector2 = cam.unproject_position(high)
+	_expect(raw.y < 0.0,
+		"setup sanity: the high note must project above the top of the frame or this test proves nothing")
+
+	var pad := HitCircle.TARGET_RADIUS * HitCircle.START_SCALE * 0.5 + 8.0
+	var clamped: Vector2 = hc._screen(0)
+	_expect(is_equal_approx(clamped.y, pad),
+		"a note projecting off the top of the frame is clamped onto the visible rect (at the padded edge) instead of drawing above it where it can never be tapped")
+	_expect(clamped.y >= 0.0 and clamped.y <= hc.size.y,
+		"the clamped note must land inside the Control's own rect, not merely closer to it")
+
+	hc.free()
+	cam.queue_free()
+
+
+## The sibling case to the clamp test above: a note that already projects
+## comfortably inside the frame must come back untouched. Without this, a
+## clamp bug that always snapped every note to the padded edge -- on-screen
+## notes included -- would still pass the "off the top" test above, since
+## clampf(x, pad, max) happens to return `pad` for an input that is already
+## near it. Pairing "off-screen gets pulled in" with "on-screen is left alone"
+## is what actually proves the clamp is conditional, not constant.
+func _test_backlog86_hit_circle_screen_leaves_an_onscreen_note_untouched() -> void:
+	var cam := Camera3D.new()
+	root.add_child(cam)
+	cam.position = Vector3(0, 0, 10)  # looks straight down -Z
+	var centred := Vector3(0, 0, 0)  # dead centre of the frame
+	var hc := HitCircle.new()
+	hc.size = Vector2(1280, 720)
+	hc.begin(0.0, cam, PackedVector3Array([centred]), false)
+
+	var raw: Vector2 = cam.unproject_position(centred)
+	var pad := HitCircle.TARGET_RADIUS * HitCircle.START_SCALE * 0.5 + 8.0
+	_expect(raw.x > pad and raw.x < hc.size.x - pad and raw.y > pad and raw.y < hc.size.y - pad,
+		"setup sanity: the centred note must already sit well inside the padded rect or this test proves nothing")
+
+	var screen: Vector2 = hc._screen(0)
+	_expect(screen.is_equal_approx(raw),
+		"a note that already projects inside the frame is returned untouched -- the clamp only fires when the note is actually off-screen")
 
 	hc.free()
 	cam.queue_free()

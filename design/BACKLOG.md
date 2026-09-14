@@ -2782,6 +2782,29 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 3: proved `HitCircle._screen()`'s own doc-promised
+  edge clamp actually holds.** Last commit did duty 2, so this run opened on
+  duty 3. `combat_3d.gd`'s pure static helpers turned out exhaustively covered
+  by prior passes (route_between_rungs, foothold_anchor, hop_arc, cam_reach_for,
+  inside_wall_at, and a couple dozen more all already had direct tests), and a
+  scan for zero-hit function names across `core/`, `session/` and `views/`
+  mostly turned up either presentation code needing a live scene or mechanisms
+  already proven indirectly through their data-driven effect keys (energy_handoff,
+  RunMap's key-source guarantee, etc.) — a name search alone is not reliable
+  evidence something is untested. The real gap: `HitCircle._screen(i)` clamps a
+  note's projected screen position onto the visible rect, and its own comment
+  names the exact regression that fix was for — "on a tall beast the far end
+  [of the climb path] can be above the top of the frame ... you would tap 1 and
+  2 and never find 3" (Nick, 2026-08-25). The only existing test that reaches
+  `_screen()` (the HIT_RADIUS gating test) deliberately projects both notes well
+  inside the frame, so the clamp itself had zero coverage — a regression there
+  would have shipped silently. Added two tests with a real `Camera3D` in the
+  tree: one proves a note projecting above the top of the frame is pulled back
+  onto the padded rect, the other proves an already-on-screen note is returned
+  untouched (so the clamp is conditional, not a constant that happens to pass
+  the first test too). `run_tests.gd` green (2 new tests), no regressions, no
+  balance numbers touched.
+
 - **2026-09-14 — #86 duty 2: the WON/LOST screen never played `ui/sfx.gd`'s own
   authored "win"/"lose" stingers.** Last commit did duty 3, so this run opened
   on duty 2. Read `game/views/overworld_3d.gd` and `game/views/location_3d.gd`
