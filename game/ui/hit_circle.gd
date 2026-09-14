@@ -195,8 +195,15 @@ func _gui_input(event: InputEvent) -> void:
 	if mb.pressed:
 		# Position first. A click that is not on the live note is not a mistake,
 		# it is aimed at something else — ignore it rather than judging the note
-		# you were not clicking.
-		if _hits_done < _notes.size() and _visible_note(_hits_done) 				and mb.position.distance_to(_screen(_hits_done)) > HIT_RADIUS:
+		# you were not clicking. A note the camera cannot see has no on-screen
+		# position to click AT ALL, so it is even less legitimate to resolve on
+		# a stray tap than a visible note is — never fold "can't check position"
+		# into "skip the check" (backlog #86 duty 2, fixing the gap duty 3 proved
+		# in _test_backlog86_hit_circle_gui_input_skips_the_position_gate_when_the_note_is_behind_camera).
+		if _hits_done < _notes.size() and not _visible_note(_hits_done):
+			return
+		if _hits_done < _notes.size() \
+				and mb.position.distance_to(_screen(_hits_done)) > HIT_RADIUS:
 			return
 		accept_event()
 		_fire()

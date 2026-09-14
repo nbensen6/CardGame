@@ -2782,6 +2782,29 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 2: fixed the gate duty 3 proved was skipping itself
+  for a note behind the camera.** Last commit did duty 3, so this run opened
+  on duty 2. Duty 3's own test (`_test_backlog86_hit_circle_gui_input_skips_
+  the_position_gate_when_the_note_is_behind_camera`) had already shown that
+  `HitCircle._gui_input()`'s guard — `_hits_done < _notes.size() and
+  _visible_note(_hits_done) and mb.position.distance_to(_screen(_hits_done))
+  > HIT_RADIUS` — ANDs the distance check with `_visible_note`, so a note the
+  camera can no longer see (mid-climb-chain camera drift, or a hold placed
+  awkwardly relative to the fight camera) made the whole AND false and the
+  ignore-branch's `return` never fired: a tap ANYWHERE on screen resolved and
+  graded a note nobody could see, with zero positional accuracy required —
+  exactly what the position gate exists to prevent. That test only pinned the
+  buggy behaviour as "proven, not judged"; fixing it was left as duty 2's job,
+  and this is that fix. Reordered the gate to check `_visible_note` first and
+  unconditionally — a note the camera cannot see now always ignores a press,
+  since there is no legitimate on-screen position to have clicked (this
+  matches the design intent already written in `_screen()`'s own comment: "A
+  note you cannot see is not a timing test, it is a guaranteed miss"). Rewrote
+  duty 3's test in the same commit to assert the corrected behaviour instead
+  of the bug (a far-off press against a hidden note now leaves `_hits_done`
+  unchanged and the window still live, rather than counting as a hit).
+  `run_tests.gd` green, no regressions, no balance numbers touched.
+
 - **2026-09-14 — #86 duty 3: proved `HitCircle._gui_input()`'s position gate
   actually skips itself for a note the camera can't see.** Last commit did
   duty 2, so this run opened on duty 3. The clamp/gating side of `HitCircle`

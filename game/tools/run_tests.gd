@@ -1651,7 +1651,7 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_hit_circle_gui_input_ignores_a_press_far_from_the_live_note()
 	_test_backlog86_hit_circle_screen_clamps_a_note_projecting_above_the_frame()
 	_test_backlog86_hit_circle_screen_leaves_an_onscreen_note_untouched()
-	_test_backlog86_hit_circle_gui_input_skips_the_position_gate_when_the_note_is_behind_camera()
+	_test_backlog86_hit_circle_gui_input_gates_a_press_on_a_note_behind_camera()
 
 	print("")
 	if _failures == 0:
@@ -17373,24 +17373,20 @@ func _test_backlog86_hit_circle_screen_leaves_an_onscreen_note_untouched() -> vo
 	cam.queue_free()
 
 
-## backlog #86 duty 3: _gui_input's own position gate --
-## "`_hits_done < _notes.size() and _visible_note(_hits_done) and
-## mb.position.distance_to(_screen(_hits_done)) > HIT_RADIUS`" -- ANDs the
-## distance check with `_visible_note`, which the two tests above never
-## touch (both keep the live note squarely in front of the camera). That AND
-## means a note the camera can no longer see skips the distance check
-## entirely rather than failing it: `_visible_note` false makes the whole
-## guard false, so the `return` that would otherwise ignore an off-note press
-## never fires and the tap falls through to `_fire()` regardless of where it
-## landed. Unproven either way -- this could as easily have been an oversight
-## that leaves an unreachable note un-ignorable (a press anywhere resolves
-## it) as a deliberate "can't position-gate what you can't project" rule.
-## Prove which one the code actually does: a press nowhere near where the
-## note WOULD project, aimed at a note placed behind the camera, still
-## fires and grades it -- the mirror image of
+## backlog #86 duty 2: _gui_input's own position gate used to AND the distance
+## check with `_visible_note(_hits_done)` -- "`_hits_done < _notes.size() and
+## _visible_note(_hits_done) and mb.position.distance_to(_screen(_hits_done))
+## > HIT_RADIUS`" -- so a note the camera can no longer see made the whole AND
+## false, and the `return` that should have ignored an off-note press never
+## fired: a tap ANYWHERE resolved and graded a note nobody could see. Duty 3
+## proved that gap existed and left it unfixed (its own test pinned the buggy
+## fall-through as correct); this fixes it by gating on visibility FIRST,
+## unconditionally, and pins the corrected behavior: a press nowhere near
+## where the note WOULD project, aimed at a note placed behind the camera, is
+## now ignored rather than resolved -- mirroring
 ## `_hit_circle_gui_input_ignores_a_press_far_from_the_live_note`, which
-## proves the opposite for a visible note.
-func _test_backlog86_hit_circle_gui_input_skips_the_position_gate_when_the_note_is_behind_camera() -> void:
+## already proved the same for a visible note.
+func _test_backlog86_hit_circle_gui_input_gates_a_press_on_a_note_behind_camera() -> void:
 	var cam := Camera3D.new()
 	root.add_child(cam)
 	cam.position = Vector3(0, 0, 10)  # identity rotation: forward is -Z
@@ -17410,8 +17406,10 @@ func _test_backlog86_hit_circle_gui_input_skips_the_position_gate_when_the_note_
 	far_press.pressed = true
 	far_press.position = Vector2(5.0, 5.0)  # a corner nowhere near any sane projection
 	hc._gui_input(far_press)
-	_expect(hc._hits_done == 1,
-		"a press anywhere still fires and grades a note the camera cannot see -- the position gate only applies to a note that is actually visible")
+	_expect(hc._hits_done == 0,
+		"a press cannot resolve a note the camera cannot see -- there is no legitimate on-screen position to have clicked, so the gate must ignore it rather than let it fall through ungated")
+	_expect(hc.is_live(),
+		"the ignored press must leave the window open rather than resolving it as a miss or a hit")
 
 	hc.free()
 	cam.queue_free()
