@@ -2782,6 +2782,38 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 3: proved a multi-hit card's own Poison/Expose/Frail
+  applies once per PLAY, not once per HIT.** Last commit (`17af714`) was duty
+  2, so this run took duty 3. `play_card()`'s multi-hit loop (`combat.gd:925`)
+  already had two documented, previously-fixed bugs where a per-play payoff
+  was wrongly scoped to the hit loop instead — Thorns reflection and
+  weak-point-buck damage both used to fire once per card instead of once per
+  hit, the opposite direction of the risk checked here. This run went the
+  other way: `card.wound`/`card.vulnerable`/`card.frail` each live in their
+  own `if` block placed OUTSIDE that loop, so they SHOULD apply their printed
+  value exactly once per play regardless of `hits` — but nothing had ever
+  driven either shipped card that combines the two (`venom_cascade`, hits:2
+  wound:1; `rivet_gun`, hits:3 vulnerable:1) through `play_card()` at all
+  (`grep -c "venom_cascade\|rivet_gun" tools/run_tests.gd` was 0 before this).
+  Found by an Explore agent tasked with hunting a real gap after ruling out
+  ~15 already-covered candidates. Added three tests: Venom Cascade's Poison
+  lands at 1 (not 2) after both hits resolve, Rivet Gun's Expose lands at 1
+  (not 3) after all three, and — since no shipped card pairs `hits>1` with
+  Frail directly — a meld of Flurry (hits 2) with Crippling Blow (Frail 2)
+  proves the same rule generically (meld sums `frail`, maxes `hits`, so the
+  fused card is a real reachable instance of this shape). Verified the wound
+  test actually catches a regression: temporarily multiplied `card.wound` by
+  `card.hits` in `_apply` (had to use `maxi(card.hits, 1)` directly rather
+  than the loop's own `hit_count`, which is scoped inside the earlier `if
+  base_damage > 0:` block and isn't visible down here — GDScript block
+  scoping, not a real second bug), reran, got exactly one failure (the new
+  wound test, correctly), then reverted and confirmed `combat.gd` was back to
+  a clean `git diff`. No bug found in the shipped code — this closes a real
+  coverage gap next to two mechanics that actually were broken in the
+  opposite direction. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2 (find an error
+  and resolve it).
+
 - **2026-09-14 — #86 duty 2: fixed `Card.archetype_tags()` never reading a
   power card's own payoff, so all four shipped Power cards rolled with an
   EMPTY tag array.** Last commit did duty 3, so this run opened on duty 2.

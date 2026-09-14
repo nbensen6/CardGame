@@ -449,6 +449,9 @@ func _init() -> void:
 	_test_flurry_multi_hit()
 	_test_multistrike_thorns_bites_back_once_per_hit()
 	_test_backlog86_multistrike_sigil_damage_accumulates_across_hits()
+	_test_backlog86_multihit_wound_applies_once_per_play_not_per_hit()
+	_test_backlog86_multihit_vulnerable_applies_once_per_play_not_per_hit()
+	_test_backlog86_multihit_frail_via_meld_applies_once_per_play_not_per_hit()
 	_test_leech_drains_and_heals()
 	_test_leech_heals_nothing_when_fully_blocked()
 	_test_leech_heals_only_what_gets_through_block()
@@ -9384,6 +9387,62 @@ func _test_backlog86_multistrike_sigil_damage_accumulates_across_hits() -> void:
 	combat.play_card(0, _first_playable(combat, 0))  # Flurry: two 9-damage hits, 18 total
 	_expect(ps.foothold == 0 and ps.weak_point_damage == 0,
 		"a multistrike card's weak-point damage sums across every hit before the buck check fires, not just one hit's worth")
+
+
+## backlog #86 duty 3: play_card()'s wound/vulnerable/frail application each live
+## in their own `if` block placed OUTSIDE the multi-hit loop above (unlike the
+## Thorns reflection and sigil-damage accumulation the two tests above this one
+## already proved run once PER HIT) -- so they should apply their printed value
+## exactly once per PLAY, no matter how many hits the same card deals. Two real
+## shipped cards carry this exact shape and neither had ever been driven through
+## play_card(): Venom Cascade ("Deal 2 damage twice ... Poison 1", hits:2 wound:1)
+## and Rivet Gun ("Deal 2 damage 3 times. Expose 1", hits:3 vulnerable:1). Both
+## card faces promise the debuff ONCE; a future edit that "completed the pattern"
+## by moving wound/vulnerable inside the hit loop (the same shape Thorns and
+## sigil-damage were actually found broken in) would triple Rivet Gun's Expose
+## and double Venom Cascade's Poison while every existing test stayed green.
+func _test_backlog86_multihit_wound_applies_once_per_play_not_per_hit() -> void:
+	var venom := func() -> Card: return Content.make_card("venom_cascade")
+	var combat := _new_combat([_deck_of(venom, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var boss_hp0 := combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))  # Venom Cascade: 2 damage x2, Poison 1
+	_expect(combat.boss.hp == boss_hp0 - 4, "Venom Cascade still lands both 2-damage hits")
+	_expect(combat.boss.wound == 1,
+		"a 2-hit card applies its own Poison once per PLAY (1), not once per hit (2) -- venom_cascade carries hits:2 wound:1")
+
+
+func _test_backlog86_multihit_vulnerable_applies_once_per_play_not_per_hit() -> void:
+	var rivet := func() -> Card: return Content.make_card("rivet_gun")
+	var combat := _new_combat([_deck_of(rivet, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var boss_hp0 := combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))  # Rivet Gun: 2 damage x3, Expose 1
+	_expect(combat.boss.hp == boss_hp0 - 6, "Rivet Gun still lands all three 2-damage hits")
+	_expect(combat.boss.vulnerable == 1,
+		"a 3-hit card applies its own Expose once per PLAY (1), not once per hit (3) -- rivet_gun carries hits:3 vulnerable:1")
+
+
+## No shipped card combines hits>1 with Frail directly, but meld makes the
+## combination reachable exactly like it did for the Poison/Thorns/sigil bugs
+## `_meld_cards()`'s own comments already document: fusing Flurry (hits 2, no
+## Frail) with Crippling Blow (hits 1, Frail 2) sums frail (0+2=2) while hits
+## takes the max (2), producing a real fused card with the same shape as Venom
+## Cascade/Rivet Gun above -- proving the "once per play" rule generically,
+## not just for the two authored cards that happen to combine it themselves.
+func _test_backlog86_multihit_frail_via_meld_applies_once_per_play_not_per_hit() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_meld_card(), Content.make_card("flurry"), Content.make_card("crippling_blow")]
+	ps.energy = 9
+	combat.play_card(0, 0, true, 1, 2)  # meld Flurry + Crippling Blow
+	var fused: Card = ps.hand[0]
+	_expect(fused.hits == 2 and fused.frail == 2,
+		"the fused card keeps Flurry's 2 hits and carries Crippling Blow's Frail 2 (meld sums frail, maxes hits)")
+	var boss_hp0 := combat.boss.hp
+	combat.play_card(0, 0, true)  # play the fused card itself
+	_expect(combat.boss.hp == boss_hp0 - (4 + 5) * 2,
+		"the fused card still lands both hits' worth of damage (Flurry 4 + Crippling Blow 5, twice)")
+	_expect(combat.boss.frail == 2,
+		"a 2-hit meld applies its own Frail once per PLAY (2), not once per hit (4)")
 
 
 func _test_leech_drains_and_heals() -> void:
