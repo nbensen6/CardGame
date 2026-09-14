@@ -1537,6 +1537,14 @@ func _init() -> void:
 	_test_backlog86_full_card_rules_body_keeps_its_mouse_filter_after_layering()
 	_test_backlog86_body_font_size_uses_the_big_no_cost_box_ratio_when_set()
 
+	# backlog #86 duty 3: _rarity_pips' own doc comment promises "one common,
+	# two uncommon, three rare" as a colour-blind-safe count -- see the tests'
+	# own header comment for why nothing had ever called _rarity_of/
+	# _rarity_pips before this.
+	_test_backlog86_rarity_pips_count_matches_the_tier_for_every_rarity()
+	_test_backlog86_rarity_pips_falls_back_to_one_common_gem_for_missing_or_unknown_rarity()
+	_test_backlog86_rarity_of_gem_colour_actually_differs_per_tier()
+
 	# backlog #86 duty 3: DeckView._wants_toggle is the rule behind the bug
 	# _test_backlog86_deck_view_step_builds_a_toggle_the_open_pane_never_needed
 	# regression-tests end to end against a real node (that test's own header
@@ -18815,6 +18823,55 @@ func _test_backlog86_body_font_size_uses_the_big_no_cost_box_ratio_when_set() ->
 		"a no_cost (\"big\") card must shrink by the wide-box ratio (191 -> 161), not the normal-box one")
 	_expect(CardView.body_font_size(normal, 191, true) == 159,
 		"an ordinary card must shrink by the normal-box ratio (191 -> 159), distinct from the big-box result above")
+
+
+## backlog #86 duty 3: _rarity_pips' own doc comment (card_view.gd:1649-1652)
+## makes a specific, testable promise -- "one common, two uncommon, three
+## rare... count rather than colour alone, because colour alone fails for the
+## ~8% of players with a red-green deficiency" -- and until now nothing in the
+## suite ever called _rarity_of or _rarity_pips: RARITY's three dict entries,
+## the pip counts and colours they carry, and the fallback in _rarity_of's own
+## `.get(..., RARITY["common"])` for a missing or unrecognized rarity string
+## had zero coverage. A swapped uncommon/rare entry, or a `.get()` fallback
+## change that let an unknown rarity return an empty Dictionary instead of the
+## common default, would silently make a real card's rarity pips lie -- or
+## crash the `range(int(r["pips"]))` loop that builds them -- with nothing
+## here to notice.
+func _test_backlog86_rarity_pips_count_matches_the_tier_for_every_rarity() -> void:
+	var cv := CardView.new()
+	var common: Control = cv._rarity_pips({"rarity": "common"})
+	var uncommon: Control = cv._rarity_pips({"rarity": "uncommon"})
+	var rare: Control = cv._rarity_pips({"rarity": "rare"})
+	_expect(common.get_child_count() == 1, "a common card shows exactly one rarity gem")
+	_expect(uncommon.get_child_count() == 2, "an uncommon card shows exactly two rarity gems")
+	_expect(rare.get_child_count() == 3, "a rare card shows exactly three rarity gems")
+	common.free()
+	uncommon.free()
+	rare.free()
+	cv.free()
+
+
+func _test_backlog86_rarity_pips_falls_back_to_one_common_gem_for_missing_or_unknown_rarity() -> void:
+	var cv := CardView.new()
+	var missing: Control = cv._rarity_pips({})
+	var unknown: Control = cv._rarity_pips({"rarity": "legendary"})
+	_expect(missing.get_child_count() == 1,
+		"a card dict with no rarity key at all must not crash or vanish -- it falls back to a single common gem")
+	_expect(unknown.get_child_count() == 1,
+		"an unrecognized rarity string falls back to the common gem count too, not zero and not a crash")
+	missing.free()
+	unknown.free()
+	cv.free()
+
+
+func _test_backlog86_rarity_of_gem_colour_actually_differs_per_tier() -> void:
+	var cv := CardView.new()
+	var common_pip: Color = cv._rarity_of({"rarity": "common"})["pip"]
+	var uncommon_pip: Color = cv._rarity_of({"rarity": "uncommon"})["pip"]
+	var rare_pip: Color = cv._rarity_of({"rarity": "rare"})["pip"]
+	_expect(common_pip != uncommon_pip and uncommon_pip != rare_pip and common_pip != rare_pip,
+		"the three rarity tiers must each carry a distinct pip colour -- count is the colour-blind-safe cue, but colour still needs to differ for anyone who CAN see it")
+	cv.free()
 
 
 ## backlog #86 duty 3: GameHost._card_icon's fallback ladder, driven with

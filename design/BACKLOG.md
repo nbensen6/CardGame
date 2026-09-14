@@ -2782,6 +2782,28 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 3: proved `CardView._rarity_pips`' own "one common,
+  two uncommon, three rare" promise, and its fallback for a missing/unknown
+  rarity.** Last commit did duty 2, so this run took duty 3. Grepping
+  `_rarity_of`/`_rarity_pips`/`RARITY` across `run_tests.gd` turned up zero
+  hits before this — every other static/pure helper in `card_view.gd`
+  (`shape_text`, `_markup`, `fire_quality`, `body_font_size`, the window-art
+  turntable math) already had coverage nearby; this pair, which decides the
+  colour-blind-safe rarity gem row the card face's own doc comment describes
+  ("count rather than colour alone, because colour alone fails for the ~8% of
+  players with a red-green deficiency"), had none at all. Spawned an Explore
+  agent first to hunt for a genuinely untested rule rather than re-treading
+  the ~50 mechanics this duty has already covered per this file's own log —
+  it surfaced this one plus a backup candidate (`Music.play`/`refresh`'s
+  resume-after-unmute path) that I didn't need. Added three tests: pip count
+  for each of the three real rarities, the fallback to a single common gem
+  for both a missing `"rarity"` key and an unrecognized string (proving
+  `_rarity_of`'s `.get(..., RARITY["common"])` fallback holds rather than
+  returning an empty Dictionary and crashing the pip loop), and that the
+  three tiers' pip colours are actually distinct from each other. No bug
+  found — the code already matched its own doc comment — so this is coverage
+  only. `run_tests.gd` green, all six new assertions pass.
+
 - **2026-09-14 — #86 duty 2: fixed an add's own conditional move ("when")
   reading an empty board context, so it could never fire its reactive
   branch.** Last commit did duty 3, so this run opened on duty 2. Every
