@@ -572,6 +572,7 @@ func _init() -> void:
 	_test_roped_ally_climbs_when_pulled_by_grapple_arm()
 	_test_roped_ally_climbs_when_fed_by_poison_lift()
 	_test_pull_ally_survives_this_plays_own_climb()
+	_test_pull_ally_survives_the_allys_own_ally_grip_on_the_same_card()
 	_test_character_attack_bonus()
 	_test_build_creates_grapple()
 	_test_belay_scales_with_height()
@@ -11104,6 +11105,38 @@ func _test_pull_ally_survives_this_plays_own_climb() -> void:
 		"pull_ally: this play's own climb (fused in by Meld) must not shrink the grapple gap can_play() already approved")
 
 
+## #86 duty 3: the test above only proves the fix's FIRST case — this play's
+## OWN climb shrinking the gap. Commit 414f9c5's own message named a second,
+## symmetric case that never got a test: an ally_grip on the SAME fused card
+## lifting the ally's foothold before pull_ally reads it. Meld Hoist
+## (ally_grip 3, no grip of its own) into Grappling Arm (pull_ally 3):
+## play_card resolves ally_grip first (combat.gd's "lifts the ally" branch
+## runs before the "grapple the ally" branch), so by the time the pull_ally
+## block runs, the ally's LIVE foothold already equals the caster's — a live
+## gap of 0, which is exactly what re-reading live footholds would refuse,
+## even though can_play() approved a real gap of 3 off the pre-play snapshot.
+## The final foothold is 3 either way (ally_grip alone gets them there), so
+## only the LOG — which line actually fired — proves whether the grapple ran
+## or silently whiffed.
+func _test_pull_ally_survives_the_allys_own_ally_grip_on_the_same_card() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(200))
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 3  # exactly at Grappling Arm's reach (3) above the ally at 0
+	ps.hand = [_meld_card(), _grapple_arm(), _hoist()]  # fuses to ally_grip 3 + pull_ally 3
+	ps.energy = 5
+	combat.play_card(0, 0, true, 1, 2)  # meld Grappling Arm + Hoist
+	combat.play_card(0, 0)  # play the fused card: lifts the ally +3 first, then must still pull
+	var grappled := false
+	var whiffed := false
+	for line in combat.log:
+		if String(line).begins_with("P1 grapples"):
+			grappled = true
+		if String(line).find("no ally in grapple range") != -1:
+			whiffed = true
+	_expect(combat.players[0].foothold == 3 and combat.players[1].foothold == 3 and grappled and not whiffed,
+		"pull_ally: the ally's own ally_grip (fused in by Meld) lifting them first must not close the grapple gap can_play() already approved")
+
+
 func _test_roped_ally_climbs_when_fed_by_poison_lift() -> void:
 	var combat := _new_combat_p([_deck_of(_venom_dart, 10), _deck_of(_slash, 10)], 42,
 		_dummy_boss(200), [{"type": "poison_lift", "value": 2}, {"type": "ally_climb", "value": 1}])
@@ -12378,6 +12411,8 @@ func _jetpack() -> Card:
 	return Card.from_dict({"id": "goblin_jetpack", "name": "Goblin Jetpack", "type": "skill", "cost": 2, "prepare": "jetpack", "target": "enemy"})
 func _grapple_arm() -> Card:
 	return Card.from_dict({"id": "grappling_arm", "name": "Grappling Arm", "type": "skill", "cost": 1, "pull_ally": 3, "target": "ally"})
+func _hoist() -> Card:
+	return Card.from_dict({"id": "hoist", "name": "Hoist", "type": "skill", "cost": 1, "ally_grip": 3, "target": "ally"})
 func _build_mech() -> Card:
 	return Card.from_dict({"id": "build_mech", "name": "Build Mech", "type": "skill", "cost": 1, "block": 2, "block_per_play": 2})
 func _cleave() -> Card:

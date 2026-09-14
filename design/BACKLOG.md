@@ -2782,6 +2782,33 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 3: the symmetric half of the pull_ally fix
+  (previous entry, `414f9c5`) had no regression test of its own.** Last
+  commit was duty 2 (that same pull_ally fix), so this turn opened on duty 3.
+  Spawned an Explore agent to find a genuinely untested rule rather than a
+  fourth case of something already covered — nearly everything it sampled
+  across `/core` and the view layer (energy_handoff, every ascension tier,
+  Block/Buffer/Intangible/Plated-Armour interactions, map/relic/card/potion
+  reachability, `_road_edges`, `DeckView._wants_toggle`, `location_3d`'s
+  static helpers) turned out already exhaustively tested from ~29 prior duty-3
+  passes. It landed on the one real gap: `414f9c5`'s own commit message named
+  two distinct causes of the same bug — this play's own `grip` shrinking the
+  gap (tested) and, symmetrically, an `ally_grip`/`sac_ally_grip`/
+  `poison_lift` on the SAME fused card lifting the ally's live foothold
+  before the `pull_ally` block reads it (never tested). Added
+  `_test_pull_ally_survives_the_allys_own_ally_grip_on_the_same_card`: melds
+  Hoist (`ally_grip` 3, no `grip`) into Grappling Arm (`pull_ally` 3) — since
+  `ally_grip` resolves before `pull_ally` in `play_card()`, the ally's live
+  foothold already equals the caster's by the time the grapple check runs, so
+  a live-foothold gap check reads 0 and refuses, while the actual (fixed)
+  code validates against the pre-play snapshot and correctly still fires. The
+  final foothold is 3 either way (ally_grip alone gets them there), so the
+  test asserts on `combat.log` — which line actually printed — not just the
+  number. Confirmed it fails against the pre-fix gap computation (reverted
+  `combat.gd`'s snapshot read to live footholds, reran, watched it fail
+  alongside the existing sibling test, restored the fix) before committing.
+  Full suite green.
+
 - **2026-09-14 — #86 duty 2: `pull_ally` re-validated its own grapple gap AFTER
   this same play's own climb had already moved it, so a card carrying both
   `grip` and `pull_ally` (only reachable via Meld — e.g. Scramble fused with
