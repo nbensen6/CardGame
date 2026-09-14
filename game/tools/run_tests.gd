@@ -28,6 +28,7 @@ func _init() -> void:
 	_test_backlog40_min_height_condition_picks_fallback_when_unmet()
 	_test_backlog86_max_height_condition_picks_fallback_when_unmet()
 	_test_backlog40_at_sigil_condition_needs_a_hunter_on_it()
+	_test_backlog86_at_sigil_condition_still_fires_past_the_sigil()
 	_test_backlog40_undefended_condition_reads_block()
 	_test_backlog40_missing_fallback_defaults_safely()
 	_test_backlog40_conditional_move_resolves_through_a_real_enemy_turn()
@@ -1734,6 +1735,23 @@ func _test_backlog40_at_sigil_condition_needs_a_hunter_on_it() -> void:
 	var on_sigil := b.current_move({"footholds": [1, 4], "blocks": [0, 0]})
 	_expect(int(off_sigil["value"]) == 10, "no hunter on the sigil -> fallback")
 	_expect(int(on_sigil["value"]) == 14, "a hunter camped on the sigil -> reactive bite")
+
+
+## #86 duty 2: COND_AT_SIGIL used to compare foothold == weak_point_height,
+## while Combat.sigil_reached() (the truth every other system reads) treats
+## foothold >= weak_point_height as "at the sigil". Foothold has no cap at
+## the sigil (ally lifts, climb potions, plain climbing all push it past),
+## so a hunter who climbed one Height beyond the sigil silently fell back to
+## the weaker move even though sigil_reached() still reported them there.
+func _test_backlog86_at_sigil_condition_still_fires_past_the_sigil() -> void:
+	var b := Boss.new("B", 30)
+	b.weak_point_height = 4
+	b.moves = [{"type": "attack", "value": 14,
+		"when": {"type": "at_sigil"},
+		"fallback": {"type": "attack", "value": 10}}]
+	var past_sigil := b.current_move({"footholds": [1, 6], "blocks": [0, 0]})
+	_expect(int(past_sigil["value"]) == 14,
+		"a hunter climbed past the sigil is still at_sigil, not off it")
 
 
 func _test_backlog40_undefended_condition_reads_block() -> void:

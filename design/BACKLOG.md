@@ -2782,6 +2782,29 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 2: `Boss._condition_met()`'s `at_sigil` condition
+  used `==` where the truth it's supposed to mirror uses `>=`.** Last commit
+  did duty 3, so this run opened on duty 2. `Combat.sigil_reached()`
+  (`combat.gd:197`) — the single source every other system reads to ask "is
+  this hunter at the weak point" — treats `foothold >= weak_point_height` as
+  reached, because foothold has no ceiling at the sigil (a plain climbing
+  card, an ally's `ally_grip`/`sac_ally_grip`/`poison_lift`/`pull_ally`, or a
+  climb potion can all push a hunter's foothold past it, and nothing pulls it
+  back down to exactly `weak_point_height`). But `boss.gd`'s `COND_AT_SIGIL`
+  branch — the check a boss's own `"when":{"type":"at_sigil"}` telegraphed
+  move reads — compared `foothold == weak_point_height`, so the instant a
+  hunter climbed one Height past the sigil the reactive move silently fell
+  back to its weaker version even though `sigil_reached()` still reported
+  them there. Two shipped beasts author this condition and were quietly
+  softened by it: Crag Pup's 14-vs-10 (and hurt-phase 12-vs-9) attack, and
+  Brine Urchin's 15-to-everyone sweep vs. a lone 9. Every existing `at_sigil`
+  test set foothold exactly equal to `weak_point_height`, so the `==`/`>=`
+  mismatch had zero coverage. Fixed the comparison to `>=` and added
+  `_test_backlog86_at_sigil_condition_still_fires_past_the_sigil`, which sets
+  a foothold two Heights above the sigil and asserts the reactive move still
+  fires. `run_tests.gd` green (1 new test), no balance numbers touched — this
+  restores an already-authored number, it doesn't tune one.
+
 - **2026-09-14 — #86 duty 3: proved `HitCircle._screen()`'s own doc-promised
   edge clamp actually holds.** Last commit did duty 2, so this run opened on
   duty 3. `combat_3d.gd`'s pure static helpers turned out exhaustively covered

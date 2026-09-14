@@ -84,8 +84,14 @@ func _condition_met(cond: Dictionary, context: Dictionary) -> bool:
 		COND_AT_SIGIL:
 			if weak_point_height <= 0:
 				return false
+			# >= , not == : Combat.sigil_reached() (combat.gd:197) treats any
+			# foothold at or past the sigil as "at it" — foothold can climb past
+			# weak_point_height (ally lifts, climb potions, FOOTHOLD_MAX has no
+			# cap at the sigil) without ever coming back down to it exactly, so
+			# == silently stopped firing "when":{"type":"at_sigil"} moves for a
+			# hunter who climbed past the sigil instead of stopping on it.
 			for h in footholds:
-				if int(h) == weak_point_height:
+				if int(h) >= weak_point_height:
 					return true
 			return false
 		COND_UNDEFENDED:
