@@ -2782,6 +2782,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 2: fixed `Card.archetype_tags()` never reading a
+  power card's own payoff, so all four shipped Power cards rolled with an
+  EMPTY tag array.** Last commit did duty 3, so this run opened on duty 2.
+  Spawned an Explore agent to read `game/core/*.gd` and `game/net/*.gd` for a
+  genuine first-pass-hole or two-copies-of-truth bug, ruling out the view/UI
+  files (no screen here) and everything this rotation has already fixed
+  (the several `archetype_tags()` OR-list gaps, `COND_AT_SIGIL`, the add
+  board-context bug directly above). It came back with a real one:
+  `archetype_tags()`'s dozen branches all key off a card's PRINTED fields
+  (`block`, `strength`, `wound`, ...) and never once read `power_effect`/
+  `power_value` — the whole payoff of a `type: "power"` card, paid out every
+  turn end by `Combat._handle_power_effects()`. So Iron Husk (block 3),
+  Old Grudge (strength 1) and Seeping Venom (wound 2) all returned `[]` from
+  `archetype_tags()`, silently defeating backlog #72's reward-lean for every
+  power card in the game regardless of how far a hunter's deck already leaned
+  into that exact mechanic — and there was no "thorns" category at all, so
+  Barbed Hide (power_effect thorns) AND Spinebrace (a flat `thorns` field,
+  no power involved) were both untagged too. Fixed with one generic rule
+  rather than four special cases: added `power_effect == "block"/"strength"/
+  "wound"` to the matching existing OR-chains, plus new `"thorns"` (keyed off
+  either the printed `thorns` field or `power_effect == "thorns"`, catching
+  Spinebrace for free) and `"heal"` (for `power_effect == "heal"`, unused by
+  any card yet but already a live case in `_handle_power_effects`'s own
+  match) categories. Added a regression test covering all four shipped power
+  cards plus Spinebrace, a synthetic `power_effect=heal` card, and an
+  end-to-end check that Iron Husk's `reward_weight()` actually rises for a
+  Block-leaning deck now that it carries the tag (55 -> 75, confirmed it was
+  a no-op before the fix by reverting and rerunning). `run_tests.gd` green,
+  no balance tuning.
+
 - **2026-09-14 — #86 duty 3: proved `CardView._rarity_pips`' own "one common,
   two uncommon, three rare" promise, and its fallback for a missing/unknown
   rarity.** Last commit did duty 2, so this run took duty 3. Grepping

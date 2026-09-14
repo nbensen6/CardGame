@@ -384,14 +384,14 @@ func archetype_tags() -> Array:
 		tags.append("climb")
 	if rhythm > 0 or damage_per_rhythm > 0 or grip_per_rhythm > 0 or ally_grip_per_rhythm > 0:
 		tags.append("rhythm")
-	if wound > 0 or damage_per_wound > 0:
+	if wound > 0 or damage_per_wound > 0 or power_effect == "wound":
 		tags.append("poison")
 	if block > 0 or ally_block > 0 or timed_block > 0 or timed_ally_block > 0 \
 			or plated_armour > 0 or buffer > 0 or intangible > 0 \
 			or block_per_play > 0 or block_per_x > 0 \
-			or block_per_exhausted > 0 or block_per_discarded > 0:
+			or block_per_exhausted > 0 or block_per_discarded > 0 or power_effect == "block":
 		tags.append("block")
-	if strength > 0:
+	if strength > 0 or power_effect == "strength":
 		tags.append("strength")
 	if dexterity > 0:
 		tags.append("dexterity")
@@ -407,4 +407,8 @@ func archetype_tags() -> Array:
 		tags.append("discard")
 	if vulnerable > 0 or damage_per_vulnerable > 0:
 		tags.append("vulnerable")
+	if thorns > 0 or power_effect == "thorns":
+		tags.append("thorns")
+	if power_effect == "heal":
+		tags.append("heal")
 	return tags

@@ -216,6 +216,7 @@ func _init() -> void:
 	_test_backlog86_archetype_tags_recognise_grip_per_rhythm_only_cards()
 	_test_backlog86_archetype_tags_recognise_damage_per_ally_foothold_and_timed_ally_block()
 	_test_backlog86_archetype_tags_recognise_block_per_exhausted_and_block_per_discarded_only_cards()
+	_test_backlog86_archetype_tags_recognise_power_cards_by_their_power_effect()
 	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
 	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
@@ -5360,6 +5361,65 @@ func _test_backlog86_archetype_tags_recognise_block_per_exhausted_and_block_per_
 	_expect(refuse_wall_tags.has("block") and refuse_wall_tags.has("discard"),
 		"Refuse Wall (flat block AND block_per_discarded) is still tagged block and discard [tags=%s]"
 			% [refuse_wall_tags])
+
+
+## Backlog #86 duty 2 -- every branch of archetype_tags() reads a card's
+## printed numeric/flag fields (block, strength, wound, ...); none of them
+## ever read power_effect/power_value, the whole payoff of a `type: "power"`
+## card (Combat._handle_power_effects, resolved every turn end). So all four
+## shipped power cards -- Iron Husk (block), Old Grudge (strength), Seeping
+## Venom (wound), Barbed Hide (thorns) -- rolled with an EMPTY tag array,
+## silently defeating backlog #72's reward lean for every one of them no
+## matter how deep a hunter's deck already leaned into that mechanic. There
+## was also no "thorns" category at all, so Spinebrace (a `thorns` field set
+## directly, no power involved) was untagged too -- same generic rule fixes
+## both a power-driven grant and a printed-field grant at once.
+func _test_backlog86_archetype_tags_recognise_power_cards_by_their_power_effect() -> void:
+	var iron_husk_tags: Array = Content.card_tags("iron_husk")
+	_expect(iron_husk_tags.has("block"),
+		"Iron Husk (power_effect=block) is tagged block [tags=%s]" % [iron_husk_tags])
+
+	var old_grudge_tags: Array = Content.card_tags("old_grudge")
+	_expect(old_grudge_tags.has("strength"),
+		"Old Grudge (power_effect=strength) is tagged strength [tags=%s]" % [old_grudge_tags])
+
+	var seeping_venom_tags: Array = Content.card_tags("seeping_venom")
+	_expect(seeping_venom_tags.has("poison"),
+		"Seeping Venom (power_effect=wound) is tagged poison [tags=%s]" % [seeping_venom_tags])
+
+	var barbed_hide_tags: Array = Content.card_tags("barbed_hide")
+	_expect(barbed_hide_tags.has("thorns"),
+		"Barbed Hide (power_effect=thorns) is tagged thorns [tags=%s]" % [barbed_hide_tags])
+
+	# a printed `thorns` field (no power involved) hits the same new category.
+	var spinebrace_tags: Array = Content.card_tags("spinebrace")
+	_expect(spinebrace_tags.has("block") and spinebrace_tags.has("thorns"),
+		"Spinebrace (flat block AND a printed thorns field) is tagged block and thorns [tags=%s]"
+			% [spinebrace_tags])
+
+	# a bare power_effect=heal card (no shipped card uses it yet, but
+	# Combat._handle_power_effects already resolves it) still gets a tag
+	# rather than silently falling through like the four above did.
+	var heal_power := Card.new()
+	heal_power.type = "power"
+	heal_power.power_effect = "heal"
+	heal_power.power_value = 2
+	var heal_power_tags: Array = heal_power.archetype_tags()
+	_expect(heal_power_tags.has("heal") and heal_power_tags.size() == 1,
+		"a bare power_effect=heal card is tagged heal and nothing else [tags=%s]" % [heal_power_tags])
+
+	# reward-lean end to end, same shape as _test_backlog72_reward_roll_leans_
+	# toward_a_tag_already_in_the_deck: a deck already carrying Block gives
+	# Iron Husk a real lean bonus now that it is tagged, where before its
+	# empty tag array meant reward_weight()'s tag_bonus loop never ran.
+	var run := _map_run()
+	var block_deck_tags: Dictionary = run._tag_counts(_deck_of(_dig_in, 10))
+	var iron_husk_rarity: String = Content.card_rarity("iron_husk")
+	var flat_weight: int = Run.reward_weight(iron_husk_rarity, iron_husk_tags, {})
+	var leaned_weight: int = Run.reward_weight(iron_husk_rarity, iron_husk_tags, block_deck_tags)
+	_expect(leaned_weight > flat_weight,
+		"Iron Husk's reward weight rises for a Block-heavy deck now that it carries the block tag [flat=%s leaned=%s]"
+			% [flat_weight, leaned_weight])
 
 
 ## Backlog #72: a card reward roll should lean toward the archetype a hunter is
