@@ -209,6 +209,7 @@ func _init() -> void:
 	_test_backlog86_archetype_tags_recognise_a_timed_grip_only_card()
 	_test_backlog86_archetype_tags_cover_every_branch_not_just_the_first_four()
 	_test_backlog86_archetype_tags_recognise_block_per_play_and_block_per_x_only_cards()
+	_test_backlog86_archetype_tags_recognise_grip_per_rhythm_only_cards()
 	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
 	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
@@ -5163,6 +5164,34 @@ func _test_backlog86_archetype_tags_recognise_block_per_play_and_block_per_x_onl
 	var build_mech_tags: Array = _build_mech().archetype_tags()
 	_expect(build_mech_tags.has("block") and build_mech_tags.size() == 1,
 		"Build Mech (flat block AND block_per_play) is still tagged block, once [tags=%s]" % [build_mech_tags])
+
+
+## backlog #86 duty 2: the exact same "missing from its own OR-list" shape as
+## the two tests above, on the "climb" branch this time. `grip_per_rhythm`
+## (bonus Height per Rhythm built this turn) grants Foothold outright but was
+## never listed in archetype_tags()'s "climb" OR-chain -- only its ALLY
+## counterpart, `ally_grip_per_rhythm`, was (card.gd's own comment on the
+## field says the two can't be inferred from each other, so one being in the
+## chain never covered the other). It stayed hidden because every shipped
+## card carrying grip_per_rhythm (Hop, Flurry Hop, Grand Leap, Long Jump,
+## Crescendo, Hopscotch, Ripple Leap) also carries a flat `grip` value that
+## separately trips the branch. An isolated card with grip_per_rhythm and no
+## flat grip has no such cover: it would roll through backlog #72's
+## reward-lean with no "climb" tag at all, so a hunter building a climbing
+## deck got zero lean toward it.
+func _test_backlog86_archetype_tags_recognise_grip_per_rhythm_only_cards() -> void:
+	var rhythm_climb_only := Card.new()
+	rhythm_climb_only.grip_per_rhythm = 2
+	var rhythm_climb_tags: Array = rhythm_climb_only.archetype_tags()
+	_expect(rhythm_climb_tags.has("climb") and rhythm_climb_tags.has("rhythm") and rhythm_climb_tags.size() == 2,
+		"a bare card with only grip_per_rhythm set is tagged climb and rhythm [tags=%s]" % [rhythm_climb_tags])
+
+	# masking case: Hop ALSO carries a flat `grip`, so this alone would have
+	# kept passing even with grip_per_rhythm missing from the OR-list -- kept
+	# here to prove the fix doesn't regress the already-masked card.
+	var hop_tags: Array = Content.card_tags("hop")
+	_expect(hop_tags.has("climb") and hop_tags.has("rhythm"),
+		"Hop (flat grip AND grip_per_rhythm) is still tagged climb and rhythm [tags=%s]" % [hop_tags])
 
 
 ## Backlog #72: a card reward roll should lean toward the archetype a hunter is

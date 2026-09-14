@@ -2782,6 +2782,31 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 2: `grip_per_rhythm` was missing from
+  `archetype_tags()`'s own "climb" OR-chain.** Last commit was duty 3, so this
+  turn opened on duty 2. Spawned an Explore agent to hunt for a real
+  first-pass-hole or two-copies-of-one-truth bug; most of what it flagged in
+  `combat.gd`/`game_host.gd`/etc. turned out already fixed by ~24 prior duty-2
+  passes. It landed on the same "masked OR-chain" shape this file's own tests
+  already caught and fixed twice (`timed_grip` on "climb", then
+  `block_per_play`/`block_per_x` on "block"): `grip_per_rhythm` grants
+  Foothold outright but was never in the "climb" branch, only "rhythm" —
+  while its own sibling field, `ally_grip_per_rhythm`, WAS in both. Confirmed
+  it's live-masked today: every shipped card with `grip_per_rhythm` (Hop,
+  Flurry Hop, Grand Leap, Long Jump, Crescendo, Hopscotch, Ripple Leap) also
+  carries flat `grip`, so the missing branch never showed up in play — an
+  isolated card with only `grip_per_rhythm` set would roll through backlog
+  #72's reward-lean with no "climb" tag at all. The agent's other candidate
+  (`block_per_exhausted`/`block_per_discarded` also missing from "block")
+  turned out to be intentional design, not a bug — `run_tests.gd`'s own
+  `trash_strike` test confirms a "per_discarded" field's resource is tagged
+  by its trigger mechanic (`discard`/`burn`), not by the resource type, so
+  left it alone. Added `card.gd`'s one-line OR-list fix plus
+  `_test_backlog86_archetype_tags_recognise_grip_per_rhythm_only_cards`
+  (isolated card, plus Hop kept as the already-masked regression case),
+  mirroring the existing `block_per_play`/`block_per_x` test exactly.
+  `run_tests.gd` green.
+
 - **2026-09-14 — #86 duty 3: the symmetric half of the pull_ally fix
   (previous entry, `414f9c5`) had no regression test of its own.** Last
   commit was duty 2 (that same pull_ally fix), so this turn opened on duty 3.
