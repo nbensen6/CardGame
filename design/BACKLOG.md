@@ -2782,6 +2782,31 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 2: the WON/LOST screen never played `ui/sfx.gd`'s own
+  authored "win"/"lose" stingers.** Last commit did duty 3, so this run opened
+  on duty 2. Read `game/views/overworld_3d.gd` and `game/views/location_3d.gd`
+  end to end (fresh ground — neither had been swept whole before), plus
+  targeted checks of `console.gd`, `menu.gd`, the `net/*` transport files,
+  `sfx.gd`/`music.gd`, and `game_host.gd`'s less-visited snapshot helpers.
+  Several leads turned out already fixed or intentional (the shop/campfire gate
+  mirrors between `location_3d.gd` and `run.gd` are in sync via `Run.MIN_DECK`;
+  a reward card missing its `"character"` field is documented intentional).
+  The real find: `sfx.gd`'s `DEFS` has authored a distinct "win" (860Hz,
+  cheerful) and "lose" (120Hz, mournful) tone, but grepping every literal
+  `Sfx.play("...")` call site in `game/**` never turns up either — only
+  card/climb/end_turn/lock/reach_sigil/reward/shake are ever played. The one
+  moment a whole run builds toward, felling the last Titan or a wipe, has
+  played in total silence since the sound palette was baked. Same shape as the
+  already-fixed `combat.ogg` gap: an authored asset with no reachable call
+  site. Added `Location3D.sfx_for_over(phase)` (static, mirrors
+  `Game3D.music_for_phase()`'s idiom) and wired it into `_stage()`, the choke
+  point that only runs once per phase transition (guarded by `_refresh()`'s
+  own `phase != _built` check), so the jingle can't be retriggered by an
+  ally's turn or an unrelated snapshot while the screen stays up. Four new
+  tests prove the mapping and that both names are real `Sfx.DEFS` entries.
+  `run_tests.gd` green (4 new tests, 979 total), no regressions, no balance
+  numbers touched.
+
 - **2026-09-14 — #86 duty 3: proved `_meld_cards()`'s cost floor
   (`maxi(0, a.cost + b.cost - 1)`) actually holds when both melded cards are
   free.** Last commit did duty 2, so this run opened on duty 3. Every one of

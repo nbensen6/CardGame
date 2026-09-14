@@ -792,6 +792,13 @@ func _init() -> void:
 	_test_backlog86_stakes_describes_sharpening_a_card()
 	_test_backlog86_stakes_describes_a_curse_card()
 	_test_backlog86_stakes_describes_a_bold_trade()
+	# backlog #86 duty 2: location_3d.sfx_for_over -- the WON/LOST screen never
+	# played ui/sfx.gd's own authored "win"/"lose" stingers, same shape as the
+	# already-fixed combat.ogg gap (an asset with no reachable call site).
+	_test_backlog86_sfx_for_over_picks_win_for_a_won_run()
+	_test_backlog86_sfx_for_over_picks_lose_for_a_lost_run()
+	_test_backlog86_sfx_for_over_is_silent_for_every_other_phase()
+	_test_backlog86_sfx_for_over_names_are_real_sfx_events()
 	# backlog #86 duty 3: location_3d._felled_height sizes the beast's body on
 	# the reward screen from the fight it just lost -- how far you had to climb
 	# it, not the raw HP bar. Lifted static (it never touched self) and given
@@ -15179,6 +15186,40 @@ func _test_backlog86_stakes_describes_a_bold_trade() -> void:
 		"a_bold_trade's stakes must not render blank just because its own label doesn't name them")
 	_expect(Location3D._stakes(eff) == "(sharpen a card  ·  +1 %s)" % Content.make_card("bruised_grip").name,
 		"a_bold_trade's two effects both show, in field order, same as any other multi-effect choice")
+
+
+## backlog #86 duty 2: ui/sfx.gd's DEFS authors a "win" and a "lose" tone, but
+## nothing in game/** ever called Sfx.play() with either — the WON/LOST screen
+## set its text and never reached for sound. Same shape as the already-fixed
+## combat.ogg gap: an authored asset with no reachable call site. Fixed by
+## wiring Location3D.sfx_for_over() into _stage() (the same once-per-phase
+## choke point music_for_phase() uses off _sync()); this proves the mapping
+## itself, headless, the same way _test_backlog86_music_for_phase_* proves
+## Game3D's sibling mapping.
+func _test_backlog86_sfx_for_over_picks_win_for_a_won_run() -> void:
+	_expect(Location3D.sfx_for_over("won") == "win",
+		"the last Titan falling must trigger the authored 'win' stinger, not silence")
+
+
+func _test_backlog86_sfx_for_over_picks_lose_for_a_lost_run() -> void:
+	_expect(Location3D.sfx_for_over("lost") == "lose",
+		"a wiped run must trigger the authored 'lose' stinger, not silence")
+
+
+func _test_backlog86_sfx_for_over_is_silent_for_every_other_phase() -> void:
+	for phase in ["select", "map", "combat", "reward", "event", "campfire", "shop", ""]:
+		_expect(Location3D.sfx_for_over(phase) == "",
+			"phase '%s' is not a run ending and must not fire an ending stinger" % phase)
+
+
+## The mapping alone would still pass if the authored tone names it returns
+## didn't actually exist — this closes that gap by checking both stingers are
+## real entries in ui/sfx.gd's own DEFS, the table Sfx.play() reads from.
+func _test_backlog86_sfx_for_over_names_are_real_sfx_events() -> void:
+	_expect(Sfx.DEFS.has(Location3D.sfx_for_over("won")),
+		"'win' must be a real event ui/sfx.gd knows how to play")
+	_expect(Sfx.DEFS.has(Location3D.sfx_for_over("lost")),
+		"'lose' must be a real event ui/sfx.gd knows how to play")
 
 
 func _test_backlog86_felled_height_floors_at_the_min_size_for_a_short_climb() -> void:

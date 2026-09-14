@@ -162,6 +162,24 @@ func _stage(s: Dictionary, phase: String) -> void:
 		c.queue_free()
 	_hunters.clear()
 	_felled_span = 0.0   # only a reward has a body to make room for
+	# backlog #86 duty 2: ui/sfx.gd's DEFS has authored a distinct "win" (860Hz,
+	# cheerful) and "lose" (120Hz, mournful) tone since the sound palette was
+	# baked, but nothing in game/** ever called Sfx.play("win") or
+	# Sfx.play("lose") — grepping every literal Sfx.play("...") call site turns
+	# up card/climb/end_turn/lock/reach_sigil/reward/shake and stops there. The
+	# WON/LOST screen (_render_over, right below) sets its title/subtitle text
+	# on every refresh but never once reached for Sfx, so a run's actual ending
+	# — the one moment the whole run built toward — played in total silence.
+	# Same shape as the already-fixed combat.ogg gap (an authored asset with no
+	# reachable call site), and this is the right choke point for the same
+	# reason music_for_phase() is called from _sync(): _stage() only runs the
+	# instant `phase` first becomes "won"/"lost" (guarded by `_refresh()`'s own
+	# `phase != _built` check above), not on every later broadcast — so the
+	# jingle can't be re-triggered by an ally's turn, an autosave tick, or any
+	# other unrelated snapshot that lands while this screen stays up.
+	var stinger := sfx_for_over(phase)
+	if stinger != "":
+		Sfx.play(stinger)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(phase + String(s.get("felled", "")))
 	# The inner ring stays PLAIN grass: forest tiles carry trees, and trees where
@@ -647,6 +665,17 @@ static func _stakes(eff: Dictionary) -> String:
 
 
 # --- the run ending --------------------------------------------------------
+
+## Which one-shot stinger (ui/sfx.gd's DEFS) plays the moment the run reaches
+## its ending, keyed by phase. Lifted static, the same idiom
+## `Game3D.music_for_phase()` uses, so run_tests.gd can prove the mapping
+## headless with no scene tree and no audio device. #86 duty 2.
+static func sfx_for_over(phase: String) -> String:
+	match phase:
+		"won": return "win"
+		"lost": return "lose"
+		_: return ""
+
 
 func _render_over(s: Dictionary, phase: String) -> void:
 	var won := phase == "won"
