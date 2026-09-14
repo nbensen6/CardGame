@@ -2782,6 +2782,25 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 3: proved the `pull_ally` gap-freeze fix (backlog #86
+  duty 2, commit `414f9c5`) also holds for its `sac_ally_grip` (Catapult) path,
+  which was never exercised.** Last commit was duty 2, so this turn opened on
+  duty 3. Two tests already covered this fix for a fused card's own `grip`
+  (`_test_pull_ally_survives_this_plays_own_climb`) and its `ally_grip`
+  (`_test_pull_ally_survives_the_allys_own_ally_grip_on_the_same_card`), but
+  `combat.gd`'s `sac_ally_grip` branch (Catapult: "Burn a card: ally climbs
+  2") is a structurally distinct code path — gated on `card.exhaust_pick` and
+  a chosen sacrifice card, not on a climb field — and had no test at all.
+  Added `_test_pull_ally_survives_the_same_cards_own_sac_ally_grip`: meld
+  Catapult into Grappling Arm, play the fused card so its Catapult sacrifice
+  resolves first (lifting the ally live to the caster's own Height), then
+  assert the log shows the grapple actually firing off the frozen pre-play
+  gap rather than silently whiffing against the now-zero live gap. Verified
+  the test is real, not vacuous, by reverting the fix locally (live-foothold
+  read instead of the frozen snapshot) and confirming all three sibling tests
+  fail together, then restoring it — `combat.gd` itself is unchanged, only
+  `run_tests.gd` gained the new test. `run_tests.gd` green.
+
 - **2026-09-14 — #86 duty 2: `damage_per_ally_foothold` and `timed_ally_block`
   were both missing from `archetype_tags()`'s own "ally" OR-chain.** Last
   commit was duty 3, so this turn opened on duty 2. Read through `/core` file

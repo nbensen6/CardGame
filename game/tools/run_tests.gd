@@ -577,6 +577,7 @@ func _init() -> void:
 	_test_roped_ally_climbs_when_fed_by_poison_lift()
 	_test_pull_ally_survives_this_plays_own_climb()
 	_test_pull_ally_survives_the_allys_own_ally_grip_on_the_same_card()
+	_test_pull_ally_survives_the_same_cards_own_sac_ally_grip()
 	_test_character_attack_bonus()
 	_test_build_creates_grapple()
 	_test_belay_scales_with_height()
@@ -11266,6 +11267,34 @@ func _test_pull_ally_survives_the_allys_own_ally_grip_on_the_same_card() -> void
 			whiffed = true
 	_expect(combat.players[0].foothold == 3 and combat.players[1].foothold == 3 and grappled and not whiffed,
 		"pull_ally: the ally's own ally_grip (fused in by Meld) lifting them first must not close the grapple gap can_play() already approved")
+
+
+## #86 duty 3: the two tests above prove the gap-freeze fix for a fused card's own
+## `grip` and `ally_grip`, but combat.gd:1045-1050's `sac_ally_grip` branch (Catapult:
+## "Burn a card: ally climbs 2") is a structurally distinct code path — gated on
+## `card.exhaust_pick` and a chosen `sac_card`, not on `card.grip`/`card.ally_grip` —
+## and was never exercised against this fix. Meld Catapult (sac_ally_grip 2,
+## exhaust_pick) into Grappling Arm (pull_ally 3): playing the fused card resolves
+## the Catapult sacrifice first, lifting the ally live to Height 2 — a live-gap
+## re-read would see 0 and refuse ("no ally in grapple range") even though
+## can_play() approved a real gap of 2 off the pre-play snapshot.
+func _test_pull_ally_survives_the_same_cards_own_sac_ally_grip() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(200))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_meld_card(), _catapult(), _grapple_arm(), _slash()]
+	ps.energy = 5
+	combat.play_card(0, 0, true, 1, 2)  # meld Catapult + Grappling Arm -> hand: [Slash, fused]
+	ps.foothold = 2  # within Grappling Arm's reach (3) above the ally at 0
+	combat.play_card(0, 1, true, 0, -1)  # play the fused card: sacrifice the Slash, then must still pull
+	var grappled := false
+	var whiffed := false
+	for line in combat.log:
+		if String(line).begins_with("P1 grapples"):
+			grappled = true
+		if String(line).find("no ally in grapple range") != -1:
+			whiffed = true
+	_expect(combat.players[0].foothold == 2 and combat.players[1].foothold == 2 and grappled and not whiffed,
+		"pull_ally: the same card's own sac_ally_grip (Catapult, fused in by Meld) lifting the ally first must not close the grapple gap can_play() already approved")
 
 
 func _test_roped_ally_climbs_when_fed_by_poison_lift() -> void:
