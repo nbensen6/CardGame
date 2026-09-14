@@ -2782,6 +2782,37 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 3: NetLink itself had zero coverage, the one corner
+  the EnetTransport pass (thirty-seventh pass) deliberately left alone.**
+  Last commit (`0c5842f`) was duty 2, so this run took duty 3. An Explore
+  agent surveyed core/, net/ and combat_3d.gd for genuinely untested rules
+  (the suite is mature enough now that most obvious gaps are covered) and
+  found that `NetLink._ready()`'s two signal wires
+  (`multiplayer.peer_disconnected` → `peer_dropped`,
+  `multiplayer.server_disconnected` → `host_dropped`) and the bodies of its
+  two `@rpc` handlers (`_recv_command`/`_recv_message`, where
+  `command_arrived`/`message_arrived` actually get emitted) had never run —
+  the EnetTransport tests poke NetLink's four signals directly by design,
+  specifically to avoid needing `_ready()` at all. Added four tests that add
+  a real NetLink to `root` and either emit the live `multiplayer` singleton's
+  signals or call the `@rpc` methods as plain methods. Two false starts
+  along the way, both instructive: (1) a node added to `root` during `_init()`
+  is not actually inside the tree yet — `get_multiplayer()` returns null and
+  `_ready()` hasn't fired — confirmed with a throwaway script, so these had
+  to move into `_finish_with_deferred_tests()` like the `fit()` tests already
+  there; (2) even after that fix one test still silently failed with no
+  error, because it used `var fired := false` and set it from inside a
+  connected lambda — GDScript lambdas capture outer locals BY VALUE, a trap
+  this same file's own EnetTransport-test comment already names, and I hit
+  it anyway. Fixed by capturing into a Dictionary like every other test in
+  the file does. Also renumbered the "pass" count in these comments: I'd
+  first labeled this "thirty-eighth pass" by copying a nearby comment,
+  not noticing "thirty-eighth" was already taken (DevConsole) and the real
+  latest was "forty-eighth" (energy_handoff) — relabeled to forty-ninth.
+  Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS
+  PASSED, no leaked objects across three repeat runs. Next `#86` turn is
+  duty 2 (find an error and resolve it).
+
 - **2026-09-14 — #86 duty 2: an add's intent SNAPSHOT was the third copy of
   "what will this add do next" and the only one still reading an empty board
   context.** Last commit (`acfad32`) was duty 3, so this run opened on duty

@@ -1323,6 +1323,11 @@ func _init() -> void:
 	_test_backlog86_enet_transport_forwards_a_dropped_peer()
 	_test_backlog86_enet_transport_forwards_the_host_going_away()
 
+	# backlog #86 duty 3 (forty-ninth pass): NetLink itself -- see
+	# _finish_with_deferred_tests below. It needs a node actually inside the
+	# tree (root.is_inside_tree() is false this early, same reason fit()'s
+	# tests are deferred a few lines down), so it can't run here.
+
 	# backlog #86 duty 3 (thirty-eighth pass): DevConsole, the debug console
 	# Nick asked for on 2026-09-01 ("can we put in a dev console... so we can
 	# add lines like that for me to add cards to my hand to test?") -- had zero
@@ -1674,6 +1679,18 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_hit_circle_screen_clamps_a_note_projecting_above_the_frame()
 	_test_backlog86_hit_circle_screen_leaves_an_onscreen_note_untouched()
 	_test_backlog86_hit_circle_gui_input_gates_a_press_on_a_note_behind_camera()
+
+	# NetLink._ready() wires the live `multiplayer` singleton, and a node
+	# added to `root` is not actually inside the tree (nor does get_multiplayer()
+	# resolve) until the engine's main loop runs at least one frame -- confirmed
+	# with a throwaway script: is_inside_tree() is false immediately after
+	# add_child() during _init(), and _ready() itself only fires once the
+	# deferred call queue is flushed. Deferred here for the same reason fit()'s
+	# tests are above.
+	_test_backlog86_net_link_ready_wires_peer_disconnected_to_peer_dropped()
+	_test_backlog86_net_link_ready_wires_server_disconnected_to_host_dropped()
+	_test_backlog86_net_link_recv_command_emits_command_arrived()
+	_test_backlog86_net_link_recv_message_emits_message_arrived()
 
 	print("")
 	if _failures == 0:
@@ -18035,6 +18052,72 @@ func _test_backlog86_enet_transport_forwards_the_host_going_away() -> void:
 	t.server_lost.connect(func() -> void: got["fired"] = true)
 	link.host_dropped.emit()
 	_expect(got.get("fired") == true, "the host disconnecting on the link is forwarded as Transport.server_lost")
+	link.free()
+
+
+## backlog #86 duty 3 (forty-ninth pass) -- NetLink's own _ready() and its
+## two @rpc handlers, which the EnetTransport pass above deliberately skipped
+## because a detached NetLink never runs _ready() at all. Adding one to `root`
+## puts it on the SceneTree's default MultiplayerAPI (no ENetMultiplayerPeer
+## configured, so nothing actually goes over a socket) -- which is exactly
+## the object a real host/client sets `multiplayer_peer` on, so emitting its
+## signals directly exercises _ready()'s wiring for real, not a stand-in.
+func _test_backlog86_net_link_ready_wires_peer_disconnected_to_peer_dropped() -> void:
+	var link := NetLink.new()
+	root.add_child(link)
+	var got := {}
+	link.peer_dropped.connect(func(id: int) -> void: got["id"] = id)
+	link.get_multiplayer().peer_disconnected.emit(11)
+	_expect(got.get("id") == 11,
+		"_ready() wires the live multiplayer singleton's peer_disconnected straight to NetLink's own peer_dropped")
+	root.remove_child(link)
+	link.free()
+
+
+func _test_backlog86_net_link_ready_wires_server_disconnected_to_host_dropped() -> void:
+	var link := NetLink.new()
+	root.add_child(link)
+	# GDScript lambdas capture outer locals BY VALUE (see the EnetTransport
+	# tests' own comment above) -- a plain `var fired := false` set from inside
+	# the callback never updates the outer copy, so this uses a Dictionary.
+	var got := {}
+	link.host_dropped.connect(func() -> void: got["fired"] = true)
+	link.get_multiplayer().server_disconnected.emit()
+	_expect(got.get("fired") == true,
+		"_ready() wires the live multiplayer singleton's server_disconnected straight to NetLink's own host_dropped")
+	root.remove_child(link)
+	link.free()
+
+
+## _recv_command is the actual @rpc("any_peer") body a remote client's
+## to_server() lands in -- the EnetTransport pass only ever emitted
+## command_arrived directly, never called this. Calling it as a plain method
+## (no .rpc_id()) skips the wire but runs the exact same body; outside a real
+## RPC dispatch, MultiplayerAPI.get_remote_sender_id() returns 0 rather than
+## erroring, which is why this needs no configured peer to call.
+func _test_backlog86_net_link_recv_command_emits_command_arrived() -> void:
+	var link := NetLink.new()
+	root.add_child(link)
+	var got := {}
+	link.command_arrived.connect(func(peer_id: int, command: Dictionary) -> void:
+		got["peer"] = peer_id
+		got["cmd"] = command)
+	link._recv_command({"cmd": "play_card", "index": 2})
+	_expect(got.get("cmd") == {"cmd": "play_card", "index": 2},
+		"_recv_command's own body -- not a stand-in emit -- re-emits the exact command as command_arrived")
+	root.remove_child(link)
+	link.free()
+
+
+func _test_backlog86_net_link_recv_message_emits_message_arrived() -> void:
+	var link := NetLink.new()
+	root.add_child(link)
+	var got := {}
+	link.message_arrived.connect(func(message: Dictionary) -> void: got["msg"] = message)
+	link._recv_message({"snapshot": 5})
+	_expect(got.get("msg") == {"snapshot": 5},
+		"_recv_message's own body -- not a stand-in emit -- re-emits the exact message as message_arrived")
+	root.remove_child(link)
 	link.free()
 
 
