@@ -2782,6 +2782,26 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 3: proved `HitCircle._gui_input()`'s position gate
+  actually skips itself for a note the camera can't see.** Last commit did
+  duty 2, so this run opened on duty 3. The clamp/gating side of `HitCircle`
+  already had heavy coverage from prior passes (`_screen()`'s edge clamp, the
+  HIT_RADIUS distance gate against a visible note), but the gate's own guard —
+  `_hits_done < _notes.size() and _visible_note(_hits_done) and
+  mb.position.distance_to(_screen(_hits_done)) > HIT_RADIUS` — ANDs the
+  distance check with `_visible_note`, and nothing had ever exercised the
+  `_visible_note` false branch. That AND means a note behind the camera skips
+  the distance check entirely: the ignore-branch's `return` never fires, so a
+  press anywhere on screen falls through to `_fire()` and grades the note
+  regardless of where it landed. Wasn't obvious from reading alone whether
+  that was a deliberate "can't position-gate what you can't project" choice or
+  an oversight that makes an unreachable note un-ignorable — a test settles it
+  either way. Added one test with a real `Camera3D`: a note placed behind the
+  camera (`cam.is_position_behind()` true), pressed at a screen corner nowhere
+  near any sane projection, still fires and counts as a hit — confirming the
+  code's actual behaviour rather than guessing at its intent. `run_tests.gd`
+  green (1 new test), no regressions, no balance numbers touched.
+
 - **2026-09-14 — #86 duty 2: `Boss._condition_met()`'s `at_sigil` condition
   used `==` where the truth it's supposed to mirror uses `>=`.** Last commit
   did duty 3, so this run opened on duty 2. `Combat.sigil_reached()`

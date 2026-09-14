@@ -1651,6 +1651,7 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_hit_circle_gui_input_ignores_a_press_far_from_the_live_note()
 	_test_backlog86_hit_circle_screen_clamps_a_note_projecting_above_the_frame()
 	_test_backlog86_hit_circle_screen_leaves_an_onscreen_note_untouched()
+	_test_backlog86_hit_circle_gui_input_skips_the_position_gate_when_the_note_is_behind_camera()
 
 	print("")
 	if _failures == 0:
@@ -17367,6 +17368,50 @@ func _test_backlog86_hit_circle_screen_leaves_an_onscreen_note_untouched() -> vo
 	var screen: Vector2 = hc._screen(0)
 	_expect(screen.is_equal_approx(raw),
 		"a note that already projects inside the frame is returned untouched -- the clamp only fires when the note is actually off-screen")
+
+	hc.free()
+	cam.queue_free()
+
+
+## backlog #86 duty 3: _gui_input's own position gate --
+## "`_hits_done < _notes.size() and _visible_note(_hits_done) and
+## mb.position.distance_to(_screen(_hits_done)) > HIT_RADIUS`" -- ANDs the
+## distance check with `_visible_note`, which the two tests above never
+## touch (both keep the live note squarely in front of the camera). That AND
+## means a note the camera can no longer see skips the distance check
+## entirely rather than failing it: `_visible_note` false makes the whole
+## guard false, so the `return` that would otherwise ignore an off-note press
+## never fires and the tap falls through to `_fire()` regardless of where it
+## landed. Unproven either way -- this could as easily have been an oversight
+## that leaves an unreachable note un-ignorable (a press anywhere resolves
+## it) as a deliberate "can't position-gate what you can't project" rule.
+## Prove which one the code actually does: a press nowhere near where the
+## note WOULD project, aimed at a note placed behind the camera, still
+## fires and grades it -- the mirror image of
+## `_hit_circle_gui_input_ignores_a_press_far_from_the_live_note`, which
+## proves the opposite for a visible note.
+func _test_backlog86_hit_circle_gui_input_skips_the_position_gate_when_the_note_is_behind_camera() -> void:
+	var cam := Camera3D.new()
+	root.add_child(cam)
+	cam.position = Vector3(0, 0, 10)  # identity rotation: forward is -Z
+	var behind := Vector3(0, 0, 20)  # +Z from the camera, i.e. behind it
+	_expect(cam.is_position_behind(behind),
+		"setup sanity: the note must actually sit behind the camera or this test proves nothing")
+
+	var hc := HitCircle.new()
+	hc.size = Vector2(1280, 720)
+	hc.begin(0.0, cam, PackedVector3Array([behind]), false)
+	_expect(not hc._visible_note(0),
+		"setup sanity: a note behind the camera must read as not-visible")
+	hc._t = hc._approach  # note 0 is dead on the beat right now
+
+	var far_press := InputEventMouseButton.new()
+	far_press.button_index = MOUSE_BUTTON_LEFT
+	far_press.pressed = true
+	far_press.position = Vector2(5.0, 5.0)  # a corner nowhere near any sane projection
+	hc._gui_input(far_press)
+	_expect(hc._hits_done == 1,
+		"a press anywhere still fires and grades a note the camera cannot see -- the position gate only applies to a note that is actually visible")
 
 	hc.free()
 	cam.queue_free()
