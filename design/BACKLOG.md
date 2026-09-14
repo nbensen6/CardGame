@@ -2782,6 +2782,29 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 2: `block_per_exhausted` and `block_per_discarded`
+  were both missing from `archetype_tags()`'s own "block" OR-chain.** Last
+  commit was duty 3, so this turn opened on duty 2. Explored `/core` for the
+  same class of bug this function has now been fixed for four times running
+  (`block_per_play`/`block_per_x`, `grip_per_rhythm`,
+  `damage_per_ally_foothold`/`timed_ally_block`) and checked the one thing the
+  immediately-preceding fix (`ace75fe`, this same rotation) left half-done:
+  it added `block_per_play`/`block_per_x` to the "block" chain but never
+  carried over `block_per_exhausted` and `block_per_discarded`, even though
+  both already sit correctly in the "burn" and "discard" chains a few lines
+  down — they were just never cross-checked against "block", which they also
+  grant. Confirmed against real data: `pressure_valve`, `scrap_shield`,
+  `refuse_wall` and `landfill` (all in `cards.json`) all carry one of these
+  fields, and all four were masked from the gap only because each also
+  carries a flat `block` that separately trips the branch — an isolated card
+  with only `block_per_exhausted` or `block_per_discarded` set would roll
+  through backlog #72's reward-lean with no "block" tag at all. Added both
+  fields to the OR-list plus
+  `_test_backlog86_archetype_tags_recognise_block_per_exhausted_and_block_per_discarded_only_cards`
+  (isolated bare-card cases for each field, plus the Pressure Valve/Refuse
+  Wall masking cases). `run_tests.gd` green — 2 new assertions, no
+  regressions.
+
 - **2026-09-14 — #86 duty 3: proved the `pull_ally` gap-freeze fix (backlog #86
   duty 2, commit `414f9c5`) also holds for its `sac_ally_grip` (Catapult) path,
   which was never exercised.** Last commit was duty 2, so this turn opened on

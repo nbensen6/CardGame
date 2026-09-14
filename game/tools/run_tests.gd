@@ -211,6 +211,7 @@ func _init() -> void:
 	_test_backlog86_archetype_tags_recognise_block_per_play_and_block_per_x_only_cards()
 	_test_backlog86_archetype_tags_recognise_grip_per_rhythm_only_cards()
 	_test_backlog86_archetype_tags_recognise_damage_per_ally_foothold_and_timed_ally_block()
+	_test_backlog86_archetype_tags_recognise_block_per_exhausted_and_block_per_discarded_only_cards()
 	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
 	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
@@ -5239,6 +5240,46 @@ func _test_backlog86_archetype_tags_recognise_damage_per_ally_foothold_and_timed
 	_expect(summit_push_tags.has("ally") and summit_push_tags.has("climb"),
 		"Summit Push (flat ally_grip AND damage_per_ally_foothold) is still tagged ally and climb [tags=%s]"
 			% [summit_push_tags])
+
+
+## backlog #86 duty 2: the same "missing from its own OR-list" shape as the
+## four tests above, on the "block" branch again. `block_per_exhausted` (bonus
+## Block per card burned to the exhaust pile, Goblin's gimmick) and
+## `block_per_discarded` (bonus Block per card in the discard pile, backlog
+## #62) both grant Block outright but neither was listed in
+## archetype_tags()'s "block" OR-chain -- the chain's last fix (this same
+## rotation, one entry up) added block_per_play/block_per_x and stopped
+## there, leaving these two siblings out even though both already sit
+## correctly in the "burn" and "discard" OR-chains a few lines down. It
+## stayed hidden because every shipped card carrying either field (Pressure
+## Valve, Scrap Shield, Refuse Wall, Landfill) also carries a flat `block`
+## that separately trips the branch.
+func _test_backlog86_archetype_tags_recognise_block_per_exhausted_and_block_per_discarded_only_cards() -> void:
+	var exhausted_only := Card.new()
+	exhausted_only.block_per_exhausted = 3
+	var exhausted_only_tags: Array = exhausted_only.archetype_tags()
+	_expect(exhausted_only_tags.has("block") and exhausted_only_tags.has("burn") and exhausted_only_tags.size() == 2,
+		"a bare card with only block_per_exhausted set is tagged block and burn [tags=%s]" % [exhausted_only_tags])
+
+	var discarded_only := Card.new()
+	discarded_only.block_per_discarded = 1
+	var discarded_only_tags: Array = discarded_only.archetype_tags()
+	_expect(discarded_only_tags.has("block") and discarded_only_tags.has("discard") and discarded_only_tags.size() == 2,
+		"a bare card with only block_per_discarded set is tagged block and discard [tags=%s]" % [discarded_only_tags])
+
+	# masking case: Pressure Valve and Refuse Wall ALSO carry a flat `block`, so
+	# this alone would have kept passing even with block_per_exhausted/
+	# block_per_discarded missing from the OR-list -- kept here to prove the
+	# fix doesn't regress the already-masked cards.
+	var pressure_valve_tags: Array = Content.card_tags("pressure_valve")
+	_expect(pressure_valve_tags.has("block") and pressure_valve_tags.has("burn"),
+		"Pressure Valve (flat block AND block_per_exhausted) is still tagged block and burn [tags=%s]"
+			% [pressure_valve_tags])
+
+	var refuse_wall_tags: Array = Content.card_tags("refuse_wall")
+	_expect(refuse_wall_tags.has("block") and refuse_wall_tags.has("discard"),
+		"Refuse Wall (flat block AND block_per_discarded) is still tagged block and discard [tags=%s]"
+			% [refuse_wall_tags])
 
 
 ## Backlog #72: a card reward roll should lean toward the archetype a hunter is
