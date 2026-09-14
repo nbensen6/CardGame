@@ -2782,6 +2782,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 3: proved `Run._apply_effect_block`'s unconditional
+  `hp[i] = mini(hp[i], max_hp[i])` (run.gd:674) actually pulls current HP down
+  when `max_hp` shrinks with no accompanying `heal`.** Last commit was duty 2,
+  so this turn opened on duty 3. Spawned an Explore agent across every /core
+  file to hunt for a real rule with no test; it (and my own follow-up
+  cross-check of the same files) found the codebase's coverage is now
+  extremely dense — dozens of prior duty-3 turns already closed the obvious
+  gaps in boss.gd, run_map.gd, progress.gd, combatant.gd and combat.gd's
+  passive/handoff/discard machinery, all down to specific boundary
+  conditions. The one real gap: `_apply_effect_block`'s doc comment and
+  `events.json`'s own `_comment` list `max_hp` as an effect key with no sign
+  restriction, and `Location3D._stakes` already has a tested branch for
+  rendering a NEGATIVE one ("(-2 max HP)") — but no shipped event or boon
+  currently carries a negative `max_hp`, so every existing test pairs it with
+  a `heal` that lands at or above the new cap on its own. That left line 674
+  — the only code that would stop current HP sitting above a newly SHRUNK cap
+  once `heal` is 0 — never actually exercised. Added
+  `_test_backlog86_max_hp_loss_pulls_current_hp_down_with_no_accompanying_heal`:
+  fires a `max_hp: -15` event choice against a hunter set to 20/20, asserts
+  both the floor (`maxi(1, ...)`) and the clamp fire correctly, and checks the
+  same shrink-and-clamp lands on the OTHER hunter too (the effect is
+  team-wide, and nothing before this had HP pre-set specially on hunter 1).
+  No production code changed — the rule was already correct, only unproven,
+  same shape as duty 3's earlier `create`/Build-Grapple find. `run_tests.gd`
+  green, 2 new assertions, no regressions. (Second candidate the Explore
+  agent found and I didn't take: `Combat._meld_cards()`'s cost-floor
+  `maxi(0, ...)` is also never hit by an existing test pairing, since no
+  existing meld test fuses two 0-cost cards — left for a future duty-3 turn
+  since one gap per run is the rule.)
+
 - **2026-09-14 — #86 duty 2: `block_per_exhausted` and `block_per_discarded`
   were both missing from `archetype_tags()`'s own "block" OR-chain.** Last
   commit was duty 3, so this turn opened on duty 2. Explored `/core` for the

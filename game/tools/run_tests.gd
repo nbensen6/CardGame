@@ -121,6 +121,9 @@ func _init() -> void:
 	_test_backlog86_shared_result_reflects_run_phase()
 	_test_rest_node_heals_and_returns_to_map()
 	_test_event_choice_applies_effects()
+	# backlog #86 duty 3: max_hp shrinking below current HP, with no heal to
+	# already clamp it, was never proven -- see the test's own comment.
+	_test_backlog86_max_hp_loss_pulls_current_hp_down_with_no_accompanying_heal()
 	_test_event_reward_choice_routes_to_reward()
 	_test_events_load_and_are_well_formed()
 	_test_event_gold_cost_never_goes_negative()
@@ -3308,6 +3311,34 @@ func _test_event_choice_applies_effects() -> void:
 		and run.team_relics.size() == relics_before + 1
 		and run.phase == Run.Phase.MAP and run.event_result == "ouch",
 		"an event choice applies its effects and hands back to the map")
+
+
+## backlog #86 duty 3: `_apply_effect_block`'s own doc comment (run.gd:661)
+## lists `max_hp` as an effect key with no restriction on sign, and
+## `Location3D._stakes` already renders a negative one ("(-2 max HP)", tested
+## above) even though no shipped event or boon currently carries one. Every
+## existing max_hp test pairs it with a heal that lands at or above the new
+## cap (_test_event_choice_applies_effects: heal -5, max_hp +4) or a bare
+## gain, so run.gd:674's unconditional `hp[i] = mini(hp[i], max_hp[i])` -- the
+## ONLY line that would stop current HP from sitting above a newly SHRUNK
+## max_hp once `heal` is 0 -- has never actually been exercised. Proves the
+## rule holds for every hunter the effect touches, not just the one this test
+## sets up specially.
+func _test_backlog86_max_hp_loss_pulls_current_hp_down_with_no_accompanying_heal() -> void:
+	var run := _map_run()
+	run.max_hp[0] = 20
+	run.hp[0] = 20
+	run.event = {"title": "T", "text": "x", "choices": [
+		{"label": "curse", "result": "withered", "effects": {"max_hp": -15}},
+	]}
+	run.phase = Run.Phase.EVENT
+	run.map_row = 0
+	var other_max_before: int = run.max_hp[1]
+	run.pick_event(0)
+	_expect(run.max_hp[0] == 5 and run.hp[0] == 5,
+		"a max_hp-shrinking effect with no heal of its own still pulls current HP down to the new (floored) cap, not just the cap down to wherever HP already was")
+	_expect(run.max_hp[1] == other_max_before - 15 and run.hp[1] == run.max_hp[1],
+		"the same shrink-and-clamp applies to every hunter the effect touches, not only the one HP was pre-set on")
 
 
 func _test_event_reward_choice_routes_to_reward() -> void:
