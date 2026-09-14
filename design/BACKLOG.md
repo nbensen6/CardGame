@@ -2782,6 +2782,31 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 2: `damage_per_ally_foothold` and `timed_ally_block`
+  were both missing from `archetype_tags()`'s own "ally" OR-chain.** Last
+  commit was duty 3, so this turn opened on duty 2. Read through `/core` file
+  by file counting existing `backlog #86` fix comments as a rough map of what
+  had already been picked over (`combat.gd` alone has 35, `run.gd` 7,
+  `combatant.gd`/`content.gd`/`boss.gd` a couple each) and landed on `card.gd`,
+  which had zero despite `archetype_tags()` already having had two of its
+  twelve OR-chains fixed for this exact shape (`block_per_play`/`block_per_x`
+  missing from "block", `grip_per_rhythm` missing from "climb"). Checked the
+  one chain neither prior fix touched — "ally" — against every field whose own
+  doc comment names the ally, and two were absent: `damage_per_ally_foothold`
+  (Mountain Climbers' whole coordination gimmick — bonus damage per the
+  ALLY's Height) and `timed_ally_block` (bonus ALLY Block on a nailed timing
+  window). Confirmed against real data, not just theory: `rope_team` in
+  `cards.json` carries `damage_per_ally_foothold: 4` and no other ally-tagged
+  field, so it was rolling through backlog #72's reward-lean tagged only
+  "climb" — a hunter drafting toward ally-combo cards, the exact co-op-combo
+  goal CLAUDE.md §6 calls out, got zero lean toward a card whose entire text
+  is the ally's Height. `matched_pace`, `crux_move` and `rope_team` all share
+  the same gap; `summit_push`/`the_two_of_us`/`summit_strike` were masked by
+  also carrying a flat `ally_grip`. Added both fields to the OR-list plus
+  `_test_backlog86_archetype_tags_recognise_damage_per_ally_foothold_and_timed_ally_block`
+  (isolated bare-card cases for each field, the real Rope Team case, and the
+  Summit Push masking case). `run_tests.gd` green.
+
 - **2026-09-14 — #86 duty 3: proved the `create` mechanic (Goblin gadgets —
   Build Grapple/Bomb/Winch/Turret/Drone, Deploy Bulwark, Grand Contraption)
   actually builds a card into hand, which nothing had ever tested.** Last

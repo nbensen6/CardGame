@@ -210,6 +210,7 @@ func _init() -> void:
 	_test_backlog86_archetype_tags_cover_every_branch_not_just_the_first_four()
 	_test_backlog86_archetype_tags_recognise_block_per_play_and_block_per_x_only_cards()
 	_test_backlog86_archetype_tags_recognise_grip_per_rhythm_only_cards()
+	_test_backlog86_archetype_tags_recognise_damage_per_ally_foothold_and_timed_ally_block()
 	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
 	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
@@ -5194,6 +5195,49 @@ func _test_backlog86_archetype_tags_recognise_grip_per_rhythm_only_cards() -> vo
 	var hop_tags: Array = Content.card_tags("hop")
 	_expect(hop_tags.has("climb") and hop_tags.has("rhythm"),
 		"Hop (flat grip AND grip_per_rhythm) is still tagged climb and rhythm [tags=%s]" % [hop_tags])
+
+
+## backlog #86 duty 2: the same "missing from its own OR-list" shape as the
+## three tests above, on the "ally" branch this time. `damage_per_ally_foothold`
+## (bonus damage per the ALLY's Height -- Mountain Climbers' whole coordination
+## gimmick) and `timed_ally_block` (bonus ALLY Block on a nailed timing window)
+## both name the ally outright in their own doc comments, yet neither was
+## listed in archetype_tags()'s "ally" OR-chain -- only ally_block/ally_energy/
+## ally_grip/pull_ally/sac_ally_grip/ally_heal/ally_grip_per_rhythm were.
+## Rope Team (cards.json) carries damage_per_ally_foothold: 4 and no other
+## ally-tagged field, so it rolled through backlog #72's reward-lean tagged
+## ONLY "climb" -- a hunter drafting toward ally-combo cards (exactly the
+## co-op-combo design goal CLAUDE.md §6 calls out) got zero lean toward a card
+## whose entire text is about the ally's Height. It stayed hidden because every
+## OTHER shipped card carrying either field (Summit Push, The Two of Us,
+## Ripple Leap, Anchor Brace, Chock Stone...) also carries a flat ally_block or
+## ally_grip that separately trips the branch.
+func _test_backlog86_archetype_tags_recognise_damage_per_ally_foothold_and_timed_ally_block() -> void:
+	var rope_team_tags: Array = Content.card_tags("rope_team")
+	_expect(rope_team_tags.has("ally") and rope_team_tags.has("climb"),
+		"Rope Team (damage_per_ally_foothold only, no other ally field) is tagged ally and climb [tags=%s]"
+			% [rope_team_tags])
+
+	var ally_foothold_only := Card.new()
+	ally_foothold_only.damage_per_ally_foothold = 3
+	var ally_foothold_tags: Array = ally_foothold_only.archetype_tags()
+	_expect(ally_foothold_tags.has("ally") and ally_foothold_tags.has("climb") and ally_foothold_tags.size() == 2,
+		"a bare card with only damage_per_ally_foothold set is tagged ally and climb [tags=%s]" % [ally_foothold_tags])
+
+	var timed_ally_block_only := Card.new()
+	timed_ally_block_only.timed_ally_block = 5
+	var timed_ally_block_tags: Array = timed_ally_block_only.archetype_tags()
+	_expect(timed_ally_block_tags.has("ally") and timed_ally_block_tags.has("block") and timed_ally_block_tags.size() == 2,
+		"a bare card with only timed_ally_block set is tagged ally and block [tags=%s]" % [timed_ally_block_tags])
+
+	# masking case: Summit Push ALSO carries a flat ally_grip, so this alone
+	# would have kept passing even with damage_per_ally_foothold missing from
+	# the OR-list -- kept here to prove the fix doesn't regress the already-
+	# masked card.
+	var summit_push_tags: Array = Content.card_tags("summit_push")
+	_expect(summit_push_tags.has("ally") and summit_push_tags.has("climb"),
+		"Summit Push (flat ally_grip AND damage_per_ally_foothold) is still tagged ally and climb [tags=%s]"
+			% [summit_push_tags])
 
 
 ## Backlog #72: a card reward roll should lean toward the archetype a hunter is

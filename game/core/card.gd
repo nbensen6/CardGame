@@ -384,7 +384,8 @@ func archetype_tags() -> Array:
 	if dexterity > 0:
 		tags.append("dexterity")
 	if ally_block > 0 or ally_energy > 0 or ally_grip > 0 or pull_ally > 0 \
-			or sac_ally_grip > 0 or ally_heal > 0 or ally_grip_per_rhythm > 0:
+			or sac_ally_grip > 0 or ally_heal > 0 or ally_grip_per_rhythm > 0 \
+			or damage_per_ally_foothold > 0 or timed_ally_block > 0:
 		tags.append("ally")
 	if exhaust_pick or damage_per_exhausted > 0 or block_per_exhausted > 0:
 		tags.append("burn")
