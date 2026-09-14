@@ -2782,6 +2782,24 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-14 — #86 duty 3: proved `energy_handoff` actually hands unspent
+  Energy to an ally.** Last commit did duty 2, so this run took duty 3.
+  `energy_handoff` (relics.json:217, wired to `MOMENT_TURN_END` since backlog
+  #70) is a real, offerable relic — "a hunter's unspent Energy passes to
+  their ally instead of vanishing, if the ally hasn't ended their turn yet"
+  — and grepping `_handle_energy_handoff`/`energy_handoff` across
+  `run_tests.gd` turned up zero hits before this: its two sibling handlers on
+  the same `_hooks` list (`_handle_block_carries`, `_handle_power_effects`)
+  both already had coverage, this one had none. Added four tests: one drives
+  the real thing end to end through an actual `end_turn(0)` call (proving the
+  wiring, not just the handler in isolation), and three exercise the handler
+  directly against both guards its own doc comment names — nothing to hand
+  off when Energy is already 0, and no hand-off once the ally has already
+  ended their own turn (the Energy is simply lost, not banked for later).
+  A fourth pins that the relic is inert with no mod set. No bug found this
+  pass — the handler already matched its own doc comment — so this is
+  coverage only. `run_tests.gd` green, all four new assertions pass.
+
 - **2026-09-14 — #86 duty 2: fixed the gate duty 3 proved was skipping itself
   for a note behind the camera.** Last commit did duty 3, so this run opened
   on duty 2. Duty 3's own test (`_test_backlog86_hit_circle_gui_input_skips_

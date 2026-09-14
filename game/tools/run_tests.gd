@@ -1629,6 +1629,13 @@ func _init() -> void:
 	_test_backlog86_inside_wall_at_leaves_a_point_already_inside_untouched()
 	_test_backlog86_inside_wall_at_pulls_a_point_outside_back_to_exactly_the_reach()
 	_test_backlog86_inside_wall_at_preserves_direction_and_height_while_clamping()
+	# backlog #86 duty 3 (forty-eighth pass): energy_handoff, a real offerable
+	# relic wired to MOMENT_TURN_END since backlog #70, had never been driven
+	# by anything in this file — see the doc comment on the tests themselves.
+	_test_backlog86_energy_handoff_passes_unspent_energy_through_a_real_end_turn_call()
+	_test_backlog86_energy_handoff_hands_off_nothing_with_no_energy_to_spare()
+	_test_backlog86_energy_handoff_does_not_fire_once_the_ally_already_ended()
+	_test_backlog86_energy_handoff_is_inert_without_the_relic()
 
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
@@ -10620,6 +10627,58 @@ func _test_backlog86_block_carries_carries_plated_armours_own_block_too() -> voi
 		"block_carries reads whatever Block was actually left, Plated Armour included, not just round_block")
 	_expect(ps.combatant.plated_armour == 3,
 		"the Plated Armour stack itself is untouched by the carry — only the Block number compounds")
+
+
+## backlog #86 duty 3 (forty-eighth pass): energy_handoff (relics.json:217) is
+## a real, offerable relic — "a hunter's unspent Energy passes to their ally
+## instead of vanishing, if the ally hasn't ended their turn yet" — wired to
+## MOMENT_TURN_END in Combat._init (line 126) since backlog #70, and nothing
+## in this file had ever driven it: grepping "_handle_energy_handoff" and
+## "energy_handoff" outside combat.gd and relics.json turned up nothing.
+## _handle_block_carries and _handle_power_effects, the handler's own
+## siblings on the same _hooks list, both have direct coverage already; this
+## one had none. Proven both ways run_tests.gd already proves its neighbours:
+## once through the real end_turn() call (wiring), and directly against the
+## handler (both guards named in its own doc comment — energy_handoff needs
+## unspent Energy to hand off, and the ally must not have already ended).
+func _test_backlog86_energy_handoff_passes_unspent_energy_through_a_real_end_turn_call() -> void:
+	var combat := _new_combat_mods([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42,
+		_dummy_boss(300), {"energy_handoff": 1})
+	combat.end_turn(0)  # no card played: all 3 starting Energy is still unspent
+	_expect(combat.players[1].energy == 6 and combat.players[0].energy == 0,
+		"ending a turn with unspent Energy hands all of it to an ally who hasn't ended yet — 3 base + 3 handed off")
+
+
+func _test_backlog86_energy_handoff_hands_off_nothing_with_no_energy_to_spare() -> void:
+	var combat := _new_combat_mods([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42,
+		_dummy_boss(300), {"energy_handoff": 1})
+	var ps0: PlayerState = combat.players[0]
+	var ps1: PlayerState = combat.players[1]
+	ps0.energy = 0
+	var mate_before: int = ps1.energy
+	combat._handle_energy_handoff({"player": ps0, "index": 0})
+	_expect(ps1.energy == mate_before, "a hunter who spent every last point of Energy has nothing left to hand off")
+
+
+func _test_backlog86_energy_handoff_does_not_fire_once_the_ally_already_ended() -> void:
+	var combat := _new_combat_mods([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42,
+		_dummy_boss(300), {"energy_handoff": 1})
+	var ps0: PlayerState = combat.players[0]
+	var ps1: PlayerState = combat.players[1]
+	ps1.ended_turn = true
+	ps0.energy = 4
+	combat._handle_energy_handoff({"player": ps0, "index": 0})
+	_expect(ps0.energy == 4 and ps1.energy == 3,
+		"once the ally has already ended their own turn there's no one left to hand the Energy to — it's simply lost, not banked")
+
+
+func _test_backlog86_energy_handoff_is_inert_without_the_relic() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps0: PlayerState = combat.players[0]
+	var ps1: PlayerState = combat.players[1]
+	var mate_before: int = ps1.energy
+	combat._handle_energy_handoff({"player": ps0, "index": 0})
+	_expect(ps1.energy == mate_before, "with no energy_handoff relic active, unspent Energy is never passed to the ally")
 
 
 func _test_intangible_buffer_plated_armour_persist_through_save() -> void:
