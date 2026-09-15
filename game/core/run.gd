@@ -494,7 +494,15 @@ func _begin_shop() -> void:
 		for slot2 in range(names.size()):
 			shop_stock.append({"kind": "remove", "slot": slot2, "id": "", "name": "Thin the deck",
 				"text": "Remove a card from %s's deck for good." % names[slot2],
-				"price": remove_price(), "sold": false})
+				"price": remove_price(), "sold": false,
+				# snapshotted at stock time, not re-read live: this hunter has at
+				# most one unsold "remove" item per shop (this loop runs once per
+				# slot), so nothing else in this same shop can shrink decks[slot2]
+				# before a client reads this. Lets the view's shop_slot_disabled()
+				# mirror Run.buy()'s own MIN_DECK floor without needing the
+				# private deck contents of a hunter who might not be the viewing
+				# player (#86 duty 2).
+				"deck_size": decks[slot2].size()})
 
 
 ## Removal gets pricier each time — you can't just delete your whole deck.

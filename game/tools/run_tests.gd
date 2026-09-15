@@ -1487,6 +1487,19 @@ func _init() -> void:
 	_test_backlog86_shop_slot_disabled_is_false_at_the_exact_price()
 	_test_backlog86_shop_slot_disabled_is_false_when_affordable_and_unsold()
 
+	# backlog #86 duty 2: shop_slot_disabled only ever checked sold/gold/price
+	# -- it never mirrored the OTHER half of Run.buy()'s "remove" gate
+	# (run.gd:525, "deck.size() <= MIN_DECK"), even though its own sibling
+	# campfire_can_thin() got that exact rule right. A "Thin the deck" item
+	# for a hunter already at MIN_DECK rendered enabled -- affordable and
+	# unsold -- right up until the click, where the server silently refused
+	# it. Two copies of one truth (the deck floor), one of them incomplete.
+	_test_backlog86_shop_slot_disabled_is_false_for_a_remove_item_above_the_floor()
+	_test_backlog86_shop_slot_disabled_is_true_for_a_remove_item_at_the_floor()
+	_test_backlog86_shop_slot_disabled_is_true_for_a_remove_item_below_the_floor()
+	_test_backlog86_shop_slot_disabled_ignores_the_deck_floor_for_a_non_remove_item()
+	_test_backlog86_run_begin_shop_stocks_remove_items_with_a_deck_size_run_buy_agrees_with()
+
 	# backlog #86 duty 3: location_3d.campfire_can_thin is the campfire's own
 	# copy of Run.campfire_action()'s "remove" gate (run.gd:583, "deck.size()
 	# <= MIN_DECK" refuses) -- the "Thin the deck" button has to agree with the
@@ -19333,6 +19346,62 @@ func _test_backlog86_shop_slot_disabled_is_false_at_the_exact_price() -> void:
 func _test_backlog86_shop_slot_disabled_is_false_when_affordable_and_unsold() -> void:
 	_expect(not Location3D.shop_slot_disabled(false, 11, 10),
 		"an affordable, unsold slot stays enabled")
+
+
+## backlog #86 duty 2 -- shop_slot_disabled's `is_remove`/`deck_size`/
+## `min_deck` params mirror the deck-floor half of Run.buy()'s own "remove"
+## gate (run.gd:525, "deck.size() <= MIN_DECK" refuses), the half this
+## function never carried before this pass even though its sibling
+## campfire_can_thin() already had it. Affordable and unsold alone used to be
+## enough to read "enabled" for a "remove" item at the floor.
+func _test_backlog86_shop_slot_disabled_is_false_for_a_remove_item_above_the_floor() -> void:
+	_expect(not Location3D.shop_slot_disabled(false, 100, 10, true, 6, 5),
+		"a remove item one card above the floor stays enabled, gold and sold permitting")
+
+
+func _test_backlog86_shop_slot_disabled_is_true_for_a_remove_item_at_the_floor() -> void:
+	_expect(Location3D.shop_slot_disabled(false, 100, 10, true, 5, 5),
+		"a remove item exactly at MIN_DECK must disable -- the boundary is '<=', matching Run.buy()'s own check, not '<' which would wrongly let one more removal through")
+
+
+func _test_backlog86_shop_slot_disabled_is_true_for_a_remove_item_below_the_floor() -> void:
+	_expect(Location3D.shop_slot_disabled(false, 100, 10, true, 4, 5),
+		"a deck already under the floor must never read as thinnable")
+
+
+func _test_backlog86_shop_slot_disabled_ignores_the_deck_floor_for_a_non_remove_item() -> void:
+	_expect(not Location3D.shop_slot_disabled(false, 100, 10, false, 0, 5),
+		"a card/relic/potion item has no deck to floor-check -- is_remove=false must never disable on deck_size/min_deck alone")
+
+
+## Backlog #86 duty 2: Run._begin_shop() stocks each "remove" item's
+## `deck_size` at roll time so the view can floor-check it without ever
+## seeing another hunter's private deck contents (see run.gd's own comment on
+## that field). This proves the two ends actually agree: the stocked number
+## the view will floor-check is the same live decks[slot].size() Run.buy()'s
+## own gate reads at purchase time, for a hunter thinned right to MIN_DECK
+## before the shop is ever rolled.
+func _test_backlog86_run_begin_shop_stocks_remove_items_with_a_deck_size_run_buy_agrees_with() -> void:
+	var run := _map_run()
+	run.gold = 5000
+	run.map_row = 0
+	run.node_type = "shop"
+	while run.decks[0].size() > Run.MIN_DECK:  # thin hunter 0's deck to the floor first
+		run.decks[0].pop_back()
+	run._begin_shop()
+	var rem_i := -1
+	for i in range(run.shop_stock.size()):
+		if String(run.shop_stock[i]["kind"]) == "remove" and int(run.shop_stock[i]["slot"]) == 0:
+			rem_i = i
+			break
+	var item: Dictionary = run.shop_stock[rem_i]
+	var stocked_size := int(item.get("deck_size", -1))
+	var view_says_disabled := Location3D.shop_slot_disabled(bool(item["sold"]), run.gold,
+		int(item["price"]), true, stocked_size, Run.MIN_DECK)
+	var server_refuses := not run.buy(rem_i, 0)
+	_expect(stocked_size == run.decks[0].size() and stocked_size == Run.MIN_DECK
+		and view_says_disabled and server_refuses,
+		"a deck stocked at the floor is disabled in the view and refused by the server -- neither one lies about the other")
 
 
 ## backlog #86 duty 3 -- location_3d.campfire_can_thin mirrors Run.

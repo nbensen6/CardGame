@@ -2782,6 +2782,55 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-15 — #86 duty 2: `location_3d.shop_slot_disabled` never checked
+  the shop's OWN deck-floor rule — a second copy of `Run.buy()`'s gate that
+  only carried half of it.** Last commit (`2e9089a`) was duty 3, so this run
+  owed duty 2. `Run.buy()`'s `"remove"` branch refuses a "Thin the deck"
+  purchase once `decks[slot].size() <= MIN_DECK` (run.gd:525), and the
+  campfire's own mirror of that same rule, `campfire_can_thin()`, already got
+  it right. But the shop's mirror, `shop_slot_disabled()`, only ever checked
+  `sold or gold < price` — a "Thin the deck" button for a hunter already at
+  the floor rendered enabled (affordable, unsold) right up to the click,
+  where the server silently refused it: no charge, no removal, the item's
+  `sold` flag untouched, and the button redrawn looking exactly the same with
+  no explanation of why nothing happened. A real "two copies of one truth"
+  bug: the floor rule lived correctly in two places (`Run.campfire_action()`
+  and `campfire_can_thin()`) and only incompletely in the third
+  (`shop_slot_disabled()`). Fixed by giving `shop_slot_disabled()` optional
+  `is_remove`/`deck_size`/`min_deck` params (defaults keep every non-"remove"
+  call unchanged) and threading a `deck_size` field into each "remove" item
+  `Run._begin_shop()` stocks — snapshotted at roll time rather than read live,
+  since a hunter has at most one unsold "remove" item per shop, so nothing
+  else in the same shop can move it stale before a client reads it. This also
+  keeps the private-view boundary intact: the view never needs to see another
+  hunter's actual deck CONTENTS (which shop purchases can target, since gold
+  is a shared purse spendable on either hunter — `buy()` has no per-peer
+  slot check, unlike `campfire_action()`), only a size. Disabled buttons for
+  a too-thin deck now also say "deck too small" instead of a bare gold price,
+  matching the campfire's existing "deck too small" wording. Added five tests
+  (`_test_backlog86_shop_slot_disabled_is_{false_for_a_remove_item_above,
+  true_for_a_remove_item_at,true_for_a_remove_item_below}_the_floor`,
+  `..._ignores_the_deck_floor_for_a_non_remove_item`, and a core-level
+  `..._run_begin_shop_stocks_remove_items_with_a_deck_size_run_buy_agrees_
+  with` that thins a real `Run`'s deck to `MIN_DECK`, rolls a real shop, and
+  checks the stocked `deck_size`, the view's own disabled-check, and
+  `Run.buy()`'s actual refusal all agree). Found by a background investigation
+  agent hunting for this exact bug class; verified against the code and
+  fixed directly rather than taken on faith.
+  **Not fixed, flagged for a later pass:** while tracing this, the shop's
+  deck-picker for a "remove" item always shows `_my_private().deck` (the
+  CLICKING player's own deck) regardless of which hunter the item targets
+  (`location_3d.gd`'s `_render_shop`, the `_shop_pick >= 0` branch) — and
+  since `buy()` has no per-peer restriction, a player CAN target the ally's
+  "Thin <ally>'s deck" item. If they do, the card index they pick is read off
+  their OWN deck's displayed list but applied to the ally's deck server-side,
+  so the card actually removed does not match what was shown. Left alone
+  this run because fixing it correctly means deciding whether the shop should
+  ever reveal an ally's deck contents across the private-view boundary (an
+  architecture question, not a pure bug fix) or instead restrict "remove"
+  purchases to the owning hunter only (a design change to the shared-purse
+  economy) — either call is Nick's, not mine to make unsupervised.
+
 - **2026-09-15 — #86 duty 3: proved campfire refuses to re-sharpen a melded
   card that only ever inherited `upgraded` from ONE of its two source cards.**
   Last commit (`cab3eaf`) was duty 2, so this run owed duty 3. `_meld_cards()`
