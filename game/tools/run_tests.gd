@@ -704,6 +704,19 @@ func _init() -> void:
 	_test_backlog86_route_between_rungs_excludes_the_endpoints()
 	_test_backlog86_route_between_rungs_is_empty_with_no_ledges_between()
 	_test_backlog86_route_between_rungs_ignores_unsorted_input()
+	# backlog #86 duty 3 (fiftieth pass): solo_view_slot/solo_cmd_slot/
+	# solo_private_view, lifted out of combat_3d._me/_cmd_slot/_my_private —
+	# the routing that decides which hunter's private hand a solo (couch
+	# co-op, one screen, no networking) client is looking at. Had zero
+	# coverage, and used to be a hand-typed second copy in location_3d.gd too.
+	_test_backlog86_solo_view_slot_uses_the_active_slot_in_solo()
+	_test_backlog86_solo_view_slot_uses_the_clients_own_slot_when_networked()
+	_test_backlog86_solo_cmd_slot_stamps_the_active_slot_in_solo()
+	_test_backlog86_solo_cmd_slot_is_unset_when_networked()
+	_test_backlog86_solo_private_view_slices_out_the_active_hunters_hand()
+	_test_backlog86_solo_private_view_switches_hand_when_the_active_slot_changes()
+	_test_backlog86_solo_private_view_is_empty_for_an_out_of_range_slot()
+	_test_backlog86_solo_private_view_is_the_whole_snapshot_when_networked()
 	# backlog #86 duty 2: a real bug in the same file, found reading
 	# _place_hunters end to end — see the test and _start_glide for the story.
 	_test_backlog86_glide_is_not_defeated_by_a_synchronous_position_write()
@@ -14846,6 +14859,63 @@ func _test_backlog86_route_between_rungs_ignores_unsorted_input() -> void:
 	# the dictionary's insertion order to come out in climb order.
 	var route: Array = Combat3D.route_between_rungs([12, 0, 8, 4], 0, 12)
 	_expect(route == [4, 8], "the rung list is sorted before routing, regardless of the order it arrives in")
+
+
+## backlog #86 duty 3 (fiftieth pass) — solo_view_slot/solo_cmd_slot/
+## solo_private_view, lifted out of combat_3d._me/_cmd_slot/_my_private. Solo
+## mode is one physical client holding BOTH hunters' private hands (couch
+## co-op, no second peer): _active_slot says which hunter this client is
+## currently looking at, and the private snapshot carries both hands at once
+## under "slots" instead of the single hand a real networked peer's own
+## snapshot already is. Get this wrong and switching hunters either shows the
+## wrong hand or leaks the other hunter's cards — the private-hand promise
+## (CLAUDE.md §2) on the single-screen path, which #86 duty 3 had only ever
+## proved on the networked path (GameClient's for_peer filter, earlier in
+## this file). location_3d.gd used to carry a second, hand-typed copy of this
+## same routing — exactly the "two copies of one truth" bug class duty 2
+## hunts — so both views now call these same three statics.
+func _test_backlog86_solo_view_slot_uses_the_active_slot_in_solo() -> void:
+	_expect(Combat3D.solo_view_slot(true, 1, 0) == 1,
+		"in solo the active slot wins even though the client's own peer slot says 0")
+
+
+func _test_backlog86_solo_view_slot_uses_the_clients_own_slot_when_networked() -> void:
+	_expect(Combat3D.solo_view_slot(false, 1, 0) == 0,
+		"networked, the active slot (a leftover UI selection) is ignored in favour of the client's real peer slot")
+
+
+func _test_backlog86_solo_cmd_slot_stamps_the_active_slot_in_solo() -> void:
+	_expect(Combat3D.solo_cmd_slot(true, 1) == 1,
+		"a solo command must say explicitly which hunter issued it -- there is no second peer to infer it from")
+
+
+func _test_backlog86_solo_cmd_slot_is_unset_when_networked() -> void:
+	_expect(Combat3D.solo_cmd_slot(false, 1) == -1,
+		"networked, the host already knows who's asking from the connection itself, so the slot is left unset")
+
+
+func _test_backlog86_solo_private_view_slices_out_the_active_hunters_hand() -> void:
+	var private := {"slots": [{"hand": ["frog_bite"]}, {"hand": ["cadence"]}]}
+	_expect(Combat3D.solo_private_view(true, 0, private) == {"hand": ["frog_bite"]},
+		"slot 0's hand comes out of the combined snapshot, not slot 1's")
+
+
+func _test_backlog86_solo_private_view_switches_hand_when_the_active_slot_changes() -> void:
+	var private := {"slots": [{"hand": ["frog_bite"]}, {"hand": ["cadence"]}]}
+	_expect(Combat3D.solo_private_view(true, 1, private) == {"hand": ["cadence"]},
+		"the same snapshot yields the OTHER hand once the active slot switches -- this is the actual switch-hunter mechanic")
+
+
+func _test_backlog86_solo_private_view_is_empty_for_an_out_of_range_slot() -> void:
+	var private := {"slots": [{"hand": ["frog_bite"]}]}
+	_expect(Combat3D.solo_private_view(true, 1, private) == {},
+		"a stale active slot with no matching entry yet (the second hunter's slot hasn't arrived) returns {} rather than indexing off the end of the array")
+
+
+func _test_backlog86_solo_private_view_is_the_whole_snapshot_when_networked() -> void:
+	var private := {"hand": ["frog_bite"]}
+	_expect(Combat3D.solo_private_view(false, 0, private) == {"hand": ["frog_bite"]},
+		"networked, the snapshot is already addressed to exactly one hunter and is returned untouched, with no 'slots' wrapper to unwrap")
 
 
 ## backlog #86 duty 3 (thirtieth pass) — climb_marker_for is the pure half of

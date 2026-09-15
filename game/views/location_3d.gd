@@ -91,22 +91,25 @@ func _process(delta: float) -> void:
 			n.position.y = TILE_TOP + sin(_time * 2.1 + i * 1.7) * 0.035
 
 
-# --- solo helpers, identical to the combat views --------------------------
+# --- solo helpers -----------------------------------------------------
+#
+# Delegates to combat_3d.gd's own solo_view_slot/solo_cmd_slot/
+# solo_private_view (via BEAST_MODEL, already preloaded above) instead of
+# keeping a second hand-typed copy of the same routing. The two copies used
+# to drift only in wording, never behaviour, but "used to" is exactly how
+# the two-copies-of-one-truth bug class starts. #86 duty 3.
 
 func _is_solo() -> bool:
 	return bool(_client.shared.get("solo", false))
 
 func _me() -> int:
-	return _active_slot if _is_solo() else _client.you
+	return BEAST_MODEL.solo_view_slot(_is_solo(), _active_slot, _client.you)
 
 func _cmd_slot() -> int:
-	return _active_slot if _is_solo() else -1
+	return BEAST_MODEL.solo_cmd_slot(_is_solo(), _active_slot)
 
 func _my_private() -> Dictionary:
-	if _is_solo():
-		var slots: Array = _client.private.get("slots", [])
-		return slots[_active_slot] if _active_slot < slots.size() else {}
-	return _client.private
+	return BEAST_MODEL.solo_private_view(_is_solo(), _active_slot, _client.private)
 
 
 # --- staging --------------------------------------------------------------

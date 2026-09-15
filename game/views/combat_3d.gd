@@ -909,21 +909,59 @@ func _focus_camera(window := FOCUS_WINDOW, lift := 0.0) -> void:
 
 
 # --- solo helpers ---------------------------------------------------------
+#
+# Solo is one physical screen holding BOTH hunters' private hands (couch
+# co-op, no networking): _active_slot picks which hunter's hand this client
+# is currently looking at, and _client.private carries both hands at once
+# under "slots" rather than the single hand a real remote peer gets. Get the
+# routing wrong and switching hunters either freezes on the old hand or
+# leaks the other hunter's cards into view — the exact "private hand" promise
+# CLAUDE.md §2 exists to keep, just tested on the single-screen path instead
+# of the network path #86 duty 3 already proved for GameClient.
+#
+# location_3d.gd needs the identical routing (the reward/shop/campfire
+# screens are solo-aware too) and used to carry its own hand-typed copy —
+# the "two copies of one truth" bug class duty 2 hunts. The three funcs
+# below are pure (no _client, no scene tree) so both views — and
+# run_tests.gd, headless — can share one implementation instead.
 
 func _is_solo() -> bool:
 	return bool(_client.shared.get("solo", false))
 
 func _me() -> int:
-	return _active_slot if _is_solo() else _client.you
+	return solo_view_slot(_is_solo(), _active_slot, _client.you)
 
 func _cmd_slot() -> int:
-	return _active_slot if _is_solo() else -1
+	return solo_cmd_slot(_is_solo(), _active_slot)
 
 func _my_private() -> Dictionary:
-	if _is_solo():
-		var slots: Array = _client.private.get("slots", [])
-		return slots[_active_slot] if _active_slot < slots.size() else {}
-	return _client.private
+	return solo_private_view(_is_solo(), _active_slot, _client.private)
+
+## Which hunter's hand this client is looking at: itself in solo (switchable
+## by the switch button), otherwise whichever slot the host addressed this
+## peer as. #86 duty 3.
+static func solo_view_slot(is_solo: bool, active_slot: int, client_you: int) -> int:
+	return active_slot if is_solo else client_you
+
+## The slot a chat/dev command should stamp onto its payload: solo has no
+## peer identity to fall back on, so it must say explicitly which hunter
+## issued it; a networked client leaves it unset (-1) and lets the host
+## resolve the command from the connection itself. #86 duty 3.
+static func solo_cmd_slot(is_solo: bool, active_slot: int) -> int:
+	return active_slot if is_solo else -1
+
+## In solo, one client's private snapshot carries BOTH hunters' hands under
+## "slots" (there is no second peer to address a second snapshot to), so the
+## active hunter's hand has to be sliced out by index; a networked client's
+## private snapshot is already addressed to exactly one hunter and is
+## returned as-is. Out-of-range (a stale slot from a snapshot that arrived
+## before the second hunter's slot did) returns {} rather than crashing on
+## an Array index. #86 duty 3.
+static func solo_private_view(is_solo: bool, active_slot: int, private: Dictionary) -> Dictionary:
+	if is_solo:
+		var slots: Array = private.get("slots", [])
+		return slots[active_slot] if active_slot >= 0 and active_slot < slots.size() else {}
+	return private
 
 
 # --- per-frame feel -------------------------------------------------------
