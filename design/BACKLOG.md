@@ -2782,6 +2782,25 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-15 — #86 duty 3: proved the negative half of `Run._combat_worth_saving()`'s
+  promise — a save/reload taken on a non-combat reward screen (a treasure
+  chest, an event payout) must NOT resurrect an earlier fight's felled beast.**
+  Last commit (`2d7c22c`) was duty 2, so this run took duty 3. `Run.combat` is
+  set once and never cleared (see `COMBAT_NODE_TYPES`'s own comment on
+  `run.gd`), so `_combat_worth_saving()` is the only thing stopping a stale
+  fight from riding along in `to_dict()` once the party steps onto a LATER
+  non-combat reward. The existing tests only proved the positive half (combat
+  DOES survive a save on a real fight's own reward screen) and the live,
+  unsaved read (`_build_shared()`'s "felled" snapshot correctly clears for a
+  later non-combat node) — nothing round-tripped the save/reload path for the
+  non-combat case, which is exactly the shape of bug #86 duty 2 already fixed
+  once (a stale combat pointer read through the wrong gate) and exactly where
+  it could regress silently. Added
+  `_test_backlog86_a_non_combat_reward_does_not_resurrect_an_earlier_fight_on_reload`
+  proving `_combat_worth_saving()` returns false on a treasure's reward
+  screen and that `Run.from_dict(run.to_dict()).combat` comes back null there.
+  Came up green — no bug found, `run_tests.gd` still ALL TESTS PASSED.
+
 - **2026-09-15 — #86 duty 2: `GameHost._keywords_of()`'s "player_block" tag missed
   `block_per_x` and `block_per_discarded`, even though `Card.archetype_tags()`'s
   own "block" OR-list already covers both.** Last commit (`e7d651b`) was duty

@@ -666,6 +666,7 @@ func _init() -> void:
 	_test_backlog86_build_shared_exposes_keys_for_the_reward_screen()
 	_test_backlog86_felled_snapshot_clears_for_a_later_non_combat_reward()
 	_test_backlog86_a_reward_after_a_real_fight_survives_a_save_reload()
+	_test_backlog86_a_non_combat_reward_does_not_resurrect_an_earlier_fight_on_reload()
 	_test_backlog64_event_key_effect_grants_the_event_key_once()
 	_test_backlog64_boon_effects_never_grant_a_key()
 	_test_backlog64_sealed_hollow_event_grants_a_key_at_a_real_cost()
@@ -13816,6 +13817,44 @@ func _test_backlog86_a_reward_after_a_real_fight_survives_a_save_reload() -> voi
 		"setup sanity: the save/load round trip keeps the reward screen's own phase and node_type")
 	_expect(loaded.combat != null and loaded.combat.boss != null and loaded.combat.boss.id == fought_id,
 		"a reward screen following a real fight must still know which beast was felled after a save/reload, not just within the same live, unsaved session")
+
+
+## Backlog #86 duty 3: the test directly above this one proves the POSITIVE
+## half of _combat_worth_saving()'s promise -- a save taken on a real fight's
+## own reward screen still carries `combat` after a reload. Nothing proves the
+## NEGATIVE half: `Run.combat` is never cleared once a run's first fight sets
+## it (see COMBAT_NODE_TYPES's own comment on run.gd), so once a party has
+## fought anything, it keeps pointing at that felled beast for the rest of the
+## run, including on a LATER non-combat reward screen (a treasure chest, an
+## event's payout). _combat_worth_saving() is what stops that stale pointer
+## from riding along in to_dict() -- but only its live read is tested
+## (_test_backlog86_felled_snapshot_clears_for_a_later_non_combat_reward,
+## which never touches save/load). If _combat_worth_saving()'s node_type gate
+## ever regressed to match COMBAT alone again, a save taken on a treasure's
+## reward screen would silently resurrect the earlier fight's carcass on
+## reload -- the same class of bug #86 duty 2 fixed, just one hop further
+## down the same save/reload path.
+func _test_backlog86_a_non_combat_reward_does_not_resurrect_an_earlier_fight_on_reload() -> void:
+	var run := _map_run()
+	_step_into_combat(run)  # row 0 is always a plain fight
+	var fought_id: String = run.combat.boss.id
+	_force_win(run)
+	_pick_both(run)  # bank the fight's own reward and release back to the map
+	_expect(run.phase == Run.Phase.MAP and run.combat != null and run.combat.boss.id == fought_id,
+		"setup sanity: Run.combat still points at the felled beast once the run is back on the map -- it is never cleared")
+
+	# Walk onto a treasure node in the SAME run, the same technique
+	# _test_backlog86_felled_snapshot_clears_for_a_later_non_combat_reward uses.
+	run.node_type = "treasure"
+	run._begin_reward("relic")
+	_expect(not run._combat_worth_saving(),
+		"a treasure node's own reward screen is not a combat node, so the stale fight still sitting in Run.combat must not be considered worth saving")
+
+	var loaded := Run.from_dict(run.to_dict())
+	_expect(loaded.phase == Run.Phase.REWARD and loaded.node_type == "treasure",
+		"setup sanity: the save/load round trip keeps the treasure reward screen's own phase and node_type")
+	_expect(loaded.combat == null,
+		"a save/reload taken on a treasure's reward screen must not resurrect an earlier fight's felled beast just because Run.combat still points at it in memory")
 
 
 func _test_backlog64_event_key_effect_grants_the_event_key_once() -> void:
