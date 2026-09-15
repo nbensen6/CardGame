@@ -2782,6 +2782,23 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-15 — #86 duty 2: fixed `pull_ally` dragging an already-lifted ally
+  back DOWN.** Last commit (`a316348`) closed with duty 3, so this run owed
+  duty 2. `Combat.play_card()`'s `pull_ally` branch (Grappling Arm) did a bare
+  `yanked.foothold = ps.foothold` — correct on its own, but `ally_grip`/
+  `sac_ally_grip` resolve earlier in the same `play_card()` call and can
+  already have put the ally ABOVE the caster before `pull_ally` runs (reachable
+  via Meld, e.g. fusing Hoist `ally_grip 3` with Grappling Arm `pull_ally 3`:
+  caster at Height 2, ally at 0 — `ally_grip` lifts the ally to 3, then the old
+  `pull_ally` code overwrote them straight back down to 2). Two cards that each
+  only promise to help silently cost real Height. Fixed with
+  `maxi(yanked.foothold, ps.foothold)`, same guard idiom `targets_hold` already
+  uses a few lines up. The three existing `_test_pull_ally_survives_*` tests
+  all calibrated the earlier lift to land the ally exactly AT the caster's
+  height, never above it, so none of them exercised this; added
+  `_test_pull_ally_never_drags_an_already_higher_ally_down`, confirmed it fails
+  against the pre-fix code and passes after.
+
 - **2026-09-15 — #86 duty 2 attempted (came up clean), duty 3: proved every
   character's own signature passive in `characters.json` actually reaches
   `PlayerState` through `Combat._apply_passive`.** Last commit (`b72cf92`) was

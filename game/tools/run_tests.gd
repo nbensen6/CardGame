@@ -613,6 +613,7 @@ func _init() -> void:
 	_test_pull_ally_survives_this_plays_own_climb()
 	_test_pull_ally_survives_the_allys_own_ally_grip_on_the_same_card()
 	_test_pull_ally_survives_the_same_cards_own_sac_ally_grip()
+	_test_pull_ally_never_drags_an_already_higher_ally_down()
 	_test_character_attack_bonus()
 	_test_build_creates_grapple()
 	_test_belay_scales_with_height()
@@ -12325,6 +12326,25 @@ func _test_pull_ally_survives_the_same_cards_own_sac_ally_grip() -> void:
 			whiffed = true
 	_expect(combat.players[0].foothold == 2 and combat.players[1].foothold == 2 and grappled and not whiffed,
 		"pull_ally: the same card's own sac_ally_grip (Catapult, fused in by Meld) lifting the ally first must not close the grapple gap can_play() already approved")
+
+
+## #86 duty 2: the three tests above only prove pull_ally doesn't get REFUSED when an
+## earlier lift on the same play closes the live gap — none of them puts the ally
+## ABOVE the caster before pull_ally runs. Meld Hoist (ally_grip 3) into Grappling Arm
+## (pull_ally 3) with the caster at Height 2 and the ally at 0: ally_grip resolves
+## first and lifts the ally to 3, one Height above the caster; the old code then did a
+## bare `yanked.foothold = ps.foothold`, dragging the ally back down to 2 — losing
+## Height a card that only promises to help should never cost.
+func _test_pull_ally_never_drags_an_already_higher_ally_down() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(200))
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 2  # within Grappling Arm's reach (3) above the ally at 0
+	ps.hand = [_meld_card(), _grapple_arm(), _hoist()]  # fuses to ally_grip 3 + pull_ally 3
+	ps.energy = 5
+	combat.play_card(0, 0, true, 1, 2)  # meld Grappling Arm + Hoist
+	combat.play_card(0, 0)  # play the fused card: ally_grip lifts the ally to 3, above the caster's 2
+	_expect(combat.players[1].foothold == 3,
+		"pull_ally must never drag an ally back down below a height an earlier lift on the same play already reached")
 
 
 func _test_roped_ally_climbs_when_fed_by_poison_lift() -> void:

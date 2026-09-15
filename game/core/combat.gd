@@ -1102,8 +1102,13 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		var gap: int = foothold_before_climb - ally_foothold_before_play
 		if gap > 0 and gap <= card.pull_ally:
 			var yanked_before := yanked.foothold
-			yanked.foothold = ps.foothold
-			_log("%s grapples %s up to Height %d." % [who, yanked.combatant.name, ps.foothold])
+			# maxi, not a bare overwrite (backlog #86 duty 2): an ally_grip/sac_ally_grip
+			# lift earlier in this same play (reachable via meld, e.g. Hoist + Grappling
+			# Arm) can already have put the ally ABOVE the caster's own foothold — a bare
+			# `yanked.foothold = ps.foothold` would then drag them back DOWN, so two
+			# effects that only ever promise to help would silently cost real Height.
+			yanked.foothold = maxi(yanked.foothold, ps.foothold)
+			_log("%s grapples %s up to Height %d." % [who, yanked.combatant.name, yanked.foothold])
 			_lift_roped_ally(ally_index(pi), yanked_before)  # the yanked ally might themselves be roped (#86 duty 2)
 		else:
 			_log("%s plays %s — no ally in grapple range." % [who, card.name])
