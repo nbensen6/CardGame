@@ -577,6 +577,15 @@ func _init() -> void:
 	_test_incoming_for_ignores_a_dead_adds_attack()
 	_test_poison_lands_on_the_targeted_add_not_the_boss()
 	_test_frail_lands_on_the_targeted_add_not_the_boss()
+	# backlog #86 duty 3: Poison and Frail just above both redirect to whichever
+	# add enemy_index/hits_all_enemies picked; card.gd:27 and combat.gd:535-539
+	# and 941-943 all promise Vulnerable does the opposite ON PURPOSE (adds
+	# don't carry the sigil's Vulnerable bonus, so a stack parked on one would
+	# never be spent) -- but nothing had ever played a Vulnerable card at a
+	# living add to prove the promise actually holds rather than just reading
+	# that way in three separate comments.
+	_test_backlog86_vulnerable_stays_boss_only_when_aimed_at_an_add()
+	_test_backlog86_vulnerable_lands_once_on_the_boss_with_hits_all_enemies()
 	_test_damage_per_wound_reads_the_targeted_adds_own_wound()
 	_test_backlog86_wound_target_falls_back_to_boss_when_the_add_is_dead()
 	_test_backlog86_wound_target_falls_back_to_boss_when_enemy_index_is_out_of_range()
@@ -11603,6 +11612,49 @@ func _test_frail_lands_on_the_targeted_add_not_the_boss() -> void:
 	combat.play_card(0, 0, true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
 	_expect(add.frail == 2 and boss.frail == 0,
 		"a card that applies Frail lands it on the add enemy_index picked, not the main boss")
+
+
+## backlog #86 duty 3: unlike Poison and Frail just above (both fixed in an
+## earlier duty-2 pass to redirect to whichever add enemy_index names),
+## card.vulnerable is documented in three places (card.gd:27's field comment,
+## combat.gd:535-539's note on preview(), and combat.gd:941-943's note right
+## above the damage fan-out) as landing on the boss ON PURPOSE regardless of
+## target -- adds don't carry the sigil's Vulnerable bonus (_damage_add never
+## reads or spends `.vulnerable`), so a stack parked on one would sit dead.
+## Nothing had ever played a Vulnerable-carrying card at a living add to prove
+## that promise holds rather than just reading that way in comments; a future
+## change that "fixed" Vulnerable to redirect like its two siblings (a
+## plausible copy-paste of the Poison/Frail fix, since they sit right above
+## it) would park stacks on adds that no code path ever spends.
+func _test_backlog86_vulnerable_stays_boss_only_when_aimed_at_an_add() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Grub", 30)
+	combat.adds.append(add)
+	combat.players[0].hand = [Card.from_dict({"id": "expose_dart", "name": "Expose Dart",
+		"type": "skill", "cost": 1, "damage": 2, "vulnerable": 3, "target": "enemy"})]
+	combat.play_card(0, 0, true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
+	_expect(boss.vulnerable == 3 and add.vulnerable == 0,
+		"Expose lands on the boss even when enemy_index aims the whole play at an add -- by design, unlike Poison/Frail which redirect")
+	_expect(add.hp == 28,
+		"the same play's damage still lands on the add enemy_index picked; only the Expose stack stays put")
+
+
+## Same promise, for the one card shape (hits_all_enemies, reachable via meld
+## with Sweeping Strike) where Poison and Frail fan out to the boss AND every
+## living add -- Vulnerable must still land on the boss alone even there.
+func _test_backlog86_vulnerable_lands_once_on_the_boss_with_hits_all_enemies() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Grub", 30)
+	combat.adds.append(add)
+	combat.players[0].hand = [Card.from_dict({"id": "cleave_expose", "name": "Cleave Expose",
+		"type": "attack", "cost": 1, "damage": 2, "vulnerable": 2, "hits_all_enemies": true, "target": "enemy"})]
+	combat.play_card(0, 0, true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
+	_expect(boss.vulnerable == 2 and add.vulnerable == 0,
+		"a hits_all_enemies card fans its damage to boss and add both, but still lands Expose on the boss alone")
+	_expect(boss.hp == 298 and add.hp == 28,
+		"the same card's damage fans out to both enemies exactly as hits_all_enemies promises")
 
 
 ## backlog #86 duty 2: preview()'s damage_per_wound term always read

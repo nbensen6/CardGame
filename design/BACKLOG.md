@@ -16272,3 +16272,45 @@ Newest first. One line per finished item: what, and anything surprising.
   something to chase further. Fresh `--import`, headless, Godot 4.7.1-stable,
   `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 3 (verify a
   mechanic actually works).
+
+- **2026-09-15 — #86 duty 3: proved Expose (Vulnerable) really does stay
+  boss-only when a play targets an add, instead of just reading that way in
+  three separate comments.** Last commit (`5fe1301`) was duty 2, so this run
+  took duty 3. Delegated the search for a genuinely untested mechanic to an
+  Explore agent, since the last several duty-3 passes' own logs already list
+  a long, confirmed-covered set (route_between, foothold_anchor,
+  hunter_move_kind, should_rebuild_hand/switch_blocked_by_timing,
+  energy_handoff, the four fight-openers, all eight enchants, EnetTransport,
+  the boss limiters, both duplicate-pick guards, RunSave, the "then" event
+  recursion, and last run's own timing-window switch fix) — re-deriving that
+  list by hand would have wasted the run. It found that `combat.gd`'s Poison
+  (`card.wound`) and Frail (`card.frail`) branches both redirect to whichever
+  add `enemy_index`/`hits_all_enemies` picked (an earlier duty-2 fix), but the
+  Vulnerable branch two lines later (`combat.gd:1162-1167`) always writes
+  `boss.vulnerable`, never an add's. That is documented as deliberate in three
+  places — `card.gd:27`'s field comment, `preview()`'s own note at
+  `combat.gd:535-539`, and a second note right above the damage fan-out at
+  `combat.gd:941-943` ("adds don't carry the sigil's Vulnerable bonus, so a
+  stack parked on an add would never be spent") — so this was never a bug to
+  fix, just a promise sitting in three comments with nothing behind it: no
+  test had ever played a Vulnerable-carrying card at a living add to check
+  the add's own `.vulnerable` stays 0 while the boss's rises, the exact
+  mirror of the Poison/Frail tests that already exist for the redirect case.
+  The risk is real: Poison and Frail sit right above Vulnerable in the same
+  function and both got the "redirect to the add" fix in an earlier duty-2
+  pass, so a future change copy-pasting that same fix onto Vulnerable (a
+  plausible mistake, since the three branches look identical in shape) would
+  park stacks on adds that no code path ever reads or spends, quietly
+  breaking every Expose card whenever it's played at an add. Added two tests
+  following the existing `_test_poison_lands_on_the_targeted_add_not_the_boss`
+  pattern exactly: `_test_backlog86_vulnerable_stays_boss_only_when_aimed_at_an_add`
+  (a plain `enemy_index` play) and
+  `_test_backlog86_vulnerable_lands_once_on_the_boss_with_hits_all_enemies`
+  (the one card shape, reachable via meld with Sweeping Strike, where Poison
+  and Frail fan out to the boss AND every living add — Vulnerable must still
+  land on the boss alone even there). Both assert the add's own damage still
+  lands correctly in the same play, so a future bug that broke damage
+  targeting instead of Vulnerable's would also be caught. No screen needed —
+  pure `/core` state, identical harness to the neighbouring Poison/Frail
+  tests. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL
+  TESTS PASSED. Next `#86` turn is duty 2 (find an error and resolve it).
