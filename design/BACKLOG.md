@@ -2782,6 +2782,43 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-15 — #86 duty 2: `GameHost._keywords_of()`'s own comment has named
+  "heal" as a real, reachable `power_effect` value since commit `421e2e2`
+  (right alongside the six values that commit actually wired in), but no
+  branch for it, and no keyword to show for it, ever existed.** Last commit
+  (`0e4d82f`) was duty 3, so this run took duty 2. Checked the numbered items
+  above #86 first: everything actionable is `needs a screen`, Nick's call, or
+  art (off-limits since the 2026-09-08 rewrite) — nothing above #86 was
+  pickable. Delegated the hunt to an Explore agent scoped to `game/core`,
+  `game/net` and `game/session`, with the long list of mechanics/fields
+  already fixed by earlier duty-2/3 rounds named as off-limits. It found that
+  `Combat._handle_power_effects()` (combat.gd:2047) genuinely resolves a
+  `power_effect == "heal"` stacking power card (a self-heal at every turn
+  end) and `Card.archetype_tags()` already tags one "heal" (card.gd:414-415,
+  with its own test), but `GameHost._keywords_of()` — the tap-to-inspect
+  panel a player actually reads — had no `power_effect == "heal"` branch at
+  all, despite its own doc comment listing "heal" in the same sentence as
+  the six values (block/strength/thorns/wound/vulnerable/frail) that same
+  commit really did wire in. Worse than a missing branch: `keywords.json`
+  had no self-heal keyword to show even if the branch existed — only "mend"
+  ("Heals your ally directly"), which would have been the wrong text for a
+  card that heals the CASTER. No shipped card uses `power_effect: "heal"`
+  yet, so today's player-facing impact is zero, but that is exactly the same
+  "zero impact today, silent gap the moment content ships" shape as the
+  weak_point_threshold and four power_effect fixes logged below it. Fixed by
+  adding a `heal` entry to `keywords.json` ("Heals you directly, up to your
+  max health.") and the matching `if c.power_effect == "heal": ids.append
+  ("heal")` branch in `_keywords_of()`. Extended
+  `_test_backlog86_keywords_of_recognises_power_effect_only_cards` with a
+  `"heal": "heal"` case in its `expect_id` probe (no shipped-card check
+  added alongside it, unlike the other four values, since none exists yet).
+  Confirmed it fails against the unfixed code (`git stash` on just
+  `game_host.gd` and `keywords.json`, keeping the test): `FAIL a bare card
+  with only power_effect="heal" set is tagged heal [ids=["power"]]`, then
+  restored the fix. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 3 (verify a
+  mechanic actually works).
+
 - **2026-09-15 — #86 duty 3: proved `Card.upgraded_copy()`'s own doc comment
   claim that a `rule_upgrade` naming `condition_bonus` explicitly OVERRIDES the
   generic +3/+1 bump rather than stacking with it or losing to it.** Last

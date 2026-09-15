@@ -802,6 +802,17 @@ func _keywords_of(c: Card) -> Array:
 	# ship with no flat field of their own, so a player tapping to inspect any
 	# of the four saw every other keyword the card earns but not the one that
 	# is its entire non-damage identity.
+	# backlog #86 duty 2: this comment block has named "heal" as a real,
+	# reachable power_effect value since the commit above, right alongside the
+	# six it actually wired in -- but no branch for it ever existed, here or
+	# in keywords.json (only "mend", the ALLY-heal keyword, existed; there was
+	# no self-heal keyword to append even if the check had been written). No
+	# shipped card uses power_effect "heal" yet, so this had zero live impact,
+	# but the same gap that hid block/strength/wound/thorns for four real
+	# cards would have hidden it silently the moment one does -- the comment
+	# promising coverage that was never wired in is exactly the kind of drift
+	# this duty exists to catch. Added the "heal" keywords.json entry and the
+	# matching check below.
 	if c.wound > 0 or c.damage_per_wound > 0 or c.power_effect == "wound":
 		ids.append("poison")
 	if c.vulnerable > 0 or c.damage_per_vulnerable > 0 or c.power_effect == "vulnerable":
@@ -896,6 +907,8 @@ func _keywords_of(c: Card) -> Array:
 		ids.append("light")
 	if c.ally_heal > 0:
 		ids.append("mend")
+	if c.power_effect == "heal":
+		ids.append("heal")
 	if c.type == "power" or c.power_effect != "" or c.power_value != 0:
 		ids.append("power")
 	if c.scry > 0:

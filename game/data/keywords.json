@@ -129,6 +129,10 @@
       "name": "Mend",
       "text": "Heals your ally directly, up to their max health."
     },
+    "heal": {
+      "name": "Heal",
+      "text": "Heals you directly, up to your max health."
+    },
     "power": {
       "name": "Power",
       "text": "Never discarded once played — it stays in play for the rest of the fight, and its effect fires again at the end of every one of your turns, including this one. Playing a second copy stacks it."

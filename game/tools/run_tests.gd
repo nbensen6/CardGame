@@ -8485,24 +8485,29 @@ func _test_keywords_of_recognises_grip_per_rhythm_only_cards() -> void:
 
 ## Backlog #86 duty 3: `Combat._handle_power_effects()` resolves a stacking
 ## power card's turn-end payout purely from `power_effect` — "block",
-## "strength", "thorns", "wound", "vulnerable" and "frail" are all real,
-## reachable values with no flat field required (see the match statement in
-## combat.gd). `Card.archetype_tags()` already covered wound/block/strength/
-## thorns/frail via `power_effect ==` checks (added piecemeal across earlier
-## duty-2 rounds) but never vulnerable; `GameHost._keywords_of()` — the
-## tap-to-inspect panel a player actually reads — never covered ANY of them.
-## Four shipped cards have no flat field to fall back on and were silently
-## missing their own defining keyword: iron_husk (power_effect "block"),
-## old_grudge ("strength"), seeping_venom ("wound"), barbed_hide ("thorns").
-## Probes each power_effect value on a bare, isolated card (no flat field set)
-## the same way the grip_per_rhythm-only test above does, then re-confirms
-## against the real shipped cards so this can't regress to a passing probe
-## that no longer matches actual content.
+## "strength", "thorns", "wound", "vulnerable", "frail" and "heal" are all
+## real, reachable values with no flat field required (see the match
+## statement in combat.gd). `Card.archetype_tags()` already covered
+## wound/block/strength/thorns/frail via `power_effect ==` checks (added
+## piecemeal across earlier duty-2 rounds) but never vulnerable or heal;
+## `GameHost._keywords_of()` — the tap-to-inspect panel a player actually
+## reads — never covered ANY of them. Four shipped cards have no flat field
+## to fall back on and were silently missing their own defining keyword:
+## iron_husk (power_effect "block"), old_grudge ("strength"), seeping_venom
+## ("wound"), barbed_hide ("thorns"). "heal" had no shipped card yet AND no
+## keyword to even show (`keywords.json` only had "mend", the ally-heal
+## text) — fixed by adding a self-heal "heal" entry (backlog #86 duty 2,
+## 2026-09-15) rather than leaving a comment that named it as covered while
+## no branch and no keyword for it existed. Probes each power_effect value
+## on a bare, isolated card (no flat field set) the same way the
+## grip_per_rhythm-only test above does, then re-confirms the four cards
+## with a flat-field fallback against real shipped content so this can't
+## regress to a passing probe that no longer matches actual content.
 func _test_backlog86_keywords_of_recognises_power_effect_only_cards() -> void:
 	var host := GameHost.new(LocalTransport.new(), 1, 2)
 	_kept.append(host)
 	var expect_id := {"wound": "poison", "block": "player_block", "strength": "strength",
-		"thorns": "thorns", "frail": "frail", "vulnerable": "expose"}
+		"thorns": "thorns", "frail": "frail", "vulnerable": "expose", "heal": "heal"}
 	for effect in expect_id.keys():
 		var c := Card.new()
 		c.power_effect = String(effect)
