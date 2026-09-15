@@ -1348,6 +1348,21 @@ func _init() -> void:
 	_test_backlog86_window_for_clamps_to_the_documented_range()
 	_test_backlog86_ground_pivot_puts_world_zero_at_the_top_of_the_card_strip()
 
+	# backlog #86 duty 3 (forty-eighth pass): dist_for_window_for is the lens
+	# maths behind _aim_camera's own wall clamp (`minf(_dist_for_window(want.y),
+	# _cam_reach())`, line ~1711) -- the formula that decides how far back the
+	# camera stands to hold a given window, before the wall even gets a say.
+	# It had zero coverage of its own: cam_reach_for and inside_wall_at (the
+	# clamp itself) were proven in the forty-seventh pass, but the unclamped
+	# distance they clamp was not, and a broken standoff term is exactly the
+	# kind of bug the clamp would silently paper over on a small arena and only
+	# show up once a beast is big enough for the clamp to stop biting.
+	_test_backlog86_dist_for_window_for_scales_with_the_window()
+	_test_backlog86_dist_for_window_for_floors_the_window_at_one()
+	_test_backlog86_dist_for_window_for_narrower_fov_stands_off_further()
+	_test_backlog86_dist_for_window_for_adds_no_standoff_once_pivot_reaches_the_front()
+	_test_backlog86_dist_for_window_for_standoff_covers_only_what_the_pivot_has_not()
+
 	# backlog #86 duty 3 (thirty-seventh pass): EnetTransport, the real
 	# multiplayer transport CLAUDE.md's build order names as step 3 ("two-player
 	# online co-op on PC") and net/README.md's whole reason to exist -- had zero
@@ -20239,6 +20254,53 @@ func _test_backlog86_inside_wall_at_preserves_direction_and_height_while_clampin
 	_expect(is_equal_approx(out.x / out.z, p.x / p.z),
 		"the clamp keeps the camera on the same bearing from centre -- it pulls straight in, it doesn't swing around")
 	_expect(is_equal_approx(out.y, 2.0), "height survives the clamp on the diagonal case too")
+
+
+## backlog #86 duty 3 (forty-eighth pass) -- dist_for_window_for, the lens
+## distance _aim_camera stands the camera off to hold a given window before
+## cam_reach_for's wall clamp gets a say. With fov=90 the lens half of the
+## formula collapses to window/2 exactly (tan(45)=1), which keeps these cases
+## checkable by hand rather than trusting the same maths back at itself.
+func _test_backlog86_dist_for_window_for_scales_with_the_window() -> void:
+	_expect(is_equal_approx(Combat3D.dist_for_window_for(10.0, 90.0, 0.0, 0.0), 5.0),
+		"at a 90-degree fov the lens term is exactly window/2 with no beast standoff")
+	_expect(is_equal_approx(Combat3D.dist_for_window_for(20.0, 90.0, 0.0, 0.0), 10.0),
+		"doubling the window doubles the distance -- the lens term is a straight scale")
+
+
+func _test_backlog86_dist_for_window_for_floors_the_window_at_one() -> void:
+	var at_zero := Combat3D.dist_for_window_for(0.0, 90.0, 0.0, 0.0)
+	var at_half := Combat3D.dist_for_window_for(0.5, 90.0, 0.0, 0.0)
+	_expect(is_equal_approx(at_zero, 0.5) and is_equal_approx(at_half, 0.5),
+		"a window at or below the 1.0 floor always resolves as if window were exactly 1.0")
+
+
+func _test_backlog86_dist_for_window_for_narrower_fov_stands_off_further() -> void:
+	var wide := Combat3D.dist_for_window_for(10.0, 90.0, 0.0, 0.0)
+	var narrow := Combat3D.dist_for_window_for(10.0, 60.0, 0.0, 0.0)
+	_expect(narrow > wide,
+		"a narrower (more zoomed) fov needs a longer lens throw to hold the same window")
+	_expect(is_equal_approx(narrow, 10.0 / (2.0 * tan(deg_to_rad(60.0) * 0.5))),
+		"the fov half of the formula matches the raw lens equation directly, not just 'is bigger'")
+
+
+func _test_backlog86_dist_for_window_for_adds_no_standoff_once_pivot_reaches_the_front() -> void:
+	var lens_only := Combat3D.dist_for_window_for(10.0, 90.0, 0.0, 0.0)
+	var pivot_at_threshold := Combat3D.dist_for_window_for(10.0, 90.0, 10.0, 8.5)
+	var pivot_past_front := Combat3D.dist_for_window_for(10.0, 90.0, 10.0, 20.0)
+	_expect(is_equal_approx(pivot_at_threshold, lens_only),
+		"once the pivot has already reached 0.85 of the beast's front, no standoff is added on top")
+	_expect(is_equal_approx(pivot_past_front, lens_only),
+		"a pivot further out than the front doesn't SUBTRACT from the lens distance either -- it floors at zero")
+
+
+func _test_backlog86_dist_for_window_for_standoff_covers_only_what_the_pivot_has_not() -> void:
+	var pivot_at_origin := Combat3D.dist_for_window_for(10.0, 90.0, 10.0, 0.0)
+	var pivot_partway := Combat3D.dist_for_window_for(10.0, 90.0, 10.0, 3.0)
+	_expect(is_equal_approx(pivot_at_origin, 13.5),
+		"lens 5.0 plus the full 8.5-unit standoff (0.85 * front 10) when the pivot hasn't moved off centre")
+	_expect(is_equal_approx(pivot_partway, 10.5),
+		"moving the pivot 3 units toward the front cuts the exact same 3 units off the standoff, not less and not more")
 
 
 ## backlog #86 duty 2: `_switch_to()` already cancelled an in-progress

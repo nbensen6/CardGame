@@ -1775,13 +1775,21 @@ static func _ground_pivot(window: float) -> float:
 	return window * (0.5 - HUD_BOTTOM_FRACTION + 0.04)
 
 
-func _dist_for_window(window: float) -> float:
-	var lens := maxf(window, 1.0) / (2.0 * tan(deg_to_rad(_cam.fov) * 0.5))
+## The lens/standoff maths lifted out below, taking the three instance fields
+## it actually reads (fov, beast front, pivot z) as arguments so it can be
+## proven from headless without a Camera3D or a built beast model.
+static func dist_for_window_for(window: float, fov_deg: float, beast_front_z: float,
+		pivot_target_z: float) -> float:
+	var lens := maxf(window, 1.0) / (2.0 * tan(deg_to_rad(fov_deg) * 0.5))
 	# Stand off from the beast's FRONT rather than its centre — but only by the
 	# part the pivot has not already covered. Locking onto a hunter puts the pivot
 	# out on that front face, and charging the whole standoff on top of it would
 	# back the camera off by the beast's depth twice over.
-	return lens + maxf(_beast_box.end.z * 0.85 - _pivot_target.z, 0.0)
+	return lens + maxf(beast_front_z * 0.85 - pivot_target_z, 0.0)
+
+
+func _dist_for_window(window: float) -> float:
+	return dist_for_window_for(window, _cam.fov, _beast_box.end.z, _pivot_target.z)
 
 
 ## What the camera should be looking at, and how much world to fit around it:

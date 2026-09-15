@@ -2782,6 +2782,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-15 (even later) — #86 duty 3: lifted `combat_3d._dist_for_window`'s
+  lens/standoff maths into a static `dist_for_window_for(window, fov_deg,
+  beast_front_z, pivot_target_z)` and gave it five tests — it had zero
+  coverage before this.** Last commit (`496d560`) was duty 2, so this run
+  owed duty 3. `_dist_for_window` is the formula `_aim_camera` clamps against
+  `cam_reach_for`'s wall (line ~1711, `minf(_dist_for_window(want.y),
+  _cam_reach())`) to decide how far back the camera stands for a given
+  window — the forty-seventh pass proved the wall clamp itself
+  (`cam_reach_for`/`inside_wall_at`), but the unclamped distance it clamps
+  was never checked, so a broken standoff term could hide behind the clamp
+  on a small arena and only show up once a beast is big enough for the
+  clamp to stop biting. Extracted the body verbatim (no behaviour change)
+  into a static function taking the three instance fields it reads
+  (`_cam.fov`, `_beast_box.end.z`, `_pivot_target.z`) as arguments, same
+  pattern as `route_between_rungs`/`cam_reach_for` before it, with
+  `_dist_for_window` now a one-line wrapper. Tests: the lens term scales
+  linearly with window and floors correctly at the documented 1.0 minimum
+  (fov=90 makes the lens term exactly window/2, so the numbers are checkable
+  by hand); a narrower fov needs a longer throw for the same window, checked
+  against the raw `tan` equation directly rather than just "bigger than
+  wide"; the beast-front standoff adds nothing once the pivot has already
+  reached 0.85 of the beast's front (and doesn't go negative past it); and
+  moving the pivot partway toward the front cuts the standoff by exactly
+  that amount, not more or less. All five passed on the first run — the
+  extraction was mechanical and the formula's own claims held. Fresh
+  `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: 1830 tests, ALL
+  TESTS PASSED. Next `#86` turn is duty 2 (find an error and resolve it).
+
 - **2026-09-15 (later still) — #86 duty 2: a Cleave+Expose card's face text
   implied Expose lands on every add too, when the engine keeps it boss-only
   on purpose.** Last commit (`cf75907`) was duty 3, so this run owed duty 2.
