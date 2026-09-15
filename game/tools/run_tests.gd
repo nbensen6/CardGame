@@ -416,6 +416,7 @@ func _init() -> void:
 	_test_player_block_keyword_is_not_shadowed_by_the_boss_move()
 	_test_keywords_of_does_not_falsely_tag_an_ordinary_card_as_cheapen()
 	_test_keywords_of_recognises_block_per_x_and_block_per_discarded_only_cards()
+	_test_keywords_of_recognises_grip_per_rhythm_only_cards()
 	_test_every_field_a_player_must_understand_has_a_keyword()
 	_test_timed_keyword_explains_graded_quality()
 	_test_every_boss_move_type_resolves()
@@ -8408,6 +8409,31 @@ func _test_keywords_of_recognises_block_per_x_and_block_per_discarded_only_cards
 		discard_only_ids.append(String((k as Dictionary).get("id", "")))
 	_expect(discard_only_ids.has("player_block"),
 		"a bare card with only block_per_discarded set is tagged player_block [ids=%s]" % [discard_only_ids])
+
+
+## backlog #86 duty 2: the same "two functions, same question, different
+## answer" gap as the block_per_x/block_per_discarded case above, found on the
+## climb side. Card.archetype_tags()'s "climb" OR-list has included
+## grip_per_rhythm since an earlier duty-2 round (b715c58); _keywords_of()'s
+## "height"/"armoured" OR-list never got the matching fix. It stayed hidden
+## because every shipped card with grip_per_rhythm (hop, grand_leap...) also
+## carries a flat `grip` that separately trips the branch — a card authored
+## with ONLY grip_per_rhythm set would earn "climb" in the reward draft's
+## archetype lean while the tap-to-inspect panel stayed silent that it climbs
+## at all (it would only show "rhythm", since grip_per_rhythm alone already
+## trips that OR-list).
+func _test_keywords_of_recognises_grip_per_rhythm_only_cards() -> void:
+	var host := GameHost.new(LocalTransport.new(), 1, 2)
+	_kept.append(host)
+	var grip_rhythm_only := Card.new()
+	grip_rhythm_only.grip_per_rhythm = 1
+	var ids := []
+	for k in host._keywords_of(grip_rhythm_only):
+		ids.append(String((k as Dictionary).get("id", "")))
+	_expect(ids.has("height") and ids.has("armoured"),
+		"a bare card with only grip_per_rhythm set is tagged height/armoured [ids=%s]" % [ids])
+	_expect(grip_rhythm_only.archetype_tags().has("climb"),
+		"Card.archetype_tags() still agrees this card is a climb card [tags=%s]" % [grip_rhythm_only.archetype_tags()])
 
 
 ## Backlog #16: the check above only catches an id that's misspelled in one

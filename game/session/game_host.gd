@@ -812,9 +812,19 @@ func _keywords_of(c: Card) -> Array:
 		# it: JSON keeps only the last of two duplicate keys, so this card-side
 		# lookup was silently resolving to the beast's "the beast guards" text.
 		ids.append("player_block")
+	# backlog #86 duty 2: grip_per_rhythm (bonus Height per Rhythm banked this
+	# turn) grants Height outright, same as every other field already OR'd in
+	# here — Card.archetype_tags()'s own "climb" OR-list has covered it since
+	# an earlier duty-2 round (b715c58); this tap-to-inspect list never got the
+	# matching fix. It stayed hidden the same way block_per_x/block_per_discarded
+	# did above: every shipped card with grip_per_rhythm (hop, flurry_hop,
+	# grand_leap...) also carries a flat `grip` that separately trips this
+	# branch, and a card authored with ONLY grip_per_rhythm would show "rhythm"
+	# (it also trips that OR-list) but not "height"/"armoured" — telling the
+	# player this scales with Rhythm while staying silent that it climbs at all.
 	if c.grip > 0 or c.ally_grip > 0 or c.timed_grip > 0 or c.pull_ally > 0 \
 			or c.sac_ally_grip > 0 or c.damage_per_foothold > 0 or c.damage_per_ally_foothold > 0 \
-			or c.targets_hold or c.ally_grip_per_rhythm > 0:
+			or c.targets_hold or c.ally_grip_per_rhythm > 0 or c.grip_per_rhythm > 0:
 		ids.append("height")
 		ids.append("armoured")
 	if c.taunt:

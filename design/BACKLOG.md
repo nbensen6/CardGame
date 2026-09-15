@@ -2782,6 +2782,38 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-15 — #86 duty 2: `GameHost._keywords_of()`'s "height"/"armoured"
+  OR-list was missing `grip_per_rhythm`, the exact same "two functions, same
+  question, different answer" gap as the block_per_x/block_per_discarded fix
+  logged below.** Last commit (`6ce0c4a`) was duty 3, so this run took duty 2.
+  Checked the numbered items above #86 first: everything actionable is either
+  `needs a screen`, Nick's call, or (art) off-limits to this lane since the
+  2026-09-08 rewrite — nothing above #86 was pickable. Read `combat.gd`,
+  `boss.gd`, `player_state.gd`, `content.gd`, `run_map.gd`, `run_save.gd`,
+  `progress.gd` and `game_host.gd` end to end looking for first-pass holes and
+  duplicate-truth drift; most of the obvious surface here has already been
+  hardened by earlier duty-2 rounds (extensive comments name the past fixes).
+  Found the gap by diffing `Card.archetype_tags()`'s "climb" OR-list
+  (`card.gd:381-384`, includes `grip_per_rhythm` since `b715c58`) against
+  `_keywords_of()`'s "height"/"armoured" OR-list (`game_host.gd:815-818`,
+  never got the matching entry) — the same two functions that already
+  collided once on block_per_x/block_per_discarded. Every shipped card with
+  `grip_per_rhythm` (hop, flurry_hop, grand_leap, long_jump, crescendo,
+  hopscotch, ripple_leap) also carries a flat `grip`, which separately trips
+  the branch, so nothing currently in `cards.json` is actually mistagged —
+  but a card authored with ONLY `grip_per_rhythm` would show "rhythm" (that
+  OR-list already includes it) while staying silent that it climbs at all,
+  and `_test_every_field_a_player_must_understand_has_a_keyword`'s bar is
+  merely "not empty," so it couldn't have caught this — the "rhythm" tag
+  already satisfies that check. Fixed by adding `c.grip_per_rhythm > 0` to
+  the height/armoured OR-list. Added
+  `_test_keywords_of_recognises_grip_per_rhythm_only_cards`: builds a bare
+  card with only `grip_per_rhythm` set, watched it fail (only "rhythm"
+  present) before the fix, asserts both "height" and "armoured" are tagged
+  and that `archetype_tags()` still agrees it's a "climb" card. Fresh
+  `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
+  Next `#86` turn is duty 3 (verify a mechanic actually works).
+
 - **2026-09-15 — #86 duty 2: a relic's `round_block` grant bypassed Dexterity
   and Frail entirely — the one Block source in the game that still had its
   own second copy of `Combatant.gain_block()`'s math.** Last commit
