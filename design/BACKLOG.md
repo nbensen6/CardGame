@@ -2782,6 +2782,60 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-15 — #86 duty 2 attempted (came up clean), duty 3: proved every
+  character's own signature passive in `characters.json` actually reaches
+  `PlayerState` through `Combat._apply_passive`.** Last commit (`b72cf92`) was
+  duty 3, so this run owed duty 2. Spent two full Explore-agent passes plus
+  direct reading hunting for a "first-pass hole" or "two copies of one truth"
+  bug: the first pass proposed `Combat3D.card_climb_for()` (reads only printed
+  `base.grip`, ignoring live `grip_per_rhythm`/rhythm scaling) — checked its
+  own doc comment and its five tests, which explicitly assert it reads ONLY
+  the printed value and even that it "ignores a top level grip key," so this
+  is deliberate design, not drift. It also proposed `Combat.fall()` not
+  resetting `sigil_rounds` the way `shift_sigil`/`attack_all`/
+  `_check_weakpoint_buck` do — wrote the fix and a test, then noticed
+  `fall()` is gated on `is_secure(pi)`, which is already true whenever
+  `foothold >= weak_point_height`; since `fall()` can only ever fire on a
+  hunter already BELOW the sigil, and `_hold_below` only moves them further
+  down, it can never land them back at/above it the way the other three call
+  sites can from above. Reverted both the fix and the test — an honest
+  unreachable-condition "fix" is not a fix. A second Explore pass read
+  `progress.gd` whole, every previously-unlisted function in `game_host.gd`/
+  `game_client.gd`/`session.gd`, all of `game/net`, `hit_circle.gd` and
+  `card_view.gd` whole, the rest of `game/views` and `game/ui`, and the
+  remaining untouched parts of `run.gd` — came back with nothing. I then spent
+  a long stretch cross-checking every data-driven vocabulary against its own
+  code (`bosses.json`'s move/limiter/condition types vs. `_enemy_turn`/
+  `_apply_limiter`/`_condition_met`'s match statements, `relics.json`'s
+  25 distinct `effect` strings vs. `_apply_relic_effect`'s cases plus
+  `relic_totals()`'s seed keys, `events.json`/`boons.json`'s effect keys vs.
+  `_apply_effect_block`) — every one of them lined up exactly, no orphans
+  either side. Concluded duty 2 is genuinely clean this round (not because
+  nothing is untested, but because I could not construct a reachable repro
+  for anything I found) and moved to duty 3, same precedent as `1a77eda`.
+  For duty 3: the BACKLOG's own named starting point (`_route_between`/`_hop`
+  view-layer climb coverage) turned out already done (`route_between_rungs`,
+  `hop_arc`, `foothold_anchor` are all lifted, pure, and tested). Doing the
+  same "does every data vocabulary reach its code" check as a coverage
+  question rather than a bug hunt turned up one real gap:
+  `Content.character_passive()` reads a `type` string out of `characters.json`
+  and `Combat._apply_passive()` matches that string against
+  climb_bonus/attack_bonus/ally_climb/poison_lift to set one `PlayerState`
+  field each — two independent copies of the same small vocabulary, exactly
+  the shape the existing `_test_backlog86_every_relic_mod_key_reaches_relic_totals`
+  and "every card in cards.json is reachable" tests already guard for relics
+  and cards, but nobody had ever done it for character passives. Every
+  existing passive-touching test either hand-built a passive Dictionary or
+  only ever exercised frog's `climb_bonus`. Added
+  `_test_backlog86_every_character_passive_type_reaches_playerstate`
+  (`run_tests.gd`, right after the relic-mod-key test it mirrors): walks
+  `Content.list_characters()`, feeds each one's real `character_passive()`
+  through a live `Combat`, and asserts the right `PlayerState` field carries
+  the passive's own value — currently all 5 characters (4 real passives + 1
+  `"none"`) check out clean, so this is coverage against future drift, not a
+  live bug fix. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2.
+
 - **2026-09-15 — #86 duty 3: proved `vuln_bonus` and `sigil_bonus` relics
   (Hunter's Mark and Sigil Lens) actually STACK on the same hit, and that
   `preview()` still predicts the real result once both fire together.** Last

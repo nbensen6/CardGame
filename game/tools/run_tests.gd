@@ -1043,6 +1043,18 @@ func _init() -> void:
 	_test_backlog86_grip_seconds_relic_stacks_in_relic_totals()
 	_test_backlog86_every_relic_mod_key_reaches_relic_totals()
 	_test_backlog86_combat3d_grip_seconds_reads_the_relic_mod_from_shared_state()
+	# backlog #86 duty 3: the same "declared but never wired" shape as the two
+	# relic-mod tests just above, for a data path neither of them touches --
+	# a character's own signature passive (characters.json). _apply_passive's
+	# match on passive.type is a second, independent copy of the vocabulary
+	# Content.character_passive() reads off the SAME file: a typo or a rename
+	# on either side (the JSON's "type" string, or the match case naming it)
+	# would silently leave a character's whole signature ability doing nothing,
+	# with nothing anywhere failing to say so. Every existing test that touches
+	# a passive either builds one by hand or only ever exercises frog's
+	# climb_bonus -- no test had ever walked the real roster and proven each
+	# character's own authored passive actually lands on PlayerState.
+	_test_backlog86_every_character_passive_type_reaches_playerstate()
 	_test_backlog86_climb_state_secure_erases_any_existing_timer()
 	_test_backlog86_climb_state_starts_a_fresh_full_timer_on_first_leaving_a_hold()
 	_test_backlog86_climb_state_does_not_regrip_a_timer_already_draining()
@@ -15742,6 +15754,49 @@ func _test_backlog86_every_relic_mod_key_reaches_relic_totals() -> void:
 			bad.append("%s (%s): want %d got %d" % [key, rid, want, got])
 	_expect(bad.is_empty(),
 		"every relic-mod key reaches relic_totals() with its real relic's value, not just grip_seconds/attack/block/draw/energy [%s]" % ", ".join(bad))
+
+
+## backlog #86 duty 3: Combat._apply_passive() matches passive.type against
+## climb_bonus/attack_bonus/ally_climb/poison_lift and writes each to its own
+## PlayerState field -- a hand-authored vocabulary that has to agree with
+## whatever string each character's own entry in characters.json actually
+## carries, with no shared constant tying the two together. Every character
+## but frog was only ever exercised through hand-built passive Dictionaries
+## (_test_per_class_reward_pools uses frog+goblin_mech, but never reads
+## char_attack_bonus back off the result) -- nothing had ever taken the real
+## roster from Content.list_characters(), fed each one's own
+## Content.character_passive() through a live Combat, and checked the field
+## it's supposed to land on. A passive whose type string stopped matching any
+## case here (a rename on one side, a typo on the other) would silently leave
+## that character's whole signature ability doing nothing, forever, with
+## every other test still green.
+func _test_backlog86_every_character_passive_type_reaches_playerstate() -> void:
+	var bad: Array = []
+	for c in Content.list_characters():
+		var cid := String((c as Dictionary)["id"])
+		var passive := Content.character_passive(cid)
+		var ptype := String(passive.get("type", "none"))
+		if ptype == "none":
+			continue
+		var want := int(passive.get("value", 0))
+		var combat := Combat.new([_deck_of(_slash, 10), _deck_of(_slash, 10)],
+			[Combatant.new("A", 42), Combatant.new("B", 42)], _dummy_boss(500), 42, 0, 0, 0, 0,
+			[passive, {"type": "none", "value": 0}])
+		combat.start()
+		var ps: PlayerState = combat.players[0]
+		var got: int
+		match ptype:
+			"climb_bonus": got = ps.climb_bonus
+			"attack_bonus": got = ps.char_attack_bonus
+			"ally_climb": got = ps.ally_climb
+			"poison_lift": got = ps.poison_lift
+			_:
+				bad.append("%s: passive type '%s' has no case in Combat._apply_passive's match" % [cid, ptype])
+				continue
+		if got != want:
+			bad.append("%s: passive type '%s' wants %d on PlayerState, got %d" % [cid, ptype, want, got])
+	_expect(bad.is_empty(),
+		"every character's own signature passive in characters.json actually reaches PlayerState through Combat._apply_passive, not just frog's climb_bonus [%s]" % ", ".join(bad))
 
 
 ## The other half: relic_totals()'s "grip_seconds" key rides GameHost's
