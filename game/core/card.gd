@@ -409,6 +409,8 @@ func archetype_tags() -> Array:
 		tags.append("vulnerable")
 	if thorns > 0 or power_effect == "thorns":
 		tags.append("thorns")
+	if frail > 0 or power_effect == "frail":
+		tags.append("frail")
 	if power_effect == "heal":
 		tags.append("heal")
 	return tags

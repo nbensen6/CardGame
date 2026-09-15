@@ -217,6 +217,7 @@ func _init() -> void:
 	_test_backlog86_archetype_tags_recognise_damage_per_ally_foothold_and_timed_ally_block()
 	_test_backlog86_archetype_tags_recognise_block_per_exhausted_and_block_per_discarded_only_cards()
 	_test_backlog86_archetype_tags_recognise_power_cards_by_their_power_effect()
+	_test_backlog86_archetype_tags_recognise_frail_cards()
 	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
 	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
@@ -5450,6 +5451,54 @@ func _test_backlog86_archetype_tags_recognise_power_cards_by_their_power_effect(
 	var leaned_weight: int = Run.reward_weight(iron_husk_rarity, iron_husk_tags, block_deck_tags)
 	_expect(leaned_weight > flat_weight,
 		"Iron Husk's reward weight rises for a Block-heavy deck now that it carries the block tag [flat=%s leaned=%s]"
+			% [flat_weight, leaned_weight])
+
+
+## Backlog #86 duty 2: archetype_tags()'s debuff branches tag "vulnerable" and
+## "thorns" (both a printed field OR a matching power_effect), but Frail --
+## the third debuff from the same original backlog #36 trio (Frail/Artifact/
+## Thorns) -- had no branch at all, printed field or power_effect. Crippling
+## Blow (cards.json: {"damage": 5, "frail": 2}) is the one shipped card whose
+## entire non-damage identity is applying Frail, and it sits in the shared
+## reward_pool every character can draft from; with no "frail" tag it rolled
+## through backlog #72's reward-lean with zero lean toward it no matter how
+## many copies a hunter had already drafted -- the one debuff axis of three
+## that never leaned, silently, since the tag lean shipped.
+func _test_backlog86_archetype_tags_recognise_frail_cards() -> void:
+	var crippling_blow_tags: Array = Content.card_tags("crippling_blow")
+	_expect(crippling_blow_tags.has("frail"),
+		"Crippling Blow (flat frail 2, plus plain damage) is tagged frail [tags=%s]" % [crippling_blow_tags])
+
+	var frail_only := Card.new()
+	frail_only.frail = 2
+	var frail_only_tags: Array = frail_only.archetype_tags()
+	_expect(frail_only_tags.has("frail") and frail_only_tags.size() == 1,
+		"a bare card with only frail set is tagged frail and nothing else [tags=%s]" % [frail_only_tags])
+
+	# a power_effect=frail card (no shipped card uses it yet, but
+	# Combat._handle_power_effects already resolves it, same "frail" match
+	# arm _apply_frail(boss, amount) covers) still gets a tag rather than
+	# silently falling through the way the four power cards above did before
+	# their own fix.
+	var frail_power := Card.new()
+	frail_power.type = "power"
+	frail_power.power_effect = "frail"
+	frail_power.power_value = 1
+	var frail_power_tags: Array = frail_power.archetype_tags()
+	_expect(frail_power_tags.has("frail") and frail_power_tags.size() == 1,
+		"a bare power_effect=frail card is tagged frail and nothing else [tags=%s]" % [frail_power_tags])
+
+	# reward-lean end to end, same shape as the Iron Husk check above: a deck
+	# already carrying Frail gives Crippling Blow a real lean bonus now that
+	# it is tagged, where before its empty tag array meant reward_weight()'s
+	# tag_bonus loop never ran no matter how many Crippling Blows were in the deck.
+	var run := _map_run()
+	var frail_deck_tags: Dictionary = run._tag_counts(_deck_of(Callable(Content, "make_card").bind("crippling_blow"), 10))
+	var crippling_blow_rarity: String = Content.card_rarity("crippling_blow")
+	var flat_weight: int = Run.reward_weight(crippling_blow_rarity, crippling_blow_tags, {})
+	var leaned_weight: int = Run.reward_weight(crippling_blow_rarity, crippling_blow_tags, frail_deck_tags)
+	_expect(leaned_weight > flat_weight,
+		"Crippling Blow's reward weight rises for a Frail-heavy deck now that it carries the frail tag [flat=%s leaned=%s]"
 			% [flat_weight, leaned_weight])
 
 

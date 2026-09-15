@@ -2782,6 +2782,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-15 — #86 duty 2: `Card.archetype_tags()` never tagged Frail — the one
+  debuff of the original Frail/Artifact/Thorns trio (backlog #36) with no
+  branch at all, printed field or `power_effect`.** Last commit (`2102f4d`)
+  was duty 3, so this run took duty 2. Delegated the hunt to an Explore agent
+  scoped to `game/core/**`/`game/net/**`/the view layer, since `combat.gd`'s
+  `preview()`/`play_card()` pair is already saturated with recent fixes; it
+  landed on `archetype_tags()` instead, which tags `vulnerable` and `thorns`
+  (both a flat field OR a matching `power_effect`) but had never grown a
+  matching `frail` branch even though `Combat._handle_power_effects` already
+  resolves a `power_effect == "frail"` card via `_apply_frail`. Crippling Blow
+  (`cards.json`: `{"damage": 5, "frail": 2}`) is the one shipped card whose
+  whole non-damage identity is Frail, sitting in the shared `reward_pool`
+  every character can draft from — with no tag, `Run.reward_weight()`'s
+  `tag_bonus` loop never fired for it, so a hunter who'd already drafted one
+  got zero reward-lean toward a second no matter how many were in the deck,
+  the one debuff axis of three that never leaned since backlog #72 shipped
+  the tag-lean mechanic. Fixed with the same one-line idiom every sibling
+  branch uses (`if frail > 0 or power_effect == "frail": tags.append("frail")`)
+  and four regression tests
+  (`_test_backlog86_archetype_tags_recognise_frail_cards`): Crippling Blow
+  itself, a bare flat-`frail`-only card, a bare `power_effect == "frail"`
+  card, and the reward-weight lean rising for a Frail-heavy deck — all four
+  confirmed FAILING before the fix (stashed `card.gd`, reran, three tag
+  checks and the lean check all failed) and PASSING after. `run_tests.gd`:
+  ALL TESTS PASSED.
+
 - **2026-09-15 — #86 duty 3: proved the negative half of `Run._combat_worth_saving()`'s
   promise — a save/reload taken on a non-combat reward screen (a treasure
   chest, an event payout) must NOT resurrect an earlier fight's felled beast.**
