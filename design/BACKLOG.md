@@ -2782,6 +2782,37 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-15 (later still) — #86 duty 2: a Cleave+Expose card's face text
+  implied Expose lands on every add too, when the engine keeps it boss-only
+  on purpose.** Last commit (`cf75907`) was duty 3, so this run owed duty 2.
+  `CardView.face_text()`'s damage line already says "to the Titan and every
+  add it has" whenever `hits_all_enemies` is set (backlog #63's own fix);
+  the very next possible line, Expose, used to be a bare "Expose N." with no
+  scope note at all. `combat.gd:1167-1172` keeps Vulnerable boss-only on a
+  hits_all_enemies play by design — `_damage_add()`'s own comment says an
+  add never carries the sigil's Vulnerable bonus, so a stack parked on one
+  would never be spent — and the existing test
+  (`_test_backlog86_vulnerable_lands_once_on_the_boss_with_hits_all_enemies`)
+  already proves the STATUS stays boss-only. Nobody had checked the FACE
+  agreed: reachable today via `meld` (Sweeping Strike, the game's only
+  hits_all_enemies card, fused with any Expose card), the live text read
+  "Deal 8 damage to the Titan and every add it has. Expose 2." — two
+  sentences back to back, the first explicitly claiming wide scope, the
+  second silently narrower, with nothing telling the player the second one
+  doesn't mean what the first one just said. Poison and Frail sit on the
+  same list of lines and needed no such note, because they genuinely DO fan
+  out to every living enemy on a Cleave card (`combat.gd`'s `debuff_targets`)
+  — Expose is the one exception, so it's the one line that needed to say so.
+  Fixed by appending " (the Titan only)" to the Expose line specifically
+  when `hits_all_enemies` is set, leaving a plain single-target Expose card
+  untouched. Added `_test_backlog86_expose_scope_note_on_a_cleave_card`:
+  builds a synthetic Cleave+Expose card via `Card.from_dict` and a plain
+  Expose card, runs both through `GameHost._deck_face()` (no fight needed —
+  it's a pure printed-values face) and `CardView.face_text()`, and pins both
+  the corrected wording and that the plain card's wording didn't change.
+  Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS
+  PASSED. Next `#86` turn is duty 3.
+
 - **2026-09-15 (later) — #86 duty 3: proved `damage_per_vulnerable`'s bonus
   really does read the boss's own Exposed stack — and leaves it completely
   unspent — when a card carrying it is aimed at an add.** Last commit

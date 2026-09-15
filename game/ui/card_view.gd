@@ -1016,8 +1016,20 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 		out.append("%s an ally %d." % [_kw("Heal", "mend", kw, rich), int(fx["ally_heal"])])
 	if int(fx.get("wound", 0)) > 0:
 		out.append("%s %d." % [_kw("Poison", "poison", kw, rich), int(fx["wound"])])
+	# backlog #86 duty 2 — Expose is the one debuff on this list that does NOT
+	# fan out to adds on a hits_all_enemies card (combat.gd:1167-1172 keeps
+	# Vulnerable boss-only on purpose, since an add never spends the sigil's
+	# bonus it would carry). Poison/Frail above and below genuinely do fan
+	# out, so their lines needed no scope note — but this line used to sit
+	# directly under the damage line's own "to the Titan and every add it
+	# has" (the `cleave` var above), so a melded Cleave+Expose card read as
+	# "Deal 8 damage to the Titan and every add it has. Expose 2." with
+	# nothing telling the player the second sentence doesn't mean what the
+	# first one just said. _test_backlog86_expose_scope_note_on_a_cleave_card
+	# (run_tests.gd) pins the fixed wording.
 	if int(fx.get("vulnerable", 0)) > 0:
-		out.append("%s %d." % [_kw("Expose", "expose", kw, rich), int(fx["vulnerable"])])
+		var boss_only := " (the Titan only)" if bool(fx.get("hits_all_enemies", false)) else ""
+		out.append("%s %d%s." % [_kw("Expose", "expose", kw, rich), int(fx["vulnerable"]), boss_only])
 	# backlog #86 duty 2 — same shape as Dexterity/power_effect below: GameHost's
 	# "fx" dict never carried "frail", so a card combining damage with Frail
 	# (Crippling Blow: "Deal 5 damage. Frail 2.") showed only "Deal 5 damage."

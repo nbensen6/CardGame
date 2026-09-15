@@ -590,6 +590,7 @@ func _init() -> void:
 	# that way in three separate comments.
 	_test_backlog86_vulnerable_stays_boss_only_when_aimed_at_an_add()
 	_test_backlog86_vulnerable_lands_once_on_the_boss_with_hits_all_enemies()
+	_test_backlog86_expose_scope_note_on_a_cleave_card()
 	_test_backlog86_damage_per_vulnerable_scales_off_the_boss_even_when_aimed_at_an_add()
 	_test_damage_per_wound_reads_the_targeted_adds_own_wound()
 	_test_backlog86_wound_target_falls_back_to_boss_when_the_add_is_dead()
@@ -11824,6 +11825,33 @@ func _test_backlog86_vulnerable_lands_once_on_the_boss_with_hits_all_enemies() -
 		"a hits_all_enemies card fans its damage to boss and add both, but still lands Expose on the boss alone")
 	_expect(boss.hp == 298 and add.hp == 28,
 		"the same card's damage fans out to both enemies exactly as hits_all_enemies promises")
+
+
+## backlog #86 duty 2 — the test above proves Expose STAYS boss-only on a
+## hits_all_enemies card; this one proves the FACE doesn't lie about it.
+## `CardView.face_text()`'s damage line already says "to the Titan and every
+## add it has" for a Cleave card (backlog #63's own fix), and the very next
+## possible line used to be a bare "Expose N." with no scope note at all --
+## read right after a sentence that just claimed wide scope, a player has no
+## reason to think the second sentence means something narrower than the
+## first. Poison/Frail need no such note because they genuinely DO fan out
+## on a hits_all_enemies card (combat.gd's `debuff_targets`); Expose is the
+## one exception, so it's the one line that needs to say so.
+func _test_backlog86_expose_scope_note_on_a_cleave_card() -> void:
+	var host := GameHost.new(LocalTransport.new(), 1, 2)
+	_kept.append(host)
+	var cleave_expose := Card.from_dict({"id": "cleave_expose", "name": "Cleave Expose",
+		"type": "attack", "cost": 1, "damage": 2, "vulnerable": 2, "hits_all_enemies": true, "target": "enemy"})
+	var face := host._deck_face(cleave_expose, 0)
+	var text := CardView.face_text(face)
+	_expect(text == "Deal 2 damage to the Titan and every add it has. Expose 2 (the Titan only).",
+		"a hits_all_enemies card's Expose line says it doesn't share the damage line's wide scope, got: %s" % text)
+	# A plain (non-cleave) Expose card should read exactly as before -- no
+	# scope note where there's no wider claim to disagree with.
+	var plain_expose := Card.from_dict({"id": "plain_expose", "name": "Plain Expose",
+		"type": "attack", "cost": 1, "damage": 2, "vulnerable": 2, "target": "enemy"})
+	_expect(CardView.face_text(host._deck_face(plain_expose, 0)) == "Deal 2 damage. Expose 2.",
+		"a single-target Expose card carries no scope note, since it has no wide-scope line to contradict")
 
 
 ## backlog #86 duty 3: the test above proves the STATUS (card.vulnerable, i.e.
