@@ -2782,6 +2782,40 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-15 — #86 duty 2: the shared snapshot's `boss.weak_point_threshold`
+  forwarded the bare bosses.json value, not the real number
+  `Combat._check_weakpoint_buck()` bucks a hunter off at.** Last commit
+  (`0f79406`) was duty 3, so this run took duty 2. Checked the numbered items
+  above #86 first: everything actionable is `needs a screen`, Nick's call, or
+  art (off-limits since the 2026-09-08 rewrite) — nothing above #86 was
+  pickable. Delegated the hunt to an Explore agent scoped to `game/core`,
+  `game/session` and `game/net`, with the many bugs earlier duty-2 rounds
+  already fixed named as off-limits. It found `game_host.gd:502`'s boss dict
+  sending `b.weak_point_threshold` straight from data, while
+  `combat.gd:1237`'s `_check_weakpoint_buck()` — the only place that actually
+  enforces the mechanic — compares against `boss.weak_point_threshold +
+  _mod("threshold")`, where `_mod("threshold")` is the team's relic total
+  (Deep Hooks +8, Barbed Pitons +14, both real shipped relics). Same "two
+  copies of one truth" shape as the campfire-heal and round_block fixes
+  logged below: one place computes the real, modified number and a sibling
+  snapshot copy skips the modifier. Nothing renders this field yet (`grep -rn
+  weak_point_threshold game/views game/ui` is empty) so the immediate
+  player-facing harm is zero, but it's exactly the number a future "damage
+  until buck" HUD meter would read, and the snapshot already exposes
+  `wp_damage`/`weak_point_height` specifically so that meter can be built —
+  it would have undercounted by the relic's value from day one. Fixed by
+  adding the team's `relic_totals().get("threshold", 0)` to the forwarded
+  value, the same source `_run.relic_totals()` that seeds `Combat._mods` at
+  fight start (confirmed via `run.gd:972-975`), so the two never drift.
+  Added `_test_backlog86_weak_point_threshold_snapshot_matches_the_real_buck_
+  threshold`: grants Deep Hooks before a real fight starts (so Combat's own
+  frozen `_mods` and the snapshot's freshly-read `relic_totals()` are
+  checking the same real number, not just matching arithmetic), asserts the
+  snapshot shows data-value + 8. Confirmed it fails against the unfixed code
+  via `git stash` on just `game_host.gd` (`FAIL`, then reverted). Fresh
+  `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
+  Next `#86` turn is duty 3 (verify a mechanic actually works).
+
 - **2026-09-15 — #86 duty 3: `GameHost._keywords_of()` never checked
   `power_effect` at all, so a stacking power card with no flat field of its
   own explained every keyword it earns except the one that IS its identity.**

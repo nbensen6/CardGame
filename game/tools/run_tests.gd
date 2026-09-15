@@ -500,6 +500,7 @@ func _init() -> void:
 	_test_frail_artifact_thorns_persist_through_save()
 	_test_frail_artifact_thorns_reach_the_shared_snapshot()
 	_test_dexterity_intangible_buffer_plated_armour_reach_the_shared_snapshot()
+	_test_backlog86_weak_point_threshold_snapshot_matches_the_real_buck_threshold()
 	_test_light_reaches_the_shared_snapshot()
 	_test_sigil_rounds_and_boss_limiter_reach_the_shared_snapshot()
 	_test_prepared_reaches_the_shared_snapshot()
@@ -10526,6 +10527,48 @@ func _test_dexterity_intangible_buffer_plated_armour_reach_the_shared_snapshot()
 	_expect(int(p0_view["dexterity"]) == 3 and int(p0_view["intangible"]) == 2
 		and int(p0_view["buffer"]) == 1 and int(p0_view["plated_armour"]) == 4,
 		"a hunter's own Dexterity/Intangible/Buffer/Plated Armour reach the shared snapshot too")
+
+
+## backlog #86 duty 2: `game_host.gd`'s boss dict forwarded the bare, unmodified
+## `Boss.weak_point_threshold` straight from bosses.json -- but
+## `Combat._check_weakpoint_buck()` (the only place that actually enforces the
+## mechanic) bucks a hunter off at `boss.weak_point_threshold + _mod("threshold")`,
+## where `_mod("threshold")` is the team's relic total (Deep Hooks +8, Barbed
+## Pitons +14). A team holding either relic got bucked off later than the
+## snapshot's own number claimed -- the same "two copies of one truth" shape as
+## the campfire heal fix two tests above, just for a stat nothing renders yet.
+## Grants Deep Hooks BEFORE the fight starts (like a real reward would), so
+## Combat's own frozen `_mods` and the snapshot's freshly-read `relic_totals()`
+## agree on the same real, enforced number, not just on the arithmetic.
+func _test_backlog86_weak_point_threshold_snapshot_matches_the_real_buck_threshold() -> void:
+	var transport := LocalTransport.new()
+	var host := GameHost.new(transport, 42, 2)
+	_kept.append(host)
+	var c0 := GameClient.new(transport, 10)
+	var c1 := GameClient.new(transport, 20)
+	c0.join()
+	c1.join()
+	c0.select_character("frog")
+	c1.select_character("mountain_climbers")
+	host._run.team_relics = [Content.make_relic("deep_hooks")]  # +8 threshold
+	var guard := 0
+	while String(c0.shared.get("phase", "")) == "map" and guard < 10:
+		guard += 1
+		var avail: Array = (c0.shared.get("map", {}) as Dictionary).get("available", [])
+		if avail.is_empty():
+			break
+		c0.pick_node(int(avail[0]))
+	_expect(host._run.combat != null, "setup sanity: picking a node reaches combat")
+	var boss := host._run.combat.boss
+	var data_value := boss.weak_point_threshold
+	_expect(data_value > 0, "setup sanity: the fought beast has a real weak point to buck at")
+	host._broadcast_state()
+	var shown := int((c0.shared["boss"] as Dictionary)["weak_point_threshold"])
+	_expect(shown == data_value + 8,
+		("the snapshot's weak_point_threshold must include Deep Hooks' +8 relic bonus " +
+		"(%d), not just the bare data value (%d) Combat._check_weakpoint_buck() would " +
+		"have bucked a hunter off far sooner than this number told a client to expect") %
+		[data_value + 8, data_value])
 
 
 func _test_light_reaches_the_shared_snapshot() -> void:

@@ -499,7 +499,15 @@ func _build_shared() -> Dictionary:
 			"dexterity": b.dexterity, "intangible": b.intangible,
 			"buffer": b.buffer, "plated_armour": b.plated_armour,
 			"weak_point_height": b.weak_point_height, "foothold_max": Combat.FOOTHOLD_MAX,
-			"ledges": b.ledges, "weak_point_threshold": b.weak_point_threshold,
+			# backlog #86 duty 2: this forwarded the bare data value from bosses.json,
+			# not the real threshold Combat._check_weakpoint_buck() enforces -- that
+			# function adds the team's relic "threshold" total (Deep Hooks +8, Barbed
+			# Pitons +14) before comparing, so a team holding either relic got bucked
+			# off later than this number claimed. Same "two copies of one truth" shape
+			# as the campfire heal fix a few lines above: one place computes the real,
+			# modified number and a sibling snapshot copy skipped the modifier.
+			"ledges": b.ledges,
+			"weak_point_threshold": b.weak_point_threshold + int(_run.relic_totals().get("threshold", 0)),
 			# The rule this Titan bends (boss.limiter, backlog #55/#40) is real
 			# public data Combat._apply_limiter() reads every Titan turn, but was
 			# never forwarded — a client had no way to know a fight even HAS a
