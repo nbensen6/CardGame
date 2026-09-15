@@ -152,6 +152,7 @@ func _init() -> void:
 	_test_card_upgrade_bumps_grip_per_rhythm_pull_and_sac_ally_grip()
 	_test_card_upgrade_bumps_cheapen_amount_only_when_cheapen_pick_is_set()
 	_test_card_upgrade_bumps_condition_bonus_too()
+	_test_backlog86_rule_upgrade_naming_condition_bonus_overrides_the_generic_bump()
 	_test_backlog67_above_sigil_condition_gates_preview_bonus()
 	_test_backlog67_ally_hanging_condition_gates_preview_bonus()
 	_test_backlog67_nth_card_condition_counts_earlier_plays_only()
@@ -3954,6 +3955,32 @@ func _test_card_upgrade_bumps_condition_bonus_too() -> void:
 		# without a duplicate() would have rewritten dagger's own condition_bonus too
 		and int(dagger.condition_bonus.get("damage", 0)) == 3,
 		"upgrading scales condition_bonus the same way it scales the matching top-level field, without mutating the original card")
+
+
+## backlog #86 duty 3 — upgraded_copy()'s own doc comment (card.gd, right above
+## the rule_upgrade loop) claims a specific override: condition_bonus gets the
+## generic +3/+1 bump ahead of the rule_upgrade branch, "unless rule_upgrade
+## itself names condition_bonus explicitly, which the loop below then
+## correctly overrides with." No shipped card and no existing test ever builds
+## that combination — the melded-card test above carries rule_upgrade and
+## condition_bonus as two SEPARATE fields from two different parents, and
+## rule_upgrade there never names "condition_bonus" as one of its own keys —
+## so the actual override path (`for key in rule_upgrade.keys(): d[key] =
+## rule_upgrade[key]` clobbering the just-bumped condition_bonus) has run in
+## the game exactly zero times under test. Prove the claimed result: the
+## rule_upgrade's authored value wins outright, not the generic bump (6) and
+## not the two stacked together (105).
+func _test_backlog86_rule_upgrade_naming_condition_bonus_overrides_the_generic_bump() -> void:
+	var card := Card.from_dict({"id": "test_ru_cb", "name": "Test", "damage": 2,
+		"condition": {"type": "above_sigil"}, "condition_bonus": {"damage": 3},
+		"rule_upgrade": {"condition_bonus": {"damage": 99}}})
+	var up := card.upgraded_copy()
+	_expect(int(up.condition_bonus.get("damage", 0)) == 99,
+		"rule_upgrade naming condition_bonus explicitly overrides the generic bump outright (got %d, wanted the authored 99, not the generic-bump 6 or a stacked 105)" % int(up.condition_bonus.get("damage", 0)))
+	_expect(up.rule_upgrade.is_empty() and up.upgraded and up.name == "Test+",
+		"the rest of the rule_upgrade path still applies normally: rule_upgrade clears, the card is marked upgraded, and its name gets the + suffix")
+	_expect(int(card.condition_bonus.get("damage", 0)) == 3,
+		"the original card's own condition_bonus is untouched by upgrading the copy")
 
 
 ## Backlog #67: a card can ask a question about the board — "above the sigil",

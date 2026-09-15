@@ -2782,6 +2782,47 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-15 — #86 duty 3: proved `Card.upgraded_copy()`'s own doc comment
+  claim that a `rule_upgrade` naming `condition_bonus` explicitly OVERRIDES the
+  generic +3/+1 bump rather than stacking with it or losing to it.** Last
+  commit (`07c24c5`) was duty 2, so this run took duty 3. Delegated the search
+  to an Explore agent scoped away from everything the last 50+ duty-3 passes'
+  logs already list as covered (route_between, foothold_anchor,
+  next_selection_state, hunter_is_aimed_at family, fire_quality,
+  type_for_roll/_ensure_key_sources, the duplicate-character-pick guards,
+  _note_progress/_history_recorded, energy_handoff, all eight enchants, the
+  Poison/Frail/Vulnerable redirect rules, EnetTransport/NetLink, RunSave, and
+  last run's own switch_blocked_by_timing) — spent a while re-deriving several
+  of those by hand first and confirmed they really are already tested before
+  handing the search off, which is the same lesson the last two logs already
+  named. It found `card.gd:306-315`: `upgraded_copy()` computes a
+  generically-bumped `condition_bonus` first, then — if `rule_upgrade` is
+  non-empty — blindly overwrites `d[key] = rule_upgrade[key]` for every key in
+  `rule_upgrade`, including `condition_bonus` if `rule_upgrade` happens to name
+  it. The doc comment right above that loop claims this is deliberate: the
+  authored override wins outright, no stacking. No shipped card in
+  `data/cards.json` pairs the two, and the one existing test that touches both
+  fields together (`_test_backlog86_upgrading_a_melded_rule_upgrade_card_still
+  _bumps_its_condition_bonus`) only reaches the shape where `rule_upgrade` and
+  `condition_bonus` arrive from two DIFFERENT melded parent cards — its
+  `rule_upgrade` never names `condition_bonus` as one of its own keys, so the
+  actual override line had never executed under test. Built a synthetic
+  `Card.from_dict()` (same idiom `iron_husk`'s test helper already uses) with
+  both fields set so the override collision is unavoidable, and asserted the
+  authored value (99) wins over both the untouched original (3) and the
+  generic-bump result (6) — plus the ordinary parts of the rule_upgrade path
+  still hold (rule_upgrade clears, `upgraded` is set, the name gets `+`) and
+  the source card's own `condition_bonus` stays unmutated. Hit one real bug
+  in my OWN test on the first run, not the game: `condition` is a Dictionary
+  field (`{"type": "above_sigil"}`), not a String — passed a bare string
+  first, and `Card.from_dict()` crashed with "Invalid cast: could not convert
+  value to 'Dictionary'" at `card.gd:220`. The static analysis this whole
+  hunt started from would not have caught that, only actually running the
+  suite did. Fixed and reran: no bug found in the game itself, the claim
+  holds exactly as documented. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2 (find an error
+  and resolve it).
+
 - **2026-09-15 — #86 duty 2: the shared snapshot's `boss.weak_point_threshold`
   forwarded the bare bosses.json value, not the real number
   `Combat._check_weakpoint_buck()` bucks a hunter off at.** Last commit
