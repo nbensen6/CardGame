@@ -164,6 +164,7 @@ func _init() -> void:
 	_test_backlog86_condition_bonus_grip_resolves_through_a_real_play()
 	_test_backlog86_condition_bonus_grip_skips_climb_bonus_when_base_grip_is_zero()
 	_test_enchanted_copy_attaches_to_any_card()
+	_test_backlog86_enchanted_copy_replaces_rather_than_stacks()
 	_test_enchants_all_load()
 	_test_backlog86_timing_zone_bonus_combines_relic_and_enchant()
 	_test_backlog86_wide_enchant_reaches_the_wire()
@@ -4114,6 +4115,28 @@ func _test_enchanted_copy_attaches_to_any_card() -> void:
 		and String(enchanted_aim.enchant_data().get("effect", "")) == "auto_nail"
 		and slash.enchant == "" and take_aim.enchant == "",
 		"enchanted_copy attaches any enchant to any card generically, without mutating the original")
+
+
+## backlog #86 duty 3: enchanted_copy()'s own doc comment (card.gd:362-365) promises
+## "One enchant slot: enchanting an already-enchanted card REPLACES the old one rather
+## than stacking" -- but every existing enchanted_copy() test/call site (this file and
+## combat.gd) only ever enchants a fresh, unenchanted card once. Nothing had ever chained
+## a second enchanted_copy() onto an already-enchanted card and checked the result is the
+## NEW enchant alone, not both and not the old one -- exactly the kind of promise a future
+## change to enchant (e.g. turning it into an array to support multiple slots) could break
+## while every current test kept passing.
+func _test_backlog86_enchanted_copy_replaces_rather_than_stacks() -> void:
+	var slash := _slash()
+	var wide_slash := slash.enchanted_copy("wide")
+	var re_enchanted := wide_slash.enchanted_copy("sure")
+	_expect(re_enchanted.enchant == "sure",
+		"a second enchanted_copy() call replaces the old enchant id with the new one")
+	_expect(String(re_enchanted.enchant_data().get("effect", "")) == "auto_nail"
+		and int(re_enchanted.enchant_data().get("value", 0)) == 1,
+		"enchant_data() reads only the NEW enchant's effect/value -- nothing stacked from the old one")
+	_expect(wide_slash.enchant == "wide"
+		and String(wide_slash.enchant_data().get("effect", "")) == "timing_zone",
+		"re-enchanting a copy leaves the intermediate copy's own enchant untouched -- enchanted_copy still never mutates its receiver")
 
 
 func _test_enchants_all_load() -> void:

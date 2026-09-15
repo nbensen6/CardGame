@@ -2782,6 +2782,33 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-15 — #86 duty 3: `Card.enchanted_copy()`'s own doc comment promise —
+  "One enchant slot: enchanting an already-enchanted card REPLACES the old one
+  rather than stacking" — had never been driven twice.** Last commit
+  (`bdb2da9`) was duty 2, so this run took duty 3. Searched hard before
+  picking this one — an Explore agent scoped to `/core`, `/net`, and the
+  pure/static corners of the view layer ruled out ~15 already-covered
+  candidates (taunt redirects, campfire floor/upgrade paths, meld face text,
+  event "then" recursion, save/reload combat resurrection, keyword/archetype
+  tagging, the timing minigame, climb routing, netcode readiness, dev
+  console, and more) before landing here. Grepped every `enchanted_copy(`
+  call site in `run_tests.gd` (five of them) and `combat.gd`: every single
+  one enchants a fresh, unenchanted card exactly once — nothing had ever
+  chained a second `enchanted_copy()` call onto an already-enchanted card
+  and checked the result is the NEW enchant alone. A future change turning
+  `enchant` into something that could hold more than one id (e.g. an array,
+  to support multiple slots) would have passed every existing test in both
+  files while quietly breaking the one-slot promise the doc comment makes.
+  Added `_test_backlog86_enchanted_copy_replaces_rather_than_stacks`,
+  calling the real `Card.enchanted_copy()`/`enchant_data()` twice in a row
+  (Wide, then Sure) and asserting the result carries only Sure's
+  effect/value, that the intermediate Wide copy is untouched, and that the
+  original receiver contract (never mutates) still holds. Passed on the
+  first run — the promise held, this just closes the gap where nothing had
+  ever asked twice. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2 (find an
+  error and resolve it).
+
 - **2026-09-15 — #86 duty 2: `Card.archetype_tags()` never tagged Frail — the one
   debuff of the original Frail/Artifact/Thorns trio (backlog #36) with no
   branch at all, printed field or `power_effect`.** Last commit (`2102f4d`)
