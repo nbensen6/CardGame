@@ -1658,6 +1658,12 @@ func _init() -> void:
 	_test_backlog86_energy_handoff_hands_off_nothing_with_no_energy_to_spare()
 	_test_backlog86_energy_handoff_does_not_fire_once_the_ally_already_ended()
 	_test_backlog86_energy_handoff_is_inert_without_the_relic()
+	# backlog #86 duty 3 (forty-ninth pass): character_name/character_portrait
+	# back every hunter name and portrait onscreen and had never been called
+	# from this file -- see the doc comment on the test itself.
+	_test_backlog86_character_name_and_portrait_agree_with_list_characters()
+	_test_backlog86_character_name_falls_back_to_the_id_for_an_unknown_character()
+	_test_backlog86_character_portrait_falls_back_to_empty_for_an_unknown_character()
 
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
@@ -10871,6 +10877,44 @@ func _test_backlog86_energy_handoff_is_inert_without_the_relic() -> void:
 	var mate_before: int = ps1.energy
 	combat._handle_energy_handoff({"player": ps0, "index": 0})
 	_expect(ps1.energy == mate_before, "with no energy_handoff relic active, unspent Energy is never passed to the ally")
+
+
+## backlog #86 duty 3 (forty-ninth pass): Content.character_name/character_
+## portrait back every hunter name and portrait the game ever shows -- the
+## party card, the lobby's own selection list, the win/lose log lines, even
+## the headless balance/robustness sweeps -- and neither had ever been called
+## once from this file. That matters because list_characters() computes the
+## SAME name/portrait a second time, independently, straight off the JSON
+## (`String(c.get("name", id))` / `String(c.get("portrait", ""))`), rather
+## than calling character_name()/character_portrait() itself -- the "two
+## copies of one truth" shape this lane keeps finding as a live bug (see the
+## _place_hunters/h["home"] story above), here just not yet caught diverging.
+## This pins the promise that both paths agree for every real character, and
+## locks in the fallback an unknown id gets from each.
+func _test_backlog86_character_name_and_portrait_agree_with_list_characters() -> void:
+	var mismatches: Array = []
+	for entry in Content.list_characters():
+		var id := String(entry["id"])
+		if Content.character_name(id) != String(entry["name"]):
+			mismatches.append("%s name: '%s' vs '%s'" % [id, Content.character_name(id), entry["name"]])
+		if Content.character_portrait(id) != String(entry["portrait"]):
+			mismatches.append("%s portrait: '%s' vs '%s'" % [id, Content.character_portrait(id), entry["portrait"]])
+		if Content.character_name(id).is_empty():
+			mismatches.append("%s has an empty name" % id)
+		if Content.character_portrait(id).is_empty():
+			mismatches.append("%s has an empty portrait path" % id)
+	_expect(mismatches.is_empty(),
+		"character_name()/character_portrait() must agree with list_characters()'s own lookup for every character [%s]" % ", ".join(mismatches))
+
+
+func _test_backlog86_character_name_falls_back_to_the_id_for_an_unknown_character() -> void:
+	_expect(Content.character_name("no_such_character") == "no_such_character",
+		"an unrecognised character id echoes back as its own display name rather than going blank")
+
+
+func _test_backlog86_character_portrait_falls_back_to_empty_for_an_unknown_character() -> void:
+	_expect(Content.character_portrait("no_such_character") == "",
+		"an unrecognised character id has no portrait to show, not a broken path")
 
 
 func _test_intangible_buffer_plated_armour_persist_through_save() -> void:

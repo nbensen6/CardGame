@@ -2782,6 +2782,28 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-15 — #86 duty 3: `Content.character_name()`/`character_portrait()`
+  — the lookups behind every hunter name and portrait shown anywhere (party
+  card, lobby selection list, win/lose log lines, even the headless balance
+  and robustness sweeps) — had never been called once from `run_tests.gd`.**
+  Last commit (`f920011`) was duty 2, so this turn opened on duty 3. Worth
+  flagging why this survived so many prior passes: `Content.list_characters()`
+  computes the SAME name/portrait a second time, independently, straight off
+  the raw JSON (`String(c.get("name", id))` / `String(c.get("portrait", ""))`)
+  rather than calling `character_name()`/`character_portrait()` itself — the
+  exact "two copies of one truth" shape this lane keeps finding as a live bug
+  elsewhere, here just not yet caught diverging, because nothing had ever
+  asked both paths the same question. Added
+  `_test_backlog86_character_name_and_portrait_agree_with_list_characters`
+  (checks every real character in `characters.json` gets the same, non-empty
+  name and portrait from both paths) plus two fallback tests — an unknown id
+  echoes back as its own name (not blank) and gets an empty portrait (not a
+  broken path). All three passed on the first run; the two lookups do agree
+  today, so this closes a real gap rather than a bug, and guards against the
+  next edit that touches only one of them. Fresh `--import`, headless, Godot
+  4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2
+  (find an error and resolve it).
+
 - **2026-09-15 — #86 duty 2: `Combat.preview()`'s "damage" never consulted the
   Titan's own armored-hide/Exposed/sigil math, the one mechanic the whole game
   is built around.** Last commit (`76c2d31`) was duty 3, so this run took duty
