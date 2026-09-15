@@ -2782,6 +2782,48 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-15 — #86 duty 3: proved `vuln_bonus` and `sigil_bonus` relics
+  (Hunter's Mark and Sigil Lens) actually STACK on the same hit, and that
+  `preview()` still predicts the real result once both fire together.** Last
+  commit (`7c8248a`) was duty 2, so this run took duty 3. Checked the numbered
+  items above #86 first: everything actionable is `needs a screen`, Nick's
+  call, or art (off-limits since the 2026-09-08 rewrite) — nothing above #86
+  was pickable. Delegated the search to an Explore agent told that ~40+ prior
+  duty-3 passes have already put a unit test on essentially every `static
+  func` in `game/core`, `game/views`, `game/ui`, `game/session` and
+  `asset_contract.gd` (confirmed myself first by grepping every static func
+  name against `run_tests.gd` — only trivial private helpers came back
+  untested), so the remaining gaps are integration-level, not
+  new-pure-function. It found that `_damage_boss()` (combat.gd:1336-1341, the
+  real damage path) and `preview()`'s `damage_after_mods` mirror
+  (combat.gd:650-654, added by an earlier duty-2 fix whose own comment says
+  this mirror "has always lived only in `_damage_boss()` and never once been
+  mirrored here" before that fix) each run the SAME two `if` blocks — Exposed
+  bonus, then sigil bonus — but every existing test
+  (`_test_backlog86_vuln_bonus_relic_adds_to_an_exposed_hit`,
+  `_test_backlog86_sigil_bonus_relic_adds_to_a_reached_hit`) deliberately
+  zeroes the OTHER bonus's precondition so only one `if` ever fires per test.
+  No test exercised both blocks on one hit, which is exactly the case where a
+  future edit to only one of the two copies (or an `if` quietly turned into an
+  `elif`) would pass every existing test and still be wrong. Added
+  `_test_backlog86_vuln_and_sigil_bonus_relics_stack_on_the_same_hit`
+  (run_tests.gd, right after the two single-bonus tests it builds on): boss
+  Vulnerable + weak point reached + both relic mods live, asserts
+  `preview()["damage_after_mods"]` equals the full stacked total (base 6 +
+  VULN_BONUS 4 + relic 3 + SIGIL_BONUS 5 + relic 4 = 22) BEFORE playing the
+  card, then plays it and asserts `boss.hp` actually dropped by that same 22,
+  `boss.vulnerable` hit 0, and `weak_point_damage` recorded the full 22 too —
+  proving preview/actual parity under both mods at once, not just either
+  alone. Confirmed the test is real, not tautological: temporarily dropped
+  the `_mod("sigil_bonus")` term from just the `preview()` copy (leaving
+  `_damage_boss()` untouched, i.e. simulating exactly the "one copy drifts"
+  bug this test exists to catch) and re-ran the suite — the new `preview()`
+  assertion failed on its own while the `play_card()` assertion still passed,
+  proving the two halves of the test are independently load-bearing, not one
+  covering for the other; reverted and reran clean. Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86`
+  turn is duty 2 (find an error and resolve it).
+
 - **2026-09-15 — #86 duty 2: `GameHost._keywords_of()`'s own comment has named
   "heal" as a real, reachable `power_effect` value since commit `421e2e2`
   (right alongside the six values that commit actually wired in), but no

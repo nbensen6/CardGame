@@ -84,6 +84,7 @@ func _init() -> void:
 	_test_backlog86_chip_relic_softens_the_armored_divisor()
 	_test_backlog86_vuln_bonus_relic_adds_to_an_exposed_hit()
 	_test_backlog86_sigil_bonus_relic_adds_to_a_reached_hit()
+	_test_backlog86_vuln_and_sigil_bonus_relics_stack_on_the_same_hit()
 	_test_attack_all_shakes_down_a_hold()
 	_test_backlog86_attack_all_sweep_resets_the_sigil_fatigue_clock()
 	_test_backlog86_weakpoint_buck_does_not_fire_below_threshold()
@@ -2439,6 +2440,37 @@ func _test_backlog86_sigil_bonus_relic_adds_to_a_reached_hit() -> void:
 	_expect(combat.boss.hp == before - (6 + Combat.SIGIL_BONUS + 4)
 			and combat.players[0].weak_point_damage == 6 + Combat.SIGIL_BONUS + 4,
 		"sigil_bonus adds on top of the base reached-sigil bonus, and the relic bonus counts toward the buck threshold too")
+
+
+## backlog #86 duty 3: the two tests just above each prove ONE relic bonus in
+## isolation (vuln_bonus with weak_point_height forced to 0, sigil_bonus with
+## boss.vulnerable left at 0), so neither ever executes both `if` blocks in
+## _damage_boss() (combat.gd:1336-1341) on the same hit. Those two blocks are
+## duplicated almost verbatim in preview()'s damage_after_mods (combat.gd:650-
+## 654) — a mirror whose own comment says it "has always lived only in
+## _damage_boss() and never once been mirrored here" before a prior duty-2 fix
+## added it — so this is exactly the "two copies of one truth" shape the
+## Hard Rules call out: nothing proves the copies still agree once BOTH
+## bonuses are live at once, which is the one case a future edit to only one
+## copy (or a change from `if` to `elif`) would slip through unnoticed.
+func _test_backlog86_vuln_and_sigil_bonus_relics_stack_on_the_same_hit() -> void:
+	var boss := _dummy_boss(300)
+	boss.vulnerable = 1
+	boss.weak_point_height = 2
+	var combat := _new_combat_mods([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss,
+		{"vuln_bonus": 3, "sigil_bonus": 4})
+	combat.players[0].foothold = 2  # reached the sigil
+	var expected := 6 + Combat.VULN_BONUS + 3 + Combat.SIGIL_BONUS + 4  # = 22
+	var card: Card = combat.players[0].hand[_first_playable(combat, 0)]
+	var pv := combat.preview(0, card)
+	_expect(pv["damage_after_mods"] == expected,
+		"preview() predicts both relic bonuses stacking on the same hit, not just one")
+
+	var before := combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))
+	_expect(combat.boss.hp == before - expected and combat.boss.vulnerable == 0
+			and combat.players[0].weak_point_damage == expected,
+		"the actual hit deals both bonuses together, matching preview(), consumes the Exposed stack, and counts fully toward the buck threshold")
 
 
 func _test_attack_all_shakes_down_a_hold() -> void:
