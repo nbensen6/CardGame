@@ -351,6 +351,7 @@ func _init() -> void:
 	_test_backlog86_meld_carries_rule_upgrade()
 	_test_backlog86_upgrading_a_melded_rule_upgrade_card_still_bumps_its_condition_bonus()
 	_test_backlog86_meld_carries_rarity_foil_borderless_upgraded_and_status()
+	_test_backlog86_campfire_refuses_to_sharpen_a_melded_card_that_inherited_upgraded()
 	_test_backlog86_meld_carries_every_card_field_it_is_not_deliberately_dropping()
 	_test_backlog86_card_fx_carries_every_non_numeric_effect_field()
 	_test_satchel_charge_detonates()
@@ -6907,6 +6908,40 @@ func _test_backlog86_meld_carries_rarity_foil_borderless_upgraded_and_status() -
 		"a meld carries foil/borderless off either source card (OR, same idiom as taunt/retain/ethereal) — dropping them silently un-foiled a fused card")
 	_expect(fused.upgraded and fused.status,
 		"a meld carries upgraded/status off either source card (OR) — dropping them meant a fused card built from an already-sharpened or a curse card silently forgot both facts")
+
+
+## backlog #86 duty 3 (verify a mechanic actually works): the test above proves
+## _meld_cards() CARRIES `upgraded` off either source card via OR, in
+## isolation. Run.campfire_action()'s "upgrade" branch separately proves it
+## REFUSES any card already flagged upgraded (_test_campfire_guards_against_
+## illegal_actions, run.gd:592 "a curse has nothing to sharpen — only
+## remove it") — but only ever against a card upgraded through campfire_
+## action itself. Nothing had ever driven a card through BOTH systems at
+## once: fuse an already-sharpened Slash+ with a never-sharpened Brace, then
+## take that fused card to a real campfire and ask whether the refusal still
+## fires. It does, and that's worth having proven, because the two source
+## cards are not equally "spent" — Slash+'s own numbers already got a
+## campfire's worth of bump before the meld; Brace's never did. The fused
+## card is permanently locked out of ever being sharpened either way, since
+## `upgraded` is one shared flag, not one per ingredient. That is the
+## intended behaviour (the same "no double-dipping" rule a plain card
+## follows), not a bug — but it was never actually exercised end to end
+## before this test.
+func _test_backlog86_campfire_refuses_to_sharpen_a_melded_card_that_inherited_upgraded() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var sharpened_slash := _slash().upgraded_copy()  # Slash+ — upgraded true, its own numbers already bumped
+	var fresh_brace := _defend()                      # Brace — upgraded false, never sharpened
+	var fused := combat._meld_cards(sharpened_slash, fresh_brace)
+	_expect(fused.upgraded,
+		"sanity check before the real test: the fused card must carry 'upgraded' off Slash+ even though Brace never earned it")
+
+	var run := _map_run()
+	run._begin_campfire()
+	run.decks[0][0] = fused
+	var before_dict := fused.to_dict()
+	var ok := run.campfire_action(0, "upgrade", 0)
+	_expect(not ok and run.decks[0][0] == fused and fused.to_dict() == before_dict,
+		"campfire must refuse to sharpen a fused card that only ever inherited 'upgraded' from ONE ingredient, exactly as it refuses a plain already-sharpened card — the refusal is Run.campfire_action()'s own gate, and this is the first test to reach it through a melded card instead of a direct upgrade")
 
 
 ## backlog #86 duty 3 — the seven tests above each caught _meld_cards' dict

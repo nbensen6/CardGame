@@ -2782,6 +2782,28 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-15 — #86 duty 3: proved campfire refuses to re-sharpen a melded
+  card that only ever inherited `upgraded` from ONE of its two source cards.**
+  Last commit (`cab3eaf`) was duty 2, so this run owed duty 3. `_meld_cards()`
+  carries `upgraded` off either source card via OR (already proven in
+  isolation by `_test_backlog86_meld_carries_rarity_foil_borderless_upgraded_
+  and_status`), and `Run.campfire_action()`'s "upgrade" branch separately
+  refuses any card already flagged `upgraded` (already proven, but only
+  against a card upgraded through `campfire_action` itself). Nothing had ever
+  driven a card through both systems at once: fuse an already-sharpened
+  Slash+ with a never-sharpened Brace, then take the fused card to a real
+  campfire. It refuses, as intended — Brace's own numbers never got their own
+  campfire bump, but `upgraded` is one shared flag per card, not one per
+  ingredient, so the fused card is locked out of sharpening either way, same
+  as any other already-sharpened card. That is the existing "no
+  double-dipping" rule working as designed, not a bug, but the two systems
+  had never actually been proven to compose correctly before this test.
+  Added `_test_backlog86_campfire_refuses_to_sharpen_a_melded_card_that_
+  inherited_upgraded`. (First version of the test asserted `_map_run()` lands
+  straight on a campfire with no explicit `_begin_campfire()` call — wrong;
+  every other campfire test calls `run._begin_campfire()` explicitly, fixed
+  to match before it passed.)
+
 - **2026-09-15 — #86 duty 2: fixed `pull_ally` dragging an already-lifted ally
   back DOWN.** Last commit (`a316348`) closed with duty 3, so this run owed
   duty 2. `Combat.play_card()`'s `pull_ally` branch (Grappling Arm) did a bare
