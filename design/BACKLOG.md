@@ -2782,6 +2782,52 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-15 (later) — #86 duty 3: proved `damage_per_vulnerable`'s bonus
+  really does read the boss's own Exposed stack — and leaves it completely
+  unspent — when a card carrying it is aimed at an add.** Last commit
+  (`64b4524`) was duty 2, so this run owed duty 3. `preview()`'s own doc
+  comment (combat.gd:535-539) and `play_card()`'s (combat.gd:941-943) both
+  claim, in as many words, that `damage_per_vulnerable` "stays boss-only
+  regardless of target" because "there is no add-side stack to read" — the
+  same promise duty 3 already proved for the STATUS itself
+  (`_test_backlog86_vulnerable_stays_boss_only_when_aimed_at_an_add`), but
+  nobody had ever chased the adjacent claim about the BONUS DAMAGE a
+  Vulnerable stack pays out. Traced the three facts that combine into it:
+  `preview()` computes the bonus off `boss.vulnerable` unconditionally
+  (combat.gd:556, no `enemy_index` gate at all, unlike the sibling
+  `damage_per_wound` term two lines below which does redirect via
+  `_wound_target`); `play_card()` still routes that already-bonused total to
+  `_damage_add()` when `enemy_index` names a living add; and
+  `_damage_boss()` is the ONLY place `boss.vulnerable` is ever decremented
+  (combat.gd:1341-1343), gated on the hit actually landing on the boss —
+  `_damage_add()` never reads or spends it. Grepped for any existing test
+  pairing `damage_per_vulnerable`/`sunlight_blade`/`perfect_pitch`/`encore`
+  with `enemy_index`/adds: none — the only coverage,
+  `_test_sunlight_blade_scales_with_exposed`, plays straight at the boss
+  (`enemy_index` left at its -1 default). This is deliberate design, not a
+  bug — the comments are explicit and the add-damage/status-redirect
+  precedent already established the same "boss-only" rule for the sibling
+  mechanic — but it is also a real, previously unproven economy shape: a
+  Vulnerable-scaled card aimed at an add is a repeatable damage amplifier
+  that costs the boss's Exposed stack nothing at all, since only a hit that
+  actually reaches the boss ever spends it. Added
+  `_test_backlog86_damage_per_vulnerable_scales_off_the_boss_even_when_
+  aimed_at_an_add`: boss.vulnerable=2, a synthetic `damage_per_vulnerable:3`
+  card (base damage 2) played at a living add via `enemy_index`, asserting
+  the add takes the full bonused total (2 + 3*2 = 8, not just the base 2)
+  while boss.hp is untouched AND boss.vulnerable stays at 2, unconsumed.
+  Chose base/bonus/stack numbers so a bug dropping the bonus entirely or
+  reading the add's own (zero) vulnerable would both land on a different,
+  discriminating hp (30 → 28) instead of coincidentally matching the correct
+  one (30 → 22). Passed on the first run — the comments' promise held: this
+  closes the gap where nothing had ever driven the interaction end to end.
+  Left the design question itself alone (whether this amplifier SHOULD cost
+  something against adds) — that's a balance/mechanic-identity call, Nick's
+  per the standing no-balance-tuning rule, not mine to make unsupervised;
+  flagging it here in case it's worth a look. Fresh `--import`, headless,
+  Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is
+  duty 2 (find an error and resolve it).
+
 - **2026-09-15 — #86 duty 2: `location_3d.shop_slot_disabled` never checked
   the shop's OWN deck-floor rule — a second copy of `Run.buy()`'s gate that
   only carried half of it.** Last commit (`2e9089a`) was duty 3, so this run

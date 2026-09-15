@@ -590,6 +590,7 @@ func _init() -> void:
 	# that way in three separate comments.
 	_test_backlog86_vulnerable_stays_boss_only_when_aimed_at_an_add()
 	_test_backlog86_vulnerable_lands_once_on_the_boss_with_hits_all_enemies()
+	_test_backlog86_damage_per_vulnerable_scales_off_the_boss_even_when_aimed_at_an_add()
 	_test_damage_per_wound_reads_the_targeted_adds_own_wound()
 	_test_backlog86_wound_target_falls_back_to_boss_when_the_add_is_dead()
 	_test_backlog86_wound_target_falls_back_to_boss_when_enemy_index_is_out_of_range()
@@ -11823,6 +11824,44 @@ func _test_backlog86_vulnerable_lands_once_on_the_boss_with_hits_all_enemies() -
 		"a hits_all_enemies card fans its damage to boss and add both, but still lands Expose on the boss alone")
 	_expect(boss.hp == 298 and add.hp == 28,
 		"the same card's damage fans out to both enemies exactly as hits_all_enemies promises")
+
+
+## backlog #86 duty 3: the test above proves the STATUS (card.vulnerable, i.e.
+## Expose itself) stays boss-only when a play aims at an add. `preview()`'s
+## own doc comment (combat.gd:535-539) makes a second, adjacent claim about
+## the BONUS DAMAGE a Vulnerable stack pays out: "`damage_per_vulnerable`
+## stays boss-only regardless of target ... there is no add-side stack to
+## read" -- i.e. the multiplier always reads `boss.vulnerable`, even on a hit
+## that is about to land on an add. And `_damage_boss()` is the only place
+## `boss.vulnerable` is ever decremented (combat.gd:1341-1343, only on a hit
+## that actually reaches the boss) -- `_damage_add()` never touches it. Chain
+## those three true-on-their-own facts together and a card like Sunlight
+## Blade/Perfect Pitch/Encore, aimed at a living add while the boss carries
+## Exposed stacks, should compute its bonus off the boss's stacks, land the
+## WHOLE swing (base + bonus) on the add, and leave the boss's stacks
+## completely unspent -- a repeatable, no-cost damage amplifier against adds,
+## off a resource that's supposed to be spent by hitting the boss. That is
+## either working as designed (Vulnerable's bonus is a boss-only trait a
+## hunter carries into any fight, same as the status itself) or a real
+## economy leak; either way nothing had ever driven a damage_per_vulnerable
+## card at an add to find out, so the comments' promise was unproven either
+## way. Base damage (2) is kept small and damage_per_vulnerable (3) and
+## boss.vulnerable (2) are chosen so the bonus (6) dominates the total (8),
+## making a bug that dropped the bonus entirely (total 2) or read the add's
+## own vulnerable (0, also total 2) produce a different, discriminating hp.
+func _test_backlog86_damage_per_vulnerable_scales_off_the_boss_even_when_aimed_at_an_add() -> void:
+	var boss := _dummy_boss(300)
+	boss.vulnerable = 2
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Grub", 30)
+	combat.adds.append(add)
+	combat.players[0].hand = [Card.from_dict({"id": "vuln_reader", "name": "Vuln Reader",
+		"type": "attack", "cost": 1, "damage": 2, "damage_per_vulnerable": 3, "target": "enemy"})]
+	combat.play_card(0, 0, true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
+	_expect(add.hp == 22 and boss.hp == 300,
+		"damage_per_vulnerable (2 + 3*2 Exposed = 8) reads the BOSS's own Exposed stacks even though the hit lands on the add")
+	_expect(boss.vulnerable == 2,
+		"the boss's Exposed stack is only ever spent by _damage_boss(), so a hit routed to an add leaves it completely unconsumed")
 
 
 ## backlog #86 duty 2: preview()'s damage_per_wound term always read
