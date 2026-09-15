@@ -407,6 +407,7 @@ func _init() -> void:
 	_test_backlog74_occlusion_ignores_geometry_that_does_not_cover_the_same_point()
 	_test_preview_matches_what_the_card_actually_does()
 	_test_backlog86_preview_predicts_block_after_dexterity_and_frail()
+	_test_backlog86_preview_predicts_damage_after_armor_and_sigil()
 	_test_incoming_reckons_damage_after_block()
 	_test_every_derived_keyword_resolves()
 	_test_player_block_keyword_is_not_shadowed_by_the_boss_move()
@@ -837,6 +838,7 @@ func _init() -> void:
 	_test_backlog86_face_text_matched_block_merges_to_all_players()
 	_test_backlog86_face_text_mismatched_block_lists_separately()
 	_test_backlog86_face_text_uses_block_after_mods_not_the_raw_number()
+	_test_backlog86_face_text_uses_damage_after_mods_not_the_raw_number()
 	_test_backlog86_face_text_matched_climb_merges_to_all_players()
 	_test_backlog86_face_text_mismatched_climb_pluralizes_the_allys_line()
 	_test_backlog86_face_text_status_and_utility_lines_join_in_field_order()
@@ -9216,6 +9218,49 @@ func _test_backlog86_preview_predicts_block_after_dexterity_and_frail() -> void:
 		"the ally's actual gain matches ally_block_after_mods, not the raw printed number")
 
 
+## backlog #86 duty 2: Combat.preview()'s "damage" never consulted the Titan's
+## own armored-hide/Exposed/sigil math at all -- that has always lived only in
+## _damage_boss(), one call after play_card() reads pv["damage"] straight off
+## this function. A hunter camped below the weak point saw "Deal 6 damage" and
+## watched the Titan lose 1 HP; a hunter parked AT a Vulnerable sigil saw the
+## same "Deal 6 damage" and watched it lose 15 -- the exact "one formula, two
+## callers" promise this function's own doc comment makes, broken for the one
+## mechanic the whole game is built around. "damage_after_mods" fixes the
+## display by running _damage_boss()'s own math ahead of time, with no
+## mutation (no Exposed stack spent, no weak_point_damage banked) so calling
+## preview() to look never costs a resource a real play would spend. The raw
+## "damage" key deliberately stays untouched -- play_card()'s base_damage and
+## _damage_add() both still need the flat, target-independent number.
+func _test_backlog86_preview_predicts_damage_after_armor_and_sigil() -> void:
+	var boss := _dummy_boss(300)
+	boss.weak_point_height = 3
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var ci := _first_playable(combat, 0)
+	var pv := combat.preview(0, combat.players[0].hand[ci])
+	_expect(int(pv["damage"]) == 6 and int(pv["damage_after_mods"]) == 1,
+		"raw 'damage' stays the printed 6; 'damage_after_mods' shows the armored-hide chip (max(1, 6/4)) the Titan will actually lose")
+	var before: int = combat.boss.hp
+	combat.play_card(0, ci)
+	_expect(before - combat.boss.hp == int(pv["damage_after_mods"]),
+		"what actually landed matches what damage_after_mods predicted, not the raw printed number")
+
+	var boss2 := _dummy_boss(300)
+	boss2.weak_point_height = 2
+	boss2.vulnerable = 2
+	var combat2 := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss2)
+	combat2.players[0].foothold = 2  # reached the sigil
+	var ci2 := _first_playable(combat2, 0)
+	var pv2 := combat2.preview(0, combat2.players[0].hand[ci2])
+	_expect(int(pv2["damage"]) == 6
+			and int(pv2["damage_after_mods"]) == 6 + Combat.VULN_BONUS + Combat.SIGIL_BONUS,
+		"raw 'damage' stays the printed 6; 'damage_after_mods' folds in the Exposed and sigil bonuses a hit at the reached weak point will actually deal")
+	_expect(boss2.vulnerable == 2, "previewing never spends the Exposed stack a real play would")
+	var before2: int = combat2.boss.hp
+	combat2.play_card(0, ci2)
+	_expect(before2 - combat2.boss.hp == int(pv2["damage_after_mods"]) and combat2.boss.vulnerable == 1,
+		"the real hit matches damage_after_mods exactly and spends the Exposed stack the preview left untouched")
+
+
 ## An unset rarity silently defaults to "common", which would quietly make a new
 ## rare card as frequent as filler. Every drafted card must declare one.
 func _test_every_card_declares_a_rarity() -> void:
@@ -12196,8 +12241,15 @@ func _test_backlog86_reach_and_cleave_fx_carry_over_the_wire() -> void:
 			and String(recon_fx.get("tutor", "")) == "cleave"
 			and bool(sweep_fx.get("hits_all_enemies", false)),
 		"Depot/Recon/Sweeping Strike's fx dicts carry shuffle_in/tutor/hits_all_enemies to the owner's client")
+	# backlog #86 duty 2: Sweeping Strike's printed 8 is no longer what the face
+	# shows here -- "damage_after_mods" (this run's own fix, one duty up) now
+	# folds in whichever real boss the seeded map handed this session's OWN
+	# weak-point/armor state, which this test never controlled and isn't about.
+	# Pin the cleave CLAUSE, which is what the test actually exists to prove,
+	# not a damage number that is now legitimately boss-dependent.
+	var sweep_text := CardView.face_text(by_name["Sweeping Strike"])
 	_expect(CardView.face_text(by_name["Depot"]) == "Gain 3 Block. Shuffle a card into your draw pile."
-			and CardView.face_text(by_name["Sweeping Strike"]) == "Deal 8 damage to the Titan and every add it has.",
+			and sweep_text.begins_with("Deal ") and sweep_text.ends_with(" damage to the Titan and every add it has."),
 		"the live face states the shuffle-in and cleave clauses, not just the other effect on the same card")
 
 
@@ -15687,6 +15739,24 @@ func _test_backlog86_face_text_uses_block_after_mods_not_the_raw_number() -> voi
 		"base": {"block": 4, "ally_block": 4}, "fx": {}, "keywords": []}
 	_expect(CardView.face_text(equal_raw_unequal_after, false) == "Gain 4 Block. Ally gains 3 Block.",
 		"raw block/ally_block matching is not enough to merge once a Frailed ally actually gets a different amount")
+
+
+## backlog #86 duty 2: same fix, same reasoning, as face_text's own
+## block_after_mods test above -- once the Titan's armored-hide/sigil math is
+## folded into "damage_after_mods", the face must print THAT, not the raw
+## "damage" play_card()/_damage_add() still use internally.
+func _test_backlog86_face_text_uses_damage_after_mods_not_the_raw_number() -> void:
+	var armored := {"preview": {"damage": 6, "damage_after_mods": 1},
+		"preview_miss": {"damage": 6, "damage_after_mods": 1},
+		"base": {"damage": 6}, "fx": {"hits": 1}, "keywords": []}
+	_expect(CardView.face_text(armored, false) == "Deal 1 damage.",
+		"the armored-hide chip reaches the face, not the raw printed 6")
+
+	var sigil_and_vulnerable := {"preview": {"damage": 6, "damage_after_mods": 15},
+		"preview_miss": {"damage": 6, "damage_after_mods": 15},
+		"base": {"damage": 6}, "fx": {"hits": 1}, "keywords": []}
+	_expect(CardView.face_text(sigil_and_vulnerable, false) == "Deal 15 damage.",
+		"the Exposed and sigil bonuses reach the face, not the raw printed 6")
 
 
 func _test_backlog86_face_text_matched_climb_merges_to_all_players() -> void:

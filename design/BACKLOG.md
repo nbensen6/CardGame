@@ -2782,6 +2782,58 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-15 — #86 duty 2: `Combat.preview()`'s "damage" never consulted the
+  Titan's own armored-hide/Exposed/sigil math, the one mechanic the whole game
+  is built around.** Last commit (`76c2d31`) was duty 3, so this run took duty
+  2. An Explore agent's first find turned out to be a known, already-queued
+  item (#87's missing "Take a Key instead" button — real, but a UI addition I
+  can't screenshot-verify with no display, so left it queued rather than
+  building it blind). A second, narrower search (explicitly steered off
+  anything touching rendering) found this instead: `_damage_boss()` — the
+  function that actually resolves a hit — divides the swing by
+  `ARMORED_DIVISOR` below the weak point, and adds `VULN_BONUS`/`SIGIL_BONUS`
+  once a hunter has reached it, but `preview()` (the single function whose own
+  doc comment promises "what a card will actually DO right now") has zero
+  references to any of `weak_point_height`, `sigil_reached()`,
+  `ARMORED_DIVISOR`, `VULN_BONUS` or `SIGIL_BONUS` — confirmed by grep. A
+  hunter below the sigil sees "Deal 6 damage" and watches the Titan lose 1 HP;
+  a hunter at a Vulnerable sigil sees the same "Deal 6 damage" and watches it
+  lose 15. This is the exact bug class `block_after_mods`/`ally_block_after_mods`
+  (an earlier duty-2 turn) already fixed for Block — Dexterity/Frail folded
+  into a predicted number the card face reads instead of the raw one — just
+  never done for the game's actual core mechanic. Confirmed the gap was real
+  and unexercised: every existing armor/sigil/vulnerable test
+  (`_test_sigil_bonus_requires_climb`, `_test_exposed_banks_until_climbed`,
+  the chip/vuln_bonus/sigil_bonus relic tests) only ever asserts `boss.hp`
+  after a real `play_card()`, never `preview()`'s own numbers — one test's own
+  comment even narrates the SIGIL_BONUS "layered on top" of a condition bonus
+  without ever checking the previewed number agreed. Fixed the same way the
+  Block bug was: added `damage_after_mods` to `preview()`'s returned dict,
+  mirroring `_damage_boss()`'s branches with NO mutation (no Exposed stack
+  spent, no weak_point_damage banked, so looking never costs what playing
+  would), and left the raw `damage` key untouched since `play_card()`'s
+  `base_damage` and `_damage_add()` both still need the flat,
+  target-independent number. `CardView.face_text()` now reads
+  `damage_after_mods` (falling back to `damage`), same idiom as the Block
+  fix. One pre-existing test broke as a direct, correct consequence:
+  `_test_backlog86_reach_and_cleave_fx_carry_over_the_wire` had pinned
+  Sweeping Strike's face text to the printed "Deal 8 damage..." against
+  whatever real boss the seeded map handed it — now legitimately boss-
+  dependent, so loosened that one assertion to check the cleave clause
+  (what the test is actually about) rather than a damage number it never
+  meant to pin. Wrote four new regression tests first
+  (`_test_backlog86_preview_predicts_damage_after_armor_and_sigil` for both
+  the armored and the Vulnerable-at-sigil cases, plus two `face_text()` unit
+  tests), watched them fail for real: forgot to restore combat.gd once while
+  poking at this by hand, and got a `SCRIPT ERROR: Invalid access to property
+  or key 'damage_after_mods'` rather than a clean `_expect` FAIL — worth
+  knowing this suite's tests use bracket access (`pv["key"]`) throughout, so a
+  key that doesn't exist yet errors loudly rather than defaulting quietly,
+  same as the existing `block_after_mods` test already does. Restored the fix,
+  confirmed the same run comes back clean. `run_tests.gd`, fresh `--import`,
+  headless, Godot 4.7.1-stable: ALL TESTS PASSED, zero script errors. Next
+  `#86` turn is duty 3 (verify a mechanic actually works).
+
 - **2026-09-14 — #86 duty 3: NetLink itself had zero coverage, the one corner
   the EnetTransport pass (thirty-seventh pass) deliberately left alone.**
   Last commit (`0c5842f`) was duty 2, so this run took duty 3. An Explore

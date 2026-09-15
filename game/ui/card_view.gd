@@ -941,7 +941,15 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 	if int(fx.get("light_cost", 0)) > 0:
 		out.append("Spend %d %s." % [int(fx["light_cost"]), _kw("Light", "light", kw, rich)])
 
-	var dmg := int(pv.get("damage", 0))
+	# backlog #86 duty 2: read "damage_after_mods" (the Titan's own armored-hide/
+	# Exposed/sigil math already folded in, matching what _damage_boss() will
+	# actually do to boss.hp) rather than the raw "damage", which is what
+	# play_card() still feeds _damage_boss()/_damage_add() and no longer what the
+	# player should be told to expect — same fix, same reasoning, as
+	# block_after_mods above, just for the other half of a hit. A live preview
+	# lacking the new key falls back to the raw number, same as block's own
+	# fallback.
+	var dmg := int(pv.get("damage_after_mods", pv.get("damage", 0)))
 	if dmg > 0:
 		var n := int(fx.get("hits", 1))
 		var times := "" if n <= 1 else (" twice" if n == 2 else " %d times" % n)
@@ -951,7 +959,7 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 		# every add, same "reads as a smaller, wrong card" failure every other
 		# fx gap this function has caught produces.
 		var cleave := " to the Titan and every add it has" if bool(fx.get("hits_all_enemies", false)) else ""
-		out.append("Deal %s damage%s%s." % [_num(int(miss.get("damage", 0)), dmg,
+		out.append("Deal %s damage%s%s." % [_num(int(miss.get("damage_after_mods", miss.get("damage", 0))), dmg,
 			int(base.get("damage", dmg)), rich), times, cleave])
 
 	# Both-hunters effects merge into one line. "Gain 2 Block. Ally gains 2 Block."

@@ -629,8 +629,33 @@ func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PER
 	var blk_shown := Combatant.block_after_modifiers(blk, ps.combatant.dexterity, ps.combatant.frail)
 	var ally_blk_shown := Combatant.block_after_modifiers(ally_blk, mate.combatant.dexterity, mate.combatant.frail)
 
+	# backlog #86 duty 2: same "preview() lies" shape block_after_mods was fixed
+	# for, this time on the OTHER half of a hit — the Titan's own armor/Exposed/
+	# sigil math, which has always lived only in _damage_boss() and never once
+	# been mirrored here. `dmg` above is the flat, pre-mitigation number every
+	# other caller of preview() (play_card's own base_damage, _damage_add, the
+	# printed "base" dict) needs to stay UNCHANGED — _damage_boss() re-derives
+	# its armored/vulnerable/sigil swing FROM that same flat number, so shrinking
+	# or inflating `dmg` itself here would double up. `card.hits_all_enemies`
+	# (Cleave) always lands on the boss too regardless of `enemy_index`, mirroring
+	# play_card's own unconditional `_damage_boss()` call for those cards.
+	var hits_boss := card.hits_all_enemies or _wound_target(enemy_index) == boss
+	var dmg_shown := dmg
+	if dmg > 0 and hits_boss:
+		if boss.weak_point_height > 0 and not sigil_reached(pi):
+			var divisor: int = maxi(2, ARMORED_DIVISOR - _mod("chip"))
+			dmg_shown = maxi(1, dmg / divisor)
+		else:
+			var total := dmg
+			if boss.vulnerable > 0:
+				total += VULN_BONUS + _mod("vuln_bonus")
+			if boss.weak_point_height > 0:
+				total += SIGIL_BONUS + _mod("sigil_bonus")
+			dmg_shown = total
+
 	return {
 		"damage": maxi(dmg, 0), "hits": maxi(card.hits, 1),
+		"damage_after_mods": maxi(dmg_shown, 0),
 		"block": maxi(blk, 0), "ally_block": maxi(ally_blk, 0),
 		"block_after_mods": blk_shown, "ally_block_after_mods": ally_blk_shown,
 		"grip": maxi(climb, 0), "ally_grip": maxi(ally_climb, 0),
