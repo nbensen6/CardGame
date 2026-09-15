@@ -412,6 +412,7 @@ func _init() -> void:
 	_test_every_derived_keyword_resolves()
 	_test_player_block_keyword_is_not_shadowed_by_the_boss_move()
 	_test_keywords_of_does_not_falsely_tag_an_ordinary_card_as_cheapen()
+	_test_keywords_of_recognises_block_per_x_and_block_per_discarded_only_cards()
 	_test_every_field_a_player_must_understand_has_a_keyword()
 	_test_timed_keyword_explains_graded_quality()
 	_test_every_boss_move_type_resolves()
@@ -8272,6 +8273,35 @@ func _test_keywords_of_does_not_falsely_tag_an_ordinary_card_as_cheapen() -> voi
 		"an ordinary card with no cheapen_pick is never tagged 'cheapen'")
 	_expect(coal_ids.has("cheapen"),
 		"a real cheapen_pick card (Burn Coal) is still tagged 'cheapen'")
+
+
+## backlog #86 duty 2: the same "missing from its own OR-list" shape the
+## archetype_tags() block-branch fix already caught (X Brace, run_tests.gd:5265)
+## but on GameHost._keywords_of()'s tap-to-inspect list instead of the reward
+## draft's archetype lean — a different function asking the same question
+## ("does this card grant Block?") about the same Card and reaching a
+## different answer. block_per_x and block_per_discarded both grant Block
+## outright, but neither was in _keywords_of()'s "player_block" OR-chain,
+## only in archetype_tags()'s. It stayed hidden the same way: every shipped
+## card with either field (refuse_wall, landfill: both block_per_discarded)
+## also carries a flat `block` that separately trips the branch. X Brace
+## (block_per_x 4, no flat block) has no such cover.
+func _test_keywords_of_recognises_block_per_x_and_block_per_discarded_only_cards() -> void:
+	var host := GameHost.new(LocalTransport.new(), 1, 2)
+	_kept.append(host)
+	var x_brace_ids := []
+	for k in host._keywords_of(_x_brace()):
+		x_brace_ids.append(String((k as Dictionary).get("id", "")))
+	_expect(x_brace_ids.has("player_block"),
+		"X Brace (block_per_x 4, no flat block) is tagged player_block [ids=%s]" % [x_brace_ids])
+
+	var discard_only := Card.new()
+	discard_only.block_per_discarded = 2
+	var discard_only_ids := []
+	for k in host._keywords_of(discard_only):
+		discard_only_ids.append(String((k as Dictionary).get("id", "")))
+	_expect(discard_only_ids.has("player_block"),
+		"a bare card with only block_per_discarded set is tagged player_block [ids=%s]" % [discard_only_ids])
 
 
 ## Backlog #16: the check above only catches an id that's misspelled in one

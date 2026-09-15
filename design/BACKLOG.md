@@ -2782,6 +2782,29 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-15 — #86 duty 2: `GameHost._keywords_of()`'s "player_block" tag missed
+  `block_per_x` and `block_per_discarded`, even though `Card.archetype_tags()`'s
+  own "block" OR-list already covers both.** Last commit (`e7d651b`) was duty
+  3, so this run took duty 2. Delegated the hunt to an Explore agent scoped to
+  the non-visual layers (`game/core/**`, `game/net/**`, `game_host.gd`) since
+  everything visual needs a screen this session doesn't have; it ruled out
+  several already-fixed veins (save round-trips, `current_move()` context
+  threading, the `_hooks` re-registration) and landed on this: two different
+  functions answer "does this card grant Block?" about the same `Card` — one
+  for the reward-draft archetype lean, one for the tap-to-inspect keyword
+  panel — and only one of them got the block_per_x/block_per_discarded fix
+  when those fields were added (backlogs #29, #62). Stayed hidden because
+  every real card carrying either field (Refuse Wall, Landfill) also has a
+  flat `block` that separately trips the branch; a card authored with only
+  one of those two fields as its Block source would show every other keyword
+  it earns but never "Block". Added `c.block_per_x > 0 or
+  c.block_per_discarded > 0` to the OR-chain plus a regression test,
+  `_test_keywords_of_recognises_block_per_x_and_block_per_discarded_only_cards`
+  (X Brace and a bare block_per_discarded-only card), following the same shape
+  as the existing `archetype_tags()` fix's own test. Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86`
+  turn is duty 3 (verify a mechanic actually works).
+
 - **2026-09-15 — #86 duty 3: `Content.character_name()`/`character_portrait()`
   — the lookups behind every hunter name and portrait shown anywhere (party
   card, lobby selection list, win/lose log lines, even the headless balance

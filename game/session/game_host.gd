@@ -792,8 +792,19 @@ func _keywords_of(c: Card) -> Array:
 		ids.append("strength")
 	if c.dexterity > 0:
 		ids.append("dexterity")
+	# backlog #86 duty 2: block_per_x (bonus Block per point of energy spent,
+	# backlog #29) and block_per_discarded (bonus Block per card in your
+	# discard pile, backlog #62) both grant Block outright, same as every
+	# other field already OR'd in below — Card.archetype_tags()'s own "block"
+	# OR-list already covers both (fixed in an earlier duty-2 round), this
+	# tap-to-inspect list just never got the matching fix. It stayed hidden
+	# because every real card with either field also carries a flat `block`
+	# that separately trips this branch (refuse_wall, landfill); a card
+	# authored with ONLY block_per_x or ONLY block_per_discarded as its Block
+	# source would show every other keyword it earns but never "Block".
 	if c.block > 0 or c.ally_block > 0 or c.block_per_play > 0 \
-			or c.block_per_exhausted > 0 or c.timed_block > 0 or c.timed_ally_block > 0:
+			or c.block_per_exhausted > 0 or c.timed_block > 0 or c.timed_ally_block > 0 \
+			or c.block_per_x > 0 or c.block_per_discarded > 0:
 		# "player_block", not "block" — keywords.json's move-vocabulary section
 		# (see its own "_comment_moves") uses ids that match a boss move `type`
 		# verbatim, and a beast's Defend move is already "block" there. The two
