@@ -1485,7 +1485,19 @@ func _begin_round() -> void:
 		# take_damage, which assumes block never goes negative).
 		# + plated_armour (backlog #61): re-seeded every round instead of being
 		# wiped like ordinary Block — it only decays from take_damage's own cut.
-		ps.combatant.block = maxi(0, _round_block + int(start_ctx["carried_block"])) + ps.combatant.plated_armour  # relic: start each round with block (+ retained Block)
+		# _round_block through block_after_modifiers (backlog #86 duty 2): a
+		# round-start relic Block grant is a fresh grant like any card's, so
+		# Dexterity/Frail must apply to it the same way — this was the one
+		# call site combatant.gd's own doc comment on gain_block() promised
+		# never existed, a second copy of the "gain block" math that drifted
+		# the moment Dexterity/Frail entered the fight. Left negative and
+		# unmodified when <= 0 (a downside relic's own net cost), matching
+		# block_after_modifiers' own "only a positive gain earns a bonus"
+		# rule — it still nets against carried_block before the outer floor.
+		var round_block_mod := _round_block
+		if round_block_mod > 0:
+			round_block_mod = Combatant.block_after_modifiers(round_block_mod, ps.combatant.dexterity, ps.combatant.frail)
+		ps.combatant.block = maxi(0, round_block_mod + int(start_ctx["carried_block"])) + ps.combatant.plated_armour  # relic: start each round with block (+ retained Block)
 		ps.energy = maxi(0, BASE_ENERGY + _energy_bonus)  # relic: extra energy
 		ps.ended_turn = false
 		if _mod("rhythm_keeps") <= 0:

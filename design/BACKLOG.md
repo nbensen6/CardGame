@@ -2782,6 +2782,44 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-15 — #86 duty 2: a relic's `round_block` grant bypassed Dexterity
+  and Frail entirely — the one Block source in the game that still had its
+  own second copy of `Combatant.gain_block()`'s math.** Last commit
+  (`c2c38c2`) was duty 3, so this run took duty 2. Checked the numbered
+  items above #86 first: #55 (fourteen beasts) already met its own "done
+  when" bar and is only waiting on Nick's look; #76 (card icons) audited
+  itself exhaustively clean in its last batch and, since duty 1's 2026-09-08
+  rewrite, icon/portrait work belongs to the builder lane, not this one
+  (`icons.py`/`portraits.py` are explicitly off-limits now); every other
+  open item is tagged `needs a screen` or is Nick's call. Nothing above #86
+  was actionable, so this ran the rotation. Delegated the hunt to an Explore
+  agent scoped to `game/core/**` and `game/session/**`, following the two
+  named bug shapes (first-pass holes; two copies of one truth). It found
+  `Combat._begin_round()` (`combat.gd:1488`) setting
+  `ps.combatant.block = maxi(0, _round_block + carried_block) + plated_armour`
+  directly — `_round_block` (relics like Stone Skin/Fortress Ward, "start
+  each round with N Block") never touched `block_after_modifiers()`, the
+  one function `combatant.gd`'s own doc comment says every Block source
+  routes through "with no extra wiring at any of those call sites." A team
+  holding both a Dexterity relic and a round_block relic silently lost the
+  Dexterity bonus on every single round-start grant, and a Frailed hunter's
+  relic Block was immune to a debuff every card-granted Block respects.
+  `_test_relic_round_block` didn't catch it because its own combatant has
+  `dexterity == 0, frail == 0` by construction, where the buggy direct
+  assignment and the correct modified value coincide. Fixed by running
+  `_round_block` through `Combatant.block_after_modifiers()` when positive
+  (left unmodified when <= 0, same as the function's own "only a positive
+  gain earns a bonus" rule, so a downside relic's negative grant still nets
+  against `carried_block` before the outer floor exactly as before — no
+  change to `_test_relic_downside`'s floor-at-zero case). Added
+  `_test_relic_round_block_respects_dexterity_and_frail`: ends both
+  players' turns to reach round 2's own `_begin_round()` with Dexterity 2
+  on one hunter and Frail 4 on the other, then asserts the real post-round
+  Block (10 and 6 against a round_block of 8) rather than the raw relic
+  number. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`:
+  ALL TESTS PASSED. Next `#86` turn is duty 3 (verify a mechanic actually
+  works).
+
 - **2026-09-15 — #86 duty 3: `Card.enchanted_copy()`'s own doc comment promise —
   "One enchant slot: enchanting an already-enchanted card REPLACES the old one
   rather than stacking" — had never been driven twice.** Last commit

@@ -373,6 +373,7 @@ func _init() -> void:
 	_test_relic_energy_bonus()
 	_test_relic_attack_bonus()
 	_test_relic_round_block()
+	_test_relic_round_block_respects_dexterity_and_frail()
 	_test_relic_downside()
 	_test_run_is_four_titans()
 	_test_run_relic_reward_and_full_clear()
@@ -8032,6 +8033,25 @@ func _test_relic_attack_bonus() -> void:
 func _test_relic_round_block() -> void:
 	var combat := _relic_combat(0, 0, 3)
 	_expect(combat.players[0].combatant.block == 3, "round_block relic grants block each round")
+
+
+## backlog #86 duty 2 — a relic's round_block grant is a fresh Block grant
+## like any card's, so Dexterity/Frail must land on it the same way. Round 1
+## has no relic-block Dexterity check on record (only round_block=3 with
+## dexterity=0 by construction), which coincidentally matches the buggy
+## direct assignment and hid the gap; this ends both players' turn to reach
+## round 2's own _begin_round() with a Dexterity bonus and a Frail stack
+## actually in play.
+func _test_relic_round_block_respects_dexterity_and_frail() -> void:
+	var combat := _relic_combat(0, 0, 8)
+	combat.players[0].combatant.dexterity = 2
+	combat.players[1].combatant.frail = 4
+	combat.end_turn(0)
+	combat.end_turn(1)
+	_expect(combat.players[0].combatant.block == 10,
+		"a round_block relic's grant gets Dexterity's flat bonus like any other Block")
+	_expect(combat.players[1].combatant.block == 6,
+		"a round_block relic's grant gets cut by Frail like any other Block")
 
 
 func _test_run_is_four_titans() -> void:
