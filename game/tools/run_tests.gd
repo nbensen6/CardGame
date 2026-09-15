@@ -417,6 +417,7 @@ func _init() -> void:
 	_test_keywords_of_does_not_falsely_tag_an_ordinary_card_as_cheapen()
 	_test_keywords_of_recognises_block_per_x_and_block_per_discarded_only_cards()
 	_test_keywords_of_recognises_grip_per_rhythm_only_cards()
+	_test_backlog86_keywords_of_recognises_power_effect_only_cards()
 	_test_every_field_a_player_must_understand_has_a_keyword()
 	_test_timed_keyword_explains_graded_quality()
 	_test_every_boss_move_type_resolves()
@@ -8434,6 +8435,52 @@ func _test_keywords_of_recognises_grip_per_rhythm_only_cards() -> void:
 		"a bare card with only grip_per_rhythm set is tagged height/armoured [ids=%s]" % [ids])
 	_expect(grip_rhythm_only.archetype_tags().has("climb"),
 		"Card.archetype_tags() still agrees this card is a climb card [tags=%s]" % [grip_rhythm_only.archetype_tags()])
+
+
+## Backlog #86 duty 3: `Combat._handle_power_effects()` resolves a stacking
+## power card's turn-end payout purely from `power_effect` — "block",
+## "strength", "thorns", "wound", "vulnerable" and "frail" are all real,
+## reachable values with no flat field required (see the match statement in
+## combat.gd). `Card.archetype_tags()` already covered wound/block/strength/
+## thorns/frail via `power_effect ==` checks (added piecemeal across earlier
+## duty-2 rounds) but never vulnerable; `GameHost._keywords_of()` — the
+## tap-to-inspect panel a player actually reads — never covered ANY of them.
+## Four shipped cards have no flat field to fall back on and were silently
+## missing their own defining keyword: iron_husk (power_effect "block"),
+## old_grudge ("strength"), seeping_venom ("wound"), barbed_hide ("thorns").
+## Probes each power_effect value on a bare, isolated card (no flat field set)
+## the same way the grip_per_rhythm-only test above does, then re-confirms
+## against the real shipped cards so this can't regress to a passing probe
+## that no longer matches actual content.
+func _test_backlog86_keywords_of_recognises_power_effect_only_cards() -> void:
+	var host := GameHost.new(LocalTransport.new(), 1, 2)
+	_kept.append(host)
+	var expect_id := {"wound": "poison", "block": "player_block", "strength": "strength",
+		"thorns": "thorns", "frail": "frail", "vulnerable": "expose"}
+	for effect in expect_id.keys():
+		var c := Card.new()
+		c.power_effect = String(effect)
+		var ids := []
+		for k in host._keywords_of(c):
+			ids.append(String((k as Dictionary).get("id", "")))
+		var want := String(expect_id[effect])
+		_expect(ids.has(want),
+			"a bare card with only power_effect=\"%s\" set is tagged %s [ids=%s]" % [effect, want, ids])
+
+	_expect(Card.new().archetype_tags().is_empty(), "sanity: a truly blank card earns no archetype tags")
+	var vuln_only := Card.new()
+	vuln_only.power_effect = "vulnerable"
+	_expect(vuln_only.archetype_tags().has("vulnerable"),
+		"Card.archetype_tags() also tags a power_effect=\"vulnerable\" card [tags=%s]" % [vuln_only.archetype_tags()])
+
+	var live := {"iron_husk": "player_block", "old_grudge": "strength",
+		"seeping_venom": "poison", "barbed_hide": "thorns"}
+	for id in live.keys():
+		var real_ids := []
+		for k in host._keywords_of(Content.make_card(String(id))):
+			real_ids.append(String((k as Dictionary).get("id", "")))
+		_expect(real_ids.has(String(live[id])),
+			"shipped card %s is tagged %s in the real inspector panel [ids=%s]" % [id, live[id], real_ids])
 
 
 ## Backlog #16: the check above only catches an id that's misspelled in one

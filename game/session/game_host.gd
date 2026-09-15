@@ -781,14 +781,27 @@ func _keywords_of(c: Card) -> Array:
 	var ids: Array = []
 	if c.timed or c.timed_damage > 0:
 		ids.append("timed")
-	if c.wound > 0 or c.damage_per_wound > 0:
+	# backlog #86 duty 3: `_handle_power_effects()` (combat.gd) resolves a
+	# stacking power card's turn-end payout from `power_effect` alone --
+	# "block"/"strength"/"thorns"/"wound"/"vulnerable"/"frail"/"heal" are all
+	# real, reachable values -- but this OR-list, and until this fix
+	# `Card.archetype_tags()`'s "vulnerable" branch too, only ever checked the
+	# FLAT field a normal card carries. `archetype_tags()` already covered
+	# wound/block/strength/thorns/frail via `power_effect ==` (added piecemeal
+	# across earlier duty-2 rounds); this tap-to-inspect list never got any of
+	# them. Live impact: iron_husk (power_effect "block"), old_grudge
+	# ("strength"), seeping_venom ("wound"), and barbed_hide ("thorns") all
+	# ship with no flat field of their own, so a player tapping to inspect any
+	# of the four saw every other keyword the card earns but not the one that
+	# is its entire non-damage identity.
+	if c.wound > 0 or c.damage_per_wound > 0 or c.power_effect == "wound":
 		ids.append("poison")
-	if c.vulnerable > 0 or c.damage_per_vulnerable > 0:
+	if c.vulnerable > 0 or c.damage_per_vulnerable > 0 or c.power_effect == "vulnerable":
 		ids.append("expose")
 	if c.rhythm > 0 or c.damage_per_rhythm > 0 or c.grip_per_rhythm > 0 \
 			or c.ally_grip_per_rhythm > 0:
 		ids.append("rhythm")
-	if c.strength > 0:
+	if c.strength > 0 or c.power_effect == "strength":
 		ids.append("strength")
 	if c.dexterity > 0:
 		ids.append("dexterity")
@@ -804,7 +817,7 @@ func _keywords_of(c: Card) -> Array:
 	# source would show every other keyword it earns but never "Block".
 	if c.block > 0 or c.ally_block > 0 or c.block_per_play > 0 \
 			or c.block_per_exhausted > 0 or c.timed_block > 0 or c.timed_ally_block > 0 \
-			or c.block_per_x > 0 or c.block_per_discarded > 0:
+			or c.block_per_x > 0 or c.block_per_discarded > 0 or c.power_effect == "block":
 		# "player_block", not "block" — keywords.json's move-vocabulary section
 		# (see its own "_comment_moves") uses ids that match a boss move `type`
 		# verbatim, and a beast's Defend move is already "block" there. The two
@@ -861,9 +874,9 @@ func _keywords_of(c: Card) -> Array:
 		ids.append("ethereal")
 	if c.cost == -1 or c.damage_per_x > 0 or c.block_per_x > 0:
 		ids.append("x_cost")
-	if c.frail > 0:
+	if c.frail > 0 or c.power_effect == "frail":
 		ids.append("frail")
-	if c.thorns > 0:
+	if c.thorns > 0 or c.power_effect == "thorns":
 		ids.append("thorns")
 	if c.intangible > 0:
 		ids.append("intangible")

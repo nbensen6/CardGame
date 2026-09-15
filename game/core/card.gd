@@ -405,7 +405,7 @@ func archetype_tags() -> Array:
 		tags.append("light")
 	if discard > 0 or damage_per_discarded > 0 or block_per_discarded > 0:
 		tags.append("discard")
-	if vulnerable > 0 or damage_per_vulnerable > 0:
+	if vulnerable > 0 or damage_per_vulnerable > 0 or power_effect == "vulnerable":
 		tags.append("vulnerable")
 	if thorns > 0 or power_effect == "thorns":
 		tags.append("thorns")

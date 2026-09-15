@@ -2782,6 +2782,51 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-15 — #86 duty 3: `GameHost._keywords_of()` never checked
+  `power_effect` at all, so a stacking power card with no flat field of its
+  own explained every keyword it earns except the one that IS its identity.**
+  Last commit (`e026fd3`) was duty 2, so this run took duty 3. Checked the
+  numbered items above #86 first: everything actionable is `needs a screen`,
+  Nick's call, or art (off-limits to this lane since the 2026-09-08 rewrite)
+  — nothing above #86 was pickable. Delegated the search to an Explore agent
+  scoped to `/core`, `/net` and `/session`, with the ~45 mechanics already
+  proven by earlier duty-3 rounds listed as off-limits so it wouldn't re-find
+  one. It landed on the exact same function this run's own last two duty-2
+  commits (`e026fd3`, `2d7c22c`, both further back) had already been patching
+  one field at a time — except this time the gap wasn't one missed field, it
+  was a whole missing CHECK: `Combat._handle_power_effects()` (combat.gd)
+  resolves a `type: "power"` card's turn-end payout purely from
+  `power_effect` — "block"/"strength"/"thorns"/"wound"/"vulnerable"/"frail"
+  are all real, reachable values with no flat field required, by design (a
+  power card's whole point is stacking a NAMED effect, not a printed number).
+  `Card.archetype_tags()` had picked up `power_effect ==` checks for
+  wound/block/strength/thorns/frail piecemeal across five separate earlier
+  duty-2 rounds (never vulnerable), but `_keywords_of()` — the tap-to-inspect
+  panel a player actually reads mid-fight — had never gained a single one of
+  them, for any value. Four shipped cards have no flat field to fall back on
+  and were silently missing their own defining keyword: `iron_husk`
+  (power_effect "block"), `old_grudge` ("strength"), `seeping_venom`
+  ("wound"), `barbed_hide` ("thorns") — a player inspecting any of these four
+  saw every other tag the card earns but not the one that explains what it
+  actually does. Rather than patch one more field and leave the same hole
+  open for value five, six and seven, fixed the whole vocabulary at once:
+  added `power_effect ==` to all five OR-lists in `_keywords_of()` (poison,
+  expose, strength, player_block, frail, thorns), and — since the audit
+  turned up `archetype_tags()` was ALSO missing `power_effect == "vulnerable"`
+  in its own "vulnerable" branch, a genuine gap in the reward-lean system
+  too, not just the tooltip panel — fixed that one line in `card.gd` as well.
+  Added `_test_backlog86_keywords_of_recognises_power_effect_only_cards`:
+  probes each power_effect value on a bare, isolated card (no flat field,
+  same trick the grip_per_rhythm-only test above uses) for the right
+  `_keywords_of()` tag, checks `archetype_tags()` on the power_effect=
+  "vulnerable" case specifically, then re-drives all four real shipped cards
+  through `Content.make_card()` so the test can't regress to probing a
+  vocabulary that no longer matches actual content. Confirmed it fails (11
+  assertions) against the unfixed code via `git stash` on just the two
+  source files, then restored the fix. Fresh `--import`, headless, Godot
+  4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2
+  (find an error and resolve it).
+
 - **2026-09-15 — #86 duty 2: `GameHost._keywords_of()`'s "height"/"armoured"
   OR-list was missing `grip_per_rhythm`, the exact same "two functions, same
   question, different answer" gap as the block_per_x/block_per_discarded fix
