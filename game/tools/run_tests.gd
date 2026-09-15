@@ -1517,6 +1517,13 @@ func _init() -> void:
 	_test_backlog86_shop_slot_disabled_ignores_the_deck_floor_for_a_non_remove_item()
 	_test_backlog86_run_begin_shop_stocks_remove_items_with_a_deck_size_run_buy_agrees_with()
 
+	# backlog #86 duty 2: the deck_size snapshot above only proves it's right
+	# at roll time -- it never proved it stays right after a same-shop "card"
+	# purchase GROWS the same hunter's deck, which is the one path _begin_shop()'s
+	# own freeze comment never accounted for. Two copies of one truth (the
+	# deck floor), one of them frozen and the other live.
+	_test_backlog86_run_buy_card_resyncs_the_same_slots_stale_remove_deck_size()
+
 	# backlog #86 duty 3: location_3d.campfire_can_thin is the campfire's own
 	# copy of Run.campfire_action()'s "remove" gate (run.gd:583, "deck.size()
 	# <= MIN_DECK" refuses) -- the "Thin the deck" button has to agree with the
@@ -19484,6 +19491,43 @@ func _test_backlog86_run_begin_shop_stocks_remove_items_with_a_deck_size_run_buy
 	_expect(stocked_size == run.decks[0].size() and stocked_size == Run.MIN_DECK
 		and view_says_disabled and server_refuses,
 		"a deck stocked at the floor is disabled in the view and refused by the server -- neither one lies about the other")
+
+
+## backlog #86 duty 2: the previous test proves the stocked deck_size agrees
+## with Run.buy() right after _begin_shop() rolls the stock -- but that
+## number was snapshotted once and never touched again, and buy()'s own
+## "card" branch GROWS decks[slot] without re-reading it. Thin hunter 0 to
+## MIN_DECK, roll the shop (deck_size freezes at MIN_DECK, "Thin the deck"
+## correctly disabled), then buy a card for hunter 0 in the SAME shop visit
+## -- decks[0] is now MIN_DECK + 1, a removal is legal again, and the stocked
+## deck_size has to say so or the view keeps refusing a purchase the server
+## would accept (the exact bug _resync_remove_deck_size() exists to close).
+func _test_backlog86_run_buy_card_resyncs_the_same_slots_stale_remove_deck_size() -> void:
+	var run := _map_run()
+	run.gold = 5000
+	run.map_row = 0
+	run.node_type = "shop"
+	while run.decks[0].size() > Run.MIN_DECK:  # thin hunter 0's deck to the floor first
+		run.decks[0].pop_back()
+	run._begin_shop()
+	var rem_i := -1
+	var card_i := -1
+	for i in range(run.shop_stock.size()):
+		var stocked: Dictionary = run.shop_stock[i]
+		if String(stocked["kind"]) == "remove" and int(stocked["slot"]) == 0 and rem_i < 0:
+			rem_i = i
+		elif String(stocked["kind"]) == "card" and int(stocked["slot"]) == 0 and card_i < 0:
+			card_i = i
+	_expect(rem_i >= 0 and card_i >= 0, "a rolled shop stocks both a remove item and a card for hunter 0")
+	_expect(run.buy(card_i), "hunter 0 can afford the card stocked for them")
+	var item: Dictionary = run.shop_stock[rem_i]
+	var stocked_size := int(item.get("deck_size", -1))
+	var view_says_disabled := Location3D.shop_slot_disabled(bool(item["sold"]), run.gold,
+		int(item["price"]), true, stocked_size, Run.MIN_DECK)
+	_expect(run.decks[0].size() == Run.MIN_DECK + 1,
+		"buying the card actually grew hunter 0's deck past the floor")
+	_expect(stocked_size == run.decks[0].size() and not view_says_disabled,
+		"a card bought for the same hunter in the same shop visit must un-stick the stale deck_size the remove item was stocked with, or the view refuses a removal the server would now accept")
 
 
 ## backlog #86 duty 3 -- location_3d.campfire_can_thin mirrors Run.

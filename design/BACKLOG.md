@@ -2782,6 +2782,28 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-15 (later yet) — #86 duty 2: `Run._begin_shop()`'s "remove" stock
+  item snapshots `deck_size` at roll time so `shop_slot_disabled()` can
+  floor-check it without seeing another hunter's private deck — the item's
+  own comment already reasoned "nothing else in this same shop can shrink
+  decks[slot2] before a client reads this," and that half was true. It never
+  considered GROWTH: `buy()`'s "card" branch appends straight into the same
+  `decks[slot]` array without touching the sibling "remove" item's frozen
+  number. Repro: thin a hunter to `MIN_DECK`, roll a shop (deck_size freezes
+  at `MIN_DECK`, "Thin the deck" correctly disabled), buy a card for that same
+  hunter in the same visit (deck grows past the floor, a removal is legal
+  again server-side) — the stocked `deck_size` never moves, so the view keeps
+  refusing a purchase the server would now accept. Two copies of one truth,
+  one of them stale. Wrote a regression test first
+  (`_test_backlog86_run_buy_card_resyncs_the_same_slots_stale_remove_deck_size`)
+  confirmed it failed against the unfixed code (`FAIL` on the exact line, one
+  failure, rest of the suite green), then added `Run._resync_remove_deck_size(slot)`
+  and called it from the "card" branch of `buy()` — there is at most one
+  unsold "remove" item per slot, so it only ever touches that one entry. No
+  screen needed: this is a pure `/core` dict-vs-dict bug, same shape as the
+  first `shop_slot_disabled`/`deck_size` gap #86 duty 2 already closed once,
+  just on the growth side instead of the shrink side. Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
 - **2026-09-15 (even later) — #86 duty 3: lifted `combat_3d._dist_for_window`'s
   lens/standoff maths into a static `dist_for_window_for(window, fov_deg,
   beast_front_z, pivot_target_z)` and gave it five tests — it had zero

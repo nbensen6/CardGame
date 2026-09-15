@@ -501,7 +501,12 @@ func _begin_shop() -> void:
 				# before a client reads this. Lets the view's shop_slot_disabled()
 				# mirror Run.buy()'s own MIN_DECK floor without needing the
 				# private deck contents of a hunter who might not be the viewing
-				# player (#86 duty 2).
+				# player (#86 duty 2). That reasoning only ever covered
+				# decks[slot2] SHRINKING mid-shop -- buying a "card" item for the
+				# same slot GROWS it instead, which buy()'s own "card" branch
+				# below now re-syncs via _resync_remove_deck_size(), or a hunter
+				# thinned to MIN_DECK who then buys a card stays locked out of a
+				# removal the server would now legally allow (#86 duty 2).
 				"deck_size": decks[slot2].size()})
 
 
@@ -522,6 +527,7 @@ func buy(index: int, card_index: int = -1) -> bool:
 	match String(item["kind"]):
 		"card":
 			decks[slot].append(Content.make_card(String(item["id"])))
+			_resync_remove_deck_size(slot)
 		"relic":
 			team_relics.append(Content.make_relic(String(item["id"])))
 		"potion":
@@ -549,6 +555,18 @@ func buy(index: int, card_index: int = -1) -> bool:
 	gold -= price
 	item["sold"] = true
 	return true
+
+
+## Keeps a hunter's stocked "remove" item's frozen `deck_size` (see its own
+## comment above in _begin_shop()) in step with a same-shop "card" purchase
+## for that same hunter -- the only way decks[slot] can GROW mid-shop. There
+## is at most one unsold "remove" item per slot (_begin_shop() stocks one per
+## hunter), so this only ever touches that one entry.
+func _resync_remove_deck_size(slot: int) -> void:
+	for oi in range(shop_stock.size()):
+		var other: Dictionary = shop_stock[oi]
+		if String(other["kind"]) == "remove" and int(other["slot"]) == slot and not bool(other["sold"]):
+			other["deck_size"] = decks[slot].size()
 
 
 ## Walk away from the shop and carry on up the route.
