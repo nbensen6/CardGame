@@ -1720,6 +1720,15 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_net_link_recv_command_emits_command_arrived()
 	_test_backlog86_net_link_recv_message_emits_message_arrived()
 
+	# backlog #86 duty 2: a real bug in _switch_to -- a hunter swap mid-timing
+	# window (sweep-bar CardView or HitCircle) misroutes the eventual
+	# play_card, since the window's hand index and _cmd_slot()'s live
+	# active-slot read fall out of sync the moment a switch lands between
+	# them. See switch_blocked_by_timing's own doc comment above.
+	_test_backlog86_switch_blocked_by_timing_true_for_a_live_sweep_or_circle()
+	_test_backlog86_switch_to_refuses_to_change_hunter_mid_sweep()
+	_test_backlog86_switch_to_refuses_to_change_hunter_while_a_circle_window_is_open()
+
 	print("")
 	if _failures == 0:
 		print("ALL TESTS PASSED")
@@ -19825,6 +19834,66 @@ func _test_backlog86_inside_wall_at_preserves_direction_and_height_while_clampin
 	_expect(is_equal_approx(out.x / out.z, p.x / p.z),
 		"the clamp keeps the camera on the same bearing from centre -- it pulls straight in, it doesn't swing around")
 	_expect(is_equal_approx(out.y, 2.0), "height survives the clamp on the diagonal case too")
+
+
+## backlog #86 duty 2: `_switch_to()` already cancelled an in-progress
+## exhaust/cheapen/meld pick before swapping the active hunter (a swap mid-pick
+## would strand it on the other hunter's hand), but it never checked a LIVE
+## timing window. Both timing faces resolve by calling `_cmd_slot()` fresh, at
+## RESOLUTION time, while the hand index they carry (`idx` in the sweep-bar
+## closure, `_circle_index` for the HitCircle) was captured at TAP time, for
+## whichever hunter was active then. Switch hunters in between and the two
+## disagree: `play_card` pairs the OLD hunter's hand index with the NEW
+## hunter's slot, either silently failing (index out of range / unaffordable)
+## or, worse, playing a completely different card for the wrong hunter. Solo
+## is a fully supported mode with the Switch button/Tab/1/2 always enabled, so
+## tapping a timed card then reflexively swapping to check the ally before the
+## sweep/circle resolves is an easy, real sequence — not a theoretical edge
+## case. `should_rebuild_hand` (above) already proves a mid-swing CardView
+## survives an unrelated refresh; this is the other half, a hunter swap has to
+## be refused outright while that same window is open, exactly like `_selecting`
+## already is.
+func _test_backlog86_switch_blocked_by_timing_true_for_a_live_sweep_or_circle() -> void:
+	_expect(Combat3D.switch_blocked_by_timing(true, -1),
+		"a running sweep-bar timing card blocks a switch even with no circle window open")
+	_expect(Combat3D.switch_blocked_by_timing(false, 3),
+		"an open HitCircle window (a real hand index, not -1) blocks a switch even with no sweep card timing")
+	_expect(not Combat3D.switch_blocked_by_timing(false, -1),
+		"with neither window open a switch is never blocked")
+
+
+func _test_backlog86_switch_to_refuses_to_change_hunter_mid_sweep() -> void:
+	var c3d := Combat3D.new()
+	var client := GameClient.new(LocalTransport.new(), 1)
+	client.shared = {"solo": true}
+	c3d._client = client
+	c3d._active_slot = 0
+	var cv := CardView.new()
+	# compact=false, the same shape the real hand row builds it with
+	# (combat_3d._render_hand's own `cv.setup(card, playable, false)`).
+	cv.setup({"name": "Slash", "cost": 1, "text": ""}, true, false)
+	cv.start_timing(1)
+	c3d._timing_card = cv
+	# The guard must return before _refresh() -- proven by this not crashing on
+	# the @onready HUD nodes a bare Combat3D never ran _ready() to set.
+	c3d._switch_to(1)
+	_expect(c3d._active_slot == 0,
+		"a switch attempted mid-sweep must not go through -- it would pair the OLD hunter's hand index with the NEW active slot the instant the sweep resolves")
+	cv.free()
+	c3d.free()
+
+
+func _test_backlog86_switch_to_refuses_to_change_hunter_while_a_circle_window_is_open() -> void:
+	var c3d := Combat3D.new()
+	var client := GameClient.new(LocalTransport.new(), 1)
+	client.shared = {"solo": true}
+	c3d._client = client
+	c3d._active_slot = 0
+	c3d._circle_index = 2
+	c3d._switch_to(1)
+	_expect(c3d._active_slot == 0,
+		"a switch attempted while the HitCircle window is open must not go through, same failure shape as the sweep-bar case")
+	c3d.free()
 
 
 func _expect(cond: bool, name: String) -> void:

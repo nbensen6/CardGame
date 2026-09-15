@@ -16204,3 +16204,71 @@ Newest first. One line per finished item: what, and anything surprising.
   routing waits for the true final beat. Passed on the first run. Fresh
   `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
   Next `#86` turn is duty 2 (find an error and resolve it).
+
+- **2026-09-15 — #86 duty 2: a solo-mode hunter swap mid-timing-window
+  misroutes the eventual `play_card` to the wrong hunter's hand.** Last
+  commit (`421e2e2`) was duty 3, so this run took duty 2. Checked the
+  numbered items above #86 first: everything actionable is `needs a screen`,
+  Nick's call, or (art) off-limits since the 2026-09-08 rewrite — nothing
+  above #86 was pickable. My own manual read of `combat.gd`/`boss.gd`/
+  `run_map.gd`/`progress.gd`/`player_state.gd`/`combatant.gd` turned up
+  nothing live — that surface has been hardened hard by many earlier duty-2
+  passes (their own comments name the fixes) and every candidate I chased
+  (a `RunMap._ensure_key_sources` fallback gap, a `_keywords_of()`/
+  `archetype_tags()` diff, `Boss.current_move()` context passing) turned out
+  either already fixed or unreachable given the real 4-act `ENCOUNTERS`
+  config. Delegated a fresh hunt to an Explore agent scoped to files this
+  rotation hadn't picked over as hard (`run.gd`, `game_client.gd`,
+  `content.gd`, the net layer, and pure-logic corners of `views`/`ui`),
+  following the same two bug shapes (first-pass holes; two copies of one
+  truth). It found `combat_3d._switch_to()` (the one place the active hunter
+  changes in solo, per its own doc comment): it already cancels an
+  in-progress exhaust/cheapen/meld pick before swapping ("a swap mid-pick
+  would strand the half-finished selection on the other hunter's hand"), but
+  never checked a LIVE timing window. Both timing faces — the sweep-bar
+  `CardView` and the osu-style `HitCircle` — resolve by calling `_cmd_slot()`
+  fresh at RESOLUTION time, while the hand index they carry (`idx` in the
+  sweep-bar closure at combat_3d.gd:3571, `_circle_index` for the circle) was
+  captured at TAP time, for whichever hunter was active then. Confirmed this
+  is real, not theoretical: `should_rebuild_hand()` (already in this file,
+  `#86` duty 2 from an earlier pass) deliberately SKIPS rebuilding the hand
+  while a sweep-bar card is mid-timing, specifically so the window survives
+  an unrelated `_refresh()` — which means it also survives a hunter switch,
+  since `_switch_to()` itself ends by calling `_refresh()`. Switch hunters
+  between tapping a timed card and it resolving (an easy, reflexive sequence
+  — tap, then Tab to check the ally before finishing the swing) and
+  `play_card` pairs the OLD hunter's hand index with the NEW active slot:
+  best case the index doesn't exist in the new hand and the play silently
+  fails with no explanation; worst case the new hand has a card at that same
+  index and a completely different card gets played for the wrong hunter, at
+  a timing grade earned on an unrelated card, while the card that was
+  actually timed sits untouched. Fixed by refusing the switch outright while
+  either window is open (same treatment `_selecting` already gets), via a
+  new pure `switch_blocked_by_timing(card_timing, circle_index)` predicate
+  (same "lift the pure rule out" idiom as `should_rebuild_hand`/
+  `card_is_raised` above it) so the rule is provable without a scene tree.
+  Added four tests: the predicate itself, `_switch_to` refusing to move
+  `_active_slot` with a real `CardView.start_timing()` in progress, refusing
+  with `_circle_index` set, and the predicate's own false case. Building the
+  CardView for the sweep-bar test through `cv.setup(data, true, false)` (the
+  same `compact=false` shape `_render_hand()` really uses) rather than
+  `start_timing()` on a `compact=true` rail card — both work, but the full
+  form matches the real hand row exactly. Hit one dead end on the way: an
+  early draft of the "switch still succeeds with no window open" case called
+  `_switch_to()` all the way through to a real `Sfx.play("card")` and
+  `_refresh()`, which needs the view's own `@onready` HUD nodes a bare
+  `Combat3D.new()` never runs `_ready()` to set — crashes without stubbing
+  every node `_refresh()`'s early-return branch touches. Dropped that third
+  test rather than stub around it: the pure predicate already proves the
+  false case, and the unblocked code path is unchanged by this fix, so it
+  added little. Also chased a red herring: an early run of the final suite
+  showed "2 ObjectDB instances were leaked at exit" (`AudioStreamWAV`/
+  `AudioStreamPlaybackWAV`) that looked like it came from the new CardView
+  test; three more runs showed it only once, confirming it's the SAME
+  pre-existing, documented, timing-dependent `AudioServer` mix-thread flake
+  `_test_backlog86_music_refresh_stops_playback_the_instant_you_mute`'s own
+  comment already names ("harmless... does not change run_tests.gd's exit
+  code or its ALL TESTS PASSED line") — unrelated to this change, not
+  something to chase further. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 3 (verify a
+  mechanic actually works).

@@ -857,6 +857,19 @@ func _switch_to(slot: int) -> void:
 	if slot == _active_slot:
 		_focus_camera()
 		return
+	# A timing window (sweep-bar CardView or HitCircle) resolves against
+	# _cmd_slot() read LIVE at resolution time, but the hand index it carries
+	# (captured at tap time, in the resolution closures in _on_card_tapped/
+	# _on_circle_resolved) belongs to whichever hunter was active when the
+	# window opened. `should_rebuild_hand` already keeps a mid-swing CardView
+	# alive across an unrelated refresh for exactly this reason -- its state
+	# lives only on that one node. Switching hunters mid-window would leave
+	# that stale index paired with the NEW active slot, so play_card lands
+	# on the wrong hunter's hand (or a hand index that doesn't even exist
+	# there) with no warning. #86 duty 2.
+	if switch_blocked_by_timing(_timing_card != null and is_instance_valid(_timing_card)
+			and _timing_card.is_timing(), _circle_index):
+		return
 	if not _selecting.is_empty():
 		_selecting = {}
 	_active_slot = slot
@@ -3612,6 +3625,15 @@ static func render_hand_status(selecting: bool) -> Dictionary:
 ## copies of one truth: "the card in focus" had two real causes, one checked).
 static func card_is_raised(card: Variant, hover: Variant, timing: Variant) -> bool:
 	return card == hover or card == timing
+
+## Whether `_switch_to` must refuse a hunter swap because a timing window
+## (sweep-bar CardView, or the HitCircle whose `circle_index` is the hand
+## index it will eventually play) is still open. See the call site in
+## `_switch_to` for why: the window's hand index and `_cmd_slot()`'s live
+## active-slot read would otherwise disagree the moment a switch lands
+## between them. #86 duty 2.
+static func switch_blocked_by_timing(card_timing: bool, circle_index: int) -> bool:
+	return card_timing or circle_index >= 0
 
 ## The timing-window bonus a played card actually gets, as a fraction (10% ==
 ## 0.10): the team-wide relic mod (`mods.timing_zone`, a percent) plus, if
