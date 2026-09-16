@@ -2782,6 +2782,37 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-16 (yet later still) — #86 duty 2: the campfire's sharpen picker offered curse/status cards a "View Upgrades" preview and an always-enabled confirm button that `Run.campfire_action()` silently refused on click.** Last
+  commit (`0fca9f3`) was duty 3, so this run took duty 2. Delegated the hunt
+  to an Explore agent scoped away from the recently-hardened combat/reward/
+  card_view surface, toward net/, ui/deck_view.gd, ui/map_edges.gd, views/
+  game_3d.gd, run_save.gd and progress.gd. It found the two-copies-of-one-
+  truth shape again: `Run.campfire_action()`'s "upgrade" branch refuses
+  `c.upgraded or c.status` (run.gd:627, "a curse has nothing to sharpen"),
+  but nothing on the client side agreed. `GameHost._deck_face()` never
+  carried a `status` key at all, so `DeckView._wants_toggle()` — which only
+  ever checked `upgraded` — read a curse's always-nonempty `upgrade` preview
+  (built by the same generic `upgraded_copy()` fallback every card uses) as
+  a real, offerable upgrade. Worse, the sharpen picker's confirm button
+  ("Sharpen this card") is added unconditionally whenever `_picking()` is
+  true, completely independent of `_wants_toggle` — so even fixing the
+  toggle alone would have left a status card fully selectable and its
+  confirm button live, wasting the click. Fixed on three sides: `_deck_face()`
+  now carries `status`; `DeckView._wants_toggle()` checks it (mirrors the
+  existing `upgraded` check); and a new `Location3D.campfire_sharpenable()`
+  (mirroring the existing `campfire_can_thin()` pattern next to it) filters
+  the deck handed to the picker down to cards the server will actually
+  sharpen, with the "Sharpen" button itself disabled and relabeled when the
+  whole deck is ineligible. Wrote the failing tests first against the
+  unfixed code (a pure `_wants_toggle` case with an explicit `status: true`
+  entry, an end-to-end case building the entry through the real
+  `GameHost._deck_face()`, and two pure `campfire_sharpenable()` filter
+  cases), watched them fail, then fixed. No screen needed — every piece here
+  is a pure function or a static gate proven the same way `campfire_can_thin`
+  already was. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`:
+  ALL TESTS PASSED. Next `#86` turn is duty 3 (verify a mechanic actually
+  works).
+
 - **2026-09-16 (still later) — #86 duty 3: proved `_meld_cards`' `create` field is a positional first-wins tie-break, not the "keep whichever has one" the function's own header comment implies.** Last
   commit (`2597048`) was duty 2, so this run took duty 3. `combat.gd:351`'s
   merge line is `a.create if a.create != "" else b.create` — fine when only

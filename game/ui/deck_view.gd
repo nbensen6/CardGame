@@ -377,9 +377,17 @@ func _arrow(forward: bool) -> Control:
 ## Whether `entry` has a real, not-yet-applied upgrade worth offering a
 ## toggle for. Shared by _open_detail() (deciding whether to BUILD one) and
 ## step() (deciding whether the pane needs one it doesn't have yet).
+##
+## `status` is checked for the same reason `upgraded` is: Run.campfire_action()
+## (run.gd) refuses "upgrade" for either (`c.upgraded or c.status`), and a
+## status/curse card's `_deck_face()` upgrade preview is built by the same
+## generic upgraded_copy() fallback every other card uses, so it shows a
+## plausible-looking cheaper "Bruised Grip+" the server will never produce
+## (#86 duty 2).
 static func _wants_toggle(entry: Dictionary) -> bool:
 	var up: Dictionary = entry.get("upgrade", {})
-	return not up.is_empty() and not bool(entry.get("upgraded", false))
+	return (not up.is_empty() and not bool(entry.get("upgraded", false))
+		and not bool(entry.get("status", false)))
 
 
 ## Build the "View Upgrades" checkbox. Split out of _open_detail() so step()

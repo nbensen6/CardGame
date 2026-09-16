@@ -829,7 +829,11 @@ func _render_campfire(s: Dictionary) -> void:
 		_subtitle.text = ("Choose a card to remove — it leaves the deck for good."
 			if removing else "Choose a card to sharpen.")
 		var action := _deck_pick
-		_deck_picker(deck, func(i: int) -> void:
+		# "remove" can target any card; "upgrade" cannot — filtered to the same
+		# cards campfire_can_sharpen() would count, so the picker never offers a
+		# card Run.campfire_action() is about to refuse (#86 duty 2).
+		var pick_deck := deck if removing else campfire_sharpenable(deck)
+		_deck_picker(pick_deck, func(i: int) -> void:
 			Sfx.play("reward")
 			_client.campfire(action, i, _cmd_slot())
 			_deck_pick = "",
@@ -853,9 +857,13 @@ func _render_campfire(s: Dictionary) -> void:
 			_refresh())
 	thin.disabled = not can_thin
 	stack.add_child(thin)
-	stack.add_child(_button("Sharpen — upgrade a card", func() -> void:
-		_deck_pick = "upgrade"
-		_refresh()))
+	var can_sharpen: bool = not campfire_sharpenable(deck).is_empty()
+	var sharpen := _button("Sharpen — upgrade a card" if can_sharpen
+		else "Sharpen — nothing left to sharpen", func() -> void:
+			_deck_pick = "upgrade"
+			_refresh())
+	sharpen.disabled = not can_sharpen
+	stack.add_child(sharpen)
 	stack.add_child(_button("Look through your deck (%d)" % deck.size(), open_deck))
 	_add_switch()
 
@@ -939,6 +947,21 @@ static func shop_slot_disabled(sold: bool, gold: int, price: int,
 ## the same rule campfire_action() enforces for "remove". #86 duty 3.
 static func campfire_can_thin(deck_size: int, min_deck: int) -> bool:
 	return deck_size > min_deck
+
+
+## Mirrors Run.campfire_action()'s own "upgrade" gate (run.gd:627,
+## `if c.upgraded or c.status: return false`) so the sharpen picker never
+## offers a card the server is about to refuse: an already-upgraded card has
+## nothing left to gain, and a status/curse card has nothing to sharpen at
+## all — only remove. Until #86 duty 2 nothing on this side of the wire
+## checked either flag: the picker handed every deck entry to DeckView
+## unfiltered, whose own `_wants_toggle()` only ever checked `upgraded` (its
+## `status` check is the sibling half of this same fix), so a curse card in
+## the deck showed a "View Upgrades" preview and an always-enabled "Sharpen
+## this card" button that `campfire_action()` silently rejected on click.
+static func campfire_sharpenable(deck: Array) -> Array:
+	return deck.filter(func(entry: Dictionary) -> bool:
+		return not bool(entry.get("upgraded", false)) and not bool(entry.get("status", false)))
 
 
 func _stock_button(item: Dictionary, index: int, gold: int, min_deck: int, potion_slots: int = 3) -> Button:

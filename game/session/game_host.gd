@@ -959,6 +959,7 @@ func _deck_face(c: Card, i: int) -> Dictionary:
 	return {
 		"index": i, "name": c.name, "cost": c.cost, "target": c.target,
 		"text": c.text, "icon": _card_icon(c), "upgraded": c.upgraded,
+		"status": c.status,
 		"timed": c.timed, "timed_hits": c.timed_hits, "rarity": c.rarity,
 		"keywords": _keywords_of(c),
 		# id, type, foil and borderless: the FACE needs all four and this dict

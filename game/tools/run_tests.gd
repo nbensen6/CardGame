@@ -665,6 +665,7 @@ func _init() -> void:
 	_test_backlog86_warm_glow_fx_carries_ally_heal_over_the_wire()
 	_test_backlog86_defensive_stacks_fx_carry_over_the_wire()
 	_test_backlog86_deck_view_upgrade_preview_shows_defensive_stacks()
+	_test_backlog86_deck_face_status_flag_agrees_with_wants_toggle()
 	_test_backlog86_reach_and_cleave_fx_carry_over_the_wire()
 	_test_backlog86_deck_view_shows_reach_and_cleave_too()
 	_test_backlog86_route_finder_fx_carries_targets_hold_over_the_wire()
@@ -1559,6 +1560,8 @@ func _init() -> void:
 	_test_backlog86_campfire_can_thin_is_false_exactly_at_the_floor()
 	_test_backlog86_campfire_can_thin_is_false_below_the_floor()
 	_test_backlog86_campfire_can_thin_is_false_at_a_zero_floor_with_an_empty_deck()
+	_test_backlog86_campfire_sharpenable_excludes_status_and_already_upgraded_cards()
+	_test_backlog86_campfire_sharpenable_of_an_all_ineligible_deck_is_empty()
 
 	# backlog #86 duty 3: location_3d.reward_header_text is the reward screen's
 	# own headline/subtitle/prompt rule -- the same one menu.gd's
@@ -1681,6 +1684,7 @@ func _init() -> void:
 	_test_backlog86_wants_toggle_is_false_with_no_upgrade_key_at_all()
 	_test_backlog86_wants_toggle_is_false_with_an_empty_upgrade_dict()
 	_test_backlog86_wants_toggle_defaults_upgraded_to_false_when_the_key_is_missing()
+	_test_backlog86_wants_toggle_is_false_for_a_status_card_even_with_an_unapplied_upgrade()
 
 	# backlog #86 duty 3: buy/leave_shop/campfire/skip_reward/pick_card/restart
 	# had Run-level tests but had never once been sent through the real
@@ -12949,6 +12953,32 @@ func _test_backlog86_deck_view_upgrade_preview_shows_defensive_stacks() -> void:
 		"the deck view's upgrade preview states the sharpened value, not the stale authored text of the un-upgraded card")
 
 
+## backlog #86 duty 2 (two copies of one truth) — Run.campfire_action()'s
+## "upgrade" branch refuses a status/curse card outright (run.gd:627,
+## "c.upgraded or c.status"), but `_deck_face()` never carried a `status` key
+## at all, so DeckView._wants_toggle() (which only ever checked `upgraded`)
+## had no way to agree: a curse card's deck-view entry showed a "View
+## Upgrades" toggle previewing a plausible cheapened version the server would
+## never actually produce. Fixed on both sides — `_deck_face()` now carries
+## `status`, and `_wants_toggle()` checks it — proven here end to end with the
+## real host-built face rather than a hand-written test dict.
+func _test_backlog86_deck_face_status_flag_agrees_with_wants_toggle() -> void:
+	var host := GameHost.new(LocalTransport.new(), 1, 2)
+	_kept.append(host)
+	var curse_card := Content.make_card("bruised_grip")
+	var curse := host._deck_face(curse_card, 0)
+	curse["upgrade"] = host._deck_face(curse_card.upgraded_copy(), 0)
+	var slash_card := Content.make_card("slash")
+	var normal := host._deck_face(slash_card, 0)
+	normal["upgrade"] = host._deck_face(slash_card.upgraded_copy(), 0)
+	_expect(bool(curse.get("status", false)) and not bool(normal.get("status", false)),
+		"_deck_face() must carry the real card's status flag, not silently drop it like it used to")
+	_expect(not DeckView._wants_toggle(curse),
+		"a curse card's own host-built deck-view entry must not offer a 'View Upgrades' toggle the server will never honour")
+	_expect(DeckView._wants_toggle(normal),
+		"an ordinary un-upgraded card must still offer its toggle -- the status check must not swallow everything")
+
+
 ## backlog #86 duty 2 — the same wiring gap yet again, this time Reach (#68:
 ## topdeck/shuffle_in/tutor) and Cleave (#63: hits_all_enemies). All four have
 ## been tagged "reach"/"cleave" by `_keywords_of()` below since each backlog
@@ -17885,6 +17915,20 @@ func _test_backlog86_wants_toggle_defaults_upgraded_to_false_when_the_key_is_mis
 		"a base entry with no `upgraded` key yet must default to not-upgraded, not silently hide the toggle")
 
 
+## backlog #86 duty 2 (two copies of one truth): Run.campfire_action() refuses
+## "upgrade" for a status card the same way it refuses an already-upgraded
+## one (run.gd:627, "c.upgraded or c.status"), but this function used to only
+## ever check `upgraded` -- a status entry with a real, not-yet-applied
+## `upgrade` dict (which upgraded_copy()'s generic fallback always builds,
+## same as any other card) read exactly like the "true" case above and
+## offered a toggle the server would never honour.
+func _test_backlog86_wants_toggle_is_false_for_a_status_card_even_with_an_unapplied_upgrade() -> void:
+	var e := {"id": "a", "upgraded": false, "status": true,
+		"upgrade": {"id": "a", "name": "A+"}}
+	_expect(not DeckView._wants_toggle(e),
+		"a curse has nothing to sharpen -- the same rule campfire_action() enforces must stop the toggle too, not just the server-side click")
+
+
 ## backlog #86 duty 2 (first-pass hole): DeckView.step() used to only ever
 ## show/hide a "View Upgrades" toggle _open_detail() had already built for
 ## whichever card the pane OPENED on -- `if _toggle != null: ... .visible =
@@ -19951,6 +19995,30 @@ func _test_backlog86_campfire_can_thin_is_false_below_the_floor() -> void:
 func _test_backlog86_campfire_can_thin_is_false_at_a_zero_floor_with_an_empty_deck() -> void:
 	_expect(not Location3D.campfire_can_thin(0, 0),
 		"an empty deck against a zero floor still refuses rather than flipping true at the degenerate boundary")
+
+
+## backlog #86 duty 2 — the sharpen picker's own sibling gap to campfire_can_thin
+## above: nothing filtered which deck entries the "Sharpen" picker handed to
+## DeckView, so an already-upgraded or status/curse card appeared in the grid
+## with an always-enabled "Sharpen this card" confirm button (deck_view.gd's
+## `_picking()` branch adds it unconditionally, independent of `_wants_toggle`)
+## that Run.campfire_action() silently refused on click. campfire_sharpenable()
+## mirrors campfire_action()'s own "c.upgraded or c.status" gate (run.gd:627)
+## so the picker only ever offers cards the server will actually sharpen.
+func _test_backlog86_campfire_sharpenable_excludes_status_and_already_upgraded_cards() -> void:
+	var fresh := {"id": "a", "upgraded": false, "status": false}
+	var sharpened := {"id": "b", "upgraded": true, "status": false}
+	var curse := {"id": "c", "upgraded": false, "status": true}
+	var out := Location3D.campfire_sharpenable([fresh, sharpened, curse])
+	_expect(out.size() == 1 and out[0] == fresh,
+		"only the fresh, un-upgraded, non-status card should survive the filter")
+
+
+func _test_backlog86_campfire_sharpenable_of_an_all_ineligible_deck_is_empty() -> void:
+	var sharpened := {"id": "a", "upgraded": true, "status": false}
+	var curse := {"id": "b", "upgraded": false, "status": true}
+	_expect(Location3D.campfire_sharpenable([sharpened, curse]).is_empty(),
+		"a deck with nothing left to sharpen must filter down to nothing, not fall back to offering everything")
 
 
 func _test_backlog86_reward_header_text_names_a_felled_titan_with_the_encounter_count() -> void:
