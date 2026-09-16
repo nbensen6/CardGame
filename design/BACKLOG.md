@@ -2782,6 +2782,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-16 (the very latest) — #86 duty 3: proved the felled-beast
+  placement geometry actually lays a toppled body's height onto its depth,
+  not still onto its height.** Last commit (`ff5c7c9`) was duty 2, so this
+  run took duty 3. `location_3d.gd`'s `_bounds`/`_bounds_in_parent`/
+  `_relative_xform` are the math `_lay_out_the_felled` uses to place the
+  reward screen's felled-beast trophy without it floating over the sea or
+  sinking into the tile (its own comment names that exact bug, from a fixed
+  offset that used to send it off the island's edge) — and had zero test
+  coverage, in the exact "presentation code with pure math underneath it"
+  shape `foothold_anchor`/`route_between_rungs` were already lifted out of in
+  earlier duty-3 passes. All three functions touch nothing on `self`, only
+  the node chain they're handed, so lifted them `static` the same way (a
+  pure refactor, no behavior change) and added first coverage: `_relative_xform`
+  composing a two-level parent chain's translations by addition rather than
+  overwrite; `_bounds` reading a mesh child's own off-centre pivot within its
+  parent's space rather than silently re-centring it; and the real case
+  `_bounds_in_parent` exists for — a box shaped like an upright hunter (1
+  wide, 3 tall, 1 deep), rotated by the exact -90-degrees-about-X topple
+  `_lay_out_the_felled` applies, proving the old 3-unit HEIGHT lands on the
+  parent's Z axis (sprawl) and the new Y-extent is the old 1-unit depth
+  (`(1.0, 1.0, 3.0)`), not still 3 — which is precisely what would put a
+  felled beast back up on its "height" and reproduce the floating-trophy bug
+  this code exists to prevent. Fresh `--import`, headless, Godot
+  4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2
+  (find an error and resolve it).
+
 - **2026-09-16 (the very latest) — #86 duty 2: a hunter killed by an add's own
   attack had the kill misattributed to the main boss in the run's permanent
   history.** Last commit (`cd7d7b4`) was duty 3, so this run took duty 2.

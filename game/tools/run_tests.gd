@@ -876,6 +876,14 @@ func _init() -> void:
 	_test_backlog86_felled_height_caps_at_the_max_size_past_the_reference_climb()
 	_test_backlog86_felled_height_scales_between_the_floor_and_the_cap()
 	_test_backlog86_felled_height_defaults_to_the_min_size_for_an_unknown_beast()
+	# backlog #86 duty 3: location_3d._bounds/_bounds_in_parent/_relative_xform
+	# are the geometry _lay_out_the_felled leans on to place a felled trophy
+	# without it floating over the sea or sinking into the tile (its own
+	# comment names that exact bug) -- pure arithmetic on a node chain, so
+	# lifted static like _felled_height above, and given first coverage.
+	_test_backlog86_relative_xform_composes_a_parent_chains_local_transforms()
+	_test_backlog86_bounds_reads_a_mesh_child_offset_within_its_parents_space()
+	_test_backlog86_bounds_in_parent_lays_a_toppled_bodys_height_onto_depth()
 	# backlog #86 duty 3: location_3d._roster_card_width sizes every hunter card
 	# on the lobby/reward roster from the viewport width and the headcount --
 	# the exact math that decides whether a two-hunter party gets full-size
@@ -16934,6 +16942,87 @@ func _test_backlog86_felled_height_scales_between_the_floor_and_the_cap() -> voi
 func _test_backlog86_felled_height_defaults_to_the_min_size_for_an_unknown_beast() -> void:
 	_expect(is_equal_approx(Location3D._felled_height("no_such_beast"), Location3D.FELLED_MIN),
 		"an id Content can't build a Boss from falls back to the smallest trophy, never a crash or a zero-size body")
+
+
+## _relative_xform's own promise: "works on a node that was built a moment ago
+## and has never been in the tree" -- built here with add_child but freed at
+## the end, exactly the "never added to a live scene" shape _lay_out_the_felled
+## uses it in (the model is measured the instant it's instanced, before the
+## caller even returns). A two-level chain (root -> mid, offset +1 on X ->
+## leaf, offset +2 on Y) proves it WALKS the chain rather than reading one
+## hop, and that translations compose by addition rather than one overwriting
+## the other.
+func _test_backlog86_relative_xform_composes_a_parent_chains_local_transforms() -> void:
+	var root := Node3D.new()
+	var mid := Node3D.new()
+	var leaf := Node3D.new()
+	root.add_child(mid)
+	mid.add_child(leaf)
+	mid.position = Vector3(1, 0, 0)
+	leaf.position = Vector3(0, 2, 0)
+
+	var xf: Transform3D = Location3D._relative_xform(leaf, root)
+	_expect(xf.origin.is_equal_approx(Vector3(1, 2, 0)),
+		"leaf's position in root's space is the SUM of both hops, not just leaf's own local offset: got %s" % xf.origin)
+
+	var one_hop: Transform3D = Location3D._relative_xform(leaf, mid)
+	_expect(one_hop.origin.is_equal_approx(Vector3(0, 2, 0)),
+		"leaf's position in its DIRECT parent's space is just its own local offset: got %s" % one_hop.origin)
+
+	root.free()  # frees mid and leaf too -- never added under `root` in a test tree
+
+
+## _bounds' own promise: measured in the NODE'S OWN space, so a mesh sitting
+## off-centre inside that node (every real model's own pivot, per its doc
+## comment) shows up as an off-centre box, not one silently re-centred on the
+## node origin -- the exact honesty _fit_height's scale-from-height math and
+## _lay_out_the_felled's placement math both depend on.
+func _test_backlog86_bounds_reads_a_mesh_child_offset_within_its_parents_space() -> void:
+	var node := Node3D.new()
+	var mi := MeshInstance3D.new()
+	var box_mesh := BoxMesh.new()
+	box_mesh.size = Vector3(2, 4, 6)
+	mi.mesh = box_mesh
+	mi.position = Vector3(0, 3, 0)  # the mesh's own pivot sits 3 units above node's origin
+	node.add_child(mi)
+
+	var box: AABB = Location3D._bounds(node)
+	_expect(box.size.is_equal_approx(Vector3(2, 4, 6)),
+		"bounds size is the mesh's own size untouched by the offset: got %s" % box.size)
+	_expect(box.get_center().is_equal_approx(Vector3(0, 3, 0)),
+		"bounds center follows the mesh instance's own local offset within its parent, not the node's origin: got %s" % box.get_center())
+
+	node.free()
+
+
+## The real case _bounds_in_parent exists for (its own doc comment): "after
+## toppling something on its back... only then is its upright height lying
+## sideways." Same -90-degree-about-X rotation _lay_out_the_felled applies to
+## a felled body, on a box shaped like an upright hunter (1 wide, 3 tall, 1
+## deep) -- proving the claim literally: the 3-unit HEIGHT must land on the
+## parent's Z axis (now sprawl, not stature) and the parent's own Y-extent
+## must shrink to the box's old 1-unit DEPTH, not stay at 3. Get this wrong
+## and a felled beast still measures "tall" after topple, which is exactly
+## the "trophy floated over the sea" placement bug _lay_out_the_felled's own
+## comment (location_3d.gd:262-266) already names.
+func _test_backlog86_bounds_in_parent_lays_a_toppled_bodys_height_onto_depth() -> void:
+	var node := Node3D.new()
+	var mi := MeshInstance3D.new()
+	var box_mesh := BoxMesh.new()
+	box_mesh.size = Vector3(1, 3, 1)
+	mi.mesh = box_mesh
+	node.add_child(mi)
+
+	var upright: AABB = Location3D._bounds_in_parent(node)
+	_expect(upright.size.is_equal_approx(Vector3(1, 3, 1)),
+		"sanity: standing, the body measures its own printed size: got %s" % upright.size)
+
+	node.rotation = Vector3(-PI * 0.5, 0.0, 0.0)  # the exact topple _lay_out_the_felled applies
+	var toppled: AABB = Location3D._bounds_in_parent(node)
+	_expect(is_equal_approx(toppled.size.y, 1.0) and is_equal_approx(toppled.size.z, 3.0),
+		"toppled onto its back, the old 3-unit HEIGHT now sprawls along Z and the new Y-extent is the old 1-unit depth, not still 3: got %s" % toppled.size)
+
+	node.free()
 
 
 ## backlog #86 duty 3: location_3d._roster_card_width_for is the clamp math

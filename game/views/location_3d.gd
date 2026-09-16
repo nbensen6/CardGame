@@ -378,7 +378,14 @@ func _fit_height(node: Node3D, want: float, max_wide := 0.0) -> void:
 ##
 ## Measuring in the node's own space is also the honest answer: a model's size
 ## should not change because something above it happens to be scaled.
-func _bounds(node: Node3D) -> AABB:
+##
+## Static (#86 duty 3): touches nothing on self, only the node chain it's
+## handed, so run_tests.gd can prove the felled-beast placement math (the
+## "floating trophy" bug class this function exists to prevent — see
+## _lay_out_the_felled's own comment) with a bare Node3D/MeshInstance3D/BoxMesh
+## tree and no model loaded, the same lift already done for combat_3d's
+## foothold_anchor/route_between_rungs.
+static func _bounds(node: Node3D) -> AABB:
 	var box := AABB()
 	var first := true
 	for m in _meshes(node):
@@ -392,14 +399,14 @@ func _bounds(node: Node3D) -> AABB:
 ## The same bounds seen by the node's PARENT — so it includes the node's own
 ## rotation and scale. What you want after toppling something on its back: only
 ## then is its upright height lying sideways.
-func _bounds_in_parent(node: Node3D) -> AABB:
+static func _bounds_in_parent(node: Node3D) -> AABB:
 	return node.transform * _bounds(node)
 
 
 ## Transform of `from` expressed in `to`'s space, by walking the parent chain.
 ## Pure arithmetic on local transforms — works on a node that was built a moment
 ## ago and has never been in the tree.
-func _relative_xform(from: Node3D, to: Node3D) -> Transform3D:
+static func _relative_xform(from: Node3D, to: Node3D) -> Transform3D:
 	var t := Transform3D.IDENTITY
 	var n: Node = from
 	while n != null and n != to:
@@ -409,7 +416,7 @@ func _relative_xform(from: Node3D, to: Node3D) -> Transform3D:
 	return t
 
 
-func _meshes(node: Node) -> Array:
+static func _meshes(node: Node) -> Array:
 	var out: Array = []
 	if node is MeshInstance3D:
 		out.append(node)
