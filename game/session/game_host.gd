@@ -173,6 +173,17 @@ func _on_command(peer_id: int, command: Dictionary) -> void:
 			_broadcast_state()
 		"restart":
 			if _run != null:
+				# backlog #86 duty 2: `_daily_date` lives on the HOST, not the run, and
+				# start_new_run()'s daily branch reads it unconditionally — so "Hunt
+				# again" after a daily run used to hand back Run.new_daily() with the
+				# exact same date-derived seed all over again: identical map, shop
+				# stock and every event/reward roll, now played with foreknowledge.
+				# Run.new_daily()'s own doc comment is "a shared seed only races fair
+				# if everyone plays the same difficulty" — a seed you can keep
+				# re-attempting after seeing it once is the same unfairness from the
+				# other direction. A daily is a one-shot; restarting one steps back
+				# into an ordinary random run instead of replaying the same date.
+				_daily_date = ""
 				start_new_run()
 		_:
 			push_warning("GameHost: unknown command '%s'" % command.get("type", ""))

@@ -2782,6 +2782,41 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-16 (newest) — #86 duty 2: "Hunt again" on a daily run's own end
+  screen quietly replayed the identical daily seed.** Last commit (`810f6ca`)
+  was duty 3, so this run took duty 2. Delegated the search to an Explore
+  agent scoped to `run.gd`, `game_host.gd` and the net/session layer (the
+  combat/climb surface this rotation has hit hardest keeps turning out to be
+  already fixed). It found that `GameHost._daily_date` is set once in `_init`
+  and never cleared, but `start_new_run()`'s daily branch
+  (`if _daily_date != "": _run = Run.new_daily(...)`) reads it unconditionally
+  on every call — restart included. The `"restart"` command
+  (`location_3d.gd`'s "Hunt again" button -> `GameClient.restart()`) reuses
+  the same host instance and calls `start_new_run()` again, so finishing
+  today's daily and hitting "Hunt again" handed back `Run.new_daily()` with
+  the exact same date-derived seed: identical map, identical shop stock,
+  identical every event/reward roll, now played with full foreknowledge.
+  `Run.new_daily()`'s own doc comment is "a shared seed only races fair if
+  everyone plays the same difficulty" — a seed a player gets to keep
+  re-attempting after seeing it once breaks that same fairness promise from
+  the other direction, and the two prior duty-2 fixes on this exact branch
+  (ascension and unlocked-wins pinning, both "start_new_run()'s daily branch
+  never does the same" bugs) are the same shape one axis over. Currently
+  unreachable in the shipped game — `menu.gd` has no daily entry point yet,
+  same "real but unreachable" gap those two prior fixes were written against
+  — so fixed now rather than left to ship silently broken the day a daily
+  menu entry lands. Fix: the `"restart"` command handler now clears
+  `_daily_date = ""` before calling `start_new_run()`, so restarting steps
+  back into an ordinary random run instead of replaying the same date. Wrote
+  `_test_backlog86_restart_after_a_daily_does_not_replay_the_same_seed` first
+  (starts a solo daily host, forces `Run.Phase.LOST`, sends the real
+  `restart()` command through the transport, asserts the new run is no
+  longer daily and its seed differs from the daily seed) — watched it fail
+  against the unfixed handler, confirmed the fix turns it green, then ran the
+  full suite. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`:
+  ALL TESTS PASSED. Next `#86` turn is duty 3 (verify a mechanic actually
+  works).
+
 - **2026-09-16 (latest) — #86 duty 3: proved a LOST run can never bank a career win or unlock the next ascension tier.** Last
   commit (`e3a17db`) was duty 2, so this run took duty 3. `GameHost._note_progress()`
   only calls `Progress.record_win(_ascension)` inside its `if _run.phase ==

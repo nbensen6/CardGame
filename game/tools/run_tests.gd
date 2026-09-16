@@ -116,6 +116,7 @@ func _init() -> void:
 	_test_backlog86_daily_host_ascension_matches_the_pinned_run()
 	_test_backlog86_daily_unlocked_wins_is_pinned_and_fair()
 	_test_backlog86_restart_refreshes_unlocked_wins_after_a_win()
+	_test_backlog86_restart_after_a_daily_does_not_replay_the_same_seed()
 	_test_run_walks_the_map()
 	_test_backlog86_elite_node_fights_from_the_elite_pool_not_the_fight_pool()
 	_test_backlog86_boss_art_per_act_matches_encounters_in_order()
@@ -3374,6 +3375,37 @@ func _test_backlog86_restart_refreshes_unlocked_wins_after_a_win() -> void:
 		"a same-session restart must re-read the just-updated career total, not replay " +
 		"the pre-win snapshot the host was constructed with, or newly unlocked content " +
 		"stays locked until the app restarts")
+
+
+## Backlog #86 duty 2: `GameHost._daily_date` lives on the HOST (set once in
+## _init) and never clears once set, but `start_new_run()`'s daily branch reads
+## it unconditionally on every call -- restart included. "Hunt again" on a
+## daily run's own end screen (location_3d.gd -> GameClient.restart() -> the
+## host's "restart" command -> start_new_run()) used to hand back
+## Run.new_daily() with the IDENTICAL date-derived seed: same map, same shop
+## stock, same every event/reward roll, now played with foreknowledge.
+## Run.new_daily()'s own doc comment says a shared seed "only races fair if
+## everyone plays the same difficulty" -- a seed a player can keep
+## re-attempting after seeing it once breaks that same fairness promise from
+## the other direction. A daily is a one-shot; restarting it should step back
+## into an ordinary random run, not replay the same date.
+func _test_backlog86_restart_after_a_daily_does_not_replay_the_same_seed() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 0, 2, true, 0, Content.UNLOCKED_ALL, "2026-08-25")  # solo, daily-flagged
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	var daily_seed := Run.daily_seed("2026-08-25")
+	_expect(bool(c.shared.get("is_daily", false)) and int(c.shared.get("seed", -1)) == daily_seed,
+		"the first run really is today's shared daily, pinned to its date-derived seed")
+
+	host._run.phase = Run.Phase.LOST
+	host._broadcast_state()  # records the loss, same "settle -> broadcast" idiom every other test above uses
+	c.restart()  # the exact command "Hunt again" sends
+	_expect(not bool(c.shared.get("is_daily", true)) and int(c.shared.get("seed", daily_seed)) != daily_seed,
+		"restarting after a daily run starts an ordinary random run instead of quietly replaying the identical daily seed")
 
 
 func _test_run_walks_the_map() -> void:
