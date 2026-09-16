@@ -2782,6 +2782,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-16 — #86 duty 3: proved `console.gd`'s `deck`/`card`/`clear` dev
+  commands, which had zero coverage.** Last commit (`00e2f66`) was duty 2, so
+  this run took duty 3. Checked item 55 first per rule 0: its own numeric bar
+  (fourteen beasts) was already met on 2026-08-30 and everything past that is
+  `cloud-art` awaiting Nick's look, so it's not actionable for this rotation;
+  moved on to #86's own duty. Spent most of this run on the search itself —
+  the codebase's `static func`s are almost all covered after 50+ prior
+  duty-3 passes (dumped every static function's test-file hit count to find
+  gaps; asked an Explore agent to double-check nothing better was left after
+  my own pass turned up thin candidates). `_cmd_deck`/`_cmd_card`, unlike
+  every sibling console command, had never been driven end to end — none of
+  their own output strings ("deck open", "inspecting card", "no card at")
+  appeared anywhere in `run_tests.gd`. Added a minimal `DeckHavingView` test
+  double (a bare `Node` with the same `open_deck()` contract Combat3D/
+  Location3D share) rather than instancing either real view, since both
+  real `_ready()`s reach for `@onready` scene nodes that don't exist off a
+  bare `.new()` and would crash. Four new tests: `card <n>` opens the deck
+  screen and inspects the right entry, a degrees argument actually turns it,
+  the `up` flag actually flips `_upgraded`, an out-of-range index is refused
+  by name, `deck` alone opens a real screen (not just claims to), and `clear`
+  actually empties `_out` rather than just returning a blank line. One test
+  needed a fix mid-run: `RichTextLabel.text` doesn't reflect content added
+  via `append_text()` in this Godot build, so the "has output before
+  clearing" sanity check read empty and failed even though `append_text` had
+  run — switched to `get_parsed_text()`, which does. Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
 - **2026-09-15 (later yet) — #86 duty 2: `Run._begin_shop()`'s "remove" stock
   item snapshots `deck_size` at roll time so `shop_slot_disabled()` can
   floor-check it without seeing another hunter's private deck — the item's

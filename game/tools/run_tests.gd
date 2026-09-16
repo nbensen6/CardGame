@@ -1766,6 +1766,10 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_deck_view_step_builds_a_toggle_the_open_pane_never_needed()
 	_test_backlog86_deck_view_closed_fires_on_cancel_and_escape_not_on_pick()
 	_test_backlog86_console_own_closes_an_open_picker_through_closed_not_a_bare_free()
+	_test_backlog86_console_card_inspects_a_deck_entry_and_can_spin_and_show_its_upgrade()
+	_test_backlog86_console_card_refuses_an_out_of_range_index()
+	_test_backlog86_console_deck_opens_a_real_deck_screen()
+	_test_backlog86_console_clear_wipes_the_visible_output()
 	_test_backlog86_hit_circle_gui_input_ignores_a_press_far_from_the_live_note()
 	_test_backlog86_hit_circle_screen_clamps_a_note_projecting_above_the_frame()
 	_test_backlog86_hit_circle_screen_leaves_an_onscreen_note_untouched()
@@ -17817,6 +17821,103 @@ func _test_backlog86_console_own_closes_an_open_picker_through_closed_not_a_bare
 		# for that queued free to ever run (same reasoning as the sibling
 		# DeckView test's own "immediate, not queue_free()" comment above)
 	view.free()
+
+
+## A minimal stand-in for a view with a deck screen -- console.gd's `deck` and
+## `card` commands only ever ask their parent for `open_deck()` (see
+## `_cmd_deck`'s own doc: "view.call('open_deck')"), never anything else about
+## it, so proving those two commands does not need the whole Combat3D/
+## Location3D scene: both real `_ready()`s reach for @onready nodes that only
+## exist once instanced from their own .tscn, and would crash built bare with
+## `.new()`. This carries the exact same open_deck() contract those two views
+## share (empty deck opens nothing; already-open is a no-op; otherwise build a
+## "DeckView" child) with nothing else attached.
+class DeckHavingView extends Node:
+	var deck: Array = []
+	func open_deck() -> void:
+		if deck.is_empty():
+			return
+		if get_node_or_null("DeckView") != null:
+			return
+		DeckView.open(self, deck)
+
+
+## backlog #86 duty 3 -- console.gd registers thirteen commands and the help
+## text for `deck`/`card` promises a real deck screen ("open the deck screen",
+## "the Nth card, spun N degrees, `up` for its upgrade"), but unlike every
+## sibling command (find/rares/foil/turn/energy/climb/beast/hand/deal/own,
+## all proven above) nothing had ever driven `_cmd_deck`/`_cmd_card` end to
+## end -- confirmed by grep: none of their own output strings ("deck open",
+## "inspecting card", "no card at") appear anywhere else in this file before
+## this pass. Deferred, like the DeckView tests above: `_cmd_card` chains
+## into DeckView.inspect() -> _rebuild_card(), which calls get_viewport() and
+## needs a real window.
+func _test_backlog86_console_card_inspects_a_deck_entry_and_can_spin_and_show_its_upgrade() -> void:
+	var view := DeckHavingView.new()
+	view.deck = [
+		{"id": "a", "name": "A", "index": 0},
+		{"id": "b", "name": "B", "index": 1, "upgrade": {"id": "b", "name": "B+"}},
+	]
+	root.add_child(view)
+	var c := DevConsole.new()
+	view.add_child(c)
+
+	var named := c.run("card 1")
+	_expect(named == "inspecting card 1", "card <n> with no degrees just names the card it opened")
+	var dv := view.get_node_or_null("DeckView")
+	_expect(dv != null, "card must actually build the DeckView it claims to, chaining through _cmd_deck the same way the `deck` command does")
+	_expect(int(dv._at) == 1, "card <n> inspects the Nth deck entry, zero-indexed")
+
+	var spun := c.run("card 1 90")
+	_expect(spun == "inspecting card 1, spun to 90 degrees", "a degrees argument is echoed back in the reply")
+	_expect(is_equal_approx(dv._angle, deg_to_rad(90.0)), "the degrees argument actually turns the open card, not just the reported text")
+
+	_expect(not dv._upgraded, "sanity: the pane is not showing the upgrade before the `up` flag is ever passed")
+	var upgraded := c.run("card 1 45 up")
+	_expect(upgraded == "inspecting card 1, spun to 45 degrees", "the `up` flag rides alongside the degrees argument without changing the echoed text")
+	_expect(dv._upgraded, "the `up` flag flips the open deck view to its upgraded face")
+
+	view.free()
+
+
+func _test_backlog86_console_card_refuses_an_out_of_range_index() -> void:
+	var view := DeckHavingView.new()
+	view.deck = [{"id": "a", "name": "A", "index": 0}]
+	root.add_child(view)
+	var c := DevConsole.new()
+	view.add_child(c)
+
+	var said := c.run("card 5")
+	_expect(said == "no card at 5", "an index past the end of the deck is refused by name, the same promise DeckView.inspect() itself makes, rather than silently opening on nothing")
+
+	view.free()
+
+
+func _test_backlog86_console_deck_opens_a_real_deck_screen() -> void:
+	var view := DeckHavingView.new()
+	view.deck = [{"id": "a", "name": "A", "index": 0}]
+	root.add_child(view)
+	var c := DevConsole.new()
+	view.add_child(c)
+
+	_expect(c.run("deck") == "deck open", "the `deck` command reports success")
+	_expect(view.get_node_or_null("DeckView") != null, "and actually built the screen it claims to have opened, not just returned the string")
+
+	view.free()
+
+
+## `clear`'s own contract needs no window at all -- `_out` is a plain
+## RichTextLabel, built and used exactly the way `_make`'s own test above
+## builds one without running the rest of _ready().
+func _test_backlog86_console_clear_wipes_the_visible_output() -> void:
+	var c := DevConsole.new()
+	c._out = RichTextLabel.new()
+	c._out.append_text("something printed")
+	_expect(c._out.get_parsed_text() != "", "sanity: the console has visible output before clearing it")
+	_expect(c.run("clear") == "", "`clear` returns a blank line, same as every other silent command")
+	_expect(c._out.get_parsed_text() == "", "`clear` actually empties the visible output, not just reports success")
+	c._out.free()
+	c.free()
 
 
 ## backlog #86 duty 3 (thirty-first pass) -- GameHost.phase_string_for is the
