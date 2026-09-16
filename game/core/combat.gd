@@ -1502,7 +1502,20 @@ func _begin_round() -> void:
 		var round_block_mod := _round_block
 		if round_block_mod > 0:
 			round_block_mod = Combatant.block_after_modifiers(round_block_mod, ps.combatant.dexterity, ps.combatant.frail)
-		ps.combatant.block = maxi(0, round_block_mod + int(start_ctx["carried_block"])) + ps.combatant.plated_armour  # relic: start each round with block (+ retained Block)
+		# Plated Armour's own re-seed (backlog #86 duty 2): this line already sent
+		# round_block_mod through block_after_modifiers above for exactly the
+		# reason given in the comment block up top — a round-start Block grant
+		# is fresh, so Dexterity/Frail apply the same way gain_block() applies
+		# them to the very first Plated Armour grant in play_card(). The re-seed
+		# right here skipped that same treatment for plated_armour itself, so a
+		# Dexterity hunter's banked Plated Armour lost its bonus the moment a
+		# round rolled over. plated_armour is never negative (take_damage only
+		# ever decays it toward 0), so the >0 guard is just belt-and-braces to
+		# match round_block_mod's own shape.
+		var plated_seed := ps.combatant.plated_armour
+		if plated_seed > 0:
+			plated_seed = Combatant.block_after_modifiers(plated_seed, ps.combatant.dexterity, ps.combatant.frail)
+		ps.combatant.block = maxi(0, round_block_mod + int(start_ctx["carried_block"])) + plated_seed  # relic: start each round with block (+ retained Block)
 		ps.energy = maxi(0, BASE_ENERGY + _energy_bonus)  # relic: extra energy
 		ps.ended_turn = false
 		if _mod("rhythm_keeps") <= 0:
@@ -1631,7 +1644,12 @@ func _enemy_turn() -> void:
 	_apply_limiter()
 	if _check_end():
 		return
-	boss.block = boss.plated_armour  # backlog #61 — re-seeded rather than wiped, same as the players' reset
+	# backlog #86 duty 2: through block_after_modifiers now, same fix and same
+	# reason as the players' own re-seed above — no beast currently grants
+	# itself Dexterity or Frail, but nothing stops a future move from doing so
+	# (boss.dexterity/frail already exist on Boss, see its own comment), and
+	# this would have silently dropped the bonus/cut the day one did.
+	boss.block = Combatant.block_after_modifiers(boss.plated_armour, boss.dexterity, boss.frail) if boss.plated_armour > 0 else 0  # backlog #61 — re-seeded rather than wiped, same as the players' reset
 	var value := int(move.get("value", 0))
 	match String(move.get("type", "")):
 		"attack":
@@ -1776,7 +1794,11 @@ func _adds_turn() -> void:
 			if add.is_dead():
 				_log("%s falls." % add.name)
 				continue
-		add.block = add.plated_armour  # reseeded each round, same as the boss's own reset above
+		# backlog #86 duty 2: same block_after_modifiers fix as the boss's own
+		# reset above, for the same reason — an add's Dexterity/Frail (Boss
+		# extends Combatant, same as the main boss) would otherwise be silently
+		# dropped from its banked Plated Armour every round.
+		add.block = Combatant.block_after_modifiers(add.plated_armour, add.dexterity, add.frail) if add.plated_armour > 0 else 0  # reseeded each round, same as the boss's own reset above
 		# backlog #86 duty 2: same missing-context gap as incoming_for()'s add
 		# loop above (see that comment) -- the omitted context meant an add's
 		# "when"-conditioned move (min_height/max_height/at_sigil/undefended,

@@ -539,6 +539,7 @@ func _init() -> void:
 	_test_intangible_card_grants_the_stat()
 	_test_buffer_card_grants_the_stat()
 	_test_plated_armour_persists_the_round_reset()
+	_test_plated_armours_round_reset_applies_dexterity_and_frail()
 	_test_plated_armour_decays_only_when_a_hit_gets_hp_through()
 	_test_backlog86_buffer_voiding_a_hit_spares_plated_armour_from_decay()
 	_test_backlog86_intangibles_capped_hit_still_decays_plated_armour()
@@ -11203,6 +11204,32 @@ func _test_plated_armour_persists_the_round_reset() -> void:
 	_expect(ps.combatant.block == 3,
 		"Plated Armour re-seeds Block at the round reset instead of it resetting to 0")
 	_expect(ps.combatant.plated_armour == 3, "an attack that deals 0 doesn't decay Plated Armour")
+
+
+## backlog #86 duty 2: the round reset above re-seeds `block` from
+## `round_block_mod + carried_block + plated_armour`, and only the first term
+## was ever sent through Combatant.block_after_modifiers() — a second copy of
+## "gain block" math sitting right next to the one the comment above
+## _begin_round() already says was fixed for exactly this reason. Dexterity
+## boosts a Plated Armour grant the moment it's played (play_card() ->
+## gain_block() -> block_after_modifiers()), but every round after that the
+## re-seed dropped the bonus back out again. This is that gap, proven with the
+## same start_dexterity relic _test_relic_start_dexterity() already exercises
+## and the same Hardshell card the persistence test above uses.
+func _test_plated_armours_round_reset_applies_dexterity_and_frail() -> void:
+	var boss := _dummy_boss(300, 0)  # a plain attack for 0 — proves the re-seed math, not decay
+	var combat := _new_combat_mods([_deck_of(_hardshell, 10), _deck_of(_slash, 10)], 42,
+		boss, {"start_dexterity": 2})
+	var ps: PlayerState = combat.players[0]
+	combat.play_card(0, 0)  # Hardshell: Plated Armour 3, boosted to 5 Block by Dexterity 2
+	_expect(ps.combatant.block == 5 and ps.combatant.plated_armour == 3,
+		"Dexterity boosts Plated Armour's own first grant same as any Block gain")
+	combat.end_turn(0)
+	combat.end_turn(1)  # round 2 begins; the boss's 0-damage attack doesn't touch it
+	_expect(ps.combatant.block == 5,
+		"the round reset re-seeds Plated Armour through Dexterity too, not just round_block_mod")
+	_expect(ps.combatant.plated_armour == 3,
+		"the Plated Armour stack itself stays 3 — only the Block it produces is boosted")
 
 
 ## The other half: it isn't free forever. It decays by 1 only once real HP

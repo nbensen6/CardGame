@@ -2782,6 +2782,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-16 (later still) — #86 duty 2: Plated Armour's own round-reset silently dropped Dexterity's bonus (and Frail's cut) every round after the first.** Last commit
+  (`485f31a`) was duty 3, so this run took duty 2. `_begin_round()`'s own
+  comment already documents that `round_block_mod` was sent through
+  `Combatant.block_after_modifiers()` in an earlier duty-2 pass for exactly
+  this reason — "a round-start relic Block grant is a fresh grant like any
+  card's, so Dexterity/Frail must apply to it the same way." The very same
+  line adds `ps.combatant.plated_armour` on completely raw, with no such
+  call. A hunter with Dexterity (e.g. the `nimble_wraps` relic) who plays a
+  Plated Armour card gets the correct boosted Block the instant they play it
+  (`play_card()` -> `gain_block()` -> `block_after_modifiers()`), then loses
+  that bonus back out of their banked Plated Armour the moment the round
+  rolls over, silently, forever, for the rest of the fight — the same
+  two-copies-of-one-truth shape as the bug the comment right above it was
+  already written to prevent. The same raw re-seed existed for the boss
+  (`boss.block = boss.plated_armour`) and for adds (`add.block =
+  add.plated_armour`); no beast currently grants itself Dexterity or Frail,
+  but `boss.gd`/`game_host.gd` already carry both fields against exactly
+  this future. Fixed all three call sites in `combat.gd`'s `_begin_round()`/
+  `_enemy_turn()`/`_adds_turn()` to route `plated_armour` through
+  `block_after_modifiers()` the same way `round_block_mod` already does, and
+  added a regression test (`_test_plated_armours_round_reset_applies_dexterity_and_frail`)
+  that plays Hardshell under `start_dexterity: 2`, confirmed by hand to FAIL
+  against the pre-fix code (`git apply`/`git checkout` round-trip, not just
+  reasoning) before confirming it passes with the fix in place. Fresh
+  `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS
+  PASSED.
 - **2026-09-16 (even yet later) — #86 duty 3: proved Intangible caps only the FIRST of several real hits in one round, the same claim already proven for Buffer but never for its sibling.** Last commit (`2b53fbd`) was duty 2, so
   this run took duty 3. Searched extensively for a genuinely untested mechanic
   first — climb-route/hop/foothold view logic, console commands, save
