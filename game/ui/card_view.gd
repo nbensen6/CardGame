@@ -1090,6 +1090,22 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 		out.append("Draw %d." % int(fx["draw"]))
 	if bool(fx.get("taunt", false)):
 		out.append("%s." % _kw("Taunt", "taunt", kw, rich))
+	# backlog #86 duty 2 — retain/innate/ethereal (game_host.gd's "fx" dict never
+	# carried any of the three until the fix beside this one) are real card
+	# behaviour, not flavour: Bunker Down ("Gain 4 Block. Retain."), Steady Flame
+	# ("Gain 5 Block. Gain 2 Light. Retain."), First Strike ("Deal 5 damage.
+	# Innate."), and Reckless Swing/Guarded Instant/Fading Insight (all
+	# "... Ethereal.") each pair one of these with a live-tracked effect that
+	# already fills `out` above — so the live face fell straight past the
+	# `out.is_empty()` authored-text fallback and silently dropped the clause
+	# that makes the card do what its own printed text says it does, for six
+	# real, shipped cards.
+	if bool(fx.get("retain", false)):
+		out.append("%s." % _kw("Retain", "retain", kw, rich))
+	if bool(fx.get("innate", false)):
+		out.append("%s." % _kw("Innate", "innate", kw, rich))
+	if bool(fx.get("ethereal", false)):
+		out.append("%s." % _kw("Ethereal", "ethereal", kw, rich))
 	# backlog #86 duty 2 — same gap again: Light (Beacon "Gain 4 Block. Gain 3
 	# Light."; Kindled Strike "Deal 3 damage. Gain 2 Light.") had no branch, so
 	# both showed only their Block/damage line once that line made `out`

@@ -680,6 +680,9 @@ func _init() -> void:
 	_test_backlog86_light_cost_fx_carries_over_the_wire()
 	_test_backlog86_deck_view_shows_light_cost_too()
 	_test_backlog86_face_text_shows_light_cost_alongside_another_effect()
+	_test_backlog86_retain_innate_ethereal_fx_carry_over_the_wire()
+	_test_backlog86_deck_view_shows_retain_innate_ethereal_too()
+	_test_backlog86_face_text_shows_retain_innate_ethereal_alongside_another_effect()
 	_test_backlog45_named_holds_cross_to_both_peers_identically()
 	_test_backlog45_graded_timing_quality_reaches_the_host_and_the_preview()
 	# backlog #46: a robustness sweep that is not balance tuning
@@ -13356,6 +13359,62 @@ func _test_backlog86_face_text_shows_light_cost_alongside_another_effect() -> vo
 		"keywords": [], "fx": {"light_cost": 5}}
 	_expect(CardView.face_text(flare, false) == "Spend 5 Light. Deal 14 damage.",
 		"a card spending Light AND dealing damage states both, not just the damage")
+
+
+## backlog #86 duty 2 — the same "GameHost's fx dict never carried this field"
+## gap as light_cost/ally_heal/scry above, this time for retain/innate/
+## ethereal: Bunker Down ("Gain 4 Block. Retain."), First Strike ("Deal 5
+## damage. Innate.") and Reckless Swing ("Deal 10 damage. Ethereal.") each
+## pair one of these with a live-tracked effect that fills `out` first, so
+## the live face silently dropped the clause that says what the card
+## actually does when left in hand or drawn — Retain/Innate/Ethereal are
+## real rules, not flavour text.
+func _test_backlog86_retain_innate_ethereal_fx_carry_over_the_wire() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	host._run.combat.players[0].hand.append(Content.make_card("bunker_down"))
+	host._broadcast_state()
+	var hand: Array = c0.private["hand"]
+	var card: Dictionary = {}
+	for card_v in hand:
+		if String((card_v as Dictionary)["name"]) == "Bunker Down":
+			card = card_v
+	_expect(bool((card["fx"] as Dictionary).get("retain", false)),
+		"Bunker Down's fx dict carries retain to the owner's client")
+	_expect(CardView.face_text(card) == "Gain 4 Block. Retain.",
+		"the live face states Retain alongside the Block, not just the Block")
+
+
+## `_deck_face()`'s fx dict is a second hand-copied copy of the same field
+## list and had the identical retain/innate/ethereal gap as `_slot_private()`
+## above.
+func _test_backlog86_deck_view_shows_retain_innate_ethereal_too() -> void:
+	var host := GameHost.new(LocalTransport.new(), 1, 2)
+	_kept.append(host)
+	var first_strike := host._deck_face(Content.make_card("first_strike"), 0)
+	_expect(bool((first_strike["fx"] as Dictionary).get("innate", false)),
+		"_deck_face()'s fx dict carries innate")
+	_expect(CardView.face_text(first_strike) == "Deal 5 damage. Innate.",
+		"a campfire deck-view First Strike states Innate alongside its damage")
+
+
+## face_text() itself never grew a branch for retain/innate/ethereal at all --
+## prove it directly against hand-built preview dicts, the same shape as the
+## light_cost duty-2 tests above, rather than only through the wire.
+func _test_backlog86_face_text_shows_retain_innate_ethereal_alongside_another_effect() -> void:
+	var bunker_down := {"preview": {"block": 4}, "preview_miss": {}, "base": {"block": 4},
+		"keywords": [], "fx": {"retain": true}}
+	_expect(CardView.face_text(bunker_down, false) == "Gain 4 Block. Retain.",
+		"a card that gains Block AND Retains states both, not just the Block")
+	var first_strike := {"preview": {"damage": 5}, "preview_miss": {}, "base": {"damage": 5},
+		"keywords": [], "fx": {"innate": true}}
+	_expect(CardView.face_text(first_strike, false) == "Deal 5 damage. Innate.",
+		"a card that deals damage AND is Innate states both, not just the damage")
+	var reckless_swing := {"preview": {"damage": 10}, "preview_miss": {}, "base": {"damage": 10},
+		"keywords": [], "fx": {"ethereal": true}}
+	_expect(CardView.face_text(reckless_swing, false) == "Deal 10 damage. Ethereal.",
+		"a card that deals damage AND is Ethereal states both, not just the damage")
 
 
 ## Named holds (backlog #24) widened Boss.ledges from a bare int array to an

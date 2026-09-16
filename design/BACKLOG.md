@@ -2782,7 +2782,44 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-16 (the very latest) — #86 duty 3: removal pricing's own claim
+- **2026-09-16 (the very latest) — #86 duty 2: Retain/Innate/Ethereal silently
+  vanished from six real cards' live faces the moment they paired with any
+  other live-tracked effect.** Last commit (`7433840`) was duty 3, so this run
+  took duty 2. `card_view.gd`'s `face_text()` builds the live rules sentence
+  from `GameHost`'s `fx` dict, and once ANY line gets added to `out` the
+  function returns that composed sentence instead of falling back to the
+  card's own authored `text` — but `_card_fx()` (`game_host.gd`, shared by
+  `_slot_private()` and `_deck_face()`) never carried `retain`/`innate`/
+  `ethereal` at all, and `face_text()` had no branch for them either, even
+  though `_keywords_of()` right next to it has checked all three since they
+  shipped. Six real, reachable cards pair one of the three with a
+  live-tracked numeric effect: Bunker Down ("Gain 4 Block. Retain."), Steady
+  Flame ("Gain 5 Block. Gain 2 Light. Retain."), First Strike ("Deal 5
+  damage. Innate."), Reckless Swing ("Deal 10 damage. Ethereal."), Guarded
+  Instant ("Gain 10 Block. Ethereal."), Fading Insight ("Draw 2. Ethereal.")
+  — every one of them showed only its numeric line on the live face (in hand,
+  in the deck view, held or drawn) with the clause that actually changes what
+  happens to the card at end of turn silently dropped, exactly the shape this
+  same duty has now caught more than a dozen times for other fields
+  (light_cost, ally_heal, scry, dexterity, thorns, intangible/buffer/plated_
+  armour...) — a hand-copied field list drifting from `Card`'s real fields.
+  Fixed both halves: `_card_fx()` now carries all three, and `face_text()`
+  gained three one-line branches appending "Retain."/"Innate."/"Ethereal.",
+  reusing the same keyword ids `_keywords_of()` already defines so the
+  tap-to-inspect tooltip and the live sentence agree. Proved it fails without
+  the fix before landing it: stashed both edits, reran the suite, watched all
+  seven new assertions fail (fx dict missing the key, and the composed
+  sentence dropping the clause), then restored the fix and reran green. Added
+  three tests: an end-to-end wire test (`_make_session()`, Bunker Down into a
+  real hand, `_broadcast_state()`, asserts the client's own `fx` dict and
+  `face_text()` output), a `_deck_face()` sibling test (First Strike, the
+  second hand-copied dict), and a direct `face_text()` unit test covering all
+  three flags against hand-built preview dicts, the same shape the light_cost
+  duty-2 tests already use. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 3 (verify a
+  mechanic actually works).
+
+- **2026-09-16 — #86 duty 3: removal pricing's own claim
   ("rises each time it's used in a RUN", not just in a shop) had never been
   pinned down precisely or across a shop boundary.** Last commit (`ca97e30`)
   was duty 2, so this run took duty 3. `remove_price()` reads `removes_bought`

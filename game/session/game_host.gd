@@ -1034,6 +1034,16 @@ static func _card_fx(c: Card) -> Dictionary:
 		"intangible": c.intangible, "buffer": c.buffer, "plated_armour": c.plated_armour,
 		"topdeck": c.topdeck, "shuffle_in": c.shuffle_in, "tutor": c.tutor,
 		"hits_all_enemies": c.hits_all_enemies, "targets_hold": c.targets_hold,
+		# backlog #86 duty 2 — same "hand-copied field list drifts" gap this dict
+		# has been caught missing many times before (cheapen_amount, light_cost,
+		# ally_heal/scry, intangible/buffer/plated_armour...): retain/innate/
+		# ethereal are real, non-numeric effects a card can carry (Bunker Down:
+		# "Gain 4 Block. Retain."; First Strike: "Deal 5 damage. Innate.";
+		# Reckless Swing: "Deal 10 damage. Ethereal.") but were never in this
+		# dict at all, so face_text() (card_view.gd) had no live field to read
+		# for them even if it grew a branch. See that function's own fix for
+		# the other half of this bug.
+		"retain": c.retain, "innate": c.innate, "ethereal": c.ethereal,
 	}
 
 
