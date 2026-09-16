@@ -731,6 +731,7 @@ func _init() -> void:
 	_test_backlog59_scry_survives_mid_combat_save_and_load()
 	_test_backlog59_ally_sees_the_scry_reveal()
 	_test_backlog86_second_scry_before_resolve_does_not_lose_the_first_batch()
+	_test_backlog86_ending_the_turn_does_not_strand_an_unresolved_scry()
 	_test_backlog86_peek_top_reshuffles_discard_mid_call()
 	# Reaching into the draw pile (backlog #68): put a card on top, shuffle one
 	# in, pull a named one out — the draw pile's order stops being pure luck.
@@ -15222,6 +15223,49 @@ func _test_backlog86_second_scry_before_resolve_does_not_lose_the_first_batch() 
 		and (ps.draw_pile[2] as Card).id == "d" and (ps.draw_pile[1] as Card).id == "b"
 		and (ps.draw_pile[0] as Card).id == "a",
 		"the kept cards from both batches return to the top of the draw pile in reveal order")
+
+
+## backlog #86 duty 2: resolve_scry() is a COMMAND the client has to send —
+## nothing in end_turn(), or anywhere else in Combat, ever called it, and
+## `grep -rn "resolve_scry" game/views game/ui` finds no caller at all (only a
+## doc comment mentioning the id). A hunter who plays a scry card and simply
+## ends their turn without answering it (today, EVERY hunter, since there is
+## no view that can send resolve_scry yet) left those peeked cards in
+## `scry_pending` forever: not in hand, not in draw_pile, not in
+## discard_pile, not in exhaust_pile — gone from the fight's card economy for
+## good, every single time. Found via tools/robustness_sweep.gd (backlog
+## #46): a long random-policy fight (frog+lightbearer, ascension 8, seed
+## 31973) timed out at the 4000-phase-step guard because both hunters' every
+## attack card had, one by one, been peeked into an unresolved scry and never
+## seen again — leaving a hand of pure utility cards that could never damage
+## the boss, forever. The fix defaults an unresolved scry to "keep
+## everything" at end of turn, the same no-op resolve_scry(pi, []) already
+## gives an explicit call, matching the "no death without a fight"/"never
+## below MIN_DECK" idiom this project already uses everywhere else a choice
+## goes unmade — nobody answering the question a card asks should never mean
+## the game quietly deletes part of their deck.
+func _test_backlog86_ending_the_turn_does_not_strand_an_unresolved_scry() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var a := Card.from_dict({"id": "a", "name": "A", "type": "skill", "cost": 0})
+	var b := Card.from_dict({"id": "b", "name": "B", "type": "skill", "cost": 0})
+	ps.draw_pile = [a, b]
+	ps.hand = [Card.from_dict({"id": "peer_ahead", "name": "Peer Ahead", "type": "skill",
+		"cost": 1, "scry": 2})]
+	ps.energy = 3
+	combat.play_card(0, 0)   # scries both remaining cards; nobody ever resolves it
+	_expect(ps.scry_pending.size() == 2, "the scry is pending before the turn ends")
+
+	combat.end_turn(0)
+
+	_expect(ps.scry_pending.is_empty(),
+		"ending the turn auto-resolves a scry nobody answered, rather than leaving it open forever")
+	var total := ps.hand.size() + ps.draw_pile.size() + ps.discard_pile.size() + ps.exhaust_pile.size()
+	_expect(total == 3,
+		"neither peeked card is lost -- the played scry card and the two cards it revealed are all still somewhere in the fight's economy")
+	_expect(ps.draw_pile.size() == 2
+		and (ps.draw_pile[1] as Card).id == "b" and (ps.draw_pile[0] as Card).id == "a",
+		"an unresolved scry keeps every card in its original order rather than binning any of them")
 
 
 ## #86 duty 3: _peek_top()'s own doc comment claims it reshuffles the discard

@@ -1415,6 +1415,22 @@ func end_turn(pi: int) -> void:
 		else:
 			ps.discard_pile.append(c)
 	ps.hand = kept
+	# backlog #86 duty 2: resolve_scry() is a COMMAND the client has to send,
+	# and nothing anywhere in this codebase sends it yet -- a hunter who plays
+	# a scry card and just ends their turn (today, every hunter, since no view
+	# can call resolve_scry at all) left those peeked cards stuck in
+	# scry_pending forever: not in hand, not in draw_pile, not in
+	# discard_pile, not exhausted, gone from the fight's card economy for
+	# good. Confirmed as a real dead end, not a theoretical one, by
+	# tools/robustness_sweep.gd (backlog #46): a long random-policy fight
+	# timed out because every attack card either hunter drew had eventually
+	# been peeked away by a scry and never seen again. Defaults an unanswered
+	# scry to "keep everything" -- the same no-op resolve_scry(pi, []) already
+	# gives an explicit call -- rather than losing it, the same "no death
+	# without a fight"/"never below MIN_DECK" idiom this project already uses
+	# everywhere else a choice goes unmade.
+	if not ps.scry_pending.is_empty():
+		resolve_scry(pi, [])
 	_log("%s ends their turn." % ps.combatant.name)
 	if _all_ended():
 		_enemy_turn()

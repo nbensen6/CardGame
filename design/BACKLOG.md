@@ -2782,6 +2782,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-16 (the very latest) — #86 duty 2: an unresolved Scry stranded
+  cards outside the fight's card economy forever, a genuine long-fight
+  softlock.** Last commit (`dfddde2`) was duty 3, so this run took duty 2.
+  `resolve_scry()` is a COMMAND the client has to send, and nothing in the
+  view/UI layer (`game/views/*.gd`, `game/ui/*.gd`) ever sends it — only a
+  doc comment names it. So a hunter who plays a scry card (Peer Ahead, in
+  the Lightbearer's pool) and simply ends their turn leaves the peeked cards
+  sitting in `PlayerState.scry_pending` forever: not in hand, draw pile,
+  discard pile, or exhaust pile — invisible to the fight for good. Not a
+  theoretical gap: `tools/robustness_sweep.gd` (a headless smoke sweep, run
+  per rule 5 as a check, not for tuning) found a real dead end —
+  `frog+lightbearer A8 seed=31973 policy=random` timed out after ~3980
+  rounds because every attack card either hunter drew had eventually been
+  scried away and never returned, leaving a hand of pure utility that could
+  never damage the boss. Fix: `Combat.end_turn()` now calls the existing
+  no-op `resolve_scry(pi, [])` ("keep everything") when `scry_pending` is
+  still non-empty at turn end — the same "no death without a fight" idiom
+  already used elsewhere for an unanswered choice, reusing existing logic
+  rather than adding a special case. Regression test
+  `_test_backlog86_ending_the_turn_does_not_strand_an_unresolved_scry` plays
+  a scry card, ends the turn without ever calling `resolve_scry`, and
+  asserts `scry_pending` empties, no card is lost (hand+draw+discard+exhaust
+  count conserved), and the revealed cards land back on top of the draw
+  pile in original order; confirmed it fails against the unfixed code
+  first. Re-ran `robustness_sweep.gd` after the fix: 360 runs, 0 dead ends,
+  0 crashes (the original timeout is gone). Fresh `--import`, headless,
+  Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is
+  duty 3 (verify a mechanic actually works).
+
 - **2026-09-16 (the very latest) — #86 duty 3: proved the felled-beast
   placement geometry actually lays a toppled body's height onto its depth,
   not still onto its height.** Last commit (`ff5c7c9`) was duty 2, so this
