@@ -890,8 +890,9 @@ func _render_shop(s: Dictionary) -> void:
 	grid.size_flags_vertical = Control.SIZE_SHRINK_END
 	_row.add_child(grid)
 	var min_deck := int(shop.get("min_deck", 5))
+	var potion_slots := int(shop.get("potion_slots", 3))
 	for i in range(stock.size()):
-		grid.add_child(_stock_button(stock[i], i, gold, min_deck))
+		grid.add_child(_stock_button(stock[i], i, gold, min_deck, potion_slots))
 	_controls.add_child(_button("Your deck", open_deck))
 	_controls.add_child(_button("Move on →", func() -> void:
 		Sfx.play("end_turn")
@@ -912,11 +913,24 @@ func _render_shop(s: Dictionary) -> void:
 ## unsold — right up until the click, where Run.buy() silently refused it and
 ## the button came back looking exactly the same, with no explanation. The
 ## sibling gate for this same rule, campfire_can_thin() below, already got it
-## right; this one just never carried it. Defaults keep every non-"remove"
-## call (cards, relics, potions) behaving exactly as before.
+## right; this one just never carried it.
+##
+## `is_potion`/`held`/`potion_slots` are the SAME shape for the OTHER hidden
+## refusal in Run.buy() — "potion": `potions[slot].size() >= POTION_SLOTS`
+## (run.gd, the "potion" branch). The comment above this fix used to claim
+## "Defaults keep every non-'remove' call (cards, relics, potions) behaving
+## exactly as before" and stopped there: cards and relics really have no
+## such cap, but a hunter who already holds POTION_SLOTS potions (won from
+## felling beasts, before ever reaching this shop) saw an enabled, priced
+## "buy" button for a fourth — affordable and unsold — that Run.buy()
+## silently refused with no gold spent and no feedback, the exact bug the
+## "remove" fix above was written to close, just for the one sibling kind it
+## missed (#86 duty 2).
 static func shop_slot_disabled(sold: bool, gold: int, price: int,
-		is_remove: bool = false, deck_size: int = 0, min_deck: int = 0) -> bool:
-	return sold or gold < price or (is_remove and deck_size <= min_deck)
+		is_remove: bool = false, deck_size: int = 0, min_deck: int = 0,
+		is_potion: bool = false, held: int = 0, potion_slots: int = 0) -> bool:
+	return sold or gold < price or (is_remove and deck_size <= min_deck) \
+		or (is_potion and held >= potion_slots)
 
 
 ## Mirrors Run.campfire_action()'s own gate (run.gd:583) so the "Thin the
@@ -927,7 +941,7 @@ static func campfire_can_thin(deck_size: int, min_deck: int) -> bool:
 	return deck_size > min_deck
 
 
-func _stock_button(item: Dictionary, index: int, gold: int, min_deck: int) -> Button:
+func _stock_button(item: Dictionary, index: int, gold: int, min_deck: int, potion_slots: int = 3) -> Button:
 	var price := int(item["price"])
 	var sold := bool(item["sold"])
 	var owner := int(item.get("slot", -1))
@@ -935,13 +949,17 @@ func _stock_button(item: Dictionary, index: int, gold: int, min_deck: int) -> Bu
 	var is_remove := String(item.get("kind", "")) == "remove"
 	var deck_size := int(item.get("deck_size", 0))
 	var too_thin := is_remove and deck_size <= min_deck
+	var is_potion := String(item.get("kind", "")) == "potion"
+	var held := int(item.get("held", 0))
+	var too_full := is_potion and held >= potion_slots
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(258, 74)
 	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	b.text = "%s\n%s%s\n%s" % [
-		"SOLD" if sold else ("deck too small" if too_thin else "%d gold" % price),
+		"SOLD" if sold else ("deck too small" if too_thin else ("potions full" if too_full else "%d gold" % price)),
 		String(item.get("name", "?")), who, String(item.get("text", ""))]
-	b.disabled = shop_slot_disabled(sold, gold, price, is_remove, deck_size, min_deck)
+	b.disabled = shop_slot_disabled(sold, gold, price, is_remove, deck_size, min_deck,
+		is_potion, held, potion_slots)
 	if not b.disabled:
 		var idx := index
 		b.pressed.connect(func() -> void:

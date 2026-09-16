@@ -429,7 +429,8 @@ func _build_shared() -> Dictionary:
 	if _run.phase == Run.Phase.EVENT:
 		s["event"] = _run.event
 	if _run.phase == Run.Phase.SHOP:
-		s["shop"] = {"stock": _run.shop_stock, "min_deck": Run.MIN_DECK}
+		s["shop"] = {"stock": _run.shop_stock, "min_deck": Run.MIN_DECK,
+			"potion_slots": Run.POTION_SLOTS}
 	if _run.phase == Run.Phase.CAMPFIRE:
 		# backlog #86 duty 2: this used to forward the bare Run.REST_HEAL constant
 		# (9) — a "two copies of one truth" bug, since Run.campfire_action()'s own

@@ -1527,6 +1527,19 @@ func _init() -> void:
 	# deck floor), one of them frozen and the other live.
 	_test_backlog86_run_buy_card_resyncs_the_same_slots_stale_remove_deck_size()
 
+	# backlog #86 duty 2: shop_slot_disabled's own comment claimed cards,
+	# relics and potions were all unaffected by the "remove" fix above --
+	# true for cards and relics, false for potions, which have their OWN
+	# hidden cap in Run.buy()'s "potion" branch (run.gd, "potions[slot].size()
+	# >= POTION_SLOTS" refuses). A hunter who already held POTION_SLOTS
+	# potions before a shop was ever rolled saw an enabled, priced "buy"
+	# button the server would silently refuse. Same shape as the deck-floor
+	# fix: two copies of one truth (the potion cap), one of them missing.
+	_test_backlog86_shop_slot_disabled_is_false_for_a_potion_item_under_the_cap()
+	_test_backlog86_shop_slot_disabled_is_true_for_a_potion_item_at_the_cap()
+	_test_backlog86_shop_slot_disabled_ignores_the_potion_cap_for_a_non_potion_item()
+	_test_backlog86_run_begin_shop_stocks_potion_items_with_a_held_count_run_buy_agrees_with()
+
 	# backlog #86 duty 3: location_3d.campfire_can_thin is the campfire's own
 	# copy of Run.campfire_action()'s "remove" gate (run.gd:583, "deck.size()
 	# <= MIN_DECK" refuses) -- the "Thin the deck" button has to agree with the
@@ -19738,6 +19751,57 @@ func _test_backlog86_run_buy_card_resyncs_the_same_slots_stale_remove_deck_size(
 		"buying the card actually grew hunter 0's deck past the floor")
 	_expect(stocked_size == run.decks[0].size() and not view_says_disabled,
 		"a card bought for the same hunter in the same shop visit must un-stick the stale deck_size the remove item was stocked with, or the view refuses a removal the server would now accept")
+
+
+## backlog #86 duty 2 -- shop_slot_disabled's `is_potion`/`held`/`potion_slots`
+## params mirror the OTHER hidden refusal in Run.buy() (run.gd, the "potion"
+## branch: "potions[slot].size() >= POTION_SLOTS" refuses). The "remove" fix
+## above never carried this even though "potion" has the exact same shape --
+## a per-hunter cap the server enforces that the view never checked.
+func _test_backlog86_shop_slot_disabled_is_false_for_a_potion_item_under_the_cap() -> void:
+	_expect(not Location3D.shop_slot_disabled(false, 100, 10, false, 0, 5, true, 2, 3),
+		"a hunter holding 2 of 3 potion slots can still buy one more, gold and sold permitting")
+
+
+func _test_backlog86_shop_slot_disabled_is_true_for_a_potion_item_at_the_cap() -> void:
+	_expect(Location3D.shop_slot_disabled(false, 100, 10, false, 0, 5, true, 3, 3),
+		"a hunter already holding all 3 potion slots must be refused -- the boundary is '>=', matching Run.buy()'s own check, not '>' which would wrongly let a 4th potion through")
+
+
+func _test_backlog86_shop_slot_disabled_ignores_the_potion_cap_for_a_non_potion_item() -> void:
+	_expect(not Location3D.shop_slot_disabled(false, 100, 10, false, 0, 5, false, 3, 3),
+		"a card/relic/remove item has no potion inventory to cap-check -- is_potion=false must never disable on held/potion_slots alone")
+
+
+## Backlog #86 duty 2: Run._begin_shop() now stocks each "potion" item's
+## `held` count at roll time so the view can cap-check it without ever
+## seeing another hunter's private potions[]. Proves the two ends actually
+## agree: a hunter already sitting at POTION_SLOTS when the shop is rolled
+## gets a stocked item the view disables AND the server refuses -- the exact
+## bug this fix closes (previously: enabled, priced, silently refused on
+## click, no gold spent, no explanation).
+func _test_backlog86_run_begin_shop_stocks_potion_items_with_a_held_count_run_buy_agrees_with() -> void:
+	var run := _map_run()
+	run.gold = 5000
+	run.map_row = 0
+	run.node_type = "shop"
+	while run.potions[0].size() < Run.POTION_SLOTS:  # fill hunter 0's potion slots first
+		run.potions[0].append(Content.make_potion(String(Content.potion_pool()[0])))
+	run._begin_shop()
+	var pot_i := -1
+	for i in range(run.shop_stock.size()):
+		if String(run.shop_stock[i]["kind"]) == "potion" and int(run.shop_stock[i]["slot"]) == 0:
+			pot_i = i
+			break
+	_expect(pot_i >= 0, "a rolled shop stocks a potion item for hunter 0")
+	var item: Dictionary = run.shop_stock[pot_i]
+	var stocked_held := int(item.get("held", -1))
+	var view_says_disabled := Location3D.shop_slot_disabled(bool(item["sold"]), run.gold,
+		int(item["price"]), false, 0, Run.MIN_DECK, true, stocked_held, Run.POTION_SLOTS)
+	var server_refuses := not run.buy(pot_i)
+	_expect(stocked_held == run.potions[0].size() and stocked_held == Run.POTION_SLOTS
+		and view_says_disabled and server_refuses,
+		"a hunter already at the potion cap is disabled in the view and refused by the server -- neither one lies about the other")
 
 
 ## backlog #86 duty 3 -- location_3d.campfire_can_thin mirrors Run.

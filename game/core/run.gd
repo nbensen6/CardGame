@@ -487,9 +487,17 @@ func _begin_shop() -> void:
 		var pid := String(pots[_rng.randi_range(0, pots.size() - 1)])
 		pots.erase(pid)
 		var potion := Content.make_potion(pid)
+		# "held" snapshots this hunter's inventory at roll time so
+		# shop_slot_disabled() can cap-check it without ever seeing another
+		# hunter's private potions[] -- same reasoning as "remove"'s own
+		# "deck_size" a few lines up. Unlike "deck_size" it never needs a
+		# resync within one shop visit: this loop stocks at most one
+		# "potion" item per hunter, and buying it marks it sold, so no
+		# other still-buyable item for the same hunter can go stale (#86
+		# duty 2).
 		shop_stock.append({"kind": "potion", "slot": slot3, "id": pid,
 			"name": String(potion.get("name", pid)), "text": String(potion.get("text", "")),
-			"price": PRICE_POTION, "sold": false})
+			"price": PRICE_POTION, "sold": false, "held": potions[slot3].size()})
 	if int(_asc.get("no_shop_removal", 0)) <= 0:  # ascension #56: a locked market, not a pricier one
 		for slot2 in range(names.size()):
 			shop_stock.append({"kind": "remove", "slot": slot2, "id": "", "name": "Thin the deck",

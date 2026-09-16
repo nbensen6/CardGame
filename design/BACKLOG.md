@@ -2782,6 +2782,29 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-16 (yet later) — #86 duty 2: the shop's "potion" button never mirrored `Run.buy()`'s own inventory-full refusal.** Last commit (`9aa6a79`) was duty 3, so this run took duty 2. `shop_slot_disabled()`
+  (`views/location_3d.gd`) got a deck-floor gate for "remove" items in an
+  earlier duty-2 pass, and that fix's own comment claimed "Defaults keep
+  every non-'remove' call (cards, relics, potions) behaving exactly as
+  before" — true for cards and relics, false for potions: `Run.buy()`'s
+  "potion" branch has always refused once `potions[slot].size() >=
+  POTION_SLOTS` (3), a check the view never mirrored. A hunter who already
+  held 3 potions (won from felling beasts before ever reaching the shop) saw
+  an enabled, priced "buy" button for a 4th; clicking it spent no gold, sold
+  nothing, and gave no feedback — looked exactly like a working purchase
+  that silently did nothing, forever clickable. Fixed the same way the
+  "remove" gate was: `_begin_shop()` now stocks each "potion" item with a
+  `held` snapshot (needs no resync, unlike "remove"'s `deck_size` — at most
+  one potion item is ever stocked per hunter, and buying it marks it sold),
+  `game_host.gd` forwards `Run.POTION_SLOTS` to the client, and
+  `shop_slot_disabled()`/`_stock_button()` gained `is_potion`/`held`/
+  `potion_slots` params so a full inventory now reads "potions full" and
+  disables before the click. Four new tests: the three-scalar boundary
+  cases on `shop_slot_disabled` itself, plus one that fills a hunter's
+  potion slots, rolls a real shop, and checks the stocked `held` count
+  agrees with both the view's disabled state and `Run.buy()`'s own refusal.
+  Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS
+  PASSED.
 - **2026-09-16 (even later still) — #86 duty 3: proved `RunMap._ensure_key_sources()`, the backlog #64 guarantee that every generated map contains at least one elite, one treasure and one event node so the true ending is never quietly closed off by unlucky dice.** Last commit (`729ebc4`) was duty 2, so this run took duty 3. The only existing coverage,
   `_test_backlog64_map_guarantees_all_three_key_source_types_exist`, sweeps
   seeds 1-24 through a full map generation and checks the outcome — real, but
