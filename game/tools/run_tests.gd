@@ -213,6 +213,8 @@ func _init() -> void:
 	_test_shop_prices_scale_with_card_rarity()
 	_test_shop_guarantees_a_rare_card_slot()
 	_test_content_pools_are_copies()
+	_test_reward_pool_prefers_a_real_characters_own_pool_over_the_shared_fallback()
+	_test_shop_stock_for_a_real_character_is_scoped_to_their_own_pool()
 	_test_status_cards_never_offered_as_a_reward()
 	# backlog #72: rewards that know what you are building
 	_test_backlog72_archetype_tags_are_derived_from_fields()
@@ -5521,6 +5523,86 @@ func _test_content_pools_are_copies() -> void:
 		and Content.beast_pool("fight").size() > 0
 		and Content.reward_pool("frog").size() > 0,
 		"content pools hand out copies — callers can filter without draining the game")
+
+
+## Backlog #86 duty 3: Content.reward_pool()'s own comment promises "a
+## character draws from THEIR pool ... the shared pool is the fallback", but
+## every shop/reward test up to now (_test_shop_guarantees_a_rare_card_slot
+## included, by its own comment) builds its Run through _map_run(), which
+## passes empty passive dicts — so _character_of() always returns "" and
+## every one of those tests exercises the FALLBACK branch, never the
+## real-character branch every actual game uses (run.gd's _character_of()
+## reads player_passives[slot]["character"], set by a real character select
+## to a real id, never blank). Nothing has ever proven the priority the
+## comment describes actually holds for a real id. It does — this pins it —
+## and pins the corollary the priority implies: a card that sits ONLY in
+## cards.json's shared pool and in no character's own pool (there are some;
+## see the "Global vs per-class reward pools" Needs-Nick entry) never reaches
+## a real hunter's shop or reward roll at all.
+func _test_reward_pool_prefers_a_real_characters_own_pool_over_the_shared_fallback() -> void:
+	var chars_json: Dictionary = Content._read_json(Content.CHARACTERS_PATH).get("characters", {})
+	var frog_own: Array = (chars_json.get("frog", {}) as Dictionary).get("reward_pool", [])
+	var shared: Array = Content._read_json(Content.CARDS_PATH).get("reward_pool", [])
+	var frog_pool: Array = Content.reward_pool("frog")
+	var fallback_pool: Array = Content.reward_pool("")
+	var matches_own := frog_pool.size() == frog_own.size()
+	for id in frog_own:
+		if not frog_pool.has(String(id)):
+			matches_own = false
+	var differs_from_fallback := frog_pool.size() != fallback_pool.size()
+	if not differs_from_fallback:
+		for id in frog_pool:
+			if not fallback_pool.has(String(id)):
+				differs_from_fallback = true
+				break
+	var shared_only: Array = []
+	for id in shared:
+		if not frog_own.has(String(id)):
+			shared_only.append(String(id))
+	var leaks_a_shared_only_card := false
+	for id in shared_only:
+		if frog_pool.has(id):
+			leaks_a_shared_only_card = true
+			break
+	_expect(matches_own and differs_from_fallback and not shared_only.is_empty()
+			and not leaks_a_shared_only_card,
+		"a real character's reward pool is their own pool, not the shared fallback, so a card living only in the shared pool never reaches them")
+
+
+## Backlog #86 duty 3: the same priority rule, proven through the actual Run
+## flow a real game uses (_begin_shop() -> _character_of(slot) ->
+## Content.reward_pool()) instead of calling reward_pool() directly, so a
+## regression in how a real character id gets threaded from player_passives
+## into the shop roll would be caught here even if reward_pool() itself stays
+## correct in isolation.
+func _test_shop_stock_for_a_real_character_is_scoped_to_their_own_pool() -> void:
+	var decks := [_deck_of(_slash, 10), _deck_of(_slash, 10)]
+	var passives := [Content.character_passive("frog"), Content.character_passive("vine_weaver")]
+	var run := Run.new(decks, ["A", "B"], 4242, passives)
+	run.start()
+	run.map_row = 0
+	run.node_type = "shop"
+	run._begin_shop()
+	var frog_pool: Array = Content.reward_pool("frog")
+	var vine_pool: Array = Content.reward_pool("vine_weaver")
+	var slot0_ok := true
+	var slot1_ok := true
+	var saw_slot0_card := false
+	var saw_slot1_card := false
+	for item in run.shop_stock:
+		if String(item["kind"]) != "card":
+			continue
+		var id := String(item["id"])
+		if int(item["slot"]) == 0:
+			saw_slot0_card = true
+			if not frog_pool.has(id):
+				slot0_ok = false
+		elif int(item["slot"]) == 1:
+			saw_slot1_card = true
+			if not vine_pool.has(id):
+				slot1_ok = false
+	_expect(saw_slot0_card and saw_slot1_card and slot0_ok and slot1_ok,
+		"a real character's shop stock is drawn from their own reward pool end to end, not the shared fallback")
 
 
 ## Backlog #27: status cards are INFLICTED (an event's curse_card), never

@@ -2735,6 +2735,36 @@ rather than inventing work.
   `design/mobile-setup.md`; the decision is his.
 - **Global vs per-class reward pools.** 23 class cards also sit in the global
   pool. Which is authoritative is a design call, not a cleanup.
+  **2026-09-16 addendum (#86 duty 3):** the reverse gap is worse than
+  "which wins" — it's "some never appear at all." `Content.reward_pool(id)`
+  only reads `cards.json`'s global list when a character's OWN pool is
+  empty (`content.gd:101-108`); every one of the 5 characters has a large
+  own pool, so in every real game (`run.gd`'s `_character_of()` always
+  returns a real id once a character is picked) the global list is dead
+  code. 10 authored cards — `bunker_down`, `crippling_blow`, `depot`,
+  `first_strike`, `harpoon`, `recon`, `route_finder`, `spinebrace`,
+  `trailmasters_cut`, `waymark` — sit ONLY in the global list and in no
+  character's own pool, starter deck, or any card's create/topdeck/
+  shuffle_in/tutor field, so no real hunter can ever draft, buy, or be
+  event-rewarded one. This contradicts `card.gd:431-438`'s own comment,
+  which calls `waymark`/`depot`/`recon` "three real, shipped cards" that
+  "rolled through `reward_pool()`" for a duty-2 archetype-tag fix — they
+  don't, for any real character. It's also invisible to
+  `_test_backlog86_every_card_is_reachable_from_somewhere`
+  (`run_tests.gd:8242`): that test calls `Content.reward_pool()` with NO
+  character id (line 8246) to represent "the global pool is reachable",
+  which is exactly the same dead fallback path, so it marks all 10 as
+  reachable when no real character can ever reach them. Confirmed by two
+  new regression tests this run
+  (`_test_reward_pool_prefers_a_real_characters_own_pool_over_the_shared_fallback`,
+  `_test_shop_stock_for_a_real_character_is_scoped_to_their_own_pool`),
+  which prove the priority rule holds and is what leaves these 10
+  stranded. Not fixed here: whether these 10 should be folded into
+  specific characters' own pools (which ones fit which archetype) or the
+  global list should merge into every character's pool as true
+  "neutrals" is exactly the authoritative-pools design call this bullet
+  already names, just now with the concrete list and the exact blind spot
+  in the test that hides it.
 - **Is it fun.** No amount of unsupervised work answers this. It needs him, and
   then a stranger.
 - **`Boss.hold_exposed_to()` (#24's named-hold `exposed_to` field) has no
@@ -17413,3 +17443,52 @@ Newest first. One line per finished item: what, and anything surprising.
   `run_tests.gd`: ALL TESTS PASSED (confirmed the new test fails against the
   unfixed branch and passes with the fix). Next `#86` turn is duty 3 (verify
   a mechanic actually works).
+
+- **2026-09-16 (later) — #86 duty 3: proved a real character's shop/reward
+  pool actually comes from their own pool, not the documented-but-untested
+  shared fallback — and found that every existing test exercising that path
+  (including one named "every card is reachable") secretly tests the dead
+  branch instead.** Last commit (`89efc8f`) was duty 2, so this run took
+  duty 3. `Content.reward_pool()`'s own comment (`content.gd:96-100`)
+  promises a real character draws from THEIR pool, falling back to
+  `cards.json`'s shared list only when their own is empty — but every
+  shop/reward test up to now builds its `Run` through `_map_run()`, which
+  passes empty passive dicts, so `_character_of()` always returns `""` and
+  every one of those tests exercises the fallback branch, never the
+  real-character branch every actual game uses. Wrote two tests to close
+  that: `_test_reward_pool_prefers_a_real_characters_own_pool_over_the_shared_fallback`
+  (direct against `Content.reward_pool()`) and
+  `_test_shop_stock_for_a_real_character_is_scoped_to_their_own_pool`
+  (through the real `Run` flow — `_begin_shop()` → `_character_of(slot)` →
+  `reward_pool()` — so a regression in threading the id through would be
+  caught even if `reward_pool()` stays correct in isolation). Confirmed
+  both catch a real regression: temporarily made `reward_pool()` always
+  read the shared list and reran — both new tests failed alongside three
+  pre-existing ones (`each hunter drafts from their own archetype pool,
+  plus neutrals`, the Vine-Weaver/Frog rare-count tests, and
+  `_test_backlog86_every_card_is_reachable_from_somewhere`), then restored
+  the original file and confirmed all pass again. That last failure is the
+  real find: `_test_backlog86_every_card_is_reachable_from_somewhere`
+  (`run_tests.gd:8242`) calls `Content.reward_pool()` with no character id
+  to represent "the global pool is reachable" — the exact same dead
+  fallback path my new tests just proved a real character never hits. It
+  currently PASSES on the unmodified game, which means it's a false
+  positive: 10 authored cards (`bunker_down`, `crippling_blow`, `depot`,
+  `first_strike`, `harpoon`, `recon`, `route_finder`, `spinebrace`,
+  `trailmasters_cut`, `waymark`) sit only in that shared list and in no
+  character's own pool, starter deck, or any card's create/topdeck/
+  shuffle_in/tutor field — unreachable by any real hunter in any real
+  game — and the existing "reachable" test can't see it because it checks
+  the same dead branch instead of a real character id. Did not touch that
+  test or the pool data: correcting the test's check would make it fail
+  honestly against these 10 cards, and fixing that failure means deciding
+  which character(s) should own them (or whether the shared list should
+  merge into every character's pool as true neutrals instead of only
+  covering an empty one) — a content/archetype-fit call, not a bug with
+  one obvious fix, and the same authoritative-pools question the "Needs
+  Nick" section already parks under "Global vs per-class reward pools".
+  Added a dated addendum there with the concrete list and the exact
+  blind-spot line rather than fixing it blind. No screen needed — both new
+  tests and the whole reachability question are pure `/core` logic. Fresh
+  `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS
+  PASSED. Next `#86` turn is duty 2 (find an error and resolve it).
