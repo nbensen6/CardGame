@@ -378,6 +378,7 @@ func _init() -> void:
 	_test_regen_heals_titan()
 	_test_relic_energy_bonus()
 	_test_relic_attack_bonus()
+	_test_relic_attack_bonus_floors_damage_at_zero_not_negative()
 	_test_relic_round_block()
 	_test_relic_round_block_respects_dexterity_and_frail()
 	_test_relic_downside()
@@ -8375,6 +8376,27 @@ func _test_relic_attack_bonus() -> void:
 	var before := combat.boss.hp
 	combat.play_card(0, _first_playable(combat, 0))  # Slash 6 + 3
 	_expect(combat.boss.hp == before - 9, "attack_bonus relic adds damage to attacks")
+
+
+## backlog #86 duty 3 (verify a mechanic actually works): energy_bonus and
+## round_block each have their own proven "floored at zero, never negative"
+## site (_test_relic_downside: starved energy, battered block) but
+## attack_bonus is a third, structurally separate clamp
+## (`maxi(dmg, 0)` in Combat.preview(), combat.gd) that has only ever been
+## exercised positive (+3, above) or at 0 (every other combat helper). A real
+## shipped relic, bottomless_quiver (data/relics.json), reads "-3 damage" —
+## small next to Slash's 6, so even that never reaches the floor. Prove the
+## floor itself: a downside heavy enough to send raw damage negative reports
+## 0, not a negative number, both in preview()'s own dict and in what a real
+## play actually lands on the boss.
+func _test_relic_attack_bonus_floors_damage_at_zero_not_negative() -> void:
+	var combat := _relic_combat(0, -20, 0)
+	var ci := _first_playable(combat, 0)
+	var pv := combat.preview(0, combat.players[0].hand[ci])
+	var before := combat.boss.hp
+	combat.play_card(0, ci)  # Slash 6 - 20 would be -14 unfloored
+	_expect(int(pv["damage"]) == 0 and combat.boss.hp == before,
+		"a big enough attack_bonus downside floors card damage at zero, same as the energy/block siblings, instead of going negative")
 
 
 func _test_relic_round_block() -> void:

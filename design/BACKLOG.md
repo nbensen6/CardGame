@@ -2782,7 +2782,43 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-16 (the very latest) — #86 duty 2: `Card.archetype_tags()` had no
+- **2026-09-16 (the very latest) — #86 duty 3: `attack_bonus`'s zero-floor
+  had only ever been proven for its energy/block siblings, never for
+  itself.** Last commit (`6e1e36d`) was duty 2, so this run took duty 3.
+  `Combat._init` threads three flat relic-derived modifiers through combat
+  — `_energy_bonus`, `_attack_bonus`, `_round_block` — and each has its own
+  independent "floored at zero, never negative" clamp site: energy at
+  `combat.gd`'s `ps.energy = maxi(0, BASE_ENERGY + _energy_bonus)`, block via
+  `Combatant.block_after_modifiers`, and damage via `"damage": maxi(dmg, 0)`
+  in `preview()` (`combat.gd:657`). `_test_relic_downside` already proves the
+  floor for the energy and block siblings (`_relic_combat(-5, 0, 0)`,
+  `_relic_combat(0, 0, -20)`), and `_test_relic_attack_bonus` exercises
+  `attack_bonus` — but only at `+3`, matching the one relic that reads a
+  bonus (Warlord's Girdle territory); the one real relic with a damage
+  DOWNSIDE, `bottomless_quiver` ("-3 damage"), is small next to Slash's 6 and
+  never reaches the floor either. Nothing in `run_tests.gd` had ever sent
+  `attack_bonus` negative enough to drive `dmg` below zero — a plausible gap
+  given the floor is a structurally separate clamp from its two siblings
+  (different variable, different call site), so a refactor that touched only
+  one of the three could silently leave this one unfloored. `play_card()`
+  gates on `base_damage > 0` before calling `_damage_boss`/`_damage_add`
+  (`combat.gd:947`), so an unfloored negative wouldn't currently crash or
+  subtract HP — but a future card type that used damage differently (e.g.
+  something that reads `preview()`'s dict without that gate) would have
+  nothing catching a negative number. Added
+  `_test_relic_attack_bonus_floors_damage_at_zero_not_negative`: `_relic_combat(0,
+  -20, 0)` (unfloored, Slash's 6 - 20 = -14), asserts both `preview()`'s own
+  `"damage"` key reads 0 and a real `play_card()` leaves the boss's HP
+  untouched. Verified it actually catches the claimed regression by
+  temporarily changing `combat.gd:657` from `maxi(dmg, 0)` to bare `dmg`,
+  confirmed only the new test failed (1 TEST(S) FAILED, that one by name),
+  then reverted and confirmed `git diff` on `combat.gd` was clean before
+  committing. No bug found — the floor already holds — this closes a
+  coverage gap the same shape as last run's draw-relic recurrence check.
+  Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS
+  PASSED. Next `#86` turn is duty 2 (find an error and resolve it).
+
+- **2026-09-16 (newest) — #86 duty 2: `Card.archetype_tags()` had no
   branch at all for the "reach" mechanic, so three real cards never leaned
   their own reward draft.** Last commit (`8729d3f`) was duty 3, so this run
   took duty 2. `GameHost._keywords_of()` (`game_host.gd`) already groups
