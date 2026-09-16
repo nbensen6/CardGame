@@ -841,7 +841,13 @@ func sync() -> void:
 		_queued_reward = "relic" if node_type in ["elite", "boss"] else ""
 		_begin_reward("card")
 	else:
-		stats["died_to"] = combat.boss.name
+		# backlog #86 duty 2: an add's own attack (e.g. Root Lurker's Root Tendril)
+		# can be the hit that actually brings a hunter to 0 hp; combat.gd's
+		# _boss_hits() already tracks the real attacker for Thorns, so prefer
+		# that name over always blaming the main boss. Falls back to the boss's
+		# name for a death that never routes through _boss_hits() (a fall, a
+		# limiter's own chip).
+		stats["died_to"] = combat.last_attacker_name if combat.last_attacker_name != "" else combat.boss.name
 		# `hp` is a second copy of combat.players[i].combatant.hp (the "carry
 		# damage between encounters" bookkeeping _bank_hp() does on a WIN) --
 		# the WIN branch above keeps it in sync but this one never did, so a

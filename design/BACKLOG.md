@@ -2782,6 +2782,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-16 (the very latest) — #86 duty 2: a hunter killed by an add's own
+  attack had the kill misattributed to the main boss in the run's permanent
+  history.** Last commit (`cd7d7b4`) was duty 3, so this run took duty 2.
+  `Run.sync()`'s LOSE branch unconditionally wrote `stats["died_to"] =
+  combat.boss.name` — but `combat.gd`'s `_boss_hits(ps, dmg, attacker)`
+  already knows the real attacker when an add lands the hit (it uses the same
+  param to aim Thorns at the add rather than the boss), so `sync()` was
+  re-deriving "who killed you" on its own and getting it wrong exactly the
+  same "two copies of one truth" way this duty keeps finding. Concretely:
+  fight `root_lurker`, whose Root Tendril add always attacks the same hunter
+  the main boss is telegraphing against (`boss_target_index()`); if the
+  boss's own move that round doesn't kill but Root Tendril's attack does, the
+  run's saved history says "Root Lurker" felled you when the log itself says
+  Root Tendril did. Fix: added `Combat.last_attacker_name`, set in
+  `_boss_hits()` only when that specific hit is the one that brings a hunter
+  from alive to dead, and had `Run.sync()` prefer it over `combat.boss.name`
+  (falling back to the boss for deaths that don't route through
+  `_boss_hits()` at all — a fall, a limiter's own chip — since those have no
+  single "attacker" to name and weren't part of this bug). Wrote the
+  regression test first
+  (`_test_backlog86_died_to_names_the_add_that_actually_landed_the_kill`,
+  using a 0-damage dummy boss to isolate the add's hit), watched it fail with
+  "Dummy" instead of "Root Tendril" against the unfixed code, then fixed it.
+  Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS
+  PASSED. Next `#86` turn is duty 3 (verify a mechanic actually works).
+
 - **2026-09-16 (the very latest) — #86 duty 3: proved meld's `pull_ally` takes
   the better reach, not the sum, and that nothing was actually checking that.**
   Last commit (`0aa2455`) was duty 2, so this run took duty 3. `Combat.

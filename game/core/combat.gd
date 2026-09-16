@@ -99,6 +99,14 @@ var damage_dealt_total: int = 0
 var cards_played_total: int = 0
 var highest_climb: int = 0
 
+# backlog #86 duty 2: which Combatant actually landed the killing hit, so
+# Run.sync()'s "died_to" can name an add (e.g. Root Tendril) rather than
+# always blaming the main boss standing next to it. Only set by _boss_hits()
+# when that specific hit is what brings a hunter to 0 hp; a death from fall
+# damage or a limiter's own chip (neither routes through _boss_hits) leaves
+# this at "" and Run.sync() falls back to combat.boss.name for those.
+var last_attacker_name: String = ""
+
 var _rng := RandomNumberGenerator.new()
 var _forced_target: int = -1  # a "taunt" this round overrides the boss's target
 
@@ -1605,8 +1613,11 @@ func boss_context() -> Dictionary:
 ## direction used to, before those two were fixed.
 func _boss_hits(ps: PlayerState, dmg: int, attacker: Combatant = null) -> void:
 	var atk: Combatant = attacker if attacker != null else boss
+	var was_dead := ps.combatant.is_dead()
 	var dealt := ps.combatant.predicted_damage(dmg)
 	ps.combatant.take_damage(dmg)
+	if not was_dead and ps.combatant.is_dead():
+		last_attacker_name = atk.name  # backlog #86 duty 2: name the real killer, not always the main boss
 	_fire(MOMENT_DAMAGE_TAKEN, {"target": ps, "amount": dealt, "from_boss": true})
 	if ps.combatant.thorns > 0:
 		atk.take_damage(ps.combatant.thorns)

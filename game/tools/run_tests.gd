@@ -573,6 +573,7 @@ func _init() -> void:
 	_test_killing_an_add_does_not_end_the_fight()
 	_test_add_acts_on_its_own_turn()
 	_test_add_attack_adds_its_own_strength()
+	_test_backlog86_died_to_names_the_add_that_actually_landed_the_kill()
 	_test_add_block_reseeds_each_round_like_the_bosss_own()
 	_test_add_thorns_bites_the_attacking_add_not_the_boss()
 	_test_backlog86_an_adds_conditional_move_reacts_to_the_real_board()
@@ -5045,6 +5046,34 @@ func _test_add_attack_adds_its_own_strength() -> void:
 	combat.end_turn(1)
 	_expect(combat.players[0].combatant.hp == hp_before - 9,
 		"an add's attack adds its own Strength to the move's flat value, same as the main boss's attack branches do")
+
+
+## backlog #86 duty 2: Run.sync()'s LOSE branch always wrote `stats["died_to"]
+## = combat.boss.name`, even when an add's own attack (_adds_turn(), not the
+## main boss's) was the hit that actually brought a hunter to 0 hp -- exactly
+## the "two copies of one truth" shape this duty keeps finding: _boss_hits()
+## already knows the real attacker (it uses the same param to aim Thorns
+## correctly), but sync() re-derived "who killed you" on its own and just
+## assumed it was always the boss. A 0-damage dummy boss isolates the add's
+## hit; the main boss's own "attack" move still calls _boss_hits() every round
+## (for 0 damage), so this also proves that harmless call doesn't clobber
+## last_attacker_name once it's set.
+func _test_backlog86_died_to_names_the_add_that_actually_landed_the_kill() -> void:
+	var run := _map_run()
+	_step_into_combat(run)
+	var boss := _dummy_boss(300, 0)  # 0-damage boss isolates the add's own hit
+	run.combat = _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Root Tendril", 30)
+	add.moves = [{"type": "attack", "value": 5}]
+	run.combat.adds.append(add)
+	run.combat.players[0].combatant.hp = 5  # exactly what the add's hit deals; the boss's own hit is 0
+	run.combat.end_turn(0)
+	run.combat.end_turn(1)
+	_expect(run.combat.is_over() and run.combat.result() == Combat.Result.LOSE,
+		"sanity: the add's attack alone should be lethal here")
+	run.sync()
+	_expect(run.phase == Run.Phase.LOST and String(run.stats["died_to"]) == "Root Tendril",
+		"the add that actually landed the killing hit should be named, not the main boss standing next to it")
 
 
 ## Backlog #56: the ladder up to tier 8 only ever bumps a number. Tiers 9 and
