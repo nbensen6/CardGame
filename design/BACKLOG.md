@@ -2782,7 +2782,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-16 (the very latest) — #86 duty 2: campfire sharpen silently did
+- **2026-09-16 (the very latest) — #86 duty 3: removal pricing's own claim
+  ("rises each time it's used in a RUN", not just in a shop) had never been
+  pinned down precisely or across a shop boundary.** Last commit (`ca97e30`)
+  was duty 2, so this run took duty 3. `remove_price()` reads `removes_bought`
+  — a `Run`-level field `_begin_shop()` never resets — so a fresh shop's own
+  stocked "remove" price is supposed to already reflect every removal bought
+  in an *earlier* shop, not restart at `PRICE_REMOVE`. The only existing
+  coverage (`_test_gold_and_shop`) only asserted `remove_price() >
+  first_price` after one purchase in one shop — a weak inequality that would
+  pass even if the step were 1 gold, and never left that shop to check
+  whether the raise survives into a second visit. Nothing checked
+  `removes_bought` across a save/load round trip either. Added
+  `_test_backlog86_remove_price_escalates_exactly_and_persists_across_shops_and_saves`:
+  buys one removal, asserts the price rose by exactly 25; calls
+  `_begin_shop()` again (a second, later shop node) and asserts its own
+  freshly-stocked "remove" item is already priced at the escalated rate;
+  saves and reloads the run and asserts `removes_bought` survived intact.
+  Verified the test actually catches the claimed regression by temporarily
+  adding `removes_bought = 0` to the top of `_begin_shop()` (simulating a
+  "resets every shop visit" bug) — confirmed exactly the new test failed (1
+  TEST(S) FAILED, that one by name) and nothing else, then reverted and
+  confirmed `git diff` on `run.gd` was clean before committing. No bug
+  found — the mechanic already works as documented — this closes a coverage
+  gap the same shape as the last two duty-3 runs. Fresh `--import`, headless,
+  Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is
+  duty 2 (find an error and resolve it).
+
+- **2026-09-16 — #86 duty 2: campfire sharpen silently did
   nothing to four real, reachable cards.** Last commit (`522c2ae`) was duty 3,
   so this run took duty 2. `Card.upgraded_copy()`'s generic contract is "bump
   whatever numbers the card actually uses; if it has none, make it cheaper"

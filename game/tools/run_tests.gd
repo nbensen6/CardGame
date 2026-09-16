@@ -205,6 +205,7 @@ func _init() -> void:
 	_test_backlog86_coach_teaches_event_shop_campfire_and_reward_hints()
 	_test_gold_and_shop()
 	_test_shop_removal_charges_the_price_it_showed()
+	_test_backlog86_remove_price_escalates_exactly_and_persists_across_shops_and_saves()
 	_test_shop_buys_a_relic()
 	_test_shop_cannot_thin_below_min_deck()
 	_test_status_card_removable_at_shop()
@@ -5300,6 +5301,58 @@ func _test_shop_removal_charges_the_price_it_showed() -> void:
 	var bought := run.buy(rem_i, 0)
 	_expect(bought and run.gold == purse_before - shown_price,
 		"a deck-thin purchase charges exactly the price it showed, not the next tier up")
+
+
+## Backlog #86 duty 3: `remove_price()`'s own doc comment ("Removal gets
+## pricier each time — you can't just delete your whole deck") and the
+## constant's own comment ("rises each time it's used in a RUN", run.gd:34)
+## both claim the escalation is run-wide. `removes_bought` lives on Run, not
+## on the shop_stock snapshot, and _begin_shop() never resets it — so a
+## FRESH shop's own stocked "remove" price should already reflect every
+## removal bought in an EARLIER shop, not just the one it was bought in.
+## Nothing before this proved the exact +25 step (the existing
+## _test_gold_and_shop only checks a weak "priced higher than before"
+## inequality) or that the raise survives into a later shop's own fresh
+## stock roll rather than only being re-read from the very item just bought
+## — and nothing proved removes_bought survives a save/load round trip.
+func _test_backlog86_remove_price_escalates_exactly_and_persists_across_shops_and_saves() -> void:
+	var run := _map_run()
+	run.gold = 1000
+	run.map_row = 0
+	run.node_type = "shop"
+	run._begin_shop()
+	var base_price: int = run.remove_price()
+	var rem_i := -1
+	for i in range(run.shop_stock.size()):
+		if String(run.shop_stock[i]["kind"]) == "remove":
+			rem_i = i
+			break
+	run.buy(rem_i, 0)
+	var exact_step: bool = run.remove_price() == base_price + 25
+	run.leave_shop()
+	# A second, later shop node — a fresh stock roll, since _begin_shop()
+	# rebuilds shop_stock from scratch every visit — must already price its
+	# own "remove" slot at the escalated rate rather than restart at
+	# PRICE_REMOVE, since the raise lives on removes_bought (Run-level),
+	# never reset between shops.
+	run.map_row = 1
+	run.node_type = "shop"
+	run._begin_shop()
+	var rem_i2 := -1
+	for i in range(run.shop_stock.size()):
+		if String(run.shop_stock[i]["kind"]) == "remove":
+			rem_i2 = i
+			break
+	var second_shop_price: int = int(run.shop_stock[rem_i2]["price"])
+	var persisted_across_shops: bool = second_shop_price == base_price + 25
+	# The field itself must survive a save/load round trip, not just the
+	# in-memory Run this test has run against so far.
+	RunSave.clear()
+	RunSave.save(run)
+	var back := RunSave.load_run()
+	var survived_save: bool = back.removes_bought == run.removes_bought and back.removes_bought == 1
+	_expect(exact_step and persisted_across_shops and survived_save,
+		"removal price rises by exactly 25 per purchase, the raise survives into a later shop's fresh stock roll (not just the shop it was bought in), and removes_bought survives a save/load round trip")
 
 
 ## Backlog #19: the card/removal paths above were covered, but a relic
