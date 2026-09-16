@@ -1409,6 +1409,7 @@ func _init() -> void:
 	_test_backlog86_dev_console_rares_partitions_every_rare_by_real_art()
 	_test_backlog86_dev_console_on_off_parses_explicit_and_toggles_with_no_arg()
 	_test_backlog86_dev_console_turn_clamps_to_documented_range_and_off_resets()
+	_test_backlog86_dev_console_treatment_actually_cycles_the_card_treatment()
 	_test_backlog86_dev_console_make_splits_on_commas_and_spaces_and_drops_unknown_ids()
 	_test_backlog86_dev_console_combat_commands_refuse_without_a_host()
 	# backlog #86 duty 3: the refusal path above is the only path this suite had
@@ -19127,6 +19128,36 @@ func _test_backlog86_dev_console_turn_clamps_to_documented_range_and_off_resets(
 	_expect(c.run("turn off").contains("pointer") and is_equal_approx(CardView.force_turn, 2.0), "turn off hands control back to the pointer with 2.0, deliberately outside the clamped range")
 	CardView.force_turn = save_turn
 	c.free()
+
+
+## `treatment` is the one command in help's own listing (line above) that
+## nothing had ever driven -- `_cmd_treatment` is a one-line wrapper
+## ("cards: " + Dev.cycle()), and Dev.cycle() itself is thoroughly proven
+## above, but that only shows the underlying cycle works, never that the
+## console command actually reaches it rather than e.g. returning a fixed
+## string or silently no-op'ing. Same save/restore idiom as the Dev.cycle()
+## tests above, since this really does call through to the same static flags.
+func _test_backlog86_dev_console_treatment_actually_cycles_the_card_treatment() -> void:
+	var save_b: bool = CardView.force_borderless
+	var save_f: bool = CardView.force_foil
+	var save_on: bool = Dev.on
+	CardView.force_borderless = false
+	CardView.force_foil = false
+	Dev.on = false
+	var c := DevConsole.new()
+	_expect(c.run("treatment") == "cards: borderless",
+		"treatment echoes Dev.cycle()'s own return value, prefixed 'cards: '")
+	_expect(CardView.force_borderless and not CardView.force_foil,
+		"treatment's first cycle actually flips CardView's borderless flag, not just the reported text")
+	_expect(Dev.on, "treatment turns the dev-forced flag on the same way cycling it directly does")
+	_expect(c.run("treatment") == "cards: borderless foil",
+		"a second call advances the cycle again rather than repeating the first result, proving the command is live rather than a fixed string")
+	_expect(CardView.force_borderless and CardView.force_foil,
+		"the second cycle sets both flags, matching 'borderless foil'")
+	c.free()
+	CardView.force_borderless = save_b
+	CardView.force_foil = save_f
+	Dev.on = save_on
 
 
 ## _make() is the parser behind hand/deal/own: commas or spaces, either way,

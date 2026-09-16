@@ -2782,6 +2782,20 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-16 (later still) — #86 duty 3: proved `console.gd`'s `treatment`
+  command actually reaches `Dev.cycle()`, the last of the thirteen console
+  commands with zero coverage.** Last commit (`4303b64`) was duty 2, so this
+  run took duty 3. `help`'s own command list, `_cmd_deck`/`_cmd_card`/`_cmd_
+  clear` and every other sibling command already had dedicated tests from
+  earlier passes; grepping for `run("treatment")` across `run_tests.gd`
+  turned up nothing, even though `Dev.cycle()` itself (the function
+  `_cmd_treatment` delegates to) is thoroughly tested elsewhere — so the gap
+  was specifically "does the console command reach it," not "does cycling
+  work." Added one test that calls `DevConsole.run("treatment")` twice and
+  checks both the returned string and that `CardView.force_borderless`/
+  `force_foil`/`Dev.on` actually change, proving it is live rather than a
+  fixed string. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED.
 - **2026-09-16 (later) — #86 duty 2: `_end_turn()` had its own unguarded
   copy of the hunter-flip `_switch_to` was already fixed to refuse mid-window
   (`496d560`'s log entry, "a solo hunter swap mid-timing window misrouting
