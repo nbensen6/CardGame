@@ -1795,6 +1795,13 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_switch_blocked_by_timing_true_for_a_live_sweep_or_circle()
 	_test_backlog86_switch_to_refuses_to_change_hunter_mid_sweep()
 	_test_backlog86_switch_to_refuses_to_change_hunter_while_a_circle_window_is_open()
+	# backlog #86 duty 2: End Turn was a SECOND, unguarded path to the exact
+	# same flip -- it inlined `_active_slot = 1 - _active_slot` directly
+	# instead of going through `_switch_to`, so the fix above closed the
+	# button/key swap but left End Turn free to flip mid-window regardless.
+	_test_backlog86_end_turn_flip_refuses_to_change_hunter_mid_sweep()
+	_test_backlog86_end_turn_flip_refuses_to_change_hunter_while_a_circle_window_is_open()
+	_test_backlog86_end_turn_flip_still_flips_with_no_timing_window_open()
 
 	print("")
 	if _failures == 0:
@@ -20505,6 +20512,59 @@ func _test_backlog86_switch_to_refuses_to_change_hunter_while_a_circle_window_is
 	c3d._switch_to(1)
 	_expect(c3d._active_slot == 0,
 		"a switch attempted while the HitCircle window is open must not go through, same failure shape as the sweep-bar case")
+	c3d.free()
+
+
+## _end_turn() flips `_active_slot` in solo the same way `_switch_to` does,
+## but it used to do it by inlining the flip directly rather than going
+## through `_switch_to` -- so the guard above never saw it. Ending your turn
+## mid-sweep (or mid-circle) would hand the view to the OTHER hunter while
+## the window was still open, and the window resolves against `_cmd_slot()`
+## read LIVE at that later moment: the hand index it captured at tap time
+## belongs to the hunter who just ended their turn, not the one now active.
+## `_apply_solo_turn_flip` is the extracted, guarded body End Turn now calls
+## instead of inlining the flip -- exercised directly here so the test needs
+## no `_end_btn`/`_client.end_turn()`/`_refresh()` scene plumbing, the same
+## way `_switch_to`'s own tests above avoid it.
+func _test_backlog86_end_turn_flip_refuses_to_change_hunter_mid_sweep() -> void:
+	var c3d := Combat3D.new()
+	var client := GameClient.new(LocalTransport.new(), 1)
+	client.shared = {"solo": true}
+	c3d._client = client
+	c3d._active_slot = 0
+	var cv := CardView.new()
+	cv.setup({"name": "Slash", "cost": 1, "text": ""}, true, false)
+	cv.start_timing(1)
+	c3d._timing_card = cv
+	c3d._apply_solo_turn_flip()
+	_expect(c3d._active_slot == 0,
+		"ending the turn mid-sweep must not flip the active hunter -- the sweep's captured hand index still belongs to slot 0, and flipping would pair it with slot 1 the instant it resolves")
+	cv.free()
+	c3d.free()
+
+
+func _test_backlog86_end_turn_flip_refuses_to_change_hunter_while_a_circle_window_is_open() -> void:
+	var c3d := Combat3D.new()
+	var client := GameClient.new(LocalTransport.new(), 1)
+	client.shared = {"solo": true}
+	c3d._client = client
+	c3d._active_slot = 0
+	c3d._circle_index = 2
+	c3d._apply_solo_turn_flip()
+	_expect(c3d._active_slot == 0,
+		"ending the turn while the HitCircle window is open must not flip the active hunter, same failure shape as the sweep-bar case")
+	c3d.free()
+
+
+func _test_backlog86_end_turn_flip_still_flips_with_no_timing_window_open() -> void:
+	var c3d := Combat3D.new()
+	var client := GameClient.new(LocalTransport.new(), 1)
+	client.shared = {"solo": true}
+	c3d._client = client
+	c3d._active_slot = 0
+	c3d._apply_solo_turn_flip()
+	_expect(c3d._active_slot == 1,
+		"with no timing window open, ending the turn must still hand the view to the other hunter -- the guard must not swallow the ordinary case")
 	c3d.free()
 
 

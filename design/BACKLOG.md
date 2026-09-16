@@ -2782,6 +2782,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-16 (later) — #86 duty 2: `_end_turn()` had its own unguarded
+  copy of the hunter-flip `_switch_to` was already fixed to refuse mid-window
+  (`496d560`'s log entry, "a solo hunter swap mid-timing window misrouting
+  play_card").** Last commit (`3828d9d`) was duty 3, so this run owed duty 2.
+  `_switch_to` blocks flipping `_active_slot` while a sweep-bar or HitCircle
+  timing window is open, because that window resolves against `_cmd_slot()`
+  read LIVE at resolution time against a hand index captured when it opened
+  — flip the active slot mid-window and the eventual `play_card` lands on
+  the wrong hunter's hand. But `_end_turn()` never called `_switch_to()`; it
+  inlined `_active_slot = 1 - _active_slot` directly (`game/views/
+  combat_3d.gd`, was lines 755-758), so the guard the prior fix built never
+  saw it. Repro: solo, tap a timed card as hunter A (opens the sweep bar,
+  capturing A's hand index), then press End Turn before it resolves — A's
+  turn ends server-side, the view flips to B, and when the sweep animation
+  finishes moments later it plays whatever sits at A's old index out of B's
+  hand instead. Two copies of one truth: the "don't flip mid-window" rule
+  existed in exactly one of the two places that flip. Fix: extracted the
+  three-line flip into `_apply_solo_turn_flip()`, gated by the same
+  `switch_blocked_by_timing()` check `_switch_to` already uses, and made
+  `_end_turn()` call it instead of inlining the flip. Wrote the regression
+  tests first against the unfixed code (mid-sweep and mid-circle cases both
+  failed, `_active_slot` flipped when it shouldn't have), confirmed the fix,
+  then added a third test proving the ordinary no-window case still flips —
+  a guard that silently swallows the common case would be a worse bug than
+  the one it closes. All three test directly against `_apply_solo_turn_flip`
+  the same way the existing `_switch_to` tests do, so none of them need the
+  `_end_btn`/`_client.end_turn()`/`_refresh()` scene plumbing a full
+  `_end_turn()` call would drag in. Fresh `--import`, headless, Godot
+  4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
 - **2026-09-16 — #86 duty 3: proved `console.gd`'s `deck`/`card`/`clear` dev
   commands, which had zero coverage.** Last commit (`00e2f66`) was duty 2, so
   this run took duty 3. Checked item 55 first per rule 0: its own numeric bar

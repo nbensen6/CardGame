@@ -752,11 +752,28 @@ func _end_turn() -> void:
 	Sfx.play("end_turn")
 	_dismiss_coach()
 	_client.end_turn(_cmd_slot())
-	if _is_solo():
-		_active_slot = 1 - _active_slot
-		_lock_slot = _active_slot   # the camera follows the hand you now hold
-		_focus_camera()
+	_apply_solo_turn_flip()
 	_refresh()
+
+
+## The solo half of ending a turn: hand the view to whichever hunter you now
+## hold. This used to inline `_active_slot = 1 - _active_slot` here with no
+## guard at all -- `_switch_to` (below) refuses to flip the active hunter
+## while a sweep-bar or HitCircle timing window is open, because that window
+## resolves against `_cmd_slot()` read LIVE, against a hand index captured
+## when it opened. End Turn is a second, independent path to that same flip
+## and had no such guard: tap a timed card, then End Turn before the sweep
+## resolves, and the window would resolve moments later against the OTHER
+## hunter's hand at the first hunter's old index. #86 duty 2.
+func _apply_solo_turn_flip() -> void:
+	if not _is_solo():
+		return
+	if switch_blocked_by_timing(_timing_card != null and is_instance_valid(_timing_card)
+			and _timing_card.is_timing(), _circle_index):
+		return
+	_active_slot = 1 - _active_slot
+	_lock_slot = _active_slot   # the camera follows the hand you now hold
+	_focus_camera()
 
 
 ## Keyboard accelerators, all remappable from the settings menu (Progress.KEYBINDS).
