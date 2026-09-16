@@ -2782,6 +2782,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-16 (the very latest) — #86 duty 3: proved a draw relic's own
+  "each turn" text actually recurs past round 1, not just at fight start.**
+  Last commit (`75900ec`) was duty 2, so this run took duty 3. Three relics
+  (`scouts_satchel`, `long_lungs`, `bottomless_quiver` in `data/relics.json`)
+  read "Draw N more cards each turn," feeding a plain `draw` key through
+  `Run.relic_totals()` into `Combat._begin_round()`'s
+  `_draw(ps, maxi(0, HAND_SIZE + _mod("draw") - innate_drawn))` — unlike the
+  innate-card draw on the line just above it, that line carries no
+  `round_num == 1` gate, so the bonus is meant to recur every round. Nothing
+  ever proved that: `_test_backlog86_every_relic_mod_key_reaches_relic_totals`
+  explicitly excludes `"draw"` from what it checks, saying it's "only ever
+  exercised downstream, through Combat's own `_mod()` reads" — and grepping
+  `run_tests.gd` for `scouts_satchel`/`long_lungs`/`bottomless_quiver`/the
+  `_new_combat_mods` helper turned up zero uses of `"draw"` anywhere; every
+  existing hand-size assertion only ever checked the opening hand of a fight.
+  Used an Explore agent for the hunt after the usual manual sweep (climb/grip,
+  damage stacking, status interactions, map generation, save round-tripping)
+  again turned up only mechanics already covered by ~50 prior duty-3 passes.
+  Added `_test_backlog86_draw_relic_mod_grants_extra_cards_every_round_not_just_the_first`
+  (`_new_combat_mods` with `{"draw": 2}`, asserts both hunters' opening hands
+  are `HAND_SIZE + 2`, ends both turns to roll into round 2, asserts the same
+  bonus holds once round 1's hand is discarded). Verified it actually catches
+  the claimed regression by temporarily gating the draw line to
+  `round_num == 1` (mirroring the innate-draw line right above it) —
+  confirmed only the new test failed, then reverted, confirmed clean via
+  `git diff` before committing. No bug found: the mechanic works as written,
+  this closes a coverage gap a refactor could otherwise have broken silently.
+  Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS
+  PASSED. Next `#86` turn is duty 2 (find an error and resolve it).
+
 - **2026-09-16 (newest) — #86 duty 2: "Hunt again" on a daily run's own end
   screen quietly replayed the identical daily seed.** Last commit (`810f6ca`)
   was duty 3, so this run took duty 2. Delegated the search to an Explore

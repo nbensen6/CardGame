@@ -1837,6 +1837,8 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_end_turn_flip_refuses_to_change_hunter_while_a_circle_window_is_open()
 	_test_backlog86_end_turn_flip_still_flips_with_no_timing_window_open()
 
+	_test_backlog86_draw_relic_mod_grants_extra_cards_every_round_not_just_the_first()
+
 	print("")
 	if _failures == 0:
 		print("ALL TESTS PASSED")
@@ -21038,6 +21040,35 @@ func _test_backlog86_end_turn_flip_still_flips_with_no_timing_window_open() -> v
 	_expect(c3d._active_slot == 1,
 		"with no timing window open, ending the turn must still hand the view to the other hunter -- the guard must not swallow the ordinary case")
 	c3d.free()
+
+
+## backlog #86 duty 3: three relics (scouts_satchel/long_lungs/bottomless_quiver,
+## data/relics.json) promise "Draw N more cards each turn" -- not just the
+## opening hand of the fight, every round. relic_totals()'s own coverage test
+## (_test_backlog86_every_relic_mod_key_reaches_relic_totals) explicitly
+## excludes "draw" from what it checks, noting it is "only ever exercised
+## downstream, through Combat's own _mod() reads" -- and nothing downstream
+## ever checked it either. _begin_round()'s draw line
+## (`HAND_SIZE + _mod("draw")`) carries no `round_num == 1` gate, unlike the
+## innate-card draw just above it, so the bonus is meant to recur every
+## round -- but no test has ever driven a second round to prove that, only
+## ever checking the opening hand. Reading _begin_round() confirms the
+## unconditional read is real, so this is a coverage gap, not a bug -- but a
+## refactor that hoisted the innate draw's round-1 gate onto this line too
+## would silently turn "each turn" into "once, at fight start", and nothing
+## would catch it.
+func _test_backlog86_draw_relic_mod_grants_extra_cards_every_round_not_just_the_first() -> void:
+	var boss := _dummy_boss(300)
+	var decks := [_deck_of(_slash, 20), _deck_of(_slash, 20)]
+	var combat := _new_combat_mods(decks, 42, boss, {"draw": 2})
+	_expect(combat.players[0].hand.size() == Combat.HAND_SIZE + 2
+			and combat.players[1].hand.size() == Combat.HAND_SIZE + 2,
+		"a draw relic's bonus applies to the opening hand of the fight, for both hunters")
+	combat.end_turn(0)
+	combat.end_turn(1)  # both ended -> boss acts -> round 2 begins and redraws
+	_expect(combat.players[0].hand.size() == Combat.HAND_SIZE + 2
+			and combat.players[1].hand.size() == Combat.HAND_SIZE + 2,
+		"a draw relic's own text is 'each turn' -- the bonus must still apply once round 1's hand is discarded, not just at fight start")
 
 
 func _expect(cond: bool, name: String) -> void:
