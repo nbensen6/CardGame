@@ -2782,6 +2782,33 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-16 (latest) — #86 duty 3: proved a LOST run can never bank a career win or unlock the next ascension tier.** Last
+  commit (`e3a17db`) was duty 2, so this run took duty 3. `GameHost._note_progress()`
+  only calls `Progress.record_win(_ascension)` inside its `if _run.phase ==
+  Run.Phase.WON` branch; a LOST run falls straight through to the
+  unconditional `Progress.record_run()` call below it. The WON side of this
+  exact function already had real coverage
+  (`_test_backlog86_restart_refreshes_unlocked_wins_after_a_win`,
+  `_test_backlog65_gamehost_records_history_exactly_once`), but nothing in the
+  suite ever drove a host to `Run.Phase.LOST` and then checked
+  `Progress.total_wins()`/`unlocked_ascension()` afterward — a refactor that
+  widened the win-banking condition, or hoisted `record_win()` above the
+  phase check, would hand free career progress and ascension unlocks for
+  losing, and nothing would have caught it. Used an Explore agent to hunt for
+  the candidate after my own manual sweep of the obvious areas (climb/grip,
+  damage stacking, limiter types, map generation, relic totals, effect-block
+  keys, scry, console commands, campfire actions) all turned out to be
+  already exhaustively covered from ~40+ prior duty-3 passes — this codebase's
+  test suite is now genuinely thorough, so finding a real gap took real
+  search. Wrote `_test_backlog86_a_loss_never_banks_a_win_or_unlocks_ascension`
+  (drives a solo `GameHost` to `Run.Phase.LOST`, broadcasts twice, asserts
+  `total_wins`/`unlocked_ascension` are untouched and history logs exactly
+  once); verified it actually catches the claimed bug by temporarily widening
+  the WON check to `if true:`, confirming the new test failed (and only that
+  test), then reverting. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2 (find an error
+  and resolve it).
+
 - **2026-09-16 (yet later still) — #86 duty 2: the campfire's sharpen picker offered curse/status cards a "View Upgrades" preview and an always-enabled confirm button that `Run.campfire_action()` silently refused on click.** Last
   commit (`0fca9f3`) was duty 3, so this run took duty 2. Delegated the hunt
   to an Explore agent scoped away from the recently-hardened combat/reward/

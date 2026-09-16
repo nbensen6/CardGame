@@ -712,6 +712,7 @@ func _init() -> void:
 	_test_backlog65_history_entry_shape_on_a_win()
 	_test_backlog65_progress_record_run_appends_and_round_trips()
 	_test_backlog65_gamehost_records_history_exactly_once()
+	_test_backlog86_a_loss_never_banks_a_win_or_unlocks_ascension()
 	_test_backlog65_run_history_tolerates_an_entry_missing_a_newer_field()
 	# Scry (backlog #59): look at the top of the draw pile and bin what you don't want
 	_test_backlog59_scry_reveals_and_resolve_scry_bins_and_keeps_order()
@@ -14784,6 +14785,46 @@ func _test_backlog65_gamehost_records_history_exactly_once() -> void:
 	host._broadcast_state()
 	_expect(Progress.run_history().size() == 1,
 		"a finished run is logged exactly once even though broadcasts keep firing after it ends")
+
+
+## Backlog #86 duty 3: GameHost._note_progress() only calls Progress.record_win()
+## inside its `if _run.phase == Run.Phase.WON` branch -- a LOST run falls
+## straight through to the unconditional Progress.record_run() call below it
+## and touches nothing else. The WON side of this exact function has real
+## coverage (_test_backlog86_restart_refreshes_unlocked_wins_after_a_win,
+## _test_backlog65_gamehost_records_history_exactly_once, both just above/below
+## here), but nothing in the suite ever drives a host to Run.Phase.LOST and
+## then checks Progress.total_wins()/unlocked_ascension() afterward. A refactor
+## that widened the win-banking condition (say, to "!= Run.Phase.ONGOING") or
+## hoisted record_win() above the phase check would hand free career progress
+## and ascension unlocks for LOSING, and nothing here would catch it.
+func _test_backlog86_a_loss_never_banks_a_win_or_unlocks_ascension() -> void:
+	Progress.use_scratch_slot("run_tests_backlog86_loss_no_win")
+	var cfg := ConfigFile.new()
+	cfg.set_value(Progress.SECTION, "total_wins", 0)
+	cfg.set_value(Progress.SECTION, "unlocked_ascension", 0)
+	cfg.set_value(Progress.SECTION, "run_history", [])
+	cfg.save(Progress.path)
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 7, 2, true, 2)  # solo, ascension 2 -- a wrongly-banked win here would unlock ascension 3
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	_expect(host._run != null, "setup sanity: the solo run started once both hunters were picked")
+
+	host._run.stats["died_to"] = "Stone Warden"
+	host._run.phase = Run.Phase.LOST
+	host._broadcast_state()
+	host._broadcast_state()  # repeat, same as the WON exactly-once test -- must still log only once
+	_expect(Progress.total_wins() == 0,
+		"a lost run must never bank Progress.total_wins() -- record_win() is WON-only")
+	_expect(Progress.unlocked_ascension() == 0,
+		"a lost run must never raise Progress.unlocked_ascension() either")
+	var history := Progress.run_history()
+	_expect(history.size() == 1 and String(history[0]["result"]) == "lose",
+		"the loss is still logged to history exactly once, same guard a win gets")
 
 
 ## Backlog #35's lesson applied here rather than to a versioned save: an entry
