@@ -413,4 +413,14 @@ func archetype_tags() -> Array:
 		tags.append("frail")
 	if power_effect == "heal":
 		tags.append("heal")
+	# backlog #86 duty 2: topdeck/shuffle_in/tutor (backlog #68) reach straight
+	# into your own draw pile -- exactly the mechanic GameHost._keywords_of()
+	# already groups under one keyword, "reach" (keywords.json), for the
+	# tap-to-inspect panel. archetype_tags() never grew a matching branch, so
+	# waymark (topdeck), depot (shuffle_in) and recon (tutor) -- three real,
+	# shipped cards -- rolled through reward_pool() with NO archetype tag at
+	# all: a hunter who'd drafted any of them got no reward-lean (backlog #72)
+	# toward drawing another, unlike every other mechanical family in the game.
+	if topdeck != "" or shuffle_in != "" or tutor != "":
+		tags.append("reach")
 	return tags

@@ -222,6 +222,7 @@ func _init() -> void:
 	_test_backlog86_archetype_tags_recognise_block_per_exhausted_and_block_per_discarded_only_cards()
 	_test_backlog86_archetype_tags_recognise_power_cards_by_their_power_effect()
 	_test_backlog86_archetype_tags_recognise_frail_cards()
+	_test_backlog86_archetype_tags_recognise_topdeck_shuffle_in_and_tutor_as_reach()
 	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
 	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
@@ -5745,6 +5746,45 @@ func _test_backlog86_archetype_tags_recognise_frail_cards() -> void:
 	var leaned_weight: int = Run.reward_weight(crippling_blow_rarity, crippling_blow_tags, frail_deck_tags)
 	_expect(leaned_weight > flat_weight,
 		"Crippling Blow's reward weight rises for a Frail-heavy deck now that it carries the frail tag [flat=%s leaned=%s]"
+			% [flat_weight, leaned_weight])
+
+
+## Backlog #86 duty 2: GameHost._keywords_of() (game_host.gd) already groups
+## topdeck/shuffle_in/tutor (backlog #68 — a card that reaches directly into
+## your own draw pile) under one keyword, "reach" (keywords.json), for the
+## tap-to-inspect panel — but archetype_tags() never grew a matching branch at
+## all, the same "an entire tag missing, not just one field in an existing
+## OR-list" shape as the power-effect and Frail gaps fixed earlier this same
+## rotation. Waymark (topdeck), Depot (shuffle_in) and Recon (tutor) are three
+## real, shipped cards (cards.json) that rolled through reward_pool() with an
+## EMPTY tag array, so a hunter who'd already drafted one got no reward-lean
+## (backlog #72) toward drawing another — the one mechanical family in the
+## game that could never lean, silently, since the tag lean shipped.
+func _test_backlog86_archetype_tags_recognise_topdeck_shuffle_in_and_tutor_as_reach() -> void:
+	var waymark_tags: Array = Content.card_tags("waymark")
+	_expect(waymark_tags.has("reach"),
+		"Waymark (topdeck) is tagged reach [tags=%s]" % [waymark_tags])
+
+	var depot_tags: Array = Content.card_tags("depot")
+	_expect(depot_tags.has("reach"),
+		"Depot (shuffle_in, plus flat block) is tagged reach [tags=%s]" % [depot_tags])
+
+	var recon_tags: Array = Content.card_tags("recon")
+	_expect(recon_tags.has("reach") and recon_tags.size() == 1,
+		"Recon (tutor only) is tagged reach and nothing else [tags=%s]" % [recon_tags])
+
+	# reward-lean end to end, same shape as the Iron Husk / Crippling Blow
+	# checks above: a deck already carrying Reach gives Waymark a real lean
+	# bonus now that it is tagged, where before its empty tag array meant
+	# reward_weight()'s tag_bonus loop never ran no matter how many Reach
+	# cards were already in the deck.
+	var run := _map_run()
+	var reach_deck_tags: Dictionary = run._tag_counts(_deck_of(Callable(Content, "make_card").bind("waymark"), 10))
+	var waymark_rarity: String = Content.card_rarity("waymark")
+	var flat_weight: int = Run.reward_weight(waymark_rarity, waymark_tags, {})
+	var leaned_weight: int = Run.reward_weight(waymark_rarity, waymark_tags, reach_deck_tags)
+	_expect(leaned_weight > flat_weight,
+		"Waymark's reward weight rises for a Reach-heavy deck now that it carries the reach tag [flat=%s leaned=%s]"
 			% [flat_weight, leaned_weight])
 
 

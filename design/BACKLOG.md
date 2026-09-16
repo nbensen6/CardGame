@@ -2782,7 +2782,31 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-16 (the very latest) — #86 duty 3: proved a draw relic's own
+- **2026-09-16 (the very latest) — #86 duty 2: `Card.archetype_tags()` had no
+  branch at all for the "reach" mechanic, so three real cards never leaned
+  their own reward draft.** Last commit (`8729d3f`) was duty 3, so this run
+  took duty 2. `GameHost._keywords_of()` (`game_host.gd`) already groups
+  `topdeck`/`shuffle_in`/`tutor` (backlog #68 — a card that reaches straight
+  into your own draw pile) under one keyword, `"reach"` (`keywords.json`), for
+  the tap-to-inspect panel — but `archetype_tags()`, the function
+  `Run._begin_reward()` actually uses to lean a hunter's card draft toward
+  their own build (backlog #72), never grew a matching branch. Waymark
+  (topdeck), Depot (shuffle_in) and Recon (tutor — `cards.json`) are three
+  real, shipped cards that rolled through `reward_pool()` with an EMPTY tag
+  array, so a hunter who'd already drafted one got zero reward-lean toward
+  drawing another — the same "an entire tag missing, not just one field in an
+  existing OR-list" shape as the power-effect and Frail gaps this same
+  rotation already fixed, just never checked for "reach" specifically since
+  nobody had grepped `archetype_tags` against every keyword `_keywords_of()`
+  recognises. Added the branch (`topdeck != "" or shuffle_in != "" or tutor !=
+  ""` → `"reach"`) and a regression test,
+  `_test_backlog86_archetype_tags_recognise_topdeck_shuffle_in_and_tutor_as_reach`,
+  covering all three real cards plus an end-to-end `reward_weight()` check
+  (a Reach-heavy deck now weighs Waymark higher than a flat roll would).
+  Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS
+  PASSED. Next `#86` turn is duty 3 (verify a mechanic actually works).
+
+- **2026-09-16 (newest) — #86 duty 3: proved a draw relic's own
   "each turn" text actually recurs past round 1, not just at fight start.**
   Last commit (`75900ec`) was duty 2, so this run took duty 3. Three relics
   (`scouts_satchel`, `long_lungs`, `bottomless_quiver` in `data/relics.json`)
