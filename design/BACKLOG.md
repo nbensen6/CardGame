@@ -2782,6 +2782,23 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-16 (still later) — #86 duty 3: proved `_meld_cards`' `create` field is a positional first-wins tie-break, not the "keep whichever has one" the function's own header comment implies.** Last
+  commit (`2597048`) was duty 2, so this run took duty 3. `combat.gd:351`'s
+  merge line is `a.create if a.create != "" else b.create` — fine when only
+  one side ever has a `create`, silently WRONG when both do, since seven real
+  cards carry one (`build_grapple`, `build_bomb`, `deploy_bulwark`,
+  `build_winch`, `build_turret`, `build_drone`, `grand_contraption`) and
+  melding any two together is an ordinary reachable play. Every existing meld
+  test only ever paired a `create` card against a non-`create` card, so the
+  tie-break branch had literally never executed. New test
+  `_test_backlog86_meld_create_tiebreak_is_positional_not_combined` melds
+  Build Grapple + Build Bomb both ways round and proves (a) the SACRIFICE
+  side's `create` wins, not always the same card and not both, and (b)
+  playing the fused card for real builds only the kept tool — the dropped
+  gadget's build effect never fires at runtime either. No bug fixed here
+  (the behavior is real and consistent, just undocumented and unproven) —
+  this was a coverage gap, not a defect, so nothing else changed.
+
 - **2026-09-16 (later still) — #86 duty 2: Plated Armour's own round-reset silently dropped Dexterity's bonus (and Frail's cut) every round after the first.** Last commit
   (`485f31a`) was duty 3, so this run took duty 2. `_begin_round()`'s own
   comment already documents that `round_block_mod` was sent through

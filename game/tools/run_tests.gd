@@ -346,6 +346,7 @@ func _init() -> void:
 	_test_meld_carries_special_effects()
 	_test_meld_carries_light_and_deck_effects()
 	_test_meld_carries_power_effect()
+	_test_backlog86_meld_create_tiebreak_is_positional_not_combined()
 	_test_meld_carries_retain_and_ethereal()
 	_test_meld_carries_enchant()
 	_test_backlog86_meld_carries_rule_upgrade()
@@ -6857,6 +6858,57 @@ func _test_meld_carries_power_effect() -> void:
 	var paid_out: bool = ps.combatant.block == block_before + 3
 	_expect(carried and stayed_out_of_discard and paid_out,
 		"a meld carries a power card's type/effect/value, stays in play, and still pays out — even under a synthetic meld id Content.gd has never heard of")
+
+
+## backlog #86 duty 3: _meld_cards' own header comment claims one-of-a-kind
+## fields like `create` "take whichever card has one" — language that only
+## makes sense if at most one side ever carries one. The merge line itself
+## (combat.gd:351) is `a.create if a.create != "" else b.create`, a strict
+## first-wins tie-break, not a combine — but every existing meld test only
+## ever pairs a `create` card against a card with NO `create`, so that
+## tie-break line has never actually been exercised (it always takes the
+## trivial `b.create == ""` branch). Seven real cards carry `create`
+## (build_grapple, build_bomb, deploy_bulwark, build_winch, build_turret,
+## build_drone, grand_contraption), so melding two of them together is a
+## completely reachable real play that silently drops one gadget's build
+## effect. Proves the drop is real (not "keeps both"), that it is positional
+## (whichever card is picked as the SACRIFICE wins, same a/b order every
+## other one-of-a-kind field here uses), and that the drop is real at
+## runtime too — playing the fused card builds exactly one tool, never both.
+func _test_backlog86_meld_create_tiebreak_is_positional_not_combined() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	# Grapple (sac) + Bomb (cheapen): sac's create wins.
+	ps.hand = [_meld_card(), Content.make_card("build_grapple"), Content.make_card("build_bomb")]
+	ps.energy = 9
+	combat.play_card(0, 0, true, 1, 2)
+	var grapple_first: Card = ps.hand[0]
+	# Bomb (sac) + Grapple (cheapen): the OTHER order — proving it's positional,
+	# not "grapple always wins" or "both are kept".
+	ps.hand = [_meld_card(), Content.make_card("build_bomb"), Content.make_card("build_grapple")]
+	ps.energy = 9
+	combat.play_card(0, 0, true, 1, 2)
+	var bomb_first: Card = ps.hand[0]
+	_expect(grapple_first.create == "grapple" and bomb_first.create == "bomb",
+		"melding two `create` cards keeps whichever was the SACRIFICE (the a-side), " +
+		"not both and not always the same one [grapple_first=%s bomb_first=%s]"
+			% [grapple_first.create, bomb_first.create])
+	# Play the fused card (Grapple-first) for real: exactly one tool must land
+	# in hand — the kept one — and the dropped one's build effect must never
+	# have happened at all, at runtime, not just on the merged Card object.
+	ps.hand = [grapple_first]
+	ps.energy = 9
+	combat.play_card(0, 0, true)
+	var has_grapple := false
+	var has_bomb := false
+	for c in ps.hand:
+		if (c as Card).id == "grapple":
+			has_grapple = true
+		if (c as Card).id == "bomb":
+			has_bomb = true
+	_expect(has_grapple and not has_bomb,
+		"playing the fused card builds only the kept tool (Grapple) — the dropped " +
+		"gadget's build effect (Bomb) never fires, at runtime, not just in the Card fields")
 
 
 ## backlog #86 duty 2: same "hand-copied field list drifts" shape as the two
