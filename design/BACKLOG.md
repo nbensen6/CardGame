@@ -17342,3 +17342,43 @@ Newest first. One line per finished item: what, and anything surprising.
   plain values, same harness as every other test on it. Fresh `--import`,
   headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86`
   turn is duty 3 (verify a mechanic actually works).
+
+- **2026-09-16 — #86 duty 3: proved the "Cheap" enchant's cost discount
+  actually reaches the deck-view screen, which it did not.** Last commit
+  (`1213b74`) was duty 2, so this run took duty 3. Delegated the hunt to an
+  Explore agent scoped to files this rotation's own log says are less
+  picked-over (`game_host.gd`, `game_client.gd`, the net layer, `content.gd`,
+  `run_map.gd`, `progress.gd`, `player_state.gd`, `card.gd`), since my own
+  manual sweep of `combat.gd`'s hold/climb helpers and `boss.gd`'s four
+  `when` conditions confirmed they're already covered by earlier passes. It
+  found `GameHost._deck_face()` (`game/session/game_host.gd:969`, then
+  `"cost": c.cost`): the function's own comment two lines above it says "a
+  cheapened or enchanted copy is no longer its printed self", but `cost` was
+  the one field that ignored its own warning. `Combat.effective_cost()`
+  (`combat.gd:465-473`) already discounts a live hand for the "Cheap" enchant
+  (`effect: cost_cut`, data/enchants.json) — the same enchant `_deck_face()`
+  reads correctly for every OTHER field (fx, keywords, upgrade) — but the
+  deck screen's own `cost` key read the raw printed number, so an enchanted
+  card would show a stale, undiscounted cost on the campfire/shop/mid-fight
+  deck view while the identical card in hand already showed the discount.
+  Exactly the "two copies of one truth" shape this rotation keeps finding:
+  one reader (`effective_cost`) knew about the enchant, its sibling
+  (`_deck_face`) did not. No real card/relic/event grants an enchant yet (the
+  Wide enchant had the same "engine wired, no acquisition path yet" status
+  before its own duty-2 fix), so this is a forward-guarding regression test
+  rather than a live-bug repro, reached the same way that fix was verified:
+  straight through `Card.enchanted_copy()`. Fix: added
+  `GameHost._display_cost(c)`, mirroring `effective_cost()`'s enchant-only
+  half (not its `cost_reductions` half, which is per-fight `PlayerState` and
+  has no meaning to a card sitting in the deck screen outside a fight), and
+  routed `_deck_face()`'s `cost` key through it. Added three tests: an
+  un-enchanted card's cost is untouched, a Cheap-enchanted card's deck-view
+  cost shows the discount, that discount survives into the `upgraded_copy()`
+  face the deck view shows beside it (proving the enchant round-trips through
+  `to_dict()`/`from_dict()` the same as `upgraded_copy()` itself), and that
+  the X-cost sentinel (`cost == -1`, backlog #29) stays `-1` rather than
+  being cut to `-2` when cheapened. No screen needed — `_deck_face()` is a
+  pure function over a `Card` and an index, same harness as its neighbouring
+  `_test_backlog86_deck_face_status_flag_agrees_with_wants_toggle`. Fresh
+  `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
+  Next `#86` turn is duty 2 (find an error and resolve it).

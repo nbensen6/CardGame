@@ -968,7 +968,7 @@ func _deck_cards(pi: int) -> Array:
 ## be ambiguous between "the upgrade did that" and "the two builders disagree".
 func _deck_face(c: Card, i: int) -> Dictionary:
 	return {
-		"index": i, "name": c.name, "cost": c.cost, "target": c.target,
+		"index": i, "name": c.name, "cost": _display_cost(c), "target": c.target,
 		"text": c.text, "icon": _card_icon(c), "upgraded": c.upgraded,
 		"status": c.status,
 		"timed": c.timed, "timed_hits": c.timed_hits, "rarity": c.rarity,
@@ -997,6 +997,25 @@ func _deck_face(c: Card, i: int) -> Dictionary:
 
 
 ## What a card says about itself with no fight to ask — its printed values.
+## A card's cost as the deck view should print it: the printed number,
+## adjusted for a permanent "Cheap" enchant (cost_cut) the same way
+## Combat.effective_cost() adjusts it for a live hand -- but not for
+## cost_reductions, which is per-fight PlayerState (Burn Coal) and has no
+## meaning to a card sitting in the deck screen outside a fight. Without this,
+## _deck_face()'s own comment above ("a cheapened or enchanted copy is no
+## longer its printed self") was true of every field except the one most
+## literally about being cheapened: `cost` read c.cost raw, so an enchanted
+## deck card showed its stale, un-discounted cost everywhere the deck is
+## rendered (campfire, shop, the mid-fight deck peek) while the same card in
+## hand already showed the discount via effective_cost().
+static func _display_cost(c: Card) -> int:
+	if c.cost == -1:  # X-cost sentinel (backlog #29) -- not a fixed number to cut
+		return c.cost
+	if String(c.enchant_data().get("effect", "")) == "cost_cut":  # "Cheap" (backlog #50)
+		return maxi(0, c.cost - int(c.enchant_data().get("value", 0)))
+	return c.cost
+
+
 static func _printed(c: Card) -> Dictionary:
 	return {
 		"damage": c.damage, "block": c.block, "grip": c.grip,

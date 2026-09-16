@@ -673,6 +673,8 @@ func _init() -> void:
 	_test_backlog86_defensive_stacks_fx_carry_over_the_wire()
 	_test_backlog86_deck_view_upgrade_preview_shows_defensive_stacks()
 	_test_backlog86_deck_face_status_flag_agrees_with_wants_toggle()
+	_test_backlog86_deck_face_shows_the_cheap_enchants_discounted_cost()
+	_test_backlog86_deck_face_leaves_an_x_cost_cards_sentinel_alone_even_when_cheapened()
 	_test_backlog86_reach_and_cleave_fx_carry_over_the_wire()
 	_test_backlog86_deck_view_shows_reach_and_cleave_too()
 	_test_backlog86_route_finder_fx_carries_targets_hold_over_the_wire()
@@ -13223,6 +13225,49 @@ func _test_backlog86_deck_face_status_flag_agrees_with_wants_toggle() -> void:
 		"a curse card's own host-built deck-view entry must not offer a 'View Upgrades' toggle the server will never honour")
 	_expect(DeckView._wants_toggle(normal),
 		"an ordinary un-upgraded card must still offer its toggle -- the status check must not swallow everything")
+
+
+## backlog #86 duty 3: `_deck_face()`'s own comment two lines up says "a
+## cheapened or enchanted copy is no longer its printed self" -- true of every
+## field it builds except the one most literally about being cheapened.
+## `cost` read `c.cost` raw, ignoring the "Cheap" enchant (cost_cut,
+## data/enchants.json) that Combat.effective_cost() already discounts for a
+## live hand (combat.gd:465-473). An enchanted deck card would show its
+## stale, un-discounted cost on the campfire/shop/mid-fight deck screen while
+## the same card in hand already showed the discount -- two readers of one
+## Card, only one of which knew about the enchant. No real acquisition path
+## grants an enchant yet (same "engine wired, no acquisition path yet" status
+## the Wide enchant had before its own duty-2 fix), so this is a forward
+## regression test, not a live-bug repro -- reached here the same way that
+## fix was, straight through Card.enchanted_copy().
+func _test_backlog86_deck_face_shows_the_cheap_enchants_discounted_cost() -> void:
+	var host := GameHost.new(LocalTransport.new(), 1, 2)
+	_kept.append(host)
+	var plain := Content.make_card("slash")  # cost 1
+	var cheapened := plain.enchanted_copy("cheap")  # cost_cut value 1 -> 0
+	_expect(int(host._deck_face(plain, 0)["cost"]) == 1,
+		"an un-enchanted card's deck-view cost is untouched")
+	_expect(int(host._deck_face(cheapened, 0)["cost"]) == 0,
+		"a Cheap-enchanted card's deck-view cost reflects the discount, not the printed number")
+	# The upgraded twin the deck view shows beside it (_deck_cards' "upgrade"
+	# key) is built from upgraded_copy(), which round-trips through to_dict()/
+	# from_dict() the same as enchanted_copy() -- the enchant must survive
+	# that trip too, or the discount would vanish the moment a card is
+	# sharpened at a campfire.
+	_expect(int(host._deck_face(cheapened.upgraded_copy(), 0)["cost"]) == 0,
+		"the enchant, and its discount, survive into the upgraded face too")
+
+
+## The X-cost sentinel (cost == -1, backlog #29) is not a fixed number to cut
+## -- effective_cost() already refuses to touch it for the same reason
+## (combat.gd:465-469). Prove _display_cost() matches that refusal rather
+## than quietly turning -1 into -2.
+func _test_backlog86_deck_face_leaves_an_x_cost_cards_sentinel_alone_even_when_cheapened() -> void:
+	var host := GameHost.new(LocalTransport.new(), 1, 2)
+	_kept.append(host)
+	var x_card := _x_strike().enchanted_copy("cheap")
+	_expect(int(host._deck_face(x_card, 0)["cost"]) == -1,
+		"a Cheap-enchanted X-cost card still shows the -1 sentinel, not -2")
 
 
 ## backlog #86 duty 2 — the same wiring gap yet again, this time Reach (#68:
