@@ -473,6 +473,7 @@ func _init() -> void:
 	_test_leech_heals_nothing_when_fully_blocked()
 	_test_leech_heals_only_what_gets_through_block()
 	_test_leech_heal_cap_ignores_its_own_thorns_reflection()
+	_test_leech_does_not_revive_a_boss_thorns_just_killed()
 	_test_damage_boss_reports_only_what_gets_through_block()
 	_test_damage_boss_reports_nothing_when_fully_blocked()
 	_test_armored_damage_boss_reports_only_what_gets_through_block()
@@ -10286,6 +10287,26 @@ func _test_leech_heal_cap_ignores_its_own_thorns_reflection() -> void:
 	combat.end_turn(1)  # leech drains 12, thorns bites the boss for 5, heal is capped by the PRE-thorns headroom
 	_expect(combat.players[0].combatant.hp == 30 and combat.boss.hp == 95,
 		"leech's heal cap must not count headroom its own Thorns reflection just created")
+
+
+## backlog #86 duty 2 — a THIRD gap in the same branch, worse than the other
+## two: the heal itself was unconditional. _boss_hits() reflects the target's
+## Thorns onto the boss BEFORE the heal runs, and that reflection can be
+## lethal on its own -- but the heal added HP back regardless, reviving a
+## boss that had already died to its own move mid-statement. Unlike the two
+## tests above (whose Thorns amounts are small next to the boss's remaining
+## HP), this one sets Thorns >= the boss's remaining HP so the reflection
+## alone would kill it if the heal didn't paper over that afterward.
+func _test_leech_does_not_revive_a_boss_thorns_just_killed() -> void:
+	var boss := Boss.new("Leech", 100)
+	boss.hp = 3  # less than the target's thorns -- the reflection alone is lethal
+	boss.moves = [{"type": "leech", "value": 12}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.players[0].combatant.thorns = 5  # this round's target (boss_target_index)
+	combat.end_turn(0)
+	combat.end_turn(1)  # leech drains 12, but the 5 reflected thorns kill the boss (hp 3) first
+	_expect(combat.boss.hp == 0 and combat.result() == Combat.Result.WIN,
+		"a lethal Thorns reflection inside leech must not be undone by that same move's own heal")
 
 
 ## Same bug, partial mitigation: only the Block-through amount should heal the

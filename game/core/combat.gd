@@ -1704,9 +1704,19 @@ func _enemy_turn() -> void:
 			var real_dmg := lt.combatant.predicted_damage(ldmg)
 			var headroom := boss.max_hp - boss.hp
 			_boss_hits(lt, ldmg)
-			var healed := mini(real_dmg, headroom)
-			boss.hp += healed
-			_log("%s drains %s for %d and recovers %d." % [boss.name, lt.combatant.name, ldmg, healed])
+			# backlog #86 duty 2 — a Thorns reflection inside _boss_hits() above can
+			# itself be lethal (the target's thorns >= the boss's remaining hp).
+			# The heal below used to be unconditional, so a boss that had already
+			# died to its own reflected damage got refunded back to life by the
+			# same move that killed it, and _check_end() a few lines down would
+			# see a live boss.hp and report Result.ONGOING instead of the WIN that
+			# should already have happened.
+			if not boss.is_dead():
+				var healed := mini(real_dmg, headroom)
+				boss.hp += healed
+				_log("%s drains %s for %d and recovers %d." % [boss.name, lt.combatant.name, ldmg, healed])
+			else:
+				_log("%s drains %s for %d but dies to the reflected thorns before it can recover." % [boss.name, lt.combatant.name, ldmg])
 		"attack_all":
 			var dmg_all := value + boss.strength
 			for ps in players:

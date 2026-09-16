@@ -17382,3 +17382,34 @@ Newest first. One line per finished item: what, and anything surprising.
   `_test_backlog86_deck_face_status_flag_agrees_with_wants_toggle`. Fresh
   `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
   Next `#86` turn is duty 2 (find an error and resolve it).
+
+- **2026-09-16 — #86 duty 2: a boss killed by its own reflected Thorns during
+  a "leech" move came back to life one line later.** Last commit (`42e8aaf`)
+  was duty 3, so this run took duty 2. Delegated the hunt to an Explore agent
+  scoped to `/core` and `/session` (pure logic, no rendering, so any bug
+  found there is provable headlessly) and asked it to avoid the well-picked
+  combat/climb surface this rotation already hardened. It found
+  `Combat._enemy_turn()`'s `"leech"` branch (`combat.gd:1687-1709`): two
+  earlier duty-2 passes already fixed this same branch's heal to preview
+  `real_dmg` and `headroom` before `_boss_hits()` runs (because that call
+  reflects the target's Thorns back onto the boss's own hp first, and used
+  to let that self-inflicted headroom get refunded). Neither pass covered
+  the case where the reflection is outright lethal: `boss.hp += healed` ran
+  unconditionally, so a boss whose remaining hp was less than the target's
+  Thorns died to the reflection and then got healed straight back to life
+  by the same move, before `_check_end()` a few lines down ever got a
+  chance to see it dead — `result()` reported `ONGOING` and the fight kept
+  going against an undead Titan. Exactly the "two copies of one truth"
+  shape this rotation keeps finding, just one boundary condition further out
+  than the two existing tests reach (`hp=95`/`hp=50` against a `thorns=5`
+  reflection — nowhere near lethal). Wrote
+  `_test_leech_does_not_revive_a_boss_thorns_just_killed()` first (boss
+  `hp=3`, target `thorns=5` — the reflection alone is lethal), watched it
+  fail (`boss.hp` came back to 12 instead of staying `0`, `result()` stayed
+  `ONGOING`), then fixed it by guarding the heal on `not boss.is_dead()`
+  right after `_boss_hits()` returns. No screen needed — this is a `Combat`
+  state-machine sequencing bug, same headless harness as the two existing
+  leech tests beside it. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED (confirmed the new test fails against the
+  unfixed branch and passes with the fix). Next `#86` turn is duty 3 (verify
+  a mechanic actually works).
