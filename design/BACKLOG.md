@@ -2782,6 +2782,26 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-16 (even later still) — #86 duty 3: proved `RunMap._ensure_key_sources()`, the backlog #64 guarantee that every generated map contains at least one elite, one treasure and one event node so the true ending is never quietly closed off by unlucky dice.** Last commit (`729ebc4`) was duty 2, so this run took duty 3. The only existing coverage,
+  `_test_backlog64_map_guarantees_all_three_key_source_types_exist`, sweeps
+  seeds 1-24 through a full map generation and checks the outcome — real, but
+  it only proves the promise held for whatever those particular seeds rolled;
+  it can't tell a correct fixup from one that was simply never exercised on
+  those seeds, and it can't distinguish "guaranteed across the whole map"
+  from a stricter (and wrong) "guaranteed per act" reading, since a map
+  where every act happens to roll its own elite would pass either way. Added
+  two tests that drive `_ensure_key_sources()` directly against hand-set rows
+  (`RunMap.new(0, ...)` + hand-set `rows`, the same trick the `_link()` tests
+  already use): one builds a map of nothing but fight/shop/boss/rest nodes and
+  checks exactly one fight node becomes each of elite/treasure/event while
+  boss/shop/rest are left alone; the other gives one "act" a natural elite and
+  no treasure/event, and a second "act" with only fight nodes, then checks the
+  elite is never duplicated AND that treasure/event get filled in by consuming
+  the OTHER act's fight nodes — proving the check really is map-wide, not
+  per-act. Confirmed both fail (along with the pre-existing sweep test) against
+  a deliberately neutered `_ensure_key_sources` that returns immediately, then
+  restored the real function and reran clean. Fresh `--import`, headless,
+  Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
 - **2026-09-16 (later still) — #86 duty 3: proved `console.gd`'s `treatment`
   command actually reaches `Dev.cycle()`, the last of the thirteen console
   commands with zero coverage.** Last commit (`4303b64`) was duty 2, so this

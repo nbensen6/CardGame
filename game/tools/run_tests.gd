@@ -692,6 +692,8 @@ func _init() -> void:
 	_test_backlog64_boon_effects_never_grant_a_key()
 	_test_backlog64_sealed_hollow_event_grants_a_key_at_a_real_cost()
 	_test_backlog64_map_guarantees_all_three_key_source_types_exist()
+	_test_backlog64_ensure_key_sources_converts_exactly_one_fight_node_per_missing_kind()
+	_test_backlog64_ensure_key_sources_skips_a_kind_that_already_exists_anywhere_on_the_map()
 	_test_backlog64_final_titan_is_a_sealed_door_without_all_three_keys()
 	_test_backlog64_final_titan_is_a_real_fight_with_all_three_keys()
 	# backlog #65: run history — a finished run persists rather than vanishing
@@ -14435,6 +14437,73 @@ func _test_backlog64_map_guarantees_all_three_key_source_types_exist() -> void:
 		if not ok:
 			break
 	_expect(ok, "every generated map guarantees an elite, a treasure, and an event node exist (failed seed %d)" % bad_seed)
+
+
+## #86 duty 3 — RunMap._ensure_key_sources() is the guarantee
+## _test_backlog64_map_guarantees_all_three_key_source_types_exist above proves
+## holds end-to-end across seeds 1-24, but nothing had ever driven the FUNCTION
+## itself: that sweep only shows the promise holds for whatever the dice
+## happened to roll on those seeds, never a map deliberately built with zero
+## natural elite/treasure/event nodes, so it can't tell a correct fixup from
+## one that happens to never be needed on those particular seeds. This drives
+## _ensure_key_sources() directly (RunMap.new(0, ...) + hand-set rows, same
+## trick the _link() tests above use) against a map with three "fight" nodes
+## and nothing else: exactly one must become each of elite/treasure/event, and
+## the boss/shop nodes the function's own comment promises to leave alone must
+## still read "boss"/"shop" afterward.
+func _test_backlog64_ensure_key_sources_converts_exactly_one_fight_node_per_missing_kind() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	var m := RunMap.new(0, RandomNumberGenerator.new())  # 0 acts: empty, rows hand-set below
+	var boss_row: Array = [{"type": "boss", "act": 0, "next": []}]
+	var shop_row: Array = [{"type": "shop", "act": 0, "next": []}, {"type": "fight", "act": 0, "next": []}]
+	var fight_row: Array = [{"type": "fight", "act": 0, "next": []}, {"type": "fight", "act": 0, "next": []},
+		{"type": "rest", "act": 0, "next": []}]
+	m.rows = [boss_row, shop_row, fight_row]
+	m._ensure_key_sources(rng)
+	var counts := {"elite": 0, "treasure": 0, "event": 0}
+	for row in m.rows:
+		for n in row:
+			var t := String((n as Dictionary)["type"])
+			if counts.has(t):
+				counts[t] = int(counts[t]) + 1
+	_expect(int(counts["elite"]) == 1 and int(counts["treasure"]) == 1 and int(counts["event"]) == 1,
+		"a map with no natural elite/treasure/event gets exactly one of each, converted from a fight node")
+	_expect(String(boss_row[0]["type"]) == "boss" and String(shop_row[0]["type"]) == "shop"
+		and String(fight_row[2]["type"]) == "rest",
+		"the boss, shop and rest nodes are never touched by the key-source guarantee")
+
+
+## Companion to the test above: the doc comment on _ensure_key_sources() claims
+## the guarantee is checked "not per-act — any act's node can supply any key."
+## The seed sweep above can't tell that claim apart from a stricter per-act
+## rule, because a map with an elite somewhere in every act would satisfy
+## either reading. This builds two "acts" where only the FIRST has a natural
+## elite and neither has a treasure or event, and checks two things a
+## per-act (or simply broken) implementation would get wrong: the existing
+## elite is never duplicated into a second one, and treasure/event still get
+## filled in by consuming fight nodes out of the OTHER act — proving the
+## check really does read the whole map, not just the act it's filling.
+func _test_backlog64_ensure_key_sources_skips_a_kind_that_already_exists_anywhere_on_the_map() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3
+	var m := RunMap.new(0, RandomNumberGenerator.new())  # 0 acts: empty, rows hand-set below
+	var act1_row: Array = [{"type": "elite", "act": 0, "next": []}, {"type": "fight", "act": 0, "next": []}]
+	var act2_row: Array = [{"type": "fight", "act": 1, "next": []}, {"type": "fight", "act": 1, "next": []}]
+	m.rows = [act1_row, act2_row]
+	m._ensure_key_sources(rng)
+	var counts := {"elite": 0, "treasure": 0, "event": 0}
+	for row in m.rows:
+		for n in row:
+			var t := String((n as Dictionary)["type"])
+			if counts.has(t):
+				counts[t] = int(counts[t]) + 1
+	_expect(int(counts["elite"]) == 1,
+		"a kind that already exists anywhere on the map is never converted a second time")
+	_expect(String(act1_row[0]["type"]) == "elite",
+		"the naturally-rolled elite node itself is left alone")
+	_expect(int(counts["treasure"]) == 1 and int(counts["event"]) == 1,
+		"the still-missing kinds get filled in from a DIFFERENT act's fight nodes, proving the check is map-wide, not per-act")
 
 
 func _test_backlog64_final_titan_is_a_sealed_door_without_all_three_keys() -> void:
