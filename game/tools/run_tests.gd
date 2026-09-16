@@ -578,6 +578,14 @@ func _init() -> void:
 	# had ever driven a round with two adds attacking together to prove the
 	# chain still spends exactly one stack on the earliest of THREE real hits.
 	_test_backlog86_incoming_through_spends_one_stack_across_the_boss_and_two_living_adds()
+	# backlog #86 duty 3: both fixes above were proven for Buffer only, even
+	# though predicted_damage_chain()'s own header comment claims the identical
+	# risk for Intangible ("a Buffer OR Intangible stack only ever spends ONE
+	# stack cancelling/capping a SINGLE real take_damage() call"). Nothing had
+	# ever driven a real boss+add round with an Intangible stack to prove it
+	# caps only the FIRST hit at 1 and lets the second land in full, the same
+	# way the Buffer sibling above was proven rather than assumed.
+	_test_backlog86_incoming_through_caps_only_the_first_of_the_boss_and_add_hits_with_intangible()
 	_test_incoming_for_ignores_a_dead_adds_attack()
 	_test_poison_lands_on_the_targeted_add_not_the_boss()
 	_test_frail_lands_on_the_targeted_add_not_the_boss()
@@ -12159,6 +12167,41 @@ func _test_backlog86_incoming_through_spends_one_stack_across_the_boss_and_two_l
 		"the previewed 8 must equal what actually lands: Buffer eats the boss's 8, both adds' hits (5 and 3) go through untouched")
 	_expect(combat.players[0].combatant.buffer == 0,
 		"the Buffer stack was spent on the boss's hit, same as the single-add round already proved")
+
+
+## backlog #86 duty 3 -- predicted_damage_chain()'s own header comment claims
+## Buffer and Intangible share the same "only spends on ONE of several real
+## hits" risk, and the two tests above proved it for Buffer (one add, then
+## two). Intangible was never driven through a real multi-hit round at all --
+## every existing Intangible test (_test_intangible_caps_a_hit_that_gets_past_
+## block and friends) only ever prices a single take_damage() call. A round
+## with a living add is a chain of two: the boss's move resolves first
+## (_enemy_turn()), then the add's own attack (_adds_turn()), so the single
+## Intangible stack must cap the boss's hit at 1 and spend itself there,
+## leaving the add's hit to land in FULL -- not 0 and not the raw total capped
+## to 1. Plays the round out for real, same idiom as the Buffer tests above.
+func _test_backlog86_incoming_through_caps_only_the_first_of_the_boss_and_add_hits_with_intangible() -> void:
+	var boss := _dummy_boss(300, 8)  # attacks player 0 for 8 on round 1
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Root Tendril", 30)
+	add.moves = [{"type": "attack", "value": 5}]
+	combat.adds.append(add)
+	combat.players[0].combatant.intangible = 1
+
+	var previewed := combat.incoming_for(0)
+	_expect(previewed["raw"] == 13,
+		"sanity: raw still sums the boss's 8 and the add's 5")
+	_expect(previewed["through"] == 6,
+		"one Intangible stack caps only the FIRST real hit (the boss's 8, capped to 1) -- the add's 5 must land in full with nothing left to cap it, not 0 and not 1")
+
+	var hp_before: int = combat.players[0].combatant.hp
+	combat.end_turn(0)
+	combat.end_turn(1)
+	var actual_damage: int = hp_before - combat.players[0].combatant.hp
+	_expect(actual_damage == 6,
+		"the previewed 6 must equal what actually lands: Intangible caps the boss's 8 down to 1, the add's 5 goes through untouched")
+	_expect(combat.players[0].combatant.intangible == 0,
+		"the Intangible stack was spent capping the boss's hit, same as a real single-hit round would spend it")
 
 
 ## A dead add's stale "attack" move must never haunt the preview once it can no

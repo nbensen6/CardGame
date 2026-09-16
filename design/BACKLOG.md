@@ -2782,6 +2782,30 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-16 (even yet later) — #86 duty 3: proved Intangible caps only the FIRST of several real hits in one round, the same claim already proven for Buffer but never for its sibling.** Last commit (`2b53fbd`) was duty 2, so
+  this run took duty 3. Searched extensively for a genuinely untested mechanic
+  first — climb-route/hop/foothold view logic, console commands, save
+  migration, RunMap generation/linking, relic/potion/event/boon/enchant
+  effect dispatch, boss move conditions, HitCircle timing, drag/release — and
+  every one already had a real, behavior-level test from a prior duty-3 pass;
+  this codebase's coverage after ~50 rotations is genuinely comprehensive, not
+  just wide. Found the gap in `Combatant.predicted_damage_chain()`'s own
+  header comment: it explicitly claims Buffer AND Intangible each spend only
+  one stack against a single real hit in a multi-hit round (boss move, then
+  each living add's own attack, each its own `take_damage()` call), and two
+  existing duty-2/duty-3 tests prove exactly that for Buffer across one add
+  and two adds — but Intangible was only ever tested against a single hit
+  (`_test_intangible_caps_a_hit_that_gets_past_block` and friends), never
+  across a real multi-hit round. Added
+  `_test_backlog86_incoming_through_caps_only_the_first_of_the_boss_and_add_hits_with_intangible`,
+  same idiom as the Buffer tests: boss attacks for 8, one living add attacks
+  for 5, target holds 1 Intangible — proves `incoming_for()`'s preview (6) and
+  a real played-out round both cap the boss's hit to 1 and let the add's 5
+  land in full, spending the one stack on the earlier hit. Verified it (and
+  `_test_predicted_damage_after_matches_take_damage_dealt_in_the_same_order`'s
+  intangible case) fail against a neutered `predicted_damage_chain` that never
+  spends the Intangible stack, then restored the real function. Fresh
+  `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
 - **2026-09-16 (yet later) — #86 duty 2: the shop's "potion" button never mirrored `Run.buy()`'s own inventory-full refusal.** Last commit (`9aa6a79`) was duty 3, so this run took duty 2. `shop_slot_disabled()`
   (`views/location_3d.gd`) got a deck-floor gate for "remove" items in an
   earlier duty-2 pass, and that fix's own comment claimed "Defaults keep
