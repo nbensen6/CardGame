@@ -358,6 +358,7 @@ func _init() -> void:
 	_test_backlog86_meld_carries_rarity_foil_borderless_upgraded_and_status()
 	_test_backlog86_campfire_refuses_to_sharpen_a_melded_card_that_inherited_upgraded()
 	_test_backlog86_meld_carries_every_card_field_it_is_not_deliberately_dropping()
+	_test_backlog86_meld_pull_ally_takes_the_better_reach_not_the_sum()
 	_test_backlog86_card_fx_carries_every_non_numeric_effect_field()
 	_test_satchel_charge_detonates()
 	_test_rhythm_builds_and_scales()
@@ -7308,6 +7309,37 @@ func _test_backlog86_meld_carries_every_card_field_it_is_not_deliberately_droppi
 		"every meldable Card field survives a fuse without an explicit, documented exclusion — dropped: %s" % [dropped])
 	_expect(checked.size() >= 60,
 		"the reflection sweep actually covered a realistic number of fields (%d) rather than an empty or broken property list" % checked.size())
+
+
+## backlog #86 duty 3 (verify a mechanic actually works): _meld_cards() sums
+## almost every numeric field, but a handful — pull_ally, cheapen_amount,
+## timed_hits, hits — deliberately use maxi() instead, one line apart from the
+## summed fields around them (combat.gd's own doc comment: "one-of-a-kind
+## effects... take whichever card has one"). The reflection sweep just above
+## sets every int field to 3 and 5 on BOTH source cards and only checks the
+## fused value is nonzero, so it can't tell maxi(3,5)=5 apart from 3+5=8 — a
+## regression that silently changed one of these four maxi()s to a plain sum
+## (the dominant pattern one line away) would pass every existing meld test.
+## Four real cards carry pull_ally — grappling_arm, chain_lift, tongue_grab,
+## guide_rope — and none of chain_lift/tongue_grab/guide_rope had ever
+## appeared in this file before; the only existing pull_ally meld test pairs
+## grappling_arm against a card whose pull_ally is the 0 default, where
+## maxi() and + are indistinguishable.
+func _test_backlog86_meld_pull_ally_takes_the_better_reach_not_the_sum() -> void:
+	var chain_lift := Content.make_card("chain_lift")  # pull_ally 5, ally_block 5
+	var tongue_grab := Content.make_card("tongue_grab")  # pull_ally 4, rhythm 1
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var fused := combat._meld_cards(chain_lift, tongue_grab)
+	_expect(fused.pull_ally == 5,
+		"melding chain_lift (pull_ally 5) into tongue_grab (pull_ally 4) must take the BETTER reach (5), not their sum (9) — pull_ally is one of the deliberate maxi() fields, not a summed one, got %d" % fused.pull_ally)
+	_expect(fused.ally_block == 5 and fused.rhythm == 1,
+		"sanity check the fused card still sums the fields that ARE additive (ally_block off chain_lift, rhythm off tongue_grab) so this test is proving the maxi() exception, not a broken meld generally — got ally_block=%d rhythm=%d" % [fused.ally_block, fused.rhythm])
+
+	# and the reverse order, since a swapped a/b is exactly how a maxi()->sum
+	# regression could hide if only one argument order were ever exercised
+	var fused_swapped := combat._meld_cards(tongue_grab, chain_lift)
+	_expect(fused_swapped.pull_ally == 5,
+		"pull_ally's maxi() must be order-independent — melding tongue_grab into chain_lift must still yield 5, got %d" % fused_swapped.pull_ally)
 
 
 ## backlog #86 duty 2: GameHost's per-card `fx` dict — "the non-numeric

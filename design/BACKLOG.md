@@ -2782,6 +2782,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-16 (the very latest) — #86 duty 3: proved meld's `pull_ally` takes
+  the better reach, not the sum, and that nothing was actually checking that.**
+  Last commit (`0aa2455`) was duty 2, so this run took duty 3. `Combat.
+  _meld_cards()` sums almost every numeric field but deliberately uses
+  `maxi()` for four of them — `pull_ally`, `cheapen_amount`, `timed_hits`,
+  `hits` — one line apart from the summed fields around them, per the
+  function's own comment ("one-of-a-kind effects... take whichever card has
+  one"). The existing reflection-sweep test that checks every Card field
+  survives a meld sets every int field to 3 and 5 on both source cards and
+  only asserts the result is nonzero, so it can't tell `maxi(3,5)=5` apart
+  from `3+5=8` — it would not have caught a `maxi()`→`+` regression on any of
+  the four. Worse, three of the four real cards that carry `pull_ally`
+  (`chain_lift`, `tongue_grab`, `guide_rope`) had never appeared in
+  `run_tests.gd` at all; the one existing pull_ally meld test only ever pairs
+  `grappling_arm` against a card whose `pull_ally` is the 0 default, where
+  `maxi()` and `+` give the same answer. Added a test melding `chain_lift`
+  (pull_ally 5) into `tongue_grab` (pull_ally 4), both orders, asserting the
+  fused card gets 5 (the better reach) and not 9 (the sum) — plus a sanity
+  check that the *additive* fields on the same fuse (`ally_block`, `rhythm`)
+  still sum correctly, so the test proves the exception rather than a broken
+  meld generally. Verified the test is real, not a tautology: temporarily
+  changed the `maxi()` to `+` in `combat.gd`, reran the suite, watched it fail
+  with "got 9" on both direction checks, then reverted. `cheapen_amount` and
+  `timed_hits` have the identical shape (their own real cards —
+  `satchel_charge`, `bomb`, `overload_engine` for `timed_hits` — are also
+  never melded against a nonzero sibling anywhere in the suite) and are
+  worth the same treatment in a future duty-3 run, but one mechanic per run.
+
 - **2026-09-16 (the very latest) — #86 duty 2: Retain/Innate/Ethereal silently
   vanished from six real cards' live faces the moment they paired with any
   other live-tracked effect.** Last commit (`7433840`) was duty 3, so this run
