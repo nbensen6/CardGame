@@ -271,7 +271,8 @@ func to_dict() -> Dictionary:
 
 ## A sharpened copy (campfire). One generic rule so every card — including ones
 ## we invent later — can be upgraded without hand-authoring a second version:
-## bump whatever numbers the card actually uses; if it has none, make it cheaper.
+## bump whatever numbers the card actually uses; if it has none, make it
+## cheaper; if it's already free too, let it stay in hand instead.
 func upgraded_copy() -> Card:
 	var d := to_dict()
 	if upgraded:
@@ -343,8 +344,22 @@ func upgraded_copy() -> Card:
 	if bool(d.get("cheapen_pick", false)) and int(d["cheapen_amount"]) > 0:
 		d["cheapen_amount"] = int(d["cheapen_amount"]) + 1
 		bumped = true
-	if not bumped and int(d["cost"]) > 0:
-		d["cost"] = int(d["cost"]) - 1  # nothing to scale — make it cheaper instead
+	# backlog #86 duty 2: a 0-cost card with nothing bumpable (Build Grapple,
+	# Build Bomb, Build Winch, Waymark — a bare `create`/`topdeck` at cost 0,
+	# no numeric field, no rule_upgrade) fell through BOTH branches: `bumped`
+	# stayed false, and the cost-discount fallback's own `cost > 0` guard also
+	# refused to fire since there was nothing left to discount. The card came
+	# back byte-for-byte identical (same create/topdeck, same cost) except for
+	# the "+" and `upgraded = true` — which then permanently blocks the real
+	# fix, since an already-`upgraded` card can never be offered for sharpening
+	# again (Run.campfire_action) or re-rolled by a sharpen_card event. A
+	# player (or a "free" event sharpen) spent one of their two campfire
+	# actions on a card that came back doing exactly what it did before.
+	if not bumped:
+		if int(d["cost"]) > 0:
+			d["cost"] = int(d["cost"]) - 1  # nothing to scale — make it cheaper instead
+		elif not bool(d.get("retain", false)):
+			d["retain"] = true  # already as cheap as it gets — keep it in hand instead
 	d["name"] = String(d["name"]) + "+"
 	d["upgraded"] = true
 	return Card.from_dict(d)

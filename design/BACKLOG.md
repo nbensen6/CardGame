@@ -2782,7 +2782,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-16 (the very latest) — #86 duty 3: `attack_bonus`'s zero-floor
+- **2026-09-16 (the very latest) — #86 duty 2: campfire sharpen silently did
+  nothing to four real, reachable cards.** Last commit (`522c2ae`) was duty 3,
+  so this run took duty 2. `Card.upgraded_copy()`'s generic contract is "bump
+  whatever numbers the card actually uses; if it has none, make it cheaper"
+  — but `build_grapple` (in the Goblin Mech's starter deck, guaranteed every
+  Goblin Mech run), `build_bomb`, `build_winch` (Goblin Mech's reward pool)
+  and `waymark` (the global reward pool, any character) are all cost-0
+  skills whose only effect is a `create`/`topdeck` string field, with no
+  `rule_upgrade` authored for any of them. No bump loop in `upgraded_copy()`
+  touches a string field, so `bumped` stayed false; the cost-discount
+  fallback (`if not bumped and cost > 0: cost -= 1`) also refused to fire,
+  gated on `cost > 0`, and these are already 0. The card came back
+  byte-identical except for the name's "+" and `upgraded = true` — which
+  then permanently blocks the card from ever being offered for sharpening
+  again (`Run.campfire_action` refuses an already-`upgraded` card) or
+  re-rolled by an event's `sharpen_card` effect. A player spent one of their
+  two precious campfire actions, or a "free" event sharpen landed on one of
+  these by the RNG, and got nothing but cosmetic text, forever, with no
+  feedback that anything had gone wrong. Fix: extended the SAME generic
+  fallback (one rule, no per-card special-casing) — when nothing was bumped
+  and the card is already at cost 0, grant `retain` (stays in hand at end of
+  turn) instead of silently no-oping, unless it already has retain. Added
+  `_test_backlog86_upgrading_a_free_card_with_nothing_to_bump_grants_retain`,
+  which sharpens all four real cards by id (`Content.make_card`, not a
+  synthetic test card) and asserts each comes back with `retain == true`,
+  `cost` still 0, and its `create`/`topdeck` field untouched. Fresh
+  `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
+  Next `#86` turn is duty 3 (verify a mechanic actually works).
+
+- **2026-09-16 — #86 duty 3: `attack_bonus`'s zero-floor
   had only ever been proven for its energy/block siblings, never for
   itself.** Last commit (`6e1e36d`) was duty 2, so this run took duty 3.
   `Combat._init` threads three flat relic-derived modifiers through combat

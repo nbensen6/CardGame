@@ -163,6 +163,7 @@ func _init() -> void:
 	_test_backlog67_unmet_condition_never_costs_the_printed_numbers()
 	_test_backlog86_condition_bonus_grip_bumps_by_one_not_three_on_upgrade()
 	_test_backlog86_condition_bonus_grip_alone_bumps_and_skips_the_cost_discount()
+	_test_backlog86_upgrading_a_free_card_with_nothing_to_bump_grants_retain()
 	_test_backlog86_condition_bonus_grip_gates_preview_climb()
 	_test_backlog86_condition_bonus_grip_resolves_through_a_real_play()
 	_test_backlog86_condition_bonus_grip_skips_climb_bonus_when_base_grip_is_zero()
@@ -4264,6 +4265,28 @@ func _test_backlog86_condition_bonus_grip_alone_bumps_and_skips_the_cost_discoun
 	var up := card.upgraded_copy()
 	_expect(int(up.condition_bonus.get("grip", 0)) == 3 and up.cost == 2,
 		"a grip-only condition_bonus alone marks the card as bumped, skipping the cost-discount fallback -- the same rule a damage/block/ally_block-only condition bonus already gets")
+
+
+## Backlog #86 duty 2: a real, reachable gap in "if it has none, make it
+## cheaper" -- Build Grapple/Build Bomb/Build Winch (Goblin Mech's starter
+## deck and reward pool) and Waymark (global reward pool) are cost-0 skills
+## whose only effect is a `create`/`topdeck` string field, with no
+## rule_upgrade authored. No bump loop touches a string field, so `bumped`
+## stayed false; the cost-discount else-branch also refused, gated on
+## `cost > 0` and these are already 0. The card came back byte-identical
+## except for the "+" and `upgraded = true` -- which then blocks the card
+## from ever being offered for sharpening again (Run.campfire_action) or
+## re-rolled by a sharpen_card event. A player spent a scarce campfire
+## action, or a "free" event sharpen, on a card that came back doing exactly
+## what it did before.
+func _test_backlog86_upgrading_a_free_card_with_nothing_to_bump_grants_retain() -> void:
+	for id in ["build_grapple", "build_bomb", "build_winch", "waymark"]:
+		var card: Card = Content.make_card(id)
+		_expect(card.cost == 0 and not card.retain,
+			"%s must start at cost 0 with no retain, or this test proves nothing" % id)
+		var up := card.upgraded_copy()
+		_expect(up.retain and up.cost == 0 and up.create == card.create and up.topdeck == card.topdeck,
+			"%s+ has nothing to bump and is already free -- sharpening it must grant retain instead of silently doing nothing" % id)
 
 
 func _test_backlog86_condition_bonus_grip_gates_preview_climb() -> void:
