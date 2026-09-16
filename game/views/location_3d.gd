@@ -501,6 +501,8 @@ static func reward_header_text(node_type: String, encounter: int, total_encounte
 			title = "The elite falls."
 		"treasure":
 			title = "A cache in the rocks"
+		"event":
+			title = "A find on the road"
 		_:
 			title = "The beast falls."
 	var subtitle := ("Choose a RELIC — a lasting boon for the team."

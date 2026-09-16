@@ -1546,6 +1546,8 @@ func _init() -> void:
 	_test_backlog86_reward_header_text_names_a_felled_elite()
 	_test_backlog86_reward_header_text_names_a_treasure_cache()
 	_test_backlog86_reward_header_text_falls_back_to_a_felled_beast()
+	_test_backlog86_reward_header_text_names_an_event_find_not_a_felled_beast()
+	_test_backlog86_an_event_reward_keeps_node_type_event_into_the_reward_phase()
 	_test_backlog86_reward_header_text_subtitle_calls_out_a_relic()
 	_test_backlog86_reward_header_text_subtitle_calls_out_a_card()
 	_test_backlog86_reward_header_text_prompt_when_locked_in()
@@ -19718,6 +19720,49 @@ func _test_backlog86_reward_header_text_falls_back_to_a_felled_beast() -> void:
 	var h := Location3D.reward_header_text("fight", 1, 1, false, false, false, false, "Frog")
 	_expect(h["title"] == "The beast falls.",
 		"an ordinary fight node falls through the match's default branch to the generic beast headline")
+
+
+## backlog #86 duty 2: reward_header_text()'s match had a case for "boss",
+## "elite" and "treasure" but nothing for "event" -- so an event choice that
+## grants a card or relic (events.json's hollow_log, windy_ledge,
+## friendly_beetle, old_grapple_line, watchers_cairn, stranded_kite and
+## quiet_overhang all do) fell through to the same default branch a real
+## felled beast uses and told the player "The beast falls." on a node where
+## nothing was ever fought. game_host.gd already knows the difference -- its
+## own "felled" snapshot key is gated on node_type in COMBAT_NODE_TYPES, so it
+## is correctly omitted for an event reward -- but the sibling place that
+## decides the HEADLINE for that same distinction never got the matching
+## case. Same "two copies of one truth" shape this rotation keeps finding:
+## one side already knew, the other side never asked.
+func _test_backlog86_reward_header_text_names_an_event_find_not_a_felled_beast() -> void:
+	var h := Location3D.reward_header_text("event", 1, 1, false, false, false, false, "Frog")
+	_expect(h["title"] != "The beast falls." and h["title"] != "",
+		"an event's own reward (hollow_log's 'Rummage deeper' and six others) must not claim a beast was felled")
+
+
+## The pure-function test above proves the fix in isolation; this proves the
+## real path that feeds it actually produces node_type == "event" once a
+## live event choice grants a reward -- pick_event() -> _begin_reward() never
+## touches node_type, so it should still read "event" once phase flips to
+## REWARD, the same value _render_reward() forwards into reward_header_text().
+func _test_backlog86_an_event_reward_keeps_node_type_event_into_the_reward_phase() -> void:
+	var run := Run.new([_deck_of(_slash, 8), _deck_of(_slash, 8)], ["A", "B"], 33,
+		[{"character": "frog"}, {"character": "goblin_mech"}], 0)
+	run.start()
+	run.map_row = 0
+	run.node_type = "event"
+	run.event = Content.make_event("hollow_log")
+	run.phase = Run.Phase.EVENT
+	var choices: Array = run.event.get("choices", [])
+	var rummage_index := -1
+	for i in range(choices.size()):
+		if String((choices[i] as Dictionary).get("label", "")) == "Rummage deeper":
+			rummage_index = i
+			break
+	_expect(rummage_index >= 0, "hollow_log's 'Rummage deeper' choice (the reward branch) must exist to test it")
+	var picked := run.pick_event(rummage_index)
+	_expect(picked and run.phase == Run.Phase.REWARD and run.node_type == "event",
+		"picking an event's reward choice must land in the reward phase with node_type still 'event', not silently reassigned")
 
 
 func _test_backlog86_reward_header_text_subtitle_calls_out_a_relic() -> void:

@@ -16806,3 +16806,44 @@ Newest first. One line per finished item: what, and anything surprising.
   pure `/core` state, identical harness to the neighbouring Poison/Frail
   tests. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL
   TESTS PASSED. Next `#86` turn is duty 2 (find an error and resolve it).
+
+- **2026-09-16 — #86 duty 2: an event's own card/relic reward told the player
+  "The beast falls." on a node where nothing was ever fought.** Last commit
+  (`03bc9da`) was duty 3, so this run took duty 2. Delegated the hunt to an
+  Explore agent scoped to files the recent rotation hadn't picked over as
+  hard (run.gd, the session/net layer, and pure-logic corners of views/ui
+  not already named in this rotation's own "already hardened" list), since
+  most obvious candidates in the well-trodden combat/climb surface keep
+  turning out to be already fixed. It found `Location3D.reward_header_text()`
+  (`views/location_3d.gd`): its `match node_type:` names `"boss"`, `"elite"`
+  and `"treasure"`, with everything else falling to a `_` default written for
+  an ordinary felled `"fight"` node ("The beast falls." — there's already a
+  test proving that fallback for `"fight"` specifically). But seven real
+  events in `data/events.json` (`hollow_log`, `windy_ledge`,
+  `friendly_beetle`, `old_grapple_line`, `watchers_cairn`, `stranded_kite`,
+  `quiet_overhang`) have a choice whose `effects` grant a card or relic
+  reward, and `Run.pick_event()` → `_begin_reward()` never touches
+  `node_type` when that happens — it stays `"event"` all the way into the
+  reward phase (deliberately: `game_host.gd`'s own `"felled"` snapshot key
+  is correctly gated on `node_type in COMBAT_NODE_TYPES` and omitted for an
+  event reward already). So the reward screen for a real, reachable event
+  choice fell through the same default branch a felled beast uses and lied
+  about what just happened — the same "two copies of one truth" shape this
+  rotation keeps finding: one side of the code already knew the distinction,
+  the sibling side that decides the headline text never got it. Wrote the
+  test first (`_test_backlog86_reward_header_text_names_an_event_find_not_a_felled_beast`,
+  calling the pure function directly the same way the existing `"fight"`
+  test does) and watched it fail against the unfixed function. Also added a
+  second test driving the real path end to end
+  (`_test_backlog86_an_event_reward_keeps_node_type_event_into_the_reward_phase`
+  — builds a real `Run`, forces `hollow_log`, picks its "Rummage deeper"
+  reward choice through the real `pick_event()`, and asserts `node_type` is
+  still `"event"` once `phase` flips to `REWARD`) to prove the upstream state
+  was never the problem, only the header text — that one passed even before
+  the fix, confirming the bug was isolated to the one `match` statement. Fix:
+  added an explicit `"event"` case (`"A find on the road"`) to
+  `reward_header_text()`'s match, parallel to the existing `"treasure"` case.
+  No screen needed — `reward_header_text()` is a pure static function over
+  plain values, same harness as every other test on it. Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86`
+  turn is duty 3 (verify a mechanic actually works).
