@@ -2812,6 +2812,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-17 — #86 duty 2: fixed a resumed SOLO run showing both hunters
+  blank (character + portrait) on every non-combat screen.** Last commit
+  (`8e68ab6`) was duty 3, so this run took duty 2. `GameHost._slot_char()`
+  checked `_solo` before `_run != null`, so once a run existed it still
+  returned the lobby-time `_solo_chars` mirror unconditionally instead of
+  falling through to `_run.player_passives` (already the documented source of
+  truth, and already preferred first on the co-op branch for exactly this
+  reason after backlog #86's earlier reconnect fix). `resume_run()` sets
+  `_run` from the save but never re-populates `_solo_chars`, which is left at
+  its `["", ""]` default — so a fresh host resuming a saved solo run read the
+  never-set mirror and reported `""` for character and portrait on both
+  hunters everywhere except mid-combat (which reads `PlayerState.character`
+  directly, so it never caught it). Same "two copies of one truth" shape as
+  the earlier co-op reconnect bug, just the solo side of that fix was never
+  applied. An Explore agent scoped to `/core`, `/session`, `/net` found and
+  reproduced this headlessly before any code changed. Fix: reordered
+  `_slot_char()` to check `_run != null` first (using `player_passives`)
+  regardless of `_solo`/co-op, falling back to the lobby mirrors only before
+  a run exists — symmetric with the co-op branch, and it fixes both the solo
+  lobby-select path (unchanged) and the solo resume path (now correct) with
+  one change. Added `_test_backlog86_solo_resume_keeps_the_characters_and_portraits`,
+  which autosaves a two-character solo run, resumes it into a fresh host, and
+  asserts the client's shared snapshot for both slots. Confirmed the test is
+  real: reverted just the `game_host.gd` fix (kept the new test) and both new
+  assertions failed as expected with the rest of the suite green; restored the
+  fix and the full suite passed again. `run_tests.gd` green, `ALL TESTS
+  PASSED`.
+
 - **2026-09-17 — #86 duty 3: proved a fumbled timed card doesn't quietly count
   toward `nth_card` conditions (dagger/brace), the untested sibling of the
   Rhythm fumble test right beside it.** Last commit (`e09f7f8`) was duty 2, so

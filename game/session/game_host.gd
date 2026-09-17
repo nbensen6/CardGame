@@ -1148,20 +1148,25 @@ static func _card_icon(c: Card) -> String:
 
 ## The character id chosen for a hunter slot (works in solo and co-op).
 func _slot_char(slot: int) -> String:
-	if _solo:
-		return String(_solo_chars[slot]) if slot < _solo_chars.size() else ""
 	# Once a run exists, _run.player_passives (set once at run start, indexed
-	# by SLOT) is the source of truth. _character_of is a peer_id-keyed lobby
-	# mirror of the same fact, and _reclaim_slot migrates _peers/_slot_of to
-	# a reconnecting peer's NEW id without touching it -- so after a mid-run
-	# drop and rejoin it's still keyed by the dead peer id and returns "" for
-	# the reconnected slot (the exact "every hunter but the Frog rendered as
-	# the Frog's bunny" bug above, this time from a reconnect instead of a
-	# first join).
+	# by SLOT) is the source of truth. _character_of/_solo_chars are lobby-time
+	# mirrors of the same fact, used only before a run exists to pick, and
+	# never touched again -- so after a mid-run drop and rejoin _character_of
+	# is still keyed by the dead peer id (the exact "every hunter but the Frog
+	# rendered as the Frog's bunny" bug above, this time from a reconnect
+	# instead of a first join), and after resume_run() loads a save, both
+	# _character_of and _solo_chars are still at their fresh, empty defaults
+	# (backlog #86 duty 2: resume_run() never populates either -- a resumed
+	# SOLO run used to read the never-set _solo_chars unconditionally, before
+	# this check even ran, and showed a blank character/portrait everywhere
+	# except mid-combat, which reads PlayerState.character directly instead).
+	# Checking _run first fixes both paths the same way.
 	if _run != null:
 		if slot < _run.player_passives.size():
 			return String((_run.player_passives[slot] as Dictionary).get("character", ""))
 		return ""
+	if _solo:
+		return String(_solo_chars[slot]) if slot < _solo_chars.size() else ""
 	if slot < _peers.size():
 		return String(_character_of.get(_peers[slot], ""))
 	return ""

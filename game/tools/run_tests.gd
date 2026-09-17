@@ -670,6 +670,7 @@ func _init() -> void:
 	_test_lobby_drop_reindexes_the_remaining_peer_and_frees_the_slot()
 	_test_backlog86_pause_blocks_shop_commands_and_reconnect_resumes_them()
 	_test_host_autosaves_and_resumes()
+	_test_backlog86_solo_resume_keeps_the_characters_and_portraits()
 	_test_host_autosaves_and_resumes_mid_combat()
 	_test_backlog86_coop_host_never_autosaves()
 	_test_solo_controls_both_hunters()
@@ -14076,6 +14077,46 @@ func _test_host_autosaves_and_resumes() -> void:
 	# would leave the player staring at a character-select screen.
 	var reached: bool = String(c2.shared.get("phase", "")) != "select" 		and int(c2.shared.get("gold", 0)) == 210
 	_expect(same and reached, "a saved run resumes in a fresh host and reaches the client")
+	RunSave.clear()
+
+
+## Backlog #86 duty 2 ("two copies of one truth"): _slot_char() used to check
+## `_solo` before `_run != null`, so a SOLO resume returned the never-populated
+## `_solo_chars` unconditionally -- resume_run() sets `_run` (the real source of
+## truth, per _slot_char()'s own comment) but never touches `_solo_chars`. Every
+## non-combat screen (map, shop, campfire, event, reward) reads character and
+## portrait through _slot_char(), so a resumed solo run showed BOTH hunters
+## blank everywhere except mid-combat, which reads PlayerState.character
+## directly instead and so never caught it. Same shape, same fix, as the
+## co-op branch already got for a reconnect.
+func _test_backlog86_solo_resume_keeps_the_characters_and_portraits() -> void:
+	RunSave.clear()
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, true)
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	host._broadcast_state()  # the autosave rides on this, unasked
+	var before0: Dictionary = c.shared["players"][0]
+	var before1: Dictionary = c.shared["players"][1]
+	_expect(String(before0["character"]) == "frog" and String(before1["character"]) == "goblin_mech",
+		"before resuming, both hunters' characters are already right (sanity check)")
+
+	var t2 := LocalTransport.new()
+	var host2 := GameHost.new(t2, 0, 2, true)
+	_kept.append(host2)
+	var c2 := GameClient.new(t2, 1)
+	c2.join()
+	host2.resume_run(RunSave.load_run())
+	var after0: Dictionary = c2.shared["players"][0]
+	var after1: Dictionary = c2.shared["players"][1]
+	_expect(String(after0["character"]) == "frog" and String(after1["character"]) == "goblin_mech",
+		"a resumed solo run still reports the right character per slot, not blank")
+	_expect(String(after0["portrait"]) == Content.character_portrait("frog")
+		and String(after1["portrait"]) == Content.character_portrait("goblin_mech"),
+		"a resumed solo run still reports the right portrait per slot, not blank")
 	RunSave.clear()
 
 
