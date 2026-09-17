@@ -332,13 +332,27 @@ static func build_boss(id: String) -> Boss:
 	var bd: Dictionary = bosses.get(id, {})
 	var b := Boss.new(String(bd.get("name", "Titan")), int(bd.get("max_hp", 1)))
 	b.id = id
-	b.moves = bd.get("moves", [])
+	# backlog #86 duty 2: bd is a direct reference into Content._cache (the
+	# parsed bosses.json, kept for the life of the process — see _read_json).
+	# Dictionary.get() on an Array/Dictionary-valued key hands back that SAME
+	# object, not a copy. Every sibling accessor in this file duplicates what
+	# it returns (make_card, make_relic, make_enchant, make_potion, make_event,
+	# make_boon) — this was the one place that didn't, so every Boss ever built
+	# for a given beast id (this fight, a rematch, a throwaway build for
+	# _boss_art_per_act()) shared the exact same moves/hurt_moves/ledges/limiter
+	# objects. Nothing mutates them in place today, so it's never shown up as a
+	# wrong answer in play — but it is a live landmine for the next feature that
+	# does (a "shuffle my pattern" move, a ledge removed mid-fight): that would
+	# silently corrupt every other instance of the same beast for the rest of
+	# the process. duplicate(true) to match make_event/make_boon's depth, since
+	# a move can nest its own "fallback" dictionary (Boss.current_move()).
+	b.moves = (bd.get("moves", []) as Array).duplicate(true)
 	b.hurt_pct = float(bd.get("hurt_pct", 0.0))     # backlog #44: second pattern below this HP fraction
-	b.hurt_moves = bd.get("hurt_moves", [])
+	b.hurt_moves = (bd.get("hurt_moves", []) as Array).duplicate(true)
 	b.weak_point_height = int(bd.get("weak_point_height", 0))
-	b.ledges = bd.get("ledges", [])
+	b.ledges = (bd.get("ledges", []) as Array).duplicate(true)
 	b.weak_point_threshold = int(bd.get("weak_point_threshold", 0))
-	b.limiter = bd.get("limiter", {})
+	b.limiter = (bd.get("limiter", {}) as Dictionary).duplicate(true)
 	b.thorns = int(bd.get("thorns", 0))      # backlog #36: a spined beast that bites back
 	b.artifact = int(bd.get("artifact", 0))  # backlog #36: a warded beast that resists Expose/Poison/Frail
 	b.art = String(bd.get("art", ""))
@@ -365,7 +379,7 @@ static func build_boss_adds(id: String) -> Array:
 		var ad: Dictionary = raw
 		var a := Boss.new(String(ad.get("name", "Add")), int(ad.get("max_hp", 1)))
 		a.id = String(ad.get("id", ""))
-		a.moves = ad.get("moves", [])
+		a.moves = (ad.get("moves", []) as Array).duplicate(true)  # backlog #86 duty 2: same cache-aliasing fix as build_boss() above
 		a.art = String(ad.get("art", ""))
 		a.thorns = int(ad.get("thorns", 0))  # backlog #86 duty 2: was parsed for
 		# the main boss (build_boss()) but never for an add, so _damage_add()'s

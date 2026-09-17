@@ -2812,6 +2812,37 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-17 — #86 duty 2: `Content.build_boss()`/`build_boss_adds()` handed
+  out moves/ledges/limiter dictionaries aliased straight into the process-
+  lifetime content cache, instead of copies.** Last commit (`e9e21ad`) was
+  duty 3, so this run took duty 2. `_read_json()` parses `bosses.json` once
+  and keeps it in `Content._cache` for the life of the process; `build_boss`'s
+  `bd.get("moves", [])` (and `hurt_moves`/`ledges`/`limiter`, and
+  `build_boss_adds`'s own `ad.get("moves", [])`) handed back that cached
+  Array/Dictionary object itself, not a copy — Dictionary.get() on a
+  container-valued key never copies. Every sibling accessor in the same file
+  (`make_card`, `make_relic`, `make_enchant`, `make_potion`, `make_event`,
+  `make_boon`) duplicates what it returns; these two were the outliers. The
+  practical effect: every `Boss` ever built for one beast id — this fight, a
+  rematch, a throwaway build like `game_host._boss_art_per_act()` — shared the
+  literal same moves/ledges/limiter objects. Nothing in combat.gd or boss.gd
+  currently mutates those in place (`advance_move()` only bumps an index,
+  `shift_sigil` only reassigns the scalar `weak_point_height`), so this was
+  never a live wrong-answer bug, only a landmine for the next feature that
+  edits its own pattern in place — flagging that honestly rather than
+  overclaiming a manifesting bug. An Explore agent spent a full pass over
+  content.gd, run.gd, game_host.gd and game/net/*.gd first and found nothing
+  else; this was its top (and only) candidate. Fix: `.duplicate(true)` on all
+  five assignments, matching `make_event`/`make_boon`'s depth (a move can nest
+  its own "fallback" dict). Added
+  `_test_build_boss_moves_ledges_limiter_are_copies_not_cache_aliases`, which
+  builds the same beast twice, mutates one instance's moves/ledges/limiter in
+  place, and asserts the second instance is untouched; confirmed load-bearing
+  by stashing just the `content.gd` fix and re-running — all four new
+  assertions failed exactly as expected, rest of the suite stayed green;
+  restored the fix. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED.
+
 - **2026-09-17 — #86 duty 3: proved `location_3d.gd`'s own `_hex_x` places
   reward-screen ground tiles correctly — a second, never-tested copy of the
   formula `overworld_3d.gd`'s `_hex_x` already has six tests for.** Last

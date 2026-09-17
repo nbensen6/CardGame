@@ -214,6 +214,7 @@ func _init() -> void:
 	_test_shop_prices_scale_with_card_rarity()
 	_test_shop_guarantees_a_rare_card_slot()
 	_test_content_pools_are_copies()
+	_test_build_boss_moves_ledges_limiter_are_copies_not_cache_aliases()
 	_test_reward_pool_prefers_a_real_characters_own_pool_over_the_shared_fallback()
 	_test_shop_stock_for_a_real_character_is_scoped_to_their_own_pool()
 	_test_status_cards_never_offered_as_a_reward()
@@ -5602,6 +5603,42 @@ func _test_content_pools_are_copies() -> void:
 		and Content.beast_pool("fight").size() > 0
 		and Content.reward_pool("frog").size() > 0,
 		"content pools hand out copies — callers can filter without draining the game")
+
+
+## Backlog #86 duty 2: build_boss()/build_boss_adds() read moves/hurt_moves/
+## ledges/limiter straight off `bd`/`ad` -- a Dictionary sitting inside
+## Content._cache, the parsed bosses.json kept alive for the whole process
+## (_read_json). Dictionary.get() on an Array/Dictionary-valued key hands back
+## that SAME object, not a copy -- every sibling accessor here duplicates what
+## it returns (make_card, make_relic, make_enchant, make_potion, make_event,
+## make_boon; see _test_content_pools_are_copies above for the exact shape of
+## bug this guards against), but build_boss()/build_boss_adds() were the one
+## place that didn't. Nothing mutates a Boss's moves/ledges/limiter in place
+## today, so this never produced a visibly wrong fight -- but two Boss
+## instances built for the same beast id (a rematch, a same-fight add sharing
+## its parent's id, a throwaway build like game_host._boss_art_per_act())
+## shared the literal same Array/Dictionary objects, so a future feature that
+## edits its own pattern in place (a "scramble the pattern" move, a ledge
+## consumed mid-fight) would silently corrupt every other instance of that
+## beast for the rest of the process.
+func _test_build_boss_moves_ledges_limiter_are_copies_not_cache_aliases() -> void:
+	var a := Content.build_boss("stone_warden")
+	var b := Content.build_boss("stone_warden")
+	a.moves.append({"type": "attack", "value": 999})
+	a.hurt_moves.append({"type": "attack", "value": 999})
+	a.ledges.append(999)
+	a.limiter["value"] = 999
+	_expect(not b.moves.has({"type": "attack", "value": 999}),
+		"mutating one Boss's moves must not leak into a second build_boss() call for the same beast")
+	_expect(not b.ledges.has(999),
+		"mutating one Boss's ledges must not leak into a second build_boss() call for the same beast")
+	_expect(int(b.limiter.get("value", 0)) != 999,
+		"mutating one Boss's limiter must not leak into a second build_boss() call for the same beast")
+	var add1: Boss = Content.build_boss_adds("root_lurker")[0]
+	var add2: Boss = Content.build_boss_adds("root_lurker")[0]
+	add1.moves.append({"type": "attack", "value": 999})
+	_expect(not add2.moves.has({"type": "attack", "value": 999}),
+		"mutating one add's moves must not leak into a second build_boss_adds() call for the same beast")
 
 
 ## Backlog #86 duty 3: Content.reward_pool()'s own comment promises "a
