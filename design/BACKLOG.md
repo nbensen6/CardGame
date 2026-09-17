@@ -2812,6 +2812,35 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-17 — #86 duty 3: proved a fumbled timed card doesn't quietly count
+  toward `nth_card` conditions (dagger/brace), the untested sibling of the
+  Rhythm fumble test right beside it.** Last commit (`e09f7f8`) was duty 2, so
+  this run took duty 3. `player_state.gd`'s own doc comment on
+  `cards_played_this_turn` claims it "counts only cards that actually
+  resolved, same 'earlier plays only' idiom `play_counts` already uses" — that
+  promise rests on the same early-return ordering in `combat.gd`'s fumble path
+  (the card slips away at `combat.gd:883-886`, before the counter's bump at
+  `:941-942`) that `_test_backlog86_fumbled_timed_card_does_not_build_rhythm`
+  already proved for Rhythm, but nothing had ever proved the identical thing
+  for `nth_card`. Delegated the hunt for a genuinely untested mechanic to an
+  Explore agent scoped away from the long list of things this rotation has
+  already found and fixed; it found this exact gap. Added
+  `_test_backlog86_fumbled_timed_card_does_not_count_toward_nth_card`: fumble
+  a Tongue Flick, then play three real Daggers (base 3, +3 on the 3rd card
+  this turn or later) and assert the damage sequence is 3/3/6 — the bonus
+  landing on the 3rd real card, not the 2nd, which is exactly where it would
+  land if the fumble had silently counted. Confirmed the test is real by
+  sabotaging `combat.gd` to bump `cards_played_this_turn` inside the fumble
+  branch (mirroring the realistic shape of this bug): both new assertions
+  failed as expected with the rest of the suite green, then reverted (`git
+  diff` on `combat.gd` clean afterward) and confirmed `run_tests.gd` passes
+  again. No production code changed — this run only adds coverage, per duty
+  3's own rule not to fake a test for something that needs a real fix
+  instead; the mechanic already works. No screen needed — pure `/core`
+  card-resolution logic, same headless harness as its Rhythm sibling. Fresh
+  `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
+  Next `#86` turn is duty 2 (find an error and resolve it).
+
 - **2026-09-17 — #86 duty 2: fixed `_bank_hp()` silently reviving a hunter who
   died in the same blow that won the fight.** Last commit (`f9924cb`) was
   duty 3, so this run took duty 2. A background hunt through `combat.gd`/

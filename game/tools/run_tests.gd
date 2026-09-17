@@ -366,6 +366,7 @@ func _init() -> void:
 	_test_satchel_charge_detonates()
 	_test_rhythm_builds_and_scales()
 	_test_backlog86_fumbled_timed_card_does_not_build_rhythm()
+	_test_backlog86_fumbled_timed_card_does_not_count_toward_nth_card()
 	_test_vine_weaver_poison_and_wound()
 	_test_backlog86_power_triggered_poison_lifts_the_vine_weaver_ally()
 	_test_backlog86_power_triggered_poison_lift_reaches_highest_climb()
@@ -7096,6 +7097,35 @@ func _test_backlog86_fumbled_timed_card_does_not_build_rhythm() -> void:
 	_expect(ps.rhythm == 0, "a fumbled timed card must not build Rhythm — only a LANDED one does")
 	_expect(ps.hand.is_empty() and ps.discard_pile.is_empty(),
 		"a fumbled timed card slips away entirely — it never reaches the discard pile either")
+
+
+## Backlog #86 duty 3 — the Rhythm sibling test above proves a fumbled timed
+## card doesn't build Rhythm; it doesn't prove the same early return
+## (combat.gd:883-886, before cards_played_this_turn's bump at :941-942)
+## also protects nth_card conditions (dagger/brace). player_state.gd's own
+## doc comment on cards_played_this_turn claims it "counts only cards that
+## actually resolved, same 'earlier plays only' idiom play_counts already
+## uses" — nothing has ever played a real card through a fumble and then
+## checked whether a LATER nth_card play still needed its own three real
+## plays, or whether the fumble quietly counted toward the total.
+func _test_backlog86_fumbled_timed_card_does_not_count_toward_nth_card() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	# dagger: base 3, +3 more on the 3rd card this turn or later
+	ps.hand = [_flick(), Content.make_card("dagger"), Content.make_card("dagger"), Content.make_card("dagger")]
+	ps.energy = 5
+	combat.play_card(0, 0, false)  # fumble the timing bar — flick slips away with no effect
+	_expect(ps.cards_played_this_turn == 0, "a fumbled timed card must not bump cards_played_this_turn")
+	var before: int = combat.boss.hp
+	combat.play_card(0, 0, true)  # 1st real card
+	var after1: int = combat.boss.hp
+	combat.play_card(0, 0, true)  # 2nd real card — if the fumble had counted, the bug would
+	# wrongly treat this as the 3rd card and grant the bonus here instead
+	var after2: int = combat.boss.hp
+	combat.play_card(0, 0, true)  # 3rd real card — the genuine nth_card trigger
+	var after3: int = combat.boss.hp
+	_expect(before - after1 == 3 and after1 - after2 == 3 and after2 - after3 == 6,
+		"nth_card's bonus fires on the 3rd REAL card played, not a card early because a fumble silently counted toward it")
 
 
 func _test_meld_carries_special_effects() -> void:
