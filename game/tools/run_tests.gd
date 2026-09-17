@@ -495,6 +495,8 @@ func _init() -> void:
 	_test_damage_to_add_reports_capped_damage_when_intangible_caps_the_hit()
 	_test_boss_hits_reports_only_what_gets_through_block()
 	_test_boss_hits_reports_nothing_when_fully_blocked()
+	_test_boss_attack_log_reports_real_damage_not_raw_swing()
+	_test_boss_attack_log_reports_zero_when_fully_blocked()
 	_test_wound_decay_limiter_sheds_poison()
 	_test_sigil_fatigue_limiter_punishes_camping()
 	_test_shift_sigil_resets_the_sigil_fatigue_clock()
@@ -10808,6 +10810,45 @@ func _test_boss_hits_reports_nothing_when_fully_blocked() -> void:
 	combat.end_turn(1)
 	_expect(events.size() == 1 and int(events[0]["amount"]) == 0,
 		"a fully-blocked boss hit reports zero through MOMENT_DAMAGE_TAKEN, not the move's raw value")
+
+
+## backlog #86 duty 2 — fixing MOMENT_DAMAGE_TAKEN above (the two tests just
+## above this one) was not the whole gap: `_boss_hits()` computed the real,
+## post-mitigation damage into a local `dealt` and then discarded it, because
+## the function returned nothing. Every caller in _enemy_turn() still logged
+## its own raw pre-mitigation swing straight into the player-facing
+## play-by-play (`_log("... attacks ... for %d" % dmg)`) — the exact "told
+## more than actually reached HP" bug _damage_boss()'s own docstring already
+## named, just unmirrored onto the boss-hits-hunter direction. `combat.log`
+## is what game_host.gd forwards verbatim to every client (`s["log"]`), so
+## this is the actual text a player reads, not an internal-only number.
+func _test_boss_attack_log_reports_real_damage_not_raw_swing() -> void:
+	var boss := _dummy_boss(300, 8)  # boss attacks for 8 every turn
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.players[0].combatant.block = 5  # 5 of the 8 absorbed, 3 gets through
+	combat.end_turn(0)
+	combat.end_turn(1)
+	# The attack's own log line is fired inside _enemy_turn(), before that same
+	# call chains into _begin_round()'s own "— Round N —" line right after --
+	# same reasoning as _test_power_block_log_reports_real_dexterity_lifted_
+	# amount_not_raw_value above, so the attack's line is second-to-last.
+	var attack_line: String = combat.log[-2]
+	_expect(attack_line.find("for 3.") != -1 and attack_line.find("for 8.") == -1,
+		"the attack log must say what actually reached HP (3), not the raw swing (8): got '%s'" % attack_line)
+
+
+## Same gap, full mitigation: a Block-swallowed boss hit must log 0, not the
+## move's raw value — the log-text sibling of
+## _test_boss_hits_reports_nothing_when_fully_blocked above.
+func _test_boss_attack_log_reports_zero_when_fully_blocked() -> void:
+	var boss := _dummy_boss(300, 8)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.players[0].combatant.block = 20  # more than enough to eat the whole 8
+	combat.end_turn(0)
+	combat.end_turn(1)
+	var attack_line: String = combat.log[-2]
+	_expect(attack_line.find("for 0.") != -1 and attack_line.find("for 8.") == -1,
+		"a fully-blocked boss attack must log 0, not the raw swing (8): got '%s'" % attack_line)
 
 
 func _test_wound_decay_limiter_sheds_poison() -> void:

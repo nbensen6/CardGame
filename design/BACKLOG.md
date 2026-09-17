@@ -2812,6 +2812,38 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-17 — #86 duty 2: the boss's own attack log told hunters they took
+  more damage than actually reached their HP.** Last commit (`6918b3c`) was
+  duty 3, so this run took duty 2. `combat.gd`'s `_boss_hits()` already
+  computed the real, post-mitigation `dealt` (via `predicted_damage()`) for
+  its internal `MOMENT_DAMAGE_TAKEN` hook — that half was fixed in an earlier
+  duty-2 pass — but the function was still `void`, so `dealt` was thrown away
+  and every caller in `_enemy_turn()`/`_adds_turn()` logged its own raw
+  pre-mitigation swing (`dmg`, `ldmg`) straight into `combat.log`, which
+  `game_host.gd` forwards verbatim to every client as the actual play-by-play
+  text. A hunter holding Block, Buffer, or Intangible against a boss
+  "attack"/"leech" move (and an add's own "attack") was told the full nominal
+  hit landed even when little or none did — exactly the bug `_damage_boss()`'s
+  own docstring already named and fixed for the other direction (hunter hits
+  boss), just never mirrored here. Two copies of one truth: `dealt` computed
+  correctly once, the log text never wired to it. Fix: `_boss_hits()` now
+  returns `dealt`; the single-target "attack" (main boss and add) and "leech"
+  call sites log the real value instead of the raw swing. Left `attack_all`/
+  `swipe_high`/`swipe_low`/`rift` logging their nominal swing, with a comment
+  explaining why: those moves can hit two hunters with different mitigation
+  each, so there is no single "actual damage" number to swap into one
+  aggregate log line — a real fix there needs a reformatted per-hunter
+  message, which is new scope, not this bug's fix. Added
+  `_test_boss_attack_log_reports_real_damage_not_raw_swing` and
+  `_test_boss_attack_log_reports_zero_when_fully_blocked` (log-text siblings
+  of the existing `_test_boss_hits_reports_only_what_gets_through_block`/
+  `_nothing_when_fully_blocked`, which only ever checked the internal moment,
+  never the log). Confirmed both are real by stashing just the `combat.gd`
+  fix and re-running: both failed with the exact old text (`"for 8."` instead
+  of `"for 3."`/`"for 0."`), rest of the suite green; restored the fix.
+  Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`:
+  ALL TESTS PASSED.
+
 - **2026-09-17 — #86 duty 2: fixed `"restart"` being the one `_on_command`
   branch that skipped the `paused` gate every other mutating command
   checks.** Last commit (`ef20e2a`) was duty 3, so this run took duty 2.

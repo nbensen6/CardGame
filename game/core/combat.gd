@@ -1627,7 +1627,17 @@ func boss_context() -> Dictionary:
 ## "rift" move (every _boss_hits() caller in _enemy_turn()/_adds_turn()) would
 ## have this moment overstate the hit exactly the way the player-hits-boss
 ## direction used to, before those two were fixed.
-func _boss_hits(ps: PlayerState, dmg: int, attacker: Combatant = null) -> void:
+##
+## backlog #86 duty 2 (second pass): fixing that moment wasn't the whole gap
+## -- `dealt` was computed correctly right here and then thrown away, because
+## this was a `void` function. Every caller still logged its own raw
+## pre-mitigation `dmg`/`dmg_all`/`dh`/`dl`/`dr` straight into the
+## player-facing play-by-play (`_log("... attacks ... for %d" % dmg)`), the
+## exact same "told more than actually reached HP" bug _damage_boss()'s own
+## docstring already named, just unmirrored onto this side. Now returns
+## `dealt` so a caller CAN report the truth; see _enemy_turn()/_adds_turn()
+## for the single-target callers that now do.
+func _boss_hits(ps: PlayerState, dmg: int, attacker: Combatant = null) -> int:
 	var atk: Combatant = attacker if attacker != null else boss
 	var was_dead := ps.combatant.is_dead()
 	var dealt := ps.combatant.predicted_damage(dmg)
@@ -1638,6 +1648,7 @@ func _boss_hits(ps: PlayerState, dmg: int, attacker: Combatant = null) -> void:
 	if ps.combatant.thorns > 0:
 		atk.take_damage(ps.combatant.thorns)
 		_log("%s's thorns bite back — %s takes %d." % [ps.combatant.name, atk.name, ps.combatant.thorns])
+	return dealt
 
 func _enemy_turn() -> void:
 	phase = Phase.ENEMY
@@ -1700,8 +1711,11 @@ func _enemy_turn() -> void:
 		"attack":
 			var dmg := value + boss.strength
 			var target: PlayerState = players[boss_target_index()]
-			_boss_hits(target, dmg)
-			_log("%s attacks %s for %d." % [boss.name, target.combatant.name, dmg])
+			# backlog #86 duty 2: log what _boss_hits() actually took off HP, not
+			# the raw pre-mitigation swing -- a hunter holding Block/Buffer/
+			# Intangible was told the full dmg landed even when little or none did.
+			var dealt := _boss_hits(target, dmg)
+			_log("%s attacks %s for %d." % [boss.name, target.combatant.name, dealt])
 		"leech":
 			var ldmg := value + boss.strength
 			var lt: PlayerState = players[boss_target_index()]
@@ -1732,9 +1746,12 @@ func _enemy_turn() -> void:
 			if not boss.is_dead():
 				var healed := mini(real_dmg, headroom)
 				boss.hp += healed
-				_log("%s drains %s for %d and recovers %d." % [boss.name, lt.combatant.name, ldmg, healed])
+				# backlog #86 duty 2: real_dmg, not the raw ldmg -- same gap as the
+				# "attack" case above, just unmirrored onto this log line even though
+				# the heal a few lines up already knew to use real_dmg.
+				_log("%s drains %s for %d and recovers %d." % [boss.name, lt.combatant.name, real_dmg, healed])
 			else:
-				_log("%s drains %s for %d but dies to the reflected thorns before it can recover." % [boss.name, lt.combatant.name, ldmg])
+				_log("%s drains %s for %d but dies to the reflected thorns before it can recover." % [boss.name, lt.combatant.name, real_dmg])
 		"attack_all":
 			var dmg_all := value + boss.strength
 			for ps in players:
@@ -1755,6 +1772,12 @@ func _enemy_turn() -> void:
 				# _check_end() gap fixed below for the other half of this bug.
 				if boss.is_dead():
 					break
+			# backlog #86 duty 2: same raw-swing-in-the-log gap as the single-target
+			# "attack"/"leech" cases above still applies here -- dmg_all is the
+			# nominal swing before either hunter's own Block/Buffer/Intangible, and
+			# the two hunters can mitigate it differently, so there is no single
+			# "actual damage" to swap in on one line -- a real fix needs a per-hunter
+			# message, not just a different variable, so it is left as dmg_all here.
 			_log("%s sweeps both hunters for %d and shakes them down a hold." % [boss.name, dmg_all])
 		"swipe_high":  # a lash along the flank — only hunters off the ground are hit
 			var dh := value + boss.strength
@@ -1768,6 +1791,9 @@ func _enemy_turn() -> void:
 			if caught_high.is_empty():
 				_log("%s lashes along its flank — nobody is clinging to it." % boss.name)
 			else:
+				# backlog #86 duty 2: same "no single actual number for multiple hunters"
+				# gap noted on "attack_all" above -- dh is the nominal swing, not
+				# necessarily what each caught hunter's own Block/Buffer/Intangible let through.
 				_log("%s lashes its flank for %d — %s caught on it." % [boss.name, dh, ", ".join(caught_high)])
 		"swipe_low":  # it stamps the ground — safe only if you're ON the beast
 			var dl := value + boss.strength
@@ -1781,6 +1807,7 @@ func _enemy_turn() -> void:
 			if caught_low.is_empty():
 				_log("%s stamps the ground — both hunters are above it." % boss.name)
 			else:
+				# backlog #86 duty 2: same gap as swipe_high above -- dl is the nominal swing.
 				_log("%s stamps for %d — %s still on the ground." % [boss.name, dl, ", ".join(caught_low)])
 		"rift":  # the further apart the hunters are, the worse it hurts — climb together
 			var gap: int = _rift_gap(players)
@@ -1789,6 +1816,8 @@ func _enemy_turn() -> void:
 				_boss_hits(ps3, dr)
 				if boss.is_dead():  # backlog #86 duty 2 — same lethal-Thorns-mid-loop gap
 					break
+			# backlog #86 duty 2: same gap as attack_all/swipe_* above -- dr is the
+			# nominal swing, not necessarily what each hunter's own mitigation let through.
 			_log("%s wrenches the hunters apart for %d (gap of %d)." % [boss.name, dr, gap])
 		"shift_sigil":  # the weak point moves — whatever you climbed is now wrong
 			var moved: int = clampi(value, 1, FOOTHOLD_MAX)
@@ -1902,8 +1931,9 @@ func _adds_turn(captured_moves: Array = []) -> void:
 			"attack":
 				var dmg := value + add.strength
 				var target: PlayerState = players[boss_target_index()]
-				_boss_hits(target, dmg, add)
-				_log("%s attacks %s for %d." % [add.name, target.combatant.name, dmg])
+				# backlog #86 duty 2: same fix as the main boss's own "attack" case.
+				var dealt := _boss_hits(target, dmg, add)
+				_log("%s attacks %s for %d." % [add.name, target.combatant.name, dealt])
 			"block":
 				add.gain_block(value)
 				_log("%s defends (+%d block)." % [add.name, value])
