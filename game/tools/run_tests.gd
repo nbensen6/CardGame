@@ -746,6 +746,8 @@ func _init() -> void:
 	_test_backlog59_scry_survives_playerstate_dict_round_trip()
 	_test_backlog59_scry_survives_mid_combat_save_and_load()
 	_test_backlog59_ally_sees_the_scry_reveal()
+	_test_backlog86_play_card_ignores_a_spoofed_slot()
+	_test_backlog86_end_turn_ignores_a_spoofed_slot()
 	_test_backlog86_second_scry_before_resolve_does_not_lose_the_first_batch()
 	_test_backlog86_ending_the_turn_does_not_strand_an_unresolved_scry()
 	_test_backlog86_peek_top_reshuffles_discard_mid_call()
@@ -15797,6 +15799,53 @@ func _test_backlog59_ally_sees_the_scry_reveal() -> void:
 	c0.resolve_scry([0])
 	_expect(c0.shared["players"][0]["scry_pending"].is_empty(),
 		"the owner resolving their own scry clears the pending reveal")
+
+
+## Backlog #86 duty 3: use_potion (#45) and resolve_scry (#59) both have a
+## dedicated test proving a co-op peer can't touch a teammate's state by
+## sending a "slot" that names them instead of the sender. play_card and
+## end_turn share the exact same guard -- both route through
+## _in_combat_action(_acting_slot(peer_id, command)) in game_host.gd -- but
+## nobody ever drove a real two-peer session at THEM, even though they are
+## the two commands the entire game runs on. If _acting_slot ever preferred a
+## command's claimed slot over the sender's real one, one hunter could play
+## cards straight out of their ally's hand.
+func _test_backlog86_play_card_ignores_a_spoofed_slot() -> void:
+	var s := _make_session()
+	var c1: GameClient = s["c1"]
+	var host: GameHost = s["host"]
+	var combat: Combat = host._run.combat
+	var energy0_before: int = combat.players[0].energy
+	var hand0_before: int = combat.players[0].hand.size()
+	var energy1_before: int = combat.players[1].energy
+	var hand1_before: int = combat.players[1].hand.size()
+	var idx := _first_playable_client(c1)
+	_expect(idx >= 0, "hunter 2 needs a playable card in hand for this test to mean anything")
+	# c1 claims slot 0 -- co-op ignores it and resolves to the SENDER's own slot (1).
+	c1.play_card(idx, true, 0)
+	_expect(combat.players[0].energy == energy0_before and combat.players[0].hand.size() == hand0_before,
+		"a spoofed slot can't spend a teammate's energy or touch their hand")
+	_expect(combat.players[1].energy < energy1_before and combat.players[1].hand.size() < hand1_before,
+		"the caller's own card played from their own hand instead")
+
+
+## Same guarantee, for end_turn: a spoofed slot must not end a teammate's turn
+## on their behalf. That would be worse than a no-op -- it would let one
+## hunter force the round to resolve (once _all_ended() sees both flags set)
+## without the real slot 0 ever having chosen to end their own turn.
+func _test_backlog86_end_turn_ignores_a_spoofed_slot() -> void:
+	var s := _make_session()
+	var c1: GameClient = s["c1"]
+	var host: GameHost = s["host"]
+	var combat: Combat = host._run.combat
+	# c1 claims slot 0 -- co-op ignores it and resolves to the SENDER's own slot (1).
+	c1.end_turn(0)
+	_expect(not combat.players[0].ended_turn,
+		"a spoofed slot can't end a teammate's turn")
+	_expect(combat.players[1].ended_turn,
+		"the caller's own turn ended instead")
+	_expect(combat.phase == Combat.Phase.PLAYERS,
+		"the round can't resolve while the real slot 0 hasn't ended their turn yet")
 
 
 ## Backlog #68 — Reaching into the draw pile: three operations besides drawing

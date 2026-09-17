@@ -2812,6 +2812,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-17 — #86 duty 3: proved play_card and end_turn are spoof-proof in
+  co-op, the same guarantee #45 (use_potion) and #59 (resolve_scry) already
+  had a dedicated test for.** Last commit (`c0b6445`) was duty 2, so this run
+  took duty 3. Surveyed the view layer for untested pure functions first
+  (`combat_3d.gd`, `location_3d.gd`, `overworld_3d.gd`, `run_map.gd`) — every
+  candidate from Nick's original "the jump mechanic" prompt and the obvious
+  follow-ons (`route_between_rungs`, `foothold_anchor`, `hop_arc`,
+  `_ensure_shop`, `_ensure_key_sources`, `_link`) already has a dedicated
+  `#86 duty 3` test from an earlier rotation. Found the gap instead in
+  `game_host.gd._acting_slot()`: every co-op command (`play_card`, `end_turn`,
+  `fall`, `use_potion`, `campfire`, `skip_reward`, `take_key`, `pick_card`)
+  carries an optional `slot` a malicious or buggy client could set to its
+  ally's slot instead of its own, and `_acting_slot` is the one line standing
+  between that and one hunter acting on the other's behalf. Only `use_potion`
+  and `resolve_scry` had a test proving the spoofed slot gets ignored —
+  `play_card` and `end_turn`, the two commands the entire game runs on, did
+  not, despite a comment elsewhere in `run_tests.gd` asserting they behave
+  the same way. Wrote `_test_backlog86_play_card_ignores_a_spoofed_slot` and
+  `_test_backlog86_end_turn_ignores_a_spoofed_slot` using the existing
+  `_make_session()` two-peer harness; confirmed both actually catch a
+  regression by temporarily making `_acting_slot` honor a claimed slot ≥ 0
+  before falling back to the sender's own (both new tests failed, along with
+  the pre-existing potion/scry tests, exactly as expected), then reverted
+  that and confirmed `run_tests.gd` passes clean with the real code. No
+  production code changed — this run only adds coverage, per duty 3's own
+  rule not to fake a test for something that needs a real fix instead. The
+  guarantee held; nothing was broken.
+
 - **2026-09-17 — #86 duty 2: a living add's own conditional ("when") move was
   re-read live inside `_adds_turn()`, AFTER the main boss's own move that same
   turn could already have changed the board it reacts to.** Last commit
