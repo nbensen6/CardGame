@@ -17967,3 +17967,40 @@ Newest first. One line per finished item: what, and anything surprising.
   test beside it. Fresh `--import`, headless, Godot 4.7.1-stable,
   `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2 (find an error
   and resolve it).
+
+- **2026-09-17 — #86 duty 2: `game_host.gd`'s `weak_point_threshold` snapshot
+  ignored "0 = no limit" and kept adding a threshold relic's flat bonus
+  regardless.** Last commit (`ae738af`) was duty 3, so this run took duty 2.
+  A prior duty-2 pass (same file, `_test_backlog86_weak_point_threshold_
+  snapshot_matches_the_real_buck_threshold`) had already fixed this exact
+  line to forward `boss.weak_point_threshold + relic_totals().threshold`
+  instead of the bare data value — but that fix's own test asserts
+  `data_value > 0` as a precondition, so it never exercised the OTHER half
+  of the real rule: `Combat._check_weakpoint_buck()` returns immediately on
+  `weak_point_threshold <= 0` (Boss.gd's own field comment: "0 = no limit"),
+  before `_mod("threshold")` is even read — already proven by
+  `_test_backlog86_weakpoint_buck_disabled_when_threshold_is_zero`. So the
+  unconditional `+` still told a team holding Deep Hooks/Barbed Pitons a
+  hard buck-off number for a beast that in fact enforces no limit at all —
+  the exact "two copies of one truth" shape the earlier fix's own doc
+  comment named, just left half-open. Delegated the hunt to a general-
+  purpose agent (scoped to re-read `run.gd`'s and `game_host.gd`'s
+  previously-unread bodies plus a full pass over the rest of `/core`); it
+  found this, ruled out two other candidates as unreachable given the
+  code's own invariants (`fall()` and `sigil_rounds`; `last_attacker_name`
+  and save timing), and I verified its finding by reading the cited lines
+  myself before touching anything. Fixed `_build_shared()`'s boss dict to
+  only add the relic bonus `if b.weak_point_threshold > 0`, else report 0.
+  Added `_test_backlog86_weak_point_threshold_snapshot_stays_zero_when_
+  the_beast_has_no_limit`: forces a fought beast's `weak_point_threshold`
+  to 0 (no beast in `bosses.json` pairs a climbable sigil with threshold 0
+  today, so this had zero live impact yet — but the rule was wrong
+  regardless of current content, and the next beast authored with a
+  deliberately unlimited sigil would have hit it for real), grants Deep
+  Hooks, and asserts the snapshot reports 0, not 8. Verified load-bearing
+  by reverting the fix: the new test fails with `shown: 8`, confirming it
+  actually exercises the gap rather than passing vacuously. No screen
+  needed — a `GameHost`/`GameClient` snapshot read over `LocalTransport`,
+  same headless harness as the sibling test beside it. Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next
+  `#86` turn is duty 3 (verify a mechanic actually works).

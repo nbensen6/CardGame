@@ -532,6 +532,7 @@ func _init() -> void:
 	_test_dexterity_intangible_buffer_plated_armour_reach_the_shared_snapshot()
 	_test_backlog86_team_relics_reach_the_shared_snapshot_for_both_hunters()
 	_test_backlog86_weak_point_threshold_snapshot_matches_the_real_buck_threshold()
+	_test_backlog86_weak_point_threshold_snapshot_stays_zero_when_the_beast_has_no_limit()
 	_test_light_reaches_the_shared_snapshot()
 	_test_sigil_rounds_and_boss_limiter_reach_the_shared_snapshot()
 	_test_prepared_reaches_the_shared_snapshot()
@@ -11585,6 +11586,35 @@ func _test_backlog86_weak_point_threshold_snapshot_matches_the_real_buck_thresho
 		"(%d), not just the bare data value (%d) Combat._check_weakpoint_buck() would " +
 		"have bucked a hunter off far sooner than this number told a client to expect") %
 		[data_value + 8, data_value])
+
+
+## backlog #86 duty 2: the fix above (same session, one test up) only closed
+## HALF of the "two copies of one truth" gap it named. `_check_weakpoint_buck()`
+## returns immediately on `boss.weak_point_threshold <= 0` -- Boss.gd's own field
+## comment says "0 = no limit", and `_test_backlog86_weakpoint_buck_disabled_when_
+## threshold_is_zero` already proves a zero-threshold beast never bucks a hunter,
+## relics or not. The sibling test above only ever exercised `data_value > 0` (its
+## own "setup sanity" assertion says so), so it never caught that the unconditional
+## `b.weak_point_threshold + _mod("threshold")` in game_host.gd still ADDS a relic's
+## flat bonus onto a beast that in fact enforces no limit at all -- reporting a hard
+## buck-off number for a fight that will never buck. No beast in bosses.json pairs
+## weak_point_height > 0 with threshold 0 today (so no player sees this yet), but
+## the snapshot rule itself disagrees with the real rule regardless of content.
+func _test_backlog86_weak_point_threshold_snapshot_stays_zero_when_the_beast_has_no_limit() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	_expect(host._run.combat != null, "setup sanity: picking a node reaches combat")
+	var boss := host._run.combat.boss
+	_expect(boss.weak_point_height > 0, "setup sanity: the fought beast has a climbable sigil")
+	boss.weak_point_threshold = 0  # simulate a beast authored with deliberately unlimited camping
+	host._run.team_relics = [Content.make_relic("deep_hooks")]  # +8 threshold -- must NOT apply here
+	host._broadcast_state()
+	var shown := int((c0.shared["boss"] as Dictionary)["weak_point_threshold"])
+	_expect(shown == 0,
+		("a beast with weak_point_threshold 0 enforces NO limit (_check_weakpoint_buck() " +
+		"returns before _mod(\"threshold\") is even read) -- the snapshot must say 0 too, " +
+		"not silently add Deep Hooks' +8 onto a limit that doesn't exist (shown: %d)") % shown)
 
 
 func _test_light_reaches_the_shared_snapshot() -> void:

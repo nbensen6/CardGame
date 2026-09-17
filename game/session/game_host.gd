@@ -535,7 +535,23 @@ func _build_shared() -> Dictionary:
 			# as the campfire heal fix a few lines above: one place computes the real,
 			# modified number and a sibling snapshot copy skipped the modifier.
 			"ledges": b.ledges,
-			"weak_point_threshold": b.weak_point_threshold + int(_run.relic_totals().get("threshold", 0)),
+			# backlog #86 duty 2 (second pass): the fix above only ever added the
+			# relic bonus in -- it never re-checked the other half of the rule it
+			# claims to mirror. `_check_weakpoint_buck()` (combat.gd) returns
+			# immediately on `boss.weak_point_threshold <= 0`, which Boss.gd's own
+			# field comment spells out as "0 = no limit" -- a beast can have a
+			# climbable sigil (weak_point_height > 0) with camping left
+			# deliberately unlimited, and `_test_backlog86_weakpoint_buck_disabled_
+			# when_threshold_is_zero` already proves the real rule never bucks that
+			# hunter no matter how much sigil damage lands. The unconditional `+`
+			# below told a team holding Deep Hooks/Barbed Pitons a hard number (the
+			# relic's own flat bonus) for a beast that in fact enforces no limit at
+			# all -- the same "two copies of one truth" shape the relic-bonus fix
+			# closed for the nonzero case, just left open on the zero one. No
+			# beast in bosses.json pairs weak_point_height > 0 with threshold 0
+			# today, but the rule itself is wrong regardless of current content.
+			"weak_point_threshold": (b.weak_point_threshold + int(_run.relic_totals().get("threshold", 0))) \
+				if b.weak_point_threshold > 0 else 0,
 			# The rule this Titan bends (boss.limiter, backlog #55/#40) is real
 			# public data Combat._apply_limiter() reads every Titan turn, but was
 			# never forwarded — a client had no way to know a fight even HAS a
