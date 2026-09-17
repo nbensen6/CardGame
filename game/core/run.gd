@@ -490,11 +490,12 @@ func _begin_shop() -> void:
 		# "held" snapshots this hunter's inventory at roll time so
 		# shop_slot_disabled() can cap-check it without ever seeing another
 		# hunter's private potions[] -- same reasoning as "remove"'s own
-		# "deck_size" a few lines up. Unlike "deck_size" it never needs a
-		# resync within one shop visit: this loop stocks at most one
-		# "potion" item per hunter, and buying it marks it sold, so no
-		# other still-buyable item for the same hunter can go stale (#86
-		# duty 2).
+		# "deck_size" a few lines up. Buying it marks it sold, so no OTHER
+		# still-buyable item for the same hunter can go stale that way -- but
+		# discard_potion() legally shrinks potions[slot] in this same phase
+		# too, so it resyncs this field itself (_resync_potion_held(), #86
+		# duty 2 -- the first version of this comment missed that case and
+		# called no resync ever necessary).
 		shop_stock.append({"kind": "potion", "slot": slot3, "id": pid,
 			"name": String(potion.get("name", pid)), "text": String(potion.get("text", "")),
 			"price": PRICE_POTION, "sold": false, "held": potions[slot3].size()})
@@ -575,6 +576,22 @@ func _resync_remove_deck_size(slot: int) -> void:
 		var other: Dictionary = shop_stock[oi]
 		if String(other["kind"]) == "remove" and int(other["slot"]) == slot and not bool(other["sold"]):
 			other["deck_size"] = decks[slot].size()
+
+
+## Sibling of _resync_remove_deck_size() for the "potion" item's own frozen
+## `held` count (see its comment in _begin_shop()). That comment argued no
+## resync was ever needed because buying is the only thing that can change
+## potions[slot] mid-shop, and buying marks the item sold. It missed
+## discard_potion(), which is legal in ANY phase including SHOP (its own doc
+## comment) and SHRINKS potions[slot] without touching shop_stock at all --
+## so a hunter who discards down from a full inventory during a shop visit
+## kept seeing "potions full" and a disabled buy button the server would now
+## accept (#86 duty 2).
+func _resync_potion_held(slot: int) -> void:
+	for oi in range(shop_stock.size()):
+		var other: Dictionary = shop_stock[oi]
+		if String(other["kind"]) == "potion" and int(other["slot"]) == slot and not bool(other["sold"]):
+			other["held"] = potions[slot].size()
 
 
 ## Walk away from the shop and carry on up the route.
@@ -899,6 +916,7 @@ func discard_potion(slot: int, index: int) -> bool:
 	if slot < 0 or slot >= potions.size() or index < 0 or index >= potions[slot].size():
 		return false
 	potions[slot].remove_at(index)
+	_resync_potion_held(slot)
 	return true
 
 ## Every beast a hunter fells pays a potion too, if their slots aren't full —

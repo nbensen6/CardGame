@@ -17492,3 +17492,40 @@ Newest first. One line per finished item: what, and anything surprising.
   tests and the whole reachability question are pure `/core` logic. Fresh
   `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS
   PASSED. Next `#86` turn is duty 2 (find an error and resolve it).
+
+- **2026-09-17 — #86 duty 2: discarding a potion mid-shop left the shop's own
+  copy of "how many potions is this hunter holding" stale, wrongly refusing a
+  purchase the server would now allow.** Last commit (`d606dae`) was duty 3,
+  so this run took duty 2. Delegated the hunt to an Explore agent scoped to
+  `game/core` and the session/net layer, asking it to avoid re-finding
+  anything already fixed by this rotation. It found the sibling bug to the
+  one fixed 2026-09-16 ("shop potion button never mirrored `Run.buy()`'s
+  inventory-full refusal"), in the opposite direction: `Run._begin_shop()`
+  (run.gd) snapshots each hunter's potion count once, into
+  `shop_stock[i]["held"]`, and its own comment argued no resync was ever
+  needed because the only thing that can shrink `potions[slot]` mid-shop is
+  buying, and buying marks the item sold. That comment missed
+  `Run.discard_potion()`, which its own doc comment says is legal "any phase
+  you're carrying one, not just mid-fight" — including `Phase.SHOP` — and
+  which shrinks `potions[slot]` without touching `shop_stock` at all. So a
+  hunter who arrives at a shop already holding `POTION_SLOTS` potions sees
+  the stocked item correctly disabled, discards one to free a slot (legal),
+  and the button stays disabled anyway because nothing ever told
+  `shop_stock` the count changed — exactly the "two copies of one truth"
+  shape this rotation keeps finding. Wrote
+  `_test_backlog86_discard_potion_resyncs_the_same_slots_stale_held_count`
+  first, modelled directly on the existing
+  `_test_backlog86_run_buy_card_resyncs_the_same_slots_stale_remove_deck_size`
+  pattern for the "remove"/deck_size sibling: fill hunter 0's potions to the
+  cap, roll the shop, discard one, then assert the stocked `held` count
+  tracks `potions[0].size()` and the view no longer disables the buy button.
+  Confirmed it fails against the unfixed code (stashed the fix, reran: 1
+  test failed, exactly this one) and passes with it. Fix: added
+  `Run._resync_potion_held(slot)`, a direct sibling of
+  `_resync_remove_deck_size()`, and called it from `discard_potion()` right
+  after the potion is removed; also corrected `_begin_shop()`'s own comment,
+  which flatly claimed "it never needs a resync within one shop visit" and
+  was simply wrong. No screen needed — this is a pure `Run`/`Location3D`
+  state-agreement bug, same headless harness as its already-fixed sibling.
+  Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS
+  PASSED. Next `#86` turn is duty 3 (verify a mechanic actually works).

@@ -1575,6 +1575,7 @@ func _init() -> void:
 	_test_backlog86_shop_slot_disabled_is_true_for_a_potion_item_at_the_cap()
 	_test_backlog86_shop_slot_disabled_ignores_the_potion_cap_for_a_non_potion_item()
 	_test_backlog86_run_begin_shop_stocks_potion_items_with_a_held_count_run_buy_agrees_with()
+	_test_backlog86_discard_potion_resyncs_the_same_slots_stale_held_count()
 
 	# backlog #86 duty 3: location_3d.campfire_can_thin is the campfire's own
 	# copy of Run.campfire_action()'s "remove" gate (run.gd:583, "deck.size()
@@ -20579,9 +20580,40 @@ func _test_backlog86_run_begin_shop_stocks_potion_items_with_a_held_count_run_bu
 	var view_says_disabled := Location3D.shop_slot_disabled(bool(item["sold"]), run.gold,
 		int(item["price"]), false, 0, Run.MIN_DECK, true, stocked_held, Run.POTION_SLOTS)
 	var server_refuses := not run.buy(pot_i)
-	_expect(stocked_held == run.potions[0].size() and stocked_held == Run.POTION_SLOTS
-		and view_says_disabled and server_refuses,
-		"a hunter already at the potion cap is disabled in the view and refused by the server -- neither one lies about the other")
+## backlog #86 duty 2: the previous test proves the stocked "potion" item's
+## `held` count agrees with Run.buy() right after _begin_shop() rolls the
+## stock -- but that number was snapshotted once and never touched again, and
+## discard_potion() is legal in ANY phase including SHOP (its own doc
+## comment) and SHRINKS potions[slot] without going through buy() at all.
+## Fill hunter 0's potion slots, roll the shop ("held" freezes at
+## POTION_SLOTS, buy correctly disabled), then discard one held potion in the
+## SAME shop visit -- potions[0] is now POTION_SLOTS - 1, a purchase is legal
+## again, and the stocked "held" count has to say so or the view keeps
+## refusing a buy the server would accept (the exact bug
+## _resync_potion_held() exists to close).
+func _test_backlog86_discard_potion_resyncs_the_same_slots_stale_held_count() -> void:
+	var run := _map_run()
+	run.gold = 5000
+	run.map_row = 0
+	run.node_type = "shop"
+	while run.potions[0].size() < Run.POTION_SLOTS:  # fill hunter 0's potion slots first
+		run.potions[0].append(Content.make_potion(String(Content.potion_pool()[0])))
+	run._begin_shop()
+	var pot_i := -1
+	for i in range(run.shop_stock.size()):
+		if String(run.shop_stock[i]["kind"]) == "potion" and int(run.shop_stock[i]["slot"]) == 0:
+			pot_i = i
+			break
+	_expect(pot_i >= 0, "a rolled shop stocks a potion item for hunter 0")
+	_expect(run.discard_potion(0, 0), "hunter 0 can discard a held potion mid-shop")
+	var item: Dictionary = run.shop_stock[pot_i]
+	var stocked_held := int(item.get("held", -1))
+	var view_says_disabled := Location3D.shop_slot_disabled(bool(item["sold"]), run.gold,
+		int(item["price"]), false, 0, Run.MIN_DECK, true, stocked_held, Run.POTION_SLOTS)
+	_expect(run.potions[0].size() == Run.POTION_SLOTS - 1,
+		"discarding actually shrank hunter 0's held potions below the cap")
+	_expect(stocked_held == run.potions[0].size() and not view_says_disabled,
+		"discarding a potion for the same hunter in the same shop visit must un-stick the stale held count, or the view refuses a purchase the server would now accept")
 
 
 ## backlog #86 duty 3 -- location_3d.campfire_can_thin mirrors Run.
