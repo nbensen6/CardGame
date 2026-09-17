@@ -2812,6 +2812,42 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-17 — #86 duty 2: fixed `"restart"` being the one `_on_command`
+  branch that skipped the `paused` gate every other mutating command
+  checks.** Last commit (`ef20e2a`) was duty 3, so this run took duty 2.
+  Every other branch in `game_host.gd`'s `_on_command` match is written
+  `if not paused and _run != null ...`; `"restart"` only ever checked
+  `_run != null`, dropping the `not paused` half — a hand-copied guard
+  drifting in exactly one of its ~11 copies, the same "two copies of one
+  truth" shape as several earlier duty-2 fixes. Trigger: a co-op run
+  reaches WON/LOST (`location_3d.gd`'s "Hunt again" screen); a teammate
+  disconnects AFTER the fight ends, which still sets `host.paused`
+  (`_on_peer_left` gates only on `_run != null`, deliberately with no
+  `is_over()` check); the remaining player's screen has no way to know —
+  grep confirms `paused` is never read anywhere under `game/views` — so
+  clicking "Hunt again" used to sail past the missing guard straight into
+  `start_new_run()`. `paused`/`_disconnected_slots` are never touched by
+  `start_new_run()`, so they carried over onto the brand-new run, whose
+  very first broadcast was already frozen: every other handler's own
+  `not paused` guard then silently dropped every command in the new run
+  (`pick_node`, `buy`, everything), with no on-screen explanation. Found by
+  an Explore agent scoped to `game_host.gd`/`game_client.gd`/`net_link.gd`/
+  `local_transport.gd`, read end to end rather than grepped, cross-checked
+  against `run_tests.gd`'s own existing reconnect-restart test (which only
+  ever restarts AFTER clearing `paused`, never while it's still set — the
+  exact case this bug lived in). Fix: added the missing `not paused` to the
+  `"restart"` branch's guard, matching every sibling. Added
+  `_test_backlog86_restart_is_ignored_while_paused_after_the_run_ends`,
+  which forces a session to `Run.Phase.WON`, drops a peer (setting
+  `paused`), sends `restart`, and asserts `host._run` is unchanged and
+  `host.paused` still holds — confirmed the test is real by reverting just
+  the `game_host.gd` guard (kept the test) and watching it fail with the
+  rest of the suite green, then restoring the fix. Also ran
+  `tools/robustness_sweep.gd` (360 runs, 0 dead ends) as a clean smoke test
+  before landing on this — no new dead-end there, this bug lives in the
+  session layer, not `/core`. Fresh `--import`, headless, Godot
+  4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
+
 - **2026-09-17 — #86 duty 2: fixed a resumed SOLO run showing both hunters
   blank (character + portrait) on every non-combat screen.** Last commit
   (`8e68ab6`) was duty 3, so this run took duty 2. `GameHost._slot_char()`

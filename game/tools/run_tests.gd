@@ -1741,6 +1741,7 @@ func _init() -> void:
 	_test_backlog86_gamehost_wires_skip_reward_command_to_run()
 	_test_backlog86_gamehost_wires_pick_card_command_to_run()
 	_test_backlog86_gamehost_wires_restart_command_to_run()
+	_test_backlog86_restart_is_ignored_while_paused_after_the_run_ends()
 
 	# backlog #86 duty 2 (search) turned up nothing new after an exhaustive
 	# pass over /core, /session, /net and the views (content-integrity
@@ -15167,6 +15168,36 @@ func _test_backlog86_gamehost_wires_restart_command_to_run() -> void:
 	c.restart()
 	_expect(host._run != first_run and host._run.hp[0] == host._run.max_hp[0],
 		"a 'restart' command sent through GameClient/GameHost must actually reach GameHost.start_new_run and hand back a fresh run")
+
+
+## backlog #86 duty 2: every other mutating branch in _on_command's match is
+## gated "not paused and _run != null" -- "restart" was the one copy of that
+## same guard that dropped the "not paused" half (found by reading the
+## dispatch end to end, the same "state kept in two places, one drifts" shape
+## as this rotation's other duty-2 fixes). location_3d.gd's "Hunt again"
+## button — the only real caller of GameClient.restart(), shown on the
+## WON/LOST screen — has no way to know `paused` is set (grep confirms
+## `game/views/*.gd` never reads that key), and _on_peer_left() pauses on any
+## drop where `_run != null` with no is_over() gate, so a teammate who
+## disconnects AFTER the fight ends pauses the host exactly like a mid-fight
+## drop does. Before this fix, the remaining player's "Hunt again" click sailed
+## past that straight into start_new_run() — leaving `paused` (never touched by
+## start_new_run()) still set against the BRAND NEW run, so its first broadcast
+## was already frozen: every other handler's own "not paused" guard then
+## silently dropped every command in the new run, with nothing on screen
+## explaining why.
+func _test_backlog86_restart_is_ignored_while_paused_after_the_run_ends() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var transport: LocalTransport = s["transport"]
+	host._run.phase = Run.Phase.WON  # the exact condition that puts up "Hunt again" (location_3d.gd's _render_over)
+	transport.emit_signal("peer_left", 20)  # mountain_climbers (slot 1) drops AFTER the win, not mid-fight
+	_expect(host.paused, "sanity: a teammate dropping after the run already ended still pauses the host")
+	var run_before := host._run
+	c0.restart()  # the exact command "Hunt again" sends
+	_expect(host._run == run_before and host.paused,
+		"'restart' sent while paused must be a no-op, not silently start a fresh run frozen behind a pause the new run's own broadcast never showed anyone")
 
 
 ## backlog #86 duty 3: the wiring sweep above (take_key, then
