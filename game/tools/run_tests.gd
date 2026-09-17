@@ -1036,6 +1036,17 @@ func _init() -> void:
 	_test_backlog86_row_in_act_is_true_mid_act()
 	_test_backlog86_row_in_act_is_false_standing_on_the_previous_acts_titan()
 	_test_backlog86_row_in_act_is_true_on_the_first_row_of_a_new_act()
+	# backlog #86 duty 3 (fiftieth pass): node_is_open, lifted out of
+	# overworld_3d._lay_field, is a second, independent copy of "which columns
+	# can I travel to" alongside RunMap.available() (core, already tested) --
+	# this one decides which tile the VIEW marks clickable/travelable, the core
+	# one decides what a travel command actually accepts. Had zero coverage
+	# despite sitting right beside _act_ahead/row_in_act/stand_at above, which
+	# are its thoroughly-tested siblings in the same function.
+	_test_backlog86_node_is_open_only_on_the_row_just_past_cur_row()
+	_test_backlog86_node_is_open_requires_the_column_to_be_available()
+	_test_backlog86_node_is_open_is_false_with_no_available_columns()
+	_test_backlog86_node_is_open_at_the_trailhead_uses_row_zero()
 	# backlog #86 duty 3 (thirty-seventh pass): stand_at, lifted out of
 	# overworld_3d._stand_at, is the function row_in_act and _act_ahead exist to
 	# gate -- it places the party's avatar on the hex map -- and had zero
@@ -18748,6 +18759,34 @@ func _test_backlog86_row_in_act_is_false_standing_on_the_previous_acts_titan() -
 func _test_backlog86_row_in_act_is_true_on_the_first_row_of_a_new_act() -> void:
 	var rows: Array = [_act_row(0), _act_row(0), _act_row(1)]
 	_expect(Overworld3D.row_in_act(rows, 2, 1), "the first row of the new act belongs to the act now drawn")
+
+
+## backlog #86 duty 3 (fiftieth pass) -- node_is_open, lifted out of
+## overworld_3d._lay_field, is the line that decides which map tile gets a
+## marker and an entry in `_nodes` (the only source `_node_under_mouse`,
+## `nearest_node_at_hit` and eventually a travel click read from). It is a
+## second, independent copy of "which columns can I travel to" alongside
+## RunMap.available() (core) -- one gates what the view draws as clickable,
+## the other gates what a travel command actually accepts, and nothing was
+## proving they agree.
+func _test_backlog86_node_is_open_only_on_the_row_just_past_cur_row() -> void:
+	_expect(Overworld3D.node_is_open(2, 1, 0, [0]), "the row directly past cur_row, with its column available, is open")
+	_expect(not Overworld3D.node_is_open(1, 1, 0, [0]), "the row the party is currently standing on is never open, even with the column available")
+	_expect(not Overworld3D.node_is_open(3, 1, 0, [0]), "a row two steps ahead is not open -- only the very next row ever is")
+
+
+func _test_backlog86_node_is_open_requires_the_column_to_be_available() -> void:
+	_expect(Overworld3D.node_is_open(2, 1, 1, [1, 2]), "a column listed as available on the correct row is open")
+	_expect(not Overworld3D.node_is_open(2, 1, 0, [1, 2]), "the correct row alone is not enough -- a column RunMap didn't list as available must stay closed")
+
+
+func _test_backlog86_node_is_open_is_false_with_no_available_columns() -> void:
+	_expect(not Overworld3D.node_is_open(2, 1, 0, []), "an empty available list closes every column on the next row, not just the untested ones")
+
+
+func _test_backlog86_node_is_open_at_the_trailhead_uses_row_zero() -> void:
+	_expect(Overworld3D.node_is_open(0, -1, 0, [0]), "before the first step (cur_row -1), row 0 is the one that opens -- the trailhead case _act_ahead/stand_at both special-case too")
+	_expect(not Overworld3D.node_is_open(1, -1, 0, [0]), "at the trailhead, only row 0 opens -- row 1 must not, even with the column available")
 
 
 ## backlog #86 duty 3 (thirty-seventh pass) -- stand_at, lifted out of

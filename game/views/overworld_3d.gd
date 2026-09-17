@@ -235,6 +235,17 @@ func _row_in_act(rows: Array, row: int) -> bool:
 	return row_in_act(rows, row, _act)
 
 
+## Is this map tile the one that becomes a clickable/travelable node this
+## frame? A second, independent copy of "which columns can I travel to"
+## alongside RunMap.available() (core) -- this one decides what the VIEW marks
+## open, the core one decides what a travel command actually accepts. Pulled
+## out so a future edit to _lay_field can't drift the two silently: the view
+## marking a stale or wrong row open while the server correctly rejects the
+## click is a "you can click it but nothing happens" bug, not a crash.
+static func node_is_open(row: int, cur_row: int, col: int, avail: Array) -> bool:
+	return row == cur_row + 1 and avail.has(col)
+
+
 ## Rebuild the region for the act you're in. Node rows land on EVEN hex rows so
 ## the odd rows between them are free for the road.
 func _lay_field(rows: Array, act: int, cur_row: int, cur_col: int, avail: Array) -> void:
@@ -284,7 +295,7 @@ func _lay_field(rows: Array, act: int, cur_row: int, cur_col: int, avail: Array)
 			var type := String((row[c] as Dictionary).get("type", "fight"))
 			var node := _place_tile(String(NODE_TILE.get(type, "building-tower")), at.x, at.y, 0.0)
 			var pos := Vector3(_hex_x(at.x, at.y), TILE_TOP, -at.y * ROW_STEP)
-			var open: bool = (r == cur_row + 1 and avail.has(c))
+			var open: bool = node_is_open(r, cur_row, c, avail)
 			if open:
 				_nodes[c] = {"node": node, "pos": pos, "type": type, "open": true}
 				_add_marker(pos)

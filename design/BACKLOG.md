@@ -2812,6 +2812,37 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-17 — #86 duty 3: proved `overworld_3d.gd`'s `node_is_open` line —
+  the rule deciding which map tile the VIEW marks clickable/travelable this
+  frame — a second, independent copy of "which columns can I travel to"
+  alongside `RunMap.available()` (core, already tested).** Last commit
+  (`7f8de88`) was duty 2, so this run took duty 3. `_lay_field()`'s inline
+  `var open: bool = (r == cur_row + 1 and avail.has(c))` is the only place
+  `_nodes[c]` gets populated and a marker added — `_node_under_mouse`,
+  `nearest_node_at_hit`, and a travel click all key off it — and it had zero
+  coverage despite sitting right beside its already-tested siblings
+  `_act_ahead`/`row_in_act`/`stand_at` in the same function. An Explore agent
+  surveyed `combat_3d.gd`/`location_3d.gd`/`overworld_3d.gd` and the
+  session/net layer for a genuinely untested, liftable, non-cosmetic mechanic
+  (150+ duty-3 tests already exist, so most of the obvious candidates —
+  route_between_rungs, foothold_anchor, hop_arc, hex_x, and their siblings —
+  are already covered) and found this one plus a second candidate
+  (`_place_hunters`' shared-foothold step-aside offset, left for a future
+  pass). Fix: lifted the inline expression into
+  `static func node_is_open(row, cur_row, col, avail) -> bool`, following the
+  exact pattern `_act_ahead`/`row_in_act` already use one function above it,
+  and pointed `_lay_field` at it — no behaviour change, pure code motion.
+  Added four tests: only the row directly past `cur_row` opens; the column
+  must actually be in `avail`; an empty `avail` closes every column on that
+  row; and the trailhead case (`cur_row == -1` opens row 0, not row 1).
+  Confirmed the tests are wired to real production code, not vacuously true,
+  by stashing the `overworld_3d.gd` change alone and re-running: Godot failed
+  to even parse `run_tests.gd` ("Static function 'node_is_open()' not found"),
+  exactly as `_hex_x`'s own duty-3 entry predicted for a pure lift with no
+  behaviour change; restored the fix. Fresh `--import`, headless, Godot
+  4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2
+  (find an error and resolve it).
+
 - **2026-09-17 — #86 duty 2: `Content.build_boss()`/`build_boss_adds()` handed
   out moves/ledges/limiter dictionaries aliased straight into the process-
   lifetime content cache, instead of copies.** Last commit (`e9e21ad`) was
