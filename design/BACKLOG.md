@@ -17529,3 +17529,35 @@ Newest first. One line per finished item: what, and anything surprising.
   state-agreement bug, same headless harness as its already-fixed sibling.
   Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS
   PASSED. Next `#86` turn is duty 3 (verify a mechanic actually works).
+
+- **2026-09-17 — #86 duty 3: proved `Run._begin_event()` actually keeps its own
+  promise not to repeat an event while fresh ones remain, and that it survives
+  the pool running dry.** Last commit (`ead7ea2`) was duty 2, so this run took
+  duty 3. `_begin_event()`'s doc comment claims a run rolls an event id nobody
+  has seen this run where possible, tracked in `_seen_events` — but the one
+  existing event test (`_test_run_survives_a_save_and_load_in_event`) only
+  calls it once and checks that a single roll round-trips through save/load;
+  nothing ever seeded `_seen_events` to force either the "one fresh id left"
+  branch or the "every event seen" fallback, so the actual filtering logic in
+  `_begin_event()` had zero coverage. Delegated the hunt for a genuinely
+  untested MECHANIC (rather than presentation math, which this rotation's
+  duty-3 passes have by now mostly exhausted in the view layer) to an Explore
+  agent scoped to `game/core` and `game/session`. Added two tests: seeding
+  `_seen_events` to every event but one and asserting the roll deterministically
+  lands on the one fresh id left (regardless of RNG) and that it gets recorded
+  as seen; and seeding `_seen_events` to the full pool and asserting
+  `_begin_event()` still lands in `Phase.EVENT` with a valid id from the full
+  pool instead of `pick_from` going empty and `_rng.randi_range(0, -1)`
+  crashing or stranding the node. Proved both catch a real bug, not a
+  tautology: inverting the fresh-filter's `not _seen_events.has(id)` to
+  `_seen_events.has(id)` (the realistic shape of this bug — the same
+  "condition got inverted" family duty 2 keeps finding elsewhere) made both
+  new tests fail with the unmodified suite otherwise green, then reverted and
+  confirmed both pass again. (First tried sabotaging by hardcoding
+  `pick_from = ids`, which the test did NOT reliably catch — with 22 events, a
+  full-pool roll has a real chance of landing on the target id by luck; the
+  inverted-filter sabotage above is the test that actually proves the logic,
+  and is now the one that matters.) No screen needed — this is pure `/core`
+  RNG/state logic, same headless harness as its neighbouring save/load-in-event
+  test. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL
+  TESTS PASSED. Next `#86` turn is duty 2 (find an error and resolve it).

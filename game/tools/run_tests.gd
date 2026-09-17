@@ -441,6 +441,8 @@ func _init() -> void:
 	_test_run_survives_a_save_and_load_in_shop()
 	_test_run_survives_a_save_and_load_in_campfire()
 	_test_run_survives_a_save_and_load_in_event()
+	_test_backlog86_begin_event_picks_the_one_fresh_event_left()
+	_test_backlog86_begin_event_falls_back_to_the_full_pool_once_every_event_is_seen()
 	_test_backlog39_stats_round_trip_through_save()
 	_test_save_refuses_only_finished_runs_and_clears_when_over()
 	_test_load_run_migrates_an_older_save()
@@ -9497,6 +9499,47 @@ func _test_run_survives_a_save_and_load_in_event() -> void:
 	_expect(resolved and back.phase != Run.Phase.EVENT,
 		"the reloaded event still resolves when a choice is picked")
 	RunSave.clear()
+
+
+## backlog #86 duty 3 -- Run._begin_event()'s own doc comment promises "a run
+## doesn't repeat itself early" by rolling from `_seen_events`-minus-seen
+## first. Nothing called `_begin_event()` more than once or ever seeded
+## `_seen_events` to force either branch -- the one existing event test only
+## proves a single roll survives save/load. If the fresh-filter or the
+## `_seen_events.append` broke, players would see the same handful of events
+## loop while a dozen others sat unpicked, and the game would give no sign.
+func _test_backlog86_begin_event_picks_the_one_fresh_event_left() -> void:
+	var run := Run.new([_deck_of(_slash, 8), _deck_of(_slash, 8)], ["A", "B"], 7,
+		[{"character": "frog"}, {"character": "goblin_mech"}], 0)
+	run.start()
+	var ids: Array = Content.list_events()
+	_expect(ids.size() > 1, "the event pool needs at least two ids for this test to mean anything")
+	var target := String(ids[0])
+	run._seen_events = ids.duplicate()
+	run._seen_events.erase(target)
+	run.map_row = 0
+	run.node_type = "event"
+	run._begin_event()
+	_expect(String(run.event.get("id", "")) == target,
+		"with every event but one already seen, the only fresh id left is the one rolled, regardless of RNG")
+	_expect(run._seen_events.has(target),
+		"the freshly-rolled event is recorded as seen so it won't repeat again before the pool cycles")
+
+
+## Sibling of the test above: once EVERY event has been seen, `_begin_event()`
+## must widen back to the full pool instead of `pick_from` going empty and
+## `_rng.randi_range(0, -1)` crashing or stranding the node.
+func _test_backlog86_begin_event_falls_back_to_the_full_pool_once_every_event_is_seen() -> void:
+	var run := Run.new([_deck_of(_slash, 8), _deck_of(_slash, 8)], ["A", "B"], 11,
+		[{"character": "frog"}, {"character": "goblin_mech"}], 0)
+	run.start()
+	var ids: Array = Content.list_events()
+	run._seen_events = ids.duplicate()
+	run.map_row = 0
+	run.node_type = "event"
+	run._begin_event()
+	_expect(run.phase == Run.Phase.EVENT and ids.has(String(run.event.get("id", ""))),
+		"once every event has been seen, the roll falls back to the full pool instead of crashing or stranding the node")
 
 
 ## Backlog #35: rejecting on a version mismatch used to mean the day someone
