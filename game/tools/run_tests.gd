@@ -101,6 +101,7 @@ func _init() -> void:
 	_test_backlog86_is_last_row_is_true_only_for_the_maps_final_row()
 	_test_backlog86_full_clear_beats_every_acts_titan_before_won()
 	_test_backlog86_map_guarantees_a_shop_every_act()
+	_test_backlog86_shop_guarantee_lands_in_the_back_half_not_just_anywhere()
 	_test_backlog86_aligned_keeps_paths_straight_and_endpoints_pinned()
 	_test_backlog86_aligned_guards_singleton_rows()
 	_test_backlog86_run_map_available_before_start_and_out_of_bounds()
@@ -3026,6 +3027,44 @@ func _test_backlog86_map_guarantees_a_shop_every_act() -> void:
 		if not ok:
 			break
 	_expect(ok, "every act guarantees a shop node exists (failed seed %d act %d)" % [bad_seed, bad_act])
+
+
+## #86 duty 2 — the test above only proves a shop exists SOMEWHERE in the act,
+## which is exactly the truth `_ensure_shop`'s own doc comment says is not
+## good enough: "a shop turned up in about a third of acts, and when it did it
+## could land on row 1 — before you had earned anything, which is the same as
+## no shop at all. The back half guarantees a full act's fights are behind
+## you." But `_ensure_shop`'s early-return scans ALL of `act_rows`, not just
+## the back half, so when the dice already rolled a "shop" into row 1 or row 2
+## (the middle-row table offers it), the function returns immediately and
+## never forces one into the back half — reproducing precisely the "shop on
+## row 1, same as no shop at all" case the function exists to prevent.
+func _test_backlog86_shop_guarantee_lands_in_the_back_half_not_just_anywhere() -> void:
+	var ok := true
+	var bad_seed := -1
+	var bad_act := -1
+	var acts := Run.ENCOUNTERS.size()
+	var rows_per_act := RunMap.ROWS_PER_ACT + 1  # + the act's own boss row
+	var back_half_start: int = int(ceil(float(RunMap.ROWS_PER_ACT) / 2.0))
+	for s in range(1, 200):
+		var rng := RandomNumberGenerator.new()
+		rng.seed = s
+		var m := RunMap.new(acts, rng)
+		for a in range(acts):
+			var has_back_half_shop := false
+			for r in range(a * rows_per_act + back_half_start, a * rows_per_act + RunMap.ROWS_PER_ACT):
+				for n in m.rows[r]:
+					if String((n as Dictionary)["type"]) == "shop":
+						has_back_half_shop = true
+			if not has_back_half_shop:
+				ok = false
+				bad_seed = s
+				bad_act = a
+				break
+		if not ok:
+			break
+	_expect(ok, ("every act's shop guarantee lands in the back half, not just anywhere " +
+		"(failed seed %d act %d)") % [bad_seed, bad_act])
 
 
 ## #86 duty 3 — RunMap._aligned's own doc comment claims it maps an index in a
@@ -9542,6 +9581,12 @@ func _test_run_survives_a_save_and_load_mid_combat() -> void:
 	var expect_move_type := String(combat.boss.current_move().get("type", ""))
 	var expect_hp: int = combat.boss.hp
 	var expect_round: int = combat.round_num
+	# Read AFTER the real boss turn, not the pre-turn literal set above: a
+	# beast's move can legitimately touch foothold itself (e.g. "swipe_high"
+	# only catches hunters off the ground and knocks them to the hold below,
+	# combat.gd:759), so whichever move actually landed decides the true
+	# pre-save value, the same way block/discard_pile are compared live below.
+	var expect_foothold: int = combat.players[0].foothold
 
 	RunSave.clear()
 	RunSave.save(run)
@@ -9559,7 +9604,7 @@ func _test_run_survives_a_save_and_load_mid_combat() -> void:
 			back_hand.append(String((c2 as Card).id))
 		hand_ok = back_hand == expect_hand0
 	var state_ok: bool = back_combat != null \
-		and back_combat.players[0].foothold == 5 \
+		and back_combat.players[0].foothold == expect_foothold \
 		and back_combat.players[0].combatant.block == combat.players[0].combatant.block \
 		and back_combat.players[0].discard_pile.size() == combat.players[0].discard_pile.size() \
 		and back_combat.players[1].strength == 2 \

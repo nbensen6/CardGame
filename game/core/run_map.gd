@@ -89,11 +89,16 @@ static func from_dict(d: Dictionary) -> RunMap:
 ## shop at all. The back half guarantees a full act's fights are behind you, so
 ## the purse is worth spending when you get there.
 func _ensure_shop(act_rows: Array, rng: RandomNumberGenerator) -> void:
-	for row in act_rows:
+	var first: int = int(ceil(float(ROWS_PER_ACT) / 2.0))
+	# Only a BACK-HALF shop satisfies the guarantee. A dice-rolled shop in the
+	# front half (row 1 or 2's middle-row table can roll "shop") used to short
+	# -circuit this whole function via an any-row scan, leaving the exact "shop
+	# on row 1, same as no shop at all" case above unfixed even though a shop
+	# node technically existed somewhere in the act.
+	for row in act_rows.slice(first):
 		for n in row:
 			if String((n as Dictionary)["type"]) == "shop":
 				return
-	var first: int = int(ceil(float(ROWS_PER_ACT) / 2.0))
 	if first >= act_rows.size():
 		return
 	var r: int = rng.randi_range(first, act_rows.size() - 1)
