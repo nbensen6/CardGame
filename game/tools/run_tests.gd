@@ -376,6 +376,7 @@ func _init() -> void:
 	_test_run_hp_carries_between_encounters()
 	_test_relic_heal_on_clear_adds_to_the_between_fight_heal()
 	_test_relic_heal_on_clear_still_clamps_to_max_hp()
+	_test_bank_hp_does_not_revive_a_hunter_who_died_in_the_winning_blow()
 	_test_run_defeat_when_a_hunter_falls()
 	_test_run_hp_syncs_on_defeat_too()
 	_test_backlog39_stats_accumulate_across_fights()
@@ -8397,6 +8398,31 @@ func _test_relic_heal_on_clear_still_clamps_to_max_hp() -> void:
 	_force_win(run)
 	_expect(run.hp[0] == run.max_hp[0],
 		"a relic heal that would overheal still clamps to the hunter's max HP")
+
+
+## _test_boss_death_wins_a_tie_against_thorns_killing_the_attacker (combat.gd)
+## already establishes, on purpose, that a hit which kills the boss AND the
+## hunter who dealt (or, for the boss's own attack reflected by Thorns, took)
+## it resolves the FIGHT as a WIN -- _check_end()/result() both check the boss
+## first, and that ordering is deliberate and tested. Nothing downstream of
+## that ever asked what a WIN should bank for the hunter who is, in the very
+## same breath, actually dead: _bank_hp() unconditionally computed
+## `combatant.hp + heal` for every hunter, so a corpse at 0 hp got healed
+## straight back up to a live HEAL_BETWEEN (4) with nothing anywhere recording
+## that they had fallen -- the mutual kill that legitimately wins the fight
+## silently un-killed its own casualty for the next encounter.
+func _test_bank_hp_does_not_revive_a_hunter_who_died_in_the_winning_blow() -> void:
+	var run := _map_run()
+	_step_into_combat(run)
+	run.combat.players[0].combatant.hp = 0  # fell in the same trade that felled the boss
+	run.combat.players[1].combatant.hp = 20
+	_force_win(run)
+	_expect(run.combat.result() == Combat.Result.WIN,
+		"sanity: a dead boss still wins the fight even with a dead hunter (matches combat.gd's own tie rule)")
+	_expect(run.hp[0] == 0,
+		"a hunter who ended the winning fight dead must not be healed back to life by the between-fight heal")
+	_expect(run.hp[1] == 20 + Run.HEAL_BETWEEN,
+		"the surviving hunter's own heal is unaffected by their ally's fate")
 
 
 func _test_run_defeat_when_a_hunter_falls() -> void:

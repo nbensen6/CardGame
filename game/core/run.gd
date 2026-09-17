@@ -1115,10 +1115,24 @@ func _encounter_seed() -> int:
 		return 0  # keep it random
 	return _seed + (map_row + 1) * 101 + map_col
 
+## backlog #86 duty 2: combat.gd deliberately resolves a hit that kills the
+## boss and the hunter who dealt (or took, via reflected Thorns) it as a WIN —
+## see combat.gd's own _test_boss_death_wins_a_tie_against_thorns_killing_the_
+## attacker. That's the fight's call to make and this doesn't second-guess it.
+## But nothing downstream ever asked what banking should do with a hunter who
+## is, in that same breath, actually dead: this used to compute
+## `combatant.hp + heal` unconditionally, so a corpse at 0 hp got healed
+## straight back up to a live HEAL_BETWEEN for the next encounter with nothing
+## anywhere recording that they had fallen. A dead hunter stays at the real
+## 0 — same clamp sync()'s own LOSE branch already uses for a fallen hunter —
+## instead of being quietly un-killed by their own team's victory.
 func _bank_hp() -> void:
 	var heal: int = maxi(0, HEAL_BETWEEN - int(_asc.get("heal_between", 0))) + int(relic_totals()["heal"])
 	for i in range(names.size()):
-		hp[i] = mini(combat.players[i].combatant.hp + heal, max_hp[i])
+		if combat.players[i].combatant.is_dead():
+			hp[i] = 0
+		else:
+			hp[i] = mini(combat.players[i].combatant.hp + heal, max_hp[i])
 
 ## Pick the beast for this node: Titans follow the act order so the run still
 ## climaxes on a known ladder; fights and elites roll from their pool.

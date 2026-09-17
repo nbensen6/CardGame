@@ -2812,6 +2812,28 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-17 — #86 duty 2: fixed `_bank_hp()` silently reviving a hunter who
+  died in the same blow that won the fight.** Last commit (`f9924cb`) was
+  duty 3, so this run took duty 2. A background hunt through `combat.gd`/
+  `run.gd` first surfaced `result()`/`_check_end()` checking `boss.is_dead()`
+  before scanning the players as the "bug" — it is not: `combat.gd`'s own
+  `_test_boss_death_wins_a_tie_against_thorns_killing_the_attacker` proves
+  that ordering is deliberate (a hit that kills the boss and the hunter who
+  dealt or took it resolves as a WIN), and reversing it would have broken a
+  test that exists specifically to guard against this ordering ever drifting.
+  The real, untested gap was one layer up: `Run._bank_hp()`, called on every
+  WIN, computed `combatant.hp + heal` for every hunter unconditionally, never
+  checking `is_dead()`. So the one hunter who legitimately fell in that same
+  winning trade got healed from 0 straight back up to a live `HEAL_BETWEEN`
+  (4) HP for the next encounter, with nothing anywhere — no log line, no
+  stat, no state — ever recording that they had died. Fixed by clamping a
+  dead hunter's banked HP to 0, the same convention `sync()`'s own LOSE
+  branch already uses for a fallen hunter, instead of inventing a new number;
+  confirmed it doesn't strand the run either — `_check_end()` fires on the
+  very next combat action in the next encounter and correctly resolves LOSE
+  once that hunter's real 0 HP shows up there. New test:
+  `_test_bank_hp_does_not_revive_a_hunter_who_died_in_the_winning_blow`.
+
 - **2026-09-17 — #86 duty 3: proved play_card and end_turn are spoof-proof in
   co-op, the same guarantee #45 (use_potion) and #59 (resolve_scry) already
   had a dedicated test for.** Last commit (`c0b6445`) was duty 2, so this run
