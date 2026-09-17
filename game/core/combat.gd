@@ -1663,6 +1663,24 @@ func _enemy_turn() -> void:
 	# incoming_for()'s "limiter chip spends Block first" chain (see
 	# _predicted_limiter_damage()) is unaffected.
 	var move := boss.current_move(boss_context())
+	# backlog #86 duty 2: every living add's move is captured HERE too, against
+	# the same untouched board every preview (incoming_for(), game_host.gd's
+	# "intent" snapshot) already saw during the player's turn — not re-read
+	# live inside _adds_turn() below, which runs after the bleed above,
+	# _apply_limiter(), and the main boss's own move have all had a chance to
+	# mutate footholds/Block this same turn. A conditional add move
+	# ("when":"undefended"/min_height/max_height/at_sigil, #40) could
+	# therefore silently disagree with what it telegraphed the entire
+	# preceding turn: the main boss's own plain "attack" zeroing a hunter's
+	# Block a few lines below is enough to flip "undefended" true for an add
+	# that had shown its fallback the whole time, the exact "Titan whose
+	# intent icon lied" bug already fixed above for the boss's own bleed/
+	# limiter mutations — this is the same class of gap, just unmirrored onto
+	# the add's sibling call site.
+	var add_moves: Array = []
+	for add_v0 in adds:
+		var a0: Boss = add_v0
+		add_moves.append(a0.current_move(boss_context()) if not a0.is_dead() else {})
 	if boss.wound > 0:  # bleed ignores the Titan's block
 		boss.hp = maxi(boss.hp - boss.wound, 0)
 		_log("%s bleeds for %d." % [boss.name, boss.wound])
@@ -1818,7 +1836,7 @@ func _enemy_turn() -> void:
 	# undefended attack that same round, and still advanced its own move index.
 	if _check_end():
 		return
-	_adds_turn()
+	_adds_turn(add_moves)
 	boss.advance_move()
 	if _check_end():
 		return
@@ -1842,9 +1860,15 @@ func _enemy_turn() -> void:
 ## above) had nowhere to ever pay out, since this loop never read `add.wound`
 ## at all. Same shape as the Strength gap above: a stat every add already
 ## carries (Boss extends Combatant) that this loop simply never consulted.
-func _adds_turn() -> void:
-	for add_v in adds:
-		var add: Boss = add_v
+##
+## `captured_moves` (#86 duty 2): one entry per `adds`, taken by _enemy_turn()
+## before anything this turn could mutate the board — see the comment on that
+## capture. Falls back to a live current_move() only when nothing was
+## captured (empty array), so any other/future caller keeps working exactly
+## as before this param existed.
+func _adds_turn(captured_moves: Array = []) -> void:
+	for i in range(adds.size()):
+		var add: Boss = adds[i]
 		if add.is_dead():
 			continue
 		if add.wound > 0:
@@ -1864,7 +1888,15 @@ func _adds_turn() -> void:
 		# #40) could never actually resolve its reactive branch here either,
 		# so the real hit would silently disagree with what a correctly-fixed
 		# preview started promising.
-		var move := add.current_move(boss_context())
+		#
+		# `captured` (#86 duty 2, second half): prefer the move _enemy_turn()
+		# captured before this turn's own bleed/limiter/main-boss-attack could
+		# mutate footholds or Block -- a live current_move() call here would
+		# see a board this same turn has already changed, disagreeing with
+		# what incoming_for() and game_host.gd's own intent snapshot showed
+		# the player the whole preceding turn.
+		var captured: Dictionary = captured_moves[i] if i < captured_moves.size() else {}
+		var move: Dictionary = captured if not captured.is_empty() else add.current_move(boss_context())
 		var value := int(move.get("value", 0))
 		match String(move.get("type", "")):
 			"attack":

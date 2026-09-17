@@ -2812,6 +2812,43 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-17 — #86 duty 2: a living add's own conditional ("when") move was
+  re-read live inside `_adds_turn()`, AFTER the main boss's own move that same
+  turn could already have changed the board it reacts to.** Last commit
+  (`2817e6c`) was duty 3, so this run took duty 2. `_enemy_turn()` already
+  captures `boss.current_move(boss_context())` at the very top, before this
+  turn's own bleed/`_apply_limiter()` mutations, specifically so the boss's
+  telegraphed intent (shown to the player the whole preceding turn) can never
+  disagree with what actually lands — a fix landed earlier this same rotation.
+  `_adds_turn()`, called later in the same function after the main boss's own
+  attack has already resolved, was never given the same treatment: it called
+  `add.current_move(boss_context())` live, so a `"when":"undefended"` (or
+  `min_height`/`max_height`/`at_sigil`, #40) add move could see a board the
+  main boss's OWN hit this turn had already changed — e.g. the boss's plain
+  attack zeroing a hunter's Block right before the add acts flips
+  `"undefended"` true for an add that had shown its weaker fallback through
+  the entire preceding player turn (`incoming_for()`, `game_host.gd`'s intent
+  snapshot), then fires its stronger reactive move instead. No add in
+  `bosses.json` authors a `"when"` today (found via an Explore agent reading
+  `game/core/combat.gd` end to end and cross-referencing `run_tests.gd`'s
+  existing add-conditional-move tests, which both isolate the add with a
+  0-damage dummy boss and so never exercise this), so this is latent rather
+  than currently reachable in a shipped fight — same shape as several other
+  accepted fixes in this codebase. Fix: every living add's move is now
+  captured at the same point and against the same untouched snapshot as the
+  boss's own move, at the top of `_enemy_turn()`, and threaded through to
+  `_adds_turn(add_moves)` instead of re-read live; `_adds_turn()` falls back
+  to a live `current_move()` call only if nothing was captured, so no other
+  caller's behavior changes. Wrote
+  `_test_backlog86_an_adds_conditional_move_is_not_flipped_by_the_main_bosss_
+  own_hit_this_turn` first (a boss attack that fully spends a defended
+  hunter's Block, then a living add with an `"undefended"` move targeting the
+  same hunter the same turn), confirmed it fails against the unmodified code
+  (the add's reactive 14-damage move fires instead of its 3-damage fallback,
+  landing the target at 28 HP instead of the correct 39), then confirmed the whole
+  suite passes clean with the fix in. `run_tests.gd` green (whole suite)
+  before commit.
+
 - **2026-09-17 — #86 duty 2: fixed a boss's own multi-hit moves (and the
   turn-end sequencing after them) continuing to act after the boss had
   already died mid-turn to reflected Thorns.** Last commit (`f8c4bae`) was

@@ -590,6 +590,7 @@ func _init() -> void:
 	_test_add_thorns_bites_the_attacking_add_not_the_boss()
 	_test_backlog86_an_adds_conditional_move_reacts_to_the_real_board()
 	_test_backlog86_an_adds_conditional_move_preview_matches_what_actually_lands()
+	_test_backlog86_an_adds_conditional_move_is_not_flipped_by_the_main_bosss_own_hit_this_turn()
 	_test_thorns_reflects_card_damage_dealt_to_an_add()
 	_test_incoming_for_includes_a_living_adds_own_attack()
 	_test_backlog86_incoming_through_only_spends_a_buffer_stack_on_one_of_the_boss_and_add_hits()
@@ -12414,6 +12415,36 @@ func _test_backlog86_an_adds_conditional_move_preview_matches_what_actually_land
 	combat.end_turn(1)
 	_expect(combat.players[0].combatant.hp == 42 - 10,
 		"the add's real hit must match what the preview already promised")
+
+
+## backlog #86 duty 2, second half of the two tests above: proves the add's
+## captured move survives the MAIN BOSS'S OWN hit landing first in the same
+## enemy turn, not just the bleed/limiter mutations already covered elsewhere.
+## The main boss's plain "attack" here fully spends the target's Block down to
+## 0 -- if the add's "undefended" move were (as it used to be) re-read live
+## inside _adds_turn(), AFTER that attack resolves, it would wrongly see the
+## board as undefended and fire its reactive move instead of the fallback
+## every preview showed the entire preceding player turn.
+func _test_backlog86_an_adds_conditional_move_is_not_flipped_by_the_main_bosss_own_hit_this_turn() -> void:
+	var boss := _dummy_boss(300, 5)  # a plain attack for 5 -- just enough to fully spend the Block below
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Root Tendril", 30)
+	add.moves = [{"type": "attack", "value": 14,
+		"when": {"type": "undefended", "value": 0},
+		"fallback": {"type": "attack", "value": 3}}]
+	combat.adds.append(add)
+	# "undefended" (Boss._condition_met()) checks every hunter's Block, not just
+	# the targeted one -- both must start defended, or the ally's own untouched
+	# 0 Block would trip the condition regardless of what happens to the target.
+	combat.players[0].combatant.block = 5
+	combat.players[1].combatant.block = 5
+	var shown := combat.incoming_for(0)
+	_expect(int(shown["through"]) == 3,
+		"the preview already resolves the boss's attack against Block first, then the add's fallback (3) landing with nothing left to stop it -- not the add's reactive move (14)")
+	combat.end_turn(0)
+	combat.end_turn(1)  # the boss's own attack spends all 5 Block here, then the add acts the same turn
+	_expect(combat.players[0].combatant.hp == 42 - 3,
+		"the add must still fire its fallback (3), not the reactive move (14), even though the main boss's own hit just zeroed Block earlier in this same turn")
 
 
 ## backlog #86 duty 2: _damage_boss() has reflected a Titan's own Thorns onto
