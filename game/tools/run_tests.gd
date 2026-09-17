@@ -526,6 +526,7 @@ func _init() -> void:
 	_test_frail_artifact_thorns_persist_through_save()
 	_test_frail_artifact_thorns_reach_the_shared_snapshot()
 	_test_dexterity_intangible_buffer_plated_armour_reach_the_shared_snapshot()
+	_test_backlog86_team_relics_reach_the_shared_snapshot_for_both_hunters()
 	_test_backlog86_weak_point_threshold_snapshot_matches_the_real_buck_threshold()
 	_test_light_reaches_the_shared_snapshot()
 	_test_sigil_rounds_and_boss_limiter_reach_the_shared_snapshot()
@@ -11418,6 +11419,33 @@ func _test_dexterity_intangible_buffer_plated_armour_reach_the_shared_snapshot()
 	_expect(int(p0_view["dexterity"]) == 3 and int(p0_view["intangible"]) == 2
 		and int(p0_view["buffer"]) == 1 and int(p0_view["plated_armour"]) == 4,
 		"a hunter's own Dexterity/Intangible/Buffer/Plated Armour reach the shared snapshot too")
+
+
+## backlog #86 duty 3: every other piece of board-public state in this file
+## (Frail/Artifact/Thorns, Dexterity/Intangible/Buffer/Plated Armour, Light,
+## sigil_rounds, prepared) has its own "reaches the shared snapshot" test right
+## above this one -- but GameHost._relic_names() (game_host.gd:1085), which
+## `_build_shared()` puts under `shared["relics"]`, never had one. A relic is
+## exactly the kind of fact those other tests exist to protect: team_relics
+## (Run.team_relics) is genuinely team-wide -- picked once via pick_reward's
+## "relic" branch or bought via buy()'s "relic" branch, never per-hunter -- so
+## a name a future Content.make_relic() reshape drops or a to_dict()/from_dict()
+## round trip mangles would silently blank the HUD's relic list for BOTH
+## players with nothing catching it. Checks both c0 and c1 see the identical
+## list, not just that one peer's own snapshot happens to be right, since
+## "team-wide" is the whole claim being proven.
+func _test_backlog86_team_relics_reach_the_shared_snapshot_for_both_hunters() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var c1: GameClient = s["c1"]
+	host._run.team_relics = [Content.make_relic("iron_thews"), Content.make_relic("honed_blades")]
+	host._broadcast_state()
+	var expected := ["Iron Thews", "Honed Blades"]
+	_expect(c0.shared["relics"] == expected,
+		"the team's relics reach the shared snapshot, by name, in pick order [%s]" % [c0.shared["relics"]])
+	_expect(c1.shared["relics"] == expected,
+		"a relic is TEAM-wide -- the other hunter's own snapshot must show the identical list, not a blank or partial one [%s]" % [c1.shared["relics"]])
 
 
 ## backlog #86 duty 2: `game_host.gd`'s boss dict forwarded the bare, unmodified
