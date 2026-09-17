@@ -2812,6 +2812,29 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-17 — #86 duty 3: proved `_damage_boss()`/`_damage_add()` report the
+  actual damage dealt when a hit is mitigated by Buffer or Intangible, not
+  just by Block.** Last commit (`9147182`) was duty 2, so this run took duty
+  3. An Explore pass read `game/core/combat.gd` and `combatant.gd` against
+  `run_tests.gd` and found the gap: a prior duty-2 fix proved `_damage_boss`/
+  `_damage_add`'s "actual damage dealt" promise for Block (18/34 beasts carry
+  a Block move that survives into the next player round), but Buffer (full
+  cancel) and Intangible (caps at 1) — the tier of mitigation one step above
+  Block, backlog #61 — had only ever been tested for round-tripping through
+  the host/client snapshot, never for a real card hit landing on a boss or
+  add holding either stack. `predicted_damage()` and `take_damage()` are two
+  separate implementations of the same Block-then-Buffer-then-Intangible
+  cascade; a drift between them on just those two branches would silently
+  desync `damage_dealt_total` and the play-by-play log from `boss.hp`/
+  `add.hp`, the exact "two copies of one truth" shape this project keeps
+  finding. Added four tests (boss+add, Buffer+Intangible each) in
+  `tools/run_tests.gd`, wrote them first, confirmed all four fail with a
+  one-line mutation that reverts `_damage_boss` to report the raw
+  pre-mitigation swing (proving they'd have caught the original Block bug
+  too), then reverted the mutation and confirmed the whole suite passes
+  clean. No production code changed — the mechanic already worked; this
+  closes the untested gap. `run_tests.gd` green (whole suite) before commit.
+
 - **2026-09-17 — #86 duty 2: Scry cards carried no archetype tag, so they could
   never earn a reward-lean toward each other.** Last commit (`d01db70`) was
   duty 3, so this run took duty 2. Went hunting for a "hand-copied field list

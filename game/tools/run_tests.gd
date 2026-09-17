@@ -483,6 +483,10 @@ func _init() -> void:
 	_test_damage_boss_reports_nothing_when_fully_blocked()
 	_test_armored_damage_boss_reports_only_what_gets_through_block()
 	_test_damage_to_add_reports_only_what_gets_through_block()
+	_test_damage_boss_reports_zero_when_buffer_cancels_the_hit()
+	_test_damage_boss_reports_capped_damage_when_intangible_caps_the_hit()
+	_test_damage_to_add_reports_zero_when_buffer_cancels_the_hit()
+	_test_damage_to_add_reports_capped_damage_when_intangible_caps_the_hit()
 	_test_boss_hits_reports_only_what_gets_through_block()
 	_test_boss_hits_reports_nothing_when_fully_blocked()
 	_test_wound_decay_limiter_sheds_poison()
@@ -10548,6 +10552,72 @@ func _test_damage_to_add_reports_only_what_gets_through_block() -> void:
 	combat.play_card(0, 0, true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
 	_expect(add.hp == hp_before and combat.damage_dealt_total == 0,
 		"an add's Block absorbs a hit fully -- the log/stat must report 0, not the raw swing")
+
+
+## backlog #86 duty 3 — the SAME "actual damage dealt" promise the Block
+## tests above already proved, but for the two mitigations one tier above
+## Block (backlog #61): Buffer and Intangible. _damage_boss() computes
+## `dealt` via boss.predicted_damage(total), which already runs the full
+## Block-then-Buffer-then-Intangible cascade (see Combatant.predicted_damage
+## and take_damage) -- but nothing had ever driven a real card hit against a
+## boss holding Buffer to prove `dealt`/boss.hp/damage_dealt_total actually
+## stay in lockstep for it, only for Block. predicted_damage() and
+## take_damage() are two separate implementations of that same cascade
+## (backlog #61); if they ever drift specifically on the Buffer/Intangible
+## branches, `dealt` and boss.hp could silently disagree, the exact shape of
+## bug the Block fix above was written to close.
+func _test_damage_boss_reports_zero_when_buffer_cancels_the_hit() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	boss.buffer = 1  # Buffer cancels a hit that gets past Block outright
+	var hp_before: int = combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))
+	_expect(combat.boss.hp == hp_before and combat.boss.buffer == 0 and combat.damage_dealt_total == 0,
+		"a Buffer stack cancels the hit outright -- hp untouched, the stack spent, and the run's damage_dealt stat reports zero, not the card's raw damage")
+
+
+## Same gap, the sibling mitigation: Intangible caps whatever gets past Block
+## at 1, rather than cancelling it -- a different branch of the same cascade,
+## proven separately because a drift could hit only one of the two.
+func _test_damage_boss_reports_capped_damage_when_intangible_caps_the_hit() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	boss.intangible = 1  # Slash hits for 6 -- Intangible caps it at 1
+	var hp_before: int = combat.boss.hp
+	combat.play_card(0, _first_playable(combat, 0))
+	_expect(combat.boss.hp == hp_before - 1 and combat.boss.intangible == 0 and combat.damage_dealt_total == 1,
+		"an Intangible stack caps the hit at 1 -- hp drops by exactly 1, the stack spent, and the run's damage_dealt stat matches, not the card's raw 6")
+
+
+## The same Buffer/Intangible gap has a sibling in _damage_add() (backlog
+## #63), same shape as _test_damage_to_add_reports_only_what_gets_through_
+## block above did for Block: an add is a real Boss (combat.gd's own comment
+## on `adds` says so) and can legally carry either stack, but nothing had
+## ever proven _damage_add()'s report stays honest for them.
+func _test_damage_to_add_reports_zero_when_buffer_cancels_the_hit() -> void:
+	var boss := _dummy_boss(300, 0)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Grub", 30)
+	add.buffer = 1
+	combat.adds.append(add)
+	var hp_before: int = add.hp
+	combat.players[0].hand = [_slash()]
+	combat.play_card(0, 0, true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
+	_expect(add.hp == hp_before and add.buffer == 0 and combat.damage_dealt_total == 0,
+		"a Buffer stack on an add cancels the hit outright, the same as it does for the main boss")
+
+
+func _test_damage_to_add_reports_capped_damage_when_intangible_caps_the_hit() -> void:
+	var boss := _dummy_boss(300, 0)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Grub", 30)
+	add.intangible = 1
+	combat.adds.append(add)
+	var hp_before: int = add.hp
+	combat.players[0].hand = [_slash()]
+	combat.play_card(0, 0, true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
+	_expect(add.hp == hp_before - 1 and add.intangible == 0 and combat.damage_dealt_total == 1,
+		"an Intangible stack on an add caps the hit at 1, the same as it does for the main boss")
 
 
 ## The same _damage_boss()/_damage_add() gap, in the OTHER direction: the
