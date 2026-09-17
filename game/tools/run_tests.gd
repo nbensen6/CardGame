@@ -479,6 +479,8 @@ func _init() -> void:
 	_test_leech_heals_only_what_gets_through_block()
 	_test_leech_heal_cap_ignores_its_own_thorns_reflection()
 	_test_leech_does_not_revive_a_boss_thorns_just_killed()
+	_test_attack_all_stops_hitting_further_hunters_once_reflected_thorns_kills_the_boss()
+	_test_boss_dying_to_reflected_thorns_gives_no_living_add_a_free_attack_that_round()
 	_test_damage_boss_reports_only_what_gets_through_block()
 	_test_damage_boss_reports_nothing_when_fully_blocked()
 	_test_armored_damage_boss_reports_only_what_gets_through_block()
@@ -10468,6 +10470,51 @@ func _test_leech_does_not_revive_a_boss_thorns_just_killed() -> void:
 	combat.end_turn(1)  # leech drains 12, but the 5 reflected thorns kill the boss (hp 3) first
 	_expect(combat.boss.hp == 0 and combat.result() == Combat.Result.WIN,
 		"a lethal Thorns reflection inside leech must not be undone by that same move's own heal")
+
+
+## backlog #86 duty 2 — the leech fix above proved a lethal Thorns reflection
+## can't revive the boss; it never proved the loop-based moves (attack_all,
+## swipe_high/low, rift) stop hitting the REMAINING hunters once that same
+## reflection kills the boss mid-loop. _boss_hits() takes the hit and reflects
+## Thorns back onto the boss BEFORE returning, but nothing in the attack_all
+## loop checked boss.is_dead() before marching on to the next player -- a
+## sweep that killed the boss on hunter 0's reflected Thorns still landed a
+## full, real hit on hunter 1 from an already-dead boss.
+func _test_attack_all_stops_hitting_further_hunters_once_reflected_thorns_kills_the_boss() -> void:
+	var boss := Boss.new("Two-timer", 30)
+	boss.moves = [{"type": "attack_all", "value": 5}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.players[0].combatant.thorns = 30  # the reflection alone kills the boss (hp 30)
+	var hp1_before: int = combat.players[1].combatant.hp
+	combat.end_turn(0)
+	combat.end_turn(1)
+	_expect(combat.boss.hp == 0 and combat.result() == Combat.Result.WIN,
+		"sanity: hunter 0's reflected thorns kills the boss on the first hit of the sweep")
+	_expect(combat.players[1].combatant.hp == hp1_before,
+		"attack_all must stop once the boss dies mid-sweep to reflected thorns, not keep swinging its remaining targets from beyond the grave")
+
+
+## Same gap, the OTHER half: nothing stopped _adds_turn()/boss.advance_move()
+## from still running after the boss died to a reflection inside the match
+## block above, because the only _check_end() in _enemy_turn() used to sit
+## AFTER both of them. A boss that died to reflected Thorns on its own single
+## "attack" still let a living add take its own full, undefended attack that
+## same round.
+func _test_boss_dying_to_reflected_thorns_gives_no_living_add_a_free_attack_that_round() -> void:
+	var boss := Boss.new("Two-timer", 10)
+	boss.moves = [{"type": "attack", "value": 5}]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Grub", 30)
+	add.moves = [{"type": "attack", "value": 99}]  # would be lethal to hunter 0 if it ever fires
+	combat.adds.append(add)
+	combat.players[0].combatant.thorns = 10  # kills the boss (hp 10) via the reflected bite
+	var hp0_before: int = combat.players[0].combatant.hp
+	combat.end_turn(0)
+	combat.end_turn(1)
+	_expect(combat.boss.hp == 0 and combat.result() == Combat.Result.WIN,
+		"sanity: the reflected thorns kills the boss on its own single-target attack")
+	_expect(combat.players[0].combatant.hp == hp0_before - 5,
+		"the boss's own attack still lands before it dies to the reflection, but the add's free attack must never fire once the boss is already dead")
 
 
 ## Same bug, partial mitigation: only the Block-through amount should heal the

@@ -2812,6 +2812,37 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-17 — #86 duty 2: fixed a boss's own multi-hit moves (and the
+  turn-end sequencing after them) continuing to act after the boss had
+  already died mid-turn to reflected Thorns.** Last commit (`f8c4bae`) was
+  duty 3, so this run took duty 2. `_boss_hits()` reflects a hit target's
+  Thorns back onto its attacker *before returning*, and can kill the boss
+  right there if the reflection is lethal — a case `_test_leech_does_not_
+  revive_a_boss_thorns_just_killed` already covered for `leech`'s own
+  follow-up heal, but two other places in `_enemy_turn()` had never been
+  checked against it. First: the multi-target loops for `attack_all`,
+  `swipe_high`, `swipe_low` and `rift` kept marching to the REMAINING
+  players after `_boss_hits()` killed the boss on an earlier one in the
+  same loop, landing real, un-mitigated damage on them from a boss that no
+  longer existed. Second: the only `_check_end()` call in `_enemy_turn()`
+  sat AFTER both `_adds_turn()` and `boss.advance_move()` ran, so a boss
+  that died mid-`match` (to a lethal Thorns bite on ANY of its single- or
+  multi-target moves, not just the loop ones) still let every living add
+  take a full, undefended attack — and still advanced its own move index —
+  in the same turn it died. Root Lurker ships with exactly this shape (a
+  living "Root Tendril" add plus `attack_all`/`rift` moves), and any party
+  stacking Thorns (Barbed Hide, Spinebrace, the `open_thorns` relic) against
+  a low-HP boss could trigger either half. Fixed both: `boss.is_dead()`
+  breaks each multi-target loop right after the hit that may have caused it,
+  and a `_check_end()` now runs immediately after the whole `match` block,
+  before `_adds_turn()`/`boss.advance_move()` get a chance to fire. Wrote
+  two regression tests first (`_test_attack_all_stops_hitting_further_
+  hunters_once_reflected_thorns_kills_the_boss`, `_test_boss_dying_to_
+  reflected_thorns_gives_no_living_add_a_free_attack_that_round`), confirmed
+  both fail against the unmodified code, then applied the fix and confirmed
+  the whole suite passes clean. `run_tests.gd` green (whole suite) before
+  commit.
+
 - **2026-09-17 — #86 duty 3: proved `_damage_boss()`/`_damage_add()` report the
   actual damage dealt when a hit is mitigated by Buffer or Intangible, not
   just by Block.** Last commit (`9147182`) was duty 2, so this run took duty

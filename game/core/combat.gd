@@ -1730,6 +1730,13 @@ func _enemy_turn() -> void:
 						# weak_point_height never flips sigil_reached(), so the
 						# fatigue clock from before the sweep would otherwise survive it.
 						ps.sigil_rounds = 0
+				# backlog #86 duty 2 — _boss_hits() above can reflect a lethal Thorns
+				# bite back onto the boss mid-loop (see its own comment). Without this,
+				# the loop kept marching to the remaining hunters and hit them for real,
+				# un-mitigated damage from a boss that had already died — see the
+				# _check_end() gap fixed below for the other half of this bug.
+				if boss.is_dead():
+					break
 			_log("%s sweeps both hunters for %d and shakes them down a hold." % [boss.name, dmg_all])
 		"swipe_high":  # a lash along the flank — only hunters off the ground are hit
 			var dh := value + boss.strength
@@ -1738,6 +1745,8 @@ func _enemy_turn() -> void:
 				if players[i].foothold > 0:
 					_boss_hits(players[i], dh)
 					caught_high.append(players[i].combatant.name)
+					if boss.is_dead():  # backlog #86 duty 2 — same lethal-Thorns-mid-loop gap
+						break
 			if caught_high.is_empty():
 				_log("%s lashes along its flank — nobody is clinging to it." % boss.name)
 			else:
@@ -1749,6 +1758,8 @@ func _enemy_turn() -> void:
 				if players[i].foothold <= 0:
 					_boss_hits(players[i], dl)
 					caught_low.append(players[i].combatant.name)
+					if boss.is_dead():  # backlog #86 duty 2 — same lethal-Thorns-mid-loop gap
+						break
 			if caught_low.is_empty():
 				_log("%s stamps the ground — both hunters are above it." % boss.name)
 			else:
@@ -1758,6 +1769,8 @@ func _enemy_turn() -> void:
 			var dr: int = value + boss.strength + gap * RIFT_PER_GAP
 			for ps3 in players:
 				_boss_hits(ps3, dr)
+				if boss.is_dead():  # backlog #86 duty 2 — same lethal-Thorns-mid-loop gap
+					break
 			_log("%s wrenches the hunters apart for %d (gap of %d)." % [boss.name, dr, gap])
 		"shift_sigil":  # the weak point moves — whatever you climbed is now wrong
 			var moved: int = clampi(value, 1, FOOTHOLD_MAX)
@@ -1796,6 +1809,15 @@ func _enemy_turn() -> void:
 			_log("%s defends (+%d block)." % [boss.name, value])
 		_:
 			_log("%s hesitates." % boss.name)
+	# backlog #86 duty 2 — every branch above that can reflect a lethal Thorns
+	# bite (or, via a curse/frail move landing on the last-standing hunter's
+	# own follow-up, kill a player) used to fall straight through into
+	# _adds_turn()/boss.advance_move() with no death check in between; only the
+	# _check_end() AFTER both of those ran ever looked. A boss that died mid-turn
+	# to its own reflected Thorns still let every living add take a full,
+	# undefended attack that same round, and still advanced its own move index.
+	if _check_end():
+		return
 	_adds_turn()
 	boss.advance_move()
 	if _check_end():
