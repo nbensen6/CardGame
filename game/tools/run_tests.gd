@@ -278,6 +278,7 @@ func _init() -> void:
 	# actual card play a hunter uses it from.
 	_test_backlog86_targets_hold_card_can_be_aimed_at_an_unsafe_hold()
 	_test_backlog86_targets_hold_card_default_climb_skips_an_unsafe_hold()
+	_test_backlog86_targets_hold_card_named_target_at_or_below_foothold_falls_back_to_climb()
 	_test_fall_drops_to_base()
 	_test_fall_noop_when_secure()
 	_test_weakpoint_threshold_bucks()
@@ -6820,6 +6821,35 @@ func _test_backlog86_targets_hold_card_default_climb_skips_an_unsafe_hold() -> v
 	_expect(ps.foothold == 8,
 		"an untargeted climb skips the unsafe hold at 5 entirely and goes straight to " +
 		"the sigil, the next hold next_safe_height actually considers safe")
+
+
+## backlog #86 duty 3 — `_resolve_hold_target`'s doc comment (combat.gd:250-253)
+## splits an explicit request into two branches: it lands exactly on the
+## requested Height only when that height BOTH names a real hold AND sits
+## ABOVE the hunter's current foothold; every other explicit request falls
+## back to `next_safe_height`. Every existing targets_hold test explicitly
+## names either a hold above the current foothold (real or fake) or plays
+## with no target at all — none of them ever names a REAL hold that is at or
+## below the current foothold, so the `requested_height > ps.foothold` half
+## of that `and` has never actually been exercised: a broken `>` (e.g. `>=`
+## or a dropped comparison) could pass every test above while still landing
+## a hunter on a hold they're already standing at or above.
+func _test_backlog86_targets_hold_card_named_target_at_or_below_foothold_falls_back_to_climb() -> void:
+	var boss := _climb_boss(8)
+	boss.ledges = [2, 4]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 4
+	ps.hand = [Content.make_card("route_finder")]
+	ps.energy = 3
+	# Height 2 names a real ledge, but it's below the current foothold (4) —
+	# the explicit-target branch must NOT fire; this should fall back to
+	# next_safe_height(0), which skips both ledges (neither is above 4) and
+	# climbs straight to the sigil at 8.
+	combat.play_card(0, 0, true, -1, -1, 2)
+	_expect(ps.foothold == 8,
+		"naming a real hold at or below the current foothold must fall back to the " +
+		"nearest safe climb (8), not land on the named-but-lower hold (2) or no-op at 4")
 
 
 func _test_fall_drops_to_base() -> void:

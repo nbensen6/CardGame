@@ -18041,3 +18041,43 @@ Newest first. One line per finished item: what, and anything surprising.
   then restored the file exactly (confirmed clean via `git diff`). Fresh
   `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS
   PASSED. Next `#86` turn is duty 2 (find an error and resolve it).
+
+- **2026-09-17 (later) — #86 duty 3: proved `_resolve_hold_target`'s explicit-
+  target branch actually requires the requested Height to be ABOVE the
+  hunter's current foothold, not just a real named hold.** Last commit
+  (`bc4df5f`, "a shop already in the front half wrongly satisfied the
+  back-half guarantee") was duty 2, so this run took duty 3 — note that run's
+  own commit never appended a Log line here, so this entry is the first
+  record of the handoff; flagging it rather than silently letting the log
+  skip a turn. `_resolve_hold_target`'s own doc comment (`combat.gd:250-253`)
+  splits an explicit `targets_hold` request into two conditions ANDed
+  together: the height must name a real hold (`_is_named_hold`) AND sit
+  above the hunter's current foothold (`requested_height > ps.foothold`) —
+  only then does it land exactly there; anything else falls back to
+  `next_safe_height`. Delegated the hunt for a genuinely untested mechanic to
+  an Explore agent (scoped to `game/core`, `game/session` and — only where
+  provably pure/headless — `game/views`, told the long list of what this
+  rotation has already covered so it wouldn't suggest a repeat); it read
+  every existing `targets_hold`/`route_finder` test and confirmed each one
+  either passes no explicit target, or names a real hold genuinely above the
+  current foothold (safe or unsafe), or names a fake height with no real
+  hold at all — none of them ever names a REAL hold that sits AT OR BELOW
+  the current foothold, so the `>` half of that `and` had literally zero
+  coverage: a regression collapsing it to "any named hold, regardless of
+  position" (e.g. a dropped comparison) would pass every existing test while
+  letting a hunter "climb" backwards onto a lower ledge they're already past.
+  Added `_test_backlog86_targets_hold_card_named_target_at_or_below_foothold_
+  falls_back_to_climb`: boss with ledges `[2, 4]` and sigil at 8, hunter
+  foothold already at 4, plays Route Finder explicitly naming height 2 (a
+  real ledge, but below the current foothold) — asserts the hunter lands on
+  8 (the real `next_safe_height` fallback), not 2 (the named-but-lower hold)
+  and not a no-op at 4. Verified load-bearing by temporarily collapsing the
+  guard to `if _is_named_hold(requested_height):` (dropping the foothold
+  comparison entirely, the realistic shape of this bug): reran the suite,
+  exactly the new test failed (`FAIL naming a real hold at or below the
+  current foothold...`) with everything else still green, then reverted and
+  confirmed `git diff` on `combat.gd` was clean. No screen needed — pure
+  `Combat` state through a direct `play_card()` call, same headless harness
+  as the sibling `targets_hold` tests beside it. Fresh `--import`, headless,
+  Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is
+  duty 2 (find an error and resolve it).
