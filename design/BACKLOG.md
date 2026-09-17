@@ -2812,6 +2812,30 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-17 — #86 duty 3: proved `location_3d.gd`'s own `_hex_x` places
+  reward-screen ground tiles correctly — a second, never-tested copy of the
+  formula `overworld_3d.gd`'s `_hex_x` already has six tests for.** Last
+  commit (`099bb05`) was duty 2, so this run took duty 3. Same offset-hex
+  packing rule (even rows at bare columns, odd rows shifted half a tile),
+  same `HEX_W := 1.0`, but a different file, different class, and — until
+  now — zero coverage: `_tile()` and `_widen_plot()` (the felled-beast
+  reward plot's ground fill) both build every tile's world X off this
+  function, and `_widen_plot`'s own doc comment promises its circular fill
+  "stays right at any size," a promise this function's correctness
+  underwrites and nothing was checking. Classic two-copies-of-one-truth: the
+  Overworld map's copy got tested when it was lifted static; the reward
+  screen's copy of the same idea, in a different file, never did. Fix: made
+  `Location3D._hex_x` `static` (it only touches its own params and the
+  `HEX_W` const, no behaviour change) and added six tests mirroring
+  `Overworld3D._hex_x`'s own — even/odd row, negative-row parity, one-tile
+  column spacing, and half-column row interlock — against `Location3D._hex_x`
+  directly. No production behaviour changed, only added coverage, so no
+  revert-and-confirm dance; found instead by an Explore agent surveying
+  `location_3d.gd`/`combat_3d.gd` for pure functions the existing 150+ duty-3
+  tests don't reach yet. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2 (find an error
+  and resolve it).
+
 - **2026-09-17 — #86 duty 2: the boss's own attack log told hunters they took
   more damage than actually reached their HP.** Last commit (`6918b3c`) was
   duty 3, so this run took duty 2. `combat.gd`'s `_boss_hits()` already

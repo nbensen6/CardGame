@@ -904,6 +904,17 @@ func _init() -> void:
 	_test_backlog86_felled_height_caps_at_the_max_size_past_the_reference_climb()
 	_test_backlog86_felled_height_scales_between_the_floor_and_the_cap()
 	_test_backlog86_felled_height_defaults_to_the_min_size_for_an_unknown_beast()
+	# backlog #86 duty 3: location_3d._hex_x -- a SEPARATE function from
+	# overworld_3d._hex_x (different file, different class, same shape), used by
+	# _tile/_widen_plot to place every reward-screen ground tile. Overworld3D's
+	# copy has six tests just like these; this one had none. Lifted static (it
+	# only touched its own params and the HEX_W const) and given first coverage.
+	_test_backlog86_location_hex_x_is_bare_column_on_an_even_row()
+	_test_backlog86_location_hex_x_offsets_half_a_tile_on_an_odd_row()
+	_test_backlog86_location_hex_x_treats_negative_odd_rows_as_odd()
+	_test_backlog86_location_hex_x_treats_negative_even_rows_as_even()
+	_test_backlog86_location_hex_x_column_spacing_is_one_tile_regardless_of_row()
+	_test_backlog86_location_hex_x_adjacent_rows_interlock_by_half_a_column()
 	# backlog #86 duty 3: location_3d._bounds/_bounds_in_parent/_relative_xform
 	# are the geometry _lay_out_the_felled leans on to place a felled trophy
 	# without it floating over the sea or sinking into the tile (its own
@@ -17685,6 +17696,50 @@ func _test_backlog86_felled_height_scales_between_the_floor_and_the_cap() -> voi
 func _test_backlog86_felled_height_defaults_to_the_min_size_for_an_unknown_beast() -> void:
 	_expect(is_equal_approx(Location3D._felled_height("no_such_beast"), Location3D.FELLED_MIN),
 		"an id Content can't build a Boss from falls back to the smallest trophy, never a crash or a zero-size body")
+
+
+## location_3d._hex_x is a SEPARATE function from overworld_3d._hex_x -- same
+## offset-hex formula, but a different file, a different class and its own
+## HEX_W -- used by _tile/_widen_plot to place every reward-screen ground
+## tile (the felled beast's plot). Overworld3D._hex_x already has six tests
+## just below this file's own copy of them; Location3D._hex_x had zero,
+## exactly the "two copies of one truth, one covered one not" shape #86 duty
+## 2 has fixed repeatedly elsewhere. HEX_W is 1.0 here too, so these mirror
+## the Overworld3D tests but call Location3D's own function.
+func _test_backlog86_location_hex_x_is_bare_column_on_an_even_row() -> void:
+	_expect(is_equal_approx(Location3D._hex_x(3, 0), 3.0), "an even hex_row applies no offset at all")
+	_expect(is_equal_approx(Location3D._hex_x(-2, 4), -2.0), "row 4 is still even -- same bare column, no offset")
+
+
+func _test_backlog86_location_hex_x_offsets_half_a_tile_on_an_odd_row() -> void:
+	_expect(is_equal_approx(Location3D._hex_x(3, 1), 3.5), "an odd hex_row is offset half a tile")
+	_expect(is_equal_approx(Location3D._hex_x(0, 3), 0.5), "row 3 is odd too -- the offset isn't special-cased to row 1")
+
+
+func _test_backlog86_location_hex_x_treats_negative_odd_rows_as_odd() -> void:
+	# _widen_plot's filler loop runs row from -6 to 6, so hex_row == -1 is a
+	# real value the game passes, not a synthetic edge case. absi() is what
+	# has to make GDScript's % (which keeps the sign of a negative left-hand
+	# side) come out right here.
+	_expect(is_equal_approx(Location3D._hex_x(2, -1), 2.5), "row -1 must offset the same as row 1 -- it's the same parity")
+
+
+func _test_backlog86_location_hex_x_treats_negative_even_rows_as_even() -> void:
+	_expect(is_equal_approx(Location3D._hex_x(2, -2), 2.0), "row -2 is even -- no offset, same as row 2")
+
+
+func _test_backlog86_location_hex_x_column_spacing_is_one_tile_regardless_of_row() -> void:
+	for hex_row in [0, 1, -1, 4, 7]:
+		var step: float = Location3D._hex_x(1, hex_row) - Location3D._hex_x(0, hex_row)
+		_expect(is_equal_approx(step, 1.0), "adjacent columns on hex_row %d must sit exactly one tile apart" % hex_row)
+
+
+func _test_backlog86_location_hex_x_adjacent_rows_interlock_by_half_a_column() -> void:
+	# The property that actually makes two neighbouring rows nest into a hex
+	# grid instead of stacking into a plain rectangular one, and the exact
+	# thing that keeps _widen_plot's circular fill gap-free.
+	var shift: float = Location3D._hex_x(0, 1) - Location3D._hex_x(0, 0)
+	_expect(is_equal_approx(shift, 0.5), "column 0 on row 1 must sit half a tile from column 0 on row 0, or the rows would stack instead of interlocking")
 
 
 ## _relative_xform's own promise: "works on a node that was built a moment ago

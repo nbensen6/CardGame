@@ -224,7 +224,7 @@ func _stage(s: Dictionary, phase: String) -> void:
 	_cam.look_at(Vector3(0.0, 0.4 + _felled_span * 0.22, -1.1), Vector3.UP)
 
 
-func _hex_x(hex_col: int, hex_row: int) -> float:
+static func _hex_x(hex_col: int, hex_row: int) -> float:
 	return hex_col * HEX_W + (HEX_W * 0.5 if absi(hex_row) % 2 == 1 else 0.0)
 
 
