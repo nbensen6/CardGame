@@ -17935,3 +17935,35 @@ Newest first. One line per finished item: what, and anything surprising.
   beside it. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`:
   ALL TESTS PASSED. Next `#86` turn is duty 3 (verify a mechanic actually
   works).
+
+- **2026-09-17 — #86 duty 3: proved `_damage_add()`'s dead-add guard actually
+  stops Thorns reflection (and phantom damage) mid-multistrike, the sibling
+  case to the last run's `_damage_boss()` fix.** Last commit (`05aeef2`) was
+  duty 2, so this run took duty 3. `_damage_add()`'s own doc comment has
+  claimed since backlog #63 that it returns "0 if ... the add is already
+  down, so a caller doesn't have to check first" and the guard (`if
+  add.is_dead(): return 0`) was already there and already correct — unlike
+  `_damage_boss()` last run, this was never actually broken. But it was never
+  proven either: delegated the search to an Explore agent scoped to
+  `game/core`/`game/session`, which grepped every multistrike-vs-add test in
+  `run_tests.gd` and found the only one
+  (`_test_multistrike_thorns_bites_back_once_per_hit`) uses a 30-HP add that
+  survives both of Flurry's hits, so it only proves Thorns fires once per hit
+  while alive — never the death-partway-through-a-multi-hit-card case the
+  boss-side bug had just shown is exactly where this family of bug hides.
+  Added `_test_backlog86_dead_add_stops_reflecting_thorns_mid_multihit`: a
+  4-HP add with Thorns 3, hit by Flurry (4 damage x2, same card every sibling
+  test here already uses, `enemy_index` 0 redirecting both hits to the add).
+  Hit one kills the add; hit two must be a no-op, so the hunter should take
+  exactly 3 reflected damage, not 6. Proved the test is real, not a
+  tautology, by inverting the guard to `if not add.is_dead(): return 0` —
+  that broke this new test AND 17 other pre-existing add-damage tests across
+  the suite (Buffer/Intangible on an add, `enemy_index` targeting,
+  `hits_all_enemies`, add-death-doesn't-end-the-fight, wound/vulnerable
+  reading the right target's stacks), confirming the guard is load-bearing
+  for the whole add-damage path, not just this one scenario — then reverted
+  and confirmed `run_tests.gd` is clean again. No screen needed — pure
+  `Combat`/`Boss` state, same headless harness as its `_damage_boss` sibling
+  test beside it. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2 (find an error
+  and resolve it).

@@ -475,6 +475,7 @@ func _init() -> void:
 	_test_flurry_multi_hit()
 	_test_multistrike_thorns_bites_back_once_per_hit()
 	_test_backlog86_dead_boss_stops_reflecting_thorns_mid_multihit()
+	_test_backlog86_dead_add_stops_reflecting_thorns_mid_multihit()
 	_test_backlog86_multistrike_sigil_damage_accumulates_across_hits()
 	_test_backlog86_multihit_wound_applies_once_per_play_not_per_hit()
 	_test_backlog86_multihit_vulnerable_applies_once_per_play_not_per_hit()
@@ -10456,6 +10457,31 @@ func _test_backlog86_dead_boss_stops_reflecting_thorns_mid_multihit() -> void:
 	_expect(combat.boss.is_dead(), "Flurry's first 4-damage hit kills a 4-HP boss")
 	_expect(combat.players[0].combatant.hp == hp0 - 3,
 		"a boss killed by a multistrike card's first hit doesn't also reflect Thorns (or anything else) from its later, pointless hits")
+
+
+## backlog #86 duty 3: _damage_boss()'s sibling guard above (duty 2, same session
+## as this one) proved a boss stops reflecting Thorns once a multistrike card's
+## own earlier hit already killed it -- but _damage_add()'s doc comment has
+## claimed the identical guard ("0 if ... the add is already down, so a caller
+## doesn't have to check first") since backlog #63 first wrote it, and it had
+## NEVER been exercised against a multi-hit card that kills the add partway
+## through. The only existing multistrike-vs-add test
+## (_test_multistrike_thorns_bites_back_once_per_hit above) uses a 30-HP add
+## that survives both hits, so it proves Thorns fires once PER HIT while alive
+## -- never the death-mid-sequence case. Flurry (4 damage x2, same card every
+## sibling test here uses) against a 4-HP add dies on hit one; hit two must be
+## a no-op, same shape as the boss-side test just above.
+func _test_backlog86_dead_add_stops_reflecting_thorns_mid_multihit() -> void:
+	var add := Boss.new("Grub", 4)
+	add.thorns = 3
+	var combat := _new_combat([_deck_of(_flurry, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	combat.adds.append(add)
+	var hp0: int = combat.players[0].combatant.hp
+	# enemy_index 0 redirects Flurry's two hits to the add instead of the boss.
+	combat.play_card(0, _first_playable(combat, 0), true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
+	_expect(add.is_dead(), "Flurry's first 4-damage hit kills a 4-HP add")
+	_expect(combat.players[0].combatant.hp == hp0 - 3,
+		"an add killed by a multistrike card's first hit doesn't also reflect Thorns from its later, pointless hits")
 
 
 ## backlog #86 duty 3: _damage_boss()'s sigil branch adds `players[pi].weak_point_damage
