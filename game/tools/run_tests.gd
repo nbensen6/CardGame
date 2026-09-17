@@ -293,6 +293,8 @@ func _init() -> void:
 	_test_timed_ally_block_anchors_the_ally()
 	_test_backlog86_timed_block_pays_half_on_a_good_hit()
 	_test_backlog86_timed_ally_block_pays_half_on_a_good_hit()
+	_test_backlog86_true_eye_upgrades_a_good_timed_block_to_perfect()
+	_test_backlog86_true_eye_upgrades_a_good_timed_ally_block_to_perfect()
 	# Retain and Innate (backlog #28)
 	_test_retain_keeps_a_card_in_hand_at_end_of_turn()
 	_test_retain_survives_into_the_next_round()
@@ -654,6 +656,7 @@ func _init() -> void:
 	_test_belay_scales_with_height()
 	_test_timed_grapple()
 	_test_backlog86_timed_grip_pays_half_on_a_good_hit()
+	_test_backlog86_true_eye_upgrades_a_good_timed_grip_to_perfect()
 	_test_content_builds_character()
 	# session / client-server split
 	_test_session_both_players_join()
@@ -7859,6 +7862,46 @@ func _test_backlog86_timed_ally_block_pays_half_on_a_good_hit() -> void:
 	combat.play_card(0, _first_playable(combat, 0), true, -1, -1, -1, Combat.TIMING_GOOD)
 	_expect(combat.players[1].combatant.block == 7 and combat.players[0].combatant.block == 2,
 		"a good (not dead-centre) Anchor Brace shields the ally for the base ally_block plus HALF the timed bonus (7, not the full 10 or the bare 4), while the caster's own untimed block is unaffected by the grade")
+
+
+## backlog #86 duty 3: "True Eye" (quality_up) is applied at combat.gd:924,
+## BEFORE preview() is called with the upgraded timing_quality — so it reads
+## as one generic rule ("a good hit on this card lands as a perfect one",
+## enchants.json's own text, not "a good DAMAGE hit") that should upgrade
+## whichever of the four timed bonuses (timed_damage, timed_grip, timed_block,
+## timed_ally_block) the card actually carries. But _test_true_eye_enchant_
+## upgrades_good_to_perfect above only ever exercises it on timed_damage
+## (_pounce). The three tests just above this one prove GOOD pays HALF on
+## grip/block/ally_block; nothing anywhere proves True Eye lifts THOSE three
+## to the FULL bonus the same way it's proven to for damage. A quality_up
+## check gated on "card.timed_damage > 0" instead of the card-level `card.timed`
+## flag would pass every existing test in this file and still leave True Eye
+## silently inert on a grip/block/ally-block card.
+func _test_backlog86_true_eye_upgrades_a_good_timed_grip_to_perfect() -> void:
+	var combat := _new_combat([_deck_of(_grapple, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var idx := _first_playable(combat, 0)
+	combat.players[0].hand[idx] = combat.players[0].hand[idx].enchanted_copy("true_eye")
+	combat.play_card(0, idx, true, -1, -1, -1, Combat.TIMING_GOOD)
+	_expect(combat.players[0].foothold == 3,  # grip 1 + the FULL timed_grip 2, not half (would be 2)
+		"a True Eye-enchanted Grapple turns a good grip hit into a perfect one")
+
+
+func _test_backlog86_true_eye_upgrades_a_good_timed_block_to_perfect() -> void:
+	var combat := _new_combat([_deck_of(_dig_in, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var idx := _first_playable(combat, 0)
+	combat.players[0].hand[idx] = combat.players[0].hand[idx].enchanted_copy("true_eye")
+	combat.play_card(0, idx, true, -1, -1, -1, Combat.TIMING_GOOD)
+	_expect(combat.players[0].combatant.block == 10,  # base 4 + the FULL timed_block 6, not half (would be 7)
+		"a True Eye-enchanted brace turns a good block hit into a perfect one")
+
+
+func _test_backlog86_true_eye_upgrades_a_good_timed_ally_block_to_perfect() -> void:
+	var combat := _new_combat([_deck_of(_anchor_brace, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var idx := _first_playable(combat, 0)
+	combat.players[0].hand[idx] = combat.players[0].hand[idx].enchanted_copy("true_eye")
+	combat.play_card(0, idx, true, -1, -1, -1, Combat.TIMING_GOOD)
+	_expect(combat.players[1].combatant.block == 10 and combat.players[0].combatant.block == 2,
+		"a True Eye-enchanted Anchor Brace turns a good hit into a perfect one for the ally's timed block too (10, not the half-scaled 7), while the caster's own untimed block is unaffected")
 
 
 ## Retain (backlog #28): a retained card survives end_turn in hand; an
