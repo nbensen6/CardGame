@@ -668,6 +668,7 @@ func _init() -> void:
 	_test_backlog86_pause_blocks_shop_commands_and_reconnect_resumes_them()
 	_test_host_autosaves_and_resumes()
 	_test_host_autosaves_and_resumes_mid_combat()
+	_test_backlog86_coop_host_never_autosaves()
 	_test_solo_controls_both_hunters()
 	_test_backlog86_solo_cannot_pick_the_same_character_for_both_hunters()
 	_test_backlog86_coop_cannot_pick_the_same_character_twice()
@@ -14027,6 +14028,44 @@ func _test_host_autosaves_and_resumes_mid_combat() -> void:
 	_expect(back.phase == Run.Phase.COMBAT and back.combat != null
 			and back.combat.players[0].foothold == 3 and back.combat.boss.hp == expect_hp and reached,
 		"a run saved mid-fight resumes INTO the fight, and the client sees combat, not the map")
+	RunSave.clear()
+
+
+## backlog #86 duty 3: RunSave is a single slot -- GameHost._autosave()'s own
+## comment calls co-op resume "a rendezvous, not a file" and refuses to write
+## it for anyone but a solo host (`if _run == null or not _solo: return`).
+## Every existing autosave test (the two directly above) builds the host with
+## solo=true, so only the `_solo == true` half of that two-line guard has ever
+## been exercised -- the `not _solo` half that actually protects co-op has
+## never been asked to prove anything, even though _broadcast_state() (and so
+## _autosave()) fires after essentially every command a co-op game sends:
+## join, select_character, play_card, end_turn, pick_node... A co-op host
+## writing to the single-player slot would let a solo "Continue" load one
+## peer's live co-op run out from under them, or silently overwrite it.
+func _test_backlog86_coop_host_never_autosaves() -> void:
+	RunSave.clear()
+	var s := _make_session()  # co-op: two real peers, already inside a fight
+	var c0: GameClient = s["c0"]
+	var c1: GameClient = s["c1"]
+	_expect(not RunSave.has_save(),
+		"a co-op host writes no save just from joining, picking characters and reaching combat")
+	c0.end_turn()
+	c1.end_turn()  # both ended -> the enemy turn resolves, broadcasting again
+	_expect(not RunSave.has_save(),
+		"a co-op host still writes no save after real in-combat commands keep broadcasting state")
+
+	# Control: the same broadcast path DOES write a save for a solo host, so
+	# the negative result above is the `not _solo` guard doing its job, not a
+	# filesystem that silently never writes in this test harness.
+	var t2 := LocalTransport.new()
+	var host2 := GameHost.new(t2, 7, 2, true)  # solo
+	_kept.append(host2)
+	var c2 := GameClient.new(t2, 1)
+	c2.join()
+	c2.select_character("frog", 0)
+	c2.select_character("goblin_mech", 1)  # both picked -> start_new_run() -> _broadcast_state()
+	_expect(RunSave.has_save(),
+		"sanity: a solo host DOES autosave on the same broadcast path, proving the co-op result above is a real guard")
 	RunSave.clear()
 
 

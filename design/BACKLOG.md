@@ -17640,3 +17640,35 @@ Newest first. One line per finished item: what, and anything surprising.
   RNG/state logic, same headless harness as its neighbouring save/load-in-event
   test. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL
   TESTS PASSED. Next `#86` turn is duty 2 (find an error and resolve it).
+
+- **2026-09-17 — #86 duty 3: proved a co-op `GameHost` never writes the
+  single-slot `RunSave` file, no matter how many commands it broadcasts.**
+  Last commit (`4e790be`) was duty 2, so this run took duty 3. `_autosave()`'s
+  own comment calls `RunSave` "a rendezvous, not a file" for co-op and gates
+  writing on `not _solo` — but every existing autosave test
+  (`_test_host_autosaves_and_resumes`, `_test_host_autosaves_and_resumes_mid_combat`)
+  builds the host with `solo=true`, so only the `_solo == true` half of that
+  two-line guard had ever been exercised. The `not _solo` half is the one that
+  actually matters in real play: `_broadcast_state()` (and so `_autosave()`)
+  fires after nearly every co-op command — join, select_character, play_card,
+  end_turn, pick_node — so a broken guard would silently let a co-op host
+  overwrite the single-player save slot on the very first broadcast, corrupting
+  whatever a solo "Continue" would load next. Delegated the hunt for a
+  genuinely untested mechanic (rather than presentation math, which this
+  rotation's duty-3 passes have by now mostly exhausted in the view layer) to
+  an Explore agent scoped to `game/core` and `game/session`; it found this gap
+  and confirmed no test anywhere pairs a co-op (`solo=false`) host with
+  `RunSave.has_save()`. Added `_test_backlog86_coop_host_never_autosaves`:
+  builds a real two-peer co-op session via the existing `_make_session()`
+  helper (already reaches combat), asserts no save exists after the lobby
+  broadcasts, drives a real `end_turn()` round through both clients and
+  asserts still no save, then — as a control proving `RunSave` itself is live
+  in the test process rather than a dead filesystem — builds a *solo* host on
+  the same path and confirms it DOES autosave. Proved the test is real by
+  temporarily loosening the guard to `if _run == null:` (dropping `not _solo`):
+  both co-op assertions failed as expected with the rest of the suite green,
+  then reverted and confirmed `run_tests.gd` is clean again. No screen
+  needed — this is pure session-layer file I/O, same headless harness as the
+  solo autosave tests beside it. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2 (find an error
+  and resolve it).
