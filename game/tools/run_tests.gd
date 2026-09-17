@@ -1899,6 +1899,7 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_end_turn_flip_still_flips_with_no_timing_window_open()
 
 	_test_backlog86_draw_relic_mod_grants_extra_cards_every_round_not_just_the_first()
+	_test_backlog86_real_draw_relics_reach_relic_totals_and_grant_extra_cards()
 
 	print("")
 	if _failures == 0:
@@ -22320,6 +22321,43 @@ func _test_backlog86_draw_relic_mod_grants_extra_cards_every_round_not_just_the_
 	_expect(combat.players[0].hand.size() == Combat.HAND_SIZE + 2
 			and combat.players[1].hand.size() == Combat.HAND_SIZE + 2,
 		"a draw relic's own text is 'each turn' -- the bonus must still apply once round 1's hand is discarded, not just at fight start")
+
+
+## backlog #86 duty 3: the test above proves "draw" recurs every round, but
+## only through a synthetic {"draw": 2} dict handed straight to Combat --
+## it never once goes through Run.relic_totals()/_apply_relic_effect() with
+## a REAL relic id. _test_backlog86_every_relic_mod_key_reaches_relic_totals
+## deliberately excludes "draw" from its own by_key map with a comment
+## pointing here instead, so the actual claim -- that owning
+## scouts_satchel/long_lungs/bottomless_quiver (data/relics.json) drives
+## relic_totals()["draw"], which then reaches a fought Combat -- had zero
+## coverage anywhere in the suite; grep confirms none of these three ids is
+## referenced by any other test. "draw" only reaches relic_totals() through
+## the generic match fallthrough (`if t.has(e): t[e] += v`), the same path
+## every other un-special-cased key uses, so a typo'd effect string or a
+## renamed dictionary key here would silently leave these three relics doing
+## nothing, with nothing anywhere failing to say so.
+func _test_backlog86_real_draw_relics_reach_relic_totals_and_grant_extra_cards() -> void:
+	var run := _map_run()
+	run.team_relics = [Content.make_relic("scouts_satchel")]
+	_expect(int(run.relic_totals()["draw"]) == 1,
+		"Scout's Satchel (data/relics.json: draw 1) reaches relic_totals()")
+
+	run.team_relics = [Content.make_relic("long_lungs")]
+	_expect(int(run.relic_totals()["draw"]) == 2,
+		"Long Lungs (data/relics.json: draw 2) reaches relic_totals()")
+
+	run.team_relics = [Content.make_relic("bottomless_quiver")]
+	var totals := run.relic_totals()
+	_expect(int(totals["draw"]) == 3 and int(totals["attack"]) == -3,
+		"Bottomless Quiver's draw bonus and its attack_bonus downside both reach relic_totals(), the same generic downside rule (#30) every other relic uses")
+
+	var boss := _dummy_boss(300)
+	var decks := [_deck_of(_slash, 20), _deck_of(_slash, 20)]
+	var combat := _new_combat_mods(decks, 42, boss, totals)
+	_expect(combat.players[0].hand.size() == Combat.HAND_SIZE + 3
+			and combat.players[1].hand.size() == Combat.HAND_SIZE + 3,
+		"a real relic's draw value, carried through relic_totals() rather than a hand-built mods dict, still reaches Combat's opening hand -- closing the gap the synthetic-mods test above leaves open")
 
 
 func _expect(cond: bool, name: String) -> void:

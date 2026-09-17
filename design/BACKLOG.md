@@ -18004,3 +18004,40 @@ Newest first. One line per finished item: what, and anything surprising.
   same headless harness as the sibling test beside it. Fresh `--import`,
   headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next
   `#86` turn is duty 3 (verify a mechanic actually works).
+
+- **2026-09-17 — #86 duty 3: proved the three real "draw" relics
+  (`scouts_satchel`, `long_lungs`, `bottomless_quiver` in `data/relics.json`)
+  actually reach a fought `Combat` through `Run.relic_totals()`, not just
+  through a hand-built mods dict.** Last commit (`33c6238`) was duty 2, so
+  this run took duty 3. `_test_backlog86_draw_relic_mod_grants_extra_cards_
+  every_round_not_just_the_first` already proved the "each round" half of
+  the relics' text, but only via a synthetic `{"draw": 2}` dict passed
+  straight to `Combat`, never through `relic_totals()`/
+  `_apply_relic_effect()`. `_test_backlog86_every_relic_mod_key_reaches_
+  relic_totals` — the test that walks every OTHER relic-mod key by its real
+  relic id — explicitly excludes `"draw"` with a comment pointing at the
+  synthetic-mods test instead, so nothing anywhere ever drove a real relic
+  id through the actual data path: "draw" only reaches `relic_totals()`
+  through the generic match fallthrough (`_: if t.has(e): t[e] += v` in
+  `run.gd`'s `_apply_relic_effect`), and grep confirmed none of the three
+  relic ids is referenced by any other test in the 22k-line suite. A typo'd
+  `"effect"` string in the JSON or a renamed dict key in that fallthrough
+  would have silently made these three relics do nothing, with nothing
+  failing to say so. Delegated the search for a genuinely untested mechanic
+  to an Explore agent (scoped to `core/*.gd` and `views/combat_3d.gd`/
+  `location_3d.gd`, told what duty 3 has already covered so it wouldn't
+  suggest a repeat); read its top finding's cited lines myself before
+  writing anything. Added `_test_backlog86_real_draw_relics_reach_relic_
+  totals_and_grant_extra_cards`: builds each of the three relics by id,
+  asserts `relic_totals()["draw"]` matches the JSON's stated value (1, 2, 3),
+  checks Bottomless Quiver's `attack_bonus` downside lands too (the same
+  generic downside rule, #30), then feeds the real totals dict into a
+  `Combat` and asserts the opening hand actually grows by 3 — closing the
+  loop the synthetic-mods test left open. No production code changed, pure
+  added coverage, so verified load-bearing the only way available: temporarily
+  added a no-op `"draw": pass` case ahead of the fallthrough in
+  `_apply_relic_effect` (simulating the exact bug this test exists to catch)
+  and confirmed all four new assertions failed with that change in place,
+  then restored the file exactly (confirmed clean via `git diff`). Fresh
+  `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS
+  PASSED. Next `#86` turn is duty 2 (find an error and resolve it).
