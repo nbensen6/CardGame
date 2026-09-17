@@ -1334,6 +1334,15 @@ func _apply_frail(target: Combatant, amount: int) -> void:
 ## that's "how hard you struck the sigil", not "what got through Block", and
 ## changing what THAT counts is a mechanic-identity call, not this fix.
 func _damage_boss(amount: int, pi: int) -> int:
+	if boss.is_dead():  # backlog #86 duty 2: _damage_add() has always refused a dead
+		# add ("already down, so a caller doesn't have to check first") but this
+		# sibling never grew the same guard. play_card()'s multi-hit loop calls
+		# _damage_boss() once per hit with no break on death, so a card whose
+		# EARLIER hit already drops the boss to 0 still ran this function's full
+		# body on every later hit — full Vulnerable/sigil bonuses, a corpse's
+		# Thorns still reflecting real damage onto the hunter who just won, and
+		# a phantom "dealt" total padding the log and damage_dealt_total.
+		return 0
 	var dealt := 0
 	# Below the weak point, the beast's hide is armored — attacks barely chip it,
 	# and Exposed stacks are NOT spent (they bank until a hunter reaches the sigil).

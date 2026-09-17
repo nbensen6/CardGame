@@ -474,6 +474,7 @@ func _init() -> void:
 	_test_wound_bleeds_the_titan()
 	_test_flurry_multi_hit()
 	_test_multistrike_thorns_bites_back_once_per_hit()
+	_test_backlog86_dead_boss_stops_reflecting_thorns_mid_multihit()
 	_test_backlog86_multistrike_sigil_damage_accumulates_across_hits()
 	_test_backlog86_multihit_wound_applies_once_per_play_not_per_hit()
 	_test_backlog86_multihit_vulnerable_applies_once_per_play_not_per_hit()
@@ -10437,6 +10438,24 @@ func _test_multistrike_thorns_bites_back_once_per_hit() -> void:
 	_expect(add.hp == 22, "Flurry's two hits still land on the add (30 - 4 - 4)")
 	_expect(c2.players[0].combatant.hp == hp1 - 4,
 		"a Thorned add bites back once per hit too (2+2=4), not once per card play")
+
+
+## backlog #86 duty 2: _damage_boss() had no is_dead() guard, unlike its sibling
+## _damage_add() ("already down, so a caller doesn't have to check first") --
+## play_card()'s multi-hit loop calls _damage_boss() once per hit with no break
+## on death, so a card whose FIRST hit already drops the boss to 0 still ran
+## every later hit's full body: a corpse's Thorns still reflected real damage
+## onto the hunter who had just won, plus a phantom "dealt" total. Flurry (4
+## damage x2, the same card the sibling Thorns test above already uses) against
+## a boss with exactly 4 HP dies on hit one; hit two must do nothing at all.
+func _test_backlog86_dead_boss_stops_reflecting_thorns_mid_multihit() -> void:
+	var combat := _new_combat([_deck_of(_flurry, 10), _deck_of(_slash, 10)], 42, _dummy_boss(4))
+	combat.boss.thorns = 3
+	var hp0: int = combat.players[0].combatant.hp
+	combat.play_card(0, _first_playable(combat, 0))  # Flurry: hit 1 kills it, hit 2 must be a no-op
+	_expect(combat.boss.is_dead(), "Flurry's first 4-damage hit kills a 4-HP boss")
+	_expect(combat.players[0].combatant.hp == hp0 - 3,
+		"a boss killed by a multistrike card's first hit doesn't also reflect Thorns (or anything else) from its later, pointless hits")
 
 
 ## backlog #86 duty 3: _damage_boss()'s sigil branch adds `players[pi].weak_point_damage

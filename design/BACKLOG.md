@@ -17908,3 +17908,30 @@ Newest first. One line per finished item: what, and anything surprising.
   solo autosave tests beside it. Fresh `--import`, headless, Godot 4.7.1-stable,
   `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2 (find an error
   and resolve it).
+
+- **2026-09-17 — #86 duty 2: `_damage_boss()` kept reflecting a dead boss's
+  Thorns (and adding phantom damage) on the later hits of a multi-hit card
+  that already killed it on an earlier one.** Last commit (`dab5112`) was
+  duty 3, so this run took duty 2. Delegated the hunt to an Explore agent
+  scoped to `game/core`; it found that `_damage_add()` (backlog #63's
+  add-targeting sibling) already refuses a dead target ("already down, so a
+  caller doesn't have to check first") but `_damage_boss()` never grew the
+  same guard — the exact "two copies of one truth" shape the rotation looks
+  for, one sibling function encoding "is this thing still alive" and the
+  other not. `play_card()`'s multi-hit loop (ten shipped cards carry
+  `hits > 1`: Flurry, Double Tap, Snap Volley, Sap, Matched Pace, Turret,
+  Finale, Venom Cascade, Rivet Gun, Trailmaster's Cut) calls `_damage_boss()`
+  once per hit with no break on death, so a card whose first hit already
+  dropped a boss to 0 HP still ran the full function body on every later
+  hit — including `if boss.thorns > 0: players[pi].combatant.take_damage(...)`,
+  a corpse still biting back real damage at the hunter who had just won.
+  Added `if boss.is_dead(): return 0` at the top of `_damage_boss()`, matching
+  `_damage_add()`. New test `_test_backlog86_dead_boss_stops_reflecting_thorns_mid_multihit`:
+  a 4-HP Thorns-3 boss against a 10-card Flurry deck (4 damage x2 hits, the
+  same card the existing sibling multistrike-Thorns test already uses) — hit
+  one kills it, hit two must be a no-op, so the hunter should take exactly 3
+  reflected damage, not 6. No screen needed — pure `Combat`/`Boss` state,
+  same headless harness as every other `_damage_boss`/`_damage_add` test
+  beside it. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`:
+  ALL TESTS PASSED. Next `#86` turn is duty 3 (verify a mechanic actually
+  works).
