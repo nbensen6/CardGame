@@ -2812,7 +2812,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-16 (the very latest) — #86 duty 2: an unresolved Scry stranded
+- **2026-09-17 — #86 duty 2: Scry cards carried no archetype tag, so they could
+  never earn a reward-lean toward each other.** Last commit (`d01db70`) was
+  duty 3, so this run took duty 2. Went hunting for a "hand-copied field list
+  drifts" bug the way earlier duty-2 rounds have found several (topdeck/
+  shuffle_in/tutor missing from `archetype_tags()`, several fields missing
+  from `GameHost._keywords_of()`/`_card_fx()`): wrote a script comparing
+  every `Card` field against what `archetype_tags()` and `_keywords_of()`
+  actually reference, by name, across both functions. `scry` turned up in
+  neither gap list at first glance since `_keywords_of()` does have a
+  branch — but `archetype_tags()` (backlog #72's reward-lean weighting) does
+  not, and never has. `peer_ahead` and `read_the_climb` (cards.json) are two
+  real, shipped cards whose *only* mechanical field is `scry`, so both
+  rolled through `reward_pool()` with an empty tag array — the exact same
+  shape as the topdeck/shuffle_in/tutor gap fixed earlier this same
+  rotation, just missed at the time since scry is a different mechanic
+  entirely. A hunter who drafted one Scry card got zero lean toward drawing
+  the other, unlike every other mechanical family in the game. Fix:
+  `Card.archetype_tags()` now tags `scry > 0` as `"scry"`, mirroring the
+  `"reach"` branch right above it. Test written first and confirmed to fail
+  against the old code (`tags=[]` on both cards, `flat==leaned` reward
+  weight), then passed once the one-line fix landed —
+  `_test_backlog86_archetype_tags_recognise_scry_cards()` in
+  `tools/run_tests.gd`. `run_tests.gd` green (whole suite, not just the new
+  test) before commit.
+
+- **2026-09-16 — #86 duty 2: an unresolved Scry stranded
   cards outside the fight's card economy forever, a genuine long-fight
   softlock.** Last commit (`dfddde2`) was duty 3, so this run took duty 2.
   `resolve_scry()` is a COMMAND the client has to send, and nothing in the

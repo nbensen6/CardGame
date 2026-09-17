@@ -227,6 +227,7 @@ func _init() -> void:
 	_test_backlog86_archetype_tags_recognise_power_cards_by_their_power_effect()
 	_test_backlog86_archetype_tags_recognise_frail_cards()
 	_test_backlog86_archetype_tags_recognise_topdeck_shuffle_in_and_tutor_as_reach()
+	_test_backlog86_archetype_tags_recognise_scry_cards()
 	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
 	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
@@ -5993,6 +5994,36 @@ func _test_backlog86_archetype_tags_recognise_topdeck_shuffle_in_and_tutor_as_re
 	_expect(leaned_weight > flat_weight,
 		"Waymark's reward weight rises for a Reach-heavy deck now that it carries the reach tag [flat=%s leaned=%s]"
 			% [flat_weight, leaned_weight])
+
+
+## Backlog #86 duty 2: the identical gap the test above just proved for
+## topdeck/shuffle_in/tutor also holds for scry (backlog #59) — peer_ahead and
+## read_the_climb are two real, shipped cards whose only mechanical field is
+## `scry`, so both rolled through reward_pool() with an empty tag array and no
+## reward-lean (backlog #72) toward each other, right alongside the sibling
+## mechanic this same rotation just fixed.
+func _test_backlog86_archetype_tags_recognise_scry_cards() -> void:
+	var peer_ahead_tags: Array = Content.card_tags("peer_ahead")
+	_expect(peer_ahead_tags.has("scry") and peer_ahead_tags.size() == 1,
+		"Peer Ahead (scry only) is tagged scry and nothing else [tags=%s]" % [peer_ahead_tags])
+
+	var read_the_climb_tags: Array = Content.card_tags("read_the_climb")
+	_expect(read_the_climb_tags.has("scry"),
+		"Read The Climb (scry) is tagged scry [tags=%s]" % [read_the_climb_tags])
+
+	# reward-lean end to end, same shape as the reach check above: a deck
+	# already carrying Scry gives Peer Ahead a real lean bonus now that it is
+	# tagged, where before its empty tag array meant reward_weight()'s
+	# tag_bonus loop never ran no matter how many Scry cards were already in
+	# the deck.
+	var run := _map_run()
+	var scry_deck_tags: Dictionary = run._tag_counts(_deck_of(Callable(Content, "make_card").bind("peer_ahead"), 10))
+	var peer_ahead_rarity: String = Content.card_rarity("peer_ahead")
+	var flat_weight2: int = Run.reward_weight(peer_ahead_rarity, peer_ahead_tags, {})
+	var leaned_weight2: int = Run.reward_weight(peer_ahead_rarity, peer_ahead_tags, scry_deck_tags)
+	_expect(leaned_weight2 > flat_weight2,
+		"Peer Ahead's reward weight rises for a Scry-heavy deck now that it carries the scry tag [flat=%s leaned=%s]"
+			% [flat_weight2, leaned_weight2])
 
 
 ## Backlog #72: a card reward roll should lean toward the archetype a hunter is

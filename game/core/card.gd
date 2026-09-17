@@ -438,4 +438,15 @@ func archetype_tags() -> Array:
 	# toward drawing another, unlike every other mechanical family in the game.
 	if topdeck != "" or shuffle_in != "" or tutor != "":
 		tags.append("reach")
+	# backlog #86 duty 2: same "hand-copied field list drifts" gap the topdeck/
+	# shuffle_in/tutor fix just above closed for their own mechanic (backlog
+	# #68) -- scry (backlog #59) is the identical shape of gap, just missed
+	# when that fix landed: peer_ahead and read_the_climb are two real,
+	# shipped cards whose ONLY mechanical field is `scry`, so both rolled
+	# through reward_pool() with an empty tag array. A hunter who'd drafted
+	# either got no reward-lean (backlog #72) toward drawing the other, unlike
+	# every other mechanical family in the game -- including the very sibling
+	# fix (topdeck/shuffle_in/tutor) that this comment sits next to.
+	if scry > 0:
+		tags.append("scry")
 	return tags
