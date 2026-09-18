@@ -536,6 +536,8 @@ func _init() -> void:
 	_test_artifact_wards_off_a_debuff_then_is_spent()
 	_test_artifact_wards_off_a_poison_card_then_is_spent()
 	_test_artifact_wards_off_a_power_triggered_poison_and_expose()
+	_test_artifact_wards_only_the_first_of_two_debuffs_on_one_card()
+	_test_artifact_ward_log_names_the_poison_not_the_expose()
 	_test_power_effect_heal_pays_out_every_turn_end_and_clamps_at_max_hp()
 	_test_power_effect_frail_pays_out_onto_the_boss_and_cuts_its_own_block_move()
 	_test_thorns_reflects_a_landed_boss_attack()
@@ -11847,6 +11849,54 @@ func _test_artifact_wards_off_a_power_triggered_poison_and_expose() -> void:
 	_expect(combat.boss.wound == 2, "once Artifact is spent, a power's recurring Poison lands normally")
 
 
+## backlog #86 duty 3: the two tests above each prove Artifact wards a single
+## debuff in isolation (an Expose-only card, a Poison-only card) — neither
+## ever plays a card that carries BOTH fields at once, so the actual ORDER
+## play_card() resolves them in (wound at combat.gd:992, well before
+## vulnerable at combat.gd:1178) has never been exercised. That order is real
+## shipped content: Strangler (cards.json, common) and Withering Grasp (rare)
+## both carry wound + vulnerable on the same card, so any player who Exposes
+## and Poisons a warded Titan in one play hits exactly this path — and a
+## single Artifact stack must ward whichever debuff resolves FIRST (Poison),
+## not "whichever the player meant" and not both for free.
+func _test_artifact_wards_only_the_first_of_two_debuffs_on_one_card() -> void:
+	var combat := _new_combat([_deck_of(_strangler, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	combat.boss.artifact = 1
+	combat.play_card(0, _first_playable(combat, 0))  # Strangler: Poison 2, Expose 2
+	_expect(combat.boss.wound == 0, "one Artifact stack wards off the FIRST debuff the card resolves (Poison)")
+	_expect(combat.boss.vulnerable == 2, "...and is already spent by the time the second debuff (Expose) resolves, so it lands")
+	_expect(combat.boss.artifact == 0, "a two-debuff card only ever spends ONE stack, not one per debuff it carries")
+
+	var warded_twice := _new_combat([_deck_of(_strangler, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	warded_twice.boss.artifact = 2
+	warded_twice.play_card(0, _first_playable(warded_twice, 0))
+	_expect(warded_twice.boss.wound == 0 and warded_twice.boss.vulnerable == 0,
+		"two stacks ward both debuffs on the same card, independently")
+	_expect(warded_twice.boss.artifact == 0, "...spending both stacks doing it")
+
+	var unwarded := _new_combat([_deck_of(_strangler, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	unwarded.play_card(0, _first_playable(unwarded, 0))  # no Artifact at all
+	_expect(unwarded.boss.wound == 2 and unwarded.boss.vulnerable == 2,
+		"with no Artifact, a two-debuff card lands both halves normally (baseline)")
+
+
+## Same play as above, but reading combat.log rather than the resulting stacks
+## — proves WHICH debuff the ward line names, not just that the numbers come
+## out right by coincidence of two branches both being zero for other reasons.
+## Strangler has no damage/strength/frail/thorns/etc, so play_card appends
+## exactly two log lines for it: the wound branch's, then the vulnerable
+## branch's, in that fixed source order.
+func _test_artifact_ward_log_names_the_poison_not_the_expose() -> void:
+	var combat := _new_combat([_deck_of(_strangler, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	combat.boss.artifact = 1
+	combat.play_card(0, _first_playable(combat, 0))
+	var poison_line: String = combat.log[-2]
+	var expose_line: String = combat.log[-1]
+	_expect(poison_line.contains("wards off the Poison"), "the warded FIRST debuff's log line names Poison")
+	_expect(expose_line.contains("exposed"), "the second debuff's log line shows Expose actually landing")
+	_expect(not expose_line.contains("wards off"), "the Expose line is not itself a ward — only one ward fires per play")
+
+
 ## _handle_power_effects()'s match statement has seven branches (block,
 ## strength, thorns, heal, wound, vulnerable, frail); backlog #86's own duty-3
 ## runs had proven block/strength/thorns/wound/vulnerable by the time this was
@@ -15628,6 +15678,8 @@ func _rend() -> Card:
 	return Card.from_dict({"id": "rend", "name": "Rend", "type": "attack", "cost": 1, "damage": 4, "wound": 2})
 func _venom_dart() -> Card:
 	return Card.from_dict({"id": "venom_dart", "name": "Venom Dart", "type": "skill", "cost": 0, "wound": 2})
+func _strangler() -> Card:
+	return Card.from_dict({"id": "strangler", "name": "Strangler", "type": "skill", "cost": 1, "wound": 2, "vulnerable": 2, "target": "enemy"})
 func _flurry() -> Card:
 	return Card.from_dict({"id": "flurry", "name": "Flurry", "type": "attack", "cost": 2, "damage": 4, "hits": 2})
 func _dig_in() -> Card:

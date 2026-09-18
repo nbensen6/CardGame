@@ -18595,3 +18595,40 @@ Newest first. One line per finished item: what, and anything surprising.
   as the sibling `targets_hold` tests beside it. Fresh `--import`, headless,
   Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is
   duty 2 (find an error and resolve it).
+
+- **2026-09-18 — #86 duty 3: proved Artifact wards only the FIRST of two
+  debuffs a single card carries, and spends exactly one stack doing it, not
+  one per debuff.** Last commit (`db85aa0`, "rule_upgrade's own bookkeeping
+  made would_upgrade_change_anything() a false positive") was duty 2, so
+  this run took duty 3. `Combatant.try_block_debuff()` (combatant.gd:169) is
+  a one-stack ward, and `play_card()` gates Poison with it at combat.gd:1012
+  and Vulnerable with it again, separately, at combat.gd:1178 — two call
+  sites, always run in that fixed order. The two existing Artifact tests
+  each proved one branch in isolation with a single-debuff card (Expose-only
+  or Poison-only); neither ever played a card carrying BOTH fields, so the
+  actual resolution ORDER, and whether one stack quietly wards both debuffs
+  for free, had zero coverage — and this isn't hypothetical, Strangler
+  (`cards.json`, common) and Withering Grasp (rare) both ship wound+vulnerable
+  on one card, so any player Exposing+Poisoning a warded Titan hits this path
+  every time. Delegated the search for a genuinely untested mechanic to an
+  Explore agent (scoped to `game/core/*.gd` and the pure-math corners of
+  `game/views`, given the long list of what this rotation already covers so
+  it wouldn't suggest a repeat); it named this exact gap with file:line
+  citations, which I confirmed by reading `play_card()` and
+  `try_block_debuff()` myself before writing anything. Added a `_strangler()`
+  test-card helper (wound 2, vulnerable 2, matching the shipped card) and two
+  new tests: `_test_artifact_wards_only_the_first_of_two_debuffs_on_one_card`
+  (1 stack wards Poison only and Expose still lands, from `boss.artifact ==
+  0` after; 2 stacks ward both; 0 stacks wards neither — three combats, one
+  assertion trio each) and `_test_artifact_ward_log_names_the_poison_not_the_
+  expose` (reads `combat.log[-2]`/`[-1]` to confirm the ward line itself
+  names Poison, not just that the numbers land right by coincidence). Verified
+  load-bearing by temporarily short-circuiting the Poison branch's ward check
+  to `if false and t.try_block_debuff():` (the realistic shape of a dropped
+  gate): reran the suite, exactly the new tests plus the two pre-existing
+  single-debuff Poison tests failed (10 total, all named clearly), everything
+  else stayed green, then reverted and confirmed `git diff` on `combat.gd`
+  was clean before committing. No screen needed — pure `Combat` state through
+  `play_card()`, same headless harness as the sibling Artifact tests beside
+  it. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL
+  TESTS PASSED. Next `#86` turn is duty 2 (find an error and resolve it).
