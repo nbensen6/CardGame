@@ -462,6 +462,7 @@ func _init() -> void:
 	_test_backlog39_older_save_backfills_missing_stats()
 	_test_load_run_rejects_a_save_from_a_newer_build()
 	_test_load_run_rejects_a_corrupt_file()
+	_test_load_run_rejects_a_save_with_no_real_version()
 	_test_whole_numbers_converts_an_integral_float_to_int()
 	_test_whole_numbers_preserves_a_genuine_fraction()
 	_test_whole_numbers_recurses_into_arrays()
@@ -10080,6 +10081,31 @@ func _test_load_run_rejects_a_corrupt_file() -> void:
 	f.close()
 
 	_expect(RunSave.load_run() == null, "an unreadable file loads as \"no save\" rather than crashing")
+	RunSave.clear()
+
+
+## backlog #86 duty 3 — load_run()'s own doc comment promises null for a save
+## that is "genuinely unreadable", and its `from_version <= 0` guard is the
+## line that keeps that promise for a shape the corrupt-file test above never
+## reaches: valid JSON, a real Dictionary, just not one any build of this game
+## ever wrote (no "version" key, or "version": 0 outright). Nothing had ever
+## written that shape to RunSave.path and called load_run() on it — without
+## this guard, Run.from_dict's own defaulting .get() calls would happily build
+## a bogus-but-non-null Run out of `{"foo": "bar"}` instead of refusing it.
+func _test_load_run_rejects_a_save_with_no_real_version() -> void:
+	RunSave.clear()
+	var f := FileAccess.open(RunSave.path, FileAccess.WRITE)
+	f.store_string(JSON.stringify({"foo": "bar"}))
+	f.close()
+	_expect(RunSave.load_run() == null,
+		"a valid JSON object with no \"version\" key at all still refuses to load rather than guessing")
+	RunSave.clear()
+
+	f = FileAccess.open(RunSave.path, FileAccess.WRITE)
+	f.store_string(JSON.stringify({"version": 0, "decks": [], "map": {}}))
+	f.close()
+	_expect(RunSave.load_run() == null,
+		"\"version\": 0 alone refuses to load even when decks/map are both present")
 	RunSave.clear()
 
 

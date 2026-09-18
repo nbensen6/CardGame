@@ -2846,6 +2846,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-18 — #86 duty 3: proved `RunSave.load_run()` actually refuses a save with no real version, not just a corrupt file.** Last commit
+  (`a037117`) was duty 2, so this run's default was duty 3. `load_run()`'s own
+  doc comment promises null for a save that is "genuinely unreadable", and
+  `run_save.gd:73`'s `from_version <= 0 or from_version > Run.SAVE_VERSION`
+  guard is the line that keeps that promise for a shape the three existing
+  RunSave tests never reach: a syntactically valid JSON *object* (so it isn't
+  caught by the "corrupt file" test's `parsed is Dictionary` check) that
+  simply has no `"version"` key, or has `"version": 0` outright — the exact
+  case `run_save.gd:69`'s own comment names ("non-JSON-object garbage under a
+  real key"). Grepped `run_tests.gd` for `from_version`, `"version".*0`, and
+  the comment's own phrasing — zero hits; nothing had ever written that shape
+  to `RunSave.path` and called `load_run()` on it. Added
+  `_test_load_run_rejects_a_save_with_no_real_version`, two assertions: a bare
+  `{"foo": "bar"}` (no version key at all) and `{"version": 0, "decks": [],
+  "map": {}}` (version 0 explicit, with decks/map present so only the version
+  guard is under test, not the separate decks/map check below it). Proved it
+  load-bearing by temporarily loosening the guard to `from_version >
+  Run.SAVE_VERSION` (dropping the `<= 0` half): the `"version": 0` assertion
+  failed exactly as expected with everything else green, then restored the
+  original file from a backup and confirmed `git diff` on `run_save.gd` was
+  empty. Without the guard, `Run.from_dict`'s own defaulting `.get()` calls
+  would happily build a bogus-but-non-null `Run` out of near-arbitrary JSON
+  instead of refusing it. No screen needed — pure `RunSave`/`Run` state, no
+  view code touched. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED.
+
 - **2026-09-18 — #86 duty 2: `preview()`'s `ally_blk` leaked a caster-only Block scaling term onto the ally on any card with `ally_block: 0`.** Last two
   commits (`d25e7d1`, `5ab5a79`) were both duty 3 — a rotation miss by
   whichever run produced `5ab5a79` (its own log entry said "Next #86 turn is
