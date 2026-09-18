@@ -169,6 +169,7 @@ func _init() -> void:
 	_test_backlog86_condition_bonus_grip_alone_bumps_and_skips_the_cost_discount()
 	_test_backlog86_upgrading_a_free_card_with_nothing_to_bump_grants_retain()
 	_test_backlog86_would_upgrade_change_anything_flags_the_true_dead_end()
+	_test_backlog86_would_upgrade_change_anything_ignores_a_noop_rule_upgrade()
 	_test_backlog86_campfire_refuses_an_upgrade_that_would_change_nothing()
 	_test_backlog86_sharpen_card_skips_the_true_dead_end()
 	_test_backlog86_condition_bonus_grip_gates_preview_climb()
@@ -4600,6 +4601,30 @@ func _test_backlog86_would_upgrade_change_anything_flags_the_true_dead_end() -> 
 		"cost": 1, "damage": 6, "upgraded": true})
 	_expect(not already_upgraded.would_upgrade_change_anything(),
 		"an already-upgraded card is never offered a second sharpen, same as campfire_action's own guard")
+
+
+## Backlog #86 duty 2: would_upgrade_change_anything() diffed to_dict() before
+## and after upgraded_copy() but only erased "name"/"upgraded" from the
+## comparison, not "rule_upgrade" itself -- which upgraded_copy()'s
+## rule_upgrade branch always clears to {} as bookkeeping once its recipe is
+## applied, even when every field the recipe set was already at that value.
+## A card whose rule_upgrade recipe is a true no-op (e.g. {"cost": 0} on a
+## card already at cost 0) showed a non-empty-dict-vs-{} difference on
+## rule_upgrade alone -- every player-visible field identical -- and was
+## still reported as "yes, sharpen this", defeating the exact guard this
+## function exists to be (a card fused via Meld can land here: a rule_upgrade
+## recipe with no accompanying "text" override, carried onto a card already
+## at the value the recipe sets).
+func _test_backlog86_would_upgrade_change_anything_ignores_a_noop_rule_upgrade() -> void:
+	var noop := Card.from_dict({"id": "t_ru_noop", "name": "Test RU Noop", "type": "skill",
+		"cost": 0, "block": 4, "rule_upgrade": {"cost": 0}})
+	_expect(not noop.would_upgrade_change_anything(),
+		"a rule_upgrade recipe that sets every field to the value it already has changes nothing a player can see -- the cleared rule_upgrade dict itself is bookkeeping, not an observable change")
+
+	var real_change := Card.from_dict({"id": "t_ru_real", "name": "Test RU Real", "type": "skill",
+		"cost": 1, "block": 4, "rule_upgrade": {"cost": 0}})
+	_expect(real_change.would_upgrade_change_anything(),
+		"a rule_upgrade recipe that actually changes a field (cost 1 -> 0 here) must still be flagged as worth sharpening")
 
 
 ## Proves the guard above actually reaches the campfire: refusing to spend a

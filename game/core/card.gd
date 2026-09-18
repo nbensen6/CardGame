@@ -383,10 +383,21 @@ func would_upgrade_change_anything() -> bool:
 		return false  # already sharpened -- campfire_action's own guard, mirrored here
 	var before := to_dict()
 	var after := upgraded_copy().to_dict()
+	# rule_upgrade itself is consumed bookkeeping -- upgraded_copy()'s
+	# rule_upgrade branch always clears it to {} once its recipe is applied,
+	# even when every field the recipe set was already at that value (backlog
+	# #86 duty 2). Diffing the cleared dict against the original recipe made
+	# a true no-op rule_upgrade (e.g. {"cost": 0} on a card already at cost 0)
+	# register as "changed" on rule_upgrade alone while every player-visible
+	# field stayed identical. Any REAL change the recipe makes still shows up
+	# on the field it touched directly, so erasing rule_upgrade here only
+	# filters the bookkeeping artifact, not a genuine difference.
 	before.erase("name")
 	before.erase("upgraded")
+	before.erase("rule_upgrade")
 	after.erase("name")
 	after.erase("upgraded")
+	after.erase("rule_upgrade")
 	return before != after
 
 

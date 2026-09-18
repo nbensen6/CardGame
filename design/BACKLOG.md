@@ -2846,6 +2846,45 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-18 (later still) — #86 duty 2: `Card.would_upgrade_change_anything()` treated `rule_upgrade` being cleared to `{}` as an observable change, so a rule_upgrade recipe that sets every field to the value it already has still got flagged "worth sharpening."** Last
+  commit (`ebe75b6`, hand-fan layout math) was duty 3, so this run's default
+  was duty 2 — noting for the record that `ebe75b6` itself landed with no Log
+  entry here, an honest gap in the previous run rather than something this
+  run is claiming credit for. Delegated the hunt to an Explore agent scoped
+  to `game/core`, `game/session`, and provably-pure `game/views` code, given
+  the long list of ground this rotation has already covered so it wouldn't
+  re-tread it. It found that `would_upgrade_change_anything()`
+  (`card.gd:381-390`) diffs `to_dict()` before and after `upgraded_copy()`,
+  erasing only `"name"`/`"upgraded"` first — but `upgraded_copy()`'s
+  `rule_upgrade` branch (`card.gd:307-320`) unconditionally clears
+  `rule_upgrade` to `{}` as bookkeeping once its recipe is applied, even when
+  every field the recipe set was already at that value. A card whose
+  `rule_upgrade` has no accompanying `"text"` override (unlike every shipped
+  rule_upgrade card today — `reckless_swing`/`piston_punch`/`salvage`/`cover`
+  all pair theirs with one) and whose recipe fields already match the card's
+  own values — reachable via `Combat._meld_cards()` fusing a rule_upgrade
+  card with a second card that happens to land the fused field at the
+  recipe's own target, e.g. `dig_in` (`rule_upgrade: {"cost": 0}`) melded
+  with any 0-cost card — would diff as "changed" on `rule_upgrade` alone,
+  cost/damage/block/text all identical, and still report `true`: exactly the
+  bug class this function exists to prevent, one step further down the same
+  dead-end chain the 2026-09-19(later) entry below already closed for the
+  generic bump/cheapen/retain fallback. Not live through any single
+  character's pool today (`dig_in` isn't in Goblin Mech's, the only Meld
+  character's, `reward_pool`/`starter_deck`), so this needed constructing the
+  card shape directly rather than a scripted meld through `Run`. Fixed by
+  also erasing `"rule_upgrade"` from both sides of the diff — any REAL change
+  the recipe makes still shows up on the field it touched directly, so this
+  only filters the "recipe dict got emptied" bookkeeping artifact, not a
+  genuine difference. Added
+  `_test_backlog86_would_upgrade_change_anything_ignores_a_noop_rule_upgrade`;
+  confirmed it's load-bearing by reverting just the `card.gd` fix and
+  re-running: exactly that one test failed (`got true, wanted false` on the
+  no-op case), everything else stayed green, then restored the fix and
+  confirmed `git diff` was clean before the final run. Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86`
+  turn is duty 3.
+
 - **2026-09-19 (later) — #86 duty 3 (turned duty 2 mid-hunt: a real gap, not a working mechanic to prove — same shape as the 2026-09-18 boons entry below): `Card.upgraded_copy()`'s generic fallback chain — "bump a number, else cheapen, else grant retain" — has one dead end none of those three branches cover.** Last commit
   (`d53089a`) was duty 2, so this run's default was duty 3. Delegated the hunt
   for a genuinely untested mechanic to an Explore agent (scoped to
