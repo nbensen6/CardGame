@@ -149,6 +149,7 @@ func _init() -> void:
 	_test_backlog53_four_events_use_then()
 	_test_boons_load_and_are_well_formed()
 	_test_boon_offer_and_pick_applies_effects()
+	_test_backlog86_every_shipped_boon_applies_its_own_promised_effect()
 	_test_boon_rejects_outside_its_phase()
 	_test_start_does_not_auto_offer_a_boon()
 	_test_run_survives_a_save_and_load_in_boon()
@@ -4149,6 +4150,63 @@ func _test_boon_offer_and_pick_applies_effects() -> void:
 		and run.team_relics.size() == relics_before + 1
 		and run.phase == Run.Phase.MAP and run.boon_result == "you feel ready.",
 		"picking a boon applies its effects and hands back to the map")
+
+
+## backlog #86 duty 3: every boon test above (including the one just above
+## this) only ever proves the GENERIC effect rule against a synthetic
+## hand-written choice -- "not which boon.json entry happened to roll", in
+## that test's own words. The four boons actually shipped in boons.json have
+## never once been run through the real pipeline and checked against what
+## their own data promises. pack_light is max_hp-only, borrowed_gear is
+## relic-only, a_full_purse is gold-only, and a_bold_trade is the one real
+## edge case with two effects on one choice (sharpen_card AND curse_card
+## together) -- exactly the kind of combination a generic-rule test with one
+## invented choice can never exercise. Proves each real id, end to end.
+func _test_backlog86_every_shipped_boon_applies_its_own_promised_effect() -> void:
+	for id_v in Content.list_boons():
+		var id := String(id_v)
+		var b := Content.make_boon(id)
+		var eff: Dictionary = b.get("effects", {})
+		var run := Run.new([_deck_of(_slash, 10), _deck_of(_slash, 10)], ["A", "B"], 4242, [{}, {}])
+		run.phase = Run.Phase.BOON
+		run.boon = {"choices": [b]}
+		var max_before: Array = run.max_hp.duplicate()
+		var gold_before: int = run.gold
+		var relics_before: int = run.team_relics.size()
+		var deck_sizes_before := [run.decks[0].size(), run.decks[1].size()]
+		var upgraded_before := [_count_upgraded(run.decks[0]), _count_upgraded(run.decks[1])]
+		var picked := run.pick_boon(0)
+		_expect(picked and run.phase == Run.Phase.MAP,
+			"%s: the real shipped choice is accepted and hands back to the map" % id)
+		if int(eff.get("max_hp", 0)) != 0:
+			var mh := int(eff.get("max_hp", 0))
+			for i in range(2):
+				_expect(run.max_hp[i] == int(max_before[i]) + mh,
+					"%s: its max_hp effect actually raises max_hp by %d" % [id, mh])
+		if bool(eff.get("relic", false)):
+			_expect(run.team_relics.size() == relics_before + 1,
+				"%s: its relic effect actually grants a relic" % id)
+		if eff.has("gold"):
+			_expect(run.gold == gold_before + int(eff["gold"]),
+				"%s: its gold effect actually pays out %d" % [id, int(eff["gold"])])
+		if bool(eff.get("sharpen_card", false)):
+			for i in range(2):
+				_expect(_count_upgraded(run.decks[i]) == int(upgraded_before[i]) + 1,
+					"%s: its sharpen_card effect actually upgrades one card in hunter %d's deck" % [id, i])
+		var cc := String(eff.get("curse_card", ""))
+		if cc != "":
+			for i in range(2):
+				var deck: Array = run.decks[i]
+				_expect(deck.size() == int(deck_sizes_before[i]) + 1 and (deck[-1] as Card).id == cc,
+					"%s: its curse_card effect actually shuffles a real %s into hunter %d's deck" % [id, cc, i])
+
+
+func _count_upgraded(deck: Array) -> int:
+	var n := 0
+	for c in deck:
+		if (c as Card).upgraded:
+			n += 1
+	return n
 
 
 func _test_boon_rejects_outside_its_phase() -> void:

@@ -2846,6 +2846,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-18 — #86 duty 3 (duty 2 taken, found nothing, so the rotation moved on — see below): the four real boons in `boons.json` had never once been run through the actual pipeline and checked against what their own data promises.** Last
+  commit (`d25e7d1`) was duty 3, so this run's default was duty 2. Spent the
+  bulk of the run on duty 2 first (read `game/core/run.gd`, `run_map.gd`,
+  `content.gd`, `card.gd`, `game/session/game_client.gd`/`session.gd`,
+  every `game/net/*.gd` and `game/ui/*.gd` file, and `menu.gd`/`game_3d.gd`/
+  `overworld_3d.gd`/`location_3d.gd`'s pure helpers end to end, cross-checked
+  against every prior "backlog #86 duty 2" comment already in those files to
+  avoid re-finding the same bug) and found no new, currently-unfixed,
+  headlessly-testable defect — every promising lead either already carries a
+  fix comment from an earlier pass or checked out correct. Per the rotation's
+  own rule ("never report nothing to do... if a duty is genuinely exhausted,
+  take the next one"), moved to duty 3 instead. `_test_boon_offer_and_pick_applies_effects`
+  (run_tests.gd:4132) proves `pick_boon()` only against a synthetic
+  hand-written `{"effects": {...}}` choice — its own comment says so
+  ("not which boon.json entry happened to roll"). None of `pack_light`
+  (max_hp only), `borrowed_gear` (relic only), `a_full_purse` (gold only), or
+  `a_bold_trade` (the one real two-effect choice: `sharpen_card` AND
+  `curse_card` together) had ever been driven through `Content.make_boon()`
+  and `Run.pick_boon()` for real and checked against the actual state change.
+  Added `_test_backlog86_every_shipped_boon_applies_its_own_promised_effect`,
+  which loops every id in `Content.list_boons()`, applies each through the
+  real pipeline, and asserts the exact promised delta (max_hp per hunter,
+  a relic actually landing in `team_relics`, gold paid out to the cent, a
+  card actually flipping to upgraded in each hunter's deck, and the exact
+  named curse card actually appended) — all pass, so this is a coverage gap
+  closed rather than a bug found; logged honestly as such. Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
+
 - **2026-09-18 — #86 duty 3: pinned down that the `block_carries` relic's round-over Block carryover ignores Dexterity and Frail, unlike every other round-start Block source right next to it.** Last commit
   (`d37107e`) was duty 2, so this run took duty 3. `_begin_round()`
   (combat.gd:1514) explicitly routes `round_block_mod` and `plated_seed`
