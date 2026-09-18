@@ -580,6 +580,7 @@ func _init() -> void:
 	_test_backlog86_buffer_voiding_a_hit_spares_plated_armour_from_decay()
 	_test_backlog86_intangibles_capped_hit_still_decays_plated_armour()
 	_test_backlog86_block_carries_carries_plated_armours_own_block_too()
+	_test_backlog86_block_carries_ignores_dexterity_and_frail()
 	_test_intangible_buffer_plated_armour_persist_through_save()
 	_test_boss_dexterity_intangible_buffer_plated_armour_persist_through_save()
 	# Cards that reward discarding (backlog #62)
@@ -12415,6 +12416,37 @@ func _test_backlog86_block_carries_carries_plated_armours_own_block_too() -> voi
 		"block_carries reads whatever Block was actually left, Plated Armour included, not just round_block")
 	_expect(ps.combatant.plated_armour == 3,
 		"the Plated Armour stack itself is untouched by the carry — only the Block number compounds")
+
+
+## backlog #86 duty 3: _begin_round() explicitly routes round_block_mod and
+## plated_seed through Combatant.block_after_modifiers() so Dexterity/Frail
+## apply to those two round-start Block sources — the comment block right
+## above that code (combat.gd:1526-1534) spells out why, as a deliberate
+## backlog #86 duty 2 fix. carried_block (_handle_block_carries, this same
+## block_carries relic's half-of-last-round carryover) is added completely
+## raw two lines later, with no block_after_modifiers call at all — and
+## nothing in this file ever set Dexterity or Frail on a hunter holding
+## block_carries to prove that omission is deliberate rather than the exact
+## drift duty 2 keeps finding elsewhere (every block_carries test above sets
+## a bare `combatant.block` on an otherwise unmodified hunter).
+## combatant.gd's own doc comment on `frail` reads "Block GAINED... is cut" —
+## carried Block already passed through that cut once, when the Block it's
+## half of was originally granted, so cutting it again here would
+## double-penalize the same Block, and Dexterity re-boosting a carryover
+## would double-grant the same bonus. This pins the actual behaviour down so
+## a future change can't silently start double-dipping either modifier on a
+## carryover that was never a fresh grant.
+func _test_backlog86_block_carries_ignores_dexterity_and_frail() -> void:
+	var combat := _new_combat_mods([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42,
+		_climb_boss(6), {"block_carries": 1})
+	var ps: PlayerState = combat.players[0]
+	ps.combatant.block = 9
+	ps.combatant.frail = 4      # would cut a FRESH grant by a quarter (FRAIL_BLOCK_DIVISOR)
+	ps.combatant.dexterity = 3  # would boost a FRESH grant by +3
+	combat.end_turn(0)
+	combat.end_turn(1)  # round 2 begins: carried_block = floor(9 / 2) = 4
+	_expect(ps.combatant.block == 4,
+		"carried Block from block_carries is untouched by Dexterity or Frail — it already passed through those modifiers once, when the Block it's half of was originally granted, so re-applying them here would double-count")
 
 
 ## backlog #86 duty 3 (forty-eighth pass): energy_handoff (relics.json:217) is

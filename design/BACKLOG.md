@@ -2846,6 +2846,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-18 — #86 duty 3: pinned down that the `block_carries` relic's round-over Block carryover ignores Dexterity and Frail, unlike every other round-start Block source right next to it.** Last commit
+  (`d37107e`) was duty 2, so this run took duty 3. `_begin_round()`
+  (combat.gd:1514) explicitly routes `round_block_mod` and `plated_seed`
+  through `Combatant.block_after_modifiers()` — two lines of comment above
+  each call spell it out as a deliberate backlog #86 duty-2 fix, "a
+  round-start relic Block grant is a fresh grant like any card's, so
+  Dexterity/Frail must apply the same way." `carried_block`
+  (`_handle_block_carries`, half of last round's unspent Block) is added
+  two lines later with no such call, and nothing in `run_tests.gd` had ever
+  set Dexterity or Frail on a hunter holding `block_carries` to say whether
+  that gap was deliberate or the exact drift duty 2 keeps finding elsewhere
+  — every existing `block_carries` test (backlog #10, and duty 3's own
+  `_test_backlog86_block_carries_carries_plated_armours_own_block_too`)
+  only ever ran an otherwise-unmodified hunter. Read `combatant.gd`'s own
+  doc comment on `frail` ("Block GAINED... is cut") before concluding this
+  is correct as written, not a live bug: carried Block already passed
+  through that cut once, when it was originally granted, so cutting it (or
+  re-boosting it with Dexterity) again on the carry would double-count the
+  same Block. Added `_test_backlog86_block_carries_ignores_dexterity_and_frail`,
+  which sets both modifiers on a hunter holding `block_carries` and proves
+  the raw floor(prior_block/2) carry survives untouched — closing this seam
+  so a future change can't silently start double-dipping either modifier on
+  a carryover that was never a fresh grant. (An Explore agent surveyed
+  `/core`, `/session` and the pure-logic corners of `/views`/`/ui` first;
+  most of its other candidates — `hold_exposed_to`, map-row generation,
+  the Coach hint system, opening-relics — turned out to already have real
+  coverage under differently-named tests, same lesson the last duty-3 run
+  already learned the hard way.) Fresh `--import`, headless, Godot
+  4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
+
 - **2026-09-18 — #86 duty 2: the beast's glowing "safe ledge" ring drew from the wrong data entirely — the model's own `ledge_N` node names, with zero connection to which Heights `boss.gd`/`is_secure()` actually treat as safe.** Last
   commit (`fbf8b3b`) was duty 3, so this run took duty 2. Found reading
   `combat_3d.gd`'s climb/ledge code end to end against `boss.gd`'s real safety
