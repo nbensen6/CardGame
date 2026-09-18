@@ -410,6 +410,7 @@ func _init() -> void:
 	_test_elite_pays_a_card_then_a_relic()
 	_test_backlog86_queued_relic_survives_a_save_reload_mid_card_reward()
 	_test_backlog86_relic_taken_survives_a_save_reload_and_still_blocks_take_key()
+	_test_backlog86_skipping_an_elites_card_stage_still_opens_its_queued_relic_stage()
 	_test_backlog48_relic_pool_and_boss_relic_pool_partition_by_tier()
 	_test_backlog48_titan_relic_reward_draws_only_from_the_boss_pool()
 	_test_backlog48_elite_relic_reward_never_offers_a_boss_relic()
@@ -9362,6 +9363,38 @@ func _test_elite_pays_a_card_then_a_relic() -> void:
 		and run.team_relics.size() == relics_before + run.player_count()
 		and run.phase == Run.Phase.MAP,
 		"an elite pays a card and THEN a relic before the route reopens")
+
+
+## #86 duty 3: skip_reward() and pick_reward() both just set reward_picked[slot]
+## true and, once every slot is true, call _finish_reward() the same way —
+## _finish_reward() itself does not know or care whether a slot got there by
+## picking or by declining. _test_elite_pays_a_card_then_a_relic above proves
+## the chain opens its relic stage when BOTH hunters pick the card; nothing
+## ever drove it through skip_reward instead. That is exactly the shape of bug
+## this project's history keeps finding (pick_event() dropping a "then" reward
+## paired with a declined choice, fbf8b3b) — a reward chain is a second place
+## the same "declining is not the same code path as choosing, and one of the
+## two was never actually exercised" mistake could hide.
+func _test_backlog86_skipping_an_elites_card_stage_still_opens_its_queued_relic_stage() -> void:
+	var run := _map_run()
+	_step_into_combat(run)
+	run.node_type = "elite"
+	var deck_before: int = run.decks[0].size()
+	var relics_before: int = run.team_relics.size()
+	_force_win(run)
+	_expect(run.phase == Run.Phase.REWARD and run.reward_kind == "card",
+		"setup sanity: an elite win parks the run on the CARD stage first")
+
+	run.skip_reward(0)  # both hunters decline the card outright
+	run.skip_reward(1)
+	_expect(run.phase == Run.Phase.REWARD and run.reward_kind == "relic"
+			and run.decks[0].size() == deck_before,
+		"skipping the card stage (not picking it) still opens the queued relic stage, with no card gained")
+
+	run.skip_reward(0)  # decline the relic too
+	run.skip_reward(1)
+	_expect(run.phase == Run.Phase.MAP and run.team_relics.size() == relics_before,
+		"skipping both stages of an elite's chain still releases the run to the map, with nothing taken")
 
 
 ## Backlog #86 duty 3: an elite/Titan owes a card THEN a relic (_queued_reward,

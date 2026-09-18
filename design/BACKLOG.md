@@ -2846,6 +2846,31 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-18 (even later still) — #86 duty 3: proved `skip_reward()` opens an elite's queued relic stage exactly the way `pick_reward()` does — nobody had ever driven the chain through the decline path.** Last
+  commit (`7fcd393`, `_safe_ledges` feeding the wrong ledge helper) was duty
+  2, so this run took duty 3. `_test_elite_pays_a_card_then_a_relic` (and the
+  save/reload variant added in an earlier duty-3 pass) already proved an
+  elite/Titan's two-stage reward — card, then relic — opens its second stage
+  once both hunters PICK a choice on the first. Nothing exercised the other
+  legal way a stage ends: `skip_reward()`. Read `Run.skip_reward()`
+  (run.gd:941) and confirmed it's a thin wrapper — set
+  `reward_picked[slot] = true`, then call the same `_finish_reward()`
+  `pick_reward()` calls once every slot is true — so on the code as it
+  stands there's no reason skipping and picking should diverge. But that's
+  exactly the shape of bug this rotation keeps finding elsewhere (most
+  recently `pick_event()` dropping a "then" reward tied to a declined
+  choice, `fbf8b3b`): a chained/queued effect wired to only one of two
+  equivalent player actions, with the second path never proven. Added
+  `_test_backlog86_skipping_an_elites_card_stage_still_opens_its_queued_
+  relic_stage`: both hunters skip the card stage outright (no card gained,
+  deck size unchanged), asserts the run is still in REWARD with
+  `reward_kind == "relic"` rather than having released to the map or lost
+  the queued stage, then both skip the relic stage too and the run lands on
+  MAP with `team_relics` unchanged. Passed first try — this is confirmation
+  the mechanic holds, not a bug fix; no production code touched. Fresh
+  `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS
+  PASSED. Next `#86` turn is duty 2 (find an error and resolve it).
+
 - **2026-09-18 (later still) — #86 duty 3: proved `Content.list_boss_ids()` actually delivers on its own doc comment — that membership in it predicts `build_boss()` builds the REAL beast, not the silent "Titan"/1 HP fallback an unknown id produces.** Last
   commit (`de26e66`, campfire_sharpenable) was duty 2, so this run took duty
   3. Delegated the hunt to an Explore agent primed with the long list of
