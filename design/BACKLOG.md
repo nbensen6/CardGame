@@ -2846,6 +2846,38 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-18 (later still) — #86 duty 3: proved `Content.list_boss_ids()` actually delivers on its own doc comment — that membership in it predicts `build_boss()` builds the REAL beast, not the silent "Titan"/1 HP fallback an unknown id produces.** Last
+  commit (`de26e66`, campfire_sharpenable) was duty 2, so this run took duty
+  3. Delegated the hunt to an Explore agent primed with the long list of
+  mechanics this rotation has already covered so it wouldn't repeat one; it
+  found `list_boss_ids()` (content.gd:220) had zero coverage in
+  `run_tests.gd` despite being the ONLY thing standing between a typo'd dev-
+  console beast id (`ui/console.gd`'s `_cmd_beast`) and a fight that looks
+  broken rather than mistyped — its own doc comment says so directly
+  (`build_boss()` can't report failure; an unknown id gives a Boss named
+  "Titan" with 1 HP rather than null). It also found content.gd carries a
+  second, textually near-identical "every boss id, sorted" function
+  (`boss_ids()`, used by the art-coverage tests) with nothing pinning the
+  two to agree — the exact "two copies of one truth" shape this rotation
+  keeps finding. Added `_test_backlog86_list_boss_ids_matches_build_boss_
+  and_boss_ids`: asserts the list is sorted and duplicate-free, cross-checks
+  every id in it against the RAW `bosses.json` data (not against
+  `build_boss()`'s own output, which would just test the function against
+  itself) to confirm each one builds the real beast's name/max_hp, confirms
+  every raw `bosses.json` key is reachable through the list (nothing
+  invisible to the guard), proves a typo'd id is absent from the list while
+  `build_boss()` still silently falls back to "Titan"/1 HP for it (the exact
+  case the doc comment exists for), and cross-checks `list_boss_ids()`
+  against `boss_ids()` so a future drift between the two fails loudly.
+  Verified load-bearing by temporarily adding `ids.pop_back()` to
+  `list_boss_ids()` (dropping its last id after sorting): two of the new
+  assertions failed immediately and by name (the "covered by" check for the
+  dropped id, and the cross-check against `boss_ids()`), then reverted and
+  confirmed `git diff` on `content.gd` was clean before committing — no
+  production code changed, this run only adds coverage, per duty 3's own
+  rule. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL
+  TESTS PASSED. Next `#86` turn is duty 2 (find an error and resolve it).
+
 - **2026-09-18 (yet later still) — #86 duty 2: `Location3D.campfire_sharpenable()` drifted from `Run.campfire_action()`'s real "upgrade" gate the day the gate grew a third condition.** Last
   commit (`e2b3643`, `_fit_height`'s width-clamp) was duty 3, so this run's
   default was duty 2. Delegated the hunt to an Explore agent scoped to

@@ -1983,6 +1983,8 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_draw_relic_mod_grants_extra_cards_every_round_not_just_the_first()
 	_test_backlog86_real_draw_relics_reach_relic_totals_and_grant_extra_cards()
 
+	_test_backlog86_list_boss_ids_matches_build_boss_and_boss_ids()
+
 	print("")
 	if _failures == 0:
 		print("ALL TESTS PASSED")
@@ -12353,6 +12355,70 @@ func _test_backlog69_at_least_five_beasts_debuff_hunters() -> void:
 			debuffers.append(id)
 	_expect(debuffers.size() >= 5,
 		"at least 5 beasts inflict Frail or a curse [%d: %s]" % [debuffers.size(), ", ".join(debuffers)])
+
+
+## backlog #86 duty 3: Content.list_boss_ids()'s own doc comment ("the only
+## honest way to check a name is to ask whether it is in this list first")
+## is the console's ("_cmd_beast", ui/console.gd) whole reason to exist: it
+## gates Content.build_boss(id) behind membership specifically because
+## build_boss() can't report failure -- an unknown id silently becomes a
+## Boss named "Titan" with 1 HP instead of null or an error. Nothing had
+## ever proven that promise actually holds, and content.gd independently
+## carries a second, textually-identical "every boss id, sorted" function
+## (boss_ids(), used by the art-coverage tests) that nothing pins to agree
+## with this one -- a future edit to either (filtering a WIP beast out of
+## one, changing BOSSES_PATH in one) would silently break the console's
+## typo guard with no test to catch it.
+func _test_backlog86_list_boss_ids_matches_build_boss_and_boss_ids() -> void:
+	var ids: Array = Content.list_boss_ids()
+	_expect(not ids.is_empty(), "list_boss_ids() is non-empty")
+
+	var sorted_copy: Array = ids.duplicate()
+	sorted_copy.sort()
+	_expect(ids == sorted_copy, "list_boss_ids() is sorted ascending")
+
+	var seen: Dictionary = {}
+	for id in ids:
+		seen[id] = true
+	_expect(seen.size() == ids.size(), "list_boss_ids() has no duplicates")
+
+	# The actual promise: membership predicts build_boss() succeeds for real,
+	# not just that it returns SOME Boss (it always does). Cross-check every
+	# id against the raw data content.gd itself parses build_boss() from --
+	# not against build_boss()'s own output, which would just be testing the
+	# function against itself.
+	var raw: Dictionary = Content._read_json(Content.BOSSES_PATH).get("bosses", {})
+	for id in ids:
+		var b := Content.build_boss(String(id))
+		var bd: Dictionary = raw.get(id, {})
+		_expect(not bd.is_empty() and b.name == String(bd.get("name", "Titan")) and b.max_hp == int(bd.get("max_hp", 1)),
+			"list_boss_ids() id '%s' builds the real beast the data describes" % id)
+
+	# The reverse: every real key in bosses.json is reachable through the
+	# list -- nothing the data defines is silently invisible to the guard.
+	for id in raw.keys():
+		_expect(ids.has(id), "bosses.json id '%s' is covered by list_boss_ids()" % id)
+
+	# The exact case the doc comment exists for: a typo'd id is NOT in the
+	# list, while build_boss() still quietly hands back the "Titan"/1 HP
+	# fallback rather than erroring -- proving why the console needs the
+	# membership check instead of trusting build_boss()'s return value.
+	var fake_id := "not_a_real_beast_id_86"
+	_expect(not ids.has(fake_id), "a nonexistent id is absent from list_boss_ids()")
+	var fallback := Content.build_boss(fake_id)
+	_expect(fallback.name == "Titan" and fallback.max_hp == 1,
+		"build_boss() on an unknown id silently falls back instead of erroring")
+
+	# The sibling: content.gd's other "every boss id, sorted" implementation
+	# (boss_ids(), which the art-coverage tests actually exercise) must agree
+	# with this one, or a drift between the two would break the console's
+	# guard with nothing to notice.
+	var other: Array = Content.boss_ids()
+	var a_sorted: Array = ids.duplicate()
+	var b_sorted: Array = other.duplicate()
+	a_sorted.sort()
+	b_sorted.sort()
+	_expect(a_sorted == b_sorted, "list_boss_ids() and boss_ids() return the same set of ids")
 
 
 ## Backlog #16/#54's own rule, extended to moves: a move `type` that shows up
