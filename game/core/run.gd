@@ -643,6 +643,8 @@ func campfire_action(slot: int, action: String, card_index: int = -1) -> bool:
 			var c: Card = deck[card_index]
 			if c.upgraded or c.status:  # a curse has nothing to sharpen — only remove it
 				return false
+			if not c.would_upgrade_change_anything():  # backlog #86 duty 3->2: nothing left to bump, cheapen, or retain
+				return false
 			deck[card_index] = c.upgraded_copy()
 		_:
 			return false
@@ -743,7 +745,9 @@ func _apply_effect_block(eff: Dictionary) -> void:
 			var candidates: Array = []
 			for j in range(deck2.size()):
 				var cj: Card = deck2[j]
-				if not cj.upgraded and not cj.status:  # a curse has nothing to sharpen — campfire_action's own rule (run.gd:543)
+				# a curse has nothing to sharpen, and neither does a card with nothing left
+				# to bump/cheapen/retain — campfire_action's own rule, mirrored here
+				if not cj.upgraded and not cj.status and cj.would_upgrade_change_anything():
 					candidates.append(j)
 			if not candidates.is_empty():
 				var idx := int(candidates[_rng.randi_range(0, candidates.size() - 1)])

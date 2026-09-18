@@ -365,6 +365,31 @@ func upgraded_copy() -> Card:
 	return Card.from_dict(d)
 
 
+## Backlog #86 duty 3 (turned duty 2 mid-hunt: this is a real gap, not just an
+## untested-but-correct mechanic): upgraded_copy()'s own fallback chain — bump
+## a number, else cheapen, else grant retain — has one dead end it never
+## covered: a card that is ALREADY cost 0, ALREADY retain, and has nothing
+## bumpable (no shipped card today, but a future card or a meld result could
+## trivially land here the same way build_grapple/waymark did before the
+## duty-2 fix right above this one). upgraded_copy() still returns a Card in
+## that case — just one identical to the original but for the "+" and
+## `upgraded = true` — so this compares the two rather than duplicating
+## upgraded_copy()'s own bump logic a second time (the exact "two copies of
+## one truth" shape this rotation's own duty 2 hunts for). Callers use this to
+## refuse the sharpen instead of quietly burning a campfire action or an
+## event's "free" sharpen on a card that comes back unchanged.
+func would_upgrade_change_anything() -> bool:
+	if upgraded:
+		return false  # already sharpened -- campfire_action's own guard, mirrored here
+	var before := to_dict()
+	var after := upgraded_copy().to_dict()
+	before.erase("name")
+	before.erase("upgraded")
+	after.erase("name")
+	after.erase("upgraded")
+	return before != after
+
+
 ## The attached enchant as {id, name, text, effect, value}, or {} if none — one
 ## generic lookup so a reader keys off `effect` (e.g. "auto_nail") rather than
 ## special-casing enchant ids, the same shape Content.make_relic() already uses.

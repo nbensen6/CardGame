@@ -168,6 +168,9 @@ func _init() -> void:
 	_test_backlog86_condition_bonus_grip_bumps_by_one_not_three_on_upgrade()
 	_test_backlog86_condition_bonus_grip_alone_bumps_and_skips_the_cost_discount()
 	_test_backlog86_upgrading_a_free_card_with_nothing_to_bump_grants_retain()
+	_test_backlog86_would_upgrade_change_anything_flags_the_true_dead_end()
+	_test_backlog86_campfire_refuses_an_upgrade_that_would_change_nothing()
+	_test_backlog86_sharpen_card_skips_the_true_dead_end()
 	_test_backlog86_condition_bonus_grip_gates_preview_climb()
 	_test_backlog86_condition_bonus_grip_resolves_through_a_real_play()
 	_test_backlog86_condition_bonus_grip_skips_climb_bonus_when_base_grip_is_zero()
@@ -4550,6 +4553,84 @@ func _test_backlog86_upgrading_a_free_card_with_nothing_to_bump_grants_retain() 
 		var up := card.upgraded_copy()
 		_expect(up.retain and up.cost == 0 and up.create == card.create and up.topdeck == card.topdeck,
 			"%s+ has nothing to bump and is already free -- sharpening it must grant retain instead of silently doing nothing" % id)
+
+
+## Backlog #86 duty 3, turned duty 2 mid-hunt: the fallback chain right above
+## this test (cost fallback above it: "make it cheaper... or grant retain")
+## has one dead end neither branch covers -- a card that is ALREADY cost 0
+## AND ALREADY retain, with nothing bumpable. No shipped card is built that
+## way today, but a future one (or a meld result, the same way an unintended
+## card shape has landed here before) could. `Card.would_upgrade_change_anything()`
+## is the generic guard callers use instead of re-deriving the same "is there
+## anything left" logic a second time.
+func _test_backlog86_would_upgrade_change_anything_flags_the_true_dead_end() -> void:
+	var dead_end := Card.from_dict({"id": "t_dead_end", "name": "Test Dead End", "type": "skill",
+		"cost": 0, "retain": true, "create": "build_grapple"})
+	_expect(not dead_end.would_upgrade_change_anything(),
+		"a card already at cost 0, already retain, with nothing bumpable has genuinely nothing left to sharpen")
+
+	var bumpable := Card.from_dict({"id": "t_bump", "name": "Test Bump", "type": "attack",
+		"cost": 1, "damage": 6})
+	_expect(bumpable.would_upgrade_change_anything(),
+		"a card with a real bumpable number always has something to sharpen")
+
+	var cheapenable := Card.from_dict({"id": "t_cheap", "name": "Test Cheap", "type": "skill",
+		"cost": 2, "create": "build_grapple"})
+	_expect(cheapenable.would_upgrade_change_anything(),
+		"a card with nothing bumpable but cost > 0 still has the cost-discount fallback")
+
+	var retainable := Card.from_dict({"id": "t_retain", "name": "Test Retain", "type": "skill",
+		"cost": 0, "create": "build_grapple"})
+	_expect(retainable.would_upgrade_change_anything(),
+		"a free card with nothing bumpable and no retain yet still has the retain fallback")
+
+	var already_upgraded := Card.from_dict({"id": "t_up", "name": "Test Up", "type": "attack",
+		"cost": 1, "damage": 6, "upgraded": true})
+	_expect(not already_upgraded.would_upgrade_change_anything(),
+		"an already-upgraded card is never offered a second sharpen, same as campfire_action's own guard")
+
+
+## Proves the guard above actually reaches the campfire: refusing to spend a
+## hunter's one campfire action on a card that would come back unchanged,
+## the same protection campfire_action already gives status cards (see
+## _test_status_card_cannot_be_sharpened_but_can_be_removed_at_campfire).
+func _test_backlog86_campfire_refuses_an_upgrade_that_would_change_nothing() -> void:
+	var dead_end_maker := func() -> Card:
+		return Card.from_dict({"id": "t_dead_end", "name": "Test Dead End", "type": "skill",
+			"cost": 0, "retain": true, "create": "build_grapple"})
+	var decks := [_deck_of(dead_end_maker, 5), _deck_of(_slash, 5)]
+	var run := Run.new(decks, ["A", "B"], 4242, [{}, {}])
+	run.start()
+	run._begin_campfire()
+	var blocked := not run.campfire_action(0, "upgrade", 0)
+	var still_unupgraded: bool = not (run.decks[0][0] as Card).upgraded
+	var still_waiting: bool = run.phase == Run.Phase.CAMPFIRE  # refusal doesn't spend the visit
+	_expect(blocked and still_unupgraded and still_waiting,
+		"campfire refuses to sharpen a card that would change nothing, without spending the hunter's turn")
+
+
+## Mirrors _test_backlog86_sharpen_card_skips_status_cards: the event/boon
+## sharpen_card effect filters candidates independently of campfire_action,
+## so the true-dead-end guard has to be proven here too, not just at the
+## campfire. A deck of nothing but the dead-end card makes the RNG pick
+## deterministic -- there is no OTHER candidate it could have picked instead.
+func _test_backlog86_sharpen_card_skips_the_true_dead_end() -> void:
+	var dead_end_maker := func() -> Card:
+		return Card.from_dict({"id": "t_dead_end", "name": "Test Dead End", "type": "skill",
+			"cost": 0, "retain": true, "create": "build_grapple"})
+	var decks := [_deck_of(dead_end_maker, 5), _deck_of(_slash, 5)]
+	var run := Run.new(decks, ["A", "B"], 4242, [{}, {}])
+	run.start()
+	run.event = {"title": "T", "text": "x", "choices": [
+		{"label": "drill", "result": "!", "effects": {"sharpen_card": true}},
+	]}
+	run.phase = Run.Phase.EVENT
+	run.map_row = 0
+	run.pick_event(0)
+	for c in run.decks[0]:
+		var card: Card = c
+		_expect(not card.upgraded and card.retain and card.cost == 0,
+			"sharpen_card must never touch a card that would change nothing, same rule campfire_action now enforces")
 
 
 func _test_backlog86_condition_bonus_grip_gates_preview_climb() -> void:

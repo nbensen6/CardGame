@@ -2846,6 +2846,43 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-19 (later) — #86 duty 3 (turned duty 2 mid-hunt: a real gap, not a working mechanic to prove — same shape as the 2026-09-18 boons entry below): `Card.upgraded_copy()`'s generic fallback chain — "bump a number, else cheapen, else grant retain" — has one dead end none of those three branches cover.** Last commit
+  (`d53089a`) was duty 2, so this run's default was duty 3. Delegated the hunt
+  for a genuinely untested mechanic to an Explore agent (scoped to
+  `game/core`, `game/session`, and provably-pure `game/views` code, told the
+  long list this rotation has already covered). It found that a card already
+  at cost 0 AND already `retain: true`, with nothing bumpable, falls through
+  BOTH the cost-discount and the retain fallback (`card.gd:358-362`) — the
+  function returns a Card identical to the original but for the "+" and
+  `upgraded = true`, exactly the same failure shape the neighboring #86 duty-2
+  fix (`card.gd:347-357`, build_grapple/build_bomb/build_winch/waymark) was
+  written to close, just one step further down the chain it didn't quite
+  reach. No shipped card in `cards.json` has that exact shape today, but a
+  future card or a meld result could land there the same accidental way the
+  first version did — and once it did, sharpening it would burn a hunter's
+  scarce campfire action (or a "free" event sharpen) for literally nothing,
+  silently, forever (an upgraded card can never be re-offered). Since this is
+  a real defect rather than an untested-but-correct rule, treated it as duty 2
+  per the rotation's own precedent (see the 2026-09-18 boons entry below) —
+  added `Card.would_upgrade_change_anything()`, which answers the question by
+  comparing `upgraded_copy()`'s own real output against the original rather
+  than re-deriving the same "is there anything left" logic a second time (the
+  "two copies of one truth" shape duty 2 hunts for elsewhere), and wired it
+  into both places that filter sharpenable cards — `Run.campfire_action`'s
+  "upgrade" branch and `_apply_effect_block`'s `sharpen_card` candidate list —
+  so a true dead-end card is refused exactly like a status card already is,
+  instead of quietly consuming the action. Added four tests: the predicate
+  itself against a dead-end card, a real bumpable card, a cost>0/nothing-
+  bumpable card, and a free/not-yet-retained card; the campfire guard refusing
+  the sharpen without spending the hunter's turn; and the `sharpen_card` event
+  effect skipping an all-dead-end deck the same way it already skips an
+  all-status-card one. Verified load-bearing by reverting both guard call
+  sites and re-running: exactly the two new guard tests failed (campfire and
+  sharpen_card), everything else stayed green, then restored and confirmed
+  `git diff` was clean before the final run. Fresh `--import`, headless, Godot
+  4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2
+  (find an error and resolve it).
+
 - **2026-09-19 — #86 duty 2: a topdeck card played while a scry was still open got buried under the scry's own returning cards instead of drawing next.** Last commit
   (`876baab`) was duty 3, so this run's default was duty 2. Ran
   `tools/robustness_sweep.gd` first (360 seeded runs, char pairs x ascensions
