@@ -222,6 +222,7 @@ func _init() -> void:
 	_test_shop_guarantees_a_rare_card_slot()
 	_test_content_pools_are_copies()
 	_test_build_boss_moves_ledges_limiter_are_copies_not_cache_aliases()
+	_test_backlog86_build_boss_adds_parses_hurt_pct_and_hurt_moves()
 	_test_reward_pool_prefers_a_real_characters_own_pool_over_the_shared_fallback()
 	_test_shop_stock_for_a_real_character_is_scoped_to_their_own_pool()
 	_test_status_cards_never_offered_as_a_reward()
@@ -5947,6 +5948,42 @@ func _test_build_boss_moves_ledges_limiter_are_copies_not_cache_aliases() -> voi
 	add1.moves.append({"type": "attack", "value": 999})
 	_expect(not add2.moves.has({"type": "attack", "value": 999}),
 		"mutating one add's moves must not leak into a second build_boss_adds() call for the same beast")
+
+
+## Backlog #86 duty 2: Boss._active_moves() (backlog #44's wounded-state
+## pattern switch) is generic Combatant/Boss behaviour -- it reads
+## `self.hurt_pct`/`self.hurt_moves` with no main-boss-only check anywhere in
+## it, and Boss extends Combatant, so it already works for an add exactly the
+## same way it works for the main boss. But Content.build_boss_adds() never
+## parsed either field off an add's own JSON data, even though build_boss()
+## has parsed both for the main boss since #44 shipped -- the exact "one
+## builder grew a field, its sibling didn't" shape backlog #86 duty 2 already
+## fixed for `artifact`/`thorns` a pass ago (see the test above this one). No
+## shipped add defines hurt_pct/hurt_moves today (root_lurker's root_tendril
+## is the only add in the game and carries neither), so this had zero live
+## impact -- but a future add authored with a second, wounded-state pattern
+## would have had it silently ignored, exactly like Poison/Strength/Artifact
+## on an add did before their own fixes landed. Injects a synthetic boss
+## straight into Content's own parsed-JSON cache (removed again before this
+## function returns) rather than adding fixture content to bosses.json, since
+## nothing else needs this data to exist permanently.
+func _test_backlog86_build_boss_adds_parses_hurt_pct_and_hurt_moves() -> void:
+	var bosses: Dictionary = Content._read_json(Content.BOSSES_PATH).get("bosses", {})
+	bosses["_test_hurt_add_host"] = {"name": "Test Host", "max_hp": 100,
+		"adds": [{"id": "test_hurt_add", "name": "Test Add", "max_hp": 40,
+			"moves": [{"type": "attack", "value": 3}],
+			"hurt_pct": 0.5, "hurt_moves": [{"type": "attack", "value": 7}]}]}
+	var add: Boss = Content.build_boss_adds("_test_hurt_add_host")[0]
+	bosses.erase("_test_hurt_add_host")
+	_expect(is_equal_approx(add.hurt_pct, 0.5),
+		"build_boss_adds() reads an add's own hurt_pct off its JSON data")
+	_expect(add.hurt_moves.size() == 1 and int(add.hurt_moves[0]["value"]) == 7,
+		"build_boss_adds() reads an add's own hurt_moves off its JSON data")
+	_expect(int(add.current_move()["value"]) == 3,
+		"above the hurt_pct threshold, an add still reads its plain moves")
+	add.hp = 20  # exactly half of 40 -- at the hurt_pct threshold
+	_expect(int(add.current_move()["value"]) == 7,
+		"an add actually switches to its own hurt_moves once wounded, same as the main boss")
 
 
 ## Backlog #86 duty 3: Content.reward_pool()'s own comment promises "a

@@ -2846,6 +2846,47 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-18 (later again) — #86 duty 2: `Content.build_boss_adds()` never parsed an add's own `hurt_pct`/`hurt_moves` off its JSON data, even though `build_boss()` has parsed both for the main boss since backlog #44 shipped.** Last
+  commit (`c689289`, `skip_reward()` opening an elite's queued relic stage)
+  was duty 3, so this run took duty 2. This was a genuinely hard hunt: the
+  usual two families (first-pass holes, two copies of one truth) have been
+  worked over so many rounds already that most of what I read for — Card's
+  full to_dict/from_dict round-trip, `_meld_cards()`, `GameHost._card_fx()`,
+  `_keywords_of()`, `PlayerState`/`Boss` save round-trips, the shop's
+  `_resync_*` sibling-item bookkeeping, `_apply_limiter()` vs its own
+  `incoming_for()` preview mirror — turned out to already be either fully
+  correct or protected by a generalised reflection test (one walks Card's
+  own property list so a NINTH forgotten field, after eight real ones, shows
+  up by name with no one having to catch the specific card that exposed it).
+  One near-miss: `Boss.hold_exposed_to()` (backlog #24) looked exactly like
+  this shape — a getter, a doc comment, unit tests of the getter itself, and
+  zero call sites in `combat.gd` — but the backlog's own log already has this
+  exact finding written up at least eight times before, each one correctly
+  landing on "Needs Nick" because wiring it in means choosing new move
+  semantics for `swipe_high`/`swipe_low`, not fixing a data-loading gap. Did
+  not re-log it a ninth time. The real find: `Boss._active_moves()` (#44's
+  wounded-state pattern switch) is generic `Combatant`/`Boss` behaviour with
+  no main-boss-only check in it — it reads `self.hurt_pct`/`self.hurt_moves`,
+  and `Boss` extends `Combatant`, so it already works for an add exactly the
+  way it works for the main boss. `build_boss_adds()` parses `thorns` and
+  `artifact` off an add's own data (a prior duty-2 fix, same file) but never
+  grew the matching two lines for `hurt_pct`/`hurt_moves` — the identical
+  "one builder grew a field, its sibling didn't" shape, just an eighth
+  instance of it in a different pair of functions. No shipped add uses
+  either field today (root_lurker's root_tendril is the only add in the
+  game and carries neither), so zero live impact — but a future add authored
+  with a second, wounded-state pattern would have had it silently ignored,
+  exactly like Poison/Strength/Artifact on an add did before their own fixes.
+  Fixed `build_boss_adds()` to parse both (with the same cache-aliasing
+  `duplicate(true)` the sibling `moves` line already needs). Added
+  `_test_backlog86_build_boss_adds_parses_hurt_pct_and_hurt_moves`: injects a
+  synthetic boss straight into `Content`'s own parsed-JSON cache (removed
+  again before the test returns, so nothing else sees it), proves an add
+  reads its plain moves above the threshold and switches to `hurt_moves`
+  once wounded to exactly the threshold, the same boundary `_active_moves()`
+  itself checks with `<=`. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 3.
+
 - **2026-09-18 (even later still) — #86 duty 3: proved `skip_reward()` opens an elite's queued relic stage exactly the way `pick_reward()` does — nobody had ever driven the chain through the decline path.** Last
   commit (`7fcd393`, `_safe_ledges` feeding the wrong ledge helper) was duty
   2, so this run took duty 3. `_test_elite_pays_a_card_then_a_relic` (and the

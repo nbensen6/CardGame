@@ -393,5 +393,18 @@ static func build_boss_adds(id: String) -> Array:
 		# enemy_index) already work for whatever `artifact` a Boss instance
 		# carries -- they just never had a data path to put a nonzero value on
 		# an add's, same as Thorns didn't until the fix beside this one.
+		# backlog #86 duty 2: same shape again, this time hurt_pct/hurt_moves
+		# (#44's wounded-state pattern switch). Boss._active_moves() is generic
+		# Combatant/Boss behaviour with no main-boss-only check anywhere in it —
+		# it reads `self.hurt_pct`/`self.hurt_moves`, and Boss extends Combatant,
+		# so it already works for an add exactly the same way it works for the
+		# main boss. build_boss() has parsed both off a beast's own JSON since
+		# backlog #44 shipped; this sibling builder never grew the matching
+		# lines, so an add authored with a second, wounded-state pattern would
+		# have had it silently ignored the same way Thorns/Artifact were before
+		# their own fixes above. duplicate(true) on hurt_moves for the same
+		# cache-aliasing reason `moves` gets it two lines up.
+		a.hurt_pct = float(ad.get("hurt_pct", 0.0))
+		a.hurt_moves = (ad.get("hurt_moves", []) as Array).duplicate(true)
 		out.append(a)
 	return out
