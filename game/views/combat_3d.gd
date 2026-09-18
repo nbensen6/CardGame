@@ -587,6 +587,25 @@ static func gauge_ledge_heights(ledges: Array) -> Array:
 	return out
 
 
+## The subset of a raw `ledges` array /core actually treats as safe rest
+## stops — the same `Boss.hold_safe()` filter `Combat.is_secure()` and
+## `Combat.next_safe_height()` apply (core/combat.gd:210-234). `_safe_ledges`'
+## own doc comment already promises this ("the same data is_secure()/
+## next_safe_height() use"), but it was being fed `gauge_ledge_heights()`
+## instead, which normalizes heights without dropping unsafe ones — correct
+## for the gauge (every Height should tick the ladder, safe or not) but wrong
+## reused as "safe holds," so an unsafe named hold (backlog #24, "safe":
+## false) would still get `_build_ledge_marks`' glowing safe-rest ring even
+## though a hunter standing there has their grip timer draining regardless.
+## #86 duty 2 (two copies of one truth).
+static func safe_ledge_heights(ledges: Array) -> Array:
+	var out: Array = []
+	for l in ledges:
+		if Boss.hold_safe(l):
+			out.append(Boss.hold_height(l))
+	return out
+
+
 func _draw_gauge() -> void:
 	if _gauge_data.is_empty():
 		return
@@ -1201,7 +1220,7 @@ func _refresh() -> void:
 	_hp_bar.value = int(boss["hp"])
 	_set_intent(boss, s)
 	# Before _show_beast, which needs it ready for _build_ledge_marks.
-	_safe_ledges = gauge_ledge_heights(boss.get("ledges", []))
+	_safe_ledges = safe_ledge_heights(boss.get("ledges", []))
 	_show_beast(String(boss.get("id", "")), String(boss["name"]),
 		int(boss.get("weak_point_height", 0)))
 	_place_sigil(s)

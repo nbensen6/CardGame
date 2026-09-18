@@ -18753,3 +18753,52 @@ Newest first. One line per finished item: what, and anything surprising.
   `Run.reward_weight()` actually rises for a Build-heavy deck (35 -> 55 at
   the seed this test runs). Fresh `--import`, headless, Godot 4.7.1-stable,
   `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 3.
+
+- **2026-09-18 — #86 duty 2: `_safe_ledges` was wired to the wrong helper, so
+  the "safe rest ring" it feeds never actually excluded an unsafe named
+  hold.** Note first: the three commits between this run and the last log
+  entry above (`e2b3643` duty 3, `de26e66` duty 2, `ac0aabe` duty 3, all
+  visible in `git log` but none logged here) never appended a Log line —
+  flagging the gap rather than silently letting three turns go unrecorded,
+  same as the earlier occurrence of this. Last commit (`ac0aabe`) was duty
+  3, so this run took duty 2. Delegated the hunt to an Explore agent, scoped
+  away from every file and bug family this rotation has already mined
+  (listed explicitly in the prompt so it wouldn't repeat one); it flagged
+  `combat_3d.gd:1204`'s `_safe_ledges = gauge_ledge_heights(boss.get
+  ("ledges", []))` against `_safe_ledges`' OWN doc comment two screens away
+  (`combat_3d.gd:280-291`), which promises "the Heights /core actually
+  treats as safe rest stops... the same data is_secure()/next_safe_height()
+  use." `gauge_ledge_heights()` normalizes a raw ledge to a Height but never
+  calls `Boss.hold_safe()` — correct for the climb gauge (every Height
+  should tick the ladder, safe or not) but wrong reused as "safe holds": an
+  unsafe named hold (backlog #24, `"safe": false`) would still contribute a
+  Height to `_build_ledge_marks`' glowing "you can rest here" ring, even
+  though `Combat.is_secure()`/`next_safe_height()` (core/combat.gd:210-234)
+  both skip it and a hunter's real-time grip timer keeps draining there
+  regardless — the same "two copies of one truth" shape as the `_ledges` vs
+  `boss.ledges` bug this exact doc comment already documents fixing once.
+  Confirmed myself by reading `Boss.hold_safe()`/`hold_height()`
+  (core/boss.gd:114-119) and both `is_secure()`/`next_safe_height()` before
+  writing anything. **Caveat carried over honestly from the agent's report:**
+  no shipped beast in `data/bosses.json` currently authors a `"safe": false`
+  ledge (grep confirms every `ledges` entry today is a bare int), so this is
+  not reachable by a player against current content — it is a landmine for
+  the next beast that ships one, the same shape as the already-accepted
+  `build_boss`/`build_boss_adds` cache-aliasing fix in this same file's
+  history. Fixed by adding `safe_ledge_heights(ledges)`, the same loop as
+  `gauge_ledge_heights()` but gated on `Boss.hold_safe(l)`, and rewiring
+  `_safe_ledges` to call it instead. Added three tests: the filter drops an
+  unsafe named hold, keeps bare ints and explicit `safe: true` holds, and a
+  direct divergence test asserting `gauge_ledge_heights()` and
+  `safe_ledge_heights()` disagree on a mixed array (so a future edit that
+  makes them the same again fails loudly). Verified load-bearing by
+  temporarily stripping the `if Boss.hold_safe(l):` guard from
+  `safe_ledge_heights()` itself — the realistic shape of this exact
+  regression — reran the suite, exactly those two new tests failed
+  (`FAIL an unsafe named hold contributes no Height...`, `FAIL the two
+  helpers must disagree...`), everything else stayed green, then restored
+  the file from a pre-edit copy and confirmed `git diff` matched the
+  intended fix exactly. No screen needed — pure static-function logic, same
+  headless harness as the sibling `gauge_ledge_heights`/`safe_ledge_marks`
+  tests beside it. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 3.

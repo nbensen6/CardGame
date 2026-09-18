@@ -887,6 +887,13 @@ func _init() -> void:
 	# family as #45's named-hold boundary test above, on the gauge's own side.
 	_test_backlog86_gauge_ledge_heights_passes_bare_ints_through()
 	_test_backlog86_gauge_ledge_heights_recognizes_named_holds()
+	# backlog #86 duty 2: _safe_ledges was wired to gauge_ledge_heights(),
+	# which never filters unsafe named holds -- the exact "two copies of one
+	# truth" shape safe_ledge_marks (below) was already guarding against,
+	# just one step too late.
+	_test_backlog86_safe_ledge_heights_drops_unsafe_named_holds()
+	_test_backlog86_safe_ledge_heights_keeps_bare_ints_and_explicit_safe_holds()
+	_test_backlog86_safe_ledge_heights_diverges_from_gauge_ledge_heights_on_unsafe_holds()
 	# backlog #86 duty 3 (seventh pass): location_3d._stakes, the wayside-event
 	# stakes text a player reads before picking blind -- lifted static the same
 	# way the combat_3d climb rules were, and given first coverage.
@@ -17889,6 +17896,38 @@ func _test_backlog86_gauge_ledge_heights_recognizes_named_holds() -> void:
 	var named := [3, {"height": 6, "safe": false, "exposed_to": ["slam"]}]
 	_expect(Combat3D.gauge_ledge_heights(named) == [3, 6],
 		"a Dictionary-shaped named hold still counts as a ledge Height on the gauge, not silently dropped")
+
+
+## backlog #86 duty 2 — `_safe_ledges`' own doc comment (combat_3d.gd:280-291)
+## promises it holds "the Heights /core actually treats as safe rest stops...
+## the same data is_secure()/next_safe_height() use", but it was assigned from
+## `gauge_ledge_heights()` (the test pair right above this one), which never
+## calls `Boss.hold_safe()` at all — correct for the gauge, which wants every
+## Height marked whether safe or not, but wrong reused as "safe holds": an
+## unsafe named hold (backlog #24, `"safe": false`) still produced a Height
+## for `_build_ledge_marks`' glowing safe-rest ring, exactly the bug
+## `safe_ledge_marks`' own intersection logic further downstream was built to
+## guard against, except the unsafe Height never even got filtered before
+## reaching it. `safe_ledge_heights()` is the fix: the same input, but only
+## the holds `Boss.hold_safe()` calls safe.
+func _test_backlog86_safe_ledge_heights_drops_unsafe_named_holds() -> void:
+	var mixed := [3, {"height": 6, "safe": false, "exposed_to": ["slam"]}]
+	_expect(Combat3D.safe_ledge_heights(mixed) == [3],
+		"an unsafe named hold contributes no Height at all -- not just excluded later, excluded here")
+
+
+func _test_backlog86_safe_ledge_heights_keeps_bare_ints_and_explicit_safe_holds() -> void:
+	var mixed := [3, {"height": 6, "safe": true, "exposed_to": []}]
+	_expect(Combat3D.safe_ledge_heights(mixed) == [3, 6],
+		"legacy bare ints (always safe) and an explicitly safe named hold both survive the filter")
+
+
+func _test_backlog86_safe_ledge_heights_diverges_from_gauge_ledge_heights_on_unsafe_holds() -> void:
+	var mixed := [3, {"height": 6, "safe": false, "exposed_to": []}]
+	_expect(Combat3D.gauge_ledge_heights(mixed) == [3, 6],
+		"sanity check: the gauge's own helper still reports every Height, safe or not")
+	_expect(Combat3D.safe_ledge_heights(mixed) == [3],
+		"the two helpers must disagree on an unsafe hold -- if they ever match again here, _safe_ledges is back to being fed the wrong one")
 
 
 ## backlog #86 duty 2 — a real, currently-shipping bug: `_build_ledge_marks`
