@@ -996,6 +996,18 @@ func _deck_cards(pi: int) -> Array:
 		var c: Card = deck[i]
 		var face := _deck_face(c, i)
 		face["character"] = _slot_char(pi)
+		# Run.campfire_action()'s real "upgrade" gate (run.gd) is three checks:
+		# not upgraded, not status, and would_upgrade_change_anything() — and
+		# the last one needs the real Card (rule_upgrade, enchants, history),
+		# which a client holding only a face dict does not have, same reason
+		# the "upgrade" preview below is built HERE rather than on the client.
+		# Location3D.campfire_sharpenable() used to re-derive eligibility from
+		# just "upgraded"/"status" and drifted the day would_upgrade_change_anything()
+		# joined the gate (backlog #86 duty 2) — a card with nothing left to
+		# bump/cheapen/retain would still show up in the "Sharpen" picker and
+		# then get silently refused on click. Sending the real verdict once,
+		# from the one place that can compute it, is the fix.
+		face["sharpenable"] = not c.upgraded and not c.status and c.would_upgrade_change_anything()
 		# What a campfire would turn it into, computed HERE from the real card.
 		#
 		# The deck view shows a card beside its sharpened version, and the client

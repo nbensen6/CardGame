@@ -964,19 +964,29 @@ static func campfire_can_thin(deck_size: int, min_deck: int) -> bool:
 	return deck_size > min_deck
 
 
-## Mirrors Run.campfire_action()'s own "upgrade" gate (run.gd:627,
-## `if c.upgraded or c.status: return false`) so the sharpen picker never
-## offers a card the server is about to refuse: an already-upgraded card has
-## nothing left to gain, and a status/curse card has nothing to sharpen at
-## all — only remove. Until #86 duty 2 nothing on this side of the wire
-## checked either flag: the picker handed every deck entry to DeckView
-## unfiltered, whose own `_wants_toggle()` only ever checked `upgraded` (its
-## `status` check is the sibling half of this same fix), so a curse card in
-## the deck showed a "View Upgrades" preview and an always-enabled "Sharpen
-## this card" button that `campfire_action()` silently rejected on click.
+## Filters to the cards the sharpen picker may offer, so it never hands the
+## server one Run.campfire_action() is about to refuse.
+##
+## This used to re-derive Run.campfire_action()'s "upgrade" gate from just
+## `upgraded`/`status` (run.gd's gate at the time: `if c.upgraded or c.status:
+## return false`). That was a second copy of the gate, and it drifted the day
+## the gate grew a third condition, `would_upgrade_change_anything()` (backlog
+## #86 duty 2/3, run.gd) — a card that is fresh and curse-free but already has
+## nothing left to bump, cheapen, or grant retain (cost already 0, already
+## `retain`) kept passing this filter and reaching Run.campfire_action(),
+## which silently refused it, burning the hunter's one campfire action for
+## nothing.
+##
+## `would_upgrade_change_anything()` needs the real Card — rule_upgrade,
+## enchants, history — which a client holding a display-only face dict does
+## not have (same reason the "upgrade" preview is built server-side in
+## game_host._deck_cards, not here). So instead of a second copy of the gate,
+## this reads the one verdict the host already computed and sent:
+## `face["sharpenable"]`, set in game_host._deck_cards from the real Card.
+## There is now exactly one place that decides eligibility.
 static func campfire_sharpenable(deck: Array) -> Array:
 	return deck.filter(func(entry: Dictionary) -> bool:
-		return not bool(entry.get("upgraded", false)) and not bool(entry.get("status", false)))
+		return bool(entry.get("sharpenable", false)))
 
 
 func _stock_button(item: Dictionary, index: int, gold: int, min_deck: int, potion_slots: int = 3) -> Button:

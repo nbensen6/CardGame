@@ -2846,6 +2846,39 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-18 (yet later still) — #86 duty 2: `Location3D.campfire_sharpenable()` drifted from `Run.campfire_action()`'s real "upgrade" gate the day the gate grew a third condition.** Last
+  commit (`e2b3643`, `_fit_height`'s width-clamp) was duty 3, so this run's
+  default was duty 2. Delegated the hunt to an Explore agent scoped to
+  `/core` and `/views`, primed with the two known bug families (first-pass
+  holes, two-copies-of-one-truth) and the long list of ground already
+  covered, so it wouldn't re-tread it. It found that `campfire_sharpenable()`
+  (`location_3d.gd`) — the client-side filter deciding which deck entries the
+  campfire's "Sharpen" picker offers, and whether the Sharpen button reads
+  "nothing left to sharpen" — only checked `upgraded`/`status`, mirroring
+  `Run.campfire_action()`'s gate as it stood when it was written (own doc
+  comment: "run.gd:627, `if c.upgraded or c.status: return false`"). Commit
+  `0bb1dae` ("close the last dead end in a card's generic upgrade chain")
+  later added a third condition to that gate, `c.would_upgrade_change_anything()`,
+  and nobody updated the client-side mirror to match: a card that's fresh and curse-free
+  but already has nothing left to bump/cheapen/retain (cost 0, already
+  `retain` — no shipped card today, same "not live yet but real the moment
+  one lands there" shape as the dead-end bug itself) would still pass the
+  picker's filter and then get silently refused by `campfire_action()` on
+  click, burning the hunter's one campfire action for nothing. Root cause:
+  `would_upgrade_change_anything()` needs the real `Card` (rule_upgrade,
+  enchants, history) to answer honestly, and the client only ever holds a
+  thin display-only face dict — the same reason the deck view's "upgrade"
+  preview is already built server-side in `game_host._deck_cards()` rather
+  than reconstructed client-side. So instead of teaching the client a SECOND
+  copy of the gate (which is exactly how this drifted in the first place),
+  `_deck_cards()` now computes the real verdict once, from the real Card, and
+  sends it as `face["sharpenable"]`; `campfire_sharpenable()` just reads that
+  field. Updated the two existing `campfire_sharpenable` tests to carry the
+  new field and added two more: one proving the exact dead-end shape gets
+  excluded through the filter, one proving `_deck_cards()` itself (via a real
+  `GameHost`/`GameClient`/`Run`, not a hand-built dict) sets `sharpenable`
+  correctly for both a dead-end card and an ordinary one. All green.
+
 - **2026-09-18 (yet later) — #86 duty 3: `location_3d._fit_height`'s own width-clamp rule (the 2026-09-08 fix for the Frog dwarfing every other hunter on character select) had never been proven once.** Last
   commit (`b651d42`, `archetype_tags()`) was duty 2, so this run's default was
   duty 3. The climb-logic example duty 3's own text points at

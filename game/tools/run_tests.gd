@@ -718,6 +718,7 @@ func _init() -> void:
 	_test_backlog86_defensive_stacks_fx_carry_over_the_wire()
 	_test_backlog86_deck_view_upgrade_preview_shows_defensive_stacks()
 	_test_backlog86_deck_face_status_flag_agrees_with_wants_toggle()
+	_test_backlog86_deck_cards_sharpenable_field_reflects_would_upgrade_change_anything()
 	_test_backlog86_deck_face_shows_the_cheap_enchants_discounted_cost()
 	_test_backlog86_deck_face_leaves_an_x_cost_cards_sentinel_alone_even_when_cheapened()
 	_test_backlog86_reach_and_cleave_fx_carry_over_the_wire()
@@ -1668,6 +1669,7 @@ func _init() -> void:
 	_test_backlog86_campfire_can_thin_is_false_at_a_zero_floor_with_an_empty_deck()
 	_test_backlog86_campfire_sharpenable_excludes_status_and_already_upgraded_cards()
 	_test_backlog86_campfire_sharpenable_of_an_all_ineligible_deck_is_empty()
+	_test_backlog86_campfire_sharpenable_excludes_a_card_with_nothing_left_to_upgrade()
 
 	# backlog #86 duty 3: location_3d.reward_header_text is the reward screen's
 	# own headline/subtitle/prompt rule -- the same one menu.gd's
@@ -14539,6 +14541,34 @@ func _test_backlog86_deck_face_status_flag_agrees_with_wants_toggle() -> void:
 		"an ordinary un-upgraded card must still offer its toggle -- the status check must not swallow everything")
 
 
+## backlog #86 duty 2 (two copies of one truth, the drift this rotation found) --
+## `_deck_cards()`'s "sharpenable" field is what `Location3D.campfire_sharpenable()`
+## now trusts instead of re-deriving Run.campfire_action()'s gate from just
+## `upgraded`/`status`. Proven end to end here with the real host, a real Run
+## deck, and the exact dead-end card shape (cost 0, already retain, nothing
+## bumpable) that `would_upgrade_change_anything()` exists to catch: a card
+## that is fresh and curse-free but has genuinely nothing left to sharpen must
+## come back `sharpenable == false`, or the picker would offer it and
+## Run.campfire_action() would silently refuse it on click.
+func _test_backlog86_deck_cards_sharpenable_field_reflects_would_upgrade_change_anything() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, true)  # solo
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+	var dead_end := Card.from_dict({"id": "t_dead_end", "name": "Test Dead End", "type": "skill",
+		"cost": 0, "retain": true, "create": "build_grapple"})
+	var normal := Content.make_card("slash")
+	host._run.decks[0] = [dead_end, normal]
+	var faces: Array = host._deck_cards(0)
+	_expect(not bool((faces[0] as Dictionary).get("sharpenable", true)),
+		"a fresh, non-status card with nothing left to bump/cheapen/retain must come back unsharpenable")
+	_expect(bool((faces[1] as Dictionary).get("sharpenable", false)),
+		"an ordinary card with a real bumpable number must still come back sharpenable")
+
+
 ## backlog #86 duty 3: `_deck_face()`'s own comment two lines up says "a
 ## cheapened or enchanted copy is no longer its printed self" -- true of every
 ## field it builds except the one most literally about being cheapened.
@@ -22291,22 +22321,41 @@ func _test_backlog86_campfire_can_thin_is_false_at_a_zero_floor_with_an_empty_de
 ## with an always-enabled "Sharpen this card" confirm button (deck_view.gd's
 ## `_picking()` branch adds it unconditionally, independent of `_wants_toggle`)
 ## that Run.campfire_action() silently refused on click. campfire_sharpenable()
-## mirrors campfire_action()'s own "c.upgraded or c.status" gate (run.gd:627)
-## so the picker only ever offers cards the server will actually sharpen.
+## trusts the one "sharpenable" verdict game_host._deck_cards computes from the
+## real Card, so the picker only ever offers cards the server will actually
+## sharpen.
 func _test_backlog86_campfire_sharpenable_excludes_status_and_already_upgraded_cards() -> void:
-	var fresh := {"id": "a", "upgraded": false, "status": false}
-	var sharpened := {"id": "b", "upgraded": true, "status": false}
-	var curse := {"id": "c", "upgraded": false, "status": true}
+	var fresh := {"id": "a", "upgraded": false, "status": false, "sharpenable": true}
+	var sharpened := {"id": "b", "upgraded": true, "status": false, "sharpenable": false}
+	var curse := {"id": "c", "upgraded": false, "status": true, "sharpenable": false}
 	var out := Location3D.campfire_sharpenable([fresh, sharpened, curse])
 	_expect(out.size() == 1 and out[0] == fresh,
 		"only the fresh, un-upgraded, non-status card should survive the filter")
 
 
 func _test_backlog86_campfire_sharpenable_of_an_all_ineligible_deck_is_empty() -> void:
-	var sharpened := {"id": "a", "upgraded": true, "status": false}
-	var curse := {"id": "b", "upgraded": false, "status": true}
+	var sharpened := {"id": "a", "upgraded": true, "status": false, "sharpenable": false}
+	var curse := {"id": "b", "upgraded": false, "status": true, "sharpenable": false}
 	_expect(Location3D.campfire_sharpenable([sharpened, curse]).is_empty(),
 		"a deck with nothing left to sharpen must filter down to nothing, not fall back to offering everything")
+
+
+## backlog #86 duty 2 — the actual drift this rotation found: campfire_sharpenable()
+## used to re-derive Run.campfire_action()'s gate from just `upgraded`/`status`,
+## which was right the day it was written but stopped covering the gate's third
+## condition, `would_upgrade_change_anything()` (run.gd), added three days later
+## (backlog #86 "close the last dead end in a card's generic upgrade chain").
+## A card that is fresh and curse-free but already has nothing left to bump,
+## cheapen, or grant retain (cost 0, already `retain`) is exactly the case that
+## condition exists to catch — Run.campfire_action() refuses it, but the old
+## two-field filter could not see that and would still hand it to the picker.
+## `sharpenable` now carries the host's real verdict end to end, so a dead-end
+## card must be excluded even though `upgraded` and `status` alone say yes.
+func _test_backlog86_campfire_sharpenable_excludes_a_card_with_nothing_left_to_upgrade() -> void:
+	var dead_end := {"id": "a", "upgraded": false, "status": false, "sharpenable": false}
+	var out := Location3D.campfire_sharpenable([dead_end])
+	_expect(out.is_empty(),
+		"a fresh, non-status card the host marked unsharpenable must not reach the picker — Run.campfire_action() would silently refuse it")
 
 
 func _test_backlog86_reward_header_text_names_a_felled_titan_with_the_encounter_count() -> void:
