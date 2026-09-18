@@ -536,6 +536,7 @@ func _init() -> void:
 	_test_backlog86_team_relics_reach_the_shared_snapshot_for_both_hunters()
 	_test_backlog86_weak_point_threshold_snapshot_matches_the_real_buck_threshold()
 	_test_backlog86_weak_point_threshold_snapshot_stays_zero_when_the_beast_has_no_limit()
+	_test_backlog86_weak_point_threshold_snapshot_stays_zero_with_grapnel_clamp()
 	_test_light_reaches_the_shared_snapshot()
 	_test_sigil_rounds_and_boss_limiter_reach_the_shared_snapshot()
 	_test_prepared_reaches_the_shared_snapshot()
@@ -11739,6 +11740,30 @@ func _test_backlog86_weak_point_threshold_snapshot_stays_zero_when_the_beast_has
 		("a beast with weak_point_threshold 0 enforces NO limit (_check_weakpoint_buck() " +
 		"returns before _mod(\"threshold\") is even read) -- the snapshot must say 0 too, " +
 		"not silently add Deep Hooks' +8 onto a limit that doesn't exist (shown: %d)") % shown)
+
+
+## backlog #86 duty 2 (third pass): the two sibling tests above closed the
+## "beast has no limit" gap, but `_check_weakpoint_buck()` has a THIRD early
+## return neither one exercised: `_mod("no_buck") > 0`. Grapnel Clamp
+## (relics.json, effect "no_buck") means the real rule never bucks a hunter
+## off a sigil, on ANY beast, however high its authored threshold is. Grants
+## Grapnel Clamp alongside Deep Hooks (whose own +8 must NOT leak through
+## either) on a beast with a real, nonzero threshold, so this cannot be
+## confused with the already-covered "threshold is 0" case.
+func _test_backlog86_weak_point_threshold_snapshot_stays_zero_with_grapnel_clamp() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	_expect(host._run.combat != null, "setup sanity: picking a node reaches combat")
+	var boss := host._run.combat.boss
+	_expect(boss.weak_point_threshold > 0, "setup sanity: the fought beast has a real weak point to buck at")
+	host._run.team_relics = [Content.make_relic("grapnel_clamp"), Content.make_relic("deep_hooks")]
+	host._broadcast_state()
+	var shown := int((c0.shared["boss"] as Dictionary)["weak_point_threshold"])
+	_expect(shown == 0,
+		("Grapnel Clamp's no_buck means _check_weakpoint_buck() returns before ever " +
+		"reading weak_point_threshold or _mod(\"threshold\") -- the snapshot must say 0, " +
+		"not the beast's real threshold plus Deep Hooks' +8 for a fight that never bucks (shown: %d)") % shown)
 
 
 func _test_light_reaches_the_shared_snapshot() -> void:

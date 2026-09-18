@@ -550,8 +550,25 @@ func _build_shared() -> Dictionary:
 			# closed for the nonzero case, just left open on the zero one. No
 			# beast in bosses.json pairs weak_point_height > 0 with threshold 0
 			# today, but the rule itself is wrong regardless of current content.
-			"weak_point_threshold": (b.weak_point_threshold + int(_run.relic_totals().get("threshold", 0))) \
-				if b.weak_point_threshold > 0 else 0,
+			#
+			# backlog #86 duty 2 (third pass): `_check_weakpoint_buck()` has a
+			# THIRD early return this snapshot still never checked: `_mod("no_buck")
+			# > 0`. Grapnel Clamp (relics.json, effect "no_buck") means the real
+			# rule never bucks a hunter off a sigil at all, no matter how much
+			# weak_point_damage piles up -- but the two fixes above only ever
+			# taught this field "0 = unlimited" for a beast authored with
+			# threshold 0, not for a team that made camping unlimited with a
+			# relic. A team holding Grapnel Clamp on a beast with a real
+			# threshold got told a hard buck-off number (possibly with Deep
+			# Hooks/Barbed Pitons' own bonus stacked on top) for a fight that,
+			# per the real rule right above this comment, will never buck them.
+			# relic_totals()'s "no_buck" entry is the same real value the wire
+			# already sends wholesale under this dict's own "mods" key --
+			# nothing new to compute, just another place this field must
+			# consult it, same as "threshold" already does.
+			"weak_point_threshold": 0 if (b.weak_point_threshold <= 0 \
+				or int(_run.relic_totals().get("no_buck", 0)) > 0) \
+				else (b.weak_point_threshold + int(_run.relic_totals().get("threshold", 0))),
 			# The rule this Titan bends (boss.limiter, backlog #55/#40) is real
 			# public data Combat._apply_limiter() reads every Titan turn, but was
 			# never forwarded — a client had no way to know a fight even HAS a

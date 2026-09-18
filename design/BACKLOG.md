@@ -2812,6 +2812,32 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-18 — #86 duty 2: the shared snapshot's `weak_point_threshold`
+  still lied about Grapnel Clamp (relic effect `no_buck`).** Last commit
+  (`ea2ac27`) was duty 3, so this run took duty 2. Two prior duty-2 passes
+  already taught `game_host.gd`'s `_build_shared()` to add the team's relic
+  "threshold" bonus (Deep Hooks/Barbed Pitons) and to report 0 for a beast
+  authored with `weak_point_threshold <= 0` ("no limit") — but
+  `Combat._check_weakpoint_buck()`, the function this field claims to
+  mirror, has a THIRD early return neither fix touched:
+  `_mod("no_buck") > 0`. Grapnel Clamp means the real rule never bucks a
+  hunter off a sigil at all, on any beast, however high its threshold — the
+  snapshot kept reporting the beast's real (possibly Deep-Hooks-inflated)
+  number regardless, telling a team holding it that camping was limited when
+  the real rule says it never is. Two Explore agents ran in sequence to find
+  this: the first did a full pass over core (relics, enchants, boons,
+  events, ascension, key-take, status effects, turn order) and came back
+  empty — that ground is saturated by 25 prior duty-2 fixes — so the second
+  was redirected to the session/net layer and found this on `game_host.gd`.
+  Fix: fold `no_buck` into the same "0 = no limit" ternary the earlier two
+  fixes already built. Added
+  `_test_backlog86_weak_point_threshold_snapshot_stays_zero_with_grapnel_clamp`
+  beside its two siblings; confirmed load-bearing by stashing just the
+  `game_host.gd` fix and re-running — it failed exactly as expected
+  (`shown: 28`, the bare threshold plus Deep Hooks' +8), rest of the suite
+  stayed green; restored the fix. Fresh `--import`, headless, Godot
+  4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
+
 - **2026-09-17 — #86 duty 3: proved `overworld_3d.gd`'s `node_is_open` line —
   the rule deciding which map tile the VIEW marks clickable/travelable this
   frame — a second, independent copy of "which columns can I travel to"
