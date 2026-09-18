@@ -986,13 +986,20 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 	var climb := int(pv.get("grip", 0))
 	var ally_climb := int(pv.get("ally_grip", 0))
 	var climb_n := _num(int(miss.get("grip", 0)), climb, int(base.get("grip", climb)), rich)
+	# backlog #86 duty 2: ally_climb used to be hand-interpolated with a raw
+	# %d instead of routed through _num() like every sibling stat (damage,
+	# block, ally_block, this card's own climb_n) -- so ally_grip_per_rhythm
+	# scaling (Hopscotch, Ripple Leap) or an upgrade's +1 ally_grip could never
+	# turn the ally-climb number gold, even when it landed well above the
+	# printed card.
+	var ally_climb_n := _num(int(miss.get("ally_grip", 0)), ally_climb, int(base.get("ally_grip", ally_climb)), rich)
 	if climb > 0 and climb == ally_climb:
 		out.append("All players %s %s." % [_kw("climb", "height", kw, rich), climb_n])
 	else:
 		if climb > 0:
 			out.append("%s %s." % [_kw("Climb", "height", kw, rich), climb_n])
 		if ally_climb > 0:
-			out.append("Ally %ss %d." % [_kw("climb", "height", kw, rich), ally_climb])
+			out.append("Ally %ss %s." % [_kw("climb", "height", kw, rich), ally_climb_n])
 	# backlog #86 duty 2 — targets_hold (#24, Route Finder) never grew a branch
 	# here: Combat.preview() never folds a hold-climb into `grip` (that's
 	# resolved separately in play_card()), so face_text() had no live number to

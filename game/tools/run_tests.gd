@@ -956,6 +956,7 @@ func _init() -> void:
 	_test_backlog86_face_text_uses_damage_after_mods_not_the_raw_number()
 	_test_backlog86_face_text_matched_climb_merges_to_all_players()
 	_test_backlog86_face_text_mismatched_climb_pluralizes_the_allys_line()
+	_test_backlog86_ally_climb_highlights_live_in_rich_mode_when_scaled_above_base()
 	_test_backlog86_face_text_status_and_utility_lines_join_in_field_order()
 	_test_backlog86_face_text_shows_dexterity_alongside_block()
 	_test_backlog86_face_text_shows_a_melded_powers_recurring_payoff()
@@ -18219,6 +18220,21 @@ func _test_backlog86_face_text_mismatched_climb_pluralizes_the_allys_line() -> v
 		"base": {"grip": 2, "ally_grip": 5}, "fx": {}, "keywords": []}
 	_expect(CardView.face_text(data, false) == "Climb 2. Ally climbs 5.",
 		"the ally's own climb line conjugates to 'climbs' where the self line reads 'Climb'")
+
+
+func _test_backlog86_ally_climb_highlights_live_in_rich_mode_when_scaled_above_base() -> void:
+	# backlog #86 duty 2: ally_climb used to be hand-interpolated with a raw
+	# %d, so it could never pick up the gold "this is scaled above the
+	# printed value" highlight every sibling stat gets from _num() -- a real
+	# gap, since Combat.preview() folds ally_grip_per_rhythm (Hopscotch,
+	# Ripple Leap) into pv["ally_grip"] while base["ally_grip"] stays the
+	# printed card value (game_host.gd).
+	var data := {"preview": {"grip": 0, "ally_grip": 5},
+		"preview_miss": {"grip": 0, "ally_grip": 5},
+		"base": {"grip": 0, "ally_grip": 1}, "fx": {}, "keywords": []}
+	var wrapped := "[color=#%s]5[/color]" % CardView.LIVE_COLOR
+	_expect(CardView.face_text(data, true) == "Ally climbs %s." % wrapped,
+		"an ally-climb value scaled above its printed base highlights live, same as every other stat on the face")
 
 
 func _test_backlog86_face_text_status_and_utility_lines_join_in_field_order() -> void:

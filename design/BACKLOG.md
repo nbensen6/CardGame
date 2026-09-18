@@ -421,6 +421,40 @@ Ordered. Source in brackets.
   a screenshot confirms doesn't overlap the cost/clock/rarity furniture — and
   it's been looked at.
 
+- [ ] **92. Almost every screen has no way back to the main menu, or into
+  Settings** `needs a screen` — found by an Explore agent during #86 duty 2
+  (2026-09-18) while hunting for a fresh bug outside the areas 40+ prior
+  passes already covered. `Game3D.SCENES` (`game_3d.gd:20-30`) names nine
+  reachable phases: `select, map, combat, reward, event, campfire, shop,
+  won, lost`. The only quit-to-menu path (`_open_settings`, also the only
+  Settings screen — music/hints/timing-style/keybinds) is built into
+  `combat_3d.gd`, gated behind combat's own "Menu" button
+  (`combat_3d.gd:3070-3188`, wired at line 474). The only other quit control
+  is a one-off "Return to menu" on the terminal WON/LOST screen
+  (`location_3d.gd:692-705`). `_render_select`, `_render_reward`,
+  `_render_event`, `_render_campfire`, `_render_shop` (`location_3d.gd`) and
+  the whole of `overworld_3d.gd` build no menu or Settings control at all —
+  six of the nine phases a run actually visits. A player who wants to quit,
+  or just mute music, while at the character-select lobby, the map, an
+  event, the campfire, or the shop has no in-game way to do either; only
+  force-quitting the application works (the run itself isn't lost — RunSave
+  autosaves — but the dead end is real and total for that slice of the
+  game).
+
+  Not fixed here on purpose: the honest fix is a real, visible Settings/quit
+  affordance reachable from `location_3d.gd` (and ideally
+  `overworld_3d.gd`) — a genuine on-screen change across several screens
+  that has to be judged by eye, and this cloud lane has no screen. A pure
+  static `phase_can_reach_menu(phase)` helper (mirroring
+  `continue_button_state()`/`shop_slot_disabled()`) could prove the gap in
+  `run_tests.gd` today, but writing only that test without the real fix
+  would just pin the bug in place, not close it — so it's queued here
+  instead.
+
+  *Done when:* every phase in `Game3D.SCENES` has a tap-reachable path to
+  quit-to-menu and to Settings, it's been screenshotted at least once from a
+  non-combat screen (map or shop, say), and `run_tests.gd` still passes.
+
 - [ ] **85. You cannot see your ally** `needs a screen` — hunter1 projects to
   x=1602 on a 1280-wide viewport and sits off the right edge of the screen in
   every fight. Measured on three beasts: thrasher 1559, crag_pup 1602,
@@ -2811,6 +2845,33 @@ rather than inventing work.
 ## Log
 
 Newest first. One line per finished item: what, and anything surprising.
+
+- **2026-09-18 — #86 duty 2: `CardView.face_text()`'s ally-climb line was a second, hand-written copy of the "scaled above printed → highlight gold" rule that every sibling stat (damage, block, ally_block, the card's own climb) gets for free from `_num()`.** Last commit
+  (`ce51238`) was duty 3, so this run took duty 2. `game/ui/card_view.gd:986-995`
+  built the "Ally climbs N." line with a raw `%d` instead of routing `ally_grip`
+  through `_num()`, so it could never render the live-highlight colour no
+  matter how far the number scaled — and it does scale: `Combat.preview()`
+  (combat.gd:613) folds `ally_grip_per_rhythm` (Hopscotch, Ripple Leap) into
+  the live number, while `game_host.gd`'s `base` dict (used for the "is this
+  above printed" comparison) stays the flat card value, and an upgrade's own
+  +1 to `ally_grip` hits the same gap. Two Explore agents ran in sequence: the
+  first surveyed the whole game for a fresh candidate and found only a real
+  but out-of-scope UX gap (most non-combat screens have no way back to the
+  main menu / Settings — logged below as a new backlog item rather than
+  fixed blind, since it needs new on-screen controls across six screens and
+  this lane has no display to verify them with); the second was redirected to
+  find a pure-logic candidate instead and found this one, plus confirmed
+  `progress.gd`/`run_save.gd` and several already-fixed "two copies of truth"
+  sites are genuinely clean. Fix: `ally_climb_n := _num(int(miss.get(
+  "ally_grip", 0)), ally_climb, int(base.get("ally_grip", ally_climb)),
+  rich)`, mirroring `climb_n` immediately above it. Added
+  `_test_backlog86_ally_climb_highlights_live_in_rich_mode_when_scaled_above_base`;
+  confirmed load-bearing by stashing just the `card_view.gd` fix and
+  re-running — it failed exactly as expected, rest of the suite stayed green;
+  restored the fix. (The two sibling tests for the plain-text ally-climb line
+  only ever ran with `rich=false` or with `base == preview`, so this gap sat
+  right beside tested code without being covered by it.) Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
 
 - **2026-09-18 — #86 duty 3: proved `_relic_taken` (run.gd) survives a save/
   reload and still blocks `take_key()` afterward.** Last commit (`f56d9d3`)
