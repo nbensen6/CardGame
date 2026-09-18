@@ -2812,6 +2812,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-18 — #86 duty 3: proved `_relic_taken` (run.gd) survives a save/
+  reload and still blocks `take_key()` afterward.** Last commit (`f56d9d3`)
+  was duty 2, so this run took duty 3. Manual code review alone kept landing
+  on ground already swept by 40+ prior duty-3 passes (discard-pile scaling,
+  rhythm scaling, meld field parity, hurt_pct/limiter dispatch, boss move
+  vocabulary vs. intent telegraphs, every ascension tier including the two
+  rule-changing ones, boon/event effect dispatch, shop stocking, relic/
+  enchant/potion effect tables — all already covered), so a research-only
+  Explore agent was sent to search wider. It found that `_relic_taken` — the
+  real guard behind "you can't keep a relic AND later trade the same node
+  for a key" (itself a backlog #86 duty 2 fix) — round-trips through
+  `to_dict()`/`from_dict()` (run.gd:298/374), but no test had ever driven it
+  true and then reloaded: the one existing save/reload relic-reward test
+  always saves before the relic stage opens, so `_relic_taken` stays false
+  throughout it. Added
+  `_test_backlog86_relic_taken_survives_a_save_reload_and_still_blocks_take_key`:
+  take the relic, round-trip through `Run.from_dict(run.to_dict())`, assert
+  `take_key()` on the reloaded run still refuses. It passed against the
+  current code (the field and its round-trip are correctly wired today — no
+  live bug), so this closes a real coverage gap rather than a live exploit;
+  the value is that a future rename or dropped key on `"relic_taken"` will
+  now fail loudly instead of quietly reopening the double-dip. Also had the
+  Explore agent exhaustively diff every data-driven effect string in
+  relics.json/enchants.json/potions.json/events.json against its dispatcher
+  in code — no silent no-op branches found; that ground is genuinely
+  exhausted, not just unchecked. Fresh `--import`, headless, Godot
+  4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
+
 - **2026-09-18 — #86 duty 2: the shared snapshot's `weak_point_threshold`
   still lied about Grapnel Clamp (relic effect `no_buck`).** Last commit
   (`ea2ac27`) was duty 3, so this run took duty 2. Two prior duty-2 passes

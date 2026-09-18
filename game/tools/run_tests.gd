@@ -399,6 +399,7 @@ func _init() -> void:
 	_test_run_relic_reward_and_full_clear()
 	_test_elite_pays_a_card_then_a_relic()
 	_test_backlog86_queued_relic_survives_a_save_reload_mid_card_reward()
+	_test_backlog86_relic_taken_survives_a_save_reload_and_still_blocks_take_key()
 	_test_backlog48_relic_pool_and_boss_relic_pool_partition_by_tier()
 	_test_backlog48_titan_relic_reward_draws_only_from_the_boss_pool()
 	_test_backlog48_elite_relic_reward_never_offers_a_boss_relic()
@@ -9023,6 +9024,31 @@ func _test_backlog86_queued_relic_survives_a_save_reload_mid_card_reward() -> vo
 	_expect(loaded.phase == Run.Phase.MAP
 			and loaded.team_relics.size() == relics_before + loaded.player_count(),
 		"the queued relic that survived a save/reload still pays out and releases the run to the map")
+
+
+## Backlog #86 duty 3: `_relic_taken` (run.gd) is the real anti-double-dip guard
+## behind take_key() — set only when pick_reward() actually grants a relic, and
+## checked so a team can't keep a relic AND later trade the same node for a key
+## (run.gd:998-1015, itself a backlog #86 duty 2 fix). It round-trips through
+## to_dict()/from_dict() (run.gd:298, run.gd:374), but nothing ever drove it
+## true and THEN reloaded — the one existing save/reload relic-reward test
+## (_test_backlog86_queued_relic_survives_a_save_reload_mid_card_reward above)
+## always saves before the relic stage even opens, so _relic_taken is false for
+## its whole run. A save/quit/reload right after taking the relic would have
+## silently reset the guard to its Dictionary default (false) if the "relic_taken"
+## key were ever dropped or renamed, reopening the exact double-dip the fix closed.
+func _test_backlog86_relic_taken_survives_a_save_reload_and_still_blocks_take_key() -> void:
+	var run := _map_run()
+	run.gold = 500
+	run.node_type = "treasure"
+	run._begin_reward("relic")
+	run.pick_reward(0, 0)  # hunter 0 takes the relic -> _relic_taken = true
+	var loaded := Run.from_dict(run.to_dict())
+	_expect(loaded.phase == Run.Phase.REWARD and loaded.reward_kind == "relic",
+		"setup sanity: the reload lands back on the still-open relic stage")
+	var ok := loaded.take_key("treasure")
+	_expect(not ok and not loaded.keys.has("treasure") and loaded.gold == 500,
+		"a relic taken before the save must still block take_key after a reload, not just live in memory")
 
 
 ## Backlog #48: relics carry a tier, and relic_pool()/boss_relic_pool() are a
