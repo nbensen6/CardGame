@@ -2846,6 +2846,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-18 — #86 duty 3: proved the private/shared architecture CLAUDE.md §2 is built around actually holds over the real wire — a co-op peer's snapshot never carries the ally's hand.** Last commit
+  (`2090b10`) was duty 2, so this run's default was duty 3. #55 (14/14 beasts,
+  needs Nick) and #76 (8/8 icons, batch 7 audit found nothing left) are both
+  `cloud-art` and past their own numeric bars, so no actionable numbered queue
+  item stood above the rotation. `GameHost._build_private()`/`_slot_private()`
+  are the functions that decide what one hunter's client receives — exactly
+  the "private view (a player's hand): the cards ... only that one player
+  sees" promise CLAUDE.md's whole architecture section is written around —
+  and grepping `run_tests.gd` for either name came back with zero hits before
+  this run, despite dozens of co-op session tests elsewhere in the file: every
+  one of them drives a single client and reads `host._run` directly or that
+  one client's own snapshot, never stands up two peers with two DIFFERENT
+  hands and checks that peer A's message doesn't also carry peer B's cards.
+  Added `_test_backlog86_coop_private_hand_never_leaks_to_the_other_peer`: a
+  real co-op `GameHost` with two real `GameClient`s (Frog and Mountain
+  Climbers, so their starter hands can't coincidentally match), driven through
+  `select_character` → `pick_node(0)` (row 0 is always a fight, so combat
+  starts with no picker needed) — the actual
+  `GameClient` → `GameHost` → `Run` path, not a direct call into
+  `_build_private`. Asserts each peer's own `.private.hand` ids match that
+  peer's real hand and never the ally's, and that neither peer's snapshot
+  takes the `{"solo": true, "slots": [...]}` shape the solo branch uses (which
+  would carry both hands at once even if the id check somehow passed). It
+  passed clean on the first run — no bug caught this time, just a real
+  architectural claim that had never once been checked end to end. Fresh
+  `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
+  Next #86 turn is duty 2.
+
 - **2026-09-18 — #86 duty 2: `Card.archetype_tags()` had no branch for `draw` at all, the same "missing mechanical family" shape the reach/scry fixes already closed.** Last commit
   (`adcc00c`) was duty 3, so this run's default was duty 2. Read `archetype_tags()`
   end to end against every field `Card` declares (the same audit that already

@@ -1814,6 +1814,20 @@ func _init() -> void:
 	_test_backlog86_gamehost_wires_pick_event_command_to_run()
 	_test_backlog86_pick_node_and_pick_event_are_shared_choices_over_the_wire()
 
+	# backlog #86 duty 3: CLAUDE.md section 2 names this the whole point of the
+	# architecture -- "the private view: the cards ... only that one player
+	# sees" -- and yet grepping this file for "_build_private" and
+	# "_slot_private" both came back with zero hits before this test. Every
+	# existing co-op session test above drives ONE client and reads either
+	# `host._run` directly or that one client's own snapshot; none of them ever
+	# stood up two real peers with two DIFFERENT hands and checked that peer A's
+	# wire message doesn't also carry peer B's cards. That is precisely the
+	# "two copies of one truth" shape duty 2 hunts for, just framed as a
+	# coverage gap instead of a caught bug: `_slot_private(pi)` reads `pi`, and
+	# nothing had ever proven it uses the SENDING peer's own slot rather than,
+	# say, always slot 0.
+	_test_backlog86_coop_private_hand_never_leaks_to_the_other_peer()
+
 	# backlog #86 duty 3: GameHost._card_icon picks the silhouette a card's
 	# face renders with, and its own doc comment claims a strict priority
 	# ladder -- power_effect before taunt before meld/create before ... down
@@ -15905,6 +15919,63 @@ func _test_backlog86_pick_node_and_pick_event_are_shared_choices_over_the_wire()
 	c0.pick_event(0)  # this time the OTHER peer sends it
 	_expect(host._run.gold == gold_before + 3,
 		"pick_event has no owner either -- either hunter's connection may answer the shared event")
+
+
+## Backlog #86 duty 3: the architectural claim CLAUDE.md section 2 exists to
+## make cheap ("whether a player's private view is rendered ... on their own
+## phone tomorrow ... the networking and game logic are identical") only
+## holds if the HOST never puts one hunter's hand on the wire to the other
+## hunter's client. Two real peers, two DIFFERENT characters (so their real
+## hands can't coincidentally match), driven through the actual
+## GameClient -> GameHost -> Run path -- not a direct call into
+## _build_private/_slot_private, which would only prove the function returns
+## something, not that _broadcast_state() hands each peer the right `pi`.
+func _test_backlog86_coop_private_hand_never_leaks_to_the_other_peer() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 77, 2, false)  # co-op, two real peers
+	_kept.append(host)
+	var c0 := GameClient.new(t, 10)
+	var c1 := GameClient.new(t, 20)
+	c0.join()
+	c1.join()
+	c0.select_character("frog")
+	c1.select_character("mountain_climbers")
+	_expect(host._run != null and host._run.phase == Run.Phase.MAP,
+		"setup sanity: the co-op run opens on the map")
+	c1.pick_node(0)  # row 0 is always "fight" -- this starts combat with no picker needed
+	_expect(host._run.phase == Run.Phase.COMBAT,
+		"setup sanity: picking the opening node starts the fight")
+
+	var real_hand0: Array = []
+	for c in host._run.combat.players[0].hand:
+		real_hand0.append((c as Card).id)
+	var real_hand1: Array = []
+	for c in host._run.combat.players[1].hand:
+		real_hand1.append((c as Card).id)
+	_expect(real_hand0 != real_hand1,
+		"setup sanity: Frog and Mountain Climbers start with different decks, so their real hands must differ [frog=%s climbers=%s]"
+			% [real_hand0, real_hand1])
+
+	var seen0: Array = []
+	for c in (c0.private.get("hand", []) as Array):
+		seen0.append(String((c as Dictionary)["id"]))
+	var seen1: Array = []
+	for c in (c1.private.get("hand", []) as Array):
+		seen1.append(String((c as Dictionary)["id"]))
+
+	_expect(seen0 == real_hand0 and seen0 != real_hand1,
+		"peer 10 (Frog, slot 0) must see its OWN hand over the wire, never its ally's [seen=%s own=%s ally=%s]"
+			% [seen0, real_hand0, real_hand1])
+	_expect(seen1 == real_hand1 and seen1 != real_hand0,
+		"peer 20 (Mountain Climbers, slot 1) must see its OWN hand over the wire, never its ally's [seen=%s own=%s ally=%s]"
+			% [seen1, real_hand1, real_hand0])
+	# A co-op peer's private snapshot is the single-slot dict _slot_private()
+	# returns directly. The {"solo": true, "slots": [...]} shape carries BOTH
+	# hands at once and belongs only to the solo path (_build_private's other
+	# branch) -- a co-op peer's message must never take that shape, or an
+	# ally's whole hand would ride along even if the fields above matched.
+	_expect(not c0.private.has("slots") and not c1.private.has("slots"),
+		"a co-op peer's private snapshot must be its single slot's dict, never the solo {solo:true, slots:[...]} shape that carries both hands at once")
 
 
 ## backlog #86 duty 2: `Run.combat` is set once a run's first fight starts
