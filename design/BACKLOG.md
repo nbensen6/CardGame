@@ -2846,6 +2846,38 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-18 — #86 duty 3: proved a real, previously-undocumented trap in `Run.pick_event()`'s "then" chain — a choice that pairs `"then"` with its own `"reward"` effect silently loses the reward, forever, with no error.** Last
+  commit (`94cd6c0`) was duty 2, so this run took duty 3. `pick_event()`
+  (run.gd:687) takes the `then` branch and returns the instant `then` is
+  non-empty, before it ever reads `eff.get("reward", "")` on that same call —
+  the follow-up beat opens exactly as intended, but a `"reward"` key on that
+  same (non-final) choice is silently inert. The function's own doc comment
+  already said so in words ("put any 'reward' on the FINAL beat's effects,
+  not an intermediate one") but nothing enforced or proved it; the closest
+  existing coverage (`_test_backlog53_then_beat_effects_land_and_reward_routes_from_final_beat`,
+  the 3-beat duty-3 test beside it) only ever exercised well-formed data where
+  the trap never fires. Getting here took a long manual survey first — combat
+  core, boss move dispatch, session/GameHost's private/shared view builders,
+  Progress's keybind/hint/history mechanics, the run-map generator, and the
+  shop's reprice/resync logic were all re-checked and are all still genuinely
+  covered (several near-misses: `GameHost._scry_view`'s own "tells your ally
+  what is coming" claim and the solo/co-op duplicate-character guards both
+  looked untested by a literal function-name grep, but both already have real
+  integration tests under different names — reverted a duplicate test before
+  committing once I found `_test_backlog59_ally_sees_the_scry_reveal` and
+  `_test_backlog86_coop_cannot_pick_the_same_character_twice`). Confirmed the
+  real `events.json` currently has zero violations (checked with a throwaway
+  Python script against every event, including nested `then` chains), so this
+  is a regression guard against a future data mistake, not a fix for a live
+  bug. Added two tests:
+  `_test_backlog86_pick_event_drops_a_reward_paired_with_a_then_on_the_same_choice`
+  pins down the engine's actual behaviour (the then-branch wins, the choice's
+  other effects still land, the reward never fires at all, not even later);
+  `_test_backlog86_no_then_choice_hides_a_reward_on_a_non_final_beat` sweeps
+  every real event and every beat of every real "then" chain, recursively,
+  for the exact mistake. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED.
+
 - **2026-09-18 — #86 duty 2: `CardView.face_text()`'s ally-climb line was a second, hand-written copy of the "scaled above printed → highlight gold" rule that every sibling stat (damage, block, ally_block, the card's own climb) gets for free from `_num()`.** Last commit
   (`ce51238`) was duty 3, so this run took duty 2. `game/ui/card_view.gd:986-995`
   built the "Ally climbs N." line with a raw `%d` instead of routing `ally_grip`

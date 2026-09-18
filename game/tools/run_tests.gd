@@ -144,6 +144,8 @@ func _init() -> void:
 	_test_backlog53_event_then_beat_replaces_choices_and_stays_in_event_phase()
 	_test_backlog53_then_beat_effects_land_and_reward_routes_from_final_beat()
 	_test_backlog86_a_then_beat_can_itself_have_a_then_beat()
+	_test_backlog86_pick_event_drops_a_reward_paired_with_a_then_on_the_same_choice()
+	_test_backlog86_no_then_choice_hides_a_reward_on_a_non_final_beat()
 	_test_backlog53_four_events_use_then()
 	_test_boons_load_and_are_well_formed()
 	_test_boon_offer_and_pick_applies_effects()
@@ -4013,6 +4015,66 @@ func _test_backlog86_a_then_beat_can_itself_have_a_then_beat() -> void:
 
 	_expect(after_first and after_second and after_third,
 		"a then-beat can itself carry a then-beat, and the chain walks all three levels before routing a reward")
+
+
+## backlog #86 duty 3: pick_event()'s own doc comment states a rule in words
+## ("A choice with a 'then' should put any 'reward' on the FINAL beat's
+## effects, not an intermediate one") that nothing in the engine enforces and
+## nothing in this suite had ever driven. Read literally, pick_event() (run.gd)
+## takes the `then` branch and returns the instant `then` is non-empty --
+## before it ever reads `eff.get("reward", "")` on that same call. A choice
+## that carried BOTH keys would swap in its follow-up beat exactly as
+## intended, but its own "reward" would vanish with no error, no log line,
+## and nothing for a data author to notice short of playing that exact branch
+## and finding the promised card/relic screen never opens. This pins down the
+## engine's actual behaviour for that case -- the then-branch wins, the
+## choice's OTHER effects (gold, here) still land, and the reward itself never
+## fires at all, not even on a delayed later beat -- so a future change to
+## pick_event()'s branch order can't silently flip which of the two wins.
+func _test_backlog86_pick_event_drops_a_reward_paired_with_a_then_on_the_same_choice() -> void:
+	var run := _map_run()
+	run.event = {"title": "T", "text": "first beat", "choices": [
+		{"label": "mistake", "result": "!", "effects": {"reward": "card", "gold": 5}, "then": {
+			"text": "second beat",
+			"choices": [{"label": "onward", "result": "!", "effects": {}}],
+		}},
+	]}
+	run.phase = Run.Phase.EVENT
+	run.map_row = 0
+	run.pick_event(0)
+	_expect(run.phase == Run.Phase.EVENT and String(run.event.get("text", "")) == "second beat"
+		and run.gold == 5,
+		"the then-branch still wins over a stray reward on the same choice -- the choice's OTHER effects (gold) still land, and the chain still advances to the follow-up beat")
+	run.pick_event(0)
+	_expect(run.phase == Run.Phase.MAP,
+		"the reward itself never fires at all -- the node resolves straight to the map, never Phase.REWARD, once the (rewardless) final beat is answered")
+
+
+## Companion to the behavioural proof above: sweeps every REAL event -- and
+## every beat of every real "then" chain, recursively, the same depth
+## _test_backlog86_a_then_beat_can_itself_have_a_then_beat above proves the
+## engine actually walks -- for the exact data mistake pick_event()'s doc
+## comment warns against. Nothing before this walked events.json looking for
+## it; the four-events-use-then and four-events-touch-the-deck sweeps above
+## check that "then" and "reward" each appear somewhere, never that they never
+## land on the SAME choice.
+func _test_backlog86_no_then_choice_hides_a_reward_on_a_non_final_beat() -> void:
+	var bad: Array = []
+	for id in Content.list_events():
+		var e: Dictionary = Content.make_event(String(id))
+		var stack: Array = [e.get("choices", [])]
+		while not stack.is_empty():
+			var choices: Array = stack.pop_back()
+			for ch_v in choices:
+				var ch: Dictionary = ch_v
+				var then: Dictionary = ch.get("then", {})
+				var eff: Dictionary = ch.get("effects", {})
+				if not then.is_empty():
+					if String(eff.get("reward", "")) != "":
+						bad.append("%s: %s" % [id, ch.get("label", "")])
+					stack.append(then.get("choices", []))
+	_expect(bad.is_empty(),
+		"no event choice may pair a 'then' beat with its own 'reward' effect -- pick_event() takes the then-branch and silently drops that reward [%s]" % ", ".join(bad))
 
 
 func _test_backlog53_four_events_use_then() -> void:
