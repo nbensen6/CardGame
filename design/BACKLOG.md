@@ -18632,3 +18632,39 @@ Newest first. One line per finished item: what, and anything surprising.
   `play_card()`, same headless harness as the sibling Artifact tests beside
   it. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL
   TESTS PASSED. Next `#86` turn is duty 2 (find an error and resolve it).
+
+- **2026-09-18 — #86 duty 2: `Card.archetype_tags()` had no branch for `create` at all, the same "missing mechanical family" shape the reach/scry/draw fixes already closed.** Last
+  commit (`77b1ff5`, Artifact wards) was duty 3, so this run took duty 2.
+  Delegated the hunt to an Explore agent (scoped away from the files this
+  rotation has already picked clean — run.gd, combat.gd, boss.gd,
+  run_map.gd, game_host.gd, card.gd's own hot spots, map_edges.gd); it came
+  back with the codebase reading very clean in both named bug families and
+  only a cosmetic, screen-adjacent candidate (`hit_circle.gd`'s dead
+  `CHAIN_OVERLAP` constant, which never got wired into `_fire()`'s note
+  advance — left unfixed and unlogged here on purpose, since implementing it
+  would change on-screen timing-chain pacing with no display to judge it
+  by, the same "needs a screen" reason duty 3 defers presentation-only
+  mechanics; if it's worth a look, `design/progress/bugs.md` is where a
+  screen-equipped lane would find it, but I didn't write it up either since
+  I ended up finding a real duty-2 item instead). So I went back to the
+  data/reward-lean seam that produced the reach/scry/draw fixes and cross-
+  checked every `Card` field against `archetype_tags()`'s branches by hand
+  (`python3` over `cards.json` + the field list from `card.gd`): `create`
+  (the Goblin Engineer's whole build-a-tool archetype) was the one gap
+  left. `GameHost._keywords_of()` (game_host.gd:931) already groups
+  `create != ""` under the "build" keyword for the tap-to-inspect panel —
+  `keywords.json` has had a `"build"` entry all along — but
+  `archetype_tags()` never grew the matching branch, so `build_grapple`,
+  `build_bomb`, `build_winch`, `build_turret`, `build_drone` and
+  `deploy_bulwark` — six real, shipped, uncommon cards whose ONLY mechanical
+  field is `create` — rolled through `reward_pool()` with an empty tag
+  array: a hunter drafting any of them got zero reward-lean (backlog #72)
+  toward drawing another, the entire Goblin Engineer archetype exempt from
+  its own synergy. Fixed with one branch, `if create != "": tags.append
+  ("build")`, mirroring the reach/scry/draw comments beside it. Added
+  `_test_backlog86_archetype_tags_recognise_create_cards_as_build`, same
+  three-part shape as its siblings: Build Grapple tags as `build` and
+  nothing else, Build Bomb and Deploy Bulwark both carry `build`, and
+  `Run.reward_weight()` actually rises for a Build-heavy deck (35 -> 55 at
+  the seed this test runs). Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 3.

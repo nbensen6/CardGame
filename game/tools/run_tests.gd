@@ -238,6 +238,7 @@ func _init() -> void:
 	_test_backlog86_archetype_tags_recognise_topdeck_shuffle_in_and_tutor_as_reach()
 	_test_backlog86_archetype_tags_recognise_scry_cards()
 	_test_backlog86_archetype_tags_recognise_draw_cards()
+	_test_backlog86_archetype_tags_recognise_create_cards_as_build()
 	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
 	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
@@ -6449,6 +6450,34 @@ func _test_backlog86_archetype_tags_recognise_draw_cards() -> void:
 	_expect(leaned_weight3 > flat_weight3,
 		"Take Aim's reward weight rises for a Draw-heavy deck now that it carries the draw tag [flat=%s leaned=%s]"
 			% [flat_weight3, leaned_weight3])
+
+
+func _test_backlog86_archetype_tags_recognise_create_cards_as_build() -> void:
+	var build_grapple_tags: Array = Content.card_tags("build_grapple")
+	_expect(build_grapple_tags.has("build") and build_grapple_tags.size() == 1,
+		"Build Grapple (create only) is tagged build and nothing else [tags=%s]" % [build_grapple_tags])
+
+	var build_bomb_tags: Array = Content.card_tags("build_bomb")
+	_expect(build_bomb_tags.has("build"),
+		"Build Bomb (create) is tagged build [tags=%s]" % [build_bomb_tags])
+
+	var deploy_bulwark_tags: Array = Content.card_tags("deploy_bulwark")
+	_expect(deploy_bulwark_tags.has("build"),
+		"Deploy Bulwark (create) is tagged build [tags=%s]" % [deploy_bulwark_tags])
+
+	# reward-lean end to end, same shape as the reach/scry/draw checks above: a
+	# deck already carrying Build gives Build Grapple a real lean bonus now
+	# that it is tagged, where before its empty tag array meant
+	# reward_weight()'s tag_bonus loop never ran no matter how many Build
+	# cards were already in the deck.
+	var run := _map_run()
+	var build_deck_tags: Dictionary = run._tag_counts(_deck_of(Callable(Content, "make_card").bind("build_grapple"), 10))
+	var build_grapple_rarity: String = Content.card_rarity("build_grapple")
+	var flat_weight4: int = Run.reward_weight(build_grapple_rarity, build_grapple_tags, {})
+	var leaned_weight4: int = Run.reward_weight(build_grapple_rarity, build_grapple_tags, build_deck_tags)
+	_expect(leaned_weight4 > flat_weight4,
+		"Build Grapple's reward weight rises for a Build-heavy deck now that it carries the build tag [flat=%s leaned=%s]"
+			% [flat_weight4, leaned_weight4])
 
 
 ## Backlog #72: a card reward roll should lean toward the archetype a hunter is

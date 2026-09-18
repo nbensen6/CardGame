@@ -493,4 +493,18 @@ func archetype_tags() -> Array:
 	# empty tag array and no reward-lean (backlog #72) toward each other.
 	if draw > 0:
 		tags.append("draw")
+	# backlog #86 duty 2: the same "no tag for this mechanical family at all"
+	# gap the topdeck/shuffle_in/tutor ("reach"), scry and draw fixes above
+	# closed — create (the Goblin Engineer's whole build-a-tool archetype) was
+	# never given a branch here either, even though GameHost._keywords_of()
+	# already groups it under one keyword, "build" (keywords.json), for the
+	# tap-to-inspect panel — exactly the mirror this file's own reach fix
+	# points at. build_grapple, build_bomb, build_winch, build_turret,
+	# build_drone and deploy_bulwark are six real, shipped cards whose ONLY
+	# mechanical field is `create`, so all six rolled through reward_pool()
+	# with an empty tag array: a hunter who'd drafted any of them got no
+	# reward-lean (backlog #72) toward drawing another, unlike every other
+	# mechanical family in the game.
+	if create != "":
+		tags.append("build")
 	return tags
