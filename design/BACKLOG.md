@@ -2846,6 +2846,44 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-18 — #86 duty 2: `preview()`'s `ally_blk` leaked a caster-only Block scaling term onto the ally on any card with `ally_block: 0`.** Last two
+  commits (`d25e7d1`, `5ab5a79`) were both duty 3 — a rotation miss by
+  whichever run produced `5ab5a79` (its own log entry said "Next #86 turn is
+  duty 2"), not investigated further, just corrected by taking duty 2 here.
+  An earlier duty-2 fix (comment at `combat.gd:579-593`, for Scrap Shield)
+  widened `ally_blk` to carry all four `block_per_*` terms unconditionally,
+  with no gate on whether the card grants the ally Block at all —
+  `card.ally_block` defaults to 0 and the four scaling terms rode along
+  regardless. Five shipped cards hit it: Build Mech, Bramble Wall, Pressure
+  Valve, Refuse Wall and Landfill all scale the CASTER's own Block
+  (`block_per_play`/`block_per_exhausted`/`block_per_discarded`) with
+  `ally_block: 0` and no ally mention in their text, so a second play (or
+  first burn/discard) started handing the ally free Block their own card
+  never promised — worse in solo, where `ally_index(0) == 0` makes the
+  "ally" the caster itself and doubles the leak on top of the caster's own
+  gain. Classic first-pass hole: the very first play has every scaling
+  counter at 0, so `ally_blk` comes out 0 and looks correct; the leak only
+  starts on the second play. Every existing `block_per_*` test
+  (`_test_build_mech_scales`, `_test_block_per_exhausted_scales_with_the_
+  burn_pile`, `_test_block_per_discarded_scales_with_pile_size`, etc.) only
+  ever asserted the CASTER's own `block`, so `players[1].combatant.block`
+  silently went non-zero in more than one existing test without anything
+  catching it. Fixed by gating the four `block_per_*` terms on
+  `card.ally_block > 0` (the same `if X > 0` idiom `climb`/`ally_climb`
+  already use two lines below), leaving `timed_ally_block` ungated since
+  Ripple Leap/Barbed Vine/Root Bond carry it with `ally_block: 0` on
+  purpose. Added `_test_backlog86_build_mech_never_blocks_the_ally`
+  (two Build Mech plays, asserts `players[1].combatant.block == 0`).
+  Verified load-bearing by reverting just `combat.gd` (`git stash push --
+  game/core/combat.gd`) with the new test still in place: reran the suite,
+  exactly the new test failed (`FAIL a card that scales only the caster's
+  own Block...`) with everything else green, then restored the fix
+  (`git stash pop`) — confirmed `_test_scrap_shields_ally_gets_the_per_burn_
+  bonus_too` and the meld test for Cover+Landfill (which both legitimately
+  pair `ally_block > 0` with `block_per_*`) still pass. No screen needed —
+  pure `Combat` state through `play_card()`. Fresh `--import`, headless,
+  Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
+
 - **2026-09-18 — #86 duty 3 (duty 2 taken, found nothing, so the rotation moved on — see below): the four real boons in `boons.json` had never once been run through the actual pipeline and checked against what their own data promises.** Last
   commit (`d25e7d1`) was duty 3, so this run's default was duty 2. Spent the
   bulk of the run on duty 2 first (read `game/core/run.gd`, `run_map.gd`,

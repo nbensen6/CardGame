@@ -350,6 +350,7 @@ func _init() -> void:
 	_test_jetpack_fizzle_logs_why_nothing_happened()
 	_test_grappling_arm_pulls_ally()
 	_test_build_mech_scales()
+	_test_backlog86_build_mech_never_blocks_the_ally()
 	_test_backlog86_build_grapple_puts_a_real_grapple_in_hand()
 	_test_backlog86_grand_contraption_damages_and_builds_the_same_play()
 	_test_burn_coal_exhaust_and_cheapen()
@@ -7141,6 +7142,22 @@ func _test_build_mech_scales() -> void:
 	combat.play_card(0, _first_playable(combat, 0))  # +4 (grows) -> 6 total
 	_expect(b1 == 2 and combat.players[0].combatant.block == 6,
 		"Build Mech's Block grows each time it's played this fight")
+
+
+## backlog #86 duty 2: preview()'s ally_blk carried all four block_per_*
+## terms unconditionally (the Scrap Shield fix above _test_scrap_shields_...
+## widened it that far), which leaked onto any card that scales the CASTER's
+## own Block but grants the ally nothing -- Build Mech has `ally_block: 0`
+## and `block_per_play: 2`, so its second play was quietly handing the ally
+## 2 free Block their own card text never promised. Every existing
+## block_per_* test only ever asserted the caster's own block, so this
+## leak shipped with zero coverage on the ally's side.
+func _test_backlog86_build_mech_never_blocks_the_ally() -> void:
+	var combat := _new_combat([_deck_of(_build_mech, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	combat.play_card(0, _first_playable(combat, 0))  # first play: scaling term is 0 either way
+	combat.play_card(0, _first_playable(combat, 0))  # second play: block_per_play now non-zero
+	_expect(combat.players[1].combatant.block == 0,
+		"a card that scales only the caster's own Block (ally_block: 0) must never touch the ally")
 
 
 ## backlog #86 duty 3 — `create` (Goblin gadgets: Build Grapple/Bomb/Winch/

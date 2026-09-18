@@ -580,21 +580,24 @@ func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PER
 	# card burned") is the one card that pairs ally_block with block_per_*
 	# scaling, and its text says "All players" — so the ally's cut needs the
 	# same per-burn term the caster's own `blk` gets above, not just the flat
-	# card.ally_block. Left out until now, the ally silently got 3 no matter
-	# how many cards had been burned while the caster's own block kept scaling.
-	# The fix only carried block_per_exhausted, though — block_per_play,
-	# block_per_x and block_per_discarded are the same "scale `blk`, scale
-	# `ally_block` the same way" idiom and no authored card happens to pair
-	# any of them with ally_block, but `_meld_cards()` sums both fields
-	# independently (it must — an unrelated pair of cards can each carry
-	# either), so meld makes the combination reachable: Cover (ally_block: 6)
-	# fused with Landfill (block_per_discarded: 2) silently dropped the
-	# per-discard scaling from the ally's half while the caster's own block
-	# kept it.
-	var ally_blk := card.ally_block + card.block_per_exhausted * exhausted \
-		+ card.block_per_play * prior + card.block_per_x * x \
-		+ card.block_per_discarded * discarded \
-		+ (int(card.timed_ally_block * scale) if hit else 0)
+	# card.ally_block. That fix (below) carried all four block_per_* terms
+	# into ally_blk unconditionally, which promptly leaked them onto every
+	# card that scales the CASTER's own Block but grants the ally nothing —
+	# Build Mech, Bramble Wall, Pressure Valve, Refuse Wall and Landfill all
+	# have `ally_block: 0` and real block_per_* fields, so their second play
+	# (or first burn/discard) started handing the ally free Block their own
+	# text never promised, worst in solo where ally_index(0) == 0 makes the
+	# "ally" the caster and the leak double-dips the caster's own play. Gate
+	# the per-* terms on an actual ally grant, the same `if X > 0` idiom the
+	# climb/ally_climb split below already uses — timed_ally_block stays
+	# ungated since Ripple Leap/Barbed Vine/Root Bond carry it with
+	# ally_block == 0 on purpose.
+	var ally_blk := card.ally_block
+	if ally_blk > 0:
+		ally_blk += card.block_per_exhausted * exhausted + card.block_per_play * prior \
+			+ card.block_per_x * x + card.block_per_discarded * discarded
+	if hit:
+		ally_blk += int(card.timed_ally_block * scale)
 
 	var climb := card.grip + (int(card.timed_grip * scale) if hit else 0)
 	if climb > 0:  # the climb bonus rides an actual climb, not a zero
