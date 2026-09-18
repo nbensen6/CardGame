@@ -2151,8 +2151,16 @@ func _model_key(beast_id: String, beast_name: String) -> String:
 
 
 ## World-space bounds of a model, so hunters can be placed ON it whatever its
-## shape — no per-beast hand-tuning.
-func _merged_aabb(root: Node3D) -> AABB:
+## shape — no per-beast hand-tuning. Everything downstream of _beast_box (hunter
+## side-offsets, the sigil's position and scale, the camera window, damage
+## popups, dust) reads THIS box, so a wrong merge here is wrong everywhere at
+## once — the same "one system" shape as the shader/build-step changes that
+## actually moved the whole cast (backlog #86 duty 1's own framing). Lifted
+## pure (#86 duty 3) alongside its own helper below: neither reads `self`, and
+## MERGE walks each mesh's global_transform, not the local one _bounds()
+## (location_3d.gd) uses, since a beast's climb/sigil markers are ordinary
+## children that can sit rotated or offset under a rig node.
+static func _merged_aabb(root: Node3D) -> AABB:
 	var out := AABB()
 	var first := true
 	for node in _all_meshes(root):
@@ -2168,7 +2176,7 @@ func _merged_aabb(root: Node3D) -> AABB:
 	return out
 
 
-func _all_meshes(node: Node) -> Array:
+static func _all_meshes(node: Node) -> Array:
 	var out: Array = []
 	if node is VisualInstance3D:
 		out.append(node)

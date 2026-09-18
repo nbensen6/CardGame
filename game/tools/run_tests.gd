@@ -1946,6 +1946,8 @@ func _init() -> void:
 
 
 func _finish_with_deferred_tests() -> void:
+	_test_backlog86_merged_aabb_merges_meshes_through_their_global_transform()
+	_test_backlog86_merged_aabb_falls_back_to_a_default_box_with_no_meshes()
 	_test_backlog86_music_refresh_stops_playback_the_instant_you_mute()
 	_test_backlog86_fit_shrinks_the_logical_viewport_on_handheld()
 	_test_backlog86_fit_resets_the_logical_viewport_on_desktop()
@@ -1993,6 +1995,19 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_real_draw_relics_reach_relic_totals_and_grant_extra_cards()
 
 	_test_backlog86_list_boss_ids_matches_build_boss_and_boss_ids()
+
+	# backlog #86 duty 3: combat_3d._merged_aabb/_all_meshes had zero coverage,
+	# unlike location_3d's own sibling _bounds/_meshes pair (7-ish hits each).
+	# _beast_box, everything downstream reads: hunter side-offsets, the sigil's
+	# position and scale, the camera window, damage popups, dust — is exactly
+	# this box, unverified. See the two lifted-to-static funcs themselves
+	# (combat_3d.gd) for why GLOBAL transform matters here specifically. Only
+	# the plain tree-walk half runs here; the AABB-merge half needs a mesh
+	# actually inside the SceneTree for global_transform to resolve at all, so
+	# it's deferred below with fit()'s and the Camera3D tests, for the same
+	# "root isn't inside its own tree yet here" reason.
+	_test_backlog86_all_meshes_finds_nested_meshes_and_skips_bare_nodes()
+	_test_backlog86_all_meshes_is_empty_with_nothing_to_find()
 
 	print("")
 	if _failures == 0:
@@ -17686,6 +17701,78 @@ func _test_backlog86_route_between_rungs_ignores_unsorted_input() -> void:
 	# the dictionary's insertion order to come out in climb order.
 	var route: Array = Combat3D.route_between_rungs([12, 0, 8, 4], 0, 12)
 	_expect(route == [4, 8], "the rung list is sorted before routing, regardless of the order it arrives in")
+
+
+## backlog #86 duty 3 — combat_3d._merged_aabb/_all_meshes (now lifted static,
+## like route_between_rungs above) had zero coverage anywhere in this suite,
+## unlike location_3d.gd's own sibling pair _bounds/_meshes. _beast_box is the
+## result of _merged_aabb(_beast), and nearly everything about a fight reads
+## it: which side of the beast a hunter stands, where the sigil sits and how
+## big it is, the camera's framing window, where a damage popup or a dust
+## puff lands. A wrong merge here is wrong for every beast in the game, all at
+## once, the same "one system" shape as the shader/build-step changes that
+## actually moved the whole cast (see duty 1's own note above). The GLOBAL
+## transform matters specifically because it's the one thing that makes this
+## different from location_3d's local-space _bounds: a beast's own climb and
+## sigil markers are ordinary children that can sit offset or rotated under a
+## rig node, not just under the model root directly.
+func _mesh_box(size: Vector3) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = size
+	mi.mesh = box
+	return mi
+
+
+func _test_backlog86_all_meshes_finds_nested_meshes_and_skips_bare_nodes() -> void:
+	var root := Node3D.new()
+	var direct_mesh := _mesh_box(Vector3.ONE)
+	root.add_child(direct_mesh)
+	var rig := Node3D.new()  # a bare organizing node, no mesh of its own
+	root.add_child(rig)
+	var nested_mesh := _mesh_box(Vector3.ONE)
+	rig.add_child(nested_mesh)
+	var found: Array = Combat3D._all_meshes(root)
+	_expect(found.size() == 2 and found.has(direct_mesh) and found.has(nested_mesh),
+		"_all_meshes finds a mesh under a plain organizing node just as readily as one hung directly off the root")
+	root.free()
+
+
+func _test_backlog86_all_meshes_is_empty_with_nothing_to_find() -> void:
+	var root := Node3D.new()
+	root.add_child(Node3D.new())  # rig nodes with no mesh anywhere under them
+	_expect(Combat3D._all_meshes(root) == [], "a model with no VisualInstance3D anywhere under it finds nothing to merge, rather than erroring")
+	root.free()
+
+
+func _test_backlog86_merged_aabb_merges_meshes_through_their_global_transform() -> void:
+	# vi.global_transform (unlike location_3d's own hand-walked _relative_xform)
+	# only resolves once the node is actually inside the live tree -- hence
+	# `root` (the real SceneTree root, this script extends SceneTree) rather
+	# than a detached Node3D, and the deferral above so root itself is ready.
+	var beast_root := Node3D.new()
+	root.add_child(beast_root)
+	var near := _mesh_box(Vector3(2, 2, 2))  # local AABB: (-1,-1,-1) to (1,1,1)
+	beast_root.add_child(near)
+	var rig := Node3D.new()
+	rig.position = Vector3(5, 0, 0)  # a rig offset, same as a real rig node under a beast root
+	beast_root.add_child(rig)
+	var far := _mesh_box(Vector3(2, 2, 2))
+	rig.add_child(far)  # world position (5,0,0) — only reachable through the RIG's global_transform
+	var box: AABB = Combat3D._merged_aabb(beast_root)
+	_expect(is_equal_approx(box.position.x, -1.0) and is_equal_approx(box.end.x, 6.0),
+		"the merge spans both meshes in WORLD space (-1 to 6), so the offset mesh's own rig parent must have been read through global_transform, not just its own local transform: got %s to %s" % [box.position.x, box.end.x])
+	beast_root.queue_free()
+
+
+func _test_backlog86_merged_aabb_falls_back_to_a_default_box_with_no_meshes() -> void:
+	var beast_root := Node3D.new()
+	root.add_child(beast_root)
+	beast_root.add_child(Node3D.new())
+	var box: AABB = Combat3D._merged_aabb(beast_root)
+	_expect(box == AABB(Vector3(-1, 0, -1), Vector3(2, 2, 2)),
+		"a beast model with nothing found to merge falls back to the fixed default box instead of an all-zero AABB, which _fit_height's own maxf(raw, 0.001) guard exists for but should never actually have to use")
+	beast_root.queue_free()
 
 
 ## backlog #86 duty 3 (fiftieth pass) — solo_view_slot/solo_cmd_slot/

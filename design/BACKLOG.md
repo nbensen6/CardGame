@@ -2846,6 +2846,27 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-18 (latest) — #86 duty 3: proved `combat_3d._merged_aabb`/`_all_meshes` — the world-space bounding-box merge every beast's `_beast_box` comes from — actually merges through each mesh's GLOBAL transform, not just its local one.** Last commit
+  (`40f8481`, `build_boss_adds()`'s missing `hurt_pct`/`hurt_moves`) was duty 2,
+  so this run took duty 3. `_beast_box` is read everywhere in `combat_3d.gd`:
+  hunter side-offsets, the sigil's position and scale, the camera framing
+  window, damage popups, dust — one wrong merge is wrong for every beast at
+  once, the same "one system" shape duty 1's own rewrite singled out as the
+  only work that ever visibly moved anything. Neither function had a single
+  reference anywhere in `run_tests.gd`, unlike `location_3d.gd`'s own sibling
+  `_bounds`/`_meshes` pair. Lifted both to `static func` (no behavior change —
+  neither read `self`) and added four tests: a plain nested-mesh walk, an
+  empty-tree walk, the empty-tree AABB fallback, and the one that actually
+  mattered — two meshes under a translated "rig" child node, proving the merge
+  spans world space rather than stopping at the rig's own local offset. The
+  first version of that last test failed for real, but not on the logic: it
+  built a detached `Node3D` tree, and `VisualInstance3D.global_transform`
+  throws `!is_inside_tree()` and silently returns identity off the live
+  SceneTree — exactly why `location_3d._relative_xform` was hand-written to
+  walk local transforms instead of calling `global_transform` at all. Moved
+  the two AABB tests into `_finish_with_deferred_tests()`, parented under the
+  real `root`, same as the Camera3D and `fit()` tests already there for the
+  identical reason. `run_tests.gd` is green.
 - **2026-09-18 (later again) — #86 duty 2: `Content.build_boss_adds()` never parsed an add's own `hurt_pct`/`hurt_moves` off its JSON data, even though `build_boss()` has parsed both for the main boss since backlog #44 shipped.** Last
   commit (`c689289`, `skip_reward()` opening an elite's queued relic stage)
   was duty 3, so this run took duty 2. This was a genuinely hard hunt: the
