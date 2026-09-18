@@ -2846,6 +2846,34 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-19 — #86 duty 2: a topdeck card played while a scry was still open got buried under the scry's own returning cards instead of drawing next.** Last commit
+  (`876baab`) was duty 3, so this run's default was duty 2. Ran
+  `tools/robustness_sweep.gd` first (360 seeded runs, char pairs x ascensions
+  x policies) looking for a fresh dead end — came back clean, so this is a
+  manual read instead. `Card.topdeck`'s own doc comment promises "the very
+  next card you draw" (#68); `Combat.resolve_scry()`'s own doc comment
+  promises a kept card "is still the next one they'd draw" (#59). Both are
+  true in isolation, but nothing stops a player from playing a scry card
+  (Peer Ahead) and then, before resolving it, a topdeck card (Waymark) —
+  nothing in the UI forces a resolve between plays, the same gap #86 duty 2
+  already found and fixed once for a SECOND scry stacking on an open one. A
+  scratch probe confirmed it concretely: scry 2 off `[a,b,c,d]` peeks
+  `[d,c]`, topdeck appends `scramble` to the now-2-card pile, then
+  `resolve_scry` (keep everything) unconditionally APPENDED the kept cards to
+  the pile's current end — landing `scramble` THIRD from the top instead of
+  first, silently breaking Waymark's own printed promise the moment a scry
+  was left open around it. Fixed by giving `PlayerState` a `scry_floor` (the
+  pile size right after the first peek of an open batch) and having
+  `resolve_scry()` reinsert kept cards there instead of at the pile's current
+  end — identical to the old behaviour whenever nothing grew the pile in
+  between (the common case), but now correctly lands a topdeck/shuffle_in
+  played during an open scry above the returning cards. Added
+  `_test_backlog86_topdeck_played_during_an_open_scry_still_draws_next`;
+  confirmed it actually catches the bug by reverting just the `combat.gd`
+  half of the fix and re-running (`got ["a","b","scramble","c","d"]`, fails)
+  before restoring it. Fresh `--import`, headless, Godot 4.7.1-stable,
+  `run_tests.gd`: ALL TESTS PASSED. Next #86 turn is duty 3.
+
 - **2026-09-18 — #86 duty 3: proved the private/shared architecture CLAUDE.md §2 is built around actually holds over the real wire — a co-op peer's snapshot never carries the ally's hand.** Last commit
   (`2090b10`) was duty 2, so this run's default was duty 3. #55 (14/14 beasts,
   needs Nick) and #76 (8/8 icons, batch 7 audit found nothing left) are both

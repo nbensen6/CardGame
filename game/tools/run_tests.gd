@@ -773,6 +773,7 @@ func _init() -> void:
 	_test_backlog86_play_card_ignores_a_spoofed_slot()
 	_test_backlog86_end_turn_ignores_a_spoofed_slot()
 	_test_backlog86_second_scry_before_resolve_does_not_lose_the_first_batch()
+	_test_backlog86_topdeck_played_during_an_open_scry_still_draws_next()
 	_test_backlog86_ending_the_turn_does_not_strand_an_unresolved_scry()
 	_test_backlog86_peek_top_reshuffles_discard_mid_call()
 	# Reaching into the draw pile (backlog #68): put a card on top, shuffle one
@@ -16444,6 +16445,46 @@ func _test_backlog86_second_scry_before_resolve_does_not_lose_the_first_batch() 
 		and (ps.draw_pile[2] as Card).id == "d" and (ps.draw_pile[1] as Card).id == "b"
 		and (ps.draw_pile[0] as Card).id == "a",
 		"the kept cards from both batches return to the top of the draw pile in reveal order")
+
+
+## backlog #86 duty 2: resolve_scry() used to ALWAYS append kept cards to
+## draw_pile's current end — fine while nothing else touched the pile in
+## between, but Card.topdeck's own doc comment promises "the very next card
+## you draw" (#68), and a card can be topdecked while a scry is still sitting
+## open (nothing forces a resolve between plays — the same gap #86 duty 2's
+## "second scry" fix above closed for a second scry). Real, shipped cards:
+## Peer Ahead (scry 2) then Waymark (topdeck) in the same turn, unresolved
+## between them. Before this fix, resolving the scry afterward buried
+## Waymark's Scramble under both peeked cards — the very card it promised
+## would draw next instead drew THIRD.
+func _test_backlog86_topdeck_played_during_an_open_scry_still_draws_next() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var a := Card.from_dict({"id": "a", "name": "A", "type": "skill", "cost": 0})
+	var b := Card.from_dict({"id": "b", "name": "B", "type": "skill", "cost": 0})
+	var c := Card.from_dict({"id": "c", "name": "C", "type": "skill", "cost": 0})
+	var d := Card.from_dict({"id": "d", "name": "D", "type": "skill", "cost": 0})
+	ps.draw_pile = [a, b, c, d]   # d is the "top" — pop_back() draws it first
+	ps.hand = [Content.make_card("peer_ahead"), Content.make_card("waymark")]
+	ps.energy = 3
+
+	combat.play_card(0, 0)   # Peer Ahead — scries d, c
+	_expect(ps.scry_pending.size() == 2 and (ps.scry_pending[0] as Card).id == "d"
+		and (ps.scry_pending[1] as Card).id == "c" and ps.scry_floor == 2,
+		"Peer Ahead peeks the top 2 and records the floor they were peeled from")
+
+	combat.play_card(0, 0)   # Waymark slid to index 0 — topdecks Scramble, scry still open
+	_expect(ps.draw_pile.size() == 3 and (ps.draw_pile[2] as Card).id == "scramble",
+		"Waymark's topdeck lands on the pile's current top while the scry is still pending")
+
+	var ok := combat.resolve_scry(0, [])   # keep both peeked cards
+	_expect(ok and ps.scry_pending.is_empty() and ps.scry_floor == -1,
+		"resolve_scry clears the pending reveal and its recorded floor")
+	_expect(ps.draw_pile.size() == 5 and (ps.draw_pile[4] as Card).id == "scramble"
+		and (ps.draw_pile[3] as Card).id == "d" and (ps.draw_pile[2] as Card).id == "c"
+		and (ps.draw_pile[1] as Card).id == "b" and (ps.draw_pile[0] as Card).id == "a",
+		"Waymark's Scramble is still the very next card drawn -- the kept scry cards reinsert BELOW it, "
+		+ "at the floor they were peeled from, not on top of it [got %s]" % [_ids_of(ps.draw_pile)])
 
 
 ## backlog #86 duty 2: resolve_scry() is a COMMAND the client has to send —

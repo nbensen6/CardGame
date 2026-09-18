@@ -21,6 +21,12 @@ var play_counts: Dictionary = {}  # card id -> times played this fight (for scal
 var powers: Dictionary = {}    # power card id -> stacks played this fight (backlog #57 — cards that stay played)
 var scry_pending: Array = []   # cards revealed off the top of draw_pile, awaiting Combat.resolve_scry
                                 # (backlog #59); index 0 is the next card that would be drawn
+var scry_floor: int = -1       # draw_pile.size() right after the first peek of the CURRENT
+                                # pending batch (backlog #86 duty 2) — where resolve_scry() must
+                                # reinsert kept cards so a topdeck/shuffle_in played while the
+                                # scry is still open lands ABOVE them instead of being buried
+                                # under a batch that was already "next to draw" before it was
+                                # played. -1 = no batch open (see Combat.resolve_scry's own comment).
 var sigil_rounds: int = 0      # consecutive enemy turns spent at/above the sigil (a "sigil_fatigue" limiter)
 var light: int = 0             # the Lightbearer's own resource (backlog #47) — banks across turns, unlike energy
 var cards_played_this_turn: int = 0  # resets each round (backlog #67 — a card's "nth_card"
@@ -49,7 +55,7 @@ func to_dict() -> Dictionary:
 		"ended_turn": ended_turn, "prepared": prepared, "rhythm": rhythm,
 		"play_counts": play_counts, "sigil_rounds": sigil_rounds, "light": light,
 		"cards_played_this_turn": cards_played_this_turn,
-		"powers": powers, "scry_pending": _cards_to_dicts(scry_pending),
+		"powers": powers, "scry_pending": _cards_to_dicts(scry_pending), "scry_floor": scry_floor,
 		"character": character, "climb_bonus": climb_bonus,
 		"char_attack_bonus": char_attack_bonus, "ally_climb": ally_climb,
 		"poison_lift": poison_lift,
@@ -80,6 +86,7 @@ static func from_dict(d: Dictionary) -> PlayerState:
 	ps.light = int(d.get("light", 0))
 	ps.powers = (d.get("powers", {}) as Dictionary).duplicate(true)  # deep — values are {stacks, value} dicts
 	ps.scry_pending = _cards_from_dicts(d.get("scry_pending", []))
+	ps.scry_floor = int(d.get("scry_floor", -1))
 	ps.character = String(d.get("character", ""))
 	ps.climb_bonus = int(d.get("climb_bonus", 0))
 	ps.char_attack_bonus = int(d.get("char_attack_bonus", 0))

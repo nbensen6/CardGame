@@ -1206,9 +1206,16 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		# not in hand, draw, discard or exhaust, just gone for the rest of the
 		# fight (#86 duty 2). Appending keeps both batches, front-to-back in
 		# the same order they'd have been drawn.
+		var batch_was_open := not ps.scry_pending.is_empty()
 		var peeked := _peek_top(ps, card.scry)
 		if not peeked.is_empty():
 			ps.scry_pending.append_array(peeked)
+			# backlog #86 duty 2: only the FIRST peek of a fresh batch sets the
+			# floor — resolve_scry() reinserts the whole accumulated batch there
+			# (see its own comment), and a second scry stacked on an already-open
+			# one only peels further into a pile that's already below that floor.
+			if not batch_was_open:
+				ps.scry_floor = ps.draw_pile.size()
 			_log("%s plays %s — scries the top %d." % [who, card.name, peeked.size()])
 	if card.topdeck != "":  # backlog #68 — put a card on TOP of the draw pile: the end of
 		# the array, the same end _draw()/_peek_top() pop from.
@@ -1998,8 +2005,14 @@ func _peek_top(ps: PlayerState, n: int) -> Array:
 
 ## Backlog #59: the player's decision after a Scry reveal — bin any of the
 ## revealed cards (indices into scry_pending) to the discard pile; everything
-## else returns to the TOP of the draw pile in the same order it was revealed,
-## so a card a player chooses to keep is still the next one they'd draw.
+## else returns to the draw pile in the same order it was revealed, so a card
+## a player chooses to keep is still the next one they'd draw — UNLESS a
+## topdeck/shuffle_in card was played while this scry sat unresolved, in which
+## case that card's own "the very next card you draw" promise (#68) wins: kept
+## cards reinsert at `scry_floor` (backlog #86 duty 2), the position right
+## where the peeked block used to sit, not always the pile's current top. With
+## nothing played in between, `scry_floor` IS the current top, so this is
+## byte-identical to a plain re-append.
 ## The command the host validates: an out-of-range index is just ignored
 ## rather than failing the whole call, and calling this with nothing pending
 ## is a harmless no-op that reports false.
@@ -2023,11 +2036,27 @@ func resolve_scry(pi: int, bin_indices: Array) -> bool:
 			bin_count += 1
 		else:
 			kept.append(c)
-	# kept[0] must be the next card popped, so push the pile in reverse: the
-	# LAST append is the one pop_back() sees first.
-	for i in range(kept.size() - 1, -1, -1):
-		ps.draw_pile.append(kept[i])
+	# backlog #86 duty 2: insert at the recorded floor rather than always
+	# appending to the pile's CURRENT end — a topdeck/shuffle_in card played
+	# while this scry sat open already grew draw_pile past that floor, and
+	# appending unconditionally buried it under a batch that was "next to
+	# draw" before that card was ever played, silently breaking topdeck's own
+	# "the very next card you draw" promise. Clamped for safety against a
+	# second, deeper scry batch that shrank draw_pile below the first batch's
+	# floor (scry_floor is only ever set from the FIRST peek of an open batch
+	# — see play_card()'s own comment).
+	#
+	# kept[0] must be the next card popped, so insert forward at the SAME
+	# fixed index each time: each later insert pushes the earlier ones one
+	# slot higher (closer to the top), so kept[0] ends up highest — the exact
+	# ordering the old "append in reverse" loop produced, and identical to it
+	# whenever nothing grew draw_pile past the floor in between (see the
+	# doc comment above).
+	var insert_at: int = mini(ps.scry_floor, ps.draw_pile.size()) if ps.scry_floor >= 0 else ps.draw_pile.size()
+	for c2 in kept:
+		ps.draw_pile.insert(insert_at, c2)
 	ps.scry_pending = []
+	ps.scry_floor = -1
 	_log("%s bins %d card(s) from the scry." % [ps.combatant.name, bin_count])
 	return true
 
