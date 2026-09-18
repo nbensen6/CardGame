@@ -3529,6 +3529,29 @@ const FAN_RISE := 96.0        # px a hovered card lifts, clear of the deep tuck
 ## because the one you are looking at is.
 const FAN_HOVER_SCALE := 1.34
 
+## Pure form of _layout_hand's squeeze: how far apart two neighbouring cards
+## sit. Shrinks below the fan's natural overlap only when drawing it at that
+## spacing would run past `room` — never on an unmeasured room (0 or less,
+## the Control's first frame before a size is ever assigned), which would
+## squeeze every hand to the floor before the real width is known. #86 duty 3.
+static func hand_fan_step(n: int, w: float, room: float, base_step: float) -> float:
+	if room > 1.0 and base_step * float(n - 1) + w > room:
+		return maxf((room - w) / maxf(float(n - 1), 1.0), w * 0.30)
+	return base_step
+
+
+## Pure form of a resting card's X in _layout_hand — centred on `room`, the
+## ScrollContainer's own fixed width, never on the hand's content width.
+## Nick, 2026-09-08: centring on content instead made every layout that
+## widened the content walk the fan further right on the next call, ending a
+## turn with the hand pinned in the bottom-right corner over the End Turn
+## button. #86 duty 3.
+static func hand_card_x(i: int, n: int, w: float, step: float, room: float) -> float:
+	var mid := (float(n) - 1.0) * 0.5
+	var off := float(i) - mid
+	return room * 0.5 - w * 0.5 + off * step
+
+
 func _layout_hand() -> void:
 	if _hand_row == null:
 		return
@@ -3553,8 +3576,7 @@ func _layout_hand() -> void:
 	# The scroll viewport's width is fixed by the HUD, so it cannot run away.
 	var scroller := _hand_row.get_parent() as Control
 	var room: float = scroller.size.x if scroller != null else _hand_row.size.x
-	if room > 1.0 and step * float(n - 1) + w > room:
-		step = maxf((room - w) / maxf(float(n - 1), 1.0), w * 0.30)
+	step = hand_fan_step(n, w, room, step)
 	var mid := (float(n) - 1.0) * 0.5
 	# Desktop tucks DEEP - at rest you see the name and the art and the rules
 	# are below the screen edge, which is precisely the Slay the Spire hand:
@@ -3572,7 +3594,7 @@ func _layout_hand() -> void:
 		var raised := card_is_raised(c, _hand_hover, _timing_card)
 		var lift: float = FAN_RISE if raised else 0.0
 		c.position = Vector2(
-			room * 0.5 - w * 0.5 + off * step,
+			hand_card_x(i, n, w, step, room),
 			tuck + absf(off) * FAN_DROP - lift)
 		# A hovered card straightens up as it rises, so the face you are reading
 		# is square to you rather than tilted.

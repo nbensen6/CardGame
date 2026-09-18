@@ -1884,6 +1884,18 @@ func _init() -> void:
 	_test_backlog86_character_name_and_portrait_agree_with_list_characters()
 	_test_backlog86_character_name_falls_back_to_the_id_for_an_unknown_character()
 	_test_backlog86_character_portrait_falls_back_to_empty_for_an_unknown_character()
+	# backlog #86 duty 3 (fiftieth pass): hand_fan_step/hand_card_x, lifted out
+	# of _layout_hand -- the hand-of-cards layout that put a real hand in the
+	# bottom-right corner over the End Turn button (Nick, 2026-09-08, see the
+	# doc comments on both functions). The fix landed but nothing ever proved
+	# the room-centring or the overflow squeeze; see the tests themselves.
+	_test_backlog86_hand_fan_step_keeps_the_natural_overlap_when_the_fan_fits()
+	_test_backlog86_hand_fan_step_squeezes_a_fan_too_wide_for_the_room()
+	_test_backlog86_hand_fan_step_floors_the_squeeze_at_30pct_of_card_width()
+	_test_backlog86_hand_fan_step_never_squeezes_against_an_unmeasured_room()
+	_test_backlog86_hand_card_x_centres_the_whole_fan_on_room_not_content()
+	_test_backlog86_hand_card_x_is_symmetric_around_the_middle_card()
+	_test_backlog86_hand_card_x_spans_exactly_the_room_once_squeezed()
 	# backlog #86 duty 2: a real, currently-shipping two-copies-of-one-truth
 	# bug found reading combat_3d's ledge-ring code against boss.gd's real
 	# safety data end to end. See safe_ledge_marks' doc comment for the
@@ -12765,6 +12777,97 @@ func _test_backlog86_character_name_falls_back_to_the_id_for_an_unknown_characte
 func _test_backlog86_character_portrait_falls_back_to_empty_for_an_unknown_character() -> void:
 	_expect(Content.character_portrait("no_such_character") == "",
 		"an unrecognised character id has no portrait to show, not a broken path")
+
+
+## backlog #86 duty 3 (fiftieth pass): Combat3D.hand_fan_step/hand_card_x,
+## lifted out of _layout_hand -- the hand-of-cards layout Nick actually hit a
+## real bug in (2026-09-08: ending a turn walked the hand into the
+## bottom-right corner, over the End Turn button). Six of _layout_hand's own
+## static siblings on this file (card_is_raised, render_hand_status, etc)
+## already had coverage; the geometry that put the fan on screen at all did
+## not. See the doc comments on both functions in combat_3d.gd.
+func _test_backlog86_hand_fan_step_keeps_the_natural_overlap_when_the_fan_fits() -> void:
+	# 4 cards at width 100, base step 60: span = 60*3+100 = 280, well inside a
+	# 900-wide room -- nothing to squeeze.
+	var step := Combat3D.hand_fan_step(4, 100.0, 900.0, 60.0)
+	_expect(is_equal_approx(step, 60.0),
+		"a fan that already fits its room keeps the designed overlap untouched")
+
+
+func _test_backlog86_hand_fan_step_squeezes_a_fan_too_wide_for_the_room() -> void:
+	# 6 cards at width 100, base step 90: natural span = 90*5+100 = 550, past a
+	# 400-wide room. Squeezed step should fit exactly: (400-100)/5 = 60.
+	var step := Combat3D.hand_fan_step(6, 100.0, 400.0, 90.0)
+	_expect(is_equal_approx(step, 60.0),
+		"an overflowing fan squeezes to exactly the step that fits the room")
+
+
+func _test_backlog86_hand_fan_step_floors_the_squeeze_at_30pct_of_card_width() -> void:
+	# A huge hand in a tiny room would otherwise squeeze to zero or negative --
+	# the floor keeps every card at least partly visible instead of stacking
+	# them exactly on top of each other.
+	var step := Combat3D.hand_fan_step(20, 100.0, 50.0, 90.0)
+	_expect(is_equal_approx(step, 30.0),
+		"the squeeze never goes below 30% of a card's own width, however many cards are in hand")
+
+
+func _test_backlog86_hand_fan_step_never_squeezes_against_an_unmeasured_room() -> void:
+	# room <= 1.0 is the ScrollContainer's own first frame, before the HUD has
+	# ever assigned it a real size -- squeezing against that would floor every
+	# hand's spacing before the true room is known.
+	var step := Combat3D.hand_fan_step(6, 100.0, 0.0, 90.0)
+	_expect(is_equal_approx(step, 90.0),
+		"an unmeasured (zero) room leaves the natural overlap alone rather than squeezing blind")
+
+
+## Nick, 2026-09-08: centring the fan on `_hand_row.size.x` (the CONTENT,
+## which grows every time the hand does) instead of the ScrollContainer's own
+## fixed `room` walked the fan further right on every subsequent layout,
+## because a wider content width feeds back into a wider centre next call.
+## Centring on `room` breaks that feedback loop outright: the centre depends
+## only on the fixed viewport, never on how many cards are in hand.
+func _test_backlog86_hand_card_x_centres_the_whole_fan_on_room_not_content() -> void:
+	var room := 800.0
+	var w := 100.0
+	var step := 60.0
+	# A 3-card hand and a 7-card hand must still average out to the same
+	# centre -- the CONTENT width differs wildly between them, `room` does not.
+	var small_first: float = Combat3D.hand_card_x(0, 3, w, step, room)
+	var small_last: float = Combat3D.hand_card_x(2, 3, w, step, room)
+	var big_first: float = Combat3D.hand_card_x(0, 7, w, step, room)
+	var big_last: float = Combat3D.hand_card_x(6, 7, w, step, room)
+	var small_centre := (small_first + small_last) * 0.5
+	var big_centre := (big_first + big_last) * 0.5
+	_expect(is_equal_approx(small_centre, big_centre) and is_equal_approx(small_centre, room * 0.5 - w * 0.5),
+		"the fan's centre tracks the fixed room, not how many cards happen to be in hand")
+
+
+func _test_backlog86_hand_card_x_is_symmetric_around_the_middle_card() -> void:
+	var room := 800.0
+	var w := 100.0
+	var step := 60.0
+	var mid_x: float = Combat3D.hand_card_x(2, 5, w, step, room)
+	var left_x: float = Combat3D.hand_card_x(0, 5, w, step, room)
+	var right_x: float = Combat3D.hand_card_x(4, 5, w, step, room)
+	_expect(is_equal_approx(mid_x, room * 0.5 - w * 0.5)
+			and is_equal_approx(mid_x - left_x, right_x - mid_x),
+		"the middle card of an odd-sized hand sits dead centre, with its neighbours equidistant on either side")
+
+
+func _test_backlog86_hand_card_x_spans_exactly_the_room_once_squeezed() -> void:
+	# The same overflow case as the squeeze test above: once hand_fan_step has
+	# picked a step that makes the fan fit, the two extreme cards' centres
+	# plus half a card width on each side should land exactly on the room's
+	# own edges -- proving the two functions agree with each other, not just
+	# each in isolation.
+	var n := 6
+	var w := 100.0
+	var room := 400.0
+	var step: float = Combat3D.hand_fan_step(n, w, room, 90.0)
+	var left_edge: float = Combat3D.hand_card_x(0, n, w, step, room)
+	var right_edge: float = Combat3D.hand_card_x(n - 1, n, w, step, room) + w
+	_expect(is_equal_approx(left_edge, 0.0) and is_equal_approx(right_edge, room),
+		"a squeezed fan's outermost card edges land exactly on the room it was squeezed to fit")
 
 
 func _test_intangible_buffer_plated_armour_persist_through_save() -> void:
