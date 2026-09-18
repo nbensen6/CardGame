@@ -277,6 +277,19 @@ var _climb_points: Dictionary = {}
 ## model actually builds, not just a spot on the skin. Hunters JUMP between
 ## these; the rest are places they can be, not places they land.
 var _ledges: Dictionary = {}
+## The Heights /core actually treats as safe rest stops (Boss.ledges, the same
+## data is_secure()/next_safe_height() read) — NOT the same set as `_ledges`
+## above, which is purely "does the model have a shelf here" with zero
+## connection to the fight's own safety data. #86 duty 2 (two copies of one
+## truth): a beast's Blender export can name a "ledge_N" empty at a Height
+## bosses.json never lists as safe (verified directly against shipped .glb
+## node names — mire_snapper's model carries ledge_0/1/2/3/5/6 while its
+## `ledges` array is only `[3]`; husk_beetle, gale_serpent and stone_warden
+## all diverge the same way), and `_ledges` used to be the ONLY thing deciding
+## which Heights got a glowing "safe" ring drawn on the beast. A hunter could
+## see a lit ring at a Height where is_secure() returns false and their grip
+## timer keeps draining regardless. Set from the snapshot each `_refresh()`.
+var _safe_ledges: Array = []
 ## One ring per LEDGE, drawn on the beast where a hunter can actually land.
 ##
 ## Nick, 2026-09-08: "having clear jump points for characters to jump to." The
@@ -1187,6 +1200,8 @@ func _refresh() -> void:
 	_hp_bar.max_value = int(boss["max_hp"])
 	_hp_bar.value = int(boss["hp"])
 	_set_intent(boss, s)
+	# Before _show_beast, which needs it ready for _build_ledge_marks.
+	_safe_ledges = gauge_ledge_heights(boss.get("ledges", []))
 	_show_beast(String(boss.get("id", "")), String(boss["name"]),
 		int(boss.get("weak_point_height", 0)))
 	_place_sigil(s)
@@ -2695,6 +2710,13 @@ func _place_hunters(s: Dictionary) -> void:
 		var kind := hunter_move_kind(placed, was, foot, moved)
 		h["home"] = pos
 		h["foot"] = foot
+		# The SAME Height the grip label already reaches for (/core's
+		# next_safe_height(), relayed here as p["next_safe"] — see
+		# game_host.gd's snapshot build). _refresh_ledge_marks used to
+		# rederive "the next rung" itself from the model's own ledge_N
+		# markers; storing the real value here lets it read one number
+		# instead of recomputing a second, disagreeing one. #86 duty 2.
+		h["next_safe"] = int(p.get("next_safe", foot))
 		h["placed"] = true
 		if kind == "climb":
 			# Climb VIA the ledges in between, not through the body. Going from
@@ -2814,6 +2836,28 @@ func _hunter_pip(slot: int) -> Node3D:
 	return pip
 
 
+## Which climb-point Heights get a safety ring: the real safe holds
+## (`_safe_ledges`, straight off `boss.ledges` — the same data
+## is_secure()/next_safe_height() use) intersected with the Heights the
+## model actually has physical footing for (`_climb_points`). #86 duty 2 (two
+## copies of one truth) — before this, the ring set came ONLY from the
+## model's own "ledge_N" node names, with no connection to which Heights
+## combat.gd treats as safe; see the doc comment on `_safe_ledges` for the
+## divergence confirmed against shipped beasts. Sorted so callers get a
+## stable, climb-order list.
+static func safe_ledge_marks(safe_heights: Array, climb_point_heights: Array) -> Array:
+	var climbable := {}
+	for h in climb_point_heights:
+		climbable[int(h)] = true
+	var out: Array = []
+	for h in safe_heights:
+		var height := int(h)
+		if climbable.has(height) and height not in out:
+			out.append(height)
+	out.sort()
+	return out
+
+
 ## Draw a ring on every ledge a hunter could stand on.
 ##
 ## Placed with `_stand_on_model`, the same call that puts a hunter there, so the
@@ -2827,12 +2871,10 @@ func _build_ledge_marks() -> void:
 	for m in _ledge_marks.values():
 		(m as Node3D).queue_free()
 	_ledge_marks.clear()
-	if _beast == null or _ledges.is_empty():
+	if _beast == null:
 		return
-	for h in _ledges.keys():
+	for h in safe_ledge_marks(_safe_ledges, _climb_points.keys()):
 		var height := int(h)
-		if not _climb_points.has(height):
-			continue
 		var ring := MeshInstance3D.new()
 		var torus := TorusMesh.new()
 		# Sized off the hunter, not the beast: it marks a place a PERSON stands,
@@ -2875,14 +2917,17 @@ func _refresh_ledge_marks() -> void:
 	if _ledge_marks.is_empty():
 		return
 	var foot := -1
+	# The exact Height the grip label already says to reach for
+	# (/core's next_safe_height(), relayed as h["next_safe"] in
+	# _place_hunters) — not a second search over `_ledges` for "the nearest
+	# model-marked ledge above me", which used to disagree with the label
+	# whenever a beast's ledge_N node names didn't match its real safe
+	# heights. #86 duty 2.
+	var next := -1
 	if _active_slot >= 0 and _active_slot < _hunters.size():
-		foot = int((_hunters[_active_slot] as Dictionary).get("foot", 0))
-	var rungs := _climb_rungs()
-	var next := 9999
-	for r in rungs:
-		var rh := int(r)
-		if rh > foot and rh < next and _ledges.has(rh):
-			next = rh
+		var active: Dictionary = _hunters[_active_slot]
+		foot = int(active.get("foot", 0))
+		next = int(active.get("next_safe", foot))
 	for h in _ledge_marks.keys():
 		var height := int(h)
 		var ring: MeshInstance3D = _ledge_marks[height]

@@ -1861,6 +1861,16 @@ func _init() -> void:
 	_test_backlog86_character_name_and_portrait_agree_with_list_characters()
 	_test_backlog86_character_name_falls_back_to_the_id_for_an_unknown_character()
 	_test_backlog86_character_portrait_falls_back_to_empty_for_an_unknown_character()
+	# backlog #86 duty 2: a real, currently-shipping two-copies-of-one-truth
+	# bug found reading combat_3d's ledge-ring code against boss.gd's real
+	# safety data end to end. See safe_ledge_marks' doc comment for the
+	# divergence confirmed against shipped .glb node names.
+	_test_backlog86_safe_ledge_marks_keeps_only_heights_both_safe_and_climbable()
+	_test_backlog86_safe_ledge_marks_drops_a_climbable_height_the_boss_never_lists_as_safe()
+	_test_backlog86_safe_ledge_marks_drops_a_safe_height_with_no_physical_footing()
+	_test_backlog86_safe_ledge_marks_is_empty_with_no_safe_heights()
+	_test_backlog86_safe_ledge_marks_is_empty_with_no_climb_points()
+	_test_backlog86_safe_ledge_marks_sorts_and_dedupes_regardless_of_input_order()
 
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
@@ -17205,6 +17215,47 @@ func _test_backlog86_gauge_ledge_heights_recognizes_named_holds() -> void:
 	var named := [3, {"height": 6, "safe": false, "exposed_to": ["slam"]}]
 	_expect(Combat3D.gauge_ledge_heights(named) == [3, 6],
 		"a Dictionary-shaped named hold still counts as a ledge Height on the gauge, not silently dropped")
+
+
+## backlog #86 duty 2 — a real, currently-shipping bug: `_build_ledge_marks`
+## used to draw a glowing "safe" ring at every Height the beast MODEL names a
+## "ledge_N" node for (`_ledges`), with zero connection to the Heights
+## boss.gd/`is_secure()` actually treat as safe rest stops. Checked directly
+## against shipped content: mire_snapper's .glb carries ledge_0/1/2/3/5/6 but
+## its `bosses.json` `ledges` array is only `[3]` — every other ring drawn was
+## a spot where a hunter's real-time grip timer keeps draining even while the
+## ring told them it was safe to let go. safe_ledge_marks is the fix, the
+## intersection of the two sets rather than either one alone.
+func _test_backlog86_safe_ledge_marks_keeps_only_heights_both_safe_and_climbable() -> void:
+	_expect(Combat3D.safe_ledge_marks([3], [0, 1, 2, 3, 5, 6]) == [3],
+		"a Height that is both a real safe hold AND a physical anchor gets a ring")
+
+
+func _test_backlog86_safe_ledge_marks_drops_a_climbable_height_the_boss_never_lists_as_safe() -> void:
+	# mire_snapper's own numbers: the model's ledge_1 has physical footing but
+	# is not in boss.ledges, so it must not get a ring at all.
+	_expect(1 not in Combat3D.safe_ledge_marks([3], [0, 1, 2, 3, 5, 6]),
+		"a model-named ledge with no matching safe-hold data draws no ring — this is the bug itself")
+
+
+func _test_backlog86_safe_ledge_marks_drops_a_safe_height_with_no_physical_footing() -> void:
+	_expect(Combat3D.safe_ledge_marks([3, 9], [0, 3]) == [3],
+		"a safe Height the model has no anchor for cannot be stood on, so it draws no floating ring")
+
+
+func _test_backlog86_safe_ledge_marks_is_empty_with_no_safe_heights() -> void:
+	_expect(Combat3D.safe_ledge_marks([], [0, 3, 6]) == [],
+		"no safe holds means no rings, however many climb anchors the model has")
+
+
+func _test_backlog86_safe_ledge_marks_is_empty_with_no_climb_points() -> void:
+	_expect(Combat3D.safe_ledge_marks([3, 6], []) == [],
+		"a beast with no anchors at all (old export) draws no rings rather than crashing")
+
+
+func _test_backlog86_safe_ledge_marks_sorts_and_dedupes_regardless_of_input_order() -> void:
+	_expect(Combat3D.safe_ledge_marks([6, 3, 3], [6, 0, 3]) == [3, 6],
+		"the result is sorted low to high with no duplicate Height, regardless of how the data arrived")
 
 
 ## backlog #86 duty 2 — a real bug in `_place_hunters`'s `elif moved:` branch

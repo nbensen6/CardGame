@@ -2846,6 +2846,39 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-18 — #86 duty 2: the beast's glowing "safe ledge" ring drew from the wrong data entirely — the model's own `ledge_N` node names, with zero connection to which Heights `boss.gd`/`is_secure()` actually treat as safe.** Last
+  commit (`fbf8b3b`) was duty 3, so this run took duty 2. Found reading
+  `combat_3d.gd`'s climb/ledge code end to end against `boss.gd`'s real safety
+  data, the "two copies of one truth" family duty 2 hunts for.
+  `_build_ledge_marks`/`_refresh_ledge_marks` decided which Heights got a ring
+  and which one was highlighted "next" purely from `_ledges` — populated in
+  `_gather_climb` from any child node named `ledge_N` in the beast's own glTF
+  export — while `Combat.is_secure()`/`next_safe_height()` (and the grip
+  label's "reach Height N" text, and the 2D gauge via `gauge_ledge_heights`)
+  all read the real safety data in `boss.ledges` (`bosses.json`) instead.
+  Verified the two sets actually diverge in shipped content, not just in
+  theory, by parsing the real glTF node names out of the checked-in `.glb`
+  files against `bosses.json`: `mire_snapper` ships `ledge_0/1/2/3/5/6` but
+  its `ledges` array is only `[3]`; `husk_beetle` `[2,3]` vs `0..5`;
+  `gale_serpent` `[3,6]` vs `0..8`; `stone_warden` `[2,4]` vs `0..6` — every
+  beast sampled diverged. A hunter clinging on any of those extra rings would
+  see a lit "safe" marker and stop there while `is_secure()` still says no and
+  the real-time grip timer keeps draining underneath them. Fixed by adding
+  `_safe_ledges` (the real heights, read off the snapshot the same way the
+  gauge already does) and a new pure `safe_ledge_marks(safe_heights,
+  climb_point_heights)` — the intersection of "real safe hold" and "model has
+  physical footing here" — so a ring only ever draws where both are true.
+  Also fixed the same bug's sibling in `_refresh_ledge_marks`'s "next rung"
+  highlight, which used to re-search `_ledges` for its own answer instead of
+  reading the exact `next_safe` value the grip label already shows — stored
+  once per hunter in `_place_hunters` (`h["next_safe"]`) so both now read the
+  one number. Six new tests
+  (`_test_backlog86_safe_ledge_marks_*`) pin the intersection rule, including
+  the mire_snapper numbers directly. `_route_between`'s own use of `_ledges`
+  (physical landing spots mid-climb, a different and still-correct concept)
+  was deliberately left untouched. Fresh `--import`, headless, Godot
+  4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED (2033 passed, 0 failed).
+
 - **2026-09-18 — #86 duty 3: proved a real, previously-undocumented trap in `Run.pick_event()`'s "then" chain — a choice that pairs `"then"` with its own `"reward"` effect silently loses the reward, forever, with no error.** Last
   commit (`94cd6c0`) was duty 2, so this run took duty 3. `pick_event()`
   (run.gd:687) takes the `then` branch and returns the instant `then` is
