@@ -233,6 +233,7 @@ func _init() -> void:
 	_test_backlog86_archetype_tags_recognise_frail_cards()
 	_test_backlog86_archetype_tags_recognise_topdeck_shuffle_in_and_tutor_as_reach()
 	_test_backlog86_archetype_tags_recognise_scry_cards()
+	_test_backlog86_archetype_tags_recognise_draw_cards()
 	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
 	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
@@ -6283,6 +6284,36 @@ func _test_backlog86_archetype_tags_recognise_scry_cards() -> void:
 	_expect(leaned_weight2 > flat_weight2,
 		"Peer Ahead's reward weight rises for a Scry-heavy deck now that it carries the scry tag [flat=%s leaned=%s]"
 			% [flat_weight2, leaned_weight2])
+
+
+## Backlog #86 duty 2: the identical "no tag for this mechanical family at
+## all" gap the reach and scry fixes above closed — draw (extra cards drawn)
+## never got a branch either. Take Aim (cards.json: draw 2, nothing else) and
+## Fading Insight (draw 2, ethereal) are two real, shipped cards that rolled
+## through reward_pool() with an empty tag array, so a hunter who'd already
+## drafted one got no reward-lean (backlog #72) toward drawing the other.
+func _test_backlog86_archetype_tags_recognise_draw_cards() -> void:
+	var take_aim_tags: Array = Content.card_tags("take_aim")
+	_expect(take_aim_tags.has("draw") and take_aim_tags.size() == 1,
+		"Take Aim (draw only) is tagged draw and nothing else [tags=%s]" % [take_aim_tags])
+
+	var fading_insight_tags: Array = Content.card_tags("fading_insight")
+	_expect(fading_insight_tags.has("draw"),
+		"Fading Insight (draw, ethereal) is tagged draw [tags=%s]" % [fading_insight_tags])
+
+	# reward-lean end to end, same shape as the reach/scry checks above: a deck
+	# already carrying Draw gives Take Aim a real lean bonus now that it is
+	# tagged, where before its empty tag array meant reward_weight()'s
+	# tag_bonus loop never ran no matter how many Draw cards were already in
+	# the deck.
+	var run := _map_run()
+	var draw_deck_tags: Dictionary = run._tag_counts(_deck_of(Callable(Content, "make_card").bind("take_aim"), 10))
+	var take_aim_rarity: String = Content.card_rarity("take_aim")
+	var flat_weight3: int = Run.reward_weight(take_aim_rarity, take_aim_tags, {})
+	var leaned_weight3: int = Run.reward_weight(take_aim_rarity, take_aim_tags, draw_deck_tags)
+	_expect(leaned_weight3 > flat_weight3,
+		"Take Aim's reward weight rises for a Draw-heavy deck now that it carries the draw tag [flat=%s leaned=%s]"
+			% [flat_weight3, leaned_weight3])
 
 
 ## Backlog #72: a card reward roll should lean toward the archetype a hunter is

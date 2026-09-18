@@ -449,4 +449,12 @@ func archetype_tags() -> Array:
 	# fix (topdeck/shuffle_in/tutor) that this comment sits next to.
 	if scry > 0:
 		tags.append("scry")
+	# backlog #86 duty 2: the same "no tag for this mechanical family at all"
+	# gap the topdeck/shuffle_in/tutor ("reach") and scry fixes above closed —
+	# draw (extra cards drawn) was never given a branch here either. Take Aim
+	# (cards.json: draw 2, nothing else) and Fading Insight (draw 2, ethereal)
+	# are two real, shipped cards that rolled through reward_pool() with an
+	# empty tag array and no reward-lean (backlog #72) toward each other.
+	if draw > 0:
+		tags.append("draw")
 	return tags

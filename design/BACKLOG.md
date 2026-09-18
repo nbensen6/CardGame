@@ -2846,6 +2846,24 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-18 — #86 duty 2: `Card.archetype_tags()` had no branch for `draw` at all, the same "missing mechanical family" shape the reach/scry fixes already closed.** Last commit
+  (`adcc00c`) was duty 3, so this run's default was duty 2. Read `archetype_tags()`
+  end to end against every field `Card` declares (the same audit that already
+  found and fixed the topdeck/shuffle_in/tutor and scry gaps) and found one
+  more real field with no tag at all: `draw` (extra cards drawn). Confirmed
+  against `data/cards.json` — Take Aim (`draw: 2`, nothing else) and Fading
+  Insight (`draw: 2`, `ethereal`) are two real, shipped cards whose call to
+  `archetype_tags()` returned `[]`, so both rolled through `reward_pool()`
+  with zero reward-lean (backlog #72) toward each other, no matter how many
+  Draw cards were already in a hunter's deck. Added the missing
+  `if draw > 0: tags.append("draw")` branch and a regression test,
+  `_test_backlog86_archetype_tags_recognise_draw_cards`, in the same shape as
+  the existing reach/scry tests: pins Take Aim and Fading Insight's tags
+  directly, then proves the lean fires end to end through
+  `Run.reward_weight()` (flat=55, leaned=75 for a Take-Aim-heavy deck). Fresh
+  `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED.
+  Next #86 turn is duty 3.
+
 - **2026-09-18 — #86 duty 3: proved `RunSave.load_run()` actually refuses a save with no real version, not just a corrupt file.** Last commit
   (`a037117`) was duty 2, so this run's default was duty 3. `load_run()`'s own
   doc comment promises null for a save that is "genuinely unreadable", and
