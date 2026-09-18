@@ -346,26 +346,34 @@ func _place_hunters(s: Dictionary) -> void:
 ## Scale a model to a target world height, measured — see design/blender-pipeline.md.
 func _fit_height(node: Node3D, want: float, max_wide := 0.0) -> void:
 	var box := _bounds(node)
-	var k := want / maxf(box.size.y, 0.001)
-	# HEIGHT ALONE IS THE WRONG MEASURE FOR A SQUAT BODY.
-	#
-	# Nick, 2026-09-08: the Frog is still enormous on the character select. It is
-	# fitted to the same HUNTER_HEIGHT as everyone else and obeys it exactly —
-	# but a frog is 1.72 wide and 1.15 tall where the Vine-Weaver is 0.80 wide
-	# and 1.85 tall, so making them equally TALL makes the frog nearly three
-	# times as WIDE on screen.
-	#
-	# Worse, shortening the frog's model (2026-09-08, frog.py height 1.85 -> 1.15)
-	# made this screen worse rather than better: less height to reach the target
-	# means a bigger multiplier, so the width grew again. The model change was
-	# right for the fight and wrong here, because here nothing was clamping width.
-	#
-	# So take whichever limit binds first. Anything with a normal body plan is
-	# unaffected — their height is what binds, exactly as before.
+	node.scale = Vector3.ONE * fit_height_scale(box.size, want, max_wide)
+
+
+## The scale-selection rule inside _fit_height, pure (#86 duty 3): given a
+## model's own bounds size, the height it should reach, and an optional width
+## cap, which multiplier actually gets used.
+##
+## HEIGHT ALONE IS THE WRONG MEASURE FOR A SQUAT BODY.
+##
+## Nick, 2026-09-08: the Frog is still enormous on the character select. It is
+## fitted to the same HUNTER_HEIGHT as everyone else and obeys it exactly —
+## but a frog is 1.72 wide and 1.15 tall where the Vine-Weaver is 0.80 wide
+## and 1.85 tall, so making them equally TALL makes the frog nearly three
+## times as WIDE on screen.
+##
+## Worse, shortening the frog's model (2026-09-08, frog.py height 1.85 -> 1.15)
+## made this screen worse rather than better: less height to reach the target
+## means a bigger multiplier, so the width grew again. The model change was
+## right for the fight and wrong here, because here nothing was clamping width.
+##
+## So take whichever limit binds first. Anything with a normal body plan is
+## unaffected — their height is what binds, exactly as before.
+static func fit_height_scale(box_size: Vector3, want: float, max_wide: float) -> float:
+	var k := want / maxf(box_size.y, 0.001)
 	if max_wide > 0.0:
-		var wide := maxf(box.size.x, box.size.z)
+		var wide := maxf(box_size.x, box_size.z)
 		k = minf(k, max_wide / maxf(wide, 0.001))
-	node.scale = Vector3.ONE * k
+	return k
 
 
 ## Bounds of everything under `node`, in NODE'S OWN space.

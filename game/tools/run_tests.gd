@@ -946,6 +946,18 @@ func _init() -> void:
 	_test_backlog86_relative_xform_composes_a_parent_chains_local_transforms()
 	_test_backlog86_bounds_reads_a_mesh_child_offset_within_its_parents_space()
 	_test_backlog86_bounds_in_parent_lays_a_toppled_bodys_height_onto_depth()
+	# backlog #86 duty 3 (fifty-first pass): location_3d._fit_height sizes
+	# every hunter on character select/campfire and every felled beast on the
+	# reward screen -- and its own width-clamp rule (added 2026-09-08 to stop
+	# the Frog from dwarfing every other hunter on select) had never been
+	# proven once. Lifted the scale-selection arithmetic into a static
+	# fit_height_scale(box_size, want, max_wide), same shape as _bounds above,
+	# and given first coverage.
+	_test_backlog86_fit_height_scale_is_bound_by_height_alone_with_no_width_cap()
+	_test_backlog86_fit_height_scale_is_bound_by_height_for_a_normally_proportioned_body()
+	_test_backlog86_fit_height_scale_is_bound_by_width_for_a_squat_wide_body()
+	_test_backlog86_fit_height_scale_picks_the_wider_of_x_and_z_as_the_footprint()
+	_test_backlog86_fit_height_scale_never_divides_by_zero_on_a_degenerate_box()
 	# backlog #86 duty 3: location_3d._roster_card_width sizes every hunter card
 	# on the lobby/reward roster from the viewport width and the headcount --
 	# the exact math that decides whether a two-hunter party gets full-size
@@ -18751,6 +18763,58 @@ func _test_backlog86_bounds_in_parent_lays_a_toppled_bodys_height_onto_depth() -
 		"toppled onto its back, the old 3-unit HEIGHT now sprawls along Z and the new Y-extent is the old 1-unit depth, not still 3: got %s" % toppled.size)
 
 	node.free()
+
+
+## backlog #86 duty 3 (fifty-first pass): location_3d.fit_height_scale is the
+## scale-selection rule inside _fit_height -- lifted out the same way _bounds
+## and _roster_card_width_for were, so the width-clamp Nick asked for on
+## 2026-09-08 (the Frog dwarfing every hunter on character select, its own
+## comment names the bug) can finally be proven headless. Sized on real
+## numbers from that comment: HUNTER_HEIGHT ~= 1.85, the 0.9 width cap it's
+## called with, the Vine-Weaver's 0.80x1.85 body and the Frog's 1.72x1.15 one.
+func _test_backlog86_fit_height_scale_is_bound_by_height_alone_with_no_width_cap() -> void:
+	var k: float = Location3D.fit_height_scale(Vector3(1.0, 2.0, 1.0), 4.0, 0.0)
+	_expect(is_equal_approx(k, 2.0),
+		"with no width cap (max_wide 0.0) the multiplier is want/height alone, however wide the box is: got %s" % k)
+
+
+func _test_backlog86_fit_height_scale_is_bound_by_height_for_a_normally_proportioned_body() -> void:
+	# Vine-Weaver-shaped box: 0.80 wide, 1.85 tall. Fit to HUNTER_HEIGHT with the
+	# same 0.9 cap _fit_height is actually called with -- the cap has plenty of
+	# room, so height is still what binds, exactly as before the 2026-09-08 fix.
+	var k: float = Location3D.fit_height_scale(Vector3(0.80, 1.85, 0.80), 1.85, 1.85 * 0.9)
+	_expect(is_equal_approx(k, 1.0),
+		"a normally-proportioned body is unaffected by the width cap: got %s" % k)
+
+
+func _test_backlog86_fit_height_scale_is_bound_by_width_for_a_squat_wide_body() -> void:
+	# Frog-shaped box: 1.72 wide, 1.15 tall -- the exact case Nick reported.
+	# Scaling to height alone would give 1.85/1.15 ~= 1.609, three times as wide
+	# on screen as the Vine-Weaver; the cap must pull it down to width instead.
+	var height_only: float = 1.85 / 1.15
+	var k: float = Location3D.fit_height_scale(Vector3(1.72, 1.15, 1.72), 1.85, 1.85 * 0.9)
+	_expect(k < height_only,
+		"a squat wide body must be pulled below its height-only scale by the width cap: got %s, height-only would be %s" % [k, height_only])
+	_expect(is_equal_approx(k, (1.85 * 0.9) / 1.72),
+		"the squat body's scale is exactly max_wide/width, not some blend: got %s" % k)
+
+
+func _test_backlog86_fit_height_scale_picks_the_wider_of_x_and_z_as_the_footprint() -> void:
+	# A body deep in Z rather than wide in X (box.x=1, box.z=3) must still be
+	# clamped by its Z extent -- a footprint check that only looked at box.x
+	# would let this one through at full height-scale.
+	var k: float = Location3D.fit_height_scale(Vector3(1.0, 2.0, 3.0), 2.0, 1.0)
+	_expect(is_equal_approx(k, 1.0 / 3.0),
+		"the width cap must bind on whichever of X or Z is larger (here Z=3), not just X: got %s" % k)
+
+
+func _test_backlog86_fit_height_scale_never_divides_by_zero_on_a_degenerate_box() -> void:
+	# A model whose bounds haven't been measured yet (freshly instantiated,
+	# no mesh added) reports a zero-size box. Both the height and width legs
+	# guard their divisor the same way _bounds' own callers rely on.
+	var k: float = Location3D.fit_height_scale(Vector3.ZERO, 1.0, 0.5)
+	_expect(is_finite(k) and k > 0.0,
+		"a zero-size box must not produce inf/nan through a bare division: got %s" % k)
 
 
 ## backlog #86 duty 3: location_3d._roster_card_width_for is the clamp math

@@ -2846,6 +2846,26 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
+- **2026-09-18 (yet later) — #86 duty 3: `location_3d._fit_height`'s own width-clamp rule (the 2026-09-08 fix for the Frog dwarfing every other hunter on character select) had never been proven once.** Last
+  commit (`b651d42`, `archetype_tags()`) was duty 2, so this run's default was
+  duty 3. The climb-logic example duty 3's own text points at
+  (`combat_3d._route_between`/`_stand_on_model`/`_hop`) is already fully
+  covered — `route_between_rungs`, `foothold_anchor` and `hop_arc` all have
+  first-class tests from earlier passes — so this run swept the other view
+  files (`location_3d.gd`, `overworld_3d.gd`, `menu.gd`, `game_3d.gd`) for a
+  static/pure function with real failure modes and zero coverage instead of
+  re-treading ground already closed. `_fit_height` (sizes every hunter on
+  character select/campfire via `HUNTER_HEIGHT * 0.9` and every felled beast
+  on the reward screen) mutates `node.scale` directly, so its scale-selection
+  arithmetic was lifted into a static `fit_height_scale(box_size, want,
+  max_wide)`, same shape as the existing `_bounds`/`_roster_card_width_for`
+  lifts. Five tests: no-cap falls back to height alone, a normally-proportioned
+  body is still bound by height, a Frog-shaped box (1.72 wide, 1.15 tall) gets
+  pulled to `max_wide/width` instead of the ~1.6x height-only scale that
+  caused the original bug, the width check uses `max(box.x, box.z)` rather
+  than just X, and a zero-size box (a model whose bounds haven't been
+  measured yet) never divides into inf/nan. All pass; nothing else changed.
+
 - **2026-09-18 (later still) — #86 duty 2: `Card.would_upgrade_change_anything()` treated `rule_upgrade` being cleared to `{}` as an observable change, so a rule_upgrade recipe that sets every field to the value it already has still got flagged "worth sharpening."** Last
   commit (`ebe75b6`, hand-fan layout math) was duty 3, so this run's default
   was duty 2 — noting for the record that `ebe75b6` itself landed with no Log
