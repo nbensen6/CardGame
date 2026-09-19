@@ -1584,7 +1584,15 @@ func _resolve_prepared(pi: int) -> void:
 			ps.prepared = ""
 			if boss.weak_point_height > ps.foothold:  # never knock a hunter who climbed past the sigil back down
 				var foothold_before_jetpack := ps.foothold
-				ps.foothold = boss.weak_point_height
+				# backlog #86 duty 3: every other foothold-raising site in this
+				# file clamps to FOOTHOLD_MAX (ordinary climbs, ally_climb,
+				# poison_lift, sac_ally_grip, climb potions, even shift_sigil,
+				# the one place that WRITES weak_point_height). This was the
+				# one site that copied weak_point_height straight into foothold
+				# with no clamp, so a boss authored with a sigil above
+				# FOOTHOLD_MAX could punch a hunter through the engine's own
+				# height ceiling.
+				ps.foothold = mini(boss.weak_point_height, FOOTHOLD_MAX)
 				_log("%s's jetpack fires — rocketed to the weak point!" % ps.combatant.name)
 				_lift_roped_ally(pi, foothold_before_jetpack)  # #86 duty 2 — the jetpack ropes the ally too
 			else:

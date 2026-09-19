@@ -356,6 +356,7 @@ func _init() -> void:
 	# Goblin Engineer cards
 	_test_jetpack_prepares_climb()
 	_test_jetpack_never_lowers_a_higher_foothold()
+	_test_jetpack_never_exceeds_foothold_max()
 	_test_jetpack_fizzle_logs_why_nothing_happened()
 	_test_grappling_arm_pulls_ally()
 	_test_build_mech_scales()
@@ -7429,6 +7430,26 @@ func _test_jetpack_never_lowers_a_higher_foothold() -> void:
 	combat.end_turn(1)  # round turns over -> jetpack fires at next turn's start
 	_expect(combat.players[0].foothold == 10,
 		"Goblin Jetpack only raises foothold to the weak point, never knocks a higher climb back down")
+
+
+## backlog #86 duty 3: every other foothold-raising site in combat.gd clamps
+## to FOOTHOLD_MAX (ordinary climbs, ally_climb, poison_lift, sac_ally_grip,
+## climb potions — even shift_sigil, the one place that WRITES
+## weak_point_height, clamps it via clampi(..., 1, FOOTHOLD_MAX)). The jetpack
+## branch copies boss.weak_point_height straight into foothold with no clamp
+## at all, and weak_point_height is loaded unvalidated from bosses.json — so a
+## boss authored with a sigil above FOOTHOLD_MAX would let the jetpack punch a
+## hunter through the engine's own height ceiling.
+func _test_jetpack_never_exceeds_foothold_max() -> void:
+	var boss := Boss.new("Jet", 500)
+	boss.moves = [{"type": "block", "value": 0}]  # benign enemy turn
+	boss.weak_point_height = Combat.FOOTHOLD_MAX + 4  # above the engine's own ceiling
+	var combat := _new_combat([_deck_of(_jetpack, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.play_card(0, _first_playable(combat, 0))  # prime the jetpack (not immediate)
+	combat.end_turn(0)
+	combat.end_turn(1)  # round turns over -> jetpack fires at next turn's start
+	_expect(combat.players[0].foothold == Combat.FOOTHOLD_MAX,
+		"Goblin Jetpack clamps to FOOTHOLD_MAX same as every other foothold-raising site, even when the sigil is authored above it")
 
 
 ## backlog #86 duty 2: _resolve_prepared's jetpack branch cleared `prepared`

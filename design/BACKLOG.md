@@ -2846,7 +2846,31 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-18 (latest) — #86 duty 3: proved `combat_3d._merged_aabb`/`_all_meshes` — the world-space bounding-box merge every beast's `_beast_box` comes from — actually merges through each mesh's GLOBAL transform, not just its local one.** Last commit
+- **2026-09-19 (latest) — #86 duty 3: proved the jetpack's foothold jump respects `Combat.FOOTHOLD_MAX`, the same ceiling every other climb site in `combat.gd` already clamps to.** Last commit
+  (`740f003`, `GameHost._card_fx()` dropping a card's own `condition`/
+  `condition_bonus`) was duty 2, so this run took duty 3. Nick's own example
+  for this duty was the hunters' jump/climb logic, so an Explore pass swept
+  every foothold-raising call site in `combat.gd` for the one that skips the
+  pattern the rest share: ordinary climbs, `ally_climb`, `poison_lift`,
+  `sac_ally_grip`, climb potions, and even `shift_sigil` (the one place that
+  *writes* `weak_point_height`) all clamp the result to `FOOTHOLD_MAX` via
+  `mini(...)`/`clampi(...)`. `_resolve_prepared`'s jetpack branch
+  (`combat.gd:1587`) was the one exception — it copied `boss.weak_point_height`
+  straight into `foothold` with no clamp, and `weak_point_height` loads
+  unvalidated from `bosses.json`, so a boss authored with a sigil above 16
+  could have let the jetpack punch a hunter through the engine's own height
+  ceiling. No shipped boss currently has one (all fourteen sit at or under
+  the existing content), so this was latent, not a live bug in any real
+  fight — but it's exactly the "code's own comment already flags this as
+  reachable in principle" shape duty 2 hunts for, just caught from the other
+  direction. Wrote `_test_jetpack_never_exceeds_foothold_max` first (sets
+  `weak_point_height` to `FOOTHOLD_MAX + 4`, fires the jetpack, asserts
+  `foothold == FOOTHOLD_MAX`), watched it fail against the unclamped line,
+  then added `mini(boss.weak_point_height, FOOTHOLD_MAX)` at the one call
+  site. Full suite green (`ALL TESTS PASSED`) after the fix. Nothing else
+  touched.
+
+- **2026-09-18 — #86 duty 3: proved `combat_3d._merged_aabb`/`_all_meshes` — the world-space bounding-box merge every beast's `_beast_box` comes from — actually merges through each mesh's GLOBAL transform, not just its local one.** Last commit
   (`40f8481`, `build_boss_adds()`'s missing `hurt_pct`/`hurt_moves`) was duty 2,
   so this run took duty 3. `_beast_box` is read everywhere in `combat_3d.gd`:
   hunter side-offsets, the sigil's position and scale, the camera framing
