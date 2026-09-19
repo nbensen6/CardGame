@@ -729,6 +729,10 @@ func _init() -> void:
 	_test_backlog86_coop_cannot_pick_the_same_character_twice()
 	_test_backlog86_a_lobby_drop_frees_the_character_they_had_claimed()
 	_test_backlog86_coop_deselecting_a_character_keeps_the_lobby_waiting()
+	# backlog #86 duty 3: the lobby-display list itself, never read by any prior
+	# test -- see the doc comment above the functions under test.
+	_test_backlog86_solo_selections_reports_name_and_pick_by_slot()
+	_test_backlog86_coop_selections_reflect_peer_order_and_a_deselect()
 	_test_session_shared_state_exposes_the_seed()
 	_test_backlog86_game_client_drops_a_snapshot_addressed_to_another_peer()
 	# backlog #45: prove the new mechanics cross the client/server boundary
@@ -15985,6 +15989,58 @@ func _test_backlog86_coop_deselecting_a_character_keeps_the_lobby_waiting() -> v
 		"the run must not start while a peer's own selection is empty")
 	c0.select_character("frog")  # peer 10 commits to a real character
 	_expect(host._run != null, "the run starts once every peer holds a real pick")
+
+
+## backlog #86 duty 3: _selections()/_solo_selections() (game_host.gd) are the
+## lobby-display list every client reads to show "Frog -- picked" per hunter --
+## the doc comment above them promises name + whether picked, IN SLOT ORDER.
+## Nothing in this file ever read their output before: every prior lobby test
+## above asserts on host._run or client.private["selected"] instead, so the
+## start-gate has been proven correct while the thing a lobby screen would
+## actually render was never checked at all. Also proves the coop-deselect fix
+## two tests up (_test_backlog86_coop_deselecting_a_character_keeps_the_lobby_waiting)
+## reverts the DISPLAY, not just the start-gate -- the historical bug it fixed
+## was exactly two copies of one truth disagreeing.
+func _test_backlog86_solo_selections_reports_name_and_pick_by_slot() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, true)  # solo
+	_kept.append(host)
+	var c := GameClient.new(t, 10)
+	c.join()
+	_expect(host._solo_selections() == [{"name": "", "picked": false}, {"name": "", "picked": false}],
+		"a fresh solo lobby shows both slots blank and unpicked")
+
+	c.select_character("frog", 0)
+	_expect(host._solo_selections() == [{"name": "The Frog", "picked": true}, {"name": "", "picked": false}],
+		"slot 0's pick shows at index 0 -- by SLOT, not by pick order -- and slot 1 stays blank")
+
+	c.select_character("goblin_mech", 1)
+	_expect(host._solo_selections() == [{"name": "The Frog", "picked": true}, {"name": "The Goblin Engineer", "picked": true}],
+		"both slots report their real character name once both are picked")
+
+
+func _test_backlog86_coop_selections_reflect_peer_order_and_a_deselect() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 42, 2, false)  # co-op
+	_kept.append(host)
+	var c0 := GameClient.new(t, 10)
+	var c1 := GameClient.new(t, 20)
+	c0.join()
+	c1.join()
+	_expect(host._selections() == [{"name": "", "picked": false}, {"name": "", "picked": false}],
+		"a fresh co-op lobby shows both peers blank and unpicked")
+
+	c0.select_character("frog")  # peer 10 (slot 0) picks; peer 20 hasn't, so the run can't start yet
+	_expect(host._selections() == [{"name": "The Frog", "picked": true}, {"name": "", "picked": false}],
+		"peer 10's own pick shows at its own slot, and the other peer stays blank")
+
+	c0.select_character("")  # peer 10 changes their mind before peer 20 ever picks
+	_expect(host._selections() == [{"name": "", "picked": false}, {"name": "", "picked": false}],
+		"a deselect reverts that peer's own entry back to blank/unpicked, not stuck showing the old name")
+
+	c1.select_character("mountain_climbers")  # peer 20 (slot 1) picks; peer 10 is still blank
+	_expect(host._selections() == [{"name": "", "picked": false}, {"name": "The Mountain Climbers", "picked": true}],
+		"the list is ordered by _peers (join order/slot), not by who picked most recently")
 
 
 func _test_host_pauses_on_disconnect() -> void:
