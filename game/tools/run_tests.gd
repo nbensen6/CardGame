@@ -256,6 +256,7 @@ func _init() -> void:
 	_test_backlog86_archetype_tags_recognise_timed_and_multistrike_cards()
 	_test_backlog86_archetype_tags_recognise_prepare_cards_as_prime()
 	_test_backlog86_archetype_tags_recognise_retain_innate_ethereal_cheapen_and_meld_cards()
+	_test_backlog86_archetype_tags_recognise_x_cost_cards()
 	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
 	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
@@ -6403,8 +6404,12 @@ func _test_backlog86_archetype_tags_cover_every_branch_not_just_the_first_four()
 ## toward the one card that is nothing BUT Block.
 func _test_backlog86_archetype_tags_recognise_block_per_play_and_block_per_x_only_cards() -> void:
 	var x_brace_tags: Array = _x_brace().archetype_tags()
-	_expect(x_brace_tags.has("block") and x_brace_tags.size() == 1,
-		"X Brace (block_per_x 4, no flat block) is tagged block and nothing else [tags=%s]" % [x_brace_tags])
+	# X Brace's fixture also carries cost -1 (an X-cost card, backlog #29), so
+	# since the x_cost fix below it now earns both tags, not "block" alone --
+	# updated here rather than left asserting a tag count the x_cost fix
+	# deliberately grew.
+	_expect(x_brace_tags.has("block") and x_brace_tags.has("x_cost") and x_brace_tags.size() == 2,
+		"X Brace (block_per_x 4, cost -1, no flat block) is tagged block and x_cost, nothing else [tags=%s]" % [x_brace_tags])
 
 	var play_only := Card.new()
 	play_only.block_per_play = 3
@@ -7032,6 +7037,63 @@ func _test_backlog86_archetype_tags_recognise_retain_innate_ethereal_cheapen_and
 	_expect(leaned_weight9 > flat_weight9,
 		"an innate-only card's reward weight rises for an innate-heavy deck now that it carries the innate tag [flat=%s leaned=%s]"
 			% [flat_weight9, leaned_weight9])
+
+
+## Backlog #86 duty 2: the same "no tag for this mechanical family at all" gap
+## the reach/scry/draw/build/cleave/taunt/timed/multistrike/prime/retain-
+## innate-ethereal-cheapen-meld fixes above closed — X-cost cards (backlog
+## #29: `cost == -1`, `damage_per_x`, `block_per_x`) were never given a branch
+## either, even though GameHost._keywords_of() already groups them under their
+## own "x_cost" keyword id for the tap-to-inspect panel. No shipped card uses
+## this yet — X Strike and X Brace exist only as run_tests.gd fixtures
+## (`_x_strike()`, `_x_brace()`) — so unlike the reach/scry/etc fixes this one
+## has no real card to point at, but the same "comment promised coverage that
+## was never wired in" drift applies, and the day a shipped X-cost card lands
+## it would otherwise roll through reward_pool() with no reward-lean (backlog
+## #72) toward drawing another, unlike every other mechanical family.
+func _test_backlog86_archetype_tags_recognise_x_cost_cards() -> void:
+	var x_cost_only := Card.new()
+	x_cost_only.cost = -1
+	var x_cost_only_tags: Array = x_cost_only.archetype_tags()
+	_expect(x_cost_only_tags.has("x_cost") and x_cost_only_tags.size() == 1,
+		"a bare card with only cost -1 set is tagged x_cost and nothing else [tags=%s]" % [x_cost_only_tags])
+
+	# damage_per_x/block_per_x alone (cost left at the Card.new() default of 0)
+	# must also earn the tag -- the keyword id keys off any of the three
+	# fields, not `cost == -1` specifically.
+	var damage_per_x_only := Card.new()
+	damage_per_x_only.damage_per_x = 3
+	var damage_per_x_only_tags: Array = damage_per_x_only.archetype_tags()
+	_expect(damage_per_x_only_tags.has("x_cost") and damage_per_x_only_tags.size() == 1,
+		"a bare card with only damage_per_x set is tagged x_cost and nothing else [tags=%s]" % [damage_per_x_only_tags])
+
+	# X Strike (cost -1, damage_per_x, flat damage) and X Brace (cost -1,
+	# block_per_x) -- X Brace's block_per_x already earns "block" via that
+	# branch's own duty-2 fix, so this proves x_cost stacks alongside it
+	# rather than replacing it, the same "keeps both" shape the retain+block
+	# and ethereal+draw checks above guard against.
+	var x_strike_tags: Array = _x_strike().archetype_tags()
+	_expect(x_strike_tags.has("x_cost") and x_strike_tags.size() == 1,
+		"X Strike (cost -1 and damage_per_x, plain damage) is tagged x_cost [tags=%s]" % [x_strike_tags])
+	var x_brace_tags: Array = _x_brace().archetype_tags()
+	_expect(x_brace_tags.has("x_cost") and x_brace_tags.has("block"),
+		"X Brace (cost -1 and block_per_x) keeps both x_cost and block [tags=%s]" % [x_brace_tags])
+
+	# reward-lean end to end, same shape as the reach/scry/draw/build/cleave/
+	# taunt/timed/prime/retain checks above.
+	var x_cost_deck: Array = []
+	for _i in range(10):
+		var c := Card.new()
+		c.cost = -1
+		c.damage_per_x = 3
+		x_cost_deck.append(c)
+	var run10 := _map_run()
+	var x_cost_deck_tags: Dictionary = run10._tag_counts(x_cost_deck)
+	var flat_weight10: int = Run.reward_weight("rare", x_strike_tags, {})
+	var leaned_weight10: int = Run.reward_weight("rare", x_strike_tags, x_cost_deck_tags)
+	_expect(leaned_weight10 > flat_weight10,
+		"an x_cost card's reward weight rises for an x_cost-heavy deck now that it carries the x_cost tag [flat=%s leaned=%s]"
+			% [flat_weight10, leaned_weight10])
 
 
 ## Backlog #72: a card reward roll should lean toward the archetype a hunter is

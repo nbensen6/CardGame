@@ -593,4 +593,20 @@ func archetype_tags() -> Array:
 		tags.append("cheapen")
 	if meld:
 		tags.append("meld")
+	# backlog #86 duty 2: the same "no tag for this mechanical family at all"
+	# gap the reach/scry/draw/build/cleave/taunt/timed/multistrike/prime/
+	# retain-innate-ethereal-cheapen-meld fixes above closed — X-cost cards
+	# (backlog #29: cost == -1, paying whatever energy is left, scaled by
+	# damage_per_x/block_per_x) were never given a branch here either, even
+	# though GameHost._keywords_of() already groups them under their own
+	# "x_cost" keyword id for the tap-to-inspect panel. No shipped card uses
+	# damage_per_x or block_per_x yet (X Strike/X Brace exist only as
+	# run_tests.gd fixtures, `_x_strike()`/`_x_brace()`), so this had zero
+	# live impact today — same shape as the "heal" gap two duty-2 rounds ago —
+	# but the comment promising coverage that was never wired in is exactly
+	# the drift this duty exists to catch, and the day an X-cost card ships
+	# it would roll through reward_pool() with no reward-lean (backlog #72)
+	# toward drawing another, unlike every other mechanical family in the game.
+	if cost == -1 or damage_per_x > 0 or block_per_x > 0:
+		tags.append("x_cost")
 	return tags
