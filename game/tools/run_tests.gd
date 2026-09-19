@@ -253,6 +253,7 @@ func _init() -> void:
 	_test_backlog86_archetype_tags_recognise_create_cards_as_build()
 	_test_backlog86_archetype_tags_recognise_hits_all_enemies_as_cleave()
 	_test_backlog86_archetype_tags_recognise_taunt_cards()
+	_test_backlog86_archetype_tags_recognise_timed_and_multistrike_cards()
 	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
 	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
@@ -6820,6 +6821,69 @@ func _test_backlog86_archetype_tags_recognise_taunt_cards() -> void:
 	_expect(leaned_weight6 > flat_weight6,
 		"a Taunt-only card's reward weight rises for a Taunt-heavy deck now that it carries the taunt tag [flat=%s leaned=%s]"
 			% [flat_weight6, leaned_weight6])
+
+
+## #86 duty 2: same "no tag for this mechanical family at all" gap the reach/
+## scry/draw/build/cleave/taunt fixes above closed, for two more families --
+## `timed` (a well-timed play grants a bonus) and `hits > 1` (multi-strike).
+## Both already have their own keywords.json entry and their own
+## GameHost._keywords_of() branch for the tap-to-inspect panel, but
+## archetype_tags() never grew a matching branch for either. Every shipped
+## timed card with a climb/block/ally payoff picks up a tag from its OWN
+## timed_grip/timed_block/timed_ally_block field already, which is exactly
+## why this stayed hidden -- but Flick and Wrecking Ball (timed_damage only,
+## no other flagged field) and Flurry and Turret (hits: 2, no other flagged
+## field) are four real, shipped cards that rolled through reward_pool() with
+## an empty tag array: a hunter who'd drafted any of them got no reward-lean
+## (backlog #72) toward drawing another timed or multi-strike card.
+func _test_backlog86_archetype_tags_recognise_timed_and_multistrike_cards() -> void:
+	var timed_only := Card.new()
+	timed_only.timed = true
+	timed_only.timed_damage = 3
+	var timed_only_tags: Array = timed_only.archetype_tags()
+	_expect(timed_only_tags.has("timed") and timed_only_tags.size() == 1,
+		"a bare card with only timed/timed_damage set is tagged timed and nothing else [tags=%s]" % [timed_only_tags])
+
+	var multistrike_only := Card.new()
+	multistrike_only.hits = 2
+	var multistrike_only_tags: Array = multistrike_only.archetype_tags()
+	_expect(multistrike_only_tags.has("multistrike") and multistrike_only_tags.size() == 1,
+		"a bare card with only hits > 1 set is tagged multistrike and nothing else [tags=%s]" % [multistrike_only_tags])
+
+	# Real shipped cards, each isolating one field the way the taunt fix's
+	# draw_aggro/last_stand check does -- proving the fix reaches actual data,
+	# not just a synthetic card.
+	var flick_tags: Array = Content.card_tags("flick")
+	_expect(flick_tags.has("timed") and flick_tags.size() == 1,
+		"Flick (timed, timed_damage 3, nothing else) is tagged timed [tags=%s]" % [flick_tags])
+	var flurry_tags: Array = Content.card_tags("flurry")
+	_expect(flurry_tags.has("multistrike") and flurry_tags.size() == 1,
+		"Flurry (hits 2, nothing else) is tagged multistrike [tags=%s]" % [flurry_tags])
+
+	# A card carrying both a neighbouring OR-term AND the new field must keep
+	# both -- the "masked by a neighbouring branch" shape the taunt fix's
+	# Last Stand check already guards against, here for timed+climb together.
+	var grapple_tags: Array = Content.card_tags("grapple")
+	_expect(grapple_tags.has("timed") and grapple_tags.has("climb"),
+		"Grapple (timed_grip AND grip) keeps both timed and climb [tags=%s]" % [grapple_tags])
+
+	# reward-lean end to end, same shape as the reach/scry/draw/build/cleave/
+	# taunt checks above -- isolated on the synthetic timed-only card so the
+	# real shipped cards' other tags can't take credit for a lean that only
+	# this fix earns.
+	var timed_deck: Array = []
+	for _i in range(10):
+		var c := Card.new()
+		c.timed = true
+		c.timed_damage = 3
+		timed_deck.append(c)
+	var run7 := _map_run()
+	var timed_deck_tags: Dictionary = run7._tag_counts(timed_deck)
+	var flat_weight7: int = Run.reward_weight("common", timed_only_tags, {})
+	var leaned_weight7: int = Run.reward_weight("common", timed_only_tags, timed_deck_tags)
+	_expect(leaned_weight7 > flat_weight7,
+		"a timed-only card's reward weight rises for a timed-heavy deck now that it carries the timed tag [flat=%s leaned=%s]"
+			% [flat_weight7, leaned_weight7])
 
 
 ## Backlog #72: a card reward roll should lean toward the archetype a hunter is

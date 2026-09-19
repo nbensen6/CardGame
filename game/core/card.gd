@@ -531,4 +531,29 @@ func archetype_tags() -> Array:
 	# toward the other taunt card, unlike every other mechanical family.
 	if taunt:
 		tags.append("taunt")
+	# backlog #86 duty 2: the same "no tag for this mechanical family at all"
+	# gap the reach/scry/draw/build/cleave/taunt fixes above closed — timed
+	# (a well-timed play grants a bonus, GameHost._keywords_of()'s own
+	# "timed" keyword) was never given a branch here either. Every shipped
+	# timed card with a climb, block or ally payoff already picks up a tag
+	# from its OWN timed_grip/timed_block/timed_ally_block field via the
+	# climb/block OR-lists above, which hid the gap the same way flat block
+	# hid block_per_x/block_per_discarded before their own duty-2 fix — but
+	# flick, wrecking_ball and the base (pre-campfire) piston_punch are real,
+	# shipped cards whose only mechanical fields are `timed`/`timed_damage`,
+	# so all three rolled through reward_pool() with an empty tag array: a
+	# hunter who'd drafted any of them got no reward-lean (backlog #72)
+	# toward drawing another timed-payoff card.
+	if timed or timed_damage > 0:
+		tags.append("timed")
+	# backlog #86 duty 2: same gap again — hits (multi-strike) was never given
+	# a branch either, even though GameHost._keywords_of() already groups
+	# `hits > 1` under its own "multistrike" keyword for the tap-to-inspect
+	# panel, the same mirror the reach/build fixes above point at. flurry and
+	# turret are real, shipped cards whose only mechanical field is `hits`,
+	# so both rolled through reward_pool() with an empty tag array: a hunter
+	# who'd drafted either got no reward-lean (backlog #72) toward the other,
+	# unlike every other mechanical family in the game.
+	if hits > 1:
+		tags.append("multistrike")
 	return tags
