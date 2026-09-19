@@ -1986,6 +1986,8 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_height_of_measures_the_tallest_mesh_in_world_space()
 	_test_backlog86_height_of_is_zero_with_no_mesh_anywhere()
 	_test_backlog86_music_refresh_stops_playback_the_instant_you_mute()
+	_test_backlog86_music_play_while_muted_remembers_the_track_and_stops()
+	_test_backlog86_music_play_skips_reloading_the_same_already_playing_track()
 	_test_backlog86_fit_shrinks_the_logical_viewport_on_handheld()
 	_test_backlog86_fit_resets_the_logical_viewport_on_desktop()
 	_test_backlog86_deck_view_step_builds_a_toggle_the_open_pane_never_needed()
@@ -21543,6 +21545,100 @@ func _test_backlog86_music_refresh_stops_playback_the_instant_you_mute() -> void
 	Progress.set_music_enabled(was_enabled)
 	_expect(was_playing and not muted,
 		"muting calls Music.refresh(), which stops the track immediately rather than waiting for the next phase change")
+
+
+## backlog #86 duty 3: Music.play() itself -- the function every phase change
+## and every game_3d.gd _sync() call funnels through -- had zero coverage of
+## its own body. Its neighbours were already proven (music_for_phase's
+## routing, refresh()'s mute behaviour above), but both bypass play()
+## entirely: refresh() calls play() only through its own already-tested
+## branch, and nothing ever called play() with the mute check itself live.
+## play()'s own first branch promises "remember the intent so unmuting can
+## resume it" -- calling play() while muted must still update `_current` to
+## the requested track (not leave it stale) and must stop whatever was
+## already running. That branch returns before ever touching
+## ResourceLoader/load(), so a fake track name with no matching file on disk
+## exercises it safely -- no real .ogg decode needed, unlike the WAV
+## workaround the refresh() test above needed for a different reason.
+func _test_backlog86_music_play_while_muted_remembers_the_track_and_stops() -> void:
+	var was_enabled := Progress.music_enabled()
+	var was_player: AudioStreamPlayer = Music._player
+	var was_current: String = Music._current
+	var player := AudioStreamPlayer.new()
+	root.add_child(player)
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_16_BITS
+	wav.mix_rate = 22050
+	wav.stereo = false
+	var data := PackedByteArray()
+	data.resize(11025 * 2)
+	wav.data = data
+	player.stream = wav
+	Music._player = player
+	Music._current = "some_track_already_playing"
+	Progress.set_music_enabled(true)
+	player.play()
+	var was_playing := player.playing
+	Progress.set_music_enabled(false)
+	Music.play("a_different_track_with_no_file")
+	var current_after := Music._current
+	var stopped := not player.playing
+	player.stop()
+	root.remove_child(player)
+	player.free()
+	Music._player = was_player
+	Music._current = was_current
+	Progress.set_music_enabled(was_enabled)
+	_expect(was_playing and stopped and current_after == "a_different_track_with_no_file",
+		"Music.play() while muted still remembers the requested track (so unmuting later can resume it) and stops whatever was already playing")
+
+
+## backlog #86 duty 3: the de-dupe guard right below the mute check --
+## `if track == _current and _player != null and _player.playing: return` --
+## is what stops game_3d.gd's _sync(), called on every single state
+## broadcast (every card play, every turn), from restarting the track from
+## the beginning on every snapshot. Nothing had ever proven it fires: a
+## broken or missing guard would mean combat music stutters and restarts
+## continuously mid-fight, a real player-visible regression, not a cosmetic
+## one. Uses "combat", a track with a real shipped file, specifically so
+## this is load-bearing -- if the guard were ever removed, play() would fall
+## through to ResourceLoader/load() and overwrite _player.stream with a
+## freshly loaded AudioStreamOggVorbis, which this test would catch by the
+## stream reference changing. The synthetic WAV already on the player never
+## gets touched, and the guard fires before any real .ogg is ever loaded, so
+## this stays clear of the real-decode leak the refresh() test above
+## deliberately avoided.
+func _test_backlog86_music_play_skips_reloading_the_same_already_playing_track() -> void:
+	var was_enabled := Progress.music_enabled()
+	var was_player: AudioStreamPlayer = Music._player
+	var was_current: String = Music._current
+	var player := AudioStreamPlayer.new()
+	root.add_child(player)
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_16_BITS
+	wav.mix_rate = 22050
+	wav.stereo = false
+	var data := PackedByteArray()
+	data.resize(11025 * 2)
+	wav.data = data
+	player.stream = wav
+	Music._player = player
+	Music._current = "combat"
+	Progress.set_music_enabled(true)
+	player.play()
+	var was_playing := player.playing
+	var stream_before: AudioStream = player.stream
+	Music.play("combat")
+	var stream_after: AudioStream = player.stream
+	var still_playing := player.playing
+	player.stop()
+	root.remove_child(player)
+	player.free()
+	Music._player = was_player
+	Music._current = was_current
+	Progress.set_music_enabled(was_enabled)
+	_expect(was_playing and still_playing and stream_after == stream_before,
+		"Music.play() with the track it is already playing is a no-op -- it must never touch _player.stream, or every _sync() broadcast would restart the track from the beginning")
 
 
 ## backlog #86 duty 3: Sfx's own header comment promises a real file in
