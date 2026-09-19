@@ -294,6 +294,24 @@ static func make_event(id: String) -> Dictionary:
 	e["id"] = id
 	return e
 
+## True if any choice of this event — including a "then" follow-up, however
+## deeply nested — can grant the fourth Titan's "event" key (backlog #64).
+## Used to bias event selection so the guaranteed "event" map node
+## (RunMap._ensure_key_sources) actually offers the key rather than the
+## uniform draw leaving it to chance which of the ~22 events shows up.
+static func event_grants_key(id: String) -> bool:
+	return _choices_grant_key((make_event(id).get("choices", []) as Array))
+
+static func _choices_grant_key(choices: Array) -> bool:
+	for c in choices:
+		var choice: Dictionary = c
+		if bool((choice.get("effects", {}) as Dictionary).get("key", false)):
+			return true
+		var then: Dictionary = choice.get("then", {})
+		if not then.is_empty() and _choices_grant_key((then.get("choices", []) as Array)):
+			return true
+	return false
+
 ## Every boon id (backlog #31 — the free run-start choice, offered before the
 ## first map step).
 static func list_boons() -> Array:

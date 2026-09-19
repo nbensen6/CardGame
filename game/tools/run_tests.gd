@@ -476,6 +476,9 @@ func _init() -> void:
 	_test_run_survives_a_save_and_load_in_event()
 	_test_backlog86_begin_event_picks_the_one_fresh_event_left()
 	_test_backlog86_begin_event_falls_back_to_the_full_pool_once_every_event_is_seen()
+	_test_backlog64_content_event_grants_key_finds_the_sealed_hollow_and_only_it()
+	_test_backlog64_begin_event_guarantees_the_key_event_while_the_team_lacks_it()
+	_test_backlog64_begin_event_stops_forcing_the_key_event_once_the_key_is_held()
 	_test_backlog39_stats_round_trip_through_save()
 	_test_save_refuses_only_finished_runs_and_clears_when_over()
 	_test_load_run_migrates_an_older_save()
@@ -16844,6 +16847,65 @@ func _test_backlog64_sealed_hollow_event_grants_a_key_at_a_real_cost() -> void:
 	var ok := run.pick_event(0)  # "Force the seal"
 	_expect(ok and run.keys.has("event") and run.hp[0] < hp_before,
 		"the sealed hollow event grants the event key and bruises the team for it")
+
+
+## Content.event_grants_key() is the fix's foundation: it must find exactly the
+## one event whose content can pay out the "event" key (the_sealed_hollow's
+## "Force the seal" choice), and nothing else, including an event that merely
+## LOOKS eventful (napping_beast has a "then" follow-up but no key effect
+## anywhere in it) -- a false positive here would make _begin_event() force
+## the wrong event and never actually offer the key.
+func _test_backlog64_content_event_grants_key_finds_the_sealed_hollow_and_only_it() -> void:
+	_expect(Content.event_grants_key("the_sealed_hollow"),
+		"the_sealed_hollow's 'Force the seal' choice grants the event key, so it must be recognised")
+	_expect(not Content.event_grants_key("napping_beast"),
+		"napping_beast has a nested 'then' follow-up but no key effect anywhere in it -- must not false-positive")
+	var key_bearing: Array = []
+	for id in Content.list_events():
+		if Content.event_grants_key(String(id)):
+			key_bearing.append(id)
+	_expect(key_bearing == ["the_sealed_hollow"],
+		"exactly one shipped event grants the key today (%s) -- if this changes, the bias below still holds, this just documents the current content" % [key_bearing])
+
+
+## Backlog #64: RunMap._ensure_key_sources() only guarantees an "event"-type
+## NODE exists somewhere on the map -- it says nothing about which of the ~22
+## events actually shows up there, and only one of them (the_sealed_hollow)
+## can ever grant the key. A uniform draw meant the large majority of runs
+## never saw it even after visiting an event node, quietly sealing off the
+## fourth Titan the same way the map-level guarantee was built to prevent.
+## Drive _begin_event() across many seeds with the key still unheld and every
+## event fresh: the fix must force the_sealed_hollow every single time, not
+## just raise its odds.
+func _test_backlog64_begin_event_guarantees_the_key_event_while_the_team_lacks_it() -> void:
+	for s in range(1, 13):
+		var run := _map_run()
+		run._rng.seed = s
+		_expect(run.keys.is_empty(), "setup sanity: a fresh run holds no keys yet")
+		run.map_row = 0
+		run.node_type = "event"
+		run._begin_event()
+		_expect(String(run.event.get("id", "")) == "the_sealed_hollow",
+			"with the event key still unheld and every event fresh, _begin_event() must force the_sealed_hollow regardless of RNG (seed %d rolled %s instead)" % [s, run.event.get("id", "")])
+
+
+## Sibling of the test above: once the team already holds the event key, the
+## bias must fall away and _begin_event() go back to its ordinary uniform
+## draw across whatever's still fresh -- otherwise every event node for the
+## rest of the run would keep re-forcing a key nobody needs any more instead
+## of showing the other 21 events at all.
+func _test_backlog64_begin_event_stops_forcing_the_key_event_once_the_key_is_held() -> void:
+	var seen: Dictionary = {}
+	for s in range(1, 13):
+		var run := _map_run()
+		run._rng.seed = s
+		run.keys = ["event"]
+		run.map_row = 0
+		run.node_type = "event"
+		run._begin_event()
+		seen[String(run.event.get("id", ""))] = true
+	_expect(seen.size() > 1,
+		"once the event key is already held, the draw must vary across seeds again instead of always forcing the_sealed_hollow (only saw %s)" % [seen.keys()])
 
 
 func _test_backlog64_map_guarantees_all_three_key_source_types_exist() -> void:

@@ -657,6 +657,15 @@ func campfire_action(slot: int, action: String, card_index: int = -1) -> bool:
 
 
 ## Roll an unseen event where possible, so a run doesn't repeat itself early.
+##
+## Backlog #64: unlike "elite"/"treasure", whose key is a mechanic every node
+## of that type supports (take_key), the "event" key lives on exactly one
+## event's content. RunMap._ensure_key_sources only guarantees the NODE TYPE
+## exists — a uniform draw across ~22 events left the true ending unreachable
+## on the large majority of runs even when that node was visited. So while the
+## team still lacks the key, prefer a fresh event that can grant it over the
+## plain uniform draw; once seen (or already held) this is exactly the old
+## uniform pick.
 func _begin_event() -> void:
 	var ids: Array = Content.list_events()
 	if ids.is_empty():
@@ -667,6 +676,13 @@ func _begin_event() -> void:
 		if not _seen_events.has(id):
 			fresh.append(id)
 	var pick_from: Array = fresh if not fresh.is_empty() else ids
+	if not keys.has("event"):
+		var key_bearing: Array = []
+		for id2 in pick_from:
+			if Content.event_grants_key(String(id2)):
+				key_bearing.append(id2)
+		if not key_bearing.is_empty():
+			pick_from = key_bearing
 	var id := String(pick_from[_rng.randi_range(0, pick_from.size() - 1)])
 	_seen_events.append(id)
 	event = Content.make_event(id)
