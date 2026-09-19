@@ -604,6 +604,7 @@ func _init() -> void:
 	# Cards that reward discarding (backlog #62)
 	_test_discard_field_sends_cards_to_the_discard_pile()
 	_test_discard_stops_early_when_hand_is_short()
+	_test_discard_resolves_before_draw_so_quick_purge_cant_toss_its_own_refill()
 	_test_damage_per_discarded_scales_with_pile_size()
 	_test_block_per_discarded_scales_with_pile_size()
 	_test_cull_the_deck_does_not_count_its_own_forced_discard()
@@ -13414,6 +13415,43 @@ func _test_discard_stops_early_when_hand_is_short() -> void:
 		"with nothing left in hand, only the played card itself reaches the discard pile")
 	_expect(ps.hand.size() == 1,
 		"the draw still refills the hand even though the discard had nothing left to take")
+
+
+## Proves the ORDER combat.gd:1187-1197 promises in its own comment: discard
+## resolves before draw, so a card that does both (Quick Purge) can never toss
+## the very card it just refilled with. The two tests above only ever check
+## pile SIZES with an all-Slash deck, where every candidate card is identical
+## and the order can't be told apart by the numbers alone.
+##
+## Rigged so the outcome is deterministic under EITHER order, not just likely:
+## exactly one pre-existing card sits in hand besides Quick Purge (discard: 2,
+## one more than that lone card), so `_discard_random`'s loop always drains
+## whatever hand it's handed completely dry regardless of which random index
+## it rolls each step — one card can only be picked one way, and two discards
+## against a hand of exactly two always empties it too. That means: resolved
+## in the documented order, the pre-existing card is fully gone before the
+## marker is ever drawn, so the marker can only end up in hand. Resolved
+## backwards, the marker joins that same hand before discard runs, and a
+## hand of exactly two facing `discard: 2` is swept completely — the marker
+## can only end up discarded. Either way the test can tell which order ran
+## from the marker's location alone, with no dependence on the RNG seed.
+func _test_discard_resolves_before_draw_so_quick_purge_cant_toss_its_own_refill() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var marker := Card.from_dict({"id": "marker", "name": "Marker", "type": "skill", "cost": 1, "target": "self"})
+	var card_a := _slash()
+	ps.hand = [_quick_purge(), card_a]
+	ps.draw_pile = [marker]
+	combat.play_card(0, 0)
+	_expect(ps.hand.size() == 1 and ps.hand[0].id == "marker",
+		"discard drains the pre-draw hand before the marker is ever drawn, so it can only land in hand")
+	var discard_ids: Array = []
+	for c in ps.discard_pile:
+		discard_ids.append(c.id)
+	_expect(discard_ids.count("marker") == 0,
+		"the drawn card must never end up back in the discard pile it was just spared from")
+	_expect(discard_ids.count("quick_purge") == 1 and discard_ids.count("slash") == 1,
+		"Quick Purge itself plus the one pre-existing hand card are the only things discarded")
 
 
 ## The payoff half: damage_per_discarded reads the discard pile's CURRENT
