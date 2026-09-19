@@ -1838,7 +1838,8 @@ func _init() -> void:
 	_test_backlog86_gamehost_wires_skip_reward_command_to_run()
 	_test_backlog86_gamehost_wires_pick_card_command_to_run()
 	_test_backlog86_gamehost_wires_restart_command_to_run()
-	_test_backlog86_restart_is_ignored_while_paused_after_the_run_ends()
+	_test_backlog86_teammate_leaving_after_the_run_ends_does_not_pause_the_host()
+	_test_backlog86_restart_is_still_a_noop_while_paused_mid_run()
 
 	# backlog #86 duty 2 (search) turned up nothing new after an exhaustive
 	# pass over /core, /session, /net and the views (content-integrity
@@ -16649,27 +16650,55 @@ func _test_backlog86_gamehost_wires_restart_command_to_run() -> void:
 ## as this rotation's other duty-2 fixes). location_3d.gd's "Hunt again"
 ## button — the only real caller of GameClient.restart(), shown on the
 ## WON/LOST screen — has no way to know `paused` is set (grep confirms
-## `game/views/*.gd` never reads that key), and _on_peer_left() pauses on any
-## drop where `_run != null` with no is_over() gate, so a teammate who
-## disconnects AFTER the fight ends pauses the host exactly like a mid-fight
-## drop does. Before this fix, the remaining player's "Hunt again" click sailed
-## past that straight into start_new_run() — leaving `paused` (never touched by
-## start_new_run()) still set against the BRAND NEW run, so its first broadcast
-## was already frozen: every other handler's own "not paused" guard then
-## silently dropped every command in the new run, with nothing on screen
-## explaining why.
-func _test_backlog86_restart_is_ignored_while_paused_after_the_run_ends() -> void:
+## `game/views/*.gd` never reads that key). At the time this test was written,
+## _on_peer_left() paused on any drop where `_run != null` with no is_over()
+## gate, so a teammate who disconnects AFTER the fight ends paused the host
+## exactly like a mid-fight drop does. The remaining player's "Hunt again"
+## click then either silently no-opped forever (this guard) behind a pause
+## that never clears — start_new_run() never touches `paused` and nothing
+## reads it to explain the freeze — or, before THIS guard existed, sailed
+## past into start_new_run() and froze the brand new run just as dead.
+##
+## That was a genuine soft-lock: a finished run has no in-progress reconnect
+## state left to protect, so pausing for it served no purpose but to jam
+## "Hunt again" shut. The real fix is at the source — _on_peer_left() now
+## gates the pause itself on `not _run.is_over()` — and this test asserts
+## the fixed contract: a post-game drop must NOT pause the host, so "Hunt
+## again" keeps working for whoever stayed. The sibling test below keeps the
+## other half honest: a drop DURING an active run must still pause it, and
+## "restart" sent while genuinely paused must still be a no-op.
+func _test_backlog86_teammate_leaving_after_the_run_ends_does_not_pause_the_host() -> void:
 	var s := _make_session()
 	var host: GameHost = s["host"]
 	var c0: GameClient = s["c0"]
 	var transport: LocalTransport = s["transport"]
 	host._run.phase = Run.Phase.WON  # the exact condition that puts up "Hunt again" (location_3d.gd's _render_over)
 	transport.emit_signal("peer_left", 20)  # mountain_climbers (slot 1) drops AFTER the win, not mid-fight
-	_expect(host.paused, "sanity: a teammate dropping after the run already ended still pauses the host")
+	_expect(not host.paused,
+		"a teammate dropping AFTER the run already ended must not pause the host -- there is nothing left to reconnect to, and pausing here only jams 'Hunt again' shut")
 	var run_before := host._run
 	c0.restart()  # the exact command "Hunt again" sends
+	_expect(host._run != run_before and not host.paused,
+		"'restart' sent by the remaining player after a post-game drop must actually start a fresh, unpaused run, not stay frozen behind a pause nothing ever clears")
+
+
+## The other half of the fix above: a drop while the run is genuinely still
+## in progress (not WON/LOST) must keep pausing, and "restart" sent while that
+## real pause holds must remain a no-op -- the fixed is_over() gate must not
+## have quietly turned into "never pause on a peer_left" instead of "don't
+## pause once there is nothing left to protect".
+func _test_backlog86_restart_is_still_a_noop_while_paused_mid_run() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var transport: LocalTransport = s["transport"]
+	_expect(host._run.phase == Run.Phase.COMBAT, "sanity: _make_session() leaves the run mid-fight, not over")
+	transport.emit_signal("peer_left", 20)  # mountain_climbers (slot 1) drops mid-fight
+	_expect(host.paused, "a teammate dropping DURING an active run must still pause the host")
+	var run_before := host._run
+	c0.restart()
 	_expect(host._run == run_before and host.paused,
-		"'restart' sent while paused must be a no-op, not silently start a fresh run frozen behind a pause the new run's own broadcast never showed anyone")
+		"'restart' sent while a real mid-run pause holds must still be a no-op")
 
 
 ## backlog #86 duty 3: the wiring sweep above (take_key, then

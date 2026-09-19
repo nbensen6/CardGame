@@ -177,17 +177,21 @@ func _on_command(peer_id: int, command: Dictionary) -> void:
 			# same guard that dropped the "not paused" half. location_3d.gd's
 			# "Hunt again" button (shown on the WON/LOST screen) sends this
 			# with no idea whether `paused` is set -- nothing under
-			# game/views ever reads that key -- so a teammate who
-			# disconnects AFTER the fight ends still sets `paused`
-			# (_on_peer_left, which gates only on `_run != null`, not on
-			# is_over()) exactly as it would mid-fight. The remaining
-			# player clicking "Hunt again" used to sail straight past that
-			# into a brand-new start_new_run() -- leaving `paused`/
+			# game/views ever reads that key -- so back when _on_peer_left
+			# paused on any drop where `_run != null`, with no is_over() gate,
+			# a teammate who disconnected AFTER the fight ends still set
+			# `paused` exactly as it would mid-fight. The remaining player
+			# clicking "Hunt again" used to sail straight past that into a
+			# brand-new start_new_run() -- leaving `paused`/
 			# `_disconnected_slots` (neither touched by start_new_run())
 			# still set against the FRESH run, so its very first broadcast
 			# was already frozen: every other handler's own "not paused"
 			# guard then silently dropped pick_node, buy, every command in
 			# the new run, with nothing on screen explaining why.
+			# _on_peer_left now gates the pause itself on is_over() (see
+			# there), so a post-game drop no longer sets `paused` at all --
+			# this guard stays as the belt to that suspenders, since a
+			# genuine mid-fight drop still must not be sailed past.
 			if not paused and _run != null:
 				# backlog #86 duty 2: `_daily_date` lives on the HOST, not the run, and
 				# start_new_run()'s daily branch reads it unconditionally — so "Hunt
@@ -271,7 +275,18 @@ func _on_peer_left(peer_id: int) -> void:
 		# never showed them as having picked it in the first place.
 		_character_of.erase(peer_id)
 		_reindex_slots()
-	else:
+	elif not _run.is_over():
+		# backlog #86 duty 2: this used to pause on ANY drop where _run != null,
+		# with no is_over() gate -- so a teammate closing the app on the WON/LOST
+		# screen (ordinary end-of-session behavior, not a mid-fight drop) paused
+		# the host exactly as a real disconnect would. `restart` ("Hunt again",
+		# location_3d.gd's _render_over) is gated "not paused" like every other
+		# mutating command, so that pause could never clear -- start_new_run()
+		# doesn't touch `paused`/`_disconnected_slots`, and nothing under
+		# game/views reads `paused` to show the survivor why the button does
+		# nothing. A finished run has no in-progress state left to protect by
+		# pausing, so there is nothing to reconnect to; only an in-progress run
+		# needs the pause.
 		paused = true
 		var slot := _slot(peer_id)
 		if not _disconnected_slots.has(slot):
