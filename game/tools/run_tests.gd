@@ -255,6 +255,7 @@ func _init() -> void:
 	_test_backlog86_archetype_tags_recognise_taunt_cards()
 	_test_backlog86_archetype_tags_recognise_timed_and_multistrike_cards()
 	_test_backlog86_archetype_tags_recognise_prepare_cards_as_prime()
+	_test_backlog86_archetype_tags_recognise_retain_innate_ethereal_cheapen_and_meld_cards()
 	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
 	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
@@ -6363,7 +6364,7 @@ func _test_backlog86_archetype_tags_recognise_a_timed_grip_only_card() -> void:
 func _test_backlog86_archetype_tags_cover_every_branch_not_just_the_first_four() -> void:
 	var ghost_step: Array = Content.card_tags("ghost_step")     # intangible 2, nothing else
 	var expose: Array = Content.card_tags("expose")             # vulnerable 2, nothing else
-	var burn_coal: Array = Content.card_tags("burn_coal")       # exhaust_pick, nothing else
+	var burn_coal: Array = Content.card_tags("burn_coal")       # exhaust_pick AND cheapen_pick
 	var sure_footing: Array = Content.card_tags("sure_footing") # dexterity 2, nothing else
 	var trash_strike: Array = Content.card_tags("trash_strike") # damage_per_discarded 1, plus flat damage
 	var warm_glow: Array = Content.card_tags("warm_glow")       # ally_heal 4 AND light_gain 1 together
@@ -6372,8 +6373,8 @@ func _test_backlog86_archetype_tags_cover_every_branch_not_just_the_first_four()
 		"Ghost Step (Intangible only) is tagged block and nothing else [tags=%s]" % [ghost_step])
 	_expect(expose.has("vulnerable") and expose.size() == 1,
 		"Expose (Vulnerable only) is tagged vulnerable and nothing else [tags=%s]" % [expose])
-	_expect(burn_coal.has("burn") and burn_coal.size() == 1,
-		"Burn Coal (exhaust_pick only) is tagged burn and nothing else [tags=%s]" % [burn_coal])
+	_expect(burn_coal.has("burn") and burn_coal.has("cheapen") and burn_coal.size() == 2,
+		"Burn Coal (exhaust_pick AND cheapen_pick) is tagged BOTH burn and cheapen [tags=%s]" % [burn_coal])
 	_expect(sure_footing.has("dexterity") and not sure_footing.has("strength") and sure_footing.size() == 1,
 		"Sure Footing (Dexterity only) is tagged dexterity, never strength [tags=%s]" % [sure_footing])
 	_expect(trash_strike.has("discard") and not trash_strike.has("block"),
@@ -6947,6 +6948,86 @@ func _test_backlog86_archetype_tags_recognise_prepare_cards_as_prime() -> void:
 	_expect(leaned_weight8 > flat_weight8,
 		"Goblin Jetpack's reward weight rises for a prime-heavy deck now that it carries the prime tag [flat=%s leaned=%s]"
 			% [flat_weight8, leaned_weight8])
+
+
+## Backlog #86 duty 2: the same "no tag for this mechanical family at all" gap
+## the reach/scry/draw/build/cleave/taunt/timed/multistrike/prime fixes above
+## closed — retain, innate, ethereal, cheapen_pick and meld were never given a
+## branch here either, even though GameHost._keywords_of() already tags all
+## five ("retain", "innate", "ethereal", "cheapen", "meld") for the
+## tap-to-inspect panel. first_strike (innate only), reckless_swing (ethereal
+## only) and the Meld card itself (meld only) are three real, shipped cards
+## that rolled through reward_pool() with a completely EMPTY tag array.
+func _test_backlog86_archetype_tags_recognise_retain_innate_ethereal_cheapen_and_meld_cards() -> void:
+	var retain_only := Card.new()
+	retain_only.retain = true
+	var retain_only_tags: Array = retain_only.archetype_tags()
+	_expect(retain_only_tags.has("retain") and retain_only_tags.size() == 1,
+		"a bare card with only retain set is tagged retain and nothing else [tags=%s]" % [retain_only_tags])
+
+	var innate_only := Card.new()
+	innate_only.innate = true
+	var innate_only_tags: Array = innate_only.archetype_tags()
+	_expect(innate_only_tags.has("innate") and innate_only_tags.size() == 1,
+		"a bare card with only innate set is tagged innate and nothing else [tags=%s]" % [innate_only_tags])
+
+	var ethereal_only := Card.new()
+	ethereal_only.ethereal = true
+	var ethereal_only_tags: Array = ethereal_only.archetype_tags()
+	_expect(ethereal_only_tags.has("ethereal") and ethereal_only_tags.size() == 1,
+		"a bare card with only ethereal set is tagged ethereal and nothing else [tags=%s]" % [ethereal_only_tags])
+
+	var cheapen_only := Card.new()
+	cheapen_only.cheapen_pick = true
+	var cheapen_only_tags: Array = cheapen_only.archetype_tags()
+	_expect(cheapen_only_tags.has("cheapen") and cheapen_only_tags.size() == 1,
+		"a bare card with only cheapen_pick set is tagged cheapen and nothing else [tags=%s]" % [cheapen_only_tags])
+
+	var meld_only := Card.new()
+	meld_only.meld = true
+	var meld_only_tags: Array = meld_only.archetype_tags()
+	_expect(meld_only_tags.has("meld") and meld_only_tags.size() == 1,
+		"a bare card with only meld set is tagged meld and nothing else [tags=%s]" % [meld_only_tags])
+
+	# Real shipped cards that rolled through reward_pool() with a completely
+	# empty tag array before this fix -- the emptiest possible case, worse
+	# than the "masked by a neighbouring branch" shape the taunt/timed checks
+	# above guard against.
+	var first_strike_tags: Array = Content.card_tags("first_strike")
+	_expect(first_strike_tags.has("innate") and first_strike_tags.size() == 1,
+		"First Strike (innate only, nothing else) is tagged innate [tags=%s]" % [first_strike_tags])
+	var reckless_swing_tags: Array = Content.card_tags("reckless_swing")
+	_expect(reckless_swing_tags.has("ethereal") and reckless_swing_tags.size() == 1,
+		"Reckless Swing (ethereal only, nothing else) is tagged ethereal [tags=%s]" % [reckless_swing_tags])
+	var meld_card_tags: Array = Content.card_tags("meld")
+	_expect(meld_card_tags.has("meld") and meld_card_tags.size() == 1,
+		"the Meld card (meld only, nothing else) is tagged meld [tags=%s]" % [meld_card_tags])
+
+	# A card carrying both a neighbouring OR-term AND the new field must keep
+	# both -- retain+block (Bunker Down) and ethereal+draw (Fading Insight).
+	var bunker_down_tags: Array = Content.card_tags("bunker_down")
+	_expect(bunker_down_tags.has("retain") and bunker_down_tags.has("block"),
+		"Bunker Down (retain AND block) keeps both retain and block [tags=%s]" % [bunker_down_tags])
+	var fading_insight_tags: Array = Content.card_tags("fading_insight")
+	_expect(fading_insight_tags.has("ethereal") and fading_insight_tags.has("draw"),
+		"Fading Insight (ethereal AND draw) keeps both ethereal and draw [tags=%s]" % [fading_insight_tags])
+
+	# reward-lean end to end, same shape as the reach/scry/draw/build/cleave/
+	# taunt/timed/prime checks above -- isolated on the synthetic innate-only
+	# card so First Strike's damage field can't take credit for a lean that
+	# only this fix earns.
+	var innate_deck: Array = []
+	for _i in range(10):
+		var c := Card.new()
+		c.innate = true
+		innate_deck.append(c)
+	var run9 := _map_run()
+	var innate_deck_tags: Dictionary = run9._tag_counts(innate_deck)
+	var flat_weight9: int = Run.reward_weight("uncommon", innate_only_tags, {})
+	var leaned_weight9: int = Run.reward_weight("uncommon", innate_only_tags, innate_deck_tags)
+	_expect(leaned_weight9 > flat_weight9,
+		"an innate-only card's reward weight rises for an innate-heavy deck now that it carries the innate tag [flat=%s leaned=%s]"
+			% [flat_weight9, leaned_weight9])
 
 
 ## Backlog #72: a card reward roll should lean toward the archetype a hunter is

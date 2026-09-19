@@ -569,4 +569,28 @@ func archetype_tags() -> Array:
 	# mechanical family in the game.
 	if prepare != "":
 		tags.append("prime")
+	# backlog #86 duty 2: the same "no tag for this mechanical family at all"
+	# gap the reach/scry/draw/build/cleave/taunt/timed/multistrike/prime fixes
+	# above closed — retain, innate, ethereal, cheapen_pick and meld were never
+	# given a branch here either, even though GameHost._keywords_of() already
+	# tags all five ("retain", "innate", "ethereal", "cheapen", "meld") for the
+	# tap-to-inspect panel. first_strike (innate, nothing else archetype-tagged),
+	# reckless_swing (ethereal only) and the Meld card itself (meld only) are
+	# three real, shipped cards that rolled through reward_pool() with a
+	# completely EMPTY tag array; bunker_down/steady_flame (retain),
+	# guarded_instant/fading_insight (ethereal) and burn_coal (cheapen_pick) are
+	# real, shipped cards whose tag array had no branch for the field that is
+	# half their identity. A hunter who'd drafted any of them got no reward-lean
+	# (backlog #72) toward drawing another, unlike every other mechanical
+	# family in the game.
+	if retain:
+		tags.append("retain")
+	if innate:
+		tags.append("innate")
+	if ethereal:
+		tags.append("ethereal")
+	if cheapen_pick:
+		tags.append("cheapen")
+	if meld:
+		tags.append("meld")
 	return tags
