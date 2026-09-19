@@ -122,6 +122,7 @@ func _init() -> void:
 	_test_backlog86_restart_after_a_daily_does_not_replay_the_same_seed()
 	_test_run_walks_the_map()
 	_test_backlog86_elite_node_fights_from_the_elite_pool_not_the_fight_pool()
+	_test_backlog86_roll_beast_falls_back_to_the_first_encounter_for_an_unpooled_node_type()
 	_test_backlog86_boss_art_per_act_matches_encounters_in_order()
 	_test_backlog86_map_snapshot_wires_boss_art_per_act()
 	_test_backlog86_shared_result_reflects_run_phase()
@@ -3779,6 +3780,37 @@ func _test_backlog86_elite_node_fights_from_the_elite_pool_not_the_fight_pool() 
 	var fight_pool: Array = Content.beast_pool("fight")
 	_expect(elite_pool.has(run.beast_id) and not fight_pool.has(run.beast_id),
 		"an elite node fights a beast from the elite pool, not the fight pool [beast_id=%s]" % run.beast_id)
+
+
+## Backlog #86 duty 3: Run._roll_beast()'s own shape is "Titans follow the act
+## order; fights and elites roll from their pool" -- but it also carries a
+## third branch, `if pool.is_empty(): return ENCOUNTERS[0]`, that nothing has
+## ever driven. bosses.json's pools dict only ever holds "fight", "elite" and
+## "boss" (checked directly, not just grepped), so any OTHER node_type reaching
+## _start_encounter() -- a typo, or a future node kind pick_node()'s match
+## falls through on without being added to bosses.json's pools first -- hits
+## Content.beast_pool(kind) returning [], same as an unknown Dictionary key
+## always does. Nothing before this proved the fallback actually fires rather
+## than indexing an empty array and crashing the run outright, which is
+## exactly the "what happens when the collection is empty?" question duty 2's
+## own guidance asks and duty 3 can just as well verify.
+##
+## Driven the same way the elite-pool test above is: set node_type directly
+## and call the private _start_encounter(), since no real map node is ever
+## generated with an unpooled type (RunMap._roll_type() only ever emits the
+## six real kinds) -- this proves the GUARD holds, not that it is reachable
+## through play today.
+func _test_backlog86_roll_beast_falls_back_to_the_first_encounter_for_an_unpooled_node_type() -> void:
+	_expect(Content.beast_pool("unpooled_node_kind").is_empty(),
+		"sanity check: bosses.json's pools dict has no entry for a made-up node type")
+	var run := Run.new([_deck_of(_slash, 10), _deck_of(_slash, 10)], ["A", "B"], 4242, [{}, {}])
+	run.start()
+	run.node_type = "unpooled_node_kind"
+	run._start_encounter()  # must not crash indexing an empty pool
+	_expect(run.beast_id == Run.ENCOUNTERS[0],
+		"an unpooled node type falls back to the first encounter instead of crashing [beast_id=%s]" % run.beast_id)
+	_expect(run.combat != null and not run.combat.boss.is_dead(),
+		"the fallback beast still builds into a real, live fight rather than leaving combat unset")
 
 
 ## Backlog #86 duty 3: game_host.gd's own doc comment on _boss_art_per_act()
