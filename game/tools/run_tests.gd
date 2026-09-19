@@ -243,6 +243,7 @@ func _init() -> void:
 	_test_backlog86_archetype_tags_recognise_draw_cards()
 	_test_backlog86_archetype_tags_recognise_create_cards_as_build()
 	_test_backlog86_archetype_tags_recognise_hits_all_enemies_as_cleave()
+	_test_backlog86_archetype_tags_recognise_taunt_cards()
 	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
 	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
@@ -6655,6 +6656,59 @@ func _test_backlog86_archetype_tags_recognise_hits_all_enemies_as_cleave() -> vo
 	_expect(leaned_weight5 > flat_weight5,
 		"Sweeping Strike's reward weight rises for a Cleave-heavy deck now that it carries the cleave tag [flat=%s leaned=%s]"
 			% [flat_weight5, leaned_weight5])
+
+
+## #86 duty 3 (verify a mechanic actually works): archetype_tags()'s own OR-
+## chains cover 13 named families now (climb/rhythm/poison/block/strength/
+## dexterity/ally/burn/light/discard/vulnerable/thorns/frail/heal/reach/scry/
+## draw/build/cleave), each mirrored in GameHost's own keyword grouping for
+## the tap-to-inspect panel (game_host.gd:_keywords_of()/_card_icon()) --
+## except `taunt` (game_host.gd:923-924 and :1188-1189 both already group it
+## under its own "taunt" keyword id), which archetype_tags() never grew a
+## branch for at all. draw_aggro and last_stand are the only two shipped
+## cards carrying `taunt`, and both happen to also carry `block`/`ally_block`
+## (last_stand) -- the exact "masked by a neighbouring field" shape
+## block_per_play's fix (X Brace being the sibling that exposed it) already
+## documents -- so neither shipped card's own tag array is empty, and nothing
+## in the existing suite (which only ever exercises taunt through combat's
+## targeting redirection, GameHost._card_icon()'s icon priority, or the
+## keyword-tooltip resolver -- none of which touch archetype_tags() or
+## Run.reward_weight()) would catch a hunter building a Taunt-tanking deck
+## getting zero reward-lean (backlog #72) toward the other taunt card.
+## Synthetic single-field card isolates the branch the same way the block_per_
+## discarded/dexterity/etc checks above do, since no shipped card is taunt-only.
+func _test_backlog86_archetype_tags_recognise_taunt_cards() -> void:
+	var taunt_only := Card.new()
+	taunt_only.taunt = true
+	var taunt_only_tags: Array = taunt_only.archetype_tags()
+	_expect(taunt_only_tags.has("taunt") and taunt_only_tags.size() == 1,
+		"a bare card with only taunt set is tagged taunt and nothing else [tags=%s]" % [taunt_only_tags])
+
+	var draw_aggro_tags: Array = Content.card_tags("draw_aggro")
+	_expect(draw_aggro_tags.has("taunt") and draw_aggro_tags.has("block"),
+		"Draw Aggro (taunt AND block) is tagged both taunt and block, not masked by the block branch [tags=%s]"
+			% [draw_aggro_tags])
+	var last_stand_tags: Array = Content.card_tags("last_stand")
+	_expect(last_stand_tags.has("taunt") and last_stand_tags.has("block") and last_stand_tags.has("ally"),
+		"Last Stand (taunt, block AND ally_block) is tagged taunt alongside block and ally [tags=%s]"
+			% [last_stand_tags])
+
+	# reward-lean end to end, same shape as the reach/scry/draw/build/cleave
+	# checks above -- isolated on the synthetic taunt-only card (rather than
+	# draw_aggro/last_stand) so the block/ally tags those two shipped cards
+	# also carry can't take credit for a lean that only the taunt fix earns.
+	var taunt_deck: Array = []
+	for _i in range(10):
+		var c := Card.new()
+		c.taunt = true
+		taunt_deck.append(c)
+	var run := _map_run()
+	var taunt_deck_tags: Dictionary = run._tag_counts(taunt_deck)
+	var flat_weight6: int = Run.reward_weight("common", taunt_only_tags, {})
+	var leaned_weight6: int = Run.reward_weight("common", taunt_only_tags, taunt_deck_tags)
+	_expect(leaned_weight6 > flat_weight6,
+		"a Taunt-only card's reward weight rises for a Taunt-heavy deck now that it carries the taunt tag [flat=%s leaned=%s]"
+			% [flat_weight6, leaned_weight6])
 
 
 ## Backlog #72: a card reward roll should lean toward the archetype a hunter is

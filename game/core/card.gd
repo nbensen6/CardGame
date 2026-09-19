@@ -520,4 +520,15 @@ func archetype_tags() -> Array:
 	# mechanical family in the game.
 	if hits_all_enemies:
 		tags.append("cleave")
+	# backlog #86 duty 3: the same "no tag for this mechanical family at all"
+	# gap the reach/scry/draw/build/cleave fixes above closed — taunt was
+	# never given a branch here either, even though GameHost already groups
+	# it under its own "taunt" keyword id (game_host.gd:_keywords_of()/
+	# _card_icon()). Masked on both shipped taunt cards (draw_aggro, last_
+	# stand) by their own block/ally_block fields, so neither ever rolled
+	# through reward_pool() with a visibly empty tag array — but a hunter
+	# building a Taunt-tanking deck still got zero reward-lean (backlog #72)
+	# toward the other taunt card, unlike every other mechanical family.
+	if taunt:
+		tags.append("taunt")
 	return tags
