@@ -11,9 +11,9 @@
 ## is not a finding here.
 ##
 ##   godot --headless --path game --script res://tools/robustness_sweep.gd
+class_name RobustnessSweep
 extends SceneTree
 
-const ASCENSIONS := [0, 4, 8]      # low, mid, and the top of today's ladder
 const SEEDS_PER_CONFIG := 6
 const GUARD := 4000                 # phase-steps before a run is "never terminates"
 
@@ -22,7 +22,32 @@ var _dead_ends: Array = []          # Array[String] — human-readable, one per 
 var _runs_swept := 0
 
 
+## Which ascension tiers to sweep: the floor, the midpoint, and the actual top
+## of the ladder — read from `max_ascension` rather than hand-copied, because
+## a hand-copied number is exactly the "two copies of one truth" shape #86
+## duty 2 exists to catch. This used to be `const ASCENSIONS := [0, 4, 8]`,
+## commented "the top of today's ladder" — true the day it was written, when
+## ascension.json had 8 tiers. It has ten now: Cursed Start (9, a guaranteed
+## curse card in the starting deck) and Sealed Market (10, the shop's own
+## "remove" option locked off) are the two hardest tiers to get a legal way
+## out of, and neither one had EVER been swept, silently, for as long as the
+## ladder has had them — this tool would not have noticed its own comment
+## going false. Pure so run_tests.gd can pin `Content.max_ascension()` (the
+## real source of truth) into it and catch the next time they drift apart,
+## the same way it's already caught for every gameplay dispatch table.
+static func ascensions_to_sweep(max_ascension: int) -> Array:
+	if max_ascension <= 0:
+		return [0]
+	var out: Array = [0]
+	var mid := int(round(max_ascension / 2.0))
+	if mid > 0 and mid < max_ascension:
+		out.append(mid)
+	out.append(max_ascension)
+	return out
+
+
 func _init() -> void:
+	var ascensions := ascensions_to_sweep(Content.max_ascension())
 	var char_ids: Array = []
 	for c in Content.list_characters():
 		char_ids.append(String(c["id"]))
@@ -31,12 +56,12 @@ func _init() -> void:
 		for j in range(i + 1, char_ids.size()):
 			pairs.append([char_ids[i], char_ids[j]])
 
-	var total: int = pairs.size() * ASCENSIONS.size() * SEEDS_PER_CONFIG * 2
+	var total: int = pairs.size() * ascensions.size() * SEEDS_PER_CONFIG * 2
 	print("Robustness sweep: %d char pairs x %d ascensions x %d seeds x 2 policies = %d runs\n" % [
-		pairs.size(), ASCENSIONS.size(), SEEDS_PER_CONFIG, total])
+		pairs.size(), ascensions.size(), SEEDS_PER_CONFIG, total])
 
 	for pair in pairs:
-		for asc in ASCENSIONS:
+		for asc in ascensions:
 			for policy in ["random", "naive"]:
 				for s in range(SEEDS_PER_CONFIG):
 					# Seed derived from config, not Godot's global RNG, so a failing

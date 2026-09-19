@@ -2068,6 +2068,17 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_frame_for_rows_pitch_stays_within_the_orbit_bounds()
 	_test_backlog86_frame_for_rows_scales_with_a_different_row_step()
 
+	# backlog #86 duty 2: robustness_sweep.gd's own ASCENSIONS constant was
+	# `[0, 4, 8]`, commented "low, mid, and the top of today's ladder" — true
+	# when ascension.json had 8 tiers, silently false once it grew to 10
+	# (Cursed Start at 9, Sealed Market at 10). The sweep would not have
+	# noticed its own comment going stale: it just quietly never exercised the
+	# hardest two tiers again. Pins the real source of truth,
+	# Content.max_ascension(), into the sweep's own list so the next tier
+	# ascension.json grows can't drift out of what gets swept the same way.
+	_test_backlog86_robustness_sweep_always_includes_the_real_top_ascension()
+	_test_backlog86_robustness_sweep_ascensions_cover_floor_mid_and_top()
+
 	print("")
 	if _failures == 0:
 		print("ALL TESTS PASSED")
@@ -20754,6 +20765,44 @@ func _test_backlog86_frame_for_rows_scales_with_a_different_row_step() -> void:
 	var narrow: float = Overworld3D.frame_for_rows(5, 0.5)["dist"]
 	var wide: float = Overworld3D.frame_for_rows(5, 2.0)["dist"]
 	_expect(narrow < wide, "the same row count needs a further-back camera when each hex row itself is wider (ROW_STEP scales the whole field, not just row COUNT): got %s for a narrow step and %s for a wide one" % [narrow, wide])
+
+
+## backlog #86 duty 2: robustness_sweep.gd's ASCENSIONS constant read
+## `[0, 4, 8]`, hand-copied and commented "the top of today's ladder", while
+## Content.max_ascension() (ascension.json's own tier count) has been 10 for
+## a while — the sweep silently stopped reaching the top of the real ladder
+## the moment a ninth and tenth tier were added, and nothing would have said
+## so: the sweep only reports dead ends among the ascensions it actually
+## tries. Pins the real source of truth into the pure function that replaced
+## the stale constant, so the next tier the ladder grows can't drift out of
+## what gets swept the same way this one did.
+func _test_backlog86_robustness_sweep_always_includes_the_real_top_ascension() -> void:
+	var top := Content.max_ascension()
+	_expect(top > 0, "ascension.json defines at least one tier, or this test proves nothing")
+	var swept: Array = RobustnessSweep.ascensions_to_sweep(top)
+	_expect(swept.has(top),
+		"the sweep must always reach the actual top ascension (%d), not a hand-copied number that can go stale — got %s" % [top, swept])
+	_expect(swept.has(0), "the sweep must always include the base difficulty — got %s" % [swept])
+	for a in swept:
+		_expect(int(a) <= top, "the sweep must never ask for an ascension past the real top (%d) — got %s" % [top, swept])
+
+
+## Companion to the pin above: proves the shape (floor, one midpoint, top —
+## never a duplicate) rather than just today's Content.max_ascension() value,
+## so a future tier count doesn't quietly collapse the sweep down to one or
+## two configs, or double up on the same tier twice.
+func _test_backlog86_robustness_sweep_ascensions_cover_floor_mid_and_top() -> void:
+	_expect(RobustnessSweep.ascensions_to_sweep(0) == [0],
+		"a one-tier-or-fewer ladder (0 = base only) sweeps just the base difficulty")
+	_expect(RobustnessSweep.ascensions_to_sweep(1) == [0, 1],
+		"a single real tier sweeps floor and top with no duplicate midpoint")
+	var mid_swept: Array = RobustnessSweep.ascensions_to_sweep(10)
+	var seen := {}
+	for a in mid_swept:
+		seen[a] = true
+	_expect(seen.size() == mid_swept.size(), "no ascension is swept twice — got %s" % [mid_swept])
+	_expect(mid_swept.size() == 3 and mid_swept[0] == 0 and mid_swept[mid_swept.size() - 1] == 10,
+		"a ten-tier ladder sweeps floor, one midpoint and the top — got %s" % [mid_swept])
 
 
 ## backlog #86 duty 3 (thirty-seventh pass) -- stand_at, lifted out of
