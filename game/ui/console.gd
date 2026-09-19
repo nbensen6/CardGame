@@ -391,7 +391,20 @@ func _cmd_climb(a: PackedStringArray) -> String:
 		return why
 	if a.is_empty():
 		return "climb <n>"
-	_combat().players[_slot()].foothold = maxi(int(String(a[0]).to_int()), 0)
+	_combat().players[_slot()].foothold = clampi(int(String(a[0]).to_int()), 0, Combat.FOOTHOLD_MAX)
+	# backlog #86 duty 2: this used to write `foothold` straight and never call
+	# _track_climb() -- the same "two copies of one truth" gap _cmd_beast was
+	# already patched for above, but for highest_climb instead of adds. Every
+	# real foothold-raising path (play_card's grip/targets_hold branches,
+	# use_potion's climb effect, the jetpack's _resolve_prepared, and
+	# _handle_power_effects' poison_lift branch) calls _track_climb() right
+	# after, which is the ONLY place combat.highest_climb -- the sole source
+	# Run.sync() reads for the run-end "highest climb" stat -- ever advances.
+	# Skipping it here let a console `climb 16` put a hunter at the sigil while
+	# highest_climb silently stayed at its old value, so the run summary and
+	# saved history under-reported the peak even though every live query
+	# (is_secure, sigil_reached, next_safe_height) stayed correct.
+	_combat()._track_climb()
 	_push()
 	return "hunter %d is at Height %d" % [_slot(), _combat().players[_slot()].foothold]
 

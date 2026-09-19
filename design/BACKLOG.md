@@ -2846,7 +2846,36 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-19 (latest) — #86 duty 2: `Card.archetype_tags()` had no branch for `hits_all_enemies` (Cleave), the same "an entire tag missing" shape as the reach/scry/draw/build fixes already logged for this rotation.** Last
+- **2026-09-19 (latest) — #86 duty 2: the dev console's `climb <n>` command wrote a hunter's `foothold` straight and never called `Combat._track_climb()`, so `highest_climb` — the only field `Run.sync()` reads for the run-end "highest climb" stat — could silently fall out of sync with the live foothold it just changed.** Last
+  commit (`5e1dc01`, proving discard resolves before draw for Quick Purge)
+  was duty 3, so this run took duty 2. Checked several already-covered
+  systems first (potions, shop, boons/events, run_map generation, key
+  economy, campfire, boss adds, targeting, deck shuffling/scry, energy/Light
+  accounting, save/load, relic totals) via a dispatched Explore pass and
+  found every candidate there already fixed by ~50 prior duty-2/3 commits;
+  landed instead on `game/ui/console.gd`, the always-on debug console (no
+  build flag gates it), reading it end to end alongside `combat.gd`'s climb
+  tracking. Every REAL foothold-raising path (`play_card`'s grip/
+  targets_hold branches, `use_potion`'s climb effect, the jetpack's
+  `_resolve_prepared`, `_handle_power_effects`' `poison_lift` branch) calls
+  `_track_climb()` right after and clamps to `Combat.FOOTHOLD_MAX` — the
+  console's `_cmd_climb` did neither, the exact "two copies of one truth"
+  shape `_cmd_beast` (a few lines below it in the same file) was already
+  patched for, but for `adds`/`boss.id` instead of `foothold`/
+  `highest_climb`. Concretely: `climb 16` at the console put a hunter at the
+  sigil with no card ever played, but `highest_climb` stayed at its old
+  value, so the run summary and saved `history_entry()` under-reported the
+  peak even though every live query (`is_secure`, `sigil_reached`,
+  `next_safe_height`) read the correct foothold. Wrote
+  `_test_backlog86_dev_console_climb_keeps_highest_climb_in_sync` first
+  (fresh fight starts at 0, `climb 16` must raise `highest_climb` to 16, a
+  later lower `climb 4` must not un-track the peak, `climb 999` must clamp
+  to `FOOTHOLD_MAX` on both `foothold` and `highest_climb`), watched it fail
+  against the unfixed command, then changed `_cmd_climb` to
+  `clampi(..., 0, Combat.FOOTHOLD_MAX)` and added the `_track_climb()` call.
+  Full suite green (`ALL TESTS PASSED`) after the fix; nothing else touched.
+
+- **2026-09-19 — #86 duty 2: `Card.archetype_tags()` had no branch for `hits_all_enemies` (Cleave), the same "an entire tag missing" shape as the reach/scry/draw/build fixes already logged for this rotation.** Last
   commit (`04ab7ac`, the jetpack foothold clamp) was duty 3, so this run took
   duty 2. A dispatched Explore pass grepped every consumer of fields shared
   between `Card.archetype_tags()` (feeds `Run._tag_counts()` /

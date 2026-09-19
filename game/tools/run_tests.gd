@@ -1553,6 +1553,11 @@ func _init() -> void:
 	# the console (Nick asked for it to "add cards to my hand to test"); a
 	# console proven only to refuse is not proven to work.
 	_test_backlog86_dev_console_energy_and_climb_edit_the_live_hunter_and_broadcast()
+	# backlog #86 duty 2: the test above only ever proves `climb` writes the
+	# live foothold -- it never checks highest_climb, the SEPARATE field
+	# Run.sync() actually reads for the run-end stat, which _cmd_climb used to
+	# leave stale.
+	_test_backlog86_dev_console_climb_keeps_highest_climb_in_sync()
 	_test_backlog86_dev_console_beast_swaps_the_live_boss_or_refuses_an_unknown_id()
 	# backlog #86 duty 2: the swap test above only ever proves `boss` lands
 	# correctly -- combat.gd's own `adds` array (Boss's secondary "adds",
@@ -22284,6 +22289,51 @@ func _test_backlog86_dev_console_energy_and_climb_edit_the_live_hunter_and_broad
 	_expect(int(host._run.combat.players[0].foothold) == 4, "climb writes straight into the live foothold")
 	_expect(int(c0.shared["players"][0]["foothold"]) == 4,
 		"climb's broadcast reaches the shared snapshot, where an ally would see it too")
+
+	Session.host = save_host
+	c.free()
+
+
+## backlog #86 duty 2 (two copies of one truth) -- every REAL foothold-raising
+## path (play_card's grip/targets_hold branches, use_potion's climb effect, the
+## jetpack's _resolve_prepared, and _handle_power_effects' poison_lift branch)
+## calls Combat._track_climb() right after, which is the ONLY place
+## highest_climb -- the sole source Run.sync() reads for the run-end "highest
+## climb" stat (run.gd:850) -- ever advances. _cmd_climb wrote `foothold`
+## straight and skipped it, so a console `climb 16` (reachable with no build
+## flag, per the console's own header) could put a hunter at the sigil while
+## the run summary and saved history silently kept reporting the OLD peak.
+## Prove the console command now keeps them in lockstep the way every other
+## foothold-raising call site already does, and that it clamps to
+## Combat.FOOTHOLD_MAX the same as they do rather than accepting an
+## above-the-sigil height nothing else in the engine could ever reach.
+func _test_backlog86_dev_console_climb_keeps_highest_climb_in_sync() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var save_host: GameHost = Session.host
+	Session.host = host
+	var c := DevConsole.new()
+
+	_expect(int(host._run.combat.highest_climb) == 0, "a fresh fight starts with no climb recorded yet")
+
+	c.run("climb 16")
+	_expect(int(host._run.combat.players[0].foothold) == 16, "climb still writes straight into the live foothold")
+	_expect(int(host._run.combat.highest_climb) == 16,
+		"climb must call _track_climb() the same as every real climb path, or the run-end 'highest climb' stat silently under-reports the peak")
+
+	# A later, LOWER climb must not erase the peak the fight already reached.
+	c.run("climb 4")
+	_expect(int(host._run.combat.players[0].foothold) == 4, "a later climb still overwrites the live foothold downward")
+	_expect(int(host._run.combat.highest_climb) == 16,
+		"highest_climb tracks the PEAK, so dropping foothold back down must not un-track a height already reached")
+
+	# Height is capped at the sigil (FOOTHOLD_MAX): nothing else in the engine
+	# can ever put a hunter above it, so the console must not either.
+	c.run("climb 999")
+	_expect(int(host._run.combat.players[0].foothold) == Combat.FOOTHOLD_MAX,
+		"climb clamps to FOOTHOLD_MAX the same as every other foothold-raising call site")
+	_expect(int(host._run.combat.highest_climb) == Combat.FOOTHOLD_MAX,
+		"highest_climb follows the clamped foothold, never an unclamped input")
 
 	Session.host = save_host
 	c.free()
