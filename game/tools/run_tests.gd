@@ -1408,6 +1408,14 @@ func _init() -> void:
 	_test_backlog86_hit_circle_chain_quality_is_its_worst_window_not_its_last()
 	_test_backlog86_hit_circle_process_times_out_a_silent_window_as_a_miss()
 	_test_backlog86_hit_circle_process_timeout_honors_zone_bonus()
+	# backlog #86 duty 3 (thirty-fifth pass): _fire()'s own comment promises a
+	# multi-note TAP chain speeds up after the first note lands ("the rest of
+	# the stream comes at tempo"), and note_hit -- the per-note signal every
+	# per-note UI reaction is wired off -- had zero coverage of its own.
+	_test_backlog86_hit_circle_second_note_of_a_tap_chain_approaches_at_stream_tempo()
+	_test_backlog86_hit_circle_third_note_of_a_tap_chain_stays_at_stream_tempo()
+	_test_backlog86_hit_circle_note_hit_fires_once_per_note_with_its_own_quality()
+	_test_backlog86_hit_circle_note_hit_reports_a_miss_when_the_window_times_out()
 	# backlog #86 duty 3: the thirty-second pass proved HitCircle's plain TAP
 	# grading, but begin()'s own `slider` argument (used for a climb card whose
 	# window is one held note rather than a series of taps -- combat_3d's
@@ -22123,6 +22131,91 @@ func _test_backlog86_hit_circle_process_timeout_honors_zone_bonus() -> void:
 	var quality := _hit_circle_fired_quality(hc)
 	_expect(quality == Combat.TIMING_GOOD,
 		"a tap inside the zone_bonus-widened window still grades GOOD after _process() ticks, not silently dropped by an early timeout")
+	hc.free()
+
+
+## backlog #86 duty 3 (thirty-fifth pass): _fire()'s own comment promises "the
+## rest of the stream comes at tempo: a shorter approach, but the SAME hit
+## window" after the first note of a multi-note TAP chain lands -- the thing
+## that is supposed to turn three notes into a stream you tap through rather
+## than three separate reaction tests. Grepping this whole file for
+## STREAM_BEAT before this pass found nothing outside hit_circle.gd itself:
+## every existing chain test (_hit_circle_chain_quality_is_its_worst_window)
+## sets `hc._t = hc._approach` by hand before firing the second note, which
+## passes identically whether _approach is still the full 0.80s
+## APPROACH_SECONDS or the shortened 0.34s STREAM_BEAT -- so the actual speed-
+## up this constant exists to cause had zero coverage. If a future edit
+## dropped the `_approach = STREAM_BEAT` line entirely (leaving the second
+## note approaching at the leisurely first-note pace), every test already in
+## this file would still pass.
+func _test_backlog86_hit_circle_second_note_of_a_tap_chain_approaches_at_stream_tempo() -> void:
+	var hc := HitCircle.new()
+	hc.begin(0.0, null, PackedVector3Array([Vector3.ZERO, Vector3.ONE]), false)
+	_expect(is_equal_approx(hc._approach, HitCircle.APPROACH_SECONDS),
+		"the first note of a chain gets the full approach, so the pattern can be read before tapping starts")
+	hc._t = hc._approach  # dead on the beat for note 0
+	hc._fire()
+	_expect(is_equal_approx(hc._t, 0.0),
+		"landing the first note of a chain resets the clock for the note behind it")
+	_expect(is_equal_approx(hc._approach, HitCircle.STREAM_BEAT),
+		"the SECOND note of a tap chain must approach at STREAM_BEAT (0.34s), not the full 0.80s first-note APPROACH_SECONDS -- without this a 'stream' is just the same slow prompt repeated")
+	hc.free()
+
+
+## The sibling case: a chain long enough to have a THIRD note must keep the
+## fast stream tempo rather than reverting to the leisurely first-note pace
+## once the second note lands -- proving the speed-up sticks for the whole
+## stream, not just the one note after the first.
+func _test_backlog86_hit_circle_third_note_of_a_tap_chain_stays_at_stream_tempo() -> void:
+	var hc := HitCircle.new()
+	hc.begin(0.0, null, PackedVector3Array([Vector3.ZERO, Vector3.ONE, Vector3(2, 0, 0)]), false)
+	hc._t = hc._approach
+	hc._fire()  # note 0 lands, note 1 now approaches at STREAM_BEAT
+	hc._t = hc._approach
+	hc._fire()  # note 1 lands
+	_expect(is_equal_approx(hc._approach, HitCircle.STREAM_BEAT),
+		"the THIRD note of a chain still approaches at STREAM_BEAT -- the tempo stays fast for the whole stream rather than reverting after one note")
+	hc.free()
+
+
+## backlog #86 duty 3: `note_hit` is a second signal HitCircle fires alongside
+## `resolved` -- "as each note in a chain lands, so the view can react per hit
+## rather than only at the end" -- and grepping this file for `note_hit`
+## before this pass found nothing: every existing test only listens for
+## `resolved`, which fires once per WINDOW, not once per NOTE. A chain's
+## individual per-note bursts (combat_3d's camera-follow judgement pop, per
+## the doc comment on `_burst_note`) are wired entirely off this signal, so a
+## regression that stopped it firing, or that reported the wrong index or
+## quality for a note, would be invisible to every test already in this file.
+func _test_backlog86_hit_circle_note_hit_fires_once_per_note_with_its_own_quality() -> void:
+	var hc := HitCircle.new()
+	hc.begin(0.0, null, PackedVector3Array([Vector3.ZERO, Vector3.ONE]), false)
+	var seen: Array = []
+	hc.note_hit.connect(func(index: int, quality: int) -> void: seen.append([index, quality]))
+	hc._t = hc._approach  # note 0: dead on the beat -> PERFECT
+	hc._fire()
+	_expect(seen.size() == 1 and seen[0][0] == 0 and seen[0][1] == Combat.TIMING_PERFECT,
+		"note_hit must fire for note index 0 with TIMING_PERFECT the instant a dead-on-beat tap lands on it")
+	hc._t = hc._approach + 0.13  # note 1: inside GOOD, outside PERFECT
+	hc._fire()
+	_expect(seen.size() == 2 and seen[1][0] == 1 and seen[1][1] == Combat.TIMING_GOOD,
+		"note_hit must fire again for note index 1 with its OWN quality (GOOD), independent of note 0's PERFECT")
+	hc.free()
+
+
+## The MISS half of note_hit: `_finish()` emits it too when a window times out
+## or a slider is dropped, with `_hits_done` as the index of the note that
+## never landed. Distinct code path from the tap-lands case above (`_fire()`
+## never runs here), so it needs its own proof.
+func _test_backlog86_hit_circle_note_hit_reports_a_miss_when_the_window_times_out() -> void:
+	var hc := HitCircle.new()
+	hc.begin(0.0, null, PackedVector3Array([Vector3.ZERO]), false)
+	var seen: Array = []
+	hc.note_hit.connect(func(index: int, quality: int) -> void: seen.append([index, quality]))
+	hc._t = hc._approach + HitCircle.GOOD_WINDOW + 0.08 + 0.001  # past the timeout cutoff
+	hc._process(0.0)
+	_expect(seen.size() == 1 and seen[0][0] == 0 and seen[0][1] == Combat.TIMING_MISS,
+		"a window that times out with no tap must still emit note_hit(0, TIMING_MISS), not just resolved() -- otherwise a per-note UI reaction never fires for a silent miss")
 	hc.free()
 
 
