@@ -511,6 +511,7 @@ func _init() -> void:
 	# content batch: strength, wound, multi-hit, leech
 	_test_strength_mechanic()
 	_test_wound_bleeds_the_titan()
+	_test_backlog86_wound_bleed_ignores_the_titans_own_block()
 	_test_flurry_multi_hit()
 	_test_multistrike_thorns_bites_back_once_per_hit()
 	_test_backlog86_dead_boss_stops_reflecting_thorns_mid_multihit()
@@ -681,6 +682,7 @@ func _init() -> void:
 	_test_backlog86_wound_target_falls_back_to_boss_when_enemy_index_is_out_of_range()
 	_test_add_artifact_wards_off_poison_landed_on_it()
 	_test_add_bleeds_from_its_own_poison_on_its_turn()
+	_test_backlog86_add_bleed_ignores_its_own_block()
 	_test_adds_round_trip_through_save_and_load()
 	_test_adds_reach_the_shared_snapshot()
 	_test_add_intent_reaches_the_shared_snapshot()
@@ -11633,6 +11635,31 @@ func _test_wound_bleeds_the_titan() -> void:
 	_expect(combat.boss.hp == 94, "Wound bleeds at the start of the Titan's turn")
 
 
+## backlog #86 duty 3: _enemy_turn()'s bleed tick carries its own inline
+## comment -- "bleed ignores the Titan's block" -- and subtracts straight from
+## `boss.hp`, never routing through Combatant.take_damage() (the one place
+## the Block -> Buffer -> Intangible -> Plated Armour cascade actually lives),
+## unlike every other damage source in this file. Every existing Wound test
+## leaves boss.block at its default of 0 when the tick fires, so none of them
+## can tell "bleed correctly bypasses Block" apart from "bleed just doesn't
+## know Block exists yet" -- both produce the same result with block=0. A
+## refactor that routed this tick through take_damage() (the natural-looking
+## change, since every other damage source already does) would silently flip
+## the documented rule and every current test would stay green. Block-move
+## and Plated-Armour beasts are exactly the case this rule exists to defeat --
+## without it, a Titan could out-armor a Poison/Wound archetype entirely.
+func _test_backlog86_wound_bleed_ignores_the_titans_own_block() -> void:
+	var boss := Boss.new("Bleeder", 100)
+	boss.moves = [{"type": "block", "value": 0}]  # harmless move
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	combat.boss.wound = 5
+	combat.boss.block = 20  # a big Block must not shield against the bleed tick
+	combat.end_turn(0)
+	combat.end_turn(1)  # enemy turn: bleed 5, straight through the 20 Block
+	_expect(combat.boss.hp == 95,
+		"Wound bleed subtracts straight from hp even behind a full Block")
+
+
 func _test_flurry_multi_hit() -> void:
 	var combat := _new_combat([_deck_of(_flurry, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
 	var before := combat.boss.hp
@@ -14512,6 +14539,27 @@ func _test_add_bleeds_from_its_own_poison_on_its_turn() -> void:
 	combat.end_turn(1)
 	_expect(add.hp == 26 and boss.hp == 300,
 		"an add bleeds from its own Poison at the start of its turn, same as the main boss does")
+
+
+## backlog #86 duty 3: the add's own bleed tick in _adds_turn() (combat.gd)
+## mirrors the main boss's -- straight `add.hp -= add.wound`, no
+## take_damage() cascade -- but sibling test
+## _test_add_bleeds_from_its_own_poison_on_its_turn() above also leaves
+## add.block at its default of 0, same untested-bypass gap the main boss's
+## own version has. Proves the add side of the same invariant independently,
+## since _adds_turn() is a separate code path from _enemy_turn() and a fix
+## or regression in one does not imply anything about the other.
+func _test_backlog86_add_bleed_ignores_its_own_block() -> void:
+	var boss2 := _dummy_boss(300, 0)  # 0-damage boss isolates the add's own bleed
+	var combat2 := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss2)
+	var add2 := Boss.new("Grub", 30)
+	add2.wound = 4
+	add2.block = 15  # a big Block must not shield the add against its own bleed tick
+	combat2.adds.append(add2)
+	combat2.end_turn(0)
+	combat2.end_turn(1)
+	_expect(add2.hp == 26 and boss2.hp == 300,
+		"an add's own bleed subtracts straight from hp even behind a full Block")
 
 
 ## backlog #89: _adds_turn() always sends a living add's "attack" at
