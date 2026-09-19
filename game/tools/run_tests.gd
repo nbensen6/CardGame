@@ -102,6 +102,8 @@ func _init() -> void:
 	_test_backlog86_full_clear_beats_every_acts_titan_before_won()
 	_test_backlog86_map_guarantees_a_shop_every_act()
 	_test_backlog86_shop_guarantee_lands_in_the_back_half_not_just_anywhere()
+	_test_backlog86_ensure_shop_falls_back_when_back_half_row_is_all_rest()
+	_test_backlog86_ensure_shop_falls_back_when_back_half_row_has_no_fight_event_treasure()
 	_test_backlog86_aligned_keeps_paths_straight_and_endpoints_pinned()
 	_test_backlog86_aligned_guards_singleton_rows()
 	_test_backlog86_run_map_available_before_start_and_out_of_bounds()
@@ -3194,6 +3196,74 @@ func _test_backlog86_shop_guarantee_lands_in_the_back_half_not_just_anywhere() -
 			break
 	_expect(ok, ("every act's shop guarantee lands in the back half, not just anywhere " +
 		"(failed seed %d act %d)") % [bad_seed, bad_act])
+
+
+## #86 duty 3 — _ensure_shop's own doc comment promises "falling back to any
+## node if the row is all rests" (run_map.gd:106-107), but neither existing
+## shop test above can tell that fallback branch apart from the ordinary
+## fight/event/treasure conversion: both only run full RunMap generation over
+## many seeds and check "a shop landed somewhere in the back half", which is
+## equally true whether the fallback fired or never needed to. The preboss
+## row (row_in_act >= ROWS_PER_ACT-1) can only roll rest/treasure/event/elite —
+## see _test_backlog86_type_for_roll_preboss_row_never_offers_fight_or_shop
+## below — so a back-half row of all rest (or rest+elite) is a real, reachable
+## shape in play, not a hypothetical one, and nothing pins what happens to it.
+## Calls _ensure_shop directly, mirroring the direct-call pattern already used
+## for _ensure_key_sources, so the RNG's row pick (3 or 4) doesn't matter: both
+## back-half rows are built all-rest, so whichever one is chosen must still
+## end up with exactly one shop rather than crashing on an empty `candidates`
+## array (`randi_range(0, -1)`) or silently placing none.
+func _test_backlog86_ensure_shop_falls_back_when_back_half_row_is_all_rest() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 11
+	var m := RunMap.new(0, RandomNumberGenerator.new())  # 0 acts: empty, act_rows built by hand below
+	var front: Array = [
+		[{"type": "fight", "act": 0, "next": []}],
+		[{"type": "fight", "act": 0, "next": []}],
+		[{"type": "fight", "act": 0, "next": []}],
+	]
+	var back_row_3: Array = [{"type": "rest", "act": 0, "next": []}, {"type": "rest", "act": 0, "next": []}]
+	var back_row_4: Array = [{"type": "rest", "act": 0, "next": []}, {"type": "rest", "act": 0, "next": []}]
+	var act_rows: Array = front + [back_row_3, back_row_4]
+	m._ensure_shop(act_rows, rng)
+	var shop_count := 0
+	var shop_in_back_half := true
+	for r in range(act_rows.size()):
+		for n in act_rows[r]:
+			if String((n as Dictionary)["type"]) == "shop":
+				shop_count += 1
+				if r < 3:
+					shop_in_back_half = false
+	_expect(shop_count == 1,
+		"an all-rest back half still gets exactly one shop from the fallback (got %d)" % shop_count)
+	_expect(shop_in_back_half, "the fallback-placed shop lands in the back half, not the front")
+
+
+## Companion to the test above: proves the fallback isn't accidentally scoped
+## to "the row is literally all rest" by mixing rest with elite (also absent
+## from _ensure_shop's fight/event/treasure preference list) across BOTH
+## back-half rows, so no fight/event/treasure exists anywhere for the RNG to
+## prefer regardless of which back-half row it lands on.
+func _test_backlog86_ensure_shop_falls_back_when_back_half_row_has_no_fight_event_treasure() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 23
+	var m := RunMap.new(0, RandomNumberGenerator.new())  # 0 acts: empty, act_rows built by hand below
+	var front: Array = [
+		[{"type": "fight", "act": 0, "next": []}],
+		[{"type": "fight", "act": 0, "next": []}],
+		[{"type": "fight", "act": 0, "next": []}],
+	]
+	var back_row_3: Array = [{"type": "elite", "act": 0, "next": []}, {"type": "rest", "act": 0, "next": []}]
+	var back_row_4: Array = [{"type": "rest", "act": 0, "next": []}, {"type": "elite", "act": 0, "next": []}]
+	var act_rows: Array = front + [back_row_3, back_row_4]
+	m._ensure_shop(act_rows, rng)
+	var shop_count := 0
+	for row in act_rows.slice(3):
+		for n in row:
+			if String((n as Dictionary)["type"]) == "shop":
+				shop_count += 1
+	_expect(shop_count == 1, ("a back half of only rest/elite nodes (no fight/event/treasure) " +
+		"still gets exactly one shop, not a crash or a no-op (got %d)") % shop_count)
 
 
 ## #86 duty 3 — RunMap._aligned's own doc comment claims it maps an index in a
