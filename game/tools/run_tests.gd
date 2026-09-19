@@ -177,6 +177,13 @@ func _init() -> void:
 	_test_backlog86_condition_bonus_grip_skips_climb_bonus_when_base_grip_is_zero()
 	_test_backlog86_card_fx_carries_condition_and_condition_bonus()
 	_test_backlog86_face_text_explains_a_conditional_bonus()
+	# backlog #86 duty 3: the test above only ever drives nth_card's printed
+	# value through n=3 (both shipped cards hardcode condition.value=3), so it
+	# only ever proves the trivial "3rd" case of _ordinal()'s own doc-promised
+	# general suffix rule. Nothing exercised 1st/2nd/4th, the 11th-13th
+	# exceptions, or a value above 20 -- exactly the cases a future beast-tier
+	# card with a different nth_card threshold would rely on.
+	_test_backlog86_ordinal_covers_every_suffix_branch_not_just_3rd()
 	_test_enchanted_copy_attaches_to_any_card()
 	_test_backlog86_enchanted_copy_replaces_rather_than_stacks()
 	_test_enchants_all_load()
@@ -4842,6 +4849,30 @@ func _test_backlog86_face_text_explains_a_conditional_bonus() -> void:
 	var climber_text := CardView.face_text(host._deck_face(climber, 0))
 	_expect(climber_text == "Climb 1. Above the sigil, climb 3 more.",
 		"a synthetic above_sigil+grip condition explains itself the same generic way, got: %s" % climber_text)
+
+
+## CardView._ordinal()'s own doc comment promises a GENERAL English ordinal
+## suffix rule ("1st, 2nd, 3rd, 4th, 11th-13th exceptions") specifically so
+## that "a beast-tier card authored with a different threshold reads
+## correctly without a matching code change." But the only two shipped
+## nth_card cards (dagger, brace) both hardcode condition.value=3, so every
+## existing test that touches this function -- indirectly, through
+## face_text() -- only ever drives n=3 through it. The 1st/2nd/4th branches
+## and the 11th-13th exception window (where a naive `n % 10` suffix lookup
+## would wrongly print "11st"/"12nd"/"13rd") have never been exercised.
+func _test_backlog86_ordinal_covers_every_suffix_branch_not_just_3rd() -> void:
+	_expect(CardView._ordinal(1) == "1st", "1 takes the st suffix")
+	_expect(CardView._ordinal(2) == "2nd", "2 takes the nd suffix")
+	_expect(CardView._ordinal(3) == "3rd", "3 takes the rd suffix, the only value any shipped card exercises")
+	_expect(CardView._ordinal(4) == "4th", "4 falls through to the default th suffix")
+	_expect(CardView._ordinal(11) == "11th", "11 is the first of the 11-13 exception window, not 11st")
+	_expect(CardView._ordinal(12) == "12th", "12 is in the exception window, not 12nd")
+	_expect(CardView._ordinal(13) == "13th", "13 is the last of the exception window, not 13rd")
+	_expect(CardView._ordinal(21) == "21st", "21 leaves the exception window and resumes the st/nd/rd rule")
+	_expect(CardView._ordinal(22) == "22nd", "22 resumes the nd rule past the exception window")
+	_expect(CardView._ordinal(101) == "101st", "a value with its own tens/hundreds digits still keys off n % 10")
+	_expect(CardView._ordinal(111) == "111th", "111 hits a SECOND 11-13 exception window (111 % 100 == 11)")
+	_expect(CardView._ordinal(113) == "113th", "113 hits the same second exception window at its far edge")
 
 
 ## The enchant engine (backlog #12): one generic copy trick, same shape as
