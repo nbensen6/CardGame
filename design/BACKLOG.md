@@ -2846,7 +2846,31 @@ rather than inventing work.
 
 Newest first. One line per finished item: what, and anything surprising.
 
-- **2026-09-19 (latest) — #86 duty 3: proved the jetpack's foothold jump respects `Combat.FOOTHOLD_MAX`, the same ceiling every other climb site in `combat.gd` already clamps to.** Last commit
+- **2026-09-19 (latest) — #86 duty 2: `Card.archetype_tags()` had no branch for `hits_all_enemies` (Cleave), the same "an entire tag missing" shape as the reach/scry/draw/build fixes already logged for this rotation.** Last
+  commit (`04ab7ac`, the jetpack foothold clamp) was duty 3, so this run took
+  duty 2. A dispatched Explore pass grepped every consumer of fields shared
+  between `Card.archetype_tags()` (feeds `Run._tag_counts()` /
+  `reward_weight()`, backlog #72's reward-lean) and `GameHost._keywords_of()`
+  (feeds the tap-to-inspect panel) for one that grew a field the other never
+  learned. `_keywords_of()` already tags `hits_all_enemies` as `"cleave"`
+  (added alongside the tap-to-inspect panel); `archetype_tags()` never grew
+  the matching branch, so Sweeping Strike (base kit) and a campfire-sharpened
+  Piston Punch (`rule_upgrade.hits_all_enemies`) — two real, shipped cards —
+  rolled through `reward_pool()` with an empty tag array and gave each other
+  zero reward-lean, exactly like the four sibling gaps (reach/scry/draw/build)
+  already closed earlier in this same rotation and for the identical reason:
+  a hand-copied field list drifts every time a new mechanic lands in one
+  consumer and not the other. Wrote
+  `_test_backlog86_archetype_tags_recognise_hits_all_enemies_as_cleave` first
+  — asserts Sweeping Strike tags `cleave` alone, that base Piston Punch does
+  NOT tag `cleave` before sharpening, that its `upgraded_copy()` does after,
+  and the same reward-weight-rises-with-a-matching-deck check the sibling
+  fixes use — watched it fail on the untagged card, then added
+  `if hits_all_enemies: tags.append("cleave")` to `archetype_tags()`
+  (`card.gd`). Full suite green (`ALL TESTS PASSED`) after the fix; no other
+  behaviour changed.
+
+- **2026-09-19 — #86 duty 3: proved the jetpack's foothold jump respects `Combat.FOOTHOLD_MAX`, the same ceiling every other climb site in `combat.gd` already clamps to.** Last commit
   (`740f003`, `GameHost._card_fx()` dropping a card's own `condition`/
   `condition_bonus`) was duty 2, so this run took duty 3. Nick's own example
   for this duty was the hunters' jump/climb logic, so an Explore pass swept

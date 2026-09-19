@@ -507,4 +507,17 @@ func archetype_tags() -> Array:
 	# mechanical family in the game.
 	if create != "":
 		tags.append("build")
+	# backlog #86 duty 2: the same "no tag for this mechanical family at all"
+	# gap the reach/scry/draw/build fixes above closed — hits_all_enemies
+	# (Cleave, backlog: sweeping_strike's base kit and piston_punch's
+	# campfire rule_upgrade) was never given a branch here either, even
+	# though GameHost._keywords_of() already groups it under one keyword,
+	# "cleave" (game_host.gd), for the tap-to-inspect panel. Sweeping Strike
+	# (cards.json: damage 8, hits_all_enemies, nothing else archetype-tagged)
+	# rolled through reward_pool() with an empty tag array: a hunter who'd
+	# drafted it got no reward-lean (backlog #72) toward drawing a
+	# campfire-sharpened Piston Punch, or vice versa, unlike every other
+	# mechanical family in the game.
+	if hits_all_enemies:
+		tags.append("cleave")
 	return tags

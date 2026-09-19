@@ -242,6 +242,7 @@ func _init() -> void:
 	_test_backlog86_archetype_tags_recognise_scry_cards()
 	_test_backlog86_archetype_tags_recognise_draw_cards()
 	_test_backlog86_archetype_tags_recognise_create_cards_as_build()
+	_test_backlog86_archetype_tags_recognise_hits_all_enemies_as_cleave()
 	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
 	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
@@ -6617,6 +6618,43 @@ func _test_backlog86_archetype_tags_recognise_create_cards_as_build() -> void:
 	_expect(leaned_weight4 > flat_weight4,
 		"Build Grapple's reward weight rises for a Build-heavy deck now that it carries the build tag [flat=%s leaned=%s]"
 			% [flat_weight4, leaned_weight4])
+
+
+## Backlog #86 duty 2: the identical "no tag for this mechanical family at
+## all" gap the reach/scry/draw/build fixes above closed — hits_all_enemies
+## (Cleave) never got a branch either. Sweeping Strike (cards.json: damage 8,
+## hits_all_enemies, nothing else archetype-tagged) rolled through
+## reward_pool() with an empty tag array, and a campfire-sharpened Piston
+## Punch (rule_upgrade.hits_all_enemies) got no reward-lean toward it either,
+## unlike every other mechanical family in the game.
+func _test_backlog86_archetype_tags_recognise_hits_all_enemies_as_cleave() -> void:
+	var sweeping_strike_tags: Array = Content.card_tags("sweeping_strike")
+	_expect(sweeping_strike_tags.has("cleave") and sweeping_strike_tags.size() == 1,
+		"Sweeping Strike (hits_all_enemies, plain damage) is tagged cleave and nothing else [tags=%s]"
+			% [sweeping_strike_tags])
+
+	var piston_punch: Card = Content.make_card("piston_punch")
+	_expect(not piston_punch.archetype_tags().has("cleave"),
+		"Piston Punch is not tagged cleave before its campfire rule_upgrade applies [tags=%s]"
+			% [piston_punch.archetype_tags()])
+	var sharpened_piston_punch: Card = piston_punch.upgraded_copy()
+	_expect(sharpened_piston_punch.archetype_tags().has("cleave"),
+		"A campfire-sharpened Piston Punch (rule_upgrade.hits_all_enemies) is tagged cleave [tags=%s]"
+			% [sharpened_piston_punch.archetype_tags()])
+
+	# reward-lean end to end, same shape as the reach/scry/draw/build checks
+	# above: a deck already carrying Cleave gives Sweeping Strike a real lean
+	# bonus now that it is tagged, where before its empty tag array meant
+	# reward_weight()'s tag_bonus loop never ran no matter how many Cleave
+	# cards were already in the deck.
+	var run := _map_run()
+	var cleave_deck_tags: Dictionary = run._tag_counts(_deck_of(Callable(Content, "make_card").bind("sweeping_strike"), 10))
+	var sweeping_strike_rarity: String = Content.card_rarity("sweeping_strike")
+	var flat_weight5: int = Run.reward_weight(sweeping_strike_rarity, sweeping_strike_tags, {})
+	var leaned_weight5: int = Run.reward_weight(sweeping_strike_rarity, sweeping_strike_tags, cleave_deck_tags)
+	_expect(leaned_weight5 > flat_weight5,
+		"Sweeping Strike's reward weight rises for a Cleave-heavy deck now that it carries the cleave tag [flat=%s leaned=%s]"
+			% [flat_weight5, leaned_weight5])
 
 
 ## Backlog #72: a card reward roll should lean toward the archetype a hunter is
