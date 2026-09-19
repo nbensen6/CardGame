@@ -1969,6 +1969,7 @@ func _adds_turn(captured_moves: Array = []) -> void:
 		add.advance_move()
 
 func _draw(ps: PlayerState, n: int) -> void:
+	var reshuffled := false
 	for _i in n:
 		if ps.draw_pile.is_empty():
 			if ps.discard_pile.is_empty():
@@ -1976,7 +1977,18 @@ func _draw(ps: PlayerState, n: int) -> void:
 			ps.draw_pile = ps.discard_pile.duplicate()
 			ps.discard_pile.clear()
 			_shuffle(ps.draw_pile)
+			reshuffled = true
 		ps.hand.append(ps.draw_pile.pop_back())
+	# backlog #86 duty 2: same fix as _peek_top()'s own reshuffle-mid-batch
+	# case just below — a reshuffle here REPLACES ps.draw_pile outright, so a
+	# scry_floor recorded before this draw (an open Scry batch, ps.scry_floor
+	# >= 0) now indexes into a pile it was never measured against. _peek_top()
+	# was re-anchored for its own reshuffle; a plain draw effect (the far more
+	# common trigger — any card or potion that draws while a batch is open)
+	# was not, so kept cards from resolve_scry() silently landed at the bottom
+	# of the fresh pile instead of "next to draw" as promised.
+	if reshuffled and ps.scry_floor >= 0:
+		ps.scry_floor = ps.draw_pile.size()
 
 ## Backlog #62 (discard as a cost): throw `n` random cards from hand into the
 ## discard pile — through `_rng` so it stays deterministic under a seed the

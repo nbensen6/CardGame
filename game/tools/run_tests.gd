@@ -814,6 +814,7 @@ func _init() -> void:
 	_test_backlog86_ending_the_turn_does_not_strand_an_unresolved_scry()
 	_test_backlog86_peek_top_reshuffles_discard_mid_call()
 	_test_backlog86_scry_floor_survives_a_reshuffle_mid_open_batch()
+	_test_backlog86_scry_floor_survives_a_reshuffle_from_a_plain_draw()
 	# Reaching into the draw pile (backlog #68): put a card on top, shuffle one
 	# in, pull a named one out — the draw pile's order stops being pure luck.
 	_test_backlog68_topdeck_puts_a_card_on_top_of_the_draw_pile()
@@ -17894,6 +17895,48 @@ func _test_backlog86_scry_floor_survives_a_reshuffle_mid_open_batch() -> void:
 	# are sitting in discard_pile by the time the reshuffle scoops it up).
 	_expect(ps.draw_pile.size() == 9,
 		"no card is lost across the reshuffle: everything ends up back in draw_pile [got %d]" % [ps.draw_pile.size()])
+
+
+## _peek_top() was re-anchored for its OWN reshuffle (the test above), but a
+## reshuffle can just as easily happen inside a plain `_draw()` — any card or
+## potion that draws — while a scry batch sits open, and _draw() never got
+## the same fix (#86 duty 2). Without it, resolve_scry() reinserts the kept
+## card at the STALE floor into a pile it was never measured against, burying
+## it deep instead of leaving it "next to draw" as the mechanic promises.
+func _test_backlog86_scry_floor_survives_a_reshuffle_from_a_plain_draw() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var a := Card.from_dict({"id": "a", "name": "A", "type": "skill", "cost": 0})
+	var b := Card.from_dict({"id": "b", "name": "B", "type": "skill", "cost": 0})
+	ps.draw_pile = [a, b]   # b is the "top" — pop_back() draws it first
+	var discard_cards: Array = []
+	for id in ["x", "y", "z", "w", "v"]:
+		discard_cards.append(Card.from_dict({"id": id, "name": id, "type": "skill", "cost": 0}))
+	ps.discard_pile = discard_cards.duplicate()
+	ps.hand = [
+		Card.from_dict({"id": "scry1", "name": "Scry1", "type": "skill", "cost": 0, "scry": 1}),
+		Card.from_dict({"id": "draw2", "name": "Draw2", "type": "skill", "cost": 0, "draw": 2}),
+	]
+	ps.energy = 0
+
+	combat.play_card(0, 0)   # scries b; draw_pile=[a] left, floor stamped at 1
+	_expect(ps.scry_pending.size() == 1 and ps.scry_floor == 1,
+		"the scry peeks b and stamps the floor at the pile's remaining size")
+
+	combat.play_card(0, 0)   # Draw2 slid to index 0 — a PLAIN draw, no scry of its own,
+	# but it drains the last card (a) and then reshuffles the discard pile mid-call.
+	_expect(ps.discard_pile.is_empty() and ps.hand.size() == 2,
+		"the plain draw drains the rest of draw_pile and reshuffles the discard pile mid-call")
+	_expect(ps.scry_floor == ps.draw_pile.size(),
+		"a reshuffle inside a plain draw re-anchors scry_floor to the fresh pile instead of leaving it pointed at the old one [floor=%d draw_pile=%d]"
+			% [ps.scry_floor, ps.draw_pile.size()])
+
+	var ok := combat.resolve_scry(0, [])   # keep everything
+	_expect(ok and ps.scry_pending.is_empty(), "resolve_scry clears the merged reveal")
+	_expect(not ps.draw_pile.is_empty() and (ps.draw_pile[ps.draw_pile.size() - 1] as Card).id == "b",
+		"b was the next card before the scry ever happened, so with the floor correctly re-anchored "
+		+ "it must still be the very next card drawn -- not buried under the reshuffled pile [got %s]"
+			% [_ids_of(ps.draw_pile)])
 
 
 func _test_backlog59_resolve_scry_validates_bad_input() -> void:
