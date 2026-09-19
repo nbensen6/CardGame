@@ -254,6 +254,7 @@ func _init() -> void:
 	_test_backlog86_archetype_tags_recognise_hits_all_enemies_as_cleave()
 	_test_backlog86_archetype_tags_recognise_taunt_cards()
 	_test_backlog86_archetype_tags_recognise_timed_and_multistrike_cards()
+	_test_backlog86_archetype_tags_recognise_prepare_cards_as_prime()
 	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
 	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
@@ -6908,6 +6909,42 @@ func _test_backlog86_archetype_tags_recognise_timed_and_multistrike_cards() -> v
 	_expect(leaned_weight7 > flat_weight7,
 		"a timed-only card's reward weight rises for a timed-heavy deck now that it carries the timed tag [flat=%s leaned=%s]"
 			% [flat_weight7, leaned_weight7])
+
+
+## Backlog #86 duty 2: the same "no tag for this mechanical family at all"
+## gap the reach/scry/draw/build/cleave/taunt/timed/multistrike fixes above
+## closed — prepare (GameHost._keywords_of() already groups `prepare != ""`
+## under its own "prime" keyword id for the tap-to-inspect panel) never got a
+## matching branch in archetype_tags(). goblin_jetpack (cards.json: prepare
+## "jetpack", nothing else archetype-tagged) is the only shipped card carrying
+## `prepare`, so it rolled through reward_pool() with an empty tag array: a
+## hunter who'd drafted it got no reward-lean (backlog #72) toward drawing it
+## again, unlike every other mechanical family in the game.
+func _test_backlog86_archetype_tags_recognise_prepare_cards_as_prime() -> void:
+	var prime_only := Card.new()
+	prime_only.prepare = "jetpack"
+	var prime_only_tags: Array = prime_only.archetype_tags()
+	_expect(prime_only_tags.has("prime") and prime_only_tags.size() == 1,
+		"a bare card with only prepare set is tagged prime and nothing else [tags=%s]" % [prime_only_tags])
+
+	var jetpack_tags: Array = Content.card_tags("goblin_jetpack")
+	_expect(jetpack_tags.has("prime") and jetpack_tags.size() == 1,
+		"Goblin Jetpack (prepare only, nothing else) is tagged prime [tags=%s]" % [jetpack_tags])
+
+	# reward-lean end to end, same shape as the reach/scry/draw/build/cleave/
+	# taunt/timed checks above.
+	var prime_deck: Array = []
+	for _i in range(10):
+		var c := Card.new()
+		c.prepare = "jetpack"
+		prime_deck.append(c)
+	var run8 := _map_run()
+	var prime_deck_tags: Dictionary = run8._tag_counts(prime_deck)
+	var flat_weight8: int = Run.reward_weight("rare", jetpack_tags, {})
+	var leaned_weight8: int = Run.reward_weight("rare", jetpack_tags, prime_deck_tags)
+	_expect(leaned_weight8 > flat_weight8,
+		"Goblin Jetpack's reward weight rises for a prime-heavy deck now that it carries the prime tag [flat=%s leaned=%s]"
+			% [flat_weight8, leaned_weight8])
 
 
 ## Backlog #72: a card reward roll should lean toward the archetype a hunter is

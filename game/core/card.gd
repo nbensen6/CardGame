@@ -556,4 +556,17 @@ func archetype_tags() -> Array:
 	# unlike every other mechanical family in the game.
 	if hits > 1:
 		tags.append("multistrike")
+	# backlog #86 duty 2: the same "no tag for this mechanical family at all"
+	# gap the reach/scry/draw/build/cleave/taunt/timed/multistrike fixes above
+	# closed — prepare (the Goblin Jetpack's prime-this-turn-fire-next-turn
+	# mechanic) was never given a branch either, even though
+	# GameHost._keywords_of() already groups `prepare != ""` under its own
+	# "prime" keyword id for the tap-to-inspect panel. goblin_jetpack
+	# (cards.json: prepare "jetpack", nothing else archetype-tagged) is the
+	# only shipped card carrying `prepare`, so it rolled through
+	# reward_pool() with an empty tag array: a hunter who'd drafted it got no
+	# reward-lean (backlog #72) toward drawing it again, unlike every other
+	# mechanical family in the game.
+	if prepare != "":
+		tags.append("prime")
 	return tags
