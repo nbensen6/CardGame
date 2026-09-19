@@ -1116,6 +1116,10 @@ func _init() -> void:
 	_test_backlog86_stand_at_is_the_trailhead_on_the_previous_acts_titan()
 	_test_backlog86_stand_at_centres_the_first_row_of_the_act_on_the_hex_grid()
 	_test_backlog86_stand_at_counts_act_index_from_rows_of_other_acts_too()
+	# backlog #86 duty 3: _mesh_children, _height_of's own tree-walk, needs no
+	# live scene tree (it takes a detached node directly), so it stays here
+	# rather than joining _height_of's own tests in the deferred batch below.
+	_test_backlog86_mesh_children_finds_nested_meshes_and_skips_bare_nodes()
 	# backlog #86 duty 3 (forty-first pass): _hex_x, the function stand_at and
 	# _lay_field both build their world positions from, had zero coverage of
 	# its own -- every existing test only ever calls it through stand_at with
@@ -1974,6 +1978,12 @@ func _init() -> void:
 func _finish_with_deferred_tests() -> void:
 	_test_backlog86_merged_aabb_merges_meshes_through_their_global_transform()
 	_test_backlog86_merged_aabb_falls_back_to_a_default_box_with_no_meshes()
+	# backlog #86 duty 3: _height_of, the measurement that floats a hex tile's
+	# landmark label above its model, had zero coverage -- see the tests' own
+	# comment. Deferred for the same reason the merged_aabb pair above is: it
+	# reads global_transform through `root`, not a detached node.
+	_test_backlog86_height_of_measures_the_tallest_mesh_in_world_space()
+	_test_backlog86_height_of_is_zero_with_no_mesh_anywhere()
 	_test_backlog86_music_refresh_stops_playback_the_instant_you_mute()
 	_test_backlog86_fit_shrinks_the_logical_viewport_on_handheld()
 	_test_backlog86_fit_resets_the_logical_viewport_on_desktop()
@@ -20522,6 +20532,61 @@ func _test_backlog86_stand_at_counts_act_index_from_rows_of_other_acts_too() -> 
 	var rows: Array = [_row_of(1, 2), _row_of(0, 2), _row_of(0, 2)]
 	var pos: Vector3 = Overworld3D.stand_at(rows, 0, 2, 0)
 	_expect(pos == Vector3(-1.0, Overworld3D.TILE_TOP, -2.0 * Overworld3D.ROW_STEP), "the act-index used for hex_row counts only rows that belong to the act being drawn, skipping the unrelated row ahead of them")
+
+
+## backlog #86 duty 3 -- _height_of/_mesh_children, lifted static out of
+## Overworld3D the same way combat_3d's _merged_aabb/_all_meshes were: every
+## hex tile's landmark label is floated above the model by this measurement
+## (see the call site in _lay_field), and it had zero coverage anywhere in
+## this suite. Unlike _merged_aabb it has no fallback box -- an empty tree
+## reads 0.0 -- which the third test below proves directly, since that is
+## the "first call, empty collection" shape most likely to hide a bug.
+func _ow_mesh_box(size: Vector3) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = size
+	mi.mesh = box
+	return mi
+
+
+func _test_backlog86_height_of_measures_the_tallest_mesh_in_world_space() -> void:
+	var landmark := Node3D.new()
+	root.add_child(landmark)
+	var low := _ow_mesh_box(Vector3(1, 1, 1))  # local AABB y: -0.5 to 0.5
+	low.position = Vector3(0, 0.5, 0)  # world top at y = 1.0
+	landmark.add_child(low)
+	var rig := Node3D.new()
+	rig.position = Vector3(0, 2.0, 0)  # a rig offset, same shape as a real climb rig
+	landmark.add_child(rig)
+	var tall := _ow_mesh_box(Vector3(1, 1, 1))
+	tall.position = Vector3(0, 0.5, 0)  # world top at y = 2.0 + 1.0 = 3.0, only reachable through the rig's own transform
+	rig.add_child(tall)
+	_expect(is_equal_approx(Overworld3D._height_of(landmark), 3.0),
+		"_height_of reads the TALLEST mesh's top through its full world transform, not just the shallowest child")
+	landmark.queue_free()
+
+
+func _test_backlog86_mesh_children_finds_nested_meshes_and_skips_bare_nodes() -> void:
+	var root_node := Node3D.new()
+	var direct := _ow_mesh_box(Vector3.ONE)
+	root_node.add_child(direct)
+	var organizer := Node3D.new()  # a bare node with no mesh of its own
+	root_node.add_child(organizer)
+	var nested := _ow_mesh_box(Vector3.ONE)
+	organizer.add_child(nested)
+	var found: Array = Overworld3D._mesh_children(root_node)
+	_expect(found.size() == 2 and found.has(direct) and found.has(nested),
+		"_mesh_children finds a mesh nested under an organizing node just as readily as one hung directly off the root")
+	root_node.free()
+
+
+func _test_backlog86_height_of_is_zero_with_no_mesh_anywhere() -> void:
+	var landmark := Node3D.new()
+	root.add_child(landmark)
+	landmark.add_child(Node3D.new())  # a landmark whose model failed to build any mesh
+	_expect(is_equal_approx(Overworld3D._height_of(landmark), 0.0),
+		"a landmark with no mesh anywhere under it measures a flat 0.0 rather than erroring -- the caller has no guard of its own for this, so its label would sit flush with the tile top")
+	landmark.queue_free()
 
 
 ## backlog #86 duty 3 (forty-first pass) -- _hex_x, lifted out of nothing (it

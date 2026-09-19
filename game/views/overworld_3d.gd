@@ -647,7 +647,19 @@ static func nearest_open_node_on_screen(nodes: Dictionary, screen_positions: Dic
 
 ## The cast models are all different sizes, so measure rather than assume — in
 ## the instance's own space, since the meshes sit under transformed parents.
-func _height_of(node: Node3D) -> float:
+## Lifted static (#86 duty 3), the same move already made for combat_3d's
+## sibling pair _merged_aabb/_all_meshes: both walk a model tree summing mesh
+## extents through global_transform, but this one only ever wants the highest
+## point (where a hex tile's label sits above its landmark), not a full AABB —
+## and unlike _merged_aabb it has no fallback default. A node with no mesh
+## anywhere under it (the null-check at the one call site only guards a null
+## NODE, not a real node whose landmark failed to build any mesh) returns a
+## flat 0.0, which the caller adds straight into the label's Y position with
+## no guard of its own — a landmark tile with a broken model would put its
+## name flush with the tile top rather than floating above the model, not a
+## crash but a silent placement bug of exactly the "first call, empty
+## collection" shape Hard Rule 10's bug families call out.
+static func _height_of(node: Node3D) -> float:
 	var top := 0.0
 	for m in _mesh_children(node):
 		var mi: MeshInstance3D = m
@@ -656,7 +668,7 @@ func _height_of(node: Node3D) -> float:
 	return top
 
 
-func _mesh_children(node: Node) -> Array:
+static func _mesh_children(node: Node) -> Array:
 	var out: Array = []
 	if node is MeshInstance3D:
 		out.append(node)
