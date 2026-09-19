@@ -2001,6 +2001,7 @@ func _discard_random(ps: PlayerState, n: int) -> int:
 ## would be drawn, same order _draw() would have taken them in.
 func _peek_top(ps: PlayerState, n: int) -> Array:
 	var out: Array = []
+	var reshuffled := false
 	for _i in n:
 		if ps.draw_pile.is_empty():
 			if ps.discard_pile.is_empty():
@@ -2008,7 +2009,19 @@ func _peek_top(ps: PlayerState, n: int) -> Array:
 			ps.draw_pile = ps.discard_pile.duplicate()
 			ps.discard_pile.clear()
 			_shuffle(ps.draw_pile)
+			reshuffled = true
 		out.append(ps.draw_pile.pop_back())
+	# backlog #86 duty 2: a reshuffle REPLACES ps.draw_pile outright with a fresh
+	# array built from the discard pile — so a scry_floor recorded during an
+	# EARLIER peek of this same open batch (play_card() only sets it on the
+	# first peek; see its own comment) now indexes into a pile it was never
+	# measured against. Left alone, resolve_scry() reinserts the kept cards
+	# partway down the new pile instead of "next to draw" as promised. Only
+	# re-anchor when a batch is already open (ps.scry_floor >= 0) — the first
+	# peek of a fresh batch sets its own floor right after this call returns,
+	# reshuffle or not, and that path already worked.
+	if reshuffled and ps.scry_floor >= 0:
+		ps.scry_floor = ps.draw_pile.size()
 	return out
 
 ## Backlog #59: the player's decision after a Scry reveal — bin any of the

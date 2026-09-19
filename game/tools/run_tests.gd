@@ -791,6 +791,7 @@ func _init() -> void:
 	_test_backlog86_topdeck_played_during_an_open_scry_still_draws_next()
 	_test_backlog86_ending_the_turn_does_not_strand_an_unresolved_scry()
 	_test_backlog86_peek_top_reshuffles_discard_mid_call()
+	_test_backlog86_scry_floor_survives_a_reshuffle_mid_open_batch()
 	# Reaching into the draw pile (backlog #68): put a card on top, shuffle one
 	# in, pull a named one out — the draw pile's order stops being pure luck.
 	_test_backlog68_topdeck_puts_a_card_on_top_of_the_draw_pile()
@@ -17230,6 +17231,58 @@ func _test_backlog86_peek_top_reshuffles_discard_mid_call() -> void:
 	seen.erase("top")
 	_expect(seen.keys().size() == 3 and seen.has("d0") and seen.has("d1") and seen.has("d2"),
 		"every reshuffled discard card ends up revealed or still in the pile, none lost or duplicated")
+
+
+## #86 duty 2: scry_floor is only stamped on the FIRST peek of an open batch
+## (play_card()'s own comment) — every later peek of the same batch trusts
+## that stale index. That's fine as long as the pile it indexes never
+## changes identity, but _peek_top() REPLACES ps.draw_pile outright with a
+## freshly shuffled copy of the discard pile the moment it runs dry mid-call.
+## Nothing re-anchored scry_floor to that new array, so resolve_scry() went on
+## inserting kept cards at an index measured against a pile that no longer
+## existed — burying them partway down the reshuffled deck instead of "next
+## to draw" as promised, with no test ever combining a reshuffle with an
+## already-open scry batch (the reshuffle test above always starts a fresh
+## one). Reachable with two scry cards played back to back once the draw pile
+## is thin — e.g. Peer Ahead then Read The Climb late in a fight.
+func _test_backlog86_scry_floor_survives_a_reshuffle_mid_open_batch() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var a := Card.from_dict({"id": "a", "name": "A", "type": "skill", "cost": 0})
+	var b := Card.from_dict({"id": "b", "name": "B", "type": "skill", "cost": 0})
+	ps.draw_pile = [a, b]   # b is the "top" — pop_back() draws it first
+	var discard_cards: Array = []
+	for id in ["x", "y", "z", "w", "v"]:
+		discard_cards.append(Card.from_dict({"id": id, "name": id, "type": "skill", "cost": 0}))
+	ps.discard_pile = discard_cards.duplicate()
+	ps.hand = [
+		Card.from_dict({"id": "scry1", "name": "Scry1", "type": "skill", "cost": 0, "scry": 1}),
+		Card.from_dict({"id": "scry3", "name": "Scry3", "type": "skill", "cost": 0, "scry": 3}),
+	]
+	ps.energy = 0
+
+	combat.play_card(0, 0)   # scries b; draw_pile=[a] left, no reshuffle yet
+	_expect(ps.scry_pending.size() == 1 and ps.scry_floor == 1,
+		"the first scry peeks b and stamps the floor at the pile's remaining size")
+
+	combat.play_card(0, 0)   # Scry3 slid to index 0 — peeks a, then reshuffles discard_pile mid-call
+	_expect(ps.scry_pending.size() == 4 and ps.discard_pile.is_empty(),
+		"the second scry drains the rest of draw_pile and reshuffles the discard pile mid-call")
+	_expect(ps.scry_floor == ps.draw_pile.size(),
+		"a reshuffle mid-batch re-anchors scry_floor to the fresh pile instead of leaving it pointed at the old one [floor=%d draw_pile=%d]"
+			% [ps.scry_floor, ps.draw_pile.size()])
+
+	var ok := combat.resolve_scry(0, [])   # keep everything
+	_expect(ok and ps.scry_pending.is_empty(), "resolve_scry clears the merged reveal")
+	_expect(not ps.draw_pile.is_empty() and (ps.draw_pile[ps.draw_pile.size() - 1] as Card).id == "b",
+		"b was the next card before either scry ever happened, so with nothing else touching the pile "
+		+ "it must still be the very next card drawn -- not buried under the reshuffled batch [got %s]"
+			% [_ids_of(ps.draw_pile)])
+	# 9 total: a, b, the 5 discard-pile fillers, and the two scry cards
+	# themselves (each discards on play, ahead of its own scry effect, so both
+	# are sitting in discard_pile by the time the reshuffle scoops it up).
+	_expect(ps.draw_pile.size() == 9,
+		"no card is lost across the reshuffle: everything ends up back in draw_pile [got %d]" % [ps.draw_pile.size()])
 
 
 func _test_backlog59_resolve_scry_validates_bad_input() -> void:
