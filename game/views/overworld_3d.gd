@@ -459,6 +459,21 @@ func _add_label(pos: Vector3, text: String, big: bool, hex_row: int,
 	_field.add_child(l)
 
 
+## The pure geometry behind the opening shot: given how many rows the act's
+## field has, where should the establishing camera sit? Lifted out of
+## _frame_camera so it can be proven from headless, the same way
+## route_between_rungs was lifted out of combat_3d._route_between — every
+## input here is the one int, no scene tree involved.
+static func frame_for_rows(row_count: int, row_step: float) -> Dictionary:
+	var depth := (row_count - 1) * 2.0 * row_step
+	var pivot := Vector3(0.0, 0.0, -depth * 0.55)
+	var off := Vector3(0.0, depth * 0.70 + 2.4, depth * 0.50 + 1.9) - pivot
+	var dist: float = off.length()
+	var pitch := asin(clampf(off.y / maxf(dist, 0.001), -1.0, 1.0))
+	var yaw := atan2(off.x, off.z)
+	return {"pivot": pivot, "dist": dist, "pitch": pitch, "yaw": yaw}
+
+
 ## The opening shot over the region, re-expressed as an orbit so the player can
 ## take it over. The numbers are the framing this always had — derived into
 ## yaw/pitch/distance rather than replaced, so the default view is unchanged and
@@ -472,13 +487,12 @@ func _frame_camera(row_count: int) -> void:
 		return
 	_framed_act = _act
 	_user_framed = false
-	var depth := (row_count - 1) * 2.0 * ROW_STEP
-	_pivot = Vector3(0.0, 0.0, -depth * 0.55)
-	var off := Vector3(0.0, depth * 0.70 + 2.4, depth * 0.50 + 1.9) - _pivot
-	_dist = off.length()
+	var framing := frame_for_rows(row_count, ROW_STEP)
+	_pivot = framing["pivot"]
+	_dist = framing["dist"]
 	_home_dist = _dist
-	_pitch = asin(clampf(off.y / maxf(_dist, 0.001), -1.0, 1.0))
-	_yaw = atan2(off.x, off.z)
+	_pitch = framing["pitch"]
+	_yaw = framing["yaw"]
 	_apply_orbit()
 
 

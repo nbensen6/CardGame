@@ -2034,6 +2034,19 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_all_meshes_finds_nested_meshes_and_skips_bare_nodes()
 	_test_backlog86_all_meshes_is_empty_with_nothing_to_find()
 
+	# backlog #86 duty 3 (fifty-second pass): overworld_3d.frame_for_rows, the
+	# pure geometry behind _frame_camera's establishing shot over the run map,
+	# had zero coverage. Every hex-field act gets its opening camera position
+	# from this: how far back and how high the camera sits scales with how
+	# many rows the act has, so a one-fight act and a sprawling one both open
+	# framed on the whole field rather than showing empty ground or clipping
+	# through the far rows.
+	_test_backlog86_frame_for_rows_centres_a_single_row_close_up()
+	_test_backlog86_frame_for_rows_distance_grows_with_row_count()
+	_test_backlog86_frame_for_rows_pivot_moves_deeper_with_more_rows()
+	_test_backlog86_frame_for_rows_pitch_stays_within_the_orbit_bounds()
+	_test_backlog86_frame_for_rows_scales_with_a_different_row_step()
+
 	print("")
 	if _failures == 0:
 		print("ALL TESTS PASSED")
@@ -20387,6 +20400,51 @@ func _test_backlog86_node_is_open_is_false_with_no_available_columns() -> void:
 func _test_backlog86_node_is_open_at_the_trailhead_uses_row_zero() -> void:
 	_expect(Overworld3D.node_is_open(0, -1, 0, [0]), "before the first step (cur_row -1), row 0 is the one that opens -- the trailhead case _act_ahead/stand_at both special-case too")
 	_expect(not Overworld3D.node_is_open(1, -1, 0, [0]), "at the trailhead, only row 0 opens -- row 1 must not, even with the column available")
+
+
+## backlog #86 duty 3 (fifty-second pass) -- frame_for_rows, lifted out of
+## overworld_3d._frame_camera, is the pure geometry behind the run map's
+## opening camera shot: given how many rows the current act's field has, it
+## returns the pivot to orbit, the distance to sit back, and the pitch/yaw
+## that point the camera at that pivot. Every act gets its establishing shot
+## from this, and it had zero coverage -- a sign error or a dropped constant
+## here would frame every act's opening view wrong, or crash asin() on an
+## out-of-range ratio, with nothing catching it short of someone looking at a
+## render.
+func _test_backlog86_frame_for_rows_centres_a_single_row_close_up() -> void:
+	var f: Dictionary = Overworld3D.frame_for_rows(1, 1.0)
+	_expect(f["pivot"] == Vector3.ZERO, "a one-row act has no depth to look down, so the pivot sits at the field's own origin")
+	_expect(absf(f["dist"] - 3.0610) < 0.001, "a one-row act's establishing shot sits close in, at exactly the fixed 2.4-up/1.9-back offset with no row depth added")
+	_expect(f["yaw"] == 0.0, "a hex field is symmetric left-right, so the opening shot never yaws sideways")
+
+
+func _test_backlog86_frame_for_rows_distance_grows_with_row_count() -> void:
+	var d1: float = Overworld3D.frame_for_rows(1, 1.0)["dist"]
+	var d4: float = Overworld3D.frame_for_rows(4, 1.0)["dist"]
+	var d8: float = Overworld3D.frame_for_rows(8, 1.0)["dist"]
+	_expect(d1 < d4 and d4 < d8, "the camera pulls back further the more rows an act has to show, monotonically, not just for the extremes: got %s < %s < %s" % [d1, d4, d8])
+
+
+func _test_backlog86_frame_for_rows_pivot_moves_deeper_with_more_rows() -> void:
+	var p1: Vector3 = Overworld3D.frame_for_rows(1, 1.0)["pivot"]
+	var p4: Vector3 = Overworld3D.frame_for_rows(4, 1.0)["pivot"]
+	var p8: Vector3 = Overworld3D.frame_for_rows(8, 1.0)["pivot"]
+	_expect(p1.z == 0.0, "a one-row act's field has no depth, so the pivot never steps off the origin row")
+	_expect(p4.z < p1.z and p8.z < p4.z, "the pivot recentres further down the field (more negative Z, matching _lay_field's own -row*ROW_STEP direction) as an act grows more rows: got %s, then %s, then %s" % [p1.z, p4.z, p8.z])
+
+
+func _test_backlog86_frame_for_rows_pitch_stays_within_the_orbit_bounds() -> void:
+	var pitch1: float = Overworld3D.frame_for_rows(1, 1.0)["pitch"]
+	var pitch4: float = Overworld3D.frame_for_rows(4, 1.0)["pitch"]
+	var pitch8: float = Overworld3D.frame_for_rows(8, 1.0)["pitch"]
+	_expect(pitch1 > 0.0 and pitch1 < PI * 0.5, "the opening shot always looks down at the field, never level with or below it: got %s" % pitch1)
+	_expect(pitch4 < pitch1 and pitch8 < pitch4, "a longer act flattens the opening angle as the pull-back distance outpaces the fixed height offset, rather than staying pinned at the one-row angle: got %s, then %s, then %s" % [pitch1, pitch4, pitch8])
+
+
+func _test_backlog86_frame_for_rows_scales_with_a_different_row_step() -> void:
+	var narrow: float = Overworld3D.frame_for_rows(5, 0.5)["dist"]
+	var wide: float = Overworld3D.frame_for_rows(5, 2.0)["dist"]
+	_expect(narrow < wide, "the same row count needs a further-back camera when each hex row itself is wider (ROW_STEP scales the whole field, not just row COUNT): got %s for a narrow step and %s for a wide one" % [narrow, wide])
 
 
 ## backlog #86 duty 3 (thirty-seventh pass) -- stand_at, lifted out of
