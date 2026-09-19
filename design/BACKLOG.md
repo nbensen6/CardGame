@@ -18889,3 +18889,64 @@ Newest first. One line per finished item: what, and anything surprising.
   headless harness as the sibling `gauge_ledge_heights`/`safe_ledge_marks`
   tests beside it. Fresh `--import`, headless, Godot 4.7.1-stable,
   `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 3.
+
+- **2026-09-19 — #86 duty 2: `GameHost._card_fx()` never carried a card's own
+  `condition`/`condition_bonus`, so no on-screen card face has ever explained
+  a conditional bonus it actually pays out.** Note first: the two commits
+  between this run and the last log entry above (`40f8481` duty 2, `d729a29`
+  duty 3, both visible in `git log` but neither logged here) never appended a
+  Log line — flagging the gap rather than silently letting two turns go
+  unrecorded, same as the earlier occurrences of this. Last commit
+  (`d729a29`) was duty 3, so this run took duty 2. First candidate
+  (delegated to an Explore agent, then checked myself) was `Boss.
+  hold_exposed_to()` again — already correctly logged and deferred to Nick
+  at least eight times before (most recently in `40f8481`'s own commit
+  message); did not make it nine. Delegated a second, more targeted hunt
+  with the full list of this rotation's 50 prior fixes named explicitly so
+  it wouldn't repeat one; it came back with `card_view.gd`'s `face_text()`
+  (the one function every card face — hand, deck view, campfire grid, shop,
+  and the tap-to-inspect inspector, which renders through this exact same
+  function — is built from). `Combat.preview()` (combat.gd:618-625) has
+  folded `condition_bonus` into the live damage/block/ally_block/grip
+  numbers correctly since backlog #67 shipped, so the NUMBER on a card was
+  always right — but `_card_fx()` (game_host.gd:1101, the shared field list
+  `_slot_private()`'s hand dict and `_deck_face()`'s deck dict both build
+  from, itself built to stop exactly this kind of drift) never carried the
+  two fields at all, and `face_text()` had no branch to read them even if it
+  had. All six shipped cards with a condition (dagger, brace, harpoon,
+  sunlight_blade, draw_aggro, safety_line) also carry a non-zero base
+  effect, so `out` was never empty and the `out.is_empty()` fallback to the
+  authored `text` — the only place the clause survives — never fired either;
+  a player's only way to ever learn these cards had a conditional bonus, or
+  what triggers it, was the one-time reward offer (whose dict has no
+  "preview" key and hits that fallback by construction, not by design).
+  Confirmed myself by reading `_card_fx()`, `_deck_face()`, `face_text()`
+  and `Combat.preview()`/`_condition_met()` before writing anything, and by
+  checking the existing reflection test
+  (`_test_backlog86_card_fx_carries_every_non_numeric_effect_field`) — its
+  own doc comment claims Dictionary fields "already [have their] own named
+  carry-forward test elsewhere," but every existing `condition_bonus` test
+  proves upgrade-scaling or `Combat.preview()`'s numeric resolution, none of
+  them the client-facing `fx` dict, so the claim doesn't cover this. Fixed
+  by adding `condition`/`condition_bonus` to `_card_fx()`, and a generic
+  branch to `face_text()` that reads a card's `condition.type`
+  (`above_sigil`/`ally_hanging`/`nth_card`) and writes one clause naming
+  whichever of damage/block/ally_block/grip `condition_bonus` sets — a small
+  new `_ordinal()` helper handles `nth_card`'s printed threshold as data
+  rather than hardcoding "3rd". Added two tests:
+  `_test_backlog86_card_fx_carries_condition_and_condition_bonus` (a real
+  card's condition/condition_bonus reach the dict unchanged; a plain card's
+  stay empty, not a stale leftover) and
+  `_test_backlog86_face_text_explains_a_conditional_bonus` (all six shipped
+  cards' live faces, via `host._deck_face()`, plus one synthetic
+  `condition_bonus.grip` card since no shipped card pairs that shape yet).
+  Verified load-bearing by temporarily gating the new `face_text()` branch on
+  `if false and ...`: reran the suite, exactly the seven new face-text
+  assertions failed (each showing the truncated line, e.g. `got: Deal 3
+  damage.` with the condition clause missing), the two `_card_fx()`
+  assertions and everything else stayed green, then reverted and confirmed
+  `git diff` matched the intended fix exactly. No screen needed —
+  `face_text()` is a pure `String`-returning static function, same headless
+  harness as every sibling `face_text()` test beside it. Fresh `--import`,
+  headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86`
+  turn is duty 3.

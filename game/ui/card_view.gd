@@ -1192,6 +1192,39 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 	if bool(fx.get("meld", false)):
 		out.append("Fuse two cards into one that costs 1 less.")
 
+	# backlog #67's condition/condition_bonus (backlog #86 duty 2) — same "fx
+	# never grew a branch" gap as ally_heal/scry above. Combat.preview()
+	# (combat.gd:618-625) already folds condition_bonus into the damage/block/
+	# ally_block/grip numbers written above when the condition holds, so the
+	# NUMBER on a live card is always right — but nothing ever told the player
+	# the bonus exists, since every one of dagger/brace/harpoon/sunlight_blade/
+	# draw_aggro/safety_line also has a non-zero base effect that already fills
+	# `out`, skipping the `out.is_empty()` fallback below that is the only
+	# place the authored clause used to survive.
+	var cond: Dictionary = fx.get("condition", {})
+	var cond_bonus: Dictionary = fx.get("condition_bonus", {})
+	if not cond.is_empty() and not cond_bonus.is_empty():
+		var lead := ""
+		match String(cond.get("type", "")):
+			"above_sigil":
+				lead = "Above the sigil"
+			"ally_hanging":
+				lead = "If your ally is hanging"
+			"nth_card":
+				lead = "On your %s card this turn or later" % _ordinal(int(cond.get("value", 1)))
+		if lead != "":
+			var bits: PackedStringArray = []
+			if int(cond_bonus.get("damage", 0)) > 0:
+				bits.append("deal %d more" % int(cond_bonus["damage"]))
+			if int(cond_bonus.get("block", 0)) > 0:
+				bits.append("gain %d more %s" % [int(cond_bonus["block"]), _kw("Block", "player_block", kw, rich)])
+			if int(cond_bonus.get("ally_block", 0)) > 0:
+				bits.append("ally gains %d more %s" % [int(cond_bonus["ally_block"]), _kw("Block", "player_block", kw, rich)])
+			if int(cond_bonus.get("grip", 0)) > 0:
+				bits.append("%s %d more" % [_kw("climb", "height", kw, rich), int(cond_bonus["grip"])])
+			if not bits.is_empty():
+				out.append("%s, %s." % [lead, ", ".join(bits)])
+
 	if out.is_empty():
 		return String(data.get("text", ""))
 	# No "Time it!" prefix: the clock badge in the corner says the card is timed,
@@ -1324,6 +1357,21 @@ static func _num(low: int, high: int, base: int, rich: bool) -> String:
 	if rich and shown != base:  # a buff or a scaling field moved it
 		return "[color=#%s]%d[/color]" % [LIVE_COLOR, shown]
 	return str(shown)
+
+
+## English ordinal suffix ("1st", "2nd", "3rd", "4th", "11th"–"13th" exceptions).
+## Only `nth_card`'s printed value feeds this today (always 3), but the
+## condition's own `value` is data, not a hardcoded "3rd", so a beast-tier
+## card authored with a different threshold reads correctly without a
+## matching code change.
+static func _ordinal(n: int) -> String:
+	var suffix := "th"
+	if n % 100 < 11 or n % 100 > 13:
+		match n % 10:
+			1: suffix = "st"
+			2: suffix = "nd"
+			3: suffix = "rd"
+	return "%d%s" % [n, suffix]
 
 
 ## Wrap every keyword term in a block of prose, once each.

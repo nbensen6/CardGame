@@ -1124,6 +1124,18 @@ static func _card_fx(c: Card) -> Dictionary:
 		# for them even if it grew a branch. See that function's own fix for
 		# the other half of this bug.
 		"retain": c.retain, "innate": c.innate, "ethereal": c.ethereal,
+		# backlog #86 duty 2 — same gap, one field pair the reflection test
+		# below deliberately can't catch (Dictionary fields aren't probed):
+		# `condition`/`condition_bonus` (#67) are what Combat.preview()
+		# already reads to fold a conditional bonus into the live damage/
+		# block/ally_block/grip numbers above, but the CLAUSE explaining the
+		# bonus exists at all — "On your 3rd card...", "Above the sigil...",
+		# "If your ally is hanging..." — never had a field here for
+		# face_text() to read, so dagger/brace/harpoon/sunlight_blade/
+		# draw_aggro/safety_line all showed only their base line, everywhere
+		# but the one-time reward offer (whose dict has no "preview" key and
+		# falls back to the authored text by construction, not by design).
+		"condition": c.condition, "condition_bonus": c.condition_bonus,
 	}
 
 

@@ -175,6 +175,8 @@ func _init() -> void:
 	_test_backlog86_condition_bonus_grip_gates_preview_climb()
 	_test_backlog86_condition_bonus_grip_resolves_through_a_real_play()
 	_test_backlog86_condition_bonus_grip_skips_climb_bonus_when_base_grip_is_zero()
+	_test_backlog86_card_fx_carries_condition_and_condition_bonus()
+	_test_backlog86_face_text_explains_a_conditional_bonus()
 	_test_enchanted_copy_attaches_to_any_card()
 	_test_backlog86_enchanted_copy_replaces_rather_than_stacks()
 	_test_enchants_all_load()
@@ -4770,6 +4772,66 @@ func _test_backlog86_condition_bonus_grip_skips_climb_bonus_when_base_grip_is_ze
 	var pv_one := combat.preview(0, one_base)
 	_expect(int(pv_zero["grip"]) == 3 and int(pv_one["grip"]) == 1 + 5 + 3,
 		"climb_bonus only scales a climb that already has printed grip of its own -- a card that climbs purely through its condition_bonus skips it entirely, per combat.gd's own 'not a zero' guard")
+
+
+## backlog #86 duty 2: GameHost._card_fx() -- the one field list every shape of
+## a card's client-facing dict (hand, deck, campfire, shop) is built from --
+## never carried "condition"/"condition_bonus" at all, even though Combat.
+## preview() has folded condition_bonus into the live numbers since backlog
+## #67 shipped. The reflection sweep in
+## _test_backlog86_card_fx_carries_every_non_numeric_effect_field deliberately
+## skips Dictionary fields (its own doc comment says so), so this gap had no
+## test watching it -- this is that missing coverage, by name.
+func _test_backlog86_card_fx_carries_condition_and_condition_bonus() -> void:
+	var dagger := Content.make_card("dagger")
+	var fx: Dictionary = GameHost._card_fx(dagger)
+	_expect(fx.get("condition", {}) == dagger.condition and fx.get("condition_bonus", {}) == dagger.condition_bonus,
+		"_card_fx() carries a real conditional card's condition and condition_bonus through unchanged")
+	var plain := Content.make_card("scramble")  # no condition at all
+	var plain_fx: Dictionary = GameHost._card_fx(plain)
+	_expect(plain.condition.is_empty() and (plain_fx.get("condition", {}) as Dictionary).is_empty(),
+		"a card with no condition carries an empty one through _card_fx(), not a stale leftover from another card")
+
+
+## The test above proves _card_fx() carries the field; this one proves
+## CardView.face_text() actually reads it. Every one of the six shipped cards
+## that carries a condition (dagger, brace, harpoon, sunlight_blade,
+## draw_aggro, safety_line) also has a non-zero base effect, so `out` was
+## never empty and the `out.is_empty()` fallback to the authored `text` --
+## the only place the condition clause used to survive -- never fired either.
+## A player had no way to learn any of these cards had a conditional bonus at
+## all, in the hand, the deck view, the campfire grid, or the tap-to-inspect
+## popup (deck_view.gd's inspector renders through this exact same function).
+func _test_backlog86_face_text_explains_a_conditional_bonus() -> void:
+	var host := GameHost.new(LocalTransport.new(), 1, 2)
+	_kept.append(host)
+	var dagger_text := CardView.face_text(host._deck_face(Content.make_card("dagger"), 0))
+	_expect(dagger_text == "Deal 3 damage. On your 3rd card this turn or later, deal 3 more.",
+		"a real nth_card+damage condition explains itself on the live face, got: %s" % dagger_text)
+	var brace_text := CardView.face_text(host._deck_face(Content.make_card("brace"), 0))
+	_expect(brace_text == "Gain 5 Block. On your 3rd card this turn or later, gain 3 more Block.",
+		"a real nth_card+block condition explains itself on the live face, got: %s" % brace_text)
+	var harpoon_text := CardView.face_text(host._deck_face(Content.make_card("harpoon"), 0))
+	_expect(harpoon_text == "Deal 8 damage. Expose 1. Above the sigil, deal 4 more.",
+		"a real above_sigil+damage condition explains itself after an unrelated Expose line, got: %s" % harpoon_text)
+	var sunlight_text := CardView.face_text(host._deck_face(Content.make_card("sunlight_blade"), 0))
+	_expect(sunlight_text == "Deal 5 damage. Above the sigil, deal 3 more.",
+		"a real above_sigil+damage condition explains itself on a second attack card, got: %s" % sunlight_text)
+	var aggro_text := CardView.face_text(host._deck_face(Content.make_card("draw_aggro"), 0))
+	_expect(aggro_text == "Gain 6 Block. Taunt. If your ally is hanging, gain 4 more Block.",
+		"a real ally_hanging+block condition explains itself after an unrelated Taunt line, got: %s" % aggro_text)
+	var safety_text := CardView.face_text(host._deck_face(Content.make_card("safety_line"), 0))
+	_expect(safety_text == "Ally gains 8 Block. If your ally is hanging, ally gains 4 more Block.",
+		"a real ally_hanging+ally_block condition explains itself on the ally-target half of the branch, got: %s" % safety_text)
+	# No shipped card pairs a condition with condition_bonus.grip yet (the
+	# core math has its own coverage above, under _test_backlog86_condition_
+	# bonus_grip_*), but the branch is generic, keyed off the same shape every
+	# other condition_bonus field uses -- prove it reads right too.
+	var climber := Card.from_dict({"id": "t_cond_grip_face", "name": "Test Cond Grip", "type": "skill",
+		"cost": 1, "grip": 1, "condition": {"type": "above_sigil"}, "condition_bonus": {"grip": 3}})
+	var climber_text := CardView.face_text(host._deck_face(climber, 0))
+	_expect(climber_text == "Climb 1. Above the sigil, climb 3 more.",
+		"a synthetic above_sigil+grip condition explains itself the same generic way, got: %s" % climber_text)
 
 
 ## The enchant engine (backlog #12): one generic copy trick, same shape as
