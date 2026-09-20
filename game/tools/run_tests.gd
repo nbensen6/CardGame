@@ -258,6 +258,7 @@ func _init() -> void:
 	_test_backlog86_archetype_tags_recognise_prepare_cards_as_prime()
 	_test_backlog86_archetype_tags_recognise_retain_innate_ethereal_cheapen_and_meld_cards()
 	_test_backlog86_archetype_tags_recognise_x_cost_cards()
+	_test_backlog86_archetype_tags_recognise_condition_cards()
 	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
 	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
@@ -7174,6 +7175,42 @@ func _test_backlog86_archetype_tags_recognise_x_cost_cards() -> void:
 	_expect(leaned_weight10 > flat_weight10,
 		"an x_cost card's reward weight rises for an x_cost-heavy deck now that it carries the x_cost tag [flat=%s leaned=%s]"
 			% [flat_weight10, leaned_weight10])
+
+
+## Backlog #86 duty 2: the identical "no tag for this mechanical family at
+## all" gap the reach/scry/draw/build/cleave/taunt/timed/multistrike/prime/
+## retain-innate-ethereal-cheapen-meld/x_cost fixes above closed — condition/
+## condition_bonus (backlog #67, the nth_card/ally_hanging/above_sigil
+## conditional-payoff mechanic) never got a branch here either. Dagger (cost
+## 0, damage 3, condition nth_card, nothing else archetype-tagged) rolled
+## through reward_pool() with a completely EMPTY tag array. Harpoon and
+## Sunlight Blade also carry condition but it was masked by their own
+## vulnerable/damage_per_vulnerable fields the same way taunt was masked
+## before its own duty-3 fix.
+func _test_backlog86_archetype_tags_recognise_condition_cards() -> void:
+	var condition_only := Card.new()
+	condition_only.condition = {"type": "nth_card", "value": 3}
+	var condition_only_tags: Array = condition_only.archetype_tags()
+	_expect(condition_only_tags.has("condition") and condition_only_tags.size() == 1,
+		"a bare card with only condition set is tagged condition and nothing else [tags=%s]" % [condition_only_tags])
+
+	var dagger_tags: Array = Content.card_tags("dagger")
+	_expect(dagger_tags.has("condition") and dagger_tags.size() == 1,
+		"Dagger (damage 3, condition nth_card) is tagged condition and nothing else [tags=%s]" % [dagger_tags])
+
+	var harpoon_tags: Array = Content.card_tags("harpoon")
+	_expect(harpoon_tags.has("condition") and harpoon_tags.has("vulnerable"),
+		"Harpoon (condition above_sigil, plus vulnerable) keeps both condition and vulnerable [tags=%s]" % [harpoon_tags])
+
+	# reward-lean end to end, same shape as the x_cost/reach/scry checks above.
+	var run11 := _map_run()
+	var condition_deck_tags: Dictionary = run11._tag_counts(_deck_of(Callable(Content, "make_card").bind("dagger"), 10))
+	var dagger_rarity: String = Content.card_rarity("dagger")
+	var flat_weight11: int = Run.reward_weight(dagger_rarity, dagger_tags, {})
+	var leaned_weight11: int = Run.reward_weight(dagger_rarity, dagger_tags, condition_deck_tags)
+	_expect(leaned_weight11 > flat_weight11,
+		"Dagger's reward weight rises for a condition-heavy deck now that it carries the condition tag [flat=%s leaned=%s]"
+			% [flat_weight11, leaned_weight11])
 
 
 ## Backlog #72: a card reward roll should lean toward the archetype a hunter is

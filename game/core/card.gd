@@ -609,4 +609,22 @@ func archetype_tags() -> Array:
 	# toward drawing another, unlike every other mechanical family in the game.
 	if cost == -1 or damage_per_x > 0 or block_per_x > 0:
 		tags.append("x_cost")
+	# backlog #86 duty 2: the same "no tag for this mechanical family at all"
+	# gap the reach/scry/draw/build/cleave/taunt/timed/multistrike/prime/
+	# retain-innate-ethereal-cheapen-meld/x_cost fixes above closed —
+	# condition/condition_bonus (backlog #67, the nth_card/ally_hanging/
+	# above_sigil conditional-payoff mechanic Combat.preview() resolves) was
+	# never given a branch here either, even though GameHost._keywords_of()
+	# has no need for a matching branch here to already exist — this file's
+	# own doc comment on archetype_tags() (above) promises tags are derived
+	# from every field a card carries. Dagger (cards.json: damage 3, condition
+	# nth_card, nothing else archetype-tagged) rolled through reward_pool()
+	# with a completely EMPTY tag array; Brace/Draw Aggro/Harpoon/Sunlight
+	# Blade/Safety Line all carry the field too but it was invisible even on
+	# them, masked by their own block/vulnerable/ally_block fields the same
+	# way taunt was masked before its own duty-3 fix. A hunter who'd drafted
+	# any of these six got no reward-lean (backlog #72) toward drawing
+	# another conditional-payoff card, unlike every other mechanical family.
+	if not condition.is_empty():
+		tags.append("condition")
 	return tags
