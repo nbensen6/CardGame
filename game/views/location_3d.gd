@@ -865,7 +865,7 @@ func _render_campfire(s: Dictionary) -> void:
 		func() -> void:
 			Sfx.play("reward")
 			_client.campfire("rest", -1, _cmd_slot())))
-	var can_thin: bool = campfire_can_thin(deck.size(), int(cf.get("min_deck", 5)))
+	var can_thin: bool = campfire_can_thin(deck.size(), min_deck_shown(cf))
 	var thin := _button("Thin the deck — remove a card" if can_thin
 		else "Thin the deck — deck too small", func() -> void:
 			_deck_pick = "remove"
@@ -912,8 +912,8 @@ func _render_shop(s: Dictionary) -> void:
 	# hug the bottom, so eight stock items don't bury the place you walked to
 	grid.size_flags_vertical = Control.SIZE_SHRINK_END
 	_row.add_child(grid)
-	var min_deck := int(shop.get("min_deck", 5))
-	var potion_slots := int(shop.get("potion_slots", 3))
+	var min_deck := min_deck_shown(shop)
+	var potion_slots := potion_slots_shown(shop)
 	for i in range(stock.size()):
 		grid.add_child(_stock_button(stock[i], i, gold, min_deck, potion_slots))
 	_controls.add_child(_button("Your deck", open_deck))
@@ -982,6 +982,28 @@ static func campfire_heal_shown(cf: Dictionary) -> int:
 	return int(cf.get("heal", Run.REST_HEAL))
 
 
+## The deck floor `_render_campfire()`'s "Thin the deck" gate and
+## `_render_shop()`'s "remove" gate both read from a campfire/shop snapshot
+## dict — mirroring `Run.MIN_DECK`. #86 duty 2: both call sites' `.get()`
+## fallback here used to be a bare `5` — a second, independent guess at the
+## deck floor that nobody kept in sync with `Run.MIN_DECK`, the exact "two
+## copies of one truth" shape `campfire_heal_shown()`'s own `Run.REST_HEAL`
+## fix closed right above. `game_host.gd`'s `_build_shared()` always sends a
+## real `"min_deck"` for both `"campfire"` and `"shop"` today, so this
+## fallback is never actually reached — pinned to the true constant anyway,
+## same reasoning as `campfire_heal_shown()`.
+static func min_deck_shown(d: Dictionary) -> int:
+	return int(d.get("min_deck", Run.MIN_DECK))
+
+
+## The potion cap `_render_shop()`'s "potion" gate reads from the shop
+## snapshot dict — mirroring `Run.POTION_SLOTS`, the same "two copies" shape
+## as `min_deck_shown()` right above, for the shop's other hardcoded-literal
+## fallback (`3`). #86 duty 2.
+static func potion_slots_shown(shop: Dictionary) -> int:
+	return int(shop.get("potion_slots", Run.POTION_SLOTS))
+
+
 ## Filters to the cards the sharpen picker may offer, so it never hands the
 ## server one Run.campfire_action() is about to refuse.
 ##
@@ -1007,7 +1029,7 @@ static func campfire_sharpenable(deck: Array) -> Array:
 		return bool(entry.get("sharpenable", false)))
 
 
-func _stock_button(item: Dictionary, index: int, gold: int, min_deck: int, potion_slots: int = 3) -> Button:
+func _stock_button(item: Dictionary, index: int, gold: int, min_deck: int, potion_slots: int = Run.POTION_SLOTS) -> Button:
 	var price := int(item["price"])
 	var sold := bool(item["sold"])
 	var owner := int(item.get("slot", -1))

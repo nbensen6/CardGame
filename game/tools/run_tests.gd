@@ -1760,6 +1760,18 @@ func _init() -> void:
 	_test_backlog86_campfire_heal_shown_passes_through_the_real_value()
 	_test_backlog86_campfire_heal_shown_falls_back_to_the_true_unmodified_constant()
 
+	# backlog #86 duty 2: min_deck_shown()/potion_slots_shown() are
+	# campfire_heal_shown()'s own sibling gap -- both _render_campfire() (deck
+	# floor) and _render_shop() (deck floor and potion cap) used to re-guess
+	# Run.MIN_DECK (5) and Run.POTION_SLOTS (3) as bare literals in their own
+	# .get() fallbacks instead of reading the real constants, the same "two
+	# copies of one truth" shape campfire_heal_shown()'s own Run.REST_HEAL fix
+	# closed right beside them.
+	_test_backlog86_min_deck_shown_passes_through_the_real_value()
+	_test_backlog86_min_deck_shown_falls_back_to_the_true_unmodified_constant()
+	_test_backlog86_potion_slots_shown_passes_through_the_real_value()
+	_test_backlog86_potion_slots_shown_falls_back_to_the_true_unmodified_constant()
+
 	# backlog #86 duty 3: location_3d.reward_header_text is the reward screen's
 	# own headline/subtitle/prompt rule -- the same one menu.gd's
 	# ascension_display_state and continue_button_state already got lifted for.
@@ -24619,6 +24631,38 @@ func _test_backlog86_campfire_heal_shown_passes_through_the_real_value() -> void
 func _test_backlog86_campfire_heal_shown_falls_back_to_the_true_unmodified_constant() -> void:
 	_expect(Location3D.campfire_heal_shown({}) == Run.REST_HEAL,
 		"a missing 'heal' key falls back to Run.REST_HEAL itself, not a second, independent guess that can drift from it")
+
+
+## backlog #86 duty 2: `Location3D.min_deck_shown()`'s own `.get()` fallback
+## used to be a bare `5` at both call sites (_render_campfire's "Thin the
+## deck" gate and _render_shop's "remove" gate) -- a second, independent
+## guess at the deck floor that nobody kept in sync with `Run.MIN_DECK`.
+## `game_host.gd`'s `_build_shared()` always sends a real "min_deck" for both
+## "campfire" and "shop" today, so nothing reaches the fallback -- still
+## worth pinning to the true constant so a fallback nobody hits yet isn't
+## quietly lying about the rule.
+func _test_backlog86_min_deck_shown_passes_through_the_real_value() -> void:
+	_expect(Location3D.min_deck_shown({"min_deck": 7}) == 7,
+		"a real snapshot's own deck floor is shown as-is")
+
+
+func _test_backlog86_min_deck_shown_falls_back_to_the_true_unmodified_constant() -> void:
+	_expect(Location3D.min_deck_shown({}) == Run.MIN_DECK,
+		"a missing 'min_deck' key falls back to Run.MIN_DECK itself, not a second, independent guess that can drift from it")
+
+
+## backlog #86 duty 2: `Location3D.potion_slots_shown()`'s own `.get()`
+## fallback used to be a bare `3` in _render_shop's "potion" gate and in
+## `_stock_button()`'s own default parameter -- the same "second, independent
+## guess" shape as min_deck_shown() above, for `Run.POTION_SLOTS`.
+func _test_backlog86_potion_slots_shown_passes_through_the_real_value() -> void:
+	_expect(Location3D.potion_slots_shown({"potion_slots": 4}) == 4,
+		"a real snapshot's own potion cap is shown as-is")
+
+
+func _test_backlog86_potion_slots_shown_falls_back_to_the_true_unmodified_constant() -> void:
+	_expect(Location3D.potion_slots_shown({}) == Run.POTION_SLOTS,
+		"a missing 'potion_slots' key falls back to Run.POTION_SLOTS itself, not a second, independent guess that can drift from it")
 
 
 ## backlog #86 duty 2 — the sharpen picker's own sibling gap to campfire_can_thin
