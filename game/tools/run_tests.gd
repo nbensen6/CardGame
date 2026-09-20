@@ -487,6 +487,7 @@ func _init() -> void:
 	_test_backlog86_begin_event_picks_the_one_fresh_event_left()
 	_test_backlog86_begin_event_falls_back_to_the_full_pool_once_every_event_is_seen()
 	_test_backlog64_content_event_grants_key_finds_the_sealed_hollow_and_only_it()
+	_test_backlog86_choices_grant_key_recurses_into_nested_then_follow_ups()
 	_test_backlog64_begin_event_guarantees_the_key_event_while_the_team_lacks_it()
 	_test_backlog64_begin_event_stops_forcing_the_key_event_once_the_key_is_held()
 	_test_backlog39_stats_round_trip_through_save()
@@ -17537,6 +17538,54 @@ func _test_backlog64_content_event_grants_key_finds_the_sealed_hollow_and_only_i
 			key_bearing.append(id)
 	_expect(key_bearing == ["the_sealed_hollow"],
 		"exactly one shipped event grants the key today (%s) -- if this changes, the bias below still holds, this just documents the current content" % [key_bearing])
+
+
+## Backlog #86 duty 3: the test above proves event_grants_key() against real
+## content, but every shipped event that grants the key (just the_sealed_hollow)
+## does so at the TOP level -- none of the ~22 events happens to bury a key
+## grant inside a "then" follow-up. So _choices_grant_key()'s own recursive
+## branch (content.gd:305-313, "if not then.is_empty() and _choices_grant_key(...)")
+## has run zero times in this whole suite: real data has simply never needed
+## it. That is exactly the kind of gap that survives every test until the
+## day a new event actually nests a key grant, at which point
+## event_grants_key() silently returns false, RunMap._ensure_key_sources()'s
+## bias never fires for it, and the fourth Titan's key goes back to being
+## found by luck -- the same failure backlog #64 was written to prevent, just
+## reopened by content data instead of by a code change. Drive the pure
+## recursive function directly with hand-built choice arrays so the
+## recursion itself is proven, not just the one shipped event that happens
+## to avoid it.
+func _test_backlog86_choices_grant_key_recurses_into_nested_then_follow_ups() -> void:
+	_expect(not Content._choices_grant_key([]),
+		"no choices at all can never grant a key")
+	var flat_no_key: Array = [{"effects": {"heal": 5}}, {"effects": {}}]
+	_expect(not Content._choices_grant_key(flat_no_key),
+		"a flat list of choices with no key effect anywhere must not false-positive")
+	var one_level_then_no_key: Array = [
+		{"effects": {"damage": 3}, "then": {"choices": [{"effects": {"heal": 2}}]}},
+	]
+	_expect(not Content._choices_grant_key(one_level_then_no_key),
+		"a 'then' follow-up that itself grants nothing must not be mistaken for a key")
+	var one_level_then_with_key: Array = [
+		{"effects": {"damage": 3}, "then": {"choices": [{"effects": {"key": true}}]}},
+	]
+	_expect(Content._choices_grant_key(one_level_then_with_key),
+		"a key buried one 'then' deep must still be found -- this is the recursive call actually firing")
+	var two_levels_deep: Array = [
+		{"effects": {}, "then": {"choices": [
+			{"effects": {}, "then": {"choices": [
+				{"effects": {"key": true}},
+			]}},
+		]}},
+	]
+	_expect(Content._choices_grant_key(two_levels_deep),
+		"a key buried TWO 'then' follow-ups deep must still be found -- 'however deeply nested' is a real promise, not a one-level check")
+	var key_only_on_a_sibling_branch: Array = [
+		{"effects": {}, "then": {"choices": [{"effects": {"heal": 1}}]}},
+		{"effects": {}, "then": {"choices": [{"effects": {"key": true}}]}},
+	]
+	_expect(Content._choices_grant_key(key_only_on_a_sibling_branch),
+		"the function must keep checking every top-level choice, not stop at the first branch with no key")
 
 
 ## Backlog #64: RunMap._ensure_key_sources() only guarantees an "event"-type
