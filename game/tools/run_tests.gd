@@ -998,6 +998,16 @@ func _init() -> void:
 	_test_backlog86_relative_xform_composes_a_parent_chains_local_transforms()
 	_test_backlog86_bounds_reads_a_mesh_child_offset_within_its_parents_space()
 	_test_backlog86_bounds_in_parent_lays_a_toppled_bodys_height_onto_depth()
+	# backlog #86 duty 3 (later pass): the two tests above only ever build ONE
+	# MeshInstance3D as a DIRECT child of node -- neither proves _meshes()
+	# actually RECURSES past a bare organizing node (the reason it exists
+	# instead of a one-level get_children() scan) or that _bounds() actually
+	# MERGES a second mesh's AABB in rather than only ever reading the first.
+	# combat_3d's sibling pair (_all_meshes/_merged_aabb) got this exact
+	# coverage already; location_3d's never had it.
+	_test_backlog86_meshes_finds_nested_meshes_and_skips_bare_nodes()
+	_test_backlog86_meshes_is_empty_with_nothing_to_find()
+	_test_backlog86_bounds_merges_two_separate_mesh_instances()
 	# backlog #86 duty 3 (fifty-first pass): location_3d._fit_height sizes
 	# every hunter on character select/campfire and every felled beast on the
 	# reward screen -- and its own width-clamp rule (added 2026-09-08 to stop
@@ -20424,6 +20434,58 @@ func _test_backlog86_bounds_in_parent_lays_a_toppled_bodys_height_onto_depth() -
 	var toppled: AABB = Location3D._bounds_in_parent(node)
 	_expect(is_equal_approx(toppled.size.y, 1.0) and is_equal_approx(toppled.size.z, 3.0),
 		"toppled onto its back, the old 3-unit HEIGHT now sprawls along Z and the new Y-extent is the old 1-unit depth, not still 3: got %s" % toppled.size)
+
+	node.free()
+
+
+## _meshes' own reason to exist (location_3d.gd:427-433) is recursing PAST bare
+## organizing nodes to find a mesh however deeply it's nested -- the two
+## _bounds tests above only ever hang a MeshInstance3D directly off node, so
+## neither ever exercised the recursion itself. Mirrors combat_3d's own
+## _all_meshes coverage (run_tests.gd:19098) for its location_3d sibling.
+func _test_backlog86_meshes_finds_nested_meshes_and_skips_bare_nodes() -> void:
+	var root := Node3D.new()
+	var direct_mesh := _mesh_box(Vector3.ONE)
+	root.add_child(direct_mesh)
+	var rig := Node3D.new()  # a bare organizing node, no mesh of its own
+	root.add_child(rig)
+	var nested_mesh := _mesh_box(Vector3.ONE)
+	rig.add_child(nested_mesh)
+	var sibling_rig := Node3D.new()  # a second bare node with nothing under it at all
+	root.add_child(sibling_rig)
+
+	var found: Array = Location3D._meshes(root)
+	_expect(found.size() == 2 and found.has(direct_mesh) and found.has(nested_mesh),
+		"_meshes finds a mesh nested two levels under a bare organizing node just as readily as one hung directly off the root: got %d" % found.size())
+
+	root.free()
+
+
+func _test_backlog86_meshes_is_empty_with_nothing_to_find() -> void:
+	var root := Node3D.new()
+	root.add_child(Node3D.new())  # a rig node with no mesh anywhere under it
+	_expect(Location3D._meshes(root) == [], "a model with no MeshInstance3D anywhere under it finds nothing, rather than erroring")
+	root.free()
+
+
+## _bounds' merge line (location_3d.gd:402, `box = b if first else box.merge(b)`)
+## had never once run its `else` branch in this suite -- both existing _bounds
+## tests build exactly one MeshInstance3D, so the merge was provably untested:
+## a bug that made the loop just keep the LAST mesh (or only ever read the
+## FIRST) would have passed every test in this file. _fit_height and
+## _lay_out_the_felled both trust this merge to size and place real models,
+## which are never a single mesh.
+func _test_backlog86_bounds_merges_two_separate_mesh_instances() -> void:
+	var node := Node3D.new()
+	var low := _mesh_box(Vector3.ONE)  # local AABB (-0.5,-0.5,-0.5) to (0.5,0.5,0.5)
+	node.add_child(low)
+	var high := _mesh_box(Vector3.ONE)
+	high.position = Vector3(0, 5, 0)  # local AABB (-0.5,4.5,-0.5) to (0.5,5.5,-0.5)
+	node.add_child(high)
+
+	var box: AABB = Location3D._bounds(node)
+	_expect(is_equal_approx(box.position.y, -0.5) and is_equal_approx(box.end.y, 5.5),
+		"bounds spans BOTH meshes (-0.5 to 5.5), proving box.merge(b) actually widens the box rather than the loop keeping only the first or last mesh it saw: got %s to %s" % [box.position.y, box.end.y])
 
 	node.free()
 
