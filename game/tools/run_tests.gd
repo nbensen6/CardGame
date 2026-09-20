@@ -42,6 +42,8 @@ func _init() -> void:
 	_test_backlog44_at_least_three_beasts_have_a_second_pattern()
 	_test_backlog86_hurt_pct_threshold_scales_with_ascensions_hp_pct()
 	_test_backlog86_wound_bleed_must_not_flip_which_pattern_the_intent_already_showed()
+	_test_backlog86_hurt_pattern_reverts_once_healed_back_above_threshold()
+	_test_backlog86_clot_toads_own_regen_move_reverts_it_out_of_hurt_moves()
 	# backlog #42: something to unlock between runs
 	_test_backlog42_progress_total_wins_climbs_on_every_win()
 	_test_backlog86_record_win_caps_at_max_ascension_and_never_regresses()
@@ -2440,6 +2442,52 @@ func _test_backlog44_at_least_three_beasts_have_a_second_pattern() -> void:
 					"beast '%s' actually switches pattern once hurt" % id)
 				count += 1
 	_expect(count >= 3, "at least three beasts change their pattern when hurt (found %d)" % count)
+
+
+## backlog #86 duty 3 (verify a mechanic actually works): every _test_backlog44_*
+## and _test_backlog86_hurt_pct_* test above only ever crosses hurt_pct's
+## threshold DOWNWARD (full HP -> hurt) or checks a static at-or-below state.
+## _active_moves() (boss.gd:62-65) is re-evaluated on every current_move() call --
+## not latched once a boss first drops into its hurt pattern -- and its own doc
+## comment above it promises the crossing works "no reset on crossing the
+## line" without saying which direction. clot_toad (bosses.json) ships a real
+## hurt_moves pattern built around "regen" moves specifically so it can climb
+## back OUT of hurt mid-fight; nothing had ever driven hp back above the line
+## and re-read current_move() afterward to prove the boss actually reverts
+## rather than staying latched on the scarier pattern forever once triggered.
+func _test_backlog86_hurt_pattern_reverts_once_healed_back_above_threshold() -> void:
+	var b := Boss.new("B", 100)
+	b.moves = [{"type": "attack", "value": 1}, {"type": "attack", "value": 2}, {"type": "attack", "value": 3}]
+	b.hurt_pct = 0.5
+	b.hurt_moves = [{"type": "attack", "value": 90}, {"type": "attack", "value": 91}]
+	b.advance_move()  # _move_index == 1, same setup as _test_backlog44_same_move_index_drives_both_lists
+	b.hp = 40  # below the threshold (50)
+	_expect(int(b.current_move()["value"]) == 91, "sanity: crossing down still lands on hurt_moves[1]")
+	b.hp = 60  # healed back above the threshold -- nothing touches _move_index
+	_expect(int(b.current_move()["value"]) == 2,
+		"_active_moves() is re-read every call, not a one-way latch -- healing back above hurt_pct reverts to the plain pattern, at the SAME index (moves[1]) the doc comment promises")
+
+
+## Real-content half of the test above, through the actual "regen" move
+## resolution in Combat._enemy_turn() (combat.gd:1881-1883) rather than a
+## hand-set boss.hp -- proves the pattern the CONTENT author built (clot_toad:
+## hurt_pct 0.4, hurt_moves opening on "regen" 9) really can pull the boss back
+## out of its own hurt state through a real fight, not just that hand-set HP
+## crosses a comparison correctly.
+func _test_backlog86_clot_toads_own_regen_move_reverts_it_out_of_hurt_moves() -> void:
+	var boss := Content.build_boss("clot_toad")
+	_expect(boss.max_hp == 86 and is_equal_approx(boss.hurt_pct, 0.4),
+		"sanity: clot_toad's own data (threshold floor(86*0.4)=34)")
+	boss.hp = 30  # below the threshold
+	_expect(String(boss.current_move()["type"]) == "regen",
+		"clot_toad's own hurt_moves[0] is a regen move once it's genuinely hurt")
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 7, boss)
+	boss.hp = 30  # _new_combat's Combat.start() doesn't touch boss.hp, but pin it explicitly for clarity
+	combat.end_turn(0)
+	combat.end_turn(1)  # resolves the boss's real enemy turn -- including the actual regen move
+	_expect(boss.hp == 39, "the real enemy turn actually healed the boss (mini(30+9, 86))")
+	_expect(not (boss.current_move() in boss.hurt_moves),
+		"healed back above the threshold (39 > 34) through a REAL fight -- current_move() reads the plain pattern again, not latched on hurt_moves")
 
 
 ## backlog #86 duty 2: `_enemy_turn()`'s own doc comment (combat.gd:1509-1523,
