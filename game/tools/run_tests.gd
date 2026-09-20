@@ -2047,6 +2047,17 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_music_refresh_stops_playback_the_instant_you_mute()
 	_test_backlog86_music_play_while_muted_remembers_the_track_and_stops()
 	_test_backlog86_music_play_skips_reloading_the_same_already_playing_track()
+	# backlog #86 duty 3 (fifty-third pass): Sfx.play()/_ensure() -- the pooled
+	# dispatcher every gameplay beat (card played, hit landed, climb step...)
+	# funnels through, 20+ call sites across combat_3d.gd/location_3d.gd/
+	# overworld_3d.gd -- had zero coverage of its own body. The two existing
+	# Sfx tests above only proved _load_or_synth/_synth, the pure helpers
+	# play() calls into; nothing had ever called play()/_ensure() themselves,
+	# unlike Music.play() right above, which got exactly this treatment
+	# already. Deferred for the same reason: _ensure() needs
+	# Engine.get_main_loop() to already be a real SceneTree with a root.
+	_test_backlog86_sfx_play_builds_the_pool_and_round_robins()
+	_test_backlog86_sfx_play_ignores_an_unknown_event()
 	_test_backlog86_fit_shrinks_the_logical_viewport_on_handheld()
 	_test_backlog86_fit_resets_the_logical_viewport_on_desktop()
 	_test_backlog86_deck_view_step_builds_a_toggle_the_open_pane_never_needed()
@@ -22597,6 +22608,96 @@ func _test_backlog86_sfx_synth_square_and_sine_actually_differ_in_shape() -> voi
 	var tail := absi(square.data.decode_s16((n - 1) * 2))
 	_expect(tail < head / 3,
 		"the envelope decays quickly (pow(1-i/n, 1.5)) so the tail is much quieter than the head, matching _synth's own 'quick decay' comment")
+
+
+## backlog #86 duty 3 (fifty-third pass): Sfx.play()'s own body -- lazily
+## build a 4-player pool, round-robin across it, actually start playback --
+## had never been called by anything in this file. Its sibling Music.play()
+## already got this exact treatment a few tests up; Sfx never did, despite
+## its header comment making the same "just call play(), no autoload needed"
+## promise. If _idx cycling ever broke (e.g. a stray reset, an off-by-one),
+## two sounds fired close together would fight over the SAME player and cut
+## each other off mid-tone -- a real, audible regression, not cosmetic,
+## exactly the failure mode a 4-wide pool exists to prevent.
+##
+## Forces a fresh pool build (empty _players is _ensure()'s only "already
+## built" check) so this exercises real construction, not a pool some earlier
+## test happened to leave behind. Restores every static var afterwards so no
+## later test -- or a real run started right after this one -- inherits a
+## pool of freed nodes.
+func _test_backlog86_sfx_play_builds_the_pool_and_round_robins() -> void:
+	var was_players: Array = Sfx._players
+	var was_idx: int = Sfx._idx
+	var was_sounds: Dictionary = Sfx._sounds
+	Sfx._players = []
+	Sfx._idx = 0
+	Sfx._sounds = {}
+
+	Sfx.play("card")
+	var built_four := Sfx._players.size() == 4
+	var first_playing: bool = built_four and (Sfx._players[0] as AudioStreamPlayer).playing
+	var idx_after_first := Sfx._idx
+
+	Sfx.play("attack")
+	var idx_after_second := Sfx._idx
+	var second_playing: bool = built_four and (Sfx._players[1] as AudioStreamPlayer).playing
+	var first_stream_after: AudioStream = (Sfx._players[0] as AudioStreamPlayer).stream
+	var second_stream: AudioStream = (Sfx._players[1] as AudioStreamPlayer).stream
+
+	for p in Sfx._players:
+		if is_instance_valid(p):
+			(p as AudioStreamPlayer).stop()
+			root.remove_child(p)
+			(p as AudioStreamPlayer).free()
+	Sfx._players = was_players
+	Sfx._idx = was_idx
+	Sfx._sounds = was_sounds
+
+	_expect(built_four, "the first play() call lazily builds the documented 4-player pool")
+	_expect(first_playing, "play() actually starts playback on the pooled player it picks, not just assigns a stream")
+	_expect(idx_after_first == 1 and idx_after_second == 2,
+		"play() round-robins to the NEXT pooled player each call rather than reusing the same one")
+	_expect(second_playing and second_stream != first_stream_after,
+		"the second play() call starts a DIFFERENT pooled player with its own stream, so two overlapping sounds don't fight over one player")
+
+
+## backlog #86 duty 3 (fifty-third pass): play()'s other branch --
+## `if _players.is_empty() or not _sounds.has(event): return` -- an unknown
+## event id must be a silent no-op, never advancing the round-robin index or
+## touching whichever player it would have picked. Untested even by the test
+## above, which only ever names real DEFS events. Plays a real event first so
+## _sounds is genuinely populated (proving the unknown-event branch, not just
+## an empty-pool early return that would pass for the wrong reason).
+func _test_backlog86_sfx_play_ignores_an_unknown_event() -> void:
+	var was_players: Array = Sfx._players
+	var was_idx: int = Sfx._idx
+	var was_sounds: Dictionary = Sfx._sounds
+	Sfx._players = []
+	Sfx._idx = 0
+	Sfx._sounds = {}
+
+	Sfx.play("card")
+	var idx_before := Sfx._idx
+	var picked_player: AudioStreamPlayer = Sfx._players[idx_before]
+	var stream_before: AudioStream = picked_player.stream
+
+	Sfx.play("not_a_real_event_xyz")
+	var idx_after := Sfx._idx
+	var stream_after: AudioStream = picked_player.stream
+
+	for p in Sfx._players:
+		if is_instance_valid(p):
+			(p as AudioStreamPlayer).stop()
+			root.remove_child(p)
+			(p as AudioStreamPlayer).free()
+	Sfx._players = was_players
+	Sfx._idx = was_idx
+	Sfx._sounds = was_sounds
+
+	_expect(idx_after == idx_before,
+		"an unknown event id is a no-op -- it must never advance the round-robin index")
+	_expect(stream_after == stream_before,
+		"an unknown event id never touches the pool player its index points at")
 
 
 ## backlog #86 duty 3 (thirty-second pass) -- HitCircle is the osu-style timing
