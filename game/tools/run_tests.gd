@@ -1132,6 +1132,12 @@ func _init() -> void:
 	_test_backlog86_row_in_act_is_true_mid_act()
 	_test_backlog86_row_in_act_is_false_standing_on_the_previous_acts_titan()
 	_test_backlog86_row_in_act_is_true_on_the_first_row_of_a_new_act()
+	# backlog #86 duty 2: the header's "Act N of M" fell back to a bare
+	# hand-typed 4 instead of Run.ENCOUNTERS.size() when a snapshot omitted
+	# "total_encounters" -- same "two copies of one truth" shape already fixed
+	# three times in Location3D's own shown()-suffixed helpers.
+	_test_backlog86_total_encounters_shown_passes_through_the_real_value()
+	_test_backlog86_total_encounters_shown_falls_back_to_the_true_constant_not_a_second_literal()
 	# backlog #86 duty 3 (fiftieth pass): node_is_open, lifted out of
 	# overworld_3d._lay_field, is a second, independent copy of "which columns
 	# can I travel to" alongside RunMap.available() (core, already tested) --
@@ -21333,6 +21339,22 @@ func _test_backlog86_row_in_act_is_false_standing_on_the_previous_acts_titan() -
 func _test_backlog86_row_in_act_is_true_on_the_first_row_of_a_new_act() -> void:
 	var rows: Array = [_act_row(0), _act_row(0), _act_row(1)]
 	_expect(Overworld3D.row_in_act(rows, 2, 1), "the first row of the new act belongs to the act now drawn")
+
+
+## backlog #86 duty 2 -- the header's "Act N of M" fell back to a bare
+## hand-typed `4` when a snapshot omitted "total_encounters", instead of
+## reading Run.ENCOUNTERS.size() the way GameHost._build_shared() actually
+## fills it in. Same "two copies of one truth" shape already fixed three
+## times in Location3D (campfire_heal_shown/min_deck_shown/potion_slots_shown)
+## -- this sibling fallback in overworld_3d.gd was the one those passes never
+## touched. Latent today (the real host always sends the key), but the second
+## test below is load-bearing the moment Run.ENCOUNTERS's size ever changes.
+func _test_backlog86_total_encounters_shown_passes_through_the_real_value() -> void:
+	_expect(Overworld3D.total_encounters_shown({"total_encounters": 6}) == 6, "a real snapshot's own act count is shown as-is")
+
+
+func _test_backlog86_total_encounters_shown_falls_back_to_the_true_constant_not_a_second_literal() -> void:
+	_expect(Overworld3D.total_encounters_shown({}) == Run.ENCOUNTERS.size(), "a missing 'total_encounters' key falls back to Run.ENCOUNTERS.size() itself, not an independent literal that can drift from it")
 
 
 ## backlog #86 duty 3 (fiftieth pass) -- node_is_open, lifted out of

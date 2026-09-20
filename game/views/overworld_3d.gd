@@ -196,7 +196,7 @@ func _refresh() -> void:
 	# field was laid for the act you had just finished, the next act's row was
 	# never placed, and act one ended with nowhere to go (Nick, 2026-08-16).
 	var act := _act_ahead(rows, cur_row, cur_col)
-	_title.text = "Act %d of %d" % [act + 1, int(s.get("total_encounters", 4))]
+	_title.text = "Act %d of %d" % [act + 1, total_encounters_shown(s)]
 	_subtitle.text = ""
 	if act != _act or cur_row != _laid_row:
 		_act = act
@@ -221,6 +221,15 @@ static func _act_ahead(rows: Array, cur_row: int, cur_col: int) -> int:
 	if cur_row + 1 < rows.size():
 		return int((rows[cur_row + 1] as Array)[0].get("act", 0))
 	return int((rows[cur_row] as Array)[cur_col].get("act", 0))
+
+
+## The act count shown in the header. Mirrors Run.ENCOUNTERS.size() (i.e.
+## Run.total_encounters()) rather than a second, hand-typed literal — same
+## "two copies of one truth" shape as Location3D.min_deck_shown() /
+## potion_slots_shown() (#86 duty 2), applied here because this fallback was
+## the one sibling those passes never touched.
+static func total_encounters_shown(s: Dictionary) -> int:
+	return int(s.get("total_encounters", Run.ENCOUNTERS.size()))
 
 
 ## Is the row the party stands on part of the region currently drawn? False on
