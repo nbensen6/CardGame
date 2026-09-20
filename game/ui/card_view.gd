@@ -228,14 +228,30 @@ func _build_foil(data: Dictionary) -> void:
 func _foil_tilt(t: float) -> Vector2:
 	if tilt_overridden:
 		return tilt_override
-	var drift := Vector2(sin(t * 0.6), cos(t * 0.43)) * 0.35
 	var accel := Input.get_accelerometer()
+	var here := get_global_rect()
+	var has_rect := here.size.x > 0.0
+	var rel := Vector2.ZERO
+	if has_rect:
+		rel = (get_global_mouse_position() - here.get_center()) / maxf(here.size.y, 1.0)
+	return foil_tilt_for(t, accel, has_rect, rel)
+
+
+## The math half of _foil_tilt(), lifted out so it can be hit from headless
+## with plain scalars instead of a live Control in a Viewport (get_global_rect()
+## and get_global_mouse_position() both need one). `has_rect` and `rel` are
+## exactly what _foil_tilt() would have computed from a real on-screen card;
+## the caller does that translation, this just picks and combines.
+##
+## Accelerometer wins over the pointer whenever the device reports one moving
+## -- a phone in your hand is the case this branch exists for, and it should
+## not fight a stray mouse position the OS still reports on touch input.
+static func foil_tilt_for(t: float, accel: Vector3, has_rect: bool, rel: Vector2) -> Vector2:
+	var drift := Vector2(sin(t * 0.6), cos(t * 0.43)) * 0.35
 	if accel.length() > 0.1:
 		return drift + Vector2(accel.x, accel.z) * 0.22
-	var here := get_global_rect()
-	if here.size.x <= 0.0:
+	if not has_rect:
 		return drift
-	var rel := (get_global_mouse_position() - here.get_center()) / maxf(here.size.y, 1.0)
 	return drift + rel.limit_length(1.5) * 0.5
 
 

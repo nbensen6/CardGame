@@ -1833,6 +1833,16 @@ func _init() -> void:
 	_test_backlog86_body_font_size_shrinks_further_on_handheld_than_desktop()
 	_test_backlog86_body_font_size_shrinks_a_short_card_on_handheld_too()
 	_test_backlog86_body_font_size_never_drops_below_the_readable_floor()
+	# backlog #86 duty 3: CardView.foil_tilt_for, the math half of _foil_tilt(),
+	# the per-frame sheen direction every foil card and 3D-window rare reads
+	# every _process() tick. Had zero coverage -- untestable as written because
+	# it read Input.get_accelerometer() and get_global_mouse_position() directly,
+	# both of which need a live Control inside a Viewport.
+	_test_backlog86_foil_tilt_for_drifts_alone_with_no_accel_or_rect()
+	_test_backlog86_foil_tilt_for_follows_the_pointer_when_no_accel_is_reported()
+	_test_backlog86_foil_tilt_for_prefers_accelerometer_over_the_pointer()
+	_test_backlog86_foil_tilt_for_clamps_a_far_pointer_offset()
+	_test_backlog86_foil_tilt_for_ignores_a_below_threshold_accelerometer_reading()
 
 	# backlog #86 duty 2: design/progress/bugs.md 2026-09-05's "right-click card
 	# inspector never opens" -- the fixer traced it to CardView but game/**
@@ -24434,6 +24444,58 @@ func _test_backlog86_turn_window_is_a_noop_with_no_window_art() -> void:
 	cv._turn_window(0.3)
 	_expect(cv._win_at == -1, "a card with no 3D window (the ordinary case -- 28 of 29 rares) must not touch window state at all when ticked")
 	cv.free()
+
+
+## backlog #86 duty 3: CardView.foil_tilt_for() -- see card_view.gd's own comment
+## on _foil_tilt() for why the math had to be lifted out to reach it headless.
+## drift(t) is _foil_tilt's own idle-breathing term, recomputed here from its
+## published formula so each expectation states what the branch ADDS on top of
+## it, not just "some vector came back".
+func _drift_at(t: float) -> Vector2:
+	return Vector2(sin(t * 0.6), cos(t * 0.43)) * 0.35
+
+
+func _test_backlog86_foil_tilt_for_drifts_alone_with_no_accel_or_rect() -> void:
+	var t := 1.7
+	var got := CardView.foil_tilt_for(t, Vector3.ZERO, false, Vector2(9, 9))
+	_expect(got.is_equal_approx(_drift_at(t)),
+		"with no accelerometer reading and no on-screen rect (nothing to read a pointer offset from), the tilt is pure idle drift -- the ignored `rel` proves has_rect gates it, not just a zero rel")
+
+
+func _test_backlog86_foil_tilt_for_follows_the_pointer_when_no_accel_is_reported() -> void:
+	var t := 0.4
+	var rel := Vector2(0.2, -0.1)
+	var got := CardView.foil_tilt_for(t, Vector3.ZERO, true, rel)
+	_expect(got.is_equal_approx(_drift_at(t) + rel * 0.5),
+		"with a rect but no accelerometer, the pointer's fraction-of-card offset adds in at half strength, on top of drift")
+
+
+func _test_backlog86_foil_tilt_for_prefers_accelerometer_over_the_pointer() -> void:
+	var t := 2.2
+	var accel := Vector3(0.5, 0.0, 0.3)
+	var rel := Vector2(-9.0, 9.0)  # would dominate hugely if it leaked in
+	var got := CardView.foil_tilt_for(t, accel, true, rel)
+	_expect(got.is_equal_approx(_drift_at(t) + Vector2(accel.x, accel.z) * 0.22),
+		"a real accelerometer reading (a phone in your hand) wins outright over a reported pointer position, never blends with it")
+
+
+func _test_backlog86_foil_tilt_for_clamps_a_far_pointer_offset() -> void:
+	var t := 0.0
+	var got := CardView.foil_tilt_for(t, Vector3.ZERO, true, Vector2(10.0, 0.0))
+	_expect(got.is_equal_approx(_drift_at(t) + Vector2(0.75, 0.0)),
+		"a pointer offset far outside the card (length 10) still clamps to limit_length(1.5) before the 0.5 scale, same as a card dragged clear across the screen -- 1.5 * 0.5 = 0.75, not an unbounded tilt")
+
+
+func _test_backlog86_foil_tilt_for_ignores_a_below_threshold_accelerometer_reading() -> void:
+	var t := 3.1
+	# Just under _foil_tilt's own `> 0.1` guard -- Vector3 is float32, so a
+	# literal 0.1 does not round-trip exactly and pinning length() to exactly
+	# 0.1 is not reliable; 0.09 is unambiguously below the line on any float
+	# width. Must fall through to drift-only (has_rect false here) rather than
+	# being read as a real device tilt.
+	var got := CardView.foil_tilt_for(t, Vector3(0.09, 0.0, 0.0), false, Vector2.ZERO)
+	_expect(got.is_equal_approx(_drift_at(t)),
+		"an accelerometer reading below the 0.1 threshold does not count as a real reading")
 
 
 ## backlog #86 duty 2: CardView.body_font_size, lifted out of _rich_body() so
