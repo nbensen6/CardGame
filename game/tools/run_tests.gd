@@ -259,6 +259,7 @@ func _init() -> void:
 	_test_backlog86_archetype_tags_recognise_retain_innate_ethereal_cheapen_and_meld_cards()
 	_test_backlog86_archetype_tags_recognise_x_cost_cards()
 	_test_backlog86_archetype_tags_recognise_condition_cards()
+	_test_backlog86_archetype_tags_recognise_ally_heal_cards()
 	_test_backlog72_reward_roll_leans_toward_a_tag_already_in_the_deck()
 	_test_backlog72_relic_rolls_are_unaffected_by_deck_tags()
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
@@ -7220,6 +7221,38 @@ func _test_backlog86_archetype_tags_recognise_condition_cards() -> void:
 	_expect(leaned_weight11 > flat_weight11,
 		"Dagger's reward weight rises for a condition-heavy deck now that it carries the condition tag [flat=%s leaned=%s]"
 			% [flat_weight11, leaned_weight11])
+
+
+# backlog #86 duty 2: archetype_tags()'s "heal" tag only ever fired for
+# power_effect == "heal" (a power_effect no shipped card uses). ally_heal
+# (backlog #47's Lightbearer mend) is a completely separate healing field that
+# already feeds the "ally" tag but never grew a matching "heal" branch.
+func _test_backlog86_archetype_tags_recognise_ally_heal_cards() -> void:
+	var ally_heal_only := Card.new()
+	ally_heal_only.ally_heal = 5
+	var ally_heal_only_tags: Array = ally_heal_only.archetype_tags()
+	_expect(ally_heal_only_tags.has("heal") and ally_heal_only_tags.has("ally") and ally_heal_only_tags.size() == 2,
+		"a bare card with only ally_heal set is tagged heal and ally, nothing else [tags=%s]" % [ally_heal_only_tags])
+
+	var warm_glow_tags: Array = Content.card_tags("warm_glow")
+	_expect(warm_glow_tags.has("heal") and warm_glow_tags.has("ally") and warm_glow_tags.has("light"),
+		"Warm Glow (ally_heal 4, light_gain 1) keeps ally and light and now also gets heal [tags=%s]"
+			% [warm_glow_tags])
+
+	var guiding_light_tags: Array = Content.card_tags("guiding_light")
+	_expect(guiding_light_tags.has("heal") and guiding_light_tags.has("ally") and guiding_light_tags.has("light"),
+		"Guiding Light (light_cost 3, ally_heal 8) keeps ally and light and now also gets heal [tags=%s]"
+			% [guiding_light_tags])
+
+	# reward-lean end to end, same shape as the condition/x_cost/reach/scry checks above.
+	var run12 := _map_run()
+	var heal_deck_tags: Dictionary = run12._tag_counts(_deck_of(Callable(Content, "make_card").bind("warm_glow"), 10))
+	var guiding_light_rarity: String = Content.card_rarity("guiding_light")
+	var flat_weight12: int = Run.reward_weight(guiding_light_rarity, guiding_light_tags, {})
+	var leaned_weight12: int = Run.reward_weight(guiding_light_rarity, guiding_light_tags, heal_deck_tags)
+	_expect(leaned_weight12 > flat_weight12,
+		"Guiding Light's reward weight rises for a heal-heavy deck now that both cards share the heal tag [flat=%s leaned=%s]"
+			% [flat_weight12, leaned_weight12])
 
 
 ## Backlog #72: a card reward roll should lean toward the archetype a hunter is

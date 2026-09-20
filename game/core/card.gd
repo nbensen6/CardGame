@@ -462,7 +462,15 @@ func archetype_tags() -> Array:
 		tags.append("thorns")
 	if frail > 0 or power_effect == "frail":
 		tags.append("frail")
-	if power_effect == "heal":
+	# backlog #86 duty 2: power_effect == "heal" was the only path to the "heal"
+	# tag -- no shipped card uses that power_effect, so it never masked the gap.
+	# ally_heal (backlog #47's Lightbearer mend mechanic) is a completely
+	# separate healing field and never grew a matching branch here, even though
+	# it already feeds the "ally" tag just above. warm_glow (ally_heal 4,
+	# light_gain 1) and guiding_light (light_cost 3, ally_heal 8) are two real,
+	# shipped cards that get "ally"/"light" leans but never a "heal" lean
+	# (backlog #72) toward each other, unlike every power_effect heal card would.
+	if power_effect == "heal" or ally_heal > 0:
 		tags.append("heal")
 	# backlog #86 duty 2: topdeck/shuffle_in/tutor (backlog #68) reach straight
 	# into your own draw pile -- exactly the mechanic GameHost._keywords_of()
