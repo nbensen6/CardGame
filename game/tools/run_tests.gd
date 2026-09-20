@@ -1976,6 +1976,8 @@ func _init() -> void:
 	_test_backlog86_ascension_display_state_at_the_top_of_what_is_unlocked()
 	_test_backlog86_ascension_display_state_lists_only_tiers_at_or_below_the_level()
 	_test_backlog86_ascension_display_state_sorts_by_level_regardless_of_array_order()
+	_test_backlog86_tips_toggle_state_hides_replay_while_tips_are_off()
+	_test_backlog86_tips_toggle_state_shows_replay_while_tips_are_on()
 	_test_backlog86_damage_popup_offset_leaves_well_separated_popups_alone()
 	_test_backlog86_damage_popup_offset_scales_the_minimum_gap_with_reach()
 	_test_backlog86_damage_popup_offset_still_separates_two_popups_at_the_same_spot()
@@ -25412,6 +25414,34 @@ func _test_backlog86_ascension_display_state_sorts_by_level_regardless_of_array_
 	var state: Dictionary = MenuView.ascension_display_state(3, 3, tiers)
 	_expect(state["text"] == "Thicker Hides — More HP.\nLong Roads — Less healing.\nMeaner Beasts — More Strength.",
 		"the description lists tiers in level order even when the data array isn't sorted")
+
+
+## backlog #86 duty 3 (fifty-fourth pass): menu.gd's tips row (_refresh_tips,
+## called from _ready() and both the toggle's and Replay's own pressed
+## handlers) had zero coverage -- unlike its two siblings just above,
+## _refresh_continue/continue_button_state and _refresh_ascension/
+## ascension_display_state, both already split into a pure half specifically
+## so a test could reach them with no scene tree. _refresh_tips never got that
+## treatment: it read/wrote %TipsToggle and %ResetHints directly, so no test
+## could drive it without instantiating the real menu.tscn, and nothing in
+## this file ever does (menu.gd is only ever reached through the two static
+## helpers already covered). The rule it enforces, straight from its own doc
+## comment: Replay only means anything while tips are globally on, so it must
+## never be visible while they're off -- a stray tap on it would silently
+## teach nothing. Lifted the decision out to tips_toggle_state(), the same
+## move already proven twice on this exact screen.
+func _test_backlog86_tips_toggle_state_hides_replay_while_tips_are_off() -> void:
+	var state: Dictionary = MenuView.tips_toggle_state(false)
+	_expect(state["tips_text"] == "Tips: Off", "the toggle's own label names the OFF state")
+	_expect(state["reset_visible"] == false,
+		"Replay must stay hidden while tips are off -- pressing it would teach nothing")
+
+
+func _test_backlog86_tips_toggle_state_shows_replay_while_tips_are_on() -> void:
+	var state: Dictionary = MenuView.tips_toggle_state(true)
+	_expect(state["tips_text"] == "Tips: On", "the toggle's own label names the ON state")
+	_expect(state["reset_visible"] == true,
+		"Replay becomes reachable again the moment tips are back on")
 
 
 ## backlog #86 duty 2 (found via design/progress/bugs.md, 2026-09-05 -- "two

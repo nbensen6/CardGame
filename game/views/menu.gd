@@ -136,9 +136,18 @@ func _on_continue() -> void:
 ## dismissed". Replaying with tips switched off would do nothing visible, so it
 ## switches them back on.
 func _refresh_tips() -> void:
-	var on := Progress.hints_enabled()
-	_tips_toggle.text = "Tips: On" if on else "Tips: Off"
-	_reset_hints.visible = on
+	var state := tips_toggle_state(Progress.hints_enabled())
+	_tips_toggle.text = state["tips_text"]
+	_reset_hints.visible = state["reset_visible"]
+
+
+## Pure half of _refresh_tips, lifted out the same way continue_button_state/
+## ascension_display_state were: the toggle's own label and whether Replay
+## should show at all, testable headless with no scene tree. Replay stays
+## hidden while tips are off -- pressing it would silently do nothing, since
+## every dismissed hint would still be suppressed by the toggle itself.
+static func tips_toggle_state(on: bool) -> Dictionary:
+	return {"tips_text": "Tips: On" if on else "Tips: Off", "reset_visible": on}
 
 
 ## Single-player: one player controls both hunters, all in-process (no networking).
