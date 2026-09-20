@@ -1033,6 +1033,7 @@ func _init() -> void:
 	_test_backlog86_face_text_status_and_utility_lines_join_in_field_order()
 	_test_backlog86_face_text_shows_dexterity_alongside_block()
 	_test_backlog86_face_text_shows_a_melded_powers_recurring_payoff()
+	_test_backlog86_face_text_power_effect_heal_links_to_the_heal_keyword_not_power()
 	_test_backlog86_face_text_shows_frail_alongside_damage()
 	_test_backlog86_face_text_shows_thorns_alongside_block()
 	_test_backlog86_face_text_shows_light_gain_alongside_block_or_damage()
@@ -20445,6 +20446,35 @@ func _test_backlog86_face_text_shows_a_melded_powers_recurring_payoff() -> void:
 		"keywords": [], "fx": {"power_effect": "strength", "power_value": 1}}
 	_expect(CardView.face_text(plain, false) == "Power: Strength 1 each turn end.",
 		"a plain recurring-power card also states its payoff via the live line")
+
+
+## backlog #86 duty 2 (find an error and resolve it) — the power_effect word/id
+## lookup above handles block/strength/wound/vulnerable/frail/thorns, but never
+## grew a "heal" entry even though Combat._handle_power_effects(), Card.
+## archetype_tags() and GameHost._keywords_of() all resolve power_effect
+## "heal" as real (see game_host.gd's own backlog #86 duty 2 comment right
+## above its "heal" branch). Falling through to the `peff.capitalize()`
+## default happened to print the right WORD ("Heal") by capitalize() luck, so
+## a plain (non-rich) render looked correct and hid the bug -- but the id
+## fallback is "power", not "heal", so tapping the underlined word in rich
+## mode linked to keywords.json's "power" entry ("stacks, never discarded")
+## instead of "heal" ("Heals you directly, up to your max health."). No
+## shipped card uses power_effect "heal" yet, same as block/strength/wound/
+## thorns before the cards that needed them shipped.
+func _test_backlog86_face_text_power_effect_heal_links_to_the_heal_keyword_not_power() -> void:
+	var data := {"preview": {"damage": 0}, "preview_miss": {}, "base": {},
+		"keywords": [{"id": "power"}, {"id": "heal"}], "fx": {"power_effect": "heal", "power_value": 5}}
+	_expect(CardView.face_text(data, false) == "Power: Heal 5 each turn end.",
+		"a power_effect=heal card states its recurring payoff on its live face")
+	# "Power" itself correctly links to id "power" (it's the payoff's own
+	# keyword) -- the bug this proves is the RECURRING WORD after the colon
+	# ("Heal") linking to "power" too instead of its own "heal" id.
+	var rich_out: String = CardView.face_text(data, true)
+	var heal_link: String = "[url=kw:heal][u][color=#%s]Heal[/color][/u][/url]" % CardView.KEYWORD_COLOR
+	_expect(rich_out.contains(heal_link),
+		"tapping the recurring Heal word on a power_effect=heal card must link to the heal keyword, not fall through to power [got=%s]" % rich_out)
+	_expect(rich_out.count("[url=kw:power]") == 1,
+		"only the leading \"Power\" word should link to the power keyword -- the recurring Heal word linking to it too would mean the fix regressed [got=%s]" % rich_out)
 
 
 ## backlog #86 duty 2 (find an error and resolve it) — a fourth instance of

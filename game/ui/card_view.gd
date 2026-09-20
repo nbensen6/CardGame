@@ -1118,10 +1118,22 @@ static func face_text(data: Dictionary, rich: bool = false) -> String:
 	var power_val := int(fx.get("power_value", 0))
 	if String(fx.get("power_effect", "")) != "" and power_val > 0:
 		var peff := String(fx["power_effect"])
+		# backlog #86 duty 2 — combat.gd's _handle_power_effects() and card.gd's
+		# archetype_tags() both resolve "heal" as a real power_effect
+		# (game_host.gd's _keywords_of() appends the "heal" id for it too, so
+		# keywords.json's own "heal" entry is reachable) — but this dict never
+		# grew a matching entry, so a power_effect:"heal" card fell to the
+		# peff.capitalize()/"power" default: the word still read "Heal" by
+		# capitalize() luck, but tapping it linked to the unrelated "power"
+		# keyword instead of "heal". No shipped card uses power_effect "heal"
+		# yet, but neither did block/strength/wound/thorns before the cards
+		# that needed them shipped.
 		var pword: String = {"block": "Block", "strength": "Strength", "wound": "Poison",
-			"vulnerable": "Expose", "frail": "Frail", "thorns": "Thorns"}.get(peff, peff.capitalize())
+			"vulnerable": "Expose", "frail": "Frail", "thorns": "Thorns",
+			"heal": "Heal"}.get(peff, peff.capitalize())
 		var pkw: String = {"block": "player_block", "strength": "strength", "wound": "poison",
-			"vulnerable": "expose", "frail": "frail", "thorns": "thorns"}.get(peff, "power")
+			"vulnerable": "expose", "frail": "frail", "thorns": "thorns",
+			"heal": "heal"}.get(peff, "power")
 		out.append("%s: %s %d each turn end." % [_kw("Power", "power", kw, rich),
 			_kw(pword, pkw, kw, rich), power_val])
 	if int(fx.get("rhythm", 0)) > 0:
