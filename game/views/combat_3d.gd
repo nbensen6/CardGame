@@ -451,11 +451,24 @@ static func _let_drags_through(root: Node) -> void:
 		_let_drags_through(child)
 
 
+## Hud/Root children with nothing to click on them — a camera drag anywhere
+## over their rect should reach the camera, not stop dead.
+##
+## HandScroll belongs here for the same reason TopBar does, but it took
+## longer to notice: _layout_hand() tucks a resting card FAN_TUCK+52 (~78px)
+## below the top of HandScroll's own rect on desktop, so that strip renders as
+## bare ground between the party panel and the boss — yet %Hand only carries
+## MOUSE_FILTER_IGNORE on itself, never on HandScroll, the ScrollContainer
+## that actually owns the taller rect and still defaulted to STOP. Individual
+## cards are unaffected: each CardView sets its own mouse_filter back to STOP
+## when it is added, after this subtree walk has already run once in _ready().
+const DRAG_THROUGH_PATHS := ["TopBar", "HandScroll"]
+
+
 func _ready() -> void:
 	Screen.fit(self)   # a phone gets a physically larger interface
-	# The top bar is the beast's name and health: a readout with nothing to
-	# click, so the camera gets every pixel of it.
-	_let_drags_through(get_node_or_null("Hud/Root/TopBar"))
+	for path in DRAG_THROUGH_PATHS:
+		_let_drags_through(get_node_or_null("Hud/Root/%s" % path))
 	_circle = HitCircle.new()
 	_circle.name = "HitCircle"
 	var hud := get_node_or_null("Hud/Root") as Control

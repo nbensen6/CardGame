@@ -1073,6 +1073,11 @@ func _init() -> void:
 	_test_backlog86_let_drags_through_reaches_every_descendant_control()
 	_test_backlog86_let_drags_through_walks_through_a_non_control_node()
 	_test_backlog86_let_drags_through_tolerates_a_null_root()
+	# backlog #86 duty 2: HandScroll never got the same passthrough TopBar did,
+	# so the empty ground above a tucked hand swallowed camera drags. Fixed by
+	# turning the one hardcoded _let_drags_through(TopBar) call into a list.
+	_test_backlog86_drag_through_paths_include_hand_scroll()
+	_test_backlog86_let_drags_through_leaves_a_later_sibling_at_its_own_default()
 	# backlog #86 duty 3 (twentieth turn): CardView.shape_text, the rule that
 	# decides what authored prose survives ALONGSIDE the live effect line
 	# face_text builds -- static, pure, and covered by nothing despite being
@@ -21084,6 +21089,40 @@ func _test_backlog86_let_drags_through_walks_through_a_non_control_node() -> voi
 func _test_backlog86_let_drags_through_tolerates_a_null_root() -> void:
 	Combat3D._let_drags_through(null)
 	_expect(true, "a null root returns immediately instead of crashing on get_children()")
+
+
+## backlog #86 duty 2 -- HandScroll (the ScrollContainer combat_3d.tscn wraps
+## %Hand in) is a "two copies of one truth" drift: the scene only ever marked
+## the INNER %Hand control MOUSE_FILTER_IGNORE, so a camera drag over the bare
+## ground strip above a tucked hand (_layout_hand() leaves ~78px of HandScroll's
+## own rect empty on desktop) hit the ScrollContainer's default STOP and never
+## reached the camera. _ready() used to hardcode a single call for TopBar; this
+## proves HandScroll is actually in the list that walk runs over now, so
+## re-narrowing that list back to one path silently reintroduces the dead strip.
+func _test_backlog86_drag_through_paths_include_hand_scroll() -> void:
+	_expect("HandScroll" in Combat3D.DRAG_THROUGH_PATHS,
+		"the empty ground above a tucked hand must pass camera drags through, same as the top bar does")
+	_expect("TopBar" in Combat3D.DRAG_THROUGH_PATHS,
+		"the original top-bar passthrough must survive the switch from one hardcoded call to a list")
+
+
+func _test_backlog86_let_drags_through_leaves_a_later_sibling_at_its_own_default() -> void:
+	# Mirrors how _ready() actually runs: _let_drags_through walks HandScroll
+	# once, up front, before any CardView exists. A card added afterwards is a
+	# NEW child, never visited by that earlier walk, so it must keep whatever
+	# mouse_filter it sets for itself rather than inheriting IGNORE.
+	var scroll := Control.new()
+	var hand := Control.new()
+	scroll.add_child(hand)
+	Combat3D._let_drags_through(scroll)
+	var card := Control.new()
+	hand.add_child(card)
+	card.mouse_filter = Control.MOUSE_FILTER_STOP
+	_expect(scroll.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+		"the container itself passes drags through")
+	_expect(card.mouse_filter == Control.MOUSE_FILTER_STOP,
+		"a card added after the walk keeps the STOP it sets for its own tap, unaffected by a walk that already finished")
+	scroll.free()
 
 
 ## backlog #86 duty 3 (twentieth turn) -- CardView.shape_text() is "the
