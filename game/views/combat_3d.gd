@@ -3007,6 +3007,51 @@ func _place_sigil(s: Dictionary) -> void:
 
 # --- reactions (the same snapshot deltas the 2D view uses) ----------------
 
+## Pure decision half of _react(): given the previous snapshot and the new
+## one, what changed and what the view should do about it. No node access,
+## no Sfx/_damage_popup calls, so it's provable from headless.
+##
+## backlog #86 duty 2: _react() used to compute `php` (per-hunter hp) only
+## AFTER the encounter/party-size guard, so the very first state update of
+## every fight synced foots/reached with a real baseline but left `_prev_php`
+## at its default `[]`. The NEXT update (the fight's first real action) then
+## hit a second guard -- "_prev_php.size() != php.size()" -- that existed
+## only to catch that self-inflicted mismatch, and it re-synced and returned
+## instead of reacting. Net effect: the boss's first hit of every fight never
+## flashed or popped a damage number, and a first-turn climb never played its
+## sound -- not because those systems were wrong, but because the reaction
+## code ate its own first real frame. Computing php in the same pass as
+## foots/reached (both here and in _react below) means there's only ever one
+## kind of "first pass" -- the encounter/party-size guard -- and it now syncs
+## a COMPLETE baseline, so the very next update reacts normally.
+static func react_plan(prev_enc: int, prev_foot: Array, prev_reached: Array,
+		prev_php: Array, prev_hp: int, enc: int, hp: int, foots: Array,
+		reached: Array, php: Array) -> Dictionary:
+	if enc != prev_enc or prev_foot.size() != foots.size():
+		return {"resync": true}
+	var boss_hit := hp < prev_hp
+	var hunter_dmg: Array = []
+	var foot_actions: Array = []
+	for i in range(foots.size()):
+		hunter_dmg.append(prev_php[i] - php[i] if php[i] < prev_php[i] else 0)
+		if not prev_reached[i] and reached[i]:
+			foot_actions.append("reach")
+		elif foots[i] > prev_foot[i]:
+			foot_actions.append("climb")
+		elif foots[i] < prev_foot[i]:
+			foot_actions.append("fall")
+		else:
+			foot_actions.append("")
+	return {
+		"resync": false,
+		"boss_hit": boss_hit,
+		"weak": (reached.has(true) or prev_reached.has(true)) if boss_hit else false,
+		"boss_dmg": (prev_hp - hp) if boss_hit else 0,
+		"hunter_dmg": hunter_dmg,
+		"foot_actions": foot_actions,
+	}
+
+
 func _react(s: Dictionary) -> void:
 	var boss: Dictionary = s["boss"]
 	var players: Array = s["players"]
@@ -3014,36 +3059,32 @@ func _react(s: Dictionary) -> void:
 	var hp := int(boss.get("hp", 0))
 	var foots: Array = []
 	var reached: Array = []
+	var php: Array = []
 	for p in players:
 		foots.append(int(p.get("foothold", 0)))
 		reached.append(bool(p.get("reached", false)))
-	if enc != _prev_encounter or _prev_foot.size() != foots.size():
-		_sync(enc, hp, foots, reached)
-		return
-	var php: Array = []
-	for p in players:
 		php.append(int(p.get("hp", 0)))
-	if _prev_php.size() != php.size():
-		_sync(enc, hp, foots, reached, php)
-		return
-	if hp < _prev_hp:
-		var weak := reached.has(true) or _prev_reached.has(true)
-		_strike(weak)
-		_damage_popup(_prev_hp - hp, _sigil.position if weak else _beast_box.get_center(), weak)
-	for i in range(foots.size()):
-		if php[i] < _prev_php[i] and i < _hunters.size() \
-				and is_instance_valid((_hunters[i] as Dictionary)["node"]):
-			# Hunters bleed too, and how hard you were hit is the thing you most
-			# need to know before deciding next turn.
-			var hnode: Node3D = (_hunters[i] as Dictionary)["node"]
-			_damage_popup(_prev_php[i] - php[i],
-				hnode.position + Vector3(0.0, HUNTER_HEIGHT * 1.4, 0.0), false, true)
-		if not _prev_reached[i] and reached[i]:
-			Sfx.play("reach_sigil")
-		elif foots[i] > _prev_foot[i]:
-			Sfx.play("climb")
-		elif foots[i] < _prev_foot[i]:
-			_beast_shake()
+	var plan := react_plan(_prev_encounter, _prev_foot, _prev_reached, _prev_php,
+		_prev_hp, enc, hp, foots, reached, php)
+	if not bool(plan["resync"]):
+		if plan["boss_hit"]:
+			_strike(plan["weak"])
+			_damage_popup(plan["boss_dmg"],
+				_sigil.position if plan["weak"] else _beast_box.get_center(), plan["weak"])
+		var hunter_dmg: Array = plan["hunter_dmg"]
+		var foot_actions: Array = plan["foot_actions"]
+		for i in range(foots.size()):
+			if hunter_dmg[i] > 0 and i < _hunters.size() \
+					and is_instance_valid((_hunters[i] as Dictionary)["node"]):
+				# Hunters bleed too, and how hard you were hit is the thing you most
+				# need to know before deciding next turn.
+				var hnode: Node3D = (_hunters[i] as Dictionary)["node"]
+				_damage_popup(hunter_dmg[i],
+					hnode.position + Vector3(0.0, HUNTER_HEIGHT * 1.4, 0.0), false, true)
+			match String(foot_actions[i]):
+				"reach": Sfx.play("reach_sigil")
+				"climb": Sfx.play("climb")
+				"fall": _beast_shake()
 	_sync(enc, hp, foots, reached, php)
 
 

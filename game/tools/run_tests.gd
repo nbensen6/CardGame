@@ -843,6 +843,13 @@ func _init() -> void:
 	_test_backlog86_route_between_rungs_excludes_the_endpoints()
 	_test_backlog86_route_between_rungs_is_empty_with_no_ledges_between()
 	_test_backlog86_route_between_rungs_ignores_unsorted_input()
+	# backlog #86 duty 2: combat_3d._react()'s pure half, react_plan — the
+	# boss's first hit of every fight showed no strike flash or damage number,
+	# and a first-turn climb played no sound, because the php (per-hunter hp)
+	# baseline used to be established a whole update LATE, so the update right
+	# after every resync hit a second, hidden resync instead of reacting.
+	_test_backlog86_react_plan_reacts_on_the_first_real_update_after_a_resync()
+	_test_backlog86_react_plan_still_resyncs_on_a_party_size_change()
 	# backlog #86 duty 3 (fiftieth pass): solo_view_slot/solo_cmd_slot/
 	# solo_private_view, lifted out of combat_3d._me/_cmd_slot/_my_private —
 	# the routing that decides which hunter's private hand a solo (couch
@@ -19119,6 +19126,45 @@ func _test_backlog86_route_between_rungs_ignores_unsorted_input() -> void:
 	# the dictionary's insertion order to come out in climb order.
 	var route: Array = Combat3D.route_between_rungs([12, 0, 8, 4], 0, 12)
 	_expect(route == [4, 8], "the rung list is sorted before routing, regardless of the order it arrives in")
+
+
+## backlog #86 duty 2 — combat_3d.react_plan is the pure decision half of
+## _react(), the boss/hunter-hit and climb/sigil/fall reaction code, lifted
+## the same way route_between_rungs was. The bug: _react() used to build its
+## per-hunter-hp (`php`) baseline only AFTER the "new encounter" resync, so
+## the update right after every resync found `_prev_php` still at its default
+## `[]` and hit a SECOND guard that also just re-synced and returned — eating
+## that update's reactions instead of showing them. Since every fight's very
+## first player action is exactly "the update right after the encounter's
+## first sync", this silently dropped the boss's first-hit flash/damage
+## number and the first climb's sound on every single fight.
+func _test_backlog86_react_plan_reacts_on_the_first_real_update_after_a_resync() -> void:
+	# The encounter's opening snapshot: no prior state at all (matches this
+	# view's own field defaults: _prev_encounter = -1, empty arrays, hp = -1).
+	var first: Dictionary = Combat3D.react_plan(-1, [], [], [], -1,
+		0, 40, [0, 0], [false, false], [30, 28])
+	_expect(bool(first["resync"]), "the opening snapshot of a new encounter is a resync with no reactions yet")
+
+	# The fight's first real action: the boss takes 6, hunter 1 takes 4 and
+	# hunter 0 climbs a rung. Fed straight off `first`'s own inputs as the
+	# "previous" state, exactly as _react() chains _sync()'s output forward.
+	var second: Dictionary = Combat3D.react_plan(0, [0, 0], [false, false], [30, 28], 40,
+		0, 34, [1, 0], [false, false], [30, 24])
+	_expect(not bool(second["resync"]),
+		"the update right after a resync must react, not silently resync again -- this was the bug")
+	_expect(second["boss_hit"] == true and second["boss_dmg"] == 6,
+		"a fight's first hit on the boss must be seen, not eaten by a hidden second warm-up pass")
+	_expect(second["hunter_dmg"] == [0, 4], "a fight's first hit on a hunter must be seen too")
+	_expect(second["foot_actions"] == ["climb", ""], "a fight's first climb must play its sound, not get swallowed")
+
+
+func _test_backlog86_react_plan_still_resyncs_on_a_party_size_change() -> void:
+	# A mid-fight party-size change (a solo/co-op switch, a teammate drop) must
+	# still resync rather than read mismatched-length prev arrays -- the guard
+	# react_plan kept from the original code, now the only kind of "first pass".
+	var plan: Dictionary = Combat3D.react_plan(0, [0, 0], [false, false], [30, 24], 34,
+		0, 34, [0], [false], [30])
+	_expect(bool(plan["resync"]), "a foothold-array size change must resync, not react against a stale-length previous array")
 
 
 ## backlog #86 duty 3 — combat_3d._merged_aabb/_all_meshes (now lifted static,
