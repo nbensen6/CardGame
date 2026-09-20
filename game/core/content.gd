@@ -424,5 +424,11 @@ static func build_boss_adds(id: String) -> Array:
 		# cache-aliasing reason `moves` gets it two lines up.
 		a.hurt_pct = float(ad.get("hurt_pct", 0.0))
 		a.hurt_moves = (ad.get("hurt_moves", []) as Array).duplicate(true)
+		a.weak_point_height = int(ad.get("weak_point_height", 0))  # backlog #86
+		# duty 2: same gap as thorns/artifact/hurt_pct above. Boss._condition_met()'s
+		# COND_AT_SIGIL branch is `if weak_point_height <= 0: return false` -- with
+		# this field never parsed off an add's own JSON, that branch could never be
+		# true for ANY add, so a move authored with "when":{"type":"at_sigil"} on an
+		# add would silently always fall back, no matter how far a hunter climbed.
 		out.append(a)
 	return out

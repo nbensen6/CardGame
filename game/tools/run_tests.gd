@@ -235,6 +235,7 @@ func _init() -> void:
 	_test_content_pools_are_copies()
 	_test_build_boss_moves_ledges_limiter_are_copies_not_cache_aliases()
 	_test_backlog86_build_boss_adds_parses_hurt_pct_and_hurt_moves()
+	_test_backlog86_build_boss_adds_parses_weak_point_height()
 	_test_reward_pool_prefers_a_real_characters_own_pool_over_the_shared_fallback()
 	_test_shop_stock_for_a_real_character_is_scoped_to_their_own_pool()
 	_test_status_cards_never_offered_as_a_reward()
@@ -6309,6 +6310,35 @@ func _test_backlog86_build_boss_adds_parses_hurt_pct_and_hurt_moves() -> void:
 	add.hp = 20  # exactly half of 40 -- at the hurt_pct threshold
 	_expect(int(add.current_move()["value"]) == 7,
 		"an add actually switches to its own hurt_moves once wounded, same as the main boss")
+
+
+## Backlog #86 duty 2: same "one builder grew a field, its sibling didn't"
+## shape as the test above, this time weak_point_height. Boss._condition_met()'s
+## COND_AT_SIGIL branch (boss.gd) is `if weak_point_height <= 0: return false` --
+## a branch that can never fire for ANY add, forever, because
+## Content.build_boss_adds() never read the field off an add's own JSON in the
+## first place (build_boss() has parsed it for the main boss since before adds
+## existed). No shipped add authors an "at_sigil" move today (root_lurker's
+## root_tendril carries no "when" at all), so this had zero live impact -- but
+## a future add reacting to a hunter reaching the beast's sigil would have had
+## it silently ignored, exactly like hurt_pct/hurt_moves were before their own
+## fix above. Drives it through the real data loader (not a hand-built Boss),
+## since that loader is exactly what the bug was hiding in.
+func _test_backlog86_build_boss_adds_parses_weak_point_height() -> void:
+	var bosses: Dictionary = Content._read_json(Content.BOSSES_PATH).get("bosses", {})
+	bosses["_test_sigil_add_host"] = {"name": "Test Host", "max_hp": 100,
+		"adds": [{"id": "test_sigil_add", "name": "Test Add", "max_hp": 40,
+			"weak_point_height": 4,
+			"moves": [{"type": "attack", "value": 1,
+				"when": {"type": "at_sigil"}, "fallback": {"type": "attack", "value": 9}}]}]}
+	var add: Boss = Content.build_boss_adds("_test_sigil_add_host")[0]
+	bosses.erase("_test_sigil_add_host")
+	_expect(add.weak_point_height == 4,
+		"build_boss_adds() reads an add's own weak_point_height off its JSON data")
+	_expect(int(add.current_move({"footholds": [2], "blocks": []})["value"]) == 9,
+		"below the add's own sigil, an at_sigil move still falls back")
+	_expect(int(add.current_move({"footholds": [4], "blocks": []})["value"]) == 1,
+		"an add actually reacts to at_sigil once a hunter reaches ITS sigil, not just the main boss's")
 
 
 ## Backlog #86 duty 3: Content.reward_pool()'s own comment promises "a
