@@ -119,6 +119,7 @@ func _init() -> void:
 	_test_backlog86_daily_host_ascension_matches_the_pinned_run()
 	_test_backlog86_daily_unlocked_wins_is_pinned_and_fair()
 	_test_backlog86_restart_refreshes_unlocked_wins_after_a_win()
+	_test_backlog86_sealed_door_ending_does_not_bank_a_win()
 	_test_backlog86_restart_after_a_daily_does_not_replay_the_same_seed()
 	_test_run_walks_the_map()
 	_test_backlog86_elite_node_fights_from_the_elite_pool_not_the_fight_pool()
@@ -3710,6 +3711,7 @@ func _test_backlog86_daily_host_ascension_matches_the_pinned_run() -> void:
 		"a daily run's broadcast ascension is the pinned DAILY_ASCENSION, not whatever tier was selected at the menu")
 
 	host._run.phase = Run.Phase.WON
+	host._run.stats["true_ending"] = true  # simulating a REAL win, not the #64 sealed door
 	host._broadcast_state()
 	_expect(Progress.unlocked_ascension() == Run.DAILY_ASCENSION + 1,
 		"winning a daily run only unlocks the tier just past DAILY_ASCENSION, never the stale menu-selected ascension")
@@ -3786,6 +3788,7 @@ func _test_backlog86_restart_refreshes_unlocked_wins_after_a_win() -> void:
 		"the first run is gated on the career total captured when the host was built")
 
 	host._run.phase = Run.Phase.WON
+	host._run.stats["true_ending"] = true  # simulating a REAL win, not the #64 sealed door
 	host._broadcast_state()  # records the win, banking Progress.total_wins() to 1
 	_expect(Progress.total_wins() == 1,
 		"the win is banked to the real, on-disk career total")
@@ -3795,6 +3798,47 @@ func _test_backlog86_restart_refreshes_unlocked_wins_after_a_win() -> void:
 		"a same-session restart must re-read the just-updated career total, not replay " +
 		"the pre-win snapshot the host was constructed with, or newly unlocked content " +
 		"stays locked until the app restarts")
+
+
+## Backlog #86 duty 2: `GameHost._note_progress()` used to gate `Progress.
+## record_win()` on `Run.phase == WON` alone. But backlog #64's sealed door
+## (`Run.pick_node`'s boss branch — stepping onto the fourth Titan short of
+## all three keys) ALSO sets `phase = WON`, with `combat` left null and
+## `stats["true_ending"]` left false (see
+## _test_backlog64_final_titan_is_a_sealed_door_without_all_three_keys) —
+## the run ends there without the player ever fighting, let alone beating,
+## the tier's final boss. Progress.gd's own header says the ladder is kept
+## honest by "you unlock the next tier by clearing the current one," yet the
+## phase-only check banked a sealed-door ending exactly like a real clear:
+## total_wins incremented and, on a first clear of this ascension,
+## unlocked_ascension advanced too. A genuine win always has true_ending
+## true by the time phase reaches WON (sync() sets it in the same call that
+## scores the winning fight against the fourth Titan), so gating on both
+## costs nothing on the real path and only closes the sealed-door hole.
+func _test_backlog86_sealed_door_ending_does_not_bank_a_win() -> void:
+	Progress.use_scratch_slot("run_tests_backlog86_sealed_door_no_win")
+	var cfg := ConfigFile.new()
+	cfg.set_value(Progress.SECTION, "total_wins", 0)
+	cfg.set_value(Progress.SECTION, "unlocked_ascension", 0)
+	cfg.save(Progress.path)
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 0, 2, true, 0, Content.UNLOCKED_ALL)  # solo, ascension 0
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+	c.select_character("frog", 0)
+	c.select_character("goblin_mech", 1)
+
+	# Simulate the sealed door: WON with no keys, no fight — true_ending stays
+	# the default `false` this Run already started with.
+	host._run.phase = Run.Phase.WON
+	_expect(not bool(host._run.stats.get("true_ending", false)),
+		"sanity: this Run never fought the fourth Titan, so true_ending is still false")
+	host._broadcast_state()  # the call site that used to bank a fraudulent win
+
+	_expect(Progress.total_wins() == 0 and Progress.unlocked_ascension() == 0,
+		"a sealed-door ending must not bank a career win or advance the ascension ladder — " +
+		"the player never fought, let alone beat, the tier's final boss")
 
 
 ## Backlog #86 duty 2: `GameHost._daily_date` lives on the HOST (set once in

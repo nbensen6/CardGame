@@ -1293,7 +1293,18 @@ func _note_progress() -> void:
 	if _run == null or not _run.is_over() or _history_recorded:
 		return
 	_history_recorded = true  # broadcasts repeat on a finished run; the log must not
-	if _run.phase == Run.Phase.WON:
+	# backlog #86 duty 2: a sealed-door ending (Run.pick_node's boss branch,
+	# backlog #64 — stepping onto the fourth Titan short of all three keys)
+	# sets phase = WON without ever starting that fight, so stats["true_ending"]
+	# (run.gd:871, set only when the boss node is actually fought and beaten)
+	# stays false. This check used to test phase alone, so a run that never
+	# engaged the last Titan banked Progress.record_win() exactly like a real
+	# clear — bumping total_wins and, on a first Ascension clear, advancing
+	# unlocked_ascension — contradicting Progress.gd's own stated rule ("you
+	# unlock the next tier by clearing the current one"). A real win always has
+	# true_ending true by the time _after_node() reaches WON (sync() sets it in
+	# the same call that scores the winning fight), so this costs nothing there.
+	if _run.phase == Run.Phase.WON and bool(_run.stats.get("true_ending", false)):
 		Progress.record_win(_ascension)
 		# backlog #86 duty 2: _unlocked_wins is a snapshot of Progress.total_wins()
 		# taken when the host was constructed (menu.gd) or a save was resumed —
