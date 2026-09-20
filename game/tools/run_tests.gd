@@ -555,6 +555,15 @@ func _init() -> void:
 	_test_sigil_fatigue_limiter_punishes_camping()
 	_test_shift_sigil_resets_the_sigil_fatigue_clock()
 	_test_height_split_limiter_punishes_hoarding()
+	# backlog #86 duty 3: _apply_limiter()'s sigil_fatigue/height_split chips both
+	# land through Combatant.take_damage() -- the same generic cascade an
+	# ordinary boss attack goes through -- but every existing limiter test only
+	# ever set Block (or nothing) before the chip landed. Buffer, Intangible and
+	# Plated Armour are each thoroughly tested against ordinary attacks
+	# elsewhere, but never once against a limiter's own chip specifically.
+	_test_backlog86_sigil_fatigue_limiter_chip_is_cancelled_by_buffer()
+	_test_backlog86_height_split_limiter_chip_is_capped_by_intangible()
+	_test_backlog86_sigil_fatigue_limiter_chip_only_decays_plated_armour_when_hp_is_actually_reached()
 	_test_every_titan_carries_a_known_limiter()
 	_test_relic_start_strength()
 	# Powers: cards that stay played (backlog #57)
@@ -12696,6 +12705,96 @@ func _test_height_split_limiter_punishes_hoarding() -> void:
 	combat.end_turn(1)
 	_expect(ps.combatant.hp == hp0 - 3 and combat.players[1].combatant.hp == combat.players[1].combatant.max_hp,
 		"height_split limiter chips a hunter who climbs far ahead of their ally")
+
+
+## backlog #86 duty 3: _apply_limiter()'s "sigil_fatigue" branch calls
+## ps.combatant.take_damage(SIGIL_FATIGUE_DAMAGE) directly -- the exact same
+## Block/Buffer/Intangible/Plated Armour cascade an ordinary boss attack goes
+## through (combatant.gd:66-79) -- but nothing had ever primed one of those
+## three newer mitigations before tripping the chip. Buffer cancels a hit
+## outright once it gets past Block, spending a stack; this proves the
+## limiter's own chip is "a hit" as far as Buffer is concerned, not some
+## special unblockable tax.
+func _test_backlog86_sigil_fatigue_limiter_chip_is_cancelled_by_buffer() -> void:
+	var boss := _climb_boss(6)
+	boss.limiter = {"type": "sigil_fatigue", "value": 1}
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 6  # at the sigil
+	ps.combatant.buffer = 1
+	var hp0: int = ps.combatant.hp
+	combat.end_turn(0)
+	combat.end_turn(1)  # round 1 at the sigil — within the allowance, no chip yet
+	combat.end_turn(0)
+	combat.end_turn(1)  # round 2 — camped past the allowance, the chip lands and Buffer eats it
+	_expect(ps.combatant.hp == hp0 and ps.combatant.buffer == 0,
+		"a Buffer stack cancels the sigil_fatigue chip outright and is spent doing it, same as it would an ordinary attack")
+
+
+## Same rule, proven on the OTHER limiter (height_split, run.gd's excess ==
+## players[i].foothold - ally.foothold - value) and against Intangible instead
+## of Buffer: a hit that gets past Block is capped at 1 damage, not cancelled,
+## so an excess chip bigger than 1 must still land for exactly 1 HP and spend
+## the stack — not the full excess, and not zero.
+func _test_backlog86_height_split_limiter_chip_is_capped_by_intangible() -> void:
+	var boss := Boss.new("Splitter", 200)
+	boss.moves = [{"type": "block", "value": 0}]  # harmless move — isolate the limiter
+	boss.limiter = {"type": "height_split", "value": 4}
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 9
+	combat.players[1].foothold = 2  # gap 7, 3 over the allowance of 4
+	ps.combatant.intangible = 1
+	var hp0: int = ps.combatant.hp
+	combat.end_turn(0)
+	combat.end_turn(1)
+	_expect(ps.combatant.hp == hp0 - 1 and ps.combatant.intangible == 0,
+		"an Intangible stack caps the height_split chip at 1 damage instead of the full excess of 3, and is spent doing it")
+
+
+## Plated Armour (backlog #61) decays by 1 only when real HP damage still gets
+## through — a hit Block fully absorbs must cost it nothing. Proven here on
+## the sigil_fatigue chip specifically: full Block coverage of the chip leaves
+## Plated Armour untouched, but a Block short of the chip's full value still
+## lets the chip through for the shortfall AND decays Plated Armour by 1 —
+## it never reduces the damage, only survives one more hit that gets past it.
+##
+## Block is set AFTER round 1's end_turn(1) (which has already run round 2's
+## own _begin_round()), not before combat starts — _begin_round() re-seeds
+## Block from Plated Armour every round (combat.gd:1561-1564), so a value set
+## any earlier would just be overwritten before the chip ever fires in round 2.
+func _test_backlog86_sigil_fatigue_limiter_chip_only_decays_plated_armour_when_hp_is_actually_reached() -> void:
+	var absorbed_boss := _climb_boss(6)
+	absorbed_boss.limiter = {"type": "sigil_fatigue", "value": 1}
+	var absorbed_combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, absorbed_boss)
+	var absorbed_ps: PlayerState = absorbed_combat.players[0]
+	absorbed_ps.foothold = 6
+	absorbed_ps.combatant.plated_armour = 2
+	var absorbed_hp0: int = absorbed_ps.combatant.hp
+	absorbed_combat.end_turn(0)
+	absorbed_combat.end_turn(1)  # round 1 at the sigil, within allowance — no chip yet
+	absorbed_ps.combatant.block = Combat.SIGIL_FATIGUE_DAMAGE  # exactly covers the coming chip
+	absorbed_combat.end_turn(0)
+	absorbed_combat.end_turn(1)  # round 2 — chip fires, but Block alone fully covers it
+	var untouched: bool = absorbed_ps.combatant.hp == absorbed_hp0 and absorbed_ps.combatant.plated_armour == 2
+
+	var reached_boss := _climb_boss(6)
+	reached_boss.limiter = {"type": "sigil_fatigue", "value": 1}
+	var reached_combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, reached_boss)
+	var reached_ps: PlayerState = reached_combat.players[0]
+	reached_ps.foothold = 6
+	reached_ps.combatant.plated_armour = 2
+	var reached_hp0: int = reached_ps.combatant.hp
+	reached_combat.end_turn(0)
+	reached_combat.end_turn(1)  # round 1 — no chip yet
+	reached_ps.combatant.block = 1  # short of the coming chip by 3
+	reached_combat.end_turn(0)
+	reached_combat.end_turn(1)  # round 2 — chip fires, Block only covers 1 of it
+	var decayed: bool = reached_ps.combatant.hp == reached_hp0 - (Combat.SIGIL_FATIGUE_DAMAGE - 1) \
+		and reached_ps.combatant.plated_armour == 1
+
+	_expect(untouched and decayed,
+		"Plated Armour survives a limiter chip Block fully absorbs untouched, but decays by 1 the moment any of that chip actually reaches HP")
 
 
 ## Backlog #4: per-beast limiters — a rule each Titan bends, so four Titans read
