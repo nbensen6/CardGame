@@ -1622,6 +1622,13 @@ func _init() -> void:
 	_test_backlog86_dev_console_beast_swap_keeps_adds_in_sync_with_the_new_boss()
 	_test_backlog86_dev_console_hand_deal_and_own_target_the_right_pile()
 
+	# backlog #86 duty 3: GameHost._dev_hand() -- the LAUNCH-flag `hand=` dev
+	# switch, a completely separate mechanic from the DevConsole "hand"/"deal"
+	# commands proven right above -- had never once been driven by Dev.hand
+	# actually holding anything, so its loop body had zero coverage.
+	_test_backlog86_dev_hand_stocks_both_hunters_once_per_fight()
+	_test_backlog86_dev_hand_drops_unknown_ids_and_leaves_the_hand_alone_if_all_unknown()
+
 	# backlog #86 duty 3 (thirty-ninth pass): Run._gold_for(node_type) is the
 	# ENTIRE payout table for a felled beast (fight=25, elite=55, boss=80) --
 	# its sibling _card_price() three lines below gets its own coverage by
@@ -23735,6 +23742,88 @@ func _hand_ids(client: GameClient) -> Array:
 	for card in (client.private["hand"] as Array):
 		out.append(String(card["id"]))
 	return out
+
+
+## backlog #86 duty 3: the test above proves the DevConsole's own "hand"/
+## "deal"/"own" commands, which mutate a hunter's hand or deck directly and
+## have nothing to do with GameHost._dev_hand() -- a completely separate
+## mechanic, the one behind the LAUNCH flag `hand=crescendo,leap` dev.gd's own
+## header documents. `grep -n "_dev_hand\|Dev\.hand" run_tests.gd` returns
+## nothing before this pair of tests: `Dev.hand` defaults to an empty
+## PackedStringArray and nothing else in this whole suite ever assigns to it,
+## so `_dev_hand()`'s guard (`Dev.hand.is_empty(): return`) has short-circuited
+## on every one of the ~1600 other tests -- the loop body that actually deals
+## cards (game_host.gd:744-757) has never executed once. Prove its three real
+## claims: it stocks BOTH hunters' hands from Dev.hand the first time combat
+## is broadcast; the `_dev_stocked == _run.combat` identity guard means a
+## later broadcast (e.g. after a card is played) does not refill the hand
+## back to the full forced list, which the function's own doc comment calls
+## out as the whole point ("re-stamping on every broadcast would refill your
+## hand every time you played a card, which is a cheat rather than a dev
+## switch"); and a fresh Combat (a new fight) gets re-stocked, since the guard
+## compares by Combat identity rather than latching once for the host's whole
+## lifetime.
+func _test_backlog86_dev_hand_stocks_both_hunters_once_per_fight() -> void:
+	var save_hand: PackedStringArray = Dev.hand
+	Dev.hand = PackedStringArray(["slash", "brace"])
+
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	var c1: GameClient = s["c1"]
+	host._broadcast_state()
+	_expect(_hand_ids(c0) == ["slash", "brace"],
+		"the first broadcast of a fresh fight stocks hunter 0's hand from Dev.hand, replacing the real shuffle")
+	_expect(_hand_ids(c1) == ["slash", "brace"],
+		"Dev.hand stocks BOTH hunters, not just the one asking")
+
+	var ps0: PlayerState = host._run.combat.players[0]
+	ps0.energy = 3  # BASE_ENERGY -- guarantee the 1-cost forced card is affordable regardless of relics
+	var ci := ps0.hand.size() - 1
+	_expect(host._run.combat.play_card(0, ci, true, -1, -1), "setup sanity: the forced card must actually play")
+	host._broadcast_state()
+	_expect(_hand_ids(c0) != ["slash", "brace"],
+		"once stocked, playing a card and broadcasting again must NOT refill the hand back to the full forced list -- that's a cheat, not a dev switch")
+
+	_force_win(host._run)
+	_step_into_combat(host._run)
+	host._broadcast_state()
+	_expect(_hand_ids(c0) == ["slash", "brace"] and _hand_ids(c1) == ["slash", "brace"],
+		"a NEW fight (a new Combat instance) gets re-stocked from Dev.hand -- the guard is 'once per fight', not 'once ever' for the host's whole life")
+
+	Dev.hand = save_hand
+
+
+## backlog #86 duty 3: _dev_hand()'s own inline comment explains why it checks
+## `made.id == ""` before appending -- Content.make_card() never returns null
+## for an unknown id, it returns a blank Card.new() and a push_warning nobody
+## reads, so a typo in a launch flag's `hand=` list should silently drop that
+## one card rather than deal a nameless 0-cost blank that would look like a
+## rendering bug. And if EVERY id is unknown, `dealt` ends up empty and the
+## `if dealt.is_empty(): continue` guard leaves the hunter's real hand alone
+## rather than stomping it to []. Neither branch is reachable through the
+## test above, which only ever uses real ids.
+func _test_backlog86_dev_hand_drops_unknown_ids_and_leaves_the_hand_alone_if_all_unknown() -> void:
+	var save_hand: PackedStringArray = Dev.hand
+
+	Dev.hand = PackedStringArray(["slash", "not_a_real_card_id"])
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	host._broadcast_state()
+	_expect(_hand_ids(c0) == ["slash"],
+		"an unknown id is silently dropped rather than dealt as a nameless blank card")
+
+	Dev.hand = PackedStringArray(["nope_one", "nope_two"])
+	var s2 := _make_session(99)
+	var host2: GameHost = s2["host"]
+	var c0b: GameClient = s2["c0"]
+	var real_hand_size: int = host2._run.combat.players[0].hand.size()
+	host2._broadcast_state()
+	_expect(_hand_ids(c0b).size() == real_hand_size and real_hand_size > 0,
+		"if every id in Dev.hand is unknown, the real hand is left untouched, not stomped to an empty hand")
+
+	Dev.hand = save_hand
 
 
 ## backlog #86 duty 3 (thirty-ninth pass) -- Run._gold_for(kind) is the whole
