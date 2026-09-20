@@ -263,6 +263,8 @@ func _init() -> void:
 	_test_backlog86_pick_reward_rolls_foil_and_borderless_independently_by_rarity()
 	_test_backlog86_reward_weight_caps_stacked_tag_lean_at_the_rarity_gap()
 	_test_backlog86_hopscotchs_three_shared_tags_stay_within_the_rarity_gap()
+	_test_backlog86_roll_choices_shrinks_correctly_down_to_the_last_candidate()
+	_test_backlog86_relic_reward_with_one_relic_left_offers_exactly_that_one()
 	# potions (backlog #26)
 	_test_potions_all_load()
 	# #86 duty 3: potions.json's own _comment claims "'pool' lists what fights
@@ -7334,6 +7336,68 @@ func _test_backlog86_hopscotchs_three_shared_tags_stay_within_the_rarity_gap() -
 	_expect(Run.reward_weight(rarity, tags, deck_tag_counts) == capped,
 		"a deck already building climb, rhythm and ally leans on hopscotch by the rarity gap (%d), not the uncapped sum (%d)"
 			% [capped, naive])
+
+
+## Backlog #86 duty 3: _weighted_index()'s `ids.size() <= 1: return 0` guard
+## sits ahead of the reward_kind branch, so it is the ONLY code that runs once
+## a pool is down to its last candidate -- reward_weight()'s rarity/tag math
+## never runs at all. Every _roll_choices()/_weighted_index() test in this
+## suite (backlog42, backlog48, backlog72, the tag-lean tests above) rolls
+## against pools well over a dozen ids against REWARD_CHOICES == 3, so
+## ids.size() never drops below pool_size - 2 anywhere in the whole suite --
+## this branch, and the pool shrinking through _roll_choices()'s own
+## `ids.remove_at(idx)` down to it, has never actually run under test. It is
+## the real shape of a nearly-exhausted reward pool: a long run that has
+## picked up every relic but one.
+func _test_backlog86_roll_choices_shrinks_correctly_down_to_the_last_candidate() -> void:
+	var run := _map_run()
+	run.reward_kind = "relic"
+
+	var one: Array = run._roll_choices(["iron_thews"])
+	_expect(one.size() == 1 and String((one[0] as Dictionary).get("id", "")) == "iron_thews",
+		"a pool of exactly one candidate returns that one candidate, not a crash or an empty roll")
+
+	# REWARD_CHOICES is 3, so a two-id pool can only offer n = mini(3, 2) = 2 --
+	# both ids, each exactly once, as the pool shrinks 2 -> 1 between draws.
+	var seen := {}
+	for _i in range(30):
+		var two: Array = run._roll_choices(["iron_thews", "honed_blades"])
+		_expect(two.size() == 2, "a two-candidate pool offers both candidates, not fewer or a duplicate")
+		var id0 := String((two[0] as Dictionary).get("id", ""))
+		var id1 := String((two[1] as Dictionary).get("id", ""))
+		seen[id0] = true
+		seen[id1] = true
+		_expect(id0 != id1, "the second draw (pool now down to size 1) must not repeat the first pick")
+	_expect(seen.has("iron_thews") and seen.has("honed_blades"),
+		"over repeated rolls both candidates in a two-item pool get offered (neither id starves)")
+
+
+## The real path that reaches the branch above: _relics_not_held() (used by
+## every relic reward site) legitimately returns a pool of size 1 once a long
+## run has picked up most of the relic catalog. Nothing ever proved
+## _begin_reward() still offers something sane -- not empty, not a crash --
+## at that point rather than relying on it never actually happening in a test.
+func _test_backlog86_relic_reward_with_one_relic_left_offers_exactly_that_one() -> void:
+	var run := _map_run()
+	var pool: Array = Content.relic_pool()
+	_expect(pool.size() > 1, "sanity check: the relic pool has more than one relic, or holding \"all but one\" means nothing")
+	var last_id: String = String(pool[pool.size() - 1])
+	for id in pool:
+		if String(id) != last_id:
+			run.team_relics.append(Content.make_relic(String(id)))
+
+	run.node_type = "elite"
+	run._begin_reward("relic")
+
+	var all_size_one := true
+	var all_correct_id := true
+	for choices in run.reward_choices:
+		if (choices as Array).size() != 1:
+			all_size_one = false
+		elif String(((choices as Array)[0] as Dictionary).get("id", "")) != last_id:
+			all_correct_id = false
+	_expect(run.reward_kind == "relic" and all_size_one and all_correct_id,
+		"holding every relic but one offers exactly that one remaining relic, per hunter, with no crash or empty choice")
 
 
 # --- potions (backlog #26): held per-hunter, same data shape as relics -----
