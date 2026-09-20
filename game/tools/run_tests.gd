@@ -2047,6 +2047,15 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_fit_resets_the_logical_viewport_on_desktop()
 	_test_backlog86_deck_view_step_builds_a_toggle_the_open_pane_never_needed()
 	_test_backlog86_deck_view_closed_fires_on_cancel_and_escape_not_on_pick()
+	# backlog #86 duty 3 (fifty-second pass): DeckView._apply_turn -- the "full
+	# three sixty view" Nick asked for after the first pass wobbled and never
+	# actually turned. Never referenced anywhere in this file before now,
+	# despite _angle (the input) getting plenty of coverage via spin_to/the
+	# console's `card` command -- nobody asserted what the turn actually DOES
+	# to the card: narrow it, flip it to its back, keep it centred.
+	_test_backlog86_apply_turn_narrows_the_card_by_cosine_of_the_yaw()
+	_test_backlog86_apply_turn_flips_to_the_back_past_the_edge_on_boundary()
+	_test_backlog86_apply_turn_keeps_the_card_centred_as_its_width_changes()
 	_test_backlog86_console_own_closes_an_open_picker_through_closed_not_a_bare_free()
 	_test_backlog86_console_card_inspects_a_deck_entry_and_can_spin_and_show_its_upgrade()
 	_test_backlog86_console_card_refuses_an_out_of_range_index()
@@ -21990,6 +21999,86 @@ func _test_backlog86_deck_view_closed_fires_on_cancel_and_escape_not_on_pick() -
 			(b as Button).pressed.emit()
 	_expect(not closed_via_pick[0], "a successful pick must free the screen without firing `closed`")
 	v3.free()
+
+
+## backlog #86 duty 3 (fifty-second pass): _apply_turn -- Nick's own request
+## ("that way we can use the full effect... it doesn't really rotate") and the
+## file's own comment records the bug it replaced: a card that only wobbled
+## and never turned. Three things move together (WIDTH, FACE, WINDOW) per that
+## comment, but nothing in this file ever asserted any of the three actually
+## happens. This test covers WIDTH: the card narrows by |cos(yaw)|, and the
+## front face's turn_override (the WINDOW's parallax lean) tracks sin(yaw).
+func _test_backlog86_apply_turn_narrows_the_card_by_cosine_of_the_yaw() -> void:
+	var deck := [{"id": "a", "name": "A", "index": 0}]
+	var v := DeckView.open(root, deck)
+	v.inspect(0)
+
+	v.spin_to(0.0)
+	_expect(is_equal_approx(v._scaler.scale.x, v._scale),
+		"face-on (0 degrees) is full width: scale.x == _scale * cos(0) == _scale")
+	_expect(is_zero_approx(v._card.turn_override),
+		"face-on has no parallax lean: turn_override == sin(0) == 0")
+
+	v.spin_to(60.0)
+	_expect(is_equal_approx(v._scaler.scale.x, v._scale * cos(deg_to_rad(60.0))),
+		"at 60 degrees the rendered width has narrowed to _scale * cos(60)")
+	_expect(is_equal_approx(v._card.turn_override, sin(deg_to_rad(60.0))),
+		"the window's parallax lean tracks sin(yaw), riding along with the turn")
+
+	v.free()
+
+
+## Covers FACE: past the edge-on boundary the front hides and the back shows,
+## which is the whole point of the flip -- without it the card just gets wide
+## again and reads as a squash, exactly what the pre-fix version did. Also
+## proves the EDGE_ON floor: an exactly edge-on card (facing == 0) never
+## collapses to a true zero width, which the file's own comment says would
+## flicker for one frame, and proves the `>=` boundary itself: 90 degrees on
+## the nose is still counted as the FRONT, not the back.
+func _test_backlog86_apply_turn_flips_to_the_back_past_the_edge_on_boundary() -> void:
+	var deck := [{"id": "a", "name": "A", "index": 0}]
+	var v := DeckView.open(root, deck)
+	v.inspect(0)
+
+	v.spin_to(90.0)
+	_expect(v._card.visible and not v._back.visible,
+		"exactly 90 degrees (facing == cos(90) == 0) is still the FRONT, per _apply_turn's `facing >= 0.0`")
+	_expect(is_equal_approx(v._scaler.scale.x, v._scale * DeckView.EDGE_ON),
+		"edge-on floors the width at EDGE_ON instead of letting it collapse to zero and flicker")
+
+	v.spin_to(91.0)
+	_expect(not v._card.visible and v._back.visible,
+		"one degree past the boundary the card has turned past edge-on, so the BACK shows instead")
+
+	v.spin_to(180.0)
+	_expect(not v._card.visible and v._back.visible,
+		"180 degrees is looking at the card dead from behind")
+	_expect(is_equal_approx(v._scaler.scale.x, v._scale),
+		"the back of the card is full width again, same as the front at 0 degrees")
+
+	v.free()
+
+
+## Covers the centring math itself: _apply_turn's own comment warns that a
+## container would re-centre a frame late and the card would "swim sideways"
+## as it turned, which is why _scaler.position is computed by hand every call
+## instead. Proves the x position actually follows the narrowing width while
+## the y position -- which never narrows -- stays put.
+func _test_backlog86_apply_turn_keeps_the_card_centred_as_its_width_changes() -> void:
+	var deck := [{"id": "a", "name": "A", "index": 0}]
+	var v := DeckView.open(root, deck)
+	v.inspect(0)
+
+	v.spin_to(45.0)
+	var width: float = maxf(absf(cos(deg_to_rad(45.0))), DeckView.EDGE_ON)
+	var full: Vector2 = v._card.custom_minimum_size * v._scale
+	var mid: Vector2 = v._holder.size * 0.5
+	_expect(is_equal_approx(v._scaler.position.x, mid.x - full.x * width * 0.5),
+		"the scaler's x position keeps the card centred as its rendered width narrows with the turn")
+	_expect(is_equal_approx(v._scaler.position.y, mid.y - full.y * 0.5),
+		"the scaler's y position never moves with the turn -- only width narrows, height never does")
+
+	v.free()
 
 
 ## backlog #86 duty 2 (two copies of one truth, found reading console.gd end
