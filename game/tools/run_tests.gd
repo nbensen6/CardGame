@@ -406,6 +406,7 @@ func _init() -> void:
 	_test_backlog86_campfire_refuses_to_sharpen_a_melded_card_that_inherited_upgraded()
 	_test_backlog86_meld_carries_every_card_field_it_is_not_deliberately_dropping()
 	_test_backlog86_meld_pull_ally_takes_the_better_reach_not_the_sum()
+	_test_backlog86_meld_timed_hits_takes_the_longer_chain_not_the_sum()
 	_test_backlog86_card_fx_carries_every_non_numeric_effect_field()
 	_test_satchel_charge_detonates()
 	_test_rhythm_builds_and_scales()
@@ -9101,6 +9102,37 @@ func _test_backlog86_meld_pull_ally_takes_the_better_reach_not_the_sum() -> void
 	var fused_swapped := combat._meld_cards(tongue_grab, chain_lift)
 	_expect(fused_swapped.pull_ally == 5,
 		"pull_ally's maxi() must be order-independent — melding tongue_grab into chain_lift must still yield 5, got %d" % fused_swapped.pull_ally)
+
+
+## backlog #86 duty 3 — sibling to the pull_ally test above, for the same
+## deliberate-maxi() family (combat.gd's _meld_cards doc comment: "one-of-a-
+## kind effects... take whichever card has one"). timed_hits is one of these
+## four fields (pull_ally/cheapen_amount/timed_hits/hits) and had NO dedicated
+## test: the only existing meld test touching it (_test_meld_carries_special_
+## effects) melds grappling_arm (timed_hits 0, the default) with satchel_charge
+## (timed_hits 3) — maxi(0,3) and 0+3 both equal 3, so that assertion can't
+## tell max from sum. Two real shipped cards carry different NONZERO
+## timed_hits — satchel_charge (3) and bomb (2), both real goblin/gadget cards
+## a deck can hold together (bomb is also reachable via build_bomb's create) —
+## so a regression that turned this maxi() into the dict's dominant sum
+## pattern (an easy one-character slip in a 70-line hand-typed literal) would
+## read fused.timed_hits == 5 instead of 3, and nothing before this run would
+## have caught it.
+func _test_backlog86_meld_timed_hits_takes_the_longer_chain_not_the_sum() -> void:
+	var satchel := Content.make_card("satchel_charge")  # timed_hits 3, timed_damage 20
+	var bomb := Content.make_card("bomb")  # timed_hits 2, timed_damage 12
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var fused := combat._meld_cards(satchel, bomb)
+	_expect(fused.timed_hits == 3,
+		"melding satchel_charge (timed_hits 3) into bomb (timed_hits 2) must take the LONGER chain (3), not their sum (5) — timed_hits is one of the deliberate maxi() fields, not a summed one, got %d" % fused.timed_hits)
+	_expect(fused.timed_damage == 32,
+		"sanity check the fused card still sums the fields that ARE additive (timed_damage: 20 off satchel_charge + 12 off bomb) so this test is proving the maxi() exception, not a broken meld generally — got timed_damage=%d" % fused.timed_damage)
+
+	# and the reverse order, since a swapped a/b is exactly how a maxi()->sum
+	# regression could hide if only one argument order were ever exercised
+	var fused_swapped := combat._meld_cards(bomb, satchel)
+	_expect(fused_swapped.timed_hits == 3,
+		"timed_hits' maxi() must be order-independent — melding bomb into satchel_charge must still yield 3, got %d" % fused_swapped.timed_hits)
 
 
 ## backlog #86 duty 2: GameHost's per-card `fx` dict — "the non-numeric
