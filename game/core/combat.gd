@@ -1289,6 +1289,9 @@ func _apply_limiter() -> void:
 		"wound_decay":  # sheds Poison/Wound each turn — a stack-and-wait strategy decays away
 			if boss.wound > 0:
 				boss.wound = maxi(boss.wound - value, 0)
+			# An add's own Wound is decayed in _adds_turn() instead of here,
+			# right after that add's own bleed (backlog #86 duty 2) — see the
+			# comment there for why this dispatch point runs too early for it.
 		"sigil_fatigue":  # can't camp the weak point turn after turn — grip burns out
 			for i in range(players.size()):
 				var ps: PlayerState = players[i]
@@ -1933,6 +1936,20 @@ func _adds_turn(captured_moves: Array = []) -> void:
 			if add.is_dead():
 				_log("%s falls." % add.name)
 				continue
+			# backlog #86 duty 2: wound_decay only ever chipped the main boss's
+			# own Wound in _apply_limiter() -- a Poison card can land on an add
+			# instead (play_card's enemy_index/debuff_target routing), and that
+			# stack bled every turn same as the boss's own, just above, but
+			# never decayed back down, letting a stack-and-wait strategy dodge
+			# the limiter's whole documented counter by parking on an add.
+			# Decayed HERE, right after this add's own bleed, to match the main
+			# boss's bleed-then-decay order (its bleed runs before
+			# _apply_limiter() in _enemy_turn()) -- _apply_limiter() itself
+			# runs BEFORE this bleed each turn, so decaying there would shave
+			# the stack down before it had a chance to bleed for its full
+			# amount this turn.
+			if String(boss.limiter.get("type", "")) == "wound_decay":
+				add.wound = maxi(add.wound - int(boss.limiter.get("value", 0)), 0)
 		# backlog #86 duty 2: same block_after_modifiers fix as the boss's own
 		# reset above, for the same reason — an add's Dexterity/Frail (Boss
 		# extends Combatant, same as the main boss) would otherwise be silently

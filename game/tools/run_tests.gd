@@ -542,6 +542,7 @@ func _init() -> void:
 	_test_boss_attack_log_reports_real_damage_not_raw_swing()
 	_test_boss_attack_log_reports_zero_when_fully_blocked()
 	_test_wound_decay_limiter_sheds_poison()
+	_test_wound_decay_limiter_also_sheds_an_adds_own_poison()
 	_test_sigil_fatigue_limiter_punishes_camping()
 	_test_shift_sigil_resets_the_sigil_fatigue_clock()
 	_test_height_split_limiter_punishes_hoarding()
@@ -12264,6 +12265,28 @@ func _test_wound_decay_limiter_sheds_poison() -> void:
 	combat.end_turn(1)  # bleeds 5 (this turn's old wound), then decays 5 -> 2 for next turn
 	_expect(combat.boss.hp == hp0 - 5 and combat.boss.wound == 2,
 		"wound_decay limiter sheds Wound each turn, after that turn's bleed")
+
+
+## backlog #86 duty 2: wound_decay's dispatch in _apply_limiter() only ever
+## touched boss.wound -- an add carries its own independent Wound stack
+## (already reachable via play_card's enemy_index routing, and already bled
+## every turn by _adds_turn(), same as the boss's own bleed above), but
+## nothing decayed it back down, so parking Poison on an add instead of the
+## boss let a stack-and-wait strategy dodge the limiter's whole documented
+## counter. Same boss+add setup as _test_damage_per_wound_reads_the_targeted_adds_own_wound.
+func _test_wound_decay_limiter_also_sheds_an_adds_own_poison() -> void:
+	var boss := Boss.new("Decayer", 200)
+	boss.moves = [{"type": "block", "value": 0}]  # harmless move — isolate the limiter
+	boss.limiter = {"type": "wound_decay", "value": 3}
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Grub", 30)
+	add.wound = 5
+	combat.adds.append(add)
+	var hp0 := add.hp
+	combat.end_turn(0)
+	combat.end_turn(1)  # bleeds 5 (this turn's old wound), then decays 5 -> 2 for next turn
+	_expect(add.hp == hp0 - 5 and add.wound == 2,
+		"wound_decay limiter sheds an add's own Wound too, after that turn's bleed")
 
 
 func _test_sigil_fatigue_limiter_punishes_camping() -> void:
