@@ -313,6 +313,7 @@ func _init() -> void:
 	_test_backlog86_targets_hold_card_can_be_aimed_at_an_unsafe_hold()
 	_test_backlog86_targets_hold_card_default_climb_skips_an_unsafe_hold()
 	_test_backlog86_targets_hold_card_named_target_at_or_below_foothold_falls_back_to_climb()
+	_test_backlog86_targets_hold_card_can_target_the_sigil_directly()
 	_test_fall_drops_to_base()
 	_test_fall_noop_when_secure()
 	_test_weakpoint_threshold_bucks()
@@ -8105,6 +8106,45 @@ func _test_backlog86_targets_hold_card_named_target_at_or_below_foothold_falls_b
 	_expect(ps.foothold == 8,
 		"naming a real hold at or below the current foothold must fall back to the " +
 		"nearest safe climb (8), not land on the named-but-lower hold (2) or no-op at 4")
+
+
+## backlog #86 duty 3 — `_is_named_hold()`'s own doc comment says a "named
+## hold" is "a ledge (any safety) OR the sigil itself" (combat.gd:240-244),
+## and it checks the sigil with its own `height == boss.weak_point_height`
+## branch, separate from the ledges loop right below it. Every targets_hold
+## test above names a real ledge (2 or 4) or an invalid height — none of them
+## ever names the sigil directly, so that first branch has never once fired.
+## A regression that "simplified" _is_named_hold to just the ledges loop
+## (dropping the sigil OR) would pass every test above while breaking the
+## single most natural explicit target a player could pick: skip the ledges,
+## climb straight for the weak point.
+func _test_backlog86_targets_hold_card_can_target_the_sigil_directly() -> void:
+	var boss := _climb_boss(8)
+	boss.ledges = [2, 4]
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 1
+	ps.hand = [Content.make_card("route_finder")]
+	ps.energy = 3
+	combat.play_card(0, 0, true, -1, -1, 8)  # explicitly name the sigil itself
+	_expect(ps.foothold == 8 and combat.sigil_reached(0),
+		"a targets_hold card can be aimed straight at the sigil, not just a real ledge")
+
+	# Same start position, no explicit target: next_safe_height only offers the
+	# nearest ledge (2), never the sigil. If the explicit branch above only
+	# "worked" because next_safe_height would have landed on 8 anyway, this
+	# proves that isn't so — the untargeted default stops well short of it.
+	var boss2 := _climb_boss(8)
+	boss2.ledges = [2, 4]
+	var combat2 := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss2)
+	var ps2: PlayerState = combat2.players[0]
+	ps2.foothold = 1
+	ps2.hand = [Content.make_card("route_finder")]
+	ps2.energy = 3
+	combat2.play_card(0, 0)  # no explicit hold_target
+	_expect(ps2.foothold == 2,
+		"confirms the sigil-targeted climb above is a distinct, deliberate outcome — " +
+		"the untargeted default from the same foothold stops at the nearest ledge (2)")
 
 
 func _test_fall_drops_to_base() -> void:
