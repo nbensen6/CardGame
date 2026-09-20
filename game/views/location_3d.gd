@@ -861,7 +861,7 @@ func _render_campfire(s: Dictionary) -> void:
 	_subtitle.text = "%s rests. A quiet hour before the climb — spend it how you like." \
 		% _hunter_name(_me())
 	var stack := _stack()
-	stack.add_child(_button("Rest — recover %d HP" % int(cf.get("heal", 12)),
+	stack.add_child(_button("Rest — recover %d HP" % campfire_heal_shown(cf),
 		func() -> void:
 			Sfx.play("reward")
 			_client.campfire("rest", -1, _cmd_slot())))
@@ -962,6 +962,24 @@ static func shop_slot_disabled(sold: bool, gold: int, price: int,
 ## the same rule campfire_action() enforces for "remove". #86 duty 3.
 static func campfire_can_thin(deck_size: int, min_deck: int) -> bool:
 	return deck_size > min_deck
+
+
+## The HP the Rest button promises, from the campfire dict game_host.gd's
+## `_build_shared()` sends. #86 duty 2: the `.get()` fallback here used to be
+## a bare `12` — a second, independent guess at "what a rest heals" that
+## nobody kept in sync with the real rule. It had already drifted from
+## `Run.REST_HEAL` (9) itself, let alone `Run.rest_heal_amount()`'s
+## ascension-adjusted real value — the exact "two copies of one truth" shape
+## `_build_shared()`'s own `campfire.heal` fix (game_host.gd, right above
+## this file's `"campfire"` read) closed at the snapshot layer, just one
+## layer further out: every snapshot with `phase == CAMPFIRE` always carries
+## a real "heal" (`_build_shared()`'s campfire branch sets it unconditionally
+## and `_refresh()` only calls `_render_campfire()` off that same snapshot),
+## so this fallback is never actually reached today. Pinned to the true
+## unmodified constant anyway, so a fallback nobody hits yet stops being a
+## live lie about the rule the moment anything changes that.
+static func campfire_heal_shown(cf: Dictionary) -> int:
+	return int(cf.get("heal", Run.REST_HEAL))
 
 
 ## Filters to the cards the sharpen picker may offer, so it never hands the

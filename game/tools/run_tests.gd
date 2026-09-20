@@ -1756,6 +1756,8 @@ func _init() -> void:
 	_test_backlog86_campfire_sharpenable_excludes_status_and_already_upgraded_cards()
 	_test_backlog86_campfire_sharpenable_of_an_all_ineligible_deck_is_empty()
 	_test_backlog86_campfire_sharpenable_excludes_a_card_with_nothing_left_to_upgrade()
+	_test_backlog86_campfire_heal_shown_passes_through_the_real_value()
+	_test_backlog86_campfire_heal_shown_falls_back_to_the_true_unmodified_constant()
 
 	# backlog #86 duty 3: location_3d.reward_header_text is the reward screen's
 	# own headline/subtitle/prompt rule -- the same one menu.gd's
@@ -24452,6 +24454,24 @@ func _test_backlog86_campfire_can_thin_is_false_below_the_floor() -> void:
 func _test_backlog86_campfire_can_thin_is_false_at_a_zero_floor_with_an_empty_deck() -> void:
 	_expect(not Location3D.campfire_can_thin(0, 0),
 		"an empty deck against a zero floor still refuses rather than flipping true at the degenerate boundary")
+
+
+## backlog #86 duty 2: `Location3D.campfire_heal_shown()`'s own `.get()`
+## fallback used to be a bare `12` -- a second, independent guess at "what a
+## rest heals" that had already drifted from `Run.REST_HEAL` (9) itself, the
+## exact "two copies of one truth" shape `game_host.gd`'s own `campfire.heal`
+## fix closed at the snapshot layer. A real snapshot always carries "heal"
+## (see that fix's own comment), so nothing today reaches the fallback --
+## still worth pinning to the true constant so a fallback nobody hits yet
+## isn't quietly lying about the rule.
+func _test_backlog86_campfire_heal_shown_passes_through_the_real_value() -> void:
+	_expect(Location3D.campfire_heal_shown({"heal": 5}) == 5,
+		"a real snapshot's own heal amount is shown as-is, ascension cut included")
+
+
+func _test_backlog86_campfire_heal_shown_falls_back_to_the_true_unmodified_constant() -> void:
+	_expect(Location3D.campfire_heal_shown({}) == Run.REST_HEAL,
+		"a missing 'heal' key falls back to Run.REST_HEAL itself, not a second, independent guess that can drift from it")
 
 
 ## backlog #86 duty 2 — the sharpen picker's own sibling gap to campfire_can_thin
