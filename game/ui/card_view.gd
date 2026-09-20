@@ -903,16 +903,33 @@ func _inspect_button(data: Dictionary) -> Control:
 ## `rich` emits BBCode for a RichTextLabel: numbers a buff or scaling CHANGED from
 ## the card's printed value turn green (StS's cue that your Strength is working),
 ## and every keyword turns gold so the player can see a rules term exists at all.
-## The word a keyword actually WEARS in prose. Mostly the keyword's own name, but
-## Height is written "climb" everywhere a card talks about it, so searching for
-## "Height" would find nothing. Timed has no word at all any more — the clock
-## badge says it — so it is deliberately absent.
-const KEYWORD_WORDS := {
+## Keywords whose prose form differs from keywords.json's own `name`, or that
+## are deliberately never marked up. Height is written "climb" everywhere a
+## card talks about it, so searching for "Height" alone would find nothing.
+## Timed has no word at all any more — the clock badge says it — so it opts
+## out with an empty list rather than being left for the default below.
+const KEYWORD_WORD_OVERRIDES := {
 	"height": ["Climb", "climb", "climbs", "Height"],
-	"player_block": ["Block"], "poison": ["Poison"], "expose": ["Expose"],
-	"rhythm": ["Rhythm"], "strength": ["Strength"], "burn": ["Burn"],
-	"taunt": ["Taunt"],
+	"timed": [],
 }
+
+
+## The word(s) a keyword actually WEARS in prose, for _markup() to search for.
+##
+## Used to be a hand-copied list of every keyword's own name, and it only ever
+## held the 8 keywords that existed when it was written — every keyword added
+## since (Frail, Thorns, Dexterity, Retain, Innate, Ethereal, Scry, Intangible,
+## Buffer, Plated Armour, Light, Discard, ...) silently had no entry, so its
+## word was never findable and never underlined wherever a card's authored
+## `text` was rendered with no live `preview` (every reward-screen offer).
+## Defaults to the keyword's own printed name (keywords.json) so a new keyword
+## is markup-able the moment it ships; only KEYWORD_WORD_OVERRIDES above needs
+## to spell one differently or opt one out.
+static func _keyword_words(id: String) -> Array:
+	if KEYWORD_WORD_OVERRIDES.has(id):
+		return KEYWORD_WORD_OVERRIDES[id]
+	var kw_name := String(Content.keyword(id).get("name", ""))
+	return [kw_name] if kw_name != "" else []
 
 
 static func face_text(data: Dictionary, rich: bool = false) -> String:
@@ -1385,7 +1402,7 @@ static func _markup(text_str: String, kws: Array, rich: bool) -> String:
 	var out := text_str
 	for k in kws:
 		var id := String((k as Dictionary).get("id", ""))
-		for word in KEYWORD_WORDS.get(id, []):
+		for word in _keyword_words(id):
 			var at := _word_index(out, String(word))
 			if at < 0:
 				continue

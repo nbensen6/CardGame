@@ -1086,6 +1086,19 @@ func _init() -> void:
 	_test_backlog86_markup_leaves_text_untouched_without_rich_or_without_keywords()
 	_test_backlog86_markup_marks_only_the_first_occurrence_of_a_repeated_keyword()
 	_test_backlog86_markup_marks_each_of_two_different_keywords_once()
+	# backlog #86 duty 2: KEYWORD_WORDS was a second, hand-maintained mirror of
+	# keywords.json that only ever held the 8 keywords that existed when it
+	# was written -- every keyword added since (Frail, Thorns, Dexterity,
+	# Retain, Innate, Ethereal, Scry, Intangible, Buffer, Plated Armour,
+	# Light, Discard, ...) had no entry, so _markup never underlined it on any
+	# screen with no live preview (every reward-screen card offer). Replaced
+	# with _keyword_words(), which defaults to the keyword's own printed name.
+	_test_backlog86_keyword_words_defaults_to_the_keywords_own_printed_name()
+	_test_backlog86_keyword_words_keeps_the_height_override()
+	_test_backlog86_keyword_words_keeps_timed_deliberately_absent()
+	_test_backlog86_keyword_words_is_empty_for_an_unknown_id()
+	_test_backlog86_markup_marks_a_keyword_added_after_keyword_words_was_written()
+	_test_backlog86_markup_every_real_cards_authored_keyword_word_is_findable()
 	# backlog #86 duty 3 (twenty-second pass): overworld_3d._act_ahead, the map
 	# region picker, had zero coverage — including of the exact bug it fixed
 	# (Nick, 2026-08-16): a Titan's node is the last row of ITS act, so "the
@@ -20714,6 +20727,84 @@ func _test_backlog86_markup_marks_each_of_two_different_keywords_once() -> void:
 	var block: String = "[url=kw:player_block][u][color=#%s]Block[/color][/u][/url]" % CardView.KEYWORD_COLOR
 	_expect(out == "%s 2. Gain 4 %s." % [climb, block],
 		"two different keywords on one line each get their own tag, and marking the second doesn't disturb the first")
+
+
+## backlog #86 duty 2: KEYWORD_WORDS used to be a hand-copied mirror of
+## keywords.json that only ever held the 8 keywords that existed when it was
+## written. _keyword_words() replaces it with a default of the keyword's own
+## printed `name`, so any keyword ships already markup-able -- these four
+## tests pin the override table, the deliberate opt-out, the unknown-id case
+## and the new default path against regressing back to a hand-kept list.
+func _test_backlog86_keyword_words_defaults_to_the_keywords_own_printed_name() -> void:
+	_expect(CardView._keyword_words("frail") == ["Frail"],
+		"frail has no override, so its word defaults to keywords.json's own name, 'Frail'")
+	_expect(CardView._keyword_words("plated_armour") == ["Plated Armour"],
+		"a multi-word name (Plated Armour) still comes straight from keywords.json with no override needed")
+	_expect(CardView._keyword_words("dexterity") == ["Dexterity"], "dexterity defaults the same way")
+
+
+func _test_backlog86_keyword_words_keeps_the_height_override() -> void:
+	_expect(CardView._keyword_words("height") == ["Climb", "climb", "climbs", "Height"],
+		"height keeps its override -- cards say 'climb', not keywords.json's own name 'Height' -- rather than falling through to the new default")
+
+
+func _test_backlog86_keyword_words_keeps_timed_deliberately_absent() -> void:
+	_expect(CardView._keyword_words("timed") == [],
+		"timed opts out via the override table (the clock badge already shows it) rather than silently gaining a default 'Timed' word")
+
+
+func _test_backlog86_keyword_words_is_empty_for_an_unknown_id() -> void:
+	_expect(CardView._keyword_words("not_a_real_keyword") == [],
+		"an id with no entry in keywords.json returns no words to search for, rather than erroring")
+
+
+## The bug itself: before this fix, _markup silently did nothing for any
+## keyword shipped after KEYWORD_WORDS was written -- confirmed real, shipped
+## cards whose text contains the word and whose GameHost._keywords_of() tags
+## them with the matching id (crippling_blow/Frail, spinebrace/Thorns,
+## sure_footing/Dexterity, bunker_down/Retain, first_strike/Innate,
+## reckless_swing/Ethereal, ghost_step/Intangible, overhang/Buffer,
+## hardshell/Plated Armour, quick_purge/Discard, spark/Light). A reward-screen
+## offer of any of these (no live `preview`, so face_text falls back to
+## _markup on the authored text) rendered the keyword as plain, un-underlined
+## text with no way at all to learn what it does, per BACKLOG #91/#92's own
+## family of "no tap path" bugs -- except this one had no visible control to
+## even miss, just a word that silently never turned gold.
+func _test_backlog86_markup_marks_a_keyword_added_after_keyword_words_was_written() -> void:
+	var out: String = CardView._markup("Deal 5 damage. Frail 2.", [{"id": "frail"}], true)
+	var frail: String = "[url=kw:frail][u][color=#%s]Frail[/color][/u][/url]" % CardView.KEYWORD_COLOR
+	_expect(out == "Deal 5 damage. %s 2." % frail,
+		"Frail, added long after KEYWORD_WORDS was written, is now found and wrapped like any original keyword [got=%s]" % out)
+
+
+## Walks real shipped cards rather than hand-picked strings, so this can't
+## pass against a fix that only happens to cover the one example above. Each
+## entry is a real card id (Content.make_card), its actual authored `text`,
+## and the keyword id GameHost._keywords_of() tags it with -- confirming the
+## whole chain a reward-screen offer actually uses.
+func _test_backlog86_markup_every_real_cards_authored_keyword_word_is_findable() -> void:
+	var host := GameHost.new(LocalTransport.new(), 1, 2)
+	_kept.append(host)
+	var cases := [
+		["crippling_blow", "frail"], ["spinebrace", "thorns"],
+		["sure_footing", "dexterity"], ["bunker_down", "retain"],
+		["first_strike", "innate"], ["reckless_swing", "ethereal"],
+		["ghost_step", "intangible"], ["overhang", "buffer"],
+		["hardshell", "plated_armour"], ["quick_purge", "discard"],
+		["spark", "light"],
+	]
+	for case in cases:
+		var id := String(case[0])
+		var kw_id := String(case[1])
+		var c := Content.make_card(id)
+		var kws := host._keywords_of(c)
+		var ids := []
+		for k in kws:
+			ids.append(String((k as Dictionary).get("id", "")))
+		_expect(ids.has(kw_id), "shipped card %s is tagged %s by _keywords_of [ids=%s]" % [id, kw_id, ids])
+		var out: String = CardView._markup(c.text, kws, true)
+		_expect(out.contains("[url=kw:%s]" % kw_id),
+			"shipped card %s's own authored text (\"%s\") gets its %s keyword marked up when offered with no live preview [got=%s]" % [id, c.text, kw_id, out])
 
 
 ## backlog #86 duty 3 (twenty-second pass) -- overworld_3d._act_ahead decides
