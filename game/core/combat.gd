@@ -673,6 +673,18 @@ func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PER
 		# exact "preview lies" shape blk_shown/ally_blk_shown were already
 		# fixed for above.
 		dmg_shown = boss.predicted_damage(swing)
+	else:
+		# backlog #86 duty 2: the boss-Block fix above only ever taught this
+		# branch to mirror _damage_boss()'s own predicted_damage() call --
+		# hits_boss false means enemy_index names a living add instead (see
+		# `hits_boss`'s own definition above), and _damage_add() spends that
+		# add's Block/Buffer/Intangible exactly the same way, with no armor/
+		# Vulnerable/sigil math of its own (that function's own doc comment:
+		# "deliberately flat"). Left as `dmg_shown := dmg`, a card previewed
+		# against a Block-holding add (an add's "block" move persists through
+		# the whole following player round, same as the boss's) told the
+		# player the raw pre-mitigation swing while the real hit landed less.
+		dmg_shown = _wound_target(enemy_index).predicted_damage(dmg)
 
 	return {
 		"damage": maxi(dmg, 0), "hits": maxi(card.hits, 1),

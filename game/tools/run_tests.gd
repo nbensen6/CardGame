@@ -477,6 +477,7 @@ func _init() -> void:
 	_test_backlog86_preview_predicts_block_after_dexterity_and_frail()
 	_test_backlog86_preview_predicts_damage_after_armor_and_sigil()
 	_test_backlog86_preview_predicts_damage_after_boss_block()
+	_test_backlog86_preview_predicts_damage_after_an_adds_own_block()
 	_test_incoming_reckons_damage_after_block()
 	_test_every_derived_keyword_resolves()
 	_test_keywords_of_recognises_mend_power_scry_and_x_cost()
@@ -12257,6 +12258,37 @@ func _test_backlog86_preview_predicts_damage_after_boss_block() -> void:
 	combat2.play_card(0, ci2)
 	_expect(before2 - combat2.boss.hp == int(pv2["damage_after_mods"]) and combat2.boss.block == 0,
 		"the real hit matches the partial damage_after_mods and fully spends the smaller Block stack")
+
+
+## backlog #86 duty 2: the fix right above this one only ever taught
+## damage_after_mods to mirror the BOSS's own Block -- `preview()`'s `dmg_shown`
+## is computed inside `if dmg > 0 and hits_boss:` (combat.gd:655), so a card
+## aimed at a living ADD via enemy_index (hits_boss false) fell straight
+## through to `dmg_shown := dmg`, the raw pre-mitigation swing, never once
+## reading the TARGETED add's own Block. But _damage_add() -- the function
+## that actually resolves the hit -- spends the add's Block exactly the way
+## _damage_boss() spends the boss's (predicted_damage() then take_damage()),
+## and an add's Block persists through the whole following player round the
+## same way the boss's does (_adds_turn()'s own "block" move, e.g. Root
+## Lurker's Root Tendril in bosses.json). So a card previewed against a
+## Block-holding add told the player the full raw swing while the real hit
+## landed less, or nothing -- the exact "preview lies" shape the boss-side fix
+## just closed, left open on its sibling.
+func _test_backlog86_preview_predicts_damage_after_an_adds_own_block() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Grub", 20)
+	add.gain_block(4)  # holds through the whole player round, same as a real "block" move
+	combat.adds.append(add)
+	var ci := _first_playable(combat, 0)
+	var pv := combat.preview(0, combat.players[0].hand[ci], true, Combat.TIMING_PERFECT, -1, 0)
+	_expect(int(pv["damage"]) == 6 and int(pv["damage_after_mods"]) == 2,
+		"raw 'damage' stays the printed 6; 'damage_after_mods' shows 2 once the add's 4 Block absorbs the rest, mirroring _damage_add()'s own Block spend")
+	var before: int = add.hp
+	combat.play_card(0, ci, true, -1, -1, -1, Combat.TIMING_PERFECT, 0)
+	_expect(before - add.hp == int(pv["damage_after_mods"]),
+		"what actually landed on the add matches what damage_after_mods predicted, not the raw 6")
+	_expect(add.block == 0, "the real hit still spends the add's Block for real, same as the boss's own")
 
 
 ## An unset rarity silently defaults to "common", which would quietly make a new
