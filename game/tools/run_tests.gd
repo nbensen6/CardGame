@@ -2310,6 +2310,22 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_parse_args_hand_with_nothing_after_equals_is_empty()
 	_test_backlog86_parse_args_turn_is_null_when_no_turn_token_given()
 
+	# backlog #86 duty 3 (fifty-seventh pass): Combat3D.lock_slot_for, the rule
+	# that decides which hunter the camera follows. It used to be written out
+	# three separate times inline (_lock_point, _focus_camera, _aim_camera) --
+	# the exact "two [here, three] copies of one truth" shape duty 2 hunts for
+	# -- and none of the three had ever been proven: switching hunters, tapping
+	# Focus, and the free-camera lock point all trust this fallback without a
+	# single headless test backing it. Lifted to a shared static, the same way
+	# lock_point's sibling rules (climb_frame_for, dist_for_window_for) already
+	# were, so run_tests.gd can drive the whole chain -- an explicit lock,
+	# a lock that has gone stale (its hunter left/never existed), and a lock
+	# never set at all -- with no scene tree and no hunters spawned.
+	_test_backlog86_lock_slot_for_keeps_an_explicit_valid_lock()
+	_test_backlog86_lock_slot_for_falls_back_to_you_when_the_lock_is_stale()
+	_test_backlog86_lock_slot_for_falls_back_to_you_when_the_lock_was_never_set()
+	_test_backlog86_lock_slot_for_can_return_an_invalid_slot_when_you_are_also_invalid()
+
 	print("")
 	if _failures == 0:
 		print("ALL TESTS PASSED")
@@ -24838,6 +24854,41 @@ func _test_backlog86_ground_pivot_puts_world_zero_at_the_top_of_the_card_strip()
 	var pivot := Combat3D._ground_pivot(window)
 	_expect(is_equal_approx(pivot, window * (0.5 - Combat3D.HUD_BOTTOM_FRACTION + 0.04)),
 		"the ground pivot lifts world y=0 by (0.5 - HUD_BOTTOM_FRACTION + 0.04) window-fractions, matching the derivation in the comment above it")
+
+
+func _test_backlog86_lock_slot_for_keeps_an_explicit_valid_lock() -> void:
+	_expect(Combat3D.lock_slot_for(1, 2, 0) == 1,
+		"a lock that still names a real hunter (slot 1 of 2) wins even though 'you' (slot 0) are a different, also-valid hunter")
+
+
+func _test_backlog86_lock_slot_for_falls_back_to_you_when_the_lock_is_stale() -> void:
+	# The lock was aimed at slot 1 (say, your ally), but only one hunter remains
+	# on screen -- the exact shape of an ally dropping or the party thinning to
+	# one. The camera must not keep chasing a slot that no longer exists.
+	_expect(Combat3D.lock_slot_for(1, 1, 0) == 0,
+		"a lock pointing past the current hunter count falls back to your own slot")
+	_expect(Combat3D.lock_slot_for(-1, 2, 1) == 1,
+		"a negative lock (never aimed at anyone) falls back to your own slot too, not just an out-of-range one")
+
+
+func _test_backlog86_lock_slot_for_falls_back_to_you_when_the_lock_was_never_set() -> void:
+	# _lock_slot defaults to 0 (combat_3d.gd), which happens to double as a
+	# valid slot for a solo player already at slot 0 -- pick a scene where
+	# 'you' are slot 1 instead, so a fallback bug that silently kept slot 0
+	# would show up as tracking the WRONG hunter rather than passing by luck.
+	_expect(Combat3D.lock_slot_for(0, 2, 1) == 0,
+		"lock_slot 0 is a real hunter, so it wins even when 'you' are slot 1 -- this is the explicit-lock branch, not a fallback")
+
+
+func _test_backlog86_lock_slot_for_can_return_an_invalid_slot_when_you_are_also_invalid() -> void:
+	# _lock_point's caller re-checks the result against _hunters.size() and
+	# returns Vector2.ZERO if it is still out of range (combat_3d.gd) --
+	# lock_slot_for itself only resolves the fallback CHAIN, it does not
+	# clamp the final answer. Proving that split matters: a version that
+	# clamped here instead would silently hide the "no hunters spawned yet"
+	# case the caller depends on seeing.
+	_expect(Combat3D.lock_slot_for(4, 2, -1) == -1,
+		"with no valid lock and no valid 'you' either, the fallback chain ends on -1 rather than inventing a slot -- the caller is the one that turns that into Vector2.ZERO")
 
 
 ## backlog #86 duty 3 (thirty-seventh pass) -- EnetTransport. A NetLink never

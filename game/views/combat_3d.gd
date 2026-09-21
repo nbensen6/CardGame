@@ -974,7 +974,7 @@ func _focus_camera(window := FOCUS_WINDOW, lift := 0.0) -> void:
 	# hands back. Pushing in while still aimed at the beast's middle just filled
 	# the screen with beast and left the hunter under the cards, which answers the
 	# wrong question — the whole point is showing you WHO you are holding.
-	var slot: int = _lock_slot if _lock_slot >= 0 and _lock_slot < _hunters.size() else _me()
+	var slot: int = lock_slot_for(_lock_slot, _hunters.size(), _me())
 	_focus_lift = window * lift
 	if slot >= 0 and slot < _hunters.size():
 		_pivot.y = float((_hunters[slot]["home"] as Vector3).y) \
@@ -1744,13 +1744,25 @@ func snap_camera() -> void:
 func _lock_point() -> Vector2:
 	if _hunters.is_empty():
 		return Vector2.ZERO
-	var slot := _lock_slot
-	if slot < 0 or slot >= _hunters.size():
-		slot = _me()
+	var slot := lock_slot_for(_lock_slot, _hunters.size(), _me())
 	if slot < 0 or slot >= _hunters.size():
 		return Vector2.ZERO
 	var home := _hunters[slot]["home"] as Vector3
 	return Vector2(home.x, home.z) * CAMERA_LOCK
+
+
+## Which hunter slot the camera should actually track: the explicit lock, if it
+## still points at a real hunter, else fall back to your own slot. Backlog #86
+## duty 3 -- this exact fallback used to be three separate copies of the same
+## expression (here, _focus_camera and _aim_camera below), each written out
+## inline, and none of them had a test: the rule that decides WHO the camera
+## follows every time you switch hunters or tap Focus had zero coverage. Static
+## and pure so run_tests.gd can drive the whole fallback chain -- explicit lock,
+## lock gone stale, lock never set -- with no scene tree and no hunters spawned.
+static func lock_slot_for(lock_slot: int, hunter_count: int, me: int) -> int:
+	if lock_slot >= 0 and lock_slot < hunter_count:
+		return lock_slot
+	return me
 
 
 func _aim_camera(delta: float, snap: bool) -> void:
@@ -1762,7 +1774,7 @@ func _aim_camera(delta: float, snap: bool) -> void:
 	if _focused:
 		# Aim at the hunter and keep aiming at them, so the close shot rides up
 		# the body as they climb instead of sliding back to the beast's framing.
-		var fs: int = _lock_slot if _lock_slot >= 0 and _lock_slot < _hunters.size() else _me()
+		var fs: int = lock_slot_for(_lock_slot, _hunters.size(), _me())
 		if fs >= 0 and fs < _hunters.size():
 			_pivot_target.y = float((_hunters[fs]["home"] as Vector3).y) \
 				+ HUNTER_HEIGHT * 1.2 + _focus_lift + _pan.y
