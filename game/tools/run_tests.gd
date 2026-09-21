@@ -2113,6 +2113,11 @@ func _init() -> void:
 	_test_backlog86_character_name_and_portrait_agree_with_list_characters()
 	_test_backlog86_character_name_falls_back_to_the_id_for_an_unknown_character()
 	_test_backlog86_character_portrait_falls_back_to_empty_for_an_unknown_character()
+	# backlog #86 duty 2: list_characters() walked characters.json's "order"
+	# array alone, so an id present in "characters" but missing from "order"
+	# would vanish from every character-select screen with no error -- see
+	# the doc comment on _characters_from_db().
+	_test_backlog86_list_characters_does_not_drop_an_id_missing_from_order()
 	# backlog #86 duty 3 (fiftieth pass): hand_fan_step/hand_card_x, lifted out
 	# of _layout_hand -- the hand-of-cards layout that put a real hand in the
 	# bottom-right corner over the End Turn button (Nick, 2026-09-08, see the
@@ -14670,6 +14675,31 @@ func _test_backlog86_character_name_and_portrait_agree_with_list_characters() ->
 func _test_backlog86_character_name_falls_back_to_the_id_for_an_unknown_character() -> void:
 	_expect(Content.character_name("no_such_character") == "no_such_character",
 		"an unrecognised character id echoes back as its own display name rather than going blank")
+
+
+## characters.json keeps the roster in "characters" and a separate curated
+## display "order" -- two copies of one truth. Before this fix,
+## _characters_from_db() (nee list_characters()) walked "order" alone, so an
+## id real in "characters" but simply forgotten from "order" would never
+## reach a single character-select screen, with no test or error catching it.
+## Today's real characters.json happens to keep both in sync, so this drives
+## a synthetic db to prove the drift itself, not today's data.
+func _test_backlog86_list_characters_does_not_drop_an_id_missing_from_order() -> void:
+	var db := {
+		"order": ["frog", "vine_weaver"],
+		"characters": {
+			"frog": {"name": "Frog", "desc": "d", "portrait": "p1"},
+			"vine_weaver": {"name": "Vine Weaver", "desc": "d", "portrait": "p2"},
+			"forgotten": {"name": "Forgotten", "desc": "d", "portrait": "p3"},
+		},
+	}
+	var ids: Array = []
+	for c in Content._characters_from_db(db):
+		ids.append(c["id"])
+	_expect(ids.has("forgotten"),
+		"a character present in characters.json's 'characters' dict but missing from its 'order' array must still reach the roster, not vanish silently")
+	_expect(ids == ["frog", "vine_weaver", "forgotten"],
+		"order's curated sequence should still come first, with any forgotten id appended after it, not interleaved")
 
 
 func _test_backlog86_character_portrait_falls_back_to_empty_for_an_unknown_character() -> void:

@@ -223,16 +223,39 @@ static func list_boss_ids() -> Array:
 	return ids
 
 
-static func list_characters() -> Array:
-	var db := _read_json(CHARACTERS_PATH)
+## Pulled out of list_characters() so the "order array can drift from the
+## characters dict" shape (backlog #86 duty 2) is testable headless with a
+## synthetic db, no file on disk required.
+##
+## `order` is a curated display SEQUENCE, not the roster itself -- the roster
+## is `characters`' own keys. Walking `order` alone silently drops any id
+## present in `characters` but missing from `order`: a character added to the
+## JSON without also being listed in `order` would never reach a single
+## character-select screen, with no error anywhere (the exact "new content
+## falls through to a default silently" shape hard rule #10 warns about, just
+## for a hunter's own roster entry instead of a beast's/hunter's body). So any
+## id in `characters` that `order` misses is appended after the curated
+## sequence rather than dropped.
+static func _characters_from_db(db: Dictionary) -> Array:
 	var chars: Dictionary = db.get("characters", {})
 	var out: Array = []
+	var seen: Dictionary = {}
 	for id in db.get("order", chars.keys()):
-		if chars.has(id):
+		if chars.has(id) and not seen.has(id):
+			var c: Dictionary = chars[id]
+			out.append({"id": id, "name": String(c.get("name", id)), "desc": String(c.get("desc", "")),
+				"portrait": String(c.get("portrait", ""))})
+			seen[id] = true
+	for id in chars.keys():
+		if not seen.has(id):
 			var c: Dictionary = chars[id]
 			out.append({"id": id, "name": String(c.get("name", id)), "desc": String(c.get("desc", "")),
 				"portrait": String(c.get("portrait", ""))})
 	return out
+
+
+static func list_characters() -> Array:
+	return _characters_from_db(_read_json(CHARACTERS_PATH))
 
 ## Build a character's starter deck.
 static func character_deck(id: String) -> Array:
