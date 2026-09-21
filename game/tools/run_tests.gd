@@ -476,6 +476,7 @@ func _init() -> void:
 	_test_preview_matches_what_the_card_actually_does()
 	_test_backlog86_preview_predicts_block_after_dexterity_and_frail()
 	_test_backlog86_preview_predicts_damage_after_armor_and_sigil()
+	_test_backlog86_preview_predicts_damage_after_boss_block()
 	_test_incoming_reckons_damage_after_block()
 	_test_every_derived_keyword_resolves()
 	_test_keywords_of_recognises_mend_power_scry_and_x_cost()
@@ -12212,6 +12213,39 @@ func _test_backlog86_preview_predicts_damage_after_armor_and_sigil() -> void:
 	combat2.play_card(0, ci2)
 	_expect(before2 - combat2.boss.hp == int(pv2["damage_after_mods"]) and combat2.boss.vulnerable == 1,
 		"the real hit matches damage_after_mods exactly and spends the Exposed stack the preview left untouched")
+
+
+## backlog #86 duty 2: damage_after_mods above only ever mirrored the armor/
+## Vulnerable/sigil swing, never the boss's own Block -- a boss "block" move's
+## Block persists through the whole following player round (_damage_boss()'s
+## own comment), so previewing a card against a Block-holding boss showed the
+## full pre-mitigation swing while the real hit landed less, or nothing.
+func _test_backlog86_preview_predicts_damage_after_boss_block() -> void:
+	var boss := _dummy_boss(300)
+	boss.gain_block(10)  # holds through the whole player round, same as a real "block" move
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var ci := _first_playable(combat, 0)
+	var pv := combat.preview(0, combat.players[0].hand[ci])
+	_expect(int(pv["damage"]) == 6 and int(pv["damage_after_mods"]) == 0,
+		"raw 'damage' stays the printed 6; 'damage_after_mods' shows 0 once the boss's 10 Block fully absorbs a 6-damage swing")
+	var before: int = combat.boss.hp
+	combat.play_card(0, ci)
+	_expect(before - combat.boss.hp == int(pv["damage_after_mods"]),
+		"what actually landed (nothing -- Block absorbed it) matches what damage_after_mods predicted")
+	_expect(combat.boss.block == 4, "the real hit still spends Block for real even though it dealt no HP damage")
+
+	# partial absorption: Block smaller than the swing should let the remainder through
+	var boss2 := _dummy_boss(300)
+	boss2.gain_block(3)
+	var combat2 := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss2)
+	var ci2 := _first_playable(combat2, 0)
+	var pv2 := combat2.preview(0, combat2.players[0].hand[ci2])
+	_expect(int(pv2["damage"]) == 6 and int(pv2["damage_after_mods"]) == 3,
+		"a 6-damage swing against 3 Block leaves 3 damage_after_mods, not the raw 6")
+	var before2: int = combat2.boss.hp
+	combat2.play_card(0, ci2)
+	_expect(before2 - combat2.boss.hp == int(pv2["damage_after_mods"]) and combat2.boss.block == 0,
+		"the real hit matches the partial damage_after_mods and fully spends the smaller Block stack")
 
 
 ## An unset rarity silently defaults to "common", which would quietly make a new

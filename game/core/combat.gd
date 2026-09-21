@@ -653,16 +653,26 @@ func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PER
 	var hits_boss := card.hits_all_enemies or _wound_target(enemy_index) == boss
 	var dmg_shown := dmg
 	if dmg > 0 and hits_boss:
+		var swing := dmg
 		if boss.weak_point_height > 0 and not sigil_reached(pi):
 			var divisor: int = maxi(2, ARMORED_DIVISOR - _mod("chip"))
-			dmg_shown = maxi(1, dmg / divisor)
+			swing = maxi(1, dmg / divisor)
 		else:
-			var total := dmg
 			if boss.vulnerable > 0:
-				total += VULN_BONUS + _mod("vuln_bonus")
+				swing += VULN_BONUS + _mod("vuln_bonus")
 			if boss.weak_point_height > 0:
-				total += SIGIL_BONUS + _mod("sigil_bonus")
-			dmg_shown = total
+				swing += SIGIL_BONUS + _mod("sigil_bonus")
+		# backlog #86 duty 2: the armor/Vulnerable/sigil swing above was never
+		# the last word on what actually reaches HP -- _damage_boss() feeds
+		# that same swing through boss.predicted_damage() to spend Block/
+		# Buffer/Intangible first, and a boss "block" move's Block persists
+		# through the whole following player round (see _damage_boss()'s own
+		# comment). Without this, a hunter previewing a card against a boss
+		# sitting on Block saw the pre-mitigation swing -- e.g. "8 damage"
+		# against a boss holding 10 Block, when the real hit deals 0 -- the
+		# exact "preview lies" shape blk_shown/ally_blk_shown were already
+		# fixed for above.
+		dmg_shown = boss.predicted_damage(swing)
 
 	return {
 		"damage": maxi(dmg, 0), "hits": maxi(card.hits, 1),
