@@ -912,6 +912,17 @@ func _init() -> void:
 	_test_backlog86_stand_offset_x_is_symmetric_across_sides()
 	_test_backlog86_stand_offset_x_widens_with_the_beast()
 	_test_backlog86_stand_offset_x_keeps_a_floor_gap_on_a_zero_width_beast()
+	# backlog #86 duty 3 (this turn): hull_index_for, lifted out of
+	# _build_hull's own vertex scatter and _front_of_beast's lookup — the last
+	# untested piece of that family flagged by the previous duty-3 pass. The
+	# world-to-hull-cell clamp math, including the box-edge case and the
+	# degenerate zero-size box that used to be one divide-by-zero away from
+	# an undefined int(NaN).
+	_test_backlog86_hull_index_for_maps_the_near_corner_to_the_first_cell()
+	_test_backlog86_hull_index_for_clamps_the_far_edge_into_the_last_cell()
+	_test_backlog86_hull_index_for_clamps_points_outside_the_box()
+	_test_backlog86_hull_index_for_scales_proportionally_across_the_box()
+	_test_backlog86_hull_index_for_falls_back_to_the_first_cell_on_a_degenerate_box()
 	# backlog #86 duty 2 (sixth turn): a real bug in _render_hand, found the
 	# same way as the glide bug above — reading a combat_3d.gd function end to
 	# end for an early-return that skips a tail statement.
@@ -20461,6 +20472,48 @@ func _test_backlog86_stand_offset_x_widens_with_the_beast() -> void:
 func _test_backlog86_stand_offset_x_keeps_a_floor_gap_on_a_zero_width_beast() -> void:
 	var gap: float = Combat3D.stand_offset_x(0.0, 1.0, 0.0) - Combat3D.stand_offset_x(0.0, -1.0, 0.0)
 	_expect(is_equal_approx(gap, 0.60), "even a degenerate zero-width hull keeps the fixed 0.30 floor per side, so two hunters never collapse onto the exact same point")
+
+
+## backlog #86 duty 3 (this turn) — hull_index_for is the last untested piece
+## of the _build_hull / _front_of_beast family: the world-(x, y)-to-hull-cell
+## clamp math that both _build_hull's own vertex scatter and _front_of_beast's
+## lookup used to duplicate inline. The previous duty-3 pass (stand_offset_x)
+## named this exact function, under its old name hull_index_for, as the one
+## candidate its own Explore agent surfaced and left for later — untested at
+## the box edges and on a degenerate zero-size box.
+func _test_backlog86_hull_index_for_maps_the_near_corner_to_the_first_cell() -> void:
+	var box := AABB(Vector3(2, 3, 0), Vector3(8, 10, 1))
+	var idx: Vector2i = Combat3D.hull_index_for(2.0, 3.0, box, 4, 5)
+	_expect(idx == Vector2i(0, 0), "a point exactly on the box's near corner must land in the very first hull cell on both axes")
+
+
+func _test_backlog86_hull_index_for_clamps_the_far_edge_into_the_last_cell() -> void:
+	var box := AABB(Vector3(2, 3, 0), Vector3(8, 10, 1))
+	var idx: Vector2i = Combat3D.hull_index_for(10.0, 13.0, box, 4, 5)
+	_expect(idx == Vector2i(3, 4), "a point exactly on the box's far edge must clamp into the LAST cell (hull_x-1, hull_y-1), not scale to one past the array's own bound")
+
+
+func _test_backlog86_hull_index_for_clamps_points_outside_the_box() -> void:
+	var box := AABB(Vector3(2, 3, 0), Vector3(8, 10, 1))
+	var idx: Vector2i = Combat3D.hull_index_for(500.0, -500.0, box, 4, 5)
+	_expect(idx == Vector2i(3, 0), "a point far outside the box on either side must still clamp into a valid cell, not read past the hull array")
+
+
+func _test_backlog86_hull_index_for_scales_proportionally_across_the_box() -> void:
+	var narrow := AABB(Vector3(2, 0, 0), Vector3(8, 1, 1))
+	var wide := AABB(Vector3(2, 0, 0), Vector3(16, 1, 1))
+	var idx_narrow: Vector2i = Combat3D.hull_index_for(6.0, 0.0, narrow, 4, 1)
+	var idx_wide: Vector2i = Combat3D.hull_index_for(6.0, 0.0, wide, 4, 1)
+	_expect(idx_narrow.x == 2 and idx_wide.x == 1, "the same world x must resolve to a smaller band in a WIDER box -- the mapping is relative to the beast's own size, not a fixed world offset")
+
+
+func _test_backlog86_hull_index_for_falls_back_to_the_first_cell_on_a_degenerate_box() -> void:
+	var zero_width := AABB(Vector3(5, 7, 0), Vector3(0, 6, 1))
+	var idx_x: Vector2i = Combat3D.hull_index_for(999.0, 10.0, zero_width, 9, 20)
+	_expect(idx_x == Vector2i(0, 10), "a zero-width box divides by zero on x -- the x cell must fall back to 0 instead of propagating a NaN that int() truncates unpredictably")
+	var zero_height := AABB(Vector3(5, 7, 0), Vector3(6, 0, 1))
+	var idx_y: Vector2i = Combat3D.hull_index_for(8.0, 999.0, zero_height, 6, 20)
+	_expect(idx_y == Vector2i(3, 0), "a zero-height box divides by zero on y -- the y cell must fall back to 0 the same way, independent of the x axis")
 
 
 ## backlog #86 duty 3 (third pass) — hunter_move_kind is the pure gate lifted

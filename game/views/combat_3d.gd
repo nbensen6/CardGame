@@ -2338,13 +2338,30 @@ func _build_hull() -> void:
 			var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
 			for v in verts:
 				var w: Vector3 = xf * v
-				var ix := int(clampf((w.x - box.position.x) / box.size.x, 0.0, 0.999)
-					* float(HULL_X))
-				var iy := int(clampf((w.y - box.position.y) / box.size.y, 0.0, 0.999)
-					* float(HULL_Y))
-				var at := iy * HULL_X + ix
+				var idx := hull_index_for(w.x, w.y, box, HULL_X, HULL_Y)
+				var at := idx.y * HULL_X + idx.x
 				if w.z > _hull[at]:
 					_hull[at] = w.z
+
+
+## The pure half of _build_hull's own scatter and of _front_of_beast below:
+## world (x, y) to the hull cell it falls in. Clamped to [0, 0.999) before
+## scaling so a point exactly on the box's far edge lands in the last cell
+## instead of one past it (which would read past the array in _build_hull's
+## `at` index). A degenerate box — zero width or height — would otherwise
+## divide by zero into NaN, and int(NaN) is undefined rather than merely
+## wrong; both axes fall back to the first cell instead of trusting that
+## division. _build_hull already refuses to build a hull over a degenerate
+## box, so this branch is a guarantee for callers that come later, not a
+## path production exercises today.
+static func hull_index_for(x: float, y: float, box: AABB, hull_x: int, hull_y: int) -> Vector2i:
+	var ix := 0
+	if box.size.x > 0.0:
+		ix = int(clampf((x - box.position.x) / box.size.x, 0.0, 0.999) * float(hull_x))
+	var iy := 0
+	if box.size.y > 0.0:
+		iy = int(clampf((y - box.position.y) / box.size.y, 0.0, 0.999) * float(hull_y))
+	return Vector2i(ix, iy)
 
 
 ## The front of the body at (x, y), or the bounding box front where the mesh has
@@ -2354,9 +2371,8 @@ func _front_of_beast(x: float, y: float) -> float:
 	if _hull.is_empty():
 		return _beast_box.end.z
 	var box := _beast_box
-	var ix := int(clampf((x - box.position.x) / box.size.x, 0.0, 0.999) * float(HULL_X))
-	var iy := int(clampf((y - box.position.y) / box.size.y, 0.0, 0.999) * float(HULL_Y))
-	return hull_front_at(_hull, HULL_X, HULL_Y, ix, iy, box)
+	var idx := hull_index_for(x, y, box, HULL_X, HULL_Y)
+	return hull_front_at(_hull, HULL_X, HULL_Y, idx.x, idx.y, box)
 
 
 ## The pure half of _front_of_beast: given a band already resolved to hull
