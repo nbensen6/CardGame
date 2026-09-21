@@ -41,25 +41,51 @@ static var on := false
 static var _booted := false
 
 
+## Pure form of the token loop below: given the raw user args, which flags did
+## they set. Split out static, like foothold_anchor/route_between_rungs in
+## combat_3d.gd, so run_tests.gd can prove the parsing rule with no process
+## command line and no `_booted` latch to fight. #86 duty 3.
+##
+## Keys always present: borderless/foil (bool), turn (float or null when no
+## `turn=` token was given, since 0.0 is a real value CardView.force_turn can
+## take), hand (PackedStringArray), on (bool, true only when a token matched).
+static func parse_args(args: PackedStringArray) -> Dictionary:
+	var out := {
+		"borderless": false,
+		"foil": false,
+		"turn": null,
+		"hand": PackedStringArray(),
+		"on": false,
+	}
+	for a in args:
+		if a == "borderless":
+			out["borderless"] = true
+			out["on"] = true
+		elif a == "foil":
+			out["foil"] = true
+			out["on"] = true
+		elif a.begins_with("turn="):
+			out["turn"] = float(a.substr(5))
+			out["on"] = true
+		elif a.begins_with("hand="):
+			out["hand"] = a.substr(5).split(",", false)
+			out["on"] = true
+	return out
+
+
 ## Read the command line, once. Safe to call from anywhere, as often as you
 ## like; the second call does nothing.
 static func boot() -> void:
 	if _booted:
 		return
 	_booted = true
-	for a in OS.get_cmdline_user_args():
-		if a == "borderless":
-			CardView.force_borderless = true
-			on = true
-		elif a == "foil":
-			CardView.force_foil = true
-			on = true
-		elif a.begins_with("turn="):
-			CardView.force_turn = float(a.substr(5))
-			on = true
-		elif a.begins_with("hand="):
-			hand = a.substr(5).split(",", false)
-			on = true
+	var parsed := parse_args(OS.get_cmdline_user_args())
+	CardView.force_borderless = parsed["borderless"]
+	CardView.force_foil = parsed["foil"]
+	if parsed["turn"] != null:
+		CardView.force_turn = parsed["turn"]
+	hand = parsed["hand"]
+	on = parsed["on"]
 	if on:
 		print("DEV %s%s%s" % [
 			"borderless " if CardView.force_borderless else "",

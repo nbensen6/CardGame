@@ -2272,6 +2272,22 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_solo_lobby_refuses_the_same_character_in_both_slots()
 	_test_backlog86_coop_lobby_refuses_a_character_already_taken_by_another_peer()
 
+	# backlog #86 duty 3 (fifty-sixth pass): Dev.parse_args, the token-to-flag
+	# translation behind `Dev.boot()`. Every existing Dev test sets
+	# Dev.hand/Dev.on/CardView.force_* directly (or drives Dev.cycle(), a
+	# separate path) -- the actual `--`-args parser that boot() reads on
+	# startup (borderless/foil/turn=/hand=, and the "on" flag views use to
+	# admit a dev build on screen) had zero coverage of its own. Lifted out
+	# the same way hop_arc/foothold_anchor were, so the substr offsets and
+	# comma-split can be proven with a fabricated args array instead of the
+	# real process command line.
+	_test_backlog86_parse_args_recognises_every_flag()
+	_test_backlog86_parse_args_leaves_defaults_on_no_match()
+	_test_backlog86_parse_args_ignores_an_unrecognized_token()
+	_test_backlog86_parse_args_hand_splits_on_comma_and_keeps_order()
+	_test_backlog86_parse_args_hand_with_nothing_after_equals_is_empty()
+	_test_backlog86_parse_args_turn_is_null_when_no_turn_token_given()
+
 	print("")
 	if _failures == 0:
 		print("ALL TESTS PASSED")
@@ -24383,6 +24399,53 @@ func _test_backlog86_dev_cycle_completes_a_full_loop_of_four() -> void:
 		"four calls in a row visit every treatment exactly once, in Dev.CYCLE's own order, and land back where they started")
 	CardView.force_borderless = save_b
 	CardView.force_foil = save_f
+
+
+## backlog #86 duty 3 (fifty-sixth pass): Dev.parse_args, lifted out of
+## Dev.boot() -- the `--` launch-arg parser is real logic (substr offsets,
+## comma-splitting, an "on" flag that must only flip on a recognized token)
+## and unlike Dev.cycle() above, nothing had ever exercised it: boot() itself
+## can't be called twice in one process (the `_booted` latch) and reads the
+## real OS command line, so it was untestable as written. Pure, so no
+## CardView save/restore needed -- it only builds and returns a Dictionary.
+func _test_backlog86_parse_args_recognises_every_flag() -> void:
+	var out: Dictionary = Dev.parse_args(["borderless", "foil", "turn=0.5", "hand=slash,brace,slash"])
+	_expect(out["borderless"] == true, "the bare 'borderless' token sets the borderless flag")
+	_expect(out["foil"] == true, "the bare 'foil' token sets the foil flag")
+	_expect(is_equal_approx(float(out["turn"]), 0.5), "'turn=0.5' parses the substring after the 5-character prefix as a float")
+	_expect(out["hand"] == PackedStringArray(["slash", "brace", "slash"]),
+		"'hand=a,b,c' splits on comma, preserves order, and keeps a duplicate id rather than deduping it")
+	_expect(out["on"] == true, "any recognized token sets 'on', which views use to admit a dev build on screen")
+
+
+func _test_backlog86_parse_args_leaves_defaults_on_no_match() -> void:
+	var out: Dictionary = Dev.parse_args([])
+	_expect(out["borderless"] == false and out["foil"] == false, "no args leaves both force flags false")
+	_expect(out["turn"] == null, "no 'turn=' token leaves turn null rather than a guessed 0.0 -- boot() reads this to decide whether to touch CardView.force_turn at all")
+	_expect(out["hand"].is_empty(), "no 'hand=' token leaves hand empty")
+	_expect(out["on"] == false, "with nothing recognized, 'on' stays false -- a plain launch is never mistaken for a dev build")
+
+
+func _test_backlog86_parse_args_ignores_an_unrecognized_token() -> void:
+	var out: Dictionary = Dev.parse_args(["xyz", "--some-other-flag"])
+	_expect(out["on"] == false, "a stray token that matches none of the four recognized flags must not flip 'on' -- an unconditional 'on' would falsely mark every launch as a dev build")
+	_expect(out["borderless"] == false and out["foil"] == false, "an unrecognized token touches no flag")
+
+
+func _test_backlog86_parse_args_hand_splits_on_comma_and_keeps_order() -> void:
+	var out: Dictionary = Dev.parse_args(["hand=crescendo,leap"])
+	_expect(out["hand"] == PackedStringArray(["crescendo", "leap"]), "hand= splits into the exact ids in the exact order given, since Dev.hand deals them in that order")
+
+
+func _test_backlog86_parse_args_hand_with_nothing_after_equals_is_empty() -> void:
+	var out: Dictionary = Dev.parse_args(["hand="])
+	_expect(out["hand"].is_empty(), "'hand=' with nothing after the equals sign splits to an empty array rather than crashing or producing a one-element array of an empty string")
+	_expect(out["on"] == true, "the token still matched 'hand=' by prefix, so 'on' is still set even though the hand ends up empty")
+
+
+func _test_backlog86_parse_args_turn_is_null_when_no_turn_token_given() -> void:
+	var out: Dictionary = Dev.parse_args(["borderless"])
+	_expect(out["turn"] == null, "a launch with other flags but no 'turn=' still leaves turn null -- boot() must not overwrite CardView.force_turn's real default (2.0) with a guessed value")
 
 
 ## backlog #86 duty 3 (thirty-fourth pass): Progress.timing_style() gates which
