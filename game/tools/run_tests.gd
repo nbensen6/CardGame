@@ -2209,6 +2209,18 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_draw_relic_mod_grants_extra_cards_every_round_not_just_the_first()
 	_test_backlog86_real_draw_relics_reach_relic_totals_and_grant_extra_cards()
 
+	# backlog #86 duty 3: DevConsole's Up/Down history walk and its FIFO cap
+	# (game/ui/console.gd) had zero coverage anywhere in this suite -- every
+	# test that drives the console goes straight through c.run("..."), which
+	# never touches _submit()/_history at all. Both are lifted to statics
+	# (history_step, history_append) so the boundary rules -- Up clamps at the
+	# oldest entry, Down past the newest clears to a fresh prompt, the buffer
+	# evicts its oldest entry once over HISTORY -- are provable headless.
+	_test_backlog86_console_history_step_up_clamps_at_the_oldest_entry()
+	_test_backlog86_console_history_step_down_past_newest_clears_the_line()
+	_test_backlog86_console_history_step_down_mid_buffer_returns_the_next_entry()
+	_test_backlog86_console_history_append_evicts_the_oldest_once_over_cap()
+
 	_test_backlog86_list_boss_ids_matches_build_boss_and_boss_ids()
 
 	# backlog #86 duty 3: combat_3d._merged_aabb/_all_meshes had zero coverage,
@@ -26640,6 +26652,49 @@ func _test_backlog86_real_draw_relics_reach_relic_totals_and_grant_extra_cards()
 	_expect(combat.players[0].hand.size() == Combat.HAND_SIZE + 3
 			and combat.players[1].hand.size() == Combat.HAND_SIZE + 3,
 		"a real relic's draw value, carried through relic_totals() rather than a hand-built mods dict, still reaches Combat's opening hand -- closing the gap the synthetic-mods test above leaves open")
+
+
+## backlog #86 duty 3: DevConsole.history_step is the pure half of the Up/Down
+## walk in _line_keys() -- see the call site's own doc comment for why the
+## boundaries matter (Up must clamp rather than walk off the front, Down past
+## the newest entry must clear to a fresh prompt rather than index past the
+## end). Plain PackedStringArray/int in, Dictionary out -- no LineEdit, no node.
+func _test_backlog86_console_history_step_up_clamps_at_the_oldest_entry() -> void:
+	var history: PackedStringArray = ["find leap", "card slash", "energy 9"]
+	var step := DevConsole.history_step(history, 3, true)
+	_expect(int(step["at"]) == 2 and String(step["text"]) == "energy 9",
+		"pressing Up right after typing steps back to the newest history entry")
+	# Keep pressing Up past the front of the buffer.
+	step = DevConsole.history_step(history, 0, true)
+	_expect(int(step["at"]) == 0 and String(step["text"]) == "find leap",
+		"Up repeatedly at the oldest entry clamps there rather than going negative -- an off-by-one here would index the array out of range")
+
+
+func _test_backlog86_console_history_step_down_past_newest_clears_the_line() -> void:
+	var history: PackedStringArray = ["find leap", "card slash"]
+	var step := DevConsole.history_step(history, 1, false)
+	_expect(int(step["at"]) == 2 and String(step["text"]) == "",
+		"Down past the newest history entry lands one past the end and clears the line to a fresh prompt, rather than indexing the array out of range")
+
+
+func _test_backlog86_console_history_step_down_mid_buffer_returns_the_next_entry() -> void:
+	var history: PackedStringArray = ["find leap", "card slash", "energy 9"]
+	var step := DevConsole.history_step(history, 0, false)
+	_expect(int(step["at"]) == 1 and String(step["text"]) == "card slash",
+		"Down from the middle of the buffer steps to the next-newer entry, not to the front or the end")
+
+
+## backlog #86 duty 3: DevConsole.history_append is the pure half of the
+## append-and-cap rule in _submit() -- the buffer is meant to be a bounded
+## FIFO of the last HISTORY commands, silently evicting the oldest once full.
+func _test_backlog86_console_history_append_evicts_the_oldest_once_over_cap() -> void:
+	var history: PackedStringArray = ["a", "b", "c"]
+	var out := DevConsole.history_append(history, "d", 3)
+	_expect(out.size() == 3 and out[0] == "b" and out[2] == "d",
+		"appending past the cap evicts the oldest entry rather than growing the buffer unbounded")
+	out = DevConsole.history_append(["a", "b"], "c", 3)
+	_expect(out.size() == 3 and out[0] == "a" and out[2] == "c",
+		"appending under the cap keeps every entry")
 
 
 func _expect(cond: bool, name: String) -> void:

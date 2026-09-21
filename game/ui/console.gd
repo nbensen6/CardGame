@@ -150,19 +150,34 @@ func _line_keys(event: InputEvent) -> void:
 		_toggle()
 		_line.accept_event()
 	elif key.keycode == KEY_UP and not _history.is_empty():
-		_at = maxi(_at - 1, 0)
-		_line.text = _history[_at]
+		var step := history_step(_history, _at, true)
+		_at = int(step["at"])
+		_line.text = String(step["text"])
 		_line.caret_column = _line.text.length()
 		_line.accept_event()
 	elif key.keycode == KEY_DOWN and not _history.is_empty():
-		_at += 1
-		if _at >= _history.size():
-			_at = _history.size()
-			_line.text = ""
-		else:
-			_line.text = _history[_at]
+		var step := history_step(_history, _at, false)
+		_at = int(step["at"])
+		_line.text = String(step["text"])
 		_line.caret_column = _line.text.length()
 		_line.accept_event()
+
+
+## Pure half of the Up/Down walk above: given the history buffer, where the
+## cursor currently sits, and which direction was pressed, where it lands and
+## what the line should show. #86 duty 3 — Up repeatedly must CLAMP at the
+## oldest entry rather than walking off the front of the array, and Down
+## walked past the newest entry must clear to a fresh "" prompt rather than
+## indexing past the end; both are boundary rules a resize/typo could break
+## silently since nothing exercised them before.
+static func history_step(history: PackedStringArray, at: int, up: bool) -> Dictionary:
+	if up:
+		var new_at: int = maxi(at - 1, 0)
+		return {"at": new_at, "text": history[new_at]}
+	var new_at: int = at + 1
+	if new_at >= history.size():
+		return {"at": history.size(), "text": ""}
+	return {"at": new_at, "text": history[new_at]}
 
 
 func _say(s: String) -> void:
@@ -174,12 +189,23 @@ func _submit(text_in: String) -> void:
 	_line.clear()
 	if text == "":
 		return
-	_history.append(text)
-	if _history.size() > HISTORY:
-		_history.remove_at(0)
+	_history = history_append(_history, text, HISTORY)
 	_at = _history.size()
 	_say("[color=#6f7684]> " + text + "[/color]")
 	_say(run(text))
+
+
+## Pure half of the append-and-cap rule above: appending a submitted line and
+## evicting the oldest once the buffer is over `cap`, decoupled from the
+## LineEdit/RichTextLabel _submit() also drives. #86 duty 3 — the same class
+## of boundary rule as history_step above: the buffer silently evicts the
+## oldest entry rather than growing unbounded, and nothing proved it did.
+static func history_append(history: PackedStringArray, text: String, cap: int) -> PackedStringArray:
+	var out := history.duplicate()
+	out.append(text)
+	if out.size() > cap:
+		out.remove_at(0)
+	return out
 
 
 # --- the commands ----------------------------------------------------------
