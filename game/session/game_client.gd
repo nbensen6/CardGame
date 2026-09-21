@@ -35,11 +35,19 @@ func select_character(character_id: String, slot: int = -1) -> void:
 ## chosen on the client; -1 when the card needs no selection. `quality` is the
 ## graded timing result (Combat.TIMING_MISS/GOOD/PERFECT, backlog #33) —
 ## defaults to PERFECT so an untimed play (or any caller that predates
-## grading) needs no change to keep paying a timed bonus in full.
+## grading) needs no change to keep paying a timed bonus in full. `enemy_index`
+## names which living add to aim at (backlog #63's Combat.play_card param,
+## which game_host.gd's play_card branch has always read off an "enemy" key)
+## — -1, the default, means "the boss", same as an untargeted card always
+## meant before #63 existed. Backlog #79 says this "crosses the network
+## command" already; it never did — no call site here had a parameter to put
+## it in, so every play could only ever send -1 regardless of what a future
+## tap-an-add UI passed in. #79 still owns building that UI; this only makes
+## the pipe it will use actually connect end to end.
 func play_card(index: int, timing_hit: bool = true, slot: int = -1, sac: int = -1, target: int = -1,
-		quality: int = Combat.TIMING_PERFECT) -> void:
+		quality: int = Combat.TIMING_PERFECT, enemy_index: int = -1) -> void:
 	_send({"type": "play_card", "index": index, "timing": timing_hit, "slot": slot,
-		"sac": sac, "target": target, "quality": quality})
+		"sac": sac, "target": target, "quality": quality, "enemy": enemy_index})
 
 func end_turn(slot: int = -1) -> void:
 	_send({"type": "end_turn", "slot": slot})

@@ -720,6 +720,7 @@ func _init() -> void:
 	_test_add_intent_reaches_the_shared_snapshot()
 	_test_backlog86_an_adds_intent_snapshot_reacts_to_the_real_board()
 	_test_an_adds_status_effects_reach_the_shared_snapshot()
+	_test_backlog86_gameclient_play_card_threads_its_enemy_index_to_the_host()
 	# characters (per-player climb + signature passives)
 	_test_frog_climb_bonus()
 	_test_vine_lifts_ally()
@@ -15881,6 +15882,43 @@ func _test_an_adds_status_effects_reach_the_shared_snapshot() -> void:
 	_expect(int(av["dexterity"]) == 5 and int(av["intangible"]) == 1
 		and int(av["buffer"]) == 1 and int(av["plated_armour"]) == 2,
 		"an add's own Dexterity/Intangible/Buffer/Plated Armour reach the shared snapshot too")
+
+
+## Backlog #86 duty 2: game_host.gd's play_card branch has always read an
+## "enemy" key off the command (int(command.get("enemy", -1)), threaded
+## straight into Combat.play_card's own enemy_index param) — but
+## GameClient.play_card(), the ONLY thing a view is allowed to call
+## (CLAUDE.md §2's client/server split), never had a parameter to put a
+## chosen add into that key. Backlog #79 says targeting "crosses the network
+## command... end to end" already; it never did — every one of combat_3d.gd's
+## four call sites could only ever send the implicit default, so a fight with
+## a real add (Root Lurker's Root Tendril) had no way to aim a hit at it
+## through the real host/client boundary, only through Combat.play_card()
+## directly (which #63's own tests, _test_enemy_index_targets_an_add_not_the_
+## boss among them, already cover). Same shape as _test_adds_reach_the_shared_
+## snapshot above: prove the field crosses the boundary, this time
+## client -> host instead of host -> client.
+func _test_backlog86_gameclient_play_card_threads_its_enemy_index_to_the_host() -> void:
+	var s := _make_session()
+	var host: GameHost = s["host"]
+	var c0: GameClient = s["c0"]
+	host._run.combat.adds.clear()
+	var add := Boss.new("Grub", 30)
+	add.id = "grub"
+	host._run.combat.adds.append(add)
+	host._broadcast_state()
+	var boss_hp_before := int(c0.shared["boss"]["hp"])
+	var idx := -1
+	for c in c0.private.get("hand", []):
+		if bool(c["playable"]) and String(c["type"]) == "attack":
+			idx = int(c["index"])
+			break
+	_expect(idx >= 0, "sanity: hunter 1 opens with a playable attack card")
+	c0.play_card(idx, true, 0, -1, -1, Combat.TIMING_PERFECT, 0)  # enemy_index 0 -> the add
+	_expect(int(c0.shared["boss"]["adds"][0]["hp"]) < 30,
+		"GameClient.play_card's enemy_index reaches the host and lands the hit on the named add")
+	_expect(int(c0.shared["boss"]["hp"]) == boss_hp_before,
+		"...and NOT on the boss, which an unthreaded enemy_index (always -1) would have hit instead")
 
 
 # --- Characters (per-player climb + signature passives) -------------------
