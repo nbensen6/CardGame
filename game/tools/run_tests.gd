@@ -844,6 +844,7 @@ func _init() -> void:
 	_test_backlog86_second_scry_before_resolve_does_not_lose_the_first_batch()
 	_test_backlog86_topdeck_played_during_an_open_scry_still_draws_next()
 	_test_backlog86_tutor_pull_below_the_scry_floor_keeps_a_topdeck_next_up()
+	_test_backlog86_shuffle_in_below_the_scry_floor_keeps_a_kept_card_next_up()
 	_test_backlog86_ending_the_turn_does_not_strand_an_unresolved_scry()
 	_test_backlog86_peek_top_reshuffles_discard_mid_call()
 	_test_backlog86_scry_floor_survives_a_reshuffle_mid_open_batch()
@@ -18840,6 +18841,45 @@ func _test_backlog86_tutor_pull_below_the_scry_floor_keeps_a_topdeck_next_up() -
 		"Waymark's Scramble is still the very next card drawn -- the kept scry cards reinsert BELOW it "
 		+ "even though a tutor pull shrank the pile below the recorded floor in between [got %s]"
 		% [_ids_of(ps.draw_pile)])
+
+
+## backlog #86 duty 2 (this turn): shuffle_in's own copy of the same bug the
+## tutor fix above just closed — insert() also re-indexes everything at or
+## after the inserted slot, so a shuffle_in card that lands BELOW an open
+## scry's recorded scry_floor grows the true below-floor count with nothing
+## updating the stored copy. Reachable with two real, cheap shipped cards:
+## Peer Ahead (scry 2, cost 1) then Depot (shuffle_in "grip", cost 1).
+func _test_backlog86_shuffle_in_below_the_scry_floor_keeps_a_kept_card_next_up() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var a := Card.from_dict({"id": "a", "name": "A", "type": "skill", "cost": 0})
+	var b := Card.from_dict({"id": "b", "name": "B", "type": "skill", "cost": 0})
+	var c := Card.from_dict({"id": "c", "name": "C", "type": "skill", "cost": 0})
+	var d := Card.from_dict({"id": "d", "name": "D", "type": "skill", "cost": 0})
+	ps.draw_pile = [a, b, c, d]   # d is the "top" — pop_back() draws it first
+	ps.hand = [Content.make_card("peer_ahead"), Content.make_card("depot")]
+	ps.energy = 3
+
+	combat.play_card(0, 0)   # Peer Ahead — scries d, c; draw_pile == [a, b], scry_floor == 2
+	_expect(ps.scry_floor == 2, "Peer Ahead records the floor the peek was peeled from")
+
+	# seed=1 forces the next randi_range(0, 2) call (Depot's shuffle_in, against
+	# the 2-card draw_pile left by the scry above) to land at index 0 — below
+	# the recorded floor — so the bug fires deterministically, not by luck.
+	combat._rng.seed = 1
+	combat.play_card(0, 0)   # Depot — shuffles Grip in at index 0, scry still open
+	_expect(ps.draw_pile.size() == 3 and (ps.draw_pile[0] as Card).id == "grip",
+		"Depot's Grip lands below both remaining pile cards, at the seeded index "
+		+ "[got %s]" % [_ids_of(ps.draw_pile)])
+	_expect(ps.scry_floor == 3,
+		"the shuffle-in landed BELOW the recorded floor, so the floor grows by one to match "
+		+ "[got %d]" % [ps.scry_floor])
+
+	var ok := combat.resolve_scry(0, [])   # keep both peeked cards, d and c
+	_expect(ok and ps.scry_pending.is_empty(), "resolve_scry clears the pending reveal")
+	_expect((ps.draw_pile[ps.draw_pile.size() - 1] as Card).id == "d",
+		"the scry's own kept card is still the very next card drawn -- even though Depot's shuffle-in "
+		+ "grew the pile below the recorded floor in between [got %s]" % [_ids_of(ps.draw_pile)])
 
 
 ## backlog #86 duty 2: resolve_scry() is a COMMAND the client has to send —

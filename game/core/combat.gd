@@ -1230,7 +1230,19 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		_log("%s plays %s — puts %s on top of the draw pile." % [who, card.name, topped.name])
 	if card.shuffle_in != "":  # backlog #68 — through _rng so it stays deterministic under a seed
 		var shuffled := Content.make_card(card.shuffle_in)
-		ps.draw_pile.insert(_rng.randi_range(0, ps.draw_pile.size()), shuffled)
+		var shuffle_idx := _rng.randi_range(0, ps.draw_pile.size())
+		ps.draw_pile.insert(shuffle_idx, shuffled)
+		# backlog #86 duty 2: same shape as the tutor fix just above (and just
+		# one commit before this one) — insert() re-indexes everything AT or
+		# after the inserted slot, growing the true below-floor count by one
+		# whenever the random index lands below an open scry's recorded
+		# scry_floor. Left stale, resolve_scry() reinserts the kept cards one
+		# slot too low, landing them BELOW a card that already sat above the
+		# floor (see resolve_scry()'s own comment on why the floor exists) —
+		# the same "next card you draw" promise the tutor fix protects, broken
+		# from the other direction.
+		if ps.scry_floor >= 0 and shuffle_idx < ps.scry_floor:
+			ps.scry_floor += 1
 		_log("%s plays %s — shuffles %s into the draw pile." % [who, card.name, shuffled.name])
 	if card.tutor != "":  # backlog #68 — pull a specific card straight out of the draw pile
 		# into hand; a harmless no-op if it isn't there, same fallback idiom pull_ally uses
