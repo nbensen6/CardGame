@@ -1244,8 +1244,16 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		ps.rhythm += card.rhythm
 		_log("%s plays %s — +%d Rhythm." % [who, card.name, card.rhythm])
 	_fire(MOMENT_CARD_PLAYED, {"player": ps, "card": card})  # e.g. a timed hit builds Rhythm (Frog combo payoff)
-	_check_weakpoint_buck(pi)
+	# _track_climb() must run BEFORE _check_weakpoint_buck(): a single play can both
+	# climb a hunter to a brand-new peak AND (via this same hit's damage) cross the
+	# sigil's buck threshold, which drops ps.foothold right back down. _track_climb
+	# only ever looks at the CURRENT foothold (same rule already applied to the roped
+	# ally's own climb above, and to use_potion's "climb" effect) -- bucking first
+	# (the old order) let the buck erase the peak before anything ever recorded it,
+	# so highest_climb and MOMENT_HUNTER_CLIMBS silently missed a peak reached and
+	# lost within one play.
 	_track_climb()
+	_check_weakpoint_buck(pi)
 	_check_end()
 	return true
 

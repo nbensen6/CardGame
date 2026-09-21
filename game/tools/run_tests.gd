@@ -528,6 +528,7 @@ func _init() -> void:
 	_test_backlog86_dead_boss_stops_reflecting_thorns_mid_multihit()
 	_test_backlog86_dead_add_stops_reflecting_thorns_mid_multihit()
 	_test_backlog86_multistrike_sigil_damage_accumulates_across_hits()
+	_test_climb_bucked_in_the_same_play_still_reaches_highest_climb()
 	_test_backlog86_multihit_wound_applies_once_per_play_not_per_hit()
 	_test_backlog86_multihit_vulnerable_applies_once_per_play_not_per_hit()
 	_test_backlog86_multihit_frail_via_meld_applies_once_per_play_not_per_hit()
@@ -12206,6 +12207,47 @@ func _test_backlog86_multistrike_sigil_damage_accumulates_across_hits() -> void:
 	combat.play_card(0, _first_playable(combat, 0))  # Flurry: two 9-damage hits, 18 total
 	_expect(ps.foothold == 0 and ps.weak_point_damage == 0,
 		"a multistrike card's weak-point damage sums across every hit before the buck check fires, not just one hit's worth")
+
+
+## backlog #86 duty 2: play_card() used to call _check_weakpoint_buck(pi) BEFORE
+## _track_climb(), the only one of the game's four foothold-raising call sites
+## (card, potion, jetpack, power-triggered poison_lift — all fixed in earlier
+## duty-2 passes, see _test_use_potion_climb_updates_highest_climb and its
+## neighbours) to get that order backwards. A single card can both climb a
+## hunter to a brand-new peak AND, via that same hit's own damage, cross the
+## sigil's buck threshold — and the buck (_check_weakpoint_buck) drops
+## ps.foothold right back down using whatever value is current AT THAT MOMENT.
+## _track_climb() only ever reads the CURRENT foothold (its own doc comment:
+## "called after anything that can raise a foothold"), so bucking first erased
+## the peak before anything ever recorded it: highest_climb (backlog #39's
+## run-summary stat) silently kept its old value and MOMENT_HUNTER_CLIMBS never
+## fired for a climb that genuinely happened, just because the same play also
+## knocked the hunter back down a hold.
+##
+## Pounce (damage 4, timed_damage 5, grip 1, no timed_grip): nailed at the
+## sigil (Height 5) deals 4+5=9 base damage, +SIGIL_BONUS 5 = 14 toward
+## weak_point_damage — clearing a threshold of 10 — while its grip climbs the
+## hunter from 5 to 6 in the very same play, before the buck (triggered by
+## that same 14) drops them onto the ledge below.
+func _test_climb_bucked_in_the_same_play_still_reaches_highest_climb() -> void:
+	var boss := _climb_boss(5)          # weak_point_height 5
+	boss.ledges = [2, 4]                # a safe ledge below the sigil to buck onto
+	boss.weak_point_threshold = 10      # this one nailed Pounce (14) will clear it
+	var combat := _new_combat([_deck_of(_pounce, 10), _deck_of(_slash, 10)], 42, boss)
+	var ps: PlayerState = combat.players[0]
+	ps.foothold = 5                     # already at the sigil, from an earlier turn's climb
+	combat._track_climb()               # seed highest_climb == 5, as that earlier turn would have
+	_expect(combat.highest_climb == 5, "setup: the fight's tracked peak starts at the hunter's current Height")
+
+	var climb_events: Array = []
+	combat._on(Combat.MOMENT_HUNTER_CLIMBS, func(ctx): climb_events.append(ctx))
+	combat.play_card(0, _first_playable(combat, 0))  # nailed Pounce: 14 weak-point damage, +1 Height
+
+	_expect(ps.foothold == 4, "the buck still lands the hunter on the ledge below the sigil, undoing this same play's own climb")
+	_expect(combat.highest_climb == 6,
+		"the peak (Height 6) reached by this card's own climb, before its own damage bucked the hunter back down, must still count toward highest_climb")
+	_expect(climb_events.size() == 1 and int(climb_events[0]["foothold"]) == 6,
+		"the same peak must fire MOMENT_HUNTER_CLIMBS, exactly like any other climb source, even though the buck erases it a moment later")
 
 
 ## backlog #86 duty 3: play_card()'s wound/vulnerable/frail application each live
