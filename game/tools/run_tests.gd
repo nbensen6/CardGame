@@ -429,6 +429,7 @@ func _init() -> void:
 	_test_run_defeat_when_a_hunter_falls()
 	_test_run_hp_syncs_on_defeat_too()
 	_test_backlog39_stats_accumulate_across_fights()
+	_test_backlog86_highest_climb_stat_keeps_the_runs_peak_not_the_latest_fight()
 	_test_content_make_card_and_reward_pool()
 	# phase 3: 3rd titan, relics, longer runs
 	_test_regen_heals_titan()
@@ -10358,6 +10359,42 @@ func _test_backlog39_stats_accumulate_across_fights() -> void:
 		and int(run.stats["turns_taken"]) > int(after_first["turns_taken"])
 		and int(run.stats["damage_dealt"]) >= int(after_first["damage_dealt"]),
 		"a second, losing fight records what killed the run and keeps accumulating rather than resetting")
+
+
+## Backlog #86 duty 3: every other field sync() folds into run.stats
+## (damage_dealt, cards_played, turns_taken) uses `+=` -- run.gd's own
+## deliberate exception is highest_climb, which uses maxi() instead
+## (run.gd:866) because the stat is meant to be the run's best-ever peak, not
+## a sum of per-fight peaks nor whichever fight happened last. _track_climb()
+## and the per-fight combat.highest_climb it feeds are both heavily covered
+## (potions, roped allies, power triggers, the dev console), but nothing had
+## ever driven that value through a real Run.sync() twice to prove the run
+## stat keeps the PEAK across fights rather than the latest or the sum --
+## _test_backlog39_stats_round_trip_through_save only round-trips a
+## hand-assigned number through JSON, and
+## _test_backlog39_stats_accumulate_across_fights never mentions this field.
+func _test_backlog86_highest_climb_stat_keeps_the_runs_peak_not_the_latest_fight() -> void:
+	var run := _map_run()
+	_step_into_combat(run)
+	run.combat.players[0].foothold = 10
+	run.combat._track_climb()
+	_force_win(run)
+	_expect(int(run.stats["highest_climb"]) == 10,
+		"a fight that reaches Height 10 banks 10 as the run's peak")
+
+	_step_into_combat(run)  # clears the reward, walks back to the map, into the next fight
+	run.combat.players[0].foothold = 3
+	run.combat._track_climb()
+	_force_win(run)
+	_expect(int(run.stats["highest_climb"]) == 10,
+		"a shallower second fight (peak 3) must not overwrite the run's real peak of 10 -- and must not sum to 13 either, since sync() uses maxi() for this one field, unlike its += siblings")
+
+	_step_into_combat(run)
+	run.combat.players[0].foothold = 12
+	run.combat._track_climb()
+	_force_win(run)
+	_expect(int(run.stats["highest_climb"]) == 12,
+		"a third fight that genuinely climbs past the run's prior peak (12 > 10) must still raise the run stat")
 
 
 func _test_content_make_card_and_reward_pool() -> void:
