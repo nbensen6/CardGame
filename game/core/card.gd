@@ -344,6 +344,17 @@ func upgraded_copy() -> Card:
 	if bool(d.get("cheapen_pick", false)) and int(d["cheapen_amount"]) > 0:
 		d["cheapen_amount"] = int(d["cheapen_amount"]) + 1
 		bumped = true
+	# hits (multi-strike) can't join the list above either, for the exact same
+	# reason cheapen_amount can't: Card.from_dict() defaults it to 1 on EVERY
+	# card, used or not, so a bare `int(d["hits"]) > 0` would falsely read as
+	# "already scaling" (and wrongly bump every single-hit card in the game to
+	# a double-strike) rather than only the cards that actually carry a real
+	# multi-strike (backlog #86 duty 2 — Flurry/Turret/Snap Volley and friends
+	# had their damage scale every campfire visit while their own hit count,
+	# an equally real numeric effect, silently never did).
+	if int(d["hits"]) > 1:
+		d["hits"] = int(d["hits"]) + 1
+		bumped = true
 	# backlog #86 duty 2: a 0-cost card with nothing bumpable (Build Grapple,
 	# Build Bomb, Build Winch, Waymark — a bare `create`/`topdeck` at cost 0,
 	# no numeric field, no rule_upgrade) fell through BOTH branches: `bumped`

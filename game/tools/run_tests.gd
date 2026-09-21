@@ -164,6 +164,7 @@ func _init() -> void:
 	_test_card_upgrade_bumps_grip_per_rhythm_pull_and_sac_ally_grip()
 	_test_card_upgrade_bumps_cheapen_amount_only_when_cheapen_pick_is_set()
 	_test_card_upgrade_bumps_condition_bonus_too()
+	_test_card_upgrade_bumps_hits_but_only_for_a_real_multistrike()
 	_test_backlog86_rule_upgrade_naming_condition_bonus_overrides_the_generic_bump()
 	_test_backlog67_above_sigil_condition_gates_preview_bonus()
 	_test_backlog67_ally_hanging_condition_gates_preview_bonus()
@@ -4839,6 +4840,39 @@ func _test_card_upgrade_bumps_condition_bonus_too() -> void:
 		# without a duplicate() would have rewritten dagger's own condition_bonus too
 		and int(dagger.condition_bonus.get("damage", 0)) == 3,
 		"upgrading scales condition_bonus the same way it scales the matching top-level field, without mutating the original card")
+
+
+## #86 duty 2: upgraded_copy()'s numeric bump lists never grew a branch for
+## `hits` (multi-strike) — every OTHER scaling field a card can carry has
+## already had this exact "hand-copied field list drifted" gap found and
+## closed in this rotation (grip_per_rhythm/pull_ally/sac_ally_grip,
+## cheapen_amount, condition_bonus, all just above), but `hits` itself was
+## never checked, so real, shipped Flurry (damage 4, hits 2, "Deal 4 damage
+## twice") sharpens to "Deal 7 damage twice" forever — its damage bumps every
+## visit, its strike count never does, even though card.gd's own doc comment
+## on hits calls it a plain scaling number ("how many times the damage
+## lands... multi-strike") no different from damage or block.
+## It can't just join the plain +1 list the way pull_ally did, though —
+## Card.from_dict() defaults hits to 1 on EVERY card, used or not (the exact
+## same trap cheapen_amount's own comment two functions up names), so a bare
+## `if int(d["hits"]) > 0` would silently "bump" hits on every single-hit
+## card in the game to a double-strike the moment it was sharpened, and mark
+## it as scaled (skipping the cost-reduction fallback) even though nothing
+## about the card ever asked for multi-strike. Only a card that already
+## carries a real multi-strike (hits > 1) may have it bumped, same idiom
+## cheapen_amount's own guard already uses for its own "defaults to 1
+## regardless" field.
+func _test_card_upgrade_bumps_hits_but_only_for_a_real_multistrike() -> void:
+	var flurry := _flurry()  # damage 4, hits 2, cost 2 — a real shipped multi-strike
+	var up_flurry := flurry.upgraded_copy()
+	var slash := _slash()    # damage 6, hits never authored (defaults to 1)
+	var up_slash := slash.upgraded_copy()
+	_expect(up_flurry.hits == flurry.hits + 1,
+		"upgrading a real multi-strike card must bump its hit count like every other scaling field it carries — got %d, wanted %d" % [up_flurry.hits, flurry.hits + 1])
+	_expect(up_flurry.damage == flurry.damage + 3,
+		"sanity check: the base damage field still scales too, so this is proving the missing hits bump specifically, not a broken upgrade generally")
+	_expect(up_slash.hits == 1,
+		"a card that never carried a real multi-strike (hits defaults to 1) must NOT have hits bumped just because the default 1 is > 0 — got %d" % up_slash.hits)
 
 
 ## backlog #86 duty 3 — upgraded_copy()'s own doc comment (card.gd, right above
