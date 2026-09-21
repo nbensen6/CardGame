@@ -2207,6 +2207,15 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_robustness_sweep_always_includes_the_real_top_ascension()
 	_test_backlog86_robustness_sweep_ascensions_cover_floor_mid_and_top()
 
+	# backlog #86 duty 3: GameHost's duplicate-character refusal
+	# (_solo_character_taken/_character_taken_by_another_peer) was added by a
+	# prior duty-2 pass to close a real unwinnable-lobby bug (two Lightbearers:
+	# no climb card in the starter deck, no ally-lift passive, a 200,000-round
+	# headless sweep that never killed the boss) but had zero test coverage of
+	# its own — nothing ever proved the lobby actually refuses the pick.
+	_test_backlog86_solo_lobby_refuses_the_same_character_in_both_slots()
+	_test_backlog86_coop_lobby_refuses_a_character_already_taken_by_another_peer()
+
 	print("")
 	if _failures == 0:
 		print("ALL TESTS PASSED")
@@ -21786,6 +21795,70 @@ func _test_backlog86_robustness_sweep_ascensions_cover_floor_mid_and_top() -> vo
 	_expect(seen.size() == mid_swept.size(), "no ascension is swept twice — got %s" % [mid_swept])
 	_expect(mid_swept.size() == 3 and mid_swept[0] == 0 and mid_swept[mid_swept.size() - 1] == 10,
 		"a ten-tier ladder sweeps floor, one midpoint and the top — got %s" % [mid_swept])
+
+
+## backlog #86 duty 3: proves GameHost._solo_character_taken() actually blocks
+## the lobby state its own doc comment (game_host.gd:361-372) says it exists to
+## prevent — both hunter slots picking the same character. That comment names a
+## specific, verified consequence (a Lightbearer/Lightbearer pair against
+## drowned_colossus sat at Foothold 0 for 200,000 simulated rounds and never
+## won, since neither has a climb card or an ally-lift passive), so this isn't
+## a cosmetic lobby nicety — a silent regression here reopens an unwinnable run.
+## Nothing in this suite ever drove select_character through a GameHost and
+## checked the refusal landed.
+func _test_backlog86_solo_lobby_refuses_the_same_character_in_both_slots() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 0, 2, true, 0, Content.UNLOCKED_ALL)
+	_kept.append(host)
+	var c := GameClient.new(t, 1)
+	c.join()
+
+	c.select_character("frog", 0)
+	_expect(String(host._solo_chars[0]) == "frog", "slot 0's pick lands normally")
+
+	c.select_character("frog", 1)  # duplicate — same character, the OTHER slot
+	_expect(String(host._solo_chars[1]) == "",
+		"a duplicate pick for the other slot is refused — slot 1 stays unpicked, got %s" % [host._solo_chars[1]])
+	var sel1: Array = c.shared.get("selections", [])
+	_expect(sel1.size() == 2 and bool(sel1[0]["picked"]) and not bool(sel1[1]["picked"]),
+		"the broadcast lobby snapshot agrees: slot 0 picked, slot 1 still isn't — got %s" % [sel1])
+
+	c.select_character("frog", 0)  # re-picking your OWN already-held character must not
+	# trip the "taken by someone else" refusal — exclude_slot exists precisely so a
+	# slot doesn't lock itself out.
+	_expect(String(host._solo_chars[0]) == "frog", "re-selecting your own current pick is never refused")
+
+	c.select_character("mountain_climbers", 1)  # a genuinely different character succeeds
+	_expect(String(host._solo_chars[1]) == "mountain_climbers",
+		"a non-duplicate pick for the other slot goes through, got %s" % [host._solo_chars[1]])
+
+
+## Companion to the solo test above, for the co-op path (_character_taken_by_
+## another_peer): two distinct peers, not two slots of one solo player.
+func _test_backlog86_coop_lobby_refuses_a_character_already_taken_by_another_peer() -> void:
+	var t := LocalTransport.new()
+	var host := GameHost.new(t, 0, 2, false, 0, Content.UNLOCKED_ALL)
+	_kept.append(host)
+	var c0 := GameClient.new(t, 10)
+	var c1 := GameClient.new(t, 20)
+	c0.join()
+	c1.join()
+
+	c0.select_character("frog")
+	_expect(String(host._character_of.get(10, "")) == "frog", "peer 0's pick lands normally")
+
+	c1.select_character("frog")  # duplicate — same character, a DIFFERENT peer
+	_expect(String(host._character_of.get(20, "")) == "",
+		"a duplicate pick by another peer is refused — peer 1 stays unpicked, got %s" % [host._character_of.get(20, "")])
+
+	c0.select_character("frog")  # re-sending your own already-held character must not
+	# self-block — exclude_peer exists for the same reason exclude_slot does above.
+	_expect(String(host._character_of.get(10, "")) == "frog", "re-selecting your own current pick is never refused")
+
+	c1.select_character("goblin_mech")  # a genuinely different character succeeds
+	_expect(String(host._character_of.get(20, "")) == "goblin_mech",
+		"a non-duplicate pick by the other peer goes through, got %s" % [host._character_of.get(20, "")])
+	_expect(host._all_selected(), "once both peers hold distinct characters the lobby is ready to start")
 
 
 ## backlog #86 duty 3 (thirty-seventh pass) -- stand_at, lifted out of
