@@ -903,6 +903,14 @@ func _init() -> void:
 	_test_backlog86_foothold_anchor_clamps_below_the_lowest_rung()
 	_test_backlog86_foothold_anchor_clamps_above_the_highest_rung()
 	_test_backlog86_foothold_anchor_ignores_unsorted_key_order()
+	# backlog #86 duty 3 (this turn): the sibling of foothold_anchor that never
+	# got a test of its own — stand_offset_x, the x-axis half of _stand_on_model
+	# that keeps two co-op hunters on one shared foothold from rendering inside
+	# each other.
+	_test_backlog86_stand_offset_x_leaves_the_anchor_unchanged_at_side_zero()
+	_test_backlog86_stand_offset_x_is_symmetric_across_sides()
+	_test_backlog86_stand_offset_x_widens_with_the_beast()
+	_test_backlog86_stand_offset_x_keeps_a_floor_gap_on_a_zero_width_beast()
 	# backlog #86 duty 2 (sixth turn): a real bug in _render_hand, found the
 	# same way as the glide bug above — reading a combat_3d.gd function end to
 	# end for an early-return that skips a tail statement.
@@ -20390,6 +20398,35 @@ func _test_backlog86_foothold_anchor_ignores_unsorted_key_order() -> void:
 	var anchors := {12: Vector3(0, 12, 0), 0: Vector3(0, 0, 0), 8: Vector3(0, 8, 0), 4: Vector3(0, 4, 0)}
 	var p: Vector3 = Combat3D.foothold_anchor(anchors, 6)
 	_expect(p.is_equal_approx(Vector3(0, 6, 0)), "the bracket is found by sorted Height, regardless of the dictionary's insertion order")
+
+
+## backlog #86 duty 3 (this turn) — combat_3d.stand_offset_x is the x-axis half
+## of _stand_on_model, lifted the same way foothold_anchor was: given a shared
+## foothold's own x, which side a hunter stands on, and the beast's width, the
+## world-space x that keeps two co-op hunters apart. Untested before this even
+## though its two neighbours (foothold_anchor for y, hull_front_at for z) both
+## already had tests — the exact "two tested halves, one untested combining
+## step" shape this file's own history keeps finding.
+func _test_backlog86_stand_offset_x_leaves_the_anchor_unchanged_at_side_zero() -> void:
+	_expect(is_equal_approx(Combat3D.stand_offset_x(5.0, 0.0, 2.0), 5.0), "side 0.0 (a solo hunter, no ally sharing the foothold) must not nudge the anchor's own x at all")
+
+
+func _test_backlog86_stand_offset_x_is_symmetric_across_sides() -> void:
+	var anchor_x := 3.0
+	var left: float = Combat3D.stand_offset_x(anchor_x, -1.0, 4.0)
+	var right: float = Combat3D.stand_offset_x(anchor_x, 1.0, 4.0)
+	_expect(is_equal_approx(left - anchor_x, -(right - anchor_x)), "side -1 and side +1 must land equal distances on opposite sides of the shared anchor, or two hunters on one foothold stand lopsided rather than apart")
+
+
+func _test_backlog86_stand_offset_x_widens_with_the_beast() -> void:
+	var narrow: float = Combat3D.stand_offset_x(0.0, 1.0, 1.0)
+	var wide: float = Combat3D.stand_offset_x(0.0, 1.0, 10.0)
+	_expect(wide > narrow, "a wider beast must push two hunters sharing a foothold further apart, not the same fixed distance on every body")
+
+
+func _test_backlog86_stand_offset_x_keeps_a_floor_gap_on_a_zero_width_beast() -> void:
+	var gap: float = Combat3D.stand_offset_x(0.0, 1.0, 0.0) - Combat3D.stand_offset_x(0.0, -1.0, 0.0)
+	_expect(is_equal_approx(gap, 0.60), "even a degenerate zero-width hull keeps the fixed 0.30 floor per side, so two hunters never collapse onto the exact same point")
 
 
 ## backlog #86 duty 3 (third pass) — hunter_move_kind is the pure gate lifted

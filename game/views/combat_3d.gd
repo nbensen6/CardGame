@@ -2470,6 +2470,16 @@ static func foothold_anchor(anchors: Dictionary, foot: int) -> Vector3:
 	return a.lerp(b, clampf(float(foot - lo) / float(hi - lo), 0.0, 1.0))
 
 
+## Pure form of the lateral spacing rule below: given the anchor's own x, which
+## side a hunter stands on (-1/0/+1, see hunter_side_offset) and the beast's
+## own width, the world-space x a hunter actually stands at. Split out static
+## like foothold_anchor above, so run_tests.gd can prove two hunters land on
+## opposite, symmetric sides of one shared foothold with no scene tree and no
+## model loaded. #86 duty 3.
+static func stand_offset_x(anchor_x: float, side: float, beast_width: float) -> float:
+	return anchor_x + side * (beast_width * 0.055 + 0.30)
+
+
 ## Where a hunter at `foot` stands, from the model's own anchors.
 ##
 ## Exactly on a rung when the Height matches one, and between the two that
@@ -2478,7 +2488,7 @@ static func foothold_anchor(anchors: Dictionary, foot: int) -> Vector3:
 func _stand_on_model(foot: int, side: float) -> Vector3:
 	var p: Vector3 = foothold_anchor(_climb_points, foot)
 	# Two hunters on one ledge stand apart rather than inside each other.
-	var x: float = p.x + side * (_beast_box.size.x * 0.055 + 0.30)
+	var x: float = stand_offset_x(p.x, side, _beast_box.size.x)
 	# And OUT to the body's real surface at that spot, not a fraction of the
 	# bounding box. The anchors are authored on the surface in Blender, but a
 	# point ON a surface is still half a hunter inside it, and the old nudge
