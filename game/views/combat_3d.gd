@@ -4174,13 +4174,19 @@ func _piles_clicked(event: InputEvent) -> void:
 
 
 ## The deck screen. Public because the dev console opens it too.
-func open_deck() -> void:
+##
+## Returns whether a DeckView is now actually showing — same contract fix as
+## location_3d.gd's sibling (backlog #86 duty 2): console.gd's `_cmd_deck()`
+## duck-types this method on either view and needs to tell "opened it" apart
+## from "nothing to open" rather than trusting a void call always worked.
+func open_deck() -> bool:
+	if get_node_or_null("DeckView") != null:
+		return true                 # already open; do not stack two of them
 	var deck: Array = _my_private().get("deck", [])
 	if deck.is_empty():
-		return
-	if get_node_or_null("DeckView") != null:
-		return                      # already open; do not stack two of them
+		return false
 	DeckView.open(self, deck)
+	return true
 
 
 ## A character's face at a fixed size, tinted frame optional. Portraits are baked

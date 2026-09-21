@@ -1112,11 +1112,24 @@ func _deck_picker(deck: Array, on_pick: Callable, prompt: String = "",
 
 ## Browse the deck, changing nothing. Reachable from the campfire and the
 ## trader, and from the dev console's `deck`.
-func open_deck() -> void:
+##
+## Returns whether a DeckView is now actually showing (already open, or just
+## built) — backlog #86 duty 2: this used to be void, so console.gd's
+## `_cmd_deck()` had no way to tell "opened it" apart from "there was nothing
+## to open" and reported "deck open" either way. `_my_private()` only carries
+## a "deck" key in COMBAT/CAMPFIRE/SHOP (game_host.gd's `_slot_private()`
+## returns {} for every other phase) — MAP, EVENT, REWARD, SELECT, WON and
+## LOST all read back an empty deck here, so the dev console's `deck` command
+## claimed success on six of the game's nine phases while building nothing at
+## all.
+func open_deck() -> bool:
+	if get_node_or_null("DeckView") != null:
+		return true  # already open
 	var deck: Array = _my_private().get("deck", [])
-	if deck.is_empty() or get_node_or_null("DeckView") != null:
-		return
+	if deck.is_empty():
+		return false
 	DeckView.open(self, deck)
+	return true
 
 
 func _add_switch() -> void:

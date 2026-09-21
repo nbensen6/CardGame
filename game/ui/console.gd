@@ -472,7 +472,15 @@ func _cmd_deck(_a: PackedStringArray) -> String:
 	if view == null or not view.has_method("open_deck"):
 		return "this view has no deck screen"
 	_set_open(false)   # get out of the way of the thing you asked to look at
-	view.call("open_deck")
+	# backlog #86 duty 2: open_deck() used to return void, so this reported
+	# "deck open" whether it actually built a screen or silently did nothing —
+	# true on most of the game's phases, since the private snapshot only ever
+	# carries deck data in COMBAT/CAMPFIRE/SHOP (see open_deck()'s own doc
+	# comment). A dev typing `deck` on the map, at an event, on a reward
+	# screen, at character select, or on the WON/LOST screen was told it
+	# worked while nothing appeared.
+	if not bool(view.call("open_deck")):
+		return "no deck to show here"
 	return "deck open"
 
 

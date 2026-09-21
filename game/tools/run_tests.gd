@@ -2174,6 +2174,7 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_console_card_inspects_a_deck_entry_and_can_spin_and_show_its_upgrade()
 	_test_backlog86_console_card_refuses_an_out_of_range_index()
 	_test_backlog86_console_deck_opens_a_real_deck_screen()
+	_test_backlog86_console_deck_refuses_honestly_when_there_is_nothing_to_show()
 	_test_backlog86_console_clear_wipes_the_visible_output()
 	_test_backlog86_hit_circle_gui_input_ignores_a_press_far_from_the_live_note()
 	_test_backlog86_hit_circle_screen_clamps_a_note_projecting_above_the_frame()
@@ -23240,16 +23241,19 @@ func _test_backlog86_console_own_closes_an_open_picker_through_closed_not_a_bare
 ## Location3D scene: both real `_ready()`s reach for @onready nodes that only
 ## exist once instanced from their own .tscn, and would crash built bare with
 ## `.new()`. This carries the exact same open_deck() contract those two views
-## share (empty deck opens nothing; already-open is a no-op; otherwise build a
-## "DeckView" child) with nothing else attached.
+## share (empty deck opens nothing and reports so; already-open reports true
+## as a no-op; otherwise build a "DeckView" child and report true -- backlog
+## #86 duty 2 turned this from void to bool so a caller can tell "opened it"
+## apart from "there was nothing to open").
 class DeckHavingView extends Node:
 	var deck: Array = []
-	func open_deck() -> void:
-		if deck.is_empty():
-			return
+	func open_deck() -> bool:
 		if get_node_or_null("DeckView") != null:
-			return
+			return true
+		if deck.is_empty():
+			return false
 		DeckView.open(self, deck)
+		return true
 
 
 ## backlog #86 duty 3 -- console.gd registers thirteen commands and the help
@@ -23312,6 +23316,32 @@ func _test_backlog86_console_deck_opens_a_real_deck_screen() -> void:
 
 	_expect(c.run("deck") == "deck open", "the `deck` command reports success")
 	_expect(view.get_node_or_null("DeckView") != null, "and actually built the screen it claims to have opened, not just returned the string")
+
+	view.free()
+
+
+## backlog #86 duty 2: the success test just above only ever probes a view
+## whose `deck` already holds a real entry -- open_deck() used to be void, so
+## `_cmd_deck()` had no way to learn it had built nothing and reported "deck
+## open" regardless. Real impact: game_host.gd's `_slot_private()` only ever
+## puts a "deck" key in the snapshot during COMBAT/CAMPFIRE/SHOP (its own
+## trailing `return {}` covers every other phase), so a dev typing `deck` on
+## the map, at an event, on a reward screen, at character select, or on the
+## WON/LOST screen — six of the game's nine phases — got told the deck screen
+## opened while nothing appeared on screen at all.
+func _test_backlog86_console_deck_refuses_honestly_when_there_is_nothing_to_show() -> void:
+	var view := DeckHavingView.new()
+	# view.deck stays at its default [] here, standing in for any phase whose
+	# private snapshot carries no "deck" key at all.
+	root.add_child(view)
+	var c := DevConsole.new()
+	view.add_child(c)
+
+	var said := c.run("deck")
+	_expect(said != "deck open",
+		"`deck` must not claim success when open_deck() built nothing to show — got \"%s\"" % said)
+	_expect(view.get_node_or_null("DeckView") == null,
+		"sanity: no DeckView actually exists to back that claim")
 
 	view.free()
 
