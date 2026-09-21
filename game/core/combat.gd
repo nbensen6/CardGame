@@ -915,6 +915,12 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		entry["effect"] = card.power_effect
 		entry["name"] = card.name
 		entry["text"] = card.text
+		# #86 duty 2: a melded power+Cleave card (e.g. Seeping Venom fused with
+		# Sweeping Strike) fans its one-time damage to the boss AND every living
+		# add (debuff_targets above), but _handle_power_effects()'s recurring
+		# "wound" payout only ever knew about the boss — captured here so that
+		# turn-end copy can apply the same fan-out instead of hard-coding it.
+		entry["hits_all_enemies"] = card.hits_all_enemies
 		ps.powers[card.id] = entry
 		_log("%s plays %s — it stays in play." % [ps.combatant.name, card.name])
 	else:
@@ -2268,10 +2274,12 @@ func _handle_power_effects(ctx: Dictionary) -> void:
 		# still resolve.
 		var effect: String = String(entry.get("effect", ""))
 		var pname: String = String(entry.get("name", ""))
+		var fans_out: bool = bool(entry.get("hits_all_enemies", false))
 		if effect == "":
 			var pc := Content.make_card(String(id))
 			effect = pc.power_effect
 			pname = pc.name
+			fans_out = pc.hits_all_enemies
 		if effect == "":
 			continue
 		match effect:
@@ -2295,33 +2303,48 @@ func _handle_power_effects(ctx: Dictionary) -> void:
 				ps.combatant.hp = mini(ps.combatant.hp + amount, ps.combatant.max_hp)
 				_log("%s's %s triggers — heals %d." % [ps.combatant.name, pname, amount])
 			"wound":
-				if boss.try_block_debuff():
-					_log("%s's Artifact wards off %s's Poison." % [boss.name, ps.combatant.name])
-				else:
-					boss.wound += amount
-					_log("%s's %s triggers — Poison %d on %s." % [ps.combatant.name, pname, boss.wound, boss.name])
-					if ps.poison_lift > 0:  # Vine-Weaver: the vines feed on the poison and lift the ally (same rule play_card's Poison branch applies)
-						var fed_ally: PlayerState = players[ally_index(pi)]
-						var fed_ally_before := fed_ally.foothold
-						fed_ally.foothold = mini(fed_ally.foothold + ps.poison_lift, FOOTHOLD_MAX)
-						_log("%s's vines surge — %s climbs +%d." % [ps.combatant.name, fed_ally.combatant.name, ps.poison_lift])
-						_lift_roped_ally(ally_index(pi), fed_ally_before)  # the lifted ally might themselves be roped (#86 duty 2)
-						# backlog #86 duty 2: play_card()'s own poison_lift branch (a few
-						# hundred lines up) sits inside a function that unconditionally
-						# calls _track_climb() once before returning, so a played Poison
-						# card's ally-lift always reached highest_climb (#39) immediately.
-						# This copy fires from end_turn() -> _fire(MOMENT_TURN_END, ...)
-						# instead, and end_turn() never calls _track_climb() itself — the
-						# next _begin_round() does, but only if the fight is still ONGOING
-						# when it gets there. A fight that ends in the very next
-						# _enemy_turn() (the boss's own Wound bleed finishing it off, or
-						# its telegraphed move downing a hunter) never reaches another
-						# _begin_round(), so a new peak reached by THIS climb was silently
-						# dropped from the run-end summary stat forever, even though
-						# ps.foothold itself was already correct (the _test_backlog86_
-						# power_triggered_poison_lifts_the_vine_weaver_ally test above
-						# only ever checked the foothold, never highest_climb).
-						_track_climb()
+				# #86 duty 2: play_card()'s own Poison branch fans out to the boss
+				# AND every living add when the card that granted this power also
+				# carried hits_all_enemies (debuff_targets, above) — but this
+				# recurring turn-end copy only ever knew about `boss`, so a melded
+				# power+Cleave card (Seeping Venom fused with Sweeping Strike, both
+				# in Goblin Mech's own reward_pool) poisoned every enemy once on
+				# play and then only the boss on every turn after. Mirror the same
+				# fan-out rule so the two halves of one card can't drift again.
+				var wound_targets: Array = ([boss] + adds) if fans_out else [boss]
+				var any_poisoned := false
+				for wt in wound_targets:
+					var t: Boss = wt
+					if t.is_dead():
+						continue
+					if t.try_block_debuff():
+						_log("%s's Artifact wards off %s's Poison." % [t.name, ps.combatant.name])
+					else:
+						t.wound += amount
+						_log("%s's %s triggers — Poison %d on %s." % [ps.combatant.name, pname, t.wound, t.name])
+						any_poisoned = true
+				if any_poisoned and ps.poison_lift > 0:  # Vine-Weaver: the vines feed on the poison and lift the ally (same rule play_card's Poison branch applies) — once per trigger, not once per target (same idiom as play_card's own poison_lift)
+					var fed_ally: PlayerState = players[ally_index(pi)]
+					var fed_ally_before := fed_ally.foothold
+					fed_ally.foothold = mini(fed_ally.foothold + ps.poison_lift, FOOTHOLD_MAX)
+					_log("%s's vines surge — %s climbs +%d." % [ps.combatant.name, fed_ally.combatant.name, ps.poison_lift])
+					_lift_roped_ally(ally_index(pi), fed_ally_before)  # the lifted ally might themselves be roped (#86 duty 2)
+					# backlog #86 duty 2: play_card()'s own poison_lift branch (a few
+					# hundred lines up) sits inside a function that unconditionally
+					# calls _track_climb() once before returning, so a played Poison
+					# card's ally-lift always reached highest_climb (#39) immediately.
+					# This copy fires from end_turn() -> _fire(MOMENT_TURN_END, ...)
+					# instead, and end_turn() never calls _track_climb() itself — the
+					# next _begin_round() does, but only if the fight is still ONGOING
+					# when it gets there. A fight that ends in the very next
+					# _enemy_turn() (the boss's own Wound bleed finishing it off, or
+					# its telegraphed move downing a hunter) never reaches another
+					# _begin_round(), so a new peak reached by THIS climb was silently
+					# dropped from the run-end summary stat forever, even though
+					# ps.foothold itself was already correct (the _test_backlog86_
+					# power_triggered_poison_lifts_the_vine_weaver_ally test above
+					# only ever checked the foothold, never highest_climb).
+					_track_climb()
 			"vulnerable":
 				if boss.try_block_debuff():
 					_log("%s's Artifact wards off %s's Expose." % [boss.name, ps.combatant.name])

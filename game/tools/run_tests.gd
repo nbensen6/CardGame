@@ -663,6 +663,8 @@ func _init() -> void:
 	_test_hits_all_enemies_poisons_every_living_target_not_just_one()
 	_test_hits_all_enemies_frails_every_living_target_not_just_one()
 	_test_backlog86_hits_all_enemies_poison_lifts_the_ally_only_once_per_play()
+	_test_backlog86_melded_power_wound_fans_out_to_boss_and_every_living_add()
+	_test_backlog86_melded_power_wound_poison_lift_fires_once_through_fan_out()
 	_test_killing_an_add_does_not_end_the_fight()
 	_test_add_acts_on_its_own_turn()
 	_test_add_attack_adds_its_own_strength()
@@ -14865,6 +14867,62 @@ func _test_backlog86_hits_all_enemies_poison_lifts_the_ally_only_once_per_play()
 		"a hits_all_enemies Poison card still poisons the boss and every living add")
 	_expect(combat.players[1].foothold == ally_before + 1,
 		"poison_lift fires once per card played, not once per enemy it poisoned")
+
+
+## #86 duty 2: the fan-out fix above covers play_card()'s ONE-TIME debuff loop
+## only. A melded power card (Seeping Venom fused with Sweeping Strike -- both
+## in Goblin Mech's own reward_pool, cards.json) also carries a RECURRING
+## Poison through _handle_power_effects()'s "wound" branch at turn end, and
+## that branch never learned the fan-out rule: it hard-coded `boss` regardless
+## of hits_all_enemies, so the immediate play poisoned every enemy once and
+## every turn after only poisoned the boss. Fixed by capturing
+## card.hits_all_enemies onto the ps.powers entry when the power is played
+## (play_card()'s power branch) and reading it back here. Also proves an add's
+## own Artifact wards it independently of the boss's, the same guarantee
+## _test_add_artifact_wards_off_poison_landed_on_it() already proves for the
+## one-time path.
+func _test_backlog86_melded_power_wound_fans_out_to_boss_and_every_living_add() -> void:
+	var boss := _dummy_boss(300)
+	boss.artifact = 1
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var dead_add := Boss.new("Grub Dead", 5)
+	dead_add.hp = 0
+	var living_add := Boss.new("Grub Alive", 20)
+	combat.adds.append(dead_add)
+	combat.adds.append(living_add)
+	var melded := Card.from_dict({"id": "seeping_venom_x_sweeping_strike", "name": "Venomous Cleave",
+		"type": "power", "cost": 1, "hits_all_enemies": true, "power_effect": "wound", "power_value": 2})
+	combat.players[0].hand = [melded]
+	combat.play_card(0, 0)  # bank the power -- this alone poisons nobody yet (backlog #57)
+	combat.end_turn(0)
+	_expect(boss.wound == 0 and boss.artifact == 0,
+		"the boss's own Artifact wards off the recurring Poison too, and is spent doing it")
+	_expect(living_add.wound == 2,
+		"the recurring Poison still lands on the living add even though the boss warded its own copy")
+	_expect(dead_add.wound == 0, "a dead add is never poisoned by the recurring payout either")
+
+
+## Same melded card, but proving poison_lift (Vine-Weaver) still fires exactly
+## once per turn-end trigger through the fan-out loop -- the one-time path's
+## own version of this test (_test_backlog86_hits_all_enemies_poison_lifts_
+## the_ally_only_once_per_play) caught the naive "lift once per target" bug;
+## the recurring copy is a separate loop and needed its own proof.
+func _test_backlog86_melded_power_wound_poison_lift_fires_once_through_fan_out() -> void:
+	var boss := _dummy_boss(300)
+	var combat := _new_combat_p([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42,
+		boss, [{"type": "poison_lift", "value": 1}, {}])
+	var living_add := Boss.new("Grub Alive", 20)
+	combat.adds.append(living_add)
+	var melded := Card.from_dict({"id": "seeping_venom_x_sweeping_strike", "name": "Venomous Cleave",
+		"type": "power", "cost": 1, "hits_all_enemies": true, "power_effect": "wound", "power_value": 2})
+	combat.players[0].hand = [melded]
+	combat.play_card(0, 0)
+	var ally_before: int = combat.players[1].foothold
+	combat.end_turn(0)
+	_expect(boss.wound == 2 and living_add.wound == 2,
+		"the recurring Poison lands on the boss and the living add")
+	_expect(combat.players[1].foothold == ally_before + 1,
+		"poison_lift fires once per turn-end trigger, not once per enemy it poisoned")
 
 
 func _test_killing_an_add_does_not_end_the_fight() -> void:
