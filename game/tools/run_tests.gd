@@ -842,6 +842,7 @@ func _init() -> void:
 	_test_backlog86_end_turn_ignores_a_spoofed_slot()
 	_test_backlog86_second_scry_before_resolve_does_not_lose_the_first_batch()
 	_test_backlog86_topdeck_played_during_an_open_scry_still_draws_next()
+	_test_backlog86_tutor_pull_below_the_scry_floor_keeps_a_topdeck_next_up()
 	_test_backlog86_ending_the_turn_does_not_strand_an_unresolved_scry()
 	_test_backlog86_peek_top_reshuffles_discard_mid_call()
 	_test_backlog86_scry_floor_survives_a_reshuffle_mid_open_batch()
@@ -18716,6 +18717,53 @@ func _test_backlog86_topdeck_played_during_an_open_scry_still_draws_next() -> vo
 		and (ps.draw_pile[1] as Card).id == "b" and (ps.draw_pile[0] as Card).id == "a",
 		"Waymark's Scramble is still the very next card drawn -- the kept scry cards reinsert BELOW it, "
 		+ "at the floor they were peeled from, not on top of it [got %s]" % [_ids_of(ps.draw_pile)])
+
+
+## backlog #86 duty 2: scry_floor is a SECOND copy of "how many cards sit below
+## an open scry batch" — every mutator of draw_pile that can run while a scry
+## is pending has to keep it in sync, or resolve_scry() reinserts the kept
+## cards at a stale index. _draw()/_peek_top() re-anchor it on a reshuffle
+## (tested above); the tutor branch (play_card(), backlog #68) did not adjust
+## it at all. tutor uses remove_at(), not the pop_back() draw/peek use —
+## remove_at() re-indexes every slot ABOVE the one removed, so pulling a card
+## from below the recorded floor silently shrinks the true below-floor count
+## without scry_floor noticing. Harmless alone (resolve_scry()'s own
+## mini(scry_floor, draw_pile.size()) clamp happens to self-correct when
+## nothing else grows the pile back past the stale floor) but breaks the
+## moment a topdeck/shuffle_in ALSO lands in the same open batch, which is
+## exactly this test: Peer Ahead (scry), Waymark (topdeck), Recon (tutor,
+## pulling from below the floor) are three real 1-2 energy cards.
+func _test_backlog86_tutor_pull_below_the_scry_floor_keeps_a_topdeck_next_up() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	var a := Card.from_dict({"id": "a", "name": "A", "type": "skill", "cost": 0})
+	var cleave := Card.from_dict({"id": "cleave", "name": "Cleave", "type": "attack", "cost": 1, "damage": 6})
+	var c := Card.from_dict({"id": "c", "name": "C", "type": "skill", "cost": 0})
+	var d := Card.from_dict({"id": "d", "name": "D", "type": "skill", "cost": 0})
+	ps.draw_pile = [a, cleave, c, d]   # d is the "top" — pop_back() draws it first
+	ps.hand = [Content.make_card("peer_ahead"), Content.make_card("waymark"), Content.make_card("recon")]
+	ps.energy = 3
+
+	combat.play_card(0, 0)   # Peer Ahead — scries d, c; draw_pile == [a, cleave], scry_floor == 2
+	_expect(ps.scry_floor == 2, "Peer Ahead records the floor the peek was peeled from")
+
+	combat.play_card(0, 0)   # Waymark slid to index 0 — topdecks Scramble, scry still open
+	_expect(ps.draw_pile.size() == 3 and (ps.draw_pile[2] as Card).id == "scramble",
+		"Waymark's topdeck lands on the pile's current top while the scry is still pending")
+
+	combat.play_card(0, 0)   # Recon slid to index 0 — pulls Cleave from index 1, BELOW the floor
+	_expect(ps.draw_pile.size() == 2 and _ids_of(ps.draw_pile) == ["a", "scramble"],
+		"Recon pulls Cleave out of the draw pile, leaving Scramble on top [got %s]" % [_ids_of(ps.draw_pile)])
+	_expect(ps.scry_floor == 1,
+		"the tutor pull removed a card from BELOW the recorded floor, so the floor drops by one to match "
+		+ "[got %d]" % [ps.scry_floor])
+
+	var ok := combat.resolve_scry(0, [])   # keep both peeked cards
+	_expect(ok and ps.scry_pending.is_empty(), "resolve_scry clears the pending reveal")
+	_expect((ps.draw_pile[ps.draw_pile.size() - 1] as Card).id == "scramble",
+		"Waymark's Scramble is still the very next card drawn -- the kept scry cards reinsert BELOW it "
+		+ "even though a tutor pull shrank the pile below the recorded floor in between [got %s]"
+		% [_ids_of(ps.draw_pile)])
 
 
 ## backlog #86 duty 2: resolve_scry() is a COMMAND the client has to send —

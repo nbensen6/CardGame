@@ -1242,6 +1242,16 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		if found >= 0:
 			var pulled: Card = ps.draw_pile[found]
 			ps.draw_pile.remove_at(found)
+			# backlog #86 duty 2: remove_at() re-indexes everything above the
+			# removed slot, unlike the pop_back() _draw()/_peek_top() use -- so a
+			# tutor pull from BELOW an open scry's recorded scry_floor shrinks the
+			# true below-floor count by one without this second copy of it
+			# noticing. Left stale, resolve_scry() can insert kept cards one slot
+			# too high, landing them ABOVE a topdeck/shuffle_in card played in the
+			# same open batch and breaking that card's "next card you draw"
+			# promise (see resolve_scry()'s own comment on why the floor exists).
+			if ps.scry_floor >= 0 and found < ps.scry_floor:
+				ps.scry_floor -= 1
 			ps.hand.append(pulled)
 			_log("%s plays %s — pulls %s from the draw pile." % [who, card.name, pulled.name])
 		else:
