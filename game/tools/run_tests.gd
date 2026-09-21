@@ -924,6 +924,16 @@ func _init() -> void:
 	_test_backlog86_hunter_move_kind_glides_when_the_world_moved_under_a_placed_hunter()
 	_test_backlog86_hunter_move_kind_is_none_when_placed_and_settled()
 	_test_backlog86_hunter_move_kind_climb_outranks_moved_even_if_the_point_did_not_move()
+	# backlog #86 duty 3: hunter_side_offset, lifted out of _place_hunters —
+	# the rule right beside hunter_move_kind that decides whether a hunter
+	# stands dead-centre on a foothold or steps aside for a teammate sharing
+	# it. Nick, 2026-09-08: hunters "are floating in mid air" — part of that
+	# bug was this offset firing unconditionally instead of only when the
+	# foothold is actually shared. Had zero coverage.
+	_test_backlog86_hunter_side_offset_is_zero_for_a_lone_hunter()
+	_test_backlog86_hunter_side_offset_splits_by_slot_when_a_foothold_is_shared()
+	_test_backlog86_hunter_side_offset_is_zero_once_a_shared_foothold_diverges()
+	_test_backlog86_hunter_side_offset_ignores_a_third_hunter_on_a_different_foothold()
 	# backlog #86 duty 3 (fourth pass): height_gap_between, lifted out of
 	# combat_3d._height_gap, is a SECOND copy of the exact gap formula
 	# Combat.incoming_for already prices a rift move on in /core — the intent
@@ -20210,6 +20220,46 @@ func _test_backlog86_hunter_move_kind_climb_outranks_moved_even_if_the_point_did
 	# resting point happens to land within 0.05m of the old one.
 	_expect(Combat3D.hunter_move_kind(true, 2, 5, false) == "climb",
 		"a real foothold change climbs even if the two world positions happen to coincide")
+
+
+## backlog #86 duty 3 -- hunter_side_offset is the pure half of _place_hunters
+## that decides whether a hunter stands dead-centre on a foothold (side 0.0)
+## or steps aside (-1.0 / +1.0 by slot index) because a teammate shares the
+## same Height. The doc comment above it (and Nick's own 2026-09-08 bug
+## report, "hunters are floating in mid air") promises the offset applies
+## ONLY when the foothold is genuinely shared -- a lone hunter must stand
+## right on their own anchor, not a third of a body-width off it.
+func _test_backlog86_hunter_side_offset_is_zero_for_a_lone_hunter() -> void:
+	var players := [{"foothold": 4}, {"foothold": 9}]
+	_expect(Combat3D.hunter_side_offset(players, 0) == 0.0,
+		"a hunter on a foothold nobody else shares stands dead-centre on their own anchor")
+	_expect(Combat3D.hunter_side_offset(players, 1) == 0.0,
+		"same rule for the other slot: no sharing, no offset")
+
+
+func _test_backlog86_hunter_side_offset_splits_by_slot_when_a_foothold_is_shared() -> void:
+	var players := [{"foothold": 6}, {"foothold": 6}]
+	_expect(Combat3D.hunter_side_offset(players, 0) == -1.0,
+		"slot 0 steps to the near side when sharing a foothold with slot 1")
+	_expect(Combat3D.hunter_side_offset(players, 1) == 1.0,
+		"slot 1 steps to the far side -- the split is keyed on SLOT INDEX, not on discovery order")
+
+
+func _test_backlog86_hunter_side_offset_is_zero_once_a_shared_foothold_diverges() -> void:
+	var players := [{"foothold": 6}, {"foothold": 6}]
+	_expect(Combat3D.hunter_side_offset(players, 0) == -1.0,
+		"sanity: still stepping aside while both share Height 6")
+	players[1]["foothold"] = 8
+	_expect(Combat3D.hunter_side_offset(players, 0) == 0.0,
+		"the moment a teammate climbs off this Height, this hunter must collapse back to dead-centre, not stay stepped aside for a ledge nobody else is on any more")
+
+
+func _test_backlog86_hunter_side_offset_ignores_a_third_hunter_on_a_different_foothold() -> void:
+	var players := [{"foothold": 3}, {"foothold": 3}, {"foothold": 7}]
+	_expect(Combat3D.hunter_side_offset(players, 2) == 0.0,
+		"a third hunter alone on their own foothold is unaffected by an unrelated pair sharing a different one")
+	_expect(Combat3D.hunter_side_offset(players, 0) == -1.0 and Combat3D.hunter_side_offset(players, 1) == 1.0,
+		"the sharing pair still splits normally with a third, uninvolved hunter present")
 
 
 ## backlog #86 duty 3 (forty-fourth pass) -- _key_name is the display half of
