@@ -478,6 +478,7 @@ func _init() -> void:
 	_test_backlog86_preview_predicts_damage_after_armor_and_sigil()
 	_test_incoming_reckons_damage_after_block()
 	_test_every_derived_keyword_resolves()
+	_test_keywords_of_recognises_mend_power_scry_and_x_cost()
 	_test_player_block_keyword_is_not_shadowed_by_the_boss_move()
 	_test_keywords_of_does_not_falsely_tag_an_ordinary_card_as_cheapen()
 	_test_keywords_of_recognises_block_per_x_and_block_per_discarded_only_cards()
@@ -10853,10 +10854,26 @@ func _test_backlog86_two_hunters_cannot_both_pick_the_same_relic_reward() -> voi
 ## GameHost._keywords_of derives keyword ids in CODE; keywords.json defines them.
 ## A typo in either silently drops a tooltip and the card goes back to being
 ## unexplained, which is the exact problem the keyword layer exists to fix.
+##
+## backlog #86 duty 3: `derived` was a hand-copied snapshot of _keywords_of()'s
+## own id list, frozen the day this test was written — 17 of the roughly three
+## dozen ids the function can now append (dexterity, status, retain, innate,
+## ethereal, x_cost, frail, thorns, intangible, buffer, plated_armour, light,
+## mend, heal, power, scry, discard, cleave, reach, condition all landed in
+## later duty-2 rounds) were never added here. The doc comment above promises
+## "every keyword the host derives", but this checked barely half of them, so
+## deleting or typo-ing keywords.json's "buffer" entry today would leave a
+## live card silently missing its own tooltip with every test still green —
+## the exact "two copies of one truth" shape this rotation hunts for, just
+## living in a test file instead of game code. Brought current with the real
+## function body (game_host.gd:864-1018) rather than re-copied piecemeal.
 func _test_every_derived_keyword_resolves() -> void:
-	var derived := ["timed", "poison", "expose", "rhythm", "strength", "player_block",
-		"height", "armoured", "taunt", "burn", "enchant", "energy", "build",
-		"prime", "cheapen", "meld", "multistrike"]
+	var derived := ["timed", "poison", "expose", "rhythm", "strength", "dexterity",
+		"player_block", "height", "armoured", "taunt", "burn", "enchant", "energy",
+		"build", "prime", "cheapen", "meld", "multistrike", "status", "retain",
+		"innate", "ethereal", "x_cost", "frail", "thorns", "intangible", "buffer",
+		"plated_armour", "light", "mend", "heal", "power", "scry", "discard",
+		"cleave", "reach", "condition"]
 	var defined := Content.keyword_ids()
 	var missing: Array = []
 	for id in derived:
@@ -10866,6 +10883,48 @@ func _test_every_derived_keyword_resolves() -> void:
 			missing.append("%s (no text)" % id)
 	_expect(missing.is_empty(),
 		"every keyword the host derives is defined in keywords.json [%s]" % ", ".join(missing))
+
+
+## backlog #86 duty 3: the completion above only proves keywords.json still
+## DEFINES every id _keywords_of() can produce -- it says nothing about
+## whether the CODE side still actually produces each one. Four of the ids
+## just added to `derived` had never been driven through a real
+## _keywords_of() call anywhere in this suite and asserted present: "mend"
+## (only ever mentioned in a comment, never in an _expect), "power" (every
+## existing power_effect test asserts the SUB-tag -- "poison", "strength" --
+## and never also checks the card is tagged "power" itself), "scry" (every
+## "scry" hit in this file is Card.archetype_tags(), a different function
+## asking the same question), and "x_cost" (same story -- archetype_tags()
+## has its own x_cost test, game_host.gd:970's matching branch does not).
+## Same shape as the block_per_x/grip_per_rhythm/condition gaps duty-2 fixed
+## in this same function: archetype_tags() and _keywords_of() answer "what
+## does this card do" independently, and nothing stopped them drifting apart
+## on any of these four. Real shipped cards throughout, same idiom as
+## _test_backlog86_markup_every_real_cards_authored_keyword_word_is_findable.
+func _test_keywords_of_recognises_mend_power_scry_and_x_cost() -> void:
+	var host := GameHost.new(LocalTransport.new(), 1, 2)
+	_kept.append(host)
+	var cases := [
+		["warm_glow", "mend"],    # ally_heal 4
+		["iron_husk", "power"],   # type "power"
+		["peer_ahead", "scry"],   # scry 2
+	]
+	for case in cases:
+		var id := String(case[0])
+		var kw_id := String(case[1])
+		var ids := []
+		for k in host._keywords_of(Content.make_card(id)):
+			ids.append(String((k as Dictionary).get("id", "")))
+		_expect(ids.has(kw_id),
+			"shipped card %s is tagged %s in the real inspector panel [ids=%s]" % [id, kw_id, ids])
+	# No shipped card carries an X-cost yet (same gap #86 duty-2 noted for
+	# archetype_tags()'s own x_cost fix) -- the run_tests.gd fixture is the
+	# only way to exercise this branch at all until one ships.
+	var x_ids := []
+	for k in host._keywords_of(_x_strike()):
+		x_ids.append(String((k as Dictionary).get("id", "")))
+	_expect(x_ids.has("x_cost"),
+		"X Strike (cost -1) is tagged x_cost in the real inspector panel [ids=%s]" % [x_ids])
 
 
 ## keywords.json used to carry TWO "block" keys — a player one under the card
