@@ -1322,6 +1322,19 @@ func _init() -> void:
 	_test_backlog86_next_selection_state_ignores_repicking_the_same_sac_card()
 	_test_backlog86_next_selection_state_fires_once_both_picks_land()
 	_test_backlog86_next_selection_state_fires_immediately_for_a_one_pick_card()
+	# backlog #86 duty 3 (fifty-fifth pass): selection_mode_for, the mode/pick-
+	# count derivation _start_selection used to do inline as a hand-written
+	# if/elif chain instead of mirroring core/combat.gd's own two independent
+	# gates (sac needed if exhaust_pick or meld; target needed if cheapen_pick
+	# or meld). No shipped card sets cheapen_pick alone today, so the old
+	# chain's wrong answer for that case never bit a real card -- but it was
+	# never proven right either.
+	_test_backlog86_selection_mode_for_meld_needs_two_picks()
+	_test_backlog86_selection_mode_for_burn_coal_shape_needs_two_picks()
+	_test_backlog86_selection_mode_for_exhaust_pick_alone_needs_one_pick()
+	_test_backlog86_selection_mode_for_cheapen_pick_alone_needs_only_one_pick()
+	_test_backlog86_selection_mode_for_no_fields_defaults_to_exhaust_one_pick()
+	_test_backlog86_next_selection_state_cheapen_mode_files_its_only_pick_as_target()
 	# backlog #86 duty 3: soft_fall's landing spot (_hold_below, behind
 	# Combat.fall()) has its own unsafe-hold skip, mirroring next_safe_height's,
 	# but nothing had ever proved a fall actually lands where the rules say --
@@ -22509,6 +22522,61 @@ func _test_backlog86_next_selection_state_fires_immediately_for_a_one_pick_card(
 	_expect(String(result.get("action", "")) == "fire", "a plain exhaust card fires on its single pick")
 	_expect(int(result.get("sac", -1)) == 3 and int(result.get("target", -1)) == -1,
 		"a one-pick card's only pick lands as sac with no target, matching play_card's -1 default")
+
+
+## backlog #86 duty 3 (fifty-fifth pass): Combat3D.selection_mode_for, lifted
+## out of _start_selection's own if/elif chain. core/combat.gd:864,867 gate
+## sac_index on `exhaust_pick or meld` and target_index on `cheapen_pick or
+## meld` independently -- the view's old chain only ever checked meld then
+## cheapen_pick, so a card with cheapen_pick set and NEITHER exhaust_pick nor
+## meld would have fallen into the "exhaust_cheapen" branch and been asked for
+## a sac pick the engine was never going to read. No shipped card takes that
+## shape yet (burn_coal is the only card with cheapen_pick, and it also sets
+## exhaust_pick), so this is a landmine, not a live bug.
+func _test_backlog86_selection_mode_for_meld_needs_two_picks() -> void:
+	var sel := Combat3D.selection_mode_for({"meld": true})
+	_expect(String(sel.get("mode", "")) == "meld" and int(sel.get("picks", -1)) == 2,
+		"meld needs a sac AND a target, matching combat.gd's own `exhaust_pick or meld` / `cheapen_pick or meld` gates")
+
+
+func _test_backlog86_selection_mode_for_burn_coal_shape_needs_two_picks() -> void:
+	var burn_coal := Content.make_card("burn_coal").to_dict()
+	var sel := Combat3D.selection_mode_for(burn_coal)
+	_expect(String(sel.get("mode", "")) == "exhaust_cheapen" and int(sel.get("picks", -1)) == 2,
+		"Burn Coal sets both exhaust_pick and cheapen_pick with no meld -- both gates fire, so it still needs two distinct picks")
+
+
+func _test_backlog86_selection_mode_for_exhaust_pick_alone_needs_one_pick() -> void:
+	var catapult := Content.make_card("catapult").to_dict()
+	var sel := Combat3D.selection_mode_for(catapult)
+	_expect(String(sel.get("mode", "")) == "exhaust" and int(sel.get("picks", -1)) == 1,
+		"Catapult sets exhaust_pick alone -- only the sac gate fires, one pick")
+
+
+func _test_backlog86_selection_mode_for_cheapen_pick_alone_needs_only_one_pick() -> void:
+	# No shipped card has this shape (cheapen_pick with neither exhaust_pick
+	# nor meld) -- constructed here specifically because the OLD if/elif chain
+	# got it wrong: it checked meld, then cheapen_pick, and would have returned
+	# {"exhaust_cheapen", 2} for this card even though combat.gd's own sac gate
+	# (`exhaust_pick or meld`) is false, so the engine never reads sac_index at
+	# all for it.
+	var sel := Combat3D.selection_mode_for({"cheapen_pick": true})
+	_expect(String(sel.get("mode", "")) == "cheapen" and int(sel.get("picks", -1)) == 1,
+		"cheapen_pick alone only trips combat.gd's target gate -- one pick, not two, and it must be filed as the target")
+
+
+func _test_backlog86_selection_mode_for_no_fields_defaults_to_exhaust_one_pick() -> void:
+	var sel := Combat3D.selection_mode_for({})
+	_expect(String(sel.get("mode", "")) == "exhaust" and int(sel.get("picks", -1)) == 1,
+		"a card with none of the three fields set (never actually routed to _start_selection in practice) falls back to the same default the old chain used")
+
+
+func _test_backlog86_next_selection_state_cheapen_mode_files_its_only_pick_as_target() -> void:
+	var selecting := {"play_index": 5, "mode": "cheapen", "picks": 1, "step": 0, "sac": -1, "target": -1}
+	var result := Combat3D.next_selection_state(selecting, 3)
+	_expect(String(result.get("action", "")) == "fire", "a cheapen-only card fires on its single pick")
+	_expect(int(result.get("target", -1)) == 3 and int(result.get("sac", -1)) == -1,
+		"the single pick for a cheapen-only card must land as the TARGET, not the sac -- combat.gd never reads sac_index when exhaust_pick and meld are both false, so filing it as sac would silently drop the player's only real choice")
 
 
 ## backlog #86 duty 3 (twenty-ninth pass) -- Screen.is_handheld() and

@@ -3878,21 +3878,38 @@ func _selection_prompt() -> String:
 			if step == 0:
 				return "%s — tap a card to SACRIFICE%s" % [nm, cancel]
 			return "%s — tap a card to make CHEAPER" % nm
+		"cheapen":
+			return "%s — tap a card to make CHEAPER%s" % [nm, cancel]
 		_:
 			return "%s — tap a card to SACRIFICE%s" % [nm, cancel]
 
 
+## Derives the selection mode/pick-count for a card that needs a hand-card tap
+## (exhaust_pick/cheapen_pick/meld), mirroring core/combat.gd's own play_card()
+## gates exactly rather than a hand-copied if/elif chain: a sac index is only
+## consulted if exhaust_pick or meld is set (combat.gd:864), a target index only
+## if cheapen_pick or meld is set (combat.gd:867). No shipped card sets
+## cheapen_pick alone today (burn_coal pairs it with exhaust_pick; only meld
+## sets meld) -- the old if/elif fell into its cheapen_pick branch for that case
+## too, which would have asked for two picks and filed the only one that
+## mattered as "sac" instead of "target" (backlog #86 duty 3).
+static func selection_mode_for(card: Dictionary) -> Dictionary:
+	var meld: bool = bool(card.get("meld", false))
+	var needs_sac: bool = meld or bool(card.get("exhaust_pick", false))
+	var needs_target: bool = meld or bool(card.get("cheapen_pick", false))
+	if meld:
+		return {"mode": "meld", "picks": 2}
+	if needs_sac and needs_target:
+		return {"mode": "exhaust_cheapen", "picks": 2}
+	if needs_target:
+		return {"mode": "cheapen", "picks": 1}
+	return {"mode": "exhaust", "picks": 1}
+
+
 func _start_selection(card: Dictionary) -> void:
-	var mode := "exhaust"
-	var picks := 1
-	if bool(card.get("meld", false)):
-		mode = "meld"
-		picks = 2
-	elif bool(card.get("cheapen_pick", false)):
-		mode = "exhaust_cheapen"
-		picks = 2
+	var sel := selection_mode_for(card)
 	_selecting = {"play_index": int(card["index"]), "name": String(card.get("name", "card")),
-		"mode": mode, "picks": picks, "step": 0, "sac": -1, "target": -1}
+		"mode": String(sel["mode"]), "picks": int(sel["picks"]), "step": 0, "sac": -1, "target": -1}
 	Sfx.play("card")
 	_render_hand()
 
@@ -3902,12 +3919,18 @@ func _start_selection(card: Dictionary) -> void:
 ## same rule `core/combat.gd` enforces server-side with `target_index !=
 ## sac_index` (combat.gd:621). Tapping the already-chosen sac card again is not
 ## a second pick; the state does not advance and no target is ever recorded.
+## A "cheapen"-mode card (selection_mode_for's cheapen_pick-alone case) has
+## only one pick and it is the TARGET, not the sac -- every other mode's first
+## pick is the sac, so this is the one place that has to ask which is which.
 static func next_selection_state(selecting: Dictionary, idx: int) -> Dictionary:
 	if idx == int(selecting.get("play_index", -1)):
 		return {"action": "cancel"}
 	var next: Dictionary = selecting.duplicate()
 	if int(selecting.get("step", 0)) == 0:
-		next["sac"] = idx
+		if String(selecting.get("mode", "exhaust")) == "cheapen":
+			next["target"] = idx
+		else:
+			next["sac"] = idx
 	elif idx == int(selecting.get("sac", -1)):
 		return {"action": "ignore"}
 	else:
