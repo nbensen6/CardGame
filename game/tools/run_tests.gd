@@ -2096,6 +2096,17 @@ func _init() -> void:
 	_test_backlog86_safe_ledge_marks_is_empty_with_no_safe_heights()
 	_test_backlog86_safe_ledge_marks_is_empty_with_no_climb_points()
 	_test_backlog86_safe_ledge_marks_sorts_and_dedupes_regardless_of_input_order()
+	# backlog #86 duty 3: the rule one step downstream of safe_ledge_marks —
+	# which of the rings it hands back actually gets HIDDEN or HIGHLIGHTED —
+	# had never been pinned on its own, only exercised indirectly through
+	# _refresh_ledge_marks(), which needs a live scene tree of MeshInstance3D/
+	# StandardMaterial3D nodes to even call. ledge_mark_state() is the same
+	# rule lifted pure, the same way safe_ledge_marks/route_between_rungs
+	# already were.
+	_test_backlog86_ledge_mark_state_hides_the_ring_under_your_own_feet()
+	_test_backlog86_ledge_mark_state_highlights_the_next_safe_rung()
+	_test_backlog86_ledge_mark_state_leaves_every_other_rung_plain()
+	_test_backlog86_ledge_mark_state_hiding_wins_when_standing_on_the_next_rung()
 
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
@@ -19873,6 +19884,42 @@ func _test_backlog86_safe_ledge_marks_is_empty_with_no_climb_points() -> void:
 func _test_backlog86_safe_ledge_marks_sorts_and_dedupes_regardless_of_input_order() -> void:
 	_expect(Combat3D.safe_ledge_marks([6, 3, 3], [6, 0, 3]) == [3, 6],
 		"the result is sorted low to high with no duplicate Height, regardless of how the data arrived")
+
+
+## backlog #86 duty 3 — ledge_mark_state() is the rule #86 duty 2 fixed above
+## the ring HIDDEN under a standing hunter's own feet, one lifted pure so it
+## can be pinned with no scene tree. A ring drawn for the Height you are
+## already standing on is clutter, not information (the function's own doc
+## comment) — hidden outright, regardless of whether that same Height also
+## happens to be "next".
+func _test_backlog86_ledge_mark_state_hides_the_ring_under_your_own_feet() -> void:
+	var s: Dictionary = Combat3D.ledge_mark_state(3, 3, 6)
+	_expect(bool(s["visible"]) == false,
+		"the ring at the hunter's own current Height is hidden, not drawn dim")
+
+
+func _test_backlog86_ledge_mark_state_highlights_the_next_safe_rung() -> void:
+	var s: Dictionary = Combat3D.ledge_mark_state(6, 3, 6)
+	_expect(bool(s["visible"]) == true and bool(s["highlighted"]) == true,
+		"the exact Height /core's next_safe_height() names is visible AND highlighted")
+
+
+func _test_backlog86_ledge_mark_state_leaves_every_other_rung_plain() -> void:
+	var s: Dictionary = Combat3D.ledge_mark_state(9, 3, 6)
+	_expect(bool(s["visible"]) == true and bool(s["highlighted"]) == false,
+		"a rung that is neither where you stand nor where you're headed is visible but not highlighted")
+
+
+## Standing exactly on what would otherwise be "next" (foot == next_safe — the
+## shape a hunter who just arrived, or who never left the ground, produces)
+## must still hide the ring rather than highlight one the code is about to
+## draw invisible — hiding and highlighting are two separate fields on
+## purpose, so a caller can never end up drawing a highlighted ring nobody
+## can see because visible was never actually checked.
+func _test_backlog86_ledge_mark_state_hiding_wins_when_standing_on_the_next_rung() -> void:
+	var s: Dictionary = Combat3D.ledge_mark_state(0, 0, 0)
+	_expect(bool(s["visible"]) == false and bool(s["highlighted"]) == true,
+		"the ring is still hidden even though the same Height is also 'next' — visible, not highlighted, is what a caller must check")
 
 
 ## backlog #86 duty 2 — a real bug in `_place_hunters`'s `elif moved:` branch

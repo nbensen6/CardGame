@@ -2953,6 +2953,20 @@ func _build_ledge_marks() -> void:
 ## The ledge the active hunter is standing on is hidden outright — a marker
 ## under your own feet is clutter, not information. Everything else is dim
 ## except the next rung up, which is the one the climb is actually asking about.
+## Pure decision behind _refresh_ledge_marks() below: a ring exactly under the
+## active hunter's own feet is hidden outright (a marker under your own feet
+## is clutter, not information — see that function's own doc comment), the
+## next safe rung up the /core climb label is already pointing at gets
+## highlighted, and every other rung stays plain. Split out static, the same
+## reason route_between_rungs/foothold_anchor already are (#86 duty 3): this
+## is the exact rule #86 duty 2 fixed here (the highlight used to come from a
+## second, model-only search that could disagree with the grip label), and it
+## had never been pinned with a test of its own — only touched indirectly,
+## through the scene-tree-dependent function around it.
+static func ledge_mark_state(height: int, foot: int, next_safe: int) -> Dictionary:
+	return {"visible": height != foot, "highlighted": height == next_safe}
+
+
 func _refresh_ledge_marks() -> void:
 	if _ledge_marks.is_empty():
 		return
@@ -2971,11 +2985,12 @@ func _refresh_ledge_marks() -> void:
 	for h in _ledge_marks.keys():
 		var height := int(h)
 		var ring: MeshInstance3D = _ledge_marks[height]
-		ring.visible = height != foot
+		var state := ledge_mark_state(height, foot, next)
+		ring.visible = bool(state["visible"])
 		var mat := ring.material_override as StandardMaterial3D
 		if mat == null:
 			continue
-		mat.albedo_color = LEDGE_NEXT if height == next else LEDGE_COLOR
+		mat.albedo_color = LEDGE_NEXT if bool(state["highlighted"]) else LEDGE_COLOR
 
 
 ## The weak point sits atop the beast and pulses, so the target of the whole
