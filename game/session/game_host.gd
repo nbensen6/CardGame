@@ -995,6 +995,21 @@ func _keywords_of(c: Card) -> Array:
 		ids.append("cleave")
 	if c.topdeck != "" or c.shuffle_in != "" or c.tutor != "":
 		ids.append("reach")
+	# backlog #86 duty 2: condition/condition_bonus (backlog #67) got the same
+	# "two functions, same question, different answer" gap this file's other
+	# duty-2 fixes above have already closed for block_per_x/block_per_discarded
+	# and grip_per_rhythm. Card.archetype_tags() has tagged "condition" since
+	# 5bad767; this tap-to-inspect list never grew a matching branch, and
+	# keywords.json had no "condition" entry to look up even if it had. It
+	# stayed hidden the same way those did: every real conditional card
+	# (brace/draw_aggro/harpoon/sunlight_blade/dagger/safety_line,
+	# cards.json) also carries a flat block/damage/ally_block field that
+	# separately trips another branch, so nobody ever saw a card with NO
+	# other keyword and an empty inspector panel — the gap was that the
+	# conditional-bonus mechanic itself, half of what these six cards' face
+	# text describes, never got its own explanation anywhere in the glossary.
+	if not c.condition.is_empty():
+		ids.append("condition")
 	var out: Array = []
 	for id in ids:
 		var k := Content.keyword(String(id))

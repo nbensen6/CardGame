@@ -480,6 +480,7 @@ func _init() -> void:
 	_test_keywords_of_recognises_block_per_x_and_block_per_discarded_only_cards()
 	_test_keywords_of_recognises_grip_per_rhythm_only_cards()
 	_test_backlog86_keywords_of_recognises_power_effect_only_cards()
+	_test_backlog86_keywords_of_recognises_condition_only_cards()
 	_test_every_field_a_player_must_understand_has_a_keyword()
 	_test_timed_keyword_explains_graded_quality()
 	_test_every_boss_move_type_resolves()
@@ -10902,6 +10903,42 @@ func _test_backlog86_keywords_of_recognises_power_effect_only_cards() -> void:
 ## a field added tomorrow is covered the moment it's declared. Each field is
 ## probed ALONE, isolated from every other field on the card, so it can't
 ## hide behind some unrelated field on the same real card supplying the tag.
+## backlog #86 duty 2: the same "two functions, same question, different
+## answer" gap the block_per_x/block_per_discarded and grip_per_rhythm fixes
+## above already caught. Card.archetype_tags() has tagged a conditional-payoff
+## card as "condition" since 5bad767 (backlog #67's nth_card/ally_hanging/
+## above_sigil mechanic); GameHost._keywords_of() — the panel a player
+## actually taps open — never grew a matching branch, and keywords.json had
+## no "condition" entry to resolve to even if it had. It stayed hidden for
+## every SHIPPED conditional card (brace/draw_aggro/harpoon/sunlight_blade/
+## safety_line) because each also carries a flat block/ally_block field that
+## separately trips another branch — only Dagger (cards.json: damage 3,
+## condition nth_card, nothing else archetype-tagged) has no such cover, and
+## with the old code `_keywords_of(dagger)` returned a completely empty
+## array despite the card's entire non-damage identity being its condition.
+func _test_backlog86_keywords_of_recognises_condition_only_cards() -> void:
+	var host := GameHost.new(LocalTransport.new(), 1, 2)
+	_kept.append(host)
+	var condition_only := Card.new()
+	condition_only.condition = {"type": "nth_card", "value": 3}
+	var bare_ids := []
+	for k in host._keywords_of(condition_only):
+		bare_ids.append(String((k as Dictionary).get("id", "")))
+	_expect(bare_ids.has("condition"),
+		"a bare card with only condition set is tagged condition [ids=%s]" % [bare_ids])
+	_expect(condition_only.archetype_tags().has("condition"),
+		"Card.archetype_tags() still agrees this card is a condition card [tags=%s]" % [condition_only.archetype_tags()])
+
+	var dagger := Content.make_card("dagger")  # damage 3, condition nth_card, nothing else tagged
+	var dagger_ids := []
+	for k in host._keywords_of(dagger):
+		dagger_ids.append(String((k as Dictionary).get("id", "")))
+	_expect(dagger_ids.has("condition"),
+		"Dagger (no other archetype-tagged field) is tagged condition, not left with an empty keyword panel [ids=%s]" % [dagger_ids])
+	_expect(not Content.keyword("condition").is_empty(),
+		"keywords.json actually has a 'condition' entry to resolve the id to")
+
+
 func _test_every_field_a_player_must_understand_has_a_keyword() -> void:
 	# Fields whose meaning is plain from their own number/name — a name, rules
 	# text already printed on the card, the cost pip, the damage number, how
