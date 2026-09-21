@@ -391,6 +391,8 @@ func _init() -> void:
 	_test_burn_coal_exhaust_and_cheapen()
 	_test_backlog86_burn_coal_cheapen_stacks_across_repeated_plays()
 	_test_catapult_sacrifices_to_launch_ally()
+	_test_backlog86_exhaust_pick_with_no_valid_sacrifice_no_ops_instead_of_crashing()
+	_test_backlog86_meld_with_no_valid_targets_no_ops_instead_of_crashing()
 	_test_meld_fuses_two_cards()
 	_test_backlog86_meld_cost_floor_holds_when_both_cards_are_free()
 	_test_backlog86_meld_cost_floor_holds_through_play_card()
@@ -8581,6 +8583,53 @@ func _test_catapult_sacrifices_to_launch_ally() -> void:
 	_expect(ok and ps.exhaust_pile.size() == 1 and ps.hand.size() == 0
 		and combat.players[1].foothold == ally_before + 2,
 		"Catapult sacrifices a card to launch the ally up +2 Height")
+
+
+## #86 duty 3 — can_play() never checks whether card.exhaust_pick has a valid
+## sac_card available, and combat.gd:1081's own branch just falls through to a
+## logged no-op ("but sacrifices nothing") when sac_card is null — but nothing
+## had ever actually played one that way. Every existing exhaust_pick test
+## (Burn Coal, Catapult, Detonator above) supplies a real, valid sac_index
+## against a hand that has another card in it. Left at the default sac_index
+## (-1) with nothing else in hand, this proves the play still goes through:
+## the card's own damage still lands, it's still discarded like any other
+## card, and — the part a wrong branch could get wrong in either direction —
+## nothing is exhausted and nothing crashes.
+func _test_backlog86_exhaust_pick_with_no_valid_sacrifice_no_ops_instead_of_crashing() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_detonator()]  # nothing else in hand to sacrifice
+	ps.energy = 3
+	var before: int = combat.boss.hp
+	var ok: bool = combat.play_card(0, 0)  # sac_index defaults to -1
+	var whiffed := false
+	for line in combat.log:
+		if String(line).find("sacrifices nothing") != -1:
+			whiffed = true
+	_expect(ok and before - combat.boss.hp == 4 and ps.exhaust_pile.is_empty()
+		and ps.hand.is_empty() and ps.discard_pile.size() == 1 and String(ps.discard_pile[0].id) == "detonator"
+		and whiffed,
+		"exhaust_pick with no valid sacrifice logs the no-op and still resolves the " +
+		"card's own damage and discard, rather than crashing or forcing a sacrifice")
+
+
+## Same no-op shape, for combat.gd:1097's meld branch (#86 duty 3): playing a
+## meld card without two valid picks must fall through to "needs two cards to
+## meld", discard the played card like normal, and fuse nothing out of thin air.
+func _test_backlog86_meld_with_no_valid_targets_no_ops_instead_of_crashing() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_meld_card()]  # nothing else in hand to fuse
+	ps.energy = 1
+	var ok: bool = combat.play_card(0, 0)  # sac_index/target_index default to -1
+	var whiffed := false
+	for line in combat.log:
+		if String(line).find("needs two cards to meld") != -1:
+			whiffed = true
+	_expect(ok and ps.hand.is_empty() and ps.discard_pile.size() == 1
+		and String(ps.discard_pile[0].id) == "meld" and whiffed,
+		"meld with fewer than two valid picks logs the no-op and discards the played " +
+		"card normally, rather than crashing or fusing a card from nothing")
 
 
 func _test_vine_weaver_poison_and_wound() -> void:
