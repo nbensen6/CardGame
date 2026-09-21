@@ -665,6 +665,7 @@ func _init() -> void:
 	_test_backlog86_hits_all_enemies_poison_lifts_the_ally_only_once_per_play()
 	_test_backlog86_melded_power_wound_fans_out_to_boss_and_every_living_add()
 	_test_backlog86_melded_power_wound_poison_lift_fires_once_through_fan_out()
+	_test_backlog86_melded_power_frail_fans_out_to_boss_and_every_living_add()
 	_test_killing_an_add_does_not_end_the_fight()
 	_test_add_acts_on_its_own_turn()
 	_test_add_attack_adds_its_own_strength()
@@ -14933,6 +14934,41 @@ func _test_backlog86_melded_power_wound_poison_lift_fires_once_through_fan_out()
 		"the recurring Poison lands on the boss and the living add")
 	_expect(combat.players[1].foothold == ally_before + 1,
 		"poison_lift fires once per turn-end trigger, not once per enemy it poisoned")
+
+
+## #86 duty 2: the two tests above prove _handle_power_effects()'s "wound"
+## branch fans out to every living add when the power card that granted it
+## carried hits_all_enemies. The sibling "frail" branch sits three cases
+## below it in the exact same match statement, reads the exact same
+## `fans_out` (captured off the exact same card.hits_all_enemies at play
+## time, play_card()'s power branch), and was still hard-coded to `boss`
+## alone before this fix -- the same drift the wound branch was fixed for,
+## just missed on its neighbour. Unlike "vulnerable" (boss-only ON PURPOSE,
+## see its own comment -- an add never carries the sigil's Vulnerable bonus),
+## nothing makes Frail boss-only: an add's own gain_block() (its "block"
+## move, _adds_turn()) already reads that add's own `frail` stack exactly
+## like the boss's does. A melded power+Cleave card banking a recurring
+## Frail instead of Poison would frail the boss every turn and never touch
+## the add it fanned onto at the initial play.
+func _test_backlog86_melded_power_frail_fans_out_to_boss_and_every_living_add() -> void:
+	var boss := _dummy_boss(300)
+	boss.artifact = 1
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var dead_add := Boss.new("Grub Dead", 5)
+	dead_add.hp = 0
+	var living_add := Boss.new("Grub Alive", 20)
+	combat.adds.append(dead_add)
+	combat.adds.append(living_add)
+	var melded := Card.from_dict({"id": "chill_grip_x_sweeping_strike", "name": "Frosty Cleave",
+		"type": "power", "cost": 1, "hits_all_enemies": true, "power_effect": "frail", "power_value": 2})
+	combat.players[0].hand = [melded]
+	combat.play_card(0, 0)  # bank the power -- this alone frails nobody yet (backlog #57)
+	combat.end_turn(0)
+	_expect(boss.frail == 0 and boss.artifact == 0,
+		"the boss's own Artifact wards off the recurring Frail too, and is spent doing it")
+	_expect(living_add.frail == 2,
+		"the recurring Frail still lands on the living add even though the boss warded its own copy")
+	_expect(dead_add.frail == 0, "a dead add is never frailed by the recurring payout either")
 
 
 func _test_killing_an_add_does_not_end_the_fight() -> void:

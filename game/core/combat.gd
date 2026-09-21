@@ -2352,7 +2352,30 @@ func _handle_power_effects(ctx: Dictionary) -> void:
 					boss.vulnerable += amount
 					_log("%s's %s triggers — %s exposed (%d)." % [ps.combatant.name, pname, boss.name, boss.vulnerable])
 			"frail":
-				_apply_frail(boss, amount)
+				# backlog #86 duty 2: the SAME "two copies of one truth" gap the
+				# wound branch above was fixed for (melded power+Cleave, ae3d1bd) —
+				# card.frail's one-time application (play_card, above) already
+				# fans out across `debuff_targets` ([boss]+adds when the card
+				# carries hits_all_enemies, else whichever single target
+				# enemy_index named), the same array card.wound reads. This
+				# recurring payout hard-coded `boss` regardless of `fans_out`
+				# (captured from the SAME card.hits_all_enemies the wound branch
+				# already reads), so a melded power+Cleave card carrying a
+				# recurring Frail instead of Poison would frail the boss every
+				# turn and leave any add it fanned onto at the initial play
+				# never re-frailed — unlike Vulnerable just above, nothing about
+				# Frail is boss-only by design: an add's own gain_block() (its
+				# "block" move) already reads its own `frail` stack exactly like
+				# the boss's does.
+				for ft in (([boss] + adds) if fans_out else [boss]):
+					var t3: Boss = ft
+					if t3.is_dead():
+						continue
+					if t3.try_block_debuff():
+						_log("%s's Artifact wards off %s's %s." % [t3.name, ps.combatant.name, pname])
+					else:
+						t3.frail += amount
+						_log("%s's %s triggers — %s frailed (%d)." % [ps.combatant.name, pname, t3.name, t3.frail])
 
 ## Not a relic — a fixed core rule (landing a timed card builds Rhythm) moved
 ## onto the same moment as the third proof effect, since it fires from
