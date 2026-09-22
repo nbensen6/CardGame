@@ -2157,6 +2157,18 @@ func _init() -> void:
 	_test_backlog86_ledge_mark_state_highlights_the_next_safe_rung()
 	_test_backlog86_ledge_mark_state_leaves_every_other_rung_plain()
 	_test_backlog86_ledge_mark_state_hiding_wins_when_standing_on_the_next_rung()
+	# backlog #86 duty 3: Combat's own header claims "1 for the solo loop", but
+	# every _new_combat helper in this suite hardcodes two Combatants and the
+	# shipped "solo" mode seats two hunters under one player anyway, so
+	# players.size() == 1 had never run under test -- see has_ally()'s comment
+	# in combat.gd for why that made ally-targeting cards double-grant or
+	# self-echo the moment anyone actually built one.
+	_test_backlog86_solo_fight_does_not_double_grant_a_card_with_both_block_and_ally_block()
+	_test_backlog86_solo_fight_grants_nothing_from_a_pure_ally_only_block_card()
+	_test_backlog86_solo_fight_does_not_double_grant_a_card_with_both_grip_and_ally_grip()
+	_test_backlog86_solo_fight_climbs_nothing_from_a_pure_ally_only_grip_card()
+	_test_backlog86_solo_fight_bonded_enchant_does_not_echo_block_onto_the_same_hunter()
+	_test_backlog86_two_player_fight_is_unaffected_by_the_has_ally_guard()
 
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
@@ -9849,6 +9861,75 @@ func _test_bonded_enchant_echoes_block_to_the_ally() -> void:
 	combat.play_card(0, idx, true)
 	_expect(combat.players[0].combatant.block == 5 and combat.players[1].combatant.block == 5,
 		"a Bonded card's Block is echoed to the ally, not just the caster")
+
+
+## backlog #86 duty 3: see has_ally()'s doc comment in combat.gd. Scrap Shield
+## carries block:3 AND ally_block:3 ("All players gain 3 Block") -- in a real
+## 2-player fight that's 3 to each hunter, but with one player ally_index(0)
+## resolves back to 0, and before this guard both the `blk` branch and the
+## `ally_blk` branch landed on the SAME Combatant, doubling it to 6.
+func _test_backlog86_solo_fight_does_not_double_grant_a_card_with_both_block_and_ally_block() -> void:
+	var combat := _solo_combat(_deck_of(_scrap_shield, 10), 42, _dummy_boss(300))
+	var idx := _first_playable(combat, 0)
+	combat.play_card(0, idx, true)
+	_expect(combat.players[0].combatant.block == 3,
+		"Scrap Shield promises 3 Block -- with one player, the ally_block grant must not ALSO land on the same hunter and double it to 6 (got %d)" % combat.players[0].combatant.block)
+
+
+## The mirror case: Cover (`_assist`) carries ONLY ally_block (block:0), so
+## before this guard the lone player got the 6 Block anyway -- not a double
+## grant, but still not what "Ally gains 6 Block" says when there is no ally.
+func _test_backlog86_solo_fight_grants_nothing_from_a_pure_ally_only_block_card() -> void:
+	var combat := _solo_combat(_deck_of(_assist, 10), 42, _dummy_boss(300))
+	var idx := _first_playable(combat, 0)
+	combat.play_card(0, idx, true)
+	_expect(combat.players[0].combatant.block == 0,
+		"Cover only ever promises Block to an ally -- with no ally in a 1-player fight, has_ally() must refuse the grant rather than quietly handing it to the caster (got %d)" % combat.players[0].combatant.block)
+
+
+## Same shape as the block test above, for climb: Vine (grip:1, ally_grip:2)
+## must land only the caster's own 1 Height solo, not 1+2.
+func _test_backlog86_solo_fight_does_not_double_grant_a_card_with_both_grip_and_ally_grip() -> void:
+	var combat := _solo_combat(_deck_of(_vine, 10), 42, _dummy_boss(300))
+	var idx := _first_playable(combat, 0)
+	combat.play_card(0, idx, true)
+	_expect(combat.players[0].foothold == 1,
+		"Vine promises the caster 1 Height and an ally 2 more -- with no ally in a 1-player fight, only the caster's own 1 must land (got %d)" % combat.players[0].foothold)
+
+
+## Same shape as the pure-ally-only block test, for climb: Hoist (ally_grip:3,
+## grip:0) must climb the lone player nothing, not the flat 3.
+func _test_backlog86_solo_fight_climbs_nothing_from_a_pure_ally_only_grip_card() -> void:
+	var combat := _solo_combat(_deck_of(_hoist, 10), 42, _dummy_boss(300))
+	var idx := _first_playable(combat, 0)
+	combat.play_card(0, idx, true)
+	_expect(combat.players[0].foothold == 0,
+		"Hoist only ever promises Height to an ally -- with no ally in a 1-player fight, has_ally() must refuse the climb rather than handing it to the caster (got %d)" % combat.players[0].foothold)
+
+
+## The enchant-effect sibling of the two double-grant tests above: "Bonded"
+## echoes the caster's OWN block to an ally, so it's a self-echo rather than a
+## card field, but the same collapse applies -- has_ally() must refuse it too.
+func _test_backlog86_solo_fight_bonded_enchant_does_not_echo_block_onto_the_same_hunter() -> void:
+	var combat := _solo_combat(_deck_of(_defend, 10), 42, _dummy_boss(300))
+	var idx := _first_playable(combat, 0)
+	combat.players[0].hand[idx] = combat.players[0].hand[idx].enchanted_copy("bonded")
+	combat.play_card(0, idx, true)
+	_expect(combat.players[0].combatant.block == 5,
+		"a Bonded card's echo has no ally to reach in a 1-player fight -- the caster's own 5 Block must not become 10 (got %d)" % combat.players[0].combatant.block)
+
+
+## Regression guard: has_ally() must be a no-op in the real, shipped 2-player
+## case. Without this, a fix that only ever ran solo tests could accidentally
+## gate the wrong condition and silently break every ally-targeting card that
+## co-op actually depends on.
+func _test_backlog86_two_player_fight_is_unaffected_by_the_has_ally_guard() -> void:
+	var combat := _new_combat([_deck_of(_scrap_shield, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var idx := _first_playable(combat, 0)
+	combat.play_card(0, idx, true)
+	_expect(combat.players[0].combatant.block == 3 and combat.players[1].combatant.block == 3,
+		"has_ally()'s new guard must not touch the real 2-player case -- Scrap Shield still grants Block to both hunters (got caster=%d ally=%d)"
+			% [combat.players[0].combatant.block, combat.players[1].combatant.block])
 
 
 func _test_generous_enchant_gives_the_ally_energy() -> void:
@@ -17884,6 +17965,19 @@ func _test_backlog86_pause_blocks_shop_commands_and_reconnect_resumes_them() -> 
 func _new_combat(decks: Array, seed_value: int, boss: Boss) -> Combat:
 	var players := [Combatant.new("P1", 42), Combatant.new("P2", 42)]
 	var c := Combat.new(decks, players, boss, seed_value)
+	c.start()
+	return c
+
+
+## A genuine 1-player fight (#86 duty 3) -- Combat's own header claims "1 for
+## the solo loop", but `_new_combat` above always seats two Combatants no
+## matter what `decks` it's given (the shipped "solo" mode also always seats
+## two hunters under one player), so nothing in this suite had ever actually
+## built one before. Exists to prove ally-targeting cards behave once
+## `ally_index(pi) == pi` for real, not just to read like they might.
+func _solo_combat(deck: Array, seed_value: int, boss: Boss) -> Combat:
+	var players := [Combatant.new("P1", 42)]
+	var c := Combat.new([deck], players, boss, seed_value)
 	c.start()
 	return c
 

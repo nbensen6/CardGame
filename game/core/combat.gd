@@ -183,6 +183,20 @@ func player_count() -> int:
 func ally_index(pi: int) -> int:
 	return (pi + 1) % players.size()
 
+## True when `pi` actually has a distinct ally to target. False only in a
+## 1-player fight, where `ally_index(pi) == pi` and "the ally" collapses back
+## onto the caster (#86 duty 3) -- a stated but never-exercised mode (this
+## class's own header claims "1 for the solo loop"; the shipped solo mode
+## actually seats two hunters under one player, so `players.size() == 1` had
+## never once run, not even in this suite, before the tests this guard ships
+## with). Any effect that means "send this to your partner" must check it
+## first, or a fight with no second player either double-grants a card that
+## also has a self component (Canopy: block 5 + ally_block 5 would land 10
+## Block on the one hunter instead of 5) or silently self-echoes a card that
+## has none (Cover would hand its lone player 6 Block from nowhere).
+func has_ally(pi: int) -> bool:
+	return ally_index(pi) != pi
+
 ## "Roped together" (ally_climb, Mountain Climbers' passive) lifts the ally by the
 ## same amount whenever THIS hunter's own foothold rises, from ANY source — a played
 ## card, a climb potion, a fired Jetpack, or another card lifting THEM directly
@@ -1096,7 +1110,10 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	# that term entirely. See preview()'s own comment for why this needed a new
 	# field (ally_grip_per_rhythm) instead of reusing grip_per_rhythm outright.
 	var ally_climbed: int = int(pv["ally_grip"])
-	if ally_climbed > 0:  # vines/ropes that lift the ally up the beast
+	if ally_climbed > 0 and has_ally(pi):  # vines/ropes that lift the ally up the beast --
+		# gated on has_ally (#86 duty 3): in a 1-player fight there's no partner
+		# to lift, so a card that pairs this with its own `grip` (e.g. "climb 1,
+		# ally climbs 3") must not land both amounts on the one hunter.
 		var lifted: PlayerState = players[ally_index(pi)]
 		var lifted_before := lifted.foothold
 		lifted.foothold = mini(lifted.foothold + ally_climbed, FOOTHOLD_MAX)
@@ -1169,13 +1186,18 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		ps.combatant.gain_block(blk)
 		var guard := "  (nailed it!)" if card.timed and card.timed_block > 0 else ""
 		_log("%s plays %s — +%d block%s." % [who, card.name, real_blk, guard])
-		if enchant_effect == "echo_block":  # "Bonded" (backlog #50) — the ally feels it too
+		if enchant_effect == "echo_block" and has_ally(pi):  # "Bonded" (backlog #50) — the
+			# ally feels it too. Gated on has_ally (#86 duty 3): with no ally to echo
+			# to, "Bonded" has nothing to do, not license to hand the caster their
+			# own Block a second time.
 			var bonded: PlayerState = players[ally_index(pi)]
 			var real_bonded_blk := Combatant.block_after_modifiers(blk, bonded.combatant.dexterity, bonded.combatant.frail)
 			bonded.combatant.gain_block(blk)
 			_log("%s's Bonded card echoes +%d block to %s." % [who, real_bonded_blk, bonded.combatant.name])
 	var ally_blk: int = int(pv["ally_block"])
-	if ally_blk > 0:
+	if ally_blk > 0 and has_ally(pi):  # gated on has_ally (#86 duty 3): see the comment
+		# on has_ally() -- a card pairing this with its own `block` must not land
+		# both amounts on a 1-player fight's one hunter.
 		var ally: PlayerState = players[ally_index(pi)]
 		var real_ally_blk := Combatant.block_after_modifiers(ally_blk, ally.combatant.dexterity, ally.combatant.frail)
 		ally.combatant.gain_block(ally_blk)
