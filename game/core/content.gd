@@ -153,24 +153,33 @@ static func all_relic_ids() -> Array:
 
 ## A relic as a plain dict {id, name, effect, value, text} (relics are passive
 ## data, not behaviour — Run/Combat read the effect+value).
+##
+## backlog #86 duty 2: duplicate(true), not duplicate() — every relic field is
+## flat today, so a shallow copy has looked identical to a deep one, but this
+## was the one call in this exact "make_X" family (make_card, make_event,
+## make_boon all already go deep — see build_boss()'s own comment on why a
+## shallow copy here is a landmine, not a bug, until the day some relic grows
+## a nested field like a downside's own {effect, value} pair) that didn't
+## match the depth _test_content_pools_are_copies() already claimed it had.
 static func make_relic(id: String) -> Dictionary:
 	var relics: Dictionary = _read_json(RELICS_PATH).get("relics", {})
 	if not relics.has(id):
 		push_warning("Content: unknown relic '%s'" % id)
 		return {}
-	var rd: Dictionary = (relics[id] as Dictionary).duplicate()
+	var rd: Dictionary = (relics[id] as Dictionary).duplicate(true)
 	rd["id"] = id
 	return rd
 
 ## An enchant as a plain dict {id, name, text, effect, value} (enchants are
 ## passive data, not behaviour — Card/Combat read effect+value, same shape
-## make_relic() already uses).
+## make_relic() already uses). duplicate(true) for the same reason as
+## make_relic() above — the two are siblings and must not drift apart again.
 static func make_enchant(id: String) -> Dictionary:
 	var enchants: Dictionary = _read_json(ENCHANTS_PATH).get("enchants", {})
 	if not enchants.has(id):
 		push_warning("Content: unknown enchant '%s'" % id)
 		return {}
-	var ed: Dictionary = (enchants[id] as Dictionary).duplicate()
+	var ed: Dictionary = (enchants[id] as Dictionary).duplicate(true)
 	ed["id"] = id
 	return ed
 
@@ -180,12 +189,14 @@ static func all_enchant_ids() -> Array:
 
 ## A potion as a plain dict {id, name, effect, value, text} — held per-hunter,
 ## same shape make_relic()/make_enchant() already use (backlog #26).
+## duplicate(true) for the same reason those two now use it — see make_relic()'s
+## own comment.
 static func make_potion(id: String) -> Dictionary:
 	var potions: Dictionary = _read_json(POTIONS_PATH).get("potions", {})
 	if not potions.has(id):
 		push_warning("Content: unknown potion '%s'" % id)
 		return {}
-	var pd: Dictionary = (potions[id] as Dictionary).duplicate()
+	var pd: Dictionary = (potions[id] as Dictionary).duplicate(true)
 	pd["id"] = id
 	return pd
 

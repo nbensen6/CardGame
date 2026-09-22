@@ -240,6 +240,7 @@ func _init() -> void:
 	_test_shop_guarantees_a_rare_card_slot()
 	_test_content_pools_are_copies()
 	_test_build_boss_moves_ledges_limiter_are_copies_not_cache_aliases()
+	_test_backlog86_make_relic_enchant_potion_are_copies_not_cache_aliases()
 	_test_backlog86_build_boss_adds_parses_hurt_pct_and_hurt_moves()
 	_test_backlog86_build_boss_adds_parses_weak_point_height()
 	_test_reward_pool_prefers_a_real_characters_own_pool_over_the_shared_fallback()
@@ -6751,6 +6752,62 @@ func _test_backlog86_build_boss_adds_parses_hurt_pct_and_hurt_moves() -> void:
 	add.hp = 20  # exactly half of 40 -- at the hurt_pct threshold
 	_expect(int(add.current_move()["value"]) == 7,
 		"an add actually switches to its own hurt_moves once wounded, same as the main boss")
+
+
+## Backlog #86 duty 2: make_relic()/make_enchant()/make_potion() read straight
+## off a Dictionary sitting inside Content._cache (_read_json), the same cache
+## build_boss()'s own fix (test above) already proved leaks Array/Dictionary
+## values by reference rather than by copy -- and _test_content_pools_are_copies()
+## a few lines up claims "make_card, make_relic, make_enchant, make_potion,
+## make_event, make_boon" all duplicate what they return, implying the same
+## depth for all six. That claim was only ever true by ACCIDENT for these three:
+## every relic/enchant/potion field in the real data is flat (string/int), so a
+## shallow duplicate() has looked identical to duplicate(true) for as long as
+## the files have existed -- but make_relic()/make_enchant() called plain
+## duplicate() while make_card()/make_event()/make_boon() all already called
+## duplicate(true). Nothing mutates a returned relic/enchant/potion dict's own
+## nested field in place today (there isn't one to mutate), so this never
+## produced a visibly wrong effect -- but the same "next feature that edits in
+## place silently corrupts every other instance" landmine build_boss() carried
+## before its own fix applies here too: a relic authored tomorrow with, say, a
+## nested {"downside": {...}} sub-dict would have every make_relic("that_id")
+## call across the whole process share the literal same inner Dictionary.
+## Injects a synthetic entry with a nested field straight into Content's own
+## parsed-JSON cache (removed again before this function returns) rather than
+## adding fixture content to relics.json/enchants.json/potions.json, since
+## nothing else needs this shape to exist permanently -- same technique the
+## build_boss test above and the hurt_pct/weak_point_height tests below use.
+func _test_backlog86_make_relic_enchant_potion_are_copies_not_cache_aliases() -> void:
+	var relics: Dictionary = Content._read_json(Content.RELICS_PATH).get("relics", {})
+	relics["_test_nested_relic"] = {"name": "Test Relic", "effect": "chip", "value": 1,
+		"text": "", "nested": {"n": 1}}
+	var enchants: Dictionary = Content._read_json(Content.ENCHANTS_PATH).get("enchants", {})
+	enchants["_test_nested_enchant"] = {"name": "Test Enchant", "effect": "cost_cut",
+		"value": 1, "text": "", "nested": {"n": 1}}
+	var potions: Dictionary = Content._read_json(Content.POTIONS_PATH).get("potions", {})
+	potions["_test_nested_potion"] = {"name": "Test Potion", "effect": "heal", "value": 1,
+		"text": "", "nested": {"n": 1}}
+
+	var r1 := Content.make_relic("_test_nested_relic")
+	var r2 := Content.make_relic("_test_nested_relic")
+	(r1["nested"] as Dictionary)["n"] = 999
+	var e1 := Content.make_enchant("_test_nested_enchant")
+	var e2 := Content.make_enchant("_test_nested_enchant")
+	(e1["nested"] as Dictionary)["n"] = 999
+	var p1 := Content.make_potion("_test_nested_potion")
+	var p2 := Content.make_potion("_test_nested_potion")
+	(p1["nested"] as Dictionary)["n"] = 999
+
+	relics.erase("_test_nested_relic")
+	enchants.erase("_test_nested_enchant")
+	potions.erase("_test_nested_potion")
+
+	_expect(int((r2["nested"] as Dictionary)["n"]) == 1,
+		"mutating one make_relic() call's nested field must not leak into a second call for the same id")
+	_expect(int((e2["nested"] as Dictionary)["n"]) == 1,
+		"mutating one make_enchant() call's nested field must not leak into a second call for the same id")
+	_expect(int((p2["nested"] as Dictionary)["n"]) == 1,
+		"mutating one make_potion() call's nested field must not leak into a second call for the same id")
 
 
 ## Backlog #86 duty 2: same "one builder grew a field, its sibling didn't"
