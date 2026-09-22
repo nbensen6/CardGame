@@ -512,6 +512,22 @@ func _drive_timing(v: Node) -> void:
 		await _frames(3)
 
 
+## Slow the WHOLE ENGINE to this fraction of real speed while a hop is being
+## sampled. `_hop`'s Tween (combat_3d.gd) advances by Engine.time_scale-scaled
+## delta every frame, same as everything else in Godot 4 unless a tween opts
+## out with set_ignore_time_scale -- combat_3d.gd's climb tweens never do. This
+## sandbox's software renderer draws a real frame every ~0.1-0.3s, which used
+## to leave a single-leg hop (one 0.34s tween) only 0-3 samples before it
+## finished: not this bot missing frames, but the hop itself using up its
+## real-time budget faster than a frame could be drawn. Running the SAME
+## renderer at 1/6 game speed makes the tween take 6x longer in wall-clock
+## seconds without changing one frame of the animation itself (the eased
+## curves, the apex, the squash amounts: all still `hop_arc`/`_hop`'s own
+## numbers -- only how much wall-clock time separates the frames this bot can
+## actually catch). Restored to 1.0 the instant the hop is judged, on every
+## exit path, so it never leaks into the rest of the run.
+const HOP_TIME_SCALE := 1.0 / 6.0
+
 ## Watches one hunter's climb hop (combat_3d._hop) live: samples the animated
 ## node's own position/scale every frame while its climb tween runs (not the
 ## bookkeeping dict, which combat_3d.gd sets to the destination the instant
@@ -532,20 +548,43 @@ func _watch_hop(v: Node, me: int, climb_from: Vector3) -> void:
 	var tw: Tween = (climb_tw as Dictionary).get(me) as Tween
 	if node == null or tw == null or not tw.is_valid():
 		return
-	var flight: Array = []   # {pos: Vector3, scale: Vector3}, sampled while tw runs
+	# `flight` (the numeric record _check_hop reads) is sampled every real frame
+	# for as long as the tween genuinely runs -- capped only by `guard`, sized
+	# generously for HOP_TIME_SCALE's slow-mo (a multi-leg sigil climb that took
+	# 12 real frames at 1x needs ~6x that before it actually finishes at 1/6
+	# speed). `shots` -- the PNGs actually written to disk -- is throttled far
+	# lower: nobody needs 150 frames of one hop to read a strip, and at 1/6
+	# speed that many renders would cost real minutes for no benefit.
+	# Un-syncing the two caps matters: an earlier version capped the SAMPLING
+	# loop at the same low number as the image throttle, so under slow-mo a
+	# long climb got cut off mid-flight -- still rising, still squashed -- and
+	# the code below then misread that mid-air moment as "landed," a real
+	# false positive (a squash that "never recovered" because the hunter
+	# hadn't actually landed yet). Never judge a hop the loop didn't see land.
+	var flight: Array = []   # {pos: Vector3, scale: Vector3}
 	var shots := 0
 	var guard := 0
-	while is_instance_valid(node) and tw.is_valid() and tw.is_running() and guard < 200 and shots < 24:
+	Engine.time_scale = HOP_TIME_SCALE
+	while is_instance_valid(node) and tw.is_valid() and tw.is_running() and guard < 300:
 		guard += 1
 		flight.append({"pos": node.position, "scale": body.scale if is_instance_valid(body) else Vector3.ONE})
 		await RenderingServer.frame_post_draw
-		if is_instance_valid(node):
+		if is_instance_valid(node) and shots < 24:
 			var img := root.get_viewport().get_texture().get_image()
 			img.save_png("%s/hop_%03d_%02d.png" % [_out, _step, shots])
 			shots += 1
 	if not is_instance_valid(node):
+		Engine.time_scale = 1.0
 		return   # the fight ended mid-hop
-	await _frames(8)   # let the landing recoil (0.06s + 0.16s, _hop's IMPACT/recover) settle
+	if tw.is_valid() and tw.is_running():
+		# The guard cap fired before the tween finished on its own -- we do not
+		# know the shape of the rest of the hop, so say so and judge nothing,
+		# rather than guessing from a truncated flight.
+		Engine.time_scale = 1.0
+		_note("step %d: hop still mid-flight after %d samples (guard cap) -- gave up watching, not judged" % [_step, flight.size()])
+		return
+	Engine.time_scale = 1.0
+	await _frames(8)   # back at real speed: let the landing recoil (0.06s + 0.16s) settle
 	var landed := node.position
 	var landed_scale: Vector3 = body.scale if is_instance_valid(body) else Vector3.ONE
 	_check_hop(flight, climb_from, landed, landed_scale)

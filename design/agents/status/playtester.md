@@ -3,57 +3,60 @@ tags:
   - agent-status
 agent: playtester
 updated: 2026-09-22
-working_on: jump-animation checks added (checklist item 3) — no bugs found this run
+working_on: hop sampling now runs in slow motion (checklist item 3) — two false positives found and killed before shipping, 0 real bugs this run
 ---
 
 # playtester
 
 ## Now
 
-Re-ran the full baseline first (all three modes, unmodified `playtest.gd`,
-against today's three fixer fixes) to check for regressions: **play** (80
-steps, boss to 0 HP), **hover** (0 flips), **hands** (sizes 1-10) — all
-**0 failing checks**, same as the first baseline. Not a regression, and
-nothing new to file.
+Ran the full baseline first, unmodified `playtest.gd`, against today's tip
+(the artist's arena recolour, the fixer's relic-pool write-up, no fixer code
+changes landed since the last baseline): **play** (80 steps, deterministic
+seed, boss to 0 HP) came back with **2 failing checks** —
+`hop-flat` (step 11) and `hop-no-squash` (step 63) — the first non-clean
+baseline this fight has had. Before filing anything, read the actual
+capture behind both: each had exactly **2 in-flight samples**, and both
+happened to pass the existing `covered_from_start` confidence gate by
+chance. Two samples is not enough to find an apex or a squash peak in
+either direction — this is the same sampling-is-too-sparse problem the
+last run's `## Next` already named, now caught actually misfiring instead
+of just silently under-covering. Did not file either as a game bug without
+first ruling out the bot's own sampling, per "proof or it did not happen."
 
-Then picked up my own `## Next` from last run: checklist item 3 (the jump
-animation) was "not yet checkable" because `playtest.gd` only grabbed one
-settled frame per step, after every hop had already finished. Extended
-`_play()` to detect a real climb (a foothold change on the acting hunter —
-the same "was != foot" rule `Combat3D.hunter_move_kind` uses) and, when one
-happens, watch the hunter's own animated `Node3D` (`_hunters[i].node` /
-`.body`, not the bookkeeping `home` dict — that gets written to the
-*destination* the instant the climb is decided, before the tween even
-starts, so it would never catch a hunter failing to actually arrive)
-every real frame while its climb `Tween` is running: saves each sampled
-frame (`hop_STEP_NN.png`) and checks the shape of the hop once it lands.
+Picked up option (a) from that `## Next` list: slow the capture window down
+so a 0.34s hop leg gets more than 1-3 real frames on this sandbox's slow
+software renderer. `Engine.time_scale` turns out to be exactly the right
+knob — Godot 4 Tweens scale their own delta by it unless a tween opts out
+with `set_ignore_time_scale` (`_hop`'s climb tweens never do), so dropping
+it to 1/6 inside `_watch_hop` makes the SAME renderer, drawing frames at the
+SAME real cost, land 6x more of them across one hop — without moving a
+single number in `_hop`/`hop_arc` itself. Re-ran the identical 80-step
+sequence (the seed is fixed, so it's the same climbs step-for-step): both
+prior failures gone, and every hop that had previously scraped by on 2-3
+samples now landed 12-75. Confirms both were exactly what they looked like
+— under-sampling, not a real flat hop or a real missing squash.
 
-Three new checks (`_check_hop`): **hop-flat** (the hop's peak height never
-rose above a straight line between its endpoints — a slide wearing a jump's
-clothes), **hop-no-squash** (the body's scale never left `Vector3.ONE` —
-no anticipation/impact squash), **hop-leftover-squash** (landed still
-squashed — a pop at the end, checked against the *settled* state after the
-tween conclusively stops running, so no race). All three ran clean on
-every climb any of today's runs could sample.
+That first pass at the fix shipped its own false positive, though, and I
+caught it the same way: read the numbers instead of trusting a clean run.
+`hop-leftover-squash` fired on step 1 with a suspicious detail — 24
+in-flight samples, the same number as `_watch_hop`'s image-save throttle.
+The sampling loop had been capped at that same low number as the PNG
+throttle, so under 1/6-speed a long multi-leg climb (this one: ground to
+foothold 4) got cut off still mid-air, still squashed, and the code then
+read that mid-flight moment as "landed." Fixed by un-syncing the two caps:
+the numeric sample loop now runs until the tween itself reports finished
+(capped generously at 300 iterations as a safety net, never hit in
+practice), while the PNG write-out stays throttled to 24 frames so a strip
+doesn't balloon to hundreds of images. Added an explicit branch for the
+safety-net case too: if the cap ever does fire before the tween finishes,
+the run says so and judges nothing, rather than guessing from a
+partial flight. Re-ran the same 80 steps a third time: **all checks
+passed**, richest capture yet (up to 75 in-flight samples on the step-17
+sigil climb), no false anything.
 
-Getting there took one real false positive, caught by re-running and
-reading the numbers, not assumed away: an early cut at "no pop at the
-*start*" (first sample already closer to the destination than to where the
-hop began) fired once — turned out to be this bot's own sampling starting
-late, not the game. This software renderer is slow enough (~0.1-0.3s/real
-frame) relative to one hop leg (0.34s) that the first frame this bot can
-catch sometimes already lands past the apex. Dropped the start-pop check
-entirely, and gated hop-flat/hop-no-squash on a `covered_from_start` check
-(first sample within 40% of the hop's own distance from where it started)
-so a late, partial capture is logged and skipped rather than judged — confirmed
-by re-running: two more late/partial captures later in the run (a 3-sample
-descending hop that would have false-failed hop-flat under the old logic)
-now correctly log "partial capture, arc/squash not judged" instead of
-failing. One multi-leg climb (step 17, a Height-5 sigil climb, 12 samples)
-had a full, confident capture: peak y 18.13 clearing both endpoints
-(8.99 → 18.09) and a 0.201 scale deviation — a real arc and a real squash,
-by the numbers, not just by eye. Frame strip: both hunters visibly climb
-across the 12 tiles, smoothly, no snap.
+Full baseline after the fix, all three modes: **play** (80 steps) 0 fails,
+**hover** 0 flips, **hands** (1-10) 0 fails.
 
 Checklist snapshot:
 
@@ -61,37 +64,57 @@ Checklist snapshot:
 |---|---|---|
 | 1 | card plays read | ok |
 | 2 | hunters land on the beast correctly | ok (check 8, `hunter-off-marker`, 0 fails) |
-| 3 | jump animation (squash/arc/landing) | **partially checkable now** — 3 new automatic checks (`hop-flat`/`hop-no-squash`/`hop-leftover-squash`), 0 fails on every climb any run could confidently sample this run; still can't judge every climb — a fast single-leg hop on this sandbox's slow renderer is sometimes too quick to catch mid-flight (logged as "partial capture", never silently skipped) |
-| 4 | camera | partially checkable, ok so far; over-the-shoulder target still pending (Nick's, not a bug) |
+| 3 | jump animation (squash/arc/landing) | **substantially more checkable now** — same 3 automatic checks, but hops now sample 3-75 real frames each (was 0-12) via a slow-motion capture window (`Engine.time_scale`, `HOP_TIME_SCALE = 1/6`), and two real sampling-artifact false positives (one pre-existing, one introduced by my own first attempt at this fix) are gone. Still not every climb: a handful of very short single-leg hops finish before `_watch_hop` even starts watching (the click → timed-card-minigame → pick-selection prelude before the watch loop runs at NORMAL speed, so slow-mo starting only inside `_watch_hop` is sometimes too late) — logged honestly as "too fast," never silently skipped. |
+| 4 | camera | partially checkable, ok so far; over-the-shoulder target still pending (Nick's, not a bug). Tried to get a clean visual (not just numeric) confirmation of a slow-mo'd hop this run and mostly couldn't — the current wide establishing camera keeps the climbing hunter tiny/off-screen-edge for most of a climb (step 17's strip below shows the Goblin Engineer entering from off-frame, barely readable at native size). Not a new finding, same gap this item already names. |
 | 5 | nothing errors | ok |
 
-Frames: `design/agents/frames/playtester/2026-09-22-hop-strip-goblin-step17.png`
-(the 12-tile strip, the Goblin Engineer climbing the jackal's flank toward
-the sigil) and `2026-09-22-hop-landed-step17.png` (the settled frame right
-after) — read at 1:1, nothing flagged.
+Frames: `design/agents/frames/playtester/2026-09-22-hop-strip-v2-step17.png`
+(4 frames from the richest capture this run, 75 in-flight samples, the
+Goblin Engineer approaching the sigil from off-screen — read individual
+frames at 1:1 before scaling this strip down for the note) and
+`2026-09-22-hop-landed-v2-step17.png` (the settled frame right after, full
+resolution).
 
-No new requests filed this run — nothing broke, and the one false positive
-never left this machine (caught and fixed before it was reported as a bug).
+No new requests filed — the only two "failures" this run were the bot's
+own sampling catching up to itself, killed before either reached a
+request file. `ALL TESTS PASSED` on `run_tests.gd` throughout (this is bot
+behavior, not a unit under test).
 
 ## Next
 
-Checklist item 3 is now "partially checkable," not "ok" — the honest gap
-is that a fast single-leg hop is often too quick for this sandbox's
-software renderer to sample mid-flight (0-3 partial samples, correctly not
-judged rather than false-failed). Two ways to close it, either worth
-trying next: (a) a way to slow down or single-step the engine's `Tween`
-processing during just the capture window, if Godot exposes one, so even a
-0.34s hop yields enough real frames to judge on THIS hardware; or (b) stop
-gating on real frame timing and instead read `Tween`/`hop_arc`'s own
-progress analytically (the tween's easing curves are known, `hop_arc` is
-already pure and tested) rather than sampling the live node at all. Also
-still open: checklist item 4 (camera) once the fixer/artist have more to
-show there, and finding a way to catch a squash-arc failure the numeric
-checks would miss but a human eye would catch (the frame strips are the
-backstop for that — keep saving them).
+Checklist item 3 is close to "ok" but not quite: the remaining honest gap
+is the handful of very short single-leg hops that finish during the
+normal-speed prelude (click → timed-card minigame → pick-selection loop)
+before `_watch_hop` ever starts slowing things down — logged as "too fast,"
+never silently skipped, same as before, just a smaller set of them now.
+Closing that fully means starting the slow-mo earlier (around the click
+itself, or specifically around whichever part of card resolution triggers
+`_hop`), which risks slowing down non-climb actions and timed-card
+minigames too — didn't attempt it this run; worth scoping carefully next
+time rather than reaching for a blanket "slow the whole step down," which
+would multiply this sandbox's already-slow render time across all 80 steps
+for little gain on the (mostly non-climbing) majority of them. Also still
+open: checklist item 4 (camera) once the fixer/artist have more to show
+there — this run's attempt to get a clean VISUAL (not just numeric)
+confirmation of a slow-mo'd hop mostly failed on the current wide camera,
+which is the same gap this item already names, not a new one. And finding
+a way to catch a squash-arc failure the numeric checks would miss but a
+human eye would catch (the frame strips are the backstop for that — keep
+saving them).
 
 ## Log
 
+- 2026-09-22 — checklist item 3: `_watch_hop` now runs the hop capture
+  window at 1/6 `Engine.time_scale`, turning 0-12 real in-flight samples
+  per climb into 3-75. Caught and killed two false positives before
+  shipping: the pre-existing baseline's `hop-flat`/`hop-no-squash` (both
+  were 2-sample under-sampling, confirmed gone once fully sampled) and one
+  introduced by my own first draft of this fix (`hop-leftover-squash` from
+  a sample cap that silently truncated a long multi-leg climb mid-flight
+  and read it as landed — fixed by uncoupling the numeric sample cap from
+  the PNG-save throttle and refusing to judge a hop the loop didn't
+  actually see finish). Full three-mode baseline clean after the fix. No
+  bugs to file — see `## Now` for the full trail.
 - 2026-09-22 — checklist item 3: added `_watch_hop`/`_check_hop` to
   `playtest.gd` (hop-flat / hop-no-squash / hop-leftover-squash), gated on
   a `covered_from_start` confidence check after an early version false-
