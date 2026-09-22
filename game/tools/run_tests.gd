@@ -677,6 +677,7 @@ func _init() -> void:
 	_test_add_acts_on_its_own_turn()
 	_test_add_attack_adds_its_own_strength()
 	_test_backlog86_died_to_names_the_add_that_actually_landed_the_kill()
+	_test_backlog86_last_attacker_name_survives_a_save_reload_before_sync()
 	_test_add_block_reseeds_each_round_like_the_bosss_own()
 	_test_add_thorns_bites_the_attacking_add_not_the_boss()
 	_test_backlog86_an_adds_conditional_move_reacts_to_the_real_board()
@@ -6172,6 +6173,41 @@ func _test_backlog86_died_to_names_the_add_that_actually_landed_the_kill() -> vo
 	run.sync()
 	_expect(run.phase == Run.Phase.LOST and String(run.stats["died_to"]) == "Root Tendril",
 		"the add that actually landed the killing hit should be named, not the main boss standing next to it")
+
+
+## Backlog #86 duty 2: last_attacker_name is set once, correctly, by
+## _boss_hits() the instant a hit is lethal -- but a save can legally land in
+## the window between that death and the Run.sync() call that reads it (the
+## host calls RunSave.save() before transitioning phase, and _combat_worth_saving
+## only checks phase == COMBAT, not is_over()). If Combat.to_dict()/from_dict()
+## don't carry the field, a reload in that window silently drops it back to
+## "" and Run.sync() mis-blames the main boss for a kill an add actually landed.
+func _test_backlog86_last_attacker_name_survives_a_save_reload_before_sync() -> void:
+	var run := _map_run()
+	_step_into_combat(run)
+	var boss := _dummy_boss(300, 0)  # 0-damage boss isolates the add's own hit
+	run.combat = _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, boss)
+	var add := Boss.new("Root Tendril", 30)
+	add.moves = [{"type": "attack", "value": 5}]
+	run.combat.adds.append(add)
+	run.combat.players[0].combatant.hp = 5  # exactly what the add's hit deals
+	run.combat.end_turn(0)
+	run.combat.end_turn(1)
+	_expect(run.combat.is_over() and run.combat.result() == Combat.Result.LOSE,
+		"sanity: the add's attack alone should be lethal here")
+	_expect(run.combat.last_attacker_name == "Root Tendril",
+		"sanity: the live combat should already blame the add before any save")
+
+	# Simulate a save/reload landing in the window between the lethal hit and
+	# the Run.sync() call that consumes last_attacker_name -- exactly the same
+	# round-trip RunSave.save()/RunSave.load() would do.
+	run.combat = Combat.from_dict(run.combat.to_dict())
+
+	_expect(run.combat.last_attacker_name == "Root Tendril",
+		"last_attacker_name must survive a to_dict/from_dict round-trip, not reset to \"\"")
+	run.sync()
+	_expect(run.phase == Run.Phase.LOST and String(run.stats["died_to"]) == "Root Tendril",
+		"a save/reload before sync() must not make died_to fall back to the main boss")
 
 
 ## Backlog #56: the ladder up to tier 8 only ever bumps a number. Tiers 9 and

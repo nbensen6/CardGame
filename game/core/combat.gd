@@ -2460,7 +2460,7 @@ func to_dict() -> Dictionary:
 		"round_block": _round_block, "mods": _mods,
 		"rng_state": str(_rng.state),  # a uint64; JSON floats would round it
 		"damage_dealt_total": damage_dealt_total, "cards_played_total": cards_played_total,
-		"highest_climb": highest_climb,
+		"highest_climb": highest_climb, "last_attacker_name": last_attacker_name,
 	}
 
 ## Rebuild an in-progress Combat. _init is bypassed (empty decks/combatants —
@@ -2489,4 +2489,5 @@ static func from_dict(d: Dictionary) -> Combat:
 	c.damage_dealt_total = int(d.get("damage_dealt_total", 0))
 	c.cards_played_total = int(d.get("cards_played_total", 0))
 	c.highest_climb = int(d.get("highest_climb", 0))
+	c.last_attacker_name = String(d.get("last_attacker_name", ""))
 	return c
