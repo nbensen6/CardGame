@@ -34,6 +34,7 @@ var _beast := ""
 var _steps := 40
 var _out := "user://playtest"
 var _size := Vector2i(1280, 720)
+var _timeout := 0.0   # timeout=SECONDS — 0 means scale it from the step count
 
 var _fails: Dictionary = {}       # check name -> count
 var _log: PackedStringArray = []
@@ -67,6 +68,7 @@ func _initialize() -> void:
 			"mode": _mode = kv[1]
 			"beast": _beast = kv[1]
 			"steps": _steps = int(kv[1])
+			"timeout": _timeout = float(kv[1])
 			"out": _out = kv[1]
 			"size":
 				var wh := kv[1].split("x")
@@ -101,8 +103,12 @@ func _initialize() -> void:
 	_run.call_deferred()
 
 
+## Wall-clock guard. Software rendering (the CI runner: Xvfb + llvmpipe, no
+## GPU) takes many times longer per frame than this PC, and a fixed 600s cut a
+## healthy 80-step run off at step 76 — reported as "stuck" when nothing was.
+## Scale it with the work asked for, and let a caller override.
 func _watchdog() -> void:
-	await create_timer(600.0).timeout
+	await create_timer(maxf(_timeout, 90.0 + _steps * 25.0)).timeout
 	_fail("watchdog", "playtest did not finish in 600s — something is stuck")
 	_finish()
 

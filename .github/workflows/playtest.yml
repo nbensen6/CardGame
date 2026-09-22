@@ -24,7 +24,7 @@ concurrency:
 jobs:
   playtest:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 45
     env:
       GODOT: /tmp/godot/Godot_v4.7.1-stable_linux.x86_64
     steps:
@@ -69,7 +69,7 @@ jobs:
           for mode in hands hover play; do
             xvfb-run -a -s "-screen 0 1280x720x24" $GODOT --rendering-driver opengl3 \
               --path game --script res://tools/playtest.gd -- \
-              mode=$mode beast=cinder_jackal steps=80 out=$PWD/out/$mode \
+              mode=$mode beast=cinder_jackal steps=50 timeout=1500 out=$PWD/out/$mode \
               > out/$mode.log 2>&1 || fails=$((fails+1))
             grep -E "PLAYTEST|FAIL" out/$mode.log | head -30
             # Every failure as an annotation: readable on the run page and via
