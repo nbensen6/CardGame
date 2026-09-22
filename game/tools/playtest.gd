@@ -405,6 +405,15 @@ func _play() -> void:
 			break
 		var me := int(v.call("_me"))
 		var before := _snap(c, me)
+		# The hunter's pre-climb world position, read now — before this step's
+		# click can change it — so a real climb this step can be watched against
+		# where it actually started (checklist item 3: the jump animation).
+		var hunters_before: Variant = v.get("_hunters")
+		var climb_from := Vector3.ZERO
+		var have_climb_from := false
+		if hunters_before is Array and me < (hunters_before as Array).size():
+			climb_from = ((hunters_before as Array)[me] as Dictionary).get("home", Vector3.ZERO)
+			have_climb_from = true
 		var action := ""
 		var cards := _hand(v)
 		var target: CardView = null
@@ -447,7 +456,19 @@ func _play() -> void:
 			var eb: Button = v.get("_end_btn")
 			action = "End Turn"
 			await _click(eb.get_global_rect().get_center())
-		await _frames(45)
+		# A foothold change is a climb (Combat3D.hunter_move_kind: "was != foot",
+		# nothing else) -- watch the hop itself (frame-strip + in-flight
+		# checks) instead of the blanket wait, so checklist item 3
+		# (anticipation squash, a clear arc, landing squash, no pop) is judged
+		# on every real climb in the run, not left for a hand-picked repro.
+		var watched := false
+		if have_climb_from:
+			await _frames(2)
+			var cm := _combat()
+			if cm != null and me < cm.players.size() and int(cm.players[me].foothold) != int(before.get("foot", -999)):
+				await _watch_hop(_view(), me, climb_from)
+				watched = true
+		await _frames(43 if watched else 45)
 		v = _view()
 		if v == null or not v.has_method("_layout_hand"):
 			_note("step %d: %s -> the fight ended (screen is now %s)" % [s, action, v.name if v else "none"])
@@ -489,6 +510,98 @@ func _drive_timing(v: Node) -> void:
 		guard += 1
 		await _click((tc as Control).get_global_rect().get_center())
 		await _frames(3)
+
+
+## Watches one hunter's climb hop (combat_3d._hop) live: samples the animated
+## node's own position/scale every frame while its climb tween runs (not the
+## bookkeeping dict, which combat_3d.gd sets to the destination the instant
+## the climb is decided, before the tween even starts -- sampling the dict
+## would never catch the hunter failing to actually GET there), saves a frame
+## every sampled tick as a strip, and checks the shape of the hop once it
+## lands. Checklist item 3.
+func _watch_hop(v: Node, me: int, climb_from: Vector3) -> void:
+	if not is_instance_valid(v):
+		return
+	var hunters: Variant = v.get("_hunters")
+	var climb_tw: Variant = v.get("_climb_tw")
+	if not (hunters is Array) or me >= (hunters as Array).size() or not (climb_tw is Dictionary):
+		return
+	var h: Dictionary = (hunters as Array)[me]
+	var node: Node3D = h.get("node") as Node3D
+	var body: Node3D = h.get("body") as Node3D
+	var tw: Tween = (climb_tw as Dictionary).get(me) as Tween
+	if node == null or tw == null or not tw.is_valid():
+		return
+	var flight: Array = []   # {pos: Vector3, scale: Vector3}, sampled while tw runs
+	var shots := 0
+	var guard := 0
+	while is_instance_valid(node) and tw.is_valid() and tw.is_running() and guard < 200 and shots < 24:
+		guard += 1
+		flight.append({"pos": node.position, "scale": body.scale if is_instance_valid(body) else Vector3.ONE})
+		await RenderingServer.frame_post_draw
+		if is_instance_valid(node):
+			var img := root.get_viewport().get_texture().get_image()
+			img.save_png("%s/hop_%03d_%02d.png" % [_out, _step, shots])
+			shots += 1
+	if not is_instance_valid(node):
+		return   # the fight ended mid-hop
+	await _frames(8)   # let the landing recoil (0.06s + 0.16s, _hop's IMPACT/recover) settle
+	var landed := node.position
+	var landed_scale: Vector3 = body.scale if is_instance_valid(body) else Vector3.ONE
+	_check_hop(flight, climb_from, landed, landed_scale)
+
+
+## The checks checklist item 3 asks for, read off `_watch_hop`'s samples: a
+## real arc (rises above a straight line between the endpoints, not a slide)
+## and a squash that actually shows (anticipation/impact) -- gated on
+## `covered_from_start` below -- plus no pop left behind at the end (the
+## squash actually recovers once the hunter lands), which isn't gated: it
+## reads the settled state after `is_running()` is conclusively false, not a
+## race.
+##
+## `covered_from_start`: this sandbox's software renderer is slow enough
+## (~0.1-0.3s/frame) relative to one hop leg (0.34s) that the first sample
+## this bot manages to catch sometimes already lands well past the apex --
+## caught live the first time this check ran: a 3-sample capture of a
+## descending hop whose peak sat BELOW its start height, purely because
+## sampling began after the rise was already over, not because the rise
+## never happened. Asserting hop-flat/hop-no-squash on a capture like that
+## would blame the game for this bot's own late start. So: only trust those
+## two when the first sample lands within 40% of the whole hop's distance
+## from where it started (a real rise/squash happens early, well inside
+## that window); past that, note the partial capture and judge nothing.
+func _check_hop(flight: Array, from_pos: Vector3, to_pos: Vector3, landed_scale: Vector3) -> void:
+	if flight.size() < 2:
+		_note("step %d: hop finished before it could be sampled (too fast for this frame rate) -- not checked" % _step)
+		return
+	var peak_y := -INF
+	var max_scale_dev := 0.0
+	for f in flight:
+		peak_y = maxf(peak_y, (f["pos"] as Vector3).y)
+		max_scale_dev = maxf(max_scale_dev, _scale_dev(f["scale"]))
+	var total_dist := from_pos.distance_to(to_pos)
+	var first_dist := (flight[0]["pos"] as Vector3).distance_to(from_pos)
+	var covered_from_start := total_dist < 0.05 or first_dist < total_dist * 0.4
+	var straight_top := maxf(from_pos.y, to_pos.y)
+	if covered_from_start:
+		if peak_y < straight_top - 0.03:
+			_fail("hop-flat", "step %d: hop peak y=%.2f never rose above its endpoints (%.2f -> %.2f) -- reads as a slide, not a jump"
+				% [_step, peak_y, from_pos.y, to_pos.y])
+		if max_scale_dev < 0.03:
+			_fail("hop-no-squash", "step %d: hunter body scale never left Vector3.ONE (max deviation %.3f) during the hop -- no anticipation/impact squash"
+				% [_step, max_scale_dev])
+	var end_dev: float = _scale_dev(landed_scale)
+	if end_dev > 0.03:
+		_fail("hop-leftover-squash", "step %d: landed with body scale %v, %.3f off Vector3.ONE -- squash never recovered (a pop at the end)"
+			% [_step, landed_scale, end_dev])
+	_note("step %d: hop watched -- %d in-flight samples (%s), peak y %.2f (endpoints %.2f -> %.2f), max squash dev %.3f"
+		% [_step, flight.size(), "from the start" if covered_from_start else "partial capture, arc/squash not judged",
+			peak_y, from_pos.y, to_pos.y, max_scale_dev])
+
+
+func _scale_dev(s: Vector3) -> float:
+	var d := (s - Vector3.ONE).abs()
+	return maxf(d.x, maxf(d.y, d.z))
 
 
 func _snap(c: Combat, me: int) -> Dictionary:
