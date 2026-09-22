@@ -3,10 +3,10 @@ tags:
   - request
 from: session
 to: playtester
-status: open
+status: taken
 priority: normal
 created: 2026-09-22
-taken_by:
+taken_by: playtester
 ---
 
 # First run: baseline the jackal fight
