@@ -3,15 +3,15 @@ tags:
   - agent-status
 agent: fixer
 updated: 2026-09-22
-working_on: in progress -- running the play/hover/hands playtest baseline, hunting a fixable bug in-scope
+working_on: done for this run
 ---
 
 # fixer
 
-## Now (mid-run)
+## Now
 
-No open `to: fixer` request this run (fresh sandbox). Followed my own prior
-run's "Next" note and widened the "states around the fight" look to the
+No open `to: fixer` request this run (fresh sandbox). Widened the "states
+around the fight" look (per my own prior run's "Next" note) to the
 campfire/shop/event screens (`location_3d.gd`) that hadn't had one yet:
 rendered `state=3dcampfire`, `state=3dshop`, `state=3devent` (desktop and a
 forced-mobile/phone-aspect shot) — all read clean, no overlap, no clipped
@@ -38,82 +38,66 @@ Flagged both the possible content gap (pool sized for solo, not 2p co-op —
 Nick's call) and the definite bug regardless (the prompt text has no
 "nothing left, Skip" case).
 
-Lost some time to my own harness mistake: backgrounded a playtest render
-with a bare shell `&` instead of the Bash tool's `run_in_background`, which
-got reaped when the tool call returned, then retried without noticing and
-ended up with three overlapping `playtest.gd` processes fighting over the
-same 4 cores and the same output directory. Killed all of them and started
-one clean `mode=play beast=cinder_jackal steps=80` run
-(`out=/tmp/pt_play_clean`) properly backgrounded; it's still in flight as
-this note is being written mid-run so the untracked request/frame files
-don't sit uncommitted. Picking back up once it reports: if it's clean,
-`mode=hover`/`mode=hands`, then a fresh read of `combat_3d.gd`/
-`card_view.gd`/`core/combat.gd` for an in-scope fix (order-of-work item 3),
-or backlog #86 duty (item 4) if that neighbourhood really is exhausted.
+Then ran the play/hover/hands baseline fresh against the tip (order-of-work
+item 2 — a failure the current playtest shows nobody has filed). `mode=play
+beast=cinder_jackal steps=80` failed twice: `hop-flat` at steps 1 and 17,
+"hop peak y=18.13 never rose above its endpoints (8.99 -> 18.17/18.18) --
+reads as a slide, not a jump". Both were big single-leg climbs (Leap/Hop,
+no intermediate ledge to split the hop) spanning several hunter-heights of
+pure world-Y in one tween. Root cause: `Combat3D.hop_arc()` built the
+apex's height as `lerp(from, to, 0.58).y + hop`, where `hop` is
+deliberately clamped small (≤2.5 hunter heights) so a long haul doesn't
+arc absurdly high — fine for a short hop, but for a climb whose own
+vertical span already dwarfs that cap, the uncovered 42% of the span left
+the apex BELOW the landing height. Reproduced headless with
+`hop_arc(Vector3(0,8.99,0), Vector3(0.3,18.17,-0.4), 0.34)`: apex.y was
+15.97 (below to.y=18.17). Fixed by taking the apex's height from
+`maxf(from.y, to.y) + hop` instead of the lerp (x/z still lean toward the
+landing as before) — apex.y is now 19.82, clearing both endpoints. Two new
+`hop_arc` tests in `run_tests.gd` (the exact live numbers, plus the general
+"apex always clears the higher endpoint" invariant — every prior `hop_arc`
+test only ever moved flat, which is exactly why this slipped through).
+`ALL TESTS PASSED`. Re-ran the identical `mode=play` repro on the fixed
+code: `PLAYTEST OK: 0 failing check(s) {  }`, step 17's climb (same
+8.99→~18.1 span) now peaks at 19.56. Self-filed and self-fixed —
+`requests/2026-09-22-2300-fixer-to-fixer-hop-arc-reads-as-slide-on-tall-climb.md`,
+commit `25804f3`.
 
-## Next (placeholder until this run's real fix lands)
-
-Finish the play/hover/hands baseline, fix whatever it turns up (or the next
-thing found reading the jackal-fight files), prove it, and overwrite this
-note with the real result before the run ends.
-
-## Now (superseded below by the prior run's entry, kept for history)
-
-No open `to: fixer` request this run (fresh sandbox). Ran all three
-`playtest.gd` modes (play/hover/hands) fresh against the current tip —
-all came back `0 failing check(s)`. Followed up on my own previous run's
-"Next" note first: probed every other glyph the HUD, log toggle, deck view
-and switch button use (☠ • ⇥ ▶ ▸ ▾ ◀ →) with the same throwaway
-`ThemeDB.fallback_font` render technique that caught the "⚔" bug last time —
-all render fine, so that bug class is now confirmed isolated to the one
-codepoint already fixed. No new finding there.
-
-Read through `hit_circle.gd`, `card_view.gd`'s timing minigame, and the
-`ally_grip`/`sac_ally_grip`/`pull_ally`/`grip_per_rhythm` card-effect
-plumbing in `core/combat.gd` (the Frog/Goblin's own cards) end to end —
-this whole neighbourhood already carries extensive "backlog #86 duty 2"
-comments from earlier rounds fixing exactly the raw-vs-clamped and
-self-echo bug classes I was looking for; found nothing new to fix there
-this run.
-
-Found and fixed something outside that neighbourhood instead, while
-looking at the states around the fight rather than just the fight itself:
-the reward screen straight after felling the Cinder Jackal had its
-"Tap a card to select" prompt line unreadable — physically painted over by
-the reward row's own cards (added to the tree after it, so they draw on
-top wherever they overlap) and fighting the felled beast's 3D corpse for
-contrast on top of that. Filed it to myself
-(`requests/2026-09-22-2200-fixer-to-fixer-reward-prompt-hidden.md`) and
-fixed it: wrapped the prompt `Label` in a `PanelContainer` (same
-`StyleBoxFlat` look every combat HUD text panel already uses — this one
-was the one label in the whole Hud tree that never got it) and moved its
-band up clear of the row's real top edge, found empirically from a
-pixel-column scan of the rendered PNG rather than trusting the .tscn's
-nominal offsets (the cost-orb's intentional overhang past the card's own
-border isn't visible from the layout numbers alone). Also gated the new
-panel's visibility on the prompt text being non-empty, so the three other
-screens that reuse this Hud and clear the prompt (`_render_event`,
-`_render_over`, `_clear_ui`) don't regress into showing a floating empty
-bar — checked `state=3devent` and `state=3dwon` directly to confirm.
-`ALL TESTS PASSED` (a scene-layout + visibility fix, proven with rendered
-frames rather than a new pure-function test, same as the artist's
-ear-glare fix). Before/after at `state=3dreward beast=cinder_jackal`:
-"The Fro...ks... Tap a card to ...ct" (fragmented, cut by the cards) →
-"The Frog picks:   Tap a card to select" (clean)
-(`design/agents/frames/fixer/2026-09-22-reward-prompt-hidden-*.png`, crops
-included).
+Lost some time mid-run to my own harness mistake, worth remembering: I
+backgrounded a playtest render with a bare shell `&` instead of the Bash
+tool's `run_in_background`, which got reaped the moment that tool call
+returned; retried without noticing and ended up with three overlapping
+`playtest.gd` processes fighting over the same 4 cores and the same output
+directory, which is why the first couple of attempts looked like they died
+silently. Always use `run_in_background: true`, never a bare `&`, for
+anything meant to outlive the current tool call.
 
 ## Next
 
-Pick up the next open `to: fixer` request, or hunt a bug per the fixer
-brief. The glyph-missing bug class and the sigil raw-vs-clamped bug class
-both look exhausted for now in the files fixer.md names — next time,
-worth widening the "look at the states around the fight, not just the
-fight" approach that found the reward-prompt bug: the campfire/shop/sharpen
-screens (also `location_3d.gd`) haven't had the same close look yet.
+The glyph-missing bug class, the sigil raw-vs-clamped bug class, and now
+the flat-hop-on-a-tall-climb case all look closed for now. Two open
+threads: (1) the boss-relic-pool request is waiting on Nick — nothing to
+do there until he answers. (2) `hop_arc` was tested with real numbers for
+the first time this run and immediately found a real bug purely because
+prior tests never varied Y — worth asking whether any other "pure shape"
+function in this file (or `card_view.gd`'s timing math) has the same
+gap: every existing test moving along one axis only, real bugs hiding on
+the untested ones.
 
 ## Log
 
+- 2026-09-22 — fixed `Combat3D.hop_arc()` building a hop's apex below the
+  landing height on a tall single-leg climb (Leap/Hop spanning several
+  hunter-heights in one hop), caught live by the playtester's `hop-flat`
+  check; apex height now `maxf(from.y, to.y) + hop` instead of a 58% lerp
+  plus a capped hop. Two new unit tests, playtest report before/after
+  (`PLAYTEST FAIL: 1 failing check(s)` → `PLAYTEST OK: 0 failing check(s)`).
+  Self-filed and self-fixed — see the request's `## Result`.
+- 2026-09-22 — filed (did not fix, outside the Cinder Jackal fight's scope)
+  the boss-relic pool running dry by the 3rd of 4 Titans in 2-player co-op
+  (only 4 `tier: "boss"` relics, both hunters draw from the same shared
+  pool each kill) — reward screen shows nothing to tap while the prompt
+  still says to tap one. `to: nick`, frame attached.
 - 2026-09-22 — fixed the reward screen's prompt line ("Tap a card to
   select") being painted over by the reward row's own cards and fighting
   the felled beast's 3D corpse for contrast — wrapped it in a
