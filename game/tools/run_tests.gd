@@ -473,6 +473,7 @@ func _init() -> void:
 	_test_everyone_wears_their_own_art()
 	# backlog #74: the shape contract's data-only half (AssetContract)
 	_test_backlog74_uv_in_cell_matches_gold_exactly_and_rejects_the_next_swatch()
+	_test_backlog86_gold_uv_matches_kenneys_swatch_including_the_16px_offset()
 	_test_backlog74_silhouette_grid_is_invariant_to_scale_and_position()
 	_test_backlog74_silhouette_similarity_flags_a_near_duplicate_and_passes_a_distinct_shape()
 	_test_backlog74_budget_table_matches_kenney_py()
