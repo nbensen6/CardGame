@@ -3,12 +3,61 @@ tags:
   - agent-status
 agent: fixer
 updated: 2026-09-22
-working_on: done for this run
+working_on: in progress -- running the play/hover/hands playtest baseline, hunting a fixable bug in-scope
 ---
 
 # fixer
 
-## Now
+## Now (mid-run)
+
+No open `to: fixer` request this run (fresh sandbox). Followed my own prior
+run's "Next" note and widened the "states around the fight" look to the
+campfire/shop/event screens (`location_3d.gd`) that hadn't had one yet:
+rendered `state=3dcampfire`, `state=3dshop`, `state=3devent` (desktop and a
+forced-mobile/phone-aspect shot) — all read clean, no overlap, no clipped
+buttons, no missing glyphs.
+
+While probing `state=3dwon` (drives a full run through all four Titans) to
+exercise the reward screen further, found a real bug, but it lives in
+`Run`/`location_3d.gd` reward/relic code shared by every fight, not in the
+Cinder Jackal's own arena/cards — outside this rotation's scope per the
+board's "Work outside the Cinder Jackal fight unless a request asks you to".
+Filed rather than fixed:
+`requests/2026-09-22-2245-fixer-to-nick-boss-relic-pool-runs-dry-at-half-the-titans.md`
+— with exactly 4 `tier: "boss"` relics for a 4-Titan ladder, and BOTH
+hunters drawing independently from that same shared pool each boss kill,
+2-player co-op exhausts it after just the 2nd Titan: the 3rd and 4th
+Titans' reward screens show zero relic choices, "Lock In Reward" stays
+permanently disabled, and the header prompt still says "Tap a relic to
+select" with nothing to tap. Reproduced with
+`state=3dwon beast=cinder_jackal` — the driver script itself got stuck
+spinning 400 iterations at the empty 3rd-Titan reward, never reaching WON
+(`RUN ended in phase 5`, i.e. still REWARD). Frame:
+`design/agents/frames/fixer/2026-09-22-boss-reward-relic-pool-exhausted.png`.
+Flagged both the possible content gap (pool sized for solo, not 2p co-op —
+Nick's call) and the definite bug regardless (the prompt text has no
+"nothing left, Skip" case).
+
+Lost some time to my own harness mistake: backgrounded a playtest render
+with a bare shell `&` instead of the Bash tool's `run_in_background`, which
+got reaped when the tool call returned, then retried without noticing and
+ended up with three overlapping `playtest.gd` processes fighting over the
+same 4 cores and the same output directory. Killed all of them and started
+one clean `mode=play beast=cinder_jackal steps=80` run
+(`out=/tmp/pt_play_clean`) properly backgrounded; it's still in flight as
+this note is being written mid-run so the untracked request/frame files
+don't sit uncommitted. Picking back up once it reports: if it's clean,
+`mode=hover`/`mode=hands`, then a fresh read of `combat_3d.gd`/
+`card_view.gd`/`core/combat.gd` for an in-scope fix (order-of-work item 3),
+or backlog #86 duty (item 4) if that neighbourhood really is exhausted.
+
+## Next (placeholder until this run's real fix lands)
+
+Finish the play/hover/hands baseline, fix whatever it turns up (or the next
+thing found reading the jackal-fight files), prove it, and overwrite this
+note with the real result before the run ends.
+
+## Now (superseded below by the prior run's entry, kept for history)
 
 No open `to: fixer` request this run (fresh sandbox). Ran all three
 `playtest.gd` modes (play/hover/hands) fresh against the current tip —
