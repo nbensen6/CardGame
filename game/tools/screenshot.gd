@@ -27,6 +27,7 @@ var _hold := ""   # 3dloop: stop the lap at this phase instead of finishing it
 var _beast := ""  # force a specific beast, to check a model that RNG rarely picks
 var _shade := ""  # "ao" | "shader" | "full" — the rendering prototype, see _apply_shade
 var _wide := false  # hold the establishing shot — see _capture
+var _endturns := 0  # endturn=N — press End Turn N times before the shot
 var _anim := ""  # anim=attack@0.5 — pose the beast's own animation; see _capture
 var _act := 0     # 3dmap: fast-forward to this act, so later regions get looked at
 var _orbit := 999.0  # 3D combat: drive the orbit camera to this yaw, in degrees
@@ -124,6 +125,8 @@ func _initialize() -> void:
 			load("res://views/combat_3d.gd").model_variant = a.substr(8)
 		elif a == "toon":
 			load("res://views/combat_3d.gd").toon = true
+		elif a.begins_with("endturn="):
+			_endturns = int(a.substr(8))
 		elif a.begins_with("anim="):
 			_anim = a.substr(5)
 		elif a == "classic":
@@ -404,6 +407,33 @@ func _apply_shade(view: Node) -> void:
 		print("SHADE applied creature.gdshader to %d mesh(es)" % meshes.size())
 
 
+## Where the hand actually is, in screen pixels. A centred fan should have its
+## centre at half the screen width; Nick has twice seen it pushed right over
+## End Turn, and a screenshot shows that only when you happen to look.
+func _hand_geometry(view: Node) -> void:
+	var row: Control = view.get("_hand_row") if view != null else null
+	if row == null or row.get_child_count() == 0:
+		return
+	var sc := row.get_parent() as Control
+	var lo := INF
+	var hi := -INF
+	for c in row.get_children():
+		var r := (c as Control).get_global_rect()
+		lo = minf(lo, r.position.x)
+		hi = maxf(hi, r.end.x)
+		var cc := c as Control
+		print("  card pos=%s rot=%.2f scale=%s z=%d" % [cc.position, cc.rotation, cc.scale, cc.z_index])
+	var screen_w := float(get_root().get_visible_rect().size.x)
+	var centre := (lo + hi) * 0.5
+	# The fan centres on the strip between the draw counter and End Turn, not
+	# on the screen, so that strip's centre is what it is held to.
+	var want := sc.get_global_rect().get_center().x if sc else screen_w * 0.5
+	print("HANDGEO screen_w=%.0f scroller=%s row=%s cards=%.0f..%.0f centre=%.0f off_centre=%+.0f %s" % [
+		screen_w, sc.get_global_rect() if sc else "-", row.get_global_rect(),
+		lo, hi, centre, centre - want,
+		"OK" if absf(centre - want) < 12.0 else "OFF-CENTRE"])
+
+
 func _collect_meshes(n: Node, into: Array[MeshInstance3D]) -> void:
 	if n is MeshInstance3D:
 		into.append(n)
@@ -647,6 +677,14 @@ func _capture() -> void:
 		_apply_shade(current_scene)
 		for _i in 3:
 			await process_frame
+	for _t in _endturns:
+		if current_scene == null or not current_scene.has_method("_end_turn"):
+			break
+		current_scene.call("_end_turn")
+		for _i in 90:   # the beast's turn plays out, then the new hand deals
+			await process_frame
+		_hand_geometry(current_scene)
+	_hand_geometry(current_scene)
 	if _taps:
 		_tap_check(current_scene)
 	if _slot >= 0 and current_scene != null and current_scene.has_method("_switch_to"):
@@ -1330,6 +1368,7 @@ func _capture() -> void:
 		var after := int(Session.host._run.combat.players[0].foothold)
 		print("GRIP %s: foothold %d -> %d after the timer emptied" % [
 			"OK" if after < before else "FAIL", before, after])
+	_hand_geometry(current_scene)
 	await RenderingServer.frame_post_draw
 	var img := root.get_viewport().get_texture().get_image()
 	img.save_png(_out)

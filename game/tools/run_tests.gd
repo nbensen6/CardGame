@@ -2163,6 +2163,7 @@ func _init() -> void:
 	_test_backlog86_hand_fan_step_never_squeezes_against_an_unmeasured_room()
 	_test_backlog86_hand_card_x_centres_the_whole_fan_on_room_not_content()
 	_test_backlog86_hand_card_x_is_symmetric_around_the_middle_card()
+	_test_live_hand_cards_skips_cards_being_freed()
 	_test_backlog86_hand_card_x_spans_exactly_the_room_once_squeezed()
 	# backlog #86 duty 2: a real, currently-shipping two-copies-of-one-truth
 	# bug found reading combat_3d's ledge-ring code against boss.gd's real
@@ -28184,3 +28185,21 @@ func _expect(cond: bool, name: String) -> void:
 	else:
 		print("FAIL  " + name)
 		_failures += 1
+
+
+## Nick, 2026-09-22: after a fall, a hit or End Turn, the hand sat pushed right
+## over End Turn. _render_hand queue_free()d the old cards, which stay children
+## until the frame ends, so the layout that followed counted old + new and laid
+## a hand of five out as slots 5..9 of a ten-card fan.
+func _test_live_hand_cards_skips_cards_being_freed() -> void:
+	var row := Control.new()
+	for i in 5:
+		row.add_child(Control.new())
+	for c in row.get_children():
+		c.queue_free()
+	for i in 5:
+		row.add_child(Control.new())
+	var live: Array = Combat3D.live_hand_cards(row)
+	_expect(row.get_child_count() == 10 and live.size() == 5,
+		"a hand rebuilt mid-frame lays out only its 5 live cards, not the 5 still being freed (got %d of %d)" % [live.size(), row.get_child_count()])
+	row.free()

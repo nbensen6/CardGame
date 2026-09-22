@@ -3798,10 +3798,19 @@ static func hand_card_x(i: int, n: int, w: float, step: float, room: float) -> f
 	return room * 0.5 - w * 0.5 + off * step
 
 
+## The cards that take a slot in the fan: children not already on their way
+## out. Static so the rule is provable without a scene (see _render_hand).
+static func live_hand_cards(row: Node) -> Array:
+	return row.get_children().filter(
+		func(c: Node) -> bool: return not c.is_queued_for_deletion())
+
+
 func _layout_hand() -> void:
 	if _hand_row == null:
 		return
-	var cards: Array = _hand_row.get_children()
+	# Only live cards. Anything already on its way out must not take a slot in
+	# the fan (see _render_hand).
+	var cards: Array = live_hand_cards(_hand_row)
 	var n := cards.size()
 	if n == 0:
 		return
@@ -3878,7 +3887,15 @@ func _render_hand() -> void:
 	if not should_rebuild_hand(_timing_card != null and is_instance_valid(_timing_card)
 			and _timing_card.is_timing()):
 		return
+	# Detach, THEN free. queue_free() alone leaves the old cards as children
+	# until the end of the frame, so the _layout_hand that follows this rebuild
+	# counted old + new: ten cards for a hand of five, and laid the real five
+	# out as positions 5..9 — the right half of a ten-card fan, tilted as the
+	# outer cards of one. That is the hand Nick kept seeing pushed right over
+	# End Turn after a fall, a hit, or any mid-turn refresh (2026-09-22,
+	# measured by screenshot.gd HANDGEO: centre +215px, z 5..9).
 	for c in _hand_row.get_children():
+		_hand_row.remove_child(c)
 		c.queue_free()
 	var priv := _my_private()
 	var selecting := not _selecting.is_empty()
