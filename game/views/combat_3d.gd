@@ -2748,12 +2748,39 @@ func _hop(tw: Tween, node: Node3D, body: Node3D, from: Vector3, to: Vector3,
 ## with real failure modes (an unclamped hop over a long haul would arc
 ## absurdly high; a fall half that hit zero would snap the landing instead of
 ## easing into it).
+##
+## Fixer, 2026-09-22: found live by the playtester's hop-flat check
+## (`_check_hop` in tools/playtest.gd) -- a big single-leg climb (e.g. Leap,
+## which can cover most of the jackal's flank in one hop with no intermediate
+## ledge to break the trip into shorter legs, `_route_between`) rose from
+## y=8.99 to y=18.17 and the sampled peak (18.13) never cleared either
+## endpoint: "reads as a slide, not a jump". The apex used to be built as
+## `lerp(from, to, 0.58) + UP * hop` -- only 58% of the CLIMB's own vertical
+## span plus a hop height that is deliberately clamped small (2.5 hunter
+## heights, so a long haul does not arc absurdly high, per the doc above).
+## For a short hop the 42% of vertical span still owed is small enough that
+## `hop` alone covers it, so every existing test here (all of them flat,
+## X-only moves) passed. For a climb whose OWN vertical span already exceeds
+## a couple of hunter heights, 42% of that span dwarfs the capped hop, so the
+## apex lands below `to.y` -- the "rise" tween never actually rises past the
+## landing height, and the parabola looks like a rising slide with a wobble
+## at the end, not a jump onto a hold. The apex's height only ever has to
+## clear whichever endpoint is higher by `hop`, independent of how far along
+## the lean sits -- so this now takes the height straight from `maxf(from.y,
+## to.y) + hop` instead of leaning it along with x/z, and reproduces exactly
+## with `hop_arc(Vector3(0,8.99,0), Vector3(0.3,18.17,-0.4), 0.34)`, which
+## used to return apex.y=15.97 (below to.y=18.17) and now returns apex.y=
+## 19.82 (above both endpoints).
 static func hop_arc(from: Vector3, to: Vector3, step: float) -> Dictionary:
 	var hop: float = clampf(from.distance_to(to) * 0.18, HUNTER_HEIGHT * 0.5,
 		HUNTER_HEIGHT * 2.5)
-	# Lean the apex toward the landing, so it reads as a jump ONTO something
-	# rather than a lob. Straight up the middle looks like a fountain.
-	var apex := from.lerp(to, 0.58) + Vector3.UP * hop
+	# Lean the apex toward the landing on the flat plane, so it reads as a
+	# jump ONTO something rather than a lob -- straight up the middle looks
+	# like a fountain. The HEIGHT is separate: it must clear both endpoints
+	# by `hop`, not just `from`'s, or a climb whose own vertical span already
+	# exceeds the capped hop rises to a point below the landing.
+	var lean := from.lerp(to, 0.58)
+	var apex := Vector3(lean.x, maxf(from.y, to.y) + hop, lean.z)
 	var rise := step * 0.55
 	var fall: float = maxf(step - rise, 0.05)
 	return {"apex": apex, "rise": rise, "fall": fall, "hop": hop}

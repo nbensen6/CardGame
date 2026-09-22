@@ -1515,6 +1515,11 @@ func _init() -> void:
 	_test_backlog86_hop_arc_leans_the_apex_toward_the_landing()
 	_test_backlog86_hop_arc_splits_the_step_into_a_rise_and_a_fall()
 	_test_backlog86_hop_arc_never_lets_the_fall_reach_zero()
+	# fixer, 2026-09-22: the playtester's hop-flat check caught a real
+	# "reads as a slide, not a jump" regression on a tall single-leg climb --
+	# every hop_arc test above only ever moved flat.
+	_test_backlog86_hop_arc_apex_clears_both_endpoints_on_a_tall_climb()
+	_test_backlog86_hop_arc_apex_height_is_the_higher_endpoint_plus_hop()
 	# backlog #86 duty 3 (forty-second pass): Combat3D.model_key_for -- the
 	# fallback ladder that picks a beast's 3D body. Its sibling ladder,
 	# _card_icon, was proven a duty-3 pass ago; this one -- own art file wins,
@@ -21189,6 +21194,43 @@ func _test_backlog86_hop_arc_leans_the_apex_toward_the_landing() -> void:
 	_expect(apex.x > 5.0 and apex.x < 10.0,
 		"the apex sits past the midpoint toward the landing (documented 0.58 lerp), not centred or past the end")
 	_expect(apex.y > 0.0, "the apex rises above the flat line between the two footholds")
+
+
+## Fixer, 2026-09-22: the live regression caught by the playtester's
+## hop-flat check (`playtest.gd`'s `_check_hop`, `mode=play`) -- every OTHER
+## hop_arc test above moves flat (Y stays 0), so none of them could catch
+## the apex landing BELOW a real climb's own endpoints. A big single-leg
+## climb (Leap, or any hop with no intermediate ledge to split it up -- see
+## `_route_between`) can cover several hunter heights of pure Y in one hop,
+## which the 2.5x-hunter-height clamp on `hop` was never meant to out-climb
+## on its own; the apex has to clear the HIGHER endpoint by `hop`, not lerp
+## 58% of the way up and hope the capped hop makes up the other 42%.
+## Reproduces the exact live numbers from the playtest report (step 1 and
+## step 17 of `mode=play beast=cinder_jackal steps=80`): from y=8.99 to
+## y=18.17, apex used to land at y=15.97 (below the landing) and now lands
+## at y=19.82 (above both).
+func _test_backlog86_hop_arc_apex_clears_both_endpoints_on_a_tall_climb() -> void:
+	var from := Vector3(0.0, 8.99, 0.0)
+	var to := Vector3(0.3, 18.17, -0.4)
+	var arc: Dictionary = Combat3D.hop_arc(from, to, 0.34)
+	var apex: Vector3 = arc["apex"]
+	_expect(apex.y > to.y and apex.y > from.y,
+		"a tall single-leg climb's apex clears BOTH endpoints, not just a 58%-of-the-way lerp plus a capped hop -- the live bug had apex.y=15.97 below to.y=18.17")
+
+
+## The general form of the fix above: whichever endpoint is higher, the apex
+## always clears it by exactly `hop` -- proven across both climb directions
+## (up and down) and a flat move, so the fix is a real invariant and not a
+## one-off patch of the single reported case.
+func _test_backlog86_hop_arc_apex_height_is_the_higher_endpoint_plus_hop() -> void:
+	var up: Dictionary = Combat3D.hop_arc(Vector3(0, 2.0, 0), Vector3(1, 9.0, 0), 0.3)
+	var up_apex: Vector3 = up["apex"]
+	_expect(is_equal_approx(up_apex.y, 9.0 + float(up["hop"])),
+		"climbing up: apex height is the LANDING's y (the higher endpoint) plus hop")
+	var down: Dictionary = Combat3D.hop_arc(Vector3(0, 9.0, 0), Vector3(1, 2.0, 0), 0.3)
+	var down_apex: Vector3 = down["apex"]
+	_expect(is_equal_approx(down_apex.y, 9.0 + float(down["hop"])),
+		"climbing down: apex height is the START's y (still the higher endpoint) plus hop")
 
 
 func _test_backlog86_hop_arc_splits_the_step_into_a_rise_and_a_fall() -> void:
