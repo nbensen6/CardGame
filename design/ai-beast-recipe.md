@@ -38,12 +38,17 @@ never silently put the old one back. To see it: harness `classic`.
    `holes_fill(sides=80)` + `recalc_face_normals`. (The jackal's giant ear:
    `x>1.2 and z>2.15`, then a stub at `x>1.3 and z>1.8 and y<0.5`.)
 5. **Decimate to ~10k faces** (`DECIMATE`, ratio = 10000 / faces).
-6. **Climb points — code, not guesswork.** Raycast straight down on a 0.1
-   grid, keep hits with `normal.z > 0.55`: that is every patch a hunter can
-   actually stand on. Pick one per Height near the old marker heights (0.19,
-   0.97, 1.36, 1.75, 2.1, sigil 2.56) and put `climb_N` / `ledge_N` empties
-   there, +0.02 up. On the jackal the standable route is **tail tip → tail →
-   hips → back → nape (sigil)**, which is also the route a player would want.
+6. **Climb route on the CAMERA side, with grown footholds.** Hunters approach
+   from the front (+Z in glTF, -Y in Blender) and the camera sits behind them,
+   so a route anywhere else is climbed out of sight — the jackal's first route
+   (up the tail) put the whole climb behind the beast and the sigil behind its
+   ears. A creature's front is legs and chest: nothing there faces up. So grow
+   the footing: a separate `Footholds` mesh of flat-topped basalt outcrops
+   (flattened icospheres, jagged underside, one flat colour material),
+   sunk ~0.15 into the surface you find by raycasting from the side, one per
+   Height. `climb_N` / `ledge_N` sit on each top +0.02; the sigil (`climb_5`)
+   on the forehead, found by raycasting down. The jackal's: front-left foreleg
+   ×2 → shoulder → withers → brow.
 7. **Export** mesh + empties (`use_selection`), add the id to `AI_ART`,
    `--import`, run tests.
 
@@ -59,13 +64,32 @@ Always through `tools\shot.cmd` (second monitor, no focus steal). Blender's
 viewport stops redrawing once its window is moved off-screen — render stills
 to files with a scene camera instead of `get_viewport_screenshot`.
 
+## Everywhere the beast appears
+
+- **Fight** — `combat_3d.AI_ART` + `AI_MOTION` (idle life, below).
+- **Reward screen** (the felled body) — `location_3d._lay_out_the_felled` reads
+  the same table and calls `combat_3d.toon_all`. A long AI model tipped onto
+  its back stands up on its tail, so these roll onto their flank instead; roll
+  the side that puts a curled tail UP, or it props the body off the ground.
+- **Portrait** — `portraits.py` has its own `AI_ART`; renders with specular
+  off (studio gloss turns painted fur into wet plastic; FLAT washes it out).
+  `blender -b --python tools/blender/portraits.py -- <out> cinder_jackal`,
+  then copy into `game/assets/portraits/`.
+
+## Idle life (no rig)
+
+`toon.gdshader` moves the vertices itself: a tail sweep (masked by model-space
+X/Z, lagged along its length so it whips), breathing along the normal above
+`breath_min_y`, and a pulse on the ember glow. `outline.gdshader` carries an
+identical copy so the ink rides the moving tail. Per beast in
+`combat_3d.AI_MOTION`; the masks default to the jackal. Check a new beast's
+mask in Blender first (glTF x = Blender x, y = Blender z, z = -Blender y) — it
+must catch the tail and nothing that touches the ground.
+
 ## Not done yet
 
-- **No rig.** The beast is a static mesh, same as the Python ones — nothing in
-  combat animates bones today, so this is not a regression, but it is the next
-  quality step (Rigify quadruped, or Tripo's auto-rig).
-- **Select screen and portrait** still show the Python jackal
-  (`location_3d.gd`, `portraits.py`).
+- **No rig.** Idle life is shader-only; attacks and hits still move the whole
+  body. A Rigify quadruped (or Tripo's auto-rig) is the next step.
 - The texture carries the ember glow now; the palette-UV `EMBERS` entry for
   this beast is skipped under the toon shader.
 - Footprint is much wider than the Python model (tail sweep), so the arena

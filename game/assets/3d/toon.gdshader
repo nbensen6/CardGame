@@ -13,7 +13,9 @@ render_mode cull_back, diffuse_toon, specular_toon;
 // falloff, and shadow that goes COOL instead of going black. Works on
 // gl_compatibility — it is all in light(), no screen-space pass.
 
-uniform sampler2D albedo_tex : source_color, filter_linear_mipmap, repeat_enable;
+// White when unset, so an untextured part (the jackal's basalt footholds) is
+// just its `tint`.
+uniform sampler2D albedo_tex : source_color, hint_default_white, filter_linear_mipmap, repeat_enable;
 uniform vec4 tint : source_color = vec4(1.0);
 
 // Three bands: lit, half, shadow. Soft edges a few % wide so the band boundary
@@ -38,6 +40,35 @@ uniform float spec_cut : hint_range(0.5, 1.0) = 0.94;
 uniform float glow_gain : hint_range(0.0, 4.0) = 1.2;
 uniform float glow_hue : hint_range(0.0, 1.0) = 0.07;   // orange
 
+// IDLE LIFE — no rig, so the motion lives here. Masks are in the model's own
+// space (glTF: +Z toward the head, the hunters). All zero by default: a model
+// that does not ask for motion does not move. Mirrored in outline.gdshader so
+// the ink line rides the same surface.
+uniform float tail_amp = 0.0;          // tip travel, model units
+uniform float tail_rate = 0.9;
+uniform vec2 tail_x = vec2(-1.0, -3.2); // mask ramps in over this model-X span
+uniform vec2 tail_z = vec2(-1.4, -2.2); // ... and over this model-Z span
+uniform float breath_amp = 0.0;        // along the normal, model units
+uniform float breath_rate = 1.3;
+uniform float breath_min_y = 1.2;      // only the barrel breathes, not the legs
+uniform float glow_pulse = 0.0;
+
+vec3 idle(vec3 v, vec3 n) {
+	// Negated so edge0 < edge1: smoothstep with them reversed is undefined in GLSL.
+	float tail = smoothstep(-tail_x.x, -tail_x.y, -v.x) * smoothstep(-tail_z.x, -tail_z.y, -v.z);
+	// Sweep: the further out along the tail, the further it travels, lagging
+	// behind the root so it reads as a whip rather than a stiff paddle.
+	float lag = (-v.x) * 0.6;
+	v.z += sin(TIME * tail_rate - lag) * tail_amp * tail * tail;
+	float barrel = smoothstep(breath_min_y, breath_min_y + 0.5, v.y) * (1.0 - tail);
+	v += n * sin(TIME * breath_rate) * breath_amp * barrel;
+	return v;
+}
+
+void vertex() {
+	VERTEX = idle(VERTEX, NORMAL);
+}
+
 vec3 rgb2hsv(vec3 c) {
 	vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
 	vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
@@ -55,7 +86,7 @@ void fragment() {
 	vec3 hsv = rgb2hsv(base);
 	float hue_d = min(abs(hsv.x - glow_hue), 1.0 - abs(hsv.x - glow_hue));
 	float hot = (1.0 - smoothstep(0.03, 0.08, hue_d)) * smoothstep(0.55, 0.8, hsv.y) * smoothstep(0.55, 0.85, hsv.z);
-	EMISSION = base * hot * glow_gain;
+	EMISSION = base * hot * glow_gain * (1.0 + sin(TIME * 1.1) * glow_pulse);
 }
 
 void light() {

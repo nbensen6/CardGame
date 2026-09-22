@@ -245,6 +245,11 @@ func _lay_out_the_felled(beast_id: String) -> void:
 	# the beast you felled is the beast lying here rather than the elephant it
 	# used to be standing in for.
 	var path := CAST + beast_id + ".glb"
+	var ai_art: Dictionary = BEAST_MODEL.AI_ART
+	var ai := beast_id != "" and ai_art.has(beast_id) \
+		and ResourceLoader.exists(CAST + beast_id + String(ai_art[beast_id]) + ".glb")
+	if ai:
+		path = CAST + beast_id + String(ai_art[beast_id]) + ".glb"
 	if beast_id == "" or not ResourceLoader.exists(path):
 		var key: String = String((BEAST_MODEL.MODELS as Dictionary).get(beast_id, ""))
 		path = CAST + key + ".glb"
@@ -252,12 +257,19 @@ func _lay_out_the_felled(beast_id: String) -> void:
 			return
 	var body: Node3D = (load(path) as PackedScene).instantiate()
 	_plot.add_child(body)
+	if ai:
+		BEAST_MODEL.toon_all(body)
 	var tall := _felled_height(beast_id)
 	_fit_height(body, tall)
 	_felled_span = tall
 	# Onto its BACK, feet toward the camera — a cube pet tipped onto its flank
 	# still reads as sitting, but belly-up is unmistakable.
 	body.rotation = Vector3(-PI * 0.5, 0.35, 0.0)
+	if ai:
+		# A long AI-built beast tipped onto its back stands up on its tail
+		# (measured on the jackal: a four-legged tower). Roll it onto its
+		# flank instead — the length stays along the ground.
+		body.rotation = Vector3(0.0, 0.35 - PI * 0.5, -PI * 0.5)
 	body.position = Vector3.ZERO
 	# Measure, then correct. A toppled body sprawls by its full standing height,
 	# and where a model's origin sits inside that sprawl differs per beast — the

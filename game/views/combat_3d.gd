@@ -28,6 +28,13 @@ const OUTLINE := preload("res://assets/3d/outline.gdshader")
 ## Python-built model rather than over it, so `build.cmd cast` can never
 ## silently put the old one back.
 const AI_ART := {"cinder_jackal": "_ai"}
+## Idle life for those beasts, in the toon shader (no rig yet). Uniform names
+## from toon.gdshader; the masks default to the jackal's tail. Kept small: the
+## body moves under hunters standing on it, and 2.5cm of breath on a Titan
+## reads as alive without anyone's feet visibly lifting off the footholds.
+const AI_MOTION := {
+	"cinder_jackal": {"tail_amp": 0.35, "breath_amp": 0.025, "glow_pulse": 0.25},
+}
 ## Harness switches. `model_variant` loads <beast><variant>.glb when it exists
 ## (e.g. "_ai"); `toon` shades the beast with TOON instead of CREATURE.
 ## `classic` forces the old Python-built model, for before/after shots.
@@ -2278,6 +2285,49 @@ var _hull: PackedFloat32Array = PackedFloat32Array()
 ##
 ## The texture comes off the model's OWN material rather than a hardcoded atlas
 ## path, so a model that ever ships its own texture keeps it.
+## The toon material for one mesh of an AI_ART beast, outline included. Static
+## so the reward screen's felled beast (location_3d) wears the same look.
+static func toon_material(mi: MeshInstance3D, tex: Texture2D,
+		motion: Dictionary = {}) -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = TOON
+	var line := ShaderMaterial.new()
+	line.shader = OUTLINE
+	if tex != null:
+		mat.set_shader_parameter("albedo_tex", tex)
+		# Motion only on the painted body. The footholds are a separate, flat
+		# mesh; breathing them would jiggle the thing a hunter is standing on.
+		for k in motion:
+			mat.set_shader_parameter(k, motion[k])
+			if k != "glow_pulse":
+				line.set_shader_parameter(k, motion[k])
+	else:
+		# An untextured part (the footholds) keeps its flat colour.
+		var had0 := mi.mesh.surface_get_material(0)
+		if had0 is StandardMaterial3D:
+			mat.set_shader_parameter("tint", (had0 as StandardMaterial3D).albedo_color)
+	mat.next_pass = line
+	return mat
+
+
+## Every mesh under `root`, toon-shaded. For a model loaded outside the fight.
+static func toon_all(root: Node) -> void:
+	var stack: Array[Node] = [root]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		stack.append_array(n.get_children())
+		var mi := n as MeshInstance3D
+		if mi == null or mi.mesh == null:
+			continue
+		var tex: Texture2D = null
+		for s in range(mi.mesh.get_surface_count()):
+			var had := mi.mesh.surface_get_material(s)
+			if had is StandardMaterial3D and (had as StandardMaterial3D).albedo_texture != null:
+				tex = (had as StandardMaterial3D).albedo_texture
+				break
+		mi.material_override = toon_material(mi, tex)
+
+
 func _shade_model(root: Node, is_ground := false) -> void:
 	if CREATURE == null:
 		return
@@ -2291,16 +2341,10 @@ func _shade_model(root: Node, is_ground := false) -> void:
 			if had is StandardMaterial3D and (had as StandardMaterial3D).albedo_texture != null:
 				tex = (had as StandardMaterial3D).albedo_texture
 				break
-		var mat := ShaderMaterial.new()
 		if _beast_toon and not is_ground and root == _beast:
-			mat.shader = TOON
-			if tex != null:
-				mat.set_shader_parameter("albedo_tex", tex)
-			var line := ShaderMaterial.new()
-			line.shader = OUTLINE
-			mat.next_pass = line
-			mi.material_override = mat
+			mi.material_override = toon_material(mi, tex, AI_MOTION.get(_beast_id, {}))
 			continue
+		var mat := ShaderMaterial.new()
 		mat.shader = CREATURE
 		if tex != null:
 			mat.set_shader_parameter("atlas", tex)

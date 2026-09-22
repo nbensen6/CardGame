@@ -48,7 +48,7 @@ FOCUS = {
     "husk_beetle": (0.46, 1.20), "gloom_moth": (0.55, 1.05),
     "bog_leech": (0.39, 1.28), "thrasher": (0.42, 1.55),
     "silk_widow": (0.45, 1.35), "boulder_ram": (0.34, 1.35),
-    "cinder_jackal": (0.60, 1.35), "brine_urchin": (0.62, 1.45),
+    "cinder_jackal": (0.70, 0.95), "brine_urchin": (0.62, 1.45),
     "clot_toad": (0.48, 1.46), "flicker_stag": (0.50, 1.10),
     "eyrie_hawk": (0.78, 0.60), "glyph_tortoise": (0.50, 1.28),
     "riptide_eel": (0.68, 0.75), "yoke_ox": (0.45, 1.25),
@@ -65,7 +65,7 @@ FOCUS = {
 ## than bend the shared formula for one outlier.
 FOCUS_XY = {
     "riptide_eel": (0.5, -1.0),
-    "cinder_jackal": (0.0, -0.7),
+    "cinder_jackal": (0.35, -2.45),   # the AI model: head far forward at -Y
     # Gloom Moth's mesh is X-symmetric (bbox centre 0.02) but the fixed
     # three-quarter EYE angle still renders it off-centre — antennae and
     # wings reach further forward/up on one side of the view than the
@@ -95,8 +95,12 @@ FOCUS_XY = {
 EYE = Vector((0.62, -1.0, 0.30))
 SIZE = 512
 
+## Beasts rebuilt from AI-generated models (design/ai-beast-recipe.md) render
+## from <name><suffix>.glb — the same table as combat_3d.AI_ART.
+AI_ART = {"cinder_jackal": "_ai"}
 
-def look(model_path, out_path, at, span, xy=None):
+
+def look(model_path, out_path, at, span, xy=None, painted=False):
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.gltf(filepath=model_path)
 
@@ -113,6 +117,11 @@ def look(model_path, out_path, at, span, xy=None):
     sc.display.shading.light = "STUDIO"
     sc.display.shading.color_type = "TEXTURE"
     sc.display.shading.show_shadows = False      # a portrait is not a diorama
+    if painted:
+        # An AI model's texture already carries painted light and shade. Studio
+        # light's specular on top renders it as wet plastic, and FLAT (tried
+        # first) washes it out; keep the form light, drop the gloss.
+        sc.display.shading.show_specular_highlight = False
     sc.display.shading.show_cavity = True        # but the creases should show
     sc.render.film_transparent = True            # the UI draws its own frame
     # Lifted, because these are shown at 34 PIXELS in the party panel and again
@@ -145,14 +154,17 @@ def main():
     here = os.path.dirname(os.path.abspath(__file__))
     cast = os.path.normpath(os.path.join(here, "..", "..", "game", "assets",
                                          "3d", "cast"))
+    only = sys.argv[sys.argv.index("--") + 2:]   # optional: just these names
     missing = []
     for name, (at, span) in FOCUS.items():
-        src = os.path.join(cast, name + ".glb")
+        if only and name not in only:
+            continue
+        src = os.path.join(cast, name + AI_ART.get(name, "") + ".glb")
         if not os.path.exists(src):
             missing.append(name)
             continue
         look(src, os.path.join(out_dir, name + ".png"), at, span,
-             xy=FOCUS_XY.get(name))
+             xy=FOCUS_XY.get(name), painted=name in AI_ART)
     if missing:
         print("NO MODEL for %s — those keep whatever portrait they had"
               % ", ".join(missing))
