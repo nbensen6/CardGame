@@ -49,7 +49,7 @@ clearly, nothing flickers, nothing floats, nothing is cut off.
 
 Copy `requests/_template.md` to `requests/<date>-<time>-nick-to-<agent>-<slug>.md`,
 set `to:` (artist / playtester / fixer), leave `status: open`, say what you want
-and how to see it. Then run **`toolsoard_push.cmd`** — the agents read the
+and how to see it. Then run **`tools/board_push.cmd`** — the agents read the
 repo from GitHub, so an unpushed note never reaches them.
 
 ## Requests
