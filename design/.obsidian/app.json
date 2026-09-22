@@ -3,5 +3,7 @@
   "newFileLocation": "folder",
   "newFileFolderPath": "beasts",
   "showFrontmatter": true,
-  "userIgnoreFilters": ["renders/", "art-previews/"]
+  "userIgnoreFilters": [
+    "renders/"
+  ]
 }
