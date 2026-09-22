@@ -165,6 +165,7 @@ func _init() -> void:
 	_test_card_upgrade_bumps_cheapen_amount_only_when_cheapen_pick_is_set()
 	_test_card_upgrade_bumps_condition_bonus_too()
 	_test_card_upgrade_bumps_hits_but_only_for_a_real_multistrike()
+	_test_backlog86_upgrade_reduces_timed_hits_toward_one_never_below()
 	_test_backlog86_rule_upgrade_naming_condition_bonus_overrides_the_generic_bump()
 	_test_backlog67_above_sigil_condition_gates_preview_bonus()
 	_test_backlog67_ally_hanging_condition_gates_preview_bonus()
@@ -4987,6 +4988,54 @@ func _test_card_upgrade_bumps_hits_but_only_for_a_real_multistrike() -> void:
 		"sanity check: the base damage field still scales too, so this is proving the missing hits bump specifically, not a broken upgrade generally")
 	_expect(up_slash.hits == 1,
 		"a card that never carried a real multi-strike (hits defaults to 1) must NOT have hits bumped just because the default 1 is > 0 — got %d" % up_slash.hits)
+
+
+## backlog #86 duty 2 — upgraded_copy()'s numeric bump lists never grew a
+## branch for `timed_hits` either, the exact same "hand-copied field list
+## drifted" shape already closed five separate times in this one function
+## (grip_per_rhythm/pull_ally/sac_ally_grip, cheapen_amount, condition_bonus,
+## hits, above). Three real shipped rares carry timed_hits > 1 —
+## satchel_charge (3), bomb (2), overload_engine (2) — and sharpening any of
+## them at a campfire bumped timed_damage by +3 while leaving the number of
+## consecutive timing windows required frozen forever.
+##
+## Unlike every OTHER field in the bump lists, timed_hits is not a reward to
+## grow — it is a REQUIREMENT to satisfy (how many windows in a row you must
+## nail), the same "more of this number is worse for the player" shape the
+## fallback chain's own cost discount already treats specially. So the
+## correct generic rule here is the cost discount's rule, not the reward
+## lists' rule: an upgrade makes a timed card easier to land, not harder —
+## reduce timed_hits toward 1, never below it (a floor of 1 window is not
+## "no timing bar", just the easiest one), with the same "only a card that
+## really uses it" guard cheapen_amount and hits both need, since
+## Card.from_dict() defaults timed_hits to 1 on every card regardless of
+## whether it ever authors `timed` at all.
+func _test_backlog86_upgrade_reduces_timed_hits_toward_one_never_below() -> void:
+	var satchel := Content.make_card("satchel_charge")  # timed_hits 3, timed_damage 20
+	var up_satchel := satchel.upgraded_copy()
+	_expect(up_satchel.timed_hits == 2,
+		"sharpening a real timed multi-window card must make it EASIER to land — one fewer required window, not a frozen count — got %d, wanted 2" % up_satchel.timed_hits)
+	_expect(up_satchel.timed_damage == satchel.timed_damage + 3,
+		"sanity check: the reward field still scales too, so this is proving the missing timed_hits reduction specifically, not a broken upgrade generally")
+
+	var bomb := Content.make_card("bomb")  # timed_hits 2
+	var up_bomb := bomb.upgraded_copy()
+	_expect(up_bomb.timed_hits == 1,
+		"bomb (timed_hits 2) must drop to a single window on its first sharpen — got %d" % up_bomb.timed_hits)
+
+	# a synthetic card already at the floor (timed_hits 1) — sharpening it must
+	# never push timed_hits to 0 or negative, same floor idiom the fallback
+	# cost discount already respects (never below 0 energy)
+	var one_window := Card.from_dict({"id": "spark", "name": "Spark", "type": "attack",
+		"cost": 1, "damage": 2, "timed": true, "timed_hits": 1, "timed_damage": 4})
+	var up_one_window := one_window.upgraded_copy()
+	_expect(up_one_window.timed_hits == 1,
+		"a timed card already at a single window must floor there, never drop to 0 or negative — got %d" % up_one_window.timed_hits)
+
+	var slash := _slash()  # timed_hits never authored (defaults to 1), not a timed card at all
+	var up_slash2 := slash.upgraded_copy()
+	_expect(up_slash2.timed_hits == 1,
+		"a card that never carried a real timing requirement (timed_hits defaults to 1) must NOT have it touched just because the default 1 is >= 1 — got %d" % up_slash2.timed_hits)
 
 
 ## backlog #86 duty 3 — upgraded_copy()'s own doc comment (card.gd, right above

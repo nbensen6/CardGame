@@ -355,6 +355,18 @@ func upgraded_copy() -> Card:
 	if int(d["hits"]) > 1:
 		d["hits"] = int(d["hits"]) + 1
 		bumped = true
+	# timed_hits has the exact same "defaults to 1 on every card" trap as
+	# cheapen_amount and hits just above, but the opposite polarity: it is not
+	# a reward to grow, it's a REQUIREMENT to satisfy (how many timing windows
+	# in a row you must nail), the same "more of this number is worse for the
+	# player" shape the cost-discount fallback below already treats specially.
+	# So sharpening a real timed multi-window card (satchel_charge/bomb/
+	# overload_engine — the only three that carry timed_hits > 1) makes it
+	# EASIER, not harder: one fewer required window, floored at 1 (a single
+	# window is still a timing bar, just the easiest one — never 0).
+	if int(d["timed_hits"]) > 1:
+		d["timed_hits"] = int(d["timed_hits"]) - 1
+		bumped = true
 	# backlog #86 duty 2: a 0-cost card with nothing bumpable (Build Grapple,
 	# Build Bomb, Build Winch, Waymark — a bare `create`/`topdeck` at cost 0,
 	# no numeric field, no rule_upgrade) fell through BOTH branches: `bumped`
