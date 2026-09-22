@@ -70,3 +70,9 @@ Frames kept: `design/agents/frames/playtester/2026-09-22-baseline-*.png`
 
 Commit: see this repo's `git log` for the playtest.gd change and this
 write-up, pushed together.
+
+### Frames
+
+![[frames/playtester/2026-09-22-baseline-hands-step010-10card.png]]
+![[frames/playtester/2026-09-22-baseline-play-step002-climb.png]]
+![[frames/playtester/2026-09-22-baseline-play-step020-sigil.png]]

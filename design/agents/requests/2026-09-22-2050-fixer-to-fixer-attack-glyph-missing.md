@@ -83,3 +83,10 @@ incoming-damage line now use the constant instead of a literal "⚔".
   touch layout width enough to trip the offscreen/text-cut/hand checks.
 
 Commit: see the commit that introduces this Result section.
+
+### Frames
+
+![[frames/fixer/2026-09-22-attack-glyph-missing-after-crop.png]]
+![[frames/fixer/2026-09-22-attack-glyph-missing-after.png]]
+![[frames/fixer/2026-09-22-attack-glyph-missing-before-crop.png]]
+![[frames/fixer/2026-09-22-attack-glyph-missing-before.png]]

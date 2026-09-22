@@ -80,3 +80,10 @@ calls `gauge_dot_dx(heights, i, top)` for `dx`.
   in `-after-crop.png`. Playtest report: `**All checks passed.**`
 
 Commit: see the commit that introduces this Result section.
+
+### Frames
+
+![[frames/fixer/2026-09-22-gauge-dot-overlap-after-crop.png]]
+![[frames/fixer/2026-09-22-gauge-dot-overlap-after.png]]
+![[frames/fixer/2026-09-22-gauge-dot-overlap-before-crop.png]]
+![[frames/fixer/2026-09-22-gauge-dot-overlap-before.png]]

@@ -82,3 +82,7 @@ did — left as is.
 
 Commit: see the commit that introduces this Result section.
 
+### Frames
+
+![[frames/fixer/2026-09-22-climb-readout-past-sigil-after.png]]
+![[frames/fixer/2026-09-22-climb-readout-past-sigil-before.png]]

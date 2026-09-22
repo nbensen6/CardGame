@@ -90,3 +90,7 @@ and it sits right at the sigil the camera is aimed at.
 Commit: see the commit that introduces this Result section. Touches only
 `game/assets/3d/cast/cinder_jackal_ai_Image_0.jpg`.
 
+### Frames
+
+![[frames/artist/2026-09-22-jackal-ear-glare-after.png]]
+![[frames/artist/2026-09-22-jackal-ear-glare-before.png]]
