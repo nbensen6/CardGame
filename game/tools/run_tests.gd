@@ -1330,6 +1330,7 @@ func _init() -> void:
 	_test_backlog86_party_card_stats_shows_block_only_when_positive()
 	_test_backlog86_party_card_stats_shows_energy_only_for_the_ally_not_the_viewer()
 	_test_backlog86_party_card_stats_height_carries_the_weak_point_denominator_only_when_set()
+	_test_backlog86_party_card_stats_clamps_foothold_past_the_sigil_to_the_weak_point_height()
 	_test_backlog86_party_card_stats_incoming_damage_shows_through_or_blocked()
 	_test_backlog86_party_card_stats_status_tags_reached_beats_hanging_and_ended_stacks_with_either()
 	# backlog #86 duty 3: card_climb_for, lifted out of combat_3d._card_climb --
@@ -20863,6 +20864,27 @@ func _test_backlog86_party_card_stats_height_carries_the_weak_point_denominator_
 	_expect(Combat3D.party_card_stats(no_wp, 0, 0) == "HP 10/10   ↑2",
 		"weak_point_height omitted (0, e.g. no boss context yet) falls back to the bare Height [got=%s]"
 			% Combat3D.party_card_stats(no_wp, 0, 0))
+
+
+## Same root as hunter_side_offset's clamp (backlog #86): foothold keeps
+## climbing past the sigil (core/combat.gd: FOOTHOLD_MAX, not
+## weak_point_height), so a hunter resting at the sigil at raw foothold 16 on
+## a Height-5 boss used to read "↑16 / 5" -- a player reads that as "16 of 5",
+## which is nonsense. Reported 2026-09-22 off the fixer's own overlap-fix
+## frame (Frog ↑16 / 5, Goblin ↑7 / 5 on a Height-5 jackal).
+func _test_backlog86_party_card_stats_clamps_foothold_past_the_sigil_to_the_weak_point_height() -> void:
+	var past_sigil := {"hp": 10, "max_hp": 10, "foothold": 16, "weak_point_height": 5}
+	_expect(Combat3D.party_card_stats(past_sigil, 0, 0) == "HP 10/10   ↑5 / 5",
+		"a foothold past the sigil reads clamped to the weak point height, never the raw stored value [got=%s]"
+			% Combat3D.party_card_stats(past_sigil, 0, 0))
+	var another_hunter := {"hp": 10, "max_hp": 10, "foothold": 7, "weak_point_height": 5}
+	_expect(Combat3D.party_card_stats(another_hunter, 0, 0) == "HP 10/10   ↑5 / 5",
+		"any raw foothold at or above the sigil clamps the same way, not just FOOTHOLD_MAX [got=%s]"
+			% Combat3D.party_card_stats(another_hunter, 0, 0))
+	var below_sigil := {"hp": 10, "max_hp": 10, "foothold": 3, "weak_point_height": 5}
+	_expect(Combat3D.party_card_stats(below_sigil, 0, 0) == "HP 10/10   ↑3 / 5",
+		"a foothold still below the sigil is untouched by the clamp [got=%s]"
+			% Combat3D.party_card_stats(below_sigil, 0, 0))
 
 
 func _test_backlog86_party_card_stats_incoming_damage_shows_through_or_blocked() -> void:

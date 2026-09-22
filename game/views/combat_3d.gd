@@ -4452,9 +4452,16 @@ static func party_card_stats(p: Dictionary, slot: int, me: int) -> String:
 		parts.append("✦%d" % int(p.get("energy", 0)))
 	# "↑2 / 6", never a bare "↑2" — a Height with nothing to measure it against
 	# tells you where you are and not how far is left (Nick, 2026-08-16).
+	#
+	# The numerator is `foothold` CLAMPED to `wp`, not the raw stored value —
+	# same root as hunter_side_offset() above: foothold keeps climbing past
+	# the sigil (core/combat.gd: FOOTHOLD_MAX, not weak_point_height), so a
+	# hunter sitting at the sigil could read "↑16 / 5", which is nonsense
+	# (backlog request 2026-09-22, frames/fixer/…-hunters-overlap-at-sigil-before.png).
 	var wp := int(p.get("weak_point_height", 0))
-	parts.append("↑%d / %d" % [int(p.get("foothold", 0)), wp] if wp > 0
-		else "↑%d" % int(p.get("foothold", 0)))
+	var foot := int(p.get("foothold", 0))
+	parts.append("↑%d / %d" % [mini(foot, wp), wp] if wp > 0
+		else "↑%d" % foot)
 	# What the telegraphed move costs THIS hunter, after their Block. The red border
 	# already says "aimed at"; this says whether they survive it.
 	var inc: Dictionary = p.get("incoming", {})
