@@ -27,6 +27,7 @@ var _hold := ""   # 3dloop: stop the lap at this phase instead of finishing it
 var _beast := ""  # force a specific beast, to check a model that RNG rarely picks
 var _shade := ""  # "ao" | "shader" | "full" — the rendering prototype, see _apply_shade
 var _wide := false  # hold the establishing shot — see _capture
+var _anim := ""  # anim=attack@0.5 — pose the beast's own animation; see _capture
 var _act := 0     # 3dmap: fast-forward to this act, so later regions get looked at
 var _orbit := 999.0  # 3D combat: drive the orbit camera to this yaw, in degrees
 var _size := Vector2i.ZERO  # size=WxH — shoot at a different screen shape
@@ -123,6 +124,8 @@ func _initialize() -> void:
 			load("res://views/combat_3d.gd").model_variant = a.substr(8)
 		elif a == "toon":
 			load("res://views/combat_3d.gd").toon = true
+		elif a.begins_with("anim="):
+			_anim = a.substr(5)
 		elif a == "classic":
 			load("res://views/combat_3d.gd").classic = true
 		elif a == "wide":
@@ -628,6 +631,19 @@ func _capture() -> void:
 		current_scene.call("_apply_orbit")
 		for _i in 20:
 			await process_frame
+	if _anim != "" and current_scene != null:
+		var ap: AnimationPlayer = current_scene.get("_beast_anim")
+		var parts := _anim.split("@")
+		if ap == null or not ap.has_animation(parts[0]):
+			print("ANIM n/a: %s" % _anim)
+		else:
+			ap.play(parts[0])
+			ap.seek(float(parts[1]) if parts.size() > 1 else 0.0, true)
+			ap.pause()
+			print("ANIM %s" % _anim)
+			for _i in 2:
+				await process_frame
+	if _shade != "":
 		_apply_shade(current_scene)
 		for _i in 3:
 			await process_frame

@@ -86,10 +86,42 @@ identical copy so the ink rides the moving tail. Per beast in
 mask in Blender first (glTF x = Blender x, y = Blender z, z = -Blender y) — it
 must catch the tail and nothing that touches the ground.
 
-## Not done yet
+## Rig and animation (jackal, 2026-09-22)
 
-- **No rig.** Idle life is shader-only; attacks and hits still move the whole
-  body. A Rigify quadruped (or Tripo's auto-rig) is the next step.
+- **Fix the anatomy first.** The Rodin jackal had its tail hanging down where
+  one hind leg should be: 3 feet on the ground, a leg that was really a tail.
+  Duplicated the real hind leg, mirrored it, spread both 0.42 apart; then swung
+  the tail back and up (yaw -60°, then a per-slice lift along Y so it rises
+  from the hips). Check the foot count by clustering verts with z<0.3.
+- **Holes:** the ear cut had opened the shoulder. `holes_fill` refuses a loop
+  with figure-8 pinches, so the patch is built by hand: every boundary edge →
+  a triangle to an inner ring and a bulged centre, UV'd to a nearby dark-fur
+  texel. Re-seat the footholds against the new surface after.
+- **Skeleton, built by script** (`JackalRig`, 23 bones): root, hips → spine →
+  chest → neck → head, tail1-5 following the measured tail centreline, and
+  upper/lower/foot per leg placed from the foot clusters.
+- **Weights, by script, not bone heat.** AI meshes are non-manifold and bone
+  heat fails on them. Region-gated inverse-distance (1/d⁴, top 3 bones):
+  verts near a foot and below z 1.35 only see that leg (plus the chest/hips
+  near the top); tail region only sees tail bones + hips; the rest sees the
+  spine chain. Stress-test by bending joints hard and rendering.
+- **Actions:** `idle` (120f loop), `attack` (wind-up 10f, bite 16f, recover
+  40f), `hit` (recoil 4f, shake off, 20f). Each pushed to its own NLA track;
+  export with `export_animation_mode='ACTIONS'`.
+- **Footholds and climb markers stay unparented**, so nothing a hunter stands
+  on moves. The animations keep the front-left leg (the ledge side) nearly
+  still for the same reason.
+- **In game:** `combat_3d` finds the beast's AnimationPlayer, loops `idle`,
+  plays `attack` when a hunter takes damage and `hit` in `_strike`, queueing
+  back to idle. Beasts without an AnimationPlayer are unaffected.
+
+## Checking animation (not just stills)
+
+- In Blender: render 8 frames per action with a scene camera, tile them 4×2
+  with PIL into a contact sheet, and read the sheet.
+- In game: `tools\shot.cmd ... anim=attack@0.53` seeks the beast's own
+  AnimationPlayer to that time and pauses before the shot. Step it across the
+  clip for a filmstrip.
 - The texture carries the ember glow now; the palette-UV `EMBERS` entry for
   this beast is skipped under the toon shader.
 - Footprint is much wider than the Python model (tail sweep), so the arena

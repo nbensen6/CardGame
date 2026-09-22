@@ -33,7 +33,9 @@ const AI_ART := {"cinder_jackal": "_ai"}
 ## body moves under hunters standing on it, and 2.5cm of breath on a Titan
 ## reads as alive without anyone's feet visibly lifting off the footholds.
 const AI_MOTION := {
-	"cinder_jackal": {"tail_amp": 0.35, "breath_amp": 0.025, "glow_pulse": 0.25},
+	# Rigged (2026-09-22): tail and breath are bone animation now, so the
+	# shader only keeps the ember pulse.
+	"cinder_jackal": {"glow_pulse": 0.25},
 }
 ## Harness switches. `model_variant` loads <beast><variant>.glb when it exists
 ## (e.g. "_ai"); `toon` shades the beast with TOON instead of CREATURE.
@@ -42,6 +44,9 @@ static var model_variant := ""
 static var toon := false
 static var classic := false
 var _beast_toon := false
+## The beast's own AnimationPlayer, when its model is rigged (AI_ART beasts).
+## Plays "idle" on a loop; "attack" and "hit" are one-shots that fall back to it.
+var _beast_anim: AnimationPlayer = null
 
 ## Jump-point rings. Dim for "you could stand here", warm for the next rung up.
 ## Both deliberately low-alpha: these sit on the beast all fight, and a marker
@@ -1460,6 +1465,10 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 		return
 	_beast = (load(path) as PackedScene).instantiate()
 	_rig.add_child(_beast)
+	_beast_anim = _find_anim(_beast)
+	if _beast_anim != null and _beast_anim.has_animation("idle"):
+		_beast_anim.get_animation("idle").loop_mode = Animation.LOOP_LINEAR
+		_beast_anim.play("idle")
 	_shade_model(_beast)
 	_beast_scale = _fit_height(_beast, want)
 	_beast_box = _merged_aabb(_beast)
@@ -3203,6 +3212,9 @@ func _react(s: Dictionary) -> void:
 				_sigil.position if plan["weak"] else _beast_box.get_center(), plan["weak"])
 		var hunter_dmg: Array = plan["hunter_dmg"]
 		var foot_actions: Array = plan["foot_actions"]
+		# The beast bit someone: that is its attack landing, so it is seen doing it.
+		if hunter_dmg.any(func(d): return int(d) > 0):
+			_beast_play("attack")
 		for i in range(foots.size()):
 			if hunter_dmg[i] > 0 and i < _hunters.size() \
 					and is_instance_valid((_hunters[i] as Dictionary)["node"]):
@@ -3682,9 +3694,30 @@ func _damage_popup(amount: int, at: Vector3, weak_point: bool, on_hunter: bool =
 	tw.chain().tween_callback(lbl.queue_free)
 
 
+static func _find_anim(n: Node) -> AnimationPlayer:
+	if n is AnimationPlayer:
+		return n
+	for c in n.get_children():
+		var hit := _find_anim(c)
+		if hit != null:
+			return hit
+	return null
+
+
+## Play one of the beast's own animations, then settle back into its idle.
+## A no-op for the unrigged (Python-built) beasts.
+func _beast_play(anim: String) -> void:
+	if _beast_anim == null or not _beast_anim.has_animation(anim):
+		return
+	_beast_anim.play(anim, 0.08)
+	if _beast_anim.has_animation("idle"):
+		_beast_anim.queue("idle")
+
+
 ## A hit on the beast: recoil, a flash of light, a kick of camera shake — much
 ## bigger when it lands on the weak point.
 func _strike(weak_point: bool) -> void:
+	_beast_play("hit")
 	Sfx.play("strike_weakpoint" if weak_point else "attack")
 	_beast_punch = 1.0 if weak_point else 0.45
 	_shake = maxf(_shake, 0.85 if weak_point else 0.3)
