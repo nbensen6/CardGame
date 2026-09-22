@@ -39,19 +39,24 @@ def guard():
         sys.exit("REFUSED: %d Meshy tasks already today (cap %d, MESHY_DAILY_CAP)" % (n, DAILY_CAP))
 
 def key():
-    # Cloud agents get it as an environment variable (set by Nick in the cloud
-    # environment's settings); this PC keeps it in the meshy MCP entry.
+    """The key, or None. None is normal in the cloud: the environment holds it
+    as an API credential and Anthropic's agent proxy adds the Authorization
+    header to requests for api.meshy.ai AFTER they leave the sandbox, so the
+    agent never sees it. This PC keeps it in the meshy MCP entry."""
     if os.environ.get("MESHY_API_KEY"):
         return os.environ["MESHY_API_KEY"]
-    cfg = json.load(open(os.path.expanduser("~/.claude.json"), encoding="utf-8"))
-    return cfg["mcpServers"]["meshy"]["env"]["MESHY_API_KEY"]
+    try:
+        cfg = json.load(open(os.path.expanduser("~/.claude.json"), encoding="utf-8"))
+        return cfg["mcpServers"]["meshy"]["env"]["MESHY_API_KEY"]
+    except (OSError, KeyError, ValueError):
+        return None
 
 BASE = "https://api.meshy.ai"
 
 def call(method, path, body=None):
     req = urllib.request.Request(BASE + path, method=method,
         data=json.dumps(body).encode() if body is not None else None,
-        headers={"Authorization": "Bearer " + key(), "Content-Type": "application/json"})
+        headers=({"Authorization": "Bearer " + key()} if key() else {}) | {"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=120) as r:
         return json.loads(r.read().decode())
 

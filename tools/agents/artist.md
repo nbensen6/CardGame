@@ -24,9 +24,11 @@ roughly in this order of what a player notices:
 
 ## How
 
-- **Meshy** is available if `MESHY_API_KEY` is set in this environment:
-  `python3 tools/meshy.py balance` first. Capped at 8 tasks a day; one model is
-  ~5 tasks. If the key is missing, work on what does not need it (shaders,
+- **Meshy**: the key is an API credential on the cloud environment — the proxy
+  adds it to requests for api.meshy.ai; you will never see it and need not.
+  Run `python3 tools/meshy.py balance` first; a 401 means the credential is
+  not set up. Capped at 8 tasks a day; one model is
+  ~5 tasks. If `balance` fails, work on what does not need it (shaders,
   Blender scripts, the arena, card faces) and file a request `to: nick` once.
 - **Blender** headless: see `design/agents/status/README.md`. `ai_beast.py`
   builds a quadruped beast end to end; hunters are not beasts — do not force
