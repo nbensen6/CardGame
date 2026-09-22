@@ -2,11 +2,36 @@
 
 The builder lane's work list. See `tools/builder/BRIEF.md`.
 
-**Phase 1 — pathfinder.** Subject: `cinder_jackal`. One item per run, in order.
-The order is by how much of the gap to the Sea of Thieves reference each closes,
-measured where it could be measured (`design/art-target.md`).
+## Phase 3 — AI rollout (from 2026-09-22)
 
-Tick an item when the branch is pushed. Add what you learned underneath it.
+One beast per run, through `design/ai-beast-recipe.md` and
+`tools/blender/ai_beast.py`. Each lands on a branch with `status: review` in its
+`design/beasts/<id>.md` note; Nick picks in Obsidian. Tick when the branch is
+pushed; note the candidate built and the credits spent.
+
+Four-legged beasts first — the script's gate and rig are built for them:
+
+- [x] `cinder_jackal` — the template (session, Meshy candidate B)
+- [ ] `crag_pup` — the first thing a player ever climbs; highest visibility
+- [ ] `bramble_hog`
+- [ ] `boulder_ram`
+- [ ] `yoke_ox`
+- [ ] `grove_bear` (elite)
+- [ ] `flicker_stag` (elite)
+- [ ] `glyph_tortoise` — four legs under a shell; the gate may pass, the sigil
+      raycast may land on the shell instead of the head. Check it.
+
+**Questions for Nick before these** (not quadrupeds — `ai_beast.py` would need a
+new body plan; do not bend it): `gale_serpent`, `riptide_eel`, `bog_leech`,
+`mire_snapper`, `eyrie_hawk`, `sky_snapper`, `gloom_moth`, `husk_beetle`,
+`silk_widow`, `brine_urchin`, `clot_toad`, `riftling`, `shifting_idol`,
+`stone_warden`, `sunken_warden`, `drowned_colossus`, `frost_sentinel`,
+`root_lurker`, `thrasher`, `bounder`. Some may turn out to be four-legged —
+if the docstring says so, gate it and see.
+
+## Phase 1 history (Python-primitive jackal, 2026-09-08..09)
+
+Superseded — kept so no run rediscovers what did not work.
 
 ---
 

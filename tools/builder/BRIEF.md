@@ -1,98 +1,93 @@
-# The builder — brief for the local system-change lane
+# The builder — brief for the local art-rollout lane
 
-You are the fourth lane, added 2026-09-08. Read all of this before touching
-anything.
+You are the fourth lane. Read all of this before touching anything.
 
 ## Your mission, in one sentence
 
-**Take one beast and iterate it until it stands comparison with the Sea of
-Thieves reference; work out what the steps actually were; then run those steps
-across the rest of the cast.**
+**Rebuild the beasts, one per run, through the AI pipeline the Cinder Jackal
+proved — generate with Meshy, gate the anatomy, build it with one script, and
+put it in front of Nick to judge.**
 
-Nick, 2026-09-08:
+History, so you do not repeat it: from 2026-09-08 this lane tried to lift the
+Python-primitive beasts (`tools/blender/<beast>.py`) toward the Sea of Thieves
+reference by shader and pipeline tweaks. Almost none of it was visible at play
+size (baked AO, swatch swaps, surface breakup, material variation — all
+"proven invisible"). On 2026-09-22 the session replaced the jackal outright
+with a generated, rigged, animated model and Nick said it looks good. That is
+the path now. **Phases 1 and 2 are done**: the jackal is the template and the
+recipe is `design/ai-beast-recipe.md`. You are in **phase 3, rollout.**
 
-> *"The goal of the builder is to incrementally build one beast to become as
-> close in reference to quality to sea of thieves reference as possible. Then
-> once it builds one beast it should recognize the steps taken and start working
-> on the rest of the beasts once it has a path."*
+## The pipeline you run
 
-That is three phases and you are always in exactly one of them. Say which at the
-top of every commit.
+Everything is scripted; you need no live Blender.
 
-### Phase 1 — the pathfinder
+1. **Pick the beast.** Top of the "Still Python-built" list in
+   `design/beasts/` (a note per beast; `model: python`), in the order
+   `design/BUILDER-QUEUE.md` gives. Read its note and the docstring of
+   `tools/blender/<beast>.py` — that docstring is the creature's design brief
+   (shape, palette, what makes it this animal).
+2. **Generate three shapes** with `python tools/meshy.py preview "<prompt>"`.
+   Write the prompt from the docstring, and always include the anatomy words
+   that made the jackal work: *standing still in a neutral pose, all four legs
+   clearly separate and solid, paws flat and spaced apart, tail held off the
+   ground, symmetrical left to right* (adapt for non-quadrupeds — see below).
+   Vary the three prompts (build, proportions, stylisation), not just wording.
+   Poll with `get`, download with `fetch`.
+3. **Gate them**, cheapest first:
+   `blender -b --python tools/blender/ai_beast.py -- <id> <candidate.glb> --dry`
+   prints `REPORT gate PASS` or `REPORT FAIL <why>`. Anything that fails the
+   gate is out — never try to repair anatomy; that cost a whole jackal.
+4. **Look at the survivors untextured**: `tools/blender/preview.py` on each,
+   tiled into one sheet. Pick the one that best reads as THIS creature from its
+   docstring, then `refine` it (texture). Refine at most two.
+5. **Build**: run `ai_beast.py` without `--dry`. It orients, scales to the
+   Python model's height, grows basalt footholds up the near foreleg at the
+   Python model's own climb heights, puts the sigil on the head, rigs,
+   animates (idle / attack / hit) and exports `<id>_ai.glb`. Read every
+   `REPORT` line.
+6. **Switch it on**: add the id to `AI_ART` in `game/views/combat_3d.gd` and
+   in `tools/blender/portraits.py`, and to `AI_MOTION` only if it needs a
+   glow tweak. `--import`, then run the tests.
+7. **Look at it in the fight, at 1:1** (below): `tools\preview_beast.cmd <id>`
+   writes the turnaround and three game shots to `design/art-previews/`; also
+   shoot `state=3dgrip` and read the `HUNTER` lines — a hunter must stand ON a
+   foothold, not beside it.
+8. **Portrait**: `blender -b --python tools/blender/portraits.py -- <out> <id>`,
+   check the crop, copy to `game/assets/portraits/`.
+9. **Leave Nick the choice.** Save the candidate sheet as
+   `design/art-previews/<id>_candidates.png`, and in `design/beasts/<id>.md`
+   set `model: ai`, `rigged: true`, `status: review`, embed the candidate
+   sheet and the game shots, and say which candidate you built and why. He
+   judges in Obsidian and can ask for a different candidate.
 
-**Subject: `cinder_jackal`.** It is furthest along already: unioned into one
-continuous skin, opted into the ember channel, and the beast every measurement
-in `design/art-target.md` was taken against.
+### Money
 
-One improvement per run, aimed at the largest remaining gap. Do not move to
-another beast, do not tidy, do not do two. The gap list is in
-`design/BUILDER-QUEUE.md` and it is ordered.
+Meshy credits are Nick's monthly allowance. `tools/meshy.py` logs every task to
+`design/progress/meshy-ledger.md` and refuses past `MESHY_DAILY_CAP` (8 tasks a
+day). One beast should cost **3 previews + 1–2 refines**. Never raise the cap,
+never loop regenerating to chase a better roll — if three shapes all fail the
+gate, write down why in the beast's note and stop.
 
-### Phase 2 — name the path
+### When a beast is not a four-legged animal
 
-When Nick says the jackal is good enough — **his call, not a score** — stop
-building and write `design/beast-recipe.md`. It has to separate two kinds of
-step, because they cost wildly different amounts:
+`ai_beast.py`'s gate and rig assume a quadruped. For a serpent, a flyer, a
+colossus, a shell or a swarm: generate and gate as usual, and if the gate
+fails for being the wrong body plan, **do not bend the script to force it.**
+Write it into the queue as a question for Nick ("gale_serpent: no feet; needs a
+serpent path in ai_beast.py") and move to the next quadruped.
 
-- **Pipeline steps** that already apply to every beast for free once built —
-  the creature shader, the union pass, the ember channel. Rolling these out is
-  adding a name to a list file.
-- **Per-beast authoring** that has to be decided individually — which swatches
-  glow on THIS animal, where its one exaggerated feature is, how its colour
-  zones split. The recipe must say how to decide, not just what was decided.
-
-Write down what was tried and did NOT help, too. Baked ambient occlusion cost a
-day and moved 2.25/255 at fight distance; a future run should not rediscover
-that.
-
-### Phase 3 — roll it out
-
-One beast per run, following the recipe. Now the unit is small again and the
-work is known, so it should be fast and boring. If a beast fights the recipe,
-that is a finding: add it to the recipe as a case, do not improvise a new path.
-
-## The four lanes
-
-| Lane | Runs | Does |
-|---|---|---|
-| **cloud** | hourly, Anthropic infra, no screen | reads systems end to end, hunts bugs, writes regression tests. **No art.** |
-| **fixer/inspector** | hourly, this PC, has a screen | plays the game and looks at it, files findings. **Changes nothing.** |
-| **builder** (you) | every few hours, this PC | the three phases above. Pushes a branch. |
-| **session** | Nick and Claude, live | whatever Nick is actually asking for |
-
-## The bar
-
-`design/art-target.md` holds the analysis. The short version, measured against
-the megalodon Nick gave as reference:
-
-- **Value range.** Their body runs near-black so the hot accents can scream.
-  Measured, only 2.4% of our jackal sits above 80% luminance and there is no
-  focal point at all.
-- **Emissive that goes WHITE at the core.** Saturated orange tops out at 62%
-  luminance however hard the gain is pushed. This is why `ember_white` exists.
-- **Surface breakup.** Their skin carries scarring and tonal variation; ours is
-  flat swatches, one colour per face, no variation anywhere.
-- **Material variation.** Wet body, matte fins, glowing cracks — three
-  materials. We have one roughness for the whole animal.
-- **One exaggerated anchor.** Those red dorsal spines are enormous and
-  unmistakable. Our ember ridge is a strip you have to hunt for.
-- **Form continuity.** Done — the union pass closed this one.
-
-**Do not put screenshots of other games in this repo.** The reference is
-described here and in `art-target.md`; work from the description.
+**Do not put screenshots of other games in this repo.**
 
 ## Your job, one item per run
 
 1. **Fetch first.** `git fetch origin && git merge origin/main`. Three other
    writers are ahead of you.
-2. **Take the top unblocked item** from `design/BUILDER-QUEUE.md`.
+2. **Take the next beast** (see *The pipeline you run*, step 1).
 3. **Branch.** `git checkout -b builder/<yyyy-mm-dd>-<short-slug>`. Never work
    on main.
-4. **Build the general thing.** If the improvement can live in the shader, the
-   pipeline or a list file, put it there rather than in one beast's script —
-   that is what makes phase 3 cheap. If it genuinely must be authored per beast,
-   say so in the commit so the recipe records it.
+4. **Run the pipeline** above. If a beast needs a fix the script does not
+   have, fix it IN `ai_beast.py` (so every later beast gets it) and say so in
+   the commit; never hand-edit one beast's model.
 5. **Prove it, AT 1:1.** Capture the beast in a real fight, same camera and
    biome as the previous capture, and put the before/after in the commit. A
    number is not proof.
@@ -111,6 +106,11 @@ described here and in `art-target.md`; work from the description.
    the next run needs.
 
 ## Hard rules
+
+- **Never launch Godot directly.** Every screenshot goes through
+  `tools\shot.cmd` (or `preview_beast.cmd`, which uses it): it opens the window
+  on Nick's second monitor without focus. A direct launch lands on his main
+  screen and tabs him out of his game.
 
 - **Never push main. Never merge your own branch.** A bigger blast radius is
   exactly why this lane is reviewed and the others are not.
@@ -154,6 +154,6 @@ many lines you changed.
 
 ## Stop conditions
 
-Stop after ONE item, branch pushed, queue updated. If the queue is empty, say so
+Stop after ONE beast, branch pushed, note and queue updated. If the queue is empty, say so
 and stop — but check first that you are not simply declining the hard item at
 the top, which is the failure mode this lane will have.
