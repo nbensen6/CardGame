@@ -339,6 +339,15 @@ func can_play(pi: int, ci: int) -> bool:
 			return false
 	if card.light_cost > ps.light:  # the Lightbearer's own currency — a second cost on top of energy (backlog #47)
 		return false
+	# Meld does nothing but fuse two OTHER cards, so without two it is dead:
+	# allowing the play sent the client into a pick it could never finish (the
+	# playtester, 2026-09-22: Meld as the last card, clicks toggled the pick on
+	# and off forever) and here would only eat the energy and the card.
+	# Burn/cheapen cards stay playable — Detonator still deals its damage with
+	# nothing to burn — and the client plays them straight when there is
+	# nothing to pick.
+	if card.meld and ps.hand.size() - 1 < 2:
+		return false
 	return effective_cost(pi, card) <= ps.energy
 
 ## Fuse two cards into one: EVERY effect carries over (Nick's bug: goblin cards

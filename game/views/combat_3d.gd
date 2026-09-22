@@ -3831,8 +3831,14 @@ func _layout_hand() -> void:
 	# The scroll viewport's width is fixed by the HUD, so it cannot run away.
 	var scroller := _hand_row.get_parent() as Control
 	var room: float = scroller.size.x if scroller != null else _hand_row.size.x
-	step = hand_fan_step(n, w, room, step)
 	var mid := (float(n) - 1.0) * 0.5
+	# The outer cards are TILTED about a pivot well below them, which swings
+	# their top corners outward past where an upright card would end. Squeeze
+	# for that too, or a six-card hand leans over End Turn (the playtester,
+	# 2026-09-22, after Take Aim drew a sixth card).
+	var h: float = (cards[0] as Control).custom_minimum_size.y
+	var overhang: float = h * 1.35 * sin(mid * FAN_TILT)
+	step = hand_fan_step(n, w, maxf(room - 2.0 * overhang, w), step)
 	# Desktop tucks DEEP - at rest you see the name and the art and the rules
 	# are below the screen edge, which is precisely the Slay the Spire hand:
 	# their resting cards show the top half and nothing else, and that is why
@@ -3848,9 +3854,13 @@ func _layout_hand() -> void:
 		c.pivot_offset = Vector2(w * 0.5, c.custom_minimum_size.y * 1.35)
 		var raised := card_is_raised(c, _hand_hover, _timing_card)
 		var lift: float = FAN_RISE if raised else 0.0
-		c.position = Vector2(
-			hand_card_x(i, n, w, step, room),
-			tuck + absf(off) * FAN_DROP - lift)
+		var rest := Vector2(hand_card_x(i, n, w, step, room), tuck + absf(off) * FAN_DROP)
+		c.position = rest - Vector2(0.0, lift)
+		# A raised card keeps its resting spot as hover area (CardView.hover_hold):
+		# the resting pose's global transform, tilt and all.
+		if c is CardView:
+			var pose := Transform2D(off * FAN_TILT, rest + c.pivot_offset) * Transform2D(0.0, -c.pivot_offset)
+			(c as CardView).hover_hold = (_hand_row.get_global_transform() * pose) if raised else null
 		# A hovered card straightens up as it rises, so the face you are reading
 		# is square to you rather than tilted.
 		c.rotation = 0.0 if raised else off * FAN_TILT
@@ -3895,6 +3905,16 @@ func _render_hand() -> void:
 	# End Turn after a fall, a hit, or any mid-turn refresh (2026-09-22,
 	# measured by screenshot.gd HANDGEO: centre +215px, z 5..9).
 	for c in _hand_row.get_children():
+		# Unhook first. Every card's hover/tap handlers are lambdas that capture
+		# the card; removing a card that is under the mouse (a pick during Burn
+		# Coal or Meld rebuilds the hand from inside the tap) queues a
+		# mouse_exited that lands after the card is freed — "Lambda capture at
+		# index 0 was freed", caught by the playtester 2026-09-22.
+		for sig in ["mouse_entered", "mouse_exited", "tapped", "gui_input"]:
+			for con in c.get_signal_connection_list(sig):
+				c.disconnect(sig, con["callable"])
+		if _hand_hover == c:
+			_hand_hover = null
 		_hand_row.remove_child(c)
 		c.queue_free()
 	var priv := _my_private()
@@ -4042,6 +4062,12 @@ func _on_card_tapped(card: Dictionary, cv: CardView) -> void:
 		cv.start_timing(hits)
 		return
 	if bool(card.get("exhaust_pick", false)) or bool(card.get("cheapen_pick", false)) 			or bool(card.get("meld", false)):
+		# Nothing else in hand to pick: play it as it stands rather than open
+		# a pick that can never be answered.
+		if (_my_private().get("hand", []) as Array).size() <= 1:
+			Sfx.play("card")
+			_client.play_card(index, true, _cmd_slot())
+			return
 		_start_selection(card)
 		return
 	Sfx.play("card")
@@ -4141,6 +4167,20 @@ func _pick_for_selection(idx: int) -> void:
 			_client.play_card(play_index, true, _cmd_slot(), sac, target)
 		"continue":
 			_selecting = result["selecting"]
+			# Nothing left to pick (Burn Coal with one other card: you burn it and
+			# there is no second card to cheapen) — play with what was chosen
+			# instead of waiting on a pick that cannot happen.
+			var left := 0
+			for hc in _my_private().get("hand", []):
+				var hi := int((hc as Dictionary)["index"])
+				if hi != int(_selecting["play_index"]) and hi != int(_selecting["sac"]):
+					left += 1
+			if left == 0:
+				var fire: Dictionary = _selecting
+				_selecting = {}
+				Sfx.play("card")
+				_client.play_card(int(fire["play_index"]), true, _cmd_slot(), int(fire["sac"]), -1)
+				return
 			_render_hand()
 
 

@@ -9288,15 +9288,17 @@ func _test_backlog86_meld_with_no_valid_targets_no_ops_instead_of_crashing() -> 
 	var ps: PlayerState = combat.players[0]
 	ps.hand = [_meld_card()]  # nothing else in hand to fuse
 	ps.energy = 1
+	# 2026-09-22: a lone Meld is now unplayable (can_play), not a wasted play —
+	# the client could never finish its pick. Nothing is spent, nothing lost.
+	var playable: bool = combat.can_play(0, 0)
 	var ok: bool = combat.play_card(0, 0)  # sac_index/target_index default to -1
-	var whiffed := false
-	for line in combat.log:
-		if String(line).find("needs two cards to meld") != -1:
-			whiffed = true
-	_expect(ok and ps.hand.is_empty() and ps.discard_pile.size() == 1
-		and String(ps.discard_pile[0].id) == "meld" and whiffed,
-		"meld with fewer than two valid picks logs the no-op and discards the played " +
-		"card normally, rather than crashing or fusing a card from nothing")
+	_expect(not playable and not ok and ps.hand.size() == 1 and ps.energy == 1
+		and ps.discard_pile.is_empty(),
+		"a Meld with fewer than two other cards is unplayable, and trying costs " +
+		"nothing: no energy spent, the card stays in hand")
+	# with two others it is playable again
+	ps.hand = [_meld_card(), _slash(), _slash()]
+	_expect(combat.can_play(0, 0), "a Meld with two other cards in hand is playable")
 
 
 func _test_vine_weaver_poison_and_wound() -> void:

@@ -1,0 +1,469 @@
+## Autonomous playtester — plays the real game through real input and checks
+## what a player would notice, every step, over time.
+##
+## screenshot.gd checks one frozen moment; run_tests.gd checks one rule in
+## isolation. Nick's bugs live in neither: the hand drifting right only AFTER an
+## End Turn, a card flickering only while the mouse sits still on it. This plays
+## a fight the way he does — mouse moves, clicks, waits — and after every action
+## runs the INVARIANTS below against the live screen and the live model.
+##
+##   tools\playtest.cmd mode=play beast=cinder_jackal steps=40 out=C:\pt
+##   tools\playtest.cmd mode=hover beast=cinder_jackal out=C:\pt
+##
+## Always through tools\playtest.cmd (second monitor, no focus steal).
+##
+## modes:
+##   play   pick a playable card, move to it, click it (timed cards: the bot
+##          plays the hit circle / sweep for real), else End Turn. Repeat.
+##   hands  deal every hand size 1..10 and check the layout of each
+##   hover  park the mouse still at points across every resting card and count
+##          how often the raised card changes. A still mouse must never flicker.
+##
+## Output (in out=): report.md (every FAIL with the step it happened on),
+## step_NNN.png per action, and a FAIL line on stdout per violation.
+## Exit code = number of distinct failing checks.
+extends SceneTree
+
+var _mode := "play"
+var _beast := ""
+var _steps := 40
+var _out := "user://playtest"
+var _size := Vector2i(1280, 720)
+
+var _fails: Dictionary = {}       # check name -> count
+var _log: PackedStringArray = []
+var _step := 0
+var _errors: Array = []           # script errors caught by _ErrLog
+
+
+class _ErrLog extends Logger:
+	var sink: Array
+	func _init(s: Array) -> void:
+		sink = s
+	func _log_error(function: String, file: String, line: int, code: String,
+			rationale: String, _editor_notify: bool, error_type: int,
+			bt: Array) -> void:
+		# error_type 1 = warning; everything else is an error worth failing on
+		if error_type != 1:
+			var where: PackedStringArray = []
+			for b in bt:
+				if b != null:
+					for i in mini(b.get_frame_count(), 4):
+						where.append("%s:%d %s" % [b.get_frame_file(i).get_file(), b.get_frame_line(i), b.get_frame_function(i)])
+			sink.append("%s:%d %s %s  <- %s" % [file.get_file(), line, code, rationale, " < ".join(where)])
+	func _log_message(_message: String, _error: bool) -> void:
+		pass
+
+
+func _initialize() -> void:
+	for a in OS.get_cmdline_user_args():
+		var kv := a.split("=", true, 1)
+		match kv[0]:
+			"mode": _mode = kv[1]
+			"beast": _beast = kv[1]
+			"steps": _steps = int(kv[1])
+			"out": _out = kv[1]
+			"size":
+				var wh := kv[1].split("x")
+				_size = Vector2i(int(wh[0]), int(wh[1]))
+	OS.add_logger(_ErrLog.new(_errors))
+	DirAccess.make_dir_recursive_absolute(_out)
+	DisplayServer.window_set_size(_size)
+	root.set_flag(Window.FLAG_NO_FOCUS, true)
+	_watchdog()
+	RunSave.use_scratch_slot("run_playtest")
+	RunSave.clear()
+	Progress.use_scratch_slot("progress_playtest")
+	Progress.reset_hints()
+	Progress.set_hints_enabled(false)
+	Progress.set_timing_style(Progress.TIMING_CIRCLE)
+	var transport := LocalTransport.new()
+	Session.transport = transport
+	Session.host = GameHost.new(transport, 42, 2, true)
+	Session.client = GameClient.new(transport, 1)
+	Session.client.join()
+	Session.client.select_character("frog", 0)
+	Session.client.select_character("goblin_mech", 1)
+	var r: Run = Session.host._run
+	var g := 0
+	while r.phase == Run.Phase.MAP and g < 30:
+		g += 1
+		r.pick_node(int(r.available_nodes()[0]))
+	if _beast != "" and r.combat != null:
+		r.combat.boss = Content.build_boss(_beast)
+	Session.host._broadcast_state()
+	change_scene_to_file("res://views/game_3d.tscn")
+	_run.call_deferred()
+
+
+func _watchdog() -> void:
+	await create_timer(600.0).timeout
+	_fail("watchdog", "playtest did not finish in 600s — something is stuck")
+	_finish()
+
+
+# --------------------------------------------------------------- helpers
+
+func _frames(n: int) -> void:
+	for _i in n:
+		await process_frame
+
+
+func _view() -> Node:
+	var router := current_scene
+	if router == null:
+		return null
+	var v: Node = router.get("_view")
+	return v if v != null else router
+
+
+func _combat() -> Combat:
+	var r: Run = Session.host._run
+	return r.combat if r != null else null
+
+
+func _fail(check: String, detail: String) -> void:
+	_fails[check] = int(_fails.get(check, 0)) + 1
+	var line := "FAIL [step %d] %s: %s" % [_step, check, detail]
+	print(line)
+	_log.append("- " + line)
+
+
+func _note(s: String) -> void:
+	print(s)
+	_log.append("- " + s)
+
+
+func _move(at: Vector2) -> void:
+	var mm := InputEventMouseMotion.new()
+	mm.position = at
+	mm.global_position = at
+	Input.warp_mouse(at)
+	root.push_input(mm)
+
+
+func _click(at: Vector2, release := true) -> void:
+	_move(at)
+	await process_frame
+	var down := InputEventMouseButton.new()
+	down.button_index = MOUSE_BUTTON_LEFT
+	down.pressed = true
+	down.position = at
+	down.global_position = at
+	root.push_input(down)
+	if release:
+		await process_frame
+		var up := down.duplicate() as InputEventMouseButton
+		up.pressed = false
+		root.push_input(up)
+
+
+func _hand(v: Node) -> Array:
+	var row: Control = v.get("_hand_row")
+	if row == null:
+		return []
+	return row.get_children().filter(func(c: Node) -> bool: return not c.is_queued_for_deletion())
+
+
+func _shot() -> void:
+	await RenderingServer.frame_post_draw
+	var img := root.get_viewport().get_texture().get_image()
+	img.save_png("%s/step_%03d.png" % [_out, _step])
+
+
+# --------------------------------------------------------------- invariants
+
+## Every check a player would notice without being told to look.
+func _check(v: Node, when: String) -> void:
+	if v == null or not v.has_method("_layout_hand"):
+		return
+	var screen := Vector2(root.get_visible_rect().size)
+	var cards := _hand(v)
+	var hover: Variant = v.get("_hand_hover")
+	var timing: Variant = v.get("_timing_card")
+
+	# 1. The resting fan is centred on its strip.
+	if hover == null and timing == null and not cards.is_empty():
+		var lo := INF
+		var hi := -INF
+		for c in cards:
+			var r := (c as Control).get_global_rect()
+			lo = minf(lo, r.position.x)
+			hi = maxf(hi, r.end.x)
+		var strip := ((v.get("_hand_row") as Control).get_parent() as Control).get_global_rect()
+		var off := (lo + hi) * 0.5 - strip.get_center().x
+		if absf(off) > 12.0:
+			_fail("hand-centred", "%s: fan centre is %+.0fpx off its strip" % [when, off])
+
+	# 2. The model and the screen agree on the hand.
+	var c := _combat()
+	var me := int(v.call("_me")) if v.has_method("_me") else 0
+	if c != null and me < c.players.size():
+		var n_model: int = c.players[me].hand.size()
+		if cards.size() != n_model:
+			_fail("hand-count", "%s: %d cards on screen, %d in the hand" % [when, cards.size(), n_model])
+		# 3. Energy shown is energy held.
+		var el: Label = v.get("_energy_label")
+		if el != null and el.is_visible_in_tree() and el.text.is_valid_int() \
+				and int(el.text) != int(c.players[me].energy):
+			_fail("energy-label", "%s: shows %s, model has %d" % [when, el.text, c.players[me].energy])
+
+	# 4. Nothing on the HUD hangs off the screen or is cut short.
+	for n in _all_controls(v):
+		var ctl := n as Control
+		if not ctl.is_visible_in_tree() or ctl in cards or _inside_hand(ctl, v):
+			continue
+		var r := ctl.get_global_rect()
+		if r.size.x < 2 or r.size.y < 2 or r.size.x >= screen.x - 1:
+			continue
+		if r.position.x < -4 or r.position.y < -4 or r.end.x > screen.x + 4 or r.end.y > screen.y + 4:
+			_fail("offscreen", "%s: %s %s leaves the screen" % [when, ctl.name, r])
+		if ctl is Label:
+			var lb := ctl as Label
+			if lb.text != "" and lb.autowrap_mode == TextServer.AUTOWRAP_OFF \
+					and lb.text_overrun_behavior == TextServer.OVERRUN_NO_TRIMMING \
+					and lb.get_minimum_size().x > r.size.x + 2 and lb.clip_text:
+				_fail("text-cut", "%s: '%s' is clipped (%.0f > %.0f)" % [when, lb.text.left(30),
+					lb.get_minimum_size().x, r.size.x])
+
+	# 5. The resting hand never covers End Turn / Switch.
+	for bname in ["_end_btn", "_switch_btn"]:
+		var b: Control = v.get(bname)
+		if b == null or not b.is_visible_in_tree():
+			continue
+		var br := b.get_global_rect()
+		for card in cards:
+			if card == hover or card == timing:
+				continue
+			if (card as Control).get_global_rect().grow(-6).intersects(br):
+				_fail("hand-over-button", "%s: a resting card covers %s" % [when, b.name])
+				break
+
+	# 6. No script errors, ever.
+	while not _errors.is_empty():
+		_fail("script-error", String(_errors.pop_front()))
+
+
+func _all_controls(n: Node) -> Array:
+	var out: Array = []
+	for c in n.get_children():
+		if c is Control:
+			out.append(c)
+		out.append_array(_all_controls(c))
+	return out
+
+
+func _inside_hand(ctl: Control, v: Node) -> bool:
+	var row: Control = v.get("_hand_row")
+	return row != null and (row == ctl or row.is_ancestor_of(ctl))
+
+
+# --------------------------------------------------------------- modes
+
+func _run() -> void:
+	await _frames(60)
+	var v := _view()
+	_note("playtest mode=%s beast=%s view=%s" % [_mode, _beast, v.name if v else "none"])
+	_check(v, "start")
+	if _mode == "hover":
+		await _hover_sweep()
+	elif _mode == "hands":
+		await _hand_sizes()
+	else:
+		await _play()
+	_finish()
+
+
+## Every hand size a run can produce, 1..10, laid out and checked — a six-card
+## hand only turns up when the draw allows, so do not wait for one.
+func _hand_sizes() -> void:
+	var c := _combat()
+	var ids := ["tongue_snap", "leap", "scramble", "hop", "pounce", "brace",
+		"leapfrog", "tongue_flick", "take_aim", "tongue_snap"]
+	for n in range(1, 11):
+		_step = n
+		c.players[0].hand.clear()
+		for i in n:
+			c.players[0].hand.append(Content.make_card(ids[i]))
+		Session.host._broadcast_state()
+		await _frames(20)
+		_check(_view(), "hand of %d" % n)
+		await _shot()
+
+
+## A still mouse must never make the raised card change. Parks the pointer at a
+## grid of points across each card's resting (visible) face, holds it still for
+## half a second, and counts how often `_hand_hover` flips while it waits.
+func _hover_sweep() -> void:
+	var v := _view()
+	var screen := Vector2(root.get_visible_rect().size)
+	var cards := _hand(v)
+	var worst := 0
+	for i in cards.size():
+		# Resting geometry first, with nothing hovered.
+		_move(Vector2(screen.x * 0.5, screen.y * 0.3))
+		await _frames(8)
+		var r := (cards[i] as Control).get_global_rect()
+		var top := r.position.y
+		var bottom := minf(r.end.y, screen.y - 2)
+		for fy in [0.08, 0.3, 0.55, 0.8, 0.97]:
+			for fx in [0.25, 0.5, 0.75]:
+				var at := Vector2(r.position.x + r.size.x * fx, top + (bottom - top) * fy)
+				_move(Vector2(screen.x * 0.5, screen.y * 0.3))
+				await _frames(4)
+				_move(at)
+				var flips := 0
+				var last: Variant = v.get("_hand_hover")
+				for _f in 30:
+					await process_frame
+					# re-send the same position: a real mouse keeps reporting it
+					_move(at)
+					var h: Variant = v.get("_hand_hover")
+					if h != last:
+						flips += 1
+						last = h
+				worst = maxi(worst, flips)
+				if flips > 1:
+					_fail("hover-flicker", "card %d, mouse still at %s: raised card changed %d times in 30 frames"
+						% [i, at.round(), flips])
+					if flips == worst:
+						await _shot()
+		_step += 1
+	_note("hover sweep: worst %d flips for a still mouse (0-1 is correct)" % worst)
+
+
+## Plays the fight through real clicks.
+func _play() -> void:
+	var screen := Vector2(root.get_visible_rect().size)
+	var idle := 0
+	for s in _steps:
+		_step = s
+		var v := _view()
+		var c := _combat()
+		if c == null or c.phase == Combat.Phase.OVER or v == null or not v.has_method("_layout_hand"):
+			_note("fight over at step %d" % s)
+			break
+		var me := int(v.call("_me"))
+		var before := _snap(c, me)
+		var action := ""
+		var cards := _hand(v)
+		var target: CardView = null
+		for cv in cards:
+			if cv is CardView and not (cv as CardView).disabled:
+				target = cv
+				break
+		if target != null:
+			# hover first, the way a hand does, then click where it now IS
+			_move((target as Control).get_global_rect().get_center())
+			await _frames(6)
+			var at := (target as Control).get_global_rect().get_center()
+			action = "play '%s'%s (hunter %d) at %s" % [String((target as CardView).get("_data").get("name", "?")) if (target as CardView).get("_data") is Dictionary else "?",
+				" [timed]" if (target as CardView).get("_data") is Dictionary and bool((target as CardView).get("_data").get("timed", false)) else "",
+				me, at.round()]
+			await _click(at)
+			await _frames(4)
+			await _drive_timing(v)
+			# a pick (meld / burn / cheapen) asks for one or two more cards; pick
+			# different cards each time, from the right end, never the card itself
+			var guard := 0
+			while is_instance_valid(v) and v.has_method("_pick_for_selection") and not (v.get("_selecting") as Dictionary).is_empty() and guard < 4:
+				guard += 1
+				var sel: Dictionary = v.get("_selecting")
+				var play_i := int(sel.get("play_index", -1))
+				var sac_i := int(sel.get("sac", -1))
+				var pick: Control = null
+				for x in _hand(v):
+					var d: Dictionary = (x as CardView).get("_data")
+					var ix := int(d.get("index", -1))
+					if ix != play_i and ix != sac_i:
+						pick = x
+				if pick == null:
+					break
+				_move(pick.get_global_rect().get_center())
+				await _frames(4)
+				await _click(pick.get_global_rect().get_center())
+				await _frames(6)
+		else:
+			var eb: Button = v.get("_end_btn")
+			action = "End Turn"
+			await _click(eb.get_global_rect().get_center())
+		await _frames(45)
+		v = _view()
+		if v == null or not v.has_method("_layout_hand"):
+			_note("step %d: %s -> the fight ended (screen is now %s)" % [s, action, v.name if v else "none"])
+			break
+		c = _combat()
+		var after := _snap(c, me) if c != null else {}
+		if after == before and c != null and c.phase != Combat.Phase.OVER:
+			idle += 1
+			_fail("dead-click", "%s changed nothing (energy/hand/hp/foothold/turn all the same)" % action)
+			if idle >= 3:
+				_fail("stuck", "three actions in a row did nothing")
+				break
+		else:
+			idle = 0
+		_note("step %d: %s -> %s" % [s, action, _delta(before, after)])
+		_check(v, action)
+		await _shot()
+	_move(Vector2(screen.x * 0.5, screen.y * 0.3))
+
+
+## Plays whatever timing face opened, on the beat.
+func _drive_timing(v: Node) -> void:
+	if not is_instance_valid(v):
+		return
+	var circle: Control = v.get("_circle")
+	var guard := 0
+	while is_instance_valid(v) and is_instance_valid(circle) and circle.visible and bool(circle.call("is_live")) and guard < 600:
+		guard += 1
+		var off: float = circle.call("_offset")
+		var hit := int(circle.get("_hits_done"))
+		if absf(off) < 0.02 and hit < (circle.get("_notes") as Array).size():
+			await _click(circle.call("_screen", hit))
+		await process_frame
+	if not is_instance_valid(v):
+		return   # the fight ended on that hit and its screen is gone
+	var tc: Variant = v.get("_timing_card")
+	guard = 0
+	while tc != null and is_instance_valid(tc) and bool(tc.call("is_timing")) and guard < 600:
+		guard += 1
+		await _click((tc as Control).get_global_rect().get_center())
+		await _frames(3)
+
+
+func _snap(c: Combat, me: int) -> Dictionary:
+	var p = c.players[me]
+	return {"energy": p.energy, "hand": p.hand.size(), "boss": c.boss.hp,
+		"foot": p.foothold, "hp": p.combatant.hp,
+		"turn": c.round_num, "played": c.cards_played_total}
+
+
+func _delta(a: Dictionary, b: Dictionary) -> String:
+	var parts: PackedStringArray = []
+	for k in a:
+		if b.get(k) != a[k]:
+			parts.append("%s %s→%s" % [k, a[k], b.get(k)])
+	return ", ".join(parts) if parts else "no change"
+
+
+func _finish() -> void:
+	# A GDScript error inside the bot's own coroutine just returns from it, so
+	# anything still in the sink is the reason the run ended early.
+	while not _errors.is_empty():
+		_fail("script-error", String(_errors.pop_front()))
+	var lines: PackedStringArray = ["# Playtest report", "",
+		"mode `%s`, beast `%s`, %d steps" % [_mode, _beast, _step + 1], "",
+		"## Result", ""]
+	if _fails.is_empty():
+		lines.append("**All checks passed.**")
+	else:
+		for k in _fails:
+			lines.append("- **%s**: %d" % [k, _fails[k]])
+	lines.append_array(["", "## Log", ""])
+	lines.append_array(_log)
+	var f := FileAccess.open(_out + "/report.md", FileAccess.WRITE)
+	f.store_string("\n".join(lines) + "\n")
+	f.close()
+	print("PLAYTEST %s: %d failing check(s) %s" % ["OK" if _fails.is_empty() else "FAIL",
+		_fails.size(), _fails])
+	quit(_fails.size())

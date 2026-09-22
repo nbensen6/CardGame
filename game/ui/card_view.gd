@@ -307,6 +307,28 @@ func _layer(node: Control, l: float, t: float, r: float, b: float,
 	return node
 
 
+## Where this card sat before it was raised, in global coordinates, while it is
+## raised; empty otherwise. A hovered card jumps up out of the fan and grows,
+## which moves it out from under a mouse parked on its lower half — so it lost
+## hover, dropped back under the mouse, gained hover, and rose again, every
+## frame (Nick, 2026-09-22: "rapidly goes from your hand to selected"). The
+## playtester measured 30 flips in 30 frames on the bottom half of every card.
+## Counting the resting spot as part of the raised card makes the pointer stay
+## inside it; clicks there play it, too.
+## Stored as the resting TRANSFORM, not a rect: the outer cards of the fan sit
+## tilted, and an upright rect missed their corners (still 5 flicker spots).
+var hover_hold: Variant = null   # Transform2D (global, at rest) or null
+
+
+func _has_point(point: Vector2) -> bool:
+	if Rect2(Vector2.ZERO, size).has_point(point):
+		return true
+	if hover_hold == null:
+		return false
+	var at_rest: Vector2 = (hover_hold as Transform2D).affine_inverse() * (get_global_transform() * point)
+	return Rect2(Vector2.ZERO, size).has_point(at_rest)
+
+
 func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> void:
 	_compact = compact
 	_data = data
