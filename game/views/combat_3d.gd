@@ -1378,6 +1378,18 @@ static func intent_is_hostile(kind: String) -> bool:
 	return kind in ["attack", "attack_all", "swipe_high", "swipe_low", "leech", "rift", "frail", "curse"]
 
 
+## "⚔" (U+2694 CROSSED SWORDS) has no glyph in Godot's fallback font chain on
+## this build and draws as a bare "×" — indistinguishable from a broken icon,
+## on the one line that's supposed to be "the single most time-critical fact
+## on the screen" (_party_card's own words). Confirmed with a probe render:
+## every other symbol this file already leans on for the same HUD — ⚠ ⛨ ◈ ✦
+## ↑, even the neighbouring ◆ ▲ ✚ ▼ for block/enrage/regen/frail two lines
+## down — comes through clean; only this one codepoint is missing. † (U+2020
+## DAGGER) is confirmed to render in the same probe and reads as "this will
+## cut you" well enough paired with the move name it always sits beside.
+const ATTACK_GLYPH := "†"
+
+
 ## backlog #86 duty 3 (twenty-fourth pass): lifted to a static, testable twin —
 ## this instance method's only non-pure input was _height_gap(s), so the whole
 ## body moves and the instance just supplies that one number. Writing the test
@@ -1403,11 +1415,11 @@ static func intent_text_for(boss: Dictionary, height_gap: int) -> String:
 	var term := "[u]%s[/u]" % name
 	match kind:
 		"attack", "attack_all", "swipe_high", "swipe_low", "leech":
-			return "⚔ %s %d" % [term, v]
+			return "%s %s %d" % [ATTACK_GLYPH, term, v]
 		"rift":
 			# The real total, gap included, the same way a card face shows what it
 			# will actually do rather than the formula behind it.
-			return "⚔ %s %d" % [term, v + height_gap * Combat.RIFT_PER_GAP]
+			return "%s %s %d" % [ATTACK_GLYPH, term, v + height_gap * Combat.RIFT_PER_GAP]
 		"block": return "◆ %s %d" % [term, int(move.get("value", 0))]
 		"enrage": return "▲ %s %d" % [term, int(move.get("value", 0))]
 		"regen": return "✚ %s %d" % [term, int(move.get("value", 0))]
@@ -4483,7 +4495,10 @@ static func party_card_stats(p: Dictionary, slot: int, me: int) -> String:
 	var inc: Dictionary = p.get("incoming", {})
 	var through := int(inc.get("through", 0))
 	if int(inc.get("raw", 0)) > 0:
-		parts.append("⚔%d" % through if through > 0 else "⛨ blocked")
+		# ATTACK_GLYPH, not a literal "⚔" — see its own doc comment above
+		# intent_text_for: the real crossed-swords glyph is missing from this
+		# font and draws as a bare, easy-to-miss "×" on this exact readout.
+		parts.append((ATTACK_GLYPH + "%d") % through if through > 0 else "⛨ blocked")
 	if bool(p.get("reached", false)):
 		parts.append("at the sigil")
 	elif not bool(p.get("secure", true)):

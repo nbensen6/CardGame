@@ -20899,11 +20899,12 @@ func _test_backlog86_party_card_stats_clamps_foothold_past_the_sigil_to_the_weak
 
 func _test_backlog86_party_card_stats_incoming_damage_shows_through_or_blocked() -> void:
 	var through := {"hp": 10, "max_hp": 10, "foothold": 0, "incoming": {"raw": 9, "through": 5}}
-	_expect(Combat3D.party_card_stats(through, 0, 0) == "HP 10/10   ↑0   ⚔5",
+	_expect(Combat3D.party_card_stats(through, 0, 0) == "HP 10/10   ↑0   %s5" % Combat3D.ATTACK_GLYPH,
 		"incoming damage that gets past Block prints the real post-Block number [got=%s]" % Combat3D.party_card_stats(through, 0, 0))
 	var blocked := {"hp": 10, "max_hp": 10, "foothold": 0, "incoming": {"raw": 9, "through": 0}}
 	_expect(Combat3D.party_card_stats(blocked, 0, 0) == "HP 10/10   ↑0   ⛨ blocked",
-		"incoming damage fully absorbed by Block reads \"blocked\", not a bare ⚔0 [got=%s]" % Combat3D.party_card_stats(blocked, 0, 0))
+		"incoming damage fully absorbed by Block reads \"blocked\", not a bare %s0 [got=%s]" \
+			% [Combat3D.ATTACK_GLYPH, Combat3D.party_card_stats(blocked, 0, 0)])
 	var untargeted := {"hp": 10, "max_hp": 10, "foothold": 0, "incoming": {"raw": 0, "through": 0}}
 	_expect(Combat3D.party_card_stats(untargeted, 0, 0) == "HP 10/10   ↑0",
 		"a hunter the move isn't even aimed at (raw 0) gets no incoming line at all [got=%s]" % Combat3D.party_card_stats(untargeted, 0, 0))
@@ -23879,13 +23880,28 @@ func _intent_boss(kind: String, value: int, strength: int = 0) -> Dictionary:
 
 func _test_backlog86_intent_text_for_attack_adds_boss_strength() -> void:
 	var text := Combat3D.intent_text_for(_intent_boss("attack", 5, 3), 0)
-	_expect(text == "⚔ [u]Attack[/u] 8", "attack's printed number is the move's value plus the boss's strength")
+	_expect(text == "%s [u]Attack[/u] 8" % Combat3D.ATTACK_GLYPH,
+		"attack's printed number is the move's value plus the boss's strength")
 
 
 func _test_backlog86_intent_text_for_rift_adds_the_height_gap_times_two() -> void:
 	var text := Combat3D.intent_text_for(_intent_boss("rift", 4, 0), 3)
 	var want: int = 4 + 3 * Combat.RIFT_PER_GAP
-	_expect(text == "⚔ [u]Wrench apart[/u] %d" % want, "rift prices in height_gap * RIFT_PER_GAP the same way combat.gd's own resolution does")
+	_expect(text == "%s [u]Wrench apart[/u] %d" % [Combat3D.ATTACK_GLYPH, want],
+		"rift prices in height_gap * RIFT_PER_GAP the same way combat.gd's own resolution does")
+
+
+## Pins the choice itself, not just its output: U+2694 CROSSED SWORDS has no
+## glyph anywhere in this engine's font-fallback chain (probed with a real
+## render, not guessed) and draws as a bare, easy-to-miss "×" right on the
+## party card's incoming-damage readout and the boss's own attack telegraph —
+## see ATTACK_GLYPH's doc comment above intent_text_for. A future edit that
+## swaps the constant back to look "more correct" on paper would pass every
+## other test in this file and silently reintroduce the exact bug this
+## constant exists to avoid.
+func _test_backlog86_attack_glyph_is_not_the_font_s_missing_crossed_swords_glyph() -> void:
+	_expect(Combat3D.ATTACK_GLYPH != "⚔",
+		"ATTACK_GLYPH must not be U+2694 -- that codepoint has no glyph in this build's fallback font and renders as a bare \"x\"")
 
 
 func _test_backlog86_intent_text_for_block_ignores_boss_strength() -> void:

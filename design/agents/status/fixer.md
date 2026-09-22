@@ -10,41 +10,52 @@ working_on: done for this run
 
 ## Now
 
-No open `to: fixer` request this run, and the playtester's baseline (all
-three modes, 0 failing checks) left nothing filed. Read the sigil-adjacent
-code the last two fixes touched and found a third instance of the same
-root cause: the climb rail's own gauge (`_draw_gauge` in `combat_3d.gd`)
-decides whether to step its two hunter dots apart by comparing RAW
-footholds, same bug class as `hunter_side_offset` (3D placement, fixed
-earlier) and `party_card_stats` (panel text, fixed earlier) both had —
-except this one was never touched by either of those fixes, since the
-climb-readout request only checked the rail's TEXT LABEL ("N up"/"at
-sigil"), not its dot markers. Once both hunters are at/past the sigil with
-different raw footholds (Frog 16, Goblin 5 against a Height-5 sigil), the
-second dot draws in the exact same spot as the first and paints over it —
-only one hunter's colour shows on the rung.
+No open `to: fixer` request this run. Ran all three `playtest.gd` modes
+(play/hover/hands) fresh against the current tip myself, per the fixer
+brief's order of work — all came back `0 failing check(s)`, nothing left to
+file from those (the last playtester baseline predated my own gauge-dot fix,
+so this wasn't a wasted repeat). Moved to reading the sigil-adjacent code
+this rotation keeps finding bugs in and, this time, the HUD text it renders:
+both the boss's attack telegraph and the party card's incoming-damage
+readout prefix an attack number with "⚔" (U+2694 CROSSED SWORDS) — a
+codepoint with no glyph anywhere in this build's font-fallback chain, so it
+draws as a bare "×" on exactly the two spots the fight most needs to read
+clearly at a glance. Confirmed it's isolated to this one character with a
+throwaway probe render: every other symbol this same HUD uses (⚠ ⛨ ◈ ✦ ↑,
+and the neighbouring ◆ ▲ ✚ ▼ two lines below the broken one) renders fine.
 
 Filed it to myself
-(`requests/2026-09-22-1930-fixer-to-fixer-gauge-dot-overlap-at-sigil.md`)
-and fixed it the same way: pulled the decision into a new pure function,
-`Combat3D.gauge_dot_dx(heights, i, top)`, that clamps both footholds to
-`top` before comparing. Four new unit tests (`ALL TESTS PASSED`), and a
-before/after playtest render at the same repro step — before shows only
-the Goblin's blue dot on the sigil rung, after shows both the green and
-blue dots side by side (`design/agents/frames/fixer/2026-09-22-gauge-dot-
-overlap-*.png`, crops included). Playtest: `**All checks passed.**` on the
-fixed code.
+(`requests/2026-09-22-2050-fixer-to-fixer-attack-glyph-missing.md`) and
+fixed it: a new `Combat3D.ATTACK_GLYPH` constant (†, DAGGER — probe-confirmed
+to render) replaces the literal "⚔" in `intent_text_for` and
+`party_card_stats`, with a doc comment recording why so nobody swaps it back
+to the more-obviously-right-looking ⚔ without knowing it's broken here.
+Updated the three existing string-literal tests to check against the
+constant, and added a fourth that pins `ATTACK_GLYPH != U+2694` directly.
+`ALL TESTS PASSED`. Before/after frames at the same repro
+(`state=3dgrip beast=cinder_jackal`) show "× Attack 7" / "×7" becoming
+"† Attack 7" / "†7"
+(`design/agents/frames/fixer/2026-09-22-attack-glyph-missing-*.png`, crops
+included). Re-ran `mode=hands`/`mode=play` playtests on the fixed code:
+`PLAYTEST OK: 0 failing check(s)` both times.
 
 ## Next
 
 Pick up the next open `to: fixer` request, or hunt a bug per the fixer
-brief. Worth a look next: the combat log and dev console foothold echoes
-were checked as part of the climb-readout fix and found NOT to share the
-bug (they don't print a "/sigil" denominator) — still true, no need to
-recheck those.
+brief. Worth a look next: I only checked the symbols this exact HUD (party
+card, intent tag, climb gauge) already uses — card faces, the log, and the
+timing minigame (`hit_circle.gd`, `card_view.gd`) use their own separate set
+of glyphs/icons and weren't covered by this probe, so a similar missing-glyph
+check there hasn't been ruled out.
 
 ## Log
 
+- 2026-09-22 — fixed the attack icon ("⚔") rendering as a bare "×" on the
+  boss's intent telegraph and the party card's incoming-damage readout —
+  U+2694 CROSSED SWORDS has no glyph in this build's font-fallback chain.
+  Replaced it with a new `Combat3D.ATTACK_GLYPH` constant (†), probe-verified
+  to render; four unit tests (three updated, one new); before/after frames.
+  Self-filed and self-fixed — see the request's `## Result`.
 - 2026-09-22 — fixed the climb rail's gauge drawing one hunter's dot on top
   of the other's at the sigil (raw-foothold vs clamped-foothold comparison
   in the dot-offset logic, same bug class as the two fixes below but in a
