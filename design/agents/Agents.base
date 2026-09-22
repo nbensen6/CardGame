@@ -1,0 +1,54 @@
+filters:
+  and:
+    - file.inFolder("agents")
+    - 'file.name != "_template"'
+
+formulas:
+  age_days: 'if(created, (today() - date(created)).days, "")'
+
+properties:
+  formula.age_days:
+    displayName: "Days open"
+
+views:
+  - type: table
+    name: "Open requests"
+    filters:
+      and:
+        - file.hasTag("request")
+        - 'status != "done"'
+        - 'status != "wontfix"'
+    groupBy:
+      property: to
+      direction: ASC
+    order:
+      - file.name
+      - from
+      - to
+      - status
+      - priority
+      - taken_by
+      - formula.age_days
+
+  - type: table
+    name: "Done"
+    filters:
+      and:
+        - file.hasTag("request")
+        - 'status == "done"'
+    order:
+      - file.name
+      - from
+      - to
+      - taken_by
+      - created
+
+  - type: cards
+    name: "Agents"
+    filters:
+      and:
+        - file.hasTag("agent-status")
+    order:
+      - file.name
+      - working_on
+      - updated

@@ -39,6 +39,10 @@ def guard():
         sys.exit("REFUSED: %d Meshy tasks already today (cap %d, MESHY_DAILY_CAP)" % (n, DAILY_CAP))
 
 def key():
+    # Cloud agents get it as an environment variable (set by Nick in the cloud
+    # environment's settings); this PC keeps it in the meshy MCP entry.
+    if os.environ.get("MESHY_API_KEY"):
+        return os.environ["MESHY_API_KEY"]
     cfg = json.load(open(os.path.expanduser("~/.claude.json"), encoding="utf-8"))
     return cfg["mcpServers"]["meshy"]["env"]["MESHY_API_KEY"]
 

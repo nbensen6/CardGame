@@ -1,0 +1,110 @@
+# Visual CI: the unit tests, the autonomous playtester, and the jackal fight's
+# screenshots, rendered for real on a virtual display with software OpenGL
+# (Xvfb + Mesa llvmpipe). gl_compatibility is plain OpenGL 3.3, which llvmpipe
+# runs — slowly, and with small shading differences from a real GPU, but every
+# layout, click and state check is exact.
+#
+# Results: the job summary shows the playtest report; the "playtest" artifact
+# holds report.md files and every frame. Agents read the same thing from
+# design/agents/ci-latest.md is NOT written here (CI never commits) — they run
+# the same commands themselves; this is the independent check.
+name: playtest
+
+on:
+  push:
+    branches: [main]
+    paths: ["game/**", ".github/workflows/playtest.yml"]
+  workflow_dispatch:
+
+# A burst of agent pushes collapses into one run on the newest commit.
+concurrency:
+  group: playtest-main
+  cancel-in-progress: true
+
+jobs:
+  playtest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      GODOT: /tmp/godot/Godot_v4.7.1-stable_linux.x86_64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Display + software GL
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb libgl1-mesa-dri libglx-mesa0 mesa-utils \
+            libxcursor1 libxinerama1 libxrandr2 libxi6 libasound2t64 fontconfig
+
+      - name: Cache Godot
+        id: gcache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/godot
+          key: godot-4.7.1-linux
+
+      - name: Get Godot
+        if: steps.gcache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p /tmp/godot
+          curl -sL -o /tmp/g.zip https://github.com/godotengine/godot/releases/download/4.7.1-stable/Godot_v4.7.1-stable_linux.x86_64.zip
+          unzip -o -q /tmp/g.zip -d /tmp/godot
+          chmod +x "$GODOT"
+
+      - name: Import
+        run: $GODOT --headless --path game --import 2>&1 | tail -3
+
+      - name: Unit tests
+        run: |
+          $GODOT --headless --path game --script res://tools/run_tests.gd > tests.log 2>&1 || true
+          grep -E "^FAIL|TESTS? (PASSED|FAILED)" tests.log | tail -20
+          grep -q "ALL TESTS PASSED" tests.log
+
+      - name: Playtests (rendered)
+        id: pt
+        run: |
+          mkdir -p out
+          fails=0
+          for mode in hands hover play; do
+            xvfb-run -a -s "-screen 0 1280x720x24" $GODOT --rendering-driver opengl3 \
+              --path game --script res://tools/playtest.gd -- \
+              mode=$mode beast=cinder_jackal steps=80 out=$PWD/out/$mode \
+              > out/$mode.log 2>&1 || fails=$((fails+1))
+            grep -E "PLAYTEST|FAIL" out/$mode.log | head -30
+          done
+          echo "fails=$fails" >> "$GITHUB_OUTPUT"
+
+      - name: Screenshots of the jackal fight
+        if: always()
+        run: |
+          mkdir -p out/shots
+          for st in 3d 3dclimb 3dgrip 3dstrike 3dreward; do
+            xvfb-run -a -s "-screen 0 1280x720x24" $GODOT --rendering-driver opengl3 \
+              --path game --script res://tools/screenshot.gd -- \
+              out=$PWD/out/shots/$st.png state=$st beast=cinder_jackal size=1280x720 \
+              2>&1 | grep -E "SHOT|FAIL|HANDGEO" | head -5 || true
+          done
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "# Playtest — cinder_jackal"
+            for mode in hands hover play; do
+              echo; echo "## $mode"; echo
+              sed -n '/## Result/,/## Log/p' out/$mode/report.md 2>/dev/null | grep -v "## Log" || echo "_no report_"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playtest
+          path: |
+            out/
+            tests.log
+          retention-days: 14
+
+      - name: Fail on playtest failures
+        if: steps.pt.outputs.fails != '0'
+        run: exit 1

@@ -421,8 +421,6 @@ func _hand_geometry(view: Node) -> void:
 		var r := (c as Control).get_global_rect()
 		lo = minf(lo, r.position.x)
 		hi = maxf(hi, r.end.x)
-		var cc := c as Control
-		print("  card pos=%s rot=%.2f scale=%s z=%d" % [cc.position, cc.rotation, cc.scale, cc.z_index])
 	var screen_w := float(get_root().get_visible_rect().size.x)
 	var centre := (lo + hi) * 0.5
 	# The fan centres on the strip between the draw counter and End Turn, not

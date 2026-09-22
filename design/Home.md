@@ -13,6 +13,12 @@ Moving every beast from the Python-primitive models to the AI pipeline: generate
 
 ![[Beasts.base#Art overhaul]]
 
+## The cloud agents
+
+Artist, playtester and fixer coordinate on [[agents/BOARD|the agent board]] — what each is doing, and requests between them (and to Nick).
+
+![[agents/Agents.base#Open requests]]
+
 ## Where things are
 
 | | |
