@@ -153,6 +153,7 @@ func _init() -> void:
 	_test_backlog86_pick_event_drops_a_reward_paired_with_a_then_on_the_same_choice()
 	_test_backlog86_no_then_choice_hides_a_reward_on_a_non_final_beat()
 	_test_backlog53_four_events_use_then()
+	_test_backlog86_every_shipped_event_choice_applies_its_own_promised_effects()
 	_test_boons_load_and_are_well_formed()
 	_test_boon_offer_and_pick_applies_effects()
 	_test_backlog86_every_shipped_boon_applies_its_own_promised_effect()
@@ -4755,6 +4756,174 @@ func _test_backlog17_four_events_touch_the_deck() -> void:
 				count += 1
 				break
 	_expect(count >= 4, "at least 4 events add, remove or sharpen a card (backlog #17)")
+
+
+## backlog #86 duty 3: every event test above (gold cost, heal/max_hp, remove/
+## sharpen/curse_card, potion/random_potion/take_potion, the whole "then"
+## chain) only ever proves the GENERIC effect rule against a hand-written
+## synthetic choice — the same gap the boon suite had before
+## _test_backlog86_every_shipped_boon_applies_its_own_promised_effect closed
+## it there. The 22 real events in events.json, and every real choice and
+## "then" branch inside them, had never once been driven through pick_event()
+## and checked against what their own data promises. Walks every leaf path
+## through every shipped event (a path is a chain of choice indices through
+## nested "then" beats) and asserts each beat's own effects actually land, in
+## order, ending in the reward screen or back on the map exactly as the final
+## beat's own effects say.
+func _test_backlog86_every_shipped_event_choice_applies_its_own_promised_effects() -> void:
+	for id_v in Content.list_events():
+		var id := String(id_v)
+		var top: Dictionary = Content.make_event(id)
+		var paths: Array = _event_choice_paths(top.get("choices", []))
+		for path in paths:
+			var choice_chain: Array = _choices_along_path(top, path)
+			var label := "%s %s" % [id, str(path)]
+			var run := _map_run()
+			run.gold = 200
+			run.potions[0] = [Content.make_potion("field_dressing")]
+			run.potions[1] = [Content.make_potion("field_dressing")]
+			run.event = Content.make_event(id)
+			run.phase = Run.Phase.EVENT
+			run.map_row = 0
+			for step in range(choice_chain.size()):
+				var eff: Dictionary = (choice_chain[step] as Dictionary).get("effects", {})
+				var hp_before: Array = run.hp.duplicate()
+				var max_before: Array = run.max_hp.duplicate()
+				var gold_before: int = run.gold
+				var relics_before: int = run.team_relics.size()
+				var deck_sizes_before: Array = []
+				var sharpenable_before: Array = []
+				var potions_before: Array = []
+				for i in range(run.names.size()):
+					deck_sizes_before.append(run.decks[i].size())
+					sharpenable_before.append(_count_sharpenable(run.decks[i]))
+					potions_before.append(run.potions[i].size())
+				var picked := run.pick_event(int(path[step]))
+				_expect(picked, "%s step %d: a real shipped choice is accepted" % [label, step])
+				_check_event_effect_landed("%s step %d" % [label, step], eff, run,
+					hp_before, max_before, gold_before, relics_before,
+					deck_sizes_before, sharpenable_before, potions_before)
+			var final_eff: Dictionary = (choice_chain[-1] as Dictionary).get("effects", {})
+			var rw := String(final_eff.get("reward", ""))
+			if rw != "":
+				_expect(run.phase == Run.Phase.REWARD and run.reward_kind == rw,
+					"%s: the final beat's reward effect opens the %s reward screen" % [label, rw])
+			else:
+				_expect(run.phase == Run.Phase.MAP,
+					"%s: with no reward on the final beat, the event hands back to the map" % label)
+
+
+## Every leaf path through a choice tree, as an Array of choice indices — a
+## choice with no "then" is a leaf on its own; a choice WITH one is not a leaf
+## itself, it just hands off to its "then" beat's own choices, recursively.
+func _event_choice_paths(choices: Array, prefix: Array = []) -> Array:
+	var paths: Array = []
+	for i in range(choices.size()):
+		var choice: Dictionary = choices[i]
+		var path: Array = prefix.duplicate()
+		path.append(i)
+		var then: Dictionary = choice.get("then", {})
+		if then.is_empty():
+			paths.append(path)
+		else:
+			paths.append_array(_event_choice_paths(then.get("choices", []), path))
+	return paths
+
+
+## The choice Dictionary at every step of `path`, walking the SAME "then"
+## nesting `_event_choice_paths` walked to build it — the effects to expect at
+## each beat, read straight from events.json rather than from whatever Run's
+## own `event` field has been swapped to mid-chain.
+func _choices_along_path(top: Dictionary, path: Array) -> Array:
+	var out: Array = []
+	var cur_choices: Array = top.get("choices", [])
+	for idx in path:
+		var choice: Dictionary = cur_choices[int(idx)]
+		out.append(choice)
+		cur_choices = (choice.get("then", {}) as Dictionary).get("choices", [])
+	return out
+
+
+## Cards a sharpen_card effect could actually pick, the same filter
+## _apply_effect_block/campfire_action already enforce (backlog #86:
+## sharpen_card_skips_status_cards) — not upgraded, not a status card, and
+## upgrading it would change something.
+func _count_sharpenable(deck: Array) -> int:
+	var n := 0
+	for c in deck:
+		var card: Card = c
+		if not card.upgraded and not card.status and card.would_upgrade_change_anything():
+			n += 1
+	return n
+
+
+## The generic effect-application rule (run.gd's _apply_effect_block, shared
+## by an event choice and a boon), checked against one real beat's own
+## `effects` block and the state snapshotted just before it was applied.
+## `reward` is deliberately not checked here — the caller only knows it is
+## safe to check once the whole chain has ended (see that "then" can drop a
+## non-final reward per _test_backlog86_pick_event_drops_a_reward_paired_with_a_then_on_the_same_choice).
+func _check_event_effect_landed(label: String, eff: Dictionary, run: Run,
+		hp_before: Array, max_before: Array, gold_before: int, relics_before: int,
+		deck_sizes_before: Array, sharpenable_before: Array, potions_before: Array) -> void:
+	if int(eff.get("max_hp", 0)) != 0:
+		var mh := int(eff.get("max_hp", 0))
+		for i in range(run.names.size()):
+			_expect(run.max_hp[i] == maxi(1, int(max_before[i]) + mh),
+				"%s: its max_hp effect actually changes hunter %d's cap by %d" % [label, i, mh])
+	if int(eff.get("heal", 0)) != 0:
+		var h := int(eff.get("heal", 0))
+		for i in range(run.names.size()):
+			# Clamped against the hunter's max_hp AFTER any max_hp effect in this
+			# same block already landed (run.max_hp[i] is post-effect here) —
+			# _apply_effect_block applies mh then h in the same loop iteration,
+			# so a combined {max_hp, heal} effect (berry_thicket, hot_spring)
+			# heals up to the NEW cap, not the one from before this beat.
+			var expect_hp: int = clampi(int(hp_before[i]) + h, 1, run.max_hp[i])
+			_expect(run.hp[i] == expect_hp,
+				"%s: its heal effect actually moves hunter %d's HP by %d" % [label, i, h])
+	if eff.has("gold"):
+		_expect(run.gold == maxi(0, gold_before + int(eff["gold"])),
+			"%s: its gold effect actually pays %d into the shared purse" % [label, int(eff["gold"])])
+	if bool(eff.get("relic", false)):
+		_expect(run.team_relics.size() == relics_before + 1,
+			"%s: its relic effect actually grants a relic" % label)
+	if bool(eff.get("remove_card", false)):
+		for i in range(run.names.size()):
+			if int(deck_sizes_before[i]) > Run.MIN_DECK:
+				_expect(run.decks[i].size() == int(deck_sizes_before[i]) - 1,
+					"%s: its remove_card effect actually thins hunter %d's deck" % [label, i])
+	if bool(eff.get("sharpen_card", false)):
+		for i in range(run.names.size()):
+			if int(sharpenable_before[i]) > 0:
+				_expect(_count_sharpenable(run.decks[i]) == int(sharpenable_before[i]) - 1,
+					"%s: its sharpen_card effect actually upgrades one sharpenable card in hunter %d's deck" % [label, i])
+	var cc := String(eff.get("curse_card", ""))
+	if cc != "":
+		for i in range(run.names.size()):
+			var deck: Array = run.decks[i]
+			_expect(deck.size() == int(deck_sizes_before[i]) + 1 and (deck[-1] as Card).id == cc,
+				"%s: its curse_card effect actually shuffles a real %s into hunter %d's deck" % [label, cc, i])
+	var pid := String(eff.get("potion", ""))
+	if pid != "":
+		for i in range(run.names.size()):
+			if int(potions_before[i]) < Run.POTION_SLOTS:
+				_expect(run.potions[i].size() == int(potions_before[i]) + 1
+					and String((run.potions[i][-1] as Dictionary).get("id", "")) == pid,
+					"%s: its potion effect actually grants a real %s to hunter %d" % [label, pid, i])
+	if bool(eff.get("random_potion", false)):
+		for i in range(run.names.size()):
+			if int(potions_before[i]) < Run.POTION_SLOTS:
+				_expect(run.potions[i].size() == int(potions_before[i]) + 1,
+					"%s: its random_potion effect actually grants a potion to hunter %d" % [label, i])
+	if bool(eff.get("take_potion", false)):
+		for i in range(run.names.size()):
+			if int(potions_before[i]) > 0:
+				_expect(run.potions[i].size() == int(potions_before[i]) - 1,
+					"%s: its take_potion effect actually removes a held potion from hunter %d" % [label, i])
+	if bool(eff.get("key", false)):
+		_expect(run.keys.has("event"),
+			"%s: its key effect actually grants the team's event key" % label)
 
 
 ## Backlog #31: the run-start boon reuses events.json's own well-formedness
