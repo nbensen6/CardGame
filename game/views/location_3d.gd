@@ -66,6 +66,12 @@ var _felled_span := 0.0   # size of the body on the plot; the shot backs off for
 @onready var _title: Label = %Title
 @onready var _subtitle: Label = %Subtitle
 @onready var _prompt: Label = %Prompt
+## The backdrop behind _prompt (added so the reward screen's "Tap a card to
+## select" line is readable over the 3D scene and the reward row's own cards
+## rather than fighting both for contrast — see reward_header_text/_render_reward).
+## Hidden whenever _prompt is empty, or every OTHER screen that reuses this HUD
+## (event, campfire, deck) would show a floating dark bar with nothing in it.
+@onready var _prompt_box: Control = %PromptBox
 @onready var _row: HBoxContainer = %Row
 @onready var _controls: HBoxContainer = %Controls
 
@@ -557,6 +563,7 @@ func _render_reward(s: Dictionary) -> void:
 	_title.text = String(header["title"])
 	_subtitle.text = String(header["subtitle"])
 	_prompt.text = String(header["prompt"])
+	_prompt_box.visible = not _prompt.text.is_empty()
 
 	for c in _row.get_children():
 		c.queue_free()
@@ -604,6 +611,7 @@ func _render_event(s: Dictionary) -> void:
 	_title.text = String(ev.get("title", "On the way"))
 	_subtitle.text = String(ev.get("text", ""))
 	_prompt.text = ""
+	_prompt_box.visible = false
 	for c in _row.get_children():
 		c.queue_free()
 	for c in _controls.get_children():
@@ -716,6 +724,7 @@ func _render_over(s: Dictionary, phase: String) -> void:
 	_subtitle.text = ("Every Titan in the range has been brought down. Ascension %d cleared."
 		% int(s.get("ascension", 0))) if won else 		"The range keeps its Titans. Take what you learned and climb again."
 	_prompt.text = ""
+	_prompt_box.visible = false
 	for c in _row.get_children():
 		c.queue_free()
 	for c in _controls.get_children():
@@ -1077,6 +1086,7 @@ func _stock_button(item: Dictionary, index: int, gold: int, min_deck: int, potio
 
 func _clear_ui() -> void:
 	_prompt.text = ""
+	_prompt_box.visible = false
 	for c in _row.get_children():
 		c.queue_free()
 	for c in _controls.get_children():
