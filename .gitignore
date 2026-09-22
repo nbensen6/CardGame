@@ -66,3 +66,6 @@ game/override.cfg
 # Obsidian: per-machine window layout, not project content
 design/.obsidian/workspace*.json
 design/.obsidian/cache
+
+# Blender auto-backups
+*.blend1
