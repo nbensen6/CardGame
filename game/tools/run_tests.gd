@@ -493,6 +493,15 @@ func _init() -> void:
 	_test_backlog74_z_at_xy_reads_the_triangle_plane_and_rejects_outside_points()
 	_test_backlog74_occlusion_flags_a_surface_hidden_behind_a_closer_one()
 	_test_backlog74_occlusion_ignores_geometry_that_does_not_cover_the_same_point()
+	# backlog #86 duty 3: nearest_front_z_at_xy itself (the function
+	# is_occluded_from_front is built on) had no test of its own — every test
+	# above only ever proves is_occluded_from_front's pass/fail verdict, never
+	# which Z that function actually picked, and never the "nothing here at
+	# all" case. Worth pinning directly: it is the exact spot the documented
+	# axis-flip bug in AssetContract.z_at_xy's own header lived undetected in.
+	_test_backlog86_nearest_front_z_picks_the_frontmost_of_several_overlapping_triangles()
+	_test_backlog86_nearest_front_z_is_null_where_no_triangle_covers_the_point()
+	_test_backlog86_occlusion_never_flags_a_point_no_geometry_covers_at_all()
 	_test_preview_matches_what_the_card_actually_does()
 	_test_backlog86_preview_predicts_block_after_dexterity_and_frail()
 	_test_backlog86_preview_predicts_damage_after_armor_and_sigil()
@@ -20715,6 +20724,48 @@ func _test_backlog74_occlusion_ignores_geometry_that_does_not_cover_the_same_poi
 	var all_tris: Array = mine + elsewhere
 	_expect(not AssetContract.is_occluded_from_front(0.5, 0.5, 0.0, all_tris),
 		"closer geometry that doesn't cover the same (x, y) doesn't occlude")
+
+
+## backlog #86 duty 3 — AssetContract.nearest_front_z_at_xy is the function
+## is_occluded_from_front is built on (it just compares against this value),
+## but nothing above proves nearest_front_z_at_xy's OWN two promises: that it
+## returns the FRONTMOST (largest Z) surface among every triangle covering a
+## point, not merely "a" covering triangle, and that it returns null rather
+## than some default number where nothing covers the point at all. Both are
+## exactly the kind of thing the documented axis-flip bug in z_at_xy's own
+## header (an earlier version flagged 14 already-shipped, correctly-painted
+## gold marks as 100% buried) could hide behind a passing is_occluded_from_
+## front test that only ever used two triangles.
+func _test_backlog86_nearest_front_z_picks_the_frontmost_of_several_overlapping_triangles() -> void:
+	var back: Array = _rect_tris(0, 2, 0, 2, -5.0)
+	var middle: Array = _rect_tris(0, 2, 0, 2, 0.0)
+	var front: Array = _rect_tris(0, 2, 0, 2, 3.0)
+	# Deliberately NOT in front-to-back order, so a bug that just returns the
+	# first (or last) covering triangle's Z rather than the true maximum
+	# cannot pass by accident of iteration order.
+	var shuffled: Array = middle + back + front
+	var z = AssetContract.nearest_front_z_at_xy(1.0, 1.0, shuffled)
+	_expect(z != null and absf(z - 3.0) < 0.001,
+		"the frontmost of three overlapping surfaces wins regardless of array order, got %s" % [z])
+
+
+func _test_backlog86_nearest_front_z_is_null_where_no_triangle_covers_the_point() -> void:
+	var elsewhere: Array = _rect_tris(10, 11, 10, 11, 4.0)
+	_expect(AssetContract.nearest_front_z_at_xy(0.5, 0.5, elsewhere) == null,
+		"a point no triangle's XY footprint covers reads no front surface at all")
+	_expect(AssetContract.nearest_front_z_at_xy(0.5, 0.5, []) == null,
+		"an empty triangle list reads no front surface at all")
+
+
+func _test_backlog86_occlusion_never_flags_a_point_no_geometry_covers_at_all() -> void:
+	# Distinct from _test_backlog74_occlusion_ignores_geometry_that_does_not_
+	# cover_the_same_point above: that test still has SOME triangle ('mine')
+	# covering the query point, so it can never reach is_occluded_from_front's
+	# `nearest == null` branch. This is the case where literally nothing in
+	# the model covers the point being asked about.
+	var elsewhere: Array = _rect_tris(10, 11, 10, 11, -5.0)
+	_expect(not AssetContract.is_occluded_from_front(0.5, 0.5, 0.0, elsewhere),
+		"a point with no covering geometry at all is never reported as occluded")
 
 
 ## backlog #86 duty 3 — combat_3d.route_between_rungs is the pure half of
