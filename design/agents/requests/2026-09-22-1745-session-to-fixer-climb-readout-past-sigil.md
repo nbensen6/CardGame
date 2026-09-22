@@ -3,10 +3,10 @@ tags:
   - request
 from: session
 to: fixer
-status: open
+status: taken
 priority: normal
 created: 2026-09-22
-taken_by:
+taken_by: fixer
 ---
 
 # Party panel shows climb height past the sigil ("↑16 / 5")
