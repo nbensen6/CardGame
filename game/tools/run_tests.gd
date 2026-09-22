@@ -286,6 +286,7 @@ func _init() -> void:
 	_test_backlog86_every_potion_is_reachable_from_the_pool()
 	_test_use_potion_applies_each_effect()
 	_test_use_potion_ally_and_beast_effects()
+	_test_backlog86_potion_block_effects_apply_dexterity_and_frail()
 	_test_use_potion_climb_updates_highest_climb()
 	_test_roped_ally_climb_from_a_potion_past_the_tracked_peak_updates_highest_climb()
 	_test_use_potion_gating()
@@ -7997,6 +7998,37 @@ func _test_use_potion_ally_and_beast_effects() -> void:
 	var stripped_to_floor := combat.use_potion(0, "strip_ward", 5)
 	_expect(stripped_to_floor and combat.boss.artifact == 0,
 		"strip_ward never takes the Titan's Artifact below zero")
+
+
+## backlog #86 duty 3 -- Combatant.gain_block()'s own doc comment (combatant.gd)
+## says it is THE single path Dexterity and Frail apply through "so every
+## source of Block -- cards, relics, potions -- feels it for free without each
+## of them knowing Frail exists" (combat.gd:1373-1376 makes the same claim by
+## name for potions specifically). But neither existing potion test
+## (_test_use_potion_applies_each_effect, _test_use_potion_ally_and_beast_
+## effects) ever set Dexterity or Frail on anyone, so "block"/"block_ally"
+## going through gain_block() rather than a raw `block +=` was never actually
+## proven -- a regression that swapped gain_block() for a direct assignment
+## would have passed both existing tests unnoticed.
+##
+## The drinker keeps a Dexterity stack for the WHOLE test and Frail is set
+## only on the ALLY, never the drinker: block_ally landing at the Frail-cut
+## value (not the drinker's Dexterity-boosted one) proves the grant is priced
+## off the ALLY's own Combatant, not a copy of the drinker's modifiers.
+func _test_backlog86_potion_block_effects_apply_dexterity_and_frail() -> void:
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var drinker: PlayerState = combat.players[0]
+	var ally: PlayerState = combat.players[1]
+	drinker.combatant.dexterity = 2
+
+	var self_block_ok := combat.use_potion(0, "block", 10)
+	_expect(self_block_ok and drinker.combatant.block == 12,
+		"a block potion goes through gain_block(), so the drinker's own banked Dexterity adds to it (10 + 2) exactly like a card or relic's Block would")
+
+	ally.combatant.frail = 4
+	var ally_block_ok := combat.use_potion(0, "block_ally", 12)
+	_expect(ally_block_ok and ally.combatant.block == 9,
+		"block_ally is cut by the ALLY's own Frail (12 - 12/4 = 9), not left at the drinker's Dexterity-boosted number (14) -- proving it calls gain_block() on the ally's own Combatant rather than assigning the raw value or copying the drinker's modifiers")
 
 
 ## _track_climb()'s own doc comment says it must run "after anything that can
