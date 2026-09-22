@@ -650,6 +650,25 @@ static func safe_ledge_heights(ledges: Array) -> Array:
 	return out
 
 
+## Whether this hunter's climb-rail dot steps aside from its neighbour's, and
+## which way — the gauge's own copy of hunter_side_offset's job, for the flat
+## 2D dots instead of the 3D hunter models. Same root as the hunters-overlap-
+## at-sigil fix (backlog #86): `y_of` clamps every foothold >= `top` to the
+## same rung, but this used to compare the RAW heights before that clamp, so
+## two hunters both drawn AT the sigil with different raw footholds (13 and
+## 16 on a Height-13 sigil) read as two different rungs and the offset never
+## fired — both dots landed on the exact same point and the second tint
+## painted over the first, so only one hunter's colour ever showed.
+static func gauge_dot_dx(heights: Array, i: int, top: int) -> float:
+	var dx: float = -8.0 if i == 0 else 8.0
+	if heights.size() <= 1:
+		return dx
+	var cap: int = maxi(top, 1)
+	if mini(int(heights[0]), cap) != mini(int(heights[1]), cap):
+		return 0.0
+	return dx
+
+
 func _draw_gauge() -> void:
 	if _gauge_data.is_empty():
 		return
@@ -690,10 +709,7 @@ func _draw_gauge() -> void:
 		var h: int = heights[i]
 		var y: float = y_of.call(float(h))
 		var tint: Color = _slot_color(i)
-		# Two hunters on the same hold would draw on top of each other.
-		var dx: float = -8.0 if i == 0 else 8.0
-		if heights.size() > 1 and int(heights[0]) != int(heights[1]):
-			dx = 0.0
+		var dx: float = gauge_dot_dx(heights, i, top)
 		_gauge.draw_circle(Vector2(x + dx, y), 6.0, tint)
 		_gauge.draw_arc(Vector2(x + dx, y), 6.0, 0.0, TAU, 16, Color(0.1, 0.09, 0.07), 2.0)
 

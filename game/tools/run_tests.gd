@@ -997,6 +997,16 @@ func _init() -> void:
 	# with different raw footholds still overlapped.
 	_test_backlog86_hunter_side_offset_treats_footholds_past_the_sigil_as_shared()
 	_test_backlog86_hunter_side_offset_is_zero_below_the_sigil_even_if_raw_footholds_match_above_it()
+	# fixer, 2026-09-22: gauge_dot_dx is the climb rail's own copy of the same
+	# job, for the flat 2D dots instead of the 3D hunter models. It shared the
+	# RAW-vs-clamped bug the fight above already fixed in hunter_side_offset:
+	# two hunters both drawn at the sigil with different raw footholds read as
+	# two different rungs, so the offset never fired and one hunter's dot
+	# painted over the other's.
+	_test_backlog86_gauge_dot_dx_is_the_default_offset_for_a_lone_hunter()
+	_test_backlog86_gauge_dot_dx_splits_apart_when_footholds_match()
+	_test_backlog86_gauge_dot_dx_centres_both_dots_when_footholds_genuinely_differ()
+	_test_backlog86_gauge_dot_dx_treats_footholds_past_the_sigil_as_shared()
 	# backlog #86 duty 3 (fourth pass): height_gap_between, lifted out of
 	# combat_3d._height_gap, is a SECOND copy of the exact gap formula
 	# Combat.incoming_for already prices a rift move on in /core — the intent
@@ -21781,6 +21791,45 @@ func _test_backlog86_hunter_side_offset_is_zero_below_the_sigil_even_if_raw_foot
 	var players := [{"foothold": 5}, {"foothold": 13}]
 	_expect(Combat3D.hunter_side_offset(players, 0, 13) == 0.0,
 		"a hunter below the sigil is unaffected by a teammate clamped to the sigil above them")
+
+
+## gauge_dot_dx is _draw_gauge's own copy of hunter_side_offset's job for the
+## climb rail's flat 2D dots. `heights` is already in slot order (`heights[i]`
+## is slot i's foothold), matching what `_update_gauge` feeds the gauge.
+func _test_backlog86_gauge_dot_dx_is_the_default_offset_for_a_lone_hunter() -> void:
+	var heights := [4]
+	_expect(Combat3D.gauge_dot_dx(heights, 0, 100) == -8.0,
+		"with nobody to share a rung with, the sole dot still gets slot 0's default offset")
+
+
+func _test_backlog86_gauge_dot_dx_splits_apart_when_footholds_match() -> void:
+	var heights := [6, 6]
+	_expect(Combat3D.gauge_dot_dx(heights, 0, 100) == -8.0,
+		"slot 0 steps to the near side when sharing a rung with slot 1")
+	_expect(Combat3D.gauge_dot_dx(heights, 1, 100) == 8.0,
+		"slot 1 steps to the far side -- the split is keyed on slot index")
+
+
+func _test_backlog86_gauge_dot_dx_centres_both_dots_when_footholds_genuinely_differ() -> void:
+	var heights := [4, 9]
+	_expect(Combat3D.gauge_dot_dx(heights, 0, 100) == 0.0,
+		"two dots on genuinely different, unclamped rungs need no offset -- they are not sharing a spot")
+	_expect(Combat3D.gauge_dot_dx(heights, 1, 100) == 0.0,
+		"same for the other slot")
+
+
+## The sigil bug: the gauge's `y_of` clamps every foothold >= `top` to the
+## same rung (same as _place_hunters' `t` clamp), but _draw_gauge used to
+## compare the RAW heights[0]/heights[1]. Two hunters both AT the sigil with
+## different raw footholds (13 and 16, Height 13) read as different rungs and
+## the offset never fired -- both dots landed on the exact same point and the
+## second tint painted over the first.
+func _test_backlog86_gauge_dot_dx_treats_footholds_past_the_sigil_as_shared() -> void:
+	var heights := [13, 16]
+	_expect(Combat3D.gauge_dot_dx(heights, 0, 13) == -8.0,
+		"both footholds clamp to the Height-13 sigil, so both dots land on the same rung and must step apart")
+	_expect(Combat3D.gauge_dot_dx(heights, 1, 13) == 8.0,
+		"same for the other slot -- 16 is clamped to 13, same rung as the first hunter's 13")
 
 
 ## backlog #86 duty 3 (forty-fourth pass) -- _key_name is the display half of
