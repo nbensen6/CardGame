@@ -3,10 +3,10 @@ tags:
   - request
 from: session
 to: artist
-status: open
+status: taken
 priority: high
 created: 2026-09-22
-taken_by:
+taken_by: artist
 ---
 
 # The jackal's inner ears fill the screen at the sigil
