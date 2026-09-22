@@ -1303,6 +1303,19 @@ func _init() -> void:
 	_test_backlog86_hunter_is_aimed_at_still_defers_to_sweeps_and_unconditional_hits()
 	_test_backlog86_hunter_is_aimed_at_true_when_an_add_is_attacking_even_if_the_boss_move_is_utility()
 	_test_backlog86_any_add_attacking_matches_incoming_fors_own_add_gate()
+	# backlog #86 duty 3: party_card_name/party_card_stats, the text half of
+	# combat_3d._party_card -- the HUD row showing both hunters' HP/Block/Energy/
+	# Height/incoming-damage/status at a glance. Never tested before (0 references
+	# to _party_card anywhere in this suite), and this exact spot has already
+	# shipped one silent bug ("↑2 / 6, never a bare ↑2", Nick 2026-08-16) that
+	# nothing here would have caught a regression to.
+	_test_backlog86_party_card_name_tags_only_the_viewers_own_slot_as_you()
+	_test_backlog86_party_card_stats_shows_hp_and_omits_zero_block()
+	_test_backlog86_party_card_stats_shows_block_only_when_positive()
+	_test_backlog86_party_card_stats_shows_energy_only_for_the_ally_not_the_viewer()
+	_test_backlog86_party_card_stats_height_carries_the_weak_point_denominator_only_when_set()
+	_test_backlog86_party_card_stats_incoming_damage_shows_through_or_blocked()
+	_test_backlog86_party_card_stats_status_tags_reached_beats_hanging_and_ended_stacks_with_either()
 	# backlog #86 duty 3: card_climb_for, lifted out of combat_3d._card_climb --
 	# the rule deciding slider vs. plain tap. Its own comment warns that reading
 	# card.grip (top level) instead of card.base.grip silently returns 0 for
@@ -20722,6 +20735,87 @@ func _test_backlog86_route_between_rungs_ignores_unsorted_input() -> void:
 	# the dictionary's insertion order to come out in climb order.
 	var route: Array = Combat3D.route_between_rungs([12, 0, 8, 4], 0, 12)
 	_expect(route == [4, 8], "the rung list is sorted before routing, regardless of the order it arrives in")
+
+
+## backlog #86 duty 3 — party_card_name/party_card_stats are the pure text
+## half of combat_3d._party_card(), the HUD card shown for each hunter in the
+## party row. Lifted the same way route_between_rungs was, and for the same
+## reason: nothing headless has ever driven _party_card at all (0 references
+## anywhere in this suite before this pass), even though it is the one place
+## on screen a player reads their ally's HP, Block, Energy, Height and the
+## damage about to land on them. This exact function has already shipped a
+## silent regression once -- the raw "↑%d" height line Nick had to point out
+## read as "wrench apart five" with no denominator to judge it against -- and
+## nothing here would have caught a repeat of that shape.
+func _test_backlog86_party_card_name_tags_only_the_viewers_own_slot_as_you() -> void:
+	var p := {"name": "The Frog"}
+	_expect(Combat3D.party_card_name(p, 0, 0) == "The Frog  (you)",
+		"the viewer's own slot gets the (you) suffix")
+	_expect(Combat3D.party_card_name(p, 1, 0) == "The Frog",
+		"the ally's card carries no (you) suffix")
+
+
+func _test_backlog86_party_card_stats_shows_hp_and_omits_zero_block() -> void:
+	var p := {"hp": 17, "max_hp": 30, "block": 0, "foothold": 0}
+	_expect(Combat3D.party_card_stats(p, 0, 0) == "HP 17/30   ↑0",
+		"HP always shows; Block at 0 is not printed as a bare ◈0 [got=%s]" % Combat3D.party_card_stats(p, 0, 0))
+
+
+func _test_backlog86_party_card_stats_shows_block_only_when_positive() -> void:
+	var p := {"hp": 20, "max_hp": 20, "block": 8, "foothold": 0}
+	_expect(Combat3D.party_card_stats(p, 0, 0) == "HP 20/20   ◈8   ↑0",
+		"a positive Block prints between HP and Height [got=%s]" % Combat3D.party_card_stats(p, 0, 0))
+
+
+func _test_backlog86_party_card_stats_shows_energy_only_for_the_ally_not_the_viewer() -> void:
+	var p := {"hp": 20, "max_hp": 20, "energy": 3, "foothold": 0}
+	_expect(Combat3D.party_card_stats(p, 1, 0) == "HP 20/20   ✦3   ↑0",
+		"the ally's card shows their Energy -- yours is the orb beside your hand [got=%s]" % Combat3D.party_card_stats(p, 1, 0))
+	_expect(Combat3D.party_card_stats(p, 0, 0) == "HP 20/20   ↑0",
+		"the viewer's OWN card never doubles up the energy orb [got=%s]" % Combat3D.party_card_stats(p, 0, 0))
+
+
+func _test_backlog86_party_card_stats_height_carries_the_weak_point_denominator_only_when_set() -> void:
+	var with_wp := {"hp": 10, "max_hp": 10, "foothold": 2, "weak_point_height": 6}
+	_expect(Combat3D.party_card_stats(with_wp, 0, 0) == "HP 10/10   ↑2 / 6",
+		"a real weak_point_height prints as Height / target, never a bare Height a player can't judge against anything [got=%s]"
+			% Combat3D.party_card_stats(with_wp, 0, 0))
+	var no_wp := {"hp": 10, "max_hp": 10, "foothold": 2, "weak_point_height": 0}
+	_expect(Combat3D.party_card_stats(no_wp, 0, 0) == "HP 10/10   ↑2",
+		"weak_point_height omitted (0, e.g. no boss context yet) falls back to the bare Height [got=%s]"
+			% Combat3D.party_card_stats(no_wp, 0, 0))
+
+
+func _test_backlog86_party_card_stats_incoming_damage_shows_through_or_blocked() -> void:
+	var through := {"hp": 10, "max_hp": 10, "foothold": 0, "incoming": {"raw": 9, "through": 5}}
+	_expect(Combat3D.party_card_stats(through, 0, 0) == "HP 10/10   ↑0   ⚔5",
+		"incoming damage that gets past Block prints the real post-Block number [got=%s]" % Combat3D.party_card_stats(through, 0, 0))
+	var blocked := {"hp": 10, "max_hp": 10, "foothold": 0, "incoming": {"raw": 9, "through": 0}}
+	_expect(Combat3D.party_card_stats(blocked, 0, 0) == "HP 10/10   ↑0   ⛨ blocked",
+		"incoming damage fully absorbed by Block reads \"blocked\", not a bare ⚔0 [got=%s]" % Combat3D.party_card_stats(blocked, 0, 0))
+	var untargeted := {"hp": 10, "max_hp": 10, "foothold": 0, "incoming": {"raw": 0, "through": 0}}
+	_expect(Combat3D.party_card_stats(untargeted, 0, 0) == "HP 10/10   ↑0",
+		"a hunter the move isn't even aimed at (raw 0) gets no incoming line at all [got=%s]" % Combat3D.party_card_stats(untargeted, 0, 0))
+
+
+func _test_backlog86_party_card_stats_status_tags_reached_beats_hanging_and_ended_stacks_with_either() -> void:
+	var reached_and_secure := {"hp": 10, "max_hp": 10, "foothold": 6, "reached": true, "secure": true}
+	_expect(Combat3D.party_card_stats(reached_and_secure, 0, 0) == "HP 10/10   ↑6   at the sigil",
+		"a hunter at the sigil reads \"at the sigil\" [got=%s]" % Combat3D.party_card_stats(reached_and_secure, 0, 0))
+	# "reached" and "not secure" both true at once is not a real state the game
+	# ever produces (the sigil is itself a safe hold), but the elif here means
+	# reached wins if it ever did -- pinning that so a future refactor to two
+	# independent `if`s (which would print BOTH tags) shows up as a real diff.
+	var reached_and_hanging := {"hp": 10, "max_hp": 10, "foothold": 6, "reached": true, "secure": false}
+	_expect(Combat3D.party_card_stats(reached_and_hanging, 0, 0) == "HP 10/10   ↑6   at the sigil",
+		"reached takes priority over hanging when (hypothetically) both are true [got=%s]" % Combat3D.party_card_stats(reached_and_hanging, 0, 0))
+	var hanging := {"hp": 10, "max_hp": 10, "foothold": 3, "reached": false, "secure": false}
+	_expect(Combat3D.party_card_stats(hanging, 0, 0) == "HP 10/10   ↑3   hanging!",
+		"a hunter mid-climb with their grip timer running reads \"hanging!\" [got=%s]" % Combat3D.party_card_stats(hanging, 0, 0))
+	var ended_and_reached := {"hp": 10, "max_hp": 10, "foothold": 6, "reached": true, "secure": true, "ended": true}
+	_expect(Combat3D.party_card_stats(ended_and_reached, 0, 0) == "HP 10/10   ↑6   at the sigil   done",
+		"\"done\" (ended their turn) is independent of the reached/hanging tag and always trails it [got=%s]"
+			% Combat3D.party_card_stats(ended_and_reached, 0, 0))
 
 
 ## backlog #86 duty 2 — combat_3d.react_plan is the pure decision half of

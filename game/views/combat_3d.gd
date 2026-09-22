@@ -4354,6 +4354,53 @@ func _portrait_of(p: Dictionary, px: int, ring: Color = Color(0, 0, 0, 0)) -> Co
 	return tex
 
 
+## The party card's name line: "<name>" for the ally, "<name>  (you)" for the
+## viewer's own hunter. Lifted out (backlog #86 duty 3) so the exact "(you)"
+## suffix logic can be proven headless, the same way intent_text_for and
+## selection_mode_for already were — a string built inline in a Node-returning
+## function is otherwise invisible to run_tests.gd until someone clicks it.
+static func party_card_name(p: Dictionary, slot: int, me: int) -> String:
+	return "%s%s" % [String(p.get("name", "")), "  (you)" if slot == me else ""]
+
+
+## The party card's stats line — the text half of _party_card(), pulled out
+## pure (backlog #86 duty 3) because this exact spot has already shipped a
+## silent bug once: "it currently says wrench apart five. I'm not sure what
+## that means" (Nick, 2026-08-16) was intent_text_for's bug, but the fix that
+## followed it here — "↑2 / 6, never a bare ↑2" — was a raw string edit in this
+## same Node-returning function, with nothing in run_tests.gd able to catch a
+## regression to the bare form. Six independent pieces (HP, Block, the ally's
+## own Energy, Height, incoming damage, and a status tag) assemble into one
+## joined line; any one silently dropping or misordering reads as a missing
+## number on a screen nobody is failing a test over.
+static func party_card_stats(p: Dictionary, slot: int, me: int) -> String:
+	var parts: Array = ["HP %d/%d" % [int(p.get("hp", 0)), int(p.get("max_hp", 0))]]
+	if int(p.get("block", 0)) > 0:
+		parts.append("◈%d" % int(p.get("block", 0)))
+	# Energy only for the ALLY — yours is the orb beside your hand, and printing it
+	# in both places is exactly the doubling this pass exists to remove.
+	if slot != me:
+		parts.append("✦%d" % int(p.get("energy", 0)))
+	# "↑2 / 6", never a bare "↑2" — a Height with nothing to measure it against
+	# tells you where you are and not how far is left (Nick, 2026-08-16).
+	var wp := int(p.get("weak_point_height", 0))
+	parts.append("↑%d / %d" % [int(p.get("foothold", 0)), wp] if wp > 0
+		else "↑%d" % int(p.get("foothold", 0)))
+	# What the telegraphed move costs THIS hunter, after their Block. The red border
+	# already says "aimed at"; this says whether they survive it.
+	var inc: Dictionary = p.get("incoming", {})
+	var through := int(inc.get("through", 0))
+	if int(inc.get("raw", 0)) > 0:
+		parts.append("⚔%d" % through if through > 0 else "⛨ blocked")
+	if bool(p.get("reached", false)):
+		parts.append("at the sigil")
+	elif not bool(p.get("secure", true)):
+		parts.append("hanging!")
+	if bool(p.get("ended", false)):
+		parts.append("done")
+	return "   ".join(parts)
+
+
 func _party_card(p: Dictionary, slot: int, aimed: bool) -> Control:
 	var panel := PanelContainer.new()
 	var style := StyleBoxFlat.new()
@@ -4379,7 +4426,7 @@ func _party_card(p: Dictionary, slot: int, aimed: bool) -> Control:
 	box.add_theme_constant_override("separation", 2)
 	outer.add_child(box)
 	var who := Label.new()
-	who.text = "%s%s" % [String(p.get("name", "")), "  (you)" if slot == _me() else ""]
+	who.text = party_card_name(p, slot, _me())
 	who.add_theme_font_size_override("font_size", 13)
 	who.add_theme_color_override("font_color", Color(1, 0.93, 0.78))
 	box.add_child(who)
@@ -4390,31 +4437,7 @@ func _party_card(p: Dictionary, slot: int, aimed: bool) -> Control:
 	bar.custom_minimum_size = Vector2(0, 12)
 	box.add_child(bar)
 	var stats := Label.new()
-	var parts: Array = ["HP %d/%d" % [int(p.get("hp", 0)), int(p.get("max_hp", 0))]]
-	if int(p.get("block", 0)) > 0:
-		parts.append("◈%d" % int(p.get("block", 0)))
-	# Energy only for the ALLY — yours is the orb beside your hand, and printing it
-	# in both places is exactly the doubling this pass exists to remove.
-	if slot != _me():
-		parts.append("✦%d" % int(p.get("energy", 0)))
-	# "↑2 / 6", never a bare "↑2" — a Height with nothing to measure it against
-	# tells you where you are and not how far is left (Nick, 2026-08-16).
-	var wp := int(p.get("weak_point_height", 0))
-	parts.append("↑%d / %d" % [int(p.get("foothold", 0)), wp] if wp > 0
-		else "↑%d" % int(p.get("foothold", 0)))
-	# What the telegraphed move costs THIS hunter, after their Block. The red border
-	# already says "aimed at"; this says whether they survive it.
-	var inc: Dictionary = p.get("incoming", {})
-	var through := int(inc.get("through", 0))
-	if int(inc.get("raw", 0)) > 0:
-		parts.append("⚔%d" % through if through > 0 else "⛨ blocked")
-	if bool(p.get("reached", false)):
-		parts.append("at the sigil")
-	elif not bool(p.get("secure", true)):
-		parts.append("hanging!")
-	if bool(p.get("ended", false)):
-		parts.append("done")
-	stats.text = "   ".join(parts)
+	stats.text = party_card_stats(p, slot, _me())
 	stats.add_theme_font_size_override("font_size", 12)
 	stats.add_theme_color_override("font_color", Color(0.86, 0.82, 0.72))
 	box.add_child(stats)
