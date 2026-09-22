@@ -185,6 +185,18 @@ func _init() -> void:
 	_test_backlog86_condition_bonus_grip_skips_climb_bonus_when_base_grip_is_zero()
 	_test_backlog86_card_fx_carries_condition_and_condition_bonus()
 	_test_backlog86_face_text_explains_a_conditional_bonus()
+	# backlog #86 duty 3: GameHost._printed() had zero coverage of its own --
+	# every test that touched _deck_face() checked `text`/`fx`/`cost`, never
+	# the "preview"/"preview_miss"/"base" triple it feeds, even though
+	# _deck_face()'s own comment says the three matching is exactly what keeps
+	# a deck-view card (no live fight to ask) from showing a false "buffed"
+	# green number. That is three separate calls to _printed(c) -- the same
+	# hand-copied-three-times shape #86 duty 2 has caught drifting before
+	# (_card_fx, _card_icon) -- and nothing proved they actually stay equal or
+	# that the no-live-fight rendering promise they exist for still holds.
+	_test_backlog86_printed_reads_only_the_cards_own_numbers()
+	_test_backlog86_deck_face_preview_miss_and_base_all_agree()
+	_test_backlog86_deck_face_never_colors_a_number_live_with_no_fight_to_ask()
 	# backlog #86 duty 3: the test above only ever drives nth_card's printed
 	# value through n=3 (both shipped cards hardcode condition.value=3), so it
 	# only ever proves the trivial "3rd" case of _ordinal()'s own doc-promised
@@ -5457,6 +5469,69 @@ func _test_backlog86_face_text_explains_a_conditional_bonus() -> void:
 	var climber_text := CardView.face_text(host._deck_face(climber, 0))
 	_expect(climber_text == "Climb 1. Above the sigil, climb 3 more.",
 		"a synthetic above_sigil+grip condition explains itself the same generic way, got: %s" % climber_text)
+
+
+## GameHost._printed() itself: a card's damage/block/grip/ally_block/ally_grip
+## as printed, untouched by anything else on the Card (upgraded, enchants,
+## status flags). Zero coverage before this -- every existing test drove it
+## only through _deck_face(), which hides a wrong key behind three identical
+## calls all being wrong the same way.
+func _test_backlog86_printed_reads_only_the_cards_own_numbers() -> void:
+	var c := Card.from_dict({"id": "t_printed", "name": "Test Printed", "type": "attack",
+		"cost": 1, "damage": 7, "block": 5, "grip": 3, "ally_block": 6, "ally_grip": 2})
+	var printed: Dictionary = GameHost._printed(c)
+	_expect(printed.get("damage") == 7 and printed.get("block") == 5 and printed.get("grip") == 3
+		and printed.get("ally_block") == 6 and printed.get("ally_grip") == 2,
+		"_printed() must report exactly the card's own five printed numbers, got: %s" % printed)
+	# A field _printed() does not carry (wound) must not leak into the dict.
+	_expect(not printed.has("wound"), "_printed() only names its five own keys, got: %s" % printed)
+	var upgraded := c.upgraded_copy()
+	var printed_up: Dictionary = GameHost._printed(upgraded)
+	_expect(printed_up.get("damage") == upgraded.damage and printed_up.get("block") == upgraded.block,
+		"_printed() on an upgraded copy reads the UPGRADED numbers, not the original card's, got: %s" % printed_up)
+
+
+## _deck_face()'s own comment says "preview == preview_miss == base on
+## purpose" and explains why: a deck-view card has no fight to ask, so
+## nothing should ever read as buffed. That is three separate calls to
+## _printed(c) (game_host.gd) -- prove they still land on the exact same
+## dictionary, the way a hand-copied-three-times field would NOT if one call
+## were special-cased and the other two were not (the exact drift #86 duty 2
+## caught in _card_fx/_card_icon more than once).
+func _test_backlog86_deck_face_preview_miss_and_base_all_agree() -> void:
+	var host := GameHost.new(LocalTransport.new(), 1, 2)
+	_kept.append(host)
+	var c := Card.from_dict({"id": "t_deck_face_agree", "name": "Test Agree", "type": "attack",
+		"cost": 1, "damage": 4, "block": 2, "grip": 1, "ally_block": 3, "ally_grip": 1})
+	var face := host._deck_face(c, 0)
+	var pv: Dictionary = face.get("preview", {})
+	var miss: Dictionary = face.get("preview_miss", {})
+	var base: Dictionary = face.get("base", {})
+	_expect(pv == miss and miss == base,
+		"_deck_face()'s preview/preview_miss/base must all be the same dict with no fight to ask, got preview=%s preview_miss=%s base=%s" % [pv, miss, base])
+	_expect(pv == GameHost._printed(c),
+		"_deck_face()'s preview must be exactly _printed(c), not a partial or stale copy, got: %s" % pv)
+
+
+## The rendering promise the two tests above exist to protect: CardView.
+## _num() colors a number "live" (green) the moment `shown != base` -- so if
+## preview/preview_miss/base ever disagreed even by one field, a card sitting
+## quietly in the deck view (nothing buffed it, there is no fight) would show
+## a false green highlight, exactly the bug the comment above _deck_face()
+## warns about. Drive real damage/block/ally_block/grip/ally_grip cards
+## through the full render in rich mode and prove no color tag appears.
+func _test_backlog86_deck_face_never_colors_a_number_live_with_no_fight_to_ask() -> void:
+	var host := GameHost.new(LocalTransport.new(), 1, 2)
+	_kept.append(host)
+	var c := Card.from_dict({"id": "t_deck_face_no_glow", "name": "Test No Glow", "type": "attack",
+		"cost": 1, "damage": 9, "block": 4, "grip": 2, "ally_block": 6, "ally_grip": 3})
+	var glow_text := CardView.face_text(host._deck_face(c, 0), true)
+	_expect(not glow_text.contains("[color=#%s]" % CardView.LIVE_COLOR),
+		"a deck-view card with no live fight must never show a buffed green number, got: %s" % glow_text)
+	# A real shipped card too, not just a synthetic one built to order.
+	var vine_text := CardView.face_text(host._deck_face(Content.make_card("vine"), 0), true)
+	_expect(not vine_text.contains("[color=#%s]" % CardView.LIVE_COLOR),
+		"Vine's own deck-view face must not glow either, got: %s" % vine_text)
 
 
 ## CardView._ordinal()'s own doc comment promises a GENERAL English ordinal
