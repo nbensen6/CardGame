@@ -279,7 +279,7 @@ func _run() -> void:
 func _hand_sizes() -> void:
 	var c := _combat()
 	var ids := ["tongue_snap", "leap", "scramble", "hop", "pounce", "brace",
-		"leapfrog", "tongue_flick", "take_aim", "tongue_snap"]
+		"leapfrog", "flick", "take_aim", "tongue_snap"]
 	for n in range(1, 11):
 		_step = n
 		c.players[0].hand.clear()
