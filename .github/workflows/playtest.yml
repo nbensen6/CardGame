@@ -58,6 +58,7 @@ jobs:
         run: |
           $GODOT --headless --path game --script res://tools/run_tests.gd > tests.log 2>&1 || true
           grep -E "^FAIL|TESTS? (PASSED|FAILED)" tests.log | tail -20
+          grep -E "^FAIL" tests.log | head -10 | while IFS= read -r l; do echo "::error title=unit test::$l"; done
           grep -q "ALL TESTS PASSED" tests.log
 
       - name: Playtests (rendered)
@@ -71,6 +72,11 @@ jobs:
               mode=$mode beast=cinder_jackal steps=80 out=$PWD/out/$mode \
               > out/$mode.log 2>&1 || fails=$((fails+1))
             grep -E "PLAYTEST|FAIL" out/$mode.log | head -30
+            # Every failure as an annotation: readable on the run page and via
+            # the public API without signing in (agents poll it).
+            grep -E "^FAIL" out/$mode.log | sort -u | head -20 | while IFS= read -r l; do
+              echo "::error title=playtest $mode::$l"
+            done
           done
           echo "fails=$fails" >> "$GITHUB_OUTPUT"
 
