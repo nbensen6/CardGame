@@ -123,6 +123,8 @@ func _initialize() -> void:
 			load("res://views/combat_3d.gd").model_variant = a.substr(8)
 		elif a == "toon":
 			load("res://views/combat_3d.gd").toon = true
+		elif a == "classic":
+			load("res://views/combat_3d.gd").classic = true
 		elif a == "wide":
 			_wide = true
 		elif a.begins_with("act="):
