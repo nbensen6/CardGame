@@ -1599,21 +1599,33 @@ func use_potion(pi: int, effect: String, value: int) -> bool:
 			ps.energy += value
 		"draw":
 			_draw(ps, value)
+		# The five _ally effects are gated on has_ally (#86 duty 2), mirroring
+		# play_card()'s own gate (see its comment above the ally_blk/ally_climb
+		# zeroing): in a 1-player fight ally_index(pi) == pi, so an ungated
+		# "give your ally X" potion would hand the drinker their own potion's
+		# ally grant instead of doing nothing. The potion is still spent —
+		# only the ally-only portion of its effect no-ops — matching how a
+		# pure ally-only card still gets played for no self effect.
 		"heal_ally":
-			var ally_h: PlayerState = players[ally_index(pi)]
-			var healed := mini(maxi(value, 0), ally_h.combatant.max_hp - ally_h.combatant.hp)
-			ally_h.combatant.hp += maxi(healed, 0)
+			if has_ally(pi):
+				var ally_h: PlayerState = players[ally_index(pi)]
+				var healed := mini(maxi(value, 0), ally_h.combatant.max_hp - ally_h.combatant.hp)
+				ally_h.combatant.hp += maxi(healed, 0)
 		"block_ally":
-			var ally_b: PlayerState = players[ally_index(pi)]
-			ally_b.combatant.gain_block(value)
+			if has_ally(pi):
+				var ally_b: PlayerState = players[ally_index(pi)]
+				ally_b.combatant.gain_block(value)
 		"energy_ally":
-			var ally_e: PlayerState = players[ally_index(pi)]
-			ally_e.energy += value
+			if has_ally(pi):
+				var ally_e: PlayerState = players[ally_index(pi)]
+				ally_e.energy += value
 		"strength_ally":
-			var ally_s: PlayerState = players[ally_index(pi)]
-			ally_s.strength += value
+			if has_ally(pi):
+				var ally_s: PlayerState = players[ally_index(pi)]
+				ally_s.strength += value
 		"draw_ally":
-			_draw(players[ally_index(pi)], value)
+			if has_ally(pi):
+				_draw(players[ally_index(pi)], value)
 		"climb":
 			var foothold_before_potion := ps.foothold
 			ps.foothold = mini(ps.foothold + value, FOOTHOLD_MAX)

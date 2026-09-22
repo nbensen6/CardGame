@@ -2207,6 +2207,10 @@ func _init() -> void:
 	# so this was a bonus climb from nothing, not even a double-grant.
 	_test_backlog86_solo_fight_poison_lift_climbs_nobody_from_a_played_poison_card()
 	_test_backlog86_solo_fight_poison_lift_climbs_nobody_from_a_power_triggered_poison()
+	# #86 duty 2 continued (2026-09-22) -- an eighth call site, use_potion()'s
+	# five _ally effects, left ungated the same way: no test ever drank an
+	# _ally potion in a 1-player fight, so it self-echoed silently.
+	_test_backlog86_solo_fight_ally_potions_no_op_with_no_ally()
 
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
@@ -10373,6 +10377,35 @@ func _test_backlog86_solo_fight_poison_lift_climbs_nobody_from_a_power_triggered
 	_expect(ps.foothold == before_fh and combat.boss.wound == 2,
 		"a power's recurring Poison still poisons solo, but with no ally to lift, poison_lift must not climb the caster either (got foothold %d, expected %d)"
 			% [ps.foothold, before_fh])
+
+
+## #86 duty 2 continued (2026-09-22) -- a seventh ally_index() call site left in
+## this same self-echo shape: use_potion()'s five _ally effects (heal_ally,
+## block_ally, energy_ally, strength_ally, draw_ally) were never gated on
+## has_ally(pi), unlike every equivalent card/enchant/power site above. In a
+## 1-player fight ally_index(pi) == pi, so drinking e.g. a "give your ally 12
+## Block" potion handed the drinker their own 12 Block instead of nothing --
+## the potion is still spent, matching how a pure ally-only card still gets
+## played for no self effect.
+func _test_backlog86_solo_fight_ally_potions_no_op_with_no_ally() -> void:
+	var combat := _solo_combat(_deck_of(_slash, 10), 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.combatant.hp = 20
+	var energy_before: int = ps.energy  # a fresh round already seeded base energy — assert no CHANGE, not zero
+	var strength_before: int = ps.strength
+	var hand_before: int = ps.hand.size()
+	var healed := combat.use_potion(0, "heal_ally", 15)
+	var blocked := combat.use_potion(0, "block_ally", 12)
+	var energised := combat.use_potion(0, "energy_ally", 2)
+	var strengthened := combat.use_potion(0, "strength_ally", 3)
+	var drew := combat.use_potion(0, "draw_ally", 2)
+	_expect(healed and blocked and energised and strengthened and drew,
+		"every _ally potion is still accepted (spent) solo, even though it no-ops")
+	_expect(ps.combatant.hp == 20, "heal_ally must not heal the drinker with no ally to heal (got %d)" % ps.combatant.hp)
+	_expect(ps.combatant.block == 0, "block_ally must not grant the drinker Block with no ally (got %d)" % ps.combatant.block)
+	_expect(ps.energy == energy_before, "energy_ally must not grant the drinker Energy with no ally (got %d, expected unchanged %d)" % [ps.energy, energy_before])
+	_expect(ps.strength == strength_before, "strength_ally must not grant the drinker Strength with no ally (got %d, expected unchanged %d)" % [ps.strength, strength_before])
+	_expect(ps.hand.size() == hand_before, "draw_ally must not draw cards for the drinker with no ally (got %d, expected %d)" % [ps.hand.size(), hand_before])
 
 
 func _test_generous_enchant_gives_the_ally_energy() -> void:
