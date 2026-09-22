@@ -92,7 +92,9 @@ must catch the tail and nothing that touches the ground.
   one hind leg should be: 3 feet on the ground, a leg that was really a tail.
   Duplicated the real hind leg, mirrored it, spread both 0.42 apart; then swung
   the tail back and up (yaw -60°, then a per-slice lift along Y so it rises
-  from the hips). Check the foot count by clustering verts with z<0.3.
+  from the hips). Check the foot count by clustering verts with z<0.3 — but a long hind foot puts its heel down too, so one leg can read as two clusters. Confirm by rendering each leg region on its own before cutting anything (the jackal lost a hind paw to a cut made on a miscount; reverted).
+- **Hanging flaps:** Rodin left thin sheets from belly to hind paws. Found by painting a suspect face region red and rendering, then deleting only those faces.
+- **Tail tip:** the ear cut had also chopped the tail tip flat. Tapered the last 0.55 back to a point along the tail's own centreline.
 - **Holes:** the ear cut had opened the shoulder. `holes_fill` refuses a loop
   with figure-8 pinches, so the patch is built by hand: every boundary edge →
   a triangle to an inner ring and a bulged centre, UV'd to a nearby dark-fur
