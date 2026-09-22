@@ -45,6 +45,13 @@ clearly, nothing flickers, nothing floats, nothing is cut off.
 6. **Push safely.** `git pull --rebase origin main` before every push; if the
    rebase conflicts on a design/agents file, keep both edits. Never force-push.
 
+## Nick: how to give an agent a job
+
+Copy `requests/_template.md` to `requests/<date>-<time>-nick-to-<agent>-<slug>.md`,
+set `to:` (artist / playtester / fixer), leave `status: open`, say what you want
+and how to see it. Then run **`toolsoard_push.cmd`** — the agents read the
+repo from GitHub, so an unpushed note never reaches them.
+
 ## Requests
 
 ![[Agents.base#Open requests]]
