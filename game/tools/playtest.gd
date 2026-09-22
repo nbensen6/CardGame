@@ -272,6 +272,37 @@ func _check(v: Node, when: String) -> void:
 					_fail("hunters-overlap", "%s: hunters %d/%d are %.2fm apart (< %.2f) at %v / %v" \
 						% [when, a, b, d, MIN_HUNTER_GAP, pa, pb])
 
+	# 8. A hunter mid-climb stands ON the model's own climb marker
+	# (combat_3d._stand_on_model), not floating off beside the body or fallen
+	# back to the bounding-box guess that runs when a beast ships with no
+	# climb_N anchors (checklist item 2; this is the "hunters land within
+	# reach of a climb marker after a climb" check the baseline request asked
+	# for). _place_hunters only takes the ground (t<=0.01) and sigil (t>=0.92)
+	# branches around the ends -- skip those, they intentionally don't use
+	# _climb_points. Height matches _stand_on_model exactly (h.y = anchor.y,
+	# untouched by the side/clearance offsets), so any drift there means the
+	# wrong branch ran. x tolerance is exactly _stand_on_model's own side
+	# offset (stand_offset_x), so a hunter genuinely on the model's near/far
+	# side still passes and only a real miss (wrong anchor, stale
+	# climb_points, a fallback position) fails.
+	var climb_points: Variant = v.get("_climb_points")
+	var beast_box: Variant = v.get("_beast_box")
+	if c != null and hunters is Array and c.boss != null and climb_points is Dictionary \
+			and not (climb_points as Dictionary).is_empty() and beast_box is AABB:
+		var height: int = maxi(int(c.boss.weak_point_height), 1)
+		var width: float = (beast_box as AABB).size.x
+		var tol: float = width * 0.055 + 0.30 + 0.05
+		for h in (hunters as Array):
+			var foot := int((h as Dictionary).get("foot", 0))
+			var t := clampf(float(foot) / float(height), 0.0, 1.0)
+			if t <= 0.01 or t >= 0.92:
+				continue
+			var home: Vector3 = (h as Dictionary).get("home", Vector3.ZERO)
+			var anchor: Vector3 = v.call("foothold_anchor", climb_points, foot)
+			if absf(home.y - anchor.y) > 0.05 or absf(home.x - anchor.x) > tol:
+				_fail("hunter-off-marker", "%s: hunter at foothold %d is %.2fm from its climb marker (home %v, anchor %v, x-tol %.2f)" \
+					% [when, foot, home.distance_to(anchor), home, anchor, tol])
+
 
 func _all_controls(n: Node) -> Array:
 	var out: Array = []
