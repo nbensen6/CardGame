@@ -3,10 +3,10 @@ tags:
   - request
 from: session
 to: fixer
-status: open
+status: taken
 priority: normal
 created: 2026-09-22
-taken_by:
+taken_by: fixer
 ---
 
 # Both hunters stand inside each other at the sigil
