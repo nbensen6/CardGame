@@ -231,6 +231,7 @@ func _init() -> void:
 	_test_gold_and_shop()
 	_test_shop_removal_charges_the_price_it_showed()
 	_test_backlog86_remove_price_escalates_exactly_and_persists_across_shops_and_saves()
+	_test_backlog86_remove_purchase_reprices_the_other_hunters_own_removal_too()
 	_test_shop_buys_a_relic()
 	_test_shop_cannot_thin_below_min_deck()
 	_test_status_card_removable_at_shop()
@@ -6520,6 +6521,41 @@ func _test_backlog86_remove_price_escalates_exactly_and_persists_across_shops_an
 	var survived_save: bool = back.removes_bought == run.removes_bought and back.removes_bought == 1
 	_expect(exact_step and persisted_across_shops and survived_save,
 		"removal price rises by exactly 25 per purchase, the raise survives into a later shop's fresh stock roll (not just the shop it was bought in), and removes_bought survives a save/load round trip")
+
+
+## #86 duty 3 — `Run.buy()`'s "remove" branch reprices every OTHER still-unsold
+## "remove" stock entry after a purchase (run.gd's own comment: "the next
+## removal in this shop reprices immediately"), and that loop is not scoped by
+## `slot` at all — unlike its two neighbours, `_resync_remove_deck_size` and
+## `_resync_potion_held`, which both filter `other["slot"] == slot`. So a
+## removal bought by hunter A is supposed to reprice hunter B's own unsold
+## "Thin the deck" slot too, in the SAME shop, immediately — removes_bought is
+## a Run-level counter shared by the whole team, not per-hunter. Nothing
+## proved this: the escalation test above only ever reads back the SAME
+## entry just bought, or a later shop's fresh roll; it never leaves a second
+## hunter's own unsold "remove" item sitting in shop_stock to check. A future
+## edit that "fixed" this loop to match its scoped neighbours would silently
+## break the shared-purse co-op pricing with nothing here to catch it.
+func _test_backlog86_remove_purchase_reprices_the_other_hunters_own_removal_too() -> void:
+	var run := _map_run()
+	run.gold = 5000
+	run.map_row = 0
+	run.node_type = "shop"
+	run._begin_shop()
+	var rem0 := -1
+	var rem1 := -1
+	for i in range(run.shop_stock.size()):
+		var it: Dictionary = run.shop_stock[i]
+		if String(it["kind"]) == "remove":
+			if int(it["slot"]) == 0:
+				rem0 = i
+			elif int(it["slot"]) == 1:
+				rem1 = i
+	var price_before: int = int(run.shop_stock[rem1]["price"])
+	var bought := run.buy(rem0, 0)
+	var price_after: int = int(run.shop_stock[rem1]["price"])
+	_expect(bought and price_after == price_before + 25 and not bool(run.shop_stock[rem1]["sold"]),
+		"buying hunter A's removal reprices hunter B's own still-unsold removal too, in the same shop, immediately")
 
 
 ## Backlog #19: the card/removal paths above were covered, but a relic
