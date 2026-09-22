@@ -2169,6 +2169,19 @@ func _init() -> void:
 	_test_backlog86_solo_fight_climbs_nothing_from_a_pure_ally_only_grip_card()
 	_test_backlog86_solo_fight_bonded_enchant_does_not_echo_block_onto_the_same_hunter()
 	_test_backlog86_two_player_fight_is_unaffected_by_the_has_ally_guard()
+	# #86 duty 2 continued (2026-09-22) -- the prior run's own log named four
+	# more ally_index() call sites left in this exact shape: ally_energy,
+	# the Generous enchant's ally_energy_gift, ally_heal, and sac_ally_grip
+	# (Catapult), plus a fifth bug the same audit turned up: can_play()'s own
+	# pull_ally gate divides by a gap that's always zero with no ally, so a
+	# pull_ally card is not just correctly inert solo -- it can never even be
+	# PLAYED, unlike every other pure-ally card here which plays and no-ops.
+	_test_backlog86_solo_fight_rally_gives_the_lone_hunter_no_energy()
+	_test_backlog86_solo_fight_generous_enchant_gives_the_lone_hunter_no_energy()
+	_test_backlog86_solo_fight_warm_glow_heals_nobody_but_still_banks_its_light()
+	_test_backlog86_solo_fight_catapult_launches_nobody_and_still_exhausts_its_sacrifice()
+	_test_backlog86_solo_fight_grappling_arm_is_playable_and_no_ops_with_no_ally()
+	_test_backlog86_two_player_fight_still_grants_all_five_ally_effects()
 
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
@@ -9930,6 +9943,121 @@ func _test_backlog86_two_player_fight_is_unaffected_by_the_has_ally_guard() -> v
 	_expect(combat.players[0].combatant.block == 3 and combat.players[1].combatant.block == 3,
 		"has_ally()'s new guard must not touch the real 2-player case -- Scrap Shield still grants Block to both hunters (got caster=%d ally=%d)"
 			% [combat.players[0].combatant.block, combat.players[1].combatant.block])
+
+
+## #86 duty 2 continued (2026-09-22): the prior run's own log named the
+## remaining ally_index() call sites left uncovered by has_ally() -- this run
+## takes four of them (ally_energy, the Generous enchant's ally_energy_gift,
+## ally_heal, and Catapult's sac_ally_grip), all the identical self-echo
+## shape the block/grip/Bonded fixes already closed: a pure ally-only effect
+## must not quietly land on the lone hunter just because ally_index(0) folds
+## back onto 0 with nobody else in the fight.
+func _test_backlog86_solo_fight_rally_gives_the_lone_hunter_no_energy() -> void:
+	var combat := _solo_combat(_deck_of(_rally, 10), 42, _dummy_boss(300))
+	var idx := _first_playable(combat, 0)
+	var cost := combat.effective_cost(0, combat.players[0].hand[idx])
+	var before: int = combat.players[0].energy
+	combat.play_card(0, idx, true)
+	_expect(combat.players[0].energy == before - cost,
+		"Rally only ever promises energy to an ally -- with no ally in a 1-player fight, the lone hunter must not get it back (got %d, expected %d)"
+			% [combat.players[0].energy, before - cost])
+
+
+func _test_backlog86_solo_fight_generous_enchant_gives_the_lone_hunter_no_energy() -> void:
+	var combat := _solo_combat(_deck_of(_slash, 10), 42, _dummy_boss(300))
+	var idx := _first_playable(combat, 0)
+	combat.players[0].hand[idx] = combat.players[0].hand[idx].enchanted_copy("generous")
+	var cost := combat.effective_cost(0, combat.players[0].hand[idx])
+	var before: int = combat.players[0].energy
+	combat.play_card(0, idx, true)
+	_expect(combat.players[0].energy == before - cost,
+		"a Generous-enchanted card only ever promises energy to an ally -- with no ally in a 1-player fight, the lone hunter must not get it back (got %d, expected %d)"
+			% [combat.players[0].energy, before - cost])
+
+
+func _test_backlog86_solo_fight_warm_glow_heals_nobody_but_still_banks_its_light() -> void:
+	var combat := _solo_combat(_deck_of(_slash, 10), 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand[0] = Content.make_card("warm_glow")  # ally_heal 4, light_gain 1
+	ps.energy = 3
+	ps.combatant.hp = ps.combatant.max_hp - 1  # room to (wrongly) heal, if the bug is still there
+	combat.play_card(0, 0, true)
+	_expect(ps.combatant.hp == ps.combatant.max_hp - 1 and ps.light == 1,
+		"Warm Glow only ever promises healing to an ally -- with no ally in a 1-player fight it must not heal the caster either, though its own Light gain (a self effect on the same card) still banks (got hp=%d light=%d)"
+			% [ps.combatant.hp, ps.light])
+
+
+func _test_backlog86_solo_fight_catapult_launches_nobody_and_still_exhausts_its_sacrifice() -> void:
+	var combat := _solo_combat(_deck_of(_slash, 10), 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.hand = [_catapult(), _slash()]
+	ps.energy = 3
+	var before_fh: int = ps.foothold
+	combat.play_card(0, 0, true, 1, -1)  # Catapult, sacrifice hand[1]
+	_expect(ps.foothold == before_fh and ps.exhaust_pile.size() == 1 and ps.exhaust_pile[0].id == "slash",
+		"Catapult only ever promises Height to an ally -- with no ally in a 1-player fight, the sacrifice must still burn (that part is the caster's own cost, not an ally grant) but the caster must not climb from it (got foothold %d, expected %d)"
+			% [ps.foothold, before_fh])
+
+
+## The fifth bug this same audit turned up, distinct from the other four: it
+## isn't a self-echo, it's can_play()'s own pull_ally gate reading
+## `ps.foothold - players[ally_index(pi)].foothold` -- with no ally that gap
+## is always exactly 0, and `gap <= 0` was written to mean "nobody to pull
+## yet", so a pull_ally card came back permanently unplayable in a 1-player
+## fight instead of playable-and-inert like every other pure-ally card here.
+func _test_backlog86_solo_fight_grappling_arm_is_playable_and_no_ops_with_no_ally() -> void:
+	var combat := _solo_combat(_deck_of(_grapple_arm, 10), 42, _dummy_boss(300))
+	var idx := _first_playable(combat, 0)
+	_expect(idx >= 0,
+		"Grappling Arm must be playable in a 1-player fight -- can_play()'s pull_ally gate must not treat 'no ally to pull' as 'card refused' (got not playable)")
+	var before_fh: int = combat.players[0].foothold
+	combat.play_card(0, idx, true)
+	_expect(combat.players[0].foothold == before_fh,
+		"with no ally to pull, playing Grappling Arm must no-op the climb rather than grapple the caster to themselves (got %d, expected %d)"
+			% [combat.players[0].foothold, before_fh])
+
+
+## The five 2-player regression guards: each of the fixes above only ever
+## gates on `has_ally(pi)`, so the real 2-player shape (ally_index(pi) != pi)
+## must be completely untouched. Each of these five effects already has its
+## own dedicated 2-player test elsewhere in this suite (Rally, Generous,
+## Warm Glow, Catapult's roped-ally test, Grappling Arm's roped-ally and
+## live-gap tests) -- this one exists to say so in one place, the way #86
+## duty 3's own Scrap Shield regression test does for block/grip.
+func _test_backlog86_two_player_fight_still_grants_all_five_ally_effects() -> void:
+	var rally_combat := _new_combat([_deck_of(_rally, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var rally_before: int = rally_combat.players[1].energy
+	rally_combat.play_card(0, _first_playable(rally_combat, 0))
+	_expect(rally_combat.players[1].energy == rally_before + 1, "2-player Rally still grants the ally energy")
+
+	var generous_combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var g_idx := _first_playable(generous_combat, 0)
+	generous_combat.players[0].hand[g_idx] = generous_combat.players[0].hand[g_idx].enchanted_copy("generous")
+	var generous_before: int = generous_combat.players[1].energy
+	generous_combat.play_card(0, g_idx, true)
+	_expect(generous_combat.players[1].energy == generous_before + 1, "2-player Generous enchant still grants the ally energy")
+
+	var glow_combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var glow_mate: PlayerState = glow_combat.players[1]
+	glow_combat.players[0].hand[0] = Content.make_card("warm_glow")
+	glow_combat.players[0].energy = 3
+	glow_mate.combatant.hp = glow_mate.combatant.max_hp - 4
+	glow_combat.play_card(0, 0, true)
+	_expect(glow_mate.combatant.hp == glow_mate.combatant.max_hp and glow_combat.players[0].light == 1,
+		"2-player Warm Glow still heals the ally and banks its own Light")
+
+	var cat_combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var cat_ps: PlayerState = cat_combat.players[0]
+	cat_ps.hand = [_catapult(), _slash()]
+	cat_ps.energy = 3
+	var cat_mate_before: int = cat_combat.players[1].foothold
+	cat_combat.play_card(0, 0, true, 1, -1)
+	_expect(cat_combat.players[1].foothold == cat_mate_before + 2, "2-player Catapult still launches the ally")
+
+	var pull_combat := _new_combat([_deck_of(_grapple_arm, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	pull_combat.players[0].foothold = 3
+	pull_combat.play_card(0, _first_playable(pull_combat, 0))
+	_expect(pull_combat.players[1].foothold == 3, "2-player Grappling Arm still pulls the ally up to the caster's own Height")
 
 
 func _test_generous_enchant_gives_the_ally_energy() -> void:

@@ -318,7 +318,12 @@ func can_play(pi: int, ci: int) -> bool:
 	if ci < 0 or ci >= ps.hand.size():
 		return false
 	var card: Card = ps.hand[ci]
-	if card.pull_ally > 0:  # a grapple must have someone to pull (Nick): ally below, within reach
+	if card.pull_ally > 0 and has_ally(pi):  # a grapple must have someone to pull (Nick): ally
+		# below, within reach. Gated on has_ally (#86 duty 2): with no ally the gap below is
+		# always exactly 0, and `gap <= 0` was written to mean "nobody in range yet" -- that
+		# collapsed a pull_ally card to permanently unplayable in a 1-player fight instead of
+		# playable-and-inert like every other pure-ally card (the effect itself already no-ops
+		# gracefully with a "no ally in grapple range" log once it's allowed to run).
 		var gap: int = ps.foothold - int(players[ally_index(pi)].foothold)
 		if gap <= 0 or gap > card.pull_ally:
 			return false
@@ -1132,7 +1137,10 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 				var cid := cheapen_card.id
 				ps.cost_reductions[cid] = int(ps.cost_reductions.get(cid, 0)) + card.cheapen_amount
 				_log("%s makes %s cost %d less this fight." % [who, cheapen_card.name, card.cheapen_amount])
-			if card.sac_ally_grip > 0:  # Catapult: launch the ally up
+			if card.sac_ally_grip > 0 and has_ally(pi):  # Catapult: launch the ally up. Gated
+				# on has_ally (#86 duty 2): the sacrifice above is the caster's own cost and
+				# always burns, but with no ally to launch the caster must not climb from it
+				# themselves -- same self-echo shape as ally_block/ally_grip.
 				var launched: PlayerState = players[ally_index(pi)]
 				var launched_before := launched.foothold
 				launched.foothold = mini(launched.foothold + card.sac_ally_grip, FOOTHOLD_MAX)
@@ -1208,11 +1216,13 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		# above so a card carrying both fields doesn't inflate its own printed number.
 		ps.combatant.dexterity += card.dexterity
 		_log("%s plays %s — +%d Dexterity." % [who, card.name, card.dexterity])
-	if card.ally_energy > 0:
+	if card.ally_energy > 0 and has_ally(pi):  # gated on has_ally (#86 duty 2): a pure
+		# ally-only grant like Rally must not hand the lone hunter energy it never promised.
 		var ally_e: PlayerState = players[ally_index(pi)]
 		ally_e.energy += card.ally_energy
 		_log("%s plays %s — +%d energy to %s." % [who, card.name, card.ally_energy, ally_e.combatant.name])
-	if enchant_effect == "ally_energy_gift":  # "Generous" (backlog #50)
+	if enchant_effect == "ally_energy_gift" and has_ally(pi):  # "Generous" (backlog #50) --
+		# gated on has_ally (#86 duty 2), same shape as "Bonded"'s echo_block above.
 		var gifted: PlayerState = players[ally_index(pi)]
 		var gift: int = int(card.enchant_data().get("value", 0))
 		gifted.energy += gift
@@ -1220,7 +1230,10 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	if card.light_gain > 0:  # the Lightbearer's own currency — banks across turns (backlog #47)
 		ps.light += card.light_gain
 		_log("%s plays %s — +%d Light (now %d)." % [who, card.name, card.light_gain, ps.light])
-	if card.ally_heal > 0:  # the Lightbearer's mend — direct HP to the ally, up to their max
+	if card.ally_heal > 0 and has_ally(pi):  # the Lightbearer's mend — direct HP to the ally,
+		# up to their max. Gated on has_ally (#86 duty 2): with no ally to mend, this must not
+		# quietly heal the caster instead (light_gain above is a separate, real self effect on
+		# the same card and is unaffected).
 		var mended: PlayerState = players[ally_index(pi)]
 		var mended_amount := mini(card.ally_heal, mended.combatant.max_hp - mended.combatant.hp)
 		mended.combatant.hp += maxi(mended_amount, 0)
