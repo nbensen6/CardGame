@@ -1075,7 +1075,11 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 				t.wound += card.wound
 				_log("%s plays %s — Poison %d on %s." % [who, card.name, t.wound, t.name])
 				any_poisoned = true
-		if any_poisoned and ps.poison_lift > 0:  # Vine-Weaver: the vines feed on the poison and lift the ally
+		if any_poisoned and ps.poison_lift > 0 and has_ally(pi):  # Vine-Weaver: the vines feed
+			# on the poison and lift the ally. Gated on has_ally (#86 duty 2): with no ally to
+			# lift, ally_index(pi) collapses onto the caster themselves, and a Poison card
+			# carries no grip of its own to justify a free climb -- the same self-echo shape
+			# ally_block/ally_grip/ally_energy/ally_heal/sac_ally_grip were fixed for already.
 			var fed_ally: PlayerState = players[ally_index(pi)]
 			var fed_ally_before := fed_ally.foothold
 			fed_ally.foothold = mini(fed_ally.foothold + ps.poison_lift, FOOTHOLD_MAX)
@@ -2415,7 +2419,7 @@ func _handle_power_effects(ctx: Dictionary) -> void:
 						t.wound += amount
 						_log("%s's %s triggers — Poison %d on %s." % [ps.combatant.name, pname, t.wound, t.name])
 						any_poisoned = true
-				if any_poisoned and ps.poison_lift > 0:  # Vine-Weaver: the vines feed on the poison and lift the ally (same rule play_card's Poison branch applies) — once per trigger, not once per target (same idiom as play_card's own poison_lift)
+				if any_poisoned and ps.poison_lift > 0 and has_ally(pi):  # Vine-Weaver: the vines feed on the poison and lift the ally (same rule play_card's Poison branch applies) — once per trigger, not once per target (same idiom as play_card's own poison_lift). Gated on has_ally (#86 duty 2), mirroring play_card's own gate above: no ally means nothing to lift, not a free climb for the caster.
 					var fed_ally: PlayerState = players[ally_index(pi)]
 					var fed_ally_before := fed_ally.foothold
 					fed_ally.foothold = mini(fed_ally.foothold + ps.poison_lift, FOOTHOLD_MAX)

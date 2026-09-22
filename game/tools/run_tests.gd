@@ -2197,6 +2197,15 @@ func _init() -> void:
 	_test_backlog86_solo_fight_catapult_launches_nobody_and_still_exhausts_its_sacrifice()
 	_test_backlog86_solo_fight_grappling_arm_is_playable_and_no_ops_with_no_ally()
 	_test_backlog86_two_player_fight_still_grants_all_five_ally_effects()
+	# #86 duty 2 continued (2026-09-22) -- the same self-echo shape, found in a
+	# sixth call site the prior audits didn't name: poison_lift (Vine-Weaver's
+	# "the vines feed on Poison and lift the ally") in both play_card()'s own
+	# Poison branch and _handle_power_effects()'s recurring "wound" copy.
+	# Neither checked has_ally(pi), so a solo Vine-Weaver poisoning an enemy
+	# climbed themselves for free -- a Poison card carries no grip of its own,
+	# so this was a bonus climb from nothing, not even a double-grant.
+	_test_backlog86_solo_fight_poison_lift_climbs_nobody_from_a_played_poison_card()
+	_test_backlog86_solo_fight_poison_lift_climbs_nobody_from_a_power_triggered_poison()
 
 	# fit()'s window-scaling path reads node.get_window(), which resolves to
 	# null for every node during _init() -- the whole tree, root included, is
@@ -10159,6 +10168,42 @@ func _test_backlog86_two_player_fight_still_grants_all_five_ally_effects() -> vo
 	pull_combat.players[0].foothold = 3
 	pull_combat.play_card(0, _first_playable(pull_combat, 0))
 	_expect(pull_combat.players[1].foothold == 3, "2-player Grappling Arm still pulls the ally up to the caster's own Height")
+
+
+## A sixth ally_index() self-echo site the prior audits didn't name: poison_lift
+## (Vine-Weaver's "the vines feed on Poison and lift the ally") checked
+## `ps.poison_lift > 0` but never `has_ally(pi)`, so in a 1-player fight
+## `ally_index(pi) == pi` folded the "ally" lift back onto the caster -- and
+## unlike Vine/Hoist/Cover, a plain Poison card carries no grip field of its
+## own, so this wasn't even a double-grant: it was a climb from nothing.
+## `_toxic_lash` carries wound but no grip/ally_grip, so any foothold change
+## here can only be poison_lift leaking through.
+func _test_backlog86_solo_fight_poison_lift_climbs_nobody_from_a_played_poison_card() -> void:
+	var combat := _solo_combat(_deck_of(_toxic_lash, 10), 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.poison_lift = 1
+	ps.energy = 3
+	var before_fh: int = ps.foothold
+	combat.play_card(0, 0, true)
+	_expect(ps.foothold == before_fh and combat.boss.wound > 0,
+		"poison_lift only ever promises Height to an ally -- with no ally in a 1-player fight, the caster must not climb from their own Poison (got foothold %d, expected %d)"
+			% [ps.foothold, before_fh])
+
+
+## The same gap in _handle_power_effects()'s "wound" case, the turn-end payout
+## for a power card (e.g. Seeping Venom) rather than a played card -- a
+## separate copy of the exact same poison_lift check, missing the exact same
+## guard.
+func _test_backlog86_solo_fight_poison_lift_climbs_nobody_from_a_power_triggered_poison() -> void:
+	var combat := _solo_combat(_deck_of(_slash, 10), 42, _dummy_boss(300))
+	var ps: PlayerState = combat.players[0]
+	ps.poison_lift = 3
+	ps.powers["test_poison"] = {"stacks": 1, "value": 2, "effect": "wound", "name": "Test Poison"}
+	var before_fh: int = ps.foothold
+	combat.end_turn(0)
+	_expect(ps.foothold == before_fh and combat.boss.wound == 2,
+		"a power's recurring Poison still poisons solo, but with no ally to lift, poison_lift must not climb the caster either (got foothold %d, expected %d)"
+			% [ps.foothold, before_fh])
 
 
 func _test_generous_enchant_gives_the_ally_energy() -> void:
