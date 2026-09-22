@@ -2810,10 +2810,20 @@ static func hunter_move_kind(placed: bool, was: int, foot: int, moved: bool) -> 
 ## of a body-width off the anchor the step was grown at, and stood beside
 ## their own footing rather than on it. Two hunters sharing a ledge still
 ## need to not occupy each other.
-static func hunter_side_offset(players: Array, i: int) -> float:
-	var foot: int = int((players[i] as Dictionary).get("foothold", 0))
+##
+## Compares footholds CLAMPED to `height`, not the raw stored value. A
+## foothold keeps climbing past the sigil (core/combat.gd: "foothold can
+## reach FOOTHOLD_MAX, not just weak_point_height"), but `_place_hunters`
+## clamps `t` to 1.0 and draws every foothold >= height at the same sigil
+## spot. Two hunters at, say, 13 and 16 with a Height-13 sigil are drawn on
+## top of each other — the same rendered point — but compared as raw
+## footholds they read as different holds, so the offset never fired and
+## the Goblin stood inside the Frog at the sigil.
+static func hunter_side_offset(players: Array, i: int, height: int) -> float:
+	var cap: int = maxi(height, 1)
+	var foot: int = mini(int((players[i] as Dictionary).get("foothold", 0)), cap)
 	for j in range(players.size()):
-		if j != i and int((players[j] as Dictionary).get("foothold", 0)) == foot:
+		if j != i and mini(int((players[j] as Dictionary).get("foothold", 0)), cap) == foot:
 			return -1.0 if i == 0 else 1.0
 	return 0.0
 
@@ -2828,7 +2838,7 @@ func _place_hunters(s: Dictionary) -> void:
 		var p: Dictionary = players[i]
 		var foot: int = int(p.get("foothold", 0))
 		var t: float = clampf(float(foot) / float(height), 0.0, 1.0)
-		var side: float = hunter_side_offset(players, i)
+		var side: float = hunter_side_offset(players, i, height)
 		var pos: Vector3
 		if t <= 0.01:
 			# At the feet, close in. Flanking scales with the body, and the bodies

@@ -991,6 +991,12 @@ func _init() -> void:
 	_test_backlog86_hunter_side_offset_splits_by_slot_when_a_foothold_is_shared()
 	_test_backlog86_hunter_side_offset_is_zero_once_a_shared_foothold_diverges()
 	_test_backlog86_hunter_side_offset_ignores_a_third_hunter_on_a_different_foothold()
+	# request 2026-09-22-1700-session-to-fixer-hunters-overlap-at-sigil: the
+	# offset compared RAW footholds, but _place_hunters draws every foothold
+	# >= the sigil's Height on the same spot, so two hunters past the sigil
+	# with different raw footholds still overlapped.
+	_test_backlog86_hunter_side_offset_treats_footholds_past_the_sigil_as_shared()
+	_test_backlog86_hunter_side_offset_is_zero_below_the_sigil_even_if_raw_footholds_match_above_it()
 	# backlog #86 duty 3 (fourth pass): height_gap_between, lifted out of
 	# combat_3d._height_gap, is a SECOND copy of the exact gap formula
 	# Combat.incoming_for already prices a rift move on in /core — the intent
@@ -21703,35 +21709,56 @@ func _test_backlog86_hunter_move_kind_climb_outranks_moved_even_if_the_point_did
 ## right on their own anchor, not a third of a body-width off it.
 func _test_backlog86_hunter_side_offset_is_zero_for_a_lone_hunter() -> void:
 	var players := [{"foothold": 4}, {"foothold": 9}]
-	_expect(Combat3D.hunter_side_offset(players, 0) == 0.0,
+	_expect(Combat3D.hunter_side_offset(players, 0, 100) == 0.0,
 		"a hunter on a foothold nobody else shares stands dead-centre on their own anchor")
-	_expect(Combat3D.hunter_side_offset(players, 1) == 0.0,
+	_expect(Combat3D.hunter_side_offset(players, 1, 100) == 0.0,
 		"same rule for the other slot: no sharing, no offset")
 
 
 func _test_backlog86_hunter_side_offset_splits_by_slot_when_a_foothold_is_shared() -> void:
 	var players := [{"foothold": 6}, {"foothold": 6}]
-	_expect(Combat3D.hunter_side_offset(players, 0) == -1.0,
+	_expect(Combat3D.hunter_side_offset(players, 0, 100) == -1.0,
 		"slot 0 steps to the near side when sharing a foothold with slot 1")
-	_expect(Combat3D.hunter_side_offset(players, 1) == 1.0,
+	_expect(Combat3D.hunter_side_offset(players, 1, 100) == 1.0,
 		"slot 1 steps to the far side -- the split is keyed on SLOT INDEX, not on discovery order")
 
 
 func _test_backlog86_hunter_side_offset_is_zero_once_a_shared_foothold_diverges() -> void:
 	var players := [{"foothold": 6}, {"foothold": 6}]
-	_expect(Combat3D.hunter_side_offset(players, 0) == -1.0,
+	_expect(Combat3D.hunter_side_offset(players, 0, 100) == -1.0,
 		"sanity: still stepping aside while both share Height 6")
 	players[1]["foothold"] = 8
-	_expect(Combat3D.hunter_side_offset(players, 0) == 0.0,
+	_expect(Combat3D.hunter_side_offset(players, 0, 100) == 0.0,
 		"the moment a teammate climbs off this Height, this hunter must collapse back to dead-centre, not stay stepped aside for a ledge nobody else is on any more")
 
 
 func _test_backlog86_hunter_side_offset_ignores_a_third_hunter_on_a_different_foothold() -> void:
 	var players := [{"foothold": 3}, {"foothold": 3}, {"foothold": 7}]
-	_expect(Combat3D.hunter_side_offset(players, 2) == 0.0,
+	_expect(Combat3D.hunter_side_offset(players, 2, 100) == 0.0,
 		"a third hunter alone on their own foothold is unaffected by an unrelated pair sharing a different one")
-	_expect(Combat3D.hunter_side_offset(players, 0) == -1.0 and Combat3D.hunter_side_offset(players, 1) == 1.0,
+	_expect(Combat3D.hunter_side_offset(players, 0, 100) == -1.0 and Combat3D.hunter_side_offset(players, 1, 100) == 1.0,
 		"the sharing pair still splits normally with a third, uninvolved hunter present")
+
+
+## The sigil bug (request 2026-09-22-1700-session-to-fixer-hunters-overlap-at-
+## sigil.md): a foothold keeps climbing past the sigil's Height (core/combat.gd
+## clamps it to FOOTHOLD_MAX, not weak_point_height), but _place_hunters clamps
+## `t` to 1.0 and draws every foothold >= height on the exact same sigil spot.
+## Two hunters both "at the sigil" with DIFFERENT raw footholds (13 and 16,
+## Height 13) are drawn on top of each other; the old raw-foothold comparison
+## saw 13 != 16 and never stepped either one aside.
+func _test_backlog86_hunter_side_offset_treats_footholds_past_the_sigil_as_shared() -> void:
+	var players := [{"foothold": 13}, {"foothold": 16}]
+	_expect(Combat3D.hunter_side_offset(players, 0, 13) == -1.0,
+		"both footholds are >= the Height-13 sigil, so both render at the same spot and must step apart")
+	_expect(Combat3D.hunter_side_offset(players, 1, 13) == 1.0,
+		"same for the other slot -- 16 is clamped to 13 same as the first hunter's 13")
+
+
+func _test_backlog86_hunter_side_offset_is_zero_below_the_sigil_even_if_raw_footholds_match_above_it() -> void:
+	var players := [{"foothold": 5}, {"foothold": 13}]
+	_expect(Combat3D.hunter_side_offset(players, 0, 13) == 0.0,
+		"a hunter below the sigil is unaffected by a teammate clamped to the sigil above them")
 
 
 ## backlog #86 duty 3 (forty-fourth pass) -- _key_name is the display half of

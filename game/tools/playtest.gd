@@ -24,6 +24,11 @@
 ## Exit code = number of distinct failing checks.
 extends SceneTree
 
+## Below this, two hunter "home" points read as the same standing spot rather
+## than two hunters side by side. See check 7 in _check() for where this is
+## used and why this number.
+const MIN_HUNTER_GAP := 0.35
+
 var _mode := "play"
 var _beast := ""
 var _steps := 40
@@ -242,6 +247,24 @@ func _check(v: Node, when: String) -> void:
 	# 6. No script errors, ever.
 	while not _errors.is_empty():
 		_fail("script-error", String(_errors.pop_front()))
+
+	# 7. No two hunters stand inside each other on the beast (request
+	# 2026-09-22-1700-session-to-fixer-hunters-overlap-at-sigil: both "at the
+	# sigil" drew on the exact same point). MIN_HUNTER_GAP is well under the
+	# smallest real side-step (_stand_on_model: beast_width*0.055+0.30 to
+	# EACH side, so >= ~0.6 apart whenever the offset is actually applied)
+	# and well over the ~0.05 slack _place_hunters already tolerates as "not
+	# moved", so it only fires on a genuine overlap, not layout noise.
+	var hunters: Variant = v.get("_hunters")
+	if hunters is Array and hunters.size() > 1:
+		for a in range((hunters as Array).size()):
+			for b in range(a + 1, (hunters as Array).size()):
+				var pa: Vector3 = ((hunters[a] as Dictionary).get("home", Vector3.ZERO))
+				var pb: Vector3 = ((hunters[b] as Dictionary).get("home", Vector3.ZERO))
+				var d := pa.distance_to(pb)
+				if d < MIN_HUNTER_GAP:
+					_fail("hunters-overlap", "%s: hunters %d/%d are %.2fm apart (< %.2f) at %v / %v" \
+						% [when, a, b, d, MIN_HUNTER_GAP, pa, pb])
 
 
 func _all_controls(n: Node) -> Array:
