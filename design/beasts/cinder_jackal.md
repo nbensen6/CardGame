@@ -45,6 +45,7 @@ Refresh with `tools\preview_beast.cmd cinder_jackal` — no need to boot the gam
 
 ## Notes
 
+- Rebuilt 2026-09-22 from Meshy (candidate B, lean wolf build) after the Rodin model's legs could not be fixed.
 - First beast rebuilt through the AI pipeline — the template. See [[ai-beast-recipe]].
-- Climb route: front-left foreleg ×2 → shoulder → withers → brow sigil, on grown basalt footholds.
+- Climb route: near foreleg ×2 → shoulder ×2 → brow sigil, on grown basalt footholds.
 - 23-bone rig; idle / attack / hit.

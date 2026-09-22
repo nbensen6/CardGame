@@ -19,6 +19,22 @@ for the gameplay parts (climb points, footing).**
 The Python model is untouched (`cinder_jackal.glb`), so `build.cmd cast` can
 never silently put the old one back. To see it: harness `classic`.
 
+## Generator: Meshy (from 2026-09-22)
+
+Rodin's jackal came out with sheet-like legs and a tail standing in for a hind
+leg — patching could not fix anatomy. Meshy (Pro, API) produced four clean legs
+on every one of three tries. `tools/meshy.py` wraps the API (key read from the
+meshy MCP entry, never printed):
+
+    python tools/meshy.py preview "<prompt>"   # untextured shape, ~20 credits
+    python tools/meshy.py refine <id> "<texture prompt>"
+    python tools/meshy.py fetch <id> <out>
+
+Prompt for anatomy explicitly: "standing still in a neutral pose on all four
+legs, four clearly separate solid legs, paws flat and spaced apart, tail held
+out behind off the ground, symmetrical left to right". Generate 3 previews,
+compare untextured, refine the best 1-2. The chosen jackal is candidate B.
+
 ## The steps
 
 1. **Generate.** blender-mcp → Hyper3D Rodin (free trial key) text-to-3D.

@@ -35,7 +35,9 @@ const AI_ART := {"cinder_jackal": "_ai"}
 const AI_MOTION := {
 	# Rigged (2026-09-22): tail and breath are bone animation now, so the
 	# shader only keeps the ember pulse.
-	"cinder_jackal": {"glow_pulse": 0.25},
+	# glow_gain down from 1.2: the Meshy jackal paints its inner ears the same
+	# hot orange as its markings, and at full gain they read as two flames.
+	"cinder_jackal": {"glow_pulse": 0.25, "glow_gain": 0.55},
 }
 ## Harness switches. `model_variant` loads <beast><variant>.glb when it exists
 ## (e.g. "_ai"); `toon` shades the beast with TOON instead of CREATURE.
@@ -2308,7 +2310,7 @@ static func toon_material(mi: MeshInstance3D, tex: Texture2D,
 		# mesh; breathing them would jiggle the thing a hunter is standing on.
 		for k in motion:
 			mat.set_shader_parameter(k, motion[k])
-			if k != "glow_pulse":
+			if not k.begins_with("glow_"):
 				line.set_shader_parameter(k, motion[k])
 	else:
 		# An untextured part (the footholds) keeps its flat colour.

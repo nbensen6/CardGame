@@ -48,7 +48,7 @@ FOCUS = {
     "husk_beetle": (0.46, 1.20), "gloom_moth": (0.55, 1.05),
     "bog_leech": (0.39, 1.28), "thrasher": (0.42, 1.55),
     "silk_widow": (0.45, 1.35), "boulder_ram": (0.34, 1.35),
-    "cinder_jackal": (0.70, 0.95), "brine_urchin": (0.62, 1.45),
+    "cinder_jackal": (0.80, 0.62), "brine_urchin": (0.62, 1.45),
     "clot_toad": (0.48, 1.46), "flicker_stag": (0.50, 1.10),
     "eyrie_hawk": (0.78, 0.60), "glyph_tortoise": (0.50, 1.28),
     "riptide_eel": (0.68, 0.75), "yoke_ox": (0.45, 1.25),
@@ -65,7 +65,7 @@ FOCUS = {
 ## than bend the shared formula for one outlier.
 FOCUS_XY = {
     "riptide_eel": (0.5, -1.0),
-    "cinder_jackal": (0.35, -2.45),   # the AI model: head far forward at -Y
+    "cinder_jackal": (-0.05, -2.3),   # the Meshy model (2026-09-22): head at -Y
     # Gloom Moth's mesh is X-symmetric (bbox centre 0.02) but the fixed
     # three-quarter EYE angle still renders it off-centre — antennae and
     # wings reach further forward/up on one side of the view than the
@@ -103,6 +103,9 @@ AI_ART = {"cinder_jackal": "_ai"}
 def look(model_path, out_path, at, span, xy=None, painted=False):
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.gltf(filepath=model_path)
+    # The grown climbing ledges are gameplay, not the creature's face.
+    for ob in [ob for ob in bpy.data.objects if ob.name.startswith("Footholds")]:
+        bpy.data.objects.remove(ob)
 
     co = [o.matrix_world @ v.co for o in bpy.data.objects if o.type == "MESH"
           for v in o.data.vertices]
