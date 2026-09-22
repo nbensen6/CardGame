@@ -18,6 +18,15 @@ const CAST := "res://assets/3d/cast/"
 ## _shade_model, and game/assets/3d/creature.gdshader for what it does and why
 ## each part of it is safe on the gl_compatibility renderer.
 const CREATURE := preload("res://assets/3d/creature.gdshader")
+# Graphics spike, 2026-09-22: a toon ramp + inverted-hull outline for models
+# that carry their own painted texture (AI image-to-3D, asset packs). Off unless
+# the harness asks — see screenshot.gd variant= / toon.
+const TOON := preload("res://assets/3d/toon.gdshader")
+const OUTLINE := preload("res://assets/3d/outline.gdshader")
+## Harness-only switches. `model_variant` loads <beast><variant>.glb when it
+## exists (e.g. "_ai"); `toon` shades the beast with TOON instead of CREATURE.
+static var model_variant := ""
+static var toon := false
 
 ## Jump-point rings. Dim for "you could stand here", warm for the next rung up.
 ## Both deliberately low-alpha: these sit on the beast all fight, and a marker
@@ -1426,6 +1435,8 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	if _beast != null:
 		_beast.queue_free()
 	var path := CAST + key + ".glb"
+	if model_variant != "" and ResourceLoader.exists(CAST + key + model_variant + ".glb"):
+		path = CAST + key + model_variant + ".glb"
 	if not ResourceLoader.exists(path):
 		return
 	_beast = (load(path) as PackedScene).instantiate()
@@ -2269,6 +2280,15 @@ func _shade_model(root: Node, is_ground := false) -> void:
 				tex = (had as StandardMaterial3D).albedo_texture
 				break
 		var mat := ShaderMaterial.new()
+		if toon and not is_ground and root == _beast:
+			mat.shader = TOON
+			if tex != null:
+				mat.set_shader_parameter("albedo_tex", tex)
+			var line := ShaderMaterial.new()
+			line.shader = OUTLINE
+			mat.next_pass = line
+			mi.material_override = mat
+			continue
 		mat.shader = CREATURE
 		if tex != null:
 			mat.set_shader_parameter("atlas", tex)

@@ -51,9 +51,12 @@ infra with no screen and cannot boot it at all. Use that, every run.
 ### Pass A — the walk
 
 ```
-%GODOT% --path game --script res://tools/screenshot.gd -- ^
-    out=C:\shot.png state=3d beast=<one you have not checked>
+tools\shot.cmd out=C:\shot.png state=3d beast=<one you have not checked>
 ```
+
+ALWAYS through `tools\shot.cmd`, never `%GODOT%` directly: the wrapper opens the
+window on the second monitor without focus. A direct launch lands on Nick's main
+screen and tabs him out of whatever he is playing.
 
 Read what it PRINTS as carefully as the image — `HUNTER`, `VIS`, `CAM`, `HAND`,
 `DROP`. Then open the PNG and look at it. Other states worth walking: `3dclimb`,

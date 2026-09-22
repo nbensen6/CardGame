@@ -26,6 +26,7 @@ var _state := "combat"
 var _hold := ""   # 3dloop: stop the lap at this phase instead of finishing it
 var _beast := ""  # force a specific beast, to check a model that RNG rarely picks
 var _shade := ""  # "ao" | "shader" | "full" — the rendering prototype, see _apply_shade
+var _wide := false  # hold the establishing shot — see _capture
 var _act := 0     # 3dmap: fast-forward to this act, so later regions get looked at
 var _orbit := 999.0  # 3D combat: drive the orbit camera to this yaw, in degrees
 var _size := Vector2i.ZERO  # size=WxH — shoot at a different screen shape
@@ -74,7 +75,17 @@ func _stay_out_of_the_way() -> void:
 		return
 	w.set_flag(Window.FLAG_NO_FOCUS, true)
 	w.set_flag(Window.FLAG_MOUSE_PASSTHROUGH, true)
-	w.position = Vector2i(-8000, -8000)
+	# NOT (-8000, -8000): Godot clamps an off-desktop position back onto the
+	# primary screen's corner, so that line was actively dragging the window
+	# ONTO the main screen (measured 2026-09-22, landed at -8,-31). Put it on
+	# any screen that is not the primary one instead; with a single monitor,
+	# leave it where tools/shot.cmd's override.cfg put it.
+	var primary := DisplayServer.get_primary_screen()
+	for i in DisplayServer.get_screen_count():
+		if i != primary:
+			var r := DisplayServer.screen_get_usable_rect(i)
+			w.position = r.position + Vector2i(40, 40)
+			break
 
 
 func _initialize() -> void:
@@ -107,6 +118,13 @@ func _initialize() -> void:
 			# prototype. Off by default, so every existing capture is unchanged
 			# and a before/after is the same command twice.
 			_shade = a.substr(6)
+		elif a.begins_with("variant="):
+			# variant=_ai loads <beast>_ai.glb — the 2026-09-22 graphics spike.
+			load("res://views/combat_3d.gd").model_variant = a.substr(8)
+		elif a == "toon":
+			load("res://views/combat_3d.gd").toon = true
+		elif a == "wide":
+			_wide = true
 		elif a.begins_with("act="):
 			_act = int(a.substr(4))
 		elif a.begins_with("orbit="):
@@ -593,10 +611,21 @@ func _find_with(root: Node, prop: String) -> Node:
 
 
 func _capture() -> void:
+	if _wide and current_scene != null and current_scene.get("_want_third") != null:
+		# Hold the establishing shot instead of falling in to the shoulder cam,
+		# so the whole beast is in frame — the 2026-09-22 graphics spike.
+		current_scene.set("_want_third", false)
+		current_scene.set("_user_framed", true)
 	for _i in 15:  # let the scene lay out and draw
 		await process_frame
 	await _await_camera(current_scene)
-	if _shade != "":
+	if _wide and current_scene != null and current_scene.has_method("_take_manual_control"):
+		current_scene.call("_take_manual_control")
+		current_scene.set("_dist", float(current_scene.get("_dist")) * 2.6)
+		current_scene.set("_pan", Vector3(0, float(current_scene.get("_beast_height")) * 0.35, 0))
+		current_scene.call("_apply_orbit")
+		for _i in 20:
+			await process_frame
 		_apply_shade(current_scene)
 		for _i in 3:
 			await process_frame

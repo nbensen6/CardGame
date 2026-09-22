@@ -59,3 +59,6 @@ tools/fixer/last-run.log
 tools/builder/last-run.log
 tools/builder/loop.flag
 tools/fixer/loop.flag
+
+# per-run window settings written by tools/shot.cmd
+game/override.cfg
