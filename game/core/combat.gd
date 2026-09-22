@@ -643,6 +643,19 @@ func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PER
 		ally_blk += int(card.condition_bonus.get("ally_block", 0))
 		climb += int(card.condition_bonus.get("grip", 0))
 
+	# backlog #86 duty 2: play_card() gates every ally-only grant on has_ally(pi)
+	# (e.g. the ally_climbed/ally_blk branches below its own comments), because
+	# in a 1-player fight ally_index(pi) == pi and `mate` collapses onto `ps` --
+	# a pure ally-only card (Cover: ally_block 6, block 0) must do nothing there,
+	# not hand the caster their own card's "ally" grant. preview() computed
+	# ally_blk/ally_climb above with no such gate, so the card face kept
+	# promising a solo hunter +6 Block or +3 Height that play_card() then never
+	# actually gave them -- the exact "preview lies" shape this function's own
+	# docstring exists to prevent, just never closed for this one gate.
+	if not has_ally(pi):
+		ally_blk = 0
+		ally_climb = 0
+
 	# backlog #86 duty 2: `blk`/`ally_blk` above are the raw, pre-modifier sum
 	# and stay that way -- play_card() still feeds them through
 	# Combatant.gain_block(), which is the one place Dexterity/Frail actually

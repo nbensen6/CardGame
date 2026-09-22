@@ -2170,6 +2170,8 @@ func _init() -> void:
 	_test_backlog86_solo_fight_climbs_nothing_from_a_pure_ally_only_grip_card()
 	_test_backlog86_solo_fight_bonded_enchant_does_not_echo_block_onto_the_same_hunter()
 	_test_backlog86_two_player_fight_is_unaffected_by_the_has_ally_guard()
+	_test_backlog86_solo_fight_preview_shows_no_ally_block_for_a_pure_ally_only_card()
+	_test_backlog86_solo_fight_preview_shows_no_ally_grip_for_a_pure_ally_only_card()
 	# #86 duty 2 continued (2026-09-22) -- the prior run's own log named four
 	# more ally_index() call sites left in this exact shape: ally_energy,
 	# the Generous enchant's ally_energy_gift, ally_heal, and sac_ally_grip
@@ -9944,6 +9946,29 @@ func _test_backlog86_two_player_fight_is_unaffected_by_the_has_ally_guard() -> v
 	_expect(combat.players[0].combatant.block == 3 and combat.players[1].combatant.block == 3,
 		"has_ally()'s new guard must not touch the real 2-player case -- Scrap Shield still grants Block to both hunters (got caster=%d ally=%d)"
 			% [combat.players[0].combatant.block, combat.players[1].combatant.block])
+
+
+## #86 duty 2 continued: the has_ally() guard above was only ever applied to
+## play_card()'s real effects, never to preview()'s -- the exact numbers the
+## host puts on the card face for the live hand. A 1-player fight kept telling
+## the hunter Cover grants +6 Block to an ally right up until they played it
+## and got nothing, the same "preview lies" shape already fixed for boss/add
+## Block (see preview()'s own comment above ally_blk/ally_climb).
+func _test_backlog86_solo_fight_preview_shows_no_ally_block_for_a_pure_ally_only_card() -> void:
+	var combat := _solo_combat(_deck_of(_assist, 10), 42, _dummy_boss(300))
+	var idx := _first_playable(combat, 0)
+	var pv := combat.preview(0, combat.players[0].hand[idx])
+	_expect(int(pv["ally_block"]) == 0 and int(pv["ally_block_after_mods"]) == 0,
+		"Cover's card-face preview must show 0 ally Block in a 1-player fight, matching what play_card() actually grants (got ally_block=%d, after_mods=%d)"
+			% [int(pv["ally_block"]), int(pv["ally_block_after_mods"])])
+
+
+func _test_backlog86_solo_fight_preview_shows_no_ally_grip_for_a_pure_ally_only_card() -> void:
+	var combat := _solo_combat(_deck_of(_hoist, 10), 42, _dummy_boss(300))
+	var idx := _first_playable(combat, 0)
+	var pv := combat.preview(0, combat.players[0].hand[idx])
+	_expect(int(pv["ally_grip"]) == 0,
+		"Hoist's card-face preview must show 0 ally Height in a 1-player fight, matching what play_card() actually grants (got %d)" % int(pv["ally_grip"]))
 
 
 ## #86 duty 2 continued (2026-09-22): the prior run's own log named the
