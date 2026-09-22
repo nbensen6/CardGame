@@ -410,6 +410,7 @@ func _init() -> void:
 	_test_backlog86_meld_carries_every_card_field_it_is_not_deliberately_dropping()
 	_test_backlog86_meld_pull_ally_takes_the_better_reach_not_the_sum()
 	_test_backlog86_meld_timed_hits_takes_the_longer_chain_not_the_sum()
+	_test_backlog86_meld_cheapen_amount_takes_the_larger_not_the_sum()
 	_test_backlog86_card_fx_carries_every_non_numeric_effect_field()
 	_test_satchel_charge_detonates()
 	_test_rhythm_builds_and_scales()
@@ -9356,6 +9357,41 @@ func _test_backlog86_meld_timed_hits_takes_the_longer_chain_not_the_sum() -> voi
 	var fused_swapped := combat._meld_cards(bomb, satchel)
 	_expect(fused_swapped.timed_hits == 3,
 		"timed_hits' maxi() must be order-independent — melding bomb into satchel_charge must still yield 3, got %d" % fused_swapped.timed_hits)
+
+
+## backlog #86 duty 3 — the last of the four deliberate maxi() fields in
+## `_meld_cards()` (pull_ally, cheapen_amount, timed_hits, hits) to get a
+## dedicated test. pull_ally was closed 2026-09-16, timed_hits 2026-09-20,
+## and hits turned out to already be covered incidentally
+## (_test_backlog86_multihit_frail_via_meld_applies_once_per_play_not_per_hit
+## melds Flurry's 2 hits against Crippling Blow's 1, where maxi and sum
+## actually diverge). cheapen_amount never got the same treatment.
+## Card.from_dict defaults cheapen_amount to 1 on EVERY card regardless of
+## cheapen_pick (card.gd:180) — the same "always nonzero" trap the reflection
+## sweep test's doc comment already names for this exact field — so that
+## generic sweep can only prove the fused value survives nonzero, not that it
+## took the max rather than the sum. Worse, `burn_coal` is the only shipped
+## card that ever sets `cheapen_pick`, so no two REAL cards carry different
+## nonzero cheapen_amount values to meld against each other and tell maxi()
+## from `+` apart. Its own upgraded copy does: upgraded_copy() bumps
+## cheapen_amount from 1 to 2 for a cheapen_pick card (card.gd:344-345) — a
+## fresh Burn Coal melded with an already-sharpened one is a perfectly
+## legitimate in-game pairing (a deck can hold both), and maxi(1,2)=2 while
+## 1+2=3, so the two are finally distinguishable.
+func _test_backlog86_meld_cheapen_amount_takes_the_larger_not_the_sum() -> void:
+	var fresh := Content.make_card("burn_coal")                      # cheapen_amount 1
+	var sharpened := Content.make_card("burn_coal").upgraded_copy()  # cheapen_amount 2
+	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
+	var fused := combat._meld_cards(fresh, sharpened)
+	_expect(fused.cheapen_amount == 2,
+		"melding a fresh Burn Coal (cheapen_amount 1) into a sharpened one (2) must take the LARGER value (2), not their sum (3), got %d" % fused.cheapen_amount)
+
+	# and the reverse order, same reasoning as the sibling maxi() tests above —
+	# a swapped a/b is exactly how a maxi()->sum regression could hide if only
+	# one argument order were ever exercised
+	var fused_swapped := combat._meld_cards(sharpened, fresh)
+	_expect(fused_swapped.cheapen_amount == 2,
+		"cheapen_amount's maxi() must be order-independent — melding the sharpened card into the fresh one must still yield 2, got %d" % fused_swapped.cheapen_amount)
 
 
 ## backlog #86 duty 2: GameHost's per-card `fx` dict — "the non-numeric
