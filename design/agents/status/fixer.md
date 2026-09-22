@@ -3,12 +3,77 @@ tags:
   - agent-status
 agent: fixer
 updated: 2026-09-22
-working_on: done for this run
+working_on: clean-bill-of-health run — no reproducible bug found, nothing pushed
 ---
 
 # fixer
 
 ## Now
+
+No open `to: fixer` request this run (fresh sandbox; the boss-relic-pool
+request from my own prior run is still sitting on `to: nick`, untouched).
+Order-of-work item 2 (a playtest failure nobody has filed) and item 3
+(bugs found by reading) both came back empty after a genuinely thorough
+pass — writing that up honestly rather than manufacturing a fix, per the
+brief's own "reproduce it first, or say you can't."
+
+**What I ran.** A full live `mode=play beast=cinder_jackal steps=80` (the
+whole 80 steps, fight never quite finished — Goblin Engineer down to 6 HP
+at the end), `mode=hands` (every hand size 1-10) and `mode=hover` (the
+flicker sweep). All three: `PLAYTEST OK: 0 failing check(s)`. The play
+run alone exercised nearly the whole Frog/Goblin Engineer kit for real,
+including the two hardest-to-reach paths: Meld (fused `Catapult + Burn
+Coal`, played it, resolved cleanly through the two-pick exhaust_cheapen
+flow) and Satchel Charge's 3-hit timed chain. Also hit Goblin Jetpack
+(fired correctly at the next round start), Leapfrog, Grappling Arm/Hook,
+Build Mech, Brace's 3rd-card condition, and a real fall (a boss hit
+knocked the Goblin from foothold 10 back to 4, HP 20→14 — landed cleanly
+on an intermediate ledge, both hunters still visibly separated, checked
+against `step_071.png`). Frame-by-frame look (not just the automated
+checks) at several of these — sigil pair-up, the fall/ledge landing, the
+low-HP endgame — found nothing wrong: no overlap, no clipped text, no
+missing glyphs, hunters always where the HUD says they are.
+
+**What I read.** `core/combat.gd`'s `preview()`/`play_card()` against
+every field the Frog and Goblin Engineer starter+reward cards actually
+use (`timed_hits`, `pull_ally`, `sac_ally_grip`, `block_per_play`,
+`prepare`/`_resolve_prepared`, `meld`/`_meld_cards`, `condition`/
+`condition_bonus`), `combat_3d.gd`'s hand-tap/timing/selection flow
+(`_on_card_tapped`, `_hold_points`, `selection_mode_for`), and
+`card_view.gd`'s live face-text and tap-to-inspect keyword list. All of
+it carries `backlog #86 duty 2` scars already — this system has had a
+lot of real, careful attention from earlier runs, and it showed: I could
+not find a gap that wasn't already closed.
+
+**Two things I chased that turned out NOT to be bugs**, written down so
+nobody re-chases them:
+- Satchel Charge (`damage: 6`) showing "**Deal 1 damage.**" in a forced
+  `hand=satchel_charge` screenshot (`state=3d`, foothold 0). Looked like
+  a live bug at first glance. It isn't: `combat.gd:706-710`, the armored-
+  hide mechanic — below the weak point, `swing = max(1, dmg /
+  ARMORED_DIVISOR)` (`ARMORED_DIVISOR = 4`), so `6/4 = 1`. Correct,
+  intended, by design.
+- `mode=hands` prints `WARNING: 4 ObjectDB instances were leaked at
+  exit` / `ERROR: 2 resources still in use at exit` (an `AudioStreamOggVorbis`
+  + its playback, from `combat.ogg` via the static `Music._player`).
+  `mode=play` (80 real steps, ~40 min) and `mode=hover` (also long) never
+  show it; only the fast-exiting `mode=hands` does. Nothing in the
+  shipped game ever calls `SceneTree.quit()` — a real player's process
+  just dies, no warning printed to anyone. This is `quit()`-timing noise
+  specific to the headless test tool calling `quit()` while
+  `Music`'s looping stream is still mid-flight, not a Cinder-Jackal-fight
+  bug. Leaving it alone; flagging here in case a future run sees the same
+  warning and wonders.
+
+Nothing fixed, nothing pushed to `game/`. Ran
+`$GODOT --headless --path game --script res://tools/run_tests.gd` first
+and last to confirm the tree was green throughout (`ALL TESTS PASSED`,
+unchanged since no code moved).
+
+![[frames/fixer/2026-09-22-clean-audit-meld-catapult-burncoal-sigil.png]]
+![[frames/fixer/2026-09-22-clean-audit-fall-onto-ledge.png]]
+
+## Old: 2026-09-22, earlier in the day
 
 No open `to: fixer` request this run (fresh sandbox). Widened the "states
 around the fight" look (per my own prior run's "Next" note) to the
@@ -74,18 +139,33 @@ anything meant to outlive the current tool call.
 
 ## Next
 
-The glyph-missing bug class, the sigil raw-vs-clamped bug class, and now
-the flat-hop-on-a-tall-climb case all look closed for now. Two open
-threads: (1) the boss-relic-pool request is waiting on Nick — nothing to
-do there until he answers. (2) `hop_arc` was tested with real numbers for
-the first time this run and immediately found a real bug purely because
-prior tests never varied Y — worth asking whether any other "pure shape"
-function in this file (or `card_view.gd`'s timing math) has the same
-gap: every existing test moving along one axis only, real bugs hiding on
-the untested ones.
+A clean run this time — no bug survived reproduction, so nothing new
+opened up. What's still outstanding from before: (1) the boss-relic-pool
+request is still waiting on Nick. (2) the "pure shape function tested on
+only one axis" question from last run stands: I read `hop_arc`,
+`_hold_points`, `fire_quality`/sweep-bar grading and `party_card_stats`
+this run looking for the same class of gap and didn't find one, but I
+did not audit every pure function in `combat_3d.gd`/`card_view.gd`
+against every axis it varies on — a future run could still turn one up
+by picking a different function and asking the same question. (3) worth
+someone eventually deciding whether the `mode=hands`
+ObjectDB/AudioStreamOggVorbis leak-at-exit noise (see `## Now`) is worth
+a one-line `Music.stop()` in the test harness's own teardown just to
+keep the console clean, even though it never reaches a real player —
+low priority, did not touch it this run.
 
 ## Log
 
+- 2026-09-22 — full audit pass, no bug found: live `mode=play` (80
+  steps, exercised Meld/Catapult+Burn Coal fusion, Satchel Charge,
+  Goblin Jetpack, a real fall onto an intermediate ledge), `mode=hands`,
+  `mode=hover` all `PLAYTEST OK: 0 failing check(s)`; read
+  `core/combat.gd`, `combat_3d.gd` and `card_view.gd` against every
+  Frog/Goblin Engineer card field. Ruled out two apparent bugs (Satchel
+  Charge's armored-hide-reduced "Deal 1 damage" preview; a `mode=hands`-
+  only audio-resource-leak warning at `quit()`, both by design/harness
+  noise, not gameplay bugs). Nothing fixed, nothing pushed to `game/` —
+  `run_tests.gd` unchanged and green throughout.
 - 2026-09-22 — fixed `Combat3D.hop_arc()` building a hop's apex below the
   landing height on a tall single-leg climb (Leap/Hop spanning several
   hunter-heights in one hop), caught live by the playtester's `hop-flat`
