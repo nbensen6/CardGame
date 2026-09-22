@@ -205,9 +205,19 @@ func has_ally(pi: int) -> bool:
 ## catches a Mountain Climbers hunter being climbed BY their ally rather than
 ## climbing themselves — a card like Hoist (pure ally_grip) used to leave them
 ## behind because only the acting player's own climb was ever checked (#86 duty 2).
+##
+## Gated on has_ally(pi) (#86 duty 2): every caller so far happens to already sit
+## behind its own has_ally() check EXCEPT the plain "I just climbed" call after a
+## card's own grip/targets_hold resolves — that one fires unconditionally on every
+## climb. In a 1-player fight ally_index(pi) collapses onto pi itself, so a lone
+## Mountain Climbers hunter (ally_climb > 0 is their whole passive) would rope
+## themselves: `roped` and `ps` become the SAME PlayerState, and the line below
+## would add ally_climb on top of the climb that just triggered it, doubling their
+## own Height gain. Guarding here, at the one shared choke point, protects every
+## caller uniformly instead of relying on each call site to remember its own gate.
 func _lift_roped_ally(pi: int, foothold_before: int) -> void:
 	var ps: PlayerState = players[pi]
-	if ps.foothold > foothold_before and ps.ally_climb > 0:
+	if ps.foothold > foothold_before and ps.ally_climb > 0 and has_ally(pi):
 		var roped: PlayerState = players[ally_index(pi)]
 		roped.foothold = mini(roped.foothold + ps.ally_climb, FOOTHOLD_MAX)
 		_log("%s is roped — %s climbs +%d." % [ps.combatant.name, roped.combatant.name, ps.ally_climb])

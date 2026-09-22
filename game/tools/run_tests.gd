@@ -753,6 +753,7 @@ func _init() -> void:
 	_test_roped_ally_climbs_when_launched_by_catapult()
 	_test_roped_ally_climbs_when_pulled_by_grapple_arm()
 	_test_roped_ally_climbs_when_fed_by_poison_lift()
+	_test_backlog86_solo_mountain_climber_does_not_rope_themselves()
 	_test_pull_ally_survives_this_plays_own_climb()
 	_test_pull_ally_survives_the_allys_own_ally_grip_on_the_same_card()
 	_test_pull_ally_survives_the_same_cards_own_sac_ally_grip()
@@ -17018,7 +17019,25 @@ func _test_roped_ally_climbs_when_fed_by_poison_lift() -> void:
 		_dummy_boss(200), [{"type": "poison_lift", "value": 2}, {"type": "ally_climb", "value": 1}])
 	combat.play_card(0, _first_playable(combat, 0))  # Venom Dart Poisons -- Vine-Weaver's vines feed the ally +2
 	_expect(combat.players[0].foothold == 1 and combat.players[1].foothold == 2,
-		"roped: poison_lift feeding the ally still ropes back when the ALLY is the Mountain Climber")
+		"roped: poison_lift feeding the ALLY still ropes back when the ALLY is the Mountain Climber")
+
+
+## backlog #86 duty 2: every other roped-ally call site above already sits behind
+## its own has_ally() check (poison_lift, ally_grip, catapult, pull_ally all gate
+## the block that even reaches _lift_roped_ally), but the plain "I just climbed"
+## call at the end of a card's own grip/targets_hold resolution fires
+## unconditionally. In a genuine 1-player fight (_solo_combat, not the shipped
+## two-hunters-under-one-player "solo" mode) ally_index(0) collapses back onto 0,
+## so a lone Mountain Climbers hunter (ally_climb > 0 IS their whole passive) used
+## to rope themselves: `roped` and `ps` were the same PlayerState, and their own
+## climb got doubled on top of the climb that triggered it.
+func _test_backlog86_solo_mountain_climber_does_not_rope_themselves() -> void:
+	var combat := _solo_combat(_deck_of(_scramble, 10), 42, _dummy_boss(300))
+	combat.players[0].ally_climb = 1
+	var idx := _first_playable(combat, 0)
+	combat.play_card(0, idx, true)
+	_expect(combat.players[0].foothold == 1,
+		"Scramble climbs 1 -- with no ally in a 1-player fight, a Mountain Climbers hunter must not also rope themselves for a second +1 (got %d)" % combat.players[0].foothold)
 
 
 func _test_character_attack_bonus() -> void:
