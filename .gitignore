@@ -62,3 +62,7 @@ tools/fixer/loop.flag
 
 # per-run window settings written by tools/shot.cmd
 game/override.cfg
+
+# Obsidian: per-machine window layout, not project content
+design/.obsidian/workspace*.json
+design/.obsidian/cache
