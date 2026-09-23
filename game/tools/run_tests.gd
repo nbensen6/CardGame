@@ -1953,6 +1953,9 @@ func _init() -> void:
 	_test_backlog86_reward_header_text_prompt_offers_a_change_once_something_is_selected()
 	_test_backlog86_reward_header_text_prompt_names_the_active_hunter_in_solo()
 	_test_backlog86_reward_header_text_prompt_omits_the_hunter_name_in_co_op()
+	_test_backlog86_reward_header_text_prompt_says_nothing_left_when_choices_run_dry()
+	_test_backlog86_reward_header_text_empty_choices_never_invites_a_tap()
+	_test_backlog86_reward_header_text_locked_in_wins_over_empty_choices()
 
 	# backlog #86 duty 3 (fortieth pass): CardView.fire_quality, the sweep-bar
 	# timing minigame's own grading rule -- the sibling of HitCircle's already
@@ -27259,25 +27262,25 @@ func _test_backlog86_campfire_sharpenable_excludes_a_card_with_nothing_left_to_u
 
 
 func _test_backlog86_reward_header_text_names_a_felled_titan_with_the_encounter_count() -> void:
-	var h := Location3D.reward_header_text("boss", 2, 4, false, false, false, false, "Frog")
+	var h := Location3D.reward_header_text("boss", 2, 4, false, false, false, true, false, "Frog")
 	_expect(h["title"] == "Titan felled!   (2 / 4)",
 		"a boss node names itself a felled Titan and carries the encounter counter, the one node_type that gets to claim a Titan fell")
 
 
 func _test_backlog86_reward_header_text_names_a_felled_elite() -> void:
-	var h := Location3D.reward_header_text("elite", 1, 1, false, false, false, false, "Frog")
+	var h := Location3D.reward_header_text("elite", 1, 1, false, false, false, true, false, "Frog")
 	_expect(h["title"] == "The elite falls.",
 		"an elite node must not borrow the boss's 'Titan felled' headline")
 
 
 func _test_backlog86_reward_header_text_names_a_treasure_cache() -> void:
-	var h := Location3D.reward_header_text("treasure", 1, 1, true, false, false, false, "Frog")
+	var h := Location3D.reward_header_text("treasure", 1, 1, true, false, false, true, false, "Frog")
 	_expect(h["title"] == "A cache in the rocks",
 		"a treasure node never claims anything was felled at all -- nothing fought back")
 
 
 func _test_backlog86_reward_header_text_falls_back_to_a_felled_beast() -> void:
-	var h := Location3D.reward_header_text("fight", 1, 1, false, false, false, false, "Frog")
+	var h := Location3D.reward_header_text("fight", 1, 1, false, false, false, true, false, "Frog")
 	_expect(h["title"] == "The beast falls.",
 		"an ordinary fight node falls through the match's default branch to the generic beast headline")
 
@@ -27295,7 +27298,7 @@ func _test_backlog86_reward_header_text_falls_back_to_a_felled_beast() -> void:
 ## case. Same "two copies of one truth" shape this rotation keeps finding:
 ## one side already knew, the other side never asked.
 func _test_backlog86_reward_header_text_names_an_event_find_not_a_felled_beast() -> void:
-	var h := Location3D.reward_header_text("event", 1, 1, false, false, false, false, "Frog")
+	var h := Location3D.reward_header_text("event", 1, 1, false, false, false, true, false, "Frog")
 	_expect(h["title"] != "The beast falls." and h["title"] != "",
 		"an event's own reward (hollow_log's 'Rummage deeper' and six others) must not claim a beast was felled")
 
@@ -27326,39 +27329,67 @@ func _test_backlog86_an_event_reward_keeps_node_type_event_into_the_reward_phase
 
 
 func _test_backlog86_reward_header_text_subtitle_calls_out_a_relic() -> void:
-	var h := Location3D.reward_header_text("boss", 1, 1, true, false, false, false, "Frog")
+	var h := Location3D.reward_header_text("boss", 1, 1, true, false, false, true, false, "Frog")
 	_expect(String(h["subtitle"]).findn("relic") >= 0,
 		"a relic reward's subtitle names it a relic so a player never confuses it with a card")
 
 
 func _test_backlog86_reward_header_text_subtitle_calls_out_a_card() -> void:
-	var h := Location3D.reward_header_text("boss", 1, 1, false, false, false, false, "Frog")
+	var h := Location3D.reward_header_text("boss", 1, 1, false, false, false, true, false, "Frog")
 	_expect(String(h["subtitle"]).findn("card") >= 0 and String(h["subtitle"]).findn("relic") < 0,
 		"a card reward's subtitle talks about strengthening the deck, not a relic")
 
 
 func _test_backlog86_reward_header_text_prompt_when_locked_in() -> void:
-	var h := Location3D.reward_header_text("boss", 1, 1, false, true, true, true, "Frog")
+	var h := Location3D.reward_header_text("boss", 1, 1, false, true, true, true, true, "Frog")
 	_expect(String(h["prompt"]).findn("locked in") >= 0,
 		"picked always wins the prompt regardless of selection or solo state -- a locked-in player is waiting on their ally, not still choosing")
 
 
 func _test_backlog86_reward_header_text_prompt_offers_a_change_once_something_is_selected() -> void:
-	var h := Location3D.reward_header_text("boss", 1, 1, false, false, true, false, "Frog")
+	var h := Location3D.reward_header_text("boss", 1, 1, false, false, true, true, false, "Frog")
 	_expect(String(h["prompt"]).findn("lock in") >= 0,
 		"once a card is tapped but not yet locked, the prompt offers locking it in rather than repeating the initial 'tap a card' instruction")
 
 
 func _test_backlog86_reward_header_text_prompt_names_the_active_hunter_in_solo() -> void:
-	var h := Location3D.reward_header_text("boss", 1, 1, false, false, false, true, "Frog")
+	var h := Location3D.reward_header_text("boss", 1, 1, false, false, false, true, true, "Frog")
 	_expect(String(h["prompt"]).begins_with("Frog picks:"),
 		"solo mode plays both hunters from one seat, so the initial prompt has to say WHICH hunter is choosing or a player can lock in the wrong one's reward")
 
 
 func _test_backlog86_reward_header_text_prompt_omits_the_hunter_name_in_co_op() -> void:
-	var h := Location3D.reward_header_text("boss", 1, 1, false, false, false, false, "Frog")
+	var h := Location3D.reward_header_text("boss", 1, 1, false, false, false, true, false, "Frog")
 	_expect(not String(h["prompt"]).contains("Frog"),
 		"co-op has one hunter per seat already, so naming them in the prompt would be redundant noise every reward screen")
+
+
+## backlog #86 duty 3: reward_header_text() had no parameter at all for "the
+## reward row is empty" -- with no choices, not picked and no selection it
+## fell through the else branch and told the player "Tap a relic to select"
+## with nothing on screen to tap. Filed and reproducible today: in 2-player
+## co-op, content.gd's boss relic pool (4 tier:"boss" relics) is struck from
+## both hunters' lists on every pick, so it is provably empty by the third or
+## fourth Titan (see the request to Nick, 2026-09-22-2245). The pool running
+## dry is his balance call; the screen lying about what's tappable is not.
+func _test_backlog86_reward_header_text_prompt_says_nothing_left_when_choices_run_dry() -> void:
+	var h := Location3D.reward_header_text("boss", 3, 4, true, false, false, false, false, "Frog")
+	_expect(String(h["prompt"]).findn("nothing left") >= 0,
+		"with zero choices left, the prompt must say so plainly rather than pretend there is still something to pick")
+
+
+func _test_backlog86_reward_header_text_empty_choices_never_invites_a_tap() -> void:
+	var h := Location3D.reward_header_text("boss", 3, 4, true, false, false, false, false, "Frog")
+	_expect(String(h["prompt"]).findn("tap") < 0,
+		"the prompt must never say 'tap' when the row it is describing has nothing in it")
+	_expect(String(h["prompt"]) != "Tap a relic to select",
+		"this is the exact string the bug produced -- a player staring at an empty row being told to tap one")
+
+
+func _test_backlog86_reward_header_text_locked_in_wins_over_empty_choices() -> void:
+	var h := Location3D.reward_header_text("boss", 3, 4, true, true, true, false, false, "Frog")
+	_expect(String(h["prompt"]).findn("locked in") >= 0,
+		"a player who already locked in should still see that, not the empty-row message, even if the pool happened to run dry on their own pick")
 
 
 ## backlog #86 duty 3 (fortieth pass) -- CardView.fire_quality is the sweep-bar

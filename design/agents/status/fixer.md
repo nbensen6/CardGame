@@ -3,12 +3,73 @@ tags:
   - agent-status
 agent: fixer
 updated: 2026-09-23
-working_on: backlog #86 duty 2 — fixed a sealed-door ending recording itself as a "win" in permanent run history, pushed
+working_on: backlog #86 duty 3 — reward_header_text() told a player to tap a relic when the row was empty; fixed, three new tests, pushed
 ---
 
 # fixer
 
 ## Now
+
+Fresh sandbox. No open `to: fixer` request (the boss-relic-pool request from
+a prior run is still sitting on `to: nick`, untouched). Order-of-work item 2:
+ran a full fresh `mode=play beast=cinder_jackal steps=80`, `mode=hover`, and
+`mode=hands` — all three `PLAYTEST OK: 0 failing check(s)` / 0 fails, clean.
+Item 3/4: rather than re-reading the same already-scarred `combat_3d.gd`
+functions by hand again, dispatched an Explore agent to hunt for a genuinely
+untested mechanic for this run's `#86` rotation slot, telling it what the
+~30 prior duty-3 log entries already cover so it wouldn't re-suggest one.
+Rotation state per `BACKLOG.md`: last commit was duty 2 (`09438cd`, the
+sealed-door history fix), so this run owed duty 3 ("verify a mechanic
+actually works").
+
+**What it found.** `Location3D.reward_header_text()` (`location_3d.gd:526`)
+— already a pure static function, 8 existing tests, but none of them (and no
+parameter on the function at all) covered "the reward row has zero choices
+in it". That state is real, not hypothetical: my own prior-run request
+(`2026-09-22-2245-fixer-to-nick-boss-relic-pool-runs-dry-at-half-the-titans.md`,
+still open, Nick's call) already proved 2-player co-op empties the shared
+4-relic boss pool by the 3rd Titan. With the pool empty, `picked` false and
+`has_selection` false, the function unconditionally returned "Tap a relic to
+select" — with nothing on screen to tap and "Lock In Reward" permanently
+disabled. That request already flagged this half as "definitely a bug
+regardless" of the pool-sizing question; this run is where it got fixed.
+
+**Fix.** Added a `has_choices: bool` parameter. When false (and neither
+picked nor mid-selection), the prompt now reads "Nothing left to take — Skip
+to continue" — the same "say why the option is gone" pattern the campfire's
+"Sharpen — nothing left to sharpen" button already uses. `_render_reward()`
+passes `not reward.get("choices", []).is_empty()`.
+
+**Proof.** Updated all 11 existing `reward_header_text` call sites in
+`run_tests.gd` to `has_choices=true` (none were testing the empty case).
+Added three new tests: the empty-row message text itself; a regression
+guard that the word "tap" never appears with zero choices (the literal
+string the bug produced — `"Tap a relic to select"` on an empty row); and
+that "locked in" still wins over the empty-row message for a player who
+already picked (branch-order guard, since the `elif` chain checks `picked`
+first). Proved all three against the unfixed behaviour first — temporarily
+reverted just the new `elif` branch (kept the new signature so the calls
+still matched) and reran: all three failed exactly as predicted. Restored
+the fix, reran: `ALL TESTS PASSED`.
+
+**Visual proof.** Rendered `state=3dreward` (`beast=cinder_jackal`) with
+both hunters' `reward_choices` forced empty (matches the real drought
+state): row empty, "Lock In Reward" correctly disabled, prompt now honest,
+"Skip — keep the deck lean" visible and unambiguous.
+
+![[frames/fixer/2026-09-23-reward-empty-choices-prompt.png]]
+
+Re-ran the full `mode=play beast=cinder_jackal steps=80` / `mode=hover` /
+`mode=hands` baseline after the fix: all three still `PLAYTEST OK: 0 failing
+check(s)` — no regression from the change. Added a `## Result` to the
+standing `to: nick` request noting item (2) — the prompt text — is now
+fixed, and item (1) — whether the pool itself should be resized for 2-player
+co-op — is still his call, untouched.
+
+Full write-up in `design/BACKLOG.md`'s `## Log` (2026-09-23 entry). Next
+`#86` turn is duty 2.
+
+## Old: 2026-09-23, duty 2 — sealed-door ending recorded as a win in history
 
 Fresh sandbox. No open `to: fixer` request (the boss-relic-pool request from
 a prior run is still sitting on `to: nick`, untouched, and unlike the rest of
@@ -71,8 +132,9 @@ this bug never touched a pixel, only a persisted `ConfigFile` value; the
 before/after numeric proof above is the evidence, same convention the
 hop-arc trajectory fix used two runs ago.
 
-Full write-up in `design/BACKLOG.md`'s `## Log` (2026-09-23 entry). Next
-`#86` turn is duty 3.
+Full write-up in `design/BACKLOG.md`'s `## Log` (2026-09-23 entry, now
+superseded as the newest by this run's duty-3 entry). Next `#86` turn was
+duty 3 (done above); the one after that is duty 2.
 
 ## Old: 2026-09-22, clean-bill-of-health run
 
@@ -207,21 +269,38 @@ anything meant to outlive the current tool call.
 
 The Cinder-Jackal-scoped items (1-3) are still clean, same as last run — no
 bug survived reproduction there. What's still outstanding: (1) the
-boss-relic-pool request is still waiting on Nick. (2) the "pure shape
-function tested on only one axis" question stands unresolved for
+boss-relic-pool REQUEST is still waiting on Nick for the sizing/cadence
+question, though the prompt-text half of it is now fixed. (2) the "pure
+shape function tested on only one axis" question stands unresolved for
 `combat_3d.gd`/`card_view.gd` specifically — every function I've personally
 read there is clean, but nobody has audited ALL of them. (3) the `mode=hands`
 ObjectDB/AudioStreamOggVorbis leak-at-exit noise is still just noise, still
 untouched, still low priority. (4) Backlog #86 itself isn't Cinder-Jackal-
-scoped and clearly still has real bugs in it (found one this run on the
-first widened sweep) — the general `game/core`/`game/session`/`game/net`
-layer outside the jackal fight's own hand/climb/camera code has had far
-fewer `#86` passes than `combat_3d.gd` has, so it's a better place to look
-first next time items 1-3 come back clean than re-re-reading the same
-already-scarred functions in `combat_3d.gd`.
+scoped and clearly still has real bugs/gaps in it, two runs running now
+(the sealed-door history bug, then this run's reward-prompt gap) — the
+general `game/core`/`game/session`/`game/views` layer outside the jackal
+fight's own hand/climb/camera code keeps paying off faster than re-reading
+the same already-scarred `combat_3d.gd` functions, so keep pointing the
+Explore-agent hunt there first. (5) Worth someone eventually checking
+whether other reward-adjacent screens (event/treasure rolls, not just boss
+relics) can also produce an empty choice row — `reward_header_text()` now
+handles it correctly wherever `_render_reward()` calls it, but I only
+proved the boss-relic case is reachable; didn't chase whether event/treasure
+pools can run dry too.
 
 ## Log
 
+- 2026-09-23 (latest) — backlog #86 duty 3: fixed
+  `Location3D.reward_header_text()` telling a player to "Tap a relic to
+  select" when the reward row was empty (2-player co-op runs the boss relic
+  pool dry by the 3rd Titan — already filed `to: nick`, still open for the
+  sizing call). Added a `has_choices` parameter; empty + not picked/selected
+  now reads "Nothing left to take — Skip to continue". Three new tests
+  (message text, "tap" never appears, locked-in still wins over the empty
+  message); all three fail on the unfixed `elif` chain, pass on the fix.
+  Rendered `state=3dreward` with both hunters' choices forced empty to see
+  it live. `ALL TESTS PASSED`; full `play`/`hover`/`hands` baseline clean
+  before and after. See `## Now` and the request's own `## Result`.
 - 2026-09-23 — backlog #86 duty 2: fixed `Run.history_entry()` recording a
   sealed-door ending (fourth Titan reached without all three keys) as
   `"result": "win"` in `Progress.run_history()`, even though the sibling

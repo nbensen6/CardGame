@@ -80,4 +80,19 @@ again tells a player to tap something that isn't there.
 
 ## Result
 
-(filled in by whoever takes it)
+**Item (2) is fixed, item (1) is still yours.** #86 duty 3 this run (`git
+log` — the same commit as the duty-3 write-up in `design/BACKLOG.md`) added
+a `has_choices` parameter to `reward_header_text()`: with zero choices left,
+not picked, no selection, the prompt now reads "Nothing left to take — Skip
+to continue" instead of "Tap a relic to select". Three new unit tests in
+`run_tests.gd` (one proves the message, one proves "tap" never appears with
+an empty row, one proves a locked-in player still sees "locked in" even if
+the pool happened to run dry on their own pick) — all three fail on the
+pre-fix code (`got "Tap a relic to select"`) and pass on the fix. Rendered
+`state=3dreward` with `reward_choices` forced empty both hunters:
+`design/agents/frames/fixer/2026-09-23-reward-empty-choices-prompt.png` —
+row empty, "Lock In Reward" correctly disabled, prompt now honest, "Skip —
+keep the deck lean" visible and unambiguous.
+
+Left open: whether the 4-relic boss pool should be resized or refilled for
+2-player co-op (item 1) — that's still a content/balance call, not touched.
