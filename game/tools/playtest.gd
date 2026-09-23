@@ -311,6 +311,34 @@ func _check(v: Node, when: String) -> void:
 				_fail("hand-over-button", "%s: a resting card covers %s" % [when, b.name])
 				break
 
+	# 5b. JACKAL-BAR: "nothing important is behind the hand, the rail or the
+	# party panel, in any state, at any hand size." Check 5 above already
+	# covers the two things a hidden card would make unclickable; this is the
+	# same idea for what a player needs to READ, not click -- the boss's
+	# intent (what it does next turn), its hp, the climb rail, and the party
+	# panel. `_position_intent_tag` already clamps itself 250px clear of the
+	# viewport bottom specifically "to clear the hand" (its own comment) --
+	# but that number is a guess calibrated for SOME hand height, and "at any
+	# hand size" is exactly what mode=hands (1..10 cards, run 1) exercises by
+	# calling _check() at every size already; this just gives it something to
+	# check for these elements that check 5 never looked at. Static-anchored
+	# elements (_hp_bar, top bar; _party, top-left) are included too since a
+	# future layout change could move them, and this is cheap insurance for a
+	# case that should never fire, same reasoning as check 7 (hunters-overlap).
+	for hname in ["_intent_tag", "_hp_bar", "_party", "_gauge"]:
+		var hud_el: Control = v.get(hname)
+		if hud_el == null or not is_instance_valid(hud_el) or not hud_el.is_visible_in_tree():
+			continue
+		var hr := hud_el.get_global_rect()
+		if hr.size.x < 2 or hr.size.y < 2:
+			continue
+		for card in cards:
+			if card == hover or card == timing:
+				continue
+			if (card as Control).get_global_rect().grow(-6).intersects(hr):
+				_fail("hand-over-hud", "%s: a resting card covers %s" % [when, hname])
+				break
+
 	# 6. No script errors, ever.
 	while not _errors.is_empty():
 		_fail("script-error", String(_errors.pop_front()))

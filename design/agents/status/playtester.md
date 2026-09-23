@@ -3,12 +3,107 @@ tags:
   - agent-status
 agent: playtester
 updated: 2026-09-23
-working_on: full three-mode baseline (hover/hands 0 fails, play 3 fails — the known foothold-4 residual only, unchanged); the fixer's hunter-damage-popup-offscreen fix (9653ecc) verified live, 0 fails across 5 real hp-loss events; added the visibility-aware follow-up check I'd flagged as still open — damage-popup-offscreen in playtest.gd, watching every live popup's on-screen projection across its whole life, not just at spawn — proved both directions (clean on the real fix, 3/3 FAILs when I temporarily reverted the fixer's own fix to reproduce the exact old bug, then cleanly reverted my revert). No new bugs found; nothing new filed.
+working_on: full three-mode baseline (hover/hands 0 fails, play 3 fails — the known foothold-4 residual only, unchanged, run twice, before and after today's playtest.gd edit); confirmed the fixer's End Turn crash fix (is_inside_tree() guard on _focus_camera) is holding — 0 script-error across two full 80-step baselines with heavy End Turn use, corroborating their own unit-test proof; added a new check, hand-over-hud (JACKAL-BAR: "nothing important is behind the hand... at any hand size") — the resting hand must never cover the intent tag, hp bar, party panel or climb rail, exercised automatically by mode=hands' existing 1-10 sweep, proved both directions (0 fails for real; 43 FAILs across all four elements when the intersection tolerance was deliberately loosened, reverted clean). No new bugs found in the wild; nothing new filed.
 ---
 
 # playtester
 
 ## Now
+
+No open `to: playtester` request this run (checked every file's frontmatter —
+the board's other open items are all `to: nick` or `to: fixer`). Fresh
+sandbox, Godot 4.7.1 + `--import`, `run_tests.gd`: `ALL TESTS PASSED`.
+
+**Full three-mode baseline, clean except the one known residual.** `hover` 0
+flips, `hands` (1-10) 0 fails — both matching every prior clean baseline.
+`play` (80 steps): **3 failing checks**, all `hunter-off-marker` (steps 34,
+35, 71), the exact same coordinates as every recent run (`home (5.335257,
+13.825942, 7.030925)`, anchor `(3.901302, 13.825942, 6.473297)`) — the
+fixer's own still-open, still-untaken
+`2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`.
+Not a new finding, not regressed. Ran this baseline **twice** today (once
+before touching `playtest.gd`, once after, both against the same tip) — same
+3 fails both times, so today's new check below caused no change to the
+existing checklist.
+
+**The End Turn crash the fixer took this run's queue over for is holding.**
+Their `## Result` on
+`2026-09-23-1000-playtester-to-fixer-end-turn-crash-at-sigil-solo-flip.md`
+found it was never actually a race — `_focus_camera()` runs on a camera
+that's deterministically left the tree whenever an End Turn is the one that
+ends combat, and this sandbox's slow renderer only looked like it was
+flip-flopping because it nudges which End Turn that is. Fixed with an
+`is_inside_tree()` guard plus two new tests against a real `combat_3d.tscn`
+(their own unit-level proof is the authoritative one — a live run can only
+ever add "didn't happen this time," not "can't happen"). Still, both of
+today's full 80-step runs exercised End Turn heavily (11 and 15 uses, one
+run dropping boss hp 42→6 across five real hits) with zero `script-error` —
+real, if partial, live corroboration on top of their test.
+
+**New check: `hand-over-hud`, JACKAL-BAR's "nothing important is behind the
+hand... at any hand size."** Check 5 already stops a resting card from
+covering End Turn/Switch (unclickable); nothing checked the things a player
+needs to *read* instead — the boss's intent tag, its hp bar, the party
+panel, the climb rail (`_gauge`). Worth a permanent check for two concrete
+reasons, not just symmetry with check 5: `_position_intent_tag`'s own
+comment says it clamps 250px off the bottom of the screen specifically "to
+clear the hand," a number picked for some assumed hand height, never
+verified against the real one; and the hand's own fan is allowed to spread
+past its `HandScroll` container (`clip_contents = false`, on purpose, so
+check 4's offscreen check has something to catch) — exactly the situation
+where a big hand's outer cards could reach further than usual. `mode=hands`
+already deals every hand size 1-10 and calls `_check()` at each one, so this
+needed no new plumbing, just something for it to check.
+
+Proved it both directions, not just "ran clean":
+- *Positive*: `mode=hands` (all 10 sizes) — 0 `hand-over-hud` fails, and the
+  full 80-step `play` baseline above (which passes through every hand size
+  the deck actually produces) shows the same. The `_gauge`/party/hp-bar/
+  intent-tag margins hold for real, not just by luck — see the frame below,
+  hand of 10, the largest and most spread-out fan the game deals.
+- *Negative*: temporarily grew the card-vs-HUD-element intersection test from
+  `grow(-6)` (the real, deliberately-tight tolerance) to `grow(500)` and
+  reran `mode=hands` — got **43** `hand-over-hud` FAILs, hitting all four
+  watched elements (`_intent_tag`, `_hp_bar`, `_party`, `_gauge`) at every
+  populated hand size, confirming the check logic actually fires rather than
+  silently no-op'ing (a wrong node path or an always-false condition would
+  have passed "clean" for the wrong reason). Reverted immediately
+  (`git diff` clean before moving on), then reran `run_tests.gd` and a fresh
+  `mode=hands` + full 80-step `mode=play` baseline on the real code: clean,
+  identical to the pre-change numbers above.
+
+![[frames/playtester/2026-09-23-hand-over-hud-check-hand10-clear.png]]
+Hand of 10 (the widest fan the deck deals) — the party panel (top-left), the
+Cinder Jackal's hp bar and "Attack 7" intent tag (top-center), and the climb
+rail (right edge) all stay clear of the fan. This is the real case the new
+check now watches on every run, not just this one frame.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | unchanged this run (no fresh human-eye look; still worth returning to) |
+| 2 | hunters land on the beast correctly | unchanged — the shared-foothold-4 residual is still the fixer's own open, untaken request; today's 3 fails match its exact known coordinates, both baseline runs |
+| 3 | jump animation (squash/arc/landing) | unchanged this run |
+| 4 | camera | unchanged this run — `hunter-lost-mid-hop`/check 9 still 0 fails in the wild |
+| 5 | nothing errors | **the End Turn crash fix (fixer, this run's queue) is holding** — 0 `script-error` across two full 80-step baselines with heavy End Turn use; the fixer's own unit tests remain the authoritative proof, this is corroborating, not substituting |
+| new | JACKAL-BAR "nothing important behind the hand... at any hand size" | **new automatic check added**, `hand-over-hud` — proved both directions; found no bug in the wild (the existing margins hold), but the coverage is new and permanent |
+
+No new requests filed this run — nothing failed that wasn't already known
+and owned by an existing open request.
+
+## Next
+
+The fixer's own `2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`
+(shared foothold 4) is still the loudest unclaimed item on the board, open
+across several of my runs now — watch for it landing, then re-verify item 2.
+`hand-over-hud` is live now with 0 real fails found — worth remembering it
+exists the next time a HUD layout or hand-fan change lands, same as
+`hunter-lost-mid-hop` and `damage-popup-offscreen` before it. Item 1 (card
+plays) still hasn't had a fresh human-eye look in several runs; worth
+returning to next.
+
+## Old: 2026-09-23, damage-popup-offscreen check verified live, no new bugs
 
 No open `to: playtester` request this run (checked every file's frontmatter).
 Fresh sandbox, Godot 4.7.1 + `--import`, `run_tests.gd`: `ALL TESTS PASSED`.
@@ -673,6 +768,25 @@ remain the backstop for that; keep saving them.
 
 ## Log
 
+- 2026-09-23 — full three-mode baseline (run twice, before/after today's
+  edit): `hover`/`hands` clean both times, `play` (80 steps) 3 fails both
+  times, all `hunter-off-marker` at foothold 4, exact same coordinates as
+  every recent run — still the fixer's own open, untaken
+  shared-foothold-spacing request, unchanged. Confirmed the fixer's End Turn
+  crash fix (`_focus_camera`'s new `is_inside_tree()` guard) is holding: 0
+  `script-error` across both 80-step baselines despite heavy End Turn use
+  (11-15 per run, one dropping boss hp 42→6) — corroborating, not
+  replacing, their own unit-test proof. Added a new check to `playtest.gd`,
+  `hand-over-hud` (JACKAL-BAR: "nothing important is behind the hand... at
+  any hand size") — the resting hand must never cover the intent tag, hp
+  bar, party panel or climb rail (`_gauge`), checked at every hand size via
+  the existing `mode=hands` 1-10 sweep, no new plumbing needed. Proved it
+  both directions: 0 fails for real (including the full 80-step play
+  baseline, which passes through every hand size the deck produces), and 43
+  FAILs across all four watched elements when the check's own intersection
+  tolerance was deliberately loosened (`grow(-6)` → `grow(500)`), reverted
+  clean, re-verified with `run_tests.gd` and a fresh baseline. No bug found
+  in the wild (the existing margins hold at every hand size); nothing filed.
 - 2026-09-23 — full three-mode baseline: `hover`/`hands` clean, `play`
   (80 steps) 3 fails, all `hunter-off-marker` at foothold 4 matching the
   fixer's own still-open, untaken shared-foothold-spacing request exactly —
