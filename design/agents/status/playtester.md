@@ -2,42 +2,137 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-23T14:50
-working_on: Took your high-priority design request on the floating stepping-stones — found why the climb reads as scattered rocks (four holds sweep smoothly along the body, the fifth snaps back past the start) and wrote a concrete proposal with numbers and five reference games; waiting on your yes/no before filing build work.
+updated: 2026-09-23T17:35
+working_on: Found the boss had never taken damage in any playtest run — every timed hit was fumbling because the bot's aim window was too tight for this sandbox's slow renderer. Fixed it (same trick as the jump-sampling fix), which let a fight actually reach a win for the first time and exposed a crash and a real game bug (boss-damage number off-screen at the sigil) — crash fixed, bug filed to the fixer.
 ---
 
 # playtester
 
-## This run - 2026-09-23 14:50 EDT
+## This run - 2026-09-23 17:35 EDT
 
-- Did: took your high-priority request on how the floating stepping-stones
-  should line up and what makes climbing them feel good — read the code
-  that authors each beast's climb holds, played the fight, and wrote a
-  concrete proposal.
-- Worked?: Found the real cause of "scattered rocks" — it's not the
-  placement code, it's how the Cinder Jackal's own holds were hand-placed.
-  Four of the five sweep smoothly along the body (paw → shoulder →
-  haunch), then the last one (the sigil) jumps back past where the climb
-  started, breaking the route. My proposal: routes only ever go one
-  direction, hops stay inside the range the jump system already reads well
-  at, the next hold is always shown before you commit to it, and the wide
-  establishing shot (the one every fight opens on) has to sell the whole
-  route, not just the beast. Five reference games, one line each, in the
-  request.
-- Next: nothing built yet — the request says not to split the work between
-  me/the fixer/the artist until you've said yes. The fixer's own matching
-  request (placement/camera/hunter-spacing) is still open and hadn't sent
-  me its numbers when I wrote this, so I worked from the code myself
-  rather than wait; happy to fold its numbers in once it lands.
-- Need from you: read the proposal in
-  `2026-09-23-1434-nick-to-playtester-how-the-stones-should-line-up.md`
-  and say yes, no, or "try X instead" under its Result. Once you do, I'll
-  file the actual build requests to the fixer and artist.
+- Did: ran the usual full three-mode baseline first, the same as every
+  run — and found the jackal's own HP had never moved once in ANY
+  playtest run, ever. Traced it, fixed it in the playtest bot itself (not
+  the game), and it uncovered a real bug once fixed.
+- Worked?: Yes, and it's a big one. Every timed card (the ones that deal
+  real damage) needs you to click a moving hit-circle on the beat. The
+  bot was ALWAYS missing — not because it's bad at the game, but because
+  this sandbox's renderer is too slow to ever catch the tiny window it
+  was waiting for, the same root cause as the jump-sampling bug found
+  earlier this week. Fixed with the same trick (slow the whole game down
+  while it's aiming, same as it already does for jumps). Result: the
+  jackal took real damage for the first time ever, and one run actually
+  WON the fight — something no playtest run has ever done before, because
+  no run has ever actually hurt the boss before. Fixing that then
+  exposed a crash (the tool choking when the fight ends mid-swing) and a
+  real game bug (a hit on the boss's own body pops its damage number off
+  the top of the screen at the sigil, every time) — both real, both
+  filed/fixed.
+- Next: the fixer has a new bug from me (boss-damage number off-screen at
+  the sigil). Item 1 (card plays reading clearly) can finally be judged
+  for real damage now that hits land — worth a proper look next run.
+- Need from you: nothing this run. The stones proposal
+  (`2026-09-23-1434-...`) is still waiting on your yes/no, unchanged.
 
 ## Now
 
-Took the open, high-priority `to: playtester` request — Nick's own design
-question on the floating stepping-stones
+Full three-mode baseline first, same as every run: fresh sandbox, Godot
+4.7.1 + `--import`, `run_tests.gd`: `ALL TESTS PASSED`. `mode=play` (80
+steps): 0 fails, `PLAYTEST OK`. Nothing new there — but reading the
+report closely (checklist item 1 hasn't had a fresh look in a while, per
+last run's own `## Next`) turned up something every prior baseline had
+missed: **the Cinder Jackal's own HP never appears in any `report.md`
+diff, in any run, ever.** Checked the frame at the sigil (both hunters
+there, hp worn down near zero) against the boss bar in the same shot:
+`42/42`, unchanged from the fight's start. An 11-turn fight where the
+boss never lost a single HP is not a balance question (never touching
+that, per COMMON.md) — it's checklist item 1's "timed cards'... resolve"
+never actually being exercised, ever, by any run before this one.
+
+**Root cause.** `_drive_timing` (the bot's hit-circle driver) only
+clicks when `absf(off) < 0.02` — a 40ms window — polled once per `await
+process_frame`. This sandbox's software renderer draws a real frame
+every ~0.1-0.3s (documented on `HOP_TIME_SCALE`, added for the exact
+same shape of bug in jump sampling a few days ago). The offset crosses a
+40ms window between two frames this bot can even see, so at 1x speed the
+click condition could go an entire approach without ever firing once —
+not a real gameplay problem, a guaranteed miss baked into how slow this
+sandbox draws.
+
+**Fix, same shape as the jump fix:** wrapped `_drive_timing`'s two
+polling loops in the same `Engine.time_scale = HOP_TIME_SCALE` (1/6)
+slow-down `_watch_hop` already uses, restored to 1.0 on every exit path,
+guard caps raised 600→3600 to match. Verified against a real run:
+
+    step 0: play 'Tongue Snap' [timed] ... boss 42→41
+    step 3: play 'Tongue Flick' [timed] ... boss 41→31
+    step 9: play 'Pounce' [timed] ... boss 31→17
+    step 19: play 'Tongue Snap' [timed] ... boss 17→12
+
+Real damage, landing for the first time in this fight's history.
+
+**That surfaced a second bug, in the tool itself, not the game: a script
+error once the boss can actually die.** Nothing before this run had ever
+survived long enough to reach a scene transition mid-timing-drive (the
+victory cutscene), so nobody had found that `_drive_timing`,
+`_wait_and_poll` and `_watch_hop` all hold `v` (the whole Combat3D view)
+across an `await`, and none of them re-check it's still alive before
+handing it to `_poll_popup(v)` — a freed object passed to a typed `Node`
+argument crashes at Godot's own call boundary, before the callee's own
+`is_instance_valid` guard ever gets a chance to run. Took two passes to
+close for real: the first pass guarded inside the three callees and
+still crashed on the very next run, one level up the stack, at `_play`'s
+own call site; the second pass guarded the actual call sites instead
+(`_wait_and_poll`'s and `_drive_timing`'s callers in `_play`, plus
+`_watch_hop`'s own poll call, same shape, fixed pre-emptively). Verified
+clean on a fresh run after each pass — the second one reached step 30
+with `the fight ended (screen is now Location3D)` and no script error at
+all, the first time any playtest run has ever seen this fight through to
+a real win. `run_tests.gd`: `ALL TESTS PASSED` after every change.
+
+**What was left once both were fixed: one real, reproducible game bug.**
+`damage-popup-offscreen` (an existing check, previously only ever
+exercised by hunter-damage popups) now also catches a **boss**-damage
+popup — 3/3 runs, step 19, same card, same on-screen position within a
+few pixels, both hunters "at the sigil" when it fires:
+
+![[frames/playtester/2026-09-23-boss-damage-popup-offscreen-sigil.png]]
+
+Not the same root cause as the earlier hunter-popup bug (that fix's own
+write-up says the boss-scaled rise is *correct* for a hit landing on the
+beast) — most likely the tight sigil camera framing itself, not the
+popup math; said so in the request rather than guess further. Filed
+`to: fixer`, normal priority,
+`2026-09-23-1735-playtester-to-fixer-boss-damage-popup-offscreen-at-sigil.md`.
+
+`hover`: 0 flips. `hands`: 0 fails. Both clean after all four commits.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | partially re-opened — boss damage now actually happens and mostly reads (3 real hits, 1 offscreen), first real evidence either way since this check shipped |
+| 2 | hunters land on the beast correctly | unchanged — 0 `hunter-off-marker` across all runs this session |
+| 3 | jump animation (squash/arc/landing) | unchanged — clean across all runs, no regression from the timing fix |
+| 4 | camera | new lead — the boss-popup-offscreen bug is plausibly a camera-framing issue at the sigil specifically, flagged to the fixer to confirm |
+| 5 | nothing errors | was broken (script-error) mid-run, now fixed and verified across 2 clean full runs post-fix |
+
+Four commits this run, all pushed: the timing-sampling fix, the first
+(incomplete) crash-guard pass, the second (actually complete) crash-guard
+pass, and this write-up/request.
+
+## Next
+
+Watch for the fixer's response on the boss-damage-popup-offscreen
+request. Once landed, re-run and confirm 0 `damage-popup-offscreen`
+fails at/past the sigil. Item 1 (card plays reading clearly) is worth a
+fresh human-eye pass now that boss damage is real and visible for the
+first time — most of the deck has never been seen actually connecting.
+The stones proposal is still waiting on Nick.
+
+## Old: 2026-09-23, Nick's own design question on the floating stepping-stones
+
+Took the open, high-priority `to: playtester` request
 (`2026-09-23-1434-nick-to-playtester-how-the-stones-should-line-up.md`),
 ahead of the usual baseline-and-one-item routine per COMMON.md ("requests to
 you come before your own work"). Set `status: taken` and pushed that before
@@ -1052,6 +1147,21 @@ remain the backstop for that; keep saving them.
 
 ## Log
 
+- 2026-09-23 17:35 EDT — found the Cinder Jackal's HP had never moved in
+  any playtest run: every timed card was fumbling because the bot's aim
+  window (40ms) was narrower than this sandbox's frame gap. Fixed with
+  the same `Engine.time_scale` slow-down as the jump-sampling fix
+  (`_drive_timing`, commit `535ced7`). That let hits land for the first
+  time, which surfaced a script-error crash once a fight could actually
+  reach a win (freed-view-mid-await, fixed in two passes, commits
+  `94e3ca4` and `ed9380f` — the first pass guarded inside the wrong
+  function, the second guarded the actual call sites) and one real game
+  bug: a boss-damage popup renders off-screen at the sigil, 3/3 runs,
+  filed `to: fixer`
+  (`2026-09-23-1735-playtester-to-fixer-boss-damage-popup-offscreen-at-sigil.md`).
+  Full three-mode baseline clean after every commit, `ALL TESTS PASSED`
+  throughout, one run reached a real win (fight-over via boss death) for
+  the first time ever.
 - 2026-09-23 — added `hop-position-pop` to `playtest.gd` (JACKAL-BAR
   Motion's "no pops... mid-jump" half) — took 3 iterations: a whole-hop-
   median v1 false-fired live on the genuinely fast start of `_hop`'s own
