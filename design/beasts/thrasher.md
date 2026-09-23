@@ -18,7 +18,7 @@ tags:
 
 # The Thrasher
 
-▶ **[Fight this now](titan://thrasher)** — solo, Frog and Goblin, straight into the fight.
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-this-beast)** — solo, Frog and Goblin, straight into this fight.
 
 > The Thrasher - the fight-pool beast that never lets you pick a height.
 

@@ -18,7 +18,7 @@ tags:
 
 # The Grove Bear
 
-▶ **[Fight this now](titan://grove_bear)** — solo, Frog and Goblin, straight into the fight.
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-this-beast)** — solo, Frog and Goblin, straight into this fight.
 
 > The Grove Bear - a hill that stood up and kept the forest on its back.
 

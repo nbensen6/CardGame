@@ -18,7 +18,7 @@ tags:
 
 # The Husk Beetle
 
-▶ **[Fight this now](titan://husk_beetle)** — solo, Frog and Goblin, straight into the fight.
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-this-beast)** — solo, Frog and Goblin, straight into this fight.
 
 > The Husk Beetle - the fight-pool beast that does not want to be finished off.
 

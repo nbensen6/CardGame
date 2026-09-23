@@ -18,7 +18,7 @@ tags:
 
 # The Riftling
 
-▶ **[Fight this now](titan://riftling)** — solo, Frog and Goblin, straight into the fight.
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-this-beast)** — solo, Frog and Goblin, straight into this fight.
 
 > The Riftling — the one that is not an animal.
 

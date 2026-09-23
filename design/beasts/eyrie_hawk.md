@@ -18,7 +18,7 @@ tags:
 
 # The Eyrie Hawk
 
-▶ **[Fight this now](titan://eyrie_hawk)** — solo, Frog and Goblin, straight into the fight.
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-this-beast)** — solo, Frog and Goblin, straight into this fight.
 
 > The Eyrie Hawk - the elite-pool beast whose bent rule is "the higher you
 

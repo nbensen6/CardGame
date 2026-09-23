@@ -21,7 +21,7 @@ tags:
 
 # The Cinder Jackal
 
-▶ **[Fight this now](titan://cinder_jackal)** — solo, Frog and Goblin, straight into the fight.
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-this-beast)** — solo, Frog and Goblin, straight into this fight.
 
 > The Cinder Jackal - the fight-pool beast that punishes a slow kill.
 

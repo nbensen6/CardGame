@@ -17,7 +17,7 @@ tags:
 
 # The Root Lurker
 
-▶ **[Fight this now](titan://root_lurker)** — solo, Frog and Goblin, straight into the fight.
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-this-beast)** — solo, Frog and Goblin, straight into this fight.
 
 > The Root Lurker - a knot of roots with a mouth in the middle of it.
 

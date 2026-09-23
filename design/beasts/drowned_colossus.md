@@ -19,7 +19,7 @@ tags:
 
 # The Drowned Colossus
 
-▶ **[Fight this now](titan://drowned_colossus)** — solo, Frog and Goblin, straight into the fight.
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-this-beast)** — solo, Frog and Goblin, straight into this fight.
 
 > The Drowned Colossus - something that walked out of deep water and did not dry.
 

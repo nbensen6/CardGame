@@ -17,7 +17,7 @@ tags:
 
 # The Crag Pup
 
-▶ **[Fight this now](titan://crag_pup)** — solo, Frog and Goblin, straight into the fight.
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-this-beast)** — solo, Frog and Goblin, straight into this fight.
 
 > The Crag Pup — the first thing you ever climb.
 

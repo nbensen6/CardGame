@@ -17,7 +17,7 @@ tags:
 
 # The Bounder
 
-▶ **[Fight this now](titan://bounder)** — solo, Frog and Goblin, straight into the fight.
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-this-beast)** — solo, Frog and Goblin, straight into this fight.
 
 > The Bounder - a boulder that learned to jump.
 

@@ -18,7 +18,7 @@ tags:
 
 # The Riptide Eel
 
-▶ **[Fight this now](titan://riptide_eel)** — solo, Frog and Goblin, straight into the fight.
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-this-beast)** — solo, Frog and Goblin, straight into this fight.
 
 > The Riptide Eel - the elite whose bent rule is a limiter, not a move.
 

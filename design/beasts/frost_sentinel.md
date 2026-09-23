@@ -18,7 +18,7 @@ tags:
 
 # The Frost Sentinel
 
-▶ **[Fight this now](titan://frost_sentinel)** — solo, Frog and Goblin, straight into the fight.
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-this-beast)** — solo, Frog and Goblin, straight into this fight.
 
 > The Frost Sentinel - ice that grew into a shape and stopped.
 

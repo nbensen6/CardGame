@@ -18,7 +18,7 @@ tags:
 
 # The Boulder Ram
 
-▶ **[Fight this now](titan://boulder_ram)** — solo, Frog and Goblin, straight into the fight.
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-this-beast)** — solo, Frog and Goblin, straight into this fight.
 
 > The Boulder Ram - the fight-pool beast that punishes staying down.
 

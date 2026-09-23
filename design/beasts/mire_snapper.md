@@ -17,7 +17,7 @@ tags:
 
 # The Mire Snapper
 
-▶ **[Fight this now](titan://mire_snapper)** — solo, Frog and Goblin, straight into the fight.
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-this-beast)** — solo, Frog and Goblin, straight into this fight.
 
 > The Mire Snapper - most of it is jaw.
 

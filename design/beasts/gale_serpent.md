@@ -18,7 +18,7 @@ tags:
 
 # The Gale Serpent
 
-▶ **[Fight this now](titan://gale_serpent)** — solo, Frog and Goblin, straight into the fight.
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-this-beast)** — solo, Frog and Goblin, straight into this fight.
 
 > The Gale Serpent - a storm that coiled up and stayed.
 

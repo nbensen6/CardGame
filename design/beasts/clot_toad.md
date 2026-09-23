@@ -18,7 +18,7 @@ tags:
 
 # The Clot Toad
 
-▶ **[Fight this now](titan://clot_toad)** — solo, Frog and Goblin, straight into the fight.
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-this-beast)** — solo, Frog and Goblin, straight into this fight.
 
 > The Clot Toad - the elite-pool beast whose bent rule punishes attrition
 

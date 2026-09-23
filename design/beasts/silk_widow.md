@@ -18,7 +18,7 @@ tags:
 
 # The Silk Widow
 
-▶ **[Fight this now](titan://silk_widow)** — solo, Frog and Goblin, straight into the fight.
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-this-beast)** — solo, Frog and Goblin, straight into this fight.
 
 > The Silk Widow - the elite-pool beast that punishes going shieldless.
 

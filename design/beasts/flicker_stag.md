@@ -18,7 +18,7 @@ tags:
 
 # The Flicker Stag
 
-▶ **[Fight this now](titan://flicker_stag)** — solo, Frog and Goblin, straight into the fight.
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-this-beast)** — solo, Frog and Goblin, straight into this fight.
 
 > The Flicker Stag - the elite-pool beast whose bent rule turns "hurt" into
 

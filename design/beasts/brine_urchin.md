@@ -18,7 +18,7 @@ tags:
 
 # The Brine Urchin
 
-▶ **[Fight this now](titan://brine_urchin)** — solo, Frog and Goblin, straight into the fight.
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-this-beast)** — solo, Frog and Goblin, straight into this fight.
 
 > The Brine Urchin - the elite-pool beast whose bent rule punishes reaching
 

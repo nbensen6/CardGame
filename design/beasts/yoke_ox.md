@@ -18,7 +18,7 @@ tags:
 
 # The Yoke Ox
 
-▶ **[Fight this now](titan://yoke_ox)** — solo, Frog and Goblin, straight into the fight.
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-this-beast)** — solo, Frog and Goblin, straight into this fight.
 
 > The Yoke Ox - the fight-pool beast that punishes climbing apart.
 

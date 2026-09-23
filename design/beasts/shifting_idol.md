@@ -18,7 +18,7 @@ tags:
 
 # The Shifting Idol
 
-▶ **[Fight this now](titan://shifting_idol)** — solo, Frog and Goblin, straight into the fight.
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-this-beast)** — solo, Frog and Goblin, straight into this fight.
 
 > The Shifting Idol - a stack of stones that does not agree with itself.
 

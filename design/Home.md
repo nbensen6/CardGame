@@ -16,11 +16,10 @@ Moving every beast from the Python-primitive models to the AI pipeline: generate
 ## Start here
 
 - **Every beast note has a ▶ Fight this now link** — click it and the game opens
-  solo, Frog and Goblin, straight into that fight. (Registered once with
-  `tools	itan_uri.cmd install`; `uninstall` removes it. If it ever says
-  *"Get an app to open this 'titan' link"*, restart Obsidian — it looks a link
-  scheme up once and caches it for the life of the process.)
-
+  solo, Frog and Goblin, straight into that fight. It runs through the Shell
+  commands plugin, one command (`play.cmd {{title}}`) shared by every beast, so
+  a new beast note works with no setup. Same thing from the keyboard: command
+  palette → *Execute: Fight this beast*.
 - **[[agents/Agents|Agents]] → the FOR NICK tab** — everything waiting on your
   decision, one plain sentence each. Answer under **Nick's answer** in the note.
 - **[[agents/Last sync|Last sync]]** — when this PC last pulled the agents'
