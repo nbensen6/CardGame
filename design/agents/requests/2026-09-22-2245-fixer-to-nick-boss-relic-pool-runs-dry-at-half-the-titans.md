@@ -123,4 +123,4 @@ Left open: whether the 4-relic boss pool should be resized or refilled for
 Answer:
 
 
-Do not worry about 
+Do not worry about relics at this time. 
