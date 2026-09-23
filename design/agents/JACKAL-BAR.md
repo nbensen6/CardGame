@@ -57,7 +57,8 @@ reading the fight at a glance, at play size, in motion.
       given a per-model scale, 2026-09-23 — verified in the real fight and
       the campfire row. `design/progress/goblin_mech_ai.md` ("Shipped and
       scored"). Frog was already there. Fidelity is not fully matched yet
-      (37/50, under the hunter stop line) — see the line above.
+      (38/50, under the hunter stop line, after a Colour & read touch-up
+      2026-09-23) — see the line above.
 
 ### The arena
 - [x] **It frames the beast** rather than competing with it. Meshy-generated

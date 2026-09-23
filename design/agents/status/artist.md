@@ -2,36 +2,89 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-23T17:34
-working_on: gave outline.gdshader's shared ink-outline a per-model width scale (OUTLINE_WIDTH_SCALE, combat_3d.gd) and wired goblin_mech_ai in at 0.33x -- it was a near-solid black blob at default width, now reads clearly (mint skin, gold goggles, dark rig) in the real fight and the campfire row. Took the outline-width fixer request myself since it was still open/untaken and blocking JACKAL-BAR's loudest line, and neither Meshy (0/8 today) nor Blender (network wall, reconfirmed) had budget for anything else. Scored for real for the first time: 37/50, under the 42 hunter stop line. ALL TESTS PASSED; jackal/Frog confirmed unaffected; 80-step playtest finished clean (0 failing checks). Lease released.
+updated: 2026-09-23T18:16
+working_on: boosted saturation/value on the Goblin Engineer AI texture directly (PNG already extracted by Godot's importer, no Blender needed) -- Colour & read 7->8, total 37->38/50, still under the 42 hunter stop line. Both Meshy (8/8 today) and Blender (download.blender.org 403, 3rd run in a row) were unavailable; filed to:nick on the Blender wall since it has now recurred three runs running. ALL TESTS PASSED; no regression on jackal/Frog (pixel-diff outside goblin's region is idle-animation jitter only). Lease released.
 ---
 
 # artist
 
-## This run — 2026-09-23 17:19 ET
+## This run — 2026-09-23 18:16 ET
 
-- **Did:** fixed the bug that was blocking the Goblin Engineer's Meshy
-  rebuild from shipping — gave the shared ink-outline a per-model width
-  knob and wired the Goblin in. It was reading as a near-solid black blob
-  at true in-fight size; now it reads clearly, same as the Frog does.
-- **Worked?** Yes. Verified in the real fight and the campfire screen, both
-  read clearly now; the jackal and the Frog are pixel-confirmed unchanged.
-  Scored it for real for the first time: 37/50 — a real improvement, but
-  still under this fight's own 42 bar for a hunter, so there's more to do.
-- **Next:** the two lowest scoring lines need Blender (a mesh-cleanliness
-  check) and either a Meshy budget reset or manual texture work (it's still
-  measurably duller than the Frog). Neither was available this run.
-- **Need from you:** nothing blocking — flagging that I picked up a request
-  I'd filed to the fixer myself, since it sat open for hours and was the
-  single loudest blocker on this fight's own loudest line; happy to leave
-  this kind of shader/material fix to the fixer going forward if you'd
-  rather keep that split cleaner.
+- **Did:** made the Goblin Engineer's colours read better — boosted
+  saturation and lifted the shadows on its texture directly (no Blender, no
+  Meshy spend), since the palette was measurably flatter and darker than
+  the Frog's own.
+- **Worked?** Yes, a real if modest improvement — the backpack tank, goggles
+  and strap all read more distinctly now, verified in the real fight and
+  the campfire screen; frames in the write-up. Scored it: Colour & read
+  7→8, total 37→38/50 — closer, but still under this fight's own 42 bar for
+  a hunter.
+- **Next:** the remaining gap needs Blender (a mesh-cleanliness check, the
+  lowest-scoring line) — blocked again this run.
+- **Need from you:** Blender downloads have failed three runs running now
+  (roughly 16:24, 17:19, and this one) — same fix as the Meshy one earlier
+  today would likely clear it. Filed a request with the details; not
+  blocking anything urgent, but it's the reason today's hunter-fidelity
+  work has been limited to texture tweaks instead of real geometry.
 
 ## Now
 
-**No open `to: artist` request this run.** Checked every request's
-frontmatter first, per `COMMON.md` — none addressed to me, so worked the
-`JACKAL-BAR.md` queue.
+**No open `to: artist` request this run**, and none of my own `to: nick`
+requests had a fresh, unhandled answer either — checked both per
+`COMMON.md` 1b/2 before picking work. Worked the `JACKAL-BAR.md` queue.
+
+**Both Meshy (8/8 daily tasks already spent, ledger-confirmed) and Blender
+were unavailable again — third run in a row on the exact same Blender
+wall**, so this is the one to file, per the last run's own threshold:
+`requests/2026-09-23-1811-artist-to-nick-blender-download-blocked.md`
+(`to: nick`, not blocking, but flags the recurring pattern).
+
+**Picked the one thing that needed neither tool.** `goblin_mech_ai`'s pass-1
+score (37/50, `design/progress/goblin_mech_ai.md`) named two lowest lines:
+Build hygiene (needs Blender — still blocked) and Colour & read (texture
+"measurably duller than the Frog's own"). The second one doesn't actually
+need Blender or Meshy: the runtime texture is a plain PNG Godot's importer
+already extracted to disk (`embedded_image_handling=1`), the same fact the
+jackal ear-glare fix relied on to edit a texture directly with no
+re-export needed.
+
+**Re-measured the gap on the real files first**, rather than trust pass 1's
+carried-over number (which turned out to be from Blender's own linear-space
+pixel data, not the shipped sRGB asset): HSV saturation 0.284 vs the Frog's
+0.671, value 0.535 vs 0.702 — real, reproducible, just smaller than the
+original "80 vs 156 luminance" framing suggested. Fixed with a direct HSV
+edit on `goblin_mech_ai_Image_0.png` — saturation ×1.55, value gamma 0.80 —
+moving about 40% of the way to the Frog's own numbers, deliberately not all
+the way (risk of reading oversaturated against this hunter's own palette).
+Script kept at `tools/blender/ai/goblin_ai_colour_boost.py` (no `bpy`
+despite the folder — it's the goblin-AI-texture family of scripts, this one
+just doesn't need Blender).
+
+Verified in the real fight and the campfire row, before/after at true
+in-fight size:
+
+![[../agents/frames/artist/2026-09-23-goblin-colour-boost-infight-crop.png]]
+![[../agents/frames/artist/2026-09-23-goblin-colour-boost-campfire-crop.png]]
+
+The backpack tank, goggles and strap all separate more clearly. Modest, not
+dramatic — the toon shader's own shadow ramp compresses colour range on top
+of whatever the texture carries, so part of the ceiling here is shader-side,
+not texture-side.
+
+**No regression** — only the one PNG changed (`git status` confirmed);
+full-frame pixel diff against the immediately-prior render shows nothing
+outside the goblin's own screen region beyond thin edge pixels on the
+jackal's legs and the Frog, consistent with ordinary idle-animation jitter
+between two independently-timed renders (same pattern the outline-width
+pass documented). `ALL TESTS PASSED` (`run_tests.gd`) — texture-only change,
+no logic touched, so no playtest needed.
+
+**Score: Colour & read 7→8, total 37→38/50** — still under the 42 hunter
+stop line. `design/progress/goblin_mech_ai.md` ("Pass 2") has the full
+write-up including what's still open: the portrait-scale colour check, and
+Build hygiene, still blocked on Blender.
+
+## Old: 2026-09-23 17:19, outline-width fix / goblin_mech_ai shipped and scored
 
 **Both Meshy and Blender were unavailable again.** `python3 tools/meshy.py
 balance` succeeds (the credential still works), but the daily task ledger
@@ -336,6 +389,7 @@ real geometry — this run's texture is real surface detail but still a
 smooth sphere underneath.
 ## Log
 
+- 2026-09-23 18:16 EDT — boosted saturation (x1.55) and lifted value (gamma 0.80) directly on goblin_mech_ai's extracted PNG texture (tools/blender/ai/goblin_ai_colour_boost.py, no Blender needed) -- HSV sat 0.284->0.433, val 0.535->0.601, toward the Frog's own 0.671/0.702. Verified in the real fight and campfire row, backpack/goggles/strap read more distinctly. Colour & read 7->8, total 37->38/50, still under the 42 hunter stop line. ALL TESTS PASSED; pixel-diff confirms no regression outside the goblin's own region (idle-animation jitter only). Filed to:nick on the Blender wall (3rd run in a row hitting the same 403 on download.blender.org) per the prior run's own filing threshold. See design/progress/goblin_mech_ai.md ("Pass 2"). Lease released.
 - 2026-09-23 17:34 EDT — the 80-step playtest for the outline-width/goblin_mech_ai change (below) finished clean: PLAYTEST OK, 0 failing check(s), full 80 steps, exit code 0. Ran slow this session (real CPU time, the same sandbox flakiness status/fixer.md has noted before, not a hang) but finished with no artificial cutoff. No regression. See design/progress/goblin_mech_ai.md. Lease released.
 - 2026-09-23 17:19 EDT — gave outline.gdshader's shared ink-outline a per-model width scale (OUTLINE_WIDTH_SCALE in combat_3d.gd, threaded through toon_material/toon_all/_shade_model), took the still-open to:fixer request myself since it was blocking JACKAL-BAR's loudest line and neither Meshy (0/8 today) nor Blender (network wall, reconfirmed) had budget for anything else. Wired goblin_mech_ai into HUNTER_AI_ART at scale 0.33 -- went from a near-solid black blob to a clearly-readable hunter in the real fight and the campfire row, jackal/Frog confirmed unaffected (pixel-diff outside the goblin's own region matches ordinary idle-animation jitter). Scored for real for the first time: 37/50, under the 42 hunter stop line -- see design/progress/goblin_mech_ai.md ("Shipped and scored"). Ticked JACKAL-BAR's "reads at fight distance, not a green blob" line for both hunters. ALL TESTS PASSED. 80-step playtest kicked off, ran past the foreground window -- pushed code/frames/write-ups first per COMMON.md 4b, result to follow. Marked the request done.
 - 2026-09-23 16:27 EDT — the background 80-step playtest for the foothold-texture change (below) finished clean: PLAYTEST OK, 0 failing check(s), full 80 steps, exit code 0. Confirms the change (a pure material_override/albedo_texture swap) touches no position/foothold-index logic. See design/progress/foothold_rock_detail.md.

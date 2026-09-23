@@ -295,3 +295,73 @@ closes the JACKAL-BAR.md line "Each is readable at fight distance as itself,
 not a green blob" for both hunters — ticked below. The fight's fidelity gap
 is smaller, not closed: 37/50 is a real hunter on screen, not yet at the
 tier's own bar.
+
+## Pass 2 — Colour & read, artist, 2026-09-23T18:11 EDT
+
+Picked this up because both Meshy (8/8 daily tasks already spent, confirmed
+via the ledger and `python3 tools/meshy.py balance`) and Blender
+(`download.blender.org` still a clean `403` — this is now the third run in a
+row to hit it; filed `to: nick`,
+`requests/2026-09-23-1811-artist-to-nick-blender-download-blocked.md`, per
+the threshold the last run's own note set) were unavailable, and this is the
+one of the two lowest lines from pass 1 that doesn't strictly need either:
+the runtime texture is a plain PNG already extracted onto disk by Godot's
+importer (`embedded_image_handling=1`), the exact fact the jackal ear-glare
+fix relied on to edit a texture directly and have the game pick it up with
+no re-export.
+
+**Measured the actual gap first, on the file the game renders, not the
+number pass 1's diagnosis carried over.** Pass 1's "80.1 vs 156.5 mean
+luminance" came from Blender's own linear-space `image.pixels` during the
+`goblin_ai_brighten.py` gamma-lift attempt; re-measured directly on the
+shipped sRGB PNG/JPG files instead (`tools/blender/ai/goblin_ai_colour_boost.py`'s
+docstring has the numbers): the raw luminance gap is much smaller than that
+figure suggested (116 vs 123 mean, 0–255), but a real, reproducible gap
+shows up in HSV — **saturation mean 0.284 vs the Frog's 0.671, value mean
+0.535 vs 0.702** — the goblin's texture is genuinely flatter and darker,
+just not by as much as the linear-space number implied.
+
+**Fix: boost saturation and lift value directly on the extracted PNG**, no
+Blender, no Meshy spend. `Image.convert("HSV")`, multiply the S channel by
+1.55 and apply a 0.80 gamma lift to V (shadows/midtones up, white point
+untouched), convert back to RGB, save in place. Deliberately partial, not a
+match: `SAT_MUL`/`VAL_GAMMA` picked to move about 40% of the way to the
+Frog's own numbers (sat 0.284→0.433, val 0.535→0.601) rather than push for
+an exact match that risked reading as oversaturated/neon against this
+hunter's own established palette.
+
+**Verified in the real fight and the campfire row**, same camera/state as
+pass 1, before/after crops at true in-fight size:
+
+![[../agents/frames/artist/2026-09-23-goblin-colour-boost-infight-crop.png]]
+![[../agents/frames/artist/2026-09-23-goblin-colour-boost-campfire-crop.png]]
+
+The backpack tank reads a deeper blue-grey, the goggles a warmer gold, the
+strap a more distinct brown — a real, if modest, improvement, consistent
+with the measured HSV move. Not a dramatic transformation: the toon shader's
+own shadow ramp compresses colour range on top of whatever the texture
+carries, so part of pass 1's "Colour & read 7" ceiling is shader-side, not
+texture-side, and this pass doesn't touch that.
+
+**No regression.** Only `goblin_mech_ai_Image_0.png` changed (`git status`
+confirmed). Pixel-diffed the full `state=3d` frame against the immediately
+prior render: outside the goblin's own screen region, the only pixels that
+moved are thin edge pixels on the jackal's legs and the Frog, consistent
+with ordinary idle-animation jitter between two independently-timed
+renders, not a shape or colour change — same pattern pass 1's own before/
+after diff described. `ALL TESTS PASSED` (`run_tests.gd`; texture-only
+change, no logic touched — no playtest needed, nothing moves differently).
+
+**Score: Colour & read 7→8.** The dominant reason pass 1 held this line
+down — the texture measurably duller than the Frog's own — is now
+measurably narrower (not closed) on real HSV numbers, not just eyeballed.
+The other open caveat (colour unchecked at the 34px party-portrait scale,
+`portraits.py`'s `AI_ART` table being beast-only) still stands and isn't
+addressed by this pass — held to 8, not 9, for that reason. **Total: 37→38/50**
+— still under the 42 hunter stop line; `JACKAL-BAR.md`'s "Frog and Goblin
+match the jackal's fidelity" line stays unticked.
+
+**Lowest line now: Build hygiene (6)**, still blocked on Blender for the
+mesh-topology check pass 1 named. Once the Blender wall clears: that check,
+plus the portrait-scale colour check, are the two moves left to reach the
+stop line.
