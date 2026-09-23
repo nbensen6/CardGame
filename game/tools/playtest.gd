@@ -41,6 +41,8 @@ var _log: PackedStringArray = []
 var _step := 0
 var _errors: Array = []           # script errors caught by _ErrLog
 var _step_saw_popup := false      # a Label3D damage number appeared under _rig this step
+var _step_popup_offscreen := false   # a seen popup projected outside the viewport at some frame this step
+var _step_popup_offscreen_detail := ""
 
 
 class _ErrLog extends Logger:
@@ -194,16 +196,42 @@ func _shot() -> void:
 ## next action), and a Label3D that already faded and freed is simply gone
 ## from _rig's children by the time a later poll runs -- never un-latches
 ## a real sighting.
+##
+## Existence alone missed a real bug once (2026-09-23: a hunter-damage
+## popup existed under _rig the whole time, matched _damage_popup-missing's
+## own definition of "seen", and still rendered off the top of the screen --
+## caught only by hand with a throwaway debug print, not by this check).
+## So every frame also asks the SAME camera question check 9 asks about a
+## hunter (behind the camera at all, or unprojecting outside the viewport)
+## about every live Label3D's OWN current position -- not just once at
+## first sighting, since the fixed bug was a MOVING popup that started on
+## screen and rose off it over its own rise tween, so a single spawn-time
+## check would have missed the exact case this exists to catch. Latched
+## like _step_saw_popup (_play() resets both before the next action) so one
+## bad frame anywhere in the popup's life is enough, without flooding on
+## every subsequent frame it stays off screen.
 func _poll_popup(v: Node) -> void:
-	if _step_saw_popup or not is_instance_valid(v):
+	if not is_instance_valid(v):
 		return
 	var rig: Node = v.get("_rig")
 	if rig == null:
 		return
+	var cam: Camera3D = v.get("_cam")
+	var screen := Vector2(root.get_visible_rect().size)
 	for child in rig.get_children():
 		if child is Label3D:
 			_step_saw_popup = true
-			return
+			if _step_popup_offscreen or cam == null:
+				continue
+			var pos: Vector3 = (child as Label3D).global_position
+			if cam.is_position_behind(pos):
+				_step_popup_offscreen = true
+				_step_popup_offscreen_detail = "behind the camera at %v -- cannot be on screen at all" % pos.round()
+			else:
+				var p := cam.unproject_position(pos)
+				if p.x < -2.0 or p.y < -2.0 or p.x > screen.x + 2.0 or p.y > screen.y + 2.0:
+					_step_popup_offscreen = true
+					_step_popup_offscreen_detail = "projects to %v, off the %v screen entirely" % [p.round(), screen]
 
 
 ## The tail wait after an action, folded together with _poll_popup so
@@ -470,6 +498,8 @@ func _play() -> void:
 	for s in _steps:
 		_step = s
 		_step_saw_popup = false
+		_step_popup_offscreen = false
+		_step_popup_offscreen_detail = ""
 		var v := _view()
 		var c := _combat()
 		if c == null or c.phase == Combat.Phase.OVER or v == null or not v.has_method("_layout_hand"):
@@ -565,6 +595,13 @@ func _play() -> void:
 		if (boss_down > 0 or hp_down > 0) and not _step_saw_popup:
 			_fail("damage-popup-missing", "%s: boss %+d, hp %+d, but no damage number appeared on the beast"
 				% [action, -boss_down, -hp_down])
+		# The visibility half of the same checklist item: a popup that exists
+		# under _rig (satisfying the check above) but leaves the visible
+		# screen at some point in its own life still fails the "reads" bar --
+		# see _poll_popup's own note for the real bug this is written against.
+		if _step_popup_offscreen:
+			_fail("damage-popup-offscreen", "%s: a damage number %s"
+				% [action, _step_popup_offscreen_detail])
 		_check(v, action)
 		await _shot()
 	_move(Vector2(screen.x * 0.5, screen.y * 0.3))

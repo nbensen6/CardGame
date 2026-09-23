@@ -3,7 +3,7 @@ tags:
   - agent-status
 agent: playtester
 updated: 2026-09-23
-working_on: full baseline clean on the first try (all three modes, 0 fails); extended playtest.gd with a mid-hop camera-visibility check (checklist item 4's "including mid-jump" half, which the existing check deliberately skips) — proved it both directions; a follow-up baseline run with that check in place hit a genuine, if intermittent, engine crash on End Turn (_apply_orbit using a camera no longer in the tree) unrelated to my own change — filed to the fixer, high priority
+working_on: full three-mode baseline (hover/hands 0 fails, play 3 fails — the known foothold-4 residual only, unchanged); the fixer's hunter-damage-popup-offscreen fix (9653ecc) verified live, 0 fails across 5 real hp-loss events; added the visibility-aware follow-up check I'd flagged as still open — damage-popup-offscreen in playtest.gd, watching every live popup's on-screen projection across its whole life, not just at spawn — proved both directions (clean on the real fix, 3/3 FAILs when I temporarily reverted the fixer's own fix to reproduce the exact old bug, then cleanly reverted my revert). No new bugs found; nothing new filed.
 ---
 
 # playtester
@@ -11,6 +11,100 @@ working_on: full baseline clean on the first try (all three modes, 0 fails); ext
 ## Now
 
 No open `to: playtester` request this run (checked every file's frontmatter).
+Fresh sandbox, Godot 4.7.1 + `--import`, `run_tests.gd`: `ALL TESTS PASSED`.
+
+**Full three-mode baseline**: `hover` 0 flips, `hands` (1-10) 0 fails — both
+clean, matching every prior baseline. `play` (80 steps): **3 failing
+checks**, all `hunter-off-marker` (steps 34, 35, 71), all sharing the exact
+same coordinates as every recent run (`home (5.335257, 13.825942,
+7.030925)`, anchor `(3.901302, 13.825942, 6.473297)`) — this is the fixer's
+own still-open `2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`,
+untaken since it was filed, unchanged today. Not a new finding, not
+regressed, not improved. No `script-error` this run — the intermittent End
+Turn crash from my last run's `2026-09-23-1000-playtester-to-fixer-end-turn-crash-at-sigil-solo-flip.md`
+(also still open, untaken by the fixer) did not reproduce here either. Worth
+being honest, same as that request's own `## Done when` says: a race that
+doesn't fire on one more clean run is not proof of anything — it just wasn't
+this run's turn.
+
+**Checklist item 1's remaining gap is now closed, both the bug and the
+coverage.** The fixer took my `hunter-damage-popup-offscreen` request this
+run (commit `9653ecc`, `Combat3D.popup_move_reach`) — their root cause
+(popup travel distance scaled off the BEAST's height even for a hit that
+landed on a HUNTER, six-plus hunter-heights too far) was not my own guess
+from that request (an in-flight camera transition), so this needed a fresh
+look, not just trusting the fix. This run's clean 80-step baseline already
+shows it working live: 5 real hp-loss events (steps 34, 50, 65, 71, 77), 0
+`damage-popup-missing` fails (existence, check 10, unchanged) — but until
+today nothing checked existence's other half, VISIBILITY, in the wild.
+That's exactly what my own last two runs' `## Next` kept flagging as the
+natural follow-up once the fixer knew the real cause.
+
+Added it: `_poll_popup` (playtest.gd) now asks the same camera question
+check 9 already asks about a hunter — behind the camera, or projecting
+outside the viewport — about every live `Label3D` popup's OWN current
+position, every frame it's still polled (not just once at first sighting).
+That last part matters: the original bug was a popup that started ON screen
+and rose OFF it over its own ~1.7s tween (the fixer's own write-up: screen y
+301 → -217), so a spawn-time-only check would have missed the exact case
+this exists to catch. Latched per step like the existence check, one bad
+frame anywhere in the popup's life is enough — new failure
+`damage-popup-offscreen`.
+
+**Proved it both directions, not just "ran clean once".**
+
+- *Positive*: full 80-step `mode=play` baseline against the real, fixed
+  code — 0 `damage-popup-offscreen` fails across all 5 real hp-loss events.
+- *Negative*: temporarily reverted the fixer's own fix in `combat_3d.gd`
+  (`popup_move_reach` back to always returning `beast_reach`, ignoring
+  `on_hunter`) and reran a 36-step slice. Got exactly **3**
+  `damage-popup-offscreen` FAILs, at the same shape the fixer's own
+  before-fix numbers showed (screen y -89, -28, -86 — all well above the top
+  of a 720px-tall viewport). Checked one by eye too: step 9's saved frame
+  shows the HUD boss bar correctly at 42→31, but no floating number anywhere
+  on screen — matching the check's verdict, not just trusting the number.
+  Reverted the break immediately after (`git diff game/views/combat_3d.gd`
+  clean before moving on), then re-ran `run_tests.gd` and a fresh full
+  80-step baseline on the real code to get final numbers: clean, only the
+  known foothold-4 residual above.
+
+![[frames/playtester/2026-09-23-damage-popup-offscreen-check-negative-test-step009.png]]
+The negative-test frame (fixer's fix temporarily reverted, for this proof
+only) — boss HP visibly dropped 42→31 in the HUD, but no damage number is
+anywhere on screen. This is the exact shape the new check now catches
+automatically on every run.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | **gap closed** — the off-screen damage-number bug (filed two runs ago) is fixed by the fixer (`9653ecc`) and now has permanent automatic coverage (`damage-popup-offscreen`), proved both directions |
+| 2 | hunters land on the beast correctly | unchanged — the shared-foothold-4 residual is still the fixer's own open, untaken request; today's 3 fails match its exact known coordinates |
+| 3 | jump animation (squash/arc/landing) | unchanged this run |
+| 4 | camera | unchanged this run — `hunter-lost-mid-hop` (added last run) still live, still 0 fails in the wild |
+| 5 | nothing errors | ok this run (`ALL TESTS PASSED`, no `script-error`) — but the intermittent End Turn crash request is still open and unconfirmed either way; one more clean run is not proof it's gone |
+
+No new requests filed this run — nothing failed that wasn't already known
+and owned by an existing open request.
+
+## Next
+
+Two open `to: fixer` requests are still the loudest unclaimed items on the
+board: my own high-priority End Turn crash
+(`2026-09-23-1000-playtester-to-fixer-end-turn-crash-at-sigil-solo-flip.md`)
+and the fixer's own shared-foothold-4 spacing
+(`2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`),
+both untaken across at least two of my runs now. Watch for either landing,
+then re-baseline: the crash needs several repeated clean runs to mean
+anything (it's a race, not a deterministic repro), and foothold-4 needs a
+re-check of item 2 once fixed since it's shown as intermittent even in its
+current broken state. `damage-popup-offscreen` and `hunter-lost-mid-hop` are
+both live now with 0 real fails found in the wild — worth remembering they
+exist as coverage the next time a popup or camera change lands. Items 3/4's
+human-eye frame-strip look is still current from two runs ago; nothing new
+to add there this run.
+
+## Old: 2026-09-23, mid-hop camera check, end-turn crash filed
 Fresh sandbox, Godot 4.7.1 + `--import`, `run_tests.gd`: `ALL TESTS PASSED`.
 
 **First full three-mode baseline came back completely clean** — a first for
@@ -579,6 +673,25 @@ remain the backstop for that; keep saving them.
 
 ## Log
 
+- 2026-09-23 — full three-mode baseline: `hover`/`hands` clean, `play`
+  (80 steps) 3 fails, all `hunter-off-marker` at foothold 4 matching the
+  fixer's own still-open, untaken shared-foothold-spacing request exactly —
+  unchanged, no regression. No `script-error` (the intermittent End Turn
+  crash, also still open and untaken, did not reproduce this run either —
+  not treated as proof it's gone). Picked up checklist item 1's remaining
+  gap flagged in my own last two runs' `## Next`: the fixer took and fixed
+  `hunter-damage-popup-offscreen` (`9653ecc`, `Combat3D.popup_move_reach`)
+  since my last run — verified it live in this run's clean baseline (0
+  fails across 5 real hp-loss events), then added the visibility-aware
+  follow-up check itself, `damage-popup-offscreen` in `playtest.gd`: every
+  live popup's on-screen projection is now checked every frame across its
+  whole life (not just at spawn, since the real bug was a popup that
+  started ON screen and rose OFF it). Proved both directions — clean on the
+  real fix, and exactly 3 FAILs (matching the fixer's own before-fix
+  numbers) when I temporarily reverted their fix in `combat_3d.gd` to
+  reproduce the old bug, confirmed by eye against the frame, then cleanly
+  reverted the break before re-running `run_tests.gd` and a final clean
+  80-step baseline. No new bugs found; nothing new filed this run.
 - 2026-09-23 — first full three-mode baseline clean (0 fails/flips
   everywhere). Extended `playtest.gd`'s `_watch_hop` with a mid-hop
   camera-visibility check (`hunter-lost-mid-hop`, checklist item 4's
