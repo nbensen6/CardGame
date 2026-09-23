@@ -370,3 +370,121 @@ saddle/nostrils' own 34px legibility (still unmoved this pass — a further
 Colour candidate, though it may need the shared portrait camera rather than
 the model itself, which is a bigger, cross-cutting change this pass
 deliberately did not risk).
+
+---
+
+## Pass 8 — artist lane, 2026-09-23 (Silhouette/Proportion: the front legs)
+
+Picked up pass 7's own named candidate: the front legs don't break the
+silhouette the way pass 5's haunch does — they start deep inside the head
+ball at too small a radius to ever reach its surface, so no shoulder mass
+shows in the outline; the leg only appears where the foot pokes out below.
+`tools/blender/frog.py` `foreleg()`, the only function touched.
+
+**Three things tried, each looked at in a render before the next** (the
+loop's own "look before continuing," not assumed from the first idea):
+
+1. Widened the limb's own start radius (0.185 → 0.24) in place. Measured
+   against the head ellipsoid's own surface equation at that point's y/z
+   (0.636 in X), the old radius's outer edge (0.485) was nowhere near the
+   surface; the new one (0.64) barely clears it. Real but marginal: 614px
+   differ in the `_sil` diff, almost all of it the foot, not a shoulder.
+2. A dedicated shoulder ball (the hindleg's own technique — pass 5's knee
+   ball is a separate mass, not a fatter limb), placed where #1's maths
+   pointed (centre 0.50*s). Still only 331px differ. **The finding:** a
+   local "does this point clear the head's surface at this y/z" calculation
+   undersells how much of a point is actually hidden behind the REST of the
+   head's compound silhouette from the scoring camera's actual angle — the
+   3/4 camera sees more than one ellipsoid slice at once.
+3. Pushed the ball much further out (centre 0.60*s, radius 0.30 — close to
+   the hindleg knee ball's own proportions). This finally broke the
+   silhouette decisively (2642px diff, visible in `_sil`, `_side` and
+   `_front`) — but the ball sat 0.30 away in X from the limb's own start
+   point (still 0.30*s), and in `_side.png` it read as a third ball glued to
+   the cheek, not a shoulder growing a leg. A real defect, caught by looking
+   at `_side`, not just `_sil` — the honesty rule this loop names.
+
+**Landed on:** put the ball where the hindleg's own knee ball sits relative
+to ITS limb — centre and limb-start nearly coincident, not offset — and
+move the limb's start point out to meet it rather than leaving the ball to
+stand alone. `start = (0.42*s, -0.44, 0.42)`; ball radius `(0.26, 0.24,
+0.20)` there; the limb's own first point is now `start` itself. This reads
+as a shoulder with a leg growing out of it in `_form.png` (clay) and
+`_side.png` alike — checked both, not just the silhouette this time, after
+attempt 3's exact failure mode was "looked right in `_sil`, wrong in
+`_side`."
+
+**Budget.** Two new balls (mirrored), `seg=12 ring=8` each: 4800 → 5136
+tris, +336. A further increase on the frog's already-deliberate overage
+(now 3.7x the 1400 hunter budget), named as a real cost, not folded in
+quietly — this is the second pass running to add geometry (pass 6 added
+100 tris for the dorsal saddle) rather than only repositioning, and that
+trend is worth flagging for whoever runs pass 9 or the goblin next: cheap
+position-only fixes are running out on this model.
+
+**Verified, not assumed.**
+
+- `_sil` diff (final version) against pass 7: 670px, in two small clusters —
+  one right at the front leg's own attachment, one near the haunch (an
+  unrelated 1-2px rounding shift from the new geometry's shadow on the
+  render, not a haunch change; `_sil` is flat unlit so this is a real
+  boundary pixel, not a shading artefact). Smaller than attempt 3's 2642px,
+  which is the trade made for looking integrated instead of glued-on.
+- `_side.png` and `_form.png` (clay) both show a real, distinct shoulder
+  lobe between the head and the haunch, with the leg visibly emerging from
+  it — the concrete target this pass set out for. `_front.png` shows the
+  frog reading a touch broader through the shoulders, symmetric with how
+  the haunch already reads from behind.
+- `_top.png`: no visible change (the front legs are hidden under the head
+  from directly above in both builds) — checked, not skipped.
+- Footprint unchanged: `SIZE frog is 1.72 x 1.46 x 1.15` before and after,
+  so this doesn't reopen Nick's earlier "frog is too big" finding.
+- **In the real fight camera** (`state=3d`, `cinder_jackal`), rebuilt pass 7
+  via `git stash` for a true before, then this pass, same camera. Full-frame
+  diff is 1736px, of which 363 fall in a 180×180 crop centred on the frog
+  (hunter0) and only 70 near the goblin (hunter1, unrelated — idle-animation
+  drift); the rest is the jackal's own idle ember pulse, the same pattern
+  every prior pass has seen. At the party-panel card-view size (the closest
+  the fight camera gets to the frog), the shoulder thickening is visible in
+  a direct crop comparison.
+- **34px party portrait**: rebuilt (`portraits.py frog`). The 512px render
+  genuinely differs (5737 of 262144 px), but downsampled to 34×34 the two
+  are visually indistinguishable — this fix doesn't survive to portrait
+  size, honestly reported rather than claimed. Kept the rebuilt `frog.png`
+  anyway since it's now the accurate render of the current model, the same
+  call pass 6/7 made.
+
+**Score.** Silhouette 8→9: the front legs now break the outline the way the
+haunch already does, verified in `_sil`, `_side` and the live fight camera,
+not just claimed from the model. Proportion 8→9: the shoulder mass gives
+the front legs their own presence instead of reading as afterthought lines
+under the head — the model now has a matched pair of leg-masses (front and
+rear) rather than one real one and one implied one. Held to 9, not 10, on
+both: the change is real but modest (670px on the scoring silhouette,
+smaller than pass 5's haunch win), and Hygiene did not improve alongside —
+the tri overage grew again. **+2 total (41→43)** — clears the 42 hunter
+stop line.
+
+`ALL TESTS PASSED`. Playtest (`mode=play`, `cinder_jackal`, 40 steps)
+re-run against the rebuilt model — see the Log line in
+`design/agents/status/artist.md` for the result.
+
+![[frames/artist/2026-09-23-frog-foreshoulder-sil-before-after.png]]
+![[frames/artist/2026-09-23-frog-foreshoulder-side-before-after.png]]
+![[frames/artist/2026-09-23-frog-foreshoulder-infight-before-after.png]]
+
+## Where it stands, still open for the next pass
+
+**43/50 — over the 42 hunter stop line.** `design/asset-loop.md`: "4 passes
+done. Then report final score, the per-pass history, and the one thing you
+would fix next" — this is pass 8, past the nominal 4-pass cap Nick already
+lifted for this hunter specifically, and now also past the stop line, so
+the honest call is: **stop passing `frog` unless a request or a fresh look
+finds a real defect**, not chase 44+ for its own sake (the loop's own
+"chasing 10 on nineteen characters is how the schedule dies"). The one
+thing still open if someone does pick it back up: the back saddle/nostrils'
+34px legibility pass 6 found and pass 7 partially closed (the toes) — still
+unmoved, and this pass's own attempt-2 finding (a local surface calc
+undersells occlusion from the scoring camera) applies to it too, so it
+would need the same "try, look, iterate" approach rather than a single
+computed fix.

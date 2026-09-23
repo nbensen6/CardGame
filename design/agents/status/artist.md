@@ -3,12 +3,110 @@ tags:
   - agent-status
 agent: artist
 updated: 2026-09-23
-working_on: no open to:artist request; frog pass 7, 40→41/50, a Style diagnosis under Nick's wider "pull from AAA" brief — a named greyscale/value-contrast technique found the model's weakest colour boundary (toe vs foot-pad) and fixed it — 1 short of the 42 hunter stop line; next run either a frog Sil/Prop pass on the front legs or goblin_mech
+working_on: no open to:artist request; frog pass 8, 41→43/50 — a dedicated shoulder ball on the foreleg (same technique as pass 5's haunch knee ball) finally breaks the silhouette there, clearing the 42 hunter stop line; three tried-and-looked-at attempts before landing one that reads as a shoulder rather than a glued-on lump; next run: frog is past its stop line, so move to goblin_mech (37/50) or open the fixer rig-support request for a real Meshy hunter
 ---
 
 # artist
 
 ## Now
+
+No open `to: artist` request this run (checked every file's frontmatter, not
+just the ones with obvious titles). Set up fresh (Godot 4.7.1 + `--import`;
+`download.blender.org` is still unreachable from this sandbox — same finding
+as every prior run — so Blender came from `apt install blender` again, 4.0.2,
+plus `libegl1`/`libgl1-mesa-dri`/`libglx-mesa0` for headless EEVEE; Blender's
+own Python is 3.12 here, `python3.12 -m pip install --break-system-packages
+numpy pillow` was needed before glTF export/import would run at all).
+
+Picked up pass 7's own named candidate from `frog.md`'s "Where it stands":
+the front legs never broke the silhouette the way pass 5's haunch does — a
+Silhouette/Proportion fix. `frog` pass 8 (`design/progress/frog.md`),
+41→43/50 — **clears the 42 hunter stop line.**
+
+**Three attempts, each looked at in a render before trying the next** (the
+loop's own rule, not a single computed guess): (1) widening the limb's own
+start radius in place barely cleared the head ellipsoid's own measured
+surface — real but marginal (614px silhouette diff, mostly the foot); (2) a
+dedicated shoulder ball (the hindleg's own knee-ball technique) placed where
+attempt 1's maths pointed was still barely visible (331px) — a local
+"clears the surface at this point" calculation understates how much is
+hidden behind the head's *compound* silhouette from the actual scoring
+camera angle; (3) pushed the ball much further out and it broke the
+silhouette decisively (2642px, visible in `_sil`, `_side` and `_front`) —
+but it sat far from the limb's own start point and read as a third ball
+glued to the cheek in `_side.png`, not a shoulder. Caught by looking at
+`_side`, not just `_sil` — exactly the "look at every render, not just the
+one you expect to move" the loop's honesty rule is for.
+
+**Landed on:** put the ball where the limb starts, nearly coincident, the
+same relationship pass 5's knee ball already has with the hindleg — moved
+the limb's own first point out to meet the ball instead of leaving the ball
+to stand apart from it. Reads as a shoulder with a leg growing out of it in
+both `_form.png` (clay) and `_side.png`.
+
+**Cost:** two new balls (mirrored), 4800 → 5136 tris (+336) — a further
+increase on the frog's already-deliberate overage (now 3.7x the 1400 hunter
+budget), the second pass running to add geometry rather than only
+reposition. Named as a real, growing cost, not folded in quietly.
+
+**Verified, not assumed:** `_sil` diff 670px at a real leg-attachment
+location (down from attempt 3's 2642px — the trade made for reading
+integrated instead of glued-on); `_side`/`_form` show a genuine shoulder
+lobe; `_front` reads a touch broader through the shoulders, symmetric with
+the haunch; `_top` unchanged (front legs hidden under the head from above in
+both builds — checked, not skipped); footprint unchanged (`1.72 x 1.46 x
+1.15` both builds, so this doesn't reopen Nick's earlier "frog is too big"
+finding). In the real fight camera (`state=3d`, `cinder_jackal`, true before
+via `git stash`): 363 of 1736 differing px fall in a 180×180 crop on the
+frog, 70 near the goblin (unrelated idle drift), the rest the jackal's own
+ember pulse — the same pattern every prior pass has seen. **34px party
+portrait: rebuilt, and honestly does NOT show this fix** — the 512px render
+genuinely differs (5737px) but it doesn't survive the downsample to 34×34;
+kept the rebuilt `frog.png` anyway as the accurate render of the current
+model, same call pass 6/7 made.
+
+**Score.** Silhouette 8→9, Proportion 8→9: the front legs now carry their
+own mass and break the outline, verified in `_sil`, `_side` and the live
+fight camera, not just the model in isolation. Held to 9, not 10 — the
+silhouette change is real but modest, and Hygiene didn't move alongside (the
+tri overage grew again). **+2 total (41→43)**, past the 42 hunter stop line.
+
+`ALL TESTS PASSED`. Playtest (`mode=play`, `cinder_jackal`, 40 steps)
+re-run against the rebuilt model: `hunter-off-marker` fails at foothold 4
+(steps 34–35), *exact* same home/anchor coordinates as the already-open
+`2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`
+— confirmed pre-existing by coordinate match, not re-filed.
+
+Full write-up, all three attempts and why each was rejected or kept:
+`design/progress/frog.md`.
+
+![[frames/artist/2026-09-23-frog-foreshoulder-sil-before-after.png]]
+![[frames/artist/2026-09-23-frog-foreshoulder-side-before-after.png]]
+![[frames/artist/2026-09-23-frog-foreshoulder-infight-before-after.png]]
+
+## Next
+
+`frog` is now past its 42 hunter stop line (43/50) — the honest call per
+`design/asset-loop.md` is to stop passing it unless a request or a fresh
+look finds a real defect, not chase 44+ for its own sake. One thing still
+open if it comes back up: the back saddle/nostrils' 34px legibility pass 6
+found and pass 7 partially closed — still unmoved, and this pass's own
+attempt-2 finding (a local surface calc undersells camera-angle occlusion)
+applies there too. Next run, absent a request: move to `goblin_mech`
+(37/50, cap-lifted, candidates in `design/progress/goblin_mech.md`), or open
+the fixer request that would unblock a real Meshy-rigged hunter attempt
+(flagged again below, unattempted, same as last run).
+
+`python3 tools/meshy.py balance` returned a real balance this run —
+Meshy is live, not used this pass (a colour/geometry fix on an existing
+model doesn't need it). Still true from last run: a full Meshy-rigged
+`frog`/`goblin_mech` to match the jackal's own fidelity is a multi-run,
+cross-agent initiative blocked on rig-display game code
+(`tools/agents/COMMON.md`'s rule against forcing hunters through
+`ai_beast.py`) — a real option for a future run that starts with a
+`to: fixer` request for rig support, not attempted blind.
+
+## Old: hunters, pass 7 (frog)
 
 No open `to: artist` request this run (checked every file's frontmatter, not
 just the ones with obvious titles). Set up fresh (Godot 4.7.1 + `--import`;
@@ -105,24 +203,9 @@ pre-existing by coordinate match, not re-filed here.
 Full write-up, the luminance table, and the plateau-clause note for whoever
 runs pass 8: `design/progress/frog.md`.
 
-## Next
-
-41/50 on `frog`, three passes into the lifted cap, 1 short of the 42 hunter
-stop line. `frog.md`'s own "Where it stands" names two open candidates: the
-front legs, untouched since pass 4 (don't yet break the silhouette the way
-the haunch now does — a Silhouette/Proportion fix), and the back
-saddle/nostrils' own 34px legibility, still unmoved (this pass only closed
-the toe half of that gap) — that one may need the shared portrait camera
-rather than the model itself, a bigger, cross-cutting change worth its own
-look rather than a blind attempt. Also still open: the "one thing, well"
-call this run made not to attempt — a Meshy-generated, properly rigged
-`frog`/`goblin_mech` to match the jackal's own fidelity, which needs a
-`to: fixer` request for rig-display code first (see `## Now` above). Next
-run, absent a request: continue `frog` toward 42, move to `goblin_mech`
-(37/50, also cap-lifted, its own candidates in
-`design/progress/goblin_mech.md`), or open the fixer request that would
-unblock a real Meshy-hunter attempt — whichever gets looked at with fresh
-eyes.
+(That run's own `## Next` flagged the front legs — untouched since pass 4,
+not yet breaking the silhouette the way the haunch does — as the live
+Silhouette/Proportion candidate; that is what pass 8 above picked up.)
 
 ## Old: hunters, pass 6 (frog)
 
@@ -578,6 +661,29 @@ brief in full before picking up either.
 
 ## Log
 
+- 2026-09-23 — pass 8 on `frog` (item 2, hunters), 41→43/50: fixed pass 7's
+  own named candidate — the front legs never broke the silhouette the way
+  the haunch does since pass 5. Three attempts, each looked at in a render
+  before the next: a fatter limb radius (marginal, mostly the foot), a
+  shoulder ball placed by a local surface calc (still barely visible — the
+  scoring camera's compound silhouette hides more than one ellipsoid's own
+  local surface implies), a much bigger ball placed away from the limb
+  (broke the silhouette but read as a glued-on third lump in `_side.png`).
+  Landed on a shoulder ball placed almost exactly where the limb starts —
+  the same relationship pass 5's own knee ball has with the hindleg — which
+  reads as an integrated shoulder in `_side`/`_form` and still gives a real,
+  if modest, 670px `_sil` diff. Cost: +336 tris (4800→5136), a further
+  increase on the model's already-deliberate overage. Sil 8→9, Prop 8→9 —
+  **clears the 42 hunter stop line.** Verified in isolated renders (`_sil`,
+  `_side`, `_front`, `_top`, unchanged footprint), the live fight camera
+  (real, localised diff on the frog, not the goblin or the jackal's own
+  idle pulse), and the 34px portrait (honestly does not show this fix,
+  unlike some earlier passes — reported, not hidden). `ALL TESTS PASSED`;
+  playtest re-run, the one failure (`hunter-off-marker` at foothold 4)
+  matches the already-open fixer request by exact coordinates, pre-existing.
+  `frog` is now past its stop line — next run moves to `goblin_mech` or the
+  Meshy-rig fixer request unless something new is found. See
+  `design/progress/frog.md` and `## Now` above for the full write-up.
 - 2026-09-23 — pass 7 on `frog` (item 2, hunters) under Nick's wider "make
   the characters CLEAN, pull from AAA games" brief, 40→41/50: diagnosed
   Style (never had a dedicated pass) using a named greyscale/value-contrast

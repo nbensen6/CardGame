@@ -132,10 +132,39 @@ def foot(s, at, size, toe, spread, uv=None):
 
 def foreleg(s):
     """Short and out to the side, propping the chest up. Starts INSIDE the body
-    so the shoulder is a swell rather than a socket."""
+    so the shoulder is a swell rather than a socket.
+
+    Pass 8 (2026-09-23): the hindleg's own knee ball is a SEPARATE mass,
+    pushed out past the trunk so it breaks the silhouette (pass 5), and it
+    sits almost exactly WHERE the hindleg's own limb starts -- ball and limb
+    are nearly coincident, so the two read as one lobe with a leg growing
+    out of it. The foreleg had no equivalent: three things tried in order
+    this pass, each looked at in a render before the next:
+
+    1. Just widening the limb's own start radius barely cleared the head's
+       measured local surface (0.64 vs 0.636) -- real but marginal (614px
+       diff, mostly the foot).
+    2. A dedicated shoulder ball placed WHERE #1's maths pointed (centre
+       0.50*s) was still barely visible (331px diff) -- the compound
+       silhouette from the scoring camera is not the same as one ellipsoid's
+       local surface, so a graze-past calc undersells how much is actually
+       hidden behind the rest of the head from that angle.
+    3. Pushed the ball further out (0.60*s, radius 0.30) and it finally broke
+       the silhouette clearly (2642px diff, visible in `_sil`, `_side` and
+       `_front`) -- but placed 0.30 away in X from the limb's own start
+       point (0.30*s), it read as a third ball glued to the cheek, not a
+       shoulder, in the side render.
+
+    Fixed by doing what the hindleg already does: put the ball where the
+    limb starts, not off to the side of it. Moved the limb's own first point
+    out to meet the ball (0.30*s -> 0.42*s) so the two are nearly coincident,
+    the same relationship pass 5's knee/hindleg pair has.
+    """
+    start = (0.42 * s, -0.44, 0.42)
+    b.ball(start, (0.26, 0.24, 0.20), MINT, 12, 8)
     end = (0.50 * s, -0.74, 0.085)
-    b.limb([(0.30 * s, -0.44, 0.44),
-            (0.44 * s, -0.62, 0.24),
+    b.limb([start,
+            (0.46 * s, -0.62, 0.24),
             end],
            [0.185, 0.130, 0.105], MINT, seg=10)
     foot(s, end, 0.150, 0.060, 0.90)
