@@ -11,6 +11,21 @@ taken_by:
 
 # The Cinder Jackal arena's RUST wall accent scores well but a player never sees it
 
+## What I need
+
+- The arena walls have a glowing rust-coloured band near the top, meant to echo
+  the jackal's own heat. **You never see it** — it sits above the top of the
+  frame in every camera the fight actually uses.
+- Which one:
+  - **Leave it.** Recommended for now — it costs nothing, and the camera is
+    still moving around. Revisit once the shot settles.
+  - **Move the band lower** so it lands in frame. Changes every cliff-walled
+    arena in the game, not just this one.
+  - **Bundle it** with the older "the wall eats the frame" finding and fix the
+    whole wall system once.
+- The frame below shows it side by side: obvious in the artist's own render,
+  absent in all five in-game cameras.
+
 ## What
 
 `tools/blender/env/cinder_jackal.py`'s wall recolour (`e.enclose("cliff",
@@ -63,6 +78,12 @@ Nick picks one:
    `crag_pup_ground.md`/`stone_warden_ground.md` — if `ENCLOSE_HIGH` or the
    camera framing ever gets revisited for the "wall eats the frame" reason,
    this is the same root cause and worth fixing together.
+
+## Nick's answer
+
+<!-- Type below this line. Anything, one word is fine. Then run
+     toolsoard_push.cmd. Leave the frontmatter alone. -->
+
 
 ## Result
 

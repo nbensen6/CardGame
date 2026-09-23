@@ -11,6 +11,23 @@ taken_by:
 
 # In 2-player co-op, the boss-relic pool is empty for the last two Titans — the reward screen shows nothing to tap, and the prompt still says to tap one
 
+## What I need
+
+- There are 4 boss relics and 4 Titans, but in 2-player co-op **both** hunters
+  take one each — so the pool is empty after the 2nd Titan and the last two
+  reward screens have nothing in them.
+- The part that was plainly broken is already fixed: the screen no longer tells
+  you to tap something that isn't there.
+- What's left is yours: **is 2 relics per Titan the cadence you want?**
+  - **Add 4 more boss relics** (8 total) so every Titan can pay both hunters.
+    Recommended — it's the only option that keeps the last two Titans feeling
+    like rewards, and it's content, not a rule change.
+  - **Let both hunters pick the same relic** — no new content, but the two of
+    you stop making a real choice against each other.
+  - **Leave it** — the last two Titans deliberately give nothing, and the
+    hunters are meant to Skip.
+- Not urgent: this is outside the Cinder Jackal fight.
+
 ## What
 
 Found while hunting bugs per the fixer brief (no open `to: fixer` request
@@ -78,6 +95,12 @@ Your call on (1) — whether the pool/cadence should change, or 2-per-Titan
 co-op depletion is fine as is. Either way, (2): the reward screen never
 again tells a player to tap something that isn't there.
 
+## Nick's answer
+
+<!-- Type below this line. Anything, one word is fine. Then run
+     toolsoard_push.cmd. Leave the frontmatter alone. -->
+
+
 ## Result
 
 **Item (2) is fixed, item (1) is still yours.** #86 duty 3 this run (`git
@@ -96,3 +119,8 @@ keep the deck lean" visible and unambiguous.
 
 Left open: whether the 4-relic boss pool should be resized or refilled for
 2-player co-op (item 1) — that's still a content/balance call, not touched.
+
+Answer:
+
+
+Do not worry about 

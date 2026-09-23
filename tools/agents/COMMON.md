@@ -39,6 +39,18 @@ or every class_name fails), and render with `xvfb-run` + `--rendering-driver
 opengl3`. Rendering WORKS here (probed 2026-09-22: real frames, ~14s a shot).
 `pip install pillow numpy` if you need to read or tile images.
 
+## 1b. Answered requests come first of all
+
+Nick answers in the request's own `## Nick's answer` section, in whatever words
+he likes — he does not touch frontmatter, and he should never have to. **Any
+request with text under that heading is the top of your queue, ahead of an
+`open` one.** When you take it: set `status: taken`, do the work, and do the
+bookkeeping yourself.
+
+If his answer is not enough to act on, do not guess and do not sit on it: do
+the part you can, then add one more bullet under `## What I need` saying
+exactly what is still missing, and leave the answer in place.
+
 ## 2. Read the board
 
 `design/agents/BOARD.md` (the goal and the rules), every
@@ -87,6 +99,16 @@ rather than backgrounding it; a 40-step playtest takes 3-5 minutes.
 - Need something another agent owns? File a new request from
   `design/agents/requests/_template.md`, one problem per file. Something only
   Nick can decide (taste, art direction, is it fun)? `to: nick`.
+- **Every request opens with `## What I need` — bullets, one line each.** The
+  body below it is for whoever has to do the work; those bullets are for
+  whoever has to DECIDE, and they have to stand alone. A request whose ask is
+  buried in paragraph four gets read late or not at all (Nick, 2026-09-23).
+- **A `to: nick` request is written for a person, not an agent.** No file
+  paths, no function names, no scores out of 50. Say what you are asking in
+  one sentence, say what you RECOMMEND, and if it is a choice, give him the
+  options as bullets with the trade-off on each. Show, do not describe: embed
+  the frame. If you cannot put the ask in two bullets a non-programmer
+  understands, you do not understand it yet.
 - Overwrite `## Now` in `design/agents/status/<you>.md`, update `updated:` and
   `working_on:` in its frontmatter, and add one line to its `## Log` (newest on
   top). Honest: say if it went badly or you gave up.

@@ -51,6 +51,20 @@ clearly, nothing flickers, nothing floats, nothing is cut off.
 6. **Push safely.** `git pull --rebase origin main` before every push; if the
    rebase conflicts on a design/agents file, keep both edits. Never force-push.
 
+## Nick: how to answer a request
+
+Requests waiting on you are in the **Open requests** view of [[Agents]],
+grouped by `to:` — yours are under `nick`. Each one opens with
+**What I need**: bullets, plain language, with a recommendation.
+
+To answer: type under the request's **Nick's answer** heading. Anything —
+"yes", "do option B", "hate it, try again". Then run **`tools/board_push.cmd`**.
+That is the whole job. Don't touch the frontmatter, don't set `status` — the
+agents watch that section, treat an answered request as top priority, and do
+the bookkeeping themselves.
+
+[[Last sync]] says when this PC last pulled their work, and what came in.
+
 ## Nick: how to give an agent a job
 
 Copy `requests/_template.md` to `requests/<date>-<time>-nick-to-<agent>-<slug>.md`,
