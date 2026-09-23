@@ -3,12 +3,126 @@ tags:
   - agent-status
 agent: playtester
 updated: 2026-09-23
-working_on: verified the fixer's `c8e965b` stand_z_for fix (real, large improvement); the residual foothold-4 miss turned out to already have its own, more-thorough fixer-filed request (deduped, dropped mine); a second finding this run (hop-flat false-firing near the sigil) turned out to be a hole in my own check's confidence gate, not a game bug — fixed and verified in playtest.gd itself, no request needed
+working_on: full baseline clean on the first try (all three modes, 0 fails); extended playtest.gd with a mid-hop camera-visibility check (checklist item 4's "including mid-jump" half, which the existing check deliberately skips) — proved it both directions; a follow-up baseline run with that check in place hit a genuine, if intermittent, engine crash on End Turn (_apply_orbit using a camera no longer in the tree) unrelated to my own change — filed to the fixer, high priority
 ---
 
 # playtester
 
 ## Now
+
+No open `to: playtester` request this run (checked every file's frontmatter).
+Fresh sandbox, Godot 4.7.1 + `--import`, `run_tests.gd`: `ALL TESTS PASSED`.
+
+**First full three-mode baseline came back completely clean** — a first for
+several runs: `play` (80 steps) 0 fails, `hover` 0 flips, `hands` (1-10) 0
+fails. The shared-foothold-4 residual that's been showing up in recent runs
+(the fixer's own open
+`2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`,
+still untaken) simply didn't trigger this particular run — both hunters
+never happened to occupy foothold 4 at the same settled-check moment on this
+run's exact real-time path. Not claiming it's fixed (that request is still
+open, unfixed, and I saw its exact failure mode again two runs later, see
+below) — just noting today's first baseline happened to dodge it.
+
+**Extended `playtest.gd` for checklist item 4's other half.** Check 9 (the
+camera check) is explicit in its own comment that it only judges the
+SETTLED shot — mid-hop framing is a separate, already-documented gap this
+playtester's own `## Next` has flagged across at least three prior runs
+("only the mid-hop transient... is a separate, already-documented gap").
+JACKAL-BAR itself names it directly: "the camera never loses the active
+hunter, **including mid-jump**." `_watch_hop` already samples the animated
+hunter node every real frame while a climb tween runs (for the arc/squash
+checks) — piggybacked the same loop: each sample also asks the live camera
+`is_position_behind` / `unproject_position` against the hopping hunter's
+`global_position`, same API check 9 already uses. Only meaningful when the
+camera is actually following THIS hunter (`lock_slot_for(...) == me`, the
+same fix check 9 needed after it first false-fired on the OTHER hunter
+mid-climb) — skipped otherwise, so a hunter hopping off-frame while the
+camera is deliberately locked on their ally never counts. Gated on
+`MIN_HOP_SAMPLES` like the arc/squash checks (below that, not enough
+evidence, say nothing), and only fails when the hunter was off screen for
+**more than half** the sampled flight — a single-frame graze at a wide arc's
+edge is not "the camera lost the hunter," and check 9 already owns the
+settled end-state; new check `hunter-lost-mid-hop`.
+
+Proved it both ways, per this playtester's own past mistake of trusting a
+check that can only ever pass: smoke-tested at 20 steps first (4 hops
+sampled, 0% off every time, no false positives), then deliberately broke it
+(`if true or cam.is_position_behind(...)`, forcing every sample to read as
+off-screen) and reran a 12-step slice — got exactly one
+`hunter-lost-mid-hop` FAIL, "111/111 sampled frames (100%)". Reverted before
+anything else.
+
+**A follow-up full 80-step baseline with the finished check surfaced a real
+engine crash, unrelated to my own change.** Ran the full baseline again
+(same code, same seed) to get final numbers with the new check live:
+`script-error` x2, the run truncated at step 64 out of 80 — a genuine Godot
+assertion, `node_3d.cpp: Condition "!is_inside_tree()" is true`, thrown from
+`combat_3d.gd`'s own `_apply_orbit` (called via `_focus_camera` via
+`_apply_solo_turn_flip` via `_end_turn`) trying to `look_at` a camera that
+was no longer in the scene tree — which then killed the whole game view, and
+this bot's own harness threw a second, secondary error polling the now-freed
+node. Checklist item 5 ("nothing errors") at its worst: not a cosmetic
+glitch, a crash that ends the fight. A THIRD full baseline run (again,
+identical code/seed) did NOT reproduce it — ran clean 80 steps, only the
+already-known shared-foothold-4 residual (3x, matching the fixer's own open
+request's exact numbers). One crash in three otherwise-identical runs is a
+timing/race signature, not a deterministic logic bug — exactly the shape
+this sandbox's slow software renderer is good at surfacing. Filed to the
+fixer, priority high, with the full stack trace, the frame right before the
+crash, and an honest note that I can't hand them a repro that fires every
+time.
+
+![[frames/playtester/2026-09-23-end-turn-crash-step063-before-crash.png]]
+
+**Also did the human-eye frame-strip look on items 3/4 this playtester's own
+`## Next` has been deferring for several runs** ("`a823001`... still hasn't
+had a frame-strip look at anything OTHER than the two bugs it turned up").
+Tiled 6 frames across a typical, non-sigil, non-foothold-4 climb (step 0,
+the very first ground climb, endpoints y 0.00→8.97) and looked at it at 1:1:
+real motion across the strip, the Frog visibly arcing from behind the
+jackal's hind leg to a floating stone off to the side, not a frozen or
+teleporting frame. No new bug there. Also looked again at a sigil-approach
+hop (step 17) purely to sanity-check the mid-hop camera check's own
+"0% off" verdict against a human eye, since that climb's endpoint sits right
+at the sigil where the camera is known to pull in tight on the jackal's
+head: confirmed the check is technically right (the Frog does project
+inside the viewport, both hunters visible, tiny, perched on the jackal's
+head between the ears) but a human would still call this "barely readable"
+— the same known gap this playtester has logged before (Nick's third-person
+camera target still pending), not a new finding, so not re-filed.
+
+![[frames/playtester/2026-09-23-hop-strip-ground-climb-step000.png]]
+![[frames/playtester/2026-09-23-sigil-camera-close-known-gap-step017.png]]
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | unchanged this run |
+| 2 | hunters land on the beast correctly | unchanged — the shared-foothold-4 residual is still the fixer's own open request; today's runs show it as intermittent (0 of 3 baselines had it fail, then 3x on the 3rd) rather than fixed |
+| 3 | jump animation (squash/arc/landing) | human-eye frame-strip look on a typical climb, first one done since `a823001` two runs ago — real arc, no new bug |
+| 4 | camera | **new automatic check** — `hunter-lost-mid-hop`, the "including mid-jump" half JACKAL-BAR names and check 9 explicitly skipped; proved both directions; found no bug in three runs' worth of hops, but DID surface (indirectly, by running the extra baseline to get clean numbers) the End Turn crash above |
+| 5 | nothing errors | **regression found** — a real, if intermittent, crash on End Turn (`_apply_orbit`/`_cam` not in tree), filed to the fixer, high priority, not yet fixed |
+
+One request filed this run: `to: fixer`, priority high,
+`2026-09-23-1000-playtester-to-fixer-end-turn-crash-at-sigil-solo-flip.md`.
+
+## Next
+
+Watch for the fixer taking the End Turn crash request — it's the loudest
+finding this run (checklist item 5) and worth a fresh multi-run baseline
+once a fix lands, since "ran clean" needs several repeats to mean anything
+for a race, not one. The shared-foothold-4 residual is unchanged, still
+sitting on the fixer's own open request; keep an eye out for it going
+`done`, then re-verify item 2 across a few runs (today showed it's
+intermittent even unfixed, so one clean run won't prove it closed).
+`hunter-lost-mid-hop` is live now and found nothing yet — worth remembering
+it exists next time a camera complaint comes in, since it's the first
+automatic coverage of the mid-jump half of item 4 at all. Item 1 (card
+plays) hasn't had a fresh look in a few runs; still worth returning to.
+
+## Old: 2026-09-23, verify c8e965b's foothold-4 fix, fix a hop-flat false-fire in playtest.gd itself
 
 Fresh sandbox (detached HEAD on a stale local `main` from container init —
 origin/main and local main share no merge-base, so worked from
@@ -465,6 +579,26 @@ remain the backstop for that; keep saving them.
 
 ## Log
 
+- 2026-09-23 — first full three-mode baseline clean (0 fails/flips
+  everywhere). Extended `playtest.gd`'s `_watch_hop` with a mid-hop
+  camera-visibility check (`hunter-lost-mid-hop`, checklist item 4's
+  "including mid-jump" half, which the existing settled-state check
+  explicitly skips) — proved it both directions (0% off across all sampled
+  hops in three separate runs; a deliberate break correctly produced a
+  100%-off FAIL, reverted). A follow-up baseline run with the finished check
+  surfaced a real, if intermittent, engine crash unrelated to my own
+  change: `_apply_orbit` (combat_3d.gd:2208) calls `_cam.look_at` after
+  `_cam` is no longer in the tree, during `_end_turn` →
+  `_apply_solo_turn_flip` → `_focus_camera`, killing the whole game view
+  (one crash in three otherwise-identical 80-step runs — a timing/race
+  signature). Filed `to: fixer`, priority high,
+  `2026-09-23-1000-playtester-to-fixer-end-turn-crash-at-sigil-solo-flip.md`,
+  with the stack trace and the frame right before it. Also did the
+  human-eye frame-strip look on items 3/4 flagged as overdue for several
+  runs: a typical non-sigil ground climb (step 0) shows real motion/arc by
+  eye, no new bug; re-confirmed (not re-filed) the already-known "tiny near
+  the sigil" camera gap by eye against the new check's own clean verdict.
+  `run_tests.gd`: `ALL TESTS PASSED` throughout.
 - 2026-09-23 — verified the fixer's `c8e965b` (`stand_z_for`) against a
   fresh full three-mode baseline: `hover`/`hands` clean, `play` (80 steps)
   2 failing checks. `hunter-off-marker` at foothold 4 is a real, large

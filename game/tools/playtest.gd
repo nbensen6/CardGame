@@ -651,6 +651,19 @@ func _watch_hop(v: Node, me: int, climb_from: Vector3) -> void:
 	var tw: Tween = (climb_tw as Dictionary).get(me) as Tween
 	if node == null or tw == null or not tw.is_valid():
 		return
+	# Checklist item 4, the mid-jump half check 9 explicitly does not cover
+	# (check 9 only judges the SETTLED shot -- see its own comment). Only
+	# meaningful when the camera is actually following THIS hunter: with two
+	# hunters at different heights the view can be locked onto the other one
+	# while this one hops off-frame on purpose (check 9 hit exactly this false
+	# alarm before switching to lock_slot_for, 2026-09-23) -- same fix, applied
+	# here before any sample is taken rather than after the fact.
+	var cam: Camera3D = v.get("_cam")
+	var watched := int(v.call("lock_slot_for", v.get("_lock_slot"), (hunters as Array).size(), me))
+	var track_camera := cam != null and watched == me
+	var screen := Vector2(root.get_visible_rect().size)
+	var offscreen_samples := 0
+	var cam_samples := 0
 	# `flight` (the numeric record _check_hop reads) is sampled every real frame
 	# for as long as the tween genuinely runs -- capped only by `guard`, sized
 	# generously for HOP_TIME_SCALE's slow-mo (a multi-leg sigil climb that took
@@ -671,12 +684,25 @@ func _watch_hop(v: Node, me: int, climb_from: Vector3) -> void:
 	while is_instance_valid(node) and tw.is_valid() and tw.is_running() and guard < 300:
 		guard += 1
 		flight.append({"pos": node.position, "scale": body.scale if is_instance_valid(body) else Vector3.ONE})
+		if track_camera:
+			cam_samples += 1
+			if cam.is_position_behind(node.global_position):
+				offscreen_samples += 1
+			else:
+				var p := cam.unproject_position(node.global_position)
+				if p.x < -2.0 or p.y < -2.0 or p.x > screen.x + 2.0 or p.y > screen.y + 2.0:
+					offscreen_samples += 1
 		await RenderingServer.frame_post_draw
 		_poll_popup(v)
 		if is_instance_valid(node) and shots < 24:
 			var img := root.get_viewport().get_texture().get_image()
 			img.save_png("%s/hop_%03d_%02d.png" % [_out, _step, shots])
 			shots += 1
+	# The mid-hop camera check is judged on whatever was actually sampled, even
+	# if the fight ended or the guard cap fired before the hop finished --
+	# unlike the arc/squash checks below, "the camera lost the hunter for most
+	# of what we did see" is real evidence regardless of how the hop ended.
+	_check_hop_camera(cam_samples, offscreen_samples)
 	if not is_instance_valid(node):
 		Engine.time_scale = 1.0
 		return   # the fight ended mid-hop
@@ -692,6 +718,29 @@ func _watch_hop(v: Node, me: int, climb_from: Vector3) -> void:
 	var landed := node.position
 	var landed_scale: Vector3 = body.scale if is_instance_valid(body) else Vector3.ONE
 	_check_hop(flight, climb_from, landed, landed_scale)
+
+
+## Checklist item 4's mid-jump half, JACKAL-BAR's own "the camera never loses
+## the active hunter, including mid-jump" -- check 9 deliberately never judges
+## this (it only runs on the SETTLED shot, see its own comment), so nothing
+## caught it before. Gated like hop-flat/hop-no-squash: below MIN_HOP_SAMPLES
+## there is not enough evidence either way, so say nothing rather than guess
+## off 2-3 frames. Above it, only a hunter off-screen for more than HALF the
+## sampled flight counts as "lost" -- a single-frame graze at the edge of a
+## big arc is not the same complaint as a camera that spends the whole jump
+## looking at empty air, and check 9's own settled check already covers the
+## end state; this is deliberately loose in the same direction, so it adds a
+## real gap without re-flagging the already-known "tiny near the edge" one.
+func _check_hop_camera(cam_samples: int, offscreen_samples: int) -> void:
+	if cam_samples < MIN_HOP_SAMPLES:
+		return
+	var frac := float(offscreen_samples) / float(cam_samples)
+	if frac > 0.5:
+		_fail("hunter-lost-mid-hop", "step %d: the active hunter was off screen for %d/%d sampled frames (%.0f%%) during its own jump"
+			% [_step, offscreen_samples, cam_samples, frac * 100.0])
+	else:
+		_note("step %d: mid-hop camera coverage -- %d/%d sampled frames on screen (%.0f%% off)"
+			% [_step, cam_samples - offscreen_samples, cam_samples, frac * 100.0])
 
 
 ## The checks checklist item 3 asks for, read off `_watch_hop`'s samples: a
