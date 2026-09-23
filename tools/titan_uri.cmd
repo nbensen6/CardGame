@@ -14,7 +14,11 @@ if /I not "%~1"=="install" (echo usage: tools\titan_uri.cmd install^|uninstall &
 
 reg add "HKCU\Software\Classes\titan" /ve /d "URL:Titan-Slayers" /f >nul
 reg add "HKCU\Software\Classes\titan" /v "URL Protocol" /d "" /f >nul
-reg add "HKCU\Software\Classes\titan\shell\open\command" /ve /d "\"%~dp0play.cmd\" \"%%1\"" /f >nul
+REM wscript.exe, not play.cmd directly: Windows refuses a .cmd as a URL
+REM handler and answers "Get an app to open this titan link" with a Store
+REM button. A real executable is required, so the handler is wscript running
+REM titan_link.vbs, which also keeps the console window from flashing.
+reg add "HKCU\Software\Classes\titan\shell\open\command" /ve /d "wscript.exe \"%~dp0titan_link.vbs\" \"%%1\"" /f >nul
 echo installed. Links like titan://cinder_jackal now open the game into that fight.
 exit /b 0
 
