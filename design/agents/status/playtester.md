@@ -3,20 +3,109 @@ tags:
   - agent-status
 agent: playtester
 updated: 2026-09-23
-working_on: checklist item 4 (camera) — added a settled-state "active hunter is on screen" check (check 9), no new bugs found, full three-mode baseline clean both before and after
+working_on: checklist item 1 (card plays read) — added a "real damage shows a floating number" check (check 10, damage-popup-missing), proven both ways (positive across a full run, negative via a deliberate break); found and filed a real bug along the way (hunter-damage popups projecting off the top of the screen), not fixed
 ---
 
 # playtester
 
 ## Now
 
-No open `to: playtester` request this run (only `to: nick` open on the board,
-the boss-relic-pool request, not mine). Ran the full baseline first,
-unmodified `playtest.gd`, against today's tip (the artist's `goblin_mech`
-pass 3, no fixer code changes since the last baseline): **play** (80 steps)
-0 fails, **hover** 0 flips, **hands** (1-10) 0 fails — clean, matching the
-last recorded baseline, no regression from the artist's tri-budget trim.
-`run_tests.gd`: `ALL TESTS PASSED`.
+No open `to: playtester` request this run (only the same `to: nick`
+boss-relic-pool request open on the board, not mine, plus the fixer's
+own note-hit fix landed since the last baseline — `72ad782`). Ran the
+full baseline first, unmodified `playtest.gd`, against today's tip:
+**play** (80 steps) 0 fails, **hover** 0 flips, **hands** (1-10) 0 fails —
+clean, matching the last recorded baseline, no regression from the
+fixer's `HitCircle.note_hit` fix. `run_tests.gd`: `ALL TESTS PASSED`.
+
+Picked up checklist item 1 (card plays read) — still only partially
+checkable per this playtester's own brief and last run's checklist
+snapshot. The hand-layout half (fan centred, hand/energy match the model,
+nothing off-screen or covering End Turn) has been checked since the
+baseline request; the half that was still open is "does something on the
+beast (damage number, climb, block)" — climbs get the whole hop-watch
+apparatus (item 3), but nothing checked that a real hit actually shows a
+**damage number**, only that the HUD's hp/boss fields changed.
+
+Added check 10 to `playtest.gd`: `Combat3D._damage_popup` spawns a
+`Label3D` child of `_rig` for every point of real damage (`_react`'s
+`boss_hit` / `hunter_dmg[i] > 0` — confirmed by reading `react_plan`, the
+pure half of `_react`). A naive "screenshot after the step and look for a
+label" would miss it almost every time: the popup's own lifetime
+(~1.7s: 0.85s rise, then a 0.4s hold and 0.45s fade) is short next to how
+long this sandbox's software renderer takes to get through a step's
+plain wait (its frames land every ~0.15-0.3s, same cost class this
+playtester already hit with the hop check). So instead of screenshotting,
+the check **polls `_rig`'s children every frame the step is still
+resolving** — folded into the SAME `await` loops `_play()` already runs
+(the tail wait, `_drive_timing`'s two loops, `_watch_hop`'s own loop) via
+one small helper (`_poll_popup`), so watching for the popup costs nothing
+beyond the waiting this bot already does. A flag latches per step
+(`_step_saw_popup`, reset before each action) and after the step's
+before/after snapshot, a real hp drop (boss OR the active hunter — the
+only two fields `_snap` tracks) with the flag still false is
+`damage-popup-missing`.
+
+Proved it both directions, not just "ran clean once" (per item 3's own
+past mistake of trusting a clean run without checking the failure mode
+too):
+
+- **Positive**: full 80-step `mode=play` baseline with the real check —
+  0 fails. Five real hp-loss events in that run (steps 34, 50, 65, 71,
+  77), every one correctly saw a popup. `hover`/`hands` unaffected (the
+  new code only runs inside `_play()`'s own helpers) — re-ran both to
+  confirm, 0 fails.
+- **Negative**: deliberately broke `_poll_popup` (`if false and child is
+  Label3D:`) and re-ran the same 36-step slice — got exactly one
+  `damage-popup-missing` FAIL, at the same step the positive run passed
+  cleanly (step 34, hp 42→36). Reverted the break before anything else.
+  This is the check actually firing, not a check that can only ever pass.
+
+While proving it, I instrumented `_poll_popup` throwaway (not shipped —
+reverted before this commit) to print the popup's own
+`unproject_position` against the live camera the instant the check saw
+it, out of curiosity whether "exists in the tree" also meant "on
+screen." It did not: all three hunter-damage popups sampled across one
+run projected ABOVE the top of the 720px-tall viewport (screen y from
+-99 to -604), `is_position_behind` false for all three (so not a camera
+looking the wrong way entirely — a real, if unconfirmed, distinct
+finding from item 4's "on screen at all" check 9). Filed to the fixer
+with the exact repro and both frames — see the request. This is a real
+gap in checklist item 1's own bar ("does something on the beast — a
+damage number") that the existence-only check above cannot catch by
+design (deliberately scoped to existence, not visibility, the same
+reasoning check 9 already used to avoid re-flagging the known camera
+gap) — worth a second, visibility-aware check once the fixer knows the
+real cause, not before.
+
+![[frames/playtester/2026-09-23-damage-popup-offscreen-step34.png]]
+The frame right after a real hunter-damage popup spawned (Goblin
+Engineer hp 42→36 this step) — HUD shows the drop, but no number
+anywhere on screen. Zoomed on the Goblin, still nothing:
+![[frames/playtester/2026-09-23-damage-popup-offscreen-step34-crop.png]]
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | **partially stronger** — hand layout ok (unchanged), climb ok (item 3), and now damage-shows-a-number is checked too (check 10, 0 fails on existence) — but that same work surfaced a real "reads" gap (the number can render off-screen), filed to the fixer, not yet fixed |
+| 2 | hunters land on the beast correctly | ok (check 8, `hunter-off-marker`, 0 fails) |
+| 3 | jump animation (squash/arc/landing) | ok, unchanged this run |
+| 4 | camera | check 9 unchanged this run — still settled-state only, still not visibility-aware (see item 1's new finding above, which is arguably the same underlying gap wearing a different hat) |
+| 5 | nothing errors | ok |
+
+One request filed this run: `to: fixer`,
+`2026-09-23-0430-playtester-to-fixer-hunter-damage-popup-offscreen.md`
+(the off-screen damage number above).
+
+## Old: 2026-09-23, camera check 9
+
+Ran the full baseline first, unmodified `playtest.gd`, against that
+day's tip (the artist's `goblin_mech` pass 3, no fixer code changes
+since the last baseline): **play** (80 steps) 0 fails, **hover** 0
+flips, **hands** (1-10) 0 fails — clean, matching the last recorded
+baseline, no regression from the artist's tri-budget trim. `run_tests.gd`:
+`ALL TESTS PASSED`.
 
 Picked up checklist item 4 (camera) per last run's `## Next` — still only
 "partially checkable" and named directly in this playtester's own brief as
@@ -71,16 +160,6 @@ being honest that this check's bar (on screen at all) is looser than
 "reads clearly" — it catches a camera looking at the wrong thing entirely,
 not a merely-small hunter. Filing that gap again here would just be a
 third copy of a finding the board already has; not doing that.
-
-Checklist snapshot:
-
-| # | item | state |
-|---|---|---|
-| 1 | card plays read | ok |
-| 2 | hunters land on the beast correctly | ok (check 8, `hunter-off-marker`, 0 fails) |
-| 3 | jump animation (squash/arc/landing) | ok, same state as last run — richer slow-mo sampling in place, no new work this run |
-| 4 | camera | **now has an automatic check** (check 9, `hunter-behind-camera` / `hunter-offscreen`) — settled-state framing confirmed clean across a full fight. Still not the full item: it cannot tell "small" from "absent," so the known mid-hop and near-edge framing gaps (wide establishing camera, third-person not yet built) are unchanged and NOT re-filed — see the step 1 frame above. |
-| 5 | nothing errors | ok |
 
 No new requests filed — nothing failed, and the framing gap this run's new
 check bumps into is the same one already on record (this note's own `##
@@ -176,20 +255,43 @@ No new requests filed. `ALL TESTS PASSED` throughout.
 
 ## Next
 
-Item 4's honest remaining gap after this run: check 9 can tell "on screen"
-from "not on screen at all," but not "small/hard-to-read" from "clearly
-framed" — closing that fully needs either a tighter bound (risks false
-positives against the wide establishing shot, which is deliberate today)
-or waiting on Nick's third-person target to land, at which point this same
-check becomes a much stronger regression guard almost for free. Item 3 is
-unchanged this run — its own remaining gap (very short single-leg hops
-finishing before `_watch_hop` starts slowing things down) still stands,
-see the entry two runs back. Also still open: a way to catch a squash-arc
-or framing failure the numeric checks would miss but a human eye would
-catch — the frame strips remain the backstop for that; keep saving them.
+The off-screen damage-number finding is the live thread: once the fixer
+knows the real cause (my guess — an in-flight camera transition, unconfirmed
+— is in the request), decide whether it deserves its own automatic check
+(a visibility-aware version of check 10) or folds into whatever item 4
+eventually becomes once the third-person camera lands. Item 4 itself is
+otherwise unchanged: check 9 can tell "on screen" from "not," not "small"
+from "clearly framed," and that same blind spot is arguably why this run's
+new finding wasn't caught by check 9 in the first place (a Label3D isn't a
+hunter, so check 9 never looked at it) — worth remembering these are
+two symptoms of one still-open camera gap, not two unrelated bugs. Item 3
+is unchanged this run — its own remaining gap (very short single-leg hops
+finishing before `_watch_hop` starts slowing things down) still stands.
+Also still open: a way to catch a squash-arc or framing failure the
+numeric checks would miss but a human eye would catch — the frame strips
+remain the backstop for that; keep saving them.
 
 ## Log
 
+- 2026-09-23 — checklist item 1: added check 10 to `playtest.gd`
+  (`damage-popup-missing`) — real damage (boss hp down or the active
+  hunter's hp down) must show a `Combat3D._damage_popup` `Label3D` under
+  `_rig` that same step, polled every frame the step is still resolving
+  (folded into `_play()`'s existing wait loops, so it costs nothing
+  extra) rather than screenshotted once, since the popup's own ~1.7s
+  lifetime is too short to trust a single frozen shot on this sandbox's
+  slow renderer. Proved both ways: 0 fails across a full 80-step run (5
+  real hp-loss events, all correctly seen) AND a deliberate break
+  (`if false and child is Label3D`) correctly produced exactly one
+  `damage-popup-missing` FAIL before being reverted. Full three-mode
+  baseline (play/hover/hands) clean before and after, `ALL TESTS PASSED`
+  throughout. Along the way, found and filed a real bug: every sampled
+  hunter-damage popup this run rendered above the top of the viewport
+  (screen y -99 to -604), confirmed with `unproject_position` against
+  the live camera and two frames — `to: fixer`,
+  `2026-09-23-0430-playtester-to-fixer-hunter-damage-popup-offscreen.md`.
+  Not fixed (not my job); the shipped check itself checks existence only,
+  by design, so this finding does not make it flaky.
 - 2026-09-23 — checklist item 4: added check 9 to `playtest.gd`
   (`hunter-behind-camera` / `hunter-offscreen`) — the active hunter must be
   on screen once a step has settled, using the same `Camera3D` API
@@ -229,3 +331,4 @@ catch — the frame strips remain the backstop for that; keep saving them.
   bugs found so no new requests filed. See the baseline request's
   `## Result` for full detail.
 - 2026-09-22 — note created by the session.
+</content>

@@ -40,6 +40,7 @@ var _fails: Dictionary = {}       # check name -> count
 var _log: PackedStringArray = []
 var _step := 0
 var _errors: Array = []           # script errors caught by _ErrLog
+var _step_saw_popup := false      # a Label3D damage number appeared under _rig this step
 
 
 class _ErrLog extends Logger:
@@ -183,6 +184,35 @@ func _shot() -> void:
 	await RenderingServer.frame_post_draw
 	var img := root.get_viewport().get_texture().get_image()
 	img.save_png("%s/step_%03d.png" % [_out, _step])
+
+
+## Checklist item 1: a card that lands damage must "do something on the
+## beast" -- a floating damage number (Combat3D._damage_popup, a Label3D
+## child of _rig, alive ~1.7s), not just a number changing in the HUD.
+## Cheap and safe to call every frame this step is still resolving: once
+## true, latched for the rest of the step (_play() resets it before the
+## next action), and a Label3D that already faded and freed is simply gone
+## from _rig's children by the time a later poll runs -- never un-latches
+## a real sighting.
+func _poll_popup(v: Node) -> void:
+	if _step_saw_popup or not is_instance_valid(v):
+		return
+	var rig: Node = v.get("_rig")
+	if rig == null:
+		return
+	for child in rig.get_children():
+		if child is Label3D:
+			_step_saw_popup = true
+			return
+
+
+## The tail wait after an action, folded together with _poll_popup so
+## catching the popup costs nothing beyond the wait _play() already spends
+## settling every step -- not a separate, slower pass.
+func _wait_and_poll(v: Node, n: int) -> void:
+	for _i in n:
+		await process_frame
+		_poll_popup(v)
 
 
 # --------------------------------------------------------------- invariants
@@ -427,6 +457,7 @@ func _play() -> void:
 	var idle := 0
 	for s in _steps:
 		_step = s
+		_step_saw_popup = false
 		var v := _view()
 		var c := _combat()
 		if c == null or c.phase == Combat.Phase.OVER or v == null or not v.has_method("_layout_hand"):
@@ -497,7 +528,7 @@ func _play() -> void:
 			if cm != null and me < cm.players.size() and int(cm.players[me].foothold) != int(before.get("foot", -999)):
 				await _watch_hop(_view(), me, climb_from)
 				watched = true
-		await _frames(43 if watched else 45)
+		await _wait_and_poll(v, 43 if watched else 45)
 		v = _view()
 		if v == null or not v.has_method("_layout_hand"):
 			_note("step %d: %s -> the fight ended (screen is now %s)" % [s, action, v.name if v else "none"])
@@ -513,6 +544,15 @@ func _play() -> void:
 		else:
 			idle = 0
 		_note("step %d: %s -> %s" % [s, action, _delta(before, after)])
+		# Checklist item 1: real damage (boss hp down, or MY hp down --
+		# _snap only tracks the active hunter, same as every other field here)
+		# must have shown a floating number on the beast, not just moved a bar
+		# nobody was looking at (Combat3D._damage_popup -- see _poll_popup).
+		var boss_down := int(before.get("boss", 0)) - int(after.get("boss", 0))
+		var hp_down := int(before.get("hp", 0)) - int(after.get("hp", 0))
+		if (boss_down > 0 or hp_down > 0) and not _step_saw_popup:
+			_fail("damage-popup-missing", "%s: boss %+d, hp %+d, but no damage number appeared on the beast"
+				% [action, -boss_down, -hp_down])
 		_check(v, action)
 		await _shot()
 	_move(Vector2(screen.x * 0.5, screen.y * 0.3))
@@ -531,6 +571,7 @@ func _drive_timing(v: Node) -> void:
 		if absf(off) < 0.02 and hit < (circle.get("_notes") as Array).size():
 			await _click(circle.call("_screen", hit))
 		await process_frame
+		_poll_popup(v)
 	if not is_instance_valid(v):
 		return   # the fight ended on that hit and its screen is gone
 	var tc: Variant = v.get("_timing_card")
@@ -539,6 +580,7 @@ func _drive_timing(v: Node) -> void:
 		guard += 1
 		await _click((tc as Control).get_global_rect().get_center())
 		await _frames(3)
+		_poll_popup(v)
 
 
 ## Slow the WHOLE ENGINE to this fraction of real speed while a hop is being
@@ -598,6 +640,7 @@ func _watch_hop(v: Node, me: int, climb_from: Vector3) -> void:
 		guard += 1
 		flight.append({"pos": node.position, "scale": body.scale if is_instance_valid(body) else Vector3.ONE})
 		await RenderingServer.frame_post_draw
+		_poll_popup(v)
 		if is_instance_valid(node) and shots < 24:
 			var img := root.get_viewport().get_texture().get_image()
 			img.save_png("%s/hop_%03d_%02d.png" % [_out, _step, shots])
