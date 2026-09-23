@@ -2,13 +2,141 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-23T17:08
-working_on: full three-mode baseline came back COMPLETELY clean for the first time in many runs — play (80 steps) 0 fails, hover 0 flips, hands (1-10) 0 fails. The shared-foothold-4 residual that's been the loudest recurring finding across at least five prior baselines (hunter-off-marker at the exact same coordinates every time) is gone: the fixer's stone_point() fix (self-filed and closed this same day, 2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md) holds live at both repeat instances (steps 34 and 71), verified both by the check and by eye against the frame — both hunters stand grounded on the jackal's ear, not floating clear of the model. Checklist item 2 (hunters land on the beast correctly) is now fully closed, no known residual. No new bugs found; nothing filed this run.
+updated: 2026-09-23T17:15
+working_on: Added a new automatic check (hop-position-pop) that catches a hunter's position snapping or teleporting mid-jump, and caught two false alarms in the check itself before shipping it clean.
 ---
 
 # playtester
 
+## This run - 2026-09-23 17:15 UTC
+
+- Did: added a new automatic check that watches every hunter jump for a
+  snap or teleport mid-flight (JACKAL-BAR's "no pops" rule) — it had never
+  been checked before.
+- Worked?: yes, but it took work — my first two attempts at the check
+  raised false alarms on normal jump motion; caught both before shipping,
+  proved the final version really does catch a fake glitch when I make one.
+- Found no new bugs in the fight itself this run. A different, earlier
+  jump-placement bug (both hunters landing off-model at one shared ledge)
+  was already fixed and verified clean by a separate concurrent run — see
+  the entry below.
+- Next: nothing blocking; will keep watching the new check on future runs.
+- Need from you: nothing this run.
+
 ## Now
+
+No open `to: playtester` request this run (checked every file's frontmatter —
+the board's other open items are all `to: nick` or `to: fixer`; the fixer's
+own `2026-09-23-0715-...-shared-foothold-side-spacing-clears-the-model.md`
+is still open and untaken **as of the tip this container started from** —
+see the note below and the entry right after this one: it has since landed
+and been verified clean by a concurrent playtester run). Fresh sandbox,
+Godot 4.7.1 + `--import`, `run_tests.gd`: `ALL TESTS PASSED`.
+
+**Full three-mode baseline, against a tip that predates the shared-foothold-4
+fix.** `hover` 0 flips, `hands` (1-10) 0 fails. `play` (80 steps): 3
+`hunter-off-marker` fails at foothold 4 (steps 34, 35, 71), exact same
+coordinates as every prior baseline before the fix — consistent with the
+pre-fix code this run's own container started from, not a regression and not
+news: a `git pull --rebase` at push time surfaced a concurrent playtester run
+that had already landed and verified the fixer's fix on a newer tip (see the
+`## Old` entry directly below this one for their write-up and frames).
+Checklist item 2 is closed on the current tip; this run's own numbers above
+are the last pre-fix data point, kept here for the record rather than
+silently dropped.
+
+**New check: `hop-position-pop`, JACKAL-BAR Motion's "no pops: nothing
+teleports, flickers, or snaps between frames" — the mid-jump half, since
+`hop-leftover-squash` already covers a pop in SCALE at landing but nothing
+checked POSITION continuity.** `_watch_hop` already samples the animated
+node's real position every real frame during a climb (for the arc/squash
+checks); this reads the SAME samples for a frame-to-frame jump that doesn't
+belong.
+
+This one took three attempts to ship clean, and the two failures are worth
+recording in full because both were false alarms this playtester almost
+believed, per this bot's own standing rule (item 3's history) to read the
+actual numbers before trusting a check's verdict either way:
+
+1. **First version** compared each frame-to-frame step to the WHOLE hop's
+   own median. It false-fired on the very first real run: step 17, a plain
+   single-leg Leap (y 8.99→18.17, the exact climb the fixer's own `hop_arc`
+   fix comment already documents) — "hunter position jumped 0.97m... 15.5x
+   the median". Dumped the actual y-samples around the flagged step before
+   believing it: 13.826 held flat for 4 samples (the anticipation squash's
+   own hold), then 14.525, 15.446, 16.294, 17.164, 17.854, 18.441, 18.977 —
+   smooth, monotonic, decelerating, not a jump anywhere in it. `_hop`'s rise
+   tween is EASE_OUT: fastest the instant it starts moving, right after the
+   anticipation hold ends — exactly where the flagged step landed. The
+   whole-hop median is dragged down by the hold and the near-zero-velocity
+   hang phase elsewhere in the SAME hop, so the genuinely fastest (but
+   perfectly smooth) moment of an eased curve reads as a huge outlier
+   against it.
+   ![[frames/playtester/2026-09-23-hop-position-pop-check-step17-strip.png]]
+   Cropped strip on the Goblin Engineer, samples 65→82 of that exact climb:
+   standing still on the ground through 65-70 (the anticipation hold), one
+   continuous ascending jump starting at 71-72, still rising and moving
+   right through 73 and off-frame by 75 — real, smooth motion, not a snap.
+2. **Second version** compared each step only to its two immediate
+   neighbours instead — the real climb above passed clean, but proving the
+   OTHER direction (a check that can only ever pass proves nothing) found a
+   real hole before shipping it: a synthetic one-frame position stomp that
+   reverts on the very next sample (`+Vector3(3,0,0)` at one sample only,
+   injected in `_watch_hop`'s own sampling loop, temporarily) produces TWO
+   large, almost-equal deltas back to back — each one's only neighbour is
+   the OTHER large delta, so each reads as "comparable neighbours, not
+   isolated" and a real 3m jump sailed through undetected.
+3. **Shipped version**: a two-sided local window (`POP_WINDOW` = 8 samples
+   each side, the flagged one excluded, median of the rest) instead of one
+   neighbour on either side — a real multi-sample ramp (the 7-sample rise
+   above) still blends into a window that size, but a lone 1-2 sample spike
+   cannot hide inside it. Also needs real samples on BOTH sides
+   (`i - lo >= 3 and hi - i >= 3`) after a second live false-fire at the
+   very edge of a short hop (step 71, foot 10→4, near the already-known
+   foothold-4 residual) — the first delta of a flight has no "before" to
+   compare against, only the decelerating tail of the same EASE_OUT rise
+   AFTER it, and re-running the identical scenario passed clean: a real bug
+   reproduces every time, this flickered on nothing but real-frame timing.
+
+**Proved the shipped version both directions, for real this time:**
+- *Positive*: the full 80-step baseline above, plus three earlier full
+  80-step runs during development (4 real climbs total: steps 1, 17, 34,
+  71, sizes 26-110 samples) — 0 `hop-position-pop` fails on any of them,
+  worst frame-to-frame steps 0.46m-1.99m, none an isolated spike against
+  its own local window.
+- *Negative*: re-ran the same synthetic injection (`+Vector3(3,0,0)` at one
+  sample, `_watch_hop`, temporary) against the shipped version — correctly
+  flagged both hops it touched ("30000.0x the local median", "15.6x the
+  local median"). Reverted immediately (`git diff` clean before moving on),
+  then re-ran `run_tests.gd` and the final full three-mode baseline on the
+  real code to get the numbers above.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | unchanged this run (no fresh human-eye look; still worth returning to) |
+| 2 | hunters land on the beast correctly | **closed, per a concurrent run** — this run's own container predates the fix so its 3 `hunter-off-marker` fails are stale pre-fix data (see `## Old` below); a concurrent playtester run already verified the fixer's fix clean on the current tip |
+| 3 | jump animation (squash/arc/landing) | **new automatic check added**, `hop-position-pop` — proved both directions (3 dev iterations, 2 false-positive versions caught and fixed before shipping); found no real pop in the wild, but the coverage is new and permanent, and closes the "no pops... mid-jump" half of JACKAL-BAR's Motion item |
+| 4 | camera | unchanged this run — `hunter-lost-mid-hop`/check 9 still 0 fails in the wild |
+| 5 | nothing errors | ok — `ALL TESTS PASSED`, no `script-error` this run |
+
+No new requests filed this run — nothing failed that wasn't already known
+and owned by an existing open request.
+
+## Next
+
+`hop-position-pop` is live now with 0 real fails found — worth remembering it
+exists next time a climb/camera change lands, same as `hunter-lost-mid-hop`
+and `damage-popup-offscreen` before it; its constants (`POP_WINDOW=8`,
+`POP_WINDOW_MULTIPLIER=5.0`, `POP_FLOOR=0.7`) were tuned against exactly
+four real climbs this run — worth revisiting if a future run's climbs are
+much shorter/longer than these (26-110 samples) and the margins stop
+holding. Item 1 (card plays) still hasn't had a fresh human-eye look in
+several runs; worth returning to next. Item 2 (foothold-4) is closed per the
+concurrent run below — no further watch needed there.
+
+## Old: 2026-09-23, shared-foothold-4 residual fixed and verified clean (concurrent run)
 
 No open `to: playtester` request this run (checked every file's frontmatter —
 the board's other open items are all `to: nick`). Fresh sandbox — local
@@ -68,7 +196,11 @@ Checklist snapshot:
 No new requests filed this run — the one open thread this run existed to
 verify (foothold-4) closed clean; nothing else failed.
 
-## Old: 2026-09-23, hand-over-hud check added, End Turn crash fix corroborated
+## Old: 2026-09-23, hand-over-hud check verified both directions
+
+No open `to: playtester` request this run (checked every file's frontmatter —
+the board's other open items are all `to: nick` or `to: fixer`). Fresh
+sandbox, Godot 4.7.1 + `--import`, `run_tests.gd`: `ALL TESTS PASSED`.
 
 **Full three-mode baseline, clean except the one known residual.** `hover` 0
 flips, `hands` (1-10) 0 fails — both matching every prior clean baseline.
@@ -148,7 +280,7 @@ Checklist snapshot:
 No new requests filed this run — nothing failed that wasn't already known
 and owned by an existing open request.
 
-## Next
+## Old-Next
 
 Checklist item 2 is now fully closed — no known residual left to watch. The
 loudest overdue item is item 1 (card plays read): it hasn't had a fresh
@@ -827,6 +959,24 @@ remain the backstop for that; keep saving them.
 
 ## Log
 
+- 2026-09-23 — added `hop-position-pop` to `playtest.gd` (JACKAL-BAR
+  Motion's "no pops... mid-jump" half) — took 3 iterations: a whole-hop-
+  median v1 false-fired live on the genuinely fast start of `_hop`'s own
+  EASE_OUT rise tween (step 17, verified by dumping the actual y-samples —
+  smooth and monotonic, not a jump, plus a frame strip); an immediate-
+  neighbour v2 passed that real case but missed a synthetic one-frame
+  stomp-and-revert injection (two big, mutually-validating deltas); shipped
+  a two-sided local-window-median v3 (`POP_WINDOW=8`, excludes samples
+  without real neighbours on both sides after a second live false-fire at
+  a flight's very first sample) that passed all 4 real climbs across the
+  final baseline (0 fails) AND correctly caught the synthetic spike both
+  times it was tested against v3. No real pop found in the wild; nothing
+  filed — the shipped value is the new, honestly-proven coverage itself.
+  My own `play`-mode baseline (3 `hunter-off-marker` fails at foothold 4)
+  was run against a tip that predated the fixer's shared-foothold-4 fix —
+  see the next entry below, from a concurrent playtester run, for the live
+  verification that it's since closed. `run_tests.gd`: `ALL TESTS PASSED`
+  throughout.
 - 2026-09-23 17:08 UTC — full three-mode baseline came back completely
   clean for the first time in many runs: `play` (80 steps) 0 fails, `hover`
   0 flips, `hands` (1-10) 0 fails. The shared-foothold-4 residual

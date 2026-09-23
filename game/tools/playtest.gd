@@ -696,6 +696,117 @@ const HOP_TIME_SCALE := 1.0 / 6.0
 ## the same as it already does for the guard-cap-fired case.
 const MIN_HOP_SAMPLES := 10
 
+## Checklist items 1 and 3's "no pops: nothing teleports, flickers, or snaps
+## between frames" (JACKAL-BAR, Motion) -- unchecked before this run.
+## hop-leftover-squash already catches a pop in SCALE at the very end of a
+## jump; nothing checked POSITION continuity, mid-flight or otherwise, even
+## though `flight` already samples the animated node's real position every
+## real frame `_watch_hop` runs. A genuine pop -- some other system stomping
+## `node.position` mid-tween, not the climb tween's own easing -- would be an
+## ISOLATED spike: one frame-to-frame step far larger than the ones right
+## next to it on both sides.
+##
+## First version of this check compared each step to the whole hop's own
+## MEDIAN step instead, and it false-fired live the first time it ran
+## (2026-09-23, step 17, a plain single-leg Leap from y=8.99 to y=18.17 --
+## the exact climb the fixer's own `hop_arc` fix comment already documents):
+## "hunter position jumped 0.97m... 15.5x this hop's own median step". Looked
+## at the actual samples before believing it (this playtester's own past
+## mistake, corrected before, was almost trusting a check like this without
+## reading the numbers first) -- the y-values around the flagged step read
+## 13.826 (held flat for 4 samples: the anticipation squash's own hold, node
+## position genuinely not moving yet), then 14.525, 15.446, 16.294, 17.164,
+## 17.854, 18.441, 18.977: a smooth, monotonic, ever-decelerating climb, not
+## a jump anywhere in it. `_hop`'s own rise tween is EASE_OUT -- fastest right
+## when it starts moving, right after the anticipation hold ends, which is
+## exactly where the flagged step landed. The MEDIAN across a whole hop is
+## dragged down by the anticipation hold and the near-zero-velocity hang
+## phase elsewhere in the SAME hop, so the genuinely fastest (but still
+## perfectly smooth) moment of an eased curve reads as a huge outlier against
+## it even though nothing jumped.
+##
+## Second attempt compared each step only to its two IMMEDIATE neighbours --
+## better (that real climb went clean), but proving it the other direction
+## (per this playtester's own standing rule: a check that can only ever pass
+## proves nothing) found a real hole before it ever shipped. A synthetic
+## one-frame position stomp that reverts on the very next sample -- exactly
+## what "some other system overwrote node.position for one frame" would
+## actually look like live -- produces TWO large, almost-EQUAL deltas back to
+## back (there, then back). Each one's only neighbour check sees the OTHER
+## large delta sitting right next to it and reads that as "comparable
+## neighbours, not isolated" -- the exact two-sample injection
+## (`+Vector3(3,0,0)` at one sample, reverting the next) sailed through as
+## "no isolated spike" at a full 3m jump. The real climb's own genuine fast
+## phase, by contrast, ramps smoothly across SEVEN neighbouring samples
+## (0.73, 0.97, 0.90, 0.93, 0.75, 0.65, 0.61), not two -- so the fix is a
+## wider local baseline (POP_WINDOW samples on each side, the flagged one
+## excluded) that a real multi-sample ramp still blends into, but a lone
+## one-or-two-sample spike cannot hide inside.
+const POP_WINDOW := 8
+const POP_WINDOW_MULTIPLIER := 5.0
+const POP_FLOOR := 0.7   # combat_3d.gd's own HUNTER_HEIGHT -- smaller than this is noise, not a pop
+
+## The position half of "no pops": a step only counts as a pop if it clears
+## the MEDIAN of the surrounding POP_WINDOW samples on each side (itself
+## excluded) by POP_WINDOW_MULTIPLIER, and clears POP_FLOOR in absolute terms
+## (a near-zero hop, footholds compressing near the sigil, should not flag
+## ordinary noise just because it's momentarily larger than its tiny
+## neighbours).
+##
+## Found live proving this version (2026-09-23, step 71, a short foot 10->4
+## descent near the already-known foothold-4 residual): the very FIRST delta
+## flagged once, at 5.1x a one-sided window built entirely from the samples
+## AFTER it -- the same EASE_OUT rise-start speed that explains step 17
+## above, just landing on sample 0 this time instead of a few samples in, so
+## its only available "neighbours" are the decelerating tail of that same
+## rise, never the (equally fast, but unsampled-because-it-doesn't-exist)
+## moment before it. Re-running the identical scenario passed clean -- a real
+## bug reproduces every time; this flickered with nothing but real-frame
+## timing changing between runs, the same signature `covered_from_start`
+## already exists to name for the whole-hop checks (`_check_hop`'s own
+## comment: "the first sample this bot manages to catch sometimes already
+## lands well past the apex"). A one-sided window at either edge of the
+## flight cannot tell a real edge-of-hop snap from ordinary asymmetric
+## easing, so -- same call as MIN_HOP_SAMPLES makes for the hop as a whole --
+## say nothing about a delta that does not have real neighbours on BOTH
+## sides, rather than judge it off a skewed one-sided baseline.
+func _check_hop_pop(flight: Array) -> void:
+	if flight.size() < MIN_HOP_SAMPLES:
+		return
+	var deltas: Array[float] = []
+	for i in range(1, flight.size()):
+		deltas.append((flight[i]["pos"] as Vector3).distance_to((flight[i - 1]["pos"] as Vector3)))
+	var worst := 0.0
+	var worst_i := -1
+	var worst_ref := 0.0
+	for i in deltas.size():
+		var lo := maxi(0, i - POP_WINDOW)
+		var hi := mini(deltas.size() - 1, i + POP_WINDOW)
+		if i - lo < 3 or hi - i < 3:
+			continue   # too close to either edge for a two-sided baseline
+		var window: Array[float] = []
+		for j in range(lo, hi + 1):
+			if j != i:
+				window.append(deltas[j])
+		if window.size() < 4:
+			continue
+		window.sort()
+		var local_median: float = window[window.size() / 2]
+		var threshold := maxf(local_median * POP_WINDOW_MULTIPLIER, POP_FLOOR)
+		if deltas[i] > threshold and deltas[i] > worst:
+			worst = deltas[i]
+			worst_i = i
+			worst_ref = local_median
+	if worst_i != -1:
+		_fail("hop-position-pop", "step %d: hunter position jumped %.2fm between two consecutive sampled frames (sample %d->%d), %.1fx the local median step around it (%.3fm) -- an isolated spike, not eased motion"
+			% [_step, worst, worst_i, worst_i + 1, worst / maxf(worst_ref, 0.0001), worst_ref])
+	else:
+		var peak := 0.0
+		for d in deltas:
+			peak = maxf(peak, d)
+		_note("step %d: hop position continuity ok -- worst frame-to-frame step %.3fm, no isolated spike against its own neighbours (%d samples)"
+			% [_step, peak, flight.size()])
+
 ## Watches one hunter's climb hop (combat_3d._hop) live: samples the animated
 ## node's own position/scale every frame while its climb tween runs (not the
 ## bookkeeping dict, which combat_3d.gd sets to the destination the instant
@@ -782,6 +893,7 @@ func _watch_hop(v: Node, me: int, climb_from: Vector3) -> void:
 	await _frames(8)   # back at real speed: let the landing recoil (0.06s + 0.16s) settle
 	var landed := node.position
 	var landed_scale: Vector3 = body.scale if is_instance_valid(body) else Vector3.ONE
+	_check_hop_pop(flight)
 	_check_hop(flight, climb_from, landed, landed_scale)
 
 
