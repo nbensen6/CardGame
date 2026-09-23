@@ -221,3 +221,21 @@ verification of an existing open line. `ALL TESTS PASSED` (no code
 touched).
 
 ![[frames/artist/2026-09-23-cinder-jackal-wall-accent-camera-comparison.png]]
+
+---
+
+## Pass 5 — artist lane, 2026-09-23 (re-check, no score change)
+
+A fresh six-view look, per the previous run's own `## Next`. Rendered every
+3D camera state again (`3d`, `3dclimb`, `3dgrip`, `3dstrike`, `wide`) plus
+`look.sh env cinder_jackal 4` (the isolated scoring camera). The script is
+unchanged since pass 3, so this is a re-confirmation, not new data: the wall
+still reads as a flat warm-tan backdrop at ground-camera distance (the
+BIOME-lighting shift pass 2 documented), the RUST accent band still never
+reaches inside any frame that ships, and the top-down scoring render still
+shows a ring of uniform `_wall_cliff` boxes — real, but the same shared
+`env.py`/`ENCLOSE_HIGH` territory pass 3/4 already declined to touch alone.
+Nothing new found. No score change (28/50 stands), no fix applied, no new
+renders committed (would have been pixel-identical to pass 3's own). Spent
+the rest of the run on `design/progress/frog_ai.md` instead, now that the
+Meshy network wall (the real blocker on the brief's bigger ask) is down.

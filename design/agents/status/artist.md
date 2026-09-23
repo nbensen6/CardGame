@@ -3,24 +3,103 @@ tags:
   - agent-status
 agent: artist
 updated: 2026-09-23
-working_on: no open to:artist request (network-policy, hunter-display-support and arena-wall-accent requests to nick/fixer still open, re-confirmed blocked this run — assets.meshy.ai still 403s at the proxy). Picked up goblin_mech pass 9's own leftover: the piston rods, "functionally invisible at every angle even highlighted." Diagnostic-recoloured them ICE and found the real cause — not colour, not thinness alone: the rods' own offset sat inside the claw taper's own radius, so they ran buried in the taper's volume, not beside it. Pushed the offset out past the taper's radius, widened the radius 0.016→0.030 (seg unchanged, zero tri cost), recoloured CHARCOAL→STONE (pass 5's dark-tie precedent). Also checked pass 9's other open candidate (any other rig part mounted to a rotated box the same raw-axis-aligned way the claw was) by reading the script directly — found none, reported as a real negative, not skipped. Verified: tri budget unchanged (1378/1400), sil diff 144/65536px, rods now read as bracing struts in the scoring camera; honestly does not survive to true in-fight size. Hygiene 8→9, 41→42/50 — clears the 42 hunter stop line. ALL TESTS PASSED, playtest re-run (hunter-off-marker foothold-4, exact coordinate match to the already-open fixer request, not reopened), pushed
+working_on: the meshy-fetch-blocked-by-network-policy request landed (Nick allowed assets.meshy.ai) — re-verified independently this run (fetched all 3 of the already-generated 2026-09-23 Frog preview tasks, no proxy 403). hunter-display-path-has-no-toon-or-rig-support (to fixer) and arena-wall-accent-never-shows (to nick) are both still open, unpicked. Did a fresh six-view look at the arena first (all 3D camera states) — confirmed pass 4's finding still holds, nothing new, systemic wall issue still Nick's call, not re-worked. Spent the run on the real unblock instead: fetched the 3 preview Frogs, picked candidate A (symmetric all-fours crouch, closest to the current Frog's own pose), and wrote a new hunter-specific cleanup script (tools/blender/ai/frog_ai_spike.py — NOT ai_beast.py, which is beast-only per COMMON.md) that welds/orients/scales-to-current-height/decimates it to 5200 tris. Verified in isolation: reads as a frog immediately even in 64px silhouette, symmetric, no decimation artifacts. Deliberately stopped there — no texture (refine not spent), no rig, NOT wired into game/assets/3d/cast/ or AI_ART, since the hunter-display-path request is still open and a toon-less static drop-in would look worse than today's primitives, not better. design/progress/frog_ai.md pass 1. ALL TESTS PASSED (no game code touched). Committed and pushed this time — a prior run apparently did a similar spike and lost it by never pushing (COMMON.md §4b's exact failure mode); this one is in the repo.
 ---
 
 # artist
 
 ## Now
 
-**goblin_mech pass 10 — clears the 42 hunter stop line (42/50).** No open
-`to: artist` request this run (checked every request file's frontmatter,
-plus `design/agents/BOARD.md` and every `status/*.md`) — the three
-standing requests (`...meshy-fetch-blocked-by-network-policy.md` to nick,
-`...hunter-display-path-has-no-toon-or-rig-support.md` to fixer,
-`...arena-wall-accent-never-shows.md` to nick) are all still open, none
-picked up by anyone else yet. Re-confirmed the Meshy wall before spending
-time on it again: `python3 tools/meshy.py balance` returns a real balance
-(2960 credits), `curl https://assets.meshy.ai/` still gets a 403 policy
-denial from the proxy — same infrastructure wall as every prior run, not
-stale.
+**Meshy's network wall is down — used it for the first time, on a hunter
+shape spike, not the arena.** Set up fresh (Godot 4.7.1 + `--import`,
+rendering confirmed working under `xvfb-run` + opengl3; Blender via `apt
+install blender`, 4.0.2, `download.blender.org` still unreachable — same
+finding as every prior run).
+
+No open `to: artist` request this run (checked every request file's
+frontmatter, `design/agents/BOARD.md`, every `status/*.md`). Two of the
+three standing requests are still open and unpicked:
+`...hunter-display-path-has-no-toon-or-rig-support.md` (to fixer) and
+`...arena-wall-accent-never-shows.md` (to nick). The third,
+`...meshy-fetch-blocked-by-network-policy.md`, is now `status: done` — Nick
+added `assets.meshy.ai` to the Meshy credential's allowed hosts and a
+one-off cloud probe verified a fetch worked. Re-verified it myself,
+independently, before building on it: `python3 tools/meshy.py fetch` against
+all 3 of the 2026-09-23 Frog preview tasks (still logged in
+`design/progress/meshy-ledger.md`, still fetchable by their ledger ids)
+succeeded — no proxy 403, no tunnel failure, `.glb` + thumbnail both saved.
+
+**First, the arena — a fresh six-view look, per last run's own `## Next`.**
+Rendered every 3D camera state the fight uses (`3d`, `3dclimb`, `3dgrip`,
+`3dstrike`, `wide`) fresh, and separately re-ran `look.sh env cinder_jackal
+4` for the isolated scoring views. Confirmed, not assumed: pass 4's finding
+still holds exactly — the wall reads as a flat warm-tan backdrop with faint
+seams at ground-camera distance (the BIOME lighting shift pass 2 already
+documented), and the RUST accent band is still off the top of every frame
+that ships. The top-down scoring render shows the wall is a ring of uniform
+boxy `_wall_cliff` pieces — a real, fresh observation (never described this
+precisely before) — but changing wall shape is the same shared-`env.py`
+territory pass 3/4 already declined to touch alone, for the same reason:
+`_wall_cliff`/`ENCLOSE_HIGH` back every "cliff" ground in the game, and
+that's the third progress file to say so. Nothing new to fix here without
+the standing `to: nick` request landing first — did not re-file it, did not
+re-work it blind. No score change to `cinder_jackal_ground.md` (still
+28/50), no commit from this half of the run.
+
+**Then, the real unblock: a Meshy-based Frog shape, verified in isolation,
+deliberately not wired into the game yet.** Full write-up in
+`design/progress/frog_ai.md` — new file, this is a different asset from
+`frog.md` (the current Python-primitive Frog, already past its own 42/50
+hunter stop line).
+
+Fetched all 3 already-generated 2026-09-23 Frog preview tasks (no new Meshy
+spend — 5 of 8 daily tasks still unspent). Picked candidate A ("crouched in
+a neutral resting pose on all four legs") over B (asymmetric, head-turned —
+reads worse as a fixed-camera game character) and C (came back bipedal, a
+different animal from the current Frog's crouch, not built).
+
+Wrote a new script, `tools/blender/ai/frog_ai_spike.py` — **not**
+`ai_beast.py`, which `tools/agents/COMMON.md` is explicit is beast-only
+(climb markers, a rig keyed to a boss's own climb route). This is narrower:
+weld doubles, confirm orientation (checked both models' own top-vertex
+average against their own Y midpoint — both already face Blender `-Y`, no
+rotation needed), centre, scale to match the current `frog.glb`'s own
+height (1.15, read off its bounds, not guessed — keeps Nick's already-
+accepted scale rather than introducing a new size question), decimate
+27,314 → 5,200 tris (same order of magnitude as the current model's own
+5,136, itself an accepted 3.7x hunter-budget overage). Exported to
+`tools/blender/ai/frog_ai_spike.glb`/`.blend` — **outside**
+`game/assets/3d/cast/` on purpose, so nothing auto-loads it via
+`Cast.model_path()` or gets scored by `look.sh cast`.
+
+**Verified, not assumed:** six-view `look.py` capture
+(`design/renders/frog_ai_pass1_{34,front,side,top,sil}.png`). Reads as a
+frog immediately, including in pure black silhouette at 64px — clearer than
+several passes of the current primitive spent chasing exactly this
+(`frog.md` pass 5/8's haunch/foreshoulder work). Front/top confirm left-right
+symmetry and four distinct, separated feet. Decimation held with no visible
+faceting anywhere, including the 64px silhouette (where a bad decimate shows
+up first). Exported height is 1.150 to 3 decimal places (the scale
+transform, not luck); feet sit at z=-0.0004.
+
+**Deliberately stopped there.** No texture (a Meshy `refine` task not spent
+this run — the shape question needed answering before spending the ~10
+credits on the wrong candidate would matter), no rig, and it does **not**
+touch `game/assets/3d/cast/frog.glb`, `AI_ART`, or any other live path. Per
+my own `2026-09-23-1330-...hunter-display-path...` request, a hunter model
+without the toon-shader/animation path a beast gets would render *worse*
+than today's primitives, not better — so this stays a verified, committed,
+NOT-shipped spike until that request lands. A prior run apparently attempted
+something similar (referenced from that same request as "this run — a
+first-stage spike, not wired into the live game yet") but the file never
+existed in the repo — lost by never being pushed, exactly the failure
+`tools/agents/COMMON.md` §4b now warns about. This one is committed and
+pushed.
+
+![[frames/artist/2026-09-23-frog-meshy-spike-vs-primitive.png]]
+
+`ALL TESTS PASSED` (no game code touched this run — nothing under `game/`
+changed). No playtest re-run: nothing that affects a live scene changed.
 
 Environment fresh again: Godot 4.7.1 + `--import`; Blender via
 `apt install blender` (4.0.2, `download.blender.org` still unreachable) +
@@ -98,20 +177,112 @@ code path into foothold/climb-marker placement.
 
 ## Next
 
-Both hunters are now past their stop line (`frog` 43/50, `goblin_mech`
-42/50) — the honest call is to stop passing either unless a request or a
-fresh six-view look finds a real, new defect, not chase higher for its own
-sake. The three standing requests are still open and still the real path
-to the brief's actual ask (a Meshy-rigged hunter matching the jackal's
-fidelity): `...meshy-fetch-blocked-by-network-policy.md` (to nick, needs
-`assets.meshy.ai` allowed), `...hunter-display-path-has-no-toon-or-rig-support.md`
-(to fixer, needs the beast-only toon/rig display path generalized to
-hunters), `...arena-wall-accent-never-shows.md` (to nick, a taste call on
-the arena's wall system). Next run, absent a request: re-check whether any
-of the three has landed first; if not, the arena (`env.py`/`cinder_jackal.py`)
-is the one item in scope that hasn't had a fresh six-view look this whole
-thread — worth one before assuming there's nothing left to find there
-either.
+**The hunter-display-path request is now the single real bottleneck** —
+everything else that was blocking a Meshy hunter (the network wall) is
+cleared. Until it lands: `frog_ai.md`'s next step is a Meshy `refine` on
+candidate A (texture it, ~10 credits, budget available) so the next pass has
+something to score against `design/asset-loop.md`'s Colour/Style lines, not
+just Silhouette. A rig is the step after that, and it needs its own script —
+`ai_beast.py`'s rig math is reusable in spirit (region-gated weights off
+measured leg positions) but its climb-marker step is not, since hunters
+don't climb. Nothing built here can show toon-shaded or animated in the live
+fight until the fixer's request lands; don't wire it into `cast/frog.glb` or
+`AI_ART` before then. `goblin_mech` has no Meshy equivalent yet — its own
+anatomy (arms, no quadruped gate) needs a from-scratch rig regardless of
+this hunter-display-path work, a separate, later effort. Both primitive
+hunters (`frog` 43/50, `goblin_mech` 42/50) are past their own stop lines —
+don't chase either higher without a fresh reason. The arena wall-accent
+request is still open and still Nick's call; got one more fresh look this
+run (see `## Now`) and it didn't move — don't spend a third look without new
+information.
+
+## Old: goblin_mech, pass 10
+
+**goblin_mech pass 10 — clears the 42 hunter stop line (42/50).** No open
+`to: artist` request this run (checked every request file's frontmatter,
+plus `design/agents/BOARD.md` and every `status/*.md`) — the three
+standing requests (`...meshy-fetch-blocked-by-network-policy.md` to nick,
+`...hunter-display-path-has-no-toon-or-rig-support.md` to fixer,
+`...arena-wall-accent-never-shows.md` to nick) are all still open, none
+picked up by anyone else yet. Re-confirmed the Meshy wall before spending
+time on it again: `python3 tools/meshy.py balance` returns a real balance
+(2960 credits), `curl https://assets.meshy.ai/` still gets a 403 policy
+denial from the proxy — same infrastructure wall as every prior run, not
+stale.
+
+Environment fresh again: Godot 4.7.1 + `--import`; Blender via `apt install
+blender` (4.0.2, `download.blender.org` still unreachable) + `libegl1
+libgl1-mesa-dri libglx-mesa0`; `pip install --break-system-packages
+pillow numpy scipy` for the host, `python3.12 -m pip install
+--break-system-packages numpy pillow` for Blender's own bundled Python
+(same `sys.executable`-is-the-system-interpreter quirk every prior run
+found).
+
+Picked up my own `## Next` from pass 9: two candidates left open on
+`goblin_mech` (41/50, one below the 42 stop line) — the piston rods
+("functionally invisible at every angle, even highlighted") and a check
+for any other rig part mounted to a rotated box the same raw-axis-aligned
+way pass 9's `mount()` bug affected the claw cluster. Full write-up in
+`design/progress/goblin_mech.md` pass 10.
+
+**Checked the second candidate first, by reading the script, not
+re-rendering blind.** Two other boxes carry a non-zero `rot=` (shoulder,
+wrist), but nothing is bolted to either via a `box()`/`taper()` call with
+its own fixed offset+`rot=` the way the claw cluster was — the nearby
+parts are `limb()` waypoint chains, a different code path with no
+`mount()`-shaped bug to have. **No second instance — my own speculation
+from last run's `## Next` was wrong, reported as such.**
+
+**Diagnosed the piston rods instead of just widening them.** A fresh
+diagnostic recolour (ICE, the same technique pass 4/8/9 used) showed they
+are not just thin — they're almost entirely *buried inside* the claw box
+and the claw taper's own cone. Measured why: their lateral offset (±0.048
+raw, ≈0.057 world) sat well inside the claw taper's own base radius
+(≈0.085 world), so the rods ran coincident with the taper's own volume
+from the mount point out, not beside it — a placement bug, not a
+thinness-only one.
+
+**Fix, position/scale/colour only, no new geometry:** pushed the lateral
+offset to ±0.110 (clears the taper's radius with real margin), widened the
+radius 0.016→0.030 (`seg=4` unchanged — a bigger cone from the same 4
+verts, zero tri cost), and recoloured CHARCOAL→STONE (pass 5's own
+finding: CHARCOAL/GRAPHITE are this rig's two darkest, near-tied tones the
+toon shader's shadow band crushes near-black — same fix already applied to
+the compressor box and the wrist ring).
+
+**Verified, not assumed:** tri budget/part count unaffected (`TRIS 1378
+PARTS 33 BUDGET 1400 ok`, identical to pass 9); `_sil.png` pixel diff
+against the pre-fix capture is 144 of 65,536px (0.2%); `_34.png` (the
+fight-camera reference angle) before/after shows the rods now reading as
+two parallel struts flanking the claw, not a bare hairline; `_front.png`/
+`_top.png` checked too, nothing pokes through the silhouette oddly. The
+true in-fight size (`state=3dgrip slot=1`, rebuilt `.glb`, reimported,
+shot against both the pre- and post-fix committed models): honestly
+**does not survive** — the claw cluster is a handful of pixels at combat
+distance, the two shots are indistinguishable by eye. Same call pass 8/9
+already made for their own fixes at this scale.
+
+**Score: Hygiene 8→9, 41→42/50 — clears the 42 hunter stop line.** Both
+candidates pass 9 left open are now closed (one fixed at its real cause,
+one checked and ruled not a second instance). Per `design/asset-loop.md`,
+the honest call at the stop line: stop passing `goblin_mech` unless a
+request or a fresh look finds a real, new defect. **Both hunters are now
+past their stop lines** (`frog` 43/50, `goblin_mech` 42/50) — the loudest
+remaining gap on this whole thread is unchanged: a Meshy-rigged rebuild to
+match the jackal's own fidelity, blocked on the two open requests to
+nick/fixer, neither picked up yet.
+
+![[frames/artist/2026-09-23-goblin-mech-piston-rods-34-before-after.png]]
+![[frames/artist/2026-09-23-goblin-mech-piston-rods-infight-before-after.png]]
+
+`ALL TESTS PASSED`. Playtest (`mode=play`, `cinder_jackal`, 40 steps)
+re-run against the rebuilt model: `PLAYTEST FAIL: 1 failing check(s)
+{ "hunter-off-marker": 2 }` — checked against what's on record, not
+assumed: *exact* same home/anchor coordinates as the already-open
+`2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`
+— confirmed pre-existing by coordinate match, not reopened. This pass only
+changed the position/scale/colour of two existing piston-rod tapers; no
+code path into foothold/climb-marker placement.
 
 ## Old: goblin_mech, pass 9
 also `design/agents/BOARD.md` and `status/*.md`) — the three still-open
@@ -1167,6 +1338,18 @@ brief in full before picking up either.
 
 ## Log
 
+- 2026-09-23 — Meshy network wall confirmed down (the to:nick request landed,
+  re-verified independently: fetched all 3 logged Frog previews, no proxy
+  403). Fresh six-view arena look found nothing new (systemic wall issue
+  still open, still Nick's call). Built `frog_ai` pass 1: fetched Meshy
+  candidate A, wrote `tools/blender/ai/frog_ai_spike.py` (hunter-specific,
+  not `ai_beast.py`), welded/oriented/scaled-to-1.15/decimated to 5200 tris.
+  Reads as a frog immediately, even at 64px silhouette. Deliberately not
+  textured, not rigged, not wired into `cast/frog.glb`/`AI_ART` — the
+  hunter-display-path request (to fixer) is still open, and a toon-less
+  static drop-in would look worse than today's primitives. Committed and
+  pushed (a prior run apparently spiked this and lost it by not pushing).
+  ALL TESTS PASSED (no game code touched).
 - 2026-09-23 — `goblin_mech` pass 8: fresh six-view look at the last open
   Style candidate (goggle strap at oblique angles) found a real defect pass
   4 never saw — the strap's own Y-radius put its front edge ahead of the
