@@ -2,3 +2,9 @@
 # .sh checked out with CRLF fails as "bad interpreter: /usr/bin/env bash^M" —
 # which looks like a missing Blender, not a line-ending problem.
 *.sh text eol=lf
+
+# Markdown keeps LF too. The cloud agents write LF; with core.autocrlf=true
+# this PC rewrote every note it touched to CRLF, so `git status` showed the
+# board as "modified" with no real change — and that blocked the hourly
+# tools/board_pull.cmd rebase.
+*.md text eol=lf
