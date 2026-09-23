@@ -6,7 +6,7 @@ REM and is safe to double-click any time.
 setlocal
 cd /d "%~dp0.."
 for /f %%h in ('git rev-parse HEAD') do set "BEFORE=%%h"
-git pull --rebase || (echo PULL FAILED - tell Claude & exit /b 1)
+REM --autostash: Nick may be mid-edit in Obsidian; set his changes aside and put them back.
 for /f %%h in ('git rev-parse HEAD') do set "AFTER=%%h"
 if "%BEFORE%"=="%AFTER%" (echo already up to date & exit /b 0)
 
