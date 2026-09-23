@@ -590,3 +590,103 @@ version of the same question), and Style's goggle/strap at oblique angles
 constants, a second, more aggressive scale pass is possible later, but
 should come with its own fresh six-view look rather than assuming this
 pass's margins still hold.
+
+---
+
+## Pass 8 — artist lane, 2026-09-23 (the goggle strap actually checked at oblique angles)
+
+Picked up pass 6/7's own standing candidate — Style's goggle/strap "at oblique
+angles, flagged, never actually checked" — and actually checked it, with a
+fresh six-view capture (`goblin_mech_pass8_*.png`, `look.py` direct).
+
+| Pass | Sil | Prop | Hygiene | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 1 | 5 | 5 | 5 | 7 | 7 | **29** |
+| 2 | 7 | 7 | 5 | 7 | 7 | **33** |
+| 3 | 7 | 7 | 7 | 7 | 7 | **35** |
+| 4 | 8 | 7 | 7 | 7 | 8 | **37** |
+| 5 | 8 | 7 | 7 | 8 | 8 | **38** |
+| 6 | 8 | 7 | 7 | 8 | 8 | **38** |
+| 7 | 8 | 8 | 7 | 8 | 8 | **39** |
+| 8 | 8 | 8 | 7 | 8 | 9 | **40** |
+
+### The oblique-angle check found a real defect pass 4 never saw
+
+`_34.png` (the fight-camera angle, per `look.py`'s own docstring: "the angle you
+fight it from") and `_side.png` both showed the `GOLD` goggle strap reading as
+a flat blade or beak jutting out in front of the goblin's face — not a strap on
+a head, closer to a bird's bill. Pass 4 had already touched this ring once
+(thickened the tube, un-flattened its Z-scale) and scored Style 7→8 off a
+close-to-front-on view; this pass's fresh six-view look is what actually put
+a 3/4 and profile angle in front of the problem for the first time.
+
+**Measured the cause instead of eyeballing a fix.** The strap ring sits at
+`(0.0, -0.110, 1.105)` with major radii `(0.205, 0.180)` — so its own front
+edge reaches `y = -0.110 - 0.180 = -0.290`. The goggle barrel it's supposed to
+be strapped to sits at `y=-0.180` with a taper reaching `y = -0.180 - 0.082 =
+-0.262` at its tip; the lens ball sits at `y=-0.228`. **The strap's front edge
+was forward of the barrel tip, which was forward of the lens** — geometrically
+the "strap" was the frontmost part of the whole goggle assembly, which is
+exactly what makes it read as a blade instead of a band holding something on.
+
+**Fix:** pulled the ring's Y-radius `0.180 → 0.105` (front edge now
+`y=-0.110-0.105=-0.215`, tucked behind the barrel tip and roughly level with
+the lens). X-radius (head width, already correct per pass 4) untouched. Same
+14×4 segments — a pure shape change, no tri cost, matching pass 4's own
+"no tri cost" pattern for this same ring.
+
+### Verified, not assumed
+
+- **Tri budget/part count unaffected**: `TRIS 1378 PARTS 33 BUDGET 1400 ok`,
+  identical to pass 7 (only a radius parameter changed, no geometry added or
+  removed).
+- **`_sil.png` pixel diff against the pre-fix pass-8 capture**: 64 of 65,536
+  pixels differ (0.1%) — the ring is a small enough feature that the 64px
+  silhouette rubric is correctly almost untouched by this fix; this was never
+  a silhouette-line defect.
+- **`_34.png` and `_side.png` before/after**: the strap now reads as sitting
+  behind/level with the lenses instead of projecting past them — the
+  beak/blade read is gone at both angles checked.
+- **34px party portrait** (`portraits.py`, rebuilt both ways): the 512px
+  render shows the same fix clearly (the strap tucks behind the lens instead
+  of jutting past it); downsampled to 34×34 the two are visually
+  indistinguishable — reported honestly, the same call `frog.md` pass 7 made
+  for its own 34px check, not claimed as a win it isn't.
+- **In the real fight** (`state=3dgrip slot=1`, goblin on an open foothold,
+  unoccluded, ~30px): before/after crop at true size — no visible difference
+  by eye, as expected at that scale for a feature this fine; the win lives in
+  the scoring/portrait renders, consistent with how small a detail this is
+  against the whole model.
+- **`ALL TESTS PASSED`. Playtest** (`mode=play`, `cinder_jackal`, 40 steps)
+  re-run against the rebuilt model — one failing check,
+  `hunter-off-marker` (2 hits, foothold 4), the identical residual pass 7's
+  own matched-pair run against this same beast already confirmed
+  pre-existing (`requests/2026-09-23-0715-fixer-to-fixer-shared-foothold-
+  side-spacing-clears-the-model.md`). Not re-run as a matched pair a second
+  time: this pass only changed one torus radius parameter on a decorative
+  ring, which has no code path into foothold/climb-marker placement at all.
+
+**Score: Style 8 → 9.** A real defect at its actual root cause — the strap
+projecting past the very goggles it's meant to hold on — closed at the two
+angles the fight camera and its own three-quarter reference angle actually
+use, not a proxy fix. Held short of 10 because the win doesn't survive to true
+in-fight hunter size (verified, not assumed) and the ring's back half (hidden
+behind the head from every camera checked) was left untouched. Sil/Prop/
+Hygiene/Colour unchanged — nothing this pass touched their lines. **39 →
+40/50**, still below the 42 hunter stop line.
+
+![[frames/artist/2026-09-23-goblin-mech-goggle-blade-34-before-after.png]]
+![[frames/artist/2026-09-23-goblin-mech-goggle-blade-side-before-after.png]]
+![[frames/artist/2026-09-23-goblin-mech-goggle-blade-portrait-before-after.png]]
+![[frames/artist/2026-09-23-goblin-mech-goggle-blade-infight-before-after.png]]
+
+## Where it stands after pass 8
+
+40/50, still below the 42 hunter stop line. Lowest line: Hygiene (7, the
+claw/piston mass reading separate from the main rig body — pass 5 confirmed
+it's connected but still a distinct-reading mass; untouched since). Style is
+now the joint-highest line at 9. Next pass's live candidate is Hygiene's
+claw/piston distinctness, this time with an actual measured cause the way
+this pass found one for the goggle strap, rather than another "checked,
+doesn't hold up" pass on a line two passes have already confirmed real but
+left unfixed.

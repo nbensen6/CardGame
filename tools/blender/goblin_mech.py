@@ -175,7 +175,19 @@ mirror(lambda s: b.taper((0.030 * s, -0.205, 0.962), 0.012, 0.003, 0.045,
 # (0.048 -> 0.075) so there is a band to see from any angle, and pulled the
 # major radius in a touch (0.228/0.198 -> 0.205/0.180) so less of it clears the
 # head silhouette. Same 14x4 segments, so no tri cost.
-b.ring((0.0, -0.110, 1.105), (0.205, 0.180, 0.075), GOLD, 14, 4,
+#
+# Pass 8: that fix rounded the tube but never checked whether the ring's own
+# Y-radius put its FRONT EDGE somewhere sane. It didn't - measured against the
+# goggle barrel/lens this ring is meant to carry: strap front at
+# y=-0.110-0.180=-0.290, barrel tip at y=-0.180-0.082=-0.262, lens centre at
+# y=-0.228. The "strap" sat in front of the goggles it supposedly straps on,
+# which is exactly the blade/beak `_side.png` and `_34.png` (the fight-camera
+# angle) both show at oblique angles - pass 4 fixed the tube's cross-section,
+# not this. Pulled Y-radius 0.180 -> 0.105 (front edge -0.110-0.105=-0.215,
+# now behind the barrel tip and roughly level with the lens) so the loop reads
+# as wrapping the head instead of projecting past the face. X-radius (head
+# width, already correct) untouched.
+b.ring((0.0, -0.110, 1.105), (0.205, 0.105, 0.075), GOLD, 14, 4,
        thickness=0.26)                                              # goggle strap
 mirror(lambda s: b.taper((0.108 * s, -0.180, 1.105), 0.078, 0.066, 0.082, GOLD,
                          seg=5, rot=(FWD, 0, 0)))  # goggle barrel; seg 6->5, pass 4 budget

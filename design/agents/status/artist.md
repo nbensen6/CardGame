@@ -3,22 +3,73 @@ tags:
   - agent-status
 agent: artist
 updated: 2026-09-23
-working_on: no open to:artist request; tried the Meshy hunter rebuild Nick's brief now calls for and hit a real network-policy wall (api.meshy.ai works, but fetch needs assets.meshy.ai, which this sandbox denies) — 3 Frog previews generated and stuck unretrievable, filed to:nick for the network fix and to:fixer for the separate combat_3d.gd gap (hunters never get the beast toon-shader/animation path); pivoted to goblin_mech pass 7 — did the rig-scale-up experiment pass 6 flagged (RIG_S=1.18 applied to every rig coordinate AND size from one pivot in the generator, not a post-hoc mesh scale), verified every risk pass 6 named (tri budget, silhouette connectivity, the two known camera-only gaps, in-fight visibility), Proportion 7→8, 38→39/50; ran a matched-pair playtest (rebuilt vs stock) to confirm two playtest FAILs are pre-existing, not caused by this change; ALL TESTS PASSED, pushed
+working_on: no open to:artist request; picked up goblin_mech pass 8 — the "Style's goggle/strap at oblique angles, flagged, never actually checked" candidate pass 6/7 left open. A fresh six-view look found a real defect pass 4 never saw at the fight-camera (3/4) and profile angles: the goggle strap's own Y-radius put its front edge ahead of the goggle barrel/lens it's meant to hold on, so it read as a blade/beak, not a strap. Measured the exact overshoot (strap front -0.290 vs barrel tip -0.262 vs lens -0.228), pulled the ring's Y-radius 0.180→0.105, verified tri budget/silhouette/portrait/in-fight, Style 8→9, 39→40/50; ALL TESTS PASSED, playtest re-run (one pre-existing hunter-off-marker FAIL, already filed, not caused by a decorative-ring radius change), pushed
 ---
 
 # artist
 
 ## Now
 
-No open `to: artist` request this run (checked every file's frontmatter).
-Environment fresh again: Godot 4.7.1 + `--import`; Blender `apt install
-blender` (4.0.2), `download.blender.org` still unreachable. New this run:
-Blender's own gltf exporter needs `numpy` and the sandbox's system Python
-(3.12, what Blender actually embeds) didn't have it — `apt install
-python3-numpy` fixed it; `pip install numpy` into the *other* system Python
-(3.11, `/usr/local/bin/python3`) does nothing for Blender. Worth knowing for
-whoever hits `ModuleNotFoundError: No module named 'numpy'` from
-`export_scene.gltf` next.
+No open `to: artist` request this run (checked every file's frontmatter,
+also `design/agents/BOARD.md` and `status/*.md`). Environment fresh again:
+Godot 4.7.1 + `--import`; Blender `apt install blender` (4.0.2),
+`download.blender.org` unreachable, same as prior runs — `apt-get install -y
+--fix-missing blender` gets 4.0.2 despite a batch of unrelated 404s on
+`apt-get install`'s first pass (retry with `--fix-missing` and `apt-get
+update` first clears it). New this run: headless Blender rendering needs
+`libegl1`/`libegl-mesa0` (`apt-get install -y libegl1 libgl1-mesa-dri
+libglx-mesa0`) or `look.py` fails immediately with `Couldn't open
+libEGL.so.1`. `pip install --break-system-packages pillow numpy scipy` for
+the Python-side image/mesh checks.
+
+Picked up my own `## Next` from last run: `goblin_mech` (39/50, cap lifted,
+below the 42 hunter stop line) had one live, previously-flagged candidate —
+Style's goggle/strap "at oblique angles, flagged, never actually checked"
+(pass 6/7). Ran it. Full write-up in `design/progress/goblin_mech.md` pass
+8.
+
+**A fresh six-view look (`look.py` direct, `libEGL` fixed above) found a
+real defect at exactly the angles pass 4 never checked.** `_34.png` (the
+fight-camera angle, per `look.py`'s own docstring) and `_side.png` both show
+the `GOLD` goggle strap reading as a flat blade or beak jutting out in front
+of the goblin's face, not a headband. Measured the cause instead of
+eyeballing a fix: the strap ring's own Y-radius (0.180) put its front edge
+at y=-0.290 — forward of the goggle barrel tip it's mounted to (y=-0.262),
+which is forward of the lens (y=-0.228). The "strap" was geometrically the
+frontmost part of the whole goggle assembly. Pulled the ring's Y-radius
+0.180→0.105 (front edge now -0.215, tucked behind the barrel tip); X-radius
+(head width, already correct) untouched. Same segment counts — a pure shape
+change, no tri cost.
+
+**Verified, not assumed:** tri budget/part count unaffected (1378/1400,
+unchanged — only a radius parameter moved); `_sil.png` pixel diff against
+the pre-fix capture is 64 of 65,536px (0.1%), confirming this was never a
+silhouette-line defect; the 512px party portrait shows the fix clearly (the
+strap tucks behind the lens instead of jutting past it) but honestly does
+**not** survive downsampling to the true 34px party-panel size — reported as
+such, not oversold; the true in-fight hunter size (`state=3dgrip`, ~30px)
+shows no visible difference by eye either, as expected for a feature this
+fine against the whole model.
+
+**Score: Style 8→9, 39→40/50.** A real defect closed at its actual root
+cause (the strap projecting past the goggles it holds on), at the two
+angles that matter (the fight camera's own three-quarter reference angle,
+and profile) — held short of 10 because the win doesn't reach true in-fight
+size and the ring's hidden back half was untouched.
+
+![[frames/artist/2026-09-23-goblin-mech-goggle-blade-34-before-after.png]]
+![[frames/artist/2026-09-23-goblin-mech-goggle-blade-side-before-after.png]]
+![[frames/artist/2026-09-23-goblin-mech-goggle-blade-portrait-before-after.png]]
+
+`ALL TESTS PASSED`. Playtest (`mode=play`, `cinder_jackal`, 40 steps)
+re-run against the rebuilt model: one failing check, `hunter-off-marker` (2
+hits, foothold 4) — the identical residual pass 7's own matched-pair run
+against this same beast already confirmed pre-existing earlier today. Not
+re-run as a matched pair a second time: this pass changed one torus radius
+parameter on a decorative ring, which has no code path into foothold/
+climb-marker placement.
+
+## Old: hunters, pass 7 (goblin_mech) + Meshy network wall
 
 **Tried the Meshy hunter rebuild Nick's brief now calls for, and hit a real
 infrastructure wall, not a credential one.** `balance`/`preview`/`refine`/`get`
@@ -109,16 +160,19 @@ chasing the same wall.
 
 ## Next
 
-Once the two `to:` requests filed this run land (Nick's network-policy fix,
-the fixer's hunter-display generalization), the Meshy Frog rebuild is
-unblocked end-to-end — start there, since the Frog's anatomy already clears
-`ai_beast.py`'s quadruped gate and the Goblin doesn't. Until then, `goblin_mech`
-(39/50, cap lifted) has one real, previously-flagged, not-yet-attempted lead
+Both `to:` requests from the Meshy pass (Nick's network-policy fix, the
+fixer's hunter-display generalization) and the arena wall-accent request are
+still open — check them first next run. Until one lands, `goblin_mech`
+(40/50, cap lifted) has one real, previously-flagged, not-yet-attempted lead
 left: Hygiene's claw/piston mass still reading as a separate lump from the
 main rig body (pass 3's original note, never actually fixed, only
-re-confirmed "connected but distinct" in pass 5) — a genuinely new fix, not
-a re-check of what pass 6/7 already closed. `frog` is past its own stop line
-(43/50); the arena is blocked on the still-open wall-accent request.
+re-confirmed "connected but distinct" in pass 5) — this pass found a measured
+cause for a similarly-vague-sounding Style complaint (the goggle strap) by
+comparing exact part coordinates rather than re-looking at the same renders,
+which is the model worth repeating on Hygiene rather than another "checked,
+doesn't hold up" pass. `frog` is past its own stop line (43/50); the Meshy
+Frog rebuild unblocks once the network-policy request lands (Frog's anatomy
+already clears `ai_beast.py`'s quadruped gate, the Goblin's doesn't).
 
 ## Old: hunters, pass 6 (goblin_mech) + arena wall-accent verification
 
@@ -933,6 +987,15 @@ brief in full before picking up either.
 
 ## Log
 
+- 2026-09-23 — `goblin_mech` pass 8: fresh six-view look at the last open
+  Style candidate (goggle strap at oblique angles) found a real defect pass
+  4 never saw — the strap's own Y-radius put its front edge ahead of the
+  goggle barrel/lens it's mounted to (measured: -0.290 vs -0.262 vs -0.228),
+  reading as a blade/beak at the fight-camera (3/4) and profile angles.
+  Pulled Y-radius 0.180→0.105, verified tri budget/silhouette/portrait/
+  in-fight, no tri cost. Style 8→9, 39→40/50. ALL TESTS PASSED; playtest
+  re-run, one pre-existing `hunter-off-marker` FAIL (already filed, no code
+  path from a decorative-ring radius to foothold placement).
 - 2026-09-23 — Meshy hunter rebuild attempt hit a network-policy wall:
   `api.meshy.ai` works, `fetch`'s `assets.meshy.ai` is denied by the
   sandbox; 3 Frog previews generated, unretrievable. Filed to:nick (network)
