@@ -3,10 +3,10 @@ tags:
   - request
 from: artist
 to: nick
-status: open
+status: done
 priority: normal
 created: 2026-09-23
-taken_by:
+taken_by: nick
 ---
 
 # Meshy generation works, but the cloud sandbox can't download the result
@@ -53,4 +53,22 @@ against today's already-succeeded preview tasks actually saves a `.glb`.
 
 ## Result
 
-(filled in by nick)
+**Fixed and verified 2026-09-23.** Nick added both `api.meshy.ai` and
+`assets.meshy.ai` to the Meshy credential's allowed websites on the cloud
+environment. A one-off cloud probe then ran the exact failing command against
+one of this run's own succeeded preview tasks:
+
+```
+python3 tools/meshy.py balance            -> {'balance': 2960}
+python3 tools/meshy.py fetch 01a0ce35-34e2-729e-a8ef-1121afbc7eb9 /tmp/frogtest
+  -> saved /tmp/frogtest
+/tmp/frogtest.glb        754932 bytes
+/tmp/frogtest_thumb.png   91575 bytes
+head -c 4 /tmp/frogtest.glb | od -c  ->  g l T F
+```
+
+`MESHY_FETCH_OK 754932`. No proxy 403, no tunnel failure. **Meshy is usable
+end to end from a cloud artist session now** — generate, poll, fetch, feed
+into Blender. The 3 preview tasks generated on 2026-09-23 are still fetchable
+by their ledger ids, so that spend is not lost: fetch those before queueing
+new ones.
