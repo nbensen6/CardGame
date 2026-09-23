@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-23
-working_on: full three-mode baseline (hover/hands 0 fails, play 3 fails — the known foothold-4 residual only, unchanged, run twice, before and after today's playtest.gd edit); confirmed the fixer's End Turn crash fix (is_inside_tree() guard on _focus_camera) is holding — 0 script-error across two full 80-step baselines with heavy End Turn use, corroborating their own unit-test proof; added a new check, hand-over-hud (JACKAL-BAR: "nothing important is behind the hand... at any hand size") — the resting hand must never cover the intent tag, hp bar, party panel or climb rail, exercised automatically by mode=hands' existing 1-10 sweep, proved both directions (0 fails for real; 43 FAILs across all four elements when the intersection tolerance was deliberately loosened, reverted clean). No new bugs found in the wild; nothing new filed.
+updated: 2026-09-23T17:08
+working_on: full three-mode baseline came back COMPLETELY clean for the first time in many runs — play (80 steps) 0 fails, hover 0 flips, hands (1-10) 0 fails. The shared-foothold-4 residual that's been the loudest recurring finding across at least five prior baselines (hunter-off-marker at the exact same coordinates every time) is gone: the fixer's stone_point() fix (self-filed and closed this same day, 2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md) holds live at both repeat instances (steps 34 and 71), verified both by the check and by eye against the frame — both hunters stand grounded on the jackal's ear, not floating clear of the model. Checklist item 2 (hunters land on the beast correctly) is now fully closed, no known residual. No new bugs found; nothing filed this run.
 ---
 
 # playtester
@@ -11,8 +11,64 @@ working_on: full three-mode baseline (hover/hands 0 fails, play 3 fails — the 
 ## Now
 
 No open `to: playtester` request this run (checked every file's frontmatter —
-the board's other open items are all `to: nick` or `to: fixer`). Fresh
-sandbox, Godot 4.7.1 + `--import`, `run_tests.gd`: `ALL TESTS PASSED`.
+the board's other open items are all `to: nick`). Fresh sandbox — local
+`main` arrived stale again (this container's checkout shared no merge-base
+with `origin/main`; the classifier initially refused the branch-reset as
+"irreversible local destruction" since the sandbox's own history predated a
+remote rewrite, so tagged the stale tip first (`backup-stale-local-main-*`)
+so nothing was actually lost, then did `git checkout -B main FETCH_HEAD` per
+COMMON.md 0). Claimed the lease (`tools/agents/lease.sh claim playtester`,
+exit 0 — no overlapping run). Godot 4.7.1 + `--import`, `run_tests.gd`:
+`ALL TESTS PASSED`.
+
+**Full three-mode baseline, completely clean — first time in several runs.**
+`hover` 0 flips, `hands` (1-10) 0 fails (both matching every prior clean
+baseline). `play` (80 steps): **0 failing checks.** This is the first clean
+`play` baseline since the shared-foothold-4 residual started showing up —
+every recent run (see `## Old` below) has shown `hunter-off-marker` failing
+2-4 times at the exact same coordinates (`home (5.335257, 13.825942,
+7.030925)`, anchor `(3.901302, 13.825942, 6.473297)`), all traced to the
+fixer's own self-filed
+`2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`.
+That request went `done` since my last run — this run is the first live
+verification since the fix landed.
+
+**Verified the fix holds, both by the check and by eye.** This run's own
+seed still puts both hunters on foothold 4 together twice (step 34: Frog
+`foot 7→4`; step 71: Goblin Engineer `foot 10→4`), the exact repro shape
+that failed on every prior run — and both times `hunter-off-marker` stayed
+silent. Looked at both frames at 1:1, not just trusted the check: both the
+Frog and the Goblin Engineer stand visibly grounded on the jackal's ear/mane,
+feet on the model, not the old "hovering clear of both the model and the
+stone" shape the fixer's own before-fix crop showed.
+
+![[frames/playtester/2026-09-23-foothold4-shared-fixed-step034.png]]
+Step 34 — both hunters share foothold 4. The Frog stands on the basalt stone
+at the jackal's ear, the Goblin Engineer stands on the mane fur beside it —
+both grounded, matching the fixer's fix (`stone_point()` now pushes purely
+forward instead of radially, so it no longer adds its own x-drift on top of
+`stand_offset_x`'s spacing).
+
+![[frames/playtester/2026-09-23-foothold4-shared-fixed-step071.png]]
+Step 71 — the same shared-foothold-4 moment later in the fight (Goblin
+Engineer `foot 10→4`), same clean result.
+
+`ALL TESTS PASSED` throughout; no `script-error` in any of the three runs.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | unchanged this run — no fresh human-eye look; still worth returning to, several runs overdue now |
+| 2 | hunters land on the beast correctly | **fully closed** — the shared-foothold-4 residual that dogged at least five prior baselines is gone; verified live at both repeat instances this run, by check and by eye |
+| 3 | jump animation (squash/arc/landing) | unchanged this run |
+| 4 | camera | unchanged this run — `hunter-lost-mid-hop` still 0 fails in the wild |
+| 5 | nothing errors | ok — `ALL TESTS PASSED`, 0 `script-error` across all three modes |
+
+No new requests filed this run — the one open thread this run existed to
+verify (foothold-4) closed clean; nothing else failed.
+
+## Old: 2026-09-23, hand-over-hud check added, End Turn crash fix corroborated
 
 **Full three-mode baseline, clean except the one known residual.** `hover` 0
 flips, `hands` (1-10) 0 fails — both matching every prior clean baseline.
@@ -94,14 +150,17 @@ and owned by an existing open request.
 
 ## Next
 
-The fixer's own `2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`
-(shared foothold 4) is still the loudest unclaimed item on the board, open
-across several of my runs now — watch for it landing, then re-verify item 2.
-`hand-over-hud` is live now with 0 real fails found — worth remembering it
-exists the next time a HUD layout or hand-fan change lands, same as
-`hunter-lost-mid-hop` and `damage-popup-offscreen` before it. Item 1 (card
-plays) still hasn't had a fresh human-eye look in several runs; worth
-returning to next.
+Checklist item 2 is now fully closed — no known residual left to watch. The
+loudest overdue item is item 1 (card plays read): it hasn't had a fresh
+human-eye look in several runs now (every recent run picked up a
+higher-priority verification instead — the End Turn crash, then
+hand-over-hud, now foothold-4). Worth doing next run: a frame-strip look at
+a typical card play (does the played card visibly leave the hand, does the
+effect land on the beast, does a number/state change follow — per this
+playtester's own brief, item 1's "does something on the beast" half hasn't
+had a fresh look since the damage-popup work two+ runs ago). `hand-over-hud`
+and `hunter-lost-mid-hop` remain live with 0 real fails found — worth
+remembering they exist next time a HUD or camera change lands.
 
 ## Old: 2026-09-23, damage-popup-offscreen check verified live, no new bugs
 
@@ -768,6 +827,21 @@ remain the backstop for that; keep saving them.
 
 ## Log
 
+- 2026-09-23 17:08 UTC — full three-mode baseline came back completely
+  clean for the first time in many runs: `play` (80 steps) 0 fails, `hover`
+  0 flips, `hands` (1-10) 0 fails. The shared-foothold-4 residual
+  (`hunter-off-marker`, the loudest recurring finding across at least five
+  prior baselines) is gone — the fixer's own self-filed
+  `2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`
+  (root cause: `stone_point()` pushing radially instead of forward, adding
+  its own x-drift on top of `stand_offset_x`'s spacing) closed since my last
+  run; verified live at both repeat instances this run's seed produces
+  (steps 34 and 71, both hunters sharing foothold 4), by the check (0 fails)
+  and by eye (both frames show both hunters grounded on the jackal's ear,
+  not floating). Checklist item 2 is now fully closed. `ALL TESTS PASSED`,
+  0 `script-error`. No new bugs found; nothing filed this run. Local `main`
+  arrived stale (no merge-base with `origin/main`) — tagged the old tip
+  before resetting so nothing was lost, per COMMON.md 0.
 - 2026-09-23 — full three-mode baseline (run twice, before/after today's
   edit): `hover`/`hands` clean both times, `play` (80 steps) 3 fails both
   times, all `hunter-off-marker` at foothold 4, exact same coordinates as
