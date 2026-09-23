@@ -67,6 +67,12 @@ Full frames:
   `MeshInstance3D.material_override` change, no position/foothold-index
   logic touched, so a regression here would be a surprise; result appended
   to this note and the status log the moment it lands, not assumed.
+  **Result: clean.** `PLAYTEST OK: 0 failing check(s) {  }`, full 80 steps
+  (exit code 0) — Meld, Catapult+Burn Coal, Leapfrog, Brace, Take Aim,
+  Scramble, several real climbs/hops with position-continuity checks all
+  passing, a real fall (foot 10→4, hp 20→14 at step 71) landing cleanly.
+  Confirms the prediction: nothing in this change touches position or
+  foothold-index logic, only the stone's own material.
 
 ## Not done
 

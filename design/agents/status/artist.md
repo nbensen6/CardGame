@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-23T16:24
-working_on: gave the shared floating footholds (_build_float_stones, combat_3d.gd) a generated faceted-rock detail texture instead of one flat colour -- both Meshy (0/8 left today) and Blender (download.blender.org hard-403'd this session, confirmed twice) were unavailable, so this is a pure numpy/PIL toroidal-Voronoi texture wired in as an albedo_texture multiply, no geometry/logic touched. ALL TESTS PASSED; before/after verified in the real fight (state=3dgrip). 80-step playtest still running in the background past the 590s foreground cap at push time -- pushed first per COMMON.md 4b, result to follow. Lease released.
+updated: 2026-09-23T16:27
+working_on: gave the shared floating footholds (_build_float_stones, combat_3d.gd) a generated faceted-rock detail texture instead of one flat colour -- both Meshy (0/8 left today) and Blender (download.blender.org hard-403'd this session, confirmed twice) were unavailable, so this is a pure numpy/PIL toroidal-Voronoi texture wired in as an albedo_texture multiply, no geometry/logic touched. ALL TESTS PASSED; before/after verified in the real fight (state=3dgrip). 80-step playtest completed clean after push: PLAYTEST OK, 0 failing checks, full 80 steps. Lease released.
 ---
 
 # artist
@@ -90,14 +90,16 @@ Full frame, after:
 Full write-up, including why texture over geometry and what was ruled out:
 `design/progress/foothold_rock_detail.md`.
 
-**Playtest still running at push time.** Kicked off a full 80-step
-`mode=play` as the general-regression check (this touches a shared code
-path used by every beast's climb, even though the change itself is a pure
-`material_override` swap with no position/index logic touched) — it ran
-past the 590s foreground cap and moved to the background. Per COMMON.md
-4b, pushed everything first rather than let it run unwitnessed; the result
-gets appended to this note and `foothold_rock_detail.md` the moment it
-lands, not assumed clean.
+**Playtest: clean.** Kicked off a full 80-step `mode=play` as the general-
+regression check (this touches a shared code path used by every beast's
+climb, even though the change itself is a pure `material_override` swap
+with no position/index logic touched) — it ran past the 590s foreground
+cap and moved to the background, so pushed everything first per COMMON.md
+4b rather than let it run unwitnessed. Result, once it finished:
+`PLAYTEST OK: 0 failing check(s) {  }`, full 80 steps, exit code 0 — Meld,
+Catapult+Burn Coal, Leapfrog, Brace, Take Aim, Scramble, several real
+climbs/hops with position-continuity checks, a real fall (foot 10→4, hp
+20→14 at step 71) all clean. No regression.
 
 **Also looked at, and deliberately did NOT file:** the `3dgrip` state also
 shows the OTHER hunter (not the one the camera follows) going behind the
@@ -201,19 +203,11 @@ unreferenced asset files and docs.
 
 ## Next
 
-Two threads open, neither mine to force:
-- **Hunter fidelity** (still the loudest `JACKAL-BAR.md` line): blocked on
-  the fixer's outline-width fix
-  (`requests/2026-09-23-1540-artist-to-fixer-hunter-scale-outline-swallows-thin-hunters.md`,
-  still open). Once it lands: re-wire `goblin_mech` into `HUNTER_AI_ART`,
-  re-verify, score it for real.
-- **This run's background playtest** — started before the push, still
-  running past the 590s foreground cap. Check `/tmp/pt` / the background
-  task output next run if it wasn't picked up by a notification; if it
-  found a real regression, revert the `_build_float_stones` texture change
-  (`git revert` the one commit, or hand-restore `mat.albedo_color` and
-  drop the `mat.albedo_texture` line) rather than leave a red state
-  unaddressed.
+**Hunter fidelity** (still the loudest `JACKAL-BAR.md` line): blocked on
+the fixer's outline-width fix
+(`requests/2026-09-23-1540-artist-to-fixer-hunter-scale-outline-swallows-thin-hunters.md`,
+still open). Once it lands: re-wire `goblin_mech` into `HUNTER_AI_ART`,
+re-verify, score it for real.
 
 If Blender's network wall (`download.blender.org`, hard 403 this session)
 has cleared by the next run, the footholds are the obvious next pass for
@@ -221,6 +215,7 @@ real geometry — this run's texture is real surface detail but still a
 smooth sphere underneath.
 ## Log
 
+- 2026-09-23 16:27 EDT — the background 80-step playtest for the foothold-texture change (below) finished clean: PLAYTEST OK, 0 failing check(s), full 80 steps, exit code 0. Confirms the change (a pure material_override/albedo_texture swap) touches no position/foothold-index logic. See design/progress/foothold_rock_detail.md.
 - 2026-09-23 16:24 EDT — gave the shared floating footholds a generated (numpy/PIL toroidal-Voronoi) faceted-rock detail texture, mat.albedo_texture on _build_float_stones' SphereMesh, multiplied over the existing per-stone BROWN tint (unchanged). Both Meshy (0/8 left) and Blender (download.blender.org hard-403 this session) unavailable, so pure 2D texture, no geometry/logic touched. ALL TESTS PASSED. Before/after verified in the real fight at state=3dgrip (a real reachable mid-climb state) -- flat orange blob to visibly cracked/faceted rock. 80-step playtest pushed to background past the 590s cap; pushed code first per COMMON.md 4b, result to follow. See design/progress/foothold_rock_detail.md. Lease released.
 - 2026-09-23 15:48 EDT — playtest for the above finished clean: PLAYTEST OK, 0 failing check(s), all 80 steps, exit code 0. Confirms the committed diff (goblin_mech_ai asset + docs, HUNTER_AI_ART reverted to shipped state) touches no gameplay code. Lease released.
 - 2026-09-23 15:40 EDT — built the Goblin Engineer's Meshy rebuild (1 preview + 1 refine, 8/8 daily Meshy tasks now spent), cleaned/decimated in Blender to goblin_mech_ai.glb. Wired into HUNTER_AI_ART to test: reads as a near-solid black blob at true in-fight size, not a texture problem -- isolated the cause to outline.gdshader's fixed ink-outline width overlapping on this hunter's many thin parts (jackal/frog are thick rounded masses, this one isn't). Reverted HUNTER_AI_ART (git diff clean), kept the built asset committed unwired. Filed to:fixer with the diagnosis and a before/after frame. ALL TESTS PASSED; 80-step playtest re-run against the final reverted state. See design/progress/goblin_mech_ai.md.
