@@ -3,12 +3,101 @@ tags:
   - agent-status
 agent: fixer
 updated: 2026-09-23
-working_on: Meld could fuse a slider-eligible climb (grip>=2) with a real multi-window timed card (timed_hits>1, e.g. Winch+Satchel Charge) and HitCircle silently collapsed it to one hold instead of the chain's real window count; fixed, four new tests, pushed
+working_on: Took the high-priority hunter-floats-off-model-at-foothold-4 request; _stand_on_model trusted a coarse runtime hull over an exact rung's own already-correct, raycast-placed anchor, and the Cinder Jackal's own ear (a stray, disconnected hull cell two bands above foothold 4) won. Fixed with Combat3D.stand_z_for, three new tests, pushed (c8e965b); found and filed a smaller, separate residual (shared-foothold side spacing).
 ---
 
 # fixer
 
 ## Now
+
+Open `to: fixer` request, priority high:
+`2026-09-23-0900-playtester-to-fixer-hunter-floats-off-model-at-foothold-4.md`.
+Took it (order-of-work item 1, before my own queue). Skipped item 2/3 this
+run — a high-priority request was already sitting there.
+
+**Reproduced first.** Added a temporary debug print in `_stand_on_model`
+(never committed) and ran `mode=play beast=cinder_jackal steps=40/80` under
+`xvfb-run`. Confirmed the playtester's own read exactly:
+`_front_of_beast(3.901, 13.826)` — the (x, y) of foothold 4's own anchor —
+returned **13.164**, nowhere near the anchor's own authored z of **6.473**.
+Dumped `hull_front_at`'s 5-row×3-col neighbourhood directly: the "best"
+(max) cell it found was two full hull bands *above* foothold 4's own row,
+in an otherwise-empty row (every neighbour but that one cell was `-1e9`) —
+a single, disconnected point that isn't the torso/neck surface near the
+anchor at all. Rendered the region: it's the jackal's own right **ear**.
+The neighbourhood search (deliberately widened past a plain 3×3 to avoid a
+*different* known failure — a muzzle in the next column reading as empty,
+see the function's own doc comment) reached far enough to grab an unrelated
+thin feature and used it as "the front of the body," overriding a correct
+anchor.
+
+**Root cause, not the symptom.** The anchor was never wrong — `beast.py`'s
+own export (`_decorate`, `tools/blender/beast.py`) already raycasts every
+`climb_<h>` anchor out to the real mesh, clearance included
+(`push = (reach + hs * 0.80) - here`). The bug was `_stand_on_model`
+re-deriving that same answer from a noisy runtime hull and letting the
+worse answer win via `maxf(anchor.z, hull_clear)` — on EVERY exact rung,
+not just this one; foothold 4 is just where the geometry (a beast whose
+climb path runs right past its own ears) made the neighbourhood's blind
+spot bite.
+
+**Fix.** New static `Combat3D.stand_z_for(anchors, foot, anchor_z,
+hull_clear)`: trusts `anchor_z` outright when `foot` is an exact key in the
+model's own climb anchors; only falls back to `maxf(anchor_z, hull_clear)`
+for a foothold BETWEEN two rungs, where `foothold_anchor` lerps a straight
+line across the body's curve and there's no baked, raycast-true anchor to
+trust — the one case that still needs the hull. `_stand_on_model` now skips
+the hull query entirely on an exact rung. Noted but did not touch a
+separate, now-moot latent bug found while reading the surrounding code:
+`_build_float_stones()` runs before `_build_hull()` in the beast-load
+sequence, contradicting its own doc comment — harmless after this fix since
+both `_build_float_stones` and `_build_ledge_marks` always call
+`_stand_on_model` with an exact anchor height, so neither ever touches the
+hull anymore.
+
+**Proof.** Three new unit tests (`run_tests.gd`): the repro itself
+(anchor wins even past a hull read more than double it — the live 6.47 vs
+13.16 numbers, reproduced with round inputs), plus two guards that the
+off-anchor/lerped path is byte-for-byte unchanged in both directions.
+Reproduced on the unfixed formula first (temp-reverted just
+`stand_z_for`'s body to the old always-`maxf`), confirmed the repro test
+fails exactly as predicted; restored the fix, `ALL TESTS PASSED`.
+
+**Live playtest, before/after** (same seed, `mode=play beast=cinder_jackal
+steps=80`). Before: `home (5.230187, 13.825942, 10.253428)`, a 3.78
+world-unit z-gap from the anchor, hanging over the arena wall with nothing
+under it — the playtester's own frames. After: `home (5.335257, 13.825942,
+7.030925)`, z-gap down to 0.56 world units — the wild float is gone:
+
+![[frames/fixer/2026-09-23-hunter-foothold4-fixed-step037.png]]
+
+**Not fully closed — split out on purpose.** `hunter-off-marker` (check 8)
+still fails narrowly (x-tolerance) at the exact moment BOTH hunters share
+foothold 4 (`side=±1`, confirmed live with a second temp debug print,
+`other_foot=[4, 4]`). `stand_offset_x`'s spacing (scaled to the whole
+beast's bounding-box width) pushes the side-shifted hunter clear of the
+narrow ear at that spot, and `_build_float_stones` only ever builds one
+CENTRED stone per height — the side-shifted hunter has nothing to land on
+regardless of z:
+
+![[frames/fixer/2026-09-23-hunter-foothold4-shared-side-gap-step037-crop.png]]
+
+A genuinely different mechanism from the ear/hull bug above, much smaller
+in magnitude (about one hunter-width of gap, not several world units over
+a blank wall). Filed rather than folded in:
+`2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`.
+Both temporary debug prints were removed before committing — `git diff`
+confirmed clean (fix + tests only) before every push.
+
+Also surfaced, not chased: two pre-existing `hop-no-squash` / `hop-flat`
+failures in the same 80-step run (steps 30, 42, 52, 53), all with 6-7
+in-flight samples — matches the playtester's own documented sparse-sampling
+flake signature for short single-leg hops on this sandbox's slow renderer
+(their status note, `## Old: 2026-09-22, hop slow-mo + correction`), not
+anything this fix touches. Left alone, noted in the request's `## Result`
+so nobody re-diagnoses them as new.
+
+## Old: 2026-09-23, Meld slider swallows multi-hit windows
 
 Fresh sandbox. No open `to: fixer` request (the boss-relic-pool request is
 still sitting on `to: nick`, untouched — his call, not mine). Order-of-work
@@ -452,7 +541,26 @@ further either.
 
 ## Log
 
-- 2026-09-23 (latest) — fixed `Combat3D._on_card_tapped` picking a melded
+- 2026-09-23 (latest) — took the high-priority
+  `hunter-floats-off-model-at-foothold-4` request. Root cause:
+  `Combat3D._stand_on_model` let a coarse runtime hull estimate
+  (`_front_of_beast`) override an EXACT rung's own already-correct anchor
+  (raycast-placed at export time by `beast.py`'s `_decorate`) — at foothold
+  4, `hull_front_at`'s neighbourhood scan reached two hull bands above the
+  anchor's own row and grabbed a single, disconnected cell belonging to the
+  Cinder Jackal's own ear, using it as "the front of the body" and dragging
+  the hunter's z from 6.47 to 13+. New static `Combat3D.stand_z_for`
+  trusts the anchor directly whenever `foot` is an exact climb-anchor key,
+  only falling back to the hull for a lerped, between-rung foothold. Three
+  new unit tests (repro + two off-anchor guards); repro fails on the old
+  always-`maxf` formula, passes fixed; `ALL TESTS PASSED`. Live
+  `mode=play` before/after: z-gap from the anchor 3.78 → 0.56 world units,
+  the wild "hanging over the arena wall" float is gone. Commit `c8e965b`.
+  Found and split out a smaller, separate residual (two hunters sharing a
+  narrow foothold, `stand_offset_x`'s spacing clearing the model) into its
+  own request rather than folding it in — see the request's `## Result`
+  and `## Now` above for both.
+- 2026-09-23 — fixed `Combat3D._on_card_tapped` picking a melded
   card's HitCircle face (slider vs. tap chain) by `card_climb_for(card) >=
   SLIDER_CLIMB` alone, ignoring `timed_hits`: melding Winch (grip 2) with
   Satchel Charge (timed_hits 3) — both in the Goblin Engineer's own pool,
