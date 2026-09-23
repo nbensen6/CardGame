@@ -240,6 +240,12 @@ func _poll_popup(v: Node) -> void:
 func _wait_and_poll(v: Node, n: int) -> void:
 	for _i in n:
 		await process_frame
+		# Same freed-`v`-mid-wait crash _drive_timing's own poll call now
+		# guards against (2026-09-23) -- a scene change (the boss finally
+		# dying, once _drive_timing's timing fix let hits land at all) can
+		# free `v` between one frame and the next.
+		if not is_instance_valid(v):
+			return
 		_poll_popup(v)
 
 
@@ -667,7 +673,19 @@ func _drive_timing(v: Node) -> void:
 		if absf(off) < 0.02 and hit < (circle.get("_notes") as Array).size():
 			await _click(circle.call("_screen", hit))
 		await process_frame
-		_poll_popup(v)
+		# `v` (the whole Combat3D view) can be freed by a scene change --
+		# the boss dying mid-timing-drive and cutting to the reward screen,
+		# now actually reachable now that hits land at all -- BETWEEN the
+		# await above and here, which the loop's own `is_instance_valid(v)`
+		# condition only re-checks at the top of the NEXT iteration. Calling
+		# `_poll_popup(v)` with a freed `v` crashes at the engine's own
+		# argument-type check before `_poll_popup`'s internal
+		# `is_instance_valid` guard ever runs (found 2026-09-23, once hits
+		# started landing for the first time: SCRIPT ERROR "previously
+		# freed" at this exact line, cascading into `_wait_and_poll` right
+		# after). Guard here too, not just inside the callee.
+		if is_instance_valid(v):
+			_poll_popup(v)
 	Engine.time_scale = 1.0
 	if not is_instance_valid(v):
 		return   # the fight ended on that hit and its screen is gone
@@ -678,7 +696,8 @@ func _drive_timing(v: Node) -> void:
 		guard += 1
 		await _click((tc as Control).get_global_rect().get_center())
 		await _frames(3)
-		_poll_popup(v)
+		if is_instance_valid(v):
+			_poll_popup(v)
 	Engine.time_scale = 1.0
 
 
@@ -891,7 +910,12 @@ func _watch_hop(v: Node, me: int, climb_from: Vector3) -> void:
 				if p.x < -2.0 or p.y < -2.0 or p.x > screen.x + 2.0 or p.y > screen.y + 2.0:
 					offscreen_samples += 1
 		await RenderingServer.frame_post_draw
-		_poll_popup(v)
+		# Same freed-`v`-mid-await guard as _wait_and_poll/_drive_timing
+		# (2026-09-23) -- this loop can run for a while (guard cap 300,
+		# more at HOP_TIME_SCALE), long enough for a scene change to free
+		# `v` before the next poll.
+		if is_instance_valid(v):
+			_poll_popup(v)
 		if is_instance_valid(node) and shots < 24:
 			var img := root.get_viewport().get_texture().get_image()
 			img.save_png("%s/hop_%03d_%02d.png" % [_out, _step, shots])
