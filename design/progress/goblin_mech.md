@@ -310,15 +310,112 @@ here.
 ![[frames/artist/2026-09-23-goblin-mech-goggle-strap-before-after.png]]
 ![[frames/artist/2026-09-23-goblin-mech-infight-before-after.png]]
 
+## Where it stood after pass 4
+
+37/50, all 4 passes used — this asset was at the loop's pass limit, not a
+plateau call. Below the 42 hunter stop line. Nick lifted the 4-pass cap for
+both fight hunters the same day
+(`requests/2026-09-23-0325-artist-to-nick-hunters-at-pass-cap-below-stop-line.md`),
+which is what makes pass 5 below a legitimate pass rather than a cap
+violation.
+
+---
+
+## Pass 5 — artist lane, 2026-09-23
+
+Started from the two candidates pass 4 left open (wrist-joint curvature,
+claw/piston distinctness). Full six-view capture (`look.sh goblin_mech 5`)
+and a close look at both found neither holds up as a real defect: the wrist
+limb's `seg=10` cap (pass 4's own fix) already reads as a shallow, continuous
+seam into the boxes on both sides in `_side.png`/`_form.png`, and the
+claw/piston box reads connected to the wrist chain in every isolated view —
+no fix applied to either, a real "checked, not a defect" finding rather than
+a silent skip. Also checked whether the CHARCOAL hose ring (the loop
+encircling the upper-arm joint) reads as a stray disconnected line in
+`_side.png` — it does, clearly, because the ring lies nearly flat in the
+model's XY plane and only presents its full loop face-on (top/front/¾); from
+pure profile it collapses to a thin edge. Ruled this out the same way pass
+3 ruled out the exhaust pipe's top-down separation: the live fight camera
+(`state=3d`/`3dgrip`/`3dstrike`, checked across several camera states this
+pass) never puts a hunter in a pure side-profile relative to itself — a
+`look.py` diagnostic angle the player never sees. Not fixed, not filed.
+
+**What this pass actually found and fixed: the rig's own darkest two tones
+are a functional tie, and this fight's toon shading pushes both toward
+losing their "machined plate" read.**
+
+Sampled the palette directly off `colormap_base.png` (the same technique
+`frog.md`'s pass 7 used to find its own weakest boundary): GRAPHITE and
+CHARCOAL — used on this rig for the compressor box and the hose ring,
+respectively, its two largest single-colour masses — sample at luminance
+59.4 and 56.4, a 3-point difference, functionally the same value despite
+being named as two different swatches. STONE and PEWTER, this same rig's
+own established mid-tones (upper-arm limb, wrist limb, claw box, wrist box),
+sample at 114.1 and 139.5. The file's own header states the rig's whole job
+is bevelled boxes that "catch a bright line along each edge and read as
+machined plate" — a toon-shaded bevel highlight needs headroom above its
+base tone to read, and GRAPHITE/CHARCOAL start closer to the shader's own
+shadow floor than any other rig tone.
+
+**First attempt at verifying this in the actual fight was wrong, and I'm
+recording the mistake rather than quietly redoing it.** A mid-strike shot
+(`state=3dstrike slot=1`) sampled a dark pixel near the goblin at (600,410),
+18.4 luminance, against a jackal-body sample at 4.6 — a 13.8 gap, read at
+the time as "the rig disappears against the beast." Applied the fix, re-shot
+the identical camera state, and the sampled pixel was **pixel-identical,
+before and after** — proof the fix didn't touch whatever was actually there.
+Ran the project's own diagnostic-recolour check (all rig tones forced to
+ICE, matching pass 3/4's technique) and rebuilt: the sampled point turned
+out to be the jackal's own wing membrane in shadow, not the rig at all — in
+this specific pose the rig is mostly self-occluded behind the goblin's own
+torso, only a sliver of the compressor lid visible. The camouflage claim for
+*this exact pose* was false, built on a misidentified pixel, and is
+withdrawn as stated. Worth leaving in the record: sample the diagnostic
+recolour BEFORE trusting a raw in-game pixel coordinate, not after — this
+pass did it backwards once and should not have.
+
+**What actually holds up, verified properly:**
+
+- **Isolated renders (deterministic, no animation drift).** `_front.png`
+  before/after: the compressor box and hose ring are visibly, measurably
+  lighter — `_sil.png` pixel-identical (`numpy.array_equal`, colour-only,
+  confirmed), `1378` tris unchanged both builds. A pixel diff over the
+  region that actually changed (3065px, bbox in `_front.png`) shows a real
+  but shader-compressed shift: mean luminance 79.3 → 86.2 (+6.9), not the
+  ~55-point gap the raw swatch numbers alone would suggest — the toon
+  shader's own shadow/highlight banding compresses how much of the base
+  albedo difference survives into the rendered pixel, the same kind of
+  "flat render oversold it" gap the arena pass already found once for this
+  fight's lighting. Reported as the real, smaller number, not the bigger one
+  that was never actually measured in a render.
+- **Live fight camera, a real pose this time.** `state=3dgrip slot=1` puts
+  the goblin standing on a foothold in the open, unoccluded, against both a
+  light foothold rock and the jackal's dark leg — confirmed a real object
+  this time (not repeated the pixel-coordinate mistake above; read directly
+  off the crop, not a blind sample). Before/after crop shows the same
+  compressor-box/ring lightening as the isolated render, smaller at true
+  size but visible, no regression to anything else in frame.
+
+**Score.** Colour 7 → 8: a real, verified (if modest, and initially
+mis-verified once before being corrected) lightening of the rig's two
+darkest, functionally-tied tones, on the line the model's own docstring
+calls its job. Sil/Prop/Hygiene/Style untouched — no geometry, no part
+count, no silhouette change (`_sil.png` proves it). **37 → 38/50.**
+
+![[frames/artist/2026-09-23-goblin-mech-rig-value-front-before-after.png]]
+![[frames/artist/2026-09-23-goblin-mech-rig-value-34-before-after.png]]
+![[frames/artist/2026-09-23-goblin-mech-rig-value-infight-before-after.png]]
+
+`ALL TESTS PASSED`. Playtest (`mode=play`, `cinder_jackal`, 40 steps)
+re-run against the rebuilt model — see `## Now` in `status/artist.md` for
+the result and whether anything fired.
+
 ## Where it stands, still open for the next pass
 
-37/50, all 4 passes used — this asset is at the loop's pass limit, not a
-plateau call. Below the 42 hunter stop line; per `asset-loop.md` this asset
-is done for now and would need a Nick call to spend a 5th pass on it.
-Lowest lines: Prop, Hygiene, Colour, all still 7. Candidates for whoever
-picks this up again (not diagnosed, and only worth doing if Nick lifts the
-4-pass cap): the wrist joint's rounded cap still reads as a slightly
-different curvature from the boxes it bridges (a smaller version of this
-pass's own finding); the claw/piston assembly at the feet, connected in
-mesh terms but still a visually distinct mass from the rig body in
-`_side.png`, same open question pass 3 left it at.
+38/50, cap lifted, still below the 42 hunter stop line. Lowest lines: Prop,
+Hygiene, both 7 (Colour moved to 8 this pass). Two candidates checked this
+pass and ruled non-issues (wrist-joint curvature, claw/piston distinctness)
+— do not re-open without a fresh reason. The hose ring's side-profile
+collapse is real but a `look.py`-only angle, same status. Nothing newly
+diagnosed for pass 6; whoever picks this up next should look for a fresh
+defect rather than assume one of the above is still open.

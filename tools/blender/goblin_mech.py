@@ -59,7 +59,19 @@ b.box((0.0, -0.190, 0.605), (0.150, 0.038, 0.140), UMBER, bevel=0.024)  # apron
 # so it sat behind the head in every view instead of hung off the rig's
 # shoulder. Shifted +0.30 in X, with the lid and exhaust it carries moving as
 # one piece with it, so nothing mechanical crosses behind the head.
-b.box((0.30, 0.278, 0.800), (0.145, 0.098, 0.152), GRAPHITE, bevel=0.026)
+#
+# GRAPHITE -> STONE (pass 5): in the actual Cinder Jackal fight, this box sat
+# against the beast's own near-black body/wing (sampled in-game: rig pixel
+# luminance 18.4 vs jackal-body 4.6, a 13.8-point gap - weaker than the
+# weakest boundary the frog's own pass 7 found and fixed, 18.8, on the one
+# model half whose whole job is to read as "an enormous rig", per this
+# file's own header). GRAPHITE and CHARCOAL are this palette's two darkest
+# greys (59.4/56.4 luminance, functionally the same value) and the toon
+# shader's shadow band crushes both to near-black against a dark backdrop.
+# STONE (114.1) is already this rig's own established colour (upper-arm
+# limb, claw box) - no new hue, just moved the biggest box off the two
+# darkest ties.
+b.box((0.30, 0.278, 0.800), (0.145, 0.098, 0.152), STONE, bevel=0.026)
 b.box((0.30, 0.278, 0.960), (0.106, 0.078, 0.030), PEWTER, bevel=0.013)   # lid
 b.limb([(0.412, 0.330, 0.880), (0.422, 0.398, 0.995), (0.440, 0.392, 1.088)],
        [0.044, 0.040, 0.036], PUMPKIN, seg=5)  # exhaust; seg 6->5, pass 4 budget
@@ -98,7 +110,11 @@ for dz in (-0.048, 0.048):                                              # piston
 # minor 4->3 (pass 4): ruled out as the zigzag's cause by the same
 # diagnostic recolour above, so its own roundness costs nothing that was
 # scored; freed 24 tris toward the two limb caps' seg 6->10 above.
-b.ring((0.384, -0.020, 0.690), (0.158, 0.158, 0.042), CHARCOAL, 12, 3,
+#
+# CHARCOAL -> STONE (pass 5): same dark-tie-against-the-jackal fix as the
+# compressor box above - this ring is the rig's other big CHARCOAL mass, and
+# the same near-black-on-near-black loss applies to it in-fight.
+b.ring((0.384, -0.020, 0.690), (0.158, 0.158, 0.042), STONE, 12, 3,
        rot=(0.10, 0.0, 0.0))
 
 b.limb([(-0.290, -0.010, 0.830),

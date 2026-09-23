@@ -3,12 +3,114 @@ tags:
   - agent-status
 agent: artist
 updated: 2026-09-23
-working_on: no open to:artist request; frog pass 8, 41→43/50 — a dedicated shoulder ball on the foreleg (same technique as pass 5's haunch knee ball) finally breaks the silhouette there, clearing the 42 hunter stop line; three tried-and-looked-at attempts before landing one that reads as a shoulder rather than a glued-on lump; next run: frog is past its stop line, so move to goblin_mech (37/50) or open the fixer rig-support request for a real Meshy hunter
+working_on: no open to:artist request; goblin_mech pass 5 (cap lifted by Nick), 37→38/50 — the rig's two darkest, functionally-tied greys (GRAPHITE/CHARCOAL, the compressor box and hose ring) moved to STONE, this rig's own established mid-tone, so the "machined plate" bevel read the file's own docstring calls for has headroom against this fight's toon shadow band; a first in-game verification attempt was WRONG (a misidentified pixel, corrected via diagnostic recolour, written up honestly) before landing a real one; wrist-joint curvature and claw/piston distinctness (pass 4's two open candidates) checked fresh and ruled non-issues, not fixed; next run: goblin_mech still below the 42 hunter stop line, look for a fresh defect rather than re-open either ruled-out candidate
 ---
 
 # artist
 
 ## Now
+
+No open `to: artist` request this run (checked every file's frontmatter).
+Environment fresh: Godot 4.7.1 + `--import`; Blender came from `apt install
+blender` (4.0.2) again — `download.blender.org` unreachable, same as every
+prior run.
+
+Picked up my own `## Next` from last run: `frog` cleared its stop line last
+pass, so moved to `goblin_mech` (37/50, cap lifted by Nick the same day as
+`frog`'s — see `requests/2026-09-23-0325-artist-to-nick-hunters-at-pass-cap-below-stop-line.md`).
+Pass 4's own `## Where it stands` named two open candidates for pass 5: the
+wrist joint's rounded cap reading as a different curvature from the boxes
+it bridges, and the claw/piston assembly at the feet reading as a distinct
+mass from the rig body. A full fresh six-view capture and close look at
+both found **neither holds up** — the wrist cap already reads as a shallow
+continuous seam (pass 4's own `seg=10` fix), and the claw/piston box reads
+connected in every isolated view. Checked, not fixed, not re-opened without
+a reason — written up in `design/progress/goblin_mech.md`.
+
+**What pass 5 actually found: this rig's two darkest tones are a
+near-tie, on the one line the model's own docstring says is the whole
+point.** Sampled `colormap_base.png` directly (the same technique frog pass
+7 used): GRAPHITE and CHARCOAL — the compressor box and the hose ring, this
+rig's two largest single-colour masses — sample at luminance 59.4 and 56.4,
+functionally identical, against STONE/PEWTER (this same rig's own other
+tones) at 114.1/139.5. The file's header states the rig's whole job is
+bevelled boxes that "read as machined plate" via a bright bevel edge — that
+needs headroom above the toon shader's shadow floor, and GRAPHITE/CHARCOAL
+start closest to it of anything on the model.
+
+**Got the first in-game verification wrong, and the record says so.** A
+mid-strike shot (`state=3dstrike slot=1`) sampled a dark pixel near the
+goblin — 18.4 luminance, an 13.8-point gap against a nearby jackal-body
+sample — and read that as "the rig vanishes against the beast." Applied the
+fix, re-shot the identical state, and the sampled pixel came back
+**pixel-identical, before and after**: proof whatever was at that
+coordinate wasn't touched by the edit. Ran this project's own
+diagnostic-recolour check (all rig tones forced to `ICE`, pass 3/4's
+technique) and confirmed it: that pixel was the jackal's own wing membrane
+in shadow, not the rig — in this specific pose the rig is almost entirely
+self-occluded behind the goblin's own torso. The camouflage claim for that
+exact pose is false and withdrawn, not quietly dropped.
+
+**What actually verified, properly this time:**
+- Isolated renders: `_sil.png` pixel-identical before/after (colour-only,
+  1378 tris both builds), `_front.png` shows the compressor box and ring
+  visibly lighter. A pixel diff over the region that changed (3065px) shows
+  mean luminance 79.3 → 86.2 — real, but far short of the raw 55-point
+  swatch gap; the toon shader's own shadow/highlight banding compresses
+  most of it away, the same "flat render oversold it" pattern the arena
+  pass found once already for this fight's lighting.
+- Live fight camera, a real unoccluded pose this time (`state=3dgrip
+  slot=1`, goblin standing in the open on a foothold): the same lightening
+  is visible, smaller at true size, no regression to anything else in
+  frame — confirmed by reading the crop directly, not repeating the earlier
+  blind-coordinate mistake.
+
+**Colour 7 → 8** (real, verified, modest, and initially mis-verified once
+before being corrected — reported that way, not cleaned up after the
+fact). Sil/Prop/Hygiene/Style untouched: no geometry, no tri-count change,
+`_sil.png` proves it. **37 → 38/50.**
+
+`ALL TESTS PASSED`. Playtest (`mode=play`, `cinder_jackal`, 40 steps)
+re-run against the rebuilt model: `PLAYTEST FAIL: 1 failing check(s)
+{ "hunter-off-marker": 3 }` at foothold 4, steps 36–38 — checked against
+what's on record, not assumed: *exact* same home/anchor coordinates
+(`home (5.335257, 13.825942, 7.030925)`, `anchor (3.901302, 13.825942,
+6.473297)`) as the already-open
+`2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`
+— confirmed pre-existing by coordinate match (a colour-only material edit
+cannot move where the game decides a shared foothold's anchor is), not
+re-filed.
+
+Full write-up, the luminance table, and the misidentified-pixel correction
+in full: `design/progress/goblin_mech.md`.
+
+![[frames/artist/2026-09-23-goblin-mech-rig-value-front-before-after.png]]
+![[frames/artist/2026-09-23-goblin-mech-rig-value-34-before-after.png]]
+![[frames/artist/2026-09-23-goblin-mech-rig-value-infight-before-after.png]]
+
+## Next
+
+`goblin_mech` is at 38/50, cap lifted, still below the 42 hunter stop line.
+Both candidates pass 4 left open are now checked and ruled non-issues — do
+not re-open either without a fresh reason (see `design/progress/goblin_mech.md`
+"Where it stands"). A `look.py`-only defect was also found and correctly
+left alone: the hose ring collapses to a thin line in a pure side-profile
+render, but the live fight camera never puts a hunter in that profile
+(checked across `3d`/`3dgrip`/`3dstrike` this pass), matching the same
+"diagnostic-angle-only, not a real defect" precedent pass 3 already set for
+the exhaust pipe. Next run, absent a request: look for a genuinely new
+defect on `goblin_mech` (six views again, fresh eyes) rather than assume
+either ruled-out candidate is still live, or move to the arena/frog if
+nothing new turns up. Still true from every prior run: a full Meshy-rigged
+hunter to match the jackal's own fidelity is blocked on rig-display game
+code (`tools/agents/COMMON.md`'s rule against forcing hunters through
+`ai_beast.py`) — a `to: fixer` request for rig support, not attempted
+blind.
+
+`python3 tools/meshy.py balance` not checked this run — a colour-only
+material edit on an existing model doesn't need it.
+
+## Old: hunters, pass 8 (frog)
 
 No open `to: artist` request this run (checked every file's frontmatter, not
 just the ones with obvious titles). Set up fresh (Godot 4.7.1 + `--import`;
@@ -661,6 +763,29 @@ brief in full before picking up either.
 
 ## Log
 
+- 2026-09-23 — pass 5 on `goblin_mech` (item 2, hunters, cap lifted),
+  37→38/50: checked pass 4's two open candidates (wrist-joint curvature,
+  claw/piston distinctness) fresh and ruled both non-issues, not fixed.
+  Found and fixed a real one instead — GRAPHITE and CHARCOAL, the rig's two
+  largest single-colour masses (compressor box, hose ring), sample at
+  near-identical luminance (59.4/56.4) against this same rig's own STONE/
+  PEWTER (114.1/139.5), leaving little headroom for the toon-shaded bevel
+  highlight the model's own docstring says is the rig's whole job. Moved
+  both to STONE, no new hue, no geometry/tri change (`_sil.png`
+  pixel-identical, 1378 tris both builds). **Got the first in-game
+  verification wrong and corrected it on the record**: an initial
+  mid-strike camouflage claim (13.8-luminance-gap sample) turned out to be
+  a misidentified pixel — the sampled point was pixel-identical before and
+  after the fix, and a diagnostic recolour confirmed it was the jackal's
+  own wing membrane, not the rig, which is mostly self-occluded in that
+  pose. Re-verified properly: isolated renders show a real (if
+  shader-compressed, +6.9 mean luminance) lightening, and a genuinely
+  unoccluded in-game pose (`state=3dgrip slot=1`) confirms it without
+  repeating the earlier mistake. Colour 7→8. `ALL TESTS PASSED`; playtest
+  re-run, the one failure (`hunter-off-marker`, foothold 4) matches the
+  already-open fixer request by exact coordinates, pre-existing. See
+  `design/progress/goblin_mech.md` and `## Now` above for the full
+  write-up, including the misidentified-pixel correction in full.
 - 2026-09-23 — pass 8 on `frog` (item 2, hunters), 41→43/50: fixed pass 7's
   own named candidate — the front legs never broke the silhouette the way
   the haunch does since pass 5. Three attempts, each looked at in a render
