@@ -948,6 +948,13 @@ func _init() -> void:
 	_test_backlog86_stand_offset_x_is_symmetric_across_sides()
 	_test_backlog86_stand_offset_x_widens_with_the_beast()
 	_test_backlog86_stand_offset_x_keeps_a_floor_gap_on_a_zero_width_beast()
+	# fixer, 2026-09-23: request 1423 (stones/camera/hunter-spacing) — the
+	# hunters were standing almost flush against the Cinder Jackal's front
+	# legs because the arena's own ground clamp was overriding the standoff
+	# distance. ground_standoff_for is the one rule now shared by both.
+	_test_backlog86_ground_standoff_for_grows_with_the_front_edge()
+	_test_backlog86_ground_standoff_for_matches_the_cinder_jackal_live_numbers()
+	_test_backlog86_ground_standoff_for_survives_the_arena_clamp_it_used_to_lose_to()
 	# fixer, 2026-09-23: a hunter floating off the Cinder Jackal at foothold 4
 	# (design/agents/requests/2026-09-23-0900-...) — _stand_on_model trusted
 	# the coarse in-game hull over an exact rung's own already-correct,
@@ -2513,6 +2520,7 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_lock_slot_for_falls_back_to_you_when_the_lock_is_stale()
 	_test_backlog86_lock_slot_for_falls_back_to_you_when_the_lock_was_never_set()
 	_test_backlog86_lock_slot_for_can_return_an_invalid_slot_when_you_are_also_invalid()
+	_test_backlog86_free_camera_allowed_matches_is_debug_build_exactly()
 
 	print("")
 	if _failures == 0:
@@ -21836,6 +21844,50 @@ func _test_backlog86_stand_offset_x_keeps_a_floor_gap_on_a_zero_width_beast() ->
 	_expect(is_equal_approx(gap, 0.60), "even a degenerate zero-width hull keeps the fixed 0.30 floor per side, so two hunters never collapse onto the exact same point")
 
 
+## fixer, 2026-09-23T21:xx EDT — request 2026-09-23-1423-nick-to-fixer-
+## stones-camera-and-hunter-spacing.md, the hunter-spacing half ("move the
+## characters away from the titan"). ground_standoff_for is the shared rule
+## both `_show_beast`'s arena sizing and `_place_hunters`' ground clamp now
+## call, so the arena can never again be sized too small to actually hold the
+## standoff it asks for — which is exactly what cramped the Cinder Jackal's
+## hunters against its legs (live: front edge z=16.49, hunters clamped to
+## z=17.59, a 1.1-unit gap that read as standing on the beast).
+func _test_backlog86_ground_standoff_for_grows_with_the_front_edge() -> void:
+	var near: float = Combat3D.ground_standoff_for(4.0)
+	var far: float = Combat3D.ground_standoff_for(16.49)
+	_expect(far > near, "a beast whose front edge sits further from the arena's own centre must stand its hunters further out too, or a bigger beast gets no more room than a small one")
+
+
+func _test_backlog86_ground_standoff_for_matches_the_cinder_jackal_live_numbers() -> void:
+	# The exact _beast_box.end.z read live off the fight (see the request's
+	# own frame): confirms the formula reproduces the real, deliberately
+	# generous standoff distance (26.72) rather than the old, clamped-away
+	# one (17.59) — the number that has to beat the arena's own 0.86 clamp
+	# for the fix to hold at all (proven by the next test).
+	var back: float = Combat3D.ground_standoff_for(16.494751)
+	_expect(is_equal_approx(snappedf(back, 0.01), 26.72), "ground_standoff_for(front_edge) must be front_edge * (1 + GROUND_STANDOFF) -- got %.3f" % back)
+
+
+func _test_backlog86_ground_standoff_for_survives_the_arena_clamp_it_used_to_lose_to() -> void:
+	# Reproduces the live bug end to end: given the Cinder Jackal's real
+	# _beast_box.end.z, the arena radius _show_beast now computes must be
+	# generous enough that _place_hunters' own `minf(back, _arena_r * 0.86)`
+	# clamp never actually bites -- before this fix, want_r came out as
+	# maxf(17.0, 20.45) = 20.45, so the clamp (17.59) beat `back` (36.95, the
+	# OLD size.z-based formula) and hunters landed almost flush against the
+	# beast's front legs.
+	var front_edge := 16.494751
+	var beast_height := 20.0
+	var box_size_x := 12.923840
+	var box_size_z := 32.984810
+	var back: float = Combat3D.ground_standoff_for(front_edge)
+	var want_r: float = maxf(beast_height * 0.85,
+		maxf(maxf(box_size_x, box_size_z) * 0.62, back / 0.86))
+	var stand_z: float = minf(back, want_r * 0.86)
+	_expect(is_equal_approx(stand_z, back), "the arena must be sized so its own ground clamp never overrides ground_standoff_for's distance -- got stand_z=%.3f, wanted back=%.3f" % [stand_z, back])
+	_expect(stand_z - front_edge > 9.0, "the live bug was a 1.1-unit gap that read as standing on the beast; the fix must give real clearance (>9 units here), not a marginal nudge -- got %.3f" % (stand_z - front_edge))
+
+
 ## fixer, 2026-09-23 — stand_z_for is the pure half of _stand_on_model's fix
 ## for the foothold-4 floating-hunter bug: an EXACT rung's anchor is already
 ## on the body's real surface (beast.py raycasts it there at export time,
@@ -26532,6 +26584,23 @@ func _test_backlog86_lock_slot_for_can_return_an_invalid_slot_when_you_are_also_
 	# case the caller depends on seeing.
 	_expect(Combat3D.lock_slot_for(4, 2, -1) == -1,
 		"with no valid lock and no valid 'you' either, the fallback chain ends on -1 rather than inventing a slot -- the caller is the one that turns that into Vector2.ZERO")
+
+
+## fixer, 2026-09-23 — request 1423's camera half ("the camera is LOCKED in
+## third person... A free camera is fine as a LOCAL dev tool... just not
+## something normal play can end up in"). free_camera_allowed is the gate
+## _unhandled_input and _fly both call before letting drag/pan/zoom/WASD
+## touch the camera. Nothing in this sandbox can produce an exported Release
+## build to flip OS.is_debug_build() itself, so this pins the RULE built on
+## top of it instead: not accidentally inverted, which would either lock the
+## camera in every dev/test run (this whole file's own screenshot/playtest
+## harness relies on drag/orbit=, e.g. state=3dfreecam) or leave it free in
+## a real release, the exact thing this request asked to close off.
+func _test_backlog86_free_camera_allowed_matches_is_debug_build_exactly() -> void:
+	_expect(Combat3D.free_camera_allowed(true) == true,
+		"a debug build (the editor, every agent/dev/test run here) must keep the free camera available, or state=3dfreecam and every drag/orbit= harness call breaks")
+	_expect(Combat3D.free_camera_allowed(false) == false,
+		"only a non-debug build (an exported Release template) may lose the free camera -- that is the whole point of the gate")
 
 
 ## backlog #86 duty 3 (thirty-seventh pass) -- EnetTransport. A NetLink never

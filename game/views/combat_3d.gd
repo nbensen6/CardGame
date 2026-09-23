@@ -324,9 +324,10 @@ const CAMERA_MAX_R := 2.40
 ## place the camera just behind them" — this is the "just behind" number.
 const OVER_SHOULDER := 4.2
 ## How far in FRONT of the beast the hunters stand on the ground, as a fraction
-## of the beast's own depth. They used to stand at 0.9 of its front face, which
-## is close enough to touch it and left nowhere to put a camera except further
-## out than the whole arena.
+## of the beast's own front-edge distance from the arena's centre (see
+## ground_standoff_for). They used to stand at 0.9 of its front face, which is
+## close enough to touch it and left nowhere to put a camera except further out
+## than the whole arena.
 const GROUND_STANDOFF := 0.62
 ## How long a coach hint stays up before dismissing itself. Long enough to read
 ## twice, short enough that it never becomes a thing you have to click away
@@ -1658,8 +1659,15 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	# inside; you could not see the beast for its own scenery. Height is the
 	# measure that means something, with a floor under it so a long beast still
 	# has ground beneath every part of itself.
+	# The arena has to be big enough to actually HOLD the ground standoff
+	# _place_hunters wants (ground_standoff_for below), or its own clamp there
+	# (`_arena_r * 0.86`) silently overrides it back down — exactly what
+	# cramped the Cinder Jackal's hunters against its legs (1.1-unit gap,
+	# request 2026-09-23-1423). Dividing by that same 0.86 here is what
+	# guarantees the clamp never has to bite.
 	var want_r := maxf(_beast_height * 0.85,
-		maxf(_beast_box.size.x, _beast_box.size.z) * 0.62)
+		maxf(maxf(_beast_box.size.x, _beast_box.size.z) * 0.62,
+			ground_standoff_for(_beast_box.end.z) / 0.86))
 	_arena_r = want_r
 	var ground := get_node_or_null("Ground") as CSGCylinder3D
 	if ground != null:
@@ -1878,6 +1886,10 @@ func _frame_beast() -> void:
 ## toward what you are facing instead of burrowing into the floor when you happen
 ## to be looking down. Picking a hunter puts it back.
 func _fly(delta: float) -> void:
+	# Same local-dev-tool gate as the drag/pan/zoom controls in
+	## _unhandled_input — WASD/QE is the other half of the free camera.
+	if not free_camera_allowed(OS.is_debug_build()):
+		return
 	var overlay := _detail != null and is_instance_valid(_detail)
 	if _rebinding != "" or DevConsole.open or overlay:
 		return                       # a menu owns the keyboard
@@ -1984,6 +1996,21 @@ static func lock_slot_for(lock_slot: int, hunter_count: int, me: int) -> int:
 	if lock_slot >= 0 and lock_slot < hunter_count:
 		return lock_slot
 	return me
+
+
+## The single gate _unhandled_input and _fly both call before letting the
+## free camera (drag/pan/zoom/WASD) touch anything — see their own doc
+## comments, and request 2026-09-23-1423-nick-to-fixer-stones-camera-and-
+## hunter-spacing.md. Takes the OS call as a parameter, like every other pure
+## rule in this file, rather than reading OS.is_debug_build() itself, so
+## run_tests.gd can pin the identity down (true stays allowed, false stays
+## blocked) with no exported Release build to actually flip that value —
+## nothing in the agents' sandbox can produce one. That does not prove
+## OS.is_debug_build() itself reads false in a real Steam export (verify
+## that once a build exists to check); it proves the RULE built on top of it
+## is not accidentally inverted.
+static func free_camera_allowed(is_debug_build: bool) -> bool:
+	return is_debug_build
 
 
 func _aim_camera(delta: float, snap: bool) -> void:
@@ -2396,6 +2423,24 @@ func _unhandled_input(event: InputEvent) -> void:
 	if key != null and key.pressed and key.keycode == KEY_F9:
 		print("DEV cards: %s" % Dev.cycle())
 		_render_hand()
+		return
+	# The free camera (drag to orbit, right/middle-drag to pan, wheel to zoom,
+	## WASD/QE to fly — see _fly()) is a LOCAL DEV TOOL, not something normal
+	## play can end up in. Nick, 2026-09-23 14:35 EDT: "in normal play the
+	## camera is LOCKED in third person on the active hunter — it does not
+	## drift back to the wide shot and the player cannot leave it... A free
+	## camera is fine as a LOCAL dev tool, just not something normal play can
+	## end up in." Gated on OS.is_debug_build(), the same switch
+	## console.gd's own doc comment already names for exactly this ("when
+	## there is a build to ship, gate it on OS.is_debug_build()") — true here
+	## in the editor and every unexported dev/test run (verified: prints true
+	## under --headless), false only in an exported Release template. Without
+	## this, dragging or scrolling (_take_manual_control) is the ONLY way
+	## _user_framed/_yaw/_pitch/_dist ever move off the auto-follow shoulder
+	## shot _process already settles into on its own (want_ots there does not
+	## check _user_framed) — so gating the input is what actually locks the
+	## camera, not a change to the follow logic itself.
+	if not free_camera_allowed(OS.is_debug_build()):
 		return
 	if event is InputEventMouseButton:
 		var mb: InputEventMouseButton = event
@@ -2892,6 +2937,36 @@ static func stand_offset_x(anchor_x: float, side: float, beast_width: float) -> 
 	return anchor_x + side * (beast_width * 0.055 + 0.30)
 
 
+## How far out (world z, from the arena's own centre) a hunter stands at
+## Height 0, given the beast's own front-edge distance from that same centre.
+## The one rule both `_show_beast`'s arena sizing and `_place_hunters`'
+## ground clamp below now share — see the request this fixes,
+## 2026-09-23-1423-nick-to-fixer-stones-camera-and-hunter-spacing.md
+## ("move the characters away from the titan").
+##
+## `front_edge` off `_beast_box.end.z`, not off `size.z` (the old formula
+## here, before this fix): a beast's box is centred on the world origin, so
+## `end.z` already IS roughly half of `size.z` for a squat creature and the
+## two read the same — but the Cinder Jackal is a long, low quadruped, most
+## of whose `size.z` runs BEHIND the front edge into the tail, not toward the
+## hunters at all. The old `end.z + size.z * GROUND_STANDOFF` counted that
+## tail twice: once in `end.z` implicitly (the box is symmetric, so `end.z`
+## already reflects the whole length) and again by adding a further
+## `GROUND_STANDOFF` of the SAME full length on top. Scaling off `front_edge`
+## alone still grows with a bigger beast, just without double-counting the
+## half of it hunters never stand anywhere near.
+##
+## This alone does not fix the cramped stand seen live (before this fix:
+## hunters at world z=17.59, front edge at z=16.49 — a 1.1-unit gap the
+## jackal's own legs read as "standing on it"): the ground clamp below
+## (`minf(back, _arena_r * 0.86)`) was overriding it, because `_arena_r`
+## (`_show_beast`'s `want_r`) was sized only off the beast's own footprint,
+## never off how far out a hunter needs to stand. Wiring the SAME formula
+## into `want_r`'s own max() is what stops the clamp from silently winning.
+static func ground_standoff_for(front_edge: float) -> float:
+	return front_edge * (1.0 + GROUND_STANDOFF)
+
+
 ## The pure decision inside _stand_on_model: which z a hunter's clearance
 ## should come from. An EXACT rung's anchor is already on the body's real
 ## surface — beast.py's export (`_decorate`, tools/blender/beast.py) raycasts
@@ -3231,9 +3306,10 @@ func _place_hunters(s: Dictionary) -> void:
 			# They used to stand at 0.9 of the beast's front face — close enough
 			# to touch it, which left no room behind them and forced the lens
 			# further out than the entire arena to see anything. Standing off by
-			# a fraction of the beast's own DEPTH scales with the creature, and
-			# the clamp keeps them on the floor rather than out in the apron.
-			var back: float = _beast_box.end.z + _beast_box.size.z * GROUND_STANDOFF
+			# a fraction of the beast's own front-edge distance scales with the
+			# creature (ground_standoff_for above), and the clamp keeps them on
+			# the floor rather than out in the apron.
+			var back: float = ground_standoff_for(_beast_box.end.z)
 			pos = Vector3(side * (_beast_box.size.x * 0.22 + 0.6), 0.0,
 				minf(back, _arena_r * 0.86))
 		elif not _climb_points.is_empty():

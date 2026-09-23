@@ -2,13 +2,87 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-23T15:01
-working_on: No open to:fixer request this run; full play/hover/hands baseline was clean. Found and fixed a real bug by reading core/combat.gd (item 3) -- can_play()'s pull_ally gate greyed out a card's ENTIRE effect whenever just the pull was out of range, even for Chain Lift/Tongue Grab which pair the pull with an unrelated Block/Rhythm grant. Narrowed the gate to only hard-block a pull_ally-only card (Grappling Arm, unchanged, matches Nick's own prior call); mixed cards now stay playable and the pull itself no-ops gracefully, same idiom every other ally field already uses. Three new tests, reproduced on the unfixed tree first, ALL TESTS PASSED.
+updated: 2026-09-23T17:38
+working_on: Took the high-priority stones/camera/hunter-spacing request. Locked the free camera (drag/pan/zoom/WASD) behind OS.is_debug_build() so normal play can never leave the over-the-shoulder shot -- it was already auto-following, dragging was the only escape hatch. Fixed hunters spawning almost flush against the Cinder Jackal's legs (1.1-unit real gap) -- the ground-standoff formula double-counted a long quadruped's tail; one shared rule (ground_standoff_for) now sizes the arena to actually hold the standoff it asks for -- live gap now 9.5 units. Stones: sent numbers/code-paths to the playtester, did not build -- gated on Nick answering 1434.
 ---
 
 # fixer
 
-## This run — 2026-09-23 15:01 EDT
+## This run — 2026-09-23 17:38 EDT
+
+- **Did:** took Nick's high-priority stones/camera/hunter-spacing request.
+  Locked the camera (drag/pan/zoom/WASD are now a dev-only tool, not
+  reachable in normal play) and fixed the hunters spawning almost inside
+  the Cinder Jackal's legs. Sent the playtester the technical numbers for
+  the stone-route piece rather than building it myself.
+- **Worked?** Yes on both halves I finished. Camera: the resting shot was
+  already over-the-shoulder on its own; the only way to break out of it was
+  the free-look controls, now gated to a debug build only (same convention
+  `console.gd` already names for this). Hunter spacing: real, measured
+  before/after — gap went from 1.1 units (legs reading as touching the
+  hunters) to 9.5 units. Frames and numbers in the request's `## Result`.
+- **Next:** stones stay unbuilt until Nick answers
+  `2026-09-23-1434-nick-to-playtester-how-the-stones-should-line-up.md` —
+  my numbers (arc sweet-spot band: 2.4-9.2 world units; the exact
+  `ai_beast.py` lines that place the sigil independent of route direction)
+  are sitting in `2026-09-23-1736-fixer-to-playtester-stone-route-
+  technical-numbers.md` for whoever builds it once he says yes.
+- **Need from you:** nothing blocking me. When you get to it: your answer
+  on 1434 is what unblocks the stones half of this same request.
+
+## Now
+
+Request `2026-09-23-1423-nick-to-fixer-stones-camera-and-hunter-spacing.md`
+left `taken` (not `done`) — camera and spacing are finished and proven,
+stones is still open on your answer elsewhere. Filed
+`2026-09-23-1736-fixer-to-playtester-stone-route-technical-numbers.md` to
+converge with the playtester's own proposal (already written, sitting on
+`to: nick` in 1434) rather than duplicating it.
+
+**Camera.** `_unhandled_input`'s drag/pan/zoom branch and `_fly()`'s
+WASD/QE now both open with `if not free_camera_allowed(OS.is_debug_build()):
+return`. `free_camera_allowed` is a one-line static (`return
+is_debug_build`) pulled out only so `run_tests.gd` can pin the boolean
+identity down — nothing in this sandbox can produce an exported Release
+build to flip `OS.is_debug_build()` itself, so the test proves the rule
+isn't accidentally inverted, not that the OS call reads false in a real
+Steam export (that still wants checking once a build exists). Verified
+`OS.is_debug_build()` prints `true` under plain `--headless` here, and
+re-ran `state=3dfreecam` after the change — drags at centre/sky-left/
+top-bar exactly as before (the ground-gap/gauge "DEAD" zones and the
+harness's own `SHOT TIMEOUT` are pre-existing, reproduced identically on
+`git stash` of my changes — not something I introduced).
+
+**Hunter spacing.** `GROUND_STANDOFF` (0.62) was always meant to hold
+hunters off the beast's front face, but the formula that used it
+(`_beast_box.end.z + _beast_box.size.z * GROUND_STANDOFF`) scaled the
+standoff by the beast's FULL nose-to-tail depth. For a squat beast that's
+roughly the same as scaling off the front-edge distance alone (the box is
+symmetric about the origin, so `end.z` already implies half of `size.z`) —
+but the Cinder Jackal is long and low, so `size.z` (32.98) is almost
+exactly double `end.z` (16.49), and the formula was counting the tail
+twice: once implicitly in `end.z`, again explicitly in the `* size.z`
+term. That inflated the WANTED standoff to 36.95 — plausible-looking, but
+irrelevant, because the arena radius (`_arena_r`, from `_show_beast`'s
+`want_r`) was sized only off the beast's own footprint (20.45) with no
+awareness of what the standoff formula wanted, so its own clamp
+(`_arena_r * 0.86` = 17.59) silently won and hunters landed at z=17.59 —
+1.1 units past the front edge (16.49). New rule,
+`ground_standoff_for(front_edge) := front_edge * (1.0 + GROUND_STANDOFF)`,
+called from BOTH `_show_beast`'s `want_r` (divided by the same 0.86 so its
+own clamp can never bite) and `_place_hunters`' ground clamp, so the two
+can't drift apart again. Live: hunters now at z=26.72, a 9.5-unit gap.
+Frames in the request. 5 new unit tests (`ground_standoff_for` grows with
+front edge / matches the live jackal numbers exactly / survives the arena
+clamp it used to lose to; `free_camera_allowed` pins both ways) —
+`ALL TESTS PASSED` before and after.
+
+Fresh sandbox, Godot 4.7.1 + `--import`. Started an 80-step `mode=play`
+playtest as extra verification beyond the unit tests and rendered frames
+above (which already meet the bar); it was still running when I wrapped up
+this run — if it surfaces anything, the next run picks it up.
+
+## Old — 2026-09-23 15:01 EDT, pull_ally gate over-blocking mixed cards
 
 - **Did:** fixed a card-playability bug — Chain Lift and Tongue Grab (real
   reward cards, Goblin Engineer/Frog) went completely unplayable, losing

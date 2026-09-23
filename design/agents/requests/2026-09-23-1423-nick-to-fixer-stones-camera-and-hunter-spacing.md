@@ -67,3 +67,66 @@ towards the top sigil of the beast.
   normal play.
 - The hunters do not start on top of the beast — there is space between them
   and it.
+
+## Result — fixer, 2026-09-23 17:38 EDT
+
+**Camera and hunter-spacing (mine alone): done.** Stones: not built yet —
+see below, gated on your answer to
+`2026-09-23-1434-nick-to-playtester-how-the-stones-should-line-up.md`.
+
+**Camera locked.** The resting shot was already auto-following the active
+hunter over-the-shoulder (`_process`'s `want_ots` — unconditional on
+`_focused`, not on whether you'd touched anything). The ONLY way out of it
+was the free camera: drag to orbit, right/middle-drag to pan, wheel to zoom,
+WASD/QE to fly, all live in normal play with nothing gating them. Gated all
+four behind `OS.is_debug_build()` — the same switch `game/ui/console.gd`'s
+own doc comment already names for exactly this case ("when there is a build
+to ship, gate it on OS.is_debug_build()"). True in the editor and every
+dev/test run (verified: prints `true` here under `--headless`), false only
+in an exported Release template — so it stays a working LOCAL dev tool
+(proven: `state=3dfreecam` still drags after the change, same as before)
+and is simply absent from anything actually shipped. Two new tests pin the
+gate itself isn't inverted (`free_camera_allowed`).
+
+**Hunter spacing fixed.** Root cause: the ground-standoff distance
+(`GROUND_STANDOFF`, `_place_hunters`) was computed off the beast's FULL
+nose-to-tail `size.z`, which double-counts a long quadruped's tail (the
+Cinder Jackal's box is symmetric about the origin, so `end.z` already
+reflects the whole length once) — so the intended standoff came out at
+36.95 units, but the arena itself (`_arena_r`, from `_show_beast`) was sized
+only off the beast's own footprint (20.45) and its own clamp
+(`_arena_r * 0.86` = 17.59) silently overrode the standoff back down to a
+**1.1-unit real gap** — the jackal's legs read as standing on top of the
+hunters. Fixed with one shared rule, `ground_standoff_for(front_edge)`,
+called from both the arena sizing and the ground clamp, so the arena can
+never again be too small to hold the standoff it asks for. Live now:
+**9.5-unit gap** (front edge z=16.49, hunters at z=26.72). Before/after,
+same camera, same beast:
+
+![[frames/fixer/2026-09-23-hunter-spacing-before.png]]
+![[frames/fixer/2026-09-23-hunter-spacing-after.png]]
+
+Proof: 5 new unit tests in `run_tests.gd` (`ground_standoff_for` grows with
+the front edge, matches the live jackal numbers exactly, survives the arena
+clamp it used to lose to; `free_camera_allowed` pins the debug-build gate
+both ways). `ALL TESTS PASSED`. Rendered `state=3d` before and after (above)
+and re-ran `state=3dfreecam` to confirm the dev drag tool still works
+unchanged. Commit: see `game/views/combat_3d.gd`,
+`game/tools/run_tests.gd` in this push.
+
+**Stones: not built.** Per this request's own text ("converge on one rule
+between you... do not just move the stones and call it done") I read the
+placement code and the Cinder Jackal's own climb-anchor data and sent the
+concrete numbers and code paths to the playtester —
+`2026-09-23-1736-fixer-to-playtester-stone-route-technical-numbers.md` — to
+sit alongside its own proposal in `...-1434-...`. I agree with the
+playtester's rule; nothing to arbitrate. That note is still `to: nick`,
+unanswered, and says explicitly the build only starts once you say yes —
+so I have not touched the climb anchors or stone code itself this run.
+Once you answer 1434, whoever picks this back up has the arc-distance
+band, the stone/anchor split, and the exact `ai_beast.py` lines the sigil
+placement would need to change, already gathered.
+
+Leaving this request `taken` rather than `done` — the camera and spacing
+halves are finished and proven above, but the stones half is still
+outstanding on your answer elsewhere.
