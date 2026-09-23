@@ -2,33 +2,129 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-23T17:15
-working_on: Added a new automatic check (hop-position-pop) that catches a hunter's position snapping or teleporting mid-jump, and caught two false alarms in the check itself before shipping it clean.
+updated: 2026-09-23T14:50
+working_on: Took your high-priority design request on the floating stepping-stones — found why the climb reads as scattered rocks (four holds sweep smoothly along the body, the fifth snaps back past the start) and wrote a concrete proposal with numbers and five reference games; waiting on your yes/no before filing build work.
 ---
 
 # playtester
 
-## This run - 2026-09-23 17:15 UTC
+## This run - 2026-09-23 14:50 EDT
 
-- Did: added a new automatic check that watches every hunter jump for a
-  snap or teleport mid-flight (JACKAL-BAR's "no pops" rule) — it had never
-  been checked before.
-- Worked?: yes, but it took work — my first two attempts at the check
-  raised false alarms on normal jump motion; caught both before shipping,
-  proved the final version really does catch a fake glitch when I make one.
-- Found no new bugs in the fight itself this run. A different, earlier
-  jump-placement bug (both hunters landing off-model at one shared ledge)
-  was already fixed and verified clean by a separate concurrent run — see
-  the entry below.
-- Next: nothing blocking; will keep watching the new check on future runs.
-- Need from you: nothing this run.
+- Did: took your high-priority request on how the floating stepping-stones
+  should line up and what makes climbing them feel good — read the code
+  that authors each beast's climb holds, played the fight, and wrote a
+  concrete proposal.
+- Worked?: Found the real cause of "scattered rocks" — it's not the
+  placement code, it's how the Cinder Jackal's own holds were hand-placed.
+  Four of the five sweep smoothly along the body (paw → shoulder →
+  haunch), then the last one (the sigil) jumps back past where the climb
+  started, breaking the route. My proposal: routes only ever go one
+  direction, hops stay inside the range the jump system already reads well
+  at, the next hold is always shown before you commit to it, and the wide
+  establishing shot (the one every fight opens on) has to sell the whole
+  route, not just the beast. Five reference games, one line each, in the
+  request.
+- Next: nothing built yet — the request says not to split the work between
+  me/the fixer/the artist until you've said yes. The fixer's own matching
+  request (placement/camera/hunter-spacing) is still open and hadn't sent
+  me its numbers when I wrote this, so I worked from the code myself
+  rather than wait; happy to fold its numbers in once it lands.
+- Need from you: read the proposal in
+  `2026-09-23-1434-nick-to-playtester-how-the-stones-should-line-up.md`
+  and say yes, no, or "try X instead" under its Result. Once you do, I'll
+  file the actual build requests to the fixer and artist.
 
 ## Now
 
-No open `to: playtester` request this run (checked every file's frontmatter —
-the board's other open items are all `to: nick` or `to: fixer`; the fixer's
+Took the open, high-priority `to: playtester` request — Nick's own design
+question on the floating stepping-stones
+(`2026-09-23-1434-nick-to-playtester-how-the-stones-should-line-up.md`),
+ahead of the usual baseline-and-one-item routine per COMMON.md ("requests to
+you come before your own work"). Set `status: taken` and pushed that before
+starting, per protocol. Fresh sandbox, Godot 4.7.1 + `--import`,
+`run_tests.gd`: `ALL TESTS PASSED`.
+
+**Checked for the fixer's promised numbers first.** Its matching request
+(`2026-09-23-1423-nick-to-fixer-stones-camera-and-hunter-spacing.md`) was
+still open and untaken, and no request from the fixer to me existed anywhere
+in `requests/`. Rather than sit idle waiting on another agent, read the
+placement code myself so the fixer has something concrete to react to.
+
+**Root cause, found in the beast's own build script, not the placement
+code.** `combat_3d.gd`'s `stone_point`/`foothold_anchor`/`stand_offset_x`
+just place a stone and a hunter wherever a beast's own climb anchors say to
+— they don't invent the route. The route is hand-authored per beast in
+Blender (`tools/blender/beast.py`'s `shelf()`/`anchor()`/`mark()`,
+`cinder_jackal.py`). Walked the Cinder Jackal's five authored holds in
+order: paw → shoulder → haunch sweeps smoothly in one direction (the
+authored depth coordinate moves the same way, monotonically, for four holds
+running), then the fifth hold — the sigil, authored near the snout — swings
+hard back past where the climb started. Four holds build a route; the fifth
+throws it away. That's a per-beast authoring mistake, not a system-level
+bug, which is good news for how cheap the fix is.
+
+Rendered the establishing wide shot and a mid-climb shot to show the result
+live rather than just describe it — both match Nick's "scattered rocks, not
+a route" complaint exactly: four small stones bunched in a loose vertical
+smear right in front of the jackal's face/neck, no readable shape.
+
+![[frames/playtester/2026-09-23-stones-route-wide-before.png]]
+![[frames/playtester/2026-09-23-stones-route-midclimb-before.png]]
+
+**Wrote the proposal into the request's own `## Result`.** Two rules: (1) a
+route only ever sweeps one direction — the fix for the Cinder Jackal
+specifically is re-authoring the sigil hold to continue the same sweep
+instead of reversing it; (2) ordinary hold-to-hold hops should stay inside
+the distance range `hop_arc` already scales proportionally at (roughly
+2.4-9 world units, read straight out of its own `clampf` call) rather than
+bunched at its floor, where every short hop gets the same minimum pop
+regardless of how close the stones actually are — which is exactly what
+makes tightly-packed stones look like bouncing in place. Also covered the
+climbing-feel half: always telegraph the NEXT hold before the card that
+sends you there is played, and the wide establishing shot has to sell the
+whole route since that's the shot the scattered-stones problem is most
+visible in. Five references (Shadow of the Colossus, Breath of the Wild,
+Jusant, Only Up! as the anti-pattern, Celeste, Sekiro), one line each on
+what we take and why. Full text in the request.
+
+Did not file build requests to the fixer or artist — the request is explicit
+that the split work waits on Nick's yes, so as not to ship two disagreeing
+halves if the fixer's own numbers land with different constraints.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | unchanged this run |
+| 2 | hunters land on the beast correctly | unchanged this run — no baseline regression expected, this run touched only a design document, no game code |
+| 3 | jump animation (squash/arc/landing) | unchanged this run |
+| 4 | camera | unchanged this run — the stones proposal touches how the wide shot should read, but nothing was built yet, only proposed |
+| 5 | nothing errors | `run_tests.gd`: `ALL TESTS PASSED`; full `mode=play` baseline still running as this note was written, see the next entry once it lands |
+
+One request answered this run (not filed — Nick's own, `to: playtester`,
+now `status: done` pending his yes/no):
+`2026-09-23-1434-nick-to-playtester-how-the-stones-should-line-up.md`.
+
+## Next
+
+Waiting on Nick's answer under the request's `## Nick's answer`/`## Result`
+heading. Once he says yes, file the actual build work: to the fixer
+(re-author the Cinder Jackal's sigil hold to continue the same sweep instead
+of reversing it, plus the hop-distance rule for future beasts) and to the
+artist (make the stone material read as "the path" from the wide
+establishing shot, not just up close — the Breath of the Wild reference).
+If the fixer's own numbers land first, fold them into the proposal rather
+than leave two disagreeing halves standing. `hop-position-pop` and
+`hunter-lost-mid-hop` remain live from recent runs with 0 real fails found —
+worth remembering they exist next time a climb or camera change lands. Item
+1 (card plays) still hasn't had a fresh human-eye look in several runs.
+
+## Old: 2026-09-23, hop-position-pop check added, full baseline clean
+
+No open `to: playtester` request that run (checked every file's frontmatter —
+the board's other open items were all `to: nick` or `to: fixer`; the fixer's
 own `2026-09-23-0715-...-shared-foothold-side-spacing-clears-the-model.md`
-is still open and untaken **as of the tip this container started from** —
+was still open and untaken **as of the tip that container started from** —
 see the note below and the entry right after this one: it has since landed
 and been verified clean by a concurrent playtester run). Fresh sandbox,
 Godot 4.7.1 + `--import`, `run_tests.gd`: `ALL TESTS PASSED`.
@@ -37,11 +133,11 @@ Godot 4.7.1 + `--import`, `run_tests.gd`: `ALL TESTS PASSED`.
 fix.** `hover` 0 flips, `hands` (1-10) 0 fails. `play` (80 steps): 3
 `hunter-off-marker` fails at foothold 4 (steps 34, 35, 71), exact same
 coordinates as every prior baseline before the fix — consistent with the
-pre-fix code this run's own container started from, not a regression and not
+pre-fix code that run's own container started from, not a regression and not
 news: a `git pull --rebase` at push time surfaced a concurrent playtester run
 that had already landed and verified the fixer's fix on a newer tip (see the
 `## Old` entry directly below this one for their write-up and frames).
-Checklist item 2 is closed on the current tip; this run's own numbers above
+Checklist item 2 is closed on the current tip; that run's own numbers above
 are the last pre-fix data point, kept here for the record rather than
 silently dropped.
 
@@ -110,7 +206,7 @@ this check was tuned against): a fresh full three-mode baseline against
 the rebased tip — `play` (80 steps) **0 failing checks at all**, `hover` 0
 flips, `hands` 0 fails. `hop-position-pop` stayed silent on all four climbs
 with the new, correct foothold-4 geometry (worst steps 0.49m-1.93m, same
-shape as before), and checklist item 2 is now genuinely closed on code this
+shape as before), and checklist item 2 is now genuinely closed on code that
 run itself tested, not just reported secondhand.
 
 - *Negative*: re-ran the same synthetic injection (`+Vector3(3,0,0)` at one
@@ -124,26 +220,14 @@ Checklist snapshot:
 
 | # | item | state |
 |---|---|---|
-| 1 | card plays read | unchanged this run (no fresh human-eye look; still worth returning to) |
-| 2 | hunters land on the beast correctly | **closed, verified twice** — a concurrent playtester run verified the fixer's fix clean first; this run independently re-verified it again after rebasing onto the same tip (0 `hunter-off-marker` fails, steps 34/71 both correct) |
+| 1 | card plays read | unchanged that run (no fresh human-eye look; still worth returning to) |
+| 2 | hunters land on the beast correctly | **closed, verified twice** — a concurrent playtester run verified the fixer's fix clean first; that run independently re-verified it again after rebasing onto the same tip (0 `hunter-off-marker` fails, steps 34/71 both correct) |
 | 3 | jump animation (squash/arc/landing) | **new automatic check added**, `hop-position-pop` — proved both directions (3 dev iterations, 2 false-positive versions caught and fixed before shipping); found no real pop in the wild, but the coverage is new and permanent, and closes the "no pops... mid-jump" half of JACKAL-BAR's Motion item |
-| 4 | camera | unchanged this run — `hunter-lost-mid-hop`/check 9 still 0 fails in the wild |
-| 5 | nothing errors | ok — `ALL TESTS PASSED`, no `script-error` this run |
+| 4 | camera | unchanged that run — `hunter-lost-mid-hop`/check 9 still 0 fails in the wild |
+| 5 | nothing errors | ok — `ALL TESTS PASSED`, no `script-error` that run |
 
-No new requests filed this run — nothing failed that wasn't already known
+No new requests filed that run — nothing failed that wasn't already known
 and owned by an existing open request.
-
-## Next
-
-`hop-position-pop` is live now with 0 real fails found — worth remembering it
-exists next time a climb/camera change lands, same as `hunter-lost-mid-hop`
-and `damage-popup-offscreen` before it; its constants (`POP_WINDOW=8`,
-`POP_WINDOW_MULTIPLIER=5.0`, `POP_FLOOR=0.7`) were tuned against exactly
-four real climbs this run — worth revisiting if a future run's climbs are
-much shorter/longer than these (26-110 samples) and the margins stop
-holding. Item 1 (card plays) still hasn't had a fresh human-eye look in
-several runs; worth returning to next. Item 2 (foothold-4) is closed per the
-concurrent run below — no further watch needed there.
 
 ## Old: 2026-09-23, shared-foothold-4 residual fixed and verified clean (concurrent run)
 
