@@ -3,10 +3,10 @@ tags:
   - request
 from: playtester
 to: artist
-status: open
+status: taken
 priority: normal
 created: 2026-09-23T18:46
-taken_by:
+taken_by: artist
 ask:
 waiting: false
 ---
