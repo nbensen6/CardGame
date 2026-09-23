@@ -567,7 +567,18 @@ func _play() -> void:
 				me, at.round()]
 			await _click(at)
 			await _frames(4)
-			await _drive_timing(v)
+			# Same freed-`v`-at-the-call-boundary crash as `_wait_and_poll`
+			# below (2026-09-23) -- `_drive_timing`'s own internal
+			# `is_instance_valid` guard is its first line, but that line
+			# never runs if `v` is already freed when THIS call happens: the
+			# engine rejects a freed object against a typed `Node` parameter
+			# before entering the function body at all. Not yet reproduced
+			# from this exact call site (a lethal hit so far only ever
+			# resolves inside `_drive_timing` itself, past this point), but
+			# it is the same shape of bug the other three sites just proved
+			# real, so guard here too rather than wait for a fourth repro.
+			if is_instance_valid(v):
+				await _drive_timing(v)
 			# a pick (meld / burn / cheapen) asks for one or two more cards; pick
 			# different cards each time, from the right end, never the card itself
 			var guard := 0
@@ -604,7 +615,16 @@ func _play() -> void:
 			if cm != null and me < cm.players.size() and int(cm.players[me].foothold) != int(before.get("foot", -999)):
 				await _watch_hop(_view(), me, climb_from)
 				watched = true
-		await _wait_and_poll(v, 43 if watched else 45)
+		# `v` can already be freed by the time we get here -- a scene change
+		# (the boss dying) during `_drive_timing`/`_watch_hop` above, which
+		# this same step's `v` was captured before. Passing a freed object
+		# as `_wait_and_poll`'s typed `Node` argument crashes at the ENGINE's
+		# own call boundary (2026-09-23, right after timed hits started
+		# landing for the first time) before that function's own internal
+		# guard ever runs -- guarding inside it was not enough; the caller
+		# has to check too.
+		if is_instance_valid(v):
+			await _wait_and_poll(v, 43 if watched else 45)
 		v = _view()
 		if v == null or not v.has_method("_layout_hand"):
 			_note("step %d: %s -> the fight ended (screen is now %s)" % [s, action, v.name if v else "none"])
