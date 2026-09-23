@@ -46,6 +46,19 @@ nothing.
 - You cannot see motion in one frame. For motion, render a strip of frames and
   tile them into one sheet.
 
+## 4b. Never end a run waiting on a background command
+
+A run that ends while a `run_in_background` playtest is still going **loses
+everything it did** — the 2026-09-23 16:05 artist run recoloured the
+footholds, rendered the before/after, and pushed nothing. The sandbox is
+destroyed when the run stops; there is no "resume automatically".
+
+So: **commit and push your work first, verify second.** If the playtest then
+contradicts the change, revert it in the next run — a pushed mistake is
+recoverable, an unpushed fix is not. Run the long verification in the
+FOREGROUND with a real timeout (`timeout: 600000` on the Bash call, 10 min)
+rather than backgrounding it; a 40-step playtest takes 3-5 minutes.
+
 ## 5. Write it down, then push
 
 - If you finished a request: `status: done` and fill its `## Result` (what
