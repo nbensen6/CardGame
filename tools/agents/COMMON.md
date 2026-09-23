@@ -11,6 +11,27 @@ The checkout arrives detached and often stale:
 
     git fetch --prune origin main && git checkout -B main FETCH_HEAD && git log --oneline -3
 
+## 0b. Claim the lease, or stop
+
+    tools/agents/lease.sh claim <you>
+
+**Exit 3 means another run of you is already going. Stop there — do nothing,
+push nothing, write nothing.** Say so in one line and end the run; the next
+scheduled fire picks the work up.
+
+Two of you cannot share a status note. On 2026-09-23 the hourly artist and a
+manual one overlapped, both rewrote `status/artist.md`, and the second spent
+its entire run untangling the merge instead of making anything. You cannot see
+the other run — separate sandboxes, separate machines — so the lease is a file
+in the repo, and the remote is the only thing that arbitrates.
+
+At the very end of your run, whatever happened, including when you gave up:
+
+    tools/agents/lease.sh release <you>
+
+A lease goes stale by itself after 40 minutes, so a run that dies mid-flight
+costs one skipped fire, never a wedged agent.
+
 ## 1. Set up (every run — the sandbox is fresh)
 
 Follow `design/agents/status/README.md`: download Godot, `--import` (required,
@@ -84,6 +105,7 @@ rather than backgrounding it; a 40-step playtest takes 3-5 minutes.
     says when it was filled in.
 - `git pull --rebase origin main`, then push. On a conflict in
   `design/agents/`, keep both sides. Check it landed: `git log origin/main -1`.
+- Last thing, always: `tools/agents/lease.sh release <you>`.
 
 ## Never
 
