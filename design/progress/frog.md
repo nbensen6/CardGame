@@ -17,6 +17,7 @@ crouched, not a ball.*
 | 1-control | 6 | 7 | 7 | 7 | 8 | **35** |
 | 4 | 7 | 7 | 7 | 7 | 8 | **36** |
 | 5 | 8 | 8 | 7 | 7 | 8 | **38** |
+| 6 | 8 | 8 | 8 | 8 | 8 | **40** |
 
 **Read that table with the control row in mind.** Passes 1 and 2 were scored
 through a broken camera, and most of the apparent climb from 30 to 35 is the
@@ -156,3 +157,104 @@ hit budget was tried and reverted — visibly worse). Colour at 7 has no
 open diagnosis in this file yet — worth a fresh look next pass rather than
 assumed. The front legs, never touched by this pass, are the other
 candidate: they don't yet break the silhouette the way the haunch now does.
+
+---
+
+## Pass 6 — artist lane, 2026-09-23
+
+Diagnosed and fixed both of pass 5's tied-lowest lines, Hygiene and Colour,
+one concrete fix each, `tools/blender/frog.py`. Sil/Prop/Style untouched.
+
+1. **Colour — a real dorsal marking, not a promise.** The file's own header
+   docstring has always claimed "GREEN now does what a darker shade should:
+   the eyelids and the back markings" — but no back marking ever existed in
+   the code. Every MINT mass (head, body, both leg pairs, the haunch) was
+   one flat colour; the parts separated only by pass 5's geometry notch, not
+   by colour at all, which is what "Colour & read" (do the palette swatches
+   separate the parts?) was scoring 7 for. Added one GREEN ball, `(0.00,
+   0.10, 0.80)` size `(0.24, 0.28, 0.15)`, pressed up into the body's own
+   back the same way the CREAM belly is pressed up from below — sized and
+   placed by solving the body/head ellipsoids' own surface equations first
+   (not eyeballed), so it pokes through only along the centre ridge and
+   stops short of the haunch ball's footprint in X, deliberately, so it
+   cannot paint over the pass-5 silhouette notch.
+2. **Hygiene — the nostrils never rendered.** Checked the front view for the
+   first time this pass (previous passes never looked closely at the snout)
+   and found no nostrils visible at all, on a part the file's own docstring
+   calls out as deliberate ("the only other feature on the face"). Solved
+   the head ellipsoid's own surface equation at the nostril's x/z: the
+   ball's front edge (`-0.828` at the old `y=-0.80`) sat `0.04`–`0.07` short
+   of the head's own surface there (`-0.864` to `-0.874` across the ball's
+   own z-extent) — the part was fully submerged, tris spent on zero pixels.
+   Moved to `y=-0.87`, clearing the surface by a margin at every z the ball
+   covers, not just its centre.
+
+**Budget.** The back marking is a new part: 100 triangles (`seg=10,
+ring=6`, kept deliberately low — it only needs to read as a soft patch, not
+a detailed feature). The nostril fix is a position change on the same two
+balls, no added tris. 4700 → 4800. This is a further, small increase on top
+of the frog's already-deliberate overage (see "ON THE BUDGET" in the
+script) — a real cost, and named as one rather than folded in quietly.
+
+**Verified, not assumed.**
+
+- `design/renders/frog_pass6_top.png` against pass 5: the back marking
+  reads clearly as a distinct GREEN saddle patch on the crown of the back,
+  visibly separate from the MINT sides — the top-down angle this fight's
+  camera partly shares. `design/renders/frog_pass6_front.png`: two small
+  dark nostril dots now visible on the snout, where pass 5 showed none.
+- **The silhouette did not move.** `frog_pass6_sil.png` is pixel-identical
+  to `frog_pass5_sil.png` (checked with `numpy.array_equal`, not eyeballed)
+  — the marking is a colour-only change from this angle, confirming it did
+  not touch the haunch notch pass 5 just won.
+- **In the real fight camera** (`state=3d`, `cinder_jackal`), rebuilt the
+  pass-5 model from `git stash` to get a true before, then the pass-6
+  model, both through the same camera. A pixel diff of the full frame shows
+  9246 differing px, of which only 254 fall inside a 180×180 crop centred
+  on hunter0 — the rest is the jackal's own idle ember-pulse on its legs
+  (unrelated, confirmed by location) plus a matching, smaller cluster of
+  diff pixels sitting exactly on hunter1's position too — both hunters
+  show the same real, localised change, not frame-wide noise. At true
+  combat distance the nostrils are a small but real win; the back marking
+  is faint at this size and this specific camera angle, honestly reported
+  as small rather than claimed as large.
+- **The party portrait does not show the win.** Rebuilt `frog.png`
+  (`portraits.py`) and compared at the true 34px party-panel size: the
+  portrait camera's angle does not reach far enough over the back to catch
+  the saddle, and the nostrils are too small to read at 34px either. The
+  Colour rubric explicitly asks about the 34px portrait, not just the
+  512px render or the fight camera — this pass does not move that specific
+  view, and that gap is left open rather than hidden. (Rebuilding all 32
+  portraits was a side effect of running `portraits.py` at all — reverted
+  every one except `frog.png`, kept in scope.)
+
+**Scores.** Hygiene 7→8: a genuine defect (tris spent on an invisible part)
+found and fixed, not a budget cut — the model is still over budget and
+that stays a known, deliberate trade, not newly resolved. Colour 7→8: real
+separation now exists in the cameras a player actually watches the fight
+through (the 3/4 scoring angle, the top-down angle, and — smaller but
+confirmed — the true in-fight camera), which is most of what "legible" has
+to mean for a hunter that's on screen the whole fight; held to 8 and not
+9 because the 34px party-portrait legibility named explicitly by the
+rubric is unmoved. +2 total (38→40), not a plateau.
+
+`ALL TESTS PASSED`; playtest (`mode=play`, `cinder_jackal`, 40 steps)
+re-run against the rebuilt model — see the Log line in
+`design/agents/status/artist.md` for the result.
+
+![[frames/artist/2026-09-23-frog-back-marking-top-before-after.png]]
+![[frames/artist/2026-09-23-frog-nostrils-front-before-after.png]]
+![[frames/artist/2026-09-23-frog-pass6-infight-before-after.png]]
+
+## Where it stands, still open for the next pass
+
+40/50, two passes into the lifted cap, 2 short of the 42 hunter stop line.
+Lowest line now Style alone, at 8, tied with everything else except it's
+never had a dedicated pass — no open diagnosis exists for it yet, worth a
+first real look. The 34px party-portrait gap this pass found and did not
+close (the back marking and nostrils both fail to read at that size, from
+that specific camera) is the other live candidate — either give the
+portrait camera a reason to show the back, or accept the in-fight read is
+what matters most and say so explicitly. The front legs, still untouched
+since pass 4, remain a third option: they don't yet break the silhouette
+the way the haunch now does.

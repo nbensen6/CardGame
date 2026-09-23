@@ -154,9 +154,32 @@ mirror(eye)
 mirror(foreleg)
 mirror(hindleg)
 
+# A dorsal saddle: GREEN pressed up into the body's own back so only a
+# shallow cap shows, from just behind the eyes to just short of the haunches.
+#
+# Pass 6 (2026-09-23): the docstring above has always promised this -
+# "GREEN now does what a darker shade should: the eyelids and the back
+# markings, reading as shading on a lighter animal" - but no back marking
+# ever existed in the code. Every MINT mass (head, body, both leg pairs, the
+# haunch) was one flat colour, so the masses separated only by the pass-5
+# geometry notch, not by colour at all; a monochrome animal is what "Colour &
+# read" scored 7 for. Sized and positioned so it pokes through only along the
+# centre ridge (checked against both the body's own surface equation and the
+# haunch ball's footprint before building, not eyeballed) - it stops short of
+# the haunch in X so it does not paint over the notch pass 5 just cut.
+b.ball((0.00, 0.10, 0.80), (0.24, 0.28, 0.15), GREEN, 10, 6)
+
 # Two nostrils, small and set into the snout. The only other feature on the
 # face, exactly as in the reference.
-mirror(lambda s: b.ball((0.085 * s, -0.80, 0.62), (0.028, 0.028, 0.024),
+#
+# Pass 6 (2026-09-23): these never showed. At y=-0.80 the ball's own front
+# edge (-0.828) sat 0.04-0.07 short of the head ellipsoid's own front surface
+# at this x/z (-0.864 to -0.874, worst case at the ball's own lower edge) -
+# checked against the head's surface equation, not assumed - so the whole
+# part rendered fully submerged: tris spent on a feature with zero pixels.
+# Pushed to -0.87 so the ball's front edge (-0.898) clears the head surface
+# by a margin at every z it covers, not just at its centre.
+mirror(lambda s: b.ball((0.085 * s, -0.87, 0.62), (0.028, 0.028, 0.024),
                         CHARCOAL, 8, 5))
 
 # ON THE BUDGET. This model runs over the 1400 hunter figure and the overage is

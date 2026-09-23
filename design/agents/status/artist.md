@@ -3,7 +3,7 @@ tags:
   - agent-status
 agent: artist
 updated: 2026-09-23
-working_on: no open to:artist request; picked up the hunters (item 2) with the pass cap lifted — frog pass 5, 36→38/50, still short of the 42 hunter stop line; next run either another frog pass or goblin_mech
+working_on: no open to:artist request; frog pass 6, 38→40/50 (Hygiene and Colour, the two lines pass 5 left tied lowest) — 2 short of the 42 hunter stop line; next run either a frog Style pass or goblin_mech
 ---
 
 # artist
@@ -11,11 +11,105 @@ working_on: no open to:artist request; picked up the hunters (item 2) with the p
 ## Now
 
 No open `to: artist` request this run (checked every file's frontmatter, not
-just the ones with obvious titles). Per the brief's own `## Next`, picked up
-the hunters (item 2) — Nick lifted `frog`'s and `goblin_mech`'s 4-pass cap
-2026-09-23, and `frog.md`'s own "Next, given another pass" already had a
-concrete, undone diagnosis waiting: the body reads as one round mass with
-the haunch merged into it.
+just the ones with obvious titles). Continued the hunters (item 2) from last
+run's own `## Next`: `frog` pass 6, diagnosing and fixing pass 5's two
+tied-lowest lines, Hygiene and Colour (`design/progress/frog.md`), 38→40/50.
+
+**Colour — the docstring's own back-marking promise, never built.**
+`frog.py`'s header has always said "GREEN now does what a darker shade
+should: the eyelids and the back markings, reading as shading on a lighter
+animal" — but no back marking existed anywhere in the code. Every MINT mass
+(head, body, both leg pairs, the haunch) was one flat colour; parts
+separated only by pass 5's geometry notch, never by colour, which is what
+"do the palette swatches separate the parts?" was scoring 7 for. Added one
+GREEN ball pressed up into the body's own back (same technique the CREAM
+belly already uses from below), sized and placed by solving the body/head
+ellipsoids' own surface equations first — not eyeballed — so it pokes
+through only along the centre ridge and stops short of the haunch ball's
+footprint in X, on purpose, so it can't paint over the notch pass 5 just
+won.
+
+**Hygiene — tris spent on a part with zero pixels.** Looked at the front
+view closely for the first time this pass and found the two nostril balls
+(small, deliberate, named in the file's own docstring) never actually
+showed — solved the head's own surface equation at their x/z and found
+their front edge sat 0.04-0.07 short of the head's real surface across the
+ball's whole extent: fully submerged, contributing nothing. Moved them out
+0.07 in Y so they clear the surface with margin. Cost: the back-marking ball
+is new geometry, 100 triangles (kept deliberately low-detail, `seg=10,
+ring=6` — it only has to read as a patch); the nostril fix is a position
+change on the same two balls, no added tris. 4700 → 4800, a further small
+increase on an already-deliberate overage, named as a real cost rather than
+buried.
+
+**Verified, not assumed.** `frog_pass6_top.png` shows the GREEN saddle
+patch clearly, separate from the MINT sides; `frog_pass6_front.png` shows
+both nostrils, where pass 5 showed none. The silhouette did not move —
+`frog_pass6_sil.png` is pixel-identical to pass 5's (`numpy.array_equal`,
+not eyeballed), confirming the marking is colour-only from that angle and
+didn't touch the haunch notch. In the real fight camera (`state=3d`,
+`cinder_jackal`), rebuilt pass 5 from `git stash` for a true before, then
+pass 6, same camera: the pixel diff is real and lands on both hunters
+(matching clusters at both hunter positions), with the rest of the frame's
+diff traced to the jackal's own idle ember-pulse (unrelated). At true
+combat distance the nostrils are a small real win; the back marking is
+faint there — reported as small, not oversold. **The 34px party portrait
+does not show either fix** — rebuilt it (`portraits.py`) and compared: that
+camera's angle doesn't reach far enough over the back for the saddle, and
+the nostrils are too small at that size. The Colour rubric explicitly names
+the 34px portrait, and this pass didn't move that specific view — left open
+rather than hidden. (Rebuilding `frog.png` rebuilds all 32 portraits as a
+side effect of running `portraits.py` at all; reverted every one but
+`frog.png` to stay in scope.)
+
+![[frames/artist/2026-09-23-frog-back-marking-top-before-after.png]]
+![[frames/artist/2026-09-23-frog-nostrils-front-before-after.png]]
+![[frames/artist/2026-09-23-frog-pass6-infight-before-after.png]]
+
+`ALL TESTS PASSED`. Playtest (`mode=play`, `cinder_jackal`, 40 steps)
+re-run against the rebuilt model: `PLAYTEST FAIL: 2 failing check(s)
+{ "hop-flat": 1, "hunter-off-marker": 1 }` — checked both against what's
+already on record, not assumed pre-existing. `hop-flat` (step 22) matches
+the same short-single-leg-hop sparse-sampling pattern this and other passes
+have already seen and left alone. `hunter-off-marker` (step 37, foothold 4)
+has the *exact* same home/anchor coordinates
+(`home (5.335257, 13.825942, 7.030925)`, `anchor (3.901302, 13.825942,
+6.473297)`) as the residual the fixer's own
+`2026-09-23-0900-playtester-to-fixer-hunter-floats-off-model-at-foothold-4.md`
+already named and re-filed as
+`2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`
+(both hunters sharing foothold 4 at once, a `stand_offset_x`/hull-width
+issue, nothing to do with a static-mesh position edit inside one hunter's
+own local space). Confirmed by coordinate match, not re-filed here.
+
+**Environment note for whoever runs next:** this run's background playtest
+runs stepped on each other — three separate `steps=40`/`steps=10` Godot
+processes ended up running at once on a 4-core box (each retry looked dead
+because an earlier status check raced a slow notification, not because the
+process had actually exited), and the resource contention is the likely
+cause of two of them crashing with an unhelpful bare `exit code 2`. The
+first run had in fact completed cleanly (`exit code 0`) the whole time;
+its output just arrived late. Check `ps aux | grep godot` for a still-live
+process before assuming a playtest run died and retrying — retrying an
+apparently-hung run is how three ended up racing each other here.
+
+## Next
+
+40/50 on `frog`, two passes into the lifted cap, 2 short of the 42 hunter
+stop line. `frog.md`'s own "Where it stands" names the candidates: Style
+(8, tied with everything else but never had a dedicated pass — no open
+diagnosis yet, worth a first real look), the 34px party-portrait gap this
+pass found and left open (the back marking and nostrils both fail to read
+from that camera at that size — either give the portrait camera a reason
+to show the back, or explicitly accept the in-fight read is what matters
+and say so), and the front legs, still untouched since pass 4 (don't yet
+break the silhouette the way the haunch now does). Next run, absent a
+request: continue `frog` toward 42, or move to `goblin_mech` (37/50, also
+cap-lifted, its own next candidates in `design/progress/goblin_mech.md`'s
+"Where it stands, still open") — either is valid, whichever gets looked at
+with fresh eyes.
+
+## Old
 
 **Pass 5 on `frog`** (`design/progress/frog.md`), 36 → 38/50. Applied both
 halves of that diagnosis in `tools/blender/frog.py`, geometry-position edits
@@ -70,21 +164,6 @@ pillow numpy` (for `silmetrics.py`, run outside Blender). Also needed
 `apt-get install -y libegl1 libgl1-mesa-dri libglx-mesa0` before
 `look.sh`/`screenshot.gd` would render — EGL, not just GL, is required even
 for Blender's own headless EEVEE captures on this image.
-
-## Next
-
-38/50 on `frog`, one pass into the lifted cap, still short of the 42 hunter
-stop line. `frog.md`'s own "Where it stands" names the next two candidates:
-Hygiene and Colour, tied at 7 (Hygiene has no fresh diagnosis — the
-over-budget note is old and was already tried/reverted; Colour has none at
-all yet, worth a first real look), and the front legs, untouched by this
-pass, don't yet break the silhouette the way the haunch now does. Next run,
-absent a request: either continue `frog` toward 42, or move to `goblin_mech`
-(37/50, also cap-lifted, its own next candidates written into
-`design/progress/goblin_mech.md`'s "Where it stands, still open") — both are
-valid, whichever gets looked at with fresh eyes.
-
-## Old
 
 Took the one open `to: artist` request:
 `requests/2026-09-23-0500-nick-to-artist-recreate-leap-style.md` — prove,
@@ -400,6 +479,23 @@ brief in full before picking up either.
 
 ## Log
 
+- 2026-09-23 — pass 6 of the asset loop on `frog` (item 2, hunters, cap
+  lifted), 38→40/50: fixed pass 5's two tied-lowest lines, one concrete fix
+  each. Colour: added the GREEN dorsal saddle the file's own docstring had
+  always promised but never built, solved against the body/head ellipsoids'
+  own surface equations so it reads on the back without touching the
+  pass-5 haunch notch (`frog_pass6_sil.png` pixel-identical to pass 5's).
+  Hygiene: found the two nostril balls were fully submerged inside the
+  head's own surface — tris spent on zero pixels — and moved them out
+  until they clear it. Cost: +100 tris for the new marking (4700→4800),
+  named as a real addition to the model's already-deliberate overage, not
+  buried. Verified in isolated renders, a live-fight before/after (real,
+  localised diff on both hunters), and the 34px party portrait — which
+  honestly does NOT show either fix, left open for a future pass rather
+  than claimed. `ALL TESTS PASSED`; playtest re-run, both failures
+  (`hop-flat`, `hunter-off-marker` at foothold 4) matched already-on-record
+  pre-existing issues by exact coordinate/pattern, not new. See
+  `design/progress/frog.md` and `## Now` above for the full write-up.
 - 2026-09-23 — pass 5 of the asset loop on `frog` (item 2, hunters, cap
   lifted), 36→38/50: applied the pass-4 diagnosis in full — narrowed the
   trunk ball's depth and pushed the haunch knee outward in X — so the
