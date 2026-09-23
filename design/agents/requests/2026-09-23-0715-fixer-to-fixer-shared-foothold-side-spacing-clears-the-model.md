@@ -3,7 +3,7 @@ tags:
   - request
 from: fixer
 to: fixer
-status: taken
+status: done
 priority: normal
 created: 2026-09-23
 taken_by: fixer
@@ -84,4 +84,55 @@ for whoever takes this, not necessarily both needed:
 
 ## Result
 
-(filled in by whoever takes it: what changed, which commit, how verified)
+**Neither of the two sub-questions above was the actual root cause.** Reproduced
+first, headless, with the request's own live numbers
+(`stand_offset_x(3.901302, +1.0, 12.92)` then `stone_point(...)`): got exactly
+the request's `home` (5.335, 13.826, 7.031)`, x-drift 1.434 against the check's
+own 1.06 tolerance — confirmed before touching anything.
+
+Dug into *why* the drift was 1.434 and not `stand_offset_x`'s own 1.0106
+(width*0.055+0.30): `stone_point()` — the function that pushes a standing
+point off the skin onto its floating stone, added the same day as the
+foothold-4 fix this request split off from — pushed **radially away from
+world origin** in the XZ plane (`Vector3(on_skin.x, 0, on_skin.z).normalized()
+* HUNTER_HEIGHT`), not forward off the body. That's fine near the spine
+(x≈0), but foothold 4's own anchor already sits well off-axis in x (3.9,
+it's the jackal's ear) even before any side spacing is added — so the radial
+push added its OWN ~0.42 units of x-drift on top of `stand_offset_x`'s 1.01,
+compounding to 1.434. Not a "narrow feature needs narrower spacing" problem
+(sub-question 1) and not a "one stone can't serve two hunters" problem
+(sub-question 2) — `stand_offset_x`'s spacing was already correct and the
+single centred stone already sits close enough to catch both sides once the
+extra drift is gone. The real bug was `stone_point` quietly adding lateral
+drift of its own to every anchor with nonzero local x, harmless everywhere
+tolerance had slack to spare, real exactly where a shared foothold used up
+that slack already.
+
+**Fix.** `stone_point()` now pushes purely forward (+z, `on_skin +
+Vector3(0, 0, HUNTER_HEIGHT)`) — the same "away from the body" direction
+`_front_of_beast`/`GROUND_STANDOFF` already use everywhere else in this file
+— so it can never add an x-component regardless of an anchor's own x. One
+function, no call-site changes needed (`_stand_on_model`, `_build_float_stones`,
+`_build_ledge_marks` all call it unchanged).
+
+**Proof.** Three new unit tests in `run_tests.gd`: `stone_point` only ever
+touches z; the push is exactly one `HUNTER_HEIGHT`; and the repro itself —
+`stand_offset_x` + `stone_point` at foothold 4's real anchor/width stays
+inside check 8's own tolerance formula. Reproduced on the unfixed function
+first (`git stash` on just `combat_3d.gd`): all three failed exactly as
+predicted (drift 1.434 vs tol 1.06). Restored the fix, reran: `ALL TESTS
+PASSED`.
+
+**Live playtest.** Full `mode=play beast=cinder_jackal steps=80` under
+`xvfb-run`: `report.md` shows **zero FAIL lines** — check 8
+(`hunter-off-marker`) never fires, including at step 34 where the HUD
+confirms both hunters at foothold 4 together (Frog "↑4/5", Goblin Engineer
+"↑4/5"). Frame at that exact moment: the side-shifted Goblin Engineer stands
+plausibly on the jackal's ear/mane, not hovering clear of the model and the
+Frog's stone like the request's own "before" crop showed.
+
+![[frames/fixer/2026-09-23-shared-foothold4-fixed-step034.png]]
+![[frames/fixer/2026-09-23-shared-foothold4-fixed-step034-crop.png]]
+
+Commit: pushed as part of this run (see `design/agents/status/fixer.md`'s
+`## Log` for the hash).

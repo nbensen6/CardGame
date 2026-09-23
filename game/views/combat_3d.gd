@@ -3309,13 +3309,27 @@ static func safe_ledge_marks(safe_heights: Array, climb_point_heights: Array) ->
 ## onto. Built here rather than modelled into each beast (Nick, 2026-09-23) —
 ## every boss gets them for free, they never deform with the body, and a jump
 ## target that hangs in the air reads as a jump target.
-## Where a floating stone hangs for a point on the beast's skin: pushed out
-## from the body's axis so it sits beside the flank, not inside it. Shared so
-## the jump ring and the stone can never drift apart.
+## Where a floating stone hangs for a point on the beast's skin: pushed
+## forward off the surface, same direction _front_of_beast/GROUND_STANDOFF
+## already treat as "away from the body" everywhere else in this file, so it
+## sits proud of the skin rather than embedded in it. Shared so the jump ring
+## and the stone can never drift apart.
+##
+## Used to push radially away from world origin in the XZ plane instead
+## (normalize on_skin.x/z, scale by HUNTER_HEIGHT). That reads as "away from
+## the model's own vertical axis" for a point near the spine, but every climb
+## anchor already carries its own real x (stand_offset_x's side spacing is
+## added on TOP of it before this runs) — so for an anchor already off-axis
+## in x, like foothold 4 on the Cinder Jackal's ear (anchor x=3.9), the radial
+## push added its OWN x-drift on top of stand_offset_x's already-budgeted
+## side spacing. Harmless alone (well under playtest.gd check 8's
+## tolerance), but compounding with a second hunter's side offset at a shared
+## foothold pushed the total past it —
+## 2026-09-23-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.
+## A pure forward push carries zero x-component, so it can never add to
+## stand_offset_x's own spacing regardless of an anchor's x.
 static func stone_point(on_skin: Vector3) -> Vector3:
-	var out := Vector3(on_skin.x, 0.0, on_skin.z)
-	out = out.normalized() * (HUNTER_HEIGHT * 1.0) if out.length() > 0.01 		else Vector3(HUNTER_HEIGHT, 0.0, 0.0)
-	return on_skin + out
+	return on_skin + Vector3(0.0, 0.0, HUNTER_HEIGHT)
 
 
 func _build_float_stones() -> void:

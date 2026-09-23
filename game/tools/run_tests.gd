@@ -953,6 +953,14 @@ func _init() -> void:
 	_test_backlog86_stand_z_for_trusts_the_anchor_on_an_exact_rung_even_past_a_bigger_hull_read()
 	_test_backlog86_stand_z_for_still_takes_the_hull_when_off_anchor_and_it_reaches_further()
 	_test_backlog86_stand_z_for_keeps_the_anchor_off_anchor_when_the_hull_reads_short()
+	# fixer, 2026-09-23: two hunters sharing a narrow foothold (foothold 4, the
+	# Cinder Jackal's own ear) -- stone_point's old radial-from-origin push
+	# added its own x-drift on top of stand_offset_x's side spacing, and the
+	# two together blew playtest.gd check 8's tolerance. Redirected the push
+	# to pure forward (+z), which can never touch x.
+	_test_backlog86_stone_point_never_shifts_x_or_y()
+	_test_backlog86_stone_point_pushes_forward_by_one_hunter_height()
+	_test_backlog86_shared_foothold_stays_inside_playtest_check_8_tolerance()
 	# backlog #86 duty 3 (this turn): hull_index_for, lifted out of
 	# _build_hull's own vertex scatter and _front_of_beast's lookup — the last
 	# untested piece of that family flagged by the previous duty-3 pass. The
@@ -21770,6 +21778,45 @@ func _test_backlog86_stand_z_for_keeps_the_anchor_off_anchor_when_the_hull_reads
 	var anchors := {3: Vector3.ZERO, 5: Vector3.ZERO}
 	var z: float = Combat3D.stand_z_for(anchors, 4, 6.47, 2.0)
 	_expect(is_equal_approx(z, 6.47), "off an anchor, a hull read SHORTER than the lerped z must still lose to maxf — the lerp already cleared the surface, unchanged from before this fix")
+
+
+## fixer, 2026-09-23 — stone_point used to push every standing point
+## radially away from world origin in the XZ plane (normalize on_skin.x/z,
+## scale by HUNTER_HEIGHT). That added its OWN x-drift on top of
+## stand_offset_x's already-budgeted side spacing whenever an anchor was
+## already off-axis in x, like foothold 4 on the Cinder Jackal's own ear
+## (anchor x=3.9) — harmless alone, but at a shared foothold the two combined
+## pushed the side-shifted hunter's total x-drift (1.43) past playtest.gd's
+## own check-8 tolerance (1.06, budgeted for stand_offset_x's push alone).
+## Fixed to push purely forward (+z), the same "away from the body" direction
+## every other clearance function in this file already uses (_front_of_beast,
+## GROUND_STANDOFF), so it can never add x-drift regardless of an anchor's
+## own x. See
+## design/agents/requests/2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md.
+func _test_backlog86_stone_point_never_shifts_x_or_y() -> void:
+	var p: Vector3 = Combat3D.stone_point(Vector3(3.9, 13.8, 6.47))
+	_expect(is_equal_approx(p.x, 3.9) and is_equal_approx(p.y, 13.8), "stone_point must only ever push a standing point forward (z), never sideways or vertically -- a sideways push here is exactly what compounded with stand_offset_x's own spacing and blew a shared foothold's tolerance")
+
+
+func _test_backlog86_stone_point_pushes_forward_by_one_hunter_height() -> void:
+	var p: Vector3 = Combat3D.stone_point(Vector3(3.9, 13.8, 6.47))
+	_expect(is_equal_approx(p.z - 6.47, Combat3D.HUNTER_HEIGHT), "the forward push is exactly one HUNTER_HEIGHT, the same distance the old radial push used, just redirected so it never touches x")
+
+
+func _test_backlog86_shared_foothold_stays_inside_playtest_check_8_tolerance() -> void:
+	# The live repro from the request: foothold 4 on the Cinder Jackal, both
+	# hunters sharing it (side +-1), the beast's own real width (12.92) and
+	# anchor. Before this fix, stand_offset_x's side push (1.01) plus
+	# stone_point's old radial x-drift (0.42) totalled 1.43, past playtest.gd
+	# check 8's own tolerance (width*0.055+0.30+0.05, budgeted for
+	# stand_offset_x alone) -- exactly the live FAIL the request recorded
+	# ("hunter at foothold 4 is 1.54m from its climb marker ... x-tol 1.06").
+	var anchor := Vector3(3.901302, 13.825942, 6.473297)
+	var width := 12.92
+	var side: float = Combat3D.stand_offset_x(anchor.x, 1.0, width)
+	var stood: Vector3 = Combat3D.stone_point(Vector3(side, anchor.y, anchor.z))
+	var tol: float = width * 0.055 + 0.30 + 0.05   # playtest.gd's own check-8 formula
+	_expect(absf(stood.x - anchor.x) <= tol, "a side-shifted hunter sharing foothold 4 must land within check 8's own tolerance of the anchor -- before this fix it drifted 1.43 against a 1.06 budget")
 
 
 ## backlog #86 duty 3 (this turn) — hull_index_for is the last untested piece

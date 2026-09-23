@@ -3,12 +3,67 @@ tags:
   - agent-status
 agent: fixer
 updated: 2026-09-23
-working_on: Took the high-priority end-turn-crash-at-sigil-solo-flip request. Root cause was NOT a race in the sense the playtester guessed (it's deterministic, just timing-*triggered*) — game_3d.gd's router removes and frees the current Combat3D view SYNCHRONOUSLY, mid-_end_turn(), whenever that End Turn is the one that ends combat, because _client.end_turn() resolves all the way through the host and back to state_updated.emit() before returning. _end_turn() then keeps going regardless and reaches _cam.look_at() on a camera that just left the tree. Fixed with a one-line is_inside_tree() guard on _focus_camera (same idiom location_3d.gd already uses for this exact router race), two new tests against a real combat_3d.tscn instance, pushed.
+working_on: Took the self-filed shared-foothold-side-spacing request (oldest open `to: fixer`, over the newer artist-filed hunter-display-path request). Root cause was neither of the request's own two sub-questions — `stone_point()` (the function that pushes a standing point onto its floating stone) pushed RADIALLY AWAY FROM WORLD ORIGIN in the XZ plane instead of straight forward off the body, so any anchor already off-axis in x (foothold 4 sits on the jackal's own ear, x=3.9) got its own extra x-drift on top of `stand_offset_x`'s side spacing — harmless alone, but the two together blew playtest.gd check 8's tolerance at a shared foothold. Fixed by making `stone_point` push purely forward (+z), the same direction every other clearance function in this file already uses. Three new unit tests (repro fails on the unfixed function, passes fixed), `ALL TESTS PASSED`. Live `mode=play steps=80`: zero FAIL lines, confirmed both hunters sharing foothold 4 at step 34 (HUD shows both "↑4/5") with the side-shifted Goblin Engineer now plausibly on the model. Pushed.
 ---
 
 # fixer
 
 ## Now
+
+Open `to: fixer` request
+`2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`
+— the oldest open request this run (self-filed two runs ago), taken over the
+newer `2026-09-23-1330-artist-to-fixer-hunter-display-path-has-no-toon-or-rig-support.md`
+per order-of-work "oldest first".
+
+**Reproduced first, headless**, with the request's own live numbers:
+`stand_offset_x(3.901302, +1.0, 12.92)` then `stone_point(...)` on that
+result reproduced the request's exact `home` (5.335, 13.826, 7.031) and
+x-drift (1.434 against the check's own 1.06 tolerance) before touching
+anything.
+
+**Found the cause, not the symptom.** The request's own two sub-questions
+(narrow `stand_offset_x`'s spacing at a narrow feature, or build a stone per
+side) both assumed the side-spacing math itself was too generous. It wasn't.
+`stone_point()` — added the same day as the foothold-4 z fix this request
+split off from, to push a standing point off the skin onto its floating
+stone — pushed **radially away from world origin** in the XZ plane
+(`Vector3(on_skin.x, 0, on_skin.z).normalized() * HUNTER_HEIGHT`), not
+forward off the body. Fine near the spine (x≈0); wrong the moment an anchor
+already sits off-axis in x on its own, which foothold 4's anchor does (3.9,
+it's the ear) even before any side offset is added. That radial push added
+its OWN ~0.42 units of x-drift on top of `stand_offset_x`'s already-correct
+1.01, compounding past the tolerance. `stand_offset_x`'s spacing was never
+the problem, and the single centred stone was already close enough to serve
+both sides once the extra drift was gone — building a second stone (the
+request's sub-question 2) would have masked this, not fixed it.
+
+**Fix.** `stone_point()` now pushes purely forward (+z), the same "away from
+the body" direction `_front_of_beast`/`GROUND_STANDOFF` already use
+everywhere else in this file, so it can never add an x-component regardless
+of an anchor's own x. One function; every call site (`_stand_on_model`,
+`_build_float_stones`, `_build_ledge_marks`) is unchanged.
+
+**Proof.** Three new unit tests in `run_tests.gd`: `stone_point` only ever
+touches z, not x/y; the push is exactly one `HUNTER_HEIGHT`; and the repro
+itself — `stand_offset_x` + `stone_point` at foothold 4's real anchor/width
+stays inside check 8's own tolerance formula. Ran all three against the
+unfixed function first (`git stash` on just `combat_3d.gd`): failed exactly
+as predicted (1.434 vs 1.06). Restored the fix, reran: `ALL TESTS PASSED`.
+
+**Live playtest.** Full `mode=play beast=cinder_jackal steps=80` under
+`xvfb-run`: `report.md` — zero FAIL lines. HUD confirms both hunters shared
+foothold 4 at step 34 ("↑4/5" on both); the frame shows the side-shifted
+Goblin Engineer standing plausibly on the ear/mane, not clear of both the
+model and the Frog's stone the way the request's own "before" crop showed.
+
+![[frames/fixer/2026-09-23-shared-foothold4-fixed-step034-crop.png]]
+
+Commit: pushed as part of this run (see `## Log` below for the hash).
+
+## Old: 2026-09-23, end-turn-crash-at-sigil-solo-flip
+
+Took the high-priority end-turn-crash-at-sigil-solo-flip request. Root cause was NOT a race in the sense the playtester guessed (it's deterministic, just timing-*triggered*) — game_3d.gd's router removes and frees the current Combat3D view SYNCHRONOUSLY, mid-_end_turn(), whenever that End Turn is the one that ends combat, because _client.end_turn() resolves all the way through the host and back to state_updated.emit() before returning. _end_turn() then keeps going regardless and reaches _cam.look_at() on a camera that just left the tree. Fixed with a one-line is_inside_tree() guard on _focus_camera (same idiom location_3d.gd already uses for this exact router race), two new tests against a real combat_3d.tscn instance, pushed.
 
 Open `to: fixer` request `2026-09-23-1000-playtester-to-fixer-end-turn-crash-at-sigil-solo-flip.md`
 (the only high-priority open request this run, and a real engine-level
@@ -675,7 +730,20 @@ further either.
 
 ## Log
 
-- 2026-09-23 (latest) — took the high-priority
+- 2026-09-23 (latest) — fixed the shared-foothold-4 side-gap (self-filed
+  request, oldest open `to: fixer`). Root cause was neither of the request's
+  own two sub-questions: `stone_point()` pushed a standing point radially
+  away from WORLD ORIGIN in the XZ plane instead of straight forward off the
+  body, so an anchor already off-axis in x (foothold 4 is the jackal's own
+  ear, x=3.9) picked up its own extra x-drift on top of `stand_offset_x`'s
+  correct side spacing, compounding past playtest.gd check 8's tolerance at
+  a shared foothold. Fixed by making `stone_point` push purely forward (+z).
+  Three new unit tests (repro fails unfixed, passes fixed), `ALL TESTS
+  PASSED`. Live `mode=play steps=80`: zero FAIL lines; frame at step 34
+  (both hunters confirmed at foothold 4 via the HUD) shows the side-shifted
+  Goblin Engineer plausibly on the model, not floating clear of it. See
+  `## Now` and the request's own `## Result`.
+- 2026-09-23 — took the high-priority
   `end-turn-crash-at-sigil-solo-flip` request, a real engine-level crash.
   Root cause: `_end_turn()` calls `_client.end_turn()` first, which resolves
   SYNCHRONOUSLY all the way through the host and back to
