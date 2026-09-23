@@ -44,7 +44,14 @@ b = Build()
 # --------------------------------------------------------------------- body
 # ONE mass, and everything else grows out of it. Wide, low, and deeper than it
 # is tall so the back domes over. This is the whole silhouette from behind.
-b.ball((0.00, 0.06, 0.50), (0.64, 0.60, 0.42), MINT, 15, 10)
+#
+# Pass 5 (2026-09-23): narrowed in Y (0.60 -> 0.50). At 0.60 the trunk's
+# front-to-back depth was close enough to its own width (0.64) that it read
+# as a round mass rather than a body with a haunch bulging off it - the
+# pass-4 diagnosis ("body is a single large round mass and the haunch merges
+# into it"). Narrowing depth only, not width or height, keeps the "wide, low"
+# read this comment already calls for.
+b.ball((0.00, 0.06, 0.50), (0.64, 0.50, 0.42), MINT, 15, 10)
 
 # The head. Pushed forward and UP into the body by well over a third of its own
 # radius, so the two read as one continuous swell rather than a head set on a
@@ -126,10 +133,17 @@ def hindleg(s):
     The knee ball is deliberately large and buried halfway in the trunk: in the
     reference the haunch is not a separate limb segment, it is a bulge in the
     body's own outline.
+
+    Pass 5 (2026-09-23): pushed 0.08 further out in X (0.50 -> 0.58 * s), the
+    other half of the pass-4 diagnosis. At 0.50 the knee's own bulge (it
+    already reached x=0.80 against the body's x=0.64) sat so close behind the
+    body's rounded flank, and so deep in Y, that it read as part of the same
+    swell rather than a break in the outline. The limb's own start point
+    moves the same 0.08 so it still seats inside the ball, not the trunk.
     """
-    b.ball((0.50 * s, 0.10, 0.50), (0.30, 0.36, 0.32), MINT, 12, 8)
+    b.ball((0.58 * s, 0.10, 0.50), (0.30, 0.36, 0.32), MINT, 12, 8)
     end = (0.68 * s, -0.26, 0.085)
-    b.limb([(0.52 * s, 0.12, 0.48),
+    b.limb([(0.60 * s, 0.12, 0.48),
             (0.66 * s, -0.06, 0.26),
             end],
            [0.200, 0.140, 0.110], MINT, seg=10)

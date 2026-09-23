@@ -3,12 +3,88 @@ tags:
   - agent-status
 agent: artist
 updated: 2026-09-23
-working_on: took the standing to:artist request — one recreate-leap-style test (Hop, procedural paint); verdict is don't scale it; next run goes to characters/environment (hunters, no pass cap now) per Nick's 2026-09-23 brief
+working_on: no open to:artist request; picked up the hunters (item 2) with the pass cap lifted — frog pass 5, 36→38/50, still short of the 42 hunter stop line; next run either another frog pass or goblin_mech
 ---
 
 # artist
 
 ## Now
+
+No open `to: artist` request this run (checked every file's frontmatter, not
+just the ones with obvious titles). Per the brief's own `## Next`, picked up
+the hunters (item 2) — Nick lifted `frog`'s and `goblin_mech`'s 4-pass cap
+2026-09-23, and `frog.md`'s own "Next, given another pass" already had a
+concrete, undone diagnosis waiting: the body reads as one round mass with
+the haunch merged into it.
+
+**Pass 5 on `frog`** (`design/progress/frog.md`), 36 → 38/50. Applied both
+halves of that diagnosis in `tools/blender/frog.py`, geometry-position edits
+only, no new parts:
+
+- Narrowed the trunk ball's depth (Y) `0.60 → 0.50`, so it stops reading as
+  round from every angle.
+- Pushed the hindleg's knee ball outward in X `0.50*s → 0.58*s` (and the
+  limb's own start point with it, so it stays seated in the ball), so the
+  haunch breaks the silhouette instead of blending into the trunk's own
+  swell.
+
+Also wrote the **ANCHOR** sentence `design/asset-loop.md` step 4 calls for
+— `frog.md` never had one — since without it there's nothing to score later
+passes against besides last pass's number.
+
+**Verified, not assumed.** `look.sh frog 5` (six new views): `_sil.png` and
+`_form.png` both show the haunch as a separated lobe with a real notch
+against the trunk, where pass 4's own silhouette was one continuous blob.
+In the live fight camera (`state=3d`, `cinder_jackal`), a before/after at
+true on-screen hunter size shows the same change more subtly (expected —
+matches the `goblin_mech` precedent that close-range fixes read stronger in
+the scoring camera than at combat distance); a pixel diff confirms it's
+real and localised: 2517/32400 px differ in a 180×180 crop centred on the
+hunter, against 5469 differing px in the full 1280×720 frame — the change
+doesn't scatter across the frame the way idle-animation drift would.
+Silhouette 7→8, Proportion 7→8 (both the lines the pass-4 diagnosis named);
+Hygiene/Colour/Style untouched (geometry count identical before/after:
+`TRIS 4700 PARTS 39` both builds, confirmed, not assumed).
+
+![[frames/artist/2026-09-23-frog-haunch-sil-before-after.png]]
+![[frames/artist/2026-09-23-frog-haunch-infight-before-after.png]]
+
+`ALL TESTS PASSED`. Playtest (`mode=play`, `cinder_jackal`, 40 steps)
+re-run against the rebuilt model: 1 failing check, `hunter-off-marker` at
+step 35, foothold 4 — same home/anchor coordinates as the already-open
+`requests/2026-09-23-0900-playtester-to-fixer-hunter-floats-off-model-at-foothold-4.md`
+(filed to the fixer, a gameplay-code position bug, not a model issue).
+Confirmed pre-existing and unrelated to this pass, not filed again here — a
+static-mesh position edit inside one part's local space can't move where
+the game decides a foothold's world anchor is.
+
+**Environment note for whoever runs next**: same two blockers as previous
+runs — `download.blender.org` is unreachable (sandbox egress policy);
+`apt install blender` works (pulls 4.0.2 + `libegl1`/`libgl1-mesa-dri` this
+time needed a plain `apt-get update` first, an earlier attempt 404'd on
+stale package lists) — and Blender's bundled Python on this apt build is
+the **system** `/usr/bin/python3.12`, not a Blender-private copy; `numpy`
+and `pillow` need `python3.12 -m pip install --break-system-packages numpy`
+(for Blender's own scripts) and a plain `pip install --break-system-packages
+pillow numpy` (for `silmetrics.py`, run outside Blender). Also needed
+`apt-get install -y libegl1 libgl1-mesa-dri libglx-mesa0` before
+`look.sh`/`screenshot.gd` would render — EGL, not just GL, is required even
+for Blender's own headless EEVEE captures on this image.
+
+## Next
+
+38/50 on `frog`, one pass into the lifted cap, still short of the 42 hunter
+stop line. `frog.md`'s own "Where it stands" names the next two candidates:
+Hygiene and Colour, tied at 7 (Hygiene has no fresh diagnosis — the
+over-budget note is old and was already tried/reverted; Colour has none at
+all yet, worth a first real look), and the front legs, untouched by this
+pass, don't yet break the silhouette the way the haunch now does. Next run,
+absent a request: either continue `frog` toward 42, or move to `goblin_mech`
+(37/50, also cap-lifted, its own next candidates written into
+`design/progress/goblin_mech.md`'s "Where it stands, still open") — both are
+valid, whichever gets looked at with fresh eyes.
+
+## Old
 
 Took the one open `to: artist` request:
 `requests/2026-09-23-0500-nick-to-artist-recreate-leap-style.md` — prove,
@@ -324,6 +400,17 @@ brief in full before picking up either.
 
 ## Log
 
+- 2026-09-23 — pass 5 of the asset loop on `frog` (item 2, hunters, cap
+  lifted), 36→38/50: applied the pass-4 diagnosis in full — narrowed the
+  trunk ball's depth and pushed the haunch knee outward in X — so the
+  haunch reads as a bulge breaking the silhouette instead of merging into
+  one round mass. Wrote the missing ANCHOR sentence. Verified in
+  `_sil.png`/`_form.png` and a live-fight before/after pixel diff (change
+  is real and confined to the hunter's footprint). Sil 7→8, Prop 7→8;
+  geometry count unchanged. `ALL TESTS PASSED`; playtest re-run, the one
+  failure (`hunter-off-marker` at foothold 4) matches the already-open
+  fixer request exactly (same coordinates), confirmed pre-existing. See
+  `design/progress/frog.md` and `## Now` above for the full write-up.
 - 2026-09-23 — took the standing `to: artist` request, the leap-style
   recreate test: studied `leap.png`'s style in words (flat shapes, no
   outlines, atmospheric-perspective depth, full-height tree-corridor
