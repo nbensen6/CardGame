@@ -21186,20 +21186,22 @@ func _test_backlog86_climb_marker_for_accepts_a_negative_height() -> void:
 ## earns real assertions rather than a fake one on Tween timing.
 func _test_backlog86_hop_arc_clamps_the_rise_for_a_short_hop() -> void:
 	var arc: Dictionary = Combat3D.hop_arc(Vector3.ZERO, Vector3(0.05, 0, 0), 0.3)
-	_expect(is_equal_approx(float(arc["hop"]), Combat3D.HUNTER_HEIGHT * 0.5),
-		"a very short hop still rises at least half a hunter's height, per the documented floor")
+	_expect(is_equal_approx(float(arc["hop"]), Combat3D.HUNTER_HEIGHT * 0.9),
+		"a very short hop still rises at least 0.9 of a hunter's height, per the documented floor")
 
 
 func _test_backlog86_hop_arc_clamps_the_rise_for_a_long_hop() -> void:
 	var arc: Dictionary = Combat3D.hop_arc(Vector3.ZERO, Vector3(50, 0, 0), 0.3)
-	_expect(is_equal_approx(float(arc["hop"]), Combat3D.HUNTER_HEIGHT * 2.5),
-		"a very long hop is capped at 2.5x a hunter's height, per the documented ceiling")
+	_expect(is_equal_approx(float(arc["hop"]), Combat3D.HUNTER_HEIGHT * 3.4),
+		"a very long hop is capped at 3.4x a hunter's height, per the documented ceiling")
 
 
 func _test_backlog86_hop_arc_scales_with_distance_inside_the_clamp() -> void:
 	var from := Vector3.ZERO
-	var near := Combat3D.hop_arc(from, Vector3(1.0, 0, 0), 0.3)
-	var far := Combat3D.hop_arc(from, Vector3(2.0, 0, 0), 0.3)
+	# Far enough apart to clear the 0.9-hunter floor, close enough to stay
+	# under the 3.4 ceiling (2026-09-23: both moved when the arc got higher).
+	var near := Combat3D.hop_arc(from, Vector3(3.0, 0, 0), 0.3)
+	var far := Combat3D.hop_arc(from, Vector3(6.0, 0, 0), 0.3)
 	_expect(float(far["hop"]) > float(near["hop"]),
 		"between the clamps, a farther hop rises higher than a nearer one")
 
@@ -21255,10 +21257,16 @@ func _test_backlog86_hop_arc_apex_height_is_the_higher_endpoint_plus_hop() -> vo
 
 func _test_backlog86_hop_arc_splits_the_step_into_a_rise_and_a_fall() -> void:
 	var arc: Dictionary = Combat3D.hop_arc(Vector3.ZERO, Vector3(1, 0, 0), 1.0)
-	_expect(is_equal_approx(float(arc["rise"]), 0.55) and is_equal_approx(float(arc["fall"]), 0.45),
-		"a 1-second hop splits into a 0.55s rise and a 0.45s fall, decelerating up and accelerating down")
-	_expect(is_equal_approx(float(arc["rise"]) + float(arc["fall"]), 1.0),
-		"the two halves account for the whole step -- no gap and no overlap")
+	# 2026-09-23: the arc gained a HANG at the apex and an asymmetric split —
+	# the fall is now the short half, because every jump-feel source raises
+	# gravity past the peak (Mario ~3x; Celeste halves it near the apex).
+	_expect(is_equal_approx(float(arc["rise"]), 0.46) and is_equal_approx(float(arc["hang"]), 0.14)
+			and is_equal_approx(float(arc["fall"]), 0.40),
+		"a 1-second hop splits into a 0.46s rise, a 0.14s hang at the apex and a 0.40s fall")
+	_expect(float(arc["fall"]) < float(arc["rise"]),
+		"the fall is faster than the rise — gravity is higher coming down")
+	_expect(is_equal_approx(float(arc["rise"]) + float(arc["hang"]) + float(arc["fall"]), 1.0),
+		"the three parts account for the whole step -- no gap and no overlap")
 
 
 func _test_backlog86_hop_arc_never_lets_the_fall_reach_zero() -> void:

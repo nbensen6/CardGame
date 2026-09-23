@@ -353,8 +353,20 @@ func _check(v: Node, when: String) -> void:
 	# framing gap as a new failure -- only a hunter that is not on screen AT
 	# ALL once settled counts here.
 	var cam: Camera3D = v.get("_cam")
-	if cam != null and hunters is Array and me < (hunters as Array).size():
-		var mine: Vector3 = ((hunters as Array)[me] as Dictionary).get("home", Vector3.ZERO)
+	# The hunter the CAMERA is following, which is not always `me`: the view
+	# follows `lock_slot_for(_lock_slot, ...)`, and with two hunters at very
+	# different heights (one at the sigil, one mid-climb) this check used to
+	# fail for the one the camera was never pointed at — a correct shot
+	# reported as a bug (2026-09-23).
+	var watched: int = int(v.call("lock_slot_for", v.get("_lock_slot"),
+		(hunters as Array).size() if hunters is Array else 0, me))
+	# Never judge framing mid-jump. `home` is the LANDING spot, so while a hop
+	# (or a multi-leg grapple climb) is still running it names a place the
+	# hunter has not reached and the camera is still easing toward — this
+	# check is explicitly about the SETTLED shot (2026-09-23).
+	var airborne: bool = v.has_method("_followed_is_airborne") and bool(v.call("_followed_is_airborne"))
+	if not airborne and cam != null and hunters is Array and watched >= 0 and watched < (hunters as Array).size():
+		var mine: Vector3 = ((hunters as Array)[watched] as Dictionary).get("home", Vector3.ZERO)
 		if cam.is_position_behind(mine):
 			_fail("hunter-behind-camera", "%s: the active hunter is behind the camera -- cannot be on screen at all" % when)
 		else:

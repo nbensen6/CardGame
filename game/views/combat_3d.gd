@@ -378,6 +378,15 @@ var _want_third := false
 ## silently undone on the next one, and the shot looked identical to not having
 ## done it at all.
 var _focus_lift := 0.0
+## Jump framing: whether this hop has already left the camera's dead zone (so
+## the follow stiffens), and how far past it the hunter got (so the shot widens).
+var _air_chase := false
+var _air_span := 0.0
+var _air_settle := 0.0
+## The world-height band one jump covers, set when the hop starts so the
+## camera can frame the whole arc as a single shot.
+var _jump_lo := 0.0
+var _jump_hi := 0.0
 ## Free offset from whatever the camera is locked to. Orbiting alone can only
 ## ever look AT the subject from a new angle; panning is what lets you go and
 ## look at something else, which is the difference between an orbit and a free
@@ -1116,6 +1125,22 @@ static func solo_private_view(is_solo: bool, active_slot: int, private: Dictiona
 func _process(delta: float) -> void:
 	_time += delta
 	# The stones drift. Each on its own phase so they never pulse as one block.
+	# Hunters keep their eyes on the boss. A body that never turns is the
+	# loudest 'this is a prop, not a character' tell, and every third-person
+	# game with a locked target turns the body, not just the camera. Eased
+	# rather than snapped (about 540 deg/s on a right-angle error), and only
+	# yaw - the hop owns pitch.
+	for h in _hunters:
+		var hb := h.get("body") as Node3D
+		if hb == null or not is_instance_valid(hb) or _beast == null:
+			continue
+		var holder := h["node"] as Node3D
+		var at_beast := _beast_box.get_center() - holder.position
+		if Vector2(at_beast.x, at_beast.z).length() < 0.05:
+			continue
+		var want := atan2(at_beast.x, at_beast.z)
+		hb.rotation.y = lerp_angle(hb.rotation.y, want, 1.0 - exp(-delta * 9.0))
+
 	for i in _float_stones.size():
 		var st := _float_stones[i] as Node3D
 		if not is_instance_valid(st):
@@ -1864,6 +1889,13 @@ func _lock_point() -> Vector2:
 ## follows every time you switch hunters or tap Focus had zero coverage. Static
 ## and pure so run_tests.gd can drive the whole fallback chain -- explicit lock,
 ## lock gone stale, lock never set -- with no scene tree and no hunters spawned.
+## Is the hunter the camera follows mid-jump right now? Its climb tween is
+## what "in the air" means - the same tween _hop drives.
+func _followed_is_airborne() -> bool:
+	var fs: int = lock_slot_for(_lock_slot, _hunters.size(), _me())
+	return fs >= 0 and _tween_is_live(_climb_tw.get(fs) as Tween)
+
+
 static func lock_slot_for(lock_slot: int, hunter_count: int, me: int) -> int:
 	if lock_slot >= 0 and lock_slot < hunter_count:
 		return lock_slot
@@ -1885,11 +1917,61 @@ func _aim_camera(delta: float, snap: bool) -> void:
 				+ HUNTER_HEIGHT * 1.2 + _focus_lift + _pan.y
 	_pivot_target.x = lock.x + _pan.x
 	_pivot_target.z = lock.y + _pan.z
+	# A camera that rises exactly as fast as the jumper shows no jump at all:
+	# the hunter stays pinned to the same pixel and only the background moves.
+	# So hold the vertical aim while they are in the air, and settle on the new
+	# height once they land - Mario Odyssey holds Y through a jump; SMW/DKC pan
+	# only after touchdown. `home` is already the LANDING spot, so the target
+	# below is exactly where the camera eases to the moment the hop ends.
+	if not snap and _followed_is_airborne():
+		# ... but only while they stay inside a window. Holding it flat sent a
+		# long Leap clean off the top of the screen (playtest check
+		# 'hunter-offscreen', 2026-09-23). This is the dead zone every camera
+		# source pairs with the hold: free movement in the middle band, and the
+		# camera only starts following once the jumper reaches its edge.
+		var fs2: int = lock_slot_for(_lock_slot, _hunters.size(), _me())
+		if fs2 >= 0 and fs2 < _hunters.size():
+			var node2 := _hunters[fs2]["node"] as Node3D
+			if is_instance_valid(node2):
+				var eye := node2.position.y + HUNTER_HEIGHT * 1.2 + _focus_lift
+				var span: float = _jump_hi - _jump_lo
+				if span > THIRD_WINDOW * 0.55:
+					# BIG LEAP: frame the whole arc at once — aim at the middle
+					# of the band the jump covers and open the shot to hold it.
+					# One shot for the flight beats chasing, which always lands
+					# late; on this Titan a Leap is taller than the frame.
+					_pivot_target.y = (_jump_lo + _jump_hi) * 0.5 + _focus_lift * 0.5
+					_air_span = span
+				else:
+					# SMALL HOP between stones: hold still and let them move
+					# inside a dead zone — a camera that rises with the jumper
+					# shows no jump at all.
+					var dead := THIRD_WINDOW * 0.18
+					_pivot_target.y = clampf(_pivot.y, eye - dead, eye + dead)
+					_air_span = 0.0
+				_air_chase = true
+		_air_settle = 0.45   # keep the stiffer follow briefly after touchdown
+	elif not snap:
+		# The stiff follow outlives the jump by a beat: a big climb lands with
+		# the camera still metres behind, and easing that last gap at the lazy
+		# rate left the hunter off the top of the frame after landing
+		# (playtest 'hunter-offscreen', 2026-09-23).
+		_air_settle = maxf(_air_settle - delta, 0.0)
+		_air_chase = _air_settle > 0.0
+		if _air_settle <= 0.0:
+			_air_span = 0.0
 	if not _user_framed:
 		# Never further out than the wall. This is where the enclosure stops
 		# being scenery and starts being a rule: the framing maths would
 		# happily ask for 30 units on a Titan in a 17-unit arena, and did.
 		_working_dist = minf(_dist_for_window(want.y), _cam_reach())
+	elif _focused and _air_span > THIRD_WINDOW * 0.55:
+		# A focused shot owns its own distance (_user_framed), but a leap taller
+		# than a third of the frame cannot be watched from inside it — let the
+		# camera out far enough to hold the whole arc, then the landing framing
+		# pulls it back in.
+		_working_dist = minf(_dist_for_window(_air_span * 1.25), _cam_reach())
+		_dist = lerpf(_dist, _working_dist, 1.0 - exp(-delta * 6.0))
 	if snap:
 		_pivot = _pivot_target
 		if not _user_framed:
@@ -1901,8 +1983,10 @@ func _aim_camera(delta: float, snap: bool) -> void:
 			if _establishing and absf(_dist - _working_dist) < 0.05:
 				_establishing = false
 		if _pivot.distance_to(_pivot_target) > 0.005 or _establishing:
-			# frame-rate independent ease: the same feel at 30fps and 144
-			_pivot = _pivot.lerp(_pivot_target, 1.0 - exp(-delta * 3.2))
+			# frame-rate independent ease: the same feel at 30fps and 144. A
+			# jump already past the dead zone gets a much stiffer follow, or
+			# the camera arrives after the hunter has landed.
+			_pivot = _pivot.lerp(_pivot_target, 1.0 - exp(-delta * (9.0 if _air_chase else 3.2)))
 	# Once the establishing push has landed, fall in behind the active hunter
 	# without being asked. Deliberately AFTER the ease above rather than at fight
 	# start: cutting straight to the shoulder shot throws away the one moment the
@@ -2674,7 +2758,10 @@ func _stand_on_model(foot: int, side: float) -> Vector3:
 	# (0.025 of the box depth) was a box-sized guess about a shape that is not
 	# a box — too small on a deep chest, far too large beside a thin limb.
 	var clear: float = _front_of_beast(x, p.y) + HUNTER_HEIGHT * 0.45
-	return Vector3(x, p.y, maxf(p.z, clear))
+	# Out onto the floating stone (Nick, 2026-09-23: "make sure the characters
+	# actually land on the stones"). The stone hangs at stone_point() and the
+	# hunter has to stand on it, so one rule places both.
+	return stone_point(Vector3(x, p.y, maxf(p.z, clear)))
 
 
 ## The LEDGES strictly between two footholds — the flat ground a hunter can
@@ -2733,44 +2820,58 @@ func _hop(tw: Tween, node: Node3D, body: Node3D, from: Vector3, to: Vector3,
 	var arc := hop_arc(from, to, step)
 	var apex: Vector3 = arc["apex"]
 	var rise: float = arc["rise"]
+	var hang: float = arc["hang"]
 	var fall: float = arc["fall"]
 	var live: bool = body != null and is_instance_valid(body)
+	var flight := rise + hang + fall
 
 	# ANTICIPATION. A jump that starts the instant it is asked for reads as a
 	# teleport with an arc drawn on it; the crouch is what says the hunter
-	# DECIDED to go. Short — long enough to see, not long enough to feel like a
-	# delay on your own input.
+	# DECIDED to go. 60-100ms is the window the animation literature gives:
+	# shorter cannot be seen, longer reads as input lag.
 	if live:
-		tw.tween_property(body, "scale", Vector3(1.12, 0.86, 1.12), step * 0.16) \
-			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(body, "scale", Vector3(1.10, 0.86, 1.10), 0.09) 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
-	# RISE, stretched. Pushing off is the one moment the body is taller than wide.
-	tw.tween_property(node, "position", apex, rise).set_ease(Tween.EASE_OUT)
-	if live:
-		tw.parallel().tween_property(body, "scale", Vector3(0.88, 1.22, 0.88),
-			rise * 0.45).set_ease(Tween.EASE_OUT)
-		# Back toward neutral over the top: a body at the apex is momentarily
-		# weightless and should not still look mid-launch.
-		tw.parallel().tween_property(body, "scale", Vector3(0.97, 1.05, 0.97),
-			rise * 0.55).set_delay(rise * 0.45).set_ease(Tween.EASE_IN_OUT)
-
-	# FALL, stretching again as it gathers speed.
+	# THE ARC, one axis at a time.
 	#
-	# This is what was wrong. The squash used to play across the WHOLE fall, so
-	# the hunter descended already flattened — as though they had landed a moment
-	# early — and arrived at their most compressed, with nothing left to read as
-	# impact. Falling bodies elongate; the squash belongs at contact and nowhere
-	# else.
-	tw.tween_property(node, "position", to, fall).set_ease(Tween.EASE_IN)
+	# This is the fix Nick's "the jumping animation is poor" pointed at. The old
+	# hop eased the WHOLE position vector — horizontal and vertical together —
+	# through two segments, which is a symmetric swoop: the hunter slowed down
+	# sideways at the top as well as vertically, and every jump read as a float
+	# on a wire. Real jumps are two independent motions: horizontal at a
+	# constant speed (nothing pushes you sideways in the air), vertical under
+	# gravity. Tweening x/z LINEARLY across the whole flight while y runs its
+	# own eased rise / hang / fall is that, and costs the same.
+	tw.tween_property(node, "position:x", to.x, flight).set_trans(Tween.TRANS_LINEAR)
+	tw.parallel().tween_property(node, "position:z", to.z, flight).set_trans(Tween.TRANS_LINEAR)
+	# UP: decelerating into the apex.
+	tw.parallel().tween_property(node, "position:y", apex.y, rise) 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	# HANG: the frame the player reads the height by. Celeste halves gravity
+	# near the apex for exactly this; a tween's version is a short hold.
+	tw.parallel().tween_property(node, "position:y", apex.y, hang).set_delay(rise)
+	# DOWN: accelerating, and faster than the rise — asymmetric gravity is the
+	# single biggest readability win in the jump literature (Mario multiplies
+	# gravity past the peak; hop_arc sizes `fall` shorter than `rise` for it).
+	tw.parallel().tween_property(node, "position:y", to.y, fall) 		.set_delay(rise + hang).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
 	if live:
-		tw.parallel().tween_property(body, "scale", Vector3(0.90, 1.16, 0.90),
-			fall).set_ease(Tween.EASE_IN)
-		# IMPACT, then recover — the half people actually read as weight, now
-		# that it happens when the feet arrive rather than in mid-air.
-		tw.tween_property(body, "scale", Vector3(1.20, 0.78, 1.20), 0.06) \
-			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		tw.tween_property(body, "scale", Vector3.ONE, 0.16) \
-			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		# TAKEOFF STRETCH, decaying back to neutral by the apex. Past ~1.2 a
+		# low-poly body reads as rubber rather than force.
+		tw.parallel().tween_property(body, "scale", Vector3(0.92, 1.16, 0.92), 0.08) 			.set_ease(Tween.EASE_OUT)
+		tw.parallel().tween_property(body, "scale", Vector3.ONE, rise - 0.08) 			.set_delay(0.08).set_ease(Tween.EASE_IN_OUT)
+		# BODY ATTITUDE: lean into the arc on the way up, nose down on the way
+		# in. An upright, rigid body is the loudest "there is no animation here"
+		# tell there is, and a lean costs one more tween.
+		var lean := clampf(Vector3(to.x - from.x, 0.0, to.z - from.z).length() * 0.10, 0.0, 0.35)
+		tw.parallel().tween_property(body, "rotation:x", -lean, rise) 			.set_ease(Tween.EASE_OUT)
+		tw.parallel().tween_property(body, "rotation:x", lean * 0.8, fall) 			.set_delay(rise + hang).set_ease(Tween.EASE_IN)
+
+	# LANDING. Impact is a SNAP, not an ease — the asymmetry (in fast, out
+	# slow) is what reads as weight rather than as a slide into place.
+	if live:
+		tw.chain().tween_property(body, "scale", Vector3(1.18, 0.78, 1.18), 0.05) 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.parallel().tween_property(body, "rotation:x", 0.0, 0.05)
+		tw.tween_property(body, "scale", Vector3.ONE, 0.17) 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 ## Pure form of the arc above: the apex the hop rises to and the two halves'
@@ -2808,8 +2909,11 @@ func _hop(tw: Tween, node: Node3D, body: Node3D, from: Vector3, to: Vector3,
 ## used to return apex.y=15.97 (below to.y=18.17) and now returns apex.y=
 ## 19.82 (above both endpoints).
 static func hop_arc(from: Vector3, to: Vector3, step: float) -> Dictionary:
-	var hop: float = clampf(from.distance_to(to) * 0.18, HUNTER_HEIGHT * 0.5,
-		HUNTER_HEIGHT * 2.5)
+	# Higher than it was (0.18 / 2.5 cap): Nick, 2026-09-23 — the jump has to
+	# read as a jump at a glance, and a flat arc over a long climb reads as a
+	# slide with a bump in it.
+	var hop: float = clampf(from.distance_to(to) * 0.26, HUNTER_HEIGHT * 0.9,
+		HUNTER_HEIGHT * 3.4)
 	# Lean the apex toward the landing on the flat plane, so it reads as a
 	# jump ONTO something rather than a lob -- straight up the middle looks
 	# like a fountain. The HEIGHT is separate: it must clear both endpoints
@@ -2817,9 +2921,14 @@ static func hop_arc(from: Vector3, to: Vector3, step: float) -> Dictionary:
 	# exceeds the capped hop rises to a point below the landing.
 	var lean := from.lerp(to, 0.58)
 	var apex := Vector3(lean.x, maxf(from.y, to.y) + hop, lean.z)
-	var rise := step * 0.55
-	var fall: float = maxf(step - rise, 0.05)
-	return {"apex": apex, "rise": rise, "fall": fall, "hop": hop}
+	# Asymmetric, and with a hold at the top. Gravity on the way down is what
+	# every jump-feel source raises (Mario ~3x, Celeste halves it near the
+	# apex instead) — so the fall is the SHORT half, and the hang between them
+	# is the moment the height is readable. 0.46 / 0.14 / 0.40 of the step.
+	var rise := step * 0.46
+	var hang := step * 0.14
+	var fall: float = maxf(step - rise - hang, 0.05)
+	return {"apex": apex, "rise": rise, "hang": hang, "fall": fall, "hop": hop}
 
 
 ## Slides a hunter to `to` for a move that is NOT a climb — the beast rescaled,
@@ -3006,17 +3115,33 @@ func _place_hunters(s: Dictionary) -> void:
 			# by the number of legs made a long climb a blur of tiny twitches and
 			# a short one a slow float — the same jump should take the same time
 			# however many of them there are.
-			var step := 0.34
+			# 0.34 was quick enough to miss. Nick, 2026-09-23: slower and
+			# clearer — you should be able to watch the whole arc.
+			var step := 0.62
 			# From where they were STANDING, not from node.position. If a hop was
 			# interrupted the node is somewhere in mid-air, and arcing from there
 			# starts the next jump at a point nobody chose.
 			var at: Vector3 = from_pos
 			node.position = from_pos
+			var lo_y: float = minf(from_pos.y, pos.y)
+			var hi_y: float = maxf(from_pos.y, pos.y)
 			for wp in way:
 				var mid: Vector3 = _stand_on_model(int(wp), side)
 				_hop(tw, node, body, at, mid, step)
+				lo_y = minf(lo_y, mid.y)
+				hi_y = maxf(hi_y, mid.y)
 				at = mid
 			_hop(tw, node, body, at, pos, step)
+			# Tell the camera the whole arc BEFORE it starts, so it can frame
+			# the jump as one shot instead of chasing it. Reacting per frame
+			# always arrives late: on this Titan a single Leap covers more
+			# height than the whole third-person frame, and the hunter simply
+			# left the top of the screen for half the flight (filmstrip,
+			# 2026-09-23). The apex adds the hop's own rise on top.
+			if i == lock_slot_for(_lock_slot, _hunters.size(), _me()):
+				var top: float = float(hop_arc(from_pos, pos, step)["hop"])
+				_jump_lo = lo_y - HUNTER_HEIGHT
+				_jump_hi = hi_y + top + HUNTER_HEIGHT * 1.6
 		elif kind == "first":
 			# FIRST placement: be there, with no animation.
 			#
@@ -3161,8 +3286,12 @@ func _build_float_stones() -> void:
 		var rock := SphereMesh.new()
 		# Sized off the HUNTER — it is a place a person stands, so it must stay
 		# the same size under a Crag Pup and a Titan.
-		rock.radius = HUNTER_HEIGHT * 1.15   # wide enough to read as a platform
-		rock.height = HUNTER_HEIGHT * 0.55   # a squashed boulder, not a ball
+		# Big enough to read as a platform you aim at, not a pebble: about
+		# three hunters wide (Nick, 2026-09-23 — "make the stones bigger").
+		rock.radius = HUNTER_HEIGHT * 1.5
+		rock.height = HUNTER_HEIGHT * 1.0    # a boulder with bulk, not a plate
+		# ponytail: a squashed sphere reads thin edge-on; if it still looks like
+		# a plate from the fight camera, model a low rock instead.
 		rock.radial_segments = 7
 		rock.rings = 3
 		stone.mesh = rock
@@ -3172,7 +3301,9 @@ func _build_float_stones() -> void:
 		mat.albedo_color = Color(0.42, 0.38, 0.40)
 		mat.roughness = 1.0
 		stone.material_override = mat
-		stone.position = stone_point(_stand_on_model(height, 0.0)) 			- Vector3(0.0, HUNTER_HEIGHT * 0.36, 0.0)
+		# Sunk by half its own thickness, so its TOP sits exactly on the climb
+		# anchor — which is where _stand_on_model puts the hunter's feet.
+		stone.position = _stand_on_model(height, 0.0) - Vector3(0.0, rock.height * 0.5, 0.0)
 		stone.rotation = Vector3(randf_range(-0.12, 0.12), randf_range(0.0, TAU), randf_range(-0.12, 0.12))
 		_rig.add_child(stone)
 		_float_stones.append(stone)
@@ -3214,10 +3345,9 @@ func _build_ledge_marks() -> void:
 		# entire job of a marker.
 		ring.rotation.x = PI * 0.5
 		# Clear of the skin so the body does not eat the lower half of it.
-		# On the stone, not on the skin behind it (Nick, 2026-09-23: the stones
-		# float now) — the ring marks the thing you actually jump onto.
-		var sp := stone_point(p)
-		ring.position = Vector3(sp.x, sp.y + HUNTER_HEIGHT * 0.40, sp.z)
+		# _stand_on_model already returns the point ON the stone, so no second
+		# push out here; just lift the ring clear of the stone's face.
+		ring.position = Vector3(p.x, p.y + HUNTER_HEIGHT * 0.40, p.z)
 		_rig.add_child(ring)
 		_ledge_marks[height] = ring
 	_refresh_ledge_marks()
