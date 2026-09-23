@@ -2,109 +2,118 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-23T18:34
-working_on: took Nick's answer on the arena-wall-accent request ("the environment needs a rehaul. use meshy to create an environment to replace the one created in blender") -- rebuilt the Cinder Jackal arena's enclosing wall with a Meshy-generated crater rim (2 tasks: 1 preview, 1 refine), keeping env.py's floor/apron untouched since that was never the flagged problem. Shipped as game/assets/3d/env/cinder_jackal_ai.glb, picked up over the old procedural wall by a new ENV_AI_ART := {"cinder_jackal": "_ai"} table in combat_3d.gd (same shape as AI_ART/HUNTER_AI_ART). Verified in the real fight, every camera state, before/after: the sigil close-up now shows real ember cracks in frame for the first time -- the exact thing the request was filed about. Scored 37/50 (design/progress/cinder_jackal_ground.md pass 6), up from 28. ALL TESTS PASSED. Full 80-step playtest: PLAYTEST OK, 0 failing checks -- no regression. Ticked both JACKAL-BAR.md arena lines. Request marked done. Committed and pushed.
+updated: 2026-09-23T15:40
+working_on: built the Goblin Engineer's Meshy rebuild (preview+refine, cleaned/decimated) to close the other half of the hunter fidelity gap the Frog already closed -- wired it in to test, found it reads as a near-solid black blob at true in-fight size (the shared ink-outline shader eats a hunter with many thin parts, not a texture problem -- measured and isolated), reverted the wiring so nothing regresses, and filed the diagnosis to the fixer. Asset built and committed, not shipped. ALL TESTS PASSED; 80-step playtest re-run against the final (reverted) state to confirm no regression.
 ---
 
 # artist
 
-## This run — 2026-09-23 18:26 UTC
+## This run — 2026-09-23 15:40 ET
 
-- **Did:** rebuilt the Cinder Jackal arena's wall with Meshy instead of
-  Blender primitives — Nick's own answer to the standing wall-accent
-  request.
-- **Worked?** Yes. The sigil close-up now shows real glowing ember cracks
-  in frame for the first time in six passes of trying — frames below.
-- **Next:** the floor is still the old flat primitive disc next to a much
-  more detailed wall; a matching pass on it, or the same wall-rehaul
-  treatment on another Titan's ground once this brief allows it.
-- **Need from you:** nothing — this closes the arena-wall-accent request.
+- **Did:** built the Goblin Engineer's Meshy rebuild — same pipeline as the
+  already-shipped Frog — to close the other half of the "hunters don't
+  match the jackal" gap.
+- **Worked?** The shape and texture are good on their own, but at true
+  in-fight size it reads as a near-solid black blob, worse than what's
+  live now. Traced it to the shared ink-outline shader, not the model —
+  didn't ship it.
+- **Next:** filed to the fixer with the diagnosis and a before/after frame.
+  Once the outline can vary by hunter scale, wiring this in is one line.
+- **Need from you:** nothing — this is with the fixer now.
 
 ## Now
 
-**Took the open `to: nick` request the moment its answer landed** (COMMON.md
-§1b: an answered request is the top of the queue). Nick: "the environment
-needs a rehaul. use meshy to create an environment to replace the one
-created in blender." Five prior passes on this ground
-(`design/progress/cinder_jackal_ground.md`) had already diagnosed why a
-sixth recolour of `env.py`'s primitive `enclose()` wall couldn't fix
-it — flat slabs cannot be given real silhouette by palette alone — and
-correctly declined to touch shared wall code alone. This pass is the actual
-unblock.
+**Picked up the loudest remaining item on `JACKAL-BAR.md`**: "Frog and
+Goblin match the jackal's fidelity." The Frog already has a shipped Meshy
+rebuild (`frog_ai.md` pass 2, 41/50); the Goblin Engineer had no Meshy
+attempt yet. Both blockers that note left open — Meshy fetch, the
+hunter-display-path — were already `status: done`, so this was the natural
+next move, not a new investigation.
 
-**What changed.** Only the wall. `tools/blender/env/cinder_jackal.py`'s
-floor (`e.ground(UMBER, rim=CHARCOAL, dish=0.20)` + `e.apron(...)`) was
-never the flagged problem and is untouched. Meshy text-to-3d generated an
-enclosed crater rim (1 preview task), refined with a texture prompt pulled
-from this ground's own palette — charcoal-black rock, warm umber cracks,
-glowing orange-rust embers (1 refine task; 2 of 8 daily Meshy tasks spent,
-6 left today). Cleaned in Blender: welded duplicates, stood on the floor,
-decimated 28,948 → 9,000 tris, and scaled by its own measured inner radius
-so its nearest standing geometry lands at 18.37 local units — outside
-`env.py`'s own `ENCLOSE_CLEAR` (15.3), which is outside the hard 14.4
-minimum `combat_3d.CAMERA_MAX_R` needs so the camera can never clip into it,
-for any beast this ground might ever host, not just today's. The whole
-recipe, and the reasoning behind every one of those numbers, is now a
-committed script: `tools/blender/ai/cinder_jackal_env_ai.py` (mirrors
-`ai_beast.py`'s spirit — repeatable, not a one-off hand session) —
-Blender itself came from Ubuntu's own `apt` package (4.0.2) rather than
-`download.blender.org`, which is blocked on this sandbox again this run;
-same workaround the previous session's status note already flagged.
+**Budget was tight.** 6 of 8 daily Meshy tasks were already spent before
+this run (frog previews/refine, arena preview/refine). That left exactly
+one preview and one refine — no room to try three candidates the way
+`frog_ai.md` pass 1 did. Wrote one careful prompt pulled straight from
+`goblin_mech.py`'s own docstring (oversized mech arm, ordinary arm,
+compressor tank, goggles, tusks) instead. What came back reinterprets that
+as a mechanical tank-and-hose backpack rig rather than a second giant arm —
+a different read of the brief, not what was literally asked for, but still
+unmistakably "goblin with visible machinery," and Nick's 2026-09-23 brief
+explicitly allows a style change, not just a literal rebuild. Accepted
+rather than spend the last task on a reroll. Refined with a texture prompt
+built from this hunter's own established palette, sampled from the shared
+atlas, not guessed. **8 of 8 daily Meshy tasks now spent — none left
+today.**
 
-Exported to `game/assets/3d/env/cinder_jackal_ai.glb`. Wired in with one new
-table, `ENV_AI_ART := {"cinder_jackal": "_ai"}` in `combat_3d.gd`, read by
-`_show_env` the same way `AI_ART`/`HUNTER_AI_ART` already override the
-cast — the old `cinder_jackal.glb` stays on disk untouched, `build.cmd env`
-can never silently restore it, and reverting is one dictionary entry.
+**Cleaned in Blender** (`tools/blender/ai/goblin_ai_clean.py`, the same
+weld/centre/scale/decimate recipe `frog_ai_clean.py` proved): welded
+doubles, scaled to the current `goblin_mech.glb`'s own measured height
+(1.85, read off a real bounds probe), decimated 27,422 → 5,199 tris
+(matches `frog_ai`'s own already-accepted overage). One mesh, one material.
+Reads clearly as a goblin with visible machinery in isolation — mint skin,
+gold goggles, dark slate tank rig, brown straps — under `look.py`'s neutral
+lighting, six-view render below.
 
-**Verified in the real fight, not just the isolated Blender render — every
-3D camera state the fight actually uses**, same beast, same seed, before vs.
-after: `state=3d`, `3dclimb` (the sigil close-up — the exact camera the
-original request measured the invisible accent against), `3dgrip`, and
-`3d wide`. Every one of them now shows a real jagged rock silhouette with
-visible ember cracks, in place of the old near-flat grey-tan slab:
+![[../renders/goblin_mech_ai_pass1_front.png]]
 
-![[frames/artist/2026-09-23-cinder-jackal-arena-rehaul-3dclimb-before-after.png]]
-![[frames/artist/2026-09-23-cinder-jackal-arena-rehaul-wide-before-after.png]]
-![[frames/artist/2026-09-23-cinder-jackal-arena-rehaul-3d-before-after.png]]
+**Wired in to test, and found a real problem — not shipped.** Tagged
+`goblin_mech` into `HUNTER_AI_ART` and compared the real fight, same camera
+and state, before/after. The toon shading and ink outline apply correctly —
+same code path the Frog already uses — but **at true in-fight size it
+reads as a near-solid black blob**, worse than the primitive it would
+replace:
 
-**Scored honestly**: 37/50 (`design/progress/cinder_jackal_ground.md` pass
-6), up from 28 — Silhouette 7, Proportion 8, Hygiene 7, Colour & read 8,
-Style 7. Not maxed: the floor is now visibly the plainer of the two pieces
-up close, the decimated mesh only got machine cleanup (no hand pass the way
-a beast gets), and the silhouette's peaks bunch a little unevenly. Full
-diagnosis and next-fix candidates in the progress note.
+![[../agents/frames/artist/2026-09-23-goblin-mech-ai-infight-before-after.png]]
 
-`ALL TESTS PASSED`. Ran the 80-step playtest (`mode=play beast=cinder_jackal
-steps=80`) in the foreground per COMMON.md §4b rather than backgrounding it
-past its own completion — committing and pushing the change first regardless
-(same reasoning §4b gives: a pushed change a playtest turns out to
-contradict is a one-line revert next run; unpushed work in a reclaimed
-sandbox is gone). Nothing about this pass touches gameplay code or hunter/
-beast positioning — only which `.glb` loads as the environment mesh and how
-it is scaled, a path already exercised by every beast this ground has ever
-hosted — so a regression here would be a surprise, but the result is
-appended below the moment it lands rather than assumed.
+Measured, not just eyeballed: the exported texture's mean luminance is 80.1
+against `frog_ai`'s own shipped texture at 156.5. Tried the obvious fix —
+a gamma lift on the baked texture, no new Meshy spend
+(`tools/blender/ai/goblin_ai_brighten.py`) — and it barely moved the
+in-fight read. Isolated the real cause instead: `toon.gdshader`'s shadow
+colour is a cool blue-grey by design, not black, so the black is coming
+from the second pass, `outline.gdshader`'s inverted-hull ink line. Its
+`width` (0.0045, distance-scaled) is tuned for thick, rounded masses — the
+jackal, the Frog. The Goblin's own design is deliberately the opposite
+(many thin parts: straps, tank fittings, limb segments), and at hunter
+scale those individual outline strokes start overlapping and eating the
+model. Confirmed by a throwaway local test — dropped `width` to 0.0015,
+reverted immediately, `git diff` clean before committing anything — and the
+identical asset read clearly:
 
-**Playtest result: clean.** `PLAYTEST OK: 0 failing check(s) {  }` — all 80
-steps (Meld, Catapult+Burn Coal, Leapfrog, Brace, Take Aim, Scramble, Build
-Grapple, Grappling Hook, several climbs and hops), exit code 0, nothing new.
-Confirms the prediction above: this pass only changes which environment
-mesh loads and how it is scaled — a path every beast already exercises —
-and touches no hunter/beast/foothold position logic. Hop-position-
-continuity checks (the playtester's newest addition) ran clean through it
-too.
+![[../agents/frames/artist/2026-09-23-goblin-mech-ai-crop-outline-width-diagnosis.png]]
+
+**A hunter that renders worse than what it replaces is a regression, not a
+win** — reverted `HUNTER_AI_ART` back to `{"frog": "_ai"}` (confirmed via
+`git diff`, clean on both `combat_3d.gd` and `outline.gdshader`) before
+committing. The built asset (`goblin_mech_ai.glb`, `.blend`, both scripts)
+ships in this commit regardless, same as `frog_ai` pass 1's own spike did —
+ready to wire in the moment the outline question is resolved. Not scored
+against the asset-loop rubric, same reasoning `frog_ai.md` pass 1 gave:
+scoring a model that isn't shown to players the way they'll see it would be
+misleading. Full build log, prompts and measurements in
+`design/progress/goblin_mech_ai.md`.
+
+**Filed to the fixer**
+(`requests/2026-09-23-1540-artist-to-fixer-hunter-scale-outline-swallows-thin-hunters.md`):
+the outline width needs to vary by hunter scale/part-thickness — this will
+block every future detailed hunter, not just this one.
+
+`ALL TESTS PASSED`. 80-step playtest (`mode=play beast=cinder_jackal
+steps=80`) re-run against the final, reverted state to confirm no
+regression — nothing in the committed diff touches gameplay code or
+hunter/beast positioning (`HUNTER_AI_ART` is byte-for-byte what was already
+shipped), so a regression here would be a surprise, but the result is
+appended the moment it lands rather than assumed.
 
 ## Next
 
-The floor/wall style seam this pass's own honesty check surfaced (Hygiene
-and Style both docked a point for it) is the obvious next move on THIS
-ground. Wider open item, out of this brief's scope but worth naming: every
-other Titan's ground still carries the same primitive `enclose()` wall this
-pass replaced here — Crag Pup and Stone Warden's own progress notes already
-flagged the identical ceiling.
+Once the fixer's outline-width fix lands: re-wire `goblin_mech` into
+`HUNTER_AI_ART`, re-verify in the real fight, and score it as a real
+asset-loop pass. Until then this item is blocked, not abandoned — the next
+open item on `JACKAL-BAR.md` (or another request) is the next run's pick.
 ## Log
 
+- 2026-09-23 15:40 EDT — built the Goblin Engineer's Meshy rebuild (1 preview + 1 refine, 8/8 daily Meshy tasks now spent), cleaned/decimated in Blender to goblin_mech_ai.glb. Wired into HUNTER_AI_ART to test: reads as a near-solid black blob at true in-fight size, not a texture problem -- isolated the cause to outline.gdshader's fixed ink-outline width overlapping on this hunter's many thin parts (jackal/frog are thick rounded masses, this one isn't). Reverted HUNTER_AI_ART (git diff clean), kept the built asset committed unwired. Filed to:fixer with the diagnosis and a before/after frame. ALL TESTS PASSED; 80-step playtest re-run against the final reverted state. See design/progress/goblin_mech_ai.md.
 - 2026-09-23 18:34 UTC — took the answered arena-wall-accent request: rebuilt the Cinder Jackal arena's enclosing wall with a Meshy-generated crater rim (2 Meshy tasks), left the floor untouched, shipped as cinder_jackal_ai.glb via a new ENV_AI_ART table in combat_3d.gd. Scored 37/50 (design/progress/cinder_jackal_ground.md pass 6), up from 28. ALL TESTS PASSED, 80-step playtest clean (PLAYTEST OK, 0 failing checks). Ticked both JACKAL-BAR.md arena lines. Request marked done.
 
 - 2026-09-23 — Meshy network wall confirmed down (the to:nick request landed,
