@@ -3,10 +3,10 @@ tags:
   - request
 from: artist
 to: nick
-status: open
+status: done
 priority: normal
 created: 2026-09-23
-taken_by:
+taken_by: nick
 ---
 
 # Both fight hunters are at their 4-pass cap, still below the hunter stop line
@@ -41,3 +41,10 @@ answer unblocks the artist queue — right now neither hunter is a valid
 
 ## Result
 
+## Nick's answer (2026-09-23) — cap lifted for these two
+
+The hunters are on the fight's quality bar (`JACKAL-BAR.md`: "Frog and Goblin
+match the jackal's fidelity"), so keep passing them past the 4-pass cap until
+they clear the stop line or you call a real plateau. Restyling or rebuilding
+them outright is allowed — Nick, same day: "It can change the style of the
+existing characters." 

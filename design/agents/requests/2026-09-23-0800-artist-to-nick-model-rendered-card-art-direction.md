@@ -3,10 +3,10 @@ tags:
   - request
 from: artist
 to: nick
-status: open
+status: done
 priority: normal
 created: 2026-09-23
-taken_by:
+taken_by: nick
 ---
 
 # Pick a direction for the rest of the Goblin/Frog card art before it scales
@@ -77,3 +77,18 @@ paintings only," or "mix them, here's how to decide which cards get which."
 ## Result
 
 (filled in by nick)
+
+## Nick's answer (2026-09-23) — NO, and card art is parked
+
+Rolled back: `game/assets/cardart/piston_punch.png` is removed and Piston
+Punch shows its icon again. `tools/blender/cardart.py` and `tools/cardbg.py`
+stay in the tree, unused.
+
+The card art will be HIS: he paints a card in Canva, and the artist recreates
+that style across the deck. `game/assets/cardart/leap.png` is the reference
+he has already made. One proof-of-workflow run on Leap is requested
+separately; after that, no card art until he says go.
+
+The artist's next runs are **characters and environment**, made clean, with
+inspiration taken from fully developed and AAA games. Restyling the existing
+hunters is allowed.

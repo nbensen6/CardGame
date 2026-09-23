@@ -17,10 +17,33 @@ roughly in this order of what a player notices:
    scripts) is the biggest style gap in the fight.
 3. **The arena** — the jackal's ground and walls (`game/assets/3d/env/`, built
    by `tools/blender/env*.py`; see `tools/blender/build.cmd env`).
-4. **The cards** — the Frog and Goblin decks' faces. See `design/icon-audit.md`,
+4. **The cards — PARKED (Nick, 2026-09-23).** Do not spend runs on card art.
+   When it restarts, the flow is NICK'S: he paints a card in Canva and you
+   RECREATE that style for the rest. `game/assets/cardart/leap.png` (the
+   Frog's Leap — a flat painted forest, layered depth, soft palette, the
+   subject tiny in a big scene) is the reference. The model-rendered route
+   was tried and rolled back; `tools/blender/cardart.py` and `tools/cardbg.py`
+   stay in the tree, unused, for whenever he says go.
+   (Original scope, for when it returns:) — the Frog and Goblin decks' faces. See `design/icon-audit.md`,
    `design/card-face-vs-sts.md` and `game/ui/card_view.gd`. Only some cards
    have painted art; the rest show a bare icon. Slay the Spire's cards are the
    bar: every card has art, and art reads at hand size.
+
+## What Nick wants now (2026-09-23)
+
+**Make the characters and the environment look CLEAN.** Those two, until he
+says otherwise. You may **change the style of the existing characters** —
+this is not a polish-what-is-there brief; if the Frog and the Goblin read
+better rebuilt in a different style, rebuild them.
+
+**Pull from fully developed games, including AAA.** Name the reference in
+your write-up and say what you took: silhouette, palette discipline, how
+they light a character, how they keep a small character readable at
+distance, how their environments frame the fight rather than compete with
+it. Describe the reference in words — never put screenshots of other games
+in this repo.
+
+**No bought asset packs.** Everything generated (Meshy) or built here.
 
 ## How
 
