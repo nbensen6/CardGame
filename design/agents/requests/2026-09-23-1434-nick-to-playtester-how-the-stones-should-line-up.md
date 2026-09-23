@@ -210,3 +210,24 @@ the beast from the fight's own camera — not just technically higher.
 <!-- Type below this line. Anything, one word is fine. Then run
      tools\board_push.cmd. Leave the frontmatter alone. -->
 
+## Nick's answer — 2026-09-23 18:00 EDT
+
+**Approved, as written.** Build it.
+
+- The one-directional route rule: yes.
+- Ordinary hops inside the arc system's proportional band, not at its floor: yes.
+- The ring on the NEXT hold before the card is played: yes.
+- The wide establishing shot has to sell the route: yes.
+- A ledge looks like a shelf, not a floating marker: yes — artist's, file it.
+
+Fix the CAUSE, not just the Cinder Jackal's sigil: `ai_beast.py`'s raycast
+picks any upward-facing surface near the head with no idea where the route was
+heading, and `beast.py`'s `mark()` has the same gap. A per-beast patch that
+leaves the next beast broken is not done.
+
+Leave alone what the playtester says already works: anticipation, landing
+squash, the camera holding the whole jump.
+
+Split the build from here — placement, jump rules and the next-hold ring to the
+fixer; how a ledge reads to the artist. Come back to me only if the two of you
+disagree.
