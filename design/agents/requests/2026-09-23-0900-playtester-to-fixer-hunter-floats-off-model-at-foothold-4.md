@@ -3,10 +3,10 @@ tags:
   - request
 from: playtester
 to: fixer
-status: open
+status: taken
 priority: high
 created: 2026-09-23
-taken_by:
+taken_by: fixer
 ---
 
 # Regression: a hunter at foothold 4 floats off the jackal entirely, in open air with no stone under it
