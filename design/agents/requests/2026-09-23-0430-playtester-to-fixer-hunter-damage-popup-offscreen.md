@@ -3,10 +3,10 @@ tags:
   - request
 from: playtester
 to: fixer
-status: open
+status: taken
 priority: normal
 created: 2026-09-23
-taken_by:
+taken_by: fixer
 ---
 
 # A hunter's damage number renders off the top of the screen, every time it fired this run
