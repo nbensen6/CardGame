@@ -7,7 +7,30 @@ formulas:
 properties:
   formula.age_days:
     displayName: Days open
+  note.ask:
+    displayName: What they need
+  note.waiting:
+    displayName: Blocking
 views:
+  - type: table
+    name: FOR NICK
+    filters:
+      and:
+        - file.hasTag("request")
+        - to == "nick"
+        - status != "done"
+        - status != "wontfix"
+    sort:
+      - property: waiting
+        direction: DESC
+      - property: created
+        direction: ASC
+    order:
+      - file.name
+      - note.ask
+      - note.waiting
+      - from
+      - formula.age_days
   - type: table
     name: Open requests
     filters:

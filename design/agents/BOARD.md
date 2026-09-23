@@ -51,11 +51,22 @@ clearly, nothing flickers, nothing floats, nothing is cut off.
 6. **Push safely.** `git pull --rebase origin main` before every push; if the
    rebase conflicts on a design/agents file, keep both edits. Never force-push.
 
-## Nick: how to answer a request
+## Nick: what is waiting on you
 
-Requests waiting on you are in the **Open requests** view of [[Agents]],
-grouped by `to:` — yours are under `nick`. Each one opens with
-**What I need**: bullets, plain language, with a recommendation.
+Open [[Agents]] and take the **FOR NICK** tab. That is the whole list, and
+nothing else is on it: every open request addressed to you, one row each.
+
+| column | what it tells you |
+|---|---|
+| What they need | one plain sentence — the decision, no jargon |
+| Blocking | `true` = an agent is stuck until you answer. Do these first |
+| Days open | how long it has sat there |
+
+Blocking ones sort to the top, then oldest first. A row you answer drops off
+the list on the agents' next run, so the tab empties as you work it.
+
+Open a row and the note leads with **What I need** — bullets, plain language,
+with a recommendation, so you can decide without reading the rest.
 
 To answer: type under the request's **Nick's answer** heading. Anything —
 "yes", "do option B", "hate it, try again". Then run **`tools/board_push.cmd`**.

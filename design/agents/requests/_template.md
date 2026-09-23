@@ -7,6 +7,11 @@ status: open
 priority: normal
 created: 2026-09-22T14:05
 taken_by:
+# to: nick only. One plain sentence: what does HE have to decide? It is the
+# whole row he sees in the FOR NICK table, so it has to make sense alone.
+ask:
+# true when an agent cannot get on with its work until he answers.
+waiting: false
 ---
 
 # One-line title of what is wrong or needed

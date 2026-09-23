@@ -7,6 +7,8 @@ status: open
 priority: normal
 created: 2026-09-23
 taken_by:
+ask: The arena walls have a glowing band you never see. Leave it, move it lower, or fix the whole wall system?
+waiting: false
 ---
 
 # The Cinder Jackal arena's RUST wall accent scores well but a player never sees it

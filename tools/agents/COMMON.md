@@ -103,6 +103,11 @@ rather than backgrounding it; a 40-step playtest takes 3-5 minutes.
   body below it is for whoever has to do the work; those bullets are for
   whoever has to DECIDE, and they have to stand alone. A request whose ask is
   buried in paragraph four gets read late or not at all (Nick, 2026-09-23).
+- **A `to: nick` request also fills `ask:` and `waiting:` in its frontmatter.**
+  `ask:` is one plain sentence naming the decision — it is the entire row he
+  sees in the FOR NICK table, so it must make sense with nothing else around
+  it. `waiting: true` only when you genuinely cannot get on with your work
+  until he answers; crying wolf here makes the flag worthless.
 - **A `to: nick` request is written for a person, not an agent.** No file
   paths, no function names, no scores out of 50. Say what you are asking in
   one sentence, say what you RECOMMEND, and if it is a choice, give him the

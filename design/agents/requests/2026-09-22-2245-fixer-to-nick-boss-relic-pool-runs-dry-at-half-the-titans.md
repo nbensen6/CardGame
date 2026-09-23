@@ -7,6 +7,8 @@ status: open
 priority: normal
 created: 2026-09-22
 taken_by:
+ask: Should there be more boss relics, so the last two Titans are not empty rewards in 2-player co-op?
+waiting: false
 ---
 
 # In 2-player co-op, the boss-relic pool is empty for the last two Titans — the reward screen shows nothing to tap, and the prompt still says to tap one
@@ -99,6 +101,7 @@ again tells a player to tap something that isn't there.
 
 <!-- Type below this line. Anything, one word is fine. Then run
      toolsoard_push.cmd. Leave the frontmatter alone. -->
+ Do not worry about relics at this time. 9/23/26
 
 
 ## Result
@@ -123,4 +126,3 @@ Left open: whether the 4-relic boss pool should be resized or refilled for
 Answer:
 
 
-Do not worry about relics at this time. 
