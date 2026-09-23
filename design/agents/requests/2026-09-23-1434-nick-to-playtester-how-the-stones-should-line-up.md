@@ -3,10 +3,10 @@ tags:
   - request
 from: nick
 to: playtester
-status: open
+status: taken
 priority: high
 created: 2026-09-23T14:34
-taken_by:
+taken_by: playtester
 ---
 
 # How should the floating stones line up in front of a beast, and what makes climbing them feel good?
