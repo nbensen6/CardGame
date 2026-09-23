@@ -1747,6 +1747,16 @@ func _init() -> void:
 	_test_backlog86_dist_for_window_for_adds_no_standoff_once_pivot_reaches_the_front()
 	_test_backlog86_dist_for_window_for_standoff_covers_only_what_the_pivot_has_not()
 
+	# Combat3D.shoulder_frame -- the over-the-shoulder composition (Nick,
+	# 2026-09-23, "make the resting camera third person too"). The whole shot is
+	# two claims: the lens trucks off the hunter's spine, and the aim slides past
+	# them toward the beast. Both are proven here, plus the one that matters for
+	# not breaking anything: at amount 0 it is EXACTLY the old shot.
+	_test_shoulder_frame_is_the_old_shot_at_zero()
+	_test_shoulder_frame_trucks_right_of_the_lens_axis()
+	_test_shoulder_frame_aims_sideways_only_never_into_the_scene()
+	_test_shoulder_frame_holds_its_composition_at_every_distance()
+
 	# backlog #86 duty 3 (thirty-seventh pass): EnetTransport, the real
 	# multiplayer transport CLAUDE.md's build order names as step 3 ("two-player
 	# online co-op on PC") and net/README.md's whole reason to exist -- had zero
@@ -26309,6 +26319,59 @@ func _test_backlog86_ground_pivot_puts_world_zero_at_the_top_of_the_card_strip()
 	var pivot := Combat3D._ground_pivot(window)
 	_expect(is_equal_approx(pivot, window * (0.5 - Combat3D.HUD_BOTTOM_FRACTION + 0.04)),
 		"the ground pivot lifts world y=0 by (0.5 - HUD_BOTTOM_FRACTION + 0.04) window-fractions, matching the derivation in the comment above it")
+
+
+func _test_shoulder_frame_is_the_old_shot_at_zero() -> void:
+	var pivot := Vector3(3.0, 2.4, 17.5)
+	var f := Combat3D.shoulder_frame(pivot, 0.0, 9.0, 0.0)
+	_expect((f["truck"] as Vector3).is_zero_approx(),
+		"at amount 0 the lens does not move at all, so the establishing wide and the whole-arc jump shot are byte-for-byte what they were")
+	_expect((f["aim"] as Vector3).is_equal_approx(pivot),
+		"at amount 0 the camera still looks straight at the hunter, the old follow-cam aim")
+
+
+func _test_shoulder_frame_trucks_right_of_the_lens_axis() -> void:
+	# yaw 0 is the fight's default: the lens sits at +Z looking down -Z, so its
+	# own right is +X. Trucking right puts the HUNTER on the left of frame.
+	var f := Combat3D.shoulder_frame(Vector3(0.0, 2.4, 17.5), 0.0, 10.0, 1.0)
+	var truck := f["truck"] as Vector3
+	_expect(is_equal_approx(truck.x, Combat3D.SHOULDER_TRUCK * 10.0),
+		"at yaw 0 the truck is the full SHOULDER_TRUCK * dist along +X, the lens's own right")
+	_expect(is_zero_approx(truck.y) and is_zero_approx(truck.z),
+		"the truck is purely sideways -- it never changes how far back or how high the camera sits")
+	# Quarter turn: the lens is now at +X looking -X, so its right is -Z.
+	var q := Combat3D.shoulder_frame(Vector3.ZERO, PI * 0.5, 10.0, 1.0)
+	var qt := q["truck"] as Vector3
+	_expect(is_zero_approx(qt.x) and is_equal_approx(qt.z, -Combat3D.SHOULDER_TRUCK * 10.0),
+		"the truck follows the orbit round: a quarter turn of yaw moves it from +X to -Z, still the lens's right and not a world axis")
+
+
+func _test_shoulder_frame_aims_sideways_only_never_into_the_scene() -> void:
+	# This is the whole bug from the first attempt, pinned. Sliding the aim
+	# toward the beast tips the camera down as well as across and drops the
+	# hunter behind the card strip (y=507 -> 602 on a 720 frame, measured).
+	# The aim may move along the lens's right, and along nothing else.
+	var pivot := Vector3(3.0, 2.4, 17.5)
+	for amt in [0.0, 0.5, 1.0]:
+		var aim := Combat3D.shoulder_frame(pivot, 0.0, 9.0, amt)["aim"] as Vector3
+		_expect(is_equal_approx(aim.y, pivot.y),
+			"the aim keeps the hunter's own height, so the vertical framing stays the jump's business (amount %s)" % amt)
+		_expect(is_equal_approx(aim.z, pivot.z),
+			"the aim never slides deeper into the scene, which is what would tip the pitch and sink the hunter behind the hand (amount %s)" % amt)
+	var full := Combat3D.shoulder_frame(pivot, 0.0, 9.0, 1.0)["aim"] as Vector3
+	_expect(is_equal_approx(full.x - pivot.x, Combat3D.SHOULDER_AIM * 9.0),
+		"at full amount the aim sits SHOULDER_AIM * dist to the lens's right, which is exactly how far off centre the hunter ends up")
+
+
+func _test_shoulder_frame_holds_its_composition_at_every_distance() -> void:
+	# Both offsets are per unit of distance, so the hunter sits the same fraction
+	# of the frame off centre whether the camera is at 6 units or 30.
+	var near := Combat3D.shoulder_frame(Vector3.ZERO, 0.0, 6.0, 1.0)
+	var far := Combat3D.shoulder_frame(Vector3.ZERO, 0.0, 30.0, 1.0)
+	_expect(is_equal_approx((far["truck"] as Vector3).x / (near["truck"] as Vector3).x, 5.0),
+		"five times the distance trucks five times as far, so the shot keeps its composition through every zoom")
+	_expect(is_equal_approx((far["aim"] as Vector3).x / (near["aim"] as Vector3).x, 5.0),
+		"the aim offset scales with distance for the same reason -- a fixed world offset would centre the hunter zoomed out and lose them zoomed in")
 
 
 func _test_backlog86_lock_slot_for_keeps_an_explicit_valid_lock() -> void:
