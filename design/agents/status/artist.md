@@ -3,7 +3,7 @@ tags:
   - agent-status
 agent: artist
 updated: 2026-09-23
-working_on: no open to:artist request; frog pass 6, 38→40/50 (Hygiene and Colour, the two lines pass 5 left tied lowest) — 2 short of the 42 hunter stop line; next run either a frog Style pass or goblin_mech
+working_on: no open to:artist request; frog pass 7, 40→41/50, a Style diagnosis under Nick's wider "pull from AAA" brief — a named greyscale/value-contrast technique found the model's weakest colour boundary (toe vs foot-pad) and fixed it — 1 short of the 42 hunter stop line; next run either a frog Sil/Prop pass on the front legs or goblin_mech
 ---
 
 # artist
@@ -11,9 +11,125 @@ working_on: no open to:artist request; frog pass 6, 38→40/50 (Hygiene and Colo
 ## Now
 
 No open `to: artist` request this run (checked every file's frontmatter, not
-just the ones with obvious titles). Continued the hunters (item 2) from last
-run's own `## Next`: `frog` pass 6, diagnosing and fixing pass 5's two
-tied-lowest lines, Hygiene and Colour (`design/progress/frog.md`), 38→40/50.
+just the ones with obvious titles). Set up fresh (Godot 4.7.1 + `--import`;
+`download.blender.org` is still unreachable from this sandbox — same finding
+as every prior run — so Blender came from `apt install blender` again, 4.0.2,
+plus `libegl1`/`libgl1-mesa-dri`/`libglx-mesa0` for headless EEVEE; Blender's
+own Python is 3.12 here, `python3.12 -m pip install --break-system-packages
+numpy pillow` was needed before glTF export/import would run at all).
+`python3 tools/meshy.py balance` returned a real balance (3020) — Meshy is
+live this run, noted for the record, not used (see below for why).
+
+Nick's brief moved this run (`tools/agents/artist.md`, 2026-09-23 update, the
+one my own last run's `## Next` flagged unread-in-full): "make the
+characters and environment CLEAN," pulling design principles from fully
+developed/AAA games, described in words only (never a screenshot from
+another game in this repo). Read it in full before picking work. Considered
+the heavier option first — Meshy + the jackal's own `ai_beast.py` pipeline
+could in principle build a hunter to the jackal's own fidelity — and ruled
+it out for THIS run: `tools/agents/COMMON.md` is explicit that hunters are
+not beasts, don't force them through `ai_beast.py`, and any code the game
+needs to show a rigged hunter is the fixer's to build first. A full
+Meshy-rigged hunter is a multi-run, cross-agent initiative (mesh generation,
+cleanup, a from-scratch skeleton and weighting the way the jackal's own recipe
+document shows it took), not a "one thing, well" for a single run — flagged
+as a real option for a future run that starts with a `to: fixer` request for
+rig support, not attempted blind here.
+
+Instead, picked up my own `## Next` from last run: continue the hunters
+(`frog` or `goblin_mech`, either valid) with the wider brief in mind, not
+another capped mechanical asset-loop pass. `frog` pass 7
+(`design/progress/frog.md`), 40→41/50: diagnosed Style, the one rubric line
+pass 6 flagged as never having had a dedicated look.
+
+**The technique.** AAA character-design teams commonly test a design in
+**greyscale** before shipping — hue stops separating two shapes once
+distance or a small render flattens colour perception, so every meaningful
+part boundary needs real light/dark separation, not just a different hue at
+the same brightness (Blizzard's own published design pillars for
+Overwatch's heroes are the clearest public statement of this; described
+here in words only, no screenshot from another game added to this repo, per
+Nick's brief and `design/asset-loop.md`'s own reference rule).
+
+**Measured every colour boundary in the model against that test**, off
+`colormap.png`'s own pixels (perceptual luminance
+`0.2126R + 0.7152G + 0.0722B`), not eyeballed: MINT↔CREAM 68.7,
+MINT↔dorsal-GREEN 38.1, MINT↔eye colours 100+, and **MINT foot-pad↔AMBER
+toes 18.8 — the weakest boundary on the whole model**, on the one feature
+`foot()`'s own docstring calls "most of what a frog's foot reads as."
+
+**Fix: AMBER → RUST on the toes**, `tools/blender/frog.py` `foot()`, the
+only change. RUST samples at a 42.9-point gap from the foot pad — more than
+double AMBER's — and is this fight's own established warm accent (the
+arena wall/scatter recolour already uses it), so the frog's one accent
+colour now echoes the ground it fights on. No geometry touched: `TRIS 4800
+PARTS 40` identical before/after.
+
+**Verified, not assumed.** `frog_pass7_sil.png` pixel-identical to pass 6's
+(`numpy.array_equal`) — colour-only, confirmed. Greyscale conversion of the
+34px scoring render shows the toes go from barely-distinguishable-in-value
+to a visibly separate darker mass — the fix does what the measurement
+predicted, seen in a render. In the real fight camera (`state=3d`,
+`cinder_jackal`, rebuilt pass 6 via `git stash` for a true before): a
+full-frame pixel diff is 0.16% of pixels, landing inside both hunters' own
+crops and nowhere else scanned; a 6×-upscaled crop on the frog's visible
+foreleg toe at true combat size (~15px) shows a real, if small, colour
+shift. **The 34px party portrait — unmoved by pass 6 — moves this time**:
+rebuilt `frog.png` (`portraits.py frog`, single-name arg, only that one file
+changed) and downsampled to 34×34; the toes sit at the crop's bottom edge
+and the recolour reads there too, a partial close of the portrait gap pass
+6 left open (the back saddle/nostrils still don't show at that size —
+unchanged this pass, a different fix).
+
+Style 8→9 — the model's weakest colour boundary, found by a named,
+applicable technique rather than eyeballed, fixed, and it ties the frog's
+palette to the arena's for free. Sil/Prop/Hygiene/Colour untouched
+(identical geometry). **40→41/50, +1** — not a big pass, but a real,
+verified one, on a line that had never been looked at before.
+
+![[frames/artist/2026-09-23-frog-toes-value-contrast-34-before-after.png]]
+![[frames/artist/2026-09-23-frog-toes-infight-before-after.png]]
+![[frames/artist/2026-09-23-frog-toes-portrait34-before-after.png]]
+
+`ALL TESTS PASSED`. Playtest (`mode=play`, `cinder_jackal`, 40 steps)
+re-run against the rebuilt model: `PLAYTEST FAIL: 1 failing check(s)
+{ "hunter-off-marker": 2 }` (steps 34–35, foothold 4) — checked against
+what's on record, not assumed: *exact* same home/anchor coordinates
+(`home (5.335257, 13.825942, 7.030925)`, `anchor (3.901302, 13.825942,
+6.473297)`) as the already-open
+`2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`
+(a shared-foothold hull-width issue, nothing to do with a colour-only
+material edit). No `hop-flat` fire this run, unlike pass 6's. Confirmed
+pre-existing by coordinate match, not re-filed here.
+
+Full write-up, the luminance table, and the plateau-clause note for whoever
+runs pass 8: `design/progress/frog.md`.
+
+## Next
+
+41/50 on `frog`, three passes into the lifted cap, 1 short of the 42 hunter
+stop line. `frog.md`'s own "Where it stands" names two open candidates: the
+front legs, untouched since pass 4 (don't yet break the silhouette the way
+the haunch now does — a Silhouette/Proportion fix), and the back
+saddle/nostrils' own 34px legibility, still unmoved (this pass only closed
+the toe half of that gap) — that one may need the shared portrait camera
+rather than the model itself, a bigger, cross-cutting change worth its own
+look rather than a blind attempt. Also still open: the "one thing, well"
+call this run made not to attempt — a Meshy-generated, properly rigged
+`frog`/`goblin_mech` to match the jackal's own fidelity, which needs a
+`to: fixer` request for rig-display code first (see `## Now` above). Next
+run, absent a request: continue `frog` toward 42, move to `goblin_mech`
+(37/50, also cap-lifted, its own candidates in
+`design/progress/goblin_mech.md`), or open the fixer request that would
+unblock a real Meshy-hunter attempt — whichever gets looked at with fresh
+eyes.
+
+## Old: hunters, pass 6 (frog)
+
+No open `to: artist` request that run. Continued the hunters (item 2) from
+the previous run's own `## Next`: `frog` pass 6, diagnosing and fixing pass
+5's two tied-lowest lines, Hygiene and Colour (`design/progress/frog.md`),
+38→40/50.
 
 **Colour — the docstring's own back-marking promise, never built.**
 `frog.py`'s header has always said "GREEN now does what a darker shade
@@ -82,32 +198,15 @@ already named and re-filed as
 issue, nothing to do with a static-mesh position edit inside one hunter's
 own local space). Confirmed by coordinate match, not re-filed here.
 
-**Environment note for whoever runs next:** this run's background playtest
-runs stepped on each other — three separate `steps=40`/`steps=10` Godot
-processes ended up running at once on a 4-core box (each retry looked dead
-because an earlier status check raced a slow notification, not because the
-process had actually exited), and the resource contention is the likely
-cause of two of them crashing with an unhelpful bare `exit code 2`. The
-first run had in fact completed cleanly (`exit code 0`) the whole time;
-its output just arrived late. Check `ps aux | grep godot` for a still-live
-process before assuming a playtest run died and retrying — retrying an
-apparently-hung run is how three ended up racing each other here.
-
-## Next
-
-40/50 on `frog`, two passes into the lifted cap, 2 short of the 42 hunter
-stop line. `frog.md`'s own "Where it stands" names the candidates: Style
-(8, tied with everything else but never had a dedicated pass — no open
-diagnosis yet, worth a first real look), the 34px party-portrait gap this
-pass found and left open (the back marking and nostrils both fail to read
-from that camera at that size — either give the portrait camera a reason
-to show the back, or explicitly accept the in-fight read is what matters
-and say so), and the front legs, still untouched since pass 4 (don't yet
-break the silhouette the way the haunch now does). Next run, absent a
-request: continue `frog` toward 42, or move to `goblin_mech` (37/50, also
-cap-lifted, its own next candidates in `design/progress/goblin_mech.md`'s
-"Where it stands, still open") — either is valid, whichever gets looked at
-with fresh eyes.
+**Environment note:** that run's background playtest runs stepped on each
+other — three separate Godot processes ended up running at once on a
+4-core box (each retry looked dead because an earlier status check raced a
+slow notification, not because the process had actually exited), and the
+resource contention is the likely cause of two of them crashing with an
+unhelpful bare `exit code 2`. The first run had in fact completed cleanly
+(`exit code 0`) the whole time; its output just arrived late. Check
+`ps aux | grep godot` for a still-live process before assuming a playtest
+run died and retrying.
 
 ## Old
 
@@ -479,6 +578,26 @@ brief in full before picking up either.
 
 ## Log
 
+- 2026-09-23 — pass 7 on `frog` (item 2, hunters) under Nick's wider "make
+  the characters CLEAN, pull from AAA games" brief, 40→41/50: diagnosed
+  Style (never had a dedicated pass) using a named greyscale/value-contrast
+  technique — measured every colour boundary on the model off the atlas's
+  own pixels and found the AMBER toes vs the MINT foot pad were the
+  weakest on the whole model (18.8 luminance gap, against 38–100+
+  everywhere else), on the one feature the model's own docstring calls
+  its foot's main read. Fixed with a single colour swap, AMBER→RUST (a
+  43-point gap, and this fight's own established warm accent), no geometry
+  change. Verified in a greyscale render, a live-fight before/after
+  (real, localised diff on both hunters), and — a first — the 34px party
+  portrait, which actually shows this fix where it didn't show pass 6's.
+  Considered and explicitly declined a heavier option this run: a
+  Meshy-generated, jackal-fidelity rigged hunter, blocked on game code
+  only the fixer can build (`COMMON.md`'s own rule against forcing hunters
+  through `ai_beast.py`) — flagged as a future `to: fixer` request, not
+  attempted blind. `ALL TESTS PASSED`; playtest re-run, one failure
+  (`hunter-off-marker` at foothold 4) matched the already-open fixer
+  request by exact coordinates. See `design/progress/frog.md` and `## Now`
+  above for the full write-up.
 - 2026-09-23 — pass 6 of the asset loop on `frog` (item 2, hunters, cap
   lifted), 38→40/50: fixed pass 5's two tied-lowest lines, one concrete fix
   each. Colour: added the GREEN dorsal saddle the file's own docstring had

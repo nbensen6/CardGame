@@ -37,7 +37,7 @@ oversight - see the note at the bottom of the file.
 import sys, os, math, mathutils
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from kenney import (Build, out_path, mirror, GREEN, MINT, CREAM, WHEAT,
-                    AMBER, CHARCOAL, WHITE)
+                    AMBER, CHARCOAL, WHITE, RUST)
 
 b = Build()
 
@@ -112,8 +112,22 @@ def foot(s, at, size, toe, spread, uv=None):
     for i in range(n):
         a = (-spread) + (2.0 * spread) * (i / float(n - 1))
         d = mathutils.Vector((math.sin(a) * s, -math.cos(a), 0.0))
+        # Pass 7 (2026-09-23): AMBER (luma 181) against the MINT foot pad
+        # (luma 162) is an 19-point value gap - the weakest colour boundary
+        # anywhere on this model (every other part boundary is 38+, most
+        # 70-100+; measured off the atlas pixels, not eyeballed). Value
+        # contrast, not hue, is what still separates two shapes once distance
+        # or a desaturated read (a dim arena, a downsampled 34px portrait)
+        # flattens colour - the standard "does it still read in greyscale"
+        # test AAA character design leans on for exactly this reason. The
+        # toes are the one feature this function's own docstring calls "most
+        # of what a frog's foot reads as", so they're the wrong place to have
+        # the model's weakest boundary. RUST (luma 120, a 43-point gap, more
+        # than double) fixes it and doubles as this fight's own established
+        # warm accent (the arena wall/scatter recolour already uses it) -
+        # ties the frog's one accent colour to the ground it's fought on.
         b.ball((x + d.x * size * 0.95, y + d.y * size * 0.95, z - 0.016),
-               (toe, toe * 1.25, toe * 0.58), AMBER, 7, 5)
+               (toe, toe * 1.25, toe * 0.58), RUST, 7, 5)
 
 
 def foreleg(s):

@@ -18,6 +18,7 @@ crouched, not a ball.*
 | 4 | 7 | 7 | 7 | 7 | 8 | **36** |
 | 5 | 8 | 8 | 7 | 7 | 8 | **38** |
 | 6 | 8 | 8 | 8 | 8 | 8 | **40** |
+| 7 | 8 | 8 | 8 | 8 | 9 | **41** |
 
 **Read that table with the control row in mind.** Passes 1 and 2 were scored
 through a broken camera, and most of the apparent climb from 30 to 35 is the
@@ -258,3 +259,114 @@ portrait camera a reason to show the back, or accept the in-fight read is
 what matters most and say so explicitly. The front legs, still untouched
 since pass 4, remain a third option: they don't yet break the silhouette
 the way the haunch now does.
+
+---
+
+## Pass 7 — artist lane, 2026-09-23 (Style, wider brief)
+
+Nick's brief moved (`tools/agents/artist.md`, 2026-09-23): make the hunters
+CLEAN, pulling from fully developed/AAA games for silhouette, palette
+discipline and distance-readability — describe the reference in words, never
+paste in a screenshot. Diagnosed Style, the one line pass 6 flagged as never
+having had a dedicated look, `tools/blender/frog.py`.
+
+**The reference and what it says.** Character-design teams on shipped AAA
+titles (Blizzard's own published design pillars for Overwatch's heroes are
+the clearest public statement of this, though the technique is standard
+practice, not one game's invention) test every character in **greyscale**
+before shipping, specifically because hue alone stops separating two shapes
+once distance, dim lighting, or a small render shrinks colour perception —
+what has to survive is **value** (how light or dark), not just colour. What
+that means concretely here: every boundary between two parts of a model
+should have real light/dark separation, not just a different hue at the same
+brightness.
+
+**Measured the model's own boundaries against that test, not guessed.**
+Sampled every swatch this model uses directly off `colormap.png`'s own
+pixels (the atlas the UVs point into) and computed luminance
+(`0.2126R + 0.7152G + 0.0722B`, the standard perceptual weighting):
+
+| boundary | luminance gap |
+|---|---|
+| MINT body ↔ CREAM throat/belly | 68.7 |
+| MINT ↔ CHARCOAL / WHITE (eye) | 100+ |
+| MINT body ↔ GREEN dorsal saddle | 38.1 |
+| **MINT leg/foot-pad ↔ AMBER toes** | **18.8** |
+
+The toes were the weakest colour boundary anywhere on the model — worth
+naming because `foot()`'s own docstring calls the four-toe fan "most of what
+a frog's foot reads as," so the model's least legible boundary sat on the
+one feature it was relying on most.
+
+**Fix: AMBER → RUST on the toes** (`tools/blender/frog.py` `foot()`), the
+model's only colour change this pass. RUST samples at luminance 119.6
+against the foot pad's 162.5 — a 42.9-point gap, better than double AMBER's
+18.8, and comfortably clear of every other boundary's value. RUST is also
+this fight's own established warm accent — the arena wall/scatter recolour
+(`cinder_jackal_ground.md`) already uses it — so the frog's one accent colour
+now echoes the ground it's fought on rather than sitting on an unrelated
+orange. No geometry touched: `TRIS 4800 PARTS 40` identical before and
+after.
+
+**Verified, not assumed.**
+
+- `frog_pass7_sil.png` is pixel-identical to `frog_pass6_sil.png`
+  (`numpy.array_equal`) — confirms this is a colour-only change, silhouette
+  untouched.
+- Converted `frog_pass6_34.png` and `frog_pass7_34.png` to greyscale and
+  compared side by side: in pass 6 the toes are barely distinguishable in
+  value from the leg they're attached to; in pass 7 they read as a visibly
+  darker, separate mass — the fix does what the measurement predicted, seen
+  in a render, not just computed.
+- **In the real fight camera** (`state=3d`, `cinder_jackal`), rebuilt pass 6
+  from `git stash` for a true before, then pass 7, same camera, same
+  hunter position. Full-frame pixel diff: 1467/921600 px differ (0.16%);
+  cropping to each hunter's own on-screen footprint shows the change lands
+  there (190px in a 180×180 crop around the frog, 72px around the goblin's
+  crop, both non-zero, both matching the toe positions) and nowhere else
+  scanned. A tight, 6×-upscaled crop on the frog's visible foreleg toe at
+  true combat size (~15px across) shows a real colour shift, small but
+  visible, from a dull amber blob to a distinctly reddish one.
+- **The 34px party portrait — pass 6 left this camera unmoved; this pass
+  does move it.** Rebuilt `frog.png` (`portraits.py frog`, single-name
+  argument this run — only the one file changed, not all 32) and downsampled
+  to the true 34×34 party-panel size: the toes sit at the bottom edge of
+  this crop and the recolour is visible there too, reading as a clearer red
+  accent against the cream belly rather than blending toward it. This is a
+  genuine, if partial, close of the "34px portrait" gap pass 6 flagged open
+  — the toes now separate at that size; the back saddle and nostrils still
+  don't (unchanged this pass, out of scope for a Style-line fix).
+
+**Score.** Style 8→9: the model's single weakest colour boundary is fixed,
+diagnosed by a named, applicable industry technique rather than eyeballed,
+and it also happens to tie the frog's palette to the arena's — a real style-
+consistency win on two counts. Held to 9, not 10, because "sits beside the
+approved assets" is a whole-cast judgement and this pass only touched one
+hunter; Sil/Prop/Hygiene/Colour untouched (identical geometry, only the toe
+material differs). **+1 total (40→41)** — under the loop's own "two passes
+under 2 points" plateau clause this would be the second such pass (pass 6
+was +2, so it does not trigger yet), but worth flagging for whoever runs
+pass 8: a plateau reads differently on a hunter that just moved from a
+0-diagnosis line to a named, verified fix than one that re-touched an
+already-worked line, so treat the number honestly rather than as a stop
+signal on its own.
+
+`ALL TESTS PASSED`; playtest (`mode=play`, `cinder_jackal`, 40 steps)
+re-run against the rebuilt model — see the Log line in
+`design/agents/status/artist.md` for the result.
+
+![[frames/artist/2026-09-23-frog-toes-value-contrast-34-before-after.png]]
+![[frames/artist/2026-09-23-frog-toes-infight-before-after.png]]
+![[frames/artist/2026-09-23-frog-toes-portrait34-before-after.png]]
+
+## Where it stands, still open for the next pass
+
+41/50, three passes into the lifted cap, 1 short of the 42 hunter stop line.
+Sil/Prop/Hygiene/Colour all sit at 8, Style now 9. The two candidates pass 6
+named are both still open and either would plausibly close the gap: the
+front legs (untouched since pass 4, don't yet break the silhouette the way
+the haunch does — a Silhouette/Proportion candidate) and the back
+saddle/nostrils' own 34px legibility (still unmoved this pass — a further
+Colour candidate, though it may need the shared portrait camera rather than
+the model itself, which is a bigger, cross-cutting change this pass
+deliberately did not risk).
