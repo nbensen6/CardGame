@@ -71,13 +71,44 @@ b.box((0.0, -0.190, 0.605), (0.150, 0.038, 0.140), UMBER, bevel=0.024)  # apron
 # STONE (114.1) is already this rig's own established colour (upper-arm
 # limb, claw box) - no new hue, just moved the biggest box off the two
 # darkest ties.
-b.box((0.30, 0.278, 0.800), (0.145, 0.098, 0.152), STONE, bevel=0.026)
-b.box((0.30, 0.278, 0.960), (0.106, 0.078, 0.030), PEWTER, bevel=0.013)   # lid
-b.limb([(0.412, 0.330, 0.880), (0.422, 0.398, 0.995), (0.440, 0.392, 1.088)],
-       [0.044, 0.040, 0.036], PUMPKIN, seg=5)  # exhaust; seg 6->5, pass 4 budget
-b.taper((0.442, 0.392, 1.128), 0.057, 0.046, 0.078, CARROT, seg=6, bevel=0.010)
+# Pass 7 (2026-09-23): pass 6 measured the rig's own limb radii at 1.3-1.6x
+# the ordinary MINT arm's and confirmed that's real but "moderate" against the
+# file's own "enormous" claim - Proportion held at 7, not a hidden defect but
+# a real, if partial, miss. Pass 6 also declined to just scale the rig blind:
+# every part here is an independent box()/limb()/taper() call at an absolute
+# coordinate, not a single chain from one joint, so a naive mesh-level scale
+# risks reopening the "orbiting blocks" read pass 2-4 spent three passes
+# closing. The fix that avoids that risk: scale every rig coordinate AND size
+# by the same factor from the same pivot, in the GENERATOR, before the
+# geometry is built - not a post-hoc mesh transform. That preserves every
+# rig-to-rig distance and overlap exactly (touching stays touching, by
+# construction), the one thing a blind scale couldn't guarantee. RIG_P sits
+# near the shoulder box, so the compressor cluster grows up/back and the
+# claw/piston cluster grows down/forward from roughly where the rig meets the
+# body - reading as the rig itself getting bigger, not the goblin sliding out
+# from under it.
+RIG_S = 1.18
+RIG_P = (0.30, 0.05, 0.80)
 
-b.box((0.346, 0.030, 0.812), (0.122, 0.126, 0.134), PEWTER, bevel=0.024,
+
+def rp(x, y, z):
+    return (RIG_P[0] + RIG_S * (x - RIG_P[0]),
+            RIG_P[1] + RIG_S * (y - RIG_P[1]),
+            RIG_P[2] + RIG_S * (z - RIG_P[2]))
+
+
+def rs(*vs):
+    return tuple(RIG_S * v for v in vs) if len(vs) > 1 else RIG_S * vs[0]
+
+
+b.box(rp(0.30, 0.278, 0.800), rs(0.145, 0.098, 0.152), STONE, bevel=rs(0.026))
+b.box(rp(0.30, 0.278, 0.960), rs(0.106, 0.078, 0.030), PEWTER, bevel=rs(0.013))   # lid
+b.limb([rp(0.412, 0.330, 0.880), rp(0.422, 0.398, 0.995), rp(0.440, 0.392, 1.088)],
+       [rs(0.044), rs(0.040), rs(0.036)], PUMPKIN, seg=5)  # exhaust; seg 6->5, pass 4 budget
+b.taper(rp(0.442, 0.392, 1.128), rs(0.057), rs(0.046), rs(0.078), CARROT, seg=6,
+        bevel=rs(0.010))
+
+b.box(rp(0.346, 0.030, 0.812), rs(0.122, 0.126, 0.134), PEWTER, bevel=rs(0.024),
       rot=(0.0, 0.10, 0.0))
 # Upper arm and wrist limbs were 0.086-0.098 radius bridging boxes with
 # 0.12-0.15 half-extents - thin enough that the joints vanished between the
@@ -92,21 +123,22 @@ b.box((0.346, 0.030, 0.812), (0.122, 0.126, 0.134), PEWTER, bevel=0.024,
 # crown. Confirmed with a diagnostic recolour - see goblin_mech.md pass 4 -
 # and it was NOT the CHARCOAL ring a few lines down, which was the first
 # suspect. More segments round the cap into a shallow seam instead.
-b.limb([(0.350, 0.020, 0.766), (0.392, -0.030, 0.652), (0.414, -0.062, 0.580)],
-       [0.137, 0.120, 0.112], STONE, seg=10)                             # upper arm
-b.box((0.416, -0.068, 0.548), (0.086, 0.090, 0.106), PEWTER, bevel=0.020,
+b.limb([rp(0.350, 0.020, 0.766), rp(0.392, -0.030, 0.652), rp(0.414, -0.062, 0.580)],
+       [rs(0.137), rs(0.120), rs(0.112)], STONE, seg=10)                 # upper arm
+b.box(rp(0.416, -0.068, 0.548), rs(0.086, 0.090, 0.106), PEWTER, bevel=rs(0.020),
       rot=(0.12, 0.14, 0.0))
-b.limb([(0.420, -0.076, 0.500), (0.438, -0.100, 0.430), (0.450, -0.118, 0.378)],
-       [0.095, 0.106, 0.115], PEWTER, seg=10)                            # wrist
-b.box((0.454, -0.128, 0.298), (0.132, 0.138, 0.112), STONE, bevel=0.026,
+b.limb([rp(0.420, -0.076, 0.500), rp(0.438, -0.100, 0.430), rp(0.450, -0.118, 0.378)],
+       [rs(0.095), rs(0.106), rs(0.115)], PEWTER, seg=10)                # wrist
+b.box(rp(0.454, -0.128, 0.298), rs(0.132, 0.138, 0.112), STONE, bevel=rs(0.026),
       rot=(0.18, 0.20, 0.0))
-b.taper((0.454, -0.268, 0.298), 0.072, 0.058, 0.130, CARROT, seg=6, rot=(FWD, 0, 0))
+b.taper(rp(0.454, -0.268, 0.298), rs(0.072), rs(0.058), rs(0.130), CARROT, seg=6,
+        rot=(FWD, 0, 0))
 for dz in (-0.048, 0.048):                                              # piston rods
     # seg 5->4: at 0.016 radius (a thin rod, not a silhouette-defining mass)
     # the facet is invisible; this and the three balls above claw back the
     # 84-tri budget overage pass 2 didn't touch (goblin_mech.md pass 2).
-    b.taper((0.454, -0.208, 0.298 + dz), 0.016, 0.016, 0.190, CHARCOAL, seg=4,
-            rot=(FWD, 0, 0))
+    b.taper(rp(0.454, -0.208, 0.298 + dz), rs(0.016), rs(0.016), rs(0.190), CHARCOAL,
+            seg=4, rot=(FWD, 0, 0))
 # minor 4->3 (pass 4): ruled out as the zigzag's cause by the same
 # diagnostic recolour above, so its own roundness costs nothing that was
 # scored; freed 24 tris toward the two limb caps' seg 6->10 above.
@@ -114,8 +146,8 @@ for dz in (-0.048, 0.048):                                              # piston
 # CHARCOAL -> STONE (pass 5): same dark-tie-against-the-jackal fix as the
 # compressor box above - this ring is the rig's other big CHARCOAL mass, and
 # the same near-black-on-near-black loss applies to it in-fight.
-b.ring((0.384, -0.020, 0.690), (0.158, 0.158, 0.042), STONE, 12, 3,
-       rot=(0.10, 0.0, 0.0))
+b.ring(rp(0.384, -0.020, 0.690), rs(0.158, 0.158, 0.042), STONE, 12, 3,
+       rot=(0.10, 0.0, 0.0), thickness=rs(0.16))
 
 b.limb([(-0.290, -0.010, 0.830),
         (-0.335, -0.055, 0.660),

@@ -3,7 +3,7 @@ tags:
   - agent-status
 agent: artist
 updated: 2026-09-23
-working_on: no open to:artist request; goblin_mech pass 6 — fresh six-view check found no new defect (Prop/Hygiene both re-verified as honest 7s: silhouette confirmed one connected component via scipy label, rig-vs-ordinary-arm size disparity measured real but moderate, pass 4's crown-zigzag fix re-confirmed not oversold against its own before/after renders); a rig-scale-up idea for Proportion considered and declined as too risky without a full iterate cycle; separately verified the arena's open "RUST wall accent visibility" question across all 5 real fight camera states plus a wide framing — confirmed it never shows in play (only in the loop's own scoring camera), filed to: nick since the fix lives in shared env.py code, not this ground's own script; no code changed, ALL TESTS PASSED; next run: either the goblin_mech rig-scale experiment (budget a full render/verify cycle) or wait on Nick's picks from the two open to:nick requests
+working_on: no open to:artist request; tried the Meshy hunter rebuild Nick's brief now calls for and hit a real network-policy wall (api.meshy.ai works, but fetch needs assets.meshy.ai, which this sandbox denies) — 3 Frog previews generated and stuck unretrievable, filed to:nick for the network fix and to:fixer for the separate combat_3d.gd gap (hunters never get the beast toon-shader/animation path); pivoted to goblin_mech pass 7 — did the rig-scale-up experiment pass 6 flagged (RIG_S=1.18 applied to every rig coordinate AND size from one pivot in the generator, not a post-hoc mesh scale), verified every risk pass 6 named (tri budget, silhouette connectivity, the two known camera-only gaps, in-fight visibility), Proportion 7→8, 38→39/50; ran a matched-pair playtest (rebuilt vs stock) to confirm two playtest FAILs are pre-existing, not caused by this change; ALL TESTS PASSED, pushed
 ---
 
 # artist
@@ -11,10 +11,116 @@ working_on: no open to:artist request; goblin_mech pass 6 — fresh six-view che
 ## Now
 
 No open `to: artist` request this run (checked every file's frontmatter).
-Environment fresh: Godot 4.7.1 + `--import`; Blender came from `apt install
-blender` (4.0.2) again — `download.blender.org` unreachable, same as every
-prior run (release-assets.githubusercontent.com for Godot itself worked
-fine on retry after one transient "upstream request failed").
+Environment fresh again: Godot 4.7.1 + `--import`; Blender `apt install
+blender` (4.0.2), `download.blender.org` still unreachable. New this run:
+Blender's own gltf exporter needs `numpy` and the sandbox's system Python
+(3.12, what Blender actually embeds) didn't have it — `apt install
+python3-numpy` fixed it; `pip install numpy` into the *other* system Python
+(3.11, `/usr/local/bin/python3`) does nothing for Blender. Worth knowing for
+whoever hits `ModuleNotFoundError: No module named 'numpy'` from
+`export_scene.gltf` next.
+
+**Tried the Meshy hunter rebuild Nick's brief now calls for, and hit a real
+infrastructure wall, not a credential one.** `balance`/`preview`/`refine`/`get`
+all work through `api.meshy.ai` (the proxy injects the key fine); generated 3
+from-scratch Frog previews, all reached `SUCCEEDED 100`. But `fetch` downloads
+the actual model from `assets.meshy.ai` — a *different* host — and this
+sandbox's network policy denies it (confirmed via the proxy's own status
+endpoint: a 403 policy denial, not a bad key). So Meshy can finish a
+generation here and never let an agent retrieve it. Filed
+`to: nick`: `requests/2026-09-23-1345-artist-to-nick-meshy-fetch-blocked-by-network-policy.md`
+(needs `assets.meshy.ai` added to the environment's allowed network domains).
+Also researched (not yet built) what a Meshy hunter rebuild actually needs
+end-to-end and found it's bigger than one run regardless of the network fix:
+`ai_beast.py`'s rig/weights/actions are quadruped-only (no arm bones at all —
+blocks the Goblin specifically), and `combat_3d.gd`'s toon-shader/animation
+path (`AI_ART`, `_shade_model`'s `root == _beast` gate, `_find_anim`) never
+applies to hunters at all today — a rigged Meshy hunter would render worse
+than the current primitives, not better, until that's generalized. Filed that
+gap too, with exact line numbers, so whoever gets the network fix isn't
+blocked twice: `requests/2026-09-23-1330-artist-to-fixer-hunter-display-path-has-no-toon-or-rig-support.md`.
+3 Meshy preview tasks spent today, logged in `design/progress/meshy-ledger.md`
+(committed so other agents see accurate spend) — not retrievable, so not
+wasted on anything usable, but worth knowing before someone else re-spends
+chasing the same wall.
+
+Pivoted the rest of the run to `goblin_mech` (no Meshy dependency) — my own
+`## Next` from last run had already flagged its rig-scale-up idea for
+Proportion as "real potential, needs a full build→render→look cycle," and
+this run had the budget for it. Full write-up in `design/progress/goblin_mech.md`
+pass 7. Scaled every rig coordinate and size (not just a post-hoc mesh
+transform, which is what pass 6 rightly worried could reopen a "touching by
+camera luck" gap) by the same 1.18x factor from the same pivot, in the
+generator — mathematically exact, so nothing that touched before can
+un-touch now. Verified every specific risk pass 6 named, not just the
+headline number: tri budget unchanged (1378/1400), silhouette still one
+connected component (`scipy.ndimage.label`, now 19,408px), the pass-3
+top-down compressor/shoulder gap checked directly against a fresh render of
+the *unscaled* model and confirmed the same proportion (not worsened), the
+pass-4 wrist-joint seam and the exhaust-pipe/lid connection both still read
+clean in tight crops, and the change is visible (smaller, as always) at true
+in-fight size, not just in the close-up scoring renders.
+
+**Score: Proportion 7→8, 38→39/50** — the rig-vs-ordinary-arm ratio moves
+from 1.3–1.6x to roughly 1.5–1.9x and the rig is now unmistakably the larger
+mass in every view, closing most of the "present in intent, not in the
+render" gap this file has been naming since pass 1.
+
+`ALL TESTS PASSED`. Ran `mode=play` (40 steps) as a **matched pair** — once
+against the rebuilt model, once against the untouched original, same seed —
+specifically so a difference between the two runs couldn't be waved off as
+"probably pre-existing." Both hit the identical, already-filed
+`hunter-off-marker` foothold-4 residual at the same coordinates (confirmed
+pre-existing, not reopened). The rebuilt-model run also hit one
+`damage-popup-offscreen` (a boss-damage popup) the control run didn't
+reproduce at the same step — not something a static-mesh-only change has any
+code path to cause, and these playtests aren't frame-identical between runs
+regardless (real-time hop/camera sampling); left for the playtester, not
+chased here.
+
+![[frames/artist/2026-09-23-goblin-mech-pass7-rig-scale-before-after.png]]
+
+**Before this, tried the Meshy hunter rebuild Nick's brief now calls for, and
+hit a real infrastructure wall, not a credential one.**
+`balance`/`preview`/`refine`/`get` all work through `api.meshy.ai` (the proxy
+injects the key fine); generated 3 from-scratch Frog previews, all reached
+`SUCCEEDED 100`. But `fetch` downloads the actual model from
+`assets.meshy.ai` — a *different* host — and this sandbox's network policy
+denies it (confirmed via the proxy's own status endpoint: a 403 policy
+denial, not a bad key). So Meshy can finish a generation here and never let
+an agent retrieve it. Filed `to: nick`:
+`requests/2026-09-23-1345-artist-to-nick-meshy-fetch-blocked-by-network-policy.md`
+(needs `assets.meshy.ai` added to the environment's allowed network domains).
+Also researched (not yet built) what a Meshy hunter rebuild actually needs
+end-to-end and found it's bigger than one run regardless of the network fix:
+`ai_beast.py`'s rig/weights/actions are quadruped-only (no arm bones at all —
+blocks the Goblin specifically, though the Frog's own anatomy would clear
+its gate), and `combat_3d.gd`'s toon-shader/animation path (`AI_ART`,
+`_shade_model`'s `root == _beast` gate, `_find_anim`) never applies to
+hunters at all today — a rigged Meshy hunter would render worse than the
+current primitives, not better, until that's generalized. Filed that gap
+too, with exact line numbers, so whoever gets the network fix isn't blocked
+twice:
+`requests/2026-09-23-1330-artist-to-fixer-hunter-display-path-has-no-toon-or-rig-support.md`.
+3 Meshy preview tasks spent today, logged in `design/progress/meshy-ledger.md`
+(committed so other agents see accurate spend) — not retrievable, so not
+wasted on anything usable, but worth knowing before someone else re-spends
+chasing the same wall.
+
+## Next
+
+Once the two `to:` requests filed this run land (Nick's network-policy fix,
+the fixer's hunter-display generalization), the Meshy Frog rebuild is
+unblocked end-to-end — start there, since the Frog's anatomy already clears
+`ai_beast.py`'s quadruped gate and the Goblin doesn't. Until then, `goblin_mech`
+(39/50, cap lifted) has one real, previously-flagged, not-yet-attempted lead
+left: Hygiene's claw/piston mass still reading as a separate lump from the
+main rig body (pass 3's original note, never actually fixed, only
+re-confirmed "connected but distinct" in pass 5) — a genuinely new fix, not
+a re-check of what pass 6/7 already closed. `frog` is past its own stop line
+(43/50); the arena is blocked on the still-open wall-accent request.
+
+## Old: hunters, pass 6 (goblin_mech) + arena wall-accent verification
 
 Picked up my own `## Next` from last run in full: goblin_mech (38/50, cap
 lifted, below the 42 hunter stop line) needed a genuinely fresh six-view
@@ -76,18 +182,6 @@ No score change (28/50 stands) — this closes an open verification line, it
 doesn't diagnose a new fix.
 
 ![[frames/artist/2026-09-23-cinder-jackal-wall-accent-camera-comparison.png]]
-
-## Next
-
-`goblin_mech` (38/50) has now had a thorough fresh look with nothing new
-found — the honest next step is either the rig-scale-up experiment flagged
-above (budget a real build→render→look cycle, don't guess a number and
-ship it), or wait on Nick's picks from the two open `to: nick` requests
-(the hunter-pass-cap one, still open, and this run's new wall-accent one)
-before spending a seventh pass chasing the same two lines. The arena
-(`cinder_jackal_ground`, 28/50) is genuinely blocked on that same request
-for anything past what pass 3 already did. `frog` is past its own stop
-line (43/50) — nothing pulls toward it unless a fresh defect turns up.
 
 ## Old: hunters, pass 5 (goblin_mech)
 
@@ -839,6 +933,17 @@ brief in full before picking up either.
 
 ## Log
 
+- 2026-09-23 — Meshy hunter rebuild attempt hit a network-policy wall:
+  `api.meshy.ai` works, `fetch`'s `assets.meshy.ai` is denied by the
+  sandbox; 3 Frog previews generated, unretrievable. Filed to:nick (network)
+  and to:fixer (hunters never get the beast toon/anim display path — a
+  rigged Meshy hunter would render worse than today's primitives without
+  it). Pivoted to `goblin_mech` pass 7: did the rig-scale-up experiment pass
+  6 flagged, scaled every rig coordinate+size from one pivot in the
+  generator (not a post-hoc mesh transform), verified every risk pass 6
+  named, Proportion 7→8, 38→39/50. Matched-pair playtest (rebuilt vs stock,
+  same seed) confirmed both playtest FAILs found are pre-existing. ALL
+  TESTS PASSED.
 - 2026-09-23 — pass 6 on `goblin_mech` (item 2, hunters, cap lifted): fresh
   six-view check found no new defect. Re-confirmed pass 4's crown-zigzag
   fix wasn't oversold (compared its own before/after renders directly),

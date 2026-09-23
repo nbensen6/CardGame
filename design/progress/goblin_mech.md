@@ -490,3 +490,103 @@ look at something this file hasn't touched yet (Style's goggle/strap
 combination at oblique angles, or a genuinely new six-view look after
 another run's fresh eyes) rather than a fourth re-check of Prop/Hygiene
 with no new idea.
+
+---
+
+## Pass 7 — artist lane, 2026-09-23 (the rig-scale-up, done properly)
+
+Picked up pass 6's own declined idea, this time budgeted for the full
+build→render→look cycle it needed. Pass 6's worry was real but aimed at the
+wrong risk: it assumed a *post-hoc mesh scale* (grow the finished object from
+one pivot), which on a rig built from independently-placed absolute
+coordinates could plausibly reopen a gap between two parts that only "touch"
+by camera-dependent luck (pass 3's exhaust-cap finding). The actual fix
+avoids that risk instead of gambling on it: scale every rig coordinate AND
+every rig size (box half-extents, limb/taper radii, ring thickness) by the
+same factor from the same pivot, **in the generator**, before any geometry is
+built. That's provably exact — every rig-to-rig 3D distance and overlap
+scales identically, so nothing that touched before can un-touch now. Added
+`RIG_S = 1.18`, `RIG_P = (0.30, 0.05, 0.80)` (near the shoulder box) and two
+helpers (`rp()` for positions, `rs()` for sizes) in `goblin_mech.py`, and
+routed every rig call through them — the compressor cluster (up/back) and the
+claw/piston cluster (down/forward) both grow away from the shoulder, reading
+as the rig itself getting bigger rather than the goblin sliding out from
+under it.
+
+| Pass | Sil | Prop | Hygiene | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 1 | 5 | 5 | 5 | 7 | 7 | **29** |
+| 2 | 7 | 7 | 5 | 7 | 7 | **33** |
+| 3 | 7 | 7 | 7 | 7 | 7 | **35** |
+| 4 | 8 | 7 | 7 | 7 | 8 | **37** |
+| 5 | 8 | 7 | 7 | 8 | 8 | **38** |
+| 6 | 8 | 7 | 7 | 8 | 8 | **38** |
+| 7 | 8 | 8 | 7 | 8 | 8 | **39** |
+
+**Verified, not assumed, on every axis pass 6 flagged as the actual risk:**
+
+- **Tri budget unaffected**, as expected (scaling changes no segment counts):
+  1378 tris both builds, `PARTS 33 BUDGET 1400 ok`.
+- **Silhouette connectivity still 1 component** (`scipy.ndimage.label` on
+  `goblin_mech_pass7_sil.png`): 19,408px, up from pass 6's 17,079 (a bigger,
+  still-solid shape), no floating part opened.
+- **The top-down compressor/shoulder gap — checked directly against the
+  pre-scale model, not assumed unchanged.** Rendered the untouched original
+  through `look.py` for a true side-by-side (`goblin_mech_pass6b_top.png`,
+  not committed, this pass's own control). The gap between the two grey
+  clusters in `_top.png` is the same proportion in both — a real,
+  already-known, `look.py`-diagnostic-only artefact (pass 3's own finding,
+  restated here because scaling is exactly the kind of change that could
+  have made it worse and didn't).
+- **The wrist-to-claw joint (pass 4's `seg=10` fix) still reads as a shallow
+  seam, not a reopened zigzag** — checked in a tight crop of `_34.png`,
+  before/after: unchanged shape, correctly bigger.
+- **The exhaust pipe still meets the compressor lid cleanly** — the one other
+  joint pass 3 found to be camera-dependent — checked in a tight crop, no
+  new gap.
+- **Overall model footprint**: X 1.533→1.615 (+5.3%), Y 1.163→1.373 (+18.0%,
+  matching `RIG_S` almost exactly since the rig extends mostly along Y), Z
+  unchanged at 1.85 (the head/ears stay the tallest point, so `finish()`'s
+  auto height-fit doesn't quietly undo any of this by rescaling the whole
+  model down).
+- **In the real fight** (`state=3dgrip slot=1`, goblin on an open foothold,
+  unoccluded): a tight before/after crop at true ~30px size shows the rig
+  reading as visibly bulkier against the green body — smaller than the
+  isolated renders, as every prior pass's in-fight check has found, but real
+  and not a close-up-only effect.
+- **`ALL TESTS PASSED`. Playtest (`mode=play`, `cinder_jackal`, 40 steps) run
+  against both builds as a matched pair**, not just the new one: both report
+  the identical, already-filed `hunter-off-marker` foothold-4 residual
+  (`requests/2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`)
+  at the same coordinates on both runs — confirmed pre-existing, not
+  reopened. The rebuilt-model run also hit one `damage-popup-offscreen` (a
+  boss-damage popup, not the hunter-damage case the fixer already fixed and
+  the playtester already verified in commit `32db5a6`) that the control run
+  didn't reproduce at the same step — expected, since these playtests are
+  not frame-identical between runs (real-time hop/camera sampling), and a
+  static-mesh-only change has no code path into popup placement at all.
+  Left for the playtester to catch on its own terms; not this asset's to
+  chase.
+
+**Score: Proportion 7→8.** The rig's own limb-radii-vs-ordinary-arm ratio
+(pass 6's own measurement) moves from 1.3-1.6x to roughly 1.5-1.9x, and the
+whole rig cluster is now unmistakably the larger mass in every view checked,
+closing most of the "present in intent, not in the render" gap pass 1-6 kept
+finding. Held at 8, not higher: this is one, real, moderate step, not a
+transformation, and Hygiene's still-separate-reading claw/piston mass (pass
+3's note) is untouched. Sil/Hygiene/Colour/Style unchanged — nothing this
+pass touched their lines. **38 → 39/50, still below the 42 hunter stop line
+but the first real movement since pass 5.**
+
+![[frames/artist/2026-09-23-goblin-mech-pass7-rig-scale-before-after.png]]
+
+## Where it stands after pass 7
+
+39/50. The rig-scale idea pass 6 flagged is spent and worked. Untouched
+lines for a future pass: Hygiene (7, the claw/piston mass reading separate
+from the main rig body — pass 5 confirmed connected, but distinct, a milder
+version of the same question), and Style's goggle/strap at oblique angles
+(flagged, never actually checked). Given `RIG_S`/`RIG_P` are now named
+constants, a second, more aggressive scale pass is possible later, but
+should come with its own fresh six-view look rather than assuming this
+pass's margins still hold.
