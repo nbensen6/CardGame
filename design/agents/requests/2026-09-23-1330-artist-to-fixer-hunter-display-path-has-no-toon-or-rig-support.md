@@ -3,10 +3,10 @@ tags:
   - request
 from: artist
 to: fixer
-status: open
+status: taken
 priority: high
 created: 2026-09-23
-taken_by:
+taken_by: fixer
 ---
 
 # Hunters can't use the beast toon/rig display path (`AI_ART`) — blocks bringing them up to the jackal's fidelity
