@@ -3,12 +3,94 @@ tags:
   - agent-status
 agent: fixer
 updated: 2026-09-23
-working_on: hit_circle.gd's note_hit signal double-reported a dropped slider note (PERFECT then MISS for the same index); fixed, two new tests, pushed
+working_on: Meld could fuse a slider-eligible climb (grip>=2) with a real multi-window timed card (timed_hits>1, e.g. Winch+Satchel Charge) and HitCircle silently collapsed it to one hold instead of the chain's real window count; fixed, four new tests, pushed
 ---
 
 # fixer
 
 ## Now
+
+Fresh sandbox. No open `to: fixer` request (the boss-relic-pool request is
+still sitting on `to: nick`, untouched — his call, not mine). Order-of-work
+item 1-2: ran `run_tests.gd` (`ALL TESTS PASSED`) then a full fresh
+`mode=play beast=cinder_jackal steps=80` — clean, no failing checks through
+the whole run. Fell to item 3 (bugs in the jackal fight's own code paths,
+found by reading): dispatched an Explore agent scoped strictly to
+`combat_3d.gd`/`card_view.gd`/`hit_circle.gd`/`core/combat.gd`'s Frog/Goblin
+Engineer card fields, told exactly which functions the last several runs'
+logs already call settled (`hop_arc`, `hunter_side_offset`, `gauge_dot_dx`,
+`foothold_anchor`, `stand_offset_x`, `climb_frame_for`, `popup_offset`,
+`pattern_shove`, `height_gap_between`, `react_plan`, `_markup`/`_word_index`/
+`_kw`, `fire_quality`/`_fire`/`_end_timing`/`zone_bonus_t`, and `note_hit` —
+last run's own fix) so it wouldn't re-surface one of those.
+
+**What it found, confirmed myself before touching anything.**
+`HitCircle.begin()` (`ui/hit_circle.gd:139-151`) sets `_hits_needed = 1 if
+_slider else points.size()` — whether a card is a "slider" (one held note)
+or a tap chain was decided in `combat_3d.gd`'s `_on_card_tapped` purely by
+`card_climb_for(card) >= SLIDER_CLIMB` (printed `grip >= 2`), with no regard
+at all for the card's own `timed_hits`. No single shipped card carries both
+a slider-eligible climb and more than one real timing window — but **Meld**,
+the Goblin Engineer's own signature starter card, reaches it for real:
+`_meld_cards` (`core/combat.gd:388,399`) sums `grip` and takes
+`maxi(timed_hits)` independently, so melding **Winch** (`grip:2`, built via
+Build Winch) with **Satchel Charge** (`timed_hits:3`, in the Goblin
+Engineer's own starter deck ×2) — confirmed both are in the Goblin
+Engineer's card pool via `data/characters.json` — produces `grip:2,
+timed_hits:3`. On the HitCircle face that resolved as ONE 0.85s hold with
+`SLIDE_RESCUE` forgiveness instead of three separately-graded windows — a
+real difficulty cut on a real, reachable card, and disagreeing with the
+sweep-bar `CardView` face's own `start_timing(hits)`, which already demands
+all `hits` windows for the identical melded card with no slider concept at
+all. Two faces of one rule silently disagreeing on what the rule was — same
+shape as several prior `#86` finds, just never closed in this exact spot.
+
+**Fix.** Extracted `Combat3D.card_is_slider(card, hits) -> bool` —
+`card_climb_for(card) >= SLIDER_CLIMB and hits <= 1` — and pointed
+`_on_card_tapped`'s `_circle.begin(...)` call at it instead of the old
+inline `climb >= SLIDER_CLIMB`. Every currently-shipped slider card has
+`timed_hits` implicitly 1, so this is a no-op for all of them; it only
+changes behavior for a melded card that combines a slider climb with a real
+multi-window chain, which now correctly falls back to the tap chain both
+faces then agree on.
+
+**Reproduced first.** Temporarily reverted just the new function's body to
+the old formula (`return card_climb_for(card) >= SLIDER_CLIMB`, ignoring
+`hits`), kept the call site and the four new tests: the melded-shape test
+failed exactly as predicted (`{grip:2}, hits=3` → `card_is_slider` true when
+it must be false). Restored the fix, reran: `ALL TESTS PASSED`.
+
+**Proof.** Four new tests covering the full 2×2 truth table: a plain climb
+card (grip 2, hits 1, every shipped slider today) stays a slider; a plain
+attack card (grip 0) is never a slider; the melded shape (grip 2, hits 3)
+now correctly falls back to a tap chain — the repro above; a high-`hits`
+card with no climb (Satchel Charge alone, grip 0, hits 3) was already
+correct and stays a tap chain, guarded against a regression in the other
+direction. No live frame: reaching this exact card needs Build Winch held
+alongside Satchel Charge, then Meld — no dev-harness switch forces a
+synthetic melded id into a hand (`Dev.hand`/`hand=` only resolve real
+`data/cards.json` ids via `Content.make_card`; a meld's id is built at
+runtime, not data-driven) and the deterministic `playtest.gd` script never
+happens to build Winch and meld it with Satchel Charge in its fixed
+sequence — proof here is the before/after unit test, the same convention
+every other pure timing-minigame rule in this file already uses
+(`card_climb_for`, `fire_quality`, `zone_bonus_t`, none of which have a live
+frame either).
+
+Re-ran a fresh full `mode=play beast=cinder_jackal steps=80` against the
+fixed tree as a general-regression sanity check — clean throughout, no
+errors, no behavior change on any of the real card plays along the way
+(none of them melded Winch+Satchel Charge, so this run couldn't have
+exercised the fixed branch specifically, only confirmed nothing else broke).
+`hover`/`hands` were started too but killed early to free the sandbox's 4
+cores for `play` alone under 3-way contention that was making all three
+crawl; nothing in this change touches hover/flicker timing or hand-size
+layout, so the risk from not completing their run this time is low.
+
+Self-filed and self-fixed —
+`requests/2026-09-23-0700-fixer-to-fixer-meld-slider-swallows-multi-hit-windows.md`.
+
+## Old: 2026-09-23, note_hit double-report on a dropped slider
 
 Fresh sandbox. No open `to: fixer` request (the boss-relic-pool request is
 still sitting on `to: nick`, untouched — his call, not mine). Order-of-work
@@ -322,7 +404,25 @@ anything meant to outlive the current tool call.
 ## Next
 
 Items 1-2 (open requests, live playtest failures) are clean this run, same
-as the last several. Item 3 found a real gap this time: `hit_circle.gd` had
+as the last several. Item 3 found a real gap this time: two faces of the
+timing minigame (HitCircle's osu circles vs CardView's sweep bar) disagreed
+on how many windows a melded slider+multi-hit card needs — only reachable
+via the Goblin Engineer's own Meld + Winch + Satchel Charge, so a live frame
+would need scripting that exact build-then-meld sequence rather than the
+deterministic playtest's fixed script; proved it headless instead, same as
+every other pure timing-minigame rule already is. Worth someone eventually
+checking whether OTHER Meld combinations produce a similarly-disagreeing
+pair of derived fields (this run only chased the slider/hits pair) — didn't
+audit `_meld_cards`'s other ~20 summed/maxed fields against how each one is
+actually consumed downstream. `hover`/`hands` baseline wasn't completed this
+run (killed early for CPU headroom, see `## Now`) — worth a full three-mode
+run next time nothing else takes priority, though nothing in this fix
+touches either.
+
+## Old: 2026-09-23, note_hit double-report on a dropped slider
+
+Items 1-2 (open requests, live playtest failures) were clean that run, same
+as several before. Item 3 found a real gap: `hit_circle.gd` had
 heavy prior test coverage, but every existing test only ever listened for
 `resolved()` (fires once per window) — none connected `note_hit` (fires once
 per note) for the slider path, which is exactly where the double-report bug
@@ -352,7 +452,25 @@ further either.
 
 ## Log
 
-- 2026-09-23 (latest) — fixed `HitCircle.note_hit` (ui/hit_circle.gd)
+- 2026-09-23 (latest) — fixed `Combat3D._on_card_tapped` picking a melded
+  card's HitCircle face (slider vs. tap chain) by `card_climb_for(card) >=
+  SLIDER_CLIMB` alone, ignoring `timed_hits`: melding Winch (grip 2) with
+  Satchel Charge (timed_hits 3) — both in the Goblin Engineer's own pool,
+  via their own Meld card — produced a fused card that collapsed to a
+  single 0.85s slider hold instead of the 3 separately-graded windows the
+  sweep-bar CardView face already correctly demands for the identical card.
+  Extracted `Combat3D.card_is_slider(card, hits)` — `card_climb_for(card) >=
+  SLIDER_CLIMB and hits <= 1` — a no-op for every currently-shipped slider
+  (all have `timed_hits` 1), fixing only the melded case. Four new tests
+  (full 2×2 truth table); repro fails on the old formula
+  (temp-reverted just the new function's body), passes fixed. `ALL TESTS
+  PASSED`; fresh `mode=play` baseline clean (general-regression sanity, this
+  exact melded card isn't in the scripted sequence). No live frame — no
+  dev-harness switch forces a synthetic melded card into a hand; proof is
+  the before/after unit test, same convention every other pure
+  timing-minigame rule in this file uses. Self-filed and self-fixed — see
+  the request's `## Result`.
+- 2026-09-23 — fixed `HitCircle.note_hit` (ui/hit_circle.gd)
   double-reporting a slider's one note: a good press emitted `note_hit(0,
   PERFECT)` immediately, then dropping the hold before `SLIDE_RESCUE`
   unconditionally emitted `note_hit(0, MISS)` too — two conflicting verdicts

@@ -1352,6 +1352,12 @@ func _init() -> void:
 	_test_backlog86_card_climb_for_defaults_to_zero_with_no_grip_key()
 	_test_backlog86_card_climb_for_ignores_a_top_level_grip_key()
 	_test_backlog86_card_climb_for_threshold_matches_slider_cutoff()
+	# fixer: card_is_slider -- a melded card can be BOTH slider-eligible (grip)
+	# and multi-window (timed_hits), which used to collapse to a single hold.
+	_test_backlog86_card_is_slider_a_plain_climb_card_stays_a_slider()
+	_test_backlog86_card_is_slider_a_plain_attack_card_is_never_a_slider()
+	_test_backlog86_card_is_slider_a_melded_multi_hit_climb_falls_back_to_a_tap_chain()
+	_test_backlog86_card_is_slider_high_hits_with_no_climb_is_still_a_tap_chain()
 	# backlog #86 duty 3 (twenty-sixth pass): the grip/fall timer itself --
 	# Nick's own example is the jump, and this is the OTHER half of it: whether
 	# a hunter who is climbing actually falls in time. grip_after_tick is the
@@ -24217,6 +24223,42 @@ func _test_backlog86_card_climb_for_threshold_matches_slider_cutoff() -> void:
 	_expect(Combat3D.card_climb_for({"base": {"grip": 1}}) < Combat3D.SLIDER_CLIMB, "climb 1 stays a plain tap")
 	_expect(Combat3D.card_climb_for({"base": {"grip": 2}}) >= Combat3D.SLIDER_CLIMB, "climb 2 is the rule's own cutoff for a slider")
 	_expect(Combat3D.card_climb_for({"base": {"grip": 5}}) >= Combat3D.SLIDER_CLIMB, "a high climb stays a slider")
+
+
+## fixer: card_is_slider decides the boolean HitCircle.begin() actually grades
+## against -- `_slider = slider and points.size() > 1`, then `_hits_needed = 1
+## if _slider else points.size()`. Before this existed, `_on_card_tapped`
+## passed `climb >= SLIDER_CLIMB` straight through with no regard for `hits`
+## (timed_hits), so a card that was BOTH slider-eligible (grip >= SLIDER_CLIMB)
+## AND had more than one real timing window collapsed to a single held note --
+## unreachable on any single shipped card, but real the moment Meld fuses one
+## of each: `_meld_cards` (combat.gd) sums `grip` and takes `maxi(timed_hits)`
+## independently, so melding Winch (grip 2) with Satchel Charge (timed_hits 3)
+## -- both in the Goblin Engineer's own pool, via the "meld" starter card --
+## produces exactly this: grip 2, timed_hits 3. The sweep-bar CardView face
+## (`start_timing(hits)`) already demands all 3 windows for the identical
+## melded card with no such collapse; only the HitCircle face disagreed.
+func _test_backlog86_card_is_slider_a_plain_climb_card_stays_a_slider() -> void:
+	_expect(Combat3D.card_is_slider({"base": {"grip": 2}}, 1),
+		"a genuine single-window climb card (every shipped slider today) is still a held slider")
+
+
+func _test_backlog86_card_is_slider_a_plain_attack_card_is_never_a_slider() -> void:
+	_expect(not Combat3D.card_is_slider({"base": {"grip": 0}}, 1),
+		"a card with no climb at all is a plain tap, not a slider")
+
+
+func _test_backlog86_card_is_slider_a_melded_multi_hit_climb_falls_back_to_a_tap_chain() -> void:
+	# Winch (grip 2) melded with Satchel Charge (timed_hits 3): grip stays 2
+	# (SLIDER_CLIMB-eligible) but the card now genuinely needs 3 separately-
+	# graded windows, not one hold that silently drops two of them.
+	_expect(not Combat3D.card_is_slider({"base": {"grip": 2}}, 3),
+		"a melded card with real multiple timing windows must not collapse to a single-hold slider")
+
+
+func _test_backlog86_card_is_slider_high_hits_with_no_climb_is_still_a_tap_chain() -> void:
+	_expect(not Combat3D.card_is_slider({"base": {"grip": 0}}, 3),
+		"Satchel Charge alone (timed_hits 3, grip 0) was already a correct tap chain -- guard it stays one")
 
 
 ## backlog #86 duty 3: Progress's keybind rule -- "binding a key steals it from

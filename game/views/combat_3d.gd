@@ -762,6 +762,26 @@ static func card_climb_for(card: Dictionary) -> int:
 	return int((card.get("base", {}) as Dictionary).get("grip", 0))
 
 
+## Should this timed card's HitCircle window be one held slider, or a tap chain?
+##
+## `card_climb_for` and `hits` (timed_hits) are printed independently and no
+## shipped, un-melded card carries both a slider-eligible climb AND more than
+## one real timing window -- but Meld sums `grip` and takes the max of
+## `timed_hits` across its two cards (combat.gd's `_meld_cards`), so fusing a
+## climb card (e.g. Winch, grip 2) with a multi-hit card (e.g. Satchel Charge,
+## timed_hits 3) reaches it for real. `HitCircle.begin()` used to let `slider`
+## win outright, collapsing `_hits_needed` to 1 regardless of `points.size()`
+## -- a card that should demand 3 separately-graded windows instead resolved
+## as a single 0.85s hold with SLIDE_RESCUE forgiveness, a much easier check
+## than its own `timed_hits` promises and than the sweep-bar CardView face
+## (`start_timing(hits)`, unconditional on grip) already gives the identical
+## melded card. Only a genuinely single-window climb stays a slider; anything
+## melded past one window falls back to the tap chain both faces otherwise
+## agree on.
+static func card_is_slider(card: Dictionary, hits: int) -> bool:
+	return card_climb_for(card) >= SLIDER_CLIMB and hits <= 1
+
+
 ## Screen-space spacing between consecutive notes, in pixels.
 ##
 ## About a circle and a half apart — an osu stream, where the next note is close
@@ -4114,9 +4134,8 @@ func _on_card_tapped(card: Dictionary, cv: CardView) -> void:
 			# happens where you are looking instead of in a strip under the cards.
 			_circle_index = index
 			var anchor := cv.get_global_rect().get_center() - Vector2(0.0, cv.size.y * 0.62)
-			var climb := card_climb_for(card)
 			_circle.begin(bonus, _cam, _hold_points(card, hits, anchor),
-				climb >= SLIDER_CLIMB)
+				card_is_slider(card, hits))
 			return
 		cv.zone_bonus = bonus
 		# Raise the card the same way hover would -- a handheld tap never fires
