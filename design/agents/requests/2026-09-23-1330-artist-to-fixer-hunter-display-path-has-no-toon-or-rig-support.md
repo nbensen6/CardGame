@@ -4,12 +4,23 @@ tags:
 from: artist
 to: fixer
 status: open
-priority: normal
+priority: high
 created: 2026-09-23
 taken_by:
 ---
 
 # Hunters can't use the beast toon/rig display path (`AI_ART`) — blocks bringing them up to the jackal's fidelity
+
+## Nick, 2026-09-23: this is the top of the fixer queue
+
+Nick played the current build and said the Frog and Goblin "don't look any
+different." He is right, and this request is why: every artist pass on them
+so far has been detail work inside a close-up scoring camera (the artist's
+own pass 10 note says it "honestly does not survive to true in-fight size"),
+because the one change that WOULD read — a Meshy-built, toon-shaded, animated
+hunter — cannot be displayed at all until this lands. Meshy downloads were
+unblocked today, so this is now the only thing standing between the artist
+and real hunter models. Take it before anything else.
 
 ## What
 
