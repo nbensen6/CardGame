@@ -3568,7 +3568,22 @@ func _build_float_stones() -> void:
 		var height := int(h)
 		if height <= 0:
 			continue   # Height 0 is the ground; you are already standing on it
-		var stone := MeshInstance3D.new()
+		# A wrapper, not a mesh directly, so the bob/spin in _process (which
+		# reads/writes `st.position`/`st.rotation.y` by array index — see the
+		# loop over `_float_stones` above) still moves the whole shelf as one
+		# rigid piece, while the flat cap and rim below stay level and don't
+		# inherit the boulder's own random tilt/squash (see BODY below).
+		var stone := Node3D.new()
+		stone.position = _stand_on_model(height, 0.0)
+		_rig.add_child(stone)
+
+		# BODY: the original boulder, unchanged in shape — it is what gives
+		# the shelf bulk and reads as rock from any angle, including edge-on
+		# (see the "ponytail" note below on why a squashed sphere alone does
+		# not work). Tilted/squashed at random so a run of stones doesn't
+		# read as identical clones; the CAP below deliberately is NOT, so it
+		# stays a true flat, standable plane regardless of the body under it.
+		var body := MeshInstance3D.new()
 		var rock := SphereMesh.new()
 		# Sized off the HUNTER — it is a place a person stands, so it must stay
 		# the same size under a Crag Pup and a Titan.
@@ -3580,8 +3595,8 @@ func _build_float_stones() -> void:
 		# a plate from the fight camera, model a low rock instead.
 		rock.radial_segments = 7
 		rock.rings = 3
-		stone.mesh = rock
-		var mat := StandardMaterial3D.new()
+		body.mesh = rock
+		var body_mat := StandardMaterial3D.new()
 		# BROWN, the same swatch `cinder_jackal.py`'s own scattered ground
 		# boulders already recoloured to (2026-09-23) — was a flat cool grey
 		# (0.42, 0.38, 0.40, "basalt" in name only) that read as a pebble from
@@ -3592,26 +3607,85 @@ func _build_float_stones() -> void:
 		# rock this fight is made of. Small per-stone jitter so a run of
 		# stones at neighbouring heights doesn't read as the same clone.
 		var tint := randf_range(-0.05, 0.05)
-		mat.albedo_color = Color(0.690 + tint, 0.376 + tint, 0.255 + tint)
+		body_mat.albedo_color = Color(0.690 + tint, 0.376 + tint, 0.255 + tint)
 		# Generated faceted-rock multiply (ROCK_DETAIL, a toroidal Voronoi
 		# grayscale so it wraps on the sphere's own UV seam with no visible
 		# joint) so the stone reads as cut rock instead of one flat colour —
 		# "footholds are plain basalt" (artist.md item 1). Every stone shares
 		# the one texture; the per-stone rotation two lines down already turns
 		# it to a different facet each time, so they still don't read as clones.
-		mat.albedo_texture = ROCK_DETAIL
-		mat.roughness = 1.0
-		stone.material_override = mat
-		# Sunk by half its own thickness, so its TOP sits exactly on the climb
-		# anchor — which is where _stand_on_model puts the hunter's feet.
-		stone.position = _stand_on_model(height, 0.0) - Vector3(0.0, rock.height * 0.5, 0.0)
-		stone.rotation = Vector3(randf_range(-0.12, 0.12), randf_range(0.0, TAU), randf_range(-0.12, 0.12))
+		body_mat.albedo_texture = ROCK_DETAIL
+		body_mat.roughness = 1.0
+		body.material_override = body_mat
+		# Sunk enough that the CAP below (not the bare dome) is what a hunter
+		# visually lands on, with no gap between the two. Generous overlap
+		# (not just flush) on purpose: the body's own random tilt below can
+		# swing its low-poly apex (rings=3, so the "top" is a faceted point,
+		# not a smooth dome) sideways by more than the cap's own thickness at
+		# this radius, which showed as visible daylight between cap and body
+		# at a shallow overlap.
+		var cap_height := HUNTER_HEIGHT * 0.22
+		body.position = Vector3(0.0, cap_height * 0.5 - rock.height * 0.5, 0.0)
+		body.rotation = Vector3(randf_range(-0.12, 0.12), randf_range(0.0, TAU), randf_range(-0.12, 0.12))
 		# Irregular horizontal scale — X/Z only, Y left at 1.0 — so stones read
 		# as separate boulders instead of identical smooth domes. Y is untouched
 		# on purpose: the sink offset above is computed from rock.height before
 		# any scale is applied, and scaling Y would throw that off.
-		stone.scale = Vector3(randf_range(0.85, 1.18), 1.0, randf_range(0.85, 1.18))
-		_rig.add_child(stone)
+		body.scale = Vector3(randf_range(0.85, 1.18), 1.0, randf_range(0.85, 1.18))
+		stone.add_child(body)
+
+		# CAP: the flat top face the playtester's request asked for
+		# (`2026-09-23-1846-...make-ledges-read-as-shelves`). A round boulder
+		# alone reads as a loose rock you jump ONTO; a flat plane sitting on
+		# top reads as a surface you stand ON, from Breath of the Wild's own
+		# cue for "this is footing" (the request's named reference). Left
+		# level (no random tilt) so it always reads as a true horizontal
+		# shelf no matter how the body under it is squashed/rotated, and its
+		# top face sits exactly at the local origin — the same anchor
+		# `_stand_on_model` puts the hunter's feet at.
+		var cap := MeshInstance3D.new()
+		var cap_mesh := CylinderMesh.new()
+		cap_mesh.top_radius = rock.radius * 0.92
+		cap_mesh.bottom_radius = rock.radius * 1.05
+		cap_mesh.height = cap_height
+		cap_mesh.radial_segments = 8
+		cap.mesh = cap_mesh
+		var cap_mat := StandardMaterial3D.new()
+		# A pale, worn sandstone tone — deliberately lighter than both the
+		# BROWN body under it and the jackal's own near-black CHARCOAL skin,
+		# so the "this is where a foot has stood" cue reads at a glance and
+		# at the wide establishing shot's distance, not just close up.
+		var cap_tint := randf_range(-0.04, 0.04)
+		cap_mat.albedo_color = Color(0.82 + cap_tint, 0.74 + cap_tint, 0.58 + cap_tint * 0.7)
+		cap_mat.albedo_texture = ROCK_DETAIL
+		cap_mat.roughness = 0.75   # a touch less rough than the raw body: worn, not raw rock
+		cap.material_override = cap_mat
+		cap.position = Vector3(0.0, -cap_height * 0.5, 0.0)
+		cap.rotation.y = randf_range(0.0, TAU)
+		stone.add_child(cap)
+
+		# RIM: a thin warm edge along the cap's lip. This is the "rim
+		# light or edge highlight" the request asked for — unshaded so it
+		# reads the same regardless of which way the key light is falling,
+		# and it is what actually carries the shelf's silhouette at the
+		# distance/size of the wide shot, where the cap/body colour
+		# difference alone gets small on screen.
+		var rim := MeshInstance3D.new()
+		var rim_mesh := TorusMesh.new()
+		rim_mesh.inner_radius = cap_mesh.top_radius * 0.86
+		rim_mesh.outer_radius = cap_mesh.top_radius * 1.02
+		rim_mesh.rings = 24
+		rim_mesh.ring_segments = 5
+		rim.mesh = rim_mesh
+		var rim_mat := StandardMaterial3D.new()
+		rim_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		rim_mat.albedo_color = Color(0.95, 0.55, 0.18, 0.9)   # warm ember edge, matches this fight's palette
+		rim_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		rim.material_override = rim_mat
+		rim.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		rim.position = Vector3(0.0, -0.005, 0.0)   # just under the cap's own top face, at its edge
+		stone.add_child(rim)
+
 		_float_stones.append(stone)
 		_float_home.append(stone.position)
 

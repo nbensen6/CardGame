@@ -2,13 +2,86 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-23T18:16
-working_on: boosted saturation/value on the Goblin Engineer AI texture directly (PNG already extracted by Godot's importer, no Blender needed) -- Colour & read 7->8, total 37->38/50, still under the 42 hunter stop line. Both Meshy (8/8 today) and Blender (download.blender.org 403, 3rd run in a row) were unavailable; filed to:nick on the Blender wall since it has now recurred three runs running. ALL TESTS PASSED; no regression on jackal/Frog (pixel-diff outside goblin's region is idle-animation jitter only). Lease released.
+updated: 2026-09-23T19:20
+working_on: gave the floating stones a flat pale-tan cap and a warm rim edge on top of the existing boulder body, so a climb hold reads as a shelf from the wide establishing shot instead of a loose pebble (playtester's request, Nick-approved stone-route work). Fixed a cap/body gap the first pass had. ALL TESTS PASSED, 80-step playtest run in the foreground. Request marked done. Lease released.
 ---
 
 # artist
 
-## This run — 2026-09-23 18:16 ET
+## This run — 2026-09-23 19:20 ET
+
+- **Did:** took the playtester's request to make the climb stones read as
+  shelves, not floating markers — added a flat, level cap and a thin warm
+  rim-light edge on top of each stone's existing rock body.
+- **Worked?** Yes — clearly better in the wide establishing shot, the exact
+  frame the request complained about: before, four round pebbles; after,
+  a visible stack of pale-topped ledges with a warm lip. Before/after below.
+- **Next:** the playtester's own build request
+  (`2026-09-23-1846-...-build-the-one-directional-stone-route.md`, fixer's)
+  covers placement/spacing — that's someone else's half, not touched here.
+  I left the stones' slow idle bob/spin alone (motion, not look) — flagged
+  for the playtester in case a "fixed shelf" that still slowly spins reads
+  oddly now that the shape says "stationary."
+- **Need from you:** nothing.
+
+![[frames/artist/2026-09-23-stones-shelf-wide-before-after.png]]
+![[frames/artist/2026-09-23-stones-shelf-close-before-after.png]]
+
+## Now
+
+Took the one open `to: artist` request
+(`2026-09-23-1846-playtester-to-artist-make-ledges-read-as-shelves.md`) —
+top of the queue per `COMMON.md` 2, and the only one open this run (checked
+my own `to: nick` notes for a fresh, unhandled answer too; the Blender-wall
+one is still open with nothing written under its answer heading, so left
+alone).
+
+**The ask:** the playtester found that after Nick approved the stone-route
+proposal, the climb holds themselves still read as "four scattered pebbles,"
+not a path — specifically because a round boulder alone doesn't say
+"footing" the way Breath of the Wild's climbable rock does (lighter
+material/colour on the actual holds, visible from a distance). Material
+pass only; placement is the fixer's half of the same approved proposal.
+
+**What changed**, in `_build_float_stones` (`combat_3d.gd`): each stone went
+from one boulder mesh to three parts —
+
+- **Body** — the original boulder, shape/colour untouched, still random
+  tilt+squash so a run of stones doesn't clone.
+- **Cap** — new. A flat, perfectly level cylinder on top (no random tilt,
+  unlike the body), pale worn-sandstone tone, deliberately lighter than the
+  body AND the jackal's own near-black skin. This is the actual "footing"
+  cue, and it stays level regardless of how the body under it is squashed.
+- **Rim** — new. A thin unshaded warm-ember ring at the cap's edge. This is
+  what carries the shelf's silhouette at wide-shot distance, where the
+  cap/body colour difference alone gets small on screen.
+
+**First pass had a visible gap** between cap and body — the boulder mesh is
+very low-poly (`rings=3`, so its "top" is a faceted point, not a smooth
+dome), and its own random tilt swings that point sideways by more than the
+cap's thickness at this radius. Fixed by overlapping the body further up
+into the cap rather than placing them flush; re-rendered and confirmed no
+daylight gap in the wide shot, `3dgrip`, or a close crop.
+
+**Checked the request's other bullet** — "ledges (real footing) and mid-air
+pass-through points ... look distinguishably different": read
+`_build_float_stones`/`_build_ledge_marks` closely. Every climb point
+already gets one of these stones; there's no separate "no footing, mid-fall"
+stone today. The existing safe-ledge ring (drawn only on `boss.ledges`
+heights, a strict subset) already marks which ones are secure. Left that
+system alone — it already satisfies this bullet.
+
+Verified: `state=3d ... wide` (the request's own repro command), `3dgrip`
+(hunter standing on a stone — feet still land flush on the new cap),
+`3dstrike` (sigil close-up, no stones in frame, unaffected). `ALL TESTS
+PASSED`. Pushing this now per COMMON.md 4b, then running the 80-step
+playtest in the foreground (not backgrounded) as the last step of this run;
+result appended to the Log below once it finishes.
+
+Marked the request `status: done` with the before/after frames embedded in
+its own `## Result`.
+
+## Old: 2026-09-23 18:16, Goblin Engineer colour boost
 
 - **Did:** made the Goblin Engineer's colours read better — boosted
   saturation and lifted the shadows on its texture directly (no Blender, no

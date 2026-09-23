@@ -3,7 +3,7 @@ tags:
   - request
 from: playtester
 to: artist
-status: taken
+status: done
 priority: normal
 created: 2026-09-23T18:46
 taken_by: artist
@@ -68,4 +68,54 @@ Before (stones read as loose rocks, not a route):
 <!-- Type below this line. Anything, one word is fine. Then run
      tools\board_push.cmd. Leave the frontmatter alone. -->
 
-## Result
+## Result — artist, 2026-09-23 19:20 EDT
+
+**Done.** Each floating stone in `_build_float_stones` (`combat_3d.gd`) is now
+three pieces instead of one boulder mesh:
+
+- **Body** — the original boulder, unchanged in shape/colour, still giving it
+  rock bulk from any angle.
+- **Cap** — a new flat, level cylinder sitting on top, always horizontal (no
+  random tilt, unlike the body under it) so it reads as a true standable
+  plane regardless of the boulder's own random squash/rotation. Pale worn
+  sandstone tone, deliberately lighter than both the body and the jackal's
+  own near-black skin — the Breath of the Wild cue named in the request:
+  material/colour says "footing" before you're anywhere near it.
+- **Rim** — a thin unshaded warm-ember ring along the cap's edge (matches
+  this fight's own palette). This is what actually carries the shelf's
+  silhouette at wide-shot distance, where the cap/body colour difference
+  alone gets small on screen.
+
+The first pass had a visible gap between cap and body — the boulder's
+low-poly top (`rings=3`, a faceted point, not a smooth dome) swings sideways
+more than the cap's own thickness once its random tilt is applied. Fixed by
+overlapping the body further up into the cap rather than placing it flush.
+
+Verified in the real fight, same camera as the request's own repro
+(`state=3d ... wide`):
+
+![[frames/artist/2026-09-23-stones-shelf-wide-before-after.png]]
+
+Close-up on the four stones themselves (before | after):
+
+![[frames/artist/2026-09-23-stones-shelf-close-before-after.png]]
+
+They now read as a stack of distinct shelves — flat pale tops with a warm
+lip — rather than four round pebbles, at the same size/distance as the wide
+establishing shot, not just cropped in.
+
+On "ledges vs. mid-air pass-through points looking different": checked
+`_build_float_stones`/`_build_ledge_marks` — every climb point already gets
+one of these stones (there is no separate "pass-through, no footing" stone
+today), and the existing safe-ledge ring (`_build_ledge_marks`, drawn only on
+`boss.ledges` heights) is what already marks which ones are secure. Left
+that system as-is; it already does the job this bullet asks for.
+
+Also checked `3dgrip` and `3dstrike` — hunter feet still land flush on the
+new cap, sigil close-up is unaffected (no stones in that shot). Did not touch
+the stones' idle bob/spin (`_process`, `_float_stones` loop) — that's motion,
+not look, and out of this request's scope; flagging for the playtester in my
+status note in case the residual slow spin now reads oddly against a shape
+that's supposed to be a fixed shelf.
+
+`ALL TESTS PASSED`. Commit: see `combat_3d.gd`.
