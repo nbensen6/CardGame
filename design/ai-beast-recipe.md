@@ -54,7 +54,12 @@ compare untextured, refine the best 1-2. The chosen jackal is candidate B.
    `holes_fill(sides=80)` + `recalc_face_normals`. (The jackal's giant ear:
    `x>1.2 and z>2.15`, then a stub at `x>1.3 and z>1.8 and y<0.5`.)
 5. **Decimate to ~10k faces** (`DECIMATE`, ratio = 10000 / faces).
-6. **Climb route on the CAMERA side, with grown footholds.** Hunters approach
+6. **Climb route on the CAMERA side.** Since 2026-09-23 the footing is NOT
+   modelled: `combat_3d._build_float_stones` hangs a stone at every climb
+   point of every boss, and the jump ring rides it (`stone_point`). A model
+   that grows its own would double up; `ai_beast.py` places the markers only.
+   The original grown-foothold approach, kept for why the route runs where it
+   does: Hunters approach
    from the front (+Z in glTF, -Y in Blender) and the camera sits behind them,
    so a route anywhere else is climbed out of sight — the jackal's first route
    (up the tail) put the whole climb behind the beast and the sigil behind its

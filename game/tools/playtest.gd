@@ -78,6 +78,9 @@ func _initialize() -> void:
 	DisplayServer.window_set_size(_size)
 	root.set_flag(Window.FLAG_NO_FOCUS, true)
 	_watchdog()
+	# Silence. These run while Nick is playing something else, and a harness
+	# that sings over his game is a harness he turns off (2026-09-23).
+	AudioServer.set_bus_mute(AudioServer.get_bus_index("Master"), true)
 	RunSave.use_scratch_slot("run_playtest")
 	RunSave.clear()
 	Progress.use_scratch_slot("progress_playtest")

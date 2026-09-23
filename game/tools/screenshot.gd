@@ -174,6 +174,9 @@ func _initialize() -> void:
 		while shot.x > 1900:
 			shot /= 2
 		DisplayServer.window_set_size(shot)
+	# Silence. These run while Nick is playing something else, and a harness
+	# that sings over his game is a harness he turns off (2026-09-23).
+	AudioServer.set_bus_mute(AudioServer.get_bus_index("Master"), true)
 	RunSave.use_scratch_slot("run_screenshot")
 	RunSave.clear()
 	# Settings go to a scratch file too. Every Progress write below used to land

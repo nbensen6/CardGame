@@ -10,9 +10,11 @@ repeatable pass, so the builder lane can run it without a live Blender:
   2. ANATOMY GATE: exactly four foot clusters, two either side, or it stops.
      Rodin's jackal had a tail standing in for a hind leg; nothing downstream
      can fix that, so do not build on it.
-  3. basalt footholds up the near (+X, camera-side) foreleg and shoulder, one
-     per climb marker, heights taken from the Python model's own markers; the
-     top marker is the sigil, on the head
+  3. climb markers up the near (+X, camera-side) side, heights taken from the
+     Python model's own markers; the top marker is the sigil, on the head.
+     NO footholds are modelled: combat_3d floats a stone at every climb point
+     for every boss (Nick, 2026-09-23), so a beast that grows its own would
+     have two.
   4. 20-bone rig from the measured feet and topline, region-gated weights
   5. idle / attack / hit actions
   6. export game/assets/3d/cast/<id>_ai.glb, save tools/blender/ai/<id>_ai.blend
@@ -190,9 +192,11 @@ for k in climbs:
     y, sx = best
     # alternate a little either side so the route zigzags instead of stacking
     y += 0.03 * H if i % 2 else -0.03 * H
-    r = 0.105 * H
+    r = 0.105 * H   # ponytail: kept only to place the marker; no mesh is built
     p = V((sx + r * 0.55, y, z))
     marks[k] = p
+    if True:   # stones float in-engine now; no foothold geometry is exported
+        continue
     ret = bmesh.ops.create_icosphere(bm, subdivisions=2, radius=1.0)
     vs2 = ret["verts"]
     for v in vs2:

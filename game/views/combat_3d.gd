@@ -215,7 +215,7 @@ const FOCUS_WINDOW := 6.5
 ##
 ## 15 units: the hunter still reads clearly at the bottom of the frame and the
 ## beast owns the rest of it, which is the composition the whole fight is about.
-const THIRD_WINDOW := 15.0
+const THIRD_WINDOW := 8.0     # world units tall. 15 left a hunter 4% of the frame — a wide shot, not third person (Nick, 2026-09-23).
 const ZOOM_STEP := 0.12
 ## Sideways truck, in world units per unit of camera distance, that pushes the
 ## beast right so it centres in the space left of the HUD rather than on the
@@ -346,6 +346,9 @@ var _timing_card: CardView = null
 ## size swallowed a small beast's whole head — so it scales with the body.
 var _sigil_scale := 1.0
 var _beast_scale := 1.0
+## The floating stepping stones and where each one hangs at rest.
+var _float_stones: Array = []
+var _float_home: Array = []
 var _beast_height := 0.0
 var _hunters: Array = []          # slot -> {node, home}
 var _active_slot := 0
@@ -1112,6 +1115,14 @@ static func solo_private_view(is_solo: bool, active_slot: int, private: Dictiona
 ## hunters sway, and any shake or recoil decays back to rest.
 func _process(delta: float) -> void:
 	_time += delta
+	# The stones drift. Each on its own phase so they never pulse as one block.
+	for i in _float_stones.size():
+		var st := _float_stones[i] as Node3D
+		if not is_instance_valid(st):
+			continue
+		var home: Vector3 = _float_home[i]
+		st.position.y = home.y + sin(_time * 1.1 + float(i) * 1.7) * HUNTER_HEIGHT * 0.12
+		st.rotation.y += delta * 0.25
 	if _beast != null:
 		# No breathing pulse. Nick, 2026-09-08: "for whatever reason the beast
 		# gets bigger and smaller. we can get rid of that." It was
@@ -1514,6 +1525,10 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	if not ResourceLoader.exists(path):
 		return
 	_beast = (load(path) as PackedScene).instantiate()
+	# Footholds baked into a model are gone — the stones float now (below), and
+	# one set of rules for every boss beats a mesh each beast has to grow.
+	for baked in _beast.find_children("Footholds*", "", true, false):
+		baked.queue_free()
 	_rig.add_child(_beast)
 	_beast_anim = _find_anim(_beast)
 	if _beast_anim != null and _beast_anim.has_animation("idle"):
@@ -1523,6 +1538,7 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	_beast_scale = _fit_height(_beast, want)
 	_beast_box = _merged_aabb(_beast)
 	_read_climb_points()
+	_build_float_stones()
 	_build_hull()
 	_build_ledge_marks()   # needs the hull, so it goes after it
 	# Grow the arena with its occupant. A 9-unit disc was generous under a bear and
@@ -3118,6 +3134,51 @@ static func safe_ledge_marks(safe_heights: Array, climb_point_heights: Array) ->
 ##
 ## Built after `_build_hull`, not with the climb points: `_stand_on_model` needs
 ## `_front_of_beast`, which needs the hull.
+## Floating stepping stones, one per climb anchor: the thing a hunter jumps
+## onto. Built here rather than modelled into each beast (Nick, 2026-09-23) —
+## every boss gets them for free, they never deform with the body, and a jump
+## target that hangs in the air reads as a jump target.
+## Where a floating stone hangs for a point on the beast's skin: pushed out
+## from the body's axis so it sits beside the flank, not inside it. Shared so
+## the jump ring and the stone can never drift apart.
+static func stone_point(on_skin: Vector3) -> Vector3:
+	var out := Vector3(on_skin.x, 0.0, on_skin.z)
+	out = out.normalized() * (HUNTER_HEIGHT * 1.0) if out.length() > 0.01 		else Vector3(HUNTER_HEIGHT, 0.0, 0.0)
+	return on_skin + out
+
+
+func _build_float_stones() -> void:
+	for st in _float_stones:
+		(st as Node3D).queue_free()
+	_float_stones.clear()
+	if _beast == null:
+		return
+	for h in _climb_points.keys():
+		var height := int(h)
+		if height <= 0:
+			continue   # Height 0 is the ground; you are already standing on it
+		var stone := MeshInstance3D.new()
+		var rock := SphereMesh.new()
+		# Sized off the HUNTER — it is a place a person stands, so it must stay
+		# the same size under a Crag Pup and a Titan.
+		rock.radius = HUNTER_HEIGHT * 1.15   # wide enough to read as a platform
+		rock.height = HUNTER_HEIGHT * 0.55   # a squashed boulder, not a ball
+		rock.radial_segments = 7
+		rock.rings = 3
+		stone.mesh = rock
+		var mat := StandardMaterial3D.new()
+		# Lighter than the beast it hangs against, or a dark stone on a dark
+		# flank is invisible — the one thing a jump target must never be.
+		mat.albedo_color = Color(0.42, 0.38, 0.40)
+		mat.roughness = 1.0
+		stone.material_override = mat
+		stone.position = stone_point(_stand_on_model(height, 0.0)) 			- Vector3(0.0, HUNTER_HEIGHT * 0.36, 0.0)
+		stone.rotation = Vector3(randf_range(-0.12, 0.12), randf_range(0.0, TAU), randf_range(-0.12, 0.12))
+		_rig.add_child(stone)
+		_float_stones.append(stone)
+		_float_home.append(stone.position)
+
+
 func _build_ledge_marks() -> void:
 	for m in _ledge_marks.values():
 		(m as Node3D).queue_free()
@@ -3153,7 +3214,10 @@ func _build_ledge_marks() -> void:
 		# entire job of a marker.
 		ring.rotation.x = PI * 0.5
 		# Clear of the skin so the body does not eat the lower half of it.
-		ring.position = Vector3(p.x, p.y + HUNTER_HEIGHT * 0.55, p.z + HUNTER_HEIGHT * 0.10)
+		# On the stone, not on the skin behind it (Nick, 2026-09-23: the stones
+		# float now) — the ring marks the thing you actually jump onto.
+		var sp := stone_point(p)
+		ring.position = Vector3(sp.x, sp.y + HUNTER_HEIGHT * 0.40, sp.z)
 		_rig.add_child(ring)
 		_ledge_marks[height] = ring
 	_refresh_ledge_marks()
