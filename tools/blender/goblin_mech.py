@@ -165,12 +165,21 @@ CLAW_BOX_ROT = (0.18, 0.20, 0.0)
 b.box(CLAW_BOX_LOC, rs(0.132, 0.138, 0.112), STONE, bevel=rs(0.026), rot=CLAW_BOX_ROT)
 _claw_loc, _claw_rot = mount(CLAW_BOX_LOC, CLAW_BOX_ROT, (0.0, rs(-0.140), 0.0), (FWD, 0, 0))
 b.taper(_claw_loc, rs(0.072), rs(0.058), rs(0.130), CARROT, seg=6, rot=_claw_rot)
-for dz in (-0.048, 0.048):                                              # piston rods
-    # seg 5->4: at 0.016 radius (a thin rod, not a silhouette-defining mass)
-    # the facet is invisible; this and the three balls above claw back the
-    # 84-tri budget overage pass 2 didn't touch (goblin_mech.md pass 2).
-    _p_loc, _p_rot = mount(CLAW_BOX_LOC, CLAW_BOX_ROT, (0.0, rs(-0.080), rs(dz)), (FWD, 0, 0))
-    b.taper(_p_loc, rs(0.016), rs(0.016), rs(0.190), CHARCOAL, seg=4, rot=_p_rot)
+# Pass 10: pass 9's own diagnostic recolour found these functionally
+# invisible at every angle, even highlighted - measured why instead of just
+# widening blind. A diagnostic-ICE rebuild showed almost the whole rod
+# buried inside the claw box and the claw taper's own cone: the old dz
+# offset (+-0.048, ~0.057 world) sat well inside the taper's 0.085 base
+# radius, so the rods ran coincident with the taper's volume, not beside it.
+# Pushed dz out to +-0.110 (clears the taper's radius with margin) and
+# widened the radius 0.016->0.030 (seg unchanged, zero tri cost - a bigger
+# cone from the same 4 verts). CHARCOAL -> STONE too: pass 5 already found
+# CHARCOAL/GRAPHITE are this rig's two darkest, near-tied tones that the toon
+# shader's shadow band crushes near-black, the same fix already applied to
+# the compressor box and the wrist ring.
+for dz in (-0.110, 0.110):                                              # piston rods
+    _p_loc, _p_rot = mount(CLAW_BOX_LOC, CLAW_BOX_ROT, (0.0, rs(-0.090), rs(dz)), (FWD, 0, 0))
+    b.taper(_p_loc, rs(0.030), rs(0.030), rs(0.190), STONE, seg=4, rot=_p_rot)
 # minor 4->3 (pass 4): ruled out as the zigzag's cause by the same
 # diagnostic recolour above, so its own roundness costs nothing that was
 # scored; freed 24 tris toward the two limb caps' seg 6->10 above.

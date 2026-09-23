@@ -714,6 +714,7 @@ alone, each in isolation.
 | 7 | 8 | 8 | 7 | 8 | 8 | **39** |
 | 8 | 8 | 8 | 7 | 8 | 9 | **40** |
 | 9 | 8 | 8 | 8 | 8 | 9 | **41** |
+| 10 | 8 | 8 | 9 | 8 | 9 | **42** |
 
 ### What the diagnostic recolour actually showed
 
@@ -807,3 +808,98 @@ against what's on record, not assumed: *exact* same home/anchor coordinates
 — confirmed pre-existing by coordinate match, not reopened. This pass only
 changed the loc/rot of three existing parts mounted to the claw box; it has
 no code path into foothold/climb-marker placement.
+
+## Pass 10 — the piston rods pass 9 flagged and never chased
+
+Picked up pass 9's own `## Next`: two candidates left open — the piston
+rods (confirmed "functionally invisible at every angle, even highlighted")
+and a check for any other rig part mounted to a rotated box the same
+raw-axis-aligned way the claw taper was (pass 9's `mount()` bug). Checked
+the second first, by reading `goblin_mech.py` directly rather than
+re-rendering blind: two other boxes carry a non-zero `rot=` (the shoulder
+box `rot=(0.0, 0.10, 0.0)`, the wrist box `rot=(0.12, 0.14, 0.0)`), but
+nothing is bolted to either one via a `box()`/`taper()` call with its own
+fixed offset+`rot=` the way the claw cluster was — the parts near them are
+`limb()` waypoint chains, a different code path with no `mount()`-shaped
+bug to have. **No second instance found** — pass 9's own speculation about
+this was wrong, reported as such rather than silently dropped.
+
+**The piston rods, diagnosed instead of just widened.** Diagnostic-recoloured
+both to `ICE` (same technique pass 4/8/9 used) and rendered every view: the
+rods are almost entirely *buried inside* the claw box and the claw taper's
+own cone, not just thin. Measured why: their `dz` offset (±0.048, ≈0.057
+world after `RIG_S`) sits well inside the claw taper's own base radius
+(0.072 raw, ≈0.085 world) — the rods run coincident with the taper's own
+volume from the mount point out, not beside it, so almost the whole rod is
+inside geometry that already existed. Confirmed with the diagnostic render:
+only a sliver of `ICE` peeks past the claw box's corner and the taper's own
+mass (`gm_diag_pass1_34.png`, kept as scratch, not committed).
+
+**Fix, two parts, both geometry-position/scale only:**
+- Pushed `dz` from ±0.048 to ±0.110 — clears the taper's own radius with
+  real margin, so the rods run alongside the claw instead of through it.
+- Widened the radius 0.016 → 0.030 (`seg=4` unchanged — a bigger cone from
+  the same 4 verts, zero tri cost).
+- `CHARCOAL` → `STONE`: pass 5's own finding (`CHARCOAL`/`GRAPHITE` are this
+  rig's two darkest, near-tied tones, and the toon shader's shadow band
+  crushes both near-black) applies here too — same fix already applied to
+  the compressor box and the wrist ring.
+
+### Verified, not assumed
+
+- **Tri budget/part count unaffected**: `TRIS 1378 PARTS 33 BUDGET 1400 ok`
+  — identical to pass 9 (radius and offset are parameters, not new
+  geometry).
+- **`_sil.png` pixel diff against the pre-fix pass-10 capture**: 144 of
+  65,536 px differ (0.2%) — small and real, in line with prior passes' own
+  tolerances for a position/scale change on a part this size.
+- **`_34.png` (the fight-camera reference angle) before/after**: the rods
+  now read clearly as two parallel struts flanking the claw, closer to
+  "piston" than the old hairline. `_front.png`/`_top.png` checked too — no
+  new part pokes through the silhouette or crosses another part oddly.
+- **In the real fight** (`state=3dgrip slot=1`, true `.glb` rebuild,
+  reimported, shot against both the pre-fix and post-fix committed models):
+  honestly, **does not survive to true in-fight size** — the whole claw
+  cluster is a handful of pixels at combat distance and the two shots are
+  indistinguishable by eye. Same call pass 8/9 already made for their own
+  fixes at this scale — the win lives in the scoring/close-up render, not
+  oversold as an in-fight one.
+
+**Score: Hygiene 8 → 9.** The piston rods were pass 9's own honest
+complaint — real tri cost, confirmed zero visible read, "not this pass's
+to spend budget fixing." This pass found the actual cause (buried inside
+neighbouring geometry, not just thin) and fixed it at zero additional tri
+cost: the rods now read as a mechanical part in the scoring camera, closing
+the last open Hygiene line on this model. Held at 9, not 10: the fix
+doesn't survive to true in-fight size, and Sil/Prop/Colour/Style are
+untouched (nothing this pass touched their lines). **41 → 42/50 — clears
+the 42 hunter stop line.**
+
+![[frames/artist/2026-09-23-goblin-mech-piston-rods-34-before-after.png]]
+![[frames/artist/2026-09-23-goblin-mech-piston-rods-infight-before-after.png]]
+
+`ALL TESTS PASSED`. Playtest (`mode=play`, `cinder_jackal`, 40 steps)
+re-run against the rebuilt model: `PLAYTEST FAIL: 1 failing check(s)
+{ "hunter-off-marker": 2 }` — checked against what's on record, not
+assumed: *exact* same home/anchor coordinates (`home (5.335257,
+13.825942, 7.030925)`, `anchor (3.901302, 13.825942, 6.473297)`) as the
+already-open
+`2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`
+— confirmed pre-existing by coordinate match, not reopened. This pass only
+changed the position/scale/colour of two existing piston-rod tapers; it has
+no code path into foothold/climb-marker placement.
+
+### Where it stands
+
+**42/50 — at the 42 hunter stop line.** Both candidates pass 9 left open
+are now closed (one fixed, one checked and ruled not a real second
+instance). Per `design/asset-loop.md`, the honest call at the stop line is
+the same one `frog` got at pass 8: stop passing this hunter unless a
+request or a fresh six-view look finds a real, new defect — not chase
+higher for its own sake. Both hunters (`frog` 43/50, `goblin_mech` 42/50)
+are now past their stop line; the real remaining gap named throughout this
+whole file and `frog.md` is unchanged: a Meshy-rigged rebuild to match the
+jackal's own fidelity, blocked on two open requests
+(`2026-09-23-1345-artist-to-nick-meshy-fetch-blocked-by-network-policy.md`,
+`2026-09-23-1330-artist-to-fixer-hunter-display-path-has-no-toon-or-rig-support.md`),
+neither picked up yet.

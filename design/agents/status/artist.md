@@ -3,14 +3,117 @@ tags:
   - agent-status
 agent: artist
 updated: 2026-09-23
-working_on: no open to:artist request (network-policy and hunter-display-support requests to nick/fixer still open, checked and re-confirmed blocked this run); picked up goblin_mech pass 9 — Hygiene's claw/piston mass "connected but distinct" (open since pass 3/5, never diagnosed). Diagnostic-recoloured the claw taper and both piston rods alone: the piston rods are functionally invisible at every angle even highlighted (not fixed, flagged for later tri-budget spend); the claw taper reads exactly as described, a lump glued to the claw box's corner with a visible gap beneath it. Measured the cause: the claw box carries rot=(0.18,0.20,0.0) but the taper/rods were mounted to it at a raw world-axis-aligned offset and rot=(FWD,0,0) — correct for an unrotated box, wrong the moment it's tilted. Added mount() to rotate a part's offset+orientation by its reference box's rotation; applied to all three parts. Verified tri budget unchanged, silhouette still one connected component, before/after crops show the gap closed; honestly does not survive to true in-fight size. Hygiene 7→8, 40→41/50, still 1 below the 42 hunter stop line. ALL TESTS PASSED, playtest re-run (hunter-off-marker foothold-4, exact coordinate match to the already-open fixer request, not reopened), pushed
+working_on: no open to:artist request (network-policy, hunter-display-support and arena-wall-accent requests to nick/fixer still open, re-confirmed blocked this run — assets.meshy.ai still 403s at the proxy). Picked up goblin_mech pass 9's own leftover: the piston rods, "functionally invisible at every angle even highlighted." Diagnostic-recoloured them ICE and found the real cause — not colour, not thinness alone: the rods' own offset sat inside the claw taper's own radius, so they ran buried in the taper's volume, not beside it. Pushed the offset out past the taper's radius, widened the radius 0.016→0.030 (seg unchanged, zero tri cost), recoloured CHARCOAL→STONE (pass 5's dark-tie precedent). Also checked pass 9's other open candidate (any other rig part mounted to a rotated box the same raw-axis-aligned way the claw was) by reading the script directly — found none, reported as a real negative, not skipped. Verified: tri budget unchanged (1378/1400), sil diff 144/65536px, rods now read as bracing struts in the scoring camera; honestly does not survive to true in-fight size. Hygiene 8→9, 41→42/50 — clears the 42 hunter stop line. ALL TESTS PASSED, playtest re-run (hunter-off-marker foothold-4, exact coordinate match to the already-open fixer request, not reopened), pushed
 ---
 
 # artist
 
 ## Now
 
-No open `to: artist` request this run (checked every file's frontmatter,
+**goblin_mech pass 10 — clears the 42 hunter stop line (42/50).** No open
+`to: artist` request this run (checked every request file's frontmatter,
+plus `design/agents/BOARD.md` and every `status/*.md`) — the three
+standing requests (`...meshy-fetch-blocked-by-network-policy.md` to nick,
+`...hunter-display-path-has-no-toon-or-rig-support.md` to fixer,
+`...arena-wall-accent-never-shows.md` to nick) are all still open, none
+picked up by anyone else yet. Re-confirmed the Meshy wall before spending
+time on it again: `python3 tools/meshy.py balance` returns a real balance
+(2960 credits), `curl https://assets.meshy.ai/` still gets a 403 policy
+denial from the proxy — same infrastructure wall as every prior run, not
+stale.
+
+Environment fresh again: Godot 4.7.1 + `--import`; Blender via
+`apt install blender` (4.0.2, `download.blender.org` still unreachable) +
+`libegl1 libgl1-mesa-dri libglx-mesa0`; `pip install --break-system-packages
+pillow numpy scipy` for the host, `python3.12 -m pip install
+--break-system-packages numpy pillow` for Blender's own bundled Python
+(same `sys.executable`-is-the-system-interpreter quirk every prior run
+found).
+
+Picked up my own `## Next` from pass 9: two candidates left open on
+`goblin_mech` (41/50, one below the 42 stop line) — the piston rods
+("functionally invisible at every angle, even highlighted") and a check
+for any other rig part mounted to a rotated box the same raw-axis-aligned
+way pass 9's `mount()` bug affected the claw cluster. Full write-up in
+`design/progress/goblin_mech.md` pass 10.
+
+**Checked the second candidate first, by reading the script, not
+re-rendering blind.** Two other boxes carry a non-zero `rot=` (shoulder,
+wrist), but nothing is bolted to either via a `box()`/`taper()` call with
+its own fixed offset+`rot=` the way the claw cluster was — the nearby
+parts are `limb()` waypoint chains, a different code path with no
+`mount()`-shaped bug to have. **No second instance — my own speculation
+from last run's `## Next` was wrong, reported as such.**
+
+**Diagnosed the piston rods instead of just widening them.** A fresh
+diagnostic recolour (ICE, the same technique pass 4/8/9 used) showed they
+are not just thin — they're almost entirely *buried inside* the claw box
+and the claw taper's own cone. Measured why: their lateral offset (±0.048
+raw, ≈0.057 world) sat well inside the claw taper's own base radius
+(≈0.085 world), so the rods ran coincident with the taper's own volume
+from the mount point out, not beside it — a placement bug, not a
+thinness-only one.
+
+**Fix, position/scale/colour only, no new geometry:** pushed the lateral
+offset to ±0.110 (clears the taper's radius with real margin), widened the
+radius 0.016→0.030 (`seg=4` unchanged — a bigger cone from the same 4
+verts, zero tri cost), and recoloured CHARCOAL→STONE (pass 5's own
+finding: CHARCOAL/GRAPHITE are this rig's two darkest, near-tied tones the
+toon shader's shadow band crushes near-black — same fix already applied to
+the compressor box and the wrist ring).
+
+**Verified, not assumed:** tri budget/part count unaffected (`TRIS 1378
+PARTS 33 BUDGET 1400 ok`, identical to pass 9); `_sil.png` pixel diff
+against the pre-fix capture is 144 of 65,536px (0.2%); `_34.png` (the
+fight-camera reference angle) before/after shows the rods now reading as
+two parallel struts flanking the claw, not a bare hairline; `_front.png`/
+`_top.png` checked too, nothing pokes through the silhouette oddly. The
+true in-fight size (`state=3dgrip slot=1`, rebuilt `.glb`, reimported,
+shot against both the pre- and post-fix committed models): honestly
+**does not survive** — the claw cluster is a handful of pixels at combat
+distance, the two shots are indistinguishable by eye. Same call pass 8/9
+already made for their own fixes at this scale.
+
+**Score: Hygiene 8→9, 41→42/50 — clears the 42 hunter stop line.** Both
+candidates pass 9 left open are now closed (one fixed at its real cause,
+one checked and ruled not a second instance). Per `design/asset-loop.md`,
+the honest call at the stop line: stop passing `goblin_mech` unless a
+request or a fresh look finds a real, new defect. **Both hunters are now
+past their stop lines** (`frog` 43/50, `goblin_mech` 42/50) — the loudest
+remaining gap on this whole thread is unchanged: a Meshy-rigged rebuild to
+match the jackal's own fidelity, blocked on the two open requests to
+nick/fixer, neither picked up yet.
+
+![[frames/artist/2026-09-23-goblin-mech-piston-rods-34-before-after.png]]
+![[frames/artist/2026-09-23-goblin-mech-piston-rods-infight-before-after.png]]
+
+`ALL TESTS PASSED`. Playtest (`mode=play`, `cinder_jackal`, 40 steps)
+re-run against the rebuilt model: `PLAYTEST FAIL: 1 failing check(s)
+{ "hunter-off-marker": 2 }` — checked against what's on record, not
+assumed: *exact* same home/anchor coordinates as the already-open
+`2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`
+— confirmed pre-existing by coordinate match, not reopened. This pass only
+changed the position/scale/colour of two existing piston-rod tapers; no
+code path into foothold/climb-marker placement.
+
+## Next
+
+Both hunters are now past their stop line (`frog` 43/50, `goblin_mech`
+42/50) — the honest call is to stop passing either unless a request or a
+fresh six-view look finds a real, new defect, not chase higher for its own
+sake. The three standing requests are still open and still the real path
+to the brief's actual ask (a Meshy-rigged hunter matching the jackal's
+fidelity): `...meshy-fetch-blocked-by-network-policy.md` (to nick, needs
+`assets.meshy.ai` allowed), `...hunter-display-path-has-no-toon-or-rig-support.md`
+(to fixer, needs the beast-only toon/rig display path generalized to
+hunters), `...arena-wall-accent-never-shows.md` (to nick, a taste call on
+the arena's wall system). Next run, absent a request: re-check whether any
+of the three has landed first; if not, the arena (`env.py`/`cinder_jackal.py`)
+is the one item in scope that hasn't had a fresh six-view look this whole
+thread — worth one before assuming there's nothing left to find there
+either.
+
+## Old: goblin_mech, pass 9
 also `design/agents/BOARD.md` and `status/*.md`) — the three still-open
 requests from the Meshy pass (`...meshy-fetch-blocked-by-network-policy.md`
 to nick, `...hunter-display-path-has-no-toon-or-rig-support.md` to fixer)
