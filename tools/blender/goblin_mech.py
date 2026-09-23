@@ -62,7 +62,7 @@ b.box((0.0, -0.190, 0.605), (0.150, 0.038, 0.140), UMBER, bevel=0.024)  # apron
 b.box((0.30, 0.278, 0.800), (0.145, 0.098, 0.152), GRAPHITE, bevel=0.026)
 b.box((0.30, 0.278, 0.960), (0.106, 0.078, 0.030), PEWTER, bevel=0.013)   # lid
 b.limb([(0.412, 0.330, 0.880), (0.422, 0.398, 0.995), (0.440, 0.392, 1.088)],
-       [0.044, 0.040, 0.036], PUMPKIN, seg=6)                           # exhaust
+       [0.044, 0.040, 0.036], PUMPKIN, seg=5)  # exhaust; seg 6->5, pass 4 budget
 b.taper((0.442, 0.392, 1.128), 0.057, 0.046, 0.078, CARROT, seg=6, bevel=0.010)
 
 b.box((0.346, 0.030, 0.812), (0.122, 0.126, 0.134), PEWTER, bevel=0.024,
@@ -71,12 +71,21 @@ b.box((0.346, 0.030, 0.812), (0.122, 0.126, 0.134), PEWTER, bevel=0.024,
 # 0.12-0.15 half-extents - thin enough that the joints vanished between the
 # bigger masses and the rig read as loose boxes rather than one jointed arm.
 # Thickened ~1.4x so the limb reads as continuous with the boxes it connects.
+#
+# seg 6->10 on both (pass 4): the real cause of three passes' "reads as
+# scattered blocks" - each limb's hex end-cap pokes out right where it
+# meets its box (a box's rotated face never sits parallel to the cap, so no
+# amount of embedding the waypoint deeper hides it), and each of the 6
+# flat facets caught its own toon-shading band, reading as a sharp zigzag
+# crown. Confirmed with a diagnostic recolour - see goblin_mech.md pass 4 -
+# and it was NOT the CHARCOAL ring a few lines down, which was the first
+# suspect. More segments round the cap into a shallow seam instead.
 b.limb([(0.350, 0.020, 0.766), (0.392, -0.030, 0.652), (0.414, -0.062, 0.580)],
-       [0.137, 0.120, 0.112], STONE, seg=6)                             # upper arm
+       [0.137, 0.120, 0.112], STONE, seg=10)                             # upper arm
 b.box((0.416, -0.068, 0.548), (0.086, 0.090, 0.106), PEWTER, bevel=0.020,
       rot=(0.12, 0.14, 0.0))
 b.limb([(0.420, -0.076, 0.500), (0.438, -0.100, 0.430), (0.450, -0.118, 0.378)],
-       [0.095, 0.106, 0.115], PEWTER, seg=6)                            # wrist
+       [0.095, 0.106, 0.115], PEWTER, seg=10)                            # wrist
 b.box((0.454, -0.128, 0.298), (0.132, 0.138, 0.112), STONE, bevel=0.026,
       rot=(0.18, 0.20, 0.0))
 b.taper((0.454, -0.268, 0.298), 0.072, 0.058, 0.130, CARROT, seg=6, rot=(FWD, 0, 0))
@@ -86,14 +95,17 @@ for dz in (-0.048, 0.048):                                              # piston
     # 84-tri budget overage pass 2 didn't touch (goblin_mech.md pass 2).
     b.taper((0.454, -0.208, 0.298 + dz), 0.016, 0.016, 0.190, CHARCOAL, seg=4,
             rot=(FWD, 0, 0))
-b.ring((0.384, -0.020, 0.690), (0.158, 0.158, 0.042), CHARCOAL, 12, 4,
+# minor 4->3 (pass 4): ruled out as the zigzag's cause by the same
+# diagnostic recolour above, so its own roundness costs nothing that was
+# scored; freed 24 tris toward the two limb caps' seg 6->10 above.
+b.ring((0.384, -0.020, 0.690), (0.158, 0.158, 0.042), CHARCOAL, 12, 3,
        rot=(0.10, 0.0, 0.0))
 
 b.limb([(-0.290, -0.010, 0.830),
         (-0.335, -0.055, 0.660),
         (-0.330, -0.100, 0.530)],
-       [0.086, 0.074, 0.068], MINT, seg=6)                              # ordinary arm
-b.ball((-0.330, -0.130, 0.487), (0.090, 0.098, 0.082), GREEN, 8, 5)     # hand
+       [0.086, 0.074, 0.068], MINT, seg=5)             # ordinary arm; pass 4 budget
+b.ball((-0.330, -0.130, 0.487), (0.090, 0.098, 0.082), GREEN, 7, 4)     # hand, same
 
 # ------------------------------------------------------------------- the head
 b.ball((0.0, -0.045, 1.030), (0.235, 0.215, 0.205), MINT, 8, 5)
@@ -108,9 +120,17 @@ b.box((0.0, -0.212, 0.947), (0.062, 0.022, 0.016), CHARCOAL, bevel=0.006)  # gri
 mirror(lambda s: b.taper((0.030 * s, -0.205, 0.962), 0.012, 0.003, 0.045,
                          ICE, seg=4, rot=(-0.5, 0, 0)))             # tusks
 
-b.ring((0.0, -0.110, 1.105), (0.228, 0.198, 0.048), GOLD, 14, 4)    # goggle strap
+# Was a near-flat disc (thickness 0.16 default squashed further by the 0.048
+# z-scale): reads as a strap only face-on; `_side.png` shows it as a thin gold
+# blade jutting well past the ear, since a flat disc viewed edge-on is just its
+# rim. Thickened the tube (thickness 0.16 -> 0.26) and un-flattened it in Z
+# (0.048 -> 0.075) so there is a band to see from any angle, and pulled the
+# major radius in a touch (0.228/0.198 -> 0.205/0.180) so less of it clears the
+# head silhouette. Same 14x4 segments, so no tri cost.
+b.ring((0.0, -0.110, 1.105), (0.205, 0.180, 0.075), GOLD, 14, 4,
+       thickness=0.26)                                              # goggle strap
 mirror(lambda s: b.taper((0.108 * s, -0.180, 1.105), 0.078, 0.066, 0.082, GOLD,
-                         seg=6, rot=(FWD, 0, 0)))                  # goggle barrel
+                         seg=5, rot=(FWD, 0, 0)))  # goggle barrel; seg 6->5, pass 4 budget
 mirror(lambda s: b.ball((0.108 * s, -0.228, 1.105), (0.055, 0.024, 0.055), ICE, 8, 5))
 
 b.finish(out_path(), name="GoblinEngineer", budget="hunter")

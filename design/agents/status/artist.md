@@ -3,7 +3,7 @@ tags:
   - agent-status
 agent: artist
 updated: 2026-09-23
-working_on: hunters (item 2) — goblin_mech pass 3 done (tri budget); frog and the rest of goblin_mech still open
+working_on: hunters (item 2) — goblin_mech at 37/50, all 4 passes used; frog still open
 ---
 
 # artist
@@ -11,8 +11,56 @@ working_on: hunters (item 2) — goblin_mech pass 3 done (tri budget); frog and 
 ## Now
 
 No open `to: artist` request this run, so picked up item 2 (hunters) per
-last run's `## Next` — the biggest style gap per the brief, and untouched
-since pass 2. Ran pass 3 of the asset-loop on `goblin_mech`
+last run's `## Next` — `goblin_mech` was one pass short of the hunter stop
+line (42), with a diagnosed-but-unformed 4-way tie at 35/50. Ran pass 4
+(`design/progress/goblin_mech.md`), 35 → 37/50 — the loop's 4-pass cap for
+this asset, not a plateau call.
+
+**Neither pass-3 candidate survived contact with a full six-view capture.**
+Pass 3 had only ever committed `_34`/`_front`/`_sil`; `look.cmd goblin_mech
+4` also renders `_side`/`_top`/`_form`, which this pass looked at for the
+first time. The goggle-readability-at-34px candidate turned out fine when
+actually checked against the 34px party portrait. The claw/piston
+"connectedness" candidate turned out to already be one connected mesh
+(`_sil.png` is a single connected component, checked with
+`scipy.ndimage.label`).
+
+**What the six views actually showed:** a sharp zigzag "crown of teeth"
+right where the upper-arm and wrist limbs meet their boxes — this is what
+three passes of scoring had been calling "reads as scattered blocks"
+without ever finding the real cause. Diagnosed with the same diagnostic-
+recolour technique pass 3 used on the exhaust pipe: an `ICE`-recoloured
+limb exactly matched the zigzag; the CHARCOAL collar ring I'd first
+suspected did not. Fix: `seg` 6→10 on both limbs (rounds the hex end-cap
+that was catching its own toon-shading facets). Separately, `_side.png`
+showed the goggle strap as a razor-thin blade past the ear — a near-flat
+torus with almost no cross-section edge-on; thickened it (`thickness`
+0.16→0.26) and pulled its radius in slightly. Silhouette 7→8, Style 7→8.
+
+**Budget:** the two limb fixes cost +48 tris against 4 tris of headroom.
+Freed it with four small cuts verified not to matter — the same collar
+ring's own segment count (which the diagnostic recolour had just shown was
+never the zigzag), the off-rig arm/hand, and the exhaust/goggle-barrel
+tapers, one segment each. 1396 → 1378, still under the 1400 hunter budget.
+
+**Verified, not assumed:** `_sil.png` pixel-diff against pass 3, both at
+the scoring 64px render — 0.4% of pixels differ (lit-shading only, not
+silhouette). In the real fight camera, a full-frame diff against pass 3's
+own capture shows fewer differing pixels than pass 3's own idle-animation
+baseline — no regression, as expected at ~20px true hunter size; the win
+is in the close-up scoring renders. Playtest flagged `hop-flat` once — 
+checked directly against the unmodified baseline (same fight, same steps)
+and it fires there too, so it's pre-existing and unrelated to this asset,
+not something to fix or file here.
+
+![[frames/artist/2026-09-23-goblin-mech-joint-crown-before-after.png]]
+![[frames/artist/2026-09-23-goblin-mech-goggle-strap-before-after.png]]
+
+`ALL TESTS PASSED`.
+
+## Old: pass 3 (tri budget)
+
+Ran pass 3 of the asset-loop on `goblin_mech`
 (`design/progress/goblin_mech.md`), 33 → 35/50.
 
 **First, resolved a standing "unsure about" from pass 1/2 as a non-issue.**
@@ -143,25 +191,40 @@ fully inspectable without it for anything that doesn't need re-export.
 
 ## Next
 
-`goblin_mech` is at 35/50, one pass short of the hunter stop line (42),
-with a 4-way tie for lowest (Sil/Prop/Hygiene/Colour/Style all 7) and no
-line diagnosed yet for pass 4 — candidates noted in
-`design/progress/goblin_mech.md`'s "Where it stands": the claw/piston
-assembly's own connectedness, and whether the goggles/strap read at true
-34px combat distance (this run was the first time this file was checked
-against the live fight camera at all, not just `look.py`'s close-up
-renders — worth doing for every hunter score, not just this one). `frog`
-is still at 36/50 from its own last pass, plateaued, with a diagnosed but
-unapplied next fix already written in `frog.md` (narrow the trunk, push
-the haunch out in X). Either is a reasonable pick next run, checking
-`requests/` first as always. Also still open for whoever picks up the
-arena again: `design/progress/cinder_jackal_ground.md`'s "What's still
-open" (the RUST accent's own visibility, and whether the scatter recolour
-reads at all in the fight camera) plus the shared `env.py` wall-height/
-proportion finding, which is Nick's call across three grounds now.
+`goblin_mech` is at 37/50, **all 4 passes used** — per `asset-loop.md` this
+asset is done for now; a 5th pass needs a Nick call, not a default pick.
+Still below the 42 hunter stop line. Lowest lines now Prop/Hygiene/Colour,
+all 7, none diagnosed. Open for whoever revisits it (see
+`design/progress/goblin_mech.md`'s final "Where it stands"): the wrist
+joint's rounded cap still reads as a slightly different curvature from the
+boxes it bridges (a smaller version of this pass's own finding), and the
+claw/piston assembly at the feet, connected in mesh terms but still a
+visually distinct mass in `_side.png`. `frog` is also at its own 4-pass cap
+(36/50, `frog.md`) — same situation, same "needs Nick" gate, not a default
+pick either. Both hunters being at cap at the same time is itself worth
+flagging to Nick: the two hunters this fight's brief calls out by name are
+both below the hunter stop line and both out of passes under the current
+rule. Also still open: the arena's `design/progress/cinder_jackal_ground.md`
+"What's still open" and the shared `env.py` wall-height/proportion finding
+(Nick's call across three grounds now), and the cards item (item 4) in the
+brief, untouched so far this whole thread of runs.
 
 ## Log
 
+- 2026-09-23 — pass 4 of the asset loop on `goblin_mech` (item 2, hunters),
+  35→37/50, the asset's 4-pass cap: found and fixed the real cause behind
+  three passes of "reads as scattered blocks" — the upper-arm and wrist
+  limbs' hex end-caps exposed as a sharp zigzag right at their box joints
+  (diagnosed by a diagnostic recolour, which also cleared the CHARCOAL
+  collar ring of the same suspicion) — smoothed both (`seg` 6→10, Sil
+  7→8), and thickened the goggle strap ring, which read as a blade from
+  the side (Style 7→8). Freed the +48 tri cost with four small, verified
+  cuts elsewhere, 1396→1378, still under budget. `_sil.png` pixel-diff
+  0.4% (lit-shading only); in-fight capture diff smaller than pass 3's own
+  idle-animation noise floor. Playtest's `hop-flat` fail checked directly
+  against the unmodified baseline — fires there too, pre-existing,
+  unrelated to this asset. `ALL TESTS PASSED`. See
+  `design/progress/goblin_mech.md` for the full pass detail.
 - 2026-09-23 — pass 3 of the asset loop on `goblin_mech` (item 2, hunters),
   33→35/50: resolved pass 1/2's "unsure about" (the exhaust pipe reads
   fine in every camera the game uses, only separates in a top-down view

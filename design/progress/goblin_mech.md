@@ -195,16 +195,130 @@ Before/after frames (isolated `_34`/`_sil`, and the live fight camera):
 ![[frames/artist/2026-09-23-goblin-mech-tri-budget-sil-before-after.png]]
 ![[frames/artist/2026-09-23-goblin-mech-tri-budget-infight-before-after.png]]
 
-## Where it stands, still open for the next pass
+## Where it stood after pass 3
 
 35/50, 3 of 4 passes used, still under the hunter stop line (42). The
-lowest lines are now a four-way tie at 7 (Sil, Prop, Hygiene, Colour,
+lowest lines were a four-way tie at 7 (Sil, Prop, Hygiene, Colour,
 Style are ALL 7 — the model is even across the board, not bottlenecked on
-one line). Candidates for pass 4, none diagnosed yet: the claw/piston
-assembly's own connectedness (noted above), and whether the goggle
-lens/strap read as anything at true 34px combat distance rather than in
-the close-up renders every pass so far has scored from — this pass is the
-first time this file compared against the live fight camera at all, and it
-surfaced a real thing (the pip) that had nothing to do with the model, which
-is itself a reason to keep doing that check rather than scoring from
-`look.py` alone.
+one line). Candidates noted for pass 4: the claw/piston assembly's own
+connectedness, and whether the goggle lens/strap read as anything at true
+34px combat distance rather than in the close-up renders every pass so far
+had scored from — this pass was the first time this file compared against
+the live fight camera at all, and it surfaced a real thing (the pip) that
+had nothing to do with the model, which is itself a reason to keep doing
+that check rather than scoring from `look.py` alone.
+
+---
+
+## Pass 4 — artist lane, 2026-09-23
+
+Last pass's two candidates didn't survive contact with a full six-view
+capture (only `_34`/`_front`/`_sil` had been committed for pass 3;
+`look.cmd goblin_mech 4` also captures `_side`/`_top`/`_form`, which pass 3
+never looked at). Checking the 34px party-panel portrait
+(`tools/blender/portraits.py`) directly answered the goggle-readability
+candidate — the strap and lenses read fine at 34px, a real non-issue, not
+worth spending a fix on. The claw/piston assembly turned out to be one
+connected mesh (`_sil.png` is a single connected-component blob, checked
+with `scipy.ndimage.label` — no floating island), so "connectedness" was
+never literally broken either.
+
+What the six-view capture actually found, not on last pass's list:
+
+| Pass | Sil | Prop | Hygiene | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 1 | 5 | 5 | 5 | 7 | 7 | **29** |
+| 2 | 7 | 7 | 5 | 7 | 7 | **33** |
+| 3 | 7 | 7 | 7 | 7 | 7 | **35** |
+| 4 | 8 | 7 | 7 | 7 | 8 | **37** |
+
+### Diagnosis — two real, previously-unseen defects
+
+1. **Silhouette (7) — the rig's two limb-to-box joints read as a crown of
+   teeth, not a jointed arm.** `_34.png`, `_front.png` and `_top.png` all
+   show a sharp zigzag "M" right where the upper-arm limb meets the
+   shoulder box, and the same shape again where the wrist limb meets the
+   wrist box — this is what earlier passes were calling "reads as
+   scattered blocks" without ever finding the actual cause. Diagnostic
+   pass: recoloured the upper-arm limb to `ICE` one part at a time and
+   re-rendered — the zigzag is exactly the limb's own hex end-cap
+   (`seg=6` in `kenney.limb()`), exposed right at the joint, each of its
+   six flat side-faces catching its own toon-shading band. **Not the
+   CHARCOAL collar ring** — first suspected, ruled out the same way (an
+   `ICE`-recoloured ring rendered as a thin pale oval, visibly separate
+   from the zigzag). Repositioning the limb's start point deeper into the
+   box (tested at +0.03–0.04 along the path) did not hide it — the cap's
+   flat plane doesn't sit parallel to the box's own (rotated) face, so no
+   embedding depth fixes the mismatch; only rounding the cap does. Fix:
+   `seg` 6→10 on both the upper-arm and wrist limbs, smoothing six sharp
+   facets into a shallow, rounded seam.
+2. **Style (7) — the goggle strap read as a blade, not a headband, from
+   any angle but near-front.** `_side.png` shows the `GOLD` strap ring as a
+   razor-thin line jutting well past the ear — a torus that is nearly a
+   flat disc (default `thickness=0.16` squashed further by a 0.048
+   z-scale) has almost no cross-section to show edge-on, so any view that
+   isn't close to face-on sees only its rim. Fix: `thickness` 0.16→0.26
+   and un-flattened the z-scale 0.048→0.075 so the tube has a real
+   profile from the side, and pulled the major radius in slightly
+   (0.228/0.198→0.205/0.180) so less of it clears the head. Same segment
+   counts on both fixes, so this line is a pure shape change, no tri
+   cost.
+
+### Budget
+
+The two `seg=6→10` limb fixes cost +24 tris each (`kenney.limb()`'s
+`6*seg-4` triangle count for a 3-point path), +48 total, against 4 tris of
+headroom (1396/1400 after pass 3). Freed it with four small, individually
+checked cuts rather than touching either fixed line again: the CHARCOAL
+collar ring's minor segments 4→3 (-24, and confirmed via the same `ICE`
+diagnostic that this ring was never the zigzag, so losing a little of its
+own roundness costs nothing that was scored), the ordinary (non-rig) arm
+limb and its hand ball trimmed one segment each (6→5, 8,5→7,4), and the
+exhaust limb and goggle-barrel tapers trimmed one segment each (6→5).
+1396 → **1378, under the 1400 hunter budget** with all four fixes applied.
+
+**Verified, not assumed:** `_sil.png` pixel-diff against pass 3's own
+silhouette, both at the scoring 64px render — 256 of 65536 pixels differ
+(0.4%), i.e. unchanged; the fix is a lit-shading change on already-rounded
+massing, not a silhouette change. The 34px portrait
+(`goblin_mech_pass4_34px_big.png` equivalent, not committed — regenerate
+with `portraits.py`) shows no visible loss on the arm/hand/exhaust cuts. In
+the real fight (`state=3d`, both hunters, `cinder_jackal`), a full-frame
+pixel diff against the pass-3 capture shows 705 differing pixels (fewer
+than pass 3's own 2100-pixel idle-animation baseline) — indistinguishable
+by eye at the true ~20px hunter size, as expected; the win is in the
+close-up scoring renders, where the crown is now a shallow seam instead of
+sharp teeth, and the strap has an actual cross-section from the side.
+
+**Silhouette 7→8** (the "reads as one arm" complaint that survived three
+passes is now addressed at its real cause, not a proxy for it — held back
+from 9 because the wrist limb's rounded joint is still visibly a slightly
+different profile from the boxes it bridges, not because anything is
+still broken). **Style 7→8** (goggle strap is a strap from more than one
+angle now). Prop/Hygiene/Colour unchanged — not touched this pass.
+
+`ALL TESTS PASSED`; playtest re-run (`mode=play`, 40 steps) against the
+rebuilt model — `hop-flat` fired once, but the same check fires on the
+unmodified baseline too (checked directly: stashed this pass's changes,
+reimported, re-ran the identical playtest, same `hop-flat` failure on
+stock `goblin_mech.glb`). Pre-existing, unrelated to this asset (see the
+fixer/playtester history on `hop-flat` — a jump-arc sampling issue in
+gameplay code, nothing a hunter's static mesh can cause), not filed again
+here.
+
+![[frames/artist/2026-09-23-goblin-mech-joint-crown-before-after.png]]
+![[frames/artist/2026-09-23-goblin-mech-goggle-strap-before-after.png]]
+![[frames/artist/2026-09-23-goblin-mech-infight-before-after.png]]
+
+## Where it stands, still open for the next pass
+
+37/50, all 4 passes used — this asset is at the loop's pass limit, not a
+plateau call. Below the 42 hunter stop line; per `asset-loop.md` this asset
+is done for now and would need a Nick call to spend a 5th pass on it.
+Lowest lines: Prop, Hygiene, Colour, all still 7. Candidates for whoever
+picks this up again (not diagnosed, and only worth doing if Nick lifts the
+4-pass cap): the wrist joint's rounded cap still reads as a slightly
+different curvature from the boxes it bridges (a smaller version of this
+pass's own finding); the claw/piston assembly at the feet, connected in
+mesh terms but still a visually distinct mass from the rig body in
+`_side.png`, same open question pass 3 left it at.
