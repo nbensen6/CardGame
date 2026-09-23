@@ -690,3 +690,120 @@ claw/piston distinctness, this time with an actual measured cause the way
 this pass found one for the goggle strap, rather than another "checked,
 doesn't hold up" pass on a line two passes have already confirmed real but
 left unfixed.
+
+---
+
+## Pass 9 — artist lane, 2026-09-23 (the claw/piston cluster's real cause, measured)
+
+Picked up pass 8's own standing candidate: Hygiene's claw/piston mass
+reading separate from the main rig body (pass 3's original note, "connected
+but distinct" through pass 5, never actually diagnosed to a cause). Six-view
+capture (`goblin_mech_pass9_*.png`, `look.py` direct) plus the same
+diagnostic-recolour technique pass 4/8 used (recolour one part to `ICE`,
+re-render, look) — recoloured the claw taper alone, then the two piston rods
+alone, each in isolation.
+
+| Pass | Sil | Prop | Hygiene | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 1 | 5 | 5 | 5 | 7 | 7 | **29** |
+| 2 | 7 | 7 | 5 | 7 | 7 | **33** |
+| 3 | 7 | 7 | 7 | 7 | 7 | **35** |
+| 4 | 8 | 7 | 7 | 7 | 8 | **37** |
+| 5 | 8 | 7 | 7 | 8 | 8 | **38** |
+| 6 | 8 | 7 | 7 | 8 | 8 | **38** |
+| 7 | 8 | 8 | 7 | 8 | 8 | **39** |
+| 8 | 8 | 8 | 7 | 8 | 9 | **40** |
+| 9 | 8 | 8 | 8 | 8 | 9 | **41** |
+
+### What the diagnostic recolour actually showed
+
+**The piston rods (`CHARCOAL`, radius 0.016) are functionally invisible at
+every angle rendered, even recoloured to `ICE`.** They register as a single
+faint pale hairline crossing the shoulder at `_side.png` and nowhere else —
+too thin to read as pistons, or as anything. Confirmed, not fixed this pass:
+they cost real tris (2 × a 4-segment taper) for zero visible read, a
+Hygiene line of their own, not this one — noted for whoever picks the claw
+cluster up again with tri budget to spend, not chased here (this pass's
+budget went to the part that IS visible).
+
+**The claw taper (`CARROT`), recoloured alone, reads exactly as pass 8's
+"connected but distinct" line describes**: a small rounded lump sitting at
+the STONE claw box's bottom-front corner with a visible gap of shadow
+beneath it, not flush against the face it's mounted to — see
+`goblin_mech_pass9_34.png`/`_side.png` crops in
+`design/agents/frames/artist/2026-09-23-goblin-mech-claw-mount-*-before-after.png`
+(before/after, this pass's fix already applied to the "after" side).
+
+### Measured the cause instead of eyeballing a fix
+
+The claw box carries `rot=(0.18, 0.20, 0.0)` — a real tilt, ~10-11° on two
+axes, put there (pass-over-pass) so the rig's joints read as angled machinery
+rather than a stack of dead-level blocks. The claw taper and both piston rods
+mounted to that box's face were each placed at a **raw axis-aligned world
+offset** from the box's center, with a **raw axis-aligned `rot=(FWD, 0, 0)`**
+— correct for an unrotated box, and silently wrong the moment the box itself
+is tilted. The taper's mount point and heading were never rotated along with
+the face they're bolted to, so it emerged from a point/direction that only
+matches an untilted box — which is exactly a corner-glued-lump read, not a
+face-mounted one. Same category of bug as pass 8's goggle-strap fix (a part
+positioned without accounting for what it's actually relative to), on a
+different part of the model.
+
+**Fix:** added `mount(box_loc, box_rot, delta, own_rot)` to
+`goblin_mech.py` — rotates both a part's offset and its own orientation by
+the reference box's rotation matrix, so a rigidly-bolted part follows the
+box's tilt instead of assuming it is world-axis-aligned. Applied it to the
+claw taper and both piston rods (all three mount to the same claw box).
+Pure position/orientation math — no new geometry, no segment count changes.
+
+### Verified, not assumed
+
+- **Tri budget/part count unaffected**: `TRIS 1378 PARTS 33 BUDGET 1400 ok`,
+  identical to pass 8 (only loc/rot parameters changed on three existing
+  parts).
+- **`_sil.png` pixel diff against the pre-fix pass-9 capture**: 347 of 65,536
+  px differ (0.5%) — small, real, and matches what a corner-vs-face mount
+  shift on a part this size should cost; `scipy.ndimage.label` still finds
+  **1 connected component** (19,327px) — the fix didn't reopen the
+  "floating island" question pass 5 already closed.
+- **`_34.png`/`_side.png` before/after**: the claw now sits flush against the
+  box's bottom edge with no visible gap beneath it, at both angles checked —
+  full-resolution crops committed as
+  `design/agents/frames/artist/2026-09-23-goblin-mech-claw-mount-34-before-after.png`
+  and `...-side-before-after.png`.
+- **In the real fight** (`state=3dgrip slot=1`, goblin on an open foothold,
+  unoccluded, ~15-30px true size): rebuilt `game/assets/3d/cast/goblin_mech.glb`,
+  reimported, shot against both the pre-fix and post-fix builds. Honestly:
+  **does not survive to true in-fight size** — the claw is a handful of
+  pixels at that scale and the two shots are indistinguishable by eye (frame
+  committed:
+  `design/agents/frames/artist/2026-09-23-goblin-mech-claw-mount-infight-before-after.png`).
+  Same call pass 8 made for the goggle strap at 34px portrait scale — the win
+  lives in the scoring/close-up renders, not overstated as an in-fight one.
+  (`goblin_mech` has no head-and-shoulders portrait crop that reaches the
+  claw at all — `FOCUS["goblin_mech"]` in `portraits.py` frames the upper
+  body, so the 34px party-portrait check pass 4/8 used doesn't apply here.)
+
+**Score: Hygiene 7 → 8.** A real, previously-only-described defect
+("connected but distinct" since pass 3/5) now has a measured cause — a
+rigid part mounted without accounting for its own reference box's rotation
+— and a fix at that cause, not a proxy for it. Held at 8, not higher:
+the piston rods, the cluster's other half, are confirmed still
+functionally invisible (a separate, tri-cost-not-read Hygiene question,
+not this pass's to spend budget fixing), and the win doesn't reach true
+in-fight size. Sil/Prop/Colour/Style unchanged — nothing this pass touched
+their lines. **40 → 41/50**, one point under the 42 hunter stop line.
+
+![[frames/artist/2026-09-23-goblin-mech-claw-mount-34-before-after.png]]
+![[frames/artist/2026-09-23-goblin-mech-claw-mount-side-before-after.png]]
+![[frames/artist/2026-09-23-goblin-mech-claw-mount-infight-before-after.png]]
+
+`ALL TESTS PASSED`. Playtest (`mode=play`, `cinder_jackal`, 40 steps) re-run
+against the rebuilt model: `hunter-off-marker` (2 hits, foothold 4) — checked
+against what's on record, not assumed: *exact* same home/anchor coordinates
+(`home (5.335257, 13.825942, 7.030925)`, `anchor (3.901302, 13.825942,
+6.473297)`) as the already-open
+`2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`
+— confirmed pre-existing by coordinate match, not reopened. This pass only
+changed the loc/rot of three existing parts mounted to the claw box; it has
+no code path into foothold/climb-marker placement.

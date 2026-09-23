@@ -3,7 +3,7 @@ tags:
   - agent-status
 agent: artist
 updated: 2026-09-23
-working_on: no open to:artist request; picked up goblin_mech pass 8 — the "Style's goggle/strap at oblique angles, flagged, never actually checked" candidate pass 6/7 left open. A fresh six-view look found a real defect pass 4 never saw at the fight-camera (3/4) and profile angles: the goggle strap's own Y-radius put its front edge ahead of the goggle barrel/lens it's meant to hold on, so it read as a blade/beak, not a strap. Measured the exact overshoot (strap front -0.290 vs barrel tip -0.262 vs lens -0.228), pulled the ring's Y-radius 0.180→0.105, verified tri budget/silhouette/portrait/in-fight, Style 8→9, 39→40/50; ALL TESTS PASSED, playtest re-run (one pre-existing hunter-off-marker FAIL, already filed, not caused by a decorative-ring radius change), pushed
+working_on: no open to:artist request (network-policy and hunter-display-support requests to nick/fixer still open, checked and re-confirmed blocked this run); picked up goblin_mech pass 9 — Hygiene's claw/piston mass "connected but distinct" (open since pass 3/5, never diagnosed). Diagnostic-recoloured the claw taper and both piston rods alone: the piston rods are functionally invisible at every angle even highlighted (not fixed, flagged for later tri-budget spend); the claw taper reads exactly as described, a lump glued to the claw box's corner with a visible gap beneath it. Measured the cause: the claw box carries rot=(0.18,0.20,0.0) but the taper/rods were mounted to it at a raw world-axis-aligned offset and rot=(FWD,0,0) — correct for an unrotated box, wrong the moment it's tilted. Added mount() to rotate a part's offset+orientation by its reference box's rotation; applied to all three parts. Verified tri budget unchanged, silhouette still one connected component, before/after crops show the gap closed; honestly does not survive to true in-fight size. Hygiene 7→8, 40→41/50, still 1 below the 42 hunter stop line. ALL TESTS PASSED, playtest re-run (hunter-off-marker foothold-4, exact coordinate match to the already-open fixer request, not reopened), pushed
 ---
 
 # artist
@@ -11,22 +11,99 @@ working_on: no open to:artist request; picked up goblin_mech pass 8 — the "Sty
 ## Now
 
 No open `to: artist` request this run (checked every file's frontmatter,
-also `design/agents/BOARD.md` and `status/*.md`). Environment fresh again:
-Godot 4.7.1 + `--import`; Blender `apt install blender` (4.0.2),
-`download.blender.org` unreachable, same as prior runs — `apt-get install -y
---fix-missing blender` gets 4.0.2 despite a batch of unrelated 404s on
-`apt-get install`'s first pass (retry with `--fix-missing` and `apt-get
-update` first clears it). New this run: headless Blender rendering needs
-`libegl1`/`libegl-mesa0` (`apt-get install -y libegl1 libgl1-mesa-dri
-libglx-mesa0`) or `look.py` fails immediately with `Couldn't open
-libEGL.so.1`. `pip install --break-system-packages pillow numpy scipy` for
-the Python-side image/mesh checks.
+also `design/agents/BOARD.md` and `status/*.md`) — the three still-open
+requests from the Meshy pass (`...meshy-fetch-blocked-by-network-policy.md`
+to nick, `...hunter-display-path-has-no-toon-or-rig-support.md` to fixer)
+plus the arena wall-accent request are all still open, none picked up by
+anyone else yet. Re-confirmed the network wall is still there before
+spending any more time on it: `python3 tools/meshy.py balance` works fine
+(2960 credits), but `curl https://assets.meshy.ai/` still gets a 403 policy
+denial from the proxy — the same infrastructure wall as last run, not a
+stale finding. Environment fresh again: Godot 4.7.1 + `--import`; Blender
+`apt install blender` (4.0.2) + `libegl1 libgl1-mesa-dri libglx-mesa0` for
+headless rendering; `pip install --break-system-packages pillow numpy scipy`
+for the host Python, and separately `python3.12 -m pip install
+--break-system-packages numpy pillow` for Blender's own bundled Python (this
+Blender build's `sys.executable` is the system `/usr/bin/python3.12`, not a
+Blender-private one — glTF import/export fails with `ModuleNotFoundError:
+numpy` otherwise).
 
-Picked up my own `## Next` from last run: `goblin_mech` (39/50, cap lifted,
+Picked up my own `## Next` from last run: `goblin_mech` (40/50, cap lifted,
 below the 42 hunter stop line) had one live, previously-flagged candidate —
-Style's goggle/strap "at oblique angles, flagged, never actually checked"
-(pass 6/7). Ran it. Full write-up in `design/progress/goblin_mech.md` pass
-8.
+Hygiene's claw/piston mass reading separate from the main rig body (open
+since pass 3, re-confirmed "connected but distinct" through pass 5, never
+actually diagnosed to a cause). Ran it. Full write-up in
+`design/progress/goblin_mech.md` pass 9.
+
+**Used the same diagnostic-recolour technique pass 4/8 used** (recolour one
+part to `ICE`, re-render, look) on the claw taper and the two piston rods
+separately. The piston rods are functionally invisible at every angle
+rendered, even highlighted bright — a real cost (2 tapers) for zero visible
+read, its own Hygiene question, not chased this pass. The claw taper reads
+exactly as the standing complaint describes: a small lump sitting at the
+claw box's corner with a visible gap of shadow beneath it, not flush against
+the face.
+
+**Measured the cause instead of eyeballing a fix.** The claw box carries
+`rot=(0.18, 0.20, 0.0)` — a real ~10-11° tilt. The claw taper and both
+piston rods mounted to that box were each placed at a raw axis-aligned world
+offset with a raw axis-aligned `rot=(FWD, 0, 0)` — correct for an unrotated
+box, silently wrong the moment the box itself is tilted, so the parts
+emerged from a point/heading that never matched the box's actual (tilted)
+face. Same category as pass 8's goggle-strap bug (a part positioned without
+accounting for what it's relative to), on a different part of the model.
+Added `mount(box_loc, box_rot, delta, own_rot)` to `goblin_mech.py` — rotates
+a rigidly-bolted part's offset and its own orientation by the reference
+box's rotation matrix — and applied it to all three parts. Pure
+position/orientation math, no new geometry.
+
+**Verified, not assumed:** tri budget/part count unaffected (1378/1400,
+identical to pass 8); `_sil.png` pixel diff against the pre-fix capture is
+347 of 65,536px (0.5%), and `scipy.ndimage.label` still finds one connected
+component — the fix didn't reopen the "floating island" question pass 5
+already closed; `_34.png`/`_side.png` before/after show the claw now sitting
+flush against the box's bottom edge, gap closed, at both angles checked; the
+true in-fight hunter size (`state=3dgrip slot=1`, ~15-30px, rebuilt
+`goblin_mech.glb` shot against both the pre- and post-fix builds) honestly
+does **not** show a visible difference — reported as such, not oversold, the
+same call pass 8 made for the goggle strap at 34px portrait scale.
+`goblin_mech`'s own party-portrait framing (`portraits.py`'s `FOCUS` table)
+never reaches this low on the model at all, so that particular check doesn't
+apply here.
+
+**Score: Hygiene 7→8, 40→41/50, still 1 below the 42 hunter stop line.** A
+real, previously-only-described defect ("connected but distinct" since pass
+3/5) now has a measured cause and a fix at that cause. Held at 8, not
+higher: the piston rods (the cluster's other half) are confirmed still
+invisible, and the win doesn't reach true in-fight size.
+
+![[frames/artist/2026-09-23-goblin-mech-claw-mount-34-before-after.png]]
+![[frames/artist/2026-09-23-goblin-mech-claw-mount-side-before-after.png]]
+![[frames/artist/2026-09-23-goblin-mech-claw-mount-infight-before-after.png]]
+
+`ALL TESTS PASSED`. Playtest (`mode=play`, `cinder_jackal`, 40 steps) re-run
+against the rebuilt model: `hunter-off-marker` (2 hits, foothold 4) — exact
+same home/anchor coordinates as the already-open
+`2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`,
+confirmed pre-existing by coordinate match, not reopened. This pass only
+changed loc/rot on three existing parts; no code path into foothold/climb-
+marker placement.
+
+## Next
+
+`goblin_mech` is at 41/50, cap lifted, one point below the 42 hunter stop
+line. Two real, named candidates left open for whoever picks it up: the
+piston rods this pass confirmed are invisible at every angle even
+highlighted (a tri-cost-for-nothing Hygiene question, needs either a
+visibility fix or cutting them for budget elsewhere) and the exhaust-pipe/
+hose-ring "diagnostic-angle-only" precedent from pass 3/5/6 (never revisited
+with this pass's box-rotation lens — worth checking whether any other rig
+part is mounted the same raw-axis-aligned way to a rotated box). `frog` is
+past its own stop line (43/50); the Meshy Frog rebuild (Nick's brief's
+actual ask) stays blocked on the `assets.meshy.ai` network-policy request,
+still open, still unpicked by Nick.
+
+## Old: hunters, pass 8 (goblin_mech)
 
 **A fresh six-view look (`look.py` direct, `libEGL` fixed above) found a
 real defect at exactly the angles pass 4 never checked.** `_34.png` (the

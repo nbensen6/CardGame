@@ -13,7 +13,7 @@ edges with a bevel on them, which is exactly what box() and taper() are for.
 The organic half stays soft on purpose. Goblin round, rig square, and the two
 halves of the silhouette disagree with each other, which is the character.
 """
-import sys, os, math
+import sys, os, math, mathutils
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from kenney import (Build, out_path, mirror, MINT, GREEN, GRAPHITE, PEWTER,
                     STONE, CHARCOAL, PUMPKIN, CARROT, GOLD, ICE, UMBER)
@@ -101,6 +101,28 @@ def rs(*vs):
     return tuple(RIG_S * v for v in vs) if len(vs) > 1 else RIG_S * vs[0]
 
 
+def mount(box_loc, box_rot, delta, own_rot=(0.0, 0.0, 0.0)):
+    """Where a part rigidly bolted to a rotated box's face actually sits.
+
+    A part placed at a raw axis-aligned offset from a box's center, with its
+    own fixed rot=, ignores the box's own tilt entirely - it points wherever
+    its own rot says, from wherever the offset says, in WORLD axes, no matter
+    how the box itself is rotated. The claw/piston cluster (pass 9) was
+    exactly this: mounted on the claw box's face with a world-axis-aligned
+    offset and a world-axis-aligned rot=(FWD,0,0), while the box itself
+    carries rot=(0.18, 0.20, 0.0) - so the claw did not emerge from the box's
+    actual (tilted) front face, it emerged from a point and heading that were
+    only correct for an unrotated box. That reads as a peg glued to a corner,
+    not a claw mounted on a face. Rotate both the offset and the part's own
+    orientation by the box's rotation so the mount follows the tilt, the same
+    way a bolt follows the panel it's bolted to.
+    """
+    bm = mathutils.Euler(box_rot, 'XYZ').to_matrix()
+    loc = tuple(mathutils.Vector(box_loc) + bm @ mathutils.Vector(delta))
+    rot = tuple((bm @ mathutils.Euler(own_rot, 'XYZ').to_matrix()).to_euler('XYZ'))
+    return loc, rot
+
+
 b.box(rp(0.30, 0.278, 0.800), rs(0.145, 0.098, 0.152), STONE, bevel=rs(0.026))
 b.box(rp(0.30, 0.278, 0.960), rs(0.106, 0.078, 0.030), PEWTER, bevel=rs(0.013))   # lid
 b.limb([rp(0.412, 0.330, 0.880), rp(0.422, 0.398, 0.995), rp(0.440, 0.392, 1.088)],
@@ -129,16 +151,26 @@ b.box(rp(0.416, -0.068, 0.548), rs(0.086, 0.090, 0.106), PEWTER, bevel=rs(0.020)
       rot=(0.12, 0.14, 0.0))
 b.limb([rp(0.420, -0.076, 0.500), rp(0.438, -0.100, 0.430), rp(0.450, -0.118, 0.378)],
        [rs(0.095), rs(0.106), rs(0.115)], PEWTER, seg=10)                # wrist
-b.box(rp(0.454, -0.128, 0.298), rs(0.132, 0.138, 0.112), STONE, bevel=rs(0.026),
-      rot=(0.18, 0.20, 0.0))
-b.taper(rp(0.454, -0.268, 0.298), rs(0.072), rs(0.058), rs(0.130), CARROT, seg=6,
-        rot=(FWD, 0, 0))
+# Pass 9: the claw box's own rot=(0.18, 0.20, 0.0) tilts its face, but the
+# claw taper and both piston rods below were placed at a raw axis-aligned
+# offset with a raw axis-aligned rot=(FWD,0,0) - correct for an UNROTATED
+# box, so on this (tilted) box they emerged from a point and heading that
+# don't match the face they're meant to sit on. Six-view look confirmed the
+# read this causes: the claw hangs off the box's corner with a visible gap
+# beneath it (`_34.png`, `_side.png`), not flush against the face - see
+# goblin_mech.md pass 9. mount() rotates the offset and the part's own
+# orientation by the box's own rotation so both actually land on its face.
+CLAW_BOX_LOC = rp(0.454, -0.128, 0.298)
+CLAW_BOX_ROT = (0.18, 0.20, 0.0)
+b.box(CLAW_BOX_LOC, rs(0.132, 0.138, 0.112), STONE, bevel=rs(0.026), rot=CLAW_BOX_ROT)
+_claw_loc, _claw_rot = mount(CLAW_BOX_LOC, CLAW_BOX_ROT, (0.0, rs(-0.140), 0.0), (FWD, 0, 0))
+b.taper(_claw_loc, rs(0.072), rs(0.058), rs(0.130), CARROT, seg=6, rot=_claw_rot)
 for dz in (-0.048, 0.048):                                              # piston rods
     # seg 5->4: at 0.016 radius (a thin rod, not a silhouette-defining mass)
     # the facet is invisible; this and the three balls above claw back the
     # 84-tri budget overage pass 2 didn't touch (goblin_mech.md pass 2).
-    b.taper(rp(0.454, -0.208, 0.298 + dz), rs(0.016), rs(0.016), rs(0.190), CHARCOAL,
-            seg=4, rot=(FWD, 0, 0))
+    _p_loc, _p_rot = mount(CLAW_BOX_LOC, CLAW_BOX_ROT, (0.0, rs(-0.080), rs(dz)), (FWD, 0, 0))
+    b.taper(_p_loc, rs(0.016), rs(0.016), rs(0.190), CHARCOAL, seg=4, rot=_p_rot)
 # minor 4->3 (pass 4): ruled out as the zigzag's cause by the same
 # diagnostic recolour above, so its own roundness costs nothing that was
 # scored; freed 24 tris toward the two limb caps' seg 6->10 above.
