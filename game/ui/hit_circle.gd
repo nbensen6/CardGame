@@ -115,6 +115,7 @@ var _slider := false          # this window is held, not tapped
 var _holding := false         # the press has landed and the follower is running
 var _slide := 0.0             # 0..1 along the path
 var _press_quality := Combat.TIMING_PERFECT
+var _slider_note_hit := false # note_hit already told a slider's one note its press quality; _finish() must not report it again with a conflicting one if the hold later breaks
 var _cam: Camera3D
 var _notes: PackedVector3Array = PackedVector3Array()   # one world point per hit
 var _at := Vector2.ZERO
@@ -144,6 +145,7 @@ func begin(bonus: float, cam: Camera3D, points: PackedVector3Array,
 	_holding = false
 	_slide = 0.0
 	_press_quality = Combat.TIMING_PERFECT
+	_slider_note_hit = false
 	_notes = points
 	_hits_needed = 1 if _slider else points.size()
 	_hits_done = 0
@@ -250,6 +252,7 @@ func _fire() -> void:
 		_burst_grade = _worst
 		_flash = 1.0
 		note_hit.emit(0, _worst)
+		_slider_note_hit = true
 		return
 
 	_hits_done += 1
@@ -270,7 +273,15 @@ func _fire() -> void:
 func _finish(quality: int) -> void:
 	_holding = false
 	if _live and quality == Combat.TIMING_MISS:
-		note_hit.emit(_hits_done, Combat.TIMING_MISS)
+		# A slider's one note already told note_hit its press quality (_fire()'s
+		# slider branch, above) -- reporting it again here with a conflicting
+		# TIMING_MISS for the SAME index would break the "quality grades that
+		# note alone" contract the doc comment on note_hit promises. The note
+		# landed; only the hold that followed it broke. The visual MISS burst
+		# below still plays, since a player who dropped the hold needs to see
+		# why, same as any other miss.
+		if not (_slider and _slider_note_hit):
+			note_hit.emit(_hits_done, Combat.TIMING_MISS)
 		_combo = 0
 		_burst_note = mini(_hits_done, maxi(_notes.size() - 1, 0))
 		_burst_grade = Combat.TIMING_MISS

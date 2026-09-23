@@ -1620,6 +1620,12 @@ func _init() -> void:
 	_test_backlog86_hit_circle_slider_released_past_rescue_downgrades_to_good()
 	_test_backlog86_hit_circle_slider_ignores_a_second_press_while_holding()
 	_test_backlog86_hit_circle_slider_press_outside_the_window_still_misses_immediately()
+	# fixer: a slider's note_hit fires at press (its own quality) and again from
+	# _finish() if the hold later breaks (TIMING_MISS, same index) -- a real
+	# double-report for one note that none of the tests above caught, since
+	# none of them connect note_hit for the slider path at all.
+	_test_hit_circle_slider_dropped_after_a_good_press_does_not_double_report_note_hit()
+	_test_hit_circle_slider_missed_press_still_reports_note_hit_once()
 	# backlog #86 duty 3: HitCircle._path_point, the slider follower's own
 	# on-screen position, was the one piece of the slider path with zero
 	# coverage of its own -- every test above proves the PRESS/HOLD/RELEASE
@@ -25539,6 +25545,53 @@ func _test_backlog86_hit_circle_slider_press_outside_the_window_still_misses_imm
 	_expect(int(got[0]) == Combat.TIMING_MISS,
 		"a slider's press still has to land inside the window -- missing the press entirely never starts a hold to rescue")
 	_expect(not hc._holding, "a missed press never enters the holding state")
+	hc.free()
+
+
+## fixer: note_hit's own doc comment says "quality grades that note alone" --
+## one verdict per index. _fire()'s slider branch already emits note_hit(0,
+## press_quality) the instant a good press lands (line ~254). But a slider
+## that is later dropped before SLIDE_RESCUE resolves via _finish(MISS), and
+## _finish() unconditionally emitted note_hit(_hits_done, MISS) too -- for a
+## slider _hits_done never leaves 0, so that is a SECOND note_hit for the
+## exact same index, with a quality that contradicts the first. A listener
+## reacting per-note (the per-note camera-follow burst note_hit exists for,
+## per its own doc comment) would see index 0 graded PERFECT and then MISS a
+## moment later. None of the slider tests above catch this because none of
+## them connect note_hit at all -- they only ever check resolved().
+func _test_hit_circle_slider_dropped_after_a_good_press_does_not_double_report_note_hit() -> void:
+	var hc := HitCircle.new()
+	hc.begin(0.0, null, PackedVector3Array([Vector3.ZERO, Vector3.ONE]), true)
+	hc._t = hc._approach  # dead on the beat -- press quality PERFECT
+	var seen: Array = []
+	hc.note_hit.connect(func(index: int, quality: int) -> void: seen.append([index, quality]))
+	hc._fire()
+	hc._slide = 0.3  # well short of SLIDE_RESCUE (0.72) -- a dropped hold
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	hc._gui_input(release)
+	_expect(seen.size() == 1,
+		"a slider has one note -- note_hit must report it exactly once even when a good press is later dropped, not once at press and again at drop (got %s)" % [seen])
+	_expect(seen[0][0] == 0 and seen[0][1] == Combat.TIMING_PERFECT,
+		"the one note_hit report for a dropped slider must be the press's own quality (what actually landed), not overwritten by the drop")
+	hc.free()
+
+
+## fixer: the sibling case -- a slider whose PRESS itself misses the window
+## never enters holding at all (see the test above this one), so _finish()'s
+## MISS branch is the only place note_hit could ever fire for that note. The
+## guard added for the double-report above must not silence this real,
+## single, legitimate report.
+func _test_hit_circle_slider_missed_press_still_reports_note_hit_once() -> void:
+	var hc := HitCircle.new()
+	hc.begin(0.0, null, PackedVector3Array([Vector3.ZERO, Vector3.ONE]), true)
+	hc._t = hc._approach + 0.30  # past GOOD_WINDOW with no zone bonus
+	var seen: Array = []
+	hc.note_hit.connect(func(index: int, quality: int) -> void: seen.append([index, quality]))
+	hc._fire()
+	_expect(seen.size() == 1 and seen[0][0] == 0 and seen[0][1] == Combat.TIMING_MISS,
+		"a slider's press missing the window outright must still report note_hit(0, MISS) exactly once (got %s)" % [seen])
 	hc.free()
 
 

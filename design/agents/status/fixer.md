@@ -3,12 +3,66 @@ tags:
   - agent-status
 agent: fixer
 updated: 2026-09-23
-working_on: backlog #86 duty 3 — reward_header_text() told a player to tap a relic when the row was empty; fixed, three new tests, pushed
+working_on: hit_circle.gd's note_hit signal double-reported a dropped slider note (PERFECT then MISS for the same index); fixed, two new tests, pushed
 ---
 
 # fixer
 
 ## Now
+
+Fresh sandbox. No open `to: fixer` request (the boss-relic-pool request is
+still sitting on `to: nick`, untouched — his call, not mine). Order-of-work
+item 2: ran a full fresh `mode=play beast=cinder_jackal steps=80`,
+`mode=hover`, and `mode=hands` — all three `PLAYTEST OK: 0 failing check(s)`,
+clean baseline, nothing to file. Fell to item 3 (bugs in the jackal fight's
+own code paths, found by reading) and read `ui/hit_circle.gd` — the file's
+own status-note history shows the last several duty-3 passes hammered
+`combat_3d.gd`'s climb/hop/gauge functions repeatedly; `hit_circle.gd` had a
+thorough thirty-second-pass audit for its TAP grading and its SLIDER
+press/hold/release rules, but every one of those tests only ever listens for
+`resolved()` (fires once per WINDOW) — none of them connect `note_hit`
+(fires once per NOTE) for the slider path specifically.
+
+**What I found.** `note_hit`'s own doc comment: "`index` is 0-based, `quality`
+grades that note alone" — one verdict per note. A slider window has exactly
+one note (`_hits_needed = 1`, `_hits_done` never leaves `0`). `_fire()`'s
+slider branch already emits `note_hit(0, press_quality)` the instant a good
+press lands. But `_finish()`'s MISS branch **unconditionally** also emitted
+`note_hit(_hits_done, TIMING_MISS)` — so a slider pressed perfectly and then
+dropped before `SLIDE_RESCUE` reports index 0 as `PERFECT`, then immediately
+reports the *same* index 0 as `MISS`. Not yet visible to a player —
+`combat_3d.gd` only ever connects `resolved`, never `note_hit` — but the
+signal exists precisely so a future per-note UI reaction (the doc comment
+names "the camera-follow judgement pop") can be wired off it, and this bug
+would corrupt that reaction the day it's connected.
+
+**Reproduced first.** Wrote the repro as a unit test, ran it against the
+unfixed tree (`git stash` on just `hit_circle.gd`, keeping the new test):
+failed exactly as predicted, `got [[0, 2], [0, 0]]` (PERFECT then MISS for
+index 0).
+
+**Fix.** Added `_slider_note_hit`, set `true` right after the slider press's
+own `note_hit.emit(0, _worst)`, reset `false` in `begin()`. `_finish()`'s MISS
+branch now skips the `note_hit.emit(...)` call when `_slider and
+_slider_note_hit` — the note already reported its real verdict at press time.
+The **visual** MISS burst is untouched and still plays on a dropped slider (a
+player who blew the hold still needs to see why); only the signal
+double-report was the bug.
+
+**Proof.** Two new tests: the repro above, plus a sibling proving the guard
+doesn't silence the legitimate single MISS report when the press itself
+misses the window (never enters holding, so `_finish()` is the only place
+that note is ever reported). Both pass on the fixed tree; restored the
+stashed fix and reran the full suite: `ALL TESTS PASSED`. Re-ran `mode=hands`
+post-fix as a sanity check (pure logic fix, nothing rendered changes):
+`PLAYTEST OK: 0 failing check(s)`, same known harness-only leak-at-exit noise
+as every prior clean run. No frame to attach — this bug never reached a
+pixel; the before/after test output is the evidence.
+
+Self-filed and self-fixed —
+`requests/2026-09-23-0300-fixer-to-fixer-note-hit-double-reports-on-dropped-slider.md`.
+
+## Old: 2026-09-23, duty 3 — reward header lied "Tap a relic" with an empty row
 
 Fresh sandbox. No open `to: fixer` request (the boss-relic-pool request from
 a prior run is still sitting on `to: nick`, untouched). Order-of-work item 2:
@@ -267,30 +321,56 @@ anything meant to outlive the current tool call.
 
 ## Next
 
-The Cinder-Jackal-scoped items (1-3) are still clean, same as last run — no
-bug survived reproduction there. What's still outstanding: (1) the
+Items 1-2 (open requests, live playtest failures) are clean this run, same
+as the last several. Item 3 found a real gap this time: `hit_circle.gd` had
+heavy prior test coverage, but every existing test only ever listened for
+`resolved()` (fires once per window) — none connected `note_hit` (fires once
+per note) for the slider path, which is exactly where the double-report bug
+was hiding. Worth remembering: a thoroughly-tested FILE can still have an
+untested SIGNAL CONTRACT if every test only exercises one of the signals it
+fires. Worth someone eventually checking `card_view.gd`'s
+`timing_resolved`/inspector signals the same way — I didn't chase this
+beyond `hit_circle.gd` itself this run. What's still outstanding: (1) the
 boss-relic-pool REQUEST is still waiting on Nick for the sizing/cadence
-question, though the prompt-text half of it is now fixed. (2) the "pure
-shape function tested on only one axis" question stands unresolved for
+question, prompt-text half already fixed. (2) the "pure shape function
+tested on only one axis" question stands unresolved for
 `combat_3d.gd`/`card_view.gd` specifically — every function I've personally
 read there is clean, but nobody has audited ALL of them. (3) the `mode=hands`
 ObjectDB/AudioStreamOggVorbis leak-at-exit noise is still just noise, still
 untouched, still low priority. (4) Backlog #86 itself isn't Cinder-Jackal-
-scoped and clearly still has real bugs/gaps in it, two runs running now
-(the sealed-door history bug, then this run's reward-prompt gap) — the
-general `game/core`/`game/session`/`game/views` layer outside the jackal
-fight's own hand/climb/camera code keeps paying off faster than re-reading
-the same already-scarred `combat_3d.gd` functions, so keep pointing the
-Explore-agent hunt there first. (5) Worth someone eventually checking
-whether other reward-adjacent screens (event/treasure rolls, not just boss
-relics) can also produce an empty choice row — `reward_header_text()` now
-handles it correctly wherever `_render_reward()` calls it, but I only
-proved the boss-relic case is reachable; didn't chase whether event/treasure
-pools can run dry too.
+scoped and clearly still has real bugs/gaps in it — the general
+`game/core`/`game/session`/`game/views` layer outside the jackal fight's own
+hand/climb/camera code keeps paying off faster than re-reading the same
+already-scarred `combat_3d.gd` functions, so keep pointing the Explore-agent
+hunt there first when it's that duty's turn. Next `#86` rotation turn (last
+commit before mine was duty 3) is duty 2 ("find an error and resolve it") —
+this run's own item-3 find took priority over dropping to the backlog
+rotation, per the brief's own order of work. (5) Worth someone eventually
+checking whether other reward-adjacent screens (event/treasure rolls, not
+just boss relics) can also produce an empty choice row — didn't chase this
+further either.
 
 ## Log
 
-- 2026-09-23 (latest) — backlog #86 duty 3: fixed
+- 2026-09-23 (latest) — fixed `HitCircle.note_hit` (ui/hit_circle.gd)
+  double-reporting a slider's one note: a good press emitted `note_hit(0,
+  PERFECT)` immediately, then dropping the hold before `SLIDE_RESCUE`
+  unconditionally emitted `note_hit(0, MISS)` too — two conflicting verdicts
+  for the same index, violating the signal's own "quality grades that note
+  alone" contract. Not yet player-visible (`combat_3d.gd` only connects
+  `resolved`, not `note_hit`, yet) but a real logic bug in code explicitly
+  in the fixer's scope, found by order-of-work item 3 after items 1-2 (open
+  requests, live playtest) came back clean. Added `_slider_note_hit`; guards
+  `_finish()`'s MISS emission so a slider's already-reported note isn't
+  re-reported. Visual MISS burst untouched — still plays on a dropped hold.
+  Two new tests (the double-report repro; a sibling proving the guard
+  doesn't silence a genuinely missed press) — repro fails on the unfixed
+  tree (`git stash` on just `hit_circle.gd`) with `got [[0, 2], [0, 0]]`,
+  both pass fixed. `ALL TESTS PASSED`; `mode=play`/`hover`/`hands` baseline
+  clean before, `mode=hands` re-checked clean after (pure logic fix, nothing
+  rendered changes). Self-filed and self-fixed — see the request's
+  `## Result`.
+- 2026-09-23 — backlog #86 duty 3: fixed
   `Location3D.reward_header_text()` telling a player to "Tap a relic to
   select" when the reward row was empty (2-player co-op runs the boss relic
   pool dry by the 3rd Titan — already filed `to: nick`, still open for the
