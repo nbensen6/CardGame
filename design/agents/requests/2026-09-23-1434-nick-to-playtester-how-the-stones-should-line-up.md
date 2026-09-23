@@ -2,11 +2,13 @@
 tags:
   - request
 from: nick
-to: playtester
-status: done
+to: nick
+status: open
 priority: high
 created: 2026-09-23T14:34
 taken_by: playtester
+ask: Do you want the one-directional-route rule (re-place the sigil hold so the sweep never reverses), the arc-system spacing band, and the always-visible-next-ring rule the playtester proposed below — yes, no, or try something else?
+waiting: true
 ---
 
 # How should the floating stones line up in front of a beast, and what makes climbing them feel good?
@@ -202,3 +204,9 @@ the beast from the fight's own camera — not just technically higher.
   shot, not just up close) once you've said so.
 - If the fixer's own numbers land before you answer, I'll fold them in rather
   than ship two disagreeing halves.
+
+## Nick's answer
+
+<!-- Type below this line. Anything, one word is fine. Then run
+     tools\board_push.cmd. Leave the frontmatter alone. -->
+

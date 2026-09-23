@@ -96,6 +96,20 @@ rather than backgrounding it; a 40-step playtest takes 3-5 minutes.
 
 - If you finished a request: `status: done` and fill its `## Result` (what
   changed, the commit, how verified, the frame).
+- **Writing the proposal is not finishing the request, if the request itself
+  asked Nick for a decision.** A note that arrived `from: nick` asking you to
+  design or investigate something, with a "Done when" that says he reads it
+  and says yes/no, is NOT done the moment you deliver the write-up — it is
+  done when HE has answered. Found live, 2026-09-23: the playtester delivered
+  a real proposal into exactly such a note and marked it `status: done`; since
+  its `to:` was never `nick`, it dropped out of the FOR NICK table Nick
+  actually reads, and his answer had nowhere obvious to go. Instead: once your
+  half (the write-up) is ready, set `to: nick` on the SAME note (leave `from:`
+  alone — it still records who asked), keep `status: open`, fill `ask:`/
+  `waiting:` per the bullet below, and make sure a `## Nick's answer` heading
+  exists (the Nick-authored template doesn't start with one — add it if it's
+  missing, empty, his to fill in — see 1b). Only the agent or Nick who reads
+  his eventual answer sets `status: done`.
 - Need something another agent owns? File a new request from
   `design/agents/requests/_template.md`, one problem per file. Something only
   Nick can decide (taste, art direction, is it fun)? `to: nick`.
