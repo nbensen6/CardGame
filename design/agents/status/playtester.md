@@ -3,20 +3,70 @@ tags:
   - agent-status
 agent: playtester
 updated: 2026-09-23
-working_on: checklist item 1 (card plays read) — added a "real damage shows a floating number" check (check 10, damage-popup-missing), proven both ways (positive across a full run, negative via a deliberate break); found and filed a real bug along the way (hunter-damage popups projecting off the top of the screen), not fixed
+working_on: full baseline against today's tip (now including Nick's own `a823001` jump/camera rebuild) found a real regression — hunter-off-marker fails 3x in the 80-step play run, a hunter floating in open air off the jackal at foothold 4 — filed to the fixer, not fixed
 ---
 
 # playtester
 
 ## Now
 
-No open `to: playtester` request this run (only the same `to: nick`
-boss-relic-pool request open on the board, not mine, plus the fixer's
-own note-hit fix landed since the last baseline — `72ad782`). Ran the
-full baseline first, unmodified `playtest.gd`, against today's tip:
-**play** (80 steps) 0 fails, **hover** 0 flips, **hands** (1-10) 0 fails —
-clean, matching the last recorded baseline, no regression from the
-fixer's `HitCircle.note_hit` fix. `run_tests.gd`: `ALL TESTS PASSED`.
+No open `to: playtester` request this run (the board's only other open
+items are `to: nick` — boss-relic-pool, hunters-at-pass-cap,
+model-rendered-card-art-direction — and my own still-open `to: fixer`
+damage-popup-offscreen request from last run, untaken). Ran the full
+baseline first, unmodified `playtest.gd`, against today's tip — which,
+since my last run, picked up Nick's own `a823001` ("Rebuild the jump:
+real arc, jump-framing camera, hunters facing the boss") and the artist's
+`c3992f7` (Piston Punch card art, no gameplay code).
+
+**Not clean this time.** `hover` 0 flips and `hands` (1-10) 0 fails, both
+matching the last baseline. But `play` (80 steps): `hunter-off-marker`
+(check 8) FAILED 3 times (steps 34, 35, 71) — the last several runs of
+this exact check were all 0 fails, so this is a real regression, not a
+flake. `run_tests.gd` still prints `ALL TESTS PASSED` (the bug is a live
+placement issue the unit tests don't cover, not a logic error a pure test
+would catch).
+
+All three fails share the *exact same* `home` coordinates, and two of the
+three (steps 34 and 71) are different hunters reaching foothold 4 by
+different climb paths (`foot 7→4` vs `foot 10→4`) — this is deterministic
+on foothold 4 itself, not path- or RNG-dependent. The numbers alone
+(x missed tolerance by 0.27m) undersell it: the frame shows a hunter
+floating in open air against the arena wall, no stone or beast surface
+anywhere near its feet — exactly the "floating beside... the body" failure
+checklist item 2 exists to catch.
+
+![[frames/playtester/2026-09-23-hunter-off-marker-foothold4-step034.png]]
+![[frames/playtester/2026-09-23-hunter-off-marker-foothold4-step034-crop.png]]
+
+My read, unconfirmed: `a823001` changed `_stand_on_model`
+(`combat_3d.gd:2751-2764`) to wrap its return in `stone_point(...)`
+directly, where before only the *stone's own* visual position got that
+treatment and the hunter stood at the raw anchor+clearance point. Check
+8's tolerance was never widened for `stone_point`'s extra push, which
+likely explains the borderline x-miss — but a hunter hanging with nothing
+under it at all suggests `_front_of_beast` (which feeds the z clearance
+that then feeds `stone_point`) is returning something much larger than
+expected at foothold 4's own rung, pushing the whole point (hunter AND
+its stone) well past the model. Diagnosing which of the three functions
+is actually wrong is the fixer's job, not mine — filed with both frames
+and the exact repro.
+
+One request filed this run: `to: fixer`,
+`2026-09-23-0900-playtester-to-fixer-hunter-floats-off-model-at-foothold-4.md`
+(priority high — this is a live gameplay regression, not a polish gap).
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | unchanged this run |
+| 2 | hunters land on the beast correctly | **regressed** — check 8 (`hunter-off-marker`) now fails 3x in the 80-step play baseline, a real floating-hunter bug at foothold 4, filed to the fixer, not yet fixed |
+| 3 | jump animation (squash/arc/landing) | unchanged this run (Nick's own `a823001` reworked the arc/anticipation/landing squash directly — worth a fresh look with frame strips once the foothold-4 fix lands, since that commit touches exactly this item, but didn't check it this run — floating-hunter regression took priority) |
+| 4 | camera | unchanged this run (`a823001` also reworked jump-framing; same note as item 3 — worth a fresh look, not done this run) |
+| 5 | nothing errors | ok — `ALL TESTS PASSED`, no script errors in any log this run |
+
+## Old: 2026-09-23, damage popup check
 
 Picked up checklist item 1 (card plays read) — still only partially
 checkable per this playtester's own brief and last run's checklist
@@ -255,8 +305,20 @@ No new requests filed. `ALL TESTS PASSED` throughout.
 
 ## Next
 
-The off-screen damage-number finding is the live thread: once the fixer
-knows the real cause (my guess — an in-flight camera transition, unconfirmed
+The live thread is the foothold-4 float: once the fixer knows which of
+`_front_of_beast` / `_stand_on_model` / `stone_point` is actually wrong,
+decide whether check 8's tolerance needs widening for `stone_point`'s own
+push (a calibration fix) on top of whatever position fix lands (a real
+bug fix) — those are two separate things and both may be needed. Also
+worth a fresh pass on items 3 and 4 once that lands: `a823001` rewrote
+the hop arc/anticipation/landing squash AND the jump-framing camera in
+the same commit that introduced this regression, and neither got a
+frame-strip look this run — the numeric checks (hop-flat/hop-no-squash,
+camera check 9) came back clean, but item 3's own history shows a clean
+numeric pass has missed a real bug before (the pre-fix `hop_arc` case);
+worth watching, not assuming fine. The off-screen damage-number finding
+from last run is still open too, still waiting on the fixer: once they
+know the real cause (my guess — an in-flight camera transition, unconfirmed
 — is in the request), decide whether it deserves its own automatic check
 (a visibility-aware version of check 10) or folds into whatever item 4
 eventually becomes once the third-person camera lands. Item 4 itself is
@@ -273,6 +335,23 @@ remain the backstop for that; keep saving them.
 
 ## Log
 
+- 2026-09-23 — full three-mode baseline against today's tip (now including
+  Nick's own `a823001` jump/camera rebuild): `hover` and `hands` clean, but
+  `play` (80 steps) regressed — `hunter-off-marker` (check 8) failed 3x
+  (steps 34, 35, 71), all three at foothold 4 with identical `home`
+  coordinates across two different hunters reaching it by different climb
+  paths (deterministic, not a flake). The frame shows a hunter floating in
+  open air off the jackal's body entirely, no stone or surface under it —
+  the exact "floating beside the body" failure checklist item 2 exists to
+  catch, not just a tolerance miss. Traced (unconfirmed) to `a823001`
+  changing `_stand_on_model` to wrap its point in `stone_point(...)`
+  directly, which check 8's own x-tolerance was never widened for, plus a
+  suspicion `_front_of_beast`'s clearance is oversized at foothold 4's
+  rung specifically. Did not touch any of the three functions — filed
+  `to: fixer`, priority high,
+  `2026-09-23-0900-playtester-to-fixer-hunter-floats-off-model-at-foothold-4.md`,
+  with both frames and the exact repro. `run_tests.gd`: `ALL TESTS
+  PASSED` (a live-placement bug, not one a pure unit test would catch).
 - 2026-09-23 — checklist item 1: added check 10 to `playtest.gd`
   (`damage-popup-missing`) — real damage (boss hp down or the active
   hunter's hp down) must show a `Combat3D._damage_popup` `Label3D` under
