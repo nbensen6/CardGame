@@ -303,6 +303,32 @@ func _check(v: Node, when: String) -> void:
 				_fail("hunter-off-marker", "%s: hunter at foothold %d is %.2fm from its climb marker (home %v, anchor %v, x-tol %.2f)" \
 					% [when, foot, home.distance_to(anchor), home, anchor, tol])
 
+	# 9. The camera keeps the ACTIVE hunter (the one you are playing) on screen
+	# once things have settled -- checklist item 4, "the beast is framed, the
+	# hunter is visible", and this playtester's own brief names exactly this
+	# check as a gap ("camera keeps the active hunter inside the frame").
+	# Checked only here, at the settled `when` _check() always runs at (after
+	# a hop's own mid-flight transient has had a few frames to ease back) --
+	# NOT sampled during the hop itself, which is a separate, already-
+	# documented gap (the wide establishing shot leaving a climbing hunter
+	# briefly tiny/off-frame; see the playtester status note) and not what
+	# this check is asking. `is_position_behind` catches a camera looking
+	# somewhere else entirely (a real break, never expected); the screen
+	# bounds below are the FULL viewport with no HUD-safe-region trim (unlike
+	# screenshot.gd's tighter `_report_visibility`, tuned for single frozen
+	# states) precisely so this doesn't re-flag the already-known near-edge
+	# framing gap as a new failure -- only a hunter that is not on screen AT
+	# ALL once settled counts here.
+	var cam: Camera3D = v.get("_cam")
+	if cam != null and hunters is Array and me < (hunters as Array).size():
+		var mine: Vector3 = ((hunters as Array)[me] as Dictionary).get("home", Vector3.ZERO)
+		if cam.is_position_behind(mine):
+			_fail("hunter-behind-camera", "%s: the active hunter is behind the camera -- cannot be on screen at all" % when)
+		else:
+			var p := cam.unproject_position(mine)
+			if p.x < -2.0 or p.y < -2.0 or p.x > screen.x + 2.0 or p.y > screen.y + 2.0:
+				_fail("hunter-offscreen", "%s: the active hunter projects to %v, off the %v screen entirely" % [when, p.round(), screen])
+
 
 func _all_controls(n: Node) -> Array:
 	var out: Array = []

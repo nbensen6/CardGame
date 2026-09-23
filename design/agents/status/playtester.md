@@ -2,23 +2,101 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-22
-working_on: hop sampling now runs in slow motion (checklist item 3) — richer sampling helped confirm the fixer's independent hop_arc fix, killed one own false positive, no new bugs to file
+updated: 2026-09-23
+working_on: checklist item 4 (camera) — added a settled-state "active hunter is on screen" check (check 9), no new bugs found, full three-mode baseline clean both before and after
 ---
 
 # playtester
 
 ## Now
 
-Ran the full baseline first, unmodified `playtest.gd`, against today's tip
-(the artist's arena recolour, the fixer's relic-pool write-up, no fixer code
-changes landed since the last baseline): **play** (80 steps, deterministic
-seed, boss to 0 HP) came back with **2 failing checks** —
+No open `to: playtester` request this run (only `to: nick` open on the board,
+the boss-relic-pool request, not mine). Ran the full baseline first,
+unmodified `playtest.gd`, against today's tip (the artist's `goblin_mech`
+pass 3, no fixer code changes since the last baseline): **play** (80 steps)
+0 fails, **hover** 0 flips, **hands** (1-10) 0 fails — clean, matching the
+last recorded baseline, no regression from the artist's tri-budget trim.
+`run_tests.gd`: `ALL TESTS PASSED`.
+
+Picked up checklist item 4 (camera) per last run's `## Next` — still only
+"partially checkable" and named directly in this playtester's own brief as
+an example gap ("camera keeps the active hunter inside the frame" — not yet
+an automatic check, unlike item 2's `hunter-off-marker`). `screenshot.gd`
+already had the building block for this (`_report_visibility`'s `VIS`
+line: `Camera3D.is_position_behind` + `unproject_position` against a
+hunter's `home`), but only for one frozen `state=` shot — never run
+continuously across a real fight, which is exactly the gap `playtest.gd`
+exists to close (see the file's own header: "screenshot.gd checks one
+frozen moment... Nick's bugs live in neither").
+
+Added check 9 to `_check()`: after every step settles (not mid-hop — the
+hop's own mid-flight transient is a separate, already-documented gap, see
+item 3/4's history below), read the ACTIVE hunter's `home` position and
+ask the live camera the same two questions `_report_visibility` asks for
+one frame: is it behind the camera at all (`hunter-behind-camera` — would
+mean the camera is looking somewhere else entirely, never expected), and
+does it project inside the full viewport (`hunter-offscreen` — no HUD-
+safe-region trim like `screenshot.gd`'s tighter check, deliberately, so
+this doesn't re-flag the already-known "tiny near the edge" framing gap as
+a new failure; only genuinely NOT on screen counts).
+
+Smoke-tested first at 15 steps (2 real climbs) before committing to a full
+run — 0 fails, so no obvious false-positive problem. Then shook it out
+properly: full 80-step **play**, **hover**, and **hands** runs, all clean,
+0 fails on every check including the two new ones. The 80-step run alone
+crossed five real climbs (foot 0→4, 4→6, 8→10, 12→16, and a boss-hit fall
+10→4) plus the sigil approach — every one of those settled states had the
+active hunter genuinely on screen once the camera caught up, not just
+"passed by luck." That's a real result for item 4, not a null one: the
+settled-state framing holds up across a full fight; only the mid-hop
+transient (documented below) is the open gap.
+
+Two frames, same check, different framing to make the "on screen" claim
+legible rather than take my word for the numbers:
+
+![[frames/playtester/2026-09-23-camera-check-step43-sigil.png]]
+Step 43 (after a Leap to foothold 16, near the sigil) — the Frog reads
+clearly, comfortably inside frame. This is the check passing on an easy
+case.
+
+![[frames/playtester/2026-09-23-camera-check-step1-tiny-known-gap.png]]
+Step 1 (right after the very first ground climb) — the Frog is small and
+mostly eclipsed by the jackal's own jaw, only its eyes and the top of its
+head clearing the hand row. This is the check passing on the HARD case:
+the projected point is still technically inside the viewport, so no fail
+fires, but a human eye would call this "barely readable," matching what
+the last two runs already logged as the known gap ("tiny/off-screen-edge
+for most of a climb," "Nick's third-person target still pending"). Worth
+being honest that this check's bar (on screen at all) is looser than
+"reads clearly" — it catches a camera looking at the wrong thing entirely,
+not a merely-small hunter. Filing that gap again here would just be a
+third copy of a finding the board already has; not doing that.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | ok |
+| 2 | hunters land on the beast correctly | ok (check 8, `hunter-off-marker`, 0 fails) |
+| 3 | jump animation (squash/arc/landing) | ok, same state as last run — richer slow-mo sampling in place, no new work this run |
+| 4 | camera | **now has an automatic check** (check 9, `hunter-behind-camera` / `hunter-offscreen`) — settled-state framing confirmed clean across a full fight. Still not the full item: it cannot tell "small" from "absent," so the known mid-hop and near-edge framing gaps (wide establishing camera, third-person not yet built) are unchanged and NOT re-filed — see the step 1 frame above. |
+| 5 | nothing errors | ok |
+
+No new requests filed — nothing failed, and the framing gap this run's new
+check bumps into is the same one already on record (this note's own `##
+Next`, and item 4's history), not a new finding.
+
+## Old: 2026-09-22, hop slow-mo + correction
+
+Ran the full baseline first, unmodified `playtest.gd`, against that day's
+tip (the artist's arena recolour, the fixer's relic-pool write-up, no
+fixer code changes landed since the last baseline): **play** (80 steps,
+deterministic seed, boss to 0 HP) came back with **2 failing checks** —
 `hop-flat` (step 11) and `hop-no-squash` (step 63) — the first non-clean
-baseline this fight has had. Both captures had exactly **2 in-flight
+baseline this fight had had. Both captures had exactly **2 in-flight
 samples**, which passed the existing `covered_from_start` confidence gate
 by chance — not nearly enough to trust for finding an apex or a squash
-peak, the same sampling-is-too-sparse problem the last run's `## Next`
+peak, the same sampling-is-too-sparse problem the run before's `## Next`
 already named. Correctly did not take either at face value; wrongly
 guessed (see the correction below) that sparse sampling was the WHOLE
 story for both, and went looking for a way to sample more before filing
@@ -83,60 +161,47 @@ just sparse sampling" without checking whether a real bug could produce
 the exact same 2-sample symptom. It could, and did, for one of the two. The
 fixer's independent, code-level repro (a plain function call, no
 rendering, no sampling at all) is what actually settles a question like
-this, not a live run coming back clean. Filed nothing new — this bug is
+this, not a live run coming back clean. Filed nothing new — this bug was
 already fixed and closed on the fixer's side.
 
 Full baseline after both fixes, all three modes: **play** (80 steps) 0
 fails, **hover** 0 flips, **hands** (1-10) 0 fails.
 
-Checklist snapshot:
-
-| # | item | state |
-|---|---|---|
-| 1 | card plays read | ok |
-| 2 | hunters land on the beast correctly | ok (check 8, `hunter-off-marker`, 0 fails) |
-| 3 | jump animation (squash/arc/landing) | **substantially more checkable now** — same 3 automatic checks, but hops now sample 12-75 real frames each (was 0-12) via a slow-motion capture window (`Engine.time_scale`, `HOP_TIME_SCALE = 1/6`). One real bug this richer sampling helped surface (the fixer's `hop_arc` apex fix, commit `25804f3` — a real "reads as a slide" on tall single-leg climbs, NOT a sampling artifact, confirmed by their own pure-function repro) plus one genuine sampling-only false positive (`hop-no-squash`) are both gone, and one false positive my own first attempt at this fix introduced (`hop-leftover-squash`, a truncated-capture bug) was caught and killed before shipping. Still not every climb: a handful of very short single-leg hops finish before `_watch_hop` even starts watching (the click → timed-card-minigame → pick-selection prelude runs at NORMAL speed, so slow-mo starting only inside `_watch_hop` is sometimes too late) — logged honestly as "too fast," never silently skipped. |
-| 4 | camera | partially checkable, ok so far; over-the-shoulder target still pending (Nick's, not a bug). Tried to get a clean visual (not just numeric) confirmation of a slow-mo'd hop this run and mostly couldn't — the current wide establishing camera keeps the climbing hunter tiny/off-screen-edge for most of a climb (step 17's strip below shows the Goblin Engineer entering from off-frame, barely readable at native size). Not a new finding, same gap this item already names. |
-| 5 | nothing errors | ok |
-
-Frames (from the final run, both fixes applied):
-`design/agents/frames/playtester/2026-09-22-hop-strip-v2-step17.png`
+Frames: `design/agents/frames/playtester/2026-09-22-hop-strip-v2-step17.png`
 (4 frames from the richest capture, 72 in-flight samples, peak y 19.56 —
-the Goblin Engineer approaching the sigil from off-screen; read individual
-frames at 1:1 before scaling this strip down for the note) and
-`2026-09-22-hop-landed-v2-step17.png` (the settled frame right after, full
-resolution).
+the Goblin Engineer approaching the sigil from off-screen) and
+`2026-09-22-hop-landed-v2-step17.png` (the settled frame right after).
 
-No new requests filed — `hop-flat` was already fixed and closed on the
-fixer's side by the time I'd confirmed it, and `hop-no-squash` and my own
-`hop-leftover-squash` mistake were both bot-side sampling issues that never
-needed a request. `ALL TESTS PASSED` on `run_tests.gd` throughout (this is
-bot behavior, not a unit under test).
+No new requests filed. `ALL TESTS PASSED` throughout.
 
 ## Next
 
-Checklist item 3 is close to "ok" but not quite: the remaining honest gap
-is the handful of very short single-leg hops that finish during the
-normal-speed prelude (click → timed-card minigame → pick-selection loop)
-before `_watch_hop` ever starts slowing things down — logged as "too fast,"
-never silently skipped, same as before, just a smaller set of them now.
-Closing that fully means starting the slow-mo earlier (around the click
-itself, or specifically around whichever part of card resolution triggers
-`_hop`), which risks slowing down non-climb actions and timed-card
-minigames too — didn't attempt it this run; worth scoping carefully next
-time rather than reaching for a blanket "slow the whole step down," which
-would multiply this sandbox's already-slow render time across all 80 steps
-for little gain on the (mostly non-climbing) majority of them. Also still
-open: checklist item 4 (camera) once the fixer/artist have more to show
-there — this run's attempt to get a clean VISUAL (not just numeric)
-confirmation of a slow-mo'd hop mostly failed on the current wide camera,
-which is the same gap this item already names, not a new one. And finding
-a way to catch a squash-arc failure the numeric checks would miss but a
-human eye would catch (the frame strips are the backstop for that — keep
-saving them).
+Item 4's honest remaining gap after this run: check 9 can tell "on screen"
+from "not on screen at all," but not "small/hard-to-read" from "clearly
+framed" — closing that fully needs either a tighter bound (risks false
+positives against the wide establishing shot, which is deliberate today)
+or waiting on Nick's third-person target to land, at which point this same
+check becomes a much stronger regression guard almost for free. Item 3 is
+unchanged this run — its own remaining gap (very short single-leg hops
+finishing before `_watch_hop` starts slowing things down) still stands,
+see the entry two runs back. Also still open: a way to catch a squash-arc
+or framing failure the numeric checks would miss but a human eye would
+catch — the frame strips remain the backstop for that; keep saving them.
 
 ## Log
 
+- 2026-09-23 — checklist item 4: added check 9 to `playtest.gd`
+  (`hunter-behind-camera` / `hunter-offscreen`) — the active hunter must be
+  on screen once a step has settled, using the same `Camera3D` API
+  `screenshot.gd`'s `_report_visibility` already used for one frozen frame,
+  now run continuously across a real fight. Full three-mode baseline run
+  twice (before and after, unmodified vs. with the new check): both clean,
+  0 fails, no regressions from the artist's `goblin_mech` pass 3. The new
+  check itself found no bug — confirms settled-state framing holds across
+  five real climbs and the sigil approach in one 80-step run — but stayed
+  deliberately loose (on-screen-at-all, not "reads clearly") so it doesn't
+  re-flag the already-known near-edge/tiny framing gap, shown honestly in
+  the step-1 frame rather than hidden. No new requests filed.
 - 2026-09-22 — checklist item 3: `_watch_hop` now runs the hop capture
   window at 1/6 `Engine.time_scale`, turning 0-12 real in-flight samples per
   climb into 12-75. The pre-existing baseline's `hop-flat` turned out to be
@@ -151,7 +216,7 @@ saving them).
   uncoupling the numeric sample cap from the PNG-save throttle and
   refusing to judge a hop the loop didn't actually see finish. Full
   three-mode baseline clean with both fixes merged. No new bugs to file —
-  see `## Now` for the full trail, correction included.
+  see `## Old` above for the full trail, correction included.
 - 2026-09-22 — checklist item 3: added `_watch_hop`/`_check_hop` to
   `playtest.gd` (hop-flat / hop-no-squash / hop-leftover-squash), gated on
   a `covered_from_start` confidence check after an early version false-
