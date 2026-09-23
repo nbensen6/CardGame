@@ -38,7 +38,11 @@ def leg(s):
 
 mirror(leg)
 
-b.ball((0.0, 0.0, 0.66), (0.275, 0.235, 0.255), MINT, 10, 6)       # body
+# Body/head/snout dropped from the default seg=10,ring=6 (body/head) and 9,5
+# (snout) to 8,5 to claw back budget (see "Budget" note below) - the biggest,
+# gentlest-curved masses on the model, so fewer segments cost the least here;
+# a _sil.png diff against the pre-cut render is pixel-identical at 64px.
+b.ball((0.0, 0.0, 0.66), (0.275, 0.235, 0.255), MINT, 8, 5)        # body
 b.box((0.0, -0.190, 0.605), (0.150, 0.038, 0.140), UMBER, bevel=0.024)  # apron
 
 # ------------------------------------------------------------------- the rig
@@ -77,7 +81,10 @@ b.box((0.454, -0.128, 0.298), (0.132, 0.138, 0.112), STONE, bevel=0.026,
       rot=(0.18, 0.20, 0.0))
 b.taper((0.454, -0.268, 0.298), 0.072, 0.058, 0.130, CARROT, seg=6, rot=(FWD, 0, 0))
 for dz in (-0.048, 0.048):                                              # piston rods
-    b.taper((0.454, -0.208, 0.298 + dz), 0.016, 0.016, 0.190, CHARCOAL, seg=5,
+    # seg 5->4: at 0.016 radius (a thin rod, not a silhouette-defining mass)
+    # the facet is invisible; this and the three balls above claw back the
+    # 84-tri budget overage pass 2 didn't touch (goblin_mech.md pass 2).
+    b.taper((0.454, -0.208, 0.298 + dz), 0.016, 0.016, 0.190, CHARCOAL, seg=4,
             rot=(FWD, 0, 0))
 b.ring((0.384, -0.020, 0.690), (0.158, 0.158, 0.042), CHARCOAL, 12, 4,
        rot=(0.10, 0.0, 0.0))
@@ -89,14 +96,14 @@ b.limb([(-0.290, -0.010, 0.830),
 b.ball((-0.330, -0.130, 0.487), (0.090, 0.098, 0.082), GREEN, 8, 5)     # hand
 
 # ------------------------------------------------------------------- the head
-b.ball((0.0, -0.045, 1.030), (0.235, 0.215, 0.205), MINT, 10, 6)
+b.ball((0.0, -0.045, 1.030), (0.235, 0.215, 0.205), MINT, 8, 5)
 
 # Goblin ears are CONES. Two flattened spheres was the single most obvious
 # ellipsoid tell on the whole model - they read as fins glued to his temples.
 mirror(lambda s: b.taper((0.236 * s, 0.025, 1.100), 0.086, 0.014, 0.215, GREEN,
                          seg=6, rot=(-0.22, 0.86 * s, 0.0)))
 
-b.ball((0.0, -0.150, 1.005), (0.128, 0.090, 0.072), GREEN, 9, 5)     # snout
+b.ball((0.0, -0.150, 1.005), (0.128, 0.090, 0.072), GREEN, 8, 5)     # snout
 b.box((0.0, -0.212, 0.947), (0.062, 0.022, 0.016), CHARCOAL, bevel=0.006)  # grin
 mirror(lambda s: b.taper((0.030 * s, -0.205, 0.962), 0.012, 0.003, 0.045,
                          ICE, seg=4, rot=(-0.5, 0, 0)))             # tusks

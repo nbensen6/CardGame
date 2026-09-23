@@ -2,13 +2,54 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-22
-working_on: arena (item 3) — cinder_jackal ground scored and recoloured; hunters (item 2) still next
+updated: 2026-09-23
+working_on: hunters (item 2) — goblin_mech pass 3 done (tri budget); frog and the rest of goblin_mech still open
 ---
 
 # artist
 
 ## Now
+
+No open `to: artist` request this run, so picked up item 2 (hunters) per
+last run's `## Next` — the biggest style gap per the brief, and untouched
+since pass 2. Ran pass 3 of the asset-loop on `goblin_mech`
+(`design/progress/goblin_mech.md`), 33 → 35/50.
+
+**First, resolved a standing "unsure about" from pass 1/2 as a non-issue.**
+The raised orange exhaust pipe both earlier passes flagged as possibly
+floating off the compressor box only separates in `look.py`'s top-down
+view — every camera the game actually uses (the fight camera, the
+three-quarter and side `look.py` views) shows it touching cleanly. Checked
+empirically: recoloured the exhaust and the tusks (the model's other `ICE`
+user) to a diagnostic magenta one at a time, rebuilt, re-shot the live
+fight camera. Neither swap explained a pale-blue triangle I'd also
+suspected was part of this model, floating above the goblin's head in the
+real fight screenshot — that turned out to be `combat_3d.gd`'s own
+per-hunter "pip" marker (existing gameplay UI, out of scope), not an asset
+bug. Worth knowing for whoever next scores a hunter against the live fight
+camera: that pip sits over hunter slot 1 in every fight, always.
+
+**Second, closed the tri-budget overage** (1484/1400, 84 over, open since
+pass 1): trimmed segment/ring counts on the body, head and snout balls and
+the piston-rod tapers — the biggest, gentlest-curved masses and the
+thinnest, least-noticed part, deliberately not the small high-detail
+features (eyes, goggles) the frog's own budget cut burned itself on.
+1484 → 1396, now under budget. Verified pixel-identical at the 64px
+silhouette rubric and indistinguishable in the live fight camera before
+fixing it in the doc as a real, not assumed, non-regression — see the
+before/after frames. Hygiene 5 → 7.
+
+`ALL TESTS PASSED`; playtest (`mode=play`, 40 steps) re-run against the
+rebuilt model, `PLAYTEST OK: 0 failing check(s)`.
+
+![[frames/artist/2026-09-23-goblin-mech-tri-budget-34-before-after.png]]
+![[frames/artist/2026-09-23-goblin-mech-tri-budget-infight-before-after.png]]
+
+Full pass-by-pass detail, what's still open (the claw/piston assembly's own
+connectedness; whether the goggles/strap read at true combat distance),
+and the sigil-less-rig note: `design/progress/goblin_mech.md`.
+
+## Old: the arena pass
 
 No open `to: artist` request this run, so picked up the brief's next item
 in order — the arena. `design/progress/cinder_jackal_ground.md` did not
@@ -102,20 +143,36 @@ fully inspectable without it for anything that doesn't need re-export.
 
 ## Next
 
-Still haven't started the hunters (Frog, Goblin Engineer still
-Python-primitive next to a textured/rigged beast — the biggest style gap
-per the brief, and a much bigger job than this run's arena pass: the
-jackal's own AI-pipeline rig/weights/animation took a full session by
-itself per `design/ai-beast-recipe.md`, and hunters aren't beasts — the
-brief says not to force them through `ai_beast.py`). That's next run's
-pick, checking `requests/` first as always. Also open for whoever picks up
-the arena again: `design/progress/cinder_jackal_ground.md`'s "What's still
+`goblin_mech` is at 35/50, one pass short of the hunter stop line (42),
+with a 4-way tie for lowest (Sil/Prop/Hygiene/Colour/Style all 7) and no
+line diagnosed yet for pass 4 — candidates noted in
+`design/progress/goblin_mech.md`'s "Where it stands": the claw/piston
+assembly's own connectedness, and whether the goggles/strap read at true
+34px combat distance (this run was the first time this file was checked
+against the live fight camera at all, not just `look.py`'s close-up
+renders — worth doing for every hunter score, not just this one). `frog`
+is still at 36/50 from its own last pass, plateaued, with a diagnosed but
+unapplied next fix already written in `frog.md` (narrow the trunk, push
+the haunch out in X). Either is a reasonable pick next run, checking
+`requests/` first as always. Also still open for whoever picks up the
+arena again: `design/progress/cinder_jackal_ground.md`'s "What's still
 open" (the RUST accent's own visibility, and whether the scatter recolour
 reads at all in the fight camera) plus the shared `env.py` wall-height/
 proportion finding, which is Nick's call across three grounds now.
 
 ## Log
 
+- 2026-09-23 — pass 3 of the asset loop on `goblin_mech` (item 2, hunters),
+  33→35/50: resolved pass 1/2's "unsure about" (the exhaust pipe reads
+  fine in every camera the game uses, only separates in a top-down view
+  nobody sees) as a non-issue, ruled out an unrelated pale-blue triangle
+  in the live fight screenshot as `combat_3d.gd`'s own hunter-slot pip
+  marker rather than an asset bug, and closed the 84-tri budget overage
+  (1484→1396) by trimming segment counts on the model's biggest/gentlest
+  masses and its thinnest rod — verified pixel-identical at the 64px
+  silhouette rubric and unchanged in the live fight camera. Hygiene 5→7.
+  `ALL TESTS PASSED`; playtest re-run (40 steps), 0 failing checks. See
+  `design/progress/goblin_mech.md` for the full pass detail.
 - 2026-09-22 — scored `cinder_jackal`'s fight ground (never scored before,
   despite existing renders), 22→28/50 over two applied fixes: the
   `enclose()` wall recoloured from generic SLATE/PEWTER to CHARCOAL/RUST,

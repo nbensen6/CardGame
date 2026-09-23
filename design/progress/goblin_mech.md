@@ -118,3 +118,93 @@ The pass-1 "orbiting part" hygiene framing and the raised orange arm-shape
 above the shoulder are both untouched — outside the two lines this pass was
 allowed to touch. Same open question as pass 1 on whether that shape is
 meant to render statically.
+
+---
+
+## Pass 3 — artist lane, 2026-09-23
+
+Two things this run's brief flagged as the biggest style gap in the fight
+(hunters next to a textured/rigged beast) sent me looking at this model
+again. Views: `design/renders/goblin_mech_pass3_*.png`, `look.cmd
+goblin_mech 3` (a stray, never-scored `pass3` render already existed in the
+repo from the initial seed commit — identical geometry to pass 2, since
+`goblin_mech.py` had no commits between them; overwritten by this pass's
+real renders).
+
+| Pass | Sil | Prop | Hygiene | Colour | Style | Total |
+|---|---|---|---|---|---|---|
+| 1 | 5 | 5 | 5 | 7 | 7 | **29** |
+| 2 | 7 | 7 | 5 | 7 | 7 | **33** |
+| 3 | 7 | 7 | 7 | 7 | 7 | **35** |
+
+### First: resolved the standing "unsure about", not a bug
+
+The raised orange arm-shape (the compressor's exhaust pipe/cap) reads as
+touching the compressor+lid in every camera the game actually uses — the
+fight camera (`state=3d`) and `look.py`'s own three-quarter (`_34.png`) and
+side (`_side.png`) views all show it emerging cleanly from the box, not
+floating. It only separates from the box in the **top-down** view
+(`_top.png`), which is a `look.py` diagnostic angle the player never sees.
+Confirmed empirically, not just by eye: recoloured the exhaust and,
+separately, the tusks (the model's other user of `ICE`) to a diagnostic
+magenta one at a time, rebuilt, and re-shot the live fight camera — neither
+swap changed a pale-blue triangle I'd initially suspected was part of this
+model floating above the goblin's head in-game. That triangle turned out to
+be `combat_3d.gd`'s own per-hunter "pip" marker (`_hunter_pip`, an unshaded,
+depth-test-off cone tinted by `_slot_color`) — intentional existing gameplay
+UI, not this asset, and out of the artist's scope. Filed nothing; noting it
+here so the next person who spots that triangle doesn't re-walk this.
+
+### Second: closed the tri-budget overage (the other open Hygiene item)
+
+1484/1400 tris (84 over) had sat untouched since pass 1 because neither
+diagnosed fix (Sil, Prop) was allowed to touch geometry count. Trimmed
+seg/ring on the four parts least likely to show it — the body and head
+balls (10,6 → 8,5 each), the snout ball (9,5 → 8,5), and the two piston-rod
+tapers (seg 5 → 4, at 0.016 radius) — the biggest, gentlest-curved masses
+and the thinnest, least-noticed rod, the opposite end of the spectrum from
+where the frog's own budget cut backfired (`frog.md`: cutting the *eyes'*
+segments there faceted the single most load-bearing feature on the model).
+1484 → **1396, now under the 1400 hunter budget**.
+
+**Verified, not assumed, that nothing visibly degraded**:
+`goblin_mech_pass3_sil.png` is pixel-identical to a pre-cut render of the
+same pose at 64px (the silhouette rubric's own test), and the isolated
+`_34.png` shows no visible faceting on body, head or snout at that
+distance. In the actual fight (`state=3d`, both hunters visible,
+`cinder_jackal`), a before/after pair at the real on-screen hunter size
+(≈25×30px) is indistinguishable by eye; a raw pixel diff over the full
+1280×720 frame shows ~2100 differing pixels confined to the hunters'
+region, consistent with this fight's own idle-animation drift between two
+separate captures rather than a geometry change — the same order of
+magnitude of noise seen on unrelated re-captures elsewhere in this project.
+`ALL TESTS PASSED`; playtest re-run (`mode=play`, 40 steps) to confirm no
+regression.
+
+**Hygiene 5 → 7.** Within budget now, still one mesh/one material, and the
+"orbiting part"/scattered-blocks framing pass 1 named is answered above —
+the rig reads as one arm in every camera that matters. Not scored higher:
+the claw/piston assembly near the feet (visible in `_side.png`) is still a
+distinct mass from the main rig body, a smaller version of the same
+"reads as separate pieces" question, and I did not touch or re-diagnose it
+this pass.
+
+Before/after frames (isolated `_34`/`_sil`, and the live fight camera):
+
+![[frames/artist/2026-09-23-goblin-mech-tri-budget-34-before-after.png]]
+![[frames/artist/2026-09-23-goblin-mech-tri-budget-sil-before-after.png]]
+![[frames/artist/2026-09-23-goblin-mech-tri-budget-infight-before-after.png]]
+
+## Where it stands, still open for the next pass
+
+35/50, 3 of 4 passes used, still under the hunter stop line (42). The
+lowest lines are now a four-way tie at 7 (Sil, Prop, Hygiene, Colour,
+Style are ALL 7 — the model is even across the board, not bottlenecked on
+one line). Candidates for pass 4, none diagnosed yet: the claw/piston
+assembly's own connectedness (noted above), and whether the goggle
+lens/strap read as anything at true 34px combat distance rather than in
+the close-up renders every pass so far has scored from — this pass is the
+first time this file compared against the live fight camera at all, and it
+surfaced a real thing (the pip) that had nothing to do with the model, which
+is itself a reason to keep doing that check rather than scoring from
+`look.py` alone.
