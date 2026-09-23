@@ -3,12 +3,66 @@ tags:
   - agent-status
 agent: artist
 updated: 2026-09-23
-working_on: cards (item 4) — first model-rendered card art (Piston Punch); to: nick request open on whether to scale it
+working_on: took the standing to:artist request — one recreate-leap-style test (Hop, procedural paint); verdict is don't scale it; next run goes to characters/environment (hunters, no pass cap now) per Nick's 2026-09-23 brief
 ---
 
 # artist
 
 ## Now
+
+Took the one open `to: artist` request:
+`requests/2026-09-23-0500-nick-to-artist-recreate-leap-style.md` — prove,
+ONCE, whether the artist can recreate Nick's Canva card-art style
+(`game/assets/cardart/leap.png`) without Canva, on a single test card, and
+report honestly whether the route works.
+
+**Studied `leap.png` at 1:1 and in crops** (full write-up in the request):
+flat filled shapes, no outlines, depth from atmospheric-perspective colour
+alone (pale-far to near-black-near), a tree-lined-corridor composition —
+full-height trees hugging the left/right margins, a narrow ragged sky slit
+up the centre — and a tiny frog, off-centre, on a branch, camera pulled way
+back.
+
+**Route: pure 2D procedural paint** (`tools/cardpaint.py`), not a Blender
+render — `leap.png` has no 3D shading cue to render toward (no specular, no
+lens perspective, no AO), it's flat layered shapes, which a renderer fights
+and a direct 2D paint reproduces on its own terms. Palette sampled straight
+from `leap.png`'s own pixel histogram, not invented. Picked **Hop** (Frog's
+starter deck, currently a bare icon, same "climb" flavour as `leap` for a
+fair comparison).
+
+**Took three full rewrites to get right**, not one pass: v1's stacked-
+triangle canopies left a flat empty sky rectangle where the recession should
+be; v2 fixed the gap but had a base-height bug that made distant trees hang
+like icicles from the top of the frame; v3 (final) switched to overlapping
+rounded ellipse lobes on thin bare trunks after actually cropping and
+looking at `leap.png`'s margins — its canopies are lobed, not spiky — and
+rebuilt the composition as two full-height tree walls around a hazy,
+partly-translucent (not solid) centre treeline. Every round needed a fresh
+look at the render, not just a number tweak.
+
+**Verdict, in the request's own words: don't scale this.** It gets the
+surface cues (sampled palette, flat-shape layering, tiny-subject-in-a-big-
+landscape framing) close enough to read as "the same family," especially at
+card size. It does not get Nick's hand — his canopy shapes read as
+unmistakably pine trees on sight; these need forest context to read as
+trees at all, and the centre recession still reads as a soft smear more
+than real depth. That's not a tuning gap, it's the artist's-judgement layer
+(where to put a branch, how to vary one canopy against its neighbour) that
+a human supplies for free and a script has to fake with heavy hand-tuning
+per scene, from scratch, per card — no shortcut for card #2. Against Nick's
+stated flow (he paints, the artist recreates the *style*), this route
+doesn't save him the painting step.
+
+Comparison, full size and card size (~160px), side by side:
+
+![[frames/artist/2026-09-23-leap-style-recreate-test.png]]
+
+Not shipped into `game/assets/cardart/`, no second card attempted, per the
+request. `tools/cardpaint.py` stays in the tree for reference.
+`ALL TESTS PASSED` (no game code touched, ran the suite anyway).
+
+## Old: cards (item 4) — first model-rendered card art (Piston Punch)
 
 No open `to: artist` request this run. Both hunters (item 2) are at their
 4-pass cap awaiting Nick (see `## Old` below and the standing `to: nick`
@@ -253,23 +307,40 @@ fully inspectable without it for anything that doesn't need re-export.
 
 ## Next
 
-**Waiting on Nick on three fronts now**, all filed: the model-rendered-card-art
-direction (this run's request — whether to scale `cardart.py`/`cardbg.py`
-across the rest of the Frog/Goblin decks, and whether the Frog's 4 existing
-paintings should stay or get replaced for consistency), both hunters being
-at their 4-pass cap below the hunter stop line, and the arena's shared
-`env.py` wall-height/proportion finding. Until one of those comes back,
-there's no default pick left in items 1-3 that isn't "wait" — the next open
-lane of my own is more cards *if* Nick says keep going, or the Goblin's
-other 8 cards' framing entries in `cardart.py`'s `CARDS` table if so. Worth
-someone (me, next run, if still no answer) double-checking whether a
-non-taste corner of the cards item exists to make progress on regardless —
-e.g. `type` and `rarity` still being invisible on the face
-(`card-face-vs-sts.md` §2.3/§2.4) is a border/frame-tint job, not an art
-one, and might not need Nick's sign-off the way new illustrations do.
+Card art is closed for now: parked by Nick (2026-09-23, see `tools/agents/artist.md`),
+and this run's request answered it with a documented "don't scale" — the
+procedural-paint route reproduces surface style cues but not Nick's hand,
+and costs real iteration per card with no reuse across different subjects.
+Nothing left to do on cards without a new signal from Nick.
+
+**Brief has moved on**: the 4-pass cap on the two hunters is *lifted*
+(`tools/agents/artist.md`, 2026-09-23 update) and the goal is now explicitly
+"make the characters and the environment CLEAN," pulling from fully
+developed/AAA games, restyling or rebuilding the hunters if that reads
+better than polishing them in place. Next run's default pick (no open
+request): resume the hunters (Frog, `goblin_mech`) or the arena with that
+wider brief in mind, not another capped asset-loop pass — read the updated
+brief in full before picking up either.
 
 ## Log
 
+- 2026-09-23 — took the standing `to: artist` request, the leap-style
+  recreate test: studied `leap.png`'s style in words (flat shapes, no
+  outlines, atmospheric-perspective depth, full-height tree-corridor
+  composition, tiny off-centre subject), then built one new card
+  (`Hop`, Frog's starter deck, previously a bare icon) in that style via a
+  pure 2D procedural paint (`tools/cardpaint.py`) — not a Blender render,
+  since `leap.png` itself has no 3D shading cue to render toward. Palette
+  sampled from `leap.png`'s own pixel histogram, not invented. Took three
+  full rewrites (empty-sky gap → inverted/hanging trees → lobed canopies on
+  bare trunks, the fix that actually read as leap's style) before it held
+  together. Verdict, written into the request: gets the surface cues close
+  enough to read as "the same family," especially at card size, but not
+  Nick's hand — recommend NOT scaling this to the rest of the deck. Not
+  shipped into `cardart/`, no second card, per the request's own limits.
+  `ALL TESTS PASSED`. See the request
+  (`requests/2026-09-23-0500-nick-to-artist-recreate-leap-style.md`) for
+  the full writeup and `## Now` above for the short version.
 - 2026-09-23 — cards (item 4), first pass: built a model-rendered card art
   pipeline (`tools/blender/cardart.py`, `tools/cardbg.py`) instead of
   waiting on Nick's Canva paintings, proved it on the Goblin Engineer's
