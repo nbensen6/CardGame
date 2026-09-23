@@ -76,15 +76,18 @@ proves the guard doesn't swallow the ordinary case (a view still in the tree
 still moves its own camera). Two new tests in `run_tests.gd`; `ALL TESTS
 PASSED`.
 
-A fresh `mode=play beast=cinder_jackal steps=80` was still rendering under
-`xvfb-run` when this was written (this sandbox's software renderer runs
-~45-50 min for 80 steps per the last several fixer notes) — since the
-trigger is timing-dependent and only one sandbox run is available to spend
-on it, a clean live run isn't the standard of proof here either way: the fix
-is proven by reproducing the SAME engine error the request reported,
-verbatim, against the real camera node, then showing it's gone. Will note
-the live run's own result below if it lands before this sandbox's lifetime
-runs out.
+**Live verification, since finished.** The `mode=play beast=cinder_jackal
+steps=80` run that was still rendering when the above was written completed
+clean against the fixed tree: full 80 steps (0-79, no truncation — the
+crash's own tell), End Turn exercised 11 times with real HP/energy/foothold
+swings, zero `script-error`. `PLAYTEST FAIL: 1 failing check(s) {
+"hunter-off-marker": 3 }` — the already-open, unrelated
+shared-foothold-4-spacing request, not a new issue. The fight didn't
+conclude in 80 steps, so this run didn't land on the exact "End Turn ends
+combat" trigger state (expected — that's a specific game state, not
+something a rerun can force); the unit-test reproduction against the real
+engine error remains the authoritative proof, this is a clean regression
+check on top of it.
 
 Commit: pushed as part of this run (see `## Log` below for the hash).
 

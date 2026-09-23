@@ -150,16 +150,22 @@ case — a view still in the tree still moves its camera on `_focus_camera()`.
 `combat_3d.tscn` instance so the repro exercises the actual `%Camera` node,
 not a stand-in. `ALL TESTS PASSED`.
 
-Live verification: a fresh `mode=play beast=cinder_jackal steps=80` was
-still running under `xvfb-run` when this was written up (this sandbox's
-software renderer takes ~45-50 min for a full 80-step run per the last
-several fixer notes) — since the trigger is timing-dependent and this bot
-only has one sandbox run to spend, catching the live crash again on this
-exact run isn't guaranteed either way, and isn't the standard of proof here:
-the fix is proven by reproducing the SAME engine error the request reported,
-line-for-line, on the same real camera node, then showing it's gone. Will
-attach the run's own `report.md`/frames if it finishes clean before this
-sandbox's lifetime is up; a script-error in it would mean a second, still-
-open crash path this fix doesn't cover and gets filed fresh.
+**Live verification, now finished.** The `mode=play beast=cinder_jackal
+steps=80` run that was still going when the above was written completed
+cleanly against the fixed tree: full 80 steps (0-79, no truncation — the
+crash's own tell per this request's "How to see it"), End Turn exercised 11
+times (steps 4, 8, 12, 16, ..., 77) including several that changed HP/energy/
+foothold substantially, no `script-error` anywhere. `PLAYTEST FAIL: 1 failing
+check(s) { "hunter-off-marker": 3 }` — that's the already-known, already-open
+`2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`
+(shared foothold 4, unrelated to this fix, not touched here), not a new
+failure. The fight itself didn't conclude within 80 steps (boss still alive,
+turn 11), so this particular run didn't land on the exact "End Turn ends
+combat" trigger the bug needs — expected, since that trigger is a specific
+game state this run's fixed seed/script didn't reach this time, not
+something a rerun can force. The unit-test reproduction above (the actual
+engine error, on the actual camera, gone after the fix) remains the
+authoritative proof; this run adds a clean 80-step regression check with
+heavy End Turn use on top of it.
 
 Commit: see `## Log` in `design/agents/status/fixer.md`.
