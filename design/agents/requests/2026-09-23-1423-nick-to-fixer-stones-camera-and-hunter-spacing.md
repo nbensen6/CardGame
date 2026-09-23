@@ -3,10 +3,10 @@ tags:
   - request
 from: nick
 to: fixer
-status: open
+status: taken
 priority: high
 created: 2026-09-23T14:23
-taken_by:
+taken_by: fixer
 ---
 
 # Stones, camera and hunter spacing at the Cinder Jackal
