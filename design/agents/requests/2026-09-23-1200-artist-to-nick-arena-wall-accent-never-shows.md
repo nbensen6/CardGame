@@ -3,7 +3,7 @@ tags:
   - request
 from: artist
 to: nick
-status: taken
+status: done
 priority: normal
 created: 2026-09-23
 taken_by: artist
@@ -89,3 +89,25 @@ Nick picks one:
 the environment needs a rehaul. use meshy to create an environment to replace the one created in blender. 
 ## Result
 
+**Done, 2026-09-23 18:25 UTC.** Replaced the enclosing wall with a
+Meshy-generated crater rim; the floor (`env.py`'s `ground()`/`apron()`) was
+never the flagged problem and stayed as-is. 2 Meshy tasks (1 preview, 1
+refine) — well under the 8/day cap. New file
+`game/assets/3d/env/cinder_jackal_ai.glb`, picked up over the old
+`cinder_jackal.glb` by `ENV_AI_ART := {"cinder_jackal": "_ai"}` in
+`combat_3d.gd` (same shape as `AI_ART`/`HUNTER_AI_ART` for the cast — the
+old wall stays on disk, one dictionary entry from coming back). Full recipe:
+`tools/blender/ai/cinder_jackal_env_ai.py`. Full write-up, scoring and the
+before/after renders: `design/progress/cinder_jackal_ground.md` pass 6.
+
+This directly answers the request's own question: the sigil close-up
+(`3dclimb`, the exact camera the invisible RUST band was measured against)
+now shows real ember cracks in frame, because they are baked into the
+wall's own jagged form and texture instead of riding a flat band placed
+above where any in-game camera looks.
+
+![[frames/artist/2026-09-23-cinder-jackal-arena-rehaul-3dclimb-before-after.png]]
+![[frames/artist/2026-09-23-cinder-jackal-arena-rehaul-wide-before-after.png]]
+
+`ALL TESTS PASSED`. An 80-step playtest was running as this was written;
+see the status note's `## Now` for the result.

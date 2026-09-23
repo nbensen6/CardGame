@@ -21,9 +21,15 @@ whether it reads as *a place*, not a creature.
 | 1 | 5 | 5 | 6 | 3 | 3 | **22** |
 | 2 | 5 | 5 | 6 | 6 | 6 | **28** |
 | 3 | 5 | 5 | 6 | 6 | 6 | **28** |
+| 6 | 7 | 8 | 7 | 8 | 7 | **37** |
 
-Stop line for a ground is 44/50. Stopped at pass 3 (see "Why stop here"
-below) rather than running the full 4 — the two lines still open are the
+Pass 6 is a rebuild, not another fix on `enclose()` — see below. Passes 1-3
+score the old primitive wall; pass 6 on is the Meshy one, so the two are not
+one continuous line, but the log stays in one file because it is the same
+asset.
+
+Stop line for a ground is 44/50. Passes 1-3 stopped at pass 3 (see "Why stop
+here" below) rather than running the full 4 — the two lines still open were the
 same systemic issue two other grounds already flagged and left to Nick, not
 something a fourth two-line pass on this one script would move.
 
@@ -239,3 +245,103 @@ Nothing new found. No score change (28/50 stands), no fix applied, no new
 renders committed (would have been pixel-identical to pass 3's own). Spent
 the rest of the run on `design/progress/frog_ai.md` instead, now that the
 Meshy network wall (the real blocker on the brief's bigger ask) is down.
+
+---
+
+## Pass 6 — artist lane, 2026-09-23 18:25 UTC — the Meshy rehaul
+
+Nick answered the open wall-accent request directly: "the environment needs
+a rehaul. use meshy to create an environment to replace the one created in
+blender." Passes 1-5 all diagnosed the same ceiling honestly (a primitive
+`enclose()` wall cannot be given real silhouette by recolouring it) and
+correctly declined to touch shared `env.py` geometry alone — this pass is
+the actual fix that unblocks, not a fourth recolour.
+
+**What changed.** `tools/blender/env/cinder_jackal.py`'s floor
+(`e.ground(UMBER, rim=CHARCOAL, dish=0.20)` + `e.apron(...)`) is untouched —
+it was never the flagged problem. Only the wall changed, and it is no
+longer built by `env.py`'s shared `enclose()` at all: Meshy text-to-3d
+generated an enclosed crater rim (prompt: "a small enclosed volcanic canyon
+arena: a flat cracked scorched rock clearing in the middle surrounded by a
+low ring of jagged charred cliff walls... hand-painted stylized fantasy
+game art"), refined with a texture prompt pulled from this ground's own
+palette (scorched charcoal-black rock, warm umber cracks, glowing
+orange-rust embers, no snow/moss/green — 2 Meshy tasks, preview
+`01a0cf77-655e-7018-93df-1251ba59f345` + refine `01a0cf79-6c8b-700d-b30f-
+cd808fac0c1d`, logged in `design/progress/meshy-ledger.md`). Cleaned,
+welded, decimated to 9000 tris and scaled by its own measured inner radius
+so its nearest standing geometry sits at 18.37 local units — outside the
+15.3 `ENCLOSE_CLEAR` env.py itself used, which is outside the 14.4 hard
+minimum `combat_3d.CAMERA_MAX_R` (2.40) needs for ANY beast this ground
+might ever host. Full recipe and the reasoning behind every number:
+`tools/blender/ai/cinder_jackal_env_ai.py`.
+
+Shipped as `game/assets/3d/env/cinder_jackal_ai.glb`, picked up over the old
+`cinder_jackal.glb` by a new `ENV_AI_ART := {"cinder_jackal": "_ai"}` table
+in `combat_3d.gd` (same shape as `AI_ART`/`HUNTER_AI_ART`) — the old
+procedural wall stays on disk, untouched, one dictionary entry away from
+coming back.
+
+**Verified in the real fight, every camera state that ships**, same seed,
+same positions, before vs. after: `state=3d`, `3dclimb` (the sigil
+close-up), `3dgrip`, and `3d wide`. This is the direct answer to the
+standing open question across passes 2-5 — does the wall's own detail
+survive to a camera a player actually uses:
+
+![[frames/artist/2026-09-23-cinder-jackal-arena-rehaul-wide-before-after.png]]
+![[frames/artist/2026-09-23-cinder-jackal-arena-rehaul-3dclimb-before-after.png]]
+![[frames/artist/2026-09-23-cinder-jackal-arena-rehaul-3d-before-after.png]]
+
+The `3dclimb` pair is the one that matters most: this is the exact camera
+the wall-accent request was filed against, and where pass 4 measured the
+RUST band never reaching the frame. The after shot shows real ember cracks
+glowing in the rock, in frame, without any camera change — because the
+detail is now baked into the wall's own jagged form and texture instead of
+riding a flat band placed above where any in-game camera looks.
+
+**Scored honestly, not maxed.** 37/50, against the old wall's 28 (see "Pass
+6 is a rebuild" note on the table above — not the same line, same asset):
+
+- **Silhouette (7).** The isolated `_sil.png` (64px, blown up) reads
+  clearly as a broken, jagged rock rim with a real gap — recognisable as
+  "a place" the way the old cluster of boxes only did with a label.
+  Docked one point: the tallest peaks bunch to one side rather than
+  reading evenly around the ring, and the gap is a little lopsided.
+- **Proportion (8).** The direct fix of passes 1-5's one open, systemic
+  finding: floor and wall both read together in `3d`, `3dclimb`, `3dgrip`
+  and `wide` now — not just from directly above. Not a 9-10: no
+  measurement was taken of exactly how much of the floor is visible in
+  each shot, only "clearly some, clearly more than before."
+- **Hygiene (7).** Weld + decimate (28,948 → 9,000 tris) left no floating
+  geometry or z-fighting in any render or in-game shot. Docked two points
+  versus a hand-built beast: this is machine cleanup only, no manual
+  artifact-cutting pass the way `cinder_jackal_ai`'s ear/tail fixes got —
+  reasonable for a background piece, not free of the caveat.
+- **Colour & read (8).** Ember cracks are now visible in-game, unprompted,
+  in the exact close-up camera three prior passes couldn't get the old
+  accent into. Matches the jackal's own TANGERINE/RUST/ember identity.
+- **Style consistency (7).** Reads as its own charred place, not a generic
+  cliff-walled quarry. Docked one point: the floor is still the old flat
+  primitive UMBER disc, so up close (`3dgrip`) the seam between the
+  generated wall's detail and the floor's flat primitive simplicity shows
+  — the floor was correctly left alone (never the flagged problem) but is
+  now visibly the plainer of the two pieces.
+
+`ALL TESTS PASSED`. Full 80-step playtest (`mode=play beast=cinder_jackal
+steps=80`) started before this note was written; result appended below the
+moment it lands, per COMMON.md §4b — committing now rather than holding a
+proven, rendered change unpushed while a background verification finishes.
+
+## What's still open
+
+- **Hygiene/Style's one point each** — a manual pass over the decimated
+  mesh (the way beasts get one) and/or a small floor detail pass so it
+  doesn't read as the plainer of the two pieces up close.
+- **Silhouette's lopsided peaks** — try a second Meshy preview with the
+  prompt asking explicitly for an even ring, or nudge this one's tallest
+  cluster in Blender by hand.
+- Same four other Titan grounds this brief has not reached yet (Crag Pup,
+  Stone Warden, and the rest) still carry the primitive `enclose()` wall
+  this pass replaced here — out of scope for this brief (Cinder Jackal
+  fight only) but worth naming so nobody rediscovers the same ceiling from
+  scratch on the next one.

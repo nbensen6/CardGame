@@ -38,6 +38,14 @@ const AI_ART := {"cinder_jackal": "_ai"}
 ## (_show_beast, location_3d.gd's felled-beast lookup) means "beast", and nothing
 ## here changes that. Empty until an artist ships a rigged hunter .glb.
 const HUNTER_AI_ART := {"frog": "_ai"}
+## Grounds rebuilt with a generated wall instead of env.py's primitive
+## enclose() (Nick, 2026-09-23, answering the arena-wall-accent request:
+## "the environment needs a rehaul. use meshy to create an environment to
+## replace the one created in blender."). Same shape as AI_ART/HUNTER_AI_ART:
+## a beast id listed here loads env/<id><suffix>.glb over env/<id>.glb, so the
+## old procedural ground stays on disk untouched and reverting is one entry.
+## See tools/blender/ai/cinder_jackal_env_ai.py.
+const ENV_AI_ART := {"cinder_jackal": "_ai"}
 ## Idle life for those beasts, in the toon shader (no rig yet). Uniform names
 ## from toon.gdshader; the masks default to the jackal's tail. Kept small: the
 ## body moves under hunters standing on it, and 2.5cm of breath on a Titan
@@ -1653,7 +1661,8 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 ##
 ## Same rule as the cast: `env/<beast_id>.glb` if you made one, nothing if you
 ## have not, and the plain disc stays underneath either way so a beast with no
-## ground yet still has a floor. Making one is exporting a file.
+## ground yet still has a floor. Making one is exporting a file. ENV_AI_ART
+## beats the plain path the same way AI_ART beats a beast's own cast/<id>.glb.
 ## Light, per place.
 ##
 ## Nick, 2026-08-31: "one directional light and flat ambient make a stone golem
@@ -1743,7 +1752,7 @@ func _show_env(beast_id: String, want_r: float, ground: CSGCylinder3D) -> void:
 	if _env != null:
 		_env.queue_free()
 		_env = null
-	var path := ENV + beast_id + ".glb"
+	var path := ENV + beast_id + String(ENV_AI_ART.get(beast_id, "")) + ".glb"
 	if beast_id == "" or not ResourceLoader.exists(path):
 		if ground != null:
 			ground.visible = true
