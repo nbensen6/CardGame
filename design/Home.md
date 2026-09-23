@@ -17,7 +17,9 @@ Moving every beast from the Python-primitive models to the AI pipeline: generate
 
 - **Every beast note has a ▶ Fight this now link** — click it and the game opens
   solo, Frog and Goblin, straight into that fight. (Registered once with
-  `tools	itan_uri.cmd install`; `uninstall` removes it.)
+  `tools	itan_uri.cmd install`; `uninstall` removes it. If it ever says
+  *"Get an app to open this 'titan' link"*, restart Obsidian — it looks a link
+  scheme up once and caches it for the life of the process.)
 
 - **[[agents/Agents|Agents]] → the FOR NICK tab** — everything waiting on your
   decision, one plain sentence each. Answer under **Nick's answer** in the note.

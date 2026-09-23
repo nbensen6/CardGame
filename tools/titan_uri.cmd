@@ -20,6 +20,10 @@ REM button. A real executable is required, so the handler is wscript running
 REM titan_link.vbs, which also keeps the console window from flashing.
 reg add "HKCU\Software\Classes\titan\shell\open\command" /ve /d "wscript.exe \"%~dp0titan_link.vbs\" \"%%1\"" /f >nul
 echo installed. Links like titan://cinder_jackal now open the game into that fight.
+echo.
+echo RESTART OBSIDIAN if it is already open. A program looks up a link scheme
+echo once and caches it, so an app that started before this ran will keep saying
+echo "Get an app to open this titan link" however correct the registration is.
 exit /b 0
 
 :remove
