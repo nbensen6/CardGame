@@ -215,7 +215,16 @@ func history_entry() -> Dictionary:
 			ids.append((c as Card).id)
 		final_deck.append(ids)
 	var result := ""
-	if phase == Phase.WON:
+	# backlog #86 duty 2: a sealed-door ending (pick_node's boss branch above --
+	# stepping onto the fourth Titan short of all three keys) sets phase = WON
+	# without the party ever fighting, let alone beating, that Titan, so
+	# stats["true_ending"] stays false. game_host.gd's _note_progress() already
+	# gates the real win bookkeeping (Progress.record_win) on phase == WON AND
+	# true_ending for exactly this reason -- this sibling copy of the same rule
+	# used to test phase alone, so a walked-away run got permanently written
+	# into Progress.run_history() as a "win" even though the player's own
+	# total_wins counter, right next to it, correctly stayed put.
+	if phase == Phase.WON and bool(stats.get("true_ending", false)):
 		result = "win"
 	elif phase == Phase.LOST:
 		result = "lose"

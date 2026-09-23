@@ -4173,6 +4173,11 @@ func _test_backlog86_sealed_door_ending_does_not_bank_a_win() -> void:
 		"a sealed-door ending must not bank a career win or advance the ascension ladder — " +
 		"the player never fought, let alone beat, the tier's final boss")
 
+	var recorded: Array = Progress.run_history()
+	_expect(recorded.size() == 1 and String(recorded[0]["result"]) != "win",
+		"a sealed-door ending must not be written into permanent run history as a win either — " +
+		"got result=%s" % [String(recorded.back().get("result", "")) if not recorded.is_empty() else "<none recorded>"])
+
 
 ## Backlog #86 duty 2: `GameHost._daily_date` lives on the HOST (set once in
 ## _init) and never clears once set, but `start_new_run()`'s daily branch reads

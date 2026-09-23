@@ -2,13 +2,79 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-22
-working_on: clean-bill-of-health run — no reproducible bug found, nothing pushed
+updated: 2026-09-23
+working_on: backlog #86 duty 2 — fixed a sealed-door ending recording itself as a "win" in permanent run history, pushed
 ---
 
 # fixer
 
 ## Now
+
+Fresh sandbox. No open `to: fixer` request (the boss-relic-pool request from
+a prior run is still sitting on `to: nick`, untouched, and unlike the rest of
+this note that one is still someone else's call to make). Order-of-work item
+2: ran a full fresh `mode=play beast=cinder_jackal steps=80` (the whole 80
+steps; the earlier `run_in_background` mistake from two runs ago did NOT
+recur this time — used it correctly from the start), `mode=hover`, and
+`mode=hands` — all three `PLAYTEST OK: 0 failing check(s)`, matching
+yesterday's clean baseline (the hop_arc fix from two runs ago is holding:
+step 17's climb still peaks at 19.56). Item 3: read `hop_arc`,
+`hunter_side_offset`, `gauge_dot_dx`, `foothold_anchor`, `stand_offset_x`,
+`climb_frame_for`, `popup_offset`, `pattern_shove`, `height_gap_between`,
+`react_plan`, and card_view.gd's `_markup`/`_word_index`/`_kw` keyword
+markup — nothing new; every one of these already carries an earlier `#86`
+fix's scar tissue and reads correct.
+
+Fell through to item 4 (backlog #86 duty — the only one of the four that
+isn't scoped to the Cinder Jackal fight, "hunt a bug anywhere"). Rotation
+state per `BACKLOG.md`'s own log: last turn was duty 3 (`21734f1`), so this
+one owed duty 2 ("find an error and resolve it"). Dispatched an Explore
+agent over the files the last several `#86` entries call already "fully
+spent" for `game/views`/`game/ui`/`game/session` — pointed it at
+`game/core/run.gd`, `run_save.gd`, `run_map.gd`, `progress.gd`, `boss.gd`,
+`character.gd`, `card.gd`, `location_3d.gd`, `deck_view.gd`, `console.gd`,
+`net/*`, cross-referenced against every existing `_test_backlog86_*` name so
+it wouldn't re-find something already fixed. It came back with a real "two
+copies of one truth" bug: `game_host.gd`'s `_note_progress()` correctly
+gates `Progress.record_win()` on `phase == WON and true_ending` (an earlier
+duty-2 fix, because the sealed-door ending — reaching the fourth Titan
+without all three keys, backlog #64 — sets `phase = WON` with no fight ever
+happening), but the very next line, unconditional
+`Progress.record_run(_run.history_entry())`, still built its own `result`
+field off the bare `phase == WON` test the sibling fix had already rejected.
+A walked-away sealed-door run correctly left the career win counter alone
+but still landed in the player's permanent run history reading
+`"result": "win"`.
+
+**Reproduced first.** Extended the existing
+`_test_backlog86_sealed_door_ending_does_not_bank_a_win` test to also read
+`Progress.run_history()` after the sealed-door `_broadcast_state()` call;
+ran it against the unfixed tree and it failed exactly as predicted —
+`got result=win`.
+
+**Fix.** `Run.history_entry()` (`game/core/run.gd`) now matches
+`_note_progress()`'s own condition — `phase == Phase.WON and
+stats.get("true_ending", false)` — before setting `result = "win"`. A
+sealed-door WON now falls through to the function's existing `""` default,
+the same sentinel it already used for "neither WON nor LOST," so this is
+the honest state, not a new one.
+
+**Proof.** Reran the extended test on the fixed code: passes, `result=""`.
+Full suite (including both pre-existing `history_entry` shape tests for a
+real win and a real loss, and every `run_history`/`record_run` test)
+unaffected — a real win always has `true_ending` true by the time
+`_after_node()` reaches `WON`. `$GODOT --headless --path game --script
+res://tools/run_tests.gd` → `ALL TESTS PASSED`. Re-ran `mode=hands` under
+`xvfb-run` post-fix as a sanity check (this is a pure logic fix, nothing
+rendered changes) — `PLAYTEST OK: 0 failing check(s)`. No frame to attach —
+this bug never touched a pixel, only a persisted `ConfigFile` value; the
+before/after numeric proof above is the evidence, same convention the
+hop-arc trajectory fix used two runs ago.
+
+Full write-up in `design/BACKLOG.md`'s `## Log` (2026-09-23 entry). Next
+`#86` turn is duty 3.
+
+## Old: 2026-09-22, clean-bill-of-health run
 
 No open `to: fixer` request this run (fresh sandbox; the boss-relic-pool
 request from my own prior run is still sitting on `to: nick`, untouched).
@@ -139,23 +205,34 @@ anything meant to outlive the current tool call.
 
 ## Next
 
-A clean run this time — no bug survived reproduction, so nothing new
-opened up. What's still outstanding from before: (1) the boss-relic-pool
-request is still waiting on Nick. (2) the "pure shape function tested on
-only one axis" question from last run stands: I read `hop_arc`,
-`_hold_points`, `fire_quality`/sweep-bar grading and `party_card_stats`
-this run looking for the same class of gap and didn't find one, but I
-did not audit every pure function in `combat_3d.gd`/`card_view.gd`
-against every axis it varies on — a future run could still turn one up
-by picking a different function and asking the same question. (3) worth
-someone eventually deciding whether the `mode=hands`
-ObjectDB/AudioStreamOggVorbis leak-at-exit noise (see `## Now`) is worth
-a one-line `Music.stop()` in the test harness's own teardown just to
-keep the console clean, even though it never reaches a real player —
-low priority, did not touch it this run.
+The Cinder-Jackal-scoped items (1-3) are still clean, same as last run — no
+bug survived reproduction there. What's still outstanding: (1) the
+boss-relic-pool request is still waiting on Nick. (2) the "pure shape
+function tested on only one axis" question stands unresolved for
+`combat_3d.gd`/`card_view.gd` specifically — every function I've personally
+read there is clean, but nobody has audited ALL of them. (3) the `mode=hands`
+ObjectDB/AudioStreamOggVorbis leak-at-exit noise is still just noise, still
+untouched, still low priority. (4) Backlog #86 itself isn't Cinder-Jackal-
+scoped and clearly still has real bugs in it (found one this run on the
+first widened sweep) — the general `game/core`/`game/session`/`game/net`
+layer outside the jackal fight's own hand/climb/camera code has had far
+fewer `#86` passes than `combat_3d.gd` has, so it's a better place to look
+first next time items 1-3 come back clean than re-re-reading the same
+already-scarred functions in `combat_3d.gd`.
 
 ## Log
 
+- 2026-09-23 — backlog #86 duty 2: fixed `Run.history_entry()` recording a
+  sealed-door ending (fourth Titan reached without all three keys) as
+  `"result": "win"` in `Progress.run_history()`, even though the sibling
+  `_note_progress()` check correctly kept it out of the real win counter —
+  matched `history_entry()`'s condition to that sibling's
+  (`phase == WON and true_ending`). Extended the existing sealed-door test
+  to check `run_history()` too; failed on the unfixed tree (`got
+  result=win`), passes now. `ALL TESTS PASSED`; `mode=hands` playtest clean.
+  Full write-up in `design/BACKLOG.md`'s `## Log`. Items 1-3 (Cinder-
+  Jackal-scoped) came back clean first, same as yesterday's audit — see
+  `## Now`.
 - 2026-09-22 — full audit pass, no bug found: live `mode=play` (80
   steps, exercised Meld/Catapult+Burn Coal fusion, Satchel Charge,
   Goblin Jetpack, a real fall onto an intermediate ledge), `mode=hands`,
