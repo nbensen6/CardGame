@@ -3,7 +3,7 @@ tags:
   - request
 from: playtester
 to: fixer
-status: taken
+status: done
 priority: normal
 created: 2026-09-23
 taken_by: fixer
@@ -77,4 +77,69 @@ belongs on it.
 
 ## Result
 
-(filled in by whoever takes it: what changed, which commit, how verified)
+**Not a camera timing bug.** Reproduced live (`mode=play beast=cinder_jackal
+steps=36`) with a temporary debug print in `_react`/`_damage_popup` (not
+committed) logging `hnode.position`, the label's `global_position` and
+`_cam.unproject_position` every frame after a hunter-damage popup spawned.
+Two real, separate mechanisms, both in `_damage_popup` (combat_3d.gd), both
+tracing to the same root cause:
+
+1. **The rise.** `_damage_popup`'s own "float up" tween moves the label by
+   `reach * 0.22`, where `reach = maxf(_beast_box.size.y, 2.0)` — the
+   Cinder Jackal's own height (~20 world units), so the rise is ~4.4 world
+   units. That's *right* for a hit landing ON the beast (the glyph itself
+   is sized off `reach` too, so it has to travel that far to clear a
+   Titan-scale body) but a hunter is `HUNTER_HEIGHT` (0.7) tall — a 4.4-unit
+   rise is over six hunter-heights, more than enough to carry the number
+   off the top of a frame that's still centred on the (stationary) hunter.
+   Live numbers, one sample: label spawned at world y=19.15 (screen y=301,
+   on screen) and rose to y=23.55 (screen y=-217, ~600px above the top
+   edge) within under a second — matches the playtester's exact numbers.
+2. **`popup_offset`'s spacing.** Same `reach` feeds `popup_offset`'s
+   `min_sep = reach * 0.5` (~10 units), meant to keep a weak-point hit and
+   a hunter hit landing the same frame from blurring into one glyph. Fine
+   next to a Titan; for two HUNTER popups sharing a frame (both hunters hit
+   on the same End Turn, e.g. step 34 of the repro — `foot 7→4`, a fall)
+   it flings the second one ~7.88 units sideways, well clear of the frame.
+   Confirmed a second time with a clean synthetic repro
+   (`screenshot.gd state=3dstrike`, firing a hunter-hit popup at hunter 1's
+   real node position): before the fix the "11" lands top-right of frame,
+   nowhere near the Goblin Engineer it belongs to; after the fix it lands
+   right at the point of impact.
+
+**Fix**: `popup_move_reach(beast_reach, on_hunter)` (combat_3d.gd) — a hit
+ON the beast keeps scaling its rise/spacing off the beast's own height;
+`on_hunter` scales off `HUNTER_HEIGHT * 3.0` (2.1 units) instead. Both the
+rise tween and the `popup_offset` call in `_damage_popup` now use this
+instead of the raw beast-scale `reach`. Glyph *size* (`pixel_size`) is
+untouched — it already read fine, this was purely the popup's own travel
+distance being computed off the wrong body.
+
+**Proof:**
+- 3 new tests in `run_tests.gd` (`popup_move_reach` for both branches, plus
+  `popup_offset` fed the new hunter-scale reach), using the EXACT numbers
+  from the live repro — confirms the rise drops from ~4.4 to 0.46 world
+  units and the lateral fling drops from 7.88 to under 4.0. `ALL TESTS
+  PASSED`.
+- Before/after frames, same synthetic repro, same camera, same wait:
+  ![[frames/fixer/2026-09-23-hunter-damage-popup-before-fix.png]]
+  ![[frames/fixer/2026-09-23-hunter-damage-popup-after-fix.png]]
+  Before: the "11" is off in empty space top-right, disconnected from the
+  Goblin Engineer. After: it lands right at the hunter, boss "34" popup
+  unchanged either way.
+
+**Honesty note**: the full `playtest.gd mode=play steps=36` render (the
+exact repro command in `## How to see it`) was very unreliable in this
+session — two separate attempts stalled for 10+ minutes and had to be
+killed; a bare `screenshot.gd` render took its normal ~5-6s once the stuck
+processes were cleared, so I fell back to a targeted `state=3dstrike`
+repro (firing `_damage_popup` at a real hunter node's position, the same
+formula `_react` uses) instead of a fresh full end-to-end playtest pass.
+The unit tests use the real numbers already captured from the one live
+`mode=play` run that DID complete, so the fix is proven against the actual
+reported bug, not just the synthetic harness — but if `hunter-off-marker`
+(the pre-existing, separately-filed foothold-4 spacing bug) or anything
+else regresses, a fresh `mode=play` pass is worth another try once the
+environment is behaving.
+
+Commit: see `design/agents/status/fixer.md` for the hash.

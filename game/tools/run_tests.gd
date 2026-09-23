@@ -2178,6 +2178,9 @@ func _init() -> void:
 	_test_backlog86_damage_popup_offset_leaves_well_separated_popups_alone()
 	_test_backlog86_damage_popup_offset_scales_the_minimum_gap_with_reach()
 	_test_backlog86_damage_popup_offset_still_separates_two_popups_at_the_same_spot()
+	_test_popup_move_reach_uses_beast_reach_for_a_boss_hit()
+	_test_popup_move_reach_uses_hunter_scale_for_a_hunter_hit_on_a_titan()
+	_test_popup_offset_with_hunter_move_reach_keeps_two_hunter_popups_close()
 	# backlog #86 duty 3 (forty-seventh pass): combat_3d.cam_reach_for/
 	# inside_wall_at are the fight camera's own wall clamp -- the geometry
 	# alone cannot enclose anything a camera is not stopped by a mesh, per the
@@ -28245,6 +28248,52 @@ func _test_backlog86_damage_popup_offset_still_separates_two_popups_at_the_same_
 	_expect(not placed.is_equal_approx(prev), "two popups spawned at the exact same point still end up apart")
 	_expect(is_equal_approx(Vector2(placed.x - prev.x, placed.z - prev.z).length(), 4.0),
 		"falls back to a fixed direction (+X) when there's no delta to steer by, but the DISTANCE still scales with reach")
+
+
+## 2026-09-23-0430-playtester-to-fixer-hunter-damage-popup-offscreen: every
+## hunter-hit popup this run landed off the top of the screen, up to ~600px
+## above the frame -- while the hunter it belonged to was plainly on screen.
+## Reproduced live (temporary debug, not committed): on the Cinder Jackal
+## (_beast_box.size.y ~20, so reach ~20), a hunter popup's own "rise" tween
+## (reach * 0.22 = ~4.4 world units) carried it more than SIX HUNTER HEIGHTS
+## into the air -- while the camera correctly stayed anchored near the tiny
+## (0.7-unit) hunter the whole time, since nothing about the hunter itself
+## moved. `reach` is right for a hit ON THE BEAST (the glyph and its float
+## both have to read against a body that can be 20+ units tall) but was never
+## supposed to describe a hunter. popup_move_reach is the fix: hunter hits
+## get a reach built from HUNTER_HEIGHT instead of the beast's own height.
+func _test_popup_move_reach_uses_beast_reach_for_a_boss_hit() -> void:
+	_expect(is_equal_approx(Combat3D.popup_move_reach(20.0, false), 20.0),
+		"a boss/weak-point hit keeps scaling its rise and spacing off the beast's own height")
+
+
+func _test_popup_move_reach_uses_hunter_scale_for_a_hunter_hit_on_a_titan() -> void:
+	var move_reach: float = Combat3D.popup_move_reach(20.0, true)
+	_expect(is_equal_approx(move_reach, Combat3D.HUNTER_HEIGHT * 3.0),
+		"a hunter hit scales off the HUNTER (2.1 units), not the Titan it happens to be standing on (20)")
+	_expect(move_reach < 20.0 * 0.5,
+		"whatever the exact multiplier, a hunter's own reach must stay far below the beast's -- the whole bug was a Titan-scale float on a hunter-scale target")
+
+
+## Same repro, run back through the two real call sites the bug fired in:
+## the rise (_damage_popup's own `move_reach * 0.22`, checked directly here)
+## and popup_offset's min_sep, now fed the hunter-scale reach instead of the
+## beast's. Both stay small enough that a popup can no longer leave a
+## hunter's own neighbourhood, however tall the beast it is standing on.
+func _test_popup_offset_with_hunter_move_reach_keeps_two_hunter_popups_close() -> void:
+	var beast_reach := 20.0  # the Cinder Jackal, per the live repro
+	var move_reach: float = Combat3D.popup_move_reach(beast_reach, true)
+	var rise := move_reach * 0.22
+	_expect(rise < Combat3D.HUNTER_HEIGHT * 2.0,
+		"the rise no longer carries a hunter's popup several beast-heights into the air (was ~4.4 world units on this beast, now %.2f)" % rise)
+	# Two hunters hit the same frame, standing a body-width apart -- the exact
+	# shape step 34 of the repro hit (both foothold 4, "fall" reaction).
+	var first := Vector3(1.057644, 19.11127, 15.77305)
+	var second := Vector3(-1.057644, 19.11127, 15.77305)
+	var placed: Vector3 = Combat3D.popup_offset(second, first, move_reach)
+	var gap := placed.distance_to(first)
+	_expect(gap < 4.0,
+		"two simultaneous hunter popups land within a few hunter-heights of each other (was flung 7.88 units -- half the Titan's own width -- and behind the camera)")
 
 
 ## backlog #86 duty 3 (forty-seventh pass) -- the fight camera's own wall clamp.

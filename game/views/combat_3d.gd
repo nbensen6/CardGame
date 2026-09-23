@@ -3969,13 +3969,29 @@ static func popup_offset(new_at: Vector3, prev_at: Vector3, reach: float) -> Vec
 	return prev_at + dir * min_sep + Vector3(0.0, new_at.y - prev_at.y, 0.0)
 
 
+## How far a popup is allowed to travel -- its rise, and (via popup_offset above)
+## how far it has to scoot to clear a sibling popup -- before it strays off
+## whatever it landed on. `beast_reach` (the Titan's own height) is right for a
+## hit ON the beast: the glyph and its float both have to read against a body
+## that can be 20+ units tall. A hunter is HUNTER_HEIGHT (0.7) tall regardless
+## of the beast, so reusing beast_reach for a hunter hit sent the number
+## rocketing several beast-heights into the air (the rise alone) or, when two
+## hunters were hit the same frame, flung apart by half a Titan's width
+## (popup_offset's min_sep) -- both landed the popup off the top of the screen
+## or off to the side, the camera correctly staying on the (tiny) hunter the
+## whole time. Pure so it is provable without a beast, a hunter, or a frame.
+static func popup_move_reach(beast_reach: float, on_hunter: bool) -> float:
+	return HUNTER_HEIGHT * 3.0 if on_hunter else beast_reach
+
+
 func _damage_popup(amount: int, at: Vector3, weak_point: bool, on_hunter: bool = false) -> void:
 	if amount <= 0:
 		return
 	var reach: float = maxf(_beast_box.size.y, 2.0)
+	var move_reach: float = popup_move_reach(reach, on_hunter)
 	var placed_at := at
 	if _last_popup_guard > 0.0:
-		placed_at = popup_offset(at, _last_popup_at, reach)
+		placed_at = popup_offset(at, _last_popup_at, move_reach)
 	_last_popup_at = placed_at
 	_last_popup_guard = POPUP_OVERLAP_WINDOW
 	var lbl := Label3D.new()
@@ -3997,7 +4013,7 @@ func _damage_popup(amount: int, at: Vector3, weak_point: bool, on_hunter: bool =
 	lbl.position = placed_at
 	_rig.add_child(lbl)
 
-	var rise := reach * 0.22
+	var rise := move_reach * 0.22
 	var tw := create_tween()
 	tw.set_parallel(true)
 	tw.tween_property(lbl, "position", placed_at + Vector3(0.0, rise, 0.0), 0.85) \

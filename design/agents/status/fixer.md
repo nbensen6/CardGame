@@ -3,17 +3,68 @@ tags:
   - agent-status
 agent: fixer
 updated: 2026-09-23
-working_on: Took the high-priority hunter-floats-off-model-at-foothold-4 request; _stand_on_model trusted a coarse runtime hull over an exact rung's own already-correct, raycast-placed anchor, and the Cinder Jackal's own ear (a stray, disconnected hull cell two bands above foothold 4) won. Fixed with Combat3D.stand_z_for, three new tests, pushed (c8e965b); found and filed a smaller, separate residual (shared-foothold side spacing).
+working_on: Took the hunter-damage-popup-offscreen request; _damage_popup's rise tween and popup_offset's spacing both scaled off the BEAST's own height regardless of whether the hit landed on the beast or a (six times smaller) hunter, sending hunter-hit numbers rocketing off the top of frame or flung sideways past a sibling popup. Fixed with Combat3D.popup_move_reach, three new tests, before/after frames, pushed.
 ---
 
 # fixer
 
 ## Now
 
-Open `to: fixer` request, priority high:
-`2026-09-23-0900-playtester-to-fixer-hunter-floats-off-model-at-foothold-4.md`.
-Took it (order-of-work item 1, before my own queue). Skipped item 2/3 this
-run — a high-priority request was already sitting there.
+Open `to: fixer` request `2026-09-23-0430-playtester-to-fixer-hunter-damage-popup-offscreen.md`
+(oldest open `to: fixer` request this run — took it over the newer
+shared-foothold-spacing request I filed to myself last run, per order-of-work
+"oldest first"). Root cause was NOT the playtester's own guess (a camera
+mid-climb-transition not caught up) — reproduced live
+(`mode=play beast=cinder_jackal steps=36`, temp debug print in `_react`/
+`_damage_popup`, never committed) and it's `_damage_popup` itself: its rise
+tween and `popup_offset`'s minimum-separation both scale off `reach =
+_beast_box.size.y` (the BEAST's own height, ~20 units on the Cinder Jackal)
+regardless of whether the hit landed on the beast or on a hunter. That's
+correct for a beast hit (the glyph has to travel far enough to read against
+a Titan) and wildly oversized for a hunter — `HUNTER_HEIGHT` is 0.7, so a
+beast-scale rise (~4.4 units) carries a hunter's own popup six-plus
+hunter-heights into the air, and beast-scale popup spacing (~10 units, when
+two hunters are hit the same frame) flings the second one most of the
+beast's own width sideways. Both send the number well outside a frame
+still centred on the (stationary) hunter — live numbers matched the
+playtester's exactly (label rose from screen y=301 to y=-217, ~600px above
+the top edge, within under a second).
+
+**Fix**: new static `Combat3D.popup_move_reach(beast_reach, on_hunter)` —
+beast hits keep the beast-scale reach; `on_hunter` gets `HUNTER_HEIGHT *
+3.0` (2.1 units) instead. Both the rise tween and the `popup_offset` call
+in `_damage_popup` now read this instead of the raw beast reach; glyph
+*size* (`pixel_size`) untouched, since that already read fine — this was
+purely the popup's own travel distance, not its scale.
+
+**Proof**: 3 new unit tests in `run_tests.gd` using the exact numbers from
+the live repro (rise 4.4→0.46 world units, lateral fling 7.88→under 4.0),
+`ALL TESTS PASSED`. Visual: a clean synthetic repro
+(`screenshot.gd state=3dstrike`, firing `_damage_popup` at hunter 1's real
+node position — the same formula `_react` uses) before/after the fix,
+same camera, same wait — before, the "11" lands top-right of frame,
+disconnected from the Goblin Engineer; after, it lands right at the point
+of impact:
+
+![[frames/fixer/2026-09-23-hunter-damage-popup-before-fix.png]]
+![[frames/fixer/2026-09-23-hunter-damage-popup-after-fix.png]]
+
+**Environment was flaky this run** — two full `mode=play steps=36`
+playtest renders stalled for 10+ minutes each (Godot burning CPU but
+barely advancing a step) and had to be killed; a bare `screenshot.gd`
+render took its normal ~5-6s once the stuck processes were gone, so the
+before/after proof above is the targeted `state=3dstrike` repro rather
+than a fresh full end-to-end playtest pass. The unit tests carry the real
+numbers from the one `mode=play` run that DID complete cleanly (the
+original reproduction, before any fix), so the fix is proven against the
+actual reported bug either way. Didn't chase why the environment slowed
+down; if it recurs for the next agent, killing the stuck Godot process and
+retrying seemed to fully clear it (confirmed: a plain screenshot went from
+apparently hung to ~5s once the old process was gone).
+
+Commit: pushed as part of this run (see `## Log` below for the hash).
+
+## Old: 2026-09-23, hunter-floats-off-model-at-foothold-4
 
 **Reproduced first.** Added a temporary debug print in `_stand_on_model`
 (never committed) and ran `mode=play beast=cinder_jackal steps=40/80` under
@@ -541,7 +592,19 @@ further either.
 
 ## Log
 
-- 2026-09-23 (latest) — took the high-priority
+- 2026-09-23 (latest) — took `hunter-damage-popup-offscreen` request
+  (playtester's guess of a camera-timing gap was wrong). Root cause:
+  `Combat3D._damage_popup`'s rise tween and `popup_offset`'s minimum
+  separation both scaled off the BEAST's own height (`reach`, ~20 on the
+  Cinder Jackal) even for a hunter hit — a hunter is 0.7 units tall, so a
+  beast-scale rise (~4.4 units) or spacing (~10 units) sent the number
+  flying off-frame while the camera correctly stayed on the (stationary)
+  hunter. Fixed with `Combat3D.popup_move_reach(beast_reach, on_hunter)`;
+  hunter hits now scale off `HUNTER_HEIGHT * 3.0` instead. 3 new tests
+  using the live repro's exact numbers, `ALL TESTS PASSED`; before/after
+  frames via a targeted `screenshot.gd state=3dstrike` repro (the full
+  `mode=play` playtest render was unreliable this session — see `## Now`).
+- 2026-09-23 — took the high-priority
   `hunter-floats-off-model-at-foothold-4` request. Root cause:
   `Combat3D._stand_on_model` let a coarse runtime hull estimate
   (`_front_of_beast`) override an EXACT rung's own already-correct anchor
