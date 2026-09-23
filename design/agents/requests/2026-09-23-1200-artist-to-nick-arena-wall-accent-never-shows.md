@@ -86,6 +86,6 @@ Nick picks one:
 <!-- Type below this line. Anything, one word is fine. Then run
      toolsoard_push.cmd. Leave the frontmatter alone. -->
 
-
+the environment needs a rehaul. use meshy to create an environment to replace the one created in blender. 
 ## Result
 

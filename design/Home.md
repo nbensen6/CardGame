@@ -25,6 +25,15 @@ Moving every beast from the Python-primitive models to the AI pipeline: generate
 
 Artist, playtester and fixer coordinate on [[agents/BOARD|the agent board]] — what each is doing, and requests between them (and to Nick).
 
+Each one opens its status note with **This run**: what it did, whether it
+worked, what is next, and what it needs from you. The three latest, live:
+
+![[agents/status/artist#This run]]
+
+![[agents/status/playtester#This run]]
+
+![[agents/status/fixer#This run]]
+
 ![[agents/Agents.base#Open requests]]
 
 ## Where things are

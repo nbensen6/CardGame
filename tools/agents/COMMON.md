@@ -114,9 +114,29 @@ rather than backgrounding it; a 40-step playtest takes 3-5 minutes.
   options as bullets with the trade-off on each. Show, do not describe: embed
   the frame. If you cannot put the ask in two bullets a non-programmer
   understands, you do not understand it yet.
-- Overwrite `## Now` in `design/agents/status/<you>.md`, update `updated:` and
-  `working_on:` in its frontmatter, and add one line to its `## Log` (newest on
-  top). Honest: say if it went badly or you gave up.
+- **Your status note opens with `## This run`, and it is written for Nick.**
+  Three to six bullets, one line each, plain language, before any prose:
+
+        ## This run — 2026-09-23 17:05 UTC
+
+        - **Did:** textured the Meshy frog and scored it — 38/50, the body
+          reads, the hands do not.
+        - **Worked?** Yes. It is in the fight and it is a clear step up on the
+          primitive one; frame below.
+        - **Next:** rig it so it can animate.
+        - **Need from you:** nothing.
+
+  `Did` / `Worked?` / `Next` / `Need from you` every time, in that order, even
+  when the answer is "nothing" or "no, and here is why". No file paths, no
+  function names, no scores he has no scale for. He reads this to know whether
+  the hour was worth it; everything below it is for you and the other agents
+  (Nick, 2026-09-23).
+- Then overwrite `## Now` in `design/agents/status/<you>.md` with the detail,
+  update `updated:` and `working_on:` in its frontmatter, and add one line to
+  its `## Log` (newest on top). Honest: say if it went badly or you gave up.
+- **`working_on:` is ONE short sentence** — it is a card in Obsidian, not a
+  transcript. A paragraph there is unreadable and the detail belongs in
+  `## This run` and `## Now` anyway.
 - **Timestamp everything, to the minute, in UTC** (Nick, 2026-09-23). A bare
   date is useless here: three agents write these notes several times an hour,
   and Nick reads them in Obsidian to find out what is CURRENT. On a day with
