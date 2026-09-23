@@ -945,6 +945,14 @@ func _init() -> void:
 	_test_backlog86_stand_offset_x_is_symmetric_across_sides()
 	_test_backlog86_stand_offset_x_widens_with_the_beast()
 	_test_backlog86_stand_offset_x_keeps_a_floor_gap_on_a_zero_width_beast()
+	# fixer, 2026-09-23: a hunter floating off the Cinder Jackal at foothold 4
+	# (design/agents/requests/2026-09-23-0900-...) — _stand_on_model trusted
+	# the coarse in-game hull over an exact rung's own already-correct,
+	# raycast-placed anchor, and a stray hull cell (the beast's ear) won.
+	# stand_z_for is the pure decision that was missing between them.
+	_test_backlog86_stand_z_for_trusts_the_anchor_on_an_exact_rung_even_past_a_bigger_hull_read()
+	_test_backlog86_stand_z_for_still_takes_the_hull_when_off_anchor_and_it_reaches_further()
+	_test_backlog86_stand_z_for_keeps_the_anchor_off_anchor_when_the_hull_reads_short()
 	# backlog #86 duty 3 (this turn): hull_index_for, lifted out of
 	# _build_hull's own vertex scatter and _front_of_beast's lookup — the last
 	# untested piece of that family flagged by the previous duty-3 pass. The
@@ -21717,6 +21725,36 @@ func _test_backlog86_stand_offset_x_widens_with_the_beast() -> void:
 func _test_backlog86_stand_offset_x_keeps_a_floor_gap_on_a_zero_width_beast() -> void:
 	var gap: float = Combat3D.stand_offset_x(0.0, 1.0, 0.0) - Combat3D.stand_offset_x(0.0, -1.0, 0.0)
 	_expect(is_equal_approx(gap, 0.60), "even a degenerate zero-width hull keeps the fixed 0.30 floor per side, so two hunters never collapse onto the exact same point")
+
+
+## fixer, 2026-09-23 — stand_z_for is the pure half of _stand_on_model's fix
+## for the foothold-4 floating-hunter bug: an EXACT rung's anchor is already
+## on the body's real surface (beast.py raycasts it there at export time,
+## clearance included), so the coarse in-game hull estimate must never
+## override it, however much bigger the hull's own read comes out — that
+## "however much bigger" is exactly what went wrong live (a real hull_clear
+## of 13.16 against the Cinder Jackal's own authored anchor_z of 6.47 at
+## foothold 4, reproduced here with round numbers instead).
+func _test_backlog86_stand_z_for_trusts_the_anchor_on_an_exact_rung_even_past_a_bigger_hull_read() -> void:
+	var anchors := {4: Vector3(3.9, 13.8, 6.47)}
+	var z: float = Combat3D.stand_z_for(anchors, 4, 6.47, 13.16)
+	_expect(is_equal_approx(z, 6.47), "foothold 4 is an exact rung in the anchor dictionary, so its own already-correct anchor_z must win no matter how far out the hull's estimate reaches")
+
+
+## Off an anchor (a foothold between two rungs, where foothold_anchor lerps a
+## straight line across the body's curve) there is no baked, raycast-true z to
+## trust — this is the one case that still needs the hull, unchanged from
+## before this fix.
+func _test_backlog86_stand_z_for_still_takes_the_hull_when_off_anchor_and_it_reaches_further() -> void:
+	var anchors := {3: Vector3.ZERO, 5: Vector3.ZERO}   # foot 4 is NOT a key
+	var z: float = Combat3D.stand_z_for(anchors, 4, 6.47, 13.16)
+	_expect(is_equal_approx(z, 13.16), "off an anchor, the hull's further-out read is the only way to clear a body the straight-line lerp cut across — must still win, same as before this fix")
+
+
+func _test_backlog86_stand_z_for_keeps_the_anchor_off_anchor_when_the_hull_reads_short() -> void:
+	var anchors := {3: Vector3.ZERO, 5: Vector3.ZERO}
+	var z: float = Combat3D.stand_z_for(anchors, 4, 6.47, 2.0)
+	_expect(is_equal_approx(z, 6.47), "off an anchor, a hull read SHORTER than the lerped z must still lose to maxf — the lerp already cleared the surface, unchanged from before this fix")
 
 
 ## backlog #86 duty 3 (this turn) — hull_index_for is the last untested piece

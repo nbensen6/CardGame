@@ -2743,6 +2743,30 @@ static func stand_offset_x(anchor_x: float, side: float, beast_width: float) -> 
 	return anchor_x + side * (beast_width * 0.055 + 0.30)
 
 
+## The pure decision inside _stand_on_model: which z a hunter's clearance
+## should come from. An EXACT rung's anchor is already on the body's real
+## surface — beast.py's export (`_decorate`, tools/blender/beast.py) raycasts
+## every anchor out to the mesh itself, clearance for a standing hunter
+## already included (`push = (reach + hs * 0.80) - here`). The coarse in-game
+## hull estimate (`_front_of_beast`) exists only for a foothold BETWEEN two
+## rungs, where `foothold_anchor` lerps a straight line across the body's
+## curve and the result can land back inside the mesh or short of the skin —
+## that's the one case with no baked, raycast-true anchor to trust.
+##
+## Trusting the hull on an exact rung too let one bad hull cell override a
+## correct, already-placed anchor: `hull_front_at`'s neighbourhood search
+## (widened past the anchor's own row/column to avoid the opposite failure,
+## see its own doc comment) picked up the Cinder Jackal's ear — a thin,
+## disconnected feature two hull bands above foothold 4's own row — and used
+## it as "the front of the body" there, pushing the hunter's z from the
+## anchor's authored 6.47 out to 13+, well past the model and the arena wall
+## behind it, with nothing under the hunter at all.
+static func stand_z_for(anchors: Dictionary, foot: int, anchor_z: float, hull_clear: float) -> float:
+	if anchors.has(foot):
+		return anchor_z
+	return maxf(anchor_z, hull_clear)
+
+
 ## Where a hunter at `foot` stands, from the model's own anchors.
 ##
 ## Exactly on a rung when the Height matches one, and between the two that
@@ -2752,16 +2776,23 @@ func _stand_on_model(foot: int, side: float) -> Vector3:
 	var p: Vector3 = foothold_anchor(_climb_points, foot)
 	# Two hunters on one ledge stand apart rather than inside each other.
 	var x: float = stand_offset_x(p.x, side, _beast_box.size.x)
-	# And OUT to the body's real surface at that spot, not a fraction of the
-	# bounding box. The anchors are authored on the surface in Blender, but a
-	# point ON a surface is still half a hunter inside it, and the old nudge
-	# (0.025 of the box depth) was a box-sized guess about a shape that is not
-	# a box — too small on a deep chest, far too large beside a thin limb.
-	var clear: float = _front_of_beast(x, p.y) + HUNTER_HEIGHT * 0.45
+	# Only a lerped, off-anchor foothold needs the hull's guess — see
+	# stand_z_for above. Skip the hull query entirely on an exact rung; it has
+	# nothing to add and, per the bug this guards against, can actively hurt.
+	var z: float = p.z
+	if not _climb_points.has(foot):
+		# And OUT to the body's real surface at that spot, not a fraction of
+		# the bounding box. The anchors are authored on the surface in
+		# Blender, but a point ON a surface is still half a hunter inside it,
+		# and the old nudge (0.025 of the box depth) was a box-sized guess
+		# about a shape that is not a box — too small on a deep chest, far
+		# too large beside a thin limb.
+		var clear: float = _front_of_beast(x, p.y) + HUNTER_HEIGHT * 0.45
+		z = stand_z_for(_climb_points, foot, p.z, clear)
 	# Out onto the floating stone (Nick, 2026-09-23: "make sure the characters
 	# actually land on the stones"). The stone hangs at stone_point() and the
 	# hunter has to stand on it, so one rule places both.
-	return stone_point(Vector3(x, p.y, maxf(p.z, clear)))
+	return stone_point(Vector3(x, p.y, z))
 
 
 ## The LEDGES strictly between two footholds — the flat ground a hunter can
