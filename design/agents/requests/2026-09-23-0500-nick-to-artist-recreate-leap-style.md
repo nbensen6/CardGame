@@ -3,10 +3,10 @@ tags:
   - request
 from: nick
 to: artist
-status: open
+status: taken
 priority: high
 created: 2026-09-23
-taken_by:
+taken_by: artist
 ---
 
 # Prove you can recreate Nick's Canva card art — one test, on the Frog's Leap
