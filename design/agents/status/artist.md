@@ -3,15 +3,77 @@ tags:
   - agent-status
 agent: artist
 updated: 2026-09-23
-working_on: hunters (item 2) — goblin_mech at 37/50, all 4 passes used; frog still open
+working_on: cards (item 4) — first model-rendered card art (Piston Punch); to: nick request open on whether to scale it
 ---
 
 # artist
 
 ## Now
 
-No open `to: artist` request this run, so picked up item 2 (hunters) per
-last run's `## Next` — `goblin_mech` was one pass short of the hunter stop
+No open `to: artist` request this run. Both hunters (item 2) are at their
+4-pass cap awaiting Nick (see `## Old` below and the standing `to: nick`
+request), and the arena (item 3) stopped short on purpose pending the
+shared-wall-system call across three grounds — also Nick's. So this run
+picked up item 4, **the cards**, which last run's `## Next` flagged as
+"untouched so far this whole thread of runs."
+
+**The real blocker on cards is art, not code** (`design/BACKLOG.md` #82) —
+painted card faces need Canva work from Nick (`tools/artprep.py`'s `--card`
+flow), and only 4 of 187 cards (all Frog) have any. Rather than wait on
+that, tried the same move `portraits.py` already made for the party-panel
+portraits: **render the art from the hunter's own model** instead of
+painting it. Built the pipeline and proved it on one card, the Goblin
+Engineer's `Piston Punch` (this fight's other hunter, currently at zero
+painted cards):
+
+- `tools/blender/cardart.py` — new, modelled directly on `portraits.py`:
+  loads a hunter's `.glb`, but frames FULL BODY at the card's real 620×870
+  aspect (`sensor_fit = VERTICAL` so the aspect ratio, not a square, drives
+  the camera) instead of portraits.py's head-and-shoulders crop, and
+  renders on transparency rather than compositing in Blender.
+- `tools/cardbg.py` — new, plain-Python compositing step (kept separate
+  from the Blender render, same division `artprep.py` already draws): a
+  contained ember-glow backdrop sampled straight from
+  `tools/blender/colormap_base.png`'s CHARCOAL/RUST cells — the same two
+  colours the arena pass already established as this fight's palette — so
+  the card and the ground it's fought on agree. First attempt blended all
+  the way to raw RUST at the glow's centre and it read as a card-sized
+  orange flare, the same mistake in the opposite direction as the arena
+  pass's own "flat render oversold the effect" finding; darkened the base
+  to 45% and capped the blend at 40% toward RUST to fix it.
+- Output: `game/assets/cardart/piston_punch.png`. No code change needed —
+  `CardView._build_face` already loads `cardart/<id>.png` by convention, so
+  the same file that makes `crescendo`/`leap` etc. painted makes this one
+  painted too.
+
+**Verified in the real fight**, not just the isolated render: `hand=`
+forced Piston Punch into a real hand next to `Slash`/`Brace` at the actual
+in-game card size, and separately next to `Satchel Charge` (another Goblin
+card, still a bare icon, same slot) for a fair before/after. Reads clearly
+at hand size — the goblin and its mech arm are both legible, no edge halo
+from the alpha composite, the raised exhaust pipe happens to read as a
+"punching" silhouette by the coincidence of the model's own resting pose
+that the card's namesake move plausibly matches (it's the model as it
+already exists in the fight, not a fabricated action pose — there is no rig
+to re-pose off, so this stays true to the "rendered, not painted" premise
+end to end). `3dinspect` opened cleanly on it too (`RIGHTCLICK
+opened_inspector=true`, correct keyword text). `ALL TESTS PASSED`;
+`mode=play` playtest (40 steps) `PLAYTEST OK: 0 failing check(s)` — a
+new PNG can't touch gameplay logic, but ran it anyway rather than assume.
+
+![[frames/artist/2026-09-23-piston-punch-before-after.png]]
+![[frames/artist/2026-09-23-piston-punch-infight.png]]
+
+**Filed `to: nick`, did not scale it further.** This is a real style
+choice — rendered-from-model art next to the Frog's 4 painted illustrations
+is a different look, and mixing them in one deck (or replacing the 4
+paintings too) is a taste call, not mine to make for 30+ more cards. See
+`requests/2026-09-23-0800-artist-to-nick-model-rendered-card-art-direction.md`.
+
+## Old: hunters, pass 4 (goblin_mech)
+
+No open `to: artist` request that run, so picked up item 2 (hunters) per
+that run's `## Next` — `goblin_mech` was one pass short of the hunter stop
 line (42), with a diagnosed-but-unformed 4-way tie at 35/50. Ran pass 4
 (`design/progress/goblin_mech.md`), 35 → 37/50 — the loop's 4-pass cap for
 this asset, not a plateau call.
@@ -191,26 +253,31 @@ fully inspectable without it for anything that doesn't need re-export.
 
 ## Next
 
-`goblin_mech` is at 37/50, **all 4 passes used** — per `asset-loop.md` this
-asset is done for now; a 5th pass needs a Nick call, not a default pick.
-Still below the 42 hunter stop line. Lowest lines now Prop/Hygiene/Colour,
-all 7, none diagnosed. Open for whoever revisits it (see
-`design/progress/goblin_mech.md`'s final "Where it stands"): the wrist
-joint's rounded cap still reads as a slightly different curvature from the
-boxes it bridges (a smaller version of this pass's own finding), and the
-claw/piston assembly at the feet, connected in mesh terms but still a
-visually distinct mass in `_side.png`. `frog` is also at its own 4-pass cap
-(36/50, `frog.md`) — same situation, same "needs Nick" gate, not a default
-pick either. Both hunters being at cap at the same time is itself worth
-flagging to Nick: the two hunters this fight's brief calls out by name are
-both below the hunter stop line and both out of passes under the current
-rule. Also still open: the arena's `design/progress/cinder_jackal_ground.md`
-"What's still open" and the shared `env.py` wall-height/proportion finding
-(Nick's call across three grounds now), and the cards item (item 4) in the
-brief, untouched so far this whole thread of runs.
+**Waiting on Nick on three fronts now**, all filed: the model-rendered-card-art
+direction (this run's request — whether to scale `cardart.py`/`cardbg.py`
+across the rest of the Frog/Goblin decks, and whether the Frog's 4 existing
+paintings should stay or get replaced for consistency), both hunters being
+at their 4-pass cap below the hunter stop line, and the arena's shared
+`env.py` wall-height/proportion finding. Until one of those comes back,
+there's no default pick left in items 1-3 that isn't "wait" — the next open
+lane of my own is more cards *if* Nick says keep going, or the Goblin's
+other 8 cards' framing entries in `cardart.py`'s `CARDS` table if so. Worth
+someone (me, next run, if still no answer) double-checking whether a
+non-taste corner of the cards item exists to make progress on regardless —
+e.g. `type` and `rarity` still being invisible on the face
+(`card-face-vs-sts.md` §2.3/§2.4) is a border/frame-tint job, not an art
+one, and might not need Nick's sign-off the way new illustrations do.
 
 ## Log
 
+- 2026-09-23 — cards (item 4), first pass: built a model-rendered card art
+  pipeline (`tools/blender/cardart.py`, `tools/cardbg.py`) instead of
+  waiting on Nick's Canva paintings, proved it on the Goblin Engineer's
+  `Piston Punch` (zero painted cards on that hunter previously). Verified
+  in a real hand next to both a bare-icon card and generated cards, in the
+  inspector, `ALL TESTS PASSED`, playtest clean. Filed `to: nick` before
+  scaling to the other ~30 cards — a style/taste call, not a code one. See
+  `## Now` for the full write-up.
 - 2026-09-23 — pass 4 of the asset loop on `goblin_mech` (item 2, hunters),
   35→37/50, the asset's 4-pass cap: found and fixed the real cause behind
   three passes of "reads as scattered blocks" — the upper-arm and wrist
