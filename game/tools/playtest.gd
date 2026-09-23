@@ -611,6 +611,26 @@ func _drive_timing(v: Node) -> void:
 ## exit path, so it never leaks into the rest of the run.
 const HOP_TIME_SCALE := 1.0 / 6.0
 
+## `_check_hop`'s confidence gate needs at least this many in-flight samples
+## before trusting hop-flat/hop-no-squash, on top of the spatial
+## covered_from_start check below. Found 2026-09-23: a near-zero-distance
+## climb (both endpoints almost the same point, e.g. two footholds that
+## compress to nearly the same anchor near the sigil) makes
+## covered_from_start's `total_dist < 0.05` bypass fire unconditionally --
+## any first sample is "close to the start" when start and end are nearly
+## the same point -- so a capture that only ever caught 4-7 samples (this
+## sandbox's slow software renderer skipping most of a 0.62s hop, even
+## slowed 6x) passed as "confident" and reported a flat peak that was
+## really just too few rolls of the dice to land one during the rise/hang
+## window. Two independent runs (this playtester's and the fixer's, same
+## day, different steps each time -- 49/50 here, 30/42/52/53 there) hit
+## this with different footholds and different sample counts, which is the
+## signature of a sampling gap, not a reproducible geometry bug: a real
+## hop_arc defect would fail at the SAME footholds every run, not different
+## ones. Below this count, `_check_hop` now says so and judges nothing,
+## the same as it already does for the guard-cap-fired case.
+const MIN_HOP_SAMPLES := 10
+
 ## Watches one hunter's climb hop (combat_3d._hop) live: samples the animated
 ## node's own position/scale every frame while its climb tween runs (not the
 ## bookkeeping dict, which combat_3d.gd sets to the destination the instant
@@ -693,6 +713,18 @@ func _watch_hop(v: Node, me: int, climb_from: Vector3) -> void:
 ## two when the first sample lands within 40% of the whole hop's distance
 ## from where it started (a real rise/squash happens early, well inside
 ## that window); past that, note the partial capture and judge nothing.
+##
+## The spatial check above has its own hole: `total_dist < 0.05` (a climb
+## whose endpoints are nearly the same point) bypasses the 40%-of-distance
+## test entirely, since any first sample is trivially "close" to a start
+## that's almost the same as the end. That doesn't mean the samples
+## actually covered the hop's real DURATION -- `hop_arc` still guarantees a
+## real rise (at least HUNTER_HEIGHT*0.9) regardless of how short the
+## distance is, so a near-zero-distance climb can still get missed by a
+## too-sparse capture the same way a long one can. MIN_HOP_SAMPLES is the
+## other half of the gate: below it, judge nothing, whatever the spatial
+## check says (see the constant's own doc comment for the live case this
+## closes, 2026-09-23).
 func _check_hop(flight: Array, from_pos: Vector3, to_pos: Vector3, landed_scale: Vector3) -> void:
 	if flight.size() < 2:
 		_note("step %d: hop finished before it could be sampled (too fast for this frame rate) -- not checked" % _step)
@@ -704,7 +736,8 @@ func _check_hop(flight: Array, from_pos: Vector3, to_pos: Vector3, landed_scale:
 		max_scale_dev = maxf(max_scale_dev, _scale_dev(f["scale"]))
 	var total_dist := from_pos.distance_to(to_pos)
 	var first_dist := (flight[0]["pos"] as Vector3).distance_to(from_pos)
-	var covered_from_start := total_dist < 0.05 or first_dist < total_dist * 0.4
+	var covered_from_start := flight.size() >= MIN_HOP_SAMPLES \
+		and (total_dist < 0.05 or first_dist < total_dist * 0.4)
 	var straight_top := maxf(from_pos.y, to_pos.y)
 	if covered_from_start:
 		if peak_y < straight_top - 0.03:
@@ -717,9 +750,12 @@ func _check_hop(flight: Array, from_pos: Vector3, to_pos: Vector3, landed_scale:
 	if end_dev > 0.03:
 		_fail("hop-leftover-squash", "step %d: landed with body scale %v, %.3f off Vector3.ONE -- squash never recovered (a pop at the end)"
 			% [_step, landed_scale, end_dev])
+	var coverage_note := "from the start"
+	if not covered_from_start:
+		coverage_note = "too few samples, arc/squash not judged" if flight.size() < MIN_HOP_SAMPLES \
+			else "partial capture, arc/squash not judged"
 	_note("step %d: hop watched -- %d in-flight samples (%s), peak y %.2f (endpoints %.2f -> %.2f), max squash dev %.3f"
-		% [_step, flight.size(), "from the start" if covered_from_start else "partial capture, arc/squash not judged",
-			peak_y, from_pos.y, to_pos.y, max_scale_dev])
+		% [_step, flight.size(), coverage_note, peak_y, from_pos.y, to_pos.y, max_scale_dev])
 
 
 func _scale_dev(s: Vector3) -> float:

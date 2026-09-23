@@ -3,12 +3,115 @@ tags:
   - agent-status
 agent: playtester
 updated: 2026-09-23
-working_on: full baseline against today's tip (now including Nick's own `a823001` jump/camera rebuild) found a real regression — hunter-off-marker fails 3x in the 80-step play run, a hunter floating in open air off the jackal at foothold 4 — filed to the fixer, not fixed
+working_on: verified the fixer's `c8e965b` stand_z_for fix (real, large improvement); the residual foothold-4 miss turned out to already have its own, more-thorough fixer-filed request (deduped, dropped mine); a second finding this run (hop-flat false-firing near the sigil) turned out to be a hole in my own check's confidence gate, not a game bug — fixed and verified in playtest.gd itself, no request needed
 ---
 
 # playtester
 
 ## Now
+
+Fresh sandbox (detached HEAD on a stale local `main` from container init —
+origin/main and local main share no merge-base, so worked from
+`origin/main` directly rather than force-resetting a branch ref without
+asking). No open `to: playtester` request this run. HEAD started at the
+fixer's own `c8e965b` ("stand_z_for trusts an exact rung's own anchor over
+the hull"), which targets exactly the foothold-4 float regression I filed
+last run.
+
+Set up fresh (Godot 4.7.1 + `--import`, Xvfb), `run_tests.gd`: `ALL TESTS
+PASSED`. Full three-mode baseline against `c8e965b`: `hover` 0 fails,
+`hands` 0 fails (clean, matching every prior baseline). `play` (80 steps):
+**2 failing checks**, `hunter-off-marker: 4` and `hop-flat: 2`.
+
+**Foothold-4: verified the fix is real, not a no-op — and while I was
+writing up the residual, the fixer beat me to it.** Before `c8e965b`,
+`home.z` at foothold 4 was 10.25 — a hunter hanging in open air against the
+arena wall, ~4m from the marker. After, it's 7.03, right next to the
+anchor's own 6.47 — the frame now shows the hunter standing on solid ground
+near the jackal's ears, not floating in dead air:
+
+![[frames/playtester/2026-09-23-hunter-off-marker-foothold4-after-standz-fix-step038-feet.png]]
+![[frames/playtester/2026-09-23-hunter-off-marker-foothold4-after-standz-fix-step038.png]]
+
+`hunter-off-marker` still fires 4x (steps 38/39/78/79, `x` off by 1.43
+against a 1.06 tolerance) — I had a follow-up request drafted for this when
+a `git fetch` mid-run turned up the fixer's OWN `4c15649` ("close out
+foothold-4 float — proof, write-up, and the residual"), pushed while I was
+still rendering: they independently hit the exact same numbers
+(`home (5.335257, 13.825942, 7.030925)`, same anchor, same 1.54m), traced it
+further than I had (a debug print confirming both hunters share foothold 4
+simultaneously, and `stand_offset_x`'s spacing — sized off the whole beast's
+bounding-box width — overshoots the jackal's much narrower ear at that
+specific foothold, plus `_build_float_stones` only ever building one
+centred stone per height so the side-shifted hunter has nothing to land on
+regardless), and self-filed
+`2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`.
+Two independent same-day findings landing on identical numbers is about as
+strong a confirmation as this gets. Deleted my own draft rather than file a
+duplicate — nothing left for me to add here; checklist item 2 stays at
+"real, large improvement, smaller residual already owned."
+
+**`hop-flat` fires 2x near the sigil, steps 49/50 — chased it down, and it
+was my own tool's bug, not the game's.** Both captures had only 5 in-flight
+samples and reported the peak sitting at EXACTLY the start height (18.13).
+`hop_arc`'s own proven invariant (apex clears both endpoints by at least
+`HUNTER_HEIGHT * 0.9`, regardless of distance — an existing unit test)
+made that suspicious rather than a clean "reads as a slide" verdict. The
+`git fetch` above also surfaced the fixer's OWN independent run hitting the
+same shape at yet a THIRD set of step numbers (30/42/52/53, different
+footholds, 6-7 samples) and dismissing it as matching my own previously-
+documented sparse-sampling flake pattern. Two independent runs failing at
+different steps each time is the opposite of what a real geometry bug would
+do (same footholds every run) — it's the signature of a sampling gap.
+
+Both 5-frame strips, both hunters essentially static throughout (still
+reading "at the sigil" in every saved frame):
+
+![[frames/playtester/2026-09-23-hop-flat-near-sigil-step049-strip.png]]
+![[frames/playtester/2026-09-23-hop-flat-near-sigil-step050-strip.png]]
+
+Found it: `_check_hop`'s confidence gate (`covered_from_start`) has a
+`total_dist < 0.05` bypass for near-zero-distance climbs that doesn't
+actually verify the samples covered the flight's real TIME, only that the
+first sample was spatially close to a start/end pair that are already
+almost the same point — trivially true regardless of when sampling began.
+Near-sigil climbs where consecutive footholds compress to nearly the same
+anchor hit this exactly, and on this sandbox's slow renderer sometimes only
+get 4-6 real samples across the whole hop, which can land entirely outside
+the rise/hang window purely by bad luck.
+
+**Fixed in `playtest.gd`, not filed to the fixer** (this is my own tool,
+squarely in "extend it" territory) — added `MIN_HOP_SAMPLES := 10`,
+AND'd into `covered_from_start` alongside the existing spatial check.
+Strictly conservative: it only ADDS a requirement, so it can never turn an
+already-correct fail into a pass, only move an under-sampled "confident"
+capture to "not judged." Checked against this run's own report.md before
+touching anything: real, meaningful climbs got 25-120 samples every time
+(steps 17, 34, 38, 78); the degenerate near-sigil ones that misfired got
+4-6 (steps 10, 19, 20, 32, 36, 37, 41, 43, 49, 50) — the threshold cleanly
+separates the two populations in real data, not a guess.
+
+**Verified, not just reasoned about.** Re-ran `mode=play steps=51` (covers
+the exact repro plus the big, well-sampled climbs) after the fix:
+`hunter-off-marker: 2` is the ONLY failing check left — `hop-flat` and
+`hop-no-squash` are gone. The five previously-flagged-or-flaggable
+under-sampled captures (steps 19, 20, 36, 37, 43) now correctly report "too
+few samples, arc/squash not judged" instead of a verdict. The two
+well-sampled climbs in the same run (step 17: 120 samples, step 34: 26
+samples) still get judged normally, "from the start" — so a real hop_arc
+regression on a real climb would still be caught, unweakened.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | unchanged this run |
+| 2 | hunters land on the beast correctly | **improved, residual owned by the fixer's own request** — `c8e965b` fixed the open-air float; the smaller shared-foothold gap is diagnosed and self-filed by the fixer (`2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`), nothing further for me to add |
+| 3 | jump animation (squash/arc/landing) | **checker bug found and fixed** — `hop-flat` was false-firing on under-sampled near-sigil captures; `MIN_HOP_SAMPLES` gate added to `playtest.gd`, verified clean on a fresh run with the real bug-catching cases (25-120 samples) still judged |
+| 4 | camera | unchanged this run |
+| 5 | nothing errors | ok — `ALL TESTS PASSED`, no script errors in any log this run |
+
+## Old: 2026-09-23, foothold-4 float regression (superseded by this run's verification above)
 
 No open `to: playtester` request this run (the board's only other open
 items are `to: nick` — boss-relic-pool, hunters-at-pass-cap,
@@ -305,6 +408,33 @@ No new requests filed. `ALL TESTS PASSED` throughout.
 
 ## Next
 
+Both threads from this run resolved without needing a fresh playtester
+request: foothold-4's residual is the fixer's own
+`2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`
+(watch for it going `done`, then re-run the baseline to confirm check 8
+finally goes clean at foothold 4 for BOTH hunters sharing it); `hop-flat`'s
+false-fire was my own check's confidence gate, fixed and verified in
+`playtest.gd` this run (`MIN_HOP_SAMPLES`).
+
+Once foothold-4 is fully closed, worth a fresh pass on items 3 and 4
+overall: `a823001` (Nick's own jump/camera rebuild, now two runs back)
+still hasn't had a frame-strip look at anything OTHER than the two bugs it
+turned up — the numeric checks passing everywhere else in this run doesn't
+mean the squash/arc/camera framing actually reads well at typical (non-
+sigil, non-foothold-4) climbs, just that nothing failed. The off-screen
+damage-number finding from two runs ago is also still open, still waiting
+on the fixer: once they know the real cause (my guess — an in-flight camera
+transition, unconfirmed — is in the request), decide whether it deserves
+its own automatic check (a visibility-aware version of check 10) or folds
+into whatever item 4 eventually becomes once the third-person camera
+lands. Item 4 itself is otherwise unchanged: check 9 can tell "on screen"
+from "not," not "small" from "clearly framed." Also still open: a way to
+catch a squash-arc or framing failure the numeric checks would miss but a
+human eye would catch — the frame strips remain the backstop for that;
+keep saving them.
+
+## Old-Next: superseded by the two-item list above
+
 The live thread is the foothold-4 float: once the fixer knows which of
 `_front_of_beast` / `_stand_on_model` / `stone_point` is actually wrong,
 decide whether check 8's tolerance needs widening for `stone_point`'s own
@@ -335,6 +465,38 @@ remain the backstop for that; keep saving them.
 
 ## Log
 
+- 2026-09-23 — verified the fixer's `c8e965b` (`stand_z_for`) against a
+  fresh full three-mode baseline: `hover`/`hands` clean, `play` (80 steps)
+  2 failing checks. `hunter-off-marker` at foothold 4 is a real, large
+  improvement over the pre-fix baseline (open-air float, `home.z` 10.25 →
+  7.03, right next to the anchor) but still fails 4x on a smaller residual
+  x-miss (1.43 vs 1.06 tolerance). Had a follow-up drafted when a mid-run
+  `git fetch` turned up the fixer's own `4c15649`, closing the original
+  request and self-filing the exact same residual with a deeper diagnosis
+  (two hunters sharing foothold 4, `stand_offset_x`'s spacing too wide for
+  the jackal's narrow ear) — deleted my draft, nothing to add. Also found a
+  NEW `hop-flat` failure, 2x near the sigil (steps 49/50), both captures
+  reporting a peak sitting exactly at the start height despite passing the
+  confidence gate; the same `git fetch` showed the fixer independently hit
+  the same shape at a THIRD set of steps in their own run and called it a
+  likely sampling flake — different failing steps every run is the
+  signature of a sampling gap, not a reproducible geometry bug, so chased
+  it myself instead of filing it. Found the real hole: `covered_from_start`'s
+  `total_dist < 0.05` bypass doesn't verify temporal coverage, so a
+  near-zero-distance climb (footholds compressing near the sigil) can pass
+  the gate on as few as 4-5 real samples. Fixed in `playtest.gd`
+  (`MIN_HOP_SAMPLES := 10`, AND'd into the existing gate — strictly
+  conservative, can only reduce false fails, never mask a real one).
+  Verified against this run's own report.md (real climbs: 25-120 samples;
+  degenerate ones: 4-6 — clean separation) AND with a fresh `steps=51`
+  re-run: `hop-flat`/`hop-no-squash` gone, only `hunter-off-marker: 2`
+  left, and the well-sampled real climbs (120, 26 samples) still get
+  judged normally. `run_tests.gd`: `ALL TESTS PASSED`. Local `main` branch
+  in this sandbox shares no merge-base with `origin/main` (a stale ref
+  from container init, predating some history rewrite on the remote) —
+  worked from `origin/main` directly rather than force-resetting the
+  branch ref without asking; pushing straight to `origin/main` from a
+  detached HEAD.
 - 2026-09-23 — full three-mode baseline against today's tip (now including
   Nick's own `a823001` jump/camera rebuild): `hover` and `hands` clean, but
   `play` (80 steps) regressed — `hunter-off-marker` (check 8) failed 3x
