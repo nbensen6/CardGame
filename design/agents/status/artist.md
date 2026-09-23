@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-23T15:40
-working_on: built the Goblin Engineer's Meshy rebuild (preview+refine, cleaned/decimated) to close the other half of the hunter fidelity gap the Frog already closed -- wired it in to test, found it reads as a near-solid black blob at true in-fight size (the shared ink-outline shader eats a hunter with many thin parts, not a texture problem -- measured and isolated), reverted the wiring so nothing regresses, and filed the diagnosis to the fixer. Asset built and committed, not shipped. ALL TESTS PASSED; 80-step playtest re-run against the final (reverted) state to confirm no regression.
+updated: 2026-09-23T15:48
+working_on: built the Goblin Engineer's Meshy rebuild (preview+refine, cleaned/decimated) to close the other half of the hunter fidelity gap the Frog already closed -- wired it in to test, found it reads as a near-solid black blob at true in-fight size (the shared ink-outline shader eats a hunter with many thin parts, not a texture problem -- measured and isolated), reverted the wiring so nothing regresses, and filed the diagnosis to the fixer. Asset built and committed, not shipped. ALL TESTS PASSED; 80-step playtest re-run against the final (reverted) state: PLAYTEST OK, 0 failing checks -- confirmed no regression. Lease released.
 ---
 
 # artist
@@ -105,6 +105,13 @@ hunter/beast positioning (`HUNTER_AI_ART` is byte-for-byte what was already
 shipped), so a regression here would be a surprise, but the result is
 appended the moment it lands rather than assumed.
 
+**Playtest result: clean.** `PLAYTEST OK: 0 failing check(s) {  }` — all 80
+steps (Meld, Catapult+Burn Coal, Leapfrog, Brace, Take Aim, Scramble, Build
+Grapple, several climbs and hops with position-continuity checks passing),
+exit code 0. Confirms the prediction above: the committed diff never
+touched `HUNTER_AI_ART` or any gameplay/positioning code, only added new,
+unreferenced asset files and docs.
+
 ## Next
 
 Once the fixer's outline-width fix lands: re-wire `goblin_mech` into
@@ -113,6 +120,7 @@ asset-loop pass. Until then this item is blocked, not abandoned — the next
 open item on `JACKAL-BAR.md` (or another request) is the next run's pick.
 ## Log
 
+- 2026-09-23 15:48 EDT — playtest for the above finished clean: PLAYTEST OK, 0 failing check(s), all 80 steps, exit code 0. Confirms the committed diff (goblin_mech_ai asset + docs, HUNTER_AI_ART reverted to shipped state) touches no gameplay code. Lease released.
 - 2026-09-23 15:40 EDT — built the Goblin Engineer's Meshy rebuild (1 preview + 1 refine, 8/8 daily Meshy tasks now spent), cleaned/decimated in Blender to goblin_mech_ai.glb. Wired into HUNTER_AI_ART to test: reads as a near-solid black blob at true in-fight size, not a texture problem -- isolated the cause to outline.gdshader's fixed ink-outline width overlapping on this hunter's many thin parts (jackal/frog are thick rounded masses, this one isn't). Reverted HUNTER_AI_ART (git diff clean), kept the built asset committed unwired. Filed to:fixer with the diagnosis and a before/after frame. ALL TESTS PASSED; 80-step playtest re-run against the final reverted state. See design/progress/goblin_mech_ai.md.
 - 2026-09-23 18:34 UTC — took the answered arena-wall-accent request: rebuilt the Cinder Jackal arena's enclosing wall with a Meshy-generated crater rim (2 Meshy tasks), left the floor untouched, shipped as cinder_jackal_ai.glb via a new ENV_AI_ART table in combat_3d.gd. Scored 37/50 (design/progress/cinder_jackal_ground.md pass 6), up from 28. ALL TESTS PASSED, 80-step playtest clean (PLAYTEST OK, 0 failing checks). Ticked both JACKAL-BAR.md arena lines. Request marked done.
 

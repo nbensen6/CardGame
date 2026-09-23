@@ -158,7 +158,8 @@ players will see it would be comparing a partial, misleading number against
 `ALL TESTS PASSED`. Full 80-step playtest (`mode=play beast=cinder_jackal
 steps=80`) re-run after reverting, to confirm the final committed state (no
 gameplay files touched, `HUNTER_AI_ART` unchanged from what's already
-shipped) regresses nothing — result appended below once it lands.
+shipped) regresses nothing: **`PLAYTEST OK: 0 failing check(s) {  }`**, all
+80 steps, exit code 0 — confirmed clean.
 
 ## What's still open, in order
 
