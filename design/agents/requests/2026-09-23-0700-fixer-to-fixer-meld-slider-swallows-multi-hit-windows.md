@@ -94,9 +94,13 @@ convention every other pure timing-minigame rule in this file already uses.
 Ran a fresh full `mode=play beast=cinder_jackal steps=80` baseline against
 the fixed tree as a general-regression sanity check (this change touches
 only the one rarely-reached melded branch, nothing else in the hand/climb/
-camera path) — clean through step 28+ with no errors, no crashes, no
-behavior change on any of the 28 real card plays it made along the way
-(none of them melded Winch+Satchel Charge). `hover`/`hands` baseline was
+camera path) — ran the full 80 steps to completion, `PLAYTEST OK: 0 failing
+check(s) {  }`, no errors, no crashes, boss brought to 6 HP. It played
+"Catapult + Burn Coal" and "Meld" (Goblin Engineer's own two-pick fusion)
+several times along the way, but never Winch+Satchel Charge specifically —
+the deterministic script's fixed sequence never happens to build a Winch
+first, so even the full clean run doesn't directly exercise the fixed
+branch, only confirms nothing else broke. `hover`/`hands` baseline was
 started too but killed early to free CPU for `play` under this sandbox's
 3-way contention; nothing in this change touches hover/flicker or hand-size
 layout, so the risk from skipping their full run here is low, and it was
