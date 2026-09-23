@@ -165,11 +165,59 @@ copy of the same ask.
 
 ## What's still open
 
-- The RUST ember-accent band's own visibility, per pass 2 above — untested
-  at a camera pitch that would actually show it.
 - Whether the pass-3 scatter recolour reads at all from the fight camera
   itself (only confirmed, and only barely, from the isolated top-down
   Blender render) — plausible it is simply too small and too far back to
   matter, same as the "gravel chips" `crag_pup_ground.md` couldn't confirm
   either.
 - Silhouette/Proportion, per "Why stop here."
+
+---
+
+## Pass 4 — artist lane, 2026-09-23 (verification only, no score change)
+
+Picked up pass 2's own open question — the RUST accent band's visibility —
+and actually answered it, rather than leaving "untested at a camera pitch
+that would show it" sitting open a second run running. No code touched.
+
+**Rendered every 3D camera state the fight actually uses**, not just the
+sigil close-up pass 2 checked: `state=3d`, `3dclimb`, `3dgrip`, `3dstrike`,
+and `3d wide` (the pulled-back framing). **The RUST accent never appears in
+any of them.** Confirmed by eye in each frame and by a direct crop of a
+wall piece's own visible top edge in the `wide` framing (the one shot with
+the best chance of showing it) — the piece's top edge runs off the top of
+the frame itself, above the RUST band's own placement fraction
+(`env.py`'s `_wall_cliff`, `tall * uniform(0.75, 0.95)`), before the accent
+would ever be reached.
+
+**It is real, though — just not in this game's camera.** The loop's own
+scoring camera (`cinder_jackal_env_pass3_34.png`, the pulled-back 3/4 view
+`look.py` shoots) shows the RUST caps clearly on several wall pieces —
+which is why the recolour was a legitimate Colour/Style improvement in the
+loop's own methodology (the rubric's stated test camera), even though a
+player will never see it. Same family of finding as `goblin_mech.md` pass
+3's exhaust-pipe top-down-only separation and pass 5's hose-ring
+side-profile-only collapse: real in one camera, invisible in the one that
+ships.
+
+**Not fixed, on purpose.** The accent's placement (`_wall_cliff`) and the
+wall's overall height (`ENCLOSE_HIGH`, passed as this ground's own `high=`
+if ever overridden) are both shared code — `_wall_cliff` backs every
+"cliff"-style ground in the game, and wall height was deliberately tuned by
+Nick "against camera reach across every ground in the game" per pass 3's
+own note. Cutting the now-confirmed-invisible accent geometry to reclaim a
+few tris was considered and declined: it is real in the loop's scoring
+camera, already credited toward this ground's Colour/Style score, and
+removing it would be undoing a scored, deliberate design choice on a guess
+about what the shared wall system should do differently — not this script's
+call to make alone. Filed `to: nick` instead of guessing (see
+`requests/2026-09-23-1200-artist-to-nick-arena-wall-accent-never-shows.md`) —
+this is the third grounds' progress file to flag the shared wall system,
+but the first with the accent question actually closed by evidence rather
+than left as "untested."
+
+Score unchanged, 28/50 — nothing here was a diagnosed fix, it's a
+verification of an existing open line. `ALL TESTS PASSED` (no code
+touched).
+
+![[frames/artist/2026-09-23-cinder-jackal-wall-accent-camera-comparison.png]]

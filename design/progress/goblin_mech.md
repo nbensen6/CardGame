@@ -419,3 +419,74 @@ pass and ruled non-issues (wrist-joint curvature, claw/piston distinctness)
 collapse is real but a `look.py`-only angle, same status. Nothing newly
 diagnosed for pass 6; whoever picks this up next should look for a fresh
 defect rather than assume one of the above is still open.
+
+---
+
+## Pass 6 — artist lane, 2026-09-23 (checked, nothing applied)
+
+Full fresh six-view capture (`goblin_mech_pass6_*.png`, `look.py` direct
+since `look.cmd` is Windows-only) and a close look, not assuming last pass's
+two ruled-out candidates or its own crown-zigzag fix are still the story.
+No fix applied this pass — every concrete lead checked either doesn't hold
+up as a defect or isn't reachable without a riskier change than the loop's
+"two small fixes" step allows. Recorded honestly rather than forcing a
+number to move.
+
+**Re-checked the pass-4 crown-zigzag fix against its own before/after
+renders, not just this pass's own capture.** `goblin_mech_pass3_34.png`
+(pre-fix, `seg=6`) vs `goblin_mech_pass4_34.png` (post-fix, `seg=10`), same
+crop, same zoom: pass 3 shows a sharp "M" with deep, dark-shadowed valleys;
+pass 4 (and this pass's identical geometry) shows a visibly shallower,
+softer scalloped seam — a real, not oversold, improvement, though still
+visible up close. Not re-opened; the pass-4 score already reflected a
+partial fix (7→8, not 9/10), which the direct before/after comparison
+confirms was the honest call.
+
+**Silhouette connectivity, confirmed again with a different method.**
+`scipy.ndimage.label` on `goblin_mech_pass6_sil.png`: **1 connected
+component**, 17,079 px — everything, including the "ordinary" MINT arm,
+reads as one solid shape with no floating or spaced-away part. Answers the
+Hygiene rubric's "no part spaced away from the body" line directly, not by
+inference.
+
+**Measured whether the rig actually reads as "enormous" against the
+ordinary arm, the file's own stated comparison — not against the whole
+body, which the docstring never claims.** Off the script's own numbers:
+ordinary-arm limb radii top out at 0.086 (hand ball 0.090–0.098); the
+rig's upper-arm/wrist limbs run 0.095–0.137 (roughly 1.3–1.6x), and the rig
+carries several boxes/tapers/a ring the ordinary arm has none of. The
+size disparity is real and larger than a passing glance suggests — this is
+not a fresh defect, it's confirmation that Prop's existing 7 (not higher)
+is the right number: present in intent and in the geometry, moderate in
+the render.
+
+**Considered and declined a rig-scale-up experiment.** If the rig read
+too *small* rather than merely uncohesive, the concrete fix would be to
+enlarge it — but every rig part's exact position was hand-tuned pass over
+pass specifically to keep loosely-touching pieces (compressor box↔lid↔exhaust,
+shoulder↔upper-arm↔wrist↔claw) reading as connected. A uniform scale from a
+single pivot preserves relative touching mathematically, but this rig isn't
+a single radiating chain from one point — it's several independently-placed
+boxes whose "touching" is closer than the numbers alone suggest (pass 3's
+own finding for the exhaust cap). Scaling it blind, without the loop's own
+build→render→look cycle to catch a newly-opened gap, is exactly the kind of
+change the loop's Apply step warns against ("do not restyle the whole
+asset"). Flagged as a real option for a future pass that budgets for the
+extra render/verify cycle, not attempted here.
+
+**No score change.** 38/50 stands. `ALL TESTS PASSED` (no code touched);
+skipped a playtest re-run since nothing in `goblin_mech.py` or the `.glb`
+changed from origin/main.
+
+![[frames/artist/2026-09-23-goblin-mech-pass6-fresh-check.png]]
+
+## Where it stands after pass 6
+
+Still 38/50. Prop and Hygiene both checked hard this pass and both hold up
+as real, already-correctly-scored 7s, not hidden defects. The one live lead
+for a future pass is the rig-scale-up idea above — real, but needs its own
+full iterate cycle, not a blind edit. Absent that, the next pass should
+look at something this file hasn't touched yet (Style's goggle/strap
+combination at oblique angles, or a genuinely new six-view look after
+another run's fresh eyes) rather than a fourth re-check of Prop/Hygiene
+with no new idea.

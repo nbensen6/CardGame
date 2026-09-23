@@ -3,7 +3,7 @@ tags:
   - agent-status
 agent: artist
 updated: 2026-09-23
-working_on: no open to:artist request; goblin_mech pass 5 (cap lifted by Nick), 37→38/50 — the rig's two darkest, functionally-tied greys (GRAPHITE/CHARCOAL, the compressor box and hose ring) moved to STONE, this rig's own established mid-tone, so the "machined plate" bevel read the file's own docstring calls for has headroom against this fight's toon shadow band; a first in-game verification attempt was WRONG (a misidentified pixel, corrected via diagnostic recolour, written up honestly) before landing a real one; wrist-joint curvature and claw/piston distinctness (pass 4's two open candidates) checked fresh and ruled non-issues, not fixed; next run: goblin_mech still below the 42 hunter stop line, look for a fresh defect rather than re-open either ruled-out candidate
+working_on: no open to:artist request; goblin_mech pass 6 — fresh six-view check found no new defect (Prop/Hygiene both re-verified as honest 7s: silhouette confirmed one connected component via scipy label, rig-vs-ordinary-arm size disparity measured real but moderate, pass 4's crown-zigzag fix re-confirmed not oversold against its own before/after renders); a rig-scale-up idea for Proportion considered and declined as too risky without a full iterate cycle; separately verified the arena's open "RUST wall accent visibility" question across all 5 real fight camera states plus a wide framing — confirmed it never shows in play (only in the loop's own scoring camera), filed to: nick since the fix lives in shared env.py code, not this ground's own script; no code changed, ALL TESTS PASSED; next run: either the goblin_mech rig-scale experiment (budget a full render/verify cycle) or wait on Nick's picks from the two open to:nick requests
 ---
 
 # artist
@@ -13,7 +13,83 @@ working_on: no open to:artist request; goblin_mech pass 5 (cap lifted by Nick), 
 No open `to: artist` request this run (checked every file's frontmatter).
 Environment fresh: Godot 4.7.1 + `--import`; Blender came from `apt install
 blender` (4.0.2) again — `download.blender.org` unreachable, same as every
-prior run.
+prior run (release-assets.githubusercontent.com for Godot itself worked
+fine on retry after one transient "upstream request failed").
+
+Picked up my own `## Next` from last run in full: goblin_mech (38/50, cap
+lifted, below the 42 hunter stop line) needed a genuinely fresh six-view
+look, not a re-litigation of pass 5's two ruled-out candidates. Ran it —
+full write-up in `design/progress/goblin_mech.md` pass 6 — and it came back
+clean: no new defect found. Three specific things checked, not assumed:
+
+- **The pass-4 crown-zigzag fix, checked against its own before/after
+  renders** (`goblin_mech_pass3_34.png` vs `pass4_34.png`, same crop): the
+  improvement is real, not oversold — pass 3's sharp "M" with deep shadowed
+  valleys is visibly softer in pass 4/6's identical geometry, matching the
+  honest partial-credit score (7→8, not higher) it was already given.
+- **Silhouette connectivity**, this time by `scipy.ndimage.label` on the
+  actual pixel data rather than a look: 1 connected component, 17,079px —
+  the "ordinary" MINT arm included. Answers Hygiene's "no part spaced away
+  from the body" line directly.
+- **Whether the rig genuinely reads as "enormous"** — the docstring's own
+  claim, against the ordinary arm specifically (not the whole body, which
+  it never claims to dwarf): the rig's limb radii run 1.3–1.6x the ordinary
+  arm's, plus several boxes/tapers/a ring it has none of. Real, moderate —
+  confirms Prop's existing 7 is the right number, not a hidden defect.
+
+**Considered, and explicitly declined, a rig-scale-up experiment** for
+Proportion — the one idea from this pass with real potential. Rejected
+because this rig's parts were hand-tuned pass over pass to keep
+loosely-touching pieces reading as connected (the exhaust cap, the
+crown-zigzag joints); a blind uniform scale risks reopening a gap the loop
+can only catch by actually rendering and looking again, which is a second
+pass's worth of work, not a same-pass gamble. Flagged for whoever picks
+this up next with budget for the full cycle.
+
+**Score unchanged: 38/50.** `ALL TESTS PASSED` (no code touched); skipped a
+playtest re-run since nothing in `goblin_mech.py`/`.glb` changed from
+`origin/main`.
+
+![[frames/artist/2026-09-23-goblin-mech-pass6-fresh-check.png]]
+
+Second half of the run: the arena's one genuinely open, non-Nick-blocked
+question from `cinder_jackal_ground.md` pass 2/3 — whether the RUST wall
+accent (credited toward Colour/Style 3→6) is ever actually visible in play,
+"untested at a camera pitch that would show it." Rendered every 3D state
+the fight uses (`3d`, `3dclimb`, `3dgrip`, `3dstrike`) plus a pulled-back
+`wide` framing and checked each directly, not just the one sigil-close-up
+angle pass 2 tried. **Confirmed: never visible in any of them** — the
+wall's own top edge runs off-frame before reaching the accent's placement
+height, even in the widest framing tested. It IS real and does show in the
+loop's own scoring camera (`cinder_jackal_env_pass3_34.png`) — same family
+of finding as `goblin_mech.md`'s exhaust-pipe/hose-ring "only in a diagnostic
+angle" results, now with the fight's own camera states all checked instead
+of one.
+
+**Not fixed** — the accent's placement fraction and the wall's overall
+height both live in `env.py`'s shared `enclose()`/`_wall_cliff`, used by
+every "cliff" ground in the game; changing either is a cross-fight call,
+already flagged twice for Nick by other grounds' progress files without an
+explicit ask. Filed one now, with the evidence and three concrete options
+to pick from: `requests/2026-09-23-1200-artist-to-nick-arena-wall-accent-never-shows.md`.
+No score change (28/50 stands) — this closes an open verification line, it
+doesn't diagnose a new fix.
+
+![[frames/artist/2026-09-23-cinder-jackal-wall-accent-camera-comparison.png]]
+
+## Next
+
+`goblin_mech` (38/50) has now had a thorough fresh look with nothing new
+found — the honest next step is either the rig-scale-up experiment flagged
+above (budget a real build→render→look cycle, don't guess a number and
+ship it), or wait on Nick's picks from the two open `to: nick` requests
+(the hunter-pass-cap one, still open, and this run's new wall-accent one)
+before spending a seventh pass chasing the same two lines. The arena
+(`cinder_jackal_ground`, 28/50) is genuinely blocked on that same request
+for anything past what pass 3 already did. `frog` is past its own stop
+line (43/50) — nothing pulls toward it unless a fresh defect turns up.
+
+## Old: hunters, pass 5 (goblin_mech)
 
 Picked up my own `## Next` from last run: `frog` cleared its stop line last
 pass, so moved to `goblin_mech` (37/50, cap lifted by Nick the same day as
@@ -88,7 +164,7 @@ in full: `design/progress/goblin_mech.md`.
 ![[frames/artist/2026-09-23-goblin-mech-rig-value-34-before-after.png]]
 ![[frames/artist/2026-09-23-goblin-mech-rig-value-infight-before-after.png]]
 
-## Next
+### Next (as of pass 5, superseded above)
 
 `goblin_mech` is at 38/50, cap lifted, still below the 42 hunter stop line.
 Both candidates pass 4 left open are now checked and ruled non-issues — do
@@ -763,6 +839,23 @@ brief in full before picking up either.
 
 ## Log
 
+- 2026-09-23 — pass 6 on `goblin_mech` (item 2, hunters, cap lifted): fresh
+  six-view check found no new defect. Re-confirmed pass 4's crown-zigzag
+  fix wasn't oversold (compared its own before/after renders directly),
+  confirmed the whole silhouette including the ordinary arm is one
+  connected component (`scipy.ndimage.label`), and measured the
+  rig-vs-ordinary-arm size disparity as real but moderate — Prop/Hygiene's
+  existing 7s hold up, not hidden defects. Considered and declined a
+  rig-scale-up experiment for Proportion as too risky without a full
+  iterate cycle. Score unchanged, 38/50. Separately: verified the arena's
+  open "RUST wall accent visibility" question across all 5 real fight
+  camera states plus a wide framing — confirmed it never shows in play
+  (only in the loop's own scoring camera) — and filed
+  `to: nick` (`requests/2026-09-23-1200-artist-to-nick-arena-wall-accent-never-shows.md`)
+  since the fix lives in shared `env.py` code. No code changed;
+  `ALL TESTS PASSED`. See `design/progress/goblin_mech.md` pass 6,
+  `design/progress/cinder_jackal_ground.md` pass 4, and `## Now`/`## Next`
+  above for the full write-up.
 - 2026-09-23 — pass 5 on `goblin_mech` (item 2, hunters, cap lifted),
   37→38/50: checked pass 4's two open candidates (wrist-joint curvature,
   claw/piston distinctness) fresh and ruled both non-issues, not fixed.
