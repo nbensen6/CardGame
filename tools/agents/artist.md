@@ -50,7 +50,11 @@ in this repo.
 - **Meshy**: the key is an API credential on the cloud environment — the proxy
   adds it to requests for api.meshy.ai; you will never see it and need not.
   Run `python3 tools/meshy.py balance` first; a 401 means the credential is
-  not set up. Capped at 8 tasks a day; one model is
+  not set up. **Downloads work now** — `assets.meshy.ai` was allowed on
+  2026-09-23 and a cloud probe fetched a real 754KB `glTF`
+  (`MESHY_FETCH_OK 754932`); the old proxy-403 wall is gone. The 3 previews
+  generated 2026-09-23 are still fetchable by their ledger ids — fetch those
+  before spending new tasks. Capped at 8 tasks a day; one model is
   ~5 tasks. If `balance` fails, work on what does not need it (shaders,
   Blender scripts, the arena, card faces) and file a request `to: nick` once.
 - **Blender** headless: see `design/agents/status/README.md`. `ai_beast.py`
@@ -79,5 +83,5 @@ in this repo.
 your queue when no request is open. **No bought asset packs** — every asset
 is generated (Meshy) or built here (Blender, shaders, painted textures).
 Nick, 2026-09-23. The two loudest items on that list are yours: the hunters
-matching the jackal's fidelity, and every card having art that reads at hand
-size.
+matching the jackal's fidelity, and the arena framing the fight instead of
+competing with it. The card items on that list are parked with the card art.
