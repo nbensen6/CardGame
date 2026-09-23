@@ -40,6 +40,20 @@ put screenshots of other games in this repo.**
 Then say what OUR route should be, concretely enough for the fixer and the
 artist to build it.
 
+## The fixer is sending you its view — use it
+
+Nick, 2026-09-23 14:40 EDT. The fixer has the matching request
+(`2026-09-23-1423-nick-to-fixer-stones-camera-and-hunter-spacing.md`) and has
+been told to write down what IT thinks the placement should come out as and
+send it to you, in numbers.
+
+Take that seriously rather than designing around it: it can tell you where a
+stone can actually go, what the jump arc reaches, and what the placement code
+cannot currently express — the constraints your proposal has to live inside.
+Your half is whether the result reads as a route. Converge on one rule, and if
+you cannot agree, say so and file `to: nick` rather than each shipping half of
+it.
+
 ## How to see it
 
 Click **Fight this now** on the Cinder Jackal and try to climb to the sigil.

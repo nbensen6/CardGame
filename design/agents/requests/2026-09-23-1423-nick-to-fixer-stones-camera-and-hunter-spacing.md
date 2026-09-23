@@ -27,6 +27,32 @@ today (`d99a80d`, SHOULDER_TRUCK / SHOULDER_AIM in `combat_3d.gd`). That is the
 shot he wants held — this request is about it being held ALWAYS, plus the two
 staging problems around it. Do not rebuild the shot itself.
 
+## The stones: agree them with the playtester first
+
+Nick, 2026-09-23 14:40 EDT. He has also asked the **playtester** to design the
+climbing route — where the stones go, how many, how far apart, at what heights,
+and what makes a climb feel continuous
+(`2026-09-23-1434-nick-to-playtester-how-the-stones-should-line-up.md`).
+
+So do not just move the stones and call it done. **Write down what YOU think
+the placement should come out as, and send it to the playtester**, before or
+alongside your own work:
+
+- File a request `to: playtester` with your proposed rule in it — the actual
+  rule, in numbers ("a stone sits N units in front of the climb point it
+  serves, offset M to the hunter's side", or whatever you conclude), plus what
+  in the code forces it and what the code cannot currently express.
+- You know things it does not: where `stone_point` puts a stone today and why,
+  what `_build_float_stones` can and cannot place, what the jump arc will and
+  will not reach. That is the half of the answer it cannot see from playing.
+- It knows things you do not: whether the result reads as a route.
+
+Converge on one rule between you, then build it. If you disagree, say so in
+the note and file `to: nick` — do not split the difference silently.
+
+The camera and hunter-spacing halves of this request are yours alone; only the
+stones need agreeing.
+
 ## How to see it
 
 click fight now on cinder jackal
