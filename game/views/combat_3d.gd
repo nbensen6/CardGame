@@ -216,6 +216,35 @@ const FOCUS_WINDOW := 6.5
 ## 15 units: the hunter still reads clearly at the bottom of the frame and the
 ## beast owns the rest of it, which is the composition the whole fight is about.
 const THIRD_WINDOW := 8.0     # world units tall. 15 left a hunter 4% of the frame — a wide shot, not third person (Nick, 2026-09-23).
+## Over the shoulder, at rest as well as mid-jump.
+##
+## Nick, 2026-09-23: "make the resting camera third person too." THIRD_WINDOW
+## already held the hunter and the beast in one frame, but the lens sat dead
+## behind the hunter and aimed AT them, so the hunter was a centred dot with the
+## beast behind their head — a follow cam, not an over-the-shoulder shot. Every
+## third-person game that frames a fight (RE4 onward, Gears, TLOU) does two
+## things this did not: it trucks the lens off the subject's spine, and it aims
+## past them at what they are fighting. The subject then sits in a third of the
+## frame, in the foreground, with the target clear over the shoulder.
+##
+## Both are in world units per unit of camera distance, so the shot holds its
+## composition at every zoom — a fixed world-unit offset would centre the hunter
+## when zoomed out and shove them off the edge when zoomed in.
+##
+## TRUCK moves the LENS off the hunter's spine. That is the parallax alone: it
+## is what lets you see the beast past the hunter instead of through them, and
+## on its own it does not move the hunter in frame at all.
+const SHOULDER_TRUCK := 0.15
+## AIM moves what the lens LOOKS AT, sideways. This is the one that composes the
+## shot: the hunter's offset from the centre of the frame works out to exactly
+## AIM, whatever TRUCK does. At fov 48 on 16:9 a frame is ~1.58 * distance wide,
+## so 0.26 puts the hunter a third of the way in from the left edge.
+##
+## Sideways only — never toward the beast. Sliding the aim INTO the scene changes
+## the camera's pitch as well as its yaw, which dropped the hunter from y=507 to
+## y=602 on a 720 frame, behind the card strip (measured, first attempt at this).
+## The vertical belongs to the jump's hold and dead zone; this must not touch it.
+const SHOULDER_AIM := 0.26
 const ZOOM_STEP := 0.12
 ## Sideways truck, in world units per unit of camera distance, that pushes the
 ## beast right so it centres in the space left of the HUD rather than on the
@@ -368,6 +397,10 @@ var _lock_slot := 0         # the hunter the camera is locked onto (CAMERA_LOCK)
 var _circle: HitCircle      # the osu-style timing face, when that setting is on
 var _circle_index := -1     # the hand index whose window the circle is holding open
 var _focused := false       # the camera is held close on the hunter you picked
+## How much of the over-the-shoulder truck is applied, 0..1, eased rather than
+## switched: the shot has to give it up for the establishing wide and for a jump
+## whose whole arc has to fit, and a hard cut between the two reads as a pop.
+var _shoulder := 0.0
 ## Third person is the DEFAULT now, not a thing you opt into by clicking a
 ## hunter. Set when a fight opens; cleared the moment the shot actually settles
 ## onto someone, or the moment the player takes the camera themselves.
@@ -2006,6 +2039,15 @@ func _aim_camera(delta: float, snap: bool) -> void:
 	# without being asked. Deliberately AFTER the ease above rather than at fight
 	# start: cutting straight to the shoulder shot throws away the one moment the
 	# player gets to see the size of the thing they picked a fight with.
+	# The over-the-shoulder truck, eased. Off for the establishing wide (that shot
+	# is of the BEAST, and trucking would slide it off centre), and off while a
+	# jump is being framed whole — mid-arc the subject is the arc, not a shoulder.
+	var want_ots := 1.0 if (_focused and not _establishing and not _air_chase
+			and _air_span <= THIRD_WINDOW * 0.55) else 0.0
+	if snap:
+		_shoulder = want_ots
+	else:
+		_shoulder = lerpf(_shoulder, want_ots, 1.0 - exp(-delta * 2.2))
 	if _want_third and not _establishing and not _user_framed and not _hunters.is_empty():
 		_want_third = false
 		# 0.20, measured against the card fan rather than guessed. At 0.30 the
@@ -2051,6 +2093,28 @@ static func _window_for(want: float) -> float:
 ## Derivation: for world y=0 to sit at screen fraction (1 - HUD_BOTTOM_FRACTION),
 ## the pivot must be (0.5 - HUD_BOTTOM_FRACTION) * window. The small margin keeps
 ## the feet just clear of the card edge rather than tangent to it.
+## Where an over-the-shoulder lens sits and what it looks at.
+##
+## `amount` is the eased 0..1 blend. Returns the sideways truck to ADD to an
+## orbit camera's position, and the point to aim at: the pivot slid horizontally
+## toward the beast, never vertically (the jump owns the vertical).
+##
+## Static and pure so the composition can be proven headless: truck right of the
+## lens axis, aim left of the hunter, and at amount 0 both reduce to exactly the
+## old shot.
+static func shoulder_frame(pivot: Vector3, yaw: float, dist: float,
+		amount: float) -> Dictionary:
+	var a := clampf(amount, 0.0, 1.0)
+	# The camera's own right on the ground plane. The orbit puts the lens at
+	# pivot + (sin yaw, ., cos yaw) * dist, so it looks along -(sin yaw, 0, cos yaw)
+	# and its right is (cos yaw, 0, -sin yaw).
+	var right := Vector3(cos(yaw), 0.0, -sin(yaw))
+	return {
+		"truck": right * (SHOULDER_TRUCK * dist * a),
+		"aim": pivot + right * (SHOULDER_AIM * dist * a),
+	}
+
+
 static func _ground_pivot(window: float) -> float:
 	return window * (0.5 - HUD_BOTTOM_FRACTION + 0.04)
 
@@ -2218,9 +2282,10 @@ func _apply_orbit() -> void:
 	# Stay inside the arena wall. Without this the orbit happily walks the
 	# lens out past the scenery and the fight goes back to being a plate in
 	# an open sky, however much wall env.py built.
-	_cam_home = _inside_wall(_cam_home)
+	var ots := shoulder_frame(_pivot, _yaw, _dist, _shoulder)
+	_cam_home = _inside_wall(_cam_home + (ots["truck"] as Vector3))
 	_cam.position = _cam_home
-	_cam.look_at(_pivot, Vector3.UP)
+	_cam.look_at(ots["aim"] as Vector3, Vector3.UP)
 	# The hand rail owns the left edge, so the screen's centre is not the SCENE's
 	# centre any more. h_offset trucks the camera sideways without re-aiming it, so
 	# the beast sits in the middle of the space it actually has. It scales with
@@ -3356,15 +3421,28 @@ func _build_float_stones() -> void:
 		rock.rings = 3
 		stone.mesh = rock
 		var mat := StandardMaterial3D.new()
-		# Lighter than the beast it hangs against, or a dark stone on a dark
-		# flank is invisible — the one thing a jump target must never be.
-		mat.albedo_color = Color(0.42, 0.38, 0.40)
+		# BROWN, the same swatch `cinder_jackal.py`'s own scattered ground
+		# boulders already recoloured to (2026-09-23) — was a flat cool grey
+		# (0.42, 0.38, 0.40, "basalt" in name only) that read as a pebble from
+		# a different biome next to this fight's warm UMBER/RUST ground and
+		# beast. BROWN keeps the "lighter than the beast it hangs against"
+		# requirement below (still a bigger gap against the jackal's near-black
+		# CHARCOAL legs than the old grey had) while actually matching the
+		# rock this fight is made of. Small per-stone jitter so a run of
+		# stones at neighbouring heights doesn't read as the same clone.
+		var tint := randf_range(-0.05, 0.05)
+		mat.albedo_color = Color(0.690 + tint, 0.376 + tint, 0.255 + tint)
 		mat.roughness = 1.0
 		stone.material_override = mat
 		# Sunk by half its own thickness, so its TOP sits exactly on the climb
 		# anchor — which is where _stand_on_model puts the hunter's feet.
 		stone.position = _stand_on_model(height, 0.0) - Vector3(0.0, rock.height * 0.5, 0.0)
 		stone.rotation = Vector3(randf_range(-0.12, 0.12), randf_range(0.0, TAU), randf_range(-0.12, 0.12))
+		# Irregular horizontal scale — X/Z only, Y left at 1.0 — so stones read
+		# as separate boulders instead of identical smooth domes. Y is untouched
+		# on purpose: the sink offset above is computed from rock.height before
+		# any scale is applied, and scaling Y would throw that off.
+		stone.scale = Vector3(randf_range(0.85, 1.18), 1.0, randf_range(0.85, 1.18))
 		_rig.add_child(stone)
 		_float_stones.append(stone)
 		_float_home.append(stone.position)
