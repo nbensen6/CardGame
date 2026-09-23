@@ -18,11 +18,11 @@ var weak_point_height: int = 0 # 0 = low sigil (always reachable); >0 needs Foot
 var ledges: Array = []         # safe rest Heights between the base and the sigil (SotC holds) —
                                # each element is either a bare int (legacy: an unrestricted safe
                                # hold) or a named-hold Dictionary, see hold_height()/hold_safe()
-                               # below (design/BACKLOG.md #24).
+                               # below (design/plan/BACKLOG.md #24).
 var weak_point_threshold: int = 0  # sigil damage a hunter can deal per visit before it bucks them off (0 = no limit)
 var limiter: Dictionary = {}   # {"type": ..., "value": ...} — a rule this Titan bends against a
                                 # specific strategy, applied generically by Combat._apply_limiter()
-                                # (design/sts2-comparison.md §3.4). {} = none.
+                                # (design/notes/sts2-comparison.md §3.4). {} = none.
 var hurt_pct: float = 0.0      # backlog #44: below this fraction of max_hp, `hurt_moves` replaces
                                 # `moves` entirely. 0 (default) = no second pattern, unchanged beast.
 var hurt_moves: Array = []     # the second pattern; same shape as `moves` ("when"/"fallback" both

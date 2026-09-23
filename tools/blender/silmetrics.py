@@ -33,7 +33,7 @@ WHAT IT DOES NOT MEASURE
   perfectly here and still be unrecognisable. Use this to find the assets that
   are provably wrong, not to certify the ones that are not.
 
-Thresholds are in design/art-target.md and are gates in design/asset-loop.md.
+Thresholds are in design/art/art-target.md and are gates in design/guide/asset-loop.md.
 """
 import os
 import re
@@ -49,7 +49,7 @@ RENDERS = os.path.join(ROOT, "design", "renders")
 SKIP = ("icon", "portrait", "compare", "control", "_old", "_new")
 
 # The Kenney animal packs sitting unused in game/assets/3d/cast are CC0, are
-# what design/asset-loop.md already names as the reference, and are the closest
+# what design/guide/asset-loop.md already names as the reference, and are the closest
 # thing this project has to "art a professional made and sold in this style".
 # Measured 2026-09-08 they are the calibration, not a decoration.
 KENNEY = {"beaver", "bunny", "cat", "caterpillar", "crab", "deer", "dog",

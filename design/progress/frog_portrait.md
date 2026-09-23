@@ -1,6 +1,6 @@
 # frog — portrait scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D per backlog #83. **Scoring pass
+Loop: `design/guide/asset-loop.md`, adapted for 2D per backlog #83. **Scoring pass
 only — report, not repair; no edits to `tools/blender/portraits.py` or its
 `FOCUS` table.** Asset: `game/assets/portraits/frog.png` (512x512, rendered by
 `portraits.py` from the 3D model). Batch 9 of #83, the first to score

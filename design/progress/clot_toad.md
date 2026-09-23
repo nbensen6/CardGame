@@ -1,6 +1,6 @@
 # clot_toad — refinement log
 
-Loop: `design/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
+Loop: `design/guide/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
 no edits made to `tools/blender/clot_toad.py`.** Views:
 `design/renders/clot_toad_pass1_*.png`.
 

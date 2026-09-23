@@ -28,7 +28,7 @@ Nick's current brief for the artist (`tools/agents/artist.md`, 2026-09-23) names
 Goblin Engineer's fidelity gap against the Cinder Jackal as one of the two loudest items on
 `design/agents/JACKAL-BAR.md`, and explicitly allows rebuilding them in a different style,
 including via Meshy — the same pipeline that built `cinder_jackal_ai.glb`
-(`design/ai-beast-recipe.md`, `tools/blender/ai_beast.py`).
+(`design/guide/ai-beast-recipe.md`, `tools/blender/ai_beast.py`).
 
 I confirmed (research pass this run, not yet acted on in game code — this is squarely game code,
 not mine) that **the display path a rigged/toon Meshy model needs only exists for beasts, not

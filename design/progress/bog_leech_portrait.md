@@ -1,6 +1,6 @@
 # bog_leech — portrait scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D per backlog #83. **Scoring pass
+Loop: `design/guide/asset-loop.md`, adapted for 2D per backlog #83. **Scoring pass
 only — report, not repair.** Asset: `game/assets/portraits/bog_leech.png`
 (512x512). Batch 10 of #83; rubric defined in full in `frog_portrait.md`.
 Rendered from the model as it stands after `bog_leech.md`'s pass 2 fixer pass

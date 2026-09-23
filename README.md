@@ -5,12 +5,12 @@ Each player has a private hand; the boss and battlefield are shared. PC-first (S
 architected so a mobile / "phones-as-hands, TV-as-boss" casting mode is a later
 rendering target, not a rewrite.
 
-**Start here: [`design/GDD.md`](design/GDD.md)** — the game design document. What the
+**Start here: [`design/plan/GDD.md`](design/plan/GDD.md)** — the game design document. What the
 game is, every system, current content counts, and a map of every other design doc
 (including which ones are now history).
 
 See [`CLAUDE.md`](./CLAUDE.md) for the architecture rules and build conventions,
-and [`design/ROADMAP.md`](design/ROADMAP.md) for milestones and Early Access scope.
+and [`design/plan/ROADMAP.md`](design/plan/ROADMAP.md) for milestones and Early Access scope.
 
 ## Engine
 
@@ -106,9 +106,9 @@ Exit code 0 = passed. (Use the `_console.exe` on Windows so stdout is captured.)
     any hunter's death = the run is lost.
 
 - **Autonomous deepening pass** (theme: **Titan-slayers**, Shadow-of-the-Colossus
-  inspired — see [`design/titan-design.md`](design/titan-design.md)):
+  inspired — see [`design/plan/titan-design.md`](design/plan/titan-design.md)):
   - **Balance** (sim-driven): tuned so coordination decides — naive AI 8% / a
-    coordinated AI 96% over a full run ([`design/balance-notes.md`](design/balance-notes.md)).
+    coordinated AI 96% over a full run ([`design/notes/balance-notes.md`](design/notes/balance-notes.md)).
   - **Climb loop**: shared **Foothold** + high weak points → *climb → reveal →
     strike* (Grip, Sunlight Blade, Bowshot).
   - **3-Titan runs + relics**: a 3rd Titan (Drowned Colossus, new `regen` move) and
@@ -123,7 +123,7 @@ Exit code 0 = passed. (Use the `_console.exe` on Windows so stdout is captured.)
 hundreds of full runs to measure difficulty.
 
 **To fine-tune** (difficulty, cards, Titans, relics): see
-[`design/tuning-knobs.md`](design/tuning-knobs.md).
+[`design/notes/tuning-knobs.md`](design/notes/tuning-knobs.md).
 
 Open / needs you: whether the difficulty & combos *feel* right (playtest),
 real cross-machine network test, seamless reconnect, real art, and the §4

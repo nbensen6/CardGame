@@ -1,11 +1,11 @@
 # support — icon scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D card icons per backlog #83,
+Loop: `design/guide/asset-loop.md`, adapted for 2D card icons per backlog #83,
 batch 15 — rubric and method as `design/progress/shield_icon.md` (this
 batch's reference file), not repeated here. Asset:
 `game/assets/icons/support.png` (256x256). Fourth of the "not dying" family
 (`shield`, `guard`, `wall`, `support`) — grouped with the other three by
-`design/ART-REVIEW.md` even though its own card_view.gd comment ("help the
+`design/art/ART-REVIEW.md` even though its own card_view.gd comment ("help the
 ally") is not itself a Block variant the way the other three are.
 
 ## Score

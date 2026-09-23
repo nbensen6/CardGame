@@ -1,10 +1,10 @@
 # cog — icon scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
+Loop: `design/guide/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
 21 (see `target_icon.md` for the batch's full scope and shared rubric).
 **Scoring pass only — report, not repair; no edits to `tools/blender/icons.py`.**
 Asset: `game/assets/icons/cog.png` (256x256, rendered by `icons.py`,
-orthographic head-on per `design/ART-REVIEW.md`'s own build note). Last of
+orthographic head-on per `design/art/ART-REVIEW.md`'s own build note). Last of
 batch 21's four — with this batch, thirty-two of the thirty-six total card
 icons are now scored.
 

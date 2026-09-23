@@ -1,6 +1,6 @@
 # ascend — icon scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D card icons per backlog #83,
+Loop: `design/guide/asset-loop.md`, adapted for 2D card icons per backlog #83,
 batch 16 (see `design/progress/climb_icon.md` for the full rubric and batch
 setup — same rules apply here, not repeated). Asset:
 `game/assets/icons/ascend.png` (256x256). Second of the "six are about going

@@ -1407,7 +1407,7 @@ func _check_weakpoint_buck(pi: int) -> void:
 
 ## Each Titan bends one rule against a specific strategy — a wound-stacker, a
 ## sigil-camper, a hunter who hoards all the Height — so four Titans read as four
-## puzzles rather than four HP bars (design/sts2-comparison.md §3.4). One generic
+## puzzles rather than four HP bars (design/notes/sts2-comparison.md §3.4). One generic
 ## dispatch on boss.limiter (data), same pattern as the move-type match in
 ## _enemy_turn(). Runs once at the start of the Titan's turn, before its move.
 func _apply_limiter() -> void:

@@ -1,13 +1,13 @@
 # intangible — icon scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
+Loop: `design/guide/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
 14 — the third adaptation after the 3D-model rubric (batches 1-8) and the
 portrait rubric (batches 9-13). **Scoring pass only — report, not repair; no
 edits to `tools/blender/icons.py`.** Asset: `game/assets/icons/intangible.png`
 (256x256, rendered by `icons.py`, orthographic head-on per
-`design/ART-REVIEW.md`'s own build note). First of batch 14's four — the
+`design/art/ART-REVIEW.md`'s own build note). First of batch 14's four — the
 "four defensive-keyword icons (intangible, buffer, plated_armour, thorns)"
-block in `design/ART-REVIEW.md`, its own stated question: can these four be
+block in `design/art/ART-REVIEW.md`, its own stated question: can these four be
 told apart from `shield`/`guard`/`wall` at 42px, and does each look like what
 its card actually does.
 

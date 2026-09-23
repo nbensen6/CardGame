@@ -1,6 +1,6 @@
 # lightbearer — portrait scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D per backlog #83. **Scoring pass
+Loop: `design/guide/asset-loop.md`, adapted for 2D per backlog #83. **Scoring pass
 only — report, not repair.** Asset: `game/assets/portraits/lightbearer.png`
 (512x512). Batch 9 of #83; rubric defined in full in `frog_portrait.md`
 (Framing / Identity / Readability @34px / Colour & separation / Style

@@ -1,6 +1,6 @@
 # husk_beetle — portrait scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D per backlog #83. **Scoring pass
+Loop: `design/guide/asset-loop.md`, adapted for 2D per backlog #83. **Scoring pass
 only — report, not repair.** Asset: `game/assets/portraits/husk_beetle.png`
 (512x512). Batch 12 of #83; rubric defined in full in `frog_portrait.md`.
 

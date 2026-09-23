@@ -98,5 +98,5 @@ repo from GitHub, so an unpushed note never reaches them.
 - **Stay on the goal.** Work outside the jackal fight only if a request asks.
 - **Money.** Meshy credits (artist only) are capped by `tools/meshy.py`
   (8 tasks/day). Never raise the cap.
-- Everything in `CLAUDE.md` and the hard rules in `design/BACKLOG.md` still
+- Everything in `CLAUDE.md` and the hard rules in `design/plan/BACKLOG.md` still
   apply.

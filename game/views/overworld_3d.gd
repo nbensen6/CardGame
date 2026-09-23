@@ -1,6 +1,6 @@
 ## The overworld — the run map as a PLACE you walk, not a column of buttons.
 ##
-## Step 3 of design/3d-pivot.md. `RunMap` is already a DAG of rows and edges;
+## Step 3 of design/guide/3d-pivot.md. `RunMap` is already a DAG of rows and edges;
 ## this renders it as a hex field. Each node is one Kenney Hexagon Kit tile whose
 ## landmark tells you what it is (watchtower = fight, castle = elite, cabin =
 ## rest, market = shop, wizard tower = event, mine = treasure, mountain = Titan),

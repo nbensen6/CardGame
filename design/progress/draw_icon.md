@@ -1,10 +1,10 @@
 # draw — icon scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
+Loop: `design/guide/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
 19 — continuing the icon rubric batches 14-18 established. **Scoring pass
 only — report, not repair; no edits to `tools/blender/icons.py`.** Asset:
 `game/assets/icons/draw.png` (256x256, rendered by `icons.py`, orthographic
-head-on per `design/ART-REVIEW.md`'s own build note). Last of batch 19's
+head-on per `design/art/ART-REVIEW.md`'s own build note). Last of batch 19's
 four (see `flask_icon.md` for the batch's scope and shared rubric).
 
 ## The adapted rubric (1–10 each, out of 50)

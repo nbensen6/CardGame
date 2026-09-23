@@ -8826,7 +8826,7 @@ func _test_next_safe_height() -> void:
 		"the next safe hold is the ledge (or sigil) above you")
 
 
-# --- Named holds — the climb ENGINE (design/BACKLOG.md #24) ---------------
+# --- Named holds — the climb ENGINE (design/plan/BACKLOG.md #24) ---------------
 
 func _test_hold_helpers_read_both_shapes() -> void:
 	var legacy_ok: bool = Boss.hold_height(4) == 4 and Boss.hold_safe(4) and Boss.hold_exposed_to(4).is_empty()
@@ -20691,7 +20691,7 @@ func _face(id: String, path: String, shared: Dictionary, faceless: Array) -> voi
 
 
 ## backlog #74: AssetContract carries the reusable half of the model shape
-## contract (design/BACKLOG.md — "give the machine enough of a contract that
+## contract (design/plan/BACKLOG.md — "give the machine enough of a contract that
 ## it can fail loudly"). assetcheck.gd wires it to real loaded .glb files,
 ## which needs actual model files and a scene tree; these exercise the exact
 ## same functions against a handful of hand-built triangles so the contract
@@ -26638,7 +26638,7 @@ func _test_backlog86_dev_console_find_matches_ids_case_insensitively() -> void:
 
 ## backlog #86 duty 3: `rares` is the ONLY thing that tells a human (or another
 ## lane) how many of backlog #84's 29 rares still need a painted 3D window --
-## `design/rare-card-3d-effect.md` and #84's own log cite this exact count --
+## `design/art/rare-card-3d-effect.md` and #84's own log cite this exact count --
 ## and nothing had ever driven it. A rare that silently landed in BOTH buckets,
 ## or neither, would misreport real unfinished art as done (or vice versa)
 ## with nobody able to tell from the console's own output.

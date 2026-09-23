@@ -1,10 +1,10 @@
 # burn — icon scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
+Loop: `design/guide/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
 22 (see `target_icon.md` for batch 21's full scope and the shared rubric).
 **Scoring pass only — report, not repair; no edits to `tools/blender/icons.py`.**
 Asset: `game/assets/icons/burn.png` (256x256, rendered by `icons.py`,
-orthographic head-on per `design/ART-REVIEW.md`'s own build note). First of
+orthographic head-on per `design/art/ART-REVIEW.md`'s own build note). First of
 batch 22's four — the last batch of the "twenty-eight card icons" block; with
 this batch, all thirty-six total card icons are scored.
 
@@ -287,7 +287,7 @@ Verified both fixes directly, not from the geometry alone:
 
 **+4 total (37 → 41), not a plateau — kept. Crosses the 40/50 stop line.**
 No line regressed. `run_tests.gd`: **ALL TESTS PASSED** (fresh import,
-headless, godot 4.7.1). Stopping here per `design/asset-loop.md`'s own stop
+headless, godot 4.7.1). Stopping here per `design/guide/asset-loop.md`'s own stop
 condition — 3 of 4 passes used, and another pass would be chasing points
 past the line the loop itself says is "shippable and good."
 

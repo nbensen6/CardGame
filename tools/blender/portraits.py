@@ -95,7 +95,7 @@ FOCUS_XY = {
 EYE = Vector((0.62, -1.0, 0.30))
 SIZE = 512
 
-## Beasts rebuilt from AI-generated models (design/ai-beast-recipe.md) render
+## Beasts rebuilt from AI-generated models (design/guide/ai-beast-recipe.md) render
 ## from <name><suffix>.glb — the same table as combat_3d.AI_ART.
 AI_ART = {"cinder_jackal": "_ai"}
 

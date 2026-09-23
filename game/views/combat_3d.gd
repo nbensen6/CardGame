@@ -28,7 +28,7 @@ const OUTLINE := preload("res://assets/3d/outline.gdshader")
 ## Python-built model rather than over it, so `build.cmd cast` can never
 ## silently put the old one back.
 const AI_ART := {"cinder_jackal": "_ai"}
-## Hunters rebuilt the same way (design/ai-beast-recipe.md), the parallel table
+## Hunters rebuilt the same way (design/guide/ai-beast-recipe.md), the parallel table
 ## the 2026-09-23 hunter-display-path request asked for: a character id listed
 ## here loads <id><suffix>.glb over cast/<id>.glb (Cast.model_path's own
 ## stand-in rule still applies first — see _spawn_hunter) and takes the same
@@ -90,7 +90,7 @@ const EMBERS := {
 ## no-op (body_gain 1.0, the shader's own ember_gain 2.6); a beast only
 ## renders differently once it has an entry here. A swatch swap was tried
 ## first and could not move the top of the range at all — see
-## design/BUILDER-QUEUE.md for the measurement.
+## design/plan/BUILDER-QUEUE.md for the measurement.
 const VALUE_RANGE := {
 	"cinder_jackal": {"body_gain": 0.55, "ember_gain": 4.5},
 }
@@ -3976,7 +3976,7 @@ func _confirm_quit() -> void:
 ## Shows what it does right now (live, from Combat.preview), the authored text, and
 ## every keyword it touches with the mechanic explained. Before this, each card
 ## re-taught its own mechanics on the face forever, which is why card text kept
-## growing. See design/feel-and-readability.md.
+## growing. See design/notes/feel-and-readability.md.
 func _show_card_detail(data: Dictionary) -> void:
 	if _detail != null and is_instance_valid(_detail):
 		_detail.queue_free()
@@ -4108,7 +4108,7 @@ func _detail_rule() -> Control:
 ##
 ## Until now the only place a hit's SIZE appeared was a line of text in the log,
 ## four lines down in the corner — so the loop was: play a card, see a flash, then
-## READ to find out what happened. See design/feel-and-readability.md.
+## READ to find out what happened. See design/notes/feel-and-readability.md.
 ##
 ## Sized against the beast's own height so it stays legible whether you're fighting
 ## a pup or a Titan (the camera pulls back with the beast, so a fixed size shrinks).

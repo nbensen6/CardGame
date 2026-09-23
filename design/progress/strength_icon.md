@@ -1,11 +1,11 @@
 # strength — icon scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
+Loop: `design/guide/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
 17 — continuing the icon rubric batches 14-16 established. **Scoring pass
 only — report, not repair; no edits to `tools/blender/icons.py`.** Asset:
 `game/assets/icons/strength.png` (256x256, rendered by `icons.py`,
-orthographic head-on per `design/ART-REVIEW.md`'s own build note). First of
-batch 17's four — `design/ART-REVIEW.md`'s own **"Strength and Dexterity
+orthographic head-on per `design/art/ART-REVIEW.md`'s own build note). First of
+batch 17's four — `design/art/ART-REVIEW.md`'s own **"Strength and Dexterity
 icons"** section, scored as a pair; `dexterity` is scored alongside it in
 `design/progress/dexterity_icon.md`.
 

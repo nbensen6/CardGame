@@ -104,7 +104,7 @@ copies, with a regression test.
   feels good, only whether the numbers are survivable.
 - Route and campfire policy are modelled simply (heal when hurt, otherwise take
   risks / sharpen). A player drafting a real archetype should beat these numbers.
-- Every knob lives in data — see `design/tuning-knobs.md`.
+- Every knob lives in data — see `design/notes/tuning-knobs.md`.
 
 ## Older results, for reference
 Pre-climb 3-Titan runs landed naive 8% / coord 96%; the first height-gated

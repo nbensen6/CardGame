@@ -567,7 +567,7 @@ standing `to: nick` request noting item (2) — the prompt text — is now
 fixed, and item (1) — whether the pool itself should be resized for 2-player
 co-op — is still his call, untouched.
 
-Full write-up in `design/BACKLOG.md`'s `## Log` (2026-09-23 entry). Next
+Full write-up in `design/plan/BACKLOG.md`'s `## Log` (2026-09-23 entry). Next
 `#86` turn is duty 2.
 
 ## Old: 2026-09-23, duty 2 — sealed-door ending recorded as a win in history
@@ -633,7 +633,7 @@ this bug never touched a pixel, only a persisted `ConfigFile` value; the
 before/after numeric proof above is the evidence, same convention the
 hop-arc trajectory fix used two runs ago.
 
-Full write-up in `design/BACKLOG.md`'s `## Log` (2026-09-23 entry, now
+Full write-up in `design/plan/BACKLOG.md`'s `## Log` (2026-09-23 entry, now
 superseded as the newest by this run's duty-3 entry). Next `#86` turn was
 duty 3 (done above); the one after that is duty 2.
 
@@ -967,7 +967,7 @@ further either.
   (`phase == WON and true_ending`). Extended the existing sealed-door test
   to check `run_history()` too; failed on the unfixed tree (`got
   result=win`), passes now. `ALL TESTS PASSED`; `mode=hands` playtest clean.
-  Full write-up in `design/BACKLOG.md`'s `## Log`. Items 1-3 (Cinder-
+  Full write-up in `design/plan/BACKLOG.md`'s `## Log`. Items 1-3 (Cinder-
   Jackal-scoped) came back clean first, same as yesterday's audit — see
   `## Now`.
 - 2026-09-22 — full audit pass, no bug found: live `mode=play` (80

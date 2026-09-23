@@ -20,7 +20,7 @@ start to finish.
    against the Kenney reference band it prints. **These are not gates and they
    do not fail an asset** — the thresholds this step shipped with on 2026-09-07
    were invented and the reference refuted them a day later; see
-   `design/art-target.md`. The one output worth acting on is a **near-twin pair
+   `design/art/art-target.md`. The one output worth acting on is a **near-twin pair
    inside our own cast**. Confirm the progress file carries its **ANCHOR**
    sentence, and write one if it does not — that sentence, not the numbers, is
    what the rest of the loop is judged against.
@@ -121,7 +121,7 @@ a pass" will grind on the joinery of furniture that needs redesigning.
   `tools/blender/dissect.py` on the real packs gives ~575 tris median, ~80% of
   faces smooth-shaded, ~30% of edges in a 25–50° bevel band, parts built from
   tubes, boxes and tapers. `tools/blender/kenney.py` is that vocabulary.
-- **Reference:** `design/art-target.md` — read it before the first pass on any
+- **Reference:** `design/art/art-target.md` — read it before the first pass on any
   asset. The short version: the Kenney models in `game/assets/3d/` are the
   reference and they are CC0, so `dissect.py` and `silmetrics.py` can both be
   run over them to get target numbers from art a professional made and sold in

@@ -160,7 +160,7 @@ PC first, where the audience is proven).
 ## 12. 3D assets
 
 Every 3D asset goes through the scored refinement loop in
-**`design/asset-loop.md`** — build, capture, look, score, fix the two worst
+**`design/guide/asset-loop.md`** — build, capture, look, score, fix the two worst
 things, repeat, max four passes. Do not generate an asset in one pass and call
 it done.
 
@@ -170,7 +170,7 @@ prove a model meets its contract and cannot tell you it reads as a lamp.
 
 - `tools\blender\look.cmd <asset> <pass>` — capture six views to `design/renders/`
 - `design/progress/<asset>.md` — the score history for one asset
-- `design/ART-REVIEW.md` — assets still waiting on a human eye
+- `design/art/ART-REVIEW.md` — assets still waiting on a human eye
 - `tools\blender\palette.py` — the shared colour atlas. Derives from
   `colormap_base.png`, so it is safe to re-run and the numbers in it always mean
   what they say. **Every model embeds the atlas**, so changing it means

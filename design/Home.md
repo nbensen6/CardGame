@@ -13,6 +13,14 @@ Moving every beast from the Python-primitive models to the AI pipeline: generate
 
 ![[Beasts.base#Art overhaul]]
 
+## Start here
+
+- **[[agents/Agents|Agents]] → the FOR NICK tab** — everything waiting on your
+  decision, one plain sentence each. Answer under **Nick's answer** in the note.
+- **[[agents/Last sync|Last sync]]** — when this PC last pulled the agents'
+  work, and what came in. It syncs hourly on its own; **Sync the agents** on
+  the desktop does it now.
+
 ## The cloud agents
 
 Artist, playtester and fixer coordinate on [[agents/BOARD|the agent board]] — what each is doing, and requests between them (and to Nick).
@@ -21,14 +29,17 @@ Artist, playtester and fixer coordinate on [[agents/BOARD|the agent board]] — 
 
 ## Where things are
 
-| | |
+Six folders, and nothing loose. Links work by name, so `[[BACKLOG]]` still
+finds it wherever it lives.
+
+| folder | what is in it |
 |---|---|
-| Game design | [[GDD]] · [[titan-design]] · [[climbing-and-characters]] · [[cards-and-classes]] |
-| Plans | [[ROADMAP]] · [[OVERHAUL-PLAN]] · [[BACKLOG]] · [[BUILDER-QUEUE]] |
-| Art | [[ai-beast-recipe]] · [[art-target]] · [[ART-REVIEW]] · [[adding-detail]] · [[blender-pipeline]] |
-| Feel | [[feel-and-readability]] · [[tuning-knobs]] · [[audio-guide]] |
-| Tech | [[3d-pivot]] · [[mobile-setup]] · [[claude-project]] |
-| Bugs | `progress/bugs.md` (filed by the inspector lane) |
+| **agents** | the board, the three agents' status notes, requests, frames |
+| **plan** | where the game is going — [[GDD]] · [[ROADMAP]] · [[OVERHAUL-PLAN]] · [[BACKLOG]] · [[BUILDER-QUEUE]] · [[titan-design]] · [[depth-plan]] |
+| **guide** | how things get made — [[asset-loop]] · [[ai-beast-recipe]] · [[blender-pipeline]] · [[blender-learning]] · [[audio-guide]] · [[3d-pivot]] · [[mobile-setup]] · [[climbing-and-characters]] |
+| **art** | how it should look — [[ART-REVIEW]] · [[art-target]] · [[card-face-vs-sts]] · [[icon-audit]] · the palette and frame templates, plus `previews/` and `references/` |
+| **notes** | thinking out loud — [[feel-and-readability]] · [[tuning-knobs]] · [[balance-notes]] · [[cards-and-classes]] · [[sts2-comparison]] |
+| **beasts** · **progress** · **renders** | one note per beast · per-asset work logs · raw render output |
 
 > [!tip] How to use this
 > - **Beasts.base** is a live table: change a beast's `status`, `model` or `next` in its note and the table updates.

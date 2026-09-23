@@ -1,6 +1,6 @@
 # husk_beetle — refinement log
 
-Loop: `design/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
+Loop: `design/guide/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
 no edits made to `tools/blender/husk_beetle.py`.** Views: `design/renders/husk_beetle_pass1_*.png`.
 
 | Pass | Sil | Prop | Hygiene | Colour | Style | Total |
@@ -248,7 +248,7 @@ longer overshoots the thorax dome's clearance window.
   edge on both shoulders in the pass 4 front render. That is almost
   certainly the real source of the silhouette spike, not the main seam this
   pass fixed. Leaving the score at 5 rather than claiming an improvement the
-  render does not show — the honesty rule in `design/asset-loop.md`.
+  render does not show — the honesty rule in `design/guide/asset-loop.md`.
   Colour and Style untouched, scores carried over from pass 3.
 
 +2 total. Not a plateau on its own (pass 3 was a re-score, not a geometry

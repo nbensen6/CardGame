@@ -20,7 +20,7 @@ repeatable pass, so the builder lane can run it without a live Blender:
   6. export game/assets/3d/cast/<id>_ai.glb, save tools/blender/ai/<id>_ai.blend
 
 Prints REPORT lines the builder reads back. --dry stops after the gate.
-See design/ai-beast-recipe.md.
+See design/guide/ai-beast-recipe.md.
 """
 import bpy, bmesh, math, os, random, sys
 from mathutils import Vector as V, Matrix

@@ -1,7 +1,7 @@
 """The Yoke Ox - the fight-pool beast that punishes climbing apart.
 
 Ledges at Height 2 and 4, sigil at 5. Its bent rule is `height_split`
-(design/BACKLOG.md #55's own limiter field, spent before only by Stone Warden,
+(design/plan/BACKLOG.md #55's own limiter field, spent before only by Stone Warden,
 a Titan): a hunter more than 3 Height above their ally takes chip damage each
 of the Ox's turns, previewing for a hunter the exact rule language a real
 Titan will use later, gentler (value 3) than Stone Warden's harsher 4. Every

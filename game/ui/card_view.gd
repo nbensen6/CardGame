@@ -282,7 +282,7 @@ static func foil_tilt_for(t: float, accel: Vector3, has_rect: bool, rel: Vector2
 ## ART_LAYER is deliberately a named index. Backlog #84 wants the Slay the Spire
 ## style 3D window on rare cards, and that effect arrives as a 120-frame sprite
 ## sequence - it replaces exactly one node, at exactly this index, and every
-## layer above it keeps working untouched. See design/rare-card-3d-effect.md.
+## layer above it keeps working untouched. See design/art/rare-card-3d-effect.md.
 const ART_LAYER := 1
 
 

@@ -1,4 +1,4 @@
-## The run map — the roguelike's branching route (design/depth-plan.md item 1).
+## The run map — the roguelike's branching route (design/plan/depth-plan.md item 1).
 ##
 ## A run is a sequence of ACTS. Each act is a few rows of branching nodes capped
 ## by a boss row (a Titan). You stand on a node and may step to any node its

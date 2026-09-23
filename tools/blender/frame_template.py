@@ -2,7 +2,7 @@
 
     python tools/blender/frame_template.py
 
-Writes design/card-frame-template.png — open it in Canva as a locked background
+Writes design/art/card-frame-template.png — open it in Canva as a locked background
 layer, design on top of it, then export the frame alone at the same size.
 
 WHY A TEMPLATE AND NOT JUST "MAKE A BORDER". A card is not one size. It is

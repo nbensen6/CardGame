@@ -1,6 +1,6 @@
 # stack — icon scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
+Loop: `design/guide/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
 22 (see `target_icon.md`/`burn_icon.md` for the batch's full scope and the
 shared rubric). **Scoring pass only — report, not repair; no edits to
 `tools/blender/icons.py`.** Asset: `game/assets/icons/stack.png` (256x256,

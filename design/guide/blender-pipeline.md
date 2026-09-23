@@ -122,7 +122,7 @@ then **one lesser beast**, then a **Titan**. Do not start with the Titan — it'
 the most visible model and you'll want your third attempt at a beast, not your
 first.
 
-**→ `design/first-asset-frog.md` picks that first hunter and walks it end to end:
+**→ `design/guide/first-asset-frog.md` picks that first hunter and walks it end to end:
 what to build, the two evenings it takes, the exact drop-in path, and the command
 to look at it.**
 

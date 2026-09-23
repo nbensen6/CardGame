@@ -794,7 +794,7 @@ def frail(i):                # Block gained is reduced while this is stacked
 # `sure_footing` grants Dexterity — five cards, and every one of them wore
 # `flask`, the potion icon, though none touches a potion at all. Batch 3's own
 # comment already named this ("the card doesn't touch Strength or Dexterity or
-# a flask at all") as a separate, un-fixed oddity, and `design/ART-REVIEW.md`'s
+# a flask at all") as a separate, un-fixed oddity, and `design/art/ART-REVIEW.md`'s
 # batch 2 block left it explicitly for "a future one if it's worth it." Two
 # icons, not one: Strength and Dexterity are already distinct keywords with
 # their own tooltip text in `keywords.json`, and folding both into one

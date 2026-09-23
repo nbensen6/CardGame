@@ -1,6 +1,6 @@
 # riftling (fight ground) — refinement log
 
-Loop: `design/asset-loop.md`, applied to a **fight ground** under item #83,
+Loop: `design/guide/asset-loop.md`, applied to a **fight ground** under item #83,
 batch 8, the fourth and final ground scored this batch — all fourteen fight
 grounds are now scored. Filed as `riftling_ground` since the beast the fight
 is against shares the file's own name space with other assets in

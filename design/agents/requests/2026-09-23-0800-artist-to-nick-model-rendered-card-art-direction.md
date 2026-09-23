@@ -13,11 +13,11 @@ taken_by: nick
 
 ## What
 
-Item 4 of the artist brief (`design/card-face-vs-sts.md` §2.5) has been
+Item 4 of the artist brief (`design/art/card-face-vs-sts.md` §2.5) has been
 untouched all thread: only 4 of the Frog's 41 pool cards are painted, and the
 Goblin Engineer — this fight's other hunter — has **zero**. Painted art needs
 Canva work from you (`tools/artprep.py`'s `--card` flow), which is the actual
-blocker (`design/BACKLOG.md` #82: "the blocker is now ART, not code").
+blocker (`design/plan/BACKLOG.md` #82: "the blocker is now ART, not code").
 
 I tried a different source for it instead of asking you to paint 33 more
 cards: **render the card's art from the hunter's own 3D model**, the same

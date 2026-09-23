@@ -1,4 +1,4 @@
-"""The 3D window for rare cards — backlog #84, from design/rare-card-3d-effect.md.
+"""The 3D window for rare cards — backlog #84, from design/art/rare-card-3d-effect.md.
 
     blender --background --python tools/blender/rare3d.py -- \
         --art game/assets/cardart/grand_leap.png \

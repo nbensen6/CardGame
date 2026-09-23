@@ -1,4 +1,4 @@
-## The pure, data-only half of the model shape contract (design/BACKLOG.md #74).
+## The pure, data-only half of the model shape contract (design/plan/BACKLOG.md #74).
 ##
 ## Everything here takes plain triangle/UV arrays and returns numbers or bools —
 ## no file IO, no SceneTree, no Blender. That is deliberate: `assetcheck.gd`
@@ -31,7 +31,7 @@ const BUDGET := {"hunter": 1400, "beast": 2600, "prop": 500}
 ## `320.0 / 512.0`.
 ##
 ## This constant carried the pre-+16 value for a while after `swatch()`
-## picked up the offset (design/BACKLOG.md #86 duty 2, 2026-09-03) — a hand
+## picked up the offset (design/plan/BACKLOG.md #86 duty 2, 2026-09-03) — a hand
 ## copy of a formula, and the formula moved without it. Checked against every
 ## already-shipped beast's real exported UVs while fixing it: every one
 ## carries its gold mark at V ~= 0.656 (336/512), none at the old 0.625, so

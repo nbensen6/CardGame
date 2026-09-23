@@ -1,6 +1,6 @@
 # grove_bear (fight ground) — refinement log
 
-Loop: `design/asset-loop.md`, applied to a **fight ground** under item #83,
+Loop: `design/guide/asset-loop.md`, applied to a **fight ground** under item #83,
 batch 7. Filed as `grove_bear_ground` rather than `grove_bear` because a
 beast of the same name already exists in `game/assets/3d/cast/`. **Scoring
 pass only — item #83 is report, not repair; no edits made to

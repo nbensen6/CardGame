@@ -13,7 +13,7 @@ taken_by: nick
 
 ## What
 
-`design/asset-loop.md` caps an asset at 4 passes (or the stop line,
+`design/guide/asset-loop.md` caps an asset at 4 passes (or the stop line,
 whichever comes first). Both hunters this fight's brief names — `frog` and
 `goblin_mech` — have now used all 4 passes and are still under the 42
 hunter stop line: `frog` at 36/50 (`design/progress/frog.md`), `goblin_mech`

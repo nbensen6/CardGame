@@ -155,7 +155,7 @@ already made for their own fixes at this scale.
 
 **Score: Hygiene 8→9, 41→42/50 — clears the 42 hunter stop line.** Both
 candidates pass 9 left open are now closed (one fixed at its real cause,
-one checked and ruled not a second instance). Per `design/asset-loop.md`,
+one checked and ruled not a second instance). Per `design/guide/asset-loop.md`,
 the honest call at the stop line: stop passing `goblin_mech` unless a
 request or a fresh look finds a real, new defect. **Both hunters are now
 past their stop lines** (`frog` 43/50, `goblin_mech` 42/50) — the loudest
@@ -182,7 +182,7 @@ the fixer took it mid-run** (per `origin/main`, not this run's own work —
 check its `## Result` first next time before assuming it's still open).
 Once it lands: `frog_ai.md`'s next step is a Meshy `refine` on
 candidate A (texture it, ~10 credits, budget available) so the next pass has
-something to score against `design/asset-loop.md`'s Colour/Style lines, not
+something to score against `design/guide/asset-loop.md`'s Colour/Style lines, not
 just Silhouette. A rig is the step after that, and it needs its own script —
 `ai_beast.py`'s rig math is reusable in spirit (region-gated weights off
 measured leg positions) but its climb-marker step is not, since hunters
@@ -359,7 +359,7 @@ already made for their own fixes at this scale.
 
 **Score: Hygiene 8→9, 41→42/50 — clears the 42 hunter stop line.** Both
 candidates pass 9 left open are now closed (one fixed at its real cause,
-one checked and ruled not a second instance). Per `design/asset-loop.md`,
+one checked and ruled not a second instance). Per `design/guide/asset-loop.md`,
 the honest call at the stop line: stop passing `goblin_mech` unless a
 request or a fresh look finds a real, new defect. **Both hunters are now
 past their stop lines** (`frog` 43/50, `goblin_mech` 42/50) — the loudest
@@ -876,7 +876,7 @@ Full write-up, all three attempts and why each was rejected or kept:
 ## Next
 
 `frog` is now past its 42 hunter stop line (43/50) — the honest call per
-`design/asset-loop.md` is to stop passing it unless a request or a fresh
+`design/guide/asset-loop.md` is to stop passing it unless a request or a fresh
 look finds a real defect, not chase 44+ for its own sake. One thing still
 open if it comes back up: the back saddle/nostrils' 34px legibility pass 6
 found and pass 7 partially closed — still unmoved, and this pass's own
@@ -936,7 +936,7 @@ part boundary needs real light/dark separation, not just a different hue at
 the same brightness (Blizzard's own published design pillars for
 Overwatch's heroes are the clearest public statement of this; described
 here in words only, no screenshot from another game added to this repo, per
-Nick's brief and `design/asset-loop.md`'s own reference rule).
+Nick's brief and `design/guide/asset-loop.md`'s own reference rule).
 
 **Measured every colour boundary in the model against that test**, off
 `colormap.png`'s own pixels (perceptual luminance
@@ -1093,7 +1093,7 @@ only, no new parts:
   haunch breaks the silhouette instead of blending into the trunk's own
   swell.
 
-Also wrote the **ANCHOR** sentence `design/asset-loop.md` step 4 calls for
+Also wrote the **ANCHOR** sentence `design/guide/asset-loop.md` step 4 calls for
 — `frog.md` never had one — since without it there's nothing to score later
 passes against besides last pass's number.
 
@@ -1197,7 +1197,7 @@ shared-wall-system call across three grounds — also Nick's. So this run
 picked up item 4, **the cards**, which last run's `## Next` flagged as
 "untouched so far this whole thread of runs."
 
-**The real blocker on cards is art, not code** (`design/BACKLOG.md` #82) —
+**The real blocker on cards is art, not code** (`design/plan/BACKLOG.md` #82) —
 painted card faces need Canva work from Nick (`tools/artprep.py`'s `--card`
 flow), and only 4 of 187 cards (all Frog) have any. Rather than wait on
 that, tried the same move `portraits.py` already made for the party-panel
@@ -1344,7 +1344,7 @@ and the sigil-less-rig note: `design/progress/goblin_mech.md`.
 No open `to: artist` request this run, so picked up the brief's next item
 in order — the arena. `design/progress/cinder_jackal_ground.md` did not
 exist: the ground had renders from a past batch build but had never been
-scored under `design/asset-loop.md`, unlike several other fights' grounds.
+scored under `design/guide/asset-loop.md`, unlike several other fights' grounds.
 Ran the loop on it (pass 1 baseline, pass 2 fix, pass 3 fix), scored
 22 → 28/50 (stop line for a ground is 44; stopped short of it deliberately —
 see the file's "Why stop here").

@@ -4,7 +4,7 @@
 ##   Godot_v4.7.1-stable_win64_console.exe --headless --path game \
 ##     --script res://tools/assetcheck.gd -- file=res://assets/3d/cast/frog.glb
 ##
-## Why this exists: the five rules in design/blender-pipeline.md (facing, origin,
+## Why this exists: the five rules in design/guide/blender-pipeline.md (facing, origin,
 ## applied transforms, .glb, embedded textures) are all invisible until the thing
 ## is standing in a fight looking wrong, and then it is guesswork which rule you
 ## broke. This reads the mesh and tells you which one, in seconds.

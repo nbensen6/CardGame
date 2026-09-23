@@ -1,6 +1,6 @@
 # drowned_colossus (fight ground) — refinement log
 
-Loop: `design/asset-loop.md`, applied to a **fight ground** under item #83,
+Loop: `design/guide/asset-loop.md`, applied to a **fight ground** under item #83,
 batch 8. Filed as `drowned_colossus_ground` rather than `drowned_colossus`
 because a beast of the same name already exists in `game/assets/3d/cast/`.
 **Scoring pass only — item #83 is report, not repair; no edits made to

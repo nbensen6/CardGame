@@ -1,6 +1,6 @@
 # yoke_ox — refinement log
 
-Loop: `design/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
+Loop: `design/guide/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
 no edits made to `tools/blender/yoke_ox.py`.** Views: `design/renders/yoke_ox_pass1_*.png`.
 
 | Pass | Sil | Prop | Hygiene | Colour | Style | Total |

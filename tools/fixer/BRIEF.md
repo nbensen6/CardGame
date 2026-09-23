@@ -114,8 +114,8 @@ difference between this brief and the one before it.
   history of trouble is claims nobody looked at.
 - **A find needs a repro.** The exact command, the state, the beast. A finding
   nobody can reproduce is a rumour.
-- **Do not touch `design/BACKLOG.md`** (the cloud's) or
-  `design/BUILDER-QUEUE.md` (the builder's). Say it in `bugs.md`; they read it.
+- **Do not touch `design/plan/BACKLOG.md`** (the cloud's) or
+  `design/plan/BUILDER-QUEUE.md` (the builder's). Say it in `bugs.md`; they read it.
 - **Say what you could not check.** A pass you skipped is more useful admitted
   than quietly dropped — this lane has twice been dead for days while its log
   looked fine.

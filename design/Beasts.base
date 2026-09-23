@@ -2,26 +2,23 @@ filters:
   and:
     - file.hasTag("beast")
     - file.inFolder("beasts")
-
 formulas:
-  stage: 'if(status == "done", "✅ done", if(status == "template", "⭐ template", if(model == "ai", "🛠 in progress", "⬜ todo")))'
-  tier_rank: 'if(tier == "boss", 3, if(tier == "elite", 2, 1))'
-
+  stage: if(status == "done", "✅ done", if(status == "template", "⭐ template", if(model == "ai", "🛠 in progress", "⬜ todo")))
+  tier_rank: if(tier == "boss", 3, if(tier == "elite", 2, 1))
 properties:
   name:
     displayName: Beast
   formula.stage:
     displayName: Stage
   weak_point_height:
-    displayName: "Sigil height"
+    displayName: Sigil height
   rigged:
     displayName: Rigged
   next:
-    displayName: "Next step"
-
+    displayName: Next step
 views:
   - type: table
-    name: "Art overhaul"
+    name: Art overhaul
     groupBy:
       property: tier
       direction: ASC
@@ -36,20 +33,18 @@ views:
       - next
     summaries:
       rigged: Checked
-
   - type: table
-    name: "Still Python-built"
+    name: Still Python-built
     filters:
       and:
-        - 'model == "python"'
+        - model == "python"
     order:
       - file.name
       - tier
       - hp
       - weak_point_height
-
   - type: cards
-    name: "Roster"
+    name: Roster
     order:
       - file.name
       - tier

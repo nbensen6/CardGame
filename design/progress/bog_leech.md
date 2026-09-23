@@ -1,6 +1,6 @@
 # bog_leech — refinement log
 
-Loop: `design/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
+Loop: `design/guide/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
 no edits made to `tools/blender/bog_leech.py`.** Views: `design/renders/bog_leech_pass1_*.png`.
 Captured after "Darken the rock, warm the organics" (rock-family palette darkened,
 a UV row-sampling bug fixed) and the three-point lighting rig landed underneath this

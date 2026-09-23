@@ -1,6 +1,6 @@
 # boulder_ram — refinement log
 
-Loop: `design/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
+Loop: `design/guide/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
 no edits made to `tools/blender/boulder_ram.py`.** Views: `design/renders/boulder_ram_pass1_*.png`.
 Captured after "Darken the rock, warm the organics" (palette + UV fix) and the
 three-point lighting rig landed underneath this pass via merge — re-rendered

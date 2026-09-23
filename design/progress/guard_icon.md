@@ -1,11 +1,11 @@
 # guard — icon scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D card icons per backlog #83,
+Loop: `design/guide/asset-loop.md`, adapted for 2D card icons per backlog #83,
 batch 15 — rubric and method as `design/progress/shield_icon.md` (this
 batch's reference file), not repeated here. Asset:
 `game/assets/icons/guard.png` (256x256). Second of the "not dying" family
 (`shield`, `guard`, `wall`, `support`) — the specific icon
-`design/ART-REVIEW.md` names as the closest pair to `shield`.
+`design/art/ART-REVIEW.md` names as the closest pair to `shield`.
 
 ## Score
 
@@ -25,7 +25,7 @@ the body. Alpha bbox `(60, 38, 196, 242)`: comfortable margin, no clipping.
   one pair `ART-REVIEW.md` itself flagged as unsure, and looking at it
   directly confirms the worry rather than clearing it. Outer silhouette is
   effectively identical to `shield`'s at 42px.
-- **Mechanic match (3), the weak point of this batch:** `design/ART-REVIEW.md`
+- **Mechanic match (3), the weak point of this batch:** `design/art/ART-REVIEW.md`
   describes the intended build as "a shield with a clock face" — a clock
   face would visually carry "timed" the way `timer`'s icon already does
   elsewhere in the set. What actually renders is a plain block letter "L,"
@@ -82,7 +82,7 @@ moved):
    two tapered hands built with `spike()`, both centred so their pivot end
    sits exactly at the ring's own centre (0.0, 0.10) and radiate outward at
    0.5 rad and 2.6 rad — a genuine off-12 angle pair, not the 12-and-3 "plus"
-   `design/ART-REVIEW.md` warned against. Each hand's own object had its
+   `design/art/ART-REVIEW.md` warned against. Each hand's own object had its
    `.location.y` set to −0.12 to match the ring, for the same reason the ring
    needed moving. Both hands kept under length 0.14, inside the ring's own
    tube (inner edge ≈0.164), so neither tip hides behind the rim.
@@ -248,7 +248,7 @@ Verified three ways before scoring:
 
 **+4 total (37 → 41), not a plateau — kept. Crosses the 40/50 stop line.**
 No line regressed. `run_tests.gd`: **ALL TESTS PASSED** (fresh import,
-headless, Godot 4.7.1). Stopping here per `design/asset-loop.md`'s stop
+headless, Godot 4.7.1). Stopping here per `design/guide/asset-loop.md`'s stop
 condition — 3 of 4 passes used, and past the line the loop calls
 "shippable and good."
 

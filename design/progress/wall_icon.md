@@ -1,6 +1,6 @@
 # wall — icon scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D card icons per backlog #83,
+Loop: `design/guide/asset-loop.md`, adapted for 2D card icons per backlog #83,
 batch 15 — rubric and method as `design/progress/shield_icon.md` (this
 batch's reference file), not repeated here. Asset:
 `game/assets/icons/wall.png` (256x256). Third of the "not dying" family

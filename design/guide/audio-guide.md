@@ -15,7 +15,7 @@ no code, no rebuild. So upgrading is mostly "find a better file, name it right."
 
 ## Level 1 — free, high-quality libraries (fastest win)
 All royalty-free, usable commercially (check each item's license — see
-`design/cards-and-classes.md`… actually the itch note in chat: prefer **CC0**):
+`design/notes/cards-and-classes.md`… actually the itch note in chat: prefer **CC0**):
 - **Kenney.nl** — CC0 game-audio packs (impacts, UI, whooshes). Zero attribution.
   Grab "Impact Sounds", "UI Audio", "RPG Audio". Best starting point.
 - **Sonniss "GDC Game Audio Bundle"** — free every year, tens of GB of *pro*,

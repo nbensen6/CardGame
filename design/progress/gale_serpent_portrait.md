@@ -1,6 +1,6 @@
 # gale_serpent — portrait scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D per backlog #83. Asset:
+Loop: `design/guide/asset-loop.md`, adapted for 2D per backlog #83. Asset:
 `game/assets/portraits/gale_serpent.png` (512x512, rendered by
 `portraits.py` from the 3D model). Rubric defined in full in
 `frog_portrait.md`. First score for this asset — `gale_serpent` already had

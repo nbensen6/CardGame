@@ -51,7 +51,7 @@ Look at it, three angles, without opening Blender:
       --python tools/blender/preview.py -- \
       "G:/Co Op Game/game/assets/3d/cast/frog.glb" out.png
 
-Then check it against the five pipeline rules in `design/blender-pipeline.md`:
+Then check it against the five pipeline rules in `design/guide/blender-pipeline.md`:
 
     Godot_v4.7.1-stable_win64_console.exe --headless --path game \
       --script res://tools/assetcheck.gd -- file=res://assets/3d/cast/frog.glb
@@ -204,7 +204,7 @@ So `done()` measures the real range and prints the line to paste back:
 
 ## References
 
-`design/art-references/` — drop pictures in, say which model. Its README is an
+`design/art/references/` — drop pictures in, say which model. Its README is an
 honest account of which kinds of reference change the result and which do not.
 The short version: a model file beats three views, three views beat a
 screenshot, and a screenshot beats a concept painting, because the ranking is by

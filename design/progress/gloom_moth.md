@@ -1,6 +1,6 @@
 # gloom_moth — refinement log
 
-Loop: `design/asset-loop.md`. Views: `design/renders/gloom_moth_pass1_*.png`,
+Loop: `design/guide/asset-loop.md`. Views: `design/renders/gloom_moth_pass1_*.png`,
 `design/renders/gloom_moth_pass2_*.png`.
 
 | Pass | Sil | Prop | Hygiene | Colour | Style | Total |

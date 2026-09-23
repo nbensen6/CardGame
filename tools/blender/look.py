@@ -16,7 +16,7 @@ The last one is the point of this script existing rather than preview.py.
 Every automated check this project has answers "does the model meet the
 contract" — budget, one mesh, one material, holds where the data says. Not one
 of them answers "is it readable as this creature". The failures listed at the
-top of design/ART-REVIEW.md are all of the second kind, and all of them passed
+top of design/art/ART-REVIEW.md are all of the second kind, and all of them passed
 every check: the Vine-Weaver that read as a lamp, the Warden's sigil hidden
 behind its own head, two zones of dark and darker.
 

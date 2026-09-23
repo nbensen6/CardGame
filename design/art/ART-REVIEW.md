@@ -55,7 +55,7 @@ Treat every "NEEDS A PASS" note below as **possibly describing the camera rather
 than the model**. The frog scored 30/50 on the broken view and about 35 on the
 fixed one without a single edit. Re-shoot before believing any of them.
 
-The loop these now go through is `design/asset-loop.md`:
+The loop these now go through is `design/guide/asset-loop.md`:
 `tools\blender\look.cmd <asset> <pass>`, then open the images and score.
 
 ## How a run adds to this
@@ -66,7 +66,7 @@ One block per asset, newest at the top, appended by the run that made it:
 ### <name> — NEEDS A PASS
 - built: 2026-08-25 by the routine, from tools/blender/<name>.py
 - checks: assetcheck 4/4, holds PASS (3 holds + sigil), 2140 tris, 1 mesh, 1 material
-- previews: design/art-previews/<name>_0.png (three-quarter), _1.png (front), _2.png (side)
+- previews: design/art/previews/<name>_0.png (three-quarter), _1.png (front), _2.png (side)
 - intent: one or two lines on what it was TRYING to be, so a reviewer can judge
   it against that rather than against a guess
 - unsure about: whatever the run could not verify — silhouette, colour, whether
@@ -199,7 +199,7 @@ The failures that have happened, all of which passed every check:
   backlog #55's numeric "done when" bar (six new beasts) was met on
   2026-08-27 and twelve had landed by the time this run started, the most
   recent being Glyph Tortoise. This run kept finding no other actionable
-  `cloud-safe`/`cloud-art` work in `design/BACKLOG.md`, so it built a
+  `cloud-safe`/`cloud-art` work in `design/plan/BACKLOG.md`, so it built a
   thirteenth toward the item's own stated goal of fourteen. Elite pool.
   Bent rule: `sigil_fatigue` (backlog #55's `limiter` field — the same
   field every true Titan carries, checked generically by
@@ -310,7 +310,7 @@ The failures that have happened, all of which passed every check:
   backlog #55's numeric "done when" bar (six new beasts) was met on
   2026-08-27 and eleven had landed by the time this run started. This run
   kept finding no other actionable `cloud-safe`/`cloud-art` work in
-  `design/BACKLOG.md`, so it built a twelfth toward the item's own stated
+  `design/plan/BACKLOG.md`, so it built a twelfth toward the item's own stated
   goal of fourteen. Fight pool. Bent rule: `artifact` (backlog #36 — wards
   off the first N Frail/Poison/Expose applications before they land),
   spent before only by Frost Sentinel (an ELITE) and never yet by any of
@@ -419,7 +419,7 @@ The failures that have happened, all of which passed every check:
   backlog #55's numeric "done when" bar (six new beasts) was met on
   2026-08-27 and ten landed by the time this run started (five in the fight
   pool, five in elite). This run kept finding no other actionable
-  `cloud-safe`/`cloud-art` work in `design/BACKLOG.md`, so it built an
+  `cloud-safe`/`cloud-art` work in `design/plan/BACKLOG.md`, so it built an
   eleventh toward the item's own stated goal of fourteen. Elite pool. Bent
   rule: `min_height` (backlog #40, spent before only by Frost Sentinel,
   paired there with `attack_all`) combined with `leech` for the first
@@ -519,7 +519,7 @@ The failures that have happened, all of which passed every check:
   backlog #55's numeric "done when" bar (six new beasts) was met on
   2026-08-27 and nine landed by the time this run started; this run kept
   finding no other actionable `cloud-safe`/`cloud-art` work in
-  `design/BACKLOG.md`, so it built a tenth toward the item's own stated
+  `design/plan/BACKLOG.md`, so it built a tenth toward the item's own stated
   goal of fourteen. Elite pool. Bent rule: `hurt_pct`/`hurt_moves` again
   (spent before by Crag Pup, Mire Snapper, Gale Serpent, Cinder Jackal —
   all four MORE dangerous below the line — and Clot Toad, which scabs
@@ -580,7 +580,7 @@ The failures that have happened, all of which passed every check:
   "never on the centreline" fix every recent beast's SHELVES already
   needed) dropped it straight to 49% on the next build — the fix was
   never "push it further forward," the geometry test in
-  `design/BACKLOG.md`'s own beast.py notes about centreline anchors
+  `design/plan/BACKLOG.md`'s own beast.py notes about centreline anchors
   applies to the SIGIL too, not only to holds, and this is the first
   beast that needed it there.
 - **unsure about — read this before treating the model as done, even by
@@ -775,7 +775,7 @@ The failures that have happened, all of which passed every check:
   floating somewhere near it. Landed at exactly 50%, the contract's own
   boundary — a human should decide whether that is too close to the line
   once ledges or hold flairs shift a future rebuild of this file.
-- previews: `design/art-previews/brine_urchin_0.png` (three-quarter), _1
+- previews: `design/art/previews/brine_urchin_0.png` (three-quarter), _1
   (front), _2 (side); portrait `game/assets/portraits/brine_urchin.png`.
   Not opened or judged by this run — no display here, per this file's own
   standing rule.
@@ -864,7 +864,7 @@ The failures that have happened, all of which passed every check:
   wrong. Fixed by placing `foot()` a little above the paw's own lowest
   point rather than exactly on it, giving the step room to grow downward
   without going negative.
-- previews: `design/art-previews/cinder_jackal_0.png` (three-quarter), _1
+- previews: `design/art/previews/cinder_jackal_0.png` (three-quarter), _1
   (front), _2 (side); portrait `game/assets/portraits/cinder_jackal.png`.
   Two cosmetic problems were caught by actually opening the renders (not
   just trusting the contract) and partly fixed: the shoulder/haunch hold
@@ -955,7 +955,7 @@ The failures that have happened, all of which passed every check:
   rebuilt as a small STONE plate recessed flush into the hump's own front
   face with the mark sitting just proud of it (a mounted shoulder-sigil
   rather than an antenna), which is what shipped.
-- previews: `design/art-previews/boulder_ram_0.png` (three-quarter), `_1.png`
+- previews: `design/art/previews/boulder_ram_0.png` (three-quarter), `_1.png`
   (front), `_2.png` (side). Portrait: `game/assets/portraits/boulder_ram.png`
   (`portraits.py` regenerates all 22 by design; only the new one was copied
   into the repo, the other 21 left untouched on disk). `FOCUS["boulder_ram"]
@@ -1043,7 +1043,7 @@ The failures that have happened, all of which passed every check:
   and moving the mark doesn't move the number, the culprit may be the mark
   itself, not the body — try shrinking `size` before adding more forward
   clearance.
-- previews: `design/art-previews/silk_widow_0.png` (three-quarter), `_1.png`
+- previews: `design/art/previews/silk_widow_0.png` (three-quarter), `_1.png`
   (front), `_2.png` (side). Portrait: `game/assets/portraits/silk_widow.png`
   (`portraits.py` regenerates all 21 by design; only the new one was copied
   into the repo, the other 20 left untouched on disk).
@@ -1113,7 +1113,7 @@ The failures that have happened, all of which passed every check:
   again, was real forward clearance (the mark sits roughly a ball-diameter
   in front of the crest's own edge) bridged by a thin stalk, not a
   hand-measured "just past the surface."
-- previews: `design/art-previews/thrasher_0.png` (three-quarter), `_1.png`
+- previews: `design/art/previews/thrasher_0.png` (three-quarter), `_1.png`
   (front), `_2.png` (side). Portrait: `game/assets/portraits/thrasher.png`
   (rendering `portraits.py` regenerates all 21 by design; only the new one
   was copied into the repo, the other 20 left untouched on disk).
@@ -1188,7 +1188,7 @@ The failures that have happened, all of which passed every check:
   ONE axis, which read fine in the contract but rendered as a giant flat red
   wall covering the whole model from the front — caught by looking at the
   rendered preview, not by any automated check.
-- previews: `design/art-previews/bog_leech_0.png` (three-quarter), `_1.png`
+- previews: `design/art/previews/bog_leech_0.png` (three-quarter), `_1.png`
   (front), `_2.png` (side). Portrait: `game/assets/portraits/bog_leech.png`
   (rendering portraits.py regenerates all 20 by design; only the new one was
   copied into the repo, the other 19 left untouched on disk).
@@ -1236,7 +1236,7 @@ The failures that have happened, all of which passed every check:
   silhouette distinct (closest match `shifting_idol.glb` at 72%, checked
   against all 38 existing models). 1856 tris / 2600 beast budget, 1 mesh,
   1 material. Full `run_tests.gd` green (484 passed).
-- previews: `design/art-previews/gloom_moth_0.png` (three-quarter), `_1.png`
+- previews: `design/art/previews/gloom_moth_0.png` (three-quarter), `_1.png`
   (front), `_2.png` (side). Portrait: `game/assets/portraits/gloom_moth.png`
   (rendering it regenerated all 19 other portraits too — a Blender-version
   rendering difference, not a content change — so those were reverted and
@@ -1307,7 +1307,7 @@ The failures that have happened, all of which passed every check:
   one of its own, so the size check failed. Fixed in `run_tests.gd` by
   clearing `combat.adds` before the test appends Grub, so the assertion no
   longer depends on which beast a seed happens to roll.
-- previews: `design/art-previews/husk_beetle_0.png` (three-quarter), `_1.png`
+- previews: `design/art/previews/husk_beetle_0.png` (three-quarter), `_1.png`
   (front), `_2.png` (side).
 - intent: a stout, low ground beetle climbing its own back — four stubby legs,
   a two-segment shell forming the two ledges, mandibles up front, the sigil on
@@ -1692,7 +1692,7 @@ fallback was the default rather than something chosen.
 - built: 2026-08-25 by hand, from tools/blender/lightbearer.py
 - checks: 1312 tris (inside the 1400 hunter budget), 1 mesh, 1 material, all
   parts touching, assetcheck 4/4
-- previews: design/art-previews/lightbearer_0.png (three-quarter), _1, _2
+- previews: design/art/previews/lightbearer_0.png (three-quarter), _1, _2
 - intent: the class banks a resource and spends it in one go, so the read is a
   VESSEL — a lantern held high on a staff and a second light already caught in
   the chest. Two lights, one stored and one carried. Silhouette-wise it is the
@@ -1770,7 +1770,7 @@ rebuilding was going to fix that, because the shape itself was the problem.
 - built: 2026-08-25 by hand, from tools/blender/vine_weaver.py
 - checks: 1704 tris (**304 over the 1400 hunter budget — see below**), 1 mesh,
   1 material, all parts touching, assetcheck 4/4
-- previews: design/art-previews/vine_weaver_0.png (three-quarter), _1, _2
+- previews: design/art/previews/vine_weaver_0.png (three-quarter), _1, _2
 - intent: the Ent read is carried by four things — a face cut INTO the wood with
   a jutting brow so the eyes sit in their own shadow, root feet with three toes
   each reaching the ground at different lengths, arms that FORK rather than
@@ -1789,7 +1789,7 @@ rebuilding was going to fix that, because the shape itself was the problem.
 - built: 2026-08-25 by hand, from tools/blender/mountain_climbers.py
 - checks: 1436 tris (36 over), 1 mesh, 1 material, all parts touching,
   assetcheck 4/4
-- previews: design/art-previews/mountain_climbers_0.png (three-quarter), _1, _2
+- previews: design/art/previews/mountain_climbers_0.png (three-quarter), _1, _2
 - intent: the rope is the class, so it is an actual rope — one limb wound twice
   round the chest on a helix whose radius follows the torso's own curve, so it
   lies ON him. Two horizontal tori read as a barrel. The pack is a bevelled box
@@ -1802,7 +1802,7 @@ rebuilding was going to fix that, because the shape itself was the problem.
 - built: 2026-08-25 by hand, from tools/blender/goblin_mech.py
 - checks: 1484 tris (84 over the 1400 hunter budget), 1 mesh, 1 material, all
   parts touching, assetcheck 4/4
-- previews: design/art-previews/goblin_mech_0.png (three-quarter), _1 (front),
+- previews: design/art/previews/goblin_mech_0.png (three-quarter), _1 (front),
   _2 (side)
 - intent: the rebuild onto the wider vocabulary. The organic half stays soft —
   ball body, cone ears, ball head — and the rig is entirely bevelled boxes and
@@ -1813,7 +1813,7 @@ rebuilding was going to fix that, because the shape itself was the problem.
   stacked beside him rather than as an arm attached to him, and four passes of
   shrinking, swinging and angling it did not fix that. This is a proportion
   problem, which is the exact thing a reference settles and guessing does not —
-  see design/art-references/README.md. Any picture of a mech arm, a piston claw
+  see design/art/references/README.md. Any picture of a mech arm, a piston claw
   or a power loader would end it.
   Also unjudged: whether the ears are now too large, and whether the exhaust
   pipe reads as a pipe or as an orange handle.
@@ -1822,7 +1822,7 @@ rebuilding was going to fix that, because the shape itself was the problem.
 - built: 2026-08-25 by hand, from tools/blender/frog.py
 - checks: 1456 tris (56 over the 1400 hunter budget), 1 mesh, 1 material, all
   parts touching, assetcheck 4/4
-- previews: design/art-previews/frog_0.png (three-quarter), _1 (front), _2 (side)
+- previews: design/art/previews/frog_0.png (three-quarter), _1 (front), _2 (side)
 - intent: the head is now ONE broad wedge that narrows to a blunt snout, split
   across its full width by a grin with a jaw under it, rather than a ball with a
   stripe painted on. Legs bend — one limb() each, folded at the knee — and every

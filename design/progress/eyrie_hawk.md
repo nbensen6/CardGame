@@ -1,6 +1,6 @@
 # eyrie_hawk — refinement log
 
-Loop: `design/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
+Loop: `design/guide/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
 no edits made to `tools/blender/eyrie_hawk.py`.** Views:
 `design/renders/eyrie_hawk_pass1_*.png`.
 

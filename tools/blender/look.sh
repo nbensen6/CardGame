@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Capture an asset so it can be judged. See design/asset-loop.md.
+# Capture an asset so it can be judged. See design/guide/asset-loop.md.
 #
 #   tools/blender/look.sh frog 1               a hunter or a beast
 #   tools/blender/look.sh env crag_pup 1       a fight's ground

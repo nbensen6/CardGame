@@ -1,10 +1,10 @@
 # fire — icon scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
+Loop: `design/guide/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
 18 — continuing the icon rubric batches 14-17 established. **Scoring pass
 only — report, not repair; no edits to `tools/blender/icons.py`.** Asset:
 `game/assets/icons/fire.png` (256x256, rendered by `icons.py`, orthographic
-head-on per `design/ART-REVIEW.md`'s own build note). Third of batch 18's
+head-on per `design/art/ART-REVIEW.md`'s own build note). Third of batch 18's
 four — the "four basic damage-type icons" (sword, bow, fire, skull).
 
 ## The adapted rubric (1–10 each, out of 50)

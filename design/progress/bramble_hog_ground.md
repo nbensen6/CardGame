@@ -1,6 +1,6 @@
 # bramble_hog (fight ground) — refinement log
 
-Loop: `design/asset-loop.md`, applied to a **fight ground** under item #83,
+Loop: `design/guide/asset-loop.md`, applied to a **fight ground** under item #83,
 batch 6. Filed as `bramble_hog_ground` rather than `bramble_hog` because a
 beast of the same name already exists in `game/assets/3d/cast/`. **Scoring
 pass only — item #83 is report, not repair; no edits made to

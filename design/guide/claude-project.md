@@ -22,7 +22,7 @@ in Godot 4.7 where two small creatures climb colossal beasts and kill them
 together. Slay-the-Spire run structure, Shadow-of-the-Colossus fights. PC first,
 Steam, Early Access. Solo (one player drives both hunters) or two players online.
 
-Read design/GDD.md in the project knowledge before answering anything about what
+Read design/plan/GDD.md in the project knowledge before answering anything about what
 the game is. It is the source of truth and it maps every other document.
 
 THE FIVE PILLARS. Every idea must serve one, or it gets cut:
@@ -74,14 +74,14 @@ All of it is small — the whole doc set is ~126KB, well inside a project.
 
 | File | Why |
 |---|---|
-| `design/GDD.md` | The whole game in one document. If you attach only one, this. |
-| `design/ROADMAP.md` | Milestones, the EA box, content targets, risks |
-| `design/tuning-knobs.md` | Every number and where it lives |
-| `design/cards-and-classes.md` | The card schema and class kits — needed to draft content |
+| `design/plan/GDD.md` | The whole game in one document. If you attach only one, this. |
+| `design/plan/ROADMAP.md` | Milestones, the EA box, content targets, risks |
+| `design/notes/tuning-knobs.md` | Every number and where it lives |
+| `design/notes/cards-and-classes.md` | The card schema and class kits — needed to draft content |
 | `CLAUDE.md` | Architecture rules and conventions |
 
-**Worth adding:** `design/blender-pipeline.md` if you're going to talk about art,
-`design/balance-notes.md` for difficulty conversations, `TASKS.md` for planning.
+**Worth adding:** `design/guide/blender-pipeline.md` if you're going to talk about art,
+`design/notes/balance-notes.md` for difficulty conversations, `TASKS.md` for planning.
 
 **Don't attach:** the historical docs (`titan-design.md`,
 `climbing-and-characters.md`, `OVERHAUL-PLAN.md`). They describe a game you no

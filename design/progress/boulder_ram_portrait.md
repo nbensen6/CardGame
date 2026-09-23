@@ -1,6 +1,6 @@
 # boulder_ram — portrait scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D per backlog #83. **Scoring pass
+Loop: `design/guide/asset-loop.md`, adapted for 2D per backlog #83. **Scoring pass
 only — report, not repair.** Asset: `game/assets/portraits/boulder_ram.png`
 (512x512). Batch 10 of #83; rubric defined in full in `frog_portrait.md`.
 No fixer pass exists for this asset — geometry matches the pass-1 render

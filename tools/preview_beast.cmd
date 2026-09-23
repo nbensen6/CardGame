@@ -1,5 +1,5 @@
 @echo off
-REM Refresh a beast's previews in design/art-previews, so Nick can look at it
+REM Refresh a beast's previews in design/art/previews, so Nick can look at it
 REM in Obsidian (or any image viewer) without booting the game.
 REM
 REM     tools\preview_beast.cmd cinder_jackal

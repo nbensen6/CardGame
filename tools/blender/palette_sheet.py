@@ -2,7 +2,7 @@
 
     python tools/blender/palette_sheet.py
 
-Writes design/palette.png — every swatch with its name and hex, then a strip per
+Writes design/art/palette.png — every swatch with its name and hex, then a strip per
 hunter showing the colours that hunter's own MODEL is built from.
 
 Nick wants a different card border per character. The colours for that already

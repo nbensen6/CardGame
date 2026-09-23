@@ -1,6 +1,6 @@
 # vine_weaver — refinement log
 
-Loop: `design/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
+Loop: `design/guide/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
 no edits made to `tools/blender/vine_weaver.py`.** Views: `design/renders/vine_weaver_pass1_*.png`.
 Hunter (1400 tri budget).
 

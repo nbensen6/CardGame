@@ -1,12 +1,12 @@
 # target — icon scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
+Loop: `design/guide/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
 21 — the next four of the eight "twenty-eight card icons" left unscored
 after batch 20, in `card_view.gd`'s own `ICONS` table order (`target`,
 `rhythm`, `timer`, `cog`). **Scoring pass only — report, not repair; no
 edits to `tools/blender/icons.py`.** Asset: `game/assets/icons/target.png`
 (256x256, rendered by `icons.py`, orthographic head-on per
-`design/ART-REVIEW.md`'s own build note). First of batch 21's four (see
+`design/art/ART-REVIEW.md`'s own build note). First of batch 21's four (see
 `rhythm_icon.md`, `timer_icon.md`, `cog_icon.md` for the rest).
 
 ## The adapted rubric (1–10 each, out of 50)

@@ -149,7 +149,7 @@ better starting point than the 2D situation ever was.
   Worth re-checking by feel in co-op specifically, where two live clocks while
   your partner thinks is the case most likely to grate. Real-time solo /
   turn-based in co-op remains available if it does.
-- **Art: Nick is learning Blender.** See `design/blender-pipeline.md` for the
+- **Art: Nick is learning Blender.** See `design/guide/blender-pipeline.md` for the
   model contract. The relevant engineering follow-up is done: models are now sized
   to a measured target world height rather than a fixed multiplier, so a mesh
   built at any scale drops in, and swapping a beast is a one-line change.

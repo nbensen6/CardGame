@@ -1,5 +1,5 @@
 {
-  "_comment": "The game's vocabulary. A card names a mechanic; this explains it ONCE, in the card inspector. Before this file every card re-taught its own rules on the face, which is why card text kept growing (design/feel-and-readability.md). Keywords are DERIVED from a card's fields by GameHost._keywords_of — no card has to declare them, so a new card gets the right tooltips for free.",
+  "_comment": "The game's vocabulary. A card names a mechanic; this explains it ONCE, in the card inspector. Before this file every card re-taught its own rules on the face, which is why card text kept growing (design/notes/feel-and-readability.md). Keywords are DERIVED from a card's fields by GameHost._keywords_of — no card has to declare them, so a new card gets the right tooltips for free.",
   "keywords": {
     "timed": {
       "name": "Timed",

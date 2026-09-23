@@ -6,7 +6,7 @@
 ##
 ## That ordering is the point: making art should mean exporting a file, not
 ## exporting a file AND editing three view scripts to notice it (see
-## design/blender-pipeline.md).
+## design/guide/blender-pipeline.md).
 class_name Cast
 extends RefCounted
 

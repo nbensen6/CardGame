@@ -6,7 +6,7 @@ roughly in this order of what a player notices:
 1. **The Cinder Jackal** (`game/assets/3d/cast/cinder_jackal_ai.glb`,
    source `tools/blender/ai/cinder_jackal_ai.blend`). Built 2026-09-22 from a
    Meshy model through `tools/blender/ai_beast.py`; recipe in
-   `design/ai-beast-recipe.md`. Known open issues: its inner ears glow so hot
+   `design/guide/ai-beast-recipe.md`. Known open issues: its inner ears glow so hot
    they fill the screen when the camera is at the sigil (see `combat_3d.gd`
    `AI_MOTION` glow_gain and `toon.gdshader`); footholds are plain basalt.
 2. **The two hunters in the fight** — the Frog and the Goblin Engineer
@@ -24,8 +24,8 @@ roughly in this order of what a player notices:
    subject tiny in a big scene) is the reference. The model-rendered route
    was tried and rolled back; `tools/blender/cardart.py` and `tools/cardbg.py`
    stay in the tree, unused, for whenever he says go.
-   (Original scope, for when it returns:) — the Frog and Goblin decks' faces. See `design/icon-audit.md`,
-   `design/card-face-vs-sts.md` and `game/ui/card_view.gd`. Only some cards
+   (Original scope, for when it returns:) — the Frog and Goblin decks' faces. See `design/art/icon-audit.md`,
+   `design/art/card-face-vs-sts.md` and `game/ui/card_view.gd`. Only some cards
    have painted art; the rest show a bare icon. Slay the Spire's cards are the
    bar: every card has art, and art reads at hand size.
 

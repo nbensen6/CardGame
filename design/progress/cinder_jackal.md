@@ -1,6 +1,6 @@
 # cinder_jackal — refinement log
 
-Loop: `design/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
+Loop: `design/guide/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
 no edits made to `tools/blender/cinder_jackal.py`.** Views:
 `design/renders/cinder_jackal_pass1_*.png`.
 

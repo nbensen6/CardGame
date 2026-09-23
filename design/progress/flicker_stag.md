@@ -1,6 +1,6 @@
 # flicker_stag — refinement log
 
-Loop: `design/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
+Loop: `design/guide/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
 no edits made to `tools/blender/flicker_stag.py`.** Views:
 `design/renders/flicker_stag_pass1_*.png`.
 

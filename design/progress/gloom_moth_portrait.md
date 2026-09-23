@@ -1,6 +1,6 @@
 # gloom_moth — portrait scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D per backlog #83. **Scoring pass
+Loop: `design/guide/asset-loop.md`, adapted for 2D per backlog #83. **Scoring pass
 only — report, not repair.** Asset: `game/assets/portraits/gloom_moth.png`
 (512x512). Batch 12 of #83; rubric defined in full in `frog_portrait.md`.
 
@@ -72,7 +72,7 @@ Only the **Framing (7)** line had a fix that stays in `portraits.py`
 without touching the model: nudge the focus centre right, per this file's
 own diagnosis. **Readability @ 34px (6)** needs the sigil moved on the
 antenna, which is `gloom_moth.py` model geometry — out of this lane's
-scope (`design/asset-loop.md`'s file-ownership split), so left untouched
+scope (`design/guide/asset-loop.md`'s file-ownership split), so left untouched
 here, same as `eyrie_hawk_portrait.md`'s sigil finding and every prior
 pass under this item that hit a model-only fix.
 

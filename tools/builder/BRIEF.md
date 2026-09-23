@@ -15,7 +15,7 @@ size (baked AO, swatch swaps, surface breakup, material variation — all
 "proven invisible"). On 2026-09-22 the session replaced the jackal outright
 with a generated, rigged, animated model and Nick said it looks good. That is
 the path now. **Phases 1 and 2 are done**: the jackal is the template and the
-recipe is `design/ai-beast-recipe.md`. You are in **phase 3, rollout.**
+recipe is `design/guide/ai-beast-recipe.md`. You are in **phase 3, rollout.**
 
 ## The pipeline you run
 
@@ -23,7 +23,7 @@ Everything is scripted; you need no live Blender.
 
 1. **Pick the beast.** Top of the "Still Python-built" list in
    `design/beasts/` (a note per beast; `model: python`), in the order
-   `design/BUILDER-QUEUE.md` gives. Read its note and the docstring of
+   `design/plan/BUILDER-QUEUE.md` gives. Read its note and the docstring of
    `tools/blender/<beast>.py` — that docstring is the creature's design brief
    (shape, palette, what makes it this animal).
 2. **Generate three shapes** with `python tools/meshy.py preview "<prompt>"`.
@@ -49,13 +49,13 @@ Everything is scripted; you need no live Blender.
    in `tools/blender/portraits.py`, and to `AI_MOTION` only if it needs a
    glow tweak. `--import`, then run the tests.
 7. **Look at it in the fight, at 1:1** (below): `tools\preview_beast.cmd <id>`
-   writes the turnaround and three game shots to `design/art-previews/`; also
+   writes the turnaround and three game shots to `design/art/previews/`; also
    shoot `state=3dgrip` and read the `HUNTER` lines — a hunter must stand ON a
    foothold, not beside it.
 8. **Portrait**: `blender -b --python tools/blender/portraits.py -- <out> <id>`,
    check the crop, copy to `game/assets/portraits/`.
 9. **Leave Nick the choice.** Save the candidate sheet as
-   `design/art-previews/<id>_candidates.png`, and in `design/beasts/<id>.md`
+   `design/art/previews/<id>_candidates.png`, and in `design/beasts/<id>.md`
    set `model: ai`, `rigged: true`, `status: review`, embed the candidate
    sheet and the game shots, and say which candidate you built and why. He
    judges in Obsidian and can ask for a different candidate.

@@ -1,12 +1,12 @@
 # climb — icon scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
+Loop: `design/guide/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
 16 — continuing the icon rubric batches 14-15 established. **Scoring pass
 only — report, not repair; no edits to `tools/blender/icons.py`.** Asset:
 `game/assets/icons/climb.png` (256x256, rendered by `icons.py`, orthographic
-head-on per `design/ART-REVIEW.md`'s own build note). First of batch 16's
+head-on per `design/art/ART-REVIEW.md`'s own build note). First of batch 16's
 four — the **"six are about going up" family**
-`design/ART-REVIEW.md` itself names as the other pair to check, alongside the
+`design/art/ART-REVIEW.md` itself names as the other pair to check, alongside the
 "not dying" family batch 15 already scored: `climb`, `ascend`, `peak`,
 `rope`, `lift`, `rally`. This batch covers the first four in the order
 `ART-REVIEW.md` lists them; `lift` and `rally` are left for a future batch.

@@ -37,7 +37,7 @@ asks you to").
 
 `relics.json` has exactly 4 `tier: "boss"` relics (`warlords_girdle`,
 `bottomless_quiver`, `fortress_ward`, `adrenal_surge`) — sized, per
-`design/BACKLOG.md`'s 2026-08-25 #48 entry, for the 4-Titan ladder
+`design/plan/BACKLOG.md`'s 2026-08-25 #48 entry, for the 4-Titan ladder
 (`Run.ENCOUNTERS`). But `Run._begin_reward()` gives BOTH hunters their own
 independent roll from that same shared, team-wide pool, and a relic either
 one picks is struck from both lists (`pick_reward`, run.gd:989-997) — so a
@@ -105,7 +105,7 @@ Do not worry about relics at this time.
 ## Result
 
 **Item (2) is fixed, item (1) is still yours.** #86 duty 3 this run (`git
-log` — the same commit as the duty-3 write-up in `design/BACKLOG.md`) added
+log` — the same commit as the duty-3 write-up in `design/plan/BACKLOG.md`) added
 a `has_choices` parameter to `reward_header_text()`: with zero choices left,
 not picked, no selection, the prompt now reads "Nothing left to take — Skip
 to continue" instead of "Tap a relic to select". Three new unit tests in

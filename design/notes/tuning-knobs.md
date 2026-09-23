@@ -5,7 +5,7 @@ Almost all of it is data (JSON) or a handful of constants — no deep code neede
 After any change, re-measure with the balance simulator (bottom of this doc).
 
 ## Difficulty at a glance
-Current (measured — see `design/balance-notes.md`):
+Current (measured — see `design/notes/balance-notes.md`):
 **naive 7% · coordinated 74% · gap +67 · Ascension 8 at 12%.**
 - Too hard? Lower beast HP/damage, or raise `PLAYER_HP` / `HEAL_BETWEEN` / energy.
 - Too easy? The reverse. Watch the *gap* — a big gap means coordination matters.
@@ -167,7 +167,7 @@ hunter marker tints) are inline `Color(...)` literals in `game/views/combat_3d.g
 — `_update_grip_bar`, `_party_card`, `_hunter_pip`.
 
 ## Difficulty targets (what "balanced" means here)
-Hit these and the design pillar is holding — see `design/balance-notes.md`:
+Hit these and the design pillar is holding — see `design/notes/balance-notes.md`:
 - **Coordinated ~75–80%** at Ascension 0 (a good team usually wins, not always)
 - **Naive under ~15%** (solo-style play loses)
 - **A gap of +60 or more** — coordination must DECIDE the run

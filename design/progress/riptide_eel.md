@@ -1,6 +1,6 @@
 # riptide_eel — refinement log
 
-Loop: `design/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
+Loop: `design/guide/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
 no edits made to `tools/blender/riptide_eel.py`.** Views:
 `design/renders/riptide_eel_pass1_*.png`.
 

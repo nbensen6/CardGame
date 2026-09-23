@@ -1,10 +1,10 @@
 # rally — icon scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
+Loop: `design/guide/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
 17 — continuing the icon rubric batches 14-16 established. **Scoring pass
 only — report, not repair; no edits to `tools/blender/icons.py`.** Asset:
 `game/assets/icons/rally.png` (256x256, rendered by `icons.py`, orthographic
-head-on per `design/ART-REVIEW.md`'s own build note). Fourth of batch 17's
+head-on per `design/art/ART-REVIEW.md`'s own build note). Fourth of batch 17's
 four, and the last of the **"six are about going up" family**
 (`climb`, `ascend`, `peak`, `rope`, `lift`, `rally`) — see
 `design/progress/lift_icon.md` for the other family member this batch

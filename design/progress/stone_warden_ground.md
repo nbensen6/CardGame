@@ -1,6 +1,6 @@
 # stone_warden (fight ground) — refinement log
 
-Loop: `design/asset-loop.md`, applied to a **fight ground** rather than a
+Loop: `design/guide/asset-loop.md`, applied to a **fight ground** rather than a
 creature for the first time under item #83 — filed as `stone_warden_ground`
 rather than `stone_warden` because a beast of the same name already exists
 in `game/assets/3d/cast/` and will need its own file. **Scoring pass only —
@@ -9,7 +9,7 @@ item #83 is report, not repair; no edits made to
 `design/renders/stone_warden_pass1_*.png`, captured with
 `look.sh env stone_warden 1`.
 
-**Rubric adaptation.** The five-line rubric in `design/asset-loop.md` is
+**Rubric adaptation.** The five-line rubric in `design/guide/asset-loop.md` is
 written for a single creature ("readable as this creature"). For a ground,
 each line is reinterpreted the same way item #83's own ART-REVIEW batch note
 already reinterprets grounds — silhouette/proportion ask whether it reads as

@@ -1,11 +1,11 @@
 # shield — icon scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
+Loop: `design/guide/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
 15 — continuing the icon rubric batch 14 introduced. **Scoring pass only —
 report, not repair; no edits to `tools/blender/icons.py`.** Asset:
 `game/assets/icons/shield.png` (256x256, rendered by `icons.py`, orthographic
-head-on per `design/ART-REVIEW.md`'s own build note). First of batch 15's
-four — the **"four are about not dying" family** `design/ART-REVIEW.md`
+head-on per `design/art/ART-REVIEW.md`'s own build note). First of batch 15's
+four — the **"four are about not dying" family** `design/art/ART-REVIEW.md`
 itself names as the pair to check first inside the "twenty-eight card icons"
 block: `shield`, `guard`, `wall`, `support`. Its own stated open question:
 "whether `guard` (a shield with a clock face) is distinguishable from

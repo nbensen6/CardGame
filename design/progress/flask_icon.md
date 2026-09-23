@@ -1,10 +1,10 @@
 # flask — icon scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
+Loop: `design/guide/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
 19 — continuing the icon rubric batches 14-18 established. **Scoring pass
 only — report, not repair; no edits to `tools/blender/icons.py`.** Asset:
 `game/assets/icons/flask.png` (256x256, rendered by `icons.py`, orthographic
-head-on per `design/ART-REVIEW.md`'s own build note). First of batch 19's
+head-on per `design/art/ART-REVIEW.md`'s own build note). First of batch 19's
 four — the first four of the sixteen remaining "twenty-eight card icons"
 entries, taken in `card_view.gd`'s `ICONS` table order: `flask`, `bomb`,
 `gadget`, `draw`.

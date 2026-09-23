@@ -46,7 +46,7 @@ These exist because nobody is watching. Breaking one is worse than doing nothing
    `origin/main` ref can be behind the real GitHub tip (seen 2026-08-23: 17
    commits behind, including a prior session's own finished work on the item
    this session picked). Run `git fetch origin main` and diff
-   `design/BACKLOG.md` against `origin/main` before starting — not just before
+   `design/plan/BACKLOG.md` against `origin/main` before starting — not just before
    pushing — or unsupervised work can silently redo something already done.
 10. **A new hunter or beast needs a body, or a deliberate stand-in.** Adding
     character or beast DATA with no model is how the Lightbearer shipped
@@ -143,7 +143,7 @@ Ordered. Source in brackets.
   progress file and pick another asset; do not score a picture of an old model.
 
   Score against the five rubric lines and the **anchors** in
-  `design/asset-loop.md` — the anchors are new and they are strict, because
+  `design/guide/asset-loop.md` — the anchors are new and they are strict, because
   Silhouette and Proportion had been scoring 6 and 7 on models that are visibly
   a box with four cylinders. Then name the two lowest lines, write one concrete
   fix for each into `design/progress/<asset>.md`, and stop. The fixer applies
@@ -155,7 +155,7 @@ Ordered. Source in brackets.
   lowest fixes, re-render with `bash tools/blender/look.sh <asset> <pass>` (the
   `.sh`, not the `.cmd` beside it, which is Nick's Windows copy and unreadable
   here), LOOK at the render with the Read tool, keep it or revert it, re-score.
-  The full loop is `design/asset-loop.md`.
+  The full loop is `design/guide/asset-loop.md`.
 
   **Card icons are last, and say so when you take one.** 36 of the 88 scored
   assets are icons and every painted card retires one permanently. Taking an
@@ -482,7 +482,7 @@ Ordered. Source in brackets.
 - [x] **84. The 3D window effect for rares** — a card with a hole cut through it
   and a scene BEHIND the hole, so the contents parallax against the frame as it
   turns. Nick sent the technique (youtube B76I9mPd5lg); it is written up from
-  the video's own transcript in `design/rare-card-3d-effect.md`, which now also
+  the video's own transcript in `design/art/rare-card-3d-effect.md`, which now also
   records what actually shipped and where it departs from the tutorial.
 
   Built 2026-09-01, on Nick's ask ("I would like to attempt the 3d for it").
@@ -523,7 +523,7 @@ Ordered. Source in brackets.
   the FIXED camera.
 
   **The ART-REVIEW gate is lifted; stop reporting yourself blocked on it.**
-  Recent runs have ended "pending Nick's look at design/ART-REVIEW.md". There
+  Recent runs have ended "pending Nick's look at design/art/ART-REVIEW.md". There
   was never a decision waiting there. What looked like 87 open design calls is
   one boilerplate sentence — *"a fix is Nick's call"* — that this routine writes
   into every file it produces, meaning "I score, I do not repair". ART-REVIEW.md
@@ -536,12 +536,12 @@ Ordered. Source in brackets.
   Original brief follows, for the record:
   fourteen beasts,
   five hunters, fourteen grounds, the map, nineteen portraits and twenty-eight
-  icons are on screen right now, and `design/ART-REVIEW.md` carries **28 blocks
+  icons are on screen right now, and `design/art/ART-REVIEW.md` carries **28 blocks
   marked NEEDS A PASS against 2 DONE**. This routine built most of them, then
   spent 72 of its last 93 commits logging that there was nothing to do. There
   is something to do: the looking.
 
-  `design/asset-loop.md` is the loop; `bash tools/blender/look.sh <asset> <pass>`
+  `design/guide/asset-loop.md` is the loop; `bash tools/blender/look.sh <asset> <pass>`
   is its capture step — use the `.sh`, not the `.cmd` beside it, which is
   Nick's Windows copy and unreadable here. It writes six views, including
   the model as solid black at 64px, which answers the silhouette question a
@@ -1089,7 +1089,7 @@ Ordered. Source in brackets.
   list (34-43); the bottom ten remains entirely fight grounds and portraits,
   none of them icons yet. Remaining unscored: the "twenty-eight card icons"
   and "Strength and Dexterity icons" blocks (30 icons total across two
-  blocks) from `design/ART-REVIEW.md`, plus the overworld map — which, on
+  blocks) from `design/art/ART-REVIEW.md`, plus the overworld map — which, on
   inspection this batch, is **not actually cloud-scoreable the way icons and
   portraits are**: unlike a portrait, there is no single flattened map image,
   only many separate hex-tile `.glb` models assembled at runtime, and
@@ -1120,7 +1120,7 @@ Ordered. Source in brackets.
   justifications and one concrete (unapplied) fix per asset are in
   `design/progress/<name>_icon.md`.
   **Correction to batch 14's own count, found while checking
-  `design/ART-REVIEW.md` directly rather than trusting the prior batch's
+  `design/art/ART-REVIEW.md` directly rather than trusting the prior batch's
   tally secondhand:** batch 14 logged "30 icons total across two blocks"
   remaining after it finished, but `ART-REVIEW.md` carries two more
   standalone NEEDS A PASS sections neither block name covers — "one Frail
@@ -1140,7 +1140,7 @@ Ordered. Source in brackets.
   the bottom ten — the list is identical to batch 14's.
   **Checked 2026-09-01: batch 16, the first four of the "six are about going
   up" family** (`climb`, `ascend`, `peak`, `rope`, `lift`, `rally`) —
-  `design/ART-REVIEW.md`'s own second named pair to check, alongside the
+  `design/art/ART-REVIEW.md`'s own second named pair to check, alongside the
   "not dying" family batch 15 already scored. Same setup as batch 15: all
   four rendered and downsampled together to a real 42px (Pillow, `LANCZOS`)
   over the flat-brown card standin, alpha bounding boxes checked
@@ -1175,7 +1175,7 @@ Ordered. Source in brackets.
   (29-39) scored above the tenth-place value of 26, so none of them enters
   the bottom ten — the list is identical to batch 15's.
   **Checked 2026-09-01: batch 17, four more icons — the last two of the
-  "going up" family (`lift`, `rally`) plus `design/ART-REVIEW.md`'s own
+  "going up" family (`lift`, `rally`) plus `design/art/ART-REVIEW.md`'s own
   "Strength and Dexterity icons" section (`strength`, `dexterity`), scored
   as a pair the way it names them.** Same Pillow real-42px-downsample method
   as batches 14-16, plus a new >10-alpha threshold pass (this batch's own
@@ -1451,7 +1451,7 @@ Ordered. Source in brackets.
   batch 20's.
   **Checked 2026-09-01: batch 22, the last four icons — `burn`, `stack`,
   `light`, `frail`, closing out the "twenty-eight card icons" block and
-  the two standalone Frail/Light sections in `design/ART-REVIEW.md`.** Same
+  the two standalone Frail/Light sections in `design/art/ART-REVIEW.md`.** Same
   Pillow real-42px-downsample method and alpha-threshold edge check as
   batches 14-21. Scored `burn` (exhaust a card, 33/50 — the card-plus-flame
   read is literal, but the flame samples as a flat, uniformly-lit
@@ -1881,7 +1881,7 @@ Ordered. Source in brackets.
   route) so this is no longer stuck — `husk_beetle` landed in the `fight`
   pool with holds, a `regen` limiter-idiom, a full Blender body, and content
   integrity + the whole suite green. Still unchecked: the "Done when" bar is
-  six, and `design/ART-REVIEW.md`'s `husk_beetle` block is NEEDS A PASS like
+  six, and `design/art/ART-REVIEW.md`'s `husk_beetle` block is NEEDS A PASS like
   every `cloud-art` beast before it — a human has to look before this or any
   single beast counts as done.
   **Checked 2026-08-27 (later the same day): two down, four to go.**
@@ -1896,7 +1896,7 @@ Ordered. Source in brackets.
   handles bolted on" failure, caught by looking at the rendered preview
   rather than trusting the contract alone. Root cause and the fix (a soft
   ridge mass + off-centre anchors, the same trick `crag_pup.py` already
-  uses) are written up in `design/ART-REVIEW.md`'s `gloom_moth` block — read
+  uses) are written up in `design/art/ART-REVIEW.md`'s `gloom_moth` block — read
   it before the next beast reaches for `shelf()` on a centreline. Left
   unchecked: still NEEDS A PASS, a human has to look.
   **Checked 2026-08-27 (a third time the same day): three down, three to go.**
@@ -1959,7 +1959,7 @@ Ordered. Source in brackets.
   things spotted by looking at the rendered previews that the contract
   can't check (the sigil-crest bridge reading as a spike, the crest ball
   reading as loose rather than grown-from, and whether the belly hourglass
-  reads at all), is in `design/ART-REVIEW.md`'s `silk_widow` block. Left
+  reads at all), is in `design/art/ART-REVIEW.md`'s `silk_widow` block. Left
   unchecked: still NEEDS A PASS, a human has to look.
   **Checked 2026-08-27 (a sixth time the same day): six down, zero to go —
   the "Done when" bar is met.** `boulder_ram` landed in the `fight` pool —
@@ -1986,7 +1986,7 @@ Ordered. Source in brackets.
   spotted by looking that the contract can't check (a boxy "robot on legs"
   read, thin ram horns that nearly vanish from the three-quarter angle, and
   a small remaining nub where the antenna used to be), is in
-  `design/ART-REVIEW.md`'s `boulder_ram` block. Left unchecked, same as
+  `design/art/ART-REVIEW.md`'s `boulder_ram` block. Left unchecked, same as
   every prior entry here: this item's numeric bar is now met but nobody has
   looked at any of the six yet, and a `cloud-art` item is never ticked by
   the routine regardless — that judgement is Nick's.
@@ -2008,7 +2008,7 @@ Ordered. Source in brackets.
   balls reading as belly pouches, fixed by recolouring; the sigil still
   reading as a disc detached from the head in the FRONT view specifically,
   not fully fixed — a real trade-off against the occlusion contract, not an
-  oversight), is in `design/ART-REVIEW.md`'s `cinder_jackal` block. Left
+  oversight), is in `design/art/ART-REVIEW.md`'s `cinder_jackal` block. Left
   unchecked, same as every beast before it: a `cloud-art` item is never
   ticked by the routine, and this one especially needs a look — the sigil
   placement compromise above is exactly the kind of call that is Nick's,
@@ -2021,7 +2021,7 @@ Ordered. Source in brackets.
   assetcheck 4/4, sigil exactly 50% occluded (the contract's own line —
   closest any beast has landed to it and still a real pass), full suite
   green (499 PASS). Two real bugs, both written up in full in
-  `design/ART-REVIEW.md`'s `brine_urchin` block: `taper()` centres a cone
+  `design/art/ART-REVIEW.md`'s `brine_urchin` block: `taper()` centres a cone
   on its `loc`, not its base, which floated nine tip-marker balls a
   half-length past the real spines until fixed; and this radial body's
   `span` took three rebuilds to converge, same lesson Cinder Jackal's
@@ -2052,7 +2052,7 @@ Ordered. Source in brackets.
   as the required smoke test only. `download.blender.org` was a policy
   403 again (unchanged from #74); `apt-get install blender` still works
   and gave a working headless 4.0.2.
-  One real, fully-written-up pipeline bug in `design/ART-REVIEW.md`'s
+  One real, fully-written-up pipeline bug in `design/art/ART-REVIEW.md`'s
   `clot_toad` block: placing the tail-ridge mounds' OWN mass via `z_for()`
   (rather than fixed coordinates, the way every working beast script
   does it) makes their position depend on `span` while `span` is
@@ -2093,7 +2093,7 @@ Ordered. Source in brackets.
   nothing, since Blender 4.0's own interpreter is 3.12 and imports from
   its own site-packages, not whatever `python3` resolves to.
   Two real pipeline bugs, both written up in full in
-  `design/ART-REVIEW.md`'s `flicker_stag` block: `taper()`'s `loc` is a
+  `design/art/ART-REVIEW.md`'s `flicker_stag` block: `taper()`'s `loc` is a
   cone's own CENTRE, not one end, so branching the antlers by passing a
   start point straight through as `loc` left both tine pairs floating
   (caught immediately by `finish()`'s own "in N pieces" warning) — fixed
@@ -2162,7 +2162,7 @@ Ordered. Source in brackets.
   sigil-crest bridge reading thin the same way Silk Widow's and Boulder
   Ram's already did on other beasts, and a portrait that took four
   framing attempts and still leaves real empty space in frame), is in
-  `design/ART-REVIEW.md`'s `eyrie_hawk` block. Left unchecked, same as
+  `design/art/ART-REVIEW.md`'s `eyrie_hawk` block. Left unchecked, same as
   every beast before it: a `cloud-art` item is never ticked by the
   routine, and a human has to look at all eleven — nobody has yet.
   **Checked 2026-08-30 (a sixth time the same day): twelve down.**
@@ -2182,7 +2182,7 @@ Ordered. Source in brackets.
   `libegl1`/`libegl-mesa0` installed alongside it, same as recent runs.
   This run also actually LOOKED at the rendered previews with the Read
   tool (`tools/blender/look.py`'s six views, plus the three canonical
-  `preview.py` ones committed to `design/art-previews/`) rather than
+  `preview.py` ones committed to `design/art/previews/`) rather than
   trusting the contract alone, and caught a real defect no check flagged:
   the first sigil mount passed assetcheck at 43% occluded but was a bare
   rod pushed so far forward to clear the shell's own bulge (see below)
@@ -2191,7 +2191,7 @@ Ordered. Source in brackets.
   already named on a different beast. Rebuilt with a rounder, shallower
   shell and a short thick mount instead of a long thin one; full account
   of both that fix and a second trap it hit on the way (too thick self-
-  occludes, hitting 52-63%) is in `design/ART-REVIEW.md`'s
+  occludes, hitting 52-63%) is in `design/art/ART-REVIEW.md`'s
   `glyph_tortoise` block. Looking does not make this routine a
   substitute for Nick's eye though — the block also names a real design
   problem it found and could not fix: the four carved glyphs meant to
@@ -2216,7 +2216,7 @@ Ordered. Source in brackets.
   `portraits.py` itself — its `main()` ran unconditionally at import time,
   so a first attempt to render just this one portrait silently re-rendered
   all thirty-one existing ones into the wrong path, now guarded behind
-  `if __name__ == "__main__"`), is in `design/ART-REVIEW.md`'s
+  `if __name__ == "__main__"`), is in `design/art/ART-REVIEW.md`'s
   `riptide_eel` block. `portraits.py` also gained a `FOCUS_XY` override
   mechanism this run, needed because this body's shape (reared up AND long)
   breaks the bounding-box-centre framing every other character relies on —
@@ -2248,7 +2248,7 @@ Ordered. Source in brackets.
   passing every geometry check; and a first sigil mount sat inside the
   hump's own ellipsoid rather than on its surface and came back 100%
   buried, fixed by moving it to the yoke's own front face), is in
-  `design/ART-REVIEW.md`'s `yoke_ox` block. This run also caught and
+  `design/art/ART-REVIEW.md`'s `yoke_ox` block. This run also caught and
   reverted a real close call: `portraits.py`'s batch render regenerates
   every character's portrait, not just the new one, and in THIS
   container (apt's Blender 4.0.2, surfaceless EGL software rendering)
@@ -2466,7 +2466,7 @@ something Slay the Spire leans on hard and we do not have at all.
   `husk_beetle` (backlog #55) is the first beast built end to end this way: all
   four contract rules pass, three previews are committed, and the whole test
   suite is green. This item is the tooling half only, not a judgement that any
-  beast built with it looks good — see `design/ART-REVIEW.md`'s `husk_beetle`
+  beast built with it looks good — see `design/art/ART-REVIEW.md`'s `husk_beetle`
   block (NEEDS A PASS) for that, and its own note that a human still has to
   look. The still-open 10-beast sigil-occlusion punch list from the previous
   entry is unaffected by this — it's `cloud-art` rework, not tooling, and a
@@ -2482,7 +2482,7 @@ is the mistake this whole section exists to stop repeating.
 
 Tagged `cloud-art`: the routine downloads Blender, writes a build script, proves
 the model against the contract, renders three angles, and appends a block to
-`design/ART-REVIEW.md` saying what it was trying to make and what it could not
+`design/art/ART-REVIEW.md` saying what it was trying to make and what it could not
 check. It never judges its own work. See item 74 for why.
 
 - [x] **75. The other eleven beasts** `cloud-art` — **done 2026-08-25, by hand,
@@ -2492,7 +2492,7 @@ check. It never judges its own work. See item 74 for why.
   exactly where the contract wants one, and runs Godot's own area test in Blender
   before the file is written. Ticked because the models exist and are proven —
   but every one is **unreviewed**, and the eleven review blocks in
-  `design/ART-REVIEW.md` say what to look at first.
+  `design/art/ART-REVIEW.md` say what to look at first.
 
 - [ ] **81. The ledges read as scaffolding** `needs a screen` — every beast now
   has real standable ledges and hunters stand on them (2026-08-25). On the
@@ -2511,7 +2511,7 @@ check. It never judges its own work. See item 74 for why.
   `portraits.py`), and hard rule #10 above now writes the habit — build a body
   or queue a deliberate placeholder — into the brief. Left **unchecked**
   regardless, per this file's own convention: a `cloud-art` item is never
-  ticked by the routine, and `design/ART-REVIEW.md`'s `lightbearer` block still
+  ticked by the routine, and `design/art/ART-REVIEW.md`'s `lightbearer` block still
   reads NEEDS A PASS — Nick has not looked at the model yet.
 
 - [ ] **76. Card icons, rendered rather than borrowed** `cloud-art` — every card
@@ -2539,7 +2539,7 @@ check. It never judges its own work. See item 74 for why.
   a 2D icon this time. Fixed by basing each spike out at the ball's own
   radius instead. Full write-up, including what still could not be verified
   (mainly: how `intangible`'s palest diamond and `buffer`'s deflected shard
-  read at actual 42px card size) is in `design/ART-REVIEW.md`. Content
+  read at actual 42px card size) is in `design/art/ART-REVIEW.md`. Content
   integrity and the whole suite green (only touched a card's `icon` field,
   which nothing type-checks against a fixed enum). Left unchecked: still
   `cloud-art`, still needs a human look, same as batch 1.
@@ -2566,7 +2566,7 @@ check. It never judges its own work. See item 74 for why.
   out of this run; the other 32 committed files are untouched. Content
   integrity and the whole suite green. Full write-up, including what
   couldn't be verified (42px legibility, whether it's confusable with
-  `expose`'s ring-and-ticks design), is in `design/ART-REVIEW.md`. Left
+  `expose`'s ring-and-ticks design), is in `design/art/ART-REVIEW.md`. Left
   unchecked: still `cloud-art`, still needs a human look.
   **Checked 2026-08-28 (a third time): batch 4, one icon, the fifth member of
   batch 2's own family.** `crippling_blow` ("Deal 5 damage. Frail 2.") wore
@@ -2585,7 +2585,7 @@ check. It never judges its own work. See item 74 for why.
   way batches 2 and 3 had to — caught a first draft reading as stacked
   cracked bricks rather than a shield (no tapered point at the bottom the
   way `shield()` itself has one), fixed by giving each broken half its own
-  point. Still flagged NEEDS A PASS in `design/ART-REVIEW.md` regardless —
+  point. Still flagged NEEDS A PASS in `design/art/ART-REVIEW.md` regardless —
   this file's own rule that a `cloud-art` item is never ticked by the
   routine holds even when the routine can see the image; looking at a
   render is not Nick's judgement on a real card face in a real hand.
@@ -2611,7 +2611,7 @@ check. It never judges its own work. See item 74 for why.
   contract couldn't: a column of flat plates read as a fir tree, and the
   rebuild (two tapered blades) read as a tent with its own barb lines
   floating clear of the shape — full detail, including exactly how the third
-  build fixed it, is in `design/ART-REVIEW.md`. Content integrity and the
+  build fixed it, is in `design/art/ART-REVIEW.md`. Content integrity and the
   whole suite green (496 passed, same count — an icon batch adds no new
   tests, matching batches 2-4). Left unchecked: still `cloud-art`, still
   needs a human look, and this one especially — `dexterity`'s feather read
@@ -2649,7 +2649,7 @@ check. It never judges its own work. See item 74 for why.
   `support` (all 6 grant Ally Block/heal), `target`/`taunt`/`bow`/`rally`/
   `expose`/`cog` (7 single-purpose cards, each icon matches its one
   guaranteed effect), and `stack`/`draw` (confirmed `stack` = draw/hand-
-  size per `design/icon-audit.md` line 52, so `take_aim` and
+  size per `design/art/icon-audit.md` line 52, so `take_aim` and
   `fading_insight` wearing `stack` for a plain "Draw 2" is correct by the
   documented vocabulary, not a leftover miss — `draw` is reserved by hand
   for `quick_purge`'s discard-then-replace shape, distinct from a flat
@@ -2672,7 +2672,7 @@ check. It never judges its own work. See item 74 for why.
   seventeen models built by `tools/blender/hexes.py` in one Blender run; nine
   tiles, seven landmarks and the loose tree. `ui/tiles.gd` prefers ours and falls
   back to Kenney's, same rule as `ui/cast.gd`, so the map can be changed one tile
-  at a time. Unreviewed — see the block in `design/ART-REVIEW.md`, particularly
+  at a time. Unreviewed — see the block in `design/art/ART-REVIEW.md`, particularly
   the note about the green.
 
 - [ ] **78. A Light meter for the Lightbearer** `needs a screen` — #47's engine
@@ -2755,7 +2755,7 @@ That is why every queue item is tagged:
 - `cloud-safe` — data and logic, provable by the test suite alone.
 - `cloud-art` — the routine CAN build it in Blender (headless, no display
   needed) but cannot judge it. It must prove the model against the contract,
-  render previews, and write a block in `design/ART-REVIEW.md` saying what it
+  render previews, and write a block in `design/art/ART-REVIEW.md` saying what it
   was going for and what it could not check. Never tick a `cloud-art` item off
   as finished: a human has to look first.
 - `needs a screen` — the cloud routine must **skip it and move down the list**,
@@ -2770,7 +2770,7 @@ rather than inventing work.
 - **The art pass.** The single biggest gap to a Steam page, and entirely a
   taste-and-budget call. See the timeline discussion of 2026-08-16.
 - **Whether iOS/Android testing is worth a Mac.** Costed in
-  `design/mobile-setup.md`; the decision is his.
+  `design/guide/mobile-setup.md`; the decision is his.
 - **Global vs per-class reward pools.** 23 class cards also sit in the global
   pool. Which is authoritative is a design call, not a cleanup.
   **2026-09-16 addendum (#86 duty 3):** the reverse gap is worse than
@@ -2922,7 +2922,7 @@ Newest first. One line per finished item: what, and anything surprising.
 - **2026-09-22 — #86 duty 3: `Run.buy()`'s "remove" branch reprices every OTHER still-unsold "remove" stock entry after a purchase — including the OTHER HUNTER's own removal slot, not just the buyer's — and that had never been proven.** Last commit (`9c0f58c`, the `last_attacker_name` save/reload fix) was duty 2, so this run took duty 3. Bare name-grep of every `static func` in `game/views`/`game/ui` against `run_tests.gd` again came back with everything already referenced (that technique is fully spent, 57+ passes in), so dispatched two Explore agents in sequence: the first proposed `Run._grant_potions()`, which turned out to be a false positive — `_test_fight_wins_grant_a_potion()` already drives the positive path indirectly through `_force_win()`/`sync()` without ever naming the function, so a bare grep for the function's own name missed it. Re-briefed a second agent with that exact miss as a warning (verify indirect coverage by reading nearby test bodies, not just grepping the function name), which found the real gap: `buy()`'s "remove" case reprices every other unsold "remove" `shop_stock` entry via `remove_price()` (run.gd's own comment: "the next removal in this shop reprices immediately"), and that loop is scoped only by `not oi == index`, unlike its two neighbours (`_resync_remove_deck_size`, `_resync_potion_held`) which both filter by `slot`. Since `removes_bought` is a Run-level counter shared by the whole team (not per-hunter — confirmed by reading `PRICE_REMOVE`'s own comment and `remove_price()`), buying hunter A's removal is supposed to immediately reprice hunter B's own still-unsold removal too, in the same shop. Read every existing test touching `remove_price`/`removes_bought`/a "remove" stock entry (`_test_backlog86_remove_price_escalates_exactly_and_persists_across_shops_and_saves`, `_test_shop_removal_charges_the_price_it_showed`, `_test_gold_and_shop`, `_test_shop_cannot_thin_below_min_deck`, `_test_status_card_removable_at_shop`) and confirmed none of them ever buy one hunter's removal and then re-read the OTHER hunter's own unsold entry from the same `shop_stock` — each either checks only the bought item itself or only a later shop's fresh roll. Added `_test_backlog86_remove_purchase_reprices_the_other_hunters_own_removal_too`: a 2-hunter shop, buy slot 0's removal, assert slot 1's still-unsold removal price rose by exactly 25 in that same `shop_stock`. Verified load-bearing: temporarily added `and int(other["slot"]) == slot` to the reprice loop's filter (matching its scoped neighbours' shape, the exact regression the test exists to catch), reran, watched the new assertion fail, then restored the file from a saved copy and confirmed `git diff` showed no changes to it. Pure test-coverage addition, no production code changed. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2.
 - **2026-09-22 — #86 duty 2: `Combat.last_attacker_name` (added by an earlier duty-2 pass so `Run.sync()`'s `died_to` can blame the add that actually landed a killing hit, not the main boss standing next to it) was never carried through `Combat.to_dict()`/`from_dict()`, so a save/reload landing in the real window between a lethal hit and the next `Run.sync()` call silently reset it to `""` and mis-blamed the boss.** Last commit (`9b92e29`, the potion-block Dexterity/Frail proof) was duty 3, so this run took duty 2. Dispatched an Explore agent over `game/core` for the two named bug shapes (first-pass holes, two-copies-of-one-truth), explicitly fed the long list of what this rotation has already closed so it wouldn't re-propose any of it. It found that `last_attacker_name` sits right next to `damage_dealt_total`/`cards_played_total`/`highest_climb` — all four added for the identical "carry per-fight state through a save so a reload keeps counting from the right spot" purpose, per `combat.gd`'s own header comment — but only those three ever made it into `to_dict()`/`from_dict()`'s key lists; `last_attacker_name` (added in a later duty-2 pass, per its own comment) was simply never added to that parity list. The window is real, not theoretical: `RunSave.save()` only refuses when `run.is_over()`, and `_combat_worth_saving()` includes a combat whenever `phase == COMBAT` — which is still true the instant a hunter dies, since nothing transitions `Run.phase` until the separate `Run.sync()` call the host makes afterward. A save landing in exactly that gap (autosave, app killed, anything) would reload with `last_attacker_name` back at its class default `""`, and `Run.sync()`'s own fallback (`last_attacker_name if != "" else boss.name`) would then permanently misattribute the death in `stats["died_to"]`/`history_entry()`. Fixed by adding the missing key to both functions, the same one-line-each shape as its three siblings. New test `_test_backlog86_last_attacker_name_survives_a_save_reload_before_sync` reuses the existing `_test_backlog86_died_to_names_the_add_that_actually_landed_the_kill` fixture (Root Tendril add, 0-damage boss) but inserts a `Combat.from_dict(combat.to_dict())` round-trip between the lethal hit and `run.sync()`, asserting `last_attacker_name` survives the round-trip and `died_to` still names the add afterward. Verified load-bearing by construction: before this fix, `from_dict()` had no line restoring the field at all, so the new test's round-trip assertion is exactly the gap being closed — reran with only the `run_tests.gd` addition and confirmed the new assertions are the only place this fix is exercised. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 3.
 - **2026-09-22 — #86 duty 3: potion "block"/"block_ally" going through `Combatant.gain_block()` (so Dexterity and Frail apply to a potion's Block exactly like any card or relic's) was never actually proven — both existing potion tests set neither stat.** Last commit (`22d9266`, `upgraded_copy()`'s `timed_hits` scaling fix) was duty 2, so this run took duty 3. Bare name-grep across `game/core`/`game/views`/`game/session`/`game/ui`/`game/net` against `run_tests.gd` came back with every `static func` already referenced by name — confirms, again, that technique is spent — so delegated an Explore agent to read doc comments in `combat.gd`/`run.gd` for a claimed rule or cross-mechanic interaction with no dedicated test, the technique the 2026-09-09 and 2026-09-22-earlier entries both credit for their own finds. It surfaced `Combatant.gain_block()`'s own doc comment naming potions by name as a beneficiary of the shared Dexterity-then-Frail path, and confirmed by grep that neither `_test_use_potion_applies_each_effect` nor `_test_use_potion_ally_and_beast_effects` ever set `dexterity` or `frail` on any combatant before drinking a "block" or "block_ally" potion — a regression that swapped `gain_block()` for a raw `block += value` would have passed both unnoticed. Added `_test_backlog86_potion_block_effects_apply_dexterity_and_frail`: the drinker banks Dexterity for the whole test and Frail is set only on the ally, so `block_ally` landing at the ally's Frail-cut value (9, not the drinker's Dexterity-boosted 14) proves the grant is priced off the ALLY's own Combatant, not a copy of the drinker's modifiers. Verified load-bearing: temporarily swapped both `gain_block()` calls in `combat.gd`'s `use_potion()` for raw `block += value`, reran, watched exactly the two new assertions fail (12→10, 9→12) with nothing else regressing, then restored the file from a saved copy and confirmed `git diff` showed no changes to it. Pure test-coverage addition, no production code changed. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2.
-- **2026-09-22 — #86 duty 3: `Combat._meld_cards()`'s `cheapen_amount` maxi() was the last of its own documented four-field family (pull_ally, cheapen_amount, timed_hits, hits) never proven against a real, distinct-valued pair.** Last commit (`48004cb`, `list_characters()`'s `order` fix) was duty 2, so this run took duty 3. Started by grepping every function in `game/core`, `game/views` and `game/session` against `run_tests.gd` for a zero-hit name, which mostly turned up false positives (functions only ever exercised through the public API, e.g. `_handle_opening_relics` fires via `Combat.start()` and is thoroughly covered without ever being called by name) — confirming this codebase's own coverage is now too dense for a bare name-grep to find real gaps. Switched to reading `design/BACKLOG.md`'s own log for "left for a future duty-3 turn" breadcrumbs instead, and found one still open from 2026-09-16: `_meld_cards()` sums almost every numeric field but deliberately takes `maxi()` for four of them (its own comment: "one-of-a-kind effects... take whichever card has one"); `pull_ally` got its dedicated test that same day, `timed_hits` on 2026-09-20, and `hits` turned out to already be covered incidentally by an existing Flurry/Crippling-Blow meld test — but `cheapen_amount` was never done. The generic reflection-sweep test (`_test_backlog86_meld_carries_every_card_field...`) only checks the fused value is nonzero, which can't tell `maxi()` from `+`; and `Card.from_dict` defaults `cheapen_amount` to 1 on every card regardless of `cheapen_pick`, while `burn_coal` is the only shipped card that ever sets `cheapen_pick` at all — so no two REAL cards carry different nonzero `cheapen_amount` values to meld against each other. Used `burn_coal` against its own `upgraded_copy()` instead (cheapen_amount 1 vs 2, a legitimate in-game pairing since a deck can hold both a sharpened and unsharpened copy of the same card): `maxi(1,2)=2` while `1+2=3`, finally distinguishable. Added `_test_backlog86_meld_cheapen_amount_takes_the_larger_not_the_sum`, both argument orders, same shape as the `pull_ally`/`timed_hits` siblings. Verified load-bearing: temporarily changed the `maxi()` to `+` in `combat.gd`, reran, watched exactly the two new assertions fail (`got 3`, wanted 2) with nothing else regressing, then restored the file from a saved copy and confirmed `git diff` showed no changes to it. Pure test-coverage addition, no production code changed. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2.
+- **2026-09-22 — #86 duty 3: `Combat._meld_cards()`'s `cheapen_amount` maxi() was the last of its own documented four-field family (pull_ally, cheapen_amount, timed_hits, hits) never proven against a real, distinct-valued pair.** Last commit (`48004cb`, `list_characters()`'s `order` fix) was duty 2, so this run took duty 3. Started by grepping every function in `game/core`, `game/views` and `game/session` against `run_tests.gd` for a zero-hit name, which mostly turned up false positives (functions only ever exercised through the public API, e.g. `_handle_opening_relics` fires via `Combat.start()` and is thoroughly covered without ever being called by name) — confirming this codebase's own coverage is now too dense for a bare name-grep to find real gaps. Switched to reading `design/plan/BACKLOG.md`'s own log for "left for a future duty-3 turn" breadcrumbs instead, and found one still open from 2026-09-16: `_meld_cards()` sums almost every numeric field but deliberately takes `maxi()` for four of them (its own comment: "one-of-a-kind effects... take whichever card has one"); `pull_ally` got its dedicated test that same day, `timed_hits` on 2026-09-20, and `hits` turned out to already be covered incidentally by an existing Flurry/Crippling-Blow meld test — but `cheapen_amount` was never done. The generic reflection-sweep test (`_test_backlog86_meld_carries_every_card_field...`) only checks the fused value is nonzero, which can't tell `maxi()` from `+`; and `Card.from_dict` defaults `cheapen_amount` to 1 on every card regardless of `cheapen_pick`, while `burn_coal` is the only shipped card that ever sets `cheapen_pick` at all — so no two REAL cards carry different nonzero `cheapen_amount` values to meld against each other. Used `burn_coal` against its own `upgraded_copy()` instead (cheapen_amount 1 vs 2, a legitimate in-game pairing since a deck can hold both a sharpened and unsharpened copy of the same card): `maxi(1,2)=2` while `1+2=3`, finally distinguishable. Added `_test_backlog86_meld_cheapen_amount_takes_the_larger_not_the_sum`, both argument orders, same shape as the `pull_ally`/`timed_hits` siblings. Verified load-bearing: temporarily changed the `maxi()` to `+` in `combat.gd`, reran, watched exactly the two new assertions fail (`got 3`, wanted 2) with nothing else regressing, then restored the file from a saved copy and confirmed `git diff` showed no changes to it. Pure test-coverage addition, no production code changed. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2.
 - **2026-09-21 — #86 duty 2: `Content.list_characters()` walked `characters.json`'s curated `order` array alone, so a character present in the `characters` dict but forgotten from `order` would silently vanish from every character-select screen with no error.** Last commit (`09231be`, the `Run.sync()` highest_climb proof) was duty 3, so this run was owed duty 2. Spent most of the budget on a deep manual sweep (`core/combat.gd`, `core/run.gd`, `core/boss.gd`, `core/card.gd`, `core/content.gd`, `core/run_map.gd`, `session/game_host.gd`, `session/game_client.gd`, every headless-testable static in the views) cross-checking dispatch tables against their data files; this codebase has been mined hard enough by now that most near-misses ruled themselves out on inspection (`upgraded_copy()` correctly not scaling `timed_hits`, `power_effect: "vulnerable"` correctly staying boss-only unlike its Frail/Wound siblings). The one real, unfixed find was `list_characters()`'s `order`/`characters` split — a genuine "two copies of one truth" shape (`characters.json` keeps the roster twice: the `characters` dict with the real definitions, and a separate `order` array for display sequence) that a prior duty-2 pass (2026-09-20) had already surfaced and explicitly declined to fix, on the grounds that today's data keeps both in sync so there's no live wrong-output case — true, and still true after checking `characters.json` again here. Fixed it anyway rather than reporting an empty hunt: it is exactly the "new content falls through to a default silently" shape hard rule #10 already warns about for beasts and hunter bodies, just for a hunter's own roster *entry* instead, and it costs nothing to close now versus waiting for someone to lose a character silently later. Lifted the body into a pure static `Content._characters_from_db(db: Dictionary) -> Array` (same "extract the static so it's testable headless" pattern this rotation has used repeatedly), which now backfills any `characters` key missed by `order` after the curated sequence rather than dropping it, deduping so a name double-listed in `order` doesn't double-append either. `list_characters()` itself is now a one-line call to it. New test `_test_backlog86_list_characters_does_not_drop_an_id_missing_from_order` builds a synthetic db (not the real file, since real `characters.json` has zero divergence to exercise) with a `characters` entry named `forgotten` left out of `order`, and asserts it still reaches the roster, after `order`'s own two entries rather than interleaved. Verified load-bearing the direct way: reverted just the `_characters_from_db` body back to the old `order`-only loop and reran — both new assertions FAILED — then restored the fix and reran clean. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 3.
 - **2026-09-21 — #86 duty 2: `GameClient.play_card()` never actually had a parameter to send an `enemy_index`, so backlog #79's own claim that add-targeting "crosses the network command... end to end" was false — the plumbing stopped one function short of the host.** Last commit (`c082d02`, the `lock_slot_for` proof) was duty 3, so this run was owed duty 2. Read `game_host.gd`'s `play_card` branch end to end (it reads `int(command.get("enemy", -1))` and threads it into `Combat.play_card`) and then read every caller that could put a value in that key: `GameClient.play_card()`'s signature stopped at `quality`, with no `enemy_index` parameter at all, and none of `combat_3d.gd`'s four call sites passed one positionally either — so every play, through the real client/server boundary, could only ever send the implicit default (`-1`, "the boss"), no matter what a future tap-an-add UI wanted to aim at. Item #79 (`needs a screen`, still open, still correctly gated on a UI nobody can build headless) explicitly says the network command already carries this end to end; it doesn't, and hasn't. Added the missing `enemy_index: int = -1` parameter to `GameClient.play_card()` and put it in the sent dict under `"enemy"` — a trailing, defaulted param, so none of the four existing call sites needed to change and no behavior changed for any card played today. New test `_test_backlog86_gameclient_play_card_threads_its_enemy_index_to_the_host` drives it through the REAL host/client boundary (not a direct `Combat.play_card()` call, which #63's own tests already cover): a live session, a fresh `Boss` add appended to `combat.adds` the same way `_test_adds_reach_the_shared_snapshot` does, then `c0.play_card(idx, ..., enemy_index=0)` and asserts the add's HP drops while the boss's stays untouched. Verified load-bearing the direct way: reverted just the `game_client.gd` change and reran — the suite didn't even compile ("Too many arguments for play_card()... expected at most 6 but received 7"), the sharpest possible proof the parameter genuinely didn't exist before this commit — then restored the fix and reran clean. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 3.
 - **2026-09-21 — #86 duty 3: `Combat3D.lock_slot_for`, the fallback rule deciding which hunter the camera actually follows, had zero coverage — and existed as three separate hand-written copies of the same expression rather than one.** Last commit (`126dc7c`, the add-Block preview fix) was duty 2, so this run was owed duty 3. Grepped `run_tests.gd` for every camera/climb static already lifted this rotation (`route_between_rungs`, `climb_frame_for`, `foothold_anchor`, `stand_offset_x`, `hull_index_for`, `hunter_move_kind`, `hunter_side_offset`, `dist_for_window_for`, `cam_reach_for`, `model_key_for`, and more) to confirm the obvious camera/climb candidates were already closed before hunting further — they were, so this pass read `combat_3d.gd`'s remaining instance methods directly rather than re-treading ground. Found `_lock_point()`, `_focus_camera()` and `_aim_camera()` each independently wrote out `_lock_slot if _lock_slot >= 0 and _lock_slot < _hunters.size() else _me()` — the rule that decides whether the camera keeps following the hunter it was explicitly locked onto or falls back to your own slot (stale ally left, lock never set) — with no test anywhere proving any of the three branches. Lifted it into a static `Combat3D.lock_slot_for(lock_slot, hunter_count, me) -> int`, same pattern as the funcs named above, and pointed all three call sites at it — a pure refactor (no behavior change) that also closes the "three copies of one truth" gap as a side effect, verified by the full suite staying green. Four new tests: an explicit lock still pointing at a real hunter wins even over a different, also-valid "you"; a lock that has gone stale (out of range, or never set/negative) falls back to your own slot; lock slot 0 is *not* mistaken for "unset" when you are a different slot (the actual default value doubling as a real slot was the one way this could have passed by luck rather than by design); and — since the function only resolves the fallback chain and leaves final-bounds clamping to its callers, exactly like `_lock_point` already did — proved it returns an out-of-range slot rather than inventing one when both the lock and "you" are invalid, matching `_lock_point`'s own `Vector2.ZERO` guard living in the caller, not here. Fresh `--import`, headless, Godot 4.7.1-stable, `run_tests.gd`: ALL TESTS PASSED. Next `#86` turn is duty 2.
@@ -10862,7 +10862,7 @@ Newest first. One line per finished item: what, and anything surprising.
 - **2026-09-06** — #86 duty 2 (find an error and resolve it). Last `#86` turn
   (`499b130`) was duty 1, so this was due for duty 2. Started down the wrong
   path first: began a duty-1 portrait fix on `clot_toad` (a real left-edge
-  crop the earlier passes missed) before checking `design/BACKLOG.md`'s own
+  crop the earlier passes missed) before checking `design/plan/BACKLOG.md`'s own
   Log section against `git log`'s commit subjects, which don't all literally
   say "#86 duty N" — `499b130`'s subject line doesn't, but the Log entry
   below it does confirm it was duty 1. Reverted that work cleanly (nothing
@@ -11684,7 +11684,7 @@ Newest first. One line per finished item: what, and anything surprising.
 
 - **2026-09-04** — #86 duty 2 (find an error and resolve it). Last turn
   (`72ba3a8`) was duty 1, so this one was due for duty 2. A prior duty-2 run
-  (`design/BACKLOG.md` history, commit `9b25b48`) had already found and
+  (`design/plan/BACKLOG.md` history, commit `9b25b48`) had already found and
   explicitly deferred this: "Roped together" (`ps.ally_climb`, Mountain
   Climbers' signature passive — "the ally climbs with you") was only ever
   honored at ONE of the three places a hunter's foothold can rise —
@@ -13534,7 +13534,7 @@ Newest first. One line per finished item: what, and anything surprising.
   the framing changed since the last check. Fetched fresh (tip `fab9f26`, a
   fixer commit) and found `ef700b8` ("Point the fixer at what you can see, and
   close the art review") landed since: Nick retired the old excuse this lane
-  kept giving — "pending Nick's look at `design/ART-REVIEW.md`" — because that
+  kept giving — "pending Nick's look at `design/art/ART-REVIEW.md`" — because that
   file never held an open decision, only the scoring pass's own boilerplate
   ("a fix is Nick's call") repeated 87 times. `ART-REVIEW.md` now carries a
   SUPERSEDED header pointing at `design/progress/`, and #83 (score the art) is
@@ -13559,13 +13559,13 @@ Newest first. One line per finished item: what, and anything surprising.
   "done when" needs Nick to open the ranked list — nothing left for a batch
   to score. Independently re-derived the standing numbers rather than
   trusting them secondhand: 28 bosses, 187/187 cards with a non-empty
-  `icon` field, `design/ART-REVIEW.md` still 28 `NEEDS A PASS` / 0
+  `icon` field, `design/art/ART-REVIEW.md` still 28 `NEEDS A PASS` / 0
   APPROVED-REJECTED. #55 (14 beasts) and #76 (36 icons, exhaustive audit)
   are both already past their own numeric bars, same as every re-check
   since 2026-08-31. The unchecked queue is unchanged: 2, 3, 8, 25, 29b, 32,
   31b, 78, 79, 81 are `needs a screen` (skipped); 83, 55, 76 and 80 are
   past their bars and stay unchecked on purpose — only Nick opening
-  `design/ART-REVIEW.md` closes them. No code or data changed this run.
+  `design/art/ART-REVIEW.md` closes them. No code or data changed this run.
 
 - **2026-09-01** — #83 batch 17: scored `lift` (38/50), `strength` (43/50,
   tied for the best score under this item so far), `dexterity` (35/50) and
@@ -13581,12 +13581,12 @@ Newest first. One line per finished item: what, and anything surprising.
   the same conclusion before reading the 40th check's own text:
   `git log --oneline -1 -- game/data/ game/assets/` still points at
   `2e8310b` (yoke_ox, the commit that closed #55's own 14-beast bar), and
-  `design/ART-REVIEW.md` still has 28 NEEDS A PASS blocks against 0
+  `design/art/ART-REVIEW.md` still has 28 NEEDS A PASS blocks against 0
   APPROVED/REJECTED lines. The queue's unchecked items are still the same
   13: 2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 are `needs a screen` (skipped
   per the rules); 55, 76 and 80 are `cloud-art`, each already past its own
   "Done when" bar, and stay unchecked on purpose — only Nick opening
-  `design/ART-REVIEW.md` can close them. No code or data changed this run;
+  `design/art/ART-REVIEW.md` can close them. No code or data changed this run;
   not sending a notification since the standing condition has already been
   reported and nothing has changed.
 - **2026-08-31** — Fortieth consecutive re-check, no actionable
@@ -13595,12 +13595,12 @@ Newest first. One line per finished item: what, and anything surprising.
   since the last real content commit is Log-only, five commits deep now.
   Independently re-derived the numbers again rather than trusting them
   secondhand: `bosses.json` 28 bosses, `cards.json` 187/187 cards with a
-  non-empty `icon` field, `design/ART-REVIEW.md` 28 `NEEDS A PASS` blocks
+  non-empty `icon` field, `design/art/ART-REVIEW.md` 28 `NEEDS A PASS` blocks
   and 0 APPROVED/REJECTED. The queue's unchecked items are still the same
   13: 2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 are `needs a screen` (skipped
   per the rules); 55, 76 and 80 are `cloud-art`, each already past its own
   "Done when" bar, and stay unchecked on purpose — only Nick opening
-  `design/ART-REVIEW.md` can close them. No code or data changed this run,
+  `design/art/ART-REVIEW.md` can close them. No code or data changed this run,
   so no test cycle to run. Not sending a notification: this standing
   condition has already been reported repeatedly and nothing is new.
 
@@ -13610,7 +13610,7 @@ Newest first. One line per finished item: what, and anything surprising.
   game/` shows only Log commits in between, no code or data). Independently
   re-derived the same numbers rather than trusting them secondhand:
   `bosses.json` 28 bosses, `cards.json` 187/187 cards with a non-empty `icon`
-  field, `design/ART-REVIEW.md` 28 `NEEDS A PASS` blocks and 0
+  field, `design/art/ART-REVIEW.md` 28 `NEEDS A PASS` blocks and 0
   APPROVED/REJECTED. Went looking specifically for a fresh angle rather than
   repeating the prior check verbatim — audited every card wearing the `stack`
   icon (7 cards: draw, scry, put-on-top, shuffle-in, search-and-pull) against
@@ -13624,7 +13624,7 @@ Newest first. One line per finished item: what, and anything surprising.
   #76 could audit that batches 6-7 didn't already see. Items 55, 76 and 80
   remain the only `cloud-safe`/`cloud-art` entries in the queue, all past
   their own "Done when" bars, all blocked solely on Nick opening
-  `design/ART-REVIEW.md`. Every other unchecked item is `needs a screen`. No
+  `design/art/ART-REVIEW.md`. Every other unchecked item is `needs a screen`. No
   code or data changed this run, so no test cycle to run. Not sending a
   notification: this exact standing condition has already been reported and
   nothing has changed since.
@@ -13637,11 +13637,11 @@ Newest first. One line per finished item: what, and anything surprising.
   (checked via the real nested `{bosses:[...]}`/`{cards:{...}}` shape, not a
   flat list, after a first naive read mis-parsed it), `grep -c
   'preload("res://assets/icons/' game/ui/card_view.gd` still 36, `grep -c
-  'NEEDS A PASS' design/ART-REVIEW.md` still 28 with zero
+  'NEEDS A PASS' design/art/ART-REVIEW.md` still 28 with zero
   APPROVED/REJECTED. The Queue's `- [ ]` items are the same 13: 2, 3, 8, 25,
   29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
   `cloud-safe`/`cloud-art`, each past its own "Done when" bar and blocked
-  solely on Nick opening `design/ART-REVIEW.md`. No code or data changed
+  solely on Nick opening `design/art/ART-REVIEW.md`. No code or data changed
   this run, so no test cycle to run and nothing to build. Not sending a
   notification: this exact standing condition has already been reported and
   nothing has changed since.
@@ -13654,7 +13654,7 @@ Newest first. One line per finished item: what, and anything surprising.
   one of the 187 cards in `cards.json` against its own base text and found
   nothing left to fix; #80's model and portrait landed 2026-08-25. All three
   stay unchecked correctly, blocked solely on Nick opening
-  `design/ART-REVIEW.md` (still 28 `NEEDS A PASS`, 0 approved/rejected).
+  `design/art/ART-REVIEW.md` (still 28 `NEEDS A PASS`, 0 approved/rejected).
   Every other unchecked item is `needs a screen`. Did not re-run the
   PlayerState/Boss/Combatant wire-gap audit the last two entries closed,
   since none of `game_host.gd`/`player_state.gd`/`boss.gd`/`combatant.gd`
@@ -13667,10 +13667,10 @@ Newest first. One line per finished item: what, and anything surprising.
   re-derivation would just repeat it. Confirmed directly rather than assumed:
   `git status` clean, `git log -1 -- game/data/ game/assets/` still points at
   `2e8310b` (yoke_ox, #55's fourteenth and final beast), and
-  `design/ART-REVIEW.md` still has 28 `NEEDS A PASS` blocks and zero
+  `design/art/ART-REVIEW.md` still has 28 `NEEDS A PASS` blocks and zero
   APPROVED/REJECTED lines. The only unchecked items carrying `cloud-safe` or
   `cloud-art` remain #55, #76 and #80, all build-complete and blocked solely
-  on Nick opening `design/ART-REVIEW.md`. Every other unchecked item is
+  on Nick opening `design/art/ART-REVIEW.md`. Every other unchecked item is
   `needs a screen`. No code or data changed this run; not sending a
   notification since the state it would report hasn't changed since the
   9th check's.
@@ -13678,12 +13678,12 @@ Newest first. One line per finished item: what, and anything surprising.
   `origin/main` fresh (tip `04e31f5`, no stale-HEAD this run). Independently
   re-verified against the tree, not the log: `bosses.json` now has 28 bosses
   (the original Titans/beasts plus all fourteen of item #55's new-content
-  beasts) and `design/ART-REVIEW.md` has 28 `NEEDS A PASS` blocks, one per
+  beasts) and `design/art/ART-REVIEW.md` has 28 `NEEDS A PASS` blocks, one per
   boss; `cards.json` still 187/187 cards with a non-empty `icon` field. The
   Queue's `- [ ]` items are the same 13 as every recent check — 2, 3, 8, 25,
   29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
   `cloud-safe`/`cloud-art`, each past its own "Done when" bar and blocked
-  solely on Nick opening `design/ART-REVIEW.md`. Also went looking for more
+  solely on Nick opening `design/art/ART-REVIEW.md`. Also went looking for more
   of the wire-gap class of bug the previous two entries closed (sigil_rounds/
   boss.limiter, then PlayerState.prepared): read every field on `PlayerState`
   (`player_state.gd`), `Boss` (`boss.gd`) and `Combatant` (`combatant.gd`) by
@@ -13781,7 +13781,7 @@ Newest first. One line per finished item: what, and anything surprising.
   `anchor()` points on the real nearby surface (same fix Flicker Stag's
   Height 5 already used) fixed both. Full write-up, including what's still
   unverified (trailing feathers reading as quills, a thin sigil-crest
-  bridge, an imperfect portrait crop), is in `design/ART-REVIEW.md`'s
+  bridge, an imperfect portrait crop), is in `design/art/ART-REVIEW.md`'s
   `eyrie_hawk` block. Left unchecked, same as every beast before it: a
   `cloud-art` item is never ticked by the routine — a human has to look.
 
@@ -13805,8 +13805,8 @@ Newest first. One line per finished item: what, and anything surprising.
   balls read as belly pouches until recoloured; the sigil still reads as a
   disc detached from the head in the front-on view specifically, a real
   trade-off against the occlusion contract rather than an oversight) are
-  written up in full in `design/ART-REVIEW.md`'s `cinder_jackal` block and
-  in `design/BACKLOG.md` item #55's own log. Left both the item and the
+  written up in full in `design/art/ART-REVIEW.md`'s `cinder_jackal` block and
+  in `design/plan/BACKLOG.md` item #55's own log. Left both the item and the
   ART-REVIEW block unchecked/NEEDS A PASS — a `cloud-art` item is never
   ticked by the routine, and the sigil trade-off above is exactly Nick's
   call to make, not the routine's.
@@ -13816,11 +13816,11 @@ Newest first. One line per finished item: what, and anything surprising.
   tip, `a8d834d`, no stale-HEAD issue this run). Independently re-verified
   against the tree, not the log: `bosses.json` still 20 bosses, `cards.json`
   still 187/187 cards with a non-empty `icon` field; `grep -c 'NEEDS A PASS'
-  design/ART-REVIEW.md` still 20; `grep -c 'preload("res://assets/icons/'
+  design/art/ART-REVIEW.md` still 20; `grep -c 'preload("res://assets/icons/'
   game/ui/card_view.gd` still 36; the Queue's `- [ ]` items are the same 13 —
   2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
   `cloud-safe`/`cloud-art`, each past its own "Done when" bar and blocked
-  solely on Nick opening `design/ART-REVIEW.md`. Nothing landed since the
+  solely on Nick opening `design/art/ART-REVIEW.md`. Nothing landed since the
   thirty-second check. No code or data changed, so no test cycle to run. Not
   sending another notification: the standing condition is unchanged from the
   one already reported, and a repeat ping with nothing new to add is exactly
@@ -13831,11 +13831,11 @@ Newest first. One line per finished item: what, and anything surprising.
   tip, `a6e60e7`, no stale-HEAD issue this run). Independently re-verified
   against the tree, not the log: `bosses.json` still 20 bosses, `cards.json`
   still 187/187 cards with a non-empty `icon` field; `grep -c 'NEEDS A PASS'
-  design/ART-REVIEW.md` still 20; `grep -c 'preload("res://assets/icons/'
+  design/art/ART-REVIEW.md` still 20; `grep -c 'preload("res://assets/icons/'
   game/ui/card_view.gd` still 36; the Queue's `- [ ]` items are the same 13 —
   2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
   `cloud-safe`/`cloud-art`, each past its own "Done when" bar and blocked
-  solely on Nick opening `design/ART-REVIEW.md`. Nothing landed since the
+  solely on Nick opening `design/art/ART-REVIEW.md`. Nothing landed since the
   thirty-first check. No code or data changed, so no test cycle to run. Not
   sending another notification: the standing condition is unchanged from the
   one already reported (the ninth check), and a repeat ping with nothing new
@@ -13846,11 +13846,11 @@ Newest first. One line per finished item: what, and anything surprising.
   tip, `dfb21ce`, no stale-HEAD issue this run). Independently re-verified
   against the tree, not the log: `bosses.json` still 20 bosses, `cards.json`
   still 187/187 cards with a non-empty `icon` field; `grep -c 'NEEDS A PASS'
-  design/ART-REVIEW.md` still 20; `grep -c 'preload("res://assets/icons/'
+  design/art/ART-REVIEW.md` still 20; `grep -c 'preload("res://assets/icons/'
   game/ui/card_view.gd` still 36; the Queue's `- [ ]` items are the same 13 —
   2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
   `cloud-safe`/`cloud-art`, each past its own "Done when" bar and blocked
-  solely on Nick opening `design/ART-REVIEW.md`. Nothing landed since the
+  solely on Nick opening `design/art/ART-REVIEW.md`. Nothing landed since the
   twenty-ninth check. No code or data changed, so no test cycle to run. Not
   sending another notification: the standing condition is unchanged from the
   one already reported, and a repeat ping with nothing new to add is exactly
@@ -13861,11 +13861,11 @@ Newest first. One line per finished item: what, and anything surprising.
   tip, `5a1cccb`, no stale-HEAD issue this run). Independently re-verified
   against the tree, not the log: `bosses.json` still 20 bosses, `cards.json`
   still 187/187 cards with a non-empty `icon` field; `grep -c 'NEEDS A PASS'
-  design/ART-REVIEW.md` still 20; `grep -c 'preload("res://assets/icons/'
+  design/art/ART-REVIEW.md` still 20; `grep -c 'preload("res://assets/icons/'
   game/ui/card_view.gd` still 36; the Queue's `- [ ]` items are the same 13 —
   2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
   `cloud-safe`/`cloud-art`, each past its own "Done when" bar and blocked
-  solely on Nick opening `design/ART-REVIEW.md`. Nothing landed since the
+  solely on Nick opening `design/art/ART-REVIEW.md`. Nothing landed since the
   twenty-eighth check. No code or data changed, so no test cycle to run. Not
   sending another notification: the standing condition is unchanged from the
   one already reported, and a repeat ping with nothing new to add is exactly
@@ -13876,11 +13876,11 @@ Newest first. One line per finished item: what, and anything surprising.
   tip, `e22615f`, no stale-HEAD issue this run). Independently re-verified
   against the tree, not the log: `bosses.json` still 20 bosses, `cards.json`
   still 187/187 cards with a non-empty `icon` field; `grep -c 'NEEDS A PASS'
-  design/ART-REVIEW.md` still 20; `grep -c 'preload("res://assets/icons/'
+  design/art/ART-REVIEW.md` still 20; `grep -c 'preload("res://assets/icons/'
   game/ui/card_view.gd` still 36; the Queue's `- [ ]` items are the same 13 —
   2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
   `cloud-safe`/`cloud-art`, each past its own "Done when" bar and blocked
-  solely on Nick opening `design/ART-REVIEW.md`. Nothing landed since the
+  solely on Nick opening `design/art/ART-REVIEW.md`. Nothing landed since the
   twenty-seventh check. No code or data changed, so no test cycle to run. Not
   sending another notification: the standing condition is unchanged from the
   one already reported, and a repeat ping with nothing new to add is exactly
@@ -13891,11 +13891,11 @@ Newest first. One line per finished item: what, and anything surprising.
   tip, `bebbe70`, no stale-HEAD issue this run). Independently re-verified
   against the tree, not the log: `bosses.json` still 20 bosses, `cards.json`
   still 187/187 cards with a non-empty `icon` field; `grep -c 'NEEDS A PASS'
-  design/ART-REVIEW.md` still 20; `grep -c 'preload("res://assets/icons/'
+  design/art/ART-REVIEW.md` still 20; `grep -c 'preload("res://assets/icons/'
   game/ui/card_view.gd` still 36; the Queue's `- [ ]` items are the same 13 —
   2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
   `cloud-safe`/`cloud-art`, each past its own "Done when" bar and blocked
-  solely on Nick opening `design/ART-REVIEW.md`. Nothing landed since the
+  solely on Nick opening `design/art/ART-REVIEW.md`. Nothing landed since the
   twenty-sixth check. No code or data changed, so no test cycle to run. Not
   sending another notification: the standing condition is unchanged from the
   one already reported, and a repeat ping with nothing new to add is exactly
@@ -13905,11 +13905,11 @@ Newest first. One line per finished item: what, and anything surprising.
   tip, `bd91e8f`, no stale-HEAD issue this run). Independently re-verified
   against the tree, not the log: `bosses.json` still 20 bosses, `cards.json`
   still 187/187 cards with a non-empty `icon` field; `grep -c 'NEEDS A PASS'
-  design/ART-REVIEW.md` still 20; `grep -c 'preload("res://assets/icons/'
+  design/art/ART-REVIEW.md` still 20; `grep -c 'preload("res://assets/icons/'
   game/ui/card_view.gd` still 36; the Queue's `- [ ]` items are the same 13 —
   2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
   `cloud-safe`/`cloud-art`, each past its own "Done when" bar and blocked
-  solely on Nick opening `design/ART-REVIEW.md`. Nothing landed since the
+  solely on Nick opening `design/art/ART-REVIEW.md`. Nothing landed since the
   twenty-fifth check. No code or data changed, so no test cycle to run. Not
   sending another notification: the standing condition is unchanged from the
   one already reported, and a repeat ping with nothing new to add is exactly
@@ -13919,11 +13919,11 @@ Newest first. One line per finished item: what, and anything surprising.
   tip, `d2940b6`, no stale-HEAD issue this run). Independently re-verified
   against the tree, not the log: `bosses.json` still 20 bosses, `cards.json`
   still 187/187 cards with a non-empty `icon` field; `grep -c 'NEEDS A PASS'
-  design/ART-REVIEW.md` still 20; `grep -c 'preload("res://assets/icons/'
+  design/art/ART-REVIEW.md` still 20; `grep -c 'preload("res://assets/icons/'
   game/ui/card_view.gd` still 36; the Queue's `- [ ]` items are the same 13 —
   2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
   `cloud-safe`/`cloud-art`, each past its own "Done when" bar and blocked
-  solely on Nick opening `design/ART-REVIEW.md`. Nothing landed since the
+  solely on Nick opening `design/art/ART-REVIEW.md`. Nothing landed since the
   twenty-fourth check. No code or data changed, so no test cycle to run. Not
   sending another notification: the standing condition is unchanged from the
   one already reported, and a repeat ping with nothing new to add is exactly
@@ -13933,11 +13933,11 @@ Newest first. One line per finished item: what, and anything surprising.
   tip, `8e4e5f1`, no stale-HEAD issue this run). Independently re-verified
   against the tree, not the log: `bosses.json` still 20 bosses, `cards.json`
   still 187/187 cards with a non-empty `icon` field; `grep -c 'NEEDS A PASS'
-  design/ART-REVIEW.md` still 20; `grep -c 'preload("res://assets/icons/'
+  design/art/ART-REVIEW.md` still 20; `grep -c 'preload("res://assets/icons/'
   game/ui/card_view.gd` still 36; the Queue's `- [ ]` items are the same 13 —
   2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
   `cloud-safe`/`cloud-art`, each past its own "Done when" bar and blocked
-  solely on Nick opening `design/ART-REVIEW.md`. Nothing landed since the
+  solely on Nick opening `design/art/ART-REVIEW.md`. Nothing landed since the
   twenty-third check. No code or data changed, so no test cycle to run. Not
   sending another notification: the standing condition is unchanged from the
   one already reported, and a repeat ping with nothing new to add is exactly
@@ -13947,11 +13947,11 @@ Newest first. One line per finished item: what, and anything surprising.
   tip, `4d7cc76`, no stale-HEAD issue this run). Independently re-verified
   against the tree, not the log: `bosses.json` still 20 bosses, `cards.json`
   still 187/187 cards with a non-empty `icon` field; `grep -c 'NEEDS A PASS'
-  design/ART-REVIEW.md` still 20; `grep -c 'preload("res://assets/icons/'
+  design/art/ART-REVIEW.md` still 20; `grep -c 'preload("res://assets/icons/'
   game/ui/card_view.gd` still 36; the Queue's `- [ ]` items are the same 13 —
   2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
   `cloud-safe`/`cloud-art`, each past its own "Done when" bar and blocked
-  solely on Nick opening `design/ART-REVIEW.md`. Nothing landed since the
+  solely on Nick opening `design/art/ART-REVIEW.md`. Nothing landed since the
   twenty-second check. No code or data changed, so no test cycle to run. Not
   sending another notification: the standing condition is unchanged from the
   one already reported, and a repeat ping with nothing new to add is exactly
@@ -13961,12 +13961,12 @@ Newest first. One line per finished item: what, and anything surprising.
   tip, `9273801`, no stale-HEAD issue this run). Independently re-verified
   against the tree, not the log, same as the last several checks: `bosses.json`
   still 20 bosses, `cards.json` still 187/187 cards with a non-empty `icon`
-  field; `grep -c 'NEEDS A PASS' design/ART-REVIEW.md` still 20; `grep -c
+  field; `grep -c 'NEEDS A PASS' design/art/ART-REVIEW.md` still 20; `grep -c
   'preload("res://assets/icons/' game/ui/card_view.gd` still 36; the Queue's
   `- [ ]` items are the same 13 — 2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81
   `needs a screen` (skipped); 55, 76, 80 `cloud-safe`/`cloud-art`, each past
   its own "Done when" bar and blocked solely on Nick opening
-  `design/ART-REVIEW.md`. Nothing landed since the twenty-first check. No code
+  `design/art/ART-REVIEW.md`. Nothing landed since the twenty-first check. No code
   or data changed, so no test cycle to run. Not sending another notification:
   the standing condition is unchanged from the one already reported, and a
   repeat ping with nothing new to add is exactly the noise the notification
@@ -13976,12 +13976,12 @@ Newest first. One line per finished item: what, and anything surprising.
   tip, `e3deb2a`, no stale-HEAD issue this run). Independently re-verified
   against the tree, not the log, same as the last several checks: `bosses.json`
   still 20 bosses, `cards.json` still 187/187 cards with a non-empty `icon`
-  field; `grep -c 'NEEDS A PASS' design/ART-REVIEW.md` still 20; `grep -c
+  field; `grep -c 'NEEDS A PASS' design/art/ART-REVIEW.md` still 20; `grep -c
   'preload("res://assets/icons/' game/ui/card_view.gd` still 36; the Queue's
   `- [ ]` items are the same 13 — 2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81
   `needs a screen` (skipped); 55, 76, 80 `cloud-safe`/`cloud-art`, each past
   its own "Done when" bar and blocked solely on Nick opening
-  `design/ART-REVIEW.md`. Nothing landed since the twentieth check. No code
+  `design/art/ART-REVIEW.md`. Nothing landed since the twentieth check. No code
   or data changed, so no test cycle to run. Not sending another notification:
   the standing condition is unchanged from the one already reported, and a
   repeat ping with nothing new to add is exactly the noise the notification
@@ -13993,12 +13993,12 @@ Newest first. One line per finished item: what, and anything surprising.
   Independently re-verified against the tree, not the log: `python3 -c`
   loading `game/data/bosses.json` and `game/data/cards.json` directly gives 20
   bosses and 187/187 cards with a non-empty `icon` field (zero missing); `grep
-  -c 'NEEDS A PASS' design/ART-REVIEW.md` still 20; `grep -c
+  -c 'NEEDS A PASS' design/art/ART-REVIEW.md` still 20; `grep -c
   'preload("res://assets/icons/' game/ui/card_view.gd` still 36; `grep '^- \[
-  \]' design/BACKLOG.md` on the Queue still the same 13 items — 2, 3, 8, 25,
+  \]' design/plan/BACKLOG.md` on the Queue still the same 13 items — 2, 3, 8, 25,
   29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
   `cloud-safe`/`cloud-art`, each already past its own "Done when" bar and
-  blocked solely on Nick opening `design/ART-REVIEW.md`. No code or data
+  blocked solely on Nick opening `design/art/ART-REVIEW.md`. No code or data
   changed, so no test cycle to run. A notification for this exact standing
   condition already went out on an earlier re-check (and the backlog of
   unreviewed art has not grown since); not repeating it here, per the
@@ -14010,12 +14010,12 @@ Newest first. One line per finished item: what, and anything surprising.
   Independently re-verified against the tree, not the log: `python3 -c`
   loading `game/data/bosses.json` and `game/data/cards.json` directly gives
   20 bosses and 187/187 cards with a non-empty `icon` field (zero missing);
-  `grep -c 'NEEDS A PASS' design/ART-REVIEW.md` still 20; `grep -c
+  `grep -c 'NEEDS A PASS' design/art/ART-REVIEW.md` still 20; `grep -c
   'preload("res://assets/icons/' game/ui/card_view.gd` still 36; `grep '^- \[
-  \]' design/BACKLOG.md` on the Queue still the same 13 items — 2, 3, 8, 25,
+  \]' design/plan/BACKLOG.md` on the Queue still the same 13 items — 2, 3, 8, 25,
   29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
   `cloud-safe`/`cloud-art`, each already past its own "Done when" bar and
-  blocked solely on Nick opening `design/ART-REVIEW.md`. No code or data
+  blocked solely on Nick opening `design/art/ART-REVIEW.md`. No code or data
   changed, so no test cycle to run. A notification for this exact standing
   condition already went out on an earlier re-check; nothing new surfaced
   this run, so no second one was sent. Stopped per rule 6 rather than
@@ -14028,12 +14028,12 @@ Newest first. One line per finished item: what, and anything surprising.
   Independently re-verified against the tree, not the log: `python3 -c`
   loading `game/data/bosses.json` and `game/data/cards.json` directly gives
   20 bosses and 187/187 cards with a non-empty `icon` field (zero missing);
-  `grep -c 'NEEDS A PASS' design/ART-REVIEW.md` still 20; `grep -c
+  `grep -c 'NEEDS A PASS' design/art/ART-REVIEW.md` still 20; `grep -c
   'preload("res://assets/icons/' game/ui/card_view.gd` still 36; `grep '^- \[
-  \]' design/BACKLOG.md` on the Queue still the same 13 items — 2, 3, 8, 25,
+  \]' design/plan/BACKLOG.md` on the Queue still the same 13 items — 2, 3, 8, 25,
   29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
   `cloud-safe`/`cloud-art`, each already past its own "Done when" bar and
-  blocked solely on Nick opening `design/ART-REVIEW.md`. No code or data
+  blocked solely on Nick opening `design/art/ART-REVIEW.md`. No code or data
   changed, so no test cycle to run. A notification for this exact standing
   condition already went out on an earlier re-check; nothing new surfaced
   this run, so no second one was sent. Stopped per rule 6 rather than
@@ -14046,12 +14046,12 @@ Newest first. One line per finished item: what, and anything surprising.
   Independently re-verified against the tree, not the log: `python3 -c`
   loading `game/data/bosses.json` and `game/data/cards.json` directly gives
   20 bosses and 187/187 cards with a non-empty `icon` field (zero missing);
-  `grep -c 'NEEDS A PASS' design/ART-REVIEW.md` still 20; `grep -c
+  `grep -c 'NEEDS A PASS' design/art/ART-REVIEW.md` still 20; `grep -c
   'preload("res://assets/icons/' game/ui/card_view.gd` still 36; `grep '^- \[
-  \]' design/BACKLOG.md` on the Queue still the same 13 items — 2, 3, 8, 25,
+  \]' design/plan/BACKLOG.md` on the Queue still the same 13 items — 2, 3, 8, 25,
   29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
   `cloud-safe`/`cloud-art`, each already past its own "Done when" bar and
-  blocked solely on Nick opening `design/ART-REVIEW.md`. No code or data
+  blocked solely on Nick opening `design/art/ART-REVIEW.md`. No code or data
   changed, so no test cycle to run. A notification for this exact standing
   condition already went out on an earlier re-check; nothing new surfaced
   this run, so no second one was sent. Stopped per rule 6 rather than
@@ -14064,12 +14064,12 @@ Newest first. One line per finished item: what, and anything surprising.
   Independently re-verified against the tree, not the log: `python3 -c`
   loading `game/data/bosses.json` and `game/data/cards.json` directly gives
   20 bosses and 187/187 cards with a non-empty `icon` field (zero missing);
-  `grep -c 'NEEDS A PASS' design/ART-REVIEW.md` still 20; `grep -c
+  `grep -c 'NEEDS A PASS' design/art/ART-REVIEW.md` still 20; `grep -c
   'preload("res://assets/icons/' game/ui/card_view.gd` still 36; `grep '^- \[
-  \]' design/BACKLOG.md` on the Queue still the same 13 items — 2, 3, 8, 25,
+  \]' design/plan/BACKLOG.md` on the Queue still the same 13 items — 2, 3, 8, 25,
   29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
   `cloud-safe`/`cloud-art`, each already past its own "Done when" bar and
-  blocked solely on Nick opening `design/ART-REVIEW.md`. No code or data
+  blocked solely on Nick opening `design/art/ART-REVIEW.md`. No code or data
   changed, so no test cycle to run. A notification for this exact standing
   condition already went out on an earlier re-check; nothing new surfaced
   this run, so no second one was sent. Stopped per rule 6 rather than
@@ -14082,12 +14082,12 @@ Newest first. One line per finished item: what, and anything surprising.
   Independently re-verified against the tree, not the log: `python3 -c`
   loading `game/data/bosses.json` and `game/data/cards.json` directly gives
   20 bosses and 187/187 cards with a non-empty `icon` field (zero missing);
-  `grep -c 'NEEDS A PASS' design/ART-REVIEW.md` still 20; `grep -c
+  `grep -c 'NEEDS A PASS' design/art/ART-REVIEW.md` still 20; `grep -c
   'preload("res://assets/icons/' game/ui/card_view.gd` still 36; `grep '^- \[
-  \]' design/BACKLOG.md` on the Queue still the same 13 items — 2, 3, 8, 25,
+  \]' design/plan/BACKLOG.md` on the Queue still the same 13 items — 2, 3, 8, 25,
   29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
   `cloud-safe`/`cloud-art`, each already past its own "Done when" bar and
-  blocked solely on Nick opening `design/ART-REVIEW.md`. No code or data
+  blocked solely on Nick opening `design/art/ART-REVIEW.md`. No code or data
   changed, so no test cycle to run. A notification for this exact standing
   condition already went out on an earlier re-check; nothing new surfaced
   this run, so no second one was sent. Stopped per rule 6 rather than
@@ -14100,12 +14100,12 @@ Newest first. One line per finished item: what, and anything surprising.
   Independently re-verified against the tree, not the log: `python3 -c`
   loading `game/data/bosses.json` and `game/data/cards.json` directly gives
   20 bosses and 187/187 cards with a non-empty `icon` field (zero missing);
-  `grep -c 'NEEDS A PASS' design/ART-REVIEW.md` still 20; `grep -c
+  `grep -c 'NEEDS A PASS' design/art/ART-REVIEW.md` still 20; `grep -c
   'preload("res://assets/icons/' game/ui/card_view.gd` still 36; `grep '^- \[
-  \]' design/BACKLOG.md` on the Queue still the same 13 items — 2, 3, 8, 25,
+  \]' design/plan/BACKLOG.md` on the Queue still the same 13 items — 2, 3, 8, 25,
   29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
   `cloud-safe`/`cloud-art`, each already past its own "Done when" bar and
-  blocked solely on Nick opening `design/ART-REVIEW.md`. No code or data
+  blocked solely on Nick opening `design/art/ART-REVIEW.md`. No code or data
   changed, so no test cycle to run. A notification for this exact standing
   condition already went out on an earlier re-check; nothing new surfaced
   this run, so no second one was sent. Stopped per rule 6 rather than
@@ -14118,11 +14118,11 @@ Newest first. One line per finished item: what, and anything surprising.
   Independently re-verified against the tree, not the log: `python3 -c`
   loading `game/data/bosses.json` and `game/data/cards.json` directly gives
   20 bosses and 187/187 cards with a non-empty `icon` field (zero missing);
-  `grep -c 'NEEDS A PASS' design/ART-REVIEW.md` still 20; `grep '^- \[ \]'
-  design/BACKLOG.md` on the Queue still the same 13 items — 2, 3, 8, 25,
+  `grep -c 'NEEDS A PASS' design/art/ART-REVIEW.md` still 20; `grep '^- \[ \]'
+  design/plan/BACKLOG.md` on the Queue still the same 13 items — 2, 3, 8, 25,
   29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
   `cloud-safe`/`cloud-art`, each already past its own "Done when" bar and
-  blocked solely on Nick opening `design/ART-REVIEW.md`. No code or data
+  blocked solely on Nick opening `design/art/ART-REVIEW.md`. No code or data
   changed, so no test cycle to run. A notification for this exact standing
   condition already went out on an earlier re-check; nothing new surfaced
   this run, so no second one was sent. Stopped per rule 6 rather than
@@ -14135,11 +14135,11 @@ Newest first. One line per finished item: what, and anything surprising.
   re-verified against the tree, not the log: `python3 -c` loading
   `game/data/bosses.json` and `game/data/cards.json` directly gives 20
   bosses and 187/187 cards with a non-empty `icon` field (zero missing);
-  `grep -c 'NEEDS A PASS' design/ART-REVIEW.md` still 20; `grep '^- \[ \]'
-  design/BACKLOG.md` on the Queue still the same 13 items — 2, 3, 8, 25,
+  `grep -c 'NEEDS A PASS' design/art/ART-REVIEW.md` still 20; `grep '^- \[ \]'
+  design/plan/BACKLOG.md` on the Queue still the same 13 items — 2, 3, 8, 25,
   29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
   `cloud-safe`/`cloud-art`, each already past its own "Done when" bar and
-  blocked solely on Nick opening `design/ART-REVIEW.md`. No code or data
+  blocked solely on Nick opening `design/art/ART-REVIEW.md`. No code or data
   changed, so no test cycle to run. A notification for this exact standing
   condition already went out on an earlier re-check; nothing new surfaced
   this run, so no second one was sent. Stopped per rule 6 rather than
@@ -14152,11 +14152,11 @@ Newest first. One line per finished item: what, and anything surprising.
   the tree, not the log: loaded `game/data/bosses.json` and
   `game/data/cards.json` with `python3 -c` directly — 20 bosses, 187/187
   cards with a non-empty `icon` field (zero missing); `grep -c 'NEEDS A
-  PASS' design/ART-REVIEW.md` still 20; `grep '^- \[ \]' design/BACKLOG.md`
+  PASS' design/art/ART-REVIEW.md` still 20; `grep '^- \[ \]' design/plan/BACKLOG.md`
   on the Queue still the same 13 items — 2, 3, 8, 25, 29b, 32, 31b, 78, 79,
   81 `needs a screen` (skipped); 55, 76, 80 `cloud-safe`/`cloud-art`, each
   already past its own "Done when" bar and blocked solely on Nick opening
-  `design/ART-REVIEW.md`. No code or data changed, so no test cycle to run.
+  `design/art/ART-REVIEW.md`. No code or data changed, so no test cycle to run.
   A notification for this exact standing condition already went out on an
   earlier re-check; nothing new surfaced this run, so no second one was
   sent. Stopped per rule 6 rather than inventing work.
@@ -14167,11 +14167,11 @@ Newest first. One line per finished item: what, and anything surprising.
   between. Independently re-verified against the tree, not the log: `python3
   -c` loading `game/data/bosses.json` and `game/data/cards.json` directly
   gives 20 bosses and 187/187 cards with a non-empty `icon` field (zero
-  missing); `grep -c 'NEEDS A PASS' design/ART-REVIEW.md` still 20;
-  `grep '^- \[ \]' design/BACKLOG.md` on the Queue still the same 13 items —
+  missing); `grep -c 'NEEDS A PASS' design/art/ART-REVIEW.md` still 20;
+  `grep '^- \[ \]' design/plan/BACKLOG.md` on the Queue still the same 13 items —
   2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped); 55, 76, 80
   `cloud-safe`/`cloud-art`, each already past its own "Done when" bar and
-  blocked solely on Nick opening `design/ART-REVIEW.md`. No code or data
+  blocked solely on Nick opening `design/art/ART-REVIEW.md`. No code or data
   changed, so no test cycle to run. A notification for this exact standing
   condition already went out on an earlier re-check; nothing new surfaced
   this run, so no second one was sent. Stopped per rule 6 rather than
@@ -14185,7 +14185,7 @@ Newest first. One line per finished item: what, and anything surprising.
   `game/data/bosses.json` still 20 bosses; `game/data/cards.json` still
   187/187 cards with a non-empty `icon` field (`d['cards']` is a dict keyed
   by id, not a list — confirmed no id has a falsy `icon`); `game/ui/card_view.gd`
-  still 36 `preload("res://assets/icons/...")` lines; `design/ART-REVIEW.md`
+  still 36 `preload("res://assets/icons/...")` lines; `design/art/ART-REVIEW.md`
   still 20 `NEEDS A PASS` blocks; `grep '^- \[ \]'` on the Queue still the
   same 13 items — 2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 `needs a screen`
   (skipped); 55, 76, 80 `cloud-safe`/`cloud-art`, past their own "Done when"
@@ -14200,7 +14200,7 @@ Newest first. One line per finished item: what, and anything surprising.
   entry: `game/data/bosses.json` still 20 bosses; `game/data/cards.json`
   still 187/187 cards with a non-empty `icon` field (checked programmatically
   this time, not by grep count); `game/ui/card_view.gd` still 36
-  `preload("res://assets/icons/...")` lines; `design/ART-REVIEW.md` still 20
+  `preload("res://assets/icons/...")` lines; `design/art/ART-REVIEW.md` still 20
   `NEEDS A PASS` blocks; `grep '^- \[ \]'` on the Queue still the same 13
   items — 2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 `needs a screen` (skipped);
   55, 76, 80 `cloud-safe`/`cloud-art`, past their own "Done when" bar,
@@ -14214,7 +14214,7 @@ Newest first. One line per finished item: what, and anything surprising.
   Independently re-verified against the tree rather than trusting the prior
   entry: `game/data/bosses.json` still 20 bosses; `game/data/cards.json`
   still 187/187 cards with a non-empty `icon` field; `game/ui/card_view.gd`
-  still 36 `preload("res://assets/icons/...")` lines; `design/ART-REVIEW.md`
+  still 36 `preload("res://assets/icons/...")` lines; `design/art/ART-REVIEW.md`
   still 20 `NEEDS A PASS` blocks; `grep '^- \[ \]'` on the Queue still the
   same 13 items — 2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 `needs a screen`
   (skipped); 55, 76, 80 `cloud-safe`/`cloud-art`, past their own "Done when"
@@ -14229,7 +14229,7 @@ Newest first. One line per finished item: what, and anything surprising.
   Independently re-verified against the tree rather than trusting the prior
   entry: `game/data/bosses.json` still 20 bosses; `game/data/cards.json`
   still 187/187 cards with a non-empty `icon` field; `game/ui/card_view.gd`
-  still 36 `preload("res://assets/icons/...")` lines; `design/ART-REVIEW.md`
+  still 36 `preload("res://assets/icons/...")` lines; `design/art/ART-REVIEW.md`
   still 20 `NEEDS A PASS` blocks; `grep '^- \[ \]'` on the Queue still the
   same 13 items — 2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 `needs a screen`
   (skipped); 55, 76, 80 `cloud-safe`/`cloud-art`, past their own "Done when"
@@ -14244,7 +14244,7 @@ Newest first. One line per finished item: what, and anything surprising.
   audit out, same tip (`3ab10a9`, the prior run's own no-op log entry) — no
   commits landed on `origin/main` between that check and this one.
   Independently re-verified against the tree rather than trusting the prior
-  entry: `game/data/bosses.json` still 20 bosses, `design/ART-REVIEW.md`
+  entry: `game/data/bosses.json` still 20 bosses, `design/art/ART-REVIEW.md`
   still 20 `NEEDS A PASS` blocks, queue structure unchanged (2, 3, 8, 25,
   29b, 32, 31b, 78, 79, 81 `needs a screen`; 55, 76, 80 `cloud-safe`/
   `cloud-art` and past their own "Done when" bar, waiting on Nick's art
@@ -14260,7 +14260,7 @@ Newest first. One line per finished item: what, and anything surprising.
   Independently re-verified again rather than trusting the prior entry:
   `game/data/cards.json` still 187 cards, `game/data/bosses.json` still 20
   bosses, `game/ui/card_view.gd` still 36 `preload("res://assets/icons/...")`
-  lines, `design/ART-REVIEW.md` still 20 `NEEDS A PASS` blocks, `origin/main`
+  lines, `design/art/ART-REVIEW.md` still 20 `NEEDS A PASS` blocks, `origin/main`
   and local `HEAD` at the same commit. Queue unchanged: 2, 3, 8, 25, 29b, 32,
   31b, 78, 79, 81 are `needs a screen` (skipped, no display here); 55, 76, 80
   are `cloud-safe`/`cloud-art` and already past their own "Done when" bar,
@@ -14290,7 +14290,7 @@ Newest first. One line per finished item: what, and anything surprising.
   re-verified rather than trusting the item's own note: `game/data/
   bosses.json` parses to 20 `bosses` entries; `game/data/cards.json` has
   187/187 cards with a non-empty `icon` field; `game/ui/card_view.gd` still
-  has 36 `preload("res://assets/icons/...")` lines; `design/ART-REVIEW.md`
+  has 36 `preload("res://assets/icons/...")` lines; `design/art/ART-REVIEW.md`
   still has 20 blocks marked `NEEDS A PASS`. `grep '^- \[ \]'` on the Queue:
   2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 are all `needs a screen` (correctly
   skipped, no display here); 55, 76, 80 are `cloud-safe`/`cloud-art` items
@@ -14334,7 +14334,7 @@ Newest first. One line per finished item: what, and anything surprising.
   `steady_grip` pair Strength/Dexterity with Block and correctly wear
   `shield` since Block is their primary effect, same reasoning `spinebrace`
   (Block + Thorns → `shield`) already uses. No card without an icon, no
-  card wearing an icon for an effect it doesn't have. `design/ART-REVIEW.md`
+  card wearing an icon for an effect it doesn't have. `design/art/ART-REVIEW.md`
   still has 20 blocks marked `NEEDS A PASS`. `grep '^- \[ \]'` on the Queue
   reproduces the same list: 2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 (`needs a
   screen`, correctly skipped) plus 55, 76, 80 (`cloud-safe`/`cloud-art`,
@@ -14423,7 +14423,7 @@ Newest first. One line per finished item: what, and anything surprising.
   batch 2 found; no genuine gap or wrong-icon case left for a batch 3
   without inventing one); `game/assets/3d/cast/lightbearer.glb` and
   `game/assets/portraits/lightbearer.png` both still present (#80);
-  `design/ART-REVIEW.md` still has 16 blocks marked `NEEDS A PASS`. `grep
+  `design/art/ART-REVIEW.md` still has 16 blocks marked `NEEDS A PASS`. `grep
   '^- \[ \]'` on the Queue reproduces the same list again: 2, 3, 8, 25, 29b,
   32, 31b, 78, 79, 81 (`needs a screen`, correctly skipped) plus 55, 76, 80
   (`cloud-safe`/`cloud-art`, already built past their own "Done when" bar,
@@ -14440,7 +14440,7 @@ Newest first. One line per finished item: what, and anything surprising.
   `game/data/bosses.json` still parses to 20 `bosses` entries (#55's six
   still present); `game/ui/card_view.gd` still has exactly 32
   `preload("res://assets/icons/...")` entries and `game/data/cards.json`
-  still has 187 `"icon"` fields (#76); `design/ART-REVIEW.md` still has 16
+  still has 187 `"icon"` fields (#76); `design/art/ART-REVIEW.md` still has 16
   blocks marked `NEEDS A PASS`. `grep '^- \[ \]'` on the Queue reproduces the
   same list again: 2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 (`needs a screen`,
   correctly skipped) plus 55, 76, 80 (`cloud-safe`/`cloud-art`, already built
@@ -14472,7 +14472,7 @@ Newest first. One line per finished item: what, and anything surprising.
   numbers: `game/data/bosses.json` still parses to 20 `bosses` entries (#55's
   six still present); `game/ui/card_view.gd` still has exactly 32
   `preload("res://assets/icons/...")` entries, and `game/data/cards.json`
-  still has 187 `"icon"` fields (#76); `design/ART-REVIEW.md` still has 16
+  still has 187 `"icon"` fields (#76); `design/art/ART-REVIEW.md` still has 16
   blocks marked `NEEDS A PASS`. `grep '^- \[ \]'` on the Queue reproduces the
   same list again: 2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 (`needs a screen`,
   correctly skipped) plus 55, 76, 80 (`cloud-safe`/`cloud-art`, already built
@@ -14489,7 +14489,7 @@ Newest first. One line per finished item: what, and anything surprising.
   bosses.json` still parses to 20 `bosses` entries (#55's six still present);
   `game/ui/card_view.gd` still has exactly 32
   `preload("res://assets/icons/...")` entries, and `game/data/cards.json`
-  still has 187 `"icon"` fields (#76); `design/ART-REVIEW.md` still has 16
+  still has 187 `"icon"` fields (#76); `design/art/ART-REVIEW.md` still has 16
   blocks marked `NEEDS A PASS`. `grep '^- \[ \]'` on the Queue reproduces the
   same list again: 2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 (`needs a screen`,
   correctly skipped) plus 55, 76, 80 (`cloud-safe`/`cloud-art`, already built
@@ -14506,7 +14506,7 @@ Newest first. One line per finished item: what, and anything surprising.
   parses to 20 `bosses` entries (#55's six still present); `game/ui/
   card_view.gd` still has exactly 32 `preload("res://assets/icons/...")`
   entries, and `game/data/cards.json` still has 187 `"icon"` fields (#76);
-  `design/ART-REVIEW.md` still has 21 blocks with 16 still marked `NEEDS A
+  `design/art/ART-REVIEW.md` still has 21 blocks with 16 still marked `NEEDS A
   PASS`. `grep '^- \[ \]'` on the Queue reproduces the same list again: 2, 3,
   8, 25, 29b, 32, 31b, 78, 79, 81 (`needs a screen`, correctly skipped) plus
   55, 76, 80 (`cloud-safe`/`cloud-art`, already built past their own "Done
@@ -14524,7 +14524,7 @@ Newest first. One line per finished item: what, and anything surprising.
   `preload("res://assets/icons/...")` entries, and `game/data/cards.json`
   still has 187 `"icon"` fields (#76); `game/assets/3d/cast/lightbearer.glb`
   and `game/assets/portraits/lightbearer.png` are both still committed
-  (#80); `design/ART-REVIEW.md` still has 21 blocks with 16 still marked
+  (#80); `design/art/ART-REVIEW.md` still has 21 blocks with 16 still marked
   `NEEDS A PASS`. Rebuilt the unchecked-item list from scratch
   (`grep '^- \[ \]'`): 2, 3, 8, 25, 29b, 32, 31b, 78, 79, 81 are `needs a
   screen`, correctly skipped; 55, 76, 80 are the only `cloud-safe`/
@@ -14541,7 +14541,7 @@ Newest first. One line per finished item: what, and anything surprising.
   than trusting the twentieth entry's numbers: `game/data/bosses.json` still
   parses to 20 `bosses` entries (#55's six still present); `game/ui/
   card_view.gd` still has exactly 32 `preload("res://assets/icons/...")`
-  entries (#76); `design/ART-REVIEW.md` still shows every block `NEEDS A
+  entries (#76); `design/art/ART-REVIEW.md` still shows every block `NEEDS A
   PASS` except `frog` (`DONE`) — Nick has not reviewed the rest. Also checked
   that no commit since `7ac9204` (well before the eighteenth check) has
   touched `cards.json`, `bosses.json`, `card_view.gd` or `ART-REVIEW.md`, so
@@ -14563,7 +14563,7 @@ Newest first. One line per finished item: what, and anything surprising.
   staleness this run). Independently re-verified rather than trusting the
   nineteenth entry's numbers: `game/data/bosses.json` parses to 20 `bosses`
   entries (#55's six still present); `game/ui/card_view.gd` still has exactly
-  32 `preload("res://assets/icons/...")` entries (#76); `design/ART-REVIEW.md`
+  32 `preload("res://assets/icons/...")` entries (#76); `design/art/ART-REVIEW.md`
   still shows every block as `NEEDS A PASS` except `frog` (already `DONE`) —
   Nick has not reviewed the rest. `grep '^- \[ \]'` on the Queue reproduces
   the same list as the nineteenth entry exactly: 2, 3, 8, 25, 29b, 32, 31b,
@@ -14645,7 +14645,7 @@ Newest first. One line per finished item: what, and anything surprising.
   Thorns 2, not a bug). `tools/cardlab/build.js`'s own icon finding reads
   `info`, not `warn` (30 icons, most-shared `lift` at 10%) — healthy, nothing
   to fix. `lightbearer.glb`/`.png` still committed (#80); its
-  `design/ART-REVIEW.md` block still reads NEEDS A PASS, same as all sixteen
+  `design/art/ART-REVIEW.md` block still reads NEEDS A PASS, same as all sixteen
   other review blocks — Nick has not looked yet. No code or data changed, so
   the Godot import/test cycle was skipped, same as the fourteenth/fifteenth
   checks. No push notification — nothing has changed since the sixteenth
@@ -14722,7 +14722,7 @@ Newest first. One line per finished item: what, and anything surprising.
   `"bosses"` (#55's six all present); `game/ui/card_view.gd`'s `ICONS` dict
   still has exactly 32 `preload()` entries, unchanged from the fourteenth
   check (#76); `lightbearer.glb` and `lightbearer.png` are both still
-  committed (#80). Also grepped `design/ART-REVIEW.md` directly for any block
+  committed (#80). Also grepped `design/art/ART-REVIEW.md` directly for any block
   header changing from `NEEDS A PASS` — all fifteen review blocks (six
   beasts, two icon batches, portraits, the overworld map, lightbearer,
   vine_weaver, mountain_climbers, goblin_mech) are still unreviewed; Nick has
@@ -14744,7 +14744,7 @@ Newest first. One line per finished item: what, and anything surprising.
   `ICONS` dict still has exactly 32 entries (lines 77-108), each a real
   `preload()` under `game/assets/icons/`, matching #76's own count from batch
   2; `lightbearer.glb` and `lightbearer.png` are both still committed (#80).
-  Also checked `design/ART-REVIEW.md` directly for any of the nine review
+  Also checked `design/art/ART-REVIEW.md` directly for any of the nine review
   blocks flipping from NEEDS A PASS to reviewed — none have; Nick has not
   looked yet. Rebuilt the unchecked list with `grep '^- \[ \]'`: 2, 3, 8, 25,
   29b, 32, 31b, 78, 79, 81 are `needs a screen`; 55, 76, 80 are the only
@@ -14986,7 +14986,7 @@ Newest first. One line per finished item: what, and anything surprising.
   `husk_beetle`, a `regen`-idiom fight-pool beast, end to end: data in
   `bosses.json`, a Blender body via `tools/blender/husk_beetle.py`, all four
   `assetcheck.gd` contract rules passing, three previews rendered and
-  committed, an honest `design/ART-REVIEW.md` block. Surprising: the sigil
+  committed, an honest `design/art/ART-REVIEW.md` block. Surprising: the sigil
   failed the visibility check at 100% occluded on the first three placements
   (a beetle's long horizontal body doesn't fit `beast.py`'s "radial out from
   a central axis" assumption the way a rounder creature like the Crag Pup
@@ -16039,7 +16039,7 @@ Newest first. One line per finished item: what, and anything surprising.
   unreachable, same 6 pre-existing findings) — this item touched no data files.
 
 - **2026-08-25** — #47 A fifth hunter, driven by a resource: The Lightbearer
-  (`design/climbing-and-characters.md`'s stretch-5th concept, an owl portrait
+  (`design/guide/climbing-and-characters.md`'s stretch-5th concept, an owl portrait
   since no new art was in scope), built on Light — a resource that BANKS
   across turns instead of resetting like energy or Rhythm does, since nothing
   in `_begin_round()` touches it (deliberate — that's the whole point of the
@@ -17431,7 +17431,7 @@ Newest first. One line per finished item: what, and anything surprising.
   bar already met), #76 (icon audit exhaustive as of batch 7, zero cards
   changed in `cards.json`/`bosses.json` since), and #80 (Lightbearer model and
   portrait already built) — all three are build-complete and blocked only on
-  Nick looking at `design/ART-REVIEW.md`, which this routine cannot do for
+  Nick looking at `design/art/ART-REVIEW.md`, which this routine cannot do for
   itself. Every other unchecked item is tagged `needs a screen`. No commits
   touched `game/data/` since batch 7's audit, so there is no new gap to find.
   No code changed this run.
@@ -17440,7 +17440,7 @@ Newest first. One line per finished item: what, and anything surprising.
   (nothing landed in between), and independently re-derived the same
   conclusion before reading it: the only three unchecked items carrying
   either tag are #55, #76 and #80, all build-complete and blocked solely on
-  Nick opening `design/ART-REVIEW.md` — six beasts, eight card icons, the
+  Nick opening `design/art/ART-REVIEW.md` — six beasts, eight card icons, the
   Lightbearer model/portrait, nineteen portraits, the overworld map, and all
   fourteen fight grounds are sitting there as NEEDS A PASS with nothing new
   since the eighth check. Every other unchecked item is `needs a screen`. No
@@ -17451,7 +17451,7 @@ Newest first. One line per finished item: what, and anything surprising.
   independently re-derived the same conclusion the 8th through 29th checks
   reached before reading any of them: the only three unchecked items carrying
   either tag are #55, #76 and #80, all build-complete and blocked solely on
-  Nick opening `design/ART-REVIEW.md`. Every status in that file is still
+  Nick opening `design/art/ART-REVIEW.md`. Every status in that file is still
   NEEDS A PASS with nothing approved. Every other unchecked item is `needs a
   screen`. No commits touched `game/data/`, `game/assets/`, or any cloud-safe
   item since the 9th check's notification, so there is nothing new to flag —
@@ -17462,10 +17462,10 @@ Newest first. One line per finished item: what, and anything surprising.
   time), then independently re-derived the same conclusion the 8th through
   33rd checks reached before reading any of them: the only unchecked items
   carrying either tag are #55, #76 and #80, all build-complete and blocked
-  solely on Nick opening `design/ART-REVIEW.md`. Confirmed directly rather
+  solely on Nick opening `design/art/ART-REVIEW.md`. Confirmed directly rather
   than trusting the log: `git log --oneline -1 -- game/data/ game/assets/`
   still points at `d95d4ac` (batch 6), predating even batch 7's audit, and
-  `design/ART-REVIEW.md` has zero APPROVED/REJECTED lines against its 20
+  `design/art/ART-REVIEW.md` has zero APPROVED/REJECTED lines against its 20
   NEEDS A PASS blocks — nothing has moved since the 9th check's notification.
   Every other unchecked item is tagged `needs a screen`. No code or data
   changed this run; not re-sending the notification since the state it
@@ -17475,9 +17475,9 @@ Newest first. One line per finished item: what, and anything surprising.
   time), then independently re-derived the same conclusion the 8th through
   34th checks reached before reading any of them: the only unchecked items
   carrying either tag are #55, #76 and #80, all build-complete and blocked
-  solely on Nick opening `design/ART-REVIEW.md`. Confirmed directly:
+  solely on Nick opening `design/art/ART-REVIEW.md`. Confirmed directly:
   `git log --oneline -1 -- game/data/ game/assets/` still points at `d95d4ac`
-  (batch 6), and `design/ART-REVIEW.md` still has zero APPROVED/REJECTED
+  (batch 6), and `design/art/ART-REVIEW.md` still has zero APPROVED/REJECTED
   lines against its 20 NEEDS A PASS blocks. Every other unchecked item is
   tagged `needs a screen`. No code or data changed this run; not re-sending
   the notification since the state it described still hasn't changed.
@@ -17486,14 +17486,14 @@ Newest first. One line per finished item: what, and anything surprising.
   time), then independently re-derived the same conclusion the 8th through
   35th checks reached before reading any of them: the only unchecked items
   carrying either tag are #55, #76 and #80, all build-complete and blocked
-  solely on Nick opening `design/ART-REVIEW.md`. Confirmed directly rather
+  solely on Nick opening `design/art/ART-REVIEW.md`. Confirmed directly rather
   than trusting the prior entry's number: `git log --oneline -1 -- game/data/
   game/assets/` actually points at `2e8310b` (the yoke_ox commit that closed
   #55's own 14-beast bar), not `d95d4ac` as the 34th/35th checks claimed —
   that number was already stale then, since yoke_ox (2026-08-30) postdates
   batch 6 (2026-08-29) and touches both paths. Either way the conclusion is
   unchanged: no commit since `2e8310b` has touched `game/data/` or
-  `game/assets/`. `design/ART-REVIEW.md` still has 28 NEEDS A PASS blocks and
+  `game/assets/`. `design/art/ART-REVIEW.md` still has 28 NEEDS A PASS blocks and
   zero APPROVED/REJECTED lines. Every other unchecked item is tagged `needs a
   screen`. No code or data changed this run; not re-sending the notification
   since the state it described still hasn't changed.
@@ -17502,7 +17502,7 @@ Newest first. One line per finished item: what, and anything surprising.
   issue this time) and independently re-derived the same conclusion again
   before reading the 36th check's own text: the only unchecked items
   carrying either tag are still #55, #76 and #80, all build-complete and
-  blocked solely on Nick opening `design/ART-REVIEW.md`. `design/ART-
+  blocked solely on Nick opening `design/art/ART-REVIEW.md`. `design/ART-
   REVIEW.md` still has 28 NEEDS A PASS blocks and zero APPROVED/REJECTED
   lines. Every other unchecked item is tagged `needs a screen`. No code or
   data changed this run; not re-sending the notification since the state it
@@ -17529,7 +17529,7 @@ Newest first. One line per finished item: what, and anything surprising.
   `cloud-safe`/`cloud-art`, each past its own "Done when" bar). Confirmed
   directly: `git log --oneline -1 -- game/data/ game/assets/` still points
   at `2e8310b` (yoke_ox, the commit that closed #55's own bar), and
-  `design/ART-REVIEW.md` still has 28 NEEDS A PASS blocks against zero
+  `design/art/ART-REVIEW.md` still has 28 NEEDS A PASS blocks against zero
   APPROVED/REJECTED lines — read #55, #76 and #80's own queue entries in
   full to confirm each is genuinely build-complete (all fourteen beasts,
   the exhaustive icon audit across all 187 cards, and the Lightbearer

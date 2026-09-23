@@ -1,6 +1,6 @@
 # brine_urchin — refinement log
 
-Loop: `design/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
+Loop: `design/guide/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
 no edits made to `tools/blender/brine_urchin.py`.** Views:
 `design/renders/brine_urchin_pass1_*.png`.
 

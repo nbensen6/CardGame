@@ -1,6 +1,6 @@
 # cinder_jackal (fight ground) — refinement log
 
-Loop: `design/asset-loop.md`, applied to a **fight ground**, per the artist
+Loop: `design/guide/asset-loop.md`, applied to a **fight ground**, per the artist
 brief's item 3 ("the arena — the jackal's ground and walls"). Filed as
 `cinder_jackal_ground` rather than `cinder_jackal` because a beast/companion
 model of the same name already exists in `game/assets/3d/env/` under a
@@ -62,7 +62,7 @@ CHARCOAL rim (`e.ground`), a CHARCOAL apron beyond it, and a default
 - **Style consistency (3)**: `enclose("cliff")` with no arguments is the
   *default* — the same grey as any other cliff-walled quarry in the game.
   Nothing about this wall says "Cinder Jackal" while the beast standing on
-  it carries a strong TANGERINE/AMBER identity (`design/adding-detail.md`).
+  it carries a strong TANGERINE/AMBER identity (`design/guide/adding-detail.md`).
 
 ## Diagnosis — two lowest (pass 1)
 
@@ -156,7 +156,7 @@ named after is only confirmable from directly above. A fourth two-line
 pass on `tools/blender/env/cinder_jackal.py` alone cannot move either
 number — the honest concrete fix is a change to shared wall geometry or
 camera framing that would affect every "cliff"/"crag" ground in the game,
-which is Nick's call (`design/asset-loop.md`'s rebuild-verdict spirit, even
+which is Nick's call (`design/guide/asset-loop.md`'s rebuild-verdict spirit, even
 though nothing here needs literally rebuilding — the ceiling is systemic,
 not this asset's own geometry). Not filing a `to: nick` request for it
 right now since it's already sitting as an open, unresolved finding in two

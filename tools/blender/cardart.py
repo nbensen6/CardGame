@@ -13,7 +13,7 @@ Differs from portraits.py in three ways, because a card's art is a
 different job than a 34px party-panel face:
 
   * FULL BODY, not head-and-shoulders — a card has room, and StS's own bar
-    (design/card-face-vs-sts.md) is a scene, not a headshot.
+    (design/art/card-face-vs-sts.md) is a scene, not a headshot.
   * The 620x870 CARD_ART_SIZE aspect (CardView.CARD_ART_SIZE), not a square,
     so the camera is set up VERTICAL-fit: the vertical span is the number
     that means something (how much of the model's height fills the frame)
@@ -26,7 +26,7 @@ different job than a 34px party-panel face:
 
 CARDS below is deliberately short. One card, verified end to end (rendered,
 composited, checked in the real hand at 1:1), is worth more than a batch
-nobody looked at — see design/asset-loop.md's own case for that, which
+nobody looked at — see design/guide/asset-loop.md's own case for that, which
 applies just as much to a new pipeline as to a fifth pass on an old one.
 """
 import bpy, math, os, sys

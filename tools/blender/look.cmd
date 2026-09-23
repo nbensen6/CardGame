@@ -1,5 +1,5 @@
 @echo off
-REM Capture an asset so it can be judged. See design/asset-loop.md.
+REM Capture an asset so it can be judged. See design/guide/asset-loop.md.
 REM
 REM   tools\blender\look.cmd frog              a hunter or a beast, pass 1
 REM   tools\blender\look.cmd frog 2            the same asset, pass 2

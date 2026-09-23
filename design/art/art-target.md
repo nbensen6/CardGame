@@ -5,7 +5,7 @@ Written 2026-09-07, because Nick asked the question the loop could not answer:
 
 ## The honest answer was: nothing you can look at
 
-`design/asset-loop.md` has said so since it was written:
+`design/guide/asset-loop.md` has said so since it was written:
 
 > **Reference:** the Kenney models still in `game/assets/3d/` as stand-ins, and
 > `dissect.py` output. There is no reference image per creature — that is the
@@ -185,7 +185,7 @@ scorer can actually be wrong about.
 ### Layer 3 — the rubric
 
 Unchanged in shape, five lines out of 50, with the anchors and tier stop lines
-in `design/asset-loop.md`. It runs **after** the gates, and it may not be used
+in `design/guide/asset-loop.md`. It runs **after** the gates, and it may not be used
 to argue a gate away.
 
 ## How we get from here to there

@@ -1,6 +1,6 @@
 # glyph_tortoise — refinement log
 
-Loop: `design/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
+Loop: `design/guide/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
 no edits made to `tools/blender/glyph_tortoise.py`.** Views:
 `design/renders/glyph_tortoise_pass1_*.png`.
 

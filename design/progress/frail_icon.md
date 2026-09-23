@@ -1,11 +1,11 @@
 # frail — icon scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
+Loop: `design/guide/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
 22 (see `target_icon.md`/`burn_icon.md` for the batch's full scope and the
 shared rubric). **Scoring pass only — report, not repair; no edits to
 `tools/blender/icons.py`.** Asset: `game/assets/icons/frail.png` (256x256,
 rendered by `icons.py`, orthographic head-on). Last of batch 22's four; also
-answers `design/ART-REVIEW.md`'s own standalone "one Frail icon" section. With
+answers `design/art/ART-REVIEW.md`'s own standalone "one Frail icon" section. With
 this batch, **all thirty-six total card icons are now scored**, and every
 asset class this item's own text names (beasts, hunters, fight grounds,
 portraits, icons) is complete except the overworld map, which batch 14
@@ -302,7 +302,7 @@ not newly introduced here.
 ## Batch 22 close-out — all thirty-six card icons scored
 
 With `burn`, `stack`, `light` and `frail`, every icon named across
-`design/ART-REVIEW.md`'s icon sections (the twenty-eight-icon block, the four
+`design/art/ART-REVIEW.md`'s icon sections (the twenty-eight-icon block, the four
 defensive-keyword icons, Strength/Dexterity, and the standalone Frail and
 Light sections) has a scored `design/progress/<name>_icon.md`. Combined with
 batches 1-13 (all fourteen beasts, all fourteen fight grounds, all nineteen

@@ -1,6 +1,6 @@
 # riptide_eel — portrait scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D per backlog #83. **Scoring pass
+Loop: `design/guide/asset-loop.md`, adapted for 2D per backlog #83. **Scoring pass
 only — report, not repair.** Asset: `game/assets/portraits/riptide_eel.png`
 (512x512). Batch 12 of #83; rubric defined in full in `frog_portrait.md`.
 
@@ -81,7 +81,7 @@ defect gets written down if the scorer's attention was on other parts.
 
 Applied both named fixes. In-lane: one is a model geometry edit in
 `tools/blender/riptide_eel.py`, but its effect is judged entirely through
-this flat, headless-rendered portrait (per `design/BACKLOG.md` #86's own
+this flat, headless-rendered portrait (per `design/plan/BACKLOG.md` #86's own
 tier split — portraits/icons are judged flat at 512px, which a headless
 render answers completely, unlike a beast's fight-distance read), the same
 kind of model-plus-portrait fix `silk_widow_portrait.md`'s own Pass 2

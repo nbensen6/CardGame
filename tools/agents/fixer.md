@@ -12,7 +12,7 @@ from requests (mostly the playtester's) and from what you find yourself.
    (hand, hover, camera, climb/jump), card_view.gd, hit_circle.gd,
    core/combat.gd for the cards the Frog and Goblin hold.
 4. Only if all of that is clear: the existing backlog duty in
-   `design/BACKLOG.md` #86 (hunt a bug anywhere, write a regression test).
+   `design/plan/BACKLOG.md` #86 (hunt a bug anywhere, write a regression test).
 
 ## How a fix is done here
 

@@ -4,7 +4,7 @@ The builder lane's work list. See `tools/builder/BRIEF.md`.
 
 ## Phase 3 — AI rollout (from 2026-09-22)
 
-One beast per run, through `design/ai-beast-recipe.md` and
+One beast per run, through `design/guide/ai-beast-recipe.md` and
 `tools/blender/ai_beast.py`. Each lands on a branch with `status: review` in its
 `design/beasts/<id>.md` note; Nick picks in Obsidian. Tick when the branch is
 pushed; note the candidate built and the credits spent.
@@ -279,7 +279,7 @@ per-beast cost. Phase 3 rolls them out by adding names to a list.
       the whole cast is that theirs have eyes, a snout and ears on a head that is
       its own colour block, and ours have a featureless head with a sigil where a
       face would be. The jackal has two eye balls and nothing else. Per-beast
-      authoring; see `design/adding-detail.md`.
+      authoring; see `design/guide/adding-detail.md`.
 
 ## Tried, did not pay off
 

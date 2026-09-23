@@ -1,6 +1,6 @@
 # goblin_mech — refinement log
 
-Loop: `design/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
+Loop: `design/guide/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
 no edits made to `tools/blender/goblin_mech.py`.** Views:
 `design/renders/goblin_mech_pass1_*.png`. First scoring under item #83's
 rubric for a **hunter** (1400 tri budget). The build script's own header
@@ -893,7 +893,7 @@ no code path into foothold/climb-marker placement.
 
 **42/50 — at the 42 hunter stop line.** Both candidates pass 9 left open
 are now closed (one fixed, one checked and ruled not a real second
-instance). Per `design/asset-loop.md`, the honest call at the stop line is
+instance). Per `design/guide/asset-loop.md`, the honest call at the stop line is
 the same one `frog` got at pass 8: stop passing this hunter unless a
 request or a fresh six-view look finds a real, new defect — not chase
 higher for its own sake. Both hunters (`frog` 43/50, `goblin_mech` 42/50)

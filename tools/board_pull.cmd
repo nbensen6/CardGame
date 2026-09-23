@@ -12,11 +12,20 @@ REM Plain ASCII on purpose - an em-dash breaks cmd parsing under the OEM
 REM codepage, and the failure reads as "'M' is not recognized".
 setlocal
 cd /d "%~dp0.."
+REM Send anything Nick wrote on the board FIRST, so answering a request is
+REM just "type it and walk away" - he does not have to find tools\ at all.
+REM design/agents is the only path he edits; nothing else is touched.
+git add design/agents
+git diff --cached --quiet || (git commit -q -m "board: Nick's edits" & echo sending your board edits)
+
 for /f %%h in ('git rev-parse HEAD') do set "BEFORE=%%h"
 REM --autostash: Nick may be mid-edit in Obsidian; set those edits aside for
 REM the rebase and put them back after, instead of refusing to pull.
 git pull --rebase --autostash || (echo PULL FAILED - tell Claude & exit /b 1)
 for /f %%h in ('git rev-parse HEAD') do set "AFTER=%%h"
+REM Push whatever the commit above made (and anything else local). Quiet
+REM failure: a push that cannot go out is not a reason to skip the import.
+git push -q origin HEAD:main 2>nul
 call :stamp
 if "%BEFORE%"=="%AFTER%" (echo already up to date & exit /b 0)
 

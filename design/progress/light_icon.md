@@ -1,11 +1,11 @@
 # light — icon scoring log
 
-Loop: `design/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
+Loop: `design/guide/asset-loop.md`, adapted for 2D card icons per backlog #83, batch
 22 (see `target_icon.md`/`burn_icon.md` for the batch's full scope and the
 shared rubric). **Scoring pass only — report, not repair; no edits to
 `tools/blender/icons.py`.** Asset: `game/assets/icons/light.png` (256x256,
 rendered by `icons.py`, orthographic head-on). Third of batch 22's four; also
-answers `design/ART-REVIEW.md`'s own standalone "one Light icon" section.
+answers `design/art/ART-REVIEW.md`'s own standalone "one Light icon" section.
 
 ## The adapted rubric (1–10 each, out of 50)
 

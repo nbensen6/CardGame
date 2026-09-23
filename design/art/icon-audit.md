@@ -1,6 +1,6 @@
 # Icon audit
 
-**2026-08-15.** The last visual gap from `design/card-face-vs-sts.md`.
+**2026-08-15.** The last visual gap from `design/art/card-face-vs-sts.md`.
 
 ---
 

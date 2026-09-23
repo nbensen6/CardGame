@@ -221,7 +221,7 @@ StS2 took **~21,000 negative reviews in five days** in April, and an earlier pat
 ~13,000 more, dropping the game to "Mostly Negative" — during a *beta branch* patch that
 was explicitly meant to gather feedback. Mega Crit was caught off guard.
 
-Lessons for our Early Access, which `design/ROADMAP.md` commits to:
+Lessons for our Early Access, which `design/plan/ROADMAP.md` commits to:
 - Balance changes to a live game are a **communications** problem at least as much as a
   design one. Ship them with the reasoning, not just the numbers.
 - An opt-in beta branch is not automatically safe — StS2's was the thing that got bombed.
@@ -257,7 +257,7 @@ out something you didn't want, the difficulty reads as unfair rather than earned
 4. **Card enchantments** — the big one. Includes `sure` (wider timing window), which
    is a mechanic only this game can offer.
 5. **Per-beast limiters** — makes four titans feel like four puzzles.
-6. Update `CLAUDE.md` §10 and `design/GDD.md` — the "nobody owns co-op deckbuilders"
+6. Update `CLAUDE.md` §10 and `design/plan/GDD.md` — the "nobody owns co-op deckbuilders"
    market claim is now false and shouldn't keep steering decisions.
 
 ---

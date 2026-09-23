@@ -143,5 +143,5 @@ rather than backgrounding it; a 40-step playtest takes 3-5 minutes.
 - Work outside the Cinder Jackal fight unless a request asks you to.
 
 `CLAUDE.md` (architecture: /core must not depend on /views, /input or /net;
-data lives in game/data/*.json) and the hard rules in `design/BACKLOG.md`
+data lives in game/data/*.json) and the hard rules in `design/plan/BACKLOG.md`
 still apply.

@@ -1,6 +1,6 @@
 ## The places between fights, staged in 3D.
 ##
-## Step 6 of design/3d-pivot.md — the phases the 2D client still owned. Routing
+## Step 6 of design/guide/3d-pivot.md — the phases the 2D client still owned. Routing
 ## the run through 3D made those handovers jarring: you walk a region in 3D,
 ## climb a beast in 3D, and then a flat 2D panel appears.
 ##
@@ -376,7 +376,7 @@ func _place_hunters(s: Dictionary) -> void:
 		_hunters.append(n)
 
 
-## Scale a model to a target world height, measured — see design/blender-pipeline.md.
+## Scale a model to a target world height, measured — see design/guide/blender-pipeline.md.
 func _fit_height(node: Node3D, want: float, max_wide := 0.0) -> void:
 	var box := _bounds(node)
 	node.scale = Vector3.ONE * fit_height_scale(box.size, want, max_wide)

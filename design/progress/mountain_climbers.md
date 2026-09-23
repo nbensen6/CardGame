@@ -1,6 +1,6 @@
 # mountain_climbers — refinement log
 
-Loop: `design/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
+Loop: `design/guide/asset-loop.md`. **Scoring pass only — item #83 is report, not repair;
 no edits made to `tools/blender/mountain_climbers.py`.** Views:
 `design/renders/mountain_climbers_pass1_*.png`. First scoring under item #83's
 rubric for a **hunter** (1400 tri budget) — the five-line rubric applies the

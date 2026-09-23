@@ -67,7 +67,7 @@ Gaps to close (see §4 for the ordered plan):
   human timing and falls: naive 7% / coordinated 78%, ladder to 20% at A8.
   *Still needs a real human to confirm it FEELS fair.*
 - ⬜ **First real art pass** — the one remaining gap, and Nick's call (see
-  `design/depth-plan.md` for why the placeholders fight the fantasy).
+  `design/plan/depth-plan.md` for why the placeholders fight the fantasy).
 **Exit:** a stranger plays a full run unaided and asks to play again.
 
 ### M2 — Steam page live *(marketing track begins — do this AT M1)*

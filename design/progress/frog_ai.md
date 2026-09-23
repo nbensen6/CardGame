@@ -1,6 +1,6 @@
 # frog_ai — Meshy-based Frog rebuild, first-stage spike
 
-Not the `design/asset-loop.md` loop proper yet — this is the shape-only step
+Not the `design/guide/asset-loop.md` loop proper yet — this is the shape-only step
 before that loop can start, because the loop's Colour/Style lines need a
 textured model and this one is untextured grey. Filed separately from
 `frog.md` (the current Python-primitive Frog, past its own 42/50 hunter stop
@@ -11,7 +11,7 @@ line) because this is a different asset, not a revision of that one.
 `tools/agents/artist.md`'s current brief names the Frog/Goblin fidelity gap
 against the Cinder Jackal as the loudest open item, and explicitly permits a
 full rebuild via the same Meshy pipeline that built the jackal
-(`design/ai-beast-recipe.md`). Every prior run since 2026-09-23 1330–1345
+(`design/guide/ai-beast-recipe.md`). Every prior run since 2026-09-23 1330–1345
 found the same wall: Meshy could generate and finish a task but this cloud
 sandbox could never fetch the result (`assets.meshy.ai` 403'd at the proxy).
 That wall is now down —
@@ -76,7 +76,7 @@ New script, `tools/blender/ai/frog_ai_spike.py` (not a copy of `ai_beast.py`
    Meshy A's own top-60-vertices' average Y against each model's own Y
    midpoint — both land on the `-Y` (min-Y) side, i.e. both already face
    Blender `-Y`, the project's established "front" convention
-   (`design/ai-beast-recipe.md` step 2). No rotation needed; would have
+   (`design/guide/ai-beast-recipe.md` step 2). No rotation needed; would have
    flagged it as a defect if it had come out the other way.
 3. Centre X/Y, feet to `z=0`, uniform-scale to match the current `frog.glb`'s
    own height (1.15, read directly off its bounds, not guessed) — same
@@ -105,7 +105,7 @@ actual questions):
 - **Reads as a frog immediately, including in pure silhouette at 64px**
   (`_sil.png`) — crouched haunches, splayed toes, the eye-dome pair, all
   legible as solid black. This is the one rubric line
-  (`design/asset-loop.md`'s Silhouette) that a shape-only, untextured pass
+  (`design/guide/asset-loop.md`'s Silhouette) that a shape-only, untextured pass
   can actually be judged on, and it already reads better than several passes
   of the current primitive frog spent trying to get exactly this (see
   `frog.md` pass 5/8's haunch and foreshoulder work).
@@ -133,7 +133,7 @@ meaningful this pass — this spike's isolated render against the current
 
 ## Not scored against the asset-loop rubric
 
-`design/asset-loop.md`'s Colour & Style lines are not answerable on an
+`design/guide/asset-loop.md`'s Colour & Style lines are not answerable on an
 untextured grey mesh, and scoring the other three alone would invite
 comparing a partial number against `frog.md`'s full 43/50 — misleading, not
 informative. This file will get real rubric scores once refine (texture) and
@@ -153,6 +153,6 @@ a rig exist to judge.
    reusable in structure, not as-is.
 4. Once 2 and 3 exist: wire into `AI_ART` (or its hunter-table equivalent),
    verify in the real fight camera, and only then does this become a
-   `design/asset-loop.md` pass with a real score.
+   `design/guide/asset-loop.md` pass with a real score.
 
 ![[frames/artist/2026-09-23-frog-meshy-spike-vs-primitive.png]]

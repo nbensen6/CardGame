@@ -1,6 +1,6 @@
 # frog — refinement log
 
-Loop: `design/asset-loop.md`. Nick lifted the 4-pass cap for this hunter
+Loop: `design/guide/asset-loop.md`. Nick lifted the 4-pass cap for this hunter
 2026-09-23 (see `requests/2026-09-23-0325-artist-to-nick-hunters-at-pass-cap-below-stop-line.md`)
 — **pass 5 below, still short of the 42 hunter stop line.**
 
@@ -475,7 +475,7 @@ re-run against the rebuilt model — see the Log line in
 
 ## Where it stands, still open for the next pass
 
-**43/50 — over the 42 hunter stop line.** `design/asset-loop.md`: "4 passes
+**43/50 — over the 42 hunter stop line.** `design/guide/asset-loop.md`: "4 passes
 done. Then report final score, the per-pass history, and the one thing you
 would fix next" — this is pass 8, past the nominal 4-pass cap Nick already
 lifted for this hunter specifically, and now also past the stop line, so
