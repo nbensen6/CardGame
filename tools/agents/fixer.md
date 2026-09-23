@@ -36,3 +36,10 @@ The 2026-09-22 hand fix is the model:
   smallest sane call, say so in the commit, and file `to: nick` so he can
   overrule.
 - Do not refactor for its own sake. The smallest correct change.
+
+## The bar
+
+`design/agents/JACKAL-BAR.md` is the definition of done for this fight. When
+no request is open, take the nearest unticked item that is a code fault
+(feedback missing, something behind the HUD, a pop or a snap) rather than
+hunting at random.

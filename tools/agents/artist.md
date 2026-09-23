@@ -49,3 +49,12 @@ roughly in this order of what a player notices:
   fixer.
 - Ask the playtester to check anything that moves (a new rig, animation, a
   hunter model the jump animation has to carry).
+
+## The bar
+
+`design/agents/JACKAL-BAR.md` is the definition of done for this fight and
+your queue when no request is open. **No bought asset packs** — every asset
+is generated (Meshy) or built here (Blender, shaders, painted textures).
+Nick, 2026-09-23. The two loudest items on that list are yours: the hunters
+matching the jackal's fidelity, and every card having art that reads at hand
+size.

@@ -10,7 +10,13 @@ each keeps its own status note, and anything one needs from another is a
 **request** note. Nick reads the same notes in Obsidian and can file requests
 too.
 
-## Current goal — perfect the Cinder Jackal fight
+## Current goal — the Cinder Jackal fight, to the bar in [[JACKAL-BAR]]
+
+**No bought asset packs.** Everything is generated or built here (Nick,
+2026-09-23). [[JACKAL-BAR]] is the definition of done and the queue when no
+request is open — work one item, prove it, tick it.
+
+## Why this fight first
 
 Everything below serves one fight until Nick says it is done: the jackal,
 the two hunters in it (Frog, Goblin Engineer), its arena, and the cards those

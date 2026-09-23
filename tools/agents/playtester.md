@@ -45,3 +45,10 @@ result in your status note — a new failure is a regression; request the
 fixer with the step and frame. Then do one checklist item deeper, or add one
 new check. Keep a small table in your status note: checklist item → state
 (ok / bug filed / not yet checkable).
+
+## The bar
+
+`design/agents/JACKAL-BAR.md` is the definition of done for this fight. The
+"Motion", "The fight, read at a glance" and card-feedback items are yours to
+judge and to turn into automatic checks. Tick only what a frame or a check
+proves.
