@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-23T19:20
-working_on: gave the floating stones a flat pale-tan cap and a warm rim edge on top of the existing boulder body, so a climb hold reads as a shelf from the wide establishing shot instead of a loose pebble (playtester's request, Nick-approved stone-route work). Fixed a cap/body gap the first pass had. ALL TESTS PASSED, 80-step playtest run in the foreground. Request marked done. Lease released.
+updated: 2026-09-23T19:29
+working_on: gave the floating stones a flat pale-tan cap and a warm rim edge on top of the existing boulder body, so a climb hold reads as a shelf from the wide establishing shot instead of a loose pebble (playtester's request, Nick-approved stone-route work). Fixed a cap/body gap the first pass had. ALL TESTS PASSED; 80-step playtest run in the foreground found only the already-filed, unrelated damage-popup-offscreen issue. Request marked done. Lease released.
 ---
 
 # artist
@@ -456,12 +456,30 @@ the fixer's outline-width fix
 still open). Once it lands: re-wire `goblin_mech` into `HUNTER_AI_ART`,
 re-verify, score it for real.
 
-If Blender's network wall (`download.blender.org`, hard 403 this session)
-has cleared by the next run, the footholds are the obvious next pass for
-real geometry — this run's texture is real surface detail but still a
-smooth sphere underneath.
+Blender's own network wall cleared this run (`download.blender.org` fetched
+clean — the first artist run in three not to hit the 403). Worth
+re-confirming next run before relying on it; if it holds, the footholds'
+underlying geometry (still a smooth sphere under the new cap/rim, this run
+only touched the visual dressing) is the obvious next real-geometry pass.
+
 ## Log
 
+- 2026-09-23 19:29 EDT — 80-step playtest for the stone-shelf change, run in
+  the foreground this time (COMMON.md 4b), after pushing the code/frames
+  first: `PLAYTEST FAIL: 1 failing check(s) { "damage-popup-offscreen": 1 }`
+  at step 19. Checked before treating it as a regression: this is the exact,
+  already-filed, still-open `to: fixer` issue
+  (`requests/2026-09-23-1735-playtester-to-fixer-boss-damage-popup-offscreen-at-sigil.md`)
+  — a damage number's screen projection, nothing to do with the stones'
+  mesh/material. No hop/camera check failed; hop position continuity and
+  mid-hop camera coverage were clean on every sampled jump, including onto
+  the new shelf-capped stones. Not a regression from this change; not
+  reopening or duplicating the fixer's own request. Commit `66d2f4f`.
+- 2026-09-23 19:20 EDT — shipped the ledges-read-as-shelves request: added a
+  flat cap + warm rim edge on top of each floating stone's existing rock
+  body (`_build_float_stones`, `combat_3d.gd`); fixed a cap/body gap the
+  first pass had. `ALL TESTS PASSED`. Before/after in the request's own
+  `## Result` and above. Request marked `status: done`. Commit `66d2f4f`.
 - 2026-09-23 18:16 EDT — boosted saturation (x1.55) and lifted value (gamma 0.80) directly on goblin_mech_ai's extracted PNG texture (tools/blender/ai/goblin_ai_colour_boost.py, no Blender needed) -- HSV sat 0.284->0.433, val 0.535->0.601, toward the Frog's own 0.671/0.702. Verified in the real fight and campfire row, backpack/goggles/strap read more distinctly. Colour & read 7->8, total 37->38/50, still under the 42 hunter stop line. ALL TESTS PASSED; pixel-diff confirms no regression outside the goblin's own region (idle-animation jitter only). Filed to:nick on the Blender wall (3rd run in a row hitting the same 403 on download.blender.org) per the prior run's own filing threshold. See design/progress/goblin_mech_ai.md ("Pass 2"). Lease released.
 - 2026-09-23 17:34 EDT — the 80-step playtest for the outline-width/goblin_mech_ai change (below) finished clean: PLAYTEST OK, 0 failing check(s), full 80 steps, exit code 0. Ran slow this session (real CPU time, the same sandbox flakiness status/fixer.md has noted before, not a hang) but finished with no artificial cutoff. No regression. See design/progress/goblin_mech_ai.md. Lease released.
 - 2026-09-23 17:19 EDT — gave outline.gdshader's shared ink-outline a per-model width scale (OUTLINE_WIDTH_SCALE in combat_3d.gd, threaded through toon_material/toon_all/_shade_model), took the still-open to:fixer request myself since it was blocking JACKAL-BAR's loudest line and neither Meshy (0/8 today) nor Blender (network wall, reconfirmed) had budget for anything else. Wired goblin_mech_ai into HUNTER_AI_ART at scale 0.33 -- went from a near-solid black blob to a clearly-readable hunter in the real fight and the campfire row, jackal/Frog confirmed unaffected (pixel-diff outside the goblin's own region matches ordinary idle-animation jitter). Scored for real for the first time: 37/50, under the 42 hunter stop line -- see design/progress/goblin_mech_ai.md ("Shipped and scored"). Ticked JACKAL-BAR's "reads at fight distance, not a green blob" line for both hunters. ALL TESTS PASSED. 80-step playtest kicked off, ran past the foreground window -- pushed code/frames/write-ups first per COMMON.md 4b, result to follow. Marked the request done.
