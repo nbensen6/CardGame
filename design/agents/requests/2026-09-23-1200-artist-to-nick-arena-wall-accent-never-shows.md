@@ -3,10 +3,10 @@ tags:
   - request
 from: artist
 to: nick
-status: open
+status: taken
 priority: normal
 created: 2026-09-23
-taken_by:
+taken_by: artist
 ask: The arena walls have a glowing band you never see. Leave it, move it lower, or fix the whole wall system?
 waiting: false
 ---
