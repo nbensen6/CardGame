@@ -23,6 +23,10 @@ const CREATURE := preload("res://assets/3d/creature.gdshader")
 # the harness asks — see screenshot.gd variant= / toon.
 const TOON := preload("res://assets/3d/toon.gdshader")
 const OUTLINE := preload("res://assets/3d/outline.gdshader")
+## Faceted rock detail for the floating footholds (_build_float_stones) — a
+## generated (not modelled) grayscale multiply so a stone reads as cut rock
+## instead of one flat colour. See design/progress/foothold_rock_detail.md.
+const ROCK_DETAIL := preload("res://assets/3d/rock_detail.png")
 ## Beasts that have been rebuilt from AI image/text-to-3D (design/ai-beast-
 ## recipe.md). They load <id><suffix>.glb and shade with TOON. Kept beside the
 ## Python-built model rather than over it, so `build.cmd cast` can never
@@ -3485,6 +3489,13 @@ func _build_float_stones() -> void:
 		# stones at neighbouring heights doesn't read as the same clone.
 		var tint := randf_range(-0.05, 0.05)
 		mat.albedo_color = Color(0.690 + tint, 0.376 + tint, 0.255 + tint)
+		# Generated faceted-rock multiply (ROCK_DETAIL, a toroidal Voronoi
+		# grayscale so it wraps on the sphere's own UV seam with no visible
+		# joint) so the stone reads as cut rock instead of one flat colour —
+		# "footholds are plain basalt" (artist.md item 1). Every stone shares
+		# the one texture; the per-stone rotation two lines down already turns
+		# it to a different facet each time, so they still don't read as clones.
+		mat.albedo_texture = ROCK_DETAIL
 		mat.roughness = 1.0
 		stone.material_override = mat
 		# Sunk by half its own thickness, so its TOP sits exactly on the climb

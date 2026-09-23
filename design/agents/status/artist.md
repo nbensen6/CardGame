@@ -2,26 +2,113 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-23T15:48
-working_on: built the Goblin Engineer's Meshy rebuild (preview+refine, cleaned/decimated) to close the other half of the hunter fidelity gap the Frog already closed -- wired it in to test, found it reads as a near-solid black blob at true in-fight size (the shared ink-outline shader eats a hunter with many thin parts, not a texture problem -- measured and isolated), reverted the wiring so nothing regresses, and filed the diagnosis to the fixer. Asset built and committed, not shipped. ALL TESTS PASSED; 80-step playtest re-run against the final (reverted) state: PLAYTEST OK, 0 failing checks -- confirmed no regression. Lease released.
+updated: 2026-09-23T16:24
+working_on: gave the shared floating footholds (_build_float_stones, combat_3d.gd) a generated faceted-rock detail texture instead of one flat colour -- both Meshy (0/8 left today) and Blender (download.blender.org hard-403'd this session, confirmed twice) were unavailable, so this is a pure numpy/PIL toroidal-Voronoi texture wired in as an albedo_texture multiply, no geometry/logic touched. ALL TESTS PASSED; before/after verified in the real fight (state=3dgrip). 80-step playtest still running in the background past the 590s foreground cap at push time -- pushed first per COMMON.md 4b, result to follow. Lease released.
 ---
 
 # artist
 
-## This run — 2026-09-23 15:40 ET
+## This run — 2026-09-23 16:24 ET
 
-- **Did:** built the Goblin Engineer's Meshy rebuild — same pipeline as the
-  already-shipped Frog — to close the other half of the "hunters don't
-  match the jackal" gap.
-- **Worked?** The shape and texture are good on their own, but at true
-  in-fight size it reads as a near-solid black blob, worse than what's
-  live now. Traced it to the shared ink-outline shader, not the model —
-  didn't ship it.
-- **Next:** filed to the fixer with the diagnosis and a before/after frame.
-  Once the outline can vary by hunter scale, wiring this in is one line.
-- **Need from you:** nothing — this is with the fixer now.
+- **Did:** gave the jackal's (and every beast's, shared code) floating
+  climb footholds real surface detail — generated a faceted-rock texture
+  and multiplied it onto the stones, which had only ever had one flat
+  colour. Fixes `artist.md` item 1's own "footholds are plain basalt".
+- **Worked?** Yes — before/after in the real fight (same camera, same
+  state) shows the stone going from a flat orange blob to a visibly
+  cracked, faceted rock, still the same warm palette. Frame below.
+- **Next:** the hunter-fidelity item (Goblin Engineer) is still blocked on
+  the fixer's outline-width fix, untouched since last run. If a future run
+  gets Blender back, the stones could get real geometry too, not just a
+  texture.
+- **Need from you:** nothing.
 
 ## Now
+
+**Both Meshy and Blender were unavailable this run.** Checked first, before
+picking work: `design/agents/status/artist.md`'s own last entry already
+recorded 8/8 daily Meshy tasks spent (confirmed no reset since — Meshy
+budget is a hard daily cap, not per-run). Tried Blender next —
+`curl https://download.blender.org/...` came back a clean `403 Forbidden`
+through the proxy, twice, not a timeout or a flaky retry (`curl -sS
+"$HTTPS_PROXY/__agentproxy/status"` confirmed `connect_rejected` /
+"organization policy" on that host this session, distinct from the Meshy
+network wall other runs have filed before). Prior runs built real beasts
+under this exact wall with Blender working fine today, so this reads as a
+this-session network policy quirk, not a standing block — not worth a
+fresh `to: nick` request for a one-off that may not recur; noted here so
+the next run knows to just try again rather than assume it's permanent.
+
+**Picked the next thing that needed neither.** The hunter-fidelity item
+(the loudest open line on `JACKAL-BAR.md`) is blocked on the fixer's
+outline-width fix (`requests/2026-09-23-1540-...`, still open, untouched
+since I filed it). Went looking for a real gap I could still close and
+found one by rendering, the same way the ear-glare bug was found: the
+`3dgrip` state (a hunter mid-climb, a real reachable state, not a
+synthetic edge case) shows the floating stone under the Frog as one flat
+solid-orange blob with a hard shadow — no surface variation at all. This
+is exactly `artist.md` item 1's own named issue ("footholds are plain
+basalt"), never actually fixed, only recoloured (2026-09-23, brown to
+match the arena's own boulders — colour was right, surface detail never
+was).
+
+**Ruled out reusing the arena's own Meshy texture first.** The env
+model's `cinder_jackal_ai_Image_0.jpg` (the crater wall's baked texture)
+has real rock detail, but it's vertical striated wall rock, UV-unwrapped
+for that specific wall mesh — slapping it onto a `SphereMesh`'s own
+lat-long UV via its default mapping would stretch/misalign into an obvious
+smear, not read as rock. Building a real from-scratch rock mesh is the
+right fix but needs Blender, which wasn't available.
+
+**Built a generated (not modelled) detail texture instead** — pure
+numpy/PIL, no Blender, no Meshy: a toroidal Voronoi (seed points wrapped
+9x so the pattern has no seam crossing the sphere's own UV wrap),
+per-cell random brightness, and a distance-based darkening near each cell
+edge for a crack line — the same low-poly **faceted** look every other
+rock/beast asset in this fight already established, not an invented style.
+512×512 grayscale, `game/assets/3d/rock_detail.png`.
+
+**Wired into `_build_float_stones()`** (`combat_3d.gd`, shared by every
+beast — verified specifically in the Cinder Jackal fight per this fight's
+own scope rule): added `mat.albedo_texture = ROCK_DETAIL` next to the
+existing per-stone `albedo_color` tint, which stays exactly as it was — the
+texture multiplies it, so the already-tuned BROWN palette and its
+"lighter than the beast's own CHARCOAL legs" contrast rule are untouched.
+One texture shared by every stone; the existing per-stone random rotation
+(unrelated code, already there) turns a different facet forward on each,
+so neighbouring stones still don't clone.
+
+**Verified.** `ALL TESTS PASSED` (`run_tests.gd`, material-only change, no
+logic touched). Before/after at the exact same camera and state
+(`state=3dgrip beast=cinder_jackal`, a real reachable mid-climb position):
+
+![[../agents/frames/artist/2026-09-23-foothold-rock-detail-before-after-crop.png]]
+
+Full frame, after:
+![[../agents/frames/artist/2026-09-23-foothold-rock-detail-after-full.png]]
+
+Full write-up, including why texture over geometry and what was ruled out:
+`design/progress/foothold_rock_detail.md`.
+
+**Playtest still running at push time.** Kicked off a full 80-step
+`mode=play` as the general-regression check (this touches a shared code
+path used by every beast's climb, even though the change itself is a pure
+`material_override` swap with no position/index logic touched) — it ran
+past the 590s foreground cap and moved to the background. Per COMMON.md
+4b, pushed everything first rather than let it run unwitnessed; the result
+gets appended to this note and `foothold_rock_detail.md` the moment it
+lands, not assumed clean.
+
+**Also looked at, and deliberately did NOT file:** the `3dgrip` state also
+shows the OTHER hunter (not the one the camera follows) going behind the
+top HUD bar — flagged it as a possible bug at first, then found
+`playtest.gd`'s own `check 9` comment (2026-09-23) explicitly documents
+this as settled, not a gap: only the camera-followed hunter is required to
+stay on screen, after an earlier version of this exact check "false-fired
+on the OTHER hunter mid-climb" and was deliberately narrowed. Re-filing it
+would be re-litigating already-closed work, so left alone.
+
+## Old: 2026-09-23 15:40, Goblin Engineer Meshy rebuild — blocked on outline width
 
 **Picked up the loudest remaining item on `JACKAL-BAR.md`**: "Frog and
 Goblin match the jackal's fidelity." The Frog already has a shipped Meshy
@@ -114,12 +201,27 @@ unreferenced asset files and docs.
 
 ## Next
 
-Once the fixer's outline-width fix lands: re-wire `goblin_mech` into
-`HUNTER_AI_ART`, re-verify in the real fight, and score it as a real
-asset-loop pass. Until then this item is blocked, not abandoned — the next
-open item on `JACKAL-BAR.md` (or another request) is the next run's pick.
+Two threads open, neither mine to force:
+- **Hunter fidelity** (still the loudest `JACKAL-BAR.md` line): blocked on
+  the fixer's outline-width fix
+  (`requests/2026-09-23-1540-artist-to-fixer-hunter-scale-outline-swallows-thin-hunters.md`,
+  still open). Once it lands: re-wire `goblin_mech` into `HUNTER_AI_ART`,
+  re-verify, score it for real.
+- **This run's background playtest** — started before the push, still
+  running past the 590s foreground cap. Check `/tmp/pt` / the background
+  task output next run if it wasn't picked up by a notification; if it
+  found a real regression, revert the `_build_float_stones` texture change
+  (`git revert` the one commit, or hand-restore `mat.albedo_color` and
+  drop the `mat.albedo_texture` line) rather than leave a red state
+  unaddressed.
+
+If Blender's network wall (`download.blender.org`, hard 403 this session)
+has cleared by the next run, the footholds are the obvious next pass for
+real geometry — this run's texture is real surface detail but still a
+smooth sphere underneath.
 ## Log
 
+- 2026-09-23 16:24 EDT — gave the shared floating footholds a generated (numpy/PIL toroidal-Voronoi) faceted-rock detail texture, mat.albedo_texture on _build_float_stones' SphereMesh, multiplied over the existing per-stone BROWN tint (unchanged). Both Meshy (0/8 left) and Blender (download.blender.org hard-403 this session) unavailable, so pure 2D texture, no geometry/logic touched. ALL TESTS PASSED. Before/after verified in the real fight at state=3dgrip (a real reachable mid-climb state) -- flat orange blob to visibly cracked/faceted rock. 80-step playtest pushed to background past the 590s cap; pushed code first per COMMON.md 4b, result to follow. See design/progress/foothold_rock_detail.md. Lease released.
 - 2026-09-23 15:48 EDT — playtest for the above finished clean: PLAYTEST OK, 0 failing check(s), all 80 steps, exit code 0. Confirms the committed diff (goblin_mech_ai asset + docs, HUNTER_AI_ART reverted to shipped state) touches no gameplay code. Lease released.
 - 2026-09-23 15:40 EDT — built the Goblin Engineer's Meshy rebuild (1 preview + 1 refine, 8/8 daily Meshy tasks now spent), cleaned/decimated in Blender to goblin_mech_ai.glb. Wired into HUNTER_AI_ART to test: reads as a near-solid black blob at true in-fight size, not a texture problem -- isolated the cause to outline.gdshader's fixed ink-outline width overlapping on this hunter's many thin parts (jackal/frog are thick rounded masses, this one isn't). Reverted HUNTER_AI_ART (git diff clean), kept the built asset committed unwired. Filed to:fixer with the diagnosis and a before/after frame. ALL TESTS PASSED; 80-step playtest re-run against the final reverted state. See design/progress/goblin_mech_ai.md.
 - 2026-09-23 18:34 UTC — took the answered arena-wall-accent request: rebuilt the Cinder Jackal arena's enclosing wall with a Meshy-generated crater rim (2 Meshy tasks), left the floor untouched, shipped as cinder_jackal_ai.glb via a new ENV_AI_ART table in combat_3d.gd. Scored 37/50 (design/progress/cinder_jackal_ground.md pass 6), up from 28. ALL TESTS PASSED, 80-step playtest clean (PLAYTEST OK, 0 failing checks). Ticked both JACKAL-BAR.md arena lines. Request marked done.
