@@ -2,13 +2,156 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-23
-working_on: Took the high-priority artist-filed hunter-display-path request (top of the fixer queue per Nick's own note in it) — generalized the beast-only toon-shaded/rigged display path (`AI_ART`, `_shade_model`'s `root == _beast` gate, the beast's idle/attack/hit AnimationPlayer wiring) so a hunter can opt in too, via a new parallel `HUNTER_AI_ART` table. Pulled the shading decision into a pure `Combat3D.wants_toon(beast_here, beast_toon, force_toon)`, four new unit tests, repro against the pre-fix gate confirmed the hunter-side case fails without it. Live-verified end to end by temporarily tagging the existing `frog.glb` in (no new asset needed, exactly as the request asked) and confirming it toon-shades in a `state=3d` screenshot; reverted the tag before committing. `ALL TESTS PASSED`. See `## Now` for the full writeup and the live `mode=play` regression check.
+updated: 2026-09-23T15:01
+working_on: No open to:fixer request this run; full play/hover/hands baseline was clean. Found and fixed a real bug by reading core/combat.gd (item 3) -- can_play()'s pull_ally gate greyed out a card's ENTIRE effect whenever just the pull was out of range, even for Chain Lift/Tongue Grab which pair the pull with an unrelated Block/Rhythm grant. Narrowed the gate to only hard-block a pull_ally-only card (Grappling Arm, unchanged, matches Nick's own prior call); mixed cards now stay playable and the pull itself no-ops gracefully, same idiom every other ally field already uses. Three new tests, reproduced on the unfixed tree first, ALL TESTS PASSED.
 ---
 
 # fixer
 
+## This run — 2026-09-23 15:01 EDT
+
+- **Did:** fixed a card-playability bug — Chain Lift and Tongue Grab (real
+  reward cards, Goblin Engineer/Frog) went completely unplayable, losing
+  their Block/Rhythm grant too, whenever the ally they'd pull was just out of
+  grapple range.
+- **Worked?** Yes. Grappling Arm (the pure-pull card) keeps its existing
+  "unplayable out of range" behaviour exactly as-is; only cards that pair the
+  pull with something else are affected.
+- **Next:** nothing blocking. Worth someone eventually checking Guide Rope
+  (same `pull_ally + ally_block` shape) actually reaches a reward pool too.
+- **Need from you:** nothing — flagged the one small rules call I made (kept
+  Grappling Arm hard-blocked rather than loosening every pull_ally card) in
+  the request write-up in case you'd rather I'd gone the other way.
+
 ## Now
+
+No open `to: fixer` request this run (checked every request's frontmatter —
+the only other open item, the boss-relic-pool sizing question, is still
+sitting on `to: nick`, untouched, someone else's call). Fresh sandbox, Godot
+4.7.1 + `--import`, `run_tests.gd`: `ALL TESTS PASSED` before touching
+anything.
+
+**Order-of-work item 2** (a playtest failure nobody has filed): full fresh
+baseline, all three modes, all clean —
+`mode=play beast=cinder_jackal steps=80`: `PLAYTEST OK: 0 failing check(s)`
+(the first attempt hit this sandbox's known flakiness — see `tools/agents`
+notes on prior runs stalling — and my own `timeout 590` wrapper killed it at
+56/80 steps; a second run with no artificial cutoff, backgrounded properly,
+completed clean in full). `mode=hover`: `0 flips`. `mode=hands`: `0 fails`.
+Nothing to file.
+
+**Order-of-work item 3** (a bug in the jackal fight's own code paths, found
+by reading): dispatched an Explore agent scoped to `combat_3d.gd`,
+`card_view.gd`, `hit_circle.gd`, and `core/combat.gd`'s Frog/Goblin Engineer
+card fields, given the long list of functions prior runs already scarred
+(`hop_arc`, `stand_offset_x`, `wants_toon`, `card_is_slider`, `stone_point`,
+`popup_move_reach`, `_focus_camera`'s is_inside_tree guard, `note_hit`,
+`reward_header_text`, and others) so it wouldn't re-surface one of those, and
+specifically pointed at `_meld_cards`'s ~20 summed/maxed fields — only the
+`grip`/`timed_hits` pair (the slider-swallow fix) had been individually
+audited against how it's actually consumed downstream.
+
+**What it found, confirmed myself before touching anything.** Not a meld
+bug — `can_play()` itself (`core/combat.gd:331-339`):
+
+```gdscript
+if card.pull_ally > 0 and has_ally(pi):
+    var gap: int = ps.foothold - int(players[ally_index(pi)].foothold)
+    if gap <= 0 or gap > card.pull_ally:
+        return false   # blocked the ENTIRE card
+```
+
+Every sibling ally field (`ally_block`, `ally_grip`, `ally_energy`,
+`sac_ally_grip`) is never gated in `can_play()` at all — each one just no-ops
+gracefully inside `play_card()` if its own target condition isn't met, the
+"playable-and-inert" pattern this exact function's own comments already
+describe for the has_ally case (#86 duty 2, the prior fix directly above
+this one in the file). `play_card()` already had that same graceful fallback
+for `pull_ally` too (`"%s plays %s — no ally in grapple range."`,
+combat.gd:1225) — but `can_play()` never let a mixed-effect card reach it;
+the whole card came back unplayable instead.
+
+**Confirmed two real, reachable cards hit this**, both checked against
+`characters.json`'s actual reward pools:
+- **Chain Lift** (Goblin Engineer's reward pool, `characters.json:299`):
+  `{"cost": 2, "pull_ally": 5, "ally_block": 5, "text": "Ally gains 5 Block.
+  Pull your ally up to you."}`
+- **Tongue Grab** (Frog's reward pool, `characters.json:39`):
+  `{"cost": 1, "pull_ally": 4, "rhythm": 1, "text": "Rhythm 1. Pull your
+  ally up to you."}`
+
+Concrete case: Goblin Engineer at foothold 2, ally at foothold 4 (level or
+above). `gap = 2 - 4 = -2 <= 0` → `can_play()` false → Chain Lift renders
+disabled in hand — the player can't play it for its 5 Block, an effect that
+has nothing to do with the grapple gap, purely because the OTHER half of the
+card (the pull) isn't valid right now. Same for Tongue Grab's Rhythm 1. A
+third card, Guide Rope (`pull_ally: 4, ally_block: 4`), has the identical
+shape — didn't chase where it's offered from, but the fix covers it either
+way.
+
+**Fix.** `can_play()`'s gate now only hard-blocks when the pull really is
+the card's entire reason to exist (`card.ally_block == 0 and card.rhythm ==
+0`). Grappling Arm (neither field set, pure `pull_ally`) keeps today's exact
+behaviour unchanged. Chain Lift/Guide Rope/Tongue Grab now fall through; the
+pull itself still no-ops gracefully and logs it, same as a solo fight with
+no ally at all already does.
+
+**Rules call, smallest sane version — flagged rather than guessed.** An
+existing test (`_test_grappling_arm_pulls_ally`) explicitly attributes "the
+card is simply UNPLAYABLE" out of range to Nick — a deliberate call for the
+pure-pull case. Rather than flip that too (which every OTHER ally field's
+own behaviour would argue for, per the finding above), I kept it as-is and
+only widened the gate for cards that have something else to do. Small
+enough I didn't think it needed its own `to: nick` note, but said so plainly
+in the request in case he'd rather I'd gone further.
+
+**Reproduced first.** Two new tests against the unfixed tree failed exactly
+as predicted: Chain Lift/Tongue Grab both came back `can_play() == false`
+when level with the ally, and their Block/Rhythm never landed either — not
+just the pull, the whole card was inert. (One of my own first-draft
+assertions was ALSO wrong the first time through — checking `log[-1]` for
+the pull's own no-op line, not realizing the card's Block/Rhythm log line
+comes right after it, not before; fixed the test to search the log instead
+of assuming position, verified that failure was a test bug and not a second
+real bug before moving on.)
+
+**Proof.** Three new tests in `run_tests.gd`:
+- Chain Lift stays playable out of range, its Block lands on the ally, the
+  ally's Height doesn't move, and the pull's own "no ally in grapple range"
+  line is still logged.
+- Tongue Grab stays playable out of range and its Rhythm lands.
+- Regression guard: Grappling Arm (no other effect) is still unplayable out
+  of range, exactly as before this fix — proves the narrowing didn't
+  silently remove the gate outright.
+
+All three failed on the unfixed tree, pass on the fixed one. Full suite:
+`ALL TESTS PASSED`.
+
+**No live frame.** Pure `core/combat.gd` rule, same convention the melded-
+slider and `note_hit` fixes used earlier today — `Dev`/`hand=` can force
+which cards are dealt but has no switch to force a specific foothold gap, so
+there's no harness path to put Chain Lift in hand exactly level with an
+ally on-screen. The pre-fix full `play`/`hover`/`hands` baseline above (run
+before this change, same tip) is the general-regression check; the unit
+tests are the correctness proof, per this file's own established pattern
+for pure timing/rule fixes with no rendering surface.
+
+Self-filed and self-fixed —
+`requests/2026-09-23-1500-fixer-to-fixer-pull-ally-gate-blocks-a-cards-other-effect.md`.
+
+## Next
+
+Item 3 found a real gap in a part of `_meld_cards`'s field list that hadn't
+been individually audited before (this run only chased `pull_ally` itself,
+not a melded combination) — worth someone eventually checking the REMAINING
+~18 summed/maxed fields in `_meld_cards` the same way, not just the ones
+already scarred (`grip`/`timed_hits`, `pull_ally`/`cheapen_amount` per the
+existing meld tests). Also worth finding where Guide Rope is actually
+offered from and confirming it's reachable, same as Chain Lift/Tongue Grab
+were confirmed here. `hover`/`hands` baseline completed clean this run (all
+three modes, unlike some recent runs that had to drop one for CPU headroom).
+
+## Old: 2026-09-23, hunter-display-path-has-no-toon-or-rig-support
 
 Took the high-priority `to: fixer` request
 `2026-09-23-1330-artist-to-fixer-hunter-display-path-has-no-toon-or-rig-support.md`
@@ -817,7 +960,16 @@ further either.
 
 ## Log
 
-- 2026-09-23 (latest) — took the high-priority hunter-display-path request
+- 2026-09-23 15:01 EDT (latest) — no open `to: fixer` request; full
+  play/hover/hands baseline clean. Explore agent found a real bug in
+  `core/combat.gd`'s `can_play()`: the `pull_ally` range gate blocked a
+  card's ENTIRE effect out of grapple range, not just the pull — hit two real
+  reward cards (Chain Lift's Block, Tongue Grab's Rhythm). Narrowed the gate
+  to only hard-block a pull_ally-only card (Grappling Arm unchanged, matches
+  Nick's own prior call); mixed cards now stay playable. Three new tests,
+  reproduced on the unfixed tree first, `ALL TESTS PASSED`. Self-filed
+  `requests/2026-09-23-1500-fixer-to-fixer-pull-ally-gate-blocks-a-cards-other-effect.md`.
+- 2026-09-23 — took the high-priority hunter-display-path request
   (artist-filed, Nick's own note named it top of the fixer queue). The
   toon-shaded, rigged/animated display path a beast gets (`AI_ART`,
   `_shade_model`, `_beast_anim`) was gated on `root == _beast` throughout, so

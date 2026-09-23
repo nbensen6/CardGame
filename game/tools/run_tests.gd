@@ -402,6 +402,9 @@ func _init() -> void:
 	_test_jetpack_never_exceeds_foothold_max()
 	_test_jetpack_fizzle_logs_why_nothing_happened()
 	_test_grappling_arm_pulls_ally()
+	_test_chain_lift_stays_playable_out_of_pull_range_for_its_block()
+	_test_tongue_grab_stays_playable_out_of_pull_range_for_its_rhythm()
+	_test_pull_ally_only_card_still_unplayable_out_of_range()
 	_test_build_mech_scales()
 	_test_backlog86_build_mech_never_blocks_the_ally()
 	_test_backlog86_build_grapple_puts_a_real_grapple_in_hand()
@@ -9201,6 +9204,63 @@ func _test_grappling_arm_pulls_ally() -> void:
 	var level: bool = combat.can_play(0, 0)
 	_expect(in_range and pulled and not out_of_range and not level,
 		"Grappling Arm pulls an ally in reach, and is unplayable when it can't pull")
+
+
+## can_play()'s pull_ally gate (see _test_grappling_arm_pulls_ally above) is
+## meant for a card like Grappling Arm whose ENTIRE effect is the pull -- out
+## of range, there is genuinely nothing left for it to do, so Nick's call was
+## to grey the whole card out. But Chain Lift and Tongue Grab pair pull_ally
+## with a second, position-independent effect (ally_block / rhythm), and the
+## same gate was blocking that second effect too: out of grapple range, the
+## whole card vanished from play even though the Block/Rhythm half had
+## nothing to do with the gap. Reachable for real -- both are in the Goblin
+## Engineer's and Frog's own reward pools (characters.json).
+func _test_chain_lift_stays_playable_out_of_pull_range_for_its_block() -> void:
+	var combat := _new_combat([_deck_of(func(): return Content.make_card("chain_lift"), 10), _deck_of(_slash, 10)], 42, _climb_boss(8))
+	combat.players[0].foothold = 6
+	combat.players[1].foothold = 6  # level: gap 0, out of pull range ("no ally in grapple range")
+	_expect(combat.can_play(0, 0),
+		"Chain Lift must stay playable when the pull is out of range -- it still grants the ally 5 Block, an effect with nothing to do with the grapple gap")
+	var ally_block_before: int = combat.players[1].combatant.block
+	var ally_foothold_before: int = combat.players[1].foothold
+	combat.play_card(0, 0)
+	_expect(combat.players[1].combatant.block == ally_block_before + 5,
+		"Chain Lift's Block must land on the ally even though the pull itself had no one in range (got %d, expected %d)"
+			% [combat.players[1].combatant.block, ally_block_before + 5])
+	_expect(combat.players[1].foothold == ally_foothold_before,
+		"with the pull out of range, the ally's Height must not move -- only the Block half of the card should have fired")
+	var logged_noop := false
+	for line in combat.log:
+		if (line as String).contains("no ally in grapple range"):
+			logged_noop = true
+	_expect(logged_noop,
+		"the pull itself must still log its own graceful no-op, same as every other out-of-range pull_ally play (the ally_block grant logs its own separate line right after)")
+
+
+func _test_tongue_grab_stays_playable_out_of_pull_range_for_its_rhythm() -> void:
+	var combat := _new_combat([_deck_of(func(): return Content.make_card("tongue_grab"), 10), _deck_of(_slash, 10)], 42, _climb_boss(8))
+	combat.players[0].foothold = 6
+	combat.players[1].foothold = 6  # level: gap 0, out of pull range
+	_expect(combat.can_play(0, 0),
+		"Tongue Grab must stay playable when the pull is out of range -- it still grants Rhythm 1, an effect with nothing to do with the grapple gap")
+	var rhythm_before: int = combat.players[0].rhythm
+	combat.play_card(0, 0)
+	_expect(combat.players[0].rhythm == rhythm_before + 1,
+		"Tongue Grab's Rhythm must land even though the pull itself had no one in range (got %d, expected %d)"
+			% [combat.players[0].rhythm, rhythm_before + 1])
+
+
+## Regression guard for the fix above: a pull_ally card with NO other effect
+## (Grappling Arm) must still hard-block out of range -- the fix narrows the
+## gate to cards that have something else to do, it must not remove the gate
+## outright and silently flip Nick's own "simply unplayable" call for the
+## pure-pull case _test_grappling_arm_pulls_ally already covers.
+func _test_pull_ally_only_card_still_unplayable_out_of_range() -> void:
+	var combat := _new_combat([_deck_of(_grapple_arm, 10), _deck_of(_slash, 10)], 42, _climb_boss(8))
+	combat.players[0].foothold = 6
+	combat.players[1].foothold = 6  # level: gap 0
+	_expect(not combat.can_play(0, 0),
+		"Grappling Arm has no other effect besides the pull -- out of range it must stay unplayable, same as before this fix")
 
 
 func _test_build_mech_scales() -> void:

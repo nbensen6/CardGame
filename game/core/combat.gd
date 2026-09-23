@@ -335,7 +335,18 @@ func can_play(pi: int, ci: int) -> bool:
 		# playable-and-inert like every other pure-ally card (the effect itself already no-ops
 		# gracefully with a "no ally in grapple range" log once it's allowed to run).
 		var gap: int = ps.foothold - int(players[ally_index(pi)].foothold)
-		if gap <= 0 or gap > card.pull_ally:
+		# Out of range/level, Grappling Arm (pull_ally and nothing else) is
+		# deliberately UNPLAYABLE here (Nick) -- there's genuinely nothing left
+		# for it to do. But Chain Lift/Guide Rope (+ally_block) and Tongue Grab
+		# (+rhythm) pair the pull with a second, position-independent effect,
+		# and this same gate was blocking THAT effect too the instant the pull
+		# alone fell out of range -- the whole card greyed out even though half
+		# of it still had something to do. Only hard-block when the pull really
+		# is the card's entire reason to exist; a card with another live effect
+		# falls through, and the pull itself still no-ops gracefully below
+		# ("no ally in grapple range"), same idiom every other ally field uses.
+		var pull_is_whole_card: bool = card.ally_block == 0 and card.rhythm == 0
+		if (gap <= 0 or gap > card.pull_ally) and pull_is_whole_card:
 			return false
 	if card.light_cost > ps.light:  # the Lightbearer's own currency — a second cost on top of energy (backlog #47)
 		return false
