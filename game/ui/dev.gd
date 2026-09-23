@@ -33,6 +33,15 @@ extends RefCounted
 
 ## Card ids to deal instead of whatever the shuffle produced, or empty.
 static var hand: PackedStringArray = []
+## Beast id to drop straight into a fight against, or empty for the menu.
+##
+## Nick, 2026-09-23: "can we have a link that opens to a fight with the frog and
+## goblin facing that beast" — every beast note in Obsidian now carries one, via
+## the titan:// scheme (tools/titan_uri.cmd). Solo, Frog and Goblin, first fight
+## of a fresh run with its beast swapped for this one. The swap is exactly what
+## the console's `beast <id>` command does, so there is one rule for what a
+## beast swap means and both callers obey it.
+static var fight := ""
 ## True when any flag was given at all. Views use it to decide whether to say
 ## so on screen — a build that silently forces every card foil is a build that
 ## will eventually be screenshotted as if it were the game.
@@ -55,6 +64,7 @@ static func parse_args(args: PackedStringArray) -> Dictionary:
 		"foil": false,
 		"turn": null,
 		"hand": PackedStringArray(),
+		"fight": "",
 		"on": false,
 	}
 	for a in args:
@@ -69,6 +79,9 @@ static func parse_args(args: PackedStringArray) -> Dictionary:
 			out["on"] = true
 		elif a.begins_with("hand="):
 			out["hand"] = a.substr(5).split(",", false)
+			out["on"] = true
+		elif a.begins_with("fight="):
+			out["fight"] = a.substr(6).strip_edges()
 			out["on"] = true
 	return out
 
@@ -85,12 +98,14 @@ static func boot() -> void:
 	if parsed["turn"] != null:
 		CardView.force_turn = parsed["turn"]
 	hand = parsed["hand"]
+	fight = String(parsed["fight"])
 	on = parsed["on"]
 	if on:
-		print("DEV %s%s%s" % [
+		print("DEV %s%s%s%s" % [
 			"borderless " if CardView.force_borderless else "",
 			"foil " if CardView.force_foil else "",
-			("hand=" + ", ".join(hand)) if not hand.is_empty() else ""])
+			("hand=" + ", ".join(hand)) if not hand.is_empty() else "",
+			("fight=" + fight) if fight != "" else ""])
 
 
 ## The four treatments, in the order F9 walks them. Named so the on-screen

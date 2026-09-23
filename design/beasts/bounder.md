@@ -17,6 +17,8 @@ tags:
 
 # The Bounder
 
+▶ **[Fight this now](titan://bounder)** — solo, Frog and Goblin, straight into the fight.
+
 > The Bounder - a boulder that learned to jump.
 
 ## Files

@@ -18,6 +18,8 @@ tags:
 
 # The Glyph Tortoise
 
+▶ **[Fight this now](titan://glyph_tortoise)** — solo, Frog and Goblin, straight into the fight.
+
 > The Glyph Tortoise - the fight-pool beast whose bent rule is a shrug, not a hit.
 
 ## Files

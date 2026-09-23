@@ -18,6 +18,8 @@ tags:
 
 # The Boulder Ram
 
+▶ **[Fight this now](titan://boulder_ram)** — solo, Frog and Goblin, straight into the fight.
+
 > The Boulder Ram - the fight-pool beast that punishes staying down.
 
 ## Files

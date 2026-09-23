@@ -18,6 +18,8 @@ tags:
 
 # The Flicker Stag
 
+▶ **[Fight this now](titan://flicker_stag)** — solo, Frog and Goblin, straight into the fight.
+
 > The Flicker Stag - the elite-pool beast whose bent rule turns "hurt" into
 
 ## Files

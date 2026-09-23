@@ -4,7 +4,7 @@ REM
 REM   tools\builder\run.cmd            do a build now
 REM   tools\builder\run.cmd --dry      plan it, change nothing
 REM
-REM Reads tools\builder\BRIEF.md, takes one item from design\BUILDER-QUEUE.md,
+REM Reads tools\builder\BRIEF.md, takes one item from design\plan\BUILDER-QUEUE.md,
 REM and changes a PIPELINE rather than an asset - a shader, a build step, a
 REM layout rule, a tool. Pushes a BRANCH for Nick to look at. Never main.
 REM

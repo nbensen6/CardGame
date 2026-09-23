@@ -18,6 +18,8 @@ tags:
 
 # The Gloom Moth
 
+▶ **[Fight this now](titan://gloom_moth)** — solo, Frog and Goblin, straight into the fight.
+
 > The Gloom Moth - the elite-pool beast that does not want to fight you, it
 
 ## Files

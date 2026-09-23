@@ -20,6 +20,8 @@ tags:
 
 # The Sunken Warden
 
+▶ **[Fight this now](titan://sunken_warden)** — solo, Frog and Goblin, straight into the fight.
+
 > The Sunken Warden - the last Titan, and the tallest thing in the game.
 
 ## Files

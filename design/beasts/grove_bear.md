@@ -18,6 +18,8 @@ tags:
 
 # The Grove Bear
 
+▶ **[Fight this now](titan://grove_bear)** — solo, Frog and Goblin, straight into the fight.
+
 > The Grove Bear - a hill that stood up and kept the forest on its back.
 
 ## Files

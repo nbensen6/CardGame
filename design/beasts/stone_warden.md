@@ -18,6 +18,8 @@ tags:
 
 # The Stone Warden
 
+▶ **[Fight this now](titan://stone_warden)** — solo, Frog and Goblin, straight into the fight.
+
 > The Stone Warden — the first Titan, and a creature rather than a building.
 
 ## Files

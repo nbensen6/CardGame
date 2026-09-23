@@ -17,6 +17,8 @@ tags:
 
 # The Mire Snapper
 
+▶ **[Fight this now](titan://mire_snapper)** — solo, Frog and Goblin, straight into the fight.
+
 > The Mire Snapper - most of it is jaw.
 
 ## Files

@@ -17,6 +17,8 @@ tags:
 
 # The Crag Pup
 
+▶ **[Fight this now](titan://crag_pup)** — solo, Frog and Goblin, straight into the fight.
+
 > The Crag Pup — the first thing you ever climb.
 
 ## Files

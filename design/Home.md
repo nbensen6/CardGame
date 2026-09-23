@@ -15,6 +15,10 @@ Moving every beast from the Python-primitive models to the AI pipeline: generate
 
 ## Start here
 
+- **Every beast note has a ▶ Fight this now link** — click it and the game opens
+  solo, Frog and Goblin, straight into that fight. (Registered once with
+  `tools	itan_uri.cmd install`; `uninstall` removes it.)
+
 - **[[agents/Agents|Agents]] → the FOR NICK tab** — everything waiting on your
   decision, one plain sentence each. Answer under **Nick's answer** in the note.
 - **[[agents/Last sync|Last sync]]** — when this PC last pulled the agents'

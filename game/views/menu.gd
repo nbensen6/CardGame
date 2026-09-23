@@ -38,6 +38,14 @@ func _ready() -> void:
 	Dev.boot()         # `-- borderless foil hand=...`, for looking at rare pulls
 	_compact_for_handheld()
 	Session.reset()
+	if Dev.fight != "":
+		# `fight=<beast>` skips this whole screen. Deliberately after reset() so
+		# it starts from the same clean slate the buttons below do, and DEFERRED
+		# because it ends in change_scene_to_file: swapping the scene while this
+		# node is still being added throws "Parent node is busy adding/removing
+		# children" and leaves you on a half-built menu.
+		_straight_into_a_fight.call_deferred(Dev.fight)
+		return
 	Music.play("menu")
 	_ascension = Progress.unlocked_ascension()  # default to your hardest cleared tier
 	_asc_down.pressed.connect(func() -> void: _set_ascension(_ascension - 1))
@@ -157,6 +165,48 @@ func _on_solo() -> void:
 	Session.host = GameHost.new(transport, 0, 2, true, _ascension, Progress.total_wins())  # solo = true
 	Session.client = GameClient.new(transport, 1)
 	Session.client.join()  # enters the (solo) character-select lobby
+	_goto_combat()
+
+
+## `fight=<beast_id>` — solo, Frog and Goblin, in front of that beast, now.
+##
+## Nick clicks these from the beast notes in Obsidian (the titan:// scheme,
+## tools/titan_uri.cmd). It is the menu's own solo start, walked one step
+## further: take the first map node to reach a fight, then swap the beast the
+## way the console's `beast <id>` does — build_boss AND build_boss_adds, which
+## have to name the same beast or the previous one's adds keep fighting for it.
+##
+## An id the content does not know leaves you on the menu with the list, rather
+## than in a fight against build_boss's 1 HP fallback "Titan" — which looks like
+## a broken beast rather than a typo.
+func _straight_into_a_fight(beast_id: String) -> void:
+	if not (beast_id in Content.list_boss_ids()):
+		_status.text = "no such beast: %s" % beast_id
+		print("DEV fight=%s is not a beast. Known: %s" % [
+			beast_id, ", ".join(Content.list_boss_ids())])
+		return
+	var transport := LocalTransport.new()
+	Session.transport = transport
+	Session.host = GameHost.new(transport, 0, 2, true, _ascension, Progress.total_wins())
+	Session.client = GameClient.new(transport, 1)
+	Session.client.join()
+	Session.client.select_character("frog", 0)
+	Session.client.select_character("goblin_mech", 1)
+	var r: Run = Session.host._run
+	var guard := 0
+	while r.phase == Run.Phase.MAP and not r.available_nodes().is_empty() and guard < 30:
+		guard += 1
+		r.pick_node(int(r.available_nodes()[0]))
+	if r.phase == Run.Phase.COMBAT:
+		r.combat.boss = Content.build_boss(beast_id)
+		r.combat.adds = Content.build_boss_adds(beast_id)
+		r.sync()
+	Session.host._broadcast_state()
+	# Say what you got, not what you asked for. A silent launch cannot tell the
+	# difference between "walked into the fight" and "stalled on the map".
+	print("DEV fight -> %s, phase %d, hunters %s" % [
+		r.combat.boss.name if r.phase == Run.Phase.COMBAT else "(no fight)",
+		r.phase, ", ".join(PackedStringArray(["frog", "goblin_mech"]))])
 	_goto_combat()
 
 

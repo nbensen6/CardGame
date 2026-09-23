@@ -18,6 +18,8 @@ tags:
 
 # The Bog Leech
 
+▶ **[Fight this now](titan://bog_leech)** — solo, Frog and Goblin, straight into the fight.
+
 > The Bog Leech - the elite-pool beast that gets worse the longer you leave it.
 
 ## Files

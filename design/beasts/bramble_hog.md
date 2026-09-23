@@ -17,6 +17,8 @@ tags:
 
 # The Bramble Hog
 
+▶ **[Fight this now](titan://bramble_hog)** — solo, Frog and Goblin, straight into the fight.
+
 > The Bramble Hog - a thicket that got up and started rooting around.
 
 ## Files

@@ -17,6 +17,8 @@ tags:
 
 # The Sky Snapper
 
+▶ **[Fight this now](titan://sky_snapper)** — solo, Frog and Goblin, straight into the fight.
+
 > The Sky Snapper - a beak with a storm folded behind it.
 
 ## Files

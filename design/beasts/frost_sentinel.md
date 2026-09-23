@@ -18,6 +18,8 @@ tags:
 
 # The Frost Sentinel
 
+▶ **[Fight this now](titan://frost_sentinel)** — solo, Frog and Goblin, straight into the fight.
+
 > The Frost Sentinel - ice that grew into a shape and stopped.
 
 ## Files

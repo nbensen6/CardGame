@@ -18,6 +18,8 @@ tags:
 
 # The Shifting Idol
 
+▶ **[Fight this now](titan://shifting_idol)** — solo, Frog and Goblin, straight into the fight.
+
 > The Shifting Idol - a stack of stones that does not agree with itself.
 
 ## Files

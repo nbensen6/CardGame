@@ -18,6 +18,8 @@ tags:
 
 # The Riftling
 
+▶ **[Fight this now](titan://riftling)** — solo, Frog and Goblin, straight into the fight.
+
 > The Riftling — the one that is not an animal.
 
 ## Files

@@ -18,6 +18,8 @@ tags:
 
 # The Gale Serpent
 
+▶ **[Fight this now](titan://gale_serpent)** — solo, Frog and Goblin, straight into the fight.
+
 > The Gale Serpent - a storm that coiled up and stayed.
 
 ## Files

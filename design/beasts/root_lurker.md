@@ -17,6 +17,8 @@ tags:
 
 # The Root Lurker
 
+▶ **[Fight this now](titan://root_lurker)** — solo, Frog and Goblin, straight into the fight.
+
 > The Root Lurker - a knot of roots with a mouth in the middle of it.
 
 ## Files

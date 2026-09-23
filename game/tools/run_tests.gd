@@ -1767,6 +1767,12 @@ func _init() -> void:
 	_test_shoulder_frame_aims_sideways_only_never_into_the_scene()
 	_test_shoulder_frame_holds_its_composition_at_every_distance()
 
+	# Dev.parse_args fight= -- the Obsidian "Fight this now" links (titan://,
+	# tools/titan_uri.cmd) are just this token on a command line, so a break here
+	# breaks every beast note at once and nothing else would notice.
+	_test_parse_args_fight_names_the_beast_and_marks_the_build_as_dev()
+	_test_parse_args_without_fight_leaves_it_empty_so_the_menu_still_opens()
+
 	# backlog #86 duty 3 (thirty-seventh pass): EnetTransport, the real
 	# multiplayer transport CLAUDE.md's build order names as step 3 ("two-player
 	# online co-op on PC") and net/README.md's whole reason to exist -- had zero
@@ -26358,6 +26364,26 @@ func _test_backlog86_ground_pivot_puts_world_zero_at_the_top_of_the_card_strip()
 	var pivot := Combat3D._ground_pivot(window)
 	_expect(is_equal_approx(pivot, window * (0.5 - Combat3D.HUD_BOTTOM_FRACTION + 0.04)),
 		"the ground pivot lifts world y=0 by (0.5 - HUD_BOTTOM_FRACTION + 0.04) window-fractions, matching the derivation in the comment above it")
+
+
+func _test_parse_args_fight_names_the_beast_and_marks_the_build_as_dev() -> void:
+	var p := Dev.parse_args(PackedStringArray(["fight=cinder_jackal"]))
+	_expect(String(p["fight"]) == "cinder_jackal",
+		"fight=<id> parses the beast id after the token, which is the whole contract the titan:// links depend on")
+	_expect(bool(p["on"]),
+		"a fight= launch is a dev build and says so on screen, the same as borderless or hand=")
+	var spaced := Dev.parse_args(PackedStringArray(["fight= thrasher "]))
+	_expect(String(spaced["fight"]) == "thrasher",
+		"surrounding whitespace is stripped -- a URL handler hands the id over with whatever spacing it likes")
+
+
+func _test_parse_args_without_fight_leaves_it_empty_so_the_menu_still_opens() -> void:
+	# The menu checks `Dev.fight != ""` to decide whether to skip itself. Anything
+	# other than empty here would send an ordinary launch straight into a fight.
+	_expect(String(Dev.parse_args(PackedStringArray([]))["fight"]) == "",
+		"no fight= token leaves it empty, so a plain launch still lands on the menu")
+	_expect(String(Dev.parse_args(PackedStringArray(["borderless", "foil"]))["fight"]) == "",
+		"other dev flags do not accidentally set a fight")
 
 
 func _test_shoulder_frame_is_the_old_shot_at_zero() -> void:
