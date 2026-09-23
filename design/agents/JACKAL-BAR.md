@@ -51,7 +51,13 @@ reading the fight at a glance, at play size, in motion.
 - [ ] **Frog and Goblin match the jackal's fidelity.** Today they are
       Python-primitive models beside a textured, rigged beast — the loudest
       style break in the fight.
-- [ ] **Each is readable at fight distance** as itself, not a green blob.
+- [x] **Each is readable at fight distance** as itself, not a green blob.
+      The Goblin Engineer's Meshy rebuild was wired in and unreadable at true
+      size (a near-solid black blob) until the shared ink-outline width was
+      given a per-model scale, 2026-09-23 — verified in the real fight and
+      the campfire row. `design/progress/goblin_mech_ai.md` ("Shipped and
+      scored"). Frog was already there. Fidelity is not fully matched yet
+      (37/50, under the hunter stop line) — see the line above.
 
 ### The arena
 - [x] **It frames the beast** rather than competing with it. Meshy-generated

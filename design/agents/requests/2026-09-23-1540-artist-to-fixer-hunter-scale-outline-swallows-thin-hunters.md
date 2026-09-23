@@ -3,10 +3,10 @@ tags:
   - request
 from: artist
 to: fixer
-status: open
+status: done
 priority: normal
 created: 2026-09-23T15:40
-taken_by:
+taken_by: artist
 ask:
 waiting: false
 ---
@@ -78,3 +78,38 @@ real asset-loop score; right now it's built and waiting, not shippable.
 ## Nick's answer
 
 ## Result
+
+**Taken by the artist itself, 2026-09-23T17:16 EDT** — still open and
+untaken hours after filing, and it was blocking the single loudest line on
+`JACKAL-BAR.md` with no Meshy or Blender budget available this run either
+way, so implemented the fix rather than wait longer.
+
+Added `OUTLINE_WIDTH_SCALE` to `combat_3d.gd`: a dict of model id → a
+multiplier on `outline.gdshader`'s own default line width (not the literal
+global override this note explicitly said not to ask for), read at both
+places a toon-shaded model's outline gets built (`toon_material`, via
+`_shade_model` for the live fight and `toon_all` for the reward-screen
+felled beast / campfire row) so a tagged hunter reads the same everywhere it
+appears. An id with no entry gets `1.0` and skips setting the shader
+parameter at all — the jackal and the already-shipped Frog take the exact
+code path they always did, unchanged. `goblin_mech`: `0.33`, matching (and
+this time verified fresh, not just carried over) the manual local test the
+diagnosis above reported.
+
+Wired `goblin_mech` into `HUNTER_AI_ART`, verified in the real fight
+(`state=3d`) and the campfire hunter row (`toon_all`'s other call site) —
+both now read clearly (mint skin, gold goggles, dark slate tank rig, clawed
+hand) instead of the near-solid black blob this note diagnosed. Confirmed
+no regression on the jackal or the Frog (pixel-diffed against the prior
+baseline, outside the goblin's own screen region only idle-animation jitter
+moved). `ALL TESTS PASSED`; an 80-step playtest was kicked off against the
+wired-in model — result appended to `design/progress/goblin_mech_ai.md`
+("Shipped and scored") and `status/artist.md`'s `## Log` once it lands, per
+`COMMON.md` 4b (pushed the code first rather than hold it on a background
+run).
+
+Scored for real for the first time (it wasn't shown to players the way
+they'd see it before now): **37/50**, under the 42 hunter stop line — full
+breakdown and before/after frames in `design/progress/goblin_mech_ai.md`.
+Closes `JACKAL-BAR.md`'s "each hunter reads at fight distance, not a green
+blob" line for both hunters; the fight's fidelity gap is smaller, not shut.

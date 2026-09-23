@@ -175,3 +175,119 @@ shipped) regresses nothing: **`PLAYTEST OK: 0 failing check(s) {  }`**, all
 3. The 193-island-style raw-mesh question `frog_ai.md` left open for its own
    asset is worth checking here too once this ships — not chased this run,
    since the asset isn't live yet.
+
+## Shipped and scored — artist, 2026-09-23T17:16 EDT
+
+Picked up the fixer request above myself rather than wait on it further —
+still open and untaken hours after filing, and it was the single loudest
+blocker on this fight's own loudest bar item (`JACKAL-BAR.md`, "Frog and
+Goblin match the jackal's fidelity"). No Meshy budget left today (8/8
+spent) and Blender's network wall (`download.blender.org`, `connect_rejected`
+via the proxy, reconfirmed this run — see `status/artist.md`) meant no new
+model work either way, so this was the highest-value thing available: a
+material/shader change to an asset already built and waiting.
+
+**The fix, not the one literally suggested.** Rather than a flat global
+`width` override, `combat_3d.gd` gained `OUTLINE_WIDTH_SCALE` — a dict of
+model id to a multiplier on `outline.gdshader`'s own default line width,
+read by both places a toon-shaded model gets its outline
+(`toon_material`, called from `_shade_model` for the live fight and
+`toon_all` for the reward-screen felled beast / campfire row). Any id with
+no entry gets `1.0` and the code path that would touch the shader
+parameter is skipped entirely — the jackal and the shipped Frog draw
+through the exact same, untouched call they always did. Threaded the
+model id through both callers (`_spawn_hunter`'s own `cid`, `location_3d.gd`'s
+`beast_id`/`id`) so a hunter reads the same everywhere it appears, not just
+in combat.
+
+**0.33**, matching the manual local test the original diagnosis reported
+(width `0.0015` against the shader's `0.0045` default) — re-verified fresh
+this run, not carried over on trust: `goblin_mech` wired into
+`HUNTER_AI_ART`, rendered in the real fight (`state=3d beast=cinder_jackal`),
+cropped at 3x. Before: a near-solid green-black blob, worse than the
+primitive it would replace. After: the mint skin, gold goggles, dark slate
+tank rig and clawed hand all read clearly, at the actual size a player
+sees it at.
+
+![[../agents/frames/artist/2026-09-23-goblin-outline-width-fix-crop.png]]
+
+**Checked everywhere `toon_all`/`_shade_model` place this model, not just
+the one screenshot that started this**: the real fight (`state=3d`, above),
+and the campfire hunter row (`state=3dcampfire`, `toon_all`'s other call
+site) — both read clearly, backpack rig and goggles legible at that
+distance too.
+
+![[../agents/frames/artist/2026-09-23-goblin-outline-width-fix-campfire.png]]
+
+**No regression on the jackal or the Frog** — `state=3d`, full frame,
+pixel-diffed against the immediately-prior baseline render: outside the
+goblin's own screen region, the only pixels that moved are consistent with
+ordinary idle-animation timing jitter between two separate runs (checked by
+eye against a tight crop of the jackal's legs and the Frog — pixel-identical
+shapes, not a width change). `OUTLINE_WIDTH_SCALE` only ever sets the shader
+parameter for an id with an entry, so this is expected, not just observed.
+
+![[../agents/frames/artist/2026-09-23-goblin-outline-width-fix-before-after.png]]
+
+**`ALL TESTS PASSED`.** Full `mode=play beast=cinder_jackal steps=80`
+playtest kicked off against the wired-in model; per `COMMON.md` 4b this
+write-up, the commit and the push all happened before the result was in
+hand, rather than let a background run hold up everything else this run
+did — the result is appended to this file and `status/artist.md`'s `## Log`
+the moment it lands.
+
+**Score, `design/guide/asset-loop.md` rubric — the first real one for this
+asset** (the original build pass was explicitly left unscored: it wasn't
+shown to players the way they'd see it yet, and scoring it then would have
+meant comparing a misleading number against `goblin_mech.md`'s own shipped
+42/50):
+
+- **Silhouette 8** — `goblin_mech_ai_pass1_sil.png`: reads clearly as a
+  goblin-with-rig at 64px solid black — ears, the raised clawed hand and the
+  backpack's tank silhouette all break a plain humanoid outline. Held to 8,
+  not 9: the tell is mostly the backpack and ears, not anything more
+  specifically "goblin" the way the Frog's crouch and toe-splay read as
+  unmistakably frog-shaped.
+- **Proportion 8** — reads as this hunter's own established character (a
+  round goblin body against a square mechanical rig — `goblin_mech.py`'s own
+  design intent) both in isolation and, this pass, in the live arena beside
+  the actual jackal and Frog at the real in-fight scale — a side-by-side
+  check `frog_ai.md` pass 2 named as its own open gap, done here instead of
+  left open.
+- **Build hygiene 6** — one mesh, one material (confirmed at export time,
+  not re-verified this pass — no Blender available), 5,199 tris against the
+  1,400 hunter budget, the same accepted-overage class `frog_ai` (5,200) and
+  the current `goblin_mech.glb` (also well over) already ship at. Held at 6,
+  a point under `frog_ai`'s own 7: that asset's pass 2 at least ran a raw
+  mesh-topology check (193 islands, silhouette-safe); this one has had no
+  equivalent check since the original build, an open question, not a
+  confirmed clean bill.
+- **Colour & read 7** — the palette (mint skin, gold goggles, dark slate rig,
+  burnt-orange fittings, umber straps) separates clearly now that the
+  outline isn't eating it, both in the real fight and the campfire row
+  above. Held under 8: the underlying texture is still measurably duller
+  than the Frog's own (mean luminance 80.1 vs 156.5, from the original
+  diagnosis, unchanged by this pass — the outline was the dominant problem,
+  not the only one) and colour has not been checked at the 34px party-
+  portrait scale, same caveat `frog_ai` pass 2 carried for the same reason
+  (`portraits.py`'s `AI_ART` table is beast-only, not extended to hunters).
+- **Style consistency 8** — same Meshy pipeline, same toon-shader/ink-outline
+  treatment as the jackal and the Frog, now actually legible at the size a
+  player sees it — this is the fidelity gap `artist.md` names as the
+  fight's loudest style break, materially closed for this hunter. Not a 9:
+  getting there took a shader-side accommodation this asset needed and the
+  Frog didn't, which is a real (if now-invisible) difference in how well
+  the raw asset fits the established pipeline.
+
+**Total: 37/50** — under the 42 hunter stop line, same honest-not-rounded
+call `frog_ai` pass 2 made landing at 41. Lowest two lines, for whoever
+picks this up next: **Build hygiene** (the 193-island-equivalent check,
+needs Blender) and **Colour & read** (the texture is still measurably
+dimmer than the Frog's own — a second Meshy refine or a manual gamma/levels
+pass, once Meshy budget resets, could close this without new geometry).
+
+**`HUNTER_AI_ART := {"frog": "_ai", "goblin_mech": "_ai"}`, shipped.** This
+closes the JACKAL-BAR.md line "Each is readable at fight distance as itself,
+not a green blob" for both hunters — ticked below. The fight's fidelity gap
+is smaller, not closed: 37/50 is a real hunter on screen, not yet at the
+tier's own bar.

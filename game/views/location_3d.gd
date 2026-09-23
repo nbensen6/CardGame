@@ -264,7 +264,7 @@ func _lay_out_the_felled(beast_id: String) -> void:
 	var body: Node3D = (load(path) as PackedScene).instantiate()
 	_plot.add_child(body)
 	if ai:
-		BEAST_MODEL.toon_all(body)
+		BEAST_MODEL.toon_all(body, beast_id)
 	var tall := _felled_height(beast_id)
 	_fit_height(body, tall)
 	_felled_span = tall
@@ -365,7 +365,7 @@ func _place_hunters(s: Dictionary) -> void:
 			# gets (_lay_out_the_felled) — toon_all shades every mesh with no
 			# beast-only glow/embers, which is right for a static reward-screen
 			# pose either way.
-			BEAST_MODEL.toon_all(n)
+			BEAST_MODEL.toon_all(n, id)
 		# Width capped a shade under the height, so the widest hunter still reads
 		# as one of the row rather than as scenery.
 		_fit_height(n, HUNTER_HEIGHT, HUNTER_HEIGHT * 0.9)

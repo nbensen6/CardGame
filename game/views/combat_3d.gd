@@ -41,7 +41,20 @@ const AI_ART := {"cinder_jackal": "_ai"}
 ## rather than merged into it: AI_ART's own doc comment and every reader of it
 ## (_show_beast, location_3d.gd's felled-beast lookup) means "beast", and nothing
 ## here changes that. Empty until an artist ships a rigged hunter .glb.
-const HUNTER_AI_ART := {"frog": "_ai"}
+const HUNTER_AI_ART := {"frog": "_ai", "goblin_mech": "_ai"}
+## outline.gdshader draws one fixed screen-space line weight on every model,
+## tuned against thick rounded masses (the jackal, the Frog). A HUNTER_AI_ART
+## model built from many thin parts (straps, tank fittings, limb segments)
+## gets that same-width stroke on each one, and at hunter scale the strokes
+## overlap and eat the model — measured on goblin_mech_ai: mean luminance
+## 80.1 against the Frog's shipped 156.5, isolated to the outline pass, not
+## the texture (design/progress/goblin_mech_ai.md). A multiplier here, not a
+## second shader, keeps the jackal and the already-shipped Frog untouched —
+## both stay at implicit 1.0 (outline.gdshader's own uniform default) unless
+## given an entry. 0.33 matches the manual test that diagnosed this
+## (0.0015 against the shader's 0.0045 default); re-verified in the real
+## fight camera, not just carried over from that note.
+const OUTLINE_WIDTH_SCALE := {"goblin_mech": 0.33}
 ## Grounds rebuilt with a generated wall instead of env.py's primitive
 ## enclose() (Nick, 2026-09-23, answering the arena-wall-accent request:
 ## "the environment needs a rehaul. use meshy to create an environment to
@@ -2549,12 +2562,17 @@ var _hull: PackedFloat32Array = PackedFloat32Array()
 ## path, so a model that ever ships its own texture keeps it.
 ## The toon material for one mesh of an AI_ART beast, outline included. Static
 ## so the reward screen's felled beast (location_3d) wears the same look.
+## outline_scale multiplies outline.gdshader's own default line width — see
+## OUTLINE_WIDTH_SCALE. 1.0 (the default) sets nothing, so the jackal and the
+## Frog draw exactly as they did before this parameter existed.
 static func toon_material(mi: MeshInstance3D, tex: Texture2D,
-		motion: Dictionary = {}) -> ShaderMaterial:
+		motion: Dictionary = {}, outline_scale: float = 1.0) -> ShaderMaterial:
 	var mat := ShaderMaterial.new()
 	mat.shader = TOON
 	var line := ShaderMaterial.new()
 	line.shader = OUTLINE
+	if outline_scale != 1.0:
+		line.set_shader_parameter("width", 0.0045 * outline_scale)
 	if tex != null:
 		mat.set_shader_parameter("albedo_tex", tex)
 		# Motion only on the painted body. The footholds are a separate, flat
@@ -2573,7 +2591,11 @@ static func toon_material(mi: MeshInstance3D, tex: Texture2D,
 
 
 ## Every mesh under `root`, toon-shaded. For a model loaded outside the fight.
-static func toon_all(root: Node) -> void:
+## model_id looks up OUTLINE_WIDTH_SCALE the same way _shade_model does, so a
+## thin-parted hunter reads the same in the reward-screen row (_place_hunters)
+## and the felled-beast pose (_lay_out_the_felled) as it does in the fight.
+static func toon_all(root: Node, model_id: String = "") -> void:
+	var outline_scale: float = OUTLINE_WIDTH_SCALE.get(model_id, 1.0)
 	var stack: Array[Node] = [root]
 	while not stack.is_empty():
 		var n: Node = stack.pop_back()
@@ -2587,7 +2609,7 @@ static func toon_all(root: Node) -> void:
 			if had is StandardMaterial3D and (had as StandardMaterial3D).albedo_texture != null:
 				tex = (had as StandardMaterial3D).albedo_texture
 				break
-		mi.material_override = toon_material(mi, tex)
+		mi.material_override = toon_material(mi, tex, {}, outline_scale)
 
 
 ## Whether a mesh under `root` takes the toon-shaded, rigged path instead of
@@ -2601,11 +2623,17 @@ static func wants_toon(beast_here: bool, beast_toon: bool, force_toon: bool) -> 
 	return force_toon or (beast_here and beast_toon)
 
 
-func _shade_model(root: Node, is_ground := false, force_toon := false) -> void:
+## model_id is only for a forced-toon hunter's OUTLINE_WIDTH_SCALE lookup
+## (_spawn_hunter passes its cid); the beast finds its own scale off
+## _beast_id, same as it already does for AI_MOTION/EMBERS below.
+func _shade_model(root: Node, is_ground := false, force_toon := false,
+		model_id := "") -> void:
 	if CREATURE == null:
 		return
 	var beast_here := not is_ground and root == _beast
 	var toon_here := wants_toon(beast_here, _beast_toon, force_toon)
+	var outline_scale: float = OUTLINE_WIDTH_SCALE.get(
+		_beast_id if beast_here else model_id, 1.0)
 	for node in _all_meshes(root):
 		var mi := node as MeshInstance3D
 		if mi == null or mi.mesh == null:
@@ -2622,7 +2650,7 @@ func _shade_model(root: Node, is_ground := false, force_toon := false) -> void:
 			# its motion comes off its own AnimationPlayer instead (_spawn_hunter)
 			# and it takes the toon material with nothing pumped into it here.
 			mi.material_override = toon_material(mi, tex,
-				AI_MOTION.get(_beast_id, {}) if beast_here else {})
+				AI_MOTION.get(_beast_id, {}) if beast_here else {}, outline_scale)
 			continue
 		var mat := ShaderMaterial.new()
 		mat.shader = CREATURE
@@ -3357,7 +3385,7 @@ func _spawn_hunter(slot: int, players: Array) -> Dictionary:
 	if ResourceLoader.exists(path):
 		var m := (load(path) as PackedScene).instantiate()
 		holder.add_child(m)
-		_shade_model(m, false, hunter_toon)
+		_shade_model(m, false, hunter_toon, cid)
 		_fit_height(m, HUNTER_HEIGHT)
 		body = m
 		# Same idle-loop wiring _show_beast gives a rigged beast — a no-op for

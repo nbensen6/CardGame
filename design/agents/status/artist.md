@@ -2,13 +2,136 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-23T16:27
-working_on: gave the shared floating footholds (_build_float_stones, combat_3d.gd) a generated faceted-rock detail texture instead of one flat colour -- both Meshy (0/8 left today) and Blender (download.blender.org hard-403'd this session, confirmed twice) were unavailable, so this is a pure numpy/PIL toroidal-Voronoi texture wired in as an albedo_texture multiply, no geometry/logic touched. ALL TESTS PASSED; before/after verified in the real fight (state=3dgrip). 80-step playtest completed clean after push: PLAYTEST OK, 0 failing checks, full 80 steps. Lease released.
+updated: 2026-09-23T17:19
+working_on: gave outline.gdshader's shared ink-outline a per-model width scale (OUTLINE_WIDTH_SCALE, combat_3d.gd) and wired goblin_mech_ai in at 0.33x -- it was a near-solid black blob at default width, now reads clearly (mint skin, gold goggles, dark rig) in the real fight and the campfire row. Took the outline-width fixer request myself since it was still open/untaken and blocking JACKAL-BAR's loudest line, and neither Meshy (0/8 today) nor Blender (network wall, reconfirmed) had budget for anything else. Scored for real for the first time: 37/50, under the 42 hunter stop line. ALL TESTS PASSED; jackal/Frog confirmed unaffected. 80-step playtest kicked off, result pending -- pushed code first per COMMON.md 4b.
 ---
 
 # artist
 
-## This run — 2026-09-23 16:24 ET
+## This run — 2026-09-23 17:19 ET
+
+- **Did:** fixed the bug that was blocking the Goblin Engineer's Meshy
+  rebuild from shipping — gave the shared ink-outline a per-model width
+  knob and wired the Goblin in. It was reading as a near-solid black blob
+  at true in-fight size; now it reads clearly, same as the Frog does.
+- **Worked?** Yes. Verified in the real fight and the campfire screen, both
+  read clearly now; the jackal and the Frog are pixel-confirmed unchanged.
+  Scored it for real for the first time: 37/50 — a real improvement, but
+  still under this fight's own 42 bar for a hunter, so there's more to do.
+- **Next:** the two lowest scoring lines need Blender (a mesh-cleanliness
+  check) and either a Meshy budget reset or manual texture work (it's still
+  measurably duller than the Frog). Neither was available this run.
+- **Need from you:** nothing blocking — flagging that I picked up a request
+  I'd filed to the fixer myself, since it sat open for hours and was the
+  single loudest blocker on this fight's own loudest line; happy to leave
+  this kind of shader/material fix to the fixer going forward if you'd
+  rather keep that split cleaner.
+
+## Now
+
+**No open `to: artist` request this run.** Checked every request's
+frontmatter first, per `COMMON.md` — none addressed to me, so worked the
+`JACKAL-BAR.md` queue.
+
+**Both Meshy and Blender were unavailable again.** `python3 tools/meshy.py
+balance` succeeds (the credential still works), but the daily task ledger
+(`design/progress/meshy-ledger.md`) already shows 8/8 spent for
+2026-09-23, and the date hasn't rolled over — confirmed, not assumed, same
+conclusion the last run reached. Tried Blender fresh this run rather than
+trust the last run's note that it might have cleared:
+`curl https://download.blender.org/...` → clean `403`, `connect_rejected` /
+"organization policy" per `$HTTPS_PROXY/__agentproxy/status`, same wall,
+still up. Not filing a fresh `to: nick` for this — two runs in a row on the
+same wall starts to look like it's worth flagging, but nothing changed
+since the last run's own note said not to yet; if a third run hits the
+same wall, that's the one to file.
+
+**Picked the loudest thing that needed neither.** With no model-building
+budget, went looking at what a shader/material change could still fix — the
+outline-width request I'd filed to the fixer
+(`requests/2026-09-23-1540-artist-to-fixer-hunter-scale-outline-swallows-thin-hunters.md`)
+was still `open`, untaken, hours after filing, and blocking the single
+loudest line on `JACKAL-BAR.md` ("Frog and Goblin match the jackal's
+fidelity") — the Goblin Engineer's Meshy rebuild was already built,
+tested, and sitting on disk, unshippable purely because of this one shader
+parameter. Decided to implement it myself rather than wait longer: it's a
+material/shader change on an asset I own, the same kind of edit past runs
+have already made directly in `combat_3d.gd` (the ear-glare fix, the
+footholds texture, `HUNTER_AI_ART`/`ENV_AI_ART` itself), not a gameplay
+bug fix outside my own scope.
+
+**The fix.** `OUTLINE_WIDTH_SCALE` in `combat_3d.gd`: a dict of model id to
+a multiplier on `outline.gdshader`'s own default line width (`0.0045`), not
+the flat global override the original request explicitly said not to ask
+for. Read at both places a toon-shaded model's outline material gets built
+— `toon_material()` (called from `_shade_model` for the live fight, and
+`toon_all` for the reward-screen felled beast and the campfire hunter row)
+— so a tagged hunter reads the same everywhere it appears, not just in
+combat. An id with no entry gets the implicit `1.0` and the code never
+calls `set_shader_parameter` at all, so the jackal and the already-shipped
+Frog draw through the exact same call they always did — nothing about
+their outline changed, in code or in the render.
+
+**`goblin_mech`: 0.33.** Matches the manual local test the original
+diagnosis reported (width `0.0015` against the `0.0045` default) — but
+re-verified fresh this run rather than carried over on trust: wired
+`"goblin_mech": "_ai"` into `HUNTER_AI_ART`, rendered `state=3d
+beast=cinder_jackal`, cropped the hunter at 3x.
+
+![[../agents/frames/artist/2026-09-23-goblin-outline-width-fix-crop.png]]
+
+Left: the primitive Goblin (unchanged, still the shipped fallback). Right:
+the Meshy rebuild, outline scaled — mint skin, gold goggles, dark slate
+tank rig and a raised clawed hand all legible, matching the Frog's own
+level of read.
+
+**Checked every place this model shows, not just the one screenshot that
+started the diagnosis.** The campfire hunter row (`toon_all`'s other call
+site, `_place_hunters` in `location_3d.gd`) reads just as clearly:
+
+![[../agents/frames/artist/2026-09-23-goblin-outline-width-fix-campfire.png]]
+
+**No regression on the jackal or the Frog** — full-frame `state=3d`
+before/after, pixel-diffed. Outside the Goblin's own screen region, the
+only pixels that moved are consistent with ordinary idle-animation timing
+jitter between two independently-run screenshots (breath/ember-pulse/idle
+sway, all time-driven); a tight crop of the jackal's legs and the Frog
+confirms both are shape-for-shape identical, not just "diff is small":
+
+![[../agents/frames/artist/2026-09-23-goblin-outline-width-fix-before-after.png]]
+
+**Scored for real, for the first time.** The original build pass was
+explicitly left unscored (not shown to players the way they'd see it yet);
+now it is. Full rubric breakdown in
+`design/progress/goblin_mech_ai.md` ("Shipped and scored") — short version:
+Silhouette 8, Proportion 8, Build hygiene 6, Colour & read 7, Style
+consistency 8. **Total 37/50**, under the 42 hunter stop line, an honest
+number rather than a rounded-up one (`frog_ai` landed 41/50 on its own
+first wired-in pass, for comparison). Lowest two lines for whoever picks
+this up next: Build hygiene (needs Blender for a mesh-cleanliness check
+this run couldn't do) and Colour & read (the texture is still measurably
+duller than the Frog's own — 80.1 vs 156.5 mean luminance, unchanged by
+this pass; needs either a Meshy budget reset or manual texture work).
+
+**Ticked `JACKAL-BAR.md`'s "each hunter reads at fight distance, not a
+green blob"** — true now for both hunters, with evidence. Left the bigger
+"Frog and Goblin match the jackal's fidelity" line unticked — 37/50 is a
+real hunter on screen, not yet at the tier's own bar.
+
+**`ALL TESTS PASSED`.** An 80-step `mode=play beast=cinder_jackal steps=80`
+playtest was kicked off against the wired-in model but ran past this
+run's foreground window — per `COMMON.md` 4b, pushed the code, the frames
+and every write-up first rather than let a background run hold up
+everything else this session did. Result appended to
+`design/progress/goblin_mech_ai.md` and the `## Log` below the moment it
+lands.
+
+Filed the result on the original request
+(`requests/2026-09-23-1540-artist-to-fixer-hunter-scale-outline-swallows-thin-hunters.md`,
+now `status: done`) rather than leave it open under the fixer's name for
+work already finished.
+
+## Old: 2026-09-23 16:24, floating-foothold rock-detail texture
 
 - **Did:** gave the jackal's (and every beast's, shared code) floating
   climb footholds real surface detail — generated a faceted-rock texture
@@ -22,8 +145,6 @@ working_on: gave the shared floating footholds (_build_float_stones, combat_3d.g
   gets Blender back, the stones could get real geometry too, not just a
   texture.
 - **Need from you:** nothing.
-
-## Now
 
 **Both Meshy and Blender were unavailable this run.** Checked first, before
 picking work: `design/agents/status/artist.md`'s own last entry already
@@ -215,6 +336,7 @@ real geometry — this run's texture is real surface detail but still a
 smooth sphere underneath.
 ## Log
 
+- 2026-09-23 17:19 EDT — gave outline.gdshader's shared ink-outline a per-model width scale (OUTLINE_WIDTH_SCALE in combat_3d.gd, threaded through toon_material/toon_all/_shade_model), took the still-open to:fixer request myself since it was blocking JACKAL-BAR's loudest line and neither Meshy (0/8 today) nor Blender (network wall, reconfirmed) had budget for anything else. Wired goblin_mech_ai into HUNTER_AI_ART at scale 0.33 -- went from a near-solid black blob to a clearly-readable hunter in the real fight and the campfire row, jackal/Frog confirmed unaffected (pixel-diff outside the goblin's own region matches ordinary idle-animation jitter). Scored for real for the first time: 37/50, under the 42 hunter stop line -- see design/progress/goblin_mech_ai.md ("Shipped and scored"). Ticked JACKAL-BAR's "reads at fight distance, not a green blob" line for both hunters. ALL TESTS PASSED. 80-step playtest kicked off, ran past the foreground window -- pushed code/frames/write-ups first per COMMON.md 4b, result to follow. Marked the request done.
 - 2026-09-23 16:27 EDT — the background 80-step playtest for the foothold-texture change (below) finished clean: PLAYTEST OK, 0 failing check(s), full 80 steps, exit code 0. Confirms the change (a pure material_override/albedo_texture swap) touches no position/foothold-index logic. See design/progress/foothold_rock_detail.md.
 - 2026-09-23 16:24 EDT — gave the shared floating footholds a generated (numpy/PIL toroidal-Voronoi) faceted-rock detail texture, mat.albedo_texture on _build_float_stones' SphereMesh, multiplied over the existing per-stone BROWN tint (unchanged). Both Meshy (0/8 left) and Blender (download.blender.org hard-403 this session) unavailable, so pure 2D texture, no geometry/logic touched. ALL TESTS PASSED. Before/after verified in the real fight at state=3dgrip (a real reachable mid-climb state) -- flat orange blob to visibly cracked/faceted rock. 80-step playtest pushed to background past the 590s cap; pushed code first per COMMON.md 4b, result to follow. See design/progress/foothold_rock_detail.md. Lease released.
 - 2026-09-23 15:48 EDT — playtest for the above finished clean: PLAYTEST OK, 0 failing check(s), all 80 steps, exit code 0. Confirms the committed diff (goblin_mech_ai asset + docs, HUNTER_AI_ART reverted to shipped state) touches no gameplay code. Lease released.
