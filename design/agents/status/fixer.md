@@ -3,18 +3,96 @@ tags:
   - agent-status
 agent: fixer
 updated: 2026-09-23
-working_on: Took the self-filed shared-foothold-side-spacing request (oldest open `to: fixer`, over the newer artist-filed hunter-display-path request). Root cause was neither of the request's own two sub-questions — `stone_point()` (the function that pushes a standing point onto its floating stone) pushed RADIALLY AWAY FROM WORLD ORIGIN in the XZ plane instead of straight forward off the body, so any anchor already off-axis in x (foothold 4 sits on the jackal's own ear, x=3.9) got its own extra x-drift on top of `stand_offset_x`'s side spacing — harmless alone, but the two together blew playtest.gd check 8's tolerance at a shared foothold. Fixed by making `stone_point` push purely forward (+z), the same direction every other clearance function in this file already uses. Three new unit tests (repro fails on the unfixed function, passes fixed), `ALL TESTS PASSED`. Live `mode=play steps=80`: zero FAIL lines, confirmed both hunters sharing foothold 4 at step 34 (HUD shows both "↑4/5") with the side-shifted Goblin Engineer now plausibly on the model. Pushed.
+working_on: Took the high-priority artist-filed hunter-display-path request (top of the fixer queue per Nick's own note in it) — generalized the beast-only toon-shaded/rigged display path (`AI_ART`, `_shade_model`'s `root == _beast` gate, the beast's idle/attack/hit AnimationPlayer wiring) so a hunter can opt in too, via a new parallel `HUNTER_AI_ART` table. Pulled the shading decision into a pure `Combat3D.wants_toon(beast_here, beast_toon, force_toon)`, four new unit tests, repro against the pre-fix gate confirmed the hunter-side case fails without it. Live-verified end to end by temporarily tagging the existing `frog.glb` in (no new asset needed, exactly as the request asked) and confirming it toon-shades in a `state=3d` screenshot; reverted the tag before committing. `ALL TESTS PASSED`. See `## Now` for the full writeup and the live `mode=play` regression check.
 ---
 
 # fixer
 
 ## Now
 
+Took the high-priority `to: fixer` request
+`2026-09-23-1330-artist-to-fixer-hunter-display-path-has-no-toon-or-rig-support.md`
+over the older, normal-priority shared-foothold-side-spacing request (still
+sitting self-filed, see `## Old` below) — Nick's own note inside the newer
+request names it "the top of the fixer queue," and fixer.md's order-of-work
+puts `priority: high` before "oldest first" among open requests.
+
+**What it asked for.** The rigged, toon-shaded, idle-animated display path
+`AI_ART`/`_shade_model`/`_show_beast` already gives a beast (the Cinder
+Jackal's own `cinder_jackal_ai.glb`) only ever matched on `root == _beast` —
+no hunter id could reach it however it was tagged, so any Meshy-built hunter
+rebuild would have to ship un-toon-shaded and un-animated. Confirmed all four
+of the artist's named gaps by reading first: `AI_ART` beast-only (line ~30),
+`_shade_model`'s toon branch gated on `root == _beast` (~2518), `_beast_anim`
+only ever wired in `_show_beast`/`_strike` and never touched by
+`_spawn_hunter`, and `location_3d.gd`'s `_place_hunters` with no shading call
+at all.
+
+**Generalized each gate at its own spot**, per-detail writeup and the live
+proof in the request's own `## Result`:
+- New `HUNTER_AI_ART` table (parallel to `AI_ART`, kept separate since
+  `AI_ART`'s own doc comment and readers mean "beast" specifically) — a
+  character id listed here beats even your own `cast/<id>.glb`, same
+  precedence `AI_ART` already has over a beast's Python-built model.
+- `_shade_model`'s inline `_beast_toon and not is_ground and root == _beast`
+  pulled into a pure `Combat3D.wants_toon(beast_here, beast_toon,
+  force_toon)` — every existing call keeps `force_toon` defaulted `false`
+  (byte-for-byte unchanged behaviour for beasts/ground); `_spawn_hunter`
+  passes `true` only for a `HUNTER_AI_ART`-tagged id whose `.glb` exists.
+- `_spawn_hunter` now runs `_find_anim`/idle-loop wiring exactly like
+  `_show_beast` does for the beast, stored as a new `"anim"` key on the
+  hunter dict.
+- New `_hunter_play(slot, anim)` (`_beast_play`'s own twin, one hunter's
+  `AnimationPlayer`), wired into `_react`: a hunter's own damage (existing
+  per-hunter `hunter_dmg[i]` loop) plays `"hit"`; a hit landing on the boss
+  plays `"attack"` on every hunter together — the shared state diff carries
+  no per-hunter attribution for which hunter's card connected, the same
+  aggregate granularity `_beast_play("attack")` already uses for the beast's
+  side of a hit. Written down as a known limit in the request rather than
+  faked finer than the data supports.
+- `location_3d.gd`'s `_place_hunters` got the matching lookup +
+  `BEAST_MODEL.toon_all(n)`, the same treatment its own `_lay_out_the_felled`
+  already gives a felled `AI_ART` beast on the same screen.
+
+**Proof.** Four new `wants_toon` unit tests (`run_tests.gd`) covering all
+four cases: AI_ART beast unchanged, a plain beast doesn't toon-leak from a
+tagged hunter nearby, a tagged hunter toons on its own regardless of the
+beast, an untagged hunter never toons even beside a toon beast. Reproduced
+the pre-fix gate first — temporarily reverted `wants_toon`'s body to
+`beast_here and beast_toon` (force_toon ignored) — the "hunter opts in on
+its own" test failed exactly as predicted, the other three still passed.
+Restored, `ALL TESTS PASSED`.
+
+**Live verification, exactly as the request's "Done when" asked** — no new
+asset needed. Temporarily set `HUNTER_AI_ART := {"frog": ""}`, rendered
+`state=3d beast=cinder_jackal` before/after, cropped to the frog:
+
+![[frames/fixer/2026-09-23-hunter-toon-path-frog-before-after.png]]
+
+Left: flat `CREATURE`-shader frog. Right: the black ink outline + toon ramp
+the Cinder Jackal's own `AI_ART` build wears — confirms the tagged hunter
+really routes through `_shade_model`'s toon branch end to end, not just in
+the unit test. `frog.glb` has no `AnimationPlayer`, so the idle-loop half
+couldn't be shown live this run — `_find_anim`/`_beast_play`'s own logic is
+reused unchanged by `_hunter_play`, already proven on the beast side, and
+will fire the moment a real rigged hunter `.glb` exists. Reverted the tag
+before committing; `HUNTER_AI_ART := {}` ships empty.
+
+**Live regression check**, since the new code sits in `_react` (the per-tick
+state-diff hot path, run for every hunter every fight): full fresh
+`mode=play beast=cinder_jackal steps=80`, pushed the code first per the
+"never end a run on a background task" rule, ran this after — see `## Log`
+for the result and whether anything needed a follow-up fix.
+
+Commit: pushed as part of this run (see `## Log` below for the hash).
+
+## Old: 2026-09-23, shared-foothold-side-spacing-clears-the-model
+
 Open `to: fixer` request
 `2026-09-23-0715-fixer-to-fixer-shared-foothold-side-spacing-clears-the-model.md`
-— the oldest open request this run (self-filed two runs ago), taken over the
-newer `2026-09-23-1330-artist-to-fixer-hunter-display-path-has-no-toon-or-rig-support.md`
-per order-of-work "oldest first".
+— the oldest open request that run (self-filed two runs earlier), taken over
+the newer `2026-09-23-1330-artist-to-fixer-hunter-display-path-has-no-toon-or-rig-support.md`
+per order-of-work "oldest first" among the requests open at the time.
 
 **Reproduced first, headless**, with the request's own live numbers:
 `stand_offset_x(3.901302, +1.0, 12.92)` then `stone_point(...)` on that
@@ -59,7 +137,7 @@ model and the Frog's stone the way the request's own "before" crop showed.
 
 ![[frames/fixer/2026-09-23-shared-foothold4-fixed-step034-crop.png]]
 
-Commit: pushed as part of this run (see `## Log` below for the hash).
+Commit: pushed as part of that run (see `## Log` below for the hash).
 
 ## Old: 2026-09-23, end-turn-crash-at-sigil-solo-flip
 
@@ -730,7 +808,29 @@ further either.
 
 ## Log
 
-- 2026-09-23 (latest) — fixed the shared-foothold-4 side-gap (self-filed
+- 2026-09-23 (latest) — took the high-priority hunter-display-path request
+  (artist-filed, Nick's own note named it top of the fixer queue). The
+  toon-shaded, rigged/animated display path a beast gets (`AI_ART`,
+  `_shade_model`, `_beast_anim`) was gated on `root == _beast` throughout, so
+  no hunter id could ever reach it. Generalized each gate at its own spot: a
+  new parallel `HUNTER_AI_ART` table; `_shade_model`'s toon branch pulled into
+  a pure `Combat3D.wants_toon(beast_here, beast_toon, force_toon)` with every
+  existing call site unchanged (`force_toon` defaults false); `_spawn_hunter`
+  now wires a hunter's own `AnimationPlayer` idle loop exactly like
+  `_show_beast` does; new `_hunter_play` (`_beast_play`'s twin) fires "hit" on
+  the hunter who took damage and "attack" on every hunter when a hit lands on
+  the boss (no per-hunter attribution exists in the shared state diff for
+  which hunter's card connected — same aggregate granularity the existing
+  beast-side "attack" trigger already uses; written down as a known limit,
+  not faked finer than the data supports); `location_3d.gd`'s reward-screen
+  hunter row got the matching lookup. Four new `wants_toon` unit tests; repro
+  against the pre-fix gate (force_toon ignored) failed exactly as predicted,
+  fixed passes, `ALL TESTS PASSED`. Live-verified exactly as the request
+  asked — temporarily tagged the existing `frog.glb` into `HUNTER_AI_ART`
+  (no new asset), confirmed it toon-shades in a `state=3d` screenshot,
+  reverted the tag before committing. See `## Now` and the request's own
+  `## Result`.
+- 2026-09-23 — fixed the shared-foothold-4 side-gap (self-filed
   request, oldest open `to: fixer`). Root cause was neither of the request's
   own two sub-questions: `stone_point()` pushed a standing point radially
   away from WORLD ORIGIN in the XZ plane instead of straight forward off the

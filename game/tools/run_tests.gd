@@ -961,6 +961,16 @@ func _init() -> void:
 	_test_backlog86_stone_point_never_shifts_x_or_y()
 	_test_backlog86_stone_point_pushes_forward_by_one_hunter_height()
 	_test_backlog86_shared_foothold_stays_inside_playtest_check_8_tolerance()
+	# fixer, 2026-09-23: the hunter-display-path request
+	# (design/agents/requests/2026-09-23-1330-...) -- the toon-shaded, rigged
+	# path _shade_model gave AI_ART beasts was gated on `root == _beast`, so a
+	# HUNTER_AI_ART hunter (the parallel table this request added) could never
+	# reach it however it was tagged. wants_toon is the decision that gate got
+	# pulled out into.
+	_test_wants_toon_true_for_an_ai_art_beast()
+	_test_wants_toon_false_for_a_plain_beast_even_when_a_hunter_nearby_is_tagged()
+	_test_wants_toon_true_for_a_tagged_hunter_even_when_the_beast_itself_is_not_toon()
+	_test_wants_toon_false_for_an_untagged_hunter()
 	# backlog #86 duty 3 (this turn): hull_index_for, lifted out of
 	# _build_hull's own vertex scatter and _front_of_beast's lookup — the last
 	# untested piece of that family flagged by the previous duty-3 pass. The
@@ -24124,6 +24134,35 @@ func _test_backlog86_beast_changed_ignores_a_shift_sigil_height_change() -> void
 		"no beast built yet (first spawn, or one just freed) must still trigger a build even for a repeated id")
 	_expect(Combat3D.beast_changed("stone_warden", "", true),
 		"the very first beast of a fresh view (no boss id recorded yet) must build")
+
+
+## design/agents/requests/2026-09-23-1330-...-hunter-display-path: the toon-
+## shaded, rigged path _shade_model gives an AI_ART beast used to be reachable
+## only through `_beast_toon and not is_ground and root == _beast` inline --
+## no hunter root could ever satisfy `root == _beast`, so a HUNTER_AI_ART
+## hunter had no way in. wants_toon(beast_here, beast_toon, force_toon) is
+## that same decision, generalized: `beast_here` is the old `root == _beast`
+## test (computed once per _shade_model call, not per mesh), `beast_toon` is
+## the existing per-beast flag, and `force_toon` is the new hunter-side knob
+## _spawn_hunter passes when a character id is listed in HUNTER_AI_ART.
+func _test_wants_toon_true_for_an_ai_art_beast() -> void:
+	_expect(Combat3D.wants_toon(true, true, false),
+		"an AI_ART beast (root == _beast, _beast_toon true) must still take the toon path -- the pre-existing case this generalizes, unchanged")
+
+
+func _test_wants_toon_false_for_a_plain_beast_even_when_a_hunter_nearby_is_tagged() -> void:
+	_expect(not Combat3D.wants_toon(true, false, false),
+		"a beast with no AI_ART entry (_beast_toon false) must not toon-shade just because SOME hunter elsewhere is HUNTER_AI_ART-tagged -- force_toon is per-model, passed only for that model's own _shade_model call")
+
+
+func _test_wants_toon_true_for_a_tagged_hunter_even_when_the_beast_itself_is_not_toon() -> void:
+	_expect(Combat3D.wants_toon(false, false, true),
+		"a HUNTER_AI_ART hunter (beast_here false, since root != _beast) must reach the toon path on its own force_toon flag, with no dependency on whether the CURRENT beast happens to be AI_ART too -- this is the whole point of the request: hunters opt in independently of beasts")
+
+
+func _test_wants_toon_false_for_an_untagged_hunter() -> void:
+	_expect(not Combat3D.wants_toon(false, true, false),
+		"an ordinary hunter (not in HUNTER_AI_ART, so force_toon false) must keep rendering on the plain CREATURE shader even while the beast it stands beside is a toon-shaded AI_ART build -- beast_toon must never leak onto a hunter's own material")
 
 
 func _test_backlog86_intent_text_for_frail_is_no_longer_blank() -> void:

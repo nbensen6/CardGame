@@ -28,6 +28,16 @@ const OUTLINE := preload("res://assets/3d/outline.gdshader")
 ## Python-built model rather than over it, so `build.cmd cast` can never
 ## silently put the old one back.
 const AI_ART := {"cinder_jackal": "_ai"}
+## Hunters rebuilt the same way (design/ai-beast-recipe.md), the parallel table
+## the 2026-09-23 hunter-display-path request asked for: a character id listed
+## here loads <id><suffix>.glb over cast/<id>.glb (Cast.model_path's own
+## stand-in rule still applies first — see _spawn_hunter) and takes the same
+## toon-shaded, rigged path AI_ART beasts do, instead of the plain CREATURE
+## shader the Python-primitive hunters render with. Kept separate from AI_ART
+## rather than merged into it: AI_ART's own doc comment and every reader of it
+## (_show_beast, location_3d.gd's felled-beast lookup) means "beast", and nothing
+## here changes that. Empty until an artist ships a rigged hunter .glb.
+const HUNTER_AI_ART := {}
 ## Idle life for those beasts, in the toon shader (no rig yet). Uniform names
 ## from toon.gdshader; the masks default to the jackal's tail. Kept small: the
 ## body moves under hunters standing on it, and 2.5cm of breath on a Titan
@@ -2567,9 +2577,22 @@ static func toon_all(root: Node) -> void:
 		mi.material_override = toon_material(mi, tex)
 
 
-func _shade_model(root: Node, is_ground := false) -> void:
+## Whether a mesh under `root` takes the toon-shaded, rigged path instead of
+## the plain CREATURE shader — the branch that used to be hardcoded to
+## `root == _beast`, generalized (2026-09-23 hunter-display-path request) so a
+## HUNTER_AI_ART hunter can opt in via `force_toon` the same way an AI_ART
+## beast already does via `beast_toon`. Pure so run_tests.gd can prove a
+## tagged hunter resolves through it, and a plain one still doesn't, with no
+## scene tree needed.
+static func wants_toon(beast_here: bool, beast_toon: bool, force_toon: bool) -> bool:
+	return force_toon or (beast_here and beast_toon)
+
+
+func _shade_model(root: Node, is_ground := false, force_toon := false) -> void:
 	if CREATURE == null:
 		return
+	var beast_here := not is_ground and root == _beast
+	var toon_here := wants_toon(beast_here, _beast_toon, force_toon)
 	for node in _all_meshes(root):
 		var mi := node as MeshInstance3D
 		if mi == null or mi.mesh == null:
@@ -2580,8 +2603,13 @@ func _shade_model(root: Node, is_ground := false) -> void:
 			if had is StandardMaterial3D and (had as StandardMaterial3D).albedo_texture != null:
 				tex = (had as StandardMaterial3D).albedo_texture
 				break
-		if _beast_toon and not is_ground and root == _beast:
-			mi.material_override = toon_material(mi, tex, AI_MOTION.get(_beast_id, {}))
+		if toon_here:
+			# AI_MOTION's uniforms are the beast's own shader-driven idle life
+			# (no rig yet); a HUNTER_AI_ART hunter is rigged from the start, so
+			# its motion comes off its own AnimationPlayer instead (_spawn_hunter)
+			# and it takes the toon material with nothing pumped into it here.
+			mi.material_override = toon_material(mi, tex,
+				AI_MOTION.get(_beast_id, {}) if beast_here else {})
 			continue
 		var mat := ShaderMaterial.new()
 		mat.shader = CREATURE
@@ -2589,7 +2617,7 @@ func _shade_model(root: Node, is_ground := false) -> void:
 			mat.set_shader_parameter("atlas", tex)
 		# Only the beast glows. A hunter standing beside it painted from the same
 		# palette would otherwise light up for sharing a swatch.
-		if not is_ground and root == _beast:
+		if beast_here:
 			var lit: Array = EMBERS.get(_beast_id, [])
 			if not lit.is_empty():
 				var uvs := PackedVector2Array()
@@ -3302,18 +3330,34 @@ func _spawn_hunter(slot: int, players: Array) -> Dictionary:
 	# Your own cast/<character>.glb wins over the Kenney stand-in (see ui/cast.gd),
 	# so exporting a model is the whole job — no code edit to make it show up.
 	var path := Cast.model_path(cid)
+	# HUNTER_AI_ART beats even your own cast/<id>.glb, the same order AI_ART
+	# takes over a beast's Python-built model in _show_beast — the rigged,
+	# toon-shaded build is the upgrade, so it wins when it exists.
+	var hunter_toon := false
+	if HUNTER_AI_ART.has(cid):
+		var ai_path := CAST + cid + String(HUNTER_AI_ART[cid]) + ".glb"
+		if ResourceLoader.exists(ai_path):
+			path = ai_path
+			hunter_toon = true
 	var body: Node3D = null
+	var anim: AnimationPlayer = null
 	if ResourceLoader.exists(path):
 		var m := (load(path) as PackedScene).instantiate()
 		holder.add_child(m)
-		_shade_model(m)
+		_shade_model(m, false, hunter_toon)
 		_fit_height(m, HUNTER_HEIGHT)
 		body = m
+		# Same idle-loop wiring _show_beast gives a rigged beast — a no-op for
+		# a model with no AnimationPlayer (every hunter today).
+		anim = _find_anim(m)
+		if anim != null and anim.has_animation("idle"):
+			anim.get_animation("idle").loop_mode = Animation.LOOP_LINEAR
+			anim.play("idle")
 	holder.add_child(_hunter_pip(slot))
 	# The BODY is kept apart from the holder because the climb hop squashes it,
 	# and the pip is a child of the holder too — squashing that would pump the
 	# one marker that has to stay readable from across the arena.
-	return {"node": holder, "home": Vector3.ZERO, "body": body}
+	return {"node": holder, "home": Vector3.ZERO, "body": body, "anim": anim}
 
 
 ## Orbiting means a hunter can end up behind the beast's body. A pip that draws
@@ -3629,6 +3673,15 @@ func _react(s: Dictionary) -> void:
 			_strike(plan["weak"])
 			_damage_popup(plan["boss_dmg"],
 				_sigil.position if plan["weak"] else _beast_box.get_center(), plan["weak"])
+			# A hunter's card just landed on the beast. The shared diff this
+			# reacts to (same as _strike above) carries no per-hunter attribution
+			# for WHICH hunter's play connected — only that the boss took a hit —
+			# so every hunter takes its own "attack" beat together, at the same
+			# granularity _beast_play("attack") below already uses for the
+			# beast's side of a hit. A no-op for any hunter without a
+			# HUNTER_AI_ART model wired to an AnimationPlayer (every hunter today).
+			for hi in range(_hunters.size()):
+				_hunter_play(hi, "attack")
 		var hunter_dmg: Array = plan["hunter_dmg"]
 		var foot_actions: Array = plan["foot_actions"]
 		# The beast bit someone: that is its attack landing, so it is seen doing it.
@@ -3642,6 +3695,7 @@ func _react(s: Dictionary) -> void:
 				var hnode: Node3D = (_hunters[i] as Dictionary)["node"]
 				_damage_popup(hunter_dmg[i],
 					hnode.position + Vector3(0.0, HUNTER_HEIGHT * 1.4, 0.0), false, true)
+				_hunter_play(i, "hit")
 			match String(foot_actions[i]):
 				"reach": Sfx.play("reach_sigil")
 				"climb": Sfx.play("climb")
@@ -4147,6 +4201,22 @@ func _beast_play(anim: String) -> void:
 	_beast_anim.play(anim, 0.08)
 	if _beast_anim.has_animation("idle"):
 		_beast_anim.queue("idle")
+
+
+## _beast_play's own twin for a hunter: play one of THAT hunter's animations,
+## then settle back into its idle. A no-op for a hunter with no AnimationPlayer
+## at all (every hunter today, until HUNTER_AI_ART names one) or an out-of-
+## range slot, same shape as the beast's is_instance_valid guards elsewhere in
+## this file.
+func _hunter_play(slot: int, anim: String) -> void:
+	if slot < 0 or slot >= _hunters.size():
+		return
+	var player := (_hunters[slot] as Dictionary).get("anim") as AnimationPlayer
+	if player == null or not player.has_animation(anim):
+		return
+	player.play(anim, 0.08)
+	if player.has_animation("idle"):
+		player.queue("idle")
 
 
 ## A hit on the beast: recoil, a flash of light, a kick of camera shake — much

@@ -340,6 +340,7 @@ func _landmark(name: String, at: Vector3) -> void:
 
 func _place_hunters(s: Dictionary) -> void:
 	var players: Array = s.get("players", [])
+	var hunter_ai: Dictionary = BEAST_MODEL.HUNTER_AI_ART
 	for i in range(players.size()):
 		var id := String((players[i] as Dictionary).get("character", ""))
 		if id == "":
@@ -347,10 +348,24 @@ func _place_hunters(s: Dictionary) -> void:
 				.get_file().get_basename()
 		# Your art first — same rule as the fight (ui/cast.gd).
 		var path := Cast.model_path(id)
+		# HUNTER_AI_ART beats even your own cast/<id>.glb here too, same order
+		# combat_3d.gd's _spawn_hunter and this file's own felled-beast lookup
+		# (_lay_out_the_felled) already give the rigged/toon build over anything
+		# else that exists for the same id.
+		var ai := hunter_ai.has(id) \
+			and ResourceLoader.exists(CAST + id + String(hunter_ai[id]) + ".glb")
+		if ai:
+			path = CAST + id + String(hunter_ai[id]) + ".glb"
 		if not ResourceLoader.exists(path):
 			continue
 		var n: Node3D = (load(path) as PackedScene).instantiate()
 		_plot.add_child(n)
+		if ai:
+			# Same treatment the felled beast right next to this row already
+			# gets (_lay_out_the_felled) — toon_all shades every mesh with no
+			# beast-only glow/embers, which is right for a static reward-screen
+			# pose either way.
+			BEAST_MODEL.toon_all(n)
 		# Width capped a shade under the height, so the widest hunter still reads
 		# as one of the row rather than as scenery.
 		_fit_height(n, HUNTER_HEIGHT, HUNTER_HEIGHT * 0.9)

@@ -3,7 +3,7 @@ tags:
   - request
 from: artist
 to: fixer
-status: taken
+status: done
 priority: high
 created: 2026-09-23
 taken_by: fixer
@@ -93,4 +93,65 @@ beast branch of `_shade_model`, so this doesn't silently regress later.
 
 ## Result
 
-(filled in by whoever takes it: what changed, which commit, how verified)
+**Generalized, not reimplemented.** The beast-only gates you named were all real; fixed each at
+its own spot rather than building a second parallel system:
+
+- New `HUNTER_AI_ART` table (`combat_3d.gd`, beside `AI_ART`) — a character id listed here loads
+  `<id><suffix>.glb` over `Cast.model_path`'s stand-in/your-own-art result, the same way `AI_ART`
+  already wins over a beast's Python-built model. Kept as its own table rather than merged into
+  `AI_ART`, since `AI_ART`'s doc comment and every existing reader of it (`_show_beast`,
+  `location_3d.gd`'s felled-beast lookup) means "beast" specifically. Empty until an artist ships
+  a rigged hunter `.glb` — nothing changes for any hunter until then.
+- `_shade_model`'s `root == _beast` gate is now `Combat3D.wants_toon(beast_here, beast_toon,
+  force_toon)`, a pure static function: `beast_here`/`beast_toon` are exactly the old inline test
+  (unchanged for every existing beast call), `force_toon` is the new per-call hunter knob.
+  `_spawn_hunter` passes `true` when its character id is in `HUNTER_AI_ART` and the `.glb`
+  exists; every other call site (`_show_beast`, the ground shade, the plain-hunter case) passes
+  `false` by default, so behaviour for everything that exists today is byte-for-byte unchanged.
+- `_spawn_hunter` now mirrors `_show_beast`'s own idle wiring: `_find_anim(m)` on the loaded
+  model, loop `idle` if present and play it — a no-op for every hunter today (no
+  `AnimationPlayer` on the Python-primitive models), live the instant a rigged `.glb` lands.
+  Stored on the hunter dict as `"anim"` alongside the existing `"node"`/`"body"`/`"home"`.
+- New `_hunter_play(slot, anim)` — `_beast_play`'s own twin, scoped to one hunter's
+  `AnimationPlayer`. Wired into `_react`: a hunter takes damage (`hunter_dmg[i] > 0`, the same
+  per-hunter loop that already drives that hunter's damage popup) plays `_hunter_play(i, "hit")`;
+  a hit lands on the boss (`plan["boss_hit"]`) plays `"attack"` on every hunter. **Known limit,
+  written down rather than hidden**: the shared state diff `_react` reacts to carries no
+  per-hunter attribution for which hunter's card connected — only that the boss took a hit, the
+  same aggregate signal `_beast_play("attack")` already uses for the beast's own side of a hit —
+  so "attack" fires on every hunter together rather than only the one who acted. Real
+  per-hunter attribution would need a new field in `core/combat.gd`'s snapshot/diff, out of scope
+  for "generalize the display path"; flagged here rather than silently faked.
+- `location_3d.gd`'s `_place_hunters` (reward screen) got the matching lookup + `toon_all(n)` —
+  the same treatment its own `_lay_out_the_felled` already gives a felled `AI_ART` beast right
+  next to this row.
+
+**Proof.** `Combat3D.wants_toon` unit-tested against all four cases (`run_tests.gd`): an AI_ART
+beast still takes the path (unchanged case), a plain beast doesn't toon just because some other
+hunter is tagged, a `HUNTER_AI_ART` hunter takes the path on its own flag regardless of the
+beast, and an untagged hunter never does even next to a toon beast. Reproduced the pre-fix gate
+first: temporarily reverted `wants_toon`'s body to the old `beast_here and beast_toon` (ignoring
+`force_toon`) and reran — the "hunter opts in on its own" test failed exactly as predicted
+(`force_toon` had no effect), the other three still passed. Restored the fix, reran: `ALL TESTS
+PASSED`.
+
+**Live verification**, exactly as asked — no new asset needed. Temporarily set `HUNTER_AI_ART :=
+{"frog": ""}` (routes the existing `frog.glb` through the new path with no suffix), rendered
+`state=3d beast=cinder_jackal` before and after, cropped to the frog:
+
+![[frames/fixer/2026-09-23-hunter-toon-path-frog-before-after.png]]
+
+Left (untagged): flat `CREATURE`-shader frog, no outline. Right (tagged): the black ink outline
+and toon-ramp shading the Cinder Jackal's own `AI_ART` build wears — confirms `_shade_model`
+really routes a tagged hunter through the toon material end to end, not just in the unit test.
+`frog.glb` has no `AnimationPlayer`, so the idle-loop half of this couldn't be shown live this
+run; `_find_anim`/`_beast_play`'s own existing beast-side behaviour (already proven on the
+Cinder Jackal) is the same code path `_hunter_play` now reuses, so it will fire the moment a
+rigged hunter `.glb` exists. Reverted the temporary tag before committing —
+`HUNTER_AI_ART := {}` ships empty, `git diff` confirmed clean of the test tag.
+
+Full fresh `mode=play beast=cinder_jackal steps=80` run after the revert, to make sure the
+`_react` changes (new code in the hot per-tick diff loop) didn't regress anything for the
+existing, all-untagged roster: see the status note for the result.
+
+Commit: pushed as part of this run (see `tools/agents/status/fixer.md`'s `## Log` for the hash).

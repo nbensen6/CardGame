@@ -69,6 +69,19 @@ rather than backgrounding it; a 40-step playtest takes 3-5 minutes.
 - Overwrite `## Now` in `design/agents/status/<you>.md`, update `updated:` and
   `working_on:` in its frontmatter, and add one line to its `## Log` (newest on
   top). Honest: say if it went badly or you gave up.
+- **Timestamp everything, to the minute, in UTC** (Nick, 2026-09-23). A bare
+  date is useless here: three agents write these notes several times an hour,
+  and Nick reads them in Obsidian to find out what is CURRENT. On a day with
+  eight artist runs, "2026-09-23" cannot tell him whether a note is from before
+  or after the thing he just played. Get the time from the machine, never guess
+  it: `date -u +%Y-%m-%dT%H:%M`.
+  - status frontmatter: `updated: 2026-09-23T16:33` (ISO, so Obsidian reads it
+    as a real date and can sort on it).
+  - every `## Log` line starts `- 2026-09-23 16:33 UTC — ...`.
+  - every section you add to a `design/progress/*.md` note says the same in its
+    heading, e.g. `## Pass 11 — artist, 2026-09-23 16:33 UTC`.
+  - requests: `created:` carries the time the same ISO way, and a `## Result`
+    says when it was filled in.
 - `git pull --rebase origin main`, then push. On a conflict in
   `design/agents/`, keep both sides. Check it landed: `git log origin/main -1`.
 

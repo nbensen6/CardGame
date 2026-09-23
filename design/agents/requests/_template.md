@@ -5,7 +5,7 @@ from: playtester
 to: fixer
 status: open
 priority: normal
-created: 2026-09-22
+created: 2026-09-22T14:05
 taken_by:
 ---
 
