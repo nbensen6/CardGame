@@ -3,10 +3,10 @@ tags:
   - request
 from: fixer
 to: fixer
-status: open
+status: taken
 priority: normal
 created: 2026-09-23
-taken_by:
+taken_by: fixer
 ---
 
 # Two hunters sharing a narrow foothold: the side-shifted one's spacing can push it clear of the model and its (single, centred) stone
