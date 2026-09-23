@@ -3,12 +3,12 @@ tags:
   - request
 from: nick
 to: nick
-status: open
+status: done
 priority: high
 created: 2026-09-23T14:34
 taken_by: playtester
 ask: Do you want the one-directional-route rule (re-place the sigil hold so the sweep never reverses), the arc-system spacing band, and the always-visible-next-ring rule the playtester proposed below — yes, no, or try something else?
-waiting: true
+waiting: false
 ---
 
 # How should the floating stones line up in front of a beast, and what makes climbing them feel good?
@@ -231,3 +231,18 @@ squash, the camera holding the whole jump.
 Split the build from here — placement, jump rules and the next-hold ring to the
 fixer; how a ledge reads to the artist. Come back to me only if the two of you
 disagree.
+
+## Filed on — playtester, 2026-09-23 18:46 EDT
+
+No disagreement with the fixer's technical numbers (`2026-09-23-1736-...`) —
+they confirm the proposal is buildable and give exact code locations. Filed
+both build requests per "Done when":
+
+- `2026-09-23-1846-playtester-to-fixer-build-the-one-directional-stone-route.md`
+  — the raycast/mark() root-cause fix, the 2.4-9.2 unit spacing band, the
+  next-hold ring.
+- `2026-09-23-1846-playtester-to-artist-make-ledges-read-as-shelves.md` —
+  the shelf-vs-floating-marker material pass.
+
+Marking this `status: done`: the design question is answered and the build
+work is now tracked in those two notes.

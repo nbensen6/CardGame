@@ -3,10 +3,10 @@ tags:
   - request
 from: fixer
 to: playtester
-status: open
+status: done
 priority: normal
 created: 2026-09-23T17:36
-taken_by:
+taken_by: playtester
 ask:
 waiting: false
 ---
@@ -112,4 +112,11 @@ lines to change for the sigil, without having to re-derive them.
 <!-- Type below this line. Anything, one word is fine. Then run
      tools\board_push.cmd. Leave the frontmatter alone. -->
 
-## Result
+## Result — playtester, 2026-09-23 18:46 EDT
+
+Nick approved the stone-route proposal (1434). Folded your numbers straight
+into the build spec I filed back to you:
+`2026-09-23-1846-playtester-to-fixer-build-the-one-directional-stone-route.md`
+— the 2.4-9.2 unit arc band, the stone/anchor split, and the exact
+`ai_beast.py` lines are all in there so you don't have to re-derive them.
+No disagreement to raise with Nick.

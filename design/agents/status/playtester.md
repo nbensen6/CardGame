@@ -2,13 +2,66 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-23T17:35
-working_on: Found the boss had never taken damage in any playtest run — every timed hit was fumbling because the bot's aim window was too tight for this sandbox's slow renderer. Fixed it (same trick as the jump-sampling fix), which let a fight actually reach a win for the first time and exposed a crash and a real game bug (boss-damage number off-screen at the sigil) — crash fixed, bug filed to the fixer.
+updated: 2026-09-23T18:46
+working_on: Closed out Nick's approved stone-route proposal — filed the two build requests it promised (fixer: one-directional route + spacing + next-hold ring; artist: ledges read as shelves) and marked both source notes done.
 ---
 
 # playtester
 
-## This run - 2026-09-23 17:35 EDT
+## This run - 2026-09-23 18:46 EDT
+
+- Did: claimed the lease, found Nick had answered the stone-route design
+  question (`2026-09-23-1434-...`, "Approved, as written. Build it.") with
+  text under its `## Nick's answer` heading — per COMMON.md 1b that's the
+  top of the queue, ahead of anything else open. Read the fixer's numbers
+  note (`2026-09-23-1736-...`) alongside it and filed the two build
+  requests the original proposal promised.
+- Worked?: Yes. Filed
+  `2026-09-23-1846-playtester-to-fixer-build-the-one-directional-stone-route.md`
+  (the raycast/`mark()` root-cause fix per Nick's "fix the cause, not just
+  the sigil," the 2.4-9.2 unit arc-band spacing, the next-hold ring) and
+  `2026-09-23-1846-playtester-to-artist-make-ledges-read-as-shelves.md`
+  (the shelf-vs-floating-marker material pass Nick called out as the
+  artist's). Closed both source notes: `1434` → `status: done` (design
+  question answered, filed onward), `1736` → `status: done` (its numbers
+  are now folded into the fixer request, no disagreement to raise).
+- Next: watch for the fixer's build landing, then re-run the full playtest
+  baseline and confirm the sigil no longer reverses and every hop measures
+  inside the 2.4-9.2 band. Item 1 (card plays reading clearly) still hasn't
+  had a fresh human-eye pass since real boss damage started landing last
+  run.
+- Need from you: nothing this run.
+
+## Now
+
+No game code changed this run — pure board bookkeeping, so skipped the
+usual full three-mode baseline (nothing to regress; will run it fresh once
+the fixer's build lands to verify the route for real). Read all three
+touched notes end to end before writing anything, so the two new requests
+carry real numbers (the fixer's own `hop_arc()` clamp math, `ai_beast.py`
+line numbers, the anchor/stone split) rather than re-summarizing loosely.
+
+Checklist snapshot: unchanged from last run — this run was request/board
+bookkeeping only, no gameplay code touched, no fresh playtest run to
+compare against.
+
+Two requests filed this run: `to: fixer`, high priority,
+`2026-09-23-1846-playtester-to-fixer-build-the-one-directional-stone-route.md`;
+`to: artist`, normal priority,
+`2026-09-23-1846-playtester-to-artist-make-ledges-read-as-shelves.md`.
+
+## Next
+
+Once the fixer pushes the route fix, run the full three-mode baseline and
+look specifically at: the sigil hold no longer reversing direction (a
+frame-by-frame check of the route's rotational sweep), every ordinary hop
+landing inside 2.4-9.2 world units, and the next-hold ring appearing before
+its card is played. Also check in on the artist's shelf-material pass once
+it lands — verify it reads from the wide establishing shot, not just up
+close. Item 1 (card plays reading clearly) is still overdue for a fresh
+human-eye pass now that real boss damage lands (flagged two runs running).
+
+## Old: 2026-09-23, boss-damage timing fix — first real win, crash fixed, popup bug filed
 
 - Did: ran the usual full three-mode baseline first, the same as every
   run — and found the jackal's own HP had never moved once in ANY
@@ -33,8 +86,6 @@ working_on: Found the boss had never taken damage in any playtest run — every 
   for real damage now that hits land — worth a proper look next run.
 - Need from you: nothing this run. The stones proposal
   (`2026-09-23-1434-...`) is still waiting on your yes/no, unchanged.
-
-## Now
 
 Full three-mode baseline first, same as every run: fresh sandbox, Godot
 4.7.1 + `--import`, `run_tests.gd`: `ALL TESTS PASSED`. `mode=play` (80
@@ -120,8 +171,6 @@ Checklist snapshot:
 Four commits this run, all pushed: the timing-sampling fix, the first
 (incomplete) crash-guard pass, the second (actually complete) crash-guard
 pass, and this write-up/request.
-
-## Next
 
 Watch for the fixer's response on the boss-damage-popup-offscreen
 request. Once landed, re-run and confirm 0 `damage-popup-offscreen`
@@ -1147,6 +1196,14 @@ remain the backstop for that; keep saving them.
 
 ## Log
 
+- 2026-09-23 18:46 EDT — Nick approved the stone-route proposal
+  (`1434`, "Approved, as written. Build it."). Read it alongside the
+  fixer's numbers note (`1736`) and filed the two build requests it
+  promised: `to: fixer` (one-directional route fix in `ai_beast.py`/
+  `beast.py mark()`, 2.4-9.2 unit hop-spacing band, next-hold ring) and
+  `to: artist` (ledges read as shelves, not floating markers, from the
+  wide shot). Closed `1434` and `1736` as `done`. No game code touched
+  this run — pure board bookkeeping.
 - 2026-09-23 17:35 EDT — found the Cinder Jackal's HP had never moved in
   any playtest run: every timed card was fumbling because the bot's aim
   window (40ms) was narrower than this sandbox's frame gap. Fixed with
