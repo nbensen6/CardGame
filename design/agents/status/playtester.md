@@ -104,6 +104,15 @@ actual numbers before trusting a check's verdict either way:
   71, sizes 26-110 samples) — 0 `hop-position-pop` fails on any of them,
   worst frame-to-frame steps 0.46m-1.99m, none an isolated spike against
   its own local window.
+**Also re-verified after the rebase below landed the real foothold-4 fix**
+(which changes the exact geometry at steps 34/71, two of the four climbs
+this check was tuned against): a fresh full three-mode baseline against
+the rebased tip — `play` (80 steps) **0 failing checks at all**, `hover` 0
+flips, `hands` 0 fails. `hop-position-pop` stayed silent on all four climbs
+with the new, correct foothold-4 geometry (worst steps 0.49m-1.93m, same
+shape as before), and checklist item 2 is now genuinely closed on code this
+run itself tested, not just reported secondhand.
+
 - *Negative*: re-ran the same synthetic injection (`+Vector3(3,0,0)` at one
   sample, `_watch_hop`, temporary) against the shipped version — correctly
   flagged both hops it touched ("30000.0x the local median", "15.6x the
@@ -116,7 +125,7 @@ Checklist snapshot:
 | # | item | state |
 |---|---|---|
 | 1 | card plays read | unchanged this run (no fresh human-eye look; still worth returning to) |
-| 2 | hunters land on the beast correctly | **closed, per a concurrent run** — this run's own container predates the fix so its 3 `hunter-off-marker` fails are stale pre-fix data (see `## Old` below); a concurrent playtester run already verified the fixer's fix clean on the current tip |
+| 2 | hunters land on the beast correctly | **closed, verified twice** — a concurrent playtester run verified the fixer's fix clean first; this run independently re-verified it again after rebasing onto the same tip (0 `hunter-off-marker` fails, steps 34/71 both correct) |
 | 3 | jump animation (squash/arc/landing) | **new automatic check added**, `hop-position-pop` — proved both directions (3 dev iterations, 2 false-positive versions caught and fixed before shipping); found no real pop in the wild, but the coverage is new and permanent, and closes the "no pops... mid-jump" half of JACKAL-BAR's Motion item |
 | 4 | camera | unchanged this run — `hunter-lost-mid-hop`/check 9 still 0 fails in the wild |
 | 5 | nothing errors | ok — `ALL TESTS PASSED`, no `script-error` this run |
