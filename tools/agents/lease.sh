@@ -1,7 +1,7 @@
 #!/bin/sh
 # One run of an agent at a time.
 #
-# 2026-09-23 16:19 UTC: the hourly artist fire and a manual one overlapped.
+# 2026-09-23 12:19 EDT: the hourly artist fire and a manual one overlapped.
 # Both rewrote design/agents/status/artist.md, and the second spent its whole
 # run untangling a merge instead of making anything. The runs cannot see each
 # other — separate sandboxes, separate machines — so the only thing they share
@@ -38,7 +38,7 @@ sync_to_remote() {
 
 push_lease() {
 	git add "$1"
-	git commit -q -m "$agent: $2 the run lease, $(date -u +%Y-%m-%dT%H:%M) UTC" || true
+	git commit -q -m "$agent: $2 the run lease, $(TZ=America/New_York date +%Y-%m-%dT%H:%M) ET" || true
 	git push -q origin HEAD:main
 }
 
@@ -53,7 +53,7 @@ claim)
 		echo "BUSY $agent — $(cat "$f")"
 		exit 3
 	fi
-	printf '%s %s %s\n' "$(date -u +%s)" "$(date -u +%Y-%m-%dT%H:%M)" "${LEASE_TAG:-run}" > "$f"
+	printf '%s %s %s\n' "$(date -u +%s)" "$(TZ=America/New_York date +%Y-%m-%dT%H:%M)" "${LEASE_TAG:-run}" > "$f"
 	if push_lease "$f" claim 2>/dev/null; then
 		exit 0
 	fi
@@ -65,7 +65,7 @@ claim)
 		echo "BUSY $agent — $(cat "$f") (lost the push race)"
 		exit 3
 	fi
-	printf '%s %s %s\n' "$(date -u +%s)" "$(date -u +%Y-%m-%dT%H:%M)" "${LEASE_TAG:-run}" > "$f"
+	printf '%s %s %s\n' "$(date -u +%s)" "$(TZ=America/New_York date +%Y-%m-%dT%H:%M)" "${LEASE_TAG:-run}" > "$f"
 	push_lease "$f" claim
 	;;
 release)

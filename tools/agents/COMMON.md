@@ -117,7 +117,7 @@ rather than backgrounding it; a 40-step playtest takes 3-5 minutes.
 - **Your status note opens with `## This run`, and it is written for Nick.**
   Three to six bullets, one line each, plain language, before any prose:
 
-        ## This run — 2026-09-23 17:05 UTC
+        ## This run — 2026-09-23 13:05 ET
 
         - **Did:** textured the Meshy frog and scored it — 38/50, the body
           reads, the hands do not.
@@ -137,19 +137,35 @@ rather than backgrounding it; a 40-step playtest takes 3-5 minutes.
 - **`working_on:` is ONE short sentence** — it is a card in Obsidian, not a
   transcript. A paragraph there is unreadable and the detail belongs in
   `## This run` and `## Now` anyway.
-- **Timestamp everything, to the minute, in UTC** (Nick, 2026-09-23). A bare
-  date is useless here: three agents write these notes several times an hour,
-  and Nick reads them in Obsidian to find out what is CURRENT. On a day with
-  eight artist runs, "2026-09-23" cannot tell him whether a note is from before
-  or after the thing he just played. Get the time from the machine, never guess
-  it: `date -u +%Y-%m-%dT%H:%M`.
-  - status frontmatter: `updated: 2026-09-23T16:33` (ISO, so Obsidian reads it
+- **Timestamp everything, to the minute, in NICK'S time zone** — US Eastern,
+  not UTC (Nick, 2026-09-23). A bare date is useless here: three agents write
+  these notes several times an hour, and Nick reads them in Obsidian to find
+  out what is CURRENT. On a day with eight artist runs, "2026-09-23" cannot
+  tell him whether a note is from before or after the thing he just played —
+  and a UTC time makes him do arithmetic to find out. **You run in UTC**, so
+  get the time from the machine, converted, and never guess it:
+
+        TZ=America/New_York date +"%Y-%m-%dT%H:%M"      # 2026-09-23T13:05
+        TZ=America/New_York date +"%Y-%m-%d %H:%M %Z"   # 2026-09-23 13:05 EDT
+
+  Use `America/New_York`, not a fixed -05:00, so it stays right across the
+  daylight-saving change on its own. `%Z` prints EDT or EST correctly for the
+  date; write whichever it gives you rather than picking one.
+
+  **Check `%Z` once per run before you trust it.** A sandbox without the tz
+  database does not fail — it silently ignores `TZ` and hands back UTC, and
+  every timestamp you write is then four hours wrong with nothing to show for
+  it. If `%Z` says UTC or GMT rather than EDT/EST, run
+  `apt-get install -y tzdata` and ask again.
+  - status frontmatter: `updated: 2026-09-23T13:05` (ISO, so Obsidian reads it
     as a real date and can sort on it).
-  - every `## Log` line starts `- 2026-09-23 16:33 UTC — ...`.
+  - every `## Log` line starts `- 2026-09-23 13:05 EDT — ...`.
   - every section you add to a `design/progress/*.md` note says the same in its
-    heading, e.g. `## Pass 11 — artist, 2026-09-23 16:33 UTC`.
+    heading, e.g. `## Pass 11 — artist, 2026-09-23 13:05 EDT`.
   - requests: `created:` carries the time the same ISO way, and a `## Result`
     says when it was filled in.
+  - a git commit message is the one exception: leave it to git, which already
+    stamps every commit with the author's own clock.
 - `git pull --rebase origin main`, then push. On a conflict in
   `design/agents/`, keep both sides. Check it landed: `git log origin/main -1`.
 - Last thing, always: `tools/agents/lease.sh release <you>`.
