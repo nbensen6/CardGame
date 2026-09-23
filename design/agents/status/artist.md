@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-23T18:26
-working_on: took Nick's answer on the arena-wall-accent request ("the environment needs a rehaul. use meshy to create an environment to replace the one created in blender") -- rebuilt the Cinder Jackal arena's enclosing wall with a Meshy-generated crater rim (2 tasks: 1 preview, 1 refine), keeping env.py's floor/apron untouched since that was never the flagged problem. Shipped as game/assets/3d/env/cinder_jackal_ai.glb, picked up over the old procedural wall by a new ENV_AI_ART := {"cinder_jackal": "_ai"} table in combat_3d.gd (same shape as AI_ART/HUNTER_AI_ART). Verified in the real fight, every camera state, before/after: the sigil close-up now shows real ember cracks in frame for the first time -- the exact thing the request was filed about. Scored 37/50 (design/progress/cinder_jackal_ground.md pass 6), up from 28. ALL TESTS PASSED. 80-step playtest run in the foreground; see ## Now for the result. Committed and pushed.
+updated: 2026-09-23T18:34
+working_on: took Nick's answer on the arena-wall-accent request ("the environment needs a rehaul. use meshy to create an environment to replace the one created in blender") -- rebuilt the Cinder Jackal arena's enclosing wall with a Meshy-generated crater rim (2 tasks: 1 preview, 1 refine), keeping env.py's floor/apron untouched since that was never the flagged problem. Shipped as game/assets/3d/env/cinder_jackal_ai.glb, picked up over the old procedural wall by a new ENV_AI_ART := {"cinder_jackal": "_ai"} table in combat_3d.gd (same shape as AI_ART/HUNTER_AI_ART). Verified in the real fight, every camera state, before/after: the sigil close-up now shows real ember cracks in frame for the first time -- the exact thing the request was filed about. Scored 37/50 (design/progress/cinder_jackal_ground.md pass 6), up from 28. ALL TESTS PASSED. Full 80-step playtest: PLAYTEST OK, 0 failing checks -- no regression. Ticked both JACKAL-BAR.md arena lines. Request marked done. Committed and pushed.
 ---
 
 # artist
@@ -86,7 +86,14 @@ it is scaled, a path already exercised by every beast this ground has ever
 hosted — so a regression here would be a surprise, but the result is
 appended below the moment it lands rather than assumed.
 
-**Playtest result: PENDING AT COMMIT TIME — updated below once it lands.**
+**Playtest result: clean.** `PLAYTEST OK: 0 failing check(s) {  }` — all 80
+steps (Meld, Catapult+Burn Coal, Leapfrog, Brace, Take Aim, Scramble, Build
+Grapple, Grappling Hook, several climbs and hops), exit code 0, nothing new.
+Confirms the prediction above: this pass only changes which environment
+mesh loads and how it is scaled — a path every beast already exercises —
+and touches no hunter/beast/foothold position logic. Hop-position-
+continuity checks (the playtester's newest addition) ran clean through it
+too.
 
 ## Next
 
@@ -98,7 +105,7 @@ pass replaced here — Crag Pup and Stone Warden's own progress notes already
 flagged the identical ceiling.
 ## Log
 
-- 2026-09-23 18:26 UTC — took the answered arena-wall-accent request: rebuilt the Cinder Jackal arena's enclosing wall with a Meshy-generated crater rim (2 Meshy tasks), left the floor untouched, shipped as cinder_jackal_ai.glb via a new ENV_AI_ART table in combat_3d.gd. Scored 37/50 (design/progress/cinder_jackal_ground.md pass 6), up from 28. ALL TESTS PASSED, 80-step playtest run in the foreground. Request marked done.
+- 2026-09-23 18:34 UTC — took the answered arena-wall-accent request: rebuilt the Cinder Jackal arena's enclosing wall with a Meshy-generated crater rim (2 Meshy tasks), left the floor untouched, shipped as cinder_jackal_ai.glb via a new ENV_AI_ART table in combat_3d.gd. Scored 37/50 (design/progress/cinder_jackal_ground.md pass 6), up from 28. ALL TESTS PASSED, 80-step playtest clean (PLAYTEST OK, 0 failing checks). Ticked both JACKAL-BAR.md arena lines. Request marked done.
 
 - 2026-09-23 — Meshy network wall confirmed down (the to:nick request landed,
   re-verified independently: fetched all 3 logged Frog previews, no proxy
