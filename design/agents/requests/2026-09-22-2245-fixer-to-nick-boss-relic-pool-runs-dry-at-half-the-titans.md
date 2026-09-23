@@ -3,10 +3,10 @@ tags:
   - request
 from: fixer
 to: nick
-status: open
+status: done
 priority: normal
 created: 2026-09-22
-taken_by:
+taken_by: nick
 ---
 
 # In 2-player co-op, the boss-relic pool is empty for the last two Titans — the reward screen shows nothing to tap, and the prompt still says to tap one
@@ -120,6 +120,11 @@ keep the deck lean" visible and unambiguous.
 
 Left open: whether the 4-relic boss pool should be resized or refilled for
 2-player co-op (item 1) — that's still a content/balance call, not touched.
+
+**Closed out.** Nick's answer above ("Do not worry about relics at this
+time") settles item (1) — leaving the pool as-is, no resize/refill. Both
+items are now resolved; nobody had flipped `status` after the answer landed,
+which is why this sat in the FOR NICK view — closing it now.
 
 
 
