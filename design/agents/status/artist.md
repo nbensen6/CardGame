@@ -3,18 +3,113 @@ tags:
   - agent-status
 agent: artist
 updated: 2026-09-23
-working_on: no open to:artist request (network-policy, hunter-display-support and arena-wall-accent requests to nick/fixer still open, re-confirmed blocked this run — assets.meshy.ai still 403s at the proxy). Picked up goblin_mech pass 9's own leftover: the piston rods, "functionally invisible at every angle even highlighted." Diagnostic-recoloured them ICE and found the real cause — not colour, not thinness alone: the rods' own offset sat inside the claw taper's own radius, so they ran buried in the taper's volume, not beside it. Pushed the offset out past the taper's radius, widened the radius 0.016→0.030 (seg unchanged, zero tri cost), recoloured CHARCOAL→STONE (pass 5's dark-tie precedent). Also checked pass 9's other open candidate (any other rig part mounted to a rotated box the same raw-axis-aligned way the claw was) by reading the script directly — found none, reported as a real negative, not skipped. Verified: tri budget unchanged (1378/1400), sil diff 144/65536px, rods now read as bracing struts in the scoring camera; honestly does not survive to true in-fight size. Hygiene 8→9, 41→42/50 — clears the 42 hunter stop line. ALL TESTS PASSED, playtest re-run (hunter-off-marker foothold-4, exact coordinate match to the already-open fixer request, not reopened), pushed
+working_on: no open to:artist request. The jackal's own "known open issues" line named the footholds "plain basalt" — checked in the real fight camera and found a flat, pale, cool grey (0.42, 0.38, 0.40) that read as a pebble from a different biome next to this fight's all-warm palette, nowhere near actual basalt. Recoloured `combat_3d.gd`'s `_build_float_stones()` to BROWN, the exact swatch `cinder_jackal_ground.md`'s own scattered boulders already use (sampled off colormap_base.png, not invented), with small per-stone jitter; added irregular horizontal (X/Z only, Y untouched on purpose) scale so stones read as separate boulders instead of identical smooth domes. Checked the code's own "must stay lighter than the beast's dark flank" comment before touching colour — BROWN's contrast against the jackal's CHARCOAL legs is larger than the old grey's, so the fix keeps that requirement, not just the palette match. ALL TESTS PASSED, playtest (mode=play, 40 steps) PLAYTEST OK 0 failing checks, pushed. Meshy's network wall is confirmed gone (Nick fixed it, verified via a real fetch) but the hunter-display-path request (to fixer) and arena-wall-accent request (to nick) are both still open, unpicked.
 ---
 
 # artist
 
 ## Now
 
-**goblin_mech pass 10 — clears the 42 hunter stop line (42/50).** No open
-`to: artist` request this run (checked every request file's frontmatter,
-plus `design/agents/BOARD.md` and every `status/*.md`) — the three
-standing requests (`...meshy-fetch-blocked-by-network-policy.md` to nick,
-`...hunter-display-path-has-no-toon-or-rig-support.md` to fixer,
+**The jackal's footholds — "plain basalt" (item 1's own known-open-issue
+line), fixed and verified.** No open `to: artist` request this run
+(checked every request file's frontmatter, `design/agents/BOARD.md`, every
+`status/*.md`). Of the three standing requests: `...meshy-fetch-blocked-by-network-policy.md`
+is now `status: done` — Nick allowed `assets.meshy.ai` and a cloud probe
+verified a real fetch (`MESHY_FETCH_OK 754932`, logged in that request's own
+`## Result`) — Meshy is genuinely usable end to end now. The other two are
+still open and still unpicked: `...hunter-display-path-has-no-toon-or-rig-support.md`
+(to fixer — fixer took the older shared-foothold-spacing request instead
+this run, oldest-first) and `...arena-wall-accent-never-shows.md` (to nick,
+a taste call).
+
+**Why footholds, not another Meshy attempt or another arena pass.** Both
+hunters are past their stop line (frog 43/50, goblin_mech 42/50) — no
+fresh defect to chase there. `cinder_jackal_ground.md` is at pass 4/28; its
+two open lines (Sil/Prop — the shared `enclose()` wall filling the frame)
+are the same systemic finding two other grounds already flagged and left
+to Nick, already filed, not a fifth pass' fix. A Meshy hunter rebuild is
+unblocked on the network now, but dropping a rigged model in today would
+still render in bind pose, wrong shader, worse than the current
+primitives — the open fixer request's own reasoning, re-confirmed, not
+re-attempted blind. That left the one named, unblocked, unaddressed line
+in my own brief: item 1 calls the footholds "plain basalt," never checked
+against what's actually on screen.
+
+**Rendered the real fight first, not the code in isolation**
+(`state=3dgrip`, `state=3d wide`, `cinder_jackal`): the floating stones
+`_build_float_stones()` hangs at every climb point are a flat, pale,
+cool grey (`Color(0.42, 0.38, 0.40)`) — nowhere close to actual basalt
+(near-black volcanic rock), and a cool grey sitting inside an otherwise
+all-warm scene (ground, wall and beast are all RUST/UMBER/TANGERINE).
+Cropped and looked close: the stones read as pebbles from a different
+biome, not this fight's own rock.
+
+**Fix, `game/views/combat_3d.gd` `_build_float_stones()`, colour and scale
+only — the same two-line diagnosis the arena wall pass already used,
+applied to the last un-recoloured rock in this fight:**
+1. **Colour.** Swapped the flat grey for BROWN — the exact swatch
+   `cinder_jackal_ground.md` pass 3 already put on this ground's own
+   scattered boulders, sampled off `colormap_base.png` (176, 96, 65), not
+   invented — plus small per-stone jitter (±0.05) so neighbouring stones
+   don't read as identical clones. Checked the comment already sitting on
+   this code ("lighter than the beast it hangs against, or a dark stone on
+   a dark flank is invisible") before touching it: BROWN's luminance gap
+   against the jackal's own near-black CHARCOAL legs (56, 56, 61) is
+   *larger* than the old grey's gap — the functional requirement gets
+   stronger, not weaker, while the colour now actually matches the ground
+   these are chunks of.
+2. **Shape.** Added irregular horizontal scale (`randf_range(0.85, 1.18)`
+   on X/Z only; Y held at 1.0 on purpose — the vertical sink offset
+   computed two lines above it uses `rock.height` before any scale is
+   applied, so touching Y would throw that off) so stones read as separate
+   boulders instead of identical smooth domes.
+
+**Verified, not assumed.** `ALL TESTS PASSED` (the existing `stone_point`
+position tests are untouched and still pass — confirms this pass only
+touched colour/scale, not the position math they check). Rendered
+`state=3dgrip` and `state=3d wide` before/after, same camera: a tight crop
+shows the stones move from a pale, cool, plate-like blob to a warm
+rust-brown boulder that now visually belongs to the ground beneath it; a
+pixel diff at a real-change threshold (>100/765 sum, well above AA/lighting
+noise) is 66,973 of 921,600px (7.3%), concentrated on the stones and their
+cast shadows. `screenshot.gd`'s own `HANDGEO`/`CAM`/`HUNTER`/`VIS`/`GRIP`
+lines are unchanged from the pre-fix run — nothing about hunter position,
+camera or grip state moved, only the stones' own pixels. Live playtest
+(`mode=play`, `cinder_jackal`, 40 steps): `PLAYTEST OK: 0 failing check(s)
+{  }` — clean, no regression.
+
+![[frames/artist/2026-09-23-foothold-basalt-colour-crop-before-after.png]]
+![[frames/artist/2026-09-23-foothold-basalt-3dgrip-after.png]]
+![[frames/artist/2026-09-23-foothold-basalt-wide-after.png]]
+
+`ALL TESTS PASSED`. Pushed.
+
+## Next
+
+Item 1's own "known open issues" line (ear glare, footholds) is now fully
+closed — both fixed, both verified in the real fight camera. The two
+loudest items are still the two Nick's 2026-09-23 brief update named:
+hunters matching the jackal's fidelity (blocked on the fixer's still-open
+`...hunter-display-path-has-no-toon-or-rig-support.md`, not yet taken —
+check again first) and the arena framing the fight (blocked on Nick's
+still-open `...arena-wall-accent-never-shows.md` taste call;
+`cinder_jackal_ground.md` itself is at pass 4/28, no further pass-worth
+defect found this thread, its two open lines are the same shared-`enclose()`-
+wall finding filed three times now across three grounds). Absent either
+landing: no further two-line passes on `frog`/`goblin_mech` past their stop
+line without a fresh, real defect. Meshy is confirmed working end-to-end
+now (`assets.meshy.ai` unblocked, verified by a real fetch), but spending
+more of the daily cap on a hunter rebuild before the display-path lands
+would produce an asset that renders worse than the current primitives, per
+the fixer request's own reasoning — not worth re-litigating without new
+information.
+
+## Old: goblin_mech, pass 10
+
+No open `to: artist` request this run (checked every request file's
+frontmatter, plus `design/agents/BOARD.md` and every `status/*.md`) — the
+three standing requests (`...meshy-fetch-blocked-by-network-policy.md` to
+nick, `...hunter-display-path-has-no-toon-or-rig-support.md` to fixer,
 `...arena-wall-accent-never-shows.md` to nick) are all still open, none
 picked up by anyone else yet. Re-confirmed the Meshy wall before spending
 time on it again: `python3 tools/meshy.py balance` returns a real balance

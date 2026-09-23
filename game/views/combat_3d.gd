@@ -3356,15 +3356,28 @@ func _build_float_stones() -> void:
 		rock.rings = 3
 		stone.mesh = rock
 		var mat := StandardMaterial3D.new()
-		# Lighter than the beast it hangs against, or a dark stone on a dark
-		# flank is invisible — the one thing a jump target must never be.
-		mat.albedo_color = Color(0.42, 0.38, 0.40)
+		# BROWN, the same swatch `cinder_jackal.py`'s own scattered ground
+		# boulders already recoloured to (2026-09-23) — was a flat cool grey
+		# (0.42, 0.38, 0.40, "basalt" in name only) that read as a pebble from
+		# a different biome next to this fight's warm UMBER/RUST ground and
+		# beast. BROWN keeps the "lighter than the beast it hangs against"
+		# requirement below (still a bigger gap against the jackal's near-black
+		# CHARCOAL legs than the old grey had) while actually matching the
+		# rock this fight is made of. Small per-stone jitter so a run of
+		# stones at neighbouring heights doesn't read as the same clone.
+		var tint := randf_range(-0.05, 0.05)
+		mat.albedo_color = Color(0.690 + tint, 0.376 + tint, 0.255 + tint)
 		mat.roughness = 1.0
 		stone.material_override = mat
 		# Sunk by half its own thickness, so its TOP sits exactly on the climb
 		# anchor — which is where _stand_on_model puts the hunter's feet.
 		stone.position = _stand_on_model(height, 0.0) - Vector3(0.0, rock.height * 0.5, 0.0)
 		stone.rotation = Vector3(randf_range(-0.12, 0.12), randf_range(0.0, TAU), randf_range(-0.12, 0.12))
+		# Irregular horizontal scale — X/Z only, Y left at 1.0 — so stones read
+		# as separate boulders instead of identical smooth domes. Y is untouched
+		# on purpose: the sink offset above is computed from rock.height before
+		# any scale is applied, and scaling Y would throw that off.
+		stone.scale = Vector3(randf_range(0.85, 1.18), 1.0, randf_range(0.85, 1.18))
 		_rig.add_child(stone)
 		_float_stones.append(stone)
 		_float_home.append(stone.position)
