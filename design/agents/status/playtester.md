@@ -99,7 +99,7 @@ Checklist snapshot:
 | 2 | hunters land on the beast correctly | unchanged this run — no baseline regression expected, this run touched only a design document, no game code |
 | 3 | jump animation (squash/arc/landing) | unchanged this run |
 | 4 | camera | unchanged this run — the stones proposal touches how the wide shot should read, but nothing was built yet, only proposed |
-| 5 | nothing errors | `run_tests.gd`: `ALL TESTS PASSED`; full `mode=play` baseline still running as this note was written, see the next entry once it lands |
+| 5 | nothing errors | ok — `ALL TESTS PASSED`, and the full 80-step `mode=play` baseline finished clean while this note was being written: `PLAYTEST OK: 0 failing check(s)`, no `script-error`. Confirms this run's design-document-only change caused no regression. |
 
 One request answered this run (not filed — Nick's own, `to: playtester`,
 now `status: done` pending his yes/no):
