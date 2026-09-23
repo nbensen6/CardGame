@@ -98,7 +98,7 @@ again tells a player to tap something that isn't there.
 ## Nick's answer
 
 <!-- Type below this line. Anything, one word is fine. Then run
-     toolsoard_push.cmd. Leave the frontmatter alone. -->
+     tools\board_push.cmd. Leave the frontmatter alone. -->
 Do not worry about relics at this time. 
 
 
