@@ -636,12 +636,31 @@ func _play() -> void:
 
 
 ## Plays whatever timing face opened, on the beat.
+##
+## Found 2026-09-23: a full 80-step baseline played 15+ timed cards over 11
+## turns and the Cinder Jackal's own HP never moved once (still 42/42 at the
+## sigil, both hunters worn down to the edge of death around it -- see the
+## playtester's status note, 2026-09-23, for the frames). Root cause traced
+## here, same shape as HOP_TIME_SCALE below: the old loop only clicked when
+## `absf(off) < 0.02` -- a 40ms-wide
+## window -- polled once per `await process_frame`, on a software renderer
+## that (per HOP_TIME_SCALE's own comment) draws a real frame every
+## ~0.1-0.3s. The offset can cross that whole window BETWEEN two frames this
+## bot ever gets to see, so at 1x speed the click condition can go the
+## entire approach without ever being true once -- a guaranteed `_finish`
+## timeout miss on every timed card, not a real gameplay problem. Slowing
+## the engine the same way `_watch_hop` already does spreads the same real
+## hit window over ~6x the real-world frames, so the bot actually gets a
+## chance to sample inside it, without changing one number `hit_circle.gd`
+## itself uses (GOOD_WINDOW/PERFECT_WINDOW are graded in game-seconds,
+## already unaffected by Engine.time_scale, same reasoning as the hop fix).
 func _drive_timing(v: Node) -> void:
 	if not is_instance_valid(v):
 		return
 	var circle: Control = v.get("_circle")
 	var guard := 0
-	while is_instance_valid(v) and is_instance_valid(circle) and circle.visible and bool(circle.call("is_live")) and guard < 600:
+	Engine.time_scale = HOP_TIME_SCALE
+	while is_instance_valid(v) and is_instance_valid(circle) and circle.visible and bool(circle.call("is_live")) and guard < 3600:
 		guard += 1
 		var off: float = circle.call("_offset")
 		var hit := int(circle.get("_hits_done"))
@@ -649,15 +668,18 @@ func _drive_timing(v: Node) -> void:
 			await _click(circle.call("_screen", hit))
 		await process_frame
 		_poll_popup(v)
+	Engine.time_scale = 1.0
 	if not is_instance_valid(v):
 		return   # the fight ended on that hit and its screen is gone
 	var tc: Variant = v.get("_timing_card")
 	guard = 0
-	while tc != null and is_instance_valid(tc) and bool(tc.call("is_timing")) and guard < 600:
+	Engine.time_scale = HOP_TIME_SCALE
+	while tc != null and is_instance_valid(tc) and bool(tc.call("is_timing")) and guard < 3600:
 		guard += 1
 		await _click((tc as Control).get_global_rect().get_center())
 		await _frames(3)
 		_poll_popup(v)
+	Engine.time_scale = 1.0
 
 
 ## Slow the WHOLE ENGINE to this fraction of real speed while a hop is being
