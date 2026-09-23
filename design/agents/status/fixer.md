@@ -81,10 +81,19 @@ before committing; `HUNTER_AI_ART := {}` ships empty.
 **Live regression check**, since the new code sits in `_react` (the per-tick
 state-diff hot path, run for every hunter every fight): full fresh
 `mode=play beast=cinder_jackal steps=80`, pushed the code first per the
-"never end a run on a background task" rule, ran this after — see `## Log`
-for the result and whether anything needed a follow-up fix.
+"never end a run on a background task" rule, ran this after (in the
+background once it ran past the foreground timeout — the code was already
+pushed by then, so nothing was at risk). Result: `PLAYTEST OK: 0 failing
+check(s)` through the whole 80 steps — exercised Meld/Catapult+Burn Coal,
+Leapfrog, Brace, Take Aim, Scramble, several real climbs and a real fall
+(foot 10→4, hp 20→14 at step 71) — no regression from the new `_hunter_play`
+calls in the per-hunter damage loop or the per-tick `boss_hit` branch. The
+`ObjectDB`/resource-leak warning at exit is the same pre-existing
+`Music`-at-`quit()` harness noise several earlier entries in this log already
+identified and ruled out; not new here.
 
-Commit: pushed as part of this run (see `## Log` below for the hash).
+Commits: pushed in two parts — the fix/tests/request/frame first, this
+regression result second (see `## Log` for both hashes).
 
 ## Old: 2026-09-23, shared-foothold-side-spacing-clears-the-model
 
@@ -828,8 +837,10 @@ further either.
   fixed passes, `ALL TESTS PASSED`. Live-verified exactly as the request
   asked — temporarily tagged the existing `frog.glb` into `HUNTER_AI_ART`
   (no new asset), confirmed it toon-shades in a `state=3d` screenshot,
-  reverted the tag before committing. See `## Now` and the request's own
-  `## Result`.
+  reverted the tag before committing. Live regression check after pushing —
+  full `mode=play beast=cinder_jackal steps=80` — `PLAYTEST OK: 0 failing
+  check(s)`, no regression from the new per-tick `_hunter_play` calls. See
+  `## Now` and the request's own `## Result`.
 - 2026-09-23 — fixed the shared-foothold-4 side-gap (self-filed
   request, oldest open `to: fixer`). Root cause was neither of the request's
   own two sub-questions: `stone_point()` pushed a standing point radially

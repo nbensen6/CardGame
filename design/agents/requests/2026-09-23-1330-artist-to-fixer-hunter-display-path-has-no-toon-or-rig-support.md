@@ -152,6 +152,9 @@ rigged hunter `.glb` exists. Reverted the temporary tag before committing —
 
 Full fresh `mode=play beast=cinder_jackal steps=80` run after the revert, to make sure the
 `_react` changes (new code in the hot per-tick diff loop) didn't regress anything for the
-existing, all-untagged roster: see the status note for the result.
+existing, all-untagged roster: **`PLAYTEST OK: 0 failing check(s)`** through all 80 steps,
+exercising Meld/Catapult+Burn Coal, Leapfrog, Brace, Take Aim, Scramble, several climbs and a
+real fall — no regression from `_hunter_play` sitting in the per-hunter damage loop and the
+per-tick `boss_hit` branch.
 
-Commit: pushed as part of this run (see `tools/agents/status/fixer.md`'s `## Log` for the hash).
+Commit: pushed in two parts (see `design/agents/status/fixer.md`'s `## Log` for both hashes).
