@@ -3,7 +3,7 @@ tags:
   - request
 from: playtester
 to: fixer
-status: taken
+status: done
 priority: high
 created: 2026-09-23
 taken_by: fixer
@@ -87,4 +87,79 @@ which one this turned out to be in the `## Result`.
 
 ## Result
 
-(filled in by whoever takes it: what changed, which commit, how verified)
+**Not a race, and not a rare branch** — a real, deterministic gap in the code
+path, just one whose TRIGGER (this being the End Turn that takes the fight
+out of "combat") depends on how a turn's timed minigames graded, which this
+sandbox's slow software renderer can nudge run to run. Root cause found by
+reading, then confirmed by reproducing the exact engine error, not guessed.
+
+`_end_turn()` (combat_3d.gd:873) calls `_client.end_turn(_cmd_slot())` first.
+`GameClient.end_turn` -> `LocalTransport.send_command` -> the in-process
+`GameHost` resolves the command and calls `_broadcast_state()`
+**synchronously** — no frame boundary, no defer — which reaches
+`GameClient._on_message` -> `state_updated.emit(shared, private)` before
+`_client.end_turn(...)` ever returns to `_end_turn()`. `views/game_3d.gd`
+(the phase router) connects its OWN `state_updated` listener (`_sync`) in
+`_ready()`, which runs *before* `combat_3d.gd`'s own listener is connected
+(it's instantiated as `game_3d`'s child, so its `_ready` — and its
+connection — happens later, hence later in Godot's per-signal FIFO order).
+So the instant an End Turn is the one that ends combat (boss dies, or any
+other phase change), `_sync()` fires first and does exactly what its own
+comment says: `remove_child(_view); _view.queue_free()` on the CURRENT
+Combat3D — the very instance whose `_end_turn()` is still on the call stack.
+Control returns to `_end_turn()`, which carries on regardless and calls
+`_apply_solo_turn_flip()` -> `_focus_camera()` -> `_apply_orbit()` ->
+`_cam.look_at()` on a camera that is still non-null but no longer inside the
+tree — the exact stack trace filed above.
+
+`location_3d.gd`'s own `_refresh()` already documents this precise router
+race (backlog #7, commit `0934ea9915b2`) and guards itself with
+`is_inside_tree()`; combat_3d.gd's own `_refresh()` independently dodges it
+by bailing the moment `phase` isn't "combat" any more. Neither guard covers
+`_focus_camera()`, which `_end_turn()`/`_switch_to()` reach directly and
+unconditionally, with only a `_cam == null` check that's true for "never had
+a camera," never for "my camera's node just left the tree."
+
+**Fix.** One line: `_focus_camera()`'s existing early-return guard
+(combat_3d.gd:1058) now also checks `not is_inside_tree()`, same idiom
+`location_3d.gd` already uses for the identical race. `_apply_solo_turn_flip`
+already flips `_active_slot` *before* calling `_focus_camera()`, so this
+doesn't touch the ordinary end-of-turn flip at all — it only stops the
+camera code from running once the view is gone. `_apply_orbit()`'s other
+call sites are all `_process`/input-driven and never fire on a detached node
+(Godot stops calling them), so this one guard closes the only reachable path.
+
+**Reproduced first, against the real `_cam`.** A bare `Combat3D.new()` (the
+existing sibling flip tests' own trick) never resolves the `%Camera` onready
+var at all, so `_cam` stays null and would mask this bug rather than catch
+it — needed the real scene. Instantiated `combat_3d.tscn` into the test
+runner's own tree, called `remove_child` on it (the exact call `game_3d.gd`
+makes), then called `_focus_camera()` directly. Temporarily reverted just
+the new `or not is_inside_tree()` clause and reran: failed exactly as
+predicted, with the SAME engine error the request's log shows —
+`ERROR: Node not inside tree. Use look_at_from_position() instead. at:
+look_at (scene/3d/node_3d.cpp:1253)` — from `_apply_orbit` via
+`_focus_camera`, and the camera's own position changed even though the view
+had already left the tree. Restored the fix, reran: passes, camera left
+untouched. A sibling test proves the guard doesn't swallow the ordinary
+case — a view still in the tree still moves its camera on `_focus_camera()`.
+
+**Proof.** Two new tests in `run_tests.gd`
+(`_test_backlog_focus_camera_does_not_touch_the_camera_once_the_view_left_the_tree`,
+`..._still_moves_the_camera_while_in_the_tree`), both using a real
+`combat_3d.tscn` instance so the repro exercises the actual `%Camera` node,
+not a stand-in. `ALL TESTS PASSED`.
+
+Live verification: a fresh `mode=play beast=cinder_jackal steps=80` was
+still running under `xvfb-run` when this was written up (this sandbox's
+software renderer takes ~45-50 min for a full 80-step run per the last
+several fixer notes) — since the trigger is timing-dependent and this bot
+only has one sandbox run to spend, catching the live crash again on this
+exact run isn't guaranteed either way, and isn't the standard of proof here:
+the fix is proven by reproducing the SAME engine error the request reported,
+line-for-line, on the same real camera node, then showing it's gone. Will
+attach the run's own `report.md`/frames if it finishes clean before this
+sandbox's lifetime is up; a script-error in it would mean a second, still-
+open crash path this fix doesn't cover and gets filed fresh.
+
+Commit: see `## Log` in `design/agents/status/fixer.md`.

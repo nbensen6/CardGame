@@ -2369,6 +2369,18 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_end_turn_flip_refuses_to_change_hunter_mid_sweep()
 	_test_backlog86_end_turn_flip_refuses_to_change_hunter_while_a_circle_window_is_open()
 	_test_backlog86_end_turn_flip_still_flips_with_no_timing_window_open()
+	# The end-turn crash filed 2026-09-23 (request
+	# 2026-09-23-1000-playtester-to-fixer-end-turn-crash-at-sigil-solo-flip.md):
+	# _end_turn's own _client.end_turn() call can resolve synchronously all the
+	# way through the host, back to state_updated.emit(), and into game_3d.gd's
+	# router removing this exact view from the tree -- mid-call, before
+	# _apply_solo_turn_flip -> _focus_camera -> _apply_orbit ever runs. Needs a
+	# REAL Camera3D (a bare Combat3D.new(), like the flip tests just above, never
+	# resolves %Camera at all, so _cam stays null and the bug is masked rather
+	# than reproduced) -- deferred here for the same reason the other real-scene
+	# tests in this function are.
+	_test_backlog_focus_camera_does_not_touch_the_camera_once_the_view_left_the_tree()
+	_test_backlog_focus_camera_still_moves_the_camera_while_in_the_tree()
 
 	_test_backlog86_draw_relic_mod_grants_extra_cards_every_round_not_just_the_first()
 	_test_backlog86_real_draw_relics_reach_relic_totals_and_grant_extra_cards()
@@ -28502,6 +28514,50 @@ func _test_backlog86_end_turn_flip_still_flips_with_no_timing_window_open() -> v
 	c3d._apply_solo_turn_flip()
 	_expect(c3d._active_slot == 1,
 		"with no timing window open, ending the turn must still hand the view to the other hunter -- the guard must not swallow the ordinary case")
+	c3d.free()
+
+
+## The end-turn crash, reproduced against the real _cam: game_3d.gd's router
+## calls `remove_child(_view)` on this exact node the instant a synchronous
+## `_client.end_turn()` reports a phase change -- see combat_3d.gd's own
+## _focus_camera doc comment. Before the fix, _apply_orbit() (called with no
+## guard of its own past _focus_camera) went ahead and set _cam.position from
+## a freshly computed _cam_home, then crashed on _cam.look_at() requiring the
+## tree it no longer had. Reproduced first: temporarily dropping
+## `or not is_inside_tree()` from _focus_camera's guard (git stash the one-line
+## change, keep this test) makes this fail -- _cam.position moves even though
+## the view already left the tree, matching the "still runs, just wrong" half
+## of the crash headlessly, since a caught GDScript test can't observe the
+## ERR_FAIL_COND_MSG print look_at() itself raises. Restoring the fix passes.
+func _test_backlog_focus_camera_does_not_touch_the_camera_once_the_view_left_the_tree() -> void:
+	var c3d: Node = preload("res://views/combat_3d.tscn").instantiate()
+	get_root().add_child(c3d)
+	c3d._client = GameClient.new(LocalTransport.new(), 1)
+	c3d._hunters = [{"node": null, "home": Vector3(0.0, 5.0, 0.0)}]
+	var cam_before: Vector3 = c3d._cam.position
+	# game_3d.gd's _sync(): "drop it out of the tree NOW, not at the end of the
+	# frame" -- the exact remove_child a phase change fires mid-End-Turn.
+	get_root().remove_child(c3d)
+	c3d._focus_camera()
+	_expect(c3d._cam.position == cam_before,
+		"_focus_camera must leave the camera alone once this view has left the tree -- reaching _apply_orbit's _cam.look_at() on a detached node is the crash the request reported")
+	c3d.free()
+
+
+## Sibling guard: the tree check must not swallow the ordinary case (a view
+## still on screen has to keep being able to move its own camera), same shape
+## as _test_backlog86_end_turn_flip_still_flips_with_no_timing_window_open
+## above for the sibling _apply_solo_turn_flip guard.
+func _test_backlog_focus_camera_still_moves_the_camera_while_in_the_tree() -> void:
+	var c3d: Node = preload("res://views/combat_3d.tscn").instantiate()
+	get_root().add_child(c3d)
+	c3d._client = GameClient.new(LocalTransport.new(), 1)
+	c3d._hunters = [{"node": null, "home": Vector3(0.0, 5.0, 0.0)}]
+	var cam_before: Vector3 = c3d._cam.position
+	c3d._focus_camera()
+	_expect(c3d._cam.position != cam_before,
+		"the is_inside_tree() guard must not swallow the ordinary case -- a view still in the tree must still be able to move its own camera")
+	get_root().remove_child(c3d)
 	c3d.free()
 
 

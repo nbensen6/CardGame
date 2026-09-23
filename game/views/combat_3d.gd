@@ -1037,10 +1037,25 @@ func _switch_to(slot: int) -> void:
 ## a close hold into a third-person shot. At 0 the hunter sits dead centre and
 ## half the frame is floor; at 0.3 they sit low and the beast owns everything
 ## above them, which is the composition the fight is actually about.
+## `is_inside_tree()` closes the same race location_3d.gd's `_refresh()` already
+## documents (backlog #7, 0934ea9915b2): `_client.end_turn()` (and any other
+## command send) can resolve synchronously all the way through the host and
+## back to `state_updated.emit()` before returning, and game_3d.gd's router
+## listens on that same signal and, on a phase change, `remove_child(_view)`s
+## the OLD view *immediately* -- mid-command, before `_end_turn()`'s own
+## `_apply_solo_turn_flip()` -> `_focus_camera()` call even runs. This view's
+## `_refresh()` already dodges that by bailing the moment `phase` no longer
+## names it (see its own top), but `_focus_camera()` is reachable straight from
+## `_end_turn()`/`_switch_to()` with no phase check at all, and its only guard
+## was `_cam == null` -- true for "never had a camera," never for "my camera's
+## node just left the tree." `_apply_orbit()` below has no guard of its own and
+## calls `_cam.look_at()`, which requires the tree; reaching it after a
+## same-turn teardown is exactly the crash filed in
+## 2026-09-23-1000-playtester-to-fixer-end-turn-crash-at-sigil-solo-flip.md.
 func _focus_camera(window := FOCUS_WINDOW, lift := 0.0) -> void:
 	_pan = Vector3.ZERO
 	_establishing = false
-	if _hunters.is_empty() or _cam == null:
+	if _hunters.is_empty() or _cam == null or not is_inside_tree():
 		return
 	_focused = true
 	# Hold the shot: _aim_camera only eases distance back to the beast framing

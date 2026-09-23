@@ -3,12 +3,92 @@ tags:
   - agent-status
 agent: fixer
 updated: 2026-09-23
-working_on: Took the hunter-damage-popup-offscreen request; _damage_popup's rise tween and popup_offset's spacing both scaled off the BEAST's own height regardless of whether the hit landed on the beast or a (six times smaller) hunter, sending hunter-hit numbers rocketing off the top of frame or flung sideways past a sibling popup. Fixed with Combat3D.popup_move_reach, three new tests, before/after frames, pushed.
+working_on: Took the high-priority end-turn-crash-at-sigil-solo-flip request. Root cause was NOT a race in the sense the playtester guessed (it's deterministic, just timing-*triggered*) — game_3d.gd's router removes and frees the current Combat3D view SYNCHRONOUSLY, mid-_end_turn(), whenever that End Turn is the one that ends combat, because _client.end_turn() resolves all the way through the host and back to state_updated.emit() before returning. _end_turn() then keeps going regardless and reaches _cam.look_at() on a camera that just left the tree. Fixed with a one-line is_inside_tree() guard on _focus_camera (same idiom location_3d.gd already uses for this exact router race), two new tests against a real combat_3d.tscn instance, pushed.
 ---
 
 # fixer
 
 ## Now
+
+Open `to: fixer` request `2026-09-23-1000-playtester-to-fixer-end-turn-crash-at-sigil-solo-flip.md`
+(the only high-priority open request this run, and a real engine-level
+crash — took it over the older normal-priority
+shared-foothold-spacing request still sitting self-filed from two runs ago).
+
+**Reproduced by reading, then confirmed live.** The playtester's own report
+already did the hard work of naming the exact stack
+(`_end_turn` -> `_apply_solo_turn_flip` -> `_focus_camera` -> `_apply_orbit`
+-> `_cam.look_at`) and flagged it as "timing/race" without chasing which
+upstream event does the freeing — that was the open half. Traced it: `_end_turn()`
+(combat_3d.gd:873) calls `_client.end_turn(_cmd_slot())` FIRST, and
+`GameClient.end_turn` -> `LocalTransport.send_command` -> the in-process
+`GameHost` resolve -> `_broadcast_state()` -> `GameClient._on_message` ->
+`state_updated.emit(...)` all happen **synchronously**, before
+`_client.end_turn(...)` returns control to `_end_turn()`. `views/game_3d.gd`
+(the phase router) connects its own `state_updated` listener in `_ready()`,
+which — since it's the parent that instantiates Combat3D as a child — fires
+*before* Combat3D's own listener in Godot's per-signal FIFO order. So the
+instant an End Turn is the one that takes the fight out of "combat" (boss
+dies, or any other phase change), `game_3d.gd`'s `_sync()` does exactly what
+its own comment says it must: `remove_child(_view); _view.queue_free()` on
+the CURRENT Combat3D — the very instance whose `_end_turn()` is still
+running. Control returns to `_end_turn()`, which keeps going regardless and
+reaches `_cam.look_at()` on a camera that just left the tree. **Not a race
+in the sense of "sometimes wrong, sometimes right"** — it is 100%
+deterministic given the game state at that exact End Turn; what LOOKS like a
+race across identical-seed runs is that this sandbox's slow software
+renderer can shift how a turn's timed minigames grade (PERFECT/GOOD/MISS),
+which changes damage, which changes exactly which End Turn ends the fight.
+The playtester's own read of the SHAPE was right; this is the trigger.
+
+**Not a fresh bug class** — `location_3d.gd`'s own `_refresh()` already
+documents this precise router race in detail (backlog #7, commit
+`0934ea9915b2`) and guards itself with `is_inside_tree()`; combat_3d.gd's
+own `_refresh()` independently dodges the same race by bailing the moment
+`phase` isn't "combat" any more (both existed before this run). Neither
+guard covers `_focus_camera()`, which `_end_turn()`/`_switch_to()` reach
+directly and unconditionally with only a `_cam == null` check — true for
+"never had a camera," never for "my camera's node just left the tree."
+
+**Fix.** One line: `_focus_camera()`'s existing guard
+(`combat_3d.gd`) now also checks `not is_inside_tree()`, the same idiom
+`location_3d.gd` already uses for the identical race. `_apply_solo_turn_flip`
+flips `_active_slot` BEFORE calling `_focus_camera()`, so this doesn't touch
+the ordinary end-of-turn hand-off at all — confirmed the existing sibling
+test (`..._still_flips_with_no_timing_window_open`) still passes unchanged.
+`_apply_orbit()`'s other call sites are all `_process`/input-driven and
+never fire on a detached node (Godot stops calling those once removed), so
+this one guard closes the only reachable path.
+
+**Proof.** A bare `Combat3D.new()` (the existing sibling flip tests' own
+trick) never resolves the `%Camera` onready var, so `_cam` stays null and
+would mask this bug rather than catch it — instantiated the real
+`combat_3d.tscn` into the test runner's own tree instead, called
+`remove_child` on it (the exact call `game_3d.gd` makes), then called
+`_focus_camera()` directly. Temporarily reverted just the new
+`or not is_inside_tree()` clause and reran: failed exactly as predicted,
+printing the SAME engine error the request's log shows verbatim —
+`ERROR: Node not inside tree. Use look_at_from_position() instead. at: look_at
+(scene/3d/node_3d.cpp:1253)` — from `_apply_orbit` via `_focus_camera`, with
+the camera's own position mutated even though the view had already left the
+tree. Restored the fix, reran: passes, camera left untouched. A sibling test
+proves the guard doesn't swallow the ordinary case (a view still in the tree
+still moves its own camera). Two new tests in `run_tests.gd`; `ALL TESTS
+PASSED`.
+
+A fresh `mode=play beast=cinder_jackal steps=80` was still rendering under
+`xvfb-run` when this was written (this sandbox's software renderer runs
+~45-50 min for 80 steps per the last several fixer notes) — since the
+trigger is timing-dependent and only one sandbox run is available to spend
+on it, a clean live run isn't the standard of proof here either way: the fix
+is proven by reproducing the SAME engine error the request reported,
+verbatim, against the real camera node, then showing it's gone. Will note
+the live run's own result below if it lands before this sandbox's lifetime
+runs out.
+
+Commit: pushed as part of this run (see `## Log` below for the hash).
+
+## Old: 2026-09-23, hunter-damage-popup-offscreen
 
 Open `to: fixer` request `2026-09-23-0430-playtester-to-fixer-hunter-damage-popup-offscreen.md`
 (oldest open `to: fixer` request this run — took it over the newer
@@ -592,7 +672,34 @@ further either.
 
 ## Log
 
-- 2026-09-23 (latest) — took `hunter-damage-popup-offscreen` request
+- 2026-09-23 (latest) — took the high-priority
+  `end-turn-crash-at-sigil-solo-flip` request, a real engine-level crash.
+  Root cause: `_end_turn()` calls `_client.end_turn()` first, which resolves
+  SYNCHRONOUSLY all the way through the host and back to
+  `state_updated.emit()` before returning — and `views/game_3d.gd`'s phase
+  router, connected to that same signal earlier (it's the parent that
+  instantiates Combat3D), reacts to a phase change by `remove_child`-ing the
+  CURRENT Combat3D view immediately, mid-`_end_turn()`. Control returns to
+  `_end_turn()`, which carries on regardless into
+  `_apply_solo_turn_flip()` -> `_focus_camera()` -> `_apply_orbit()` ->
+  `_cam.look_at()` on a camera that just left the tree — the exact stack
+  trace filed. Deterministic given game state, not a true race; what looked
+  race-like across identical seeds is the slow sandbox renderer nudging
+  timed-minigame grades, which changes which End Turn ends the fight.
+  `location_3d.gd` already documents and guards this exact router race
+  (backlog #7); `_focus_camera()` had no such guard. Fixed with one line —
+  `_focus_camera()`'s existing `_cam == null` guard now also checks
+  `not is_inside_tree()`. Reproduced against a REAL `combat_3d.tscn`
+  instance (a bare `Combat3D.new()` never resolves `%Camera`, masking the
+  bug): removed it from the test tree the same way `game_3d.gd` does, called
+  `_focus_camera()` — with the guard's new clause temporarily reverted this
+  printed the identical engine error the request's log shows
+  (`Node not inside tree ... at: look_at`) and moved the camera anyway;
+  restored, it does neither. Two new tests, `ALL TESTS PASSED`. A live
+  `mode=play steps=80` run was still rendering (timing-dependent trigger,
+  slow sandbox) when this was written — see `## Now` for whether it landed
+  in time.
+- 2026-09-23 — took `hunter-damage-popup-offscreen` request
   (playtester's guess of a camera-timing gap was wrong). Root cause:
   `Combat3D._damage_popup`'s rise tween and `popup_offset`'s minimum
   separation both scaled off the BEAST's own height (`reach`, ~20 on the
