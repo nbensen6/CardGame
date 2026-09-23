@@ -78,10 +78,70 @@ the bookkeeping themselves.
 
 ## Nick: how to give an agent a job
 
-Copy `requests/_template.md` to `requests/<date>-<time>-nick-to-<agent>-<slug>.md`,
-set `to:` (artist / playtester / fixer), leave `status: open`, say what you want
-and how to see it. Then run **`tools/board_push.cmd`** — the agents read the
-repo from GitHub, so an unpushed note never reaches them.
+1. **New note in `agents/requests`.** Name it whatever you like — the agents
+   read the frontmatter, not the filename.
+2. **Insert the template**: command palette → *Insert template* → **Request to
+   an agent**. It fills the frontmatter and the headings for you.
+3. **Change one line of frontmatter: `to:`.** That is the only field you have
+   to touch.
+4. **Write what you want**, in plain words. Then close the note — the hourly
+   sync sends it, or **Sync the agents** on your desktop sends it now.
+
+### Who to send it to
+
+| `to:` | what they own |
+|---|---|
+| `artist` | how it LOOKS — models, textures, the arena, anything visual |
+| `fixer` | when something is BROKEN or wrong — bugs, crashes, bad behaviour |
+| `playtester` | when something FEELS off but you cannot say why — they play it and find out |
+
+Wrong one? They hand it to each other. Send it to whoever seems closest.
+
+### A filled-in example
+
+```markdown
+---
+tags: [request]
+from: nick
+to: artist
+status: open
+priority: normal
+created: 2026-09-23T14:20
+taken_by:
+---
+
+# The jackal's ears glow so hot they hide its face
+
+## What I want
+
+Close up at the sigil, the ears are two white blobs and I cannot read the
+head any more. Keep the ember look, just turn it down until the face reads.
+
+## How to see it
+
+Click Fight this now on the Cinder Jackal and climb to the sigil.
+
+## Done when
+
+I can tell what the head is doing at the sigil, and it still looks like it
+is burning.
+```
+
+That is a complete request. No file paths, no numbers — "what I want" and
+"how to see it" is enough for them to work from, and if it is not, they will
+ask you in the note.
+
+### The other fields, if you ever want them
+
+- `priority: high` — jump the queue. Use it rarely or it stops meaning anything.
+- `status:` — leave it `open`. They set it to `taken`, then `done`.
+- `from:`, `created:`, `taken_by:` — the template handles these; ignore them.
+
+### Answering, once they reply
+
+They write under `## Result`, and anything they need from you goes in a note
+addressed back to you — which shows up in the **FOR NICK** tab of [[Agents]].
+You answer by typing under **Nick's answer** in that note.
 
 ## Requests
 
