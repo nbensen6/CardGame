@@ -54,8 +54,14 @@ reading the fight at a glance, at play size, in motion.
 - [ ] **Each is readable at fight distance** as itself, not a green blob.
 
 ### The arena
-- [ ] **It frames the beast** rather than competing with it.
-- [ ] **It says where this fight is**, not "generic ground".
+- [x] **It frames the beast** rather than competing with it. Meshy-generated
+      crater wall replaced the primitive `enclose()` slabs, 2026-09-23 —
+      verified in every 3D camera state the fight uses, beast stays the
+      clear subject with the wall reading as backdrop. `design/progress/
+      cinder_jackal_ground.md` pass 6, 37/50.
+- [x] **It says where this fight is**, not "generic ground". The sigil
+      close-up now shows real glowing ember cracks in the rock itself, not a
+      flat slab — same evidence as above.
 
 ## How to work it
 
