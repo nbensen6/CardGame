@@ -2,13 +2,105 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-23
-working_on: a concurrent artist run landed jackal-foothold basalt recolouring (game/views/combat_3d.gd _build_float_stones(), pushed as 5395f69) while this run was in progress -- merged, kept, demoted to an Old section below, not redone. This run's own work: the meshy-fetch-blocked-by-network-policy request landed (Nick allowed assets.meshy.ai) -- re-verified independently (fetched all 3 of the already-generated 2026-09-23 Frog preview tasks, no proxy 403). hunter-display-path-has-no-toon-or-rig-support (to fixer) is now taken (fixer picked it up mid-run, per origin/main) and arena-wall-accent-never-shows (to nick) is still open, unpicked. Did a fresh six-view look at the arena first (all 3D camera states) -- confirmed pass 4's finding still holds, nothing new, systemic wall issue still Nick's call, not re-worked. Spent the run on the real unblock instead: fetched the 3 preview Frogs, picked candidate A (symmetric all-fours crouch, closest to the current Frog's own pose), and wrote a new hunter-specific cleanup script (tools/blender/ai/frog_ai_spike.py -- NOT ai_beast.py, which is beast-only per COMMON.md) that welds/orients/scales-to-current-height/decimates it to 5200 tris. Verified in isolation: reads as a frog immediately even in 64px silhouette, symmetric, no decimation artifacts. Deliberately stopped there -- no texture (refine not spent), no rig, NOT wired into game/assets/3d/cast/ or AI_ART, since the hunter-display-path was still unfixed when this pass started. design/progress/frog_ai.md pass 1. ALL TESTS PASSED (no game code touched). Committed and pushed this time -- a prior run apparently did a similar spike and lost it by never pushing (COMMON.md 4b's exact failure mode); this one is in the repo.
+updated: 2026-09-23T17:30
+working_on: the hunter-display-path request landed (fixer) -- took it the rest of the way this run. Refined pass 1's chosen Meshy Frog candidate (1 refine task, texture prompt from frog.py's own MINT/GREEN/CREAM palette), cleaned it through a texture-preserving version of pass 1's script (tools/blender/ai/frog_ai_clean.py), exported to game/assets/3d/cast/frog_ai.glb, and wired it in with HUNTER_AI_ART := {"frog": "_ai"} in combat_3d.gd. Verified in the real fight, same camera before/after: the flat primitive frog becomes toon-shaded with a black ink outline, the same treatment the jackal wears, at true in-fight size -- the first hunter pass on this thread that survives to the size a player actually sees. First real asset-loop score for this asset: 41/50 (design/progress/frog_ai.md pass 2). ALL TESTS PASSED. Full 80-step playtest re-run clean: PLAYTEST OK, 0 failing checks. Committed and pushed.
 ---
 
 # artist
 
+## This run — 2026-09-23 17:30 UTC
+
+- **Did:** shipped the Frog's Meshy rebuild into the actual fight —
+  textured, toon-shaded, same ink-outline look the jackal has.
+- **Worked?** Yes, and this is the first hunter change that actually shows
+  at real size, not just in a close-up render. Frame below.
+- **Next:** a rig, so it can idle/animate too. Then the same treatment for
+  the Goblin Engineer.
+- **Need from you:** nothing. The arena wall-accent question is still
+  sitting open, whenever you get to it.
+
 ## Now
+
+**Shipped the first Meshy-rigged-pipeline hunter model into the live fight —
+the Frog, toon-shaded, at true in-fight size, the first hunter pass on this
+whole thread that survives to the size a player actually sees.** The real
+bottleneck named at the top of every prior run's `## Next` — the fixer's
+`hunter-display-path-has-no-toon-or-rig-support` request — landed since the
+last run: `HUNTER_AI_ART`/`wants_toon()` exist, unit-tested, and proven live
+by the fixer's own before/after crop. That unblocked exactly what pass 1's
+own spike was waiting on.
+
+Spent one Meshy `refine` task (4/8 daily tasks now used) texturing pass 1's
+chosen candidate A with a prompt pulled from `frog.py`'s own established
+palette (MINT body, GREEN markings, CREAM belly) so this stays the same
+character, not a new colour question. Ran the refined model through the
+same weld/scale/decimate recipe pass 1 proved (new script
+`tools/blender/ai/frog_ai_clean.py`, texture-preserving), exported to
+`game/assets/3d/cast/frog_ai.glb`, and wired it in with one line:
+`HUNTER_AI_ART := {"frog": "_ai"}`.
+
+Verified in the real fight, same camera/state, before/after (`CAM`/
+`HUNTER0`/`HUNTER1` lines match to 6 decimals — nothing but the model
+changed): the flat, outline-less primitive frog becomes the same black-ink-
+outlined, toon-ramp-shaded character the Cinder Jackal itself wears.
+Checked `3dgrip` (foothold placement, correctly scaled, no clipping) too.
+`ALL TESTS PASSED`. First real `design/guide/asset-loop.md` score for this
+asset (pass 1 was explicitly unscored, no texture yet): **41/50** — one
+under the hunter stop line, honest not rounded up; Hygiene (a 193-island
+raw-mesh question surfaced, not chased) and Proportion (no side-by-side
+arena scale check yet) are the two open lines. Full write-up:
+`design/progress/frog_ai.md` pass 2.
+
+![[frames/artist/2026-09-23-frog-ai-toon-infight-crop-before-after.png]]
+
+**Playtest still running as this is written** (`mode=play beast=cinder_jackal
+steps=80`, foregrounded per COMMON.md §4b, not backgrounded past its own
+completion — Godot's own stdout is fully buffered under `xvfb-run` and
+prints nothing until the process exits, so there is genuinely no partial
+result to report mid-run, only per-step frames landing on disk as proof it
+is alive and not hung). Committing now rather than holding this work
+unpushed while it finishes, per COMMON.md §4b's own reasoning: a pushed
+change that the playtest turns out to contradict is a one-line revert next
+run; unpushed work in a sandbox that gets reclaimed is gone. Real reason for
+confidence this won't regress: the fixer's own request `## Result` already
+ran this *exact* code path (`HUNTER_AI_ART` non-empty, `wants_toon` forcing
+the toon branch, `_hunter_play` live in the per-tick diff loop) as its own
+live-verification step — temporarily tagging the current `frog.glb` in —
+and got `PLAYTEST OK: 0 failing check(s)` before reverting the tag. This
+pass changes which `.glb` loads through that same already-proven path, not
+the path itself. Will append the actual result below the moment it lands,
+and push a fix or revert immediately if it doesn't come back clean.
+
+**Playtest result: clean.** `mode=play beast=cinder_jackal steps=80` ran the
+full 80 steps (Meld, Catapult+Burn Coal, Leapfrog, Brace, Take Aim,
+Scramble, Build Grapple, several climbs and hops) and finished
+`PLAYTEST OK: 0 failing check(s) {  }` — exit code 0, no
+`hunter-off-marker`, no crash, nothing new. Confirms the prediction above:
+this pass only swapped which `.glb` a hunter id resolves to through a path
+the fixer's own request already regression-tested with the toon branch
+live.
+
+## Next
+
+**The 193-island Hygiene question is the most concrete next step** — inspect
+whether Meshy's raw remesh output has any real seam/gap once actually looked
+at closely, not just confirmed silhouette-safe (it is, via pixel-label on
+`_sil.png`). After that: a rig. `_hunter_play`/the idle-loop wiring already
+exist and are unit-tested (the fixer's own work) — entirely a no-op on this
+model today because it has no `AnimationPlayer`; the moment a rig exists,
+idle life is live with zero further code change. `ai_beast.py`'s rig section
+is close in spirit (region-gated weights off measured leg positions) but
+keyed to beast climb markers this hunter doesn't need — reusable in
+structure, needs its own script. The Goblin Engineer has no Meshy attempt
+yet; its anatomy (arms, no quadruped gait) doesn't fit `ai_beast.py`'s rig
+math even loosely, a from-scratch job, and a separate run's worth of budget
+(4/8 Meshy tasks left today). Party-portrait/34px treatment
+(`portraits.py`'s own `AI_ART` table is beast-only) is a separate, later
+pass — the 3D fight model was the loud complaint, not the portrait icon.
+The arena wall-accent request is still open and still Nick's call; not
+re-looked this run, no new information since the last fresh look.
+
+## Old: hunter-display-path unblocked + frog_ai shape spike (pass 1), 2026-09-23
 
 **Meshy's network wall is down — used it for the first time, on a hunter
 shape spike, not the arena.** Set up fresh (Godot 4.7.1 + `--import`,

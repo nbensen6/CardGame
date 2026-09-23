@@ -37,7 +37,7 @@ const AI_ART := {"cinder_jackal": "_ai"}
 ## rather than merged into it: AI_ART's own doc comment and every reader of it
 ## (_show_beast, location_3d.gd's felled-beast lookup) means "beast", and nothing
 ## here changes that. Empty until an artist ships a rigged hunter .glb.
-const HUNTER_AI_ART := {}
+const HUNTER_AI_ART := {"frog": "_ai"}
 ## Idle life for those beasts, in the toon shader (no rig yet). Uniform names
 ## from toon.gdshader; the masks default to the jackal's tail. Kept small: the
 ## body moves under hunters standing on it, and 2.5cm of breath on a Titan

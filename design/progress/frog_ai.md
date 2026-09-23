@@ -1,10 +1,12 @@
-# frog_ai — Meshy-based Frog rebuild, first-stage spike
+# frog_ai — Meshy-based Frog rebuild
 
-Not the `design/guide/asset-loop.md` loop proper yet — this is the shape-only step
-before that loop can start, because the loop's Colour/Style lines need a
-textured model and this one is untextured grey. Filed separately from
-`frog.md` (the current Python-primitive Frog, past its own 42/50 hunter stop
-line) because this is a different asset, not a revision of that one.
+Filed separately from `frog.md` (the current Python-primitive Frog, past its
+own 42/50 hunter stop line) because this is a different asset, not a
+revision of that one. Pass 1 was shape-only, before the asset-loop rubric
+could apply (no texture yet). **Pass 2 (below) refines, cleans and wires it
+into the live fight via `HUNTER_AI_ART` — it is the shipped
+`game/assets/3d/cast/frog_ai.glb` as of 2026-09-23T17:17 UTC, first real
+rubric score 41/50.**
 
 ## Why this run
 
@@ -156,3 +158,141 @@ a rig exist to judge.
    `design/guide/asset-loop.md` pass with a real score.
 
 ![[frames/artist/2026-09-23-frog-meshy-spike-vs-primitive.png]]
+
+## Pass 2 — artist, 2026-09-23T17:17 UTC: refined, cleaned, wired into the live fight
+
+Item 2 from pass 1's own list landed first: the hunter-display-path request
+(`...hunter-display-path-has-no-toon-or-rig-support.md`) is now `status:
+done` — the fixer generalized `_shade_model`'s beast-only toon gate behind a
+new `HUNTER_AI_ART` table and `wants_toon()`, proved with a unit test and a
+live before/after crop of the *current* `frog.glb` forced through it. That
+was the real bottleneck (item 2), ahead of texture (item 1) and rig (item
+3) — a rigged, textured model still can't show right without it, and a
+*static* textured model now can, so this pass did item 1 and shipped
+without item 3 rather than wait on a rig that isn't required to be seen.
+
+**Refine.** One Meshy `refine` task on candidate A's own preview id
+(`01a0ce35-34e2-729e-a8ef-1121afbc7eb9`), texture prompt: "bright mint
+yellow-green frog skin (#55BF6D) with darker forest green markings on the
+back and eyelids, cream/wheat pale belly, hand-painted stylized toon game
+art, matte non-metallic, clean flat shading" — pulled straight from
+`frog.py`'s own colour doc-comment (MINT body, GREEN markings, CREAM/WHEAT
+highlights) so this stays the same character's established palette, not a
+new colour question. Task `01a0cf3c-6c1f-75e7-aa9e-86736858b27f`,
+`SUCCEEDED 100` on the first try — logged in `meshy-ledger.md`. 4 of 8
+daily tasks now spent (3 preview + 1 refine), 4 left. The thumbnail alone
+was worth stopping to look at before doing anything else: a clean,
+symmetric, hand-painted frog that matches the brief's palette without any
+cleanup yet.
+
+**Cleanup, same recipe as pass 1, on the textured mesh this time.** New
+script `tools/blender/ai/frog_ai_clean.py` — `frog_ai_spike.py`'s own
+weld/centre/scale-to-1.15/decimate-to-5200 steps, unchanged, run against
+the refined (textured) `.glb` instead of the untextured preview, so the
+material comes along through every step rather than being reapplied after.
+Confirmed the material survived decimation before exporting (`mats_post
+1`, i.e. still one material, not split or dropped). Output straight to
+`game/assets/3d/cast/frog_ai.glb` — the `<id>_ai` naming `AI_ART`/
+`HUNTER_AI_ART` both resolve — plus `tools/blender/ai/frog_ai.blend`
+alongside the other AI sources. Godot's own import step wrote
+`frog_ai_Image_0.jpg` (2048×2048) beside the `.glb`, the same pattern
+`cinder_jackal_ai_Image_0.jpg` already sitting in this folder — not
+something this pass created by hand, and needed on disk for the model to
+show textured, so committed alongside it.
+
+**Wired in.** One line: `HUNTER_AI_ART := {"frog": "_ai"}` in
+`combat_3d.gd`. Nothing else to change — `_spawn_hunter` already resolves
+`HUNTER_AI_ART` over `Cast.model_path()`, calls `_shade_model(m, false,
+true)` for a tagged hunter, and `_fit_height` rescales to `HUNTER_HEIGHT`
+regardless of the source mesh's own scale, so pass 1's careful height-match
+was for the isolated renders' own sake, not load-bearing here.
+
+**Verified, not assumed:**
+- `run_tests.gd`: `ALL TESTS PASSED` (the `wants_toon` unit tests the fixer
+  added already cover this exact case: a `HUNTER_AI_ART` hunter takes the
+  toon path on its own flag).
+- Six-view `look.sh frog_ai 2` (pass 1's own renders, at the same filenames,
+  were untextured — restored with `git checkout` first so this pass's
+  textured renders land as their own `pass2` set instead of overwriting
+  history). Reads as a frog immediately at every angle, texture visibly
+  separates head/back markings/belly, no seams or stretching from the
+  weld/decimate step.
+- **Silhouette connectivity, the metric this loop has actually used before**
+  (pixel-label on `_sil.png`, not a raw mesh-topology count): `1` connected
+  component, 11,981px — nothing floats away from the body in projection.
+  Checked the raw mesh too, honestly: `193` disconnected vertex islands by
+  a direct edge-graph walk — Meshy's own remesh output, never hand-cleaned
+  the way the jackal's mesh was, and a real open question for Hygiene (see
+  score below), but it does not cost the visual read, which is what the
+  silhouette check actually answers.
+- **The real fight, same state and camera, before/after** — `state=3d
+  beast=cinder_jackal`, camera/hunter positions logged identical between
+  runs (`CAM`/`HUNTER0`/`HUNTER1` lines match to 6 decimals). Before: the
+  flat-shaded, outline-less primitive. After: the same black ink outline
+  and toon-ramp shading the jackal itself wears, at true in-fight size —
+  this is the first hunter pass on this whole thread where the win survives
+  to the size a player actually sees, not just the close-up scoring camera.
+  Also checked `3dgrip` (the frog standing on a foothold beside the jackal's
+  leg — reads clearly, correctly scaled, no clipping) and `3dreward` (the
+  reward screen; the party row sits below the visible crop at this camera,
+  so nothing to compare there this pass, not a regression, just out of
+  frame).
+
+![[frames/artist/2026-09-23-frog-ai-toon-infight-crop-before-after.png]]
+![[frames/artist/2026-09-23-frog-ai-infight-before.png]]
+![[frames/artist/2026-09-23-frog-ai-infight-after.png]]
+
+**Score, `design/guide/asset-loop.md` rubric, the first real one for this
+asset (pass 1 was explicitly unscored — no texture yet):**
+
+- **Silhouette 9** — reads as this frog immediately as solid black at 64px
+  (verified above), symmetric, four distinct feet.
+- **Proportion 8** — the crouch reads correctly as this fight's own Frog at
+  the game's own height-match convention; held below 9 because this pass
+  didn't do a side-by-side scale check against the Goblin/jackal in the
+  live arena the way `goblin_mech.md`'s rig-scale passes did.
+- **Build hygiene 7** — one mesh, one material (confirmed post-decimate),
+  in the same accepted-overage tri class as the current model (5200 vs the
+  current `frog.glb`'s own 5136, both well over the 1400 hunter budget),
+  silhouette-connected. Held to 7, not higher: 193 raw mesh islands is a
+  real unknown this pass surfaced and did not chase down — Meshy's own
+  remesh, never hand-inspected piece by piece the way the jackal's mesh was
+  in `ai-beast-recipe.md`'s own cleanup steps.
+- **Colour & read 8** — matches the established Frog palette (MINT/GREEN/
+  CREAM) and separates head, back markings and belly clearly at 512px and
+  at true in-fight size (the crop above). Not verified at the 34px party-
+  portrait scale — `portraits.py`'s own `AI_ART` table hasn't been extended
+  to hunters, a separate, later scope, not touched this pass.
+- **Style consistency 9** — the same Meshy "hand-painted stylized game art"
+  pipeline as the jackal, and now the same toon-shader/ink-outline
+  treatment, wired through the same code path. This is the change Nick's
+  own "the Frog and Goblin don't look any different" note (quoted in the
+  hunter-display-path request) was actually asking for.
+
+**Total: 41/50** — one point under the 42 hunter stop line, an honest
+number, not rounded up. The two lines to chase next are named above, not
+guessed: Hygiene's 193-island question (does it cost anything once actually
+inspected, or is it Meshy's normal output for a model this size) and
+Proportion's missing side-by-side arena check.
+
+`ALL TESTS PASSED`. Full `mode=play beast=cinder_jackal steps=80` playtest
+re-run against the wired-in model: **`PLAYTEST OK: 0 failing check(s) {  }`**,
+exit code 0, the full 80 steps (Meld, Catapult+Burn Coal, Leapfrog, Brace,
+Take Aim, Scramble, Build Grapple, several climbs and hops) — no
+regression.
+
+## What's still open, in order (superseding pass 1's list)
+
+1. **The 193-island Hygiene question** — inspect whether any of them are
+   visible gaps/seams once actually looked at closely, not just confirmed
+   silhouette-safe.
+2. **A hunter-specific rig and idle/attack/hit animation.** `_hunter_play`
+   and the idle-loop wiring already exist in `combat_3d.gd`, wired and unit-
+   tested by the fixer's own request, and are a no-op on this model today
+   purely because it has no `AnimationPlayer` — the moment a rig exists,
+   this asset's idle life is live with no further code change.
+3. **The Goblin Engineer's own equivalent** — no Meshy build attempted yet;
+   its anatomy (arms, no quadruped gait) doesn't fit `ai_beast.py`'s rig
+   math even in spirit, a from-scratch job.
+4. **Party-portrait/34px treatment** — `portraits.py`'s `AI_ART` table is
+   beast-only; extending it to `frog_ai` is a separate, later pass.
