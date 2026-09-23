@@ -233,8 +233,12 @@ parameter for an id with an entry, so this is expected, not just observed.
 playtest kicked off against the wired-in model; per `COMMON.md` 4b this
 write-up, the commit and the push all happened before the result was in
 hand, rather than let a background run hold up everything else this run
-did — the result is appended to this file and `status/artist.md`'s `## Log`
-the moment it lands.
+did. **Result, 2026-09-23T17:34 EDT: `PLAYTEST OK: 0 failing check(s) {  }`**,
+full 80 steps, exit code 0 (Meld, Catapult+Burn Coal, Leapfrog, Brace, Take
+Aim, Scramble, Build Grapple, a real hop with position-continuity checks at
+step 71, a real fall foot 10→4/hp 20→14). The run was slow this session (the
+same sandbox flakiness `status/fixer.md` has noted before — real CPU time,
+not a hang) but finished clean with no artificial cutoff. No regression.
 
 **Score, `design/guide/asset-loop.md` rubric — the first real one for this
 asset** (the original build pass was explicitly left unscored: it wasn't

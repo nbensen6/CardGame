@@ -103,10 +103,9 @@ hand) instead of the near-solid black blob this note diagnosed. Confirmed
 no regression on the jackal or the Frog (pixel-diffed against the prior
 baseline, outside the goblin's own screen region only idle-animation jitter
 moved). `ALL TESTS PASSED`; an 80-step playtest was kicked off against the
-wired-in model — result appended to `design/progress/goblin_mech_ai.md`
-("Shipped and scored") and `status/artist.md`'s `## Log` once it lands, per
-`COMMON.md` 4b (pushed the code first rather than hold it on a background
-run).
+wired-in model (pushed the code first per `COMMON.md` 4b rather than hold
+it on a background run) and finished clean: `PLAYTEST OK: 0 failing
+check(s)`, full 80 steps, exit code 0. No regression.
 
 Scored for real for the first time (it wasn't shown to players the way
 they'd see it before now): **37/50**, under the 42 hunter stop line — full
