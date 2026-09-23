@@ -20,17 +20,17 @@ views:
         - to == "nick"
         - status != "done"
         - status != "wontfix"
+    order:
+      - file.name
+      - ask
+      - waiting
+      - from
+      - formula.age_days
     sort:
       - property: waiting
         direction: DESC
       - property: created
         direction: ASC
-    order:
-      - file.name
-      - note.ask
-      - note.waiting
-      - from
-      - formula.age_days
   - type: table
     name: Open requests
     filters:
