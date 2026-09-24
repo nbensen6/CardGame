@@ -14,6 +14,8 @@ issue: 6
 
 # A small sliver of the intent-tag-vs-hunter bug survives your fix, at the very start of a ground-level hop
 
+**#6**
+
 ## What I need
 
 - Your `intent_tag_pos`/`hunter_screen_rect` fix (commit `73ae6b4`) closes the

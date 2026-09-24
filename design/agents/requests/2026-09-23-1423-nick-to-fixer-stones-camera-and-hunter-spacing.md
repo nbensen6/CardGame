@@ -12,6 +12,8 @@ issue: 3
 
 # Stones, camera and hunter spacing at the Cinder Jackal
 
+**#3**
+
 ## What I want
 
 Fix the placement of the stones. and the camera angle should be changed locked

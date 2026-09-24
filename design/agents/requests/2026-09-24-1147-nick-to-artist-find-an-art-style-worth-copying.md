@@ -1,5 +1,4 @@
 ---
-
 tags:
   - request
 from: nick
@@ -12,11 +11,12 @@ taken_by: artist
 ask: Four real art-style directions, two shown on the actual jackal fight — which one (if any) should I build toward?
 waiting: false
 issue: 8
+synced_comment: 5820849589
 ---
 
-
-
 # Research art styles and bring me ones we could actually use
+
+**#8**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 
@@ -61,6 +61,10 @@ you are beating.
 ## Nick's answer
 
 <!-- (I pick a direction here) -->
+
+**From GitHub #8 (nbensen6, 2026-09-24 19:33 UTC):**
+
+take C, and steal one thing from B — a light distance fog purely for depth, not mood.
 
 ## Result — artist, 2026-09-24 13:12 EDT
 

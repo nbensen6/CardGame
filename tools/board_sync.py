@@ -98,6 +98,24 @@ def title_of(body, fallback):
     return m.group(1).strip() if m else fallback
 
 
+def stamp_ticket(text, num):
+    """Put a visible `**#N**` under the note's title.
+
+    The issue number is the ticket number -- there is no point inventing a
+    second one -- but it lived only in the frontmatter, where nobody reading
+    the note would ever quote it. This puts it where an agent writing "see #8"
+    can actually see it. Left alone if it is already there, so the sync can run
+    as often as it likes.
+    """
+    nl = "\r\n" if "\r\n" in text else "\n"
+    if re.search(r"^\*\*#\d+\*\*", text, re.M):
+        return text
+    m = re.search(r"^#\s+.+$", text, re.M)
+    if not m:
+        return text
+    return text[:m.end()] + nl + nl + "**#%s**" % num + text[m.end():]
+
+
 def labels_for(fm):
     out = []
     to = fm.get("to", "")
@@ -119,7 +137,12 @@ def labels_for(fm):
 def gh(*args, **kw):
     """Run `gh api ...` and return parsed JSON, or None on a handled failure."""
     cmd = [GH, "api"] + list(args)
-    p = subprocess.run(cmd, capture_output=True, text=True)
+    # encoding, explicitly: text=True decodes with the locale codepage, which on
+    # this machine is cp1252, and GitHub returns UTF-8. Nick's first comment came
+    # back with its em dash as "a-tilde-euro-mdash" -- his words reaching the
+    # agents corrupted is exactly what this pipe must not do.
+    p = subprocess.run(cmd, capture_output=True, text=True,
+                       encoding="utf-8", errors="replace")
     if p.returncode != 0:
         err = (p.stderr or "").strip()
         if kw.get("quiet"):
@@ -230,7 +253,7 @@ def push(dry):
                 continue
             num = str(made["number"])
             with open(path, "w", encoding="utf-8", newline="") as f:
-                f.write(set_field(text, "issue", num))
+                f.write(stamp_ticket(set_field(text, "issue", num), num))
             print("  #%s opened for %s" % (num, name))
             changed.append(path)
             continue
@@ -239,6 +262,12 @@ def push(dry):
         if dry:
             print("  would update #%s (%s) from %s" % (num, want_state, name))
             continue
+        stamped = stamp_ticket(text, num)
+        if stamped != text:
+            with open(path, "w", encoding="utf-8", newline="") as f:
+                f.write(stamped)
+            _, _, body = split_note(stamped)
+            changed.append(path)
         gh("-X", "PATCH", "repos/%s/issues/%s" % (REPO, num),
            "-f", "title=" + title,
            "-f", "body=" + issue_body(path, body, fm),
@@ -332,6 +361,16 @@ def selftest():
     assert "before" in out and "after" in out
     # a note with no beast is left exactly as written, not half-rewritten
     assert fight_link("x %s y" % link, {}) == "x %s y" % link
+
+    # the ticket number becomes visible under the title, once, however often
+    # the sync runs
+    stamped = stamp_ticket("---\nto: fixer\n---\n\n# A title\n\nbody\n", "12")
+    assert "# A title\n\n**#12**" in stamped, stamped
+    assert stamp_ticket(stamped, "12") == stamped
+    # and the title itself is untouched, or the issue would rename itself every
+    # run to "#12 #12 A title"
+    assert title_of(stamped, "x") == "A title"
+    assert stamp_ticket("no heading here", "3") == "no heading here"
 
     b = issue_body(os.path.join("design", "agents", "requests", "a.md"), "# T", {})
     assert "(http://127.0.0.1:8787/note/agents/requests/a)" in b, b

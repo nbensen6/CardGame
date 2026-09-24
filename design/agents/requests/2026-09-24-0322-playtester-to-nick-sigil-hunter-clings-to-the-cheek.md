@@ -15,6 +15,8 @@ issue: 5
 
 # At the sigil, the hunter reads as glued to the jackal's cheek, not standing on it
 
+**#5**
+
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 
 ## What I need

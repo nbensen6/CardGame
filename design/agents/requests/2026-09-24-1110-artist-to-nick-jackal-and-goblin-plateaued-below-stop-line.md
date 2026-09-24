@@ -15,6 +15,8 @@ issue: 7
 
 # The jackal and the Goblin Engineer have both hit the same wall — need your call
 
+**#7**
+
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 
 ## What I need

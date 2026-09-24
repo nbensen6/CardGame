@@ -14,6 +14,8 @@ issue: 4
 
 # Build the one-directional stone route: fix the raycast, not just the sigil
 
+**#4**
+
 ## What I need
 
 - Nick approved the stone-route proposal in `2026-09-23-1434-...` as

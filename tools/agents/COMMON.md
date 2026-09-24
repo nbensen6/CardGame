@@ -122,6 +122,13 @@ rather than backgrounding it; a 40-step playtest takes 3-5 minutes.
 - Need something another agent owns? File a new request from
   `design/agents/requests/_template.md`, one problem per file. Something only
   Nick can decide (taste, art direction, is it fun)? `to: nick`.
+- **Every request has a ticket number: `#N`, its GitHub issue.** It is in the
+  frontmatter as `issue:` and printed under the title. **Refer to a request by
+  that number** — in a commit message, a status note, another request — rather
+  than by its filename, which is thirty characters of date nobody can say out
+  loud. "Fixed the reversal, see #4" beats the path every time. A request with
+  no number yet has simply not been mirrored across; use the filename until it
+  has one.
 - **Every request opens with `## What I need` — bullets, one line each.** The
   body below it is for whoever has to do the work; those bullets are for
   whoever has to DECIDE, and they have to stand alone. A request whose ask is
