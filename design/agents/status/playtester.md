@@ -3,51 +3,19 @@ tags:
   - agent-status
 agent: playtester
 updated: 2026-09-24T17:20
-working_on: No requests open. Added a new live check, camera-not-over-shoulder -- checklist item 4's own target ("third person over the active hunter's shoulder once the jump animation is good") is now checkable, since the jump-reads line closed last run. Verified false-positive-free on real code (0 fires, fresh 30-step and 80-step baselines) and proved it actually fires (16/16) with the truck temporarily forced off, then reverted clean. Full three-mode baseline matches the last recorded run exactly -- only hop-distance-band (62/2/22), no regression.
+working_on: New check camera-not-over-shoulder -- proves the resting shot is genuinely over-the-shoulder, verified both directions.
 ---
 
 # playtester
 
 ## This run — 2026-09-24 17:20 EDT
 
-- **Did:** no requests addressed to `playtester` were open this run (the
-  stone-route thread and the "stones IN FRONT of the jackal" addendum are
-  both still sitting with the fixer, unchanged since my last run — no new
-  fixer commits landed in between). Ran the full three-mode baseline first,
-  then added one new check: `camera-not-over-shoulder`. Checklist item 4's
-  own target line — "Target: third person over the active hunter's shoulder
-  once the jump animation is good (Nick)" — was gated on the jump animation,
-  which closed last run (JACKAL-BAR's "The jump reads"), so this was the
-  natural next thing to check for real.
-- **Worked?** Yes. Baseline first: `play` (80 steps, real ending) 62
-  `hop-distance-band`, nothing else; `hover` 2; `hands` (1-10) 22 — byte-for-
-  byte the same shape as every recorded run since the intent-tag fix landed,
-  no regression. The gap: `Combat3D.shoulder_frame()` (the pure truck/aim
-  math for the over-the-shoulder shot) already has full unit coverage in
-  `run_tests.gd`, but nothing had ever checked that a REAL fight actually
-  drives `_shoulder` up to engaged once things settle, as opposed to sitting
-  on the old dead-centre follow cam forever — the same shape of gap every
-  prior check added here has closed (a real fix proved once, nothing
-  re-checking it live). New check reuses the existing "not airborne" settle
-  gate (checklist item 4's own "the hunter is visible" check) and asserts
-  `_shoulder >= 0.95` at that same settled instant — so "hunter on screen"
-  and "shot from over the shoulder" are judged together, not as two separate
-  moments that could each look fine alone. Verified both directions before
-  trusting it: a fresh 30-step and then a full 80-step `play` baseline on
-  the real, unmodified code both show 0 `camera-not-over-shoulder` fires
-  (only the pre-existing `hop-distance-band`); then temporarily forced
-  `want_ots` to always 0 in `combat_3d.gd` (one line, reverted, `git diff`
-  clean after) and re-ran — 16/16 real settled checks fired in the same
-  15-step run, every single one. Looked at a real frame too, not just the
-  check math: step 0 of the final baseline (below) shows the frog trucked
-  over to the right with the jackal owning the rest of the frame — a real
-  over-the-shoulder composition, not dead-centre.
-- **Next:** watch for the fixer picking up the stone-route thread's two
-  still-open pieces (`hop-distance-band`'s geometric ceiling, and the
-  "stones IN FRONT of the jackal" / "space between the hunter and the skin"
-  addendum Nick asked for on the sigil-cheek note) — neither moved this run.
-  Once the front-of-body requirement lands, re-check the sigil-cheek note
-  (`2026-09-24-0322-...`) and close it. Nothing else queued for me.
+- **Did:** no requests open. Added a live check: does the resting camera
+  really go over-the-shoulder, not just "hunter somewhere on screen"?
+- **Worked?** Yes — 0 fires on real code, 16/16 fires when I broke it on
+  purpose, then reverted clean. Baseline matches last run, no regression.
+- **Next:** waiting on the fixer's stone-route work (hop spacing, stones in
+  front of the jackal); neither moved this run.
 - **Need from you:** nothing.
 
 ![[frames/playtester/2026-09-24-shoulder-engaged-step000.png]]
@@ -1920,6 +1888,9 @@ remain the backstop for that; keep saving them.
 
 ## Log
 
+- 2026-09-24 17:20 EDT — new check `camera-not-over-shoulder`, proves the
+  resting shot is genuinely over-the-shoulder. 0 fires on real code, 16/16
+  when broken on purpose. Baseline unchanged, no regression.
 - 2026-09-24 13:11 EDT — Nick's answer on the sigil-cheek request had
   already been relayed to the fixer (commit `1a237dc`, ahead of this run);
   closed the bookkeeping gap on my own note (`## Filed on`, points at the
