@@ -192,7 +192,7 @@ reading the fight at a glance, at play size, in motion.
       an abstract shape. `design/progress/cinder_jackal_ai.md` ("Pass 4").
 
 ### Motion
-- [ ] **The jump reads** — anticipation, arc, landing, at the size it plays.
+- [x] **The jump reads** — anticipation, arc, landing, at the size it plays.
       First dedicated artist look, 2026-09-24: real hops (`mode=play
       beast=cinder_jackal`) read well overall at true 1:1 — a clear
       anticipation crouch, a real airborne arc, a clean landing on the
@@ -227,6 +227,31 @@ reading the fight at a glance, at play size, in motion.
       (`2026-09-24-1002-playtester-to-fixer-intent-tag-still-grazes-hunter-at-hop-start.md`)
       so the near-complete fix and the original bug aren't conflated.
       Leaving unticked until that residual closes too.
+
+      **Closed for real, 2026-09-24 15:17 ET.** The fixer's own root-cause
+      fix landed (`_position_intent_tag` was reading the hunter's position
+      one engine frame stale, off `_process()` instead of
+      `RenderingServer.frame_pre_draw`; commit noted in
+      `2026-09-24-1002-...`'s own `## Result`). Re-verified independently
+      this run rather than trust the write-up alone: fresh `mode=play
+      beast=cinder_jackal steps=80` on the current tree, foreground with a
+      10-minute timeout, played to its own real ending (Pounce landed,
+      screen changed to Location3D). `intent-tag-vs-hunter` — 0 fails, every
+      sampled hop, including the exact opening ground-level hop the residual
+      lived on (log: "intent tag stayed clear of the jumping hunter across
+      28 sampled frames"). Only failing check left is the pre-existing,
+      unrelated `hop-distance-band` (62, already the fixer's other
+      already-`taken` thread — climb spacing, not this line). Then looked,
+      not just trusted the check: tiled the exact `hop_000_03` through
+      `hop_000_06` frames (the precise window the residual used to graze in)
+      side by side at native crop resolution — the frog sits with a clear,
+      visible gap from the tag's left edge in every one, no overlap anywhere
+      in the sequence.
+      ![[frames/artist/2026-09-24-jump-reads-tag-fix-final-verify.png]]
+      Anticipation/arc/landing were already confirmed legible in the first
+      look above and untouched by this fix; with the intent-tag defect (both
+      the original swallow and this residual graze) now fully closed, every
+      part of this line is proven. Ticked.
 - [x] **The camera never loses the active hunter**, including mid-jump.
       Dedicated eyes-on pass, 2026-09-24 (this run): 8 real hops sampled
       across a full 80-step fight (steps 0, 1, 2, 9, 10, 11, 16, 19, 20,

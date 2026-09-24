@@ -2,13 +2,93 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T14:08
-working_on: Checked the board fresh — no open to:artist request, my own art-style pick request to Nick still unanswered, and every other unticked JACKAL-BAR line is parked or already blocked on Nick/the fixer. Confirmed baseline clean (ALL TESTS PASSED), shipped nothing this run.
+updated: 2026-09-24T15:17
+working_on: The fixer's frame_pre_draw fix closed the last intent-tag residual; re-verified it live with a fresh 80-step baseline (0 intent-tag-vs-hunter fails) and ticked JACKAL-BAR's Motion "jump reads" line. Still waiting on Nick's art-style pick for anything bigger.
 ---
 
 # artist
 
-## This run — 2026-09-24 14:08 ET
+## This run — 2026-09-24 15:17 ET
+
+- **Did:** the fixer closed the intent-tag-vs-hunter residual that was
+  blocking my own last unticked Motion line ("the jump reads") — re-verified
+  it live myself instead of trusting the write-up, then ticked the line.
+- **Worked?** Yes. Fresh full fight (80 steps, foreground, to its own real
+  ending) shows zero intent-tag-vs-hunter fails anywhere, including the
+  exact ground-level hop where the graze used to live. Looked at the actual
+  frames too, not just the check: the frog sits with a clear gap from the
+  tag's edge in every one.
+- **Next:** still waiting on Nick's pick on the art-style request — nothing
+  else on my brief is open or unblocked right now.
+- **Need from you:** your pick on
+  `2026-09-24-1147-nick-to-artist-find-an-art-style-worth-copying.md`.
+
+![[frames/artist/2026-09-24-jump-reads-tag-fix-final-verify.png]]
+
+## Now
+
+No open `to: artist` request this run (checked every request's frontmatter
+— the only open notes are two `to: fixer` (one `taken`, the stone-route
+thread; one `open` but unrelated to me) and one `to: nick` (my own
+art-style ask, `issue: 8`, still no text under its `## Nick's answer`
+heading — just the template comment, re-checked fresh this run). None of my
+own `to: nick` notes had a fresh unhandled answer either.
+
+**What changed since my last run (14:08 ET):** the fixer landed
+`2026-09-24-1002-playtester-to-fixer-intent-tag-still-grazes-hunter-at-hop-start.md`
+(commit `d443ccd`, 14:42 ET) — the exact residual my own 14:08 note named as
+the one thing keeping the Motion "jump reads" line unticked. Root cause per
+the fixer's own write-up: `_position_intent_tag()` ran from `_process()`,
+one engine frame behind the active hunter's own climb tween, so the tag was
+placed to clear a hunter position that was already stale by the time that
+frame rendered. Fixed by moving the call to `RenderingServer.frame_pre_draw`.
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `pip install
+pillow numpy`. No Blender or Meshy needed — verification only, no asset
+touched.
+
+**Did not take the fixer's proof on faith.** `run_tests.gd` first —
+`ALL TESTS PASSED`, including the fixer's own two new tests (the mechanism
+test built on real captured frame-115/116 numbers, and the
+`frame_pre_draw`-connection guard). Then a fresh, independent full 80-step
+`mode=play beast=cinder_jackal` baseline, foreground with a 10-minute
+timeout (the run exceeded the harness's own default 400s foreground window
+and moved to background once — followed it to completion with a real
+process-exit wait rather than end the turn on it, per `COMMON.md` §4b).
+Played clean to its own real ending (Pounce landed, screen changed to
+Location3D). Result: `intent-tag-vs-hunter` — 0 fails across the entire
+run, confirmed by grepping the report (`grep -c "intent-tag-vs-hunter"
+report.md` → 0) rather than eyeballing the log. Only failing check left:
+`hop-distance-band` (62), the pre-existing, unrelated stone-route item —
+already the fixer's own separate `taken` thread, not this line's concern,
+not a regression (same count shape as every prior run on record).
+
+**Then looked, since a check proves the math, not that it reads right**
+(this brief's own standing rule). Read `hop_000_03.png` through
+`hop_000_06.png` — the exact frames the residual used to graze on,
+identified from the original bug report's own repro instructions — at true
+1:1, individually, before tiling. In every one the frog sits fully clear of
+the tag's left edge with a real, visible gap; no partial overlap anywhere
+in the sequence. Tiled the four into one strip (native-resolution crops,
+no upscale) for the record:
+
+![[frames/artist/2026-09-24-jump-reads-tag-fix-final-verify.png]]
+
+**Ticked `JACKAL-BAR.md`'s Motion "the jump reads" line.** Anticipation,
+arc and landing were already confirmed legible in the first dedicated look
+(09:24 ET, this same file); the intent-tag defect was the one open item
+keeping the line unticked, in both its original half-tag-swallow form
+(closed same day it was found) and this smaller graze (closed this run).
+With both closed and independently re-verified, every part of the line's
+own wording is now proven — wrote the closing paragraph directly into the
+bar rather than just reference this note.
+
+`ALL TESTS PASSED` (`run_tests.gd`) before and after. `git status` before
+this push: `JACKAL-BAR.md`, this status note, and one new frame — no game
+code, asset, or shader touched this run (the fix itself is the fixer's
+commit, already on `main`; this run only verifies and records it).
+
+## Old: 2026-09-24 14:08 ET
 
 - **Did:** fresh board check — no open `to: artist` request, and my own
   `to: nick` art-style request from last run still has no answer. Walked
