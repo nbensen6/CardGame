@@ -75,6 +75,17 @@ const SIGIL_CLEAR_MARGIN := 0.05
 ## finished easing in yet.
 const SHOULDER_ENGAGED_MIN := 0.95
 
+## For check 9c (camera-ots-while-grounded): how far `_shoulder` may drift
+## above 0 before the resting shot counts as trucking toward
+## over-the-shoulder rather than sitting on the plain ground follow cam
+## (2026-09-24, #11). Small on purpose -- while nobody has climbed,
+## `_aim_camera`'s own `want_ots` is false (gated on `_focused`, which
+## `_focus_camera` never sets true until `anyone_off_ground` is true), so
+## `_shoulder` should read exactly 0.0 the whole time the fight is grounded;
+## this only exists so float noise, not a real truck, can never be mistaken
+## for one.
+const SHOULDER_GROUNDED_MAX := 0.05
+
 ## For check 5d (intent-tag-hides-jumping-hunter): reuses combat_3d.gd's own
 ## pure `hunter_screen_rect`/`_merged_aabb` to measure where the hop's hunter
 ## actually is on screen, the same way check 8d (sigil-behind-hunter) measures
@@ -673,31 +684,64 @@ func _check(v: Node, when: String) -> void:
 				_fail("hunter-offscreen", "%s: the active hunter projects to %v, off the %v screen entirely" % [when, p.round(), screen])
 
 	# 9b. JACKAL-BAR / checklist item 4's own target camera: "third person
-	# over the active hunter's shoulder" is the RESTING shot Nick asked for
-	# (2026-09-23, "make the resting camera third person too"), not only a
-	# mid-jump framing rule. `Combat3D.shoulder_frame()` -- the pure
-	# truck/aim math that composes the over-the-shoulder shot -- already has
-	# full unit coverage in run_tests.gd, proven correct for any `amount`,
-	# but nothing had ever checked that a REAL fight actually DRIVES that
-	# amount (`_shoulder`) up once things settle, as opposed to sitting on
-	# the plain dead-centre follow cam forever. `_aim_camera`'s own rule
-	# (`want_ots`) eases `_shoulder` toward 1.0 whenever the shot is focused,
-	# not still easing in from the establishing wide, and not chasing a leap
-	# tall enough to need the whole-arc framing instead -- so this reuses
-	# check 9's own "not airborne" settle gate (the same moment "the beast is
-	# framed, the hunter is visible" is judged) to check the other half of
-	# checklist item 4 at the same settled instant: not just SOMEWHERE on
-	# screen, genuinely shot from over the shoulder. SHOULDER_ENGAGED_MIN
-	# sits far under 1.0 on purpose -- see its own doc comment for why
-	# anything short of it means the shot never engaged at all, not that the
-	# ease simply hasn't finished.
+	# over the active hunter's shoulder" is the MID-CLIMB shot -- once
+	# someone has actually left the ground. This check used to require OTS
+	# any time the shot was `_focused`, including at rest (2026-09-23, "make
+	# the resting camera third person too"), but #11 (Nick, 2026-09-24;
+	# design/agents/requests/2026-09-24-1700-nick-to-fixer-composition-
+	# hunters-back-stones-as-a-path.md) supersedes that for the RESTING shot
+	# specifically: his own drawing calls it "side-on/three-quarter, not over
+	# the shoulder," whole beast and both hunters small and far back instead
+	# -- the fixer's `_focus_camera` fix (`anyone_off_ground`) now leaves
+	# `_focused` false at rest on purpose, so gating on `climbing` here (not
+	# just `focused`) keeps this check asking for OTS only where #11 still
+	# wants it: once someone is actually climbing. See 9c below for the other
+	# half -- the resting shot must NOT engage OTS -- checked explicitly
+	# rather than left to fall out of this gate by omission. `Combat3D.
+	# shoulder_frame()` -- the pure truck/aim math that composes the
+	# over-the-shoulder shot -- already has full unit coverage in
+	# run_tests.gd, proven correct for any `amount`, but nothing had ever
+	# checked that a REAL fight actually DRIVES that amount (`_shoulder`) up
+	# once things settle, as opposed to sitting on the plain dead-centre
+	# follow cam forever. `_aim_camera`'s own rule (`want_ots`) eases
+	# `_shoulder` toward 1.0 whenever the shot is focused, not still easing
+	# in from the establishing wide, and not chasing a leap tall enough to
+	# need the whole-arc framing instead -- so this reuses check 9's own "not
+	# airborne" settle gate (the same moment "the beast is framed, the hunter
+	# is visible" is judged) to check the other half of checklist item 4 at
+	# the same settled instant: not just SOMEWHERE on screen, genuinely shot
+	# from over the shoulder. SHOULDER_ENGAGED_MIN sits far under 1.0 on
+	# purpose -- see its own doc comment for why anything short of it means
+	# the shot never engaged at all, not that the ease simply hasn't
+	# finished.
 	var focused: bool = bool(v.get("_focused"))
 	var establishing: bool = bool(v.get("_establishing"))
-	if not airborne and focused and not establishing and cam != null:
+	var climbing: bool = hunters is Array and Combat3D.anyone_off_ground(hunters as Array)
+	if not airborne and climbing and focused and not establishing and cam != null:
 		var shoulder: float = float(v.get("_shoulder"))
 		if shoulder < SHOULDER_ENGAGED_MIN:
-			_fail("camera-not-over-shoulder", "%s: the resting shot never engaged the over-the-shoulder truck (_shoulder=%.3f, want >= %.2f) -- reads as a plain follow cam, not third-person over the shoulder" \
+			_fail("camera-not-over-shoulder", "%s: the mid-climb shot never engaged the over-the-shoulder truck (_shoulder=%.3f, want >= %.2f) -- reads as a plain follow cam, not third-person over the shoulder" \
 				% [when, shoulder, SHOULDER_ENGAGED_MIN])
+
+	# 9c. The other half of the same #11 split, checked explicitly rather
+	# than left to fall out of 9b's `climbing` gate by omission: while nobody
+	# has left the ground, the resting shot must NOT engage the
+	# over-the-shoulder truck -- #11's own bullet 4, "you are looking AT the
+	# fight, not down the hunter's neck." This is a real regression risk, not
+	# a hypothetical one: the director's 2026-09-24 18:40 note flags that
+	# this exact camera is being tuned from two directions at once (this
+	# playtester's own 2026-09-23 check enshrined OTS-at-rest; #11 asks for
+	# the opposite the very next day), and warns that if either agent "fixes"
+	# the other, the camera flips back. Gating 9b on `climbing` alone already
+	# makes it silent while grounded, but silence proves nothing happened,
+	# not that nothing broke -- so this checks the actual invariant
+	# `_focus_camera` now encodes (`anyone_off_ground` gates `_focused`)
+	# directly, live, every settled ground step.
+	if not airborne and not climbing and not establishing and cam != null:
+		var shoulder2: float = float(v.get("_shoulder"))
+		if focused or shoulder2 > SHOULDER_GROUNDED_MAX:
+			_fail("camera-ots-while-grounded", "%s: the resting shot engaged the over-the-shoulder truck (_focused=%s, _shoulder=%.3f) -- #11 calls this shot side-on/three-quarter, not over the hunter's shoulder" \
+				% [when, focused, shoulder2])
 
 
 func _all_controls(n: Node) -> Array:
