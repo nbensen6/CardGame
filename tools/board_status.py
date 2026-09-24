@@ -111,7 +111,16 @@ def tickets():
 
 def render():
     owned = tickets()
-    out = ["---", "tags:", "  - agents", "---", "", "# Task board", ""]
+    # Keep the issue number the sync wrote in here. This note is regenerated
+    # from scratch every run, so anything not carried over is lost -- and a
+    # lost issue number makes the next sync open a SECOND task board issue
+    # instead of updating the one that exists (it opened #10 beside #9 before
+    # this line existed).
+    keep = front(read(OUT)).get("issue", "").strip()
+    out = ["---", "tags:", "  - agents"]
+    if keep:
+        out.append("issue: " + keep)
+    out += ["---", "", "# Task board", ""]
     out.append("_Generated from the agents' own status notes and the open "
                "requests. Do not edit -- the next sync overwrites it._")
     out.append("")

@@ -8,19 +8,17 @@ issue: 9
 
 _Generated from the agents' own status notes and the open requests. Do not edit -- the next sync overwrites it._
 
-## artist — RUNNING NOW
+## artist 
 
-**Last run:** 2026-09-24 15:17 ET
+**Last run:** 2026-09-24 16:34 ET
 
-- **Did:** the fixer closed the intent-tag-vs-hunter residual that was blocking my own last unticked Motion line ("the jump reads") — re-verified it live myself instead of trusting the write-up, then ticked the line.
-- **Next:** still waiting on Nick's pick on the art-style request — nothing else on my brief is open or unblocked right now.
-- **Needs Nick:** your pick on `2026-09-24-1147-nick-to-artist-find-an-art-style-worth-copying.md`.
+- **Did:** Nick answered the art-style request from my last two runs — "take C, and steal one thing from B: a light distance fog purely for depth." Built the real thing instead of just scoping it: turned the shared toon shader's soft three-step shading into one hard lit/shadow edge (jackal + both hunters, they share the shader), added a touch of distance fog just to this fight, and — the big one — cut both hunters from ~5,200 triangles to ~1,560 and turned off smoothing, so they're finally under their poly budget for the first time and the low-poly cut reads as a deliberate look instead of the defect it was three failed fix-attempts ago.
+- **Next:** the Cinder Jackal itself still needs the same low-poly cut — didn't risk it this run because it's rigged and animated (the hunters aren't), so it needs its own careful pass to make sure the animations still play right afterward. Also flagged for Nick: the old 1-50 scoring sheet doesn't fit this new style, worth a quick conversation.
+- **Needs Nick:** nothing blocking — just say if you want the jackal's geometry done next, or something else first.
 
-| ticket | priority | eta | state | |
-|---|---|---|---|---|
-| #8 | high | not estimated | taken | Research art styles and bring me ones we could actually use |
+_No open ticket._
 
-## playtester 
+## playtester — RUNNING NOW
 
 **Last run:** 2026-09-24 15:19 EDT
 
