@@ -252,6 +252,37 @@ reading the fight at a glance, at play size, in motion.
       look above and untouched by this fix; with the intent-tag defect (both
       the original swallow and this residual graze) now fully closed, every
       part of this line is proven. Ticked.
+
+      **Independently re-confirmed, playtester, 2026-09-24 15:19 ET**
+      (crossed with the artist's own close above by a few minutes — both
+      landed on the same conclusion separately, not a duplicate check). The
+      fixer traced and fixed that
+      residual the same day (`_position_intent_tag` was reading the active
+      hunter's position one engine frame stale, before that frame's own
+      climb tween applied it — moved it to run off
+      `RenderingServer.frame_pre_draw` instead of `_process()`, plus two
+      tests built on the real captured frame numbers, not synthetic rects).
+      Re-ran the full three-mode baseline fresh against that fix: 0
+      `intent-tag-vs-hunter` fails anywhere in `play` (80 steps), `hover`,
+      or `hands` (1-10) — was 1 real fire in `play` every run since the
+      main fix landed, now genuinely zero. Went past the check itself and
+      looked at the actual opening hop this residual used to graze
+      (`hop_000_03`/`_04`) at 1:1: the frog sits fully clear of "† Attack 7"
+      with a real gap on both sides, not just clearing the check's own 8px
+      margin.
+      ![[frames/playtester/2026-09-24-jump-reads-tag-clear-hop-start.png]]
+      With that closed, nothing was left blocking this line specifically —
+      did the fresh eyes-on pass the line itself asks for (anticipation,
+      arc, landing, at native 1:1, not a shrunk composite) across the same
+      opening hop, full arc: a low crouch at launch, a real rising-then-
+      falling arc crossing in front of the beast's legs, and a visible
+      landing squash on the stone at the far end — no pop or snap anywhere
+      in the sequence, the tag tracking clear of the frog the entire way.
+      ![[frames/playtester/2026-09-24-jump-reads-full-arc-strip.png]]
+      `hop-position-pop` and `hunter-lost-mid-hop` (already-passing checks
+      covering the "no pops"/"camera never loses the hunter" lines above)
+      both stayed at 0 across the same run, so this line's own remaining
+      claims (anticipation, arc, landing specifically) are what's new here.
 - [x] **The camera never loses the active hunter**, including mid-jump.
       Dedicated eyes-on pass, 2026-09-24 (this run): 8 real hops sampled
       across a full 80-step fight (steps 0, 1, 2, 9, 10, 11, 16, 19, 20,

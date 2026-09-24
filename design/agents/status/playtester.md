@@ -2,13 +2,78 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-24T13:11
-working_on: Nick answered the sigil-cheek request (already relayed to the fixer's stone-route build ahead of this run, commit 1a237dc) -- closed the bookkeeping gap on my own note so it points at where that's tracked. Full three-mode baseline re-confirmed clean, byte-for-byte the same two known open issues as every prior run (62 hop-distance-band in play, 22 in hands, 1 intent-tag-vs-hunter). Tried a new live check for "hunter stands with real space off the skin" using combat_3d's own mesh hull (_front_of_beast) and ruled it out with real numbers -- the hull returns wildly wrong values off an exact climb anchor (up to 12m), the same picking-up-unrelated-geometry failure mode the code already documents for stand_z_for's own hull use. Not shipped; no safe way to verify "hunter clings to skin" automatically without a real per-point mesh raycast, a bigger job.
+updated: 2026-09-24T15:19
+working_on: The fixer landed the intent-tag-vs-hunter ground-hop-start fix (frame_pre_draw retiming, commit d443ccd) since my last run. Re-ran the full three-mode baseline fresh against it -- confirmed 0 intent-tag-vs-hunter fails anywhere (play/hover/hands), was 1 real fire in play every run since the main fix landed. hop-distance-band unchanged (62 play, 2 hover, 22 hands -- the same known geometric ceiling, still with the fixer). With the residual closed, ticked JACKAL-BAR's "The jump reads" line for real: fresh eyes-on pass across the opening hop's full arc at native 1:1 (crouch, rising/falling arc, landing squash, tag staying clear throughout), two frames. No open requests to playtester this run.
 ---
 
 # playtester
 
-## This run — 2026-09-24 13:11 EDT
+## This run — 2026-09-24 15:19 EDT
+
+- **Did:** no requests addressed to `playtester` were open this run. Since
+  my last run, the fixer landed the fix for the last thing I had filed
+  (`1002`, the intent-tag-vs-hunter residual at ground-hop start — commit
+  `d443ccd`). Ran the full three-mode baseline fresh against it first, then
+  spent the rest of the run confirming that fix live and, since it closed
+  the last thing blocking JACKAL-BAR's "The jump reads" line, gave that
+  line the fresh eyes-on pass it asks for and ticked it.
+- **Worked?** Yes, on all counts. Baseline: `play` (80 steps, real ending)
+  0 `intent-tag-vs-hunter`, 0 `script-error`, `hop-distance-band` ×62 (only
+  known open item, unchanged); `hover` 0 `intent-tag-vs-hunter`, 0 flips,
+  `hop-distance-band` ×2; `hands` (1-10) 0 `intent-tag-vs-hunter`,
+  `hop-distance-band` ×22 — all three exactly matching the last run's shape
+  except `intent-tag-vs-hunter` going from its one known real fire to zero.
+  Looked at the actual repro frames (`hop_000_03`/`_04` from this run's own
+  `play` baseline, the exact frames the open request used to show a real
+  graze) at 1:1: the frog now sits fully clear of "† Attack 7" with a
+  visible gap on both sides. Then did the fresh look "The jump reads" had
+  never had a dedicated pass on its own remaining claims (the residual was
+  the only thing keeping it unticked): tiled the opening hop's frames 0,
+  4, 8, 12, 16, 20, 23 at native crop resolution (never shrunk — a past run
+  in this thread flagged a shrunk composite as misleading) — a clear
+  low crouch at launch, a real airborne arc crossing in front of the
+  beast's legs, and a visible landing squash on the stone at the end, no
+  pop or snap anywhere in the sequence. Ticked the line in JACKAL-BAR with
+  both frames.
+- **Next:** watch for the fixer picking up stone-route item 2
+  (`hop-distance-band`, the only other open item, confirmed a genuine
+  geometric ceiling several runs ago — needs re-authoring the Python
+  reference model or a joint placement rule, not another retry). Also
+  watch for the fixer picking up the "stones IN FRONT of the jackal" /
+  "space between the hunter and the skin" requirement Nick added to the
+  same stone-route build request (`2026-09-23-1846-...`) on 2026-09-24
+  11:52 ET — still `status: taken`, no movement on that half as of this
+  run's read of it. Once it lands, re-check the sigil-cheek note
+  (`2026-09-24-0322-...`) and close it.
+- **Need from you:** nothing.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | unchanged — closed two runs ago (Play feedback) |
+| 2 | hunters land on the beast correctly | unchanged — 0 `hunter-off-marker`, 0 `hunters-overlap`, 0 `route-reversal`, 0 `sigil-behind-hunter` |
+| 3 | jump animation (squash/arc/landing) | **JACKAL-BAR's "The jump reads" line closed this run** — the last blocker (the intent-tag-vs-hunter residual) is fixed and confirmed at 0 across all three modes; fresh eyes-on pass across the full opening-hop arc at native 1:1, two frames |
+| 4 | camera | unchanged — 0 `hunter-offscreen`/`hunter-lost-mid-hop`; `intent-tag-vs-hunter` now also 0 (was 1) |
+| 5 | nothing errors | clean — 0 `script-error` across all three modes |
+
+![[frames/playtester/2026-09-24-jump-reads-tag-clear-hop-start.png]]
+The exact frame the open request used to show a real graze (`hop_000_04`,
+opening hop): the frog now sits fully clear of "† Attack 7", a real gap on
+both sides — the fixer's `frame_pre_draw` retiming fix, confirmed live.
+
+![[frames/playtester/2026-09-24-jump-reads-full-arc-strip.png]]
+The opening hop's full arc, frames 0/4/8/12/16/20/23, native crop
+resolution (not shrunk): crouch, rising arc, falling arc, landing squash on
+the stone — no pop anywhere, the tag never touching the frog through the
+whole sequence.
+
+One commit this run: the JACKAL-BAR tick with its evidence, two frames,
+and this write-up. No game code changed (`git diff` on anything under
+`game/` is empty) — this run confirmed the fixer's fix and closed a
+checklist line, it didn't find a new bug.
+
+## Old: 2026-09-24 13:11 EDT
 
 - **Did:** Nick's answer landed on the sigil-cheek request since the last
   run — but it had already been relayed to the fixer, ahead of this run,
