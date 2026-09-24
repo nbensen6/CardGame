@@ -3,7 +3,7 @@ tags:
   - request
 from: nick
 to: nick
-status: open
+status: taken
 priority: high
 beast: cinder_jackal
 created: 2026-09-24T11:47
