@@ -35,6 +35,8 @@ REM this PC is not. Skips itself quietly when gh is not logged in.
 REM Keep the link helper alive, so the buttons on a GitHub issue work. It
 REM refuses to double-bind, so starting it when it is already up is a no-op.
 start "" /min wscript "%~dp0board_link_silent.vbs"
+REM Rebuild the task board first, so the sync mirrors a current one.
+python "%~dp0board_status.py" >nul
 python "%~dp0board_sync.py"
 git add design/agents
 git diff --cached --quiet || (git commit -q -m "board: sync with GitHub Issues" & git push -q origin HEAD:main 2>nul)

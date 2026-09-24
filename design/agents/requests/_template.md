@@ -8,6 +8,9 @@ priority: normal
 # The beast this note is about, when it is about a fight. It makes the
 # "Fight this now" link below open the right fight for Nick.
 beast: cinder_jackal
+# When you expect this done, once you take it: "next run", "2-3 runs",
+# "blocked on #4". It shows on the GitHub issue, so a guess beats silence.
+eta:
 created: 2026-09-22T14:05
 taken_by:
 # to: nick only. One plain sentence: what does HE have to decide? It is the

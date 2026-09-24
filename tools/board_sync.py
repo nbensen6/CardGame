@@ -117,6 +117,24 @@ def stamp_ticket(text, num):
     return text[:m.end()] + nl + nl + "**#%s**" % num + text[m.end():]
 
 
+def status_line(fm):
+    """The one line Nick reads before deciding whether to open the issue.
+
+    Everything in it already lives in the frontmatter except `eta:`, which the
+    agent taking the request fills in -- a request with no estimate reads "not
+    estimated" rather than silently implying "soon".
+    """
+    owner = fm.get("taken_by", "").strip() or fm.get("to", "?").strip()
+    state = fm.get("status", "open").strip()
+    bits = [
+        "**Priority:** " + (fm.get("priority", "normal").strip() or "normal"),
+        "**Owner:** " + owner,
+        "**Status:** " + state,
+        "**ETA:** " + (fm.get("eta", "").strip() or "not estimated"),
+    ]
+    return " · ".join(bits)
+
+
 def assignees_for(fm):
     """Assign Nick the issues that are his.
 
@@ -202,7 +220,8 @@ def issue_body(path, body, fm):
     # is why it showed up as plain text. http IS allowed, so the buttons point
     # at the local redirector (tools/board_link.py) and it hands the browser
     # the obsidian:// address GitHub would not print.
-    head = "**[Open in Obsidian](%s/note/%s)**" % (LINK_HELPER, quote(in_vault))
+    head = status_line(fm) + "\n\n"
+    head += "**[Open in Obsidian](%s/note/%s)**" % (LINK_HELPER, quote(in_vault))
     head += " · [read it on GitHub](https://github.com/%s/blob/main/%s)\n\n" % (REPO, rel)
     head += "_Mirror of `%s`. The note is the source of truth; " % rel
     head += "comment here and the sync copies it back into the note for the agents._\n\n"
@@ -342,6 +361,41 @@ def pull(dry):
 
 # --------------------------------------------------------------------------
 
+BOARD_NOTE = os.path.join("design", "agents", "Task board.md")
+
+
+def mirror_board(dry):
+    """Keep one long-lived issue holding the generated task board.
+
+    A GitHub Project would be the obvious home, but Projects v2 is GraphQL-only
+    and GraphQL is blocked for these sessions, so a single issue it is -- which
+    also means it arrives in the mobile app like everything else.
+    """
+    if not os.path.exists(BOARD_NOTE):
+        return []
+    with open(BOARD_NOTE, encoding="utf-8", newline="") as f:
+        text = f.read()
+    fm, _, body = split_note(text)
+    num = fm.get("issue", "").strip()
+    if dry:
+        print("  would %s the task board issue" % ("update #" + num if num else "open"))
+        return []
+    if not num:
+        made = gh("-X", "POST", "repos/%s/issues" % REPO,
+                  "-f", "title=Task board — what the agents are doing",
+                  "-f", "body=" + body)
+        if not made:
+            return []
+        num = str(made["number"])
+        with open(BOARD_NOTE, "w", encoding="utf-8", newline="") as f:
+            f.write(set_field(text, "issue", num))
+        print("  #%s opened for the task board" % num)
+        return [BOARD_NOTE]
+    gh("-X", "PATCH", "repos/%s/issues/%s" % (REPO, num),
+       "-f", "body=" + body, quiet=True)
+    return []
+
+
 def selftest():
     t = "---\ntags:\n  - request\nto: fixer\nstatus: open\n---\n\n# A title\n\nbody\n"
     fm, _, body = split_note(t)
@@ -418,7 +472,7 @@ def main():
         return 0
     print("board sync%s" % (" (dry run)" if dry else ""))
     ensure_labels(dry)
-    changed = push(dry) + pull(dry)
+    changed = push(dry) + pull(dry) + mirror_board(dry)
     if not changed:
         print("  nothing changed")
     return 0

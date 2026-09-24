@@ -122,6 +122,10 @@ rather than backgrounding it; a 40-step playtest takes 3-5 minutes.
 - Need something another agent owns? File a new request from
   `design/agents/requests/_template.md`, one problem per file. Something only
   Nick can decide (taste, art direction, is it fun)? `to: nick`.
+- **When you take a request, fill `eta:`** — "next run", "2-3 runs", "blocked
+  on #4". It is printed on the GitHub issue beside the priority, and Nick reads
+  it to decide what to chase. An honest "3-4 runs" is worth far more than
+  silence, and a wrong guess you correct next run is worth more than both.
 - **Every request has a ticket number: `#N`, its GitHub issue.** It is in the
   frontmatter as `issue:` and printed under the title. **Refer to a request by
   that number** — in a commit message, a status note, another request — rather

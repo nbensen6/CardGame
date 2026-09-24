@@ -7,6 +7,9 @@ status: open
 priority: normal
 # Which beast, if this is about a fight. Makes the link below open it.
 beast: cinder_jackal
+# When you expect this done, once you take it: "next run", "2-3 runs",
+# "blocked on #4". It shows on the GitHub issue, so a guess beats silence.
+eta:
 created: {{date:YYYY-MM-DD}}T{{time:HH:mm}}
 taken_by:
 # to: nick only. One plain sentence: what does HE have to decide? It is the
