@@ -2,13 +2,50 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-23T23:12
-working_on: Full three-mode baseline (clean, matches last run -- both known open bugs still open, no new failures) plus a new check for the fixer's stone-route fix (route.py's "no reversal" rule), verified against the live game and pushed.
+updated: 2026-09-24T01:13
+working_on: Full three-mode baseline (clean, matches last run -- same two known open bugs, no new failures, route-reversal still 0) plus a new check, hop-distance-band, that live-confirms the fixer's own partial fix on the stone-route request's item 2 (the two hops nearest the sigil are still short) -- verified against the live game and pushed.
 ---
 
 # playtester
 
-## This run - 2026-09-23 23:12 EDT
+## This run — 2026-09-24 01:13 EDT
+
+- **Did:** no requests addressed to `playtester` were open. Ran the full
+  three-mode baseline first, then added one new check: `hop-distance-band`,
+  the runtime half of the fixer's still-open stone-route item 2 (ordinary
+  hold-to-hold hops have to sit inside `hop_arc()`'s 2.4-9.2 world-unit
+  band). The fixer's own build-time gate (`route.py`) already enforces this
+  in Blender-authoring units; nothing re-checked it against what the fight
+  actually loads — the same shape of gap check 8b (`route-reversal`) closed
+  last run.
+- **Worked?** Yes, both halves. Baseline: 0 new failures — `hover` and
+  `hands` both clean, `play` (80 steps) reproduced exactly the one
+  already-filed, already-open bug (`intent-hidden` ×12) and nothing else —
+  not a regression, and confirms the fixer's item-1/item-3 stone-route work
+  (route direction, next-hold ring) still holds: 0 `route-reversal`, 0
+  `hunter-off-marker`, 0 script-error across all three modes. New check:
+  fired for real, live, on exactly the two hops the fixer's own last run
+  named as still short — Height 3→4 measured 2.39m, Height 4→5 measured
+  1.52m, both against the same 2.42m floor, matching the fixer's numbers to
+  two decimal places — while Height 0→1/1→2/2→3 (7.10/3.28/6.23, all
+  in-band per the same table) never fired, in the same run: real signal in
+  both directions, not a check that can only ever fire or only ever pass.
+  Nothing new to file: this is the fixer's own already-open, already-taken
+  request (`2026-09-23-1846-...build-the-one-directional-stone-route.md`),
+  now with a permanent live check that will read 0 the moment item 2 is
+  actually finished, instead of depending on someone remembering to re-read
+  the request's own numbers table.
+- **Next:** watch for the fixer closing item 2 for real (its own `## Result`
+  says it needs either re-authoring the Python reference model's sigil hold
+  or a joint placement rule that considers the Height 4→5 hop when choosing
+  Height 4 — two dead ends already ruled out, written down there). Once it
+  lands, re-run and confirm `hop-distance-band` goes to 0. Also watch for
+  either open bug landing a fix (`intent-tag-hides-behind-party-panel`,
+  `boss-damage-popup-offscreen-at-sigil`) and re-run to confirm each goes to
+  0.
+- **Need from you:** nothing this run.
+
+## Old: 2026-09-23 23:12 EDT
 
 - Did: no requests addressed to `playtester` were open (both closed out
   already — the stone-route design question and the fixer's technical-
@@ -80,68 +117,77 @@ working_on: Full three-mode baseline (clean, matches last run -- both known open
 ## Now
 
 Fresh sandbox, Godot 4.7.1 + `--import`. `run_tests.gd`: `ALL TESTS PASSED`
-before and after. Full baseline, all three modes, matches the prior run
-exactly — same two already-filed, already-open bugs, nothing new:
+before and after. Full baseline, all three modes, against a tip that
+already carries the fixer's 2026-09-24 00:24 ET run (item 3 of the
+stone-route request verified with no code change; item 2 partially fixed —
+two of five hops now comfortably in-band, two still short):
 
-- `mode=play steps=40`: 2 failing checks, `intent-hidden` ×26 and
-  `damage-popup-offscreen` ×1 — both already filed
-  (`2026-09-23-2141-...intent-tag-hides-behind-party-panel.md`,
-  `2026-09-23-1735-...boss-damage-popup-offscreen-at-sigil.md`), both still
-  open/unfixed, neither a new failure.
+- `mode=play steps=80`: 1 failing check, `intent-hidden` ×12 — already
+  filed (`2026-09-23-2141-...intent-tag-hides-behind-party-panel.md`),
+  still open/unfixed, not a new failure. 0 `route-reversal`, 0
+  `hunter-off-marker`, 0 script-error — the fixer's item-1 (route direction)
+  fix still holds under this evening's item-2 changes.
 - `mode=hover`: 0 flips, clean.
-- `mode=hands`: 0 fails across hand sizes 1-10, clean.
+- `mode=hands`: 0 fails across hand sizes 1-10 (on the pre-edit script,
+  re-confirmed clean again after adding this run's own check — see below).
 
-New check added to `game/tools/playtest.gd` (check 8b, `route-reversal`):
-the fixer's stone-route fix landed this evening
-(`5a0db96`, "fix the climb-route reversal at its cause") — `route.py`'s
-rule that a beast's climb only ever sweeps one way, enforced at BUILD time
-in `ai_beast.py`'s raycast and `beast.py`'s `_prove()` gate. That is real,
-but nothing downstream of the build ever re-checked it against what a
-player's own camera actually loads — which is exactly the gap that let the
-original sigil bug ship (`beast.py` built the model; nothing looked at the
-result afterward). New check reads the live `_climb_points` off the loaded
-beast, projects onto the same horizontal sweep plane `route.py` uses
-(Godot x/z; y is climb height, excluded, same reasoning as `route.py`
-itself), and fails if any rung nets backward (>0.05m) along the direction
-the last two rungs already established — tolerant of the same deliberate
-side-to-side zigzag `route.py`'s own build-time check tolerates, since it's
-the identical dot-product math, just read off the shipped result instead
-of the Blender-side authoring data.
+New check added to `game/tools/playtest.gd` (check 8c, `hop-distance-band`):
+the runtime half of the stone-route request's item 2 ("keep hold-to-hold
+distance between 2.4 and 9.2 world units"), the same shape of gap check 8b
+(`route-reversal`) closed last run — the fixer's `route.py`
+(`hop_world_distance`/`hop_distance_violation`) enforces the band at BUILD
+time, in a beast's own Blender-authoring units, but nothing re-checks it
+against what a player's camera actually loads. `_climb_points` is already
+in the SAME world units `hop_arc()` clamps against (`combat_3d.gd`:
+`next.origin * _beast_scale`, the literal Vector3s `hop_arc()` itself
+receives as `from`/`to`), so this needed no mesh-to-world conversion: it
+reads adjacent rungs straight off the live dictionary and checks the FULL
+3D distance (unlike 8b, which projects onto the horizontal sweep and
+ignores height) against `hop_arc()`'s own clamp solved for distance
+(2.4230769–9.1538461, `HOP_MIN_WORLD`/`HOP_MAX_WORLD`, mirroring
+`route.py`'s identical constants since this file can't import a `.py`
+module).
 
-Verified in two stages before trusting it, same discipline as every check
-added here: `mode=hands` first (all 10 sizes, 0 fires), then a full
-`mode=play` baseline (0 fires) — confirms the check does not fire against
-the route the fixer's item-1 fix already corrected. This run found no new
-bug; it closes a coverage gap so a FUTURE regression (this beast or a new
-one) fails an automated playtest instead of depending on someone
-remembering to run `python3 tools/blender/test_route.py`.
+Verified both directions in the same live run, not synthetically — the
+real shipped Cinder Jackal already has both a passing case and a failing
+one to check against: `mode=hands` (all 10 sizes) fired 22 times (11 calls
+× 2 short hops), `mode=play` (80 steps) fired 62 times (31 calls × 2) — in
+both runs, every single fire was Height 3→4 (2.39m) or 4→5 (1.52m), never
+0→1/1→2/2→3 (7.10/3.28/6.23, all comfortably in-band). Those numbers match
+the fixer's own 2026-09-24 00:24 ET table to two decimal places — this is
+independent, live confirmation of their own diagnosis, not a new bug. This
+run found no new bug; it closes a coverage gap so the moment item 2 is
+actually finished (or regresses on a future beast), a playtest run proves
+it instead of depending on someone re-reading a request's numbers table.
 
 Checklist snapshot:
 
 | # | item | state |
 |---|---|---|
 | 1 | card plays read | unchanged — reads clearly except where the already-filed offscreen-popup bug (`1735`) hides the number |
-| 2 | hunters land on the beast correctly | unchanged — 0 `hunter-off-marker` fails; **new**: 0 `route-reversal` fails (the fixer's stone-route fix holds) |
+| 2 | hunters land on the beast correctly | unchanged — 0 `hunter-off-marker`, 0 `route-reversal`; **new**: `hop-distance-band` now watches the stone-route item-2 gap live (currently 2 real fires, matching the fixer's own known-incomplete fix) |
 | 3 | jump animation (squash/arc/landing) | unchanged — clean, no pops, across every hop this run |
 | 4 | camera | unchanged — 0 `hunter-offscreen`/`hunter-lost-mid-hop` fails; `intent-hidden` still open (filed) |
 | 5 | nothing errors | clean — 0 script-error fails across all three modes |
 
-One commit this run: the new `route-reversal` check in `playtest.gd`,
-pushed before the `mode=play` verification finished (per COMMON.md 4b — a
-pushed check is recoverable, an unpushed one that outlives this sandbox is
-not), then proven live exactly as described above.
+One commit this run: the new `hop-distance-band` check in `playtest.gd`
+(`8c3813a`), pushed before writing this note up (per COMMON.md 4b), then
+proven live exactly as described above — all three baseline modes and both
+verification runs (`hands`, `play`) were run and read before this note was
+written.
 
 ## Next
 
-Watch for the fixer finishing items 2/3 of the stone-route build
-(`2026-09-23-1846-...build-the-one-directional-stone-route.md` — spacing
-band, next-hold ring; item 1 is done and now covered by an automated
-check). Once the next-hold ring exists, that is itself a new check to add
-(the approved design: "the ring on the NEXT hold should always be visible
-before the card that sends you there is played"). Also watch for either
-open bug (`intent-tag-hides-behind-party-panel`,
-`boss-damage-popup-offscreen-at-sigil`) landing a fix, and re-run to
-confirm each goes to 0. Nothing else queued.
+Watch for the fixer closing stone-route item 2 for real — its own
+`## Result` on `2026-09-23-1846-...build-the-one-directional-stone-route.md`
+names two dead ends already ruled out (widening the per-rung search window
+reintroduces a live route reversal; an unconstrained sigil re-raycast can
+land off the head) and says what's actually needed (re-author the Python
+reference model's sigil hold, or a joint placement rule that considers the
+Height 4→5 hop when choosing Height 4). Once it lands, re-run and confirm
+`hop-distance-band` goes to 0. Also watch for either open bug landing a fix
+(`intent-tag-hides-behind-party-panel`, `boss-damage-popup-offscreen-at-
+sigil`) and re-run to confirm each goes to 0. Nothing else queued.
 
 ## Old: 2026-09-23 21:41 EDT, intent-tag-hides-behind-party-panel filed
 
@@ -1369,6 +1415,17 @@ remain the backstop for that; keep saving them.
 
 ## Log
 
+- 2026-09-24 01:13 EDT — no open requests addressed to `playtester`. Full
+  three-mode baseline (clean, matches last run: `intent-hidden` ×12, already
+  filed/open, not a regression; 0 `route-reversal`, 0 `hunter-off-marker`, 0
+  script-error — the fixer's item-1/item-3 stone-route work still holds).
+  Added `hop-distance-band` to `playtest.gd` (check 8c: an ordinary
+  hold-to-hold hop must sit inside `hop_arc()`'s 2.4-9.2 world-unit band,
+  the runtime half of the fixer's still-open stone-route item 2) — fired
+  live on exactly the two hops (Height 3→4, 4→5) the fixer's own last run
+  named as still short, matching their numbers to two decimals, while the
+  three in-band hops stayed silent in the same run. Commit `8c3813a`,
+  pushed.
 - 2026-09-23 23:12 EDT — no open requests addressed to `playtester`. Full
   three-mode baseline (clean, matches last run's own results exactly:
   `intent-hidden` ×26 and `damage-popup-offscreen` ×1, both already filed
