@@ -2,13 +2,93 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T19:05
-working_on: Closed #13 — cut the hunters to ~260-310 tris with flat vertex colour and fixed character select's stale model.
+updated: 2026-09-24T19:19
+working_on: Closed #16 — the floating footholds were a squashed sphere reading as a saucer; now a true sphere, same width.
 ---
 
 # artist
 
-## This run — 2026-09-24 19:05 ET
+## This run — 2026-09-24 19:19 ET
+
+- **Did:** closed #16 — footholds were a squashed sphere (3 hunters wide, 1
+  tall); made height match width, same one-line fix.
+- **Worked?** Yes, both now read as solid pale boulders, not saucers; frame
+  below.
+- **Next:** nothing queued — back to `JACKAL-BAR.md`'s queue if nothing new
+  comes in.
+- **Need from you:** nothing blocking.
+
+![[frames/artist/2026-09-24-stones-boulder-zoom-before-after.png]]
+![[frames/artist/2026-09-24-stones-boulder-grip-after.png]]
+
+## Now
+
+Took the one open `to: artist` request this run
+(`2026-09-24-1837-director-to-artist-stones-are-saucers-not-boulders.md`,
+`#16`, from the director) — `status: taken`, pushed before starting work,
+per `COMMON.md` §2.
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `ALL TESTS
+PASSED` confirmed before touching anything. No Blender/Meshy needed — this
+was a pure code-side mesh-parameter fix, no asset rebuild.
+
+**Reproduced the director's finding first.** Rendered `state=3d` (the same
+resting shot the request diagnosed from) and cropped tight on both stones —
+matched exactly: two pale flat discs with an orange rim, no readable height.
+
+**Found the actual cause by reading the code, not guessing.**
+`_build_float_stones` (`game/views/combat_3d.gd`) builds each stone's rock
+body as a `SphereMesh` with `radius = HUNTER_HEIGHT * 1.5` (three hunters
+wide — correct, #13's own width) but `height = HUNTER_HEIGHT * 1.0` — a third
+of what a true, un-squashed sphere at that radius needs (`height = 2 *
+radius` is a real sphere in Godot's `SphereMesh`). The code comment right
+above even says "a boulder with bulk, not a plate" — the shape under it
+never matched the words.
+
+**One-line fix:** `rock.height = rock.radius * 2.0` instead of the fixed
+`HUNTER_HEIGHT * 1.0`. Width (radius) untouched, so it's still exactly three
+hunters wide per #13 — only the squash is gone. The body's vertical position
+is already computed to keep the sphere's TOP fixed at the cap's underside
+(so the overlap with the cap stays right regardless of height), so the only
+visible effect is the boulder now extends further down into open air below
+the cap — exactly "more boulder," nothing else moves.
+
+**Looked before shipping**, per this brief's own rule. Rendered `state=3d`
+before/after and cropped tight — the discs became visibly round pale lumps
+under the caps:
+
+![[frames/artist/2026-09-24-stones-boulder-zoom-before-after.png]]
+![[frames/artist/2026-09-24-stones-boulder-resting-before-after.png]]
+
+Also rendered `state=3dgrip` (a hunter actually standing/jumping between
+stones) to make sure the bigger boulder body doesn't clip the beast's legs or
+read wrong mid-hop — clean in both, no overlap with the jackal's legs, no
+change to where a hunter's feet land:
+
+![[frames/artist/2026-09-24-stones-boulder-grip-after.png]]
+
+**Proved no regression.** `run_tests.gd` — `ALL TESTS PASSED`, before and
+after. Fresh full 80-step `mode=play beast=cinder_jackal` playtest,
+foreground, 10-minute timeout per `COMMON.md` §4b: zero `hunter-off-marker`
+anywhere; only the pre-existing `hop-distance-band` (62). Didn't just assume
+that count was old — re-ran the identical playtest against the untouched
+tree (`git stash`) and confirmed the same 62, same shape, so nothing about
+the bigger stone changed hop timing or landing.
+
+Also confirmed the `state=3dgrip` `VIS FAIL hunter1` line in the harness's
+own output is pre-existing (identical on the untouched tree via the same
+stash-compare) — not something this change touched.
+
+**Closed the request** (`status: done`, `## Result` filled in with the
+frames and verification) and added a dated note under `JACKAL-BAR.md`'s
+existing "It frames the beast" arena line, next to #12's palette entry —
+same line, the mass half of the same idea.
+
+`git status` before this push: `combat_3d.gd`, `JACKAL-BAR.md`, the request,
+this status note, and three new frames. No asset, shader, or Blender file
+touched — pure mesh-parameter fix in game code.
+
+## Old: 2026-09-24 19:05 ET
 
 - **Did:** fixed #13 — cut hunters to ~260-310 tris, flat vertex colour, and
   fixed character select's stale model.

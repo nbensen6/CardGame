@@ -3,7 +3,7 @@ tags:
   - request
 from: director
 to: artist
-status: taken
+status: done
 priority: normal
 beast: cinder_jackal
 eta: next run
@@ -63,4 +63,39 @@ pale.
 
 ## Nick's answer
 
-## Result
+## Result — 2026-09-24 19:19 EDT
+
+Found the exact cause: `_build_float_stones` in `game/views/combat_3d.gd` built
+each foothold's rock body as a `SphereMesh` with `radius = HUNTER_HEIGHT *
+1.5` (3 hunters wide, correct per #13) but `height = HUNTER_HEIGHT * 1.0` —
+squashed to a third of a true sphere's height for that width. A comment right
+above it even said "a boulder with bulk, not a plate," but the numbers built
+the plate anyway.
+
+One-line fix: `rock.height = rock.radius * 2.0` instead of a fixed
+`HUNTER_HEIGHT * 1.0`. That's a true, un-squashed sphere — as tall as it is
+wide — at the exact same width as before (radius untouched, so still "three
+hunters wide" per #13). Nothing else about the stone (cap, rim, colour,
+position) changed.
+
+Rendered `state=3d` (the same resting shot this request diagnosed from) and
+`state=3dgrip` before and after, at 1:1:
+
+![[frames/artist/2026-09-24-stones-boulder-zoom-before-after.png]]
+![[frames/artist/2026-09-24-stones-boulder-resting-before-after.png]]
+![[frames/artist/2026-09-24-stones-boulder-grip-after.png]]
+
+Both footholds now read as solid pale lumps under the flat cap, not discs —
+directly matching Nick's reference's "chunky pale rock."
+
+**Verified "Done when" both ways, not just by eye:**
+- `run_tests.gd` — `ALL TESTS PASSED`, before and after.
+- Fresh full 80-step `mode=play beast=cinder_jackal` playtest, foreground,
+  10-minute timeout. Zero `hunter-off-marker` anywhere. Only failing check:
+  the pre-existing `hop-distance-band` (62) — confirmed identical before and
+  after by re-running the same playtest on the untouched tree (`git stash`),
+  same count, same shape. That's the fixer's own open stone-route thread
+  (#4-adjacent), unrelated to this change.
+
+`git status` before this push: `combat_3d.gd`, this request, and three new
+frames. No other asset, shader, or script touched.

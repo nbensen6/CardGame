@@ -466,6 +466,19 @@ reading the fight at a glance, at play size, in motion.
       at the wide shot, the sigil close-up, and a 160x90 thumbnail — the
       pale stones, dark ground and hot beast now read as three distinct
       values at a glance.
+
+      2026-09-24 (#16, `to: artist` from director): the colour was right but
+      the footholds had no mass — `_build_float_stones`'s rock body was a
+      `SphereMesh` squashed to a third of a true sphere's height for its
+      width (3 hunters wide, 1 hunter tall), reading as a flat pale disc/
+      saucer next to the dog rather than a boulder. Fixed with one line:
+      `rock.height = rock.radius * 2.0` (a true, un-squashed sphere) instead
+      of a fixed `HUNTER_HEIGHT * 1.0` — same width as #13 set, now as tall
+      as it is wide. Verified at `state=3d` and `state=3dgrip`, 1:1: both
+      footholds read as solid pale lumps under the flat cap. `ALL TESTS
+      PASSED` and a fresh 80-step playtest before/after: zero
+      `hunter-off-marker`, only the pre-existing `hop-distance-band` (62,
+      the fixer's own open thread, unchanged count).
 - [x] **It says where this fight is**, not "generic ground". The sigil
       close-up now shows real glowing ember cracks in the rock itself, not a
       flat slab — same evidence as above.

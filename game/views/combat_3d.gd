@@ -3724,9 +3724,12 @@ func _build_float_stones() -> void:
 		# Big enough to read as a platform you aim at, not a pebble: about
 		# three hunters wide (Nick, 2026-09-23 — "make the stones bigger").
 		rock.radius = HUNTER_HEIGHT * 1.5
-		rock.height = HUNTER_HEIGHT * 1.0    # a boulder with bulk, not a plate
-		# ponytail: a squashed sphere reads thin edge-on; if it still looks like
-		# a plate from the fight camera, model a low rock instead.
+		# Was HUNTER_HEIGHT * 1.0 — a squashed sphere 3 hunters wide but only
+		# 1 hunter tall, which read as a flat disc/saucer at fight-camera size
+		# (#16, director, 2026-09-24: "a teacup and a saucer"). height = 2x
+		# radius makes it a true, un-squashed sphere: as tall as it is wide,
+		# same width as before (radius untouched per the request).
+		rock.height = rock.radius * 2.0    # a boulder with bulk, not a plate
 		rock.radial_segments = 7
 		rock.rings = 3
 		body.mesh = rock
