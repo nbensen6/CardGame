@@ -47,6 +47,27 @@ or every class_name fails), and render with `xvfb-run` + `--rendering-driver
 opengl3`. Rendering WORKS here (probed 2026-09-22: real frames, ~14s a shot).
 `pip install pillow numpy` if you need to read or tile images.
 
+## 1a. A question for Nick is a REQUEST, never a line in your status note
+
+If you need an answer from him, **file it `to: nick`**. Not a sentence in
+`Need from you`, not a paragraph in `## Now`, not a remark in a commit message.
+Those reach nobody: his board is built from requests, so a question anywhere
+else is a question he will never be shown and you will sit blocked waiting for
+a reply he does not know you want (Nick, 2026-09-24).
+
+One question per request, with `ask:` filled in — that sentence IS the row he
+sees. Give him the options and your recommendation; he answers in a line.
+
+**When he answers, clear it.** Take the request the way you take any other:
+`status: taken`, `taken_by: <you>`, and set `to:` back to yourself. That is
+what moves it off "waiting on Nick" and into your lane. Then `done` when the
+work lands.
+
+You do not have to be quick about it for his board to be right — the sync drops
+a request out of his column the moment he replies, whatever `to:` still says.
+But the request is now YOURS, and leaving it addressed to him after he has
+answered is how something ends up belonging to nobody.
+
 ## 1b. Answered requests come first of all
 
 Nick answers in the request's own `## Nick's answer` section, in whatever words

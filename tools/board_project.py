@@ -24,6 +24,9 @@ import os
 import subprocess
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from board_sync import answered  # one definition of "has he replied", shared
+
 OWNER = "nbensen6"
 NUMBER = "1"
 GH = "gh"
@@ -145,7 +148,9 @@ def main():
         if not name.endswith(".md") or name.startswith("_"):
             continue
         with open(os.path.join(REQUESTS, name), encoding="utf-8") as f:
-            fm = front(f.read())
+            text = f.read()
+        fm = front(text)
+        fm["_answered"] = answered(text)
         num = fm.get("issue", "").strip()
         if not num:
             continue  # not mirrored yet; board_sync opens the issue first

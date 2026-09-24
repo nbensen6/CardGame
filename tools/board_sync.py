@@ -135,6 +135,28 @@ def status_line(fm):
     return " · ".join(bits)
 
 
+def answered(text):
+    """Has Nick actually said something under `## Nick's answer` yet?
+
+    "Waiting on Nick" has to clear itself the moment he replies, rather than
+    when an agent next happens to notice -- otherwise his own board keeps
+    showing him work he has already done. Blank lines and the template's HTML
+    comment do not count as an answer; a heading that carries his own date
+    (`## Nick's answer - 2026-09-24 11:47 EDT`) does, because that is how he
+    and Claude have been writing them.
+    """
+    i = text.find("## Nick's answer")
+    if i == -1:
+        return False
+    if "\n" in text[i:] and text[i:text.find("\n", i)].strip() != "## Nick's answer":
+        return True  # the heading itself is dated, so it was answered
+    rest = text[text.find("\n", i) + 1:] if "\n" in text[i:] else ""
+    nxt = rest.find("\n## ")
+    body = rest[:nxt if nxt != -1 else len(rest)]
+    body = re.sub(r"<!--.*?-->", "", body, flags=re.S)
+    return bool(body.strip())
+
+
 def assignees_for(fm):
     """Assign Nick the issues that are his.
 
@@ -143,15 +165,15 @@ def assignees_for(fm):
     assignment and he never has to remember a query. Agent-owned issues stay
     unassigned: there is no GitHub account behind "the fixer".
     """
-    return [OWNER] if fm.get("to", "") == "nick" else []
+    return [OWNER] if fm.get("to", "") == "nick" and not fm.get("_answered") else []
 
 
 def labels_for(fm):
     out = []
     to = fm.get("to", "")
-    if to == "nick":
+    if to == "nick" and not fm.get("_answered"):
         out.append("for:nick")
-    elif to in ("artist", "playtester", "fixer"):
+    elif to in ("director", "artist", "playtester", "fixer"):
         out.append("agent:" + to)
     if fm.get("priority") == "high":
         out.append("priority:high")
@@ -178,6 +200,21 @@ def gh(*args, **kw):
         if kw.get("quiet"):
             return None
         print("  gh failed: %s" % err.split("\n")[0])
+        return None
+    try:
+        return json.loads(p.stdout or "null")
+    except ValueError:
+        return None
+
+
+def gh_json(method, path, payload):
+    """PATCH/POST with a JSON body on stdin, for fields `-f` cannot express."""
+    p = subprocess.run([GH, "api", "-X", method, path, "--input", "-"],
+                       input=json.dumps(payload), capture_output=True,
+                       text=True, encoding="utf-8", errors="replace")
+    if p.returncode != 0:
+        print("  gh %s %s failed: %s" % (method, path,
+                                         (p.stderr or "").strip().split("\n")[0]))
         return None
     try:
         return json.loads(p.stdout or "null")
@@ -266,6 +303,7 @@ def push(dry):
         with open(path, encoding="utf-8", newline="") as f:
             text = f.read()
         fm, _, body = split_note(text)
+        fm["_answered"] = answered(text)
         status = fm.get("status", "open").lower()
         num = fm.get("issue", "").strip()
         title = title_of(body, name[:-3])
@@ -300,17 +338,19 @@ def push(dry):
                 f.write(stamped)
             _, _, body = split_note(stamped)
             changed.append(path)
-        args = ["-X", "PATCH", "repos/%s/issues/%s" % (REPO, num),
-                "-f", "title=" + title,
-                "-f", "body=" + issue_body(path, body, fm),
-                "-f", "state=" + want_state]
-        # An agent hands a request back by flipping `to:` to nick, so the
-        # assignment has to follow that, not just be set once at creation.
-        mine = assignees_for(fm)
-        args += sum((["-f", "assignees[]=" + a] for a in mine), []) or ["-F", "assignees[]="]
-        for label in labels_for(fm):
-            args += ["-f", "labels[]=" + label]
-        gh(*args, quiet=True)
+        # Sent as one JSON body rather than -f pairs. Labels and assignees have
+        # to go as the WHOLE set every time -- GitHub leaves a key it is not
+        # given untouched, so an answered ticket kept its for:nick label and sat
+        # on his filter after it stopped being his. And an empty set cannot be
+        # expressed with -f at all: `-F "labels[]="` is an empty label NAME and
+        # GitHub answers 422, which the quiet call then swallowed.
+        gh_json("PATCH", "repos/%s/issues/%s" % (REPO, num), {
+            "title": title,
+            "body": issue_body(path, body, fm),
+            "state": want_state,
+            "assignees": assignees_for(fm),
+            "labels": labels_for(fm),
+        })
     return changed
 
 
@@ -416,6 +456,16 @@ def selftest():
     assert labels_for({"to": "nick", "priority": "high"}) == ["for:nick", "priority:high"]
     assert labels_for({"to": "fixer"}) == ["agent:fixer"]
     assert assignees_for({"to": "nick"}) == ["nbensen6"]
+    # once he has answered it is no longer his: off his assigned list and
+    # out of the Waiting-on-Nick column, without waiting for an agent to notice
+    assert assignees_for({"to": "nick", "_answered": True}) == []
+    assert "for:nick" not in labels_for({"to": "nick", "_answered": True})
+    assert answered("## Nick's answer\n\nyes do it\n")
+    # the dated-heading form he and Claude actually use
+    assert answered("## Nick's answer — 2026-09-24 11:47 EDT\n\nanything\n")
+    # the untouched template must NOT read as answered
+    assert not answered("## Nick's answer\n\n<!-- type below -->\n\n## Result\n")
+    assert not answered("no such heading here")
     assert assignees_for({"to": "artist"}) == []
     assert "blocked-on-nick" in labels_for({"to": "nick", "waiting": "true"})
 
