@@ -2,13 +2,157 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T00:12
-working_on: goblin_mech_ai pass 7 -- tested pass 6's own suggested next move (weld the 489 raw mesh islands without a visible seam) and it does not work: welding vertex positions in Blender collapses them fine pre-export (5799->2604 verts), but the glTF exporter re-splits almost the exact same 489 islands back on export regardless, because the split is driven by this model's own UV seam count, not leftover unwelded remesh duplicates. Also caught and corrected a units mistake in pass 6's own gap numbers (the two real gaps are 5.92mm and 15.38mm, not 2.5mm/6.6mm -- same conclusion, invisible either way, just the wrong figure). No fix applied to the shipped glb -- nothing there to trade risk for. Build hygiene stays 7, total unchanged 41/50. Real fix would need reducing the UV unwrap's own seam count, a bigger riskier job flagged for whoever picks this up next. ALL TESTS PASSED (no game asset changed, no playtest needed). Lease released.
+updated: 2026-09-24T01:23
+working_on: cinder_jackal_ai's first-ever rubric score (never scored before, only two named point-fixes) turned up a real defect no prior pass caught -- 320 faces of leftover basalt foothold geometry, baked into the body before the 2026-09-23 switch to floating in-engine stones, silently propagating forward through every rebuild that re-fed the shipped model as its own source. Confirmed fully disjoint from the real body (0 shared verts) before deleting, also removed a stray unreferenced icosphere, re-exported. Verified: run_tests.gd ALL TESTS PASSED, six-view before/after frame, state=3d/wide/3dclimb/3dgrip all render clean with hunters landing correctly despite the beast's own bounding box legitimately shrinking (it had been artificially widened by the removed chunk). Scored 40/50 (Sil 8, Prop 8, Hygiene 7, Colour 9, Style 8), 4 under the 44 beast stop line. Full 80-step playtest still to run before push completes.
 ---
 
 # artist
 
-## This run — 2026-09-24 00:12 ET
+## This run — 2026-09-24 01:23 ET
+
+- **Did:** ran the same rubric score/scoring-loop on the Cinder Jackal itself
+  (`cinder_jackal_ai.glb`) that the two hunters have already been through
+  repeatedly -- this beast, the actual star of the fight, had never been
+  scored at all. The fresh look found a real defect immediately: a stack of
+  grey rock geometry fused into its own chest/foreleg area.
+- **Worked?** Yes. Traced it to leftover foothold geometry from before the
+  fight switched to floating in-engine climb stones (2026-09-23) -- it had
+  been silently riding forward through every later rebuild because those
+  rebuilds reuse the beast's own last export as their source instead of a
+  fresh download. Confirmed the geometry was fully disconnected from the
+  real body before removing it, so nothing else could break. Verified in
+  every 3D camera state the fight uses -- clean, no regression. First-ever
+  score: 40/50, 4 points under the beast bar.
+- **Next:** Build hygiene's remaining gap is the same tri-budget ceiling the
+  hunters already carry (not fixable in one pass); a fresh, more critical
+  look at Silhouette/Proportion/Style is the next thing likely to find a
+  real, closeable point.
+- **Need from you:** nothing.
+
+![[frames/artist/2026-09-24-cinder-jackal-basalt-cleanup.png]]
+
+## Now
+
+No open `to: artist` request this run (checked every request's frontmatter —
+the only two open notes in `requests/` are both `to: fixer`), and none of my
+own `to: nick` notes had a fresh, unhandled answer under `## Nick's answer`
+either (checked per `COMMON.md` 1b). Worked the `JACKAL-BAR.md` queue, but
+picked a different item than the last several runs' momentum suggested.
+
+**Why the Cinder Jackal instead of another `goblin_mech_ai` pass.** Pass 7
+(previous run) left `goblin_mech_ai` at 41/50 with no cheap remaining lever
+— the honest next move there is either a bigger, riskier UV re-unwrap, or a
+fresh six-view look at lines already sitting at 8 with no named defect.
+Before spending another pass grinding the last point off a hunter, checked
+`design/progress/` for a scoring file on the Cinder Jackal itself and found
+there wasn't one — `frog_ai.md` and `goblin_mech_ai.md` both exist and have
+been iterated on multiple times each; `cinder_jackal_ai.glb`, the beast every
+player looks at for the entire fight, had only ever had two named point
+fixes (`artist.md`'s own "known open issues": ear-glare glow, foothold
+texture) and never a real rubric pass. `JACKAL-BAR.md`'s own "The creature"
+section (silhouette, weak point, idle life, reacts) is entirely unticked —
+the loudest unaddressed gap in my own brief's scope, not a marginal one.
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, Blender 4.1.1.
+`libegl1`/`libegl-mesa0` weren't preinstalled this sandbox either (same gap
+pass 6/7 hit) — `apt-get install` alone 404'd on `libegl-mesa0` until an
+`apt-get update` first pulled a newer index; noting the update-first order
+for whichever run hits this next. Meshy `balance` OK (2890 credits), not
+needed this run.
+
+**Rendered a fresh six-view look at `cinder_jackal_ai`** (`look.sh
+cinder_jackal_ai 1`) and read the images cold before assuming anything.
+`_side.png`, `_form.png` (clay) and the wireframe all showed the same thing
+unmistakably: a stack of untextured grey rock wedges fused into the model's
+own chest, right where the front legs meet the body — not a lighting
+artifact, real baked geometry, and it visibly distorts the front-leg
+silhouette in `_sil.png` too.
+
+**Traced the cause by reading the pipeline, not guessing.**
+`design/guide/ai-beast-recipe.md` step 6 documents the ORIGINAL approach for
+this exact beast: real basalt foothold geometry grown onto the body along
+the climb route, one lump per climb Height. That approach was replaced
+2026-09-23 (`combat_3d._build_float_stones` hangs a stone at runtime
+instead) — `tools/blender/ai_beast.py`'s own foothold loop now opens with
+`if True: continue  # stones float in-engine now; no foothold geometry is
+exported`. But the fixer's own last two rebuilds of this beast (`status/
+fixer.md`, 2026-09-23/24, the route-reversal and hop-distance fixes) both
+explicitly re-fed the ALREADY-SHIPPED `cinder_jackal_ai.glb` back into
+`ai_beast.py` as its own raw source, to avoid a Meshy spend on a beast whose
+anatomy and rig are already right. Every such re-feed re-imports whatever
+the previous export already contained — including basalt geometry baked in
+BEFORE the 2026-09-23 refactor, which the `if True: continue` guard was
+never going to strip, since it only stops NEW geometry from being ADDED, not
+old geometry already present in the incoming mesh. The contamination has
+been silently riding forward through every rebuild since, invisible because
+nobody had pointed `look.sh` at this specific beast since it first shipped.
+
+**Confirmed the geometry was safe to delete before touching anything.**
+Opened `tools/blender/ai/cinder_jackal_ai.blend` directly: 320 faces on the
+`Body` mesh carry a distinct `Basalt` material; a vertex-set check showed
+those 320 faces share **zero** vertices with the other 11999 faces (603
+basalt verts, 10369 other verts, 0 overlap) — a fully disjoint island,
+so deleting it cannot open a hole in the real body surface. Also found a
+second, unrelated piece of junk in the same file: a stray untextured unit
+icosphere (42 verts, no material) sitting exactly at the model's local
+origin — a leftover default-primitive object from manual editing.
+
+**Fix.** Deleted the 320 Basalt-material faces from `Body` (0 loose verts
+left behind afterward, confirming the island really was fully disjoint),
+dropped the now-unused `Basalt` material slot/datablock, deleted the stray
+`Icosphere` object, and deleted the now-pointless empty `Footholds` mesh
+object (0 verts even before this pass, created every rebuild by
+`ai_beast.py`'s own dead branch). Re-exported with the exact glTF call
+`ai_beast.py`'s own step 6 uses, over the real shipped path, and re-saved the
+cleaned `.blend`. Climb/ledge marker empties, the rig, and every action are
+separate objects and were never touched.
+
+**Verified thoroughly, since this is the hero asset every fight uses.**
+`tools/blender/ai/mesh_gap_check.py` (the same tool `goblin_mech_ai` pass 3
+used) on the cleaned model: 10370 verts, 440 raw mesh islands (this
+beast's own UV seam count, same story as `goblin_mech_ai`'s 489),
+**0 islands with a real 3D gap** — topology is otherwise clean, the basalt
+chunk was the only real defect. Noticed the beast's own runtime bounding box
+(`_beast_box`, from `screenshot.gd`'s `CAM` line) legitimately shrank,
+`size.x` 12.92 → 10.78 — traced it rather than assumed it was fine: the
+removed chunk's own X extent (0.10–0.99 local, camera-side) had been making
+the AABB read as symmetric (±0.99) when the real body is asymmetric in this
+running pose (−0.99 / +0.66). Confirmed this doesn't break anything the box
+feeds by rendering `state=3d`, `wide`, `3dclimb` and `3dgrip` after the fix —
+`HUNTER0`/`HUNTER1 ... OK` on every one, arena framing unchanged, nothing
+clips. Built a before/after comparison from the six-view side/clay renders,
+same camera, same pose — the grey wedge stack is simply gone, nothing else
+in the silhouette changed:
+
+![[frames/artist/2026-09-24-cinder-jackal-basalt-cleanup.png]]
+
+**Scored it for the first time.** Silhouette 8 (reads as a lean running
+canid at 64px, nothing merges after the fix), Proportion 8 (masses read
+correctly for the "lean chase predator" brief), Build hygiene 7 (the one
+real defect is fixed and confirmed there's nothing else via
+`mesh_gap_check.py`; what's left is the same tri-budget structural ceiling
+the hunters already carry — 12079 tris vs the old 2600 beast budget, ~4.6×
+over, not a same-pass fix), Colour & read 9 (clean black/ember/gold
+separation, confirmed in the real `state=3d` camera, not just the studio
+render), Style consistency 8 (same toon/outline/painted pipeline as the
+hunters). **Total 40/50**, 4 points under the 44 beast stop line. Full
+write-up: `design/progress/cinder_jackal_ai.md` (new file, "Pass 2" — pass 1
+is the as-shipped/contaminated baseline, scored implicitly by comparison
+since nobody looked at it before this run). Updated `JACKAL-BAR.md`'s
+creature section with the score and the finding.
+
+`silmetrics.py` was skipped — Blender's bundled Python has no `PIL` in this
+sandbox — not a gate per `asset-loop.md`, so scoring proceeded without it.
+
+`ALL TESTS PASSED` (`run_tests.gd`) before and after. Pushing this now per
+`COMMON.md` 4b, then running the full 80-step `mode=play beast=cinder_jackal`
+playtest in the foreground as the last step of this run — this change
+touches the beast's own bounding box, which several other systems (arena
+sizing, hunter standoff, camera) read from, so a full regression pass earns
+its time even though the individual state renders above already checked the
+obvious paths. Result appended to the `## Log` below once it finishes.
+
+## Old: 2026-09-24 00:12 ET
 
 - **Did:** tested pass 6's own suggested next move on `goblin_mech_ai` --
   can the 489 raw mesh islands be welded down without a visible seam? Wrote

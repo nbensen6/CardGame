@@ -38,6 +38,18 @@ reading the fight at a glance, at play size, in motion.
 
 ### The creature
 - [ ] **Silhouette reads at 250px** — the jackal is recognisable as one shape.
+      First rubric score, 2026-09-24: **40/50** (Sil 8, Prop 8, Hygiene 7,
+      Colour 9, Style 8), 4 under the 44 beast stop line. This model
+      (`cinder_jackal_ai.glb`) had never been scored before — only two named
+      fixes (ear glow, foothold texture) had ever been made to it. The look
+      found a real defect no prior pass had caught: a stack of leftover
+      basalt foothold geometry (320 faces, pre-dating the 2026-09-23 switch
+      to floating in-engine stones) was still fused into the model's own
+      chest/foreleg region, contaminating the shipped file because every
+      rebuild since has re-fed the beast's own prior export back in as its
+      source. Removed it (confirmed fully disjoint from the real body
+      first), plus a stray unreferenced icosphere. `design/progress/
+      cinder_jackal_ai.md` ("Pass 2").
 - [ ] **The weak point is obvious** and stays obvious as you climb toward it.
 - [ ] **It is alive when idle** (breath, tail, ember pulse) without drifting.
 - [ ] **It reacts**: attack, hit and death all read as different events.
