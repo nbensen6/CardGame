@@ -50,6 +50,26 @@ per the loop's own rule** ("do not perform the rebuild... it is Nick's
 call") — raised in
 `design/agents/requests/2026-09-24-1110-artist-to-nick-jackal-and-goblin-plateaued-below-stop-line.md`.
 
+**Correction, 2026-09-24T12:23 EDT: the premise above does not hold, checked
+on the actual numbers, not repeated here blind.** Nick greenlit the
+re-unwrap; `design/progress/goblin_mech_ai.md` pass 9 built and baked one
+for real on the Goblin Engineer (lowest risk of the three) before touching
+this rigged, animated hero asset, and found the "island count" every VERDICT
+on this cast blamed on UV seams is actually 100% raw disconnected geometry
+(bolts, spikes, fur clumps the Meshy remesh never welded) — checked directly
+on THIS beast too: **440 raw mesh components in the untouched `.blend`,
+before any UV or export step, exactly matches the 440 islands
+`mesh_gap_check.py` reports on the shipped `.glb`.** The current UV already
+contributes zero extra splitting; a re-unwrap can only add seams to that
+floor, never remove from it, and pass 9's own re-unwrap experiment measured
+that exact failure mode on the goblin (489 → 1,586 islands, worse by more
+than 3x, across five different seam strategies tried). Do **not** repeat
+this experiment on the jackal — it is now proven, not just risky, and this
+asset carries the added real risk pass 9 didn't have to take (rig, weights,
+animation, the toon shader/outline's UV-space assumptions) for a lever
+that cannot move the number it targets. Left untouched this pass — no
+`.glb`/`.blend` file for this beast changed.
+
 ---
 
 The shipped Meshy rebuild (`game/assets/3d/cast/cinder_jackal_ai.glb`, source

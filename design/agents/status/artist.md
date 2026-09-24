@@ -2,11 +2,177 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T11:10
-working_on: Called the plateau on cinder_jackal_ai (40/50, three identical scores) and goblin_mech_ai (41/50, two identical scores) -- both hit this project's own "stop repassing, ask Nick" rule. Wrote a VERDICT: REBUILD section on each progress file (score, why it's not a shape/silhouette problem, what the real fix -- a full UV re-unwrap -- would need) and filed one to:nick request covering both, asking him to either accept the current scores or greenlight the risky re-unwrap as its own dedicated pass.
+updated: 2026-09-24T12:23
+working_on: Nick greenlit the risky texture re-unwrap on all three cast members; built and baked a real one on the Goblin Engineer first (lowest risk) and found the premise wrong -- the file-hygiene number isn't a UV problem, it's unwelded remesh geometry that a re-unwrap can't fix and five different attempts all made worse. Confirmed the same root cause on the jackal and Frog by the numbers, without risking either. Not shipped. Corrected all three progress files and closed out the request with the finding.
 ---
 
 # artist
+
+## This run — 2026-09-24 12:23 ET
+
+- **Did:** an answered request was waiting (top of queue, ahead of the open
+  `to: artist` "find an art style" one) -- Nick had greenlit my own
+  plateau-call request from an hour earlier: go ahead and try the risky
+  texture rewrap on the jackal, Goblin Engineer and Frog. Built the actual
+  thing on the Goblin Engineer (lowest risk -- no rig, no animation) instead
+  of just reasoning about it.
+- **Worked?** No, and that's the useful finding. The number we all thought a
+  texture rewrap would fix turns out to have nothing to do with the texture
+  wrap at all -- it's small separate bits (bolts, spikes, fur) left over from
+  how the model was generated that were never joined to the body, and I
+  proved that by checking the raw numbers before touching anything. Every
+  way I tried to redo the wrap made it worse, one of them three times worse.
+  Baked one anyway and looked: looks identical at real fight size, very
+  slightly softer close up. Didn't ship it -- no upside, a real cost.
+- **Next:** checked the same numbers on the jackal and Frog too (safely, no
+  need to risk either) -- same story, so I'm not attempting this on them
+  either. The three hunters/boss stay exactly where they were: Frog at
+  target, Goblin Engineer and jackal each one point under. If it's worth
+  more time, the real fix is a hand rebuild of each loose part, a much
+  bigger job than this was -- Nick's call, not blocking anything. Otherwise
+  next run should pick up the still-open "find an art style" request.
+- **Need from you:** nothing blocking. Said in the request whether the
+  bigger hand-rebuild job is worth doing.
+
+![[frames/artist/2026-09-24-goblin-reunwrap-studio-before-after.png]]
+![[frames/artist/2026-09-24-goblin-reunwrap-infight-before-after.png]]
+
+## Now
+
+An answered request outranked the open ones this run (`COMMON.md` §1b): my
+own `2026-09-24-1110-artist-to-nick-jackal-and-goblin-plateaued-below-stop-
+line.md` had a fresh `## Nick's answer` (11:47 EDT) greenlighting the risky
+texture re-unwrap on all three cast members ("Risky is fine... show me
+before/after at real fight size... a partial win is a win"). Took it (set
+`status: taken`, pushed, then worked it) ahead of the other open note in the
+queue (`2026-09-24-1147-nick-to-artist-find-an-art-style-worth-copying.md`,
+`to: artist`, high priority but not answered/urgent in the §1b sense).
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `ALL TESTS
+PASSED` confirmed before touching anything. Blender 4.1.1 for this run's
+actual work, `pip install pillow numpy`.
+
+**Picked the Goblin Engineer to build the real experiment on, not the
+jackal the request was framed around.** All three assets share the
+identical VERDICT: a Meshy-remesh tri-budget/"island"-fragmentation
+ceiling. The Goblin Engineer and Frog are static meshes (no armature, no
+animation, confirmed by inspecting the `.glb` directly: 0 armatures, 0
+actions on both) — the jackal is rigged and animated. Building the first
+real attempt on the lowest-risk asset, per Nick's own "a partial win is a
+win, do not force all three to land together," meant proving or disproving
+the whole plan without touching the one asset that could actually break
+something expensive (rig weights, NLA tracks) if it went wrong.
+
+**Before building anything, checked what "489 islands" (`goblin_mech_ai`'s
+Build hygiene blocker, per pass 6/7/8) actually was, since the VERDICT
+section blamed it on "UV-seam-driven fragmentation" and every prior pass
+had reasoned from that label without checking it directly.** Walked the
+SAME edge-graph connectivity `mesh_gap_check.py` uses, but on the raw
+Blender mesh straight after import — before any UV layer, any export, any
+`glTF` involvement at all. Result: **489 disconnected components, matching
+the shipped `.glb`'s own 489 reported islands exactly.** The current UV
+layout contributes zero additional splitting on export. 334 of the 489
+have fewer than 10 vertices — small separate parts (bolts, rivets, greeble)
+the Meshy remesh never joined to the body, not big surface regions split by
+a seam. This single check overturned the premise three separate progress
+notes had built on.
+
+**Built the actual re-unwrap rather than stop at that theoretical finding**,
+since Nick asked to see it, not be told it wouldn't work. Wrote a Blender
+script (`/tmp` scratch, not committed — a one-off tool, not part of the
+asset pipeline until it's proven useful) that: pins the existing texture's
+shading to the OLD UV layer explicitly (so baking still samples the current
+look), lays a fresh UV from scratch with Smart UV Project (angle limit 89°,
+the setting that produces the FEWEST, LARGEST islands — since the goal was
+fewer seams, not less stretch, and the texture was being rebaked fresh
+anyway), bakes the existing diffuse colour onto that new layout with
+Cycles, and re-exports. Ran it for real on `goblin_mech_ai.glb`, into
+scratch output, never touching the shipped file:
+
+    before (Meshy's own unwrap, shipped): 489 islands, 5,799 verts
+    after  (fresh Smart UV Project):    1,586 islands, 8,134 verts
+
+Worse by more than 3x — the opposite of the goal. Tried four more seam
+strategies before concluding this wasn't one bad algorithm choice
+(mark-seam-by-sharp-angle at 30°/45°/60°/75°, then angle-based unwrap, the
+standard hard-surface alternative): 2,045 / 1,105 / 834 / 724 islands
+respectively. Every single one, even the most permissive, still landed
+above the shipped 489. There is no seam layout for this mesh that beats
+what Meshy already shipped — because Meshy's own unwrap already sits at the
+mathematical floor (zero export-time splitting) that any re-unwrap attempt
+can only add seams on top of, never subtract from.
+
+**Also re-ran pass 7's weld attempt myself rather than trust the old
+write-up's conclusion secondhand.** `goblin_ai_weld.py` (5mm merge
+threshold) on the shipped file: internally welds beautifully (5,799 → 2,604
+verts, a real 55% merge, confirmed inside Blender before export). Exported
+and re-checked: **back to 5,783 verts, 489 islands** — within 16 verts of
+untouched. The glTF exporter re-splits at ANY per-vertex attribute mismatch,
+not just UV — these small separate parts carry their own distinct normals
+even once spatially welded (they're modelled as separate parts on purpose),
+so the exporter treats them as different vertices again on write regardless
+of position. Fixing this for real would mean manually remodelling each of
+334 tiny parts into the surrounding surface — a full retopology, not a
+texture-only job.
+
+**Baked it and looked anyway, since Nick's ask was "show me before/after,"
+not a numbers argument.** Cycles diffuse-colour bake (2048px, margin 16),
+rendered in `look.py`'s studio six-view rig and in the real fight
+(`state=3d`, `state=3dgrip`, same camera/frame as the untouched original —
+swapped the test `.glb` into the shipped path only long enough to render,
+then restored it and confirmed `git status` showed no diff before doing
+anything else):
+
+![[frames/artist/2026-09-24-goblin-reunwrap-studio-before-after.png]]
+![[frames/artist/2026-09-24-goblin-reunwrap-infight-before-after.png]]
+
+Reads as the same goblin, no colour shift, no seam artefact. Looking close
+in the bright studio shot, the tank's metallic highlight and the goggle rim
+are very slightly softer on the rebake (expected — a diffuse-only bake
+through a new UV loses the last bit of the original's variation). At the
+goblin's actual on-screen size in both in-fight crops, that softening isn't
+visible at all — indistinguishable at the size a player would ever see it.
+
+**Did not ship it.** No visible win at real fight size, a measured real
+cost (3x the islands, more export bloat, a fractionally softer texture
+under close inspection), and it doesn't touch the actual score-capping
+issue either way (tri budget: ~3.7x over regardless of UV layout). Shipping
+a real regression for an invisible, unverifiable gain fails this project's
+own honesty rule (`asset-loop.md`). `git status` on
+`game/assets/3d/cast/goblin_mech_ai.glb` and
+`tools/blender/ai/goblin_mech_ai.blend` shows no diff.
+
+**Checked the same underlying numbers on the jackal and Frog rather than
+leave Nick's "all three" instruction half-answered**, without needing to
+risk either one with a full build: `frog_ai` — 193 raw components, 193
+shipped islands (identical, same zero-UV-contribution finding). Jackal
+(`cinder_jackal_ai`) — 440 raw components, 440 shipped islands (same). Both
+confirm the exact same root cause generalizes across the whole cast, so
+there was no need to also bake-and-revert-test each one individually to
+know a re-unwrap won't help them either — the maths is the same maths.
+Left both completely untouched.
+
+**Wrote up the correction everywhere the wrong premise had been recorded**,
+so a future run doesn't re-propose the same experiment cold: a new "Pass 9"
+in `design/progress/goblin_mech_ai.md` with the full mechanism and numbers,
+a correction note in `cinder_jackal_ai.md`'s own VERDICT section, a pointer
+in `frog_ai.md` where it first raised the "193 islands" question, and both
+`JACKAL-BAR.md` lines that referenced the re-unwrap as the open lever.
+Filled the original request's `## Result` in plain language (no file paths
+or scores in the ask itself, per this project's own `to: nick` writing
+rule) and set `status: done` — Nick's "all three" instruction is answered
+(attempted where it was safe to, ruled out everywhere by the same evidence),
+and the one open question left (whether a full hand-retopology is worth a
+much bigger dedicated job) is framed as his call, not something blocking my
+own next run.
+
+`ALL TESTS PASSED` (`run_tests.gd`) before and after — no game code touched
+this run. No playtest re-run: confirmed via `git status` that no shipped
+`.glb`/`.blend`/asset file differs from before this run started (the one
+stray file Godot's importer wrote while the test `.glb` was briefly swapped
+in, `goblin_mech_ai_Image_0_remap.png` and its `.import`/cache, was deleted
+and `--import` re-run clean afterward) — nothing in the live fight can
+differ, so nothing to re-verify beyond the tests.
 
 ## This run — 2026-09-24 11:10 ET
 

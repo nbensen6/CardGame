@@ -225,6 +225,17 @@ was for the isolated renders' own sake, not load-bearing here.
   the way the jackal's mesh was, and a real open question for Hygiene (see
   score below), but it does not cost the visual read, which is what the
   silhouette check actually answers.
+
+  **2026-09-24T12:23 EDT update:** that "193" question is now answered, not
+  open. `design/progress/goblin_mech_ai.md` pass 9 checked this exact number
+  before/after a real UV re-unwrap attempt and found it's raw disconnected
+  geometry (unwelded bolts/greeble from the Meshy remesh), not a UV-seam
+  artifact — confirmed on this asset directly too: 193 raw mesh components
+  in the untouched `.blend` matches the 193 shipped-`.glb` islands exactly,
+  meaning this frog's current UV already adds zero extra splitting. A
+  re-unwrap cannot reduce this number (it was tried on the Goblin Engineer
+  and made it worse, on five different seam strategies) — do not attempt it
+  on this asset either. Left the frog untouched this pass.
 - **The real fight, same state and camera, before/after** — `state=3d
   beast=cinder_jackal`, camera/hunter positions logged identical between
   runs (`CAM`/`HUNTER0`/`HUNTER1` lines match to 6 decimals). Before: the

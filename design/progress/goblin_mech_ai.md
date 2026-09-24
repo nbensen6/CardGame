@@ -45,6 +45,13 @@ belongs in one dedicated, careful, revertible pass, not a routine run.
 `cinder_jackal_ai`'s identical verdict in
 `design/agents/requests/2026-09-24-1110-artist-to-nick-jackal-and-goblin-plateaued-below-stop-line.md`.
 
+**Correction, pass 9 (below): the premise above was wrong.** Nick greenlit
+the re-unwrap on 2026-09-24T11:47 EDT and pass 9 actually built and baked
+one, on this asset, rather than reasoning about it further — and it proved
+the "island count" was never a UV problem to fix. Left here rather than
+deleted so nobody re-reads this file cold and re-proposes the same
+experiment.
+
 ---
 
 Filed separately from `goblin_mech.md` (the current Python-primitive Goblin
@@ -995,3 +1002,106 @@ pass 8) — a re-unwrap is the one remaining, deliberately-scoped, separately
 risk-budgeted job, not a same-pass follow-up. Silhouette/Proportion/Style
 at 8 each still have no named concrete defect after two independent fresh
 looks (pass 6, pass 8).
+
+## Pass 9 — the re-unwrap, tried and NOT shipped, artist, 2026-09-24T12:23 EDT
+
+Nick greenlit the re-unwrap on all three (jackal, Goblin Engineer, Frog),
+2026-09-24T11:47 EDT, on the VERDICT sections' own recommendation. This pass
+built it for real on this asset (lowest risk of the three -- no armature, no
+animation, one mesh, one material) instead of reasoning about it further,
+and found the entire premise behind the VERDICT sections was wrong.
+
+**What "489 islands" actually is.** Before touching any UV, checked the
+SHIPPED file's raw mesh connectivity in Blender -- before export, before any
+UV involvement at all -- by walking the edge graph the same way
+`mesh_gap_check.py` does, but on the imported `.blend` data directly rather
+than a re-exported `.glb`. Result: **489 disconnected components, identical
+to the exported island count, to the last one.** 334 of those 489 have under
+10 vertices -- individually separate bolts, rivets and greeble bits from the
+Meshy remesh that were never welded to the body, not big continuous surface
+regions split by a seam. The shipped UV layout adds **zero** additional
+vertex splitting on export. Checked this wasn't a goblin-specific fluke:
+`frog_ai` (193 raw components, 193 shipped islands) and `cinder_jackal_ai`
+(440 raw components, 440 shipped islands) show the exact same identity. All
+three "VERDICT: REBUILD" writeups called this a UV-seam-fragmentation
+ceiling; it is actually a raw-geometry-welding ceiling, and the current UV
+already contributes nothing to it, on any of the three assets.
+
+**Why that makes a re-unwrap unable to help, not just risky.** A re-unwrap
+can only ever ADD seams relative to a zero-additional-seam baseline -- it
+can never subtract from a floor the UV isn't causing. Built one anyway to
+confirm rather than argue from theory: Smart UV Project (angle limit 89°,
+the setting that produces the FEWEST, LARGEST islands) on this asset's
+existing mesh, re-exported, re-checked with `mesh_gap_check.py`:
+
+    before (shipped, Meshy's own unwrap):  489 islands, 5,799 verts
+    after  (fresh Smart UV Project unwrap): 1,586 islands, 8,134 verts
+
+Worse on the metric it was meant to fix, by more than 3x. Tried three more
+seam strategies (mark-seam-by-sharp-angle at 30°/45°/60°/75° then
+angle-based unwrap, the standard hard-surface alternative to Smart Project)
+to make sure this wasn't one bad algorithm choice: 2,045 / 1,105 / 834 / 724
+islands respectively -- every single one still worse than the shipped
+489, even at 75° (very few seams). There is no seam layout for this mesh
+that beats what Meshy already shipped, because Meshy's own unwrap already
+achieves the mathematical floor (zero export-time splitting) that any
+re-unwrap can only add to.
+
+**Re-confirmed pass 7's weld finding rather than take its word for it.**
+Re-ran `goblin_ai_weld.py` (`remove_doubles` threshold 5mm) on the shipped
+file: internally it works great (5,799 -> 2,604 verts, a real 55% merge).
+Re-exported and re-checked: **back to 5,783 verts, 489 islands** -- within
+16 verts of the untouched original. The glTF exporter re-splits at ANY
+per-vertex attribute mismatch, not just UV -- these tiny separate parts
+have their own distinct normals (they're separate parts, meant to shade
+that way) even once spatially welded, so the exporter treats them as
+different vertices again on write. Welding the position without also
+forcing identical normals AND identical UVs at every one of 334 tiny parts
+would mean manually re-modelling each one into the surrounding surface --
+a full retopology, categorically bigger than "redo the texture wrap."
+
+**Baked it anyway and looked, since Nick asked to see before/after, not
+just a metric.** Baked the existing diffuse colour onto the new (worse)
+UV layout with Cycles (2048px, diffuse-colour-only pass) and rendered both
+in the studio six-view rig and in the real fight (`state=3d`, `state=
+3dgrip`, same camera, same frame):
+
+![[frames/artist/2026-09-24-goblin-reunwrap-studio-before-after.png]]
+![[frames/artist/2026-09-24-goblin-reunwrap-infight-before-after.png]]
+
+Reads as the same goblin -- no colour shift, no obvious seam artefact -- but
+looking closely at the studio shot, the tank's metallic highlight and the
+goggle rim are very slightly softer on the rebake (expected: resampling a
+2048 texture through a new UV layout and a diffuse-only bake loses the
+tiny bit of variation a direct copy keeps). Rendered in-fight at the
+goblin's actual on-screen size (both crops above, true native resolution)
+the softening is not visible at all -- the two are indistinguishable at
+the size a player would ever actually see this hunter.
+
+**Did not ship it.** No visible upside (identical at real fight size), a
+real and measured downside (the file gets structurally worse -- 3x the
+islands, more export bloat, a fractionally softer texture on close
+inspection), and it does not touch the actual score-capping issue (tri
+budget: this asset ships at ~3.7x its hunter budget regardless of UV
+layout). Shipping a real regression for a cosmetic-only, unverifiable gain
+fails this project's own honesty rule. Reverted the shipped
+`.glb`/`.blend`/embedded image back to the pre-pass state before this run's
+commit (`git status` on `game/assets/3d/cast/goblin_mech_ai.glb` and
+`tools/blender/ai/goblin_mech_ai.blend` shows no diff) -- the only files
+this pass actually changes are this progress note, the sibling VERDICT
+correction in `cinder_jackal_ai.md`, a pointer note in `frog_ai.md`, the
+request `## Result`, this status note, and the two frames above.
+
+**Score: unchanged, 41/50.** Nothing shipped, so nothing to re-score.
+
+### Where it stands now
+
+The re-unwrap lever named in every VERDICT section on this cast is now
+tried, on real numbers, and closed: it cannot move Build hygiene on any of
+the three assets (the same raw-component-count identity holds on all
+three), and attempting it makes the shipped file's own fragmentation worse,
+not better. The only lever that could still move this line is a full
+manual retopology of the small disconnected parts (not a texture-only
+job, not scoped, not attempted here) -- or accepting that 41/42/40 across
+the cast is this Meshy pipeline's honest ceiling at this budget. Passed
+back to Nick as the request's own `## Result`, not decided here.

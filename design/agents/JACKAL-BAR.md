@@ -141,6 +141,15 @@ reading the fight at a glance, at play size, in motion.
       cinder_jackal_ai.md` now opens with a `VERDICT: REBUILD` section, and
       the choice (leave it, or greenlight the risky re-unwrap) is with Nick:
       `2026-09-24-1110-artist-to-nick-jackal-and-goblin-plateaued-below-stop-line.md`.
+      **2026-09-24 12:23 ET: Nick greenlit it; tried on the Goblin Engineer
+      first (lower risk, same root cause) and it does not work** — the
+      "island count" this and every VERDICT blamed on UV seams is actually
+      unwelded remesh geometry, confirmed identical on this beast too (440
+      raw components = 440 shipped islands, zero UV contribution), and a
+      real re-unwrap attempt made the goblin's number 3x worse, not better.
+      Not attempted on this beast — proven not to work before risking its
+      rig/animation. `design/progress/cinder_jackal_ai.md`'s VERDICT section
+      has the correction; `goblin_mech_ai.md` pass 9 has the experiment.
 - [x] **The weak point is obvious** and stays obvious as you climb toward it.
       First look, 2026-09-24: the persistent 2D climb gauge already marks it
       clearly at all times (a distinct gold rail-cap and `✦ <N>` label, never
@@ -266,6 +275,16 @@ reading the fight at a glance, at play size, in motion.
       goblin_mech_ai.md` now opens with a `VERDICT: REBUILD` section
       alongside the jackal's own identical call; the choice is with Nick:
       `2026-09-24-1110-artist-to-nick-jackal-and-goblin-plateaued-below-stop-line.md`.
+      **2026-09-24 12:23 ET: Nick greenlit the re-unwrap; tried on the
+      Goblin Engineer and it does not work.** `goblin_mech_ai.md` pass 9 —
+      the "island count" all three VERDICTs blamed on UV seams is actually
+      raw unwelded remesh geometry (confirmed identical on all three cast
+      members), a re-unwrap can only add seams to that floor not remove
+      them, and a real built-and-baked attempt measured exactly that
+      (489→1,586 islands, worse). Not shipped. Still one point under the
+      stop line; the only remaining lever is a full manual retopology, a
+      different and much bigger job than what was approved, not attempted
+      here — back with Nick via the same request's `## Result`.
 - [x] **Each is readable at fight distance** as itself, not a green blob.
       The Goblin Engineer's Meshy rebuild was wired in and unreadable at true
       size (a near-solid black blob) until the shared ink-outline width was
