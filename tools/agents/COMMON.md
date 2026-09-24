@@ -170,6 +170,19 @@ rather than backgrounding it; a 40-step playtest takes 3-5 minutes.
   function names, no scores he has no scale for. He reads this to know whether
   the hour was worth it; everything below it is for you and the other agents
   (Nick, 2026-09-23).
+
+  **Hard limit: ONE sentence per bullet, 20 words or fewer.** Not a short
+  paragraph — a sentence. Nick, 2026-09-24: "the agents are writing too much."
+  One `Did:` line was 470 characters and it goes on the task board, where a
+  wall of text is the same as no board at all. The board TRUNCATES anything
+  longer now, so writing more does not get it read — it gets it cut. The
+  detail belongs in `## Now` and in the request's `## Result`, which is where
+  anyone who wants it will look.
+
+      GOOD  - **Did:** cut both hunters to 1,560 tris; they finally fit budget.
+      BAD   - **Did:** Nick answered the art-style request from my last two
+              runs, so I built the real thing instead of just scoping it,
+              turning the shared toon shader's soft three-step shading into ...
 - Then overwrite `## Now` in `design/agents/status/<you>.md` with the detail,
   update `updated:` and `working_on:` in its frontmatter, and add one line to
   its `## Log` (newest on top). Honest: say if it went badly or you gave up.

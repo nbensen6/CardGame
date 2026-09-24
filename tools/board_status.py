@@ -27,6 +27,22 @@ OUT = os.path.join("design", "agents", "Task board.md")
 STALE = 2400  # seconds; matches lease.sh, after which a lease is not a run
 
 
+def short(text, limit=110):
+    """Cut a bullet to something scannable, on a word boundary.
+
+    The agents write paragraphs into their `Did:` line -- one was 470
+    characters. A board you have to READ is not a board, so it is trimmed here
+    rather than trusted: the full text is a click away in the status note, and
+    the brief now asks for one line, but the board must stay legible even when
+    an agent ignores that.
+    """
+    text = " ".join((text or "").split())
+    if len(text) <= limit:
+        return text
+    cut = text[:limit].rsplit(" ", 1)[0]
+    return cut + " …"
+
+
 def bullet(text, label):
     """The one line after `**Did:**` (or Next, or Need from you), unwrapped.
 
@@ -125,40 +141,58 @@ def render():
                "requests. Do not edit -- the next sync overwrites it._")
     out.append("")
 
+    out.append("| agent | | doing now | next | tickets |")
+    out.append("|---|---|---|---|---|")
     for agent in AGENTS:
         block = this_run(read(os.path.join(STATUS, agent + ".md")))
         live = running(read(os.path.join(STATUS, agent + ".lease")))
-        out.append("## %s %s" % (agent, "— RUNNING NOW" if live else ""))
-        out.append("")
-        out.append("**Last run:** %s" % run_heading_time(block))
-        out.append("")
-        out.append("- **Did:** %s" % (bullet(block, "Did") or "—"))
-        out.append("- **Next:** %s" % (bullet(block, "Next") or "—"))
-        need = bullet(block, "Need from you")
-        if need and need.lower().strip(" .") not in ("nothing", "none"):
-            out.append("- **Needs Nick:** %s" % need)
         rows = owned.get(agent, [])
-        out.append("")
-        if rows:
-            out.append("| ticket | priority | eta | state | |")
-            out.append("|---|---|---|---|---|")
-            for r in rows:
-                out.append("| #%s | %s | %s | %s | %s |" % (
-                    r["num"] or "-", r["priority"], r["eta"] or "not estimated",
-                    r["status"], r["title"]))
-        else:
-            out.append("_No open ticket._")
-        out.append("")
+        refs = " ".join("#" + (r["num"] or "?") for r in rows) or "—"
+        out.append("| **%s** | %s | %s | %s | %s |" % (
+            agent,
+            "🟢 running" if live else "idle",
+            short(bullet(block, "Did"), 90) or "—",
+            short(bullet(block, "Next"), 90) or "—",
+            refs))
+    out.append("")
+
+    out.append("## Tickets")
+    out.append("")
+    out.append("| # | owner | priority | eta | state | |")
+    out.append("|---|---|---|---|---|---|")
+    any_row = False
+    for owner in list(AGENTS) + ["nick"]:
+        for r in owned.get(owner, []):
+            any_row = True
+            out.append("| #%s | %s | %s | %s | %s | %s |" % (
+                r["num"] or "-", owner, r["priority"],
+                r["eta"] or "—", r["status"], short(r["title"], 60)))
+    if not any_row:
+        out.append("| — | | | | | _nothing open_ |")
+    out.append("")
 
     mine = owned.get("nick", [])
-    out.append("## waiting on Nick")
+    out.append("## Waiting on you")
     out.append("")
     if mine:
         for r in mine:
-            out.append("- **#%s** %s" % (r["num"] or "-", r["title"]))
+            out.append("- **#%s** %s" % (r["num"] or "-", short(r["title"], 80)))
     else:
         out.append("_Nothing._")
     out.append("")
+
+    out.append("## Last run, in their own words")
+    out.append("")
+    for agent in AGENTS:
+        block = this_run(read(os.path.join(STATUS, agent + ".md")))
+        out.append("**%s** — %s" % (agent, run_heading_time(block)))
+        out.append("")
+        out.append("- Did: %s" % (short(bullet(block, "Did"), 220) or "—"))
+        out.append("- Next: %s" % (short(bullet(block, "Next"), 220) or "—"))
+        need = bullet(block, "Need from you")
+        if need and need.lower().strip(" .") not in ("nothing", "none"):
+            out.append("- **Needs you:** %s" % short(need, 220))
+        out.append("")
     return "\n".join(out) + "\n"
 
 
@@ -185,6 +219,13 @@ def selftest():
     assert not running("")
     assert not running("%d old run" % (time.time() - STALE - 1))
     assert not running("garbage in the lease")
+
+    # a paragraph in a Did: line must not be allowed to wreck the board
+    long_text = "word " * 60
+    assert len(short(long_text, 90)) <= 92, len(short(long_text, 90))
+    assert short(long_text, 90).endswith("…")
+    assert short("short enough", 90) == "short enough"
+    assert short("", 90) == ""
     print("BOARD STATUS SELFTEST OK")
 
 
