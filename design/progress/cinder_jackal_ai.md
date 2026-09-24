@@ -211,3 +211,55 @@ another six-view look. Worth flagging for whoever next rebuilds this beast
 from itself: the pass-2 contamination existed because nothing had looked at
 this specific beast's own six-view render since it first shipped, not
 because `ai_beast.py`'s current logic is wrong.
+
+## Pass 4 — "alive when idle" and "reacts" verification, artist, 2026-09-24T03:21 EDT
+
+`JACKAL-BAR.md`'s creature section had two unticked bullets nobody had ever
+checked directly for this beast: "it is alive when idle... without drifting"
+and "it reacts: attack, hit and death all read as different events." No
+asset or code change this pass — pure verification, in the real engine, not
+assumed from reading the shader/animation code.
+
+**Alive when idle, without drifting.** `_beast_play`/the imported glb's own
+`idle` clip loops every 4.0s. Rendered `state=3d` at `anim=idle@0.0/@2.0/@4.0`
+and diffed: real motion every time (2.6k-4.8k changed pixels, all inside the
+beast's own screen box) — not a frozen pose. The "without drifting" half of
+the bullet needed more than one loop to actually test: diffed frame 0 against
+10 loops later (`@40.0`) and 100 loops later (`@400.0`) and the changed-pixel
+count stayed flat (2641 → 2602, same bounding box) rather than growing —
+confirmed by numbers, not eyeballing, that the idle motion is bounded
+(shader-driven ember pulse + normal loop, matching the jitter pattern earlier
+passes already documented for the hunters) and never accumulates into a
+net drift over time.
+
+**Reacts: attack, hit and death all read as different events.** Attack and
+hit were already known to differ (separate animation clips, `_strike()`'s
+own camera-shake/flash/weak-point emphasis). "Death" had never been checked
+at all — the glb itself carries no `death` animation clip, and
+`combat_3d.gd` never branches on `boss.is_dead()`. Reading `location_3d.gd`
+found the actual mechanism: on the REWARD phase the beast is torn down out
+of the fight scene entirely and `_lay_out_the_felled()` (already
+beast-specific-tuned: "a four-legged tower... roll it onto its flank
+instead", written for exactly this beast) lays a second, static instance of
+the same glb on its side in the reward scene. Rendered
+`state=3dreward beast=cinder_jackal` — confirmed this fires for the jackal
+and reads as a fallen animal, not an abstract shape: snout/ears cluster at
+one end, four legs splayed, the same spine markings as the standing pose.
+Cross-checked the ambiguous parts of that in-game render (a bright orange
+mass that doesn't appear anywhere on the standing 3/4 render) with a
+scratch three-angle probe (front/side/top, same rotation as the shipped
+code, discarded after use, not committed) before calling it a defect: it is
+the tail's own small ember tip, foreshortened almost end-on by this
+particular fall angle, not a texture or geometry problem — confirmed by the
+top-down angle, where the tail reads correctly as a slender curve.
+
+**Verdict: both bullets hold, ticked below.** No fix needed — the systems
+that make idle read as alive and death read as distinct from a hit already
+existed and already worked; nobody had pointed a render at either question
+before. Three-state composite (idle / hit-at-the-sigil / felled-in-reward),
+same beast, same run:
+
+![[frames/artist/2026-09-24-cinder-jackal-idle-hit-death-composite.png]]
+
+Score unchanged — this pass verified two definition-of-done lines, not the
+five-line rubric — 40/50 stands from pass 3.

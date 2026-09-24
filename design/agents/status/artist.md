@@ -2,13 +2,108 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T02:14
-working_on: A fresh, more critical six-view look at cinder_jackal_ai (the natural next step pass 2's own writeup named) plus an in-fight check across 3dgrip/3dclimb/3dstrike confirmed the basalt-cleanup fix is holding and found no further closeable defect on Silhouette/Proportion/Style. Score unchanged at 40/50 -- the one remaining gap (Build hygiene's tri-budget overage) is now a confirmed structural ceiling shared by all three Meshy-built cast members, not a same-pass fix, so did not attempt a blind decimation pass on the hero asset. No shipped asset changed this run.
+updated: 2026-09-24T03:21
+working_on: Verified the two remaining unticked JACKAL-BAR creature bullets for cinder_jackal_ai -- "alive when idle without drifting" and "reacts: attack/hit/death all differ" -- both checked directly in the real engine for the first time and both hold. No asset or code change; pure verification with real renders and a diff-based drift check.
 ---
 
 # artist
 
-## This run — 2026-09-24 02:14 ET
+## This run — 2026-09-24 03:21 ET
+
+- **Did:** checked the two remaining unticked lines in `JACKAL-BAR.md`'s
+  creature section for the jackal — "alive when idle... without drifting"
+  and "reacts: attack, hit and death all read as different events" — nobody
+  had ever pointed a render at either.
+- **Worked?** Yes, both hold, no fix needed. Idle motion is real and stays
+  bounded over 100 loops (not creeping). "Death" turned out to already be
+  handled — not by the fight scene, but by the reward screen's existing
+  "felled beast lying down" system, which is already tuned for this exact
+  beast's proportions and reads clearly as a fallen animal in a real render.
+- **Next:** the hunters-vs-jackal fidelity gap and its tri-budget structural
+  ceiling are still the loudest open items on my own brief; this run went a
+  different, cheaper direction first because two bar lines had simply never
+  been looked at.
+- **Need from you:** nothing.
+
+![[frames/artist/2026-09-24-cinder-jackal-idle-hit-death-composite.png]]
+
+## Now
+
+No open `to: artist` request this run (checked every request's frontmatter —
+the only two open notes in `requests/` are both `to: fixer`), and none of my
+own `to: nick` notes had a fresh, unhandled answer either (all are
+`status: done`, checked per `COMMON.md` 1b). Worked the `JACKAL-BAR.md`
+queue.
+
+**Why this over another hunter-fidelity pass.** The last several runs
+(basalt cleanup, fresh critical look) both converged on the same conclusion:
+the hunter/beast tri-budget overage is a real structural ceiling that needs
+its own separately-scoped, risk-budgeted decimation pass, not something to
+attempt blind in a single unattended run. Rather than force that this run,
+I re-read `JACKAL-BAR.md`'s creature section end to end and found two
+bullets — "alive when idle" and "reacts" — that were still unticked and had
+never actually been checked, as distinct from being checked-and-failing.
+Cheap to verify, directly in scope, and either result (holds, or a real
+defect) would be useful.
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `pip install
+pillow numpy`. Blender not needed this run — no geometry touched.
+
+**Alive when idle, without drifting.** The shipped `idle` clip loops every
+4.0s (read straight from the glb's own animation accessor). Rendered
+`state=3d anim=idle@0.0/@2.0/@4.0` and diffed: 2.6k-4.8k changed pixels each
+time, all inside the beast's own screen region — real motion, not a frozen
+pose. The "without drifting" half needed more than one loop to test for
+real: diffed frame 0 against **10 loops later** (`@40.0`) and **100 loops
+later** (`@400.0`) — changed-pixel count stayed flat (2641 → 2602, same
+bounding box) instead of growing, which is the actual signature of bounded
+oscillation (shader ember-pulse + normal idle sway) versus a bug that would
+let a bone's transform creep away from its start pose over time.
+
+**Reacts: attack, hit and death all read as different events.** Attack and
+hit were already known-good — separate animation clips, and `_strike()`
+already gives hits (bigger at the weak point) a camera shake, a light flash
+and a dust kick that attack doesn't get. "Death" was the real open question:
+the glb carries no `death` clip and `combat_3d.gd` never branches on
+`boss.is_dead()` at all. Read `location_3d.gd` instead of assuming the gap
+was real, and found the actual mechanism: on the REWARD phase the fight
+scene is torn down and replaced by a location scene whose
+`_lay_out_the_felled()` lays a second, static copy of the same beast glb on
+its side — and its own code comment shows this was already tuned
+specifically for this beast ("a four-legged tower... roll it onto its
+flank instead"). Rendered `state=3dreward beast=cinder_jackal` for real and
+read the frame: the felled jackal shows its snout/ear cluster at one end,
+four legs splayed, the same spine markings as the standing pose — reads as
+a fallen animal, not an abstract shape.
+
+**Chased down the one part of that render that looked odd before calling
+it clean.** A bright orange round mass shows up near one end of the felled
+body that doesn't match any single marking visible on the standing 3/4
+render. Wrote a small scratch diagnostic (three clean camera angles —
+front/side/top — same rotation the shipped code uses, on a plain grey
+background, no UI) to identify it rather than guess: from directly above,
+it's unambiguously the tail's own small ember tip, foreshortened almost
+end-on by this specific fall angle into what reads as a disc from other
+angles. Not a texture or geometry defect. Discarded the scratch script
+after use — it isn't part of the shipped tool set and nothing about it
+needed to survive the run.
+
+**No fix applied, because none was needed** — both systems (the shader/
+animation driving idle life, and the reward screen's felled-beast layout)
+already existed and already worked; this run's only contribution was
+pointing a real render at each and checking the result against the bar's
+own wording instead of assuming either from reading the code. Ticked both
+lines in `JACKAL-BAR.md` with this evidence. Score unchanged, 40/50 (pass 3
+verified the five-line rubric; this pass verified two separate
+definition-of-done lines, not a rubric line). Full write-up:
+`design/progress/cinder_jackal_ai.md` ("Pass 4").
+
+`ALL TESTS PASSED` (`run_tests.gd`). No playtest re-run — nothing shipped
+changed (`git status` shows only the two design-doc updates, the status
+note, and the one committed composite frame), so nothing in the live fight
+can differ.
+
+## Old: 2026-09-24 02:14 ET
 
 - **Did:** gave `cinder_jackal_ai` the fresh, more critical six-view look
   last run's own "Next" named as the likely place to find a real, closeable

@@ -58,8 +58,23 @@ reading the fight at a glance, at play size, in motion.
       deliberately risk-budgeted decimation/re-unwrap pass, not another
       look. `design/progress/cinder_jackal_ai.md` ("Pass 3").
 - [ ] **The weak point is obvious** and stays obvious as you climb toward it.
-- [ ] **It is alive when idle** (breath, tail, ember pulse) without drifting.
-- [ ] **It reacts**: attack, hit and death all read as different events.
+- [x] **It is alive when idle** (breath, tail, ember pulse) without drifting.
+      Verified 2026-09-24: the shipped `idle` clip (4.0s loop) produces real
+      motion every render (`state=3d anim=idle@0/@2/@4`), and diffing frame 0
+      against 10 and 100 loops later (`@40`, `@400`) shows the same bounded
+      amount of change each time rather than a growing one — the motion
+      oscillates, it does not accumulate into drift. `design/progress/
+      cinder_jackal_ai.md` ("Pass 4").
+- [x] **It reacts**: attack, hit and death all read as different events.
+      Attack/hit were already known to differ (separate clips, `_strike()`'s
+      camera-shake/flash/weak-point emphasis). Death had never been checked:
+      no `death` clip exists and `combat_3d.gd` never branches on
+      `boss.is_dead()` — but `location_3d.gd`'s own `_lay_out_the_felled()`
+      (already tuned specifically for this beast's proportions) lays the
+      jackal on its flank in the reward scene, and a real render
+      (`state=3dreward beast=cinder_jackal`) confirms it reads as a fallen
+      animal — snout/ears, four splayed legs, the same spine markings — not
+      an abstract shape. `design/progress/cinder_jackal_ai.md` ("Pass 4").
 
 ### Motion
 - [ ] **The jump reads** — anticipation, arc, landing, at the size it plays.
