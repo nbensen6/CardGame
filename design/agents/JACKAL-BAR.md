@@ -99,7 +99,7 @@ reading the fight at a glance, at play size, in motion.
       an abstract shape. `design/progress/cinder_jackal_ai.md` ("Pass 4").
 
 ### Motion
-- [x] **The jump reads** — anticipation, arc, landing, at the size it plays.
+- [ ] **The jump reads** — anticipation, arc, landing, at the size it plays.
       First dedicated artist look, 2026-09-24: real hops (`mode=play
       beast=cinder_jackal`) read well overall at true 1:1 — a clear
       anticipation crouch, a real airborne arc, a clean landing on the
@@ -121,6 +121,19 @@ reading the fight at a glance, at play size, in motion.
       "† Attack 7", not behind it — tag fix verified live, not just by the
       fixer's own test suite.
       ![[frames/artist/2026-09-24-jump-tag-fix-verified.png]]
+      Playtester, 2026-09-24 10:05 ET: built a permanent live check
+      (`intent-tag-vs-hunter`, `playtest.gd`) rather than take one verified
+      frame as proof for every hop, and it found real, if much smaller,
+      leftover trouble the single re-render above didn't happen to catch —
+      a ~13x34px graze at the very FIRST instant of a ground-level hop
+      (before the artist's own checked frame, `hop_000_08`, which is
+      further into the same hop), reproduced on three separate full
+      80-step runs. Small enough that the main fix is real and holding
+      everywhere else, not small enough to call this line done — filed
+      separately
+      (`2026-09-24-1002-playtester-to-fixer-intent-tag-still-grazes-hunter-at-hop-start.md`)
+      so the near-complete fix and the original bug aren't conflated.
+      Leaving unticked until that residual closes too.
 - [x] **The camera never loses the active hunter**, including mid-jump.
       Dedicated eyes-on pass, 2026-09-24 (this run): 8 real hops sampled
       across a full 80-step fight (steps 0, 1, 2, 9, 10, 11, 16, 19, 20,

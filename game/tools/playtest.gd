@@ -64,6 +64,27 @@ const SIGIL_HUNTER_HEIGHT := 0.7
 ## not a hair under it).
 const SIGIL_CLEAR_MARGIN := 0.05
 
+## For check 5d (intent-tag-hides-jumping-hunter): reuses combat_3d.gd's own
+## pure `hunter_screen_rect`/`_merged_aabb` to measure where the hop's hunter
+## actually is on screen, the same way check 8d (sigil-behind-hunter) measures
+## the sigil/head geometry itself instead of trusting a placement branch to
+## have run correctly. Only the MEASUREMENT is reused, not the placement
+## decision `intent_tag_pos` makes -- this check reads _intent_tag's own
+## real, rendered rect (ground truth, same as check 5c) and asks whether it
+## really does clear the real hunter, live, on every sampled frame of a real
+## hop -- something request 2026-09-24's fix only ever proved with a unit
+## test on synthetic rects, never against a real camera/hop in motion.
+const Combat3D := preload("res://views/combat_3d.gd")
+
+## `hunter_screen_rect`'s box is the convex hull of a 3D AABB's projected
+## corners -- looser than the sprite's real silhouette by a few px on almost
+## any real hop, so a bare rect intersection against the tag fires on hairline
+## grazes that are never actually visible (see check 5d's own comment). Small
+## enough to still catch the real bug (the artist's original repro overlapped
+## by roughly half the tag's own height and half the hunter's own width),
+## nowhere near enough to forgive a genuine swallow as "just the AABB."
+const INTENT_OVERLAP_MIN_PX := 8.0
+
 var _mode := "play"
 var _beast := ""
 var _steps := 40
@@ -1105,6 +1126,16 @@ func _watch_hop(v: Node, me: int, climb_from: Vector3) -> void:
 	var screen := Vector2(root.get_visible_rect().size)
 	var offscreen_samples := 0
 	var cam_samples := 0
+	# Check 5d: only meaningful for the hunter _position_intent_tag() actually
+	# clamps against -- it only ever computes a hunter_rect for _active_slot,
+	# same targeting `me` already has here (the hunter whose own card just
+	# started this climb). A hop on the OTHER hunter (mid-turn camera lock,
+	# a shared-foothold side-step) is real motion the tag was never asked to
+	# avoid, so checking it would just be noise, not a gap.
+	var itag: Control = v.get("_intent_tag")
+	var check_intent := int(v.get("_active_slot")) == me
+	var intent_frames := 0
+	var intent_overlap_frames := 0
 	# `flight` (the numeric record _check_hop reads) is sampled every real frame
 	# for as long as the tween genuinely runs -- capped only by `guard`, sized
 	# generously for HOP_TIME_SCALE's slow-mo (a multi-leg sigil climb that took
@@ -1133,6 +1164,27 @@ func _watch_hop(v: Node, me: int, climb_from: Vector3) -> void:
 				var p := cam.unproject_position(node.global_position)
 				if p.x < -2.0 or p.y < -2.0 or p.x > screen.x + 2.0 or p.y > screen.y + 2.0:
 					offscreen_samples += 1
+		if check_intent and cam != null and itag != null and is_instance_valid(itag) \
+				and itag.is_visible_in_tree() and is_instance_valid(body):
+			var trect := itag.get_global_rect()
+			if trect.size.x >= 2.0 and trect.size.y >= 2.0:
+				var hrect := Combat3D.hunter_screen_rect(cam, Combat3D._merged_aabb(node))
+				if hrect.size.x > 0.0 and hrect.size.y > 0.0:
+					intent_frames += 1
+					# hunter_screen_rect is the convex hull of a 3D AABB's 8 corners --
+					# always a little looser than the character's real silhouette, so
+					# its edge sweeps a few px past the tag's edge on nearly every real
+					# hop with nothing ever visibly touching. A first version of this
+					# check used a bare .intersects() and fired 3-4/29 times on the
+					# ALREADY-FIXED code -- every one a hairline graze (down to 0.13px
+					# wide), nothing like the artist's original ~half-tag swallow -- the
+					# same shape of false alarm check 5's own `grow(-6)` already guards
+					# against for a card resting near a button. Require the actual
+					# overlap rect to clear a real margin on BOTH axes before it counts
+					# as the hunter's body genuinely hidden, not two loose boxes grazing.
+					var inter := trect.intersection(hrect)
+					if inter.size.x > INTENT_OVERLAP_MIN_PX and inter.size.y > INTENT_OVERLAP_MIN_PX:
+						intent_overlap_frames += 1
 		await RenderingServer.frame_post_draw
 		# Same freed-`v`-mid-await guard as _wait_and_poll/_drive_timing
 		# (2026-09-23) -- this loop can run for a while (guard cap 300,
@@ -1149,6 +1201,7 @@ func _watch_hop(v: Node, me: int, climb_from: Vector3) -> void:
 	# unlike the arc/squash checks below, "the camera lost the hunter for most
 	# of what we did see" is real evidence regardless of how the hop ended.
 	_check_hop_camera(cam_samples, offscreen_samples)
+	_check_hop_intent_tag(intent_frames, intent_overlap_frames)
 	if not is_instance_valid(node):
 		Engine.time_scale = 1.0
 		return   # the fight ended mid-hop
@@ -1188,6 +1241,29 @@ func _check_hop_camera(cam_samples: int, offscreen_samples: int) -> void:
 	else:
 		_note("step %d: mid-hop camera coverage -- %d/%d sampled frames on screen (%.0f%% off)"
 			% [_step, cam_samples - offscreen_samples, cam_samples, frac * 100.0])
+
+
+## Check 5d, JACKAL-BAR's "the jump reads... at the size it plays" mid-air:
+## request 2026-09-24-0822 found the boss's intent tag can render on top of a
+## jumping hunter, swallowing a real chunk of their body at the arc's peak;
+## the fixer's own fix (`intent_tag_pos`'s hunter clamp) is proven only by
+## unit tests against synthetic rects, never against a real camera watching a
+## real hop -- the same shape of gap check 5c (intent-hidden) closed for the
+## party panel a run earlier, now closed for the active hunter itself.
+##
+## Unlike the camera-coverage check above, ANY overlapping frame is real
+## evidence, not just a majority -- a hunter's own body swallowed for even a
+## few consecutive frames at an arc's peak is exactly the reported bug, and
+## there is no "brief graze is fine" case the way a camera edge-graze is.
+func _check_hop_intent_tag(checked_frames: int, overlap_frames: int) -> void:
+	if checked_frames == 0:
+		return   # tag never visible (or never both on screen) during this hop -- nothing to judge
+	if overlap_frames > 0:
+		_fail("intent-tag-vs-hunter", "step %d: the intent tag overlapped the jumping hunter's own on-screen body for %d/%d sampled frames"
+			% [_step, overlap_frames, checked_frames])
+	else:
+		_note("step %d: intent tag stayed clear of the jumping hunter across %d sampled frames"
+			% [_step, checked_frames])
 
 
 ## The checks checklist item 3 asks for, read off `_watch_hop`'s samples: a

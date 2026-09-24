@@ -2,13 +2,74 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-24T07:26
-working_on: Full three-mode baseline clean and better than last run -- intent-hidden is now GONE (the fixer's fix landed and holds, 0 fails across 80 steps), no regression from the artist's sigil-lift change either. New check: sigil-behind-hunter, closing the live-check gap on JACKAL-BAR's "weak point is obvious... stays obvious as you climb toward it" the same way hop-distance-band/route-reversal closed it for the stone route -- proved both directions (0 fires on the real 1.7x-lift code, 11 real fires when temporarily reverted to the old buggy 0.9x). Only hop-distance-band remains open, unchanged. Still waiting on Nick's answer on the sigil-cheek request.
+updated: 2026-09-24T10:05
+working_on: Full three-mode baseline clean -- verified the fixer's new intent-tag-vs-hunter fix (73ae6b4) live, not just its unit tests. New check found the fix mostly works (0 fails on the reported repro) but also found its own first version was too strict (fired on invisible AABB hairline grazes) -- added an 8px margin, then found one real, much smaller residual (a ground-hop-start graze) surviving underneath the noise. Filed the residual to the fixer. Only hop-distance-band remains open otherwise, unchanged. Still waiting on Nick's answer on the sigil-cheek request.
 ---
 
 # playtester
 
-## This run — 2026-09-24 07:26 EDT
+## This run — 2026-09-24 10:05 EDT
+
+- **Did:** the fixer landed a fix (`73ae6b4`) for the artist's
+  jump-hides-behind-intent-tag finding while I was setting up this run.
+  Ran the full three-mode baseline first (clean, matches every recent run),
+  then extended `playtest.gd` with a live check
+  (`intent-tag-vs-hunter`, check 5d) — the fixer's own fix is proven only
+  by unit tests on synthetic rects, the same gap `intent-hidden` (check 5c)
+  closed for the party-panel fix a run earlier, now closed for this one.
+- **Worked?** Yes, in two stages, and the first stage taught me something
+  worth recording. A first version fired 3-4/29 times per run on the
+  ALREADY-FIXED code — looked at every flagged frame at 1:1 and none showed
+  any visible overlap at all: `Combat3D.hunter_screen_rect`'s box is the
+  convex hull of a 3D AABB's projected corners, always a bit looser than
+  the character's real silhouette, so it sweeps a few px past the tag's
+  edge on nearly every hop with nothing ever actually touching (one graze
+  measured 0.13px wide). Added an 8px-minimum-on-both-axes margin (the same
+  idea as this file's own check 5 `grow(-6)` for a card near a button)
+  before trusting the check at all. With that margin, three full fresh
+  80-step baselines agree: 0 fails everywhere the fixer's fix already
+  covers (including the artist's own original opening-hop repro, now
+  clean), and exactly one real, much smaller residual every single run —
+  a ~13x34px graze at the very first instant of a ground-level hop, small
+  but genuinely visible when I opened the frame. Filed it separately
+  (`to: fixer`,
+  `2026-09-24-1002-playtester-to-fixer-intent-tag-still-grazes-hunter-at-hop-start.md`)
+  rather than let it sit unrecorded under a fix that's 95% of the way
+  there.
+- **Next:** watch for the fixer's fix on the ground-hop-start residual,
+  re-run and confirm `intent-tag-vs-hunter` goes to 0. `hop-distance-band`
+  (the two short hops nearest the sigil) is still the only other open item,
+  unchanged. Still waiting on Nick's answer on the sigil-cheek request —
+  unchanged ask, nothing new to add.
+- **Need from you:** the sigil-cheek request, whenever you have a minute —
+  same ask as every run since it was filed.
+
+![[frames/playtester/2026-09-24-intent-tag-vs-hunter-groundhop-full.png]]
+The real repro: the frog's rightmost edge sits under the intent tag's left
+edge, low on screen, moments after the opening hop launches. Full 1:1
+frame, the fixed code (`73ae6b4`) already in place.
+
+![[frames/playtester/2026-09-24-intent-tag-vs-hunter-groundhop-crop.png]]
+Same frame, cropped for detail only (2x nearest-neighbour) — small, but a
+real, visible graze, not a bounding-box artifact.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | unchanged — reads clearly; sigil-cheek placement unchanged, already filed to Nick |
+| 2 | hunters land on the beast correctly | unchanged — 0 `hunter-off-marker`, 0 `hunters-overlap`, 0 `route-reversal`, 0 `sigil-behind-hunter` |
+| 3 | jump animation (squash/arc/landing) | unchanged — clean, no pops, across every hop this run |
+| 4 | camera | unchanged — 0 `hunter-offscreen`/`hunter-lost-mid-hop`; **new**: `intent-tag-vs-hunter` now watches the fixer's tag-vs-jumping-hunter fix live, on every hop, in every mode — confirms the main fix holds, found one small residual, filed |
+| 5 | nothing errors | clean — 0 `script-error` across all three modes; `intent-hidden` (party-panel) still gone, confirmed again this run |
+
+Two commits this run: the new `intent-tag-vs-hunter` check in
+`game/tools/playtest.gd` (with its 8px margin, added only after the
+false-positive investigation above), and the new request + two frames +
+this write-up. Both pushed per COMMON.md 4b before the final full-baseline
+re-verification finished.
+
+## Old: 2026-09-24 07:26 EDT
 
 - **Did:** no requests addressed to `playtester` were open, and Nick still
   hasn't answered the sigil-cheek request. Ran the full three-mode
