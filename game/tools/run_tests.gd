@@ -2533,6 +2533,14 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog_intent_tag_pos_repros_the_pre_fix_overlap_without_the_party_clamp()
 	_test_backlog_intent_tag_pos_leaves_a_clear_tag_untouched()
 
+	# request 2026-09-24-0822: mid-hop, a jumping hunter's own screen rect can
+	# pass through the intent tag's fixed rect -- the artist's own measured
+	# numbers from the real step-0 Tongue Snap hop.
+	_test_backlog_intent_tag_pos_repros_the_pre_fix_hunter_overlap_without_the_hunter_clamp()
+	_test_backlog_intent_tag_pos_clears_the_hunter_by_moving_above_it()
+	_test_backlog_intent_tag_pos_falls_back_below_the_hunter_when_above_has_no_room()
+	_test_backlog_intent_tag_pos_leaves_the_prior_clamp_alone_when_neither_side_has_room()
+
 	print("")
 	if _failures == 0:
 		print("ALL TESTS PASSED")
@@ -29089,3 +29097,68 @@ func _test_backlog_intent_tag_pos_leaves_a_clear_tag_untouched() -> void:
 	var want_y := clampf(p.y - sz.y - 10.0, 70.0, maxf(70.0, vp.y - sz.y - 250.0))
 	_expect(is_equal_approx(pos.y, want_y),
 		"a tag nowhere near the party panel keeps the ordinary HP-bar/hand clamp untouched (got y=%f want=%f)" % [pos.y, want_y])
+
+
+## request 2026-09-24-0822: the artist's own step-0 Tongue Snap repro. `p`/`sz`
+## reconstruct the exact reported "before" tag rect [295,168]..[450,204]
+## through the ORIGINAL (still hunter-blind) clamp; `hunter` is the Frog's own
+## measured bbox [282,141]..[364,222] at the arc's peak. No party panel in
+## play here (isolating the hunter clamp alone, same as the sibling party
+## sanity check does for its own clamp).
+func _test_backlog_intent_tag_pos_repros_the_pre_fix_hunter_overlap_without_the_hunter_clamp() -> void:
+	var p := Vector2(372.5, 214.0)
+	var sz := Vector2(155.0, 36.0)
+	var vp := Vector2(1280.0, 720.0)
+	var hunter := Rect2(282.0, 141.0, 82.0, 81.0)
+	var pos: Vector2 = Combat3D.intent_tag_pos(p, sz, vp, Rect2())
+	var tag_rect := Rect2(pos, sz)
+	_expect(is_equal_approx(pos.x, 295.0) and is_equal_approx(pos.y, 168.0),
+		"sanity check: reconstructs the artist's own reported before-rect exactly (got %s)" % tag_rect)
+	_expect(tag_rect.intersects(hunter),
+		"sanity check: with no hunter awareness the tag really does land on the jumping hunter (got %s against hunter %s)" % [tag_rect, hunter])
+
+
+func _test_backlog_intent_tag_pos_clears_the_hunter_by_moving_above_it() -> void:
+	var p := Vector2(372.5, 214.0)
+	var sz := Vector2(155.0, 36.0)
+	var vp := Vector2(1280.0, 720.0)
+	var hunter := Rect2(282.0, 141.0, 82.0, 81.0)
+	var pos: Vector2 = Combat3D.intent_tag_pos(p, sz, vp, Rect2(), hunter)
+	var tag_rect := Rect2(pos, sz)
+	_expect(not tag_rect.intersects(hunter),
+		"the intent tag must never land on the jumping hunter (got %s against hunter %s)" % [tag_rect, hunter])
+	_expect(is_equal_approx(pos.x, 295.0),
+		"clearing the hunter is a Y move -- the X tracking must not shift (got x=%f)" % pos.x)
+	_expect(is_equal_approx(pos.y, 95.0),
+		"prefers sitting just above the hunter, closer to where the tag already tracks the crown (got y=%f want=95)" % pos.y)
+
+
+## The hunter's own bbox sits too close to the top of the legal band for
+## "above" to have room (its top edge minus the tag's own height and pad
+## would clear the HP-bar floor) -- the tag has to fall back to just below
+## the hunter instead.
+func _test_backlog_intent_tag_pos_falls_back_below_the_hunter_when_above_has_no_room() -> void:
+	var p := Vector2(372.5, 50.0)
+	var sz := Vector2(155.0, 36.0)
+	var vp := Vector2(1280.0, 720.0)
+	var hunter := Rect2(282.0, 20.0, 82.0, 81.0)
+	var pos: Vector2 = Combat3D.intent_tag_pos(p, sz, vp, Rect2(), hunter)
+	var tag_rect := Rect2(pos, sz)
+	_expect(not tag_rect.intersects(hunter),
+		"falls back to clearing the hunter from below when above has no room (got %s against hunter %s)" % [tag_rect, hunter])
+	_expect(is_equal_approx(pos.y, 111.0),
+		"lands exactly on the hunter's own bottom edge plus the same 10px pad the party clamp uses (got y=%f want=111)" % pos.y)
+
+
+## A hunter tall enough to span the whole legal band (neither above nor below
+## has room) leaves the pre-hunter clamp's own answer alone rather than
+## picking an arbitrary worse spot -- still wrong, but not worse than the bug
+## this fix is closing, and a hunter that tall is not a real game state.
+func _test_backlog_intent_tag_pos_leaves_the_prior_clamp_alone_when_neither_side_has_room() -> void:
+	var p := Vector2(372.5, 214.0)
+	var sz := Vector2(155.0, 36.0)
+	var vp := Vector2(1280.0, 720.0)
+	var hunter := Rect2(282.0, 50.0, 82.0, 400.0)
+	var pos: Vector2 = Combat3D.intent_tag_pos(p, sz, vp, Rect2(), hunter)
+	_expect(is_equal_approx(pos.y, 168.0),
+		"no clear spot either side of a too-tall hunter -- keeps the pre-hunter clamp's own y unchanged (got y=%f want=168)" % pos.y)

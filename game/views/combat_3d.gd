@@ -1480,7 +1480,21 @@ func _set_intent(boss: Dictionary, s: Dictionary) -> void:
 ## clear on the one axis Y never covers. Only tighten `lo_y` when the tag's
 ## X-range would actually overlap the panel -- an off-centre or right-side
 ## crown never pays for a panel it isn't near.
-static func intent_tag_pos(p: Vector2, sz: Vector2, vp: Vector2, party_rect: Rect2) -> Vector2:
+##
+## `hunter_rect` is the active hunter's own projected screen rect (or a
+## zero-size Rect2 when there is none). Unlike the party panel, a hunter is
+## not fixed to one corner -- a hop's arc can carry it through the tag's
+## rect from any side (request 2026-09-24, "jump-hides-behind-intent-tag":
+## a hop's peak put the hunter's own bbox stretched both above AND below the
+## tag's fixed y-range) -- so this needs a real 2D overlap test, not a
+## one-sided push like the party panel's. Prefers pushing the tag to sit
+## just ABOVE the hunter (closer to where it already tracks the crown);
+## falls back to just BELOW when there is no room above; leaves the
+## party/HP/hand clamp's own answer alone when neither side has room (a
+## hunter tall enough to fill the whole legal band) rather than pick a worse
+## spot arbitrarily.
+static func intent_tag_pos(p: Vector2, sz: Vector2, vp: Vector2, party_rect: Rect2,
+		hunter_rect: Rect2 = Rect2()) -> Vector2:
 	var x := clampf(p.x - sz.x * 0.5, 12.0, maxf(12.0, vp.x - sz.x - 12.0))
 	var lo_y := 70.0                                   # clear of the boss HP bar
 	var hi_y: float = maxf(lo_y, vp.y - sz.y - 250.0)  # clear of the hand
@@ -1489,7 +1503,43 @@ static func intent_tag_pos(p: Vector2, sz: Vector2, vp: Vector2, party_rect: Rec
 			and x + sz.x > party_rect.position.x:
 		lo_y = maxf(lo_y, party_rect.position.y + party_rect.size.y + 10.0)  # clear of the party panel
 		hi_y = maxf(lo_y, hi_y)
-	return Vector2(x, clampf(p.y - sz.y - 10.0, lo_y, hi_y))
+	var y := clampf(p.y - sz.y - 10.0, lo_y, hi_y)
+	if hunter_rect.size.x > 0.0 and hunter_rect.size.y > 0.0 \
+			and x < hunter_rect.position.x + hunter_rect.size.x \
+			and x + sz.x > hunter_rect.position.x \
+			and y < hunter_rect.position.y + hunter_rect.size.y \
+			and y + sz.y > hunter_rect.position.y:
+		var above := hunter_rect.position.y - sz.y - 10.0
+		var below := hunter_rect.position.y + hunter_rect.size.y + 10.0
+		if above >= lo_y:
+			y = above
+		elif below <= hi_y:
+			y = below
+	return Vector2(x, y)
+
+
+## The active hunter's own on-screen bounding rect, for `intent_tag_pos`'s
+## hunter clamp -- empty when there is no camera, no active hunter, or the
+## hunter has no visible model to bound. Projects the hunter's real,
+## currently-tweened AABB (mid-hop included, since `_merged_aabb` reads the
+## node's live global transform), not its resting foothold, so the check
+## covers the exact moment a jump's arc carries it through the tag's rect.
+static func hunter_screen_rect(cam: Camera3D, box: AABB) -> Rect2:
+	var pts: Array = []
+	for i in range(8):
+		var corner := box.position + Vector3(
+			box.size.x if (i & 1) else 0.0,
+			box.size.y if (i & 2) else 0.0,
+			box.size.z if (i & 4) else 0.0)
+		if cam.is_position_behind(corner):
+			continue
+		pts.append(cam.unproject_position(corner))
+	if pts.is_empty():
+		return Rect2()
+	var r := Rect2(pts[0], Vector2.ZERO)
+	for i in range(1, pts.size()):
+		r = r.expand(pts[i])
+	return r
 
 
 ## Follow the beast's crown in screen space, clamped so it is always readable.
@@ -1513,7 +1563,12 @@ func _position_intent_tag() -> void:
 	var party_rect := Rect2()
 	if _party != null and is_instance_valid(_party) and _party.is_visible_in_tree():
 		party_rect = _party.get_global_rect()
-	_intent_tag.position = intent_tag_pos(p, sz, vp, party_rect)
+	var hunter_rect := Rect2()
+	if _active_slot >= 0 and _active_slot < _hunters.size():
+		var hnode: Node3D = (_hunters[_active_slot] as Dictionary).get("node") as Node3D
+		if hnode != null and is_instance_valid(hnode) and (_hunters[_active_slot] as Dictionary).get("body") != null:
+			hunter_rect = hunter_screen_rect(_cam, _merged_aabb(hnode))
+	_intent_tag.position = intent_tag_pos(p, sz, vp, party_rect, hunter_rect)
 
 
 ## What the beast is about to do, in numbers the player does not have to derive.
