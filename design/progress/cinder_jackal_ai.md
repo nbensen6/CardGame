@@ -139,14 +139,75 @@ concrete on.
 a gate ("these are not gates and they do not fail an asset"), so scoring
 proceeded without it.
 
+## Pass 3 — fresh critical look, artist, 2026-09-24T02:14 EDT
+
+Pass 2's own "Where it stands" named two live options: a dedicated look for a
+smaller Silhouette/Proportion defect pass 2's first look might have missed,
+or accepting the tri-count ceiling and pushing on whichever of Silhouette/
+Proportion/Style a fresh, more critical pass turns up something concrete on.
+Did the first one for real, not just re-read pass 2's own numbers.
+
+**Re-rendered all six views fresh** (`look.sh cinder_jackal_ai 3`) and read
+every one cold before opening pass 2's write-up again, same discipline the
+loop calls for. `_side.png`, `_front.png`, `_top.png` and `_form.png` (clay)
+all confirm the basalt fix from pass 2 is holding — the front-leg/chest
+silhouette is clean in every angle, no new foreign geometry, no seam or gap
+visible anywhere the six views can catch. `_wire.png` shows an even,
+unremarkable topology; nothing bunches or stretches oddly on the legs, ears
+or tail. `_sil.png` at true 64px still reads as a lean running canid, all
+four legs, the tail and both ears separating cleanly.
+
+![[../agents/frames/artist/2026-09-24-cinder-jackal-fresh-critical-look.png]]
+
+**Also checked the in-fight camera directly**, not just the studio render —
+`state=3dgrip wide` (full body, hunters climbing) and `state=3dclimb`/
+`state=3dstrike` (weak-point-height shots) all still frame the beast as the
+clear subject, ember markings read the same clean black/orange split at
+in-fight scale as the studio render, and the ear-glow at the sigil close-up
+(`3dstrike`) stays legible — eyes, muzzle and ear structure still read
+distinctly through the glow, the 2026-09-22 ear-glare fix is holding, not
+regressing back toward the "two white blobs" it used to be.
+
+**Found nothing new to fix.** No silhouette defect, no proportion mismatch,
+no style break against the shared toon/outline/painted pipeline the whole
+cast uses — a genuinely critical look, not a rubber stamp, and the honest
+result is that pass 2's fix was the real defect this asset had. This matches
+the same shape of result `goblin_mech_ai` pass 7 recorded on its own weld
+attempt: a real, deliberate check that closes an open question in the
+negative rather than manufacturing a change to justify the run.
+
+**Score unchanged: 40/50** (Sil 8, Prop 8, Hygiene 7, Colour 9, Style 8).
+Build hygiene's remaining gap is the same tri-budget structural ceiling
+every Meshy-built asset in this cast carries (12079 tris here, 5199/5178 on
+`frog_ai`, 5199 on `goblin_mech_ai`'s own pre-Meshy-remesh count) — all three
+cast notes now independently name this as a real ceiling, not a same-pass
+fix, and none has found a safe way to reduce it without risking the rig or
+the UV layout on a shipped hero asset. Not attempting a decimation pass on
+the beast blind this run — three separate passes across three assets in this
+cast (`frog_ai`, `goblin_mech_ai` twice) have already concluded the same
+thing, and a rigged hero asset is the wrong place to test a first attempt at
+that risk.
+
+`ALL TESTS PASSED` (`run_tests.gd`) — nothing shipped changed this pass, so
+no playtest re-run; `git status` shows only the three tracked studio renders
+(`_front`/`_sil`/`_34`, `_side`/`_top`/`_form`/`_wire` are gitignored scratch
+per `.gitignore`) and this write-up.
+
 ### Where it stands
 
-**40/50.** Lines: Silhouette 8, Proportion 8, Build hygiene 7, Colour & read
-9, Style consistency 8. The real defect this pass found and fixed — leftover
-foothold geometry from before the 2026-09-23 "stones float in-engine" switch,
-silently propagating forward through every subsequent rebuild that reused
-the shipped model as its own source — is now closed and the source `.blend`
-is clean going forward. Worth flagging for whoever next rebuilds this beast
-from itself: the contamination existed because nothing had looked at this
-specific beast's own six-view render since it first shipped, not because
-`ai_beast.py`'s current logic is wrong.
+**40/50, unchanged since pass 2.** Lines: Silhouette 8, Proportion 8, Build
+hygiene 7, Colour & read 9, Style consistency 8. Pass 2's real defect —
+leftover foothold geometry from before the 2026-09-23 "stones float
+in-engine" switch, silently propagating forward through every subsequent
+rebuild that reused the shipped model as its own source — is closed and the
+source `.blend` is clean going forward. Pass 3's fresh critical look
+confirmed that fix is holding, in both the studio six-view render and the
+real in-fight camera, and found nothing further on Silhouette/Proportion/
+Style. The one remaining gap, Build hygiene's tri-budget overage, is now a
+confirmed structural ceiling shared by all three Meshy-built cast members
+(`frog_ai`, `goblin_mech_ai`, this beast) — closing it needs a deliberate,
+separately-scoped decimation/re-unwrap pass with its own risk budget, not
+another six-view look. Worth flagging for whoever next rebuilds this beast
+from itself: the pass-2 contamination existed because nothing had looked at
+this specific beast's own six-view render since it first shipped, not
+because `ai_beast.py`'s current logic is wrong.

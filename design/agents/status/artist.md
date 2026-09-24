@@ -2,13 +2,90 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T01:23
-working_on: cinder_jackal_ai's first-ever rubric score (never scored before, only two named point-fixes) turned up a real defect no prior pass caught -- 320 faces of leftover basalt foothold geometry, baked into the body before the 2026-09-23 switch to floating in-engine stones, silently propagating forward through every rebuild that re-fed the shipped model as its own source. Confirmed fully disjoint from the real body (0 shared verts) before deleting, also removed a stray unreferenced icosphere, re-exported. Verified: run_tests.gd ALL TESTS PASSED, six-view before/after frame, state=3d/wide/3dclimb/3dgrip all render clean with hunters landing correctly despite the beast's own bounding box legitimately shrinking (it had been artificially widened by the removed chunk). Scored 40/50 (Sil 8, Prop 8, Hygiene 7, Colour 9, Style 8), 4 under the 44 beast stop line. Full 80-step playtest still to run before push completes.
+updated: 2026-09-24T02:14
+working_on: A fresh, more critical six-view look at cinder_jackal_ai (the natural next step pass 2's own writeup named) plus an in-fight check across 3dgrip/3dclimb/3dstrike confirmed the basalt-cleanup fix is holding and found no further closeable defect on Silhouette/Proportion/Style. Score unchanged at 40/50 -- the one remaining gap (Build hygiene's tri-budget overage) is now a confirmed structural ceiling shared by all three Meshy-built cast members, not a same-pass fix, so did not attempt a blind decimation pass on the hero asset. No shipped asset changed this run.
 ---
 
 # artist
 
-## This run — 2026-09-24 01:23 ET
+## This run — 2026-09-24 02:14 ET
+
+- **Did:** gave `cinder_jackal_ai` the fresh, more critical six-view look
+  last run's own "Next" named as the likely place to find a real, closeable
+  point — plus checked it in the actual fight camera (3dgrip, 3dclimb,
+  3dstrike), not just the studio render.
+- **Worked?** No new defect found — which is itself the useful answer. The
+  basalt-geometry fix from last run is holding clean in every angle and at
+  true in-fight scale; the ear-glow fix from 2026-09-22 is holding too (face
+  still reads through the glow at the sigil close-up). Score stays 40/50.
+- **Next:** the only remaining lever (Build hygiene's tri-budget overage) is
+  now confirmed as a structural ceiling shared by `frog_ai`, `goblin_mech_ai`
+  and this beast alike — three independent passes across the cast have all
+  landed on the same conclusion. Closing it for real needs a deliberately
+  risk-budgeted decimation or re-unwrap pass, scoped and tried on a hunter
+  first, not attempted blind on the hero asset in a single run.
+- **Need from you:** nothing.
+
+![[frames/artist/2026-09-24-cinder-jackal-fresh-critical-look.png]]
+
+## Now
+
+No open `to: artist` request this run (checked every request's frontmatter —
+the only two open notes in `requests/` are both `to: fixer`), and none of my
+own `to: nick` notes had a fresh, unhandled answer either (all four are
+`status: done`, checked per `COMMON.md` 1b). Worked the `JACKAL-BAR.md`
+queue — picked up exactly where the previous run's own "Next" left off.
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `apt-get update`
+first then `libegl1`/`libegl-mesa0` (same gap as the last several fresh
+sandboxes — `apt-get install` alone 404s on `libegl-mesa0` without a fresh
+index), Blender 4.1.1. Meshy `balance` OK (2890 credits), not needed.
+
+**Re-rendered all six views** (`look.sh cinder_jackal_ai 3`) and read them
+cold before reopening `cinder_jackal_ai.md`'s pass 2 write-up, per the loop's
+own discipline. `_side`/`_front`/`_top`/`_form` (clay)/`_wire` all confirm
+the pass-2 basalt fix is holding — clean front-leg/chest silhouette, no new
+foreign geometry, an even unremarkable topology. `_sil.png` at true 64px
+still separates ears, snout, all four legs and the tail cleanly.
+
+**Went past the studio render into the real fight camera**, the same
+discipline that caught the goblin's skin-desaturation defect two runs ago —
+a studio render alone isn't proof of how it reads in play.
+`state=3dgrip wide` (full body, hunter climbing) confirmed the beast frames
+clean at true in-fight scale, ember markings separate the same way as the
+studio render, and the climbing hunters read as their own portrait-icon
+markers on the stone footholds (the existing, already-verified design, not a
+new finding). `state=3dclimb` and `state=3dstrike` (sigil close-up) both
+confirmed the 2026-09-22 ear-glow fix is still holding — eyes, muzzle and
+ear structure all read distinctly through the glow, not the "two white
+blobs" the original request complained about.
+
+**Found nothing new to fix.** Not a rubber stamp — a real look, with the
+in-fight cross-check pass 2 didn't do — and the honest result is that pass
+2's basalt fix was the real defect this asset had. Scored it again for the
+record: Sil 8, Prop 8, Hygiene 7, Colour 9, Style 8, **40/50, unchanged**.
+Full write-up: `design/progress/cinder_jackal_ai.md` ("Pass 3"). Updated
+`JACKAL-BAR.md`'s creature line with the confirmation and the cross-cast
+Build hygiene finding.
+
+**Deliberately did not attempt a decimation pass on the beast's tri count**
+this run. `cinder_jackal_ai.md` pass 2, `frog_ai.md` and `goblin_mech_ai.md`
+pass 7 have all independently landed on the same conclusion — the tri-budget
+overage against each asset's old primitive-era budget is a real, shared
+structural ceiling, not a same-pass fix — and `goblin_mech_ai` pass 7 already
+tried the adjacent lever (welding to cut island count) on a hunter and found
+it doesn't survive glTF export. Reducing tri count on a rigged, skinned hero
+asset risks distorting the skin weights or the UV layout in a way that isn't
+safely testable in one unattended run; if this is worth trying for real, it
+belongs as its own scoped pass, tried on a hunter first where a mistake is
+cheaper to catch and undo.
+
+`ALL TESTS PASSED` (`run_tests.gd`) — nothing shipped changed this run, so
+no playtest re-run; only the three tracked studio renders
+(`design/renders/cinder_jackal_ai_pass3_{front,sil,34}.png`), the frame
+above, and the two progress/status write-ups are new.
+
+## Old: 2026-09-24 01:23 ET, cinder_jackal_ai basalt cleanup
 
 - **Did:** ran the same rubric score/scoring-loop on the Cinder Jackal itself
   (`cinder_jackal_ai.glb`) that the two hunters have already been through
@@ -1139,6 +1216,15 @@ only touched the visual dressing) is the obvious next real-geometry pass.
 
 ## Log
 
+- 2026-09-24 02:14 EDT — fresh critical six-view look at `cinder_jackal_ai`
+  (pass 3) plus an in-fight check (3dgrip/3dclimb/3dstrike): the pass-2
+  basalt fix and the 2026-09-22 ear-glow fix are both holding, no new
+  defect found on Sil/Prop/Style. Score unchanged 40/50. Deliberately did
+  not attempt a decimation pass on the beast's tri count — the tri-budget
+  overage is now a confirmed structural ceiling across all three Meshy-built
+  cast members, and a rigged hero asset is the wrong place to test that
+  first. No shipped asset changed; `ALL TESTS PASSED`, no playtest re-run
+  needed (nothing gameplay-visible touched).
 - 2026-09-24 01:38 EDT — 80-step `mode=play beast=cinder_jackal` playtest for
   the basalt-geometry cleanup finished: `PLAYTEST FAIL: 2 failing check(s) {
   "hop-distance-band": 62, "intent-hidden": 18 }`. Checked both against the

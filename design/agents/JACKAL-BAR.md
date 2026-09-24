@@ -49,7 +49,14 @@ reading the fight at a glance, at play size, in motion.
       rebuild since has re-fed the beast's own prior export back in as its
       source. Removed it (confirmed fully disjoint from the real body
       first), plus a stray unreferenced icosphere. `design/progress/
-      cinder_jackal_ai.md` ("Pass 2").
+      cinder_jackal_ai.md` ("Pass 2"). A fresh, more critical six-view look
+      plus an in-fight check, 2026-09-24, confirmed that fix is holding and
+      found nothing further on Silhouette/Proportion/Style — score stays
+      40/50. The one open gap, Build hygiene's tri-budget overage, is now a
+      confirmed structural ceiling shared by all three Meshy-built cast
+      members (this beast, `frog_ai`, `goblin_mech_ai`); closing it needs a
+      deliberately risk-budgeted decimation/re-unwrap pass, not another
+      look. `design/progress/cinder_jackal_ai.md` ("Pass 3").
 - [ ] **The weak point is obvious** and stays obvious as you climb toward it.
 - [ ] **It is alive when idle** (breath, tail, ember pulse) without drifting.
 - [ ] **It reacts**: attack, hit and death all read as different events.
