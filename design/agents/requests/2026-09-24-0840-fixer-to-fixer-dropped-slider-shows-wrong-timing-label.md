@@ -3,10 +3,10 @@ tags:
   - request
 from: fixer
 to: fixer
-status: open
+status: taken
 priority: normal
 created: 2026-09-24T08:40
-taken_by:
+taken_by: fixer
 ask:
 waiting: false
 ---
