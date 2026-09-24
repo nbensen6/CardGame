@@ -263,3 +263,81 @@ same beast, same run:
 
 Score unchanged — this pass verified two definition-of-done lines, not the
 five-line rubric — 40/50 stands from pass 3.
+
+## Pass 5 — "the weak point is obvious... as you climb toward it", artist, 2026-09-24T04:35 EDT
+
+The last unchecked line in `JACKAL-BAR.md`'s creature section, nobody had
+ever pointed a render at it either. Unlike pass 4's two verifications, this
+one found a real defect.
+
+**Where the weak point can even be on screen.** `screenshot.gd`'s own
+`_report_visibility` already documents the design on purpose: the 3D sigil
+mark is only expected to be visible once the hunter you're playing is
+within 3.5 world units of it (`combat_3d.gd` line ~571) — below that, it is
+correctly off-frame, "the scale doing its job, not a framing bug." Confirmed
+this holds at `state=3d` (hunter 15.9 below) and `state=3dgrip` (9.4 below):
+both correctly print `VIS n/a sigil ... out of frame by design`, not a fail.
+So for most of a climb the *only* "stays obvious" signal is the persistent
+2D ladder gauge (`_draw_gauge`, right edge of the HUD) — checked it too: it
+marks the sigil's own Height with a distinct gold rail-cap and a
+`✦ <N>` label at all times the weak point exists, separate from the tan
+ledge rungs below it. That part already works and needed no fix (zoomed
+render: `design/agents/frames/artist/2026-09-24-cinder-jackal-sigil-lift-before-after.png`
+is about the 3D mark specifically, not this gauge).
+
+**The real gap: once close enough that the 3D mark IS on screen
+(`state=3dstrike`, hunter at the sigil), it was invisible in practice.**
+`_place_sigil` puts the glowing mark at the same `_climb_points[wp]` anchor
+`_build_float_stones` hangs the climbing shelf from (`_stand_on_model` →
+`stone_point`, same key) — the shelf itself got a bright faceted-rock
+texture on 2026-09-23 (`foothold_rock_detail.md`). Sampled the actual
+rendered pixels at the sigil's own reported screen position
+(`state=3dstrike`, `VIS OK sigil: (534, 320)`) directly, not by eye first:
+every pixel in that neighbourhood was already at or past R=234-255 — the
+shelf's own highlight, already brighter than the sigil's
+`emission_energy_multiplier=3.0` gold had anything left to add. A small
+emissive gold sphere sitting on top of an already-blown-out gold shelf
+cannot read as a separate thing; the before frame (left half of the PNG
+above) shows only the faintest lighter fleck on the shelf's own cream ring,
+easy to mistake for a texture detail.
+
+**Fix — a placement change, not a colour or size change.** The boulder body
+under a shelf's flat standing cap is mostly *below* the stand point, not
+above it (`cap_height*0.5 - rock.height*0.5` in `_build_float_stones`, a
+negative offset) — a hunter's-height of open air sits above every shelf,
+against the dark cave wall, not the bright rock. Lifted the sigil's own
+position by `HUNTER_HEIGHT * 0.9` in `_place_sigil`'s climb-point branch so
+it sits in that open, dark space instead of level with the shelf surface.
+Deliberately did not touch colour or `_sigil_scale` — those are shared with
+every future beast through the same function, and the placement alone was
+enough to test cleanly on this one beast without widening the change.
+
+**Verified with pixels, not just by eye.** Re-rendered `state=3dstrike` and
+sampled the same neighbourhood: a small but genuinely separated bright spot
+(242,242,229, blown toward white the way an overexposed point light blooms)
+now sits against a dark cave-wall background reading 50-90 per channel — a
+~5x brightness gap against its own surroundings, versus the old position
+where the "sigil" pixels were statistically indistinguishable from the
+shelf around them. Right half of the frame above shows it: a small clear
+gold spark floating above the shelf, not a highlight on it.
+
+**Honest limit, not fully solved.** Re-checked `state=3dclimb`, where the
+CAMERA's own followed hunter stands exactly at the sigil (not just near
+it, the way `3dstrike`'s establishing angle happens to separate them): from
+that angle the lifted position lands right behind the hunter's own body,
+and the "distinct gold spark" reads as part of the hunter's sprite rather
+than a separate mark. Not a regression — the pre-fix position was
+*equally* unreadable there (blended into the shelf either way) — but it
+means the fix's real win is specifically the wider establishing shots where
+hunter and mark are not co-located, not every camera angle. The party
+panel and gauge already say "at the sigil" in text at that exact moment
+(confirmed in both renders), so a viewer isn't left guessing even when the
+3D mark itself is occluded by the hunter standing on it. Left
+`JACKAL-BAR.md`'s line unticked rather than claim more than this run
+actually proved — a real, verified improvement in the states where it
+matters most (approaching, not yet standing on it), not a closed case.
+
+`ALL TESTS PASSED` (`run_tests.gd`). 80-step playtest
+(`mode=play beast=cinder_jackal steps=80`) run in the foreground after
+pushing this change, per `COMMON.md` 4b; result recorded in `status/
+artist.md` once it finished.

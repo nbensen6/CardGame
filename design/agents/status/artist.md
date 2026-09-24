@@ -2,13 +2,135 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T03:21
-working_on: Verified the two remaining unticked JACKAL-BAR creature bullets for cinder_jackal_ai -- "alive when idle without drifting" and "reacts: attack/hit/death all differ" -- both checked directly in the real engine for the first time and both hold. No asset or code change; pure verification with real renders and a diff-based drift check.
+updated: 2026-09-24T04:40
+working_on: Found and fixed a real defect in the last unchecked JACKAL-BAR creature bullet, "the weak point is obvious... as you climb toward it" -- the 3D glow mark on cinder_jackal_ai was pixel-identical brightness to the climbing shelf it sits on, so it read as invisible right where it mattered most. Lifted it into open air above the shelf; verified with a real render and pixel sample, not just by eye.
 ---
 
 # artist
 
-## This run — 2026-09-24 03:21 ET
+## This run — 2026-09-24 04:40 ET
+
+- **Did:** checked `JACKAL-BAR.md`'s last unverified creature line for the
+  jackal -- "the weak point is obvious and stays obvious as you climb
+  toward it" -- nobody had ever pointed a render at it. Found the 2D climb
+  gauge already does this well (never checked before, holds up), but the 3D
+  glow mark on the beast itself did not: sampled the actual pixels at its
+  own reported screen position and they were statistically identical to the
+  bright climbing shelf it sits on -- a real player would never pick it out.
+- **Worked?** Yes, partially and honestly. Lifted the mark into the open
+  dark air above the shelf instead of level with its bright surface
+  (`combat_3d.gd`); a before/after render+pixel-sample confirms it now
+  reads as a distinct ~5x-brighter gold spark in the establishing shot
+  where you're approaching it. It does NOT yet separate from the hunter's
+  own sprite in the one camera angle where that hunter stands exactly on
+  top of the sigil -- not worse than before there, just not fully solved.
+  Left the bar line unticked rather than overclaim.
+- **Next:** if this is worth another point, the leftover gap is a hunter
+  standing exactly at the sigil position -- would need either a colour
+  change (a taste call, `to: nick`) or lifting it further, tried and
+  re-verified from that specific angle. Otherwise, the hunter-fidelity
+  tri-budget ceiling (frog_ai 42/50, goblin_mech_ai 41/50, cinder_jackal_ai
+  40/50, all sharing the same structural cause) is still the loudest open
+  item on my own brief.
+- **Need from you:** nothing.
+
+![[frames/artist/2026-09-24-cinder-jackal-sigil-lift-before-after.png]]
+
+## Now
+
+No open `to: artist` request this run (checked every request's frontmatter
+-- the only two open notes in `requests/` are `to: fixer` and `to: nick`),
+and none of my own `to: nick` notes had a fresh, unhandled answer under
+`## Nick's answer` either (all `status: done`, checked per `COMMON.md` 1b).
+Worked the `JACKAL-BAR.md` queue -- picked the one remaining unticked
+creature bullet nobody had verified yet, same discipline as last run's
+"alive when idle"/"reacts" pass, except this one turned up a real defect
+instead of confirming an already-working system.
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `pip install
+pillow numpy`. Blender not needed -- no geometry touched, this was a
+placement change in `combat_3d.gd` only.
+
+**Found the check that already governs when the 3D mark should even be on
+screen.** `screenshot.gd`'s `_report_visibility` documents, on purpose,
+that the sigil is only expected on screen once the hunter is within 3.5
+world units of it -- below that it's "the scale doing its job, not a
+framing bug." Confirmed this holds (`state=3d`: hunter 15.9 below,
+`state=3dgrip`: 9.4 below, both correctly `n/a`, not a fail). So for most
+of a climb, the only thing making the weak point "stay obvious" is the 2D
+ladder gauge on the HUD's right edge -- checked its actual draw code and a
+real render: it marks the sigil's own Height with a distinct gold rail-cap
+and a `✦ <N>` label at all times, separate from the plain ledge rungs.
+That part was already right and needed no fix.
+
+**The real gap was the one moment the 3D mark IS supposed to be on
+screen.** `state=3dstrike` puts the hunter at the sigil; the harness prints
+`VIS OK sigil: (534, 320)` -- passes the on-screen bounds check, so nothing
+automated ever flagged it. Sampled the actual rendered pixels at that exact
+coordinate before assuming anything: every pixel nearby already read
+R≈234-255 -- the climbing shelf's own bright faceted-rock texture (added
+2026-09-23, `foothold_rock_detail.md`), already past what the sigil's
+`emission_energy_multiplier=3.0` gold glow could add on top of. The mark
+and its background were, numerically, almost the same colour and
+brightness. A screen-space bounds check can't catch that; only reading the
+pixels can.
+
+**Traced why the two coincide.** `_place_sigil`'s climb-point branch uses
+the same `_climb_points[wp]` anchor that `_build_float_stones` hangs the
+climbing shelf from (`_stand_on_model` -> `stone_point`, same key) -- the
+sigil sits right at the shelf's own stand height. But the shelf's boulder
+body sits mostly BELOW that stand point (`cap_height*0.5 - rock.height*0.5`
+is negative), so a hunter's-height of open, dark cave-wall-backed air
+exists directly above every shelf, unused.
+
+**Fix: a placement change, not colour or size.** Lifted the sigil's
+position by `HUNTER_HEIGHT * 0.9` in that one branch, so it floats in the
+open air above the shelf instead of level with its bright surface.
+Deliberately left `_sigil_scale` and the gold colour alone -- both are
+shared by every future beast through this same function, and the placement
+change alone was enough to test cleanly without widening the risk to
+assets outside this fight.
+
+**Verified with pixels, not just a glance.** Re-rendered `state=3dstrike`
+and sampled the same neighbourhood again: found a small but genuinely
+separated bright spot (242,242,229, the washed-white core an overexposed
+point light blooms to) sitting against dark cave-wall pixels reading
+50-90 per channel -- roughly a 5x brightness gap against its own
+surroundings, versus the old position where the "sigil" pixels were
+indistinguishable from their neighbours. Before/after crop, same camera,
+same frame:
+
+![[frames/artist/2026-09-24-cinder-jackal-sigil-lift-before-after.png]]
+
+**Checked the other near-sigil states too, not just the one that improved.**
+`state=3dclimb` (hunter's own home height IS the sigil height, camera
+angle puts the hunter's body directly where the lifted mark now sits) still
+doesn't show a clean separate spark there -- pixel-sampled that position
+too and it reads as the hunter's own sprite colours, not a distinguishable
+gold point. Not a regression (the old position was equally unreadable
+there, just for a different reason -- blended into the shelf instead of
+occluded by the hunter), but means this fix's real, verified win is
+specifically the approach angle, not literally every camera state. The
+party panel and gauge both already print "at the sigil" in text at that
+exact moment in both renders, so nobody is actually left guessing when the
+3D mark is occluded there.
+
+**Left `JACKAL-BAR.md`'s line unticked.** A real, pixel-verified
+improvement in the state that matters for "stays obvious as you climb
+toward it" (the approach, not the moment of arrival), not a fully closed
+case -- said so plainly in both the bar and `cinder_jackal_ai.md` ("Pass
+5") rather than round up.
+
+`ALL TESTS PASSED` (`run_tests.gd`). Per `COMMON.md` 4b, pushing this now
+before the full 80-step playtest finishes rather than holding the change
+hostage to a foreground wait; playtest launched in the foreground but
+exceeded the harness's default check-in window, so its result will be
+confirmed and appended here (or reverted if it disagrees) rather than left
+unpushed. `git status` before this push shows only `combat_3d.gd` (the one
+line offset), the two design-doc updates, this status note, and the one
+committed frame -- no other file touched.
+
+## Old: 2026-09-24 03:21 ET
 
 - **Did:** checked the two remaining unticked lines in `JACKAL-BAR.md`'s
   creature section for the jackal — "alive when idle... without drifting"

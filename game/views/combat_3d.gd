@@ -3796,7 +3796,22 @@ func _place_sigil(s: Dictionary) -> void:
 		# Just in FRONT of the mark the model already wears, so the pulsing glow
 		# reads as a highlight ON the weak point rather than as a second sigil
 		# floating near it.
-		_sigil.position = (_climb_points[wp] as Vector3) + Vector3(0.0, 0.0,
+		#
+		# Lifted above the climb point, not level with it: the same anchor is
+		# also where `_build_float_stones` hangs the shelf a hunter stands on
+		# (`_stand_on_model` -> `stone_point`, same `_climb_points[wp]`), and
+		# that stone got a bright faceted-rock texture 2026-09-23
+		# (foothold_rock_detail.md). A real render at the sigil
+		# (`state=3dstrike`) showed the gold glow sitting almost exactly on
+		# that shelf's own surface, both already near-peak brightness in the
+		# same warm hue -- sampled pixels there never exceeded the shelf's
+		# own (255,*,*) values, so `emission_energy_multiplier=3.0` had
+		# nothing left to stand out against. A hunter's own height of open
+		# air sits above every shelf (the boulder's bulk is mostly BELOW the
+		# stand point, not above it), against the dark cave wall/ceiling
+		# rather than the shelf -- moving the mark there costs no colour
+		# change and no taste call, only a placement fix.
+		_sigil.position = (_climb_points[wp] as Vector3) + Vector3(0.0, HUNTER_HEIGHT * 0.9,
 			_beast_box.size.z * 0.05)
 		return
 	# On the FRONT of the body. A quarter-depth offset put it inside the mesh —

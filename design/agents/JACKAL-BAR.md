@@ -58,6 +58,20 @@ reading the fight at a glance, at play size, in motion.
       deliberately risk-budgeted decimation/re-unwrap pass, not another
       look. `design/progress/cinder_jackal_ai.md` ("Pass 3").
 - [ ] **The weak point is obvious** and stays obvious as you climb toward it.
+      First look, 2026-09-24: the persistent 2D climb gauge already marks it
+      clearly at all times (a distinct gold rail-cap and `✦ <N>` label, never
+      checked before, holds up). The 3D glow on the beast itself did not —
+      pixel-sampled at `state=3dstrike`, it sat exactly on the climbing
+      shelf's own 2026-09-23 bright rock texture and was statistically
+      indistinguishable from it (both at R≈234-255). Fixed by lifting the
+      mark into the open air above the shelf instead of level with it
+      (`combat_3d.gd` `_place_sigil`) — verified with a real render+pixel
+      sample as a distinct ~5x-brighter spark against the dark cave wall.
+      Left unticked: the same fix does not separate the mark from the
+      hunter's own sprite in the one camera angle where that hunter is
+      standing exactly on the sigil (`state=3dclimb`) — not worse than
+      before there, but not proven "obvious" from every angle either.
+      `design/progress/cinder_jackal_ai.md` ("Pass 5").
 - [x] **It is alive when idle** (breath, tail, ember pulse) without drifting.
       Verified 2026-09-24: the shipped `idle` clip (4.0s loop) produces real
       motion every render (`state=3d anim=idle@0/@2/@4`), and diffing frame 0
