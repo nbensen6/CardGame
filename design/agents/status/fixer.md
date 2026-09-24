@@ -2,11 +2,91 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-24T14:42
-working_on: Fixed the last sliver of the intent-tag-vs-hunter bug -- the tag's on-screen position was computed one engine frame behind the hunter it was avoiding, because it ran from _process() (before the climb tween's own per-frame move) instead of after it.
+updated: 2026-09-24T17:38
+working_on: Took #11 (Nick's composition request) -- the resting camera no longer cuts to a tight lock while everyone is grounded, so the whole beast and both hunters fit in one wide frame.
 ---
 
 # fixer
+
+## This run — 2026-09-24 17:38 EDT
+
+- **Did:** stopped the resting camera cutting to a tight lock on the active
+  hunter while everyone is still grounded (#11).
+- **Worked?** Yes — whole beast, both hunters, visible gap, all in one
+  frame now; frame below. Full 80-step playtest still running, not
+  reported yet.
+- **Next:** report the playtest result on #11; stone-path geometry (#4)
+  is still separately open, not touched here.
+- **Need from you:** nothing yet — see #11 for the one open question
+  (whether you want a genuine three-quarter yaw on top of this).
+
+## Now
+
+Nick's #11 ("hunters far back, stones a visible path") showed the resting
+shot was cropping the Cinder Jackal to "four legs and a shadow." Root cause:
+`_focus_camera()` — called every time a hunter is selected, which includes
+automatically at fight start and on every solo End Turn — pinned the camera
+to a fixed 8-world-unit window centred on the hunter's own eye height,
+permanently, the instant the fight's opening establishing shot finished.
+That's a tight over-the-shoulder lock, and it doesn't care how tall the
+beast is; a 20-unit jackal simply doesn't fit in 8 units.
+
+The code already had the right shot ready and unit-tested for exactly this
+moment — `climb_frame_for`'s own "nobody has climbed yet" branch sizes the
+window off the beast's real height — it just never got a turn, because
+`_focus_camera` always overrode it the moment anyone picked a hunter.
+
+**Fix (`combat_3d.gd`):** new pure helper `anyone_off_ground(hunters)` (same
+0.05 epsilon `climb_frame_for` already uses internally). `_focus_camera()`
+now checks it first: while nobody has left the ground, it clears
+`_focused`/`_user_framed` and returns, handing framing straight back to
+`_aim_camera`'s per-frame ground shot. The shoulder truck/aim (`want_ots`)
+is already gated on `_focused`, so "not over the shoulder while grounded"
+comes for free — no second change needed. The moment anyone actually
+climbs, `_focus_camera` runs exactly as it always has; nothing about the
+tuned climbing camera (jump framing, hunter-offscreen dead zones, the OTS
+shot mid-climb) was touched.
+
+![[frames/fixer/2026-09-24-composition-ground-before.png]]
+![[frames/fixer/2026-09-24-composition-ground-after.png]]
+
+Before: `CAM dist=8.98`, legs and a shadow, hunters barely on screen at the
+very bottom edge. After: `CAM dist=31.44` (the beast's own 20-unit height
+driving the window instead of the fixed 8), whole beast head-to-foot, both
+hunters small at the bottom with real ground between them and it, two of
+the route's stones visible mid-body.
+
+Left the yaw at the straight-on angle `_frame_beast` already opens on,
+rather than inventing an untuned three-quarter turn — reads as "looking at
+the fight," not down anyone's neck, which is the concrete complaint in
+#11's own bullet 4. Flagged in the request as an open question if Nick
+wants an actual three-quarter camera angle on top of this.
+
+**Not touched, on purpose:** the stone route's own placement (only 2 of the
+climb's stones read clearly in the after frame) is `#4`'s open hop-distance
+work, already deep into its own investigation
+(`2026-09-23-1846-...build-the-one-directional-stone-route.md`) — #11's own
+notes say those rules "still apply," i.e. this request is about the camera,
+not a stone-geometry rebuild. Didn't fold it in.
+
+**Proof:** `run_tests.gd` — `anyone_off_ground`'s own epsilon tests
+(grounded exactly at 0/just under 0.05/off the ground/mixed pair), plus two
+`_focus_camera` behavior tests (holds the wide shot even with a stale
+`_focused=true` left from a previous fight; still locks tight once someone
+is actually climbing). `ALL TESTS PASSED`. Rendered `state=3d` (above),
+`state=3dclimb` and a hover state — both pixel-unchanged from before this
+fix, confirming the climbing camera and the HUD-hover path are unaffected.
+
+A full `mode=play beast=cinder_jackal steps=80` regression (the playtester's
+own `camera-not-over-shoulder`/`hunter-offscreen`/etc. checks) was still
+running when the stop-hook forced this push — pushing now per the standing
+rule (commit before verifying long-running background work, never lose a
+push to the sandbox dying mid-flight). Will report the result on #11 the
+moment it lands; if it surfaces a regression this write-up missed, the next
+pass fixes or reverts it.
+
+Left `#11` at `status: taken`, not `done` — the playtest hasn't confirmed
+clean yet.
 
 ## This run — 2026-09-24 14:42 EDT
 
@@ -1591,7 +1671,16 @@ further either.
 
 ## Log
 
-- 2026-09-24 14:42 EDT (latest) — intent-tag-still-grazes-hunter-at-hop-start:
+- 2026-09-24 17:38 EDT (latest) — #11 composition (hunters far back, whole
+  beast in frame): fixed the camera half. `_focus_camera` no longer cuts to
+  a tight over-the-shoulder lock while everyone is grounded (new
+  `anyone_off_ground` guard) -- the wide, beast-scaled ground shot
+  `climb_frame_for` already computed just gets to run instead of being
+  overridden. Climbing camera untouched. `ALL TESTS PASSED`, before/after
+  frames attached. Full playtest regression still running at push time --
+  left `#11` at `taken`, reporting the result there once it lands. Stone
+  path geometry (#4) not touched, out of scope.
+- 2026-09-24 14:42 EDT — intent-tag-still-grazes-hunter-at-hop-start:
   fixed. Not a math bug in `intent_tag_pos` -- `_position_intent_tag()` ran
   from `_process()`, one full engine frame ahead of the active hunter's own
   climb-tween position update, so it always placed the tag to clear a

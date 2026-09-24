@@ -1137,6 +1137,18 @@ func _focus_camera(window := FOCUS_WINDOW, lift := 0.0) -> void:
 	_establishing = false
 	if _hunters.is_empty() or _cam == null or not is_inside_tree():
 		return
+	if not anyone_off_ground(_hunters):
+		# Nobody has left the ground: hold #11's composition (the whole beast
+		# and both hunters, small, in one wide frame) instead of cutting to a
+		# tight lock on whoever you just picked. _aim_camera's own per-frame
+		# ground framing (climb_frame_for, `not _focused`) already draws this
+		# shot — clearing the flags here just lets it keep doing so instead of
+		# being overridden a moment later. The instant anyone actually climbs,
+		# the next selection re-engages the tight over-the-shoulder follow
+		# below, unchanged.
+		_focused = false
+		_user_framed = false
+		return
 	_focused = true
 	# Hold the shot: _aim_camera only eases distance back to the beast framing
 	# while it still owns framing, so taking it away is what stops the drift.
@@ -2303,6 +2315,22 @@ static func dist_for_window_for(window: float, fov_deg: float, beast_front_z: fl
 
 func _dist_for_window(window: float) -> float:
 	return dist_for_window_for(window, _cam.fov, _beast_box.end.z, _pivot_target.z)
+
+
+## Whether any hunter has left the ground — the same 0.05 epsilon
+## climb_frame_for's own "nobody has climbed yet" branch uses on `home.y + eye`
+## (eye being a constant added to every hunter alike, so it drops out of a
+## bare `home.y` comparison). Pulled out as its own pure check (request #11)
+## so _focus_camera can ask this directly rather than trust `_climb_t` — a
+## field `_aim_camera` alone refreshes, so it reads stale (its default 0.0,
+## whatever the real hunters are doing) the moment anything calls
+## _focus_camera before `_aim_camera` has run even once, e.g. straight off a
+## freshly built view in a test.
+static func anyone_off_ground(hunters: Array) -> bool:
+	for h in hunters:
+		if float((h["home"] as Vector3).y) >= 0.05:
+			return true
+	return false
 
 
 ## What the camera should be looking at, and how much world to fit around it:

@@ -2440,6 +2440,11 @@ func _finish_with_deferred_tests() -> void:
 	# tests in this function are.
 	_test_backlog_focus_camera_does_not_touch_the_camera_once_the_view_left_the_tree()
 	_test_backlog_focus_camera_still_moves_the_camera_while_in_the_tree()
+	# request #11: the resting shot holds the whole beast + both hunters wide
+	# rather than cutting to the old tight over-the-shoulder lock.
+	_test_anyone_off_ground_epsilon()
+	_test_focus_camera_holds_the_wide_ground_shot_before_anyone_climbs()
+	_test_focus_camera_still_locks_tight_once_someone_climbs()
 
 	_test_backlog86_draw_relic_mod_grants_extra_cards_every_round_not_just_the_first()
 	_test_backlog86_real_draw_relics_reach_relic_totals_and_grant_extra_cards()
@@ -28998,6 +29003,59 @@ func _test_backlog_focus_camera_still_moves_the_camera_while_in_the_tree() -> vo
 	c3d._focus_camera()
 	_expect(c3d._cam.position != cam_before,
 		"the is_inside_tree() guard must not swallow the ordinary case -- a view still in the tree must still be able to move its own camera")
+	get_root().remove_child(c3d)
+	c3d.free()
+
+
+## request #11: nobody has left the ground when every hunter's home.y is (near)
+## zero -- the same epsilon climb_frame_for's own ground branch uses.
+func _test_anyone_off_ground_epsilon() -> void:
+	_expect(not Combat3D.anyone_off_ground([{"home": Vector3(-2.9, 0.0, 26.7)},
+			{"home": Vector3(2.9, 0.0, 26.7)}]),
+		"two hunters standing exactly at y=0 have not left the ground")
+	_expect(not Combat3D.anyone_off_ground([{"home": Vector3(0.0, 0.04, 0.0)}]),
+		"a hair under the 0.05 epsilon still reads as grounded")
+	_expect(Combat3D.anyone_off_ground([{"home": Vector3(0.0, 5.0, 0.0)}]),
+		"a hunter partway up the beast has left the ground")
+	_expect(Combat3D.anyone_off_ground([{"home": Vector3(-2.9, 0.0, 26.7)},
+			{"home": Vector3(2.9, 5.0, 26.7)}]),
+		"one climbing hunter is enough, even with the other still grounded")
+
+
+## request #11 ("hunters far back, stones a visible path"): before either
+## hunter has left the ground, picking one must NOT cut to the old tight
+## over-the-shoulder lock -- that lock is what cropped the beast down to
+## "four legs and a shadow". _focus_camera must leave _focused/_user_framed
+## false so _aim_camera's own per-frame ground framing (climb_frame_for) keeps
+## drawing the wide, whole-beast shot instead.
+func _test_focus_camera_holds_the_wide_ground_shot_before_anyone_climbs() -> void:
+	var c3d: Node = preload("res://views/combat_3d.tscn").instantiate()
+	get_root().add_child(c3d)
+	c3d._client = GameClient.new(LocalTransport.new(), 1)
+	c3d._hunters = [{"node": null, "home": Vector3(-2.9, 0.0, 26.7)},
+			{"node": null, "home": Vector3(2.9, 0.0, 26.7)}]
+	c3d._focused = true       # simulate a stale lock left over from a previous fight
+	c3d._user_framed = true
+	c3d._focus_camera()
+	_expect(not c3d._focused,
+		"selecting a grounded hunter must clear _focused rather than lock in tight")
+	_expect(not c3d._user_framed,
+		"selecting a grounded hunter must clear _user_framed so the ground framing keeps recomputing every frame")
+	get_root().remove_child(c3d)
+	c3d.free()
+
+
+## Sibling: the instant anyone is actually climbing, _focus_camera must go
+## right back to the tight over-the-shoulder lock this whole change leaves
+## untouched -- request #11 is about the RESTING shot only.
+func _test_focus_camera_still_locks_tight_once_someone_climbs() -> void:
+	var c3d: Node = preload("res://views/combat_3d.tscn").instantiate()
+	get_root().add_child(c3d)
+	c3d._client = GameClient.new(LocalTransport.new(), 1)
+	c3d._hunters = [{"node": null, "home": Vector3(0.0, 5.0, 0.0)}]
+	c3d._focus_camera()
+	_expect(c3d._focused, "a hunter partway up the beast must still get the tight lock")
+	_expect(c3d._user_framed, "the tight lock must still own the framing while climbing")
 	get_root().remove_child(c3d)
 	c3d.free()
 
