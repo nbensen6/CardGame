@@ -20,6 +20,10 @@ Moving every beast from the Python-primitive models to the AI pipeline: generate
   commands plugin, one command (`play.cmd {{title}}`) shared by every beast, so
   a new beast note works with no setup. Same thing from the keyboard: command
   palette → *Execute: Fight this beast*.
+- **[The task board](https://github.com/users/nbensen6/projects/1)** — four
+  columns: Waiting on Nick, Todo, In Progress, Done. Group or filter by agent,
+  priority or ETA. [[agents/Task board|The same thing as a note]] if you are
+  already in Obsidian.
 - **[[agents/Agents|Agents]] → the FOR NICK tab** — everything waiting on your
   decision, one plain sentence each. Answer under **Nick's answer** in the note.
 - **[[agents/Last sync|Last sync]]** — when this PC last pulled the agents'

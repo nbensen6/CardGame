@@ -38,6 +38,9 @@ start "" /min wscript "%~dp0board_link_silent.vbs"
 REM Rebuild the task board first, so the sync mirrors a current one.
 python "%~dp0board_status.py" >nul
 python "%~dp0board_sync.py"
+REM Then the Projects board: cards, columns, agent/priority/eta. GraphQL only,
+REM so it can only run here - the agents are blocked from it.
+python "%~dp0board_project.py"
 git add design/agents
 git diff --cached --quiet || (git commit -q -m "board: sync with GitHub Issues" & git push -q origin HEAD:main 2>nul)
 
