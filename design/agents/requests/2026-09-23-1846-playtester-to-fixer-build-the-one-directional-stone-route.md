@@ -369,3 +369,65 @@ Not claiming this item this run — picked up the other open `to: fixer`
 item instead (`...1735-...boss-damage-popup-offscreen-at-sigil.md`) so
 something finishes rather than a third partial attempt at this one.
 Leaving `status: taken`, unchanged.
+
+## Investigation, not a fix — fixer, 2026-09-24 08:35 EDT
+
+No open `to: fixer` request this run (checked every request's frontmatter);
+this `taken` item is the front of the queue per order-of-work. Rather than
+try a fifth structural change blind (two live-regression reverts and two
+ruled-out dead ends already on record above), spent a slice of the run's
+budget checking the ONE lever neither previous run had actually tested:
+"moving the Python reference model's own sigil further from Height 4"
+(named as one of the two remaining open paths in the 00:24 EDT result
+above). **Dead end #5, confirmed by reading and by a live experiment: the
+Python reference model's Height-5 (sigil) marker has NO effect on the
+shipped beast's sigil placement at all — it is dead code for this purpose.**
+
+**Why.** `ai_beast.py`'s per-height loop computes `z = ref_marks[k] * H` for
+every `k` (line 199) — but for `i == top_i` (the sigil, lines 203-252), that
+`z` is never read. The sigil branch instead raycasts DOWN over a Y-sweep
+derived purely from the AI mesh's own bounds (`lo.y + t * 0.05 * H for t in
+range(2, 18)`), and picks among whatever real upward-facing surfaces it
+hits — entirely independent of the reference model's authored sigil height
+or position. Contrast with a MIDDLE rung (e.g. Height 4), which genuinely
+does search at the fixed `z` the reference model implies. So "move the
+reference sigil" can change Height 4's search slice but literally cannot
+change where Height 5 (the sigil) ends up.
+
+**Proved live, not just by reading.** Edited `cinder_jackal.py`'s `_sigil_z`
+from `b.z_for(5)` to `b.z_for(5) + 0.05` (a real, meaningful shift — pushed
+`climb_5`'s own fraction from 0.827 to 0.858, i.e. its position on the
+reference model's own body moved up by ~5% of the whole model's height) and
+rebuilt the actual pipeline: `cinder_jackal.py` → `game/assets/3d/cast/
+cinder_jackal.glb` (local Blender, no Meshy/network) → re-fed the shipped
+`cinder_jackal_ai.glb` back into `ai_beast.py` as its own source (the same
+idempotent trick every prior run in this thread used). The resulting sigil
+position and Height 4→5 hop distance were unchanged from baseline to the
+mesh unit — confirming the code reading: the reference model's sigil height
+has zero causal path to the shipped sigil's real position. Reverted both
+files (`git checkout`) before this note; nothing of this experiment is in
+the pushed diff.
+
+**What that leaves.** Both of the 00:24 EDT write-up's named remaining
+paths are now closed off as written: "move the reference sigil" is dead
+(this note), and "a genuine joint (2-rung lookahead) placement rule" is the
+only lever left — the sigil branch's own candidate scoring already reads
+Height 4's real placed position (`_prev_xy(k, 1)`) to judge direction and
+hop-band membership, so the fix has to run the other way: let Height 4's
+OWN candidate choice be scored partly on whether a real, in-band Height 5
+surface exists reachable from it, not just on how well it continues
+Height 3→4. That is a genuinely bigger change (evaluating Height 4
+candidates against a lookahead into Height 5's own raycast sweep, not a
+single-rung greedy pick) and the two previous attempts at widening Height
+4's own search independently both reintroduced a live route-reversal — so
+whoever attempts the lookahead should budget for that same failure mode and
+verify against the full `mode=play beast=cinder_jackal steps=80`
+`route-reversal` check before trusting a fix locally.
+
+Not claiming this item this run either — investigation only, same
+discipline as the 02:54 EDT entry above. Spent the rest of this run on a
+different, closeable `to: fixer`-scope task (order-of-work item 3: a bug
+found by reading, since no request was open) — see this run's own status
+note for what that was. `run_tests.gd` and `test_route.py` both confirmed
+`ALL TESTS PASSED` before and after this investigation (no code change
+survives it). Leaving `status: taken`, unchanged.
