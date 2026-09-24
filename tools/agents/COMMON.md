@@ -42,7 +42,16 @@ opengl3`. Rendering WORKS here (probed 2026-09-22: real frames, ~14s a shot).
 ## 1b. Answered requests come first of all
 
 Nick answers in the request's own `## Nick's answer` section, in whatever words
-he likes — he does not touch frontmatter, and he should never have to. **Any
+he likes — he does not touch frontmatter, and he should never have to.
+
+Some of those answers arrive from his phone. Every open request is mirrored to
+a GitHub issue (`issue:` in the frontmatter is its number), and anything he
+comments there is copied into the note by the hourly sync on his PC, tagged
+**From GitHub #N (nbensen6, <time> UTC)**. Treat it exactly like anything else
+under that heading — it is him. **You do not read or write GitHub yourself**:
+you cannot (every external write is refused in the sandbox, and the `gh issue`
+subcommands do not work there at all), and you do not need to. Write markdown;
+the mirror is someone else's job. **Any
 request with text under that heading is the top of your queue, ahead of an
 `open` one.** When you take it: set `status: taken`, do the work, and do the
 bookkeeping yourself.
