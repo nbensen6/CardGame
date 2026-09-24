@@ -11,9 +11,12 @@ created: 2026-09-24T19:20
 taken_by:
 ask: Should the jackal stay black with glowing ember cracks, or be lit hot orange all over like the beast in your drawing?
 waiting: false
+issue: 17
 ---
 
 # Black jackal with embers, or a hot orange one like your drawing?
+
+**#17**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 
