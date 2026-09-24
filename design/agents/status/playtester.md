@@ -2,13 +2,77 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-24T15:19
-working_on: The fixer landed the intent-tag-vs-hunter ground-hop-start fix (frame_pre_draw retiming, commit d443ccd) since my last run. Re-ran the full three-mode baseline fresh against it -- confirmed 0 intent-tag-vs-hunter fails anywhere (play/hover/hands), was 1 real fire in play every run since the main fix landed. hop-distance-band unchanged (62 play, 2 hover, 22 hands -- the same known geometric ceiling, still with the fixer). With the residual closed, ticked JACKAL-BAR's "The jump reads" line for real: fresh eyes-on pass across the opening hop's full arc at native 1:1 (crouch, rising/falling arc, landing squash, tag staying clear throughout), two frames. No open requests to playtester this run.
+updated: 2026-09-24T17:20
+working_on: No requests open. Added a new live check, camera-not-over-shoulder -- checklist item 4's own target ("third person over the active hunter's shoulder once the jump animation is good") is now checkable, since the jump-reads line closed last run. Verified false-positive-free on real code (0 fires, fresh 30-step and 80-step baselines) and proved it actually fires (16/16) with the truck temporarily forced off, then reverted clean. Full three-mode baseline matches the last recorded run exactly -- only hop-distance-band (62/2/22), no regression.
 ---
 
 # playtester
 
-## This run — 2026-09-24 15:19 EDT
+## This run — 2026-09-24 17:20 EDT
+
+- **Did:** no requests addressed to `playtester` were open this run (the
+  stone-route thread and the "stones IN FRONT of the jackal" addendum are
+  both still sitting with the fixer, unchanged since my last run — no new
+  fixer commits landed in between). Ran the full three-mode baseline first,
+  then added one new check: `camera-not-over-shoulder`. Checklist item 4's
+  own target line — "Target: third person over the active hunter's shoulder
+  once the jump animation is good (Nick)" — was gated on the jump animation,
+  which closed last run (JACKAL-BAR's "The jump reads"), so this was the
+  natural next thing to check for real.
+- **Worked?** Yes. Baseline first: `play` (80 steps, real ending) 62
+  `hop-distance-band`, nothing else; `hover` 2; `hands` (1-10) 22 — byte-for-
+  byte the same shape as every recorded run since the intent-tag fix landed,
+  no regression. The gap: `Combat3D.shoulder_frame()` (the pure truck/aim
+  math for the over-the-shoulder shot) already has full unit coverage in
+  `run_tests.gd`, but nothing had ever checked that a REAL fight actually
+  drives `_shoulder` up to engaged once things settle, as opposed to sitting
+  on the old dead-centre follow cam forever — the same shape of gap every
+  prior check added here has closed (a real fix proved once, nothing
+  re-checking it live). New check reuses the existing "not airborne" settle
+  gate (checklist item 4's own "the hunter is visible" check) and asserts
+  `_shoulder >= 0.95` at that same settled instant — so "hunter on screen"
+  and "shot from over the shoulder" are judged together, not as two separate
+  moments that could each look fine alone. Verified both directions before
+  trusting it: a fresh 30-step and then a full 80-step `play` baseline on
+  the real, unmodified code both show 0 `camera-not-over-shoulder` fires
+  (only the pre-existing `hop-distance-band`); then temporarily forced
+  `want_ots` to always 0 in `combat_3d.gd` (one line, reverted, `git diff`
+  clean after) and re-ran — 16/16 real settled checks fired in the same
+  15-step run, every single one. Looked at a real frame too, not just the
+  check math: step 0 of the final baseline (below) shows the frog trucked
+  over to the right with the jackal owning the rest of the frame — a real
+  over-the-shoulder composition, not dead-centre.
+- **Next:** watch for the fixer picking up the stone-route thread's two
+  still-open pieces (`hop-distance-band`'s geometric ceiling, and the
+  "stones IN FRONT of the jackal" / "space between the hunter and the skin"
+  addendum Nick asked for on the sigil-cheek note) — neither moved this run.
+  Once the front-of-body requirement lands, re-check the sigil-cheek note
+  (`2026-09-24-0322-...`) and close it. Nothing else queued for me.
+- **Need from you:** nothing.
+
+![[frames/playtester/2026-09-24-shoulder-engaged-step000.png]]
+Step 0 of this run's own full baseline, real fixed code: the frog sits
+trucked to the right, not dead-centre, with the jackal filling the rest of
+the frame — the resting shot the new check now proves engages on every
+settled step, not just this one.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | unchanged — closed several runs ago (Play feedback) |
+| 2 | hunters land on the beast correctly | unchanged — 0 `hunter-off-marker`, 0 `hunters-overlap`, 0 `route-reversal`, 0 `sigil-behind-hunter` |
+| 3 | jump animation (squash/arc/landing) | unchanged — JACKAL-BAR's "The jump reads" line closed last run |
+| 4 | camera | **strengthened this run** — 0 `hunter-offscreen`/`hunter-lost-mid-hop` as before, plus new: `camera-not-over-shoulder` now proves the settled shot is genuinely over-the-shoulder (not just "hunter somewhere on screen"), 0 fires on real code, proven to fire for real when broken |
+| 5 | nothing errors | clean — 0 `script-error` across all three modes |
+
+One commit this run: the new `camera-not-over-shoulder` check in
+`game/tools/playtest.gd`, pushed before the final 80-step re-verification
+finished (per COMMON.md 4b). `combat_3d.gd`'s temporary break used to prove
+the negative direction was reverted before committing anything —
+`git diff` on it is clean.
+
+## Old: 2026-09-24 15:19 EDT
 
 - **Did:** no requests addressed to `playtester` were open this run. Since
   my last run, the fixer landed the fix for the last thing I had filed
