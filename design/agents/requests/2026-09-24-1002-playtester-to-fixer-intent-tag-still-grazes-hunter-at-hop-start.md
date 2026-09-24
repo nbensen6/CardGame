@@ -3,10 +3,10 @@ tags:
   - request
 from: playtester
 to: fixer
-status: open
+status: taken
 priority: normal
 created: 2026-09-24T10:02
-taken_by:
+taken_by: fixer
 ask:
 waiting: false
 issue: 6
