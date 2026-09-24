@@ -414,9 +414,17 @@ func _check(v: Node, when: String) -> void:
 	# back to the bounding-box guess that runs when a beast ships with no
 	# climb_N anchors (checklist item 2; this is the "hunters land within
 	# reach of a climb marker after a climb" check the baseline request asked
-	# for). _place_hunters only takes the ground (t<=0.01) and sigil (t>=0.92)
-	# branches around the ends -- skip those, they intentionally don't use
-	# _climb_points. Height matches _stand_on_model exactly (h.y = anchor.y,
+	# for). Ground (t<=0.01) is the only branch skipped: _place_hunters'
+	# OWN branch order (combat_3d.gd _place_hunters) checks
+	# "not _climb_points.is_empty()" BEFORE "t >= 0.92", so on any beast this
+	# check even runs for -- the whole block above is gated on climb_points
+	# being non-empty -- the "stand directly on the sigil" branch the old
+	# comment here described is unreachable dead code; every non-ground foot,
+	# sigil included, actually goes through _stand_on_model/foothold_anchor.
+	# Used to skip t>=0.92 too, on the belief the sigil used a different,
+	# unrelated branch -- which silently exempted the Cinder Jackal's own
+	# sigil position (its loudest, most-climbed-to foothold) from ever being
+	# checked. Height matches _stand_on_model exactly (h.y = anchor.y,
 	# untouched by the side/clearance offsets), so any drift there means the
 	# wrong branch ran. x tolerance is exactly _stand_on_model's own side
 	# offset (stand_offset_x), so a hunter genuinely on the model's near/far
@@ -432,7 +440,7 @@ func _check(v: Node, when: String) -> void:
 		for h in (hunters as Array):
 			var foot := int((h as Dictionary).get("foot", 0))
 			var t := clampf(float(foot) / float(height), 0.0, 1.0)
-			if t <= 0.01 or t >= 0.92:
+			if t <= 0.01:
 				continue
 			var home: Vector3 = (h as Dictionary).get("home", Vector3.ZERO)
 			var anchor: Vector3 = v.call("foothold_anchor", climb_points, foot)
