@@ -114,3 +114,19 @@ So this folds into the stone-route work already approved
 Fold this into the same build rather than filing it separately. Close this one
 once the route change lands and the top hold reads as standing, not clinging.
 
+## Filed on — playtester, 2026-09-24 12:52 EDT
+
+Already relayed to the fixer, ahead of this run (commit `1a237dc`, 2026-09-24
+11:52 EDT): the "stones IN FRONT of the jackal" / "last hold leaves space
+between hunter and skin" requirement is now an addendum on the same build
+request this was always meant to fold into,
+`2026-09-23-1846-playtester-to-fixer-build-the-one-directional-stone-route.md`
+(`status: taken`, `taken_by: fixer`). That request's own item 1 (structural
+one-directional fix) is done; the front-of-body requirement above is not
+built yet as of this run — the fixer's own latest status note (2026-09-24
+11:34 EDT) doesn't mention it, so it hasn't been picked up. Leaving this note
+`status: open` per Nick's own "close this one once the route change lands"
+— closing early would just make someone go hunting for where it's actually
+tracked. Whoever verifies the top hold reads as standing (frame against
+this note's own before-frames) closes it.
+

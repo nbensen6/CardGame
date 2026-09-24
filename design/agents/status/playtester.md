@@ -2,13 +2,75 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-24T11:02
-working_on: Full three-mode baseline clean (only the two known open issues, unchanged) -- then a dedicated look at JACKAL-BAR's still-unticked "Play feedback" line, closed it. Its three parts already had permanent live checks (hand-count, damage-popup-missing, dead-click/stuck) with a clean record across every run on file; verified fresh this run (0 fails across ~24 real plays in a full fight to a win, plus hover/hands) and backed it with a real before/after frame pair (Brace: card leaves, Block icon appears). Still waiting on Nick's answer on the sigil-cheek request.
+updated: 2026-09-24T13:11
+working_on: Nick answered the sigil-cheek request (already relayed to the fixer's stone-route build ahead of this run, commit 1a237dc) -- closed the bookkeeping gap on my own note so it points at where that's tracked. Full three-mode baseline re-confirmed clean, byte-for-byte the same two known open issues as every prior run (62 hop-distance-band in play, 22 in hands, 1 intent-tag-vs-hunter). Tried a new live check for "hunter stands with real space off the skin" using combat_3d's own mesh hull (_front_of_beast) and ruled it out with real numbers -- the hull returns wildly wrong values off an exact climb anchor (up to 12m), the same picking-up-unrelated-geometry failure mode the code already documents for stand_z_for's own hull use. Not shipped; no safe way to verify "hunter clings to skin" automatically without a real per-point mesh raycast, a bigger job.
 ---
 
 # playtester
 
-## This run — 2026-09-24 11:02 EDT
+## This run — 2026-09-24 13:11 EDT
+
+- **Did:** Nick's answer landed on the sigil-cheek request since the last
+  run — but it had already been relayed to the fixer, ahead of this run,
+  as an addendum on the same stone-route build request it needed to fold
+  into (commit `1a237dc`, 2026-09-24 11:52 EDT, written by whoever
+  answered live). My own note never got its half of the bookkeeping
+  though, so I added a `## Filed on` section pointing at where the work
+  is actually tracked and left `status: open` (the route change hasn't
+  landed yet — the fixer's last status note, 11:34 EDT, predates the
+  answer). Ran the full three-mode baseline next: clean, byte-for-byte the
+  same two known open issues as every prior run on file. Then tried to
+  turn Nick's new requirement ("space between the hunter and the skin")
+  into a live check, the way "Play feedback" got one last run.
+- **Worked?** Bookkeeping: yes. Baseline: yes, no regression — `play`
+  (80 steps) shows 62 `hop-distance-band` fails and 1 `intent-tag-vs-hunter`
+  fail, `hands` (1-10) shows 22 `hop-distance-band`, `hover` shows 2 — the
+  exact same shape every run since these were filed, nothing new. The new
+  check: **no**, and I'm glad I checked before shipping it. The idea was
+  clearance = hunter's world z minus the beast's real mesh surface z at
+  the hunter's own (x, y), using `combat_3d.gd`'s own `_front_of_beast`
+  (the same hull it already trusts for placing a hunter between two
+  rungs). Added it behind a print-only calibration line (no fail yet) and
+  ran a real fight: most non-sigil footholds came back with `clearance`
+  values like -1.28m and -12.6m — physically impossible for holds every
+  prior run has looked at and called clean. The hull is a flat (x, y)
+  grid of "furthest-forward vertex in this cell" with no idea which part
+  of the mesh that vertex belongs to, so a cell can return an unrelated
+  disconnected feature (an ear, a far leg) instead of the local skin —
+  `combat_3d.gd` already documents this exact failure mode for its own
+  use of the hull (`stand_z_for`'s comment: a bad cell "picked up the
+  Cinder Jackal's ear... pushing the hunter's z... well past the model").
+  I'd have hit the same thing from a different angle. Reverted the check
+  before it ever reached a real threshold — shipping it would have meant
+  either flagging holds everyone agrees are fine, or padding the margin
+  so far past the real numbers that it could never catch anything.
+- **Next:** "hunter stands with real space off the skin" needs a per-point
+  mesh raycast against the beast's actual triangles, not the coarse hull —
+  a bigger job than one run, and not mine to build blind; whoever builds
+  the front-of-body route (the fixer, on the stone-route request) is the
+  one with a reason to also solve this, since they'll want to prove their
+  own fix. Watching for that build to land so the sigil-cheek note (and
+  its own before-frames) can actually be re-checked and closed. Also still
+  watching for `1002` (intent-tag-vs-hunter residual, unchanged this run).
+- **Need from you:** nothing.
+
+Checklist snapshot (unchanged from last run — no game code changed):
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | closed last run (Play feedback); unchanged |
+| 2 | hunters land on the beast correctly | unchanged — 0 `hunter-off-marker`, 0 `hunters-overlap`, 0 `route-reversal`, 0 `sigil-behind-hunter` |
+| 3 | jump animation (squash/arc/landing) | unchanged — clean |
+| 4 | camera | unchanged — 0 `hunter-offscreen`/`hunter-lost-mid-hop` |
+| 5 | nothing errors | clean — 0 `script-error` across all three modes |
+
+No game code changed this run (the new check was tried, ruled out, and
+reverted before it ever shipped — `git diff` on `playtest.gd` is empty).
+One request bookkeeping edit
+(`2026-09-24-0322-...sigil-hunter-clings-to-the-cheek.md`) and this
+write-up.
+
+## Old: 2026-09-24 11:02 EDT, JACKAL-BAR "Play feedback" closed
 
 - **Did:** ran the full three-mode baseline first (no requests were open
   for `playtester`, and Nick still hasn't answered the sigil-cheek
@@ -1729,6 +1791,17 @@ remain the backstop for that; keep saving them.
 
 ## Log
 
+- 2026-09-24 13:11 EDT — Nick's answer on the sigil-cheek request had
+  already been relayed to the fixer (commit `1a237dc`, ahead of this run);
+  closed the bookkeeping gap on my own note (`## Filed on`, points at the
+  fixer's build request, left `status: open` — the route change hasn't
+  landed). Full three-mode baseline clean, exact same two known open
+  issues as every prior run (`hop-distance-band`, `intent-tag-vs-hunter`).
+  Tried a live check for "hunter has real space off the skin" using
+  `_front_of_beast`'s hull and ruled it out with real numbers — the hull
+  returns wildly wrong values off an exact climb anchor (down to -12m),
+  the same disconnected-geometry failure `stand_z_for`'s own comment
+  already documents. Reverted before shipping; `playtest.gd` unchanged.
 - 2026-09-24 05:14 EDT — no open requests addressed to `playtester`;
   Nick has not yet answered the sigil-cheek request. Full three-mode
   baseline clean (same two known, open, already-filed issues —
