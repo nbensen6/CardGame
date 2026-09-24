@@ -2,11 +2,98 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-23T20:49
-working_on: Took the high-priority build-the-one-directional-stone-route request, item 1 of 3 (the structural fix). Fixed the real root cause in BOTH tools/blender/ai_beast.py's raycast and beast.py's hand-authored mark()/anchor() with one shared, bpy-free rule (route.py) instead of a per-beast patch -- proved it with 17 pure-Python assertions plus a real regeneration of the shipped Cinder Jackal glb (the sigil no longer reverses past the haunch), then a full mode=play regression playtest that finished clean (one pre-existing, unrelated fail). Items 2 (spacing band) and 3 (next-hold ring) not started -- left the request taken, not done.
+updated: 2026-09-24T00:24
+working_on: Picked the same build-the-one-directional-stone-route request back up for items 2 and 3. Item 3 (next-hold ring) verified already correct by reading and a live render -- no code needed. Item 2 (2.4-9.2 unit hop band): built and tested the real hop_arc()-floor math (route.py), hard-gated it into beast.py's _prove() for future/other beasts, and improved ai_beast.py's raycast search to prefer real in-band candidates -- fixed 2 of 5 real hops on the shipped Cinder Jackal, but the two hops nearest the sigil stay short. Tried two structural fixes to close that gap; both reintroduced a live route-reversal regression (caught by the playtester's own check) and were reverted. Left taken, not done, with the ruled-out approaches written down so the next agent doesn't repeat them.
 ---
 
 # fixer
+
+## This run — 2026-09-24 00:24 EDT
+
+- **Did:** picked up the two unfinished pieces of the stone-route request.
+  Confirmed the next-hold ring already lights up correctly with no code
+  change needed. For the hop-distance rule, built the real math, added a
+  permanent build-time check for it, and made two of the five real hops on
+  the Cinder Jackal noticeably better-spaced.
+- **Worked?** Partly. Two hops now sit comfortably inside the intended
+  range instead of barely squeaking by; the two hops closest to the very
+  top (near the sigil) are still too short — I tried two different fixes
+  for those and both broke something else (the climb briefly doubled back
+  on itself), so I undid both rather than ship a regression.
+- **Next:** whoever picks this back up should read the request's own
+  `## Result` — it names exactly which two approaches already failed and
+  why, so that's two dead ends already ruled out.
+- **Need from you:** nothing blocking. If you want, take a look at the
+  before/after frame below — it shows real progress even though the job
+  isn't finished.
+
+![[frames/fixer/2026-09-24-hop-distance-route-before.png]]
+![[frames/fixer/2026-09-24-hop-distance-route-after.png]]
+
+## Now
+
+Open `to: fixer` request
+`2026-09-23-1846-playtester-to-fixer-build-the-one-directional-stone-route.md`
+(priority high, still the only high-priority item open or taken this run —
+the other two open `to: fixer` items, `...1735-...boss-damage-popup-
+offscreen-at-sigil.md` and `...2141-...intent-tag-hides-behind-party-
+panel.md`, are both `priority: normal`). Continued rather than switched,
+since it was already `taken` by a previous run of this same agent with two
+of its three items unfinished — per order-of-work, an unfinished `taken`
+item is this queue's own unfinished business, not something to leapfrog for
+a newer `open` one.
+
+**Item 3, next-hold ring: verified correct, no fix needed.**
+`_refresh_ledge_marks`/`ledge_mark_state` (`combat_3d.gd`) already derive
+the highlight purely from `foot`/`next_safe` — state read fresh on every
+`_refresh()` (every state broadcast, hunter switch, End Turn), never gated
+on a card being tapped. Rendered `state=3d` at the very start of a fresh
+fight, before either hunter has played a card: the next safe stone already
+glows gold. Full detail and the frame are in the request's own `## Result`.
+
+**Item 2, 2.4-9.2 unit hop band: real but incomplete.** `route.py` gained
+`hop_world_distance()`/`hop_distance_violation()`, solving `hop_arc()`'s own
+clamp for the DISTANCE it clamps, not the arc height it produces (an easy
+mix-up — the request's own numbers name the 2.4/9.2 band as the distance,
+and I nearly wired the wrong pair of constants before checking the algebra
+against `hop_arc()`'s actual formula). Hard-gated into `beast.py`'s
+`_prove()`, scoped to Heights exactly one apart (a beast with sparse named
+anchors can legally skip several Heights in one hop; that's a different move
+with its own distance, not what this rule is for). `ai_beast.py`'s middle-
+rung search now prefers a real candidate already inside the band over the
+widest-reaching one. Measured on the real shipped `cinder_jackal_ai.glb`
+(re-fed back into its own build as the source, no Meshy spend): Height
+1→2 and 2→3 went from just barely clearing the floor to comfortably inside
+the band; Height 3→4 and 4→5 (the two nearest the sigil) stay short —
+2.39 and 1.52 world units against a 2.42 floor.
+
+**Two structural fixes tried for the last two hops, both reverted.**
+(1) Widening the per-rung search window and centring it on the previous
+rung, instead of always the same fixed `near_front.y` band: does find a
+real in-band candidate for every hop, but lets a middle rung swing far
+enough sideways that the LIVE `_climb_points` come out reversed —
+`PLAYTEST FAIL: climb rung 4 reverses the route -- -3.50m backward`,
+reproduced live, not just predicted. (2) The sigil's own pre-existing
+fallback (moving a rejected pick, then re-raycasting with no surface-normal
+check) can land on a real but wrong point — confirmed live, the sigil
+landed on the neck instead of the head. Fixed (2) on its own (now safe,
+in this push) but it doesn't unlock (1) without reintroducing the reversal.
+Full numbers, the exact playtest failure lines, and what a real fix needs
+are all in the request's `## Result` — read that before trying either
+approach again.
+
+**Proof this run.** `python3 tools/blender/test_route.py`: 33 assertions,
+`ALL TESTS PASSED` (20 new, covering the hop-floor math and the push/re-snap
+helper against the real Cinder Jackal numbers both before and after this
+fix). `run_tests.gd`: `ALL TESTS PASSED`, unaffected (no GDScript touched).
+Fresh `--import`, full `mode=play beast=cinder_jackal steps=80` under
+`xvfb-run`: zero `route-reversal`, zero anatomy failures; the only
+failure is the pre-existing, already-open `intent-hidden` (12 occurrences,
+unrelated). Rendered the real shipped `.glb`'s own `climb_N` markers
+before/after in Blender (foot red, sigil pale yellow) — the top three used
+to sit almost on top of each other; now all six are clearly separated,
+visible progress even where the numbers don't yet clear the floor.
+
 
 ## This run — 2026-09-23 20:45 EDT
 
@@ -1071,7 +1158,19 @@ further either.
 
 ## Log
 
-- 2026-09-23 15:01 EDT (latest) — no open `to: fixer` request; full
+- 2026-09-24 00:24 EDT (latest) — build-the-one-directional-stone-route,
+  items 2/3. Item 3 (next-hold ring) verified already correct, no fix
+  needed. Item 2 (2.4-9.2 unit hop band): built `hop_world_distance()`/
+  `hop_distance_violation()` in `route.py`, hard-gated into `beast.py`'s
+  `_prove()`, improved `ai_beast.py`'s middle-rung candidate selection —
+  fixed 2 of 5 real hops on the shipped Cinder Jackal (Height 1→2, 2→3),
+  the two nearest the sigil (3→4, 4→5) stay short. Two structural attempts
+  to close that gap both reintroduced a live route-reversal (playtester's
+  own check) and were reverted; written down in the request so the next
+  agent doesn't retry either. `test_route.py` 33 assertions, `run_tests.gd`,
+  and a full 80-step live playtest all clean (one pre-existing, unrelated
+  `intent-hidden` fail). Left `status: taken`.
+- 2026-09-23 15:01 EDT — no open `to: fixer` request; full
   play/hover/hands baseline clean. Explore agent found a real bug in
   `core/combat.gd`'s `can_play()`: the `pull_ally` range gate blocked a
   card's ENTIRE effect out of grapple range, not just the pull — hit two real

@@ -104,3 +104,99 @@ def route_violation(anchor_before_last, last_anchor, candidate, min_step):
     if direction == (0.0, 0.0):
         return False
     return route_progress(last_anchor, candidate, direction) < min_step
+
+
+## combat_3d.gd's own hop_arc(): `hop = clampf(distance * 0.26, HUNTER_HEIGHT *
+## 0.9, HUNTER_HEIGHT * 3.4)` -- `distance` is the hold-to-hold gap itself
+## (`from.distance_to(to)`), `hop` is the resulting arc's RISE, not the gap.
+## Below the floor every hop gets the identical minimum rise regardless of how
+## close the holds really are (bouncing in place); above the cap the rise
+## stops growing with distance (stops reading as effort) -- Nick's approval of
+## the stone-route proposal, 2026-09-23: "ordinary hops inside the arc
+## system's proportional band, not at its floor." Solving the clamp's own
+## edges for `distance` (not `hop`) gives the band a hold-to-hold GAP has to
+## sit inside: 0.9*0.7/0.26 = 2.42, 3.4*0.7/0.26 = 9.15 -- the 2.4/9.2 world
+## units the playtester's own numbers already named. HUNTER_HEIGHT and
+## ARC_DISTANCE_SCALE are combat_3d.gd's own constants, mirrored here the same
+## way beast.py's hunter_size() already mirrors BEAST_BASE_HEIGHT/
+## BEAST_HEIGHT_PER_CLIMB -- this file cannot import a .gd script, so the
+## numbers are typed once, here, and nowhere else in Python.
+HUNTER_HEIGHT = 0.7
+ARC_DISTANCE_SCALE = 0.26                              # hop_arc()'s own `* 0.26`
+HOP_MIN_WORLD = (HUNTER_HEIGHT * 0.9) / ARC_DISTANCE_SCALE   # hop_arc()'s clamp floor, solved for distance
+HOP_MAX_WORLD = (HUNTER_HEIGHT * 3.4) / ARC_DISTANCE_SCALE   # hop_arc()'s clamp ceiling, solved for distance
+
+
+def hop_world_distance(mesh_distance, hunter_size):
+    """`mesh_distance` (a beast's own build units) converted to the world
+    units hop_arc() actually measures and clamps against.
+
+    `hunter_size` is `Beast.hunter_size()` -- the mesh-space size that
+    combat_3d.gd's runtime rescale (`_fit_height`, `want = BEAST_BASE_HEIGHT
+    + BEAST_HEIGHT_PER_CLIMB * sigil`) turns into one HUNTER_HEIGHT of real
+    world space. A beast's own build height (and so its own rescale factor)
+    is never the same number twice, so this ratio -- not a flat constant --
+    is what turns a model's own units into the ones hop_arc() clamps.
+    """
+    if hunter_size <= 0.0:
+        return 0.0
+    return mesh_distance * (HUNTER_HEIGHT / hunter_size)
+
+
+def hop_distance_violation(mesh_distance, hunter_size):
+    """None when the hold-to-hold hop `mesh_distance` lands inside
+    hop_arc()'s proportional band once rescaled to world units; otherwise
+    "short" (below the floor -- every such hop gets the same bounce-in-place
+    arc) or "long" (past the cap -- the arc stops growing, so it stops
+    reading as effort), naming which side it missed on.
+    """
+    world = hop_world_distance(mesh_distance, hunter_size)
+    if world < HOP_MIN_WORLD:
+        return "short"
+    if world > HOP_MAX_WORLD:
+        return "long"
+    return None
+
+
+def enforce_hop_floor(last_xy, dz, candidate_xy, min_mesh_dist, fallback_direction=(0.0, 0.0)):
+    """Push `candidate_xy` further from `last_xy` until the full hop --
+    (x, y) movement combined with the climb's own fixed vertical step `dz`
+    between the two rungs' Heights -- reaches `min_mesh_dist` (a beast's own
+    mesh-unit equivalent of hop_arc()'s floor; see hop_distance_violation).
+
+    Confirmed live on the shipped Cinder Jackal AI rebuild, 2026-09-23: every
+    middle rung already gets pushed forward by `keep_route_going` (the
+    anti-reversal rule) whenever the raycast search stalls near the top of
+    the climb, where the body narrows -- but that push is sized only to
+    prove *some* forward progress, not to clear hop_arc()'s actual distance
+    floor, so two real rungs (Height 3->4, 4->5) landed a genuine hop_arc()
+    bounce-in-place distance apart. Only the (x, y) half of a hop is ever
+    adjusted here -- `dz` is the climb's own per-Height contract (see
+    `ref_marks` in ai_beast.py / FOOT_LOW..FOOT_HIGH in beast.py) and is
+    never something a route rule should move.
+
+    Extends along the line `candidate_xy` already sits on relative to
+    `last_xy` (a real raycast pick keeps its own direction) unless the two
+    coincide, in which case `fallback_direction` (typically the route's own
+    established sweep, from route_direction) is used instead. Like
+    `keep_route_going`, this returns a POINT, not a verdict -- the caller is
+    expected to re-snap it onto the body's real surface with its own
+    raycast, the same way a moved sigil pick already does.
+    """
+    need_xy_sq = min_mesh_dist * min_mesh_dist - dz * dz
+    if need_xy_sq <= 0.0:
+        return candidate_xy       # the Height step alone already clears the floor
+    need_xy = math.sqrt(need_xy_sq)
+    dx, dy = candidate_xy[0] - last_xy[0], candidate_xy[1] - last_xy[1]
+    have_xy = math.hypot(dx, dy)
+    if have_xy >= need_xy:
+        return candidate_xy
+    if have_xy > 1e-6:
+        ux, uy = dx / have_xy, dy / have_xy
+    else:
+        fx, fy = fallback_direction
+        flen = math.hypot(fx, fy)
+        if flen < 1e-6:
+            return candidate_xy   # nothing to extend along -- leave it as found
+        ux, uy = fx / flen, fy / flen
+    return (last_xy[0] + ux * need_xy, last_xy[1] + uy * need_xy)

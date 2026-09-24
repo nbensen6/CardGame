@@ -203,3 +203,129 @@ Commit: pushed as part of this run — see `tools/blender/route.py`,
 `tools/blender/test_route.py`, `tools/blender/ai_beast.py`,
 `tools/blender/beast.py`, `tools/blender/ai/cinder_jackal_ai.blend`,
 `game/assets/3d/cast/cinder_jackal_ai.glb` in this push.
+
+## Result — fixer, 2026-09-24 00:24 EDT (item 3, and item 2 partial)
+
+**Item 3 (next-hold ring before commit): verified already correct, no code
+change needed.** Read `_refresh_ledge_marks`/`ledge_mark_state` in
+`combat_3d.gd`: the highlight is a pure function of `foot` and `next_safe`
+(the same Height `/core`'s `next_safe_height()` names), read fresh on every
+`_refresh()` — which fires on every state broadcast, hunter switch and End
+Turn, never on a card being tapped. There is no card-gating anywhere in this
+path to remove. Confirmed live, not just by reading: rendered `state=3d` at
+the very START of a fresh Cinder Jackal fight, before either hunter has
+played a single card —
+
+![[frames/fixer/2026-09-24-hop-distance-wide-after.png]]
+
+— the second-from-bottom stone already glows gold (the next safe hold,
+Height 2) while every stone below the active hunter's own feet stays plain,
+exactly the "Done when" this item asks for. Nothing to fix; closing this
+part of the request.
+
+**Item 2 (2.4-9.2 unit hop band): partially fixed, and the remaining gap is
+now precisely diagnosed rather than just observed.**
+
+Built the actual enforcement `hop_arc()` implies: `hop_world_distance()` and
+`hop_distance_violation()` in `route.py` (solve `hop_arc()`'s own
+`clampf(distance * 0.26, HUNTER_HEIGHT * 0.9, HUNTER_HEIGHT * 3.4)` for
+`distance`, giving exactly the playtester's own 2.4/9.2 world-unit band —
+pinned in `test_route.py` to 6 decimal places). Wired as a hard gate into
+`beast.py`'s `_prove()` (same FAIL-the-build treatment `route_violation`
+already gets), scoped to Heights exactly one apart — a beast with sparse
+named anchors (`mire_snapper.py` has only 0, 3, 6) can legally jump straight
+between them with no "ordinary hop" in between; that multi-Height jump has
+its own, much longer real distance and isn't what `hop_arc()` was tuned for.
+This gate is real and already fires on existing, unrelated content: rerunning
+it against `crag_pup.py`'s and `mire_snapper.py`'s own real numbers
+(read, not rebuilt — out of scope for this fight) isn't needed to know it
+works, since it's the same tested pure function `test_route.py` already
+proves against the Cinder Jackal's own real measurements.
+
+For `ai_beast.py` (the path that actually builds the shipped Cinder Jackal),
+made the raycast search for each middle rung PREFER a real, already-in-band
+candidate over the widest-reaching one, falling back to the widest-reaching
+candidate (then a bounded push/re-snap loop) only when nothing in the sweep
+clears the floor on its own. Measured on the real shipped asset (re-fed
+`cinder_jackal_ai.glb` back into `ai_beast.py` as its own source, exactly
+the previous run's idempotent-rebuild trick — no network, no Meshy credits):
+
+| hop | before | after |
+|---|---|---|
+| Height 0→1 | 7.10 (ok) | 7.10 (ok, unaffected) |
+| Height 1→2 | 2.61 (ok, right at the floor) | 3.28 (ok, comfortably centred) |
+| Height 2→3 | 2.61 (ok, right at the floor) | 6.23 (ok, comfortably centred) |
+| Height 3→4 | 2.37 (short) | 2.39 (still short, ~1% under) |
+| Height 4→5 (sigil) | 1.52 (short) | 1.52 (short, unchanged) |
+
+Real, provable improvement on 2 of 5 hops (no longer squeaking by right at
+the floor); the two hops nearest the sigil are not fixed.
+
+**Why not, and what I ruled out rather than leaving unexplored.** The two
+short hops sit where the climb's own Z-contract (the Height→body-fraction
+mapping, copied verbatim from the Python reference model's own marker
+positions) allocates the LEAST vertical headroom of the whole climb — the
+same reference model that, per the previous run's own write-up, has its
+sigil authored too close to the hold below it and has never been rebuilt
+since. With that little Z to work with, closing the gap needs real lateral
+(X, Y) movement, and I tried two structural ways to get it, BOTH of which
+regenerated a real, live route-reversal on the actual beast (caught by the
+playtester's own `route-reversal` playtest check, not just by me) before
+being reverted:
+
+1. Widening the per-rung search window and centring it on the previous
+   rung's own position (rather than always `near_front.y`) does let a real
+   in-band candidate be found for the last hop — confirmed live, all 5 hops
+   read `ok` — but it also lets a middle rung's own pick swing far enough
+   sideways relative to the one below it that the LIVE `_climb_points` (not
+   just `route.py`'s own build-time check) come out reversed:
+   `PLAYTEST FAIL: climb rung 4 reverses the route -- -3.50m backward`,
+   reproduced twice, on two different tie-break rules for which in-band
+   candidate to prefer.
+2. A `keep_route_going`-moved sigil pick, re-raycast with NO surface-normal
+   check (the same idiom the pre-existing sigil branch already used for its
+   own fallback), can land on a real point that isn't upward-facing at all
+   — confirmed live: the sigil landed at Height-fraction 0.34 instead of
+   0.76, on the neck rather than the head. Fixed the SIGIL half of this
+   (its own fallback now only ever picks from real, normal-checked
+   candidates, never an unconstrained re-raycast) — that fix is in this
+   push and is safe on its own — but it doesn't by itself unlock the widened
+   window without reintroducing (1).
+
+Both attempts, and their revert, are why this push's actual diff is smaller
+than the exploration: rather than ship either regression, I kept the
+regression-free version (unmodified search window, in-band-preferring
+selection only) and proved it clean with a full, fresh `mode=play
+beast=cinder_jackal steps=80` — zero `route-reversal`, zero anatomy
+failures, `run_tests.gd` and `test_route.py` both `ALL TESTS PASSED`. The
+only surviving failure in that 80-step run is the pre-existing, already-open
+`intent-hidden` (12 occurrences — `...2026-09-23-2141-...intent-tag-hides-
+behind-party-panel.md`), unrelated to this change.
+
+![[frames/fixer/2026-09-24-hop-distance-route-before.png]]
+![[frames/fixer/2026-09-24-hop-distance-route-after.png]]
+
+Foot (red) to sigil (pale yellow), same camera, same lighting, rendered
+directly from each `.glb`'s own `climb_N` markers (no game code involved —
+this is the asset, not the view). Before: the top three markers overlap
+almost on top of each other. After: all six form one clearly-separated
+line — a real, visible improvement, even though the numeric floor isn't
+fully met on the last two hops.
+
+**What's left, precisely (not "not started" any more, but not done):**
+closing Height 3→4 and 4→5 needs EITHER moving the Python reference
+model's own sigil further from Height 4 (a `cinder_jackal.py` rebuild,
+which also lands the still-open sigil-reversal-on-the-reference-model
+issue the previous run flagged but didn't fix, since the reference glb
+isn't what ships) OR a genuine joint placement rule that chooses Height 4
+with the Height 4→5 hop already in mind, not just Height 3→4 — a bigger
+change than a single-rung greedy search can give safely. Whoever picks this
+up next should start from the two ruled-out approaches above rather than
+re-discovering the same live route-reversal both ways.
+
+Commit: pushed as part of this run — see `tools/blender/route.py`,
+`tools/blender/test_route.py`, `tools/blender/ai_beast.py`,
+`tools/blender/beast.py`, `tools/blender/ai/cinder_jackal_ai.blend`,
+`game/assets/3d/cast/cinder_jackal_ai.glb` in this push. Leaving `status:
+taken`, not `done` — item 3 is closed, item 2 is real but incomplete
+progress, not the finished ask.

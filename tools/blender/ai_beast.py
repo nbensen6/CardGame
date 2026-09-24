@@ -26,7 +26,8 @@ import bpy, bmesh, math, os, random, sys
 from mathutils import Vector as V, Matrix
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from route import route_direction, route_progress, keep_route_going
+from route import (route_direction, route_progress, keep_route_going,
+                    enforce_hop_floor, HOP_MIN_WORLD, HOP_MAX_WORLD, HUNTER_HEIGHT)
 
 args = sys.argv[sys.argv.index("--") + 1:]
 BID, SRC = args[0], args[1]
@@ -166,6 +167,21 @@ def side_x(y, z):
 bm = bmesh.new()
 marks = {}
 MIN_ROUTE_STEP = 0.03 * H   # see route.py: real progress, not zigzag noise
+# hop_arc()'s own distance floor (2.4 world units -- see route.py's
+# HOP_MIN_WORLD), converted to this beast's own mesh units via the exact
+# rescale combat_3d.gd applies at runtime (_fit_height: want = 12.0 + 1.6 *
+# top_i, the same formula beast.py's hunter_size() already mirrors). Below
+# this, keep_route_going's own anti-reversal push (MIN_ROUTE_STEP, sized only
+# to prove SOME forward progress) is not enough on its own -- confirmed live
+# on the shipped Cinder Jackal: every rung near the top got pushed forward by
+# exactly MIN_ROUTE_STEP because the raycast search kept stalling as the body
+# narrows, and MIN_ROUTE_STEP alone landed two real hops (Height 3->4, 4->5)
+# under the floor once the climb's own vertical step also shrank near the
+# head. See enforce_hop_floor.
+_want_height = 12.0 + 1.6 * float(top_i)
+_mesh_per_world = (HUNTER_HEIGHT * H / _want_height) / HUNTER_HEIGHT
+MIN_HOP_MESH = HOP_MIN_WORLD * _mesh_per_world
+MAX_HOP_MESH = HOP_MAX_WORLD * _mesh_per_world   # hop_arc()'s own ceiling, same conversion
 
 
 def _prev_xy(k, back):
@@ -207,7 +223,20 @@ for k in climbs:
         p2, p1 = _prev_xy(k, 2), _prev_xy(k, 1)
         direction = route_direction(p2, p1)
         if p1 is not None and direction != (0.0, 0.0):
-            best = max(candidates, key=lambda c: route_progress(p1, (c.x, c.y), direction))
+            # Prefer a real candidate already inside hop_arc()'s own distance
+            # band from the rung below (route.py) -- among REAL, upward-
+            # facing head surfaces, not a pushed point re-raycast with no
+            # normal check, which can land anywhere the ray happens to hit
+            # first (confirmed live: an early version of this fix pushed the
+            # sigil clean off the head onto a much lower part of the body).
+            # Falls back to every candidate when none are in-band.
+            prev_z = marks[climbs[climbs.index(k) - 1]].z
+            def _hop_ok(c):
+                gap = math.sqrt((c.x - p1[0]) ** 2 + (c.y - p1[1]) ** 2 + (c.z - prev_z) ** 2)
+                return MIN_HOP_MESH <= gap <= MAX_HOP_MESH
+            in_band = [c for c in candidates if _hop_ok(c)]
+            pool = in_band if in_band else candidates
+            best = max(pool, key=lambda c: route_progress(p1, (c.x, c.y), direction))
         else:
             best = candidates[0]
         bx, by = keep_route_going(p2, p1, (best.x, best.y), MIN_ROUTE_STEP)
@@ -222,22 +251,83 @@ for k in climbs:
             marks[k] = loc if ok else V((bx, by, best.z))
         continue
     # A leg slants, so its foot is not under its knee: sweep along Y from the
-    # foot back toward the chest and take the most outward surface at this
+    # foot back toward the chest and collect every real surface at this
     # height (the leg, or higher up, the shoulder).
-    best = None
+    prev2_xy, prev1_xy = _prev_xy(k, 2), _prev_xy(k, 1)
+    candidates = []
     for t in range(0, 16):
         y = near_front.y - 0.05 * H + t * 0.03 * H
         sx = side_x(y, z)
-        if sx is not None and sx > 0 and (best is None or sx > best[1] + 0.01 * H):
-            best = (y, sx)
-    if best is None:
+        if sx is not None and sx > 0:
+            candidates.append((y, sx))
+    if not candidates:
         fail("no body surface on the near side at climb height %.2f" % z)
-    y, sx = best
+    r = 0.105 * H   # ponytail: kept only to place the marker; no mesh is built
+    prev_z = marks[climbs[climbs.index(k) - 1]].z if prev1_xy is not None else None
+    direction = route_direction(prev2_xy, prev1_xy)
+    if prev1_xy is not None and direction != (0.0, 0.0):
+        # A route is already established: prefer a REAL candidate that
+        # already sits inside hop_arc()'s own distance band from the rung
+        # below (route.py) -- searching for one beats pushing an unreal
+        # point into the band and re-snapping it, which can land somewhere
+        # the push never intended (the real surface at a corrected Y is
+        # never exactly the X a straight-line push assumed). Falls back to
+        # every candidate when none of them are in-band, so the push/re-snap
+        # loop below still has a real starting point to correct.
+        dz = z - prev_z
+        def _hop_ok(c):
+            gap = math.sqrt((c[1] + r * 0.55 - prev1_xy[0]) ** 2
+                             + (c[0] - prev1_xy[1]) ** 2 + dz * dz)
+            return MIN_HOP_MESH <= gap <= MAX_HOP_MESH
+        in_band = [c for c in candidates if _hop_ok(c)]
+        pool = in_band if in_band else candidates
+        # Among the pool, the candidate that continues the route best wins,
+        # same rule the sigil search above already uses -- not just
+        # whichever surface happens to reach furthest out. Taking the widest
+        # reach regardless of position let two rungs land almost on top of
+        # each other in Y while their (x) swung by half the width of the
+        # body between them -- a real, live route-reversal (confirmed: the
+        # Cinder Jackal's own Height 3 landed x=0.36 sandwiched between
+        # Height 2's x=0.82 and Height 4's x=0.93).
+        y, sx = max(pool, key=lambda c: route_progress(
+            prev1_xy, (c[1] + r * 0.55, c[0]), direction))
+    else:
+        # No direction yet (the very first middle rung): take the widest
+        # real reach, same as before this fix.
+        best = None
+        for c in candidates:
+            if best is None or c[1] > best[1] + 0.01 * H:
+                best = c
+        y, sx = best
     # alternate a little either side so the route zigzags instead of stacking
     y += 0.03 * H if i % 2 else -0.03 * H
-    r = 0.105 * H   # ponytail: kept only to place the marker; no mesh is built
-    # Never let this rung double back past the one below it (route.py).
-    px, py = keep_route_going(_prev_xy(k, 2), _prev_xy(k, 1), (sx + r * 0.55, y), MIN_ROUTE_STEP)
+    raw_candidate = (sx + r * 0.55, y)
+    px, py = raw_candidate
+    # Never let this rung double back past the one below it, nor land within
+    # hop_arc()'s own bounce-in-place floor of the rung below it (route.py) --
+    # MIN_ROUTE_STEP alone only proves the pick didn't reverse, not that it
+    # went far enough (see MIN_HOP_MESH's own comment for the live numbers
+    # this caught on the Cinder Jackal). Looped: re-snapping a pushed pick
+    # onto the real surface (below) can itself land short again -- the real
+    # X at the corrected Y is never exactly the X the push assumed -- so this
+    # repeats a few times rather than accepting a near-miss.
+    for _attempt in range(4):
+        moved = keep_route_going(prev2_xy, prev1_xy, (px, py), MIN_ROUTE_STEP)
+        if prev1_xy is not None:
+            moved = enforce_hop_floor(prev1_xy, z - prev_z, moved, MIN_HOP_MESH,
+                                       route_direction(prev2_xy, prev1_xy))
+        if moved == (px, py):
+            break
+        # A route or hop-floor correction moved this pick past the raycast's
+        # own choice -- re-snap onto the real surface at the corrected Y (the
+        # sigil branch above does the same when ITS pick gets moved): the
+        # correction's own X is a straight-line artifact, not a point on the
+        # body.
+        sx = side_x(moved[1], z)
+        if sx is None or sx <= 0:
+            fail("route/hop-floor correction at climb height %.2f left no "
+                 "body surface at the corrected position" % z)
+        px, py = sx + r * 0.55, moved[1]
     p = V((px, py, z))
     marks[k] = p
     if True:   # stones float in-engine now; no foothold geometry is exported

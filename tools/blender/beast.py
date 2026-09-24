@@ -31,7 +31,7 @@ from mathutils import Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from kenney import Build, GOLD, AMBER, SLATE
-from route import route_violation
+from route import route_violation, hop_distance_violation
 
 ## Where a hunter stands, as a fraction of the model's height, for a hold at the
 ## bottom and at the sigil. Straight out of combat_3d.gd via assetcheck.gd; if
@@ -584,6 +584,37 @@ class Beast(Build):
                       "only ever goes one way" % (h0, h1))
                 route_bad.append(h0)
         bad.extend(route_bad)
+
+        # Hop distance: hop_arc() (combat_3d.gd) clamps a hop's rise to
+        # `clampf(distance * 0.26, HUNTER_HEIGHT * 0.9, HUNTER_HEIGHT * 3.4)` --
+        # below the floor every hop gets the identical minimum arc regardless
+        # of how close the holds really are (bouncing in place); above the
+        # cap the arc stops growing with distance (stops reading as effort).
+        # Nick's approval of the stone-route proposal, 2026-09-23: "ordinary
+        # hops inside the arc system's proportional band, not at its floor."
+        # `hunter_size()` is the same mesh-to-world ratio this file already
+        # derives for `_clearance` -- converts a real 3D gap between two
+        # consecutive holds into the world units hop_arc() actually clamps.
+        #
+        # Only ADJACENT Heights (h_hi == h_lo + 1): a beast with sparse named
+        # anchors (mire_snapper.py has just 0, 3 and 6) can jump straight from
+        # one to the next without an "ordinary hop" ever happening in
+        # between -- _route_between only ever stops at real ledges/anchors,
+        # never invents one to keep this check happy. That multi-Height jump
+        # is a different move with its own, much longer real distance; this
+        # only checks the one hop_arc() itself was tuned for.
+        hs = self.hunter_size()
+        hop_bad = []
+        for h_lo, h_hi in zip(heights, heights[1:]):
+            if h_hi != h_lo + 1:
+                continue
+            gap = (self._final[h_hi] - self._final[h_lo]).length
+            violation = hop_distance_violation(gap, hs)
+            if violation is not None:
+                print("  HOP   Height %-3d -> %-3d %s of hop_arc()'s band "
+                      "(hunter is %.2f wide)" % (h_lo, h_hi, violation, hs))
+                hop_bad.append(h_hi)
+        bad.extend(hop_bad)
 
         if bad:
             print("FAIL %s: nowhere to stand at Height(s) %s. Widen the shelf or "
