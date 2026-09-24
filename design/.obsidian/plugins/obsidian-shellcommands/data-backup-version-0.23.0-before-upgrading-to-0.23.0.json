@@ -138,10 +138,7 @@
     {
       "id": "beastvar0001",
       "title": "beast",
-      "content": "",
-      "name": "1",
-      "description": "",
-      "default_value": null
+      "content": ""
     }
   ],
   "custom_variables_notify_changes_via": {
