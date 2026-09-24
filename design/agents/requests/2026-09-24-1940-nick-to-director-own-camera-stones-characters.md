@@ -32,23 +32,53 @@ says it is done.
      `tools/dev.cmd`, which IS a debug build. The lock the fixer shipped has
      never once applied to me.
    - The resting shot was then widened to show the whole beast (#11), which
-     moved it further from what I asked for on 09-23, not closer.
+     moved it further from what I asked for on 09-23, not closer. The answer
+   is not a wider camera — it is more distance between us and the beast; see
+   below.
 2. **The stones in front of the boss.** Asked 09-24 11:52. Still beside the
    flank. #4 and #14 both cover it and neither has moved.
 3. **The characters.** "#13 done" then I looked at them and they look really
    bad. Reopened.
 
-## The part I want you to fix, not just relay
+## The real diagnosis — read the reference again
 
-There is a contradiction in what I have asked for and nobody has said so out
-loud: **"third person close on the hunter" and "the whole beast in frame" do
-not both fit.** You saw it yourself — the fixer removed the close shot to get
-the whole beast, and the playtester has a check enforcing the one that was
-removed. That is why this oscillates instead of landing.
+**Correction, 2026-09-24 19:55 EDT.** An earlier draft of this ticket claimed
+Nick's two asks contradicted each other — close third-person on the hunter
+versus the whole beast in frame. **That was wrong, and he said so.** Do not
+carry it forward.
 
-**Resolve it and tell me the answer**, with a frame: what the ground camera
-should be, what the climbing camera should be, and which of my two asks wins
-where. I will say yes or no to that once and then it is settled.
+Look at `art/references/2026-09-24-nick-target-composition.webp` again:
+
+- The frog is **in the foreground, close to the camera, and fairly large**.
+  The camera is near him — this IS a close third-person shot.
+- The beast is **far away**, small in the frame, whole, looming in the
+  background over a wide gap of dark ground.
+- The stones **recede into depth** between the two: big and near the frog,
+  smaller as they climb away toward the beast. A path in perspective, not a
+  vertical line beside a body.
+
+So both asks are satisfied at once, and the reason we cannot do it is neither
+the camera nor a conflict:
+
+> **There is not enough space between the hunters and the beast.**
+
+They stand between its paws, about ten units out. At that range any camera
+close enough to be third-person on a hunter has the beast filling and
+overflowing the frame — so the fixer widened the shot to fit the beast and
+lost the close hunter. Move the hunters properly back, and a close
+over-the-shoulder camera frames the whole beast on its own, with the stones
+climbing away into the gap. The distance is the fix; the camera follows it.
+
+**So the order of work is:**
+
+1. Open the gap — hunters well back from the beast, a real stretch of ground
+   between them.
+2. Lay the stones across that gap, receding toward the beast.
+3. Then bring the camera back in close behind the active hunter, which now
+   works because there is somewhere for it to stand.
+
+Do not "resolve a contradiction" — there isn't one. Do not widen the camera
+further to compensate for the gap being too small.
 
 ## Authority
 
