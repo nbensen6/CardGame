@@ -25,6 +25,9 @@ See design/guide/ai-beast-recipe.md.
 import bpy, bmesh, math, os, random, sys
 from mathutils import Vector as V, Matrix
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from route import route_direction, route_progress, keep_route_going
+
 args = sys.argv[sys.argv.index("--") + 1:]
 BID, SRC = args[0], args[1]
 DRY = "--dry" in args
@@ -162,6 +165,19 @@ def side_x(y, z):
 
 bm = bmesh.new()
 marks = {}
+MIN_ROUTE_STEP = 0.03 * H   # see route.py: real progress, not zigzag noise
+
+
+def _prev_xy(k, back):
+    """The (x, y) of the rung `back` positions below `k` in the climb, or
+    None if the climb hasn't placed that many rungs yet."""
+    j = climbs.index(k) - back
+    if j < 0:
+        return None
+    p = marks.get(climbs[j])
+    return None if p is None else (p.x, p.y)
+
+
 for k in climbs:
     i = int(k.split("_")[1])
     z = ref_marks[k] * H
@@ -169,14 +185,41 @@ for k in climbs:
         marks[k] = V((near_front.x + 0.18 * H, near_front.y, 0.0))
         continue
     if i == top_i:
-        # the sigil: on top of the head, found by raycasting down
-        for y in [lo.y + t * 0.05 * H for t in range(2, 12)]:
+        # the sigil: on top of the head, found by raycasting down. Every
+        # upward-facing candidate in the sweep is collected first -- not
+        # just the one nearest the nose, which is how this used to reverse
+        # the whole climb back past the haunch to reach the head (Nick,
+        # 2026-09-23) -- and the one that best continues the direction the
+        # rest of the climb already established wins. Swept further back
+        # than a bare head-hunt needs (0.85*H past the nose, was 0.55*H) so
+        # a real continuing surface has room to be found instead of only
+        # ever the tip of the snout. keep_route_going is still the final
+        # guarantee: if nothing the raycast found reaches far enough, the
+        # pick is nudged forward exactly like a middle rung's would be. See
+        # route.py.
+        candidates = []
+        for y in [lo.y + t * 0.05 * H for t in range(2, 18)]:
             ok, loc, n, _ = body.ray_cast(V((0, y, hi.z + 5)), V((0, 0, -1)))
             if ok and n.z > 0.6:
-                marks[k] = loc
-                break
-        else:
+                candidates.append(loc)
+        if not candidates:
             fail("no upward-facing head surface for the sigil")
+        p2, p1 = _prev_xy(k, 2), _prev_xy(k, 1)
+        direction = route_direction(p2, p1)
+        if p1 is not None and direction != (0.0, 0.0):
+            best = max(candidates, key=lambda c: route_progress(p1, (c.x, c.y), direction))
+        else:
+            best = candidates[0]
+        bx, by = keep_route_going(p2, p1, (best.x, best.y), MIN_ROUTE_STEP)
+        if (bx, by) == (best.x, best.y):
+            marks[k] = best   # the raycast's own point already continued the route
+        else:
+            # keep_route_going moved the pick past every real candidate -- put
+            # it back ON the body with one more raycast at the corrected (x,
+            # y) rather than keeping the old candidate's z, which belongs to
+            # a different point on the surface.
+            ok, loc, n, _ = body.ray_cast(V((bx, by, hi.z + 5)), V((0, 0, -1)))
+            marks[k] = loc if ok else V((bx, by, best.z))
         continue
     # A leg slants, so its foot is not under its knee: sweep along Y from the
     # foot back toward the chest and take the most outward surface at this
@@ -193,7 +236,9 @@ for k in climbs:
     # alternate a little either side so the route zigzags instead of stacking
     y += 0.03 * H if i % 2 else -0.03 * H
     r = 0.105 * H   # ponytail: kept only to place the marker; no mesh is built
-    p = V((sx + r * 0.55, y, z))
+    # Never let this rung double back past the one below it (route.py).
+    px, py = keep_route_going(_prev_xy(k, 2), _prev_xy(k, 1), (sx + r * 0.55, y), MIN_ROUTE_STEP)
+    p = V((px, py, z))
     marks[k] = p
     if True:   # stones float in-engine now; no foothold geometry is exported
         continue

@@ -3,10 +3,10 @@ tags:
   - request
 from: playtester
 to: fixer
-status: open
+status: taken
 priority: high
 created: 2026-09-23T18:46
-taken_by:
+taken_by: fixer
 ask:
 waiting: false
 ---
@@ -91,4 +91,109 @@ Before frames (scattered route, reversal at the sigil):
 <!-- Type below this line. Anything, one word is fine. Then run
      tools\board_push.cmd. Leave the frontmatter alone. -->
 
-## Result
+## Result — fixer, 2026-09-23 20:45 EDT
+
+**Item 1 (one-directional route, structurally, for any beast): done.** Items
+2 (2.4-9.2 unit spacing band) and 3 (next-hold ring before commit): not
+started — see "What's left" below. Splitting rather than rushing all three
+into one unverified push.
+
+**Root cause, confirmed by reading both places Nick named.**
+`ai_beast.py`'s sigil raycast (lines ~174-182 before this fix) took the
+FIRST upward-facing surface starting from the nose tip, with zero regard for
+where the climb had already been. `beast.py`'s `mark()`/`anchor()` are
+hand-typed numbers with the identical gap — confirmed on a REAL shipped
+beast, not a hypothetical: `crag_pup.py` anchors Height 2 at y=-0.30 (after
+its foot at y=-0.66, i.e. climbing forward), then its own `mark()` places
+the sigil at y=-0.50 — backward, past the hold below it. Same shape of bug,
+already shipped, in a beast nobody filed a complaint about because nobody
+looked at the numbers.
+
+**Fix: one shared rule, not two divergent patches.** New
+`tools/blender/route.py` — no `bpy` import, pure `(x, y)` arithmetic — holds
+`keep_route_going()` (used by `ai_beast.py`'s raycast: a candidate that
+doesn't make real progress past the rung below it is pushed forward along
+the direction the last two rungs already established) and `route_violation()`
+(used by `beast.py`'s `_prove()`: a hand-authored hold that doesn't make that
+same progress now prints `FAIL`, the same hard-stop the anatomy gate already
+uses, instead of silently shipping). Both `ai_beast.py`'s per-height sweep
+and its sigil search now run every candidate through this; `beast.py` checks
+every hold's FINAL position against it after `finish()`. Direction is never
+assumed to be a fixed axis — it's derived from the two rungs already placed,
+so this holds for a beast built facing any which way, not just one oriented
+like the jackal.
+
+**Proven three ways before touching the shipped asset:**
+
+1. `python3 tools/blender/test_route.py` —
+   17 assertions, zero Blender needed: `keep_route_going` corrects the exact
+   Cinder Jackal shape (paw/shoulder/haunch sweeping one way, sigil
+   reversing) and a stalled (near-zero-progress) pick alike; `route_violation`
+   is checked against crag_pup's own real numbers (catches it) and
+   mire_snapper's own real numbers (a beast that never reverses — correctly
+   passes). `ALL TESTS PASSED (17 assertions)`.
+2. Re-ran the REAL pipeline on the REAL shipped Cinder Jackal — no network,
+   no Meshy credits spent: fed the already-exported
+   `game/assets/3d/cast/cinder_jackal_ai.glb` back into `ai_beast.py` as its
+   own source (steps 1-2 are idempotent on an already-oriented/decimated
+   body, confirmed by the unchanged `feet`/`dims`/`gate` REPORT lines).
+   Before: `climb_0..4` y = -1.48, -0.99, -1.17, -1.17, -0.99, then the sigil
+   (`climb_5`) jumps to **y=-2.07** — a 1.08-unit reversal past every hold
+   used to get there. After: **-1.48, -0.99, -0.90, -0.81, -0.72, -0.63** —
+   monotonic the whole way, the sigil the smallest step of the six.
+   `ALL TESTS PASSED` on `run_tests.gd`, unaffected (this fix touches no
+   GDScript).
+3. Rendered both the pre-fix and post-fix `.glb` directly in Blender with a
+   small sphere on every `climb_N` (red = foot, brightening to pale yellow =
+   sigil), camera and lighting identical, so the route itself is the whole
+   picture:
+
+![[frames/fixer/2026-09-23-stone-route-sigil-reversal-before.png]]
+![[frames/fixer/2026-09-23-stone-route-sigil-reversal-after.png]]
+
+Before: four stones climb the shoulder in a line, then the fifth (palest)
+sits alone up by the ear, disconnected from the other four. After: all six
+markers form one continuous line up the chest toward the neck — no jump.
+
+**Confirmed live, in the actual game.** Fresh `--import`, re-rendered
+`state=3d wide` against the regenerated asset: no script errors, hunters and
+stones still place correctly (frame in this run's own status note, not
+duplicated here since it shows no visible change at this camera angle — the
+sigil was already out-of-frame in this shot before AND after; the Blender
+renders above are what actually shows the fix). Started a full
+`mode=play beast=cinder_jackal steps=80` regression playtest before writing
+this up; it had not finished by the time this run had to end (16/80 steps in
+several minutes — this sandbox was slow this run) — no failures in what
+completed, and nothing this change touches (climb-point *placement*, not
+climb *mechanics*) gives me reason to expect one, but I did not get to see
+it through. Whoever picks this back up should either let a fresh one run to
+completion or treat that as still open.
+
+**A trade-off worth a look, not hidden.** Forcing the sigil to keep
+sweeping forward means it no longer sits on the tip of the snout the way the
+un-fixed build happened to place it — it lands near the base of the
+neck/shoulder instead (see the "after" render: the palest sphere is close to
+the mane, not the nose). It is still recognisably near the head and it is
+the honest result of "the actual head surface that continues the route,"
+not a synthetic point off the mesh — but if Nick or the artist wants the
+sigil visually ON the skull specifically while still never reversing, that
+needs the sigil search to hunt further back along the neck/skull
+specifically rather than straight down from above, which is a design/asset
+call, not a bug fix. Flagging rather than guessing further.
+
+**What's left (2 and 3 of this request, not started):**
+- The 2.4-9.2 unit ordinary-hop spacing band — needs enforcing wherever a
+  beast's rungs get their final world-scale distance, which depends on
+  `_beast_scale` at runtime (combat_3d.gd), not something `ai_beast.py`/
+  `beast.py` can fully guarantee at Blender-authoring time on their own.
+- The next-hold ring shown before its card is played — `_refresh_ledge_marks`
+  in `combat_3d.gd` already highlights `next_safe_height()`, which is
+  state-only and not gated on a card being played, so on a first read this
+  might already be doing what's asked; needs actually playing a climb and
+  checking whether the highlight appears one hunter-turn EARLIER than the
+  card that would use it, which I have not done yet.
+
+Commit: pushed as part of this run — see `tools/blender/route.py`,
+`tools/blender/test_route.py`, `tools/blender/ai_beast.py`,
+`tools/blender/beast.py`, `tools/blender/ai/cinder_jackal_ai.blend`,
+`game/assets/3d/cast/cinder_jackal_ai.glb` in this push.

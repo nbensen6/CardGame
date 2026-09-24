@@ -2,37 +2,69 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-23T17:38
-working_on: Took the high-priority stones/camera/hunter-spacing request. Locked the free camera (drag/pan/zoom/WASD) behind OS.is_debug_build() so normal play can never leave the over-the-shoulder shot -- it was already auto-following, dragging was the only escape hatch. Fixed hunters spawning almost flush against the Cinder Jackal's legs (1.1-unit real gap) -- the ground-standoff formula double-counted a long quadruped's tail; one shared rule (ground_standoff_for) now sizes the arena to actually hold the standoff it asks for -- live gap now 9.5 units. Stones: sent numbers/code-paths to the playtester, did not build -- gated on Nick answering 1434.
+updated: 2026-09-23T20:45
+working_on: Took the high-priority build-the-one-directional-stone-route request, item 1 of 3 (the structural fix). Fixed the real root cause in BOTH tools/blender/ai_beast.py's raycast and beast.py's hand-authored mark()/anchor() with one shared, bpy-free rule (route.py) instead of a per-beast patch -- proved it with 17 pure-Python assertions plus a real regeneration of the shipped Cinder Jackal glb (the sigil no longer reverses past the haunch). Items 2 (spacing band) and 3 (next-hold ring) not started -- left the request taken, not done.
 ---
 
 # fixer
 
-## This run — 2026-09-23 17:38 EDT
+## This run — 2026-09-23 20:45 EDT
 
-- **Did:** took Nick's high-priority stones/camera/hunter-spacing request.
-  Locked the camera (drag/pan/zoom/WASD are now a dev-only tool, not
-  reachable in normal play) and fixed the hunters spawning almost inside
-  the Cinder Jackal's legs. Sent the playtester the technical numbers for
-  the stone-route piece rather than building it myself.
-- **Worked?** Yes on both halves I finished. Camera: the resting shot was
-  already over-the-shoulder on its own; the only way to break out of it was
-  the free-look controls, now gated to a debug build only (same convention
-  `console.gd` already names for this). Hunter spacing: real, measured
-  before/after — gap went from 1.1 units (legs reading as touching the
-  hunters) to 9.5 units. Frames and numbers in the request's `## Result`.
-- **Next:** stones stay unbuilt until Nick answers
-  `2026-09-23-1434-nick-to-playtester-how-the-stones-should-line-up.md` —
-  my numbers (arc sweet-spot band: 2.4-9.2 world units; the exact
-  `ai_beast.py` lines that place the sigil independent of route direction)
-  are sitting in `2026-09-23-1736-fixer-to-playtester-stone-route-
-  technical-numbers.md` for whoever builds it once he says yes.
-- **Need from you:** nothing blocking me. When you get to it: your answer
-  on 1434 is what unblocks the stones half of this same request.
+- **Did:** fixed the Cinder Jackal's climb reversal at its actual root, not
+  just for this one beast. Both `ai_beast.py` (the Meshy-rebuild raycast)
+  and `beast.py` (a human typing `anchor()`/`mark()` calls) can place a hold
+  that doubles back past the one before it — Nick asked for the cause fixed,
+  not a one-off nudge. One shared rule now, `tools/blender/route.py`.
+- **Worked?** Yes. Re-ran the real pipeline on the real shipped Cinder Jackal
+  (no network, no Meshy credits — reused its own already-exported glb as the
+  source): the sigil went from jumping 1.08 units backward past every hold
+  used to reach it, to being the smallest, forward-most step of the six.
+  Rendered proof below. Only the route's DIRECTION is fixed this run — the
+  spacing band and the next-hold ring (parts 2 and 3 of the same request)
+  are still open.
+- **Next:** whoever picks this back up should read the request's own
+  `## Result` for exactly what's left (the 2.4-9.2 unit spacing band; check
+  whether the next-hold ring already fires early or needs a real change),
+  and let the `mode=play steps=80` regression playtest I started run to
+  completion — it hadn't finished when this run had to end.
+- **Need from you:** a look at the trade-off called out in the request —
+  the fixed sigil now sits near the neck/shoulder rather than the tip of the
+  snout, because that's the nearest real head-adjacent surface that doesn't
+  reverse the climb. Say if that's fine or if the sigil should be hunted
+  further back along the skull specifically.
+
+![[frames/fixer/2026-09-23-stone-route-sigil-reversal-before.png]]
+![[frames/fixer/2026-09-23-stone-route-sigil-reversal-after.png]]
 
 ## Now
 
-Request `2026-09-23-1423-nick-to-fixer-stones-camera-and-hunter-spacing.md`
+Open `to: fixer` request
+`2026-09-23-1846-playtester-to-fixer-build-the-one-directional-stone-route.md`
+(priority high, oldest-among-high-priority open requests this run — the only
+other open `to: fixer` item, the boss-damage-popup-offscreen-at-sigil
+request, is `priority: normal`). Full technical write-up, before/after
+numbers, and the trade-off flag are all in that request's own `## Result` —
+not duplicating them here. Left `status: taken`, not `done`: only item 1 of
+the request's three numbered asks is finished.
+
+**Why I stopped at item 1.** This request bundles three genuinely separate
+pieces of work (route direction, hop-distance spacing, ring telegraphing)
+under one ticket. Item 1 was both the one Nick's own approval note called
+out by name ("fix the CAUSE... a per-beast patch that leaves the next beast
+broken is not done") and the one with an actual measurable bug already
+proven live (the 1.08-unit reversal) — worth doing well and proving properly
+rather than splitting attention across all three and shipping any of them
+half-verified. Items 2 and 3 need their own reproduce-fix-prove pass.
+
+**Lease/time note.** Standing up Blender in this sandbox (download +
+regenerate + render) ate a real chunk of this run's budget; the `mode=play`
+regression playtest was still at 16/80 steps (slow sandbox this run) when I
+had to stop to get the finished part committed and pushed rather than risk
+losing it. `run_tests.gd` (unaffected by this change — no GDScript touched)
+and the pure-Python `test_route.py` both pass; the in-game `state=3d`
+render shows no errors against the regenerated asset.
+
+## Old: 2026-09-23, stones-camera-and-hunter-spacing
 left `taken` (not `done`) — camera and spacing are finished and proven,
 stones is still open on your answer elsewhere. Filed
 `2026-09-23-1736-fixer-to-playtester-stone-route-technical-numbers.md` to

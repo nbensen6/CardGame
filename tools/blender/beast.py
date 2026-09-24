@@ -31,6 +31,7 @@ from mathutils import Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from kenney import Build, GOLD, AMBER, SLATE
+from route import route_violation
 
 ## Where a hunter stands, as a fraction of the model's height, for a hold at the
 ## bottom and at the sigil. Straight out of combat_3d.gd via assetcheck.gd; if
@@ -563,6 +564,26 @@ class Beast(Build):
                      "ok" if off <= BAND else "OFF by %.0f%%" % (off * 100)))
             if off > BAND:
                 bad.append(h)
+
+        # Route continuity: a climb only ever sweeps one way, never doubling
+        # back past a hold it already used to reach the next one (Nick,
+        # 2026-09-23, after the Cinder Jackal's sigil jumped back to the head
+        # past every hold the rest of the climb had already used). Checked on
+        # the FINAL, post-rescale positions, against the same rule
+        # ai_beast.py's own raycast search now enforces for a Meshy rebuild -
+        # see route.py. Needs three holds to say anything: the first two
+        # define the direction, they cannot contradict it.
+        heights = sorted(getattr(self, "_final", self._anchors))
+        min_route_step = 0.03 * self.H
+        route_bad = []
+        for idx in range(2, len(heights)):
+            h2, h1, h0 = heights[idx - 2], heights[idx - 1], heights[idx]
+            p2, p1, p0 = self._final[h2], self._final[h1], self._final[h0]
+            if route_violation((p2.x, p2.y), (p1.x, p1.y), (p0.x, p0.y), min_route_step):
+                print("  ROUTE Height %-3d doubles back past Height %d - a route "
+                      "only ever goes one way" % (h0, h1))
+                route_bad.append(h0)
+        bad.extend(route_bad)
 
         if bad:
             print("FAIL %s: nowhere to stand at Height(s) %s. Widen the shelf or "
