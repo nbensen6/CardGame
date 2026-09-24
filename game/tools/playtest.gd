@@ -345,6 +345,29 @@ func _check(v: Node, when: String) -> void:
 				_fail("hand-over-hud", "%s: a resting card covers %s" % [when, hname])
 				break
 
+	# 5c. JACKAL-BAR, "the beast's intent is unmissable": the telegraph is
+	# useless if the HUD itself hides it, or if it sits on top of the party
+	# panel it's floating above. `_position_intent_tag` clamps _intent_tag's Y
+	# away from the boss HP bar (lo_y=70) and away from the hand (hi_y), but
+	# nothing clamps it on X -- it tracks the beast's crown in screen space, and
+	# an off-centre beast or an unusual camera angle could park it right over
+	# the top-left party rows with nothing to stop it. Same reasoning as check
+	# 7 (hunters-overlap): should never fire, cheap insurance that it doesn't.
+	var itag: Control = v.get("_intent_tag")
+	if itag != null and is_instance_valid(itag) and itag.is_visible_in_tree():
+		var ir := itag.get_global_rect()
+		if ir.size.x >= 2 and ir.size.y >= 2:
+			for hname2 in ["_hp_bar", "_party"]:
+				var other: Control = v.get(hname2)
+				if other == null or not is_instance_valid(other) or not other.is_visible_in_tree():
+					continue
+				var orect := other.get_global_rect()
+				if orect.size.x < 2 or orect.size.y < 2:
+					continue
+				if ir.intersects(orect):
+					_fail("intent-hidden", "%s: the intent tag %s overlaps %s %s"
+						% [when, ir, hname2, orect])
+
 	# 6. No script errors, ever.
 	while not _errors.is_empty():
 		_fail("script-error", String(_errors.pop_front()))
