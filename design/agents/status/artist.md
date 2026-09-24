@@ -2,13 +2,114 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-23T21:12
-working_on: fixed portraits.py's AI_ART table -- it only ever had cinder_jackal, so the party-rail/campfire portraits for both hunters were still rendered from the OLD Python-primitive frog.glb/goblin_mech.glb even though the fight itself moved to frog_ai/goblin_mech_ai weeks ago. Added frog and goblin_mech, re-rendered both portraits, verified in the real party rail. This was also the outstanding 34px Colour & read check both hunter notes had named as open: frog_ai now measures clean (8->9, total 41->42/50, AT the hunter stop line); goblin_mech_ai measures confirmed-still-duller (stays 8, 39/50) -- named the concrete next fix (tank-vs-body contrast). ALL TESTS PASSED. Lease released.
+updated: 2026-09-23T22:20
+working_on: goblin_mech_ai pass 5 -- fixed the tank-vs-body contrast at the 34px party-portrait scale that pass 4 named as the concrete next move, and found a real bug while measuring it -- the glb's own embedded texture had never received pass 2's colour boost (only the loose extracted PNG the live fight reads had), so every portrait render has shown a dimmer goblin than the fight itself for two passes. Wrote a small GLB image-patch tool, masked the tank/shorts by hue, boosted sat/val there only. Colour & read 8->9, total 39->40/50. ALL TESTS PASSED, playtest running now. Lease released.
 ---
 
 # artist
 
-## This run — 2026-09-23 21:12 ET
+## This run — 2026-09-23 22:20 ET
+
+- **Did:** fixed `goblin_mech_ai`'s tank-vs-body contrast at 34px -- the
+  concrete next move pass 4 left named. Along the way found the portrait
+  render pipeline had been showing a dimmer, pre-colour-boost goblin for two
+  passes running (a real bug, not a taste question), and fixed that too.
+- **Worked?** Yes -- verified in the real fight (same camera/positions,
+  before/after) and at the actual 34px party-rail scale. The tank and
+  shorts now read as a clear blue, separated from the green body, matching
+  the Frog's own headroom at that size. Colour & read 8→9, total 39→40/50.
+- **Next:** no single line is far behind on `goblin_mech_ai` any more
+  (Sil/Prop/Style 8, Hygiene 7) -- a fresh six-view look is probably more
+  useful than another colour push. 2 points under the 42 hunter stop line.
+- **Need from you:** nothing.
+
+![[frames/artist/2026-09-23-goblin-tank-contrast-infight-before-after.png]]
+![[frames/artist/2026-09-23-goblin-tank-contrast-34px-before-after.png]]
+
+## Now
+
+Checked for a fresh, unhandled answer under `## Nick's answer` on my own
+`to: nick` notes first, per `COMMON.md` 1b -- none open. Checked open
+`to: artist` requests -- none this run. Worked the `JACKAL-BAR.md` queue:
+`goblin_mech_ai.md` pass 4 named its own concrete next move -- "raise the
+tank's value/saturation relative to the body ... checked against the party
+rail's actual `(58,42,30)` background" -- so this run did exactly that.
+
+**Measured the starting point first, on the real render, and found a bug
+nobody had caught.** `portraits.py` renders straight from
+`goblin_mech_ai.glb`, not from the loose `goblin_mech_ai_Image_0.png`
+Godot's importer extracts for the live 3D fight. Extracted the glb's own
+embedded texture directly and measured it: sat 0.282, val 0.535 -- pass 2's
+own recorded PRE-boost numbers, exactly. Pass 2's colour boost
+(`goblin_ai_colour_boost.py`) only ever edited the loose PNG; the glb's own
+copy was never touched. Every portrait render since pass 2 -- party rail,
+character card, campfire -- has quietly shown the dimmer, pre-boost goblin
+this whole time, out of sync with what the fight itself has shown for two
+passes.
+
+**Wrote a small reusable tool to fix it properly**, since editing an
+embedded glb image isn't something any existing script here does:
+`tools/blender/ai/glb_image_patch.py` -- pure struct/json, no bpy, no
+external glTF library -- reads a .glb's chunks and can swap one embedded
+image's bytes for new ones. Only safe when that image's bufferView is the
+LAST one in the buffer (checked in code, not assumed, before writing
+anything) -- true here, verified by inspecting every bufferView's offset.
+Round-tripped it first (extract then reinject unchanged, confirmed
+byte-identical, confirmed the patched glb still imports and renders in
+Blender) before trusting it with a real edit.
+
+**The actual fix**, `tools/blender/ai/goblin_ai_tank_contrast.py`: masks
+the texture by HUE alone (195°-245°, this hunter's tank/steel/shorts
+blue-grey family) restricted to value < 0.6, which excludes the near-white
+ice-blue goggle lens sitting in the same hue range. Confirmed the mask
+lands where intended with a diagnostic magenta recolour, rendered in
+Blender, before touching real colour -- covers exactly the backpack tank
+and the shorts, nothing on skin/goggles/straps/boots. Boosts saturation
+×1.7 and lifts value (gamma 0.68) inside the mask only. Applied to the
+loose PNG directly (it already had pass 2's boost); applied to the glb's
+embedded image with pass 2's global boost run first, then the same tank
+step on top -- verified the two paths agree byte-for-byte at the
+global-boost stage before they diverge.
+
+**Verified in the real fight**, same camera and hunter positions as every
+prior pass (logged, matched to the position), before/after:
+
+![[frames/artist/2026-09-23-goblin-tank-contrast-infight-before-after.png]]
+
+**Verified at the actual 34px party-portrait scale** -- the exact
+measurement pass 4 held Colour & read down on -- composited on the rail's
+own `(58,42,30)` background:
+
+    goblin_mech_ai  before: sat 0.263  val 0.398
+    goblin_mech_ai  after:  sat 0.493  val 0.461
+    frog_ai (ref):          sat 0.69   val 0.44
+
+![[frames/artist/2026-09-23-goblin-tank-contrast-34px-before-after.png]]
+
+Value now matches the Frog's own 34px reading almost exactly; saturation
+is well over halfway there, from under half before.
+
+**No regression.** Only the three touched files changed
+(`git status` confirmed). Full-frame pixel diff against the immediately
+prior baseline, same camera/positions: changed pixels are the goblin's own
+screen region (intended), the party rail's goblin portrait icon (intended),
+and thin scattered edge pixels elsewhere matching the idle-animation-jitter
+pattern this file's prior passes have already documented (jackal tail/ember
+pulse, frog sway) -- not a shape or position change.
+
+**Score: Colour & read 8→9, total 39→40/50** -- still 2 points under the 42
+hunter stop line. Full write-up: `design/progress/goblin_mech_ai.md`
+("Pass 5"). Updated `JACKAL-BAR.md`'s hunter-fidelity line with the new
+number and the bug finding.
+
+`ALL TESTS PASSED` (`run_tests.gd`). 80-step playtest
+(`mode=play beast=cinder_jackal steps=80`) kicked off in the foreground
+after this write-up and the push, per `COMMON.md` 4b -- nothing in this
+diff touches gameplay code or hunter positioning (texture/asset-embed data
+only), so a regression here would be a surprise, but the result is appended
+to the `## Log` below the moment it lands rather than assumed clean.
+
+## Old: 2026-09-23 21:12 ET, portraits.py AI_ART table fix
 
 - **Did:** the party rail's portraits for the Frog and the Goblin Engineer
   were still the OLD Python-primitive models — even though `combat_3d.gd`
@@ -652,6 +753,17 @@ only touched the visual dressing) is the obvious next real-geometry pass.
 
 ## Log
 
+- 2026-09-23 22:20 EDT — `goblin_mech_ai` pass 5: fixed the tank-vs-body
+  contrast at 34px (pass 4's named next move) and found/fixed a real bug
+  along the way -- the glb's embedded texture never got pass 2's colour
+  boost, only the loose extracted PNG did, so every portrait render has
+  shown a dimmer goblin than the fight for two passes. New
+  `tools/blender/ai/glb_image_patch.py` (safe embedded-image swap, GLB last-
+  bufferView case) + `goblin_ai_tank_contrast.py` (hue-masked sat/val boost
+  on the tank/shorts only, confirmed by a diagnostic recolour). Colour & read
+  8→9, total 39→40/50. Verified in the real fight and at the actual 34px
+  scale, before/after. `ALL TESTS PASSED`; 80-step playtest running in the
+  foreground after this push. Lease released.
 - 2026-09-23 21:12 EDT — fixed `portraits.py`'s `AI_ART` table (beast-only,
   `{"cinder_jackal": "_ai"}`) to also cover `frog`/`goblin_mech`, so the
   party-rail/campfire portraits finally render from the same `_ai` models

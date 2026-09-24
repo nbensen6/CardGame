@@ -512,10 +512,107 @@ playtest re-run: nothing moves or renders differently in the 3D scene,
 only the 2D portrait texture the party rail and campfire already knew how
 to draw.
 
-### Where it stands
+### Where it stands (superseded by pass 5 below)
 
 **39/50 — under the 42 hunter stop line, 3 points off.** Lines: Silhouette
 8, Proportion 8, Build hygiene 7, Colour & read 8 (now verified, not
 assumed), Style consistency 8. The next concrete move is named above: a
 texture contrast/saturation pass separating the tank from the body,
 targeted at the party rail's own background rather than a neutral one.
+
+## Pass 5 — Colour & read, artist, 2026-09-23T22:20 EDT
+
+Picked up pass 4's own named next move: raise the tank's value/saturation
+relative to the body so the two masses separate at 34px, checked against the
+party rail's own `(58,42,30)` background.
+
+**Found a real bug while measuring the starting point, not just eyeballing
+it.** `portraits.py` renders straight from `goblin_mech_ai.glb` — but the
+glb's OWN embedded texture turns out to be the raw, never-boosted Meshy
+output. Pass 2's global saturation/value boost
+(`goblin_ai_colour_boost.py`) only ever edited the LOOSE extracted
+`goblin_mech_ai_Image_0.png` (what Godot's importer reads for the live 3D
+fight) — nothing ever touched the glb's own embedded copy. Confirmed by
+extracting the glb's embedded image directly and measuring it: sat 0.282,
+val 0.535 — pass 2's own recorded PRE-boost numbers, exactly. Every
+portrait render since pass 2 (party rail, character card, campfire) has
+been silently showing the dimmer, pre-boost goblin, out of sync with what
+the fight itself has shown for two passes now.
+
+**Fix, in two parts** (`tools/blender/ai/goblin_ai_tank_contrast.py`, new
+`glb_image_patch.py` alongside it — a small pure-Python GLB reader/writer
+that swaps an embedded image's bytes in place, safe here because this
+model's image bufferView is the last one in its buffer, checked in code
+before writing, not assumed):
+
+1. The loose PNG (already carrying pass 2's boost) gets the new
+   tank-specific boost below, applied directly, same as pass 2's own
+   technique.
+2. The glb's embedded image gets pass 2's global boost applied FIRST — so
+   the portrait finally matches the shipped fight colours, closing the
+   two-pass-old bug above — then the same tank boost on top. Verified
+   byte-identical to the loose PNG at the global-boost stage (same formula,
+   same raw source) before the tank step is applied to each independently.
+
+**The tank boost itself:** masks pixels by HUE alone (195°-245°, the
+tank/steel/shorts blue-grey family this hunter's palette uses) restricted to
+value < 0.6, which excludes the near-white ice-blue goggle lens sitting in
+the same hue range. Confirmed the mask lands where intended with a
+diagnostic magenta recolour, rendered in Blender before touching real
+colour — it covers exactly the backpack tank and the shorts, nothing on the
+skin, goggles, straps or boots. Saturation ×1.7, value gamma 0.68, inside
+the mask only.
+
+**Verified in the real fight**, same camera/hunter positions as every prior
+pass (logged, matched), before/after:
+
+![[../agents/frames/artist/2026-09-23-goblin-tank-contrast-infight-before-after.png]]
+
+The tank goes from a pale grey blob barely distinct from the shorts to a
+clear blue, and the shorts read as a matching blue rather than a dark smear
+— both now separate from the mint/orange body at true in-fight size.
+
+**Verified at the actual 34px party-portrait scale**, the exact
+measurement pass 4 held Colour & read down on — composited on the rail's
+own `(58,42,30)` background, same methodology as pass 4:
+
+    goblin_mech_ai  before: sat 0.263  val 0.398
+    goblin_mech_ai  after:  sat 0.493  val 0.461
+    frog_ai (ref):          sat 0.69   val 0.44
+
+![[../agents/frames/artist/2026-09-23-goblin-tank-contrast-34px-before-after.png]]
+
+Saturation nearly doubled (well over halfway to the Frog's own number now,
+against less than half before) and value now matches the Frog's own 34px
+reading almost exactly. Looked at directly, not just measured: the tank and
+shorts read as a clear blue mass distinct from the green body, the same
+separation the Frog's body/belly split already had.
+
+**No regression.** Only the three touched files changed (`git status`
+confirmed: the glb, its loose extracted PNG, the portrait PNG). Full-frame
+`state=3d` pixel diff against the immediately-prior baseline, same
+camera/hunter positions: changed pixels are the goblin's own screen region
+(the intended recolour) plus the party rail's goblin portrait icon
+(intended) plus thin, scattered edge pixels elsewhere matching the
+established idle-animation-jitter pattern (jackal tail/ember pulse, frog
+sway) every prior pass in this file has already documented, not a shape or
+position change. `ALL TESTS PASSED` (`run_tests.gd`).
+
+**Score: Colour & read 8 → 9.** Pass 4 held this line at 8 specifically
+because the tank crowded the body with "less headroom than the Frog's own"
+at the 34px scale — that headroom is now measured, not assumed, to be
+closed: value matches the Frog's own reading and saturation is much closer.
+Not held at 8 any longer, but not a 10 either — the underlying palette is
+still a hunter-specific compromise (the tank boost is a targeted patch on
+top of the base texture, not a from-scratch recolour). **Total: 39 → 40/50**
+— 2 points under the 42 hunter stop line.
+
+### Where it stands
+
+**40/50.** Lines: Silhouette 8, Proportion 8, Build hygiene 7, Colour &
+read 9, Style consistency 8. No single line is far behind the others now;
+Build hygiene (7, real tri-budget overage, same accepted class as `frog_ai`)
+and Silhouette/Proportion/Style (8 each, no fresh defect found this pass)
+are the remaining candidates for whoever picks this up next — a fresh
+six-view look, not a further colour push, is probably the next useful
+move.

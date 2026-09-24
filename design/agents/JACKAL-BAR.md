@@ -62,9 +62,14 @@ reading the fight at a glance, at play size, in motion.
       moved to the Meshy ones (`portraits.py`'s own `AI_ART` table never
       got the hunters added); fixed 2026-09-23, which also closed the last
       open Colour & read question for both — `frog_ai` **42/50, at the
-      stop line**; `goblin_mech_ai` **39/50**, the tank-vs-body contrast at
-      34px is the concrete remaining gap. `design/progress/frog_ai.md` pass
-      3, `design/progress/goblin_mech_ai.md` pass 4.
+      stop line**; `goblin_mech_ai` **40/50** (was 39), after fixing the
+      tank-vs-body contrast at 34px named as the concrete gap — which also
+      surfaced and fixed a real bug: the glb's own embedded texture had
+      never received the earlier colour-boost pass, so every portrait
+      render (party rail, character card, campfire) had shown a dimmer
+      goblin than the fight itself for two passes running.
+      `design/progress/frog_ai.md` pass 3,
+      `design/progress/goblin_mech_ai.md` pass 5.
 
 ### The arena
 - [x] **It frames the beast** rather than competing with it. Meshy-generated
