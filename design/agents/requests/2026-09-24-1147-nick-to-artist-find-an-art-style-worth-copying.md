@@ -1,4 +1,5 @@
 ---
+
 tags:
   - request
 from: nick
@@ -8,7 +9,10 @@ priority: high
 beast: cinder_jackal
 created: 2026-09-24T11:47
 taken_by:
+issue: 8
 ---
+
+
 
 # Research art styles and bring me ones we could actually use
 

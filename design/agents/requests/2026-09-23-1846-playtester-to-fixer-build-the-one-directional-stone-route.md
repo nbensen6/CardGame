@@ -9,6 +9,7 @@ created: 2026-09-23T18:46
 taken_by: fixer
 ask:
 waiting: false
+issue: 4
 ---
 
 # Build the one-directional stone route: fix the raycast, not just the sigil

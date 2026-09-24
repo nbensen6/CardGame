@@ -7,6 +7,7 @@ status: taken
 priority: high
 created: 2026-09-23T14:23
 taken_by: fixer
+issue: 3
 ---
 
 # Stones, camera and hunter spacing at the Cinder Jackal

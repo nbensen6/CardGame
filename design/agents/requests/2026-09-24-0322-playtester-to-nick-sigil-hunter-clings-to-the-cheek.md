@@ -10,6 +10,7 @@ created: 2026-09-24T03:22
 taken_by:
 ask: The route fix moved the Cinder Jackal's sigil off the snout tip onto the cheek, and up close the climbing hunter now reads as pasted flat against the face rather than standing on it — is that OK, or should the sigil be hunted further back on the skull?
 waiting: false
+issue: 5
 ---
 
 # At the sigil, the hunter reads as glued to the jackal's cheek, not standing on it

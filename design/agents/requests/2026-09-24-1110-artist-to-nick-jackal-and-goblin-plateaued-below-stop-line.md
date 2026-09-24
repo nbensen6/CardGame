@@ -10,6 +10,7 @@ created: 2026-09-24T11:10
 taken_by: artist
 ask: Leave the jackal and Goblin Engineer at their current, already-good scores, or let me attempt a risky texture-remapping fix on them?
 waiting: false
+issue: 7
 ---
 
 # The jackal and the Goblin Engineer have both hit the same wall — need your call

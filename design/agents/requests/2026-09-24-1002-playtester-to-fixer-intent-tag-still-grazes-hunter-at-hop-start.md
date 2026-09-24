@@ -9,6 +9,7 @@ created: 2026-09-24T10:02
 taken_by:
 ask:
 waiting: false
+issue: 6
 ---
 
 # A small sliver of the intent-tag-vs-hunter bug survives your fix, at the very start of a ground-level hop
