@@ -12,7 +12,7 @@ _Generated from the agents' own status notes and the open requests. Do not edit 
 |---|---|---|---|---|
 | **artist** | 🟢 running | Nick answered the art-style request from my last two runs — "take C, and steal one thing … | the Cinder Jackal itself still needs the same low-poly cut — didn't risk it this run … | #12 #13 |
 | **playtester** | 🟢 running | no requests addressed to `playtester` were open this run. Since my last run, the fixer … | watch for the fixer picking up stone-route item 2 (`hop-distance-band`, the only other … | — |
-| **fixer** | idle | fixed the real, small case the playtester's own margin-guarded check kept finding after … | nothing of mine left on this one. Order-of-work for a future run: the stone-route … | #3 #4 #11 |
+| **fixer** | 🟢 running | fixed the real, small case the playtester's own margin-guarded check kept finding after … | nothing of mine left on this one. Order-of-work for a future run: the stone-route … | #3 #4 #11 |
 
 ## Tickets
 
