@@ -2,13 +2,112 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-23T20:11
-working_on: ran a mesh-topology gap check (new tools/blender/ai/mesh_gap_check.py) against goblin_mech_ai.glb now that the Blender network wall cleared -- 489 raw islands, zero with a real 3D gap from the rest of the body, closing pass 1/2's open Build hygiene question. Build hygiene 6->7, total 38->39/50, still under the 42 hunter stop line. Closed the blender-download-blocked request. ALL TESTS PASSED. Lease released.
+updated: 2026-09-23T21:12
+working_on: fixed portraits.py's AI_ART table -- it only ever had cinder_jackal, so the party-rail/campfire portraits for both hunters were still rendered from the OLD Python-primitive frog.glb/goblin_mech.glb even though the fight itself moved to frog_ai/goblin_mech_ai weeks ago. Added frog and goblin_mech, re-rendered both portraits, verified in the real party rail. This was also the outstanding 34px Colour & read check both hunter notes had named as open: frog_ai now measures clean (8->9, total 41->42/50, AT the hunter stop line); goblin_mech_ai measures confirmed-still-duller (stays 8, 39/50) -- named the concrete next fix (tank-vs-body contrast). ALL TESTS PASSED. Lease released.
 ---
 
 # artist
 
-## This run — 2026-09-23 20:11 ET
+## This run — 2026-09-23 21:12 ET
+
+- **Did:** the party rail's portraits for the Frog and the Goblin Engineer
+  were still the OLD Python-primitive models — even though `combat_3d.gd`
+  wired both hunters to their Meshy `_ai` rebuilds a while back,
+  `portraits.py` (the separate tool that renders the 34px party-rail/
+  campfire portrait) never got the same table update. A real fight
+  screenshot showed the mismatch directly: the icon in the corner didn't
+  match the hunter standing in the arena. Fixed the table, re-rendered both
+  portraits.
+- **Worked?** Yes — verified in the real party rail, before/after, same
+  camera and state (frame below). This also happened to be the exact 34px
+  Colour & read check both `frog_ai.md` and `goblin_mech_ai.md` had named
+  as still-open (couldn't be measured until the portrait actually came from
+  the right model): `frog_ai` measures clean and **crosses the 42 hunter
+  stop line (41→42/50)**; `goblin_mech_ai` measures confirmed-still-duller,
+  not worse, not better (stays 39/50) — named the concrete next fix (the
+  tank reads too close to the body at that size).
+- **Next:** `goblin_mech_ai`'s tank-vs-body contrast at 34px, or the
+  193-island Hygiene question both hunter notes still list.
+- **Need from you:** nothing.
+
+![[frames/artist/2026-09-23-hunter-portraits-34px-old-vs-new.png]]
+![[frames/artist/2026-09-23-hunter-portraits-party-rail-before-after.png]]
+
+## Now
+
+Checked for a fresh, unhandled answer under `## Nick's answer` on my own
+`to: nick` notes first, per `COMMON.md` 1b — none. Checked open `to: artist`
+requests — none this run. Worked the `JACKAL-BAR.md` queue: both hunter
+notes (`frog_ai.md` pass 2, `goblin_mech_ai.md` pass 2/3) named the same
+concrete open item — Colour & read "not verified at the 34px party-portrait
+scale — `portraits.py`'s `AI_ART` table is beast-only" — so this run closed
+that gap for both at once, one table edit.
+
+**Confirmed the bug first, in the real game, not just in the code.**
+Rendered `state=3d beast=cinder_jackal` and looked at the party rail next to
+the hunters actually standing in the arena: the rail's frog was the flat
+primitive green blob, the rail's goblin was the flat primitive green-and-
+grey figure — neither matched the mottled, painted `_ai` models visibly
+standing on the arena floor two inches away in the same screenshot.
+
+**The cause**, in `tools/blender/portraits.py`: `AI_ART = {"cinder_jackal":
+"_ai"}` — this table decides which `.glb` a portrait renders from, and it
+only ever had the beast. `combat_3d.gd`'s own `HUNTER_AI_ART = {"frog":
+"_ai", "goblin_mech": "_ai"}` has pointed the fight itself at the rebuilt
+hunter models for a while; nothing kept the portrait tool's table in sync
+with it.
+
+**Fix:** merged the hunter entries into `portraits.py`'s own `AI_ART`
+(`{"cinder_jackal": "_ai", "frog": "_ai", "goblin_mech": "_ai"}`),
+`painted=True` for both — an AI model's texture already carries painted
+light/shade, the same reason `look()` already drops the specular highlight
+for `painted=True` models. Re-ran `portraits.py` for just these two; the
+existing `FOCUS`/`FOCUS_XY` entries framed the `_ai` mesh correctly with no
+retuning needed. Copied the two output PNGs over
+`game/assets/portraits/{frog,goblin_mech}.png` — same 512×512 RGBA shape,
+so nothing downstream (`characters.json`'s `portrait` paths, the party
+rail's `_portrait_of(p, 34)`, the campfire hunter row) needed a code change.
+
+**Verified in the real party rail**, same camera/state, before vs after:
+
+![[frames/artist/2026-09-23-hunter-portraits-party-rail-before-after.png]]
+
+**This closes the 34px Colour & read verification both hunter notes had
+open**, now actually measured instead of assumed, because the portrait the
+rail draws finally IS the shown model. Downsampled each render to the real
+34px and measured mean saturation/value over the non-transparent pixels,
+composited on the rail's own dark-brown background to judge legibility the
+way the eye actually sees it:
+
+    frog_ai         sat 0.69  val 0.44  — clean: eye/body/belly separate
+    goblin_mech_ai  sat 0.27  val 0.40  — reads goblin-shaped, but the
+                                          cool body and navy tank crowd
+                                          together with little contrast
+
+![[frames/artist/2026-09-23-hunter-portraits-34px-old-vs-new.png]]
+
+`frog_ai`'s own Colour & read line was held at 8 explicitly pending this
+check — now clean, bumped to 9, **total 41→42/50, at the hunter stop
+line** (`design/progress/frog_ai.md` pass 3). `goblin_mech_ai`'s own line
+was held at 8 the same way — verified, and the verification confirms pass
+2's original "measurably duller than the Frog's own" finding rather than
+improving on it, so it stays 8, **total unchanged, 39/50**
+(`design/progress/goblin_mech_ai.md` pass 4). No texture touched this
+pass — the scope was the tooling gap, not a colour fix; the concrete next
+move for `goblin_mech_ai` is named with real numbers now: raise the tank's
+value/saturation relative to the body, checked against the rail's own
+`(58,42,30)` background specifically.
+
+Updated `JACKAL-BAR.md`'s hunter-fidelity bullet with both new numbers and
+this pass's write-up links.
+
+`ALL TESTS PASSED` (`run_tests.gd`; no game code changed, a Blender tool
+table and two portrait PNGs only). No playtest re-run — nothing moves or
+renders differently in the 3D scene itself, only a 2D portrait texture the
+party rail and campfire already knew how to draw (same reasoning past
+texture-only passes here used).
+
+## Old: 2026-09-23 20:11 ET, mesh-topology gap check
 
 - **Did:** Blender's download wall (blocked 3 runs running, request filed
   `to: nick`) cleared on its own this run — no answer needed, the network
@@ -553,6 +652,18 @@ only touched the visual dressing) is the obvious next real-geometry pass.
 
 ## Log
 
+- 2026-09-23 21:12 EDT — fixed `portraits.py`'s `AI_ART` table (beast-only,
+  `{"cinder_jackal": "_ai"}`) to also cover `frog`/`goblin_mech`, so the
+  party-rail/campfire portraits finally render from the same `_ai` models
+  the fight itself has used for a while, not the old Python-primitives.
+  Verified in the real party rail before/after. This closed the 34px
+  Colour & read check both hunter notes had left open: `frog_ai` 8→9,
+  total 41→42/50 — **at the hunter stop line**
+  (`design/progress/frog_ai.md` pass 3); `goblin_mech_ai` stays 8, 39/50,
+  confirmed still duller than the Frog's own at that scale, next move named
+  with real numbers (`design/progress/goblin_mech_ai.md` pass 4). Updated
+  `JACKAL-BAR.md`. `ALL TESTS PASSED`; no playtest re-run (texture/tooling
+  only, nothing moves differently). Lease released.
 - 2026-09-23 20:11 EDT — Blender's download wall cleared on its own
   (`download.blender.org` now `200`); closed the `to: nick` request that
   flagged it. Wrote `tools/blender/ai/mesh_gap_check.py` (a measured 3D

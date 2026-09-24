@@ -56,9 +56,15 @@ reading the fight at a glance, at play size, in motion.
       size (a near-solid black blob) until the shared ink-outline width was
       given a per-model scale, 2026-09-23 — verified in the real fight and
       the campfire row. `design/progress/goblin_mech_ai.md` ("Shipped and
-      scored"). Frog was already there. Fidelity is not fully matched yet
-      (38/50, under the hunter stop line, after a Colour & read touch-up
-      2026-09-23) — see the line above.
+      scored"). Frog was already there. Fidelity is not fully matched yet —
+      see the line above. The party rail's portraits were still the OLD
+      Python-primitive models for both hunters even after the fight itself
+      moved to the Meshy ones (`portraits.py`'s own `AI_ART` table never
+      got the hunters added); fixed 2026-09-23, which also closed the last
+      open Colour & read question for both — `frog_ai` **42/50, at the
+      stop line**; `goblin_mech_ai` **39/50**, the tank-vs-body contrast at
+      34px is the concrete remaining gap. `design/progress/frog_ai.md` pass
+      3, `design/progress/goblin_mech_ai.md` pass 4.
 
 ### The arena
 - [x] **It frames the beast** rather than competing with it. Meshy-generated

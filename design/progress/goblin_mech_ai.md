@@ -437,7 +437,7 @@ measurement script only, added to the tree for the next hunter that needs
 the same check; no playtest re-run needed, nothing moves or renders
 differently).
 
-### Where it stands
+### Where it stands (superseded by pass 4 below)
 
 **39/50 — under the 42 hunter stop line, 3 points off.** Lines, current:
 Silhouette 8, Proportion 8, Build hygiene 7, Colour & read 8, Style
@@ -449,3 +449,73 @@ concrete of what's left: it is a real, named gap rather than a "go find
 something" search, and it is the next candidate for whoever picks this up,
 Meshy budget and Blender both being available again this run for the first
 time since pass 1.
+
+## Pass 4 — Colour & read, artist, 2026-09-23T21:12 EDT
+
+Runs the check pass 2 and pass 3 both left named but unattempted:
+`portraits.py`'s `AI_ART` table (`{"cinder_jackal": "_ai"}`) only pointed
+the portrait renderer at a rebuilt model for the beast — `combat_3d.gd`'s
+own `HUNTER_AI_ART` has named `goblin_mech: "_ai"` since the hunter-
+display-path fix, so the fight itself has shown this model for a while, but
+`game/assets/portraits/goblin_mech.png` (the party rail, character card and
+campfire) was still rendered from the old Python-primitive `goblin_mech.glb`.
+A real fight screenshot shows the mismatch directly: the party rail's icon
+and the hunter standing on the arena floor in the same frame did not agree.
+
+**Fix:** `AI_ART = {"cinder_jackal": "_ai", "frog": "_ai", "goblin_mech":
+"_ai"}` (`frog_ai.md` pass 3 is the same fix, same commit — one table
+change closes the gap for both hunters at once), `painted=True` for both.
+`FOCUS`/`FOCUS_XY`'s existing `goblin_mech` entry needed no retuning — it
+already framed the `_ai` mesh correctly.
+
+![[frames/artist/2026-09-23-hunter-portraits-34px-old-vs-new.png]]
+![[frames/artist/2026-09-23-hunter-portraits-party-rail-before-after.png]]
+
+**This is the 34px verification pass 2 named and never ran — now run, and
+the answer is not clean.** Measured on the real 34px-downsampled render
+(mean saturation/value over non-transparent pixels), against `frog_ai`'s
+own portrait rendered the same way this same pass:
+
+    frog_ai        sat 0.69  val 0.44
+    goblin_mech_ai  sat 0.27  val 0.40
+
+Saturation is well under half the Frog's own — the same "measurably
+duller" finding pass 2 made from the 512px render and the shader's own HSV
+numbers, now confirmed at the actual UI scale rather than inferred from a
+bigger picture. Looked at directly (frame above, composited on the party
+rail's own dark-brown background, not a light preview canvas): the goblin
+reads as goblin-shaped but the cool grey-green body and the navy tank
+crowd together with too little contrast between them, and the tank reads
+closer to the dark backdrop than the Frog's own parts ever get to its
+backdrop. Not dark-ON-dark (nothing drops to nearly-black against
+nearly-black) so this stops short of the rubric's hard failure line, but it
+does not clear "legible... not just at 512" the way `frog_ai` now does.
+
+**Score: Colour & read stays 8.** Pass 2 held this line at 8 *pending*
+34px verification; verification is done now, and it confirms pass 2's own
+reading rather than improving on it — 8 was the right number then and is
+still the right number now, just no longer a guess. Not dropped lower:
+the parts ARE distinguishable, goblin-green from tank-navy from
+strap-brown, just with less headroom than the Frog. **Total stays 39/50.**
+
+**No texture touched this pass** — scope was the tooling gap
+(`portraits.py` showing the wrong model), which is now closed and provably
+correct for both hunters. The concrete next Colour & read move, now named
+with real numbers instead of a hunch: raise the tank's value/saturation
+relative to the body so the two masses separate at 34px the way the Frog's
+body/belly split already does, and check contrast against the party rail's
+actual `(58,42,30)` background specifically, not just against white.
+
+`ALL TESTS PASSED` (`run_tests.gd`; no game code touched, a Blender tool
+table and two portrait PNGs — this asset's and `frog_ai`'s — changed). No
+playtest re-run: nothing moves or renders differently in the 3D scene,
+only the 2D portrait texture the party rail and campfire already knew how
+to draw.
+
+### Where it stands
+
+**39/50 — under the 42 hunter stop line, 3 points off.** Lines: Silhouette
+8, Proportion 8, Build hygiene 7, Colour & read 8 (now verified, not
+assumed), Style consistency 8. The next concrete move is named above: a
+texture contrast/saturation pass separating the tank from the body,
+targeted at the party rail's own background rather than a neutral one.

@@ -95,9 +95,14 @@ FOCUS_XY = {
 EYE = Vector((0.62, -1.0, 0.30))
 SIZE = 512
 
-## Beasts rebuilt from AI-generated models (design/guide/ai-beast-recipe.md) render
-## from <name><suffix>.glb — the same table as combat_3d.AI_ART.
-AI_ART = {"cinder_jackal": "_ai"}
+## Characters rebuilt from AI-generated models (design/guide/ai-beast-recipe.md)
+## render from <name><suffix>.glb instead of the plain <name>.glb — merges
+## combat_3d.AI_ART (beasts) and combat_3d.HUNTER_AI_ART (hunters): both pick
+## the rigged, painted model over the Python-primitive one the same way, and a
+## portrait should always match what the fight itself shows for that
+## character. Left as one table here (portraits has no beast/hunter split of
+## its own) rather than two, since every reader below treats them alike.
+AI_ART = {"cinder_jackal": "_ai", "frog": "_ai", "goblin_mech": "_ai"}
 
 
 def look(model_path, out_path, at, span, xy=None, painted=False):

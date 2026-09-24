@@ -294,5 +294,59 @@ regression.
 3. **The Goblin Engineer's own equivalent** — no Meshy build attempted yet;
    its anatomy (arms, no quadruped gait) doesn't fit `ai_beast.py`'s rig
    math even in spirit, a from-scratch job.
-4. **Party-portrait/34px treatment** — `portraits.py`'s `AI_ART` table is
-   beast-only; extending it to `frog_ai` is a separate, later pass.
+4. ~~**Party-portrait/34px treatment**~~ — closed by pass 3 below.
+
+## Pass 3 — Colour & read, artist, 2026-09-23T21:12 EDT
+
+Closes item 4 above. `portraits.py`'s `AI_ART` table (`{"cinder_jackal":
+"_ai"}`) only ever pointed the portrait renderer at the beast's rebuilt
+model — `combat_3d.gd`'s own `HUNTER_AI_ART` table has named `frog: "_ai"`
+since the hunter-display-path fix, but nothing told `portraits.py` the same
+thing, so `game/assets/portraits/frog.png` (shown in the party rail, the
+character card and campfire) was still rendered from the old Python-
+primitive `frog.glb`, not the Meshy model actually standing in the arena. A
+real fight screenshot shows it: the party rail's frog icon and the frog
+hunting the jackal in the same frame did not match.
+
+**Fix:** `AI_ART = {"cinder_jackal": "_ai", "frog": "_ai", "goblin_mech":
+"_ai"}`, `painted=` now true for both hunters too (an AI model's texture
+already carries painted light/shade the same way the jackal's does — same
+reason `look()` already drops specular for `painted=True`). Re-rendered
+both portraits with the existing `FOCUS`/`FOCUS_XY` entries unchanged —
+they already framed the `_ai` mesh correctly, nothing to retune.
+
+![[frames/artist/2026-09-23-hunter-portraits-34px-old-vs-new.png]]
+![[frames/artist/2026-09-23-hunter-portraits-party-rail-before-after.png]]
+
+**This is also the 34px verification pass 2's Colour & read line named as
+outstanding**, now actually measurable instead of assumed, because the
+portrait the party rail draws finally IS this model. Measured on the real
+34px-downsampled render (mean saturation/value over non-transparent
+pixels): **sat 0.69, val 0.44** — separates head/back-marking/belly/eye
+cleanly at the size the rubric grades (`asset-loop.md`: "Legible at 34px in
+the party panel, not just at 512? Nothing dark-on-dark."), confirmed by eye
+against the party rail's own dark-brown background, not just the number
+(frame above).
+
+**Score: Colour & read 8 → 9.** The only reason pass 2 held this line at 8
+was "not verified at the 34px party-portrait scale" — that caveat is now
+answered, and answered clean, not just closed. Every other line is
+unchanged (Silhouette 9, Proportion 8, Build hygiene 7, Style 9): this pass
+touched no geometry, texture or shader, only which model the portrait
+renderer reads. **Total: 41 → 42/50 — at the 42 hunter stop line.**
+`frog_ai` on its own now clears the bar `JACKAL-BAR.md` sets for a hunter;
+`goblin_mech_ai` (39/50, see its own note) is what still holds the shared
+"Frog and Goblin match the jackal's fidelity" line unticked.
+
+`ALL TESTS PASSED` (`run_tests.gd`; no game code touched, a Blender tool
+table and two portrait PNGs only). No playtest re-run: nothing moves or
+renders differently in the 3D scene itself, only the 2D portrait texture
+the party rail and campfire already knew how to draw.
+
+### Where it stands
+
+**42/50 — at the hunter stop line.** Lines: Silhouette 9, Proportion 8,
+Build hygiene 7, Colour & read 9, Style consistency 9. What's left, in
+order: the 193-island Hygiene question (item 1 above, unchanged this pass)
+and Proportion's missing side-by-side arena scale check (pass 2's own
+note) — neither blocks the stop line, both are real remaining unknowns.
