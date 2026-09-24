@@ -40,6 +40,7 @@ Desktop.ini
 tools/cardlab/cardlab.html
 
 tools/blender/__pycache__/
+tools/blender/ai/__pycache__/
 
 # Scratch copies for looking at models in Blender (toolslenderdit.cmd blends).
 # Regenerable in seconds, binary, and NOT the source â€” the scripts are.
@@ -55,7 +56,7 @@ design/renders/*_top.png
 design/renders/*_form.png
 design/renders/*_wire.png
 
-# Lane run logs — overwritten every run, never worth a diff
+# Lane run logs ï¿½ overwritten every run, never worth a diff
 tools/fixer/last-run.log
 tools/builder/last-run.log
 tools/builder/loop.flag
