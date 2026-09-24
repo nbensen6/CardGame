@@ -158,8 +158,15 @@ def issue_body(path, body, fm):
     in_vault = rel.replace("design/", "", 1)
     if in_vault.endswith(".md"):
         in_vault = in_vault[:-3]
-    head = "**[Open this note in Obsidian](obsidian://open?vault=design&file=%s)**" % quote(in_vault)
-    head += " · [read it on GitHub](https://github.com/%s/blob/main/%s)\n\n" % (REPO, rel)
+    # GitHub's markdown sanitiser strips every link whose scheme is not http,
+    # https or mailto -- verified 2026-09-24 by reading the rendered body_html
+    # of issue #8: the https link survived, the obsidian:// one did not, which
+    # is why it showed up as plain text. So the Obsidian address is offered as
+    # something to copy into the address bar, where it does work, rather than
+    # as a link that silently is not one.
+    head = "[Read the note on GitHub](https://github.com/%s/blob/main/%s)" % (REPO, rel)
+    head += " · open it in Obsidian (copy into your address bar):\n\n"
+    head += "    obsidian://open?vault=design&file=%s\n\n" % quote(in_vault)
     head += "_Mirror of `%s`. The note is the source of truth; " % rel
     head += "comment here and the sync copies it back into the note for the agents._\n\n"
     if "![[" in body:
@@ -179,9 +186,15 @@ def fight_link(body, fm):
     beast = fm.get("beast", "").strip()
     if not beast:
         return body
-    return body.replace(
-        "obsidian://shell-commands/?vault=design&execute=fight-request-beast",
-        "obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=" + quote(beast))
+    uri = ("obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast="
+           + quote(beast))
+    # Whole line, not just the URI: GitHub would render the markdown link as
+    # bare text (it strips non-http schemes), so replace it with an instruction
+    # that tells the truth about what to do with the address.
+    return re.sub(
+        r"^.*\(obsidian://shell-commands/\?vault=design&execute=fight-request-beast\).*$",
+        "To play this fight, copy into your address bar:\n\n    " + uri,
+        body, count=1, flags=re.M)
 
 
 # --------------------------------------------------------------------------
@@ -309,15 +322,22 @@ def selftest():
 
     # the mirrored fight link must name its beast, or it is dead from a browser
     link = "obsidian://shell-commands/?vault=design&execute=fight-request-beast"
-    out = fight_link("see [Fight](%s) here" % link, {"beast": "cinder_jackal"})
+    out = fight_link("before\n- [Fight](%s) - blurb\nafter" % link, {"beast": "cinder_jackal"})
     assert "execute=fight-uri-beast&_beast=cinder_jackal" in out, out
     assert "fight-request-beast" not in out
+    # the whole line goes, not just the URI -- a half-replaced markdown link
+    # renders as broken text on GitHub
+    assert "[Fight](" not in out, out
+    assert "before" in out and "after" in out
     # a note with no beast is left exactly as written, not half-rewritten
     assert fight_link("x %s y" % link, {}) == "x %s y" % link
 
     b = issue_body(os.path.join("design", "agents", "requests", "a.md"), "# T", {})
     assert "obsidian://open?vault=design&file=agents/requests/a" in b, b
     assert "/blob/main/design/agents/requests/a.md" in b
+    # GitHub strips non-http schemes, so the obsidian address must NOT be a
+    # markdown link -- it is offered as something to copy instead
+    assert "](obsidian://" not in b, b
     print("BOARD SYNC SELFTEST OK")
 
 
