@@ -2,11 +2,80 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-24T02:54
-working_on: Fixed the boss-damage-popup-offscreen-at-sigil request (a fixed world-space rise vs a variable camera zoom, new popup_rise_scale in combat_3d.gd, 3 new tests). Also spent part of the run confirming the stone-route request's last two short hops are a real geometric ceiling, not a retry-budget bug -- left that one taken, not done, with a fourth dead end ruled out and written down.
+updated: 2026-09-24T05:34
+working_on: Fixed the intent-tag-hides-behind-party-panel request -- the tag's Y clamp never accounted for the top-left party panel; new Combat3D.intent_tag_pos clamps clear of it, 3 new tests, 0 intent-hidden fails on a full live playtest.
 ---
 
 # fixer
+
+## This run — 2026-09-24 05:34 EDT
+
+- **Did:** fixed the intent-tag-hides-behind-party-panel request the
+  playtester filed — the boss's telegraph ("† Attack 7") could render
+  partially behind the top-left party panel.
+- **Worked?** Yes. Reproduced the playtester's exact numbers first, fixed
+  the root cause they'd already diagnosed (the tag's clamp never accounted
+  for the party panel), then ran the fight all the way to a real ending —
+  zero `intent-hidden` failures anywhere in the run, including their own
+  two named repro points.
+- **Next:** nothing of mine left on this one. The still-open stone-route
+  request (last two short hops, a real geometric ceiling per the last two
+  runs) is the only other `taken` item sitting unfinished.
+- **Need from you:** nothing.
+
+![[frames/fixer/2026-09-24-intent-tag-clear-of-party-step000.png]]
+
+## Now
+
+Open `to: fixer` request
+`2026-09-23-2141-playtester-to-fixer-intent-tag-hides-behind-party-panel.md`
+(the only genuinely `open` `to: fixer` request this run — the two `taken`
+stone/camera items are a previous run's own unfinished work with two
+documented dead ends already on record; the last run explicitly deferred
+picking that back up rather than risk a third partial attempt, so this was
+the real front of the queue).
+
+**Root cause, confirmed by reading before touching anything.**
+`_position_intent_tag` (`combat_3d.gd`) clamps the tag's Y away from the
+boss HP bar (`lo_y = 70.0`) and away from the hand (`hi_y`), but never
+clamped X (or Y) away from the top-left party panel — and `lo_y=70` already
+sits inside the panel's own y-range (`Party`'s own offsets in
+`combat_3d.tscn`: `x:[16,320] y:[12,160]`). The only thing that ever kept
+the tag clear was the beast's crown happening to project past x≈320, which
+the playtester's own step 0 and step 13 repros show isn't reliable.
+
+**Reproduced their exact numbers first.** Fed their reported tag rect
+(`[257.5,70]..[417.5,104]`) and party rect (`[16,12]..[320,160]`) through
+the OLD clamp logic and got the identical overlapping rect back before
+writing a single line of the fix.
+
+**Fix.** Pulled the rule into a pure static, `Combat3D.intent_tag_pos(p,
+sz, vp, party_rect)` — provable with no camera or scene tree. When the
+tag's X-range would overlap the party panel's real global rect, `lo_y` is
+raised to clear the panel's bottom (+10px) instead of the HP bar;
+otherwise nothing changes. `_position_intent_tag` now just reads
+`_party.get_global_rect()` (or an empty `Rect2()` if it's missing/hidden)
+and calls the static.
+
+**Proof.**
+- Three new tests in `run_tests.gd`, built on the playtester's own step-0
+  numbers: the fix clears the panel via a Y move only (X untouched, still
+  `257.5`); the SAME inputs with no party-panel awareness reproduce the
+  exact reported overlap (proves the fixture really exercises the bug);
+  a crown nowhere near the panel keeps the ordinary clamp byte-for-byte
+  unchanged. `ALL TESTS PASSED`.
+- Fresh `--import`, full `mode=play beast=cinder_jackal steps=40` under
+  `xvfb-run`: the fight ran to a real ending at step 30 (Pounce landed).
+  Zero `intent-hidden` failures across the whole run, including the
+  playtester's own named step 0 and step 13 states. The only failures (62
+  hits) are the already-open, unrelated `hop-distance-band` check from the
+  still-open stone-route request.
+- Rendered the real fight at step 0 and step 13 on the fixed tip and read
+  both at 1:1: "† Attack 7" (step 0) and "Defend 5" (step 13) both sit
+  fully clear of the party rows now. Frames in the request's own
+  `## Result` and above.
+
+Commit: `183a8a6` (`game/views/combat_3d.gd`, `game/tools/run_tests.gd`).
 
 ## This run — 2026-09-24 02:54 EDT
 
@@ -1238,7 +1307,15 @@ further either.
 
 ## Log
 
-- 2026-09-24 02:54 EDT (latest) — boss-damage-popup-offscreen-at-sigil:
+- 2026-09-24 05:34 EDT (latest) — intent-tag-hides-behind-party-panel:
+  fixed. `_position_intent_tag`'s Y clamp (clear of the HP bar, clear of
+  the hand) never accounted for the top-left party panel, and the HP-bar
+  clamp itself sits inside the panel's own y-range. New pure static
+  `Combat3D.intent_tag_pos()` raises the Y floor to clear the panel
+  whenever the tag's X-range would overlap it. Reproduced the playtester's
+  exact numbers first; 3 new tests pinned to those numbers; full live
+  playtest to a real fight ending, 0 `intent-hidden` fails.
+- 2026-09-24 02:54 EDT — boss-damage-popup-offscreen-at-sigil:
   fixed. A boss hit's damage-popup rise is a fixed world distance; the
   sigil's own tight camera framing turned it into enough screen pixels to
   poke a few px past the top edge. New `popup_rise_scale()` (combat_3d.gd)

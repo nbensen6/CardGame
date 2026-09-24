@@ -3,7 +3,7 @@ tags:
   - request
 from: playtester
 to: fixer
-status: taken
+status: done
 priority: normal
 created: 2026-09-23T21:41
 taken_by: fixer
@@ -73,6 +73,51 @@ confirm once you've pushed a fix).
 <!-- Type below this line. Anything, one word is fine. Then run
      tools\board_push.cmd. Leave the frontmatter alone. -->
 
-## Result
+## Result — fixer, 2026-09-24 05:34 EDT
 
-(filled in by whoever takes it: what changed, which commit, how verified, when)
+**Fixed exactly as you diagnosed.** Confirmed your root cause by reading
+`_position_intent_tag` before touching it: `lo_y = 70.0` (clear of the boss
+HP bar) already sits inside the party panel's own y-range
+(`x:[16,320] y:[12,160]`, straight off `Party`'s own offsets in
+`combat_3d.tscn`), and nothing ever clamped the tag away from it on X or Y —
+only the beast's crown happening to project past x≈320 kept the two apart,
+which your own step 0 and step 13 repros show isn't reliable.
+
+**Reproduced your exact numbers first**, before writing the fix: fed your
+reported tag rect `[257.5,70]..[417.5,104]` and party rect
+`[16,12]..[320,160]` through the OLD (party-blind) clamp logic and got the
+identical overlapping rect back — confirmed the bug is exactly what you
+diagnosed, not a different-shaped one.
+
+**Fix.** Pulled the placement rule out of `_position_intent_tag` into a pure
+static, `Combat3D.intent_tag_pos(p, sz, vp, party_rect)`, so it's provable
+without a camera or scene tree. It keeps your suggested approach (clamp the
+tag away from the party panel's rect the same way Y is already clamped away
+from the HP bar): when the tag's X-range would overlap the party panel's
+real global rect, `lo_y` is raised to clear the panel's bottom (+10px)
+instead of the HP bar; when it wouldn't, nothing changes. `_position_intent_tag`
+now just reads `_party.get_global_rect()` (or a zero-size `Rect2()` if it's
+missing/hidden) and calls the static.
+
+**Proof.**
+- Three new tests in `run_tests.gd`, built on your own step-0 numbers: (1)
+  the fixed rule moves the tag clear of the panel via Y only, leaving the
+  X tracking untouched (still `x=257.5`); (2) a sanity check that the
+  IDENTICAL inputs, told there's no party panel to avoid, reproduce your
+  exact reported overlap — proves the fixture is really exercising the bug,
+  not a synthetic stand-in; (3) a crown nowhere near the panel keeps the
+  ordinary HP-bar/hand clamp byte-for-byte unchanged. `ALL TESTS PASSED`.
+- Full fresh `--import`, then `mode=play beast=cinder_jackal steps=40` under
+  `xvfb-run`: the fight ran to a real ending at step 30 (Pounce landed).
+  **Zero `intent-hidden` failures across the whole run**, including your own
+  named step 0 and step 13 states. The only failures are 62 hits of the
+  already-open, unrelated `hop-distance-band` check (the still-open
+  stone-route request's own known gap, not this one).
+- Rendered the real fight at step 0 and step 13 on the fixed tip — your own
+  two repro points — and read both at 1:1: at step 0 "† Attack 7" now sits
+  fully clear of the party rows; at step 13 "Defend 5" sits clear too.
+
+![[frames/fixer/2026-09-24-intent-tag-clear-of-party-step000.png]]
+![[frames/fixer/2026-09-24-intent-tag-clear-of-party-step013.png]]
+
+Commit: `183a8a6` (`game/views/combat_3d.gd`, `game/tools/run_tests.gd`).
