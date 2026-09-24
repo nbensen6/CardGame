@@ -66,3 +66,15 @@ the risky redo as its own dedicated pass.
 ## Nick's answer
 
 ## Result
+
+## Nick's answer — 2026-09-24 11:47 EDT
+
+**Yes — take the texture remap. On the jackal, the Goblin Engineer AND the
+Frog.** All three, not just the two you asked about.
+
+- Risky is fine. A plateau you can see is worse than an attempt that fails.
+- Keep the current models so a bad result can be rolled back in one commit,
+  and show me before/after at real fight size, not in the scoring camera.
+- If one of the three comes out worse, say so and revert that one — a partial
+  win is a win, do not force all three to land together.
+

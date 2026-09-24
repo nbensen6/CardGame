@@ -90,3 +90,26 @@ done.
      tools\board_push.cmd. Leave the frontmatter alone. -->
 
 ## Result
+
+## Nick's answer — 2026-09-24 11:47 EDT
+
+**The sigil stays on the head. Do not hunt it further back on the skull.**
+
+You have diagnosed the wrong half. The sigil is where it should be — the
+weak point belongs on the head, that is the whole read of the fight. What is
+wrong is **where the stones put the hunter**: they leave him beside the face,
+so he clings to the cheek instead of standing in front of it.
+
+So this folds into the stone-route work already approved
+(`2026-09-23-1434-nick-to-playtester-how-the-stones-should-line-up.md`):
+
+- **The stones go IN FRONT of the jackal**, as we agreed — the route climbs up
+  and toward the head from the front, not up its side.
+- The last hold should leave a hunter **facing the sigil with space between
+  him and the skin**, standing on a shelf, not pressed flat against a cheek.
+- If a hold cannot be reached from in front, that is the hold to move — not
+  the sigil.
+
+Fold this into the same build rather than filing it separately. Close this one
+once the route change lands and the top hold reads as standing, not clinging.
+
