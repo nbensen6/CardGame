@@ -2,13 +2,79 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-24T01:13
-working_on: Full three-mode baseline (clean, matches last run -- same two known open bugs, no new failures, route-reversal still 0) plus a new check, hop-distance-band, that live-confirms the fixer's own partial fix on the stone-route request's item 2 (the two hops nearest the sigil are still short) -- verified against the live game and pushed.
+updated: 2026-09-24T03:35
+working_on: Full three-mode baseline clean (same two known bugs, no new failures). Extended hunter-off-marker to actually check the sigil position -- it used to skip it on a stale assumption. Proved both directions (injected offset caught, real code stays clean), and the clean pass exposed why the Frog reads as glued to the jackal's cheek at the sigil (correct by the placement math, just nowhere good to stand) -- filed to Nick as a decision, since the fixer already diagnosed the same trade-off but it never reached him as a to:nick request.
 ---
 
 # playtester
 
-## This run — 2026-09-24 01:13 EDT
+## This run — 2026-09-24 03:35 EDT
+
+- **Did:** no requests addressed to `playtester` were open. Ran the full
+  three-mode baseline first, then extended `hunter-off-marker`
+  (`playtest.gd` check 8) to stop skipping the sigil (`t >= 0.92`) — it
+  used to exempt that position on the belief `_place_hunters` used a
+  different branch there, which is only true for a beast with NO authored
+  climb points. The Cinder Jackal has climb points, so its sigil was going
+  through the exact same `_stand_on_model`/`foothold_anchor` path as every
+  other rung, just never checked.
+- **Worked?** Yes, both halves, and the second one found something real.
+  Baseline: 0 new failures — the same two already-filed, already-open bugs
+  as every recent run (`hop-distance-band`, `intent-hidden`), nothing else,
+  across all three modes. New check: proved both directions before
+  trusting it — a temporary, reverted +3m offset injected at the sigil
+  made it fire correctly (4/4 real occurrences, clean `git diff` after
+  reverting), and the real, unmodified code stays clean on a full 80-step
+  run. Clean is itself the finding: it means the Frog's position at the
+  sigil is *correct* by the game's own placement math — so the odd thing I
+  saw looking at the actual frames (the Frog pressed flat against the
+  jackal's cheek, right beside the eye, nowhere near a stone the way every
+  other hold has one) isn't a logic bug to fix, it's a placement/read
+  question. Turns out the fixer already found and flagged this exact
+  trade-off in their 2026-09-23 20:45 ET write-up (forcing the climb route
+  to never reverse pushed the sigil off the snout tip onto the cheek) and
+  asked for a decision on it — but that ask was buried in a `## Result` on
+  a `to: fixer` request, so it never reached Nick. Filed it properly this
+  run: `to: nick`,
+  `2026-09-24-0322-playtester-to-nick-sigil-hunter-clings-to-the-cheek.md`,
+  with fresh frames from this run's own baseline (not the fixer's Blender
+  renders, which don't show the in-game camera at all).
+- **Worth knowing:** while this run was in progress, the fixer landed a fix
+  for the other open bug (`boss-damage-popup-offscreen-at-sigil`, commit
+  `56b97fc`) — their own request write-up says the original repro no
+  longer reproduces on the current tip either way (most likely because the
+  earlier stone-route fix already moved the sigil off the nose), and they
+  fixed the underlying scale-vs-camera-zoom gap anyway rather than leave it
+  to depend on geometry nobody meant to fix it. Consistent with what I
+  saw: 0 `damage-popup-offscreen` fails in any of this run's own baselines,
+  before or after that commit landed.
+- **Next:** watch for Nick's answer on the sigil-cheek request. If he says
+  fix it, that's the fixer's own already-named approach (hunt the sigil
+  further back on the skull instead of straight down from above). Also
+  watch for the stone-route request's item 2 (the two short hops nearest
+  the sigil) — the fixer ruled out a 4th approach this run (raising the
+  raycast retry budget) and called it a genuine geometric ceiling, not a
+  retry bug; next real option is re-authoring the Python reference model.
+  `intent-tag-hides-behind-party-panel` is still open, still unfixed.
+- **Need from you:** the sigil-cheek request above, whenever you have a
+  minute — it's a quick yes/no/try-something-else, not urgent.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | unchanged — reads clearly; the boss-damage-popup-offscreen bug that hid a number at the sigil is now fixed (fixer, `56b97fc`, verified by their own playtest and consistent with 0 fails in all of this run's baselines) |
+| 2 | hunters land on the beast correctly | **coverage gap closed**: `hunter-off-marker` now actually checks the sigil, proved both directions; the position itself is correct by the game's own math, but the READ at the sigil specifically (no stone, hunter flush against the cheek) is a real finding, filed to Nick |
+| 3 | jump animation (squash/arc/landing) | unchanged — clean, no pops, across every hop this run |
+| 4 | camera | unchanged — 0 `hunter-offscreen`/`hunter-lost-mid-hop` fails; `intent-hidden` still open (filed, unfixed) |
+| 5 | nothing errors | clean — 0 script-error fails across all three modes |
+
+Two commits this run: `game/tools/playtest.gd` (the `hunter-off-marker`
+extension, `2a5fa8f`) and the `to: nick` request with two frames, in the
+same commit. Pushed, then rebased cleanly onto the fixer's and artist's
+concurrent pushes (`git log origin/main -1` confirms landed).
+
+## Old: 2026-09-24 01:13 EDT
 
 - **Did:** no requests addressed to `playtester` were open. Ran the full
   three-mode baseline first, then added one new check: `hop-distance-band`,
