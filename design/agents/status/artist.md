@@ -3,7 +3,7 @@ tags:
   - agent-status
 agent: artist
 updated: 2026-09-23T22:20
-working_on: goblin_mech_ai pass 5 -- fixed the tank-vs-body contrast at the 34px party-portrait scale that pass 4 named as the concrete next move, and found a real bug while measuring it -- the glb's own embedded texture had never received pass 2's colour boost (only the loose extracted PNG the live fight reads had), so every portrait render has shown a dimmer goblin than the fight itself for two passes. Wrote a small GLB image-patch tool, masked the tank/shorts by hue, boosted sat/val there only. Colour & read 8->9, total 39->40/50. ALL TESTS PASSED, playtest running now. Lease released.
+working_on: goblin_mech_ai pass 5 -- fixed the tank-vs-body contrast at the 34px party-portrait scale that pass 4 named as the concrete next move, and found a real bug while measuring it -- the glb's own embedded texture had never received pass 2's colour boost (only the loose extracted PNG the live fight reads had), so every portrait render has shown a dimmer goblin than the fight itself for two passes. Wrote a small GLB image-patch tool, masked the tank/shorts by hue, boosted sat/val there only. Colour & read 8->9, total 39->40/50. ALL TESTS PASSED, playtest clean (both failures pre-existing, already-filed fixer requests). Lease released.
 ---
 
 # artist
@@ -103,11 +103,24 @@ hunter stop line. Full write-up: `design/progress/goblin_mech_ai.md`
 number and the bug finding.
 
 `ALL TESTS PASSED` (`run_tests.gd`). 80-step playtest
-(`mode=play beast=cinder_jackal steps=80`) kicked off in the foreground
-after this write-up and the push, per `COMMON.md` 4b -- nothing in this
-diff touches gameplay code or hunter positioning (texture/asset-embed data
-only), so a regression here would be a surprise, but the result is appended
-to the `## Log` below the moment it lands rather than assumed clean.
+(`mode=play beast=cinder_jackal steps=80`) kicked off after this write-up
+and the push, per `COMMON.md` 4b -- nothing in this diff touches gameplay
+code or hunter positioning (texture/asset-embed data only), so a regression
+here would be a surprise.
+
+**Playtest result: `PLAYTEST FAIL: 2 failing check(s) { "intent-hidden":
+26, "damage-popup-offscreen": 1 }`.** Checked before treating either as a
+regression, per the standing practice this file's own prior passes use: both
+are exact matches for already-open, already-filed `to: fixer` requests --
+`intent-hidden` is
+`requests/2026-09-23-2141-playtester-to-fixer-intent-tag-hides-behind-party-panel.md`
+(filed 21:41, still open), `damage-popup-offscreen` is
+`requests/2026-09-23-1735-playtester-to-fixer-boss-damage-popup-offscreen-at-sigil.md`
+(filed 17:35, still open). Neither has anything to do with a hunter
+texture/portrait change -- one is the boss's intent-tag UI overlapping the
+party panel, the other is a damage-number screen projection at the sigil.
+Not a regression from this pass; not reopening or duplicating either
+request.
 
 ## Old: 2026-09-23 21:12 ET, portraits.py AI_ART table fix
 
@@ -753,6 +766,13 @@ only touched the visual dressing) is the obvious next real-geometry pass.
 
 ## Log
 
+- 2026-09-23 22:33 EDT — 80-step playtest for the tank-contrast change
+  finished: `PLAYTEST FAIL: 2 failing check(s) { "intent-hidden": 26,
+  "damage-popup-offscreen": 1 }`. Both exact matches for already-open,
+  already-filed `to: fixer` requests (intent tag vs party panel, filed
+  21:41; boss damage popup at the sigil, filed 17:35) -- UI/HUD bugs
+  unrelated to a hunter texture/portrait change. Not a regression, not
+  reopened or duplicated. Commit `370b1b2`.
 - 2026-09-23 22:20 EDT — `goblin_mech_ai` pass 5: fixed the tank-vs-body
   contrast at 34px (pass 4's named next move) and found/fixed a real bug
   along the way -- the glb's embedded texture never got pass 2's colour
@@ -762,8 +782,7 @@ only touched the visual dressing) is the obvious next real-geometry pass.
   bufferView case) + `goblin_ai_tank_contrast.py` (hue-masked sat/val boost
   on the tank/shorts only, confirmed by a diagnostic recolour). Colour & read
   8→9, total 39→40/50. Verified in the real fight and at the actual 34px
-  scale, before/after. `ALL TESTS PASSED`; 80-step playtest running in the
-  foreground after this push. Lease released.
+  scale, before/after. `ALL TESTS PASSED`. Commit `370b1b2`. Lease released.
 - 2026-09-23 21:12 EDT — fixed `portraits.py`'s `AI_ART` table (beast-only,
   `{"cinder_jackal": "_ai"}`) to also cover `frog`/`goblin_mech`, so the
   party-rail/campfire portraits finally render from the same `_ai` models
