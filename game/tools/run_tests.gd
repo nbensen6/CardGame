@@ -2525,6 +2525,14 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_lock_slot_for_can_return_an_invalid_slot_when_you_are_also_invalid()
 	_test_backlog86_free_camera_allowed_matches_is_debug_build_exactly()
 
+	# request 2026-09-23-2141: the intent tag's own Y clamp (clear of the boss
+	# HP bar, clear of the hand) never accounted for the top-left party panel,
+	# even though the HP-bar clamp (lo_y=70) sits inside the panel's own
+	# y-range -- so an off-centre crown could park the tag right on top of it.
+	_test_backlog_intent_tag_pos_clears_the_party_panel_when_it_would_overlap()
+	_test_backlog_intent_tag_pos_repros_the_pre_fix_overlap_without_the_party_clamp()
+	_test_backlog_intent_tag_pos_leaves_a_clear_tag_untouched()
+
 	print("")
 	if _failures == 0:
 		print("ALL TESTS PASSED")
@@ -29032,3 +29040,52 @@ func _test_live_hand_cards_skips_cards_being_freed() -> void:
 	_expect(row.get_child_count() == 10 and live.size() == 5,
 		"a hand rebuilt mid-frame lays out only its 5 live cards, not the 5 still being freed (got %d of %d)" % [live.size(), row.get_child_count()])
 	row.free()
+
+
+## request 2026-09-23-2141: the playtester's own step-0 repro. Tag rect
+## [257.5,70]..[417.5,104] against the party panel's real scene rect
+## (Party's own offsets in combat_3d.tscn: 16,12 to 320,160, i.e. Rect2(16,
+## 12, 304, 148)). `p` and `sz` below reconstruct the crown projection and
+## tag size that produced that exact "before" rect through the ORIGINAL
+## (still party-blind) X clamp, so this is the real reported case, not a
+## synthetic one.
+func _test_backlog_intent_tag_pos_clears_the_party_panel_when_it_would_overlap() -> void:
+	var p := Vector2(337.5, 0.0)
+	var sz := Vector2(160.0, 34.0)
+	var vp := Vector2(1280.0, 720.0)
+	var party := Rect2(16.0, 12.0, 304.0, 148.0)
+	var pos: Vector2 = Combat3D.intent_tag_pos(p, sz, vp, party)
+	var tag_rect := Rect2(pos, sz)
+	_expect(not tag_rect.intersects(party),
+		"the intent tag must never land on top of the party panel (got %s against party %s)" % [tag_rect, party])
+	_expect(is_equal_approx(pos.x, 257.5),
+		"clearing the party panel is a Y move -- the X tracking that already reads the beast's crown correctly must not shift (got x=%f)" % pos.x)
+
+
+## Sanity check that the bug is real: the same inputs, but told there is no
+## party panel to avoid (as every call site did before this fix), reproduce
+## the exact reported overlap. If this ever stops failing, the fixture above
+## stopped exercising the real bug.
+func _test_backlog_intent_tag_pos_repros_the_pre_fix_overlap_without_the_party_clamp() -> void:
+	var p := Vector2(337.5, 0.0)
+	var sz := Vector2(160.0, 34.0)
+	var vp := Vector2(1280.0, 720.0)
+	var pos: Vector2 = Combat3D.intent_tag_pos(p, sz, vp, Rect2())
+	var tag_rect := Rect2(pos, sz)
+	var party := Rect2(16.0, 12.0, 304.0, 148.0)
+	_expect(tag_rect.intersects(party),
+		"sanity check: with no party-panel awareness the old Y-only clamp really does land the tag on the panel (got %s)" % tag_rect)
+
+
+## A crown that projects well clear of the party panel (right side of frame)
+## must keep the ordinary HP-bar/hand clamp exactly as before -- the party
+## clearance is only ever supposed to engage when it would actually overlap.
+func _test_backlog_intent_tag_pos_leaves_a_clear_tag_untouched() -> void:
+	var p := Vector2(900.0, 300.0)
+	var sz := Vector2(160.0, 34.0)
+	var vp := Vector2(1280.0, 720.0)
+	var party := Rect2(16.0, 12.0, 304.0, 148.0)
+	var pos: Vector2 = Combat3D.intent_tag_pos(p, sz, vp, party)
+	var want_y := clampf(p.y - sz.y - 10.0, 70.0, maxf(70.0, vp.y - sz.y - 250.0))
+	_expect(is_equal_approx(pos.y, want_y),
+		"a tag nowhere near the party panel keeps the ordinary HP-bar/hand clamp untouched (got y=%f want=%f)" % [pos.y, want_y])

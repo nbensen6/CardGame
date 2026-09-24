@@ -1470,6 +1470,28 @@ func _set_intent(boss: Dictionary, s: Dictionary) -> void:
 	_intent_tag.add_theme_stylebox_override("panel", style)
 
 
+## The pure placement rule behind _position_intent_tag, pulled out static so it
+## is provable without a camera or a scene tree.
+##
+## `party_rect` is the top-left party panel's own global rect (or a
+## zero-size Rect2 when it doesn't apply). The X clamp alone can land the tag
+## squarely inside it: `lo_y` (70) already sits inside the party panel's own
+## y-range (request 2026-09-23-2141), so nothing before this pushed the tag
+## clear on the one axis Y never covers. Only tighten `lo_y` when the tag's
+## X-range would actually overlap the panel -- an off-centre or right-side
+## crown never pays for a panel it isn't near.
+static func intent_tag_pos(p: Vector2, sz: Vector2, vp: Vector2, party_rect: Rect2) -> Vector2:
+	var x := clampf(p.x - sz.x * 0.5, 12.0, maxf(12.0, vp.x - sz.x - 12.0))
+	var lo_y := 70.0                                   # clear of the boss HP bar
+	var hi_y: float = maxf(lo_y, vp.y - sz.y - 250.0)  # clear of the hand
+	if party_rect.size.x > 0.0 and party_rect.size.y > 0.0 \
+			and x < party_rect.position.x + party_rect.size.x \
+			and x + sz.x > party_rect.position.x:
+		lo_y = maxf(lo_y, party_rect.position.y + party_rect.size.y + 10.0)  # clear of the party panel
+		hi_y = maxf(lo_y, hi_y)
+	return Vector2(x, clampf(p.y - sz.y - 10.0, lo_y, hi_y))
+
+
 ## Follow the beast's crown in screen space, clamped so it is always readable.
 ##
 ## The clamp matters more than the tracking: a Titan's head is off the top of the
@@ -1488,11 +1510,10 @@ func _position_intent_tag() -> void:
 	var sz := _intent_tag.size
 	# Node3D has no get_viewport_rect(); that lives on Control.
 	var vp: Vector2 = get_viewport().get_visible_rect().size
-	var lo_y := 70.0                                   # clear of the boss HP bar
-	var hi_y: float = maxf(lo_y, vp.y - sz.y - 250.0)  # clear of the hand
-	_intent_tag.position = Vector2(
-		clampf(p.x - sz.x * 0.5, 12.0, maxf(12.0, vp.x - sz.x - 12.0)),
-		clampf(p.y - sz.y - 10.0, lo_y, hi_y))
+	var party_rect := Rect2()
+	if _party != null and is_instance_valid(_party) and _party.is_visible_in_tree():
+		party_rect = _party.get_global_rect()
+	_intent_tag.position = intent_tag_pos(p, sz, vp, party_rect)
 
 
 ## What the beast is about to do, in numbers the player does not have to derive.
