@@ -911,6 +911,27 @@ only touched the visual dressing) is the obvious next real-geometry pass.
 
 ## Log
 
+- 2026-09-23 23:35 EDT — 80-step playtest for the skin-saturation change
+  finished: `PLAYTEST FAIL: 2 failing check(s) { "intent-hidden": 26,
+  "damage-popup-offscreen": 1 }` — the same two pre-existing, already-filed
+  `to: fixer` requests every recent pass has hit (intent tag vs party
+  panel, filed 21:41; boss damage popup at the sigil, filed 17:35), neither
+  touching a hunter texture. Not a regression. Commit `68de1c2`.
+- 2026-09-23 23:22 EDT — `goblin_mech_ai` pass 6: a fresh six-view look
+  (pass 5's own suggested next move) found the skin reads near-white, not
+  green, at the real fight camera and native pixel size -- every prior
+  "verified in the real fight" frame in this thread had been a 3x crop that
+  hid it. Root cause: skin texture S 0.26-0.29 even after pass 2's boost,
+  low enough that `toon.gdshader`'s bright lit band washes it toward white;
+  the Frog's own texture (S 0.66-0.77) survives the same shader. New
+  `tools/blender/ai/goblin_ai_skin_saturation.py`: hue-masked (70-160°)
+  saturation ×2.6 on skin only, value untouched. Verified with a magenta
+  diagnostic first, then real before/after screen pixels: (240,243,220) ->
+  (211,249,151), visibly cream to visibly green. Also fixed the party
+  portrait (glb's embedded texture changed) -- now matches the Frog's own
+  saturation range at both scales. Colour & read 9->10, total 40->41/50,
+  one point under the 42 hunter stop line. `ALL TESTS PASSED`. Commit
+  `68de1c2`. Lease released.
 - 2026-09-23 22:33 EDT — 80-step playtest for the tank-contrast change
   finished: `PLAYTEST FAIL: 2 failing check(s) { "intent-hidden": 26,
   "damage-popup-offscreen": 1 }`. Both exact matches for already-open,
