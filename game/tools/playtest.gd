@@ -37,6 +37,17 @@ const MIN_HUNTER_GAP := 0.35
 ## was 1+ unit), not flatten normal jitter.
 const ROUTE_REVERSAL_TOL := 0.05
 
+## hop_arc()'s (combat_3d.gd) own clamp -- `clampf(from.distance_to(to) * 0.26,
+## HUNTER_HEIGHT * 0.9, HUNTER_HEIGHT * 3.4)` -- solved for distance instead of
+## arc height, same algebra as tools/blender/route.py's HOP_MIN_WORLD/
+## HOP_MAX_WORLD (kept here too since this file cannot import a .py module):
+## 0.9*0.7/0.26 = 2.4230769, 3.4*0.7/0.26 = 9.1538461. See check 8c in
+## _check() -- the stone-route request's item 2 ("ordinary hold-to-hold
+## distance should sit inside the arc system's own proportional range, not
+## down at its floor"), the same rule route.py enforces at BUILD time.
+const HOP_MIN_WORLD := 2.4230769
+const HOP_MAX_WORLD := 9.1538461
+
 var _mode := "play"
 var _beast := ""
 var _steps := 40
@@ -477,6 +488,43 @@ func _check(v: Node, when: String) -> void:
 						% [when, rungs2[i], prog, dir.normalized(), prev2, prev1, cur])
 			prev2 = prev1
 			prev1 = cur
+
+	# 8c. Ordinary hold-to-hold hop distances sit inside hop_arc()'s own
+	# proportional band -- the other half of the same stone-route request
+	# (2026-09-23-1846-...build-the-one-directional-stone-route.md) item 8b
+	# above covers direction for: "keep hold-to-hold distance between 2.4 and
+	# 9.2 world units. Below 2.4 every hop gets the same floor arc height
+	# (bouncing-in-place); above 9.2 the arc caps (stops reading as effort)."
+	# The fixer's route.py (hop_world_distance/hop_distance_violation)
+	# enforces this at BUILD time, in a beast's own Blender-authoring units,
+	# scoped to Heights exactly one apart -- a beast with sparse named
+	# anchors can legally skip several Heights in a single hop, and that
+	# multi-Height jump has its own, much longer real distance and isn't what
+	# hop_arc()'s floor/ceiling were tuned for (route.py's own comment). That
+	# build-time gate is real, but exactly like 8b before this check existed,
+	# nothing re-checks it against what a player's own camera actually loads
+	# -- and the fixer's own 2026-09-24 status note already found, on the
+	# real shipped asset, that two of five hops (the ones nearest the sigil)
+	# still measure short after its partial fix. `_climb_points` is already
+	# in the SAME world units hop_arc() clamps against (combat_3d.gd:
+	# `next.origin * _beast_scale`, the literal Vector3s hop_arc() itself
+	# receives as `from`/`to`) -- so this reads the live rungs directly, no
+	# mesh-to-world conversion needed, and -- unlike 8b, which projects onto
+	# the horizontal sweep plane and deliberately ignores climb height --
+	# uses the FULL 3D distance, matching `from.distance_to(to)` exactly.
+	if climb_points is Dictionary and (climb_points as Dictionary).size() > 1:
+		var rungs3: Array = (climb_points as Dictionary).keys()
+		rungs3.sort()
+		for i in range(rungs3.size() - 1):
+			var a3: Vector3 = climb_points[rungs3[i]]
+			var b3: Vector3 = climb_points[rungs3[i + 1]]
+			var d3 := a3.distance_to(b3)
+			if d3 < HOP_MIN_WORLD:
+				_fail("hop-distance-band", "%s: ordinary hop Height %s->%s measures %.2fm (< %.2f floor) -- gets hop_arc()'s same minimum bounce regardless of how close the holds really are" \
+					% [when, rungs3[i], rungs3[i + 1], d3, HOP_MIN_WORLD])
+			elif d3 > HOP_MAX_WORLD:
+				_fail("hop-distance-band", "%s: ordinary hop Height %s->%s measures %.2fm (> %.2f ceiling) -- the arc stops growing with distance, stops reading as effort" \
+					% [when, rungs3[i], rungs3[i + 1], d3, HOP_MAX_WORLD])
 
 	# 9. The camera keeps the ACTIVE hunter (the one you are playing) on screen
 	# once things have settled -- checklist item 4, "the beast is framed, the
