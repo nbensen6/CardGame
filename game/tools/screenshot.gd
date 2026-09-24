@@ -915,10 +915,20 @@ func _capture() -> void:
 						up.button_index = MOUSE_BUTTON_LEFT
 						up.pressed = false
 						pc.call("_gui_input", up)
-					print("TIMING   %-16s -> %s  %s" % [probe[0], _quality_name(int(got[0])),
+					# The burst label a player would actually SEE for this release --
+					# a dropped hold (let go before the rescue mark) used to read
+					# "TOO EARLY"/"TOO LATE" off the press's own stale timing sign,
+					# never "LET GO", however dead-on-beat the press was.
+					var shown := HitCircle.burst_label(int(pc.get("_burst_grade")),
+						bool(pc.get("_burst_dropped")), pc.call("_offset") < 0.0)
+					print("TIMING   %-16s -> %s  %s  burst=\"%s\"" % [probe[0], _quality_name(int(got[0])),
 						"OK" if int(got[0]) == int(probe[2])
-						else "FAIL want " + _quality_name(int(probe[2]))])
-					pc.queue_free()
+						else "FAIL want " + _quality_name(int(probe[2])), shown])
+					# Leave the dropped-hold circle live for the state's own final
+					# screenshot, so the burst text above is a rendered pixel, not
+					# just a printed claim -- see design/agents/frames/fixer/.
+					if String(probe[0]) != "let go early":
+						pc.queue_free()
 			if _state == "3dosu" and circle != null:
 				# It must be able to RECEIVE the tap, not just draw.
 				print("TIMING circle takes taps: %s"

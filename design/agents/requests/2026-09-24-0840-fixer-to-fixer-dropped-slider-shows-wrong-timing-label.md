@@ -3,7 +3,7 @@ tags:
   - request
 from: fixer
 to: fixer
-status: taken
+status: done
 priority: normal
 created: 2026-09-24T08:40
 taken_by: fixer
@@ -94,4 +94,59 @@ touching the fix, per this brief's own "reproduce first" rule.
 
 ## Nick's answer
 
-## Result
+## Result — fixer, 2026-09-24 11:34 EDT
+
+**Both items done: the mislabel is fixed, and the secondary (no-burst on a
+rescue-window downgrade) is real and fixed too, in the same pass.**
+
+**Reproduced first, live.** Rendered `state=3dslide beast=cinder_jackal`
+(the harness's own three-probe slider check: held to the end, let go past
+rescue, let go before rescue) on the pre-fix code (`git stash` on just
+`hit_circle.gd`): a perfect press let go at 20% of the hold — well before
+`SLIDE_RESCUE` (72%) — resolved `TIMING_MISS` as expected, but the burst
+that popped over the hunter read **"TOO LATE"**, inherited from `_offset()`'s
+stale sign at press time. Matches the request's own prediction exactly.
+
+**Cause, as diagnosed:** `_finish()` only ever set `_burst_grade`/`_flash`
+on its `quality == TIMING_MISS` branch, and `_burst()` always derived the
+label from `_offset() < 0.0` — with no notion that a MISS could come from
+letting go rather than a mistimed tap, and no burst refresh at all for a
+non-MISS release (the rescue-window downgrade case).
+
+**Fix.** `_finish()` now takes two optional flags: `dropped` (this MISS
+came from letting go early, not a bad tap) and `released` (this call came
+from the player letting go of a hold at all, MISS or not). The `_gui_input`
+release handler passes both. The label itself is pulled into a new static
+`HitCircle.burst_label(grade, dropped, early)` — testable with no camera —
+so a dropped MISS now shows "LET GO" and a downgrade-but-paid release
+(rescue-to-completion) now refreshes `_flash`/`_burst_grade` instead of
+popping nothing.
+
+**Proven three ways:**
+1. 9 new unit tests in `run_tests.gd` (label rule in isolation for all four
+   grade/dropped/early combinations it can reach, plus three integration
+   tests driving a real `HitCircle` through `begin()`/`_fire()`/
+   `_gui_input()`) — `ALL TESTS PASSED`, existing slider tests untouched
+   and still green.
+2. Rendered `state=3dslide` before (old `hit_circle.gd`, new harness probe
+   kept alive for the shot) and after — same camera, same beast:
+
+![[frames/fixer/2026-09-24-dropped-slider-label-before.png]]
+![[frames/fixer/2026-09-24-dropped-slider-label-after.png]]
+
+   Before: "TOO LATE" over the jackal's legs for a dropped, dead-on-beat
+   press. After: "LET GO". The harness now also prints the shown label
+   (`TIMING   let go early -> miss OK burst="LET GO"`), and confirms the
+   secondary fix live too: `TIMING let go late -> good OK burst="GOOD"` —
+   before the fix this probe's burst never appeared at all (`_burst_grade`/
+   `_flash` never touched on the non-MISS release path).
+3. Full regression: `mode=play beast=cinder_jackal steps=80` — the only
+   failures are the two already-open, unrelated items (`hop-distance-band`,
+   the still-unresolved stone-route hop-spacing investigation; and
+   `intent-tag-vs-hunter`, the still-open
+   `2026-09-24-1002-playtester-...` sliver). Nothing new.
+
+Commit: pushed as part of this run — see `game/ui/hit_circle.gd`,
+`game/tools/run_tests.gd`, `game/tools/screenshot.gd` (the `3dslide`
+probe now prints and can render the burst label it produces, for future
+verification) in this push.

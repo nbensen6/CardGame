@@ -1668,6 +1668,18 @@ func _init() -> void:
 	# none of them connect note_hit for the slider path at all.
 	_test_hit_circle_slider_dropped_after_a_good_press_does_not_double_report_note_hit()
 	_test_hit_circle_slider_missed_press_still_reports_note_hit_once()
+	# fixer: a dropped slider hold's MISS burst used to derive its label from
+	# _offset(), which freezes the instant the press lands -- so a player who
+	# pressed dead-on-beat and just let go too soon saw "TOO EARLY"/"TOO LATE",
+	# a cause that never happened. And a release PAST the rescue point (a real
+	# downgrade, not a MISS) never refreshed the burst at all, since _finish()
+	# only touched _flash/_burst_grade on its MISS branch.
+	_test_hit_circle_burst_label_dropped_miss_says_let_go_regardless_of_offset_sign()
+	_test_hit_circle_burst_label_timed_miss_still_says_early_or_late()
+	_test_hit_circle_burst_label_good_and_perfect_ignore_the_dropped_flag()
+	_test_hit_circle_slider_dropped_before_rescue_marks_the_burst_dropped()
+	_test_hit_circle_slider_timed_out_with_no_press_never_marks_the_burst_dropped()
+	_test_hit_circle_slider_released_past_rescue_pops_a_burst_instead_of_nothing()
 	# backlog #86 duty 3: HitCircle._path_point, the slider follower's own
 	# on-screen position, was the one piece of the slider path with zero
 	# coverage of its own -- every test above proves the PRESS/HOLD/RELEASE
@@ -25928,6 +25940,74 @@ func _test_hit_circle_slider_missed_press_still_reports_note_hit_once() -> void:
 	hc._fire()
 	_expect(seen.size() == 1 and seen[0][0] == 0 and seen[0][1] == Combat.TIMING_MISS,
 		"a slider's press missing the window outright must still report note_hit(0, MISS) exactly once (got %s)" % [seen])
+	hc.free()
+
+
+## fixer, 2026-09-24: `_burst()` used to pick "TOO EARLY"/"TOO LATE" purely
+## from `_offset()`'s sign, which is meaningless for a dropped slider hold --
+## the press was fine, only the hold broke. `burst_label()` is the rule
+## pulled out of `_burst()` so it is checkable without a camera or `_draw()`.
+func _test_hit_circle_burst_label_dropped_miss_says_let_go_regardless_of_offset_sign() -> void:
+	_expect(HitCircle.burst_label(Combat.TIMING_MISS, true, true) == "LET GO",
+		"a dropped slider hold must say LET GO even when the stale offset sign reads early")
+	_expect(HitCircle.burst_label(Combat.TIMING_MISS, true, false) == "LET GO",
+		"a dropped slider hold must say LET GO even when the stale offset sign reads late")
+
+
+func _test_hit_circle_burst_label_timed_miss_still_says_early_or_late() -> void:
+	_expect(HitCircle.burst_label(Combat.TIMING_MISS, false, true) == "TOO EARLY",
+		"an ordinary mistimed-tap MISS must keep saying TOO EARLY -- only a dropped hold gets the new label")
+	_expect(HitCircle.burst_label(Combat.TIMING_MISS, false, false) == "TOO LATE",
+		"an ordinary mistimed-tap MISS must keep saying TOO LATE -- only a dropped hold gets the new label")
+
+
+func _test_hit_circle_burst_label_good_and_perfect_ignore_the_dropped_flag() -> void:
+	_expect(HitCircle.burst_label(Combat.TIMING_GOOD, true, false) == "GOOD",
+		"a rescued-but-downgraded release still reads GOOD, not LET GO -- dropped only relabels a MISS")
+	_expect(HitCircle.burst_label(Combat.TIMING_PERFECT, true, false) == "PERFECT",
+		"a landed PERFECT is never relabeled, dropped flag or not")
+
+
+func _test_hit_circle_slider_dropped_before_rescue_marks_the_burst_dropped() -> void:
+	var hc := HitCircle.new()
+	hc.begin(0.0, null, PackedVector3Array([Vector3.ZERO, Vector3.ONE]), true)
+	hc._t = hc._approach  # perfect press
+	hc._fire()
+	hc._slide = 0.3  # well short of SLIDE_RESCUE (0.72)
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	hc._gui_input(release)
+	_expect(hc._burst_dropped, "letting go of a slider before the rescue point must mark the burst as a drop, not a mistimed tap")
+	_expect(hc._burst_grade == Combat.TIMING_MISS, "a drop before the rescue point still grades MISS")
+	_expect(hc._flash > 0.0, "a dropped slider hold must still pop a burst")
+	hc.free()
+
+
+func _test_hit_circle_slider_timed_out_with_no_press_never_marks_the_burst_dropped() -> void:
+	var hc := HitCircle.new()
+	hc.begin(0.0, null, PackedVector3Array([Vector3.ZERO, Vector3.ONE]), true)
+	hc._t = hc._approach + HitCircle.GOOD_WINDOW + 0.09  # window closes with no press at all
+	hc._process(0.0)
+	_expect(not hc.is_live(), "an unpressed slider window must close on its own")
+	_expect(not hc._burst_dropped, "a MISS from never pressing at all is not a drop -- it must keep the ordinary early/late label")
+	hc.free()
+
+
+func _test_hit_circle_slider_released_past_rescue_pops_a_burst_instead_of_nothing() -> void:
+	var hc := HitCircle.new()
+	hc.begin(0.0, null, PackedVector3Array([Vector3.ZERO, Vector3.ONE]), true)
+	hc._t = hc._approach  # perfect press
+	hc._fire()
+	hc._slide = 0.9  # past SLIDE_RESCUE (0.72) but short of the full 1.0
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	hc._gui_input(release)
+	_expect(hc._flash > 0.0,
+		"a release past the rescue point is a real downgrade, not a MISS -- it must still pop a burst, not silently show nothing (the press-time flash from _fire() has long since decayed by the time this release can happen)")
+	_expect(hc._burst_grade == Combat.TIMING_GOOD, "a release past the rescue point on a perfect press grades GOOD")
+	_expect(not hc._burst_dropped, "a paid, non-MISS release is not a drop -- dropped only matters for the MISS label")
 	hc.free()
 
 

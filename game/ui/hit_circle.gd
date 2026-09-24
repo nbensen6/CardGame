@@ -109,6 +109,7 @@ var _worst := Combat.TIMING_PERFECT
 var _flash := 0.0
 var _burst_grade := -1        # judgement being popped, osu's 300 / 100 / X
 var _burst_note := 0          # which note it belongs to, so it follows the camera
+var _burst_dropped := false   # this MISS/downgrade came from letting go a slider hold, not a mistimed tap -- _offset()'s early/late sign is stale for it
 var _combo := 0               # notes landed in a row, reset by a miss
 var _approach := APPROACH_SECONDS   # this note's own approach length
 var _slider := false          # this window is held, not tapped
@@ -146,6 +147,7 @@ func begin(bonus: float, cam: Camera3D, points: PackedVector3Array,
 	_slide = 0.0
 	_press_quality = Combat.TIMING_PERFECT
 	_slider_note_hit = false
+	_burst_dropped = false
 	_notes = points
 	_hits_needed = 1 if _slider else points.size()
 	_hits_done = 0
@@ -213,9 +215,14 @@ func _gui_input(event: InputEvent) -> void:
 	accept_event()
 	if _holding:
 		# Let go. Near the end is a slip and still pays something; letting go at
-		# the start means you did not hold it at all.
-		_finish(Combat.TIMING_MISS if _slide < SLIDE_RESCUE
-			else mini(_press_quality, Combat.TIMING_GOOD))
+		# the start means you did not hold it at all. Either way the press was
+		# fine and the SIGN _offset() would show is stale (frozen the instant the
+		# hold began) -- mark it `dropped` so the burst says what actually
+		# happened instead of inheriting a timing verdict from the press.
+		if _slide < SLIDE_RESCUE:
+			_finish(Combat.TIMING_MISS, true, true)
+		else:
+			_finish(mini(_press_quality, Combat.TIMING_GOOD), false, true)
 
 
 ## Seconds from the beat. Negative before the ring lands, positive after; the
@@ -270,7 +277,14 @@ func _fire() -> void:
 	_t = 0.0
 
 
-func _finish(quality: int) -> void:
+## `dropped` marks a MISS that came from letting go a slider hold early, not
+## a mistimed tap -- the burst needs to say "LET GO", not inherit a stale
+## early/late sign from the press. `released` marks ANY window close that
+## came from the player letting go of a hold (a rescue-window downgrade is
+## not a MISS, but it needs its own burst too, or a release between the
+## rescue point and full completion pops nothing at all -- the press-time
+## flash from _fire() has long since decayed by then).
+func _finish(quality: int, dropped: bool = false, released: bool = false) -> void:
 	_holding = false
 	if _live and quality == Combat.TIMING_MISS:
 		# A slider's one note already told note_hit its press quality (_fire()'s
@@ -283,8 +297,10 @@ func _finish(quality: int) -> void:
 		if not (_slider and _slider_note_hit):
 			note_hit.emit(_hits_done, Combat.TIMING_MISS)
 		_combo = 0
+	if _live and (quality == Combat.TIMING_MISS or released):
 		_burst_note = mini(_hits_done, maxi(_notes.size() - 1, 0))
-		_burst_grade = Combat.TIMING_MISS
+		_burst_grade = quality
+		_burst_dropped = dropped
 		_flash = 1.0
 	_live = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -425,20 +441,30 @@ func _draw_slider(path: PackedVector2Array) -> void:
 		ring, 3.5, true)
 
 
+## The word a judgement burst shows. Pulled out of _burst() so it is testable
+## without a camera or a live _draw() call. `dropped` overrides the early/late
+## guess -- a dropped slider hold's press was fine, so `early` (whatever stale
+## sign _offset() happens to be frozen at) would be lying about why it missed.
+static func burst_label(grade: int, dropped: bool, early: bool) -> String:
+	if grade >= Combat.TIMING_PERFECT:
+		return "PERFECT"
+	if grade >= Combat.TIMING_GOOD:
+		return "GOOD"
+	if dropped:
+		return "LET GO"
+	return "TOO EARLY" if early else "TOO LATE"
+
+
 ## osu pops a judgement at the circle the moment you hit it — 300, 100, 50 or a
 ## miss — and the number IS the feedback. Ours are named rather than numbered
 ## because the words are what the rest of the game already calls them.
 func _burst(at: Vector2, grade: int, t: float) -> void:
 	var tint := MISS
-	# Which side of the beat you were on. "MISS" teaches nothing; "TOO EARLY"
-	# teaches the whole thing in one word.
-	var label := "TOO EARLY" if _offset() < 0.0 else "TOO LATE"
+	var label := burst_label(grade, _burst_dropped, _offset() < 0.0)
 	if grade >= Combat.TIMING_PERFECT:
 		tint = CORE
-		label = "PERFECT"
 	elif grade >= Combat.TIMING_GOOD:
 		tint = GOLD
-		label = "GOOD"
 	var ring := tint
 	ring.a = t * 0.7
 	draw_arc(at, TARGET_RADIUS * (1.0 + (1.0 - t) * 1.6), 0.0, TAU, 48, ring, 4.0, true)

@@ -2,11 +2,91 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-24T08:46
-working_on: Fixed jump-hides-behind-intent-tag (artist's find) -- intent_tag_pos gets a hunter_rect param with a real 2D overlap test, same idea as the party-panel clamp but the hunter can straddle the tag from any side. 4 new tests, live re-render of the artist's exact repro shows no overlap. Also ruled out a 5th dead end on the stone-route hop-distance ceiling and self-filed a fresh bug (dropped-slider mislabels the miss) for a future run.
+updated: 2026-09-24T11:34
+working_on: Fixed the self-filed dropped-slider-wrong-label bug -- a dropped slider hold's MISS burst read "TOO EARLY"/"TOO LATE" off a frozen, stale offset sign instead of saying it was let go; also fixed a same-neighborhood bug where a rescue-window downgrade popped no burst at all.
 ---
 
 # fixer
+
+## This run — 2026-09-24 11:34 EDT
+
+- **Did:** fixed the bug I self-filed last run — a dropped slider hold's
+  MISS burst said "TOO EARLY" or "TOO LATE", which is never the real
+  reason it missed (the press was fine; the player just let go too soon).
+  Also fixed a same-neighborhood bug in the same pass: letting go past the
+  rescue point (a real, paid downgrade, not a MISS) popped no burst at all.
+- **Worked?** Yes on both. Reproduced the mislabel live first (before/after
+  render, frames below), fixed it with a new "LET GO" label plus a small
+  static rule so it's unit-testable, and confirmed the no-burst case now
+  shows "GOOD" instead of nothing. Full regression playtest shows nothing
+  new — only the two already-known, unrelated open items (hop-distance-band,
+  intent-tag-vs-hunter sliver).
+- **Next:** nothing of mine left on this one. Order-of-work for a future
+  run: the stone-route hop-distance item (still `taken`, one real lever
+  left after five ruled-out dead ends) or a fresh read of the fight's code
+  paths if no request is open.
+- **Need from you:** nothing.
+
+![[frames/fixer/2026-09-24-dropped-slider-label-before.png]]
+![[frames/fixer/2026-09-24-dropped-slider-label-after.png]]
+
+## Now
+
+Took the self-filed `to: fixer` request
+`2026-09-24-0840-fixer-to-fixer-dropped-slider-shows-wrong-timing-label.md`
+(oldest open `to: fixer` request this run — checked every request's
+frontmatter; the other unfinished item, the stone/camera/hop-distance
+thread, is `taken` not `open`, and already has five documented dead ends
+against it, so per order-of-work an actual open request came first).
+
+**Reproduced first, live.** `git stash` on just `hit_circle.gd` to get back
+the pre-fix behaviour, rendered `state=3dslide beast=cinder_jackal`: a
+perfect press let go at 20% of an 0.85s hold (well short of `SLIDE_RESCUE`,
+72%) resolved `TIMING_MISS` as expected, but the burst read **"TOO LATE"**
+— inherited from `_offset()`'s sign at press time, frozen ever since
+(`_process()`'s holding branch never touches `_t`/`_approach`). Exactly the
+mechanism the self-filed request predicted from reading alone.
+
+**The fix.** `_finish(quality, dropped, released)` gets two new optional
+flags. `dropped` marks a MISS that came from letting go early rather than a
+bad tap; `released` marks any window-close that came from the player
+letting go of a hold at all (MISS or not) — added because the rescue-window
+downgrade case (`quality != MISS`) never touched `_burst_grade`/`_flash`
+before, so its burst popped nothing (the press-time flash from `_fire()`
+had long since decayed by the time a release that late can happen). The
+label itself moved into a new static `HitCircle.burst_label(grade, dropped,
+early)`, checkable with no camera or `_draw()` call, so a dropped MISS
+shows "LET GO" and everything else keeps its old label unchanged.
+
+**Proof.**
+1. 9 new unit tests in `run_tests.gd`: the label rule in isolation for
+   every grade/dropped/early combination it can reach, plus three
+   integration tests driving a real `HitCircle` through
+   `begin()`/`_fire()`/`_gui_input()` (dropped-before-rescue marks the
+   burst dropped and still pops it; an unpressed timeout never marks
+   dropped; released-past-rescue pops a GOOD burst instead of nothing).
+   `ALL TESTS PASSED`, every existing slider test still green.
+2. Rendered `state=3dslide` before/after, same camera, same beast, same
+   probe (extended `screenshot.gd`'s existing 3-probe slider check to print
+   and render the shown label rather than just the resolved quality):
+
+![[frames/fixer/2026-09-24-dropped-slider-label-before.png]]
+![[frames/fixer/2026-09-24-dropped-slider-label-after.png]]
+
+   Before: "TOO LATE" for a dropped, dead-on-beat press. After: "LET GO".
+   The harness's own print also confirms the secondary fix:
+   `TIMING   let go late -> good OK burst="GOOD"` (this probe's burst never
+   appeared at all before the fix).
+3. Full regression: `mode=play beast=cinder_jackal steps=80` — only the
+   two already-open, unrelated items (`hop-distance-band`, the still-open
+   stone-route hop-spacing investigation; `intent-tag-vs-hunter`, the
+   still-open `2026-09-24-1002-playtester-...` sliver). Nothing new.
+
+Commit: pushed as part of this run — `game/ui/hit_circle.gd`,
+`game/tools/run_tests.gd`, `game/tools/screenshot.gd` (the `3dslide` probe
+now prints and can render the burst label it produces).
+
+## Old: 2026-09-24, jump-hides-behind-intent-tag
 
 ## This run — 2026-09-24 08:46 EDT
 
@@ -1399,7 +1479,14 @@ further either.
 
 ## Log
 
-- 2026-09-24 08:46 EDT (latest) — jump-hides-behind-intent-tag: fixed.
+- 2026-09-24 11:34 EDT (latest) — dropped-slider-shows-wrong-timing-label:
+  fixed. A dropped slider hold's MISS burst read "TOO EARLY"/"TOO LATE" off
+  a frozen, stale `_offset()` sign instead of saying it was let go; also
+  fixed the same-neighborhood bug where a rescue-window downgrade (release
+  past `SLIDE_RESCUE`, a real GOOD, not a MISS) popped no burst at all.
+  New "LET GO" label, a testable static `burst_label()` rule, 9 new tests,
+  before/after render, full regression clean.
+- 2026-09-24 08:46 EDT — jump-hides-behind-intent-tag: fixed.
   `intent_tag_pos` gets a `hunter_rect` param with a real 2D overlap test
   (prefer above, fall back below, else leave alone) — the artist's own
   find, mid-jump the hunter's sprite could render behind the boss's intent
