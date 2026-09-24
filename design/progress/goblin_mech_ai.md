@@ -365,3 +365,87 @@ match the jackal's fidelity" line stays unticked.
 mesh-topology check pass 1 named. Once the Blender wall clears: that check,
 plus the portrait-scale colour check, are the two moves left to reach the
 stop line.
+
+## Pass 3 — Build hygiene, artist, 2026-09-23T20:11 EDT
+
+`download.blender.org` came back `200` this run (the wall
+`2026-09-23-1811-artist-to-nick-blender-download-blocked.md` filed — no
+answer needed; the curl the request's own "Done when" named just started
+working), so this is the mesh-topology check pass 1 and pass 2 both named
+as the thing still blocking Build hygiene, now actually run.
+
+**Built the check pass 1 asked for, stronger than the one `frog_ai.md` pass
+2 ran.** That pass walked the raw edge graph into 193 connected components
+and called it "silhouette-safe" — checked in 2D projection, not measured in
+3D, and its own "still open" list says so (item 1: "inspect whether any of
+them are visible gaps/seams once actually looked at closely, not just
+confirmed silhouette-safe"). New script,
+`tools/blender/ai/mesh_gap_check.py`: same edge-graph walk, but then
+(numpy, brute force) measures the minimum 3D distance from every island to
+the nearest vertex in any OTHER island. An island that's just unwelded from
+its neighbours (the normal, harmless output of Meshy's remesh/decimate) sits
+at ~0 gap; a genuinely floating part — spaced away from the body, the exact
+defect Build hygiene's rubric line names — would show a gap that's a real
+fraction of the model's own bounding-box diagonal.
+
+    blender -b --python tools/blender/ai/mesh_gap_check.py -- game/assets/3d/cast/goblin_mech_ai.glb
+
+**Result, on the actual shipped file:**
+
+    REPORT total_verts 5799
+    REPORT total_islands 489
+    REPORT body_diag 2.3296
+    REPORT islands_with_real_gap_total 0 (of 489 islands, verts>=3, threshold=0.010)
+
+489 raw islands (more than `frog_ai`'s 193 — a bigger, more detailed mesh,
+not a worse one) and **zero** have any real spatial gap at a 1%-of-body-
+diagonal threshold (~23mm on this model). Re-ran at a threshold ten times
+tighter (0.1%, ~2.3mm) to see what the honest floor looks like rather than
+stopping at the first clean number: two 4-vert islands show up, at 2.5mm
+and 6.6mm gaps respectively — both near the compressor-tank/backpack region
+(`centre=(0.140,-0.274,1.159)` and `(0.460,-0.203,0.855)` in the model's own
+local space). Opened both in the six-view renders at that location: neither
+is visible even zoomed in on `_front.png`/`_side.png` at pass 1's own
+capture resolution — sub-centimetre gaps between decimated micro-facets,
+not a seam or a part standing off the body. **Verified, not assumed**: this
+is the same "look before claiming" step the loop asks for, applied to a
+measurement instead of a render.
+
+**No fix to apply.** This pass's finding is that Build hygiene's open
+question — "no floating islands, no part spaced away from the body,"
+unconfirmed since the original build per pass 1 — is now confirmed clean,
+not that something needed correcting. The 489-island fragmentation itself
+is real (Meshy's remesh output, never hand-welded the way the jackal's mesh
+was) but it is exactly the harmless, cosmetic-only kind `frog_ai`'s own
+193-island question left open and never closed; this pass closes the
+equivalent question for `goblin_mech_ai` with a sharper test than that one
+got.
+
+**Score: Build hygiene 6 → 7.** Matches `frog_ai`'s own Build hygiene (7),
+on the same basis that asset was held to 7 rather than higher: real tri
+overage against the hunter budget (5199 vs 1400, same accepted-overage
+class both AI hunters ship at — unchanged this pass, no geometry touched)
+still costs a point, but the topology question that was this model's own
+extra uncertainty versus `frog_ai` is now answered, and answered with a
+stricter test (a measured 3D gap, not a 2D silhouette check) than the one
+`frog_ai` itself still has open. Not held to 8: budget overage alone is
+enough to keep both AI hunters off a "clean bill" score at this tier.
+**Total: 38 → 39/50** — still under the 42 hunter stop line.
+
+`ALL TESTS PASSED` (no code or asset file changed this pass — a
+measurement script only, added to the tree for the next hunter that needs
+the same check; no playtest re-run needed, nothing moves or renders
+differently).
+
+### Where it stands
+
+**39/50 — under the 42 hunter stop line, 3 points off.** Lines, current:
+Silhouette 8, Proportion 8, Build hygiene 7, Colour & read 8, Style
+consistency 8. No single line is now the clear worst; the honest reading is
+this hunter needs roughly a point spread across the board, which the
+Colour & read caveat pass 2 already named (unverified at the 34px party-
+portrait scale — `portraits.py`'s `AI_ART` table is beast-only) is the most
+concrete of what's left: it is a real, named gap rather than a "go find
+something" search, and it is the next candidate for whoever picks this up,
+Meshy budget and Blender both being available again this run for the first
+time since pass 1.

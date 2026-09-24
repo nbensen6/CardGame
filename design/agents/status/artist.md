@@ -2,13 +2,104 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-23T19:29
-working_on: gave the floating stones a flat pale-tan cap and a warm rim edge on top of the existing boulder body, so a climb hold reads as a shelf from the wide establishing shot instead of a loose pebble (playtester's request, Nick-approved stone-route work). Fixed a cap/body gap the first pass had. ALL TESTS PASSED; 80-step playtest run in the foreground found only the already-filed, unrelated damage-popup-offscreen issue. Request marked done. Lease released.
+updated: 2026-09-23T20:11
+working_on: ran a mesh-topology gap check (new tools/blender/ai/mesh_gap_check.py) against goblin_mech_ai.glb now that the Blender network wall cleared -- 489 raw islands, zero with a real 3D gap from the rest of the body, closing pass 1/2's open Build hygiene question. Build hygiene 6->7, total 38->39/50, still under the 42 hunter stop line. Closed the blender-download-blocked request. ALL TESTS PASSED. Lease released.
 ---
 
 # artist
 
-## This run — 2026-09-23 19:20 ET
+## This run — 2026-09-23 20:11 ET
+
+- **Did:** Blender's download wall (blocked 3 runs running, request filed
+  `to: nick`) cleared on its own this run — no answer needed, the network
+  policy fix just landed. Used it for the thing it was blocking:
+  `goblin_mech_ai`'s Build hygiene score has been stuck since pass 1 on an
+  unanswered question — "no floating islands, no part spaced away from the
+  body," unverified since the original build. Wrote a proper check for it
+  (`tools/blender/ai/mesh_gap_check.py`) and ran it on the real shipped
+  model.
+- **Worked?** Yes, a clean answer either way would have been useful, and
+  this one came back clean: 489 raw mesh islands (unwelded topology,
+  Meshy's normal remesh output), but a measured 3D distance check says
+  **zero** of them are actually floating away from the body — the two
+  closest-to-flagging are 2.5mm and 6.6mm gaps on a 1.85m-tall model,
+  invisible even zoomed in. Build hygiene 6→7, total 37→38→**39/50** — real
+  progress, still 3 points under the 42 hunter stop line.
+- **Next:** no single line is the clear worst any more (Sil 8, Prop 8,
+  Hygiene 7, Colour 8, Style 8) — closing the stop line needs the 34px
+  party-portrait colour check pass 2 named as still open (`portraits.py`'s
+  `AI_ART` table is beast-only), or a fresh six-view look for something
+  this run didn't find. Also closed the Blender-wall request as done.
+- **Need from you:** nothing.
+
+## Now
+
+Checked for a fresh, unhandled answer under `## Nick's answer` on my own
+`to: nick` notes first, per `COMMON.md` 1b — none. Checked open `to: artist`
+requests — none this run. Worked the `JACKAL-BAR.md` queue.
+
+**Set up Blender and Godot fresh (per `status/README.md`), and both worked
+without the network wall this time** — `curl` against
+`download.blender.org` returned `200` (vs the clean `403` the last three
+runs hit), so the request filed at 18:11
+(`requests/2026-09-23-1811-artist-to-nick-blender-download-blocked.md`) is
+resolved; marked it `status: done` with the proof in its own `## Result`
+rather than leave it sitting open with nothing to answer. Meshy also
+confirmed working (`balance` OK, 0/8 tasks spent today — the daily ledger
+rolled over) but wasn't needed this run.
+
+**Picked the loudest remaining hunter-fidelity gap that Blender specifically
+unblocks.** `design/progress/goblin_mech_ai.md` (the shipped, wired-in
+Meshy rebuild — not `goblin_mech.md`, the older primitive one, already past
+its own stop line) named Build hygiene as its lowest line twice running (6,
+pass 1 and pass 2), both times explicitly because the mesh-topology check
+`frog_ai.md` pass 2 ran on the Frog had never been run on this model — "an
+open question, not a confirmed clean bill."
+
+**Ran a stronger version of that check, not just the same one.** `frog_ai`
+pass 2's own check walked the mesh into 193 raw connected components and
+confirmed them "silhouette-safe" — a 2D check, and its own "still open"
+list admits it never verified in 3D whether any of them are real gaps.
+Wrote `tools/blender/ai/mesh_gap_check.py` instead: same connected-component
+walk, then (numpy) the minimum 3D distance from every island to the nearest
+vertex in a DIFFERENT island. An island that's just unwelded from its
+neighbours (harmless, the normal cost of a decimated Meshy remesh) sits at
+~0 gap; a genuinely floating part — spaced away from the body, the actual
+defect the rubric line names — would show a real fraction of the model's
+own bounding-box diagonal as its gap.
+
+    blender -b --python tools/blender/ai/mesh_gap_check.py -- game/assets/3d/cast/goblin_mech_ai.glb
+
+    REPORT total_verts 5799
+    REPORT total_islands 489
+    REPORT body_diag 2.3296
+    REPORT islands_with_real_gap_total 0 (of 489 islands, verts>=3, threshold=0.010)
+
+**489 islands, zero real gaps at a 1%-of-body-diagonal threshold (~23mm).**
+Didn't stop at the first clean number — re-ran at 10x tighter (0.1%,
+~2.3mm) to find the honest floor: two 4-vert islands show up, at 2.5mm and
+6.6mm gaps near the backpack/compressor-tank region. Looked at both
+locations in the existing six-view renders at that spot: invisible even
+zoomed in, sub-centimetre gaps between decimated micro-facets, not a seam
+or a standoff part.
+
+**No fix to apply — the finding itself is the result.** Build hygiene's
+open question was "is this confirmed clean," not "here's a known defect to
+fix." It's now confirmed clean, with a sharper test than the one `frog_ai`
+itself still has outstanding (that asset's own "still open" item 1 is this
+exact 3D-gap question, unresolved). Scored Build hygiene 6→7 — matched to
+`frog_ai`'s own 7, on the same logic: real tri-budget overage (5199 vs the
+1400 hunter budget) still costs a point at this tier, but the topology
+uncertainty that was `goblin_mech_ai`'s own extra gap versus `frog_ai` is
+now closed. **Total 38→39/50**, still under the 42 hunter stop line.
+Nothing else touched — no geometry, texture or code changed, so `ALL TESTS
+PASSED` needed no playtest re-run (ran it anyway: no game-visible change,
+confirmed by `git status` showing only the new script and the two progress/
+status notes).
+
+Full write-up: `design/progress/goblin_mech_ai.md` ("Pass 3").
+
+## Old: 2026-09-23 19:20, floating-stone shelves
 
 - **Did:** took the playtester's request to make the climb stones read as
   shelves, not floating markers — added a flat, level cap and a thin warm
@@ -26,8 +117,6 @@ working_on: gave the floating stones a flat pale-tan cap and a warm rim edge on 
 
 ![[frames/artist/2026-09-23-stones-shelf-wide-before-after.png]]
 ![[frames/artist/2026-09-23-stones-shelf-close-before-after.png]]
-
-## Now
 
 Took the one open `to: artist` request
 (`2026-09-23-1846-playtester-to-artist-make-ledges-read-as-shelves.md`) —
@@ -464,6 +553,18 @@ only touched the visual dressing) is the obvious next real-geometry pass.
 
 ## Log
 
+- 2026-09-23 20:11 EDT — Blender's download wall cleared on its own
+  (`download.blender.org` now `200`); closed the `to: nick` request that
+  flagged it. Wrote `tools/blender/ai/mesh_gap_check.py` (a measured 3D
+  nearest-different-island-gap check, stronger than `frog_ai`'s own
+  silhouette-only one) and ran it on `goblin_mech_ai.glb`: 489 raw topology
+  islands, 0 with a real spatial gap (>1% of body diagonal); even at 10x
+  tighter threshold only two 4-vert islands show up, both sub-centimetre
+  and invisible in the renders. Closes the open Build hygiene question from
+  pass 1/2. Build hygiene 6→7, total 38→39/50, still under the 42 hunter
+  stop line. No asset/code change, so no playtest needed; `ALL TESTS
+  PASSED`. See `design/progress/goblin_mech_ai.md` ("Pass 3"). Lease
+  released.
 - 2026-09-23 19:29 EDT — 80-step playtest for the stone-shelf change, run in
   the foreground this time (COMMON.md 4b), after pushing the code/frames
   first: `PLAYTEST FAIL: 1 failing check(s) { "damage-popup-offscreen": 1 }`

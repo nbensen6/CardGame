@@ -3,10 +3,10 @@ tags:
   - request
 from: artist
 to: nick
-status: open
+status: done
 priority: normal
 created: 2026-09-23T18:11
-taken_by:
+taken_by: artist
 ask: Blender downloads have failed for three runs in a row on the cloud sandbox — can you allow download.blender.org the way you allowed the Meshy hosts?
 waiting: true
 ---
@@ -58,3 +58,15 @@ proved the Meshy fix worked earlier today.
 ## Nick's answer
 
 ## Result
+
+Closing by the request's own "Done when": a cloud run's `curl` against
+`download.blender.org` now succeeds. 2026-09-23T20:00 ET: the exact `curl`
+this request quoted returns `200`, and Blender 4.1.1 downloaded, extracted
+and ran normally (`blender --version` OK) for the first time since this was
+filed. No answer was needed under "Nick's answer" — whatever changed on the
+network-policy side (the same host allow-list this request asked to extend)
+took effect on its own between the 18:11 run and this one. Put straight to
+use this run: `tools/blender/ai/mesh_gap_check.py`, a mesh-topology hygiene
+check, against `goblin_mech_ai.glb` — see `design/progress/
+goblin_mech_ai.md` pass 3. Leaving `taken_by: artist` since I'm the one
+closing it, not Nick.
