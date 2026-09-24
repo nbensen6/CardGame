@@ -69,7 +69,16 @@ reading the fight at a glance, at play size, in motion.
       render (party rail, character card, campfire) had shown a dimmer
       goblin than the fight itself for two passes running.
       `design/progress/frog_ai.md` pass 3,
-      `design/progress/goblin_mech_ai.md` pass 5.
+      `design/progress/goblin_mech_ai.md` pass 5. A fresh six-view look,
+      2026-09-23, found a bigger colour defect than any prior pass had
+      caught: at the true `state=3d` camera, 1:1, not a zoomed crop, the
+      Goblin's skin read near-white, not green — every earlier "verified in
+      the real fight" frame in this thread had been a 3x crop, which hid it.
+      Fixed with a hue-masked saturation boost (skin only, value untouched)
+      that now matches the Frog's own saturation range at both the real
+      fight camera and the 34px portrait. `goblin_mech_ai` **41/50** (was
+      40), one point under the hunter stop line.
+      `design/progress/goblin_mech_ai.md` pass 6.
 
 ### The arena
 - [x] **It frames the beast** rather than competing with it. Meshy-generated

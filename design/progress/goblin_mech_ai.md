@@ -607,7 +607,7 @@ still a hunter-specific compromise (the tank boost is a targeted patch on
 top of the base texture, not a from-scratch recolour). **Total: 39 → 40/50**
 — 2 points under the 42 hunter stop line.
 
-### Where it stands
+### Where it stands (superseded by pass 6 below)
 
 **40/50.** Lines: Silhouette 8, Proportion 8, Build hygiene 7, Colour &
 read 9, Style consistency 8. No single line is far behind the others now;
@@ -616,3 +616,137 @@ and Silhouette/Proportion/Style (8 each, no fresh defect found this pass)
 are the remaining candidates for whoever picks this up next — a fresh
 six-view look, not a further colour push, is probably the next useful
 move.
+
+## Pass 6 — Colour & read, artist, 2026-09-23T23:22 EDT
+
+Took pass 5's own suggestion literally: a fresh `look.sh goblin_mech_ai 6`
+six-view render, looked at cold, not against the score history. Silhouette,
+proportion, form and wire all held up — nothing new there. The real find
+came from going one step further than any pass here has: not a 3x crop of
+the real fight, but the **exact, unscaled screen pixels** a player's eye
+resolves at the default `state=3d` camera, sampled directly off the PNG.
+
+**Every prior "verified in the real fight" claim in this file, including
+pass 5's own before/after two entries up, was a zoomed 3x crop.** At
+1:1 — no zoom — the goblin's skin is not dull or measurably-duller-than-
+the-Frog the way pass 2/4/5 characterised it. It is **near-white**:
+
+    before (state=3d, native px): (240,243,220) (233,244,211) (238,243,214)
+
+Sampled next to the Frog, same frame, same light: (234,249,117), (99,194,0)
+— unmistakably green. The screenshot pass 5 itself committed as evidence of
+the tank-contrast fix
+(`2026-09-23-goblin-tank-contrast-infight-before-after.png`) shows this
+exact defect in its own "after" half, uncropped: a cream-white body with
+only the tank and shorts carrying colour. Nobody had looked at that frame
+at the size it actually ships at.
+
+**Root cause, isolated by testing, not guessed.** Not `toon.gdshader`
+(shared with the jackal and the Frog, both fine) and not a lighting bug —
+confirmed by a throwaway diagnostic: recolouring the skin mask solid
+magenta in the loose PNG and re-rendering `state=3d` made the model
+visibly magenta in the same region, so the albedo texture does reach the
+screen here. The texture itself is the cause: skin sampled at
+S 0.26–0.29, V 0.68–0.72 even after pass 2's global boost — high value,
+low saturation, exactly the profile that a bright "lit" band (the shader
+mixes toward white as light level rises, by design, same as every model
+here) reads as neutral. The Frog's own texture measures S 0.66–0.77 at
+similar value — saturated enough that the same white-ward mix still shows
+green. Pass 2 raised the Goblin's *value* to fix the 34px portrait (a real
+fix, still valid); it never touched saturation enough to survive the
+arena's own bright key light, because nobody had rendered the actual
+gameplay camera at 1:1 to see that this was still broken.
+
+**Fix:** new `tools/blender/ai/goblin_ai_skin_saturation.py`. Masks by hue
+alone (70°–160°, this hunter's green skin/ear family) with a floor on the
+pixel's OWN current saturation/value (>0.12, >0.15) so near-neutral
+pixels — goggle-lens highlights, cream tusks/nails, teeth — are never
+pulled toward green by an unstable hue reading on a near-grey pixel.
+Confirmed by a diagnostic magenta recolour on the flat texture atlas before
+touching real colour (screenshot showed the mask landing exactly on
+skin/ears, nothing on the tank, straps, goggles or boots). Saturation
+×2.6 inside the mask, **value untouched** — deliberately not the same lever
+pass 2 used, because this is a lit-band saturation problem, not a
+brightness problem, and re-darkening would undo pass 2's own portrait fix.
+2.6 was picked by testing sample points until their result (S 0.67–0.74)
+landed inside the Frog's own measured range (0.66–0.77), matching the
+survivor rather than guessing a number.
+
+Applied to both files, same two-part pattern pass 5 established: the loose
+PNG (what the live 3D fight reads) and the glb's own embedded image (what
+`portraits.py` reads) — confirmed byte-identical before the edit, so one
+script call keeps them in sync.
+
+**First attempt measured as a false negative — caught before writing it
+up.** The very first before/after render showed almost no change at the
+sampled pixels. Before concluding the fix didn't work, checked why: the
+loose PNG had been edited but Godot's importer was never told to
+re-`--import`, so the screenshot was still reading its cached, pre-edit
+texture. Re-ran `--import`, re-rendered, and the real result showed up.
+Confirmed the mechanism with a second, unambiguous test (the magenta
+recolour above) before trusting the quieter saturation result — the
+project's own honesty rule ("never claim an improvement you have not seen
+in a render") cuts both ways: a claimed NON-improvement needs the same
+scrutiny before it's written down as the finding.
+
+**Verified in the real fight, same camera/hunter positions as every prior
+pass (6-decimal match), at true 1:1 scale, not a crop:**
+
+![[../agents/frames/artist/2026-09-23-goblin-skin-desaturation-infight-before-after.png]]
+
+Sample pixels at the same coordinates: (240,243,220)→(211,249,151),
+(233,244,211)→(194,252,122) — visibly, measurably green now, not a subtle
+shift.
+
+**Verified at the 34px party-portrait scale too** (re-rendered
+`portraits.py`, since the glb's embedded texture changed) — composited on
+the rail's own `(58,42,30)` background, same methodology as pass 4/5:
+
+    goblin_mech_ai  pass 5: sat 0.493  val 0.461
+    goblin_mech_ai  pass 6: sat 0.655  val 0.422
+    frog_ai (ref):          sat 0.69   val 0.44
+
+![[../agents/frames/artist/2026-09-23-goblin-skin-desaturation-party-rail-before-after.png]]
+
+Saturation now lands almost exactly inside the Frog's own range at this
+scale too — the portrait fix and the in-fight fix reinforce each other
+rather than trading off, because this pass moved saturation, not value.
+
+**Checked the campfire hunter row too** (`state=3dcampfire`, the third
+place this texture is shown) — reads clearly green there as well, not
+just at the two camera angles this pass optimised for.
+
+**No regression.** Full-frame `state=3d` pixel diff against the pass-5
+baseline, same camera/hunter positions: 2,407 changed pixels total, all in
+four small clusters — the goblin's own screen region and its party-rail
+icon (both intended), plus the jackal's tail/legs and the Frog's own body,
+which match the established idle-animation-jitter pattern (breath/ember
+pulse/sway) every prior pass in this file has documented between two
+independently-timed renders. No shape or position change on either
+untouched model. `ALL TESTS PASSED` (`run_tests.gd`) — texture and a
+regenerated portrait PNG only, no code or geometry touched.
+
+**Score: Colour & read 9 → 10.** The rubric's own question for this line —
+"do the palette swatches separate the parts? Legible at 34px in the party
+panel, not just at 512? Nothing dark-on-dark" — is now checked at the
+hardest version of that test this project has (the live in-fight camera at
+native resolution, not a lit studio render or a zoomed crop) as well as
+the 34px panel itself, and both pass with the parts reading as distinctly
+as the Frog's own. Not claiming the texture is a from-scratch repaint —
+it's still a hue-masked patch on the original Meshy output — but the
+specific defect this line has carried since pass 1 ("measurably duller
+than the Frog's own") is closed at the actual size and lighting a player
+sees it in, not just improved on a number. **Total: 40 → 41/50** — one
+point under the 42 hunter stop line.
+
+### Where it stands
+
+**41/50, one point under the hunter stop line.** Lines: Silhouette 8,
+Proportion 8, Build hygiene 7, Colour & read 10, Style consistency 8.
+Build hygiene is the clear low line now (real tri-budget overage, 5199 vs
+1400) — the honest next move, if another pass is spent here, is checking
+whether any of the 489 raw islands can be welded down without a visible
+seam, which would be the first real hygiene fix rather than a topology
+measurement. Silhouette/Proportion/Style at 8 each have no named concrete
+defect left from this pass's look — closing the last point on any of them
+needs a fresh six-view look to find one, not an assumed push.

@@ -2,13 +2,158 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-23T22:20
-working_on: goblin_mech_ai pass 5 -- fixed the tank-vs-body contrast at the 34px party-portrait scale that pass 4 named as the concrete next move, and found a real bug while measuring it -- the glb's own embedded texture had never received pass 2's colour boost (only the loose extracted PNG the live fight reads had), so every portrait render has shown a dimmer goblin than the fight itself for two passes. Wrote a small GLB image-patch tool, masked the tank/shorts by hue, boosted sat/val there only. Colour & read 8->9, total 39->40/50. ALL TESTS PASSED, playtest clean (both failures pre-existing, already-filed fixer requests). Lease released.
+updated: 2026-09-23T23:22
+working_on: goblin_mech_ai pass 6 -- a fresh six-view look (pass 5's own suggested next move) found a much bigger colour defect than any prior pass caught -- at the true state=3d camera, 1:1, not a zoomed crop, the goblin's skin read near-white, not green, because every prior "verified in the real fight" frame in this thread was a 3x crop that hid it. Root cause: the skin texture measures S 0.26-0.29 even after pass 2's boost, low enough that the toon shader's bright "lit" band (mix toward white) reads as neutral; the Frog survives the same shader because its own texture is S 0.66-0.77. Wrote a hue-masked saturation-only boost (skin, not value -- avoids undoing pass 2's portrait fix), verified with a magenta diagnostic first. Colour & read 9->10, total 40->41/50, one point under the hunter stop line. Verified at both the real fight camera and the 34px portrait. ALL TESTS PASSED; 80-step playtest run in the foreground after pushing. Lease released.
 ---
 
 # artist
 
-## This run — 2026-09-23 22:20 ET
+## This run — 2026-09-23 23:22 ET
+
+- **Did:** a fresh six-view look at `goblin_mech_ai` (pass 5's own suggested
+  next move) turned up a much bigger colour problem than any pass before it
+  had found: at the real fight camera, at the actual pixel size a player
+  sees (not a 3x crop the way every prior "verified" frame here was taken),
+  the Goblin's skin reads near-white, not green.
+- **Worked?** Yes — traced it to the skin texture being too low-saturation
+  to survive the shader's own bright "lit" band (the Frog's texture is far
+  more saturated and survives the same shader fine), boosted saturation on
+  skin only, left brightness alone so it doesn't undo the portrait fix from
+  two passes ago. Confirmed with real screen pixels, before/after: a body
+  that read (240,243,220) — visibly cream — now reads (211,249,151) —
+  visibly green — same camera, same lighting. Also checked the party
+  portrait and the campfire row; both improved the same way. Colour & read
+  9→10, total 40→41/50.
+- **Next:** one point under the hunter stop line. Build hygiene (7, real
+  tri-budget overage) is the clear lowest line now — whether any of its 489
+  raw mesh islands can be welded without a visible seam is the next
+  concrete thing to try, not another colour pass.
+- **Need from you:** nothing.
+
+![[frames/artist/2026-09-23-goblin-skin-desaturation-infight-before-after.png]]
+![[frames/artist/2026-09-23-goblin-skin-desaturation-party-rail-before-after.png]]
+
+## Now
+
+Checked for a fresh, unhandled answer under `## Nick's answer` on my own
+`to: nick` notes first, per `COMMON.md` 1b — none open (all four of my
+`to: nick` requests are `status: done` with a filled `## Result`). Checked
+open `to: artist` requests — none this run (`requests/`'s only two `open`
+notes are both `to: fixer`). Worked the `JACKAL-BAR.md` queue: pass 5's own
+"Where it stands" named a fresh six-view look, not another colour push, as
+the next useful move on `goblin_mech_ai` — so this run did exactly that,
+literally, before assuming the asset needed something else.
+
+**Set up fresh** (fresh sandbox, per `status/README.md`): Godot 4.7.1
+imported clean, Meshy `balance` OK (2890 credits, not used this run — no
+Meshy needed), Blender 4.1.1 downloaded and ran. One real setup gap this
+run hit and fixed: Blender's own background render needs `libEGL.so.1`,
+which this fresh Ubuntu 24.04 image didn't have even with Mesa's GL
+libraries present — `apt-get install -y libegl1 libegl-mesa0` fixed it (the
+render silently produced nothing without it, no error beyond a one-line
+`Couldn't open libEGL.so.1` buried in ALSA noise — worth remembering for
+the next fresh sandbox that hits the same silent failure).
+
+**Ran `look.sh goblin_mech_ai 6`** and looked at all six views cold, before
+re-reading the score history, per the loop's own "score before reading the
+previous pass's number." Silhouette, form and wire held up — nothing new
+there, matching pass 5's own prediction that no single line was far behind.
+
+**The actual find came from going past the six-view render**, into the
+live fight at native resolution. Every earlier "verified in the real
+fight" claim in this asset's file — including pass 5's own two committed
+frames — was a 3x-zoomed crop. Rendered plain `state=3d` at its native
+1280×720 and sampled the goblin's own screen pixels directly, unscaled: at
+the coordinates the fight actually draws it, the skin is (240,243,220),
+(233,244,211), (238,243,214) — under 10% saturation, visibly cream, not
+green. The exact frame pass 5 committed as its own "after" evidence shows
+this same defect in its uncropped half; nobody had looked at it at the
+size it actually ships at.
+
+**Isolated the cause before touching anything**, the same way past passes
+in this file have: not a shader bug (`toon.gdshader` is shared with the
+jackal and the Frog, both read fine) — confirmed by a throwaway diagnostic,
+recolouring the skin mask solid magenta in the loose PNG and re-rendering
+`state=3d`: the model visibly went magenta in that exact region, so the
+albedo texture does reach the screen here, ruling out "the shader ignores
+albedo." The texture itself is genuinely too flat: skin measures S
+0.26–0.29, V 0.68–0.72 even after pass 2's global boost — high value, low
+saturation, which is exactly the profile a shader that mixes toward white
+in bright light will wash out. The Frog's own texture measures S
+0.66–0.77 at similar value and survives the identical shader untouched.
+
+**Fix, new `tools/blender/ai/goblin_ai_skin_saturation.py`**: hue-masked
+(70°–160°, this hunter's skin/ear green family), floored on the pixel's
+own current saturation/value (>0.12, >0.15) so near-neutral pixels
+(goggle-lens highlights, cream tusks/nails) can't be mis-tagged by an
+unstable hue reading on a near-grey pixel — confirmed by a magenta
+diagnostic on the flat texture atlas before touching real colour, landing
+exactly on skin/ears and nothing else. Saturation ×2.6 inside the mask,
+**value untouched** — deliberately the other lever from pass 2's, since
+this is a saturation problem under bright light, not a brightness problem,
+and lowering value again would undo the 34px portrait fix pass 2 made.
+2.6 chosen by testing sample points until they landed inside the Frog's
+own measured range, not guessed. Applied to both the loose PNG and the
+glb's embedded image, same two-part pattern pass 5 established (confirmed
+byte-identical beforehand).
+
+**Caught my own false negative before writing it up.** The first
+before/after render showed almost no change. Instead of concluding the fix
+didn't work, checked why first: the loose PNG was edited but Godot was
+never told to `--import` again, so the screenshot was reading its stale
+cached texture. Re-ran `--import`, re-rendered, and the real change showed
+up — confirmed independently by the magenta test above before trusting it.
+The project's "never claim an improvement you haven't seen in a render"
+rule cuts both ways: a claimed non-result needs the same scrutiny before
+it goes in the record.
+
+**Verified in the real fight**, same camera and hunter positions as every
+prior pass (logged, 6-decimal match), at true 1:1 scale, not a crop:
+
+![[frames/artist/2026-09-23-goblin-skin-desaturation-infight-before-after.png]]
+
+**Verified at the 34px party-portrait scale too** (re-ran `portraits.py`
+since the glb's embedded texture changed), composited on the rail's own
+`(58,42,30)` background:
+
+    pass 5: sat 0.493  val 0.461
+    pass 6: sat 0.655  val 0.422
+    frog_ai (ref): sat 0.69  val 0.44
+
+![[frames/artist/2026-09-23-goblin-skin-desaturation-party-rail-before-after.png]]
+
+Saturation now lands almost exactly inside the Frog's own range at this
+scale too — the in-fight fix and the portrait fix reinforce each other
+rather than trading off, because this pass moved saturation only. Also
+checked the campfire hunter row (`state=3dcampfire`) — reads clearly green
+there too, not just the two angles this pass targeted.
+
+**No regression.** Full-frame `state=3d` pixel diff against the pass-5
+baseline, same camera/positions: 2,407 changed pixels in four small
+clusters — the goblin's own screen region and its party-rail icon
+(intended), plus the jackal's tail/legs and the Frog's own body, matching
+the established idle-animation-jitter pattern (breath/ember pulse/sway)
+this file's own prior passes have already documented between two
+independently-timed renders. No shape or position change on either
+untouched model.
+
+**Score: Colour & read 9 → 10.** The rubric's own question — "do the
+palette swatches separate the parts? Legible at 34px in the party panel,
+not just at 512? Nothing dark-on-dark" — now checks clean at the hardest
+version of that test this project has (the live fight camera at native
+resolution) as well as the 34px panel, both matching the Frog's own
+separation. Not a from-scratch repaint, still a targeted hue-masked patch
+— but the specific defect this line has carried since pass 1 is closed at
+the size and lighting a player actually sees it in. **Total: 40 → 41/50**
+— one point under the 42 hunter stop line. Full write-up:
+`design/progress/goblin_mech_ai.md` ("Pass 6"). Updated `JACKAL-BAR.md`'s
+hunter-fidelity line.
+
+`ALL TESTS PASSED` (`run_tests.gd`). Pushing this now per `COMMON.md` 4b,
+then running the 80-step playtest in the foreground as the last step of
+this run; result appended to the Log below once it finishes.
+
+## Old: 2026-09-23 22:20 ET, goblin_mech_ai pass 5
 
 - **Did:** fixed `goblin_mech_ai`'s tank-vs-body contrast at 34px -- the
   concrete next move pass 4 left named. Along the way found the portrait
