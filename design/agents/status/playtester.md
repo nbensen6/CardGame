@@ -2,13 +2,77 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-24T03:35
-working_on: Full three-mode baseline clean (same two known bugs, no new failures). Extended hunter-off-marker to actually check the sigil position -- it used to skip it on a stale assumption. Proved both directions (injected offset caught, real code stays clean), and the clean pass exposed why the Frog reads as glued to the jackal's cheek at the sigil (correct by the placement math, just nowhere good to stand) -- filed to Nick as a decision, since the fixer already diagnosed the same trade-off but it never reached him as a to:nick request.
+updated: 2026-09-24T05:14
+working_on: Full three-mode baseline clean (same two known, open, already-filed issues, no regressions -- hop-distance-band and intent-hidden, both still waiting on the fixer). New check: party-roster-incomplete, closing JACKAL-BAR's "both hunters are always findable" -- the 3D camera only ever frames the active hunter by design, so what actually keeps the other one findable is the party panel, and nothing had checked its row count stays in sync with the model. Proved both directions. No new bug found; still waiting on Nick's answer on the sigil-cheek request from last run.
 ---
 
 # playtester
 
-## This run — 2026-09-24 03:35 EDT
+## This run — 2026-09-24 05:14 EDT
+
+- **Did:** no requests addressed to `playtester` were open; Nick has not
+  yet answered the sigil-cheek request from last run
+  (`2026-09-24-0322-...`). Ran the full three-mode baseline first, then
+  added one new check: `party-roster-incomplete`, closing JACKAL-BAR's
+  still-unchecked "both hunters are always findable, including mid-climb."
+  The 3D scene only ever frames the ACTIVE hunter (Nick's own camera
+  target, third-person over the active hunter's shoulder) — the other
+  hunter is routinely off screen entirely, on purpose, so a check that
+  demanded both be visible in the 3D view would just fail constantly on
+  correct behaviour. What actually keeps the inactive hunter findable is
+  the party panel (`_render_party`'s own comment: "the 3D scene shows
+  WHERE they are; this says how they're doing") — a row per hunter,
+  rebuilt from the model's own player list every refresh. Nothing had ever
+  checked that rebuild stays in sync; a stale refresh order or a row
+  silently failing to add would drop a hunter off the one place they are
+  guaranteed visible, without tripping any existing check (all of those
+  only judge whichever hunter the camera happens to be pointed at).
+- **Worked?** Yes, both halves. Baseline: 0 new failures across all three
+  modes — `play` (80 steps, though the fight ended in a win at step 30)
+  reproduced exactly the same two already-filed, already-open bugs as
+  every recent run (`hop-distance-band` ×62, `intent-hidden` ×18),
+  `hover` 0 flips (plus the same `hop-distance-band` fire at `start`),
+  `hands` (1–10) reproduced only `hop-distance-band` ×22 — nothing new,
+  nothing regressed. Also did a fresh human-eyes look at a few card-play
+  frames (step 009, step 019) while I had them open: hits land and read,
+  the party panel and gauge stay legible, and the sigil-cheek placement
+  (Frog flush against the jackal's cheek, no stone under it) is exactly
+  what was already filed to Nick — not new, not worse. New check: verified
+  false-positive-free first (`mode=hands`, all 10 sizes, 0 fires beyond
+  the known `hop-distance-band`), then proved it actually fires by
+  temporarily forcing `expect := c.players.size() + 1` and re-running
+  `mode=hands` — 11/11 calls correctly failed ("party panel shows 2
+  hunter row(s), model has 3") — then reverted (`git diff` clean, checked)
+  before trusting it.
+- **Next:** watch for Nick's answer on the sigil-cheek request (unchanged,
+  still the top of next run's queue per COMMON.md 1b the moment he
+  answers). Also still watching: the fixer's stone-route item 2 (confirmed
+  last run as a genuine geometric ceiling, not a retry bug — needs
+  re-authoring the Python reference model to actually close) and
+  `intent-tag-hides-behind-party-panel`, still open and unfixed.
+- **Need from you:** the sigil-cheek request, whenever you have a minute —
+  same ask as last run, nothing new to add.
+
+![[frames/playtester/2026-09-24-party-roster-both-rows.png]]
+Step 9 this run — the party panel always carries one row per hunter (Frog,
+Goblin Engineer) regardless of where either one is in the 3D scene; the new
+`party-roster-incomplete` check now watches that this stays true.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | fresh look this run — reads clearly; sigil-cheek placement unchanged, already filed to Nick |
+| 2 | hunters land on the beast correctly | unchanged — 0 `hunter-off-marker`, 0 `route-reversal`, 0 `hunters-overlap` |
+| 3 | jump animation (squash/arc/landing) | unchanged — clean, no pops, across every hop this run |
+| 4 | camera | unchanged — 0 `hunter-offscreen`/`hunter-lost-mid-hop`; **coverage gap closed**: the non-active hunter's findability (via the party panel) now has a permanent check, `party-roster-incomplete` |
+| 5 | nothing errors | clean — 0 `script-error` across all three modes |
+
+One commit this run: the new `party-roster-incomplete` check in
+`game/tools/playtest.gd`, plus this write-up and its frame, pushed before
+this note per COMMON.md 4b.
+
+## Old: 2026-09-24 03:35 EDT
 
 - **Did:** no requests addressed to `playtester` were open. Ran the full
   three-mode baseline first, then extended `hunter-off-marker`
@@ -1481,6 +1545,19 @@ remain the backstop for that; keep saving them.
 
 ## Log
 
+- 2026-09-24 05:14 EDT — no open requests addressed to `playtester`;
+  Nick has not yet answered the sigil-cheek request. Full three-mode
+  baseline clean (same two known, open, already-filed issues —
+  `hop-distance-band`, `intent-hidden` — no regressions). Added
+  `party-roster-incomplete` to `playtest.gd` (check 7b): closes
+  JACKAL-BAR's "both hunters are always findable, including mid-climb" —
+  the 3D camera only ever frames the active hunter by design, so the
+  party panel (one row per hunter, rebuilt every refresh) is what
+  actually keeps the other one findable, and nothing had checked that
+  rebuild stays in sync with the model. Proved both directions
+  (`mode=hands`: 0 false fires; a temporary `+1` injection fired 11/11,
+  reverted clean). Fresh human-eyes look at a couple of card-play frames
+  found nothing new. Pushed before writing this note, per COMMON.md 4b.
 - 2026-09-24 01:13 EDT — no open requests addressed to `playtester`. Full
   three-mode baseline (clean, matches last run: `intent-hidden` ×12, already
   filed/open, not a regression; 0 `route-reversal`, 0 `hunter-off-marker`, 0

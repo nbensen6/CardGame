@@ -409,6 +409,30 @@ func _check(v: Node, when: String) -> void:
 					_fail("hunters-overlap", "%s: hunters %d/%d are %.2fm apart (< %.2f) at %v / %v" \
 						% [when, a, b, d, MIN_HUNTER_GAP, pa, pb])
 
+	# 7b. JACKAL-BAR, "both hunters are always findable, including
+	# mid-climb." The 3D scene only ever frames the ACTIVE hunter -- by
+	# design (Nick's camera target is third-person over the active hunter's
+	# own shoulder; check 9's own comment says the same) -- so the other
+	# hunter is routinely off camera entirely, on purpose, not a bug. What
+	# actually keeps them findable then is the party panel: _render_party's
+	# own comment says it straight out, "the 3D scene shows WHERE they are;
+	# this says how they're doing," and it rebuilds one row per hunter from
+	# the model's own player list on every refresh. Nothing had ever checked
+	# that rebuild keeps up -- a stale refresh ordering, or a row silently
+	# failing to add, would drop a hunter off the one place they are
+	# guaranteed visible without ever failing any check above, since those
+	# only ever judge whichever hunter the camera happens to be pointed at.
+	# Cheap insurance, same reasoning as check 7 just above it: should never
+	# fire on real code.
+	if c != null and hunters is Array:
+		var party_el: Control = v.get("_party")
+		if party_el != null and is_instance_valid(party_el):
+			var rows := party_el.get_child_count()
+			var expect: int = c.players.size()
+			if rows != expect:
+				_fail("party-roster-incomplete", "%s: party panel shows %d hunter row(s), model has %d"
+					% [when, rows, expect])
+
 	# 8. A hunter mid-climb stands ON the model's own climb marker
 	# (combat_3d._stand_on_model), not floating off beside the body or fallen
 	# back to the bounding-box guess that runs when a beast ships with no
