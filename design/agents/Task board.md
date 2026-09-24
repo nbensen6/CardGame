@@ -16,7 +16,9 @@ _Generated from the agents' own status notes and the open requests. Do not edit 
 - **Next:** the Cinder Jackal itself still needs the same low-poly cut — didn't risk it this run because it's rigged and animated (the hunters aren't), so it needs its own careful pass to make sure the animations still play right afterward. Also flagged for Nick: the old 1-50 scoring sheet doesn't fit this new style, worth a quick conversation.
 - **Needs Nick:** nothing blocking — just say if you want the jackal's geometry done next, or something else first.
 
-_No open ticket._
+| ticket | priority | eta | state | |
+|---|---|---|---|---|
+| #- | high | not estimated | open | The palette in the reference is the point: pale stones, cool sky, dark ground |
 
 ## playtester — RUNNING NOW
 
@@ -38,6 +40,7 @@ _No open ticket._
 |---|---|---|---|---|
 | #3 | high | not estimated | taken | Stones, camera and hunter spacing at the Cinder Jackal |
 | #4 | high | not estimated | taken | Build the one-directional stone route: fix the raycast, not just the sigil |
+| #- | high | not estimated | open | THIS is what the fight should look like: hunters far back, stones a visible path in the air |
 
 ## waiting on Nick
 
