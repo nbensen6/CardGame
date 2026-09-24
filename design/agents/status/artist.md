@@ -2,13 +2,93 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T13:12
-working_on: Took the open "find an art style" request, researched 4 named styles (Wind Waker bold-cel, Shadow of the Colossus atmosphere, Risk of Rain 2 low-poly, Blizzard hand-painted), built real before/after renders of the two cheap ones on the live jackal fight, recommended Shadow of the Colossus, filed back to Nick to pick.
+updated: 2026-09-24T14:08
+working_on: Checked the board fresh — no open to:artist request, my own art-style pick request to Nick still unanswered, and every other unticked JACKAL-BAR line is parked or already blocked on Nick/the fixer. Confirmed baseline clean (ALL TESTS PASSED), shipped nothing this run.
 ---
 
 # artist
 
-## This run — 2026-09-24 13:12 ET
+## This run — 2026-09-24 14:08 ET
+
+- **Did:** fresh board check — no open `to: artist` request, and my own
+  `to: nick` art-style request from last run still has no answer. Walked
+  every unticked `JACKAL-BAR.md` line by hand to make sure nothing was
+  actionable: cards stay parked (Nick's standing order), the jackal/hunter
+  fidelity plateau is already asked-and-answered (Nick greenlit the risky
+  re-unwrap, it didn't work, nothing further to try without a much bigger
+  manual-retopology job he hasn't been asked about), and the Motion
+  "jump reads" line is blocked on the fixer's still-open residual
+  (`2026-09-24-1002-...intent-tag-still-grazes-hunter-at-hop-start.md`).
+- **Worked?** N/A — genuinely nothing open, answered, or unblocked to build
+  this run. Confirmed the baseline is still healthy (`ALL TESTS PASSED`)
+  rather than force a task; `git status` clean before this push except this
+  note.
+- **Next:** still waiting on Nick's pick on the art-style request. If the
+  fixer closes the intent-tag residual first, re-verify that Motion line
+  live before ticking it.
+- **Need from you:** your pick on
+  `2026-09-24-1147-nick-to-artist-find-an-art-style-worth-copying.md` —
+  everything else on my brief right now is done, parked, or waiting on
+  that same answer or on the fixer.
+
+## Now
+
+No open `to: artist` request this run (checked every request's
+frontmatter — the only open notes in `requests/` are two `to: fixer` and
+one `to: nick` (my own art-style ask, `issue: 8`, still no text under its
+`## Nick's answer` heading — just the template comment). None of my own
+`to: nick` notes had a fresh unhandled answer either (`COMMON.md` §1b):
+the plateau request (`2026-09-24-1110-...`) is `status: done`, its
+`## Result` already closed the loop Nick asked for (leave-or-retry the
+re-unwrap), and the follow-up it raises in passing ("a full manual
+retopology... your call, not blocking") was never turned into its own
+`to: nick` ask — re-raising the identical question with no new evidence
+this run would be crying wolf, so I left it alone rather than refile it
+for its own sake.
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`,
+`ALL TESTS PASSED` confirmed (`run_tests.gd`) before concluding there was
+nothing to build. No Blender or Meshy needed — no asset or geometry
+touched.
+
+**Went through `JACKAL-BAR.md` line by line rather than assume idle
+means done.** Every currently-ticked line stays ticked (nothing regressed
+— only three commits landed since my last run, `9cd616e`/`95695f7`/
+`c41886a`, all `design/agents/` documentation/tooling for Nick's Obsidian
+sync, none touching gameplay, a shader, or an asset). Of the unticked
+lines:
+- **Cards** (4 lines) — parked, Nick's standing order 2026-09-23. Skipped.
+- **Silhouette / hunter fidelity** — plateau already called, already asked,
+  already answered (12:23 ET result above), already tried and ruled out
+  for real (the re-unwrap on the Goblin Engineer). The one remaining lever
+  (hand-rebuilding ~334 tiny disconnected parts into each mesh, a full
+  retopology) is a much bigger job than what Nick greenlit, and my own
+  prior write-up already flagged it as his call without asking urgently.
+  Doing another scored pass on either asset now would violate the very
+  stop-the-loop rule (`asset-loop.md`) I invoked to call the plateau in
+  the first place — did not touch either asset.
+- **Motion, "the jump reads"** — the main bug is fixed and verified live
+  (my own 09:24 run), but the playtester's own permanent check caught a
+  smaller residual graze at hop start and filed it `to: fixer`
+  (`2026-09-24-1002-...`, still `status: open`). Not mine to fix or
+  re-verify until that lands.
+
+**Considered spending Meshy or Blender time anyway rather than end with
+nothing built, and decided against it.** The cheapest untested style
+candidate (B, Shadow of the Colossus, my own recommendation from last
+run) needs no Meshy spend either — it's shader/light values only — so
+there's no idle-Meshy-credit angle here; spending any of today's 8-task
+cap on a new model ahead of Nick's style pick would risk building the
+wrong thing twice. Checked `python3 tools/meshy.py balance` anyway to
+confirm the credential still works for whenever there is a real answer to
+build toward.
+
+`ALL TESTS PASSED` (`run_tests.gd`) before this push — no game code, asset,
+shader, or script touched this run; `git status` shows only this status
+note differs from `origin/main`. No playtest re-run needed: nothing in the
+live, shipped fight can differ from before this run started.
+
+## Old: 2026-09-24 13:12 ET
 
 - **Did:** the open `to: artist` request from last run ("find an art style
   worth copying") — researched 4 real, named art-style directions and, for
@@ -2506,6 +2586,12 @@ only touched the visual dressing) is the obvious next real-geometry pass.
 
 ## Log
 
+- 2026-09-24 14:08 EDT — checked the board fresh: no open `to: artist`
+  request, art-style pick still unanswered, every other unticked
+  `JACKAL-BAR.md` line already parked or blocked on Nick/the fixer with no
+  new lever to try. Confirmed baseline clean (`ALL TESTS PASSED`, Meshy
+  credential still good, balance 2890), shipped nothing this run rather
+  than force busy work.
 - 2026-09-24 13:12 EDT — researched 4 named art styles (Wind Waker bold-cel,
   Shadow of the Colossus atmosphere, Risk of Rain 2 low-poly, Blizzard
   hand-painted); built real before/after renders of the two free-to-test
