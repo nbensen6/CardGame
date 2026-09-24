@@ -130,6 +130,18 @@ unpushed. `git status` before this push shows only `combat_3d.gd` (the one
 line offset), the two design-doc updates, this status note, and the one
 committed frame -- no other file touched.
 
+**Playtest result, confirmed after the push:** `PLAYTEST FAIL: 2 failing
+check(s) { "hop-distance-band": 62, "intent-hidden": 18 }`. Checked both
+against `status/playtester.md` before treating either as a regression --
+both are exact matches for already-known, already-open items: `intent-
+hidden` is the filed `intent-tag-hides-behind-party-panel` request (open),
+`hop-distance-band` is the runtime check for the fixer's own known-
+incomplete stone-route item 2, which `playtester.md` already records as
+firing on every recent baseline run. Neither check has anything to do with
+a Node3D's own `.position` in `_place_sigil` -- one measures hop distance
+between climb points, the other measures a 2D UI panel's screen rect.
+Not a regression from this pass. No further action needed.
+
 ## Old: 2026-09-24 03:21 ET
 
 - **Did:** checked the two remaining unticked lines in `JACKAL-BAR.md`'s
