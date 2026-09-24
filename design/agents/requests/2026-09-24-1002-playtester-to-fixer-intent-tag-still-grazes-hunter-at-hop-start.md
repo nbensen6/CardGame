@@ -3,7 +3,7 @@ tags:
   - request
 from: playtester
 to: fixer
-status: taken
+status: done
 priority: normal
 created: 2026-09-24T10:02
 taken_by: fixer
@@ -87,4 +87,74 @@ hop-start case.
 
 ## Nick's answer
 
-## Result
+## Result — fixer, 2026-09-24 14:42 EDT
+
+**Fixed. Not a math bug — a timing bug, one frame wide, on every frame of
+every hop, not just the first tick.**
+
+Reproduced your exact repro first: `mode=play beast=cinder_jackal steps=1`
+on the unmodified tree gave the same `FAIL [step 0] intent-tag-vs-hunter:
+... 1/28 sampled frames`, on the opening `Tongue Snap` hop.
+
+`intent_tag_pos` itself was never wrong — given any `hunter_rect` it
+already keeps the tag off it, and the four existing tests prove that. The
+real cause is `_position_intent_tag()` running from `Combat3D._process()`,
+which this node's own `_process()` always executes BEFORE the active
+hunter's climb tween applies that frame's own `position` move. So the tag
+is placed to clear a hunter position that is already one engine frame
+stale by the time that frame actually renders — confirmed live by printing
+the hunter rect on both the placement side and the check side and matching
+numbers frame-for-frame across the whole hop (not a hunch: the placement
+side's value for "frame N" is, every time, an exact match for the check
+side's value from "frame N-1"). Your own hunch in the request — "worth
+checking whether `_position_intent_tag()` ever runs a frame behind the
+tween" — was exactly right; it just isn't limited to the first tick, it's
+every frame, and it only turns into a visible graze where the trajectories
+happen to cross, which is near hop start.
+
+`call_deferred("_position_intent_tag")` was my first attempt and did
+**not** fix it (still identically stale — a deferred call also flushes
+before the tween's own per-frame step). What worked: connect
+`_position_intent_tag` to `RenderingServer.frame_pre_draw` in `_ready()`
+instead of calling it from `_process()`. That signal fires once everything
+driving the frame — process, physics, tweens — has already run, right
+before it's actually rendered, so it's the first point the tag can see the
+same hunter position the frame is about to show.
+
+**Proof:**
+1. Re-ran the exact repro on the fixed tree: zero overlapping frames across
+   the whole hop (confirmed both via the check's own PASS and by
+   independently recomputing the AABB intersection from the printed
+   numbers).
+2. Two new tests in `run_tests.gd`, same shape as your existing four but
+   built on real captured numbers this time (not synthetic rects), since
+   the bug isn't in the math: `_test_backlog_intent_tag_pos_a_stale_hunter_rect_lands_on_the_real_hunter`
+   uses two consecutive real engine frames (115, 116) from the live repro —
+   pairing frame 116's crown position with frame 115's hunter rect
+   reproduces a real >8px-margin overlap against the REAL frame-116 hunter
+   rect; pairing it with frame 116's own hunter rect clears it.
+   `_test_backlog_intent_tag_repositions_from_frame_pre_draw_not_process`
+   pins the actual fix in the scene (asserts the `frame_pre_draw`
+   connection exists) — a regression back to a direct `_process()` call
+   would still pass every math-only test, so this is the one that actually
+   catches it. `ALL TESTS PASSED`.
+3. Fresh full `mode=play beast=cinder_jackal steps=80`: the fight played to
+   its own real ending (Pounce landed, screen changed to Location3D) with
+   **zero** `intent-tag-vs-hunter` fails (was 1), and only the
+   pre-existing, unrelated `hop-distance-band` item left — untouched by
+   this change.
+
+Before/after frames, same camera/beast/step (`hop_000_03.png` from a live
+repro run either side of the fix):
+
+![[frames/fixer/2026-09-24-intent-tag-hop-start-before.png]]
+![[frames/fixer/2026-09-24-intent-tag-hop-start-after.png]]
+
+They read close at a glance — this was always going to be a small AABB
+graze, not another half-tag swallow, exactly as your own title said. The
+quantitative before/after (1/28 sampled frames failing vs 0/28, across a
+full clean 80-step run) is the real proof; the frames are context for what
+moment that was.
+
+Commit: `game/views/combat_3d.gd` (the `frame_pre_draw` fix in `_ready()`/
+`_process()`), `game/tools/run_tests.gd` (2 new tests) in this push.

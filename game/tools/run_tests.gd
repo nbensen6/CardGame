@@ -2553,6 +2553,13 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog_intent_tag_pos_falls_back_below_the_hunter_when_above_has_no_room()
 	_test_backlog_intent_tag_pos_leaves_the_prior_clamp_alone_when_neither_side_has_room()
 
+	# request 2026-09-24-1002: a sliver of the same bug survived the hunter
+	# clamp above -- not a math gap in intent_tag_pos, but _position_intent_tag
+	# reading the hunter's position one climb-tween step behind whatever the
+	# frame actually renders, at the very start of a ground-level hop.
+	_test_backlog_intent_tag_pos_a_stale_hunter_rect_lands_on_the_real_hunter()
+	_test_backlog_intent_tag_repositions_from_frame_pre_draw_not_process()
+
 	print("")
 	if _failures == 0:
 		print("ALL TESTS PASSED")
@@ -29242,3 +29249,56 @@ func _test_backlog_intent_tag_pos_leaves_the_prior_clamp_alone_when_neither_side
 	var pos: Vector2 = Combat3D.intent_tag_pos(p, sz, vp, Rect2(), hunter)
 	_expect(is_equal_approx(pos.y, 168.0),
 		"no clear spot either side of a too-tall hunter -- keeps the pre-hunter clamp's own y unchanged (got y=%f want=168)" % pos.y)
+
+
+## Request 2026-09-24-1002: the playtester's own margin-guarded check
+## (`intent-tag-vs-hunter`, playtest.gd) still fired 1/28 sampled frames on
+## the already-fixed code, always on the opening hop's ground-level start.
+## intent_tag_pos itself was never wrong -- given ANY hunter_rect, its clamp
+## already keeps the tag off of it. What was wrong is _position_intent_tag
+## calling it once per _process(), which this node's own _process() runs
+## BEFORE the climb tween's per-frame position write lands (confirmed live:
+## instrumenting both sides showed _position_intent_tag reading the SAME
+## node.position value the previous engine frame had already used, every
+## single frame of the hop, not just the first one -- call_deferred made no
+## difference, since deferred calls also flush before the tween's own step).
+## So the tag was placed to clear a hunter position that was already stale
+## by the time the frame it belongs to actually rendered.
+##
+## Real numbers below are two CONSECUTIVE real engine frames (115, 116) from
+## a live `mode=play beast=cinder_jackal steps=1` run of the opening Tongue
+## Snap hop, captured straight out of _position_intent_tag's own inputs.
+## `p` and `hrect_now` are both frame 116's; `hrect_stale` is frame 115's --
+## exactly what a one-frame-behind read would have paired `p` with.
+func _test_backlog_intent_tag_pos_a_stale_hunter_rect_lands_on_the_real_hunter() -> void:
+	var p := Vector2(367.888, -107.5907)
+	var sz := Vector2(160.0, 34.0)
+	var vp := Vector2(1280.0, 720.0)
+	var party := Rect2(16.0, 12.0, 304.0, 148.0)
+	var hrect_stale := Rect2(96.11755, 108.7229, 182.5405, 123.191)    # frame 115's hunter rect
+	var hrect_now := Rect2(155.719, 117.1161, 161.42, 114.3538)        # frame 116's REAL hunter rect
+	var pos_stale: Vector2 = Combat3D.intent_tag_pos(p, sz, vp, party, hrect_stale)
+	var overlap_stale := Rect2(pos_stale, sz).intersection(hrect_now)
+	_expect(overlap_stale.size.x > 8.0 and overlap_stale.size.y > 8.0,
+		"pairing this frame's crown position with LAST frame's hunter_rect must reproduce the reported graze against the real, current hunter (got overlap %s)" % overlap_stale)
+	var pos_now: Vector2 = Combat3D.intent_tag_pos(p, sz, vp, party, hrect_now)
+	var overlap_now := Rect2(pos_now, sz).intersection(hrect_now)
+	_expect(not (overlap_now.size.x > 8.0 and overlap_now.size.y > 8.0),
+		"pairing the crown position with its OWN frame's hunter_rect (what the frame_pre_draw fix guarantees) must clear the real hunter (got overlap %s)" % overlap_now)
+
+
+## Pins the actual fix (combat_3d.gd's _ready()), not just the math above:
+## _position_intent_tag must run off RenderingServer.frame_pre_draw -- which
+## fires once this frame's process, physics and tweens have all already run,
+## the first point where the hunter's position is no longer stale -- rather
+## than from _process(), which runs ahead of the climb tween's own per-frame
+## step. A regression back to a direct _process() call would still pass
+## every test above (they call intent_tag_pos directly, not through the
+## scene), so this is the guard that actually catches it.
+func _test_backlog_intent_tag_repositions_from_frame_pre_draw_not_process() -> void:
+	var c3d: Node = preload("res://views/combat_3d.tscn").instantiate()
+	get_root().add_child(c3d)
+	_expect(RenderingServer.frame_pre_draw.is_connected(c3d._position_intent_tag),
+		"_position_intent_tag must be wired to RenderingServer.frame_pre_draw so it reads the hunter's position after this frame's climb tween has stepped, not before it")
+	get_root().remove_child(c3d)
+	c3d.free()

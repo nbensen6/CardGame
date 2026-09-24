@@ -2,11 +2,123 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-24T11:34
-working_on: Fixed the self-filed dropped-slider-wrong-label bug -- a dropped slider hold's MISS burst read "TOO EARLY"/"TOO LATE" off a frozen, stale offset sign instead of saying it was let go; also fixed a same-neighborhood bug where a rescue-window downgrade popped no burst at all.
+updated: 2026-09-24T14:42
+working_on: Fixed the last sliver of the intent-tag-vs-hunter bug -- the tag's on-screen position was computed one engine frame behind the hunter it was avoiding, because it ran from _process() (before the climb tween's own per-frame move) instead of after it.
 ---
 
 # fixer
+
+## This run — 2026-09-24 14:42 EDT
+
+- **Did:** fixed the real, small case the playtester's own margin-guarded
+  check kept finding after my last hunter-clamp fix: at the very start of
+  a ground-level hop, the intent tag's left edge grazed the hunter's own
+  on-screen body for exactly one sampled frame in every full run.
+- **Worked?** Yes. Root cause wasn't the placement math (`intent_tag_pos`)
+  at all — it was `_position_intent_tag()` running from `_process()`,
+  which this node's own `_process()` always executes BEFORE the active
+  hunter's climb tween applies that frame's own position move. So the tag
+  was placed to clear a hunter position that was already one frame stale
+  by the time the frame it belonged to actually rendered. Proved this live
+  by instrumenting both sides (not guessed): the position `_position_intent_tag`
+  read matched the PREVIOUS real engine frame's position, every single
+  frame of the hop, not just the first tick. Tried `call_deferred` first —
+  no change, still stale (deferred calls flush before the tween's own step
+  too). Fix: run `_position_intent_tag` off `RenderingServer.frame_pre_draw`
+  instead, which fires only once this frame's process/physics/tweens have
+  already applied. Confirmed live: the AABB overlap that fired 1/28 sampled
+  frames every full run is gone, and a fresh full 80-step regression plays
+  clean to the fight's own real ending with only the pre-existing, unrelated
+  `hop-distance-band` item left.
+- **Next:** nothing of mine left on this one. Order-of-work for a future
+  run: the stone-route hop-distance item (still `taken`, one real lever
+  left after five ruled-out dead ends) or a fresh read of the fight's code
+  paths if no request is open.
+- **Need from you:** nothing.
+
+![[frames/fixer/2026-09-24-intent-tag-hop-start-before.png]]
+![[frames/fixer/2026-09-24-intent-tag-hop-start-after.png]]
+
+## Now
+
+Took the open `to: fixer` request
+`2026-09-24-1002-playtester-to-fixer-intent-tag-still-grazes-hunter-at-hop-start.md`
+(the only open `to: fixer` request this run — checked every request's
+frontmatter; the stone/camera/hop-distance thread is still `taken`, not
+`open`, and already carries five documented dead ends, so order-of-work
+put this actual open request first).
+
+**Reproduced first, live.** `xvfb-run ... playtest.gd -- mode=play
+beast=cinder_jackal steps=1` on the unmodified tree reproduced exactly what
+the request described: `FAIL [step 0] intent-tag-vs-hunter: the intent tag
+overlapped the jumping hunter's own on-screen body for 1/28 sampled frames`,
+on the opening `Tongue Snap` hop, hunter still low over the beast's front leg.
+
+**Found the cause, not just the symptom, by instrumenting both sides.**
+`intent_tag_pos` (the pure placement math) was never wrong — given ANY
+`hunter_rect`, its clamp already keeps the tag off it, and the four existing
+tests already prove that. The bug was in `_position_intent_tag()`'s own
+timing: it runs from `Combat3D._process()`, but the active hunter's climb
+tween applies ITS OWN per-frame `position` move at a point in the frame that
+this node's `_process()` runs ahead of — so every single frame of a hop, not
+just the first tick, `_position_intent_tag()` was reading (and placing the
+tag to avoid) the hunter's position as of the PREVIOUS real engine frame,
+one full step behind whatever that frame actually rendered. Proved this by
+printing the hunter rect on both the placement side (inside
+`_position_intent_tag`) and the check side (playtest.gd's own fresh
+recomputation right after the frame it just watched render) and comparing:
+the placement side's value for "frame N" was, every time, an exact match
+for the check side's value from "frame N-1" — not a hunch, a live number
+match across dozens of consecutive frames of the same hop.
+
+**First attempt (`call_deferred("_position_intent_tag")`) did not fix it** —
+identical staleness, because a deferred call also flushes before the tween's
+own per-frame step. Second attempt worked: connect `_position_intent_tag`
+to `RenderingServer.frame_pre_draw` in `_ready()` instead of calling it from
+`_process()`. That signal fires once everything driving this frame — process,
+physics, tweens — has already run, right before it is actually rendered, so
+it is the first point where the tag can see the same hunter position the
+frame is about to show.
+
+**Proof.**
+1. Re-ran the exact repro on the fixed tree: the AABB overlap the check
+   found is gone (confirmed both via the check's own PASS/FAIL and by
+   independently recomputing the intersection from the same printed numbers
+   in Python — zero overlapping frames across the whole hop, where the
+   unfixed tree had exactly one).
+2. Two new tests in `run_tests.gd`. The first pins the MECHANISM with real
+   captured numbers from two consecutive real engine frames (115, 116) of
+   the live repro: pairing frame 116's crown position with frame 115's
+   (stale) hunter rect reproduces a real >8px-margin overlap against the
+   REAL frame-116 hunter rect; pairing it with frame 116's own hunter rect
+   clears it. The second pins the actual fix in the scene: instantiates
+   `combat_3d.tscn` and asserts `RenderingServer.frame_pre_draw.is_connected
+   (c3d._position_intent_tag)` — a regression back to a direct `_process()`
+   call would still pass every math-only test, so this is the guard that
+   actually catches it. `ALL TESTS PASSED` (both new tests plus the full
+   existing suite).
+3. Full fresh `mode=play beast=cinder_jackal steps=80` regression: the fight
+   played to its own real ending (Pounce landed, screen changed to
+   Location3D) with **zero** `intent-tag-vs-hunter` fails (was 1 before),
+   and only the pre-existing, unrelated `hop-distance-band` item left (62
+   occurrences, the same already-`taken` thread five prior runs have been
+   chipping at — untouched by this change).
+
+Before/after frames above: `hop_000_03.png` from a live repro run, same
+camera, same beast, same step. The overlap this check catches is a real but
+small AABB graze (the hunter's real silhouette is tighter than the AABB
+`hunter_screen_rect` measures, per that function's own doc comment), so the
+two frames read close at a glance — this was never the artist's original
+half-tag swallow, it is the much smaller sliver the request's own title
+says survived that fix. The quantitative before/after (1/28 sampled frames
+failing vs 0/28, across a full clean run) is the real proof; the frames are
+context for what moment that was.
+
+Commit: see `game/views/combat_3d.gd` (the `frame_pre_draw` fix, `_ready()`
+and `_process()`), `game/tools/run_tests.gd` (2 new tests) in this push.
+Filled the request's own `## Result` and set `status: done`.
+
+## Old: 2026-09-24, dropped-slider-shows-wrong-timing-label
 
 ## This run — 2026-09-24 11:34 EDT
 
@@ -1479,7 +1591,17 @@ further either.
 
 ## Log
 
-- 2026-09-24 11:34 EDT (latest) — dropped-slider-shows-wrong-timing-label:
+- 2026-09-24 14:42 EDT (latest) — intent-tag-still-grazes-hunter-at-hop-start:
+  fixed. Not a math bug in `intent_tag_pos` -- `_position_intent_tag()` ran
+  from `_process()`, one full engine frame ahead of the active hunter's own
+  climb-tween position update, so it always placed the tag to clear a
+  hunter position that was already stale by the time that frame rendered
+  (proved live, numbers matched frame-for-frame). `call_deferred` did not
+  fix it; wiring `_position_intent_tag` to `RenderingServer.frame_pre_draw`
+  instead did. 2 new tests (real captured numbers pin the mechanism; a
+  scene test pins the actual signal wiring), full 80-step regression clean
+  (0 `intent-tag-vs-hunter` fails, was 1).
+- 2026-09-24 11:34 EDT — dropped-slider-shows-wrong-timing-label:
   fixed. A dropped slider hold's MISS burst read "TOO EARLY"/"TOO LATE" off
   a frozen, stale `_offset()` sign instead of saying it was let go; also
   fixed the same-neighborhood bug where a rescue-window downgrade (release

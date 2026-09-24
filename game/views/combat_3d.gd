@@ -601,6 +601,16 @@ func _ready() -> void:
 	# have finished reading what it printed.
 	DevConsole.attach(self, _refresh)
 	_cam_home = _cam.position
+	# The active hunter's climb tween updates node.position during its own
+	# per-frame step, which this node's _process() runs ahead of -- reading
+	# it from _process (even at the very end, even deferred) still sees last
+	# frame's position, so the tag's hunter-avoidance clamp was one step
+	# behind whatever actually got drawn (request 2026-09-24, "still grazes
+	# hunter at hop start"). frame_pre_draw fires once everything driving
+	# this frame -- process, physics, tweens -- has already run, right before
+	# it is actually rendered, so this is the first point where the tag can
+	# see the same hunter position the frame is about to show.
+	RenderingServer.frame_pre_draw.connect(_position_intent_tag)
 	_client = Session.client
 	if _client == null:
 		return
@@ -1267,9 +1277,6 @@ func _process(delta: float) -> void:
 		_sigil.scale = Vector3.ONE * _sigil_scale * (1.0 + sin(_time * 3.0) * 0.14)
 	_fly(delta)
 	_track_climb(delta)
-	# After the camera work above: the tag is pinned to a world point, so it has to
-	# be reprojected once the shake, recoil and orbit for this frame have settled.
-	_position_intent_tag()
 	if _coach_left > 0.0:
 		_coach_left -= delta
 		# fade the last second, so it leaves rather than blinking out
