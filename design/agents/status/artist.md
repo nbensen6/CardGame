@@ -2,13 +2,114 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T08:22
-working_on: First dedicated artist look at JACKAL-BAR's Motion section (jump reads, camera, no pops) -- never checked before. Real hops read well at true 1:1. Found one real defect along the way -- the boss intent tag can render on top of a hunter mid-jump, swallowing part of it at the arc's peak -- filed to the fixer with pixel-measured before frames, same shape as the already-fixed intent-tag-vs-party-panel bug.
+updated: 2026-09-24T09:24
+working_on: Closed out JACKAL-BAR's Motion section -- ticked all three lines. The fixer's jump-hides-behind-intent-tag fix (commit 73ae6b4) verified live with a fresh render (frog now clear of the tag, not behind it), and a dedicated eyes-on pass on camera-hold and no-pops across 8 real hops in a full fight found nothing wrong (0 check fires, real frames read clean by eye too).
 ---
 
 # artist
 
-## This run — 2026-09-24 08:22 ET
+## This run — 2026-09-24 09:24 ET
+
+- **Did:** picked up my own last run's "Next" — the fixer's fix for the
+  jump-hides-behind-intent-tag bug had landed
+  (`2026-09-24-0822-...jump-hides-behind-intent-tag.md`, commit `73ae6b4`),
+  so re-rendered a real fight to verify it live (not just trust the
+  fixer's own test suite) and finish the Motion section's two remaining
+  unticked lines — camera-holds-the-hunter and no-pops — which my last run
+  had deliberately left un-graded pending that fix.
+- **Worked?** Yes, all three lines. The exact repro hop (step 0's opening
+  Tongue Snap) now shows the frog sitting fully clear above "† Attack 7",
+  not swallowed by it — a live re-render, not just reading the fixer's own
+  write-up. Camera-hold and no-pops: ran a full 80-step real fight,
+  sampled 8 real hops across it, and both `hunter-lost-mid-hop` and
+  `hop-position-pop` fired 0 times (coverage 94-100% on-screen per hop,
+  worst frame-to-frame step 3.07m and still read as smooth, not a spike).
+  Then did the actual eyes-on pass this line has always needed — tiled two
+  real hops (the opening ground hop, and the run's biggest single-frame
+  delta, a cross-arena Grappling Hook hop) into strips and read them at
+  true resolution: the hunter stays visible and readable through the
+  whole arc in both, no frame where it disappears, teleports, or snaps.
+- **Next:** `JACKAL-BAR.md`'s Motion section is now fully ticked — nothing
+  left on this line. The loudest remaining items on my own brief:
+  `goblin_mech_ai` still sits one point under its hunter stop line (needs
+  a scoped UV re-unwrap, not a routine-run fix), and the bar's "the fight,
+  read at a glance" section (intent unmissable, damage numbers land where
+  things happen, hunters always findable, nothing hidden behind the hand/
+  rail/party panel) has never had a dedicated artist look.
+- **Need from you:** nothing.
+
+![[frames/artist/2026-09-24-jump-tag-fix-verified.png]]
+![[frames/artist/2026-09-24-motion-camera-hold-hop000.png]]
+![[frames/artist/2026-09-24-motion-no-pop-hop027.png]]
+
+## Now
+
+No open `to: artist` request this run (checked every request's
+frontmatter — the two open notes in `requests/` are `to: fixer` and
+`to: nick`, neither mine, and neither `to: nick` note under my own name has
+a fresh unhandled answer per `COMMON.md` 1b). Worked `JACKAL-BAR.md`'s
+Motion section, exactly where my own last run's "Next" pointed once the
+fixer's tag fix landed.
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `pip install
+pillow numpy`. Blender not needed this run — no geometry touched, this was
+a rendering/observation pass only, same as last run.
+
+**Verified the tag fix live before trusting it.** The fixer's own
+write-up (`2026-09-24-0822-...jump-hides-behind-intent-tag.md` `## Result`)
+already showed a re-render clearing the exact repro hop and four new unit
+tests, all passing (`ALL TESTS PASSED` confirmed again this run, clean
+tree, no code touched). Re-ran it myself anyway rather than take that on
+faith: fresh `mode=play beast=cinder_jackal steps=80`, read
+`hop_000_08.png` (one of the original six frames the bug report was built
+on) at true 1:1 — the frog now sits clearly above "† Attack 7", full body
+visible, nothing occluded. Independent confirmation, not a rubber stamp.
+
+**Ran the same fight to also close the two Motion lines my last run left
+open on purpose.** `JACKAL-BAR.md`'s own text said these were "worth a
+future run once the tag fix lands, since re-rendering the same hops is
+nearly free at that point" — that future run is this one. Sampled 8 real
+hops spread across the full 80 steps (0, 1, 2, 9, 10, 11, 16, 19, 20, 27 —
+different heights, different cards, both hunters), read the check output
+for each:
+
+    mid-hop camera coverage -- 29-118/29-118 sampled frames on screen
+      (0% off on 7 of 8; 6% off on step 0, the opening hop, comfortably
+      under the 50%-off "lost" threshold the check itself documents as the
+      line between a real complaint and "a single-frame graze at the edge
+      of a big arc")
+    hop position continuity ok -- worst frame-to-frame step 3.070m (step
+      27's Grappling Hook, the run's biggest), still read as smooth
+      against its own local neighbours, not an isolated spike
+
+Zero `hunter-lost-mid-hop` or `hop-position-pop` fails anywhere in the
+full log (`grep -c` on both against the run's own output, not eyeballed).
+
+**Then did the part the check math can't do — looked.** Per this brief's
+own standing rule (a check proves the number is in range, not that it
+reads right), tiled two real hops into strips at true native resolution
+and read them frame by frame: `hop_000` (the opening ground→foothold hop,
+the same one the tag bug lived on) and `hop_027` (the Goblin's Grappling
+Hook, the run's largest single-frame position delta, the likeliest place
+a real pop would show if the check's threshold were hiding one). Both
+read as one continuous, readable motion — the hunter is never lost behind
+UI or the arena, and nothing teleports or snaps between frames anywhere
+in either strip.
+
+![[frames/artist/2026-09-24-motion-camera-hold-hop000.png]]
+![[frames/artist/2026-09-24-motion-no-pop-hop027.png]]
+
+**Ticked all three `JACKAL-BAR.md` Motion lines** with this evidence —
+the jump-reads line (now that its one real defect is fixed and verified),
+camera-holds-the-hunter, and no-pops. The Motion section is now fully
+closed; nothing left unticked on it.
+
+`ALL TESTS PASSED` (`run_tests.gd`) — no code or asset touched this run,
+only `JACKAL-BAR.md`, this status note, and three new frames (`git status`
+confirms). No further playtest needed beyond the one 80-step baseline
+above, which already covers everything this run claims.
+
+## Old: 2026-09-24 08:22 ET
 
 - **Did:** picked up the one thing my own last run's "Next" named as
   never having had a dedicated artist look: `JACKAL-BAR.md`'s Motion
@@ -1837,6 +1938,15 @@ only touched the visual dressing) is the obvious next real-geometry pass.
 
 ## Log
 
+- 2026-09-24 09:24 EDT — closed `JACKAL-BAR.md`'s Motion section: verified
+  the fixer's jump-hides-behind-intent-tag fix (commit `73ae6b4`) live with
+  a fresh render, then did a dedicated eyes-on pass on camera-hold and
+  no-pops across 8 real hops in a full fight — 0 check fires, and the real
+  frames read clean by eye too. All three Motion lines ticked.
+- 2026-09-24 08:22 EDT — first dedicated artist look at Motion: real hops
+  read well at true 1:1, but found the boss's intent tag can render on top
+  of a jumping hunter and hide part of it at the arc's peak. Filed
+  `to: fixer`; left all three Motion lines unticked pending that fix.
 - 2026-09-24 07:16 EDT — `goblin_mech_ai` pass 8: fresh six-view look found
   no new Sil/Prop/Style defect; tested tri-count decimation as a cheaper
   substitute for the UV re-unwrap Build hygiene needs — 40% fewer tris is

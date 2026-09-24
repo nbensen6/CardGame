@@ -99,7 +99,7 @@ reading the fight at a glance, at play size, in motion.
       an abstract shape. `design/progress/cinder_jackal_ai.md` ("Pass 4").
 
 ### Motion
-- [ ] **The jump reads** — anticipation, arc, landing, at the size it plays.
+- [x] **The jump reads** — anticipation, arc, landing, at the size it plays.
       First dedicated artist look, 2026-09-24: real hops (`mode=play
       beast=cinder_jackal`) read well overall at true 1:1 — a clear
       anticipation crouch, a real airborne arc, a clean landing on the
@@ -113,21 +113,34 @@ reading the fight at a glance, at play size, in motion.
       the tag's screen rect (six consecutive real frames of the opening
       hop show the frog's lower body swallowed by "† Attack 7"). Filed
       `to: fixer`,
-      `2026-09-24-0822-artist-to-fixer-jump-hides-behind-intent-tag.md`
-      (same shape as the already-fixed intent-tag-vs-party-panel bug, just
-      never checked against a hunter). Leaving this line unticked until
-      that's closed — the arc/landing read is real, but "at the size it
-      plays" isn't fully true while the tag can eat the jump's own peak.
-- [ ] **The camera never loses the active hunter**, including mid-jump.
-      Not contradicted by this run — every hop checked stayed on screen the
-      whole time (`playtester.md`'s own `hunter-lost-mid-hop` check has
-      never fired) — left unticked only because nobody has done a dedicated
-      eyes-on pass for framing quality specifically (vs. "on screen at
-      all"), same as this run did for the jump-read line above.
-- [ ] **No pops**: nothing teleports, flickers, or snaps between frames.
-      Not contradicted either — `playtester.md`'s `hop-position-pop` check
-      (proved both directions) has never fired on a real run — same caveat,
-      no dedicated artist eyes-on pass yet.
+      `2026-09-24-0822-artist-to-fixer-jump-hides-behind-intent-tag.md`;
+      fixed same day (`intent_tag_pos` gained a `hunter_rect` clamp,
+      commit `73ae6b4`). Closed 2026-09-24: fresh `mode=play
+      beast=cinder_jackal steps=80` re-render of the exact repro hop
+      (`hop_000_08.png`) shows the frog sitting fully clear above
+      "† Attack 7", not behind it — tag fix verified live, not just by the
+      fixer's own test suite.
+      ![[frames/artist/2026-09-24-jump-tag-fix-verified.png]]
+- [x] **The camera never loses the active hunter**, including mid-jump.
+      Dedicated eyes-on pass, 2026-09-24 (this run): 8 real hops sampled
+      across a full 80-step fight (steps 0, 1, 2, 9, 10, 11, 16, 19, 20,
+      27), `playtester.md`'s own `hunter-lost-mid-hop` check fired 0 times
+      — coverage ranged 94%-100% on-screen per hop, all comfortably under
+      the 50%-off "lost" threshold. Backed by an actual look, not just the
+      check: tiled strips of two real hops (the ground→first-foothold
+      opening hop, and a long cross-arena Grappling Hook hop) both show the
+      hunter clearly visible and readable through the whole arc, no frame
+      where it drops off screen or behind another element.
+      ![[frames/artist/2026-09-24-motion-camera-hold-hop000.png]]
+- [x] **No pops**: nothing teleports, flickers, or snaps between frames.
+      Dedicated eyes-on pass, 2026-09-24 (this run): `hop-position-pop`
+      fired 0 times across the same 8 sampled hops (worst frame-to-frame
+      step 3.07m on the longest hop, still read as smooth against its own
+      neighbours, not an isolated spike). Confirmed by eye on the same two
+      strips as the line above — the goblin's Grappling Hook arc (the
+      biggest single-frame delta this run) reads as one continuous motion
+      frame to frame, no teleport or snap anywhere in the sequence.
+      ![[frames/artist/2026-09-24-motion-no-pop-hop027.png]]
 
 ### The hunters
 - [ ] **Frog and Goblin match the jackal's fidelity.** Both are now the
