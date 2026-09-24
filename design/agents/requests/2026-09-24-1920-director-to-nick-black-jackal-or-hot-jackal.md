@@ -12,6 +12,7 @@ taken_by:
 ask: Should the jackal stay black with glowing ember cracks, or be lit hot orange all over like the beast in your drawing?
 waiting: false
 issue: 17
+synced_comment: 5823947773
 ---
 
 # Black jackal with embers, or a hot orange one like your drawing?
@@ -62,5 +63,10 @@ You answer below. Whoever reads it files the follow-up to the artist if the
 answer is orange, or marks this done if it is black.
 
 ## Nick's answer
+
+**From GitHub #17 (nbensen6, 2026-09-24 23:26 UTC):**
+
+keep black. only use the picture as reference for character and stone placement. no art direction is needed.
+
 
 ## Result

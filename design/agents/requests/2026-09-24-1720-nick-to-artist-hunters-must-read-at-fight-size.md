@@ -4,7 +4,7 @@ tags:
   - request
 from: nick
 to: artist
-status: done
+status: open
 priority: high
 beast: cinder_jackal
 eta: next run
@@ -156,3 +156,13 @@ fully solved.
 The Blender pipeline (`tools/blender/ai/flat_paint_dump.py` →
 `flat_paint_region_merge.py` → `flat_paint_bake.py`) is committed and
 reusable if another cast member ever needs the same treatment.
+
+## Nick's answer — 2026-09-24 19:40 EDT
+
+**Reopened. "The characters look really bad" — his words, after this was
+marked done.** Marking it done was your judgement, not his, and on a ticket
+whose Done-when is "Nick can tell the Frog from the Goblin in a 1:1 wide shot
+without hunting" that call was never yours to make.
+
+Do not close this again. When you believe it is right, hand it back
+`to: nick` with a 1:1 wide shot and let him say so.
