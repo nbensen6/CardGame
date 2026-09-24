@@ -1139,6 +1139,24 @@ only touched the visual dressing) is the obvious next real-geometry pass.
 
 ## Log
 
+- 2026-09-24 01:38 EDT — 80-step `mode=play beast=cinder_jackal` playtest for
+  the basalt-geometry cleanup finished: `PLAYTEST FAIL: 2 failing check(s) {
+  "hop-distance-band": 62, "intent-hidden": 18 }`. Checked both against the
+  known record before treating either as a regression: `intent-hidden` is
+  the same still-open `to: fixer` request filed 2026-09-23 21:41 (intent tag
+  vs party panel). `hop-distance-band` is a check the playtester added THIS
+  run (commit `1313708`, after my own run started) confirming the fixer's own
+  still-open finding from their last run's status note — Height 3→4 measures
+  2.39m and 4→5 measures 1.52m against a 2.42m floor, the EXACT numbers the
+  fixer already reported as unfixed ("the two hops nearest the sigil stay
+  short"). Climb marker positions are untouched by this pass's fix (they're
+  separate empties from the Body mesh I edited), so this can't be a
+  regression from removing the basalt geometry — confirmed by the numbers
+  matching exactly, not just "plausibly pre-existing." No `hunter-off-marker`,
+  `route-reversal`, `damage-popup-offscreen` or `script-error` fails despite
+  the beast's own bounding box legitimately shrinking this pass — the
+  systems that read `_beast_box` (arena sizing, hunter standoff, camera) all
+  held. Commit `c4c25a8`.
 - 2026-09-23 23:35 EDT — 80-step playtest for the skin-saturation change
   finished: `PLAYTEST FAIL: 2 failing check(s) { "intent-hidden": 26,
   "damage-popup-offscreen": 1 }` — the same two pre-existing, already-filed
