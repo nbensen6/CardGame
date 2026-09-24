@@ -64,6 +64,17 @@ const SIGIL_HUNTER_HEIGHT := 0.7
 ## not a hair under it).
 const SIGIL_CLEAR_MARGIN := 0.05
 
+## For check 9b (camera-not-over-shoulder): how close to fully engaged (1.0)
+## `_shoulder` must sit once the fight has settled before this counts as a
+## real over-the-shoulder shot rather than the plain dead-centre follow cam
+## it replaced. Far under 1.0 on purpose -- `_shoulder`'s own ease
+## (combat_3d.gd _aim_camera, rate 2.2/s) reaches this in well under a
+## second of real time, and every step gives it several real seconds to
+## settle (_wait_and_poll) before _check runs, so anything short of this
+## means the truck never actually engaged, not that it simply hasn't
+## finished easing in yet.
+const SHOULDER_ENGAGED_MIN := 0.95
+
 ## For check 5d (intent-tag-hides-jumping-hunter): reuses combat_3d.gd's own
 ## pure `hunter_screen_rect`/`_merged_aabb` to measure where the hop's hunter
 ## actually is on screen, the same way check 8d (sigil-behind-hunter) measures
@@ -660,6 +671,33 @@ func _check(v: Node, when: String) -> void:
 			var p := cam.unproject_position(mine)
 			if p.x < -2.0 or p.y < -2.0 or p.x > screen.x + 2.0 or p.y > screen.y + 2.0:
 				_fail("hunter-offscreen", "%s: the active hunter projects to %v, off the %v screen entirely" % [when, p.round(), screen])
+
+	# 9b. JACKAL-BAR / checklist item 4's own target camera: "third person
+	# over the active hunter's shoulder" is the RESTING shot Nick asked for
+	# (2026-09-23, "make the resting camera third person too"), not only a
+	# mid-jump framing rule. `Combat3D.shoulder_frame()` -- the pure
+	# truck/aim math that composes the over-the-shoulder shot -- already has
+	# full unit coverage in run_tests.gd, proven correct for any `amount`,
+	# but nothing had ever checked that a REAL fight actually DRIVES that
+	# amount (`_shoulder`) up once things settle, as opposed to sitting on
+	# the plain dead-centre follow cam forever. `_aim_camera`'s own rule
+	# (`want_ots`) eases `_shoulder` toward 1.0 whenever the shot is focused,
+	# not still easing in from the establishing wide, and not chasing a leap
+	# tall enough to need the whole-arc framing instead -- so this reuses
+	# check 9's own "not airborne" settle gate (the same moment "the beast is
+	# framed, the hunter is visible" is judged) to check the other half of
+	# checklist item 4 at the same settled instant: not just SOMEWHERE on
+	# screen, genuinely shot from over the shoulder. SHOULDER_ENGAGED_MIN
+	# sits far under 1.0 on purpose -- see its own doc comment for why
+	# anything short of it means the shot never engaged at all, not that the
+	# ease simply hasn't finished.
+	var focused: bool = bool(v.get("_focused"))
+	var establishing: bool = bool(v.get("_establishing"))
+	if not airborne and focused and not establishing and cam != null:
+		var shoulder: float = float(v.get("_shoulder"))
+		if shoulder < SHOULDER_ENGAGED_MIN:
+			_fail("camera-not-over-shoulder", "%s: the resting shot never engaged the over-the-shoulder truck (_shoulder=%.3f, want >= %.2f) -- reads as a plain follow cam, not third-person over the shoulder" \
+				% [when, shoulder, SHOULDER_ENGAGED_MIN])
 
 
 func _all_controls(n: Node) -> Array:
