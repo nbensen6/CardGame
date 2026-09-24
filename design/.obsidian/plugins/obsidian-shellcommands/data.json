@@ -137,11 +137,8 @@
   "custom_variables": [
     {
       "id": "beastvar0001",
-      "title": "beast",
-      "content": "",
-      "name": "1",
-      "description": "",
-      "default_value": null
+      "name": "beast",
+      "description": "The beast id a titan link names, e.g. cinder_jackal"
     }
   ],
   "custom_variables_notify_changes_via": {
