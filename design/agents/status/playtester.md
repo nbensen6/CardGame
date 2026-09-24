@@ -2,13 +2,82 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-24T05:14
-working_on: Full three-mode baseline clean (same two known, open, already-filed issues, no regressions -- hop-distance-band and intent-hidden, both still waiting on the fixer). New check: party-roster-incomplete, closing JACKAL-BAR's "both hunters are always findable" -- the 3D camera only ever frames the active hunter by design, so what actually keeps the other one findable is the party panel, and nothing had checked its row count stays in sync with the model. Proved both directions. No new bug found; still waiting on Nick's answer on the sigil-cheek request from last run.
+updated: 2026-09-24T07:26
+working_on: Full three-mode baseline clean and better than last run -- intent-hidden is now GONE (the fixer's fix landed and holds, 0 fails across 80 steps), no regression from the artist's sigil-lift change either. New check: sigil-behind-hunter, closing the live-check gap on JACKAL-BAR's "weak point is obvious... stays obvious as you climb toward it" the same way hop-distance-band/route-reversal closed it for the stone route -- proved both directions (0 fires on the real 1.7x-lift code, 11 real fires when temporarily reverted to the old buggy 0.9x). Only hop-distance-band remains open, unchanged. Still waiting on Nick's answer on the sigil-cheek request.
 ---
 
 # playtester
 
-## This run — 2026-09-24 05:14 EDT
+## This run — 2026-09-24 07:26 EDT
+
+- **Did:** no requests addressed to `playtester` were open, and Nick still
+  hasn't answered the sigil-cheek request. Ran the full three-mode
+  baseline first — the tip had picked up two real changes since my last
+  run: the fixer's fix for `intent-tag-hides-behind-party-panel`, and the
+  artist's sigil-lift fix (0.9x → 1.7x `HUNTER_HEIGHT`) for the "hunter's
+  head hides the weak-point glow at the sigil" gap they found on their own
+  pass. Confirmed both hold. Then added one new check:
+  `sigil-behind-hunter` — the same shape of gap `hop-distance-band` and
+  `route-reversal` closed for the stone route, now closed for the sigil
+  mark itself: the artist's fix was proved once with a render, but nothing
+  re-checks it live, so a future beast (or a future retune of the same
+  lift) could land the mark back inside a standing hunter's own
+  silhouette and nothing would catch it before a human happened to look.
+- **Worked?** Yes, both halves. Baseline: 0 new failures, and one known
+  failure is now GONE — `intent-hidden` (open since 2026-09-23 21:41,
+  ~34 hours) fired 0 times across all three modes on this run, matching
+  the fixer's own claim exactly. Only `hop-distance-band` remains
+  (`play` ×62, `hover` ×2, `hands` ×22 — identical counts to every recent
+  run, not a regression). No `hunter-off-marker`/`hunters-overlap`/
+  `route-reversal`/`script-error` anywhere — the artist's sigil-lift
+  change (a real placement edit, `_place_sigil` in `combat_3d.gd`) didn't
+  disturb hunter placement at all. New check: verified false-positive-free
+  first (`mode=hands`, all 10 sizes, and a fresh `mode=play` 30-step run
+  against the real, fixed code — 0 `sigil-behind-hunter` fires either
+  way, even though the run reaches the sigil around step 16-26 the same
+  as every prior run), then proved it actually fires by temporarily
+  reverting `_place_sigil`'s lift from `1.7` back to the old, buggy `0.9`
+  (one line, `combat_3d.gd`) and re-running `mode=play` — 11/11 real fires,
+  every one at the exact sigil steps (16–26), with the exact numbers the
+  bug had (sigil y=15.86 vs. a standing hunter's head at y=15.93) — then
+  reverted (`git diff` clean, checked) and re-ran `run_tests.gd` before
+  trusting it.
+- **Next:** watch for Nick's answer on the sigil-cheek request (unchanged
+  ask, still the top of next run's queue the moment he answers). Watch for
+  the fixer closing `hop-distance-band`'s last two short hops (confirmed a
+  genuine geometric ceiling two runs ago, needs re-authoring the Python
+  reference model). Nothing else open.
+- **Need from you:** the sigil-cheek request, whenever you have a minute —
+  same ask as every run since it was filed, nothing new to add.
+
+![[frames/playtester/2026-09-24-sigil-check-baseline-step019.png]]
+Step 19 this run, the real fixed code — both hunters "at the sigil",
+`† Attack 14` clear of the party panel (the fixer's fix, confirmed live),
+boss taking real damage (12/42). The baseline this run's numbers come from.
+
+![[frames/playtester/2026-09-24-sigil-check-3dclimb.png]]
+`state=3dclimb` on the same fixed code — the gold sigil spark sits above
+and clear of the climbing hunter's head, not behind it. The new
+`sigil-behind-hunter` check now watches this stays true on every run,
+not just this one frame.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | unchanged — reads clearly; sigil-cheek placement unchanged, already filed to Nick |
+| 2 | hunters land on the beast correctly | unchanged — 0 `hunter-off-marker`, 0 `route-reversal`, 0 `hunters-overlap`; **new**: `sigil-behind-hunter` now watches the sigil mark stays clear of a standing hunter's head, proved both directions |
+| 3 | jump animation (squash/arc/landing) | unchanged — clean, no pops, across every hop this run |
+| 4 | camera | unchanged — 0 `hunter-offscreen`/`hunter-lost-mid-hop` |
+| 5 | nothing errors | clean — 0 `script-error` across all three modes; **closed this run**: `intent-hidden` is gone, the fixer's fix holds under a full live baseline |
+
+One commit this run: the new `sigil-behind-hunter` check in
+`game/tools/playtest.gd`, pushed before the negative-direction
+verification (per COMMON.md 4b) — the temporary revert used to prove the
+negative direction was never committed, only `run_tests.gd` and a fresh
+baseline on the real code after reverting it.
+
+## Old: 2026-09-24 05:14 EDT
 
 - **Did:** no requests addressed to `playtester` were open; Nick has not
   yet answered the sigil-cheek request from last run
