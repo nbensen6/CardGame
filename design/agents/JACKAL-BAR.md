@@ -100,8 +100,34 @@ reading the fight at a glance, at play size, in motion.
 
 ### Motion
 - [ ] **The jump reads** — anticipation, arc, landing, at the size it plays.
+      First dedicated artist look, 2026-09-24: real hops (`mode=play
+      beast=cinder_jackal`) read well overall at true 1:1 — a clear
+      anticipation crouch, a real airborne arc, a clean landing on the
+      floating stone, all legible at the size they actually render (a
+      shrunk composite grid made the hunter look far smaller/harder to
+      read than it actually is at native resolution — worth remembering
+      for future motion checks: judge from the real PNG, never a resized
+      tile). Found one real defect along the way, not this line's own:
+      the boss's intent tag can render on top of and hide a real chunk of
+      the hunter mid-arc when the hop's own trajectory happens to cross
+      the tag's screen rect (six consecutive real frames of the opening
+      hop show the frog's lower body swallowed by "† Attack 7"). Filed
+      `to: fixer`,
+      `2026-09-24-0822-artist-to-fixer-jump-hides-behind-intent-tag.md`
+      (same shape as the already-fixed intent-tag-vs-party-panel bug, just
+      never checked against a hunter). Leaving this line unticked until
+      that's closed — the arc/landing read is real, but "at the size it
+      plays" isn't fully true while the tag can eat the jump's own peak.
 - [ ] **The camera never loses the active hunter**, including mid-jump.
+      Not contradicted by this run — every hop checked stayed on screen the
+      whole time (`playtester.md`'s own `hunter-lost-mid-hop` check has
+      never fired) — left unticked only because nobody has done a dedicated
+      eyes-on pass for framing quality specifically (vs. "on screen at
+      all"), same as this run did for the jump-read line above.
 - [ ] **No pops**: nothing teleports, flickers, or snaps between frames.
+      Not contradicted either — `playtester.md`'s `hop-position-pop` check
+      (proved both directions) has never fired on a real run — same caveat,
+      no dedicated artist eyes-on pass yet.
 
 ### The hunters
 - [ ] **Frog and Goblin match the jackal's fidelity.** Both are now the

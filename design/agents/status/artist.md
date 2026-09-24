@@ -2,13 +2,146 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T07:16
-working_on: Ruled out tri-count decimation as a cheap substitute for the goblin_mech_ai UV re-unwrap -- 40% fewer tris is visually free but doesn't move Build hygiene (frog_ai sits in the same accepted-overage class untouched and already caps at the same score). Fresh six-view look found no new Sil/Prop/Style defect either. No shipped asset changed.
+updated: 2026-09-24T08:22
+working_on: First dedicated artist look at JACKAL-BAR's Motion section (jump reads, camera, no pops) -- never checked before. Real hops read well at true 1:1. Found one real defect along the way -- the boss intent tag can render on top of a hunter mid-jump, swallowing part of it at the arc's peak -- filed to the fixer with pixel-measured before frames, same shape as the already-fixed intent-tag-vs-party-panel bug.
 ---
 
 # artist
 
-## This run — 2026-09-24 07:16 ET
+## This run — 2026-09-24 08:22 ET
+
+- **Did:** picked up the one thing my own last run's "Next" named as
+  never having had a dedicated artist look: `JACKAL-BAR.md`'s Motion
+  section (does the jump read, does the camera hold the active hunter,
+  are there any pops) — every other lever on hunter fidelity is either
+  ticked or waiting on a scoped, risky UV re-unwrap, not a routine-run
+  thing. Ran a real fight (`mode=play beast=cinder_jackal`) and read the
+  actual hop frames it saves (`hop_NNN_NN.png`), frame by frame, at true
+  1:1.
+- **Worked?** Yes, and it paid for itself twice over. First: the jump
+  itself reads well — a real anticipation crouch, a real airborne arc, a
+  clean landing on the floating stone, all legible at native resolution.
+  I nearly reported the opposite — a shrunk composite grid made the
+  hunter look like a barely-visible speck mid-air — until I checked the
+  same frames at true 1:1 and found it reads fine; worth remembering for
+  any future motion check. Second, a real defect no prior check (logic or
+  eye) had caught: on the opening hop, the hunter's own arc passes
+  directly through the boss's intent tag ("† Attack 7"), and the tag
+  renders on top, hiding a real chunk of the jumping hunter's body for six
+  consecutive real frames — right at the peak of the jump, the one moment
+  that most needs to read clearly. Measured the overlap in raw pixels
+  before filing anything (frog bbox vs. tag bbox, ~half the tag's height
+  and half the frog's width overlapping) and confirmed it's real but
+  position-dependent, not universal (a different hop in the same run
+  cleared the tag by ~40px once checked at true res, not the grid).
+- **Next:** filed `to: fixer` — this is game code
+  (`_position_intent_tag`/`intent_tag_pos` in `combat_3d.gd`), not an
+  asset, and it's the same shape of bug the fixer already fixed once for
+  the party panel, just never extended to the active hunter. Left
+  `JACKAL-BAR.md`'s three Motion lines unticked: the jump-reads line has
+  a real, filed defect; the other two (camera holds the hunter, no pops)
+  aren't contradicted by anything found this run, but hadn't had a
+  dedicated eyes-on pass either — worth a future run once the tag fix
+  lands, since re-rendering the same hops is nearly free at that point.
+- **Need from you:** nothing.
+
+![[frames/artist/2026-09-24-jump-hides-behind-intent-tag-full.png]]
+![[frames/artist/2026-09-24-jump-hides-behind-intent-tag-crop.png]]
+
+## Now
+
+No open `to: artist` request this run (checked every request's
+frontmatter — the only open notes in `requests/` are `to: fixer` and one
+`to: nick` from the playtester, still unanswered — not mine to act on).
+None of my own `to: nick` notes had a fresh unhandled answer either (all
+`status: done`). Worked `JACKAL-BAR.md`'s Motion section — my own last
+run's "Next" named it as the one part of the bar that had never had a
+dedicated artist look, since every remaining hunter-fidelity lever short
+of a full, separately-risk-budgeted UV re-unwrap is now tried and closed.
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `pip install
+pillow numpy`. Blender not needed this run — no geometry touched, this was
+a rendering/observation pass only.
+
+**Ran a real fight, not a synthetic pose.** `mode=play beast=cinder_jackal
+steps=80` under `xvfb-run`, foreground with a 10-minute timeout per
+COMMON.md 4b (the harness's own default 120s window had already moved an
+earlier attempt to background once, losing the run's own foreground
+guarantee — killed it and restarted properly). Result:
+`PLAYTEST FAIL: 1 failing check(s) { "hop-distance-band": 62 }` — the
+already-open, already-known stone-route item 2 (the two short hops nearest
+the sigil), not a regression, not something this run touched.
+
+**`playtest.gd`'s own `_watch_hop` already saves real per-frame PNGs of
+every hop it samples** (`hop_<step>_<NN>.png`, up to 24 shots per hop,
+capped low on purpose per its own doc comment) — nobody had ever pointed a
+human eye at these before; every prior motion claim in this project came
+from the check math (arc height, squash deviation, position-continuity),
+never a look. Picked several real hops across the run (steps 0, 9, 11, 16,
+19, 20, 27 — different heights, different cards, different cameras) and
+read them.
+
+**First pass, at half-scale in a composite grid, gave a wrong impression.**
+Tiling 9-24 frames per hop into one sheet (to eyeball the whole arc at
+once) made the hunter read as a tiny, hard-to-parse blob for most of a big
+climb — looked like a real "doesn't read at the size it plays" defect.
+Before writing that up, opened the SAME frames individually at their true
+native 1280×720 (per `status/README.md`'s own "never judge from a zoomed
+crop" — the same rule cuts the other way too: never judge from a SHRUNK
+composite either). At true size the hunter reads clearly through the whole
+arc: a crouched anticipation pose on the ground, a stretched airborne pose
+at the peak, a settled landing pose on the stone. The grid wasn't lying
+about relative scale, but it was small enough to blur past detail a real
+player's screen wouldn't lose. Correcting this before filing anything
+avoided reporting a defect that isn't real.
+
+**The real defect turned up while re-checking individual frames at true
+scale.** Step 0's opening hop (`Tongue Snap`, ground → foot 2, six
+consecutive real frames — `hop_000_03.png` through `hop_000_08.png`):
+the boss's intent tag ("† Attack 7") sits fixed near the beast's own
+crown for the whole turn, and this hop's arc rises directly through that
+same screen region. Cropped tight at native resolution (no upscale beyond
+NEAREST for visibility, source pixels untouched) and it's unambiguous —
+the frog's lower body is genuinely behind the tag panel, not just grazing
+it.
+
+**Measured before writing it up, the same discipline this project's
+requests already hold to.** Sampled the raw pixels of `hop_000_06.png`
+directly (no Blender, no in-editor tool): frog's own on-screen bbox
+`[282,141]..[364,222]`, tag's own rect `[295,168]..[450,204]` — an overlap
+of roughly `[295,168]..[364,204]`, about half the tag's own height and
+half the frog's own width. Checked it wasn't universal before calling it
+structural: step 19 (same run, sigil close-up camera) shows the hunter
+NEAR the tag but — checked at true resolution, not the half-scale grid
+that first suggested otherwise — actually clears it by ~40px. Real,
+reproducible, but position-dependent: exactly why nothing caught it
+before (a check would need to know where the active hunter is on screen
+relative to the tag, and nothing does).
+
+**Read the actual code before filing, not just the symptom.**
+`intent_tag_pos` (`combat_3d.gd`) already clamps the tag away from the HP
+bar, the hand, and — since `2026-09-23-2141`'s fix — the party panel, but
+never checks it against a hunter's own screen position, in flight or
+standing. Same shape of gap as the already-fixed bug, just never widened
+to cover this case. Filed `to: fixer`,
+`2026-09-24-0822-artist-to-fixer-jump-hides-behind-intent-tag.md`, with
+both frames and the measured rects — not my fix to make (game code, not an
+asset, per this brief's own hand-off rule).
+
+**Updated `JACKAL-BAR.md`'s Motion section** with the finding. Left all
+three lines unticked: the jump-reads line has a real, filed, open defect;
+the other two (camera holds the hunter, no pops) aren't contradicted by
+anything this run found, but hadn't had their own dedicated eyes-on pass
+either — said so plainly rather than round up a clean bill of health that
+wasn't actually earned this run.
+
+`ALL TESTS PASSED` (`run_tests.gd`) before and after — no game code or
+asset touched this run, only two design-doc updates, this status note,
+one new request, and two new frames (`git status` confirms). No playtest
+re-run needed beyond the one baseline above, since nothing shipped
+changed.
+
+## Old: 2026-09-24 07:16 ET
 
 - **Did:** picked up pass 7's own two named next moves on `goblin_mech_ai`
   (the loudest open item on my brief, one point under its hunter stop
