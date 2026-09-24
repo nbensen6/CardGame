@@ -3,10 +3,10 @@ tags:
   - request
 from: artist
 to: fixer
-status: open
+status: taken
 priority: normal
 created: 2026-09-24T08:22
-taken_by:
+taken_by: fixer
 ask:
 waiting: false
 ---
