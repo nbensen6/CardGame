@@ -31,6 +31,9 @@ from urllib.parse import quote
 
 REPO = "nbensen6/CardGame"
 REQUESTS = os.path.join("design", "agents", "requests")
+# The local redirector (tools/board_link.py). GitHub allows http links and
+# strips obsidian:// ones, so every button on an issue goes through here.
+LINK_HELPER = "http://127.0.0.1:8787"
 GH = "gh"
 
 # Labels the board needs, and the colour each gets on GitHub.
@@ -159,14 +162,13 @@ def issue_body(path, body, fm):
     if in_vault.endswith(".md"):
         in_vault = in_vault[:-3]
     # GitHub's markdown sanitiser strips every link whose scheme is not http,
-    # https or mailto -- verified 2026-09-24 by reading the rendered body_html
-    # of issue #8: the https link survived, the obsidian:// one did not, which
-    # is why it showed up as plain text. So the Obsidian address is offered as
-    # something to copy into the address bar, where it does work, rather than
-    # as a link that silently is not one.
-    head = "[Read the note on GitHub](https://github.com/%s/blob/main/%s)" % (REPO, rel)
-    head += " · open it in Obsidian (copy into your address bar):\n\n"
-    head += "    obsidian://open?vault=design&file=%s\n\n" % quote(in_vault)
+    # https or mailto -- verified 2026-09-24 by reading issue #8's rendered
+    # body_html: the https link survived, the obsidian:// one was gone, which
+    # is why it showed up as plain text. http IS allowed, so the buttons point
+    # at the local redirector (tools/board_link.py) and it hands the browser
+    # the obsidian:// address GitHub would not print.
+    head = "**[Open in Obsidian](%s/note/%s)**" % (LINK_HELPER, quote(in_vault))
+    head += " · [read it on GitHub](https://github.com/%s/blob/main/%s)\n\n" % (REPO, rel)
     head += "_Mirror of `%s`. The note is the source of truth; " % rel
     head += "comment here and the sync copies it back into the note for the agents._\n\n"
     if "![[" in body:
@@ -186,14 +188,13 @@ def fight_link(body, fm):
     beast = fm.get("beast", "").strip()
     if not beast:
         return body
-    uri = ("obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast="
-           + quote(beast))
-    # Whole line, not just the URI: GitHub would render the markdown link as
-    # bare text (it strips non-http schemes), so replace it with an instruction
-    # that tells the truth about what to do with the address.
+    # Point the whole line at the redirector. Replacing just the URI inside the
+    # markdown link would leave a link GitHub strips; replacing the line keeps
+    # it a real, clickable button.
     return re.sub(
         r"^.*\(obsidian://shell-commands/\?vault=design&execute=fight-request-beast\).*$",
-        "To play this fight, copy into your address bar:\n\n    " + uri,
+        "▶ **[Fight this now](%s/fight/%s)** — opens the game into this fight."
+        % (LINK_HELPER, quote(beast)),
         body, count=1, flags=re.M)
 
 
@@ -323,8 +324,8 @@ def selftest():
     # the mirrored fight link must name its beast, or it is dead from a browser
     link = "obsidian://shell-commands/?vault=design&execute=fight-request-beast"
     out = fight_link("before\n- [Fight](%s) - blurb\nafter" % link, {"beast": "cinder_jackal"})
-    assert "execute=fight-uri-beast&_beast=cinder_jackal" in out, out
-    assert "fight-request-beast" not in out
+    assert "(http://127.0.0.1:8787/fight/cinder_jackal)" in out, out
+    assert "obsidian://" not in out, out
     # the whole line goes, not just the URI -- a half-replaced markdown link
     # renders as broken text on GitHub
     assert "[Fight](" not in out, out
@@ -333,11 +334,11 @@ def selftest():
     assert fight_link("x %s y" % link, {}) == "x %s y" % link
 
     b = issue_body(os.path.join("design", "agents", "requests", "a.md"), "# T", {})
-    assert "obsidian://open?vault=design&file=agents/requests/a" in b, b
+    assert "(http://127.0.0.1:8787/note/agents/requests/a)" in b, b
     assert "/blob/main/design/agents/requests/a.md" in b
-    # GitHub strips non-http schemes, so the obsidian address must NOT be a
-    # markdown link -- it is offered as something to copy instead
-    assert "](obsidian://" not in b, b
+    # Nothing in an issue may be an obsidian:// link: GitHub deletes those, and
+    # a deleted link is what sent Nick copy-pasting in the first place
+    assert "obsidian://" not in b, b
     print("BOARD SYNC SELFTEST OK")
 
 
