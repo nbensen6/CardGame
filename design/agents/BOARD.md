@@ -30,6 +30,7 @@ clearly, nothing flickers, nothing floats, nothing is cut off.
 | [[status/artist\|artist]] | new and improved **assets**: the jackal model, hunter models, the arena, card art | gameplay code, bug fixes outside its assets |
 | [[status/playtester\|playtester]] | **does it feel smooth**: card animations, jumps onto the beast, the jump animation, camera framing (third-person). Plays the fight with `tools/playtest.gd`, extends the playtester with new checks, files what it finds | fixing what it finds (it files a request) |
 | [[status/fixer\|fixer]] | **bugs**: takes bug requests, fixes them with a regression test and a playtest run that proves it | new features, art |
+| [[status/director\|director]] | **reviewing**: looks at the whole frame at play size, compares it with Nick's reference and the bar, and files at most three requests a run telling the others what to change | build anything at all |
 
 ## How to work together
 

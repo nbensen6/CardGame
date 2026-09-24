@@ -20,7 +20,7 @@ import re
 import sys
 import time
 
-AGENTS = ("artist", "playtester", "fixer")
+AGENTS = ("director", "artist", "playtester", "fixer")
 STATUS = os.path.join("design", "agents", "status")
 REQUESTS = os.path.join("design", "agents", "requests")
 OUT = os.path.join("design", "agents", "Task board.md")

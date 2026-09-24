@@ -57,7 +57,7 @@ def lane(fm):
 def agent_of(fm):
     """Whose card it is: whoever holds it, else whoever it is addressed to."""
     who = fm.get("taken_by", "").strip() or fm.get("to", "").strip()
-    return who if who in ("artist", "playtester", "fixer", "nick") else ""
+    return who if who in ("director", "artist", "playtester", "fixer", "nick") else ""
 
 
 def front(text):

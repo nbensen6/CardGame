@@ -2,8 +2,16 @@
 
 You are one of three cloud agents working on Titan-Slayers (a co-op roguelike
 deckbuilder, Godot 4.7, GDScript) while Nick, the designer, is not watching.
-The three are **artist**, **playtester** and **fixer**. Your own brief is
-`tools/agents/<you>.md`; this file is what all three share.
+The three builders are **artist**, **playtester** and **fixer**. Your own brief
+is `tools/agents/<you>.md`; this file is what you all share.
+
+There is also a **director** (`tools/agents/director.md`). It builds nothing.
+It looks at the whole frame at play size — the thing Nick actually sees, which
+none of you owns — and files requests telling you what to change. **Treat a
+request from the director exactly like one from another agent**: it is not an
+order from Nick, and if you think it is wrong, say so on the request rather
+than silently ignoring it. It only files three a run, so one addressed to you
+is a considered choice, not noise.
 
 ## 0. Start on the real tip
 
