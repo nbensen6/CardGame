@@ -29,12 +29,56 @@ reading the fight at a glance, at play size, in motion.
       the beast, and a number or state change follows. No silent plays.
 
 ### The fight, read at a glance
-- [ ] **The beast's intent is unmissable** — what it will do next turn, and
-      to whom, readable without hunting for it.
-- [ ] **Damage and climb numbers** appear where the thing happened.
-- [ ] **Both hunters are always findable**, including mid-climb.
-- [ ] **Nothing important is behind the hand**, the rail or the party panel,
-      in any state, at any hand size.
+- [x] **The beast's intent is unmissable** — what it will do next turn, and
+      to whom, readable without hunting for it. First dedicated artist look,
+      2026-09-24: `_position_intent_tag` already carries two live guards
+      (clear of the party panel, clear of the active jumping hunter — both
+      already fought for and fixed this same day), and a full 80-step real
+      fight plus `mode=hands` at every hand size 1-10 both show `intent-
+      hidden` and `hand-over-hud` at 0 fails throughout. Looked at the actual
+      tag in several real frames, not just the check math: "† Attack 7" reads
+      clearly, high-contrast (dark red panel, white text) against both the
+      orange arena floor and the beast's own black body, in every state
+      checked (`3d`, `3dgrip wide`, `3dclimb`, a 10-card hand).
+      ![[frames/artist/2026-09-24-glance-10card-hand-nothing-hidden.png]]
+- [x] **Damage and climb numbers** appear where the thing happened. Damage:
+      `playtest.gd`'s own `damage-popup-missing`/`damage-popup-offscreen`
+      checks (poll every frame a hit resolves, not just once) fired 0 times
+      across a full fight that took the boss from 42 HP to dead — every
+      landed hit produced a popup and it stayed on screen throughout. Went
+      past the check math to actually look: caught a real popup alive
+      mid-hop and it sits exactly on the beast's own body at the hunter's
+      attack point, pale numerals for a boss hit, a distinct orange-red for
+      a hunter taking damage — same colour-coding, same "at the hit" rule,
+      both confirmed in real frames.
+      ![[frames/artist/2026-09-24-glance-boss-damage-lands-on-beast.png]]
+      ![[frames/artist/2026-09-24-glance-hunter-damage-and-marker.png]]
+      Climb has no separate transient popup — checked the code, this is by
+      design, not a gap: the persistent 2D climb gauge (`✦ <N>` label,
+      already verified in "the weak point is obvious" above) shows the
+      current Height continuously rather than flashing a number and fading
+      it, which is a stronger treatment for something a player needs to
+      track for the whole climb, not just the instant it changes.
+- [x] **Both hunters are always findable**, including mid-climb. The design
+      is explicit in the code's own comments: the 3D camera only ever frames
+      the ACTIVE hunter (third-person, by intent), and the party panel is
+      the thing that guarantees the OTHER hunter stays findable —
+      `party-roster-incomplete` (party panel row count matches player count)
+      and `hunter-behind-camera`/`hunter-lost-mid-hop` (the active hunter
+      specifically) all read 0 fails across the same full fight. Looked at
+      the case that matters most — the sigil close-up, where the 3D frame is
+      tightest — and both hunters still read as distinct small portrait
+      markers on their own footholds, clear of the rock and the glow.
+      ![[frames/artist/2026-09-24-glance-sigil-both-hunters-findable.png]]
+- [x] **Nothing important is behind the hand**, the rail or the party panel,
+      in any state, at any hand size. `mode=hands` (hands of 1 through 10,
+      the top of what this deck can realistically hold) and the full 80-step
+      fight both show `hand-over-hud` (`_intent_tag`, `_hp_bar`, `_party`,
+      `_gauge`) and `hand-over-button` at 0 fails throughout — no hand size
+      or moment ever covers any of them. A real 10-card hand, the largest
+      dealt this run, still leaves the boss HP bar, intent tag, party panel
+      and climb gauge fully clear at true resolution.
+      ![[frames/artist/2026-09-24-glance-10card-hand-nothing-hidden.png]]
 
 ### The creature
 - [ ] **Silhouette reads at 250px** — the jackal is recognisable as one shape.

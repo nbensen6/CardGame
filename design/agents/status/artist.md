@@ -2,13 +2,154 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T09:24
-working_on: Closed out JACKAL-BAR's Motion section -- ticked all three lines. The fixer's jump-hides-behind-intent-tag fix (commit 73ae6b4) verified live with a fresh render (frog now clear of the tag, not behind it), and a dedicated eyes-on pass on camera-hold and no-pops across 8 real hops in a full fight found nothing wrong (0 check fires, real frames read clean by eye too).
+updated: 2026-09-24T10:20
+working_on: Closed out JACKAL-BAR's "the fight, read at a glance" section -- ticked all four lines (intent unmissable, damage/climb numbers land where the hit happened, both hunters always findable, nothing hidden behind the hand/rail/party panel). Real 80-step fight plus mode=hands at every hand size 1-10 both show every relevant check at 0 fails, and a real eyes-on pass caught a live damage popup landing exactly on the hit and a 10-card hand leaving every HUD element clear.
 ---
 
 # artist
 
-## This run — 2026-09-24 09:24 ET
+## This run — 2026-09-24 10:20 ET
+
+- **Did:** picked up my own last run's "Next" -- `JACKAL-BAR.md`'s "the
+  fight, read at a glance" section had never had a dedicated artist look
+  (four bullets: intent unmissable, damage/climb numbers land where the hit
+  happened, both hunters always findable including mid-climb, nothing
+  behind the hand/rail/party panel at any hand size). No open `to: artist`
+  request this run either (checked every request's frontmatter -- the three
+  open notes in `requests/` are `to: fixer` (two) and `to: nick` (the
+  playtester's sigil-cheek ask, unchanged, not mine).
+- **Worked?** Yes, all four lines, with real evidence rather than a rubber
+  stamp. The automated side was already mostly built by the fixer/
+  playtester's recent work on this exact area (`hand-over-hud`,
+  `intent-hidden`, `damage-popup-missing/offscreen`, `party-roster-
+  incomplete`, `hunter-behind-camera`) -- ran a fresh full 80-step fight and
+  a fresh `mode=hands` (hand sizes 1-10) and every one of those checks came
+  back 0 fails, on top of the two already-known, already-filed items
+  (`hop-distance-band`, `intent-tag-vs-hunter`'s tiny residual, neither
+  mine). Then did the part the check math can't do: looked at real frames.
+  Caught a genuine damage popup alive mid-hop landing exactly on the beast
+  at the hit point (pale for a boss hit, a distinct orange-red for a hunter
+  hit -- same colour rule, same "at the hit" placement, both real, both
+  photographed), confirmed a 10-card hand -- the largest this deck
+  realistically holds -- still leaves the boss HP bar, intent tag, party
+  panel and climb gauge fully clear at true resolution, and confirmed both
+  hunters still read as distinct small portrait markers on their footholds
+  even at the tightest 3D shot (the sigil close-up).
+- **Next:** every bar line this brief's own scope can reach with a routine
+  run is now ticked except two: the cards section (parked, Nick's standing
+  order) and `goblin_mech_ai`'s last hunter-fidelity point, which needs a
+  scoped, risk-budgeted UV re-unwrap, not another routine pass. Worth
+  weighing whether that re-unwrap is worth scoping as its own dedicated run
+  now that the bar's other sections are this close to fully closed.
+- **Need from you:** nothing.
+
+![[frames/artist/2026-09-24-glance-boss-damage-lands-on-beast.png]]
+![[frames/artist/2026-09-24-glance-hunter-damage-and-marker.png]]
+![[frames/artist/2026-09-24-glance-10card-hand-nothing-hidden.png]]
+![[frames/artist/2026-09-24-glance-sigil-both-hunters-findable.png]]
+
+## Now
+
+No open `to: artist` request this run (checked every request's frontmatter
+-- the three open notes in `requests/` are `to: fixer` (two,
+`dropped-slider-shows-wrong-timing-label` and `intent-tag-still-grazes-
+hunter-at-hop-start`) and one `to: nick` from the playtester
+(`sigil-hunter-clings-to-the-cheek`), still unanswered -- none mine to act
+on). None of my own `to: nick` notes had a fresh unhandled answer either
+(all `status: done`, per `COMMON.md` 1b). Worked `JACKAL-BAR.md`'s "the
+fight, read at a glance" section, exactly where my own last run's "Next"
+pointed.
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `pip install
+pillow numpy`. Blender not needed this run -- no geometry touched, this was
+a rendering/observation pass only.
+
+**Why this section over another `goblin_mech_ai` attempt.** My last run's
+"Next" named two live options: the goblin's UV re-unwrap (already flagged
+across three prior passes as needing its own separately-risk-budgeted run,
+not a routine one) and this section (never looked at by a human eye at all,
+four concrete, checkable bullets, no asset risk). Picked the lower-risk,
+higher-certainty win.
+
+**Read the existing automated coverage before assuming anything was
+missing.** `playtest.gd`'s `_check()` already carries real checks for three
+of the four bullets, built by the fixer and playtester across the last two
+days chasing specific bugs in this exact area: check 5b `hand-over-hud`
+(a resting card against `_intent_tag`/`_hp_bar`/`_party`/`_gauge`), check 5c
+`intent-hidden` (the tag against the party panel), check 7b
+`party-roster-incomplete` (the party panel's own row count vs. the model),
+check 9 `hunter-behind-camera` (the active hunter, once settled), and a
+dedicated `_poll_popup` mechanism (`damage-popup-missing`/`damage-popup-
+offscreen`) that watches every live `Label3D` damage number every frame a
+hit is resolving, not just once. None of this had ever been run as a single
+deliberate pass against this section's own wording, and none of it had ever
+been looked at with real eyes -- exactly the gap this run closes.
+
+**Ran the checks fresh, not trusted from memory.** `mode=hands beast=
+cinder_jackal` (hand sizes 1 through 10, the top of what this deck
+realistically holds): only the already-known `hop-distance-band` (22 fails,
+the fixer's own open stone-route item, unrelated to this section) --
+`hand-over-hud`, `intent-hidden`, `party-roster-incomplete` all 0 across
+every size. `mode=play beast=cinder_jackal steps=80`, foreground with a
+10-minute timeout per `COMMON.md` 4b: `PLAYTEST FAIL: 2 failing check(s)
+{ "hop-distance-band": 62, "intent-tag-vs-hunter": 1 }` -- both already
+open, already filed to the fixer (the second is the playtester's own tiny
+residual from this morning), neither this section's concern. Every check
+this section cares about -- `hand-over-hud`, `intent-hidden`,
+`party-roster-incomplete`, `hunter-behind-camera`, `damage-popup-missing`,
+`damage-popup-offscreen` -- 0 fails across a full fight that took the boss
+from 42 HP to dead, i.e. plenty of real hits landing.
+
+**Then looked, since a check proves the math, not that it reads right**
+(this project's own standing rule, the same one that caught the goblin's
+skin-desaturation bug a check missed). Read the full 80-step run's saved
+`hop_NNN_NN.png` frames looking specifically for a live damage popup, since
+the settled `step_NNN.png` shots are taken after the ~0.85s popup tween has
+already finished and never show one. Found it in `hop_000_10.png`/
+`hop_000_14.png` -- a pale "1" sitting directly on the beast's own chest,
+right at the frog's Tongue Snap attack point, rising slightly between the
+two frames (the popup's own rise tween, caught mid-flight, not a static
+crop). Then rendered `state=3dgrip wide` fresh and it happened to also
+catch a live popup -- this time a hunter taking a hit, orange-red "3" at
+the hunter's own position, the colour-coded "your blood, not the beast's"
+distinction `_damage_popup`'s own code comment describes, confirmed for
+real rather than just read from source.
+
+![[frames/artist/2026-09-24-glance-boss-damage-lands-on-beast.png]]
+![[frames/artist/2026-09-24-glance-hunter-damage-and-marker.png]]
+
+**Checked "climb numbers" honestly rather than assume a gap.** Grepped
+`combat_3d.gd` for any climb-specific popup and found none -- by design, not
+an oversight: climb has no `_damage_popup`-style transient number, only the
+persistent 2D gauge (`✦ <N>` label) this brief already verified earlier
+today under "the weak point is obvious." Said so plainly in the bar rather
+than force a false parallel with the damage popup or claim a defect that
+isn't real.
+
+**Rendered the two remaining cases by hand** rather than rely only on
+`playtest.gd`'s own saved frames. `mode=hands`'s own `step_010.png` (a real
+10-card hand, the largest size that mode tests): boss HP bar, intent tag,
+climb gauge and party panel all read fully clear of the fan at true
+resolution -- matches the 0-fail check result with an actual look.
+`state=3dclimb` (the tightest 3D framing this fight has, the sigil
+close-up): both hunters still read as distinct small portrait markers on
+their own footholds, clear of the rock and the glow -- confirms "findable
+mid-climb" holds even in the one camera state with the least room to work
+with.
+
+![[frames/artist/2026-09-24-glance-10card-hand-nothing-hidden.png]]
+![[frames/artist/2026-09-24-glance-sigil-both-hunters-findable.png]]
+
+**Ticked all four `JACKAL-BAR.md` "read at a glance" lines** with this
+evidence -- check results plus a real look for each. The section is now
+fully closed; nothing left unticked on it.
+
+`ALL TESTS PASSED` (`run_tests.gd`) -- no game code or asset touched this
+run, only `JACKAL-BAR.md`, this status note, and four new frames (`git
+status` confirms). No further playtest needed beyond the two runs above,
+which already cover everything this run claims.
+
+## Old: 2026-09-24 09:24 ET
 
 - **Did:** picked up my own last run's "Next" — the fixer's fix for the
   jump-hides-behind-intent-tag bug had landed
