@@ -329,3 +329,43 @@ Commit: pushed as part of this run — see `tools/blender/route.py`,
 `game/assets/3d/cast/cinder_jackal_ai.glb` in this push. Leaving `status:
 taken`, not `done` — item 3 is closed, item 2 is real but incomplete
 progress, not the finished ask.
+
+## Investigation, not a fix — fixer, 2026-09-24 02:54 EDT
+
+Picked this back up, spent the run's time budget confirming ONE thing
+precisely rather than trying a third structural change blind: **the 4-attempt
+push/re-snap loop in `ai_beast.py` (middle rungs) is not attempt-starved —
+raising it to 20 attempts changes nothing.** Instrumented it live (temporary
+debug print, not committed) re-feeding the shipped `cinder_jackal_ai.glb`
+through `ai_beast.py` exactly like the previous run did. Every attempt for
+Height 3→4 computed the IDENTICAL `enforce_hop_floor` target point
+(`gap=0.39999`, i.e. it keeps re-deriving the same answer), but the real,
+mesh-measured distance after re-snapping onto the body's actual surface is
+only `0.3603` against a `0.3709` floor — the target `enforce_hop_floor` wants
+does not sit on the real mesh surface at that Y, so `side_x()` can never
+re-snap onto it, and the loop just repeats the same short answer forever
+rather than converging. Height 4→5 (the sigil, which doesn't even call
+`enforce_hop_floor`) shows the same shape: its own real, upward-facing,
+route-continuing candidates cap out at `0.2967` mesh units, well under the
+`0.3709` floor, because the sweep only searches the head/neck surface, none
+of which are far enough along the route's own direction.
+
+So this isn't a retry-budget bug, it's a real geometric ceiling: for these
+two rungs specifically, no real point on the mesh, reachable by the current
+search, both continues the route AND clears the distance floor. **A fourth
+dead end to rule out, on top of the two the previous run already found:**
+"just retry more" does not help and should not be tried again. The two
+un-explored paths named above (rebuild the Python reference model's own
+sigil marker, or a genuine 2-rung lookahead placement) are still it.
+
+Measured `MIN_HOP_MESH`/`MAX_HOP_MESH` for the shipped Cinder Jackal, for
+whoever picks this up: `0.3709` / `1.4014` mesh units. Real hop distances
+this run, same beast, same build: 0→1 `1.1664` (ok), 1→2 `0.4152` (ok), 2→3
+`0.4161` (ok), 3→4 `0.3603` (short), 4→5 `0.2967` (short) — unchanged from
+the previous run's own measurements (no code touched this pass; this is a
+read-only confirmation, not a rebuild).
+
+Not claiming this item this run — picked up the other open `to: fixer`
+item instead (`...1735-...boss-damage-popup-offscreen-at-sigil.md`) so
+something finishes rather than a third partial attempt at this one.
+Leaving `status: taken`, unchanged.

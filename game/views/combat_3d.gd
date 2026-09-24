@@ -487,6 +487,7 @@ var _time := 0.0
 var _last_popup_at := Vector3.ZERO
 var _last_popup_guard := 0.0
 const POPUP_OVERLAP_WINDOW := 0.5  # seconds a popup counts as "still there" for the next one to avoid
+const POPUP_TOP_PAD := 30.0  # px kept clear at the top of frame -- see popup_rise_scale
 # snapshot deltas drive the juice, exactly like the 2D view
 var _prev_hp := -1
 var _prev_foot: Array = []
@@ -4343,6 +4344,33 @@ static func popup_move_reach(beast_reach: float, on_hunter: bool) -> float:
 	return HUNTER_HEIGHT * 3.0 if on_hunter else beast_reach
 
 
+## What fraction of a popup's full world-space rise to actually use, so the
+## risen number never lands above `pad` px from the top of frame.
+##
+## `popup_move_reach` fixed the rise being scaled off the wrong target (a
+## Titan's height on a hunter hit); this is a second, independent way the
+## SAME rise can still go off-screen even at the right scale, because the
+## rise is a fixed WORLD distance while how many pixels that covers depends
+## on how close the camera is. A boss hit's rise reads fine from this fight's
+## normal, wider shots -- the bug is the tight, near-vertical close-up the
+## climb ends on at the sigil, where the frame is already mostly jackal head
+## and the same rise pokes a few px past the top edge (2026-09-23,
+## boss-damage-popup-offscreen-at-sigil: 676,-5 on a 720-tall frame -- 5px
+## over, reproduced 3/3 runs at the same step and the same spot).
+##
+## `screen_y_at`/`screen_y_full` are the ALREADY-PROJECTED screen Y of the
+## popup's start and of its full, unscaled rise destination -- pure so it is
+## provable with no camera or frame at all. 1.0 (no change) whenever the full
+## rise already clears `pad`; 0.0 only if the START itself is already past
+## `pad` -- nothing a rise can fix without moving where the hit is drawn.
+static func popup_rise_scale(screen_y_at: float, screen_y_full: float, pad: float) -> float:
+	if screen_y_full >= pad:
+		return 1.0
+	if screen_y_at <= pad:
+		return 0.0
+	return clampf((screen_y_at - pad) / (screen_y_at - screen_y_full), 0.0, 1.0)
+
+
 func _damage_popup(amount: int, at: Vector3, weak_point: bool, on_hunter: bool = false) -> void:
 	if amount <= 0:
 		return
@@ -4373,6 +4401,10 @@ func _damage_popup(amount: int, at: Vector3, weak_point: bool, on_hunter: bool =
 	_rig.add_child(lbl)
 
 	var rise := move_reach * 0.22
+	if _cam != null:
+		var screen_at: float = _cam.unproject_position(placed_at).y
+		var screen_full: float = _cam.unproject_position(placed_at + Vector3(0.0, rise, 0.0)).y
+		rise *= popup_rise_scale(screen_at, screen_full, POPUP_TOP_PAD)
 	var tw := create_tween()
 	tw.set_parallel(true)
 	tw.tween_property(lbl, "position", placed_at + Vector3(0.0, rise, 0.0), 0.85) \

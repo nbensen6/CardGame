@@ -2,11 +2,91 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-24T00:24
-working_on: Picked the same build-the-one-directional-stone-route request back up for items 2 and 3. Item 3 (next-hold ring) verified already correct by reading and a live render -- no code needed. Item 2 (2.4-9.2 unit hop band): built and tested the real hop_arc()-floor math (route.py), hard-gated it into beast.py's _prove() for future/other beasts, and improved ai_beast.py's raycast search to prefer real in-band candidates -- fixed 2 of 5 real hops on the shipped Cinder Jackal, but the two hops nearest the sigil stay short. Tried two structural fixes to close that gap; both reintroduced a live route-reversal regression (caught by the playtester's own check) and were reverted. Left taken, not done, with the ruled-out approaches written down so the next agent doesn't repeat them.
+updated: 2026-09-24T02:54
+working_on: Fixed the boss-damage-popup-offscreen-at-sigil request (a fixed world-space rise vs a variable camera zoom, new popup_rise_scale in combat_3d.gd, 3 new tests). Also spent part of the run confirming the stone-route request's last two short hops are a real geometric ceiling, not a retry-budget bug -- left that one taken, not done, with a fourth dead end ruled out and written down.
 ---
 
 # fixer
+
+## This run — 2026-09-24 02:54 EDT
+
+- **Did:** fixed the boss-damage-popup-offscreen-at-sigil request. A boss
+  hit's damage number rises a fixed WORLD distance; a close-in camera (the
+  sigil's own tight framing) can turn that into enough screen pixels to
+  poke past the top edge by a few px, exactly what the playtester measured
+  (676,-5 on a 1280x720 frame). Added a small check that scales the rise
+  down so it lands on a safe pad instead of past it.
+- **Worked?** Yes, provably — pinned with three new tests built on the
+  playtester's own exact numbers, plus a full live playtest run (0
+  `damage-popup-offscreen` fails). One honest wrinkle: I could not make the
+  ORIGINAL failure happen live on the current tip any more, with or without
+  my fix — I think an unrelated later change (the stone-route fix moving
+  the sigil off the nose) shifted the hit point just enough to no longer
+  clip. Fixed the real underlying gap anyway rather than leaving it to
+  chance; full reasoning is in the request's own `## Result`.
+- **Next:** also spent part of this run confirming (not fixing) the
+  stone-route request's last two short hops — instrumented the build live
+  and proved it's a genuine "no real point on the mesh reaches far enough"
+  ceiling, not a retry-budget bug (raising 4 attempts to 20 changes
+  nothing). Whoever picks that back up should read its own `## Result` —
+  a fourth dead end is now ruled out on top of the previous run's two.
+- **Need from you:** nothing blocking.
+
+![[frames/fixer/2026-09-24-boss-popup-sigil-step19-after.png]]
+
+## Now
+
+Took the open `to: fixer` request
+`2026-09-23-1735-playtester-to-fixer-boss-damage-popup-offscreen-at-sigil.md`
+(priority normal — the only OPEN `to: fixer` request left; the other,
+`...2141-...intent-tag-hides-behind-party-panel.md`, is also normal and
+still open for the next run). Passed over the `taken`, priority-high
+`...1846-...stone-route...` item rather than attempt a third structural
+fix blind — see below — since two failed attempts were already on record
+and a third risks becoming a fourth without ever landing something
+finished this run.
+
+**The fix.** `combat_3d.gd`: new `POPUP_TOP_PAD` (30px, matching the scale
+of the existing `GAUGE_PAD_TOP`) and `popup_rise_scale(screen_y_at,
+screen_y_full, pad)` — a pure function next to the existing
+`popup_move_reach`. `_damage_popup` now projects the popup's start and its
+full, un-scaled rise destination to screen space before starting the tween;
+if the destination would land above the pad, the rise is scaled down by
+exactly the fraction that lands it ON the pad instead of past it. Verified
+against the playtester's own reported numbers to the pixel (a rise that
+lands at screen y=-5 with a start at y=650 and a 30px pad scales down to
+land at EXACTLY y=30, not still over or short — the test computes this
+identity directly, not just a pass/fail band).
+
+**Why I could not reproduce the original bug live, and why I fixed it
+anyway.** A fresh `mode=play beast=cinder_jackal steps=25-30` run on the
+UNMODIFIED code (`git stash`) also shows 0 `damage-popup-offscreen` fails,
+on the exact same step 19 / 'Tongue Snap' / (376,475) the report named.
+Between the report (17:35) and now, the stone-route request
+(`...1846-...`) moved the Cinder Jackal's own sigil position — its own
+write-up says the sigil "no longer sits on the tip of the snout... lands
+near the base of the neck/shoulder instead." That plausibly moved the hit
+point enough to pull the popup back on screen by itself, on a bug that was
+only ever 3-5px over to begin with. The architectural gap the playtester
+actually diagnosed (a fixed world rise, a camera whose zoom varies) is real
+regardless of where the sigil happens to sit today, so I fixed it directly
+rather than leaving it to depend on geometry nobody meant to fix it.
+
+**The stone-route investigation (not a fix — that request stays `taken`).**
+Instrumented `ai_beast.py` live (temporary debug print, not committed),
+re-feeding the shipped `cinder_jackal_ai.glb` through the pipeline exactly
+like the previous run did. Confirmed the 4-attempt push/re-snap loop for
+Height 3→4 is not attempt-starved: raised to 20 attempts, every single one
+re-derives the IDENTICAL target point (`enforce_hop_floor`'s own answer,
+gap=0.39999) but the real mesh surface at that Y never reaches it
+(re-snapped real distance stays `0.3603` against a `0.3709` floor) — the
+loop just repeats the same short answer forever. Height 4→5 (the sigil)
+shows the same shape from a different angle: its own real, route-continuing
+candidates cap out at `0.2967`, well under the floor, because none of the
+real head/neck surface in its search sweep reaches further along the
+route's own direction. Full numbers and the conclusion (a genuine
+geometric ceiling for these two rungs, not a bug in the retry loop) are in
+the request's own new section, dated this run.
 
 ## This run — 2026-09-24 00:24 EDT
 
@@ -1158,7 +1238,19 @@ further either.
 
 ## Log
 
-- 2026-09-24 00:24 EDT (latest) — build-the-one-directional-stone-route,
+- 2026-09-24 02:54 EDT (latest) — boss-damage-popup-offscreen-at-sigil:
+  fixed. A boss hit's damage-popup rise is a fixed world distance; the
+  sigil's own tight camera framing turned it into enough screen pixels to
+  poke a few px past the top edge. New `popup_rise_scale()` (combat_3d.gd)
+  scales the rise down so it lands on a 30px pad instead. 3 new tests
+  pinned to the playtester's own exact reported numbers; full live
+  playtest, 0 `damage-popup-offscreen` fails. Could not reproduce the
+  ORIGINAL failure live on the current tip (likely moot since the
+  stone-route fix moved the sigil) — fixed the real underlying gap anyway.
+  Also confirmed (not fixed) that the stone-route request's last two short
+  hops are a genuine geometric ceiling, not a retry-budget bug — a fourth
+  dead end ruled out and written into that request.
+- 2026-09-24 00:24 EDT — build-the-one-directional-stone-route,
   items 2/3. Item 3 (next-hold ring) verified already correct, no fix
   needed. Item 2 (2.4-9.2 unit hop band): built `hop_world_distance()`/
   `hop_distance_violation()` in `route.py`, hard-gated into `beast.py`'s

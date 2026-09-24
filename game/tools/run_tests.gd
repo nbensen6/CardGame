@@ -2225,6 +2225,9 @@ func _init() -> void:
 	_test_popup_move_reach_uses_beast_reach_for_a_boss_hit()
 	_test_popup_move_reach_uses_hunter_scale_for_a_hunter_hit_on_a_titan()
 	_test_popup_offset_with_hunter_move_reach_keeps_two_hunter_popups_close()
+	_test_popup_rise_scale_leaves_a_rise_that_already_clears_the_pad_alone()
+	_test_popup_rise_scale_pulls_an_offscreen_rise_back_to_the_pad()
+	_test_popup_rise_scale_zeroes_out_when_the_start_is_already_past_the_pad()
 	# backlog #86 duty 3 (forty-seventh pass): combat_3d.cam_reach_for/
 	# inside_wall_at are the fight camera's own wall clamp -- the geometry
 	# alone cannot enclose anything a camera is not stopped by a mesh, per the
@@ -28610,6 +28613,37 @@ func _test_popup_offset_with_hunter_move_reach_keeps_two_hunter_popups_close() -
 	var gap := placed.distance_to(first)
 	_expect(gap < 4.0,
 		"two simultaneous hunter popups land within a few hunter-heights of each other (was flung 7.88 units -- half the Titan's own width -- and behind the camera)")
+
+
+## 2026-09-23-1735-playtester-to-fixer-boss-damage-popup-offscreen-at-sigil:
+## popup_move_reach (above) already fixes a rise scaled off the wrong TARGET;
+## this is the other, independent way the same, correctly-scaled rise still
+## goes off the top of frame -- not because the world distance is wrong, but
+## because a close, near-vertical camera (the climb's own sigil framing)
+## turns a small world rise into a lot of screen pixels. Reproduced live 3/3
+## runs, same step, same spot: a boss hit's popup projected to (676, -5) on a
+## 1280x720 frame -- 5px past the top edge. popup_rise_scale is the fix:
+## scale the rise down by exactly enough that its projected top lands on
+## POPUP_TOP_PAD instead of past it.
+func _test_popup_rise_scale_leaves_a_rise_that_already_clears_the_pad_alone() -> void:
+	_expect(is_equal_approx(Combat3D.popup_rise_scale(400.0, 100.0, 30.0), 1.0),
+		"the full rise already stays clear of the pad -- nothing to scale down")
+
+
+func _test_popup_rise_scale_pulls_an_offscreen_rise_back_to_the_pad() -> void:
+	# The live repro's own shape: a popup that starts on screen and rises to
+	# just past the top (a frame's top edge is screen y=0).
+	var scale: float = Combat3D.popup_rise_scale(650.0, -5.0, 30.0)
+	_expect(scale > 0.0 and scale < 1.0,
+		"a rise that pokes past the pad gets scaled down, not left alone or zeroed out entirely")
+	var landed: float = 650.0 - scale * (650.0 - (-5.0))
+	_expect(is_equal_approx(landed, 30.0),
+		"scaling the rise by this factor lands its projected top exactly on the pad, not still past it or short of it (landed at %.2f)" % landed)
+
+
+func _test_popup_rise_scale_zeroes_out_when_the_start_is_already_past_the_pad() -> void:
+	_expect(is_equal_approx(Combat3D.popup_rise_scale(10.0, -20.0, 30.0), 0.0),
+		"the popup's own start already sits past the pad -- no amount of rise can fix that, so it does not try")
 
 
 ## backlog #86 duty 3 (forty-seventh pass) -- the fight camera's own wall clamp.
