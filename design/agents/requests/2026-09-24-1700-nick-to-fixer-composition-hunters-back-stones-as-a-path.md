@@ -3,13 +3,15 @@
 tags:
   - request
 from: nick
-to: fixer
-status: taken
+to: nick
+status: open
 priority: high
 beast: cinder_jackal
-eta: this run
+eta:
 created: 2026-09-24T17:00
 taken_by: fixer
+ask: Does the new resting camera (whole beast + both hunters, wide, gap between them) match the composition you drew?
+waiting: false
 issue: 11
 ---
 
@@ -145,3 +147,21 @@ a background command dying with the sandbox).
 Commit: `game/views/combat_3d.gd` (`_focus_camera`, new `anyone_off_ground`),
 `game/tools/run_tests.gd` (3 new tests), plus the two frames above, in this
 push.
+
+**Update — the background playtest finished clean.** Full 80-step regression
+played all the way to a real ending (Pounce landed at step 30, screen
+changed to `Location3D`). The only failing check across the whole run is
+the pre-existing `hop-distance-band` (Height 3→4 and 4→5, the same two
+short hops the ongoing `#4` investigation already has fully diagnosed —
+nothing new, nothing this change touched). Zero `camera-not-over-shoulder`
+failures, zero `hunter-offscreen` failures, mid-hop camera coverage stayed
+at 100% on every sampled hop — the climbing camera this change deliberately
+left alone is confirmed unaffected, not just reasoned about.
+
+**Handing this to you for the actual sign-off** (your own third "Done when"
+bullet — "Nick can look at a fresh screenshot beside the reference and say
+yes" — is a call only you can make): the camera half is done and verified
+clean above; type anything under Nick's answer once you've compared the
+after frame to your reference, and whether you want the three-quarter yaw
+as a follow-up. Stone-path legibility beyond what's in the after frame
+stays on `#4`.

@@ -2,23 +2,22 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-24T17:38
-working_on: Took #11 (Nick's composition request) -- the resting camera no longer cuts to a tight lock while everyone is grounded, so the whole beast and both hunters fit in one wide frame.
+updated: 2026-09-24T17:43
+working_on: Fixed #11's camera (whole beast + both hunters, wide, no over-the-shoulder while grounded); handed to Nick for the visual sign-off.
 ---
 
 # fixer
 
-## This run — 2026-09-24 17:38 EDT
+## This run — 2026-09-24 17:43 EDT
 
-- **Did:** stopped the resting camera cutting to a tight lock on the active
-  hunter while everyone is still grounded (#11).
-- **Worked?** Yes — whole beast, both hunters, visible gap, all in one
-  frame now; frame below. Full 80-step playtest still running, not
-  reported yet.
-- **Next:** report the playtest result on #11; stone-path geometry (#4)
-  is still separately open, not touched here.
-- **Need from you:** nothing yet — see #11 for the one open question
-  (whether you want a genuine three-quarter yaw on top of this).
+- **Did:** stopped the resting camera cutting to a tight lock while
+  everyone is grounded, so the whole beast and both hunters fit (#11).
+- **Worked?** Yes — full 80-step playtest clean, only the pre-existing
+  hop-distance-band (#4) still fails, camera checks all pass.
+- **Next:** #11 needs Nick's own eyes on the frame vs. his reference
+  before it can close; stone-path legibility stays on #4.
+- **Need from you:** compare the after frame on #11 to your drawing and
+  say yes/no there.
 
 ## Now
 
@@ -87,6 +86,18 @@ pass fixes or reverts it.
 
 Left `#11` at `status: taken`, not `done` — the playtest hasn't confirmed
 clean yet.
+
+**Update, 17:43 EDT: the playtest came back clean.** Full 80-step run
+played to a real ending (Pounce landed at step 30). Only failing check
+across the whole run: the pre-existing `hop-distance-band` (Height 3→4 and
+4→5), already fully diagnosed on `#4`, untouched by this change. Zero
+`camera-not-over-shoulder`, zero `hunter-offscreen`, mid-hop camera
+coverage 100% on every sampled hop — the climbing camera is confirmed
+unaffected, not just reasoned about. Set `#11` to `to: nick` / `status:
+open` with `ask:`/`waiting: false` filled in, per the standing rule that a
+`from: nick` request asking for his own visual sign-off ("Nick can look at
+a screenshot and say yes") isn't done until he says so — not marking it
+`done` myself.
 
 ## This run — 2026-09-24 14:42 EDT
 
@@ -1671,15 +1682,16 @@ further either.
 
 ## Log
 
-- 2026-09-24 17:38 EDT (latest) — #11 composition (hunters far back, whole
+- 2026-09-24 17:43 EDT (latest) — #11 composition (hunters far back, whole
   beast in frame): fixed the camera half. `_focus_camera` no longer cuts to
   a tight over-the-shoulder lock while everyone is grounded (new
   `anyone_off_ground` guard) -- the wide, beast-scaled ground shot
   `climb_frame_for` already computed just gets to run instead of being
   overridden. Climbing camera untouched. `ALL TESTS PASSED`, before/after
-  frames attached. Full playtest regression still running at push time --
-  left `#11` at `taken`, reporting the result there once it lands. Stone
-  path geometry (#4) not touched, out of scope.
+  frames attached. Full 80-step playtest came back clean: only the
+  pre-existing `hop-distance-band` (#4) fails, zero camera regressions.
+  Handed to Nick (`to: nick`) for the visual sign-off his own "Done when"
+  bullet asks for. Stone path geometry (#4) not touched, out of scope.
 - 2026-09-24 14:42 EDT — intent-tag-still-grazes-hunter-at-hop-start:
   fixed. Not a math bug in `intent_tag_pos` -- `_position_intent_tag()` ran
   from `_process()`, one full engine frame ahead of the active hunter's own
