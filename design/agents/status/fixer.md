@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-23T20:45
-working_on: Took the high-priority build-the-one-directional-stone-route request, item 1 of 3 (the structural fix). Fixed the real root cause in BOTH tools/blender/ai_beast.py's raycast and beast.py's hand-authored mark()/anchor() with one shared, bpy-free rule (route.py) instead of a per-beast patch -- proved it with 17 pure-Python assertions plus a real regeneration of the shipped Cinder Jackal glb (the sigil no longer reverses past the haunch). Items 2 (spacing band) and 3 (next-hold ring) not started -- left the request taken, not done.
+updated: 2026-09-23T20:49
+working_on: Took the high-priority build-the-one-directional-stone-route request, item 1 of 3 (the structural fix). Fixed the real root cause in BOTH tools/blender/ai_beast.py's raycast and beast.py's hand-authored mark()/anchor() with one shared, bpy-free rule (route.py) instead of a per-beast patch -- proved it with 17 pure-Python assertions plus a real regeneration of the shipped Cinder Jackal glb (the sigil no longer reverses past the haunch), then a full mode=play regression playtest that finished clean (one pre-existing, unrelated fail). Items 2 (spacing band) and 3 (next-hold ring) not started -- left the request taken, not done.
 ---
 
 # fixer
@@ -23,10 +23,10 @@ working_on: Took the high-priority build-the-one-directional-stone-route request
   spacing band and the next-hold ring (parts 2 and 3 of the same request)
   are still open.
 - **Next:** whoever picks this back up should read the request's own
-  `## Result` for exactly what's left (the 2.4-9.2 unit spacing band; check
-  whether the next-hold ring already fires early or needs a real change),
-  and let the `mode=play steps=80` regression playtest I started run to
-  completion — it hadn't finished when this run had to end.
+  `## Result` for exactly what's left — the 2.4-9.2 unit spacing band, and
+  checking whether the next-hold ring already fires early or needs a real
+  change. The regression playtest finished clean after I first wrote this
+  up (see below) — nothing left to chase there.
 - **Need from you:** a look at the trade-off called out in the request —
   the fixed sigil now sits near the neck/shoulder rather than the tip of the
   snout, because that's the nearest real head-adjacent surface that doesn't
@@ -59,10 +59,15 @@ half-verified. Items 2 and 3 need their own reproduce-fix-prove pass.
 **Lease/time note.** Standing up Blender in this sandbox (download +
 regenerate + render) ate a real chunk of this run's budget; the `mode=play`
 regression playtest was still at 16/80 steps (slow sandbox this run) when I
-had to stop to get the finished part committed and pushed rather than risk
-losing it. `run_tests.gd` (unaffected by this change — no GDScript touched)
-and the pure-Python `test_route.py` both pass; the in-game `state=3d`
-render shows no errors against the regenerated asset.
+committed and pushed the fix, rather than hold the finished part hostage to
+a slow background render. It finished shortly after, in the same session:
+full 80-step fight, real ending (Pounce at step 30), one failing check —
+`damage-popup-offscreen` at step 9, which is the already-open, unrelated
+`2026-09-23-1735-playtester-to-fixer-boss-damage-popup-offscreen-at-sigil.md`
+(a hit on the boss near the sigil, exactly that request's shape), not this
+change. `run_tests.gd` (unaffected — no GDScript touched) and the
+pure-Python `test_route.py` both pass; the in-game `state=3d` render shows
+no errors against the regenerated asset. Regression check: clean.
 
 ## Old: 2026-09-23, stones-camera-and-hunter-spacing
 left `taken` (not `done`) — camera and spacing are finished and proven,

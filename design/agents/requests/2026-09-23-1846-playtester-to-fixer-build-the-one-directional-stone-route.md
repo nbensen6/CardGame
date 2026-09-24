@@ -160,14 +160,20 @@ markers form one continuous line up the chest toward the neck — no jump.
 stones still place correctly (frame in this run's own status note, not
 duplicated here since it shows no visible change at this camera angle — the
 sigil was already out-of-frame in this shot before AND after; the Blender
-renders above are what actually shows the fix). Started a full
-`mode=play beast=cinder_jackal steps=80` regression playtest before writing
-this up; it had not finished by the time this run had to end (16/80 steps in
-several minutes — this sandbox was slow this run) — no failures in what
-completed, and nothing this change touches (climb-point *placement*, not
-climb *mechanics*) gives me reason to expect one, but I did not get to see
-it through. Whoever picks this back up should either let a fresh one run to
-completion or treat that as still open.
+renders above are what actually shows the fix).
+
+**Update, same run, after the background playtest finished:** the full
+`mode=play beast=cinder_jackal steps=80` regression run I'd started
+completed after this note was first written (it was still at 16/80 steps
+when I had to push, per the caveat that used to be here) — the fight played
+all the way to a real ending (Pounce landed at step 30, screen changed to
+Location3D) with **one** failing check: `damage-popup-offscreen` at step 9,
+which is the already-open, unrelated
+`2026-09-23-1735-playtester-to-fixer-boss-damage-popup-offscreen-at-sigil.md`
+(a hit landing ON the boss near the sigil, exactly that request's own
+description) — not this change. Nothing this fix touches (climb-point
+*placement*) showed up as a regression in climbing, hopping, or camera
+coverage across the whole run. Consider the regression check closed.
 
 **A trade-off worth a look, not hidden.** Forcing the sigil to keep
 sweeping forward means it no longer sits on the tip of the snout the way the
