@@ -11,9 +11,12 @@ created: 2026-09-24T18:35
 taken_by:
 ask:
 waiting: false
+issue: 14
 ---
 
 # The stones are still beside the jackal, not in front of it — Nick asked for this at 11:52 and is waiting
+
+**#14**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 

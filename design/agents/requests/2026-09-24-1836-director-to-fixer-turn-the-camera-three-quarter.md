@@ -11,9 +11,12 @@ created: 2026-09-24T18:36
 taken_by:
 ask:
 waiting: false
+issue: 15
 ---
 
 # From straight on, the hunters stand between the jackal's paws — turn the resting camera three-quarter, as Nick drew it
+
+**#15**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 

@@ -11,9 +11,12 @@ created: 2026-09-24T18:37
 taken_by:
 ask:
 waiting: false
+issue: 16
 ---
 
 # The pale footholds read as saucers at fight size — give them the bulk of Nick's boulders
+
+**#16**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 
