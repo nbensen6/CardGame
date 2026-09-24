@@ -3,7 +3,7 @@ tags:
   - request
 from: artist
 to: fixer
-status: taken
+status: done
 priority: normal
 created: 2026-09-24T08:22
 taken_by: fixer
@@ -80,4 +80,43 @@ real numbers the way the party-panel fix's tests were.
 
 ## Nick's answer
 
-## Result
+## Result — fixer, 2026-09-24 08:46 EDT
+
+**Done.** Extended `intent_tag_pos` (`combat_3d.gd`) with a `hunter_rect`
+parameter, the same idea as the party-panel fix but with a real 2D overlap
+test instead of a one-sided push — a hunter's own bbox (unlike the fixed
+top-left party panel) can straddle the tag's rect from any side, exactly
+what your own measured numbers showed (the Frog's bbox spanned both above
+and below the tag's fixed y-range). Prefers pushing the tag to sit just
+above the hunter; falls back to just below when there's no room above;
+leaves the prior HP-bar/hand/party answer alone on the (not-really-
+reachable) case where a hunter fills the whole legal band.
+
+`hunter_rect` itself comes from a new `hunter_screen_rect()`, projecting
+the active hunter's real, live-tweened AABB (`_merged_aabb` on its holder
+node, so mid-hop squash/position is included, not the resting foothold) to
+screen space via the same `unproject_position`/`is_position_behind` the
+crown tracking already uses.
+
+**Proof.** Four new tests in `run_tests.gd`, built on your own reported
+step-0 numbers (tag `[295,168]..[450,204]`, Frog bbox
+`[282,141]..[364,222]`): one reproduces the exact pre-fix overlap (sanity
+check the fixture really exercises your bug), one proves the fixed code
+clears it by moving above, one proves the below-fallback when above has no
+room, one proves the no-clear-spot case leaves the prior answer alone
+rather than guessing. `ALL TESTS PASSED`.
+
+**Live re-render of your exact repro**, fresh `--import`,
+`mode=play beast=cinder_jackal steps=15`: the opening Tongue Snap hop
+(`hop_000_03.png` through `hop_000_14.png`, covering your named
+`hop_000_06.png`) — the Frog now sits fully clear of "† Attack 7" at every
+sampled frame, no overlap, at 1:1:
+
+![[frames/fixer/2026-09-24-intent-tag-clear-of-hunter-hop000-06-after.png]]
+
+Full regression: only the already-open, unrelated `hop-distance-band` (32
+occurrences, identical shape/count to every recent run) — no
+`script-error`, no new failure category. `run_tests.gd` and this playtest
+both ran on the same fresh checkout.
+
+Commit: `73ae6b4` (`game/views/combat_3d.gd`, `game/tools/run_tests.gd`).

@@ -2,11 +2,103 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-24T05:34
-working_on: Fixed the intent-tag-hides-behind-party-panel request -- the tag's Y clamp never accounted for the top-left party panel; new Combat3D.intent_tag_pos clamps clear of it, 3 new tests, 0 intent-hidden fails on a full live playtest.
+updated: 2026-09-24T08:46
+working_on: Fixed jump-hides-behind-intent-tag (artist's find) -- intent_tag_pos gets a hunter_rect param with a real 2D overlap test, same idea as the party-panel clamp but the hunter can straddle the tag from any side. 4 new tests, live re-render of the artist's exact repro shows no overlap. Also ruled out a 5th dead end on the stone-route hop-distance ceiling and self-filed a fresh bug (dropped-slider mislabels the miss) for a future run.
 ---
 
 # fixer
+
+## This run — 2026-09-24 08:46 EDT
+
+- **Did:** fixed a fresh request from the artist — mid-jump, a hunter's own
+  sprite could render behind the boss's intent tag ("† Attack 7"), hiding
+  part of the hunter right at the peak of a hop. Same shape as the
+  already-fixed party-panel overlap, just never extended to a moving
+  hunter. Also spent part of the run ruling out one more dead end on the
+  still-open stone-route hop-distance item, and found (but didn't fix, to
+  keep this run to one thing) a real mislabeling bug in the slider
+  minigame — filed both for the record.
+- **Worked?** Yes on the intent-tag fix — reproduced the artist's exact
+  numbers, fixed it so the tag now prefers sitting just above a hunter it
+  would otherwise overlap (falling back to below, or leaving it alone, when
+  there's no room), and a fresh live re-render of their exact repro hop
+  shows the two clear of each other at every sampled frame. Full regression
+  playtest shows nothing new — only the already-known, unrelated
+  hop-distance-band failures.
+- **Next:** the self-filed dropped-slider-shows-wrong-label request is real
+  and ready to build from (mechanism, line numbers and a fix direction
+  already written up) — good next pick if nothing higher-priority is open.
+  The stone-route hop-distance item (last two short hops) is down to one
+  real remaining lever (a 2-rung lookahead in Height 4's own candidate
+  scoring) after this run closed off a 5th dead end.
+- **Need from you:** nothing.
+
+![[frames/fixer/2026-09-24-intent-tag-clear-of-hunter-hop000-06-after.png]]
+
+## Now
+
+Took the new `to: fixer` request
+`2026-09-24-0822-artist-to-fixer-jump-hides-behind-intent-tag.md` (the only
+open `to: fixer` request this run — it landed mid-run, after I'd already
+started a code-reading pass per order-of-work item 3 since nothing was
+open at the time; per "requests to you come before your own work," dropped
+that pass — already written up as a self-filed request below — and took
+this one instead the moment it appeared).
+
+**The fix.** `intent_tag_pos` (`combat_3d.gd`) gets a new `hunter_rect`
+parameter (default `Rect2()`, so the three existing call sites in
+`run_tests.gd` are untouched). Unlike the party panel — fixed to the
+top-left corner, so a one-sided "push the Y floor down" always clears it —
+a hunter can be anywhere the camera can see, and the artist's own measured
+numbers showed the hunter's bbox straddling the tag's y-range from both
+sides at once. So this is a real 2D rect-overlap test: when it fires, the
+tag moves to sit just above the hunter (closer to where it already tracks
+the crown); if there's no room above, just below; if neither side has
+room, the pre-hunter answer is left alone rather than picking an arbitrary
+worse spot. `hunter_screen_rect()` (new) supplies the rect itself, by
+projecting the active hunter's real, live-tweened AABB (`_merged_aabb` on
+its holder node — the same node the hop tween moves, so mid-air position
+and squash are both included, not just the resting foothold) through the
+same `unproject_position`/`is_position_behind` the crown-tracking already
+uses.
+
+**Proof.** Four new tests in `run_tests.gd`, all built on the artist's own
+reported step-0 numbers (tag `[295,168]..[450,204]`, Frog bbox
+`[282,141]..[364,222]`): a sanity check that those exact inputs reproduce
+their reported overlap through the old, hunter-blind clamp; the
+above-fallback; the below-fallback (crafted so "above" has no room); the
+no-clear-spot case (a hunter tall enough to span the whole legal band)
+leaving the prior clamp's y untouched. `ALL TESTS PASSED`.
+
+**Live re-render of their exact repro.** Fresh `--import`,
+`mode=play beast=cinder_jackal steps=15`: `hop_000_03.png` through
+`hop_000_14.png` (covering their own named `hop_000_06.png`) all show the
+Frog fully clear of "† Attack 7", at 1:1. Frame above. Full regression:
+only the already-open, unrelated `hop-distance-band` (32, identical
+shape/count to every recent run) — no `script-error`, no new failure
+category.
+
+Commit: `73ae6b4` (`game/views/combat_3d.gd`, `game/tools/run_tests.gd`).
+
+**Also this run, not the main item:**
+- Ruled out a 5th dead end on the stone-route hop-distance ceiling
+  (`...1846-...build-the-one-directional-stone-route.md`): confirmed by
+  reading AND a live experiment that the Python reference model's own
+  sigil height has zero effect on the shipped beast's actual sigil
+  placement — `ai_beast.py`'s sigil branch never reads the `z` it computes
+  from the reference model's fractions at all. Full mechanism and the
+  experiment's numbers are in that request's own new section. Reverted the
+  experiment before this note; nothing of it is in the pushed diff.
+- Dispatched an Explore agent (order-of-work item 3, since nothing was open
+  at the time) scoped to `card_view.gd`/`hit_circle.gd`. It found a real,
+  reachable bug — a dropped slider hold shows a "TOO EARLY"/"TOO LATE"
+  label that's actually just the stale sign left over from the original,
+  successful press, never the real reason (letting go too soon) it missed.
+  Self-filed rather than built, since the higher-priority intent-tag
+  request landed while I was mid-investigation and "Do ONE thing" applied:
+  `2026-09-24-0840-fixer-to-fixer-dropped-slider-shows-wrong-timing-label.md`.
+
+## Old: 2026-09-24, intent-tag-hides-behind-party-panel
 
 ## This run — 2026-09-24 05:34 EDT
 
@@ -1307,7 +1399,16 @@ further either.
 
 ## Log
 
-- 2026-09-24 05:34 EDT (latest) — intent-tag-hides-behind-party-panel:
+- 2026-09-24 08:46 EDT (latest) — jump-hides-behind-intent-tag: fixed.
+  `intent_tag_pos` gets a `hunter_rect` param with a real 2D overlap test
+  (prefer above, fall back below, else leave alone) — the artist's own
+  find, mid-jump the hunter's sprite could render behind the boss's intent
+  tag. 4 new tests on the artist's exact numbers; live re-render of their
+  named repro hop shows no overlap; full regression clean (only the
+  already-known hop-distance-band). Also ruled out a 5th dead end on the
+  stone-route ceiling and self-filed a real dropped-slider mislabeling bug
+  an Explore pass found, for a future run.
+- 2026-09-24 05:34 EDT — intent-tag-hides-behind-party-panel:
   fixed. `_position_intent_tag`'s Y clamp (clear of the HP bar, clear of
   the hand) never accounted for the top-left party panel, and the HP-bar
   clamp itself sits inside the panel's own y-range. New pure static
