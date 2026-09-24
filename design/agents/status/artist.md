@@ -2,13 +2,176 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T17:24
-working_on: Took #12 (Nick, high priority) — the arena floor, footholds and sky were still all one warm orange-brown even after style C landed. Recoloured the ground dark, the footholds pale, the sky/ambient cool purple-into-pink for this fight only. Shipped and verified; nothing else open.
+updated: 2026-09-24T19:05
+working_on: Closed #13 — cut the hunters to ~260-310 tris with flat vertex colour and fixed character select's stale model.
 ---
 
 # artist
 
-## This run — 2026-09-24 17:24 ET
+## This run — 2026-09-24 19:05 ET
+
+- **Did:** fixed #13 — cut hunters to ~260-310 tris, flat vertex colour, and
+  fixed character select's stale model.
+- **Worked?** Yes, both read as a real shape now; frame below.
+- **Next:** nothing queued — say if the Goblin's residual darkness is worth
+  a follow-up.
+- **Need from you:** nothing blocking.
+
+![[frames/artist/2026-09-24-hunters-zoom-evidence.png]]
+![[frames/artist/2026-09-24-character-select-matches-fight.png]]
+
+## Now
+
+Took the one open `to: artist` request this run
+(`2026-09-24-1720-nick-to-artist-hunters-must-read-at-fight-size.md`, `#13`,
+high priority, no `## Nick's answer` yet needed — it's a fresh ask, not an
+answered one) — `status: taken`, pushed before starting work, per
+`COMMON.md` §2.
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `ALL TESTS
+PASSED` confirmed before touching anything. Blender 4.1.1, `pip install
+pillow numpy`.
+
+**Reproduced Nick's finding first.** Rendered `state=3d wide` at 1280x720
+(the real fight camera) and cropped tight on each hunter (evidence only, per
+his own note — never the size to judge by). Both matched his description
+exactly: the Frog a green/black speckled blob with no shape, the Goblin
+barely a blue/green fleck, no findable limb.
+
+**Extracted the actual embedded textures and looked at them directly**
+rather than guess. Both `frog_ai.glb`/`goblin_mech_ai.glb` carry one
+2048x2048 texture each — hundreds of colours, Meshy's own baked
+micro-shading, painted onto a scrambled, tightly-packed UV atlas (confirmed
+489/193 disconnected islands from an earlier pass, `goblin_mech_ai.md` pass
+9). That atlas layout is the real hazard: at a hunter's true ~40px on-screen
+size, the GPU's mip sampling blends across whatever happens to sit next to a
+given point in TEXTURE space, which is unrelated to what's next to it on the
+actual 3D model.
+
+**First attempt (quantize the existing texture to ~6 flat colours,
+re-embed) barely moved the needle** — rendered near-identical to the
+original at real fight size. Proved it wasn't a caching artifact: dumped the
+render, diffed pixels against the unmodified original, confirmed the new
+texture really was shipping and importing correctly. The quantization
+reduced hue variety but didn't fix the UV-bleed mechanism causing the noise,
+since neighbouring texture-space regions are still unrelated body parts.
+
+**Second attempt: bake the SAME quantized colours as flat per-face texture
+regions (paint each triangle's own UV footprint one solid colour) instead of
+posterizing pixel-by-pixel.** Also barely moved the needle. This ruled out
+"the texture has too many colours" as the whole story.
+
+**Isolated the SECOND cause with a shader test before building anything
+else** — forced `toon.gdshader`'s `ALBEDO` to a constant magenta, no texture
+or colour logic at all, and rendered. The jackal's legs (big on screen) went
+solid magenta cleanly. The hunters still showed the SAME speckled noise
+pattern, just in magenta/black instead of green/black. Since every face was
+now IDENTICALLY coloured, the only thing left that could vary per-pixel was
+per-facet LIGHTING — 1,560 triangles across a ~30px screen footprint means
+most facets are sub-pixel, so style C's hard lit/shadow edge flips
+independently per tiny facet and reads as flicker, regardless of colour.
+
+**Fixed the real cause: cut triangle count from the PRE-decimation source,
+not the already-cut one.** Pulled `frog_ai.glb`/`goblin_mech_ai.glb` from
+the commit before style C's own low-poly pass (`7c6a951^`, ~5,200 tris,
+properly welded topology) and re-ran `lowpoly_facet.py`'s same Decimate
+lever at a much smaller ratio: Frog to 260 tris, Goblin to 311. Chose this
+over decimating the shipped 1,560-tri file again because that file's own
+vertices are already split per-face (flat-shading export duplicates them),
+which starves Blender's Decimate of the shared edges it needs to collapse
+well.
+
+**Then fixed colour for real: flat VERTEX colour, no texture at all**, so
+there is no UV lookup left to bleed across anything.
+`tools/blender/ai/flat_paint_dump.py` dumps each face's UV (for sampling)
+and its real 3D adjacency (after welding the flat-shaded export's
+duplicated-per-face vertices back together — the shipped mesh has ZERO
+bmesh-visible adjacency until this runs, confirmed empirically: 0 adjacent
+pairs before the weld, thousands after).
+`tools/blender/ai/flat_paint_region_merge.py` merges faces into K
+colour regions using ONLY adjacency — never just colour similarity alone,
+which checkerboarded neighbouring facets into different-but-close clusters
+and looked identical to the original noise. Disconnected greeble parts
+(Meshy never welds small bolts/spikes to the body, `goblin_mech_ai.md` pass
+9 — confirmed 134/341 disconnected components even after welding) fall back
+to nearest-colour merging once adjacency is exhausted. Also floors each
+region's HSV value so a naturally-dark source patch doesn't read as a hole
+in the silhouette. `tools/blender/ai/flat_paint_bake.py` writes the result
+as real per-face vertex colour and a flat white 1x1 base texture, and wires
+a `ShaderNodeVertexColor` into the material's Base Color so Blender's own
+glTF exporter actually emits `COLOR_0` (it only does this when the material
+node tree reads the attribute — mesh data alone isn't enough, cost real time
+to find). `toon.gdshader`'s `ALBEDO` gained `* COLOR.rgb` — a no-op for
+every already-shipped textured model (COLOR defaults white with no vertex
+colour present), real colour source for these two.
+
+**Fixed the character-select mismatch (finding #5) too.** `Cast.model_path`
+— the one function every screen that shows a hunter calls — never checked
+for an `_ai` rebuild, only the character's own plain `cast/<id>.glb`, so
+character select kept showing the old Kenney-primitive Frog long after the
+fight moved to `frog_ai.glb`. Added the same "`_ai` beats plain beats
+stand-in" check `combat_3d.gd`'s own `HUNTER_AI_ART` already uses. This
+alone would have made character select show the new model in PLAIN WHITE
+(no texture, and Godot doesn't read vertex colour as albedo by default) —
+`location_3d.gd`'s `_show_roster` never called `toon_all()` the way the
+reward-screen row already does, so added that too, gated on the model
+actually being an `_ai` one (so the four non-hunter characters and their
+Kenney stand-ins render exactly as before).
+
+**Looked before shipping**, per this brief's own rule. Rendered
+`state=3d wide` before/after at the real camera, cropped tight (evidence,
+not the design size) on both hunters:
+
+![[frames/artist/2026-09-24-hunters-readable-wide.png]]
+![[frames/artist/2026-09-24-hunters-zoom-evidence.png]]
+
+Also rendered `state=3dselect` (character select) before/after against
+Nick's own reference screenshot from the request:
+
+![[frames/artist/2026-09-24-character-select-matches-fight.png]]
+
+**Checked the residual honestly rather than call it fully solved.** The
+Goblin still reads darker than the Frog. Tested two hypotheses directly
+rather than guess: rendered with the outline shader's width forced to
+near-zero (no change), then with `shadow_color` forced much lighter (no
+change either). Both ruled out — the darkness survives even with no outline
+and a much brighter shadow tint, which only makes sense if it's ambient
+light level, not colour or line width. The arena's ambient was
+intentionally darkened/cooled for this fight by #12 (a separate, already-
+shipped, deliberate decision) — a Goblin facet with little direct light
+leans on that dim ambient regardless of its own colour. Said so plainly in
+the request rather than claim a full fix; it's the Goblin's own geometry
+(more facets facing away from the key light than the Frog's) interacting
+with an unrelated approved change, not something this request's own scope
+covers.
+
+**Updated the Blender source too**, not just the shipped `.glb`s —
+`tools/blender/ai/frog_ai.blend`/`goblin_mech_ai.blend` re-saved from the
+exact pipeline that produced what's shipped, so the source doesn't drift
+from the shipped asset the way earlier passes flagged as a risk.
+
+**Proved no regression.** `ALL TESTS PASSED` before and after — added two
+new cases to the existing `Cast.model_path` test (the corrected `_ai`-first
+priority, and a character with no `_ai` rebuild still falling through to
+its own plain model). Fresh full 80-step `mode=play beast=cinder_jackal`
+playtest in the foreground with a 10-minute timeout per `COMMON.md` §4b:
+only the pre-existing, already-filed `hop-distance-band` (62) — identical
+shape to every prior baseline on record, the fixer's own open stone-route
+thread, unrelated to anything touched this run.
+
+**Cleaned up after the experiments that didn't ship** — deleted four
+orphaned extracted-texture PNGs from the quantize/bake-texture attempts that
+were superseded by the vertex-colour approach, so they didn't linger as
+untracked debris.
+
+`git status` before this push: `frog_ai.glb`/`goblin_mech_ai.glb` (now
+~40KB each, down from 2.1MB/6.9MB — no embedded texture left), their
+`.blend` sources, `toon.gdshader`, `cast.gd`, `location_3d.gd`,
+`run_tests.gd`, the three new `flat_paint_*.py` tools plus a shared
+`white1x1.png`, `JACKAL-BAR.md`, the request, this status note, and three
+new frames.
+
+## Old: 2026-09-24 17:24 ET
 
 - **Did:** took #12 (Nick, high priority, top of queue) — the arena read as
   one flat orange-brown (floor, wall, beast all the same warm family) even

@@ -406,6 +406,46 @@ reading the fight at a glance, at play size, in motion.
       fight camera and the 34px portrait. `goblin_mech_ai` **41/50** (was
       40), one point under the hunter stop line.
       `design/progress/goblin_mech_ai.md` pass 6.
+      **Regressed, 2026-09-24: style C's low-poly cut (16:38 ET) kept the
+      full photoreal Meshy texture on the decimated mesh — Nick caught it
+      at real fight size (#13), both hunters back to unreadable.** Two
+      compounding causes, not one: (1) the texture itself was still
+      hundreds of colours of baked micro-shading across a scrambled,
+      unpadded UV atlas (489/193 disconnected islands), which bleeds
+      across unrelated islands once the mesh is only ~40px tall — any
+      texture-based fix inherits this; (2) 1,560 triangles is still too
+      many facets for a ~40px character — most are sub-pixel, so
+      `toon.gdshader`'s hard lit/shadow edge flips per-facet and reads as
+      noise independent of colour. Fixed both: decimated further, from the
+      pre-style-C ~5,200-tri source, to ~260 (Frog) / ~310 (Goblin)
+      triangles so remaining facets are actually visible on screen, then
+      replaced the texture entirely with flat PER-FACE VERTEX COLOUR (a
+      handful of swatches per hunter, merged only across ADJACENT faces so
+      a region is one real contiguous body part, not a colour-similarity
+      guess) — vertex colour can't bleed across UV space because there is
+      no texture lookup at all (`tools/blender/ai/flat_paint_dump.py` →
+      `flat_paint_region_merge.py` → `flat_paint_bake.py`,
+      `toon.gdshader`'s `ALBEDO` gained `* COLOR.rgb`). Also fixed the
+      character-select screen showing the OLD Kenney-primitive models
+      (`Cast.model_path` never checked for an `_ai` rebuild at all;
+      `location_3d.gd`'s roster row never toon-shaded one either).
+      Verified: both hunters read as a real shape with 4-7 flat colours at
+      the true `state=3d` camera, the ink outline is a mostly-continuous
+      line instead of dotted fragments (fewer/bigger facets), and
+      character select now shows the exact model the fight does.
+      ![[frames/artist/2026-09-24-hunters-zoom-evidence.png]]
+      ![[frames/artist/2026-09-24-character-select-matches-fight.png]]
+      **Honest residual:** the Goblin still reads darker than the Frog —
+      its geometry has more facets angled away from the key light, and the
+      arena's own ambient is intentionally darker/cooler since #12's
+      palette pass, so a facet with little direct light leans on a dim
+      ambient regardless of its assigned colour. Confirmed this is a
+      light/geometry interaction, not a leftover colour or outline defect
+      (tested with the outline fully off and a much lighter shadow tint —
+      neither moved it). Not fixed here — would mean either re-touching
+      the recently-approved ambient (out of this request's scope) or a
+      geometry pass on which facets face the light, worth its own look if
+      Nick still finds the Goblin too dark after seeing this.
 
 ### The arena
 - [x] **It frames the beast** rather than competing with it. Meshy-generated

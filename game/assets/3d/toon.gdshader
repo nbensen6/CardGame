@@ -83,7 +83,13 @@ vec3 rgb2hsv(vec3 c) {
 }
 
 void fragment() {
-	vec3 base = texture(albedo_tex, UV).rgb * tint.rgb;
+	// COLOR is the mesh's own per-vertex colour, white (1,1,1,1) when a model
+	// carries none, so this is a no-op for every already-shipped textured
+	// model. A model baked to flat per-face vertex colour (request #13 — the
+	// hunters, whose auto-generated texture was noise, not detail, at their
+	// real ~40px on-screen size) supplies a plain white 1x1 albedo_tex so its
+	// true colour comes entirely from COLOR.
+	vec3 base = texture(albedo_tex, UV).rgb * tint.rgb * COLOR.rgb;
 	ALBEDO = base;
 	ROUGHNESS = 1.0;
 	SPECULAR = 0.0;

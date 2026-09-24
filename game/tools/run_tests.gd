@@ -8949,9 +8949,16 @@ func _test_backlog86_soft_fall_drops_to_base_when_only_hold_below_is_unsafe() ->
 
 
 func _test_backlog86_cast_model_path_prefers_your_own_art() -> void:
-	_expect(Cast.model_path("frog") == Cast.DIR + "frog.glb",
-		"the Frog's own model wins over its Kenney stand-in")
+	_expect(Cast.model_path("frog") == Cast.DIR + "frog_ai.glb",
+		"the Frog's own model wins over its Kenney stand-in, and the rigged " +
+		"_ai rebuild wins over the plain one -- request #13, the fight and " +
+		"character select must show the same model")
 	_expect(Cast.is_yours("frog"), "the Frog is flagged as wearing its own art")
+	# A character with a plain cast/<id>.glb but no "_ai" rebuild -- the new
+	# ai-first check must still fall through to it rather than skip straight
+	# to the Kenney stand-in.
+	_expect(Cast.model_path("vine_weaver") == Cast.DIR + "vine_weaver.glb",
+		"a character with no _ai rebuild still gets its own plain model")
 
 
 func _test_backlog86_cast_model_path_falls_back_when_theres_no_own_art() -> void:

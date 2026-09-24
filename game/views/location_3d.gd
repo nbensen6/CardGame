@@ -852,15 +852,24 @@ func _show_roster(roster: Array) -> void:
 	var span := 1.05
 	var left := -span * (float(roster.size()) - 1.0) * 0.5
 	for i in range(roster.size()):
-		# Ask Cast, which prefers your own art over the Kenney stand-in. This line
-		# used to carry its own copy of the placeholder table and so kept showing a
-		# bunny for the Frog long after frog.glb existed — the character select is
-		# the ONE screen whose whole job is showing you who you are picking.
-		var path := Cast.model_path(String((roster[i] as Dictionary).get("id", "")))
+		var id := String((roster[i] as Dictionary).get("id", ""))
+		# Ask Cast, which prefers your own art over the Kenney stand-in — an "_ai"
+		# rebuild first, same order the fight itself uses. This line used to carry
+		# its own copy of the placeholder table and so kept showing a bunny for the
+		# Frog long after frog.glb existed — the character select is the ONE screen
+		# whose whole job is showing you who you are picking.
+		var path := Cast.model_path(id)
 		if not ResourceLoader.exists(path):
 			continue
 		var n: Node3D = (load(path) as PackedScene).instantiate()
 		_plot.add_child(n)
+		if path == CAST + id + "_ai.glb":
+			# An "_ai" rebuild is toon-shaded and (for a hunter, request #13)
+			# coloured by flat per-face vertex colour, not a texture -- without
+			# this it renders through Godot's plain imported material, which
+			# reads that colour source as white. Same call _place_hunters makes
+			# for the identical row on the reward screen.
+			BEAST_MODEL.toon_all(n, id)
 		# Width capped a shade under the height, so the widest hunter still reads
 		# as one of the row rather than as scenery.
 		_fit_height(n, HUNTER_HEIGHT, HUNTER_HEIGHT * 0.9)

@@ -7,6 +7,13 @@
 ## That ordering is the point: making art should mean exporting a file, not
 ## exporting a file AND editing three view scripts to notice it (see
 ## design/guide/blender-pipeline.md).
+##
+## A rigged, toon-shaded rebuild (combat_3d.gd's HUNTER_AI_ART, the same
+## "<id>_ai.glb beats <id>.glb" rule the fight itself uses) wins over even
+## your own plain cast/<id>.glb, so this is the ONE place that decides which
+## model a character wears — request #13, 2026-09-24: character select was
+## still showing the old primitive Frog after the fight moved on to
+## frog_ai.glb, because this function never looked for the "_ai" file at all.
 class_name Cast
 extends RefCounted
 
@@ -19,10 +26,16 @@ const PLACEHOLDER := {
 }
 
 
-## Path to the model for a character id. Yours if it exists, else the stand-in.
+## Path to the model for a character id: an "_ai" rebuild first, then your
+## plain cast/<id>.glb, else the stand-in.
 static func model_path(character_id: String) -> String:
+	if character_id == "":
+		return DIR + String(PLACEHOLDER.get(character_id, "bunny")) + ".glb"
+	var ai := DIR + character_id + "_ai.glb"
+	if ResourceLoader.exists(ai):
+		return ai
 	var own := DIR + character_id + ".glb"
-	if character_id != "" and ResourceLoader.exists(own):
+	if ResourceLoader.exists(own):
 		return own
 	return DIR + String(PLACEHOLDER.get(character_id, "bunny")) + ".glb"
 
