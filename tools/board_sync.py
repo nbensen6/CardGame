@@ -27,6 +27,7 @@ import os
 import re
 import subprocess
 import sys
+from urllib.parse import quote
 
 REPO = "nbensen6/CardGame"
 REQUESTS = os.path.join("design", "agents", "requests")
@@ -146,18 +147,41 @@ def ensure_labels(dry):
 
 
 def issue_body(path, body, fm):
-    """The issue text: the note, plus where it really lives.
+    """The issue text: the note, a way back to it, and a way into the game.
 
     Obsidian embeds (![[frames/...]]) do not render on GitHub. Rather than
     rewrite them into raw URLs and get it subtly wrong, say plainly that the
     frames are in the repo -- the note is the source of truth and this is a
     mirror.
     """
-    head = "_Mirror of `%s`. The note is the source of truth; " % path.replace(os.sep, "/")
-    head += "comment here and the hourly sync copies it back into the note for the agents._\n\n"
+    rel = path.replace(os.sep, "/")
+    in_vault = rel.replace("design/", "", 1)
+    if in_vault.endswith(".md"):
+        in_vault = in_vault[:-3]
+    head = "**[Open this note in Obsidian](obsidian://open?vault=design&file=%s)**" % quote(in_vault)
+    head += " · [read it on GitHub](https://github.com/%s/blob/main/%s)\n\n" % (REPO, rel)
+    head += "_Mirror of `%s`. The note is the source of truth; " % rel
+    head += "comment here and the sync copies it back into the note for the agents._\n\n"
     if "![[" in body:
         head += "_(Frames referenced below are in the repo, not rendered here.)_\n\n"
-    return head + body
+    return head + fight_link(body, fm)
+
+
+def fight_link(body, fm):
+    """Make the note's "Fight this now" link work when clicked from GitHub.
+
+    In the note it runs `play.cmd {{yaml_value:beast}}` -- the beast comes from
+    the ACTIVE note in Obsidian, which is right there and useless from a
+    browser, where no note is active. The mirrored copy names the beast in the
+    URI instead (`&_beast=...`, the plugin's custom-variable parameter), so
+    clicking it from an issue on this PC opens the right fight.
+    """
+    beast = fm.get("beast", "").strip()
+    if not beast:
+        return body
+    return body.replace(
+        "obsidian://shell-commands/?vault=design&execute=fight-request-beast",
+        "obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=" + quote(beast))
 
 
 # --------------------------------------------------------------------------
@@ -282,6 +306,18 @@ def selftest():
 
     # a note with no frontmatter is left alone rather than corrupted
     assert split_note("# just a title")[2] == "# just a title"
+
+    # the mirrored fight link must name its beast, or it is dead from a browser
+    link = "obsidian://shell-commands/?vault=design&execute=fight-request-beast"
+    out = fight_link("see [Fight](%s) here" % link, {"beast": "cinder_jackal"})
+    assert "execute=fight-uri-beast&_beast=cinder_jackal" in out, out
+    assert "fight-request-beast" not in out
+    # a note with no beast is left exactly as written, not half-rewritten
+    assert fight_link("x %s y" % link, {}) == "x %s y" % link
+
+    b = issue_body(os.path.join("design", "agents", "requests", "a.md"), "# T", {})
+    assert "obsidian://open?vault=design&file=agents/requests/a" in b, b
+    assert "/blob/main/design/agents/requests/a.md" in b
     print("BOARD SYNC SELFTEST OK")
 
 
