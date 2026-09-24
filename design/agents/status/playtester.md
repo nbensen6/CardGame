@@ -2,13 +2,108 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-23T18:46
-working_on: Closed out Nick's approved stone-route proposal — filed the two build requests it promised (fixer: one-directional route + spacing + next-hold ring; artist: ledges read as shelves) and marked both source notes done.
+updated: 2026-09-23T21:41
+working_on: Full three-mode baseline (clean, matches last run) plus a fresh human-eye pass on item 1, then added a new check (intent tag vs. party panel) that caught a real, reproducible bug -- filed to the fixer.
 ---
 
 # playtester
 
-## This run - 2026-09-23 18:46 EDT
+## This run - 2026-09-23 21:41 EDT
+
+- Did: full three-mode baseline first (this sandbox is slow tonight, ~20-26s/
+  step — play mode alone took ~13 minutes for 30-40 steps). Then a fresh
+  human-eye pass on item 1 (card plays reading clearly), overdue two runs
+  running. Then one new check: the intent tag must never overlap the boss
+  HP bar or the party panel (JACKAL-BAR's "the beast's intent is unmissable"
+  / "nothing important is behind... the party panel", never covered before —
+  the existing hand-over-hud check only ever compared HUD elements against
+  the *hand*, never HUD against HUD).
+- Worked?: Yes, on both halves. Baseline: 0 new failures, `hover` and `hands`
+  both fully clean, `play` reproduced exactly the one already-filed,
+  already-open bug (`damage-popup-offscreen` at the sigil, `1735`, still
+  unaddressed) and nothing else — not a regression. Item 1 fresh look: real
+  damage numbers land and read clearly, a Block icon visibly appears on the
+  party row the instant Brace is played (checked the before/after frame
+  pair), hands refresh cleanly at every size — no new complaint there. The
+  new check: verified false-positive-free on `mode=hands` (all 10 sizes)
+  first, then it fired for REAL on `mode=play`, twice, at different fight
+  states — the intent tag ("† Attack 7" at fight start, a climb-intent tag
+  mid-fight) renders **partially behind the top-left party panel**, text
+  visibly clipped in both frames. Filed
+  `to: fixer`,
+  `2026-09-23-2141-playtester-to-fixer-intent-tag-hides-behind-party-panel.md`,
+  with the root cause I could see from reading the code (`_position_intent_tag`
+  clamps Y away from the HP bar/hand but never clamps X away from the party
+  panel) and both frames.
+- Next: watch for the fixer's fix, re-run `mode=play` and confirm 0
+  `intent-hidden` fails. The stone-route build (`1846`, `to: fixer`) and the
+  boss-damage-popup-offscreen bug (`1735`) are both still open and unbuilt/
+  unfixed as of this run — nothing on my end is blocking either.
+- Need from you: nothing this run.
+
+## Now
+
+Fresh sandbox, Godot 4.7.1 + `--import`, `run_tests.gd`: `ALL TESTS PASSED`
+before and after the code change. Full baseline (this sandbox ran ~4-5x
+slower than the documented 3-5min/40-steps tonight, so `play` used
+`steps=40` instead of 80 to keep each run under ~15 minutes and let me
+verify the new check twice without losing the whole run to render time):
+
+- `mode=play steps=40`: 1 failing check, `damage-popup-offscreen` ×1 at
+  step 19 (same card, same on-screen position, same "both at the sigil"
+  condition as every prior run since `1735` was filed 2026-09-23 17:35 —
+  confirmed still open, still unfixed, not a new bug).
+- `mode=hover`: 0 flips, clean.
+- `mode=hands`: 0 fails across hand sizes 1-10, clean.
+
+Item 1 fresh-eyes pass (overdue since the boss-damage-timing fix made real
+hits possible for the first time): looked closely at step_002/003 (a
+Tongue Flick landing for 10, boss bar visibly draining), step_017/018
+(Brace granting 5 Block — a new "◈5" icon appears on the Frog's party row
+that was not there the frame before), and step_019 (the known offscreen-
+popup bug, confirmed still reproducing). Conclusion: card plays read
+clearly wherever the popup itself stays on screen; the one thing standing
+between item 1 and a clean tick is the same offscreen-popup bug already
+filed and still open.
+
+New check added to `game/tools/playtest.gd` (check 5c, `intent-hidden`):
+whenever `_intent_tag` is visible, its rect must not intersect `_hp_bar` or
+`_party`. Verified in two stages before trusting it (same discipline as
+every prior check added here — a check that can only ever pass proves
+nothing, but neither does one that fires on noise): `mode=hands` first (all
+10 hand sizes, 0 fires — rules out "any overlap, any hand size" as an
+artifact of the check itself), then `mode=play`, where it fired twice for
+real, at fight-start and mid-fight, both frames showing genuinely clipped
+text. Filed to the fixer with the root cause
+(`_position_intent_tag`'s clamp only ever protects the tag's Y, never its
+X, against the party panel specifically) rather than guess further at a
+fix — not my job to fix, per this role's own rule.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | fresh pass done — reads clearly except where the already-filed offscreen-popup bug (`1735`) hides the number; no new complaint |
+| 2 | hunters land on the beast correctly | unchanged — 0 `hunter-off-marker` fails this run |
+| 3 | jump animation (squash/arc/landing) | unchanged — clean, no pops, across every hop this run |
+| 4 | camera | unchanged — 0 `hunter-offscreen`/`hunter-lost-mid-hop` fails; **new gap found and now checked**: the intent tag (not the hunter) can hide behind the party panel — filed |
+| 5 | nothing errors | clean — 0 script-error fails across all three modes |
+
+One commit this run: the new `intent-hidden` check in `playtest.gd`, pushed
+before the verification runs finished (per COMMON.md 4b — a pushed check is
+recoverable, an unpushed one that outlives this sandbox is not), then
+proven live exactly as described above.
+
+## Next
+
+Watch for the fixer picking up either open request
+(`2026-09-23-1735-...boss-damage-popup-offscreen-at-sigil.md`,
+`2026-09-23-2141-...intent-tag-hides-behind-party-panel.md`) or the still-
+unbuilt stone route (`2026-09-23-1846-...build-the-one-directional-stone-
+route.md`). Once any of those land, re-run the full baseline and confirm
+the matching check goes to 0 fails. Nothing else queued.
+
+## Old: 2026-09-23 18:46 EDT, stone-route proposal closed out
 
 - Did: claimed the lease, found Nick had answered the stone-route design
   question (`2026-09-23-1434-...`, "Approved, as written. Build it.") with
@@ -32,34 +127,10 @@ working_on: Closed out Nick's approved stone-route proposal — filed the two bu
   run.
 - Need from you: nothing this run.
 
-## Now
-
-No game code changed this run — pure board bookkeeping, so skipped the
-usual full three-mode baseline (nothing to regress; will run it fresh once
-the fixer's build lands to verify the route for real). Read all three
-touched notes end to end before writing anything, so the two new requests
-carry real numbers (the fixer's own `hop_arc()` clamp math, `ai_beast.py`
-line numbers, the anchor/stone split) rather than re-summarizing loosely.
-
-Checklist snapshot: unchanged from last run — this run was request/board
-bookkeeping only, no gameplay code touched, no fresh playtest run to
-compare against.
-
-Two requests filed this run: `to: fixer`, high priority,
-`2026-09-23-1846-playtester-to-fixer-build-the-one-directional-stone-route.md`;
-`to: artist`, normal priority,
+No game code changed that run — pure board bookkeeping, so it skipped the
+usual full three-mode baseline. Two requests filed:
+`2026-09-23-1846-playtester-to-fixer-build-the-one-directional-stone-route.md`,
 `2026-09-23-1846-playtester-to-artist-make-ledges-read-as-shelves.md`.
-
-## Next
-
-Once the fixer pushes the route fix, run the full three-mode baseline and
-look specifically at: the sigil hold no longer reversing direction (a
-frame-by-frame check of the route's rotational sweep), every ordinary hop
-landing inside 2.4-9.2 world units, and the next-hold ring appearing before
-its card is played. Also check in on the artist's shelf-material pass once
-it lands — verify it reads from the wide establishing shot, not just up
-close. Item 1 (card plays reading clearly) is still overdue for a fresh
-human-eye pass now that real boss damage lands (flagged two runs running).
 
 ## Old: 2026-09-23, boss-damage timing fix — first real win, crash fixed, popup bug filed
 
@@ -1196,6 +1267,19 @@ remain the backstop for that; keep saving them.
 
 ## Log
 
+- 2026-09-23 21:41 EDT — full three-mode baseline (clean, matches last
+  run's own results exactly: `damage-popup-offscreen` still the one open
+  bug, `1735`, not a regression). Fresh human-eye pass on item 1 (overdue
+  two runs) found nothing new. Added `intent-hidden` to `playtest.gd`
+  (check 5c: `_intent_tag` must never overlap `_hp_bar`/`_party`) — clean
+  on `mode=hands` (all 10 sizes), then fired for real twice on `mode=play`,
+  a genuine bug: the intent tag renders partially behind the party panel
+  at fight-start and again mid-fight. Filed
+  `2026-09-23-2141-playtester-to-fixer-intent-tag-hides-behind-party-panel.md`
+  with the root cause (`_position_intent_tag` clamps Y away from the HP
+  bar/hand, never X away from the party panel) and both frames. `ALL TESTS
+  PASSED` throughout; commit pushed before the verification runs finished
+  per COMMON.md 4b.
 - 2026-09-23 18:46 EDT — Nick approved the stone-route proposal
   (`1434`, "Approved, as written. Build it."). Read it alongside the
   fixer's numbers note (`1736`) and filed the two build requests it
