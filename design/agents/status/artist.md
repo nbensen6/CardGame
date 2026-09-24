@@ -2,13 +2,151 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T12:23
-working_on: Nick greenlit the risky texture re-unwrap on all three cast members; built and baked a real one on the Goblin Engineer first (lowest risk) and found the premise wrong -- the file-hygiene number isn't a UV problem, it's unwelded remesh geometry that a re-unwrap can't fix and five different attempts all made worse. Confirmed the same root cause on the jackal and Frog by the numbers, without risking either. Not shipped. Corrected all three progress files and closed out the request with the finding.
+updated: 2026-09-24T13:12
+working_on: Took the open "find an art style" request, researched 4 named styles (Wind Waker bold-cel, Shadow of the Colossus atmosphere, Risk of Rain 2 low-poly, Blizzard hand-painted), built real before/after renders of the two cheap ones on the live jackal fight, recommended Shadow of the Colossus, filed back to Nick to pick.
 ---
 
 # artist
 
-## This run — 2026-09-24 12:23 ET
+## This run — 2026-09-24 13:12 ET
+
+- **Did:** the open `to: artist` request from last run ("find an art style
+  worth copying") — researched 4 real, named art-style directions and, for
+  the two that cost nothing to test, actually built them on the live Cinder
+  Jackal fight (shader/light values only) instead of just describing them.
+- **Worked?** Yes. Bold cel (Wind Waker) looks great on the jackal's thick
+  legs but turns the Frog into a black blob at real hunter scale — a real,
+  useful cost finding, not a dead end (the game already has a per-model
+  outline-width knob, it would just need tuning per hunter). Atmospheric
+  scale-drama (Shadow of the Colossus) reads as a clean win with no such
+  trap — haze eating the distance, one continuous shaded form instead of
+  hard steps, and a thin outline is never a problem on a small character.
+  That's my pick. The other two (Risk of Rain 2 low-poly, Blizzard
+  hand-painted) are real candidates too, costed honestly from existing
+  evidence rather than faked with a render that isn't really them.
+- **Next:** waiting on Nick's pick. Once he answers, scope the real build
+  as its own request. Everything tested was reverted before this push —
+  `git status` was clean on every asset/shader/code file before committing,
+  only the request note and four new frames are new.
+- **Need from you:** the pick — full options and one rough render each (two
+  of the four) are in
+  `design/agents/requests/2026-09-24-1147-nick-to-artist-find-an-art-style-worth-copying.md`.
+
+![[frames/artist/2026-09-24-style-B-sotc-wide.png]]
+![[frames/artist/2026-09-24-style-A-windwaker-hunter-cost.png]]
+
+## Now
+
+The open `to: artist` request from last run's own "Next" was still open
+this run (`2026-09-24-1147-nick-to-artist-find-an-art-style-worth-copying.md`),
+high priority, no `## Nick's answer` yet — took it (`status: taken`, pushed
+before starting work, per `COMMON.md` §2).
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `ALL TESTS
+PASSED` confirmed before touching anything. Blender not needed this run —
+every demo was a shader-parameter or biome-light value change, not a
+geometry change.
+
+**Researched 4 real, named styles rather than reach for a vague word
+("stylised", "painterly") the request specifically ruled out** — picked a
+spread across cost, from free (a light/fog/palette pass) to something the
+project cannot currently do at all (hand-painted textures), so Nick's
+choice is a real tradeoff, not four flavours of the same thing:
+
+- **A — Wind Waker bold-cel** (Nintendo EAD): thick ink outline, hard flat
+  colour bands, saturated palette. Ours already has both systems (the
+  inverted-hull outline, the banded toon shader) — this is turning existing
+  knobs further, not new tech.
+- **B — Shadow of the Colossus atmosphere** (Team ICO / Fumito Ueda): muted
+  colour, heavy haze, soft continuous light, near-invisible outline. This
+  game's whole premise — small figures against something huge — IS this
+  game's premise.
+- **C — Risk of Rain 2 low-poly** (Hopoo Games): deliberately faceted
+  geometry, one hard light band, bright flat colour. The one candidate that
+  would turn our actual, already-diagnosed tri-budget problem (three
+  independent progress notes, jackal/Goblin Engineer/Frog all capped by the
+  same Meshy-remesh ceiling) into the art style instead of a debt.
+- **D — Blizzard hand-painted** (WoW / Hearthstone): hand-painted textures
+  with baked-in shading, built for small-character readability at a
+  distance — the AAA answer to our exact problem, but it needs an actual
+  painter or an AI-texture step we do not have. Flagged as the honest
+  "can't do this yet" option rather than faked.
+
+**Built A and B for real on the live jackal fight, since those two cost
+nothing to test** (`toon.gdshader`'s band/rim/shadow uniforms,
+`outline.gdshader`'s line width, `combat_3d.gd`'s `BIOME.quarry` light/fog
+values — all just default numbers, no code path changed). Rendered
+`state=3d` and `state=3d wide` on `cinder_jackal` before touching anything
+for the baseline, then again after each set of edits, then reverted and
+confirmed `git status` clean before rendering the next one — never had two
+experiments live at once.
+
+**A (bold cel) found a real cost, not just a look.** The thicker outline
+(0.0045 → 0.013) and harder colour bands read great on the jackal's own
+thick legs — a genuine Wind Waker punch. The same line width on the Frog at
+its real on-screen size turns the whole hunter into a black silhouette with
+almost no readable colour left:
+
+![[frames/artist/2026-09-24-style-A-windwaker-close.png]]
+![[frames/artist/2026-09-24-style-A-windwaker-hunter-cost.png]]
+
+Checked whether this kills the direction before writing it up as a cost:
+it doesn't — `combat_3d.gd` already has `OUTLINE_WIDTH_SCALE`, a per-model
+line-width multiplier already in use to thin the Goblin Engineer's own
+outline. Bold cel is buildable, it just needs each small character tuned
+down individually rather than one global slider turned up once. Said so
+plainly rather than call it free.
+
+**B (Shadow of the Colossus) found no equivalent trap.** Widening the shade
+band's soft edge (0.03 → 0.2) turns three hard colour steps into one
+continuous gradient, dropping the outline to near-invisible (0.0045 →
+0.0015) and turning the quarry biome's fog density up (0.008 → 0.028) pulls
+the far cave wall into real haze instead of the same flat light at every
+distance:
+
+![[frames/artist/2026-09-24-style-B-sotc-wide.png]]
+![[frames/artist/2026-09-24-style-B-sotc-close.png]]
+
+A thin line is never a problem on a small character the way a thick one is
+— checked the Frog under these same values and it reads cleanly, no
+version of candidate A's cost.
+
+**C and D got real cost numbers, not a fresh render, on purpose.** For C, I
+already have real data from this project's own pass 8
+(`design/progress/goblin_mech_ai.md`, 2026-09-24 07:16): a 40% tri cut on
+the shipped Goblin Engineer looked completely free, a 70% cut visibly
+faceted the tank and boots. That's the actual answer to "can our pipeline
+do this" for a low-poly direction — spending a third render pass to say the
+same thing again wasn't worth the Blender/Meshy time. For D, the honest
+technical answer is a flat "not with what we have today" — hand-painted
+texture work needs a painter or a texture-generation step neither exists in
+this pipeline, and faking that in a shader would be showing Nick a picture
+of something we can't actually ship, which is exactly the "do not describe,
+show" instruction turned into a lie instead of evidence.
+
+**Recommended B, with reasons, not a bare pick** — cheapest to build
+(existing shader/light knobs only, no new Meshy spend, no new geometry),
+the most honest genre fit (a game about small hunters climbing something
+huge, recommending the style built around exactly that image), and it
+avoids candidate A's real cost by construction rather than by luck.
+
+**Filed it back to Nick rather than call the write-up done.** Per
+`COMMON.md` §5's own rule (a proposal a note asked HIM to decide is not
+finished until he answers): set `to: nick` on the same note (left `from:`
+alone), kept `status: open`, filled `ask:` with the one-sentence version of
+the decision, `waiting: false` (nothing else on my brief needs his answer
+first), and the note already carried a `## Nick's answer` heading to write
+under.
+
+`ALL TESTS PASSED` (`run_tests.gd`) before and after — no game code shipped
+this run (`combat_3d.gd`'s biome-light edit was reverted with `git
+checkout` the same run it was made, confirmed clean before the render that
+used it was even taken as final). `git status` before this push: the
+request note, this status note, and four new frames — no asset, shader, or
+script file differs from before the run started. No playtest re-run needed:
+nothing in the live, shipped fight can differ from before this run.
+
+## Old: 2026-09-24 12:23 ET
 
 - **Did:** an answered request was waiting (top of queue, ahead of the open
   `to: artist` "find an art style" one) -- Nick had greenlit my own
@@ -2368,6 +2506,18 @@ only touched the visual dressing) is the obvious next real-geometry pass.
 
 ## Log
 
+- 2026-09-24 13:12 EDT — researched 4 named art styles (Wind Waker bold-cel,
+  Shadow of the Colossus atmosphere, Risk of Rain 2 low-poly, Blizzard
+  hand-painted); built real before/after renders of the two free-to-test
+  ones on the live jackal fight (shader/light values, reverted); found bold
+  cel breaks on the Frog at hunter scale, Shadow of the Colossus doesn't;
+  recommended Shadow of the Colossus; filed back to Nick to pick
+  (`2026-09-24-1147-...find-an-art-style-worth-copying.md`).
+- 2026-09-24 12:23 EDT — built the real texture re-unwrap Nick greenlit on
+  the Goblin Engineer (lowest risk); found the premise wrong (unwelded
+  remesh geometry, not a UV problem) and every re-unwrap attempt made it
+  worse; confirmed the same cause on the jackal and Frog by the numbers
+  without risking either; did not ship; corrected all three progress files.
 - 2026-09-24 09:24 EDT — closed `JACKAL-BAR.md`'s Motion section: verified
   the fixer's jump-hides-behind-intent-tag fix (commit `73ae6b4`) live with
   a fresh render, then did a dedicated eyes-on pass on camera-hold and
