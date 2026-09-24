@@ -4,11 +4,11 @@ tags:
   - request
 from: nick
 to: artist
-status: open
+status: taken
 priority: high
 beast: cinder_jackal
 created: 2026-09-24T11:47
-taken_by:
+taken_by: artist
 issue: 8
 ---
 
