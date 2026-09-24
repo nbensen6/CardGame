@@ -10,15 +10,14 @@ _Generated from the agents' own status notes and the open requests. Do not edit 
 
 | agent | | doing now | next | tickets |
 |---|---|---|---|---|
-| **artist** | 🟢 running | Nick answered the art-style request from my last two runs — "take C, and steal one thing … | the Cinder Jackal itself still needs the same low-poly cut — didn't risk it this run … | #12 #13 |
-| **playtester** | 🟢 running | no requests addressed to `playtester` were open this run. Since my last run, the fixer … | watch for the fixer picking up stone-route item 2 (`hop-distance-band`, the only other … | — |
-| **fixer** | 🟢 running | fixed the real, small case the playtester's own margin-guarded check kept finding after … | nothing of mine left on this one. Order-of-work for a future run: the stone-route … | #3 #4 #11 |
+| **artist** | idle | took #12 (Nick, high priority, top of queue) — the arena read as one flat orange-brown … | nothing queued — this closes the one open `to: artist` request. Back to `JACKAL-BAR.md`'s … | #13 |
+| **playtester** | idle | no requests open. Added a live check: does the resting camera really go … | waiting on the fixer's stone-route work (hop spacing, stones in front of the jackal); … | — |
+| **fixer** | idle | stopped the resting camera cutting to a tight lock while everyone is grounded, so the … | #11 needs Nick's own eyes on the frame vs. his reference before it can close; stone-path … | #3 #4 #11 |
 
 ## Tickets
 
 | # | owner | priority | eta | state | |
 |---|---|---|---|---|---|
-| #12 | artist | high | — | open | The palette in the reference is the point: pale stones, … |
 | #13 | artist | high | — | open | The hunters are photoreal models rendered at 40 pixels. … |
 | #3 | fixer | high | — | taken | Stones, camera and hunter spacing at the Cinder Jackal |
 | #4 | fixer | high | — | taken | Build the one-directional stone route: fix the raycast, not … |
@@ -31,19 +30,20 @@ _Generated from the agents' own status notes and the open requests. Do not edit 
 
 ## Last run, in their own words
 
-**artist** — 2026-09-24 16:34 ET
+**artist** — 2026-09-24 17:24 ET
 
-- Did: Nick answered the art-style request from my last two runs — "take C, and steal one thing from B: a light distance fog purely for depth." Built the real thing instead of just scoping it: turned the shared toon shader's …
-- Next: the Cinder Jackal itself still needs the same low-poly cut — didn't risk it this run because it's rigged and animated (the hunters aren't), so it needs its own careful pass to make sure the animations still play right …
-- **Needs you:** nothing blocking — just say if you want the jackal's geometry done next, or something else first.
+- Did: took #12 (Nick, high priority, top of queue) — the arena read as one flat orange-brown (floor, wall, beast all the same warm family) even after style C's shading landed. Recoloured three things for this fight only: the …
+- Next: nothing queued — this closes the one open `to: artist` request. Back to `JACKAL-BAR.md`'s queue next run if nothing new has come in.
+- **Needs you:** nothing blocking — say if the new palette should carry over to any of the other quarry-biome beasts, or stay scoped to this fight only as built.
 
-**playtester** — 2026-09-24 15:19 EDT
+**playtester** — 2026-09-24 17:20 EDT
 
-- Did: no requests addressed to `playtester` were open this run. Since my last run, the fixer landed the fix for the last thing I had filed (`1002`, the intent-tag-vs-hunter residual at ground-hop start — commit `d443ccd`). …
-- Next: watch for the fixer picking up stone-route item 2 (`hop-distance-band`, the only other open item, confirmed a genuine geometric ceiling several runs ago — needs re-authoring the Python reference model or a joint …
+- Did: no requests open. Added a live check: does the resting camera really go over-the-shoulder, not just "hunter somewhere on screen"?
+- Next: waiting on the fixer's stone-route work (hop spacing, stones in front of the jackal); neither moved this run.
 
-**fixer** — 2026-09-24 14:42 EDT
+**fixer** — 2026-09-24 17:43 EDT
 
-- Did: fixed the real, small case the playtester's own margin-guarded check kept finding after my last hunter-clamp fix: at the very start of a ground-level hop, the intent tag's left edge grazed the hunter's own on-screen …
-- Next: nothing of mine left on this one. Order-of-work for a future run: the stone-route hop-distance item (still `taken`, one real lever left after five ruled-out dead ends) or a fresh read of the fight's code paths if no …
+- Did: stopped the resting camera cutting to a tight lock while everyone is grounded, so the whole beast and both hunters fit (#11).
+- Next: #11 needs Nick's own eyes on the frame vs. his reference before it can close; stone-path legibility stays on #4.
+- **Needs you:** compare the after frame on #11 to your drawing and say yes/no there.
 
