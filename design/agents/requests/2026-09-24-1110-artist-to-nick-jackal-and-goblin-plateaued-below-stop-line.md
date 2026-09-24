@@ -3,11 +3,11 @@ tags:
   - request
 from: artist
 to: nick
-status: open
+status: taken
 priority: normal
 beast: cinder_jackal
 created: 2026-09-24T11:10
-taken_by:
+taken_by: artist
 ask: Leave the jackal and Goblin Engineer at their current, already-good scores, or let me attempt a risky texture-remapping fix on them?
 waiting: false
 ---
