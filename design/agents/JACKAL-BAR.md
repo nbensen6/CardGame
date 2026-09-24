@@ -413,6 +413,19 @@ reading the fight at a glance, at play size, in motion.
       verified in every 3D camera state the fight uses, beast stays the
       clear subject with the wall reading as backdrop. `design/progress/
       cinder_jackal_ground.md` pass 6, 37/50.
+
+      2026-09-24 (#12, `to: artist` from Nick): the shape framed the beast
+      but the colour didn't — floor, wall and beast were all the same warm
+      orange-brown, so nothing separated by value even though the geometry
+      was right. Recoloured the ground floor from UMBER to CHARCOAL (both
+      `tools/blender/env/cinder_jackal.py` and the shipped
+      `cinder_jackal_ai.glb`'s own Floor mesh — the Wall itself was already
+      CHARCOAL and untouched), the floating footholds from basalt-brown to
+      a pale near-white, and the sky/ambient/fog from warm tan to a cool
+      purple-into-pink dusk, sampled straight off Nick's reference. Verified
+      at the wide shot, the sigil close-up, and a 160x90 thumbnail — the
+      pale stones, dark ground and hot beast now read as three distinct
+      values at a glance.
 - [x] **It says where this fight is**, not "generic ground". The sigil
       close-up now shows real glowing ember cracks in the rock itself, not a
       flat slab — same evidence as above.

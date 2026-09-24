@@ -1801,18 +1801,26 @@ const BIOME := {
 		"top": Color(0.44, 0.50, 0.62), "horizon": Color(0.82, 0.72, 0.55),
 	},
 	# Same place as "quarry" (bounder, stone_warden, gale_serpent, yoke_ox stay
-	# on that one, untouched), but with the one thing style C borrows from
-	# candidate B: more distance fog, purely for depth, not mood (Nick,
-	# 2026-09-24 — "take C, and steal one thing from B: a light distance fog
-	# purely for depth, not mood"). Same fog colour as quarry, only density
-	# moves, so the far cave wall recedes instead of sitting flat at every
-	# distance, without quarry's own warm-mood retint (candidate B's own
-	# 0.028 demo). Scoped to the Cinder Jackal fight alone via BEAST_BIOME.
+	# on that one, untouched), but with the two things style C borrows from
+	# candidate B: distance fog, purely for depth (Nick, 2026-09-24 — "take
+	# C, and steal one thing from B: a light distance fog purely for depth,
+	# not mood"), and now a cool dusk sky/ambient/fog (Nick, 2026-09-24 —
+	# request #12: "the stones are pale, the ground is dark, the sky is cool
+	# — purple into pink" — sampled straight off his reference image
+	# (design/art/references/2026-09-24-nick-target-composition.webp): sky
+	# top ~(52,58,104), the pink glow low in the sky ~(209,90,93)). `key`
+	# stays quarry's own warm ember tone on purpose — the jackal's own heat
+	# is what's supposed to read as the hottest thing in frame, against this
+	# now-cool backdrop, not another warm light washing it out. `ambient`
+	# and `fog` move off quarry's warm dust into the same cool dusk family
+	# as the sky, or the ground/wall recolour below would sit in a
+	# warm-tinted haze that undoes the point. Scoped to the Cinder Jackal
+	# fight alone via BEAST_BIOME.
 	"quarry_ember": {
 		"key": Color(1.0, 0.88, 0.68), "energy": 1.30,
-		"fill": Color(0.58, 0.62, 0.80), "ambient": Color(0.34, 0.29, 0.24),
-		"fog": Color(0.52, 0.44, 0.34), "density": 0.014,
-		"top": Color(0.44, 0.50, 0.62), "horizon": Color(0.82, 0.72, 0.55),
+		"fill": Color(0.58, 0.62, 0.80), "ambient": Color(0.24, 0.22, 0.32),
+		"fog": Color(0.34, 0.28, 0.38), "density": 0.014,
+		"top": Color(0.20, 0.23, 0.41), "horizon": Color(0.80, 0.36, 0.38),
 	},
 	"forest": {
 		"key": Color(1.0, 0.96, 0.74), "energy": 1.15,
@@ -3695,17 +3703,18 @@ func _build_float_stones() -> void:
 		rock.rings = 3
 		body.mesh = rock
 		var body_mat := StandardMaterial3D.new()
-		# BROWN, the same swatch `cinder_jackal.py`'s own scattered ground
-		# boulders already recoloured to (2026-09-23) — was a flat cool grey
-		# (0.42, 0.38, 0.40, "basalt" in name only) that read as a pebble from
-		# a different biome next to this fight's warm UMBER/RUST ground and
-		# beast. BROWN keeps the "lighter than the beast it hangs against"
-		# requirement below (still a bigger gap against the jackal's near-black
-		# CHARCOAL legs than the old grey had) while actually matching the
-		# rock this fight is made of. Small per-stone jitter so a run of
-		# stones at neighbouring heights doesn't read as the same clone.
+		# Was BROWN basalt — matched the fight's old warm UMBER ground and
+		# beast so closely it disappeared into both (Nick, 2026-09-24, #12:
+		# "basalt brown against brown ground... the stones are pale, nearly
+		# white... they are the brightest thing in the picture after the
+		# beast's own heat"). Now a pale warm-neutral grey sampled off his
+		# reference (design/art/references/2026-09-24-nick-target-
+		# composition.webp, the stepping-stones: ~(174,171,165)), pushed a
+		# touch paler still since this is the body, not the lit cap below.
+		# Small per-stone jitter so a run of stones at neighbouring heights
+		# doesn't read as the same clone.
 		var tint := randf_range(-0.05, 0.05)
-		body_mat.albedo_color = Color(0.690 + tint, 0.376 + tint, 0.255 + tint)
+		body_mat.albedo_color = Color(0.72 + tint, 0.70 + tint, 0.65 + tint)
 		# Generated faceted-rock multiply (ROCK_DETAIL, a toroidal Voronoi
 		# grayscale so it wraps on the sphere's own UV seam with no visible
 		# joint) so the stone reads as cut rock instead of one flat colour —
@@ -3749,12 +3758,15 @@ func _build_float_stones() -> void:
 		cap_mesh.radial_segments = 8
 		cap.mesh = cap_mesh
 		var cap_mat := StandardMaterial3D.new()
-		# A pale, worn sandstone tone — deliberately lighter than both the
-		# BROWN body under it and the jackal's own near-black CHARCOAL skin,
-		# so the "this is where a foot has stood" cue reads at a glance and
-		# at the wide establishing shot's distance, not just close up.
+		# Nearly white — was a warm sandstone tan, lighter than the body
+		# under it but still close enough to the fight's old orange-brown
+		# family to blend in (Nick, 2026-09-24, #12). Pushed paler than the
+		# body above so the worn top face, the part a foot actually lands
+		# on, is unmistakably the lightest thing on screen after the beast's
+		# own glow, per the request's own "Done when": readable as the
+		# lightest thing at a glance, even at the wide shot's distance.
 		var cap_tint := randf_range(-0.04, 0.04)
-		cap_mat.albedo_color = Color(0.82 + cap_tint, 0.74 + cap_tint, 0.58 + cap_tint * 0.7)
+		cap_mat.albedo_color = Color(0.88 + cap_tint, 0.86 + cap_tint, 0.82 + cap_tint * 0.7)
 		cap_mat.albedo_texture = ROCK_DETAIL
 		cap_mat.roughness = 0.75   # a touch less rough than the raw body: worn, not raw rock
 		cap.material_override = cap_mat

@@ -12,7 +12,14 @@ from kenney import (out_path, SAND, TAN, WHEAT, CREAM, CLAY, BROWN, UMBER,
 
 e = Env(seed=62)
 
-e.ground(UMBER, rim=CHARCOAL, dish=0.20)
+# Was UMBER — a warm mid-brown that, under this fight's own warm key light,
+# sat in the same orange-brown family as the beast and the floating stones
+# both, so nothing separated (Nick, 2026-09-24, #12: "floor, walls and beast
+# are all the same orange-brown... the ground is dark, almost black in the
+# foreground"). CHARCOAL already matches the apron/rim and the wall below —
+# the ground floor was the one warm outlier in an otherwise dark arena, so
+# this is the fix, not a new colour.
+e.ground(CHARCOAL, rim=CHARCOAL, dish=0.20)
 e.apron(CHARCOAL, out=2.50, drop=0.60)
 
 # The wall. Without one a fight happens on a disc in an open sky and reads as a

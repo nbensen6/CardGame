@@ -2,13 +2,136 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T16:34
-working_on: Nick picked style C (Risk of Rain 2, low-poly flat-shaded) for the art-style request. Shipped it for real — hard-band shader on the jackal and both hunters, and both hunters decimated to budget with flat shading so the facets read on purpose. Jackal geometry (rigged) still needs its own pass.
+updated: 2026-09-24T17:24
+working_on: Took #12 (Nick, high priority) — the arena floor, footholds and sky were still all one warm orange-brown even after style C landed. Recoloured the ground dark, the footholds pale, the sky/ambient cool purple-into-pink for this fight only. Shipped and verified; nothing else open.
 ---
 
 # artist
 
-## This run — 2026-09-24 16:34 ET
+## This run — 2026-09-24 17:24 ET
+
+- **Did:** took #12 (Nick, high priority, top of queue) — the arena read as
+  one flat orange-brown (floor, wall, beast all the same warm family) even
+  after style C's shading landed. Recoloured three things for this fight
+  only: the ground floor from warm brown to near-black, the floating
+  footholds from basalt-brown to pale near-white, and the sky/ambient/fog
+  from warm tan to a cool purple-into-pink dusk — colours sampled straight
+  off Nick's own reference image, not guessed.
+- **Worked?** Yes. Side-by-side renders below show it plainly — the pale
+  stones are now unmistakably the lightest thing in frame, the ground is
+  darker than everything, the sky reads cool, and the beast's own orange
+  finally pops as heat instead of blending into the floor under it. Checked
+  it survives down to a 160x90 thumbnail, per the request's own "Done when".
+  Full test suite and a complete fight afterward: nothing broke, same one
+  pre-existing hop-distance-band issue the fixer already owns, nothing new.
+- **Next:** nothing queued — this closes the one open `to: artist` request.
+  Back to `JACKAL-BAR.md`'s queue next run if nothing new has come in.
+- **Need from you:** nothing blocking — say if the new palette should carry
+  over to any of the other quarry-biome beasts, or stay scoped to this fight
+  only as built.
+
+![[frames/artist/2026-09-24-palette-wide-before-after.png]]
+![[frames/artist/2026-09-24-palette-grip-before-after.png]]
+
+## Now
+
+The one open `to: artist` request this run
+(`2026-09-24-1701-nick-to-artist-palette-pale-stones-cool-sky-dark-ground.md`,
+`#12`, high priority) — took it (`status: taken`, pushed before starting
+work, per `COMMON.md` §2).
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `ALL TESTS
+PASSED` confirmed before touching anything. Blender 4.1.1 for the asset
+rebuild, `pip install pillow numpy` (used to sample exact pixel colours off
+Nick's reference rather than eyeball them).
+
+**Read the reference first, not just the words.** Nick's request pointed at
+`design/art/references/2026-09-24-nick-target-composition.webp` (the same
+image the fixer's #11 composition ticket uses). Sampled real pixels from it
+with PIL rather than guess: sky top ~(52,58,104), a magenta/pink band lower
+in the sky ~(129,58,87) to ~(209,90,93) near the glow, ground ~(47,55,64),
+the pale stepping-stones ~(174,171,165). Used those numbers directly as the
+target, not a vibe.
+
+**Found the actual cause before changing anything.** Rendered the live
+fight first (`state=3d wide`, `state=3dgrip`, `state=3dclimb`) and confirmed
+Nick's read: the wall was already dark (CHARCOAL, from a prior request) —
+the ground floor was the one remaining warm UMBER surface, and it alone was
+enough to make the whole arena read as one orange-brown mass under the
+fight's own warm key light. This mattered because it meant the fix was one
+colour swap, not a wall rebuild.
+
+**Three changes, each scoped to this fight alone:**
+
+1. **`game/views/combat_3d.gd`'s `BIOME.quarry_ember`** (already
+   `cinder_jackal`-only via `BEAST_BIOME`, from the earlier fog request) —
+   `ambient` and `fog` moved off quarry's warm dust into a cool dusk family,
+   `top`/`horizon` (the procedural sky) moved from blue/tan to purple/pink.
+   `key` (the sun hitting the beast) deliberately untouched — the jackal's
+   own heat is still supposed to be the hottest thing in frame, now against
+   a cool backdrop instead of a warm one.
+2. **`_build_float_stones`'s `body_mat`/`cap_mat`** — the climbing
+   footholds, was basalt-brown top to bottom, now a pale warm-neutral grey
+   (body) with an even paler, near-white lit cap on top, matching the
+   reference's own stepping-stone value.
+3. **The arena ground itself** — two files, because the game doesn't
+   actually load `tools/blender/env/cinder_jackal.py`'s own output for this
+   fight. `ENV_AI_ART` (`combat_3d.gd`) points `cinder_jackal` at
+   `cinder_jackal_ai.glb`, a separately hand-combined file (Meshy-generated
+   Wall mesh + a procedural Floor mesh, built by
+   `tools/blender/ai/cinder_jackal_env_ai.py` on 2026-09-23 answering the
+   arena-wall-accent request) — found this by dumping the shipped glb's own
+   JSON chunk (two mesh nodes, "Wall" and "Floor", two separate materials)
+   rather than assume the plain env script was in the loop. Updated
+   `cinder_jackal.py`'s own `e.ground(UMBER, ...)` to `CHARCOAL` too, so the
+   source recipe and the shipped asset don't drift apart again, then wrote a
+   one-off Blender script (`/tmp`, not committed — same "scratch tool, not
+   part of the pipeline" rule as the earlier re-unwrap experiment) that:
+   extracts the existing "Wall" object straight out of the shipped
+   `cinder_jackal_ai.glb` (no Meshy spend — the wall geometry and its own
+   photo texture are untouched), rebuilds the "Floor" object fresh from the
+   same updated `env.py` recipe (`CHARCOAL` ground + apron), and recombines
+   them as two separate mesh objects the way the original recipe's own step
+   5 requires (joining them would force one shared texture onto both the
+   Floor's palette-atlas UVs and the Wall's own baked photo UVs). Re-saved
+   `tools/blender/ai/cinder_jackal_env_ai.blend` too, so the source file
+   doesn't go stale against what's shipped.
+
+**Looked before shipping**, per this brief's own rule (a check proves the
+math, not that it reads right). Rendered `state=3d wide`, `state=3dgrip`,
+`state=3dclimb` before touching anything (the true "before"), again after,
+tiled into before/after strips, and read every one at 1:1 — the pale
+footholds now pop clearly against the dark ground and wall in every camera
+state the fight uses, not just the wide establishing shot. Also resized the
+final wide shot to 160x90 (the request's own "tell them apart in a
+thumbnail" bar) and confirmed the three values still separate at that size.
+
+![[frames/artist/2026-09-24-palette-wide-before-after.png]]
+![[frames/artist/2026-09-24-palette-grip-before-after.png]]
+![[frames/artist/2026-09-24-palette-climb-after.png]]
+
+**Proved no regression, not just "it still runs."** `run_tests.gd` — `ALL
+TESTS PASSED` — before and after every change. Fresh full 80-step
+`mode=play beast=cinder_jackal` playtest in the foreground with a 10-minute
+timeout per `COMMON.md` §4b: only the pre-existing, already-filed
+`hop-distance-band` (62 — the fixer's own open stone-route thread, identical
+shape to every prior baseline on record, unrelated to colour). No new fails
+anywhere — nothing about the recolour touched geometry, hitboxes, or camera
+framing.
+
+**Closed the request** (`status: done`, `## Result` filled in plain language
+for Nick, the three renders embedded) and added a dated note under
+`JACKAL-BAR.md`'s existing "It frames the beast" arena line — the shape was
+already right (2026-09-23's wall rebuild), this closes the colour half of
+the same idea.
+
+`git status` before this push: `combat_3d.gd`, `tools/blender/env/
+cinder_jackal.py`, the two shipped `.glb`s (`cinder_jackal.glb`,
+`cinder_jackal_ai.glb`) plus the resaved `.blend`, `JACKAL-BAR.md`, the
+request, this status note, and three new frames. No `.blend` diff on
+anything else, no hunter/beast asset touched.
+
+## Old: 2026-09-24 16:34 ET
 
 - **Did:** Nick answered the art-style request from my last two runs —
   "take C, and steal one thing from B: a light distance fog purely for
@@ -2821,6 +2944,15 @@ only touched the visual dressing) is the obvious next real-geometry pass.
 
 ## Log
 
+- 2026-09-24 17:24 EDT — closed #12 (Nick, high priority): recoloured the
+  arena ground dark, the floating footholds pale, and the sky/ambient/fog
+  cool purple-into-pink for the Cinder Jackal fight only, colours sampled
+  off Nick's own reference. `ALL TESTS PASSED`, full fight clean bar the
+  pre-existing `hop-distance-band`.
+- 2026-09-24 16:34 EDT — shipped style C for real (Nick's answer on the
+  art-style request): hard-band shader on the jackal and both hunters, both
+  hunters decimated to budget with flat shading. `ALL TESTS PASSED`, full
+  fight clean bar the pre-existing `hop-distance-band`.
 - 2026-09-24 14:08 EDT — checked the board fresh: no open `to: artist`
   request, art-style pick still unanswered, every other unticked
   `JACKAL-BAR.md` line already parked or blocked on Nick/the fixer with no

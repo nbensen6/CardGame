@@ -4,12 +4,12 @@ tags:
   - request
 from: nick
 to: artist
-status: open
+status: done
 priority: high
 beast: cinder_jackal
 eta:
 created: 2026-09-24T17:01
-taken_by:
+taken_by: artist
 issue: 12
 ---
 
@@ -57,3 +57,38 @@ family, no value separation.
 ## Nick's answer
 
 ## Result
+
+Done, 2026-09-24 17:24 ET. Colour and value only, geometry untouched, exactly
+as scoped.
+
+- **The floor was the actual culprit.** The wall was already dark (CHARCOAL)
+  — only the ground disc was still warm UMBER, which is what made the whole
+  arena read as one orange-brown mass. Changed it to CHARCOAL, both in
+  `tools/blender/env/cinder_jackal.py` (the source recipe) and, because the
+  game actually loads a separate hand-combined file for this fight
+  (`cinder_jackal_ai.glb` — a Meshy wall + a procedural floor, see
+  `tools/blender/ai/cinder_jackal_env_ai.py`), rebuilt that Floor mesh fresh
+  from the same updated recipe and recombined it with the existing Wall
+  (untouched, no Meshy spend).
+- **The floating footholds went from basalt-brown to pale, near-white** —
+  `game/views/combat_3d.gd`'s `_build_float_stones`, both the body and the
+  lit top cap.
+- **The sky, ambient and fog for this fight only** (`quarry_ember`, scoped to
+  `cinder_jackal` alone via `BEAST_BIOME`) moved from a warm tan/dust family
+  to a cool purple-into-pink dusk, colours sampled directly off your
+  reference image's own pixels.
+- The beast's own key light stays warm on purpose — it's still supposed to
+  be the hottest thing in frame, just against a cool backdrop now instead of
+  a warm one.
+
+Verified: fresh `ALL TESTS PASSED`, a full 80-step fight with only the
+pre-existing, already-filed `hop-distance-band` failing (unrelated, the
+fixer's own stone-route thread — no new fails anywhere). Looked at real
+frames, not just checks — wide shot, the sigil close-up, and a 160x90
+thumbnail all show the pale stones as the clear lightest thing on screen, the
+ground clearly darker than both stones and beast, and the sky/backdrop cool
+rather than orange.
+
+![[frames/artist/2026-09-24-palette-wide-before-after.png]]
+![[frames/artist/2026-09-24-palette-grip-before-after.png]]
+![[frames/artist/2026-09-24-palette-climb-after.png]]
