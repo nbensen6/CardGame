@@ -57,7 +57,7 @@ reading the fight at a glance, at play size, in motion.
       members (this beast, `frog_ai`, `goblin_mech_ai`); closing it needs a
       deliberately risk-budgeted decimation/re-unwrap pass, not another
       look. `design/progress/cinder_jackal_ai.md` ("Pass 3").
-- [ ] **The weak point is obvious** and stays obvious as you climb toward it.
+- [x] **The weak point is obvious** and stays obvious as you climb toward it.
       First look, 2026-09-24: the persistent 2D climb gauge already marks it
       clearly at all times (a distinct gold rail-cap and `✦ <N>` label, never
       checked before, holds up). The 3D glow on the beast itself did not —
@@ -67,11 +67,19 @@ reading the fight at a glance, at play size, in motion.
       mark into the open air above the shelf instead of level with it
       (`combat_3d.gd` `_place_sigil`) — verified with a real render+pixel
       sample as a distinct ~5x-brighter spark against the dark cave wall.
-      Left unticked: the same fix does not separate the mark from the
-      hunter's own sprite in the one camera angle where that hunter is
-      standing exactly on the sigil (`state=3dclimb`) — not worse than
-      before there, but not proven "obvious" from every angle either.
-      `design/progress/cinder_jackal_ai.md` ("Pass 5").
+      `design/progress/cinder_jackal_ai.md` ("Pass 5"). Left one gap open:
+      the same fix (a 0.9x-`HUNTER_HEIGHT` lift) did not separate the mark
+      from the hunter's own sprite in the one camera angle where that
+      hunter stands exactly on the sigil (`state=3dclimb`) — it landed at
+      the hunter's own torso/head height, not above it. Closed 2026-09-24:
+      raised the lift to 1.7x `HUNTER_HEIGHT`, clearing a standing hunter's
+      head at the same anchor — no colour or scale change, placement only.
+      Re-verified all four 3D camera states: `3dclimb` now shows a clean
+      gold spark above the hunter's head instead of hidden behind it,
+      `3dstrike`'s earlier shelf-separation win still holds (if anything
+      cleaner now), `3d`/`3dgrip` are unaffected (sigil correctly `n/a`,
+      out of frame by design, in both). `design/progress/
+      cinder_jackal_ai.md` ("Pass 7").
 - [x] **It is alive when idle** (breath, tail, ember pulse) without drifting.
       Verified 2026-09-24: the shipped `idle` clip (4.0s loop) produces real
       motion every render (`state=3d anim=idle@0/@2/@4`), and diffing frame 0

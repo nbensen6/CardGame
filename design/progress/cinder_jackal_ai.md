@@ -409,3 +409,78 @@ pass 7), not a stylistic mismatch. No fix applied; nothing to fix here.
 `ALL TESTS PASSED` (`run_tests.gd`). No playtest re-run — no game file
 changed this pass (asset, script, or scene), only progress notes and one
 new frame.
+
+## Pass 7 — "the weak point is obvious", the `state=3dclimb` gap from pass 5, artist, 2026-09-24T06:18 EDT
+
+Pass 5 left one honest gap: from `state=3dclimb` — the camera that follows
+whoever is standing AT the sigil, not the wider establishing shots pass 5
+fixed — the lifted mark (`HUNTER_HEIGHT * 0.9` above the climb point) landed
+right at that hunter's own torso/head height and read as part of their
+sprite. Its own write-up named the two remaining options: a colour change
+(a taste call) or lifting it further. This pass tried the second, since it
+costs no colour change and is not a taste call.
+
+**Confirmed the occlusion first, precisely, before changing anything.**
+Rendered `state=3dclimb` at the shipped `0.9x` lift and read the exact
+pixel the game itself reports for the sigil (`VIS OK sigil: (425, 440)`,
+14px from `VIS OK hunter0: (431, 450)`, the hunter standing on it). A tight
+1:1 crop at that coordinate shows nothing but the Frog — no separate gold
+fleck anywhere, confirming pass 5's own read rather than assuming it still
+held.
+
+**Why 0.9x lands there.** A hunter is `HUNTER_HEIGHT` (0.7) tall, feet at
+the climb point. `0.9 * HUNTER_HEIGHT` = 0.63 world units up — inside the
+hunter's own body height, not above their head. That is the whole
+mechanism: the mark was never behind the hunter in depth, it was floating
+at head height, directly in the same screen column the camera already
+frames them in.
+
+**Fix: raised the lift from `0.9x` to `1.7x` `HUNTER_HEIGHT` in
+`_place_sigil`** (`game/views/combat_3d.gd`), clearing a standing hunter's
+head at the same anchor. No colour, scale, or Z-offset change — the same
+placement-only lever pass 5 used, just further along it. Confirmed this
+does not run off the top of frame: `climb_frame_for`'s own headroom
+handling already reserves space for a visible sigil up to
+`active + 3.0` world units when `sigil_visible` is true, well past the
+extra ~0.75 units this adds.
+
+**Verified from the angle that mattered.** Re-rendered `state=3dclimb`: the
+sigil moved from `(425, 440)` to `(424, 420)` — 20px up on screen — and a
+1:1 crop now shows a small distinct gold spark sitting above the Frog's
+head, clear of their sprite, against the cave-wall background:
+
+![[frames/artist/2026-09-24-cinder-jackal-sigil-3dclimb-before-after.png]]
+
+**Re-checked pass 5's own win, not just assumed it still held.** The bigger
+lift moves the mark further from the climbing shelf's bright rock texture
+too, so re-rendered `state=3dstrike` (the establishing shot pass 5 fixed)
+to make sure raising the number further didn't overshoot into some new
+problem (off-frame, inside geometry, etc.) — it did not; the mark still
+reads as a clean separated spark against the dark cave wall, if anything
+more clearly separated from the hunter now than before:
+
+![[frames/artist/2026-09-24-cinder-jackal-sigil-3dstrike-recheck.png]]
+
+**Checked the other two 3D states too.** `state=3d` and `state=3dgrip`
+still correctly report the sigil `n/a` / out of frame by design (hunter
+below the 3.5-unit visibility threshold in both) — unaffected, as expected
+for a change scoped to the one branch that only fires once
+`_climb_points.has(wp)`. `state=3dgrip`'s own `VIS FAIL hunter1: (230, 96)`
+is pre-existing — confirmed by re-rendering the same state against the
+pre-change code (`git stash`) and getting the identical failure — not
+something this pass touched or should claim credit/blame for.
+
+**Ticking the bar line.** All four camera angles that can show the sigil
+now separate it from both the shelf (pass 5) and the hunter standing on it
+(this pass); the 2D climb gauge already marked it clearly at every other
+distance (pass 5). `JACKAL-BAR.md`'s "the weak point is obvious" line is
+ticked.
+
+`ALL TESTS PASSED` (`run_tests.gd`). 80-step playtest
+(`mode=play beast=cinder_jackal steps=80`) run per `COMMON.md` 4b:
+`PLAYTEST FAIL: 1 failing check(s) { "hop-distance-band": 62 }` — an exact
+match for the already-filed, already-open `hop-distance-band` item
+(`status/playtester.md`, the fixer's known-incomplete stone-route item 2),
+which measures hop distance between climb points and has nothing to do
+with a `Node3D`'s own `.position` in `_place_sigil`. Not a regression from
+this pass.

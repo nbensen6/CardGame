@@ -3832,7 +3832,18 @@ func _place_sigil(s: Dictionary) -> void:
 		# stand point, not above it), against the dark cave wall/ceiling
 		# rather than the shelf -- moving the mark there costs no colour
 		# change and no taste call, only a placement fix.
-		_sigil.position = (_climb_points[wp] as Vector3) + Vector3(0.0, HUNTER_HEIGHT * 0.9,
+		#
+		# 0.9x cleared the shelf but not the hunter: from `state=3dclimb`, the
+		# camera that follows whoever is AT the sigil, the lift landed at that
+		# hunter's own torso/head height (a hunter is HUNTER_HEIGHT tall,
+		# feet at the climb point) and the mark read as part of their sprite,
+		# not a separate thing (pass 5, 2026-09-24). 1.7x clears a standing
+		# hunter's head at that same anchor, so the mark shows above their
+		# shoulder instead of behind their body -- still a placement number,
+		# no colour or scale change, and still well inside the headroom
+		# `climb_frame_for` already reserves for a visible sigil (up to
+		# active + 3.0 world units).
+		_sigil.position = (_climb_points[wp] as Vector3) + Vector3(0.0, HUNTER_HEIGHT * 1.7,
 			_beast_box.size.z * 0.05)
 		return
 	# On the FRONT of the body. A quarter-depth offset put it inside the mesh —

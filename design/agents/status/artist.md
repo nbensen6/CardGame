@@ -2,13 +2,124 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T05:17
-working_on: Chased what looked like a real regression (a leftover icosphere back in the shipped cinder_jackal_ai.glb) and proved it was a Blender-reimport-only artifact, never in the actual shipped file -- no fix needed. Used the clean result to run the first literal side-by-side check of the jackal and both hunters together at true fight scale; style holds, no new defect.
+updated: 2026-09-24T06:21
+working_on: Closed the one gap pass 5 left open on "the weak point is obvious" -- the sigil's lift over the climbing shelf (0.9x HUNTER_HEIGHT) landed at a standing hunter's own head height, so from state=3dclimb it read as part of their sprite. Raised it to 1.7x to clear a hunter's head; re-verified all four 3D camera states, ticked the bar line.
 ---
 
 # artist
 
-## This run — 2026-09-24 05:17 ET
+## This run — 2026-09-24 06:21 ET
+
+- **Did:** picked the last honest gap pass 5 left on `JACKAL-BAR.md`'s "the
+  weak point is obvious" line -- the sigil-lift fix separated the mark from
+  the climbing shelf, but not from the hunter's own body in the one camera
+  (`state=3dclimb`) where that hunter stands exactly on the sigil. Raised
+  the lift from `0.9x` to `1.7x HUNTER_HEIGHT` in `_place_sigil`
+  (`combat_3d.gd`) -- enough to clear a standing hunter's head at the same
+  anchor, no colour or scale change.
+- **Worked?** Yes. Confirmed the occlusion first with a pixel-level crop at
+  the exact `VIS` coordinate the game reports (nothing but the Frog
+  visible), then re-rendered after the change: a clean gold spark now shows
+  above the hunter's head. Re-checked the earlier `state=3dstrike` win
+  still holds at the bigger lift (it does, if anything cleaner), and that
+  `state=3d`/`3dgrip` are unaffected (sigil still correctly off-frame by
+  design in both). `ALL TESTS PASSED`, and an 80-step playtest reproduces
+  only the already-filed, already-open `hop-distance-band` item (62 fires,
+  the fixer's known-incomplete stone-route work, nothing to do with a
+  Node3D's `.position`) -- no regression.
+- **Next:** the hunter-fidelity tri-budget ceiling (`goblin_mech_ai` 41/50,
+  one point under its stop line) is still the loudest open item on my own
+  brief -- three independent passes now agree closing it needs a
+  deliberately risk-budgeted decimation/re-unwrap, not another attempt
+  blind. Otherwise the bar's remaining creature/motion items (jump reads,
+  camera never loses the active hunter, no pops) haven't had a dedicated
+  look yet.
+- **Need from you:** nothing.
+
+![[frames/artist/2026-09-24-cinder-jackal-sigil-3dclimb-before-after.png]]
+
+## Now
+
+No open `to: artist` request this run (the only open notes in `requests/`
+are `to: fixer` and `to: nick`), and none of my own `to: nick` notes had a
+fresh unhandled answer (all `status: done`). Worked the last unticked
+half of `JACKAL-BAR.md`'s "the weak point is obvious" line -- pass 5
+(04:35 ET, below) had already fixed the mark's separation from the bright
+climbing-shelf texture, but its own write-up named one honest leftover: at
+`state=3dclimb`, the camera that follows whoever is standing AT the sigil,
+the lifted mark landed at that hunter's own torso/head height and read as
+part of their sprite rather than a separate thing.
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `pip install
+pillow numpy`. Blender not needed -- this was a placement change in
+`combat_3d.gd` only, no geometry touched.
+
+**Measured why 0.9x landed there before changing anything.** A hunter is
+`HUNTER_HEIGHT` (0.7) tall, feet at the climb point the sigil also anchors
+to. `0.9 * HUNTER_HEIGHT` = 0.63 world units up -- inside a standing
+hunter's own body height, not above their head. The mark was never behind
+the hunter in depth (Z); it was floating at head height, in the same
+screen column the `3dclimb` camera already frames them in.
+
+**Confirmed with pixels, not assumption.** Rendered `state=3dclimb` at the
+shipped code first: game reports `VIS OK sigil: (425, 440)`, 14px from
+`VIS OK hunter0: (431, 450)` (the Frog, standing on it, "at the sigil" per
+the party panel). A 1:1 crop at that exact coordinate shows nothing but the
+Frog -- no separate gold fleck anywhere, matching pass 5's own read.
+
+**Fix: raised the lift to `1.7x HUNTER_HEIGHT`**, still only in
+`_place_sigil`'s `_climb_points.has(wp)` branch -- no colour, scale, or
+Z-offset change, the same placement-only lever pass 5 used, just further
+along it. Checked it wouldn't run off the top of frame first:
+`climb_frame_for`'s own headroom handling already reserves space for a
+visible sigil up to `active + 3.0` world units, well past the extra ~0.75
+units this adds.
+
+**Verified from the angle that mattered.** Re-rendered `state=3dclimb`:
+sigil moved from `(425, 440)` to `(424, 420)`, and the 1:1 crop now shows a
+small, clearly separated gold spark above the Frog's head, against the
+cave-wall background:
+
+![[frames/artist/2026-09-24-cinder-jackal-sigil-3dclimb-before-after.png]]
+
+**Re-checked the win this could have broken, not just the one it fixed.**
+The bigger lift moves the mark further from the shelf's bright rock
+texture too -- re-rendered `state=3dstrike` (pass 5's own fix) to make sure
+raising the number further didn't overshoot into some new problem. It
+didn't; the mark still reads as a clean separated spark against the dark
+cave wall:
+
+![[frames/artist/2026-09-24-cinder-jackal-sigil-3dstrike-recheck.png]]
+
+**Checked the two states this branch doesn't touch, too.** `state=3d` and
+`state=3dgrip` still correctly report the sigil `n/a`/out of frame by
+design (hunter more than 3.5 units below it in both) -- unaffected, as
+expected for a change scoped to one branch. `3dgrip`'s own
+`VIS FAIL hunter1: (230, 96)` is pre-existing -- re-rendered the same state
+against the pre-change code (`git stash`) and got the identical failure,
+so not something this pass caused or should claim.
+
+**Playtest, run in the foreground per `COMMON.md` 4b** (the harness moved
+it to background once past its own 300s default; waited for it rather than
+ending the run): `PLAYTEST FAIL: 1 failing check(s)
+{ "hop-distance-band": 62 }` -- an exact match for the already-filed,
+already-open item `status/playtester.md` already records firing on every
+recent baseline (the fixer's own known-incomplete stone-route item 2,
+which measures hop distance between climb points, not a `Node3D`'s
+`.position`). Not a regression from this pass.
+
+**Ticked `JACKAL-BAR.md`'s "the weak point is obvious" line.** All four 3D
+camera states that can show the sigil now separate it from both the
+climbing shelf (pass 5) and the hunter standing on it (this pass); the 2D
+climb gauge already marked it clearly at every other distance (pass 5).
+`design/progress/cinder_jackal_ai.md` ("Pass 7") has the full mechanism and
+both before/after renders.
+
+`git status` before this push: `combat_3d.gd` (the one-line offset change),
+`JACKAL-BAR.md`, `cinder_jackal_ai.md`, this status note, and the two new
+frames -- no other file touched.
+
+## Old: 2026-09-24 05:17 ET
 
 - **Did:** no open `to: artist` request this run, and none of my own
   `to: nick` notes had a fresh unhandled answer (all `status: done`, per
