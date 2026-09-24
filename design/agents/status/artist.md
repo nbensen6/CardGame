@@ -2,13 +2,136 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T10:20
-working_on: Closed out JACKAL-BAR's "the fight, read at a glance" section -- ticked all four lines (intent unmissable, damage/climb numbers land where the hit happened, both hunters always findable, nothing hidden behind the hand/rail/party panel). Real 80-step fight plus mode=hands at every hand size 1-10 both show every relevant check at 0 fails, and a real eyes-on pass caught a live damage popup landing exactly on the hit and a 10-card hand leaving every HUD element clear.
+updated: 2026-09-24T11:10
+working_on: Called the plateau on cinder_jackal_ai (40/50, three identical scores) and goblin_mech_ai (41/50, two identical scores) -- both hit this project's own "stop repassing, ask Nick" rule. Wrote a VERDICT: REBUILD section on each progress file (score, why it's not a shape/silhouette problem, what the real fix -- a full UV re-unwrap -- would need) and filed one to:nick request covering both, asking him to either accept the current scores or greenlight the risky re-unwrap as its own dedicated pass.
 ---
 
 # artist
 
-## This run — 2026-09-24 10:20 ET
+## This run — 2026-09-24 11:10 ET
+
+- **Did:** no open or answered `to: artist` request this run (checked every
+  request's frontmatter -- three open notes in `requests/`, all `to: fixer`
+  or `to: nick`, none mine). Went to `JACKAL-BAR.md`'s own queue and, before
+  starting another routine pass on the two remaining blocked items (the
+  jackal's Silhouette line, the hunters' fidelity line -- both stuck behind
+  the same "needs a scoped UV re-unwrap" refrain for 8+ runs now), reread
+  `design/guide/asset-loop.md`'s own stop-the-loop rule: two consecutive
+  scored passes gaining under 2 points means stop passing and write a
+  verdict for Nick, not try again. Checked both progress files' own score
+  history against that rule directly rather than assume.
+- **Worked?** Yes -- both assets meet the rule, literally, and neither had
+  ever had the verdict written down despite it being true for a while.
+  `cinder_jackal_ai`: three separate scores (pass 2, pass 3, pass 6) all
+  landed on the identical 40/50. `goblin_mech_ai`: its last two scored
+  passes (7, 8) both landed on the identical 41/50. In both cases the
+  blocker is the same shared cause -- a tri-budget/UV-seam ceiling from the
+  Meshy build pipeline, not the shape or colour, which are already good.
+  Wrote the verdict on both progress files and one `to: nick` request
+  presenting the actual decision (leave them, or greenlight the risky
+  re-unwrap) instead of letting a ninth near-identical "needs a scoped pass"
+  note go by unresolved.
+- **Next:** waiting on Nick's answer on the new request. Until then, nothing
+  on my own brief is blocked -- the only other open lever (cards) stays
+  parked per his standing order, so the next run should re-check for an
+  answer first, then fall back to whatever `JACKAL-BAR.md` line hasn't had a
+  dedicated look yet.
+- **Need from you:** the new request -- accept the jackal/goblin scores as
+  they are, or greenlight the risky texture-remap redo.
+
+## Now
+
+No open `to: artist` request this run (checked every request's frontmatter
+-- the three open notes in `requests/` are `to: fixer` (two) and `to: nick`
+(the playtester's sigil-cheek ask, still unanswered, not mine). None of my
+own `to: nick` notes had a fresh unhandled answer either (all `status:
+done`, per `COMMON.md` 1b).
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, confirmed
+`ALL TESTS PASSED` before touching anything. No Blender or Meshy needed --
+this run touched no asset or geometry file, only design docs.
+
+**Why this over another routine `goblin_mech_ai`/`cinder_jackal_ai` attempt.**
+Every recent run on either asset (jackal passes 2/3/6, goblin passes 6/7/8)
+independently concluded the same thing -- Silhouette/Proportion/Style are
+fine, Build hygiene is capped by a UV-seam-fragmentation ceiling, and the
+one lever that could move it (a full re-unwrap) is too risky to attempt
+blind in an unattended run -- and then filed that conclusion as "needs a
+future scoped pass" without ever invoking this project's own written rule
+for exactly this situation (`design/guide/asset-loop.md`, "the rebuild
+verdict": two consecutive passes gaining under 2 points means stop and
+write the verdict, it's Nick's call). Re-reading the actual score tables
+confirmed both assets already meet that rule's letter, more than once each
+-- this wasn't new investigation, it was applying a rule that already
+existed and already fit, which nobody had checked literally before.
+
+**Confirmed the plateau from the score tables themselves, not from
+memory or the prose summaries.**
+
+    cinder_jackal_ai: pass 2 = 40/50 (first score)
+                       pass 3 = 40/50 ("score unchanged")
+                       pass 6 = 40/50 ("score unchanged")
+    goblin_mech_ai:    pass 7 = 41/50 ("Total: 41/50, unchanged")
+                       pass 8 = 41/50 ("Score: unchanged, 41/50")
+
+Both meet "two consecutive scored passes each gained fewer than 2 points"
+(0 points, twice, in both cases) while both sit below their tier's stop
+line (jackal: 40 vs 44 beast stop line, 4 short; goblin: 41 vs 42 hunter
+stop line, 1 short). Neither meets the loop's OTHER trigger ("Silhouette
+or Proportion scored 5 or below, fix is a shape rebuild") -- both score 8/8
+on those two lines, checked fresh more than once on each asset -- so the
+verdict text on both files says plainly that the real fix isn't a body
+rebuild, it's a UV re-unwrap, adapting the rule's own remedy language
+honestly rather than forcing a "primitive shape" diagnosis that isn't true
+here.
+
+**Checked this wasn't already raised and sitting unanswered somewhere.**
+Grepped every request and status note for "VERDICT" and "rebuild" -- no
+prior `VERDICT: REBUILD` section exists anywhere in the repo, and the one
+closely related prior request
+(`2026-09-23-0325-artist-to-nick-hunters-at-pass-cap-below-stop-line.md`)
+is a different, already-`done` question (lifting the 4-pass cap, not
+calling a plateau) -- but its answer is exactly the standing authorization
+for this: Nick, 2026-09-23, "keep passing them... until they clear the
+stop line or you call a real plateau." This run is calling it.
+
+**Wrote the verdict on both files**, each covering: the current score and
+which rubric line is capping it, why it isn't the "rebuild the shape"
+scenario the rule's example describes, the actual shared root cause (Meshy
+export tri-count and the exporter's own UV-seam-driven island
+refragmentation -- already independently diagnosed across three prior
+passes on three different cast members, cited by number: jackal 12,079
+tris vs. 2,600 beast budget, goblin ~5,199 vs. 1,400 hunter budget, both
+~3.7-4.6x over), and what the untried fix would actually require (a full
+UV re-unwrap, not another tri-count or weld attempt -- both already tried
+and ruled out on the goblin, same conclusion the jackal independently
+reached). Did not touch either `.glb`, `.blend`, or any shader/script --
+this run is a documentation and escalation call, not an asset change.
+
+**Filed one `to: nick` request** covering both assets together, since
+they share the identical cause and the identical decision -- written in
+plain language per this project's own `to: nick` rules (no file paths or
+scores in the ask itself, a clear recommendation, the real tradeoff stated
+plainly): leave both at their current, already-good-looking scores, or
+greenlight the re-unwrap as its own separately scoped, revertible pass.
+Set `waiting: false` -- nothing else on my brief is blocked by his answer,
+since the cards item stays parked regardless and every other bar line
+either needs a request-driven fix (not mine) or has already been checked.
+
+**Updated `JACKAL-BAR.md`'s two affected lines** (Silhouette, hunter
+fidelity) with a short pointer to the new verdict sections and the request,
+without deleting any of the existing evidence trail -- both stay unticked,
+correctly; nothing about the asset itself changed, only the record of the
+decision now waiting on Nick.
+
+`ALL TESTS PASSED` (`run_tests.gd`), confirmed before this run's edits (no
+code touched, so no reason to expect it to change) -- `git status` before
+this push shows only the two progress-doc verdicts, `JACKAL-BAR.md`, this
+status note, and the one new request file. No asset, scene, shader or
+script touched, so no playtest re-run needed -- nothing in the live fight
+can differ.
+
+## Old: 2026-09-24 10:20 ET
 
 - **Did:** picked up my own last run's "Next" -- `JACKAL-BAR.md`'s "the
   fight, read at a glance" section had never had a dedicated artist look

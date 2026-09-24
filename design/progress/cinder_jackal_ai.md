@@ -1,5 +1,57 @@
 # cinder_jackal_ai — refinement log
 
+## VERDICT: REBUILD — called 2026-09-24T11:10 EDT, artist
+
+Calling the plateau `design/guide/asset-loop.md`'s own "rebuild verdict" rule
+defines: **two consecutive scored passes each gained fewer than 2 points**,
+below the tier's stop line. This asset's rubric score has now been checked
+three separate times — pass 2 (40/50, first score), pass 3 (fresh critical
+look, "score unchanged: 40/50"), pass 6 (build-hygiene re-check, "score
+unchanged, 40/50") — every check landed on the identical 40/50, a 0-point
+gain each time, against a **beast** stop line of 44. That is the plateau
+condition, met three times over, and no prior pass ever wrote the verdict
+the loop's own rule calls for at that point — each one correctly diagnosed
+the ceiling but filed it as "needs a future scoped pass" instead of stopping
+here. Nick's own answer on the sibling hunter-cap request
+(`2026-09-23-0325-artist-to-nick-hunters-at-pass-cap-below-stop-line.md`,
+"keep passing them... until they clear the stop line **or you call a real
+plateau**") is the standing authorization to call it now rather than grind
+a fourth identical check.
+
+**Current score: 40/50** — Silhouette 8, Proportion 8, Build hygiene 7,
+Colour & read 9, Style consistency 8. Silhouette and Proportion are NOT the
+blocker (both 8/8, no defect found across three independent looks) — this is
+**not** the loop's other trigger condition ("Sil/Prop ≤5, rebuild the body
+from a worked form"). The single line holding the score down is **Build
+hygiene**, capped at 7, and the honest cause is not a primitive/blocky body
+needing a shape rebuild — it's a **tri-budget and UV-seam-fragmentation
+ceiling** shared structurally by every Meshy-built cast member: this beast
+ships at **12,079 tris against a 2,600 beast budget** (4.6x over), and the
+two hunters built the same way (`frog_ai` ~5,136 tris, `goblin_mech_ai`
+~5,199 tris, both against a 1,400 hunter budget, ~3.7x over) independently
+cap at the identical Build hygiene 7 through the same mechanism — Meshy's
+own export re-fragments UV islands at seam boundaries regardless of what a
+downstream pass does to vertex count (`goblin_mech_ai.md` pass 7: island
+weld doesn't survive re-export; pass 8: a visually-free 40% tri decimation
+still doesn't reduce island count, it goes up). Three independent passes
+across three assets in this cast have now converged on the same finding.
+
+**What it would need instead of another pass.** Not a body rebuild — the
+shape, silhouette and proportion are already good. What's untried is a full
+**UV re-unwrap from scratch** (new seams placed to minimize island count,
+not just a vertex-count cut on the existing seam layout), which every pass
+since `goblin_mech_ai` pass 6 has named as the one remaining lever and
+deliberately not attempted blind, unattended, on a shipped, rigged hero
+asset — that is a real risk (re-unwrapping and re-baking can break UV-space
+assumptions the toon shader/outline and the existing animation-driven
+texture reads depend on) that belongs in a single dedicated, careful pass
+with room to revert, not folded into a routine run. **This is Nick's call
+per the loop's own rule** ("do not perform the rebuild... it is Nick's
+call") — raised in
+`design/agents/requests/2026-09-24-1110-artist-to-nick-jackal-and-goblin-plateaued-below-stop-line.md`.
+
+---
+
 The shipped Meshy rebuild (`game/assets/3d/cast/cinder_jackal_ai.glb`, source
 `tools/blender/ai/cinder_jackal_ai.blend`), built 2026-09-22 via
 `tools/blender/ai_beast.py` — see `design/guide/ai-beast-recipe.md`. This is

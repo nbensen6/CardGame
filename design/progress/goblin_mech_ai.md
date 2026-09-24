@@ -1,5 +1,52 @@
 # goblin_mech_ai — Meshy-based Goblin Engineer rebuild, pass 1
 
+## VERDICT: REBUILD — called 2026-09-24T11:10 EDT, artist
+
+Calling the plateau `design/guide/asset-loop.md`'s own "rebuild verdict" rule
+defines: **two consecutive scored passes each gained fewer than 2 points**,
+below the tier's stop line. This asset's last two rubric-scoring passes both
+targeted Build hygiene, the one line still short of the 42 hunter stop line,
+and both landed on the identical total — pass 7 ("Score: Build hygiene stays
+7... Total: 41/50, unchanged") and pass 8 ("Score: unchanged, 41/50"). Two
+consecutive 0-point passes on the same line is the plateau condition, met
+here just as cleanly as on `cinder_jackal_ai` (see that file's own verdict,
+same date — the two share the identical root cause). Nick's own answer on
+the earlier hunter-cap request
+(`2026-09-23-0325-artist-to-nick-hunters-at-pass-cap-below-stop-line.md`,
+"keep passing them... until they clear the stop line **or you call a real
+plateau**") is the standing authorization to call it now.
+
+**Current score: 41/50**, one point under the 42 hunter stop line —
+Silhouette 8, Proportion 8, Build hygiene 7, Colour & read 10, Style
+consistency 8. Silhouette/Proportion are not the blocker (8/8, no defect
+found across two independent fresh looks, pass 6 and pass 8) — this is not
+the loop's other trigger ("Sil/Prop ≤5, rebuild the body from a worked
+form"). The blocker is the same **tri-budget/UV-seam-fragmentation ceiling**
+`cinder_jackal_ai`'s verdict describes in full: this model ships at ~5,199
+tris against the 1,400 hunter budget (~3.7x over), and three independent
+levers on Build hygiene specifically are now tried and closed — island
+count (cosmetic re-check, pass 3), vertex welding (doesn't survive glTF
+re-export because the exporter re-splits at UV seams regardless, pass 7),
+and tri-count decimation (a 40% cut is visually free but doesn't reduce
+island count — it rose 489→590 — because decimation moves vertices without
+moving UV seam boundaries, pass 8). `frog_ai` sits in the same accepted-
+overage tri class untouched and already caps at the identical Build hygiene
+7, independent evidence this isn't a sliding tri-count scale within the
+band.
+
+**What it would need instead of another pass.** A full UV re-unwrap (new
+seam placement to cut island count, not another vertex-count cut on the
+existing seams) — named as the one remaining lever since pass 6 and
+deliberately not attempted blind on a shipped, rigged, already
+colour-patched hero-adjacent asset; the risk (re-baking can break the toon
+shader/outline's and the existing skin-colour patch's UV-space assumptions)
+belongs in one dedicated, careful, revertible pass, not a routine run.
+**This is Nick's call per the loop's own rule** — raised alongside
+`cinder_jackal_ai`'s identical verdict in
+`design/agents/requests/2026-09-24-1110-artist-to-nick-jackal-and-goblin-plateaued-below-stop-line.md`.
+
+---
+
 Filed separately from `goblin_mech.md` (the current Python-primitive Goblin
 Engineer, past its own 42/50 hunter stop line) because this is a different
 asset, not a revision of that one — same split `frog_ai.md` uses for the

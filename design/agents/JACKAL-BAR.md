@@ -134,7 +134,13 @@ reading the fight at a glance, at play size, in motion.
       confirmed structural ceiling shared by all three Meshy-built cast
       members (this beast, `frog_ai`, `goblin_mech_ai`); closing it needs a
       deliberately risk-budgeted decimation/re-unwrap pass, not another
-      look. `design/progress/cinder_jackal_ai.md` ("Pass 3").
+      look. `design/progress/cinder_jackal_ai.md` ("Pass 3"). **Plateau
+      called, 2026-09-24 11:10 ET**: three separate scores all landed on the
+      identical 40/50, which is this project's own signal to stop repassing
+      and ask rather than try a fourth time — `design/progress/
+      cinder_jackal_ai.md` now opens with a `VERDICT: REBUILD` section, and
+      the choice (leave it, or greenlight the risky re-unwrap) is with Nick:
+      `2026-09-24-1110-artist-to-nick-jackal-and-goblin-plateaued-below-stop-line.md`.
 - [x] **The weak point is obvious** and stays obvious as you climb toward it.
       First look, 2026-09-24: the persistent 2D climb gauge already marks it
       clearly at all times (a distinct gold rail-cap and `✦ <N>` label, never
@@ -253,7 +259,13 @@ reading the fight at a glance, at play size, in motion.
       isn't on a sliding tri-count scale within that band). The re-unwrap
       is the one lever left; it needs its own scoped, risk-budgeted pass,
       not another same-run attempt. `goblin_mech_ai.md` pass 8.
-      `design/progress/cinder_jackal_ai.md` ("Pass 6").
+      `design/progress/cinder_jackal_ai.md` ("Pass 6"). **Plateau called,
+      2026-09-24 11:10 ET**: `goblin_mech_ai`'s last two scored passes (7, 8)
+      both landed on the identical 41/50 — two consecutive 0-point passes,
+      this project's own signal to stop repassing and ask. `design/progress/
+      goblin_mech_ai.md` now opens with a `VERDICT: REBUILD` section
+      alongside the jackal's own identical call; the choice is with Nick:
+      `2026-09-24-1110-artist-to-nick-jackal-and-goblin-plateaued-below-stop-line.md`.
 - [x] **Each is readable at fight distance** as itself, not a green blob.
       The Goblin Engineer's Meshy rebuild was wired in and unreadable at true
       size (a near-solid black blob) until the shared ink-outline width was
