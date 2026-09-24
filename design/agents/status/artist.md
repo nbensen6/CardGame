@@ -2,13 +2,168 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T15:17
-working_on: The fixer's frame_pre_draw fix closed the last intent-tag residual; re-verified it live with a fresh 80-step baseline (0 intent-tag-vs-hunter fails) and ticked JACKAL-BAR's Motion "jump reads" line. Still waiting on Nick's art-style pick for anything bigger.
+updated: 2026-09-24T16:34
+working_on: Nick picked style C (Risk of Rain 2, low-poly flat-shaded) for the art-style request. Shipped it for real — hard-band shader on the jackal and both hunters, and both hunters decimated to budget with flat shading so the facets read on purpose. Jackal geometry (rigged) still needs its own pass.
 ---
 
 # artist
 
-## This run — 2026-09-24 15:17 ET
+## This run — 2026-09-24 16:34 ET
+
+- **Did:** Nick answered the art-style request from my last two runs —
+  "take C, and steal one thing from B: a light distance fog purely for
+  depth." Built the real thing instead of just scoping it: turned the
+  shared toon shader's soft three-step shading into one hard lit/shadow
+  edge (jackal + both hunters, they share the shader), added a touch of
+  distance fog just to this fight, and — the big one — cut both hunters
+  from ~5,200 triangles to ~1,560 and turned off smoothing, so they're
+  finally under their poly budget for the first time and the low-poly cut
+  reads as a deliberate look instead of the defect it was three failed
+  fix-attempts ago.
+- **Worked?** Yes. Real before/after renders on all of it — the shading
+  change is visibly flatter and more graphic, not just numbers, and both
+  hunters look like a confident, on-purpose low-poly style, not a broken
+  model. Full test suite and a complete fight afterward: nothing broke, no
+  new problems anywhere, same one pre-existing camera-spacing issue the
+  fixer already owns.
+- **Next:** the Cinder Jackal itself still needs the same low-poly cut —
+  didn't risk it this run because it's rigged and animated (the hunters
+  aren't), so it needs its own careful pass to make sure the animations
+  still play right afterward. Also flagged for Nick: the old 1-50 scoring
+  sheet doesn't fit this new style, worth a quick conversation.
+- **Need from you:** nothing blocking — just say if you want the jackal's
+  geometry done next, or something else first.
+
+![[frames/artist/2026-09-24-style-c-goblin-studio-before-after.png]]
+![[frames/artist/2026-09-24-style-c-frog-studio-before-after.png]]
+![[frames/artist/2026-09-24-style-c-infight-grip.png]]
+
+## Now
+
+Nick's answer on `2026-09-24-1147-nick-to-artist-find-an-art-style-worth-
+copying.md` (`## Nick's answer`, "From GitHub #8", 19:33 UTC) outranked
+everything else this run per `COMMON.md` §1b — took it (`status: taken`,
+pushed before starting work).
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `ALL TESTS
+PASSED` confirmed before touching anything. Blender 4.1.1 (needed
+`apt-get install libegl1 libegl-mesa0` for `look.py`'s render to work
+headless in this sandbox — new since the last Blender-using run, noted
+here in case it recurs). `pip install pillow numpy`.
+
+**Shading half (`game/assets/3d/toon.gdshader`), applies to the jackal and
+both hunters since they share this shader.** `band_lo` moved onto `band_hi`
+(was 0.12, now 0.55) and `band_soft` dropped from 0.03 to 0.008 — the old
+three-step lit/half-lit/shadow ramp with soft ~3%-wide edges collapses to
+one hard lit/shadow edge with a near-instant transition. Verified with a
+real before/after render, not just read the numbers: `git stash`'d the
+edit, shot `state=3dgrip`, restored it, shot again, diffed the two PNGs —
+44% of pixels changed by more than 15/255, concentrated exactly where a
+shading boundary would move (the legs), not a uniform colour-temperature
+shift that would suggest a mistake elsewhere.
+
+![[frames/artist/2026-09-24-style-c-hard-band-legs.png]]
+
+**Fog half (`game/views/combat_3d.gd`).** Added a new `quarry_ember` biome
+entry — a copy of `quarry` with only `density` changed (0.008 → 0.014) —
+and pointed just `cinder_jackal`'s own `BEAST_BIOME` entry at it, leaving
+`bounder`/`stone_warden`/`gale_serpent`/`yoke_ox` on plain `quarry`
+untouched. Kept deliberately light (well under candidate B's own 0.028
+mood demo from two runs ago) per Nick's own wording — "purely for depth,
+not mood."
+
+**Geometry half — the part that actually closes an old problem.** Both
+hunters have been stuck ~3.7x over their 1,400-tri hunter budget since they
+were built, and three separate fix attempts this week (island-count
+cleanup, vertex welding, a full UV re-unwrap tried twice) all failed for
+the same underlying reason — the "islands" were never a UV problem, they
+were unwelded remesh geometry a re-unwrap can only make worse
+(`goblin_mech_ai.md` pass 9). Pass 8 on the Goblin Engineer had already
+found that a straight Decimate (Collapse) cut to the budget line (ratio
+0.3, ~1,560 tris) is easy and clean, and rejected it anyway because it
+"visibly facets the tank and boots" — a real defect under the old smooth
+style. Under style C that facet IS the style, so the fix that was sitting
+there the whole time just needed permission to ship.
+
+Wrote `tools/blender/ai/lowpoly_facet.py` — the same Decimate lever pass 8
+proved, run against the shipped, already colour-patched `.glb` (never the
+older `.blend`, which would silently drop the earlier colour patches), plus
+one change from pass 8's own recipe: `use_smooth = False` on every face
+instead of Blender's smooth default, so each decimated triangle keeps its
+own flat normal and reads as a chosen facet rather than a lumpy attempt at
+roundness. Ran it on both `goblin_mech_ai.glb` (5,199 → 1,559 tris) and
+`frog_ai.glb` (5,200 → 1,560 tris).
+
+Looked before shipping, per this brief's own rule (a check proves the
+triangle count, not that it reads right) — rendered both in the studio
+six-view rig (`tools/blender/look.sh <asset> <pass>`) before touching the
+live cast folder, and read every image:
+
+![[frames/artist/2026-09-24-style-c-goblin-studio-before-after.png]]
+![[frames/artist/2026-09-24-style-c-frog-studio-before-after.png]]
+
+Both read as a deliberate, confident low-poly character — the goblin's tank
+is a proper faceted cylinder, the frog's eyes and mouth line survive the
+cut clean. Checked silhouette at 64px on both (`_sil.png`): still clean,
+legible shapes, same read as before the cut. Ran `mesh_gap_check.py` on the
+goblin's re-exported file — island count went up a lot (489 → 1,558), but
+that's the expected, harmless shape of flat shading itself (a hard normal
+edge duplicates vertices per face on export), not the real-3D-separation
+defect earlier passes chased; one facet sits 0.0116 body-diagonal-fractions
+from its neighbour, invisible in every render taken.
+
+Shipped both into `game/assets/3d/cast/{goblin_mech_ai,frog_ai}.glb` and
+`tools/blender/ai/{goblin_mech_ai,frog_ai}.blend`, re-imported
+(`--import`), and verified together in the real fight (`state=3d`,
+`state=3dgrip`):
+
+![[frames/artist/2026-09-24-style-c-infight-wide.png]]
+![[frames/artist/2026-09-24-style-c-infight-grip.png]]
+
+Both hunters read clearly at real on-screen size (roughly 60-120px
+depending on camera) — the flat colour blocks arguably pop more than the
+smooth originals did at the same distance, not less.
+
+**Proved no regression, not just "it still runs."** `run_tests.gd` — `ALL
+TESTS PASSED` — both before touching anything and after every change.
+Fresh full 80-step `mode=play beast=cinder_jackal` playtest on the final
+tree, foreground with a 10-minute timeout per `COMMON.md` §4b: only the
+pre-existing, already-filed `hop-distance-band` (62 — the fixer's own open
+climb-spacing thread, identical shape to every prior baseline on record).
+`grep -c "FAIL"` against the full report confirms it's the only failing
+check anywhere in the run — no `hunter-lost-mid-hop`, no `hop-position-pop`,
+no visibility check regressed from either the shader change or either
+model swap.
+
+**Wrote up the honest limits rather than oversell this.** Not re-scored
+against `design/guide/asset-loop.md`'s own 1-50 rubric this run — its Style
+consistency line and its Kenney-smooth-shading hard constraint were written
+for the exact style this direction leaves, so a number against that rubric
+right now would be comparing to the wrong target, not a real score. Said so
+plainly in both progress files and the request's own `## Result` rather
+than invent one. The Cinder Jackal itself did not get the geometry cut —
+it's rigged and animated (1 armature, 3 clips), unlike the two static
+hunters, so the same recipe needs its own pass to confirm the reduced mesh
+still deforms correctly under all three clips, not a copy-paste. Right now
+the fight has two faceted low-poly hunters next to a smooth high-poly
+jackal, both sharing the new hard-band shading — the shading language
+matches, the facet density doesn't yet.
+
+**Closed the request** (`status: done`, `## Result` filled in plain
+language for Nick, no file paths or scores in the ask itself) and updated
+both affected `JACKAL-BAR.md` lines (Silhouette, hunter fidelity) with
+what changed and why they're still unticked — the tri-budget ceiling both
+lines have chased for two days is gone, but neither line's own remaining
+condition (a jackal geometry pass; a rubric that fits the new style) is
+met yet.
+
+`git status` before this push: two shader/code files, two `.glb` + two
+`.blend` pairs, three progress-doc updates, `JACKAL-BAR.md`, the request,
+this status note, five new frames, and six new `design/renders/` studio
+crops (`_34`/`_front`/`_sil` only — `_side`/`_top`/`_form`/`_wire` are
+gitignored). Nothing else touched.
+
+## Old: 2026-09-24 15:17 ET
 
 - **Did:** the fixer closed the intent-tag-vs-hunter residual that was
   blocking my own last unticked Motion line ("the jump reads") — re-verified

@@ -556,3 +556,51 @@ match for the already-filed, already-open `hop-distance-band` item
 which measures hop distance between climb points and has nothing to do
 with a `Node3D`'s own `.position` in `_place_sigil`. Not a regression from
 this pass.
+
+## Pass 8 — style C, shader half only, artist, 2026-09-24T16:30 EDT
+
+Nick picked style C (Risk of Rain 2, low-poly flat-shaded) for the whole
+cast, plus one thing borrowed from candidate B ("a light distance fog
+purely for depth, not mood") —
+`2026-09-24-1147-nick-to-artist-find-an-art-style-worth-copying.md`. This
+beast shares `toon.gdshader` with both hunters, so it gets the shading half
+of the change for free: `band_lo` moved onto `band_hi` and `band_soft`
+dropped from 0.03 to 0.008, collapsing the old three-step lit/half/shadow
+ramp into one hard lit/shadow edge — confirmed in a real before/after render
+(git-stashed the shader edit, shot `state=3dgrip`, restored it, shot again):
+the leg shading reads visibly flatter and more graphic, not just numerically
+different (diff: 44% of pixels changed by >15/255, not a rounding artefact).
+![[../agents/frames/artist/2026-09-24-style-c-hard-band-legs.png]]
+
+Also added the borrowed fog: a new `quarry_ember` biome entry (a copy of
+`quarry` with `density` 0.008 → 0.014, nothing else changed), and pointed
+only `cinder_jackal`'s `BEAST_BIOME` entry at it — `bounder`, `stone_warden`,
+`gale_serpent` and `yoke_ox` stay on plain `quarry`, untouched, since they
+are not part of this fight and this brief's own scope is the Cinder Jackal
+fight alone. Deliberately light: Nick asked for depth, not B's own
+mood-heavy 0.028 demo.
+
+**Geometry not touched this pass.** `goblin_mech_ai.md` pass 10 and
+`frog_ai.md` pass 4 (same run) did the geometry half of style C — decimate
+to the hunter budget, flat-shade so the facets read on purpose — on both
+hunters. This beast is rigged and animated (1 armature, 3 clips), so the
+identical Decimate-and-flat-shade recipe needs its own careful pass
+(decimate, then confirm the armature still deforms the reduced mesh
+correctly and all three clips still play cleanly) rather than the direct
+copy-paste the two static hunter meshes got. Not attempted this run —
+right now the jackal is the shared shader's new hard-band look on its
+existing ~12,000-tri smooth geometry, next to two hunters that are also
+faceted low-poly. Flagged as the next dedicated pass, not a regression: the
+shading language (hard band, flat colour) matches across all three, only
+the facet density doesn't yet.
+
+`ALL TESTS PASSED` (`run_tests.gd`) — no logic changed, shader/data values
+only. Fresh 80-step `mode=play beast=cinder_jackal` playtest: same single
+pre-existing `hop-distance-band` fail (62) as every prior baseline, nothing
+new.
+
+**Not re-scored against this file's own rubric this pass**, same reasoning
+as the two hunter files: the rubric's Style consistency line and
+Kenney-smooth-shading hard constraint were written for the style this
+direction is deliberately leaving, and this pass didn't touch this asset's
+geometry (the rubric line most affected) at all.

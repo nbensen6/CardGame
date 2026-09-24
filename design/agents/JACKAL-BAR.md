@@ -150,6 +150,18 @@ reading the fight at a glance, at play size, in motion.
       Not attempted on this beast — proven not to work before risking its
       rig/animation. `design/progress/cinder_jackal_ai.md`'s VERDICT section
       has the correction; `goblin_mech_ai.md` pass 9 has the experiment.
+      **2026-09-24 16:30 ET: the tri-budget ceiling this VERDICT is about is
+      resolved on the hunters by a style change, not by the re-unwrap this
+      VERDICT chased.** Nick picked style C (Risk of Rain 2, low-poly
+      flat-shaded) for the whole cast
+      (`2026-09-24-1147-nick-to-artist-find-an-art-style-worth-copying.md`).
+      This beast shares its shading with both hunters now (`toon.gdshader`'s
+      hard band, `design/progress/cinder_jackal_ai.md` pass 8) but not the
+      geometry half — it is rigged and animated, unlike the two static
+      hunters, so decimating it needs its own careful pass, not the
+      copy-paste the hunters got this run. Still unticked: this line's own
+      Silhouette hasn't been re-scored under the new direction and the
+      geometry itself is unchanged.
 - [x] **The weak point is obvious** and stays obvious as you climb toward it.
       First look, 2026-09-24: the persistent 2D climb gauge already marks it
       clearly at all times (a distinct gold rail-cap and `✦ <N>` label, never
@@ -341,6 +353,31 @@ reading the fight at a glance, at play size, in motion.
       stop line; the only remaining lever is a full manual retopology, a
       different and much bigger job than what was approved, not attempted
       here — back with Nick via the same request's `## Result`.
+      **2026-09-24 16:30 ET: Nick answered the follow-on style request —
+      style C (Risk of Rain 2, low-poly flat-shaded), plus a light distance
+      fog borrowed from candidate B, purely for depth
+      (`2026-09-24-1147-...find-an-art-style-worth-copying.md`).** Built it
+      for real on both hunters, not another demo: `tools/blender/ai/
+      lowpoly_facet.py` (new — same Decimate lever pass 8 already validated
+      on the Goblin Engineer, plus flat shading so the facets read on
+      purpose instead of being smoothed into a lump) cuts both from ~5,200
+      tris to ~1,560 — inside the 1,400 hunter budget for the first time,
+      where three passes' worth of re-unwrap attempts never got them.
+      Verified in the studio rig and the real fight, both hunters together,
+      `ALL TESTS PASSED` and a fresh 80-step playtest with no new fail (only
+      the pre-existing, unrelated `hop-distance-band`):
+      ![[frames/artist/2026-09-24-style-c-goblin-studio-before-after.png]]
+      ![[frames/artist/2026-09-24-style-c-frog-studio-before-after.png]]
+      ![[frames/artist/2026-09-24-style-c-infight-grip.png]]
+      **Still unticked.** The tri-budget gap between the hunters and the
+      jackal that this line has chased all day is gone, but the beast itself
+      hasn't had the matching geometry pass yet (it is rigged/animated,
+      needs its own careful decimation, not attempted this run —
+      `design/progress/cinder_jackal_ai.md` pass 8) — right now the hunters
+      are faceted low-poly and the jackal is smooth high-poly, both under the
+      same new hard-band shading. "Matches the jackal's fidelity" cannot be
+      true until the jackal gets the same treatment or Nick says the
+      mismatch is fine.
 - [x] **Each is readable at fight distance** as itself, not a green blob.
       The Goblin Engineer's Meshy rebuild was wired in and unreadable at true
       size (a near-solid black blob) until the shared ink-outline width was

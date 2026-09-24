@@ -52,6 +52,17 @@ the "island count" was never a UV problem to fix. Left here rather than
 deleted so nobody re-reads this file cold and re-proposes the same
 experiment.
 
+**Superseded, pass 10 (below), 2026-09-24T16:30 EDT: the tri-budget ceiling
+this VERDICT is built on is gone, not fixed.** Nick answered the follow-on
+"pick a style" request with a real direction change (style C, Risk of Rain
+2 — low-poly, flat-shaded, facets as the identity), and under that direction
+the ~3.7x tri overage this whole VERDICT is about stops being a defect to
+route around and becomes the actual budget target: this asset now ships at
+1,559 tris, inside the same 1,400 hunter budget this VERDICT measured itself
+against. The re-unwrap question this VERDICT and pass 9 spent real time on
+is moot — not answered, just no longer the right question. Left here for the
+history, not as an open item.
+
 ---
 
 Filed separately from `goblin_mech.md` (the current Python-primitive Goblin
@@ -1105,3 +1116,88 @@ manual retopology of the small disconnected parts (not a texture-only
 job, not scoped, not attempted here) -- or accepting that 41/42/40 across
 the cast is this Meshy pipeline's honest ceiling at this budget. Passed
 back to Nick as the request's own `## Result`, not decided here.
+
+## Pass 10 — style C (Risk of Rain 2, low-poly flat-shaded), artist, 2026-09-24T16:30 EDT
+
+Nick answered the follow-on style-pick request
+(`2026-09-24-1147-nick-to-artist-find-an-art-style-worth-copying.md`,
+19:33 UTC): "take C, and steal one thing from B — a light distance fog
+purely for depth, not mood." C was this project's own candidate B/C: Risk of
+Rain 2's deliberately low, faceted geometry with one hard light band and no
+gradient, bright flat colour, emissive accents instead of texture detail.
+Built it for real on this asset, not another demo pass.
+
+**The tri-budget ceiling this file's own VERDICT and pass 9 spent two passes
+on turns out to be the fix, not the defect, under this direction.** Pass 8
+already measured that a Decimate (Collapse) cut to 1,559 tris (ratio 0.3,
+right at the 1,400 hunter budget) "visibly facets the tank and boots" and
+rejected it for exactly that reason — under the old smooth-toon style, a
+visible facet was a defect. Under style C, a visible facet is the point. Ran
+the identical cut again
+(`tools/blender/ai/lowpoly_facet.py`, new — same Decimate lever pass 8
+already validated, on the shipped, already colour-patched
+`goblin_mech_ai.glb`, never the older `.blend`) with one real change: pass 8
+left `use_smooth = True` on every face (Blender's default, inherited from
+`goblin_ai_clean.py`), which blends the decimated normals across each facet
+so it reads as a lumpy attempt at a round surface. This pass sets
+`use_smooth = False` instead, so every triangle keeps its own flat normal
+and reads as a deliberate facet, not a topology error.
+
+    before: 5,199 tris, smooth-shaded
+    after:  1,559 tris, flat-shaded — inside the 1,400 hunter budget for the
+            first time (was ~3.7x over)
+
+Looked at it in the studio six-view rig (`look.sh goblin_mech_ai 10`) before
+touching the shipped file with anything else:
+
+![[../agents/frames/artist/2026-09-24-style-c-goblin-studio-before-after.png]]
+
+Reads as a confident, deliberate low-poly character — the tank is a proper
+faceted cylinder, the boots and shoulders are angular in a way that looks
+chosen, not broken. Silhouette at 64px is still a legible goblin-with-tank
+shape, same read as before the cut:
+
+    before sil: design/renders/goblin_mech_ai_before_pass10_sil.png
+    after  sil: design/renders/goblin_mech_ai_pass10_sil.png
+
+`mesh_gap_check.py` on the re-exported file: 1,558 islands (of 1,559 faces —
+expected and harmless under flat shading, since a hard-normal edge means
+every face keeps its own vertex copies on export; this is not the same
+"floating part" defect earlier passes chased, which was about real 3D
+separation, not per-face normal duplication), one island 0.0116 body-diagonal
+fractions from its neighbour (a single 3-vert facet at an extremity,
+invisible in every render taken).
+
+**Shipped it — swapped into `game/assets/3d/cast/goblin_mech_ai.glb` and
+`tools/blender/ai/goblin_mech_ai.blend`, re-imported, and verified in the
+real fight** (`state=3d`, `state=3dgrip`, both hunters present):
+
+![[../agents/frames/artist/2026-09-24-style-c-infight-grip.png]]
+
+Reads clearly at real on-screen size (roughly 60-120px tall depending on
+camera) — the flat colour blocks if anything pop more than the smooth
+original did at the same distance. `run_tests.gd` — `ALL TESTS PASSED` — and
+a fresh full 80-step `mode=play beast=cinder_jackal` playtest shows the same
+single pre-existing, unrelated failing check as every prior baseline
+(`hop-distance-band`, 62, the fixer's own open climb-spacing thread) — no
+new fail from the geometry swap (no `hunter-lost-mid-hop`, no
+`hop-position-pop`, no visibility check regressed).
+
+**Not re-scored against this file's own rubric this pass.** The rubric's
+Style consistency line ("sit beside the approved assets without looking
+like it came from a different game") and its hard Kenney-low-poly-with-
+smooth-shading constraint (`asset-loop.md` "Hard constraints") were both
+written for the style this pass is deliberately leaving — scoring this
+build against a rubric anchored to the style Nick just asked to move away
+from would be circular. Silhouette and Colour & read still read fine by eye
+(above); a real re-score needs the rubric conversation this direction change
+opens, not a number invented mid-pass. Flagging that as the next open
+question rather than picking a score.
+
+**What's still open:** the Frog got the identical treatment this same run
+(below, and its own file). The Cinder Jackal itself has not — it is rigged
+and animated (1 armature, 3 clips), so the same Decimate-and-flat-shade
+recipe needs its own careful pass (decimate, then confirm the armature
+still deforms it correctly and the clips still play) rather than the
+copy-paste this pass and the Frog's got. Not attempted this run — flagged
+for a dedicated pass, not blocking.

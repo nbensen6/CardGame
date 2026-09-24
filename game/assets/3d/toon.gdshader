@@ -18,11 +18,16 @@ render_mode cull_back, diffuse_toon, specular_toon;
 uniform sampler2D albedo_tex : source_color, hint_default_white, filter_linear_mipmap, repeat_enable;
 uniform vec4 tint : source_color = vec4(1.0);
 
-// Three bands: lit, half, shadow. Soft edges a few % wide so the band boundary
-// does not crawl as the beast breathes.
+// One hard band: lit or shadow, no midtone step. Style C, Nick 2026-09-24
+// (Risk of Rain 2 / Hopoo Games — low-poly, flat-shaded, no gradient). Was
+// three bands (lit/half/shadow) with a soft ~3%-wide edge; band_lo now sits
+// on band_hi so the midtone plateau collapses to nothing, and the edge itself
+// is razor-thin instead of soft, so the boundary reads as a hard cel line
+// rather than a shaded falloff. half_level stays wired (mix() still runs) so
+// a future style can reopen the midtone without touching the light() logic.
 uniform float band_hi : hint_range(0.0, 1.0) = 0.55;
-uniform float band_lo : hint_range(0.0, 1.0) = 0.12;
-uniform float band_soft : hint_range(0.001, 0.2) = 0.03;
+uniform float band_lo : hint_range(0.0, 1.0) = 0.55;
+uniform float band_soft : hint_range(0.001, 0.2) = 0.008;
 uniform float half_level : hint_range(0.0, 1.0) = 0.62;
 // Shadow is a colour, not an absence of light.
 uniform vec4 shadow_color : source_color = vec4(0.38, 0.40, 0.62, 1.0);

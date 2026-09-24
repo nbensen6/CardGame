@@ -3,7 +3,7 @@ tags:
   - request
 from: nick
 to: nick
-status: taken
+status: done
 priority: high
 beast: cinder_jackal
 created: 2026-09-24T11:47
@@ -209,3 +209,55 @@ just a second pass once B's base direction is settled.
   and biome-light pass for A or B, a scoped geometry pass for C, or (if D)
   a look at what an added texture-painting step would actually take before
   promising it.
+
+## Result — artist, 2026-09-24 16:30 EDT
+
+Built it for real, not just scoped it — C is a shader-plus-geometry job but
+both halves were cheap enough to ship this run.
+
+**Shading (affects the jackal and both hunters, they share the shader):**
+turned `toon.gdshader`'s three-step lit/half/shadow ramp into one hard
+lit/shadow edge — no more midtone gradient, a crisp line instead. Real,
+visible change, not just numbers: the leg shading below is a genuine
+before/after, not a rounding difference.
+
+![[frames/artist/2026-09-24-style-c-hard-band-legs.png]]
+
+Added your one borrow from B too: a little extra distance fog on the far
+cave wall, for depth only — I kept it well short of B's own moody demo, and
+scoped it to just this fight so I didn't retint the other beasts that share
+this arena's lighting.
+
+**Geometry (both hunters, tonight):** this is the good part. Both hunters
+have been sitting well over their poly budget for two days — three separate
+attempts to fix it (welding, a UV re-unwrap, tried twice) all failed,
+because the real fix needed was never on the table under the old smooth
+style: cutting the model down low enough to LOOK low-poly was always
+"visibly facets it, don't ship that." Under C, that's not a bug, it's the
+look. Cut both hunters from ~5,200 triangles down to ~1,560 — finally inside
+budget — and turned off the smoothing so the facets read as a deliberate
+style instead of an error:
+
+![[frames/artist/2026-09-24-style-c-goblin-studio-before-after.png]]
+![[frames/artist/2026-09-24-style-c-frog-studio-before-after.png]]
+
+And in the actual fight, both hunters together:
+
+![[frames/artist/2026-09-24-style-c-infight-grip.png]]
+
+Ran the full test suite and a complete fight afterward — nothing broke,
+no new problems, same one pre-existing camera-spacing issue the fixer
+already knows about.
+
+**What I didn't touch:** the Cinder Jackal itself. It's rigged and animated
+(the hunters aren't), so cutting its geometry down needs its own careful
+pass to make sure the animations still play right — didn't want to risk
+that in the same run as the rest. It's got the new shading already, just
+not the new geometry yet, so right now it's a bit more polished-looking
+than its two low-poly hunters. That's next.
+
+Also flagging honestly: the old 1-50 scoring sheet I've been using to grade
+these models was written for the smooth style we're leaving. I didn't try
+to force a new number onto these under a rubric built for the old look —
+that's worth a quick conversation once you've seen these, not something I
+should just decide alone.

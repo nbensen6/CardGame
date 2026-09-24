@@ -1800,6 +1800,20 @@ const BIOME := {
 		"fog": Color(0.52, 0.44, 0.34), "density": 0.008,
 		"top": Color(0.44, 0.50, 0.62), "horizon": Color(0.82, 0.72, 0.55),
 	},
+	# Same place as "quarry" (bounder, stone_warden, gale_serpent, yoke_ox stay
+	# on that one, untouched), but with the one thing style C borrows from
+	# candidate B: more distance fog, purely for depth, not mood (Nick,
+	# 2026-09-24 — "take C, and steal one thing from B: a light distance fog
+	# purely for depth, not mood"). Same fog colour as quarry, only density
+	# moves, so the far cave wall recedes instead of sitting flat at every
+	# distance, without quarry's own warm-mood retint (candidate B's own
+	# 0.028 demo). Scoped to the Cinder Jackal fight alone via BEAST_BIOME.
+	"quarry_ember": {
+		"key": Color(1.0, 0.88, 0.68), "energy": 1.30,
+		"fill": Color(0.58, 0.62, 0.80), "ambient": Color(0.34, 0.29, 0.24),
+		"fog": Color(0.52, 0.44, 0.34), "density": 0.014,
+		"top": Color(0.44, 0.50, 0.62), "horizon": Color(0.82, 0.72, 0.55),
+	},
 	"forest": {
 		"key": Color(1.0, 0.96, 0.74), "energy": 1.15,
 		"fill": Color(0.42, 0.62, 0.48), "ambient": Color(0.18, 0.27, 0.20),
@@ -1844,7 +1858,7 @@ const BIOME := {
 const BEAST_BIOME := {
 	"crag_pup": "crag", "sky_snapper": "crag", "boulder_ram": "crag",
 	"bounder": "quarry", "stone_warden": "quarry", "gale_serpent": "quarry",
-	"cinder_jackal": "quarry", "yoke_ox": "quarry",
+	"cinder_jackal": "quarry_ember", "yoke_ox": "quarry",
 	"bramble_hog": "forest", "root_lurker": "forest", "grove_bear": "forest",
 	"flicker_stag": "forest", "silk_widow": "forest", "eyrie_hawk": "forest",
 	"mire_snapper": "marsh", "bog_leech": "marsh", "clot_toad": "marsh",

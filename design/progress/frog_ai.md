@@ -361,3 +361,57 @@ Build hygiene 7, Colour & read 9, Style consistency 9. What's left, in
 order: the 193-island Hygiene question (item 1 above, unchanged this pass)
 and Proportion's missing side-by-side arena scale check (pass 2's own
 note) — neither blocks the stop line, both are real remaining unknowns.
+
+## Pass 4 — style C (Risk of Rain 2, low-poly flat-shaded), artist, 2026-09-24T16:30 EDT
+
+Nick picked a new direction for the whole Cinder Jackal cast (style C, Risk
+of Rain 2 — low-poly, faceted geometry, one hard light band, no gradient,
+flat colour), answering
+`2026-09-24-1147-nick-to-artist-find-an-art-style-worth-copying.md`. Built
+it here the same way as `goblin_mech_ai.md` pass 10 (same run, same recipe,
+`tools/blender/ai/lowpoly_facet.py`): Decimate (Collapse) on the shipped,
+already-patched `frog_ai.glb` to ratio 0.3, flat shading (`use_smooth =
+False`) instead of the smooth default every earlier pass on this file used.
+
+    before: 5,200 tris, smooth-shaded — already inside this file's own
+            "accepted overage" class, per pass 3, but still ~3.7x the 1,400
+            hunter budget
+    after:  1,560 tris, flat-shaded — inside the hunter budget
+
+This asset was already AT the hunter stop line (42/50) under the old style,
+so this is a real trade, not a free win — worth being honest about rather
+than treating it as a strict upgrade. Looked hard before shipping it:
+
+![[../agents/frames/artist/2026-09-24-style-c-frog-studio-before-after.png]]
+
+The face (both eyes, the mouth line) and the toe detail — the two things
+`frog_ai`'s own Colour & read and Proportion scores lean on — both survive
+the cut and read clearly in the studio render. Silhouette at 64px is still a
+clean, recognisable crouching-frog shape:
+
+    before sil: design/renders/frog_ai_before_pass4_sil.png
+    after  sil: design/renders/frog_ai_pass4_sil.png
+
+Verified in the real fight alongside the identically-treated Goblin
+Engineer, same render as that file's pass 10:
+
+![[../agents/frames/artist/2026-09-24-style-c-infight-grip.png]]
+
+`run_tests.gd` — `ALL TESTS PASSED`. A fresh full 80-step
+`mode=play beast=cinder_jackal` playtest shows only the same pre-existing,
+unrelated `hop-distance-band` fail (62, the fixer's own open thread) — no
+new fail, nothing hunter-visibility- or hop-motion-related regressed from
+the geometry swap.
+
+**Not re-scored against this file's own rubric this pass**, for the same
+reason as `goblin_mech_ai.md` pass 10: the rubric's Style consistency line
+and Kenney-smooth-shading hard constraint were written for the style this
+pass is deliberately leaving. This asset was the cast's one hunter already
+at its stop line under that rubric — whether it still is under a rubric that
+actually fits style C is an open question for whoever picks the rubric
+conversation back up, not answered here.
+
+**What's still open:** the Cinder Jackal itself is rigged and animated (1
+armature, 3 clips) and has not had this treatment — same note as
+`goblin_mech_ai.md` pass 10. Needs its own dedicated pass, not attempted
+here.
