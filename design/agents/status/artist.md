@@ -2,13 +2,97 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-23T23:22
-working_on: goblin_mech_ai pass 6 -- a fresh six-view look (pass 5's own suggested next move) found a much bigger colour defect than any prior pass caught -- at the true state=3d camera, 1:1, not a zoomed crop, the goblin's skin read near-white, not green, because every prior "verified in the real fight" frame in this thread was a 3x crop that hid it. Root cause: the skin texture measures S 0.26-0.29 even after pass 2's boost, low enough that the toon shader's bright "lit" band (mix toward white) reads as neutral; the Frog survives the same shader because its own texture is S 0.66-0.77. Wrote a hue-masked saturation-only boost (skin, not value -- avoids undoing pass 2's portrait fix), verified with a magenta diagnostic first. Colour & read 9->10, total 40->41/50, one point under the hunter stop line. Verified at both the real fight camera and the 34px portrait. ALL TESTS PASSED; 80-step playtest run in the foreground after pushing. Lease released.
+updated: 2026-09-24T00:12
+working_on: goblin_mech_ai pass 7 -- tested pass 6's own suggested next move (weld the 489 raw mesh islands without a visible seam) and it does not work: welding vertex positions in Blender collapses them fine pre-export (5799->2604 verts), but the glTF exporter re-splits almost the exact same 489 islands back on export regardless, because the split is driven by this model's own UV seam count, not leftover unwelded remesh duplicates. Also caught and corrected a units mistake in pass 6's own gap numbers (the two real gaps are 5.92mm and 15.38mm, not 2.5mm/6.6mm -- same conclusion, invisible either way, just the wrong figure). No fix applied to the shipped glb -- nothing there to trade risk for. Build hygiene stays 7, total unchanged 41/50. Real fix would need reducing the UV unwrap's own seam count, a bigger riskier job flagged for whoever picks this up next. ALL TESTS PASSED (no game asset changed, no playtest needed). Lease released.
 ---
 
 # artist
 
-## This run — 2026-09-23 23:22 ET
+## This run — 2026-09-24 00:12 ET
+
+- **Did:** tested pass 6's own suggested next move on `goblin_mech_ai` --
+  can the 489 raw mesh islands be welded down without a visible seam? Wrote
+  a weld script and tried it for real on the shipped model.
+- **Worked?** No, and that's the useful finding: welding merges the mesh
+  fine inside Blender, but Godot/the game only ever sees the RE-EXPORTED
+  glTF file, and the exporter puts the same 489 islands right back on
+  export -- they're driven by this hunter's own UV seam layout, not by
+  leftover unwelded duplicate geometry the way the raw number suggested.
+  Proved it by exporting and re-measuring, not by assuming. Nothing shipped
+  changed; Build hygiene stays 7, total 41/50, same as pass 6.
+- **Next:** the only real lever left on Build hygiene is reducing the UV
+  unwrap's own seam count -- a bigger, riskier job (could shift where the
+  texture lands) that deserves its own careful pass with full
+  before/after verification, not a quick follow-up. Otherwise: a fresh
+  six-view look for Silhouette/Proportion/Style (all 8, no named defect),
+  or Colour & read's own shader-side ceiling pass 6 flagged.
+- **Need from you:** nothing.
+
+## Now
+
+Checked for a fresh, unhandled answer under `## Nick's answer` on my own
+`to: nick` notes first, per `COMMON.md` 1b — none. Checked open `to: artist`
+requests — none this run (`requests/`'s only two `open` notes are both
+`to: fixer`). Worked the `JACKAL-BAR.md` queue: pass 6's own "Where it
+stands" named the 489-island weld question as the concrete next move on
+`goblin_mech_ai` — this run did exactly that.
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, Blender 4.1.1,
+`libegl1`/`libegl-mesa0` installed up front (last run's fresh-sandbox note
+about needing them for Blender's background render). Meshy `balance` OK
+(2890 credits) but not needed this run.
+
+**Ran a read-only diagnostic before touching anything**: for every one of
+the 489 raw islands on the shipped `goblin_mech_ai.glb`, the minimum
+vertex distance to its nearest OTHER island. 487 of 489 sit at exactly
+0.000mm — genuinely coincident duplicate vertices, not real separation.
+Only two islands have a real gap. Re-measured those two properly and
+caught a units bug in pass 6's own write-up: `mesh_gap_check.py`'s
+`min_gap_frac` is a FRACTION of the 2329.6mm body diagonal, not
+millimetres — pass 6 read the raw fraction as millimetres directly. The
+real gaps are **5.92mm and 15.38mm**, not "2.5mm and 6.6mm." Same
+conclusion (invisible, not a seam or standoff part) — just corrected the
+number so it doesn't get carried forward wrong again.
+
+**Picked a weld threshold from the diagnostic, not a guess**: a union-find
+over the same distance table shows the 489 islands collapse to 5 groups at
+a 2–5mm threshold (safely under the smaller real 5.92mm gap) and to 2
+groups by 20mm (which would start bridging the real gaps) — so 5mm was the
+one worth testing for real.
+
+**Wrote `tools/blender/ai/goblin_ai_weld.py`** and ran it on the shipped
+model into a scratch output, never overwriting the real asset until proven
+worth it. Inside Blender, before export: 5799 → 2604 vertices, tri count
+essentially flat (5199 → 5178). Looked like a clean win.
+
+**Then re-imported the actual EXPORTED file and re-ran `mesh_gap_check.py`
+on it — the file that ships, not the in-memory Blender mesh — and the weld
+had (almost) no effect there: 5799 → 5783 vertices, 489 → 489 islands,
+unchanged.** Root cause: glTF requires one vertex per unique
+(position, normal, UV) combination; Blender stores UV per face-corner, so
+the exporter re-splits a welded mesh back apart at every UV seam
+regardless of how connected it was pre-export. Confirmed it isn't a
+normals issue by forcing every polygon `use_smooth` before export (removes
+hard-normal splits as a variable) — island count still came back
+unchanged. The 489 number tracks this hunter's own UV seam count, not
+leftover Meshy remesh duplicates.
+
+**Did not touch the shipped `goblin_mech_ai.glb`.** The tested fix makes
+zero measurable difference to the actual file the game loads, so there was
+nothing to trade risk for. `git status` shows only the new script and the
+progress write-up — `game/assets/3d/cast/goblin_mech_ai.glb` itself is
+untouched. `ALL TESTS PASSED` (`run_tests.gd`); no playtest re-run, since
+nothing in the live fight can differ with no asset change.
+
+**Score: Build hygiene stays 7. Total unchanged, 41/50.** Not a null
+result — the open question ("can these be welded without a visible seam?")
+is answered for real, just in the negative, and the real remaining lever
+(reducing the UV unwrap's own seam count) is now named precisely instead
+of guessed at. Full write-up: `design/progress/goblin_mech_ai.md`
+("Pass 7"). Didn't touch `JACKAL-BAR.md`'s hunter-fidelity bullet — the
+score it records didn't change.
+
+## Old: 2026-09-23 23:22 ET, goblin_mech_ai pass 6
 
 - **Did:** a fresh six-view look at `goblin_mech_ai` (pass 5's own suggested
   next move) turned up a much bigger colour problem than any pass before it

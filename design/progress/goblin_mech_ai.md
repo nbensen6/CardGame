@@ -739,7 +739,7 @@ than the Frog's own") is closed at the actual size and lighting a player
 sees it in, not just improved on a number. **Total: 40 → 41/50** — one
 point under the 42 hunter stop line.
 
-### Where it stands
+### Where it stands (superseded by pass 7 below)
 
 **41/50, one point under the hunter stop line.** Lines: Silhouette 8,
 Proportion 8, Build hygiene 7, Colour & read 10, Style consistency 8.
@@ -750,3 +750,93 @@ seam, which would be the first real hygiene fix rather than a topology
 measurement. Silhouette/Proportion/Style at 8 each have no named concrete
 defect left from this pass's look — closing the last point on any of them
 needs a fresh six-view look to find one, not an assumed push.
+
+## Pass 7 — Build hygiene, artist, 2026-09-24T00:12 EDT
+
+Took pass 6's own suggested next move literally: can any of the 489 raw
+mesh islands on the shipped `goblin_mech_ai.glb` be welded down without a
+visible seam? Wrote `tools/blender/ai/goblin_ai_weld.py` to try it
+properly, and the honest answer is **no — not by welding, because welding
+does not survive this asset's own export path.** No fix applied to the
+shipped model this pass; the finding itself is the result, same as pass
+3's gap-check.
+
+**First corrected a units mistake in pass 6's own numbers**, found while
+re-measuring the two flagged "real" gaps as a sanity check before touching
+anything: `mesh_gap_check.py --` reports `min_gap_frac` as a FRACTION of
+the model's own bounding-box diagonal (2.3296m), not millimetres directly.
+Pass 6 read `0.00254` and `0.00660` off that report as "2.5mm and 6.6mm" —
+it should have multiplied by the 2329.6mm diagonal first. The real gaps are
+**5.92mm and 15.38mm** — still small, still invisible at any render
+distance checked, so pass 6's conclusion ("not a seam or a standoff part")
+still holds; only the number was wrong. Noted here so the next run doesn't
+carry the wrong figure forward.
+
+**Wrote a read-only diagnostic first** (kept out of the tree, scratch-only)
+to find a safe weld threshold before editing anything: for every one of the
+489 islands, the minimum vertex-to-vertex distance to its nearest OTHER
+island. 487 of 489 sit at **0.000mm** — genuinely coincident duplicate
+vertices at old remesh/decimate boundaries, not real separation. Only the
+two gaps above (5.92mm, 15.38mm) are non-zero. A union-find over that
+distance table shows the 489 islands collapse to just **5** connected
+groups at a 2–5mm weld threshold (safely under the smaller real gap), and
+to 2 groups by 20mm (which would start bridging the two genuine small
+gaps) — so 5mm was the threshold to test for real.
+
+**Tested it on the shipped model, in Blender.** `goblin_ai_weld.py` imports
+the glb, runs `remove_doubles(threshold=0.005)` on the joined mesh, and
+re-exports. Inside Blender, before export, this is dramatic and exactly as
+predicted: **5799 → 2604 vertices**, tri count essentially unchanged
+(5199 → 5178 — a handful of degenerate faces collapsed, nothing else).
+
+**Then re-ran `mesh_gap_check.py` on the RE-EXPORTED glb — the file that
+actually ships — and the weld had (almost) no effect there: 5799 → 5783
+vertices, islands unchanged at 489 → 489.** The glTF exporter reconstructs
+almost the exact original vertex count and island count on export,
+regardless of the weld. This is not a bug in the script; it is how glTF
+works: a glTF vertex is a single (position, normal, UV) tuple, while
+Blender stores UV/normal per face-corner. Every place this model's own UV
+unwrap has a seam, the exporter is required to re-split the merged
+vertex back into one-per-UV-value on export — and 489 is apparently
+almost entirely accounted for by this hunter's own UV seam count, not by
+leftover unwelded remesh duplicates the way the raw island number
+suggested. Confirmed this is not a normals issue rather than a UV one:
+every polygon was already forced to `use_smooth = True` before export in
+this test, which removes hard-normal splits as a variable, and the island
+count still came back unchanged.
+
+**No fix applied to the shipped `goblin_mech_ai.glb`** — the tested
+approach makes zero measurable difference to the actual shipped file, so
+there is nothing here worth trading risk for. The real lever left, if a
+future pass wants to spend a hygiene point here, is reducing the UV
+unwrap's own seam count (fewer UV islands) — which is a materially
+bigger, riskier job (a re-unwrap can shift or distort where the texture
+lands, and would need the full six-view + in-fight + 34px-portrait
+re-verification loop this hunter has already been through twice for
+colour alone) — not a same-run weld. Flagging it as the honest next step
+rather than attempting it blind.
+
+**No regression, because nothing shipped changed.** `git status` confirms
+only the new script and this write-up are new; `game/assets/3d/cast/
+goblin_mech_ai.glb` itself is untouched. `ALL TESTS PASSED` (`run_tests.gd`)
+— no playtest re-run needed, nothing in the live fight can differ.
+
+**Score: Build hygiene stays 7.** Not because the question wasn't
+answered — it was, definitively — but because the honest answer is "the
+easy version of this fix doesn't exist," not "fixed." **Total: 41/50,
+unchanged**, still one point under the 42 hunter stop line.
+
+### Where it stands
+
+**41/50, one point under the hunter stop line.** Lines: Silhouette 8,
+Proportion 8, Build hygiene 7, Colour & read 10, Style consistency 8.
+Build hygiene's 489-island number is now understood, not just measured: it
+tracks this model's own UV seam count, re-imposed by the glTF exporter on
+every export regardless of how welded the mesh is beforehand, so a plain
+vertex weld cannot move it (`tools/blender/ai/goblin_ai_weld.py`, pass 7).
+Closing this point for real means reducing the UV unwrap's own seam
+count — a bigger, riskier job that needs the full verification loop, not a
+quick follow-up. Silhouette/Proportion/Style at 8 each still have no named
+concrete defect — a fresh six-view look is the next useful move on either
+of those, or on Colour & read's own texture-vs-shader ceiling (pass 6's own
+note: "part of the ceiling here is shader-side, not texture-side").
