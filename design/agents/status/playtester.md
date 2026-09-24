@@ -2,13 +2,49 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-23T21:41
-working_on: Full three-mode baseline (clean, matches last run) plus a fresh human-eye pass on item 1, then added a new check (intent tag vs. party panel) that caught a real, reproducible bug -- filed to the fixer.
+updated: 2026-09-23T23:12
+working_on: Full three-mode baseline (clean, matches last run -- both known open bugs still open, no new failures) plus a new check for the fixer's stone-route fix (route.py's "no reversal" rule), verified against the live game and pushed.
 ---
 
 # playtester
 
-## This run - 2026-09-23 21:41 EDT
+## This run - 2026-09-23 23:12 EDT
+
+- Did: no requests addressed to `playtester` were open (both closed out
+  already — the stone-route design question and the fixer's technical-
+  numbers note). Ran the full three-mode baseline first, then added one new
+  check: the fixer's stone-route fix (`route.py`'s "a climb only ever
+  sweeps one way" rule, landed this evening, item 1 of 3 on the build
+  request) is enforced at BUILD time but nothing re-checked it against what
+  the fight actually loads at runtime — the exact gap that let the original
+  sigil bug ship. New check 8b in `playtest.gd`: read the live
+  `_climb_points` off the loaded beast, project onto the same horizontal
+  sweep plane `route.py` uses, fail if any rung nets backward along the
+  established sweep.
+- Worked?: Yes, both halves. Baseline: 0 new failures — `hover` and `hands`
+  both clean, `play` reproduced exactly the same two already-filed, already-
+  open bugs as last run (`intent-hidden` ×26, `damage-popup-offscreen` ×1),
+  nothing new — not a regression, and confirms the fixer's route.py change
+  (a real structural edit to how every beast's climb points get placed)
+  didn't break hop continuity, camera coverage, or hunter-off-marker
+  anywhere in a 30-step run. New check: verified false-positive-free on
+  `mode=hands` (all 10 sizes) AND a full `mode=play` baseline against the
+  current, already-fixed Cinder Jackal (0 `route-reversal` fails in either)
+  before trusting it — same two-stage discipline as every check added here.
+  Nothing to file: this run found no new bug, it closed a coverage gap so
+  the NEXT regression (a future beast, or a regression in this one) fails a
+  playtest automatically instead of only a Python unit test someone has to
+  remember to run.
+- Next: watch for the fixer finishing items 2/3 of the stone-route request
+  (spacing band, next-hold ring) — once the ring exists, that's a new check
+  to add (JACKAL-BAR / the approved design: "the ring on the NEXT hold
+  should always be visible before the card that sends you there is
+  played"). Also watch for a fix landing on either open bug
+  (`intent-tag-hides-behind-party-panel`, `boss-damage-popup-offscreen-at-
+  sigil`) and re-run to confirm each goes to 0.
+- Need from you: nothing this run.
+
+## Old: 2026-09-23 21:41 EDT
 
 - Did: full three-mode baseline first (this sandbox is slow tonight, ~20-26s/
   step — play mode alone took ~13 minutes for 30-40 steps). Then a fresh
@@ -42,6 +78,72 @@ working_on: Full three-mode baseline (clean, matches last run) plus a fresh huma
 - Need from you: nothing this run.
 
 ## Now
+
+Fresh sandbox, Godot 4.7.1 + `--import`. `run_tests.gd`: `ALL TESTS PASSED`
+before and after. Full baseline, all three modes, matches the prior run
+exactly — same two already-filed, already-open bugs, nothing new:
+
+- `mode=play steps=40`: 2 failing checks, `intent-hidden` ×26 and
+  `damage-popup-offscreen` ×1 — both already filed
+  (`2026-09-23-2141-...intent-tag-hides-behind-party-panel.md`,
+  `2026-09-23-1735-...boss-damage-popup-offscreen-at-sigil.md`), both still
+  open/unfixed, neither a new failure.
+- `mode=hover`: 0 flips, clean.
+- `mode=hands`: 0 fails across hand sizes 1-10, clean.
+
+New check added to `game/tools/playtest.gd` (check 8b, `route-reversal`):
+the fixer's stone-route fix landed this evening
+(`5a0db96`, "fix the climb-route reversal at its cause") — `route.py`'s
+rule that a beast's climb only ever sweeps one way, enforced at BUILD time
+in `ai_beast.py`'s raycast and `beast.py`'s `_prove()` gate. That is real,
+but nothing downstream of the build ever re-checked it against what a
+player's own camera actually loads — which is exactly the gap that let the
+original sigil bug ship (`beast.py` built the model; nothing looked at the
+result afterward). New check reads the live `_climb_points` off the loaded
+beast, projects onto the same horizontal sweep plane `route.py` uses
+(Godot x/z; y is climb height, excluded, same reasoning as `route.py`
+itself), and fails if any rung nets backward (>0.05m) along the direction
+the last two rungs already established — tolerant of the same deliberate
+side-to-side zigzag `route.py`'s own build-time check tolerates, since it's
+the identical dot-product math, just read off the shipped result instead
+of the Blender-side authoring data.
+
+Verified in two stages before trusting it, same discipline as every check
+added here: `mode=hands` first (all 10 sizes, 0 fires), then a full
+`mode=play` baseline (0 fires) — confirms the check does not fire against
+the route the fixer's item-1 fix already corrected. This run found no new
+bug; it closes a coverage gap so a FUTURE regression (this beast or a new
+one) fails an automated playtest instead of depending on someone
+remembering to run `python3 tools/blender/test_route.py`.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | unchanged — reads clearly except where the already-filed offscreen-popup bug (`1735`) hides the number |
+| 2 | hunters land on the beast correctly | unchanged — 0 `hunter-off-marker` fails; **new**: 0 `route-reversal` fails (the fixer's stone-route fix holds) |
+| 3 | jump animation (squash/arc/landing) | unchanged — clean, no pops, across every hop this run |
+| 4 | camera | unchanged — 0 `hunter-offscreen`/`hunter-lost-mid-hop` fails; `intent-hidden` still open (filed) |
+| 5 | nothing errors | clean — 0 script-error fails across all three modes |
+
+One commit this run: the new `route-reversal` check in `playtest.gd`,
+pushed before the `mode=play` verification finished (per COMMON.md 4b — a
+pushed check is recoverable, an unpushed one that outlives this sandbox is
+not), then proven live exactly as described above.
+
+## Next
+
+Watch for the fixer finishing items 2/3 of the stone-route build
+(`2026-09-23-1846-...build-the-one-directional-stone-route.md` — spacing
+band, next-hold ring; item 1 is done and now covered by an automated
+check). Once the next-hold ring exists, that is itself a new check to add
+(the approved design: "the ring on the NEXT hold should always be visible
+before the card that sends you there is played"). Also watch for either
+open bug (`intent-tag-hides-behind-party-panel`,
+`boss-damage-popup-offscreen-at-sigil`) landing a fix, and re-run to
+confirm each goes to 0. Nothing else queued.
+
+## Old: 2026-09-23 21:41 EDT, intent-tag-hides-behind-party-panel filed
 
 Fresh sandbox, Godot 4.7.1 + `--import`, `run_tests.gd`: `ALL TESTS PASSED`
 before and after the code change. Full baseline (this sandbox ran ~4-5x
@@ -1267,6 +1369,18 @@ remain the backstop for that; keep saving them.
 
 ## Log
 
+- 2026-09-23 23:12 EDT — no open requests addressed to `playtester`. Full
+  three-mode baseline (clean, matches last run's own results exactly:
+  `intent-hidden` ×26 and `damage-popup-offscreen` ×1, both already filed
+  and open, not regressions — and confirms the fixer's route.py stone-route
+  fix landing this evening broke nothing). Added `route-reversal` to
+  `playtest.gd` (check 8b: a beast's climb rungs must never net backward
+  along the established sweep, same rule the fixer just enforced at build
+  time, now also checked against the live loaded beast) — clean on
+  `mode=hands` (all 10 sizes) and a full `mode=play` baseline, before
+  trusting it. No new bug found; closes a coverage gap for the next
+  regression. Pushed before the `mode=play` verification finished (COMMON.md
+  4b).
 - 2026-09-23 21:41 EDT — full three-mode baseline (clean, matches last
   run's own results exactly: `damage-popup-offscreen` still the one open
   bug, `1735`, not a regression). Fresh human-eye pass on item 1 (overdue
