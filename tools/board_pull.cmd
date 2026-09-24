@@ -29,6 +29,13 @@ git push -q origin HEAD:main 2>nul
 call :stamp
 if "%BEFORE%"=="%AFTER%" (echo already up to date & exit /b 0)
 
+REM Mirror the request board to GitHub Issues, both ways. Runs here rather
+REM than in a cloud agent because the agents are refused every external write;
+REM this PC is not. Skips itself quietly when gh is not logged in.
+python "%~dp0board_sync.py"
+git add design/agents
+git diff --cached --quiet || (git commit -q -m "board: sync with GitHub Issues" & git push -q origin HEAD:main 2>nul)
+
 git --no-pager log --oneline %BEFORE%..%AFTER%
 REM Only reimport when something under game/ moved - the import costs ~20s and
 REM a notes-only pull does not need it.
