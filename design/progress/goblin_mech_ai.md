@@ -826,7 +826,7 @@ answered — it was, definitively — but because the honest answer is "the
 easy version of this fix doesn't exist," not "fixed." **Total: 41/50,
 unchanged**, still one point under the 42 hunter stop line.
 
-### Where it stands
+### Where it stands (superseded by pass 8 below)
 
 **41/50, one point under the hunter stop line.** Lines: Silhouette 8,
 Proportion 8, Build hygiene 7, Colour & read 10, Style consistency 8.
@@ -840,3 +840,111 @@ quick follow-up. Silhouette/Proportion/Style at 8 each still have no named
 concrete defect — a fresh six-view look is the next useful move on either
 of those, or on Colour & read's own texture-vs-shader ceiling (pass 6's own
 note: "part of the ceiling here is shader-side, not texture-side").
+
+## Pass 8 — Build hygiene (tri-count lever), artist, 2026-09-24T07:16 EDT
+
+Pass 7's own "Where it stands" named two untried moves: a fresh six-view
+look for Silhouette/Proportion/Style, and reducing the UV unwrap's own seam
+count for Build hygiene. Did the cheap one first (the look), then tried a
+cheaper, less risky version of the second (a straight tri-count decimation,
+not a re-unwrap) before concluding the re-unwrap really is the only lever
+left — this pass rules one more thing out, it does not close the point.
+
+**Fresh six-view look, scored cold before reopening this file.** Rendered
+`look.sh goblin_mech_ai 8` and read all seven images (34, front, side, top,
+form, wire, sil) before comparing to pass 6/7's own numbers. Also pulled
+the real in-fight camera at native 1280×720 (`state=3d`), not a zoomed
+crop, and cropped the goblin's own screen region at 4× nearest-neighbour to
+check Silhouette/Colour at the size a player actually sees it (the same
+method that caught the skin-desaturation defect in pass 5/6). No new
+defect on Silhouette, Proportion or Style: the figure still reads as a
+green goblin with a blue tank and goggles at 64px, symmetric front-on,
+consistent toon/outline treatment with the Frog and jackal. The one thing
+that looked odd on first pass — a pale triangular shape floating above
+each hunter's head in the in-fight render — is not part of either model
+(same shape sits over the Frog too); it's the game's own party-marker UI,
+outside this brief's scope.
+
+**Tried the tri-count side of Build hygiene properly, in scratch, before
+touching the shipped file.** `goblin_ai_clean.py`'s own comment says 5200
+tris "matches frog_ai's already-accepted overage" against the 1400 hunter
+budget — nobody had actually tested how much of that could come back down
+without a visible cost, only whether *welding* helped (pass 7, it doesn't,
+because the exporter re-splits at UV seams regardless of vertex welding).
+A blanket **Decimate (Collapse)** is a different lever from welding — it
+removes real geometry instead of just merging coincident duplicates — and
+had never been tried here.
+
+Ran it on the actual **shipped, already colour-patched** `.glb` (not the
+older `.blend` source, which predates the skin-saturation/colour-boost
+patches applied straight to the exported file's embedded image — decimating
+from the stale `.blend` would have silently reverted those) at two ratios,
+each re-exported and re-looked-at before judging anything from the
+in-Blender preview alone:
+
+    ratio 0.6 -> 5199 -> 3119 tris (40% cut)
+    ratio 0.3 -> 5199 -> 1559 tris (70% cut, ~= the 1400 hunter budget)
+
+![[../agents/frames/artist/2026-09-24-goblin-mech-ai-decimate-test.png]]
+
+**0.6 is a real, free win visually** — silhouette at 64px is pixel-similar
+to the shipped model, and the 512px textured render shows no faceting, no
+seam break, no texture stretch anywhere I could find. **0.3 is not** — the
+tank's cylindrical surface visibly facets into flat panels and the boots
+square off, both visible at 512px without a crop; a decimation ratio
+between the two is where texture/silhouette safety runs out, not at the
+budget line.
+
+**Checked hygiene, not just the eye, on the 0.6 candidate** —
+`mesh_gap_check.py` on the re-exported `goblin_dec60.glb`: 0 islands with a
+real gap (same as shipped, no new floating parts), but **island count went
+up, not down** (489 → 590). Decimation collapses vertices in 3D space but
+can still land differently relative to existing UV-seam boundaries, so the
+UV-driven refragmentation on export (pass 7's own finding) gets slightly
+worse under decimation, not better — confirming pass 7's read that this
+number is a seam-count artifact, not a real-geometry count this lever can
+move.
+
+**Did not ship it.** The 0.6 cut is visually free but doesn't reach "within
+budget" (3119 vs 1400 is still 2.2× over — closer than 5199's 3.7×, but
+still squarely in the same "accepted overage" class `frog_ai` already sits
+in at 5136 tris with an identical Build hygiene 7) and doesn't move the
+island count in the right direction. `frog_ai` — same overage class, same
+shader, same toon pipeline — already caps at Hygiene 7 with its tri count
+untouched, which is the actual evidence this project has that this rubric
+line isn't scored on a sliding tri-count scale within the accepted-overage
+band: it's capped there regardless, and only a materially different
+approach (the re-unwrap, or a genuine "some geometry here is pure waste"
+find, neither of which this pass found) would move it. Shipping a change
+with no evidenced score effect, on the hero-adjacent asset, for its own
+sake, isn't a trade worth making. `git status` before this push: the two
+progress-doc updates, the status note, one new frame, and the two new
+`design/renders/goblin_mech_ai_pass8_*` studio renders — `goblin_mech_ai.glb`
+itself is untouched, same discipline as pass 7.
+
+**Score: unchanged, 41/50.** Not a null result: the tri-count lever pass 7
+left open ("the real lever left ... is reducing the UV unwrap's own seam
+count") is now tested and ruled out as a *cheaper substitute* for that —
+decimation alone cannot get here even when it's visually free, because the
+ceiling isn't really about raw tri count once inside the accepted-overage
+band, it's about the UV-seam-driven fragmentation a re-unwrap is the only
+thing that touches. Three independent levers (weld, tri-count, and the
+six-view look) have now been tried on this exact point and closed. The
+re-unwrap is the only one left, and it is exactly as risky as every pass
+since pass 6 has said it is — not something to attempt blind in an
+unattended run.
+
+`ALL TESTS PASSED` (`run_tests.gd`). No playtest re-run — no shipped asset,
+scene or code file changed this pass.
+
+### Where it stands
+
+**41/50, one point under the hunter stop line.** Lines: Silhouette 8,
+Proportion 8, Build hygiene 7, Colour & read 10, Style consistency 8. Every
+lever short of a full UV re-unwrap has now been tried and closed on Build
+hygiene (islands: cosmetic, pass 3; welding: doesn't survive export, pass
+7; tri-count decimation: visually free at 40% but doesn't move the score,
+pass 8) — a re-unwrap is the one remaining, deliberately-scoped, separately
+risk-budgeted job, not a same-pass follow-up. Silhouette/Proportion/Style
+at 8 each still have no named concrete defect after two independent fresh
+looks (pass 6, pass 8).

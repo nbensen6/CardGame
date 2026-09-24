@@ -2,53 +2,106 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T06:21
-working_on: Closed the one gap pass 5 left open on "the weak point is obvious" -- the sigil's lift over the climbing shelf (0.9x HUNTER_HEIGHT) landed at a standing hunter's own head height, so from state=3dclimb it read as part of their sprite. Raised it to 1.7x to clear a hunter's head; re-verified all four 3D camera states, ticked the bar line.
+updated: 2026-09-24T07:16
+working_on: Ruled out tri-count decimation as a cheap substitute for the goblin_mech_ai UV re-unwrap -- 40% fewer tris is visually free but doesn't move Build hygiene (frog_ai sits in the same accepted-overage class untouched and already caps at the same score). Fresh six-view look found no new Sil/Prop/Style defect either. No shipped asset changed.
 ---
 
 # artist
 
-## This run — 2026-09-24 06:21 ET
+## This run — 2026-09-24 07:16 ET
 
-- **Did:** picked the last honest gap pass 5 left on `JACKAL-BAR.md`'s "the
-  weak point is obvious" line -- the sigil-lift fix separated the mark from
-  the climbing shelf, but not from the hunter's own body in the one camera
-  (`state=3dclimb`) where that hunter stands exactly on the sigil. Raised
-  the lift from `0.9x` to `1.7x HUNTER_HEIGHT` in `_place_sigil`
-  (`combat_3d.gd`) -- enough to clear a standing hunter's head at the same
-  anchor, no colour or scale change.
-- **Worked?** Yes. Confirmed the occlusion first with a pixel-level crop at
-  the exact `VIS` coordinate the game reports (nothing but the Frog
-  visible), then re-rendered after the change: a clean gold spark now shows
-  above the hunter's head. Re-checked the earlier `state=3dstrike` win
-  still holds at the bigger lift (it does, if anything cleaner), and that
-  `state=3d`/`3dgrip` are unaffected (sigil still correctly off-frame by
-  design in both). `ALL TESTS PASSED`, and an 80-step playtest reproduces
-  only the already-filed, already-open `hop-distance-band` item (62 fires,
-  the fixer's known-incomplete stone-route work, nothing to do with a
-  Node3D's `.position`) -- no regression.
-- **Next:** the hunter-fidelity tri-budget ceiling (`goblin_mech_ai` 41/50,
-  one point under its stop line) is still the loudest open item on my own
-  brief -- three independent passes now agree closing it needs a
-  deliberately risk-budgeted decimation/re-unwrap, not another attempt
-  blind. Otherwise the bar's remaining creature/motion items (jump reads,
-  camera never loses the active hunter, no pops) haven't had a dedicated
-  look yet.
+- **Did:** picked up pass 7's own two named next moves on `goblin_mech_ai`
+  (the loudest open item on my brief, one point under its hunter stop
+  line): a fresh six-view look for Silhouette/Proportion/Style, and tested
+  whether a straight tri-count decimation (not the untried-and-riskier UV
+  re-unwrap) could cheaply close Build hygiene instead.
+- **Worked?** Partly, honestly. The look found nothing new to fix -- still
+  reads clean at 64px and in the real fight camera at native size. The
+  decimation test is a real, useful negative result: cutting the shipped
+  model's tris 40% (5199 -> 3119) is visually free at every render I
+  checked, but doesn't reach "within budget" and doesn't reduce the UV-seam
+  island count (it went up, 489 -> 590) -- and `frog_ai`, sitting at the
+  same ~5200-tri "accepted overage" untouched, already caps at the
+  identical Build hygiene 7, which is real evidence this line isn't on a
+  sliding tri-count scale within that band. Did not ship the cut -- no
+  proven score effect, no reason to trade the risk. Pushed a more
+  aggressive cut too (70%, down to budget) to see where safety actually
+  runs out: it visibly facets the tank and boots at 512px, so the safe
+  ceiling sits well short of the budget line either way.
+- **Next:** every lever short of a full UV re-unwrap on `goblin_mech_ai`
+  is now tried and closed (islands: cosmetic, pass 3; weld: doesn't survive
+  export, pass 7; tri-count: visually free but doesn't move the score,
+  this pass). The re-unwrap is the one thing left, and it's exactly as
+  risky as every pass since pass 6 has said -- worth scoping as its own
+  dedicated, careful pass rather than folded into a routine run. Otherwise
+  the bar's Motion section (jump reads, camera holds the active hunter, no
+  pops) hasn't had a dedicated artist look yet.
 - **Need from you:** nothing.
 
-![[frames/artist/2026-09-24-cinder-jackal-sigil-3dclimb-before-after.png]]
+![[frames/artist/2026-09-24-goblin-mech-ai-decimate-test.png]]
 
 ## Now
 
 No open `to: artist` request this run (the only open notes in `requests/`
-are `to: fixer` and `to: nick`), and none of my own `to: nick` notes had a
-fresh unhandled answer (all `status: done`). Worked the last unticked
-half of `JACKAL-BAR.md`'s "the weak point is obvious" line -- pass 5
-(04:35 ET, below) had already fixed the mark's separation from the bright
-climbing-shelf texture, but its own write-up named one honest leftover: at
-`state=3dclimb`, the camera that follows whoever is standing AT the sigil,
-the lifted mark landed at that hunter's own torso/head height and read as
-part of their sprite rather than a separate thing.
+are `to: fixer` and one `to: nick` from the playtester, still unanswered --
+not mine to act on). None of my own `to: nick` notes had a fresh unhandled
+answer either (all `status: done`). Worked `JACKAL-BAR.md`'s hunter-fidelity
+line -- the loudest open item my own brief names, and the one every recent
+run's "Next" has pointed at.
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `apt-get update`
+then `libegl1`/`libegl-mesa0`, Blender 4.1.1, `pip install pillow numpy`.
+Meshy not needed this run.
+
+**Fresh six-view look first** (`look.sh goblin_mech_ai 8`), read cold before
+reopening the progress file. No new defect on Silhouette, Proportion or
+Style -- same conclusion pass 6 reached. Also pulled the real `state=3d`
+in-fight camera at native 1280x720 and cropped the goblin's own screen
+region at 4x nearest-neighbour (the method that caught the skin-desaturation
+bug in pass 5/6) -- reads as a green goblin with a blue tank, no new issue.
+One thing that looked odd at first (a pale triangle floating over each
+hunter's head) turned out to be the game's own party-marker UI, present
+over the Frog too -- not this model, not my scope.
+
+**Then tried the untried tri-count lever**, on the actual shipped,
+already-colour-patched `.glb` (not the older `.blend`, which predates the
+skin-saturation fixes baked into the exported file's embedded image only --
+decimating from the `.blend` would have silently reverted those). Blender's
+`Decimate (Collapse)` modifier at two ratios, each re-exported and
+re-rendered before judging anything from the in-Blender preview:
+
+    0.6 -> 5199 -> 3119 tris (40% cut) -- visually free
+    0.3 -> 5199 -> 1559 tris (70% cut, ~= 1400 hunter budget) -- visible facets
+
+![[frames/artist/2026-09-24-goblin-mech-ai-decimate-test.png]]
+
+Checked hygiene, not just the eye, on the safe 0.6 candidate:
+`mesh_gap_check.py` still shows 0 real floating gaps, but island count rose
+(489 -> 590) -- decimation moves vertices without moving UV seam
+boundaries, so the exporter's seam-driven refragmentation (pass 7's own
+finding) gets slightly worse, not better.
+
+**Did not touch the shipped file.** `frog_ai` already sits in the same
+~5200-tri accepted-overage class, untouched, and already caps at the
+identical Build hygiene 7 -- the actual evidence that this rubric line
+isn't scored on a sliding tri-count scale inside that band. Shipping a
+40%-smaller file with no evidenced score effect isn't a trade worth making
+on a cast-fidelity asset. `git status` before this push: the progress-doc
+and `JACKAL-BAR.md` updates, this status note, one new comparison frame,
+and the three new `goblin_mech_ai_pass8_*` studio renders -- no asset,
+scene or code file touched.
+
+`ALL TESTS PASSED` (`run_tests.gd`). No playtest re-run -- nothing shipped
+changed, so nothing in the live fight can differ. Full write-up:
+`design/progress/goblin_mech_ai.md` ("Pass 8").
+
+## Old: 2026-09-24 06:21 ET
+
+Closed the one gap pass 5 left open on "the weak point is obvious" -- the
+sigil's lift over the climbing shelf (0.9x HUNTER_HEIGHT) landed at a
+standing hunter's own head height, so from state=3dclimb it read as part
+of their sprite. Raised it to 1.7x to clear a hunter's head; re-verified
+all four 3D camera states, ticked the bar line.
 
 **Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `pip install
 pillow numpy`. Blender not needed -- this was a placement change in
@@ -1651,6 +1704,13 @@ only touched the visual dressing) is the obvious next real-geometry pass.
 
 ## Log
 
+- 2026-09-24 07:16 EDT — `goblin_mech_ai` pass 8: fresh six-view look found
+  no new Sil/Prop/Style defect; tested tri-count decimation as a cheaper
+  substitute for the UV re-unwrap Build hygiene needs — 40% fewer tris is
+  visually free but doesn't move the score (`frog_ai`, same accepted-overage
+  tri class, untouched, already caps at the same Build hygiene 7) and
+  doesn't reduce the UV-seam island count. Did not ship it. Score unchanged
+  41/50; the re-unwrap is the one lever left, still not attempted blind.
 - 2026-09-24 02:14 EDT — fresh critical six-view look at `cinder_jackal_ai`
   (pass 3) plus an in-fight check (3dgrip/3dclimb/3dstrike): the pass-2
   basalt fix and the 2026-09-22 ear-glow fix are both holding, no new

@@ -112,7 +112,17 @@ reading the fight at a glance, at play size, in motion.
       side-by-side check of all three together at true in-fight scale,
       2026-09-24: same outline, palette-atlas colouring and painted-light
       treatment on all three — no stylistic mismatch found, only
-      `goblin_mech_ai`'s one remaining point keeps this unticked.
+      `goblin_mech_ai`'s one remaining point keeps this unticked. 2026-09-24
+      pass 8: every cheaper lever short of a full UV re-unwrap is now tried
+      and ruled out on that point (a fresh six-view look found no new
+      Silhouette/Proportion/Style defect; a tri-count decimation test cuts
+      `goblin_mech_ai` 40% with zero visible loss but doesn't reach "within
+      budget" and doesn't move the island count the right way — `frog_ai`
+      sits in the same accepted-overage tri class untouched and already
+      caps at the same Build hygiene 7, which is the evidence this line
+      isn't on a sliding tri-count scale within that band). The re-unwrap
+      is the one lever left; it needs its own scoped, risk-budgeted pass,
+      not another same-run attempt. `goblin_mech_ai.md` pass 8.
       `design/progress/cinder_jackal_ai.md` ("Pass 6").
 - [x] **Each is readable at fight distance** as itself, not a green blob.
       The Goblin Engineer's Meshy rebuild was wired in and unreadable at true
