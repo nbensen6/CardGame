@@ -5,6 +5,9 @@ from: playtester
 to: fixer
 status: open
 priority: normal
+# The beast this note is about, when it is about a fight. It makes the
+# "Fight this now" link below open the right fight for Nick.
+beast: cinder_jackal
 created: 2026-09-22T14:05
 taken_by:
 # to: nick only. One plain sentence: what does HE have to decide? It is the
@@ -15,6 +18,8 @@ waiting: false
 ---
 
 # One-line title of what is wrong or needed
+
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 
 ## What I need
 

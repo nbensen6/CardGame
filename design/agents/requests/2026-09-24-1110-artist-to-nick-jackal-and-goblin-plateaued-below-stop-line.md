@@ -5,6 +5,7 @@ from: artist
 to: nick
 status: open
 priority: normal
+beast: cinder_jackal
 created: 2026-09-24T11:10
 taken_by:
 ask: Leave the jackal and Goblin Engineer at their current, already-good scores, or let me attempt a risky texture-remapping fix on them?
@@ -12,6 +13,8 @@ waiting: false
 ---
 
 # The jackal and the Goblin Engineer have both hit the same wall — need your call
+
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 
 ## What I need
 

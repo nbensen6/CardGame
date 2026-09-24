@@ -122,6 +122,11 @@ rather than backgrounding it; a 40-step playtest takes 3-5 minutes.
   sees in the FOR NICK table, so it must make sense with nothing else around
   it. `waiting: true` only when you genuinely cannot get on with your work
   until he answers; crying wolf here makes the flag worthless.
+- **A request about a fight carries `beast:` in its frontmatter and the
+  "Fight this now" link under its title** (both are in the template). Nick
+  clicks it and the game opens into that exact fight — he should never have to
+  find the beast himself to see what you are describing. A frame shows him what
+  you saw; the link lets him see it move.
 - **A `to: nick` request is written for a person, not an agent.** No file
   paths, no function names, no scores out of 50. Say what you are asking in
   one sentence, say what you RECOMMEND, and if it is a choice, give him the

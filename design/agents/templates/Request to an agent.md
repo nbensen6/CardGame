@@ -5,6 +5,8 @@ from: nick
 to: artist
 status: open
 priority: normal
+# Which beast, if this is about a fight. Makes the link below open it.
+beast: cinder_jackal
 created: {{date:YYYY-MM-DD}}T{{time:HH:mm}}
 taken_by:
 # to: nick only. One plain sentence: what does HE have to decide? It is the
@@ -16,6 +18,8 @@ waiting: false
 ---
 
 # One line: what you want
+
+▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 
 ## What I want
 
