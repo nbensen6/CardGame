@@ -29,6 +29,14 @@ extends SceneTree
 ## used and why this number.
 const MIN_HUNTER_GAP := 0.35
 
+## How far (world metres, along the established sweep direction) a climb rung
+## may net backward before it counts as a real route reversal rather than the
+## deliberate side-to-side zigzag every climb already uses. See check 8b in
+## _check(). Small on purpose, same reasoning as route.py's own
+## MIN_STEP_FRAC: this only has to catch a genuine reversal (the sigil bug
+## was 1+ unit), not flatten normal jitter.
+const ROUTE_REVERSAL_TOL := 0.05
+
 var _mode := "play"
 var _beast := ""
 var _steps := 40
@@ -420,6 +428,55 @@ func _check(v: Node, when: String) -> void:
 			if absf(home.y - anchor.y) > 0.05 or absf(home.x - anchor.x) > tol:
 				_fail("hunter-off-marker", "%s: hunter at foothold %d is %.2fm from its climb marker (home %v, anchor %v, x-tol %.2f)" \
 					% [when, foot, home.distance_to(anchor), home, anchor, tol])
+
+	# 8b. "A route only ever goes one way" -- Nick's approved rule from the
+	# stone-route design question (2026-09-23-1434, "How should the floating
+	# stones line up..."), the same rule the Cinder Jackal's sigil broke
+	# (paw -> shoulder -> haunch swept backward along the spine, then the
+	# sigil jumped back past all of it). The fixer's fix (route.py,
+	# 2026-09-23) enforces this at BUILD time -- ai_beast.py's raycast search
+	# and beast.py's hand-authored mark()/anchor() both have to make forward
+	# progress along the direction the last two rungs already established, or
+	# beast.py's own _prove() gate fails the build. That is real, but it only
+	# ever runs against `python3 tools/blender/test_route.py` and whatever a
+	# human remembers to regenerate -- nothing re-checks it against what a
+	# player's own camera actually loads in the fight, which is exactly the
+	# gap that let the original bug ship in the first place (beast.py built
+	# the model; nothing downstream ever looked at the result). Same math,
+	# read off the live `_climb_points` instead: route.py's rule projects
+	# onto the horizontal sweep plane and deliberately ignores climb height,
+	# because height climbs monotonically by construction (foot order already
+	# guarantees that) and hiding it is what let the sigil's real reversal --
+	# forward in height, backward in the sweep -- through in the first place.
+	# combat_3d.gd's own axis convention (_stand_on_model, stand_offset_x,
+	# stand_z_for) already fixes what that plane is: y is climb height, x is
+	# the side-to-side offset, z is depth/front-of-body -- so the sweep plane
+	# here is (x, z), matching route.py's (x, y) in the Blender frame the
+	# glTF exporter maps to Godot's y-up (x unchanged, z a straight readout of
+	# Blender's forward axis for this pipeline). A small deliberate zigzag
+	# from side to side (ai_beast.py's own comment: "alternate a little
+	# either side") still passes here exactly as it passes route.py's
+	# build-time check -- both compare against the direction the LAST two
+	# rungs actually made, not a fixed axis, so a route that curves is still
+	# "forward" as long as each rung keeps advancing the same general way.
+	# Only a rung that nets backward along that established sweep -- the
+	# sigil's actual bug, a 1+ unit reversal, not a few centimetres of
+	# side-step -- fails.
+	if climb_points is Dictionary and (climb_points as Dictionary).size() > 2:
+		var rungs2: Array = (climb_points as Dictionary).keys()
+		rungs2.sort()
+		var prev2: Vector3 = climb_points[rungs2[0]]
+		var prev1: Vector3 = climb_points[rungs2[1]]
+		for i in range(2, rungs2.size()):
+			var cur: Vector3 = climb_points[rungs2[i]]
+			var dir := Vector2(prev1.x - prev2.x, prev1.z - prev2.z)
+			if dir.length_squared() > 0.0001:
+				var prog := Vector2(cur.x - prev1.x, cur.z - prev1.z).dot(dir.normalized())
+				if prog < -ROUTE_REVERSAL_TOL:
+					_fail("route-reversal", "%s: climb rung %s reverses the route -- %.2fm backward along the sweep %v (%v -> %v -> %v)" \
+						% [when, rungs2[i], prog, dir.normalized(), prev2, prev1, cur])
+			prev2 = prev1
+			prev1 = cur
 
 	# 9. The camera keeps the ACTIVE hunter (the one you are playing) on screen
 	# once things have settled -- checklist item 4, "the beast is framed, the
