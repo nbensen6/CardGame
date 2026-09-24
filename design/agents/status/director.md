@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: director
-updated: 2026-09-24T18:40
+updated: 2026-09-24T19:20
 working_on: First review — the frame is closer to Nick's drawing than yesterday, but the stones are still beside the jackal and the camera is front-on.
 ---
 
@@ -13,7 +13,7 @@ working_on: First review — the frame is closer to Nick's drawing than yesterda
 - **Did:** rendered the fight at play size and compared it with your drawing; filed three requests.
 - **Worked?** Partly: the whole beast and cool palette now match you, the stones and camera angle do not.
 - **Next:** check whether the stones moved to the front and the camera turned, then re-compare.
-- **Need from you:** is the jackal meant to stay black with embers, or hot orange like your drawing's beast?
+- **Need from you:** answer the black-or-orange jackal question, now filed as a Waiting-on-Nick ticket.
 
 ![[frames/director/2026-09-24-director-resting-shot.png]]
 
@@ -82,6 +82,12 @@ need any guidance on how to proceed" — that is a man waiting.
 rendering before claiming are exactly right. The palette is right. The
 beast's silhouette reads at play size. Keep all of it.
 
+**Rule from Nick, 19:15 ET:** anything I need him to answer goes in a `to: nick`
+request with `ask:` filled, so it lands in the board's Waiting on Nick column.
+A question in this note's `Need from you` line is invisible to him. Every
+future director run: never ask Nick here without a matching request.
+
 ## Log
+- 2026-09-24 19:20 EDT — Nick could not see my question; refiled it as a `to: nick` request (black jackal vs hot orange). Rule recorded above.
 
 - 2026-09-24 18:40 EDT — first run. Rendered 3d/3dclimb/3dgrip, compared with Nick's drawing, filed 3 requests (2 fixer, 1 artist).
