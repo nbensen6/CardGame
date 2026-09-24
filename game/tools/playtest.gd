@@ -48,6 +48,22 @@ const ROUTE_REVERSAL_TOL := 0.05
 const HOP_MIN_WORLD := 2.4230769
 const HOP_MAX_WORLD := 9.1538461
 
+## combat_3d.gd's own HUNTER_HEIGHT (0.7) -- mirrored here for the same reason
+## HOP_MIN_WORLD/HOP_MAX_WORLD are: this file can't import a .gd script's
+## private consts either. See check 8d in _check() -- "the weak point is
+## obvious... stays obvious as you climb toward it" (JACKAL-BAR), the sigil
+## mark has to clear a hunter's own head once they are standing at the weak
+## point, or it reads as part of their sprite instead of a separate thing.
+const SIGIL_HUNTER_HEIGHT := 0.7
+
+## How far above a standing hunter's own head the sigil mark must sit before
+## it counts as "clear" rather than "borderline" -- small on purpose, the
+## same shape of slack ROUTE_REVERSAL_TOL uses: just enough that render
+## jitter/rounding never flags a genuinely-clear mark, nowhere near enough to
+## forgive the actual bug (the old 0.9x lift landed 0.56m BELOW this line,
+## not a hair under it).
+const SIGIL_CLEAR_MARGIN := 0.05
+
 var _mode := "play"
 var _beast := ""
 var _steps := 40
@@ -557,6 +573,34 @@ func _check(v: Node, when: String) -> void:
 			elif d3 > HOP_MAX_WORLD:
 				_fail("hop-distance-band", "%s: ordinary hop Height %s->%s measures %.2fm (> %.2f ceiling) -- the arc stops growing with distance, stops reading as effort" \
 					% [when, rungs3[i], rungs3[i + 1], d3, HOP_MAX_WORLD])
+
+	# 8d. JACKAL-BAR "the weak point is obvious... stays obvious as you climb
+	# toward it": the artist's fix (combat_3d.gd _place_sigil, 2026-09-24)
+	# lifts the sigil mark above the climb point specifically so it clears a
+	# standing hunter's own head once that hunter is actually AT the sigil --
+	# an earlier version (0.9x HUNTER_HEIGHT, landing at torso/head height,
+	# the mark reading as part of the hunter's sprite rather than a separate
+	# thing) shipped for a full day before anyone's eyes caught it, because
+	# nothing re-checked the fix live, only a one-time render. Same shape of
+	# gap as 8/8b/8c: a real fix, proved once, with no permanent guard against
+	# a future beast -- or a future retune of the same lift -- landing the
+	# mark back inside a standing hunter's own silhouette. Checks the actual
+	# invariant ("clears the hunter's head by a real margin"), not the 1.7x
+	# multiplier itself, so a deliberate future retune that keeps the mark
+	# clear doesn't trip this for no reason.
+	var sigil: Node3D = v.get("_sigil")
+	if sigil != null and is_instance_valid(sigil) and sigil.visible and c != null \
+			and c.boss != null and hunters is Array:
+		var wp2: int = int(c.boss.weak_point_height)
+		if wp2 > 0:
+			for h2 in (hunters as Array):
+				if int((h2 as Dictionary).get("foot", -1)) != wp2:
+					continue
+				var home2: Vector3 = (h2 as Dictionary).get("home", Vector3.ZERO)
+				var head_y: float = home2.y + SIGIL_HUNTER_HEIGHT
+				if sigil.position.y < head_y + SIGIL_CLEAR_MARGIN:
+					_fail("sigil-behind-hunter", "%s: sigil mark y=%.2f does not clear the head (y=%.2f, +%.2f margin) of the hunter standing at the sigil (home %v) -- reads as part of their sprite, not a separate weak point" \
+						% [when, sigil.position.y, head_y, SIGIL_CLEAR_MARGIN, home2])
 
 	# 9. The camera keeps the ACTIVE hunter (the one you are playing) on screen
 	# once things have settled -- checklist item 4, "the beast is framed, the
