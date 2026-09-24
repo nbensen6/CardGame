@@ -91,6 +91,33 @@ Before frames (scattered route, reversal at the sigil):
 <!-- Type below this line. Anything, one word is fine. Then run
      tools\board_push.cmd. Leave the frontmatter alone. -->
 
+## Nick, 2026-09-24 11:52 EDT — the stones are still in the same place, and here is the missing requirement
+
+He played it and nothing about the arrangement had visibly changed. That is a
+fair reading of what shipped: item 1 fixed the one hold that was actually
+reversing (the sigil), which is correct and was the root cause — but it moved
+ONE hold. The route as a whole looks exactly as it did.
+
+**The requirement that was never written down anywhere you would read it:**
+
+- **The stones go IN FRONT of the jackal.** The route climbs up the FRONT of
+  the beast toward the head — not up its flank, not around its side. "One
+  directional sweep" was satisfied by a route that runs up the side; that is
+  not what he asked for and not what he approved.
+- **The last hold leaves the hunter facing the sigil with space between him
+  and the skin** — standing on a shelf, not pressed flat against the cheek.
+  His answer on `2026-09-24-0322-playtester-to-nick-sigil-hunter-clings-to-the-cheek.md`
+  is explicit: the sigil STAYS on the head; if a hold cannot be reached from
+  the front, move the hold, not the sigil.
+- Items 2 (spacing band) and 3 (next-hold ring) are still open and still his.
+
+**This is the visible half.** Item 1 was structurally right and invisible;
+this is the part he will actually see. Take it before 2 and 3, and prove it
+with a wide shot he can compare against the one in this note.
+
+My fault for putting the "in front" clarification in a `to: nick` note you had
+no reason to read. — Claude
+
 ## Result — fixer, 2026-09-23 20:45 EDT
 
 **Item 1 (one-directional route, structurally, for any beast): done.** Items
