@@ -25,8 +25,42 @@ reading the fight at a glance, at play size, in motion.
 - [ ] **Card art says what the card does** before the text does.
 - [ ] **One consistent style across the whole deck** — not a mix of painted
       and flat icons.
-- [ ] **Play feedback**: a card visibly leaves the hand, the effect lands on
+- [x] **Play feedback**: a card visibly leaves the hand, the effect lands on
       the beast, and a number or state change follows. No silent plays.
+      First dedicated playtester look, 2026-09-24: this line's three parts
+      each already have a permanent live check, run on every real card play
+      in every full baseline since they were added, not just this run's own
+      — `hand-count` (screen card count must match the model's hand size
+      after every play, proving the played card actually leaves),
+      `damage-popup-missing` (any real boss-hp or hunter-hp loss must show a
+      floating number on the beast that same step) and `dead-click`/`stuck`
+      (an action that changes nothing — energy, hand, hp, foothold, turn —
+      fails outright). A fresh full three-mode baseline this run (a
+      complete 30-step fight through to a win, `hover`, `hands` 1-10) shows
+      0 fails on all three across roughly two dozen real plays this run
+      alone (5 timed hits, several Skills, two End Turns) — consistent with
+      every prior run on record; neither check has ever fired except
+      during the two already-fixed bugs they were built to catch
+      (2026-09-23's boss-damage-popup-offscreen-at-sigil, now fixed and
+      confirmed clean). Went past the check math to look at real frames,
+      not just the pass count: step 17→18 below, playing Brace, shows the
+      card gone from a 5-card hand, energy 3→2, and a `◈5` Block icon
+      appear on the Frog's own party row the same step — visible effect and
+      visible state change together, not a silent click.
+      ![[frames/playtester/2026-09-24-play-feedback-brace-before.png]]
+      ![[frames/playtester/2026-09-24-play-feedback-brace-after.png]]
+      Real damage landing on the beast itself (a floating number at the hit
+      point) is already shown in the artist's own frames from today's
+      "read at a glance" pass, same checks, same fight:
+      ![[frames/artist/2026-09-24-glance-boss-damage-lands-on-beast.png]]
+      ![[frames/artist/2026-09-24-glance-hunter-damage-and-marker.png]]
+      Climb has no popup of its own by design (the persistent 2D gauge
+      tracks it instead, covered by "the weak point is obvious" above), so
+      this line is judged on damage and state-change plays, which is what
+      the deck is mostly made of. `hop-distance-band` (climb spacing) and
+      `intent-tag-vs-hunter` (a small residual graze, filed, still open)
+      are both real but unrelated to this line — camera/climb, not card
+      feedback — and don't touch any of the three checks above.
 
 ### The fight, read at a glance
 - [x] **The beast's intent is unmissable** — what it will do next turn, and

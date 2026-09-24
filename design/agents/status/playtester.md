@@ -2,13 +2,67 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-24T10:05
-working_on: Full three-mode baseline clean -- verified the fixer's new intent-tag-vs-hunter fix (73ae6b4) live, not just its unit tests. New check found the fix mostly works (0 fails on the reported repro) but also found its own first version was too strict (fired on invisible AABB hairline grazes) -- added an 8px margin, then found one real, much smaller residual (a ground-hop-start graze) surviving underneath the noise. Filed the residual to the fixer. Only hop-distance-band remains open otherwise, unchanged. Still waiting on Nick's answer on the sigil-cheek request.
+updated: 2026-09-24T11:02
+working_on: Full three-mode baseline clean (only the two known open issues, unchanged) -- then a dedicated look at JACKAL-BAR's still-unticked "Play feedback" line, closed it. Its three parts already had permanent live checks (hand-count, damage-popup-missing, dead-click/stuck) with a clean record across every run on file; verified fresh this run (0 fails across ~24 real plays in a full fight to a win, plus hover/hands) and backed it with a real before/after frame pair (Brace: card leaves, Block icon appears). Still waiting on Nick's answer on the sigil-cheek request.
 ---
 
 # playtester
 
-## This run — 2026-09-24 10:05 EDT
+## This run — 2026-09-24 11:02 EDT
+
+- **Did:** ran the full three-mode baseline first (no requests were open
+  for `playtester`, and Nick still hasn't answered the sigil-cheek
+  request), confirmed it clean against last run, then picked one checklist
+  item to close for real: JACKAL-BAR's "Play feedback" line under Cards,
+  unticked since the file was created — never given a dedicated look of
+  its own, even though the machinery to prove it has existed for days.
+- **Worked?** Yes. The three things that line asks for each already have a
+  live check that runs on every real card play, every full baseline, not
+  just today: `hand-count` (the played card actually leaves — screen count
+  matches the model), `damage-popup-missing` (a real hit shows a floating
+  number on the beast the same step), `dead-click`/`stuck` (nothing ever
+  clicks for free). This run's own fresh full baseline — a complete 30-step
+  fight through to a win, plus `hover` and `hands` 1-10 — hit all three
+  checks across roughly two dozen real plays (5 timed hits, several
+  Skills, two End Turns) and came back with 0 fails on every one of them,
+  matching every prior run on record. Then looked past the numbers at real
+  frames: Brace going from a 5-card hand to 4, with a `◈5` Block icon
+  appearing on the Frog's row the same step — card gone, effect visible,
+  state changed, together. Ticked the line in JACKAL-BAR with that
+  evidence and two frames.
+- **Next:** watch for the fixer picking up the ground-hop-start intent-tag
+  residual (`1002`, still open) or closing stone-route item 2
+  (`hop-distance-band`, still the only other open item, unchanged this
+  run — 62-63 fires in `play`, 22 in `hands`, all at the same two known
+  short hops as every prior run). Still waiting on Nick's answer on the
+  sigil-cheek request.
+- **Need from you:** the sigil-cheek request, whenever you have a minute —
+  same ask as every run since it was filed.
+
+![[frames/playtester/2026-09-24-play-feedback-brace-before.png]]
+Step 17 this run: a 5-card hand (Brace, Tongue Snap, Hop, Scramble,
+Leapfrog), energy 3.
+
+![[frames/playtester/2026-09-24-play-feedback-brace-after.png]]
+Step 18, right after playing Brace: the card is gone, the remaining 4
+re-fan cleanly, energy 3→2, and a `◈5` Block icon appears on the Frog's own
+party row — the card left, the effect landed, the state visibly changed.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | **JACKAL-BAR's "Play feedback" line closed this run** — three permanent checks (`hand-count`, `damage-popup-missing`, `dead-click`/`stuck`) proven clean across a fresh full baseline and tied to a real frame pair; sigil-cheek placement unchanged, already filed to Nick |
+| 2 | hunters land on the beast correctly | unchanged — 0 `hunter-off-marker`, 0 `hunters-overlap`, 0 `route-reversal`, 0 `sigil-behind-hunter` |
+| 3 | jump animation (squash/arc/landing) | unchanged — clean, no pops, across every hop this run |
+| 4 | camera | unchanged — 0 `hunter-offscreen`/`hunter-lost-mid-hop`; `intent-tag-vs-hunter` residual unchanged (2 fires this run, same shape as filed, still open with the fixer) |
+| 5 | nothing errors | clean — 0 `script-error` across all three modes |
+
+No game code changed this run — one JACKAL-BAR edit (ticking "Play
+feedback" with its evidence and two frames) and this write-up, both
+pushed together per COMMON.md 4b.
+
+## Old: 2026-09-24 10:05 EDT
 
 - **Did:** the fixer landed a fix (`73ae6b4`) for the artist's
   jump-hides-behind-intent-tag finding while I was setting up this run.
