@@ -30,6 +30,7 @@ import sys
 from urllib.parse import quote
 
 REPO = "nbensen6/CardGame"
+OWNER = "nbensen6"
 REQUESTS = os.path.join("design", "agents", "requests")
 # The local redirector (tools/board_link.py). GitHub allows http links and
 # strips obsidian:// ones, so every button on an issue goes through here.
@@ -114,6 +115,17 @@ def stamp_ticket(text, num):
     if not m:
         return text
     return text[:m.end()] + nl + nl + "**#%s**" % num + text[m.end():]
+
+
+def assignees_for(fm):
+    """Assign Nick the issues that are his.
+
+    A label filter works, but assignment is what GitHub's own "Assigned to you"
+    view and the mobile app's home tab key off -- so `to: nick` becomes a real
+    assignment and he never has to remember a query. Agent-owned issues stay
+    unassigned: there is no GitHub account behind "the fixer".
+    """
+    return [OWNER] if fm.get("to", "") == "nick" else []
 
 
 def labels_for(fm):
@@ -248,7 +260,8 @@ def push(dry):
             made = gh("-X", "POST", "repos/%s/issues" % REPO,
                       "-f", "title=" + title,
                       "-f", "body=" + issue_body(path, body, fm),
-                      *sum((["-f", "labels[]=" + l] for l in labels_for(fm)), []))
+                      *sum((["-f", "labels[]=" + l] for l in labels_for(fm)), []),
+                      *sum((["-f", "assignees[]=" + a] for a in assignees_for(fm)), []))
             if not made:
                 continue
             num = str(made["number"])
@@ -268,10 +281,17 @@ def push(dry):
                 f.write(stamped)
             _, _, body = split_note(stamped)
             changed.append(path)
-        gh("-X", "PATCH", "repos/%s/issues/%s" % (REPO, num),
-           "-f", "title=" + title,
-           "-f", "body=" + issue_body(path, body, fm),
-           "-f", "state=" + want_state, quiet=True)
+        args = ["-X", "PATCH", "repos/%s/issues/%s" % (REPO, num),
+                "-f", "title=" + title,
+                "-f", "body=" + issue_body(path, body, fm),
+                "-f", "state=" + want_state]
+        # An agent hands a request back by flipping `to:` to nick, so the
+        # assignment has to follow that, not just be set once at creation.
+        mine = assignees_for(fm)
+        args += sum((["-f", "assignees[]=" + a] for a in mine), []) or ["-F", "assignees[]="]
+        for label in labels_for(fm):
+            args += ["-f", "labels[]=" + label]
+        gh(*args, quiet=True)
     return changed
 
 
@@ -341,6 +361,8 @@ def selftest():
 
     assert labels_for({"to": "nick", "priority": "high"}) == ["for:nick", "priority:high"]
     assert labels_for({"to": "fixer"}) == ["agent:fixer"]
+    assert assignees_for({"to": "nick"}) == ["nbensen6"]
+    assert assignees_for({"to": "artist"}) == []
     assert "blocked-on-nick" in labels_for({"to": "nick", "waiting": "true"})
 
     # CRLF notes are the norm here; the rewrite must not mix endings
