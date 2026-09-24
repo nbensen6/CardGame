@@ -341,3 +341,71 @@ matters most (approaching, not yet standing on it), not a closed case.
 (`mode=play beast=cinder_jackal steps=80`) run in the foreground after
 pushing this change, per `COMMON.md` 4b; result recorded in `status/
 artist.md` once it finished.
+
+## Pass 6 — Build hygiene re-check + cast-wide Style consistency, artist, 2026-09-24T05:17 EDT
+
+**Started by chasing what looked like a real regression, and it was a false
+alarm — writing down why so nobody re-chases it blind.** Re-inspected the
+shipped `cinder_jackal_ai.glb` to sanity-check pass 2's basalt/icosphere
+cleanup was still holding (a routine re-verify, not triggered by any new
+report). A plain `bpy.ops.import_scene.gltf()` re-import in Blender 4.1.1
+consistently shows a SECOND mesh object, `Icosphere` (42 verts, 80 tris, no
+material, sitting at local origin) — looking exactly like the "stray
+untextured unit icosphere... leftover from manual editing" pass 2's own
+write-up says it deleted. First read: pass 2's fix hadn't actually made it
+into the shipped file.
+
+**Checked the raw file before touching anything, and the alarm was wrong.**
+Parsed the `.glb`'s own JSON chunk directly (no Blender in the loop) —
+1 mesh (`Mesh_0`/"Body"), 1 material, 33 nodes, no Icosphere anywhere in the
+data. Re-exported fresh straight from the current `tools/blender/ai/
+cinder_jackal_ai.blend` (which also has no Icosphere object, confirmed by
+listing `bpy.data.objects` on open) using `ai_beast.py`'s own step-6 export
+call — the raw JSON of THAT export is equally clean. The Icosphere only
+ever exists in Blender's own in-memory scene after a `gltf` REIMPORT; it is
+not in the file, not in the source `.blend`, and — confirmed by rendering a
+real `look.py` pass and reading the `_side`/`_sil` frames at 1:1 — it does
+not show up in the render pipeline either (fully invisible, whatever it
+is). `mesh_gap_check.py`'s own multi-mesh join step hits a silent "No mesh
+data to join" warning in background mode when this happens, but that
+failure mode happens to leave `meshes[0]` ("Body") as the analysed object
+either way — so every earlier hygiene number for this beast (440 islands,
+10370 verts, 0 real gaps) was already reading the real body, unaffected.
+
+**Root cause not fully chased down** (some background-mode-only quirk in
+Blender 4.1.1's glTF importer, reproducible on this specific file only —
+`frog_ai.glb` and `goblin_mech_ai.glb` reimport clean, one mesh object
+each) — not worth more time on since it provably never reaches the shipped
+asset or the game. Flagging it here so a future pass that reimports this
+beast in Blender and sees a phantom "Icosphere" object doesn't repeat this
+investigation from zero: check the raw glTF JSON first, not just Blender's
+reimported scene.
+
+**No change made to any shipped file.** `git status` before writing this up
+shows only this progress note, `JACKAL-BAR.md` (below) and the status note
+as new — `cinder_jackal_ai.glb`, `.blend`, and every other asset are
+byte-identical to before this run.
+
+**Also used the clean bill of health to check something never checked as a
+group: does the trio (jackal + both `_ai` hunters) actually read as one
+game, side by side, at true in-fight scale — not just each asset's own
+Style consistency line in isolation.** Rendered `state=3d` and `state=
+3dgrip wide` (same camera/positions the fight itself uses) and cropped the
+Frog and Goblin at native resolution, no scaling tricks:
+
+![[frames/artist/2026-09-24-cast-trio-style-check.png]]
+
+Holds. Same thick black ink outline on all three, same flat/cel-shaded
+palette-atlas colouring, same "painted" light read (no separate specular
+highlight, matching `portraits.py`'s own `painted=True` treatment for all
+three models) — nothing about either hunter reads as being from a
+different pipeline than the beast standing over them. This is the closest
+this project has come to a literal side-by-side check of the "Frog and
+Goblin match the jackal's fidelity" bar line; the remaining gap that keeps
+it unticked is `goblin_mech_ai`'s own 41/50 (one point under the 42 hunter
+stop line, Build hygiene's tri-budget overage — see `goblin_mech_ai.md`
+pass 7), not a stylistic mismatch. No fix applied; nothing to fix here.
+
+`ALL TESTS PASSED` (`run_tests.gd`). No playtest re-run — no game file
+changed this pass (asset, script, or scene), only progress notes and one
+new frame.

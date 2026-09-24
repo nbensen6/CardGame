@@ -2,13 +2,108 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T04:40
-working_on: Found and fixed a real defect in the last unchecked JACKAL-BAR creature bullet, "the weak point is obvious... as you climb toward it" -- the 3D glow mark on cinder_jackal_ai was pixel-identical brightness to the climbing shelf it sits on, so it read as invisible right where it mattered most. Lifted it into open air above the shelf; verified with a real render and pixel sample, not just by eye.
+updated: 2026-09-24T05:17
+working_on: Chased what looked like a real regression (a leftover icosphere back in the shipped cinder_jackal_ai.glb) and proved it was a Blender-reimport-only artifact, never in the actual shipped file -- no fix needed. Used the clean result to run the first literal side-by-side check of the jackal and both hunters together at true fight scale; style holds, no new defect.
 ---
 
 # artist
 
-## This run — 2026-09-24 04:40 ET
+## This run — 2026-09-24 05:17 ET
+
+- **Did:** no open `to: artist` request this run, and none of my own
+  `to: nick` notes had a fresh unhandled answer (all `status: done`, per
+  `COMMON.md` 1b). Re-checked `cinder_jackal_ai.glb`'s basalt/icosphere
+  cleanup (pass 2) was still holding, since a routine reimport in Blender
+  showed a second "Icosphere" mesh object that looked exactly like the
+  leftover pass 2 said it deleted.
+- **Worked?** It was a false alarm, and a useful one to run down. The
+  Icosphere is not in the shipped `.glb`'s own file data (checked the raw
+  glTF JSON directly, no Blender in the loop) and not in the source
+  `.blend` either -- it only appears after Blender's own glTF importer
+  reimports this specific file, and never shows up in an actual render.
+  Nothing was broken; nothing needed fixing. Wrote the mechanism down so a
+  future run doesn't re-chase it from zero.
+- **Next:** used the now-confirmed-clean beast to do something never done
+  before -- a literal side-by-side render of the jackal and both hunters
+  together at true in-fight scale, checking "Style consistency" as a group
+  rather than per-asset. Holds clean; frame below. `goblin_mech_ai`'s own
+  41/50 (one point under its stop line, Build hygiene's shared tri-budget
+  ceiling) is still the only thing keeping the hunter-fidelity bar line
+  unticked -- not a style mismatch.
+- **Need from you:** nothing.
+
+![[frames/artist/2026-09-24-cast-trio-style-check.png]]
+
+## Now
+
+No open `to: artist` request this run (the only open notes in `requests/`
+are `to: fixer` and `to: nick`), and no fresh unhandled answer on my own
+`to: nick` notes either (all `status: done`). Worked the `JACKAL-BAR.md`
+queue via a routine re-verify of the last shipped change, which turned up
+a tooling red herring rather than a real bug -- full mechanism and the
+raw-JSON proof are in `design/progress/cinder_jackal_ai.md` ("Pass 6").
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `apt-get
+update` then `libegl1`/`libegl-mesa0` (same gap recent fresh sandboxes have
+hit), Blender 4.1.1, `pip install pillow numpy`. Meshy not needed this run.
+
+**Why this over another `goblin_mech_ai` hygiene attempt.** `goblin_mech_ai`
+pass 7 (2026-09-24 00:12) already tried welding its 489 raw islands and
+proved the glTF exporter re-splits them at UV seams regardless -- not a
+same-run fix, and the honest remaining lever (a full UV re-unwrap) has been
+named as a deliberately-scoped, separately-risk-budgeted job by three
+independent passes now (`frog_ai`, `goblin_mech_ai`, `cinder_jackal_ai`),
+not something to re-attempt blind without new information. No new
+information turned up this run either, so it stayed untouched again --
+correctly, not out of avoidance: the `frog_ai_clean.py` recipe already
+decimates to ~5200 tris and still lands at Build hygiene 7, the same
+number `goblin_mech_ai` and `cinder_jackal_ai` land at through different
+routes, which is real evidence 7 may be close to this asset pipeline's
+honest ceiling without a much more aggressive (and riskier) cut.
+
+**The red herring, briefly** (full writeup in the progress note): Blender
+4.1.1's `bpy.ops.import_scene.gltf()`, reimporting the shipped
+`cinder_jackal_ai.glb`, deterministically adds a second mesh object named
+"Icosphere" (42 verts, 80 tris, no material, at local origin) that looks
+exactly like the stray leftover pass 2's own writeup said it deleted.
+Parsed the `.glb`'s raw JSON chunk by hand (no Blender) -- one mesh, one
+material, 33 nodes, no Icosphere anywhere in the actual file. Re-exported
+straight from the current (also-clean) `tools/blender/ai/
+cinder_jackal_ai.blend` using `ai_beast.py`'s own step-6 export call and
+the fresh export's raw JSON is equally clean. Rendered a real `look.py`
+pass and read the `_side`/`_sil` frames at 1:1 -- no stray blob visible
+anywhere, silhouette clean. `mesh_gap_check.py`'s own join-on-multi-mesh
+step hits a silent "No mesh data to join" warning in background mode when
+this phantom object shows up, but happens to leave the real "Body" object
+as the one analysed either way, so no earlier hygiene number for this
+beast was ever affected. Root cause not fully chased (reproducible only on
+this file, not `frog_ai.glb`/`goblin_mech_ai.glb`) -- not worth more time
+since it provably never reaches the shipped asset, the game, or any score,
+but worth one line in the progress note so nobody repeats this
+investigation cold.
+
+**Then used the clean bill of health for something genuinely new**: every
+prior "Style consistency" check in this project's history has scored one
+asset at a time (six-view look, in-fight crop, 34px portrait) -- nobody had
+put the jackal and both `_ai` hunters in the same frame at once and looked.
+Rendered `state=3d` and `state=3dgrip wide` (the fight's own camera/
+positions) and cropped both hunters at native resolution:
+
+![[frames/artist/2026-09-24-cast-trio-style-check.png]]
+
+Same thick black ink outline, same flat palette-atlas colouring, same
+"painted" light treatment (no separate specular highlight) on all three --
+nothing reads as coming from a different pipeline. Updated `JACKAL-BAR.md`'s
+hunter-fidelity line, which had also gone stale (it still said "Today they
+are Python-primitive models," true when written, false since both hunters
+moved to their `_ai` rebuilds) -- corrected it to name the real remaining
+gap (`goblin_mech_ai`'s one point) instead.
+
+`ALL TESTS PASSED` (`run_tests.gd`). No playtest re-run -- `git status`
+before this push shows only the two progress-doc updates, this status
+note, and the one new frame; no asset, script or scene file changed.
+
+## Old: 2026-09-24 04:40 ET
 
 - **Did:** checked `JACKAL-BAR.md`'s last unverified creature line for the
   jackal -- "the weak point is obvious and stays obvious as you climb

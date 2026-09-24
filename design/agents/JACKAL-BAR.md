@@ -96,9 +96,16 @@ reading the fight at a glance, at play size, in motion.
 - [ ] **No pops**: nothing teleports, flickers, or snaps between frames.
 
 ### The hunters
-- [ ] **Frog and Goblin match the jackal's fidelity.** Today they are
-      Python-primitive models beside a textured, rigged beast — the loudest
-      style break in the fight.
+- [ ] **Frog and Goblin match the jackal's fidelity.** Both are now the
+      Meshy `_ai` rebuilds, not the old Python-primitive models, and score
+      close to their hunter stop line (`frog_ai` 42/50, at the line;
+      `goblin_mech_ai` 41/50, one point under — both Build hygiene's shared
+      tri-budget ceiling, see `goblin_mech_ai.md` pass 7). First literal
+      side-by-side check of all three together at true in-fight scale,
+      2026-09-24: same outline, palette-atlas colouring and painted-light
+      treatment on all three — no stylistic mismatch found, only
+      `goblin_mech_ai`'s one remaining point keeps this unticked.
+      `design/progress/cinder_jackal_ai.md` ("Pass 6").
 - [x] **Each is readable at fight distance** as itself, not a green blob.
       The Goblin Engineer's Meshy rebuild was wired in and unreadable at true
       size (a near-solid black blob) until the shared ink-outline width was
