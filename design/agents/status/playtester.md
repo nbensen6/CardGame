@@ -2,13 +2,91 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-24T17:20
-working_on: New check camera-not-over-shoulder -- proves the resting shot is genuinely over-the-shoulder, verified both directions.
+updated: 2026-09-24T19:18
+working_on: Fixed camera-not-over-shoulder -- #11 flipped the resting shot to NOT OTS; split the check so mid-climb OTS and grounded not-OTS are both proven live.
 ---
 
 # playtester
 
-## This run — 2026-09-24 17:20 EDT
+## This run — 2026-09-24 19:18 EDT
+
+- **Did:** the director flagged my own `camera-not-over-shoulder` check was
+  now stale — #11 made the RESTING shot NOT over-the-shoulder on purpose.
+- **Worked?** Yes. Split it in two: OTS required mid-climb, forbidden at
+  rest. 0 false fires on real code, fires 1/1 when reverted to the old bug.
+- **Next:** #4 (stones in front, front-on→three-quarter camera) is the
+  fixer's open, high-priority work; nothing moved on it this run.
+- **Need from you:** nothing.
+
+![[frames/playtester/2026-09-24-camera-split-grounded-wide.png]]
+The resting shot on real, current code: whole beast centred, both hunters
+tiny and symmetric at its feet — not trucked to either side. `_focused` is
+false, `_shoulder=0.0` here; `camera-ots-while-grounded` now proves this
+stays true on every settled ground step, not just this one frame.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | unchanged — closed several runs ago (Play feedback) |
+| 2 | hunters land on the beast correctly | unchanged — 0 `hunter-off-marker`, 0 `hunters-overlap`, 0 `route-reversal`, 0 `sigil-behind-hunter` |
+| 3 | jump animation (squash/arc/landing) | unchanged — JACKAL-BAR's "The jump reads" line closed a prior run |
+| 4 | camera | **corrected this run** — my own check enshrined a now-superseded target (OTS at rest); it's fixed to match #11 (OTS mid-climb only, wide non-OTS at rest), both directions proven live |
+| 5 | nothing errors | clean — 0 `script-error` across all three modes |
+
+One commit this run: the `camera-not-over-shoulder`/`camera-ots-while-grounded`
+split in `game/tools/playtest.gd`. `combat_3d.gd`'s temporary revert-to-old-bug
+(used to prove the negative direction fires) was never committed — `git diff`
+on it is clean after reverting.
+
+### Why this run
+
+Nick's #11 (2026-09-24 17:00, taken by the fixer, closed 17:43) replaced the
+resting camera with a wide "whole beast + both hunters, side-on/three-quarter,
+NOT over the shoulder" shot — the exact opposite of what MY OWN check from
+2026-09-23 17:20 had enshrined (OTS required any time the shot was
+`_focused`, at rest included). The fixer's fix (`_focus_camera`'s new
+`anyone_off_ground` gate) already does the right thing — `_focused` stays
+false while grounded — so my check's `focused` gate already meant it never
+fired on real code either way. But the director's 2026-09-24 18:40 note
+caught something I hadn't: the check's own DOC COMMENT still claimed OTS was
+the resting-shot target, a stale claim that could send a future run "fixing"
+the resting camera back to OTS to satisfy it, undoing #11 (the director's own
+words: "if either agent 'fixes' the other, the camera will flip back").
+Silence isn't proof — a check that only ever passes because its gate happens
+to exclude the case it used to test proves nothing about that case going
+forward.
+
+**Fix, in `game/tools/playtest.gd`:** check 9b now gates on `climbing`
+(`Combat3D.anyone_off_ground(hunters)`) as well as `focused`, so it only
+demands OTS once someone has actually left the ground — matching #11's own
+words, "OTS mid-climb still stands." Added check 9c
+(`camera-ots-while-grounded`) to check the OTHER half explicitly rather than
+leave it to fall out of 9b's gate by omission: while nobody has climbed, the
+shot must NOT engage OTS (`_focused` false, `_shoulder` under a small
+`SHOULDER_GROUNDED_MAX` margin for float noise). This is a real regression
+guard, not a restatement — it's exactly the invariant `_focus_camera` now
+encodes, checked live on every settled ground step instead of trusted to
+never drift.
+
+**Verified both directions**, same discipline as every check added here:
+- Real, current code, full three-mode baseline (`play` 80 steps, `hands`
+  1-10, `hover`): 0 `camera-not-over-shoulder`, 0 `camera-ots-while-grounded`
+  fires anywhere — only the pre-existing, already-owned `hop-distance-band`
+  (62/22/2 across the three modes, byte-for-byte the same shape as every
+  prior run, not a regression).
+- Reverted `_focus_camera`'s `anyone_off_ground` gate to `false` (the exact
+  pre-#11 bug: always tight-lock OTS, even at rest) and ran a short `mode=play
+  steps=6`: `camera-ots-while-grounded` fired exactly once, at step 0 (the
+  only settled ground moment before the fight's first hop starts climbing),
+  `_focused=true, _shoulder=1.000` — the precise regression this check now
+  exists to catch. Reverted the break; `git diff` on `combat_3d.gd` came back
+  clean before committing anything.
+
+`run_tests.gd`: `ALL TESTS PASSED`, before and after, on the real committed
+code.
+
+## Old: 2026-09-24 17:20 EDT
 
 - **Did:** no requests open. Added a live check: does the resting camera
   really go over-the-shoulder, not just "hunter somewhere on screen"?
