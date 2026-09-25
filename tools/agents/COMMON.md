@@ -151,6 +151,12 @@ rather than backgrounding it; a 40-step playtest takes 3-5 minutes.
 - Need something another agent owns? File a new request from
   `design/agents/requests/_template.md`, one problem per file. Something only
   Nick can decide (taste, art direction, is it fun)? `to: nick`.
+- **You may not close a ticket whose Done-when is Nick's judgement.** If it
+  says he can tell two things apart, or that it matches his reference, or that
+  it looks or feels right, then you cannot satisfy it — only he can. Hand it
+  back `to: nick` with a 1:1 frame and `ask:` filled in, and let him close it.
+  Closing it yourself is how #11 and #13 were marked done while he was still
+  looking at the problem.
 - **When you take a request, fill `eta:`** — "next run", "2-3 runs", "blocked
   on #4". It is printed on the GitHub issue beside the priority, and Nick reads
   it to decide what to chase. An honest "3-4 runs" is worth far more than

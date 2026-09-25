@@ -64,6 +64,39 @@ These are the failure patterns that have actually happened here. Hunt them.
   instinct and the honest reporting here are good and worth keeping; an agent
   told only what is wrong will optimise away the parts that are right.
 
+## Audit what was CLOSED, every run
+
+Nick, 2026-09-24: "the director should have caught this." He was right. #11
+was his own composition reference; an agent closed it while the stones were
+still beside the beast and the hunters still at its paws. #13 was closed the
+same way and he had to reopen it himself after looking.
+
+So before anything else each run, list what closed since your last one and ask
+of each: **was the done-when a judgement only Nick can make?** If it was —
+"Nick can hold a screenshot beside the reference and say same fight", "he can
+tell the Frog from the Goblin", anything about whether it looks or feels
+right — then the agent could not have satisfied it, and closing it was not its
+call. **Reopen it, say who closed it and why it is not done, and hand it back
+`to: nick` with a frame.**
+
+A ticket that closed on a real test, a measurement or a check is fine. Leave it.
+
+## Make sure a judgement call actually reaches him
+
+Any decision that is Nick's to make must arrive as a request `to: nick` with
+`ask:` filled in — that is the only thing his board shows him. Every run, hunt
+for judgement calls that are sitting anywhere else and move them:
+
+- a question buried in another agent's status note or `Need from you` line
+- an agent about to pick one of two readings of something he said, rather than
+  asking which
+- a taste call quietly made inside a commit message
+- a ticket handed back `to: nick` with no `ask:`, so his board shows a row he
+  cannot read
+
+**You are the last line on this.** If a decision that was his got made without
+him, that is your miss, and it goes at the top of your status note.
+
 ## Answers to your own questions
 
 A request YOU filed `to: nick` is yours to pick up when he replies. Check
