@@ -4025,6 +4025,29 @@ static func route_pos(top: Vector3, ground_z: float, i: int, n: int,
 	return start.lerp(top, t)
 
 
+## Extra sideways clearance for the low-to-mid stretch of the approach, on
+## top of route_pos()'s own straight sweep.
+##
+## 2026-09-25, director (#0658): route_pos()'s line has to land exactly on
+## the gap's own near end (t=0, #14/#0505) and exactly on the sigil (t=1,
+## the beast's real anchor) -- neither endpoint can move -- but nothing
+## requires the line's own middle to stay dead straight. Measured on the
+## live route: the worst on-screen overlap with the beast (43% on one
+## stone, 25-30% on its neighbours) sits low and early, roughly a sixth to
+## a third of the way up the climb; by the point route_pos's own sweep has
+## closed to within 40% of the sigil, the beast is already clear (12% and
+## falling). This bulges exactly that early stretch further along the same
+## direction route_pos already sweeps, fading linearly to zero by t=0.6 so
+## the stones from there to the sigil (already reading clean) are untouched.
+## Decorative only -- see its one call site in _build_float_stones -- so the
+## hunter's own foot (still `_stand_on_model`'s unmodified route_pos point)
+## never strays outside the nudged rock's own footprint.
+const CHEST_CLEAR_TAPER := 0.6
+const CHEST_CLEAR_PUSH := HUNTER_HEIGHT * 8.0
+static func chest_clear_push(t: float) -> float:
+	return CHEST_CLEAR_PUSH * clampf(1.0 - t / CHEST_CLEAR_TAPER, 0.0, 1.0)
+
+
 func _build_float_stones() -> void:
 	for st in _float_stones:
 		(st as Node3D).queue_free()
@@ -4050,11 +4073,27 @@ func _build_float_stones() -> void:
 	rungs.sort()
 	var at := Vector3(0.0, 0.0, minf(ground_standoff_for(_beast_box.end.z), _arena_r * 0.86))
 	var landings: Array[Vector3] = []
+	# Where the SWEEP itself begins -- rung 1's own stop (route_pos's t=0,
+	# the "start" chest_clear_push measures from). Everything before it is
+	# the ground->rung-1 leg, on a different line entirely (never measured
+	# as occluding, see check 8's own numbers) and left out of the nudge
+	# below on purpose.
+	var sweep_from_index := 0
 	for h in rungs:
 		var stop: Vector3 = _stand_on_model(int(h), 0.0)
 		for sub in hop_subpoints(at, stop, HOP_MAX_LEG):
 			landings.append(sub)
+		if h == rungs[0]:
+			sweep_from_index = landings.size() - 1
 		at = stop
+	# The two ends of route_pos()'s own straight sweep, recomputed the same
+	# way route_pos builds them internally -- needed here only to recover
+	# how far along that line (t, 0..1) a given landing already sits, since
+	# every point on it was placed by the exact same lerp (chest_clear_push's
+	# own doc comment has why).
+	var top_pt: Vector3 = _top_hold()
+	var sweep_start_pt := Vector3(top_pt.x - STONE_SWEEP_WIDTH, HUNTER_HEIGHT * 1.6,
+		ground_standoff_for(_beast_box.end.z) - HUNTER_HEIGHT * 6.0)
 	for index in range(landings.size()):
 		# A wrapper, not a mesh directly, so the bob/spin in _process (which
 		# reads/writes `st.position`/`st.rotation.y` by array index — see the
@@ -4062,7 +4101,25 @@ func _build_float_stones() -> void:
 		# rigid piece, while the flat cap and rim below stay level and don't
 		# inherit the boulder's own random tilt/squash (see BODY below).
 		var stone := Node3D.new()
-		stone.position = landings[index]
+		var pos: Vector3 = landings[index]
+		# #0658 (director): the low-mid stretch of the sweep (route_pos, above)
+		# reads as a wall in front of the beast's chest/foreleg from the
+		# resting camera. Nudge the DECORATIVE rock only -- never `landings`,
+		# never `_stand_on_model`'s own return -- so the hunter's actual foot
+		# (still exactly route_pos's point) and every check built on it
+		# (hunter-off-marker, hop-distance-band, the sigil, the gap) are
+		# untouched to the float; the rock stays well within the hunter's own
+		# footing radius of its unmodified landing (see the CHEST_CLEAR_PUSH
+		# magnitude picked against that radius, and the request's own numbers
+		# on what this moved and what it didn't).
+		var is_top_hold: bool = index == landings.size() - 1
+		if index >= sweep_from_index and not is_top_hold \
+				and not is_equal_approx(top_pt.y, sweep_start_pt.y):
+			var t: float = clampf((pos.y - sweep_start_pt.y) / (top_pt.y - sweep_start_pt.y), 0.0, 1.0)
+			var push: float = chest_clear_push(t)
+			if push > 0.0:
+				pos.x += signf(sweep_start_pt.x - top_pt.x) * push
+		stone.position = pos
 		_rig.add_child(stone)
 
 		# BODY: an irregular convex-hull rock (FOOTHOLD_ROCK, the artist's

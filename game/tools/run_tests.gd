@@ -990,6 +990,14 @@ func _init() -> void:
 	_test_hop_subpoints_splits_a_long_leg_into_even_legs_inside_the_band()
 	_test_hop_subpoints_last_point_is_always_the_destination()
 	_test_hop_subpoints_matches_the_live_20m_repro()
+	# fixer, 2026-09-25: #0658 -- the low-mid stretch of route_pos()'s own
+	# sweep read as a wall in front of the beast's chest/foreleg from the
+	# resting camera. chest_clear_push is the decorative-only nudge on top
+	# of it.
+	_test_chest_clear_push_is_full_strength_at_the_sweep_start()
+	_test_chest_clear_push_fades_to_zero_at_the_taper_point()
+	_test_chest_clear_push_is_zero_past_the_taper()
+	_test_chest_clear_push_decreases_monotonically()
 	# fixer, 2026-09-25: #0420 -- home used to jump straight to a chained
 	# climb's FINAL stop before the tween even started, so the camera's lock
 	# point (_lock_point reads home.x/.z) aimed at the destination for the
@@ -22165,6 +22173,32 @@ func _test_hop_subpoints_matches_the_live_20m_repro() -> void:
 	_expect(pts.size() == 3, "20.44m over a 9.15m ceiling needs exactly ceil(20.44/9.15) = 3 sub-hops -- got %d" % pts.size())
 	var leg: float = from.distance_to(pts[0])
 	_expect(leg > 2.4230769 and leg < 9.1538461, "each of the 3 sub-hops on the live repro should land comfortably inside the 2.42-9.15 band (playtest.gd's own HOP_MIN_WORLD/HOP_MAX_WORLD) -- got %.2fm" % leg)
+
+
+## #0658 (director): the low-mid stretch of route_pos()'s own sweep (t
+## roughly 0.05-0.4) measured 43% coverage of the beast's on-screen body at
+## worst -- these pin chest_clear_push's shape (full at t=0, the sweep's own
+## near end, fading linearly to zero by CHEST_CLEAR_TAPER) with no scene
+## tree and no model loaded (#86 duty 3).
+func _test_chest_clear_push_is_full_strength_at_the_sweep_start() -> void:
+	_expect(is_equal_approx(Combat3D.chest_clear_push(0.0), Combat3D.CHEST_CLEAR_PUSH), "t=0 (route_pos's own sweep start, rung 1) must get the full push -- that is where the worst-measured overlap (43%) sat")
+
+
+func _test_chest_clear_push_fades_to_zero_at_the_taper_point() -> void:
+	_expect(is_equal_approx(Combat3D.chest_clear_push(Combat3D.CHEST_CLEAR_TAPER), 0.0), "the push must reach exactly zero at its own taper point, or stones past it (already reading clean against the beast) get nudged for no reason")
+
+
+func _test_chest_clear_push_is_zero_past_the_taper() -> void:
+	_expect(is_equal_approx(Combat3D.chest_clear_push(Combat3D.CHEST_CLEAR_TAPER + 0.2), 0.0) and is_equal_approx(Combat3D.chest_clear_push(1.0), 0.0), "nothing past the taper point may move -- that is the sigil half of the route, already on the body by construction")
+
+
+func _test_chest_clear_push_decreases_monotonically() -> void:
+	var prev: float = Combat3D.chest_clear_push(0.0)
+	for i in range(1, 7):
+		var t: float = float(i) / 6.0 * Combat3D.CHEST_CLEAR_TAPER
+		var cur: float = Combat3D.chest_clear_push(t)
+		_expect(cur <= prev + 0.0001, "the push must ease off as the route nears the beast, never spike back up partway through -- a bump reads as a stone that jumps sideways for no reason")
+		prev = cur
 
 
 ## #0420: home_after_leg is the pure step behind the per-sub-hop camera fix --
