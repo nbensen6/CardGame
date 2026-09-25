@@ -2,13 +2,53 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-25T08:09
+updated: 2026-09-25T09:10
 working_on: "Nothing to build — #13, the faceted-jackal ticket, and the near-stone-shape ticket are all still sitting with Nick."
 ---
 
 # artist
 
-## This run — 2026-09-25 08:09 ET
+## This run — 2026-09-25 09:10 ET
+
+- **Did:** re-verified fresh again (import, tests, two renders) — all three
+  Nick tickets still blank; nothing new open for the artist.
+- **Worked?** N/A — confirmed rather than assumed; checked the director's
+  09:05 push (#0802/#0803 fall-pose fix) for anything artist-owned. Nothing.
+- **Next:** whichever of #13, the faceted jackal, or the near-stone ticket
+  Nick answers first.
+- **Need from you:** your answer on those same three — #13 has been open
+  since yesterday 17:20, going on 16 hours.
+
+## Now
+
+Claimed the lease, pulled fresh to `fe0b972`, later rebased past the
+director's `611387b`/`1b4d611` (Frog fall-pose fix, #0802/#0803). Checked
+every `design/agents/requests/*.md` for `to: artist` with `status: open` —
+zero, same as every run since 2026-09-25 00:16. Read the full `## Nick's
+answer` section directly (not a grep snippet) on all three tickets blocking
+my queue — #13 (hunters, `2026-09-24-1720-...`), the faceted-jackal ticket
+(`2026-09-24-2157-...`), and the near-stone-shape one
+(`2026-09-25-0256-...the-near-stone-is-a-box-with-an-orange-lid.md`) — all
+three still empty.
+
+**Did not just trust the last run's conclusion — set up fresh and looked.**
+Godot 4.7.1 + `--import`, `ALL TESTS PASSED`. Rendered `state=3d` (the real
+resting camera) and `state=3d wide` to see whether the director's fall-pose
+fix (fixer-owned code, not pushed yet — only filed) changed anything.
+
+**The resting camera is unchanged and still good** — Frog and Goblin both
+read immediately as themselves, smooth shapes, clean outlines, no confetti.
+Same #13 fix as every prior run, still handed back `to: nick`.
+
+**The `wide` diagnostic shot is still the same off-screen fail**: `VIS FAIL
+hunter0: (638, 1462)`, `VIS FAIL hunter1: (849, 1462)` — same numbers as
+every run since 05:12, same root cause `#18` already owns.
+
+Did not spend Meshy credits or touch the jackal/hunters/stones, per the
+standing "do not touch again until Nick answers" instruction on all three.
+`git status` clean before this push.
+
+## Old: 2026-09-25 08:09 ET
 
 - **Did:** re-verified fresh again (import, tests, three renders) — all
   three Nick tickets still blank; nothing new open for the artist.
@@ -4055,6 +4095,11 @@ only touched the visual dressing) is the obvious next real-geometry pass.
 
 ## Log
 
+- 2026-09-25 09:10 EDT — nothing open for the artist, ninth run running in
+  place. Re-verified fresh (import, tests, `state=3d`/`state=3d wide`
+  renders): resting camera unchanged and good, wide diagnostic's hunter
+  pixel size unchanged (`#18`'s own thread). #13, faceted jackal,
+  near-stone-shape all still blank on Nick's answer.
 - 2026-09-25 07:09 EDT — nothing open for the artist. Re-verified fresh
   (import, tests, `state=3d`/`state=3d wide` renders) rather than trust the
   last run: resting camera reads well (already #13's shipped fix, still
