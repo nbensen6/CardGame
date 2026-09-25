@@ -30,11 +30,25 @@ run failed.
       position is between the Frog and the beast, low; last stone overlaps
       the head. Do not move the beast, do not shrink it. Shot: `state=3d`,
       then the same shot beside his drawing.
-- [ ] **Zoom out.** Nick, on the same frame: "zoom out". Pull the locked
-      third-person camera back (and/or widen the lens) until the whole stone
-      path and the whole beast are in frame with the hunter's back still
-      bottom-centre. Do this AFTER the stones item, on the new route. Shot:
-      `state=3d`.
+- [ ] **Hops land on stones, not in the air.** Nick's frame
+      `art/references/2026-09-25-nick-hopping-in-air.webp`: the Frog climbs
+      to points in open air beside the jackal while the stones sit on the
+      ground behind it. Every climb hop ends with the hunter's feet on a
+      stone of the route, at every height, for both hunters. The playtester's
+      `hunter-on-stone` check and the floating-Frog tickets (#34, #36, the
+      2026-09-25 one) are the same bug seen from the tool side. Shot:
+      `state=3dclimb` and `state=3dgrip`, feet on stone in both.
+- [ ] **One locked camera, resting and climbing.** Two frames from Nick:
+      at rest, "zoom out" (`art/references/2026-09-25-nick-stones-and-zoom.webp`);
+      mid-climb, "camera closer, should be locked to character"
+      (`art/references/2026-09-25-nick-climb-camera-closer.webp`, the Frog a
+      speck on the chest with the camera parked wide on the beast). Same
+      rule in both: the camera sits a fixed stand-off behind the ACTIVE
+      hunter, wherever the hunter is, hunter's back bottom-centre, and it
+      follows every hop. At rest that means further back than today; on
+      the beast it means much closer than today. Do not shrink or move the
+      beast. Shot: `state=3d` and `state=3dclimb` side by side; the hunter
+      must be the same size on screen in both.
 - [ ] **Hunters face the beast.** Nick, 2026-09-25 14:35 EDT: "want the
       characters to face the beast." In the frame the Frog and Goblin stand
       side-on to the camera. At rest, after End Turn, after Switch, both
