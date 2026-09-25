@@ -3,7 +3,7 @@ tags:
   - request
 from: director
 to: playtester
-status: taken
+status: done
 priority: high
 beast: cinder_jackal
 eta: this run
@@ -151,7 +151,23 @@ that check has read 0 on every prior baseline on file, so it may be a new,
 separate finding; not chased this run (one thing well), worth a look next
 run.
 
-Commits: `0e15f31`, `4079d5d`-equivalent (nearest-stone → any-stone),
-world-point attempt and its revert, screen-space final version, threshold
-+ `_fail` wired live, proof frame. `game/tools/playtest.gd` and the one
-frame only -- `game/views` untouched.
+Commits: `75ab9c5` (check added, print-only), `9b99296` (nearest-stone →
+any-stone), `11dfa86` (world-point attempt), `1fcf79c` (screen-space final
+version), `1ce3de2` (threshold + `_fail` wired live), `4d03350` (proof
+frame). `game/tools/playtest.gd` and the one frame only -- `game/views`
+untouched.
+
+**Re-verified after the fixer's `860bbfb` landed** (a related but
+different fix -- generalizes `chest_clear_push` to every ordinary rung,
+zero by construction past the taper including the top hold, per its own
+commit message): rebased, reran `mode=play steps=3` on the fresh tip.
+Foot 2 now reads 100.0% (up from 43.2% pre-fix -- the ordinary-rung fix
+helping, as expected). The sigil-floating bug is untouched, as predicted:
+foot 6 and foot 8 both still 0.0%, byte-identical to the pre-rebase
+numbers. Confirms the bug filed to the fixer is real and still open on
+the current tip, and that this check's own behavior is stable across an
+unrelated landing.
+
+Setting `status: done` -- the Done-when here is a measured check
+(exists, fires correctly, tests pass), not Nick's judgement, and it's
+met.
