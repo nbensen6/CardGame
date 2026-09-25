@@ -939,7 +939,7 @@ func _check(v: Node, when: String) -> void:
 					# the rect number so the old figure can be seen dying
 					# honestly rather than silently swapped out.
 					var pixel_pct: float = await _stone_cover_pixels(beast_node as Node3D, \
-						(stones as Array)[si] as Node3D, overlap)
+						(stones as Array)[si] as Node3D, beast_rect)
 					var judged_pct: float = pixel_pct if pixel_pct >= 0.0 else pct
 					occluding_desc.append("%s rect %.1f%% pixel %s" \
 						% [label, pct, ("%.1f%%" % pixel_pct if pixel_pct >= 0.0 else "n/a")])
@@ -1452,6 +1452,14 @@ const MIN_HOP_SAMPLES := 10
 const HOP_VIS_SAMPLES := 16
 const HOP_VIS_PIXEL_DELTA := 40.0   # 0-255 per-channel-sum; anti-aliasing noise sits well under this
 const HOP_VIS_MIN_DRAWN_PX := 24    # real drawn (stepped) pixels needed, not a stray AA fringe
+
+## _stone_cover_pixels' own sample budget: a resting-shot beast box can run to
+## hundreds of thousands of pixels, an order of magnitude past a hunter's own
+## rect, so a fixed 2px step (fine for HOP_VIS's small rects) would blow the
+## per-stone cost out badly with up to nine occluding stones checked every
+## step. The step adapts to keep roughly this many samples regardless of the
+## box's own size; 2px is still the floor, never coarser than #0506's own rule.
+const STONE_COVER_TARGET_SAMPLES := 6000
 const HOP_SHOT_PERIOD := 13         # ceil(300 / 24)
 
 ## Checklist items 1 and 3's "no pops: nothing teleports, flickers, or snaps
@@ -1864,20 +1872,31 @@ static func _rect_pixels_differ(with_img: Image, without_img: Image, rect: Rect2
 ## times -- beast+stone as the scene actually stands (img_full), beast alone
 ## with the stone hidden (img_no_stone), neither visible (img_neither) -- so
 ## two real per-pixel facts fall out of plain colour diffs, same pixel-delta
-## rule #0506 already calibrated (HOP_VIS_PIXEL_DELTA, stepped 2px like
-## _rect_pixels_differ, same reason: a hunter/beast silhouette is never so
-## thin that halving the resolution could hide a real edge):
+## rule #0506 already calibrated (HOP_VIS_PIXEL_DELTA, same reason a hunter's
+## silhouette is never so thin that skipping pixels could hide a real edge):
 ##   - img_no_stone vs img_neither: is THIS pixel actually beast (not sky or
 ##     ground that would have looked the same either way)?
 ##   - img_full vs img_no_stone, for the pixels the first test called beast:
 ##     did the stone's presence change what got drawn there?
-## covered / beast, over just the two boxes' own screen overlap (the only
-## region either render could possibly differ in). Returns -1.0 rather than
-## 0.0 when beast or stone is gone, or no beast pixel is found in the overlap
-## at all, so a caller can tell "genuinely 0% covered" from "couldn't
-## measure" and fall back to the rect number instead of silently reporting a
-## clean beast that was never actually checked.
-func _stone_cover_pixels(beast: Node3D, stone: Node3D, rect: Rect2) -> float:
+## covered / beast. **Scans the whole `beast_rect`, not just the stone's own
+## overlap with it** -- an early version scanned only the overlap rect for
+## BOTH numbers and produced nonsense (pixel% running 10-20x the rect% on
+## stones the rect check barely flagged): the overlap rect is the right
+## region to look for CHANGED pixels in (a stone can only occlude where it
+## and the beast both draw), but restricting the denominator to that same
+## sliver undercounts "beast's own drawn pixels" by throwing away most of
+## the beast's actual on-screen body, inflating the fraction. Both counts
+## now come from the same full-beast-box scan; outside the stone's own
+## footprint `cover_delta` is ~0 by construction (img_full and img_no_stone
+## only differ where the stone itself was drawn), so nothing is lost by not
+## pre-restricting the search. Stride adapts to the box's own pixel area
+## (never below 2px, matching #0506) rather than a fixed step, since a
+## resting-shot beast box can be an order of magnitude bigger than a hunter's.
+## Returns -1.0 rather than 0.0 when beast or stone is gone, or no beast pixel
+## is found at all, so a caller can tell "genuinely 0% covered" from
+## "couldn't measure" and fall back to the rect number instead of silently
+## reporting a clean beast that was never actually checked.
+func _stone_cover_pixels(beast: Node3D, stone: Node3D, beast_rect: Rect2) -> float:
 	if beast == null or not is_instance_valid(beast) or stone == null or not is_instance_valid(stone):
 		return -1.0
 	var beast_was_visible := beast.visible
@@ -1893,10 +1912,15 @@ func _stone_cover_pixels(beast: Node3D, stone: Node3D, rect: Rect2) -> float:
 	beast.visible = beast_was_visible
 	stone.visible = stone_was_visible
 	var size := img_full.get_size()
-	var x0: int = clampi(int(rect.position.x), 0, size.x - 1)
-	var y0: int = clampi(int(rect.position.y), 0, size.y - 1)
-	var x1: int = clampi(int(rect.position.x + rect.size.x), 0, size.x)
-	var y1: int = clampi(int(rect.position.y + rect.size.y), 0, size.y)
+	var x0: int = clampi(int(beast_rect.position.x), 0, size.x - 1)
+	var y0: int = clampi(int(beast_rect.position.y), 0, size.y - 1)
+	var x1: int = clampi(int(beast_rect.position.x + beast_rect.size.x), 0, size.x)
+	var y1: int = clampi(int(beast_rect.position.y + beast_rect.size.y), 0, size.y)
+	var w := x1 - x0
+	var h := y1 - y0
+	if w <= 0 or h <= 0:
+		return -1.0
+	var step: int = maxi(2, int(ceil(sqrt(float(w) * float(h) / float(STONE_COVER_TARGET_SAMPLES)))))
 	var beast_px := 0
 	var covered_px := 0
 	var y := y0
@@ -1912,8 +1936,8 @@ func _stone_cover_pixels(beast: Node3D, stone: Node3D, rect: Rect2) -> float:
 				var cover_delta := (absf(full.r - no_stone.r) + absf(full.g - no_stone.g) + absf(full.b - no_stone.b)) * 255.0
 				if cover_delta > HOP_VIS_PIXEL_DELTA:
 					covered_px += 1
-			x += 2
-		y += 2
+			x += step
+		y += step
 	if beast_px == 0:
 		return -1.0
 	return 100.0 * float(covered_px) / float(beast_px)
