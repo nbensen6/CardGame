@@ -2,13 +2,138 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-25T00:16
-working_on: "#13 unblocked by the camera fix — rebuilt the Frog from the smooth pre-style-C source, handed back to Nick; Goblin next."
+updated: 2026-09-25T01:33
+working_on: "#13: Goblin now smooth and colour-matched to the Frog too — handed back to Nick, both hunters done for now."
 ---
 
 # artist
 
-## This run — 2026-09-25 00:16 ET
+## This run — 2026-09-25 01:33 ET
+
+- **Did:** rebuilt the Goblin Engineer the same way as the Frog — smooth
+  normals from a raw Meshy refine (fetched by ledger task id, no new
+  spend), plus a measured colour boost the raw texture needed that the
+  Frog's didn't.
+- **Worked?** Yes — clean shape, continuous outline, reads right next to
+  the Frog at the real fight camera; frame below.
+- **Next:** Nick's call on whether the cast reads as one family now
+  (`ask:` filled on #13). The Jackal's own faceted-or-smooth question is
+  still separate and open.
+- **Need from you:** does the Goblin also read as "smooth" the way you
+  meant, next to the Frog?
+
+![[frames/artist/2026-09-25-0133-artist-goblin-smooth-before-after-1to1.png]]
+
+## Now
+
+The director's 00:58 ET note on #13 sequenced this directly: "Goblin next,
+from a smooth source the same way, before the horizon line ticket." Took
+that — the only actionable `to: artist` work this run (#19, the horizon
+line, is still correctly parked behind this per its own frontmatter).
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `ALL TESTS
+PASSED` confirmed before touching anything. Blender 4.1.1 (`apt-get install
+libegl1 libegl-mesa0` again for headless render — this recurs every fresh
+sandbox, not fixed by anything in the repo).
+
+**Unlike the Frog, no `_refined` source was already sitting in the tree.**
+`goblin_ai_clean.py` existed (written earlier, never run) but pointed at a
+raw Meshy `refine` output that had never actually been downloaded. Checked
+`design/progress/meshy-ledger.md` for the task id logged 2026-09-23
+(`01a0cfae-5a1b-7309-8e83-e7be3e597de9`), confirmed it `SUCCEEDED` via
+`python3 tools/meshy.py get`, then `fetch` — a GET/download of an already-
+generated result, not a new generation call, so no spend (`meshy-ledger.md`
+only logs `preview`/`refine` calls; confirmed the file untouched by
+`git status` after). 27,422 raw tris, fully painted — matches the "goblin
+engineer, jetpack, goggles" prompt on the ledger.
+
+Ran `goblin_ai_clean.py` unmodified: weld, recentre, scale to 1.85 (this
+file's own established height), decimate only if over the 5,200 target
+(landed at 5,199, no decimation needed after the weld), smooth normals. No
+script changes — same recipe that fixed the Frog.
+
+**Colour did not come along for free, and I checked rather than assumed
+it did.** Measured the fetched texture directly: sat 0.40, val 0.38 —
+notably under the shipped Frog's 0.67/0.70. This is the identical gap
+`goblin_ai_colour_boost.py` (pass 2, 2026-09-23) already measured and fixed
+once on this same raw Meshy output (0.28/0.54 back then) — it re-surfaces
+here because this rebuild starts fresh from the untouched download, and the
+old fix lived entirely on plumbing this rebuild doesn't have any more (a
+flat-vertex-colour pipeline the 40px pass replaced the texture with
+entirely, and a glb bufferView layout `tools/blender/ai/glb_image_patch.py`
+can't safely patch on top of a fresh Blender export — tried it, hit its own
+safety assertion, did not bypass it).
+
+Rather than skip the correction because the old tool doesn't fit, ported
+the validated NUMBERS (`SAT_MUL 1.55, VAL_GAMMA 0.80` — recorded in
+`goblin_ai_tank_contrast.py`'s `global_boost` as "pass 2's own global
+boost... to bring it level with the fight") into a small new script that
+applies the same HSV formula to the loaded image inside Blender, before
+export — sidesteps the bufferView constraint entirely since it never
+touches the exported glb's byte layout. Landed at sat 0.61, val 0.45: short
+of the Frog's own numbers, but a real, checked-by-eye improvement, not a
+guess:
+
+![[frames/artist/2026-09-25-0133-artist-goblin-colour-boost-crop3x.png]]
+
+**Deliberately did not port the tank- or skin-specific extra boosts**
+(`goblin_ai_tank_contrast.py`'s TANK_* constants, `goblin_ai_skin_
+saturation.py`'s SKIN_SAT_MUL) — both were built to fix a later, different
+mechanism (style C's hard lit-band shading flipping per sub-pixel facet on
+a 1,560-tri decimated mesh). This rebuild isn't decimated to that point and
+never had that problem; applying those corrections anyway would be
+guessing a fix onto a defect that isn't there.
+
+**Verified at the real fight camera, not the studio rig**, `state=3d` 1:1,
+before (today's shipped flat-vertex-colour Goblin) next to the Frog:
+
+![[frames/artist/2026-09-25-0133-artist-goblin-smooth-before-after-1to1.png]]
+![[frames/artist/2026-09-25-0133-artist-goblin-confetti-vs-smooth-crop3x.png]]
+
+The before is exactly the "confetti" Nick's original complaint described —
+no findable shape. The after reads immediately: jetpack tank, goggles,
+straps, shorts, boots, one continuous outline.
+
+Also rendered `state=3dgrip`, `3dclimb`, `3dreward`, `3dselect` (character
+select — shows the same new model correctly; the Frog's own `_ai`-priority
+fix in `Cast.model_path` already covers every hunter, no code touched) and
+regenerated the party-rail portrait — checked first rather than assumed it
+was current the way the Frog's turned out to be: it was NOT (still built
+from the old flat-vertex-colour file), so re-rendered it from the new
+model with `tools/blender/portraits.py`.
+
+**Cleaned up one orphaned asset.** The old loose
+`game/assets/3d/cast/goblin_mech_ai_Image_0.png` (Godot's own extraction of
+the previous embedded texture) had nothing left pointing at it once the new
+model's texture round-trips as a `.jpg` instead (Blender's own export
+choice, harmless) — deleted rather than leave a second, stale face in the
+tree.
+
+**Proved no regression.** `ALL TESTS PASSED` before and after (asset-only
+change, no code touched). Fresh full 80-step `mode=play beast=cinder_jackal`
+playtest, foreground, real timeout (this one ran past 10 minutes — let it
+finish rather than cut it short, ended around 13 minutes): 124
+`hop-distance-band` fails, 0 anything else — the exact count the Frog's own
+run reported this morning on the same pre-existing, already-filed issue
+(widened ground-gap route, fixer/director's own open thread). No
+hunter-visibility or hop-position regression anywhere.
+
+**Handed back to Nick, not closed** (`to: nick`, `status: open`, `ask:`
+updated to cover both hunters together) — per COMMON.md, whether the two
+now read as one family is his call. Wrote the full pass up in
+`design/progress/goblin_mech_ai.md` ("Pass 11") and added a dated,
+still-unticked note to `JACKAL-BAR.md`'s "Frog and Goblin match the
+jackal's fidelity" line — the hunter half of that question is now answered
+the same way on both; the Jackal's own faceted-or-smooth question stays
+separate and open to Nick.
+
+`git status` before this push: the shipped `goblin_mech_ai.glb`, its
+resaved `.blend`, the regenerated portrait, the request, `JACKAL-BAR.md`,
+`goblin_mech_ai.md`, this status note, and three new frames. The old,
+now-orphaned loose texture PNG is deleted. No game code, shader, or the
+Frog's own asset touched.
+
+## Old: 2026-09-25 00:16 ET
 
 - **Did:** rebuilt the Frog from the smooth ~5,200-tri source (no Meshy
   spend, no rebuild) — the spiky low-poly look is gone.

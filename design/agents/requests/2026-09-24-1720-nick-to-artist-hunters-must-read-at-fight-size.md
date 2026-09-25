@@ -10,7 +10,7 @@ beast: cinder_jackal
 eta: tonight: 1-2 runs
 created: 2026-09-24T17:20
 taken_by: artist
-ask: The Frog is smooth again with a clean outline at fight size — is this the "smooth character model" you wanted, and should the Goblin get the same treatment next?
+ask: Both the Frog and the Goblin are smooth now, matched to each other, at fight size — is this the "smooth character model" you wanted for the cast?
 waiting: false
 issue: 13
 ---
@@ -369,5 +369,56 @@ Jackal's geometry (keep the re-cut or revert) stands on its own ticket.
   not decimate to get back under it** — that is the exact move that made
   the outline break in the first place.
 - Do not touch the Jackal; its keep-or-revert question is open to Nick.
+
+## Result — artist, 2026-09-25 01:33 EDT (Goblin done — smooth, colour-matched to the Frog)
+
+**No Meshy spend.** This hunter's own `goblin_ai_clean.py` was already
+sitting in the tree, unrun, pointed at a raw Meshy `refine` fetch that had
+never actually been downloaded — fetched it by task id from the ledger
+(`python3 tools/meshy.py get/fetch`, a download, not a generation call; the
+ledger file is untouched by this pass). 27,422 raw tris. Ran the existing
+script unmodified: weld, scale to 1.85 (this file's own established
+height), decimate only if over the 5,200 target (landed at 5,199 after
+welding), smooth normals — the same recipe that fixed the Frog, no new
+script needed for the shape.
+
+**Colour needed real work, not a free ride.** Measured the raw texture
+directly rather than assume it would look like the Frog's: sat 0.40, val
+0.38 — the same measurable gap pass 2 already found and fixed once
+(0.28/0.54 back then), just re-surfacing because this rebuild starts over
+from the untouched raw download. That old fix lived on plumbing this
+rebuild doesn't have any more (a flat-vertex-colour pipeline since replaced,
+and a glb layout the old patch script can't touch), so I ported the
+validated numbers themselves (`SAT_MUL 1.55, VAL_GAMMA 0.80`, recorded in
+`goblin_ai_tank_contrast.py` as "pass 2's own global boost") into a small
+new in-Blender pass rather than skip the correction or guess new numbers.
+Landed at sat 0.61, val 0.45 — short of the Frog's own 0.67/0.70 by the
+numbers, but a real, measured lift, and the render is the actual test:
+
+![[frames/artist/2026-09-25-0133-artist-goblin-colour-boost-crop3x.png]]
+
+**Verified at the real `state=3d` camera, beside the Frog, same frame, not
+a studio shot:**
+
+![[frames/artist/2026-09-25-0133-artist-goblin-smooth-before-after-1to1.png]]
+![[frames/artist/2026-09-25-0133-artist-goblin-confetti-vs-smooth-crop3x.png]]
+
+The confetti is gone — this reads as a goblin with a jetpack, goggles,
+straps and boots, a continuous outline, no dotting. Also checked
+`state=3dgrip`, `3dclimb`, `3dreward`, `3dselect` (character select — shows
+the same new model, no code change needed) and regenerated the party-rail
+portrait (it was stale, still built from the old flat-vertex-colour file;
+the Frog's own portrait had turned out already-current, this one did not).
+
+**Proved no regression.** `ALL TESTS PASSED` (asset-only). Fresh full
+80-step `mode=play beast=cinder_jackal` playtest: 124 `hop-distance-band`
+fails, 0 anything else — the exact count the Frog's own run reported this
+morning on the same pre-existing, already-filed issue. No hunter-visibility
+or hop-position regression.
+
+**Not closing this — your call, not mine**, same as the Frog's own half:
+whether the Goblin now reads as the same family as the smooth Frog is
+something only you can settle. Full writeup: `design/progress/
+goblin_mech_ai.md` pass 11.
 
 ## Nick's answer

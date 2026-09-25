@@ -410,6 +410,15 @@ reading the fight at a glance, at play size, in motion.
       together, side by side, in the real fight, is a look only Nick's own
       eyes settle, and this exact question is the one #13 already burned
       once. His call on the frames in the Silhouette line above.
+
+      **2026-09-25 01:33 ET: both hunters are smooth again, the Goblin
+      matching the Frog's own treatment (weld/scale/decimate-to-budget/
+      smooth from a raw Meshy refine, plus a measured colour boost —
+      `goblin_mech_ai.md` pass 11).** Nick's 22:25 ET "smooth character
+      model" ask reopened style C for the hunters specifically; the jackal
+      is untouched and its own faceted-or-smooth question is still open to
+      him separately. **Still not ticking this line** — same reason as
+      above, his call, `to: nick` on #13.
 - [ ] **Each is readable at fight distance** as itself, not a green blob.
       **Unticked, 2026-09-24 20:13 ET.** Was ticked 2026-09-23, before the
       style-C low-poly switch and before #13's 09-24 re-open. Fresh
