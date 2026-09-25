@@ -3,7 +3,7 @@ tags:
   - request
 from: director
 to: playtester
-status: taken
+status: done
 priority: normal
 beast: cinder_jackal
 eta: this run
@@ -83,3 +83,85 @@ camera than the beast. The current tree should fail: that is the point.
 ## Nick's answer
 
 ## Result
+
+Done, 2026-09-25 03:38 EDT. `game/tools/playtest.gd` only — `combat_3d.gd`
+untouched by this ticket (verified: `git diff` on it is empty).
+
+**New check, `beast-behind-stone`** (check 8e, right after 8d/sigil):
+projects `_beast_box` and every `_float_stones` entry's real mesh AABB
+(`Combat3D._merged_aabb`, the same helper `hunter_screen_rect`'s own doc
+comment points at) to screen with `hunter_screen_rect`, clips both to the
+actual 1280x720 viewport first (an unclipped rect blows up to thousands of
+px wide the instant either box is partly behind the camera — a mid-hop
+close-up, not what this check is about, and it would swing the percentage
+on nothing real), and — for every stone whose own centre sits nearer the
+camera than the beast's centre along the camera's forward axis — measures
+what fraction of the beast's clipped rect that stone's clipped rect covers.
+Fails per-stone, with the percentage and which stone (by climb Height) in
+the message:
+
+    beast-behind-stone: start: 23.9% of the beast's on-screen body is covered by stone 2 (want <= 15%)
+
+**Threshold (`BEAST_STONE_COVER_MAX = 15.0`):** calibrated off a real run,
+not picked to pass the current frame — its own doc comment in
+`playtest.gd` has the numbers. Stones two or more Heights below the top
+hold measure under 13% (a real gap in the data), while a stone actually
+occluding the beast's silhouette measures 20%+. 15.0 sits in that gap.
+
+**Numbers below are on the current tip, not the tree I first calibrated
+against** — the fixer landed a fix for the near (Height 1) stone
+(`2026-09-25-0200-...`, `STONE_SWEEP_WIDTH` 2.1→4.55) while this ticket was
+in progress, and a `git pull --rebase` picked it up before this push. Real
+find: their fix moved stone 1 clear, but a second, smaller, PRE-EXISTING
+stone at Height 2 — previously hidden behind the big one — is now visible
+and squarely on the beast's chest (see the resting frame below and the
+fixer's own note on #14). Re-ran the full baseline after the rebase rather
+than push stale numbers:
+
+| mode | beast-behind-stone fires | worst case |
+|---|---|---|
+| play (80 steps) | 8 | stone 5 (the sigil hold, mid-climb) at 45.0-47.7% |
+| hover | 1 | stone 2 at 23.9% |
+| hands (1-10) | 11 (1 per hand size) | stone 2 at 21.6-24.6% |
+
+0 `script-error` anywhere. `run_tests.gd`: `ALL TESTS PASSED`, on the
+rebased tree.
+
+**Verified both directions**, also on the pre-rebase tree (the underlying
+mechanism the fixer's fix touches — `STONE_SWEEP_WIDTH` moving a stone
+sideways — is the same one either side of it):
+- Real code (above): fires, with a real percentage, matching what the
+  frames show (see below).
+- Negative: temporarily widened `STONE_SWEEP_WIDTH` in `combat_3d.gd` 10x
+  and reran `mode=hands` — `beast-behind-stone` dropped to 0/10 while
+  `hop-distance-band` stayed at 44 (unrelated, unaffected) — the check
+  tracks real geometry, not a fixed false positive. Reverted;
+  `git diff` on `combat_3d.gd` is clean, checked before committing anything.
+
+**Runs after every hop, not just step 0** — `_check()` is called at
+`start` and after every played action in `mode=play`, plus every hand size
+in `mode=hands` and every hover point in `mode=hover`; check 8e sits inside
+that same function, so it runs everywhere those already do. The 45-48%
+sigil-hold fires above (mid-climb) are exactly the "climb shot worst case"
+the ticket named, and are untouched by the fixer's Height-1-only fix.
+
+**Filed on #14** (`2026-09-24-1835-...`, still `taken` by the fixer): one
+`## Note from playtester` section with the pre-rebase numbers (written
+before the rebase surfaced their own concurrent fix — the fixer's own
+02:55 note on the same ticket already names the Height-2 stone as "the one
+open remainder", so nothing here is new to them). Did not touch its
+frontmatter or status.
+
+**Frames**, both at 1:1, both re-rendered after the rebase on the real,
+current tip:
+
+![[frames/playtester/2026-09-25-beast-behind-stone-resting.png]]
+The resting shot (`state=3d`): the fixer's fix cleared the near (Height 1)
+stone, but the Height 2 stone behind it is now visible and sits over the
+beast's own chest — 23.9% of the beast's rect, the "one open remainder"
+their own #14 note already named.
+
+![[frames/playtester/2026-09-25-beast-behind-stone-climb-sigil.png]]
+`state=3dclimb`: unaffected by the Height-1-only fix — the beast is still
+reduced to a dark shape in the bottom-left corner behind the sigil-hold
+stone, which is what the 45-47.7% "stone 5" fires above describe.

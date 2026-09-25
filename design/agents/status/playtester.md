@@ -2,13 +2,109 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-25T01:26
-working_on: Added a live check that timed cards' hit circle doesn't get clamped far from its true on-screen target.
+updated: 2026-09-25T03:38
+working_on: Added a live check that a floating stone nearer the camera than the beast doesn't cover the beast's own on-screen body.
 ---
 
 # playtester
 
-## This run — 2026-09-25 01:26 EDT
+## This run — 2026-09-25 03:38 EDT
+
+- **Did:** took the director's request (#14's sibling ticket) — every
+  existing check asked if the HUNTER was hidden, none asked about the BEAST.
+- **Worked?** Yes. Fires on a real gap: while pushing, the fixer's own #14
+  fix cleared one stone but exposed a second one; re-baselined post-rebase.
+- **Next:** left a note on #14 so the fixer sees the Height-2 stone before
+  they call the sweep done.
+- **Need from you:** nothing.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | unchanged — closed several runs ago (Play feedback) |
+| 2 | hunters land on the beast correctly | **extended this run** — new `beast-behind-stone` closes a real gap (every prior check asked if the HUNTER/HUD was hidden, none asked about the BEAST); fires 8-11x/mode post-rebase (Height-2 stone, 22-48%), filed to #14; `hop-distance-band` still the fixer's own open #14 thread (124/4/44, unchanged) |
+| 3 | jump animation (squash/arc/landing/facing) | unchanged — clean |
+| 4 | camera | unchanged — 0 `camera-not-behind-hunter`, 0 `camera-not-over-shoulder` |
+| 5 | nothing errors | clean — 0 `script-error` across all three modes |
+
+### Why this run
+
+The director's `2026-09-25-0155-...` ticket named a real, specific hole:
+`sigil-behind-hunter`, `hunter-offscreen`, `intent-hidden`, `hand-over-hud`
+— every check this file has ever had for "something covers something"
+asks whether the HUNTER or the HUD is hidden. Nothing asked whether the
+BEAST is, and the fixer's #14 stone-sweep (live tonight) can pass
+`hop-distance-band` and `route-reversal` — the two numbers it's proving
+itself against — while still parking a stone over the torso, because
+neither of those numbers looks at the beast at all. Confirmed live: the
+`state=3d` resting shot on the tree as of this run's start showed exactly
+that — the near stone sitting over the Cinder Jackal's chest and forelegs,
+only the head clear.
+
+**Added (`game/tools/playtest.gd`), check 8e, `beast-behind-stone`:**
+projects `_beast_box` and every `_float_stones` entry's real mesh AABB
+(`Combat3D._merged_aabb`, the same helper `hunter_screen_rect`'s own doc
+comment already points at for a hunter) to screen the same way check 8d
+already projects the sigil mark, clips both rects to the actual viewport
+first (an unclipped rect explodes to thousands of px wide the instant
+either box is partly behind the camera — a mid-hop close-up, not this
+check's problem, and it would swing the percentage on nothing real), and
+for every stone whose own centre sits nearer the camera than the beast's
+along the camera's forward axis, measures what fraction of the beast's
+own clipped rect that stone's clipped rect covers. Fails per stone, with
+the real percentage and which stone (by climb Height) in the message —
+asked for a number, not a boolean, and got one:
+`"23.9% of the beast's on-screen body is covered by stone 2 (want <= 15%)"`.
+
+`BEAST_STONE_COVER_MAX = 15.0` is calibrated off a real run, not picked to
+pass the current frame (its own doc comment in `playtest.gd` has the raw
+numbers): stones well clear of the beast's silhouette measure under 13% on
+the current tree, while one actually sitting on the beast measures 20%+ —
+a real gap in the data, and 15.0 sits inside it.
+
+**A real find surfaced mid-run, on push:** the fixer landed their own fix
+for the near (Height 1) stone (`2026-09-25-0200-...`) while this ticket was
+being worked, and `git pull --rebase` picked it up before this push. Their
+fix moved stone 1 clear, but a second, smaller, pre-existing stone at
+Height 2 — previously hidden behind the bigger one — is now visible and
+still squarely on the beast's chest (their own #14 note already calls this
+"the one open remainder"). Re-ran the full three-mode baseline on the
+rebased tree rather than push the pre-rebase numbers:
+
+| mode | beast-behind-stone fires | worst case |
+|---|---|---|
+| play (80 steps) | 8 | stone 5, the sigil hold, mid-climb, 45.0-47.7% |
+| hover | 1 | stone 2 at 23.9% |
+| hands (1-10) | 11 (1 per hand size) | stone 2 at 21.6-24.6% |
+
+0 `script-error` anywhere, either side of the rebase.
+
+**Verified both directions** (on the mechanism itself — moving a stone
+sideways via `STONE_SWEEP_WIDTH` — which is the same either side of the
+fixer's fix):
+- Real code: fires, with a real percentage, matching what the frames show.
+- Broke it on purpose: temporarily widened `combat_3d.gd`'s
+  `STONE_SWEEP_WIDTH` 10x, reran `mode=hands` — `beast-behind-stone`
+  dropped to 0/10 while `hop-distance-band` held at 44 (unrelated,
+  unaffected) — real signal, not a fixed false positive. Reverted;
+  `git diff` on `combat_3d.gd` is clean, checked before committing
+  anything.
+
+`run_tests.gd`: `ALL TESTS PASSED`, on the rebased tree. Left a
+`## Note from playtester` section on #14 (`2026-09-24-1835-...`, still the
+fixer's, `taken`) with the pre-rebase numbers — the fixer's own concurrent
+02:55 note on the same ticket already names the Height-2 stone, so nothing
+there is new to them; did not touch its frontmatter or status. Two frames,
+both re-rendered after the rebase, both 1:1 on the real, current tip: the
+resting shot (Height-2 stone now on the chest) and `state=3dclimb` (the
+sigil-hold stone, untouched by the Height-1-only fix, still reducing the
+beast to a dark shape in the corner).
+
+![[frames/playtester/2026-09-25-beast-behind-stone-resting.png]]
+![[frames/playtester/2026-09-25-beast-behind-stone-climb-sigil.png]]
+
+## Old: 2026-09-25 01:26 EDT
 
 - **Did:** no request open `to: playtester`. Full 3-mode baseline first (no
   regression), then added `hit-circle-off-target` — checklist item 1's own

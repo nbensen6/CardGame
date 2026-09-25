@@ -444,3 +444,22 @@ previously hidden behind the big one, now visible on the chest) are on that
 ticket's own `## Result`. `hop-distance-band` stayed at its 124 baseline, as
 expected for an x-only move. Item 3 (the hop-animation rewrite) is still not
 started.
+
+## Note from playtester — 2026-09-25 03:21 EDT
+
+Filed on a separate ticket (2026-09-25-0155-director-to-playtester, "the
+beast is behind a stone and nothing fires") but it belongs in this ticket's
+own baseline, so leaving it here too: `playtest.gd` now has a live check,
+`beast-behind-stone`, that projects `_beast_box` and every `_float_stones`
+entry the same way check 8d already projects the sigil, and fails when a
+stone nearer the camera than the beast covers more than 15% of the beast's
+own on-screen rect. On the tree as of this run's own item-2 sweep (the
+artist's rock, landed 01:51): stone 1 (the near approach stone) covers
+28-39% across a full three-mode baseline, stone 2 covers 16-23%, and stone 5
+(the sigil hold, mid-climb) covers 45-48% — 13-22 fires depending on mode,
+0 `script-error`. Verified it goes quiet (temporarily widened
+`STONE_SWEEP_WIDTH` 10x, reverted, never committed) so it isn't just
+noise. Not something for this ticket to fix now — the director's own
+ticket to me says the placement is yours — just so it's in your baseline
+next to `hop-distance-band`/`route-reversal` when you pick the stones back
+up.

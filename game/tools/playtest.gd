@@ -74,6 +74,21 @@ const STONE_SWEEP_WIDTH := SIGIL_HUNTER_HEIGHT * 6.5
 ## not a hair under it).
 const SIGIL_CLEAR_MARGIN := 0.05
 
+## How much of the beast's own on-screen rect a nearer foothold may cover
+## before it counts as hiding the beast rather than just sitting near it --
+## see check 8e in _check() (2026-09-25-0155-director-to-playtester-the-
+## beast-is-behind-a-stone-and-nothing-fires.md). Calibrated off a real
+## 20-step `play` baseline on the tree as of 2026-09-25 02:xx EDT (the fixer's
+## #14 sweep already landed): every stone at least one Height below the top
+## hold covers under 13% (a real gap in the data, 2%-12.9%), while the near
+## (Height 1) stone in the resting/early shots covers 16.8%-38.3% -- the
+## director's own "pale wedge over the chest" bug. 15.0 sits in that gap: it
+## fires on the real regression on this tree and would go quiet once the near
+## stone actually clears the beast's silhouette, without flagging the small,
+## expected edge-graze every stone on the route has as it passes in front of
+## or behind the body.
+const BEAST_STONE_COVER_MAX := 15.0
+
 ## For check 9b (camera-not-over-shoulder): how close to fully engaged (1.0)
 ## `_shoulder` must sit once the fight has settled before this counts as a
 ## real over-the-shoulder shot rather than the plain dead-centre follow cam
@@ -771,6 +786,53 @@ func _check(v: Node, when: String) -> void:
 				if sigil.position.y < head_y + SIGIL_CLEAR_MARGIN:
 					_fail("sigil-behind-hunter", "%s: sigil mark y=%.2f does not clear the head (y=%.2f, +%.2f margin) of the hunter standing at the sigil (home %v) -- reads as part of their sprite, not a separate weak point" \
 						% [when, sigil.position.y, head_y, SIGIL_CLEAR_MARGIN, home2])
+
+	# 8e. The beast itself can go behind a foothold -- a real, filed regression
+	# (2026-09-25-0155-director-to-playtester-the-beast-is-behind-a-stone-and-
+	# nothing-fires.md) that nothing here used to catch: every existing check
+	# in this file asks whether the HUNTER or the HUD is hidden (7/8d/9/9b/9c,
+	# `intent-hidden`, `hand-over-hud`), never whether the BEAST is. #14's own
+	# stone sweep (route_pos, the float-stone rebuild above) can pass
+	# `hop-distance-band` and `route-reversal` -- both already checked above --
+	# while still parking a stone over the beast's own torso, because neither
+	# of those numbers looks at the beast at all.
+	#
+	# Projects the beast's real `_beast_box` and every `_float_stones` entry's
+	# real mesh AABB (`_merged_aabb`, the same helper `hunter_screen_rect`'s
+	# own doc comment points at for a hunter) the same way check 8d already
+	# projects the sigil, clips both to the actual viewport (an unclipped rect
+	# blows up to thousands of pixels wide the moment either box is partly
+	# behind the camera -- a mid-hop close-up, not this check's problem, and
+	# it would swing the percentage on nothing this check is about), and
+	# measures how much of the beast's clipped rect a nearer stone's clipped
+	# rect covers. "Nearer" is each box's own centre depth along the camera's
+	# forward axis, not world distance -- the same axis `is_position_behind`
+	# and `unproject_position` already use everywhere else in this file.
+	#
+	# BEAST_STONE_COVER_MAX's own doc comment has the calibration numbers this
+	# threshold came from.
+	var stone_cam: Camera3D = v.get("_cam")
+	var stones: Variant = v.get("_float_stones")
+	if stone_cam != null and beast_box is AABB and stones is Array:
+		var vp := Rect2(Vector2.ZERO, screen)
+		var beast_rect: Rect2 = Combat3D.hunter_screen_rect(stone_cam, beast_box as AABB).intersection(vp)
+		var beast_area: float = beast_rect.size.x * beast_rect.size.y
+		if beast_area > 0.0:
+			var beast_depth: float = ((beast_box as AABB).get_center() - stone_cam.global_position) \
+				.dot(-stone_cam.global_transform.basis.z)
+			for si in range((stones as Array).size()):
+				var stone_box: AABB = Combat3D._merged_aabb((stones as Array)[si] as Node3D)
+				var stone_depth: float = (stone_box.get_center() - stone_cam.global_position) \
+					.dot(-stone_cam.global_transform.basis.z)
+				if stone_depth >= beast_depth:
+					continue  # behind (or level with) the beast -- can't occlude it
+				var stone_rect: Rect2 = Combat3D.hunter_screen_rect(stone_cam, stone_box).intersection(vp)
+				var overlap: Rect2 = beast_rect.intersection(stone_rect)
+				var pct: float = 100.0 * overlap.size.x * overlap.size.y / beast_area
+				if pct > BEAST_STONE_COVER_MAX:
+					var label: String = "stone %d" % (route_rungs[si] if si < route_rungs.size() else si)
+					_fail("beast-behind-stone", "%s: %.1f%% of the beast's on-screen body is covered by %s (want <= %.0f%%)" \
+						% [when, pct, label, BEAST_STONE_COVER_MAX])
 
 	# 9. The camera keeps the ACTIVE hunter (the one you are playing) on screen
 	# once things have settled -- checklist item 4, "the beast is framed, the
