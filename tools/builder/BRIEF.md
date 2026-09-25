@@ -49,9 +49,13 @@ stones climbing the gap between them, dark ground, cool sky.
    `git pull --rebase origin main` first. Frames go in
    `design/agents/frames/builder/`, 1280x720 or smaller.
 
-7. **Write `design/agents/status/builder.md`**, overwrite `## This run`:
+7. **Write `design/agents/status/builder.md`**, overwrite `## This run`. The
+   heading is exactly `## This run` (Home embeds it by name); the time goes
+   on the first line under it:
 
-       ## This run — 2026-09-25 14:05 EDT
+       ## This run
+
+       2026-09-25 14:05 EDT
 
        - **Did:** one sentence, 20 words or fewer, no file paths.
        - **Worked?** Yes / No / Partly, and why in the same sentence.

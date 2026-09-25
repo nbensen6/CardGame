@@ -5,6 +5,9 @@ tags:
 
 # Agent board
 
+> [!warning] Archived 2026-09-25
+> The cloud agents are off. One local builder replaced them: see [[Home]] and [[BUILDER-QUEUE]]. Everything below is history.
+
 Three cloud agents work on the game at once. This folder is how they talk:
 each keeps its own status note, and anything one needs from another is a
 **request** note. Nick reads the same notes in Obsidian and can file requests

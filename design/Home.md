@@ -7,59 +7,42 @@ tags:
 
 Co-op deckbuilder where hunters climb giant Titans. This vault is the `design/` folder of the repo — every note here is a real design doc, so editing it here edits the project.
 
-## Art overhaul — the beasts
+**One goal: the Cinder Jackal fight, to Slay the Spire quality.** The bar is [[JACKAL-BAR]]. The picture is yours:
 
-Moving every beast from the Python-primitive models to the AI pipeline: generate, clean, rig, animate. [[beasts/cinder_jackal|The Cinder Jackal]] is the template; the steps live in [[ai-beast-recipe]].
+![[art/references/2026-09-24-nick-target-composition.webp|400]]
+
+## The builder
+
+One agent builds. It takes the **top unticked line** of the queue below, shoots the named frame before and after, tests, pushes. It marks a line `[?]` when it wants you to look. **Only you tick `[x]`.** Reorder the list however you like; that is the whole steering wheel.
+
+▶ **[Run the builder now](obsidian://shell-commands/?vault=design&execute=run-builder)** — runs hidden, 10–40 min, then this page updates. Same from the palette: *Execute: Run the builder*.
+
+![[BUILDER-QUEUE#Now — the Cinder Jackal fight]]
+
+### Last run
+
+![[agents/status/builder#This run]]
+
+Full note: [[agents/status/builder|builder]] · frames: `agents/frames/builder/` · defaults it takes when you say nothing: [[BUILDER-QUEUE#Open decisions, with the default the builder takes if Nick says nothing|open decisions]]
+
+## Beasts
+
+[[beasts/cinder_jackal|The Cinder Jackal]] is the template; the recipe is [[ai-beast-recipe]]. Rollout waits until the jackal fight is ticked. Every beast note has a ▶ Fight this now link.
 
 ![[Beasts.base#Art overhaul]]
 
-## Start here
-
-- **Every beast note has a ▶ Fight this now link** — click it and the game opens
-  solo, Frog and Goblin, straight into that fight. It runs through the Shell
-  commands plugin, one command (`play.cmd {{title}}`) shared by every beast, so
-  a new beast note works with no setup. Same thing from the keyboard: command
-  palette → *Execute: Fight this beast*.
-- **[The task board](https://github.com/users/nbensen6/projects/1)** — four
-  columns: Waiting on Nick, Todo, In Progress, Done. Group or filter by agent,
-  priority or ETA. [[agents/Task board|The same thing as a note]] if you are
-  already in Obsidian.
-- **[[agents/Agents|Agents]] → the FOR NICK tab** — everything waiting on your
-  decision, one plain sentence each. Answer under **Nick's answer** in the note.
-- **[[agents/Last sync|Last sync]]** — when this PC last pulled the agents'
-  work, and what came in. It syncs hourly on its own; **Sync the agents** on
-  the desktop does it now.
-
-## The cloud agents
-
-Artist, playtester and fixer coordinate on [[agents/BOARD|the agent board]] — what each is doing, and requests between them (and to Nick).
-
-Each one opens its status note with **This run**: what it did, whether it
-worked, what is next, and what it needs from you. The three latest, live:
-
-![[agents/status/artist#This run]]
-
-![[agents/status/playtester#This run]]
-
-![[agents/status/fixer#This run]]
-
-![[agents/Agents.base#Open requests]]
-
 ## Where things are
-
-Six folders, and nothing loose. Links work by name, so `[[BACKLOG]]` still
-finds it wherever it lives.
 
 | folder | what is in it |
 |---|---|
-| **agents** | the board, the three agents' status notes, requests, frames |
-| **plan** | where the game is going — [[GDD]] · [[ROADMAP]] · [[OVERHAUL-PLAN]] · [[BACKLOG]] · [[BUILDER-QUEUE]] · [[titan-design]] · [[depth-plan]] |
-| **guide** | how things get made — [[asset-loop]] · [[ai-beast-recipe]] · [[blender-pipeline]] · [[blender-learning]] · [[audio-guide]] · [[3d-pivot]] · [[mobile-setup]] · [[climbing-and-characters]] |
-| **art** | how it should look — [[ART-REVIEW]] · [[art-target]] · [[card-face-vs-sts]] · [[icon-audit]] · the palette and frame templates, plus `previews/` and `references/` |
-| **notes** | thinking out loud — [[feel-and-readability]] · [[tuning-knobs]] · [[balance-notes]] · [[cards-and-classes]] · [[sts2-comparison]] |
+| **plan** | [[BUILDER-QUEUE]] (live) · [[GDD]] · [[ROADMAP]] · [[OVERHAUL-PLAN]] · [[BACKLOG]] · [[titan-design]] · [[depth-plan]] |
+| **agents** | `status/builder` (live) · `frames/builder` (live) · everything else is the 2026-09-22..25 cloud-agent era, archived: [[agents/BOARD|board]] · [[agents/Agents|requests]] · [[agents/HANDOFF-TO-FABLE|what went wrong]] |
+| **guide** | [[asset-loop]] · [[ai-beast-recipe]] · [[blender-pipeline]] · [[blender-learning]] · [[audio-guide]] · [[3d-pivot]] · [[mobile-setup]] · [[climbing-and-characters]] |
+| **art** | [[ART-REVIEW]] · [[art-target]] · [[card-face-vs-sts]] · [[icon-audit]] · palette and frame templates · `previews/` · `references/` |
+| **notes** | [[feel-and-readability]] · [[tuning-knobs]] · [[balance-notes]] · [[cards-and-classes]] · [[sts2-comparison]] |
 | **beasts** · **progress** · **renders** | one note per beast · per-asset work logs · raw render output |
 
-> [!tip] How to use this
-> - **Beasts.base** is a live table: change a beast's `status`, `model` or `next` in its note and the table updates.
-> - The graph view (left ribbon) shows how the docs link together.
-> - Claude can read and write here too — ask it to update a beast's row when work lands.
+> [!tip] How to steer
+> - Move a line up in [[BUILDER-QUEUE]] and the next run does it. Delete a line and it never happens.
+> - A `[?]` line is waiting on you. Look at the frames in **Last run**, then tick it or write what is wrong under it.
+> - Claude reads and writes here too. Ask it to add to the queue rather than describing the work twice.

@@ -6,6 +6,9 @@ issue: 9
 
 # Task board
 
+> [!warning] Archived 2026-09-25
+> The sync that generated this is off. Live status is on [[Home]].
+
 _Generated from the agents' own status notes and the open requests. Do not edit -- the next sync overwrites it._
 
 | agent | | doing now | next | tickets |

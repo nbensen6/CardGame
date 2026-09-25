@@ -11,7 +11,9 @@ working_on: "nothing — this run is done"
 The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 `tools/builder/BRIEF.md`. Run it: `tools\builder\run.cmd`.
 
-## This run — 2026-09-25 13:27 EDT
+## This run
+
+2026-09-25 13:27 EDT
 
 - **Did:** bound F8 to flip the Menu's Camera Player/Dev toggle live, with a one-second HUD note saying which.
 - **Worked?** Yes — F8 is new; the "Player by default" half of the item was already fixed 2026-09-24 by fixer.
