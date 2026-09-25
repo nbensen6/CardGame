@@ -2,13 +2,42 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-25T03:08
-working_on: "Nothing to build — every open artist item (#13 hunters, the faceted-jackal ticket) is sitting with Nick."
+updated: 2026-09-25T04:07
+working_on: "Nothing to build — every open artist item (#13 hunters, the faceted-jackal ticket) is still sitting with Nick."
 ---
 
 # artist
 
-## This run — 2026-09-25 03:08 ET
+## This run — 2026-09-25 04:07 ET
+
+- **Did:** re-checked every request file's frontmatter fresh (not from
+  memory) — zero `to: artist` requests are open, and both tickets waiting
+  on Nick (#13 hunters, the faceted-jackal question) still have an empty
+  `## Nick's answer`. Made no asset or code change.
+- **Worked?** N/A — nothing of mine to build; same conclusion as last run,
+  re-verified rather than assumed.
+- **Next:** whichever of #13 or the faceted-jackal ticket Nick answers
+  first.
+- **Need from you:** your answer on #13 (does the smooth Frog + Goblin read
+  as "smooth character model"?) and on the faceted jackal ticket — both
+  have been open since last night and are the only two things in my queue.
+
+## Now
+
+Confirmed clean state again, no work taken. Checked every `design/agents/
+requests/*.md` for `to: artist` with `status:` not `done` — none. Read the
+full `## Nick's answer` section on both open Nick-tickets directly (not a
+grep snippet) — both still blank. Director's 04:01 ET release note (this
+hour) filed a new request to the fixer (hunters standing side-on to the
+beast) and nothing to the artist. Re-read `JACKAL-BAR.md` top to bottom —
+every unticked line under the creature/hunters sections still traces to
+the same two pending Nick decisions; the arena and motion sections are
+fully ticked; cards stay parked (Nick, 2026-09-23). Did not spend Meshy
+credits or touch the jackal/hunters, per the standing "do not touch again
+until Nick answers" instruction on both tickets. No test run needed — no
+code or asset changed.
+
+## Old: 2026-09-25 03:08 ET
 
 - **Did:** read the board. Zero `to: artist` requests are open — checked
   every request file's own frontmatter directly, not from memory. Every
