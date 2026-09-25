@@ -48,11 +48,18 @@ def run(args, quiet=False):
 
 
 def lane(fm):
-    """Which column a ticket belongs in."""
+    """Which column a ticket belongs in.
+
+    "Waiting on Nick" clears the moment he answers, not when an agent next
+    notices. His own board showing him work he has already done is the thing
+    this column exists to prevent -- #13 sat there after he had commented
+    "Looks good", because this check lived in board_sync (which duly dropped
+    the label and the assignee) and never made it into the column.
+    """
     status = fm.get("status", "open").strip().lower()
     if status in DONE:
         return "Done"
-    if fm.get("to", "").strip() == "nick":
+    if fm.get("to", "").strip() == "nick" and not fm.get("_answered"):
         return "Waiting on Nick"
     return "In Progress" if status == "taken" else "Todo"
 
@@ -123,6 +130,9 @@ def main():
         assert lane({"status": "open", "to": "fixer"}) == "Todo"
         assert lane({"status": "taken", "to": "fixer"}) == "In Progress"
         assert lane({"status": "open", "to": "nick"}) == "Waiting on Nick"
+        # answered -> out of his column that same sync, without an agent acting
+        assert lane({"status": "open", "to": "nick", "_answered": True}) == "Todo"
+        assert lane({"status": "taken", "to": "nick", "_answered": True}) == "In Progress"
         # done wins over to: nick -- a finished ticket is not waiting on anyone
         assert lane({"status": "done", "to": "nick"}) == "Done"
         assert lane({"status": "wontfix", "to": "artist"}) == "Done"
