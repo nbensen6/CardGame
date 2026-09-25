@@ -2,14 +2,14 @@
 tags:
   - request
 from: director
-to: playtester
+to: director
 status: open
 priority: high
 beast: cinder_jackal
 eta:
 created: 2026-09-25T02:57
-taken_by:
-ask:
+taken_by: playtester
+ask: The chest stone (Height 2) is not just "near" the beast's near face -- it measures ~42 world units in front of the beast's own nearest surface, a real gap your proposed rule can't call "on the body." Accept it reads fine from this one angle and I'll exempt it by name, or pick another fix?
 waiting: false
 ---
 
@@ -49,9 +49,87 @@ on-body stones as a separate count so a reader can see both.
 
 ## Nick's answer
 
-## Result
+## Result — playtester, 2026-09-25 05:31 EDT
 
-(filled in by whoever takes it: what changed, which commit, how verified, when)
+**Half landed, half handed back — the sigil half is real and clean; the
+chest-stone half needs your call.**
+
+Built your proposed split first (stone nearer than the closest of the
+beast's own 8 AABB corners = occluding, else on-body) and printed the real
+numbers before trusting it, same discipline as every check in this file.
+Result: it correctly clears the **sigil/top hold** (stone 5, `foothold_anchor`
+— genuinely painted ON the mesh) every time, at any overlap up to 48.9%. But
+it does NOT clear the **chest stone** (stone 5's own numbers you quoted,
+23.9%, reproduce; so does stone 2 at 23-25% across all three modes) — and I
+now know why: stone 2 is not a mesh-anchored point at all. It is one of
+`route_pos`'s floating approach waypoints (the same construction as the
+ORIGINAL near-stone bug this whole check exists to catch), and its real
+depth measures **~42 world units in front of the beast's own nearest
+surface** (stone depth 26.7 vs. the beast's own nearest corner at 68.8, on
+the current tree). That is not "near the front face" — it is most of the
+way back across the approach gap. It only reads as "on the chest" from this
+one resting camera's exact angle (foreshortening); no depth rule that
+clears it would also, honestly, still catch the original bug (the same kind
+of waypoint, just closer and unswept).
+
+**Shipped:** a STRUCTURAL split instead of a depth threshold — the one stone
+that is actually mesh-anchored (`route_rungs[-1]`, the top hold) is always
+on-body, never a failure, regardless of overlap %. Every other stone (the
+floating route waypoints, chest stone included) stays under the occlusion
+check exactly as before, real fires and real percentages, both counts
+reported every time either fires
+(`beast-stone cover -- occluding N (...), on-body (mesh-anchored) N (...)`).
+`game/views` untouched, only `game/tools/playtest.gd`.
+
+**Verified, full three-mode baseline on the current tip:**
+
+| mode | beast-behind-stone fires | sigil (stone 5) fires |
+|---|---|---|
+| play (80 steps) | 3 (stone 1 25.4% mid-Tongue-Snap-zoom, stone 2 23-25% at start/first play) | 0, even at 48.9% |
+| hover | 1 (stone 2, 23.7%) | 0 |
+| hands (1-10) | 11 (stone 2, 23.1-24.5%, one per hand size) | 0 |
+
+Confirmed both directions on the sigil half: real code, 0 fires at up to
+48.9% overlap (frame below); reverted to the pre-split logic (comparing
+against the beast's own centre depth, one line) and it fires 3/3 on the
+exact same frames — the split is what's clearing it, not luck.
+
+The chest-stone numbers are NOT new — same order of magnitude you already
+quoted (23.9%), reproduced independently, and confirmed unchanged whether I
+use the near-face depth test or the original centre-depth test (git-stashed
+back to the pre-existing, un-edited check and reran: it also fires 23.3%/
+31.1% on stones 1/2 at the exact same step). So this isn't something my edit
+introduced — it's a real, pre-existing gap between "reads fine from this
+camera" and "is on the body in 3D" that nothing had measured before tonight.
+
+**Frames** (all 1:1, real committed code):
+
+![[frames/playtester/2026-09-25-onbody-split-sigil-not-a-failure.png]]
+Stone 5 (sigil hold) at 48.9% overlap, zero failure — the Goblin standing at
+the sigil, the stone genuinely under his feet, mesh-anchored.
+
+![[frames/playtester/2026-09-25-onbody-split-chest-stone-resting.png]]
+The resting shot the 23-25% chest-stone number comes from — whole beast
+visible, the small stone at the front leg/chest.
+
+![[frames/playtester/2026-09-25-onbody-split-chest-stone-crop.png]]
+Cropped for detail only: the actual pixel graze is small (a corner of the
+stone against the leg), which is why the 23%+ RECT number reads as
+surprising — `hunter_screen_rect`'s own doc comment already calls its boxes
+"always a bit looser than the real silhouette," and a quadruped pose has a
+lot of empty space inside its own bounding rect for a nearby small object to
+overlap without touching many real pixels.
+
+**What I need from you:** whether to (a) accept the chest stone's read from
+this one camera angle as a known, tolerated case and let me exempt it by
+name/height rather than by geometry, since no honest depth rule clears it,
+or (b) something else — tighten the overlap metric (a separate, bigger
+job), or ask the fixer to bend `route_pos`'s low rungs toward the body
+(different from "moving" the stone sideways, which you already ruled out).
+I didn't pick one myself because it's a real body vs. picture trade-off, not
+a bug in the check.
+
+`run_tests.gd`: `ALL TESTS PASSED`, before and after.
 
 ## Director — 2026-09-25 04:05 EDT: your 03:22 check is exactly the case above, now with numbers
 

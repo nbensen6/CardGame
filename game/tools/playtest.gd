@@ -825,35 +825,95 @@ func _check(v: Node, when: String) -> void:
 	# blows up to thousands of pixels wide the moment either box is partly
 	# behind the camera -- a mid-hop close-up, not this check's problem, and
 	# it would swing the percentage on nothing this check is about), and
-	# measures how much of the beast's clipped rect a nearer stone's clipped
-	# rect covers. "Nearer" is each box's own centre depth along the camera's
-	# forward axis, not world distance -- the same axis `is_position_behind`
-	# and `unproject_position` already use everywhere else in this file.
+	# measures how much of the beast's clipped rect a stone's clipped rect
+	# covers.
 	#
-	# BEAST_STONE_COVER_MAX's own doc comment has the calibration numbers this
+	# 2026-09-25 04:05, director (2026-09-25-0257-...-a-stone-on-the-body-is-
+	# not-a-failure.md): the first version of this check compared each STONE's
+	# own centre depth against the BEAST's own centre depth, so a stone that is
+	# deliberately part of the drawing -- sitting on the beast's own chest, or
+	# the head hold the Frog stands on at the sigil -- measured "nearer than
+	# the beast's centre" exactly like a real occluder does, and fired two
+	# false positives Nick's own reference draws on purpose (23.9% on the
+	# chest stone, 45-48% on the sigil hold).
+	#
+	# Their own proposed split ("a stone whose position is inside or behind
+	# the box's front face is a foothold on the body") is exactly right for
+	# ONE of those two, and provably wrong for the other -- tried it (a stone
+	# nearer than the CLOSEST of the beast's own 8 AABB corners along the
+	# camera's forward axis counts as occluding), and printed the real
+	# geometry it produces before trusting it. The SIGIL/top-hold stone
+	# (`_stand_on_model`'s `i >= n-1` branch, check 8's own `route_rungs`) is
+	# placed by `foothold_anchor` -- a point authored ON the mesh -- so by
+	# construction it sits at or behind the beast's own near face; the split
+	# correctly clears it every time. But the CHEST stone (Height 2 on this
+	# beast) is not that branch: it is one of `route_pos`'s in-between rungs,
+	# placed on the straight-line APPROACH from the ground to the top hold --
+	# a floating waypoint with no idea where the beast's actual surface is,
+	# by the stone-route design itself (see check 8's own long comment).
+	# Printed its real numbers on the current tree: stone depth 26.7, the
+	# beast's own nearest corner (the chest/forepaw line, the visually
+	# closest part of the model) at depth 68.8 -- the chest stone is ~42
+	# world units (about 28 hunter-heights) IN FRONT of the beast's own
+	# nearest surface, not behind or inside it by any measure. It only reads
+	# as "on the chest" from this one resting camera's exact angle -- the
+	# small screen overlap this produces (see BEAST_STONE_COVER_MAX's own
+	# note on `hunter_screen_rect`'s looseness) is real, but it is
+	# foreshortening, not contact. No depth-vs-near-face rule can honestly
+	# call a waypoint 42 units out "on the body"; a rule loose enough to
+	# clear it would also clear the ORIGINAL near-stone bug this whole check
+	# exists to catch (that stone was the very same kind of route waypoint,
+	# just closer still and unswept sideways).
+	#
+	# So the split here is STRUCTURAL, not a depth threshold: the one stone
+	# genuinely anchored to the mesh (the top hold, `si == n - 1` in the same
+	# `route_rungs` order check 8 already establishes `_float_stones` shares)
+	# is always on-body -- a real geometric fact, not a camera-angle
+	# coincidence. Every other stone is a floating approach waypoint and
+	# stays under the occlusion check exactly as it always was; the chest
+	# stone's own real fire is left in place and called out by name below
+	# rather than hidden, since silencing a real 42-unit-in-front position
+	# would be lying about the geometry, not fixing the check. Handed back to
+	# the director with these numbers rather than closed -- whether to accept
+	# the chest stone's read from this one angle, retune the overlap metric,
+	# or bend route_pos's low rungs toward the body is a design call, not a
+	# geometry one.
+	#
+	# BEAST_STONE_COVER_MAX's own doc comment has the calibration numbers that
 	# threshold came from.
 	var stone_cam: Camera3D = v.get("_cam")
 	var stones: Variant = v.get("_float_stones")
 	if stone_cam != null and beast_box is AABB and stones is Array:
 		var vp := Rect2(Vector2.ZERO, screen)
-		var beast_rect: Rect2 = Combat3D.hunter_screen_rect(stone_cam, beast_box as AABB).intersection(vp)
+		var bbox: AABB = beast_box as AABB
+		var beast_rect: Rect2 = Combat3D.hunter_screen_rect(stone_cam, bbox).intersection(vp)
 		var beast_area: float = beast_rect.size.x * beast_rect.size.y
 		if beast_area > 0.0:
-			var beast_depth: float = ((beast_box as AABB).get_center() - stone_cam.global_position) \
-				.dot(-stone_cam.global_transform.basis.z)
+			var top_hold_i: int = route_rungs.size() - 1
+			var occluding_desc: Array = []
+			var on_body_desc: Array = []
 			for si in range((stones as Array).size()):
 				var stone_box: AABB = Combat3D._merged_aabb((stones as Array)[si] as Node3D)
-				var stone_depth: float = (stone_box.get_center() - stone_cam.global_position) \
-					.dot(-stone_cam.global_transform.basis.z)
-				if stone_depth >= beast_depth:
-					continue  # behind (or level with) the beast -- can't occlude it
 				var stone_rect: Rect2 = Combat3D.hunter_screen_rect(stone_cam, stone_box).intersection(vp)
 				var overlap: Rect2 = beast_rect.intersection(stone_rect)
-				var pct: float = 100.0 * overlap.size.x * overlap.size.y / beast_area
-				if pct > BEAST_STONE_COVER_MAX:
-					var label: String = "stone %d" % (route_rungs[si] if si < route_rungs.size() else si)
-					_fail("beast-behind-stone", "%s: %.1f%% of the beast's on-screen body is covered by %s (want <= %.0f%%)" \
-						% [when, pct, label, BEAST_STONE_COVER_MAX])
+				var overlap_area: float = overlap.size.x * overlap.size.y
+				if overlap_area <= 0.0:
+					continue  # doesn't even land on the beast's own rect on screen
+				var pct: float = 100.0 * overlap_area / beast_area
+				var label: String = "stone %d" % (route_rungs[si] if si < route_rungs.size() else si)
+				if si == top_hold_i:
+					# The one stone actually anchored to the mesh (foothold_anchor,
+					# not route_pos) -- on the body by construction, never a failure.
+					on_body_desc.append("%s %.1f%%" % [label, pct])
+				else:
+					occluding_desc.append("%s %.1f%%" % [label, pct])
+					if pct > BEAST_STONE_COVER_MAX:
+						_fail("beast-behind-stone", "%s: %.1f%% of the beast's on-screen body is covered by %s (want <= %.0f%%)" \
+							% [when, pct, label, BEAST_STONE_COVER_MAX])
+			if not occluding_desc.is_empty() or not on_body_desc.is_empty():
+				_note("%s: beast-stone cover -- occluding %d (%s), on-body (mesh-anchored) %d (%s, not a failure)" \
+					% [when, occluding_desc.size(), (", ".join(occluding_desc) if not occluding_desc.is_empty() else "none"), \
+						on_body_desc.size(), (", ".join(on_body_desc) if not on_body_desc.is_empty() else "none")])
 
 	# 9. The camera keeps the ACTIVE hunter (the one you are playing) on screen
 	# once things have settled -- checklist item 4, "the beast is framed, the

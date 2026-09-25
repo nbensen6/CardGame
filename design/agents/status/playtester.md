@@ -2,13 +2,97 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-25T03:38
-working_on: Added a live check that a floating stone nearer the camera than the beast doesn't cover the beast's own on-screen body.
+updated: 2026-09-25T05:31
+working_on: Handed the chest-stone half of the on-body split back to the director — real 42-unit gap, not a bug in the check.
 ---
 
 # playtester
 
-## This run — 2026-09-25 03:38 EDT
+## This run — 2026-09-25 05:31 EDT
+
+- **Did:** took the director's on-body-split ticket; built their proposed
+  rule and printed real numbers before trusting it.
+- **Worked?** Half. Sigil stone: clean, 0 false fires up to 48.9%. Chest
+  stone: genuinely ~42 units in front of the beast, not "on it."
+- **Next:** handed the chest-stone call back to the director — my numbers,
+  their decision.
+- **Need from you:** nothing.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | unchanged — closed several runs ago (Play feedback) |
+| 2 | hunters land on the beast correctly | **refined this run** — `beast-behind-stone` now splits mesh-anchored (sigil, always on-body) from floating route stones (still checked); sigil false-positive closed, chest-stone (stone 2) fire confirmed real, not a bug — handed to director; `hop-distance-band` clean (0/0/0, the fixer's #14 item 3 fix holds) |
+| 3 | jump animation (squash/arc/landing/facing) | unchanged — clean |
+| 4 | camera | unchanged — 0 `camera-not-behind-hunter`, 0 `camera-not-over-shoulder` |
+| 5 | nothing errors | clean — 0 `script-error` across all three modes; one pre-existing, disclosed `hunter-lost-mid-hop` (fixer's own #14 item 3 follow-up, not new) |
+
+### Why this run
+
+The director's `2026-09-25-0257-...` ticket named their own 03:22 check's
+two false positives (stone 2 chest, 23.9%; stone 5 sigil, 45-48%) and
+proposed a fix: a stone nearer than the beast's own AABB's closest corner
+(along the camera's forward axis) is occluding, else on-body. Built it
+first, printed the real depths before trusting it — same discipline every
+check here uses before shipping.
+
+**Real result, both directions:** the sigil (stone 5, `foothold_anchor` —
+genuinely painted onto the mesh) clears cleanly at any overlap, confirmed by
+reverting to the old centre-depth comparison and watching it refire on the
+identical frames. But stone 2 (Height 2, the chest) does NOT clear under
+the director's proposed rule, and it's not a bug in my implementation —
+printed its real depth: 26.7, against the beast's own nearest corner at
+68.8. That's ~42 world units in front, not "near" the front face by any
+reasonable margin. Stone 2 is one of `route_pos`'s floating approach
+waypoints (the exact same construction as the ORIGINAL near-stone bug this
+check exists to catch), not a mesh-anchored point — it only reads as "on
+the chest" from this one resting camera's angle, a foreshortening
+coincidence, not 3D contact. Confirmed this isn't something my edit
+introduced: `git stash`'d back to the pre-existing, un-edited check and it
+fires the same stone at the same step too (23.3%/31.1%).
+
+**Shipped a STRUCTURAL split instead of a depth threshold:** the one stone
+that is actually mesh-anchored (the top hold, last in `route_rungs`) is
+always on-body, unconditionally. Every other stone — including the chest
+stone — stays under the occlusion check exactly as before, real fires, real
+percentages, both counts reported every time either fires. This correctly
+closes the sigil false positive (a real geometric fact, not camera-angle
+luck) without inventing a rule dishonest about where the chest stone
+actually sits.
+
+**Full three-mode baseline, real committed code:** `play` (80 steps) 3
+fires (stone 1 25.4% during the very first Tongue-Snap camera zoom, stone 2
+23-25% at start/first play — both real, both new-to-this-run
+*measurements*, not new bugs, see below), 0 sigil fires even at 48.9%;
+`hover` 1 fire (stone 2, 23.7%); `hands` (1-10) 11 fires (stone 2, one per
+hand size, 23-25%). `hunter-lost-mid-hop` fired once (step 16, a 3-Height
+climb) — the fixer's own #14 item 3 commit message already discloses this
+as a known follow-up, not something this run found new.
+
+**Handed back, not closed:** the ticket's Done-when needs the chest stone to
+NOT fail on the current tree, and I can't honestly deliver that with a
+geometric rule — the stone really is ~42 units out. Wrote up the full
+numbers and two options (exempt it by name since it's a known, tolerated
+read from one angle, or a bigger fix to the route/overlap math) on the
+ticket itself, retargeted `to: director`, left `status: open`. Frames (all
+1:1, real code):
+
+![[frames/playtester/2026-09-25-onbody-split-sigil-not-a-failure.png]]
+Stone 5 at 48.9% overlap, zero failure — genuinely under the Goblin's feet
+at the sigil.
+
+![[frames/playtester/2026-09-25-onbody-split-chest-stone-crop.png]]
+The chest stone's real pixel footprint — a small graze on the front leg,
+which is why 23%+ of the beast's bounding RECT is a surprising number for
+what's a small visual overlap (`hunter_screen_rect`'s own looseness, plus a
+quadruped pose's own bounding rect being mostly empty space).
+
+`run_tests.gd`: `ALL TESTS PASSED`, before and after. One commit: the
+structural split in `game/tools/playtest.gd`; `game/views` untouched, per
+the ticket's own Done-when.
+
+## Old: 2026-09-25 03:38 EDT
 
 - **Did:** took the director's request (#14's sibling ticket) — every
   existing check asked if the HUNTER was hidden, none asked about the BEAST.
@@ -2306,6 +2390,10 @@ remain the backstop for that; keep saving them.
 
 ## Log
 
+- 2026-09-25 05:31 EDT — director's on-body split: sigil half clean (0
+  fires up to 48.9%, structural mesh-anchor exemption); chest stone is
+  really ~42 units in front of the beast, not on it — handed back to
+  director with numbers, not closed.
 - 2026-09-24 23:44 EDT — took #director's checks-measure-the-old-route
   ticket: `hunter-off-marker`/`hop-distance-band` now read the live route
   (`route_pos`/`_stand_on_model`), camera check flipped to
