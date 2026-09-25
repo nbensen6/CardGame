@@ -63,7 +63,7 @@ run failed.
       rest; the "same size in both" bar is met at holds nearer the beast's
       front and not yet at the very top. The dedicated weak-point-shot
       queue item below covers that top hold specifically.
-- [ ] **Climb shot at the sigil, second pass: trust the hold's anchor z.**
+- [?] **Climb shot at the sigil, second pass: trust the hold's anchor z.**
       Answer to the builder's 16:11 ask: yes, skip `_front_of_beast` for the
       climbing camera's clearance and trust the hold's own authored z, the
       same rule `stand_z_for` already uses and for the same reason (the hull
@@ -83,6 +83,17 @@ run failed.
       Shot: `state=3dclimb`. Previous passes:
       `agents/frames/builder/2026-09-25-sigil-climb-after.png` (dist 17.0),
       `2026-09-25-locked-camera-climb-after.png` (dist 19.4).
+      **Builder, 2026-09-25 16:24 EDT:** clearance now trusts the anchor z
+      (`climb_focus_for`, tested) instead of the hull — dist 17.0→8.0 (6.0
+      fixed stand-off + a 2.0 pad so the lens doesn't sit on the surface it
+      now trusts, both within the ranges the ticket itself allowed) — and
+      pitch rises with climb_t instead of freezing wherever it last was, so
+      the jackal is now visibly in frame (was empty sky). Done-when not met:
+      the hunter is still mostly behind the card fan and no eyes are visible
+      — the lens is looking at the side of the head/ear, not the face. That
+      reads like a yaw problem, out of this item's scope (clearance + pitch
+      only); stopped rather than tune a third constant. See the proposed
+      item below.
 - [ ] **Hops land on stones, not in the air.** Nick's frame
       `art/references/2026-09-25-nick-hopping-in-air.webp`: the Frog climbs
       to points in open air beside the jackal while the stones sit on the
@@ -192,3 +203,10 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
       aim/pitch at the weak point, not just less clearance distance —
       probably belongs in the "Weak-point shot" item below rather than this
       one; the two should be looked at together once that item is up.
+- [ ] (proposed) With clearance and pitch fixed at the sigil (dist 17.0→8.0,
+      pitch rising with climb_t), the after frame shows an ear/jaw silhouette
+      against the sky, not a face — the eyes never come into frame at whatever
+      yaw the camera already had. The Weak-point shot item should check
+      whether `_yaw` needs its own rule at the top hold (facing the actual
+      front of the head) rather than just carrying over whatever yaw the
+      climb was already at.

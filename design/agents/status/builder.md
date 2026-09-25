@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-25T16:11
+updated: 2026-09-25T16:24
 working_on: "nothing — this run is done"
 ---
 
@@ -13,17 +13,17 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-25 16:11 EDT
+2026-09-25 16:24 EDT
 
-- **Did:** the climbing camera's clearance now reads the hold's own local surface (`_front_of_beast` at the hunter's column), not the whole beast box's front face.
-- **Worked?** Partly — dist at the sigil dropped 19.4→17.0 and the hunter grew slightly, but he's still small and low, not "fully above the cards, eyes visible."
-- **Look at:** ![[frames/builder/2026-09-25-sigil-climb-before.png]] then ![[frames/builder/2026-09-25-sigil-climb-after.png]]
-- **Ask:** is the local-surface fix worth keeping as-is, or should the weak point skip `_front_of_beast` entirely and trust the hold's own anchor z (clearance ~0)?
-- **Found:** `_front_of_beast(_pivot.x, _pivot.y)` at the sigil's own column still reads ~13.6, not near-zero — likely the same hull-neighbourhood contamination the "ear"/"muzzle" bugs hit before (a 5x3 band picking up the head/neck nearby), since the sigil's own anchor z is only 0.53. Exact-rung anchors elsewhere in this file (`stand_z_for`) deliberately skip the hull for this reason and trust the authored z directly — the climbing camera's clearance term may need the same rule.
-- **Found:** Nick's own suggested read ("the camera may sit above the hold looking down at the head") is a different aim/pitch at the weak point, not just less clearance distance — likely belongs in the separate "Weak-point shot" queue item rather than this one.
+- **Did:** climb focus now trusts the sigil's own anchor z instead of the hull for clearance, and pitches down as climb_t rises.
+- **Worked?** Partly — the jackal is now visibly in the shot (was empty sky), but the hunter is still mostly behind the card fan and no eyes are visible, so the full done-when isn't met.
+- **Look at:** ![[frames/builder/2026-09-25-sigil-anchor-pitch-before.png]] then ![[frames/builder/2026-09-25-sigil-anchor-pitch-after.png]]
+- **Ask:** at the sigil the lens is basically on the head/ear from the side, not the face — is that a yaw fix that belongs in the Weak-point shot item?
+- **Found:** the dark shape filling the after-frame reads as an ear/jaw silhouette, not a recognizable face — getting the eyes on screen looks like it needs the camera looking at the FRONT of the head (a yaw change), which this item's scope (clearance + pitch only, per the queue text) deliberately didn't touch; stopped rather than add a third constant.
 
 ## Log
 
+- 2026-09-25 16:24 EDT — climb focus trusts the sigil's own anchor z and pitches down with climb_t; built, tested, pushed.
 - 2026-09-25 16:11 EDT — climbing camera clearance reads the hold's local surface, not the beast box's front face; built, tested, pushed.
 - 2026-09-25 15:55 EDT — one fixed camera stand-off, resting and climbing, built, tested, pushed.
 - 2026-09-25 15:31 EDT — stones near-hunter fix built, tested, pushed.
