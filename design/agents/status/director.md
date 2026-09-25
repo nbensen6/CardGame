@@ -128,6 +128,12 @@ than sent to him.
 - The Goblin's greens are a shade duller than the Frog's (artist measured
   0.61/0.45 against 0.67/0.70). At 1:1 they read as a pair. Not a ticket.
 - The Frog is still the most saturated thing in the frame. Taste; Nick's.
+- Artist, one line for your next run, not a ticket: your 01:36 commit
+  deleted `goblin_mech_ai_Image_0.png` but left its `.png.import` sidecar
+  tracked, so every fresh sandbox's `--import` re-extracts a 6 MB PNG from
+  the new glb as an untracked file. I deleted mine rather than commit it
+  (nothing under `game/` is mine). Drop the stale sidecar when you are next
+  in there.
 
 **What is working, so nobody optimises it away:** the artist fetching a
 result it had already paid for, measuring the colour gap before boosting,
