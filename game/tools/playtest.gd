@@ -1411,6 +1411,21 @@ const HOP_TIME_SCALE := 1.0 / 6.0
 ## the same as it already does for the guard-cap-fired case.
 const MIN_HOP_SAMPLES := 10
 
+## _check_hop_visibility's own tuning (2026-09-25,
+## director-to-playtester-on-screen-is-not-visible...). HOP_VIS_SAMPLES is how
+## many of `flight`'s already-recorded instants get replayed and re-rendered
+## after the hop lands; HOP_VIS_PIXEL_DELTA/HOP_VIS_MIN_DRAWN_PX are the real
+## vs. background pixel test itself -- see the function's own doc comment for
+## why a render, not a projected rectangle, is what decides "on screen" now.
+## HOP_SHOT_PERIOD spaces the 24 saved hop_*.png debug shots across the
+## guard-cap ceiling (300) instead of only ever catching the opening of a
+## slow-mo flight (2026-09-25 06:05 addendum on the same ticket) -- a separate
+## fix from the visibility check itself, sharing nothing but the file.
+const HOP_VIS_SAMPLES := 16
+const HOP_VIS_PIXEL_DELTA := 40.0   # 0-255 per-channel-sum; anti-aliasing noise sits well under this
+const HOP_VIS_MIN_DRAWN_PX := 24    # real drawn (stepped) pixels needed, not a stray AA fringe
+const HOP_SHOT_PERIOD := 13         # ceil(300 / 24)
+
 ## Checklist items 1 and 3's "no pops: nothing teleports, flickers, or snaps
 ## between frames" (JACKAL-BAR, Motion) -- unchecked before this run.
 ## hop-leftover-squash already catches a pop in SCALE at the very end of a
@@ -1578,13 +1593,14 @@ func _watch_hop(v: Node, me: int, climb_from: Vector3) -> void:
 	# the code below then misread that mid-air moment as "landed," a real
 	# false positive (a squash that "never recovered" because the hunter
 	# hadn't actually landed yet). Never judge a hop the loop didn't see land.
-	var flight: Array = []   # {pos: Vector3, scale: Vector3}
+	var flight: Array = []   # {pos: Vector3, scale: Vector3, cam: Transform3D}
 	var shots := 0
 	var guard := 0
 	Engine.time_scale = HOP_TIME_SCALE
 	while is_instance_valid(node) and tw.is_valid() and tw.is_running() and guard < 300:
 		guard += 1
-		flight.append({"pos": node.position, "scale": body.scale if is_instance_valid(body) else Vector3.ONE})
+		flight.append({"pos": node.position, "scale": body.scale if is_instance_valid(body) else Vector3.ONE,
+			"cam": cam.global_transform if cam != null else Transform3D()})
 		if track_camera:
 			cam_samples += 1
 			if cam.is_position_behind(node.global_position):
@@ -1621,28 +1637,39 @@ func _watch_hop(v: Node, me: int, climb_from: Vector3) -> void:
 		# `v` before the next poll.
 		if is_instance_valid(v):
 			_poll_popup(v)
-		if is_instance_valid(node) and shots < 24:
+		# 2026-09-25 06:05 addendum: this used to be `shots < 24` alone -- one
+		# per real frame until the cap hit -- which under HOP_TIME_SCALE's
+		# slow-mo only ever covers the OPENING of a long flight (on a 167-
+		# sample Leap, the first 24 is the opening 14%). Spaced on `guard`
+		# instead so the strip runs launch to landing.
+		if is_instance_valid(node) and shots < 24 and (guard - 1) % HOP_SHOT_PERIOD == 0:
 			var img := root.get_viewport().get_texture().get_image()
 			img.save_png("%s/hop_%03d_%02d.png" % [_out, _step, shots])
 			shots += 1
-	# The mid-hop camera check is judged on whatever was actually sampled, even
-	# if the fight ended or the guard cap fired before the hop finished --
-	# unlike the arc/squash checks below, "the camera lost the hunter for most
-	# of what we did see" is real evidence regardless of how the hop ended.
-	_check_hop_camera(cam_samples, offscreen_samples)
 	_check_hop_intent_tag(intent_frames, intent_overlap_frames)
 	if not is_instance_valid(node):
+		# Node's gone -- nothing left to replay against. Fall back to the old
+		# rect/behind-camera test; it is a looser signal (see
+		# _check_hop_visibility's own doc comment) but it is what there is.
+		_check_hop_camera(cam_samples, offscreen_samples)
 		Engine.time_scale = 1.0
 		return   # the fight ended mid-hop
 	if tw.is_valid() and tw.is_running():
 		# The guard cap fired before the tween finished on its own -- we do not
-		# know the shape of the rest of the hop, so say so and judge nothing,
-		# rather than guessing from a truncated flight.
+		# know the shape of the rest of the hop, so say so and judge nothing
+		# about the ARC. The mid-hop camera question still gets an answer, off
+		# whatever was actually sampled, same fallback as above: a still-
+		# running tween would fight any position we set for a real-pixel
+		# replay (it writes `node.position` itself, every frame), so a replay
+		# here would just be rendering the tween's own current pose, not the
+		# historical one we asked for.
+		_check_hop_camera(cam_samples, offscreen_samples)
 		Engine.time_scale = 1.0
 		_note("step %d: hop still mid-flight after %d samples (guard cap) -- gave up watching, not judged" % [_step, flight.size()])
 		return
 	Engine.time_scale = 1.0
 	await _frames(8)   # back at real speed: let the landing recoil (0.06s + 0.16s) settle
+	await _check_hop_visibility(node, body, cam, flight, cam_samples, offscreen_samples)
 	var landed := node.position
 	var landed_scale: Vector3 = body.scale if is_instance_valid(body) else Vector3.ONE
 	_check_hop_pop(flight)
@@ -1652,24 +1679,156 @@ func _watch_hop(v: Node, me: int, climb_from: Vector3) -> void:
 ## Checklist item 4's mid-jump half, JACKAL-BAR's own "the camera never loses
 ## the active hunter, including mid-jump" -- check 9 deliberately never judges
 ## this (it only runs on the SETTLED shot, see its own comment), so nothing
-## caught it before. Gated like hop-flat/hop-no-squash: below MIN_HOP_SAMPLES
-## there is not enough evidence either way, so say nothing rather than guess
-## off 2-3 frames. Above it, only a hunter off-screen for more than HALF the
-## sampled flight counts as "lost" -- a single-frame graze at the edge of a
-## big arc is not the same complaint as a camera that spends the whole jump
-## looking at empty air, and check 9's own settled check already covers the
-## end state; this is deliberately loose in the same direction, so it adds a
-## real gap without re-flagging the already-known "tiny near the edge" one.
+## caught it before.
+##
+## LEGACY / FALLBACK ONLY as of 2026-09-25 -- see _check_hop_visibility below,
+## which now judges every hop that actually lands. This rect/behind-camera
+## test is real evidence of nothing more than "the hunter's own recorded
+## POSITION projects inside the viewport" -- true for a hunter standing right
+## behind the beast's own back the whole time it's mid-air. A real run found
+## exactly that: step 1 of a 24-step play run, this test said "105/144 sampled
+## frames on screen (27% off)" and passed, while counting actual Frog pixels
+## in every one of the 24 saved frames found ZERO
+## (2026-09-25-0506-director-to-playtester-...). Kept only for the two paths
+## _check_hop_visibility can't safely cover -- the hunter node already freed,
+## or the tween still running when the guard cap fired (replaying a position
+## while the tween is still writing to it every frame would just render the
+## tween's own current pose, not the historical one asked for) -- so a hop
+## that ends abnormally still gets AN answer instead of silence, even a
+## looser one.
 func _check_hop_camera(cam_samples: int, offscreen_samples: int) -> void:
 	if cam_samples < MIN_HOP_SAMPLES:
 		return
 	var frac := float(offscreen_samples) / float(cam_samples)
 	if frac > 0.5:
-		_fail("hunter-lost-mid-hop", "step %d: the active hunter was off screen for %d/%d sampled frames (%.0f%%) during its own jump"
+		_fail("hunter-lost-mid-hop", "step %d: the active hunter's recorded position was off screen for %d/%d sampled frames (%.0f%%) during its own jump (rect test only -- hop did not land cleanly enough to check real pixels)"
 			% [_step, offscreen_samples, cam_samples, frac * 100.0])
 	else:
-		_note("step %d: mid-hop camera coverage -- %d/%d sampled frames on screen (%.0f%% off)"
+		_note("step %d: mid-hop camera coverage (rect test only) -- %d/%d sampled frames on screen (%.0f%% off)"
 			% [_step, cam_samples - offscreen_samples, cam_samples, frac * 100.0])
+
+
+## The real check, replacing _check_hop_camera above for every hop that lands
+## normally. No physics body exists anywhere under game/views to raycast
+## against (checked: no CollisionShape3D on the beast, a hunter, or a
+## foothold), and the one coarse surface estimate that does exist
+## (Combat3D._front_of_beast, a flat per-cell "furthest-forward vertex" grid)
+## is already documented elsewhere in this file as unreliable at this kind of
+## precision -- a cell can return an unrelated disconnected feature, an ear or
+## a far leg, instead of the local skin (the sigil-cheek investigation,
+## 2026-09-24, hit exactly this and threw the approach out). So this asks the
+## one thing that cannot lie: what the renderer actually drew.
+##
+## `flight` already has the hunter's real position AND the real camera's real
+## `global_transform` at every real frame of a hop that has now FULLY
+## finished and landed -- nothing about the original hop's own timing is at
+## risk. This replays a spread of those recorded instants one at a time,
+## after the fact, on a throwaway Camera3D rather than the live one:
+## Combat3D's own `_process` re-derives the live camera's transform every
+## single frame from CURRENT game state (is anyone climbing right now, whose
+## turn it is...), unconditionally, so a first version of this that set the
+## live camera's transform and the hunter's position, then awaited a frame,
+## found `_process` had already snapped the camera back to its resting,
+## whole-beast framing before the render happened -- the hop is over, nobody
+## is climbing, so nothing told it to track a fake mid-air position. Every
+## early sample in a real run read "off the rectangle" for that reason alone,
+## not because the beast occluded anything (rect-only test on the SAME hop
+## said 0% off the whole live flight -- confirmed by temporarily dumping the
+## with/without pairs to disk and looking at them). A throwaway camera that
+## nothing else in the scene touches sidesteps this entirely: it renders
+## from the REAL recorded pose, not a re-derived guess at it.
+func _check_hop_visibility(node: Node3D, body: Node3D, cam: Camera3D, flight: Array,
+		cam_samples: int, offscreen_samples: int) -> void:
+	if cam_samples < MIN_HOP_SAMPLES or not (flight is Array) or (flight as Array).is_empty() \
+			or cam == null or not is_instance_valid(node):
+		return
+	var true_pos := node.position
+	var true_scale: Vector3 = body.scale if is_instance_valid(body) else Vector3.ONE
+	var true_visible := node.visible
+	var vp := Rect2(Vector2.ZERO, Vector2(root.get_visible_rect().size))
+	# A plain new Camera3D, not cam.duplicate() -- duplicate() would also bring
+	# along any children cam has (shake rigs, listeners), which this has no
+	# use for and no business copying. Just the lens.
+	var replay_cam := Camera3D.new()
+	replay_cam.fov = cam.fov
+	replay_cam.near = cam.near
+	replay_cam.far = cam.far
+	replay_cam.projection = cam.projection
+	replay_cam.keep_aspect = cam.keep_aspect
+	cam.get_parent().add_child(replay_cam)
+	var n: int = (flight as Array).size()
+	var stride: int = maxi(1, int(ceil(float(n) / float(HOP_VIS_SAMPLES))))
+	var checked := 0
+	var drawn := 0
+	var i := 0
+	while i < n:
+		var f: Dictionary = (flight as Array)[i]
+		node.position = f.get("pos", true_pos)
+		if is_instance_valid(body):
+			body.scale = f.get("scale", true_scale)
+		node.visible = true
+		replay_cam.global_transform = f.get("cam", cam.global_transform)
+		replay_cam.make_current()
+		await RenderingServer.frame_post_draw
+		var rect := Combat3D.hunter_screen_rect(replay_cam, Combat3D._merged_aabb(node)).intersection(vp)
+		checked += 1
+		if rect.size.x >= 2.0 and rect.size.y >= 2.0:
+			# Off the theoretical rectangle entirely -- can't be drawn either,
+			# no need to spend the two extra renders confirming it.
+			var with_img := root.get_viewport().get_texture().get_image()
+			node.visible = false
+			await RenderingServer.frame_post_draw
+			var without_img := root.get_viewport().get_texture().get_image()
+			if _rect_pixels_differ(with_img, without_img, rect):
+				drawn += 1
+		i += stride
+	cam.make_current()
+	replay_cam.queue_free()
+	node.position = true_pos
+	if is_instance_valid(body):
+		body.scale = true_scale
+	node.visible = true_visible
+	if checked == 0:
+		return
+	var offscreen := checked - drawn
+	var frac := float(offscreen) / float(checked)
+	var rect_frac := float(offscreen_samples) / float(maxi(cam_samples, 1))
+	if frac > 0.5:
+		_fail("hunter-lost-mid-hop", "step %d: the active hunter was actually drawn in only %d/%d replayed frames (%.0f%% off) during its own jump -- rect-only test said %.0f%% off"
+			% [_step, drawn, checked, frac * 100.0, rect_frac * 100.0])
+	else:
+		_note("step %d: mid-hop pixel coverage -- %d/%d replayed frames actually drew the hunter (%.0f%% off; rect-only test said %.0f%% off)"
+			% [_step, drawn, checked, frac * 100.0, rect_frac * 100.0])
+
+
+## The real-vs-background test _check_hop_visibility relies on: two renders of
+## the SAME instant, one with the hunter visible and one without, so the only
+## possible difference between them is whatever the hunter's own body drew.
+## Stepped 2px on each axis -- a hunter's own on-screen box is never so thin
+## that halving the resolution could hide a real, visible body -- and stops
+## the moment HOP_VIS_MIN_DRAWN_PX is reached rather than scanning the whole
+## rect every time.
+static func _rect_pixels_differ(with_img: Image, without_img: Image, rect: Rect2) -> bool:
+	var size := with_img.get_size()
+	var x0: int = clampi(int(rect.position.x), 0, size.x - 1)
+	var y0: int = clampi(int(rect.position.y), 0, size.y - 1)
+	var x1: int = clampi(int(rect.position.x + rect.size.x), 0, size.x)
+	var y1: int = clampi(int(rect.position.y + rect.size.y), 0, size.y)
+	var count := 0
+	var y := y0
+	while y < y1:
+		var x := x0
+		while x < x1:
+			var a := with_img.get_pixel(x, y)
+			var b := without_img.get_pixel(x, y)
+			var d := (absf(a.r - b.r) + absf(a.g - b.g) + absf(a.b - b.b)) * 255.0
+			if d > HOP_VIS_PIXEL_DELTA:
+				count += 1
+				if count >= HOP_VIS_MIN_DRAWN_PX:
+					return true
+			x += 2
+		y += 2
+	return false
 
 
 ## Check 5d, JACKAL-BAR's "the jump reads... at the size it plays" mid-air:

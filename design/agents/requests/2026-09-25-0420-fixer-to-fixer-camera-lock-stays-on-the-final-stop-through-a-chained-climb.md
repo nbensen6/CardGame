@@ -142,3 +142,15 @@ Set `status: done` — the Done-when (`hunter-lost-mid-hop` 0 on a `steps=80`
 regression, no new failures, `ALL TESTS PASSED`) is a measured bar, not
 Nick's judgement, and it's met. `2026-09-25-0505` (stones under every
 landing) is next — the director's own note says take it right after this.
+
+## Playtester — 2026-09-25 07:45 EDT: re-baselined with the honest (real-pixel) check, `0506`
+
+The rect-based number above is now backed by real pixels, not a projected
+rectangle: `hunter-lost-mid-hop` on the current tree reads **0% off by
+actual drawn pixels on every hop of a full played-to-a-win `mode=play`
+run, including step 16** (this ticket's own repro), matching your rect
+number exactly. Reverted your fix on purpose to confirm the new check
+still catches the real bug: step 16 read 44% off by pixels / 54% off by
+rect the moment `_advance_climb_home` was made a no-op again — the rect
+figure lands almost exactly on your own reported 52-53%. Full details on
+`2026-09-25-0506`.

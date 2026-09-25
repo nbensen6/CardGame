@@ -2,21 +2,117 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-25T05:31
-working_on: Handed the chest-stone half of the on-body split back to the director — real 42-unit gap, not a bug in the check.
+updated: 2026-09-25T07:45
+working_on: Chest-stone half of 0257 next — apply the new drawn-pixel primitive to beast-behind-stone, same as hunter-lost-mid-hop.
 ---
 
 # playtester
 
-## This run — 2026-09-25 05:31 EDT
+## This run — 2026-09-25 07:45 EDT
 
-- **Did:** took the director's on-body-split ticket; built their proposed
-  rule and printed real numbers before trusting it.
-- **Worked?** Half. Sigil stone: clean, 0 false fires up to 48.9%. Chest
-  stone: genuinely ~42 units in front of the beast, not "on it."
-- **Next:** handed the chest-stone call back to the director — my numbers,
-  their decision.
+- **Did:** rebuilt `hunter-lost-mid-hop` on real drawn pixels (render diff,
+  not a projected rectangle) per the director's `0506`, high priority.
+- **Worked?** Yes. 0% off on every hop, a real full win — the fixer's `0420`
+  already fixed the underlying bug; my check confirms it honestly.
+- **Next:** apply the same primitive to `beast-behind-stone`'s chest stone
+  (`0257`, folded into this one).
 - **Need from you:** nothing.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | unchanged — closed several runs ago (Play feedback) |
+| 2 | hunters land on the beast correctly | unchanged this run — `beast-behind-stone` chest-stone half still open (`0257`), sigil split still clean |
+| 3 | jump animation (squash/arc/landing/facing) | unchanged — clean |
+| 4 | camera | **rebuilt this run** — `hunter-lost-mid-hop` now judges real drawn pixels, not a projected rectangle; 0 fires across a full played-to-a-win `play` run, `hover`, `hands` (1-10) |
+| 5 | nothing errors | clean — 0 `script-error` across all three modes |
+
+### Why this run
+
+The director's `0506` (high priority) found the exact gap `0257`'s own
+05:57 note predicted: `hunter-lost-mid-hop` asked only whether the hunter's
+recorded POSITION projected inside the viewport rectangle, which is true for
+a hunter standing directly behind the beast's own back the whole flight. On
+the director's own repro (step 1 of a 24-step run, the Leap) the old check
+said "105/144 sampled frames on screen (27% off)" and passed, while a human
+counting actual Frog pixels in all 24 saved frames found zero.
+
+**Built `_check_hop_visibility` (`game/tools/playtest.gd`), replacing
+`_check_hop_camera` for every hop that lands normally.** No physics body
+exists anywhere under `game/views` to raycast against (checked — no
+`CollisionShape3D` on the beast, a hunter, or a foothold), and the one
+coarse surface estimate that does exist (`Combat3D._front_of_beast`) is
+already documented elsewhere in this file as unreliable at this kind of
+precision. So this asks the one thing that cannot lie: what the renderer
+actually drew. Once a hop's tween finishes, it replays up to 16 of the
+hop's own already-recorded instants, evenly spread: sets the hunter back to
+its real historical position, renders once with it shown and once hidden on
+a **throwaway Camera3D set to that instant's own real recorded
+`global_transform`** (recorded into `flight` alongside the hunter's
+position, at zero extra render cost), and counts differing pixels inside
+the hunter's projected rect. Nothing differs -> nothing was drawn ->
+occluded, whatever the rectangle said. The old rect-only test survives as a
+fallback for the two cases a replay can't safely cover (node already freed;
+tween still running when the guard cap fired, which would just fight the
+replay for `node.position`).
+
+**A first version was wrong, and printing the real numbers caught it before
+it shipped** — the same discipline the sigil-split investigation used. It
+reused the LIVE camera, banking on Combat3D's own `_process` re-aiming it
+every frame off the hunter's (faked, historical) position. It doesn't:
+`_process` derives the camera from CURRENT state (is anyone climbing right
+now), and once a hop has landed, nobody is — it snapped straight back to
+the resting framing regardless of where I put the hunter, so every early
+sample in a real flight read "off the rectangle" for that reason alone, not
+occlusion. Caught it by dumping the with/without image pairs to disk on the
+exact hop the rect-only test called 0% off the whole live flight, and
+finding real Frog pixels in every one — the check was measuring its own
+methodology, not the beast. Fixed by rendering from a plain new Camera3D
+holding the real recorded historical transform instead, which nothing else
+in the scene can silently re-aim.
+
+**Verified both directions, full three-mode baseline, real committed
+code:** `play` (40 steps, played to a real win) — 9 hops checked, **0% off
+by pixels on every one** (`step 0` 16/16, `step 1` 16/16, `step 2` 12/12,
+`step 9` 12/12, `step 11` 12/12, `step 16` 16/16 — the fixer's own `0420`
+repro step, `step 19` 12/12, `step 20` 12/12, `step 27` 14/14), matching
+the rect-only number exactly every time; `hover` and `hands` (1-10) have no
+hops to check, came back with nothing but the known, pre-existing
+`beast-behind-stone` (`0257`) — no `hunter-lost-mid-hop`,
+`hop-position-pop`, or `script-error` anywhere.
+
+Then temporarily reverted the fixer's `0420` fix (`_advance_climb_home`
+made a no-op, one line, `combat_3d.gd`, never committed) to restore the
+exact pre-fix bug and reran: `step 0` 29% off (was 0%), `step 1` 19% off
+(was 0%), `step 16` **44% off by pixels / 54% off by rect** (was 0%/0%) —
+the rect figure lands almost exactly on the fixer's own reported 52-53% on
+that exact step. Real, honest movement in the expected direction on every
+hop the bug touches. Reverted; `git diff` on `combat_3d.gd` clean before
+committing anything.
+
+Did not move the 50% threshold or `MIN_HOP_SAMPLES`, per the ticket. Also
+fixed the ticket's own 06:05 addendum in the same commit: the 24 saved
+`hop_*.png` debug shots now space themselves across the whole flight
+(`HOP_SHOT_PERIOD`) instead of only ever catching a slow-mo hop's opening
+~14% — a separate mechanism from the check itself, sharing nothing but the
+file.
+
+`run_tests.gd`: `ALL TESTS PASSED`, before and after. One commit:
+`game/tools/playtest.gd` only. Re-baselined the fixer's `0420` with the
+honest number (one line on that ticket, per `0506`'s own Done-when). Left
+`0257` open with a short note — the chest-stone half (same primitive,
+applied to `beast-behind-stone`) is next run, per the director's own "lands
+with it or the run after."
+
+![[frames/playtester/2026-09-25-hunter-lost-mid-hop-pixel-leap-launch.png]]
+The same Leap the director's own ticket showed empty (step 1, foot 2→6),
+real committed code: the Frog clear on the near stone at launch.
+
+![[frames/playtester/2026-09-25-hunter-lost-mid-hop-pixel-leap-landing.png]]
+Same flight, near the sigil: the Frog visible again, small but real. Not
+one frame of this Leap on the current tree matches the ticket's original
+"no Frog anywhere" repro.
 
 Checklist snapshot:
 

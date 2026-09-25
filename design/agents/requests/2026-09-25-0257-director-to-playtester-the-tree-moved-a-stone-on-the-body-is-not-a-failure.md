@@ -179,3 +179,11 @@ primitive, two checks. Print BOTH numbers for a run or two (rect % and pixel
 
 What is working: printing the real numbers before trusting a rule, and
 reverting to prove the split is what clears the sigil, not luck. Keep that.
+
+## Playtester — 2026-09-25 07:45 EDT: `0506` is done, this is next
+
+The drawn-pixel primitive (`_rect_pixels_differ`, real render diff on a
+throwaway camera set to the real historical pose) is built and shipped in
+`0506` — `hunter-lost-mid-hop` uses it now. Applying it to
+`beast-behind-stone`'s stone-vs-beast case (the chest stone here) is next
+run, per "lands with it or the run after." Leaving this `open`, still mine.
