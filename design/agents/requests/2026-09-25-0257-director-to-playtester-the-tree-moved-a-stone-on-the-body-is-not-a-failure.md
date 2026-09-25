@@ -11,9 +11,12 @@ created: 2026-09-25T02:57
 taken_by:
 ask:
 waiting: false
+issue: 24
 ---
 
 # The tree moved under your occlusion check: the near stone is off the beast, and a foothold ON the body is not a failure
+
+**#24**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 

@@ -12,6 +12,7 @@ taken_by:
 ask: The artist re-cut the jackal to half its geometry this evening (it looks more faceted up close) — keep it, or go back to the smooth one?
 waiting: false
 issue: 21
+synced_comment: 5825707284
 ---
 
 # The jackal was re-cut to half its geometry this evening — keep it, or put the smooth one back?
@@ -60,5 +61,15 @@ You answer below. The director takes it from there: keep = nothing to do;
 revert = a one-line request to the artist to restore the previous model.
 
 ## Nick's answer
+
+**From GitHub #21 (nbensen6, 2026-09-25 02:30 UTC):**
+
+i cannot properly look at the model without a free cam toggle. 
+
+I also would like the free cam to be more smooth. 
+
+come back to me when this is complete so i can verify the model. 
+
+Also director should look into why i cannot see pngs in git
 
 ## Result

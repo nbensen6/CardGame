@@ -11,9 +11,12 @@ created: 2026-09-24T22:56
 taken_by:
 ask: Please drop the Risk of Rain 2 camera picture you sent at 22:30 into design/art/references so the fixer can render beside it.
 waiting: false
+issue: 22
 ---
 
 # Drop your Risk of Rain 2 camera picture into the references folder
+
+**#22**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 

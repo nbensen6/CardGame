@@ -11,9 +11,12 @@ created: 2026-09-25T08:03
 taken_by:
 ask:
 waiting: false
+issue: 29
 ---
 
 # No check says whether the hunter is standing on a stone — the 07:51 push put the Frog on air and every check stayed green
+
+**#29**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 

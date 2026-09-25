@@ -11,9 +11,12 @@ created: 2026-09-25T02:58
 taken_by:
 ask:
 waiting: false
+issue: 25
 ---
 
 # When the Frog takes a hit, the damage number sits on top of it and hides it
+
+**#25**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 

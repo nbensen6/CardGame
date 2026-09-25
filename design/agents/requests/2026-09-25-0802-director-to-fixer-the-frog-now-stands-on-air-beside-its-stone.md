@@ -11,9 +11,12 @@ created: 2026-09-25T08:02
 taken_by: fixer
 ask:
 waiting: false
+issue: 28
 ---
 
 # The chest is clear, but the Frog now stands on air beside its stone and the path reads as scattered debris
+
+**#28**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 

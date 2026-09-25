@@ -11,9 +11,12 @@ created: 2026-09-25T09:05
 taken_by: fixer
 ask:
 waiting: false
+issue: 30
 ---
 
 # After a fall the Frog hangs in the air beside an empty stone — and the "grip" shot everyone has been judging IS that fall
+
+**#30**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 

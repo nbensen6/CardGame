@@ -11,9 +11,12 @@ created: 2026-09-25T04:05
 taken_by:
 ask:
 waiting: false
+issue: 26
 ---
 
 # At rest the Frog stands side-on, looking off the right edge of the screen; Nick's shot wants its back to us and its eyes on the beast
+
+**#26**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 

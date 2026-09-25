@@ -11,9 +11,12 @@ created: 2026-09-25T02:56
 taken_by:
 ask: The big near stone reads as a pale box with an orange lid, but your drawing has plain rounded boulders — plain boulders, or keep the flat top and orange rim as a "you can stand here" cue?
 waiting: false
+issue: 23
 ---
 
 # The near stone is a box with an orange lid; your drawing has plain boulders
+
+**#23**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 
