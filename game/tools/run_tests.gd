@@ -2445,6 +2445,10 @@ func _finish_with_deferred_tests() -> void:
 	_test_anyone_off_ground_epsilon()
 	_test_focus_camera_holds_the_wide_ground_shot_before_anyone_climbs()
 	_test_focus_camera_still_locks_tight_once_someone_climbs()
+	# The Risk of Rain shot (director/Nick, 2026-09-24 22:56 EDT): over-the-
+	# shoulder on the active hunter at rest as well as mid-climb.
+	_test_want_shoulder_truck_engages_at_rest_now()
+	_test_want_shoulder_truck_still_off_for_the_establishing_wide_and_big_leaps()
 
 	_test_backlog86_draw_relic_mod_grants_extra_cards_every_round_not_just_the_first()
 	_test_backlog86_real_draw_relics_reach_relic_totals_and_grant_extra_cards()
@@ -29071,6 +29075,29 @@ func _test_anyone_off_ground_epsilon() -> void:
 	_expect(Combat3D.anyone_off_ground([{"home": Vector3(-2.9, 0.0, 26.7)},
 			{"home": Vector3(2.9, 5.0, 26.7)}]),
 		"one climbing hunter is enough, even with the other still grounded")
+
+
+## Director, 2026-09-24 22:56 EDT: the Risk of Rain shot is over-the-
+## shoulder on the active hunter AT REST too, not only while climbing --
+## the previous rule (want_ots gated on _focused alone) is exactly why the
+## resting shot used to sit dead-centre on the pair instead of trucking off
+## to one side.
+func _test_want_shoulder_truck_engages_at_rest_now() -> void:
+	_expect(is_equal_approx(Combat3D.want_shoulder_truck(false, true, false, false, 0.0, 8.0), 1.0),
+		"grounded and settled (not climbing) must now engage the truck")
+	_expect(is_equal_approx(Combat3D.want_shoulder_truck(true, false, false, false, 0.0, 8.0), 1.0),
+		"climbing (focused) must still engage the truck, unchanged from before")
+	_expect(is_equal_approx(Combat3D.want_shoulder_truck(false, false, false, false, 0.0, 8.0), 0.0),
+		"neither grounded nor focused (mid-transition) must not truck")
+
+
+func _test_want_shoulder_truck_still_off_for_the_establishing_wide_and_big_leaps() -> void:
+	_expect(is_equal_approx(Combat3D.want_shoulder_truck(false, true, true, false, 0.0, 8.0), 0.0),
+		"the establishing wide shot must stay centred even though it starts out grounded")
+	_expect(is_equal_approx(Combat3D.want_shoulder_truck(true, false, false, true, 0.0, 8.0), 0.0),
+		"air_chase (mid-hop dead-zone follow) must stay off, same as before this change")
+	_expect(is_equal_approx(Combat3D.want_shoulder_truck(true, false, false, false, 5.0, 8.0), 0.0),
+		"a leap taller than the third-window threshold frames the whole arc, not a shoulder")
 
 
 ## request #11 ("hunters far back, stones a visible path"): before either

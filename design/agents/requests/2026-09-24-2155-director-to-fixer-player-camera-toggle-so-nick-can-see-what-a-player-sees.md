@@ -2,14 +2,14 @@
 tags:
   - request
 from: director
-to: fixer
-status: taken
+to: nick
+status: open
 priority: high
 beast: cinder_jackal
-eta: tonight — the default-lock half is in this push; the Risk of Rain framing is next run
+eta: done, pending your look
 created: 2026-09-24T21:55
 taken_by: fixer
-ask:
+ask: Is this the Risk of Rain shot you wanted — hunter close in the foreground, beast diagonal above it — or does it need another pass?
 waiting: false
 ---
 
@@ -211,3 +211,80 @@ His Risk of Rain 2 picture is not in the repo yet; asked him for it
 separately (`2026-09-24-2256-director-to-nick-drop-the-risk-of-rain-picture-in.md`).
 Until it lands, his drawing above is the target for the diagonal and his
 22:25 words for the distance.
+
+## Result, pass 3 (the framing) — fixer, 2026-09-24 23:44 EDT
+
+The shot is in. Handing back per the director's own instruction above and
+per COMMON §5 — this Done-when is Nick's own eyes, not mine to close.
+
+**Did.** Two small, isolated changes in `_aim_camera`/`_apply_orbit`
+(`combat_3d.gd`), nothing else touched:
+
+1. **The over-the-shoulder truck now also engages at rest.** It always ran
+   for the climbing camera (`_focused`); the resting shot never got a turn
+   because `_focus_camera` explicitly clears `_focused` while grounded
+   (that's request #11's own fix, still correct and untouched). Pulled the
+   decision into a new static, `want_shoulder_truck(focused, grounded,
+   establishing, air_chase, air_span, third_window)` — same rule as before,
+   ORed with `grounded` — so it's provable with no camera or scene tree.
+   This alone is what turns the dead-centre lock into the diagonal: the
+   pivot was already locked to the active hunter's (x, z) (`_lock_point`,
+   unchanged), it just never trucked sideways off that lock while resting.
+2. **Closer and a touch less tilted-up.** `GROUND_VIEW_DIST` 9.0 → 3.0,
+   `GROUND_VIEW_EYE` 3.2 → 1.05 (scaled down with it, or the hunter's own
+   look-at height overshoots and pushes them down under the card fan —
+   tested that failure live at an intermediate 5.5/3.2 pairing before
+   finding the right ratio), and a new `GROUND_VIEW_PITCH` (0.08, a touch
+   of look-down) used only while grounded — the climbing camera's own
+   tilt-up-at-the-base curve (`ORBIT_PITCH_MIN` → 0.10 over `_climb_t`) is
+   completely untouched, gated behind the same `grounded` flag.
+
+**Proof.**
+- `run_tests.gd`: two new tests on `want_shoulder_truck` (engages when
+  grounded-and-settled or focused; stays off during the establishing wide
+  and a big-leap air-chase, matching the climbing camera's existing
+  exceptions exactly) — `ALL TESTS PASSED`, full suite.
+- `state=3dclimb`/`state=3dgrip` (mid-climb camera): **pixel-identical**
+  `CAM`/`HUNTER`/`VIS` numbers before and after, including the two
+  pre-existing `VIS FAIL hunter1` lines (confirmed present, byte-for-byte
+  identical, on `git stash` of this change too) — the climbing camera this
+  ticket was told not to touch is provably untouched.
+- `state=3d` at 1:1, fresh render, this pass:
+  ![[frames/fixer/2026-09-24-ror-shot-camera-close-shoulder.png]]
+  Before (Nick's own 22:12 commit, what the director measured):
+  ![[frames/fixer/2026-09-24-ror-shot-before-centred.png]]
+  Measured on the actual pixels (green/dark silhouette scan, not eyeballed):
+  the Frog now stands ~24-30% of frame height (director's ask: "a quarter")
+  — met. The beast's own visible height only reaches ~24-29% before the
+  near foothold stone (correctly, now in the foreground) occludes its legs
+  — short of "the upper two thirds." Real reason, not a tuning miss: the
+  hunter-to-beast gap is `GROUND_STANDOFF = 4.2` (Nick's own 22:12 change,
+  ~26.7 world units), and camera-to-beast distance is dominated by that gap,
+  not by `GROUND_VIEW_DIST` — cutting the latter from 9 to 3 (a 3x change)
+  only moves camera-to-beast from ~35.7 to ~29.7 (a 1.2x change), so the
+  beast can only ever grow modestly from this ticket alone. Getting the
+  beast to fill two-thirds of the frame needs the gap itself narrowed,
+  which is #14's job, explicitly off-limits here ("do NOT move the stones
+  or hunters").
+- Full 80-step playtest: only the already-open, pre-existing failures
+  (`hop-distance-band` 62, `hunter-off-marker` 8, `hop-position-pop` 1 —
+  all present, identical counts, on `git stash` of this change) plus ONE
+  new category, `camera-ots-while-grounded` (1) — expected, not a
+  regression: that check was written to assert the OLD behaviour (shoulder
+  stays at 0 while grounded) and the playtester's own ticket
+  (`2026-09-24-2233-director-to-playtester-checks-measure-the-old-route-and-the-old-camera.md`,
+  no issue number yet) already exists to flip it to "third-person on the
+  active hunter always," per Nick's own 22:25 words. Left it alone rather
+  than edit the playtester's file mid-ticket.
+
+**What I did NOT do.** Didn't touch `GROUND_STANDOFF`, the stones, or the
+climbing camera. Didn't try to force the beast to two-thirds by narrowing
+its own gap — that's #14, and the instruction here was explicit. Didn't
+edit `playtest.gd`'s `camera-ots-while-grounded` check even though this
+change makes it fail on purpose — it's the playtester's own ticket to flip,
+already filed, already taken.
+
+**ask:** is this the shot — closer, over-the-shoulder, diagonal — or does
+distance/pitch/eye-height need another pass once you've seen it move (not
+just a static frame)? If the beast still reads too small, that's the gap
+from #14, not this camera.

@@ -2,13 +2,52 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-24T22:40
-working_on: Shipped the camera lock-by-default (Nick's live ask); RoR shot framing itself is next.
+updated: 2026-09-24T23:44
+working_on: Handed the Risk of Rain camera shot back to Nick; #14 (stones/gap) is next.
 ---
 
 # fixer
 
-## This run — 2026-09-24 22:40 EDT
+## This run — 2026-09-24 23:44 EDT
+
+- **Did:** finished the Risk of Rain camera pass — the resting shot now
+  trucks over-the-shoulder like the climbing one, and sits closer.
+- **Worked?** Yes. Frog now fills about a quarter of the frame, like you
+  asked; the beast is capped smaller by #14's own gap, flagged not fixed.
+- **Next:** your look at the frame; #14 (stones/gap) once you weigh in.
+- **Need from you:** does the shot read right? Frame's on the ticket.
+
+## Now
+
+Finished `2026-09-24-2155-...player-camera-toggle...` (the Risk of Rain
+framing pass the director queued after the lock-by-default push). The
+resting camera now trucks over-the-shoulder onto the active hunter
+(`want_shoulder_truck`, new pure static, ORs in a `grounded` case the old
+rule never had) and sits closer (`GROUND_VIEW_DIST` 9→3, `GROUND_VIEW_EYE`
+3.2→1.05, new `GROUND_VIEW_PITCH` 0.08) — the flat, dead-centre "everyone
+on one vertical line" shot is now a real diagonal, Frog foreground-left,
+beast upper-right. Climbing camera is provably untouched (pixel-identical
+`state=3dclimb`/`3dgrip` before/after). Full numbers, before/after frames,
+and the one genuine limit found (the beast can't reach "upper two-thirds"
+without #14 narrowing its own gap — out of scope here) are in the
+ticket's own `## Result, pass 3`. Handed back `to: nick`, never `done` —
+the ticket's own Done-when is his eyes on it.
+
+One expected, non-regression playtest fail: `camera-ots-while-grounded`
+(1) — that check asserts the OLD grounded behaviour on purpose and the
+playtester already has a ticket open (`2026-09-24-2233-...`) to flip it to
+match tonight's change. Left it alone rather than touch the playtester's
+own file mid-ticket. `hop-distance-band` (62), `hunter-off-marker` (8) and
+`hop-position-pop` (1) are pre-existing, confirmed identical on `git
+stash` of this change.
+
+![[frames/fixer/2026-09-24-ror-shot-camera-close-shoulder.png]]
+
+Next real pick, once Nick answers (or if nothing's open next run): #14
+(stones-in-front / the gap), still `taken` by fixer, blocked on a
+parametric-path rewrite for the open-air holds.
+
+## Old: 2026-09-24 22:40 EDT — the camera lock itself
 
 - **Did:** built the Camera Dev/Player menu toggle, then Nick answered live
   mid-push wanting it locked by default in every build — flipped that too.

@@ -337,8 +337,9 @@ const GROUND_STANDOFF := 4.2
 ## The grounded camera's fixed standoff behind the active hunter, in world
 ## units, and where it looks as a multiple of hunter height. Fixed on purpose:
 ## see the long note at its use in _aim_camera.
-const GROUND_VIEW_DIST := 9.0
-const GROUND_VIEW_EYE := 3.2
+const GROUND_VIEW_DIST := 3.0
+const GROUND_VIEW_EYE := 1.05
+const GROUND_VIEW_PITCH := 0.08
 ## How long a coach hint stays up before dismissing itself. Long enough to read
 ## twice, short enough that it never becomes a thing you have to click away
 ## (Nick, 2026-08-06: the tips are annoying). Acting also dismisses it — if you
@@ -2205,7 +2206,8 @@ func _aim_camera(delta: float, snap: bool) -> void:
 		_air_chase = _air_settle > 0.0
 		if _air_settle <= 0.0:
 			_air_span = 0.0
-	if not _user_framed and not anyone_off_ground(_hunters):
+	var grounded := not _user_framed and not anyone_off_ground(_hunters)
+	if grounded:
 		# ON THE GROUND THE CAMERA DOES NOT FIT THE BEAST. It stands a fixed
 		# distance behind the active hunter and lets the beast be however big it
 		# happens to be from there.
@@ -2256,8 +2258,12 @@ func _aim_camera(delta: float, snap: bool) -> void:
 	# The over-the-shoulder truck, eased. Off for the establishing wide (that shot
 	# is of the BEAST, and trucking would slide it off centre), and off while a
 	# jump is being framed whole — mid-arc the subject is the arc, not a shoulder.
-	var want_ots := 1.0 if (_focused and not _establishing and not _air_chase
-			and _air_span <= THIRD_WINDOW * 0.55) else 0.0
+	# On the ground it is on too (director, 2026-09-24 22:56): the resting shot
+	# is over-the-shoulder like the climbing one, not a dead-centre lock, or the
+	# hunter/stones/beast all sit on one vertical line and the depth reads as
+	# height instead of distance.
+	var want_ots := want_shoulder_truck(_focused, grounded, _establishing, _air_chase,
+			_air_span, THIRD_WINDOW)
 	if snap:
 		_shoulder = want_ots
 	else:
@@ -2271,11 +2277,17 @@ func _aim_camera(delta: float, snap: bool) -> void:
 		_focus_camera(THIRD_WINDOW, 0.20)
 		return
 	if not _user_framed:
-		# Tilted up at the base, flattening out as you gain height — and only ever
-		# flattening. A camera that tips DOWN at the top looks at a Titan's scalp,
-		# which reads as a floor; near-level keeps the silhouette against the sky,
-		# and a silhouette is what makes something look big.
-		_pitch = lerpf(ORBIT_PITCH_MIN, 0.10, _climb_t)
+		if grounded:
+			# The Risk of Rain shot (director, 2026-09-24 22:56 / Nick, 22:25):
+			# a touch above the active hunter, looking slightly down at their
+			# back, not tilted up at the beast the way the climb does.
+			_pitch = GROUND_VIEW_PITCH
+		else:
+			# Tilted up at the base, flattening out as you gain height — and only ever
+			# flattening. A camera that tips DOWN at the top looks at a Titan's scalp,
+			# which reads as a floor; near-level keeps the silhouette against the sky,
+			# and a silhouette is what makes something look big.
+			_pitch = lerpf(ORBIT_PITCH_MIN, 0.10, _climb_t)
 	_apply_orbit()
 
 
@@ -2402,6 +2414,20 @@ static func anyone_off_ground(hunters: Array) -> bool:
 		if float((h["home"] as Vector3).y) >= 0.05:
 			return true
 	return false
+
+
+## Whether the over-the-shoulder truck should be engaged this frame: while
+## climbing (`focused`) exactly as before, and now also at rest (`grounded`) --
+## the Risk of Rain shot (director, 2026-09-24 22:56 EDT, relaying Nick 22:25
+## EDT) is over-the-shoulder on the active hunter at rest AND mid-climb, not a
+## dead-centre lock only while climbing. Off during the establishing wide (that
+## shot is of the beast, trucking would slide it off centre) and while a big
+## leap is framed whole (mid-arc the subject is the arc, not a shoulder),
+## exactly as the climbing case already required.
+static func want_shoulder_truck(focused: bool, grounded: bool, establishing: bool,
+		air_chase: bool, air_span: float, third_window: float) -> float:
+	return 1.0 if ((focused or grounded) and not establishing and not air_chase
+			and air_span <= third_window * 0.55) else 0.0
 
 
 ## What the camera should be looking at, and how much world to fit around it:
