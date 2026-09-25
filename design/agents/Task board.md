@@ -11,9 +11,9 @@ _Generated from the agents' own status notes and the open requests. Do not edit 
 | agent | | doing now | next | tickets |
 |---|---|---|---|---|
 | **director** | idle | nothing on screen moved since 09:05; Nick answered two of my tickets, one eleven hours … | fixer eases the Dev camera so Nick can inspect the jackal; then hunters' backs to the … | #18 #21 |
-| **artist** | idle | re-verified fresh again (import, tests, two renders) — all three Nick tickets still … | whichever of #13, the faceted jackal, or the near-stone ticket Nick answers first. | #13 |
+| **artist** | idle | checked git history and the three blocking tickets directly (not a grep) — nothing … | whichever of #13, the faceted jackal, or the near-stone ticket Nick answers first. | #13 |
 | **playtester** | idle | closed `0257`'s chest-stone half — `beast-behind-stone` now judges real drawn pixels, not … | `0803` (high) — build `hunter-on-stone`, the check that should have caught the … | #29 #31 |
-| **fixer** | idle | investigated #0905 (grip shot shows a fallen Frog mid-air) — it's a harness timing bug, … | #0258 or #0405, both open `to: fixer`, both older than this one. | #14 #19 #25 #26 #30 #? |
+| **fixer** | 🟢 running | investigated #0905 (grip shot shows a fallen Frog mid-air) — it's a harness timing bug, … | #0258 or #0405, both open `to: fixer`, both older than this one. | #14 #19 #25 #26 #30 #33 |
 
 ## Tickets
 
@@ -29,7 +29,7 @@ _Generated from the agents' own status notes and the open requests. Do not edit 
 | #25 | fixer | normal | — | open | When the Frog takes a hit, the damage number sits on top of … |
 | #26 | fixer | normal | — | open | At rest the Frog stands side-on, looking off the right edge … |
 | #30 | fixer | high | rides #0933 (playtester's harness fix) | taken | After a fall the Frog hangs in the air beside an empty … |
-| #- | fixer | high | — | open | The Dev camera jerks under the mouse, so Nick cannot look … |
+| #33 | fixer | high | next run | taken | The Dev camera jerks under the mouse, so Nick cannot look … |
 | #23 | nick | normal | — | open | The near stone is a box with an orange lid; your drawing … |
 | #27 | nick | normal | — | open | At the weak point the shot is sky, the beast is behind the … |
 
@@ -46,11 +46,11 @@ _Generated from the agents' own status notes and the open requests. Do not edit 
 - Next: fixer eases the Dev camera so Nick can inspect the jackal; then hunters' backs to the camera.
 - **Needs you:** nothing new; #21 and #22 are off your board, five rows left.
 
-**artist** — 2026-09-25 09:10 ET
+**artist** — 2026-09-25 10:09 ET
 
-- Did: re-verified fresh again (import, tests, two renders) — all three Nick tickets still blank; nothing new open for the artist.
+- Did: checked git history and the three blocking tickets directly (not a grep) — nothing changed since the 09:10 run one hour ago.
 - Next: whichever of #13, the faceted jackal, or the near-stone ticket Nick answers first.
-- **Needs you:** your answer on those same three — #13 has been open since yesterday 17:20, going on 16 hours.
+- **Needs you:** your answer on those same three — #13 has been open since yesterday 17:20, going on 17 hours.
 
 **playtester** — 2026-09-25 09:39 EDT
 
