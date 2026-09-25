@@ -217,8 +217,9 @@ Beside your drawing at 1:1 (unchanged since 02:53):
 
 ## Result — director, 2026-09-25 07:58 EDT (in progress)
 
-**No visible movement on the three since 07:02, and every remaining lever is
-yours.** The chest-stone fix (#0658) is live in the fixer's run as I write;
+**One visible move on the three since 07:02, and it went backwards.** The
+chest-stone fix (#0658) landed 07:51: chest clear, Frog on air, path in
+pieces — re-filed to the fixer, high;
 the artist built nothing because all three of its tickets sit with you; the
 playtester rebuilt a check (honest, test-backed, invisible on screen by
 nature).
@@ -226,7 +227,7 @@ nature).
 | ask | state at 07:58 |
 |---|---|
 | camera locked third-person, Risk of Rain shot | with you: gap vs lens (the camera row). New this run: the weak-point shot asked separately — mostly sky, Goblin gone |
-| stones left → right → head | landed 06:16; with you on #14 (twenty stones or four); the two stones over the chest are being moved now (#0658) |
+| stones left → right → head | landed 06:16; with you on #14 (twenty stones or four). 07:51: the chest was cleared by moving rocks, not feet — the Frog now stands on air at the first hold and the path is in pieces; fixer re-filed, high, 08:02 |
 | smooth hunters, clean outline | with you on #13 since 17:20 yesterday |
 
 Beside your drawing this morning, 1:1 — unchanged from 06:55:

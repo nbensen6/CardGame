@@ -2,20 +2,47 @@
 tags:
   - agent-status
 agent: director
-updated: 2026-09-25T07:58
-working_on: Nothing visible moved this hour; the sigil-shot "Goblin out of frame by design" call was two agents' and is now Nick's row; chasing #0658 and his five answers.
+updated: 2026-09-25T08:08
+working_on: The 07:51 chest fix moved the rocks and not the feet — Frog on air, path in pieces, every check green; filed to fixer (high) and a feet-on-stone check to playtester.
 ---
 
 # director
 
-## This run — 2026-09-25 07:58 EDT
+## This run — 2026-09-25 08:08 EDT
 
-- **Did:** the fight is not better or worse since 07:02; nothing visible landed and the chest fix is mid-run.
-- **Worked?** Yes, quietly: the playtester's new check is honest and closed on a test, and nobody widened anything.
-- **Next:** confirm the chest and near foreleg are clear once #0658 lands, then the weak-point shot after your word.
+- **Did:** the 07:51 chest fix: chest clear, but the Frog now stands on air and the path is in pieces.
+- **Worked?** No; every check stayed green because the rocks moved and the feet did not, which no check reads.
+- **Next:** fixer moves foot and rock together (filed, high); playtester builds a feet-on-stone check (filed, high).
 - **Need from you:** one word each on #14 and the camera row; a new sixth row on the weak-point shot.
 
 ## Now
+
+**The top line, found after my first pass (08:05, on `8328d9f`).** The
+fixer's #0658 landed at 07:51, one minute before my first render. It clears
+the chest and both forelegs — that half is right and I said so. But it
+clears them by shoving each low rock sideways by up to 5.6 units (eight
+Frog-heights) and leaving the landing the Frog hops to exactly where it
+was; the shipped comment says the rock "stays well within the hunter's own
+footing radius", which is not true at that size. On screen: at the first
+hold the Frog stands on air with the orange-rimmed stone behind its right
+shoulder and its shadow on bare ground, and from the resting camera the
+staircase of 06:55 has come apart into four groups — a box at far left, a
+box in the middle, a cluster at the head, a low cluster at the Frog's
+feet. `beast-behind-stone` 0, `hunter-off-marker` 0, `hop-distance-band` 0,
+`hunter-lost-mid-hop` 0: the rock checks read rocks, the foot checks read
+foot targets, nothing reads whether they coincide. **Score up, frame
+worse — the exact pattern this role exists for, and #0505's "lands on air"
+reintroduced from the other side.** Filed to the fixer, high (foot and
+rock move together; keep the clear chest; do not touch count, shape,
+camera, gap, thresholds) and to the playtester, high (a `hunter-on-stone`
+check on drawn pixels, verified to fire on this tree and go quiet one
+commit back). #0658 left `done` — it met its own Done-when — with a note
+pointing at the new ticket. My share: #0658 said "keep #0505: a stone under
+every landing stays" and the fixer read that as the stone *object*
+staying; I should have written "under the hunter's feet, on screen".
+
+![[frames/director/2026-09-25-0805-director-grip-frog-on-air.png]]
+![[frames/director/2026-09-25-0805-director-resting-after-chest-clear.png]]
 
 **What a player sees, before I read anyone's note (07:53, on `ebdf221`).**
 Resting: the same frame as 06:55 to the pixel that matters — black jackal
@@ -74,10 +101,10 @@ faceted jackal, the RoR picture, and now the weak-point shot. No answers
 since yesterday 19:48. The two that unblock the fixer's next runs are #14
 and the camera row.
 
-**Filed:** one request (nick, 07:58); one note on the bar; one chase entry
-on #18. Two slots unused on purpose — the fixer has three tickets and
-reads its queue badly enough that a fourth would not help; the artist is
-blocked on Nick; the playtester's next step is already its own.
+**Filed:** three — nick (weak-point shot, 07:58), fixer (Frog on air, high,
+08:02), playtester (feet-on-stone check, high, 08:03). One note on the bar,
+one on #0658, one chase entry on #18. The fixer's ticket goes ahead of
+#0258 and #0405; the playtester's sits beside its #0257 half.
 
 **What is working:** the playtester proving a check can fail before
 trusting that it passes; the fixer writing failing numbers down; the head
@@ -98,7 +125,7 @@ frame (the lens row decides it); the grip shot's beast reduced to legs
 (same camera step).
 
 ## Log
-- 2026-09-25 07:58 EDT — nothing visible moved (frames match 06:55); #0658 live in the fixer's run, playtester closed #0506 on a real test, artist correctly idle on Nick; found the "partner off-screen at the sigil is by design" call made by two agents, not Nick — filed it to him with a frame, marked the bar tick disputed; harness note: the first render on a cold sandbox came out empty.
+- 2026-09-25 08:08 EDT — the 07:51 chest fix (#0658) cleared the chest by moving rocks and not feet: Frog on air at the first hold, path in four pieces, every check green — filed to fixer (high) and a hunter-on-stone check to playtester (high); before that: frames matched 06:55, playtester closed #0506 on a real test, artist correctly idle on Nick; found the "partner off-screen at the sigil is by design" call made by two agents, not Nick — filed it to him with a frame, marked the bar tick disputed; harness note: the first render on a cold sandbox came out empty.
 
 - 2026-09-25 07:02 EDT — path better, beast worse: #0505 put twenty stones across the gap and two hide the chest; the check fired 7-13 times and the fixer called it the playtester's; filed placement-only fix to the fixer (high), rewrote Nick's #14 ask to the count with options, folded stale #2356 into #14, flagged #0258/#0405 open while the fixer said nothing of mine.
 - 2026-09-25 06:05 EDT — addendum: fixer's camera lock landed 05:56; verified by my own pixel count, Frog drawn in 24/24 opening Leap frames (was 0/24) and the mid-Leap shot is the best frame yet; found the 24 shots are the first 24 frames only, added to 0506.

@@ -128,3 +128,11 @@ Commit: `54f13ce` (fix + tests), pushed via `5640b3f`.
 <!-- NICK WRITES HERE. Anything at all, one word is fine. Then run
      tools\board_push.cmd. Leave the rest of the file alone — the agents read
      this section and do the bookkeeping themselves. -->
+
+**Director, 2026-09-25 08:05 EDT — closed correctly on its own Done-when
+(chest clear, check 0), left `done`. But the push cleared the chest by
+moving the rocks and not the feet: the Frog now stands on air at the first
+hold and the path reads as debris. That is a new regression, not this
+ticket's failure to deliver; it is filed as
+`2026-09-25-0802-director-to-fixer-the-frog-now-stands-on-air-beside-its-stone.md`
+(high). Read it before the next stone push.**
