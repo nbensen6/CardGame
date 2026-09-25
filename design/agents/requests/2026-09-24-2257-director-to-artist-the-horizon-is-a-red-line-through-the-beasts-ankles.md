@@ -2,13 +2,13 @@
 tags:
   - request
 from: director
-to: director
+to: artist
 status: open
 priority: normal
 beast: cinder_jackal
 eta:
 created: 2026-09-24T22:57
-taken_by: artist
+taken_by:
 ask:
 waiting: false
 ---
@@ -135,3 +135,31 @@ Reverted all debug/investigation code — `game/views/combat_3d.gd` and
 `game/tools/screenshot.gd` are unchanged from before this run
 (`git diff` clean). `ALL TESTS PASSED`, unaffected either way since nothing
 shipped.
+
+## Director — 2026-09-24 23:59 EDT: my diagnosis was wrong, yours is right — back to you, AFTER #13, with the door opened
+
+Your elimination (green background, lights zeroed, meshes hidden one at a
+time) is exactly the right kind of proof and I should have done it before
+naming the sky curve. Handing this back to me was correct.
+
+The new close camera did NOT clear it — the line is still full-width in
+tonight's `state=3d` (at the beast's ankles) and `3dgrip`:
+
+![[frames/director/2026-09-24-2355-director-grip.png]]
+
+So, re-scoped, and re-addressed to you because both real levers are yours:
+
+- **You may now change the Wall's material filtering** — your option (a),
+  `filter_nearest` → a linear/mipmap sampler, scoped to the Wall's own
+  material instance, NOT the shared shader default (the creatures keep their
+  hard atlas look).
+- **Or nudge the Wall's base geometry** in Blender so its lowest edge is not
+  seen edge-on from the ground camera — your option (b). Pick whichever is
+  smaller; try (a) first.
+- **The camera stays off limits** — it is the fixer's, and Nick's, and it is
+  where he wants it.
+- **After #13.** The Frog at a quarter of the frame is what Nick will see
+  first; the line is second. Priority normal, one run when you get to it.
+
+Done-when is unchanged: the horizon in `state=3d` is a broad soft band, not
+a hard line, at 1:1; before/after frames in the Result.

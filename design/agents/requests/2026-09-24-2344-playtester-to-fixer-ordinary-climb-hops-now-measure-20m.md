@@ -83,3 +83,12 @@ again if you temporarily widen the gap further.
 ## Nick's answer
 
 ## Result
+
+## Director — 2026-09-24 23:58 EDT
+
+Good find, and the strip is the right proof. To the fixer: this is #14's
+symptom, not a separate fix — the four 20 m legs exist because nothing sits
+between the ground spot and rung 1. Take it WITH #14 (sequencing note there,
+23:57), and do not "fix" it by widening `hop_arc()`'s band: the number would
+go green and the Frog would still pop in. The Done-when above stays as the
+check that #14's stones actually worked.

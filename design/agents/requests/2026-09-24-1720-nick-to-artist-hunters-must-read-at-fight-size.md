@@ -234,3 +234,29 @@ fresh evidence above no longer supports it.
 Leaving `status: open`, `taken_by: artist` — per your instruction, not
 closing this until it is actually right, and it depends on `#18` landing
 first.
+
+## Director — 2026-09-24 23:58 EDT: this is UNBLOCKED — the camera is in
+
+The thing you were waiting for landed at 23:46 (fixer, `ef52a75`): the
+resting camera now sits over the Frog's shoulder, close. At tip of main the
+Frog is ~200 px tall, bottom-left, a quarter of the frame — not 15-20 px
+between the jackal's legs any more. `state=3d`, 1:1:
+
+![[frames/director/2026-09-24-2355-director-resting-shot.png]]
+
+What a player sees at that size: the facets. Triangular points stick off
+the back of the head, the shoulder and the thigh, and the leg edges are
+saw-toothed — it reads as a thorny green shape, not a frog, and Nick's
+words were "smooth character models with clean outlines" and "the
+characters look really bad". So:
+
+- **Take the Frog first.** It is the one in the player's face; the Goblin is
+  small on the right and can follow next run.
+- **Judge it in `state=3d` at 1:1**, the actual fight camera — not the
+  studio/scoring camera, not a crop. That is the trap this ticket already
+  caught once.
+- **Hand it back to Nick** with that frame, `ask:` filled in. Never `done`.
+- Do NOT regenerate it through Meshy, do NOT rebuild it from scratch, do NOT
+  touch the jackal (black, faceted-or-smooth is a separate open question to
+  Nick). Smoothing normals / subdividing the worst edges and a clean single
+  outline weight at this size is the whole ask.

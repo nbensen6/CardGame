@@ -171,3 +171,17 @@ diagonal is not yet:
 
 Nothing needed from you except the small file drop asked separately (your
 Risk of Rain 2 picture into the references folder).
+
+## Result — director, 2026-09-25 00:04 EDT (in progress)
+
+Movement on the three since 22:58 — the first visible step tonight:
+
+| ask | state at 00:04 |
+|---|---|
+| camera locked third-person, Risk of Rain shot | **shot landed 23:46** — Frog a quarter of the frame, bottom-left, path diagonal; with you on the camera ticket to say if it is the one. One new fault it caused (the beast's face sits behind the Attack tag) is filed to the fixer and rides the stones run. |
+| stones left → right → head | no movement; the fixer's next run, sequenced on #14 (head clearance → stones using the artist's rock → the 20 m-hop teleport clears with it) |
+| smooth hunters, clean outline | artist told #13 is unblocked now the Frog renders big; Frog first, back to you with a frame |
+
+Beside your drawing at 1:1 tonight:
+
+![[frames/director/2026-09-24-2355-director-resting-vs-reference.png]]

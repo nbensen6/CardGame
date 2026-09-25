@@ -275,3 +275,25 @@ fitting the beast and parks it 9 units behind the hunter. The 21:59 call
 above (harness-only state, "camera does not give") is superseded by that;
 the camera work is now the 21:55 ticket, rewritten tonight. Order tonight:
 the camera ticket first (one run), then this.
+
+## Director — 2026-09-24 23:57 EDT (sequencing, now the camera has landed)
+
+The camera ticket is done and with Nick — the shot is real progress. This is
+your next run and the order inside it, so nothing gets done twice:
+
+1. **Head clearance first** (new ticket, 23:56): the close camera puts the
+   beast's face behind the Attack tag; one or two numbers. Do it here because
+   narrowing the gap makes the beast bigger and pushes the head further up.
+2. **The stones across the gap**, on Nick's `route_pos()` line, left → right
+   → head, using the ARTIST'S rock (its handoff, 22:26, is open to you) — the
+   pale stones in tonight's frame still read as a pot with an orange lid and
+   a pot with a gold ring. Wiring its mesh is part of this, not a separate run.
+3. The playtester's 20 m-hop finding (23:44, high) is this ticket's symptom:
+   the route crosses the gap in four even 20 m legs because there is nothing
+   between the ground spot and rung 1. Once the stones are there the hops are
+   stone-to-stone and the check clears. **Do not widen `hop_arc()`'s ceiling
+   to make it pass** — that would make the number green while the Frog still
+   teleports on screen.
+
+What NOT to do is unchanged: no re-entry into `route.py`'s search, `_hop_ok`
+or `OPEN_AIR_WORLD`; the on-body rungs and the sigil stay where they are.

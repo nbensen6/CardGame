@@ -2,20 +2,121 @@
 tags:
   - agent-status
 agent: director
-updated: 2026-09-24T22:58
-working_on: Nick's three overnight asks — camera lock landed, RoR framing and the stones are the fixer's next two runs, hunters with the artist.
+updated: 2026-09-25T00:03
+working_on: The close camera landed and the fight finally moved toward Nick's drawing; chasing head clearance (fixer), the stones (#14) and the Frog (#13).
 ---
 
 # director
 
-## This run — 2026-09-24 22:58 EDT
+## This run — 2026-09-25 00:03 EDT
+
+- **Did:** the fight is better for the first time tonight, but the beast's face now hides behind the Attack tag.
+- **Worked?** Yes — Frog big and bottom-left, path diagonal, like your drawing; the hidden head is the one new fault.
+- **Next:** fixer clears the head then lays the stones; artist smooths the Frog now the camera shows it big.
+- **Need from you:** look at the camera shot on your board and say whether it is the one you meant.
+
+## Now
+
+**My miss, at the top as the brief says:** the horizon-line ticket I filed
+at 22:57 named the wrong cause (the sky curve). The artist proved it is the
+arena wall seen edge-on and handed it back; I have re-filed it with the
+right levers, behind the Frog. Also: the fixer's own frame of the new shot
+was posted at 23:44 with the face already behind the tag, and it measured
+the beast's height without saying which part was missing — that is the
+"score up, frame not checked" pattern, caught here rather than by the fixer.
+
+**What a player sees, before I read anyone's note.** Resting shot: a big
+low-poly Frog bottom-left, a quarter of the frame, in profile facing right;
+the Goblin small on the right; a pale boulder with a flat orange lid mid
+frame and a smaller one with a gold ring further back; the black jackal at
+the top with its eyes just under the "Attack 7" tag and its skull behind
+the boss bar. A hard red line still runs full width at the beast's ankles.
+The path from Frog to beast is a real diagonal now. Climb shot: unchanged —
+sky, a black lump bottom-left, the Frog tiny on a pot, "Attack 7" over
+nothing, Goblin off frame. Grip shot: the Frog still hidden behind a "3"
+four Frogs tall; only the beast's legs in frame.
+
+![[frames/director/2026-09-24-2355-director-resting-shot.png]]
+![[frames/director/2026-09-24-2355-director-at-the-sigil.png]]
+![[frames/director/2026-09-24-2355-director-grip.png]]
+
+**Against the drawing**, 1:1 beside it:
+
+![[frames/director/2026-09-24-2355-director-resting-vs-reference.png]]
+
+| his drawing | the frame now | verdict |
+|---|---|---|
+| whole beast, upper-middle, sky above its ears | top third, head behind tag and bar | **no — new ticket to fixer, rides #14** |
+| frog large, bottom-left, camera near it | ~200 px, bottom-left, camera over its shoulder | **yes — fixer, 23:46** |
+| stones recede from frog to beast | big near, small far | yes (still the pots; artist's rock waits on #14) |
+| path runs diagonally, left to right | diagonal | **yes — fixer, 23:46** |
+| broad hot glow at the horizon | a 3 px red line | no — re-filed to artist with the right cause |
+| cool sky, dark ground, pale stones | yes | yes |
+| beast black | black | settled (#17) |
+
+**Did the fight get better for Nick, or did three scores go up?** Better,
+for the first time tonight — two rows of the table flipped to yes on one
+fixer commit, and they are the two Nick drew the picture for. The cost is
+one new visible fault (the head) that the fixer's own measurements did not
+see because they measured height, not which part of the beast was showing.
+**The single thing standing in the way now is #14**: the stones across the
+gap. It fixes the beast being small (the gap), the climb shot (the route
+decides where that camera stands), and the playtester's new 20 m-hop
+teleport (four even legs because nothing sits between the ground and rung
+1) — three symptoms, one ticket, and it has sat `taken` since 20:08 with
+nothing shipped. That was by Nick's own order (camera first) and the order
+is now discharged, so the next fixer run with no stones is the first line
+of my next note.
+
+**Audit of what closed since 22:58.** Only the playtester's checks ticket
+(22:33, mine): Done-when measurable (three checks re-pointed at the live
+route, 0 false fires, fires again on a revert) — legitimate. It surfaced the
+20 m-hop finding as a by-product, which is the discipline working. Nothing
+closed that was Nick's to close. **Stuck audit:** the camera ticket is
+correctly `to: nick`, `open`, `ask:` filled, frame at 1:1 — not stuck. The
+artist's rock handoff (22:26) is open to the fixer with an empty Result —
+queued, now sequenced inside #14. #13 is `taken` by the artist and marked
+blocked on the camera; the camera is in, so I have told the artist it is
+unblocked and what the Frog looks like at a quarter of the frame (thorny).
+**Judgement calls sitting elsewhere:** the playtester's ticket offers the
+fixer a choice (widen the hop band, or add stones) that Nick already made
+at 22:25 — relayed on the ticket so the fixer does not pick the wrong one.
+#18's 19:48 GitHub comment is the toggle ask, already built; nothing new
+from Nick since #17.
+
+**Filed (one new, three notes, one re-route — three things, three agents):**
+
+1. `2026-09-24-2356-director-to-fixer-the-beasts-face-is-behind-the-attack-tag.md`
+   (high): tilt/eye-height numbers first, tag placement second, done as the
+   first step of the #14 run because the gap change moves the head again.
+   Not: widen, move stones, touch the climb camera.
+2. #13 note to the artist: unblocked, Frog first, judge in `state=3d` at
+   1:1, hand back to Nick. Not: Meshy, rebuild, touch the jackal.
+3. #19 re-routed to the artist after #13 with the door opened: Wall material
+   filtering (scoped) or Wall base geometry. Not: the camera, the shared
+   shader default.
+
+Plus sequencing on my own #14 (head → stones with the artist's rock → the
+20 m hop clears itself; do not widen `hop_arc()`), and the same one-liner
+on the playtester's 20 m ticket.
+
+**What is working, so nobody optimises it away:** the fixer's pixel-exact
+before/after and "climb camera provably untouched"; the artist's
+elimination proof on the horizon line (it was right and I was wrong); the
+playtester finding a real teleport the moment its checks read the live
+route. Keep all three.
+
+**Leftovers I did not file (three is the limit):** the "3" in `3dgrip` is
+still four Frogs tall and on top of the Frog; the climb shot stays
+unreadable until #14; the pot with the gold ring at the beast's chest is
+the second foothold and will go with the rock swap.
+
+## Old: 2026-09-24 22:58 EDT
 
 - **Did:** looked at all three shots; nothing visible moved since 22:35, and the camera lock you asked for is in.
 - **Worked?** Partly: the lock is real but invisible in a frame; the shot is still your 22:12 one, stacked dead centre.
 - **Next:** fixer tunes the over-the-shoulder shot, then the stones; artist smooths the hunters, then the horizon line.
 - **Need from you:** nothing urgent; one small file drop asked as a ticket (your Risk of Rain picture).
-
-## Now
 
 **What a player sees, before I read anyone's note.** Resting shot: a black
 jackal with ember panels, whole, centre-top, about a third of the frame; a
@@ -307,6 +408,7 @@ Closed: #4, #5, #11, #15, #17. The camera ticket (#18 step 3) is filed only
 once #14 lands, so the fixer has exactly one thing in front of it.
 
 ## Log
+- 2026-09-25 00:03 EDT — fight visibly better (close shot landed: Frog quarter-frame, diagonal); beast head behind the HUD filed to fixer; #13 told it is unblocked; #19 re-routed to artist with the artist's correct cause; #14 sequenced (head → stones → 20 m hop).
 - 2026-09-24 22:58 EDT — nothing visible moved; camera lock (fixer) and boulder mesh (artist) both landed correct-but-invisible by my own scoping. Advised the fixer on the over-the-shoulder framing, filed the horizon line to the artist, asked Nick for the RoR picture as a ticket.
 - 2026-09-24 22:35 EDT — Nick live: three asks by morning. Camera ticket rewritten (locked by default, RoR shot), #14 re-aimed on his route_pos, #13 re-aimed smooth, playtester told its checks read the old route.
 - 2026-09-24 21:58 EDT — no movement on #14; relayed Nick's camera-switch ask to the fixer, closed #3 into #14/#18, filed stones-shape (artist) and jackal keep/revert (nick).
