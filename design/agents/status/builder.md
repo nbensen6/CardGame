@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-25T17:26
-working_on: "hunters face the beast fix handed to Nick"
+updated: 2026-09-25T17:41
+working_on: "goblin trim recolour handed to Nick"
 ---
 
 # builder
@@ -13,16 +13,17 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-25 17:26 EDT
+2026-09-25 17:41 EDT
 
-- **Did:** Ground hunters now face the beast, backs to camera — the old rotation formula had them facing the camera instead.
-- **Worked?** Yes — Frog and Goblin now stand back/three-quarter to the camera at rest, matching Nick's Risk of Rain 2 reference.
-- **Look at:** ![[frames/builder/2026-09-25-hunters-face-beast-before.png]] then ![[frames/builder/2026-09-25-hunters-face-beast-after.png]]
-- **Ask:** nothing.
-- **Found:** the relative-`out=` save-failure bug (previously filed below) is now fixed upstream — `shot.cmd` correctly fails loud (`SHOT FAILED`, exit 2) on a relative path instead of silently reusing a stale frame; confirmed live this run.
+- **Did:** Unified the Goblin's boots/shorts/strap/ear-tuft from four bright warm hues into one muted rust, so green (body) + blue (pack) read as the one silhouette, same as the Frog's own palette shape.
+- **Worked?** Yes — the goblin-only crop shows 47% of its own pixels changed, boots and straps read as trim now instead of a third competing bright colour.
+- **Look at:** ![[frames/builder/2026-09-25-goblin-reads-before.png]] then ![[frames/builder/2026-09-25-goblin-reads-after.png]]
+- **Ask:** does this read as "one silhouette" now, or does the pack still need to shrink too?
+- **Found:** the loose `goblin_mech_ai_Image_0.png` is gitignored and regenerated from the `.glb`'s embedded image on import — editing only that file (as a couple of the artist's own earlier passes did) does not survive a fresh checkout; the fix has to live in the `.glb` itself. Also: two screenshots of the identical, unchanged state differ by ~43,000 px in the background tent/box region alone — a real, large, pre-existing run-to-run render difference there, not just the small idle-animation jitter this project's notes usually describe; not chased, since it wasn't part of this item.
 
 ## Log
 
+- 2026-09-25 17:41 EDT — builder: goblin trim (boots/shorts/strap/ear) recoloured to one muted rust, baked into goblin_mech_ai.glb's embedded texture; built, tested, pushed.
 - 2026-09-25 17:26 EDT — builder: ground hunters face the beast, backs to camera, not the camera itself; built, tested, pushed.
 - 2026-09-25 17:15 EDT — builder: hull built before the decorative stones, so mid-route hunters land on their own stone; built, tested, pushed.
 - 2026-09-25 16:43 EDT — builder: sigil top hold uses each hunter's own route side, not the shared-foothold nudge; built, tested, pushed.

@@ -138,10 +138,24 @@ run failed.
       term turned them to face the camera instead. Dropped it (now
       `0.7 * side`); the climbing branch was untouched. Lifted into a
       tested static function, `hunter_facing_y`. Frame confirmed changed.
-- [ ] **Goblin reads at 40 px.** The Frog reads at fight size; the Goblin is
+- [?] **Goblin reads at 40 px.** The Frog reads at fight size; the Goblin is
       noise. Same treatment that fixed the Frog: fewer, bigger colour regions,
       one silhouette read (the pack? the goggles?). Shot: `state=goblin`,
       crop both hunters at 1:1.
+      **Builder, 2026-09-25 17:41 EDT:** sampled the goblin at true in-fight
+      size and found four separate bright warm hues (boots ~h16, ~h36; strap
+      ~h0; ear tuft ~h40, all near-full saturation) competing with the green
+      body and the blue tank — the Frog avoids this by being one hue (MINT)
+      plus two small accents. `tools/blender/ai/goblin_ai_trim_desaturate.py`
+      masks that whole warm band by hue and folds it into one muted rust
+      (sat x0.55, val x0.85), baked into `goblin_mech_ai.glb`'s own embedded
+      texture (not just the loose extracted PNG, which is gitignored and
+      regenerates from the glb on every `--import` — confirmed by reverting
+      it alone and watching the live fight revert too). Picked the pack as
+      the one anchor per the ticket's own suggestion; did not touch the tank
+      or skin. Frame confirmed changed (goblin-only crop: 47% of its own
+      pixels differ). Did not touch the goggles option, or shrink the pack
+      itself — only the competing trim.
 - [ ] **Re-derive the two failing playtest checks.** `hop-distance-band` and
       `hunter-off-marker` measure the beast's authored anchors, not the stone
       route. Measure the route, or delete them. Shot: none — this one is
@@ -298,3 +312,20 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
       print an actual error (or refuse to print "SHOT SAVED") on failure, so
       a future run can't ship a stale frame as proof without an extra hash
       check nobody is required to run.
+- [ ] (proposed) Two `state=goblin` screenshots of the *identical* game
+      state (no code or asset change between them) differ by roughly 43,000
+      of 921,600 px, all in the background tent/box scenery to the left of
+      the hunters — not the small idle-animation jitter (ember pulse, sway)
+      this project's notes usually attribute frame-diff noise to. Worth a
+      look before it's mistaken for a real change in some future before/after
+      pair: isolate the diff to the subject's own bounding box, the way this
+      run had to, rather than trust a full-frame pixel count.
+- [ ] (proposed) `goblin_mech_ai_Image_0.png` (and the same pattern would hit
+      any other `*_Image_*.png`) is gitignored as "derived, regenerable from
+      the tracked `.jpg` beside it" (`8e5a27c`), but the live fight actually
+      reads the PNG, not the JPG — confirmed by reverting only the PNG and
+      watching the render revert. The tracked
+      `goblin_mech_ai_Image_0.jpg` looks orphaned (unused by the current
+      `.glb`, which embeds its own PNG). Worth deleting the stale jpg or
+      correcting the gitignore comment so the next person doesn't edit the
+      jpg expecting it to change anything.
