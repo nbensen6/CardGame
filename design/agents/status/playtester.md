@@ -2,13 +2,81 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-25T07:45
-working_on: Chest-stone half of 0257 next — apply the new drawn-pixel primitive to beast-behind-stone, same as hunter-lost-mid-hop.
+updated: 2026-09-25T09:39
+working_on: 0257 done. Next up — 0803 (high): build hunter-on-stone, verified to fire on the offset-rocks tree and go quiet once fixed.
 ---
 
 # playtester
 
-## This run — 2026-09-25 07:45 EDT
+## This run — 2026-09-25 09:39 EDT
+
+- **Did:** closed `0257`'s chest-stone half — `beast-behind-stone` now
+  judges real drawn pixels, not rect overlap.
+- **Worked?** Yes, after finding and fixing three real bugs in my own
+  check before trusting its numbers.
+- **Next:** `0803` (high) — build `hunter-on-stone`, the check that should
+  have caught the frog-on-air regression.
+- **Need from you:** nothing.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | unchanged — closed several runs ago (Play feedback) |
+| 2 | hunters land on the beast correctly | **closed this run** — `beast-behind-stone` chest-stone half done (`0257`); sigil split still clean |
+| 3 | jump animation (squash/arc/landing/facing) | unchanged — clean |
+| 4 | camera | unchanged — clean |
+| 5 | nothing errors | clean — 0 `script-error` across all three modes |
+
+### Why this run
+
+`0257`'s chest-stone half was next per my last note. Applied #0506's
+render-diff primitive to `beast-behind-stone`: three renders of the same
+instant (beast+stone, beast alone, neither), pixel-diffed with #0506's own
+calibrated threshold, so "of the beast's own drawn pixels, how many does
+this stone hide" replaces the loose rect-overlap guess.
+
+**Three real bugs, found by printing the numbers before trusting them —
+the same discipline every check in this file uses:**
+
+1. First version scanned only the stone/beast overlap sliver for the
+   denominator too — pixel% ran 10-20x the rect% on stones the rect check
+   barely flagged, 130 fails on a tree the fixer's own regression test
+   already called clean. Fixed: scan the whole beast box for "how many of
+   the beast's pixels exist," not just the sliver a stone could occlude.
+2. Next run still showed noise — stones under 1% rect overlap reading
+   6-19% covered, suspiciously close to the 15% threshold. The jackal's
+   own ember/dust particles kept animating across the three renders this
+   needs. Fixed: pause the tree for just the capture sequence.
+3. `_check` became a coroutine the moment it needed `await` for those
+   renders; I updated two of its three call sites and missed
+   `_hand_sizes`'. Left un-awaited, successive hand-size checks raced,
+   toggling the same nodes' visibility out from under each other —
+   `hand of 2` read 90-100% covered on stones nowhere near the beast.
+   Fixed: `await` it there too.
+
+**Verified sensitivity directly**, since a check that only ever passes
+proves nothing: a temporary, never-committed probe put a real stone
+between the camera and the beast and confirmed a real fire — 52.2% pixel
+(rect said 60.1%), well over the 15% threshold — then reverted before
+pushing. Could not replay the exact tree named in the ticket (`b2a5c21`
+predates `route_pos_cleared`, which `playtest.gd` now calls, so the files
+no longer agree) — this is the same claim, proven directly instead.
+
+**Full three-mode baseline, real committed code (`562ea6a`):** `play` (16
+and 30 steps), `hover` (full sweep), `hands` (1-10) — `PLAYTEST OK: 0
+failing check(s)` on all four. Chest stone reads 0-13% pixel throughout,
+clean under the unmoved 15% threshold; sigil hold never fires even past
+31% rect overlap. `ALL TESTS PASSED` headless throughout.
+
+![[frames/playtester/2026-09-25-0257-chest-stone-pixel-cover-resting.png]]
+The resting shot the numbers come from.
+
+Commits: `15e56fa`, `5238a9e`, `7667ed2`, `6bde10d`. Set `0257`
+`status: done` — its Done-when is a measured check, not Nick's judgement,
+and it's met.
+
+## Old: 2026-09-25 07:45 EDT, hunter-lost-mid-hop rebuilt on real drawn pixels
 
 - **Did:** rebuilt `hunter-lost-mid-hop` on real drawn pixels (render diff,
   not a projected rectangle) per the director's `0506`, high priority.

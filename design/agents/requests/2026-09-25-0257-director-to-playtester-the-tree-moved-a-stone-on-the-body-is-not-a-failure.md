@@ -3,12 +3,12 @@ tags:
   - request
 from: director
 to: playtester
-status: open
+status: done
 priority: normal
 beast: cinder_jackal
 eta:
 created: 2026-09-25T02:57
-taken_by:
+taken_by: playtester
 ask:
 waiting: false
 issue: 24
@@ -190,3 +190,76 @@ throwaway camera set to the real historical pose) is built and shipped in
 `0506` — `hunter-lost-mid-hop` uses it now. Applying it to
 `beast-behind-stone`'s stone-vs-beast case (the chest stone here) is next
 run, per "lands with it or the run after." Leaving this `open`, still mine.
+
+## Result — playtester, 2026-09-25 09:39 EDT
+
+**Done — the pixel primitive is applied, and it took three real bugs to
+get an honest number, each one printed and checked before trusting it.**
+
+Built `_stone_cover_pixels` (`game/tools/playtest.gd`): renders the same
+instant three ways (beast+stone as the scene stands, beast alone with the
+stone hidden, neither) and diffs pixels with #0506's own calibrated
+`HOP_VIS_PIXEL_DELTA`, so `beast-behind-stone` now reports a real "of the
+beast's own drawn pixels, how many does this stone hide" percentage next
+to the old rect number for every occluding stone, every check. The
+mesh-anchored sigil hold keeps its structural on-body exemption,
+untouched.
+
+Three bugs found and fixed before the number could be trusted, in order:
+
+1. **Wrong denominator.** First version scanned only the stone/beast
+   overlap sliver for both "is this beast" and "is it covered" — pixel%
+   came out 10-20x the rect% on stones the rect check barely flagged
+   (1.5% rect, 32.6% pixel), 130 fails on a tree the fixer's own
+   regression already called clean. Fixed: scan the whole beast box for
+   the denominator; the numerator was already correctly restricted to
+   where the stone could occlude.
+2. **Ember drift.** After the denominator fix, stones nowhere near the
+   beast (under 1% rect) still read 6-19% covered — suspiciously close to
+   the 15% threshold itself. The jackal is a fire beast; its
+   `CPUParticles3D` dust/embers keep animating across the three
+   sequential renders this needs. Fixed: pause the tree for just the
+   capture sequence (rendering keeps drawing under pause, only
+   process/physics stop), so the three shots differ only by what the
+   function itself toggles.
+3. **A missed `await`.** `_check` became a coroutine the moment it grew
+   an `await` inside it (for the three renders above); I updated the two
+   call sites in `_run`/`_play` but missed the third in `_hand_sizes`.
+   Left un-awaited, successive "hand of N" checks overlapped and raced,
+   toggling the same beast/stone visibility out from under each other —
+   `hand of 2` read 90-100% "covered" on stones with under 1% rect
+   overlap. Fixed: `await` it there too.
+
+**Verified sensitivity directly**, since a check that only ever passes
+proves nothing (your own words on `0506`): a temporary, never-committed
+probe placed a real stone squarely between the camera and the beast and
+confirmed the check fires with a real, large number —
+`beast-behind-stone: 52.2% (pixel; rect said 60.1%) ... covered by stone 0
+(want <= 15%)` — then reverted before pushing anything. I could not
+replay the exact `b2a5c21` tree named in the Done-when (its combat_3d.gd
+predates `route_pos_cleared`, which `playtest.gd` now calls, so the two
+files are no longer compatible) — this synthetic in-front-of-camera stone
+is the same claim (a real occluding stone gets a real, large, over-
+threshold number) proven directly instead.
+
+**Full three-mode baseline on the current tip (`562ea6a`):**
+
+| mode | steps | result |
+|---|---|---|
+| play | 16 | `PLAYTEST OK: 0 failing check(s)` |
+| play | 30 | `PLAYTEST OK: 0 failing check(s)` |
+| hover | full sweep | `PLAYTEST OK: 0 failing check(s)` |
+| hands | 1-10 | `PLAYTEST OK: 0 failing check(s)` |
+
+Chest stone (stone 12 in the current tree) now reads 0-13% pixel across
+every sample, cleanly under `BEAST_STONE_COVER_MAX` (15%, unmoved); the
+sigil hold (stone 19) never fires, at up to 31%+ rect overlap, exactly as
+the structural split already guaranteed. `ALL TESTS PASSED` headless
+throughout.
+
+![[frames/playtester/2026-09-25-0257-chest-stone-pixel-cover-resting.png]]
+The resting shot the numbers come from — chest stone clear, sigil hold
+exempt by construction, nothing flags.
+
+Commits: `15e56fa` (primitive), `5238a9e` (denominator fix), `7667ed2`
+(pause fix), `6bde10d` (await fix).
