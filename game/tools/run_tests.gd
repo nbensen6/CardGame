@@ -971,6 +971,17 @@ func _init() -> void:
 	_test_backlog86_stone_point_never_shifts_x_or_y()
 	_test_backlog86_stone_point_pushes_forward_by_one_hunter_height()
 	_test_backlog86_shared_foothold_stays_inside_playtest_check_8_tolerance()
+	# fixer, 2026-09-25: #14 (Nick, live, 2026-09-24 22:25 EDT, relayed by the
+	# director) — the approach stones' straight-ahead line barely left the
+	# beast's own centreline, so from behind the hunter they stacked one over
+	# the other. route_pos now sweeps left-to-right (his drawing is a
+	# diagonal) as well as near-to-far.
+	_test_route_pos_returns_the_top_hold_directly_when_there_is_only_one_rung()
+	_test_route_pos_first_rung_sits_left_of_the_top_hold()
+	_test_route_pos_sweeps_monotonically_left_to_right()
+	_test_route_pos_still_climbs_as_it_sweeps()
+	_test_route_pos_keeps_even_spacing_along_the_swept_line()
+	_test_route_pos_zero_half_width_matches_a_centred_straight_line()
 	# fixer, 2026-09-23: the hunter-display-path request
 	# (design/agents/requests/2026-09-23-1330-...) -- the toon-shaded, rigged
 	# path _shade_model gave AI_ART beasts was gated on `root == _beast`, so a
@@ -22026,6 +22037,71 @@ func _test_backlog86_shared_foothold_stays_inside_playtest_check_8_tolerance() -
 	var stood: Vector3 = Combat3D.stone_point(Vector3(side, anchor.y, anchor.z))
 	var tol: float = width * 0.055 + 0.30 + 0.05   # playtest.gd's own check-8 formula
 	_expect(absf(stood.x - anchor.x) <= tol, "a side-shifted hunter sharing foothold 4 must land within check 8's own tolerance of the anchor -- before this fix it drifted 1.43 against a 1.06 budget")
+
+
+## fixer, 2026-09-25 — request #14, Nick live 2026-09-24 22:25 EDT (relayed by
+## the director): the approach stones' first version (`start.x = top.x * 0.2`)
+## barely left the beast's own centreline, so from behind the hunter the
+## stones stacked one over the other instead of sweeping sideways. His
+## drawing is a diagonal: first stone low and LEFT of the hunter, each next
+## one further RIGHT and higher, the last at the head. route_pos's new
+## `half_width` parameter (the beast's own half-width at the one call site)
+## is what earns that sweep -- these pin the shape of the line itself, with
+## no scene tree and no model loaded (#86 duty 3).
+func _test_route_pos_returns_the_top_hold_directly_when_there_is_only_one_rung() -> void:
+	var top := Vector3(1.0, 2.0, 3.0)
+	var p: Vector3 = Combat3D.route_pos(top, -5.0, 0, 1, 4.0)
+	_expect(p == top, "a beast with only one climb rung has no approach to sweep across -- route_pos must hand back the top hold unchanged")
+
+
+func _test_route_pos_first_rung_sits_left_of_the_top_hold() -> void:
+	var top := Vector3(0.4, 12.0, 2.0)
+	var p: Vector3 = Combat3D.route_pos(top, -20.0, 0, 5, 6.0)
+	_expect(p.x < top.x, "the first approach stone must sit left of the top hold's own x, or the sweep the director asked for (left low, right and high toward the head) never happens")
+
+
+func _test_route_pos_sweeps_monotonically_left_to_right() -> void:
+	var top := Vector3(0.4, 12.0, 2.0)
+	var n := 5
+	var prev := -INF
+	for i in range(n):
+		var p: Vector3 = Combat3D.route_pos(top, -20.0, i, n, 6.0)
+		_expect(p.x > prev, "each rung must sit further right (higher x) than the one before it -- a lateral sweep that doubles back reads as scattered stones, not a path")
+		prev = p.x
+
+
+func _test_route_pos_still_climbs_as_it_sweeps() -> void:
+	var top := Vector3(0.4, 12.0, 2.0)
+	var n := 5
+	var lo: Vector3 = Combat3D.route_pos(top, -20.0, 0, n, 6.0)
+	var hi: Vector3 = Combat3D.route_pos(top, -20.0, n - 1, n, 6.0)
+	_expect(hi.y > lo.y, "the sweep must still rise toward the beast -- a lateral-only move with no climb reads as a walk, not the approach to a climb")
+	_expect(is_equal_approx(hi.x, top.x) and is_equal_approx(hi.y, top.y) and is_equal_approx(hi.z, top.z), "the last rung (i = n-1) must still land exactly on the top hold -- the sweep only touches the rungs BEFORE the beast, never the climb point itself")
+
+
+func _test_route_pos_keeps_even_spacing_along_the_swept_line() -> void:
+	# Nick's own commit (b0648db) requirement, carried into the sweep: "one
+	# line, even steps" -- a lateral sweep with even ARC LENGTH keeps that,
+	# because it is still one straight line, just angled in x as well as z/y.
+	var top := Vector3(0.4, 12.0, 2.0)
+	var n := 5
+	var p0: Vector3 = Combat3D.route_pos(top, -20.0, 0, n, 6.0)
+	var p1: Vector3 = Combat3D.route_pos(top, -20.0, 1, n, 6.0)
+	var p2: Vector3 = Combat3D.route_pos(top, -20.0, 2, n, 6.0)
+	var p3: Vector3 = Combat3D.route_pos(top, -20.0, 3, n, 6.0)
+	var d0: float = p0.distance_to(p1)
+	var d1: float = p1.distance_to(p2)
+	var d2: float = p2.distance_to(p3)
+	_expect(is_equal_approx(d0, d1) and is_equal_approx(d1, d2), "every leg of the swept line must be the same length -- an uneven sweep breaks the hop-distance band exactly like the pre-b0648db per-rung anchors did")
+
+
+func _test_route_pos_zero_half_width_matches_a_centred_straight_line() -> void:
+	# half_width=0 collapses the sweep back to a straight line ahead in x --
+	# a regression guard that the new parameter is additive, not a second,
+	# unrelated change to the line's shape.
+	var top := Vector3(0.4, 12.0, 2.0)
+	var p: Vector3 = Combat3D.route_pos(top, -20.0, 0, 5, 0.0)
+	_expect(is_equal_approx(p.x, top.x), "half_width=0 must leave the near end's x exactly at the top hold's own x -- no sweep, same shape the ground_z/height math already had")
 
 
 ## backlog #86 duty 3 (this turn) — hull_index_for is the last untested piece

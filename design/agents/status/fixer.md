@@ -2,11 +2,103 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-25T00:51
-working_on: Fixed the head-behind-tag bug (#14 item 1). Stones (#14 items 2-3) are next, a real rewrite.
+updated: 2026-09-25T01:48
+working_on: "#14 items 1-2 done (head clearance, stone sweep + rock). Item 3 (hop-distance-band) needs a hop-animation rewrite, not started."
 ---
 
 # fixer
+
+## This run — 2026-09-25 01:48 EDT
+
+- **Did:** swept the approach stones left-to-right (#14 item 2) and wired in
+  the artist's rock mesh, replacing the old sphere.
+- **Worked?** Yes on both — stones no longer stack behind each other, rock
+  reads clean up close. The wide shot still isn't Nick's drawing: 4 of 5
+  stones are still ~20m apart (item 3, unsolved).
+- **Next:** item 3 needs the hop ANIMATION to walk several waypoints per
+  climb, not just more decorative stones — a real rewrite.
+- **Need from you:** nothing blocking; flagged one open question on #14
+  (is the near stone's own size/closeness okay once it's visible) for
+  whoever looks next.
+
+![[frames/fixer/2026-09-25-stone-sweep-state3d-after.png]]
+![[frames/fixer/2026-09-25-stone-sweep-3dgrip-after.png]]
+
+## Now
+
+Took #14 (director, high priority, `taken` by fixer since last night) —
+items 2 and 3 of the 23:57 sequencing note, item 1 (head clearance) having
+landed last run. The playtester's own high-priority `2026-09-24-2344-...`
+(ordinary hops now measure ~20m) is the director's own item 3, folded into
+#14 rather than a separate pick.
+
+**Item 2 — the sweep.** `route_pos` (`combat_3d.gd`) took a new `half_width`
+param: the near end's `x` used to be `top.x * 0.2` (barely off centre, which
+is why the approach stones stacked one over the other from behind the
+hunter — Nick's own complaint, relayed 22:25 EDT). Now `start.x = top.x -
+half_width`, sweeping left-to-right as it climbs. First tried `half_width =
+_beast_box.size.x * 0.5` (the beast's own half-width, 5.4 units on the
+Cinder Jackal) — rendered it, and the near stone (close to camera) stretched
+badly at the frustum's edge, wide-lens style. Backed off to a new
+`STONE_SWEEP_WIDTH` const (`HUNTER_HEIGHT * 3.0`, 2.1 units), sized off the
+hunter like every other stone dimension in this file rather than the beast.
+5 new pure `route_pos` tests in `run_tests.gd` (no scene tree). Missed on
+the first pass, caught by a full playtest run: `playtest.gd` calls the same
+static function directly for its own checks 8/8c and needed the same new
+argument — added a mirrored `STONE_SWEEP_WIDTH` const there too (same
+pattern `SIGIL_HUNTER_HEIGHT` already uses, since this file can't import a
+`.gd` script's private consts).
+
+**Item 2 — the rock.** Wired `game/assets/3d/env/foothold_rock.glb` (the
+artist's own handoff, #17, 22:26) into `_build_float_stones` in place of the
+`SphereMesh` BODY, using their own already-verified scaffolding math
+verbatim. The imported scene is a `Node3D` wrapper around one
+`MeshInstance3D`; `find_children` locates it so the existing
+`material_override` (the #12 palette + `ROCK_DETAIL`) still lands on the
+real mesh. Dropped the old per-stone tilt/squash (tuned for a sphere; the
+artist's own note says it would distort this hull unpredictably) for a
+random Y spin only, per their handoff. CAP/RIM/palette code untouched. Also
+closed the artist's own `2026-09-24-2226-...` request — its Done-when is
+objective (mesh wired, no regression), not Nick's judgement, so I closed it
+myself rather than leaving it open pending #14.
+
+**Proof.** `ALL TESTS PASSED`. Full fresh-import `mode=play
+beast=cinder_jackal steps=80`: `PLAYTEST FAIL: 1 failing check(s) {
+"hop-distance-band": 124 }` — the exact pre-existing baseline count, zero
+`route-reversal`/`hunter-off-marker`/`script-error`. `state=3dgrip`'s
+pre-existing `VIS FAIL hunter1` reproduces identically on `git stash`
+((541,81) vs (546,81) after — noise from the x-sweep, not a new failure).
+
+**Item 3 — confirmed NOT solved by item 2, with a real reason.** The
+director's 23:57 note expected the 20m-hop finding to clear once the stones
+landed. It doesn't: `route_pos`'s `n`/`i` are still `_rung_count()`/
+`_rung_index()` — the SAME indices `_stand_on_model` uses for the hunter's
+actual foot state. The sweep changes WHERE the 5 named-Height points sit,
+not how many there are, so the ~82-unit ground-to-sigil span is still 4
+legs of ~20.44m each (measured this run, unchanged from every prior
+baseline). A real fix needs more waypoints than the beast has named
+Heights, which means the HOP ANIMATION (`_place_hunters`, one `hop_arc`
+tween per Height change) has to walk several waypoints for a single
+card-driven climb — not something `_build_float_stones`/`route_pos` alone
+can do. That's a bigger rewrite than this run's budget, and the "2-3 more
+runs" #14 already carried is now down to one clear target instead of two.
+
+**Open question, on #14 itself, for whoever looks next (not Nick — this
+isn't ready for his eyes yet):** sweeping stone 1 out from behind the
+hunter reveals it sits close to the camera (~7 world units away, against a
+resting camera 3 units behind the hunter) and now reads as big/dominant in
+the wide shot. That closeness was always there — it just used to be hidden
+directly behind the hunter's own sprite. Nick's own 20:08 EDT note asked for
+"big near the hunter, smaller as they recede," so this might be exactly
+right, or might be too big now that it isn't hidden. Not something I have
+standing to call — see #14's own `## Result` for the frame.
+
+Left #14 at `status: taken` — Done-when isn't met (item 3 open, the wide
+shot still doesn't match Nick's drawing). Not `to: nick`: nothing here is
+ready for his judgement, and the gap left (item 3) is bigger than a
+look-and-say-yes.
+
+## Old: 2026-09-25 00:51 EDT — the head-behind-tag fix (#14 item 1)
 
 ## This run — 2026-09-25 00:51 EDT
 
@@ -1944,6 +2036,14 @@ further either.
 
 ## Log
 
+- 2026-09-25 01:48 EDT — #14 items 1-2 (director, high): swept the approach
+  stones left-to-right (`route_pos` new `half_width`/`STONE_SWEEP_WIDTH`,
+  sized off the hunter after a beast-width version stretched at the frame
+  edge) and wired in the artist's `foothold_rock.glb`, closing their own
+  `2026-09-24-2226-...` request too. `ALL TESTS PASSED`, full 80-step
+  playtest: only the pre-existing `hop-distance-band` (124, unchanged).
+  Item 3 (same check) confirmed NOT solved by the sweep — needs a
+  multi-waypoint hop animation, not just more stones; left `#14` `taken`.
 - 2026-09-24 22:40 EDT — #18's camera-switch request (2026-09-24-2155), two
   passes: built the Menu's Camera Dev/Player toggle, then Nick answered live
   wanting it locked by default in EVERY build (his own is always debug) —

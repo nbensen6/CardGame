@@ -6,11 +6,11 @@ to: fixer
 status: taken
 priority: high
 beast: cinder_jackal
-eta: item 1 (head clearance) done this run; the stones are a real rewrite, 2-3 more runs
+eta: items 1-2 done; item 3 (hop-distance-band, 124 fails) needs a bigger rewrite -- more approach holds than named Heights, which means the hop animation itself, not just route_pos. Not started.
 created: 2026-09-24T20:08
 taken_by: fixer
-ask: item 1's Done-when (a visible ground gap in state=3d) can't be met without touching the camera you told fixer not to touch — which one gives?
-waiting: true
+ask:
+waiting: false
 issue: 14
 ---
 
@@ -323,3 +323,113 @@ will make the beast bigger on screen again, which may reopen the head
 clearance question — the near-top intent-tag fix should still hold (it
 reacts to wherever the crown actually projects, not a fixed number), but
 re-check `state=3d` once the stones land rather than assume it does.
+
+## Fixer — 2026-09-25 01:48 EDT (item 2 done: sweep + rock; item 3 still open)
+
+Took item 2 of the 23:57 sequencing note (item 1, head clearance, landed last
+run). Nothing pushed to `route.py`/`ai_beast.py`/the beast's own `.glb` — this
+is entirely inside `combat_3d.gd`/`playtest.gd`, no Blender rebuild needed.
+
+### The sweep
+
+`route_pos` (`combat_3d.gd`) took a new `half_width` argument. The near end's
+`x` used to be `top.x * 0.2` — barely off the top hold's own x, so from behind
+the hunter the approach stones stacked one over the other (Nick's own
+complaint, relayed 22:25 EDT). Now `start.x = top.x - half_width`, so the
+whole thing is still ONE straight line (start → top, lerped by `t` — Nick's
+"one line, even steps" from b0648db is unchanged, since a straight line has
+the same even spacing wherever it points), just angled sideways as well as in
+depth/height: first stone left and low, each next one further right and
+higher, last exactly on the sigil.
+
+`half_width` is `STONE_SWEEP_WIDTH` (new const, `HUNTER_HEIGHT * 3.0`), sized
+off the hunter rather than the beast's own width on purpose — first tried
+`_beast_box.size.x * 0.5` (5.4 units on the Cinder Jackal) and rendered it:
+because the near stone sits close to the camera, that offset put it almost at
+the frustum's edge, stretched by the wide-angle-lens distortion objects get
+near the edge that close in. `HUNTER_HEIGHT * 3.0` (2.1 units) keeps the sweep
+visible without that.
+
+5 new unit tests in `run_tests.gd`, pure/no scene tree (#86 duty 3 style):
+n<=1 returns the top hold unchanged, the first rung sits left of it, each
+rung sweeps monotonically right, the sweep still climbs and the last rung
+still lands exactly on the top hold, every leg of the line is the same
+length (the "even steps" requirement), and `half_width=0` collapses back to
+a centred line (regression guard). `ALL TESTS PASSED`.
+
+`playtest.gd` calls the same static function directly for its own checks 8/8c
+(hunter-off-marker, hop-distance-band) — missed on the first pass, caught by
+a full playtest run (`script-error: Invalid call... Expected 5 argument(s)`).
+Added `STONE_SWEEP_WIDTH` there too (mirrored the same way
+`SIGIL_HUNTER_HEIGHT` already mirrors `HUNTER_HEIGHT`, since this file can't
+import a `.gd` script's private consts) and passed it at both call sites.
+
+### The rock
+
+Wired in the artist's `foothold_rock.glb` (#17's own handoff, 22:26) in place
+of the `SphereMesh` BODY, using their own verified scaffolding math
+(`design/progress/foothold_rock.md` pass 2 — they'd already proven this exact
+wiring live and reverted it before their own push, per "do not touch
+combat_3d.gd"). The mesh's single `MeshInstance3D` child gets the same
+`material_override` (the #12 palette + `ROCK_DETAIL` multiply) the old sphere
+had, found by `find_children` since the imported scene is a `Node3D` wrapper
+around one mesh, not a `MeshInstance3D` directly. Dropped the old per-stone
+tilt/squash (tuned for a sphere; the artist's own note says it would distort
+this hull unpredictably) — a random Y spin only, per their handoff. CAP/RIM
+and the palette code are untouched, per #17.
+
+### Proof
+
+- `ALL TESTS PASSED` (`run_tests.gd`, including the 5 new `route_pos` tests).
+- Full `mode=play beast=cinder_jackal steps=80` regression, fresh `--import`:
+  `PLAYTEST FAIL: 1 failing check(s) { "hop-distance-band": 124 }` — the
+  SAME count as the pre-existing baseline (this run's own numbers below), and
+  the SAME shape it's had every run since b0648db. Zero `route-reversal`,
+  zero `hunter-off-marker`, zero `script-error` once the two `playtest.gd`
+  call sites were fixed. `state=3dgrip`'s pre-existing `VIS FAIL hunter1`
+  reproduces identically on `git stash` of this whole change (541,81) vs
+  (546,81) after — pre-existing, not a regression.
+- Rendered `state=3d` (below) and `state=3dgrip` (below) fresh.
+
+![[frames/fixer/2026-09-25-stone-sweep-state3d-after.png]]
+![[frames/fixer/2026-09-25-stone-sweep-3dgrip-after.png]]
+
+The grip shot matches the artist's own verification
+(`frames/artist/2026-09-24-foothold-clay-pot-vs-boulder.png`) — a clean
+angular rock with a readable flat cap. **The wide `state=3d` shot is honest,
+not a win yet**: the literal "stacked" complaint is gone (each rung now has
+its own distinct x), but sweeping the near stone (Height 1) out from behind
+the hunter reveals it was ALWAYS this close to the camera (its own z sits
+~7 world units in front of the lens, against a resting camera 3 units behind
+the hunter) — previously invisible because it sat almost exactly on the
+hunter's own sightline. Now visible, it dominates the frame the way any
+object that close does, while the stones after it (Heights 2-4) recede
+into a ~20m-per-hop span (item 3's own number, unchanged by this fix — see
+below) and read as small/lost near the beast rather than as a legible
+staircase. I did not retune that near-point's own depth (the `ground_z -
+HUNTER_HEIGHT * 6.0` term) — it's Nick's own b0648db number, not something
+this ticket asked me to touch, and I don't have standing to call whether
+"big and near" (his own words, 20:08 EDT) is working here or reads as too
+big. Flagging rather than guessing.
+
+### Item 3 (hop-distance-band, #`2026-09-24-2344-...`) — confirmed NOT solved by item 2
+
+The director's 23:57 note expected this to clear once the stones landed. It
+doesn't, and the reason is structural, not a tuning miss: `route_pos` still
+only has as many points as the beast has named climb Heights (5 on the
+Cinder Jackal), because `n`/`i` come from `_rung_count()`/`_rung_index()` —
+the SAME indices `_stand_on_model` uses for the hunter's actual foot state.
+The sweep changes WHERE those 5 points sit, not how many there are, so the
+total ~82-unit ground-to-sigil span is still divided into 4 legs of ~20.44m
+each (measured this run, identical to every prior baseline). Fixing this for
+real needs MORE waypoints between the named Heights than gameplay has states
+for — which means the hop animation itself (currently one `hop_arc` tween
+per Height change, in `_place_hunters`) would need to walk several
+waypoints for a single card-driven height change, not just `route_pos`
+placing more decorative stones. That's the "2-3 more runs" this ticket
+already carried, now narrowed to one clear target instead of two.
+
+Leaving `status: taken` — Done-when isn't met (item 3 open, and the wide
+shot still isn't what Nick's drawing shows). Not handing to `nick`: nothing
+here is ready for his judgement yet, and the honest gap above is bigger than
+a look-and-say-yes.

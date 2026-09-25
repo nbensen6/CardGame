@@ -56,6 +56,14 @@ const HOP_MAX_WORLD := 9.1538461
 ## point, or it reads as part of their sprite instead of a separate thing.
 const SIGIL_HUNTER_HEIGHT := 0.7
 
+## combat_3d.gd's own STONE_SWEEP_WIDTH (HUNTER_HEIGHT * 3.0) -- mirrored here
+## for the same reason as SIGIL_HUNTER_HEIGHT above: this file can't import a
+## .gd script's private consts. route_pos() now takes a half_width argument
+## (#14, the left-to-right stone sweep) -- checks 8 and 8c below call it
+## exactly the way _stand_on_model does, or they'd measure a route that no
+## longer exists, the same trap check 8's own comment already tells once.
+const STONE_SWEEP_WIDTH := SIGIL_HUNTER_HEIGHT * 3.0
+
 ## How far above a standing hunter's own head the sigil mark must sit before
 ## it counts as "clear" rather than "borderline" -- small on purpose, the
 ## same shape of slack ROUTE_REVERSAL_TOL uses: just enough that render
@@ -629,7 +637,7 @@ func _check(v: Node, when: String) -> void:
 					_fail("hunter-off-marker", "%s: hunter at foothold %d is %.2fm from its live route position (home %v, expected x=%.2f y=%.2f, x-tol %.2f)" \
 						% [when, foot, home.distance_to(Vector3(x_expected, anchor.y, home.z)), home, x_expected, anchor.y, tol_x])
 			else:
-				var expected: Vector3 = v.call("route_pos", route_top_hold, route_ground_z, i, n)
+				var expected: Vector3 = v.call("route_pos", route_top_hold, route_ground_z, i, n, STONE_SWEEP_WIDTH)
 				var miss := home.distance_to(expected)
 				if miss > 0.10:
 					_fail("hunter-off-marker", "%s: hunter at foothold %d is %.2fm from its live route position (home %v, expected %v, tol 0.10)" \
@@ -722,7 +730,7 @@ func _check(v: Node, when: String) -> void:
 			if i >= n2 - 1:
 				pts.append(route_top_hold)
 			else:
-				pts.append(v.call("route_pos", route_top_hold, route_ground_z, i, n2))
+				pts.append(v.call("route_pos", route_top_hold, route_ground_z, i, n2, STONE_SWEEP_WIDTH))
 		for i in range(pts.size() - 1):
 			var a3: Vector3 = pts[i]
 			var b3: Vector3 = pts[i + 1]

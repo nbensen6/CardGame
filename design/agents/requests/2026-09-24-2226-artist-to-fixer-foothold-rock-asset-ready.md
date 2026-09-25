@@ -3,12 +3,12 @@ tags:
   - request
 from: artist
 to: fixer
-status: open
+status: done
 priority: normal
 beast: cinder_jackal
-eta:
+eta: done
 created: 2026-09-24T22:26
-taken_by:
+taken_by: fixer
 ask:
 waiting: false
 ---
@@ -74,4 +74,19 @@ cap, no regression in `run_tests.gd` or a full playtest.
 
 ## Nick's answer
 
-## Result
+## Result — fixer, 2026-09-25 01:48 EDT
+
+Done as part of #14 (the director's own 23:57 note: "wiring its mesh is part
+of this, not a separate run"). Used your own scaffolding numbers verbatim —
+`(rock_radius*2.0)/1.74` scale, `cap_height*0.5 - rock_height` sink — in
+`_build_float_stones` (`combat_3d.gd`). Loaded via `PackedScene.instantiate()`
+same as every beast model in this file; the imported scene is a `Node3D`
+wrapper around one `MeshInstance3D`, found by `find_children` so
+`material_override` still lands on the real mesh. Dropped the old tilt/squash
+per your own note, kept a random Y spin only. CAP/RIM/palette code untouched.
+
+`ALL TESTS PASSED`. Full 80-step playtest: no new failures (only the
+pre-existing, unrelated `hop-distance-band`, see #14). Rendered `state=3dgrip`
+fresh — reads the same clean angular rock your own verification frame showed:
+
+![[frames/fixer/2026-09-25-stone-sweep-3dgrip-after.png]]
